@@ -82,7 +82,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="sipcapture.p.db_url">
 		<title><varname>db_url</varname> (str)</title>
 		<para>
 		Database URL.
@@ -101,7 +101,7 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipcapture.p.table_name">
 		<title><varname>table_name</varname> (str)</title>
 		<para>
 		Name of the table's name used to store the SIP messages. Can contain multiple tables, separated by "|".
@@ -122,7 +122,7 @@ modparam("sipcapture", "table_name", "homer_capture1|homer_capture2");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipcapture.p.mt_mode">
 		<title><varname>mt_mode</varname> (str)</title>
 		<para>
 		Name of the mode used for storing data in multiple tables. Modes can be "rand" (random), "round_robin" (use a round_robin algorithm) or "hash" (use hashing to determine the table to store). These modes are only triggered if there is more than one table specified in table_name parameter, separated by "|". 
@@ -141,7 +141,7 @@ modparam("sipcapture", "mt_mode", "hash")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipcapture.p.hash_source">
 		<title><varname>hash_source</varname> (str)</title>
 		<para>
 		The field of the SIP message used for hashing, when mt_mode is set to "hash". The value can be "call_id", "to_user" or "from_user".
@@ -160,7 +160,7 @@ modparam("sipcapture", "hash_source", "to_user")
 </programlisting>
 		</example>
 	</section>
-        <section>
+	<section id="sipcapture.p.db_insert_mode">
                 <title><varname>db_insert_mode</varname> (integer)</title>
                 <para>
                 If set to 1, use INSERT DELAYED to store sip message into capture table
@@ -177,7 +177,7 @@ modparam("sipcapture", "db_insert_mode", 1)
 </programlisting>
                 </example>
         </section>
-	<section>
+	<section id="sipcapture.p.capture_on">
 		<title><varname>capture_on</varname> (integer)</title>
 		<para>
 		Parameter to enable/disable capture globaly (on(1)/off(0))
@@ -196,7 +196,7 @@ modparam("sipcapture", "capture_on", 1)
 </programlisting>
 		</example>
 	</section>
-        <section>
+	<section id="sipcapture.p.hep_capture_on">
                 <title><varname>hep_capture_on</varname> (integer)</title>
                 <para>
                 Parameter to enable/disable capture of HEP (on(1)/off(0))
@@ -215,7 +215,7 @@ modparam("sipcapture", "hep_capture_on", 1)
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="sipcapture.p.raw_ipip_capture_on">
                 <title><varname>raw_ipip_capture_on</varname> (integer)</title>
                 <para>
                 Parameter to enable/disable IPIP capturing (on(1)/off(0))
@@ -234,7 +234,7 @@ modparam("sipcapture", "raw_ipip_capture_on", 1)
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="sipcapture.p.raw_moni_capture_on">
                 <title><varname>raw_moni_capture_on</varname> (integer)</title>
                 <para>
                 Parameter to enable/disable monitoring/mirroring port capturing (on(1)/off(0))
@@ -255,7 +255,7 @@ modparam("sipcapture", "raw_moni_capture_on", 1)
 		</programlisting>
                 </example>
         </section>
-	<section>
+	<section id="sipcapture.p.raw_socket_listen">
                 <title><varname>raw_socket_listen</varname> (string)</title>
                 <para>
                 Parameter indicate an listen IP address of RAW socket for IPIP capturing. 
@@ -290,7 +290,7 @@ modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060")
 </programlisting>
                 </example>
         </section>
-       <section>
+	<section id="sipcapture.p.raw_interface">
                 <title><varname>raw_interface</varname> (string)</title>
 		<para>
 		Name of the interface to bind on the raw socket.
@@ -301,7 +301,7 @@ modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060")
                 </emphasis>
                 </para>
                 <example>
-                <title>Set <varname>raw_socket_listen</varname> parameter</title>
+                <title>Set <varname>raw_interface</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
 modparam("sipcapture", "raw_interface", "eth0")
@@ -309,7 +309,7 @@ modparam("sipcapture", "raw_interface", "eth0")
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="sipcapture.p.raw_sock_children">
                 <title><varname>raw_sock_children</varname> (integer)</title>
                 <para>
 		Parameter define how many children that must be created to listen the raw socket.
@@ -328,7 +328,7 @@ modparam("sipcapture", "raw_sock_children", 6)
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="sipcapture.p.promiscuous_on">
                 <title><varname>promiscuous_on</varname> (integer)</title>
                 <para>
                 Parameter to enable/disable promiscuous mode on the raw socket.
@@ -348,7 +348,7 @@ modparam("sipcapture", "promiscuous_on", 1)
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="sipcapture.p.raw_moni_bpf_on">
                 <title><varname>raw_moni_bpf_on</varname> (integer)</title>
                 <para>
                 Activate Linux Socket Filter (LSF based on BPF) on the mirroring interface. 
@@ -369,7 +369,7 @@ modparam("sipcapture", "raw_moni_bpf_on", 1)
 </programlisting>
                 </example>
         </section>        
-	<section>
+	<section id="sipcapture.p.capture_node">
 		<title><varname>capture_node</varname> (str)</title>
 		<para>
 		Name of the capture node.
@@ -391,7 +391,7 @@ modparam("sipcapture", "capture_node", "homer03")
 </section>	
     <section>
 	<title>MI Commands</title>
-	<section>
+	<section id="sipcapture.m.sip_capture">
 		<title>
 		<function moreinfo="none">sip_capture</function>
 		</title>
@@ -428,7 +428,7 @@ modparam("sipcapture", "capture_node", "homer03")
 	</section><!-- MI commands -->
     	<section>
 	<title>RPC Commands</title>
-	<section>
+	<section id="sipcapture.r.sipcapture.status">
 		<title>
 		<function moreinfo="none">sipcapture.status param</function>
 		</title>

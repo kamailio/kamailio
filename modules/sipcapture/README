@@ -66,7 +66,7 @@ Alexandr Dubovikov
    1.8. Set raw_ipip_capture_on parameter
    1.9. Set raw_moni_capture_on parameter
    1.10. Set raw_socket_listen parameter
-   1.11. Set raw_socket_listen parameter
+   1.11. Set raw_interface parameter
    1.12. Set raw_sock_children parameter
    1.13. Set promiscous_on parameter
    1.14. Set raw_moni_bpf_on parameter
@@ -301,7 +301,7 @@ modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060")
 
    Default value is "".
 
-   Example 1.11. Set raw_socket_listen parameter
+   Example 1.11. Set raw_interface parameter
 ...
 modparam("sipcapture", "raw_interface", "eth0")
 ...
@@ -359,7 +359,7 @@ modparam("sipcapture", "capture_node", "homer03")
 
    4.1. sip_capture
 
-4.1.  sip_capture
+4.1. sip_capture
 
    Name: sip_capture
 
@@ -381,7 +381,7 @@ modparam("sipcapture", "capture_node", "homer03")
 
    5.1. sipcapture.status param
 
-5.1.  sipcapture.status param
+5.1. sipcapture.status param
 
    Name: sipcapture.status
 
