@@ -1,19 +1,20 @@
 /*
  * $Id$
- * This file is part of SIP-router, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
@@ -25,18 +26,18 @@
  */
 
 #include "../../cfg/cfg.h"
-#include "../../parser/msg_parser.h" /* method types */
-
 #include "config.h"
 
 struct cfg_group_outbound default_outbound_cfg = {
 		0,	/* Read only variable to mark if outbound is enabled */
-	    };
+};
 
-void	*outbound_cfg = &default_outbound_cfg;
+void *outbound_cfg = &default_outbound_cfg;
 
-cfg_def_t	outbound_cfg_def[] = {
-	{"outbound_enabled", CFG_VAR_INT | CFG_ATOMIC | CFG_READONLY, 0, 0, 0, 0,
-		"If set to one (true) Outbound is enabled."},
+cfg_def_t outbound_cfg_def[] = {
+	{ "outbound_enabled", CFG_VAR_INT | CFG_ATOMIC | CFG_READONLY,
+	  0, 0, 0, 0,
+	  "If set to one (true) Outbound is enabled." },
+
 	{0, 0, 0, 0, 0, 0}
 };
