@@ -154,6 +154,9 @@ static int pike_init(void)
 	register_timer( clean_routine , 0, 1 );
 	register_timer( swap_routine , 0, time_unit );
 
+	/* Register counter */
+	pike_counter_init();
+
 	return 0;
 error3:
 	destroy_ip_tree();

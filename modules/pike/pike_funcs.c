@@ -43,6 +43,7 @@
 #include "../../timer.h"
 #include "../../ip_addr.h"
 #include "../../resolve.h"
+#include "../../counters.h"
 #include "ip_tree.h"
 #include "pike_funcs.h"
 #include "timer.h"
@@ -54,6 +55,13 @@ extern gen_lock_t*       timer_lock;
 extern struct list_link* timer;
 extern int               timeout;
 extern int               pike_log_level;
+
+counter_handle_t blocked;
+
+void pike_counter_init()
+{
+	counter_register(&blocked, "pike", "blocked_ips", 0, 0, 0, "Counter of blocked IP addresses", 0);
+}
 
 
 
@@ -154,6 +162,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 		if (flags&NEWRED_NODE) {
 			LM_GEN1( pike_log_level,
 				"PIKE - BLOCKing ip %s, node=%p\n",ip_addr2a(ip),node);
+			counter_inc(blocked);
 			return -2;
 		}
 		return -1;
