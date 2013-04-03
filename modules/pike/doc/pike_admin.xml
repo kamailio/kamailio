@@ -58,7 +58,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="pike.p.sampling_time_unit">
 		<title><varname>sampling_time_unit</varname> (integer)</title>
 		<para>
 		Time period in seconds used for sampling (or the sampling accuracy).
@@ -85,7 +85,7 @@ modparam("pike", "sampling_time_unit", 10)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="pike.p.reqs_density_per_unit">
 		<title><varname>reqs_density_per_unit</varname> (integer)</title>
 		<para>
 		How many requests should be allowed per sampling_time_unit before 
@@ -107,7 +107,7 @@ modparam("pike", "reqs_density_per_unit", 30)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="pike.p.remove_latency">
 		<title><varname>remove_latency</varname> (integer)</title>
 		<para>
 		For how long the IP address will be kept in memory after the last 
@@ -132,7 +132,7 @@ modparam("pike", "remove_latency", 130)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="pike.p.pike_log_level">
 		<title><varname>pike_log_level</varname> (integer)</title>
 		<para>
 		Log level to be used by module to auto report the blocking (only first
@@ -157,7 +157,7 @@ modparam("pike", "pike_log_level", -1)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="pike.f.pike_check_req">
 		<title>
 		<function moreinfo="none">pike_check_req()</function>
 		</title>
@@ -208,7 +208,7 @@ if (!pike_check_req()) { exit; };
 
 	<section>
 	<title>MI Commands</title>
-	<section>
+	<section id="pike.m.pike_list">
 		<title>
 		<function moreinfo="none">pike_list</function>
 		</title>
