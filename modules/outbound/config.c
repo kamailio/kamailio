@@ -21,7 +21,7 @@
 /*!
  * \file 
  * \brief Outbound :: Configuration
- * \ingroup Outbound
+ * \ingroup outbound
  */
 
 #include "../../cfg/cfg.h"
