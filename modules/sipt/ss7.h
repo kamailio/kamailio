@@ -24,6 +24,8 @@
  * 
  */
 
+#ifndef _SIPT_SS7_H_
+#define _SIPT_SS7_H_
 
 /* ISUP messages */
 #define ISUP_IAM	0x01
@@ -134,7 +136,9 @@
 #define ISUP_PARM_DIVERSION_INFORMATION 0x36
 #define ISUP_PARM_UUI 0x20
 
+#ifndef bool
 #define bool unsigned char
+#endif
 
 
 /* ISUP Parameter Pseudo-type */
@@ -147,3 +151,4 @@ struct isup_parm_opt {
 int isup_get_hop_counter(unsigned char *buf, int len);
 int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, int len, unsigned char * obuf, int olen);
 
+#endif
