@@ -70,12 +70,12 @@ sipt_destination($rU, 31, 4);
 
 3.2. sipt_get_hop_count()
 
-   Returns the value of the Hop Coutner for the IAM message if it exists.
+   Returns the value of the Hop Counter for the IAM message if it exists.
    Returns -1 if there isn't a hop counter.
 
    Example 1.2. sipt_get_hop_counter() usage
 ...
-# get the hop couter and update the Max-Forwards header if it exists
+# get the hop counter and update the Max-Forwards header if it exists
 $avp(s:hop) = sipt_get_hop_counter();
 if($avp(s:hop) > 0)
 {
