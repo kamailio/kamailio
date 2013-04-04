@@ -17,7 +17,7 @@ Torrey Searle
         3. Functions
 
               3.1. sipt_destination(destination, hops, nai)
-              3.2. sipt_get_hop_count()
+              3.2. sipt_get_hop_counter()
 
    List of Examples
 
@@ -33,7 +33,7 @@ Chapter 1. Admin Guide
    3. Functions
 
         3.1. sipt_destination(destination, hops, nai)
-        3.2. sipt_get_hop_count()
+        3.2. sipt_get_hop_counter()
 
 1. Overview
 
@@ -51,7 +51,7 @@ Chapter 1. Admin Guide
 3. Functions
 
    3.1. sipt_destination(destination, hops, nai)
-   3.2. sipt_get_hop_count()
+   3.2. sipt_get_hop_counter()
 
 3.1. sipt_destination(destination, hops, nai)
 
@@ -68,7 +68,7 @@ $rU = "19495551234";
 sipt_destination($rU, 31, 4);
 ...
 
-3.2. sipt_get_hop_count()
+3.2. sipt_get_hop_counter()
 
    Returns the value of the Hop Counter for the IAM message if it exists.
    Returns -1 if there isn't a hop counter.
