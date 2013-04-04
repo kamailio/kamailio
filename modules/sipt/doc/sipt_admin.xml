@@ -57,7 +57,7 @@ sipt_destination($rU, 31, 4);
 		</example>
 	</section>
 	<section>
-		<title><function moreinfo="none">sipt_get_hop_count()</function></title>
+		<title><function moreinfo="none">sipt_get_hop_counter()</function></title>
 		<para>
 			Returns the value of the Hop Counter for the IAM message if it exists.
 			Returns -1 if there isn't a hop counter.
