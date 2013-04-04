@@ -23,7 +23,7 @@ IMPORTS
 
 
 kamailioTcModule MODULE-IDENTITY
-	LAST-UPDATED	"201301081200Z"
+	LAST-UPDATED	"201304041200Z"
 	ORGANIZATION	"Kamailio"
 	CONTACT-INFO
 		"http://www.kamailio.org"
@@ -51,16 +51,22 @@ KamailioSIPTransportProtocol ::= TEXTUAL-CONVENTION
                  bit 1   : User Datagram Protocol.
                  bit 2   : Transmission Control Protocol.
                  bit 3   : Stream Control Transmission Protocol.
-                 bit 4   : Transport Layer Security Protocol."
+                 bit 4   : Transport Layer Security Protocol.
+                 bit 5   : SCTP/Transport Layer Security Protocol.
+                 bit 6   : WebSocket transport (http)
+		 bit 7   : WebSocket over HTTP/TLS (wss)"
            SYNTAX     BITS {
                             other(0),  -- none of the following
 
                             udp(1),
                             tcp(2),
                             sctp(3),
-                            tls(4)
+                            tls(4),
+                            sctp_tls(5),
+			    ws(6),
+			    wss(7)
            }
---         REFERENCE "RFC 3261, Section 18"
+--         REFERENCE "RFC 4780, SipTCTransportProtocol"
 
 KamailioSIPEntityRole ::= TEXTUAL-CONVENTION
            STATUS current
@@ -68,13 +74,20 @@ KamailioSIPEntityRole ::= TEXTUAL-CONVENTION
                 "This convention defines the role of a SIP entity.
                  Examples of SIP entities are proxies, user agents,
                  redirect servers, registrars or combinations of
-                 the above."
+                 the above.
+		Kamailio adds the role 'edgeproxyServer' for
+		operation of a SIP outbound edge proxy node.
+		Kamailio adds the role 'sipcaptureServer' for
+		operation of a Homer SIPcapture node."
+		"
            SYNTAX BITS {
                             other(0),
                             userAgent(1),
                             proxyServer(2),
                             redirectServer(3),
                             registrarServer(4)
+                            edgeproxyServer(5)
+                            sipcaptureServer(6)
            }
 
 
@@ -87,7 +100,6 @@ KamailioSIPMethodIdentifier ::= TEXTUAL-CONVENTION
              of all defined SIP methods.
 
              Experimental support of extension methods is
-
              acceptable and expected.  Extention methods are
              those defined in Internet-Draft documents but
              not yet allocated an official number by IANA.

@@ -302,7 +302,8 @@ Chapter 1. Admin Guide
    and will be used in determining what is returned for the
    kamailioSIPEntityType scalar. Valid parameters are:
 
-   registrarServer, redirectServer, proxyServer, userAgent, other
+   registrarServer, redirectServer, proxyServer, userAgent,
+   edgeproxyServer, sipcaptureServer,other
 
    Example 1.1. Setting the sipEntityType parameter
 ...
@@ -312,7 +313,9 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
 
    Note that as the above example shows, you can define this parameter
    more than once. This is of course because a given Kamailio instance can
-   take on more than one role.
+   take on more than one role. The edgeproxyServer is an edge server using
+   the outbound module and path extensions. The sipcaptureServer is a
+   Homer Sip Capture server that collect SIP messages.
 
 4.2. MsgQueueMinorThreshold (Integer)
 

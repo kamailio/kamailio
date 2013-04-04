@@ -259,7 +259,7 @@
 
 		<para>
 		<emphasis>
-		registrarServer, redirectServer, proxyServer, userAgent, other
+		registrarServer, redirectServer, proxyServer, userAgent, edgeproxyServer, sipcaptureServer,other
 		</emphasis>
 		</para>
 
@@ -276,7 +276,9 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
 		<para>
 		Note that as the above example shows, you can define this parameter more
 		than once.  This is of course because a given Kamailio instance can take on
-		more than one role.
+		more than one role. The edgeproxyServer is an edge server using the outbound
+		module and path extensions. The sipcaptureServer is a Homer Sip Capture
+		server that collect SIP messages.
 		</para>
 	</section>
 

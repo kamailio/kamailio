@@ -502,6 +502,12 @@ int handleSipEntityType( modparam_t type, void* val)
 	else if (strcasecmp(strEntityType, "registrarServer") == 0) {
 		kamailioEntityType |= TC_SIP_ENTITY_ROLE_REGISTRAR_SERVER;
 	}
+	else if (strcasecmp(strEntityType, "edgeproxyServer") == 0) {
+		kamailioEntityType |= TC_SIP_ENTITY_ROLE_EDGEPROXY_SERVER;
+	}
+	else if (strcasecmp(strEntityType, "sipcaptureServer") == 0) {
+		kamailioEntityType |= TC_SIP_ENTITY_ROLE_SIPCAPTURE_SERVER;
+	}
 	else {
 		LM_ERR("The configuration file specified sipEntityType=%s,"
 				" an unknown type\n", strEntityType);

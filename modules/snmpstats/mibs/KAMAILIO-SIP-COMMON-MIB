@@ -338,7 +338,7 @@ KAMAILIO-SIP-COMMON-MIB DEFINITIONS ::= BEGIN
        		bit 4: Transport Layer Security Protocol over TCP
        		bit 5: Transport Layer Security Protocol over SCTP
        		bit 6: WebSocket transport
-       		bit 7: WebSocket transport over HTTP/TLS (WSS)
+       		bit 7: WebSocket transport over HTTP/TLS (WSS)"
        ::= { kamailioSIPPortEntry 4 }
 
    --
