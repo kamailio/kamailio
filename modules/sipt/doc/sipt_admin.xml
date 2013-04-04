@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- sipt Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>Module for updating ISUP encapuslated in SIP (SIP-T/SIP-I)</para>
+	<para>
+	The sipt module can be used to update various ss7 headers contained inside
+	a message.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the
+		listed modules must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>none</emphasis></para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+
+    <section>
+	<title>Functions</title>
+	<section>
+		<title><function moreinfo="none">sipt_destination(destination, hops, nai)</function></title>
+		<para>
+			updates the IAM in the body if it exists, setting the called party number to <quote>destination</quote>
+			with the nature address specified in <quote>nai</quote> and decrementing the hop counter value if present.
+			If the hop counter header is missing it will be added with the value of <quote>hops</quote>.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_destination(destination, hops, nai)</function> usage</title>
+			<programlisting format="linespecific">
+...
+# update the destination number to our current request uri, 
+# setting nature of address to international
+$rU = "19495551234";
+sipt_destination($rU, 31, 4);
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">sipt_get_hop_count()</function></title>
+		<para>
+			Returns the value of the Hop Coutner for the IAM message if it exists.
+			Returns -1 if there isn't a hop counter.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_get_hop_counter()</function> usage</title>
+			<programlisting format="linespecific">
+...
+# get the hop couter and update the Max-Forwards header if it exists
+$avp(s:hop) = sipt_get_hop_counter();
+if($avp(s:hop) > 0)
+{
+	remove_hf("Max-Forwards");
+	append_hf("Max-Forwards: $avp(s:hop)\r\n");
+}
+
+...
+</programlisting>
+		</example>
+	</section>
+</section>
+</chapter>
+

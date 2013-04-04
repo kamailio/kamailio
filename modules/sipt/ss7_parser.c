@@ -1,0 +1,302 @@
+/*
+ *
+ * Copyright (C) 2013 Voxbone SA
+ * 
+ * Parsing code derrived from libss7 Copyright (C) Digium
+ *
+ *
+ * This file is part of SIP-Router, a free SIP server.
+ *
+ * SIP-Router is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * SIP-Router is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * 
+ */
+
+#include "ss7.h"
+#include <string.h>
+
+static char char2digit(char localchar)
+{
+	switch (localchar) {
+		case '0':
+			return 0;
+		case '1':
+			return 1;
+		case '2':
+			return 2;
+		case '3':
+			return 3;
+		case '4':
+			return 4;
+		case '5':
+			return 5;
+		case '6':
+			return 6;
+		case '7':
+			return 7;
+		case '8':
+			return 8;
+		case '9':
+			return 9;
+		case 'A':
+			return 0xa;
+		case 'B':
+			return 0xb;
+		case 'C':
+			return 0xc;
+		case 'D':
+			return 0xd;
+		case '*':
+			return 0xe;
+		case '#':
+		case 'F':
+			return 0xf;
+		default:
+			return 0;
+	}
+}
+
+static void isup_put_number(unsigned char *dest, char *src, int *len, int *oddeven)
+{
+	int i = 0;
+	int numlen = strlen(src);
+
+	if (numlen % 2) {
+		*oddeven = 1;
+		*len = numlen/2 + 1;
+	} else {
+		*oddeven = 0;
+		*len = numlen/2;
+	}
+
+	while (i < numlen) {
+		if (!(i % 2))
+			dest[i/2] |= char2digit(src[i]) & 0xf;
+		else
+		{
+			dest[i/2] |= (char2digit(src[i]) << 4) & 0xf0;
+		}
+		i++;
+	}
+}
+
+static int encode_called_party(char * number, unsigned char * flags, int nai, unsigned char * buf, int len)
+{
+	int numlen, oddeven;
+	buf[0] = flags[0]&0x7F;
+	buf[1] = flags[1];
+
+	isup_put_number(&buf[2], number, &numlen, &oddeven);
+
+	if(oddeven)
+	{
+		buf[0] |= 0x80;
+	}
+	
+	if(nai)
+	{
+		buf[0] &= 0x80;
+		buf[0] = (unsigned char)(nai&0x7F);
+	}
+
+	return numlen + 2;
+}
+
+// returns start of specified optional header of IAM, otherwise return -1
+static int get_optional_header(unsigned char header, unsigned char *buf, int len)
+{
+	int offset = 0;
+	int res;
+	char optparams;
+
+	// not an iam? do nothing
+	if(buf[0] != ISUP_IAM)
+	{
+		return -1;
+	}
+
+	/* Copy the fixed parms */
+	len -= 6;
+	offset += 6;
+
+	if (len < 1)
+		return -1;
+
+	/* IAM has one Fixed variable param, Called party number */
+
+	// pointer to fixed part (2)
+	offset++;
+	len--;
+
+
+	//pointer to optional part
+	optparams = buf[offset];
+	offset++;
+	len--;
+
+
+	// add the new mandatory fixed header
+	res = buf[offset];
+	offset += res+1;
+	len -= res+1;
+
+	if (len < 1 )
+		return -1;
+
+	/* Optional paramter parsing code */
+	if (optparams) {
+		while ((len > 0) && (buf[offset] != 0)) {
+			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
+
+			res = optparm->len+2;
+			if(optparm->type == header)
+			{
+				return offset;
+			}
+
+			len -= res;
+			offset += res;
+		}
+	}
+	return -1;
+}
+
+int isup_get_hop_counter(unsigned char *buf, int len)
+{
+	int  offset = get_optional_header(ISUP_PARM_HOP_COUNTER, buf, len);
+
+	if(offset != -1 && len-offset-2 > 0)
+	{
+		return buf[offset+2] & 0x1F;
+	}
+	return -1;
+}
+
+
+
+int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, int len, unsigned char * obuf, int olen)
+{
+	int offset = 0, offset2 = 0;
+	int res;
+	char optparams;
+	unsigned char *param_pointer = NULL;
+
+
+	// not an iam? do nothing
+	if(buf[0] != ISUP_IAM)
+	{
+		int l = len > olen ? olen : len;
+		memcpy((void*)obuf, (void *)(buf), l);
+		return l;
+	}
+
+	memset(obuf, 0, olen);
+
+	// bounds checking
+	if(hops > 31)
+	{
+		hops = 31;
+	}
+
+
+
+	/* Copy the fixed parms */
+	memcpy((void*)obuf, (void *)(buf), 6);
+	len -= 6;
+	olen -= 6;
+	offset += 6;
+	offset2 += 6;
+
+	if (len < 1)
+		return -1;
+
+	/* IAM has one Fixed variable param, Called party number, we need to modify this */
+
+	// pointer to fixed part (2)
+	obuf[offset2++]=buf[offset++];
+
+
+	//pointer to optional part (to update later)
+	param_pointer = (obuf+offset2);
+	optparams = buf[offset];
+	offset2++;
+	offset++;
+	len--;
+	olen--;
+
+
+	// add the new mandatory fixed header
+	res = encode_called_party(dest, buf+offset+1, nai, obuf+offset2+1, olen-1);
+	obuf[offset2] = (char)res;
+
+	offset2 += res+1;
+	olen -= res+1;
+	
+	res = buf[offset];
+	offset += res+1;
+	len -= res+1;
+
+
+	
+	if (len < 1 )
+		return -1;
+
+
+	
+	// set the pointer to the optional part
+	param_pointer[0] = (char)((obuf+offset2) - param_pointer);
+
+	/* Optional paramter parsing code */
+	if (optparams) {
+
+		bool has_hops = 0;
+		
+		while ((len > 0) && (buf[offset] != 0)) {
+			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
+
+
+			res = optparm->len+2;
+			switch(optparm->type)
+			{
+				case ISUP_PARM_HOP_COUNTER:
+					obuf[offset2++] = ISUP_PARM_HOP_COUNTER;
+					obuf[offset2++] = 1;
+					obuf[offset2++] = ((optparm->data[0]&0x1F)-1)&0x1F;
+					has_hops = 1;
+					break;
+				default:
+					memcpy((void*)(obuf+offset2), (void *)(buf + offset), res);
+					offset2 += res;
+			}
+
+			len -= res;
+			offset += res;
+		}
+
+		// add missing headers
+		if(!has_hops)
+		{
+			obuf[offset2++] = ISUP_PARM_HOP_COUNTER;
+			obuf[offset2++] = 1;
+			obuf[offset2++] = hops & 0x1F;
+			has_hops = 1;
+		}
+
+		// nicely null terminate it
+		obuf[offset2++] = 0;
+	}
+
+	return offset2;
+}
