@@ -136,7 +136,7 @@ static inline str cxdx_get_avp(AAAMessage *msg,int avp_code,int vendor_id,
 	
 	avp = cdpb.AAAFindMatchingAVP(msg,0,avp_code,vendor_id,0);
 	if (avp==0){
-		LM_INFO("%s: Failed finding avp\n",func);
+		LM_INFO("%s: Failed finding avp (avp_code = %d, vendor_id = %d)\n",func, avp_code, vendor_id);
 		return r;
 	}
 	else 
