@@ -1,11 +1,12 @@
+
 WebSocket Module
 
 Peter Dunkley
 
    Crocodile RCS Ltd
 
-   Copyright © 2012-2013 Crocodile RCS Ltd
-     __________________________________________________________________
+   Copyright � 2012-2013 Crocodile RCS Ltd
+     _________________________________________________________________
 
    Table of Contents
 
@@ -34,7 +35,7 @@ Peter Dunkley
 
         5. Functions
 
-              5.1. ws_handle_handshake()
+              5.1. ws_handle_handshake() 
 
         6. MI Commands
 
@@ -47,7 +48,7 @@ Peter Dunkley
 
         7. Event routes
 
-              7.1. websocket:closed
+              7.1. websocket:closed 
 
    List of Examples
 
@@ -60,6 +61,7 @@ Peter Dunkley
    1.7. Set ping_application_data parameter
    1.8. Set sub_protocols parameter
    1.9. ws_handle_handshake usage
+   1.10. event_route[websocket:closed] usage
 
 Chapter 1. Admin Guide
 
@@ -88,7 +90,7 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. ws_handle_handshake()
+        5.1. ws_handle_handshake() 
 
    6. MI Commands
 
@@ -101,14 +103,14 @@ Chapter 1. Admin Guide
 
    7. Event routes
 
-        7.1. websocket:closed
+        7.1. websocket:closed 
 
 1. Overview
 
-   This module implements a WebSocket (RFC 6455) server and provides
-   connection establishment (handshaking), management (including
-   connection keep-alive), and framing for the SIP and MSRP WebSocket
-   sub-protocols (draft-ietf-sipcore-sip-websocket and
+   This  module  implements  a  WebSocket  (RFC 6455) server and provides
+   connection    establishment   (handshaking),   management   (including
+   connection  keep-alive),  and  framing  for the SIP and MSRP WebSocket
+   sub-protocols           (draft-ietf-sipcore-sip-websocket          and
    draft-pd-msrp-websocket).
 
    The module supports WebSockets (ws) and secure WebSockets (wss)
@@ -122,15 +124,15 @@ Chapter 1. Admin Guide
 2.1. Initiating a connection
 
    A WebSocket connection is initiated with an HTTP GET. The xhttp module
-   is used to handle this GET and call the Section 5.1, “
-   ws_handle_handshake() ” exported function.
+   is   used   to   handle   this   GET   and  call  the  Section 5.1,  "
+   ws_handle_handshake() " exported function.
 
-   event_route[xhttp:request] should perform some validation of the HTTP
-   headers before calling Section 5.1, “ ws_handle_handshake() ”. The
+   event_route[xhttp:request]  should perform some validation of the HTTP
+   headers  before  calling  Section 5.1,  " ws_handle_handshake() ". The
    event_route can also be used to make sure the HTTP GET has the correct
-   URI, perform HTTP authentication on the WebSocket connection, and check
-   the Origin header (RFC 6454) to ensure a browser-based SIP UA or MSRP
-   client has been downloaded from the correct location.
+   URI,  perform  HTTP  authentication  on  the WebSocket connection, and
+   check the Origin header (RFC 6454) to ensure a browser-based SIP UA or
+   MSRP client has been downloaded from the correct location.
 
    Example 1.1. event_route[xhttp:request]
 ...
@@ -196,21 +198,22 @@ event_route[xhttp:request] {
 
 2.2. SIP message routing
 
-   SIP over WebSockets uses invalid URIs in routing headers (Contact:,
-   Record-Route:, and Via:) because a JavaScript stack running in a
-   browser has no way to determine the local address from which the
-   WebSocket connection is made. This means that the routing headers
+   SIP  over  WebSockets  uses invalid URIs in routing headers (Contact:,
+   Record-Route:,  and  Via:)  because  a  JavaScript  stack running in a
+   browser  has  no  way  to  determine  the local address from which the
+   WebSocket  connection  is  made.  This  means that the routing headers
    cannot be used for request or response routing in the normal manner.
 
    draft-ietf-sipcore-sip-websocket states that SIP WebSocket Clients and
-   the SIP registrar should implement Outbound (RFC 5626) and Path (RFC
-   3327) to enable requests and responses to be correctly routed. However,
-   Kamailio does not currently support Outbound and it may not be possible
-   to guarantee all SIP WebSocket clients will support Outbound and Path.
+   the  SIP  registrar should implement Outbound (RFC 5626) and Path (RFC
+   3327)  to  enable  requests  and  responses  to  be  correctly routed.
+   However,  Kamailio  does not currently support Outbound and it may not
+   be  possible  to  guarantee  all  SIP  WebSocket  clients will support
+   Outbound and Path.
 
-   The nathelper module functions (nat_uac_test(), fix_nated_register(),
-   add_contact_alias(), and handle_ruri_alias()) and the Kamailio core
-   force_rport() can be used to ensure correct routing of SIP WebSocket
+   The  nathelper module functions (nat_uac_test(), fix_nated_register(),
+   add_contact_alias(),  and  handle_ruri_alias())  and the Kamailio core
+   force_rport()  can  be used to ensure correct routing of SIP WebSocket
    requests without using Outbound and Path.
 
    Example 1.2. WebSocket SIP Routing
@@ -235,7 +238,8 @@ request_route {
                         fix_nated_register();
                 else {
                         if (!add_contact_alias()) {
-                                xlog("L_ERR", "Error aliasing contact <$ct>\n");
+                                xlog("L_ERR", "Error aliasing contact <$ct>\n")
+;
                                 sl_send_reply("400", "Bad Request");
                                 exit;
                         }
@@ -275,11 +279,11 @@ onreply_route[WS_REPLY] {
 
 2.3. MSRP message routing
 
-   MSRP over WebSocket clients create invalid local URIs for use in Path
-   headers (From-Path: and To-Path:) because a JavaScript stack running in
-   a browser has no way to determine the local address from which the
-   WebSocket connection is made. This is OK because MSRP over WebSocket
-   clients MUST use an MSRP relay and it is the MSRP relay's
+   MSRP  over WebSocket clients create invalid local URIs for use in Path
+   headers  (From-Path:  and To-Path:) because a JavaScript stack running
+   in  a browser has no way to determine the local address from which the
+   WebSocket  connection  is made. This is OK because MSRP over WebSocket
+   clients   MUST   use  an  MSRP  relay  and  it  is  the  MSRP  relay's
    responsibility to select the correct connection to the client based on
    the MSRP URIs that it has created (and maintains a mapping for).
 
@@ -298,7 +302,7 @@ onreply_route[WS_REPLY] {
      * tm.
      * xhttp.
 
-   The following module is required to use the secure WebSocket (wss)
+   The  following  module  is  required to use the secure WebSocket (wss)
    scheme:
      * tls.
 
@@ -327,10 +331,10 @@ onreply_route[WS_REPLY] {
 
 Note
 
-   If nathelper is only being used for WebSocket connections then
-   nathelper NAT pinging is not required. If nathelper is used for
-   WebSocket connections and TCP/TLS aliasing/NAT-traversal then WebSocket
-   keep-alives are not required.
+   If  nathelper  is  only  being  used  for  WebSocket  connections then
+   nathelper  NAT  pinging  is  not  required.  If  nathelper is used for
+   WebSocket   connections   and   TCP/TLS   aliasing/NAT-traversal  then
+   WebSocket keep-alives are not required.
 
      * 0 - no WebSocket keep-alives
      * 1 - Ping WebSocket keep-alives
@@ -345,7 +349,7 @@ modparam("websocket", "keepalive_mechanism", 0)
 
 4.2. keepalive_timeout (integer)
 
-   The time (in seconds) after which to send a keep-alive on idle
+   The  time  (in  seconds)  after  which  to  send  a keep-alive on idle
    WebSocket connections.
 
    Default value is 180.
@@ -357,7 +361,7 @@ modparam("websocket", "keepalive_timeout", 30)
 
 4.3. keepalive_processes (integer)
 
-   The number of processes to start to perform WebSocket connection
+   The  number  of  processes  to  start  to perform WebSocket connection
    keep-alives.
 
    Default value is 1.
@@ -397,7 +401,8 @@ modparam("websocket", "ping_application_data", "WebSockets rock")
      * 2 - msrp (draft-pd-msrp-websocket) - msrp.so must be loaded before
        websocket.so
 
-   Default value is 1 when msrp.so is not loaded 3 when msrp.so is loaded.
+   Default  value  is  1  when  msrp.so  is  not loaded 3 when msrp.so is
+   loaded.
 
    Example 1.8. Set sub_protocols parameter
 ...
@@ -406,20 +411,20 @@ modparam("websocket", "sub_protocols", 2)
 
 5. Functions
 
-   5.1. ws_handle_handshake()
+   5.1. ws_handle_handshake() 
 
 5.1.  ws_handle_handshake()
 
-   This function checks an HTTP GET request for the required headers and
-   values, and (if successful) upgrades the connection from HTTP to
+   This  function checks an HTTP GET request for the required headers and
+   values,  and  (if  successful)  upgrades  the  connection from HTTP to
    WebSocket.
 
-   This function can be used from ANY_ROUTE (but will only work in
+   This  function  can  be  used  from  ANY_ROUTE  (but will only work in
    event_route[xhttp:request]).
 
 Note
 
-   This function returns 0, stopping all further processing of the
+   This  function  returns  0,  stopping  all  further  processing of the
    request, when there is a problem.
 
    Example 1.9. ws_handle_handshake usage
@@ -443,7 +448,7 @@ ws_handle_handshake();
    Name: ws.dump
 
    Parameters:
-     * order (optional) - “id_hash”, “used_desc”, or “used_asc”.
+     * order (optional) - "id_hash", "used_desc", or "used_asc".
 
 Note
 
@@ -526,13 +531,15 @@ Note
 
 7. Event routes
 
-   7.1. websocket:closed
+   7.1. websocket:closed 
 
 7.1.  websocket:closed
 
-   When defined, the module calls event_route[websocket:closed] when a
-   connection closes. The connection may be identified using the the $si
+   When  defined,  the  module calls event_route[websocket:closed] when a
+   connection  closes. The connection may be identified using the the $si
    and $sp pseudo-variables.
+
+   Example 1.10. event_route[websocket:closed] usage
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");

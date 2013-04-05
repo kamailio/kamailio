@@ -30,11 +30,11 @@
 	<title>Initiating a connection</title>
 	<para>A WebSocket connection is initiated with an HTTP GET.  The
 	<emphasis>xhttp</emphasis> module is used to handle this GET and
-	call the <xref linkend="ws_handle_handshake"/> exported function.
+	call the <xref linkend="websocket.f.ws_handle_handshake"/> exported function.
 	</para>
 	<para><emphasis>event_route[xhttp:request]</emphasis> should perform
 	some validation of the HTTP headers before calling
-	<xref linkend="ws_handle_handshake"/>.  The event_route can also be
+	<xref linkend="websocket.f.ws_handle_handshake"/>.  The event_route can also be
 	used to make sure the HTTP GET has the correct URI, perform HTTP
 	authentication on the WebSocket connection, and check the
 	<emphasis>Origin</emphasis> header (RFC 6454) to ensure a
@@ -275,7 +275,7 @@ onreply_route[WS_REPLY] {
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="websocket.p.keepalive_mechanism">
 		<title><varname>keepalive_mechanism</varname> (integer)</title>
 		<para>The keep-alive mechanism to use for WebSocket connections.
 		</para>
@@ -306,7 +306,7 @@ modparam("websocket", "keepalive_mechanism", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="websocket.p.keepalive_timeout">
 		<title><varname>keepalive_timeout</varname> (integer)</title>
 		<para>The time (in seconds) after which to send a keep-alive on
 		idle WebSocket connections.</para>
@@ -322,7 +322,7 @@ modparam("websocket", "keepalive_timeout", 30)
 		</example>
 	</section>
 
-	<section>
+	<section id="websocket.p.keepalive.processes">
 		<title><varname>keepalive_processes</varname> (integer)</title>
 		<para>The number of processes to start to perform WebSocket
 		connection keep-alives.</para>
@@ -338,7 +338,7 @@ modparam("websocket", "keepalive_processes", 2)
 		</example>
 	</section>
 
-	<section>
+	<section id="websocket.p.keepalive_interval">
 		<title><varname>keepalive_interval</varname> (integer)</title>
 		<para>The number of seconds between each keep-alice process run
 		</para>
@@ -354,7 +354,7 @@ modparam("websocket", "keepalive_interval", 2)
 		</example>
 	</section>
 
-	<section>
+	<section id="websocket.p.ping_application_data">
 		<title><varname>ping_application_data</varname> (string)</title>
 		<para>The application data to use in keep-alive Ping and Pong
 		frames.</para>
@@ -371,7 +371,7 @@ modparam("websocket", "ping_application_data", "WebSockets rock")
 		</example>
 	</section>
 
-	<section>
+	<section id="websocket.p.sub_protocols">
 		<title><varname>sub_protocols</varname> (integer)</title>
 		<para>A bitmap that allows you to control the sub-protocols
 		supported by the WebSocket server.</para>
@@ -401,7 +401,7 @@ modparam("websocket", "sub_protocols", 2)
 
 	<section>
 	<title>Functions</title>
-	<section id="ws_handle_handshake">
+	<section id="websocket.f.ws_handle_handshake">
 		<title>
 		<function moreinfo="none">ws_handle_handshake()</function>
 		</title>
@@ -425,7 +425,7 @@ ws_handle_handshake();
 
 	<section>
 	<title>MI Commands</title>
-	<section>
+	<section id="websocket.m.ws.dump">
 		<title><function moreinfo="none">ws.dump</function></title>
 		<para>Provides the details of the first 50 WebSocket
 		connections.</para>
@@ -449,7 +449,7 @@ ws_handle_handshake();
 </programlisting>
 	</section>
 
-	<section>
+	<section id="websocket.m.ws.close">
 		<title><function moreinfo="none">ws.close</function></title>
 		<para>Starts the close handshake for the specified
 		WebSocket connection.</para>
@@ -468,7 +468,7 @@ ws_handle_handshake();
 </programlisting>
 	</section>
 
-	<section>
+	<section id="websocket.m.ping">
 		<title><function moreinfo="none">ws.ping</function></title>
 		<para>Sends a Ping frame on the specified WebSocket
 		connection.</para>
@@ -487,7 +487,7 @@ ws_handle_handshake();
 </programlisting>
 	</section>
 
-	<section>
+	<section id="websocket.m.ws.pong">
 		<title><function moreinfo="none">ws.pong</function></title>
 		<para>Sends a Pong frame on the specified WebSocket
 		connection.</para>
@@ -506,7 +506,7 @@ ws_handle_handshake();
 </programlisting>
 	</section>
 
-	<section>
+	<section id="websocket.m.ws.disable">
 		<title><function moreinfo="none">ws.disable</function></title>
 		<para>Disables WebSockets preventing new connections from
 		being established.</para>
@@ -519,7 +519,7 @@ ws_handle_handshake();
 </programlisting>
 	</section>
 
-	<section>
+	<section id="websocket.m.ws.enable">
 		<title><function moreinfo="none">ws.enable</function></title>
 		<para>Enables WebSockets allowing new connections to be
 		established.</para>
@@ -537,7 +537,7 @@ ws_handle_handshake();
 
 	<section>
 	<title>Event routes</title>
-	<section>
+	<section id="websocket.e.closed">
 		<title>
 		<function moreinfo="none">websocket:closed</function>
 		</title>
@@ -547,13 +547,16 @@ ws_handle_handshake();
 			closes.  The connection may be identified using the
 			the $si and $sp pseudo-variables.
 		</para>
-		<programlisting format="linespecific">
+		<example>
+		<title><function moreinfo="none">event_route[websocket:closed]</function> usage</title>
+			<programlisting format="linespecific">
 ...
 event_route[websocket:closed] {
 	xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");
 }
 ...
-		</programlisting>
+			</programlisting>
+		</example>
 	</section>
 
 	</section>	
