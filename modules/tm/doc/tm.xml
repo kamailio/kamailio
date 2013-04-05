@@ -348,5 +348,6 @@ failure_route["serial"]
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
     <xi:include href="api.xml"/>
+    <xi:include href="event_routes.xml"/>
 
 </section>

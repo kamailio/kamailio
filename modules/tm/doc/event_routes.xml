@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="tm.event_routes" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Event Routes</title>
+
+    <section id="tm.e.branch_failure">
+	<title>
+	    <function moreinfo="none">event_route[tm:branch_failure]</function>
+	</title>
+	<para>
+            When defined, this event route will be run when a failure response is received.
+            This allows handling failures on individual branches, for example, retrying an alternative outbound flow.
+	</para>
+        <para>
+            This event_route uses the BRANCH_FAILURE_ROUTE route type.
+        </para>
+	<example>
+	    <title><function>event_route[tm:branch_failure]</function> usage</title>
+	    <programlisting>
+...
+event_route[tm:branch_failure] {
+    xlog("L_INFO", "Received $T_reply_code to $rm message\n");
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>
