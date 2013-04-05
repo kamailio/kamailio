@@ -228,7 +228,7 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
  */
 int hepv3_received(char *buf, unsigned int len, struct receive_info *ri)
 {
-	if(parsing_hepv3_message(buf, len)) {
+	if(!parsing_hepv3_message(buf, len)) {
 		LM_ERR("couldn't parse hepv3 message\n");
         	return -2;
         }
@@ -396,7 +396,7 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
                                         hg->capt_id  = (hep_chunk_uint32_t *) (tmp);
                                         i+=chunk_length;
                                         heptime->captid = ntohs(hg->capt_id->data);
-                                        LM_ERR("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: [%i] vs [%i]\n", heptime->captid, ntohl(hg->capt_id->data));
+                                        //LM_ERR("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: [%i] vs [%i]\n", heptime->captid, ntohl(hg->capt_id->data));
                                         totelem++;
                                         break;
 

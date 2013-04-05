@@ -74,6 +74,7 @@
 #include "../../onsend.h"
 #include "../../resolve.h"
 #include "../../receive.h"
+#include "../../mod_fix.h"
 #include "sipcapture.h"
 #include "hash_mode.h"
 #include "hep.h"
@@ -99,7 +100,9 @@ static int mod_init(void);
 static int sipcapture_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
-static int sip_capture(struct sip_msg *msg, char *s1, char *s2);
+static int sipcapture_fixup(void** param, int param_no);
+static int sip_capture(struct sip_msg *msg, str *dtable);
+static int w_sip_capture(struct sip_msg* _m, char* _table, char* s2);
 int init_rawsock_children(void);
 int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
@@ -212,7 +215,8 @@ struct hep_timehdr* heptime;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sip_capture", (cmd_function)sip_capture, 0, 0, 0, ANY_ROUTE},
+	{"sip_capture", (cmd_function)w_sip_capture, 0, 0, 0, ANY_ROUTE},
+	{"sip_capture", (cmd_function)w_sip_capture, 1, sipcapture_fixup, 0, ANY_ROUTE },	                         
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -579,6 +583,29 @@ error:
 #endif
 }
 
+static int sipcapture_fixup(void** param, int param_no)
+{
+        if (param_no == 1) {
+                return fixup_var_pve_str_12(param, 1);
+        }
+        
+        return 0;
+} 
+   
+static int w_sip_capture(struct sip_msg* _m, char* _table, char* s2)
+{
+        str table = {0};
+        
+        if(_table!=NULL && (get_str_fparam(&table, _m, (fparam_t*)_table) < 0))
+        {
+                LM_ERR("invalid table parameter [%s] [%s]\n", _table, table.s);
+                return -1;
+        }
+
+        return sip_capture(_m, (table.len>0)?&table:NULL);
+}
+
+
 int extract_host_port(void)
 {
 	if(raw_socket_listen.len) {
@@ -699,7 +726,7 @@ static int sip_capture_prepare(sip_msg_t *msg)
         return 0;
 }
 
-static int sip_capture_store(struct _sipcapture_object *sco)
+static int sip_capture_store(struct _sipcapture_object *sco, str *dtable)
 {
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
@@ -928,8 +955,10 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 			LM_DBG("round robin idx is:%d\n", ii);
 		}
 	}
-	LM_DBG("insert into homer table: [%.*s]\n", table_names[ii].len, table_names[ii].s);
-	db_funcs.use_table(db_con, &table_names[ii]);
+
+	/* check dynamic table */
+	LM_DBG("insert into homer table: [%.*s]\n", (dtable)?dtable->len:table_names[ii].len, (dtable)?dtable->s:table_names[ii].s);
+	db_funcs.use_table(db_con, (dtable)?dtable:&table_names[ii]);
 
 	LM_DBG("storing info...\n");
 	
@@ -953,7 +982,7 @@ error:
 	return -1;
 }
 
-static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
+static int sip_capture(struct sip_msg *msg, str *_table)
 {
 	struct _sipcapture_object sco;
 	struct sip_uri from, to, contact;
@@ -1262,7 +1291,7 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 	}
 #endif
 	//LM_DBG("DONE");
-	return sip_capture_store(&sco);
+	return sip_capture_store(&sco, _table);
 }
 
 #define capture_is_off(_msg) \
