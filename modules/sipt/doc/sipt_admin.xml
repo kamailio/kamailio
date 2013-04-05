@@ -78,6 +78,69 @@ if($avp(s:hop) > 0)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><function moreinfo="none">sipt_get_cpc()</function></title>
+		<para>
+			Returns the value of the Calling Party Category for the IAM message.
+			Returns -1 if there is a parsing error.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_get_cpc()</function> usage</title>
+			<programlisting format="linespecific">
+...
+# get the Cpc code and set put it in a custom sip header
+$avp(s:cpc) = sipt_get_cpc();
+append_hf("X-CPC: $avp(s:cpc)\r\n");
+
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">sipt_get_calling_party_nai()</function></title>
+		<para>
+			Returns the value of the Nature of Address Indicator
+			of the Calling Party for the IAM message.
+			Returns -1 if there is a parsing error or if
+			the Calling Party Number is not present.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_get_calling_party_nai()</function> usage</title>
+			<programlisting format="linespecific">
+...
+# get the Calling Nai and add country code if national
+$avp(s:from_nai) = sipt_get_calling_party_nai();
+if($avp(s:from_nai) == 3)
+{
+	$fU = "32" + "$fU";
+}
+
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">sipt_get_called_party_nai()</function></title>
+		<para>
+			Returns the value of the Nature of Address Indicator
+			of the Called Party for the IAM message.
+			Returns -1 if there is a parsing error.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_get_called_party_nai()</function> usage</title>
+			<programlisting format="linespecific">
+...
+# get the Called Nai and add country code if national
+$avp(s:to_nai) = sipt_get_called_party_nai();
+if($avp(s:from_nai) == 3)
+{
+	$rU = "32" + "$rU";
+}
+
+...
+</programlisting>
+		</example>
+	</section>
 </section>
 </chapter>
 

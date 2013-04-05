@@ -41,6 +41,9 @@ MODULE_VERSION
 
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai);
 static int sipt_get_hop_counter(struct sip_msg *msg, char *x, char *y);
+static int sipt_get_cpc(struct sip_msg *msg, char *x, char *y);
+static int sipt_get_calling_party_nai(struct sip_msg *msg, char *x, char *y);
+static int sipt_get_called_party_nai(struct sip_msg *msg, char *x, char *y);
 
 static int mod_init(void);
 static void mod_destroy(void);
@@ -75,6 +78,24 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|BRANCH_ROUTE}, 
 	{"sipt_get_hop_counter", /* action name as in scripts */
 		(cmd_function)sipt_get_hop_counter,  /* C function name */
+		0,          /* number of parameters */
+		0, 0,         /* */
+		/* can be applied to original requests */
+		REQUEST_ROUTE|BRANCH_ROUTE}, 
+	{"sipt_get_cpc", /* action name as in scripts */
+		(cmd_function)sipt_get_cpc,  /* C function name */
+		0,          /* number of parameters */
+		0, 0,         /* */
+		/* can be applied to original requests */
+		REQUEST_ROUTE|BRANCH_ROUTE}, 
+	{"sipt_get_calling_party_nai", /* action name as in scripts */
+		(cmd_function)sipt_get_calling_party_nai,  /* C function name */
+		0,          /* number of parameters */
+		0, 0,         /* */
+		/* can be applied to original requests */
+		REQUEST_ROUTE|BRANCH_ROUTE}, 
+	{"sipt_get_called_party_nai", /* action name as in scripts */
+		(cmd_function)sipt_get_called_party_nai,  /* C function name */
 		0,          /* number of parameters */
 		0, 0,         /* */
 		/* can be applied to original requests */
@@ -276,6 +297,66 @@ static int sipt_get_hop_counter(struct sip_msg *msg, char *x, char *y)
 	}
 	
 	return isup_get_hop_counter((unsigned char*)body.s, body.len);
+}
+
+static int sipt_get_cpc(struct sip_msg *msg, char *x, char *y)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_UNKNOWN,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_ERR("No ISUP Message Found");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_IAM)
+	{
+		LM_DBG("message not an IAM\n");
+		return -1;
+	}
+	
+	return isup_get_cpc((unsigned char*)body.s, body.len);
+}
+
+static int sipt_get_calling_party_nai(struct sip_msg *msg, char *x, char *y)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_UNKNOWN,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_ERR("No ISUP Message Found");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_IAM)
+	{
+		LM_DBG("message not an IAM\n");
+		return -1;
+	}
+	
+	return isup_get_calling_party_nai((unsigned char*)body.s, body.len);
+}
+
+static int sipt_get_called_party_nai(struct sip_msg *msg, char *x, char *y)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_UNKNOWN,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_ERR("No ISUP Message Found");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_IAM)
+	{
+		LM_DBG("message not an IAM\n");
+		return -1;
+	}
+	
+	return isup_get_called_party_nai((unsigned char*)body.s, body.len);
 }
 
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai)

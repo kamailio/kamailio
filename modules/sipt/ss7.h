@@ -148,7 +148,22 @@ struct isup_parm_opt {
 	unsigned char data[0];
 };
 
+
+struct isup_iam_fixed {
+	unsigned char type;
+	unsigned char nature_of_connection;
+	unsigned char forward_call_indicators[2];
+	unsigned char calling_party_category;
+	unsigned char transmission_medium_req;
+	unsigned char fixed_pointer;
+	unsigned char optional_pointer;
+	unsigned char called_party_number[0];
+};
+
 int isup_get_hop_counter(unsigned char *buf, int len);
+int isup_get_cpc(unsigned char *buf, int len);
+int isup_get_calling_party_nai(unsigned char *buf, int len);
+int isup_get_called_party_nai(unsigned char *buf, int len);
 int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, int len, unsigned char * obuf, int olen);
 
 #endif

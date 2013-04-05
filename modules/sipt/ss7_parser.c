@@ -26,6 +26,7 @@
 
 #include "ss7.h"
 #include <string.h>
+#include <stddef.h>
 
 static char char2digit(char localchar)
 {
@@ -117,46 +118,30 @@ static int encode_called_party(char * number, unsigned char * flags, int nai, un
 // returns start of specified optional header of IAM, otherwise return -1
 static int get_optional_header(unsigned char header, unsigned char *buf, int len)
 {
+	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
 	int offset = 0;
 	int res;
-	char optparams;
 
 	// not an iam? do nothing
-	if(buf[0] != ISUP_IAM)
+	if(message->type != ISUP_IAM)
 	{
 		return -1;
 	}
 
-	/* Copy the fixed parms */
-	len -= 6;
-	offset += 6;
+	len -= offsetof(struct isup_iam_fixed, optional_pointer);
+	offset += offsetof(struct isup_iam_fixed, optional_pointer);
 
 	if (len < 1)
 		return -1;
 
-	/* IAM has one Fixed variable param, Called party number */
-
-	// pointer to fixed part (2)
-	offset++;
-	len--;
-
-
-	//pointer to optional part
-	optparams = buf[offset];
-	offset++;
-	len--;
-
-
-	// add the new mandatory fixed header
-	res = buf[offset];
-	offset += res+1;
-	len -= res+1;
+	offset += message->optional_pointer;
+	len -= message->optional_pointer;
 
 	if (len < 1 )
 		return -1;
 
 	/* Optional paramter parsing code */
-	if (optparams) {
+	if (message->optional_pointer) {
 		while ((len > 0) && (buf[offset] != 0)) {
 			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
 
@@ -184,7 +169,54 @@ int isup_get_hop_counter(unsigned char *buf, int len)
 	return -1;
 }
 
+int isup_get_cpc(unsigned char *buf, int len)
+{
+	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
 
+	// not an iam? do nothing
+	if(message->type != ISUP_IAM)
+	{
+		return -1;
+	}
+
+	/* Message Type = 1 */
+	len -= offsetof(struct isup_iam_fixed, calling_party_category);
+
+	if (len < 1)
+		return -1;
+
+	return (int)message->calling_party_category;
+}
+
+
+int isup_get_calling_party_nai(unsigned char *buf, int len)
+{
+	int  offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
+
+	if(offset != -1 && len-offset-2 > 0)
+	{
+		return buf[offset+2] & 0x7F;
+	}
+	return -1;
+}
+
+int isup_get_called_party_nai(unsigned char *buf, int len)
+{
+	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
+
+	// not an iam? do nothing
+	if(message->type != ISUP_IAM)
+	{
+		return -1;
+	}
+
+	/* Message Type = 1 */
+	len -= offsetof(struct isup_iam_fixed, called_party_number);
+
+	if (len < 1)
+		return -1;
+	return message->called_party_number[1]&0x7F;
+}
 
 int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, int len, unsigned char * obuf, int olen)
 {
