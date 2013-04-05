@@ -50,8 +50,6 @@ static void destroy(void);
 
 sl_api_t ws_slb;
 
-int ws_keepalive_mechanism = KEEPALIVE_MECHANISM_PING;
-
 #define DEFAULT_KEEPALIVE_INTERVAL	1
 static int ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
 

@@ -37,7 +37,6 @@ enum
 extern sl_api_t ws_slb;
 extern gen_lock_t *ws_stats_lock;
 
-extern int ws_keepalive_mechanism;
 extern int ws_ping_interval;	/* time (in seconds) between sending Pings */
 
 #endif /* _WS_MOD_H */
