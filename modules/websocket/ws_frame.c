@@ -94,6 +94,7 @@ typedef enum
 #define OPCODE_PONG		(0xa)
 /* 0xb - 0xf are reserved for further control frames */
 
+int ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;
 str ws_ping_application_data = {0, 0};
 
 stat_var *ws_failed_connections;
