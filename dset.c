@@ -216,7 +216,7 @@ void set_branch_iterator(int n)
 char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 		 str* path, unsigned int *flags,
 		 struct socket_info** force_socket,
-		 str *ruid)
+		 str *ruid, str *instance)
 {
 	if (i < nr_branches) {
 		*len = branches[i].len;
@@ -236,6 +236,10 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 		if (ruid) {
 			ruid->len = branches[i].ruid_len;
 			ruid->s = (ruid->len)?branches[i].ruid:0;
+		}
+		if (instance) {
+			instance->len = branches[i].instance_len;
+			instance->s = (instance->len)?branches[i].instance:0;
 		}
 		return branches[i].uri;
 	} else {
@@ -257,6 +261,10 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 			ruid->s = 0;
 			ruid->len = 0;
 		}
+		if (instance) {
+			instance->s = 0;
+			instance->len = 0;
+		}
 		return 0;
 	}
 }
@@ -268,12 +276,12 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
  */
 char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
 		  unsigned int* flags, struct socket_info** force_socket,
-		  str* ruid)
+		  str* ruid, str *instance)
 {
 	char* ret;
 	
 	ret=get_branch(branch_iterator, len, q, dst_uri, path, flags,
-		       force_socket, ruid);
+		       force_socket, ruid, instance);
 	if (likely(ret))
 		branch_iterator++;
 	return ret;
@@ -442,7 +450,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	crt_branch = get_branch_iterator();
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0))) {
 		cnt++;
 		*len += uri.len;
 		if (q != Q_UNSPECIFIED) {
@@ -483,7 +491,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0))) {
 		if (i) {
 			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
 			p += CONTACT_DELIM_LEN;

@@ -188,7 +188,7 @@ static cmd_export_t cmds[] = {
 	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
 	{"unregister",   (cmd_function)w_unregister2, 3, unreg_fixup, 0,
-			REQUEST_ROUTE| FAILURE_ROUTE },
+			REQUEST_ROUTE| FAILURE_ROUTE | BRANCH_FAILURE_ROUTE },
 	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, 
 			fetchc_fixup, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },

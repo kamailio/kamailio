@@ -997,7 +997,6 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 			LM_WARN("could not delete contact\n");
 			return -1;
 		}
-		ul.release_urecord(r);
 		ul.unlock_udomain(_d, &aor);
 	}
 

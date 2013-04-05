@@ -648,7 +648,7 @@ urecord_t* db_load_urecord_by_ruid(db1_con_t* _c, udomain_t* _d, str *_ruid)
 	db_row_t *row;
 	str contact;
 	str aor;
-	char aorbuf[512];
+	static char aorbuf[512];
 	str domain;
 
 	urecord_t* r;
@@ -1031,7 +1031,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
  * \param _ruid record internal unique id
  * \param _r store pointer to location record
  * \param _c store pointer to contact structure
- * \return 0 if a record was found, 1 if nothing could be found
+ * \return 0 if a record was found, -1 if nothing could be found
  */
 int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
 		str *_ruid, struct urecord** _r, struct ucontact** _c)
@@ -1057,6 +1057,7 @@ int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
 						*_c = c;
 						return 0;
 					}
+					c = c->next;
 				}
 			}
 			r = r->next;
@@ -1074,6 +1075,7 @@ int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
 						*_c = c;
 						return 0;
 					}
+					c = c->next;
 				}
 			}
 		}

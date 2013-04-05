@@ -53,7 +53,7 @@
 #include "mem/mem.h"
 
 /* Number of cb types = last cb type */
-#define SCRIPT_CB_NUM	EVENT_CB_TYPE
+#define SCRIPT_CB_NUM	(MAX_CB_TYPE-1)
 
 static struct script_cb *pre_script_cb[SCRIPT_CB_NUM];
 static struct script_cb *post_script_cb[SCRIPT_CB_NUM];

@@ -61,6 +61,7 @@ enum rps {
 extern char tm_tags[TOTAG_VALUE_LEN];
 extern char *tm_tag_suffix;
 
+extern int goto_on_branch_failure;
 extern int goto_on_sl_reply;
 
 extern int failure_reply_mode;
@@ -161,6 +162,11 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 					int code, int extra_flags);
 typedef int (*run_failure_handlers_f)(struct cell*, struct sip_msg*, int, int);
 
+/* return 1 if a branch_failure_route processes */
+int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
+					int code, int extra_flags);
+typedef int (*run_branch_failure_handlers_f)(struct cell*, struct sip_msg*, int, int);
+
 
 /* Retransmits the last sent inbound reply.
  * Returns  -1 - error
@@ -236,5 +242,8 @@ void free_faked_req(struct sip_msg *faked_req, struct cell *t);
 
 typedef int (*tget_picked_f)(void);
 int t_get_picked_branch(void);
+
+int t_get_this_branch_instance(struct sip_msg *msg, str *instance);
+int t_get_this_branch_ruid(struct sip_msg *msg, str *ruid);
 
 #endif

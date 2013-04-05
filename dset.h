@@ -140,12 +140,12 @@ void set_branch_iterator(int n);
  */
 char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
 		  unsigned int* flags, struct socket_info** force_socket,
-		  str *ruid);
+		  str *ruid, str *instance);
 
 char* get_branch( unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 		  str* path, unsigned int *flags,
 		  struct socket_info** force_socket,
-		  str* ruid);
+		  str* ruid, str *instance);
 
 /*! \brief
  * Empty the array of branches

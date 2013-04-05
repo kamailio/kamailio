@@ -82,7 +82,9 @@ struct cell;
 #endif
 #define TMCB_REQUEST_SENT_N     22
 #define TMCB_RESPONSE_SENT_N    23
-#define TMCB_MAX_N              23
+#define TMCB_ON_BRANCH_FAILURE_RO_N 24
+#define TMCB_ON_BRANCH_FAILURE_N 25
+#define TMCB_MAX_N              25
 
 
 #define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
@@ -111,6 +113,8 @@ struct cell;
 #endif
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
+#define TMCB_ON_BRANCH_FAILURE (1<<TMCB_ON_BRANCH_FAILURE_N)
+#define TMCB_ON_BRANCH_FAILURE_RO (1<<TMCB_ON_BRANCH_FAILURE_RO_N)
 #define TMCB_MAX              ((1<<(TMCB_MAX_N+1))-1)
 
 

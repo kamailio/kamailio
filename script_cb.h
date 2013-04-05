@@ -49,14 +49,14 @@ typedef int (cb_function)(struct sip_msg *msg, unsigned int flags, void *param);
  */
 enum script_cb_flag { REQUEST_CB=1, FAILURE_CB=2, ONREPLY_CB=4,
 			BRANCH_CB=8, ONSEND_CB=16, ERROR_CB=32,
-			LOCAL_CB=64, EVENT_CB=128 };
+			LOCAL_CB=64, EVENT_CB=128, BRANCH_FAILURE_CB=256 };
 
 /* Callback types used for executing the callbacks.
  * Keep in sync with script_cb_flag!!!
  */
 enum script_cb_type { REQUEST_CB_TYPE=1, FAILURE_CB_TYPE, ONREPLY_CB_TYPE,
 			BRANCH_CB_TYPE, ONSEND_CB_TYPE, ERROR_CB_TYPE,
-			LOCAL_CB_TYPE, EVENT_CB_TYPE };
+			LOCAL_CB_TYPE, EVENT_CB_TYPE, BRANCH_FAILURE_CB_TYPE, MAX_CB_TYPE };
 
 struct script_cb{
 	cb_function *cbf;

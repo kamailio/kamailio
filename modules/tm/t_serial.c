@@ -365,7 +365,7 @@ void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
  * Adds to request a new destination set that includes highest
  * priority class contacts in contacts_avp, but only one contact with same
  * +sip.instance value is included.  Others are added to contact_flows_avp
- * for later consumption by next_contact_flows().
+ * for later consumption by next_contact_flow().
  * Request URI is rewritten with first contact and the remaining contacts
  * (if any) are added as branches. Removes all highest priority contacts
  * from contacts_avp.
@@ -461,6 +461,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 	il->instance.len = instance.len;
 	memcpy(il->instance.s, instance.s, instance.len);
 	il->next = (struct instance_list *)0;
+	set_instance(msg, &instance);
     }
 
     vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
@@ -588,7 +589,12 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
         vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
         ruid = vavp->val.v.s;
 
-	if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, 0, 0,
+	LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s'\n",
+		uri.len, uri.s,
+		dst_uri.len, dst_uri.s,
+		path.len, path.s,
+		instance.len, instance.s);
+	if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
 			  &ruid) != 1) {
 	    LM_ERR("appending branch failed\n");
 	    free_instance_list(il);
@@ -622,15 +628,15 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
  * Returns 1, if contact_flows_avp was not empty and a destination set was
  * successfully added.  Returns -2, if contact_flows_avp was empty and thus
  * there was nothing to do. Returns -1 in case of an error. */
-int t_next_contact_flows(struct sip_msg* msg, char* key, char* value)
+int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 {
     str uri, dst_uri, path, instance, host, ruid;
+	str this_instance;
     struct socket_info *sock;
     unsigned int flags;
     sr_xavp_t *xavp_list, *xavp, *next_xavp, *vavp;
     char *tmp;
     int port, proto;
-    struct instance_list *il, *ilp;
 
     /* Check if contact_flows_avp has been defined */
     if (contact_flows_avp.len == 0) {
@@ -640,208 +646,98 @@ int t_next_contact_flows(struct sip_msg* msg, char* key, char* value)
     }
 
     /* Load Request-URI and branches */
+	t_get_this_branch_instance(msg, &this_instance);
 
-    /* Find first contact_flows_avp value */
-    xavp_list = xavp_get(&contact_flows_avp, NULL);
-    if (!xavp_list) {
-	LM_DBG("no contacts in contact_flows_avp - we are done!\n");
-	return -2;
-    }
-
-    xavp = xavp_list;
-    next_xavp = xavp_get_next(xavp);
-
-    vavp = xavp_get(&uri_name, xavp->val.v.xavp);
-    uri = vavp->val.v.s;
-
-    vavp = xavp_get(&dst_uri_name, xavp->val.v.xavp);
-    if (vavp != NULL) {
-	dst_uri = vavp->val.v.s;
-    } else {
-	dst_uri.s = 0;
-	dst_uri.len = 0;
-    }
-
-    vavp = xavp_get(&path_name, xavp->val.v.xavp);
-    if (vavp != NULL) {
-	path = vavp->val.v.s;
-    } else {
-	path.s = 0;
-	path.len = 0;
-    }
-
-    vavp = xavp_get(&sock_name, xavp->val.v.xavp);
-    if (vavp != NULL) {
-	tmp = vavp->val.v.s.s;
-	if (parse_phostport(tmp, &host.s, &host.len, &port, &proto) != 0) {
-	    LM_ERR("parsing of socket info <%s> failed\n", tmp);
-	    xavp_destroy_list(&xavp_list);
-	    return -1;
+	if (this_instance.len == 0)
+	{
+		LM_DBG("No instance on this branch\n");
+		return -2;
 	}
-	sock = grep_sock_info(&host, (unsigned short)port,
-			      (unsigned short)proto);
-	if (sock == 0) {
-	    xavp_destroy_list(&xavp_list);
-	    return -1;
+	/* Find first contact_flows_avp value */
+	xavp_list = xavp_get(&contact_flows_avp, NULL);
+	if (!xavp_list) {
+		LM_DBG("no contacts in contact_flows_avp - we are done!\n");
+		return -2;
 	}
-    } else {
-	sock = NULL;
-    }
 
-    vavp = xavp_get(&flags_name, xavp->val.v.xavp);
-    flags = vavp->val.v.i;
+	xavp = xavp_list;
 
-    vavp = xavp_get(&instance_name, xavp->val.v.xavp);
-    il = (struct instance_list *)0;
-    if ((vavp != NULL) && next_xavp) {
-	instance = vavp->val.v.s;
-	il = (struct instance_list *)pkg_malloc(sizeof(struct instance_list));
-	if (!il) {
-	    LM_ERR("no memory for instance list entry\n");
-	    return -1;
-	}
-	il->instance.s = pkg_malloc(instance.len);
-	if (!il->instance.s) {
-	    pkg_free(il);
-	    LM_ERR("no memory for instance list instance\n");
-	    return -1;
-	}
-	il->instance.len = instance.len;
-	memcpy(il->instance.s, instance.s, instance.len);
-	il->next = (struct instance_list *)0;
-    }
+	while (xavp) {
+		next_xavp = xavp_get_next(xavp);
 
-    vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
-    ruid = vavp->val.v.s;
-
-    /* Rewrite Request-URI */
-    rewrite_uri(msg, &uri);
-
-    if (dst_uri.len) {
-	set_dst_uri(msg, &dst_uri);
-    } else {
-	reset_dst_uri(msg);
-    }
-
-    if (path.len) {
-	set_path_vector(msg, &path);
-    } else {
-	reset_path_vector(msg);
-    }
-
-    set_force_socket(msg, sock);
-
-    set_ruid(msg, &ruid);
-
-    setbflagsval(0, flags);
-
-    /* Append branches until out of branches. */
-    /* Do not include a branch that has same instance value as some */
-    /* previous branch. */
-
-    xavp_rm(xavp, NULL);
-    xavp = next_xavp;
-
-    while (xavp) {
-	
-	next_xavp = xavp_get_next(xavp);
-
-	vavp = xavp_get(&instance_name, xavp->val.v.xavp);
-	if (vavp != NULL) {
-	    instance = vavp->val.v.s;
-	    ilp = il;
-	    while (ilp) {
-		if ((instance.len == ilp->instance.len) &&
-		    (strncmp(instance.s, ilp->instance.s, instance.len) == 0))
-		    break;
-		ilp = ilp->next;
-	    }
-	    if (ilp) {
-		/* skip already appended instance */
-		xavp = next_xavp;
-		continue;
-	    }
-	    if (next_xavp) {
-		ilp = (struct instance_list *)
-		pkg_malloc(sizeof(struct instance_list));
-		if (!ilp) {
-		    LM_ERR("no memory for new instance list entry\n");
-		    free_instance_list(il);
-		    return -1;
+	   	vavp = xavp_get(&instance_name, xavp->val.v.xavp);
+		if (vavp == NULL)
+		{
+			/* Does not match this instance */
+			goto next_xavp;
 		}
-		ilp->instance.s = pkg_malloc(instance.len);
-		if (!ilp->instance.s) {
-		    pkg_free(il);
-		    LM_ERR("no memory for instance list instance\n");
-		    return -1;
+		else
+		{
+			instance = vavp->val.v.s;
+			if ((instance.len != this_instance.len) ||
+			    (strncmp(instance.s, this_instance.s, instance.len) != 0))
+				/* Does not match this instance */
+				goto next_xavp;
 		}
-		ilp->instance.len = instance.len;
-		memcpy(ilp->instance.s, instance.s, instance.len);
-		ilp->next = il;
-		il = ilp;
-	    } else {
-		LM_ERR("instance missing from contact_flow_avp contact\n");
-		free_instance_list(il);
-		return -1;
-	    }
-	}
 
-	vavp = xavp_get(&uri_name, xavp->val.v.xavp);
-	uri = vavp->val.v.s;
+		vavp = xavp_get(&uri_name, xavp->val.v.xavp);
+		uri = vavp->val.v.s;
 
-	vavp = xavp_get(&dst_uri_name, xavp->val.v.xavp);
-	if (vavp != NULL) {
-	    dst_uri = vavp->val.v.s;
-	} else {
-	    dst_uri.len = 0;
-	}
+		vavp = xavp_get(&dst_uri_name, xavp->val.v.xavp);
+		if (vavp != NULL) {
+			dst_uri = vavp->val.v.s;
+		} else {
+			dst_uri.len = 0;
+		}
 
-	vavp = xavp_get(&path_name, xavp->val.v.xavp);
-	if (vavp != NULL) {
-	    path = vavp->val.v.s;
-	} else {
-	    path.len = 0;
-	}
+		vavp = xavp_get(&path_name, xavp->val.v.xavp);
+		if (vavp != NULL) {
+			path = vavp->val.v.s;
+		} else {
+			path.len = 0;
+		}
 
-	vavp = xavp_get(&sock_name, xavp->val.v.xavp);
-	if (vavp != NULL) {
-	    tmp = vavp->val.v.s.s;
-	    if (parse_phostport(tmp, &host.s, &host.len, &port, &proto) != 0) {
-		LM_ERR("parsing of socket info <%s> failed\n", tmp);
-		free_instance_list(il);
-		xavp_destroy_list(&xavp_list);
-		return -1;
-	    }
-	    sock = grep_sock_info(&host, (unsigned short)port,
+		vavp = xavp_get(&sock_name, xavp->val.v.xavp);
+		if (vavp != NULL) {
+			tmp = vavp->val.v.s.s;
+			if (parse_phostport(tmp, &host.s, &host.len, &port, &proto) != 0) {
+				LM_ERR("parsing of socket info <%s> failed\n", tmp);
+				xavp_rm(xavp, NULL);
+				return -1;
+			}
+			sock = grep_sock_info(&host, (unsigned short)port,
 				  (unsigned short)proto);
-	    if (sock == 0) {
-		free_instance_list(il);
-		xavp_destroy_list(&xavp_list);
-		return -1;
-	    }
-	} else {
-	    sock = NULL;
-	}
+			if (sock == 0) {
+				xavp_rm(xavp, NULL);
+				return -1;
+			}
+		} else {
+			sock = NULL;
+		}
 
-	vavp = xavp_get(&flags_name, xavp->val.v.xavp);
-	flags = vavp->val.v.i;
+		vavp = xavp_get(&flags_name, xavp->val.v.xavp);
+		flags = vavp->val.v.i;
 
-        vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
-        ruid = vavp->val.v.s;
+		vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
+		ruid = vavp->val.v.s;
 
-	if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, 0, 0,
+		LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s'\n",
+			uri.len, uri.s,
+			dst_uri.len, dst_uri.s,
+			path.len, path.s,
+			instance.len, instance.s);
+		if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
 			  &ruid) != 1) {
-	    LM_ERR("appending branch failed\n");
-	    free_instance_list(il);
-	    xavp_destroy_list(&xavp_list);
-	    return -1;
+			LM_ERR("appending branch failed\n");
+			xavp_destroy_list(&xavp_list);
+			return -1;
+		}
+
+		xavp_rm(xavp, NULL);
+		return 1;
+next_xavp:
+		xavp = next_xavp;
 	}
 
-	xavp_rm(xavp, NULL);
-	xavp = next_xavp;
-    }
-
-    free_instance_list(il);
-
-    return 1;
+	return -1;
 }

@@ -414,7 +414,7 @@ static cmd_export_t cmds[]={
 	{"t_on_branch",       w_t_on_branch,         1, fixup_on_branch,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_check_status",     t_check_status,          1, fixup_t_check_status,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_FAILURE_ROUTE},
 	{"t_write_req",       t_write_req,              2, fixup_t_write,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_write_unix",      t_write_unix,             2, fixup_t_write,
@@ -475,8 +475,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"t_next_contacts", t_next_contacts,            0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
-	{"t_next_contact_flows", t_next_contact_flows,            0, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"t_next_contact_flow", t_next_contact_flow,            0, 0,
+			REQUEST_ROUTE | BRANCH_FAILURE_ROUTE},
 
 	/* not applicable from the script */
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0},
@@ -599,7 +599,6 @@ static int fixup_on_failure(void** param, int param_no)
 	}
 	return 0;
 }
-
 
 
 static int fixup_on_reply(void** param, int param_no)
@@ -855,6 +854,9 @@ static int mod_init(void)
 	    return -1;
 	}
 
+	goto_on_branch_failure = route_lookup(&event_rt, "tm:branch-failure");
+	if (goto_on_branch_failure >= 0 && event_rt.rlist[goto_on_branch_failure]==0)
+		goto_on_branch_failure = -1; /* disable */
 #ifdef WITH_EVENT_LOCAL_REQUEST
 	goto_on_local_req=route_lookup(&event_rt, "tm:local-request");
 	if (goto_on_local_req>=0 && event_rt.rlist[goto_on_local_req]==0)
@@ -891,8 +893,6 @@ static int child_init(int rank)
 	}
 	return 0;
 }
-
-
 
 
 
@@ -979,7 +979,10 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		}
 		status = int2str( lowest_status , 0);
 		break;
-
+	case BRANCH_FAILURE_ROUTE:
+#warning add the status for branch failure route
+		status = int2str(t->uac[get_t_branch()].last_received, 0);
+		break;
 	default:
 		LOG(L_ERR,"ERROR:t_check_status: unsupported route type %d\n",
 				get_route_type());
@@ -1368,6 +1371,7 @@ inline static int w_t_on_failure( struct sip_msg* msg, char *go_to, char *foo)
 	return 1;
 }
 
+
 inline static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo)
 {
 	t_on_branch( (unsigned int )(long) go_to );
@@ -1438,7 +1442,7 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 	struct cell *t;
 	int res;
 
-	if (is_route_type(FAILURE_ROUTE)) {
+	if (is_route_type(FAILURE_ROUTE|BRANCH_FAILURE_ROUTE)) {
 		t=get_t();
 		if (!t || t==T_UNDEFINED) {
 			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");

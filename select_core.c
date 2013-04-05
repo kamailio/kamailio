@@ -1621,7 +1621,7 @@ int select_branch_uri(str* res, select_t* s, struct sip_msg* msg) {
 		char *c;
 		init_branch_iterator();
 		len = 0;
-		while ((c = next_branch(&l, &q, &dst_uri, 0, 0, 0, 0))) {
+		while ((c = next_branch(&l, &q, &dst_uri, 0, 0, 0, 0, 0))) {
 
 			if (s->params[SEL_POS].v.i & SEL_BRANCH_DST_URI) {
 				l = dst_uri.len;
@@ -1645,7 +1645,7 @@ int select_branch_uri(str* res, select_t* s, struct sip_msg* msg) {
 		init_branch_iterator();
 		res->len = 0;
 		n = 0;
-		while ((c = next_branch(&l, &q, &dst_uri, 0, 0, 0, 0))) {
+		while ((c = next_branch(&l, &q, &dst_uri, 0, 0, 0, 0, 0))) {
 			if (s->params[SEL_POS].v.i & SEL_BRANCH_DST_URI) {
 				l = dst_uri.len;
 				c = dst_uri.s;
@@ -1687,7 +1687,7 @@ int select_branch_uri(str* res, select_t* s, struct sip_msg* msg) {
 		if (n < 0 || n >= nr_branches) 
 			return -1;
 		init_branch_iterator();
-		for (; (c = next_branch(&l, &q, &dst_uri, 0, 0, 0, 0)) && n; n--);
+		for (; (c = next_branch(&l, &q, &dst_uri, 0, 0, 0, 0, 0)) && n; n--);
 		if (!c) return 1;
 		
 		if (s->params[SEL_POS].v.i & SEL_BRANCH_DST_URI) {

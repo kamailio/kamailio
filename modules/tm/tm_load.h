@@ -88,6 +88,7 @@ struct tm_binds {
 	trelease_f         t_release;
 	tunref_f           t_unref;
 	run_failure_handlers_f run_failure_handlers;
+	run_branch_failure_handlers_f run_branch_failure_handlers;
 	cancel_uacs_f      cancel_uacs;
 	cancel_all_uacs_f  cancel_all_uacs;
 	prepare_request_within_f  prepare_request_within;

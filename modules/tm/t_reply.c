@@ -172,6 +172,8 @@ char *tm_tag_suffix;
 
 /* where to go if there is no positive reply (>=300) */
 static int goto_on_failure=0;
+/* where to go if a failure is returned on a branch */
+int goto_on_branch_failure=0;
 /* where to go on receipt of reply */
 static int goto_on_reply=0;
 /* where to go on receipt of reply without transaction context */
@@ -1039,6 +1041,62 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 }
 
 
+/* return 1 if a failure_route processes */
+int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
+					int code, int extra_flags)
+{
+	static struct sip_msg faked_req;
+	struct sip_msg *shmem_msg = t->uas.request;
+
+	/* failure_route for a local UAC? */
+	if (!shmem_msg) {
+		LOG(L_WARN,"Warning: run_branch_failure_handlers: no UAC support (%d, %d) \n",
+			goto_on_branch_failure, t->tmcb_hl.reg_types);
+		return 0;
+	}
+
+	/* don't start faking anything if we don't have to */
+	if (unlikely((goto_on_branch_failure < 0) && !has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE))) {
+		LOG(L_WARN,
+			"Warning: run_failure_handlers: no branch_failure handler (%d, %d)\n",
+			goto_on_branch_failure, t->tmcb_hl.reg_types);
+		return 1;
+	}
+
+	if (!fake_req(&faked_req, shmem_msg, extra_flags, &t->uac[picked_branch])) {
+		LOG(L_ERR, "ERROR: run_branch_failure_handlers: fake_req failed\n");
+		return 0;
+	}
+	/* fake also the env. conforming to the fake msg */
+	faked_env( t, &faked_req);
+	set_route_type(BRANCH_FAILURE_ROUTE);
+	set_t(t, picked_branch);
+	/* DONE with faking ;-) -> run the branch_failure handlers */
+
+	if (unlikely(has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE)) ) {
+		run_trans_callbacks( TMCB_ON_BRANCH_FAILURE, t, &faked_req, rpl, code);
+	}
+	if (goto_on_branch_failure >= 0) {
+		if (exec_pre_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE)>0) {
+			/* run a branch_failure_route action if some was marked */
+			if (run_top_route(event_rt.rlist[goto_on_branch_failure], &faked_req, 0)<0)
+				LOG(L_ERR, "ERROR: run_branch_failure_handlers: Error in run_top_route\n");
+			exec_post_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE);
+		}
+		/* update message flags, if changed in branch_failure route */
+		t->uas.request->flags = faked_req.flags;
+	}
+
+	/* restore original environment and free the fake msg */
+	faked_env( t, 0);
+	free_faked_req(&faked_req,t);
+
+	/* if branch_failure handler changed flag, update transaction context */
+	shmem_msg->flags = faked_req.flags;
+	return 1;
+}
+
+
 
 /* 401, 407, 415, 420, and 484 have priority over the other 4xx*/
 inline static short int get_4xx_prio(unsigned char xx)
@@ -1251,6 +1309,25 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	if (new_code >=300 ) {
 
 		Trans->uac[branch].last_received=new_code;
+
+/* New branch failure route code */
+		/* also append the current reply to the transaction to
+		 * make it available in failure routes - a kind of "fake"
+		 * save of the final reply per branch */
+		Trans->uac[branch].reply = reply;
+		if (unlikely(goto_on_branch_failure > 0 )) {
+			extra_flags=
+				((Trans->uac[branch].request.flags & F_RB_TIMEOUT)?
+							FL_TIMEOUT:0) | 
+				((Trans->uac[branch].request.flags & F_RB_REPLIED)?
+						 	FL_REPLIED:0);
+			tm_ctx_set_branch_index(branch);
+			picked_branch = branch;
+			run_branch_failure_handlers( Trans, Trans->uac[branch].reply,
+									new_code, extra_flags);
+		}
+/* END - New branch failure route code */
+
 
 		/* if all_final return lowest */
 		picked_branch=t_pick_branch(branch,new_code, Trans, &picked_code);
@@ -2528,6 +2605,58 @@ void t_drop_replies(int v)
 	in shm mem, we are just going to clone it. So better to set a flag
 	and check it after failure_route has ended. (Miklos) */
 	drop_replies = v;
+}
+
+int t_get_this_branch_instance(struct sip_msg *msg, str *instance)
+{
+	struct cell *t;
+	if (!msg || !instance)
+	{
+		LM_ERR("Invalid params\n");
+		return -1;
+	}
+	if (get_route_type() != BRANCH_FAILURE_ROUTE)
+	{
+		LM_ERR("Called t_get_this_branch_instance not in a branch_failure_route\n");
+		return -1;
+	}
+
+	t = 0;
+	/* first get the transaction */
+	if (t_check(msg, 0 ) == -1) return -1;
+	if ((t = get_t()) == 0) {
+		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
+			"which has no T-state established\n");
+		return -1;
+	}
+	*instance = t->uac[get_t_branch()].instance;
+	return 1;
+}
+
+int t_get_this_branch_ruid(struct sip_msg *msg, str *ruid)
+{
+	struct cell *t;
+	if (!msg || !ruid)
+	{
+		LM_ERR("Invalid params\n");
+		return -1;
+	}
+	if (get_route_type() != BRANCH_FAILURE_ROUTE)
+	{
+		LM_ERR("Called t_get_this_branch_ruid not in a branch_failure_route\n");
+		return -1;
+	}
+
+	t = 0;
+	/* first get the transaction */
+	if (t_check(msg, 0 ) == -1) return -1;
+	if ((t = get_t()) == 0) {
+		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
+			"which has no T-state established\n");
+		return -1;
+	}
+	*ruid = t->uac[get_t_branch()].ruid;
+	return 1;
 }
 
 #if 0
