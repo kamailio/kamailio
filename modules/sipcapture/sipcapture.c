@@ -155,6 +155,7 @@ static str node_column 		= str_init("node");
 static str msg_column 		= str_init("msg");   
 static str capture_node 	= str_init("homer01");     	
 static str star_contact		= str_init("*");
+static str callid_aleg_header   = str_init("X-CID");
 
 int raw_sock_desc = -1; /* raw socket used for ip packets */
 unsigned int raw_sock_children = 1;
@@ -277,6 +278,7 @@ static param_export_t params[] = {
 	{"raw_interface",     		STR_PARAM, &raw_interface.s   },
         {"promiscious_on",  		INT_PARAM, &promisc_on   },		
         {"raw_moni_bpf_on",  		INT_PARAM, &bpf_on   },		
+        {"callid_aleg_header",          STR_PARAM, &callid_aleg_header.s},
 	{0, 0, 0}
 };
 
@@ -459,6 +461,7 @@ static int mod_init(void) {
 	node_column.len = strlen(node_column.s);  
 	msg_column.len = strlen(msg_column.s);   
 	capture_node.len = strlen(capture_node.s);     	
+	callid_aleg_header.len = strlen(callid_aleg_header.s);
 	
 	if(raw_socket_listen.s) 
 		raw_socket_listen.len = strlen(raw_socket_listen.s);     	
@@ -1158,9 +1161,8 @@ static int sip_capture(struct sip_msg *msg, str *_table)
 	    }
         }
 
-	/* get header x-cid: */
-	/* callid_aleg X-CID */
-	if((tmphdr[0] = get_hdr_by_name(msg,"X-CID", 5)) != NULL) {
+	/* callid_aleg - default is X-CID but configurable via modul params */
+        if((tmphdr[0] = get_hdr_by_name(msg, callid_aleg_header.s, callid_aleg_header.len)) != NULL) {	
 		sco.callid_aleg = tmphdr[0]->body;
         }
 	else { EMPTY_STR(sco.callid_aleg);}
