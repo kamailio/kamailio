@@ -990,6 +990,109 @@ str cscf_get_charging_vector(struct sip_msg *msg, struct hdr_field **h)
 	return cv;
 }
 
+int cscf_get_p_charging_vector(struct sip_msg *msg, str * icid, str * orig_ioi,
+		str * term_ioi) {
+	struct hdr_field* header = 0;
+	str header_body = { 0, 0 };
+	char * p;
+	int index;
+	str temp = { 0, 0 };
+
+	if (parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("cscf_get_p_charging_vector: error parsing headers\n");
+		return 0;
+	}
+	header = msg->headers;
+	while (header) {
+		if (header->name.len == cscf_p_charging_vector.len
+				&& strncasecmp(header->name.s, cscf_p_charging_vector.s, cscf_p_charging_vector.len) == 0)
+			break;
+		header = header->next;
+	}
+	if (!header) {
+		LM_DBG("no header %.*s was found\n", cscf_p_charging_vector.len, cscf_p_charging_vector.s);
+		return 0;
+	}
+	if (!header->body.s || !header->body.len)
+		return 0;
+
+	str_dup(header_body, header->body, pkg);
+
+	LM_DBG("p_charging_vector body is %.*s\n", header_body.len, header_body.s);
+
+	p = strtok(header_body.s, " ;:\r\t\n\"=");
+	loop: if (p > (header_body.s + header_body.len))
+		return 1;
+
+	if (strncmp(p, "icid-value", 10) == 0) {
+		p = strtok(NULL, " ;:\r\t\n\"=");
+		if (p > (header_body.s + header_body.len)) {
+			LM_ERR("cscf_get_p_charging_vector: no value for icid\n");
+			return 0;
+		}
+		temp.s = p;
+		temp.len = 0;
+		while (*p != '\"') {
+			temp.len = temp.len + 1;
+			p++;
+		}
+		icid->len = temp.len;
+		index = temp.s - header_body.s;
+		LM_DBG("icid len %i, index %i\n", temp.len, index);
+		icid->s = header->body.s + index;
+		LM_DBG("icid is %.*s\n", icid->len, icid->s);
+		p = strtok(NULL, " ;:\r\t\n\"=");
+		goto loop;
+	} else if (strncmp(p, "orig-ioi", 8) == 0) {
+
+		p = strtok(NULL, " ;:\r\t\n\"=");
+		if (p > (header_body.s + header_body.len)) {
+			LM_ERR("cscf_get_p_charging_vector: no value for icid\n");
+			return 0;
+		}
+		temp.s = p;
+		temp.len = 0;
+		while (*p != '\"') {
+			temp.len = temp.len + 1;
+			p++;
+		}
+		orig_ioi->len = temp.len;
+		index = temp.s - header_body.s;
+		LM_DBG("orig ioi len %i, index %i\n", temp.len, index);
+		orig_ioi->s = header->body.s + index;
+		LM_DBG("orig_ioi is %.*s\n", orig_ioi->len, orig_ioi->s);
+		p = strtok(NULL, " ;:\r\t\n\"=");
+		goto loop;
+	} else if (strncmp(p, "term-ioi", 8) == 0) {
+
+		p = strtok(NULL, " ;:\r\t\n\"=");
+		if (p > (header_body.s + header_body.len)) {
+			LM_ERR("cscf_get_p_charging_vector: no value for icid\n");
+			return 0;
+		}
+		temp.s = p;
+		temp.len = 0;
+		while (*p != '\"') {
+			temp.len = temp.len + 1;
+			p++;
+		}
+		term_ioi->len = temp.len;
+		term_ioi->s = header->body.s + (temp.s - header_body.s);
+		p = strtok(NULL, " ;:\r\t\n\"=");
+		goto loop;
+	} else {
+		p = strtok(NULL, " ;:\r\t\n\"=");
+		goto loop;
+	}
+
+	LM_DBG("end\n");
+	str_free(header_body, pkg);
+	return 1;
+	out_of_memory:
+	LM_ERR("cscf_get_p_charging_vector:out of pkg memory\n");
+	return 0;
+}
+
 /**
  * Get the from tag
  * @param msg - the SIP message to look into

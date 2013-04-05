@@ -294,6 +294,14 @@ str cscf_get_access_network_info(struct sip_msg *msg, struct hdr_field **h);
 
 str cscf_get_charging_vector(struct sip_msg *msg, struct hdr_field **h);
 
+/**
+ * Return the P-Charging-Vector tokens
+ * @param msg - the SIP message
+ * @returns the str with icid, orig_ioi and term_ioi
+ */
+int cscf_get_p_charging_vector(struct sip_msg *msg, str * icid, str * orig_ioi,
+	str * term_ioi);
+
 
 /**
  * Get the to tag
