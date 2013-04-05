@@ -47,7 +47,7 @@
 #define RR_PREFIX_SIP "Record-Route: <sip:"
 #define RR_PREFIX_SIP_LEN (sizeof(RR_PREFIX_SIP)-1)
 
-#define RR_PREFIX_SIPS "Record-Route: <sip:"
+#define RR_PREFIX_SIPS "Record-Route: <sips:"
 #define RR_PREFIX_SIPS_LEN (sizeof(RR_PREFIX_SIPS)-1)
 
 #define RR_LR ";lr"
