@@ -19,7 +19,7 @@
     <title>Overview</title>
          
     <para>
-      This module offers operations for handling IP addresses, both IPv4 and IPv6.
+      The IPops module offers operations for handling IP addresses, both IPv4 and IPv6.
     </para>
     <para>
       IPv6 is defined in <ulink url="http://tools.ietf.org/html/rfc2460">RFC 2460</ulink>.
@@ -93,7 +93,7 @@
 
     <title>Functions</title>
              
-    <section>
+    <section id="ipops.f.is_ip">
       <title>
         <function moreinfo="none">is_ip (ip)</function>
       </title>
@@ -131,7 +131,7 @@ if (is_ip($rd)) {
 
     </section>
 
-    <section>
+    <section id="ipops.f.is_pur_ip">
       <title>
         <function moreinfo="none">is_pure_ip (ip)</function>
       </title>
@@ -170,7 +170,7 @@ if (is_pure_ip($var(ip))) {
 
     </section>
 
-    <section>
+    <section id="ipops.f.is_ipv4">
       <title>
         <function moreinfo="none">is_ipv4 (ip)</function>
       </title>
@@ -208,7 +208,7 @@ if (is_ipv4("1.2.3.4")) {
 
     </section>
 
-    <section>
+    <section id="ipops.f.is_ipv6">
       <title>
         <function moreinfo="none">is_ipv6 (ip)</function>
       </title>
@@ -246,7 +246,7 @@ if (is_ipv6("1080:0:0:0:8:800:200C:417A")) {
 
     </section>
 
-    <section>
+    <section id="ipops.f.is_ipv6_reference">
       <title>
         <function moreinfo="none">is_ipv6_reference (ip)</function>
       </title>
@@ -284,7 +284,7 @@ if (is_ipv6_reference("[1080:0:0:0:8:800:200C:417A]")) {
 
     </section>
 
-    <section>
+    <section id="ipops.f.is_ip_type">
       <title>
         <function moreinfo="none">ip_type (ip)</function>
       </title>
@@ -359,7 +359,7 @@ switch($rc) {
 
     </section>
 
-    <section>
+    <section id="ipops.f.compare_ips">
       <title>
         <function moreinfo="none">compare_ips (ip1, ip2)</function>
       </title>
@@ -403,7 +403,7 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
 
     </section>
 
-    <section>
+    <section id="ipops.f.compare_pure_ips">
       <title>
         <function moreinfo="none">compare_pure_ips (ip1, ip2)</function>
       </title>
@@ -447,7 +447,7 @@ if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
 
     </section>
 
-    <section>
+    <section id="ipops.f.is_ip_rfc1918">
       <title>
         <function moreinfo="none">is_ip_rfc1918 (ip)</function>
       </title>
@@ -485,7 +485,7 @@ if (is_ip_rfc1918("10.0.123.123")) {
 
     </section>
  
-    <section>
+    <section id="ipops.f.is_in_subnet">
       <title>
         <function moreinfo="none">is_in_subnet (ip, subnet)</function>
       </title>
