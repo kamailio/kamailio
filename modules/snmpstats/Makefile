@@ -15,6 +15,20 @@ else
 	INSTALLMIBDIR = $(cfg-prefix)$(shell net-snmp-config --prefix)/share/snmp/mibs
 endif 
 
+ifeq($(EMBEDDED_PERL),1)
+#
+# Enable this part if you compile on Centos 5 or another system that has a
+# packaged snmpd with embedded perl and libwrap support
+#
+BUILDAGENTLIBS += -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE \
+                -L/usr/local/lib /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a \
+                -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE \
+                -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc \
+                -lwrap \
+                -lsensors \
+                -lrpmdb -lrpm
+endif
+
 CFLAGS+=
 auto_gen=
 NAME=snmpstats.so
