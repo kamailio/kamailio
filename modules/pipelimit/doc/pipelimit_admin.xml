@@ -65,7 +65,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="pipelimit.p.db_url">
 	    <title><varname>db_url</varname> (string)</title>
 	    <para>
 		URL of the database server to be used.
@@ -85,7 +85,7 @@ modparam("pipelimit", "db_url", "&exampledb;")
 	    </example>
 	</section>
 
-	<section>
+	<section id="pipelimit.p.plp_table_name">
 	    <title><varname>plp_table_name</varname> (string)</title>
 	    <para>
 			Name of DB table where data definition for pipes is stores.
@@ -105,7 +105,7 @@ modparam("pipelimit", "plp_table_name", "mypipes")
 	    </example>
 	</section>
 
-	<section>
+	<section id="pipelimit.p.plp_pipeid_column">
 	    <title><varname>plp_pipeid_column</varname> (string)</title>
 	    <para>
 		Name of 'pipeid' column.
@@ -125,7 +125,7 @@ modparam("pipelimit", "plp_pipeid_column", "name")
 	    </example>
 	</section>
 
-	<section>
+	<section id="pipelimit.p.plp_limit_column">
 	    <title><varname>plp_limit_column</varname> (string)</title>
 	    <para>
 		Name of 'limit' column.
@@ -145,7 +145,7 @@ modparam("pipelimit", "plp_limit_column", "name")
 	    </example>
 	</section>
 
-	<section>
+	<section id="pipelimit.p.plp_algorithm_column">
 	    <title><varname>plp_algorithm_column</varname> (string)</title>
 	    <para>
 		Name of 'algorithm' column.
@@ -165,7 +165,7 @@ modparam("pipelimit", "plp_algorithm_column", "name")
 	    </example>
 	</section>
 
-	<section>
+	<section id="pipelimit.p.timer_interval">
 		<title><varname>timer_interval</varname> (integer)</title>
 		<para>
 		The initial length of a timer interval in seconds. All amounts of
@@ -190,7 +190,7 @@ modparam("pipelimit", "timer_interval", 5)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="pipelimit.p.reply_code">
 		<title><varname>reply_code</varname> (integer)</title>
 		<para>
 		The code of the reply sent by &kamailio; while limiting.
@@ -221,7 +221,7 @@ modparam("pipelimit", "reply_code", 505)
 		</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="pipelimit.p.reply_reason">
 		<title><varname>reply_reason</varname> (string)</title>
 		<para>
 		The reason of the reply sent by &kamailio; while limiting.
@@ -254,7 +254,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="pipelimit.f.pl_check">
 		<title>
 		<function moreinfo="none">pl_check(name)</function>
 		</title>
@@ -319,7 +319,7 @@ with unexpected retcode=$var(check_result)\n");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="pipelimit.f.pl_drop">
 		<title>
 		<function moreinfo="none">pl_drop([ [min ], max ])</function>
 		</title>
@@ -366,12 +366,12 @@ with unexpected retcode=$var(check_result)\n");
 
 	<section>
 	<title>MI Commands</title>
-	<section>
+	<section id="pipelimit.m.pl_stats">
 		<title>
 		<function moreinfo="none">pl_stats</function>
 		</title>
 		<para>
-		Lists the parameters and variabiles in the pipelimit module.
+		Lists the parameters and variables in the pipelimit module.
 		</para>
 		<para>
 		Name: <emphasis>pl_stats</emphasis>
@@ -385,7 +385,7 @@ with unexpected retcode=$var(check_result)\n");
 		_empty_line_
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.m.pl_set_pipe">
 		<title>
 		<function moreinfo="none">pl_set_pipe</function>
 		</title>
@@ -420,7 +420,7 @@ with unexpected retcode=$var(check_result)\n");
 		_empty_line_
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.m.pl_get_pipes">
 		<title>
 		<function moreinfo="none">pl_get_pipes</function>
 		</title>
@@ -439,7 +439,7 @@ with unexpected retcode=$var(check_result)\n");
 		_empty_line_
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.m.pl_set_pid">
 		<title>
 		<function moreinfo="none">pl_set_pid</function>
 		</title>
@@ -472,7 +472,7 @@ with unexpected retcode=$var(check_result)\n");
 		_empty_line_
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.m.pl_get_pid">
 		<title>
 		<function moreinfo="none">pl_get_pid</function>
 		</title>
@@ -491,12 +491,12 @@ with unexpected retcode=$var(check_result)\n");
 		_empty_line_
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.m.pl_push_load">
 		<title>
 		<function moreinfo="none">pl_push_load</function>
 		</title>
 		<para>
-		Force the value of the load parameter.  This command is useful
+		Force the value of the load parameter. This command is useful
 		for testing the Feedback algorithm.
 		</para>
 		<para>
@@ -522,7 +522,7 @@ with unexpected retcode=$var(check_result)\n");
 	
 	<section>
 	<title>RPC Commands</title>
-	<section>
+	<section id="pipelimit.r.pl.stats">
 		<title>
 		<function moreinfo="none">pl.stats</function>
 		</title>
@@ -541,7 +541,7 @@ with unexpected retcode=$var(check_result)\n");
 	kamcmd pl.stats
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.r.pl.set_pipe">
 		<title>
 		<function moreinfo="none">pl.set_pipe</function>
 		</title>
@@ -572,7 +572,7 @@ with unexpected retcode=$var(check_result)\n");
 	kamcmd pl.set_pipe 2 RED 10
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.r.pl.get_pipes">
 		<title>
 		<function moreinfo="none">pl.get_pipes</function>
 		</title>
@@ -590,7 +590,7 @@ with unexpected retcode=$var(check_result)\n");
 	kamcmd pl.get_pipes
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.r.pl.set_pid">
 		<title>
 		<function moreinfo="none">pl.set_pid</function>
 		</title>
@@ -619,7 +619,7 @@ with unexpected retcode=$var(check_result)\n");
 	kamcmd pl.set_pid 0.5 0.5 0.5
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.r.pl.get_pid">
 		<title>
 		<function moreinfo="none">pl.get_pid</function>
 		</title>
@@ -637,12 +637,12 @@ with unexpected retcode=$var(check_result)\n");
 	kamcmd pl.get_pid
 		</programlisting>
 	</section>
-	<section>
+	<section id="pipelimit.r.pl.push_load">
 		<title>
 		<function moreinfo="none">pl.push_load</function>
 		</title>
 		<para>
-		Force the value of the load parameter.  This command is useful
+		Force the value of the load parameter. This command is useful
 		for testing the Feedback algorithm.
 		</para>
 		<para>
