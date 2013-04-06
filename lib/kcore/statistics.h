@@ -40,6 +40,7 @@
 
 
 #define NUM_IP_OCTETS 4
+#define NUM_IPV6_OCTETS 16
 
 
 #ifdef STATISTICS
@@ -63,7 +64,7 @@ stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int in_codes);
 /*!
  * This function will retrieve a list of all ip addresses and ports that Kamailio
  * is listening on, with respect to the transport protocol specified with
- * 'protocol'. 
+ * 'protocol'. This function only returns IPv4 addresses.
  *
  * The first parameter, ipList, is a pointer to a pointer. It will be assigned a
  * new block of memory holding the IP Addresses and ports being listened to with
@@ -92,6 +93,13 @@ stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int in_codes);
  *       contents, to avoid a nasty memory leak.
  */
 int get_socket_list_from_proto(int **ipList, int protocol);
+
+/*! \brief Function to get a list of all IP addresses and ports in a specific
+ * family, like AF_INET or AF_INET6
+ *
+ * For documentation see \ref get_socket_list_from_proto()
+ */
+int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family);
 
 
 /*!
