@@ -1,31 +1,144 @@
-<?xml version="1.0" encoding='ISO-8859-1'?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+sipt Module
 
-<!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
-%docentities;
+Torrey Searle
 
-]>
+   Voxbone SA
+   <torrey@voxbone.com>
 
-<book xmlns:xi="http://www.w3.org/2001/XInclude">
-	<bookinfo>
-	<title>sipt Module</title>
-	<authorgroup>
-		<author>
-		<firstname>Torrey</firstname>
-		<surname>Searle</surname>
-		<affiliation><orgname>Voxbone SA</orgname></affiliation>
-		<email>torrey@voxbone.com</email>
-		</author>
-	</authorgroup>
-	<copyright>
-		<year>2013</year>
-		<holder>Voxbone SA</holder>
-	</copyright>
-	</bookinfo>
-	<toc></toc>
+   Copyright © 2013 Voxbone SA
+     __________________________________________________________________
 
-	<xi:include href="sipt_admin.xml"/>
+   Table of Contents
 
-</book>
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+        3. Functions
+
+              3.1. sipt_destination(destination, hops, nai)
+              3.2. sipt_get_hop_counter()
+              3.3. sipt_get_cpc()
+              3.4. sipt_get_calling_party_nai()
+              3.5. sipt_get_called_party_nai()
+
+   List of Examples
+
+   1.1. sipt_destination(destination, hops, nai) usage
+   1.2. sipt_get_hop_counter() usage
+   1.3. sipt_get_cpc() usage
+   1.4. sipt_get_calling_party_nai() usage
+   1.5. sipt_get_called_party_nai() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Functions
+
+        3.1. sipt_destination(destination, hops, nai)
+        3.2. sipt_get_hop_counter()
+        3.3. sipt_get_cpc()
+        3.4. sipt_get_calling_party_nai()
+        3.5. sipt_get_called_party_nai()
+
+1. Overview
+
+   Module for updating ISUP encapuslated in SIP (SIP-T/SIP-I)
+
+   The sipt module can be used to update various ss7 headers contained
+   inside a message.
+
+2. Dependencies
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
+     * none
+
+3. Functions
+
+   3.1. sipt_destination(destination, hops, nai)
+   3.2. sipt_get_hop_counter()
+   3.3. sipt_get_cpc()
+   3.4. sipt_get_calling_party_nai()
+   3.5. sipt_get_called_party_nai()
+
+3.1. sipt_destination(destination, hops, nai)
+
+   updates the IAM in the body if it exists, setting the called party
+   number to “destination” with the nature address specified in “nai” and
+   decrementing the hop counter value if present. If the hop counter
+   header is missing it will be added with the value of “hops”.
+
+   Example 1.1. sipt_destination(destination, hops, nai) usage
+...
+# update the destination number to our current request uri,
+# setting nature of address to international
+$rU = "19495551234";
+sipt_destination($rU, 31, 4);
+...
+
+3.2. sipt_get_hop_counter()
+
+   Returns the value of the Hop Counter for the IAM message if it exists.
+   Returns -1 if there isn't a hop counter.
+
+   Example 1.2. sipt_get_hop_counter() usage
+...
+# get the hop counter and update the Max-Forwards header if it exists
+$avp(s:hop) = sipt_get_hop_counter();
+if($avp(s:hop) > 0)
+{
+        remove_hf("Max-Forwards");
+        append_hf("Max-Forwards: $avp(s:hop)\r\n");
+}
+
+...
+
+3.3. sipt_get_cpc()
+
+   Returns the value of the Calling Party Category for the IAM message.
+   Returns -1 if there is a parsing error.
+
+   Example 1.3. sipt_get_cpc() usage
+...
+# get the Cpc code and set put it in a custom sip header
+$avp(s:cpc) = sipt_get_cpc();
+append_hf("X-CPC: $avp(s:cpc)\r\n");
+
+...
+
+3.4. sipt_get_calling_party_nai()
+
+   Returns the value of the Nature of Address Indicator of the Calling
+   Party for the IAM message. Returns -1 if there is a parsing error or if
+   the Calling Party Number is not present.
+
+   Example 1.4. sipt_get_calling_party_nai() usage
+...
+# get the Calling Nai and add country code if national
+$avp(s:from_nai) = sipt_get_calling_party_nai();
+if($avp(s:from_nai) == 3)
+{
+        $fU = "32" + "$fU";
+}
+
+...
+
+3.5. sipt_get_called_party_nai()
+
+   Returns the value of the Nature of Address Indicator of the Called
+   Party for the IAM message. Returns -1 if there is a parsing error.
+
+   Example 1.5. sipt_get_called_party_nai() usage
+...
+# get the Called Nai and add country code if national
+$avp(s:to_nai) = sipt_get_called_party_nai();
+if($avp(s:to_nai) == 3)
+{
+        $rU = "32" + "$rU";
+}
+
+...

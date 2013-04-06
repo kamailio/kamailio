@@ -37,7 +37,7 @@
 
     <section>
 	<title>Functions</title>
-	<section>
+	<section id="sipt.f.sipt_destination">
 		<title><function moreinfo="none">sipt_destination(destination, hops, nai)</function></title>
 		<para>
 			updates the IAM in the body if it exists, setting the called party number to <quote>destination</quote>
@@ -56,7 +56,7 @@ sipt_destination($rU, 31, 4);
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.f.sipt_get_hop_counter">
 		<title><function moreinfo="none">sipt_get_hop_counter()</function></title>
 		<para>
 			Returns the value of the Hop Counter for the IAM message if it exists.
@@ -78,7 +78,7 @@ if($avp(s:hop) > 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.f.sipt_get_cpc">
 		<title><function moreinfo="none">sipt_get_cpc()</function></title>
 		<para>
 			Returns the value of the Calling Party Category for the IAM message.
@@ -96,7 +96,7 @@ append_hf("X-CPC: $avp(s:cpc)\r\n");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.f.sipt_get_calling_party_nai">
 		<title><function moreinfo="none">sipt_get_calling_party_nai()</function></title>
 		<para>
 			Returns the value of the Nature of Address Indicator
@@ -119,7 +119,7 @@ if($avp(s:from_nai) == 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.f.sipt_get_called_party_nai">
 		<title><function moreinfo="none">sipt_get_called_party_nai()</function></title>
 		<para>
 			Returns the value of the Nature of Address Indicator
@@ -132,7 +132,7 @@ if($avp(s:from_nai) == 3)
 ...
 # get the Called Nai and add country code if national
 $avp(s:to_nai) = sipt_get_called_party_nai();
-if($avp(s:from_nai) == 3)
+if($avp(s:to_nai) == 3)
 {
 	$rU = "32" + "$rU";
 }
