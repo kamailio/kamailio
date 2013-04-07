@@ -879,6 +879,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 		/* Outbound supported on server, and more than one Via: - not the first hop */
 
 		if (!(parse_headers(_m, HDR_PATH_F, 0) == -1 || _m->path == 0)) {
+		        route = (rr_t *)0;
 			if (parse_rr_body(_m->path->body.s, _m->path->body.len, &route) < 0) {
 				LM_ERR("Failed to parse Path: header body\n");
 				goto error;
