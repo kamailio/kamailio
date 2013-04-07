@@ -47,8 +47,7 @@ extern "C" {
 
 #include "../../config.h"
 
-// OLD #define SIP_PORT_TABLE_STR_INDEX_SIZE 10
-#define SIP_PORT_TABLE_STR_INDEX_SIZE 50
+#define SIP_PORT_TABLE_STR_INDEX_SIZE 22
 
 /* This structure represents a single row in the table. */
 typedef struct kamailioSIPPortTable_context_s 

@@ -173,7 +173,7 @@ static void createRowsFromIPList(int *theList, int listSize, int protocol,
 		int *snmpIndex, int family) {
 
 	kamailioSIPPortTable_context *currentRow;
-	
+	int num_octets = family == AF_INET ? NUM_IP_OCTETS : NUM_IPV6_OCTETS;
 	int curIndexOfIP;
 	int curSocketIdx;
 	int valueToAssign;
@@ -190,14 +190,6 @@ static void createRowsFromIPList(int *theList, int listSize, int protocol,
 	{
 		valueToAssign = TC_TRANSPORT_PROTOCOL_TLS;
 	}
-	else if (protocol == PROTO_WS)
-	{
-		valueToAssign = TC_TRANSPORT_PROTOCOL_WS;
-	}
-	else if (protocol == PROTO_WSS)
-	{
-		valueToAssign = TC_TRANSPORT_PROTOCOL_WSS;
-	}
 	else if (protocol == PROTO_SCTP)
 	{
 		valueToAssign = TC_SIP_TRANSPORT_PROTOCOL_SCTP;
@@ -210,7 +202,7 @@ static void createRowsFromIPList(int *theList, int listSize, int protocol,
 	/* Create all rows with respect to the given protocol */
 	for (curSocketIdx=0; curSocketIdx < listSize; curSocketIdx++) {
 
-		curIndexOfIP   = (NUM_IP_OCTETS + 1) * curSocketIdx;
+		curIndexOfIP   = (num_octets + 1) * curSocketIdx;
 		
 		/* Retrieve an existing row, or a new row if one doesn't
 		 * already exist. 
