@@ -45,47 +45,47 @@
 void
 init_kamailioNet(void)
 {
-    const oid kamailioNetTcpConnEstablished_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,1 };
-    const oid kamailioNetTcpConnFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,2 };
-    const oid kamailioNetTcpConnReset_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,3 };
-    const oid kamailioNetTcpConnSuccess_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,4 };
-    const oid kamailioNetTcpConnOpen_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,5 };
-    const oid kamailioNetTcpConnPassiveOpen_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,6 };
-    const oid kamailioNetTcpConnReject_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,8 };
-    const oid kamailioNetTcpEnabled_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,1 };
-    const oid kamailioNetTcpMaxConns_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,2 };
-    const oid kamailioNetTcpConnTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,3 };
-    const oid kamailioNetTcpSendTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,4 };
-    const oid kamailioNetTcpConnLifetime_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,5 };
-    const oid kamailioNetTcpNoConnect_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,7 };
-    const oid kamailioNetTcpFdCache_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,8 };
-    const oid kamailioNetTcpAsync_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,9 };
-    const oid kamailioNetTcpAsyncConnWait_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,10 };
-    const oid kamailioNetTcpAsyncConnWqMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,11 };
-    const oid kamailioNetTcpAsyncWqMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,12 };
-    const oid kamailioNetTcpRdBufSize_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,13 };
-    const oid kamailioNetTcpDeferAccept_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,14 };
-    const oid kamailioNetTcpDelayedAck_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,15 };
-    const oid kamailioNetTcpSynCnt_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,16 };
-    const oid kamailioNetTcpLinger_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,17 };
-    const oid kamailioNetTcpKeepAlive_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,18 };
-    const oid kamailioNetTcpKeepIdle_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,19 };
-    const oid kamailioNetTcpKeepIntvl_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,20 };
-    const oid kamailioNetTcpKeepCnt_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,21 };
-    const oid kamailioNetTcpCrlfPing_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,22 };
-    const oid kamailioNetTcpAcceptAliases_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,23 };
-    const oid kamailioNetTcpAcceptNoCl_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,24 };
+    oid kamailioNetTcpConnEstablished_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,1 };
+    oid kamailioNetTcpConnFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,2 };
+    oid kamailioNetTcpConnReset_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,3 };
+    oid kamailioNetTcpConnSuccess_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,4 };
+    oid kamailioNetTcpConnOpen_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,5 };
+    oid kamailioNetTcpConnPassiveOpen_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,6 };
+    oid kamailioNetTcpConnReject_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,8 };
+    oid kamailioNetTcpEnabled_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,1 };
+    oid kamailioNetTcpMaxConns_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,2 };
+    oid kamailioNetTcpConnTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,3 };
+    oid kamailioNetTcpSendTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,4 };
+    oid kamailioNetTcpConnLifetime_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,5 };
+    oid kamailioNetTcpNoConnect_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,7 };
+    oid kamailioNetTcpFdCache_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,8 };
+    oid kamailioNetTcpAsync_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,9 };
+    oid kamailioNetTcpAsyncConnWait_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,10 };
+    oid kamailioNetTcpAsyncConnWqMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,11 };
+    oid kamailioNetTcpAsyncWqMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,12 };
+    oid kamailioNetTcpRdBufSize_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,13 };
+    oid kamailioNetTcpDeferAccept_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,14 };
+    oid kamailioNetTcpDelayedAck_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,15 };
+    oid kamailioNetTcpSynCnt_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,16 };
+    oid kamailioNetTcpLinger_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,17 };
+    oid kamailioNetTcpKeepAlive_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,18 };
+    oid kamailioNetTcpKeepIdle_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,19 };
+    oid kamailioNetTcpKeepIntvl_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,20 };
+    oid kamailioNetTcpKeepCnt_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,21 };
+    oid kamailioNetTcpCrlfPing_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,22 };
+    oid kamailioNetTcpAcceptAliases_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,23 };
+    oid kamailioNetTcpAcceptNoCl_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,24 };
 
     /* WebSockets */
-    const oid kamailioNetWsConnsActive_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,1 };
-    const oid kamailioNetWsConnsActiveMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,2 };
-    const oid kamailioNetWsConnsFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,3 };
-    const oid kamailioNetWsConnsClosedLocal_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,4 };
-    const oid kamailioNetWsConnsClosedRemote_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,5 };
-    const oid kamailioNetWsFramesRx_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,6 };
-    const oid kamailioNetWsFramesTx_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,7 };
-    const oid kamailioNetWsHandshakeSuccess_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,8 };
-    const oid kamailioNetWsHandshakeFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,9 };
+    oid kamailioNetWsConnsActive_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,1 };
+    oid kamailioNetWsConnsActiveMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,2 };
+    oid kamailioNetWsConnsFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,3 };
+    oid kamailioNetWsConnsClosedLocal_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,4 };
+    oid kamailioNetWsConnsClosedRemote_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,5 };
+    oid kamailioNetWsFramesRx_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,6 };
+    oid kamailioNetWsFramesTx_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,7 };
+    oid kamailioNetWsHandshakeSuccess_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,8 };
+    oid kamailioNetWsHandshakeFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,9 };
 
   DEBUGMSGTL(("kamailioNet", "Initializing\n"));
 

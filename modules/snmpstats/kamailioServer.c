@@ -49,21 +49,21 @@
 void
 init_kamailioServer(void)
 {
-    const oid kamailioSrvMaxMemory_oid[] =      { 1,3,6,1,4,1,34352,3,1,3,1,1,1,1 };
-    const oid kamailioSrvFreeMemory_oid[] =     { 1,3,6,1,4,1,34352,3,1,3,1,1,1,2 };
-    const oid kamailioSrvMaxUsed_oid[] =        { 1,3,6,1,4,1,34352,3,1,3,1,1,1,3 };
-    const oid kamailioSrvRealUsed_oid[] =       { 1,3,6,1,4,1,34352,3,1,3,1,1,1,4 };
-    const oid kamailioSrvMemFragments_oid[] =   { 1,3,6,1,4,1,34352,3,1,3,1,1,1,5 };
+    oid kamailioSrvMaxMemory_oid[] =      { 1,3,6,1,4,1,34352,3,1,3,1,1,1,1 };
+    oid kamailioSrvFreeMemory_oid[] =     { 1,3,6,1,4,1,34352,3,1,3,1,1,1,2 };
+    oid kamailioSrvMaxUsed_oid[] =        { 1,3,6,1,4,1,34352,3,1,3,1,1,1,3 };
+    oid kamailioSrvRealUsed_oid[] =       { 1,3,6,1,4,1,34352,3,1,3,1,1,1,4 };
+    oid kamailioSrvMemFragments_oid[] =   { 1,3,6,1,4,1,34352,3,1,3,1,1,1,5 };
 
-    const oid kamailioSrvCnfFullVersion_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,1 };
-    const oid kamailioSrvCnfVerName_oid[] =     { 1,3,6,1,4,1,34352,3,1,3,1,1,2,2 };
-    const oid kamailioSrvCnfVerVersion_oid[] =  { 1,3,6,1,4,1,34352,3,1,3,1,1,2,3 };
-    const oid kamailioSrvCnfVerArch_oid[] =     { 1,3,6,1,4,1,34352,3,1,3,1,1,2,4 };
-    const oid kamailioSrvCnfVerOs_oid[] =       { 1,3,6,1,4,1,34352,3,1,3,1,1,2,5 };
-    const oid kamailioSrvCnfVerId_oid[] =       { 1,3,6,1,4,1,34352,3,1,3,1,1,2,6 };
-    const oid kamailioSrvCnfVerCompTime_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,7 };
-    const oid kamailioSrvCnfVerCompiler_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,8 };
-    const oid kamailioSrvCnfVerFlags_oid[] =    { 1,3,6,1,4,1,34352,3,1,3,1,1,2,9 };
+    oid kamailioSrvCnfFullVersion_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,1 };
+    oid kamailioSrvCnfVerName_oid[] =     { 1,3,6,1,4,1,34352,3,1,3,1,1,2,2 };
+    oid kamailioSrvCnfVerVersion_oid[] =  { 1,3,6,1,4,1,34352,3,1,3,1,1,2,3 };
+    oid kamailioSrvCnfVerArch_oid[] =     { 1,3,6,1,4,1,34352,3,1,3,1,1,2,4 };
+    oid kamailioSrvCnfVerOs_oid[] =       { 1,3,6,1,4,1,34352,3,1,3,1,1,2,5 };
+    oid kamailioSrvCnfVerId_oid[] =       { 1,3,6,1,4,1,34352,3,1,3,1,1,2,6 };
+    oid kamailioSrvCnfVerCompTime_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,7 };
+    oid kamailioSrvCnfVerCompiler_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,8 };
+    oid kamailioSrvCnfVerFlags_oid[] =    { 1,3,6,1,4,1,34352,3,1,3,1,1,2,9 };
 
      DEBUGMSGTL(("kamailioServer", "Initializing\n"));
      LM_DBG("initializing Kamailio Server OID's X\n");
@@ -290,7 +290,7 @@ int handle_kamailioSrvCnfFullVersion(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					full_version, strlen(full_version));
+					(u_char *) full_version, strlen(full_version));
             break;
 
 
@@ -312,7 +312,7 @@ int handle_kamailioSrvCnfVerName(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					ver_name, strlen(ver_name));
+					(u_char *) ver_name, strlen(ver_name));
             break;
 
 
@@ -334,7 +334,7 @@ int handle_kamailioSrvCnfVerVersion(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					ver_version, strlen(ver_version));
+					(u_char *) ver_version, strlen(ver_version));
             break;
 
 
@@ -356,7 +356,7 @@ int handle_kamailioSrvCnfVerArch(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					ver_arch, strlen(ver_arch));
+					(u_char *) ver_arch, strlen(ver_arch));
             break;
 
 
@@ -378,7 +378,7 @@ int handle_kamailioSrvCnfVerOs(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					ver_os, strlen(ver_os));
+					(u_char *) ver_os, strlen(ver_os));
             break;
 
 
@@ -400,7 +400,7 @@ int handle_kamailioSrvCnfVerId(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					ver_id, strlen(ver_id));
+					(u_char *) ver_id, strlen(ver_id));
             break;
 
 
@@ -422,7 +422,7 @@ int handle_kamailioSrvCnfVerCompTime(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					ver_compiled_time, strlen(ver_compiled_time));
+					(u_char *) ver_compiled_time, strlen(ver_compiled_time));
             break;
 
 
@@ -444,7 +444,7 @@ int handle_kamailioSrvCnfVerCompiler(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					ver_compiler, strlen(ver_compiler));
+					(u_char *) ver_compiler, strlen(ver_compiler));
             break;
 
 
@@ -467,7 +467,7 @@ int handle_kamailioSrvCnfVerFlags(netsnmp_mib_handler *handler,
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-					ver_flags, strlen(ver_flags));
+					(u_char *) ver_flags, strlen(ver_flags));
             break;
 
 
