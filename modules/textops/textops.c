@@ -1813,8 +1813,7 @@ static int fixup_in_list(void** param, int param_no)
 static int fixup_free_in_list(void** param, int param_no)
 {
     if ((param_no == 1) || (param_no == 2)) {
- 	LM_WARN("free function has not been defined for spve\n");
- 	return 0;
+	return fixup_free_spve_null(param, 1);
     }
  
     if (param_no == 3) return 0;
