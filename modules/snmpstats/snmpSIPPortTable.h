@@ -50,7 +50,7 @@ extern "C" {
 // OLD #define SIP_PORT_TABLE_STR_INDEX_SIZE 10
 #define SIP_PORT_TABLE_STR_INDEX_SIZE 50
 
-/* This strucutre represents a single row in the table. */
+/* This structure represents a single row in the table. */
 typedef struct kamailioSIPPortTable_context_s 
 {
 
@@ -107,7 +107,7 @@ extern size_t kamailioSIPPortTable_oid_len;
 #define COLUMN_KAMAILIOSIPTRANSPORTRCV 4
 
 #define kamailioSIPPortTable_COL_MIN 4
-#define kamailioSIPPortTable_COL_MAX 12
+#define kamailioSIPPortTable_COL_MAX 4
 
 
 #ifdef __cplusplus

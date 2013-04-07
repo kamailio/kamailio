@@ -169,7 +169,7 @@ kamailioSIPPortTable_context *getRow(int ipType, int *ipAddress)
  * to an integer so that if the function is called again with another
  * 'protocol', we can continue from the last index. 
  */
-void createRowsFromIPList(int *theList, int listSize, int protocol, 
+static void createRowsFromIPList(int *theList, int listSize, int protocol, 
 		int *snmpIndex, int family) {
 
 	kamailioSIPPortTable_context *currentRow;
