@@ -204,11 +204,15 @@ static type_node_t subtype_tree[] = {
 											{'o',SUBTYPE_UNKNOWN,1,-1},
 												{'d',SUBTYPE_UNKNOWN,1,-1},
 													{'y',SUBTYPE_EXTERNAL_BODY,0,-1},
-	{'m',SUBTYPE_UNKNOWN,1,-1}, /* 107 */
+	{'m',SUBTYPE_UNKNOWN,1,112}, /* 107 */
 		{'i',SUBTYPE_UNKNOWN,1,-1},
 			{'x',SUBTYPE_UNKNOWN,1,-1},
 				{'e',SUBTYPE_UNKNOWN,1,-1},
 					{'d',SUBTYPE_MIXED,0,-1},
+	{'i',SUBTYPE_UNKNOWN,1,-1}, /* 112 */
+		{'s',SUBTYPE_UNKNOWN,1,-1},
+			{'u',SUBTYPE_UNKNOWN,1,-1},
+				{'p',SUBTYPE_ISUP,0,-1},
 };
 
 

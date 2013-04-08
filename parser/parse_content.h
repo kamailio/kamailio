@@ -64,6 +64,7 @@ struct mime_type {
 #define SUBTYPE_XML_MSRTC_PIDF     12
 #define SUBTYPE_CPIM_PIDFXML       13
 #define SUBTYPE_MIXED              14
+#define SUBTYPE_ISUP               15
 #define SUBTYPE_ALL          0xfe
 #define SUBTYPE_UNKNOWN      0xff
 
