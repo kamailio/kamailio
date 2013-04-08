@@ -282,7 +282,7 @@ static int replace_body(struct sip_msg *msg, str * nb)
 static int sipt_get_hop_counter(struct sip_msg *msg, char *x, char *y)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_UNKNOWN,&body.len);
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
 	if(body.s == NULL)
 	{
@@ -302,7 +302,7 @@ static int sipt_get_hop_counter(struct sip_msg *msg, char *x, char *y)
 static int sipt_get_cpc(struct sip_msg *msg, char *x, char *y)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_UNKNOWN,&body.len);
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
 	if(body.s == NULL)
 	{
@@ -322,7 +322,7 @@ static int sipt_get_cpc(struct sip_msg *msg, char *x, char *y)
 static int sipt_get_calling_party_nai(struct sip_msg *msg, char *x, char *y)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_UNKNOWN,&body.len);
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
 	if(body.s == NULL)
 	{
@@ -342,7 +342,7 @@ static int sipt_get_calling_party_nai(struct sip_msg *msg, char *x, char *y)
 static int sipt_get_called_party_nai(struct sip_msg *msg, char *x, char *y)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_UNKNOWN,&body.len);
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
 	if(body.s == NULL)
 	{
@@ -371,7 +371,7 @@ static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops
 
 	// update forwarded iam
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_UNKNOWN,&body.len);
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
 	if(body.s == NULL)
 	{
