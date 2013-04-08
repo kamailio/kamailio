@@ -248,12 +248,12 @@ static int w_redis_cmd5(struct sip_msg* msg, char* ssrv, char* scmd,
 	arg1.s[arg1.len] = '\0';
 	arg2.s[arg2.len] = '\0';
 	if(redisc_exec(&s[0], &s[2], &s[1], arg1.s, arg2.s)<0) {
-		c1 = arg1.s[arg1.len];
-		c2 = arg2.s[arg2.len];
+		arg1.s[arg1.len] = c1;
+		arg2.s[arg2.len] = c2;
 		return -1;
 	}
-	c1 = arg1.s[arg1.len];
-	c2 = arg2.s[arg2.len];
+	arg1.s[arg1.len] = c1;
+	arg2.s[arg2.len] = c2;
 	return 1;
 }
 
@@ -305,14 +305,14 @@ static int w_redis_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
 	arg2.s[arg2.len] = '\0';
 	arg3.s[arg3.len] = '\0';
 	if(redisc_exec(&s[0], &s[2], &s[1], arg1.s, arg2.s, arg3.s)<0) {
-		c1 = arg1.s[arg1.len];
-		c2 = arg2.s[arg2.len];
-		c3 = arg3.s[arg3.len];
+		arg1.s[arg1.len] = c1;
+		arg2.s[arg2.len] = c2;
+		arg3.s[arg3.len] = c3;
 		return -1;
 	}
-	c1 = arg1.s[arg1.len];
-	c2 = arg2.s[arg2.len];
-	c3 = arg3.s[arg3.len];
+	arg1.s[arg1.len] = c1;
+	arg2.s[arg2.len] = c2;
+	arg3.s[arg3.len] = c3;
 	return 1;
 }
 
