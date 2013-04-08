@@ -366,6 +366,10 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		if(redisc_reconnect_server(rsrv)==0)
 		{
 			rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap);
+		} else {
+			LM_ERR("unable to reconnect to redis server: %.*s\n", srv->len, srv->s);
+			cmd->s[cmd->len] = c;
+			goto error_exec;
 		}
 	}
 	cmd->s[cmd->len] = c;
