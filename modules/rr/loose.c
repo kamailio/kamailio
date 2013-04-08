@@ -367,7 +367,7 @@ static inline int get_maddr_uri(str *uri, struct sip_uri *puri)
 		return 0;
 
 	/* sip: + maddr + : + port */
-	if( (puri->maddr_val.len) > (127 - 10) )
+	if( (puri->maddr_val.len) > (127 - 6 - puri->port.len) )
 	{
 		LM_ERR( "Too long maddr parameter\n");
 		return RR_ERROR;
