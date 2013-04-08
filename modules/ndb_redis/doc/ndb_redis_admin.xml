@@ -59,7 +59,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="ndb_redis.p.server">
 		<title><varname>server</varname> (str)</title>
 		<para>
 			Specify the details to connect to REDIS server. It takes a list of
@@ -98,7 +98,7 @@ modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="ndb_redis.f.redis_cmd">
 	    <title>
 		<function moreinfo="none">redis_cmd(srvname, command, ..., replyid)</function>
 	    </title>
@@ -178,7 +178,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="ndb_redis.f.redis_free">
 	<title>
 		<function moreinfo="none">redis_free(replyid)</function>
 	</title>
