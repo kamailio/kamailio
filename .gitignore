@@ -32,6 +32,7 @@ utils/sercmd/sercmd
 utils/sercmd/kamcmd
 utils/pdbt/pdb_server
 utils/pdbt/pdbt
+utils/protoshoot/protoshoot
 # Emacs backup files
 *~
 # Emacs file locks
