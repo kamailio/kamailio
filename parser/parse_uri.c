@@ -1207,6 +1207,10 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			goto error_bad_uri;
 			break; /* do nothing, avoids a compilation warning */
 	}
+
+	if(uri->port.len>5)
+		goto error_invalid_port;
+
 #ifdef EXTRA_DEBUG
 	/* do stuff */
 	DBG("parsed uri:\n type=%d user=<%.*s>(%d)\n passwd=<%.*s>(%d)\n"
@@ -1269,6 +1273,10 @@ error_bad_port:
 		" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
 		*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf),
 		len, ZSW(buf), len);
+	goto error_exit;
+error_invalid_port:
+	DBG("parse_uri: bad port in uri: [%.*s] in <%.*s>\n",
+			uri->port.len, uri->port.s, len, ZSW(buf));
 	goto error_exit;
 error_bad_uri:
 	DBG("parse_uri: bad uri,  state %d"
