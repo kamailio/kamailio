@@ -23,6 +23,9 @@
  */
 #include "sca_common.h"
 
+#include <sys/types.h>
+#include <time.h>
+
 #include "sca_rpc.h"
 
 #include "sca.h"
@@ -82,7 +85,9 @@ sca_rpc_show_all_subscriptions( rpc_t *rpc, void *ctx )
     sca_hash_table	*ht;
     sca_hash_entry	*ent;
     sca_subscription	*sub;
+    sip_uri_t		aor_uri, sub_uri;
     str			sub_state = STR_NULL;
+    time_t		now;
     int			i;
     int			rc = 0;
 
@@ -91,6 +96,8 @@ sca_rpc_show_all_subscriptions( rpc_t *rpc, void *ctx )
 	return;
     }
 
+    now = time( NULL );
+
     for ( i = 0; i < ht->size; i++ ) {
 	sca_hash_table_lock_index( ht, i );
 
@@ -98,12 +105,31 @@ sca_rpc_show_all_subscriptions( rpc_t *rpc, void *ctx )
 	    sub = (sca_subscription *)ent->value;
 	    sca_subscription_state_to_str( sub->state, &sub_state );
 
-	    rc = rpc->printf( ctx, "%d: %.*s %.*s %s %d %.*s", i,
-				STR_FMT( &sub->target_aor ),
-				STR_FMT( &sub->subscriber ),
-				sca_event_name_from_type( sub->event ),
-				sub->expires,
-				STR_FMT( &sub_state ));
+	    rc = parse_uri( sub->target_aor.s, sub->target_aor.len, &aor_uri );
+	    if ( rc >= 0 ) {
+		rc = parse_uri( sub->subscriber.s, sub->subscriber.len,
+				&sub_uri );
+	    }
+	    if ( rc >= 0 ) {
+		rc = rpc->printf( ctx, "%.*s %.*s%s%.*s %s %ld %.*s",
+				    STR_FMT( &aor_uri.user ),
+				    STR_FMT( &sub_uri.host ),
+				    (sub_uri.port.len ? ":" : "" ),
+				    STR_FMT( &sub_uri.port ),
+				    sca_event_name_from_type( sub->event ),
+				    (long)(sub->expires - now),
+				    STR_FMT( &sub_state ));
+	    } else {
+		LM_ERR( "sca_rpc_show_all_subscriptions: parse_uri %.*s "
+			"failed, dumping unparsed info",
+			STR_FMT( &sub->target_aor ));
+		rc = rpc->printf( ctx, "%.*s %.*s %s %ld %.*s",
+				    STR_FMT( &sub->target_aor ),
+				    STR_FMT( &sub->subscriber ),
+				    sca_event_name_from_type( sub->event ),
+				    (long)sub->expires,
+				    STR_FMT( &sub_state ));
+	    }
 
 	    if ( rc < 0 ) {
 		/* make sure we unlock below */
