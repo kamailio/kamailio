@@ -479,7 +479,7 @@ redisc_reply_t *redisc_get_reply(str *name)
  */
 int redisc_free_reply(str *name)
 {
-	redisc_reply_t *rpl, *next_rpl;
+	redisc_reply_t *rpl;
 	unsigned int hid;
 
 	if(name==NULL || name->len==0) {
@@ -494,7 +494,6 @@ int redisc_free_reply(str *name)
 
 		if(rpl->hname==hid && rpl->rname.len==name->len
 		   && strncmp(rpl->rname.s, name->s, name->len)==0) {
-			next_rpl = rpl->next;
 			if(rpl->rplRedis) {
 				freeReplyObject(rpl->rplRedis);
 				rpl->rplRedis = NULL;
