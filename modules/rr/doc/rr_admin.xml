@@ -280,7 +280,9 @@ record_route();
 
       <para>When the <quote>outbound</quote> module was loaded before this
       module and the Route: header contains a username part this function will
-      attempt to use the username part as a flow-token for routing.</para>
+      attempt to use the username part as a flow-token for routing.  If route
+      calculation based on flow-token succeeds, function returns TRUE even
+      if there is only one Route: header indicating the local proxy.</para>
 
       <para>Make sure your loose_routing function can't be used by attackers
       to bypass proxy authorization.</para>
@@ -295,6 +297,11 @@ record_route();
         <listitem>
           <para><emphasis>1</emphasis> - route calculation has been
           successful</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>2</emphasis> - route calculation based on
+	  flow-token has been successful</para>
         </listitem>
 
         <listitem>
