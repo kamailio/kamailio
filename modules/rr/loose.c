@@ -47,6 +47,7 @@
 
 #define RR_ERROR -1		/*!< An error occured while processing route set */
 #define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
+#define RR_OB_DRIVEN 2		/*!< The next hop is determined from the route set based on flow-token */
 #define NOT_RR_DRIVEN -1	/*!< The next hop is not determined from the route set */
 #define FLOW_TOKEN_BROKEN -2	/*!< Outbound flow-token shows evidence of tampering */
 
@@ -367,7 +368,7 @@ static inline int get_maddr_uri(str *uri, struct sip_uri *puri)
 		return 0;
 
 	/* sip: + maddr + : + port */
-	if( (puri->maddr_val.len) > (127 - 6 - puri->port.len) )
+	if( (puri->maddr_val.len) > (127 - 10) )
 	{
 		LM_ERR( "Too long maddr parameter\n");
 		return RR_ERROR;
@@ -704,7 +705,7 @@ static inline int after_strict(struct sip_msg* _m)
 		if (res < 0) {
 			LM_ERR("searching for last Route URI failed\n");
 			return RR_ERROR;
-		} else if (res > 0) {
+ 		} else if (res > 0) {
 			/* No remote target is an error */
 			return RR_ERROR;
 		}
@@ -728,7 +729,7 @@ static inline int after_strict(struct sip_msg* _m)
 		if (prev) {
 			rem_off = prev->nameaddr.name.s + prev->len;
 			rem_len = rt->nameaddr.name.s + rt->len - rem_off;
-		} else {
+	 	} else {
 			rem_off = hdr->name.s;
 			rem_len = hdr->len;
 		}
@@ -742,7 +743,10 @@ static inline int after_strict(struct sip_msg* _m)
 	if(routed_params.len > 0)
 		run_rr_callbacks( _m, &routed_params );
 
-	return RR_DRIVEN;
+	if (use_ob == 1)
+	    return RR_OB_DRIVEN;
+	else
+	    return RR_DRIVEN;
 }
 
 
@@ -907,7 +911,10 @@ got_uri:
 			}
 		}
 	}
-	status = RR_DRIVEN;
+	if (use_ob == 1) 
+	    status = RR_OB_DRIVEN;
+	else
+	    status = RR_DRIVEN;
 
 done:
 	/* run RR callbacks only if we have Route URI parameters */
