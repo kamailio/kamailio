@@ -251,7 +251,9 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 
 	prev = (struct contact *)0;
 	curr = contacts;
-	while (curr && (curr->q < branch->q)) {
+	while (curr && 
+	       ((curr->q < next->q) ||
+		((curr->q == next->q) && (next->path.len == 0)))) {
 	    prev = curr;
 	    curr = curr->next;
 	}
