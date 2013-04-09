@@ -462,6 +462,8 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 	memcpy(il->instance.s, instance.s, instance.len);
 	il->next = (struct instance_list *)0;
 	set_instance(msg, &instance);
+    } else {
+		instance.len = 0;
     }
 
     vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
@@ -549,6 +551,9 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 	vavp = xavp_get(&flags_name, xavp->val.v.xavp);
 	flags = vavp->val.v.i;
 
+	vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
+	ruid = vavp->val.v.s;
+
 	vavp = xavp_get(&instance_name, xavp->val.v.xavp);
 	if (vavp != NULL) {
 	    instance = vavp->val.v.s;
@@ -584,16 +589,16 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 		ilp->next = il;
 		il = ilp;
 	    }
+	} else {
+		instance.len = 0;
 	}
 
-        vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
-        ruid = vavp->val.v.s;
-
-	LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s'\n",
+	LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s' ruid-'%.*s'\n",
 		uri.len, uri.s,
-		dst_uri.len, dst_uri.s,
-		path.len, path.s,
-		instance.len, instance.s);
+		dst_uri.len, (dst_uri.len > 0)?dst_uri.s:"",
+		path.len, (path.len>0)?path.s:"",
+		instance.len, (instance.len>0)?instance.s:"",
+		ruid.len, ruid.s);
 	if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
 			  &ruid) != 1) {
 	    LM_ERR("appending branch failed\n");
@@ -721,11 +726,12 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 		vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
 		ruid = vavp->val.v.s;
 
-		LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s'\n",
+		LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s' ruid-'%.*s'\n",
 			uri.len, uri.s,
-			dst_uri.len, dst_uri.s,
-			path.len, path.s,
-			instance.len, instance.s);
+			dst_uri.len, (dst_uri.len > 0)?dst_uri.s:"",
+			path.len, (path.len>0)?path.s:"",
+			instance.len, (instance.len>0)?instance.s:"",
+			ruid.len, ruid.s);
 		if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
 			  &ruid) != 1) {
 			LM_ERR("appending branch failed\n");
