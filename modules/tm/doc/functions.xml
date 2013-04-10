@@ -8,7 +8,7 @@
 
     <title>Functions</title>
 
-    <section id="t_relay">
+    <section id="tm.f.t_relay">
 	<title>
 	    <function>t_relay([host, port])</function>
 	</title>
@@ -49,7 +49,7 @@ if (!t_relay())
 	</example>
     </section>
 
-    <section id="t_relay_to_udp">
+    <section id="tm.f.t_relay_to_udp">
 	<title>
 	    <function>t_relay_to_udp([ip, port])</function>
 	</title>
@@ -90,7 +90,7 @@ else
 	</example>
     </section>
 
-    <section id="t_relay_to_tcp">
+    <section id="tm.f.t_relay_to_tcp">
 	<title>
 	    <function>t_relay_to_tcp([ip, port])</function>
 	</title>
@@ -99,7 +99,7 @@ else
 	</para>
     </section>
 
-    <section id="t_relay_to_tls">
+    <section id="tm.f.t_relay_to_tls">
 	<title>
 	    <function>t_relay_to_tls([ip, port])</function>
 	</title>
@@ -108,7 +108,7 @@ else
 	</para>
     </section>
 
-    <section id="t_relay_to_sctp">
+    <section id="tm.f.t_relay_to_sctp">
 	<title>
 	    <function>t_relay_to_sctp([ip, port])</function>
 	</title>
@@ -117,7 +117,7 @@ else
 	</para>
     </section>
 
-    <section id="t_on_failure">
+    <section id="tm.f.t_on_failure">
 	<title>
 	    <function>t_on_failure(failure_route)</function>
 	</title>
@@ -167,8 +167,51 @@ failure_route[1] {
 	    combination of serial with parallel forking.
 	</para>
     </section>
+     <section id="tm.f.t_on_branch_failure">
+	<title>
+	    <function>t_on_branch_failure(branch_failure_route)</function>
+	</title>
+	<para>
+	    Sets the branch_failure routing block, to which control is passed on each
+	    negative response to a transaction. This route is run before deciding if
+	    the transaction is complete. In the referred block, you can start a new
+	    branch which is required for failover of multiple outbound flows (RFC 5626).
+	    Note that the set of commands which are usable within a branch_failure route
+	    is limited to a subset of the failure_rotue commands including logging,
+	    rewriting URI and initiating new branches. Any other commands may generate
+	    errors or result in unpredictable behavior.
+	    Note that whenever failure_route is entered, uri is reset to
+	    value which it had on relaying. If it temporarily changed during a
+	    reply_route processing, subsequent reply_route will ignore the
+	    changed value and use again the original one.
+	</para>
+	<para>Function Parameters:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>branch_failure_route</emphasis> - Name of the branch_failure route block to be called.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>t_on_branch_failure</function> usage</title>
+	    <programlisting>
+...
+route {
+    t_on_branch_failure("myroute");
+    t_relay();
+}
+
+event_route[tm:branch_failure:myroute] {
+    if (t_check_status("430|403") {
+        unregister("location", "$tu", "$T_reply_ruid");
+    }
+}
+...
+	    </programlisting>
+	</example>
+    </section>
  
-	 <section id="t_on_reply">
+	 <section id="tm.f.t_on_reply">
 	<title>
 	    <function>t_on_reply(onreply_route)</function>
 	</title>
@@ -211,7 +254,7 @@ onreply_route[1] {
 	</example>
 	</section>
 
-	<section id="t_on_branch">
+	<section id="tm.f.t_on_branch">
 	<title>
 	    <function>t_on_branch(branch_route)</function>
 	</title>
@@ -249,7 +292,7 @@ branch_route[1] {
 	</example>
 	</section>
 
-    <section id="t_newtran">
+    <section id="tm.f.t_newtran">
 	<title>
 	    <function>t_newtran()</function>
 	</title>
@@ -274,7 +317,7 @@ if (t_newtran()) {
 	</para>
     </section>
 
-    <section id="t_reply">
+    <section id="tm.f.t_reply">
 	<title>
 	    <function>t_reply(code, reason_phrase)</function>
 	</title>
@@ -303,7 +346,7 @@ t_reply("404", "Not found");
 	</example>
     </section>
 
-    <section id="t_lookup_request">
+    <section id="tm.f.t_lookup_request">
 	<title>
 	    <function>t_lookup_request()</function>
 	</title>
@@ -326,7 +369,7 @@ if (t_lookup_request()) {
 	</example>
     </section>
 
-    <section id="t_retransmit_reply">
+    <section id="tm.f.t_retransmit_reply">
 	<title>
 	    <function>t_retransmit_reply()</function>
 	</title>
@@ -343,7 +386,7 @@ t_retransmit_reply();
 	</example>
     </section>
 
-    <section id="t_release">
+    <section id="tm.f.t_release">
 	<title>
 	    <function>t_release()</function>
 	</title>
@@ -361,7 +404,7 @@ t_release();
 	</example>
     </section>
 
-    <section id="t_forward_nonack">
+    <section id="tm.f.t_forward_nonack">
 	<title>
 	    <function>t_forward_nonack([ip, port])</function>
 	</title>
@@ -390,7 +433,7 @@ t_forward_nonack("1.2.3.4", "5060");
 	</example>
     </section>
 
-   <section id="t_forward_nonack_udp">
+   <section id="tm.f.t_forward_nonack_udp">
 	<title>
 	    <function>t_forward_nonack_udp(ip, port)</function>
 	</title>
@@ -399,7 +442,7 @@ t_forward_nonack("1.2.3.4", "5060");
 	</para>
     </section>
 
-   <section id="t_forward_nonack_tcp">
+   <section id="tm.f.t_forward_nonack_tcp">
 	<title>
 	    <function>t_forward_nonack_tcp(ip, port)</function>
 	</title>
@@ -408,7 +451,7 @@ t_forward_nonack("1.2.3.4", "5060");
 	</para>
     </section>
 
-   <section id="t_forward_nonack_tls">
+   <section id="tm.f.t_forward_nonack_tls">
 	<title>
 	    <function>t_forward_nonack_tls(ip, port)</function>
 	</title>
@@ -417,7 +460,7 @@ t_forward_nonack("1.2.3.4", "5060");
 	</para>
     </section>
 
-   <section id="t_forward_nonack_sctp">
+   <section id="tm.f.t_forward_nonack_sctp">
 	<title>
 	    <function>t_forward_nonack_sctp(ip, port)</function>
 	</title>
@@ -426,7 +469,7 @@ t_forward_nonack("1.2.3.4", "5060");
 	</para>
     </section>
 
-	<section id="t_set_fr">
+	<section id="tm.f.t_set_fr">
 	<title>
 	    <function>t_set_fr(fr_inv_timeout [, fr_timeout])</function>
 	</title>
@@ -480,7 +523,7 @@ branch_route[1] {
 	</example>
 	</section>
 
-	<section id="t_reset_fr">
+	<section id="tm.f.t_reset_fr">
 	<title>
 	    <function>t_reset_fr()</function>
 	</title>
@@ -513,7 +556,7 @@ route {
 	</section>
 
 
-	<section id="t_set_max_lifetime">
+	<section id="tm.f.t_set_max_lifetime">
 	<title>
 	    <function>t_set_max_lifetime(inv_lifetime, noninv_lifetime)</function>
 	</title>
@@ -563,7 +606,7 @@ route {
 	</example>
 	</section>
 
-	<section id="t_reset_max_lifetime">
+	<section id="tm.f.t_reset_max_lifetime">
 	<title>
 	    <function>t_reset_max_lifetime()</function>
 	</title>
@@ -595,7 +638,7 @@ route {
 	</example>
 	</section>
 
-	<section id="t_set_retr">
+	<section id="tm.f.t_set_retr">
 	<title>
 	    <function>t_set_retr(retr_t1_interval, retr_t2_interval)</function>
 	</title>
@@ -665,7 +708,7 @@ branch_route[1] {
 	</section>
 
 
-	<section id="t_reset_retr">
+	<section id="tm.f.t_reset_retr">
 	<title>
 	    <function>t_reset_retr()</function>
 	</title>
@@ -697,7 +740,7 @@ route {
 	</example>
 	</section>
 
-	<section id="t_set_auto_inv_100">
+	<section id="tm.f.t_set_auto_inv_100">
 	<title>
 	    <function>t_set_auto_inv_100(0|1)</function>
 	</title>
@@ -723,7 +766,7 @@ route {
 	</example>
 	</section>
 
-	<section id="t_branch_timeout">
+	<section id="tm.f.t_branch_timeout">
 	<title>
 	    <function>t_branch_timeout()</function>
 	</title>
@@ -747,7 +790,7 @@ failure_route[0]{
 	</example>
 	</section>
 
-<section id="t_branch_replied">
+<section id="tm.f.t_branch_replied">
 	<title>
 	    <function>t_branch_replied()</function>
 	</title>
@@ -775,7 +818,7 @@ failure_route[0]{
 	</example>
 	</section>
 
-<section id="t_any_timeout">
+<section id="tm.f.t_any_timeout">
 	<title>
 	    <function>t_any_timeout()</function>
 	</title>
@@ -799,7 +842,7 @@ failure_route[0]{
 	</example>
 	</section>
 
-<section id="t_any_replied">
+<section id="tm.f.t_any_replied">
 	<title>
 	    <function>t_any_replied()</function>
 	</title>
@@ -822,7 +865,7 @@ onreply_route[0]{
 	</example>
 </section>
 
-<section id="t_grep_status">
+<section id="tm.f.t_grep_status">
 	<title>
 	    <function>t_grep_status("code")</function>
 	</title>
@@ -844,7 +887,7 @@ onreply_route[0]{
 	</example>
 </section>
 
-<section id="t_is_canceled">
+<section id="tm.f.t_is_canceled">
 	<title>
 	    <function>t_is_canceled()</function>
 	</title>
@@ -865,7 +908,7 @@ failure_route[0]{
 	</example>
 	</section>
 
-	<section id="t_is_expired">
+	<section id="tm.f.t_is_expired">
 	<title>
 	    <function>t_is_expired()</function>
 	</title>
@@ -888,7 +931,7 @@ failure_route[0]{
 	</example>
 	</section>
 
-    <section id="t_relay_cancel">
+    <section id="tm.f.t_relay_cancel">
 	<title>
 	    <function>t_relay_cancel()</function>
 	</title>
@@ -924,7 +967,7 @@ if (method == CANCEL) {
 	</example>
     </section>
 
-    <section id="t_lookup_cancel">
+    <section id="tm.f.t_lookup_cancel">
 	<title>
 	    <function>t_lookup_cancel([1])</function>
 	</title>
@@ -967,7 +1010,7 @@ if (method == CANCEL) {
 	</example>
     </section>
 
-    <section id="t_drop_replies">
+    <section id="tm.f.t_drop_replies">
 	<title>
 	    <function>t_drop_replies([mode])</function>
 	</title>
@@ -1005,7 +1048,7 @@ failure_route[0]{
 	</example>
     </section>
 
-    <section id="t_save_lumps">
+    <section id="tm.f.t_save_lumps">
 	<title>
 	    <function>t_save_lumps()</function>
 	</title>
@@ -1056,7 +1099,7 @@ failure_route[1] {
 	</example>
     </section>
 
-	<section>
+	<section id="tm.f.t_load_contacts">
 		<title>
 		<function moreinfo="none">t_load_contacts()</function>
 		</title>
@@ -1098,7 +1141,7 @@ failure_route[1] {
 		<para>
 		  After calling <function>t_load_contacts()</function>, function
 		  <function>t_next_contacts()</function> and possibly
-		  also <function>t_next_contact_flows()</function> need
+		  also <function>t_next_contact_flow()</function> need
 		  to be called
 		  one or more times in order to retrieve the branches based
 		  on their q value.
@@ -1124,7 +1167,7 @@ if (!t_load_contacts()) {
 		</example>
 	</section>
 
-	<section>
+	<section id="tm.f.t_next_contacts">
 		<title>
 		<function moreinfo="none">t_next_contacts()</function>
 		</title>
@@ -1141,7 +1184,7 @@ if (!t_load_contacts()) {
 		  but only one contact with the same +sip.instance value is
 		  included.  Duplicate contacts are added to contact_flows_avp
 		  for later consumption by function 
-		  <function>next_contact_flows()</function>.
+		  <function>next_contact_flow()</function>.
 		  Upon each call, Request URI is rewritten with
 		  the first contact and the remaining contacts (if any) are
 		  added as branches. Then all highest priority contacts
@@ -1204,25 +1247,22 @@ if (!t_next_contacts()) {
 		</example>
 	</section>
 
-	<section>
+	<section id="tm.f.t_next_contact_flow">
 		<title>
-		<function moreinfo="none">t_next_contact_flows()</function>
+		<function moreinfo="none">t_next_contact_flow()</function>
 		</title>
 		<para>
-		  Function <function>t_next_contact_flows()</function> 
+		  Function <function>t_next_contact_flow()</function>
 		  is the last of the three functions that can be used to
-		  implement serial/parallel
-		  forking based on the q value of the individual branches
-		  in a destination set.
+		  implement serial/parallel forking based on the q value
+		  and instance value of individual branches in a destination set.
 		</para>
 		<para>
-		  Function adds to request a new destination set that
-		  includes contacts from <varname>contact_flows_avp</varname>,
-		  but only one contact with same +sip.instance value is
-		  included.  Upon each call, Request URI is rewritten with
-		  first contact (if any) and the remaining contacts (if any) are
-		added as branches. Then the used contacts
-		are removed from <varname>contact_flows_avp</varname>.
+		  Function adds a new branch to the request that includes
+		  the first contact from <varname>contact_flows_avp</varname>
+		  that matches the +sip.instance value of the flow that has failed.
+		  Upon each call, Request URI is rewritten with the contact. The
+		  used contact is removed from <varname>contact_flows_avp</varname>.
 		</para>
 		<para>
 		  Function does nothing if there are
@@ -1230,26 +1270,31 @@ if (!t_next_contacts()) {
 		</para>
 		<para>
 		Function returns 1 if <varname>contact_flows_avp</varname>
-		was not empty and a
-		destination set was successfully added,
+		was not empty and a destination set was successfully added,
 		returns -2 if <varname>contacts_avp</varname>
 		was empty and thus there was
 		nothing to do, and returns -1 in case of an error (see
 		syslog).
-          	This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		This function can be used from a BRANCH_FAILURE event route.
 		</para>
 		<example>
-		<title><function>t_next_contact_flows</function> usage</title>
+		<title><function>t_next_contact_flow</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (!t_next_contact_flows())
-    t_next_contacts();
+event_route[tm:branch_failure:outbound]
+{
+	if (t_next_contact_flow())
+	{
+		t_relay();
+	} else {
+		xlog("L_INFO", "No more flows\n");
+	}
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="t_check_trans">
+	<section id="tm.f.t_check_trans">
 	<title>
 		<function>t_check_trans()</function>
 	</title>
@@ -1327,7 +1372,7 @@ if ( method == "CANCEL" &amp;&amp; !t_check_trans())
 	</example>
 	</section>
 
-	<section id="t_set_disable_6xx">
+	<section id="tm.f.t_set_disable_6xx">
 	<title>
 		<function>t_set_disable_6xx(0|1)</function>
 	</title>
@@ -1358,7 +1403,7 @@ route {
 	</example>
 	</section>
 
-	<section id="t_set_disable_failover">
+	<section id="tm.f.t_set_disable_failover">
 	<title>
 		<function>t_set_disable_failover(0|1)</function>
 	</title>
@@ -1382,7 +1427,7 @@ route {
 	</example>
 	</section>
 
-	<section id="t_replicate">
+	<section id="tm.f.t_replicate">
 	<title>
 	    <function>t_replicate(params)</function>
 	</title>
@@ -1457,7 +1502,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
 	    </programlisting>
 	</example>
     </section>
-	<section id="t_relay_to">
+	<section id="tm.f.t_relay_to">
 	<title>
 	    <function>t_relay_to(proxy, flags)</function>
 	</title>
@@ -1529,7 +1574,7 @@ t_relay_to("0x01");
     </section>
 
 
-	<section id="t_set_no_e2e_cancel_reason">
+	<section id="tm.f.t_set_no_e2e_cancel_reason">
 	<title>
 		<function>t_set_no_e2e_cancel_reason(0|1)</function>
 	</title>
@@ -1559,7 +1604,7 @@ route {
 	</example>
 	</section>
 
-	<section id="t_is_set">
+	<section id="tm.f.t_is_set">
 	<title>
 	    <function>t_is_set(target)</function>
 	</title>

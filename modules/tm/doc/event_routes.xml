@@ -8,22 +8,28 @@
 
     <title>Event Routes</title>
 
-    <section id="tm.e.branch_failure">
+    <section id="tm.e.branch-failure">
 	<title>
-	    <function moreinfo="none">event_route[tm:branch_failure]</function>
+	    <function moreinfo="none">event_route[tm:branch-failure]</function>
 	</title>
 	<para>
-            When defined, this event route will be run when a failure response is received.
+	    Named branch failure routes can be defined to run when when a failure response is received.
             This allows handling failures on individual branches, for example, retrying an alternative outbound flow.
 	</para>
         <para>
+	    The format of the event_route name is "tm:branch-failure:&lt;name&gt;" and is enabled with the t_on_branch_failure function.
             This event_route uses the BRANCH_FAILURE_ROUTE route type.
         </para>
 	<example>
-	    <title><function>event_route[tm:branch_failure]</function> usage</title>
+	    <title><function>event_route[tm:branch-failure]</function> usage</title>
 	    <programlisting>
 ...
-event_route[tm:branch_failure] {
+route {
+    t_on_branch_failure("myroute");
+    t_relay();
+}
+
+event_route[tm:branch-failure:myroute] {
     xlog("L_INFO", "Received $T_reply_code to $rm message\n");
 }
 ...
