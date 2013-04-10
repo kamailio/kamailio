@@ -37,16 +37,17 @@
 
 
 /*! \brief Unscape all printable ASCII characters */
-int unescape_string(str *sin)
+int unescape_string(str *sin, str *sout)
 {
 	char *at, *p, c;
 
-	if (sin == NULL || sin->s == NULL || sin->len < 0)
+	if(sin==NULL || sout==NULL || sin->s==NULL || sout->s==NULL
+			|| sin->len<0 || sout->len < sin->len+1)
 		return -1;
 
-	at = sin->s;
+	at = sout->s;
 	p  = sin->s;
-	while(p < sin->s + sin->len)
+	while(p < sin->s+sin->len)
 	{
 	    if (*p == '%')
 		{
@@ -129,11 +130,13 @@ int unescape_string(str *sin)
 	    } else {
 			*at++ = *p;
 	    }
-	    p++;
+		p++;
 	}
 
-	sin->len = at - sin->s;
+	*at = 0;
+	sout->len = at - sout->s;
 	
+	LM_DBG("unescaped string is <%s>\n", sout->s);
 	return 0;
 }
 
@@ -143,6 +146,8 @@ int unescape_string(str *sin)
 int build_path_vector(struct sip_msg *_m, str *path, str *received)
 {
 	static char buf[MAX_PATH_SIZE];
+	static char uri_buf[MAX_URI_SIZE];
+	static str uri_str;
 	char *p;
 	struct hdr_field *hdr;
 	struct sip_uri puri;
@@ -196,10 +201,14 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 			}
 
 			if (hooks.contact.received) {
-				*received = hooks.contact.received->body;
-				if (unescape_string(received) < 0)
-				    LM_ERR("unescaping received value <%.*s> failed\n",
-					   received->len, received->s);
+			        uri_str.s = uri_buf;
+				uri_str.len = MAX_URI_SIZE;
+			        if (unescape_string(&(hooks.contact.received->body), &uri_str) < 0) {
+				    LM_ERR("unescaping received failed\n");
+				    goto error;
+				}
+				*received = uri_str;
+				LM_DBG("received is <%.*s>\n", received->len, received->s);
 			}
 				
 			/*for (;params; params = params->next) {
@@ -215,6 +224,7 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 
 	path->s = buf;
 	path->len = p-buf;
+	LM_DBG("path is <%.*s>\n", path->len, path->s);
 	return 0;
 error:
 	if(route) free_rr(&route);
