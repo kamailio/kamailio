@@ -448,8 +448,10 @@ static cmd_export_t cmds[]={
 		fixup_var_int_1,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 #endif /* CANCEL_REASON_SUPPORT */
-	{"t_branch_timeout",  t_branch_timeout,         0, 0,  FAILURE_ROUTE},
-	{"t_branch_replied",  t_branch_replied,         0, 0,  FAILURE_ROUTE},
+	{"t_branch_timeout",  t_branch_timeout,         0, 0,
+	                FAILURE_ROUTE|EVENT_ROUTE},
+	{"t_branch_replied",  t_branch_replied,         0, 0,
+	                FAILURE_ROUTE|EVENT_ROUTE},
 	{"t_any_timeout",     t_any_timeout,            0, 0, 
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_any_replied",     t_any_replied,            0, 0, 
@@ -1831,21 +1833,37 @@ T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
 #endif /* CANCEL_REASON_SUPPORT */
 
 
-/* script function, FAILURE_ROUTE only, returns true if the 
- * choosed "failure" branch failed because of a timeout, 
+/* script function, FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
+ * returns true if the choosed "failure" branch failed because of a timeout, 
  * -1 otherwise */
 int t_branch_timeout(struct sip_msg* msg, char* foo, char* bar)
 {
+    switch(get_route_type()) {
+    case FAILURE_ROUTE:
+    case BRANCH_FAILURE_ROUTE:
 	return (msg->msg_flags & FL_TIMEOUT)?1:-1;
+    default:
+	LOG(L_ERR, "ERROR:t_check_status: unsupported route type %d\n",
+	    get_route_type());
+    }
+    return -1;
 }
 
 
-
-/* script function, FAILURE_ROUTE only, returns true if the 
- * choosed "failure" branch ever received a reply, -1 otherwise */
+/* script function, FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
+ * returns true if the choosed "failure" branch ever received a reply,
+ * -1 otherwise */
 int t_branch_replied(struct sip_msg* msg, char* foo, char* bar)
 {
+    switch(get_route_type()) {
+    case FAILURE_ROUTE:
+    case BRANCH_FAILURE_ROUTE:
 	return (msg->msg_flags & FL_REPLIED)?1:-1;
+    default:
+	LOG(L_ERR, "ERROR:t_check_status: unsupported route type %d\n",
+	    get_route_type());
+    }
+    return -1;
 }
 
 
