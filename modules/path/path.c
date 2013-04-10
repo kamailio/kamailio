@@ -145,27 +145,27 @@ static int prepend_path(struct sip_msg* _m, str *user, path_param_t param)
 	if (param == PATH_PARAM_RECEIVED) {
 		/* TODO: agranig: optimize this one! */
 		src_ip = ip_addr2a(&_m->rcv.src_ip);
-		rcv_addr.s = pkg_malloc(6 + IP_ADDR_MAX_STR_SIZE + 22); /* 'sip:<ip>:<port>;transport=sctp'\0 */
+		rcv_addr.s = pkg_malloc(6 + IP_ADDR_MAX_STR_SIZE + 24); /* sip:<ip>:<port>%3Btransport%3Dsctp\0 */
 		if(!rcv_addr.s) {
 			LM_ERR("no pkg memory left for receive-address\n");
 			goto out3;
 		}
 		switch (_m->rcv.proto) {
 			case PROTO_UDP:
-				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 6, "'sip:%s:%u'", src_ip, _m->rcv.src_port);
+				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 4, "sip:%s:%u", src_ip, _m->rcv.src_port);
 				break;
 			case PROTO_TCP:
-				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 20, "'sip:%s:%u;transport=tcp'", src_ip, _m->rcv.src_port);
+				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 22, "sip:%s:%u%%3Btransport%%3Dtcp", src_ip, _m->rcv.src_port);
 				break;
 			case PROTO_TLS:
-				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 20, "'sip:%s:%u;transport=tls'", src_ip, _m->rcv.src_port);
+				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 22, "sip:%s:%u%%3Btransport%%3Dtls", src_ip, _m->rcv.src_port);
 				break;
 			case PROTO_SCTP:
-				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 21, "'sip:%s:%u;transport=sctp'", src_ip, _m->rcv.src_port);
+				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 23, "sip:%s:%u%%3Btransport%%3Dsctp", src_ip, _m->rcv.src_port);
 				break;
 			case PROTO_WS:
 			case PROTO_WSS:
-				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 19, "'sip:%s:%u;transport=ws'", src_ip, _m->rcv.src_port);
+				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 21, "sip:%s:%u%%3Btransport%%3Dws", src_ip, _m->rcv.src_port);
 				break;
 	    }
 
