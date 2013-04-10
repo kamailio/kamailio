@@ -35,6 +35,108 @@
 #include "path.h"
 #include "reg_mod.h"
 
+
+/*! \brief Unscape all printable ASCII characters */
+int unescape_string(str *sin)
+{
+	char *at, *p, c;
+
+	if (sin == NULL || sin->s == NULL || sin->len < 0)
+		return -1;
+
+	at = sin->s;
+	p  = sin->s;
+	while(p < sin->s + sin->len)
+	{
+	    if (*p == '%')
+		{
+			p++;
+			switch (*p)
+			{
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+				    c = (*p - '0') << 4;
+			    break;
+				case 'a':
+				case 'b':
+				case 'c':
+				case 'd':
+				case 'e':
+				case 'f':
+				    c = (*p - 'a' + 10) << 4;
+			    break;
+				case 'A':
+				case 'B':
+				case 'C':
+				case 'D':
+				case 'E':
+				case 'F':
+				    c = (*p - 'A' + 10) << 4;
+			    break;
+				default:
+				    LM_ERR("invalid hex digit <%u>\n", (unsigned int)*p);
+				    return -1;
+			}
+			p++;
+			switch (*p)
+			{
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+				    c =  c + (*p - '0');
+			    break;
+				case 'a':
+				case 'b':
+				case 'c':
+				case 'd':
+				case 'e':
+				case 'f':
+				    c = c + (*p - 'a' + 10);
+			    break;
+				case 'A':
+				case 'B':
+				case 'C':
+				case 'D':
+				case 'E':
+				case 'F':
+				    c = c + (*p - 'A' + 10);
+			    break;
+				default:
+				    LM_ERR("invalid hex digit <%u>\n", (unsigned int)*p);
+				    return -1;
+			}
+			if ((c < 32) || (c > 126))
+			{
+			    LM_ERR("invalid escaped character <%u>\n", (unsigned int)c);
+			    return -1;
+			}
+			*at++ = c;
+	    } else {
+			*at++ = *p;
+	    }
+	    p++;
+	}
+
+	sin->len = at - sin->s;
+	
+	return 0;
+}
+
 /*! \brief
  * Combines all Path HF bodies into one string.
  */
@@ -92,8 +194,14 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 				LM_ERR("failed to parse parameters of first hop\n");
 				goto error;
 			}
-			if (hooks.contact.received)
+
+			if (hooks.contact.received) {
 				*received = hooks.contact.received->body;
+				if (unescape_string(received) < 0)
+				    LM_ERR("unescaping received value <%.*s> failed\n",
+					   received->len, received->s);
+			}
+				
 			/*for (;params; params = params->next) {
 				if (params->type == P_RECEIVED) {
 					*received = hooks.contact.received->body;
