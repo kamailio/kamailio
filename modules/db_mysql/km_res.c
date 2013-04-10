@@ -73,7 +73,7 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 		return -3;
 	}
 
-	fields = mysql_fetch_fields(CON_RESULT(_h));
+	fields = mysql_fetch_fields(RES_RESULT(_r));
 	for(col = 0; col < RES_COL_N(_r); col++) {
 		RES_NAMES(_r)[col] = (str*)pkg_malloc(sizeof(str));
 		if (! RES_NAMES(_r)[col]) {
@@ -164,7 +164,7 @@ static inline int db_mysql_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 		return -1;
 	}
 
-	RES_ROW_N(_r) = mysql_num_rows(CON_RESULT(_h));
+	RES_ROW_N(_r) = mysql_num_rows(RES_RESULT(_r));
 	if (!RES_ROW_N(_r)) {
 		LM_DBG("no rows returned from the query\n");
 		RES_ROWS(_r) = 0;
@@ -177,8 +177,8 @@ static inline int db_mysql_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 	}
 
 	for(row = 0; row < RES_ROW_N(_r); row++) {
-		CON_ROW(_h) = mysql_fetch_row(CON_RESULT(_h));
-		if (!CON_ROW(_h)) {
+		RES_ROW(_r) = mysql_fetch_row(RES_RESULT(_r));
+		if (!RES_ROW(_r)) {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(_r) = row;
 			db_free_rows(_r);
@@ -221,3 +221,22 @@ int db_mysql_convert_result(const db1_con_t* _h, db1_res_t* _r)
 	return 0;
 }
 
+
+/*!
+ * \brief Allocate new result set with private structure
+ * \return db1_res_t object on success, NULL on failure
+ */
+db1_res_t* db_mysql_new_result(void)
+{
+	db1_res_t* obj;
+
+	obj = db_new_result();
+	if (!obj)
+		return NULL;
+	RES_PTR(obj) = pkg_malloc(sizeof(struct my_res));
+	if (!RES_PTR(obj)) {
+		db_free_result(obj);
+		return NULL;
+	}
+	return obj;
+}
