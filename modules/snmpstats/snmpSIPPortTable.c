@@ -29,6 +29,7 @@
  * --------
  * 2006-11-23 initial version (jmagder)
  * 2013-02-24 Added SCTP support (oej)
+ * 2013-04-07 Added IPv6 support (oej)
  * 
  * Originally Generated with mib2c using mib2c.array-user.conf
  *

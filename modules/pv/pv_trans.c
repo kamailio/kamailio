@@ -39,6 +39,7 @@
 #include "../../trim.h" 
 #include "../../pvapi.h"
 #include "../../dset.h"
+#include "../../basex.h"
 
 #include "../../parser/parse_param.h"
 #include "../../parser/parse_uri.h"
@@ -189,6 +190,32 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					_tr_buffer[i] += val->rs.s[2*i+1]-'A'+10;
 				else return -1;
 			}
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_ENCODEBASE64:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			i = base64_enc((unsigned char *) val->rs.s, val->rs.len,
+					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0)
+				return -1;
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_DECODEBASE64:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			i = base64_dec((unsigned char *) val->rs.s, val->rs.len,
+					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0 || (i == 0 && val->rs.len > 0))
+				return -1;
 			_tr_buffer[i] = '\0';
 			memset(val, 0, sizeof(pv_value_t));
 			val->flags = PV_VAL_STR;
@@ -1748,6 +1775,12 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==11 && strncasecmp(name.s, "decode.hexa", 11)==0) {
 		t->subtype = TR_S_DECODEHEXA;
+		goto done;
+	} else if(name.len==13 && strncasecmp(name.s, "encode.base64", 13)==0) {
+		t->subtype = TR_S_ENCODEBASE64;
+		goto done;
+	} else if(name.len==13 && strncasecmp(name.s, "decode.base64", 13)==0) {
+		t->subtype = TR_S_DECODEBASE64;
 		goto done;
 	} else if(name.len==13 && strncasecmp(name.s, "escape.common", 13)==0) {
 		t->subtype = TR_S_ESCAPECOMMON;

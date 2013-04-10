@@ -430,16 +430,27 @@ int get_total_bytes_waiting(void)
 	int *UDPList  = NULL;
 	int *TCPList  = NULL;
 	int *TLSList  = NULL;
+	int *UDP6List  = NULL;
+	int *TCP6List  = NULL;
+	int *TLS6List  = NULL;
 
 	int numUDPSockets  = 0;
 	int numTCPSockets  = 0; 
 	int numTLSSockets  = 0;
+	int numUDP6Sockets  = 0;
+	int numTCP6Sockets  = 0; 
+	int numTLS6Sockets  = 0;
 
 	/* Extract out the IP address address for UDP, TCP, and TLS, keeping
 	 * track of the number of IP addresses from each transport  */
 	numUDPSockets  = get_socket_list_from_proto(&UDPList,  PROTO_UDP);
 	numTCPSockets  = get_socket_list_from_proto(&TCPList,  PROTO_TCP);
 	numTLSSockets  = get_socket_list_from_proto(&TLSList,  PROTO_TLS);
+
+	numUDP6Sockets  = get_socket_list_from_proto_and_family(&UDP6List,  PROTO_UDP, AF_INET6);
+	numTCP6Sockets  = get_socket_list_from_proto_and_family(&TCP6List,  PROTO_TCP, AF_INET6);
+	numTLS6Sockets  = get_socket_list_from_proto_and_family(&TLS6List,  PROTO_TLS, AF_INET6);
+
 	/* Deliberately not looking at PROTO_WS or PROTO_WSS here as they are
 	   just upgraded TCP/TLS connections */
 
@@ -449,21 +460,37 @@ int get_total_bytes_waiting(void)
 	bytesWaiting  += get_used_waiting_queue(1, TCPList,  numTCPSockets);
 	bytesWaiting  += get_used_waiting_queue(1, TLSList,  numTLSSockets);
 
+	bytesWaiting  += get_used_waiting_queue(0, UDP6List,  numUDP6Sockets);
+	bytesWaiting  += get_used_waiting_queue(1, TCP6List,  numTCP6Sockets);
+	bytesWaiting  += get_used_waiting_queue(1, TLS6List,  numTLS6Sockets);
+
 	/* get_socket_list_from_proto() allocated a chunk of memory, so we need
 	 * to free it. */
 	if (numUDPSockets > 0)
 	{
 		pkg_free(UDPList);
 	}
+	if (numUDP6Sockets > 0)
+	{
+		pkg_free(UDP6List);
+	}
 
 	if (numTCPSockets > 0) 
 	{
 		pkg_free(TCPList);
 	}
+	if (numTCP6Sockets > 0) 
+	{
+		pkg_free(TCP6List);
+	}
 
 	if (numTLSSockets > 0)
 	{
 		pkg_free(TLSList);
+	}
+	if (numTLS6Sockets > 0)
+	{
+		pkg_free(TLS6List);
 	}
 
 	return bytesWaiting;
