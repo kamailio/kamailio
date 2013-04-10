@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     4.1.0
-%define rel     dev1%{dist}
+%define rel     dev2%{dist}
 
 
 
@@ -588,6 +588,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sdpops
 %doc %{_docdir}/kamailio/modules/README.seas
 %doc %{_docdir}/kamailio/modules/README.sipcapture
+%doc %{_docdir}/kamailio/modules/README.sipt
 %doc %{_docdir}/kamailio/modules/README.siptrace
 %doc %{_docdir}/kamailio/modules/README.siputils
 %doc %{_docdir}/kamailio/modules/README.sl
@@ -727,6 +728,7 @@ fi
 %{_libdir}/kamailio/modules/sca.so
 %{_libdir}/kamailio/modules/seas.so
 %{_libdir}/kamailio/modules/sipcapture.so
+%{_libdir}/kamailio/modules/sipt.so
 %{_libdir}/kamailio/modules/siptrace.so
 %{_libdir}/kamailio/modules/siputils.so
 %{_libdir}/kamailio/modules/sl.so
@@ -1107,6 +1109,9 @@ fi
 
 
 %changelog
+* Wed Apr 10 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Added sipt module to .spec
+  - Updated rel to dev2
 * Fri Mar 29 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Added stun module to .spec
   - Updated rel to dev1
