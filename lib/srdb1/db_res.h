@@ -61,6 +61,7 @@ typedef struct db1_res {
 	int n;                 /**< Number of rows in current fetch */
 	int res_rows;          /**< Number of total rows in query   */
 	int last_row;          /**< Last row                        */
+	void* ptr;             /**< For use by DB modules           */
 } db1_res_t;
 
 
@@ -78,6 +79,8 @@ typedef struct db1_res {
 #define RES_LAST_ROW(re)  ((re)->last_row)
 /** Return the number of total result rows */
 #define RES_NUM_ROWS(re) ((re)->res_rows)
+/** Return the module-specific pointer */
+#define RES_PTR(re) ((re)->ptr)
 
 
 /**
