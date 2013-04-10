@@ -1286,6 +1286,7 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 			lifetime=cfg_get(tm, tm_cfg, tm_max_noninv_lifetime);
 	}
 	new_cell->on_failure=get_on_failure();
+	new_cell->on_branch_failure=get_on_branch_failure();
 	new_cell->on_reply=get_on_reply();
 	new_cell->end_of_life=get_ticks_raw()+lifetime;;
 	new_cell->fr_timeout=(ticks_t)get_msgid_val(user_fr_timeout,

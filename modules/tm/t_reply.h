@@ -61,7 +61,6 @@ enum rps {
 extern char tm_tags[TOTAG_VALUE_LEN];
 extern char *tm_tag_suffix;
 
-extern int goto_on_branch_failure;
 extern int goto_on_sl_reply;
 
 extern int failure_reply_mode;
@@ -215,6 +214,8 @@ void on_failure_reply( struct cell* t, struct sip_msg* msg,
 */
 void t_on_failure( unsigned int go_to );
 unsigned int get_on_failure(void);
+void t_on_branch_failure( unsigned int go_to );
+unsigned int get_on_branch_failure(void);
 void t_on_reply( unsigned int go_to );
 unsigned int get_on_reply(void);
 
