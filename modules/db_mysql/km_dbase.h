@@ -57,7 +57,7 @@ void db_mysql_close(db1_con_t* _h);
 /*! \brief
  * Free all memory allocated by get_result
  */
-int db_mysql_free_result(db1_con_t* _h, db1_res_t* _r);
+int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r);
 
 
 /*! \brief

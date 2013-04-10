@@ -163,14 +163,14 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 		return -1;
 	}
 
-	*_r = db_new_result();
+	*_r = db_mysql_new_result();
 	if (*_r == 0) {
 		LM_ERR("no memory left\n");
 		return -2;
 	}
 
-	CON_RESULT(_h) = mysql_store_result(CON_CONNECTION(_h));
-	if (!CON_RESULT(_h)) {
+	RES_RESULT(*_r) = mysql_store_result(CON_CONNECTION(_h));
+	if (!RES_RESULT(*_r)) {
 		if (mysql_field_count(CON_CONNECTION(_h)) == 0) {
 			(*_r)->col.n = 0;
 			(*_r)->n = 0;
@@ -181,7 +181,7 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 			if (code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
 				counter_inc(mysql_cnts_h.driver_err);
 			}
-			db_free_result(*_r);
+			db_mysql_free_result(_h, *_r);
 			*_r = 0;
 			return -3;
 		}
@@ -195,14 +195,14 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 		/* all mem on Kamailio API side is already freed by
 		 * db_mysql_convert_result in case of error, but we also need
 		 * to free the mem from the mysql lib side */
-		mysql_free_result(CON_RESULT(_h));
+		mysql_free_result(RES_RESULT(*_r));
 #if (MYSQL_VERSION_ID >= 40100)
 		while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) > 0 ) {
 			MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
 			mysql_free_result(res);
 		}
 #endif
-		CON_RESULT(_h) = 0;
+		RES_RESULT(*_r) = 0;
 		return -4;
 	}
 
@@ -224,19 +224,21 @@ done:
  * \param _r result set that should be freed
  * \return zero on success, negative value on failure
  */
-int db_mysql_free_result(db1_con_t* _h, db1_res_t* _r)
+int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r)
 {
      if ((!_h) || (!_r)) {
 	     LM_ERR("invalid parameter value\n");
 	     return -1;
      }
 
+     mysql_free_result(RES_RESULT(_r));
+     RES_RESULT(_r) = 0;
+     pkg_free(RES_PTR(_r));
+
      if (db_free_result(_r) < 0) {
 	     LM_ERR("unable to free result structure\n");
 	     return -1;
      }
-     mysql_free_result(CON_RESULT(_h));
-     CON_RESULT(_h) = 0;
      return 0;
 }
 
@@ -288,21 +290,21 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 
 	/* exit if the fetch count is zero */
 	if (nrows == 0) {
-		db_free_result(*_r);
+		db_mysql_free_result(_h, *_r);
 		*_r = 0;
 		return 0;
 	}
 
 	if(*_r==0) {
 		/* Allocate a new result structure */
-		*_r = db_new_result();
+		*_r = db_mysql_new_result();
 		if (*_r == 0) {
 			LM_ERR("no memory left\n");
 			return -2;
 		}
 
-		CON_RESULT(_h) = mysql_store_result(CON_CONNECTION(_h));
-		if (!CON_RESULT(_h)) {
+		RES_RESULT(*_r) = mysql_store_result(CON_CONNECTION(_h));
+		if (!RES_RESULT(*_r)) {
 			if (mysql_field_count(CON_CONNECTION(_h)) == 0) {
 				(*_r)->col.n = 0;
 				(*_r)->n = 0;
@@ -313,7 +315,7 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 				if (code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
 					counter_inc(mysql_cnts_h.driver_err);
 				}
-				db_free_result(*_r);
+				db_mysql_free_result(_h, *_r);
 				*_r = 0;
 				return -3;
 			}
@@ -323,7 +325,7 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 			return -4;
 		}
 
-		RES_NUM_ROWS(*_r) = mysql_num_rows(CON_RESULT(_h));
+		RES_NUM_ROWS(*_r) = mysql_num_rows(RES_RESULT(*_r));
 		if (!RES_NUM_ROWS(*_r)) {
 			LM_DBG("no rows returned from the query\n");
 			RES_ROWS(*_r) = 0;
@@ -362,8 +364,8 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 	}
 
 	for(i = 0; i < rows; i++) {
-		CON_ROW(_h) = mysql_fetch_row(CON_RESULT(_h));
-		if (!CON_ROW(_h)) {
+		RES_ROW(*_r) = mysql_fetch_row(RES_RESULT(*_r));
+		if (!RES_ROW(*_r)) {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(*_r) = i;
 			db_free_rows(*_r);
