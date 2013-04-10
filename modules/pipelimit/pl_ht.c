@@ -544,7 +544,7 @@ struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param)
 	pipeid = node->value;
 	
 	node = node->next;
-	if ( !node->value.s || !node->value.len)
+	if ( !node || !node->value.s || !node->value.len)
 		goto error;
 	if (str_map_str(algo_names, &(node->value), (int*)&algo_id)) {
 		LM_ERR("unknown algorithm: '%.*s'\n", node->value.len, node->value.s);
@@ -552,7 +552,7 @@ struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param)
 	}
 	
 	node = node->next;
-	if ( !node->value.s || !node->value.len || strno2int(&node->value,&limit)<0)
+	if ( !node || !node->value.s || !node->value.len || strno2int(&node->value,&limit)<0)
 		goto error;
 
 	LM_DBG("set_pipe: %.*s:%d:%d\n", pipeid.len, pipeid.s, algo_id, limit);
