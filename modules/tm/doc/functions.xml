@@ -729,8 +729,9 @@ route {
 	</title>
 	<para>
 		Returns true if the failure route is executed for a branch that did
-		timeout. It can be used only from the 
-		<emphasis>failure_route</emphasis>.
+		timeout. It can be used from 
+		<emphasis>failure_route</emphasis> and
+		<emphasis>branch-failure</emphasis> event route.
 	</para>
 	<example>
 	    <title><function>t_branch_timeout</function> usage</title>
@@ -753,8 +754,9 @@ failure_route[0]{
 	<para>
 		Returns true if the failure route is executed for a branch that did
 		receive at least one reply in the past (the "current" reply is not 
-		taken into account). It can be used only from the 
-		<emphasis>failure_route</emphasis>.
+		taken into account). It can be used from
+		<emphasis>failure_route</emphasis>  and
+		<emphasis>branch-failure</emphasis> event route.
 	</para>
 	<example>
 	    <title><function>t_branch_replied</function> usage</title>
