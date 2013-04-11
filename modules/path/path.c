@@ -36,6 +36,7 @@
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../parser/parse_param.h"
+#include "../../lib/kcore/strcommon.h"
 #include "../../dset.h"
 
 #include "path.h"
@@ -257,6 +258,8 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 {
 	param_hooks_t hooks;
 	param_t *params;
+	static char dst_uri_buf[MAX_URI_SIZE];
+	static str dst_uri;
 			
 	if (parse_params(r_param, CLASS_CONTACT, &hooks, &params) != 0) {
 		LM_ERR("failed to parse route parameters\n");
@@ -264,7 +267,14 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 	}
 
 	if (hooks.contact.received) {
-		if (set_dst_uri(_m, &hooks.contact.received->body) != 0) {
+	        dst_uri.s = dst_uri_buf;
+		dst_uri.len = MAX_URI_SIZE;
+		if (unescape_user(&(hooks.contact.received->body), &dst_uri) < 0) {
+		        LM_ERR("unescaping received failed\n");
+			free_params(params);
+			return;
+		}	    
+		if (set_dst_uri(_m, &dst_uri) != 0) {
 			LM_ERR("failed to set dst-uri\n");
 			free_params(params);
 			return;
