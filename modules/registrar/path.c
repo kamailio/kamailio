@@ -32,113 +32,10 @@
 #include "../../data_lump.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
+#include "../../lib/kcore/strcommon.h"
 #include "path.h"
 #include "reg_mod.h"
 
-
-/*! \brief Unscape all printable ASCII characters */
-int unescape_string(str *sin, str *sout)
-{
-	char *at, *p, c;
-
-	if(sin==NULL || sout==NULL || sin->s==NULL || sout->s==NULL
-			|| sin->len<0 || sout->len < sin->len+1)
-		return -1;
-
-	at = sout->s;
-	p  = sin->s;
-	while(p < sin->s+sin->len)
-	{
-	    if (*p == '%')
-		{
-			p++;
-			switch (*p)
-			{
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-				    c = (*p - '0') << 4;
-			    break;
-				case 'a':
-				case 'b':
-				case 'c':
-				case 'd':
-				case 'e':
-				case 'f':
-				    c = (*p - 'a' + 10) << 4;
-			    break;
-				case 'A':
-				case 'B':
-				case 'C':
-				case 'D':
-				case 'E':
-				case 'F':
-				    c = (*p - 'A' + 10) << 4;
-			    break;
-				default:
-				    LM_ERR("invalid hex digit <%u>\n", (unsigned int)*p);
-				    return -1;
-			}
-			p++;
-			switch (*p)
-			{
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-				    c =  c + (*p - '0');
-			    break;
-				case 'a':
-				case 'b':
-				case 'c':
-				case 'd':
-				case 'e':
-				case 'f':
-				    c = c + (*p - 'a' + 10);
-			    break;
-				case 'A':
-				case 'B':
-				case 'C':
-				case 'D':
-				case 'E':
-				case 'F':
-				    c = c + (*p - 'A' + 10);
-			    break;
-				default:
-				    LM_ERR("invalid hex digit <%u>\n", (unsigned int)*p);
-				    return -1;
-			}
-			if ((c < 32) || (c > 126))
-			{
-			    LM_ERR("invalid escaped character <%u>\n", (unsigned int)c);
-			    return -1;
-			}
-			*at++ = c;
-	    } else {
-			*at++ = *p;
-	    }
-		p++;
-	}
-
-	*at = 0;
-	sout->len = at - sout->s;
-	
-	LM_DBG("unescaped string is <%s>\n", sout->s);
-	return 0;
-}
 
 /*! \brief
  * Combines all Path HF bodies into one string.
@@ -203,9 +100,9 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 			if (hooks.contact.received) {
 			        uri_str.s = uri_buf;
 				uri_str.len = MAX_URI_SIZE;
-			        if (unescape_string(&(hooks.contact.received->body), &uri_str) < 0) {
-				    LM_ERR("unescaping received failed\n");
-				    goto error;
+			        if (unescape_user(&(hooks.contact.received->body), &uri_str) < 0) {
+				        LM_ERR("unescaping received failed\n");
+				        goto error;
 				}
 				*received = uri_str;
 				LM_DBG("received is <%.*s>\n", received->len, received->s);
