@@ -805,11 +805,25 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					case '\r':
 					case ' ':
 					case '\t': /* FIXME: check if line contains only WS */
+						if(r->content_len<0) {
+							LOG(L_ERR, "bad Content-Length header value %d in"
+									" state %d\n", r->content_len, r->state);
+							r->content_len=0;
+							r->error=TCP_REQ_BAD_LEN;
+							r->state=H_SKIP; /* skip now */
+						}
 						r->state=H_SKIP;
 						r->flags|=F_TCP_REQ_HAS_CLEN;
 						break;
 					case '\n':
 						/* end of line, parse successful */
+						if(r->content_len<0) {
+							LOG(L_ERR, "bad Content-Length header value %d in"
+									" state %d\n", r->content_len, r->state);
+							r->content_len=0;
+							r->error=TCP_REQ_BAD_LEN;
+							r->state=H_SKIP; /* skip now */
+						}
 						r->state=H_LF;
 						r->flags|=F_TCP_REQ_HAS_CLEN;
 						break;
