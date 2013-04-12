@@ -1350,6 +1350,12 @@ sca_subscription_reply( sca_mod *scam, int status_code, char *status_msg,
     return( sca_reply( scam, status_code, status_msg, &extra_headers, msg ));
 }
 
+/*
+ * return values:
+ *	-1: error
+ *	 0: no subscription found to terminate
+ *	 1: subscription terminated
+ */
     int
 sca_subscription_terminate( sca_mod *scam, str *aor, int event,
 	str *subscriber, int termination_state, int opts )
@@ -1395,7 +1401,7 @@ sca_subscription_terminate( sca_mod *scam, str *aor, int event,
     if ( ent == NULL ) {
 	LM_DBG( "No %s subscription for %.*s", event_name,
 		STR_FMT( subscriber ));
-	return( 1 );
+	return( 0 );
     }
 
     sub = (sca_subscription *)ent->value;
