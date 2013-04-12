@@ -877,8 +877,10 @@ sca_call_info_local_error_reply_handler( sip_msg_t *msg, int status )
 {
     struct to_body	*from;
     struct to_body	*to;
+    sca_appearance	*app;
     str			aor = STR_NULL;
     str			contact_uri = STR_NULL;
+    int			rc;
 
     if ( sca_get_msg_from_header( msg, &from ) < 0 ) {
 	LM_ERR( "sca_call_info_sl_reply_cb: failed to get From header from "
@@ -909,15 +911,36 @@ sca_call_info_local_error_reply_handler( sip_msg_t *msg, int status )
 	return;
     }
 
-    if ( sca_subscription_terminate( sca, &aor,
+    /*
+     * two typical cases to handle. in the first case, we haven't dropped
+     * our line-seize subscription because a transaction exists but we
+     * never got a provisional 18x response before calling t_reply. calling
+     * sca_subscription_terminate will drop the subscription and release
+     * the seized appearance.
+     *
+     * in the second case, we got a 18x response and terminated the
+     * line-seize subscription, so we need to look up the appearance by
+     * tags in order to release it.
+     */
+    rc = sca_subscription_terminate( sca, &aor,
 		SCA_EVENT_TYPE_LINE_SEIZE, &contact_uri,
 		SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
-		SCA_SUBSCRIPTION_TERMINATE_OPT_DEFAULT ) < 0 ) {
+		SCA_SUBSCRIPTION_TERMINATE_OPT_DEFAULT );
+    if ( rc < 0 ) {
 	LM_ERR( "sca_call_info_sl_reply_cb: failed to terminate "
 		"line-seize subscription for %.*s", STR_FMT( &contact_uri ));
-    } else if ( sca_notify_call_info_subscribers( sca, &aor ) < 0 ) {
-	LM_ERR( "Failed to call-info NOTIFY %.*s subscribers",
-		STR_FMT( &aor ));
+    } else if ( rc == 0 ) {
+	/* no line-seize subscription found */
+	app = sca_appearance_unlink_by_tags( sca, &aor,
+		    &msg->callid->body, &from->tag_value, &to->tag_value );
+	if ( app ) {
+	    sca_appearance_free( app );
+	    if ( sca_notify_call_info_subscribers( sca, &aor ) < 0 ) {
+		LM_ERR( "sca_call_info_local_error_reply: failed to send "
+			"call-info NOTIFY to %.*s subscribers",
+			STR_FMT( &aor ));
+	    }
+	}
     }
 }
 
