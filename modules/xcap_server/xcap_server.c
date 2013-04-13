@@ -506,8 +506,8 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 	str uri;
 	str path;
 	str body = {0, 0};
-	str etag;
-	str etag_hdr;
+	str etag = {0, 0};
+	str etag_hdr = {0, 0};
 	str tbuf;
 	str nbuf = {0, 0};
 	str allow = {0, 0};
@@ -1069,7 +1069,7 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 	struct sip_uri turi;
 	str uri;
 	str path;
-	str etag;
+	str etag = {0, 0};
 	str body;
 	int ret = 0;
 	xcap_uri_t xuri;
