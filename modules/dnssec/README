@@ -1,0 +1,71 @@
+Dnssec Module
+
+Marius Zbihlei
+
+   Copyright © 2013
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. none
+
+   List of Examples
+
+   1.1.
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. none
+
+1. Overview
+
+   The module replaces the common system dns resolver function with the
+   DNSSEC wrappers provided by libval
+
+   Installing libval can be done from https://www.dnssec-tools.org/
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * LibVal must be install. Check https://www.dnssec-tools.org for
+       installation procedures.
+
+3. Parameters
+
+   3.1. none
+
+3.1. none
+
+   Example 1.1.
+...
