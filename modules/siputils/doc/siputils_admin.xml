@@ -989,6 +989,29 @@ if(is_gruu()) { ... }
 </programlisting>
 		</example>
 	</section>
+	<section id="is-supported">
+		<title>
+			<function moreinfo="none">is_supported(option)</function>
+		</title>
+		<para>
+			Function returns true if given option is listed
+			in Supported header(s) (if any) of the request.
+			Currently the following options are known: path,
+			100rel, timer, eventlist, gruu, and outbound.
+			
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title>is_supported() usage</title>
+		<programlisting format="linespecific">
+...
+if (is_supported("outbound")) { ... }
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 </chapter>

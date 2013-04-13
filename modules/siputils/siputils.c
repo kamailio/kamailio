@@ -65,6 +65,7 @@
 #include "../../ut.h"
 #include "../../mod_fix.h"
 #include "../../error.h"
+#include "../../parser/parse_option_tags.h"
 
 #include "ring.h"
 #include "options.h"
@@ -112,6 +113,7 @@ static int fixup_free_set_uri(void** param, int param_no);
 static int fixup_tel2sip(void** param, int param_no);
 static int fixup_get_uri_param(void** param, int param_no);
 static int free_fixup_get_uri_param(void** param, int param_no);
+static int fixup_option(void** param, int param_no);
 
 
 char *contact_flds_separator = DEFAULT_SEPARATOR;
@@ -168,6 +170,8 @@ static cmd_export_t cmds[]={
 	{"is_gruu",  (cmd_function)w_is_gruu,                    0, 0,
 		0, ANY_ROUTE},
 	{"is_gruu",  (cmd_function)w_is_gruu,                    1, fixup_spve_null,
+		0, ANY_ROUTE},
+	{"is_supported",  (cmd_function)w_is_supported,                    1, fixup_option,
 		0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
@@ -374,4 +378,70 @@ static int free_fixup_get_uri_param(void** param, int param_no) {
 	}
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
+}
+
+/* */
+static int fixup_option(void** param, int param_no) {
+
+    char *option;
+    unsigned int option_len, res;
+
+    option = (char *)*param;
+    option_len = strlen(option);
+
+    if (param_no != 1) {
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+    }
+
+    switch (option_len) {
+    case 4:
+	if (strncasecmp(option, "path", 4) == 0)
+	    res = F_OPTION_TAG_PATH;
+	else if (strncasecmp(option, "gruu", 4) == 0)
+	    res = F_OPTION_TAG_GRUU;
+	else {
+	    LM_ERR("unknown option <%s>\n", option);
+	    return -1;
+	}
+	break;
+    case 5:
+	if (strncasecmp(option, "timer", 5) == 0)
+	    res = F_OPTION_TAG_TIMER;
+	else {
+	    LM_ERR("unknown option <%s>\n", option);
+	    return -1;
+	}
+	break;
+    case 6:
+	if (strncasecmp(option, "100rel", 6) == 0)
+	    res = F_OPTION_TAG_100REL;
+	else {
+	    LM_ERR("unknown option <%s>\n", option);
+	    return -1;
+	}
+	break;
+    case 8:
+	if (strncasecmp(option, "outbound", 8) == 0)
+	    res = F_OPTION_TAG_OUTBOUND;
+	else {
+	    LM_ERR("unknown option <%s>\n", option);
+	    return -1;
+	}
+	break;
+    case 9:
+	if (strncasecmp(option, "eventlist", 9) == 0)
+	    res = F_OPTION_TAG_EVENTLIST;
+	else {
+	    LM_ERR("unknown option <%s>\n", option);
+	    return -1;
+	}
+	break;
+    default:
+	LM_ERR("unknown option <%s>\n", option);
+	return -1;
+    }
+
+    *param = (void *)(long)res;
+    return 0;
 }

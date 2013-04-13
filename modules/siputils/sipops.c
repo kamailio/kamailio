@@ -33,6 +33,7 @@
 
 #include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_supported.h"
 #include "../../lib/kcore/cmpapi.h"
 
 #include "sipops.h"
@@ -113,4 +114,20 @@ int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2)
 		return 2;
 	}
 	return -1;
+}
+
+int w_is_supported(sip_msg_t *msg, char *_option, char *p2)
+{
+    unsigned long option;
+
+    option = (unsigned long)_option;
+
+    if (parse_supported(msg) < 0)
+	return -1;
+
+    if ((((struct option_tag_body*)msg->supported->parsed)->option_tags_all &
+	 option) == 0)
+	return -1;
+    else
+	return 1;
 }
