@@ -397,16 +397,16 @@ int consume_credentials(struct sip_msg* msg)
 {
     struct hdr_field* h;
     int len;
-    
+
+	/* skip requests that can't be authenticated */
+	if (msg->REQ_METHOD & (METHOD_ACK|METHOD_CANCEL|METHOD_PRACK))
+		return -1;
     get_authorized_cred(msg->authorization, &h);
     if (!h) {
 		get_authorized_cred(msg->proxy_auth, &h);
 		if (!h) { 
-			if (msg->REQ_METHOD != METHOD_ACK 
-				&& msg->REQ_METHOD != METHOD_CANCEL) {
-				LOG(L_ERR, "auth:consume_credentials: No authorized "
+			LOG(L_ERR, "auth:consume_credentials: No authorized "
 					"credentials found (error in scripts)\n");
-			}
 			return -1;
 		}
     }
