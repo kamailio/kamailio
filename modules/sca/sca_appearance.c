@@ -780,6 +780,10 @@ sca_uri_lock_shared_appearance( sca_mod *scam, str *aor )
     sca_appearance_list	*app_list;
     int			slot_idx;
 
+    if ( SCA_STR_EMPTY( aor )) {
+	return( -1 );
+    }
+
     slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
     slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
 
@@ -801,6 +805,11 @@ sca_uri_lock_if_shared_appearance( sca_mod *scam, str *aor, int *slot_idx )
     sca_appearance_list	*app_list;
 
     assert( slot_idx != NULL );
+
+    if ( SCA_STR_EMPTY( aor )) {
+	*slot_idx = -1;
+	return( 0 );
+    }
 
     *slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
     slot = sca_hash_table_slot_for_index( scam->appearances, *slot_idx );
