@@ -272,56 +272,71 @@ sca_subscriptions_restore_from_db( sca_mod *scam )
 	result_columns[ i ] = column_names[ i ];
     }
 
-    if ( scam->db_api->query( db_con, NULL, NULL, NULL, result_columns,
-				0, SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS,
-				0, &result ) < 0 ) {
+    rc = db_fetch_query( scam->db_api, SCA_DB_DEFAULT_FETCH_ROW_COUNT,
+			db_con, NULL, NULL, NULL, result_columns,
+			0, SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS,
+			0, &result );
+    switch ( rc ) {
+    default:
+    case -1:
 	LM_ERR( "sca_subscriptions_restore_from_db: query failed" );
 	goto done;
+
+    case 0:
+	LM_WARN( "sca_subscriptions_restore_from_db: DB module does "
+		 "not support fetch, query returning all values..." );
+	/* fall through */
+
+    case 1:
+	break;
     }
 
-    rows = RES_ROWS( result );
-    num_rows = RES_ROW_N( result );
+    do {
+	rows = RES_ROWS( result );
+	num_rows = RES_ROW_N( result );
 
-    for ( i = 0; i < num_rows; i++ ) {
-	memset( &sub, 0, sizeof( sca_subscription ));
+	for ( i = 0; i < num_rows; i++ ) {
+	    memset( &sub, 0, sizeof( sca_subscription ));
 
-	row_values = ROW_VALUES( rows + i );
+	    row_values = ROW_VALUES( rows + i );
 
-	sub.expires = row_values[ SCA_DB_SUBS_EXPIRES_COL ].val.time_val;
-	if ( sub.expires < now ) {
-	    continue;
+	    sub.expires = row_values[ SCA_DB_SUBS_EXPIRES_COL ].val.time_val;
+	    if ( sub.expires < now ) {
+		continue;
+	    }
+
+	    if ( sca_subscription_from_db_row_values( row_values, &sub ) < 0 ) {
+		LM_ERR( "sca_subscriptions_restore_from_db: skipping bad result "
+			"at index %d", i );
+		continue;
+	    }
+
+	    if ( sca_subscription_copy_subscription_key( &sub, &sub_key ) < 0 ) {
+		LM_ERR( "sca_subscriptions_restore_from_db: failed to copy "
+			"subscription key %.*s%s", STR_FMT( &sub.subscriber ),
+			sca_event_name_from_type( sub.event ));
+		continue;
+	    }
+
+	    idx = sca_hash_table_index_for_key( sca->subscriptions, &sub_key );
+	    pkg_free( sub_key.s );
+
+	    sca_hash_table_lock_index( sca->subscriptions, idx );
+
+	    if ( sca_subscription_save_unsafe( scam, &sub, idx,
+			    SCA_SUBSCRIPTION_CREATE_OPT_RAW_EXPIRES ) < 0 ) {
+		LM_ERR( "sca_subscriptions_restore_from_db: failed to restore "
+			"%s subscription from %.*s to the hash table",
+			sca_event_name_from_type( sub.event ),
+			STR_FMT( &sub.subscriber ));
+
+		/* fall through to unlock index */
+	    }
+
+	    sca_hash_table_unlock_index( sca->subscriptions, idx );
 	}
-
-	if ( sca_subscription_from_db_row_values( row_values, &sub ) < 0 ) {
-	    LM_ERR( "sca_subscriptions_restore_from_db: skipping bad result "
-		    "at index %d", i );
-	    continue;
-	}
-
-	if ( sca_subscription_copy_subscription_key( &sub, &sub_key ) < 0 ) {
-	    LM_ERR( "sca_subscriptions_restore_from_db: failed to copy "
-		    "subscription key %.*s%s", STR_FMT( &sub.subscriber ),
-		    sca_event_name_from_type( sub.event ));
-	    continue;
-	}
-
-	idx = sca_hash_table_index_for_key( sca->subscriptions, &sub_key );
-	pkg_free( sub_key.s );
-
-	sca_hash_table_lock_index( sca->subscriptions, idx );
-
-	if ( sca_subscription_save_unsafe( scam, &sub, idx,
-			SCA_SUBSCRIPTION_CREATE_OPT_RAW_EXPIRES ) < 0 ) {
-	    LM_ERR( "sca_subscriptions_restore_from_db: failed to restore "
-		    "%s subscription from %.*s to the hash table",
-		    sca_event_name_from_type( sub.event ),
-		    STR_FMT( &sub.subscriber ));
-
-	    /* fall through to unlock index */
-	}
-
-	sca_hash_table_unlock_index( sca->subscriptions, idx );
-    }
+    } while ( db_fetch_next( scam->db_api, SCA_DB_DEFAULT_FETCH_ROW_COUNT,
+		db_con, &result ) == 1 && num_rows > 0 );
 
     scam->db_api->free_result( db_con, result );
 
