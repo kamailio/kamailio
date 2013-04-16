@@ -467,6 +467,9 @@ static int mi_child_init(void)
 			return -1;
 		}
 	}
+
+	if(sruid_init(&_ul_sruid, '-', "ulcx", SRUID_INC)<0)
+		return -1;
 	done = 1;
 
 	return 0;
