@@ -700,27 +700,31 @@ sca_call_info_seize_held_call( sip_msg_t *msg, sca_call_info *call_info,
     sca_hash_table_unlock_index( sca->appearances, slot_idx );
     slot_idx = -1;
 
-    if ( sca_uri_lock_if_shared_appearance( sca, &callee_aor, &slot_idx )) {
-	app = sca_appearance_for_tags_unsafe( sca, &callee_aor,
-		    &prev_callid, &prev_totag, NULL, slot_idx );
-	if ( app == NULL ) {
-	    LM_ERR( "sca_call_info_seize_held_call: failed to find "
-		    "appearance of %.*s with dialog %.*s;%.*s",
-		    STR_FMT( &callee_aor ), STR_FMT( &prev_callid ),
-		    STR_FMT( &prev_totag ));
-	    goto done;
-	}
+    if ( callee_aor.s != NULL && callee_aor.len > 0 ) {
+	if ( sca_uri_lock_if_shared_appearance( sca, &callee_aor, &slot_idx )) {
+	    app = sca_appearance_for_tags_unsafe( sca, &callee_aor,
+			&prev_callid, &prev_totag, NULL, slot_idx );
+	    if ( app == NULL ) {
+		LM_ERR( "sca_call_info_seize_held_call: failed to find "
+			"appearance of %.*s with dialog %.*s;%.*s",
+			STR_FMT( &callee_aor ), STR_FMT( &prev_callid ),
+			STR_FMT( &prev_totag ));
+		goto done;
+	    }
 
-	app->flags |= SCA_APPEARANCE_FLAG_CALLEE_PENDING;
+	    app->flags |= SCA_APPEARANCE_FLAG_CALLEE_PENDING;
 
-	if ( sca_appearance_update_callee_unsafe( app, contact_uri ) < 0 ) {
-	    LM_ERR( "sca_call_info_seize_held_call: failed to update callee" );
-	    goto done;
-	}
-	if ( sca_appearance_update_dialog_unsafe( app, &msg->callid->body,
+	    if ( sca_appearance_update_callee_unsafe( app, contact_uri ) < 0 ) {
+		LM_ERR( "sca_call_info_seize_held_call: "
+			"failed to update callee" );
+		goto done;
+	    }
+	    if ( sca_appearance_update_dialog_unsafe( app, &msg->callid->body,
 				    &to->tag_value, &from->tag_value ) < 0 ) {
-	    LM_ERR( "sca_call_info_seize_held_call: failed to update dialog" );
-	    goto done;
+		LM_ERR( "sca_call_info_seize_held_call: "
+			"failed to update dialog" );
+		goto done;
+	    }
 	}
     }
 
