@@ -387,7 +387,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
 
     if (type == TMCB_RESPONSE_OUT) {
         if (rpl == FAKED_REPLY) {
-            LM_ERR("Faked reply\n");
+            LM_DBG("Faked reply\n");
             return;
         }
 
