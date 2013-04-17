@@ -179,7 +179,13 @@ void print_all_dlgs();
  * \param dlg dialog cell
  * \return void
  */
-
 void internal_print_all_dlg(struct dlg_cell *dlg);
+
+/*!
+ * \get the current dialog based on the current SIP message
+ * \param msg SIP message
+ * \return current dialog, null if none.
+ */
+struct dlg_cell *dlg_get_msg_dialog(sip_msg_t *msg);
 
 #endif

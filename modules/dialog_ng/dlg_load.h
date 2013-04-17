@@ -35,6 +35,9 @@
 /* terminate_dlg function prototype */
 typedef int (*terminate_dlg_f)(str *callid, str *ftag, str *ttag, str *hdrs, str *reason);
 
+/* get the current dialog based on message function prototype */
+typedef struct dlg_cell *(*get_dlg_f)(struct sip_msg *msg);
+
 /* get_dlg_lifetime function prototype */
 typedef time_t (*get_dlg_expires_f)(str *callid, str *ftag, str *ttag);
 
@@ -45,6 +48,7 @@ struct dlg_binds {
 	set_dlg_variable_f 		set_dlg_var;
 	get_dlg_variable_f 		get_dlg_var;
 	get_dlg_expires_f 		get_dlg_expires;
+	get_dlg_f				get_dlg;
 };
 
 
