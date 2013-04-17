@@ -143,6 +143,12 @@ static cmd_export_t cdp_cmds[] = {
 	EXP_FUNC(AAADropAuthSession)
 	EXP_FUNC(AAATerminateAuthSession)
 
+	EXP_FUNC(AAACreateCCAccSession)
+	EXP_FUNC(AAAStartChargingCCAccSession)
+	EXP_FUNC(AAAGetCCAccSession)
+	EXP_FUNC(AAADropCCAccSession)
+	EXP_FUNC(AAATerminateCCAccSession)
+
 	{ 0, 0, 0, 0, 0 }
 };
 

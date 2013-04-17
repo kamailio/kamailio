@@ -53,44 +53,12 @@
 #include "peermanager.h"
 #include "routing.h"
 #include "receiver.h"
+#include "common.h"
 
 char *auth_states[] = {"Idle", "Pending", "Open", "Discon"};
 char *auth_events[] = {};
 
 extern dp_config *config; // because i want to use tc for the expire times...
-
-int get_result_code(AAAMessage* msg) {
-    AAA_AVP *avp;
-    AAA_AVP_LIST list;
-    list.head = 0;
-    list.tail = 0;
-    int rc = -1;
-
-    if (!msg) goto error;
-
-    for (avp = msg->avpList.tail; avp; avp = avp->prev) {
-
-        if (avp->code == AVP_Result_Code) {
-            rc = get_4bytes(avp->data.s);
-            goto finish;
-        } else if (avp->code == AVP_Experimental_Result) {
-            list = AAAUngroupAVPS(avp->data);
-            for (avp = list.head; avp; avp = avp->next) {
-                if (avp->code == AVP_IMS_Experimental_Result_Code) {
-                    rc = get_4bytes(avp->data.s);
-                    AAAFreeAVPList(&list);
-                    goto finish;
-                }
-            }
-            AAAFreeAVPList(&list);
-        }
-    }
-finish:
-    return rc;
-error:
-    LM_ERR("get_result_code(): no AAAMessage or Result Code not found\n");
-    return -1;
-}
 
 /*
  * Alberto Diez changes the default behaviour on error is going to be to return the default state
@@ -282,7 +250,7 @@ inline int auth_client_statefull_sm_process(cdp_session_t* s, int event, AAAMess
                 case AUTH_EV_SESSION_TIMEOUT:
                 case AUTH_EV_SERVICE_TERMINATED:
                 case AUTH_EV_SESSION_GRACE_TIMEOUT:
-                    Session_Cleanup(s, NULL);
+                    cdp_session_cleanup(s, NULL);
                     break;
 
                 default:
@@ -381,7 +349,7 @@ inline int auth_client_statefull_sm_process(cdp_session_t* s, int event, AAAMess
                     if (msg) AAAFreeMessage(&msg); // if might be needed in frequency
                     // If I register a ResponseHandler then i Free the STA there not here..
                     // but i dont have interest in that now..
-                    Session_Cleanup(s, NULL);
+                    cdp_session_cleanup(s, NULL);
                     s = 0;
                     rv = 1;
                     break;
@@ -438,14 +406,14 @@ inline void auth_server_statefull_sm_process(cdp_session_t* s, int event, AAAMes
                     break;
                 case AUTH_EV_SEND_STA:
                     x->state = AUTH_ST_IDLE;
-                    Session_Cleanup(s, msg);
+                    cdp_session_cleanup(s, msg);
                     s = 0;
                     break;
 
                     /* Just in case we have some lost sessions */
                 case AUTH_EV_SESSION_TIMEOUT:
                 case AUTH_EV_SESSION_GRACE_TIMEOUT:
-                    Session_Cleanup(s, msg);
+                	cdp_session_cleanup(s, msg);
                     s = 0;
                     break;
 
@@ -477,7 +445,7 @@ inline void auth_server_statefull_sm_process(cdp_session_t* s, int event, AAAMes
                     break;
                 case AUTH_EV_SEND_ANS_UNSUCCESS:
                     x->state = AUTH_ST_IDLE;
-                    Session_Cleanup(s, msg);
+                    cdp_session_cleanup(s, msg);
                     s = 0;
                     break;
                 case AUTH_EV_SEND_ASR:
@@ -487,13 +455,13 @@ inline void auth_server_statefull_sm_process(cdp_session_t* s, int event, AAAMes
                 case AUTH_EV_SESSION_GRACE_TIMEOUT:
                     x->state = AUTH_ST_IDLE;
                     LM_DBG("before session cleanup\n");
-                    Session_Cleanup(s, msg);
+                    cdp_session_cleanup(s, msg);
                     s = 0;
                     break;
                 case AUTH_EV_SEND_STA:
                     LM_ERR("SENDING STA!!!\n");
                     x->state = AUTH_ST_IDLE;
-                    Session_Cleanup(s, msg);
+                    cdp_session_cleanup(s, msg);
                     s = 0;
                     break;
                 default:
@@ -509,7 +477,7 @@ inline void auth_server_statefull_sm_process(cdp_session_t* s, int event, AAAMes
                 case AUTH_EV_RECV_ASA:
                 case AUTH_EV_RECV_ASA_SUCCESS:
                     x->state = AUTH_ST_IDLE;
-                    //Session_Cleanup(s,msg);
+                    //cdp_session_cleanup(s,msg);
                     break;
                 case AUTH_EV_RECV_ASA_UNSUCCESS:
                     Send_ASR(s, msg);
@@ -518,7 +486,7 @@ inline void auth_server_statefull_sm_process(cdp_session_t* s, int event, AAAMes
                     break;
                 case AUTH_EV_SEND_STA:
                     x->state = AUTH_ST_IDLE;
-                    Session_Cleanup(s, msg);
+                    cdp_session_cleanup(s, msg);
                     s = 0;
                     break;
                 default:
@@ -864,18 +832,4 @@ void Send_ASR(cdp_session_t* s, AAAMessage* msg) {
         if (asr) AAAFreeMessage(&asr); //needed in frequency
     } else
         LM_DBG("success sending ASR\n");
-}
-
-void Session_Cleanup(cdp_session_t* s, AAAMessage* msg) {
-    // Here we should drop the session ! and free everything related to it
-    // but the generic_data thing should be freed by the callback function registered
-    // when the auth session was created
-    AAASessionCallback_f *cb;
-    LM_INFO("cleaning up session %.*s\n", s->id.len, s->id.s);
-    if (s->cb) {
-        cb = s->cb;
-        (cb) (AUTH_EV_SERVICE_TERMINATED, s);
-    }
-
-    AAADropAuthSession(s);
 }

@@ -100,6 +100,12 @@ struct cdp_binds {
 	AAADropAuthSession_f		AAADropAuthSession;
 	AAATerminateAuthSession_f	AAATerminateAuthSession;
 
+	AAACreateCCAccSession_f 	AAACreateCCAccSession;
+	AAAStartChargingCCAccSession_f	AAAStartChargingCCAccSession;
+	AAAGetCCAccSession_f		AAAGetCCAccSession;
+	AAADropCCAccSession_f		AAADropCCAccSession;
+	AAATerminateCCAccSession_f	AAATerminateCCAccSession;
+
 };
 
 

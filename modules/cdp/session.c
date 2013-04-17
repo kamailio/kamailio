@@ -51,7 +51,9 @@
 #include "diameter.h"
 #include "config.h"
 #include "authstatemachine.h"
+#include "acctstatemachine.h"
 #include "timer.h"
+#include "globals.h"
 
 extern dp_config *config;		/**< Configuration for this diameter peer 	*/
 
@@ -62,6 +64,8 @@ cdp_session_list_t *sessions;	/**< the session hash table					*/
 
 unsigned int *session_id1;		/**< counter for first part of the session id */
 unsigned int *session_id2;		/**< counter for second part of the session id */
+
+#define GRACE_DISCON_TIMEOUT	60	/**< 60 seconds for a DISCON acct session to hang around for before being cleaned up */
 
 
 /**
@@ -110,6 +114,12 @@ void free_session(cdp_session_t *x)
 			case AUTH_CLIENT_STATEFULL:
 				break;
 			case AUTH_SERVER_STATEFULL:
+				break;
+			case ACCT_CC_CLIENT:
+				if (x->u.generic_data) {
+					LM_ERR("free_session(): The session->u.generic_data should be freed and reset before dropping the session!"
+						"Possible memory leak!\n");
+				}
 				break;
 			default:
 				LM_ERR("free_session(): Unknown session type %d!\n",x->type);
@@ -383,11 +393,11 @@ void cdp_sessions_log()
 	int hash;
 	cdp_session_t *x;
 
-	LM_DBG("------- CDP Sessions ----------------\n");
+	LM_DBG(ANSI_MAGENTA"------- CDP Sessions ----------------\n"ANSI_GREEN);
 	for(hash=0;hash<sessions_hash_size;hash++){
 		AAASessionsLock(hash);
 		for(x = sessions[hash].head;x;x=x->next) {
-			LM_DBG(" %3u. [%.*s] AppId [%d] Type [%d]\n",
+			LM_DBG(ANSI_GRAY" %3u. [%.*s] AppId [%d] Type [%d]\n",
 					hash,
 					x->id.len,x->id.s,
 					x->application_id,
@@ -395,12 +405,21 @@ void cdp_sessions_log()
 			switch (x->type){
 				case AUTH_CLIENT_STATEFULL:
 				case AUTH_SERVER_STATEFULL:
-					LM_DBG("\tAuth State [%d] Timeout [%d] Lifetime [%d] Grace [%d] Generic [%p]\n",
+					LM_DBG(ANSI_GRAY"\tAuth State [%d] Timeout [%d] Lifetime [%d] Grace [%d] Generic [%p]\n",
 							x->u.auth.state,
 							(int)(x->u.auth.timeout-time(0)),
 							x->u.auth.lifetime?(int)(x->u.auth.lifetime-time(0)):-1,
 							(int)(x->u.auth.grace_period),
 							x->u.auth.generic_data);
+					break;
+				case ACCT_CC_CLIENT:
+					LM_DBG(ANSI_GRAY"\tCCAcct State [%d] Charging Active [%c (%d)s] Reserved Units(valid=%ds) [%d] Generic [%p]\n",
+							x->u.cc_acc.state,
+							x->u.cc_acc.charging_start_time?'Y':'N',
+							x->u.cc_acc.charging_start_time?(int)((int)time(0) - (int)x->u.cc_acc.charging_start_time):-1,
+							x->u.cc_acc.reserved_units?(int)((int)x->u.cc_acc.last_reservation_request_time + x->u.cc_acc.reserved_units_validity_time) - (int)time(0):-1,
+							x->u.cc_acc.reserved_units,
+							x->u.cc_acc.generic_data);
 					break;
 				default:
 					break;
@@ -408,7 +427,7 @@ void cdp_sessions_log()
 		}
 		AAASessionsUnlock(hash);
 	}
-	LM_DBG("-------------------------------------\n");
+	LM_DBG(ANSI_MAGENTA"-------------------------------------\n"ANSI_GREEN);
 }
 
 int cdp_sessions_timer(time_t now, void* ptr)
@@ -420,6 +439,28 @@ int cdp_sessions_timer(time_t now, void* ptr)
 		for(x = sessions[hash].head;x;x=n) {
 			n = x->next;
 			switch (x->type){
+				case ACCT_CC_CLIENT:
+					if (x->u.cc_acc.type == ACC_CC_TYPE_SESSION) {
+						//check for old, stale sessions
+						if (time(0) > (x->u.cc_acc.discon_time + GRACE_DISCON_TIMEOUT)) {
+							cc_acc_client_stateful_sm_process(x, ACC_CC_EV_SESSION_STALE, 0);
+						}
+						//check reservation timers - again here we are assuming CC-Time applications
+						int last_res_timestamp = x->u.cc_acc.last_reservation_request_time;
+						int res_valid_for = x->u.cc_acc.reserved_units_validity_time;
+						int last_reservation = x->u.cc_acc.reserved_units;
+						int buffer_time = 15; //15 seconds - TODO: add as config parameter
+						if (last_res_timestamp) {
+							//we have obv already started reservations
+							if ((last_res_timestamp + res_valid_for) < (time(0) + last_reservation + buffer_time)) {
+								LM_DBG("reservation about to expire, sending callback\n");
+								cc_acc_client_stateful_sm_process(x, ACC_CC_EV_RSVN_WARNING, 0);
+							}
+
+						}
+					}
+					break;
+
 				case AUTH_CLIENT_STATEFULL:
 					if (x->u.auth.timeout>=0 && x->u.auth.timeout<=now){
 						//Session timeout
@@ -538,6 +579,33 @@ AAASession* cdp_new_auth_session(str id,int is_client,int is_statefull)
 		s->u.auth.timeout=time(0)+config->default_auth_session_timeout;
 		s->u.auth.lifetime=0;
 		s->u.auth.grace_period=0;
+		cdp_add_session(s);
+	}
+	return s;
+}
+
+/**
+ * Creates a Credit Control Accounting session for Client.
+ * It generates a new id and adds the session to the cdp list of sessions
+ * \note Returns with a lock on AAASession->hash. Unlock when done working with the result
+ * @returns the new AAASession or null on error
+ */
+AAASession* cdp_new_cc_acc_session(str id, int is_statefull)
+{
+	AAASession *s;
+	cdp_session_type_t type;
+
+	if (is_statefull) type = ACCT_CC_CLIENT;
+	else type = ACCT_CC_CLIENT; //for now everything will be supported through this SM (until we add IEC)
+
+	s = cdp_new_session(id,type);
+	if (s) {
+		if (is_statefull)
+			s->u.cc_acc.type = ACC_CC_TYPE_SESSION;
+		else
+			s->u.cc_acc.type = ACC_CC_TYPE_EVENT;
+
+//		s->u.cc_acc.timeout=time(0)+config->default_cc_acct_session_timeout;
 		cdp_add_session(s);
 	}
 	return s;
@@ -667,5 +735,111 @@ AAASession* AAACreateAccSession(void *generic_data)
  */
 void AAADropAccSession(AAASession *s)
 {
-	free_session(s);
+	AAADropSession(s);
 }
+
+/**
+ * Creates an Accounting Session (Credit control - RFC 4006) for the client
+ * It generates a new id and adds the session to the cdp list of sessions
+ * \note Returns with a lock on AAASession->hash. Unlock when done working with the result
+ * @returns the new AAASession or null on error
+ */
+AAASession* AAACreateCCAccSession(AAASessionCallback_f *cb, int is_session, void *generic_data)
+{
+	AAASession *s;
+	str id;
+
+	generate_session_id(&id, 0);
+
+	s = cdp_new_cc_acc_session(id, is_session);
+	if (s) {
+		s->u.auth.generic_data = generic_data;
+		s->cb = cb;
+		if (s->cb)
+			(s->cb)(ACC_CC_EV_SESSION_CREATED, s);
+	}
+	return s;
+}
+
+/**
+ * Starts accounting on time-based CC App session (Credit control - RFC 4006) for the client
+  * @returns 0 on success, anything else on failure
+ */
+int AAAStartChargingCCAccSession(AAASession *s)
+{
+	if (s->type != ACCT_CC_CLIENT && s->u.cc_acc.type != ACC_CC_TYPE_SESSION) {
+		LM_ERR("Can't start charing on a credit-control session that is not session based\n");
+		return -1;
+	}
+
+	s->u.cc_acc.charging_start_time = time(0);
+	return 0;
+}
+/**
+ * Deallocates the memory taken by a Accounting Session (Credit Control - RFC 4006)
+ */
+void AAADropCCAccSession(AAASession *s)
+{
+	AAADropSession(s);
+}
+
+/**
+ * Looks for a CC Acc dession with a given id and returns it if found
+ * \note Returns with a lock on AAASession->hash. Unlock when done working with the result
+ * @returns the new AAASession or null on error
+ */
+AAASession* AAAGetCCAccSession(str id)
+{
+	AAASession *x=cdp_get_session(id);
+	if (x){
+		switch (x->type){
+			case ACCT_CC_CLIENT:
+				return x;
+			default:
+				AAASessionsUnlock(x->hash);
+				return 0;
+		}
+	}
+	return 0;
+}
+
+/**
+ * Sends a Service terminated event to the session
+ */
+void AAATerminateCCAccSession(AAASession *s)
+{
+	if (s->type==ACCT_CC_CLIENT) {
+		//TODO: run state machine for terminate event
+	}
+}
+
+void cdp_session_cleanup(cdp_session_t* s, AAAMessage* msg) {
+    // Here we should drop the session ! and free everything related to it
+    // but the generic_data thing should be freed by the callback function registered
+    // when the auth session was created
+    AAASessionCallback_f *cb;
+
+    LM_DBG("cleaning up session %.*s\n", s->id.len, s->id.s);
+    switch (s->type) {
+    	case ACCT_CC_CLIENT:
+    		if (s->cb) {
+    			cb = s->cb;
+    			(cb)(ACC_CC_EV_SESSION_TERMINATED, s);
+    		}
+    		AAADropCCAccSession(s);
+    		break;
+    	case AUTH_CLIENT_STATEFULL:
+    	case AUTH_CLIENT_STATELESS:
+			if (s->cb) {
+				cb = s->cb;
+				(cb)(AUTH_EV_SERVICE_TERMINATED, s);
+			}
+			AAADropAuthSession(s);
+			break;
+    	default:
+    		LM_WARN("asked to cleanup unknown/unhandled session type [%d]\n", s->type);
+    		break;
+    }
+
+}
+

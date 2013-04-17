@@ -69,7 +69,6 @@ int load_cdp( struct cdp_binds *cdpb)
 	FIND_EXP(AAACreateResponse);
 	FIND_EXP(AAAFreeMessage);
 
-
 	FIND_EXP(AAACreateAVP);
 	FIND_EXP(AAAAddAVPToMessage);
 	FIND_EXP(AAAAddAVPToList);
@@ -86,14 +85,11 @@ int load_cdp( struct cdp_binds *cdpb)
 	FIND_EXP(AAASendRecvMessage);
 	FIND_EXP(AAASendRecvMessageToPeer);
 
-
 	FIND_EXP(AAAAddRequestHandler);
 	FIND_EXP(AAAAddResponseHandler);
 
-
 	FIND_EXP(AAACreateTransaction);
 	FIND_EXP(AAADropTransaction);
-
 
 	FIND_EXP(AAACreateSession);
 	FIND_EXP(AAAMakeSession);
@@ -108,5 +104,12 @@ int load_cdp( struct cdp_binds *cdpb)
 	FIND_EXP(AAADropAuthSession);
 	FIND_EXP(AAATerminateAuthSession);
 	
+	/* Credit Control Application API - RFC 4006 */
+	FIND_EXP(AAACreateCCAccSession);
+	FIND_EXP(AAAStartChargingCCAccSession);
+	FIND_EXP(AAAGetCCAccSession);
+	FIND_EXP(AAADropCCAccSession);
+	FIND_EXP(AAATerminateCCAccSession);
+
 	return 1;
 }

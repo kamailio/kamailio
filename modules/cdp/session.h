@@ -52,7 +52,7 @@
 #include "diameter.h"
 
 /** Function for callback on session events: timeout, etc. */
-typedef void (AAASessionCallback_f)(int event,void *session);
+typedef void (AAASessionCallback_f)(int event, void *session);
 
 /** Types of sessions */
 typedef enum {
@@ -63,9 +63,12 @@ typedef enum {
 	AUTH_CLIENT_STATEFULL	= 3,
 	AUTH_SERVER_STATEFULL	= 4,
 
-	ACCT_CLIENT				= 5,
-	ACCT_SERVER_STATELESS	= 6,
-	ACCT_SERVER_STATEFULL	= 7,
+	ACCT_CLIENT_STATELESS	= 5,
+	ACCT_CLIENT_STATEFUL	= 6,
+	ACCT_SERVER_STATELESS	= 7,
+	ACCT_SERVER_STATEFULL	= 8,
+
+	ACCT_CC_CLIENT			= 9,		/**< Credit Control Client - RFC (4006) */
 
 } cdp_session_type_t;
 
@@ -128,7 +131,6 @@ typedef enum {
 	ACC_ST_PENDING_L	= 6		/**< PendingL - sent accounting stop */
 } cdp_acc_state_t;
 
-
 /** Accounting events definition */
 typedef enum {
 	ACC_EV_START					= 101,	/**< Client or device "requests access" (SIP session establishment) */
@@ -140,32 +142,85 @@ typedef enum {
 	ACC_EV_STOP						= 107,	/**< User service terminated */
 	ACC_EV_INTERIM					= 108,	/**< Interim interval elapses */
 	ACC_EV_RCV_SUC_ACA_INTERIM		= 109,	/**< Successful accounting interim answer received */
-	ACC_EV_RCV_FAILED_ACA_INTERIM	=110,	/**< Failed accounting interim answer received */
+	ACC_EV_RCV_FAILED_ACA_INTERIM	= 110,	/**< Failed accounting interim answer received */
 	ACC_EV_RCV_SUC_ACA_EVENT		= 111,	/**< Successful accounting event answer received */
 	ACC_EV_RCV_FAILED_ACA_EVENT		= 112,	/**< Failed accounting event answer received */
 	ACC_EV_RCV_SUC_ACA_STOP			= 113,	/**< Successful accounting stop answer received */
 	ACC_EV_RCV_FAILED_ACA_STOP		= 114,	/**< Failed accounting stop answer received */
 } cdp_acc_event_t;
 
+/** Credit Control states - RFC 4006 */
+typedef enum {
+	ACC_CC_ST_IDLE		= 0, 	/**< Idle */
+	ACC_CC_ST_PENDING_I	= 1,	/**< Pending Initial Answer */
+	ACC_CC_ST_PENDING_U	= 2,	/**< Pending Interim/Update Answer */
+	ACC_CC_ST_PENDING_T	= 3,	/**< Pending Terminate Answer */
+	ACC_CC_ST_OPEN		= 4,	/**< Open */
+	ACC_CC_ST_DISCON	= 5,	/**< Disconnected, ie. end of session */
+} cdp_cc_acc_state_t;
+
+/** Credit Control events - RFC 4006 */
+typedef enum {
+	ACC_CC_EV_SESSION_START				= 0, 		/**< Client or device requests access to service */
+	ACC_CC_EV_SEND_REQ					= 1,		/**< Sent initial request on session CCR */
+	ACC_CC_EV_RECV_ANS					= 2,		/**< Received a response message */
+	ACC_CC_EV_RECV_ANS_SUCCESS 			= 3,		/**< CCA = success */
+	ACC_CC_EV_RECV_ANS_UNSUCCESS 		= 4,		/**< CCA = failure */
+	ACC_CC_EV_SESSION_CREATED 			= 5,		/**< used for callbacks - new CC session created */
+	ACC_CC_EV_SESSION_TIMEOUT			= 6,		/**< CC Session timeout */
+	ACC_CC_EV_RSVN_WARNING				= 7,		/**< Reservation is about to expire */
+	ACC_CC_EV_SESSION_TERMINATED		= 8,
+	ACC_CC_EV_SESSION_MODIFIED			= 9,
+	ACC_CC_EV_SESSION_STALE				= 10,		/**< Session is being removed from memory after stale expiry */
+} cdp_cc_acc_event_t;
+
+/** Credit Control Session types - RFC 4006 */
+typedef enum {
+	ACC_CC_TYPE_EVENT		= 0, 	/**< Immediate Event Charge (IEC - see TS32.299 6.3.2.1)*/
+	ACC_CC_TYPE_SESSION		= 1, 	/**< Session-based charging (SCUR/ECUR - see TS32.299 6.3.2.1)*/
+} cdp_cc_acc_type_t;
+
+/** Credit Control Failure Handling */
+typedef enum {
+	ACC_CC_CCFH_UNKNOWN				= 0,
+	ACC_CC_CCFH_CONTINUE 			= 1,
+	ACC_CC_CCFH_TERMINATE			= 2,
+	ACC_CC_CCFH_RETRY_AND_TERMINATE	= 3,
+} cdp_cc_acc_ccfh_t;
+
+/** Credit Control Final Unit Action */
+typedef enum {
+	ACC_CC_FUI_UNKNOWN				= 0,
+	ACC_CC_FUI_TERMINATE			= 1,
+} cdp_cc_acc_fua_t;
 
 /** Structure for accounting sessions */
 typedef struct _acc_session {
-
-	cdp_acc_state_t state;						/**< current state */
-
+	cdp_acc_state_t state;					/**< current state */
 	str dlgid;       						/**< application-level identifier, combines application session (e.g. SIP dialog) or event with diameter accounting session */
-
 	unsigned int acct_record_number; 		/**< number of last accounting record within this session */
 	time_t aii;	 							/**< expiration of Acct-Interim-Interval (seconds) */
 	time_t timeout;							/**< session timeout (seconds) */
-
-
 	void* generic_data;
-
 } cdp_acc_session_t;
 
+/** Structure for credit control accounting sessions (RFC 4006)*/
+typedef struct _cc_acc_session {
+	cdp_cc_acc_state_t state;				/**< current state */
+	time_t discon_time;						/**< the time we went into DISCON state. we use this to cleanup dead sessions*/
+	cdp_cc_acc_type_t type;					/**< type of CC, event or session (each have a different state machine - see RFC 4006 */
+	cdp_cc_acc_ccfh_t ccfh;					/**< credit control failure handling type set for this session */
+//	cdp_cc_acc_fua_t fua;					/**< final unit action */
+	int fua;								/**< TODO: clean this up */
+	unsigned int acct_record_number; 		/**< number of last accounting record within this session */
+	time_t timeout;							/**< session timeout (seconds) - this is to prevent idle sessions from 'hanging' around */
+	time_t charging_start_time;				/**< the time the session started to charge */
+	time_t last_reservation_request_time;	/**< the last time we requested reservation for the current granted units */
+	int reserved_units;						/**< current number of granted units */
+	int reserved_units_validity_time;		/**< number of seconds current granted units valid for */
 
-
+	void* generic_data;
+} cdp_cc_acc_session_t;
 
 /** Structure for session identification */
 typedef struct _cdp_session_t {
@@ -174,10 +229,11 @@ typedef struct _cdp_session_t {
 	unsigned int application_id;		/**< specific application id associated with this session */
 	unsigned int vendor_id;				/**< specific vendor id for this session */
 	cdp_session_type_t type;
-	str dest_host, dest_realm; /*the destination host and realm, used only for auth, for the moment*/
+	str dest_host, dest_realm; 			/*the destination host and realm, used only for auth, for the moment*/
 	union {
 		cdp_auth_session_t auth;
 		cdp_acc_session_t acc;
+		cdp_cc_acc_session_t cc_acc;
 		void *generic_data;
 	} u;
 
@@ -192,23 +248,23 @@ typedef struct _cdp_session_list_t {
 	cdp_session_t *head,*tail;		/**< first, last sessions in the list */
 } cdp_session_list_t;
 
-
-
 int cdp_sessions_init(int hash_size);
 int cdp_sessions_destroy();
 void cdp_sessions_log();
 int cdp_sessions_timer(time_t now, void* ptr);
 
+void cdp_session_cleanup(cdp_session_t* s, AAAMessage* msg);	/**< Session cleanup for all session types */
+
+
 cdp_session_t* cdp_get_session(str id);
 cdp_session_t* cdp_new_session(str id,cdp_session_type_t type); //this function is needed in the peerstatemachine
+
 void cdp_add_session(cdp_session_t *x);
 cdp_session_t* cdp_new_auth_session(str id,int is_client,int is_statefull);
-
+cdp_session_t* cdp_new_cc_acc_session(str id, int is_statefull);	//new redit control acct session
 
 /*           API Exported */
-
 typedef cdp_session_t AAASession;
-
 
 AAASession* AAACreateSession(void *generic_data);
 typedef AAASession* (*AAACreateSession_f)(void *generic_data);
@@ -228,9 +284,6 @@ typedef void (*AAASessionsUnlock_f) (unsigned int hash);
 void AAASessionsLock(unsigned int hash);
 typedef void (*AAASessionsLock_f) (unsigned int hash);
 
-
-
-
 AAASession* AAACreateClientAuthSession(int is_statefull,AAASessionCallback_f *cb,void *generic_data);
 typedef AAASession* (*AAACreateClientAuthSession_f)(int is_statefull,AAASessionCallback_f *cb,void *generic_data);
 
@@ -246,13 +299,22 @@ typedef void (*AAADropAuthSession_f)(AAASession *s);
 void AAATerminateAuthSession(AAASession *s);
 typedef void (*AAATerminateAuthSession_f)(AAASession *s);
 
-
-
+AAASession* AAAGetCCAccSession(str id);
+typedef AAASession* (*AAAGetCCAccSession_f)(str id);
 
 AAASession* AAACreateAccSession(void *generic_data);
 void AAADropAccSession(AAASession *s);
 
+AAASession* AAACreateCCAccSession(AAASessionCallback_f *cb, int is_session, void *generic_data);	/*create CreditControl accounting session*/
+typedef AAASession* (*AAACreateCCAccSession_f)(AAASessionCallback_f *cb, int is_session, void *generic_data);
 
+int AAAStartChargingCCAccSession(AAASession *s);
+typedef int (*AAAStartChargingCCAccSession_f)(AAASession *s);
 
+void AAADropCCAccSession(AAASession *s);		/*drop CreditControl accounting session*/
+typedef void (*AAADropCCAccSession_f)(AAASession *s);
+
+void AAATerminateCCAccSession(AAASession *s);
+typedef void (*AAATerminateCCAccSession_f)(AAASession *s);
 
 #endif

@@ -57,6 +57,7 @@
 #include "config.h"
 #include "worker.h"
 #include "authstatemachine.h"
+#include "acctstatemachine.h"
 
 extern dp_config *config;		/**< Configuration for this diameter peer 	*/
 
@@ -1100,6 +1101,15 @@ void Snd_Message(peer *p, AAAMessage *msg)
 	if (session){
 		LM_DBG("There is a session of type %d\n",session->type);
 		switch (session->type){
+			case ACCT_CC_CLIENT:
+				if (is_req(msg)) {
+					LM_DBG("this is a request for CC app\n");
+					cc_acc_client_stateful_sm_process(session, ACC_CC_EV_SEND_REQ, msg);
+					session = 0;
+				} else {
+					LM_DBG("this is a response to CC app\n");
+				}
+				break;
 			case AUTH_CLIENT_STATEFULL:
 				if (is_req(msg)) {
 					auth_client_statefull_sm_process(session,AUTH_EV_SEND_REQ,msg);
@@ -1187,6 +1197,16 @@ void Rcv_Process(peer *p, AAAMessage *msg)
 
 	if (session){
 		switch (session->type){
+			case ACCT_CC_CLIENT:
+				if (is_req(msg)){
+					LM_WARN("unhandled receive request on Credit Control Acct session\n");
+					AAASessionsUnlock(session->hash);	//must be called because we dont call state machine here
+					session = 0; //we dont call SM here so we mustnt set to 0
+				} else {
+					cc_acc_client_stateful_sm_process(session, ACC_CC_EV_RECV_ANS, msg);
+					session = 0;
+				}
+				break;
 			case AUTH_CLIENT_STATEFULL:
 				if (is_req(msg)){
 					if (msg->commandCode==IMS_ASR)
