@@ -66,10 +66,9 @@
 int encode_route_body(char *hdr,int hdrlen,rr_t *route_parsed,unsigned char *where)
 {
    int i=0,k,route_offset;
-   unsigned char flags,tmp[500];
+   unsigned char tmp[500];
    rr_t *myroute;
    
-   flags=0;
    for(route_offset=0,i=0,myroute=route_parsed;myroute;myroute=myroute->next,i++){
       if((k=encode_route(hdr,hdrlen,myroute,&tmp[route_offset]))<0){
 	 LM_ERR("parsing route number %d\n",i);
@@ -127,10 +126,9 @@ int encode_route(char *hdrstart,int hdrlen,rr_t *body,unsigned char *where)
 
 int print_encoded_route_body(FILE *fd,char *hdr,int hdrlen,unsigned char *payload,int paylen,char *prefix)
 {
-   unsigned char flags, numroutes;
+   unsigned char numroutes;
    int i,offset;
 
-   flags=payload[0];
    fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
       fprintf(fd,"%s%d%s",i==0?"ENCODED CONTACT BODY:[":":",payload[i],i==paylen-1?"]\n":"");
@@ -179,10 +177,9 @@ int print_encoded_route(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int
 
 int dump_route_body_test(char *hdr,int hdrlen,unsigned char *payload,int paylen,FILE* fd,char segregationLevel,char *prefix)
 {
-   unsigned char flags, numroutes;
+   unsigned char numroutes;
    int i,offset;
 
-   flags=payload[0];
    if(!segregationLevel){
       return dump_standard_hdr_test(hdr,hdrlen,(unsigned char*)payload,paylen,fd);
    }
