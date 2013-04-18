@@ -811,11 +811,11 @@ int ac_sl_msg(as_p the_as,unsigned char processor_id,unsigned int flags,char *ac
    str *uri;
    struct proxy_l *proxy;
    rr_t *my_route;
-   int i,k,retval;
+   int k,retval;
    //enum sip_protos proto;
 
    my_msg=NULL;
-   i=k=0;
+   k=0;
 
    proxy=0;
 
@@ -936,7 +936,7 @@ int ac_uac_req(as_p the_as,unsigned char processor_id,unsigned int flags,char *a
    struct cseq_body *cseqb;
    struct as_uac_param *the_param;
    dlg_t *my_dlg;
-   int i,k,retval,uac_id,sip_error,ret,err_ret;
+   int k,retval,uac_id,sip_error,ret,err_ret;
    long clen;
    str headers,body,fake_uri;
    uac_req_t uac_r;
@@ -945,7 +945,7 @@ int ac_uac_req(as_p the_as,unsigned char processor_id,unsigned int flags,char *a
    my_dlg=NULL;
    my_msg=NULL;
    the_param=NULL;
-   i=k=clen=0;
+   k=clen=0;
 
    net2hostL(uac_id,action,k);
 
@@ -1480,11 +1480,9 @@ void uac_cb(struct cell* t, int type,struct tmcb_params *rcvd_params)
    as_msg_p my_as_ev=0;
    int mylen,code,i;
    struct as_uac_param *ev_info;
-   struct sip_msg *msg;
    char *buffer;
 
    ev_info=(struct as_uac_param*)*rcvd_params->param;
-   msg=rcvd_params->rpl;
    code=rcvd_params->code;
    buffer=0;
    if(!ev_info || !ev_info->who){
