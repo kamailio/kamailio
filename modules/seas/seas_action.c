@@ -1410,7 +1410,9 @@ int as_action_fail_resp(int uac_id,int sip_error,char *err_buf,int i)
    k+=i;
    ev_len=htonl(k);
    memcpy(msg,&ev_len,4);
-   write(my_as->u.as.action_fd,msg,k);
+   if(write(my_as->u.as.action_fd,msg,k)<=0){
+      LM_DBG("Ignoring error write\n");
+   }
    return 0;
 }
 
