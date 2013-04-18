@@ -217,10 +217,9 @@ int print_encoded_digest(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,in
 int dump_digest_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,FILE* fd,char segregationLevel)
 {
    int i=2;/* 2*flags */
-   unsigned char flags1=0,flags2=0;
+   unsigned char flags1=0;
 
    flags1=payload[0];
-   flags2=payload[1];
    if(!(segregationLevel & ONLY_URIS))
       return dump_standard_hdr_test(hdr,hdrlen,payload,paylen,fd);
    i=2;
