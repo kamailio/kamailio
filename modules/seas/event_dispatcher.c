@@ -896,8 +896,8 @@ error:
  */
 int process_unbind_action(as_p as,unsigned char processor_id,unsigned int flags,char *payload,int len)
 {
-   int i,k;
-   k=0;
+   int i;
+
    for(i=0;i<as->num_binds;i++){
       if(as->bound_processor[i] == processor_id)
 	 break;
