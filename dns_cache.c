@@ -2306,6 +2306,7 @@ inline static struct dns_rr* dns_srv_get_nxt_rr(struct dns_hash_entry* e,
 	servers_up = atomic_get(dns_servers_up);
 #endif
 
+	memset(r_sums, 0, sizeof(struct r_sums_entry) * MAX_SRV_GRP_IDX);
 	rand_w=0;
 	for(rr=e->rr_lst, n=0;rr && (n<*no);rr=rr->next, n++);/* skip *no records*/
 
