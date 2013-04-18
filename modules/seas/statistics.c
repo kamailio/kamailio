@@ -169,8 +169,10 @@ static inline int assignIndex(int i)
  */
 inline void action_stat(struct cell *t)
 {
-   unsigned int seas_dispatch,as_delay;
-   struct timeval *t1,*t2,*t3;
+   unsigned int seas_dispatch;
+   //unsigned int as_delay;
+   struct timeval *t1,*t2;
+   //struct timeval *t3;
    struct statscell *s;
    struct totag_elem *to;
    if(t==0)
@@ -194,9 +196,9 @@ inline void action_stat(struct cell *t)
       return;
    t1=&(s->u.uas.as_relay);
    t2=&(s->u.uas.event_sent);
-   t3=&(s->u.uas.action_recvd);
+   //t3=&(s->u.uas.action_recvd);
    seas_dispatch = (t2->tv_sec - t1->tv_sec)*1000 + (t2->tv_usec-t1->tv_usec)/1000;
-   as_delay = (t3->tv_sec - t2->tv_sec)*1000 + (t3->tv_usec-t2->tv_usec)/1000;
+   //as_delay = (t3->tv_sec - t2->tv_sec)*1000 + (t3->tv_usec-t2->tv_usec)/1000;
 
    lock_get(seas_stats_table->mutex);
    {
