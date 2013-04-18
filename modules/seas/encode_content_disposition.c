@@ -61,9 +61,7 @@ int encode_content_disposition(char *hdrstart,int hdrlen,struct disposition *bod
 int print_encoded_content_disposition(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    int i=3;/* flags + urilength */
-   unsigned char flags=0;
 
-   flags=payload[0];
    fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
       fprintf(fd,"%s%d%s",i==0?"ENCODED CONTENT-DISPOSITION=[":":",payload[i],i==paylen-1?"]\n":"");
