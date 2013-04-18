@@ -897,6 +897,10 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
     for ( app = app_list->appearances; app != NULL; app = app->next ) {
 	if ( app->index == idx ) {
 	    break;
+	} else if ( idx == 0 ) {
+	    if ( SCA_STR_EQ( &dialog->id, &app->dialog.id )) {
+		break;
+	    }
 	}
     }
     if ( app == NULL ) {
