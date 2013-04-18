@@ -40,6 +40,9 @@ Chapter 1. Admin Guide
 
    Installing libval can be done from https://www.dnssec-tools.org.
 
+   More details about DNSSEC are available at:
+   http://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions.
+
 2. Dependencies
 
    2.1. Kamailio Modules

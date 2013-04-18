@@ -32,6 +32,11 @@
 		Installing libval can be done from
 		<ulink url="https://www.dnssec-tools.org/">https://www.dnssec-tools.org</ulink>.
 	</para>
+	<para>
+		More details about DNSSEC are available at:
+		<ulink url="http://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions">
+			http://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions</ulink>.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
