@@ -16,10 +16,21 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The module replaces the common system dns resolver function with the DNSSEC wrappers provided by libval
+		The module replaces the common system dns resolver functions from core
+		with the DNSSEC wrappers provided by libval. Practically, by loading
+		the module, &kamailio; will make use of extensions to DNS which provide
+		origin authentication of DNS data, authenticated denial of existence,
+		and data integrity.
 	</para>
 	<para>
-		Installing libval can be done from https://www.dnssec-tools.org/
+		There is no module parameter that should be set nor fuction that has to
+		be executed by the configuration file. Existing SIP server deployments
+		can be updated to use DNSSEC by loading this module and setting
+		appropriate DNS server to the operating system.
+	</para>
+	<para>
+		Installing libval can be done from
+		<ulink url="https://www.dnssec-tools.org/">https://www.dnssec-tools.org</ulink>.
 	</para>
 	</section>
 	<section>
@@ -45,28 +56,15 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>LibVal must be install. Check https://www.dnssec-tools.org for installation procedures</emphasis>.
+				<emphasis>libval</emphasis> - check
+				<ulink url="https://www.dnssec-tools.org/">https://www.dnssec-tools.org</ulink>
+				for installation guidelines.
 			</para>
 			</listitem>
 			</itemizedlist>
 		</para>
 	</section>
 	</section>
-	<section>
-	<title>Parameters</title>
-	<section>
-		<title>none</title>
-		<para>
-		</para>
-		<example>
-		<title></title>
-		<programlisting format="linespecific">
-...
-</programlisting>
-		</example>
-	</section>
-	</section>
-
 
 </chapter>
 

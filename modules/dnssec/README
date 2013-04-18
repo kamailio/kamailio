@@ -15,14 +15,6 @@ Marius Zbihlei
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Parameters
-
-              3.1. none
-
-   List of Examples
-
-   1.1.
-
 Chapter 1. Admin Guide
 
    Table of Contents
@@ -33,16 +25,20 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Parameters
-
-        3.1. none
-
 1. Overview
 
-   The module replaces the common system dns resolver function with the
-   DNSSEC wrappers provided by libval
+   The module replaces the common system dns resolver functions from core
+   with the DNSSEC wrappers provided by libval. Practically, by loading
+   the module, Kamailio will make use of extensions to DNS which provide
+   origin authentication of DNS data, authenticated denial of existence,
+   and data integrity.
 
-   Installing libval can be done from https://www.dnssec-tools.org/
+   There is no module parameter that should be set nor fuction that has to
+   be executed by the configuration file. Existing SIP server deployments
+   can be updated to use DNSSEC by loading this module and setting
+   appropriate DNS server to the operating system.
+
+   Installing libval can be done from https://www.dnssec-tools.org.
 
 2. Dependencies
 
@@ -58,14 +54,5 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * LibVal must be install. Check https://www.dnssec-tools.org for
-       installation procedures.
-
-3. Parameters
-
-   3.1. none
-
-3.1. none
-
-   Example 1.1.
-...
+     * libval - check https://www.dnssec-tools.org for installation
+       guidelines.
