@@ -69,10 +69,9 @@
 int encode_via_body(char *hdr,int hdrlen,struct via_body *via_parsed,unsigned char *where)
 {
    int i=0,k,via_offset;
-   unsigned char flags,tmp[500];
+   unsigned char tmp[500];
    struct via_body *myvia;
 
-   flags=0;
    if(via_parsed)
       for(via_offset=0,i=0,myvia=via_parsed;myvia;myvia=myvia->next,i++){
 	 if((k=encode_via(hdr,hdrlen,myvia,&tmp[via_offset]))<0){
@@ -152,10 +151,9 @@ int encode_via(char *hdrstart,int hdrlen,struct via_body *body,unsigned char *wh
 
 int print_encoded_via_body(FILE *fd,char *hdr,int hdrlen,unsigned char *payload,int paylen,char *prefix)
 {
-   unsigned char flags, numvias;
+   unsigned char numvias;
    int i,offset;
 
-   flags=payload[0];
    fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
       fprintf(fd,"%s%d%s",i==0?"ENCODED VIA BODY:[":":",payload[i],i==paylen-1?"]\n":"");
@@ -226,10 +224,8 @@ int print_encoded_via(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int p
 
 int dump_via_body_test(char *hdr,int hdrlen,unsigned char *payload,int paylen,FILE* fd,char segregationLevel)
 {
-   unsigned char flags, numvias;
+   unsigned char numvias;
    int i,offset;
-
-   flags=payload[0];
 
    if(!segregationLevel){
       return dump_standard_hdr_test(hdr,hdrlen,payload,paylen,fd);
