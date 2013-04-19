@@ -172,7 +172,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_iptrtpproxy) $(mod_list_mi_xmlrpc) \
 			   $(mod_list_outbound) $(mod_list_osp) \
 			   $(mod_list_java) $(mod_list_stun)) \
-			   $(mod_list_dnssec))
+			   $(mod_list_dnssec)
 
 
 
