@@ -327,7 +327,7 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 	/* Check if Supported: outbound is included */
 	if (parse_supported(msg) == 0) {
                 if (!(get_supported(msg) & F_OPTION_TAG_OUTBOUND)) {
-		        LM_INFO("outbound is not supported and thus not used\n");
+		        LM_DBG("outbound is not supported and thus not used\n");
 		        return 0;
 		}
 	}
