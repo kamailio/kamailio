@@ -35,6 +35,7 @@
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_supported.h"
 
 #include "api.h"
 #include "config.h"
@@ -322,6 +323,14 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 	param_t *params;
 	int ret;
 	struct receive_info *rcv = NULL;
+
+	/* Check if Supported: outbound is included */
+	if (parse_supported(msg) == 0) {
+                if (!(get_supported(msg) & F_OPTION_TAG_OUTBOUND)) {
+		        LM_INFO("outbound is not supported and thus not used\n");
+		        return 0;
+		}
+	}
 
 	/* Check to see if the top Route-URI is me and has a ;ob parameter */
 	if (msg->route
