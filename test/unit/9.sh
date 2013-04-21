@@ -47,5 +47,4 @@ fi ;
 mv $CTLRC.bak $CTLRC
 mv $CTL.bak $CTL
 
-cd ../test
 exit $ret

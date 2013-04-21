@@ -62,5 +62,4 @@ mv $CTLRC.bak $CTLRC
 mv $DBCTL.mysql.bak $DBCTL.mysql
 mv $DBCTL.bak $DBCTL
 
-cd ../test
 exit $ret

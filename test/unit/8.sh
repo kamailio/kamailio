@@ -46,6 +46,4 @@ fi ;
 mv $CTLRC.bak $CTLRC
 mv $DBCTL.bak $DBCTL
 
-
-cd ../test
 exit $ret
