@@ -61,7 +61,6 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"sampling_time_unit",    INT_PARAM,  &time_unit},
 	{0,0,0}
 };
 
