@@ -91,7 +91,7 @@ Chapter 1. Admin Guide
 
    This module collects the core pseudo-variables that can be used in
    configuration file. They are listed in Dokuwiki:
-   http://www.kamailio.org/dokuwiki/, in Pseudo-Variables section
+   http://www.kamailio.org/wiki/, in Pseudo-Variables section
 
 2. Dependencies
 
