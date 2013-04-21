@@ -21,7 +21,7 @@
 
 source include/common
 
-cd ../scripts
+cd $CTL_DIR
 
 # setup config file
 cp $CTLRC $CTLRC.bak

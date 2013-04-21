@@ -23,7 +23,7 @@ source include/common
 
 tmp_name=""$RANDOM"_kamailiodb_tmp"
 
-cd ../scripts
+cd $CTL_DIR
 
 # setup config file
 cp $CTLRC $CTLRC.bak
