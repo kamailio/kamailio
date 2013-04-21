@@ -49,7 +49,6 @@ static int dnssec_exit(void);
 
 
 /* parameters */
-static int time_unit = 2;
 
 /* global variables */
 gen_lock_t*             timer_lock=0;
