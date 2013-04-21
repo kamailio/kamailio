@@ -21,7 +21,7 @@ source include/common
 function check_kamailio() {
 	if ! (test -e $BIN) ; then
 		echo "kamailio not found, not run"
-		return -1
+		return 1
 	fi;
 	return 0
 }
@@ -29,7 +29,7 @@ function check_kamailio() {
 function check_module() {
 	if [ $# -ne 1 ]; then
 		echo "wrong number of params in check_module()"
-		return -1
+		return 1
 	fi
 
 	if ! (test -e $SR_DIR/modules_k/$1/$1.so) ; then
@@ -39,7 +39,7 @@ function check_module() {
 	fi;
 	if ! (test -e $SR_DIR/modules/$1/$1.so) ; then
 		echo "$SR_DIR/modules/$1/$1.so not found, not run"
-		return -1
+		return 1
 	fi;
 	return 0
 }
@@ -47,7 +47,7 @@ function check_module() {
 function check_netcat() {
 	if ! ( which nc > /dev/null ); then
 		echo "netcat not found, not run"
-		return -1
+		return 1
 	fi;
 	return 0
 }
@@ -55,7 +55,7 @@ function check_netcat() {
 function check_sipp() {
 	if ! ( which sipp > /dev/null ); then
 		echo "sipp not found, not run"
-		return -1
+		return 1
 	fi;
 	return 0
 }
@@ -63,7 +63,7 @@ function check_sipp() {
 function check_sipsak() {
 	if ! ( which sipsak > /dev/null ); then
 		echo "sipsak not found, not run"
-		return -1
+		return 1
 	fi;
 	return 0
 }

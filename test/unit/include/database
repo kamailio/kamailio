@@ -27,12 +27,12 @@ function check_mysql() {
 	$MYSQL "select * from location;" > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
 		echo "can't read from database"
-		return -1
+		return 1
 	fi;
 	$MYSQL "insert into location (user_agent) values ('___test___');" > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
 		echo "can't write to database"
-		return -1
+		return 1
 	fi;
 	$MYSQL "delete from location where user_agent ='___test___';" > /dev/null
 	return 0
@@ -42,12 +42,12 @@ function check_postgres() {
 	$PSQL "select * from location;" > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
 		echo "can't read from database"
-		return -1
+		return 1
 	fi;
 	$PSQL "insert into location (user_agent) values ('___test___');" > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
 		echo "can't write to database"
-		return -1
+		return 1
 	fi;
 	$PSQL "delete from location where user_agent ='___test___';" > /dev/null
 	return 0
@@ -57,12 +57,12 @@ function check_unixodbc() {
 	echo "select * from location;" | $ISQL  > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
 		echo "can't read from database"
-		return -1
+		return 1
 	fi;
 	echo "insert into location (id, user_agent) values ('$RANDOM', '___test___');" | $ISQL > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
 		echo "can't write to database"
-		return -1
+		return 1
 	fi;
 	echo "delete from location where user_agent ='___test___';" | $ISQL > /dev/null
 	return 0
