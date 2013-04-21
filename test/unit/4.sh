@@ -29,8 +29,8 @@ if ! (check_kamailio); then
 fi ;
 
 # setup config
-echo -e "loadmodule \"$SR_DIR/modules_k/mi_fifo/mi_fifo.so\"" > $CFG
-echo -e "loadmodule \"$SR_DIR/modules_k/kex/kex.so\"" >> $CFG
+echo -e "loadmodule \"$SR_DIR/modules/mi_fifo/mi_fifo.so\"" > $CFG
+echo -e "loadmodule \"$SR_DIR/modules/kex/kex.so\"" >> $CFG
 echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
 
 

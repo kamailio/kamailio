@@ -30,7 +30,7 @@ fi ;
 CFG=43.cfg
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXX`
 # setup config
-echo "mpath=\"../../modules_k\"" > $CFG
+echo "mpath=\"../../modules\"" > $CFG
 echo "loadmodule \"../../modules/tm/tm.so\"" >> $CFG
 echo "loadmodule \"sl/sl.so\"" >> $CFG
 echo "loadmodule \"mi_fifo/mi_fifo.so\"" >> $CFG

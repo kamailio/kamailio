@@ -30,7 +30,7 @@ fi ;
 CFG=11.cfg
 
 cp $CFG $CFG.tmp
-echo "loadmodule \"$SR_DIR/modules_k/db_unixodbc/db_unixodbc.so\"" >> $CFG
+echo "loadmodule \"$SR_DIR/modules/db_unixodbc/db_unixodbc.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"db_url\", \"unixodbc://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 
 $BIN -w . -f $CFG > /dev/null
