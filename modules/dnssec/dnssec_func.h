@@ -31,10 +31,23 @@
 
 struct hostent;
 
+typedef enum {
+	QUERY_DONT_VALIDATE = 1<<0,
+	QUERY_IGNORE_SKEW = 1<<1,
+	QUERY_AC_DETAIL = 1<<2,
+	QUERY_NO_DLV = 1<<3,
+	QUERY_NO_EDNS0_FALLBACK = 1<<4,
+	QUERY_RECURSE = 1<<5,
+	QUERY_SKIP_RESOLVER = 1<<6,
+	QUERY_SKIP_CACHE = 1<<7
+} query_flags_t;
+
 int dnssec_res_init(void);
+unsigned int set_context_flags(unsigned int flags);
 struct hostent* dnssec_gethostbyname(const char *);
 struct hostent* dnssec_gethostbyname2(const char *, int);
 int dnssec_res_search(const char*, int, int, unsigned char*, int);
 
 
-#endif
+#endif // DNSSEC_FUNC_H
+

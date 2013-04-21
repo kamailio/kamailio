@@ -49,6 +49,7 @@ static int dnssec_exit(void);
 
 
 /* parameters */
+static unsigned int flags=0;
 
 /* global variables */
 gen_lock_t*             timer_lock=0;
@@ -60,6 +61,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
+	{"general_query_flags", INT_PARAM, &flags},
 	{0,0,0}
 };
 
@@ -85,9 +87,12 @@ struct module_exports exports= {
 };
 
 
-static void load_dns(void)
+static int load_dns(void)
 {
 	struct dns_func_t *f = pkg_malloc(sizeof(struct dns_func_t));
+	if( NULL == f ) {
+		return -1;
+	}
 	memset(f, 0, sizeof(struct dns_func_t));
 	f->sr_res_init = dnssec_res_init;
 	f->sr_gethostbyname = dnssec_gethostbyname;
@@ -95,6 +100,7 @@ static void load_dns(void)
 	f->sr_res_search = dnssec_res_search;
 
 	load_dnsfunc(f);
+	return 0;
 }
 
 static int dnssec_init(void)
@@ -107,9 +113,12 @@ static int dnssec_init(void)
 		return -1;
 	}
 */
-	load_dns();
-	{
-		LM_ERR("loaded dnssec wrappers\n");
+	
+	//set parameters
+	if(flags) set_context_flags(flags);
+
+	if(load_dns() != 0) {
+		LM_ERR("loaded dnssec wrappers failed\n");
 	}
 	/* load dnssec resolver wrappers */
 	return 0;
@@ -119,7 +128,6 @@ static int dnssec_init(void)
 
 static int dnssec_exit(void)
 {
-
 	return 0;
 }
 

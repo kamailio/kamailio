@@ -15,6 +15,14 @@ Marius Zbihlei
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
+        3. Parameters
+
+              3.1. general_query_flags (integer)
+
+   List of Examples
+
+   1.1. Set enable_full_lr parameter
+
 Chapter 1. Admin Guide
 
    Table of Contents
@@ -24,6 +32,10 @@ Chapter 1. Admin Guide
 
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. general_query_flags (integer)
 
 1. Overview
 
@@ -59,3 +71,54 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libval - check https://www.dnssec-tools.org for installation
        guidelines.
+
+3. Parameters
+
+   3.1. general_query_flags (integer)
+
+3.1. general_query_flags (integer)
+
+   Set this parameter to an integer value containing of an ORed result of
+   one or more of the following values (constant present only for
+   documentation process, as they are mostly mapped to libval
+   flags).Setting this parameter will cause the libval defaults to be
+   completely overwritten
+
+   QUERY_DONT_VALIDATE == 1<<0 causes the validator to disable validation
+   for this query.
+
+   QUERY_IGNORE_SKEW == 1<<1 causes the validator to disable checking
+   signature inception and expiration times on RRSIGs.
+
+   QUERY_AC_DETAIL == 1<<2 causes the validator to copy the authentication
+   chain details into the val_rc_answer member within the returned
+   val_result_chain structure.
+
+   QUERY_NO_DLV == 1<<3 causes the validator to disable DLV processing for
+   this query. This is only available if the libval(3) library has been
+   compiled with DLV support.
+
+   QUERY_NO_EDNS0_FALLBACK = 1<<4 In querying various name servers,
+   libsres will also attempt multiple EDNS0 sizes, ending with a query
+   that has EDNS0 disabled (i.e. no CD bit set). This option causes libval
+   to disable EDNS0 fallback for the query.
+
+   QUERY_RECURSE == 1<<5 forces libval to recursively answer the query by
+   iteratively querying various name servers in the delegation hierarchy,
+   instead of requesting this information from any caching name server
+   that may be configured in dnsval.conf
+
+   SKIP_RESOLVER == 1<<6 forces libval to only look at its cache while
+   trying to resolve a name.
+
+   SKIP_CACHE == 1<<7 forces libval to ignore cached data while trying to
+   resolve a name.
+
+   Default value is 0(no changes)
+
+   Example 1.1. Set enable_full_lr parameter
+ ...
+ modparam("dnssec", "general_query_flags", 1) # QUERY_DONT_VALIDATE disable vali
+dation
+ modparam("dnssec", "general_query_flags", 10) # QUERY_IGNORE_SKEW | QUERY_NO_DLV
+ ...
