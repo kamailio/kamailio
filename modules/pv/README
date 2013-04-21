@@ -103,7 +103,7 @@ Chapter 1. Admin Guide
 
    This module collects the core pseudo-variables that can be used in
    configuration file. They are listed in Dokuwiki:
-   http://www.kamailio.org/dokuwiki/, in Pseudo-Variables section
+   http://www.kamailio.org/wiki/, in Pseudo-Variables section
 
 2. Dependencies
 
@@ -219,7 +219,7 @@ if(pv_isset("$avp("s:x")"))
 pv_unset("$avp("s:x")");
 ...
 
-4.3.  is_int(pvar)
+4.3. is_int(pvar)
 
    Function checks if pvar argument contains integer value and returns 1
    if it does and -1 otherwise.
@@ -233,7 +233,7 @@ if (is_int("$var(foo)")) {
 }
 ...
 
-4.4.  typeof(pvar, vtype)
+4.4. typeof(pvar, vtype)
 
    Returns true if the type of pseudo-variable matches the second
    parameter. The second parameter can be: 'int' - type is integer; 'str'
@@ -248,7 +248,7 @@ if (typeof("$var(foo)", "str")) {
 }
 ...
 
-4.5.  not_empty(pvar)
+4.5. not_empty(pvar)
 
    Returns true if the pseudo-variables has the type string and is not
    empty value.

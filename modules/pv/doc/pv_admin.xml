@@ -18,7 +18,7 @@
 	<para>
 		This module collects the core pseudo-variables that can be used in
 		configuration file. They are listed in Dokuwiki:
-		<ulink url="http://www.kamailio.org/dokuwiki/">http://www.kamailio.org/dokuwiki/</ulink>,
+		<ulink url="http://www.kamailio.org/wiki/">http://www.kamailio.org/wiki/</ulink>,
 		in Pseudo-Variables section
 	</para>
 	</section>
