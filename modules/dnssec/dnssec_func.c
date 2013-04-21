@@ -85,7 +85,7 @@ dnssec_gethostbyname(const char *name) {
 
   	if (val_istrusted(val_status) && !val_does_not_exist(val_status)) {
    		return res;
-  	}
+  	} 
   	return NULL; 
 }
 
@@ -115,6 +115,13 @@ dnssec_res_init(void) {
   	return dnssec_init_context();
 }
 
+int
+dnssec_res_destroy(void) {
+	LOG(L_INFO, "destroying dnssec context\n");
+	val_free_context(libval_ctx);
+	libval_ctx = NULL;
+	return 0;
+}
 
 
 int
@@ -126,15 +133,17 @@ dnssec_res_search(const char *dname, int class_h, int type_h,
   	if (dnssec_init_context())
     	return -1;
 
-  	LOG(L_ERR, "res_query(%s,%d,%d) called: wrapper\n",
+  	LOG(L_INFO, "res_query(%s,%d,%d) called: wrapper\n",
 	  	dname, class_h, type_h);
 
   	ret = val_res_search(libval_ctx, dname, class_h, type_h, answer, anslen,
 			&val_status);
 
   	if (val_istrusted(val_status) && !val_does_not_exist(val_status)) {
-    	return ret;
-  	}
+		return ret;
+  	} else {
+		LOG(L_INFO, "invalid domain %s reason %s\n", dname, p_val_status(val_status));
+	}
 
  	return -1;
 }

@@ -43,6 +43,7 @@ typedef enum {
 } query_flags_t;
 
 int dnssec_res_init(void);
+int dnssec_res_destroy(void);
 unsigned int set_context_flags(unsigned int flags);
 struct hostent* dnssec_gethostbyname(const char *);
 struct hostent* dnssec_gethostbyname2(const char *, int);

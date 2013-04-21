@@ -128,6 +128,7 @@ static int dnssec_init(void)
 
 static int dnssec_exit(void)
 {
+	(void)dnssec_res_destroy();
 	return 0;
 }
 
