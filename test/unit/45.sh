@@ -34,11 +34,12 @@ UAC=5080
 
 
 # add an registrar entry to the db;
-$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
+$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@127.0.0.1:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
 
 $BIN -w . -f $CFG &> /dev/null
-sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
-sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null
+
+sipp -sn uas -bg -i 127.0.0.1 -m 10 -f 2 -p $UAS &> /dev/null
+sipp -sn uac -s foo 127.0.0.1:$SRV -i 127.0.0.1 -m 10 -f 2 -p $UAC &> /dev/null
 
 ret=$?
 
@@ -46,5 +47,5 @@ ret=$?
 killall -9 sipp > /dev/null 2>&1
 $KILL > /dev/null 2>&1
 
-$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
+$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1:$UAS\") and (user_agent = \"ser_test\"));"
 exit $ret;
