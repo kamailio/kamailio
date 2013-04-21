@@ -184,8 +184,8 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			<para>
 			The full list of supported pseudo-variables in &kamailio; is
 			available at: 
-			<ulink url="http://kamailio.org/dokuwiki/doku.php/pseudovariables:devel">
-			http://kamailio.org/dokuwiki/doku.php/pseudovariables:devel</ulink>
+			<ulink url="http://www.kamailio.org/wiki/cookbooks/devel/pseudovariables">
+			http://www.kamailio.org/wiki/cookbooks/devel/pseudovariables</ulink>
 			</para>
 			<para>
 			Note: For all the ACK processed by tm, the registered callbacks
