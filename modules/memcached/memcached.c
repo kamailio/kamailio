@@ -1,7 +1,6 @@
 /*
- * $Id$
- *
- * Copyright (C) 2009 Henning Westerholt
+ * Copyright (C) 2009, 2013 Henning Westerholt
+ * Copyright (C) 2013 Charles Chance, sipcentric.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -37,23 +36,18 @@
 MODULE_VERSION
 
 
-#define DP_ALERT_TEXT    "ALERT:"
-#define DP_ERR_TEXT      "ERROR:"
-#define DP_WARN_TEXT     "WARNING:"
-#define DP_NOTICE_TEXT   "NOTICE:"
-#define DP_INFO_TEXT     "INFO:"
-
-
 /*! server string */
-char* memcached_srv_str = "localhost:11211";
-/*! cache expire time in seconds */
-unsigned int memcached_expire = 10800;
+char* mcd_srv_str = "localhost:11211";
+/*! cache (default) expire time in seconds */
+unsigned int mcd_expire = 0;
 /*! cache storage mode, set or add */
-unsigned int memcached_mode = 0;
+unsigned int mcd_mode = 0;
 /*! server timeout in ms*/
-int memcached_timeout = 5000;
+int mcd_timeout = 5000;
 /*! memcached handle */
-struct memcache* memcached_h = NULL;
+struct memcached_st *memcached_h;
+/*! memcached server list */
+struct memcached_server_st *servers;
 
 
 static int mod_init(void);
@@ -81,10 +75,10 @@ static pv_export_t mod_pvs[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"servers", STR_PARAM, &memcached_srv_str },
-	{"expire",   INT_PARAM, &memcached_expire },
-	{"timeout", INT_PARAM, &memcached_timeout },
-	{"mode",    INT_PARAM, &memcached_mode },
+	{"servers", STR_PARAM, &mcd_srv_str },
+	{"expire",   INT_PARAM, &mcd_expire },
+	{"timeout", INT_PARAM, &mcd_timeout },
+	{"mode",    INT_PARAM, &mcd_mode },
 	{0, 0, 0}
 };
 
@@ -113,7 +107,7 @@ struct module_exports exports = {
  * \param mem freed memory
  * \see pkg_free
  */
-static inline void memcached_free(void *mem) {
+static inline void mcd_free(void *mem) {
 	pkg_free(mem);
 }
 
@@ -124,7 +118,7 @@ static inline void memcached_free(void *mem) {
  * \return allocated memory, or NULL on failure
  * \see pkg_malloc
  */
-static inline void* memcached_malloc(const size_t size) {
+static inline void* mcd_malloc(const size_t size) {
 	return pkg_malloc(size);
 }
 
@@ -136,68 +130,9 @@ static inline void* memcached_malloc(const size_t size) {
  * \return allocated memory, or NULL on failure
  * \see pkg_realloc
  */
-static inline void* memcached_realloc(void *mem, const size_t size) {
+static inline void* mcd_realloc(void *mem, const size_t size) {
  	return pkg_realloc(mem, size);
 }
-
-
-/*!
- * \brief Small wrapper around our internal logging function
- */
-static int memcache_err_func(MCM_ERR_FUNC_ARGS) {
-
-	const struct memcache_ctxt *ctxt;
-	struct memcache_err_ctxt *ectxt;
-	int error_level;
-	const char * error_str;
-
-	MCM_ERR_INIT_CTXT(ctxt, ectxt);
-
-	switch (ectxt->severity) {
-		case MCM_ERR_LVL_INFO:
-			error_level = L_INFO;
-			error_str = DP_INFO_TEXT;
-			break;
-		case MCM_ERR_LVL_NOTICE:
-			error_level = L_NOTICE;
-			error_str = DP_NOTICE_TEXT;
-			break;
-		case MCM_ERR_LVL_WARN:
-			error_level = L_WARN;
-			error_str = DP_WARN_TEXT;
-			break;
-		case MCM_ERR_LVL_ERR:
-			error_level = L_ERR;
-			error_str  = DP_ERR_TEXT;
-			/* try to continue */
- 			ectxt->cont = 'y';
-			break;
-		case MCM_ERR_LVL_FATAL:
-  		default:
-			error_level = L_ALERT;
-			error_str = DP_ALERT_TEXT;
-			ectxt->cont = 'y';
-			break;
-	}
-
-	/*
-	* ectxt->errmsg - per error message passed along via one of the MCM_*_MSG() macros (optional)
-	* ectxt->errstr - memcache error string (optional, though almost always set)
-	*/
-	if (ectxt->errstr != NULL && ectxt->errmsg != NULL)
-		LM_GEN1(error_level, "%s memcached: %s():%u: %s: %.*s\n", error_str, ectxt->funcname, ectxt->lineno, ectxt->errstr,
-			(int)ectxt->errlen, ectxt->errmsg);
-	else if (ectxt->errstr == NULL && ectxt->errmsg != NULL)
-		LM_GEN1(error_level, "%s memcached: %s():%u: %.*s\n", error_str, ectxt->funcname, ectxt->lineno, (int)ectxt->errlen,
-			ectxt->errmsg);
-	else if (ectxt->errstr != NULL && ectxt->errmsg == NULL)
-		LM_GEN1(error_level, "%s memcached: %s():%u: %s\n", error_str, ectxt->funcname, ectxt->lineno, ectxt->errstr);
-	else
-		LM_GEN1(error_level, "%s memcached: %s():%u\n", error_str, ectxt->funcname, ectxt->lineno);
-
-	return 0;
-}
-
 
 /*!
  * \brief Module initialization function
@@ -206,58 +141,90 @@ static int memcache_err_func(MCM_ERR_FUNC_ARGS) {
 static int mod_init(void) {
 	char *server, *port;
 	unsigned int len = 0;
+	memcached_return rc;
 
-	/* setup the callbacks to our internal memory manager */
-	if (mcMemSetup(memcached_free, memcached_malloc,
-			memcached_malloc, memcached_realloc) != 0) {
-		LM_ERR("could not setup memory management callbacks\n");
-		return -1;
-	}
-
-	if (mcErrSetup(memcache_err_func) != 0) {
-		LM_ERR("could not setup error handler callback\n");
-		return -1;
-	}
-
-	/*! delete eventual log filters */
-	mc_err_filter_del(MCM_ERR_LVL_INFO);
-	mc_err_filter_del(MCM_ERR_LVL_NOTICE);
-
-	memcached_h = mc_new();
-	if (memcached_h == NULL) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
-	
-	if ((port = strchr(memcached_srv_str, ':')) != NULL) {
+	if ((port = strchr(mcd_srv_str, ':')) != NULL) {
 		port = port + 1;
-		len = strlen(memcached_srv_str) - strlen(port) - 1;
+		len = strlen(mcd_srv_str) - strlen(port) - 1;
 	} else {
 		LM_DBG("no port definition, using default port\n");
 		port = "11211";
-		len = strlen(memcached_srv_str) ;
+		len = strlen(mcd_srv_str) ;
 	}
 	
-
 	server = pkg_malloc(len);
 	if (server == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 
-	strncpy(server, memcached_srv_str, len);
+	strncpy(server, mcd_srv_str, len);
 	server[len] = '\0';
 
-	mc_timeout(memcached_h, 0, memcached_timeout);
+        servers = memcached_server_list_append(servers, server, atoi(port), &rc);
 
-	if (mc_server_add(memcached_h, server, port) != 0) {
-		LM_ERR("could not add server %s:%s\n", server, port);
+	memcached_h = memcached_create(NULL);
+	if (memcached_h == NULL) {
+		LM_ERR("could not create memcached structure\n");
 		return -1;
 	}
-	LM_INFO("connected to server %s:%s\n", server, port);
-	pkg_free(server);
+	LM_DBG("allocated new server handle at %p", memcached_h);
+	
+	#ifdef MEMCACHED_ENABLE_DEPRECATED
+	/** 
+	 * \note Set callbacks to our internal memory manager
+	 * \bug this don't work for now
+	 * \todo Move to new memcached_set_memory_allocators function, this deprecated since 0.32
+	 * 
+	 * MEMCACHED_CALLBACK_MALLOC_FUNCTION
+	 * This alllows yout to pass in a customized version of malloc that
+	 * will be used instead of the builtin malloc(3) call. The prototype
+	 * for this is:
+	 * void *(*memcached_malloc_function)(memcached_st *ptr, const size_t size);
+	 * 
+	 * MEMCACHED_CALLBACK_REALLOC_FUNCTION
+	 * This alllows yout to pass in a customized version of realloc that
+	 * will be used instead of the builtin realloc(3) call. The prototype
+	 * for this is:
+	 * void *(*memcached_realloc_function)(memcached_st *ptr, void *mem, const size_t size);
+	 * 
+	 * MEMCACHED_CALLBACK_FREE_FUNCTION
+	 * This alllows yout to pass in a customized version of realloc that
+	 * will be used instead of the builtin free(3) call. The prototype
+	 * for this is:
+	 * typedef void (*memcached_free_function)(memcached_st *ptr, void *mem);
+	 */
+	LM_DBG("set memory manager callbacks");	
+	if (memcached_callback_set(memcached_h, MEMCACHED_CALLBACK_MALLOC_FUNCTION, mcd_free) != MEMCACHED_SUCCESS) {
+		LM_ERR("could not set malloc callback handler");
+		return -1;
+	}
+	if (memcached_callback_set(memcached_h, MEMCACHED_CALLBACK_REALLOC_FUNCTION, mcd_realloc) != MEMCACHED_SUCCESS) {
+		LM_ERR("could not set realloc callback handler");
+		return -1;
+	}
+	if (memcached_callback_set(memcached_h, MEMCACHED_CALLBACK_FREE_FUNCTION, mcd_free) != MEMCACHED_SUCCESS) {
+		LM_ERR("could not set free callback handler");
+		return -1;
+	}
+	LM_DBG("memory manager callbacks set");
+	#endif
+	
+	if (memcached_behavior_set(memcached_h, MEMCACHED_BEHAVIOR_CONNECT_TIMEOUT, mcd_timeout) != MEMCACHED_SUCCESS) {
+		LM_ERR("could not set server connection timeout");
+		return -1;
+	}
+	rc = memcached_server_push(memcached_h, servers);
+	if (rc == MEMCACHED_SUCCESS) {
+		LM_DBG("added server list to structure\n");
+	} else {
+		LM_ERR("attempt to add server list to structure returned %s.\n", memcached_strerror(memcached_h, rc));
+		return -1;
+	}
 
-	LM_INFO("memcached client version is %s, released on %d\n", mc_version(), mc_reldate());
+	pkg_free(server);
+	
+	LM_INFO("libmemcached version is %s\n", memcached_lib_version());
 	return 0;
 }
 
@@ -267,8 +234,7 @@ static int mod_init(void) {
  */
 static void mod_destroy(void) {
 	if (memcached_h != NULL)
-		mc_server_disconnect_all(memcached_h);
-
-	if (memcached_h != NULL)
-		mc_free(memcached_h);
+		memcached_free(memcached_h);
+	if (servers != NULL)
+		memcached_server_list_free(servers);
 }

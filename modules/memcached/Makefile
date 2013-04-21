@@ -9,6 +9,6 @@ NAME=memcached.so
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 DEFS +=-I$(LOCALBASE)/include -I$(SYSBASE)/include
-LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmemcache
+LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmemcached
 
 include ../../Makefile.modules

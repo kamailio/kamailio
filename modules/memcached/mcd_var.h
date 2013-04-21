@@ -1,7 +1,6 @@
-/**
- * $Id$
- *
- * Copyright (C) 2009 Henning Westerholt
+/*
+ * Copyright (C) 2009, 2013 Henning Westerholt
+ * Copyright (C) 2013 Charles Chance, sipcentric.com
  *
  * This file is part of Kamailio, a free SIP server.
  *

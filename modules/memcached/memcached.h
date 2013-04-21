@@ -1,7 +1,6 @@
 /*
- * $Id$
- *
- * Copyright (C) 2009 Henning Westerholt
+ * Copyright (C) 2009, 2013 Henning Westerholt
+ * Copyright (C) 2013 Charles Chance, sipcentric.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -24,21 +23,22 @@
  * \brief memcached module
  */
 
-#include <memcache.h>
+#include <libmemcached/memcached.h>
 
 #ifndef MEMCACHED_H
 #define MEMCACHED_H
 
 /*! server string */
-extern char* db_memcached_srv_str;
+extern char* mcd_srv_str;
 /*! cache expire time in seconds */
-extern unsigned int memcached_expire;
+extern unsigned int mcd_expire;
 /*! cache storage mode, set or add */
-extern unsigned int memcached_mode;
+extern unsigned int mcd_mode;
 /*! server timeout */
-extern int memcached_timeout;
+extern int mcd_timeout;
 /*! memcached handle */
-extern struct memcache* memcached_h;
-
+extern struct memcached_st* memcached_h;
+/*! memcached server list */
+extern struct memcached_server_st *servers;
 
 #endif
