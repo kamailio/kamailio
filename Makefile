@@ -1018,6 +1018,26 @@ clean_modules_cfg clean-modules-cfg:
 .PHONY: pure
 pure: maintainer-clean
 
+.PHONY: install_initd_debian install-initd-debian
+install_initd_debian install-initd-debian:
+	sed -e "s#DAEMON=/usr/sbin/kamailio#DAEMON=$(bin_prefix)/$(bin_dir)$(NAME)#g" \
+		-e "s#NAME=kamailio#NAME=$(NAME)#g" \
+		-e "s#DESC=Kamailio#DESC=$(NAME)#g" \
+		-e "s#HOMEDIR=/var/run/kamailio#HOMEDIR=/var/run/$(NAME)#g" \
+		-e "s#DEFAULTS=/etc/default/kamailio#DEFAULTS=/etc/default/$(NAME)#g" \
+		-e "s#CFGFILE=/etc/kamailio/kamailio.cfg#CFGFILE=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
+		< pkg/kamailio/deb/debian/kamailio.init \
+		> /etc/init.d/$(NAME)
+	chmod +x /etc/init.d/$(NAME)
+	sed -e "s#RUN_KAMAILIO=no#RUN_KAMAILIO=yes#g" \
+		< pkg/kamailio/debian/kamailio.default \
+		> /etc/default/$(NAME)
+	mkdir -p /var/run/$(NAME)
+	adduser --quiet --system --group --disabled-password \
+        --shell /bin/false --gecos "$(NAME)" \
+        --home /var/run/$(NAME) $(NAME)
+	chown $(NAME):$(NAME) /var/run/$(NAME)
+
 .PHONY: dbschema
 dbschema:
 	-@echo "Build database schemas"
