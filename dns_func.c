@@ -27,7 +27,7 @@
 
 #include "dns_func.h"
 
-
+#include <netinet/in.h>
 #include <resolv.h>
 #include <sys/types.h>
 #include <netdb.h>
