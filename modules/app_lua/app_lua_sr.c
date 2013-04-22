@@ -39,6 +39,7 @@
 #include "../../dset.h"
 #include "../../parser/parse_uri.h"
 #include "../../lib/kcore/cmpapi.h"
+#include "../../xavp.h"
 
 #include "app_lua_api.h"
 #include "app_lua_sr.h"
@@ -1122,6 +1123,82 @@ static const luaL_reg _sr_pv_Map [] = {
 	{NULL, NULL}
 };
 
+
+/**
+ * creates and push a table to the lua stack with
+ * the elements of the list
+ */
+static int lua_sr_push_str_list_table(lua_State *L, struct str_list *list) {
+	lua_Number i = 1;
+	struct str_list *k = list;
+
+	lua_newtable(L);
+	while(k!=NULL){
+		lua_pushnumber(L, i);
+		lua_pushlstring(L, k->s.s, k->s.len);
+		lua_settable(L, -3);
+		i++;
+		k = k->next;
+	}
+	return 1;
+}
+
+/**
+ * puts a table with the list of keys of the xavp
+ */
+static int lua_sr_xavp_get_keys (lua_State *L)
+{
+	str xavp_name;
+	int indx = 0;
+	sr_lua_env_t *env_L;
+	sr_xavp_t *avp;
+	struct str_list *keys, *k;
+
+	env_L = sr_lua_env_get();
+
+	if(lua_gettop(L)<2)
+	{
+		LM_ERR("to few parameters [%d]\n",lua_gettop(L));
+		return 0;
+	}
+
+	if(!lua_isnumber(L, -1))
+	{
+		LM_ERR("invalid int parameter\n");
+		return 0;
+	}
+	indx = lua_tointeger(L, -1);
+
+	xavp_name.s = (char*)lua_tostring(L, -2);
+	if(xavp_name.s==NULL || env_L->msg==NULL)
+		return 0;
+	xavp_name.len = strlen(xavp_name.s);
+
+	avp = xavp_get_by_index(&xavp_name, indx, NULL);
+	if(avp==NULL){
+		LM_ERR("can't get xavp:%.*s index:%d\n", xavp_name.len, xavp_name.s, indx);
+		lua_pushnil(L);
+		return 1;
+	}
+	keys = xavp_get_list_key_names(avp);
+	lua_sr_push_str_list_table(L, keys);
+	// free list
+	while(keys!=NULL){
+		k = keys;
+		keys = k->next;
+		pkg_free(k);
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_xavp_Map [] = {
+	{"get_keys",  lua_sr_xavp_get_keys},
+	{NULL, NULL}
+};
+
 /**
  *
  */
@@ -1130,6 +1207,5 @@ void lua_sr_core_openlibs(lua_State *L)
 	luaL_openlib(L, "sr",      _sr_core_Map, 0);
 	luaL_openlib(L, "sr.hdr",  _sr_hdr_Map,  0);
 	luaL_openlib(L, "sr.pv",   _sr_pv_Map,   0);
+	luaL_openlib(L, "sr.xavp", _sr_xavp_Map, 0);
 }
-
-
