@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mem/mem.h"
 #include "mem/shm_mem.h"
 #include "dprint.h"
 #include "hashes.h"
@@ -535,6 +536,67 @@ void xavp_print_list_content(sr_xavp_t **head, int level)
 void xavp_print_list(sr_xavp_t **head)
 {
 	xavp_print_list_content(head, 0);
+}
+
+/**
+ * returns a list of str with key names.
+ * Example:
+ * If we have this structure
+ * $xavp(test=>one) = 1
+ * $xavp(test[0]=>two) = "2"
+ * $xavp(test[0]=>three) = 3
+ * $xavp(test[0]=>four) = $xavp(whatever)
+ *
+ * xavp_get_list_keys_names(test[0]) returns
+ * {"one", "two", "three", "four"}
+ */
+struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp)
+{
+	sr_xavp_t *avp = NULL;
+	struct str_list *result = NULL;
+	struct str_list *r = NULL;
+	int total = 0;
+
+	if(xavp==NULL){
+		LM_ERR("xavp is NULL\n");
+		return 0;
+	}
+
+	if(xavp->val.type!=SR_XTYPE_XAVP){
+		LM_ERR("%s not xavp?\n", xavp->name.s);
+		return 0;
+	}
+
+	avp = xavp->val.v.xavp;
+
+	if (avp)
+	{
+		result = (struct str_list*)pkg_malloc(sizeof(struct str_list));
+		if (result==NULL) {
+			PKG_MEM_ERROR;
+			return 0;
+		}
+		r = result;
+		r->s.s = avp->name.s;
+		r->s.len = avp->name.len;
+		r->next = NULL;
+		avp = avp->next;
+	}
+
+	while(avp)
+	{
+		r = append_str_list(avp->name.s, avp->name.len, &r, &total);
+		if(r==NULL){
+			while(result){
+				r = result;
+				result = result->next;
+				pkg_free(r);
+			}
+			return 0;
+		}
+		avp = avp->next;
+	}
+	return result;
 }
 
 /**

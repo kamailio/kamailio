@@ -29,6 +29,7 @@
 
 #include <time.h>
 #include "str.h"
+#include "str_list.h"
 
 struct _sr_xavp;
 
@@ -95,6 +96,7 @@ void xavp_destroy_list(sr_xavp_t **head);
 void xavp_reset_list(void);
 sr_xavp_t **xavp_set_list(sr_xavp_t **head);
 sr_xavp_t **xavp_get_crt_list(void);
+struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp);
 
 int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list);
 sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list);
