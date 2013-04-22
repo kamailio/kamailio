@@ -136,6 +136,19 @@
 #define ISUP_PARM_DIVERSION_INFORMATION 0x36
 #define ISUP_PARM_UUI 0x20
 
+/* Address Presentation */
+#define SS7_PRESENTATION_ALLOWED                       0x00
+#define SS7_PRESENTATION_RESTRICTED                    0x01
+#define SS7_PRESENTATION_ADDR_NOT_AVAILABLE            0x02
+
+/* Screening */
+#define SS7_SCREENING_USER_PROVIDED_NOT_VERIFIED       0x00
+#define SS7_SCREENING_USER_PROVIDED                    0x01
+#define SS7_SCREENING_NETWORK_PROVIDED_FAILED          0x02
+#define SS7_SCREENING_NETWORK_PROVIDED                 0x03
+
+
+
 #ifndef bool
 #define bool unsigned char
 #endif
@@ -165,5 +178,7 @@ int isup_get_cpc(unsigned char *buf, int len);
 int isup_get_calling_party_nai(unsigned char *buf, int len);
 int isup_get_called_party_nai(unsigned char *buf, int len);
 int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, int len, unsigned char * obuf, int olen);
+int isup_update_calling(char * origin, int nai, int presentation, int screening, unsigned char * buf, int len, unsigned char * obuf, int olen);
+
 
 #endif

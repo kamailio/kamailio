@@ -40,6 +40,7 @@
 MODULE_VERSION
 
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai);
+static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char *_pres, char * _screen);
 static int sipt_get_hop_counter(struct sip_msg *msg, char *x, char *y);
 static int sipt_get_cpc(struct sip_msg *msg, char *x, char *y);
 static int sipt_get_calling_party_nai(struct sip_msg *msg, char *x, char *y);
@@ -52,7 +53,7 @@ static void mod_destroy(void);
 
 static int fixup_str_str_str(void** param, int param_no)
 {
-	if(param_no == 1 || param_no == 2 || param_no == 3)
+	if(param_no == 1 || param_no == 2 || param_no == 3 || param_no == 4)
 	{
 		return fixup_str_null(param, 1);
 	}
@@ -61,7 +62,7 @@ static int fixup_str_str_str(void** param, int param_no)
 
 static int fixup_free_str_str_str(void** param, int param_no)
 {
-	if(param_no == 1 || param_no == 2 || param_no == 3)
+	if(param_no == 1 || param_no == 2 || param_no == 3 || param_no == 4)
 	{
 		return fixup_free_str_null(param, 1);
 	}
@@ -73,6 +74,12 @@ static cmd_export_t cmds[]={
 	{"sipt_destination", /* action name as in scripts */
 		(cmd_function)sipt_destination,  /* C function name */
 		3,          /* number of parameters */
+		fixup_str_str_str, fixup_free_str_str_str,         /* */
+		/* can be applied to original requests */
+		REQUEST_ROUTE|BRANCH_ROUTE}, 
+	{"sipt_set_calling", /* action name as in scripts */
+		(cmd_function)sipt_set_calling,  /* C function name */
+		4,          /* number of parameters */
 		fixup_str_str_str, fixup_free_str_str_str,         /* */
 		/* can be applied to original requests */
 		REQUEST_ROUTE|BRANCH_ROUTE}, 
@@ -471,6 +478,136 @@ static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops
 		digits[destination->len] = '#';
 
 		int res = isup_update_destination(digits, hops, int_nai, (unsigned char*)body.s, body.len, newbuf, 512);
+		free(digits);
+		offset = res;
+		if(res == -1)
+		{
+			LM_DBG("error updating IAM\n");
+			return -1;
+		}
+	}
+
+
+
+	str nb = {(char*)newbuf, offset};
+	replace_body(msg, &nb);
+
+	return 1;
+}
+
+static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char * _pres, char *_screen)
+{
+	unsigned int pres = 0;
+	str * str_pres = (str*)_pres;
+	str2int(str_pres, &pres);
+	unsigned int screen = 0;
+	str * str_screen = (str*)_screen;
+	str2int(str_screen, &screen);
+	str * nai = (str*)_nai;
+	unsigned int int_nai = 0;
+	str2int(nai, &int_nai);
+	str * origin = (str*)_origin;
+
+	// update forwarded iam
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_ERR("No ISUP Message Found");
+		return -1;
+	}
+	str sdp;
+	sdp.s = get_body_part(msg, TYPE_APPLICATION, SUBTYPE_SDP, &sdp.len);
+	
+	unsigned char newbuf[1024];
+	memset(newbuf, 0, 1024);
+	if (body.s==0) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+	body.len = msg->len -(int)(body.s-msg->buf);
+	if (body.len==0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_IAM)
+	{
+		LM_DBG("message not an IAM\n");
+		return -1;
+	}
+
+
+
+	unsigned int offset = 0;
+
+	if(sdp.s != NULL)
+	{
+		// we need to be clean, handle 2 cases
+		// one with sdp, one without sdp
+		str boundary = {0,0}; 
+		get_boundary_param(msg, &boundary);
+		memcpy(newbuf+offset, "--", 2);
+		offset+=2;
+
+		memcpy(newbuf+offset,boundary.s, boundary.len);
+		offset += boundary.len;
+
+		memcpy(newbuf+offset, "\r\n", 2);
+		offset+=2;
+
+		memcpy(newbuf+offset,SDP_HEADER, strlen(SDP_HEADER));
+		offset += strlen(SDP_HEADER);
+
+
+		memcpy(newbuf+offset,sdp.s, sdp.len);
+		offset += sdp.len;
+
+		memcpy(newbuf+offset, "\r\n", 2);
+		offset+=2;
+		memcpy(newbuf+offset, "\r\n--", 4);
+		offset+=4;
+
+		memcpy(newbuf+offset,boundary.s, boundary.len);
+		offset += boundary.len;
+
+		memcpy(newbuf+offset, "\r\n", 2);
+		offset+=2;
+
+		memcpy(newbuf+offset,ISUP_HEADER, strlen(ISUP_HEADER));
+		offset += strlen(ISUP_HEADER);
+
+		char * digits = calloc(1,origin->len+1);
+		memcpy(digits, origin->s, origin->len);
+
+		int res = isup_update_calling(digits, int_nai, pres, screen, (unsigned char*)body.s, body.len, newbuf+offset, 512);
+
+		if(res == -1)
+		{
+			LM_DBG("error updating IAM\n");
+			return -1;
+		}
+
+		free(digits);
+		offset += res;
+
+		memcpy(newbuf+offset, "\r\n--", 4);
+		offset+=4;
+
+		memcpy(newbuf+offset,boundary.s, boundary.len);
+		offset += boundary.len;
+
+		memcpy(newbuf+offset, "--\r\n", 4);
+		offset+=4;
+	}
+	else
+	{
+		// isup only body
+		char * digits = calloc(1,origin->len+1);
+		memcpy(digits, origin->s, origin->len);
+
+		int res = isup_update_calling(digits, int_nai, pres, screen, (unsigned char*)body.s, body.len, newbuf, 512);
 		free(digits);
 		offset = res;
 		if(res == -1)

@@ -19,7 +19,8 @@
 	<para>Module for updating ISUP encapuslated in SIP (SIP-T/SIP-I)</para>
 	<para>
 	The sipt module can be used to update various ss7 headers contained inside
-	a message.
+	a message.  If you want to call modify methods multiple times, be sure to call
+	msg_apply_changes from the textopsx package
 	</para>
 	</section>
 	<section>
@@ -52,6 +53,23 @@
 # setting nature of address to international
 $rU = "19495551234";
 sipt_destination($rU, 31, 4);
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipt.f.sipt_set_calling">
+		<title><function moreinfo="none">sipt_set_calling(origin, nai, presentation, screening)</function></title>
+		<para>
+			updates the IAM in the body if it exists, setting (or adding) the calling party number to <quote>origin</quote>
+			with the nature address specified in <quote>nai</quote> and setting the presentation and screening values to 
+			 <quote>presentation</quote> and <quote>screening</quote>.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_set_calling(origin, nai, presentation, screening)</function> usage</title>
+			<programlisting format="linespecific">
+...
+# update the calling party to the value in the from header
+sipt_set_calling($fU, 4, 0, 3);
 ...
 </programlisting>
 		</example>
