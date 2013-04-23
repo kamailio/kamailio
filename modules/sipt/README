@@ -18,19 +18,26 @@ Torrey Searle
 
               3.1. sipt_destination(destination, hops, nai)
               3.2. sipt_set_calling(origin, nai, presentation, screening)
-              3.3. sipt_get_hop_counter()
-              3.4. sipt_get_cpc()
-              3.5. sipt_get_calling_party_nai()
-              3.6. sipt_get_called_party_nai()
+
+        4. Exported pseudo-variables
+
+              4.1. $sipt_presentation
+              4.2. $sipt_screening
+              4.3. $sipt_hop_counter
+              4.4. $sipt_cpc
+              4.5. $sipt_calling_party_nai
+              4.6. $sipt_called_party_nai
 
    List of Examples
 
    1.1. sipt_destination(destination, hops, nai) usage
    1.2. sipt_set_calling(origin, nai, presentation, screening) usage
-   1.3. sipt_get_hop_counter() usage
-   1.4. sipt_get_cpc() usage
-   1.5. sipt_get_calling_party_nai() usage
-   1.6. sipt_get_called_party_nai() usage
+   1.3. sipt_presentation pseudo-variable usage
+   1.4. sipt_screening pseudo-variable usage
+   1.5. sipt_hop_counter pseudo-variable usage
+   1.6. sipt_cpc pseudo-variable usage
+   1.7. sipt_calling_party_nai pseudo-variable usage
+   1.8. sipt_called_party_nai pseudo-variable usage
 
 Chapter 1. Admin Guide
 
@@ -42,10 +49,15 @@ Chapter 1. Admin Guide
 
         3.1. sipt_destination(destination, hops, nai)
         3.2. sipt_set_calling(origin, nai, presentation, screening)
-        3.3. sipt_get_hop_counter()
-        3.4. sipt_get_cpc()
-        3.5. sipt_get_calling_party_nai()
-        3.6. sipt_get_called_party_nai()
+
+   4. Exported pseudo-variables
+
+        4.1. $sipt_presentation
+        4.2. $sipt_screening
+        4.3. $sipt_hop_counter
+        4.4. $sipt_cpc
+        4.5. $sipt_calling_party_nai
+        4.6. $sipt_called_party_nai
 
 1. Overview
 
@@ -65,10 +77,6 @@ Chapter 1. Admin Guide
 
    3.1. sipt_destination(destination, hops, nai)
    3.2. sipt_set_calling(origin, nai, presentation, screening)
-   3.3. sipt_get_hop_counter()
-   3.4. sipt_get_cpc()
-   3.5. sipt_get_calling_party_nai()
-   3.6. sipt_get_called_party_nai()
 
 3.1. sipt_destination(destination, hops, nai)
 
@@ -99,15 +107,60 @@ sipt_destination($rU, 31, 4);
 sipt_set_calling($fU, 4, 0, 3);
 ...
 
-3.3. sipt_get_hop_counter()
+4. Exported pseudo-variables
+
+   4.1. $sipt_presentation
+   4.2. $sipt_screening
+   4.3. $sipt_hop_counter
+   4.4. $sipt_cpc
+   4.5. $sipt_calling_party_nai
+   4.6. $sipt_called_party_nai
+
+4.1. $sipt_presentation
+
+   Returns the value of the Address presentation restricted indicator
+   contained in the Calling Party Number header of the IAM message if it
+   exists. Returns -1 if there isn't a Calling Party Number header.
+
+   Example 1.3. sipt_presentation pseudo-variable usage
+...
+# add privacy header if restriction is requested
+if($sipt_presentation == 1)
+{
+        append_hf("Privacy: id\r\n");
+        $fn = "Anonymous";
+}
+
+...
+
+4.2. $sipt_screening
+
+   Returns the value of the Screening Indicator contained in the Calling
+   Party Number header of the IAM message if it exists. Returns -1 if
+   there isn't a Calling Party Number header.
+
+   Example 1.4. sipt_screening pseudo-variable usage
+...
+
+# remove P-Asserted-Identity header if the screening isn't verified
+# or network provided
+$avp(s:screening) = $sipt_screening;
+if($avp(s:screening) != 1 && $avp(s:screening) != 3)
+{
+        remove_hf("P-Asserted-Id");
+}
+
+...
+
+4.3. $sipt_hop_counter
 
    Returns the value of the Hop Counter for the IAM message if it exists.
    Returns -1 if there isn't a hop counter.
 
-   Example 1.3. sipt_get_hop_counter() usage
+   Example 1.5. sipt_hop_counter pseudo-variable usage
 ...
 # get the hop counter and update the Max-Forwards header if it exists
-$avp(s:hop) = sipt_get_hop_counter();
+$avp(s:hop) = $sipt_hop_counter;
 if($avp(s:hop) > 0)
 {
         remove_hf("Max-Forwards");
@@ -116,46 +169,43 @@ if($avp(s:hop) > 0)
 
 ...
 
-3.4. sipt_get_cpc()
+4.4. $sipt_cpc
 
    Returns the value of the Calling Party Category for the IAM message.
    Returns -1 if there is a parsing error.
 
-   Example 1.4. sipt_get_cpc() usage
+   Example 1.6. sipt_cpc pseudo-variable usage
 ...
 # get the Cpc code and set put it in a custom sip header
-$avp(s:cpc) = sipt_get_cpc();
-append_hf("X-CPC: $avp(s:cpc)\r\n");
+append_hf("X-CPC: $sipt_cpc\r\n");
 
 ...
 
-3.5. sipt_get_calling_party_nai()
+4.5. $sipt_calling_party_nai
 
    Returns the value of the Nature of Address Indicator of the Calling
    Party for the IAM message. Returns -1 if there is a parsing error or if
    the Calling Party Number is not present.
 
-   Example 1.5. sipt_get_calling_party_nai() usage
+   Example 1.7. sipt_calling_party_nai pseudo-variable usage
 ...
 # get the Calling Nai and add country code if national
-$avp(s:from_nai) = sipt_get_calling_party_nai();
-if($avp(s:from_nai) == 3)
+if($sipt_calling_party_nai == 3)
 {
         $fU = "32" + "$fU";
 }
 
 ...
 
-3.6. sipt_get_called_party_nai()
+4.6. $sipt_called_party_nai
 
    Returns the value of the Nature of Address Indicator of the Called
    Party for the IAM message. Returns -1 if there is a parsing error.
 
-   Example 1.6. sipt_get_called_party_nai() usage
+   Example 1.8. sipt_called_party_nai pseudo-variable usage
 ...
 # get the Called Nai and add country code if national
-$avp(s:to_nai) = sipt_get_called_party_nai();
-if($avp(s:to_nai) == 3)
+if($sipt_called_party_nai == 3)
 {
         $rU = "32" + "$rU";
 }
