@@ -395,6 +395,9 @@ static int child_init(int _rank)
 	dlist_t* ptr;
 	int i;
 
+	if(sruid_init(&_ul_sruid, '-', "ulcx", SRUID_INC)<0)
+		return -1;
+
 	if(_rank==PROC_MAIN && ul_timer_procs>0)
 	{
 		for(i=0; i<ul_timer_procs; i++)
