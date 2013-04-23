@@ -21,9 +21,17 @@
  */
 
 #include "../../dprint.h"
+#include "../../trim.h"
 
 #include "../../modules/tm/tm_load.h"
 
+#include "../../parser/parse_uri.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
+#include "../../parser/contact/parse_contact.h"
+
+#include "auth.h"
+#include "auth_hdr.h"
 #include "uac_send.h"
 
 #define MAX_UACH_SIZE 2048
@@ -32,7 +40,7 @@
 /** TM bind */
 struct tm_binds tmb;
 
-struct _uac_send_info {
+typedef struct _uac_send_info {
 	unsigned int flags;
 	char  b_method[32];
 	str   s_method;
@@ -48,10 +56,37 @@ struct _uac_send_info {
 	str   s_body;
 	char  b_ouri[MAX_URI_SIZE];
 	str   s_ouri;
+	char  b_auser[128];
+	str   s_auser;
+	char  b_apasswd[64];
+	str   s_apasswd;
 	unsigned int onreply;
-};
+} uac_send_info_t;
 
 static struct _uac_send_info _uac_req;
+
+uac_send_info_t *uac_send_info_clone(uac_send_info_t *ur)
+{
+	uac_send_info_t *tp = NULL;
+	tp = (uac_send_info_t*)shm_malloc(sizeof(uac_send_info_t));
+	if(tp==NULL)
+	{
+		LM_ERR("no more shm memory\n");
+		return NULL;
+	}
+	memcpy(tp, ur, sizeof(uac_send_info_t));
+	tp->s_method.s  = tp->b_method;
+	tp->s_ruri.s    = tp->b_ruri;
+	tp->s_turi.s    = tp->b_turi;
+	tp->s_furi.s    = tp->b_furi;
+	tp->s_hdrs.s    = tp->b_hdrs;
+	tp->s_body.s    = tp->b_body;
+	tp->s_ouri.s    = tp->b_ouri;
+	tp->s_auser.s   = tp->b_auser;
+	tp->s_apasswd.s = tp->b_apasswd;
+
+	return tp;
+}
 
 int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
@@ -91,6 +126,14 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
 			if(_uac_req.s_method.len<=0)
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res, &_uac_req.s_method);
+		case 9:
+			if(_uac_req.s_auser.len<=0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_uac_req.s_auser);
+		case 10:
+			if(_uac_req.s_apasswd.len<=0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_uac_req.s_apasswd);
 		default:
 			return pv_get_uintval(msg, param, res, _uac_req.flags);
 	}
@@ -277,6 +320,46 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 			}
 			_uac_req.onreply = val->ri;
 			break;
+		case 9:
+			if(val==NULL)
+			{
+				_uac_req.s_auser.len = 0;
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("Invalid auth user type\n");
+				return -1;
+			}
+			if(val->rs.len>=128)
+			{
+				LM_ERR("Value size too big\n");
+				return -1;
+			}
+			memcpy(_uac_req.s_auser.s, val->rs.s, val->rs.len);
+			_uac_req.s_auser.s[val->rs.len] = '\0';
+			_uac_req.s_auser.len = val->rs.len;
+			break;
+		case 10:
+			if(val==NULL)
+			{
+				_uac_req.s_apasswd.len = 0;
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("Invalid auth password type\n");
+				return -1;
+			}
+			if(val->rs.len>=64)
+			{
+				LM_ERR("Value size too big\n");
+				return -1;
+			}
+			memcpy(_uac_req.s_apasswd.s, val->rs.s, val->rs.len);
+			_uac_req.s_apasswd.s[val->rs.len] = '\0';
+			_uac_req.s_apasswd.len = val->rs.len;
+			break;
 	}
 	return 0;
 }
@@ -308,6 +391,11 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 		break;
+		case 5:
+			if(strncmp(in->s, "auser", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 9;
+			else goto error;
+		break;
 		case 6: 
 			if(strncmp(in->s, "method", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 7;
@@ -316,6 +404,8 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 		case 7: 
 			if(strncmp(in->s, "onreply", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 8;
+			else if(strncmp(in->s, "apasswd", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 10;
 			else goto error;
 		break;
 		default:
@@ -347,25 +437,148 @@ void uac_req_init(void)
 	_uac_req.s_hdrs.s = _uac_req.b_hdrs;
 	_uac_req.s_body.s = _uac_req.b_body;
 	_uac_req.s_method.s = _uac_req.b_method;
+	_uac_req.s_auser.s  = _uac_req.b_auser;
+	_uac_req.s_apasswd.s  = _uac_req.b_apasswd;
 	return;
 }
+
+int uac_send_tmdlg(dlg_t *tmdlg, sip_msg_t *rpl)
+{
+	if(tmdlg==NULL || rpl==NULL)
+		return -1;
+
+	if (parse_headers(rpl, HDR_EOH_F, 0) < 0) {
+		LM_ERR("error while parsing all headers in the reply\n");
+		return -1;
+	}
+	if(parse_to_header(rpl)<0 || parse_from_header(rpl)<0) {
+		LM_ERR("error while parsing From/To headers in the reply\n");
+		return -1;
+	}
+	memset(tmdlg, 0, sizeof(dlg_t));
+
+	str2int(&(get_cseq(rpl)->number), &tmdlg->loc_seq.value);
+	tmdlg->loc_seq.is_set = 1;
+
+	tmdlg->id.call_id = rpl->callid->body;
+	trim(&tmdlg->id.call_id);
+
+	if (get_from(rpl)->tag_value.len) {
+		tmdlg->id.loc_tag = get_from(rpl)->tag_value;
+	}
+#if 0
+	if (get_to(rpl)->tag_value.len) {
+		tmdlg->id.rem_tag = get_to(rpl)->tag_value;
+	}
+#endif
+	tmdlg->loc_uri = get_from(rpl)->uri;
+	tmdlg->rem_uri = get_to(rpl)->uri;
+	tmdlg->state= DLG_CONFIRMED;
+	return 0;
+}
+
+#define MAX_UACH_SIZE 2048
 
 /** 
  * TM callback function
  */
-void uac_send_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
+void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 {
-	unsigned int onreply;
+	int ret;
+	struct hdr_field *hdr;
+	HASHHEX response;
+	str *new_auth_hdr = NULL;
+	static struct authenticate_body auth;
+	struct uac_credential cred;
+	char  b_hdrs[MAX_UACH_SIZE];
+	str   s_hdrs;
+	uac_req_t uac_r;
+	dlg_t tmdlg;
+	uac_send_info_t *tp = NULL;
+
 	if(ps->param==NULL || *ps->param==0)
 	{
 		LM_DBG("message id not received\n");
 		goto done;
 	}
-	onreply = *((unsigned int*)ps->param);
-	LM_DBG("completed with status %d [onreply: %u]\n",
-		ps->code, onreply);
+	tp = (uac_send_info_t*)(*ps->param);
+	if(ps->code != 401 && ps->code != 407)
+	{
+		LM_DBG("completed with status %d\n", ps->code);
+		goto done;
+	}
+
+	LM_DBG("completed with status %d\n", ps->code);
+
+	hdr = get_autenticate_hdr(ps->rpl, ps->code);
+	if (hdr==0)
+	{
+		LM_ERR("failed to extract authenticate hdr\n");
+		goto error;
+	}
+
+	LM_DBG("auth header body [%.*s]\n",
+		hdr->body.len, hdr->body.s);
+
+	if (parse_authenticate_body(&hdr->body, &auth)<0)
+	{
+		LM_ERR("failed to parse auth hdr body\n");
+		goto error;
+	}
+
+	cred.realm  = auth.realm;
+	cred.user   = tp->s_auser;
+	cred.passwd = tp->s_apasswd;
+	cred.next   = NULL;
+
+	do_uac_auth(&tp->s_method, &tp->s_ruri, &cred, &auth, response);
+	new_auth_hdr=build_authorization_hdr(ps->code, &tp->s_ruri, &cred,
+						&auth, response);
+	if (new_auth_hdr==0)
+	{
+		LM_ERR("failed to build authorization hdr\n");
+		goto error;
+	}
+
+	if(tp->s_hdrs.len <= 0) {
+		snprintf(b_hdrs, MAX_UACH_SIZE,
+				"%.*s",
+				new_auth_hdr->len, new_auth_hdr->s);
+	} else {
+		snprintf(b_hdrs, MAX_UACH_SIZE,
+				"%.*s%.*s",
+				tp->s_hdrs.len, tp->s_hdrs.s,
+				new_auth_hdr->len, new_auth_hdr->s);
+	}
+
+	s_hdrs.s = b_hdrs; s_hdrs.len = strlen(s_hdrs.s);
+	pkg_free(new_auth_hdr->s);
+
+	memset(&uac_r, 0, sizeof(uac_r));
+	if(uac_send_tmdlg(&tmdlg, ps->rpl)<0)
+	{
+		LM_ERR("failed to build tm dialog\n");
+		goto error;
+	}
+	tmdlg.rem_target = tp->s_ruri;
+	if(tp->s_ouri.len>0)
+		tmdlg.dst_uri = tp->s_ouri;
+	uac_r.method = &tp->s_method;
+	uac_r.headers = &s_hdrs;
+	uac_r.body = (tp->s_body.len <= 0) ? NULL : &tp->s_body;
+	uac_r.dialog = &tmdlg;
+	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
+	ret = tmb.t_request_within(&uac_r);
+
+	if(ret<0) {
+		LM_ERR("failed to send request with authentication\n");
+		goto error;
+	}
 
 done:
+error:
+	if(tp!=NULL)
+		shm_free(tp);
 	return;
 }
 
@@ -374,6 +587,7 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 {
 	int ret;
 	uac_req_t uac_r;
+	uac_send_info_t *tp = NULL;
 
 	if(_uac_req.s_ruri.len<=0 || _uac_req.s_method.len == 0
 			|| tmb.t_request==NULL)
@@ -383,13 +597,20 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 	uac_r.method = &_uac_req.s_method;
 	uac_r.headers = (_uac_req.s_hdrs.len <= 0) ? NULL : &_uac_req.s_hdrs;
 	uac_r.body = (_uac_req.s_body.len <= 0) ? NULL : &_uac_req.s_body;
-	if(_uac_req.onreply > 0)
+	if(_uac_req.s_auser.len > 0 && _uac_req.s_apasswd.len>0)
 	{
+		tp = uac_send_info_clone(&_uac_req);
+		if(tp==NULL)
+		{
+			LM_ERR("cannot clone the uac structure\n");
+			return -1;
+		}
+
 		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 		/* Callback function */
 		uac_r.cb  = uac_send_tm_callback;
 		/* Callback parameter */
-		uac_r.cbp = (void*)(long)_uac_req.onreply;
+		uac_r.cbp = (void*)tp;
 	}
 	ret = tmb.t_request(&uac_r,  /* UAC Req */
 						&_uac_req.s_ruri,        /* Request-URI */
@@ -398,8 +619,11 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 						(_uac_req.s_ouri.len<=0)?NULL:&_uac_req.s_ouri /* outbound uri */
 		);
 
-	if(ret<0)
+	if(ret<0) {
+		if(tp!=NULL)
+			shm_free(tp);
 		return -1;
+	}
 	return 1;
 }
 
