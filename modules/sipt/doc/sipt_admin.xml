@@ -77,13 +77,24 @@ sipt_set_calling($fU, 4, 0, 3);
 </section>
 <section>
         <title>Exported pseudo-variables</title>
-	<section>
+	<section id="sipt.v.sipt_presentation">
 		<title><varname>$sipt_presentation</varname></title>
 		<para>
 			Returns the value of the Address presentation restricted indicator contained in the
 			Calling Party Number header of the IAM message if it exists.
 			Returns -1 if there isn't a Calling Party Number header.
 		</para>
+		<table>
+			<title>Address Presentation Restricted Indicator Values</title>
+			<tgroup cols="2">
+				<tbody>
+					<row><entry>0</entry><entry>presentation allowed</entry></row>
+					<row><entry>1</entry><entry>presentation restricted</entry></row>
+					<row><entry>2</entry><entry>address not avail (national use)</entry></row>
+					<row><entry>3</entry><entry>spare</entry></row>
+				</tbody>
+			</tgroup>
+		</table>
 		<example>
 			<title><function moreinfo="none">sipt_presentation pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">
@@ -99,13 +110,24 @@ if($sipt_presentation == 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.v.sipt_screening">
 		<title><varname>$sipt_screening</varname></title>
 		<para>
 			Returns the value of the Screening Indicator contained in the
 			Calling Party Number header of the IAM message if it exists.
 			Returns -1 if there isn't a Calling Party Number header.
 		</para>
+		<table>
+			<title>Screening Indicator Values</title>
+			<tgroup cols="2">
+				<tbody>
+					<row><entry>0</entry><entry>Reserved (user provided, not verified)</entry></row>
+					<row><entry>1</entry><entry>User Provided, Verified and Passed</entry></row>
+					<row><entry>2</entry><entry>Reserved (user provided, verified and failed)</entry></row>
+					<row><entry>3</entry><entry>Network provided</entry></row>
+				</tbody>
+			</tgroup>
+		</table>
 		<example>
 			<title><function moreinfo="none">sipt_screening pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">
@@ -123,7 +145,7 @@ if($avp(s:screening) != 1 &amp;&amp; $avp(s:screening) != 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.v.sipt_hop_counter">
 		<title><varname>$sipt_hop_counter</varname></title>
 		<para>
 			Returns the value of the Hop Counter for the IAM message if it exists.
@@ -145,7 +167,7 @@ if($avp(s:hop) > 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.v.sipt_cpc">
 		<title><varname>$sipt_cpc</varname></title>
 		<para>
 			Returns the value of the Calling Party Category for the IAM message.
@@ -162,7 +184,7 @@ append_hf("X-CPC: $sipt_cpc\r\n");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.v.sipt_calling_party_nai">
 		<title><varname>$sipt_calling_party_nai</varname></title>
 		<para>
 			Returns the value of the Nature of Address Indicator
@@ -170,6 +192,18 @@ append_hf("X-CPC: $sipt_cpc\r\n");
 			Returns -1 if there is a parsing error or if
 			the Calling Party Number is not present.
 		</para>
+		<table>
+			<title>Calling Nature of Address Values</title>
+			<tgroup cols="2">
+				<tbody>
+					<row><entry>0</entry><entry>Spare</entry></row>
+					<row><entry>1</entry><entry>Subscriber Number (national use)</entry></row>
+					<row><entry>2</entry><entry>Unknown (national use)</entry></row>
+					<row><entry>3</entry><entry>National (significant) number (national use)</entry></row>
+					<row><entry>4</entry><entry>International use</entry></row>
+				</tbody>
+			</tgroup>
+		</table>
 		<example>
 			<title><function moreinfo="none">sipt_calling_party_nai pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">
@@ -184,13 +218,26 @@ if($sipt_calling_party_nai == 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sipt.v.sipt_called_party_nai">
 		<title><varname>$sipt_called_party_nai</varname></title>
 		<para>
 			Returns the value of the Nature of Address Indicator
 			of the Called Party for the IAM message.
 			Returns -1 if there is a parsing error.
 		</para>
+		<table>
+			<title>Called Nature of Address Values</title>
+			<tgroup cols="2">
+				<tbody>
+					<row><entry>0</entry><entry>Spare</entry></row>
+					<row><entry>1</entry><entry>Subscriber Number (national use)</entry></row>
+					<row><entry>2</entry><entry>Unknown (national use)</entry></row>
+					<row><entry>3</entry><entry>National (significant) number</entry></row>
+					<row><entry>4</entry><entry>International use</entry></row>
+					<row><entry>5</entry><entry>Network-specific number (national use)</entry></row>
+				</tbody>
+			</tgroup>
+		</table>
 		<example>
 			<title><function moreinfo="none">sipt_called_party_nai pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">

@@ -28,6 +28,13 @@ Torrey Searle
               4.5. $sipt_calling_party_nai
               4.6. $sipt_called_party_nai
 
+   List of Tables
+
+   1.1. Address Presentation Restricted Indicator Values
+   1.2. Screening Indicator Values
+   1.3. Calling Nature of Address Values
+   1.4. Called Nature of Address Values
+
    List of Examples
 
    1.1. sipt_destination(destination, hops, nai) usage
@@ -122,6 +129,12 @@ sipt_set_calling($fU, 4, 0, 3);
    contained in the Calling Party Number header of the IAM message if it
    exists. Returns -1 if there isn't a Calling Party Number header.
 
+   Table 1.1. Address Presentation Restricted Indicator Values
+   0 presentation allowed
+   1 presentation restricted
+   2 address not avail (national use)
+   3 spare
+
    Example 1.3. sipt_presentation pseudo-variable usage
 ...
 # add privacy header if restriction is requested
@@ -138,6 +151,12 @@ if($sipt_presentation == 1)
    Returns the value of the Screening Indicator contained in the Calling
    Party Number header of the IAM message if it exists. Returns -1 if
    there isn't a Calling Party Number header.
+
+   Table 1.2. Screening Indicator Values
+   0 Reserved (user provided, not verified)
+   1 User Provided, Verified and Passed
+   2 Reserved (user provided, verified and failed)
+   3 Network provided
 
    Example 1.4. sipt_screening pseudo-variable usage
 ...
@@ -187,6 +206,13 @@ append_hf("X-CPC: $sipt_cpc\r\n");
    Party for the IAM message. Returns -1 if there is a parsing error or if
    the Calling Party Number is not present.
 
+   Table 1.3. Calling Nature of Address Values
+   0 Spare
+   1 Subscriber Number (national use)
+   2 Unknown (national use)
+   3 National (significant) number (national use)
+   4 International use
+
    Example 1.7. sipt_calling_party_nai pseudo-variable usage
 ...
 # get the Calling Nai and add country code if national
@@ -201,6 +227,14 @@ if($sipt_calling_party_nai == 3)
 
    Returns the value of the Nature of Address Indicator of the Called
    Party for the IAM message. Returns -1 if there is a parsing error.
+
+   Table 1.4. Called Nature of Address Values
+   0 Spare
+   1 Subscriber Number (national use)
+   2 Unknown (national use)
+   3 National (significant) number
+   4 International use
+   5 Network-specific number (national use)
 
    Example 1.8. sipt_called_party_nai pseudo-variable usage
 ...
