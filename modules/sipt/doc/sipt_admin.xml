@@ -80,7 +80,7 @@ sipt_set_calling($fU, 4, 0, 3);
 	<section>
 		<title><varname>$sipt_presentation</varname></title>
 		<para>
-			Returns the value of the Address presentation restricted indicator contains in the
+			Returns the value of the Address presentation restricted indicator contained in the
 			Calling Party Number header of the IAM message if it exists.
 			Returns -1 if there isn't a Calling Party Number header.
 		</para>
