@@ -177,6 +177,8 @@ int isup_get_hop_counter(unsigned char *buf, int len);
 int isup_get_cpc(unsigned char *buf, int len);
 int isup_get_calling_party_nai(unsigned char *buf, int len);
 int isup_get_called_party_nai(unsigned char *buf, int len);
+int isup_get_screening(unsigned char *buf, int len);
+int isup_get_presentation(unsigned char *buf, int len);
 int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, int len, unsigned char * obuf, int olen);
 int isup_update_calling(char * origin, int nai, int presentation, int screening, unsigned char * buf, int len, unsigned char * obuf, int olen);
 

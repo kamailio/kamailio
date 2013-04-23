@@ -41,10 +41,12 @@ MODULE_VERSION
 
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai);
 static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char *_pres, char * _screen);
-static int sipt_get_hop_counter(struct sip_msg *msg, char *x, char *y);
-static int sipt_get_cpc(struct sip_msg *msg, char *x, char *y);
-static int sipt_get_calling_party_nai(struct sip_msg *msg, char *x, char *y);
-static int sipt_get_called_party_nai(struct sip_msg *msg, char *x, char *y);
+static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_cpc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 static int mod_init(void);
 static void mod_destroy(void);
@@ -83,30 +85,6 @@ static cmd_export_t cmds[]={
 		fixup_str_str_str, fixup_free_str_str_str,         /* */
 		/* can be applied to original requests */
 		REQUEST_ROUTE|BRANCH_ROUTE}, 
-	{"sipt_get_hop_counter", /* action name as in scripts */
-		(cmd_function)sipt_get_hop_counter,  /* C function name */
-		0,          /* number of parameters */
-		0, 0,         /* */
-		/* can be applied to original requests */
-		REQUEST_ROUTE|BRANCH_ROUTE}, 
-	{"sipt_get_cpc", /* action name as in scripts */
-		(cmd_function)sipt_get_cpc,  /* C function name */
-		0,          /* number of parameters */
-		0, 0,         /* */
-		/* can be applied to original requests */
-		REQUEST_ROUTE|BRANCH_ROUTE}, 
-	{"sipt_get_calling_party_nai", /* action name as in scripts */
-		(cmd_function)sipt_get_calling_party_nai,  /* C function name */
-		0,          /* number of parameters */
-		0, 0,         /* */
-		/* can be applied to original requests */
-		REQUEST_ROUTE|BRANCH_ROUTE}, 
-	{"sipt_get_called_party_nai", /* action name as in scripts */
-		(cmd_function)sipt_get_called_party_nai,  /* C function name */
-		0,          /* number of parameters */
-		0, 0,         /* */
-		/* can be applied to original requests */
-		REQUEST_ROUTE|BRANCH_ROUTE}, 
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -119,6 +97,18 @@ static mi_export_t mi_cmds[] = {
 };
 
 static pv_export_t mod_items[] = {
+        { {"sipt_presentation",  sizeof("sipt_presentation")-1}, PVT_OTHER,  sipt_get_presentation,    0,
+                0, 0, 0, 0 },
+        { {"sipt_screening",  sizeof("sipt_screening")-1}, PVT_OTHER,  sipt_get_screening,    0,
+                0, 0, 0, 0 },
+        { {"sipt_hop_counter",  sizeof("sipt_hop_counter")-1}, PVT_OTHER,  sipt_get_hop_counter,    0,
+                0, 0, 0, 0 },
+        { {"sipt_cpc",  sizeof("sipt_cpc")-1}, PVT_OTHER,  sipt_get_cpc,    0,
+                0, 0, 0, 0 },
+        { {"sipt_calling_party_nai",  sizeof("sipt_calling_party_nai")-1}, PVT_OTHER,  sipt_get_calling_party_nai,    0,
+                0, 0, 0, 0 },
+        { {"sipt_called_party_nai",  sizeof("sipt_called_party_nai")-1}, PVT_OTHER,  sipt_get_called_party_nai,    0,
+                0, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -286,7 +276,7 @@ static int replace_body(struct sip_msg *msg, str * nb)
 	return 0;
 }
 
-static int sipt_get_hop_counter(struct sip_msg *msg, char *x, char *y)
+static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
@@ -303,10 +293,11 @@ static int sipt_get_hop_counter(struct sip_msg *msg, char *x, char *y)
 		return -1;
 	}
 	
-	return isup_get_hop_counter((unsigned char*)body.s, body.len);
+	pv_get_sintval(msg, param, res, isup_get_hop_counter((unsigned char*)body.s, body.len));
+	return 0;
 }
 
-static int sipt_get_cpc(struct sip_msg *msg, char *x, char *y)
+static int sipt_get_cpc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
@@ -323,10 +314,11 @@ static int sipt_get_cpc(struct sip_msg *msg, char *x, char *y)
 		return -1;
 	}
 	
-	return isup_get_cpc((unsigned char*)body.s, body.len);
+	pv_get_sintval(msg, param, res, isup_get_cpc((unsigned char*)body.s, body.len));
+	return 0;
 }
 
-static int sipt_get_calling_party_nai(struct sip_msg *msg, char *x, char *y)
+static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
@@ -343,10 +335,11 @@ static int sipt_get_calling_party_nai(struct sip_msg *msg, char *x, char *y)
 		return -1;
 	}
 	
-	return isup_get_calling_party_nai((unsigned char*)body.s, body.len);
+	pv_get_sintval(msg, param, res, isup_get_calling_party_nai((unsigned char*)body.s, body.len));
+	return 0;
 }
 
-static int sipt_get_called_party_nai(struct sip_msg *msg, char *x, char *y)
+static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
@@ -363,7 +356,51 @@ static int sipt_get_called_party_nai(struct sip_msg *msg, char *x, char *y)
 		return -1;
 	}
 	
-	return isup_get_called_party_nai((unsigned char*)body.s, body.len);
+	pv_get_sintval(msg, param, res, isup_get_presentation((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_ERR("No ISUP Message Found");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_IAM)
+	{
+		LM_DBG("message not an IAM\n");
+		return -1;
+	}
+	LM_DBG("about to get screening\n");
+	
+	pv_get_sintval(msg, param, res, isup_get_screening((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_ERR("No ISUP Message Found");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_IAM)
+	{
+		LM_DBG("message not an IAM\n");
+		return -1;
+	}
+	
+	pv_get_sintval(msg, param, res, isup_get_called_party_nai((unsigned char*)body.s, body.len));
+	return 0;
 }
 
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai)

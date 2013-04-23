@@ -74,18 +74,67 @@ sipt_set_calling($fU, 4, 0, 3);
 </programlisting>
 		</example>
 	</section>
-	<section id="sipt.f.sipt_get_hop_counter">
-		<title><function moreinfo="none">sipt_get_hop_counter()</function></title>
+</section>
+<section>
+        <title>Exported pseudo-variables</title>
+	<section>
+		<title><varname>$sipt_presentation</varname></title>
+		<para>
+			Returns the value of the Address presentation restricted indicator contains in the
+			Calling Party Number header of the IAM message if it exists.
+			Returns -1 if there isn't a Calling Party Number header.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_presentation pseudo-variable</function> usage</title>
+			<programlisting format="linespecific">
+...
+# add privacy header if restriction is requested 
+if($sipt_presentation == 1)
+{
+	append_hf("Privacy: id\r\n");
+	$fn = "Anonymous";
+}
+
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>$sipt_screening</varname></title>
+		<para>
+			Returns the value of the Screening Indicator contained in the
+			Calling Party Number header of the IAM message if it exists.
+			Returns -1 if there isn't a Calling Party Number header.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_screening pseudo-variable</function> usage</title>
+			<programlisting format="linespecific">
+...
+
+# remove P-Asserted-Identity header if the screening isn't verified 
+# or network provided
+$avp(s:screening) = $sipt_screening;
+if($avp(s:screening) != 1 &amp;&amp; $avp(s:screening) != 3)
+{
+	remove_hf("P-Asserted-Id");
+}
+
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>$sipt_hop_counter</varname></title>
 		<para>
 			Returns the value of the Hop Counter for the IAM message if it exists.
 			Returns -1 if there isn't a hop counter.
 		</para>
 		<example>
-			<title><function moreinfo="none">sipt_get_hop_counter()</function> usage</title>
+			<title><function moreinfo="none">sipt_hop_counter pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">
 ...
 # get the hop counter and update the Max-Forwards header if it exists
-$avp(s:hop) = sipt_get_hop_counter();
+$avp(s:hop) = $sipt_hop_counter;
 if($avp(s:hop) > 0)
 {
 	remove_hf("Max-Forwards");
@@ -96,26 +145,25 @@ if($avp(s:hop) > 0)
 </programlisting>
 		</example>
 	</section>
-	<section id="sipt.f.sipt_get_cpc">
-		<title><function moreinfo="none">sipt_get_cpc()</function></title>
+	<section>
+		<title><varname>$sipt_cpc</varname></title>
 		<para>
 			Returns the value of the Calling Party Category for the IAM message.
 			Returns -1 if there is a parsing error.
 		</para>
 		<example>
-			<title><function moreinfo="none">sipt_get_cpc()</function> usage</title>
+			<title><function moreinfo="none">sipt_cpc pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">
 ...
 # get the Cpc code and set put it in a custom sip header
-$avp(s:cpc) = sipt_get_cpc();
-append_hf("X-CPC: $avp(s:cpc)\r\n");
+append_hf("X-CPC: $sipt_cpc\r\n");
 
 ...
 </programlisting>
 		</example>
 	</section>
-	<section id="sipt.f.sipt_get_calling_party_nai">
-		<title><function moreinfo="none">sipt_get_calling_party_nai()</function></title>
+	<section>
+		<title><varname>$sipt_calling_party_nai</varname></title>
 		<para>
 			Returns the value of the Nature of Address Indicator
 			of the Calling Party for the IAM message.
@@ -123,12 +171,11 @@ append_hf("X-CPC: $avp(s:cpc)\r\n");
 			the Calling Party Number is not present.
 		</para>
 		<example>
-			<title><function moreinfo="none">sipt_get_calling_party_nai()</function> usage</title>
+			<title><function moreinfo="none">sipt_calling_party_nai pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">
 ...
 # get the Calling Nai and add country code if national
-$avp(s:from_nai) = sipt_get_calling_party_nai();
-if($avp(s:from_nai) == 3)
+if($sipt_calling_party_nai == 3)
 {
 	$fU = "32" + "$fU";
 }
@@ -137,20 +184,19 @@ if($avp(s:from_nai) == 3)
 </programlisting>
 		</example>
 	</section>
-	<section id="sipt.f.sipt_get_called_party_nai">
-		<title><function moreinfo="none">sipt_get_called_party_nai()</function></title>
+	<section>
+		<title><varname>$sipt_called_party_nai</varname></title>
 		<para>
 			Returns the value of the Nature of Address Indicator
 			of the Called Party for the IAM message.
 			Returns -1 if there is a parsing error.
 		</para>
 		<example>
-			<title><function moreinfo="none">sipt_get_called_party_nai()</function> usage</title>
+			<title><function moreinfo="none">sipt_called_party_nai pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">
 ...
 # get the Called Nai and add country code if national
-$avp(s:to_nai) = sipt_get_called_party_nai();
-if($avp(s:to_nai) == 3)
+if($sipt_called_party_nai == 3)
 {
 	$rU = "32" + "$rU";
 }
@@ -159,6 +205,7 @@ if($avp(s:to_nai) == 3)
 </programlisting>
 		</example>
 	</section>
+
 </section>
 </chapter>
 

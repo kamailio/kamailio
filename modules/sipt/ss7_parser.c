@@ -227,6 +227,28 @@ int isup_get_calling_party_nai(unsigned char *buf, int len)
 	return -1;
 }
 
+int isup_get_screening(unsigned char *buf, int len)
+{
+	int  offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
+
+	if(offset != -1 && len-offset-3 > 0)
+	{
+		return buf[offset+3] & 0x03;
+	}
+	return -1;
+}
+
+int isup_get_presentation(unsigned char *buf, int len)
+{
+	int  offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
+
+	if(offset != -1 && len-offset-3 > 0)
+	{
+		return (buf[offset+3]>>2) & 0x03;
+	}
+	return -1;
+}
+
 int isup_get_called_party_nai(unsigned char *buf, int len)
 {
 	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
