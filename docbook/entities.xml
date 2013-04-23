@@ -10,7 +10,7 @@
 <!ENTITY kamailioname "Kamailio SIP Server Platform">
 <!ENTITY kamailioconfig "kamailio.cfg">
 
-<!ENTITY kamwiki "http://www.kamailio.org/dokuwiki/">
+<!ENTITY kamwiki "http://www.kamailio.org/wiki/">
 <!ENTITY kamwikilink "<ulink url='&kamwiki;'>&kamwiki;</ulink>">
 
 <!ENTITY kamailiohome "http://www.kamailio.org/">
