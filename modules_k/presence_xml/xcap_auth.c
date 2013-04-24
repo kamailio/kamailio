@@ -308,8 +308,8 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 		identity_node = xmlNodeGetChildByName(cond_node, "identity");
 		if(identity_node == NULL)
 		{
-			LM_ERR("didn't find identity tag\n");
-			goto error;
+			LM_WARN("didn't find identity tag\n");
+			continue;
 		}	
 		
 		iden_child= xmlNodeGetChildByName(identity_node, "one");
