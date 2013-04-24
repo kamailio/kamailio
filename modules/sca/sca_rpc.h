@@ -28,6 +28,7 @@
 #include "../../rpc_lookup.h"
 
 extern const char	*sca_rpc_show_all_subscriptions_doc[];
+extern const char	*sca_rpc_subscription_count_doc[];
 extern const char	*sca_rpc_show_subscription_doc[];
 extern const char	*sca_rpc_show_subscribers_doc[];
 extern const char	*sca_rpc_deactivate_all_subscriptions_doc[];
@@ -39,6 +40,7 @@ extern const char	*sca_rpc_update_appearance_doc[];
 extern const char	*sca_rpc_release_appearance_doc[];
 
 void	sca_rpc_show_all_subscriptions( rpc_t *, void * );
+void	sca_rpc_subscription_count( rpc_t *, void * );
 void	sca_rpc_show_subscription( rpc_t *, void * );
 void	sca_rpc_show_subscribers( rpc_t *, void * );
 void	sca_rpc_deactivate_all_subscriptions( rpc_t *, void * );
