@@ -447,8 +447,7 @@ int record_route(struct sip_msg* _m, str *params)
 		return -3;
 	}
 	
-	if (build_rr(l, l2, &user, tag, params, use_ob ? OUTBOUND : INBOUND,
-			sips) < 0) {
+	if (build_rr(l, l2, &user, tag, params, INBOUND, sips) < 0) {
 		LM_ERR("failed to insert inbound Record-Route\n");
 		return -4;
 	}
@@ -787,9 +786,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		return -6;
 	}
 	
-	if (build_advertised_rr(l, l2, _data, &user, tag,
-				use_ob ? OUTBOUND: INBOUND,
-				sips) < 0) {
+	if (build_advertised_rr(l, l2, _data, &user, tag, INBOUND, sips) < 0) {
 		LM_ERR("failed to insert outbound Record-Route\n");
 		return -7;
 	}

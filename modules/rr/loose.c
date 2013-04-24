@@ -501,12 +501,12 @@ static char uri_buf[MAX_ROUTE_URI_LEN];
  * \param dst_uri string to write the destination URI to (extracted from flow-token)
  * \return -1 on error, 0 when outbound not in use, 1 when outbound in use
  */
-static inline int process_outbound(struct sip_msg *_m, str flow_token,
-		str *dst_uri)
+static inline int process_outbound(struct sip_msg *_m, str flow_token)
 {
 	int ret;
 	struct receive_info *rcv = NULL;
 	struct socket_info *si;
+	str dst_uri;
 
 	if (!rr_obb.decode_flow_token)
 		return 0;
@@ -534,22 +534,29 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 		}
 
 		/* Second, override the destination URI */
-		dst_uri->s = uri_buf;
-		dst_uri->len = 0;
+		dst_uri.s = uri_buf;
+		dst_uri.len = 0;
 
-		dst_uri->len += snprintf(dst_uri->s + dst_uri->len,
-					MAX_ROUTE_URI_LEN - dst_uri->len,
+		dst_uri.len += snprintf(dst_uri.s + dst_uri.len,
+					MAX_ROUTE_URI_LEN - dst_uri.len,
 					"sip:%s",
 					rcv->src_ip.af == AF_INET6 ? "[" : "");
-		dst_uri->len += ip_addr2sbuf(&rcv->src_ip,
-					dst_uri->s + dst_uri->len,
-					MAX_ROUTE_URI_LEN - dst_uri->len);
-		dst_uri->len += snprintf(dst_uri->s + dst_uri->len,
-					MAX_ROUTE_URI_LEN - dst_uri->len,
+		dst_uri.len += ip_addr2sbuf(&rcv->src_ip,
+					dst_uri.s + dst_uri.len,
+					MAX_ROUTE_URI_LEN - dst_uri.len);
+		dst_uri.len += snprintf(dst_uri.s + dst_uri.len,
+					MAX_ROUTE_URI_LEN - dst_uri.len,
 					"%s:%d;transport=%s",
 					rcv->src_ip.af == AF_INET6 ? "]" : "",
 					rcv->src_port,
 					get_proto_name(rcv->proto));
+
+		if (set_dst_uri(_m, &dst_uri) < 0) {
+			LM_ERR("failed to set dst_uri\n");
+			return -1;
+		}
+		ruri_mark_new();
+
 		return 1;
 	}
 
@@ -754,7 +761,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	struct sip_uri puri;
 	rr_t* rt;
 	int res;
-	int status;
+	int status = RR_DRIVEN;
 	str uri;
 	struct socket_info *si;
 	int uri_is_myself, next_is_strict;
@@ -784,7 +791,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* set the hooks for the params */
 		routed_msg_id = _m->id;
 
-		if ((use_ob = process_outbound(_m, puri.user, &uri)) < 0) {
+		if ((use_ob = process_outbound(_m, puri.user)) < 0) {
 			LM_ERR("processing outbound flow-token\n");
 			return FLOW_TOKEN_BROKEN;
 		}
@@ -850,12 +857,10 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			} else rt = rt->next;
 		}
 		
-		if (!use_ob) {
-			uri = rt->nameaddr.uri;
-			if (parse_uri(uri.s, uri.len, &puri) < 0) {
-				LM_ERR("failed to parse the first route URI\n");
-				return RR_ERROR;
-			}
+		uri = rt->nameaddr.uri;
+		if (parse_uri(uri.s, uri.len, &puri) < 0) {
+			LM_ERR("failed to parse the first route URI\n");
+			return RR_ERROR;
 		}
 	} else {
 #ifdef ENABLE_USER_CHECK
@@ -884,14 +889,15 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				LM_ERR("checking maddr failed\n");
 				return RR_ERROR;
 			}
-		}
-		if (set_dst_uri(_m, &uri) < 0) {
-			LM_ERR("failed to set dst_uri\n");
-			return RR_ERROR;
-		}
-		/* dst_uri changed, so it makes sense to re-use the current uri for
+		
+			if (set_dst_uri(_m, &uri) < 0) {
+				LM_ERR("failed to set dst_uri\n");
+				return RR_ERROR;
+			}
+			/* dst_uri changed, so it makes sense to re-use the current uri for
 			forking */
-		ruri_mark_new(); /* re-use uri for serial forking */
+			ruri_mark_new(); /* re-use uri for serial forking */
+		}
 
 		/* There is a previous route uri which was 2nd uri of mine
 		 * and must be removed here */
@@ -903,12 +909,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 		}
 	}
-	if (use_ob == 1) 
-	    status = RR_OB_DRIVEN;
-	else
-	    status = RR_DRIVEN;
 
 done:
+	if (use_ob == 1)
+		status = RR_OB_DRIVEN;
+
 	/* run RR callbacks only if we have Route URI parameters */
 	if(routed_params.len > 0)
 		run_rr_callbacks( _m, &routed_params );
