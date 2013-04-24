@@ -838,6 +838,11 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 		return 0;
 	}
 
+	if(_c->ruid.len<=0) {
+		LM_ERR("updating record in database failed - empty ruid\n");
+		return -1;
+	}
+
 	n1 = 0;
 	keys1[n1] = &ruid_col;
 	vals1[n1].type = DB1_STR;
@@ -928,15 +933,10 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 	vals2[n2].val.time_val = _c->last_modified;
 	n2++;
 
-	keys2[n2] = &ruid_col;
-	if(_c->ruid.len>0)
-	{
-		vals2[n2].type = DB1_STR;
-		vals2[n2].nul = 0;
-		vals2[n2].val.str_val = _c->ruid;
-	} else {
-		vals2[n2].nul = 1;
-	}
+	keys2[n2] = &callid_col;
+	vals2[n2].type = DB1_STR;
+	vals2[n2].nul = 0;
+	vals2[n2].val.str_val = _c->callid;
 	n2++;
 
 	keys2[n2] = &instance_col;
@@ -1101,8 +1101,7 @@ int db_delete_ucontact_ruid(ucontact_t* _c)
 		return 0;
 	}
 
-	if(_c->ruid.len<=0)
-	{
+	if(_c->ruid.len<=0) {
 		LM_ERR("deleting from database failed - empty ruid\n");
 		return -1;
 	}
