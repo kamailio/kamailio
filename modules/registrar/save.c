@@ -382,6 +382,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsig
 		if(sruid_next(&_reg_sruid)<0)
 			goto error;
 		ci.ruid = _reg_sruid.uid;
+		LM_DBG("generated ruid is: %.*s\n", ci.ruid.len, ci.ruid.s);
 	}
 
 	return &ci;
@@ -452,8 +453,9 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 
 	flags = mem_only;
 #ifdef USE_TCP
-	if ( (_m->flags&tcp_persistent_flag) &&
-	(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS||_m->rcv.proto==PROTO_WS||_m->rcv.proto==PROTO_WSS)) {
+	if ( (_m->flags&tcp_persistent_flag)
+			&& (_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS
+				||_m->rcv.proto==PROTO_WS||_m->rcv.proto==PROTO_WSS)) {
 		e_max = 0;
 		tcp_check = 1;
 	} else {
