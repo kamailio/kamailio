@@ -200,7 +200,7 @@ static inline struct lump *insert_rr_param_lump(struct lump *before,
  * \return 0 on success, negative on failure
  */
 static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
-				str *tag, str *params, int _inbound, int _use_ob, int _sips)
+				str *tag, str *params, int _inbound, int _sips)
 {
 	char* prefix, *suffix, *term, *r2;
 	int suffix_len, prefix_len;
@@ -284,7 +284,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	_l = insert_subst_lump_after(_l, _inbound?SUBST_RCV_ALL:SUBST_SND_ALL, 0);
 	if (_l ==0 )
 		goto lump_err;
-	if (enable_double_rr && !_use_ob) {
+	if (enable_double_rr) {
 		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, 0)))
 			goto lump_err;
 		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, 0)))
@@ -421,7 +421,7 @@ int record_route(struct sip_msg* _m, str *params)
 
 	sips = rr_is_sips(_m);
 
-	if (enable_double_rr && !use_ob) {
+	if (enable_double_rr) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
@@ -434,7 +434,7 @@ int record_route(struct sip_msg* _m, str *params)
 			LM_ERR("failed to insert conditional lump\n");
 			return -6;
 		}
-		if (build_rr(l, l2, &user, tag, params, OUTBOUND, 0, sips) < 0) {
+		if (build_rr(l, l2, &user, tag, params, OUTBOUND, sips) < 0) {
 			LM_ERR("failed to insert outbound Record-Route\n");
 			return -7;
 		}
@@ -448,7 +448,7 @@ int record_route(struct sip_msg* _m, str *params)
 	}
 	
 	if (build_rr(l, l2, &user, tag, params, use_ob ? OUTBOUND : INBOUND,
-			use_ob, sips) < 0) {
+			sips) < 0) {
 		LM_ERR("failed to insert inbound Record-Route\n");
 		return -4;
 	}
@@ -601,7 +601,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 #define RR_TRANS_LEN 11
 #define RR_TRANS ";transport="
 static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_data,
-				str* user, str *tag, int _inbound, int _use_ob, int _sips)
+				str* user, str *tag, int _inbound, int _sips)
 {
 	char *p;
 	char *hdr, *trans, *r2, *suffix, *term;
@@ -693,7 +693,7 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 		goto lump_err;
 	if (!(_l = insert_subst_lump_after(_l, _inbound?SUBST_RCV_PROTO:SUBST_SND_PROTO, 0)))
 		goto lump_err;
-	if (enable_double_rr && !_use_ob) {
+	if (enable_double_rr) {
 		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, 0)))
 			goto lump_err;
 		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, 0)))
@@ -760,7 +760,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 
 	sips = rr_is_sips(_m);
 
-	if (enable_double_rr && !use_ob) {
+	if (enable_double_rr) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
@@ -774,7 +774,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			return -4;
 		}
 		if (build_advertised_rr(l, l2, _data, &user, tag, OUTBOUND,
-					0, sips) < 0) {
+					sips) < 0) {
 			LM_ERR("failed to insert outbound Record-Route\n");
 			return -5;
 		}
@@ -789,7 +789,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	
 	if (build_advertised_rr(l, l2, _data, &user, tag,
 				use_ob ? OUTBOUND: INBOUND,
-				use_ob, sips) < 0) {
+				sips) < 0) {
 		LM_ERR("failed to insert outbound Record-Route\n");
 		return -7;
 	}
@@ -841,7 +841,7 @@ int add_rr_param(struct sip_msg* msg, str* rr_param)
 			goto error;
 		}
 		/* double routing enabled? */
-		if (enable_double_rr && !(rr_obb.use_outbound && rr_obb.use_outbound(msg))) {
+		if (enable_double_rr) {
 			if (root==0 || (last_param=get_rr_param_lump(&root))==0) {
 				LM_CRIT("failed to locate double RR lump\n");
 				goto error;
