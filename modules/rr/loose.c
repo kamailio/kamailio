@@ -571,7 +571,7 @@ static inline int after_strict(struct sip_msg* _m)
 	char* rem_off;
 	str uri;
 	struct socket_info *si;
-	int use_ob, next_is_strict;
+	int next_is_strict;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -588,14 +588,11 @@ static inline int after_strict(struct sip_msg* _m)
 	}
 
 	next_is_strict = is_strict(&puri.params);
-	if ((use_ob = process_outbound(_m, puri.user, &uri)) < 0) {
-		LM_ERR("processing outbound flow-token\n");
-		return FLOW_TOKEN_BROKEN;
-	}
 
-	if (!use_ob && enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
+	if (enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
 		/* double route may occure due different IP and port, so force as
 		 * send interface the one advertise in second Route */
+
 		si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
 		if (si) {
 			set_force_socket(_m, si);
@@ -650,11 +647,9 @@ static inline int after_strict(struct sip_msg* _m)
 		 * always be a strict router because endpoints don't use ;lr parameter
 		 * In this case we will simply put the URI in R-URI and forward it, 
 		 * which will work perfectly */
-		if (!use_ob) {
-			if(get_maddr_uri(&uri, &puri)!=0) {
-				LM_ERR("failed to check maddr\n");
-				return RR_ERROR;
-			}
+		if(get_maddr_uri(&uri, &puri)!=0) {
+			LM_ERR("failed to check maddr\n");
+			return RR_ERROR;
 		}
 		if (rewrite_uri(_m, &uri) < 0) {
 			LM_ERR("failed to rewrite request URI\n");
@@ -676,11 +671,9 @@ static inline int after_strict(struct sip_msg* _m)
 		LM_DBG("Next hop: '%.*s' is loose router\n",
 			uri.len, ZSW(uri.s));
 
-		if (!use_ob) {
-			if(get_maddr_uri(&uri, &puri)!=0) {
-				LM_ERR("failed to check maddr\n");
-				return RR_ERROR;
-			}
+		if(get_maddr_uri(&uri, &puri)!=0) {
+			LM_ERR("failed to check maddr\n");
+			return RR_ERROR;
 		}
 		if (set_dst_uri(_m, &uri) < 0) {
 			LM_ERR("failed to set dst_uri\n");
@@ -745,10 +738,7 @@ static inline int after_strict(struct sip_msg* _m)
 	if(routed_params.len > 0)
 		run_rr_callbacks( _m, &routed_params );
 
-	if (use_ob == 1)
-	    return RR_OB_DRIVEN;
-	else
-	    return RR_DRIVEN;
+	return RR_DRIVEN;
 }
 
 
@@ -767,7 +757,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	int status;
 	str uri;
 	struct socket_info *si;
-	int uri_is_myself, use_ob, next_is_strict;
+	int uri_is_myself, next_is_strict;
+	int use_ob = 0;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -784,12 +775,6 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	next_is_strict = is_strict(&puri.params);
 	routed_params = puri.params;
 	uri_is_myself = is_myself(&puri);
-	if ((use_ob = process_outbound(_m, puri.user, &uri)) < 0) {
-		LM_ERR("processing outbound flow-token\n");
-		return FLOW_TOKEN_BROKEN;
-	}
-
-	LM_DBG("process_outbound returned <%d>\n", use_ob);
 
 	/* IF the URI was added by me, remove it */
 	if (uri_is_myself>0)
@@ -799,6 +784,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* set the hooks for the params */
 		routed_msg_id = _m->id;
 
+		if ((use_ob = process_outbound(_m, puri.user, &uri)) < 0) {
+			LM_ERR("processing outbound flow-token\n");
+			return FLOW_TOKEN_BROKEN;
+		}
+
 		if (!rt->next) {
 			/* No next route in the same header, remove the whole header
 			 * field immediately
@@ -807,10 +797,6 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				LM_ERR("failed to remove Route HF\n");
 				return RR_ERROR;
 			}
-
-			/* When using outbound skip past all this stuff and just set
- 			   the destination */
-			if (use_ob) goto got_uri;
 
 			res = find_next_route(_m, &hdr);
 			if (res < 0) {
@@ -825,14 +811,15 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
 
-		if (!use_ob) {
-			if (enable_double_rr && is_2rr(&puri.params)) {
-				/* double route may occure due different IP and port, so force as
-				 * send interface the one advertise in second Route */
-				if (parse_uri(rt->nameaddr.uri.s,rt->nameaddr.uri.len,&puri)<0) {
-					LM_ERR("failed to parse the double route URI\n");
-					return RR_ERROR;
-				}
+		if (enable_double_rr && is_2rr(&puri.params)) {
+			/* double route may occure due different IP and port, so force as
+			 * send interface the one advertise in second Route */
+			if (parse_uri(rt->nameaddr.uri.s,rt->nameaddr.uri.len,&puri)<0) {
+				LM_ERR("failed to parse the double route URI\n");
+				return RR_ERROR;
+			}
+
+			if (!use_ob) {
 				si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
 				if (si) {
 					set_force_socket(_m, si);
@@ -840,28 +827,30 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 					if (enable_socket_mismatch_warning)
 						LM_WARN("no socket found for match second RR\n");
 				}
-	
-				if (!rt->next) {
-					/* No next route in the same header, remove the whole header
-					 * field immediately */
-					if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
-						LM_ERR("failed to remove Route HF\n");
-						return RR_ERROR;
-					}
-					res = find_next_route(_m, &hdr);
-					if (res < 0) {
-						LM_ERR("failed to find next route\n");
-						return RR_ERROR;
-						}
-					if (res > 0) { /* No next route found */
-						LM_DBG("no next URI found\n");
-						status = (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
-						goto done;
-					}
-					rt = (rr_t*)hdr->parsed;
-				} else rt = rt->next;
 			}
-			
+
+			if (!rt->next) {
+				/* No next route in the same header, remove the whole header
+				 * field immediately */
+				if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
+					LM_ERR("failed to remove Route HF\n");
+					return RR_ERROR;
+				}
+				res = find_next_route(_m, &hdr);
+				if (res < 0) {
+					LM_ERR("failed to find next route\n");
+					return RR_ERROR;
+					}
+				if (res > 0) { /* No next route found */
+					LM_DBG("no next URI found\n");
+					status = (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+					goto done;
+				}
+				rt = (rr_t*)hdr->parsed;
+			} else rt = rt->next;
+		}
+		
+		if (!use_ob) {
 			uri = rt->nameaddr.uri;
 			if (parse_uri(uri.s, uri.len, &puri) < 0) {
 				LM_ERR("failed to parse the first route URI\n");
@@ -889,7 +878,6 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	} else {
 		/* Next hop is loose router */
 		LM_DBG("Next URI is a loose router\n");
-got_uri:
 
 		if (!use_ob) {
 			if(get_maddr_uri(&uri, &puri)!=0) {
