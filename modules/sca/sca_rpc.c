@@ -40,6 +40,10 @@ const char *sca_rpc_show_all_subscriptions_doc[] = {
 	"Show all shared call appearance subscriptions",
 	NULL
 };
+const char *sca_rpc_subscription_count_doc[] = {
+	"Show count of call-info or line-seize subscriptions",
+	NULL
+};
 const char *sca_rpc_show_subscription_doc[] = {
 	"Show details of a single shared call appearance subscription",
 	NULL
@@ -146,6 +150,52 @@ sca_rpc_show_all_subscriptions( rpc_t *rpc, void *ctx )
 }
 
     void
+sca_rpc_subscription_count( rpc_t *rpc, void *ctx )
+{
+    sca_hash_table	*ht;
+    sca_hash_entry	*ent;
+    sca_subscription	*sub;
+    str			event_name = STR_NULL;
+    char		*usage = "usage: sca.subscription_count "
+				 "{ call-info | line-seize }";
+    unsigned long	sub_count = 0;
+    int			i;
+    int			event_type;
+
+    if (( ht = sca->subscriptions ) == NULL ) {
+	rpc->fault( ctx, 500, "Empty subscription table!" );
+	return;
+    }
+
+    /* AoR is required */
+    if ( rpc->scan( ctx, "S", &event_name ) != 1 ) {
+	rpc->fault( ctx, 500, usage );
+	return;
+    }
+
+    event_type = sca_event_from_str( &event_name );
+    if ( event_type == SCA_EVENT_TYPE_UNKNOWN ) {
+	rpc->fault( ctx, 500, usage );
+	return;
+    }
+
+    for ( i = 0; i < ht->size; i++ ) {
+	sca_hash_table_lock_index( ht, i );
+
+	for ( ent = ht->slots[ i ].entries; ent != NULL; ent = ent->next ) {
+	    sub = (sca_subscription *)ent->value;
+
+	    if ( event_type == sub->event ) {
+		sub_count++;
+	    }
+	}
+	sca_hash_table_unlock_index( ht, i );
+    }
+
+    rpc->printf( ctx, "%ld %.*s", sub_count, STR_FMT( &event_name ));
+}
+
+    void
 sca_rpc_deactivate_all_subscriptions( rpc_t *rpc, void *ctx )
 {
     sca_hash_table	*ht;
@@ -201,7 +251,6 @@ sca_rpc_deactivate_subscription( rpc_t *rpc, void *ctx )
 sca_rpc_show_subscription( rpc_t *rpc, void *ctx )
 {
     sca_hash_table	*ht = NULL;
-    sca_hash_slot	*slot;
     sca_hash_entry	*ent;
     sca_subscription	*sub;
     str			sub_key = STR_NULL;
@@ -210,10 +259,10 @@ sca_rpc_show_subscription( rpc_t *rpc, void *ctx )
     str			event_name = STR_NULL;
     int			event_type;
     int			idx = -1;
-    int			rc = 0;
+    int			rc = 0, opt_rc;
     char		keybuf[ 1024 ];
-    char		*usage = "usage: sca.show_subscription user@domain "
-				 "{ call-info | line-seize } [user@IP]";
+    char		*usage = "usage: sca.show_subscription sip:user@domain "
+				 "{ call-info | line-seize } [sip:user@IP]";
     char		*err_msg = NULL;
     int			err_code = 0;
 
@@ -245,15 +294,18 @@ sca_rpc_show_subscription( rpc_t *rpc, void *ctx )
     sca_hash_table_lock_index( ht, idx );
 
     /* Contact is optional */
-    if ( rpc->scan( ctx, "*S", &contact ) == 1 ) {
-	slot = sca_hash_table_slot_for_index( ht, idx );
+    opt_rc = rpc->scan( ctx, "*S", &contact );
 
-	/* we lock above */
-	sub = sca_hash_table_slot_kv_find_unsafe( slot, &contact );
-	if ( sub == NULL ) {
-	    err_code = 404;
-	    err_msg = "No matching subscriptions found";
-	    goto done;
+    for ( ent = ht->slots[ idx ].entries; ent != NULL; ent = ent->next ) {
+	sub = (sca_subscription *)ent->value;
+	if ( ent->compare( &aor, &sub->target_aor ) != 0 ) {
+	    continue;
+	}
+
+	if ( opt_rc == 1 ) {
+	    if ( !SCA_STR_EQ( &contact, &sub->subscriber )) {
+		continue;
+	    }
 	}
 
 	rc = rpc->printf( ctx, "%.*s %s %.*s %d",
@@ -261,19 +313,10 @@ sca_rpc_show_subscription( rpc_t *rpc, void *ctx )
 			    sca_event_name_from_type( sub->event ),
 			    STR_FMT( &sub->subscriber ),
 			    sub->expires );
-    } else {
-	for ( ent = ht->slots[ idx ].entries; ent != NULL; ent = ent->next ) {
-	    sub = (sca_subscription *)ent->value;
-	    rc = rpc->printf( ctx, "%.*s %s %.*s %d",
-				STR_FMT( &sub->target_aor ),
-				sca_event_name_from_type( sub->event ),
-				STR_FMT( &sub->subscriber ),
-				sub->expires );
 
-	    if ( rc < 0 ) {
-		/* make sure we unlock below */
-		break;
-	    }
+	if ( rc < 0 ) {
+	    /* make sure we unlock below */
+	    break;
 	}
     }
 
