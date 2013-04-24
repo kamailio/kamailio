@@ -65,6 +65,8 @@ static cmd_export_t	cmds[] = {
 static rpc_export_t	sca_rpc[] = {
     { "sca.all_subscriptions", sca_rpc_show_all_subscriptions,
 			sca_rpc_show_all_subscriptions_doc, 0 },
+    { "sca.subscription_count", sca_rpc_subscription_count,
+			sca_rpc_subscription_count_doc, 0 },
     { "sca.show_subscription", sca_rpc_show_subscription,
 			sca_rpc_show_subscription_doc, 0 },
     { "sca.subscribers", sca_rpc_show_subscribers,
