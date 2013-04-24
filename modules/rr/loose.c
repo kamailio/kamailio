@@ -550,13 +550,11 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 					rcv->src_ip.af == AF_INET6 ? "]" : "",
 					rcv->src_port,
 					get_proto_name(rcv->proto));
-	} else {
-	    LM_DBG("outbound \"outgoing\" request found - "
-		   "Not using flow-token for routing\n");
-	    return 0;
-	}	    
+		return 1;
+	}
 
-	return 1;
+	LM_DBG("Not using flow-token for routing\n");
+	return 0;
 }
 
 /*!
