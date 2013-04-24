@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     4.1.0
-%define rel     dev2%{dist}
+%define rel     dev3%{dist}
 
 
 
@@ -1109,6 +1109,8 @@ fi
 
 
 %changelog
+* Wed Apr 24 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev3
 * Wed Apr 10 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Added sipt module to .spec
   - Updated rel to dev2
