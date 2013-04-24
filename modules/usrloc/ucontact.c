@@ -624,11 +624,11 @@ int db_insert_ucontact(ucontact_t* _c)
 
 
 /*!
- * \brief Update contact in the database
+ * \brief Update contact in the database by address
  * \param _c updated contact
  * \return 0 on success, -1 on failure
  */
-int db_update_ucontact(ucontact_t* _c)
+int db_update_ucontact_addr(ucontact_t* _c)
 {
 	char* dom;
 	db_key_t keys1[4];
@@ -816,13 +816,212 @@ int db_update_ucontact(ucontact_t* _c)
 	return 0;
 }
 
+/*!
+ * \brief Update contact in the database by ruid
+ * \param _c updated contact
+ * \return 0 on success, -1 on failure
+ */
+int db_update_ucontact_ruid(ucontact_t* _c)
+{
+	str auser;
+	str adomain;
+	db_key_t keys1[1];
+	db_val_t vals1[1];
+	int n1;
+
+	db_key_t keys2[14];
+	db_val_t vals2[14];
+	int n2;
+
+
+	if (_c->flags & FL_MEM) {
+		return 0;
+	}
+
+	n1 = 0;
+	keys1[n1] = &ruid_col;
+	vals1[n1].type = DB1_STR;
+	vals1[n1].nul = 0;
+	vals1[n1].val.str_val = _c->ruid;
+	n1++;
+
+	n2 = 0;
+	keys2[n2] = &expires_col;
+	vals2[n2].type = DB1_DATETIME;
+	vals2[n2].nul = 0;
+	vals2[n2].val.time_val = _c->expires;
+	n2++;
+
+	keys2[n2] = &q_col;
+	vals2[n2].type = DB1_DOUBLE;
+	vals2[n2].nul = 0;
+	vals2[n2].val.double_val = q2double(_c->q);
+	n2++;
+
+	keys2[n2] = &cseq_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.int_val = _c->cseq;
+	n2++;
+
+	keys2[n2] = &flags_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.bitmap_val = _c->flags;
+	n2++;
+
+	keys2[n2] = &cflags_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.bitmap_val = _c->cflags;
+	n2++;
+
+	keys2[n2] = &user_agent_col;
+	vals2[n2].type = DB1_STR;
+	vals2[n2].nul = 0;
+	vals2[n2].val.str_val = _c->user_agent;
+	n2++;
+
+	keys2[n2] = &received_col;
+	vals2[n2].type = DB1_STR;
+	if (_c->received.s == 0) {
+		vals2[n2].nul = 1;
+	} else {
+		vals2[n2].nul = 0;
+		vals2[n2].val.str_val = _c->received;
+	}
+	n2++;
+
+	keys2[n2] = &path_col;
+	vals2[n2].type = DB1_STR;
+	if (_c->path.s == 0) {
+		vals2[n2].nul = 1;
+	} else {
+		vals2[n2].nul = 0;
+		vals2[n2].val.str_val = _c->path;
+	}
+	n2++;
+
+	keys2[n2] = &sock_col;
+	vals2[n2].type = DB1_STR;
+	if (_c->sock) {
+		vals2[n2].val.str_val = _c->sock->sock_str;
+		vals2[n2].nul = 0;
+	} else {
+		vals2[n2].nul = 1;
+	}
+	n2++;
+
+	keys2[n2] = &methods_col;
+	vals2[n2].type = DB1_BITMAP;
+	if (_c->methods == 0xFFFFFFFF) {
+		vals2[n2].nul = 1;
+	} else {
+		vals2[n2].val.bitmap_val = _c->methods;
+		vals2[n2].nul = 0;
+	}
+	n2++;
+
+	keys2[n2] = &last_mod_col;
+	vals2[n2].type = DB1_DATETIME;
+	vals2[n2].nul = 0;
+	vals2[n2].val.time_val = _c->last_modified;
+	n2++;
+
+	keys2[n2] = &ruid_col;
+	if(_c->ruid.len>0)
+	{
+		vals2[n2].type = DB1_STR;
+		vals2[n2].nul = 0;
+		vals2[n2].val.str_val = _c->ruid;
+	} else {
+		vals2[n2].nul = 1;
+	}
+	n2++;
+
+	keys2[n2] = &instance_col;
+	if(_c->instance.len>0)
+	{
+		vals2[n2].type = DB1_STR;
+		vals2[n2].nul = 0;
+		vals2[n2].val.str_val = _c->instance;
+	} else {
+		vals2[n2].nul = 1;
+	}
+	n2++;
+
+	keys2[n2] = &reg_id_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.int_val = (int)_c->reg_id;
+	n2++;
+
+	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
+		LM_ERR("sql use_table failed\n");
+		return -1;
+	}
+
+	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, n1, n2) < 0) {
+		LM_ERR("updating database failed\n");
+		return -1;
+	}
+
+	if (ul_db_check_update==1 && ul_dbf.affected_rows) {
+		/* supposed to be an UPDATE, but if affected rows is 0, then try
+		 * to do an INSERT */
+		if(ul_dbf.affected_rows(ul_dbh)==0) {
+			LM_DBG("affected rows by UPDATE was 0, doing an INSERT\n");
+			if(db_insert_ucontact(_c)<0)
+				return -1;
+		}
+	}
+
+	/* delete old db attrs and add the current list */
+	auser = *_c->aor;
+	if (use_domain) {
+		adomain.s = memchr(_c->aor->s, '@', _c->aor->len);
+		if (adomain.s==0) {
+			auser.len = 0;
+			adomain = *_c->aor;
+		} else {
+			auser.len = adomain.s - _c->aor->s;
+			adomain.s++;
+			adomain.len = _c->aor->s + _c->aor->len - adomain.s;
+		}
+
+		uldb_delete_attrs(_c->domain, &auser,
+				&adomain, &_c->ruid);
+		uldb_insert_attrs(_c->domain, &auser,
+				&adomain, &_c->ruid, _c->xavp);
+	} else {
+		uldb_delete_attrs(_c->domain, &auser,
+				NULL, &_c->ruid);
+		uldb_insert_attrs(_c->domain, &auser,
+				NULL, &_c->ruid, _c->xavp);
+	}
+
+	return 0;
+}
 
 /*!
- * \brief Delete contact from the database
+ * \brief Update contact in the database
+ * \param _c updated contact
+ * \return 0 on success, -1 on failure
+ */
+int db_update_ucontact(ucontact_t* _c)
+{
+	if(ul_db_ops_ruid==0)
+		return db_update_ucontact_addr(_c);
+	else
+		return db_update_ucontact_ruid(_c);
+}
+
+/*!
+ * \brief Delete contact from the database by address
  * \param _c deleted contact
  * \return 0 on success, -1 on failure
  */
-int db_delete_ucontact(ucontact_t* _c)
+int db_delete_ucontact_addr(ucontact_t* _c)
 {
 	char* dom;
 	db_key_t keys[4];
@@ -887,6 +1086,59 @@ int db_delete_ucontact(ucontact_t* _c)
 	return 0;
 }
 
+/*!
+ * \brief Delete contact from the database by ruid
+ * \param _c deleted contact
+ * \return 0 on success, -1 on failure
+ */
+int db_delete_ucontact_ruid(ucontact_t* _c)
+{
+	db_key_t keys[1];
+	db_val_t vals[1];
+	int n;
+
+	if (_c->flags & FL_MEM) {
+		return 0;
+	}
+
+	if(_c->ruid.len<=0)
+	{
+		LM_ERR("deleting from database failed - empty ruid\n");
+		return -1;
+	}
+
+	n = 0;
+	keys[n] = &ruid_col;
+	vals[n].type = DB1_STR;
+	vals[n].nul = 0;
+	vals[n].val.str_val = _c->ruid;
+	n++;
+
+	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
+		LM_ERR("sql use_table failed\n");
+		return -1;
+	}
+
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, n) < 0) {
+		LM_ERR("deleting from database failed\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*!
+ * \brief Delete contact from the database
+ * \param _c deleted contact
+ * \return 0 on success, -1 on failure
+ */
+int db_delete_ucontact(ucontact_t* _c)
+{
+	if(ul_db_ops_ruid==0)
+		return db_delete_ucontact_addr(_c);
+	else
+		return db_delete_ucontact_ruid(_c);
+}
 
 /*!
  * \brief Remove a contact from list belonging to a certain record
