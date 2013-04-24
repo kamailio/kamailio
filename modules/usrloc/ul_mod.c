@@ -118,6 +118,8 @@ int ul_timer_procs = 0;
 int ul_db_check_update = 0;
 int ul_keepalive_timeout = 0;
 
+int ul_db_ops_ruid = 0;
+
 str ul_xavp_contact_name = {0};
 
 /* sruid to get internal uid for mi/rpc commands */
@@ -217,6 +219,7 @@ static param_export_t params[] = {
 	{"timer_procs",         INT_PARAM, &ul_timer_procs},
 	{"db_check_update",     INT_PARAM, &ul_db_check_update},
 	{"xavp_contact",        STR_PARAM, &ul_xavp_contact_name.s},
+	{"db_ops_ruid",         INT_PARAM, &ul_db_ops_ruid},
 	{0, 0, 0}
 };
 

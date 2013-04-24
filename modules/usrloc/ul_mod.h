@@ -105,5 +105,6 @@ extern db_func_t ul_dbf;
 
 extern int matching_mode;
 
+extern int ul_db_ops_ruid;
 
 #endif /* UL_MOD_H */
