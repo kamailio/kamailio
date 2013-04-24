@@ -42,7 +42,7 @@
 sql_con_t *_sql_con_root = NULL;
 sql_result_t *_sql_result_root = NULL;
 
-static str _sql_empty_str = {"", 0};
+static char _sql_empty_buf[1];
 
 sql_con_t* sql_get_connection(str *name)
 {
@@ -66,6 +66,8 @@ int sql_init_con(str *name, str *url)
 {
 	sql_con_t *sc;
 	unsigned int conid;
+
+	*_sql_empty_buf = '\0';
 
 	conid = core_case_hash(name, 0, 0);
 
@@ -373,16 +375,18 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 						LM_ERR("no more memory\n");
 						goto error;
 					}
-					db_longlong2str(RES_ROWS(db_res)[i].values[j].val.ll_val, res->vals[i][j].value.s.s, &res->vals[i][j].value.s.len);
+					db_longlong2str(RES_ROWS(db_res)[i].values[j].val.ll_val,
+							res->vals[i][j].value.s.s, &res->vals[i][j].value.s.len);
 				break;
 				default:
 					res->vals[i][j].flags = PV_VAL_NULL;
 			}
 			if(res->vals[i][j].flags == PV_VAL_STR && sv.s)
 			{
-				if(sv.len==0)
+				if(sv.len<=0)
 				{
-					res->vals[i][j].value.s = _sql_empty_str;
+					res->vals[i][j].value.s.s = _sql_empty_buf;
+					res->vals[i][j].value.s.len = 0;
 					continue;
 				}
 				res->vals[i][j].value.s.s 
