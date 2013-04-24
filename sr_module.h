@@ -670,4 +670,6 @@ void set_child_rpc_sip_mode(void);
 int is_sip_worker(int rank);
 int is_rpc_worker(int rank);
 
+unsigned int set_modinit_delay(unsigned int v);
+
 #endif /* sr_module_h */

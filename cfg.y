@@ -390,6 +390,7 @@ extern char *finame;
 %token DEBUG_V
 %token FORK
 %token FORK_DELAY
+%token MODINIT_DELAY
 %token LOGSTDERROR
 %token LOGFACILITY
 %token LOGNAME
@@ -842,6 +843,8 @@ assign_stm:
 	| FORK  EQUAL error  { yyerror("boolean value expected"); }
 	| FORK_DELAY  EQUAL NUMBER { set_fork_delay($3); }
 	| FORK_DELAY  EQUAL error  { yyerror("number expected"); }
+	| MODINIT_DELAY  EQUAL NUMBER { set_modinit_delay($3); }
+	| MODINIT_DELAY  EQUAL error  { yyerror("number expected"); }
 	| LOGSTDERROR EQUAL NUMBER { if (!config_check)  /* if set from cmd line, don't overwrite from yyparse()*/ 
 					if(log_stderr == 0) log_stderr=$3; 
 				   }
