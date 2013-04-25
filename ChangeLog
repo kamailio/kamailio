@@ -1,3 +1,481 @@
+===================== 2013-04-25 Version 4.0.1 Released =====================
+
+===================== Changes Since Version 4.0.0 ===========================
+
+commit d293977786ae7831f89f7b8a09d22516775778b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 25 16:50:15 2013 +0200
+
+    Makefile.defs: version set to 4.0.1
+
+commit 62188fa05724c4eafb4a5f192b070d9ffe22f5ae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 25 12:10:47 2013 +0200
+
+    pkg/rpm: updated version to 4.0.1 in rpm specs
+
+commit aed7548d393f1562824a851d656d7b2789991cc9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 25 12:08:49 2013 +0200
+
+    pkg/deb: updated version to 4.0.1 in deb specs
+
+commit 4fdc69e6eb8b03c4a28c2cfea1d0ee37b26207e2
+Author: Klaus Darilion <klaus.mailinglists@pernau.at>
+Date:   Thu Apr 25 08:12:07 2013 +0000
+
+    sipcapture/siptrace: set default db_url to read-write URL
+    (cherry picked from commit 81f622b9ef7d32434659f1e6d9a21c8013cefec7)
+
+commit 2c290ee29696f9c0c44fcaf04b8abd91d10c04a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 25 09:55:16 2013 +0200
+
+    modules/*: README regenerated for updates to db_url and wiki
+
+commit 88a0733ed03ecd2f16aa32ba00d146d8b395a8f6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 24 17:26:15 2013 +0200
+
+    usrloc: update call-id value in db when matching record by ruid
+    (cherry picked from commit 0125cdf0e75271a8478a3eadacc54ea1c1eb4da0)
+
+commit d87b33178e432726819e2b4c73a032d67d4a1d82
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 24 15:41:34 2013 +0200
+
+    usrloc: documented db_ops_ruid parameter
+    (cherry picked from commit e66842c2fc34d8dc8980efa821f7039685edef87)
+
+commit 102a1108b9e3ed9415e4b25d45542faa2643329d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 24 15:34:16 2013 +0200
+
+    usrloc: option to do db update/delete ops using ruid
+    
+    - new parameter db_obs_ruid - if set to 1, db update/delete operations
+      are done using ruid value
+    - if paramter set to 0 (default) the old style using aor, contact and
+      call-id is done
+    (cherry picked from commit 61e08282c905c2ee03a2be618b1e700fc0acbdeb)
+
+commit 744a6dc1c93c8b16750f4ab25deb57a02889f1d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 24 13:36:08 2013 +0200
+
+    registrar: added debug message to print generated ruid for contact
+    
+    - formatted condition to fit 80 char long line
+    (cherry picked from commit 735f83d6346c97d6f7b1da26a2fee1b6270872b1)
+
+commit 17b858ac9b88de8859f9f1cbc76da146d8f125db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 24 10:26:49 2013 +0200
+
+    sqlops: use one char buf for empty strings in db results
+    
+    - safe for the parts of code that want to access it even for write
+    (cherry picked from commit a74980270b655124c276279e54b8f82965f3f4b8)
+
+commit 224cc7ee5c9b6349cbd9755341898a94d97fd958
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 13:02:49 2013 +0200
+
+    usrloc: re-init sruid struct for each child
+    
+    - avoid overapping values for xmlrpc handling
+    (cherry picked from commit 20646b530baa1a2807e52048a8d99d31d2171bb6)
+
+commit 484444f4f90c725567a759252e2b3c11d53c8756
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 11:58:17 2013 +0200
+
+    docbook: uptdated wiki link in entities file
+    (cherry picked from commit 2b97e81b281802283ebc665da6f9190f0a9705ab)
+
+commit 137bb73470ba78fc7761f7c786abcb0de5c54cc8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 21 16:06:56 2013 +0200
+
+    acc: updated link to pseudo-variables cookbook
+    (cherry picked from commit f0c467f64c044de0b0f37addccb97d3ccff78706)
+
+commit 20fedafc2d10b8911b03dce9d5100f00ee5e3b9a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 21 16:07:34 2013 +0200
+
+    pv: updated link to wiki site
+    (cherry picked from commit ebeb18ffed8e81ae472b4c07097b58fbea115b5b)
+
+commit 66ebdf5bc5075874b2a791c042b7221e493d72be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 18 21:22:47 2013 +0200
+
+    xlog: link to wiki updated
+    (cherry picked from commit 343379957ab783a32c48822de479a9d8c2dafdf3)
+
+commit 11f031d4570c124fbb01a01b6c7ce0757e032a84
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 14 10:11:29 2013 +0200
+
+    auth: skip processing of PRACK in consume_credentials()
+    
+    - report and patch suggestions by Jorj Bauer
+    (cherry picked from commit 2a77ed2bdc9341ecf7d7200e420a1f49e4e9b6ab)
+
+commit a06c5b31f3a30c405a87bdd7be269152edf14c7b
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Apr 24 22:01:59 2013 +0100
+
+    modules/presence_xml: fixed issue with parsing some pres-rules documents
+    
+    - pres-rules that contain external links in a <conditions /> node don't
+      have to have <identity /> nodes in the <conditions /> node.
+    - Kamailio returns an error when it finds a <conditions /> node with
+      no <identity /> node inside it.
+    - Kamailio doesn't support external links, but it should skip over
+      the <conditions /> nodes that contain them rather than return
+      an error as later <conditions /> nodes may contain entries it can
+      work with.
+    (cherry picked from commit ac99219b0a850e0305eaf661b028536cfc28e2cb)
+
+commit a8991ef4b63c575a32807c3aacc7a076ae22d40d
+Author: Klaus Darilion <klaus.mailinglists@pernau.at>
+Date:   Wed Apr 24 09:09:25 2013 +0000
+
+    core: fix default read-only DB URL
+    (cherry picked from commit fdb6c8cbafec7849367f16f5dc56ffa20885bef4)
+
+commit 9d39d8b86576ca9784b96ebb43161c3174754876
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Apr 16 14:28:59 2013 +0300
+
+    modules/usrloc: init _ul_sruid also in mi_child_init
+    (cherry picked from commit 2190c572cd1bc4b57a3c2dd5241e556b834c728c)
+
+commit a49467e98dc721a1e4dbd9ba547d72aa38018883
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 12 00:50:24 2013 +0200
+
+    core: safety check for content-lenght size in tcp read
+    
+    - avoid getting negative
+    - upon a report by Kevin Wojtysiak
+    (cherry picked from commit 3c54420914c011bdd874a97c4c40ee9dacb59788)
+
+commit b2b26c811a7275dbdba90236f3cfc874fd117681
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 9 00:15:47 2013 +0200
+
+    rr: use port.len to check for buffer overflow instead of max port len
+    
+    - reported by Kevin Wojtysiak
+    (cherry picked from commit 28a8b87885e373bee8cc81985277ae718973fdfd)
+
+commit 95903a0f12e10e4852316eb52c8097fb8b30a308
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 9 00:21:44 2013 +0200
+
+    .gitignore: added protoshoot binary the ignore list of git
+    (cherry picked from commit a177a33b9938a36cfaedbce61734a1525e5b1665)
+
+commit 31f76fc50ec838b301dede678c97676d63355b4b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 9 00:18:35 2013 +0200
+
+    parser: safety check for max port length in URI
+    
+    - can't be longer than 5, a port being 16b value
+    - reported by Kevin Wojtysiak
+    (cherry picked from commit 13fd48f89555f5421e8285669e303bcefe44f149)
+
+commit 118da22f979dfa8e97a7c029ff34251ba72b6833
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 5 21:30:06 2013 +0200
+
+    rr: added missing s in sips for record route
+    
+    - reported by Sander van Grieken
+    (cherry picked from commit 0ecde91fe6e911997b1f5ee33eb50fa6778b7a89)
+
+commit 1e36ce594fa1c3ae180870025d79987fbfc90878
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 30 20:59:24 2013 +0100
+
+    dialog_ng: set kamailio mod interface always
+    
+    - it breaks rpc list generation otherwise
+    (cherry picked from commit 11bc294a9d64e31014ccb836290467984c28ce65)
+
+commit 1d6e63967ba8eaa5e1cf0d63081ec38439f0bcaa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 30 09:24:19 2013 +0100
+
+    core: set TOS for tcp IPv6 sockets
+    (cherry picked from commit b9476db0c1e1ce869c1da2f87dfaf411edf69277)
+
+commit 77c275383c509d34ba0300182ace889a4f1d7963
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 30 09:15:00 2013 +0100
+
+    core: set TOS for IPv6 sctp sockets
+    (cherry picked from commit b57f64533dbc538f3d5282d0196598062f0b4652)
+
+commit 060c8cd03ee745aa48b21d946ebfa9e3671d89c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 29 11:02:31 2013 +0100
+
+    usrloc: use NULL domain for updating ul attributes for use_domain=0
+    
+    - use counter var for db matching keys
+    (cherry picked from commit 50b116cf4c9c33c4f23c1d5b66fd313a7f40c572)
+
+commit e83d6d4c34fb04223f5754fff1248286e1345e7d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 27 20:53:00 2013 +0100
+
+    core: set TOS for IPv6 UDP sockets
+    
+    - reported by Klaus Feichtinger, FS#179
+    (cherry picked from commit 084be456bc0fab015cf9964ac85651fa60ea77c9)
+
+commit 22b614d06590f8c9adcadf9302882fba3e8f1d1b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 24 12:38:45 2013 +0100
+
+    msrp: fix compile warning of argument type in dbg message
+    
+    - reported by Olle E. Johansson
+    (cherry picked from commit 7339d847adfd098c58426e96e5e3730ad580d543)
+
+commit 5ab5edc4bba76f7a46d243fb7b9ce329b31835b6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 23 10:44:31 2013 +0100
+
+    rr: use sips to build RR headers of R-URI has sips
+    
+    - reported by Hugh James, FS#277
+    (cherry picked from commit 1826a5f4e3a981e30956da61e11ea551aae0b714)
+
+commit c7ef60e6c960c029b49bca01a89498a5dcdeec19
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Apr 13 11:26:48 2013 +0200
+
+    xcap_server: init etag variable for PUT operations
+    
+    - the function xcaps_get_db_etag() may not found a record to db and will
+      not initialize it, resulting in bogus value passed to
+      check_preconditions()
+    - reported by Juha Heinanen, FS#283
+    (cherry picked from commit 2d27dd1080cd490e93646b38d3912dcbe3761ca5)
+
+commit 5e5ba673fa4d2351047eadeaec655017c962424d
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Apr 10 09:34:49 2013 -0400
+
+    db_mysql: fix segfault when recursive queries are made
+    
+    The MySQL result object (MYSQL_RES) should not be stored within the
+    srdb1 connection object, but rather within the srdb1 result object.
+    Otherwise recursive queries overwrite each other's result sets, which
+    results in segfault.
+    
+    Conflicts:
+    	modules/db_mysql/km_my_con.h
+
+commit 5ba5a0a5bb6fc5080604e1abaef6cd41148911de
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Apr 10 09:33:53 2013 -0400
+
+    srdb1: add new db-private generic pointer to struct db1_res
+
+commit 3b9347e41195587c323f5d6d643c1807a9905941
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Wed Apr 10 13:55:57 2013 +0200
+
+    modules/pipelimit: check correctly for all arguments in mi_set_pipe
+    (cherry picked from commit d17b02ed5014b4e32bd0060f32cabd750956779c)
+
+commit c907eff8140bd07022aaf028741392322892b2f4
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Tue Apr 9 01:03:49 2013 +0200
+
+    modules/ndb_redis: b/f redisc_exec returns false if redis server is down.
+
+commit 0e7d000a9c73b0fd06132e458f838cc78abddbed
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Mon Apr 8 11:47:51 2013 +0200
+
+    modules/ndb_redis: b/f restore correctly last char in argument strings.
+
+commit 1d009c3dad2352784b48ec821732e4cca1078497
+Author: Jon Bonilla <jbonilla@sipwise.com>
+Date:   Sat Mar 30 11:45:12 2013 +0100
+
+    Set lucid version to 4.0.0
+
+commit 71dbcc196db780d5d8ca2960130850ace956ceca
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 29 23:35:39 2013 +0000
+
+    modules/outbound: changed some INFO level output to DBG
+    (cherry picked from commit ce0c420ba30388256e958a0bdf6d8f37138c3f97)
+
+commit eedf78559a0f289f695cdff40c581ec37c712502
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Mar 29 16:30:51 2013 +0200
+
+    modules/registrar: changed instance related INFO to DBG
+    (cherry picked from commit 33108f4843fdef6d45773849089446b0c408ecf3)
+
+commit c3f2d14337093843a81353aef34c078dc7e53787
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 29 01:08:02 2013 +0000
+
+    modules/outbound: updated edge proxy example in README
+    (cherry picked from commit 60953cd884af7d070ce44844a874f2bd75833998)
+
+commit 291900478f16272222b7c9138685ef871ece0875
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Mar 27 16:51:52 2013 +0000
+
+    modules/outbound: further improvement to the use_outbound() check
+    (cherry picked from commit a5f8f4cd4da60168fd73d7999c09181582ec5943)
+
+commit 1a8843319ac00020ed291d2904b202698c3bb1c8
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Mar 27 16:33:17 2013 +0000
+
+    modules/rr: copy the flow-token for "incoming" messages when using outbound
+    (cherry picked from commit 0c1725c8ccb08280a9c161e34fa9e43347cae7b0)
+
+commit 9df1edfb18f1ec0846ca474f510532050b55fc80
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Mar 27 16:32:59 2013 +0000
+
+    modules/outbound: improved check for outbound
+    (cherry picked from commit b2fb355fe5c9c64727d873cbe8d6fd883ebd2537)
+
+commit 70217018e5a72c80cee37bc5a722b769890fc64c
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Mar 27 15:43:02 2013 +0000
+
+    modules/rr: only use flow-token for routing if it doesn't point to the source of the request
+    (cherry picked from commit 874669f483e1efba032bd695eb6cee4275673874)
+
+commit 00c4469624392cb252d65ecf0e53dd64cfb9bb87
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 15 15:04:07 2013 +0000
+
+    modules/outbound: Warn during mod_init() if STUN is not built or enabled
+    
+    - STUN is required for outbound with UDP.  Don't want to stop Kamailio starting
+      when the outbound module is loaded and STUN is not available - but a warning
+      seems appropriate.
+    (cherry picked from commit 85b26219f9e4c3c8c7c990a4897d40645b4ad6e7)
+
+commit 527db661fa3f3bc3899eaf9c264c9080cc757318
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 15 14:54:41 2013 +0000
+
+    modules/outbound: free shared memory for flow-token key during shutdown
+    (cherry picked from commit 9d9d51438acd1d534f14ecbc8eb0030b45333177)
+
+commit ac9f143b3cd2422a3fb2c3ca5e29724ed65ab43d
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 15 14:07:04 2013 +0000
+
+    modules/outbound: Fixed bug in outbound mod_init
+    (cherry picked from commit c924645fcfb706fc20ed715a00531d785f99cbde)
+
+commit 6acbeef9ff574c079aaeeea72924905a0426c922
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 15 12:14:31 2013 +0000
+
+    modules/outbound: The flow-token key is now automatically generated
+    
+    - Uses OpenSSL RAND_bytes() to select 20 cryptographically strong pseudo-random
+      bytes for the key.
+    - Flow-token key can no longer be manually set.
+    (cherry picked from commit f474e85616f6f98a6ac193c7425f6c85af8efa20)
+
+commit 3c6f137ab904166cff791fab98008da2f5ebdc84
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 29 01:15:13 2013 +0000
+
+    Revert "index on 4.0: 9a57697 rtpproxy: fix spelling error in docs, reported from Victor V. Kustov, coyote at bks dot tv (cherry picked from commit a0b01f77de163cf7ea9d71d5293a1bfa20d31fa6)"
+    
+    This reverts commit 368b07fc76ee2bb0c292b7be4f06c7646036b605.
+
+commit b2a5e9dce705309ec1700ae10aa45663197c81de
+Merge: 9a57697 368b07f
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 29 01:11:15 2013 +0000
+
+    WIP on 4.0: 9a57697 rtpproxy: fix spelling error in docs, reported from Victor V. Kustov, coyote at bks dot tv (cherry picked from commit a0b01f77de163cf7ea9d71d5293a1bfa20d31fa6)
+
+commit 368b07fc76ee2bb0c292b7be4f06c7646036b605
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Mar 29 01:11:14 2013 +0000
+
+    index on 4.0: 9a57697 rtpproxy: fix spelling error in docs, reported from Victor V. Kustov, coyote at bks dot tv (cherry picked from commit a0b01f77de163cf7ea9d71d5293a1bfa20d31fa6)
+
+commit 9a57697e07824071cdce1b9ae65338771c7e32a2
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Tue Mar 19 15:32:25 2013 +0100
+
+    rtpproxy: fix spelling error in docs, reported from Victor V. Kustov, coyote at bks dot tv
+    (cherry picked from commit a0b01f77de163cf7ea9d71d5293a1bfa20d31fa6)
+
+commit a189e7fd3e6e4915c762dd6c429e68f3d9d6b49a
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Mar 18 15:03:24 2013 -0400
+
+    modules/sca: seize appearance for SCA callee answering w/o Call-Info
+    
+    - Yealink firmware 7.70.0.130 doesn't include a Call-Info header with
+      200 OK response to INVITE.
+
+commit 65d3fc0ac958128d99448966951de64a01f72b58
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Mar 18 10:32:45 2013 -0400
+
+    modules/sca: cast logging of time_t to long int to quiet warnings.
+    
+    - Report from Olle Johansson. Latent Y2K38 problem, but that needs a
+      project-wide solution.
+
+commit 6d61484c6302bfd2ad74b3b92621e541405c3240
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Sat Mar 16 16:35:29 2013 -0400
+
+    modules/sca: fix -Waddress warnings caused by static strs in SCA_STR_EMPTY
+    
+    - Tested on Ubunut 12.04 LTS. Report from Konstantin Mosesov.
+
+commit e446aa58a89c60ef9449fc8f79492232c7ed6f7f
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Mar 16 06:33:13 2013 +0200
+
+    modules/registrar: outbound_mode=1 fix
+    
+    outbound_mode=1 now accepts REGISTER requests that either contain
+    or do not contain a Supported: outbound header.
+    
+    a Supported: outbound header is always added to 200 OK reply and if
+    request contained a Supported: outbound header, also a Require: outbound
+    header is added.
+
+commit 86f3f2755bcf63a97a8eabb8a72a06614c2dbf5a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 15 09:03:26 2013 +0100
+
+    ims_icscf: fix include list for BSD
+    
+    - patch by Victor V. Kustov
+    (cherry picked from commit e930f94b71d2e5c40fa44d78738ce5efb747c5b1)
+
+
 ===================== 2013-03-11 Version 4.0.0 Released =====================
 
 ===================== Changes Since Version 3.3.0 ===========================
