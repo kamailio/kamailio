@@ -1401,7 +1401,9 @@ static inline char* print_to(char* w, dlg_t* dialog, struct cell* t)
 	t->to.len = TO_LEN + dialog->rem_uri.len + CRLF_LEN;
 
 	memapp(w, TO, TO_LEN);
+	if(dialog->rem_uri.s[0]!='<') memapp(w, "<", 1);
 	memapp(w, dialog->rem_uri.s, dialog->rem_uri.len);
+	if(dialog->rem_uri.s[0]!='<') memapp(w, ">", 1);
 
 	if (dialog->id.rem_tag.len) {
 		t->to.len += TOTAG_LEN + dialog->id.rem_tag.len ;
@@ -1423,7 +1425,9 @@ static inline char* print_from(char* w, dlg_t* dialog, struct cell* t)
 	t->from.len = FROM_LEN + dialog->loc_uri.len + CRLF_LEN;
 
 	memapp(w, FROM, FROM_LEN);
+	if(dialog->loc_uri.s[0]!='<') memapp(w, "<", 1);
 	memapp(w, dialog->loc_uri.s, dialog->loc_uri.len);
+	if(dialog->loc_uri.s[0]!='<') memapp(w, ">", 1);
 
 	if (dialog->id.loc_tag.len) {
 		t->from.len += FROMTAG_LEN + dialog->id.loc_tag.len;
@@ -1544,8 +1548,10 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 
 	*len += TO_LEN + dialog->rem_uri.len
 		+ (dialog->id.rem_tag.len ? (TOTAG_LEN + dialog->id.rem_tag.len) : 0) + CRLF_LEN;    /* To */
+	if(dialog->rem_uri.s[0]!='<') *len += 2; /* To-URI < > */
 	*len += FROM_LEN + dialog->loc_uri.len
 		+ (dialog->id.loc_tag.len ? (FROMTAG_LEN + dialog->id.loc_tag.len) : 0) + CRLF_LEN;  /* From */
+	if(dialog->loc_uri.s[0]!='<') *len += 2; /* From-URI < > */
 	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;                                      /* Call-ID */
 	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;                                    /* CSeq */
 	*len += calculate_routeset_length(dialog);                                                   /* Route set */
