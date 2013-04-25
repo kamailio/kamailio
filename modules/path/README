@@ -8,7 +8,7 @@ Edited by
 
 Andreas Granig
 
-   Copyright © 2006 Inode GmbH
+   Copyright � 2006 Inode GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -83,18 +83,18 @@ Chapter 1. Admin Guide
 
 1.1. Path insertion for registrations
 
-   For registrations in a scenario like “[UAC] -> [P1] -> [REG]”, the
+   For registrations in a scenario like "[UAC] -> [P1] -> [REG]", the
    "path" module can be used at the intermediate proxy P1 to insert a Path
    header into the message before forwarding it to the registrar REG. Two
    functions can be used to achieve this:
-     * add_path(...) adds a Path header in the form of “Path:
-       <sip:1.2.3.4;lr>” to the message using the address of the outgoing
+     * add_path(...) adds a Path header in the form of "Path:
+       <sip:1.2.3.4;lr>" to the message using the address of the outgoing
        interface. A port is only added if it's not the default port 5060.
        If a username is passed to the function, it is also included in the
-       Path URI, like “Path: <sip:username@1.2.3.4;lr>”.
+       Path URI, like "Path: <sip:username@1.2.3.4;lr>".
      * add_path_received(...) also add a Path header in the same form as
        above, but also adds a parameter indicating the received-URI of the
-       message, like “Path: <sip:1.2.3.4;received=sip:2.3.4.5:1234;lr>”.
+       message, like "Path: <sip:1.2.3.4;received=sip:2.3.4.5:1234;lr>".
        This is especially useful if the proxy does NAT detection and wants
        to pass the NAT'ed address to the registrar.
        If the function is called with a username, it's included in the
@@ -105,12 +105,12 @@ Chapter 1. Admin Guide
    If the NAT'ed address of an UAC is passed to the registrar, the
    registrar routes back subsequent requests using the Path header of the
    registration as Route header of the current request. If the
-   intermediate proxy had inserted a Path header including the “received”
+   intermediate proxy had inserted a Path header including the "received"
    parameter during the registration, this parameter will show up in the
    Route header of the new request as well, allowing the intermediate
    proxy to route to this address instead of the one propagated in the
    Route URI for tunneling through NAT. This behaviour can be activated by
-   setting the module parameter “use_received”.
+   setting the module parameter "use_received".
 
 2. Dependencies
 
@@ -121,7 +121,7 @@ Chapter 1. Admin Guide
 
    The following modules must be loaded before this module:
      * The "rr" module is needed for outbound routing according to the
-       “received” parameter.
+       "received" parameter.
      * The "outbound" module is needed for outbound routing as per RFC
        5626.
 
@@ -137,7 +137,7 @@ Chapter 1. Admin Guide
 
 3.1. use_received (int)
 
-   If set to 1, the “received” parameter of the first Route URI is
+   If set to 1, the "received" parameter of the first Route URI is
    evaluated and used as destination-URI if present.
 
    Default value is 0.
@@ -154,17 +154,17 @@ modparam("path", "use_received", 1)
    4.3. add_path_received()
    4.4. add_path_received(user)
 
-4.1.  add_path()
+4.1. add_path()
 
-   This function is used to insert a Path header in the form “Path:
-   <sip:1.2.3.4;lr>”, where “1.2.3.4” is the address of the outgoing
+   This function is used to insert a Path header in the form "Path:
+   <sip:1.2.3.4;lr>", where "1.2.3.4" is the address of the outgoing
    interface.
 
-   If the “outbound” module was loaded before this module, and outbound is
-   required for this request, the header will be in the form “Path:
-   <sip:flowtoken@1.2.3.4;lr;ob>”, where “flowtoken” is the RFC 5636
+   If the "outbound" module was loaded before this module, and outbound is
+   required for this request, the header will be in the form "Path:
+   <sip:flowtoken@1.2.3.4;lr;ob>", where "flowtoken" is the RFC 5636
    flow-token that can be used to identify the source and local address
-   and transport the request was received on, and where “1.2.3.4” is the
+   and transport the request was received on, and where "1.2.3.4" is the
    address of the outgoing interface.
 
    This function can be used from REQUEST_ROUTE.
@@ -177,10 +177,10 @@ if (!add_path()) {
 };
 ...
 
-4.2.  add_path(user)
+4.2. add_path(user)
 
-   This function adds a Path header in the form “Path:
-   <sip:user@1.2.3.4;lr>”.
+   This function adds a Path header in the form "Path:
+   <sip:user@1.2.3.4;lr>".
 
    Meaning of the parameters is as follows:
      * user - The username to be inserted as user part.
@@ -195,10 +195,10 @@ if (!add_path("loadbalancer")) {
 };
 ...
 
-4.3.  add_path_received()
+4.3. add_path_received()
 
-   This function adds a Path header in the form “Path:
-   <sip:1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting it's own outgoing
+   This function adds a Path header in the form "Path:
+   <sip:1.2.3.4;received=sip:2.3.4.5:1234;lr>", setting it's own outgoing
    address as domain-part, and the address the request has been received
    from as received-parameter.
 
@@ -212,10 +212,10 @@ if (!add_path_received()) {
 };
 ...
 
-4.4.  add_path_received(user)
+4.4. add_path_received(user)
 
-   This function adds a Path header in the form “Path:
-   <sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting 'user' as
+   This function adds a Path header in the form "Path:
+   <sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr>", setting 'user' as
    username part of address, it's own outgoing address as domain-part, and
    the address the request has been received from as received-parameter.
 

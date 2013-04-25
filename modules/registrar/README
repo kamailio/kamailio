@@ -647,10 +647,14 @@ modparam("registrar", "gruu_enabled", 0)
    response to REGISTER requests that this module generates will not
    contain Require: or Supported: headers with the outbound options tag.
 
-   If set to 1 then this module will accept REGISTER requests that do not
-   contain a Supported: header with the outbound options-tag. The 200 OK
-   response to REGISTER requests that this module generates will contain a
-   Supported: header with the outbound options tag.
+   If set to 1 this module will accept REGISTER requests that do not
+   contain a Supported: header with the outbound options-tag and REGISTER
+   requests that do contain a Supported: or a Requires: header with the
+   outbound options-tag. The 200 OK response that this module generates,
+   will contain a Supported: header with the outbound options tag. The 200
+   OK response will also contain a Require: header with the outbound
+   options tag if the REGISTER request contained a Supported: header with
+   the outbound options-tag.
 
    If set to 2 then this module will reject REGISTER requests that do not
    contain a Supported: header with the outbound options-tag. The 200 OK

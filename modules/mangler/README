@@ -51,7 +51,7 @@ modparam("mangler", "contact_flds_separator", "-")
    3.4. decode_contact()
    3.5. decode_contact_header()
 
-3.1.  sdp_mangle_ip(pattern, newip)
+3.1. sdp_mangle_ip(pattern, newip)
 
    Changes IP addresses inside SDP package in lines describing connections
    like c=IN IP4 . Currently this function only changes IP4 addresses
@@ -72,7 +72,7 @@ modparam("mangler", "contact_flds_separator", "-")
 sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 ...
 
-3.2.  sdp_mangle_port(offset)
+3.2. sdp_mangle_port(offset)
 
    Changes ports inside SDP package in lines describing media like m=audio
    13451.
@@ -88,7 +88,7 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 sdp_mangle_port("-12000");
 ...
 
-3.3.  encode_contact(encoding_prefix)
+3.3. encode_contact(encoding_prefix)
 
    This function will encode uri-s inside Contact header in the following
    manner sip:username:password@ip:port;transport=protocol goes
@@ -107,7 +107,7 @@ sdp_mangle_port("-12000");
 if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 ...
 
-3.4.  decode_contact()
+3.4. decode_contact()
 
    This function will decode the URI in first line in packets which come
    with encoded URI in the following manner
@@ -125,7 +125,7 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 if (uri =~ "^enc*") { decode_contact(); }
 ...
 
-3.5.  decode_contact_header()
+3.5. decode_contact_header()
 
    This function will decode URIs inside Contact header in the same manner
    as decode_contact(). The difference is that no dst_uri is set (src_ip,

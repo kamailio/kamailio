@@ -359,7 +359,7 @@ modparam("sipcapture", "capture_node", "homer03")
 
    4.1. sip_capture
 
-4.1.  sip_capture
+4.1. sip_capture
 
    Name: sip_capture
 
@@ -381,7 +381,7 @@ modparam("sipcapture", "capture_node", "homer03")
 
    5.1. sipcapture.status param
 
-5.1.  sipcapture.status param
+5.1. sipcapture.status param
 
    Name: sipcapture.status
 

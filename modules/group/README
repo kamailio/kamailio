@@ -273,7 +273,7 @@ modparam("group", "multiple_gid", 0)
    4.1. is_user_in(URI, group)
    4.2. get_user_group(URI, AVP)
 
-4.1.  is_user_in(URI, group)
+4.1. is_user_in(URI, group)
 
    This function is to be used for script group membership. The function
    returns true if username in the given URI is a member of the given
@@ -300,7 +300,7 @@ if (is_user_in("Request-URI", "ld")) {
 };
 ...
 
-4.2.  get_user_group(URI, AVP)
+4.2. get_user_group(URI, AVP)
 
    This function is to be used for regular expression based group
    membership. The function returns true if username in the given URI

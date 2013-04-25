@@ -107,7 +107,8 @@ modparam("statistics", "variable", "active_calls/no_reset")
    Meaning of the parameters is as follows:
      * variable - variable to be updated (it can be a string or a
        pseudovariable);
-     * value - value to update with; it may be also negative.
+     * value - value to update with; it may be also negative (it can be a
+       string or pseudovariable).
 
    This function can be used from ANY_ROUTE.
 

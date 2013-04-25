@@ -67,6 +67,7 @@ Bogdan-Andrei Iancu
               3.29. db_check_update (string)
               3.30. timer_procs (string)
               3.31. xavp_contact (string)
+              3.32. db_obs_ruid (string)
 
         4. Functions
         5. MI Commands
@@ -147,6 +148,7 @@ Bogdan-Andrei Iancu
    1.29. Set db_check_update parameter
    1.30. Set timer_procs parameter
    1.31. Set xavp_contact parameter
+   1.32. Set db_obs_ruid parameter
 
 Chapter 1. Admin Guide
 
@@ -194,6 +196,7 @@ Chapter 1. Admin Guide
         3.29. db_check_update (string)
         3.30. timer_procs (string)
         3.31. xavp_contact (string)
+        3.32. db_obs_ruid (string)
 
    4. Functions
    5. MI Commands
@@ -306,6 +309,7 @@ Chapter 1. Admin Guide
    3.29. db_check_update (string)
    3.30. timer_procs (string)
    3.31. xavp_contact (string)
+   3.32. db_obs_ruid (string)
 
 3.1. nat_bflag (integer)
 
@@ -727,6 +731,19 @@ modparam("usrloc", "timer_procs", 4)
 modparam("usrloc", "xavp_contact", "ulattrs")
 ...
 
+3.32. db_obs_ruid (string)
+
+   If set to 1, database queries for update or delete are done using ruid
+   value. If it is set to 0, the old style using aor, contact and call-id
+   is done.
+
+   Default value is "0".
+
+   Example 1.32. Set db_obs_ruid parameter
+...
+modparam("usrloc", "db_obs_ruid", 1)
+...
+
 4. Functions
 
    There are no exported functions that could be used in scripts.
@@ -740,7 +757,7 @@ modparam("usrloc", "xavp_contact", "ulattrs")
    5.5. ul_add
    5.6. ul_show_contact
 
-5.1.  ul_rm
+5.1. ul_rm
 
    Deletes an entire AOR record (including its contacts).
 
@@ -749,7 +766,7 @@ modparam("usrloc", "xavp_contact", "ulattrs")
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-5.2.  ul_rm_contact
+5.2. ul_rm_contact
 
    Deletes a contact from an AOR record.
 
@@ -759,7 +776,7 @@ modparam("usrloc", "xavp_contact", "ulattrs")
        only if use_domain option is on).
      * contact - exact contact to be removed
 
-5.3.  ul_dump
+5.3. ul_dump
 
    Dumps the entire content of the USRLOC in memory cache
 
@@ -768,11 +785,11 @@ modparam("usrloc", "xavp_contact", "ulattrs")
        "brief", a brief dump will be done (only AOR and contacts, with no
        other details)
 
-5.4.  ul_flush
+5.4. ul_flush
 
    Triggers the flush of USRLOC memory cache into DB.
 
-5.5.  ul_add
+5.5. ul_add
 
    Adds a new contact for an user AOR.
 
@@ -788,7 +805,7 @@ modparam("usrloc", "xavp_contact", "ulattrs")
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
 
-5.6.  ul_show_contact
+5.6. ul_show_contact
 
    Dumps the contacts of an user AOR.
 
@@ -802,14 +819,14 @@ modparam("usrloc", "xavp_contact", "ulattrs")
    6.1. ul.dump
    6.2. ul.lookup table AOR
 
-6.1.  ul.dump
+6.1. ul.dump
 
    Dumps the content of the location table
 
    Parameters:
      * None.
 
-6.2.  ul.lookup table AOR
+6.2. ul.lookup table AOR
 
    Looks up the contents of an AOR entry in the location table
 
@@ -897,7 +914,7 @@ Chapter 2. Developer Guide
    1.14. ul_register_ulcb(type ,callback, param)
    1.15. ul_get_num_users()
 
-1.1.  ul_register_domain(name)
+1.1. ul_register_domain(name)
 
    The function registers a new domain. Domain is just another name for
    table used in registrar. The function is called from fixups in
@@ -912,7 +929,7 @@ Chapter 2. Developer Guide
      * const char* name - Name of the domain (also called table) to be
        registered.
 
-1.2.  ul_insert_urecord(domain, aor, rec)
+1.2. ul_insert_urecord(domain, aor, rec)
 
    The function creates a new record structure and inserts it in the
    specified domain. The record is structure that contains all the
@@ -927,7 +944,7 @@ Chapter 2. Developer Guide
 
      * urecord_t** rec - The newly created record structure.
 
-1.3.  ul_delete_urecord(domain, aor)
+1.3. ul_delete_urecord(domain, aor)
 
    The function deletes all the contacts bound with the given Address Of
    Record.
@@ -939,7 +956,7 @@ Chapter 2. Developer Guide
      * str* aor - Address of record (aka username) of the record, that
        should be deleted.
 
-1.4.  ul_get_urecord(domain, aor)
+1.4. ul_get_urecord(domain, aor)
 
    The function returns pointer to record with given Address of Record.
 
@@ -949,7 +966,7 @@ Chapter 2. Developer Guide
 
      * str* aor - Address of Record of request record.
 
-1.5.  ul_lock_udomain(domain)
+1.5. ul_lock_udomain(domain)
 
    The function lock the specified domain, it means, that no other
    processes will be able to access during the time. This prevents race
@@ -960,14 +977,14 @@ Chapter 2. Developer Guide
    Meaning of the parameters is as follows:
      * udomain_t* domain - Domain to be locked.
 
-1.6.  ul_unlock_udomain(domain)
+1.6. ul_unlock_udomain(domain)
 
    Unlock the specified domain previously locked by ul_lock_udomain.
 
    Meaning of the parameters is as follows:
      * udomain_t* domain - Domain to be unlocked.
 
-1.7.  ul_release_urecord(record)
+1.7. ul_release_urecord(record)
 
    Do some sanity checks - if all contacts have been removed, delete the
    entire record structure.
@@ -975,7 +992,7 @@ Chapter 2. Developer Guide
    Meaning of the parameters is as follows:
      * urecord_t* record - Record to be released.
 
-1.8.  ul_insert_ucontact(record, contact, expires, q, callid, cseq, flags,
+1.8. ul_insert_ucontact(record, contact, expires, q, callid, cseq, flags,
 cont, ua, sock)
 
    The function inserts a new contact in the given record with specified
@@ -996,7 +1013,7 @@ cont, ua, sock)
      * struct socket_info *sock - socket on which the REGISTER message was
        received on.
 
-1.9.  ul_delete_ucontact (record, contact)
+1.9. ul_delete_ucontact (record, contact)
 
    The function deletes given contact from record.
 
@@ -1006,7 +1023,7 @@ cont, ua, sock)
 
      * ucontact_t* contact - Contact to be deleted.
 
-1.10.  ul_get_ucontact(record, contact)
+1.10. ul_get_ucontact(record, contact)
 
    The function tries to find contact with given Contact URI and returns
    pointer to structure representing the contact.
@@ -1016,7 +1033,7 @@ cont, ua, sock)
 
      * str_t* contact - URI of the request contact.
 
-1.11.  ul_get_all_ucontacts (buf, len, flags)
+1.11. ul_get_all_ucontacts (buf, len, flags)
 
    The function retrieves all contacts of all registered users and returns
    them in the caller-supplied buffer. If the buffer is too small, the
@@ -1037,7 +1054,7 @@ cont, ua, sock)
 
      * unsigned int flags - Flags that must be set.
 
-1.12.  ul_update_ucontact(contact, expires, q, callid, cseq, set, res, ua,
+1.12. ul_update_ucontact(contact, expires, q, callid, cseq, set, res, ua,
 sock)
 
    The function updates contact with new values.
@@ -1056,7 +1073,7 @@ sock)
      * struct socket_info *sock - socket on which the REGISTER message was
        received on.
 
-1.13.  ul_bind_ursloc( api )
+1.13. ul_bind_ursloc( api )
 
    The function imports all functions that are exported by the USRLOC
    module. Overs for other modules which want to user the internal USRLOC
@@ -1065,7 +1082,7 @@ sock)
    Meaning of the parameters is as follows:
      * usrloc_api_t* api - USRLOC API
 
-1.14.  ul_register_ulcb(type ,callback, param)
+1.14. ul_register_ulcb(type ,callback, param)
 
    The function register with USRLOC a callback function to be called when
    some event occures inside USRLOC.
@@ -1078,6 +1095,6 @@ sock)
      * void *param - some parameter to be passed to the callback each time
        when it is called.
 
-1.15.  ul_get_num_users()
+1.15. ul_get_num_users()
 
    The function loops through all domains summing up the number of users.

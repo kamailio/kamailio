@@ -24,13 +24,13 @@ Edited by
 
 Ovidiu Sas
 
-   Copyright (c) 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2008 Sippy Software, Inc.
 
-   Copyright (c) 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright (c) 2009 TuTPro Inc.
+   Copyright © 2009 TuTPro Inc.
 
-   Copyright (c) 2010 VoIPEmbedded Inc.
+   Copyright © 2010 VoIPEmbedded Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -405,7 +405,7 @@ modparam("nathelper", "keepalive_timeout", 120)
    5.7. add_contact_alias([ip_addr, port, proto])
    5.8. handle_ruri_alias()
 
-5.1.  fix_nated_contact()
+5.1. fix_nated_contact()
 
    Rewrites Contact HF to contain request's source address:port.
 
@@ -417,7 +417,7 @@ modparam("nathelper", "keepalive_timeout", 120)
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
 
-5.2.  fix_nated_sdp(flags [, ip_address])
+5.2. fix_nated_sdp(flags [, ip_address])
 
    Alters the SDP information in orer to facilitate NAT traversal. What
    changes to be performed may be controled via the "flags" parameter.
@@ -447,7 +447,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
 
-5.3.  add_rcv_param([flag]),
+5.3. add_rcv_param([flag]),
 
    Add received parameter to Contact header fields or Contact URI. The
    parameter will contain URI created from the source IP, port, and
@@ -471,7 +471,7 @@ add_rcv_param(); # add the parameter to the Contact header
 add_rcv_param("1"); # add the parameter to the Contact URI
 ...
 
-5.4.  fix_nated_register()
+5.4. fix_nated_register()
 
    The function creates a URI consisting of the source IP, port, and
    protocol and stores the URI in an Attribute-Value-Pair. The URI will be
@@ -489,7 +489,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 fix_nated_register();
 ...
 
-5.5.  nat_uac_test(flags)
+5.5. nat_uac_test(flags)
 
    Tries to guess if client's request originated behind a nat. The
    parameter determines what heuristics is used.
@@ -515,14 +515,14 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-5.6.  is_rfc1918(ip_address)
+5.6. is_rfc1918(ip_address)
 
    Determines if the address in the parameter is an rfc1918 address. The
    parameter allows pseudo-variables usage.
 
    This function can be used from ANY_ROUTE.
 
-5.7.  add_contact_alias([ip_addr, port, proto])
+5.7. add_contact_alias([ip_addr, port, proto])
 
    Adds ;alias=ip~port~transport parameter to contact URI containing
    either received ip, port, and transport protocol or those given as
@@ -542,7 +542,7 @@ fix_nated_register();
     };
 ...
 
-5.8.  handle_ruri_alias()
+5.8. handle_ruri_alias()
 
    Checks if Request URI has alias param and if so, removes it and sets
    $du based on its value. Note that this means that routing of request is
@@ -646,38 +646,38 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       What happend with "rtpproxy_disable" parameter?
+   What happend with "rtpproxy_disable" parameter?
 
-       It was removed as it became obsolete - now "rtpproxy_sock" can take
-       empty value to disable the rtpproxy functionality.
+   It was removed as it became obsolete - now "rtpproxy_sock" can take
+   empty value to disable the rtpproxy functionality.
 
    2.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.

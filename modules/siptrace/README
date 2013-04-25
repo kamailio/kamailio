@@ -408,7 +408,7 @@ modparam("siptrace", "trace_delayed", 1)
 
    4.1. sip_trace()
 
-4.1.  sip_trace()
+4.1. sip_trace()
 
    Store current processed SIP message in database. It is stored in the
    form prior applying chages made to it.
@@ -425,7 +425,7 @@ sip_trace();
 
    5.1. sip_trace
 
-5.1.  sip_trace
+5.1. sip_trace
 
    Name: sip_trace
 
@@ -446,7 +446,7 @@ sip_trace();
 
    6.1. siptrace.status param
 
-6.1.  siptrace.status param
+6.1. siptrace.status param
 
    Name: siptrace.status
 

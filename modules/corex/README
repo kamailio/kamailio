@@ -123,7 +123,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
    4.2. send([ host [ :port ] ])
    4.3. send_tcp([ host [ :port ] ])
 
-4.1.  append_branch([ uri, [ q ] ])
+4.1. append_branch([ uri, [ q ] ])
 
    Append a new branch to the destination set, useful to build the set of
    destination addresses for parallel forking or redirect replies.
@@ -145,7 +145,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
     append_branch("$avp(uri)", "0.5");
 ...
 
-4.2.  send([ host [ :port ] ])
+4.2. send([ host [ :port ] ])
 
    Send the original SIP message to a specific destination in stateless
    mode. No changes are applied to received message, no Via header is
@@ -167,7 +167,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
         send("$var(res)");
 ...
 
-4.3.  send_tcp([ host [ :port ] ])
+4.3. send_tcp([ host [ :port ] ])
 
    This function is identical to send() described above, except that it
    sends the SIP message using the TCP protocol instead of UDP.
@@ -177,14 +177,14 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
    5.1. corex.list_sockets
    5.2. corex.list_aliases
 
-5.1.  corex.list_sockets
+5.1. corex.list_sockets
 
    Print the list of sockets the application is listening on.
 
    Example:
                 kamcmd corex.list_sockets
 
-5.2.  corex.list_aliases
+5.2. corex.list_aliases
 
    Print the list of hostname aliases used to match the myself condition.
 

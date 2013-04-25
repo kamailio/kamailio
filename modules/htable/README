@@ -445,7 +445,7 @@ modparam("htable", "db_expires", 1)
    4.2. sht_rm_name_re(htable=>regexp)
    4.3. sht_rm_value_re(htable=>regexp)
 
-4.1.  sht_print()
+4.1. sht_print()
 
    Dump content of hash table to L_ERR log level. Intended for debug
    purposes.
@@ -458,7 +458,7 @@ modparam("htable", "db_expires", 1)
 sht_print();
 ...
 
-4.2.  sht_rm_name_re(htable=>regexp)
+4.2. sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -471,7 +471,7 @@ sht_print();
 sht_rm_name_re("ha=>.*");
 ...
 
-4.3.  sht_rm_value_re(htable=>regexp)
+4.3. sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -494,7 +494,7 @@ sht_rm_value_re("ha=>.*");
      * $shtval(htable=>key)
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/dokuwiki/.
+   http://www.kamailio.org/wiki/.
 
 6. MI Commands
 
@@ -502,7 +502,7 @@ sht_rm_value_re("ha=>.*");
    6.2. sht_dump
    6.3. sht_delete
 
-6.1.  sht_reload
+6.1. sht_reload
 
    Reload a hash table from database.
 
@@ -515,7 +515,7 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
-6.2.  sht_dump
+6.2. sht_dump
 
    Dump content of a hash table via MI.
 
@@ -528,7 +528,7 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
-6.3.  sht_delete
+6.3. sht_delete
 
    Delete a key from a hash table via MI.
 
@@ -554,7 +554,7 @@ sht_rm_value_re("ha=>.*");
    7.3. htable.dump htable
    7.4. htable.listTables
 
-7.1.  htable.get htable key
+7.1. htable.get htable key
 
    Lists one value in a hash table
 
@@ -570,7 +570,7 @@ sht_rm_value_re("ha=>.*");
 kamcmd htable.get students daniel
 ...
 
-7.2.  htable.delete htable key
+7.2. htable.delete htable key
 
    Delete one value in a hash table
 
@@ -586,7 +586,7 @@ kamcmd htable.get students daniel
 kamcmd htable.get students anna
 ...
 
-7.3.  htable.dump htable
+7.3. htable.dump htable
 
    Lists all the values in a hash table
 
@@ -600,7 +600,7 @@ kamcmd htable.get students anna
 kamcmd htable.dump ipban
 ...
 
-7.4.  htable.listTables
+7.4. htable.listTables
 
    Lists all defined tables
 
@@ -618,7 +618,7 @@ kamcmd htable.listTables
 
    8.1. htable:mod-init
 
-8.1.  htable:mod-init
+8.1. htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
    modules have been initialized. A typical use case is to initialise

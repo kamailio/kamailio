@@ -352,7 +352,7 @@ Chapter 2. Module parameter for database access.
 
    URL to the database containing the data.
 
-   Default value is "mysql://openserro:openserro@localhost/openser".
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
 
    Example 2.1. Set db_url parameter
 ...

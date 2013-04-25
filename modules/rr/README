@@ -20,60 +20,60 @@ Edited by
 
 Bogdan-Andrei Iancu
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
 
-   Copyright © 2005 Voice Sistem SRL
+   Copyright � 2005 Voice Sistem SRL
 
-   Copyright © 2011 Carsten Bock, carsten@ng-voice.com
+   Copyright � 2011 Carsten Bock, carsten@ng-voice.com
      __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dialog support
-        1.3. Dependencies
+        1. Overview
+        2. Dialog support
+        3. Dependencies
 
-              1.3.1. Kamailio Modules
-              1.3.2. External Libraries or Applications
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        1.4. Parameters
+        4. Parameters
 
-              1.4.1. enable_full_lr (integer)
-              1.4.2. append_fromtag (integer)
-              1.4.3. enable_double_rr (integer)
-              1.4.4. add_username (integer)
-              1.4.5. enable_socket_mismatch_warning (integer)
-              1.4.6. custom_user_avp (avp string)
+              4.1. enable_full_lr (integer)
+              4.2. append_fromtag (integer)
+              4.3. enable_double_rr (integer)
+              4.4. add_username (integer)
+              4.5. enable_socket_mismatch_warning (integer)
+              4.6. custom_user_avp (avp string)
 
-        1.5. Functions
+        5. Functions
 
-              1.5.1. loose_route()
-              1.5.2. record_route() and record_route(string)
-              1.5.3. record_route_preset(string [,string2])
-              1.5.4. record_route_advertised_address(address)
-              1.5.5. add_rr_param(param)
-              1.5.6. check_route_param(re)
-              1.5.7. is_direction(dir)
+              5.1. loose_route()
+              5.2. record_route() and record_route(string)
+              5.3. record_route_preset(string [,string2])
+              5.4. record_route_advertised_address(address)
+              5.5. add_rr_param(param)
+              5.6. check_route_param(re)
+              5.7. is_direction(dir)
 
-        1.6. Exported Pseudo Variables
+        6. Exported Pseudo Variables
 
-              1.6.1. $route_uri
+              6.1. $route_uri
 
    2. Developer Guide
 
-        2.1. Available Functions
+        1. Available Functions
 
-              2.1.1. record_route(string)
-              2.1.2. record_route_advertised_address(string)
-              2.1.3. add_rr_param( msg, param)
-              2.1.4. check_route_param( msg, re)
-              2.1.5. is_direction( msg, dir)
-              2.1.6. get_route_param( msg, name, val)
-              2.1.7. register_rrcb( callback, param)
+              1.1. record_route(string)
+              1.2. record_route_advertised_address(string)
+              1.3. add_rr_param( msg, param)
+              1.4. check_route_param( msg, re)
+              1.5. is_direction( msg, dir)
+              1.6. get_route_param( msg, name, val)
+              1.7. register_rrcb( callback, param)
 
-        2.2. Examples
+        2. Examples
 
    List of Examples
 
@@ -98,11 +98,43 @@ Bogdan-Andrei Iancu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dialog support
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Parameters
+
+        4.1. enable_full_lr (integer)
+        4.2. append_fromtag (integer)
+        4.3. enable_double_rr (integer)
+        4.4. add_username (integer)
+        4.5. enable_socket_mismatch_warning (integer)
+        4.6. custom_user_avp (avp string)
+
+   5. Functions
+
+        5.1. loose_route()
+        5.2. record_route() and record_route(string)
+        5.3. record_route_preset(string [,string2])
+        5.4. record_route_advertised_address(address)
+        5.5. add_rr_param(param)
+        5.6. check_route_param(re)
+        5.7. is_direction(dir)
+
+   6. Exported Pseudo Variables
+
+        6.1. $route_uri
+
+1. Overview
 
    The module contains record routing logic
 
-1.2. Dialog support
+2. Dialog support
 
    Kamailio is basically only a transaction statefull proxy, without any
    dialog support build in. There are many features/services which
@@ -130,8 +162,8 @@ Chapter 1. Admin Guide
    3261 (see 12.1.1 UAS behavior).
 
    For this purpose, the modules offers the following functions:
-     * add_rr_param() - see Section 1.5.5, “add_rr_param(param)”
-     * check_route_param() - see Section 1.5.6, “check_route_param(re)”
+     * add_rr_param() - see Section 5.5, "add_rr_param(param)"
+     * check_route_param() - see Section 5.6, "check_route_param(re)"
 
    Example 1.1. Dialog support in RR module
 UAC                       Kamailio PROXY                          UAS
@@ -148,27 +180,37 @@ UAC                       Kamailio PROXY                          UAS
 <------ BYE -------        loose_route()          <----- BYE -------
                     check_route_param(";foo=true")
 
-1.3. Dependencies
+3. Dependencies
 
-1.3.1. Kamailio Modules
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * (optional) The "outbound" module is needed for outbound routing as
        per RFC 5626.
 
-1.3.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-1.4. Parameters
+4. Parameters
 
-1.4.1. enable_full_lr (integer)
+   4.1. enable_full_lr (integer)
+   4.2. append_fromtag (integer)
+   4.3. enable_double_rr (integer)
+   4.4. add_username (integer)
+   4.5. enable_socket_mismatch_warning (integer)
+   4.6. custom_user_avp (avp string)
 
-   If set to 1 then “;lr=on” instead of just “;lr” will be used. This is
-   to overcome problems with broken UAs which strip “;lr” parameter when
-   generating Route header fields from Record-Route (“;lr=on” seems to
+4.1. enable_full_lr (integer)
+
+   If set to 1 then ";lr=on" instead of just ";lr" will be used. This is
+   to overcome problems with broken UAs which strip ";lr" parameter when
+   generating Route header fields from Record-Route (";lr=on" seems to
    help).
 
    Default value is 0 (no).
@@ -178,7 +220,7 @@ UAC                       Kamailio PROXY                          UAS
 modparam("rr", "enable_full_lr", 1)
 ...
 
-1.4.2. append_fromtag (integer)
+4.2. append_fromtag (integer)
 
    If turned on, request's from-tag is appended to record-route; that's
    useful for understanding whether subsequent requests (such as BYE) come
@@ -192,7 +234,7 @@ modparam("rr", "enable_full_lr", 1)
 modparam("rr", "append_fromtag", 0)
 ...
 
-1.4.3. enable_double_rr (integer)
+4.3. enable_double_rr (integer)
 
    There are some situations when the server needs to insert two
    Record-Route header fields instead of one. For example when using two
@@ -210,12 +252,12 @@ modparam("rr", "append_fromtag", 0)
 modparam("rr", "enable_double_rr", 0)
 ...
 
-1.4.4. add_username (integer)
+4.4. add_username (integer)
 
    If set to a non 0 value (which means yes), the username part will be
    also added in the Record-Route URI.
 
-   This option cannot be set when the “outbound” module is loaded before
+   This option cannot be set when the "outbound" module is loaded before
    this module as outbound uses the username part of Record-Route URIs to
    store flow-tokens.
 
@@ -226,7 +268,7 @@ modparam("rr", "enable_double_rr", 0)
 modparam("rr", "add_username", 1)
 ...
 
-1.4.5. enable_socket_mismatch_warning (integer)
+4.5. enable_socket_mismatch_warning (integer)
 
    When a preset record-route header is forced in Kamailio config and the
    host from the record-route header is not the same as the host server, a
@@ -242,7 +284,7 @@ modparam("rr", "add_username", 1)
 modparam("rr", "enable_socket_mismatch_warning", 0)
 ...
 
-1.4.6. custom_user_avp (avp string)
+4.6. custom_user_avp (avp string)
 
    When enable_username is enabled, a call to record_route will add the
    username of the RequestURI to the Record-Route URI. This parameter
@@ -262,17 +304,25 @@ record_route();
 
 ...
 
-1.5. Functions
+5. Functions
 
-1.5.1. loose_route()
+   5.1. loose_route()
+   5.2. record_route() and record_route(string)
+   5.3. record_route_preset(string [,string2])
+   5.4. record_route_advertised_address(address)
+   5.5. add_rr_param(param)
+   5.6. check_route_param(re)
+   5.7. is_direction(dir)
+
+5.1. loose_route()
 
    The function performs routing of SIP requests which contain a route
    set. The name is a little bit confusing, as this function also routes
-   requests which are in the “strict router” format.
+   requests which are in the "strict router" format.
 
    This function is usually used to route in-dialog requests (like ACK,
    BYE, reINVITE). Nevertheless also out-of-dialog requests can have a
-   “pre-loaded route set” and my be routed with loose_route. It also takes
+   "pre-loaded route set" and my be routed with loose_route. It also takes
    care of translating between strict-routers and loose-router.
 
    The loose_route function analyzes the Route: headers in the requests.
@@ -284,7 +334,7 @@ record_route();
    indicating the local proxy, then the Route: header is removed and the
    function returns FALSE.
 
-   When the “outbound” module was loaded before this module and the Route:
+   When the "outbound" module was loaded before this module and the Route:
    header contains a username part this function will attempt to use the
    username part as a flow-token for routing.
 
@@ -292,7 +342,7 @@ record_route();
    bypass proxy authorization.
 
    The loose_routing topic is very complex. See the RFC3261 for more
-   details (grep for “route set” is a good starting point in this
+   details (grep for "route set" is a good starting point in this
    comprehensive RFC).
 
    Return codes:
@@ -307,7 +357,7 @@ record_route();
 loose_route();
 ...
 
-1.5.2. record_route() and record_route(string)
+5.2. record_route() and record_route(string)
 
    The function adds a new Record-Route header field. The header field
    will be inserted in the message before any other Record-Route header
@@ -315,9 +365,9 @@ loose_route();
 
    If any string is passed as parameter, it will be appended as URI
    parameter to the Record-Route header. The string must follow the
-   “;name=value” scheme and it may contain pseudo-variables.
+   ";name=value" scheme and it may contain pseudo-variables.
 
-   When the “outbound” module was loaded before this module this function
+   When the "outbound" module was loaded before this module this function
    will determine whether outbound is required for the request and
    generate and add a flow-token as the username part of the
    Record-Route-URI.
@@ -330,7 +380,7 @@ loose_route();
 record_route();
 ...
 
-1.5.3. record_route_preset(string [,string2])
+5.3. record_route_preset(string [,string2])
 
    This function will put the string into Record-Route, don't use unless
    you know what you are doing.
@@ -345,7 +395,7 @@ record_route();
    the outbound interface and the 'string2' param is pointing to the
    inbound interface.
 
-   When the “outbound” module was loaded before this module this function
+   When the "outbound" module was loaded before this module this function
    will determine whether outbound is required for the request and
    generate and add a flow-token as the username part of the
    Record-Route-URI.
@@ -358,13 +408,13 @@ record_route();
 record_route_preset("1.2.3.4:5090");
 ...
 
-1.5.4. record_route_advertised_address(address)
+5.4. record_route_advertised_address(address)
 
    The function adds a new Record-Route header field using the address
    given. The header field will be inserted in the message before any
    other Record-Route header fields.
 
-   When the “outbound” module was loaded before this module this function
+   When the "outbound" module was loaded before this module this function
    will determine whether outbound is required for the request and
    generate and add a flow-token as the username part of the
    Record-Route-URI.
@@ -385,17 +435,17 @@ record_route_preset("1.2.3.4:5090");
 record_route_advertised_address("1.2.3.4:5080");
 ...
 
-1.5.5. add_rr_param(param)
+5.5. add_rr_param(param)
 
    Adds a parameter to the Record-Route URI (param must be in
-   “;name=value” format. The function may be called also before or after
+   ";name=value" format. The function may be called also before or after
    the record_route() or record_route_advertised_address() calls (see
-   Section 1.5.2, “record_route() and record_route(string)” or
-   Section 1.5.4, “record_route_advertised_address(address)”)).
+   Section 5.2, "record_route() and record_route(string)" or Section 5.4,
+   "record_route_advertised_address(address)")).
 
    Meaning of the parameters is as follows:
      * param - String containing the URI parameter to be added. It must
-       follow the “;name=value” scheme; it may contain pseudo-variables.
+       follow the ";name=value" scheme; it may contain pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
@@ -405,12 +455,12 @@ record_route_advertised_address("1.2.3.4:5080");
 add_rr_param(";nat=yes");
 ...
 
-1.5.6. check_route_param(re)
+5.6. check_route_param(re)
 
    The function checks if the URI parameters of the local Route header
    (corresponding to the local server) matches the given regular
-   expression. It must be call after loose_route() (see Section 1.5.1,
-   “loose_route()”).
+   expression. It must be call after loose_route() (see Section 5.1,
+   "loose_route()").
 
    Meaning of the parameters is as follows:
      * re - regular expression to check against the Route URI parameters.
@@ -424,23 +474,23 @@ if (check_route_param("nat=yes")) {
 }
 ...
 
-1.5.7. is_direction(dir)
+5.7. is_direction(dir)
 
    The function checks the flow direction of in-dialog requests. This
-   function uses the “ftag” prameter from the Route header, therefore the
-   append_fromtag (see Section 1.4.2, “append_fromtag (integer)” module
+   function uses the "ftag" prameter from the Route header, therefore the
+   append_fromtag (see Section 4.2, "append_fromtag (integer)" module
    parameter must be enabled. Also this must be called only after
-   loose_route() (see Section 1.5.1, “loose_route()”).
+   loose_route() (see Section 5.1, "loose_route()").
 
-   The function returns true if the “dir” is the same with the request's
+   The function returns true if the "dir" is the same with the request's
    flow direction.
 
-   The “downstream” direction means that the request is in the same
+   The "downstream" direction means that the request is in the same
    direction as the initial request that created the dialog.
 
    Meaning of the parameters is as follows:
      * dir - string containing the direction to be checked. It may be
-       “upstream” (from callee to caller) or “downstream” (caller to
+       "upstream" (from callee to caller) or "downstream" (caller to
        callee).
 
    This function can be used from REQUEST_ROUTE.
@@ -454,9 +504,11 @@ if (is_direction("downstream")) {
 }
 ...
 
-1.6. Exported Pseudo Variables
+6. Exported Pseudo Variables
 
-1.6.1. $route_uri
+   6.1. $route_uri
+
+6.1. $route_uri
 
    Returns the URI of the top route-header.
 
@@ -467,10 +519,24 @@ if (is_direction("downstream")) {
 
 Chapter 2. Developer Guide
 
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. record_route(string)
+        1.2. record_route_advertised_address(string)
+        1.3. add_rr_param( msg, param)
+        1.4. check_route_param( msg, re)
+        1.5. is_direction( msg, dir)
+        1.6. get_route_param( msg, name, val)
+        1.7. register_rrcb( callback, param)
+
+   2. Examples
+
    The RR module provides an internal API to be used by other Kamailio
    modules. The API offers support for SIP dialog based functionalities -
-   for more about the dialog support offered by RR module, see
-   Section 1.2, “Dialog support”.
+   for more about the dialog support offered by RR module, see Section 2,
+   "Dialog support".
 
    For internal(non-script) usage, the RR module offers to other module
    the possibility to register callback functions to be executed each time
@@ -478,9 +544,17 @@ Chapter 2. Developer Guide
    as parameter the register parameter and the Route header parameter
    string.
 
-2.1. Available Functions
+1. Available Functions
 
-2.1.1.  record_route(string)
+   1.1. record_route(string)
+   1.2. record_route_advertised_address(string)
+   1.3. add_rr_param( msg, param)
+   1.4. check_route_param( msg, re)
+   1.5. is_direction( msg, dir)
+   1.6. get_route_param( msg, name, val)
+   1.7. register_rrcb( callback, param)
+
+1.1. record_route(string)
 
    The function adds a new Record-Route header field. The header field
    will be inserted in the message before any other Record-Route header
@@ -488,7 +562,7 @@ Chapter 2. Developer Guide
 
    If any string is passed as parameter, it will be appended as URI
    parameter to the Record-Route header. The string must follow the
-   “;name=value” scheme and it may contain pseudo-variables.
+   ";name=value" scheme and it may contain pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
@@ -498,7 +572,7 @@ Chapter 2. Developer Guide
 record_route();
 ...
 
-2.1.2.  record_route_advertised_address(string)
+1.2. record_route_advertised_address(string)
 
    This function will add the string into a new Record-Route header field.
    Don't use unless you know what you are doing. The header field will be
@@ -516,24 +590,24 @@ record_route();
 record_route_advertised_address("1.2.3.4:5090");
 ...
 
-2.1.3.  add_rr_param( msg, param)
+1.3. add_rr_param( msg, param)
 
    Adds a parameter to the requests's Record-Route URI (param must be in
-   “;name=value” format).
+   ";name=value" format).
 
    The function returns 0 on success. Otherwise, -1 is returned.
 
    Meaning of the parameters is as follows:
-     * struct sip_msg* msg - request that will has the parameter “param”
+     * struct sip_msg* msg - request that will has the parameter "param"
        added to its Record-Route header.
      * str* param - parameter to be added to the Record-Route header - it
-       must be in “;name=value” format.
+       must be in ";name=value" format.
 
-2.1.4.  check_route_param( msg, re)
+1.4. check_route_param( msg, re)
 
-   The function checks for the request “msg” if the URI parameters of the
+   The function checks for the request "msg" if the URI parameters of the
    local Route header (corresponding to the local server) matches the
-   given regular expression “re”. It must be call after the loose_route
+   given regular expression "re". It must be call after the loose_route
    was done.
 
    The function returns 0 on success. Otherwise, -1 is returned.
@@ -544,26 +618,26 @@ record_route_advertised_address("1.2.3.4:5090");
      * regex_t* param - compiled regular expression to be checked against
        the Route header parameters.
 
-2.1.5.  is_direction( msg, dir)
+1.5. is_direction( msg, dir)
 
-   The function checks the flow direction of the request “msg”. As for
-   checking it's used the “ftag” Route header parameter, the
-   append_fromtag (see Section 1.4.2, “append_fromtag (integer)” module
+   The function checks the flow direction of the request "msg". As for
+   checking it's used the "ftag" Route header parameter, the
+   append_fromtag (see Section 4.2, "append_fromtag (integer)" module
    parameter must be enables. Also this must be call only after the
    loose_route is done.
 
-   The function returns 0 if the “dir” is the same with the request's flow
+   The function returns 0 if the "dir" is the same with the request's flow
    direction. Otherwise, -1 is returned.
 
    Meaning of the parameters is as follows:
      * struct sip_msg* msg - request that will have the direction checked.
      * int dir - direction to be checked against. It may be
-       “RR_FLOW_UPSTREAM” or “RR_FLOW_DOWNSTREAM”.
+       "RR_FLOW_UPSTREAM" or "RR_FLOW_DOWNSTREAM".
 
-2.1.6.  get_route_param( msg, name, val)
+1.6. get_route_param( msg, name, val)
 
-   The function search in to the “msg”'s Route header parameters the
-   parameter called “name” and returns its value into “val”. It must be
+   The function search in to the "msg"'s Route header parameters the
+   parameter called "name" and returns its value into "val". It must be
    call only after the loose_route is done.
 
    The function returns 0 if parameter was found (even if it has no
@@ -576,7 +650,7 @@ record_route_advertised_address("1.2.3.4:5090");
      * str *val - returns the value of the searched Route header parameter
        if found. It might be empty string if the parameter had no value.
 
-2.1.7.  register_rrcb( callback, param)
+1.7. register_rrcb( callback, param)
 
    The function register a new callback (along with its parameter). The
    callback will be called when a loose route will be performed for the
@@ -588,7 +662,7 @@ record_route_advertised_address("1.2.3.4:5090");
      * rr_cb_t callback - callback function to be registered.
      * void *param - parameter to be passed to the callback function.
 
-2.2. Examples
+2. Examples
 
    Example 2.3. Loading RR module's API from another module
 ...

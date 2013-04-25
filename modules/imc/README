@@ -232,7 +232,7 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 
    4.1. imc_manager()
 
-4.1.  imc_manager()
+4.1. imc_manager()
 
    Handles Message method.It detects if the body of the message is a
    conference command.If so it executes it, otherwise it sends the message
@@ -261,7 +261,7 @@ if(is_method("MESSAGE)
    5.1. imc_list_rooms
    5.2. imc_list_members
 
-5.1.  imc_list_rooms
+5.1. imc_list_rooms
 
    Lists of the IM Conferencing rooms.
 
@@ -273,7 +273,7 @@ if(is_method("MESSAGE)
                 :imc_list_rooms:_reply_fifo_file_
                 _empty_line_
 
-5.2.  imc_list_members
+5.2. imc_list_members
 
    Listing of the members in IM Conferencing rooms.
 
@@ -291,7 +291,7 @@ if(is_method("MESSAGE)
 
    6.1. active_rooms
 
-6.1.  active_rooms
+6.1. active_rooms
 
    Number of active IM Conferencing rooms.
 

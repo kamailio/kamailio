@@ -9,7 +9,7 @@ Andrei Pelinescu-Onciul
 
    List of Examples
 
-   1. sercmd example usage
+   1. kamcmd example usage
    2. Set binrpc parameter
    3. Set mode parameter
    4. Set user parameter
@@ -32,14 +32,14 @@ Andrei Pelinescu-Onciul
 
    By default (if no parameters are changed in the config file) it uses a
    Unix stream socket under /tmp: /tmp/ser_ctl. This socket is also the
-   default for sercmd.
+   default for kamcmd.
 
-   In general it's used in conjunction with sercmd. sercmd is a Unix tool
+   In general it's used in conjunction with kamcmd. kamcmd is a Unix tool
    for invoking Kamailio RPC functions. It can be used both in interactive
    mode (supports tab-completion and history) or command line mode.
 
-   Example 1. sercmd example usage
-$ sercmd ps
+   Example 1. kamcmd example usage
+$ kamcmd ps
 11262   attendant
 11268   udp receiver child=0 sock=127.0.0.1:5060
 11269   udp receiver child=1 sock=127.0.0.1:5060
@@ -52,7 +52,7 @@ $ sercmd ps
 11276   tcp receiver child=1
 11277   tcp main process
 
-   See utils/sercmd/EXAMPLES for more examples.
+   See utils/kamcmd/EXAMPLES for more examples.
 
 2. BINRPC
 
@@ -213,17 +213,17 @@ modparam("ctl", "binrpc_struct_max_body_size", 3)
    List all the sockets on which the ctl module listens.
 
    Example 10. print usage
- $ sercmd -f"[%v] %v:%v %v\n" ctl.listen
+ $ kamcmd -f"[%v] %v:%v %v\n" ctl.listen
 [binrpc] unix_stream:/tmp/ser_ctl
 
-# note: the above command is equivalent with sercmd listen
+# note: the above command is equivalent with kamcmd listen
 
 4.2.  ctl.connections
 
    Returns the number of open binrpc connections (to the ctl module).
 
    Example 11. ctl.connections usage
- $ sercmd ctl.connections
+ $ kamcmd ctl.connections
 1
 
 4.3.  ctl.who
@@ -231,7 +231,7 @@ modparam("ctl", "binrpc_struct_max_body_size", 3)
    List open binrpc connections (to the ctl module).
 
    Example 12. ctl.who usage
- $ sercmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
+ $ kamcmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
 [binrpc] unix_stream: <anonymous unix socket>  -> /tmp/ser_ctl
 
-# note the above command is equivalent to sercmd who
+# note the above command is equivalent to kamcmd who

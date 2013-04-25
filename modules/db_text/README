@@ -220,7 +220,7 @@ modparam("db_text", "db_mode", 1)
 
    4.1. db_text.dump
 
-4.1.  db_text.dump
+4.1. db_text.dump
 
    Write back to hard drive all modified tables.
 

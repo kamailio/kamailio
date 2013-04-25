@@ -125,7 +125,7 @@ Chapter 1. Admin Guide
    4.11. sdp_get(avpvar)
    4.12. sdp_content()
 
-4.1.  sdp_remove_codecs_by_id(list)
+4.1. sdp_remove_codecs_by_id(list)
 
    Remove the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one item or
@@ -142,7 +142,7 @@ sdp_remove_codecs_by_id("0");
 sdp_remove_codecs_by_id("0,8,3");
 ...
 
-4.2.  sdp_remove_codecs_by_name(list)
+4.2. sdp_remove_codecs_by_name(list)
 
    Remove the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one item or
@@ -159,7 +159,7 @@ sdp_remove_codecs_by_name("PCMU");
 sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 ...
 
-4.3.  sdp_remove_line_by_prefix(string)
+4.3. sdp_remove_line_by_prefix(string)
 
    Remove all SDP attribute lines beginning with 'string' in all media
    streams.
@@ -178,7 +178,7 @@ if ($si == "2001:DB8::8:800:200C:417A"
 
 ...
 
-4.4.  sdp_keep_codecs_by_id(list [, mtype])
+4.4. sdp_keep_codecs_by_id(list [, mtype])
 
    Keep only the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one item or
@@ -198,7 +198,7 @@ sdp_keep_codecs_by_id("0");
 sdp_keep_codecs_by_id("0,8,3", "audio");
 ...
 
-4.5.  sdp_keep_codecs_by_name(list [, mtype])
+4.5. sdp_keep_codecs_by_name(list [, mtype])
 
    Keep only the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one or a
@@ -218,7 +218,7 @@ sdp_keep_codecs_by_name("PCMU");
 sdp_keep_codecs_by_name("PCMU,PCMA,GSM");
 ...
 
-4.6.  sdp_with_media(type)
+4.6. sdp_with_media(type)
 
    Return true of the SDP has 'media=type ...' line. Useful to check the
    content of the RTP sessions, such as 'audio' or 'video'. The parameter
@@ -235,7 +235,7 @@ if(sdp_with_media("video"))
 }
 ...
 
-4.7.  sdp_remove_media(type)
+4.7. sdp_remove_media(type)
 
    Remove the streams that match on 'm=type ...' line. The parameter can
    be static string or variable holding the media type.
@@ -248,7 +248,7 @@ if(sdp_with_media("video"))
 sdp_remove_media("video");
 ...
 
-4.8.  sdp_with_codecs_by_id(list)
+4.8. sdp_with_codecs_by_id(list)
 
    Returns true if any of the codecs provided in the parameter 'list' from
    all media streams is found in SDP payload. The parameter 'list' must be
@@ -265,7 +265,7 @@ if(sdp_with_codecs_by_id("0")) { ... }
 if(sdp_with_codecs_by_id("0,8,3")) { ... }
 ...
 
-4.9.  sdp_with_codecs_by_name(list)
+4.9. sdp_with_codecs_by_name(list)
 
    Returns true if any of the codecs provided in the parameter 'list' from
    all media streams is found in SDP payload. The parameter 'list' must be
@@ -282,7 +282,7 @@ if(sdp_with_codecs_by_name("PCMU")) { ... }
 if(sdp_with_codecs_by_name("PCMU,PCMA,GSM")) { ... }
 ...
 
-4.10.  sdp_print(level)
+4.10. sdp_print(level)
 
    Print the SDP internal structure to log 'level'. The parameter can be
    static integer or variable holding the integer value of the log level.
@@ -295,7 +295,7 @@ if(sdp_with_codecs_by_name("PCMU,PCMA,GSM")) { ... }
 sdp_print("1");
 ...
 
-4.11.  sdp_get(avpvar)
+4.11. sdp_get(avpvar)
 
    Store the SDP part of message body in an AVP. Return 1 if SDP is found,
    -1 on error and -2 if there is no SDP part in the message body.
@@ -307,7 +307,7 @@ sdp_print("1");
 sdp_get("$avp(sdp)");
 ...
 
-4.12.  sdp_content()
+4.12. sdp_content()
 
    Return true if the SIP message has SDP body or a SDP part in body.
 

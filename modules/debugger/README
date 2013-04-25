@@ -227,7 +227,7 @@ modparam("debugger", "step_loops", 100)
 
    4.1. dbg_breakpoint(mode)
 
-4.1.  dbg_breakpoint(mode)
+4.1. dbg_breakpoint(mode)
 
    Anchor a breakpoint at the current line of the config (the one on which
    this function is called). The 'mode' specifies whether the breakpoint
@@ -248,7 +248,7 @@ if($si=="10.0.0.10")
    5.2. dbg.trace
    5.3. dbg.bp
 
-5.1.  dbg.ls
+5.1. dbg.ls
 
    List Kamailio processes with info related to interactive debugging.
 
@@ -262,7 +262,7 @@ if($si=="10.0.0.10")
                 dbg.ls
                 dbg.ls 1234
 
-5.2.  dbg.trace
+5.2. dbg.trace
 
    Control config script running trace.
 
@@ -279,7 +279,7 @@ if($si=="10.0.0.10")
                 dbg.trace off
                 dbg.trace on 1234
 
-5.3.  dbg.bp
+5.3. dbg.bp
 
    Control breakpoints and config execution.
 

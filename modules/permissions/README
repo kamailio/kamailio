@@ -634,7 +634,7 @@ modparam("permissions", "peer_tag_mode", "1")
    4.10. allow_address_group(addr, port)
    4.11. allow_trusted([src_ip_pvar, proto_pvar])
 
-4.1.  allow_routing()
+4.1. allow_routing()
 
    Returns true if all pairs constructed as described in Section 1.1,
    "Call Routing" have appropriate permissions according to the
@@ -650,7 +650,7 @@ if (allow_routing()) {
 };
 ...
 
-4.2.  allow_routing(basename)
+4.2. allow_routing(basename)
 
    Returns true if all pairs constructed as described in Section 1.1,
    "Call Routing" have appropriate permissions according to the
@@ -673,7 +673,7 @@ if (allow_routing("basename")) {
 };
 ...
 
-4.3.  allow_routing(allow_file,deny_file)
+4.3. allow_routing(allow_file,deny_file)
 
    Returns true if all pairs constructed as described in Section 1.1,
    "Call Routing" have appropriate permissions according to the
@@ -698,7 +698,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 };
 ...
 
-4.4.  allow_register(basename)
+4.4. allow_register(basename)
 
    The function returns true if all pairs constructed as described in
    Section 1.2, "Registration Permissions" have appropriate permissions
@@ -726,7 +726,7 @@ if (method=="REGISTER") {
 };
 ...
 
-4.5.  allow_register(allow_file, deny_file)
+4.5. allow_register(allow_file, deny_file)
 
    The function returns true if all pairs constructed as described in
    Section 1.2, "Registration Permissions" have appropriate permissions
@@ -756,7 +756,7 @@ if (method=="REGISTER") {
 };
 ...
 
-4.6.  allow_uri(basename, pvar)
+4.6. allow_uri(basename, pvar)
 
    Returns true if the pair constructed as described in Section 1.3, "URI
    Permissions" have appropriate permissions according to the
@@ -783,7 +783,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 };
 ...
 
-4.7.  allow_address(group_id, ip_addr_pvar, port_pvar)
+4.7. allow_address(group_id, ip_addr_pvar, port_pvar)
 
    Returns true if IP address and port given as values of pvar arguments
    belonging to a group given as group_id argument matches an IP subnet
@@ -806,7 +806,7 @@ if (!allow_address("2", "$avp(i:704)", "$avp(i:705)") {
 };
 ...
 
-4.8.  allow_source_address([group_id])
+4.8. allow_source_address([group_id])
 
    Equal to allow_address(group_id, "$si", "$sp"). If 'group_id' is
    missing, the function is equal to allow_address("1", "$si", "$sp").
@@ -822,7 +822,7 @@ if (!allow_source_address("1")) {
 };
 ...
 
-4.9.  allow_source_address_group()
+4.9. allow_source_address_group()
 
    Checks if source address/port is found in cached address or subnet
    table in any group. If yes, returns that group. If not returns -1. Port
@@ -839,7 +839,7 @@ if ($var(group) != -1) {
 };
 ...
 
-4.10.  allow_address_group(addr, port)
+4.10. allow_address_group(addr, port)
 
    Checks if address/port is found in cached address or subnet table in
    any group. If yes, returns that group. If not returns -1. Port value 0
@@ -857,7 +857,7 @@ if ($var(group) != -1) {
 };
 ...
 
-4.11.  allow_trusted([src_ip_pvar, proto_pvar])
+4.11. allow_trusted([src_ip_pvar, proto_pvar])
 
    Checks based either on request's source address and transport protocol
    or source address and transport protocol given in pvar arguments, and
@@ -893,7 +893,7 @@ if (allow_trusted("$si", "$proto")) {
    5.5. trusted_dump
    5.6. allow_uri
 
-5.1.  address_reload
+5.1. address_reload
 
    Causes permissions module to re-read the contents of address database
    table into cache memory. In cache memory the entries are for
@@ -902,35 +902,35 @@ if (allow_trusted("$si", "$proto")) {
 
    Parameters: none
 
-5.2.  address_dump
+5.2. address_dump
 
    Causes permissions module to dump contents of cache memory address
    table.
 
    Parameters: none
 
-5.3.  subnet_dump
+5.3. subnet_dump
 
    Causes permissions module to dump contents of cache memory subnet
    table.
 
    Parameters: none
 
-5.4.  trusted_reload
+5.4. trusted_reload
 
    Causes permissions module to re-read the contents of trusted table into
    cache memory.
 
    Parameters: none
 
-5.5.  trusted_dump
+5.5. trusted_dump
 
    Causes permissions module to dump contents of trusted table from cache
    memory.
 
    Parameters: none
 
-5.6.  allow_uri
+5.6. allow_uri
 
    Tests if (URI, Contact) pair is allowed according to allow/deny files.
    The files must already have been loaded by Kamailio.
@@ -951,7 +951,7 @@ if (allow_trusted("$si", "$proto")) {
    6.5. trustedReload
    6.6. trustedDump
 
-6.1.  addressReload
+6.1. addressReload
 
    Causes permissions module to re-read the contents of address database
    table into cache memory. In cache memory the entries are for
@@ -960,21 +960,21 @@ if (allow_trusted("$si", "$proto")) {
 
    Parameters: none
 
-6.2.  addressDump
+6.2. addressDump
 
    Causes permissions module to dump contents of cache memory address
    table. (Not the subnet table).
 
    Parameters: none
 
-6.3.  subnetDump
+6.3. subnetDump
 
    Causes permissions module to dump contents of cache memory subnet
    table.
 
    Parameters: none
 
-6.4.  testUri basename uri contact
+6.4. testUri basename uri contact
 
    Tests if (URI, Contact) pair is allowed according to allow/deny files.
    The files must already have been loaded by Kamailio.
@@ -986,14 +986,14 @@ if (allow_trusted("$si", "$proto")) {
      * URI - URI to be tested
      * Contact - Contact to be tested
 
-6.5.  trustedReload
+6.5. trustedReload
 
    Causes permissions module to re-read the contents of trusted table into
    cache memory.
 
    Parameters: none
 
-6.6.  trustedDump
+6.6. trustedDump
 
    Causes permissions module to dump contents of trusted table from cache
    memory.

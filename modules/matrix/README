@@ -139,11 +139,11 @@ Chapter 1. Admin Guide
 
    The URL for the database connection.
 
-   Default value is "mysql://openserro:openserro@localhost/openser".
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
-modparam("matrix", "db_url", "mysql://openserro:openserro@localhost/openser")
+modparam("matrix", "db_url", "mysql://kamailioro:kamailioro@localhost/kamailio")
 ...
 
 3.2. matrix_table (string)
@@ -264,7 +264,7 @@ Chapter 2. Module parameter for database access.
 
    URL to the database containing the data.
 
-   Default value is "mysql://openserro:openserro@localhost/openser".
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
 
    Example 2.1. Set db_url parameter
 ...

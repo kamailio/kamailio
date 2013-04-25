@@ -327,7 +327,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    6.1. rl_check([pvar])
    6.2. rl_check_pipe([pipe_no])
 
-6.1.  rl_check([pvar])
+6.1. rl_check([pvar])
 
    Check the current request against the matched ratelimit algorithm. If
    no parameter is provided, the queue will be matched based on method
@@ -374,7 +374,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
         };
 ...
 
-6.2.  rl_check_pipe([pipe_no])
+6.2. rl_check_pipe([pipe_no])
 
    Check the current request against the matched ratelimit algorithm. If
    no parameter is provided, the queue will be matched based on method
@@ -419,7 +419,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    7.8. rl.push_load
    7.9. rl.set_dbg
 
-7.1.  rl.stats
+7.1. rl.stats
 
    Lists the parameters and variables in the ratelimit module.
 
@@ -430,7 +430,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    RPC Command Format:
                 kamcmd rl.stats
 
-7.2.  rl.set_pipe
+7.2. rl.set_pipe
 
    Sets the pipe parameters for the given pipe id.
 
@@ -444,7 +444,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    RPC Command Format:
                 kamcmd rl.set_pipe 2 RED 10
 
-7.3.  rl.get_pipes
+7.3. rl.get_pipes
 
    Gets the list of in use pipes.
 
@@ -455,7 +455,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    RPC Command Format:
                 kamcmd rl.get_pipes
 
-7.4.  rl.set_queue
+7.4. rl.set_queue
 
    Sets the queue parameters for the given queue id.
 
@@ -469,7 +469,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    RPC Command Format:
                 kamcmd rl.set_queue 3 INVITE 2
 
-7.5.  rl.get_queues
+7.5. rl.get_queues
 
    Gets the list of in use queues.
 
@@ -480,7 +480,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    RPC Command Format:
                 kamcmd rl.get_queues
 
-7.6.  rl.set_pid
+7.6. rl.set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
@@ -494,7 +494,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    RPC Command Format:
                 kamcmd rl.set_pid 0.5 0.5 0.5
 
-7.7.  rl.get_pid
+7.7. rl.get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -505,7 +505,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    RPC Command Format:
                 kamcmd rl.get_pid
 
-7.8.  rl.push_load
+7.8. rl.push_load
 
    Force the value of the load parameter. This method is useful for
    testing the Feedback algorithm.
@@ -519,7 +519,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    RPC Command Format:
                 kamcmd rl.push_load 0.85
 
-7.9.  rl.set_dbg
+7.9. rl.set_dbg
 
    This function will enable/disable a WARNING debug log exposing the
    internal counters for each pipe (useful in monitoring the ratelimit

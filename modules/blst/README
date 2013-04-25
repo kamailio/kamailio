@@ -31,7 +31,7 @@ Andrei Pelinescu-Onciul
    2.7. blst_clear_ignore([flags])
    2.8. blst_rpl_clear_ignore([flags])
 
-2.1.  blst_add([timeout])
+2.1. blst_add([timeout])
 
    Adds the source of the current message to the blacklist for timeout
    seconds. If timeout is missing or 0 it uses the default blacklist
@@ -45,7 +45,7 @@ else
     blst_add();  # use default blacklist timeout
 ...
 
-2.2.  blst_add_retry_after(min, max)
+2.2. blst_add_retry_after(min, max)
 
    Adds the source of the current message to the blacklist for the time
    interval specified in the Retry-After header. If the Retry-After header
@@ -63,7 +63,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 }
 ...
 
-2.3.  blst_del()
+2.3. blst_del()
 
    Removes the source of the current message from the blacklist. If the
    address is not present in the blacklist at the time of the call it
@@ -74,7 +74,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
     blst_del();
 ...
 
-2.4.  blst_is_blacklisted()
+2.4. blst_is_blacklisted()
 
    Returns true if the source of the current message is blacklisted.
 
@@ -86,7 +86,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
    }
 ...
 
-2.5.  blst_set_ignore([flags])
+2.5. blst_set_ignore([flags])
 
    Set errors that will not be taken into account when deciding whether to
    blacklist a destination for the current message or a local reply to the
@@ -117,11 +117,11 @@ Note
    Example 5. blst_set_ignore usage
     blst_set_ignore(6); # ignore send and connect errors
 
-2.6.  blst_rpl_set_ignore([flags])
+2.6. blst_rpl_set_ignore([flags])
 
    See function blst_set_ignore([flags]).
 
-2.7.  blst_clear_ignore([flags])
+2.7. blst_clear_ignore([flags])
 
    Clears blacklist ignore flags previously set by the corresponding
    blst_set_ignore(...) or blst_rpl_set_ignore(...) functions.
@@ -131,6 +131,6 @@ Note
    Example 6. blst_clear_ignore usage
     blst_clear_ignore(4); # ignore connect errors
 
-2.8.  blst_rpl_clear_ignore([flags])
+2.8. blst_rpl_clear_ignore([flags])
 
    See function blst_clear_ignore([flags]).

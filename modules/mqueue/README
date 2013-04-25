@@ -128,7 +128,7 @@ modparam("mqueue", "mqueue", "name=qaz")
    4.3. mq_pv_free(queue)
    4.4. mq_size(queue)
 
-4.1.  mq_add(queue, key, value)
+4.1. mq_add(queue, key, value)
 
    Add a new item (key, value) in the queue. If max size of queue is
    exceeded, the oldest one is removed.
@@ -138,7 +138,7 @@ modparam("mqueue", "mqueue", "name=qaz")
 mq_add("myq", "$rU", "call from $fU");
 ...
 
-4.2.  mq_fetch(queue)
+4.2. mq_fetch(queue)
 
    Take oldest item from queue and fill $mqk(queue) and $mqv(queue) pseudo
    variables.
@@ -154,7 +154,7 @@ while(mq_fetch("myq"))
 }
 ...
 
-4.3.  mq_pv_free(queue)
+4.3. mq_pv_free(queue)
 
    Free the item fetched in pseudo-variables. It is optional, a new fetch
    frees the previous values.
@@ -164,7 +164,7 @@ while(mq_fetch("myq"))
 mq_pv_free("myq");
 ...
 
-4.4.  mq_size(queue)
+4.4. mq_size(queue)
 
    Returns the current number of elements in the mqueue.
 

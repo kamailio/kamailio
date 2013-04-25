@@ -42,7 +42,7 @@ Andrei Pelinescu-Onciul
    is "custom script counter". The format of the declaration is:
    [group.]name[( |:)description].
 
-   Example 1.  Create a new script_counter
+   Example 1. Create a new script_counter
 modparam("counters", "script_counter", "foo")  # script.foo
 modparam("counters", "script_counter", "test.bar")  # test.bar
 modparam("counters", "script_counter", "baz example counter")  # script.baz
@@ -55,7 +55,7 @@ modparam("counters", "script_counter", "test.x:another example") # test.x
 
    Default: "script".
 
-   Example 2.  Set script_cnt_grp_name in the config file
+   Example 2. Set script_cnt_grp_name in the config file
 modparam("counters", "script_cnt_grp_name", "my_counters")
 
 3. Functions
@@ -64,7 +64,7 @@ modparam("counters", "script_cnt_grp_name", "my_counters")
    3.2. cnt_add([group.]name, number)
    3.3. cnt_reset([group.]name)
 
-3.1.  cnt_inc([group.]name)
+3.1. cnt_inc([group.]name)
 
    Increments the counter group.name. The counter must be defined using
    the script_counter module parameter. If the group name is missing, the
@@ -82,7 +82,7 @@ route {
 ...
 }
 
-3.2.  cnt_add([group.]name, number)
+3.2. cnt_add([group.]name, number)
 
    Adds number the counter group.name. The counter must be defined using
    the script_counter module parameter. If the group name is missing, the
@@ -97,7 +97,7 @@ route {
 ...
 }
 
-3.3.  cnt_reset([group.]name)
+3.3. cnt_reset([group.]name)
 
    Resets the counter group.name. The counter must be defined using the
    script_counter module parameter. If the group name is missing, the
@@ -127,21 +127,21 @@ route {
    Get the value of the counter identified by group.counter_name.
 
    Example 6. cnt.get grp counter_name usage
- $ sercmd cnt.get script foo
+ $ kamcmd cnt.get script foo
 
 4.2.  cnt.reset group counter_name
 
    Resets the counter identified by group.counter_name.
 
    Example 7. cnt.reset grp name usage
- $ sercmd cnt.reset script foo
+ $ kamcmd cnt.reset script foo
 
 4.3.  cnt.grps_list
 
    Lists all the declared counter groups.
 
    Example 8. cnt.grps_list usage
- $ sercmd cnt.grps_list
+ $ kamcmd cnt.grps_list
 
 4.4.  cnt.var_list group
 
@@ -149,18 +149,18 @@ route {
    group.
 
    Example 9. cnt.var_list group usage
- $ sercmd cnt.var_list script
+ $ kamcmd cnt.var_list script
 
 4.5.  cnt.grp_get_all
 
    Lists all the counter names and their values in the specified group.
 
    Example 10. cnt.var_list group usage
- $ sercmd cnt.grp_get_all script
+ $ kamcmd cnt.grp_get_all script
 
 4.6.  cnt.help group counter_name
 
    Displays the counter description.
 
    Example 11. cnt.help grp name usage
- $ sercmd cnt.help script foo
+ $ kamcmd cnt.help script foo

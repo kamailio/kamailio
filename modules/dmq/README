@@ -90,8 +90,8 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set dmq_server_address parameter
 ...
-modparam("dmq", "dmq_server_address", "mysql://openser:openserrw@localhost/opens
-er")
+modparam("dmq", "dmq_server_address", "mysql://kamailio:kamailiorw@localhost/kam
+ailio")
 ...
 
 3.2. dmq_notification_address(str)
@@ -103,8 +103,8 @@ er")
 
    Example 1.2. Set dmq_notification_address parameter
 ...
-modparam("dmq", "dmq_notification_address", "mysql://openser:openserrw@localhost
-/openser")
+modparam("dmq", "dmq_notification_address", "mysql://kamailio:kamailiorw@localho
+st/kamailio")
 ...
 
 Chapter 2. Developer Guide

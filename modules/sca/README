@@ -256,7 +256,7 @@ modparam( "sca", "db_update_interval", 120 )
    4.1. sca_handle_subscribe()
    4.2. sca_call_info_update()
 
-4.1.  sca_handle_subscribe()
+4.1. sca_handle_subscribe()
 
    The function handling call-info and line-seize SUBSCRIBE requests. It
    stores or updates the subscriptions in shared memory, and sends NOTIFYs
@@ -284,7 +284,7 @@ if ( is_method( "SUBSCRIBE" )) {
 }
 ...
 
-4.2.  sca_call_info_update()
+4.2. sca_call_info_update()
 
    The sca_call_info_update function updates call state for SCA
    appearances. If a request or response packet contains a Call-Info

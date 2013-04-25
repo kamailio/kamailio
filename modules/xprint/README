@@ -120,7 +120,7 @@ modparam("xprint", "buf_size", 8192)
    4.1. xplog(level, format)
    4.2. xpdbg(format)
 
-4.1.  xplog(level, format)
+4.1. xplog(level, format)
 
    Print a formated message using LOG function.
 
@@ -141,7 +141,7 @@ modparam("xprint", "buf_size", 8192)
 xplog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 ...
 
-4.2.  xpdbg(format)
+4.2. xpdbg(format)
 
    Print a formatted message using DBG function.
 
@@ -171,7 +171,7 @@ xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 
 5.1. Functions
 
-5.1.1.  int xbind(xl_api_t *xl_api)
+5.1.1. int xbind(xl_api_t *xl_api)
 
    Bind to the xprint module API.
 
@@ -182,7 +182,7 @@ xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 
    Return value: 0 - success, <0 - error.
 
-5.1.2.  int xparse(char *s, xl_elog_p *el)
+5.1.2. int xparse(char *s, xl_elog_p *el)
 
    Parse an xl-formatted string in private memory.
 
@@ -192,12 +192,12 @@ xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 
    Return value: 0 - success, <0 - error.
 
-5.1.3.  int shm_xparse(char *s, xl_elog_p *el)
+5.1.3. int shm_xparse(char *s, xl_elog_p *el)
 
    Parse an xl-formatted string in shared memory. See xparse() function
    for details.
 
-5.1.4.  int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
+5.1.4. int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
 
    Parse an xl-formatted string in private memory. This function is able
    to identify regular expression back references, for example \1, \2,
@@ -224,26 +224,26 @@ xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 
    Return value: 0 - success, <0 - error.
 
-5.1.5.  int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
+5.1.5. int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
 
    Parse an xl-formatted string in shared memory supporting regular
    expression back references. See xparse2() function for details.
 
-5.1.6.  xfree(xl_elog_p el)
+5.1.6. xfree(xl_elog_p el)
 
    Free the xl-lib list allocated by xparse() or xparse2().
 
    Meaning of the parameters is as follows:
      * el - xl-lib list to be freed.
 
-5.1.7.  shm_xfree(xl_elog_p el)
+5.1.7. shm_xfree(xl_elog_p el)
 
    Free the xl-lib list allocated by shm_xparse() or shm_xparse2().
 
    Meaning of the parameters is as follows:
      * el - xl-lib list to be freed.
 
-5.1.8.  int xprint(struct sip_msg* msg, xl_elog_p el, char *buf, int *len)
+5.1.8. int xprint(struct sip_msg* msg, xl_elog_p el, char *buf, int *len)
 
    Evaluate the xl-formatted string and print the result into a buffer.
 
@@ -256,6 +256,6 @@ xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 
    Return value: 0 - success, <0 - error.
 
-5.1.9.  str *xnulstr()
+5.1.9. str *xnulstr()
 
    Return the string "<null>".

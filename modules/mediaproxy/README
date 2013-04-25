@@ -10,7 +10,7 @@ Dan Pascu
 
    <dan@ag-projects.com>
 
-   Copyright © 2004 Dan Pascu
+   Copyright � 2004 Dan Pascu
      __________________________________________________________________
 
    Table of Contents
@@ -178,7 +178,7 @@ Chapter 1. Admin Guide
    mediaproxy is disabled, calls to its functions will have no effect,
    allowing you to use the same configuration without changes.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.1. Setting the disable parameter
 ...
@@ -190,7 +190,7 @@ modparam("mediaproxy", "disable", 1)
    It is the path to the filesystem socket where the mediaproxy dispatcher
    listens for commands from the module.
 
-   Default value is “/var/run/mediaproxy/dispatcher.sock”.
+   Default value is "/var/run/mediaproxy/dispatcher.sock".
 
    Example 1.2. Setting the mediaproxy_socket parameter
 ...
@@ -203,7 +203,7 @@ modparam("mediaproxy", "mediaproxy_socket", "/var/run/mediaproxy/dispatcher.sock
    How much time (in milliseconds) to wait for an answer from the
    mediaproxy dispatcher.
 
-   Default value is “500”.
+   Default value is "500".
 
    Example 1.3. Setting the mediaproxy_timeout parameter
 ...
@@ -225,7 +225,7 @@ modparam("mediaproxy", "mediaproxy_timeout", 500)
    to get the correct NAT IP address from where the SIP signaling
    originated.
 
-   Default value is “$avp(signaling_ip)”.
+   Default value is "$avp(signaling_ip)".
 
    Example 1.4. Setting the signaling_ip_avp parameter
 ...
@@ -240,7 +240,7 @@ modparam("mediaproxy", "signaling_ip_avp", "$avp(nat_ip)")
    before calling use_media_proxy(), it will be preferred by the
    dispatcher over the normal selection algorithm.
 
-   Default value is “$avp(media_relay)”.
+   Default value is "$avp(media_relay)".
 
    Example 1.5. Setting the media_relay_avp parameter
 ...
@@ -255,7 +255,7 @@ modparam("mediaproxy", "media_relay_avp", "$avp(media_relay)")
    selected then a low priority candidate will be added and if
    'high-priority' is selected a high priority one.
 
-   Default value is “none”.
+   Default value is "none".
 
    Example 1.6. Setting the ice_candidate parameter
 ...
@@ -269,7 +269,7 @@ modparam("mediaproxy", "ice_candidate", "low-priority")
    value in ice_candidate module parameter. If the AVP is not set, the
    default value will be used.
 
-   Default value is “$avp(ice_candidate)”.
+   Default value is "$avp(ice_candidate)".
 
    Example 1.7. Setting the ice_candidate_avp parameter
 ...

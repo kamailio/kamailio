@@ -310,7 +310,7 @@ modparam("mtree", "mt_allow_duplicates", 1)
 
    4.1. mt_match(mtree, pv, mode)
 
-4.1.  mt_match(mtree, pv, mode)
+4.1. mt_match(mtree, pv, mode)
 
    Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
    of 'mode' is NOT 2, sets a value of the longest matching prefix to
@@ -331,7 +331,7 @@ mt_match("mytree", "$rU", "0");
    5.2. mt_reload
    5.3. mt_summary
 
-5.1.  mt_list
+5.1. mt_list
 
    List content of a tree.
 
@@ -345,7 +345,7 @@ mt_match("mytree", "$rU", "0");
                 _mtname_
                 _empty_line_
 
-5.2.  mt_reload
+5.2. mt_reload
 
    Reload mtree from database.
 
@@ -360,7 +360,7 @@ mt_match("mytree", "$rU", "0");
                 _mtname_
                 _empty_line_
 
-5.3.  mt_summary
+5.3. mt_summary
 
    List usage summary for all trees.
 
@@ -376,7 +376,7 @@ mt_match("mytree", "$rU", "0");
 
    6.1. mtree.summary
 
-6.1.  mtree.summary
+6.1. mtree.summary
 
    List usage summary for all trees.
 

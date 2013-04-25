@@ -174,7 +174,7 @@ modparam("pike", "pike_log_level", -1)
 
    4.1. pike_check_req()
 
-4.1.  pike_check_req()
+4.1. pike_check_req()
 
    Process the source IP of the current request and returns false if the
    IP was exceeding the blocking limit.
@@ -200,7 +200,7 @@ if (!pike_check_req()) { exit; };
 
    5.1. pike_list
 
-5.1.  pike_list
+5.1. pike_list
 
    Lists the nodes in the pike tree.
 
@@ -218,7 +218,7 @@ Chapter 2. RPC calls
 
    1. pike.top
 
-1.  pike.top
+1. pike.top
 
    Pike.top behaves like a 'top' command and shows source IP addresses of
    incoming requestes to pike_check_req() function.

@@ -275,7 +275,7 @@ Warning
 
    The url to the master database where errors are written to.
 
-   Default value is "mysql://openser:openserrw@localhost/openser"
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio"
 
    Example 1.1. Set write_db_url parameter
 ...
@@ -289,7 +289,7 @@ sename")
    from. It is seperated from write access, so for better performance, a
    local replicate can be used for read access.
 
-   Default value is mysql://openser:openserrw@localhost/openser .
+   Default value is mysql://kamailio:kamailiorw@localhost/kamailio .
 
    Example 1.2. Set read_db_url parameter
 ...
@@ -659,9 +659,9 @@ modparam("p_usrloc", "db_mode", 2)
 ...
 
    The URLs are omitted for a better overview, but you can use standard
-   Kamailio database URLs like mysql://openser:openserrw@localhost/openser
-   Databases don't need to be on different hosts, e.g. for testing
-   purposes.
+   Kamailio database URLs like
+   mysql://kamailio:kamailiorw@localhost/kamailio Databases don't need to
+   be on different hosts, e.g. for testing purposes.
 
    This table contains two database groups. The first with id one, and the
    second with the id two.

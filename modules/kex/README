@@ -393,7 +393,7 @@ resetdebug();
    4.8. reset_statistics
    4.9. clear_statistics
 
-4.1.  arg
+4.1. arg
 
    Print command line arguments.
 
@@ -405,7 +405,7 @@ resetdebug();
                 :arg:_reply_fifo_file_
                 _empty_line_
 
-4.2.  kill
+4.2. kill
 
    Kill the application.
 
@@ -417,7 +417,7 @@ resetdebug();
                 :kill:_reply_fifo_file_
                 _empty_line_
 
-4.3.  pwd
+4.3. pwd
 
    Print working directory.
 
@@ -429,7 +429,7 @@ resetdebug();
                 :pwd:_reply_fifo_file_
                 _empty_line_
 
-4.4.  uptime
+4.4. uptime
 
    Print uptime.
 
@@ -441,7 +441,7 @@ resetdebug();
                 :uptime:_reply_fifo_file_
                 _empty_line_
 
-4.5.  version
+4.5. version
 
    Print version information.
 
@@ -453,7 +453,7 @@ resetdebug();
                 :version:_reply_fifo_file_
                 _empty_line_
 
-4.6.  which
+4.6. which
 
    Print list of available MI commands.
 
@@ -465,7 +465,7 @@ resetdebug();
                 :which:_reply_fifo_file_
                 _empty_line_
 
-4.7.  get_statistics
+4.7. get_statistics
 
    Print the list of available internal statistics.
 
@@ -481,7 +481,7 @@ resetdebug();
                 _statsid_
                 _empty_line_
 
-4.8.  reset_statistics
+4.8. reset_statistics
 
    Reset internal statistics.
 
@@ -494,7 +494,7 @@ resetdebug();
                 _statsid_
                 _empty_line_
 
-4.9.  clear_statistics
+4.9. clear_statistics
 
    Return statistics and reset their value in one command.
 
@@ -511,7 +511,7 @@ resetdebug();
 
    5.1. pkg.stats
 
-5.1.  pkg.stats
+5.1. pkg.stats
 
    Print private memory (pkg) usage statistics per process. It can take
    optinally a filter to print statistics only for a specific process or

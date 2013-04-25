@@ -160,7 +160,7 @@ modparam("sanity", "autodrop", 1)
 
    2.1. sanity_check([msg_checks [, uri_checks]])
 
-2.1.  sanity_check([msg_checks [, uri_checks]])
+2.1. sanity_check([msg_checks [, uri_checks]])
 
    This function makes a row of sanity checks over the given SIP request.
    The behavior of the function is also controlled by 'autodrop'

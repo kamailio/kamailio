@@ -4,7 +4,7 @@ Tomas Mandys
 
    Iptel.org
 
-   Copyright Â© 2007 iptelorg GmbH
+   Copyright © 2007 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -63,7 +63,7 @@ le");
 
 1.5. Functions
 
-1.5.1.  timer_enable(timer_id, enable_disable)
+1.5.1. timer_enable(timer_id, enable_disable)
 
    Enable/disable timer route specified by timer_id. Because of timer core
    API the callback is not disabled immediately but is removed from
@@ -76,7 +76,7 @@ le");
         timer_enable("MY_TIMER", 1);
         ...
 
-1.5.2.  @timer.timer.timer_id.enabled
+1.5.2. @timer.timer.timer_id.enabled
 
    Return true ("1") if timer specified by timer_id is enabled, otherwise
    returns false ("0").
@@ -86,7 +86,7 @@ le");
         ....
         }
 
-1.5.3.  @timer.executed
+1.5.3. @timer.executed
 
    Returns name of timer which has been executed, i.e. non empty value is
    returned only when handler is being processed.

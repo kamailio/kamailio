@@ -263,7 +263,7 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.1. Set the "db_url" parameter
 ...

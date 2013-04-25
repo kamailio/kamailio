@@ -83,8 +83,7 @@ Daniel-Constantin Mierla
    3.14. realm_prefix (string)
    3.15. use_domain (boolean)
 
-3.1.  auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
-(flags)
+3.1. auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg (flags)
 
    These three module parameters control which optional integrity checks
    will be performed on the SIP message carrying digest response during
@@ -589,7 +588,7 @@ if (has_credentials("myrealm")) {
 }
 ...
 
-4.3.  www_challenge(realm, flags)
+4.3. www_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a WWW-Authorize
    header field containing a digest challenge, it will put the header
@@ -626,7 +625,7 @@ if (!www_authenticate("$td", "subscriber")) {
 }
 ...
 
-4.4.  proxy_challenge(realm, flags)
+4.4. proxy_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a
    Proxy-Authorize header field containing a digest challenge, it will put
@@ -648,7 +647,7 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 };
 ...
 
-4.5.  auth_challenge(realm, flags)
+4.5. auth_challenge(realm, flags)
 
    The function challenges a user agent for authentication. It combines
    the functions www_challenge() and proxy_challenge(), by calling
@@ -667,7 +666,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 };
 ...
 
-4.6.  pv_www_authenticate(realm, passwd, flags [, method])
+4.6. pv_www_authenticate(realm, passwd, flags [, method])
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -720,7 +719,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 };
 ...
 
-4.7.  pv_proxy_authenticate(realm, passwd, flags)
+4.7. pv_proxy_authenticate(realm, passwd, flags)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -743,7 +742,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 };
 ...
 
-4.8.  pv_auth_check(realm, passwd, flags, checks)
+4.8. pv_auth_check(realm, passwd, flags, checks)
 
    The function combines the functionalities of pv_www_authenticate and
    pv_proxy_authenticate, first being exectuted if the SIP request is a
@@ -768,7 +767,7 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 };
 ...
 
-4.9.  auth_get_www_authenticate(realm, flags, pvdest)
+4.9. auth_get_www_authenticate(realm, flags, pvdest)
 
    Build WWW-Authentication header and set the resulting value in 'pvdest'
    pseudo-variable parameter.

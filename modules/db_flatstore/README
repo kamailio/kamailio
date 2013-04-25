@@ -72,7 +72,7 @@ mv acc_4.log acc_3.log.20050605
        into the renamed files.
      * Send SIP Router the management command to close and reopen the
        renamed files:
-sercmd flatstore.rotate
+kamcmd flatstore.rotate
        This will force SIP Router to close the renamed files and open new
        ones with original names, such as acc_1.log. New files will be open
        at the point when SIP Router has some data to write. It is normal
