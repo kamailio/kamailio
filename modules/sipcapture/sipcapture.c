@@ -112,7 +112,7 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip);
 
 static struct mi_root* sip_capture_mi(struct mi_root* cmd, void* param );
 
-static str db_url		= str_init(DEFAULT_RODB_URL);
+static str db_url		= str_init(DEFAULT_DB_URL);
 static str table_name		= str_init("sip_capture");
 static str hash_source		= str_init("call_id");
 static str mt_mode		= str_init("rand");

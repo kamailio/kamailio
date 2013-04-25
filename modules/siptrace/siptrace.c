@@ -109,7 +109,7 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 
 static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
-static str db_url             = str_init(DEFAULT_RODB_URL);
+static str db_url             = str_init(DEFAULT_DB_URL);
 static str siptrace_table     = str_init("sip_trace");
 static str date_column        = str_init("time_stamp");  /* 00 */
 static str callid_column      = str_init("callid");      /* 01 */
