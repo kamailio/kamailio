@@ -93,7 +93,7 @@ static stat_export_t stats[] =
 	{ "ws_sip_current_connections",        0, &ws_sip_current_connections },
         { "ws_sip_max_concurrent_connectons",  0, &ws_sip_max_concurrent_connections },
         { "ws_msrp_current_connections",       0, &ws_msrp_current_connections },
-        { "ws_msrp_max_concurrent_connectons", 0, &ws_sip_max_concurrent_connections },
+        { "ws_msrp_max_concurrent_connectons", 0, &ws_msrp_max_concurrent_connections },
 
 	/* ws_frame.c */
 	{ "ws_failed_connections",             0, &ws_failed_connections },
