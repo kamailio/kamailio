@@ -48,6 +48,7 @@ static int mod_init(void);
 static void destroy(void);
 
 static unsigned int ob_force_flag = (unsigned int) -1;
+static unsigned int ob_force_no_flag = (unsigned int) -1;
 static str ob_key = {0, 0};
 
 static cmd_export_t cmds[]= 
@@ -61,6 +62,7 @@ static cmd_export_t cmds[]=
 static param_export_t params[]=
 {
 	{ "force_outbound_flag",	INT_PARAM, &ob_force_flag },
+	{ "force_no_outbound_flag",     INT_PARAM, &ob_force_no_flag },
 	{ 0, 0, 0 }
 };
 
@@ -85,6 +87,12 @@ static int mod_init(void)
 	if (ob_force_flag != -1 && !flag_in_range(ob_force_flag))
 	{
 		LM_ERR("bad force_outbound_flag value (%d)\n", ob_force_flag);
+		return -1;
+	}
+
+	if (ob_force_no_flag != -1 && !flag_in_range(ob_force_no_flag))
+	{
+		LM_ERR("bad no_outbound_flag value (%d)\n", ob_force_no_flag);
 		return -1;
 	}
 
@@ -451,8 +459,15 @@ int use_outbound(struct sip_msg *msg)
 	/* If Outbound is forced return success without any further checks */
 	if (ob_force_flag != -1 && isflagset(msg, ob_force_flag) > 0)
 	{
-		LM_DBG("outbound forced\n");
+		LM_DBG("outbound used by force\n");
 		return 1;
+	}
+
+	/* If Outbound is turned off, return failure without any further checks */
+	if (ob_force_no_flag != -1 && isflagset(msg, ob_force_no_flag) > 0)
+	{
+		LM_DBG("outbound not used by force\n");
+		return 0;
 	}
 
 	LM_DBG("Analysing %.*s for outbound markers\n",

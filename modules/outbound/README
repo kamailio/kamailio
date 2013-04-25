@@ -4,7 +4,7 @@ Peter Dunkley
 
    Crocodile RCS Ltd
 
-   Copyright © 2012-2013 Crocodile RCS Ltd
+   Copyright (c) 2012-2013 Crocodile RCS Ltd
      __________________________________________________________________
 
    Table of Contents
@@ -24,6 +24,7 @@ Peter Dunkley
         3. Parameters
 
               3.1. force_outbound_flag (integer)
+              3.2. force_no_outbound_flag (integer)
 
         4. Functions
         5. MI Commands
@@ -33,6 +34,7 @@ Peter Dunkley
    1.1. Edge Proxy Configuration
    1.2. Registrar Configuration
    1.3. Set force_outbound_flag parameter
+   1.4. Set force_no_outbound_flag parameter
 
 Chapter 1. Admin Guide
 
@@ -51,6 +53,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. force_outbound_flag (integer)
+        3.2. force_no_outbound_flag (integer)
 
    4. Functions
    5. MI Commands
@@ -69,7 +72,7 @@ Chapter 1. Admin Guide
 1.1. Edge Proxy Keep-Alives (STUN)
 
    Outbound Edge Proxies MUST support STUN NAT keep-alives on their SIP
-   UDP ports. Kamailio supports this though the “stun” module.
+   UDP ports. Kamailio supports this though the "stun" module.
 
 1.2. Flow Timer
 
@@ -78,9 +81,9 @@ Chapter 1. Admin Guide
    responses to REGISTERs.
 
    When using TCP or TLS as the SIP transport care should be taken to set
-   the “tcp_connection_lifetime” on the Edge Proxy to a value slightly
+   the "tcp_connection_lifetime" on the Edge Proxy to a value slightly
    larger than the interval the Registrar is using for flow timer. Setting
-   “tcp_connection_lifetime” to less than the interval could cause
+   "tcp_connection_lifetime" to less than the interval could cause
    connections to be lost, and setting it to a value much larger than the
    interval will keep connections open far longer than is required (which
    is wasteful).
@@ -88,9 +91,9 @@ Chapter 1. Admin Guide
    Application-layer keep-alives are optional when the underlying
    transport already has a keep-alive mechanism. The WebSocket transport
    has a transport-layer keep-alive. When using the WebSocket transport
-   the “keepalive_timeout” should be set to a value a little greater than
+   the "keepalive_timeout" should be set to a value a little greater than
    the Registrar flow timer interval and a little less than the
-   “tcp_connection_lifetime”.
+   "tcp_connection_lifetime".
 
    Example 1.1. Edge Proxy Configuration
 #!KAMAILIO
@@ -489,6 +492,7 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 3. Parameters
 
    3.1. force_outbound_flag (integer)
+   3.2. force_no_outbound_flag (integer)
 
 3.1. force_outbound_flag (integer)
 
@@ -501,6 +505,19 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
    Example 1.3. Set force_outbound_flag parameter
 ...
 modparam("outbound", "force_outbound_flag", 1)
+...
+
+3.2. force_no_outbound_flag (integer)
+
+   A flag which, if set for a request, will force path and rr not to add
+   flow tokens to Path: and Record-Route: headers regardless of the
+   request contents.
+
+   Default value is -1.
+
+   Example 1.4. Set force_no_outbound_flag parameter
+...
+modparam("outbound", "force_no_outbound_flag", 2)
 ...
 
 4. Functions

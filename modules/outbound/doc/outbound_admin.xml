@@ -481,6 +481,25 @@ modparam("outbound", "force_outbound_flag", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>force_no_outbound_flag</varname> (integer)</title>
+		<para>A flag which, if set for a request, will force
+		<emphasis>path</emphasis> and <emphasis>rr</emphasis> not
+		to add flow tokens to Path: and Record-Route: headers
+		regardless of the request contents.</para>
+		<para><emphasis>Default value is -1.</emphasis></para>
+		<example>
+		<title>Set <varname>force_no_outbound_flag</varname> parameter
+		</title>
+		<programlisting format="linespecific">
+...
+modparam("outbound", "force_no_outbound_flag", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
