@@ -273,7 +273,7 @@ int pv_get_msrp(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
 				return pv_get_null(msg, param, res);
 			s.s = pv_get_buffer();
 			p = s.s;
-			if(mf->tcpinfo->rcv->proto==PROTO_TLS)
+			if(mf->tcpinfo->rcv->proto==PROTO_TLS || mf->tcpinfo->rcv->proto==PROTO_WSS)
 			{
 				memcpy(p, "msrps://", 8);
 				p+=8;

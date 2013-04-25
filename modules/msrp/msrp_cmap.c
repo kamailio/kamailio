@@ -211,7 +211,7 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	idx = msrp_get_slot(hid, _msrp_cmap_head->mapsize);
 
 	srcaddr.s = sbuf;;
-	if(mf->tcpinfo->rcv->proto==PROTO_TLS)
+	if(mf->tcpinfo->rcv->proto==PROTO_TLS || mf->tcpinfo->rcv->proto==PROTO_WSS)
 	{
 		memcpy(srcaddr.s, "msrps://", 8);
 		srcaddr.s+=8;
@@ -295,7 +295,7 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	_msrp_cmap_head->cslots[idx].lsize++;
 	lock_release(&_msrp_cmap_head->cslots[idx].lock);
 
-	if(mf->tcpinfo->rcv->proto==PROTO_TLS)
+	if(mf->tcpinfo->rcv->proto==PROTO_TLS || mf->tcpinfo->rcv->proto==PROTO_WSS)
 	{
 		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE,
 				"Use-Path: msrps://%.*s/%.*s;tcp\r\nExpires: %d\r\n",
