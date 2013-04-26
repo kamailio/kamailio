@@ -2352,10 +2352,10 @@ static void ds_options_callback( struct cell *t, int type,
 	 *  cast it to an int. */
 	group = (int)(long)(*ps->param);
 	/* The SIP-URI is taken from the Transaction.
-	 * Remove the "To: " (s+4) and the trailing new-line (s - 4 (To: )
-	 * - 2 (\r\n)). */
-	uri.s = t->to.s + 4;
-	uri.len = t->to.len - 6;
+	 * Remove the "To: <" (s+5) and the trailing >+new-line (s - 5 (To: <)
+	 * - 3 (>\r\n)). */
+	uri.s = t->to.s + 5;
+	uri.len = t->to.len - 8;
 	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
 			ps->code, uri.len, uri.s, group);
 	/* ps->code contains the result-code of the request.
