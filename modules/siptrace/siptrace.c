@@ -1700,6 +1700,8 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 	if(strncmp(pipport, "udp:",4) == 0) *proto = IPPROTO_UDP;
 	else if(strncmp(pipport, "tcp:",4) == 0) *proto = IPPROTO_TCP;
 	else if(strncmp(pipport, "tls:",4) == 0) *proto = IPPROTO_IDP; /* fake proto type */
+	else if(strncmp(pipport, "ws:",3) == 0) *proto = IPPROTO_IDP; /* fake proto type */
+	else if(strncmp(pipport, "wss:",4) == 0) *proto = IPPROTO_IDP; /* fake proto type */
 #ifdef USE_SCTP
 	else if(strncmp(pipport, "sctp:",5) == 0) cutlen = 5, *proto = IPPROTO_SCTP;
 #endif
