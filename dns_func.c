@@ -38,7 +38,11 @@ struct dns_func_t dns_func = {
 	res_init,
 	res_search,
 	gethostbyname,
+#ifdef HAVE_GETHOSTBYNAME2
 	gethostbyname2
+#else
+	NULL
+#endif
 };
 
  
