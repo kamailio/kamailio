@@ -1399,7 +1399,7 @@ static inline char* print_to(char* w, dlg_t* dialog, struct cell* t)
 {
 	t->to.s = w;
 	t->to.len = TO_LEN + dialog->rem_uri.len + CRLF_LEN
-		+ (dialog->rem_uri.s[0]!='<')?2:0;
+		+ ((dialog->rem_uri.s[0]!='<')?2:0);
 
 	memapp(w, TO, TO_LEN);
 	if(dialog->rem_uri.s[0]!='<') memapp(w, "<", 1);
@@ -1424,7 +1424,7 @@ static inline char* print_from(char* w, dlg_t* dialog, struct cell* t)
 {
 	t->from.s = w;
 	t->from.len = FROM_LEN + dialog->loc_uri.len + CRLF_LEN
-		+ (dialog->loc_uri.s[0]!='<')?2:0;
+		+ ((dialog->loc_uri.s[0]!='<')?2:0);
 
 	memapp(w, FROM, FROM_LEN);
 	if(dialog->loc_uri.s[0]!='<') memapp(w, "<", 1);
