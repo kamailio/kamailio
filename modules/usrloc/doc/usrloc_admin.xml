@@ -853,8 +853,8 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 		</example>
 	</section>
 
-	<section id="usrloc.p.db_obs_ruid">
-		<title><varname>db_obs_ruid</varname> (string)</title>
+	<section id="usrloc.p.db_ops_ruid">
+		<title><varname>db_ops_ruid</varname> (string)</title>
 		<para>
 			If set to 1, database queries for update or delete are done using
 			ruid value. If it is set to 0, the old style using aor, contact and
@@ -866,10 +866,10 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>db_obs_ruid</varname> parameter</title>
+		<title>Set <varname>db_ops_ruid</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "db_obs_ruid", 1)
+modparam("usrloc", "db_ops_ruid", 1)
 ...
 </programlisting>
 		</example>
