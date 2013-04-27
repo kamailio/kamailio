@@ -3,8 +3,13 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
+auto_gen=
+NAME=snmpstats.so
 
+ifeq ($(CROSS_COMPILE),)
 BUILDER = $(shell which net-snmp-config)
+endif
+
 ifeq ($(BUILDER),)
 	DEFS +=-I$(LOCALBASE)/include
 	BUILDAGENTLIBS =-L$(LOCALBASE)/lib -lnetsnmpmibs -lnetsnmpagent \
@@ -29,11 +34,7 @@ BUILDAGENTLIBS += -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi
                 -lrpmdb -lrpm
 endif
 
-CFLAGS+=
-auto_gen=
-NAME=snmpstats.so
 LIBS=$(BUILDAGENTLIBS)
-
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
