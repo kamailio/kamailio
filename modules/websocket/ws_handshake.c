@@ -86,7 +86,7 @@ static str str_status_upgrade_required = str_init("Upgrade Required");
 static str str_status_internal_server_error = str_init("Internal Server Error");
 static str str_status_service_unavailable = str_init("Service Unavailable");
 
-#define HDR_BUF_LEN		(256)
+#define HDR_BUF_LEN		(512)
 static char headers_buf[HDR_BUF_LEN];
 
 static char key_buf[base64_enc_len(SHA_DIGEST_LENGTH)];
