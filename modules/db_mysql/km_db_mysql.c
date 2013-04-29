@@ -107,7 +107,7 @@ int db_mysql_bind_api(db_func_t *dbb)
 	dbb->query            = db_mysql_query;
 	dbb->fetch_result     = db_mysql_fetch_result;
 	dbb->raw_query        = db_mysql_raw_query;
-	dbb->free_result      = db_mysql_free_result;
+	dbb->free_result      = (db_free_result_f) db_mysql_free_result;
 	dbb->insert           = db_mysql_insert;
 	dbb->delete           = db_mysql_delete;
 	dbb->update           = db_mysql_update;
