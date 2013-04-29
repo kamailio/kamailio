@@ -277,7 +277,8 @@ int ws_handle_handshake(struct sip_msg *msg)
 
 	/* Final check that all required headers/values were found */
 	sub_protocol &= ws_sub_protocols;
-	if (hdr_flags != REQUIRED_HEADERS || sub_protocol == 0)
+	if ((hdr_flags & REQUIRED_HEADERS) != REQUIRED_HEADERS
+			|| sub_protocol == 0)
 	{
 
 		LM_WARN("required headers not present\n");
