@@ -397,6 +397,42 @@ modparam("websocket", "sub_protocols", 2)
 		</example>
 	</section>
 
+	<section id="websocket.p.cors_mode">
+		<title><varname>cors_mode</varname> (integer)</title>
+		<para>This parameter lets you set the &quot;Cross-origin
+		resource sharing&quot; behaviour of the WebSocket server.</para>
+		<itemizedlist>
+		<listitem><para>
+		<emphasis>0</emphasis> - Do not add an
+		&quot;Access-Control-Allow-Origin:&quot; header to the response
+		accepting the WebSocket handshake. 
+		</para></listitem>
+		<listitem><para>
+		<emphasis>1</emphasis> - Add a
+		&quot;Access-Control-Allow-Origin: *&quot; header to the
+		response accepting the WebSocket handshake.
+		</para></listitem>
+		<listitem><para>
+		<emphasis>2</emphasis> - Add a
+		&quot;Access-Control-Allow-Origin:&quot; header containing the
+		same body as the &quot;Origin:&quot; header from the request to
+		the response accepting the WebSocket handshake. If there is no
+		&quot;Origin:&quot; header in the request no header will be
+		added to the response.
+		</para></listitem>
+		</itemizedlist>
+		<para><emphasis>Default value is 0.</emphasis></para>
+		<example>
+		<title>Set <varname>cors_mode</varname>
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("websocket", "cors_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

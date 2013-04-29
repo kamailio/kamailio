@@ -44,6 +44,7 @@
 #define WS_VERSION		(13)
 
 int ws_sub_protocols = DEFAULT_SUB_PROTOCOLS;
+int ws_cors_mode = CORS_MODE_NONE;
 
 stat_var *ws_failed_handshakes;
 stat_var *ws_successful_handshakes;
@@ -63,12 +64,16 @@ static str str_hdr_sec_websocket_accept = str_init("Sec-WebSocket-Accept");
 static str str_hdr_sec_websocket_key = str_init("Sec-WebSocket-Key");
 static str str_hdr_sec_websocket_protocol = str_init("Sec-WebSocket-Protocol");
 static str str_hdr_sec_websocket_version = str_init("Sec-WebSocket-Version");
+static str str_hdr_origin = str_init("Origin");
+static str str_hdr_access_control_allow_origin
+				= str_init("Access-Control-Allow-Origin");
 #define CONNECTION		(1<<0)
 #define UPGRADE			(1<<1)
 #define SEC_WEBSOCKET_ACCEPT	(1<<2)
 #define SEC_WEBSOCKET_KEY	(1<<3)
 #define SEC_WEBSOCKET_PROTOCOL	(1<<4)
 #define SEC_WEBSOCKET_VERSION	(1<<5)
+#define ORIGIN			(1<<6)
 
 #define REQUIRED_HEADERS	(CONNECTION | UPGRADE | SEC_WEBSOCKET_KEY\
 					| SEC_WEBSOCKET_PROTOCOL\
@@ -114,7 +119,7 @@ static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 
 int ws_handle_handshake(struct sip_msg *msg)
 {
-	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0};
+	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0}, origin = {0, 0};
 	unsigned char sha1[SHA_DIGEST_LENGTH];
 	unsigned int hdr_flags = 0, sub_protocol = 0;
 	int version;
@@ -274,6 +279,27 @@ int ws_handle_handshake(struct sip_msg *msg)
 				hdr->body.len, hdr->body.s);
 			hdr_flags |= SEC_WEBSOCKET_VERSION;
 		}
+		/* Decode Origin */
+		else if (cmp_hdrname_strzn(&hdr->name,
+				str_hdr_origin.s,
+				str_hdr_origin.len) == 0)
+		{
+			if (hdr_flags & ORIGIN)
+			{
+				LM_WARN("%.*s found multiple times\n",
+					hdr->name.len, hdr->name.s);
+				ws_send_reply(msg, 400,
+						&str_status_bad_request,
+						NULL);
+				return 0;
+			}
+
+			LM_DBG("found %.*s: %.*s\n",
+				hdr->name.len, hdr->name.s,
+				hdr->body.len, hdr->body.s);
+			origin = hdr->body;
+			hdr_flags |= ORIGIN;
+		}
 
 		hdr = hdr->next;
 	}
@@ -347,6 +373,21 @@ int ws_handle_handshake(struct sip_msg *msg)
 	   101 reply */
 	headers.s = headers_buf;
 	headers.len = 0;
+
+	if (ws_cors_mode == CORS_MODE_ANY)
+		headers.len += snprintf(headers.s + headers.len,
+					HDR_BUF_LEN - headers.len,
+					"%.*s: *\r\n",
+					str_hdr_access_control_allow_origin.len,
+					str_hdr_access_control_allow_origin.s);
+	else if (ws_cors_mode == CORS_MODE_ORIGIN && origin.len > 0)
+		headers.len += snprintf(headers.s + headers.len,
+					HDR_BUF_LEN - headers.len,
+					"%.*s: %.*s\r\n",
+					str_hdr_access_control_allow_origin.len,
+					str_hdr_access_control_allow_origin.s,
+					origin.len,
+					origin.s);
 
 	if (sub_protocol & SUB_PROTOCOL_SIP)
 		headers.len += snprintf(headers.s + headers.len,

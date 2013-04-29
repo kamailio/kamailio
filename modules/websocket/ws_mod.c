@@ -73,10 +73,11 @@ static param_export_t params[]=
 	/* ws_frame.c */
 	{ "keepalive_mechanism",	INT_PARAM, &ws_keepalive_mechanism },
 	{ "keepalive_timeout",		INT_PARAM, &ws_keepalive_timeout },
-	{ "ping_application_data",	STR_PARAM, &ws_ping_application_data.s},
+	{ "ping_application_data",	STR_PARAM, &ws_ping_application_data.s },
 
 	/* ws_handshake.c */
-	{ "sub_protocols",		INT_PARAM, &ws_sub_protocols},
+	{ "sub_protocols",		INT_PARAM, &ws_sub_protocols },
+	{ "cors_mode",			INT_PARAM, &ws_cors_mode },
 
 	/* ws_mod.c */
 	{ "keepalive_interval",		INT_PARAM, &ws_keepalive_interval },
@@ -241,6 +242,12 @@ static int mod_init(void)
 	if ((ws_sub_protocols | SUB_PROTOCOL_ALL) != SUB_PROTOCOL_ALL)
 	{
 		LM_ERR("unrecognised sub-protocols enabled\n");
+		goto error;
+	}
+
+	if (ws_cors_mode < 0 || ws_cors_mode > 2)
+	{
+		LM_ERR("bad value for cors_mode\n");
 		goto error;
 	}
 

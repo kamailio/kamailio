@@ -32,6 +32,11 @@
 #define SUB_PROTOCOL_ALL	(SUB_PROTOCOL_SIP | SUB_PROTOCOL_MSRP)
 extern int ws_sub_protocols;
 
+#define CORS_MODE_NONE		0
+#define CORS_MODE_ANY		1
+#define CORS_MODE_ORIGIN	2
+extern int ws_cors_mode;
+
 extern stat_var *ws_failed_handshakes;
 extern stat_var *ws_successful_handshakes;
 extern stat_var *ws_sip_successful_handshakes;
