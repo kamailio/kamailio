@@ -534,6 +534,10 @@ static const char* htable_list_doc[2] = {
 	"List all htables.",
 	0
 };
+static const char* htable_reload_doc[2] = {
+	"Reload hash table.",
+	0
+};
 
 static void htable_rpc_delete(rpc_t* rpc, void* c) {
 	str htname, keyname;
@@ -737,11 +741,89 @@ error:
 	return;
 }
 
+static void htable_rpc_reload(rpc_t* rpc, void* c)
+{
+	str htname;
+	ht_t *ht;
+	ht_t nht;
+	ht_cell_t *first;
+	ht_cell_t *it;
+	int i;
+
+	if(ht_db_url.len<=0) {
+		rpc->fault(c, 500, "No htable db_url");
+		return;
+	}
+	if(ht_db_init_con()!=0) {
+		rpc->fault(c, 500, "Failed to init htable db connection");
+		return;
+	}
+	if(ht_db_open_con()!=0) {
+		rpc->fault(c, 500, "Failed to open htable db connection");
+		return;
+	}
+
+	if (rpc->scan(c, "S", &htname) < 1)
+	{
+		rpc->fault(c, 500, "No htable name given");
+		return;
+	}
+	ht = ht_get_table(&htname);
+	if(ht==NULL)
+	{
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+
+
+	memcpy(&nht, ht, sizeof(ht_t));
+	nht.entries = (ht_entry_t*)shm_malloc(nht.htsize*sizeof(ht_entry_t));
+	if(nht.entries == NULL)
+	{
+		ht_db_close_con();
+		rpc->fault(c, 500, "Mtree reload failed");
+		return;
+	}
+	memset(nht.entries, 0, nht.htsize*sizeof(ht_entry_t));
+
+	if(ht_db_load_table(&nht, &ht->dbtable, 0)<0)
+	{
+		ht_db_close_con();
+		rpc->fault(c, 500, "Mtree reload failed");
+		return;
+	}
+
+	/* replace old entries */
+	for(i=0; i<nht.htsize; i++)
+	{
+		lock_get(&ht->entries[i].lock);
+		first = ht->entries[i].first;
+		ht->entries[i].first = nht.entries[i].first;
+		ht->entries[i].esize = nht.entries[i].esize;
+		lock_release(&ht->entries[i].lock);
+		nht.entries[i].first = first;
+	}
+	/* free old entries */
+	for(i=0; i<nht.htsize; i++)
+	{
+		first = nht.entries[i].first;
+		while(first)
+		{
+			it = first;
+			first = first->next;
+			ht_cell_free(it);
+		}
+	}
+	ht_db_close_con();
+	return;
+}
+
 rpc_export_t htable_rpc[] = {
 	{"htable.dump", htable_rpc_dump, htable_dump_doc, 0},
 	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
 	{"htable.get", htable_rpc_get, htable_get_doc, 0},
 	{"htable.listTables", htable_rpc_list, htable_list_doc, 0},
+	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
 	{0, 0, 0, 0}
 };
 

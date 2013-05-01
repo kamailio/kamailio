@@ -17,7 +17,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright © 2008-2011 http://www.asipto.com
+   Copyright (c) 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -64,7 +64,8 @@ Alex Balashov
               7.1. htable.get htable key
               7.2. htable.delete htable key
               7.3. htable.dump htable
-              7.4. htable.listTables
+              7.4. htable.reload htable
+              7.5. htable.listTables
 
         8. Event routes
 
@@ -134,7 +135,8 @@ Chapter 1. Admin Guide
         7.1. htable.get htable key
         7.2. htable.delete htable key
         7.3. htable.dump htable
-        7.4. htable.listTables
+        7.4. htable.reload htable
+        7.5. htable.listTables
 
    8. Event routes
 
@@ -494,7 +496,7 @@ sht_rm_value_re("ha=>.*");
      * $shtval(htable=>key)
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/dokuwiki/.
+   http://www.kamailio.org/wiki/.
 
 6. MI Commands
 
@@ -552,7 +554,8 @@ sht_rm_value_re("ha=>.*");
    7.1. htable.get htable key
    7.2. htable.delete htable key
    7.3. htable.dump htable
-   7.4. htable.listTables
+   7.4. htable.reload htable
+   7.5. htable.listTables
 
 7.1.  htable.get htable key
 
@@ -600,7 +603,21 @@ kamcmd htable.get students anna
 kamcmd htable.dump ipban
 ...
 
-7.4.  htable.listTables
+7.4.  htable.reload htable
+
+   Reload hash table from database.
+
+   Name: dhtable.reload
+
+   Parameters:
+     * htable : Name of the hash table to reload
+
+   Example:
+...
+kamcmd htable.reload ipban
+...
+
+7.5.  htable.listTables
 
    Lists all defined tables
 

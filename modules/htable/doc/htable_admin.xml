@@ -760,6 +760,31 @@ kamcmd htable.dump ipban
 	</section>
         <section>
                 <title>
+                <function moreinfo="none">htable.reload htable</function>
+                </title>
+                <para>
+		Reload hash table from database.
+                </para>
+                <para>
+                Name: <emphasis>dhtable.reload</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>htable : Name of the hash table to reload</para>
+                        </listitem>
+
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+kamcmd htable.reload ipban
+...
+</programlisting>
+	</section>
+        <section>
+                <title>
                 <function moreinfo="none">htable.listTables</function>
                 </title>
                 <para>
