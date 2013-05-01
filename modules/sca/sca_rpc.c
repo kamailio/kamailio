@@ -358,14 +358,18 @@ sca_rpc_show_all_appearances( rpc_t *rpc, void *ctx )
 	    app_list = (sca_appearance_list *)ent->value;
 	    for ( app = app_list->appearances; app != NULL; app = app->next ) {
 		sca_appearance_state_to_str( app->state, &state_str );
-		rc = rpc->printf( ctx, "%.*s %d %.*s %ld %.*s %.*s %.*s",
+		rc = rpc->printf( ctx, "%.*s %d %.*s %ld %.*s %.*s "
+				"%.*s %.*s %.*s",
 				STR_FMT( &app_list->aor ),
 				app->index,
 				STR_FMT( &state_str ),
 				(long)app->times.mtime,
 				STR_FMT( &app->owner ),
 				STR_FMT( &app->callee ),
-				STR_FMT( &app->dialog.id ));
+				STR_FMT( &app->dialog.call_id ),
+				STR_FMT( &app->dialog.from_tag ),
+				STR_FMT( &app->dialog.to_tag ));
+
 		if ( rc < 0 ) {
 		    /* make sure we unlock below */
 		    goto error;
