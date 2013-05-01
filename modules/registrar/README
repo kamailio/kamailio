@@ -16,7 +16,7 @@ Edited by
 
 Bogdan-Andre Iancu
 
-   Copyright © 2003 FhG FOKUS
+   Copyright (c) 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -59,7 +59,8 @@ Bogdan-Andre Iancu
               3.22. xavp_rcd (string)
               3.23. gruu_enabled (integer)
               3.24. outbound_mode (integer)
-              3.25. flow_timer (integer)
+              3.25. regid_mode (integer)
+              3.26. flow_timer (integer)
 
         4. Functions
 
@@ -115,17 +116,18 @@ Bogdan-Andre Iancu
    1.21. Set xavp_rcd parameter
    1.22. Set gruu_enabled parameter
    1.23. Set outbound_mode parameter
-   1.24. Set flow_timer parameter
-   1.25. save usage
-   1.26. lookup usage
-   1.27. lookup_branches usage
-   1.28. registered usage
-   1.29. add_sock_hdr usage
-   1.30. unregister usage
-   1.31. reg_fetch_contacts usage
-   1.32. reg_free_contacts usage
-   1.33. event_route[usrloc:contact-expired] usage
-   1.34. $ulc(name) usage
+   1.24. Set regid_mode parameter
+   1.25. Set flow_timer parameter
+   1.26. save usage
+   1.27. lookup usage
+   1.28. lookup_branches usage
+   1.29. registered usage
+   1.30. add_sock_hdr usage
+   1.31. unregister usage
+   1.32. reg_fetch_contacts usage
+   1.33. reg_free_contacts usage
+   1.34. event_route[usrloc:contact-expired] usage
+   1.35. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -167,7 +169,8 @@ Chapter 1. Admin Guide
         3.22. xavp_rcd (string)
         3.23. gruu_enabled (integer)
         3.24. outbound_mode (integer)
-        3.25. flow_timer (integer)
+        3.25. regid_mode (integer)
+        3.26. flow_timer (integer)
 
    4. Functions
 
@@ -216,8 +219,8 @@ Chapter 1. Admin Guide
      * off - stores the value of the Path headers into usrloc without
        passing it back to the UAC in the reply.
      * lazy - stores the Path header and passes it back to the UAC if
-       Path-support is indicated by the “path” param in the Supported HF.
-     * strict - rejects the registration with “420 Bad Extension” if
+       Path-support is indicated by the "path" param in the Supported HF.
+     * strict - rejects the registration with "420 Bad Extension" if
        there's a Path header but no support for it is indicated by the
        UAC. Otherwise it's stored and passed back to the UAC.
 
@@ -229,8 +232,8 @@ Chapter 1. Admin Guide
    client's NAT).
 
    The whole process is transparent to the user, so no config changes are
-   required beside setting the registrar-parameters “use_path” and
-   “path_mode”.
+   required beside setting the registrar-parameters "use_path" and
+   "path_mode".
 
 1.2. GRUU Support
 
@@ -286,7 +289,8 @@ Chapter 1. Admin Guide
    3.22. xavp_rcd (string)
    3.23. gruu_enabled (integer)
    3.24. outbound_mode (integer)
-   3.25. flow_timer (integer)
+   3.25. regid_mode (integer)
+   3.26. flow_timer (integer)
 
 3.1. default_expires (integer)
 
@@ -294,7 +298,7 @@ Chapter 1. Admin Guide
    contact parameters, this value will be used for newly created usrloc
    records. The parameter contains number of second to expire (for example
    use 3600 for one hour). If it is set to a lower value than the
-   “min_expires” parameter then it will be ignored. This parameter can be
+   "min_expires" parameter then it will be ignored. This parameter can be
    modified via ser config framework. A random value in a specific
    interval can be selected by using the default_expires_range parameter
 
@@ -308,9 +312,9 @@ modparam("registrar", "default_expires", 1800)
 3.2. default_expires_range (integer)
 
    This parameter specifies that the expiry used for newly created usrloc
-   records are not fixed(when “default_expires” applies), but a random
-   value in the interval “[default_expires-default_expires_range%,
-   default_expires+default_expires_range%]”. The value is between 0 and
+   records are not fixed(when "default_expires" applies), but a random
+   value in the interval "[default_expires-default_expires_range%,
+   default_expires+default_expires_range%]". The value is between 0 and
    100 and represent the maximim percentage from default_expires that will
    be substracted or added when computing the value. Default in 0, meaning
    default_expires is left unmodified. This parameter can be modified via
@@ -529,7 +533,7 @@ modparam("registrar", "method_filtering", 1)
 3.17. use_path (integer)
 
    If set to 1, the Path header is handled according to the parameter This
-   parameter can be modified via ser config framework. “path_mode”.
+   parameter can be modified via ser config framework. "path_mode".
 
    Default value is 0 (disabled).
 
@@ -546,12 +550,12 @@ modparam("registrar", "use_path", 1)
        the reply.
      * 1 - The Path header is saved into usrloc, but is only included in
        the reply if path support is indicated in the registration request
-       by the “path” option of the “Supported” header.
+       by the "path" option of the "Supported" header.
      * 2 - The path header is only saved into usrloc, if path support is
-       indicated in the registration request by the “path” option of the
-       “Supported” header. If no path support is indicated, the request is
-       rejected with “420 - Bad Extension” and the header “Unsupported:
-       path” is included in the reply along with the received “Path”
+       indicated in the registration request by the "path" option of the
+       "Supported" header. If no path support is indicated, the request is
+       rejected with "420 - Bad Extension" and the header "Unsupported:
+       path" is included in the reply along with the received "Path"
        header. This mode is the one recommended by RFC-3327.
 
    Default value is 2.
@@ -563,10 +567,10 @@ modparam("registrar", "path_mode", 0)
 
 3.19. path_use_received (integer)
 
-   If set to 1, the “received” parameter of the first Path URI of a
+   If set to 1, the "received" parameter of the first Path URI of a
    registration is set as received-uri and the NAT branch flag is set for
    this contact. This is useful if the registrar is placed behind a SIP
-   loadbalancer, which passes the nat'ed UAC address as “received”
+   loadbalancer, which passes the nat'ed UAC address as "received"
    parameter in it's Path uri.
 
    Default value is 0 (disabled).
@@ -627,7 +631,7 @@ modparam("registrar", "xavp_cfg", "ulrcd")
 
 3.23. gruu_enabled (integer)
 
-   If set to 1 and GRUU “+sip.instance” parameter to Contact header of
+   If set to 1 and GRUU "+sip.instance" parameter to Contact header of
    REGISTER is present, then the value of the parameter is saved to
    location and pub-gruu and temp-gruu addresses are generated.
 
@@ -667,7 +671,24 @@ modparam("registrar", "gruu_enabled", 0)
 modparam("registrar", "outbound_mode", 2)
 ...
 
-3.25. flow_timer (integer)
+3.25. regid_mode (integer)
+
+   If set to 0 this module will ignore regid contact param when saving
+   REGISTER request if REGISTER request does not indicate support for
+   outbound.
+
+   If set to 1 this module will use regid contact param (if present) when
+   saving REGISTER request even if REGISTER request does not indicate
+   support for outbound.
+
+   Default value is 0.
+
+   Example 1.24. Set regid_mode parameter
+...
+modparam("registrar", "regid_mode", 1)
+...
+
+3.26. flow_timer (integer)
 
    If set to 0 then this module will not add a Flow-Timer: header to 200
    OK responses to REGISTER requests.
@@ -688,7 +709,7 @@ modparam("registrar", "outbound_mode", 2)
 
    Default value is 0.
 
-   Example 1.24. Set flow_timer parameter
+   Example 1.25. Set flow_timer parameter
 ...
 modparam("registrar", "flow_timer", 25)
 ...
@@ -741,7 +762,7 @@ modparam("registrar", "flow_timer", 25)
 
    This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
 
-   Example 1.25. save usage
+   Example 1.26. save usage
 ...
 save("location");
 save("location", "0x01");
@@ -774,7 +795,7 @@ save("location", "0x00", "sip:test@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. lookup usage
+   Example 1.27. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -800,7 +821,7 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. lookup_branches usage
+   Example 1.28. lookup_branches usage
 ...
 lookup_branches("location");
 ...
@@ -819,7 +840,7 @@ lookup_branches("location");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. registered usage
+   Example 1.29. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -829,7 +850,7 @@ if (registered("location")) {
 
 4.5.  add_sock_hdr(hdr_name)
 
-   Adds to the current REGISTER request a new header with “hdr_name” which
+   Adds to the current REGISTER request a new header with "hdr_name" which
    contains the description of the received socket (proto:ip:port)
 
    This make sens only in multiple replicated servers scenarios.
@@ -839,7 +860,7 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.29. add_sock_hdr usage
+   Example 1.30. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
@@ -861,7 +882,7 @@ add_sock_hdr("Sock-Info");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. unregister usage
+   Example 1.31. unregister usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
@@ -884,7 +905,7 @@ unregister("location", "$ru", "$ulc(caller=>ruid)");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. reg_fetch_contacts usage
+   Example 1.32. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
@@ -903,7 +924,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.32. reg_free_contacts usage
+   Example 1.33. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
@@ -917,7 +938,7 @@ reg_free_contacts("callee");
    Executed when a contact in location table has expired. The variable
    $ulc(exp=>...) is filled with the attributes of the expired contact.
 
-   Example 1.33. event_route[usrloc:contact-expired] usage
+   Example 1.34. event_route[usrloc:contact-expired] usage
 ...
 event_route[usrloc:contact-expired] {
     xlog("expired contact for $ulc(exp->aor)\n");
@@ -959,12 +980,12 @@ event_route[usrloc:contact-expired] {
 7.1. $ulc(profile=>attr)
 
    Access the attributes of contact addresses stored in 'profile'. It must
-   be used after a call of “reg_fetch_contacts()”.
+   be used after a call of "reg_fetch_contacts()".
 
-   The “profile” has to be one of the values used with
-   “reg_fetch_contacts()”.
+   The "profile" has to be one of the values used with
+   "reg_fetch_contacts()".
 
-   The “attr” can be:
+   The "attr" can be:
      * aor - address of record
      * domain - use location domain name
      * aorhash - hash id for the record
@@ -989,7 +1010,7 @@ event_route[usrloc:contact-expired] {
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.34. $ulc(name) usage
+   Example 1.35. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {
@@ -1021,9 +1042,9 @@ if(reg_fetch_contacts("location", "$fu", "caller"))
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with the old “nat_flag” module parameter?
-   2.2. What happend with the old “use_domain” module parameter?
-   2.3. What happend with the old “save_noreply” and “save_memory”
+   2.1. What happend with the old "nat_flag" module parameter?
+   2.2. What happend with the old "use_domain" module parameter?
+   2.3. What happend with the old "save_noreply" and "save_memory"
           functions?
 
    2.4. Where can I find more about Kamailio?
@@ -1033,60 +1054,60 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with the old “nat_flag” module parameter?
+       What happend with the old "nat_flag" module parameter?
 
-   In was removed, as the module internally loads this value from the
-   “USRLOC” module (see the “nat_bflag” USRLOC parameter).
+       In was removed, as the module internally loads this value from the
+       "USRLOC" module (see the "nat_bflag" USRLOC parameter).
 
    2.2.
 
-   What happend with the old “use_domain” module parameter?
+       What happend with the old "use_domain" module parameter?
 
-   In was removed, as the module internally loads this option from the
-   “USRLOC” module. This was done in order to simplify the configuration.
+       In was removed, as the module internally loads this option from the
+       "USRLOC" module. This was done in order to simplify the configuration.
 
    2.3.
 
-   What happend with the old “save_noreply” and “save_memory” functions?
+       What happend with the old "save_noreply" and "save_memory" functions?
 
-   There functions were merged into the new “save(domain,flags)”
-   functions. If a reply should be sent or if the DB should be updated
-   also is controlled via the flags.
+       There functions were merged into the new "save(domain,flags)"
+       functions. If a reply should be sent or if the DB should be updated
+       also is controlled via the flags.
 
    2.4.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.5.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    2.6.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+       Please follow the guidelines provided at:
+       http://sip-router.org/tracker.
 
    2.7.
 
-   What happened to the desc_time_order parameter?
+       What happened to the desc_time_order parameter?
 
-   It was removed, as its functionality was migrated into usrloc module,
-   were there is a parameter with the same name.
+       It was removed, as its functionality was migrated into usrloc module,
+       were there is a parameter with the same name.

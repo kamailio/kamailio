@@ -71,6 +71,9 @@
 #define REG_OUTBOUND_SUPPORTED	1
 #define REG_OUTBOUND_REQUIRE	2
 
+#define REG_REGID_OUTBOUND      0
+#define REG_REGID_ALWAYS        1
+
 /* Maximum of 999 to keep flow-timer to 3 digits
    - make sure to update reply.c:add_flow_timer() if the number of digits
      increases! */
@@ -94,6 +97,7 @@ extern int path_mode;
 extern int path_use_params;
 extern int reg_gruu_enabled;
 extern int reg_outbound_mode;
+extern int reg_regid_mode;
 extern int reg_flow_timer;
 
 extern str sock_hdr_name;

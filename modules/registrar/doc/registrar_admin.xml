@@ -762,6 +762,33 @@ modparam("registrar", "outbound_mode", 2)
 	</section>
 
 	<section>
+		<title><varname>regid_mode</varname> (integer)</title>
+		<para>
+		If set to 0 this module will ignore regid contact param
+		when saving REGISTER request if REGISTER request does not
+		indicate support for outbound.
+		</para>
+		<para>
+		If set to 1 this module will use regid contact param
+		(if present) when saving REGISTER request even if 
+		REGISTER request does not indicate support for outbound.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>regid_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "regid_mode", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>flow_timer</varname> (integer)</title>
 		<para>
 		If set to 0 then this module will not add a Flow-Timer: header
