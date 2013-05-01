@@ -119,7 +119,9 @@ sca_appearance_create( int appearance_index, str *owner_uri )
     SCA_STR_COPY( &new_appearance->owner, owner_uri );
 
     new_appearance->index = appearance_index;
-    new_appearance->state = SCA_APPEARANCE_STATE_IDLE;
+    new_appearance->times.ctime = time( NULL );
+    sca_appearance_update_state_unsafe( new_appearance,
+				SCA_APPEARANCE_STATE_IDLE );
     new_appearance->next = NULL;
 
     return( new_appearance );
@@ -386,7 +388,7 @@ sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
 	error = SCA_APPEARANCE_ERR_MALLOC;
         goto done;
     }
-    app->state = SCA_APPEARANCE_STATE_SEIZED;
+    sca_appearance_update_state_unsafe( app, SCA_APPEARANCE_STATE_SEIZED );
 
     sca_appearance_list_insert_appearance( app_list, app );
 
@@ -464,7 +466,7 @@ sca_appearance_seize_next_available_unsafe( sca_mod *scam, str *aor,
 		STR_FMT( owner_uri ), idx );
 	goto done;
     }
-    app->state = SCA_APPEARANCE_STATE_SEIZED;
+    sca_appearance_update_state_unsafe( app, SCA_APPEARANCE_STATE_SEIZED );
 
     sca_appearance_list_insert_appearance( app_list, app );
 
@@ -492,6 +494,15 @@ sca_appearance_seize_next_available_index( sca_mod *scam, str *aor,
     sca_hash_table_unlock_index( scam->appearances, slot_idx );
 
     return( idx );
+}
+
+    void
+sca_appearance_update_state_unsafe( sca_appearance *app, int state )
+{
+    assert( app != NULL );
+
+    app->state = state;
+    app->times.mtime = time( NULL );
 }
 
     int
@@ -638,7 +649,7 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *display,
     int			len;
 
     if ( state != SCA_APPEARANCE_STATE_UNKNOWN ) {
-	app->state = state;
+	sca_appearance_update_state_unsafe( app, state );
     }
 
     if ( !SCA_STR_EMPTY( uri )) {
@@ -911,7 +922,7 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
     }
 
     if ( state != SCA_APPEARANCE_STATE_UNKNOWN && app->state != state ) {
-	app->state = state;
+	sca_appearance_update_state_unsafe( app, state );
     }
 
     if ( !SCA_STR_EMPTY( uri )) {

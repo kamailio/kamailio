@@ -695,7 +695,7 @@ sca_call_info_seize_held_call( sip_msg_t *msg, sca_call_info *call_info,
     }
 
     app->flags |= SCA_APPEARANCE_FLAG_OWNER_PENDING;
-    app->state = SCA_APPEARANCE_STATE_ACTIVE;
+    sca_appearance_update_state_unsafe( app, SCA_APPEARANCE_STATE_ACTIVE );
 
     sca_hash_table_unlock_index( sca->appearances, slot_idx );
     slot_idx = -1;
@@ -1105,7 +1105,9 @@ sca_call_info_invite_reply_18x_handler( sip_msg_t *msg,
     SCA_STR_COPY( &owner, &app->owner );
 
     notify = ( app->state != state );
-    app->state = state;
+    if ( notify ) {
+	sca_appearance_update_state_unsafe( app, state );
+    }
     rc = 1;
 
 done:
@@ -1415,7 +1417,8 @@ sca_call_info_ack_from_handler( sip_msg_t *msg, str *from_aor, str *to_aor )
 	 * as necessary.
 	 */
 	if ( sca_call_is_held( msg )) {
-	    app->state = state = SCA_APPEARANCE_STATE_HELD;
+	    state = SCA_APPEARANCE_STATE_HELD;
+	    sca_appearance_update_state_unsafe( app, state );
 
 	    /* can't send NOTIFYs until we unlock the slot below */
 	}

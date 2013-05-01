@@ -72,6 +72,18 @@ extern const str SCA_APPEARANCE_STATE_STR_HELD;
 extern const str SCA_APPEARANCE_STATE_STR_HELD_PRIVATE;
 
 
+struct _sca_appearance_times {
+    /* time of appearance creation */
+    time_t			ctime;
+
+    /* time of last appearance state change */
+    time_t			mtime;
+
+    /* time of last end-to-end activity */
+    time_t			atime;
+};
+typedef struct _sca_appearance_times	sca_appearance_times;
+
 struct _sca_appearance_list;
 struct _sca_appearance {
     int				index;
@@ -83,6 +95,7 @@ struct _sca_appearance {
     str				owner;
     str				callee;
     sca_dialog			dialog;
+    sca_appearance_times	times;
 
     str				prev_owner;
     str				prev_callee;
@@ -109,6 +122,7 @@ int	sca_appearance_seize_index( sca_mod *, str *, int, str * );
 int	sca_appearance_seize_next_available_index( sca_mod *, str *, str * );
 sca_appearance 	*sca_appearance_seize_next_available_unsafe( sca_mod *, str *,
 							     str *, int );
+void	sca_appearance_update_state_unsafe( sca_appearance *, int );
 int	sca_appearance_update_owner_unsafe( sca_appearance *, str * );
 int	sca_appearance_update_callee_unsafe( sca_appearance *, str * );
 int	sca_appearance_update_dialog_unsafe( sca_appearance *, str *,
