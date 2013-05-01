@@ -428,6 +428,18 @@ mt_match("mytree", "$rU", "0");
 		</para>
 		<para>Parameters: none.</para>
         </section>
+	<section>
+		<title>
+		<function moreinfo="none">mtree.reload</function>
+		</title>
+		<para>
+		Reload mtree from database to memory.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_</para> - name of mtree or empty string meaning all mtrees</listitem>	  
+		</itemizedlist>
+        </section>
     	</section><!-- RPC commands -->
 
 </chapter>

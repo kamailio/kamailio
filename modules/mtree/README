@@ -20,9 +20,9 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright (c) 2010 Daniel-Constantin Mierla (asipto.com)
 
-   Copyright © 2011 Juha Heinanen
+   Copyright (c) 2011 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -64,6 +64,7 @@ Juha Heinanen
         6. RPC Commands
 
               6.1. mtree.summary
+              6.2. mtree.reload
 
    List of Examples
 
@@ -121,6 +122,7 @@ Chapter 1. Admin Guide
    6. RPC Commands
 
         6.1. mtree.summary
+        6.2. mtree.reload
 
 1. Overview
 
@@ -375,9 +377,18 @@ mt_match("mytree", "$rU", "0");
 6. RPC Commands
 
    6.1. mtree.summary
+   6.2. mtree.reload
 
 6.1.  mtree.summary
 
    List usage summary for all trees.
 
    Parameters: none.
+
+6.2.  mtree.reload
+
+   Reload mtree from database to memory.
+
+   Parameters:
+     * _mtree_
+       - name of mtree or empty string meaning all mtrees

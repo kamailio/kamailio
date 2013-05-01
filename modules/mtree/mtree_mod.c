@@ -1044,8 +1044,65 @@ static const char* rpc_mtree_summary_doc[2] = {
 	0
 };
 
+void rpc_mtree_reload(rpc_t* rpc, void* c)
+{
+	str tname = {0, 0};
+	m_tree_t *pt;
+
+	if(db_table.len>0)
+	{
+		/* re-loading all information from database */
+		if(mt_load_db_trees()!=0)
+		{
+			LM_ERR("cannot re-load mtrees from database\n");
+			goto error;
+		}
+	} else {
+		if(!mt_defined_trees())
+		{
+			LM_ERR("empty mtree list\n");
+			goto error;
+		}
+
+		/* read tree name */
+		if (rpc->scan(c, "S", &tname) != 1) {
+		    rpc->fault(c, 500, "Failed to get table name parameter");
+		    return;
+		}
+
+		pt = mt_get_first_tree();
+	
+		while(pt!=NULL)
+		{
+			if(tname.s==NULL
+				|| (tname.s!=NULL && pt->tname.len>=tname.len
+					&& strncmp(pt->tname.s, tname.s, tname.len)==0))
+			{
+				/* re-loading table from database */
+				if(mt_load_db(&pt->tname)!=0)
+				{
+					LM_ERR("cannot re-load mtree from database\n");	
+					goto error;
+				}
+			}
+			pt = pt->next;
+		}
+	}
+	
+	return;
+
+error:
+	rpc->fault(c, 500, "Mtree Reload Failed");
+}
+
+static const char* rpc_mtree_reload_doc[2] = {
+    "Reload mtrees from database to memory",
+    0
+};
+
 rpc_export_t mtree_rpc[] = {
 	{"mtree.summary", rpc_mtree_summary, rpc_mtree_summary_doc, 0},
+	{"mtree.reload", rpc_mtree_reload, rpc_mtree_reload_doc, 0},
 	{0, 0, 0, 0}
 };
 
