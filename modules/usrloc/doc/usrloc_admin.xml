@@ -1063,6 +1063,102 @@ modparam("usrloc", "db_ops_ruid", 1)
 			</para></listitem>
 		</itemizedlist>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">ul.rm table AOR</function>
+		</title>
+		<para>
+		Deletes an entire AOR record (including its contacts).
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - table where the AOR
+				resides (Ex: location).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>AOR</emphasis> - user AOR in username[@domain]
+				format (domain must be supplied only if use_domain option
+				is on).
+			</para></listitem>
+		</itemizedlist>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">ul.rm_contact table AOR contact</function>
+		</title>
+		<para>
+		Deletes a contact from an AOR record.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - table where the AOR
+				is removed from (Ex: location).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>AOR</emphasis> - user AOR in username[@domain]
+				format (domain must be supplied only if use_domain option
+				is on).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>contact</emphasis> - exact contact to be removed
+			</para></listitem>
+		</itemizedlist>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">ul.flush</function>
+		</title>
+		<para>
+		Triggers the flush of USRLOC memory cache into DB.
+		</para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">ul.add</function>
+		</title>
+		<para>
+		Adds a new contact for an user AOR.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - table where the contact
+				will be added (Ex: location).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>AOR</emphasis> - user AOR in username[@domain]
+				format (domain must be supplied only if use_domain option
+				is on).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>contact</emphasis> - contact string to be added
+			</para></listitem>
+			<listitem><para>
+				<emphasis>expires</emphasis> - expires value of the contact
+			</para></listitem>
+			<listitem><para>
+				<emphasis>Q</emphasis> - Q value of the contact
+			</para></listitem>
+			<listitem><para>
+				<emphasis>unused</emphasis> - unused attribute (kept for
+				backword compatibility)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>flags</emphasis> - internal USRLOC flags of the
+				contact
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cflags</emphasis> - per branch flags of the
+				contact
+			</para></listitem>
+			<listitem><para>
+				<emphasis>methods</emphasis> - mask with supported requests
+				of the contact
+			</para></listitem>
+		</itemizedlist>
+	</section>
 	</section><!-- RPC commands -->
 
 

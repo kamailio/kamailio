@@ -83,6 +83,10 @@ Bogdan-Andrei Iancu
 
               6.1. ul.dump
               6.2. ul.lookup table AOR
+              6.3. ul.rm table AOR
+              6.4. ul.rm_contact table AOR contact
+              6.5. ul.flush
+              6.6. ul.add
 
         7. Statistics
 
@@ -212,6 +216,10 @@ Chapter 1. Admin Guide
 
         6.1. ul.dump
         6.2. ul.lookup table AOR
+        6.3. ul.rm table AOR
+        6.4. ul.rm_contact table AOR contact
+        6.5. ul.flush
+        6.6. ul.add
 
    7. Statistics
 
@@ -823,6 +831,10 @@ modparam("usrloc", "db_ops_ruid", 1)
 
    6.1. ul.dump
    6.2. ul.lookup table AOR
+   6.3. ul.rm table AOR
+   6.4. ul.rm_contact table AOR contact
+   6.5. ul.flush
+   6.6. ul.add
 
 6.1.  ul.dump
 
@@ -839,6 +851,45 @@ modparam("usrloc", "db_ops_ruid", 1)
      * table name - table where the AOR resides (Ex: location).
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
+
+6.3.  ul.rm table AOR
+
+   Deletes an entire AOR record (including its contacts).
+
+   Parameters:
+     * table name - table where the AOR resides (Ex: location).
+     * AOR - user AOR in username[@domain] format (domain must be supplied
+       only if use_domain option is on).
+
+6.4.  ul.rm_contact table AOR contact
+
+   Deletes a contact from an AOR record.
+
+   Parameters:
+     * table name - table where the AOR is removed from (Ex: location).
+     * AOR - user AOR in username[@domain] format (domain must be supplied
+       only if use_domain option is on).
+     * contact - exact contact to be removed
+
+6.5.  ul.flush
+
+   Triggers the flush of USRLOC memory cache into DB.
+
+6.6.  ul.add
+
+   Adds a new contact for an user AOR.
+
+   Parameters:
+     * table name - table where the contact will be added (Ex: location).
+     * AOR - user AOR in username[@domain] format (domain must be supplied
+       only if use_domain option is on).
+     * contact - contact string to be added
+     * expires - expires value of the contact
+     * Q - Q value of the contact
+     * unused - unused attribute (kept for backword compatibility)
+     * flags - internal USRLOC flags of the contact
+     * cflags - per branch flags of the contact
+     * methods - mask with supported requests of the contact
 
 7. Statistics
 
