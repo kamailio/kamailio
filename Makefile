@@ -1030,7 +1030,7 @@ install_initd_debian install-initd-debian:
 		> /etc/init.d/$(NAME)
 	chmod +x /etc/init.d/$(NAME)
 	sed -e "s#RUN_KAMAILIO=no#RUN_KAMAILIO=yes#g" \
-		< pkg/kamailio/debian/kamailio.default \
+		< pkg/kamailio/deb/debian/kamailio.default \
 		> /etc/default/$(NAME)
 	mkdir -p /var/run/$(NAME)
 	adduser --quiet --system --group --disabled-password \
