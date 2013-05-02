@@ -777,7 +777,7 @@ sca_call_info_uri_update( str *aor, sca_call_info *call_info,
     app = sca_appearance_for_index_unsafe( sca, aor, call_info->index,
 						slot_idx );
     if ( app == NULL ) {
-	LM_WARN( "sca_call_info_uri_update: no appearance found for %.*s "
+	LM_DBG( "sca_call_info_uri_update: no appearance found for %.*s "
 		 "index %d, looking up by dialog...", STR_FMT( aor ),
 		 call_info->index );
 	app = sca_appearance_for_dialog_unsafe( sca, aor, &dialog, slot_idx );
