@@ -43,7 +43,6 @@
 
 extern regex_t *portExpression;
 extern regex_t *ipExpression;
-extern char *contact_flds_separator;
 
 
 #endif
