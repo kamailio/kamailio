@@ -107,7 +107,7 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		socket_str.s = c->sock->sock_str.s;
 		socket_str.len = c->sock->sock_str.len;
 	}
-	if(rpc->struct_add(vh, "f", "Q", c->q)<0)
+	if(rpc->struct_add(vh, "f", "Q", q2double(c->q))<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding q");
 		return -1;
