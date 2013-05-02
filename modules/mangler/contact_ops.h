@@ -49,7 +49,7 @@
 #define DEFAULT_SEPARATOR "*"
 
 
-char *contact_flds_separator;
+extern char *contact_flds_separator;
 
 
 struct uri_format
