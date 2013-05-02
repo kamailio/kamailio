@@ -986,8 +986,7 @@ modparam("usrloc", "db_ops_ruid", 1)
 				<emphasis>Q</emphasis> - Q value of the contact
 			</para></listitem>
 			<listitem><para>
-				<emphasis>unused</emphasis> - unused attribute (kept for
-				backword compatibility)
+				<emphasis>path</emphasis> value of the contact
 			</para></listitem>
 			<listitem><para>
 				<emphasis>flags</emphasis> - internal USRLOC flags of the 
@@ -1142,8 +1141,7 @@ modparam("usrloc", "db_ops_ruid", 1)
 				<emphasis>Q</emphasis> - Q value of the contact
 			</para></listitem>
 			<listitem><para>
-				<emphasis>unused</emphasis> - unused attribute (kept for
-				backword compatibility)
+				<emphasis>path</emphasis> value of the contact
 			</para></listitem>
 			<listitem><para>
 				<emphasis>flags</emphasis> - internal USRLOC flags of the

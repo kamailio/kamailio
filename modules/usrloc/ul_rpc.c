@@ -524,14 +524,15 @@ static const char* ul_rpc_flush_doc[2] = {
 /*!
  * \brief Add a new contact for an address of record
  * \note Expects 9 parameters: table name, AOR, contact, expires, Q,
- * useless - backward compatible, flags, cflags, methods
+ * path, flags, cflags, methods
  */
 static void ul_rpc_add(rpc_t* rpc, void* ctx)
 {
 	str table = {0, 0};
 	str aor = {0, 0};
 	str contact = {0, 0};
-	str useless = {0, 0};
+	str path = {0, 0};
+	str temp = {0, 0};
 	double dtemp;
 	ucontact_info_t ci;
 	urecord_t* r;
@@ -541,18 +542,24 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 
 	memset( &ci, 0, sizeof(ucontact_info_t));
 
-	ret = rpc->scan(ctx, "SSSdf.Sddd", &table, &aor, &contact, &ci.expires,
-		&dtemp, &useless, &ci.flags, &ci.cflags, &ci.methods);
-	LM_DBG("ret: %d table:%.*s aor:%.*s contact:%.*s expires:%d dtemp:%f useless:%.*s flags:%d bflags:%d methods:%d\n",
+	ret = rpc->scan(ctx, "SSSdfSddd", &table, &aor, &contact, &ci.expires,
+		&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods);
+	if(path.len==1 && (strncmp(temp.s, "0", 1)==0))	{
+		LM_DBG("path == 0 -> unset\n");
+	}
+	else {
+		ci.path = &path;
+	}
+	LM_DBG("ret: %d table:%.*s aor:%.*s contact:%.*s expires:%d dtemp:%f path:%.*s flags:%d bflags:%d methods:%d\n",
 		ret, table.len, table.s, aor.len, aor.s, contact.len, contact.s,
-		(int) ci.expires, dtemp, useless.len, useless.s, ci.flags, ci.cflags, (int) ci.methods);
+		(int) ci.expires, dtemp, ci.path->len, ci.path->s, ci.flags, ci.cflags, (int) ci.methods);
 	if ( ret != 9) {
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
 	}
 	ci.q = double2q(dtemp);
-	useless.s = q2str(ci.q, (unsigned int*)&useless.len);
-	LM_DBG("q:%.*s\n", useless.len, useless.s);
+	temp.s = q2str(ci.q, (unsigned int*)&temp.len);
+	LM_DBG("q:%.*s\n", temp.len, temp.s);
 	/* look for table */
 	dom = rpc_find_domain( &table );
 	if (dom == NULL) {

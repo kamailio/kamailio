@@ -491,8 +491,8 @@ struct mi_root* mi_usrloc_flush(struct mi_root *cmd, void *param)
  * \brief Add a new contact for an address of record
  * \param cmd mi_root containing the parameter
  * \param param not used
- * \note Expects 7 nodes: table name, AOR, contact, expires, Q,
- * useless - backward compatible, flags, cflags, methods
+ * \note Expects 9 nodes: table name, AOR, contact, expires, Q,
+ * path, flags, cflags, methods
  * \return mi_root with the result
  */
 struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
@@ -540,8 +540,10 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 	if (str2q( &ci.q, node->value.s, node->value.len) < 0)
 		goto bad_syntax;
 
-	/* unused value (param 6) FIXME */
+	/* path value (param 6) */
 	node = node->next;
+	if(strncmp(node->value.s, "0", 1) != 0 && node->value.len > 1)
+		ci.path = &node->value;
 
 	/* flags value (param 7) */
 	node = node->next;

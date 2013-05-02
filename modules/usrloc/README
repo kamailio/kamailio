@@ -814,7 +814,7 @@ modparam("usrloc", "db_ops_ruid", 1)
      * contact - contact string to be added
      * expires - expires value of the contact
      * Q - Q value of the contact
-     * unused - unused attribute (kept for backword compatibility)
+     * path value of the contact
      * flags - internal USRLOC flags of the contact
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
@@ -887,7 +887,7 @@ modparam("usrloc", "db_ops_ruid", 1)
      * contact - contact string to be added
      * expires - expires value of the contact
      * Q - Q value of the contact
-     * unused - unused attribute (kept for backword compatibility)
+     * path value of the contact
      * flags - internal USRLOC flags of the contact
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
