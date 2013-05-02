@@ -42,6 +42,8 @@
 static inline int pv_mcd_key_expiry_split_str(str *data, str *key, unsigned int *exp) {
 	char *p;
 	str str_exp;
+	str_exp.s = NULL;
+	str_exp.len = 0;
 	
 	if (data == NULL || data->s == NULL || data->len <= 0) {
 		LM_ERR("invalid parameters\n");
