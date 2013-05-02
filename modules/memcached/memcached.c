@@ -107,7 +107,7 @@ struct module_exports exports = {
  * \param mem freed memory
  * \see pkg_free
  */
-static inline void mcd_free(void *mem) {
+static inline void mcd_free(memcached_st *ptr, void *mem, void *context) {
 	pkg_free(mem);
 }
 
@@ -118,7 +118,7 @@ static inline void mcd_free(void *mem) {
  * \return allocated memory, or NULL on failure
  * \see pkg_malloc
  */
-static inline void* mcd_malloc(const size_t size) {
+static inline void* mcd_malloc(memcached_st *ptr, const size_t size, void *context) {
 	return pkg_malloc(size);
 }
 
@@ -130,9 +130,42 @@ static inline void* mcd_malloc(const size_t size) {
  * \return allocated memory, or NULL on failure
  * \see pkg_realloc
  */
-static inline void* mcd_realloc(void *mem, const size_t size) {
+static inline void* mcd_realloc(memcached_st *ptr, void *mem, const size_t size, void *context) {
  	return pkg_realloc(mem, size);
 }
+
+
+/*!
+ * \brief Wrapper functions around our internal memory management
+ * \param mem pointer to allocated memory
+ * \param size new size of memory area
+ * \return allocated memory, or NULL on failure
+ * \see pkg_malloc
+ * \todo this is not optimal, 	use internal calloc implemention which is not exported yet
+ */
+static inline void * mcd_calloc(memcached_st *ptr, size_t nelem, const size_t elsize, void *context) {
+	void* tmp = NULL;
+	tmp = pkg_malloc(nelem * elsize);
+	if (tmp != NULL) {
+		memset(tmp, 0, nelem * elsize);
+	}
+	return tmp;
+}
+
+/**
+ * \brief Callback to check if we could connect successfully to a server
+ * \param ptr memcached handler
+ * \param server server instance
+ * \param context context for callback
+ * \return MEMCACHED_SUCCESS on success, MEMCACHED_CONNECTION_FAILURE on failure
+ * \todo FIXME
+static inline memcached_server_fn mcd_check_connection(const memcached_st *ptr, memcached_server_instance_st my_server, void *context) {
+	if (my_server->fd < 0) {
+		return MEMCACHED_CONNECTION_FAILURE;
+	}
+	return MEMCACHED_SUCCESS;
+}
+*/
 
 /*!
  * \brief Module initialization function
@@ -161,54 +194,25 @@ static int mod_init(void) {
 	strncpy(server, mcd_srv_str, len);
 	server[len] = '\0';
 
-        servers = memcached_server_list_append(servers, server, atoi(port), &rc);
-
 	memcached_h = memcached_create(NULL);
 	if (memcached_h == NULL) {
 		LM_ERR("could not create memcached structure\n");
 		return -1;
 	}
 	LM_DBG("allocated new server handle at %p", memcached_h);
+
+	LM_DBG("set memory manager callbacks");
+	rc = memcached_set_memory_allocators(memcached_h, (memcached_malloc_fn)mcd_malloc,
+					     (memcached_free_fn)mcd_free, (memcached_realloc_fn)mcd_realloc,
+					     (memcached_calloc_fn)mcd_calloc, NULL);
+	if (rc == MEMCACHED_SUCCESS) {
+		LM_DBG("memory manager callbacks set");
+	} else {
+		LM_ERR("memory manager callbacks not set, returned %s.\n", memcached_strerror(memcached_h, rc));
+		return -1;
+	}
 	
-	#ifdef MEMCACHED_ENABLE_DEPRECATED
-	/** 
-	 * \note Set callbacks to our internal memory manager
-	 * \bug this don't work for now
-	 * \todo Move to new memcached_set_memory_allocators function, this deprecated since 0.32
-	 * 
-	 * MEMCACHED_CALLBACK_MALLOC_FUNCTION
-	 * This alllows yout to pass in a customized version of malloc that
-	 * will be used instead of the builtin malloc(3) call. The prototype
-	 * for this is:
-	 * void *(*memcached_malloc_function)(memcached_st *ptr, const size_t size);
-	 * 
-	 * MEMCACHED_CALLBACK_REALLOC_FUNCTION
-	 * This alllows yout to pass in a customized version of realloc that
-	 * will be used instead of the builtin realloc(3) call. The prototype
-	 * for this is:
-	 * void *(*memcached_realloc_function)(memcached_st *ptr, void *mem, const size_t size);
-	 * 
-	 * MEMCACHED_CALLBACK_FREE_FUNCTION
-	 * This alllows yout to pass in a customized version of realloc that
-	 * will be used instead of the builtin free(3) call. The prototype
-	 * for this is:
-	 * typedef void (*memcached_free_function)(memcached_st *ptr, void *mem);
-	 */
-	LM_DBG("set memory manager callbacks");	
-	if (memcached_callback_set(memcached_h, MEMCACHED_CALLBACK_MALLOC_FUNCTION, mcd_free) != MEMCACHED_SUCCESS) {
-		LM_ERR("could not set malloc callback handler");
-		return -1;
-	}
-	if (memcached_callback_set(memcached_h, MEMCACHED_CALLBACK_REALLOC_FUNCTION, mcd_realloc) != MEMCACHED_SUCCESS) {
-		LM_ERR("could not set realloc callback handler");
-		return -1;
-	}
-	if (memcached_callback_set(memcached_h, MEMCACHED_CALLBACK_FREE_FUNCTION, mcd_free) != MEMCACHED_SUCCESS) {
-		LM_ERR("could not set free callback handler");
-		return -1;
-	}
-	LM_DBG("memory manager callbacks set");
-	#endif
+        servers = memcached_server_list_append(servers, server, atoi(port), &rc);
 	
 	if (memcached_behavior_set(memcached_h, MEMCACHED_BEHAVIOR_CONNECT_TIMEOUT, mcd_timeout) != MEMCACHED_SUCCESS) {
 		LM_ERR("could not set server connection timeout");
@@ -223,6 +227,10 @@ static int mod_init(void) {
 	}
 
 	pkg_free(server);
+
+	/** \todo FIXME logic to handle connection errors on startup
+	memcached_server_cursor(memcached_h, (const memcached_server_fn*) &mcd_check_connection, NULL, 1);
+	*/
 	
 	LM_INFO("libmemcached version is %s\n", memcached_lib_version());
 	return 0;
@@ -233,8 +241,20 @@ static int mod_init(void) {
  * \brief Module shutdown function
  */
 static void mod_destroy(void) {
-	if (memcached_h != NULL)
-		memcached_free(memcached_h);
+	memcached_return rc;
+	
 	if (servers != NULL)
 		memcached_server_list_free(servers);
+	
+	/* unset custom memory manager to enable clean shutdown of in system memory allocated server structure */
+	LM_DBG("remove memory manager callbacks");
+	rc = memcached_set_memory_allocators(memcached_h, NULL, NULL, NULL, NULL, NULL);
+	if (rc == MEMCACHED_SUCCESS) {
+		LM_DBG("memory manager callbacks removed");
+	} else {
+		LM_ERR("memory manager callbacks not removed, returned %s but continue anyway.\n", memcached_strerror(memcached_h, rc));
+	}
+	
+	if (memcached_h != NULL)
+		memcached_free(memcached_h);
 }
