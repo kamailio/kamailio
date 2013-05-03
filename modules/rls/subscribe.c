@@ -51,6 +51,7 @@
 #include "rls.h"
 #include "../../mod_fix.h"
 #include "list.h"
+#include "utils.h"
 
 int counter= 0;
 
@@ -72,10 +73,12 @@ int remove_expired_rlsubs( subs_t* subs,unsigned int hash_code);
 /**
  * return the XML node for rls-services matching uri
  */
-xmlNodePtr rls_get_by_service_uri(xmlDocPtr doc, str* uri)
+xmlNodePtr rls_get_by_service_uri(xmlDocPtr doc, str* service_uri)
 {
 	xmlNodePtr root, node;
-	char* val;
+	struct sip_uri sip_uri;
+	str uri, uri_str;
+	str *normalized_uri;	
 
 	root = XMLDocGetNodeByName(doc, "rls-services", NULL);
 	if(root==NULL)
@@ -88,16 +91,39 @@ xmlNodePtr rls_get_by_service_uri(xmlDocPtr doc, str* uri)
 	{
 		if(xmlStrcasecmp(node->name, (unsigned char*)"service")==0)
 		{
-			val = XMLNodeGetAttrContentByName(node, "uri");
-			if(val!=NULL)
+			uri.s = XMLNodeGetAttrContentByName(node, "uri");
+			if (uri.s == NULL)
 			{
-				if((uri->len==strlen(val)) && (strncmp(val, uri->s, uri->len)==0))
-				{
-					xmlFree(val);
-					return node;
-				}
-				xmlFree(val);
+			        LM_DBG("failed to fetch 'uri' in service [invalid XML from XCAP]\n");
+			        continue;
 			}
+			uri.len = strlen(uri.s);
+			normalized_uri = normalize_sip_uri(&uri);
+			if (normalized_uri->s == NULL || normalized_uri->len == 0)
+			{
+				LM_ERR("failed to normalize service URI\n");
+				xmlFree(uri.s);
+				return NULL;
+			}
+			xmlFree(uri.s);
+			if(parse_uri(normalized_uri->s, normalized_uri->len, &sip_uri)< 0)
+			{
+				LM_ERR("failed to parse uri\n");
+				return NULL;
+			}
+			if(uandd_to_uri(sip_uri.user, sip_uri.host, &uri_str)< 0)
+			{
+				LM_ERR("failed to construct uri from user and domain\n");
+				return NULL;
+			}
+			if(uri_str.len== service_uri->len && 
+					strncmp(uri_str.s, service_uri->s, uri_str.len) == 0)
+			{
+				pkg_free(uri_str.s);
+				return node;
+			}
+			LM_DBG("match not found, service-uri = [%.*s]\n", uri_str.len, uri_str.s);
+			pkg_free(uri_str.s);
 		}
 	}
 	return NULL;
