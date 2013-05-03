@@ -67,11 +67,12 @@ usage_usrloc() {
 	mecho " -- command 'ul|alias' - manage user location or aliases"
 	echo
 cat <<EOF
- ul show [<username>]................ show in-RAM online users
- ul show --brief..................... show in-RAM online users in short format
- ul rm <username> [<contact URI>].... delete user's usrloc entries
- ul add <username> <uri> ............ introduce a permanent usrloc entry
- ul add <username> <uri> <expires> .. introduce a temporary usrloc entry
+ ul show [<username>]................... show in-RAM online users
+ ul show --brief........................ show in-RAM online users in short format
+ ul rm <username> [<contact URI>]....... delete user's usrloc entries
+ ul add <username> <uri> ............... introduce a permanent usrloc entry
+ ul add <username> <uri> <expires> ..... introduce a temporary usrloc entry
+ ul add <user> <uri> <expires> <path> .. introduce a temporary usrloc entry
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_usrloc"
