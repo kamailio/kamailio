@@ -48,6 +48,7 @@
 #include "../../hashes.h"
 #include "rls.h"
 #include "notify.h"
+#include "utils.h"
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
@@ -1003,7 +1004,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 		list_func_t function, void* param)
 {
 	xmlNodePtr node;
-	char* uri = NULL;
+	str uri;
 	int res = 0;
 
 	for(node= list_node->children; node; node= node->next)
@@ -1014,16 +1015,33 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 			unsigned short port = 0;
 			xmlNodePtr rl_node = NULL;
 			xmlDocPtr rl_doc = NULL;
+			str unescaped_uri;
+			char buf[MAX_URI_SIZE];
+			
 
-			uri= XMLNodeGetNodeContentByName(node, "resource-list", NULL);
-
-			if (uri == NULL)
+			uri.s = XMLNodeGetNodeContentByName(node, "resource-list", NULL);
+			if (uri.s == NULL)
 			{
 				LM_ERR("when extracting URI from node\n");
 				return -1;
 			}
+			uri.len = strlen(uri.s);
+			if (uri.len > MAX_URI_SIZE-1) {
+			    LM_ERR("XCAP URI is too long\n");
+			    return -1;
+			}
+			LM_DBG("got resource-list uri <%.*s>\n", uri.len, uri.s);
 
-			if(parse_xcap_uri(uri, &hostname, &port, &rl_uri)>0)
+			unescaped_uri.s = buf;
+			unescaped_uri.len = 0;
+			if (un_escape(&uri, &unescaped_uri) < 0) {
+			    LM_ERR("Error un-escaping XCAP URI\n");
+			    return -1;
+			}
+			unescaped_uri.s[unescaped_uri.len] = 0;
+			LM_DBG("got unescaped uri <%s>\n", unescaped_uri.s);
+
+			if(parse_xcap_uri(unescaped_uri.s, &hostname, &port, &rl_uri)>0)
 			{
 				if (rls_integrated_xcap_server == 1
 					&& (hostname.len == 0
@@ -1034,13 +1052,13 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 					{
 						LM_DBG("calling myself for rl_node\n");
 						res = process_list_and_exec(rl_node, username, domain, function, param);
-						xmlFree(uri);
+						xmlFree(uri.s);
 						xmlFreeDoc(rl_doc);
 					}
 					else
 					{
 						LM_ERR("<resource-list/> not found\n");
-						xmlFree(uri);
+						xmlFree(uri.s);
 						return -1;
 					}
 					
@@ -1048,7 +1066,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 				else
 				{
 					LM_ERR("<resource-list/> is not local - unsupported at this time\n");
-					xmlFree(uri);
+					xmlFree(uri.s);
 					return -1;
 				}
 			}
@@ -1061,20 +1079,20 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 		else
                 if(xmlStrcasecmp(node->name,(unsigned char*)"entry")== 0)
 		{
-			uri= XMLNodeGetAttrContentByName(node, "uri");
-			if(uri== NULL)
+			uri.s = XMLNodeGetAttrContentByName(node, "uri");
+			if(uri.s== NULL)
 			{
 				LM_ERR("when extracting entry uri attribute\n");
 				return -1;
 			}
-			LM_DBG("uri= %s\n", uri);
-			if(function(uri, param)< 0)
+			LM_DBG("uri= %s\n", uri.s);
+			if(function(uri.s, param)< 0)
 			{
 				LM_ERR("in function given as a parameter\n");
-				xmlFree(uri);
+				xmlFree(uri.s);
 				return -1;
 			}
-			xmlFree(uri);
+			xmlFree(uri.s);
 		}
 		else
 		if(xmlStrcasecmp(node->name,(unsigned char*)"list")== 0)
@@ -1252,21 +1270,6 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 			strcat(path.s, "/xmlns:");
 			path.len += 7;
 			checked++;
-		}
-		else if (checked <= rl_uri->len - 3 && strncmp(rl_uri->s + checked, "\%5b", 3) == 0)
-		{
-			path.s[path.len++] = '[';
-			checked += 3;
-		}
-		else if (checked <= rl_uri->len - 3 && strncmp(rl_uri->s + checked, "\%5d", 3) == 0)
-		{
-			path.s[path.len++] = ']';
-			checked += 3;
-		}
-		else if (checked <= rl_uri->len - 3 && strncmp(rl_uri->s + checked, "\%22", 3) == 0)
-		{
-			path.s[path.len++] = '\"';
-			checked += 3;
 		}
 		else
 		{
