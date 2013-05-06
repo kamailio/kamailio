@@ -8,6 +8,10 @@ Edited by
 
 Andreas Granig
 
+Edited by
+
+Richard Fuchs
+
    Copyright © 2006 Inode GmbH
      __________________________________________________________________
 
@@ -33,16 +37,20 @@ Andreas Granig
 
               4.1. add_path()
               4.2. add_path(user)
-              4.3. add_path_received()
-              4.4. add_path_received(user)
+              4.3. add_path(user, parameters)
+              4.4. add_path_received()
+              4.5. add_path_received(user)
+              4.6. add_path_received(user, parameters)
 
    List of Examples
 
    1.1. Set use_received parameter
    1.2. add_path usage
    1.3. add_path(user) usage
-   1.4. add_path_received() usage
-   1.5. add_path_received(user) usage
+   1.4. add_path(user, parameters) usage
+   1.5. add_path_received() usage
+   1.6. add_path_received(user) usage
+   1.7. add_path_received(user, parameters) usage
 
 Chapter 1. Admin Guide
 
@@ -66,8 +74,10 @@ Chapter 1. Admin Guide
 
         4.1. add_path()
         4.2. add_path(user)
-        4.3. add_path_received()
-        4.4. add_path_received(user)
+        4.3. add_path(user, parameters)
+        4.4. add_path_received()
+        4.5. add_path_received(user)
+        4.6. add_path_received(user, parameters)
 
 1. Overview
 
@@ -151,8 +161,10 @@ modparam("path", "use_received", 1)
 
    4.1. add_path()
    4.2. add_path(user)
-   4.3. add_path_received()
-   4.4. add_path_received(user)
+   4.3. add_path(user, parameters)
+   4.4. add_path_received()
+   4.5. add_path_received(user)
+   4.6. add_path_received(user, parameters)
 
 4.1.  add_path()
 
@@ -183,7 +195,7 @@ if (!add_path()) {
    <sip:user@1.2.3.4;lr>”.
 
    Meaning of the parameters is as follows:
-     * user - The username to be inserted as user part.
+     * user - The username to be inserted as user part. SPVE is supported.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -195,16 +207,38 @@ if (!add_path("loadbalancer")) {
 };
 ...
 
-4.3.  add_path_received()
+4.3.  add_path(user, parameters)
 
    This function adds a Path header in the form “Path:
-   <sip:1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting it's own outgoing
+   <sip:user@1.2.3.4;lr>” and appends the given parameters as additional
+   URI parameters.
+
+   Meaning of the parameters is as follows:
+     * user - The username to be inserted as user part. SPVE is supported.
+     * parameters - Additional URI parameters to be appended to the URI.
+       The semicolon separator is added automatically. The script writer
+       is responsible for proper URI escaping. SPVE is supported.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.4. add_path(user, parameters) usage
+...
+if (!add_path("loadbalancer", "ob")) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...
+
+4.4.  add_path_received()
+
+   This function adds a Path header in the form “Path:
+   <sip:1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting its own outgoing
    address as domain-part, and the address the request has been received
    from as received-parameter.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.4. add_path_received() usage
+   Example 1.5. add_path_received() usage
 ...
 if (!add_path_received()) {
         sl_send_reply("503", "Internal Path Error");
@@ -212,18 +246,35 @@ if (!add_path_received()) {
 };
 ...
 
-4.4.  add_path_received(user)
+4.5.  add_path_received(user)
 
    This function adds a Path header in the form “Path:
    <sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting 'user' as
-   username part of address, it's own outgoing address as domain-part, and
+   username part of address, its own outgoing address as domain-part, and
    the address the request has been received from as received-parameter.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.5. add_path_received(user) usage
+   Example 1.6. add_path_received(user) usage
 ...
 if (!add_path_received("inbound")) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...
+
+4.6.  add_path_received(user, parameters)
+
+   This function adds a Path header in the form “Path:
+   <sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting 'user' as
+   username part of address, its own outgoing address as domain-part, and
+   the address the request has been received from as received-parameter.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.7. add_path_received(user, parameters) usage
+...
+if (!add_path_received("inbound", "ob")) {
         sl_send_reply("503", "Internal Path Error");
         ...
 };

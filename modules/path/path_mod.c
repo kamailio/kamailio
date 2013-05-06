@@ -87,11 +87,15 @@ static cmd_export_t cmds[] = {
 	{ "add_path",          (cmd_function)add_path,              0,
 			0,              0,  REQUEST_ROUTE },
 	{ "add_path",          (cmd_function)add_path_usr,          1,
-			fixup_str_null, 0, REQUEST_ROUTE },
+			fixup_spve_null, 0, REQUEST_ROUTE },
+	{ "add_path",          (cmd_function)add_path_usr,          2,
+			fixup_spve_spve, 0, REQUEST_ROUTE },
 	{ "add_path_received", (cmd_function)add_path_received,     0,
 			0,              0, REQUEST_ROUTE },
 	{ "add_path_received", (cmd_function)add_path_received_usr, 1,
-			fixup_str_null, 0, REQUEST_ROUTE },
+			fixup_spve_null, 0, REQUEST_ROUTE },
+	{ "add_path_received", (cmd_function)add_path_received_usr, 2,
+			fixup_spve_spve, 0, REQUEST_ROUTE },
 	{ 0, 0, 0, 0, 0, 0 }
 };
 

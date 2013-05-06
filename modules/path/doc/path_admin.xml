@@ -183,6 +183,7 @@ if (!add_path()) {
 		<listitem>
 			<para>
 			<emphasis>user</emphasis> - The username to be inserted as user part.
+			SPVE is supported.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -204,11 +205,53 @@ if (!add_path("loadbalancer")) {
 
 	<section>
 		<title>
+		<function moreinfo="none">add_path(user, parameters)</function>
+		</title>
+		<para>
+		This function adds a Path header in the form 
+		<quote>Path: &lt;sip:user@1.2.3.4;lr&gt;</quote> and appends the
+		given <emphasis>parameters</emphasis> as additional URI parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>user</emphasis> - The username to be inserted as user part.
+			SPVE is supported.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>parameters</emphasis> - Additional URI parameters to be
+			appended to the URI. The semicolon separator is added automatically.
+			The script writer is responsible for proper URI escaping.
+			SPVE is supported.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path(user, parameters)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path("loadbalancer", "ob")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">add_path_received()</function>
 		</title>
 		<para>
 		This function adds a Path header in the form 
-		<quote>Path: &lt;sip:1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting it's own 
+		<quote>Path: &lt;sip:1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting its own 
 		outgoing address as domain-part, and the address the request has been received from as
 		received-parameter.
 		</para>
@@ -235,7 +278,7 @@ if (!add_path_received()) {
 		<para>
 		This function adds a Path header in the form 
 		<quote>Path: &lt;sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting
-		'user' as username part of address, it's own 
+		'user' as username part of address, its own 
 		outgoing address as domain-part, and the address the request has been received from as
 		received-parameter.
 		</para>
@@ -247,6 +290,33 @@ if (!add_path_received()) {
 		<programlisting format="linespecific">
 ...
 if (!add_path_received("inbound")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">add_path_received(user, parameters)</function>
+		</title>
+		<para>
+		This function adds a Path header in the form 
+		<quote>Path: &lt;sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting
+		'user' as username part of address, its own 
+		outgoing address as domain-part, and the address the request has been received from as
+		received-parameter.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path_received(user, parameters)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path_received("inbound", "ob")) {
 	sl_send_reply("503", "Internal Path Error");
 	...
 };
