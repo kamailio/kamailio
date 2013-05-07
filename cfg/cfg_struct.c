@@ -1035,6 +1035,7 @@ static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group)
 	unsigned int	group_id;
 	cfg_add_var_t	*add_var;
 	cfg_group_inst_t	*new_array, *ginst;
+	cfg_group_meta_t *gm;
 
 	/* count the number of group instances */
 	for (	add_var = group->add_var, num = 0, group_id = 0;
@@ -1088,8 +1089,9 @@ static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group)
 	}
 #endif
 
-	CFG_GROUP_META(block, group)->num = num;
-	CFG_GROUP_META(block, group)->array = new_array;
+	gm = CFG_GROUP_META(block, group);
+	gm->num = num;
+	gm->array = new_array;
 	return 0;
 
 error:
