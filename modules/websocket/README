@@ -36,6 +36,7 @@ Peter Dunkley
         5. Functions
 
               5.1. ws_handle_handshake()
+              5.2. ws_close([status, reason[, connection_id]])
 
         6. MI Commands
 
@@ -62,7 +63,8 @@ Peter Dunkley
    1.8. Set sub_protocols parameter
    1.9. Set cors_mode parameter
    1.10. ws_handle_handshake usage
-   1.11. event_route[websocket:closed] usage
+   1.11. ws_close usage
+   1.12. event_route[websocket:closed] usage
 
 Chapter 1. Admin Guide
 
@@ -93,6 +95,7 @@ Chapter 1. Admin Guide
    5. Functions
 
         5.1. ws_handle_handshake()
+        5.2. ws_close([status, reason[, connection_id]])
 
    6. MI Commands
 
@@ -239,8 +242,7 @@ request_route {
                         fix_nated_register();
                 else {
                         if (!add_contact_alias()) {
-                                xlog("L_ERR", "Error aliasing contact <$ct>\n")
-;
+                                xlog("L_ERR", "Error aliasing contact <$ct>\n");
                                 sl_send_reply("400", "Bad Request");
                                 exit;
                         }
@@ -433,6 +435,7 @@ modparam("websocket", "cors_mode", 2)
 5. Functions
 
    5.1. ws_handle_handshake()
+   5.2. ws_close([status, reason[, connection_id]])
 
 5.1.  ws_handle_handshake()
 
@@ -451,6 +454,31 @@ Note
    Example 1.10. ws_handle_handshake usage
 ...
 ws_handle_handshake();
+...
+
+5.2.  ws_close([status, reason[, connection_id]])
+
+   This function closes a WebSocket connection.
+
+   The function returns -1 if there is an error and 1 if it succeeds.
+
+   The meaning of the parameters is as follows:
+     * status - an integer indicating the reason for closure.
+     * reason - a string describing the reason for closure.
+     * connection_id - the connection to close. If not specified the
+       connection the current message arrived on will be closed.
+
+Note
+
+   status and reason values SHOULD correspond to the definitions in
+   section 7.4 of RFC 6455. If these parameters are not used the defaults
+   of "1000" and "Normal closure" will be used.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. ws_close usage
+...
+ws_close(4000, "Because I say so");
 ...
 
 6. MI Commands
@@ -560,7 +588,7 @@ Note
    connection closes. The connection may be identified using the the $si
    and $sp pseudo-variables.
 
-   Example 1.11. event_route[websocket:closed] usage
+   Example 1.12. event_route[websocket:closed] usage
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");

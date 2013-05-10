@@ -32,6 +32,7 @@
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
+#include "../../mod_fix.h"
 #include "../../parser/msg_parser.h"
 #include "ws_conn.h"
 #include "ws_handshake.h"
@@ -47,6 +48,7 @@ MODULE_VERSION
 static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
+static int ws_close_fixup(void** param, int param_no);
 
 sl_api_t ws_slb;
 
@@ -60,6 +62,17 @@ static int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
 
 static cmd_export_t cmds[]= 
 {
+	/* ws_frame.c */
+	{ "ws_close", (cmd_function) ws_close,
+	  0, 0, 0,
+	  ANY_ROUTE },
+	{ "ws_close", (cmd_function) ws_close2,
+	  2, ws_close_fixup, 0,
+	  ANY_ROUTE },
+	{ "ws_close", (cmd_function) ws_close3,
+	  3, ws_close_fixup, 0,
+	  ANY_ROUTE },
+
 	/* ws_handshake.c */
 	{ "ws_handle_handshake", (cmd_function) ws_handle_handshake,
 	  0, 0, 0,
@@ -294,4 +307,17 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	wsconn_destroy();
+}
+
+static int ws_close_fixup(void** param, int param_no)
+{
+	switch(param_no) {
+	case 1:
+	case 3:
+		return fixup_var_int_1(param, 1);
+	case 2:
+		return fixup_spve_null(param, 1);
+	default:
+		return 0;
+	}
 }

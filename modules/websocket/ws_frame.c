@@ -831,3 +831,70 @@ void ws_keepalive(unsigned int ticks, void *param)
 	}
 	
 }
+
+int ws_close(sip_msg_t *msg)
+{
+	ws_connection_t *wsc;
+
+	if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) == NULL) {
+		LM_ERR("failed to retrieve WebSocket connection\n");
+		return -1;
+	}
+
+	return (close_connection(wsc, LOCAL_CLOSE, 1000,
+				 str_status_normal_closure) == 0) ? 1: 0;
+}
+
+int ws_close2(sip_msg_t *msg, char *_status, char *_reason)
+{
+	int status;
+	str reason;
+	ws_connection_t *wsc;
+
+	if (get_int_fparam(&status, msg, (fparam_t *) _status) < 0) {
+		LM_ERR("failed to get status code\n");
+		return -1;
+	}
+
+	if (get_str_fparam(&reason, msg, (fparam_t *) _reason) < 0) {
+		LM_ERR("failed to get reason string\n");
+		return -1;
+	}
+
+	if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) == NULL) {
+		LM_ERR("failed to retrieve WebSocket connection\n");
+		return -1;
+	}
+
+	return (close_connection(wsc, LOCAL_CLOSE, status, reason) == 0) ? 1: 0;
+}
+
+int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con)
+{
+	int status;
+	str reason;
+	int con;
+	ws_connection_t *wsc;
+
+	if (get_int_fparam(&status, msg, (fparam_t *) _status) < 0) {
+		LM_ERR("failed to get status code\n");
+		return -1;
+	}
+
+	if (get_str_fparam(&reason, msg, (fparam_t *) _reason) < 0) {
+		LM_ERR("failed to get reason string\n");
+		return -1;
+	}
+
+	if (get_int_fparam(&con, msg, (fparam_t *) _con) < 0) {
+		LM_ERR("failed to get connection ID\n");
+		return -1;
+	}
+
+	if ((wsc = wsconn_get(con)) == NULL) {
+		LM_ERR("failed to retrieve WebSocket connection\n");
+		return -1;
+	}
+
+	return (close_connection(wsc, LOCAL_CLOSE, status, reason) == 0) ? 1: 0;
+}

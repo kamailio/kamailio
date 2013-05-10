@@ -457,6 +457,42 @@ ws_handle_handshake();
 </programlisting>
 		</example>
 	</section>
+	<section id="websocket.f.ws_close">
+		<title>
+		<function moreinfo="none">ws_close([status,
+			reason[, connection_id]])</function>
+		</title>
+		<para>This function closes a WebSocket connection.</para>
+		<para>The function returns -1 if there is an error and 1 if
+		it succeeds.</para>
+		<para>The meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem><para><emphasis>status</emphasis> - an
+			integer indicating the reason for closure.</para>
+			</listitem>
+			<listitem><para><emphasis>reason</emphasis> - a
+			string describing the reason for closure.</para>
+			</listitem>
+			<listitem><para><emphasis>connection_id</emphasis> - the
+			connection to close. If not specified the connection the
+			current message arrived on will be closed.</para>
+			</listitem>
+		</itemizedlist>
+		<note><para><emphasis>status</emphasis> and
+		<emphasis>reason</emphasis> values SHOULD correspond to the
+		definitions in section 7.4 of RFC 6455. If these parameters are
+		not used the defaults of &quot;1000&quot; and &quot;Normal
+		closure&quot; will be used.</para></note>
+		<para>This function can be used from ANY_ROUTE.</para>
+		<example>
+		<title><function>ws_close</function> usage</title>
+		<programlisting format="linespecific">
+...
+ws_close(4000, "Because I say so");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

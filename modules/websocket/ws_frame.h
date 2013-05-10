@@ -73,5 +73,8 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param);
 void ws_keepalive(unsigned int ticks, void *param);
+int ws_close(sip_msg_t *msg);
+int ws_close2(sip_msg_t *msg, char *_status, char *_reason);
+int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con);
 
 #endif /* _WS_FRAME_H */
