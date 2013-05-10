@@ -32,6 +32,7 @@
 #include "../../socket_info.h"
 #include "../../data_lump.h"
 #include "../../lib/kcore/cmpapi.h"
+#include "../../tcp_conn.h"
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -1820,6 +1821,20 @@ int pv_get_ruid(struct sip_msg *msg, pv_param_t *param,
 	}
 	
 	return pv_get_strval(msg, param, res, &msg->ruid);
+}
+
+int pv_get_tcpconn_id(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct tcp_connection *con;
+
+	if (msg == NULL)
+		return -1;
+
+	if ((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)
+		return pv_get_null(msg, param, res);
+
+	return pv_get_sintval(msg, param, res, con->id);
 }
 
 

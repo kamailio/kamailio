@@ -217,6 +217,9 @@ int pv_get_cnt(struct sip_msg *msg, pv_param_t *param,
 int pv_get_ruid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_tcpconn_id(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 /********* end PV get functions *********/
 
 /********* start PV set functions *********/
