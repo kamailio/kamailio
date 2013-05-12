@@ -517,7 +517,7 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token)
 		LM_DBG("no flow token found - outbound not in use\n");
 		return 0;
 	} else if (ret == -1) {
-		LM_ERR("failed to decode flow token\n");
+		LM_INFO("failed to decode flow token\n");
 		return -1;
 	} else if (!ip_addr_cmp(&rcv->src_ip, &_m->rcv.src_ip)
 			|| rcv->src_port != _m->rcv.src_port) {
@@ -529,7 +529,7 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token)
 		if (si)
 			set_force_socket(_m, si);
 		else {
-			LM_ERR("cannot find socket from flow-token\n");
+			LM_INFO("cannot find socket from flow-token\n");
 			return -1;
 		}
 
@@ -792,7 +792,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		routed_msg_id = _m->id;
 
 		if ((use_ob = process_outbound(_m, puri.user)) < 0) {
-			LM_ERR("processing outbound flow-token\n");
+			LM_INFO("failed to process outbound flow-token\n");
 			return FLOW_TOKEN_BROKEN;
 		}
 
