@@ -31,6 +31,7 @@
 #include "../../lib/srutils/sruid.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
+#include "../../sr_module.h"
 
 #include "msrp_netio.h"
 #include "msrp_env.h"
@@ -211,7 +212,7 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	idx = msrp_get_slot(hid, _msrp_cmap_head->mapsize);
 
 	srcaddr.s = sbuf;;
-	if(mf->tcpinfo->rcv->proto==PROTO_TLS || mf->tcpinfo->rcv->proto==PROTO_WSS)
+	if (module_loaded("tls"))
 	{
 		memcpy(srcaddr.s, "msrps://", 8);
 		srcaddr.s+=8;

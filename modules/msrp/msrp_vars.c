@@ -31,6 +31,7 @@
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../../pvapi.h"
+#include "../../sr_module.h"
 
 #include "msrp_parser.h"
 #include "msrp_vars.h"
@@ -273,7 +274,7 @@ int pv_get_msrp(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
 				return pv_get_null(msg, param, res);
 			s.s = pv_get_buffer();
 			p = s.s;
-			if(mf->tcpinfo->rcv->proto==PROTO_TLS || mf->tcpinfo->rcv->proto==PROTO_WSS)
+			if (module_loaded("tls"))
 			{
 				memcpy(p, "msrps://", 8);
 				p+=8;
