@@ -142,7 +142,7 @@ static int mod_init(void)
 	}
 
 	if (ob_load_api(&path_obb) == 0)
-		LM_INFO("Bound path module to outbound module\n");
+		LM_DBG("Bound path module to outbound module\n");
 	else {
 		LM_INFO("outbound module not available\n");
 		memset(&path_obb, 0, sizeof(ob_api_t));
