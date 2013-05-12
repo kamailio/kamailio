@@ -224,7 +224,7 @@ int decode_flow_token(struct sip_msg *msg, struct receive_info **rcv, str flow_t
 
 	if (flow_token.len == 0)
 	{
-		LM_ERR("no flow-token found\n");
+		LM_DBG("no flow-token found\n");
 		return -2;
 	}
 
@@ -234,7 +234,7 @@ int decode_flow_token(struct sip_msg *msg, struct receive_info **rcv, str flow_t
 	if (flow_length != UNENC_FLOW_TOKEN_MIN_LENGTH
 		&& flow_length != UNENC_FLOW_TOKEN_MAX_LENGTH)
 	{
-		LM_INFO("no flow-token found - bad length (%d)\n", flow_length);
+		LM_DBG("no flow-token found - bad length (%d)\n", flow_length);
 		return -2;
 	}
 
@@ -249,13 +249,13 @@ int decode_flow_token(struct sip_msg *msg, struct receive_info **rcv, str flow_t
 		flow_length - FLOW_TOKEN_START_POS,
 		hmac_sha1, NULL) == NULL)
 	{
-		LM_ERR("HMAC-SHA1 failed\n");
+		LM_INFO("HMAC-SHA1 failed\n");
 		return -1;
 	}
 	if (memcmp(unenc_flow_token, &hmac_sha1[SHA1_LENGTH - SHA1_80_LENGTH],
 		SHA1_80_LENGTH) != 0)
 	{
-		LM_ERR("flow-token failed validation\n");
+		LM_INFO("flow-token failed validation\n");
 		return -1;
 	}
 
@@ -472,7 +472,8 @@ int use_outbound(struct sip_msg *msg)
 		return 1;
 	}
 
-	/* If Outbound is turned off, return failure without any further checks */
+	/* If Outbound is turned off, return failure without any further
+	   checks */
 	if (ob_force_no_flag != -1 && isflagset(msg, ob_force_no_flag) > 0)
 	{
 		LM_DBG("outbound not used by force\n");
