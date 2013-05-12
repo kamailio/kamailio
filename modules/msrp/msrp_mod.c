@@ -165,7 +165,15 @@ static int mod_init(void)
 			msrp_timer_interval = 60;
 		register_sync_timers(1);
 	}
+
 	sr_event_register_cb(SREV_TCP_MSRP_FRAME, msrp_frame_received);
+
+	if(!module_loaded("tls")) {
+		LM_WARN("\"tls\" module is not loaded. TLS is mandatory for"
+			" MSRP Relays. To comply with RFC 4976 you must use"
+			"  TLS.\n");
+	}
+
 	return 0;
 }
 
