@@ -272,6 +272,12 @@ static int mod_init(void)
 	}
 	cfg_get(websocket, ws_cfg, keepalive_timeout) = ws_keepalive_timeout;
 
+	if (!module_loaded("xhttp"))
+	{
+		LM_ERR("\"xhttp\" must be loaded to use WebSocket.\n");
+		return -1;
+	}
+
 	if (!module_loaded("nathelper") && !module_loaded("outbound"))
 	{
 		LM_WARN("neither \"nathelper\" nor \"outbound\" modules are"
