@@ -1026,8 +1026,8 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 bad_event:
 
 	if (parsed_event && parsed_event->name.s)
-	    LM_ERR("Unsupported event header field value %.*s\n",
-		   parsed_event->name.len,parsed_event->name.s);
+	    LM_NOTICE("Unsupported presence event %.*s\n",
+		      parsed_event->name.len,parsed_event->name.s);
 	else
 	    LM_ERR("Missing event header field value\n");
 	
