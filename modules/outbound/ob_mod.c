@@ -107,12 +107,21 @@ static int mod_init(void)
 		LM_ERR("unable to get %d cryptographically strong pseudo-"
 		       "random bytes\n", ob_key.len);
 	}
+
 	if (cfg_declare("outbound", outbound_cfg_def, &default_outbound_cfg,
-			cfg_sizeof(outbound), &outbound_cfg)) {
+			cfg_sizeof(outbound), &outbound_cfg))
+	{
 		LM_ERR("declaring config framework variable\n");
 		return -1;
 	}
 	default_outbound_cfg.outbound_active = 1;
+
+	if (!module_loaded("stun"))
+	{
+		LM_WARN("\"stun\" module is not loaded. STUN is required to use"
+			" outbound with UDP.\n");
+	}
+
 	return 0;
 }
 
