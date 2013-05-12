@@ -265,11 +265,19 @@ static int mod_init(void)
 	}
 
 	if (cfg_declare("websocket", ws_cfg_def, &default_ws_cfg,
-			cfg_sizeof(websocket), &ws_cfg)) {
+			cfg_sizeof(websocket), &ws_cfg))
+	{
 		LM_ERR("declaring configuration\n");
 		return -1;
 	}
 	cfg_get(websocket, ws_cfg, keepalive_timeout) = ws_keepalive_timeout;
+
+	if (!module_loaded("nathelper") && !module_loaded("outbound"))
+	{
+		LM_WARN("neither \"nathelper\" nor \"outbound\" modules are"
+			" loaded. At least one of these is required for correct"
+			" routing of SIP over WebSocket.\n");
+	}
 
 	return 0;
 
