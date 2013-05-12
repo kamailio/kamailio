@@ -153,7 +153,7 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	if (ob_load_api(&rr_obb) == 0)
-		LM_INFO("Bound rr module to outbound module\n");
+		LM_DBG("Bound rr module to outbound module\n");
 	else
 	{
 		LM_INFO("outbound module not available\n");
