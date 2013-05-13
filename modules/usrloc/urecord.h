@@ -119,6 +119,16 @@ void timer_urecord(urecord_t* _r);
 int db_delete_urecord(urecord_t* _r);
 
 
+/*!
+ * \brief Delete a record from the database based on ruid
+ * \param _d pointer to domain from which record is deleted
+ * \param _ruid pointer to ruid of the record which is deleted
+ * \return 0 on success, -1 on failure, and -2 if record was
+ * not found
+ */
+int delete_urecord_by_ruid(udomain_t* _d, str *_ruid);
+
+
 /* ===== Module interface ======== */
 
 

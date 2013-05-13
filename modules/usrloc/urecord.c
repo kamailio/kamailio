@@ -438,6 +438,39 @@ int db_delete_urecord(urecord_t* _r)
 
 
 /*!
+ * \brief Delete a record from the database based on ruid
+ * \return 0 on success, -1 on failure
+ */
+int db_delete_urecord_by_ruid(str *_table, str *_ruid)
+{
+	db_key_t keys[1];
+	db_val_t vals[1];
+
+	keys[0] = &ruid_col;
+	vals[0].type = DB1_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val.s = _ruid->s;
+	vals[0].val.str_val.len = _ruid->len;
+
+	if (ul_dbf.use_table(ul_dbh, _table) < 0) {
+		LM_ERR("use_table failed\n");
+		return -1;
+	}
+
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, 1) < 0) {
+		LM_ERR("failed to delete from database\n");
+		return -1;
+	}
+
+	if (ul_dbf.affected_rows(ul_dbh) == 0) {
+	        return -2;
+	}
+
+	return 0;
+}
+
+
+/*!
  * \brief Release urecord previously obtained through get_urecord
  * \warning Failing to calls this function after get_urecord will
  * result in a memory leak when the DB_ONLY mode is used. When
@@ -514,6 +547,17 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 	}
 
 	return ret;
+}
+
+
+int delete_urecord_by_ruid(udomain_t* _d, str *_ruid)
+{
+    if (db_mode != DB_ONLY) {
+	LM_ERR("delete_urecord_by_ruid currently available only in db_mode=3\n");
+	return -1;
+    }
+
+    return db_delete_urecord_by_ruid(_d->name, _ruid);
 }
 
 

@@ -1109,7 +1109,9 @@ add_sock_hdr("Sock-Info");
 		<para>
 		The function removes contacts associated with 'uri'. If 'ruid' is
 		provided a specific contact is removed, if 'ruid' is not provided
-		all contacts are removed.
+		all contacts are removed.  If 'ruid' is provided and usrloc is
+		using db_mode=3, 'uri' does not need to be given and can be
+		empty string.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -1144,6 +1146,7 @@ add_sock_hdr("Sock-Info");
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
 unregister("location", "$ru", "$ulc(caller=>ruid)");
+unregister("location", "", "$ruid");
 ...
 </programlisting>
 		</example>

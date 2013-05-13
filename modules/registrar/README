@@ -869,7 +869,8 @@ add_sock_hdr("Sock-Info");
 
    The function removes contacts associated with 'uri'. If 'ruid' is
    provided a specific contact is removed, if 'ruid' is not provided all
-   contacts are removed.
+   contacts are removed. If 'ruid' is provided and usrloc is using
+   db_mode=3, 'uri' does not need to be given and can be empty string.
 
    Meaning of the parameters is as follows:
      * domain - Name of table that should be used for the lookup or
@@ -887,6 +888,7 @@ add_sock_hdr("Sock-Info");
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
 unregister("location", "$ru", "$ulc(caller=>ruid)");
+unregister("location", "", "$ruid");
 ...
 
 4.7.  reg_fetch_contacts(domain, uri, profile)

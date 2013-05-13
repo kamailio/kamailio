@@ -100,6 +100,31 @@
 
 	<section>
 		<title>
+		<function moreinfo="none">ul_delete_urecord_by_ruid(domain, ruid)</function>
+		</title>
+		<para>
+		The function deletes from given domain a contact with
+		given ruid.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>udomain_t* domain</emphasis> - Pointer
+			to domain returned by ul_register_udomain.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>str* ruid</emphasis> - ruid of contact
+			that should be deleted.
+			</para>
+		</listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">ul_get_urecord(domain, aor)</function>
 		</title>
 		<para>

@@ -151,6 +151,8 @@ typedef int (*get_urecord_by_ruid_t)(udomain_t* _d, unsigned int _aorhash,
 
 typedef int  (*delete_urecord_t)(struct udomain* _d, str* _aor, struct urecord* _r);
 
+typedef int  (*delete_urecord_by_ruid_t)(struct udomain* _d, str* _ruid);
+
 typedef int (*update_ucontact_t)(struct urecord* _r, struct ucontact* _c,
 		struct ucontact_info* _ci);
 typedef void (*release_urecord_t)(struct urecord* _r);
@@ -199,6 +201,7 @@ typedef struct usrloc_api {
 
 	insert_urecord_t     insert_urecord;
 	delete_urecord_t     delete_urecord;
+	delete_urecord_by_ruid_t     delete_urecord_by_ruid;
 	get_urecord_t        get_urecord;
 	lock_udomain_t       lock_udomain;
 	unlock_udomain_t     unlock_udomain;

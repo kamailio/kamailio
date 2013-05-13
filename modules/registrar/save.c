@@ -970,14 +970,15 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 	sip_uri_t *u;
 	urecord_t *r;
 	ucontact_t *c;
-
-	if (extract_aor(_uri, &aor, NULL) < 0) {
-		LM_ERR("failed to extract Address Of Record\n");
-		return -1;
-	}
+	int res;
 
 	if (_ruid == NULL) {
 		/* No ruid provided - remove all contacts for aor */
+
+	        if (extract_aor(_uri, &aor, NULL) < 0) {
+		        LM_ERR("failed to extract Address Of Record\n");
+		        return -1;
+		}
 
 		u = parse_to_uri(_m);
 		if(u==NULL)
@@ -991,16 +992,39 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 	} else {
 		/* ruid provided - remove a specific contact */
 
-		if (ul.get_urecord_by_ruid(_d, ul.get_aorhash(&aor),
-				_ruid, &r, &c) != 0) {
-			LM_WARN("AOR/Contact not found\n");
-			return -1;
+	        if (_uri->len > 0) {
+
+		        if (extract_aor(_uri, &aor, NULL) < 0) {
+		                LM_ERR("failed to extract Address Of Record\n");
+		                return -1;
+		        }
+
+		        if (ul.get_urecord_by_ruid(_d, ul.get_aorhash(&aor),
+						   _ruid, &r, &c) != 0) {
+			        LM_WARN("AOR/Contact not found\n");
+			        return -1;
+			}
+			if (ul.delete_ucontact(r, c) != 0) {
+			        LM_WARN("could not delete contact\n");
+			        return -1;
+			}
+			ul.unlock_udomain(_d, &aor);
+
+		} else {
+
+   		        res = ul.delete_urecord_by_ruid(_d, _ruid);
+			switch (res) {
+			case -1:
+			        LM_ERR("could not delete contact\n");
+			        return -1;
+			case -2:
+			        LM_WARN("contact not found\n");
+			        return -1;
+			default:
+			        return 1;
+			}
+
 		}
-		if (ul.delete_ucontact(r, c) != 0) {
-			LM_WARN("could not delete contact\n");
-			return -1;
-		}
-		ul.unlock_udomain(_d, &aor);
 	}
 
 	return 1;

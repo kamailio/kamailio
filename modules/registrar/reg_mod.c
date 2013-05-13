@@ -516,11 +516,11 @@ static int w_unregister(struct sip_msg* _m, char* _d, char* _uri)
 
 static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid)
 {
-	str uri = {0};
+        str uri = {0, 0};
 	str ruid = {0};
-	if(fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0)
+	if(fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0)
 	{
-		LM_ERR("invalid uri parameter\n");
+	        LM_ERR("invalid uri parameter\n");
 		return -1;
 	}
 	if(fixup_get_svalue(_m, (gparam_p)_ruid, &ruid)!=0 || ruid.len<=0)
