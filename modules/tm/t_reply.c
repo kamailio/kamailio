@@ -1339,7 +1339,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		 * save of the final reply per branch */
 		Trans->uac[branch].reply = reply;
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_BRANCH_FAILURE_RO|TMCB_ON_BRANCH_FAILURE)
-						|| (Trans->uac[picked_branch].on_branch_failure >= 0) )) {
+						|| (Trans->uac[picked_branch].on_branch_failure) )) {
 			extra_flags=
 				((Trans->uac[branch].request.flags & F_RB_TIMEOUT)?
 							FL_TIMEOUT:0) | 
