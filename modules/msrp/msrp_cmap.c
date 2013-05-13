@@ -43,6 +43,7 @@ static sruid_t _msrp_sruid;
 
 extern int msrp_auth_min_expires;
 extern int msrp_auth_max_expires;
+extern int msrp_tls_module_loaded;
 extern str msrp_use_path_addr;
 
 /**
@@ -211,8 +212,8 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	hid = msrp_get_hashid(&_msrp_sruid.uid);	
 	idx = msrp_get_slot(hid, _msrp_cmap_head->mapsize);
 
-	srcaddr.s = sbuf;;
-	if (module_loaded("tls"))
+	srcaddr.s = sbuf;
+	if (msrp_tls_module_loaded)
 	{
 		memcpy(srcaddr.s, "msrps://", 8);
 		srcaddr.s+=8;
