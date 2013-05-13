@@ -161,6 +161,7 @@ static int route_add(struct route_list* rt, char* name, int i)
 		LOG(L_CRIT, "ERROR: route_add: out of memory\n");
 		goto error;
 	}
+	LM_DBG("mapping routing block (%p)[%s] to %d\n", rt, name, i);
 	e->key.s=name;
 	e->key.len=strlen(name);
 	e->flags=0;
