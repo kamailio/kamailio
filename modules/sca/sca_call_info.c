@@ -1546,7 +1546,7 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	struct to_body *from, struct to_body *to, str *from_aor, str *to_aor,
 	str *contact_uri )
 {
-    sca_appearance	*app, *unl_app;
+    sca_appearance	*app = NULL;
     int			slot_idx = -1;
     int			rc = -1;
 
@@ -1563,30 +1563,25 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    if ( call_info->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
 		app = sca_appearance_for_index_unsafe( sca, from_aor,
 			    call_info->index, slot_idx );
-		if ( app == NULL ) {
-		    LM_ERR( "sca_call_info_bye_handler: %.*s "
-			    "appearance-index %d is not active",
-			    STR_FMT( from_aor ), call_info->index );
-		    goto done;
-		}
-	    } else {
+	    }
+	    if ( app == NULL ) {
+		/* try to find it by tags */
 		app = sca_appearance_for_tags_unsafe( sca, from_aor,
 			&msg->callid->body, &from->tag_value, NULL, slot_idx );
-		if ( app == NULL ) {
-		    LM_ERR( "sca_call_info_bye_handler: %.*s "
-			    "dialog leg %.*s;%.*s is not active",
-			    STR_FMT( from_aor ),
-			    STR_FMT( &msg->callid->body ),
-			    STR_FMT( &from->tag_value ));
-		    goto done;
-		}
+	    }
+	    if ( app == NULL ) {
+		LM_ERR( "sca_call_info_bye_handler: %.*s "
+			"dialog leg %.*s;%.*s is not active",
+			STR_FMT( from_aor ),
+			STR_FMT( &msg->callid->body ),
+			STR_FMT( &from->tag_value ));
+		goto done;
 	    }
 
 	    if ( SCA_STR_EQ( &app->dialog.call_id, &msg->callid->body )) {
 		/* XXX yes, duplicated below, too */
-		unl_app = sca_appearance_list_unlink_index(
-					app->appearance_list, app->index );
-		if ( unl_app == NULL || unl_app != app ) {
+		if ( !sca_appearance_list_unlink_appearance(
+				app->appearance_list, &app )) {
 		    LM_ERR( "sca_call_info_bye_handler: failed to unlink "
 			    "%.*s appearance-index %d, owner %.*s",
 			    STR_FMT( &app->owner ), app->index,
@@ -1604,7 +1599,14 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 		    goto done;
 		}
 	    }
-	} else {
+	}
+
+	if ( slot_idx >= 0 ) {
+	    sca_hash_table_unlock_index( sca->appearances, slot_idx );
+	    slot_idx = -1;
+	}
+
+	if ( SCA_CALL_INFO_IS_SHARED_CALLEE( call_info )) {
 	    if ( !sca_uri_lock_if_shared_appearance( sca, to_aor, &slot_idx )) {
 		LM_DBG( "BYE from non-SCA %.*s to non-SCA %.*s",
 			STR_FMT( from_aor ), STR_FMT( to_aor ));
@@ -1616,16 +1618,17 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 			&msg->callid->body, &to->tag_value,
 			NULL, slot_idx );
 	    if ( app == NULL ) {
-		LM_ERR( "sca_call_info_bye_handler: failed to look up "
-			"dialog for BYE %.*s from %.*s",
-			STR_FMT( to_aor ), STR_FMT( from_aor ));
+		LM_INFO( "sca_call_info_bye_handler: no in-use callee "
+			"appearance for BYE %.*s from %.*s, call-ID %.*s",
+			STR_FMT( to_aor ), STR_FMT( from_aor ),
+			STR_FMT( &msg->callid->body ));
+		rc = 1;
 		goto done;
 	    }
 
 	    if ( SCA_STR_EQ( &app->dialog.call_id, &msg->callid->body )) {
-		unl_app = sca_appearance_list_unlink_index(
-					app->appearance_list, app->index );
-		if ( unl_app == NULL || unl_app != app ) {
+		if ( !sca_appearance_list_unlink_appearance(
+					app->appearance_list, &app )) {
 		    LM_ERR( "sca_call_info_bye_handler: failed to unlink "
 			    "%.*s appearance-index %d, owner %.*s",
 			    STR_FMT( &app->owner ), app->index,
@@ -1645,6 +1648,7 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    }
 	}
     } else {
+	/* this is just a backup to catch anything missed on the BYE request */
 	if ( SCA_CALL_INFO_IS_SHARED_CALLEE( call_info )) {
 	    slot_idx = sca_hash_table_index_for_key( sca->appearances, to_aor );
 	    sca_hash_table_lock_index( sca->appearances, slot_idx );
@@ -1652,16 +1656,25 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    app = sca_appearance_for_index_unsafe( sca, to_aor,
 			call_info->index, slot_idx );
 	    if ( app == NULL ) {
-		LM_ERR( "sca_call_info_bye_handler: failed to look up "
-			"dialog for BYE %.*s from %.*s",
-			STR_FMT( to_aor ), STR_FMT( from_aor ));
+		app = sca_appearance_for_tags_unsafe( sca, to_aor,
+			    &msg->callid->body, &to->tag_value,
+			    NULL, slot_idx );
+	    }
+	    if ( app == NULL ) {
+		LM_DBG( "sca_call_info_bye_handler: no appearance found "
+			"for callee %.*s, call-ID %.*s",
+			STR_FMT( to_aor ), STR_FMT( &msg->callid->body ));
+		rc = 1;
 		goto done;
 	    }
 
+	    LM_INFO( "sca_call_info_bye_handler: found in-use call appearance "
+		    "for callee %.*s, call-ID %.*s",
+		    STR_FMT( to_aor ), STR_FMT( &msg->callid->body ));
+
 	    if ( SCA_STR_EQ( &app->dialog.call_id, &msg->callid->body )) {
-		unl_app = sca_appearance_list_unlink_index(
-					app->appearance_list, app->index );
-		if ( unl_app == NULL || unl_app != app ) {
+		if ( !sca_appearance_list_unlink_appearance(
+					app->appearance_list, &app )) {
 		    LM_ERR( "sca_call_info_bye_handler: failed to unlink "
 			    "%.*s appearance-index %d, owner %.*s",
 			    STR_FMT( &app->owner ), app->index,
