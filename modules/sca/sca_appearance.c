@@ -152,6 +152,16 @@ sca_appearance_free( sca_appearance *appearance )
 	    shm_free( appearance->dialog.id.s );
 	}
 
+        if ( appearance->prev_owner.s != NULL ) {
+            shm_free( appearance->prev_owner.s );
+        }
+        if ( appearance->prev_callee.s != NULL ) {
+            shm_free( appearance->prev_callee.s );
+        }
+        if ( appearance->prev_dialog.id.s != NULL ) {
+            shm_free( appearance->prev_dialog.id.s );
+        }
+
 	shm_free( appearance );
     }
 }
@@ -259,6 +269,32 @@ sca_appearance_list_unlink_index( sca_appearance_list *app_list, int idx )
     }
 
     return( app );
+}
+
+    int
+sca_appearance_list_unlink_appearance( sca_appearance_list *app_list,
+	sca_appearance **app )
+{
+    sca_appearance	**cur;
+    int			rc = 0;
+
+    assert( app_list != NULL );
+    assert( app != NULL && *app != NULL );
+
+    for ( cur = &app_list->appearances; *cur != NULL; cur = &(*cur)->next ) {
+	if ( *cur == *app ) {
+	    *cur = (*cur)->next;
+
+	    (*app)->appearance_list = NULL;
+	    (*app)->next = NULL;
+
+	    rc = 1;
+
+	    break;
+	}
+    }
+
+    return( rc );
 }
 
     int
