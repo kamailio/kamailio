@@ -616,8 +616,11 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	uldb_insert_attrs(_c->domain, &vals[0].val.str_val, &vals[nr_cols-1].val.str_val,
-		&_c->ruid, _c->xavp);
+	if (ul_xavp_contact_name.s) {
+		uldb_insert_attrs(_c->domain, &vals[0].val.str_val,
+				  &vals[nr_cols-1].val.str_val,
+				  &_c->ruid, _c->xavp);
+	}
 
 	return 0;
 }
@@ -801,16 +804,19 @@ int db_update_ucontact_addr(ucontact_t* _c)
 		}
 	}
 	/* delete old db attrs and add the current list */
-	if (use_domain) {
-		uldb_delete_attrs(_c->domain, &vals1[0].val.str_val,
-				&vals1[n1-1].val.str_val, &_c->ruid);
-		uldb_insert_attrs(_c->domain, &vals1[0].val.str_val,
-				&vals1[n1-1].val.str_val, &_c->ruid, _c->xavp);
-	} else {
-		uldb_delete_attrs(_c->domain, &vals1[0].val.str_val,
-				NULL, &_c->ruid);
-		uldb_insert_attrs(_c->domain, &vals1[0].val.str_val,
-				NULL, &_c->ruid, _c->xavp);
+	if (ul_xavp_contact_name.s) {
+		if (use_domain) {
+			uldb_delete_attrs(_c->domain, &vals1[0].val.str_val,
+					  &vals1[n1-1].val.str_val, &_c->ruid);
+			uldb_insert_attrs(_c->domain, &vals1[0].val.str_val,
+					  &vals1[n1-1].val.str_val,
+					  &_c->ruid, _c->xavp);
+		} else {
+			uldb_delete_attrs(_c->domain, &vals1[0].val.str_val,
+					  NULL, &_c->ruid);
+			uldb_insert_attrs(_c->domain, &vals1[0].val.str_val,
+					  NULL, &_c->ruid, _c->xavp);
+		}
 	}
 
 	return 0;
@@ -977,27 +983,30 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 	}
 
 	/* delete old db attrs and add the current list */
-	auser = *_c->aor;
-	if (use_domain) {
-		adomain.s = memchr(_c->aor->s, '@', _c->aor->len);
-		if (adomain.s==0) {
-			auser.len = 0;
-			adomain = *_c->aor;
+	if (ul_xavp_contact_name.s) {
+	        auser = *_c->aor;
+	        if (use_domain) {
+			adomain.s = memchr(_c->aor->s, '@', _c->aor->len);
+			if (adomain.s==0) {
+				auser.len = 0;
+				adomain = *_c->aor;
+			} else {
+				auser.len = adomain.s - _c->aor->s;
+				adomain.s++;
+				adomain.len = _c->aor->s +
+					_c->aor->len - adomain.s;
+			}
+			
+			uldb_delete_attrs(_c->domain, &auser,
+					  &adomain, &_c->ruid);
+			uldb_insert_attrs(_c->domain, &auser,
+					  &adomain, &_c->ruid, _c->xavp);
 		} else {
-			auser.len = adomain.s - _c->aor->s;
-			adomain.s++;
-			adomain.len = _c->aor->s + _c->aor->len - adomain.s;
+			uldb_delete_attrs(_c->domain, &auser,
+					  NULL, &_c->ruid);
+			uldb_insert_attrs(_c->domain, &auser,
+					  NULL, &_c->ruid, _c->xavp);
 		}
-
-		uldb_delete_attrs(_c->domain, &auser,
-				&adomain, &_c->ruid);
-		uldb_insert_attrs(_c->domain, &auser,
-				&adomain, &_c->ruid, _c->xavp);
-	} else {
-		uldb_delete_attrs(_c->domain, &auser,
-				NULL, &_c->ruid);
-		uldb_insert_attrs(_c->domain, &auser,
-				NULL, &_c->ruid, _c->xavp);
 	}
 
 	return 0;
@@ -1052,25 +1061,28 @@ int db_delete_ucontact_addr(ucontact_t* _c)
 	vals[n].val.str_val = _c->callid;
 	n++;
 
-	if (use_domain) {
-		keys[n] = &domain_col;
-		vals[n].type = DB1_STR;
-		vals[n].nul = 0;
-		dom = memchr(_c->aor->s, '@', _c->aor->len);
-		if (dom==0) {
-			vals[0].val.str_val.len = 0;
-			vals[n].val.str_val = *_c->aor;
+	if (ul_xavp_contact_name.s) {
+		if (use_domain) {
+			keys[n] = &domain_col;
+			vals[n].type = DB1_STR;
+			vals[n].nul = 0;
+			dom = memchr(_c->aor->s, '@', _c->aor->len);
+			if (dom==0) {
+				vals[0].val.str_val.len = 0;
+				vals[n].val.str_val = *_c->aor;
+			} else {
+				vals[0].val.str_val.len = dom - _c->aor->s;
+				vals[n].val.str_val.s = dom + 1;
+				vals[n].val.str_val.len = _c->aor->s +
+					_c->aor->len - dom - 1;
+			}
+			uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
+					  &vals[n].val.str_val, &_c->ruid);
+			n++;
 		} else {
-			vals[0].val.str_val.len = dom - _c->aor->s;
-			vals[n].val.str_val.s = dom + 1;
-			vals[n].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+			uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
+					  NULL, &_c->ruid);
 		}
-		uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
-				&vals[n].val.str_val, &_c->ruid);
-		n++;
-	} else {
-		uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
-				NULL, &_c->ruid);
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
