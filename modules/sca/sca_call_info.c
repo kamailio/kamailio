@@ -1441,7 +1441,6 @@ done:
     void
 sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
 {
-    struct to_body	*from;
     struct to_body	*to;
     str			from_aor = STR_NULL;
     str			to_aor = STR_NULL;
@@ -1450,24 +1449,18 @@ sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
 	return;
     }
 
-    if ( sca_get_msg_from_header( params->req, &from ) < 0 ) {
-	LM_ERR( "sca_call_info_ack_cb: failed to get From-header" );
-	return;
-    }
-    if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
-	LM_ERR( "sca_call_info_ack_cb: failed to extract From AoR from %.*s",
-		STR_FMT( &from->uri ));
+    if ( sca_create_canonical_aor( params->req, &from_aor ) < 0 ) {
 	return;
     }
 
     if ( sca_get_msg_to_header( params->req, &to ) < 0 ) {
 	LM_ERR( "sca_call_info_ack_cb: failed to get To-header" );
-	return;
+	goto done;
     }
     if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
 	LM_ERR( "sca_call_info_ack_cb: failed to extract To AoR from %.*s",
 		STR_FMT( &to->uri ));
-	return;
+	goto done;
     }
 
     sca_call_info_ack_from_handler( params->req, &from_aor, &to_aor );
@@ -1475,15 +1468,19 @@ sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
     if ( !sca_uri_is_shared_appearance( sca, &to_aor )) {
 	LM_DBG( "sca_call_info_ack_cb: %.*s is not a shared appearance",
 		STR_FMT( &to_aor ));
-	return;
+	goto done;
     }
 
     if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
 	LM_ERR( "sca_call_info_ack_cb: failed to call-info "
 		"NOTIFY %.*s subscribers", STR_FMT( &to_aor ));
-	return;
+	goto done;
     }
 
+done:
+    if ( from_aor.s != NULL ) {
+	pkg_free( from_aor.s );
+    }
 }
 
     static int
@@ -1939,45 +1936,27 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
     }
 
     /* reconcile mismatched Contact users and To/From URIs */
-    if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
-	LM_ERR( "sca_uri_extract_aor failed to extract AoR from From URI %.*s",
-		STR_FMT( &from->uri ));
-	goto done;
-    }
-    if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
-	LM_ERR( "sca_uri_extract_aor failed to extract AoR from To URI %.*s",
-		STR_FMT( &to->uri ));
-	goto done;
-    }
-
-    if ( !SCA_STR_EMPTY( &c_uri.user )) {
-	if ( msg->first_line.type == SIP_REQUEST ) {
-	    if ( !SCA_STR_EQ( &c_uri.user, &GET_FROM_PURI( msg )->user )) {
-		if ( sca_aor_create_from_info( &from_aor, c_uri.type,
-			&c_uri.user, &GET_FROM_PURI( msg )->host,
-			&GET_FROM_PURI( msg )->port ) < 0 ) {
-		    LM_ERR( "sca_aor_create_from_info from Contact %.*s "
-			    "and From URI %.*s failed",
-			    STR_FMT( &contact_uri ), STR_FMT( &from->uri ));
-		    goto done;
-		}
-
-		aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
-	    }
-	} else {
-	    if ( !SCA_STR_EQ( &c_uri.user, &GET_TO_PURI( msg )->user )) {
-		if ( sca_aor_create_from_info( &to_aor, c_uri.type,
-			&c_uri.user, &GET_TO_PURI( msg )->host,
-			&GET_TO_PURI( msg )->port ) < 0 ) {
-		    LM_ERR( "sca_aor_create_from_info from Contact %.*s "
-			    "and To URI %.*s failed", STR_FMT( &contact_uri ),
-			    STR_FMT( &from->uri ));
-		    goto done;
-		} 
-
-		aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
-	    }
+    if ( msg->first_line.type == SIP_REQUEST ) {
+	if ( sca_create_canonical_aor( msg, &from_aor ) < 0 ) {
+	    return( -1 );
 	}
+	aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
+
+	if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
+	    LM_ERR( "Failed to extract AoR from To URI %.*s",
+		    STR_FMT( &to->uri ));
+	    goto done;
+	}
+    } else {
+	if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
+	    LM_ERR( "Failed to extract AoR from From URI %.*s",
+		    STR_FMT( &from->uri ));
+	    goto done;
+	}
+	if ( sca_create_canonical_aor( msg, &to_aor ) < 0 ) {
+	    return( -1 );
+	}
+	aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
     }
 
     /* early check to see if we're dealing with any SCA endpoints */

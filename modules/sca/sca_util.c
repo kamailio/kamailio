@@ -339,6 +339,77 @@ sca_aor_create_from_info( str *aor, uri_type type, str *user, str *domain,
     return( aor->len );
 }
 
+    int
+sca_create_canonical_aor( sip_msg_t *msg, str *c_aor )
+{
+    struct to_body	*tf = NULL;
+    sip_uri_t		c_uri;
+    str			tf_aor = STR_NULL;
+    str			contact_uri = STR_NULL;
+    int			rc = -1;
+
+    assert( msg != NULL );
+    assert( c_aor != NULL );
+
+    memset( c_aor, 0, sizeof( str ));
+
+    if ( msg->first_line.type == SIP_REQUEST ) {
+	if ( sca_get_msg_from_header( msg, &tf ) < 0 ) {
+	    LM_ERR( "sca_create_canonical_aor: failed to get From header" );
+	    goto done;
+	}
+    } else {
+	if ( sca_get_msg_to_header( msg, &tf ) < 0 ) {
+	    LM_ERR( "sca_create_canonical_aor: failed to get To header" );
+	    goto done;
+	}
+    }
+
+    if ( sca_uri_extract_aor( &tf->uri, &tf_aor ) < 0 ) {
+	LM_ERR( "sca_create_canonical_aor: failed to extract AoR from "
+		"URI <%.*s>", STR_FMT( &tf->uri ));
+	goto done;
+    }
+
+    memset( &c_uri, 0, sizeof( sip_uri_t ));
+    if (( rc = sca_get_msg_contact_uri( msg, &contact_uri )) < 0 ) {
+	LM_ERR( "sca_create_canonical_aor: failed to get contact URI from "
+		"Contact <%.*s>", STR_FMT( &msg->contact->body ));
+	goto done;
+    }
+    if ( rc > 0 ) {
+	if ( parse_uri( contact_uri.s, contact_uri.len, &c_uri ) < 0 ) {
+	    LM_ERR( "sca_create_canonical_aor: failed to parse Contact URI "
+		    "<%.*s>", STR_FMT( &contact_uri ));
+	    rc = -1;
+	    goto done;
+	}
+    }
+
+    if ( SCA_STR_EMPTY( &c_uri.user ) ||
+	    SCA_STR_EQ( &c_uri.user, &tf->parsed_uri.user )) {
+	/* empty contact header or Contact user matches To/From AoR */
+	c_aor->s = (char *)pkg_malloc( tf_aor.len );
+	c_aor->len = tf_aor.len;
+	memcpy( c_aor->s, tf_aor.s, tf_aor.len );
+    } else {
+	/* Contact user and To/From user mismatch */
+	if ( sca_aor_create_from_info( c_aor, c_uri.type,
+		&c_uri.user, &tf->parsed_uri.host,
+		&tf->parsed_uri.port ) < 0 ) {
+	    LM_ERR( "sca_create_canonical_aor: failed to create AoR from "
+		    "Contact <%.*s> and URI <%.*s>",
+		    STR_FMT( &contact_uri ), STR_FMT( &tf_aor ));
+	    goto done;
+	}
+    }
+
+    rc = 1;
+
+done:
+    return( rc );
+}
+
 /* XXX this considers any held stream to mean the call is on hold. correct? */
     int
 sca_call_is_held( sip_msg_t *msg )
