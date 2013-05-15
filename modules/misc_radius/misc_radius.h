@@ -35,6 +35,7 @@ enum {GV_GROUP_CHECK = 0, GV_STATIC_MAX};
 enum {UV_CALL_CHECK = 0, UV_STATIC_MAX};
 
 extern int use_sip_uri_host;
+extern int common_response;
 
 extern void *rh;
 

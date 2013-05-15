@@ -57,6 +57,7 @@ static int caller_service_type = -1;
 static int callee_service_type = -1;
 static int group_service_type = -1;
 static int uri_service_type = -1;
+int common_response = 0;
 int use_sip_uri_host = 0;
 
 void *rh;
@@ -117,7 +118,8 @@ static param_export_t params[] = {
     {"callee_extra",        STR_PARAM, &callee_extra_str   },
     {"group_extra",         STR_PARAM, &group_extra_str    },
     {"uri_extra",           STR_PARAM, &uri_extra_str      },
-    {"use_sip_uri_host",    INT_PARAM, &use_sip_uri_host},
+    {"use_sip_uri_host",    INT_PARAM, &use_sip_uri_host   },
+    {"common_response",     INT_PARAM, &common_response    },
     {0, 0, 0}
 };	
 
@@ -139,19 +141,19 @@ struct module_exports exports = {
 
 
 /* Macro to set static attribute names */
-#define SET_STATIC(_attrs)		\
-    do {								\
+#define SET_STATIC(_attrs)		                        \
+    do {								                \
 	memset((_attrs), 0, sizeof((_attrs)));				\
-	(_attrs)[SA_SERVICE_TYPE].n	   = "Service-Type";		\
+	(_attrs)[SA_SERVICE_TYPE].n	   = "Service-Type";	\
 	(_attrs)[SA_USER_NAME].n	   = "User-Name";		\
-	(_attrs)[SA_SIP_AVP].n	           = "SIP-AVP";			\
+	(_attrs)[SA_SIP_AVP].n	       = "SIP-AVP";			\
 	(_attrs)[SA_SIP_GROUP].n	   = "SIP-Group";		\
-	if (use_sip_uri_host) {						\
-	    (_attrs)[SA_SIP_URI_HOST].n	   = "SIP-URI-Host";		\
-	} else {							\
-	    (_attrs)[SA_SIP_URI_HOST].n	   = "User-Name";		\
-	}								\
-	n = SA_STATIC_MAX;						\
+	if (use_sip_uri_host) {						        \
+	    (_attrs)[SA_SIP_URI_HOST].n  = "SIP-URI-Host";  \
+	} else {							                \
+	    (_attrs)[SA_SIP_URI_HOST].n  = "User-Name";     \
+	}								                    \
+	n = SA_STATIC_MAX;						            \
     }while(0)
 
 
