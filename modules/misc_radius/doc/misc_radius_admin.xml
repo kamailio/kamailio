@@ -303,6 +303,23 @@ modparam("misc_radius", "use_sip_uri_host", 1)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>common_response</varname> (integer)</title>
+		<para>
+		Set it to 1 if you need common radius response attributes to
+		be added as AVPs.
+		</para>
+		<para>
+		Default value is <quote>0</quote>.
+		</para>
+		<example>
+		<title><varname>common_response</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "common_response", 21)
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
