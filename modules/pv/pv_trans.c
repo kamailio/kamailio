@@ -94,6 +94,15 @@ char *tr_set_crt_buffer(void)
 	return _tr_buffer;
 }
 
+#define tr_string_clone_result do { \
+		if(val->rs.len>TR_BUFFER_SIZE-1) { \
+			LM_ERR("result is too big\n"); \
+			return -1; \
+		} \
+		strncpy(_tr_buffer, val->rs.s, val->rs.len); \
+		val->rs.s = _tr_buffer; \
+	} while(0);
+
 /*!
  * \brief Evaluate string transformations
  * \param msg SIP message
@@ -323,6 +332,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				{ /* to end */
 					val->rs.s += i;
 					val->rs.len -= i;
+					tr_string_clone_result;
 					break;
 				}
 				val->rs.s += i;
@@ -340,10 +350,12 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			{ /* to end */
 				val->rs.s += val->rs.len-i;
 				val->rs.len = i;
+				tr_string_clone_result;
 				break;
 			}
 			val->rs.s += val->rs.len-i;
 			val->rs.len = j;
+			tr_string_clone_result;
 			break;
 
 		case TR_S_SELECT:
@@ -414,6 +426,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					val->rs = _tr_empty;
 				}
 			}
+			tr_string_clone_result;
 			break;
 
 		case TR_S_TOLOWER:
@@ -489,6 +502,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			if(subtype==TR_S_STRIP)
 				val->rs.s += i;
 			val->rs.len -= i;
+			tr_string_clone_result;
 			break;
 
 
@@ -530,6 +544,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			}
 			val->rs.s += i;
 			val->rs.len -= i;
+			tr_string_clone_result;
 			break;
 
 		case TR_S_PREFIXES:
