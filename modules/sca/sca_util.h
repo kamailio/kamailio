@@ -55,6 +55,8 @@ int	sca_uri_build_aor( str *, int, str *, str * );
 
 int	sca_aor_create_from_info( str *, uri_type, str *, str *, str * );
 
+int	sca_create_canonical_aor( sip_msg_t *, str * );
+
 /* convenient call hold detection */
 int	sca_call_is_held( sip_msg_t * );
 
