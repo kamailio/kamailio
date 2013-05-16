@@ -98,7 +98,6 @@ static int w_uac_auth(struct sip_msg* msg, char* str, char* str2);
 static int w_uac_reg_lookup(struct sip_msg* msg,  char* src, char* dst);
 static int w_uac_reg_request_to(struct sip_msg* msg,  char* src, char* mode_s);
 static int fixup_replace_uri(void** param, int param_no);
-static int fixup_replace_disp_uri(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int rank);
@@ -114,13 +113,13 @@ static pv_export_t mod_pvs[] = {
 
 /* Exported functions */
 static cmd_export_t cmds[]={
-	{"uac_replace_from",  (cmd_function)w_replace_from,  2, fixup_replace_disp_uri, 0,
+	{"uac_replace_from",  (cmd_function)w_replace_from,  2, fixup_replace_uri, 0,
 			REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_replace_from",  (cmd_function)w_replace_from,  1, fixup_replace_uri, 0,
 			REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_restore_from",  (cmd_function)w_restore_from,  0,                  0, 0,
 			REQUEST_ROUTE },
-	{"uac_replace_to",  (cmd_function)w_replace_to,  2, fixup_replace_disp_uri, 0,
+	{"uac_replace_to",  (cmd_function)w_replace_to,  2, fixup_replace_uri, 0,
 		 	REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_replace_to",  (cmd_function)w_replace_to,  1, fixup_replace_uri, 0,
 			REQUEST_ROUTE | BRANCH_ROUTE },
@@ -414,51 +413,6 @@ static int fixup_replace_uri(void** param, int param_no)
 
 	return 0;
 }
-
-
-static int fixup_replace_disp_uri(void** param, int param_no)
-{
-	pv_elem_t *model;
-	char *p;
-	str s;
-
-	/* convert to str */
-	s.s = (char*)*param;
-	s.len = strlen(s.s);
-
-	model=NULL;
-	if (param_no==1)
-	{
-		if (s.len)
-		{
-			/* put " around display name */
-			p = (char*)pkg_malloc(s.len+3);
-			if (p==0)
-			{
-				LM_CRIT("no more pkg mem\n");
-				return E_OUT_OF_MEM;
-			}
-			p[0] = '\"';
-			memcpy(p+1, s.s, s.len);
-			p[s.len+1] = '\"';
-			p[s.len+2] = '\0';
-			pkg_free(s.s);
-			s.s = p;
-			s.len += 2;
-		}
-	}
-	if(pv_parse_format(&s ,&model)<0)
-	{
-		LM_ERR("wrong format [%s] for param no %d!\n", s.s, param_no);
-		pkg_free(s.s);
-		return E_UNSPEC;
-	}
-	*param = (void*)model;
-
-	return 0;
-}
-
-
 
 /************************** wrapper functions ******************************/
 
