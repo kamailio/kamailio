@@ -46,7 +46,7 @@
 
 /* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
 #if __STDC_VERSION__ < 199901L
-#	if __GNUC__ >= 2 && defined __FUNCTION__
+#	if __GNUC__ >= 2
 #		define _FUNC_NAME_ __FUNCTION__
 #	else
 #		define _FUNC_NAME_ ""
