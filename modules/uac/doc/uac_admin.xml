@@ -484,6 +484,10 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 			<para>
 			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 			</para>
+			<para>NOTE: Previous versions of this function added double quotes automatically to 
+			display variable. That is no longer the case, if you expect that behavior, you will 
+			have to add the quotes by yourself.
+			</para>
 			<para>
 			If you set restore_mode to AUTO, the URI will be modified automatically in
 			all subsequent requests and replies in that dialog.
@@ -512,7 +516,8 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 # replace both display and uri
 uac_replace_from("$avp(s:display)","$avp(s:uri)");
 # replace only display and do not touch uri
-uac_replace_from("batman","");
+uac_replace_from("batman","");   # display is replaced with: batman
+uac_replace_from("\"batman\"","");  # display is replaced with: "batman"
 # remove display and replace uri
 uac_replace_from("","sip:robin@gotham.org");
 # remove display and do not touch uri
@@ -580,6 +585,10 @@ uac_restore_from();
 			<para>
 			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 			</para>
+			<para>NOTE: Previous versions of this function added double quotes automatically to 
+			display variable. That is no longer the case, if you expect that behavior, you will 
+			have to add the quotes by yourself.
+			</para>
 			<example>
 				<title><function>uac_replace_to</function> usage</title>
 				<programlisting format="linespecific">
@@ -587,7 +596,8 @@ uac_restore_from();
 # replace both display and uri
 uac_replace_to("$avp(display)","$avp(uri)");
 # replace only display and do not touch uri
-uac_replace_to("batman","");
+uac_replace_to("batman","");   # display is replaced with: batman
+uac_replace_to("\"batman\"","");  # display is replaced with: "batman"
 # remove display and replace uri
 uac_replace_to("","sip:robin@gotham.org");
 # remove display and do not touch uri
