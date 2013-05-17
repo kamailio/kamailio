@@ -35,6 +35,7 @@
 #include "../../rpc_lookup.h"
 #include "../../route_struct.h"
 #include "../../mem/shm_mem.h"
+#include "../../locking.h"
 		       
 #include "debugger_act.h"
 #include "debugger_api.h"
@@ -867,3 +868,213 @@ int dbg_init_rpc(void)
 	return 0;
 }
 
+
+typedef struct _dbg_mod_level {
+	str name;
+	unsigned int hashid;
+	int level;
+	struct _dbg_mod_level *next;
+} dbg_mod_level_t;
+
+typedef struct _dbg_mod_slot
+{
+	dbg_mod_level_t *first;
+	gen_lock_t lock;
+} dbg_mod_slot_t;
+
+static dbg_mod_slot_t *_dbg_mod_table = NULL;
+static unsigned int _dbg_mod_table_size = 0;
+
+/**
+ *
+ */
+int dbg_init_mod_levels(int dbg_mod_level, int dbg_mod_hash_size)
+{
+	int i;
+	if(dbg_mod_level==0 || dbg_mod_hash_size<=0)
+		return 0;
+	if(_dbg_mod_table!=NULL)
+		return 0;
+	_dbg_mod_table_size = 1 << dbg_mod_hash_size;
+	_dbg_mod_table = (dbg_mod_slot_t*)shm_malloc(_dbg_mod_table_size*sizeof(dbg_mod_slot_t));
+	if(_dbg_mod_table==NULL)
+	{
+		LM_ERR("no more shm.\n");
+		return -1;
+	}
+	memset(_dbg_mod_table, 0, _dbg_mod_table_size*sizeof(dbg_mod_slot_t));
+
+	for(i=0; i<_dbg_mod_table_size; i++)
+	{
+		if(lock_init(&_dbg_mod_table[i].lock)==0)
+		{
+			LM_ERR("cannot initalize lock[%d]\n", i);
+			i--;
+			while(i>=0)
+			{
+				lock_destroy(&_dbg_mod_table[i].lock);
+				i--;
+			}
+			shm_free(_dbg_mod_table);
+			_dbg_mod_table = NULL;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * case insensitive hashing - clone here to avoid usage of LOG*()
+ * - s1 - str to hash
+ * - s1len - len of s1
+ * return computed hash id
+ */
+#define dbg_ch_h_inc h+=v^(v>>3)
+#define dbg_ch_icase(_c) (((_c)>='A'&&(_c)<='Z')?((_c)|0x20):(_c))
+static inline unsigned int dbg_compute_hash(char *s1, int s1len)
+{
+	char *p, *end;
+	register unsigned v;
+	register unsigned h;
+
+	h=0;
+
+	end=s1+s1len;
+	for ( p=s1 ; p<=(end-4) ; p+=4 ){
+		v=(dbg_ch_icase(*p)<<24)+(dbg_ch_icase(p[1])<<16)+(dbg_ch_icase(p[2])<<8)
+			+ dbg_ch_icase(p[3]);
+		dbg_ch_h_inc;
+	}
+	v=0;
+	for (; p<end ; p++){ v<<=8; v+=dbg_ch_icase(*p);}
+	dbg_ch_h_inc;
+
+	h=((h)+(h>>11))+((h>>13)+(h>>23));
+	return h;
+}
+
+int dbg_set_mod_debug_level(char *mname, int mnlen, int *mlevel)
+{
+	unsigned int idx;
+	unsigned int hid;
+	dbg_mod_level_t *it;
+	dbg_mod_level_t *itp;
+	dbg_mod_level_t *itn;
+
+	if(_dbg_mod_table==NULL)
+		return -1;
+
+	hid = dbg_compute_hash(mname, mnlen);
+	idx = hid&(_dbg_mod_table_size-1);
+
+	lock_get(&_dbg_mod_table[idx].lock);
+	it = _dbg_mod_table[idx].first;
+	itp = NULL;
+	while(it!=NULL && it->hashid < hid) {
+		itp = it;
+		it = it->next;
+	}
+	while(it!=NULL && it->hashid==hid)
+	{
+		if(mnlen==it->name.len
+				&& strncmp(mname, it->name.s, mnlen)==0)
+		{
+			/* found */
+			if(mlevel==NULL) {
+				/* remove */
+				if(itp!=NULL) {
+					itp->next = it->next;
+				} else {
+					_dbg_mod_table[idx].first = it->next;
+				}
+				shm_free(it);
+			} else {
+				/* set */
+				it->level = *mlevel;
+			}
+			lock_release(&_dbg_mod_table[idx].lock);
+			return 0;
+		}
+		itp = it;
+		it = it->next;
+	}
+	/* not found - add */
+	if(mlevel==NULL) {
+		lock_release(&_dbg_mod_table[idx].lock);
+		return 0;
+	}
+	itn = (dbg_mod_level_t*)shm_malloc(sizeof(dbg_mod_level_t) + (mnlen+1)*sizeof(char));
+	if(itn==NULL) {
+		LM_ERR("no more shm\n");
+		lock_release(&_dbg_mod_table[idx].lock);
+		return -1;
+	}
+	memset(itn, 0, sizeof(dbg_mod_level_t) + (mnlen+1)*sizeof(char));
+	itn->level    = *mlevel;
+	itn->hashid   = hid;
+	itn->name.s   = (char*)(itn) + sizeof(dbg_mod_level_t);
+	itn->name.len = mnlen;
+	strncpy(itn->name.s, mname, mnlen);
+	itn->name.s[itn->name.len] = '\0';
+
+	if(itp==NULL) {
+		itn->next = _dbg_mod_table[idx].first;
+		_dbg_mod_table[idx].first = itn;
+	} else {
+		itn->next = itp->next;
+		itp->next = itn;
+	}
+	lock_release(&_dbg_mod_table[idx].lock);
+	return 0;
+
+}
+
+static int _dbg_get_mod_debug_level = 0;
+int dbg_get_mod_debug_level(char *mname, int mnlen, int *mlevel)
+{
+	unsigned int idx;
+	unsigned int hid;
+	dbg_mod_level_t *it;
+	/* no LOG*() usage in this function and those executed insite it
+	 * - use fprintf(stderr, ...) if need for troubleshooting
+	 * - it will loop otherwise */
+	if(_dbg_mod_table==NULL)
+		return -1;
+
+	if(_dbg_get_mod_debug_level!=0)
+		return -1;
+	_dbg_get_mod_debug_level = 1;
+
+	hid = dbg_compute_hash(mname, mnlen);
+	idx = hid&(_dbg_mod_table_size-1);
+	lock_get(&_dbg_mod_table[idx].lock);
+	it = _dbg_mod_table[idx].first;
+	while(it!=NULL && it->hashid < hid)
+		it = it->next;
+	while(it!=NULL && it->hashid == hid)
+	{
+		if(mnlen==it->name.len
+				&& strncmp(mname, it->name.s, mnlen)==0)
+		{
+			/* found */
+			*mlevel = it->level;
+			lock_release(&_dbg_mod_table[idx].lock);
+			_dbg_get_mod_debug_level = 0;
+			return 0;
+		}
+		it = it->next;
+	}
+	lock_release(&_dbg_mod_table[idx].lock);
+	_dbg_get_mod_debug_level = 0;
+	return -1;
+}
+
+/**
+ *
+ */
+void dbg_enable_mod_levels(void)
+{
+	if(_dbg_mod_table==NULL)
+		return;
+	set_module_debug_level_cb(dbg_get_mod_debug_level);
+}

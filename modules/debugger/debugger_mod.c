@@ -44,6 +44,7 @@ static void mod_destroy(void);
 
 static int w_dbg_breakpoint(struct sip_msg* msg, char* point, char* str2);
 static int fixup_dbg_breakpoint(void** param, int param_no);
+static int dbg_mod_level_param(modparam_t type, void *val);
 
 /* parameters */
 extern int _dbg_cfgtrace;
@@ -55,6 +56,9 @@ extern int _dbg_step_usleep;
 extern int _dbg_step_loops;
 
 static char * _dbg_cfgtrace_facility_str = 0;
+
+static int _dbg_mod_hash_size = 0;
+static int _dbg_mod_level = 0;
 
 static cmd_export_t cmds[]={
 	{"dbg_breakpoint", (cmd_function)w_dbg_breakpoint, 1,
@@ -70,6 +74,9 @@ static param_export_t params[]={
 	{"log_prefix",        STR_PARAM, &_dbg_cfgtrace_prefix},
 	{"step_usleep",       INT_PARAM, &_dbg_step_usleep},
 	{"step_loops",        INT_PARAM, &_dbg_step_loops},
+	{"mod_hash_size",     INT_PARAM, &_dbg_mod_hash_size},
+	{"mod_level_mode",    INT_PARAM, &_dbg_mod_level},
+	{"mod_level",         STR_PARAM|USE_FUNC_PARAM, (void*)dbg_mod_level_param},
 	{0, 0, 0}
 };
 
@@ -113,6 +120,12 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(dbg_init_mod_levels(_dbg_mod_level, _dbg_mod_hash_size)<0)
+	{
+		LM_ERR("failed to init per module log level\n");
+		return -1;
+	}
+
 	return dbg_init_bp_list();
 }
 
@@ -122,8 +135,10 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	LM_DBG("rank is (%d)\n", rank);
-	if (rank==PROC_INIT)
+	if (rank==PROC_INIT) {
+		dbg_enable_mod_levels();
 		return dbg_init_pid_list();
+	}
 	return dbg_init_mypid();
 }
 
@@ -173,4 +188,39 @@ static int fixup_dbg_breakpoint(void** param, int param_no)
     return dbg_add_breakpoint(a, (*p=='0')?0:1);
 }
 
+static int dbg_mod_level_param(modparam_t type, void *val)
+{
+	char *p;
+	str s;
+	int l;
+	if(val==NULL)
+		return -1;
+
+	p = strchr((char*)val, '=');
+	if(p==NULL) {
+		LM_ERR("invalid parameter value: %s\n", (char*)val);
+		return -1;
+	}
+	s.s = p + 1;
+	s.len = strlen(s.s);
+
+	if(str2sint(&s, &l)<0) {
+		LM_ERR("invalid parameter - level value: %s\n", (char*)val);
+		return -1;
+	}
+	s.s = (char*)val;
+	s.len = p - s.s;
+	if(dbg_init_mod_levels(_dbg_mod_level, _dbg_mod_hash_size)<0)
+	{
+		LM_ERR("failed to init per module log level\n");
+		return -1;
+	}
+	if(dbg_set_mod_debug_level(s.s, s.len, &l)<0)
+	{
+		LM_ERR("cannot store parameter: %s\n", (char*)val);
+		return -1;
+	}
+	return 0;
+
+}
 
