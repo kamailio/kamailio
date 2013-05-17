@@ -844,14 +844,40 @@ static void  dbg_rpc_trace(rpc_t* rpc, void* ctx)
 	rpc->add(ctx, "s", "200 ok");
 }
 
+/**
+ *
+ */
+static const char* dbg_rpc_mod_level_doc[2] = {
+	"Specify module log level",
+	0
+};
+
+static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
+	int l;
+	str value = {0,0};
+
+	if (rpc->scan(ctx, "Sd", &value, &l) < 1)
+	{
+		rpc->fault(ctx, 500, "invalid parameters");
+		return;
+	}
+
+	if(dbg_set_mod_debug_level(value.s, value.len, &l)<0)
+	{
+		rpc->fault(ctx, 500, "cannot store parameter\n");
+		return;
+	}
+	rpc->add(ctx, "s", "200 ok");
+}
 
 /**
  *
  */
 rpc_export_t dbg_rpc[] = {
-	{"dbg.bp",    dbg_rpc_bp,        dbg_rpc_bp_doc,       0},
-	{"dbg.ls",    dbg_rpc_list,      dbg_rpc_list_doc,     0},
-	{"dbg.trace", dbg_rpc_trace,     dbg_rpc_trace_doc,    0},
+	{"dbg.bp",        dbg_rpc_bp,        dbg_rpc_bp_doc,        0},
+	{"dbg.ls",        dbg_rpc_list,      dbg_rpc_list_doc,      0},
+	{"dbg.trace",     dbg_rpc_trace,     dbg_rpc_trace_doc,     0},
+	{"dbg.mod_level", dbg_rpc_mod_level, dbg_rpc_mod_level_doc, 0},
 	{0, 0, 0, 0}
 };
 

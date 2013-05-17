@@ -444,6 +444,31 @@ if($si=="10.0.0.10")
 		</programlisting>
     </section>
 
+    <section>
+		<title>
+		<function moreinfo="none">dbg.mod_level</function>
+		</title>
+		<para>
+			Specify module log level.
+		</para>
+		<para>
+		Name: <emphasis>dbg.mod_level</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_module_ : For core log
+				level, use module name 'core'</para></listitem>
+			<listitem><para>_level_ : integer</para></listitem>
+		</itemizedlist>
+		<para>
+		Examples of use with &sercmd;:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.mod_level core 3
+		dbg.mod_level tm 3
+		</programlisting>
+    </section>
+
     </section>
 	<section>
 		<title>Usage</title>
