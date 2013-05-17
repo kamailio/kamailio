@@ -59,8 +59,10 @@
 #ifdef NO_DEBUG
 #	ifdef MOD_NAME
 #		define LOC_INFO		MOD_NAME ": "
+#		define LOG_MNAME	MOD_NAME
 #	else
 #		define LOC_INFO		"<core>: "
+#		define LOG_MNAME	"core"
 #	endif
 #else
 #	define XCT2STR(i) #i
@@ -68,8 +70,10 @@
 #
 #	ifdef MOD_NAME
 #		define LOC_INFO		MOD_NAME " [" __FILE__ ":" CT2STR(__LINE__) "]: "
+#		define LOG_MNAME	MOD_NAME
 #	else
 #		define LOC_INFO		"<core> [" __FILE__ ":" CT2STR(__LINE__) "]: "
+#		define LOG_MNAME	"core"
 #	endif
 #
 #	ifdef NO_LOG
@@ -77,6 +81,7 @@
 #	endif
 #endif /* NO_DEBUG */
 
+#define LOG_MNAME_LEN		(sizeof(LOG_MNAME)-1)
 
 /*
  * Log levels
@@ -121,11 +126,13 @@ struct log_level_info {
 };
 
 /** @brief per process debug level handling */
-int get_debug_level(void);
+int get_debug_level(char *mname, int mnlen);
 void set_local_debug_level(int level);
 void reset_local_debug_level(void);
+typedef int (*get_module_debug_level_f)(char *mname, int mnlen, int *mlevel);
+void set_module_debug_level_cb(get_module_debug_level_f f);
 
-#define is_printable(level) (get_debug_level()>=(level))
+#define is_printable(level) (get_debug_level(LOG_MNAME, LOG_MNAME_LEN)>=(level))
 extern struct log_level_info log_level_info[];
 extern char *log_name;
 
@@ -179,7 +186,7 @@ void dprint_term_color(char f, char b, str *obuf);
 #	ifdef __SUNPRO_C
 #		define LOG_(facility, level, prefix, fmt, ...) \
 			do { \
-				if (unlikely(get_debuglevel() >= (level) && \
+				if (unlikely(get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
 						DPRINT_NON_CRIT)) { \
 					DPRINT_CRIT_ENTER; \
 					if (likely(((level) >= L_ALERT) && ((level) <= L_DBG))){ \
@@ -245,7 +252,7 @@ void dprint_term_color(char f, char b, str *obuf);
 #	else /* ! __SUNPRO_C */
 #		define LOG_(facility, level, prefix, fmt, args...) \
 			do { \
-				if (get_debug_level() >= (level) && \
+				if (get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
 						DPRINT_NON_CRIT) { \
 					DPRINT_CRIT_ENTER; \
 					if (likely(((level) >= L_ALERT) && ((level) <= L_DBG))){ \

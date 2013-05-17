@@ -115,12 +115,29 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val)
 
 /* the local debug log level */
 static int _local_debug_level = UNSET_LOCAL_DEBUG_LEVEL;
+/* callback to get per module debug level */
+static get_module_debug_level_f _module_debug_level = NULL;
+
+/**
+ * @brief set callback function for per module debug level
+ */
+void set_module_debug_level_cb(get_module_debug_level_f f)
+{
+	_module_debug_level = f;
+}
 
 /**
  * @brief return the log level - the local one if it set,
  *   otherwise the global value
  */
-int get_debug_level(void) {
+int get_debug_level(char *mname, int mnlen) {
+	int mlevel = L_DBG;
+	/*important -- no LOGs inside, because it will loop */
+	if(unlikely(_module_debug_level!=NULL && mnlen>0)) {
+		if(_module_debug_level(mname, mnlen, &mlevel)==0) {
+			return mlevel;
+		}
+	}
 	return (_local_debug_level != UNSET_LOCAL_DEBUG_LEVEL) ?
 				_local_debug_level : cfg_get(core, core_cfg, debug);
 }
