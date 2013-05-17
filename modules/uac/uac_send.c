@@ -61,6 +61,8 @@ typedef struct _uac_send_info {
 	char  b_apasswd[64];
 	str   s_apasswd;
 	unsigned int onreply;
+	char  b_callid[128];
+	str   s_callid;
 } uac_send_info_t;
 
 static struct _uac_send_info _uac_req;
@@ -84,6 +86,7 @@ uac_send_info_t *uac_send_info_clone(uac_send_info_t *ur)
 	tp->s_ouri.s    = tp->b_ouri;
 	tp->s_auser.s   = tp->b_auser;
 	tp->s_apasswd.s = tp->b_apasswd;
+	tp->s_callid.s  = tp->b_callid;
 
 	return tp;
 }
@@ -134,6 +137,10 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
 			if(_uac_req.s_apasswd.len<=0)
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res, &_uac_req.s_apasswd);
+		case 11:
+			if(_uac_req.s_callid.len<=0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_uac_req.s_callid);
 		default:
 			return pv_get_uintval(msg, param, res, _uac_req.flags);
 	}
@@ -160,6 +167,7 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 				_uac_req.s_body.len = 0;
 				_uac_req.s_method.len = 0;
 				_uac_req.onreply = 0;
+				_uac_req.s_callid.len = 0;
 			}
 			break;
 		case 1:
@@ -360,6 +368,21 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 			_uac_req.s_apasswd.s[val->rs.len] = '\0';
 			_uac_req.s_apasswd.len = val->rs.len;
 			break;
+		case 11:
+			if(val==NULL)
+			{
+				_uac_req.s_callid.len = 0;
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+                        memcpy(_uac_req.s_callid.s, val->rs.s, val->rs.len);
+                        _uac_req.s_callid.s[val->rs.len] = '\0';
+                        _uac_req.s_callid.len = val->rs.len;
+			break;
 	}
 	return 0;
 }
@@ -399,6 +422,8 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 		case 6: 
 			if(strncmp(in->s, "method", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 7;
+			else if(strncmp(in->s, "callid", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 11;
 			else goto error;
 		break;
 		case 7: 
@@ -439,6 +464,7 @@ void uac_req_init(void)
 	_uac_req.s_method.s = _uac_req.b_method;
 	_uac_req.s_auser.s  = _uac_req.b_auser;
 	_uac_req.s_apasswd.s  = _uac_req.b_apasswd;
+	_uac_req.s_callid.s  = _uac_req.b_callid;
 	return;
 }
 
@@ -612,6 +638,7 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 		/* Callback parameter */
 		uac_r.cbp = (void*)tp;
 	}
+        uac_r.callid = (_uac_req.s_callid.len <= 0) ? NULL : &_uac_req.s_callid;
 	ret = tmb.t_request(&uac_r,  /* UAC Req */
 						&_uac_req.s_ruri,        /* Request-URI */
 						(_uac_req.s_turi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_turi, /* To */

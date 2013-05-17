@@ -762,7 +762,10 @@ int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 
 	if (check_params(uac_r, to, from) < 0) goto err;
 
-	generate_callid(&callid);
+	if (uac_r->callid == NULL || uac_r->callid->len <= 0)
+	    generate_callid(&callid);
+	else
+	    callid = *uac_r->callid;
 	generate_fromtag(&fromtag, &callid);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &dialog) < 0) {

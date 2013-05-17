@@ -605,6 +605,7 @@ $uac_req(method)="OPTIONS";
 $uac_req(ruri)="sip:kamailio.org";
 $uac_req(furi)="sip:kamailio.org";
 $uac_req(turi)="sip:kamailio.org";
+$uac_req(callid)=$(mb{s.md5});
 uac_req_send();
 ...
 
