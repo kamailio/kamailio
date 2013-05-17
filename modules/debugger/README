@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright (c) 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -45,6 +45,7 @@ Daniel-Constantin Mierla
               5.1. dbg.ls
               5.2. dbg.trace
               5.3. dbg.bp
+              5.4. dbg.mod_level
 
         6. Usage
 
@@ -94,6 +95,7 @@ Chapter 1. Admin Guide
         5.1. dbg.ls
         5.2. dbg.trace
         5.3. dbg.bp
+        5.4. dbg.mod_level
 
    6. Usage
 
@@ -295,6 +297,7 @@ if($si=="10.0.0.10")
    5.1. dbg.ls
    5.2. dbg.trace
    5.3. dbg.bp
+   5.4. dbg.mod_level
 
 5.1. dbg.ls
 
@@ -364,6 +367,20 @@ if($si=="10.0.0.10")
                 dbg.bp on 1234
                 dbg.bp eval 1234 $fu
                 dbg.bp move 1234
+
+5.4. dbg.mod_level
+
+   Specify module log level.
+
+   Name: dbg.mod_level
+
+   Parameters:
+     * _module_ : For core log level, use module name 'core'
+     * _level_ : integer
+
+   Examples of use with kamcmd:
+                dbg.mod_level core 3
+                dbg.mod_level tm 3
 
 6. Usage
 
