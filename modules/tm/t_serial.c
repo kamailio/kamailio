@@ -51,6 +51,7 @@ struct contact {
     struct socket_info* sock;
     str instance;
     str ruid;
+    str location_ua;
     unsigned int flags;
     unsigned short q_flag;
     struct contact *next;
@@ -94,10 +95,11 @@ static str instance_name = {"instance", 8};
 static str flags_name = {"flags", 5};
 static str q_flag_name = {"q_flag", 6};
 static str ruid_name = {"ruid", 4};
+static str ua_name = {"ua", 2};
 
 void add_contacts_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 		      unsigned int flags, unsigned int q_flag, str *instance,
-		      str *ruid)
+		      str *ruid, str *location_ua)
 {
     sr_xavp_t *record;
     sr_xval_t val;
@@ -143,6 +145,12 @@ void add_contacts_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 	val.type = SR_XTYPE_STR;
 	val.v.s = *ruid;
 	xavp_add_value(&ruid_name, &val, &record);
+    }
+
+    if (location_ua->len > 0) {
+	val.type = SR_XTYPE_STR;
+	val.v.s = *location_ua;
+	xavp_add_value(&ua_name, &val, &record);
     }
 
     val.type = SR_XTYPE_XAVP;
@@ -202,6 +210,7 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 	contacts->q = get_ruri_q();
 	contacts->instance = msg->instance;
         contacts->ruid = msg->ruid;
+	contacts->location_ua = msg->location_ua;
 	first_idx = 0;
     } else {
 	/* Insert first branch to first contact */
@@ -219,6 +228,8 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 	contacts->instance.len = branch->instance_len;
         contacts->ruid.s = branch->ruid;
         contacts->ruid.len = branch->ruid_len;
+	contacts->location_ua.s = branch->location_ua;
+	contacts->location_ua.len = branch->location_ua_len;
 	first_idx = 1;
     }
 
@@ -247,6 +258,8 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 	next->instance.len = branch->instance_len;
 	next->ruid.s = branch->ruid;
 	next->ruid.len = branch->ruid_len;
+	next->location_ua.s = branch->location_ua;
+	next->location_ua.len = branch->location_ua_len;
 	next->next = (struct contact *)0;
 
 	prev = (struct contact *)0;
@@ -299,7 +312,7 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 
 	add_contacts_avp(&(curr->uri), &(curr->dst_uri), &(curr->path),
 			 &sock_str, curr->flags, curr->q_flag,
-			 &(curr->instance), &(curr->ruid));
+			 &(curr->instance), &(curr->ruid), &(curr->location_ua));
 
 	curr = curr->next;
     }
@@ -314,7 +327,8 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 }
 
 void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
-			   unsigned int flags, str *instance, str *ruid)
+			   unsigned int flags, str *instance, str *ruid,
+			   str *location_ua)
 {
     sr_xavp_t *record;
     sr_xval_t val;
@@ -354,6 +368,12 @@ void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 	xavp_add_value(&ruid_name, &val, &record);
     }
 
+    if (location_ua->len > 0) {
+	val.type = SR_XTYPE_STR;
+	val.v.s = *location_ua;
+	xavp_add_value(&ua_name, &val, &record);
+    }
+
     val.type = SR_XTYPE_INT;
     val.v.i = flags;
     xavp_add_value(&flags_name, &val, &record);
@@ -376,7 +396,7 @@ void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
  * there was nothing to do. Returns -1 in case of an error. */
 int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 {
-    str uri, dst_uri, path, instance, host, sock_str, ruid;
+    str uri, dst_uri, path, instance, host, sock_str, ruid, location_ua;
     struct socket_info *sock;
     unsigned int flags, q_flag;
     sr_xavp_t *xavp_list, *xavp, *prev_xavp, *vavp;
@@ -471,6 +491,9 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
     vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
     ruid = vavp->val.v.s;
 
+    vavp = xavp_get(&ua_name, xavp->val.v.xavp);
+    location_ua = vavp->val.v.s;
+
     /* Rewrite Request-URI */
     rewrite_uri(msg, &uri);
 
@@ -491,6 +514,8 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
     setbflagsval(0, flags);
 
     set_ruid(msg, &ruid);
+
+    set_ua(msg, &location_ua);
 
     /* Check if there was only one contact at this priority */
     if (q_flag) {
@@ -556,6 +581,9 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 	vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
 	ruid = vavp->val.v.s;
 
+	vavp = xavp_get(&ua_name, xavp->val.v.xavp);
+	location_ua = vavp->val.v.s;
+
 	vavp = xavp_get(&instance_name, xavp->val.v.xavp);
 	if (vavp != NULL) {
 	    instance = vavp->val.v.s;
@@ -568,7 +596,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 	    }
 	    if (ilp) {
 		add_contact_flows_avp(&uri, &dst_uri, &path, &sock_str,
-				      flags, &instance, &ruid);
+				      flags, &instance, &ruid, &location_ua);
 		goto check_q_flag;
 	    }
 	    if (!q_flag) {
@@ -595,14 +623,15 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 		instance.len = 0;
 	}
 
-	LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s' ruid-'%.*s'\n",
+	LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s'"
+		" ruid-'%.*s' location_ua-'%.*s'\n",
 		uri.len, uri.s,
 		dst_uri.len, (dst_uri.len > 0)?dst_uri.s:"",
 		path.len, (path.len>0)?path.s:"",
 		instance.len, (instance.len>0)?instance.s:"",
-		ruid.len, ruid.s);
+		ruid.len, ruid.s, location_ua.len, location_ua.s);
 	if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
-			  &ruid) != 1) {
+			  &ruid, &location_ua) != 1) {
 	    LM_ERR("appending branch failed\n");
 	    free_instance_list(il);
 	    xavp_destroy_list(&xavp_list);
@@ -637,7 +666,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
  * there was nothing to do. Returns -1 in case of an error. */
 int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 {
-    str uri, dst_uri, path, instance, host, ruid;
+    str uri, dst_uri, path, instance, host, ruid, location_ua;
 	str this_instance;
     struct socket_info *sock;
     unsigned int flags;
@@ -728,14 +757,18 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 		vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
 		ruid = vavp->val.v.s;
 
-		LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s' ruid-'%.*s'\n",
+		vavp = xavp_get(&ua_name, xavp->val.v.xavp);
+		location_ua = vavp->val.v.s;
+
+		LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s'"
+			" inst-'%.*s' ruid-'%.*s' location_ua-'%.*s'\n",
 			uri.len, uri.s,
 			dst_uri.len, (dst_uri.len > 0)?dst_uri.s:"",
 			path.len, (path.len>0)?path.s:"",
 			instance.len, (instance.len>0)?instance.s:"",
-			ruid.len, ruid.s);
+			ruid.len, ruid.s, location_ua.len, location_ua.s);
 		if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
-			  &ruid) != 1) {
+			  &ruid, &location_ua) != 1) {
 			LM_ERR("appending branch failed\n");
 			xavp_destroy_list(&xavp_list);
 			return -1;
