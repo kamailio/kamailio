@@ -103,7 +103,7 @@
 
 	<section>
 		<title>Parameters</title>
-		<section>
+		<section id="uac.p.rr_from_store_param">
 			<title><varname>rr_from_store_param</varname> (string)</title>
 			<para>
 			Name of Record-Route header parameter that will be used to store 
@@ -124,7 +124,7 @@ modparam("uac","rr_from_store_param","my_param")
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.p.rr_to_store_param">
 			<title><varname>rr_to_store_param</varname> (string)</title>
 			<para>
 			Name of Record-Route header parameter that will be used to store 
@@ -145,7 +145,7 @@ modparam("uac","rr_to_store_param","my_param")
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.p.restore_mode">
 			<title><varname>restore_mode</varname> (string)</title>
 			<para>
 			There are 3 modes of restoring the original FROM URI and the original TO URI:
@@ -188,7 +188,7 @@ modparam("uac","restore_mode","auto")
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.p.restore_dlg">
 			<title><varname>restore_dlg</varname> (int)</title>
 			<para>
 			If set to 1, the module uses dialog variables to store initial and
@@ -209,7 +209,7 @@ modparam("uac", "restore_dlg", 1)
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.p.restore_passwd">
 			<title><varname>restore_passwd</varname> (string)</title>
 			<para>
 			String password to be used to encrypt the RR storing parameters. If
@@ -229,7 +229,7 @@ modparam("uac","restore_passwd","my_secret_passwd")
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.p.restore_from_avp">
 			<title><varname>restore_from_avp</varname> (string)</title>
 			<para>
 			If defined and restore_mode is manual or auto, the avp is used to save
@@ -255,7 +255,7 @@ modparam("uac","restore_from_avp","$avp(original_uri_from)")
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.p.restore_to_avp">
 			<title><varname>restore_to_avp</varname> (string)</title>
 			<para>
 			If defined and restore_mode is manual or auto, the avp is used to save
@@ -280,7 +280,7 @@ modparam("uac","restore_to_avp","$avp(original_uri_to)")
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.p.credential">
 			<title><varname>credential</varname> (string)</title>
 			<para>
 			Contains a multiple definition of credentials used to perform
@@ -300,7 +300,7 @@ modparam("uac","credential","username:domain:password")
 				</programlisting>
 			</example>
 		</section>
-		<section id="auth-realm-avp-id">
+		<section id="uac.p.auth-realm-avp-id">
 			<title><varname>auth_realm_avp</varname> (string)</title>
 			<para>
 			The definition of an PV that might contain the realm to be used
@@ -314,9 +314,9 @@ modparam("uac","credential","username:domain:password")
 			<para><emphasis>
 				If you define it, you also need to define 
 				<quote>auth_username_avp</quote> 
-				(<xref linkend="auth-username-avp-id"/>) and 
+				(<xref linkend="uac.p.auth-username-avp-id"/>) and 
 				<quote>auth_username_avp</quote> 
-				(<xref linkend="auth-password-avp-id"/>).
+				(<xref linkend="uac.p.auth-password-avp-id"/>).
 			</emphasis></para>
 			<example>
 				<title>Set <varname>auth_realm_avp</varname> parameter</title>
@@ -327,7 +327,7 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
 				</programlisting>
 			</example>
 		</section>
-		<section id="auth-username-avp-id">
+		<section id="uac.p.auth-username-avp-id">
 			<title><varname>auth_username_avp</varname> (string)</title>
 			<para>
 			The definition of an AVP that might contain the username to be used
@@ -336,9 +336,9 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
 			<para><emphasis>
 				If you define it, you also need to define 
 				<quote>auth_realm_avp</quote> 
-				(<xref linkend="auth-realm-avp-id"/>) and 
+				(<xref linkend="uac.p.auth-realm-avp-id"/>) and 
 				<quote>auth_username_avp</quote> 
-				(<xref linkend="auth-password-avp-id"/>).
+				(<xref linkend="uac.p.auth-password-avp-id"/>).
 			</emphasis></para>
 			<example>
 				<title>Set <varname>auth_username_avp</varname> parameter</title>
@@ -349,7 +349,7 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 				</programlisting>
 			</example>
 		</section>
-		<section id="auth-password-avp-id">
+		<section id="uac.p.auth-password-avp-id">
 			<title><varname>auth_password_avp</varname> (string)</title>
 			<para>
 			The definition of an AVP that might contain the password to be used
@@ -358,9 +358,9 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 			<para><emphasis>
 				If you define it, you also need to define 
 				<quote>auth_password_avp</quote> 
-				(<xref linkend="auth-password-avp-id"/>) and 
+				(<xref linkend="uac.p.auth-password-avp-id"/>) and 
 				<quote>auth_username_avp</quote> 
-				(<xref linkend="auth-password-avp-id"/>).
+				(<xref linkend="uac.p.auth-password-avp-id"/>).
 			</emphasis></para>
 			<example>
 				<title>Set <varname>auth_password_avp</varname> parameter</title>
@@ -371,7 +371,7 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 				</programlisting>
 			</example>
 		</section>
-		<section id="reg-db-url-id">
+		<section id="uac.p.reg-db-url-id">
 			<title><varname>reg_db_url</varname> (string)</title>
 			<para>
 			DB URL to fetch account profiles for registration.
@@ -387,7 +387,7 @@ modparam("uac", "reg_db_url",
 			</example>
 		</section>
 
-		<section id="reg-timer-interval-id">
+		<section id="uac.p.reg-timer-interval-id">
 			<title><varname>reg_timer_interval</varname> (string)</title>
 			<para>
 			Timer interval (in seconds) at which registrations are managed, e.g. renewed as needed.  
@@ -408,7 +408,7 @@ modparam("uac", "reg_timer_interval", 60)
 			</example>
 		</section>
 
-		<section id="reg-retry-interval-id">
+		<section id="uac.p.reg-retry-interval-id">
 			<title><varname>reg_retry_interval</varname> (int)</title>
 			<para>
 			Failed registration attempts will be retried after this interval
@@ -427,7 +427,7 @@ modparam("uac", "reg_retry_interval", 300)
 			</example>
 		</section>
 
-		<section id="reg-db-table-id">
+		<section id="uac.p.reg-db-table-id">
 			<title><varname>reg_db_table</varname> (string)</title>
 			<para>
 			DB table name to fetch user profiles for registration.
@@ -448,7 +448,7 @@ modparam("uac", "reg_db_table", "uacreg")
 			</example>
 		</section>
 
-		<section id="reg-contact-addr-id">
+		<section id="uac.p.reg-contact-addr-id">
 			<title><varname>reg_contact_addr</varname> (string)</title>
 			<para>
 			Address to be used to build contact address. Must be at least
@@ -469,7 +469,7 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 
 	<section>
 		<title>Functions</title>
-		<section>
+		<section id="uac.f.uac_replace_from">
 			<title>
 				<function moreinfo="none">uac_replace_from(display,uri)</function>
 			</title>
@@ -526,7 +526,7 @@ uac_replace_from("","");
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_replace_from(uri)">
 			<title>
 				<function moreinfo="none">uac_replace_from(uri)</function>
 			</title>
@@ -549,7 +549,7 @@ uac_replace_from("sip:batman@gotham.org");
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_restore_from()">
 			<title>
 				<function moreinfo="none">uac_restore_from()</function>
 			</title>
@@ -570,7 +570,7 @@ uac_restore_from();
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_replace_to(display,uri)">
 		<title>
 				<function moreinfo="none">uac_replace_to(display,uri)</function>
 			</title>
@@ -606,7 +606,7 @@ uac_replace_to("","");
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_replace_to(uri)">
 			<title>
 				<function moreinfo="none">uac_replace_to(uri)</function>
 			</title>
@@ -651,7 +651,7 @@ uac_replace_to("sip:batman@gotham.org");
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_restore_to()">
 			<title>
 				<function moreinfo="none">uac_restore_to()</function>
 			</title>
@@ -672,7 +672,7 @@ uac_restore_to();
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_auth()">
 			<title>
 				<function moreinfo="none">uac_auth()</function>
 			</title>
@@ -693,7 +693,7 @@ uac_auth();
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_req_send()">
 			<title>
 				<function moreinfo="none">uac_req_send()</function>
 			</title>
@@ -718,7 +718,7 @@ uac_req_send();
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_reg_lookup(uuid, dst)">
 			<title>
 				<function moreinfo="none">uac_reg_lookup(uuid, dst)</function>
 			</title>
@@ -742,7 +742,7 @@ if(uac_reg_lookup("$rU", "$ru"))
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="uac.f.uac_reg_request_to(user, mode)">
 			<title>
 				<function moreinfo="none">uac_reg_request_to(user, mode)</function>
 			</title>
