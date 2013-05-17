@@ -56,7 +56,6 @@
 #define USERNAME_MAX_SIZE      64
 #define DOMAIN_MAX_SIZE        128
 #define CALLID_MAX_SIZE        255
-#define UA_MAX_SIZE            255
 
 #define PATH_MODE_STRICT	2
 #define PATH_MODE_LAZY		1

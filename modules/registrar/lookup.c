@@ -280,6 +280,13 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 		    }
 		}
 
+		if (ptr->user_agent.len) {
+		    if (set_ua(_m, &(ptr->user_agent)) < 0) {
+				ret = -3;
+				goto done;
+		    }
+		}
+
 		set_ruri_q(ptr->q);
 
 		old_bflags = 0;
@@ -324,7 +331,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 					  ptr->sock,
 					  ptr->instance.len?&(ptr->instance):0,
 				          ptr->instance.len?ptr->reg_id:0,
-					  &ptr->ruid)
+					  &ptr->ruid, &ptr->user_agent)
 			    == -1) {
 				LM_ERR("failed to append a branch\n");
 				/* Also give a chance to the next branches*/
@@ -360,6 +367,7 @@ int reset_ruri_branch(sip_msg_t *msg)
 	reset_instance(msg);
 	msg->reg_id = 0;
 	reset_ruid(msg);
+	reset_ua(msg);
 	return 0;
 }
 
@@ -385,6 +393,7 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	str ruri_b_instance = {0};
 	unsigned int ruri_b_reg_id = 0;
 	str ruri_b_ruid = {0};
+	str ruri_b_ua = {0};
 	branch_t *crt = NULL;
 
 	ret = 1;
@@ -410,6 +419,7 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	ruri_b_instance = msg->instance;
 	ruri_b_reg_id = msg->reg_id;
 	ruri_b_ruid = msg->ruid;
+	ruri_b_ua = msg->location_ua;
 	reset_ruri_branch(msg);
 
 	for(i=0; i<nr_branches_start; i++) {
@@ -490,6 +500,7 @@ done:
 	msg->instance = ruri_b_instance;
 	msg->reg_id = ruri_b_reg_id;
 	msg->ruid = ruri_b_ruid;
+	msg->location_ua = ruri_b_ua;
 
 	return (found)?1:ret;
 }
