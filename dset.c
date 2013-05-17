@@ -216,7 +216,7 @@ void set_branch_iterator(int n)
 char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 		 str* path, unsigned int *flags,
 		 struct socket_info** force_socket,
-		 str *ruid, str *instance)
+		 str *ruid, str *instance, str *location_ua)
 {
 	if (i < nr_branches) {
 		*len = branches[i].len;
@@ -240,6 +240,11 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 		if (instance) {
 			instance->len = branches[i].instance_len;
 			instance->s = (instance->len)?branches[i].instance:0;
+		}
+		if (location_ua) {
+			location_ua->len = branches[i].location_ua_len;
+			location_ua->s
+				= (location_ua->len)?branches[i].location_ua:0;
 		}
 		return branches[i].uri;
 	} else {
@@ -265,6 +270,10 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 			instance->s = 0;
 			instance->len = 0;
 		}
+		if (location_ua) {
+			location_ua->s = 0;
+			location_ua->len = 0;
+		}
 		return 0;
 	}
 }
@@ -276,12 +285,12 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
  */
 char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
 		  unsigned int* flags, struct socket_info** force_socket,
-		  str* ruid, str *instance)
+		  str* ruid, str *instance, str *location_ua)
 {
 	char* ret;
 	
 	ret=get_branch(branch_iterator, len, q, dst_uri, path, flags,
-		       force_socket, ruid, instance);
+		       force_socket, ruid, instance, location_ua);
 	if (likely(ret))
 		branch_iterator++;
 	return ret;
@@ -316,7 +325,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		  qvalue_t q, unsigned int flags,
 		  struct socket_info* force_socket,
 		  str* instance, unsigned int reg_id,
-		  str* ruid)
+		  str* ruid, str* location_ua)
 {
 	str luri;
 
@@ -416,6 +425,21 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		branches[nr_branches].ruid_len = 0;
 	}
 
+	if (unlikely(location_ua && location_ua->len && location_ua->s)) {
+		if (unlikely(location_ua->len > MAX_UA_SIZE)) {
+			LOG(L_ERR, "too long location_ua: %.*s\n",
+			    location_ua->len, location_ua->s);
+			return -1;
+		}
+		memcpy(branches[nr_branches].location_ua, location_ua->s,
+		       location_ua->len);
+		branches[nr_branches].location_ua[location_ua->len] = 0;
+		branches[nr_branches].location_ua_len = location_ua->len;
+	} else {
+		branches[nr_branches].location_ua[0] = '\0';
+		branches[nr_branches].location_ua_len = 0;
+	}
+	
 	nr_branches++;
 	return 1;
 }
@@ -450,7 +474,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	crt_branch = get_branch_iterator();
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0))) {
 		cnt++;
 		*len += uri.len;
 		if (q != Q_UNSPECIFIED) {
@@ -491,7 +515,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0))) {
 		if (i) {
 			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
 			p += CONTACT_DELIM_LEN;

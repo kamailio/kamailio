@@ -898,6 +898,45 @@ void reset_ruid(struct sip_msg* const msg)
 }
 
 
+int set_ua(struct sip_msg* msg, str* location_ua)
+{
+	char* ptr;
+
+	if (unlikely(!msg || !location_ua)) {
+		LM_ERR("invalid location_ua parameter value\n");
+		return -1;
+	}
+
+	if (unlikely(location_ua->len == 0)) {
+		reset_ua(msg);
+	} else if (msg->location_ua.s && (msg->location_ua.len >= location_ua->len)) {
+		memcpy(msg->location_ua.s, location_ua->s, location_ua->len);
+		msg->location_ua.len = location_ua->len;
+	} else {
+		ptr = (char*)pkg_malloc(location_ua->len);
+		if (!ptr) {
+			LM_ERR("not enough pkg memory for location_ua\n");
+			return -1;
+		}
+		memcpy(ptr, location_ua->s, location_ua->len);
+		if (msg->location_ua.s) pkg_free(msg->location_ua.s);
+		msg->location_ua.s = ptr;
+		msg->location_ua.len = location_ua->len;
+	}
+	return 0;
+}
+
+
+void reset_ua(struct sip_msg* const msg)
+{
+	if(msg->location_ua.s != 0) {
+		pkg_free(msg->location_ua.s);
+	}
+	msg->location_ua.s = 0;
+	msg->location_ua.len = 0;
+}
+
+
 hdr_field_t* get_hdr(const sip_msg_t* const msg, const enum _hdr_types_t ht)
 {
 	hdr_field_t *hdr;

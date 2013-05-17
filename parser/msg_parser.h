@@ -366,6 +366,7 @@ typedef struct sip_msg {
         str instance;
         unsigned int reg_id;
 	str ruid;
+	str location_ua;
 
 	struct {
 		int decoded;
@@ -462,6 +463,10 @@ void reset_instance(struct sip_msg* const msg);
 int set_ruid(struct sip_msg* msg, str* ruid);
 
 void reset_ruid(struct sip_msg* const msg);
+
+int set_ua(struct sip_msg* msg, str *location_ua);
+
+void reset_ua(struct sip_msg* const msg);
 
 /** force a specific send socket for forwarding a request.
  * @param msg - sip msg.
