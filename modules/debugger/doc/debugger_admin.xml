@@ -223,6 +223,64 @@ modparam("debugger", "step_loops", 100)
 	    </example>
 	</section>
 
+	<section>
+	    <title><varname>mod_hash_size</varname> (int)</title>
+	    <para>
+		Used to compute power of two as size of internal hash table to store levels
+		per module (e.g., if its set to 4, internal hash table has 16 slots).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> - feature disabled.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mod_hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_hash_size", 5)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mod_level_mode</varname> (int)</title>
+	    <para>
+        Enable or disable per module log level (0 - disabled, 1 - enabled).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mod_level_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_level_mode", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mod_level</varname> (str)</title>
+	    <para>
+		Specify module log level - the value must be in the format:
+		modulename=level. The parameter can be set many times. For core
+		log level, use module name 'core'.
+	    </para>
+	    <example>
+		<title>Set <varname>mod_level</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_level", "core=3")
+modparam("debugger", "mod_level", "tm=3")
+...
+</programlisting>
+	    </example>
+	</section>
 	</section>
 	
     <section>
