@@ -366,6 +366,28 @@ if(sdp_content()) {
 </programlisting>
 	    </example>
 	</section>
+	<section>
+		<title>
+			<function moreinfo="none">sdp_get_line_startswith(avpvar, string)</function>
+		</title>
+		<para>
+			Store the search part of SDP body message with line beginning with 'string' in an AVP. 
+			Return 1 if 'string' is found in SDP, -1 on error and -2 if there is no SDP part in the message body.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>sdp_get_line_startswith</function> usage</title>
+			<programlisting format="linespecific">
+...
+if(sdp_get_line_startswith("$avp(mline)", "m=")) {
+	xlog("m-line: $avp(mline)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 </chapter>
 

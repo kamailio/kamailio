@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2011 asipto.com
+   Copyright Â© 2011 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -38,6 +38,7 @@ Daniel-Constantin Mierla
               4.10. sdp_print(level)
               4.11. sdp_get(avpvar)
               4.12. sdp_content()
+              4.13. sdp_get_line_startswith(avpvar, string)
 
    List of Examples
 
@@ -53,6 +54,7 @@ Daniel-Constantin Mierla
    1.10. sdp_print usage
    1.11. sdp_get usage
    1.12. sdp_content usage
+   1.13. sdp_get_line_startswith usage
 
 Chapter 1. Admin Guide
 
@@ -79,6 +81,7 @@ Chapter 1. Admin Guide
         4.10. sdp_print(level)
         4.11. sdp_get(avpvar)
         4.12. sdp_content()
+        4.13. sdp_get_line_startswith(avpvar, string)
 
 1. Overview
 
@@ -124,6 +127,7 @@ Chapter 1. Admin Guide
    4.10. sdp_print(level)
    4.11. sdp_get(avpvar)
    4.12. sdp_content()
+   4.13. sdp_get_line_startswith(avpvar, string)
 
 4.1.  sdp_remove_codecs_by_id(list)
 
@@ -317,5 +321,20 @@ sdp_get("$avp(sdp)");
 ...
 if(sdp_content()) {
     ...
+}
+...
+
+4.13.  sdp_get_line_startswith(avpvar, string)
+
+   Store the search part of SDP body message with line beginning with
+   'string' in an AVP. Return 1 if 'string' is found in SDP, -1 on error
+   and -2 if there is no SDP part in the message body.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. sdp_get_line_startswith usage
+...
+if(sdp_get_line_startswith("$avp(mline)", "m=")) {
+        xlog("m-line: $avp(mline)\n");
 }
 ...

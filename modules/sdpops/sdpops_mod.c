@@ -30,6 +30,7 @@
 #include "../../dprint.h"
 #include "../../mod_fix.h"
 #include "../../pvar.h"
+#include "../../usr_avp.h"
 #include "../../parser/sdp/sdp.h"
 #include "../../parser/sdp/sdp_helpr_funcs.h"
 #include "../../trim.h"
@@ -52,6 +53,8 @@ static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 static int w_sdp_get(sip_msg_t* msg, char *bar);
 static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar);
+static int w_sdp_get_line_startswith(sip_msg_t* msg, char *foo, char *bar);
+
 
 static int mod_init(void);
 
@@ -84,6 +87,8 @@ static cmd_export_t cmds[] = {
 		1, 0,  0, ANY_ROUTE},
 	{"sdp_content",                (cmd_function)w_sdp_content,
 		0, 0,  0, ANY_ROUTE},
+	{"sdp_get_line_startswith", (cmd_function)w_sdp_get_line_startswith,
+		2, 0,  0, ANY_ROUTE},
 	{"bind_sdpops",                (cmd_function)bind_sdpops,
 		1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -1117,6 +1122,123 @@ static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
 	if(parse_sdp(msg)==0 && msg->body!=NULL)
 		return 1;
 	return -1;
+}
+
+/**
+ *
+ */
+static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
+{
+	sdp_info_t *sdp = NULL;
+	str body = {NULL, 0};
+	str line = {NULL, 0};
+	char* p = NULL;
+	str s;
+	str sline;
+        int_str avp_val;
+        int_str avp_name;
+        pv_spec_t *avp_spec = NULL;
+        static unsigned short avp_type = 0;
+	int sdp_missing=1;
+
+	if (s_line == NULL || strlen(s_line) <= 0)
+	{
+		LM_ERR("Search string is null or empty\n");
+		    return -1;
+	}
+	sline.s = s_line;
+	sline.len = strlen(s_line);
+
+	sdp_missing = parse_sdp(msg);
+
+	if(sdp_missing < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	sdp = (sdp_info_t *)msg->body;
+
+        if (sdp_missing || sdp == NULL)
+	{
+                LM_DBG("No SDP\n");
+                return -2;
+	}
+
+	body.s = sdp->raw_sdp.s;
+	body.len = sdp->raw_sdp.len;
+
+	if (body.s==NULL) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+
+	body.len = msg->len - (body.s - msg->buf);
+	if (body.len==0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	if (avp == NULL || strlen(avp) <= 0)
+	{
+		LM_ERR("avp variable is null or empty\n");
+		    return -1;
+	}
+
+	s.s = avp;
+	s.len = strlen(s.s);
+
+	if (pv_locate_name(&s) != s.len)
+        {
+                LM_ERR("invalid parameter\n");
+                return -1;
+        }
+
+        if (((avp_spec = pv_cache_get(&s)) == NULL)
+                        || avp_spec->type!=PVT_AVP) {
+                LM_ERR("malformed or non AVP %s AVP definition\n", avp);
+                return -1;
+        }
+
+        if(pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type)!=0)
+        {
+                LM_ERR("[%s]- invalid AVP definition\n", avp);
+                return -1;
+        }
+
+	p = find_sdp_line(body.s, body.s+body.len, sline.s[0]);
+	while (p != NULL)
+	{
+		if (sdp_locate_line(msg, p, &line) != 0)
+		{
+			LM_ERR("sdp_locate_line fail\n");
+			return -1;
+		}
+
+		if (strncmp(line.s, sline.s, sline.len) == 0)
+		{
+            		avp_val.s.s = line.s;
+            		avp_val.s.len = line.len;
+
+			// remove ending \r\n if exists
+			if (avp_val.s.s[line.len-2] == '\r' && avp_val.s.s[line.len-1] == '\n')
+			{
+			    avp_val.s.s[line.len-2] = '\0';
+			    avp_val.s.len -= 2;
+			}
+
+    			if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)
+    			{
+        		    LM_ERR("Failed to add SDP line avp");
+        		    return -1;
+    			}
+
+			return 1;
+		}
+
+		p = find_sdp_line(line.s + line.len, body.s + body.len, sline.s[0]);
+	}
+
+	return 0;
 }
 
 /**
