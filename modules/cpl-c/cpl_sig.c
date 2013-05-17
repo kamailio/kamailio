@@ -92,7 +92,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			(*locs)->addr.uri.len, (*locs)->addr.uri.s, bflags);
 		if(append_branch(msg, &(*locs)->addr.uri,
 				 &(*locs)->addr.received, 0,
-				 Q_UNSPECIFIED, bflags, 0, 0, 0, 0)==-1){
+				 Q_UNSPECIFIED, bflags, 0, 0, 0, 0, 0)==-1){
 			LM_ERR("failed when appending branch <%s>\n",
 			       (*locs)->addr.uri.s);
 			goto error;

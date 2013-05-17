@@ -384,7 +384,7 @@ int I_scscf_select(struct sip_msg* msg, char* str1, char* str2) {
         } else {
             /* subsequent */
             req = msg;
-            append_branch(req, &scscf_name, 0, 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0);
+            append_branch(req, &scscf_name, 0, 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0);
             result = CSCF_RETURN_TRUE;
         }
     } else {

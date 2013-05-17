@@ -76,7 +76,7 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
 
 	/* append branch if last trigger failed */
 	if (is_route_type(FAILURE_ROUTE))
-		append_branch(msg, &(msg->first_line.u.request.uri), &(msg->dst_uri), 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0);
+		append_branch(msg, &(msg->first_line.u.request.uri), &(msg->dst_uri), 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0);
 
 	// Determines the tm transaction identifiers.
 	// If no transaction, then creates one
