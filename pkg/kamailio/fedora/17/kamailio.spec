@@ -1124,6 +1124,11 @@ fi
 
 
 %changelog
+* Sat May 18 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Refactored .spec
+  - Put tls module back in its own .spec (OpenSSL no longer needed by core as
+    stun is in its own module)
+  - Updated rel to dev5
 * Wed Apr 24 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to dev3
 * Wed Apr 10 2013 Peter Dunkley <peter@dunkley.me.uk>
