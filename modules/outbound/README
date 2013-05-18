@@ -4,7 +4,7 @@ Peter Dunkley
 
    Crocodile RCS Ltd
 
-   Copyright (c) 2012-2013 Crocodile RCS Ltd
+   Copyright © 2012-2013 Crocodile RCS Ltd
      __________________________________________________________________
 
    Table of Contents
@@ -72,7 +72,7 @@ Chapter 1. Admin Guide
 1.1. Edge Proxy Keep-Alives (STUN)
 
    Outbound Edge Proxies MUST support STUN NAT keep-alives on their SIP
-   UDP ports. Kamailio supports this though the "stun" module.
+   UDP ports. Kamailio supports this though the “stun” module.
 
 1.2. Flow Timer
 
@@ -81,9 +81,9 @@ Chapter 1. Admin Guide
    responses to REGISTERs.
 
    When using TCP or TLS as the SIP transport care should be taken to set
-   the "tcp_connection_lifetime" on the Edge Proxy to a value slightly
+   the “tcp_connection_lifetime” on the Edge Proxy to a value slightly
    larger than the interval the Registrar is using for flow timer. Setting
-   "tcp_connection_lifetime" to less than the interval could cause
+   “tcp_connection_lifetime” to less than the interval could cause
    connections to be lost, and setting it to a value much larger than the
    interval will keep connections open far longer than is required (which
    is wasteful).
@@ -91,9 +91,9 @@ Chapter 1. Admin Guide
    Application-layer keep-alives are optional when the underlying
    transport already has a keep-alive mechanism. The WebSocket transport
    has a transport-layer keep-alive. When using the WebSocket transport
-   the "keepalive_timeout" should be set to a value a little greater than
+   the “keepalive_timeout” should be set to a value a little greater than
    the Registrar flow timer interval and a little less than the
-   "tcp_connection_lifetime".
+   “tcp_connection_lifetime”.
 
    Example 1.1. Edge Proxy Configuration
 #!KAMAILIO
@@ -482,6 +482,9 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 
    The following modules must be loaded before this module:
      * None
+
+   The following modules are required to make proper use of this module:
+     * stun.
 
 2.2. External Libraries or Applications
 

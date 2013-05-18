@@ -445,6 +445,15 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 		</listitem>
 		</itemizedlist>
 		</para>
+		<para>
+		The following modules are required to make proper use of this
+		module:
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>stun</emphasis>.</para>
+		</listitem>
+		</itemizedlist>
+		</para>
 	</section>
 
 	<section>
