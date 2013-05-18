@@ -158,6 +158,9 @@ Chapter 1. Admin Guide
    The following modules must be loaded before this module:
      * None.
 
+   The following modules are required to make proper use of this module:
+     * tls.
+
 2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before

@@ -65,6 +65,17 @@
 			</listitem>
 			</itemizedlist>
 		</para>
+		<para>
+		The following modules are required to make proper use of this
+		module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tls</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
 	<section>
 		<title>External Libraries or Applications</title>
