@@ -896,6 +896,12 @@ void print_sdp(sdp_info_t* sdp, int log_level)
 {
 	sdp_session_cell_t *session;
 
+	if (!sdp)
+	{
+	    LOG(log_level, "no sdp body\n");
+	    return;
+	}
+
 	LOG(log_level, "sdp:%p=>%p (%d:%d)\n", sdp, sdp->sessions, sdp->sessions_num, sdp->streams_num);
 	session = sdp->sessions;
 	while (session) {
