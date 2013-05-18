@@ -458,9 +458,7 @@ int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
 int tos = IPTOS_LOWDELAY;
 int pmtu_discovery = 0;
 
-#ifdef USE_IPV6
 int auto_bind_ipv6 = 0;
-#endif
 
 #if 0
 char* names[MAX_LISTEN];              /* our names */
@@ -1450,11 +1448,9 @@ int main_loop(void)
 			if ((si->address.af==AF_INET)&&
 					((sendipv4==0)||(sendipv4->flags&(SI_IS_LO|SI_IS_MCAST))))
 				sendipv4=si;
-	#ifdef USE_IPV6
 			if ( ((sendipv6==0)||(sendipv6->flags&(SI_IS_LO|SI_IS_MCAST))) &&
 					(si->address.af==AF_INET6))
 				sendipv6=si;
-	#endif
 			/* children_no per each socket */
 			cfg_register_child((si->workers>0)?si->workers:children_no);
 		}
@@ -1503,12 +1499,10 @@ int main_loop(void)
 						((sendipv4_sctp==0) ||
 							(sendipv4_sctp->flags&(SI_IS_LO|SI_IS_MCAST))))
 					sendipv4_sctp=si;
-		#ifdef USE_IPV6
 				if( ((sendipv6_sctp==0) || 
 							(sendipv6_sctp->flags&(SI_IS_LO|SI_IS_MCAST))) &&
 						(si->address.af==AF_INET6))
 					sendipv6_sctp=si;
-		#endif
 				/* sctp_children_no per each socket */
 				cfg_register_child((si->workers>0)?si->workers:sctp_children_no);
 			}
@@ -1524,12 +1518,10 @@ int main_loop(void)
 						((sendipv4_tcp==0) ||
 							(sendipv4_tcp->flags&(SI_IS_LO|SI_IS_MCAST))))
 					sendipv4_tcp=si;
-		#ifdef USE_IPV6
 				if( ((sendipv6_tcp==0) ||
 							(sendipv6_tcp->flags&(SI_IS_LO|SI_IS_MCAST))) &&
 						(si->address.af==AF_INET6))
 					sendipv6_tcp=si;
-		#endif
 			}
 			/* the number of sockets does not matter */
 			cfg_register_child(tcp_children_no + 1 /* tcp main */);
@@ -1544,12 +1536,10 @@ int main_loop(void)
 						((sendipv4_tls==0) ||
 							(sendipv4_tls->flags&(SI_IS_LO|SI_IS_MCAST))))
 					sendipv4_tls=si;
-		#ifdef USE_IPV6
 				if( ((sendipv6_tls==0) ||
 							(sendipv6_tls->flags&(SI_IS_LO|SI_IS_MCAST))) &&
 						(si->address.af==AF_INET6))
 					sendipv6_tls=si;
-		#endif
 			}
 		}
 #endif /* USE_TLS */

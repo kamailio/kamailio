@@ -240,9 +240,7 @@ int probe_max_receive_buffer( int udp_sock )
 static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 {
 	struct ip_mreq mreq;
-#ifdef USE_IPV6
 	struct ipv6_mreq mreq6;
-#endif /* USE_IPV6 */
 	
 	if (addr->s.sa_family==AF_INET){
 		memcpy(&mreq.imr_multiaddr, &addr->sin.sin_addr, 
@@ -256,7 +254,6 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 			return -1;
 		}
 		
-#ifdef USE_IPV6
 	} else if (addr->s.sa_family==AF_INET6){
 		memcpy(&mreq6.ipv6mr_multiaddr, &addr->sin6.sin6_addr, 
 		       sizeof(struct in6_addr));
@@ -272,7 +269,6 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 			return -1;
 		}
 		
-#endif /* USE_IPV6 */
 	} else {
 		LOG(L_ERR, "ERROR: setup_mcast_rcvr: Unsupported protocol family\n");
 		return -1;
@@ -325,7 +321,6 @@ int udp_init(struct socket_info* sock_info)
 					strerror(errno));
 			/* continue since this is not critical */
 		}
-#ifdef USE_IPV6
 	} else if (addr->s.sa_family==AF_INET6){
 		if (setsockopt(sock_info->socket, IPPROTO_IPV6, IPV6_TCLASS,
 					(void*)&optval, sizeof(optval)) ==-1) {
@@ -333,7 +328,6 @@ int udp_init(struct socket_info* sock_info)
 					strerror(errno));
 			/* continue since this is not critical */
 		}
-#endif
 	}
 
 #if defined (__OS_linux) && defined(UDP_ERRORS)
@@ -379,7 +373,6 @@ int udp_init(struct socket_info* sock_info)
 						" %s\n", strerror(errno));
 			}
 		}
-#ifdef USE_IPV6
 	} else if (addr->s.sa_family==AF_INET6){
 		if (setsockopt(sock_info->socket, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, 
 						&mcast_loopback, sizeof(mcast_loopback))==-1){
@@ -393,7 +386,6 @@ int udp_init(struct socket_info* sock_info)
 						"(IPV6_MULTICAST_HOPS): %s\n", strerror(errno));
 			}
 		}
-#endif /* USE_IPV6*/
 	} else {
 		LOG(L_ERR, "ERROR: udp_init: Unsupported protocol family %d\n",
 					addr->s.sa_family);
@@ -409,11 +401,9 @@ int udp_init(struct socket_info* sock_info)
 				(unsigned)sockaddru_len(*addr),
 				sock_info->address_str.s,
 				strerror(errno));
-	#ifdef USE_IPV6
 		if (addr->s.sa_family==AF_INET6)
 			LOG(L_ERR, "ERROR: udp_init: might be caused by using a link "
 					" local address, try site local or global\n");
-	#endif
 		goto error;
 	}
 

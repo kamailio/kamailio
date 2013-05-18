@@ -1108,9 +1108,7 @@ static int goes_to_gw_1(struct sip_msg* msg, char* _type, char* _f2)
 	}
 
 	if ( ((ip=str2ip(&puri.host))!=0)
-#ifdef USE_IPV6
 	|| ((ip=str2ip6(&puri.host))!=0)
-#endif
 	){
 		pgwa = (*rdata)->pgw_addr_l;
 		while(pgwa) {

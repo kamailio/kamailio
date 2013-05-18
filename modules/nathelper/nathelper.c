@@ -1040,9 +1040,7 @@ add_contact_alias_3_f(struct sip_msg* msg, char* _ip, char* _port, char* _proto)
 	return -1;
     }
     if ((str2ip(&ip_str) == NULL)
-#ifdef USE_IPV6
 	&& (str2ip6(&ip_str) == NULL)
-#endif
 	) {
 	LM_ERR("ip param value %s is not valid IP address\n", ip_str.s);
 	return -1;

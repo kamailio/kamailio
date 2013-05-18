@@ -815,9 +815,7 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 		return F_RB_NH_STRICT;
 	/* if 1st route contains an IP address, comparing it against .dst */
 	if ((uri_ia = str2ip(&topr_uri.host))
-#ifdef USE_IPV6
 			|| (uri_ia = str2ip6(&topr_uri.host))
-#endif
 			) {
 		/* we have an IP address in route -> comparison can go swiftly */
 		if (init_su(&uri_sau, uri_ia, uri_port) < 0)

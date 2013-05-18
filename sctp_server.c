@@ -458,7 +458,6 @@ static int sctp_init_sock_opt_common(int s, int af)
 					strerror(errno));
 			/* continue since this is not critical */
 		}
-#ifdef USE_IPV6
 	} else if(af==AF_INET6){
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS,
 					(void*)&optval, sizeof(optval)) ==-1) {
@@ -466,7 +465,6 @@ static int sctp_init_sock_opt_common(int s, int af)
 					strerror(errno));
 			/* continue since this is not critical */
 		}
-#endif
 	}
 	
 	/* set receive buffer: SO_RCVBUF*/
@@ -822,11 +820,9 @@ static int sctp_bind_sock(struct socket_info* sock_info)
 				(unsigned)sockaddru_len(*addr),
 				sock_info->address_str.s,
 				strerror(errno));
-	#ifdef USE_IPV6
 		if (addr->s.sa_family==AF_INET6)
 			LOG(L_ERR, "ERROR: sctp_bind_sock: might be caused by using a "
 							"link local address, try site local or global\n");
-	#endif
 		goto error;
 	}
 	for (ai=sock_info->addr_info_lst; ai; ai=ai->next)
@@ -839,11 +835,9 @@ static int sctp_bind_sock(struct socket_info* sock_info)
 						sock_info->port_no,
 						sock_info->address_str.s, sock_info->port_no,
 						errno, strerror(errno));
-		#ifdef USE_IPV6
 			if (ai->su.s.sa_family==AF_INET6)
 				LOG(L_ERR, "ERROR: sctp_bind_sock: might be caused by using a "
 							"link local address, try site local or global\n");
-		#endif
 			/* try to continue, a secondary address bind failure is not 
 			 * critical */
 		}

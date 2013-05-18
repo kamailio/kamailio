@@ -195,17 +195,13 @@ static int check_via_address(struct ip_addr* ip, str *name,
 	struct hostent* he;
 	int i;
 	char* s;
-	#ifdef USE_IPV6
 	int len;
-	#endif
 
 	/* maybe we are lucky and name it's an ip */
 	s=ip_addr2a(ip);
 	if (s){
 		DBG("check_via_address(%s, %.*s, %d)\n",
 			s, name->len, name->s, resolver);
-
-	#ifdef USE_IPV6
 
 		len=strlen(s);
 
@@ -220,7 +216,6 @@ static int check_via_address(struct ip_addr* ip, str *name,
 		   )
 			return 0;
 		else
-	#endif
 
 			if (strncmp(name->s, s, name->len)==0)
 				return 0;
@@ -1764,9 +1759,7 @@ after_local_via:
 			}
 #if 0
 			/* no longer necessary, now hots.s contains [] */
-		#ifdef USE_IPV6
 			if(send_sock->address.af==AF_INET6) size+=1; /* +1 for ']'*/
-		#endif
 #endif
 	}
 	/* if received needs to be added, add anchor after host and add it, or
@@ -2514,7 +2507,6 @@ char* via_builder( unsigned int *len,
 		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", send_info->proto);
 		return 0;
 	}
-#	ifdef USE_IPV6
 	/* add [] only if ipv6 and outbound socket address is used;
 	 * if using pre-set no check is made */
 	if ((send_sock->address.af==AF_INET6) &&
@@ -2524,7 +2516,6 @@ char* via_builder( unsigned int *len,
 		extra_len=1;
 		via_len+=2; /* [ ]*/
 	}
-#	endif
 	memcpy(line_buf+via_prefix_len+extra_len, address_str->s,
 				address_str->len);
 	if ((send_sock->port_no!=SIP_PORT) ||

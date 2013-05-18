@@ -136,9 +136,7 @@ extern int mcast_loopback;
 extern int mcast_ttl;
 #endif /* USE_MCAST */
 
-#ifdef USE_IPV6
 extern int auto_bind_ipv6;
-#endif
 
 extern int tos;
 extern int pmtu_discovery;

@@ -37,9 +37,7 @@
 struct ip_set {
 	int use_shm;
 	struct ip_tree_leaf *ipv4_tree;
-#ifdef USE_IPV6
 	struct ip_tree_leaf *ipv6_tree;	
-#endif
 };
 
 extern void ip_set_init(struct ip_set *ip_set, int use_shm);

@@ -59,13 +59,11 @@ static inline int grep_aliases(char* name, int len, unsigned short port,
 {
 	struct  host_alias* a;
 	
-#ifdef USE_IPV6
 	if ((len>2)&&((*name)=='[')&&(name[len-1]==']')){
 		/* ipv6 reference, skip [] */
 		name++;
 		len-=2;
 	}
-#endif
 	for(a=aliases;a;a=a->next)
 		if ((a->alias.len==len) && ((a->port==0) || (port==0) || 
 				(a->port==port)) && ((a->proto==0) || (proto==0) || 

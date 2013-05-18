@@ -295,12 +295,8 @@ int parse_uri_dstip(str* received, struct ip_addr* ip, unsigned short* port,
 		goto end; /* no dst_ip param */
 	/* check if it's ipv4 or ipv6 */
 	if (
-#ifdef USE_IPV6
 			likely(((p = str2ip(&hooks.uri.dstip->body)) != 0) ||
 				((p = str2ip6(&hooks.uri.dstip->body)) != 0))
-#else /* ! USE_IPV6 */
-			likely(((p = str2ip(&hooks.uri.dstip->body)) != 0))
-#endif /* USE_IPV6 */
 				) {
 		*ip = *p;
 	} else

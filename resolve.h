@@ -276,7 +276,6 @@ error_dots:
 }
 
 
-#ifdef USE_IPV6
 /* returns an ip_addr struct.; on error returns 0
  * the ip_addr struct is static, so subsequent calls will destroy its content*/
 static inline struct ip_addr* str2ip6(str* st)
@@ -379,7 +378,6 @@ error_char:
 			st->s);*/
 	return 0;
 }
-#endif /* USE_IPV6 */
 
 
 
@@ -392,15 +390,11 @@ static inline struct hostent* _resolvehost(char* name)
 {
 	static struct hostent* he=0;
 #ifdef HAVE_GETIPNODEBYNAME 
-#ifdef USE_IPV6
 	int err;
 	static struct hostent* he2=0;
 #endif
-#endif
 #ifndef DNS_IP_HACK
-#ifdef USE_IPV6
 	int len;
-#endif
 #endif
 #ifdef DNS_IP_HACK
 	struct ip_addr* ip;
@@ -411,16 +405,13 @@ static inline struct hostent* _resolvehost(char* name)
 
 	/* check if it's an ip address */
 	if ( ((ip=str2ip(&s))!=0)
-#ifdef	USE_IPV6
 		  || ((ip=str2ip6(&s))!=0)
-#endif
 		){
 		/* we are lucky, this is an ip address */
 		return ip_addr2he(&s, ip);
 	}
 	
 #else /* DNS_IP_HACK */
-#ifdef USE_IPV6
 	len=0;
 	if (*name=='['){
 		len=strlen(name);
@@ -431,11 +422,9 @@ static inline struct hostent* _resolvehost(char* name)
 		}
 	}
 #endif
-#endif
 	/* ipv4 */
 	he=dns_func.sr_gethostbyname(name);
 
-#ifdef USE_IPV6
 	if(he==0 && cfg_get(core, core_cfg, dns_try_ipv6)){
 #ifndef DNS_IP_HACK
 skip_ipv4:
@@ -456,7 +445,6 @@ skip_ipv4:
 		if (len) name[len-2]=']'; /* restore */
 #endif
 	}
-#endif
 	return he;
 }
 

@@ -524,9 +524,7 @@ static int mod_init(void) {
 		register_procs(raw_sock_children);
 		                		
 		if(extract_host_port() && (((ip=str2ip(&raw_socket_listen)) == NULL)
-#ifdef  USE_IPV6
 		               && ((ip=str2ip6(&raw_socket_listen)) == NULL)
-#endif
 		         )) 
 		{		
 			LM_ERR("sipcapture mod_init: bad RAW IP: %.*s\n", raw_socket_listen.len, raw_socket_listen.s); 

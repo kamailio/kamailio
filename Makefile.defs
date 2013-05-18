@@ -680,7 +680,6 @@ C_DEFS= $(extra_defs) \
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DDNS_IP_HACK \
-	 -DUSE_IPV6 \
 	 -DUSE_MCAST \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
@@ -2054,9 +2053,9 @@ ifeq ($(OS), darwin)
 endif
 
 ifneq (,$(findstring cygwin, $(OS)))
-	# cygwin doesn't support IPV6 and doesn't support fd passing so no TCP
-	#C_DEFS:=$(filter-out -DUSE_IPV6 -DUSE_TCP, $(C_DEFS))
-	DEFS_RM+=-DUSE_IPV6 -DUSE_TCP
+	# cygwin does support IPV6 starting from version 1.7, but (still?) doesn't support fd passing so no TCP
+	#C_DEFS:=$(filter-out -DUSE_TCP, $(C_DEFS))
+	DEFS_RM+=-DUSE_TCP
 	C_DEFS+=-DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
 			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
 			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER
