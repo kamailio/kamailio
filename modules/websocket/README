@@ -301,8 +301,7 @@ onreply_route[WS_REPLY] {
      * sl.
 
    The following modules are required to make proper use of this module:
-     * nathelper.
-     * tm.
+     * nathelper or outbound.
      * xhttp.
 
    The following module is required to use the secure WebSocket (wss)

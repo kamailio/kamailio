@@ -225,10 +225,8 @@ onreply_route[WS_REPLY] {
 		module:
 		<itemizedlist>
 		<listitem>
-		<para><emphasis>nathelper</emphasis>.</para>
-		</listitem>
-		<listitem>
-		<para><emphasis>tm</emphasis>.</para>
+		<para><emphasis>nathelper</emphasis> or
+		<emphasis>outbound</emphasis>.</para>
 		</listitem>
 		<listitem>
 		<para><emphasis>xhttp</emphasis>.</para>
