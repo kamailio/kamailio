@@ -341,14 +341,6 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 	int ret;
 	struct receive_info *rcv = NULL;
 
-	/* Check if Supported: outbound is included */
-	if (parse_supported(msg) == 0) {
-                if (!(get_supported(msg) & F_OPTION_TAG_OUTBOUND)) {
-		        LM_DBG("outbound is not supported and thus not used\n");
-		        return 0;
-		}
-	}
-
 	/* Check to see if the top Route-URI is me and has a ;ob parameter */
 	if (msg->route
 		|| (parse_headers(msg, HDR_ROUTE_F, 0) != -1 && msg->route))
@@ -405,6 +397,14 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 
 			LM_DBG("\"outgoing\" request found\n");
 			return 1;
+		}
+	}
+
+	/* Check if Supported: outbound is included */
+	if (parse_supported(msg) == 0) {
+                if (!(get_supported(msg) & F_OPTION_TAG_OUTBOUND)) {
+		        LM_DBG("outbound is not supported and thus not used\n");
+		        return 0;
 		}
 	}
 
