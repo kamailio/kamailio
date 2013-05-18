@@ -1160,11 +1160,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{INET}			{ count(); yylval.intval=AF_INET;
 							yy_number_str=yytext; return NUMBER; }
 <INITIAL>{INET6}		{ count();
-						#ifdef USE_IPV6
-						  yylval.intval=AF_INET6;
-						#else
-						  yylval.intval=-1; /* no match*/
-						#endif
+						yylval.intval=AF_INET6;
 						yy_number_str=yytext;
 						return NUMBER; }
 <INITIAL>{SSLv23}		{ count(); yylval.strval=yytext; return SSLv23; }

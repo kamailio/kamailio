@@ -63,12 +63,10 @@ struct hep_timehdr{
    u_int16_t captid;          /* Capture ID node */
 };
 
-#ifdef USE_IPV6
 struct hep_ip6hdr {
         struct in6_addr hp6_src;        /* source address */
         struct in6_addr hp6_dst;        /* destination address */
 };
-#endif
 
 /* HEPv3 types */
 
@@ -115,12 +113,10 @@ struct hep_chunk_ip4 {
 
 typedef struct hep_chunk_ip4 hep_chunk_ip4_t;
 
-#ifdef USE_IPV6
 struct hep_chunk_ip6 {
        hep_chunk_t chunk;
        struct in6_addr data;
 } __attribute__((packed));
-#endif
 
 typedef struct hep_chunk_ip6 hep_chunk_ip6_t;
 
@@ -152,10 +148,8 @@ struct hep_generic_recv {
         hep_chunk_uint32_t *time_usec;
         hep_chunk_ip4_t    *hep_src_ip4;
         hep_chunk_ip4_t	    *hep_dst_ip4;
-#ifdef USE_IPV6
         hep_chunk_ip6_t    *hep_src_ip6;
         hep_chunk_ip6_t    *hep_dst_ip6;
-#endif
         hep_chunk_uint8_t  *proto_t;
         hep_chunk_uint32_t *capt_id;
         hep_chunk_uint16_t *keep_tm;

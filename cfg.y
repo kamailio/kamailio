@@ -165,11 +165,7 @@
 		if (rt!=ONSEND_ROUTE) yyerror( s " allowed only in onsend_routes");\
 	}while(0)
 
-#ifdef USE_IPV6
 	#define IF_AUTO_BIND_IPV6(x) x
-#else
-	#define IF_AUTO_BIND_IPV6(x) warn("IPV6 support not compiled");
-#endif
 
 #ifdef USE_DNS_CACHE
 	#define IF_DNS_CACHE(x) x
@@ -1124,12 +1120,8 @@ assign_stm:
 	| TCP_SOURCE_IPV4 EQUAL error { yyerror("IPv4 address expected"); }
 	| TCP_SOURCE_IPV6 EQUAL ipv6 {
 		#ifdef USE_TCP
-			#ifdef USE_IPV6
 				if (tcp_set_src_addr($3)<0)
 					warn("tcp_source_ipv6 failed");
-			#else
-				warn("IPv6 support not compiled in");
-			#endif
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -1856,17 +1848,12 @@ ipv6addr:
 		if ($$==0) {
 			LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
 		} else {
-		#ifdef USE_IPV6
 			memset($$, 0, sizeof(struct ip_addr));
 			$$->af=AF_INET6;
 			$$->len=16;
 			if (inet_pton(AF_INET6, $1, $$->u.addr)<=0) {
 				yyerror("bad ipv6 address");
 			}
-		#else
-			yyerror("ipv6 address & no ipv6 support compiled in");
-			YYABORT;
-		#endif
 		}
 	}
 	;
@@ -2243,10 +2230,8 @@ exp_elem:
 			}
 			if (s_tmp.s){
 				ip_tmp=str2ip(&s_tmp);
-			#ifdef USE_IPV6
 				if (ip_tmp==0)
 					ip_tmp=str2ip6(&s_tmp);
-			#endif
 				pkg_free(s_tmp.s);
 				if (ip_tmp) {
 					$$=mk_elem($2, $1, 0, NET_ST, 

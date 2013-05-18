@@ -97,9 +97,7 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
 	struct hep_timehdr* heptime_tmp = NULL;
         memset(heptime, 0, sizeof(struct hep_timehdr));
 
-#ifdef USE_IPV6
         struct hep_ip6hdr *hepip6h = NULL;
-#endif /* USE_IPV6 */
 
 	hep_offset = 0; 
 	
@@ -117,11 +115,9 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
         	case AF_INET:
                 	hl += sizeof(struct hep_iphdr);
                         break;
-#ifdef USE_IPV6
 		case AF_INET6:
                 	hl += sizeof(struct hep_ip6hdr);
                         break;
-#endif /* USE_IPV6 */
 		default:
                         LOG(L_ERR, "ERROR: sipcapture:hep_msg_received:  unsupported family [%d]\n", heph->hp_f);
                         return -1;
@@ -151,13 +147,11 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
                 	hep_offset+=sizeof(struct hep_iphdr);
                         hepiph = (struct hep_iphdr*) hep_ip;
                         break;
-#ifdef USE_IPV6
 
 		case AF_INET6:
                 	hep_offset+=sizeof(struct hep_ip6hdr);
                         hepip6h = (struct hep_ip6hdr*) hep_ip;
                         break;
-#endif /* USE_IPV6 */
 
 	}
 
@@ -189,7 +183,6 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
                         memcpy(&dst_ip.u.addr, &hepiph->hp_dst, 4);
                         memcpy(&src_ip.u.addr, &hepiph->hp_src, 4);
                         break;
-#ifdef USE_IPV6
 
 		case AF_INET6:
                 	dst_ip.af = src_ip.af = AF_INET6;
@@ -198,7 +191,6 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
                         memcpy(&src_ip.u.addr, &hepip6h->hp6_src, 16);
                         break;
 
-#endif /* USE_IPV6 */
 	}
 
         ri->src_ip = src_ip;
@@ -338,7 +330,6 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
                                         totelem++;
 
                                         break;
-#ifdef USE_IPV6                                                     
                                 case 5:
                                         hg->hep_src_ip6  = (hep_chunk_ip6_t *) (tmp);
                                         i+=chunk_length;
@@ -355,7 +346,6 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
 				        memcpy(dst_ip.u.addr, &hg->hep_dst_ip6->data, 16);
 				        totelem++;
                                         break;
-#endif                                             
         
                                 case 7:
                                         hg->src_port  = (hep_chunk_uint16_t *) (tmp);

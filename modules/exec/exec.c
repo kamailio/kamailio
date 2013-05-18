@@ -168,7 +168,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 			}
 		} else {
 		    if (append_branch(msg, &uri, 0, 0, Q_UNSPECIFIED, 0, 0,
-				      0, 0, 0) == -1) {
+				      0, 0, 0, 0) == -1) {
 				LM_ERR("append_branch failed; too many or too long URIs?\n");
 				goto error02;
 			}

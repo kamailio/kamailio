@@ -274,10 +274,8 @@ void rpc_ip_set_print(rpc_t* rpc, void* ctx) {
 	rpc->add(ctx, "{", &c);
 	if (rpc->struct_add(c, "s", "IPv", "6") < 0) 
 		goto err;	
-#ifdef USE_IPV6
 	if (rpc_ip_tree_print(rpc, c, "", ip_set->ipv6_tree, 0) < 0) 
 		goto err;
-#endif
 
 err:		
 	if (pending)

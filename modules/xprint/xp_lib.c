@@ -700,7 +700,7 @@ static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 
 	init_branch_iterator();
-	branch.s = next_branch(&branch.len, &q, 0, 0, 0, 0, 0, 0);
+	branch.s = next_branch(&branch.len, &q, 0, 0, 0, 0, 0, 0, 0);
 	if (!branch.s) {
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
@@ -731,7 +731,7 @@ static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi, int h
 	cnt = len = 0;
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0)))
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0)))
 	{
 		cnt++;
 		len += uri.len;
@@ -756,7 +756,7 @@ static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi, int h
 	p = local_buf;
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0)))
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0)))
 	{
 		if (i)
 		{

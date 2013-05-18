@@ -750,10 +750,8 @@ static int stun_add_address_attr(struct stun_msg* res,
 {
 	struct stun_attr attr;
 	int		 ip_struct_len;
-#ifdef USE_IPV6
 	UINT_T	 id[IP_ADDR];
 	int i;
-#endif /* USE_IPV6 */ 
 	
 	ip_struct_len = 0;
 	attr.type = htons(type);
@@ -766,7 +764,6 @@ static int stun_add_address_attr(struct stun_msg* res,
 			res->ip_addr.ip[0] = (do_xor) ? 
 				res->ip_addr.ip[0] ^ htonl(MAGIC_COOKIE) : res->ip_addr.ip[0];
 			break;
-#ifdef USE_IPV6
 		case AF_INET6:
 			ip_struct_len = sizeof(struct stun_ip_addr);
 			res->ip_addr.family = htons(IPV6_FAMILY);
@@ -777,7 +774,6 @@ static int stun_add_address_attr(struct stun_msg* res,
 							res->ip_addr.ip[i] ^ id[i] : res->ip_addr.ip[i];
 			}
 			break;
-#endif /* USE_IPV6 */ 
 		default:
 			break;
 	}

@@ -67,12 +67,8 @@ static inline ip_addr_t *strtoipX(str *ips)
 	/* try to figure out INET class */
 	if(ips->s[0] == '[' || memchr(ips->s, ':', ips->len)!=NULL)
 	{
-#ifdef USE_IPV6
 		/* IPv6 */
 		return str2ip6(ips);
-#else
-		return 0;
-#endif
 	} else {
 		/* IPv4 */
 		return str2ip(ips);

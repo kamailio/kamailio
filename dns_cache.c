@@ -1891,10 +1891,8 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 #endif /* USE_DNS_CACHE_STATS */
 
 	if (type==T_A){
-#ifdef USE_IPV6
 		if (str2ip6(name)!=0)
 			goto end;
-#endif /* USE_IPV6 */
 		if ((ip=str2ip(name))!=0){
 				e=dns_cache_mk_ip_entry(name, ip);
 				if (likely(e))
@@ -1902,7 +1900,6 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 				goto end; /* we do not cache obvious stuff */
 		}
 	}
-#ifdef USE_IPV6
 	else if (type==T_AAAA){
 		if (str2ip(name)!=0)
 			goto end;
@@ -1913,7 +1910,6 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 				goto end;/* we do not cache obvious stuff */
 		}
 	}
-#endif /* USE_IPV6 */
 #ifdef DNS_WATCHDOG_SUPPORT
 	if (atomic_get(dns_servers_up)==0)
 		goto end; /* the servers are down, needless to perform the query */
@@ -2412,16 +2408,9 @@ inline static struct hostent* dns_entry2he(struct dns_hash_entry* e)
 			len=4;
 			break;
 		case T_AAAA:
-#ifdef USE_IPV6
 			af=AF_INET6;
 			len=16;
 			break;
-#else /* USE_IPV6 */
-			LOG(L_ERR, "ERROR: dns_entry2he: IPv6 dns cache entry, but "
-						"IPv6 support disabled at compile time"
-						" (recompile with -DUSE_IPV6)\n");
-			return 0;
-#endif /* USE_IPV6 */
 		default:
 			LOG(L_CRIT, "BUG: dns_entry2he: wrong entry type %d for %.*s\n",
 					e->type, e->name_len, e->name);
@@ -2472,10 +2461,8 @@ inline static struct hostent* dns_a_get_he(str* name)
 	struct hostent* he;
 
 	e=0;
-#ifdef	USE_IPV6
 	if (str2ip6(name)!=0)
 		return 0;
-#endif
 	if ((ip=str2ip(name))!=0){
 		return ip_addr2he(name, ip);
 	}
@@ -2488,7 +2475,6 @@ inline static struct hostent* dns_a_get_he(str* name)
 }
 
 
-#ifdef USE_IPV6
 /* gethostbyname compatibility: performs an aaaa_lookup and returns a pointer
  * to a statical internal hostent structure
  * returns 0 on success, <0 on error (see the error codes)
@@ -2512,7 +2498,6 @@ inline static struct hostent* dns_aaaa_get_he(str* name)
 	dns_hash_put(e);
 	return he;
 }
-#endif
 
 
 
@@ -2527,16 +2512,10 @@ inline static int dns_rr2ip(int type, struct dns_rr* rr, struct ip_addr* ip)
 			return 0;
 			break;
 		case T_AAAA:
-#ifdef USE_IPV6
 			ip->af=AF_INET6;
 			ip->len=16;
 			memcpy(ip->u.addr, ((struct aaaa_rdata*)rr->rdata)->ip6, 16);
 			return 0;
-#else /* USE_IPV6 */
-			LOG(L_ERR, "ERROR: dns_rr2ip: IPv6 dns rr, but IPv6 support"
-					   "disabled at compile time (recompile with "
-					   "-DUSE_IPV6)\n" );
-#endif /*USE_IPV6 */
 			break;
 	}
 	return -1;
@@ -2554,7 +2533,6 @@ inline static int dns_rr2ip(int type, struct dns_rr* rr, struct ip_addr* ip)
  */
 struct hostent* dns_get_he(str* name, int flags)
 {
-#ifdef USE_IPV6
 	struct hostent* he;
 
 	if ((flags&(DNS_IPV6_FIRST|DNS_IPV6_ONLY))){
@@ -2570,9 +2548,6 @@ struct hostent* dns_get_he(str* name, int flags)
 		he=dns_aaaa_get_he(name);
 	}
 	return he;
-#else /* USE_IPV6 */
-	return dns_a_get_he(name);
-#endif /* USE_IPV6 */
 }
 
 
@@ -2705,9 +2680,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 		}else{
 			/* check if it's an ip address */
 			if ( ((ip=str2ip(name))!=0)
-#ifdef	USE_IPV6
 				  || ((ip=str2ip6(name))!=0)
-#endif
 				){
 				/* we are lucky, this is an ip address */
 				return ip_addr2he(name,ip);
@@ -2869,17 +2842,13 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 		*proto=PROTO_UDP; /* just in case we don't find another */
 		/* check if it's an ip address */
 		if ( ((tmp_ip=str2ip(name))!=0)
-#ifdef	USE_IPV6
 			  || ((tmp_ip=str2ip6(name))!=0)
-#endif
 			){
 			/* we are lucky, this is an ip address */
-#ifdef	USE_IPV6
 			if (((dns_flags&DNS_IPV4_ONLY) && (tmp_ip->af==AF_INET6))||
 				((dns_flags&DNS_IPV6_ONLY) && (tmp_ip->af==AF_INET))){
 				return 0;
 			}
-#endif
 			*port=SIP_PORT;
 			return ip_addr2he(name, tmp_ip);
 		}
@@ -2976,10 +2945,8 @@ inline static int dns_a_resolve( struct dns_hash_entry** e,
 	ret=-E_DNS_NO_IP;
 	if (*e==0){ /* do lookup */
 		/* if ip don't set *e */
-#ifdef	USE_IPV6
 		if (str2ip6(name)!=0)
 			goto error;
-#endif
 		if ((tmp=str2ip(name))!=0){
 			*ip=*tmp;
 			*rr_no=0;
@@ -3009,7 +2976,6 @@ error:
 }
 
 
-#ifdef USE_IPV6
 /* lookup, fills the dns_entry pointer and the ip addr.
  *  (with the first good ip). if *e ==0 does the a lookup, and changes it
  *   to the result, if not it uses the current value and tries to use
@@ -3056,7 +3022,6 @@ inline static int dns_aaaa_resolve( struct dns_hash_entry** e,
 error:
 	return ret;
 }
-#endif /* USE_IPV6 */
 
 
 
@@ -3081,7 +3046,6 @@ inline static int dns_ip_resolve(	struct dns_hash_entry** e,
 
 	ret=-E_DNS_NO_IP;
 	if (*e==0){ /* first call */
-#ifdef USE_IPV6
 		if ((flags&(DNS_IPV6_FIRST|DNS_IPV6_ONLY))){
 			ret=dns_aaaa_resolve(e, rr_no, name, ip);
 			if (ret>=0) return ret;
@@ -3094,9 +3058,6 @@ inline static int dns_ip_resolve(	struct dns_hash_entry** e,
 		}else if (!(flags&(DNS_IPV6_ONLY|DNS_IPV4_ONLY))){
 			ret=dns_aaaa_resolve(e, rr_no, name, ip);
 		}
-#else /* USE_IPV6 */
-		ret=dns_a_resolve(e, rr_no, name, ip);
-#endif /* USE_IPV6 */
 	}else if ((*e)->type==T_A){
 		/* continue A resolving */
 		/* retrieve host name from the hash entry  (ignore name which might
@@ -3104,7 +3065,6 @@ inline static int dns_ip_resolve(	struct dns_hash_entry** e,
 		host.s=(*e)->name;
 		host.len=(*e)->name_len;
 		ret=dns_a_resolve(e, rr_no, &host, ip);
-#ifdef USE_IPV6
 		if (ret>=0) return ret;
 		if (!(flags&(DNS_IPV6_ONLY|DNS_IPV6_FIRST|DNS_IPV4_ONLY))){
 			/* not found, try with AAAA */
@@ -3115,13 +3075,11 @@ inline static int dns_ip_resolve(	struct dns_hash_entry** e,
 			/* delay original record release until we're finished with host*/
 			dns_hash_put(orig);
 		}
-#endif /* USE_IPV6 */
 	}else if ((*e)->type==T_AAAA){
 		/* retrieve host name from the hash entry  (ignore name which might
 		  be null when continuing a srv lookup) */
 		host.s=(*e)->name;
 		host.len=(*e)->name_len;
-#ifdef USE_IPV6
 		/* continue AAAA resolving */
 		ret=dns_aaaa_resolve(e, rr_no, &host, ip);
 		if (ret>=0) return ret;
@@ -3134,15 +3092,6 @@ inline static int dns_ip_resolve(	struct dns_hash_entry** e,
 			/* delay original record release until we're finished with host*/
 			dns_hash_put(orig);
 		}
-#else /* USE_IPV6 */
-		/* ipv6 disabled, try with A */
-		orig=*e;
-		*e=0;
-		*rr_no=0;
-		ret=dns_a_resolve(e, rr_no, &host, ip);
-		/* delay original record release until we're finished with host*/
-		dns_hash_put(orig);
-#endif /* USE_IPV6 */
 	}else{
 		LOG(L_CRIT, "BUG: dns_ip_resolve: invalid record type %d\n",
 					(*e)->type);
@@ -3324,17 +3273,13 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 				}else{
 					/* check if it's an ip address */
 					if ( ((tmp_ip=str2ip(name))!=0)
-#ifdef	USE_IPV6
 						  || ((tmp_ip=str2ip6(name))!=0)
-#endif
 						){
 						/* we are lucky, this is an ip address */
-#ifdef	USE_IPV6
 						if (((flags&DNS_IPV4_ONLY) && (tmp_ip->af==AF_INET6))||
 							((flags&DNS_IPV6_ONLY) && (tmp_ip->af==AF_INET))){
 							return -E_DNS_AF_MISMATCH;
 						}
-#endif
 						*ip=*tmp_ip;
 						*port=h->port;
 						/* proto already set */
@@ -3467,17 +3412,13 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 
 		/* check if it's an ip address */
 		if ( ((tmp_ip=str2ip(name))!=0)
-#ifdef	USE_IPV6
 			  || ((tmp_ip=str2ip6(name))!=0)
-#endif
 			){
 			/* we are lucky, this is an ip address */
-#ifdef	USE_IPV6
 			if (((flags&DNS_IPV4_ONLY) && (tmp_ip->af==AF_INET6))||
 				((flags&DNS_IPV6_ONLY) && (tmp_ip->af==AF_INET))){
 				return -E_DNS_AF_MISMATCH;
 			}
-#endif
 			*ip=*tmp_ip;
 			h->port=SIP_PORT;
 			h->proto=*proto;
@@ -3556,7 +3497,6 @@ inline static int dns_a_get_ip(str* name, struct ip_addr* ip)
 }
 
 
-#ifdef USE_IPV6
 inline static int dns_aaaa_get_ip(str* name, struct ip_addr* ip)
 {
 	struct dns_hash_entry* e;
@@ -3569,7 +3509,6 @@ inline static int dns_aaaa_get_ip(str* name, struct ip_addr* ip)
 	if (e) dns_hash_put(e);
 	return ret;
 }
-#endif /* USE_IPV6 */
 
 
 
@@ -4280,7 +4219,6 @@ int dns_cache_add_record(unsigned short type,
 			}
 			break;
 		case T_AAAA:
-#ifdef USE_IPV6
 			ip_addr = str2ip6(value);
 			if (!ip_addr) {
 				LOG(L_ERR, "ERROR: Malformed ip address: %.*s\n",
@@ -4288,10 +4226,6 @@ int dns_cache_add_record(unsigned short type,
 				return -1;
 			}
 			break;
-#else /* USE_IPV6 */
-			LOG(L_ERR, "ERROR: IPv6 support is disabled\n");
-			return -1;
-#endif /* USE_IPV6 */
 		case T_SRV:
 			rr_name = *value;
 			break;
@@ -4588,7 +4522,6 @@ int dns_cache_delete_single_record(unsigned short type,
 			}
 			break;
 		case T_AAAA:
-#ifdef USE_IPV6
 			ip_addr = str2ip6(value);
 			if (!ip_addr) {
 				LOG(L_ERR, "ERROR: Malformed ip address: %.*s\n",
@@ -4596,10 +4529,6 @@ int dns_cache_delete_single_record(unsigned short type,
 				return -1;
 			}
 			break;
-#else /* USE_IPV6 */
-			LOG(L_ERR, "ERROR: IPv6 support is disabled\n");
-			return -1;
-#endif /* USE_IPV6 */
 		case T_SRV:
 			rr_name = *value;
 			break;

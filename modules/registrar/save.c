@@ -265,7 +265,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsig
 
 		/* additional info from message */
 		if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
-		_m->user_agent->body.len>0 && _m->user_agent->body.len<UA_MAX_SIZE) {
+		_m->user_agent->body.len>0 && _m->user_agent->body.len<MAX_UA_SIZE) {
 			ci.user_agent = &_m->user_agent->body;
 		} else {
 			ci.user_agent = &no_ua;

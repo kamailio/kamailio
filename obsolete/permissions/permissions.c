@@ -679,9 +679,7 @@ static int w_ip_is_trusted(struct sip_msg* msg, char* _ip_set, char* _ip) {
 			/* string -> ip */
 
 			if ( ((ip = str2ip(&ip_s))==0)
-				#ifdef  USE_IPV6
 			                  && ((ip = str2ip6(&ip_s))==0)
-				#endif
 							                  ){
 				ERR(MODULE_NAME": ip_is_trusted: string to ip conversion error '%.*s'\n", ip_s.len, ip_s.s);
 				return -1;

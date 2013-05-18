@@ -1359,7 +1359,7 @@ int pv_get_branch(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);
 
 
-	branch.s = get_branch(0, &branch.len, &q, 0, 0, 0, 0, 0, 0);
+	branch.s = get_branch(0, &branch.len, &q, 0, 0, 0, 0, 0, 0, 0);
 	if (!branch.s) {
 		return pv_get_null(msg, param, res);
 	}
@@ -1388,7 +1388,7 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
   
 	cnt = s.len = 0;
 
-	while ((uri.s = get_branch(cnt, &uri.len, &q, 0, 0, 0, 0, 0, 0)))
+	while ((uri.s = get_branch(cnt, &uri.len, &q, 0, 0, 0, 0, 0, 0, 0)))
 	{
 		cnt++;
 		s.len += uri.len;
@@ -1412,7 +1412,7 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 	i = 0;
 	p = pv_local_buf;
 
-	while ((uri.s = get_branch(i, &uri.len, &q, 0, 0, 0, 0, 0, 0)))
+	while ((uri.s = get_branch(i, &uri.len, &q, 0, 0, 0, 0, 0, 0, 0)))
 	{
 		if (i)
 		{
@@ -1821,6 +1821,24 @@ int pv_get_ruid(struct sip_msg *msg, pv_param_t *param,
 	}
 	
 	return pv_get_strval(msg, param, res, &msg->ruid);
+}
+
+int pv_get_location_ua(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)
+		return pv_get_null(msg, param, res);
+
+	if(msg->location_ua.len==0) 
+	{
+		LM_DBG("no location_ua\n");
+		return pv_get_null(msg, param, res);
+	}
+	
+	return pv_get_strval(msg, param, res, &msg->location_ua);
 }
 
 int pv_get_tcpconn_id(struct sip_msg *msg, pv_param_t *param,

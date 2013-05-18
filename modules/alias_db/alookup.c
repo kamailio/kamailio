@@ -202,7 +202,7 @@ int alias_db_lookup(struct sip_msg* _msg, str table_s)
 		} else {
 			user_s.s = useruri_buf;
 			if (append_branch(_msg, &user_s, 0, 0, MIN_Q, 0, 0,
-					  0, 0, 0) == -1)
+					  0, 0, 0, 0) == -1)
 			{
 				LM_ERR("error while appending branches\n");
 				goto err_server;

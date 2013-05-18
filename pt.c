@@ -95,11 +95,7 @@ static int calc_common_open_fds_no(void)
 									  tmp. tcp send +
 									  tmp dns.*/
 				-1 /* timer (no udp)*/ + 3 /* stdin/out/err */ +
-#ifdef USE_IPV6
 				2*mhomed
-#else
-				mhomed
-#endif /* USE_IPV6*/
 				;
 	return max_fds_no;
 }

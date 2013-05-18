@@ -513,9 +513,7 @@ struct socket_info** get_sock_info_list(unsigned short proto)
 inline static int si_hname_cmp(str* host, str* name, str* addr_str, 
 								struct ip_addr* ip_addr, int flags)
 {
-#ifdef USE_IPV6
 	struct ip_addr* ip6;
-#endif
 	
 	if ( (host->len==name->len) && 
 		(strncasecmp(host->s, name->s, name->len)==0) /*slower*/)
@@ -524,7 +522,6 @@ inline static int si_hname_cmp(str* host, str* name, str* addr_str,
 		 * ipv6 addresses if we are lucky*/
 		goto found;
 	/* check if host == ip address */
-#ifdef USE_IPV6
 	/* ipv6 case is uglier, host can be [3ffe::1] */
 	ip6=str2ip6(host);
 	if (ip6){
@@ -534,7 +531,6 @@ inline static int si_hname_cmp(str* host, str* name, str* addr_str,
 			return -1; /* no match, but this is an ipv6 address
 						 so no point in trying ipv4 */
 	}
-#endif
 	/* ipv4 */
 	if ( (!(flags&SI_IS_IP)) && (host->len==addr_str->len) && 
 			(memcmp(host->s, addr_str->s, addr_str->len)==0) )
@@ -563,13 +559,11 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 	unsigned short c_proto;
 	
 	hname=*host;
-#ifdef USE_IPV6
 	if ((hname.len>2)&&((*hname.s)=='[')&&(hname.s[hname.len-1]==']')){
 		/* ipv6 reference, skip [] */
 		hname.s++;
 		hname.len-=2;
 	}
-#endif
 
 	c_proto=(proto!=PROTO_NONE)?proto:PROTO_UDP;
 retry:
@@ -1275,12 +1269,8 @@ int add_interfaces(char* if_name, int family, unsigned short port,
 				#else
 					( (ifr.ifr_addr.sa_family==AF_INET)?
 						sizeof(struct sockaddr_in):
-					#ifdef USE_IPV6
 						((ifr.ifr_addr.sa_family==AF_INET6)?
 						sizeof(struct sockaddr_in6):sizeof(struct sockaddr)) )
-					#else /* USE_IPV6 */
-						sizeof(struct sockaddr) )
-					#endif /* USE_IPV6 */
 				#endif
 				)
 			#endif
@@ -1843,13 +1833,11 @@ int fix_all_socket_lists()
 		){
 		/* get all listening ipv4/ipv6 interfaces */
 		if ( ( (add_interfaces(0, AF_INET, 0,  PROTO_UDP, &ai_lst)==0)
-#ifdef USE_IPV6
 #ifdef __OS_linux
 		&&  (!auto_bind_ipv6 || add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_UDP, &ai_lst) == 0)
 #else
 		&& ( !auto_bind_ipv6 || add_interfaces(0, AF_INET6, 0,  PROTO_UDP, &ai_lst) !=0 ) /* add_interface does not work for IPv6 on Linux */
 #endif /* __OS_linux */
-#endif /* USE_IPV6 */
 			 ) && (addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, &udp_listen)==0)){
 			free_addr_info_lst(&ai_lst);
 			ai_lst=0;
@@ -1857,13 +1845,11 @@ int fix_all_socket_lists()
 #ifdef USE_TCP
 			if (!tcp_disable){
 				if ( ((add_interfaces(0, AF_INET, 0,  PROTO_TCP, &ai_lst)!=0)
-#ifdef USE_IPV6
 #ifdef __OS_linux
     				|| (auto_bind_ipv6 && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_TCP, &ai_lst) != 0)
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_TCP, &ai_lst) !=0 )
 #endif /* __OS_linux */
-#endif /* USE_IPV6 */
 				) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0,
 										 				&tcp_listen)!=0))
 					goto error;
@@ -1873,13 +1859,11 @@ int fix_all_socket_lists()
 				if (!tls_disable){
 					if (((add_interfaces(0, AF_INET, 0, PROTO_TLS,
 										&ai_lst)!=0)
-#ifdef USE_IPV6
 #ifdef __OS_linux
     				|| (auto_bind_ipv6 && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_TLS, &ai_lst) != 0)
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_TLS, &ai_lst)!=0)
 #endif /* __OS_linux */
-#endif /* USE_IPV6 */
 					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0,
 										 				&tls_listen)!=0))
 						goto error;
@@ -1892,13 +1876,11 @@ int fix_all_socket_lists()
 #ifdef USE_SCTP
 			if (!sctp_disable){
 				if (((add_interfaces(0, AF_INET, 0,  PROTO_SCTP, &ai_lst)!=0)
-#ifdef USE_IPV6
 #ifdef __OS_linux
     				|| (auto_bind_ipv6 && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_SCTP, &ai_lst) != 0)
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_SCTP, &ai_lst) != 0)
 #endif /* __OS_linux */
-#endif /* USE_IPV6 */
 					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0,
 							 				&sctp_listen)!=0))
 					goto error;

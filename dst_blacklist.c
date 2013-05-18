@@ -338,12 +338,10 @@ static ticks_t blst_timer(ticks_t ticks, struct timer_ln* tl, void* data);
 inline static void dst_blst_entry2ip(struct ip_addr* ip,
 										struct dst_blst_entry* e)
 {
-#ifdef USE_IPV6
 	if (e->flags & BLST_IS_IPV6){
 		ip->af=AF_INET6;
 		ip->len=16;
 	}else
-#endif /* USE_IPV6 */
 	{
 		ip->af=AF_INET;
 		ip->len=4;
@@ -566,12 +564,7 @@ inline static struct dst_blst_entry* _dst_blacklist_lst_find(
 	unsigned char type;
 
 	head=&dst_blst_hash[hash].first;
-#ifdef USE_IPV6
 	type=(ip->af==AF_INET6)*BLST_IS_IPV6;
-#else  /* USE_IPV6 */
-	if (unlikely(ip->af!=AF_INET)) return 0;
-	type=0;
-#endif /* USE_IPV6 */
 	for (crt=head, tmp=&(*head)->next; *crt; crt=tmp, tmp=&(*crt)->next){
 		e=*crt;
 		prefetch_loc_r((*crt)->next, 1);
@@ -612,12 +605,7 @@ inline static int _dst_blacklist_del(
 	unsigned char type;
 	
 	head=&dst_blst_hash[hash].first;
-#ifdef USE_IPV6
 	type=(ip->af==AF_INET6)*BLST_IS_IPV6;
-#else  /* USE_IPV6 */
-	if (unlikely(ip->af!=AF_INET)) return 0;
-	type=0;
-#endif /* USE_IPV6 */
 	for (crt=head, tmp=&(*head)->next; *crt; crt=tmp, tmp=&(*crt)->next){
 		e=*crt;
 		prefetch_loc_r((*crt)->next, 1);
@@ -1159,24 +1147,14 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 	}
 
 	if (err_flags & BLST_IS_IPV6) {
-#ifdef USE_IPV6
 		/* IPv6 address is specified */
 		ip_addr = str2ip6(&ip);
-#else  /* USE_IPV6 */
-		rpc->fault(ctx, 400, "IPv6 support disabled");
-		return;
-#endif /* USE_IPV6 */
 	} else {
 		/* try IPv4 first, than IPv6 */
 		ip_addr = str2ip(&ip);
 		if (!ip_addr) {
-#ifdef USE_IPV6
 			ip_addr = str2ip6(&ip);
 			err_flags |= BLST_IS_IPV6;
-#else  /* USE_IPV6 */
-			rpc->fault(ctx, 400, "Malformed or IPv6 ip address");
-			return;
-#endif /* USE_IPV6 */
 		}
 	}
 	if (!ip_addr) {

@@ -999,7 +999,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 				/* if is not the first modification, push the current uri as
 				 * branch */
 			    if (append_branch( msg, 0, 0, 0, Q_UNSPECIFIED,
-					       0, 0, 0, 0, 0) != 1)
+					       0, 0, 0, 0, 0, 0) != 1)
 				{
 					LM_ERR("append_branch action failed\n");
 					goto error;
@@ -1026,7 +1026,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			ruri_mark_new(); /* re-use uri for serial forking */
 		} else if (dst->opd&AVPOPS_USE_BRANCH) {
 			if (append_branch( msg, &val, 0, 0, Q_UNSPECIFIED, 0,
-					   msg->force_send_socket, 0, 0, 0) != 1)
+					   msg->force_send_socket, 0, 0, 0, 0) != 1)
 			{
 				LM_ERR("append_branch action failed\n");
 				goto error;

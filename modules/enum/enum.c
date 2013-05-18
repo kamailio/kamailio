@@ -687,7 +687,7 @@ int do_query(struct sip_msg* _msg, char *user, char *name, str *service) {
 		q = q - 10;
 		curr_prio = priority;
 	    }
-	    if (append_branch(_msg, &result, 0, 0, q, 0, 0, 0, 0, 0) == -1) {
+	    if (append_branch(_msg, &result, 0, 0, q, 0, 0, 0, 0, 0, 0) == -1) {
 		goto done;
 	    }
 	}
@@ -1137,7 +1137,7 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 				q = q - 10;
 				curr_prio = priority;
 			}
-			if (append_branch(_msg, &result, 0, 0, q, 0, 0, 0, 0, 0)
+			if (append_branch(_msg, &result, 0, 0, q, 0, 0, 0, 0, 0, 0)
 			    == -1) {
 				goto done;
 			}

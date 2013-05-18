@@ -34,26 +34,20 @@ void ip_set_init(struct ip_set *ip_set, int use_shm) {
 	memset(ip_set, 0, sizeof(*ip_set));
 	ip_set->use_shm = use_shm;
 	ip_tree_init(&ip_set->ipv4_tree);
-	#ifdef USE_IPV6
 	ip_tree_init(&ip_set->ipv6_tree);
-	#endif
 }
 
 void ip_set_destroy(struct ip_set *ip_set) {
 	ip_tree_destroy(&ip_set->ipv4_tree, 0, ip_set->use_shm);
-	#ifdef USE_IPV6
 	ip_tree_destroy(&ip_set->ipv6_tree, 0, ip_set->use_shm);
-	#endif
 }
 
 int ip_set_add_ip(struct ip_set *ip_set, struct ip_addr *ip, unsigned int network_prefix) {
 	switch (ip->af) {
 		case AF_INET:
 			return ip_tree_add_ip(&ip_set->ipv4_tree, ip->u.addr, (ip->len*8<network_prefix)?ip->len*8:network_prefix, ip_set->use_shm);
-	#ifdef USE_IPV6
 		case AF_INET6:
 			return ip_tree_add_ip(&ip_set->ipv6_tree, ip->u.addr, (ip->len*8<network_prefix)?ip->len*8:network_prefix, ip_set->use_shm);
-	#endif
 		default:
 			return -1;				
 		}
@@ -64,10 +58,8 @@ int ip_set_ip_exists(struct ip_set *ip_set, struct ip_addr *ip) {
 	switch (ip->af) {
 		case AF_INET:
 			return ip_tree_find_ip(ip_set->ipv4_tree, ip->u.addr, ip->len*8, &h) > 0;
-	#ifdef USE_IPV6
 		case AF_INET6:
 			return ip_tree_find_ip(ip_set->ipv6_tree, ip->u.addr, ip->len*8, &h) > 0;
-	#endif
 		default:
 			return -1;				
 		}
@@ -76,10 +68,8 @@ int ip_set_ip_exists(struct ip_set *ip_set, struct ip_addr *ip) {
 void ip_set_print(FILE *stream, struct ip_set *ip_set) {
 	fprintf(stream, "IPv4:\n");
 	ip_tree_print(stream, ip_set->ipv4_tree, 2);
-	#ifdef USE_IPV6
 	fprintf(stream, "IPv6:\n");
 	ip_tree_print(stream, ip_set->ipv6_tree, 2);
-	#endif
 }
 
 int ip_set_add_list(struct ip_set *ip_set, str ip_set_s){
@@ -126,9 +116,7 @@ int ip_set_add_ip_s(struct ip_set *ip_set, str ip_s, str mask_s){
 	unsigned int prefix, i;
 
 	if ( ((ip = str2ip(&ip_s))==0)
-		#ifdef  USE_IPV6
 					  && ((ip = str2ip6(&ip_s))==0)
-		#endif
 									  ){
 		ERR("ip_set_add_ip_s: string to ip conversion error '%.*s'\n", ip_s.len, ip_s.s);
 		return -1;
@@ -153,9 +141,7 @@ int ip_set_add_ip_s(struct ip_set *ip_set, str ip_s, str mask_s){
 		
 		if (fl) {  /* 255.255.255.0 format */
 			if ( ((ip = str2ip(&mask_s))==0)
-				#ifdef  USE_IPV6
 					  && ((ip = str2ip6(&mask_s))==0)
-				#endif
 				  ){
 				ERR("ip_set_add_ip_s: string to ip mask conversion error '%.*s'\n", mask_s.len, mask_s.s);
 				return -1;

@@ -1229,9 +1229,7 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 														  don't find another */
 		/* check if it's an ip address */
 		if (((ip=str2ip(name))!=0)
-#ifdef	USE_IPV6
 			  || ((ip=str2ip6(name))!=0) 
-#endif
 			 ){
 			/* we are lucky, this is an ip address */
 			he=ip_addr2he(name, ip);
@@ -1456,9 +1454,7 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 
 	/* check if it's an ip address */
 	if (((ip=str2ip(name))!=0)
-#ifdef	USE_IPV6
 			  || ((ip=str2ip6(name))!=0)
-#endif
 			 ){
 		/* we are lucky, this is an ip address */
 		/* set proto if needed - default udp */
@@ -1629,9 +1625,7 @@ struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
 	if (port && proto && (*proto==0) && (*port==0)){
 		*proto=PROTO_UDP; /* just in case we don't find another */
 		if ( ((ip=str2ip(name))!=0)
-#ifdef	USE_IPV6
 			  || ((ip=str2ip6(name))!=0)
-#endif
 		){
 			/* we are lucky, this is an ip address */
 			he=ip_addr2he(name,ip);

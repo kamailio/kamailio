@@ -76,11 +76,7 @@ struct cfg_group_core default_core_cfg = {
 	0, /* blst_sctp_imask */
 #endif
 	/* resolver */
-#ifdef USE_IPV6
 	1,  /*!< dns_try_ipv6 -- on by default */
-#else
-	0,  /*!< dns_try_ipv6 -- off, if no ipv6 support */
-#endif
 	0,  /*!< dns_try_naptr -- off by default */
 	30,  /*!< udp transport preference (for naptr) */
 	20,  /*!< tcp transport preference (for naptr) */
