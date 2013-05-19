@@ -1093,8 +1093,9 @@ int ac_uac_req(as_p the_as,unsigned char processor_id,unsigned int flags,char *a
       this is the same as (TMCB_DONT_ACK|TMCB_LOCAL_RESPONSE_OUT) in Kamailio
    */
 
-   memset(&uac_r,0, sizeof(uac_req_t));
-   set_uac_req(&uac_r, &(my_msg->first_line.u.request.method), &headers, &body, my_dlg,TMCB_DONT_ACK|TMCB_LOCAL_RESPONSE_OUT, uac_cb, (void*)the_param);
+   set_uac_req(&uac_r, &(my_msg->first_line.u.request.method), &headers,
+		   &body, my_dlg,TMCB_DONT_ACK|TMCB_LOCAL_RESPONSE_OUT, uac_cb,
+		   (void*)the_param);
 
    ret=seas_f.tmb.t_request_within(&uac_r);
 
