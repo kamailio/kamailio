@@ -241,6 +241,9 @@ typedef struct ua_client
 #endif
 	/* per branch flags */
 	flag_t branch_flags;
+	/* internal processing code - (mapping over sip warning codes)
+	 * - storing the code giving a clue of what happened internally */
+	int icode;
 #ifdef WITH_AS_SUPPORT
 	/**
 	 * Resent for every rcvd 2xx reply.
