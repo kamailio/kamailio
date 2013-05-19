@@ -278,7 +278,9 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (!module_loaded("nathelper") && !module_loaded("outbound"))
+	if (((ws_sub_protocols & SUB_PROTOCOL_SIP) == SUB_PROTOCOL_SIP)
+			&& !module_loaded("nathelper")
+			&& !module_loaded("outbound"))
 	{
 		LM_WARN("neither \"nathelper\" nor \"outbound\" modules are"
 			" loaded. At least one of these is required for correct"
