@@ -50,6 +50,8 @@ typedef struct _uac_send_info {
 	str   s_turi;
 	char  b_furi[MAX_URI_SIZE];
 	str   s_furi;
+	char  b_callid[128];
+	str   s_callid;
 	char  b_hdrs[MAX_UACH_SIZE];
 	str   s_hdrs;
 	char  b_body[MAX_UACB_SIZE];
@@ -61,8 +63,6 @@ typedef struct _uac_send_info {
 	char  b_apasswd[64];
 	str   s_apasswd;
 	unsigned int onreply;
-	char  b_callid[128];
-	str   s_callid;
 } uac_send_info_t;
 
 static struct _uac_send_info _uac_req;
@@ -638,7 +638,7 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 		/* Callback parameter */
 		uac_r.cbp = (void*)tp;
 	}
-        uac_r.callid = (_uac_req.s_callid.len <= 0) ? NULL : &_uac_req.s_callid;
+	uac_r.callid = (_uac_req.s_callid.len <= 0) ? NULL : &_uac_req.s_callid;
 	ret = tmb.t_request(&uac_r,  /* UAC Req */
 						&_uac_req.s_ruri,        /* Request-URI */
 						(_uac_req.s_turi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_turi, /* To */
