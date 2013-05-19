@@ -140,7 +140,6 @@ void dlg_refer_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 
-	memset(&uac_r, '\0', sizeof(uac_req_t));
 	set_uac_req(&uac_r, &met, NULL, NULL, dialog_info, 0, NULL, NULL);
 	result = d_tmb.t_request_within(&uac_r);
 
@@ -198,7 +197,6 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len+CRLF_LEN,
 			dlg_bridge_controller.s, dlg_bridge_controller.len);
 
-	memset(&uac_r, '\0', sizeof(uac_req_t));
 	set_uac_req(&uac_r, &met, &hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
 				dlg_refer_tm_callback, (void*)dtc);
 	result = d_tmb.t_request_within(&uac_r);

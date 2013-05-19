@@ -308,7 +308,6 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 		goto err;
 	}
 
-	memset(&uac_r,'\0', sizeof(uac_req_t));
 	set_uac_req(&uac_r, &met, hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
 				bye_reply_cb, (void*)iuid);
 	result = d_tmb.t_request_within(&uac_r);
@@ -372,7 +371,6 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir, str *hdrs)
 		goto err;
 	}
 
-	memset(&uac_r,'\0', sizeof(uac_req_t));
 	set_uac_req(&uac_r, &met, hdrs, NULL, di, TMCB_LOCAL_COMPLETED,
 				dlg_ka_cb, (void*)iuid);
 	result = d_tmb.t_request_within(&uac_r);
