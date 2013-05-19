@@ -188,7 +188,8 @@ failure_route[1] {
 	<para>Function Parameters:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>branch_failure_route</emphasis> - Name of the branch_failure route block to be called.
+			<para><emphasis>branch_failure_route</emphasis> - Name of the branch_failure route
+			block to be called (it is prefixed internally with 'tm:branch-failure:').
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -201,7 +202,7 @@ route {
     t_relay();
 }
 
-event_route[tm:branch_failure:myroute] {
+event_route[tm:branch-failure:myroute] {
     if (t_check_status("430|403") {
         unregister("location", "$tu", "$T_reply_ruid");
     }
@@ -1281,7 +1282,7 @@ if (!t_next_contacts()) {
 		<title><function>t_next_contact_flow</function> usage</title>
 		<programlisting format="linespecific">
 ...
-event_route[tm:branch_failure:outbound]
+event_route[tm:branch-failure:outbound]
 {
 	if (t_next_contact_flow())
 	{
