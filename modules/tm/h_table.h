@@ -239,6 +239,7 @@ typedef struct ua_client
 	/* internal flags per tm uac */
 	unsigned int flags;
 #endif
+	/* per branch flags */
 	flag_t branch_flags;
 #ifdef WITH_AS_SUPPORT
 	/**
@@ -256,6 +257,8 @@ typedef struct ua_client
 	unsigned short on_branch_failure;
 	/* the onreply_route to be processed if registered to do so */
 	unsigned short on_reply;
+	/* unused - keep the structure aligned to 32b */
+	unsigned short on_unused;
 }ua_client_type;
 
 
