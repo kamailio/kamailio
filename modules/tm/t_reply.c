@@ -1802,8 +1802,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* *** store and relay message as needed *** */
 	reply_status = t_should_relay_response(t, msg_status, branch,
 		&save_clone, &relay, cancel_data, p_msg );
-	DBG("DEBUG: relay_reply: branch=%d, save=%d, relay=%d\n",
-		branch, save_clone, relay );
+	DBG("DEBUG: relay_reply: branch=%d, save=%d, relay=%d icode=%d\n",
+		branch, save_clone, relay, t->uac[branch].icode);
 
 	/* store the message if needed */
 	if (save_clone) /* save for later use, typically branch picking */

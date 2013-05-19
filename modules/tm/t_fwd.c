@@ -126,6 +126,8 @@
 #include "../../atomic_ops.h" /* membar_depends() */
 
 
+extern int tm_failure_exec_mode;
+
 static int goto_on_branch = 0, branch_route = 0;
 
 void t_on_branch( unsigned int go_to )
@@ -1589,6 +1591,21 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		LOG(L_ERR, "ERROR: t_send_branch: sending request on branch %d "
 				"failed\n", branch);
 		if (proxy) { proxy->errors++; proxy->ok=0; }
+		if(tm_failure_exec_mode==1) {
+			LOG(L_ERR, "putting branch %d on hold \n", branch);
+			/* put on retransmission timer,
+			 * but set proto to NONE, so actually it is not trying to resend */
+			uac->request.dst.proto = PROTO_NONE;
+			/* reset last_received, 408 reply is faked by timer */
+			uac->last_received=0;
+			/* add to retransmission timer */
+			if (start_retr( &uac->request )!=0){
+				LM_CRIT("retransmission already started for %p\n",
+					&uac->request);
+				return -2;
+			}
+			return ret;
+		}
 		return -2;
 	} else {
 		if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))

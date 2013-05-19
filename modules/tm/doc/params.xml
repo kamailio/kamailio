@@ -1357,4 +1357,25 @@ modparam("tm", "remap_503_500", 0)
 		</example>
 	</section>
 
+	<section id="tm.p.failure_exec_mode">
+		<title><varname>failure_exec_mode</varname> (boolean)</title>
+		<para>
+			Add local failed branches in timer to be cosidered for failure
+			routing blocks. If disabled, relay functions will return false
+			in case the branch could not be forwarded (default behaviour
+			before v4.1.0).
+		</para>
+		<para>
+			Default value is 0 (disabled).
+		</para>
+		<example>
+			<title>Set <varname>failure_exec_mode</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "failure_exec_mode", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
 </section>
