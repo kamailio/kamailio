@@ -1061,28 +1061,26 @@ int db_delete_ucontact_addr(ucontact_t* _c)
 	vals[n].val.str_val = _c->callid;
 	n++;
 
-	if (ul_xavp_contact_name.s) {
-		if (use_domain) {
-			keys[n] = &domain_col;
-			vals[n].type = DB1_STR;
-			vals[n].nul = 0;
-			dom = memchr(_c->aor->s, '@', _c->aor->len);
-			if (dom==0) {
-				vals[0].val.str_val.len = 0;
-				vals[n].val.str_val = *_c->aor;
-			} else {
-				vals[0].val.str_val.len = dom - _c->aor->s;
-				vals[n].val.str_val.s = dom + 1;
-				vals[n].val.str_val.len = _c->aor->s +
-					_c->aor->len - dom - 1;
-			}
-			uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
-					  &vals[n].val.str_val, &_c->ruid);
-			n++;
-		} else {
-			uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
-					  NULL, &_c->ruid);
-		}
+	if (use_domain) {
+	    keys[n] = &domain_col;
+	    vals[n].type = DB1_STR;
+	    vals[n].nul = 0;
+	    dom = memchr(_c->aor->s, '@', _c->aor->len);
+	    if (dom==0) {
+		vals[0].val.str_val.len = 0;
+		vals[n].val.str_val = *_c->aor;
+	    } else {
+		vals[0].val.str_val.len = dom - _c->aor->s;
+		vals[n].val.str_val.s = dom + 1;
+		vals[n].val.str_val.len = _c->aor->s +
+		    _c->aor->len - dom - 1;
+	    }
+	    uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
+			      &vals[n].val.str_val, &_c->ruid);
+	    n++;
+	} else {
+	    uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
+			      NULL, &_c->ruid);
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
