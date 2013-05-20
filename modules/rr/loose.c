@@ -578,7 +578,6 @@ static inline int after_strict(struct sip_msg* _m)
 	char* rem_off;
 	str uri;
 	struct socket_info *si;
-	int next_is_strict;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -594,12 +593,9 @@ static inline int after_strict(struct sip_msg* _m)
 		return RR_ERROR;
 	}
 
-	next_is_strict = is_strict(&puri.params);
-
-	if (enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
+	if ( enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
 		/* double route may occure due different IP and port, so force as
 		 * send interface the one advertise in second Route */
-
 		si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
 		if (si) {
 			set_force_socket(_m, si);
@@ -634,8 +630,7 @@ static inline int after_strict(struct sip_msg* _m)
 			LM_ERR("failed to parse URI\n");
 			return RR_ERROR;
 		}
-		next_is_strict = is_strict(&puri.params);
-	} 
+	}
 
 	/* set the hooks for the param
 	 * important note: RURI is already parsed by the above function, so 
@@ -643,7 +638,7 @@ static inline int after_strict(struct sip_msg* _m)
 	routed_msg_id = _m->id;
 	routed_params = _m->parsed_uri.params;
 
-	if (next_is_strict) {
+	if (is_strict(&puri.params)) {
 		LM_DBG("Next hop: '%.*s' is strict router\n", uri.len, ZSW(uri.s));
 		/* Previous hop was a strict router and the next hop is strict
 		 * router too. There is no need to save R-URI again because it
@@ -707,7 +702,7 @@ static inline int after_strict(struct sip_msg* _m)
 		if (res < 0) {
 			LM_ERR("searching for last Route URI failed\n");
 			return RR_ERROR;
- 		} else if (res > 0) {
+		} else if (res > 0) {
 			/* No remote target is an error */
 			return RR_ERROR;
 		}
@@ -731,7 +726,7 @@ static inline int after_strict(struct sip_msg* _m)
 		if (prev) {
 			rem_off = prev->nameaddr.name.s + prev->len;
 			rem_len = rt->nameaddr.name.s + rt->len - rem_off;
-	 	} else {
+		} else {
 			rem_off = hdr->name.s;
 			rem_len = hdr->len;
 		}
