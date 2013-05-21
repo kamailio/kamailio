@@ -154,7 +154,7 @@ Chapter 1. Admin Guide
    For dbtext module (which stores data in plaintext files) it is
    directory in which the database resides.
 
-   Default value is “mysql://openserro:openserro@localhost/openser”.
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.1. db_url parameter usage
 ...
@@ -399,7 +399,8 @@ if (!proxy_authorize("$fd", "subscriber)) {
    REGISTER, the second for the rest.
 
    In addition, a matter of flags parameter value, the function checks if
-   authentication username matches From/To header username.
+   authentication username matches From/To header username, and
+   Request-URI in case of PUBLISH.
 
    Meaning of the parameters is as follows:
      * realm - Realm is a opaque string that the user agent should present
@@ -413,8 +414,14 @@ if (!proxy_authorize("$fd", "subscriber)) {
        The string may contain pseudo variables.
      * flags - set of flags to control the behaviour of the function. If
        it is 1, then the function will check to see if the authentication
-       username matches either To or From header username, a matter of
-       whether it is for a REGISTER request or not..
+       username matches either To or From header username. REGISTER
+       requests: From and To must match the authentication user. PUBLISH
+       requests: From, To and Request-URI must match the authentication
+       user. All other requests: From header must match the authentication
+       user.
+       Additionally all domains in the checked URIs and the realm in the
+       authentication header will be checked to match the provided realm
+       parameter.
        The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.

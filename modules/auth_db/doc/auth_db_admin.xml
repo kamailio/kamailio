@@ -477,7 +477,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 		<para>
 		In addition, a matter of <emphasis>flags</emphasis> parameter value,
 		the function checks if authentication username matches From/To header
-		username.
+		username, and Request-URI in case of PUBLISH.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -508,8 +508,14 @@ if (!proxy_authorize("$fd", "subscriber)) {
 			<para><emphasis>flags</emphasis> - set of flags to control the
 			behaviour of the function. If it is 1, then the function will
 			check to see if the authentication username matches either To or
-			From header username, a matter of whether it is for a REGISTER
-			request or not..
+			From header username. REGISTER requests: From and To must match the 
+			authentication user. PUBLISH requests: From, To and Request-URI must
+			match the authentication user. All other requests: From header must
+			match the authentication user.
+			</para>
+			<para>
+			Additionally all domains in the checked URIs and the realm in the 
+			authentication header will be checked to match the provided realm parameter.
 			</para>
 			<para>
 			The string may contain pseudo variables.
