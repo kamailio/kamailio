@@ -24,9 +24,9 @@ Jan Janak
 
    <jan@iptel.org>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
 
-   Copyright � 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -154,7 +154,7 @@ Chapter 1. Admin Guide
    For dbtext module (which stores data in plaintext files) it is
    directory in which the database resides.
 
-   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.1. db_url parameter usage
 ...
@@ -166,7 +166,7 @@ modparam("auth_db", "db_url", "dbdriver://username:password@dbhost/dbname")
    This is the name of the column holding usernames. Default value is fine
    for most people. Use the parameter if you really need to change it.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.2. user_column parameter usage
 ...
@@ -179,7 +179,7 @@ modparam("auth_db", "user_column", "user")
    is fine for most people. Use the parameter if you really need to change
    it.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.3. domain_column parameter usage
 ...
@@ -194,7 +194,7 @@ modparam("auth_db", "domain_column", "domain")
    safe because the server doesn't need to know plaintext passwords and
    they cannot be obtained from HA1 strings.
 
-   Default value is "ha1".
+   Default value is “ha1”.
 
    Example 1.4. password_column parameter usage
 ...
@@ -222,16 +222,16 @@ modparam("auth_db", "password_column_2", "ha1_2")
    HA1 string or plaintext passwords for authentification.
 
    If the parameter is set to 0 and the username parameter of credentials
-   contains also "@domain" (some user agents append the domain to the
+   contains also “@domain” (some user agents append the domain to the
    username parameter), then the server will use the HA1 values from the
-   column specified in the "password_column_2" parameter. If the username
+   column specified in the “password_column_2” parameter. If the username
    parameter doesn't contain a domain, the server will use the HA1 values
-   from the column given in the "password_column"parameter.
+   from the column given in the “password_column”parameter.
 
    If the parameter is set to 1 then the HA1 value will be calculated from
-   the column specified in the "password_column" parameter.
+   the column specified in the “password_column” parameter.
 
-   The "password_column_2"column contain also HA1 strings but they should
+   The “password_column_2”column contain also HA1 strings but they should
    be calculated including the domain in the username parameter (as
    opposed to password_column which (when containing HA1 strings) should
    always contains HA1 strings calculated without domain in username.
@@ -257,7 +257,7 @@ modparam("auth_db", "calculate_ha1", 1)
    IMPORTANT: before turning on this parameter, be sure that the domain
    column in subscriber table is properly populated.
 
-   Default value is "0 (false)".
+   Default value is “0 (false)”.
 
    Example 1.7. use_domain parameter usage
 ...
@@ -276,7 +276,7 @@ modparam("auth_db", "use_domain", 1)
      * credential = (avp_specification '=' column_name) | (column_name)
      * avp_specification = '$avp(' + 'i:'ID | 's:'NAME | alias + ')'
 
-   Default value of this parameter is "rpid".
+   Default value of this parameter is “rpid”.
 
    Example 1.8. load_credentials parameter usage
 ...
@@ -290,7 +290,7 @@ modparam("auth_db", "load_credentials", "$avp(i:123)=rpid;email_address")
    If set to 0, the module will skip checking the version for subscriber
    table.
 
-   Default value is "1 (check for table version)".
+   Default value is “1 (check for table version)”.
 
    Example 1.9. version_table parameter usage
 ...
@@ -306,7 +306,7 @@ modparam("auth_db", "version_table", 0)
    4.5. auth_check(realm, table, flags)
    4.6. is_subscriber(uri, dbtable, flags)
 
-4.1. www_authenticate(realm, table [, method])
+4.1.  www_authenticate(realm, table [, method])
 
    Name alias: www_authorize(realm, table)
 
@@ -327,7 +327,7 @@ modparam("auth_db", "version_table", 0)
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string "". In case of REGISTER requests To
+       It must not be empty string “”. In case of REGISTER requests To
        header field domain (e.g., variable $td) can be used (because this
        header field represents the user being registered), for all other
        messages From header field domain can be used (e.g., variable $fd).
@@ -346,13 +346,13 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 };
 ...
 
-4.2. www_authorize(realm, table)
+4.2.  www_authorize(realm, table)
 
    It is same function as www_authenticate(realm, table). This name is
    kept for backward compatibility, since it was named this way first time
    by it actually does user authentication.
 
-4.3. proxy_authenticate(realm, table)
+4.3.  proxy_authenticate(realm, table)
 
    Name alias: proxy_authorize(realm, table)
 
@@ -369,9 +369,9 @@ if (!www_authorize("kamailio.org", "subscriber")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string "". Apart of a static string, typical
+       It must not be empty string “”. Apart of a static string, typical
        value is From header field domain (e.g., variable $fd).
-       If an empty string "" is used then the server will generate it from
+       If an empty string “” is used then the server will generate it from
        the request. From header field domain will be used as realm.
        The string may contain pseudo variables.
      * table - Table to be used to lookup usernames and passwords (usually
@@ -386,26 +386,27 @@ if (!proxy_authorize("$fd", "subscriber)) {
 };
 ...
 
-4.4. proxy_authorize(realm, table)
+4.4.  proxy_authorize(realm, table)
 
    It is same function as proxy_authenticate(realm, table). This name is
    kept for backward compatibility, since it was named this way first time
    but it actually does user authentication.
 
-4.5. auth_check(realm, table, flags)
+4.5.  auth_check(realm, table, flags)
 
    The function combines the functionalities of www_authenticate and
    proxy_authenticate, first being exectuted if the SIP request is a
    REGISTER, the second for the rest.
 
    In addition, a matter of flags parameter value, the function checks if
-   authentication username matches From/To header username.
+   authentication username matches From/To header username, and
+   Request-URI in case of PUBLISH.
 
    Meaning of the parameters is as follows:
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string "". Apart of a static string, typical
+       It must not be empty string “”. Apart of a static string, typical
        value is From header field domain (e.g., variable $fd).
        The string may contain pseudo variables.
      * table - Table to be used to lookup usernames and passwords (usually
@@ -413,8 +414,14 @@ if (!proxy_authorize("$fd", "subscriber)) {
        The string may contain pseudo variables.
      * flags - set of flags to control the behaviour of the function. If
        it is 1, then the function will check to see if the authentication
-       username matches either To or From header username, a matter of
-       whether it is for a REGISTER request or not..
+       username matches either To or From header username. REGISTER
+       requests: From and To must match the authentication user. PUBLISH
+       requests: From, To and Request-URI must match the authentication
+       user. All other requests: From header must match the authentication
+       user.
+       Additionally all domains in the checked URIs and the realm in the
+       authentication header will be checked to match the provided realm
+       parameter.
        The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
@@ -427,7 +434,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 }
 ...
 
-4.6. is_subscriber(uri, dbtable, flags)
+4.6.  is_subscriber(uri, dbtable, flags)
 
    The function checks if there is a subscriber corresponding to the AoR
    in uri parameter. It uses same database connection as for
