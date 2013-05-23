@@ -63,6 +63,8 @@ static tr_export_t mod_trans[] = {
 };
 
 static pv_export_t mod_pvs[] = {
+	{ {"_s", (sizeof("_s")-1)}, PVT_OTHER, pv_get__s, 0,
+		pv_parse__s_name, 0, 0, 0 },
 	{ {"af", (sizeof("af")-1)}, PVT_OTHER, pv_get_af, 0,
 		pv_parse_af_name, 0, 0, 0 },
 	{ {"branch", sizeof("branch")-1}, /* branch attributes */

@@ -2898,3 +2898,44 @@ int pv_get_K(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_uintval(msg, param, res, AF_INET);
 	}
 }
+
+/**
+ *
+ */
+int pv_parse__s_name(pv_spec_p sp, str *in)
+{
+	pv_elem_t *fmt = NULL;
+
+	if(in->s==NULL || in->len<=0)
+		return -1;
+	if(pv_parse_format(in, &fmt)<0 || fmt==NULL)
+	{
+		LM_ERR("wrong format[%.*s]\n", in->len, in->s);
+		return -1;
+	}
+	sp->pvp.pvn.u.dname = (void*)fmt;
+	sp->pvp.pvn.type = PV_NAME_OTHER;
+	return 0;
+}
+
+/**
+ *
+ */
+int pv_get__s(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str sdata = {0};
+	pv_elem_t *fmt = NULL;
+	fmt = (pv_elem_t*)param->pvn.u.dname;
+
+	if(fmt==NULL)
+	{
+		return pv_get_null(msg, param, res);
+	}
+	if(pv_printf_s(msg, fmt, &sdata)!=0)
+	{
+		LM_ERR("cannot evaluate the string\n");
+		return -1;
+	}
+	return pv_get_strval(msg, param, res, &sdata);
+}
