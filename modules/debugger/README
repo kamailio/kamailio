@@ -241,7 +241,8 @@ modparam("debugger", "step_loops", 100)
 
    Used to compute power of two as size of internal hash table to store
    levels per module (e.g., if its set to 4, internal hash table has 16
-   slots). This parameter is accesible readonly via the ser cfg framework.
+   slots). This parameter is accesible readonly via the Kamailio config
+   framework.
 
    Default value is "0" - feature disabled.
 
@@ -253,7 +254,7 @@ modparam("debugger", "mod_hash_size", 5)
 3.9. mod_level_mode (int)
 
    Enable or disable per module log level (0 - disabled, 1 - enabled).
-   This parameter is tunable via the ser cfg framework.
+   This parameter is tunable via the Kamailio config framework.
 
    Default value is "0".
 
