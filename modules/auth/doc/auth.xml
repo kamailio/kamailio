@@ -39,10 +39,12 @@
 	    <holder>FhG FOKUS</holder>
 	</copyright>
 
-	<toc></toc>
     </bookinfo>
+    <toc></toc>
 
-    
+
+    <chapter>
+	<title>Admin Guide</title>
     <section id="auth.overview">
 	<title>Overview</title>
 	<para>
@@ -71,4 +73,5 @@
     <xi:include href="auth_params.xml"/>
     <xi:include href="auth_functions.xml"/>
 
+    </chapter>
 </book>
