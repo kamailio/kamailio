@@ -227,7 +227,7 @@ modparam("debugger", "step_loops", 100)
 	    <title><varname>mod_hash_size</varname> (int)</title>
 	    <para>
 		Used to compute power of two as size of internal hash table to store levels
-		per module (e.g., if its set to 4, internal hash table has 16 slots).
+		per module (e.g., if its set to 4, internal hash table has 16 slots). This parameter is accesible readonly via the ser cfg framework.
 	    </para>
 	    <para>
 		<emphasis>
@@ -247,7 +247,7 @@ modparam("debugger", "mod_hash_size", 5)
 	<section>
 	    <title><varname>mod_level_mode</varname> (int)</title>
 	    <para>
-        Enable or disable per module log level (0 - disabled, 1 - enabled).
+        Enable or disable per module log level (0 - disabled, 1 - enabled). This parameter is tunable via the ser cfg framework.
 	    </para>
 	    <para>
 		<emphasis>

@@ -36,9 +36,10 @@
 #include "../../route_struct.h"
 #include "../../mem/shm_mem.h"
 #include "../../locking.h"
-		       
+
 #include "debugger_act.h"
 #include "debugger_api.h"
+#include "debugger_config.h"
 
 #define DBG_CMD_SIZE 256
 
@@ -914,10 +915,10 @@ static unsigned int _dbg_mod_table_size = 0;
 /**
  *
  */
-int dbg_init_mod_levels(int dbg_mod_level, int dbg_mod_hash_size)
+int dbg_init_mod_levels(int dbg_mod_hash_size)
 {
 	int i;
-	if(dbg_mod_level==0 || dbg_mod_hash_size<=0)
+	if(dbg_mod_hash_size<=0)
 		return 0;
 	if(_dbg_mod_table!=NULL)
 		return 0;
@@ -1067,6 +1068,9 @@ int dbg_get_mod_debug_level(char *mname, int mnlen, int *mlevel)
 	if(_dbg_mod_table==NULL)
 		return -1;
 
+	if(cfg_get(dbg, dbg_cfg, mod_level_mode)==0)
+		return -1;
+
 	if(_dbg_get_mod_debug_level!=0)
 		return -1;
 	_dbg_get_mod_debug_level = 1;
@@ -1103,4 +1107,14 @@ void dbg_enable_mod_levels(void)
 	if(_dbg_mod_table==NULL)
 		return;
 	set_module_debug_level_cb(dbg_get_mod_debug_level);
+}
+
+int dbg_level_mode_fixup(void *temp_handle,
+	str *group_name, str *var_name, void **value){
+	if(_dbg_mod_table==NULL)
+	{
+		LM_ERR("mod_hash_size must be set on start\n");
+		return -1;
+	}
+	return 0;
 }
