@@ -455,8 +455,8 @@ typedef struct cell
 	 /* The route to take for each downstream branch separately */
 	unsigned short on_branch;
 
-	/* place holder for MD5checksum  (meaningful only if syn_branch=0) */
-	char md5[0]; /* if syn_branch==0 then MD5_LEN bytes are extra alloc'ed*/
+	/* place holder for MD5checksum, MD5_LEN bytes are extra alloc'ed */
+	char md5[0];
 
 } tm_cell_t;
 

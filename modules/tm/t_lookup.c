@@ -13,15 +13,8 @@
  * reply and both  of them are constructed by different software.
  * 
  * As for reply matching, we match based on branch value -- that is
- * faster too. There are two versions .. with SYNONYMs #define
- * enabled, the branch includes ordinal number of a transaction
- * in a synonym list in hash table and is somewhat faster but
- * not reboot-resilient. SYNONYMs turned off are little slower
- * but work across reboots as well.
- *
- * The branch parameter is formed as follows:
- * SYNONYMS  on: hash.synonym.branch
- * SYNONYMS off: hash.md5.branch
+ * faster too.
+ * The branch parameter is formed as follows: hash.md5.branch
  *
  * -jiri
  *
@@ -892,16 +885,12 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 
 	char *loopi;
 	int loopl;
-	char *syni;
-	int synl;
 	
 	short is_cancel;
 
 	/* make compiler warnings happy */
 	loopi=0;
 	loopl=0;
-	syni=0;
-	synl=0;
 
 	/* split the branch into pieces: loop_detection_check(ignored),
 	 hash_table_id, synonym_id, branch_id */
@@ -928,25 +917,14 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	hashi=p;
 	p=n+1;scan_space--;
 
-	if (!syn_branch) {
-		/* md5 value */
-		n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR );
-		loopl = n-p;
-		scan_space-= loopl;
-		if (n==p || scan_space<2 || *n!=BRANCH_SEPARATOR) 
-			goto nomatch2;
-		loopi=p;
-		p=n+1; scan_space--;
-	} else {
-		/* synonym id */
-		n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
-		synl=n-p;
-		scan_space-=synl;
-		if (!synl || scan_space<2 || *n!=BRANCH_SEPARATOR) 
-			goto nomatch2;
-		syni=p;
-		p=n+1;scan_space--;
-	}
+	/* md5 value */
+	n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR );
+	loopl = n-p;
+	scan_space-= loopl;
+	if (n==p || scan_space<2 || *n!=BRANCH_SEPARATOR)
+		goto nomatch2;
+	loopi=p;
+	p=n+1; scan_space--;
 
 	/* branch id  -  should exceed the scan_space */
 	n=eat_token_end( p, p+scan_space );
@@ -959,8 +937,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		||hash_index>=TABLE_ENTRIES
 		|| reverse_hex2int(branchi, branchl, &branch_id)<0
 		||branch_id>=MAX_BRANCHES
-		|| (syn_branch ? (reverse_hex2int(syni, synl, &entry_label))<0 
-			: loopl!=MD5_LEN ))
+		|| loopl!=MD5_LEN)
 	) {
 		DBG("DEBUG: t_reply_matching: poor reply labels %d label %d "
 			"branch %d\n", hash_index, entry_label, branch_id );
@@ -983,14 +960,8 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	/* all the transactions from the entry are compared */
 	clist_foreach(hash_bucket, p_cell, next_c){
 		prefetch_loc_r(p_cell->next_c, 1);
-		/* first look if branch matches */
-		if (likely(syn_branch)) {
-			if (p_cell->label != entry_label) 
-				continue;
-		} else {
-			if ( memcmp(p_cell->md5, loopi,MD5_LEN)!=0)
+		if ( memcmp(p_cell->md5, loopi,MD5_LEN)!=0)
 					continue;
-		}
 
 		/* sanity check ... too high branch ? */
 		if (unlikely(branch_id>=p_cell->nr_of_outgoings))

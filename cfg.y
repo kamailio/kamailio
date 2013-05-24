@@ -440,7 +440,6 @@ extern char *finame;
 %token SOCKET_WORKERS
 %token CHECK_VIA
 %token PHONE2TEL
-%token SYN_BRANCH
 %token MEMLOG
 %token MEMDBG
 %token MEMSUM
@@ -958,8 +957,6 @@ assign_stm:
 	| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
 	| PHONE2TEL EQUAL NUMBER { phone2tel=$3; }
 	| PHONE2TEL EQUAL error { yyerror("boolean value expected"); }
-	| SYN_BRANCH EQUAL NUMBER { syn_branch=$3; }
-	| SYN_BRANCH EQUAL error { yyerror("boolean value expected"); }
 	| MEMLOG EQUAL intno { default_core_cfg.memlog=$3; }
 	| MEMLOG EQUAL error { yyerror("int value expected"); }
 	| MEMDBG EQUAL intno { default_core_cfg.memdbg=$3; }

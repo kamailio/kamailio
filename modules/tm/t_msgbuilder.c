@@ -1612,11 +1612,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 int t_calc_branch(struct cell *t, 
 	int b, char *branch, int *branch_len)
 {
-	return syn_branch ?
-		branch_builder( t->hash_index,
-			t->label, 0,
-			b, branch, branch_len )
-		: branch_builder( t->hash_index,
+	return branch_builder( t->hash_index,
 			0, t->md5,
 			b, branch, branch_len );
 }

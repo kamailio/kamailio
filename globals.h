@@ -111,7 +111,6 @@ extern int dont_daemonize;
 extern int check_via;
 extern int phone2tel;
 extern int received_dns;
-extern int syn_branch;
 /* extern int process_no; */
 extern int child_rank;
 extern int sip_warning;

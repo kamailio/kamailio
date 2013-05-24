@@ -383,8 +383,6 @@ int config_check = 0;
 int check_via =  0;
 /* translate user=phone URIs to TEL URIs */
 int phone2tel = 1;
-/* shall use stateful synonym branches? faster but not reboot-safe */
-int syn_branch = 1;
 /* debugging level for timer debugging */
 int timerlog = L_WARN;
 /* should replies include extensive warnings? by default no,

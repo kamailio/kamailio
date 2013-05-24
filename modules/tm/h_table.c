@@ -256,27 +256,25 @@ static inline void init_synonym_id( struct cell *t )
 	char *c;
 	unsigned int myrand;
 
-	if (!syn_branch) {
-		p_msg=t->uas.request;
-		if (p_msg) {
-			/* char value of a proxied transaction is
-			   calculated out of header-fields forming
-			   transaction key
-			*/
-			char_msg_val( p_msg, t->md5 );
-		} else {
-			/* char value for a UAC transaction is created
-			   randomly -- UAC is an originating stateful element 
-			   which cannot be refreshed, so the value can be
-			   anything
-			*/
-			/* HACK : not long enough */
-			myrand=rand();
-			c=t->md5;
-			size=MD5_LEN;
-			memset(c, '0', size );
-			int2reverse_hex( &c, &size, myrand );
-		}
+	p_msg=t->uas.request;
+	if (p_msg) {
+		/* char value of a proxied transaction is
+		   calculated out of header-fields forming
+		   transaction key
+		*/
+		char_msg_val( p_msg, t->md5 );
+	} else {
+		/* char value for a UAC transaction is created
+		   randomly -- UAC is an originating stateful element
+		   which cannot be refreshed, so the value can be
+		   anything
+		*/
+		/* HACK : not long enough */
+		myrand=rand();
+		c=t->md5;
+		size=MD5_LEN;
+		memset(c, '0', size );
+		int2reverse_hex( &c, &size, myrand );
 	}
 }
 
@@ -309,10 +307,9 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	sr_xavp_t** xold;
 #endif
 
-	/* allocs a new cell */
-	/* if syn_branch==0 add space for md5 (MD5_LEN -sizeof(struct cell.md5)) */
+	/* allocs a new cell, add space for md5 (MD5_LEN - sizeof(struct cell.md5)) */
 	new_cell = (struct cell*)shm_malloc( sizeof( struct cell )+
-			((MD5_LEN-sizeof(((struct cell*)0)->md5))&((syn_branch!=0)-1)) );
+			MD5_LEN-sizeof(((struct cell*)0)->md5) );
 	if  ( !new_cell ) {
 		ser_error=E_OUT_OF_MEM;
 		return NULL;

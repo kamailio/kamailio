@@ -535,31 +535,23 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		}
 	}/* dst */
 	send_info->send_flags=msg->fwd_send_flags;
-	/* calculate branch for outbound request;  if syn_branch is turned off,
+	/* calculate branch for outbound request;
 	   calculate is from transaction key, i.e., as an md5 of From/To/CallID/
 	   CSeq exactly the same way as TM does; good for reboot -- than messages
 	   belonging to transaction lost due to reboot will still be forwarded
 	   with the same branch parameter and will be match-able downstream
-	
-	   if it is turned on, we don't care about reboot; we simply put a simple
-	   value in there; better for performance
 	*/
-	if (syn_branch ) {
-	        memcpy(msg->add_to_branch_s, "z9hG4bKcydzigwkX", 16);
-		msg->add_to_branch_len=16;
-	} else {
-		if (!char_msg_val( msg, md5 )) 	{ /* parses transaction key */
-			LOG(L_ERR, "ERROR: forward_request: char_msg_val failed\n");
-			ret=E_UNSPEC;
-			goto error;
-		}
-		msg->hash_index=hash( msg->callid->body, get_cseq(msg)->number);
-		if (!branch_builder( msg->hash_index, 0, md5, 0 /* 0-th branch */,
-					msg->add_to_branch_s, &msg->add_to_branch_len )) {
-			LOG(L_ERR, "ERROR: forward_request: branch_builder failed\n");
-			ret=E_UNSPEC;
-			goto error;
-		}
+	if (!char_msg_val( msg, md5 )) 	{ /* parses transaction key */
+		LOG(L_ERR, "ERROR: forward_request: char_msg_val failed\n");
+		ret=E_UNSPEC;
+		goto error;
+	}
+	msg->hash_index=hash( msg->callid->body, get_cseq(msg)->number);
+	if (!branch_builder( msg->hash_index, 0, md5, 0 /* 0-th branch */,
+				msg->add_to_branch_s, &msg->add_to_branch_len )) {
+		LOG(L_ERR, "ERROR: forward_request: branch_builder failed\n");
+		ret=E_UNSPEC;
+		goto error;
 	}
 	/* try to send the message until success or all the ips are exhausted
 	 *  (if dns lookup is performed && the dns cache used ) */
