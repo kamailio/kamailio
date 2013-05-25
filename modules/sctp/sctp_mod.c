@@ -40,6 +40,26 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
+	{"sctp_socket_rcvbuf",     PARAM_INT, &sctp_default_cfg.so_rcvbuf},
+	{"sctp_socket_sndbuf",     PARAM_INT, &sctp_default_cfg.so_sndbuf},
+	{"sctp_autoclose",         PARAM_INT, &sctp_default_cfg.autoclose},
+	{"sctp_send_ttl",          PARAM_INT, &sctp_default_cfg.send_ttl},
+	{"sctp_send_retries",      PARAM_INT, &sctp_default_cfg.send_retries},
+	{"sctp_assoc_tracking",    PARAM_INT, &sctp_default_cfg.assoc_tracking},
+	{"sctp_assoc_reuse",       PARAM_INT, &sctp_default_cfg.assoc_reuse},
+	{"sctp_max_assocs",        PARAM_INT, &sctp_default_cfg.max_assocs},
+	{"sctp_srto_initial",      PARAM_INT, &sctp_default_cfg.srto_initial},
+	{"sctp_srto_max",          PARAM_INT, &sctp_default_cfg.srto_max},
+	{"sctp_srto_min",          PARAM_INT, &sctp_default_cfg.srto_min},
+	{"sctp_asocmaxrxt",        PARAM_INT, &sctp_default_cfg.asocmaxrxt},
+	{"sctp_init_max_attempts", PARAM_INT, &sctp_default_cfg.init_max_attempts},
+	{"sctp_init_max_timeo",    PARAM_INT, &sctp_default_cfg.init_max_timeo},
+	{"sctp_hbinterval",        PARAM_INT, &sctp_default_cfg.hbinterval},
+	{"sctp_pathmaxrxt",        PARAM_INT, &sctp_default_cfg.pathmaxrxt},
+	{"sctp_sack_delay",        PARAM_INT, &sctp_default_cfg.sack_delay},
+	{"sctp_sack_freq",         PARAM_INT, &sctp_default_cfg.sack_freq},
+	{"sctp_max_burst",         PARAM_INT, &sctp_default_cfg.max_burst},
+
 	{0, 0, 0}
 };
 
