@@ -161,11 +161,11 @@ SCTP ?= 1
 # what to install
 INSTALL_FLAVOUR=$(FLAVOUR)
 
-#version number
+# version number
 VERSION = 4
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev5
+EXTRAVERSION = -dev6
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
