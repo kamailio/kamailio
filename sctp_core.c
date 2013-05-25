@@ -44,6 +44,12 @@ int sctp_core_init(void)
  */
 void sctp_core_destroy(void)
 {
+	if(_sctp_srapi_set==0) {
+		LM_INFO("SCTP API not initialized\n");
+		return;
+	}
+
+	_sctp_srapi.destroy();
 }
 
 /**
@@ -51,22 +57,7 @@ void sctp_core_destroy(void)
  */
 int sctp_core_init_sock(struct socket_info* sock_info)
 {
-	return 0;
-}
-
-/**
- *
- */
-void sctp_core_init_options(void)
-{
-}
-
-/**
- *
- */
-int sctp_core_check_compiled_sockopts(char* buf, int size)
-{
-	return 0;
+	return _sctp_srapi.init_sock(sock_info);
 }
 
 /**
@@ -74,7 +65,7 @@ int sctp_core_check_compiled_sockopts(char* buf, int size)
  */
 int sctp_core_check_support(void)
 {
-	return 0;
+	return _sctp_srapi.check_support();
 }
 
 /**
@@ -82,7 +73,7 @@ int sctp_core_check_support(void)
  */
 int sctp_core_rcv_loop(void)
 {
-	return 0;
+	return _sctp_srapi.rcv_loop();
 }
 
 /**
@@ -90,7 +81,7 @@ int sctp_core_rcv_loop(void)
  */
 int sctp_core_msg_send(struct dest_info* dst, char* buf, unsigned len)
 {
-	return 0;
+	return _sctp_srapi.msg_send(dst, buf, len);
 }
 
 /**

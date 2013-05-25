@@ -52,8 +52,6 @@ typedef struct sctp_srapi {
 	sctp_srapi_init_f init;
 	sctp_srapi_destroy_f destroy;
 	sctp_srapi_init_sock_f init_sock;
-	sctp_srapi_init_options_f init_options;
-	sctp_srapi_check_compiled_sockopts_f check_compiled_sockopts;
 	sctp_srapi_check_support_f check_support;
 	sctp_srapi_rcv_loop_f rcv_loop;
 	sctp_srapi_msg_send_f msg_send;
