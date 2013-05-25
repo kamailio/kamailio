@@ -1901,9 +1901,6 @@ int main(int argc, char** argv)
 #ifdef USE_TCP
 	init_tcp_options(); /* set the defaults before the config */
 #endif
-#ifdef USE_SCTP
-	sctp_core_init_options(); /* set defaults before the config */
-#endif
 	/* process command line (cfg. file path etc) */
 	optind = 1;  /* reset getopt */
 	/* switches required before script processing */
@@ -1941,12 +1938,6 @@ int main(int argc, char** argv)
 					printf("version: %s\n", full_version);
 					printf("flags: %s\n", ver_flags );
 					print_ct_constants();
-#ifdef USE_SCTP
-					tmp=malloc(256);
-					if (tmp && (sctp_core_check_compiled_sockopts(tmp, 256)!=0))
-						printf("sctp unsupported socket options: %s\n", tmp);
-					if (tmp) free(tmp);
-#endif
 					printf("id: %s\n", ver_id);
 					printf("compiled on %s with %s\n",
 							ver_compiled_time, ver_compiler );
