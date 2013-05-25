@@ -27,13 +27,18 @@
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
+#include "../../shm_init.h"
+#include "../../sctp_core.h"
 
 #include "sctp_options.h"
+#include "sctp_server.h"
 #include "sctp_rpc.h"
 
 MODULE_VERSION
 
 static int mod_init(void);
+static int sctp_mod_pre_init(void);
+
 
 static cmd_export_t cmds[]={
 	{0, 0, 0, 0, 0, 0}
@@ -78,10 +83,30 @@ struct module_exports exports = {
 	0               /* per child init function */
 };
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(!shm_initialized() && init_shm()<0)
+		return -1;
+
+#ifdef USE_SCTP
+	/* shm is used, be sure it is initialized */
+	if(sctp_mod_pre_init()<0)
+		return -1;
+	return 0;
+#else
+	LOG(L_CRIT, "sctp core support not enabled\n");
+	return -1;
+#endif
+}
 
 static int mod_init(void)
 {
 #ifdef USE_SCTP
+	char tmp[256];
+	if (sctp_check_compiled_sockopts(tmp, 256)!=0){
+		LM_WARN("sctp unsupported socket options: %s\n", tmp);
+	}
+
 	if (sctp_register_cfg()){
 		LOG(L_CRIT, "could not register the sctp configuration\n");
 		return -1;
@@ -95,4 +120,26 @@ static int mod_init(void)
 	LOG(L_CRIT, "sctp core support not enabled\n");
 	return -1;
 #endif /* USE_SCTP */
+}
+
+static int sctp_mod_pre_init(void)
+{
+	sctp_srapi_t api;
+
+	/* set defaults before the config mod params */
+	init_sctp_options();
+
+	memset(&api, 0, sizeof(sctp_srapi_t));
+	api.init                    = init_sctp;
+	api.destroy                 = destroy_sctp;
+	api.init_sock               = sctp_init_sock;
+	api.check_support           = sctp_check_support;
+	api.rcv_loop                = sctp_rcv_loop;
+	api.msg_send                = sctp_msg_send;
+
+	if(sctp_core_register_api(&api)<0) {
+		LM_ERR("cannot regiser sctp core api\n");
+		return -1;
+	}
+	return 0;
 }
