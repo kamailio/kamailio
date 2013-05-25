@@ -1807,7 +1807,8 @@ $(info "sctp libraries not installed -- sctp disabled")
 		ifeq ($(SCTP),1)
 			# use lksctp
 			C_DEFS+=-DUSE_SCTP
-			LIBS+=-lsctp
+			# link to libsctp is needed only for sctp module
+			# LIBS+=-lsctp
 		endif
 	endif # SCTP
 endif
