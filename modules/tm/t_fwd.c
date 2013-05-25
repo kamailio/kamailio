@@ -1592,7 +1592,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 				"failed\n", branch);
 		if (proxy) { proxy->errors++; proxy->ok=0; }
 		if(tm_failure_exec_mode==1) {
-			LOG(L_ERR, "putting branch %d on hold \n", branch);
+			LM_DBG("putting branch %d on hold \n", branch);
 			/* put on retransmission timer,
 			 * but set proto to NONE, so actually it is not trying to resend */
 			uac->request.dst.proto = PROTO_NONE;
@@ -1604,7 +1604,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 					&uac->request);
 				return -2;
 			}
-			return ret;
+			return branch;
 		}
 		return -2;
 	} else {
