@@ -89,7 +89,7 @@
 #include "tcp_server.h"
 #endif
 #ifdef USE_SCTP
-#include "sctp_server.h"
+#include "sctp_core.h"
 #endif
 #include "switch.h"
 #include "events.h"

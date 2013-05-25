@@ -57,7 +57,7 @@
 #include "tcp_conn.h"
 #endif
 #ifdef USE_SCTP
-#include "sctp_server.h"
+#include "sctp_core.h"
 #endif
 
 #include "compiler_opt.h"
@@ -258,7 +258,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 				}
 				dst=&new_dst;
 			}
-			if (unlikely(sctp_msg_send(dst, outb.s, outb.len)<0)){
+			if (unlikely(sctp_core_msg_send(dst, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: sctp_msg_send failed\n");
 				goto error;

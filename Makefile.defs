@@ -155,6 +155,8 @@ endif
 
 # application server support on
 WITHAS ?= 1
+# enable core hooks for SCTP
+SCTP ?= 1
 
 # what to install
 INSTALL_FLAVOUR=$(FLAVOUR)
