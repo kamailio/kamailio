@@ -1,13 +1,26 @@
 #
 
-include ../../Makefile.defs
+COREPATH=../..
+include $(COREPATH)/Makefile.defs
+include $(COREPATH)/Makefile.targets
 
 auto_gen=
 NAME=protoshoot
+RELEASE=0.2
 
-include ../../Makefile.sources
+ifneq (,$(findstring -DUSE_SCTP,$(C_DEFS)))
+SCTP=1
+endif
 
-include ../../Makefile.rules
+ifeq ($(SCTP),1)
+ifeq ($(OS), linux)
+	LIBS+= -lsctp
+endif
+endif
+
+include $(COREPATH)/Makefile.utils
+
+$(NAME).o:
 
 modules:
 
