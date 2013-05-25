@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides SCTP transport layer for &kamailio;. SCTP is an
+		acronym for Stream Control Transmission Protocol, read more about it
+		at: <ulink url="http://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol">
+			http://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol</ulink>
+	</para>
+	<para>
+		The module itself implements the callbacks required by the core to
+		receive and send SIP messages over SCTP sockets.
+	</para>
+	<para>
+		The core Makefile variable SCTP must be set to 1 (which is by default set
+		to 1 in Makefile.defs) and sources compiled with -DUSE_SCTP (automatically
+		set when SCTP=1). In other words, if core Makefiles are not changed and
+		SCTP variable is not overwritten from command line, then the SCTP 
+		support in core is enabled.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libsctp</emphasis> - SCTP user space library available
+				on Linux. To compile the module, libsctp-dev is required as well.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="sctp.p.sctp_socket_rcvbuf">
+		<title><varname>sctp_socket_rcvbuf</varname> (int)</title>
+		<para>
+		</para>
+		<para>
+		<emphasis>
+			Default value is automatically set based on OS limits.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_socket_rcvbuf</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_socket_rcvbuf", )
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.">
+		<title><varname>sctp_</varname> (int)</title>
+		<para>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp", )
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+</chapter>
+

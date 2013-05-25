@@ -1,0 +1,98 @@
+SCTP Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Andrei Pelinescu-Onciul
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. sctp_socket_rcvbuf (int)
+              3.2. sctp_ (int)
+
+   List of Examples
+
+   1.1. Set sctp_socket_rcvbuf parameter
+   1.2. Set sctp_ parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. sctp_socket_rcvbuf (int)
+        3.2. sctp_ (int)
+
+1. Overview
+
+   This module provides SCTP transport layer for Kamailio. SCTP is an
+   acronym for Stream Control Transmission Protocol, read more about it
+   at: http://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol
+
+   The module itself implements the callbacks required by the core to
+   receive and send SIP messages over SCTP sockets.
+
+   The core Makefile variable SCTP must be set to 1 (which is by default
+   set to 1 in Makefile.defs) and sources compiled with -DUSE_SCTP
+   (automatically set when SCTP=1). In other words, if core Makefiles are
+   not changed and SCTP variable is not overwritten from command line,
+   then the SCTP support in core is enabled.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libsctp - SCTP user space library available on Linux. To compile
+       the module, libsctp-dev is required as well.
+
+3. Parameters
+
+   3.1. sctp_socket_rcvbuf (int)
+   3.2. sctp_ (int)
+
+3.1. sctp_socket_rcvbuf (int)
+
+   Default value is automatically set based on OS limits.
+
+   Example 1.1. Set sctp_socket_rcvbuf parameter
+...
+modparam("sctp", "sctp_socket_rcvbuf", )
+...
+
+3.2. sctp_ (int)
+
+   Default value is 1.
+
+   Example 1.2. Set sctp_ parameter
+...
+modparam("sctp", "sctp", )
+...
