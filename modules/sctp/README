@@ -20,12 +20,46 @@ Andrei Pelinescu-Onciul
         3. Parameters
 
               3.1. sctp_socket_rcvbuf (int)
-              3.2. sctp_ (int)
+              3.2. sctp_socket_sndbuf (int)
+              3.3. sctp_autoclose (int)
+              3.4. sctp_send_ttl (int)
+              3.5. sctp_send_retries (int)
+              3.6. sctp_assoc_tracking (int)
+              3.7. sctp_assoc_reuse (int)
+              3.8. sctp_max_assocs (int)
+              3.9. sctp_srto_initial (int)
+              3.10. sctp_srto_max (int)
+              3.11. sctp_srto_min (int)
+              3.12. sctp_asocmaxrxt (int)
+              3.13. sctp_init_max_attempts (int)
+              3.14. sctp_init_max_timeo (int)
+              3.15. sctp_hbinterval (int)
+              3.16. sctp_pathmaxrxt (int)
+              3.17. sctp_sack_delay (int)
+              3.18. sctp_sack_freq (int)
+              3.19. sctp_max_burst (int)
 
    List of Examples
 
    1.1. Set sctp_socket_rcvbuf parameter
-   1.2. Set sctp_ parameter
+   1.2. Set sctp_socket_sndbuf parameter
+   1.3. Set sctp_autoclose parameter
+   1.4. Set sctp_send_ttl parameter
+   1.5. Set sctp_send_retries parameter
+   1.6. Set sctp_assoc_tracking parameter
+   1.7. Set sctp_assoc_reuse parameter
+   1.8. Set sctp_max_assocs parameter
+   1.9. Set sctp_srto_initial parameter
+   1.10. Set sctp_srto_max parameter
+   1.11. Set sctp_srto_min parameter
+   1.12. Set sctp_asocmaxrxt parameter
+   1.13. Set sctp_init_max_attempts parameter
+   1.14. Set sctp_init_max_timeo parameter
+   1.15. Set sctp_hbinterval parameter
+   1.16. Set sctp_pathmaxrxt parameter
+   1.17. Set sctp_sack_delay parameter
+   1.18. Set sctp_sack_freq parameter
+   1.19. Set sctp_max_burst parameter
 
 Chapter 1. Admin Guide
 
@@ -40,7 +74,24 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. sctp_socket_rcvbuf (int)
-        3.2. sctp_ (int)
+        3.2. sctp_socket_sndbuf (int)
+        3.3. sctp_autoclose (int)
+        3.4. sctp_send_ttl (int)
+        3.5. sctp_send_retries (int)
+        3.6. sctp_assoc_tracking (int)
+        3.7. sctp_assoc_reuse (int)
+        3.8. sctp_max_assocs (int)
+        3.9. sctp_srto_initial (int)
+        3.10. sctp_srto_max (int)
+        3.11. sctp_srto_min (int)
+        3.12. sctp_asocmaxrxt (int)
+        3.13. sctp_init_max_attempts (int)
+        3.14. sctp_init_max_timeo (int)
+        3.15. sctp_hbinterval (int)
+        3.16. sctp_pathmaxrxt (int)
+        3.17. sctp_sack_delay (int)
+        3.18. sctp_sack_freq (int)
+        3.19. sctp_max_burst (int)
 
 1. Overview
 
@@ -77,22 +128,339 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. sctp_socket_rcvbuf (int)
-   3.2. sctp_ (int)
+   3.2. sctp_socket_sndbuf (int)
+   3.3. sctp_autoclose (int)
+   3.4. sctp_send_ttl (int)
+   3.5. sctp_send_retries (int)
+   3.6. sctp_assoc_tracking (int)
+   3.7. sctp_assoc_reuse (int)
+   3.8. sctp_max_assocs (int)
+   3.9. sctp_srto_initial (int)
+   3.10. sctp_srto_max (int)
+   3.11. sctp_srto_min (int)
+   3.12. sctp_asocmaxrxt (int)
+   3.13. sctp_init_max_attempts (int)
+   3.14. sctp_init_max_timeo (int)
+   3.15. sctp_hbinterval (int)
+   3.16. sctp_pathmaxrxt (int)
+   3.17. sctp_sack_delay (int)
+   3.18. sctp_sack_freq (int)
+   3.19. sctp_max_burst (int)
 
 3.1. sctp_socket_rcvbuf (int)
+
+   Size for the sctp socket receive buffer.
 
    Default value is automatically set based on OS limits.
 
    Example 1.1. Set sctp_socket_rcvbuf parameter
 ...
-modparam("sctp", "sctp_socket_rcvbuf", )
+modparam("sctp", "sctp_socket_rcvbuf", 14096)
 ...
 
-3.2. sctp_ (int)
+3.2. sctp_socket_sndbuf (int)
 
-   Default value is 1.
+   Size for the sctp socket send buffer.
 
-   Example 1.2. Set sctp_ parameter
+   Default value is automatically set based on OS limits.
+
+   Example 1.2. Set sctp_socket_sndbuf parameter
 ...
-modparam("sctp", "sctp", )
+modparam("sctp", "sctp_socket_sndbuf", 14096)
+...
+
+3.3. sctp_autoclose (int)
+
+   Number of seconds before autoclosing an idle association. Can be
+   changed at runtime, but it will affect only new associations.
+
+   Default value is 180 (seconds).
+
+   Example 1.3. Set sctp_autoclose parameter
+...
+# kamcmd cfg.set_now_int sctp autoclose 120
+...
+modparam("sctp", "sctp_autoclose", 300)
+...
+
+3.4. sctp_send_ttl (int)
+
+   Number of milliseconds before an unsent message/chunk is dropped. Can
+   be changed at runtime.
+
+   Default value is 32000 (miliseconds - 32 seconds).
+
+   Example 1.4. Set sctp_send_ttl parameter
+...
+# kamcmd cfg.set_now_int sctp send_ttl 180000
+...
+modparam("sctp", "sctp_send_ttl", 10000)
+...
+
+3.5. sctp_send_retries (int)
+
+   How many times to attempt re-sending a message on a re-opened
+   association, if the sctp stack did give up sending it (it's not related
+   to sctp protocol level retransmission). Useful to improve reliability
+   with peers that reboot/restart or fail over to another machine.
+
+   WARNING: use with care and low values (e.g. 1-3) to avoid "multiplying"
+   traffic to unresponding hosts.
+
+   Can be changed at runtime.
+
+   Default value is 0.
+
+   Example 1.5. Set sctp_send_retries parameter
+...
+modparam("sctp", "sctp_send_retries", 1)
+...
+
+3.6. sctp_assoc_tracking (int)
+
+   Controls whether or not sctp associations are tracked inside Kamailio.
+   Turning it off would result in less memory being used and slightly
+   better performance, but it will also disable some other features that
+   depend on it (e.g. sctp_assoc_reuse).
+
+   Can be changed at runtime (sercmd sctp assoc_tracking 0), but changes
+   will be allowed only if all the other features that depend on it are
+   turned off (for example it can be turned off only if first
+   sctp_assoc_reuse was turned off).
+
+   Note: turning sctp_assoc_tracking on/off will delete all the tracking
+   information for all the currently tracked associations and might
+   introduce a small temporary delay in the sctp processing if lots of
+   associations were tracked.
+
+   Config options depending on sctp_assoc_tracking being on:
+   sctp_assoc_reuse.
+
+   Default value is 1 (enabled, 0 - disabled).
+
+   Example 1.6. Set sctp_assoc_tracking parameter
+...
+modparam("sctp", "sctp_assoc_tracking", 0)
+...
+
+3.7. sctp_assoc_reuse (int)
+
+   Controls sctp association reuse. For now only association reuse for
+   replies is affected by it. Default is on. Depends on
+   sctp_assoc_tracking being on.
+
+   Note that even if turned off, if the port in via corresponds to the
+   source port of the association the request was sent on or if rport is
+   turned on (force_rport() or via containing a rport option), the
+   association will be automatically reused by the sctp stack. Can be
+   changed at runtime (sctp assoc_reuse), but it can be turned on only if
+   sctp_assoc_tracking is on.
+
+   Default value is 1 (enabled, 0 - disabled).
+
+   Example 1.7. Set sctp_assoc_reuse parameter
+...
+modparam("sctp", "sctp_assoc_reuse", 0)
+...
+
+3.8. sctp_max_assocs (int)
+
+   Maximum number of allowed open sctp associations. -1 means maximum
+   allowed by the OS. Default: -1. Can be changed at runtime (e.g.: kamcmd
+   cfg.set_now_int sctp max_assocs 10 ). When the maximum associations
+   number is exceeded and a new associations is opened by a remote host,
+   the association will be immediately closed. However it is possible that
+   some sip packets get through (especially if they are sent early, as
+   part of the 4-way handshake).
+
+   When Kamailio tries to open a new association and the max_assocs is
+   exceeded the exact behaviour depends on whether or not
+   sctp_assoc_tracking is on. If on, the send triggering the active open
+   will gracefully fail, before actually opening the new association and
+   no packet will be sent. However if sctp_assoc_tracking is off, the
+   association will first be opened and then immediately closed. In
+   general this means that the initial sip packet will be sent (as part of
+   the 4-way handshake).
+
+   Default value is -1.
+
+   Example 1.8. Set sctp_max_assocs parameter
+...
+modparam("sctp", "sctp_max_assocs", 10)
+...
+
+3.9. sctp_srto_initial (int)
+
+   Initial value of the retransmission timeout (in miliseconds), used in
+   RTO calculations.
+
+   Can be changed at runtime (sctp srto_initial) but it will affect only
+   new associations.
+
+   Default value is OS specific.
+
+   Example 1.9. Set sctp_srto_initial parameter
+...
+modparam("sctp", "sctp_srto_initial", 1000)
+...
+
+3.10. sctp_srto_max (int)
+
+   Maximum value of the retransmission timeout (RTO) in milliseconds.
+
+   WARNING: values lower then the sctp sack_delay will cause lots of
+   retransmissions and connection instability (see sctp_srto_min for more
+   details).
+
+   Can be changed at runtime (sctp srto_max) but it will affect only new
+   associations.
+
+   Default value is OS specific.
+
+   Example 1.10. Set sctp_srto_max parameter
+...
+modparam("sctp", "sctp_srto_max", 2000)
+...
+
+3.11. sctp_srto_min (int)
+
+   Minimum value of the retransmission timeout (RTO) in milliseconds.
+
+   WARNING: values lower then the sctp sack_delay of any peer might cause
+   retransmissions and possible interoperability problems. According to
+   the standard the sack_delay should be between 200 and 500 ms, so avoid
+   trying values lower then 500 ms unless you control all the possible
+   sctp peers and you do make sure their sack_delay is higher or their
+   sack_freq is 1.
+
+   Can be changed at runtime (sctp srto_min) but it will affect only new
+   associations.
+
+   Default value is OS specific.
+
+   Example 1.11. Set sctp_srto_min parameter
+...
+modparam("sctp", "sctp_srto_min", 800)
+...
+
+3.12. sctp_asocmaxrxt (int)
+
+   Maximum retransmissions attempts per association. It should be set to
+   sctp_pathmaxrxt * no. of expected paths.
+
+   Can be changed at runtime (sctp asocmaxrxt) but it will affect only new
+   associations.
+
+   Default value is OS specific.
+
+   Example 1.12. Set sctp_asocmaxrxt parameter
+...
+modparam("sctp", "sctp_asocmaxrxt", 5)
+...
+
+3.13. sctp_init_max_attempts (int)
+
+   Maximum INIT retransmission attempts.
+
+   Can be changed at runtime (sctp init_max_attempts).
+
+   Default value is OS specific.
+
+   Example 1.13. Set sctp_init_max_attempts parameter
+...
+modparam("sctp", "sctp_init_max_attempts", 3)
+...
+
+3.14. sctp_init_max_timeo (int)
+
+   Maximum INIT retransmission timeout (RTO max for INIT) in miliseconds.
+
+   Can be changed at runtime (sctp init_max_timeo).
+
+   Default value is OS specific.
+
+   Example 1.14. Set sctp_init_max_timeo parameter
+...
+modparam("sctp", "sctp_init_max_timeo", 1000)
+...
+
+3.15. sctp_hbinterval (int)
+
+   SCTP heartbeat interval. Setting it to -1 will disable the heartbeats.
+
+   Can be changed at runtime (sctp hbinterval) but it will affect only new
+   associations.
+
+   Default value is OS specific.
+
+   Example 1.15. Set sctp_hbinterval parameter
+...
+modparam("sctp", "sctp_hbinterval", 2000)
+...
+
+3.16. sctp_pathmaxrxt (int)
+
+   Maximum retransmission attempts per path (see also sctp_asocmaxrxt).
+
+   Can be changed at runtime (sctp pathmaxrxt) but it will affect only new
+   associations.
+
+   Default value is OS specific.
+
+   Example 1.16. Set sctp_pathmaxrxt parameter
+...
+modparam("sctp", "sctp_pathmaxrxt", 2)
+...
+
+3.17. sctp_sack_delay (int)
+
+   Delay until an ACK is generated after receiving a packet (in
+   miliseconds).
+
+   WARNING: a value higher then srto_min can cause a lot of
+   retransmissions (and strange problems). A value higher then srto_max
+   will result in very high connections instability. According to the
+   standard the sack_delay value should be between 200 and 500 ms.
+
+   Can be changed at runtime (sctp sack_delay) but it will affect only new
+   associations.
+
+   Default value is OS specific.
+
+   Example 1.17. Set sctp_sack_delay parameter
+...
+modparam("sctp", "sctp_sack_delay", 400)
+...
+
+3.18. sctp_sack_freq (int)
+
+   Number of packets received before an ACK is sent (without waiting for
+   the sack_delay to expire). Default: OS specific.
+
+   Note: on linux with lksctp up to and including 1.0.9 is not possible to
+   set this value (having it in the config will produce a warning on
+   startup).
+
+   Can be changed at runtime (sctp sack_freq) but it will affect only new
+   associations.
+
+   Default value is OS specific.
+
+   Example 1.18. Set sctp_sack_freq parameter
+...
+modparam("sctp", "sctp_sack_freq", 3)
+...
+
+3.19. sctp_max_burst (int)
+
+   Maximum burst of packets that can be emitted by an association.
+
+   Can be changed at runtime (sctp max_burst) but it will affect only new
+   associations.
+
+   Default value is OS specific.
+
+   Example 1.19. Set sctp_max_burst parameter
+...
+modparam("sctp", "sctp_max_burst", 3)
 ...

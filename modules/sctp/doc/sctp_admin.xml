@@ -65,11 +65,13 @@
 		</para>
 	</section>
 	</section>
+
 	<section>
 	<title>Parameters</title>
 	<section id="sctp.p.sctp_socket_rcvbuf">
 		<title><varname>sctp_socket_rcvbuf</varname> (int)</title>
 		<para>
+			 Size for the sctp socket receive buffer.
 		</para>
 		<para>
 		<emphasis>
@@ -80,26 +82,503 @@
 		<title>Set <varname>sctp_socket_rcvbuf</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("sctp", "sctp_socket_rcvbuf", )
+modparam("sctp", "sctp_socket_rcvbuf", 14096)
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="sctp.p.">
-		<title><varname>sctp_</varname> (int)</title>
+	<section id="sctp.p.sctp_socket_sndbuf">
+		<title><varname>sctp_socket_sndbuf</varname> (int)</title>
 		<para>
+			 Size for the sctp socket send buffer.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 1.
+			Default value is automatically set based on OS limits.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>sctp_</varname> parameter</title>
+		<title>Set <varname>sctp_socket_sndbuf</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("sctp", "sctp", )
+modparam("sctp", "sctp_socket_sndbuf", 14096)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_autoclose">
+		<title><varname>sctp_autoclose</varname> (int)</title>
+		<para>
+			Number of seconds before autoclosing an idle association.
+			Can be changed at runtime, but it will affect only new associations.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 180 (seconds).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_autoclose</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# kamcmd cfg.set_now_int sctp autoclose 120
+...
+modparam("sctp", "sctp_autoclose", 300)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_send_ttl">
+		<title><varname>sctp_send_ttl</varname> (int)</title>
+		<para>
+			Number of milliseconds before an unsent message/chunk is dropped.
+			Can be changed at runtime.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 32000 (miliseconds - 32 seconds).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_send_ttl</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# kamcmd cfg.set_now_int sctp send_ttl 180000
+...
+modparam("sctp", "sctp_send_ttl", 10000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_send_retries">
+		<title><varname>sctp_send_retries</varname> (int)</title>
+		<para>
+			How many times to attempt re-sending a message on a re-opened
+			association, if the sctp stack did give up sending it (it's not
+			related to sctp protocol level retransmission). Useful to improve
+			reliability with peers that reboot/restart or fail over to another
+			machine.
+		</para>
+		<para>
+			WARNING: use with care and low values (e.g. 1-3) to avoid
+			"multiplying" traffic to unresponding hosts.
+		</para>
+		<para>
+			Can be changed at runtime. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_send_retries</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_send_retries", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_assoc_tracking">
+		<title><varname>sctp_assoc_tracking</varname> (int)</title>
+		<para>
+			Controls whether or not sctp associations are tracked inside
+			&kamailio;. Turning it off would result in less memory being used
+			and slightly better performance, but it will also disable some other
+			features that depend on it (e.g. sctp_assoc_reuse).
+		</para>
+		<para>
+			Can be changed at runtime (sercmd sctp assoc_tracking 0), but changes
+			will be allowed only if all the other features that depend on it are
+			turned off (for example it can be turned off only if first
+			sctp_assoc_reuse was turned off).
+		</para>
+		<para>
+			Note: turning sctp_assoc_tracking on/off will delete all the tracking
+			information for all the currently tracked associations and might
+			introduce a small temporary delay in the sctp processing if lots
+			of associations were tracked.
+		</para>
+		<para>
+			Config options depending on sctp_assoc_tracking being on:
+			sctp_assoc_reuse. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (enabled, 0 - disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_assoc_tracking</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_assoc_tracking", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_assoc_reuse">
+		<title><varname>sctp_assoc_reuse</varname> (int)</title>
+		<para>
+			Controls sctp association reuse. For now only association reuse
+			for replies is affected by it. Default is on. Depends on
+			sctp_assoc_tracking being on.
+		</para>
+		<para>
+			Note that even if turned off, if the port in via corresponds to
+			the source port of the association the request was sent on or if
+			rport is turned on (force_rport() or via containing a rport
+			option), the association will be automatically reused by the
+			sctp stack. Can be changed at runtime (sctp assoc_reuse), but it
+			can be turned on only if sctp_assoc_tracking is on. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (enabled, 0 - disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_assoc_reuse</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_assoc_reuse", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_max_assocs">
+		<title><varname>sctp_max_assocs</varname> (int)</title>
+		<para>
+			Maximum number of allowed open sctp associations. -1 means
+			maximum allowed by the OS. Default: -1. Can be changed at
+			runtime (e.g.: kamcmd cfg.set_now_int sctp max_assocs 10 ). When
+			the maximum associations number is exceeded and a new associations
+			is opened by a remote host, the association will be immediately
+			closed. However it is possible that some sip packets get through
+			(especially if they are sent early, as part of the 4-way handshake).
+		</para>
+		<para>
+			When &kamailio; tries to open a new association and the max_assocs
+			is exceeded the exact behaviour depends on whether or not
+			sctp_assoc_tracking is on. If on, the send triggering the active
+			open will gracefully fail, before actually opening the new
+			association and no packet will be sent. However if
+			sctp_assoc_tracking is off, the association will first be opened
+			and then immediately closed. In general this means that the initial
+			sip packet will be sent (as part of the 4-way handshake). 
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_max_assocs</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_max_assocs", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_srto_initial">
+		<title><varname>sctp_srto_initial</varname> (int)</title>
+		<para>
+			Initial value of the retransmission timeout (in miliseconds),
+			used in RTO calculations.
+		</para>
+		<para>
+			Can be changed at runtime (sctp srto_initial) but it will affect
+			only new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_srto_initial</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_srto_initial", 1000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_srto_max">
+		<title><varname>sctp_srto_max</varname> (int)</title>
+		<para>
+			Maximum value of the retransmission timeout (RTO) in milliseconds.
+		</para>
+		<para>
+			WARNING: values lower then the sctp sack_delay will cause lots
+			of retransmissions and connection instability (see sctp_srto_min
+			for more details).
+		</para>
+		<para>
+			Can be changed at runtime (sctp srto_max) but it will affect only
+			new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_srto_max</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_srto_max", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_srto_min">
+		<title><varname>sctp_srto_min</varname> (int)</title>
+		<para>
+			Minimum value of the retransmission timeout (RTO) in milliseconds.
+		</para>
+		<para>
+			WARNING: values lower then the sctp sack_delay of any peer might
+			cause retransmissions and possible interoperability problems.
+			According to the standard the sack_delay should be between 200
+			and 500 ms, so avoid trying values lower then 500 ms unless you
+			control all the possible sctp peers and you do make sure their
+			sack_delay is higher or their sack_freq is 1.
+		</para>
+		<para>
+			Can be changed at runtime (sctp srto_min) but it will affect only
+			new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_srto_min</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_srto_min", 800)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_asocmaxrxt">
+		<title><varname>sctp_asocmaxrxt</varname> (int)</title>
+		<para>
+			Maximum retransmissions attempts per association. It should be
+			set to sctp_pathmaxrxt * no. of expected paths.
+		</para>
+		<para>
+			Can be changed at runtime (sctp asocmaxrxt) but it will affect
+			only new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_asocmaxrxt</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_asocmaxrxt", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_init_max_attempts">
+		<title><varname>sctp_init_max_attempts</varname> (int)</title>
+		<para>
+			Maximum INIT retransmission attempts.
+		</para>
+		<para>
+			Can be changed at runtime (sctp init_max_attempts). 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_init_max_attempts</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_init_max_attempts", 3)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_init_max_timeo">
+		<title><varname>sctp_init_max_timeo</varname> (int)</title>
+		<para>
+			Maximum INIT retransmission timeout (RTO max for INIT) in
+			miliseconds.
+		</para>
+		<para>
+			Can be changed at runtime (sctp init_max_timeo). 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_init_max_timeo</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_init_max_timeo", 1000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_hbinterval">
+		<title><varname>sctp_hbinterval</varname> (int)</title>
+		<para>
+			SCTP heartbeat interval. Setting it to -1 will disable the
+			heartbeats.
+		</para>
+		<para>
+			Can be changed at runtime (sctp hbinterval) but it will affect only
+			new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_hbinterval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_hbinterval", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_pathmaxrxt">
+		<title><varname>sctp_pathmaxrxt</varname> (int)</title>
+		<para>
+			Maximum retransmission attempts per path (see also
+			sctp_asocmaxrxt).
+		</para>
+		<para>
+			Can be changed at runtime (sctp pathmaxrxt) but it will affect
+			only new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_pathmaxrxt</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_pathmaxrxt", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_sack_delay">
+		<title><varname>sctp_sack_delay</varname> (int)</title>
+		<para>
+			Delay until an ACK is generated after receiving a packet (in
+			miliseconds).
+		</para>
+		<para>
+			WARNING: a value higher then srto_min can cause a lot of
+			retransmissions (and strange problems). A value higher then
+			srto_max will result in very high connections instability.
+			According to the standard the sack_delay value should be between
+			200 and 500 ms.
+		</para>
+		<para>
+			Can be changed at runtime (sctp sack_delay) but it will affect
+			only new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_sack_delay</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_sack_delay", 400)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_sack_freq">
+		<title><varname>sctp_sack_freq</varname> (int)</title>
+		<para>
+			Number of packets received before an ACK is sent (without waiting
+			for the sack_delay to expire). Default: OS specific.
+		</para>
+		<para>
+			Note: on linux with lksctp up to and including 1.0.9 is not
+			possible to set this value (having it in the config will produce
+			a warning on startup).
+		</para>
+		<para>
+			Can be changed at runtime (sctp sack_freq) but it will affect only
+			new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_sack_freq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_sack_freq", 3)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sctp.p.sctp_max_burst">
+		<title><varname>sctp_max_burst</varname> (int)</title>
+		<para>
+			Maximum burst of packets that can be emitted by an association.
+		</para>
+		<para>
+			Can be changed at runtime (sctp max_burst) but it will affect only
+			new associations. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is OS specific.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sctp_max_burst</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sctp", "sctp_max_burst", 3)
 ...
 </programlisting>
 		</example>
