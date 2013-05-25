@@ -2930,39 +2930,84 @@ cmd:
 	| FORWARD_TLS LPAREN error RPAREN { $$=0; 
 									yyerror("bad forward_tls argument"); }
 	| FORWARD_SCTP LPAREN host RPAREN {
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
 	}
 	| FORWARD_SCTP LPAREN STRING RPAREN {
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
 	}
 	| FORWARD_SCTP LPAREN ip RPAREN	{
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
 	}
 	| FORWARD_SCTP LPAREN host COMMA NUMBER RPAREN {
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST,
 							(void*)$5); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
 	}
 	| FORWARD_SCTP LPAREN STRING COMMA NUMBER RPAREN {
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST,
 							(void*)$5); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
 	}
 	| FORWARD_SCTP LPAREN ip COMMA NUMBER RPAREN {
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 
 							(void*)$5); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
 					}
 	| FORWARD_SCTP LPAREN URIHOST COMMA URIPORT RPAREN {
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
 	}
 	| FORWARD_SCTP LPAREN URIHOST COMMA NUMBER RPAREN {
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, NUMBER_ST,
 							(void*)$5); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
 	}
 	| FORWARD_SCTP LPAREN URIHOST RPAREN {
+		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); set_cfg_pos($$);
+		#else
+			$$=0;
+			yyerror("tls support not compiled in");
+		#endif
 	}
 	| FORWARD_SCTP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| FORWARD_SCTP LPAREN error RPAREN { $$=0; 
-									yyerror("bad forward_tls argument"); }
+									yyerror("bad forward_sctp argument"); }
 	| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST,
 										(void*)(L_DBG+1), STRING_ST, $3);
 									set_cfg_pos($$); }
