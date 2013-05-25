@@ -20,40 +20,93 @@
 
 #include "sctp_core.h"
 
-int sctp_core_msg_send(struct dest_info* dst, char* buf, unsigned len)
+/**
+ *
+ */
+static sctp_srapi_t _sctp_srapi = { 0 };
+static int _sctp_srapi_set = 0;
+
+/**
+ *
+ */
+int sctp_core_init(void)
 {
-	return 0;
+	if(_sctp_srapi_set==0) {
+		LM_ERR("SCTP API not initialized\n");
+		return -1;
+	}
+
+	return _sctp_srapi.init();
 }
 
+/**
+ *
+ */
 void sctp_core_destroy(void)
 {
 }
 
+/**
+ *
+ */
 int sctp_core_init_sock(struct socket_info* sock_info)
 {
 	return 0;
 }
 
-int sctp_core_rcv_loop(void)
-{
-	return 0;
-}
-
+/**
+ *
+ */
 void sctp_core_init_options(void)
 {
 }
 
+/**
+ *
+ */
 int sctp_core_check_compiled_sockopts(char* buf, int size)
 {
 	return 0;
 }
 
+/**
+ *
+ */
 int sctp_core_check_support(void)
 {
 	return 0;
 }
 
-int sctp_core_init(void)
+/**
+ *
+ */
+int sctp_core_rcv_loop(void)
 {
+	return 0;
+}
+
+/**
+ *
+ */
+int sctp_core_msg_send(struct dest_info* dst, char* buf, unsigned len)
+{
+	return 0;
+}
+
+/**
+ *
+ */
+int sctp_core_register_api(sctp_srapi_t *api)
+{
+	if(api==NULL || api->init==NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	if(_sctp_srapi_set==1) {
+		LM_ERR("SCTP API already initialized\n");
+		return -1;
+	}
+	_sctp_srapi_set = 1;
+	memcpy(&_sctp_srapi, api, sizeof(sctp_srapi_t));
 	return 0;
 }
