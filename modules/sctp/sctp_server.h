@@ -27,7 +27,7 @@
 #ifndef _sctp_server_h
 #define _sctp_server_h
 
-#include "ip_addr.h"
+#include "../../ip_addr.h"
 
 struct sctp_gen_info{
 	int sctp_connections_no;

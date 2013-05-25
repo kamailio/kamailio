@@ -41,7 +41,7 @@
 
 #else /* USE_SCTP_EV */
 
-#include "ip_addr.h"
+#include "../../ip_addr.h"
 
 
 /** an association has either been opened or closed.

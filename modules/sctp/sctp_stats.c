@@ -31,7 +31,8 @@
 
 #ifdef USE_SCTP_STATS
 
-#include "counters.h"
+#include "../../counters.h"
+
 #include "sctp_server.h"
 
 struct sctp_counters_h sctp_cnts_h;

@@ -50,7 +50,7 @@
 
 #else /* USE_SCTP_STATS */
 
-#include "counters.h"
+#include "../../counters.h"
 
 struct sctp_counters_h {
 	counter_handle_t established;

@@ -44,9 +44,11 @@
 #include <errno.h>
 
 #include "sctp_options.h"
-#include "dprint.h"
-#include "cfg/cfg.h"
-#include "socket_info.h"
+
+#include "../../dprint.h"
+#include "../../cfg/cfg.h"
+#include "../../socket_info.h"
+
 #include "sctp_server.h"
 
 struct cfg_group_sctp sctp_default_cfg;
