@@ -204,6 +204,18 @@ int th_prepare_msg(sip_msg_t *msg)
 		return 1;
 	}
 
+	if(msg->first_line.type==SIP_REQUEST)
+	{
+		if(!IS_SIP(msg))
+		{
+			LM_DBG("non sip request message\n");
+			return 1;
+		}
+	} else if(msg->first_line.type!=SIP_REPLY) {
+		LM_DBG("non sip message\n");
+		return 1;
+	}
+
 	if (parse_headers(msg, HDR_EOH_F, 0)==-1)
 	{
 		LM_DBG("parsing headers failed");
