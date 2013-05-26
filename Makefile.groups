@@ -92,7 +92,7 @@ mod_list_tlsdeps=auth_identity tls
 # - modules depending on openssl library
 mod_list_outbound=outbound
 
-# - modules depending on unistring library
+# - modules depending on openssl and unistring library
 mod_list_websocket=websocket
 
 # - modules depending on openssl library
@@ -103,6 +103,9 @@ mod_list_dnssec=dnssec
 
 # - modules depending on libsctp
 mod_list_sctp=sctp
+
+# - modules depending on openssl library
+mod_list_autheph=auth_ephemeral
 
 # - modules related to SIMPLE presence extensions
 mod_list_presence=presence presence_conference presence_dialoginfo \
@@ -175,7 +178,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_iptrtpproxy) $(mod_list_mi_xmlrpc) \
 			   $(mod_list_outbound) $(mod_list_osp) \
 			   $(mod_list_java) $(mod_list_stun) \
-			   $(mod_list_dnssec) $(mod_list_sctp))
+			   $(mod_list_dnssec) $(mod_list_sctp) \
+			   $(mod_list_autheph))
 
 
 
@@ -332,6 +336,9 @@ module_group_kdnssec=$(mod_list_dnssec)
 
 # pkg sctp module
 module_group_ksctp=$(mod_list_sctp)
+
+# pkg auth_ephemeral module
+module_group_kautheph=$(mod_list_autheph)
 
 # list of static modules
 #
