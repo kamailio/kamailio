@@ -39,6 +39,11 @@ Andrei Pelinescu-Onciul
               3.18. sctp_sack_freq (int)
               3.19. sctp_max_burst (int)
 
+        4. RPC Commands
+
+              4.1. sctp.info
+              4.2. sctp.options
+
    List of Examples
 
    1.1. Set sctp_socket_rcvbuf parameter
@@ -60,6 +65,8 @@ Andrei Pelinescu-Onciul
    1.17. Set sctp_sack_delay parameter
    1.18. Set sctp_sack_freq parameter
    1.19. Set sctp_max_burst parameter
+   1.20. Use sctp.info with kamcmd
+   1.21. Use sctp.options with kamcmd
 
 Chapter 1. Admin Guide
 
@@ -92,6 +99,11 @@ Chapter 1. Admin Guide
         3.17. sctp_sack_delay (int)
         3.18. sctp_sack_freq (int)
         3.19. sctp_max_burst (int)
+
+   4. RPC Commands
+
+        4.1. sctp.info
+        4.2. sctp.options
 
 1. Overview
 
@@ -463,4 +475,28 @@ modparam("sctp", "sctp_sack_freq", 3)
    Example 1.19. Set sctp_max_burst parameter
 ...
 modparam("sctp", "sctp_max_burst", 3)
+...
+
+4. RPC Commands
+
+   4.1. sctp.info
+   4.2. sctp.options
+
+4.1. sctp.info
+
+   Print information about SCTP transport.
+
+   Example 1.20. Use sctp.info with kamcmd
+...
+kamcmd sctp.info
+...
+
+4.2. sctp.options
+
+   Print the options of SCTP sockets. It can take an optional parameter
+   that specifies the listen address of SCTP socket.
+
+   Example 1.21. Use sctp.options with kamcmd
+...
+kamcmd sctp.options
 ...

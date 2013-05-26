@@ -585,5 +585,38 @@ modparam("sctp", "sctp_max_burst", 3)
 	</section>
 	</section>
 
+	<section>
+	<title>RPC Commands</title>
+	<section id="sctp.r.sctp.info">
+		<title><varname>sctp.info</varname></title>
+		<para>
+			Print information about SCTP transport.
+		</para>
+		<example>
+		<title>Use <varname>sctp.info</varname> with kamcmd</title>
+		<programlisting format="linespecific">
+...
+kamcmd sctp.info
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sctp.r.sctp.">
+		<title><varname>sctp.options</varname></title>
+		<para>
+			Print the options of SCTP sockets. It can take an optional
+			parameter that specifies the listen address of SCTP socket.
+		</para>
+		<example>
+		<title>Use <varname>sctp.options</varname> with kamcmd</title>
+		<programlisting format="linespecific">
+...
+kamcmd sctp.options
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
 </chapter>
 
