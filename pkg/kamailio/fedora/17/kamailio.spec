@@ -15,20 +15,20 @@ Source:		http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
 URL:		http://kamailio.org/
 Vendor:		kamailio.org
 BuildRoot:	%{_tmppath}/%{name}-%{ver}-buildroot
-Conflicts:	kamailio-auth-identity < %ver, kamailio-bdb < %ver
-Conflicts:	kamailio-cdp < %ver, kamailio-cpl < %ver
+Conflicts:	kamailio-auth-ephemeral < %ver, kamailio-auth-identity < %ver
+Conflicts:	kamailio-bdb < %ver, kamailio-cdp < %ver, kamailio-cdp < %ver
 Conflicts:	kamailio-dialplan < %ver, kamailio-ims < %ver
 Conflicts:	kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:	kamailio-mysql < %ver, kamailio-outbound < %ver
 Conflicts:	kamailio-perl < %ver, kamailio-postgresql < %ver
 Conflicts:	kamailio-presence < %ver, kamailio-purple < %ver
 Conflicts:	kamailio-python < %ver, kamailio-regex < %ver
-Conflicts:	kamailio-snmpstats < %ver, kamailio-sqlite < %ver
-Conflicts:	kamailio-stun < %ver, kamailio-tls < %ver
-Conflicts:	kamailio-unixODBC < %ver, kamailio-utils < %ver
-Conflicts:	kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
-Conflicts:	kamailio-xmlops < %ver, kamailio-xmlrpc < %ver
-Conflicts:	kamailio-xmpp < %ver
+Conflicts:	kamailio-sctp < %ver, kamailio-snmpstats < %ver
+Conflicts:	kamailio-sqlite < %ver, kamailio-stun < %ver
+Conflicts:	kamailio-tls < %ver, kamailio-unixODBC < %ver
+Conflicts:	kamailio-utils < %ver, kamailio-websocket < %ver
+Conflicts:	kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
+Conflicts:	kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 %if 0%{?fedora}
 Conflicts:	kamailio-carrierroute < %ver, kamailio-GeoIP < %ver
 Conflicts:	kamailio-json < %ver, kamailio-mono < %ver
@@ -50,6 +50,16 @@ such as MySQL, Postgres, Oracle, Radius, LDAP, Redis, Cassandra; XMLRPC control
 interface, SNMP monitoring. It can be used to build large VoIP servicing
 platforms or to scale up SIP-to-PSTN gateways, PBX systems or media servers
 like Asterisk™, FreeSWITCH™ or SEMS.
+
+
+%package	auth-ephemeral
+Summary:	Functions for authentication using ephemeral credentials.
+Group:		System Environment/Daemons
+Requires:	openssl, kamailio = %ver
+BuildRequires:	openssl-devel
+
+%description auth-ephemeral
+Functions for authentication using ephemeral credentials.
 
 
 %package	auth-identity
@@ -433,14 +443,14 @@ make every-module skip_modules="app_java db_cassandra db_oracle dnssec \
 	group_include="kstandard kmysql kpostgres kcpl kxml kradius kunixodbc \
 	kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson kredis \
-	kmono kims koutbound ksctp kstun"
+	kmono kims koutbound ksctp kstun kautheph"
 %else
 make every-module skip_modules="app_java db_cassandra db_oracle dnssec \
 	iptrtpproxy memcached mi_xmlrpc osp" \
 	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
 	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound ksctp kstun"
+	kims koutbound ksctp kstun kautheph"
 %endif
 make utils
 
@@ -456,7 +466,7 @@ make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
 	group_include="kstandard kmysql kpostgres kcpl kxml kradius kunixodbc \
 	kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson kredis \
-	kmono kims koutbound ksctp kstun"
+	kmono kims koutbound ksctp kstun kautheph"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -471,7 +481,7 @@ make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
 	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
 	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound ksctp kstun"
+	kims koutbound ksctp kstun kautheph"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -813,6 +823,12 @@ fi
 %{_datadir}/kamailio/dbtext/kamailio/*
 
 
+%files		auth-ephemeral
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.auth_ephemeral
+%{_libdir}/kamailio/modules/auth_ephemeral.so
+
+
 %files		auth-identity
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.auth_identity
@@ -1139,6 +1155,8 @@ fi
 
 
 %changelog
+* Mon May 27 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Created package for auth_ephemeral module
 * Sun May 26 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Created package for sctp module
   - Updated rel to dev6
