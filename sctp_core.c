@@ -65,6 +65,12 @@ int sctp_core_init_sock(struct socket_info* sock_info)
  */
 int sctp_core_check_support(void)
 {
+	if(_sctp_srapi_set==0) {
+		LM_INFO("SCTP API not enabled"
+				" - if you want to use it, load sctp module\n");
+		return -1;
+	}
+
 	return _sctp_srapi.check_support();
 }
 
