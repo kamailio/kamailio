@@ -155,9 +155,9 @@ static void core_sctpinfo(rpc_t* rpc, void* c)
  * RPC Methods exported by this module
  */
 static rpc_export_t scp_rpc_methods[] = {
-	{"core.sctp_options",      core_sctp_options,      core_sctp_options_doc,
+	{"sctp.options",      core_sctp_options,      core_sctp_options_doc,
 		0},
-	{"core.sctp_info",         core_sctpinfo,          core_sctpinfo_doc,   0},
+	{"sctp.info",         core_sctpinfo,          core_sctpinfo_doc,   0},
 
 	{0, 0, 0, 0}
 };
