@@ -1,3 +1,28 @@
+/*
+ * $Id$
+ *
+ * dmq module - distributed message queue
+ *
+ * Copyright (C) 2011 Bucur Marius - Ovidiu
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
 #include "../../ut.h"
 #include "dmqnode.h"
 #include "dmq.h"
@@ -12,7 +37,11 @@ str dmq_node_active_str = str_init("active");
 str dmq_node_disabled_str = str_init("disabled");
 str dmq_node_timeout_str = str_init("timeout");
 
-str* get_status_str(int status) {
+/**
+ * @brief get the string status of the node
+ */
+str* get_status_str(int status)
+{
 	switch(status) {
 		case DMQ_NODE_ACTIVE: {
 			return &dmq_node_active_str;
@@ -29,14 +58,27 @@ str* get_status_str(int status) {
 	}
 }
 
-dmq_node_list_t* init_dmq_node_list() {
-	dmq_node_list_t* node_list = shm_malloc(sizeof(dmq_node_list_t));
+/**
+ * @brief initialize dmg node list
+ */
+dmq_node_list_t* init_dmq_node_list()
+{
+	dmq_node_list_t* node_list;
+	node_list = shm_malloc(sizeof(dmq_node_list_t));
+	if(node_list==NULL) {
+		LM_ERR("no more shm\n");
+		return NULL;
+	}
 	memset(node_list, 0, sizeof(dmq_node_list_t));
 	lock_init(&node_list->lock);
 	return node_list;
 }
 
-int cmp_dmq_node(dmq_node_t* node, dmq_node_t* cmpnode) {
+/**
+ * @brief compare dmq node addresses
+ */
+int cmp_dmq_node(dmq_node_t* node, dmq_node_t* cmpnode)
+{
 	if(!node || !cmpnode) {
 		LM_ERR("cmp_dmq_node - null node received\n");
 		return -1;
@@ -45,7 +87,11 @@ int cmp_dmq_node(dmq_node_t* node, dmq_node_t* cmpnode) {
 	       STR_EQ(node->uri.port, cmpnode->uri.port);
 }
 
-str* get_param_value(param_t* params, str* param) {
+/**
+ * @brief get the value of a parameter
+ */
+str* get_param_value(param_t* params, str* param)
+{
 	while (params) {
 		if ((params->name.len == param->len) &&
 		    (strncmp(params->name.s, param->s, param->len) == 0)) {
@@ -56,7 +102,11 @@ str* get_param_value(param_t* params, str* param) {
 	return NULL;
 }
 
-int set_dmq_node_params(dmq_node_t* node, param_t* params) {
+/**
+ * @brief set the parameters for the node
+ */
+int set_dmq_node_params(dmq_node_t* node, param_t* params)
+{
 	str* status;
 	if(!params) {
 		LM_DBG("no parameters given\n");
@@ -80,26 +130,45 @@ error:
 	return -1;
 }
 
-int set_default_dmq_node_params(dmq_node_t* node) {
+/**
+ * @brief set default node params
+ */
+int set_default_dmq_node_params(dmq_node_t* node)
+{
 	node->status = DMQ_NODE_ACTIVE;
 	return 0;
 }
 
+/**
+ * @brief build a dmq node
+ */
 dmq_node_t* build_dmq_node(str* uri, int shm) {
-	dmq_node_t* ret;
+	dmq_node_t* ret = NULL;
 	param_hooks_t hooks;
 	param_t* params;
 	
 	LM_DBG("build_dmq_node %.*s with %s memory\n", STR_FMT(uri), shm?"shm":"private");
 	
 	if(shm) {
-		ret = shm_malloc(sizeof(*ret));
-		memset(ret, 0, sizeof(*ret));
-		shm_str_dup(&ret->orig_uri, uri);
+		ret = shm_malloc(sizeof(dmq_node_t));
+		if(ret==NULL) {
+			LM_ERR("no more shm\n");
+			goto error;
+		}
+		memset(ret, 0, sizeof(dmq_node_t));
+		if(shm_str_dup(&ret->orig_uri, uri)<0) {
+			goto error;
+		}
 	} else {
-		ret = pkg_malloc(sizeof(*ret));
-		memset(ret, 0, sizeof(*ret));
-		pkg_str_dup(&ret->orig_uri, uri);
+		ret = pkg_malloc(sizeof(dmq_node_t));
+		if(ret==NULL) {
+			LM_ERR("no more pkg\n");
+			goto error;
+		}
+		memset(ret, 0, sizeof(dmq_node_t));
+		if(pkg_str_dup(&ret->orig_uri, uri)<0) {
+			goto error;
+		}
 	}
 	set_default_dmq_node_params(ret);
 	if(parse_uri(ret->orig_uri.s, ret->orig_uri.len, &ret->uri) < 0) {
@@ -131,19 +200,39 @@ dmq_node_t* build_dmq_node(str* uri, int shm) {
 		LM_DBG("no dmqnode params found\n");		
 	}
 	return ret;
+
 error:
+	if(ret!=NULL) {
+		/* tbd: free uri and params */
+		if(shm) {
+			shm_free(ret);
+		} else {
+			pkg_free(ret);
+		}
+	}
 	return NULL;
 }
 
-dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri) {
+/**
+ * @brief find dmq node by uri
+ */
+dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri)
+{
 	dmq_node_t *ret, *find;
 	find =  build_dmq_node(uri, 0);
+	if(find==NULL)
+		return NULL;
 	ret = find_dmq_node(list, find);
 	destroy_dmq_node(find, 0);
 	return ret;
 }
 
-void destroy_dmq_node(dmq_node_t* node, int shm) {
+/**
+ * @brief destroy dmq node
+ */
+void destroy_dmq_node(dmq_node_t* node, int shm)
+{
+	/* tbd: check inner fields */
 	if(shm) {
 		shm_free_node(node);
 	} else {
@@ -151,7 +240,11 @@ void destroy_dmq_node(dmq_node_t* node, int shm) {
 	}
 }
 
-dmq_node_t* find_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
+/**
+ * @brief find dmq node
+ */
+dmq_node_t* find_dmq_node(dmq_node_list_t* list, dmq_node_t* node)
+{
 	dmq_node_t* cur = list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
@@ -162,32 +255,58 @@ dmq_node_t* find_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
 	return NULL;
 }
 
-dmq_node_t* shm_dup_node(dmq_node_t* node) {
-	dmq_node_t* newnode = shm_malloc(sizeof(dmq_node_t));
+/**
+ * @brief duplicate dmq node
+ */
+dmq_node_t* shm_dup_node(dmq_node_t* node)
+{
+	dmq_node_t* newnode;
+	newnode = shm_malloc(sizeof(dmq_node_t));
+	if(newnode==NULL) {
+		LM_ERR("no more shm\n");
+		return NULL;
+	}
 	memcpy(newnode, node, sizeof(dmq_node_t));
-	shm_str_dup(&newnode->orig_uri, &node->orig_uri);
-	if(parse_uri(newnode->orig_uri.s, newnode->orig_uri.len, &newnode->uri) < 0) {
+	newnode->orig_uri.s = NULL;
+	if(shm_str_dup(&newnode->orig_uri, &node->orig_uri)<0) {
+		goto error;
+	}
+	if(parse_uri(newnode->orig_uri.s, newnode->orig_uri.len,
+				&newnode->uri) < 0) {
 		LM_ERR("error in parsing node uri\n");
 		goto error;
 	}
 	return newnode;
 error:
-	shm_free(newnode->orig_uri.s);
+	if(newnode->orig_uri.s!=NULL)
+		shm_free(newnode->orig_uri.s);
 	shm_free(newnode);
 	return NULL;
 }
 
-void shm_free_node(dmq_node_t* node) {
+/**
+ * @brief free shm dmq node
+ */
+void shm_free_node(dmq_node_t* node)
+{
 	shm_free(node->orig_uri.s);
 	shm_free(node);
 }
 
-void pkg_free_node(dmq_node_t* node) {
+/**
+ * @brief free pkg dmq node
+ */
+void pkg_free_node(dmq_node_t* node)
+{
 	pkg_free(node->orig_uri.s);
 	pkg_free(node);
 }
 
-int del_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
+/**
+ * @brief delete dmq node
+ */
+int del_dmq_node(dmq_node_list_t* list, dmq_node_t* node)
+{
 	dmq_node_t *cur, **prev;
 	lock_get(&list->lock);
 	cur = list->nodes;
@@ -206,8 +325,14 @@ int del_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
 	return 0;
 }
 
-dmq_node_t* add_dmq_node(dmq_node_list_t* list, str* uri) {
-	dmq_node_t* newnode = build_dmq_node(uri, 1);
+/**
+ * @brief add dmq node
+ */
+dmq_node_t* add_dmq_node(dmq_node_list_t* list, str* uri)
+{
+	dmq_node_t* newnode;
+	
+	newnode = build_dmq_node(uri, 1);
 	if(!newnode) {
 		LM_ERR("error creating node\n");
 		goto error;
@@ -223,6 +348,9 @@ error:
 	return NULL;
 }
 
+/**
+ * @brief build dmq node string
+ */
 int build_node_str(dmq_node_t* node, char* buf, int buflen) {
 	/* sip:host:port;status=[status] */
 	int len = 0;
@@ -242,7 +370,8 @@ int build_node_str(dmq_node_t* node, char* buf, int buflen) {
 	len += 1;
 	memcpy(buf + len, "status=", 7);
 	len += 7;
-	memcpy(buf + len, get_status_str(node->status)->s, get_status_str(node->status)->len);
+	memcpy(buf + len, get_status_str(node->status)->s,
+			get_status_str(node->status)->len);
 	len += get_status_str(node->status)->len;
 	return len;
 }

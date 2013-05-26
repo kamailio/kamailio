@@ -1,6 +1,32 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../sip_msg_clone.h"
+/*
+ * $Id$
+ *
+ * dmq module - distributed message queue
+ *
+ * Copyright (C) 2011 Bucur Marius - Ovidiu
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
@@ -14,7 +40,11 @@ str dmq_400_rpl  = str_init("Bad request");
 str dmq_500_rpl  = str_init("Server Internal Error");
 str dmq_404_rpl  = str_init("User Not Found");
 
-int dmq_handle_message(struct sip_msg* msg, char* str1, char* str2) {
+/**
+ * @brief config function to handle dmq messages
+ */
+int dmq_handle_message(struct sip_msg* msg, char* str1, char* str2)
+{
 	dmq_peer_t* peer;
 	struct sip_msg* cloned_msg = NULL;
 	int cloned_msg_len;
@@ -43,7 +73,10 @@ int dmq_handle_message(struct sip_msg* msg, char* str1, char* str2) {
 		LM_ERR("error cloning sip message\n");
 		goto error;
 	}
-	add_dmq_job(cloned_msg, peer);
+	if(add_dmq_job(cloned_msg, peer)<0) {
+		LM_ERR("failed to add dmq job\n");
+		goto error;
+	}
 	return 0;
 error:
 	return -1;
