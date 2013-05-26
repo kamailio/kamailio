@@ -1,10 +1,37 @@
+/*
+ * $Id$
+ *
+ * dmq module - distributed message queue
+ *
+ * Copyright (C) 2011 Bucur Marius - Ovidiu
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
 #include "dmq.h"
 #include "peer.h"
 #include "worker.h"
 #include "../../data_lump_rpl.h"
 #include "../../mod_fix.h"
 
-/* set the body of a response */
+/**
+ * @brief set the body of a response
+ */
 static int set_reply_body(struct sip_msg* msg, str* body, str* content_type)
 {
 	char* buf;
@@ -41,16 +68,23 @@ static int set_reply_body(struct sip_msg* msg, str* body, str* content_type)
 	return 1;
 }
 
-void worker_loop(int id) {
-	dmq_worker_t* worker = &workers[id];
+/**
+ * @brief dmq worker loop
+ */
+void worker_loop(int id)
+{
+	dmq_worker_t* worker;
 	dmq_job_t* current_job;
 	peer_reponse_t peer_response;
 	int ret_value;
+
+	worker = &workers[id];
 	for(;;) {
 		LM_DBG("dmq_worker [%d %d] getting lock\n", id, my_pid());
 		lock_get(&worker->lock);
 		LM_DBG("dmq_worker [%d %d] lock acquired\n", id, my_pid());
-		/* multiple lock_release calls might be performed, so remove from queue until empty */
+		/* multiple lock_release calls might be performed, so remove
+		 * from queue until empty */
 		do {
 			/* fill the response with 0's */
 			memset(&peer_response, 0, sizeof(peer_response));
@@ -64,13 +98,15 @@ void worker_loop(int id) {
 				}
 				/* add the body to the reply */
 				if(peer_response.body.s) {
-					if(set_reply_body(current_job->msg, &peer_response.body, &peer_response.content_type) < 0) {
+					if(set_reply_body(current_job->msg, &peer_response.body,
+								&peer_response.content_type) < 0) {
 						LM_ERR("error adding lumps\n");
 						continue;
 					}
 				}
 				/* send the reply */
-				if(slb.freply(current_job->msg, peer_response.resp_code, &peer_response.reason) < 0)
+				if(slb.freply(current_job->msg, peer_response.resp_code,
+							&peer_response.reason) < 0)
 				{
 					LM_ERR("error sending reply\n");
 				}
@@ -89,10 +125,17 @@ void worker_loop(int id) {
 	}
 }
 
-int add_dmq_job(struct sip_msg* msg, dmq_peer_t* peer) {
+/**
+ * @brief add a dmq job
+ */
+int add_dmq_job(struct sip_msg* msg, dmq_peer_t* peer)
+{
 	int i, found_available = 0;
+	int ret;
 	dmq_job_t new_job = { 0 };
 	dmq_worker_t* worker;
+
+	ret = 0;
 	new_job.f = peer->callback;
 	new_job.msg = msg;
 	new_job.orig_peer = peer;
@@ -102,26 +145,33 @@ int add_dmq_job(struct sip_msg* msg, dmq_peer_t* peer) {
 	}
 	/* initialize the worker with the first one */
 	worker = workers;
-	/* search for an available worker, or, if not possible, for the least busy one */
+	/* search for an available worker, or, if not possible,
+	 * for the least busy one */
 	for(i = 0; i < num_workers; i++) {
 		if(job_queue_size(workers[i].queue) == 0) {
 			worker = &workers[i];
 			found_available = 1;
 			break;
-		} else if(job_queue_size(workers[i].queue) < job_queue_size(worker->queue)) {
+		} else if(job_queue_size(workers[i].queue)
+				< job_queue_size(worker->queue)) {
 			worker = &workers[i];
 		}
 	}
 	if(!found_available) {
-		LM_DBG("no available worker found, passing job to the least busy one [%d %d]\n",
-		       worker->pid, job_queue_size(worker->queue));
+		LM_DBG("no available worker found, passing job"
+				" to the least busy one [%d %d]\n",
+				worker->pid, job_queue_size(worker->queue));
 	}
-	job_queue_push(worker->queue, &new_job);
+	ret = job_queue_push(worker->queue, &new_job);
 	lock_release(&worker->lock);
-	return 0;
+	return ret;
 }
 
-void init_worker(dmq_worker_t* worker) {
+/**
+ * @brief init dmq worker
+ */
+void init_worker(dmq_worker_t* worker)
+{
 	memset(worker, 0, sizeof(*worker));
 	lock_init(&worker->lock);
 	// acquire the lock for the first time - so that dmq_worker_loop blocks
@@ -129,26 +179,55 @@ void init_worker(dmq_worker_t* worker) {
 	worker->queue = alloc_job_queue();
 }
 
-job_queue_t* alloc_job_queue() {
-	job_queue_t* queue = shm_malloc(sizeof(job_queue_t));
+/**
+ * @brief allog dmq job queue
+ */
+job_queue_t* alloc_job_queue()
+{
+	job_queue_t* queue;
+	
+	queue = shm_malloc(sizeof(job_queue_t));
+	if(queue==NULL) {
+		LM_ERR("no more shm\n");
+		return NULL;
+	}
+	memset(queue, 0, sizeof(job_queue_t));
 	atomic_set(&queue->count, 0);
-	queue->front = NULL;
-	queue->back = NULL;
 	lock_init(&queue->lock);
 	return queue;
 }
 
-void destroy_job_queue(job_queue_t* queue) {
-	shm_free(queue);
+/**
+ * @ brief destroy job queue
+ */
+void destroy_job_queue(job_queue_t* queue)
+{
+	if(queue!=NULL)
+		shm_free(queue);
 }
 
-int job_queue_size(job_queue_t* queue) {
+/**
+ * @brief return job queue size
+ */
+int job_queue_size(job_queue_t* queue)
+{
 	return atomic_get(&queue->count);
 }
 
-void job_queue_push(job_queue_t* queue, dmq_job_t* job) {
+/**
+ * @brief push to job queue
+ */
+int job_queue_push(job_queue_t* queue, dmq_job_t* job)
+{
 	/* we need to copy the dmq_job into a newly created dmq_job in shm */
-	dmq_job_t* newjob = shm_malloc(sizeof(dmq_job_t));
+	dmq_job_t* newjob;
+	
+	newjob = shm_malloc(sizeof(dmq_job_t));
+	if(newjob==NULL) {
+		LM_ERR("no more shm\n");
+		return -1;
+	}
+
 	*newjob = *job;
 	
 	lock_get(&queue->lock);
@@ -163,8 +242,14 @@ void job_queue_push(job_queue_t* queue, dmq_job_t* job) {
 	}
 	atomic_inc(&queue->count);
 	lock_release(&queue->lock);
+	return 0;
 }
-dmq_job_t* job_queue_pop(job_queue_t* queue) {
+
+/**
+ * @brief pop from job queue
+ */
+dmq_job_t* job_queue_pop(job_queue_t* queue)
+{
 	dmq_job_t* front;
 	lock_get(&queue->lock);
 	if(!queue->front) {

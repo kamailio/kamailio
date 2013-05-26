@@ -21,10 +21,8 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * History:
- * --------
- *  2010-03-29  initial version (mariusbucur)
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -135,7 +133,8 @@ struct module_exports exports = {
 /**
  * init module function
  */
-static int mod_init(void) {
+static int mod_init(void)
+{
 	
 	if(register_mi_mod(exports.name, mi_cmds)!=0) {
 		LM_ERR("failed to register MI commands\n");
@@ -153,12 +152,20 @@ static int mod_init(void) {
 		LM_ERR("can't load tm functions. TM module probably not loaded\n");
 		return -1;
 	}
+
 	/* load peer list - the list containing the module callbacks for dmq */
-	
 	peer_list = init_peer_list();
+	if(peer_list==NULL) {
+		LM_ERR("cannot initialize peer list\n");
+		return -1;
+	}
 	
 	/* load the dmq node list - the list containing the dmq servers */
 	node_list = init_dmq_node_list();
+	if(node_list==NULL) {
+		LM_ERR("cannot initialize node list\n");
+		return -1;
+	}
 	
 	/* register worker processes - add one because of the ping process */
 	register_procs(num_workers);
@@ -169,7 +176,8 @@ static int mod_init(void) {
 		return -1;
 	}
 	
-	if(parse_server_address(&dmq_notification_address, &dmq_notification_uri) < 0) {
+	if(parse_server_address(&dmq_notification_address,
+				&dmq_notification_uri) < 0) {
 		LM_ERR("notification address invalid\n");
 		return -1;
 	}
@@ -182,10 +190,13 @@ static int mod_init(void) {
 	}
 	
 	/**
-         * add the dmq notification peer.
+	 * add the dmq notification peer.
 	 * the dmq is a peer itself so that it can receive node notifications
 	 */
-	add_notification_peer();
+	if(add_notification_peer()<0) {
+		LM_ERR("cannot add notification peer\n");
+		return -1;
+	}
 	
 	startup_time = (int) time(NULL);
 	
@@ -196,7 +207,10 @@ static int mod_init(void) {
 	if(ping_interval < MIN_PING_INTERVAL) {
 		ping_interval = MIN_PING_INTERVAL;
 	}
-	register_timer(ping_servers, 0, ping_interval);
+	if(register_timer(ping_servers, 0, ping_interval)<0) {
+		LM_ERR("cannot register timer callback\n");
+		return -1;
+	}
 	
 	return 0;
 }
@@ -204,7 +218,8 @@ static int mod_init(void) {
 /**
  * initialize children
  */
-static int child_init(int rank) {
+static int child_init(int rank)
+{
   	int i, newpid;
 	if (rank == PROC_MAIN) {
 		/* fork worker processes */
@@ -216,7 +231,7 @@ static int child_init(int rank) {
 				LM_ERR("failed to form process\n");
 				return -1;
 			} else if(newpid == 0) {
-				// child - this will loop forever
+				/* child - this will loop forever */
 				worker_loop(i);
 			} else {
 				workers[i].pid = newpid;
@@ -259,15 +274,18 @@ static void destroy(void) {
 	}
 }
 
-static int handle_dmq_fixup(void** param, int param_no) {
+static int handle_dmq_fixup(void** param, int param_no)
+{
  	return 0;
 }
 
-static int send_dmq_fixup(void** param, int param_no) {
+static int send_dmq_fixup(void** param, int param_no)
+{
 	return fixup_spve_null(param, 1);
 }
 
-static int parse_server_address(str* uri, struct sip_uri* parsed_uri) {
+static int parse_server_address(str* uri, struct sip_uri* parsed_uri)
+{
 	if(!uri->s) {
 		goto empty;
 	}

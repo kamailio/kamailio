@@ -1,7 +1,35 @@
+/*
+ * $Id$
+ *
+ * dmq module - distributed message queue
+ *
+ * Copyright (C) 2011 Bucur Marius - Ovidiu
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include "dmq_funcs.h"
 #include "notification_peer.h"
 
-dmq_peer_t* register_dmq_peer(dmq_peer_t* peer) {
+/**
+ * @brief register a DMQ peer
+ */
+dmq_peer_t* register_dmq_peer(dmq_peer_t* peer)
+{
 	dmq_peer_t* new_peer;
 	lock_get(&peer_list->lock);
 	if(search_peer_list(peer_list, peer)) {
@@ -15,8 +43,18 @@ dmq_peer_t* register_dmq_peer(dmq_peer_t* peer) {
 	return new_peer;
 }
 
-void dmq_tm_callback(struct cell *t, int type, struct tmcb_params *ps) {
-	dmq_cback_param_t* cb_param = (dmq_cback_param_t*)(*ps->param);
+/**
+ * @brief dmq tm callback
+ */
+void dmq_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
+{
+	dmq_cback_param_t* cb_param;
+	
+	cb_param = (dmq_cback_param_t*)(*ps->param);
+
+	if(cb_param==NULL)
+		return;
+
 	LM_DBG("dmq_tm_callback start\n");
 	if(cb_param->resp_cback.f) {
 		if(cb_param->resp_cback.f(ps->rpl, ps->code, cb_param->node, cb_param->resp_cback.param) < 0) {
@@ -26,11 +64,15 @@ void dmq_tm_callback(struct cell *t, int type, struct tmcb_params *ps) {
 	LM_DBG("dmq_tm_callback done\n");
 	shm_free_node(cb_param->node);
 	shm_free(cb_param);
+	*ps->param = NULL;
 }
 
-int build_uri_str(str* username, struct sip_uri* uri, str* from) {
+int build_uri_str(str* username, struct sip_uri* uri, str* from)
+{
 	/* sip:user@host:port */
-	int from_len = username->len + uri->host.len + uri->port.len + 10;
+	int from_len;
+	
+	from_len = username->len + uri->host.len + uri->port.len + 10;
 	if(!uri->host.s || !uri->host.len) {
 		LM_ERR("no host in uri\n");
 		return -1;
@@ -40,6 +82,10 @@ int build_uri_str(str* username, struct sip_uri* uri, str* from) {
 		return -1;
 	}
 	from->s = pkg_malloc(from_len);
+	if(from->s==NULL) {
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
 	from->len = 0;
 	
 	memcpy(from->s, "sip:", 4);
@@ -63,13 +109,17 @@ int build_uri_str(str* username, struct sip_uri* uri, str* from) {
 	return 0;
 }
 
-/* broadcast a dmq message
+/**
+ * @brief broadcast a dmq message
+ *
  * peer - the peer structure on behalf of which we are sending
  * body - the body of the message
  * except - we do not send the message to this node
  * resp_cback - a response callback that gets called when the transaction is complete
  */
-int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_cback_t* resp_cback, int max_forwards) {
+int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
+		dmq_resp_cback_t* resp_cback, int max_forwards)
+{
 	dmq_node_t* node;
 	
 	lock_get(&node_list->lock);
@@ -80,7 +130,8 @@ int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_
 		 *   - itself
 		 *   - any inactive nodes
 		 */
-		if((except && cmp_dmq_node(node, except)) || node->local || node->status != DMQ_NODE_ACTIVE) {
+		if((except && cmp_dmq_node(node, except)) || node->local
+				|| node->status != DMQ_NODE_ACTIVE) {
 			LM_DBG("skipping node %.*s\n", STR_FMT(&node->orig_uri));
 			node = node->next;
 			continue;
@@ -98,13 +149,17 @@ error:
 	return -1;
 }
 
-/* send a dmq message
+/**
+ * @brief send a dmq message
+ *
  * peer - the peer structure on behalf of which we are sending
  * body - the body of the message
  * node - we send the message to this node
  * resp_cback - a response callback that gets called when the transaction is complete
  */
-int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback, int max_forwards) {
+int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
+		dmq_resp_cback_t* resp_cback, int max_forwards)
+{
 	uac_req_t uac_r;
 	str str_hdr = {0, 0};
 	str from, to, req_uri;
@@ -113,8 +168,12 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cba
 	int len = 0;
 	
 	/* Max-Forwards */
-	str_hdr.len = 18 + CRLF_LEN;
+	str_hdr.len = 20 + CRLF_LEN;
 	str_hdr.s = pkg_malloc(str_hdr.len);
+	if(str_hdr.s==NULL) {
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
 	len += sprintf(str_hdr.s, "Max-Forwards: %d%s", max_forwards, CRLF);
 	str_hdr.len = len;
 	
@@ -124,7 +183,8 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cba
 	cb_param->node = shm_dup_node(node);
 	
 	if(build_uri_str(&peer->peer_id, &dmq_server_uri, &from) < 0) {
-		LM_ERR("error building from string [username %.*s]\n", STR_FMT(&peer->peer_id));
+		LM_ERR("error building from string [username %.*s]\n",
+				STR_FMT(&peer->peer_id));
 		goto error;
 	}
 	if(build_uri_str(&peer->peer_id, &node->uri, &to) < 0) {
@@ -133,8 +193,8 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cba
 	}
 	req_uri = to;
 	
-	set_uac_req(&uac_r, &dmq_request_method, &str_hdr, body, NULL, TMCB_LOCAL_COMPLETED,
-			dmq_tm_callback, (void*)cb_param);
+	set_uac_req(&uac_r, &dmq_request_method, &str_hdr, body, NULL,
+			TMCB_LOCAL_COMPLETED, dmq_tm_callback, (void*)cb_param);
 	result = tmb.t_request(&uac_r, &req_uri,
 			       &to, &from,
 			       NULL);
@@ -149,13 +209,28 @@ error:
 	return -1;
 }
 
-int cfg_dmq_send_message(struct sip_msg* msg, char* peer, char* to, char* body) {
+/**
+ * @brief config file function for sending dmq message
+ */
+int cfg_dmq_send_message(struct sip_msg* msg, char* peer, char* to, char* body)
+{
 	str peer_str;
-	get_str_fparam(&peer_str, msg, (fparam_t*)peer);
 	str to_str;
-	get_str_fparam(&to_str, msg, (fparam_t*)to);
 	str body_str;
-	get_str_fparam(&body_str, msg, (fparam_t*)body);
+	
+	if(get_str_fparam(&peer_str, msg, (fparam_t*)peer)<0) {
+		LM_ERR("cannot get peer value\n");
+		return -1;
+	}
+	if(get_str_fparam(&to_str, msg, (fparam_t*)to)<0) {
+		LM_ERR("cannot get dst value\n");
+		return -1;
+	}
+	if(get_str_fparam(&body_str, msg, (fparam_t*)body)<0) {
+		LM_ERR("cannot get body value\n");
+		return -1;
+	}
+	
 	LM_INFO("cfg_dmq_send_message: %.*s - %.*s - %.*s\n",
 		peer_str.len, peer_str.s,
 		to_str.len, to_str.s,
@@ -180,27 +255,32 @@ int cfg_dmq_send_message(struct sip_msg* msg, char* peer, char* to, char* body) 
 		LM_ERR("cannot find dmq_node: %.*s\n", to_str.len, to_str.s);
 		goto error;
 	}
-	if(dmq_send_message(destination_peer, &body_str, to_dmq_node, &notification_callback, 1) < 0) {
+	if(dmq_send_message(destination_peer, &body_str, to_dmq_node,
+				&notification_callback, 1) < 0) {
 		LM_ERR("cannot send dmq message\n");
 		goto error;
 	}
-	return 0;
+	return 1;
 error:
 	return -1;
 }
 
-/* pings the servers in the nodelist
+/**
+ * @brief pings the servers in the nodelist
+ *
  * if the server does not reply to the ping, it is removed from the list
  * the ping messages are actualy notification requests
  * this way the ping will have two uses:
  *   - checks if the servers in the list are up and running
  *   - updates the list of servers from the other nodes
  */
-void ping_servers(unsigned int ticks,void *param) {
-	str* body = build_notification_body();
+void ping_servers(unsigned int ticks, void *param) {
+	str* body;
 	int ret;
 	LM_DBG("ping_servers\n");
-	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node, &notification_callback, 1);
+	body = build_notification_body();
+	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node,
+			&notification_callback, 1);
 	pkg_free(body->s);
 	pkg_free(body);
 	if(ret < 0) {
