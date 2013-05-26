@@ -1,6 +1,6 @@
 %define name	kamailio
 %define ver	4.1.0
-%define rel	dev5%{dist}
+%define rel	dev6%{dist}
 
 
 
@@ -34,8 +34,7 @@ Conflicts:	kamailio-carrierroute < %ver, kamailio-GeoIP < %ver
 Conflicts:	kamailio-json < %ver, kamailio-mono < %ver
 Conflicts: 	kamailio-radius < %ver, kamailio-redis < %ver
 %endif
-Requires:	lksctp-tools
-BuildRequires:	bison, flex, gcc, make, redhat-rpm-config, lksctp-tools-devel
+BuildRequires:	bison, flex, gcc, make, redhat-rpm-config
 %if 0%{?fedora}
 BuildRequires:	docbook2X
 %endif
@@ -231,6 +230,16 @@ BuildRequires:	pcre-devel
 PCRE mtaching operations for Kamailio.
 
 
+%package	sctp
+Summary:	SCTP transport for Kamailio.
+Group:		System Environment/Daemons
+Requires:	lksctp-tools, kamailio = %ver
+BuildRequires:	lksctp-tools-devel
+
+%description	sctp
+SCTP transport for Kamailio.
+
+
 %package	snmpstats
 Summary:	SNMP management interface (scalar statistics) for Kamailio.
 Group:		System Environment/Daemons
@@ -416,7 +425,7 @@ REDIS NoSQL database connector for Kamailio.
 
 %build
 make cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT \
-	cfg_target=/%{_sysconfdir}/kamailio/ modules_dirs="modules" SCTP=1
+	cfg_target=/%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
 %if 0%{?fedora}
 make every-module skip_modules="app_java db_cassandra db_oracle dnssec \
@@ -424,14 +433,14 @@ make every-module skip_modules="app_java db_cassandra db_oracle dnssec \
 	group_include="kstandard kmysql kpostgres kcpl kxml kradius kunixodbc \
 	kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson kredis \
-	kmono kims koutbound kstun"
+	kmono kims koutbound ksctp kstun"
 %else
 make every-module skip_modules="app_java db_cassandra db_oracle dnssec \
 	iptrtpproxy memcached mi_xmlrpc osp" \
 	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
 	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound kstun"
+	kims koutbound ksctp kstun"
 %endif
 make utils
 
@@ -447,7 +456,7 @@ make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
 	group_include="kstandard kmysql kpostgres kcpl kxml kradius kunixodbc \
 	kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson kredis \
-	kmono kims koutbound kstun"
+	kmono kims koutbound ksctp kstun"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -462,7 +471,7 @@ make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
 	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
 	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound kstun"
+	kims koutbound ksctp kstun"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -1004,6 +1013,12 @@ fi
 %{_libdir}/kamailio/modules/regex.so
 
 
+%files		sctp
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.sctp
+%{_libdir}/kamailio/modules/sctp.so
+
+
 %files		snmpstats
 %defattr(-,root,root)
 %{_docdir}/kamailio/modules/README.snmpstats
@@ -1124,6 +1139,9 @@ fi
 
 
 %changelog
+* Sun May 26 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Created package for sctp module
+  - Updated rel to dev6
 * Sat May 18 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Refactored .spec
   - Put tls module back in its own .spec (OpenSSL no longer needed by core as
