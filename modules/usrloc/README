@@ -87,6 +87,8 @@ Bogdan-Andrei Iancu
               6.4. ul.rm_contact table AOR contact
               6.5. ul.flush
               6.6. ul.add
+              6.7. ul.users
+              6.8. ul.contacts
 
         7. Statistics
 
@@ -221,6 +223,8 @@ Chapter 1. Admin Guide
         6.4. ul.rm_contact table AOR contact
         6.5. ul.flush
         6.6. ul.add
+        6.7. ul.users
+        6.8. ul.contacts
 
    7. Statistics
 
@@ -836,6 +840,8 @@ modparam("usrloc", "db_ops_ruid", 1)
    6.4. ul.rm_contact table AOR contact
    6.5. ul.flush
    6.6. ul.add
+   6.7. ul.users
+   6.8. ul.contacts
 
 6.1.  ul.dump
 
@@ -891,6 +897,22 @@ modparam("usrloc", "db_ops_ruid", 1)
      * flags - internal USRLOC flags of the contact
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
+
+6.7.  ul.users
+
+   Tell number of different users (AoRs) in a location table.
+
+   Parameters:
+     * table name - location table where the users are looked for, for
+       example, location.
+
+6.8.  ul.contacts
+
+   Tell number of contacts in a location table.
+
+   Parameters:
+     * table name - location table where the contacts are looked for, for
+       example, location.
 
 7. Statistics
 

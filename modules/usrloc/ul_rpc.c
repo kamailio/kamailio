@@ -637,6 +637,115 @@ static const char* ul_rpc_add_doc[2] = {
 	0
 };
 
+#define QUERY_LEN 256
+
+static void ul_rpc_users(rpc_t* rpc, void* ctx)
+{
+    str table = {0, 0};
+    char query[QUERY_LEN];
+    str query_str;
+    db1_res_t* res;
+    int count;
+
+    if (db_mode == NO_DB) {
+	rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
+	return;
+    }
+
+    if (rpc->scan(ctx, "S", &table) != 1) {
+	rpc->fault(ctx, 500, "Not enough parameters (table to lookup)");
+	return;
+    }
+
+    if (user_col.len + domain_col.len + table.len + 32 > QUERY_LEN) {
+	rpc->fault(ctx, 500, "Too long database query");
+	return;
+    }
+
+    if (!DB_CAPABILITY(ul_dbf, DB_CAP_RAW_QUERY)) {
+	rpc->fault(ctx, 500, "Database does not support raw queries");
+	return;
+    }
+    if (ul_dbf.use_table(ul_dbh, &table) < 0) {
+	rpc->fault(ctx, 500, "Failed to use table");
+	return;
+    }
+	
+    memset(query, 0, QUERY_LEN);
+    query_str.len = snprintf(query, QUERY_LEN,
+			     "SELECT COUNT(DISTINCT %.*s, %.*s) FROM %.*s",
+			     user_col.len, user_col.s,
+			     domain_col.len, domain_col.s,
+			     table.len, table.s);
+    query_str.s = query;
+    if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0) {
+	rpc->fault(ctx, 500, "Failed to query AoR count");
+	return;
+    }
+
+    count = (int)VAL_INT(ROW_VALUES(RES_ROWS(res)));
+    ul_dbf.free_result(ul_dbh, res);
+
+    rpc->add(ctx, "d", count);
+}
+
+static const char* ul_rpc_users_doc[2] = {
+	"Tell number of different users (AoRs) in database table (db_mode!=0 only)",
+	0
+};
+
+static void ul_rpc_contacts(rpc_t* rpc, void* ctx)
+{
+    str table = {0, 0};
+    char query[QUERY_LEN];
+    str query_str;
+    db1_res_t* res;
+    int count;
+
+    if (db_mode == NO_DB) {
+	rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
+	return;
+    }
+
+    if (rpc->scan(ctx, "S", &table) != 1) {
+	rpc->fault(ctx, 500, "Not enough parameters (table to lookup)");
+	return;
+    }
+
+    if (table.len + 22 > QUERY_LEN) {
+	rpc->fault(ctx, 500, "Too long database query");
+	return;
+    }
+
+    if (!DB_CAPABILITY(ul_dbf, DB_CAP_RAW_QUERY)) {
+	rpc->fault(ctx, 500, "Database does not support raw queries");
+	return;
+    }
+    if (ul_dbf.use_table(ul_dbh, &table) < 0) {
+	rpc->fault(ctx, 500, "Failed to use table");
+	return;
+    }
+	
+    memset(query, 0, QUERY_LEN);
+    query_str.len = snprintf(query, QUERY_LEN, "SELECT COUNT(*) FROM %.*s",
+			     table.len, table.s);
+    query_str.s = query;
+    if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0) {
+	rpc->fault(ctx, 500, "Failed to query contact count");
+	return;
+    }
+
+    count = (int)VAL_INT(ROW_VALUES(RES_ROWS(res)));
+    ul_dbf.free_result(ul_dbh, res);
+
+    rpc->add(ctx, "d", count);
+}
+
+static const char* ul_rpc_contacts_doc[2] = {
+	"Tell number of contacts in database table (db_mode=3 only)",
+	0
+};
+
 rpc_export_t ul_rpc[] = {
 	{"ul.dump",   ul_rpc_dump,   ul_rpc_dump_doc,   0},
 	{"ul.lookup",   ul_rpc_lookup,   ul_rpc_lookup_doc,   0},
@@ -644,6 +753,8 @@ rpc_export_t ul_rpc[] = {
 	{"ul.rm_contact", ul_rpc_rm_contact, ul_rpc_rm_contact_doc, 0},
 	{"ul.flush", ul_rpc_flush, ul_rpc_flush_doc, 0},
 	{"ul.add", ul_rpc_add, ul_rpc_add_doc, 0},
+	{"ul.users", ul_rpc_users, ul_rpc_users_doc, 0},
+	{"ul.contacts", ul_rpc_contacts, ul_rpc_contacts_doc, 0},
 	{0, 0, 0, 0}
 };
 

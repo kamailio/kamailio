@@ -1157,6 +1157,37 @@ modparam("usrloc", "db_ops_ruid", 1)
 			</para></listitem>
 		</itemizedlist>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul.users</function>
+		</title>
+		<para>
+		Tell number of different users (AoRs) in a location table.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - location table where the users are looked for, for example, location.
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul.contacts</function>
+		</title>
+		<para>
+		Tell number of contacts in a location table.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - location table where the contacts are looked for, for example, location.
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
 	</section><!-- RPC commands -->
 
 
