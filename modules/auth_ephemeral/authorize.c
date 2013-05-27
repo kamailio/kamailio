@@ -21,6 +21,7 @@
  *
  */
 #include <openssl/hmac.h>
+#include <openssl/sha.h>
 
 #include "../../basex.h"
 #include "../../dprint.h"
@@ -33,10 +34,6 @@
 
 #include "autheph_mod.h"
 #include "authorize.h"
-
-#if !defined(SHA_DIGEST_LENGTH)
-#define SHA_DIGEST_LENGTH (20)
-#endif
 
 static inline int get_ha1(struct username* _username, str* _domain,
 				str* _secret, char* _ha1)
