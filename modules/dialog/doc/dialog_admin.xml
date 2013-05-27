@@ -311,6 +311,15 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 		elements (as in RFC 3261).
 		</para>
 		<para>
+		Note: DID-based matching does not replace callid/fromtag/totag comparison. It will speed
+		up dialog matching by not iterating over the whole dialog list for callid/fromtag/totag comparison, but
+		instead it uses a hash table to find the respective dialog and then doing only one callid/fromtag/totag 
+		comparison. Thus, there is no security 
+		issue when using DID based matching. Use DID_FALLBACK for maximum interoperability or use DID_ONLY to
+		reject buggy clients or hacking attempts. DID_NONE is only useful, when you want to hide dialog-tracking
+		from the users (preventing the DID Record-Route cookie).
+		</para>
+		<para>
 		The supported modes are:
 		</para>
 		<itemizedlist>
