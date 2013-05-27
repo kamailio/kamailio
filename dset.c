@@ -461,9 +461,11 @@ char* print_dset(struct sip_msg* msg, int* len)
 
 	if (msg->new_uri.s) {
 		cnt = 1;
-		*len = msg->new_uri.len;
+		*len = msg->new_uri.len + 1 /*'<'*/;
 		if (ruri_q != Q_UNSPECIFIED) {
-			*len += 1 + Q_PARAM_LEN + len_q(ruri_q);
+			*len += Q_PARAM_LEN + len_q(ruri_q);
+		} else {
+			*len += 1 /*'>'*/;
 		}
 	} else {
 		cnt = 0;
@@ -476,9 +478,11 @@ char* print_dset(struct sip_msg* msg, int* len)
 	init_branch_iterator();
 	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0))) {
 		cnt++;
-		*len += uri.len;
+		*len += uri.len + 1 /*'<'*/;
 		if (q != Q_UNSPECIFIED) {
-			*len += 1 + Q_PARAM_LEN + len_q(q);
+			*len += Q_PARAM_LEN + len_q(q);
+		} else {
+			*len += 1 /*'>'*/;
 		}
 	}
 
@@ -494,9 +498,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	memcpy(dset, CONTACT, CONTACT_LEN);
 	p = dset + CONTACT_LEN;
 	if (msg->new_uri.s) {
-		if (ruri_q != Q_UNSPECIFIED) {
-			*p++ = '<';
-		}
+		*p++ = '<';
 
 		memcpy(p, msg->new_uri.s, msg->new_uri.len);
 		p += msg->new_uri.len;
@@ -508,6 +510,8 @@ char* print_dset(struct sip_msg* msg, int* len)
 			qbuf = q2str(ruri_q, &qlen);
 			memcpy(p, qbuf, qlen);
 			p += qlen;
+		} else {
+			*p++ = '>';
 		}
 		i = 1;
 	} else {
@@ -521,9 +525,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 			p += CONTACT_DELIM_LEN;
 		}
 
-		if (q != Q_UNSPECIFIED) {
-			*p++ = '<';
-		}
+		*p++ = '<';
 
 		memcpy(p, uri.s, uri.len);
 		p += uri.len;
@@ -534,6 +536,8 @@ char* print_dset(struct sip_msg* msg, int* len)
 			qbuf = q2str(q, &qlen);
 			memcpy(p, qbuf, qlen);
 			p += qlen;
+		} else {
+			*p++ = '>';
 		}
 		i++;
 	}
