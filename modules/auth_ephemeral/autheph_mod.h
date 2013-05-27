@@ -26,6 +26,13 @@
 #include "../../str.h"
 #include "../../modules/auth/api.h"
 
+struct secret
+{
+	str secret_key;
+	struct secret *next;
+};
+extern struct secret *secret_list;
+
 extern auth_api_s_t eph_auth_api;
 
 #endif /* AUTHEPH_MOD_H */

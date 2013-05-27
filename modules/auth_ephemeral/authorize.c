@@ -228,8 +228,6 @@ int autheph_check(struct sip_msg* _m, char* _realm)
 		return AUTH_ERROR;
 	}
 
-	LM_DBG("realm [%.*s]\n", srealm.len, srealm.s);
-
 	if(_m->REQ_METHOD==METHOD_REGISTER)
 		return digest_authenticate(_m, &srealm, HDR_AUTHORIZATION_T,
 					&_m->first_line.u.request.method);
@@ -264,8 +262,6 @@ int autheph_www(struct sip_msg* _m, char* _realm)
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
-
-	LM_DBG("realm [%.*s]\n", srealm.len, srealm.s);
 
 	return digest_authenticate(_m, &srealm, HDR_AUTHORIZATION_T,
 					&_m->first_line.u.request.method);
@@ -311,9 +307,6 @@ int autheph_www2(struct sip_msg* _m, char* _realm, char *_method)
 		return AUTH_ERROR;
 	}
 
-	LM_DBG("realm [%.*s] method [%.*s]\n", srealm.len, srealm.s,
-		smethod.len, smethod.s);
-
 	return digest_authenticate(_m, &srealm, HDR_AUTHORIZATION_T, &smethod);
 }
 
@@ -343,8 +336,6 @@ int autheph_proxy(struct sip_msg* _m, char* _realm)
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
-
-	LM_DBG("realm [%.*s]\n", srealm.len, srealm.s);
 
 	return digest_authenticate(_m, &srealm, HDR_PROXYAUTH_T,
 					&_m->first_line.u.request.method);

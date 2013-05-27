@@ -23,16 +23,7 @@
 #ifndef AUTHORIZE_H
 #define AUTHORIZE_H
 
-#include "../../str.h"
 #include "../../parser/msg_parser.h"
-
-struct secret
-{
-	str secret_key;
-	struct secret *next;
-};
-
-extern struct secret *secret_list;
 
 int autheph_check(struct sip_msg* _m, char* _realm);
 int autheph_www(struct sip_msg* _m, char* _realm);
