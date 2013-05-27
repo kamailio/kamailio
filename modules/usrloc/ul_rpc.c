@@ -639,7 +639,7 @@ static const char* ul_rpc_add_doc[2] = {
 
 #define QUERY_LEN 256
 
-static void ul_rpc_users(rpc_t* rpc, void* ctx)
+static void ul_rpc_db_users(rpc_t* rpc, void* ctx)
 {
     str table = {0, 0};
     char query[QUERY_LEN];
@@ -689,12 +689,12 @@ static void ul_rpc_users(rpc_t* rpc, void* ctx)
     rpc->add(ctx, "d", count);
 }
 
-static const char* ul_rpc_users_doc[2] = {
+static const char* ul_rpc_db_users_doc[2] = {
 	"Tell number of different users (AoRs) in database table (db_mode!=0 only)",
 	0
 };
 
-static void ul_rpc_contacts(rpc_t* rpc, void* ctx)
+static void ul_rpc_db_contacts(rpc_t* rpc, void* ctx)
 {
     str table = {0, 0};
     char query[QUERY_LEN];
@@ -741,7 +741,7 @@ static void ul_rpc_contacts(rpc_t* rpc, void* ctx)
     rpc->add(ctx, "d", count);
 }
 
-static const char* ul_rpc_contacts_doc[2] = {
+static const char* ul_rpc_db_contacts_doc[2] = {
 	"Tell number of contacts in database table (db_mode=3 only)",
 	0
 };
@@ -753,8 +753,8 @@ rpc_export_t ul_rpc[] = {
 	{"ul.rm_contact", ul_rpc_rm_contact, ul_rpc_rm_contact_doc, 0},
 	{"ul.flush", ul_rpc_flush, ul_rpc_flush_doc, 0},
 	{"ul.add", ul_rpc_add, ul_rpc_add_doc, 0},
-	{"ul.users", ul_rpc_users, ul_rpc_users_doc, 0},
-	{"ul.contacts", ul_rpc_contacts, ul_rpc_contacts_doc, 0},
+	{"ul.db_users", ul_rpc_db_users, ul_rpc_db_users_doc, 0},
+	{"ul.db_contacts", ul_rpc_db_contacts, ul_rpc_db_contacts_doc, 0},
 	{0, 0, 0, 0}
 };
 

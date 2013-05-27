@@ -1160,7 +1160,7 @@ modparam("usrloc", "db_ops_ruid", 1)
 
 	<section>
 		<title>
-		<function moreinfo="none">ul.users</function>
+		<function moreinfo="none">ul.db_users</function>
 		</title>
 		<para>
 		Tell number of different users (AoRs) in a location table.
@@ -1175,7 +1175,7 @@ modparam("usrloc", "db_ops_ruid", 1)
 
 	<section>
 		<title>
-		<function moreinfo="none">ul.contacts</function>
+		<function moreinfo="none">ul.db_contacts</function>
 		</title>
 		<para>
 		Tell number of contacts in a location table.
