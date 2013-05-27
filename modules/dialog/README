@@ -22,9 +22,9 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
 
-   Copyright � 2011 Carsten Bock, http://www.ng-voice.com
+   Copyright © 2011 Carsten Bock, http://www.ng-voice.com
      __________________________________________________________________
 
    Table of Contents
@@ -384,14 +384,14 @@ Chapter 1. Admin Guide
 2. How it works
 
    To create the dialog associated with an initial request, the flag
-   "dlg_flag" (Section 5.4, "dlg_flag (integer)") must be set before
+   “dlg_flag” (Section 5.4, “dlg_flag (integer)”) must be set before
    creating the corresponding transaction.
 
-   The dialog is automatically destroyed when a "BYE" is received. In case
-   of no "BYE", the dialog lifetime is controlled via the default timeout
-   (see "default_timeout" - Section 5.6, "default_timeout (integer)") and
-   custom timeout (see "timeout_avp" - Section 5.5, "timeout_avp
-   (string)"). The dialog timeout is reset each time a sequential request
+   The dialog is automatically destroyed when a “BYE” is received. In case
+   of no “BYE”, the dialog lifetime is controlled via the default timeout
+   (see “default_timeout” - Section 5.6, “default_timeout (integer)”) and
+   custom timeout (see “timeout_avp” - Section 5.5, “timeout_avp
+   (string)”). The dialog timeout is reset each time a sequential request
    is processed.
 
 3. Dialog profiling
@@ -498,7 +498,7 @@ Chapter 1. Admin Guide
    variables, the module provide information about the dialog processing.
    Set it to zero to disable or to non-zero to enable it.
 
-   Default value is "1 (enabled)".
+   Default value is “1 (enabled)”.
 
    Example 1.1. Set enable_stats parameter
 ...
@@ -516,7 +516,7 @@ modparam("dialog", "enable_stats", 0)
    not take place. If you really want to modify the hash_size, you must
    delete all table's rows before restarting the server.
 
-   Default value is "4096".
+   Default value is “4096”.
 
    Example 1.2. Set hash_size parameter
 ...
@@ -529,7 +529,7 @@ modparam("dialog", "hash_size", 1024)
    is used for the fast matching of sequential requests to tracked
    dialogs.
 
-   Default value is "did".
+   Default value is “did”.
 
    Example 1.3. Set rr_param parameter
 ...
@@ -541,7 +541,7 @@ modparam("dialog", "rr_param", "xyz")
    Flag to be used for marking if a dialog should be constructed for the
    current request (this make sense only for initial requests).
 
-   Default value is "none".
+   Default value is “none”.
 
    Example 1.4. Set dlg_flag parameter
 ...
@@ -554,7 +554,7 @@ modparam("dialog", "dlg_flag", 4)
    seconds) for the dialog. It may be used only in a request (initial or
    sequential) context.
 
-   Default value is "none".
+   Default value is “none”.
 
    Example 1.5. Set timeout_avp parameter
 ...
@@ -566,7 +566,7 @@ modparam("dialog", "timeout_avp", "$avp(i:10)")
    The default dialog timeout (in seconds), in the absence of a custom
    value provided in an AVP.
 
-   Default value is "43200 (12 hours)".
+   Default value is “43200 (12 hours)”.
 
    Example 1.6. Set default_timeout parameter
 ...
@@ -578,7 +578,7 @@ modparam("dialog", "default_timeout", 21600)
    A string containing the extra headers (full format, with EOH) to be
    added to requests generated locally by the module (like BYEs).
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.7. Set dlf_extra_hdrs parameter
 ...
@@ -592,6 +592,16 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
    (DID) stored as cookie in Record-Route header and matching based on SIP
    elements (as in RFC 3261).
 
+   Note: DID-based matching does not replace callid/fromtag/totag
+   comparison. It will speed up dialog matching by not iterating over the
+   whole dialog list for callid/fromtag/totag comparison, but instead it
+   uses a hash table to find the respective dialog and then doing only one
+   callid/fromtag/totag comparison. Thus, there is no security issue when
+   using DID based matching. Use DID_FALLBACK for maximum interoperability
+   or use DID_ONLY to reject buggy clients or hacking attempts. DID_NONE
+   is only useful, when you want to hide dialog-tracking from the users
+   (preventing the DID Record-Route cookie).
+
    The supported modes are:
      * 0 - DID_ONLY - the match is done exclusively based on DID;
      * 1 - DID_FALLBACK - the match is first tried based on DID and if not
@@ -599,7 +609,7 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
      * 2 - DID_NONE - the match is done exclusively based on SIP elements;
        no DID information is added in RR.
 
-   Default value is "0 (DID_ONLY)".
+   Default value is “0 (DID_ONLY)”.
 
    Example 1.8. Set dlg_match_mode parameter
 ...
@@ -628,7 +638,7 @@ modparam("dialog", "detect_spirals", 1)
    If you want to store the information about the dialogs in a database, a
    database URL must be specified.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.10. Set db_url parameter
 ...
@@ -649,7 +659,7 @@ modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname")
      * 3 - SHUTDOWN - the dialog information will be flushed into DB only
        at shutdown - no runtime updates.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.11. Set db_mode parameter
 ...
@@ -663,7 +673,7 @@ modparam("dialog", "db_mode", 1)
    interval will generate intensive database operations, while an
    excessively long one will miss dialogs with a short lifetime.
 
-   Default value is "60".
+   Default value is “60”.
 
    Example 1.12. Set db_update_period parameter
 ...
@@ -679,7 +689,7 @@ modparam("dialog", "db_update_period", 120)
    fetch_result() capability. A value of 0 means the functionality is
    disabled.
 
-   Default value is "200".
+   Default value is “200”.
 
    Example 1.13. Set db_fetch_rows parameter
 ...
@@ -691,7 +701,7 @@ modparam("dialog", "db_fetch_rows", 500)
    If you want to store the information about the dialogs in a database a
    table name must be specified.
 
-   Default value is "dialog".
+   Default value is “dialog”.
 
    Example 1.14. Set table_name parameter
 ...
@@ -702,7 +712,7 @@ modparam("dialog", "table_name", "my_dialog")
 
    The column name in the database to store the dialogs' callid.
 
-   Default value is "callid".
+   Default value is “callid”.
 
    Example 1.15. Set callid_column parameter
 ...
@@ -713,7 +723,7 @@ modparam("dialog", "callid_column", "callid_c_name")
 
    The column name in the database to store the caller's sip address.
 
-   Default value is "from_uri".
+   Default value is “from_uri”.
 
    Example 1.16. Set from_uri_column parameter
 ...
@@ -725,7 +735,7 @@ modparam("dialog", "from_uri_column", "from_uri_c_name")
    The column name in the database to store the From tag from the INVITE
    request.
 
-   Default value is "from_tag".
+   Default value is “from_tag”.
 
    Example 1.17. Set from_tag_column parameter
 ...
@@ -736,7 +746,7 @@ modparam("dialog", "from_tag_column", "from_tag_c_name")
 
    The column name in the database to store the callee's sip address.
 
-   Default value is "to_uri".
+   Default value is “to_uri”.
 
    Example 1.18. Set to_uri_column parameter
 ...
@@ -748,7 +758,7 @@ modparam("dialog", "to_uri_column", "to_uri_c_name")
    The column name in the database to store the To tag from the 200 OK
    response to the INVITE request, if present.
 
-   Default value is "to_tag".
+   Default value is “to_tag”.
 
    Example 1.19. Set to_tag_column parameter
 ...
@@ -759,7 +769,7 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 
    The column name in the database to store the cseq from caller side.
 
-   Default value is "caller_cseq".
+   Default value is “caller_cseq”.
 
    Example 1.20. Set caller_cseq_column parameter
 ...
@@ -770,7 +780,7 @@ modparam("dialog", "caller_cseq_column", "column_name")
 
    The column name in the database to store the cseq from callee side.
 
-   Default value is "callee_cseq".
+   Default value is “callee_cseq”.
 
    Example 1.21. Set callee_cseq_column parameter
 ...
@@ -782,7 +792,7 @@ modparam("dialog", "callee_cseq_column", "column_name")
    The column name in the database to store the route records from caller
    side (proxy to caller).
 
-   Default value is "caller_route_set".
+   Default value is “caller_route_set”.
 
    Example 1.22. Set caller_route_column parameter
 ...
@@ -794,7 +804,7 @@ modparam("dialog", "caller_route_column", "column_name")
    The column name in the database to store the route records from callee
    side (proxy to callee).
 
-   Default value is "callee_route_set".
+   Default value is “callee_route_set”.
 
    Example 1.23. Set to_route_column parameter
 ...
@@ -805,7 +815,7 @@ modparam("dialog", "callee_route_column", "column_name")
 
    The column name in the database to store the caller's contact uri.
 
-   Default value is "from_contact".
+   Default value is “from_contact”.
 
    Example 1.24. Set caller_contact_column parameter
 ...
@@ -816,7 +826,7 @@ modparam("dialog", "caller_contact_column", "column_name")
 
    The column name in the database to store the callee's contact uri.
 
-   Default value is "callee_contact".
+   Default value is “callee_contact”.
 
    Example 1.25. Set callee_contact_column parameter
 ...
@@ -828,7 +838,7 @@ modparam("dialog", "callee_contact_column", "column_name")
    The column name in the database to store the information about the
    local interface receiving the traffic from caller.
 
-   Default value is "caller_sock".
+   Default value is “caller_sock”.
 
    Example 1.26. Set caller_sock_column parameter
 ...
@@ -840,7 +850,7 @@ modparam("dialog", "caller_sock_column", "column_name")
    The column name in the database to store information about the local
    interface receiving the traffic from callee.
 
-   Default value is "callee_contact".
+   Default value is “callee_contact”.
 
    Example 1.27. Set callee_sock_column parameter
 ...
@@ -852,7 +862,7 @@ modparam("dialog", "callee_sock_column", "column_name")
    The column name in the database to store the dialogs' hash id
    information.
 
-   Default value is "hash_id".
+   Default value is “hash_id”.
 
    Example 1.28. Set h_id_column parameter
 ...
@@ -864,7 +874,7 @@ modparam("dialog", "h_id_column", "hash_id_c_name")
    The column name in the database to store the dialogs' hash entry
    information.
 
-   Default value is "hash_entry".
+   Default value is “hash_entry”.
 
    Example 1.29. Set h_entry_column parameter
 ...
@@ -876,7 +886,7 @@ modparam("dialog", "h_entry_column", "h_entry_c_name")
    The column name in the database to store the dialogs' state
    information.
 
-   Default value is "state".
+   Default value is “state”.
 
    Example 1.30. Set state_column parameter
 ...
@@ -888,7 +898,7 @@ modparam("dialog", "state_column", "state_c_name")
    The column name in the database to store the dialogs' start time
    information.
 
-   Default value is "start_time".
+   Default value is “start_time”.
 
    Example 1.31. Set start_time_column parameter
 ...
@@ -899,7 +909,7 @@ modparam("dialog", "start_time_column", "start_time_c_name")
 
    The column name in the database to store the dialogs' timeout.
 
-   Default value is "timeout".
+   Default value is “timeout”.
 
    Example 1.32. Set timeout_column parameter
 ...
@@ -910,7 +920,7 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 
    The column name in the database to store the script flags.
 
-   Default value is "sflags".
+   Default value is “sflags”.
 
    Example 1.33. Set sflags_column parameter
 ...
@@ -922,7 +932,7 @@ modparam("dialog", "sflags_column", "s_flags")
    The column name in the database to store the index of the route to be
    executed at timeout.
 
-   Default value is "toroute".
+   Default value is “toroute”.
 
    Example 1.34. Set toroute_column parameter
 ...
@@ -934,7 +944,7 @@ modparam("dialog", "toroute_column", "timeout_route")
    If you want to store the variables for a dialog in a database a table
    name must be specified.
 
-   Default value is "dialog_vars".
+   Default value is “dialog_vars”.
 
    Example 1.35. Set vars_table_name parameter
 ...
@@ -946,7 +956,7 @@ modparam("dialog", "vars_table_name", "my_dialog_vars")
    The column name in the database to store the dialogs' hash id
    information (as a reference to the dialog table).
 
-   Default value is "hash_id".
+   Default value is “hash_id”.
 
    Example 1.36. Set vars_h_id_column parameter
 ...
@@ -958,7 +968,7 @@ modparam("dialog", "vars_h_id_column", "vars_h_id_name")
    The column name in the database to store the dialogs' hash entry
    information (as a reference to the dialog table).
 
-   Default value is "hash_entry".
+   Default value is “hash_entry”.
 
    Example 1.37. Set vars_h_entry_column parameter
 ...
@@ -969,7 +979,7 @@ modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
 
    The column name in the database to store the keys of a variable.
 
-   Default value is "dialog_key".
+   Default value is “dialog_key”.
 
    Example 1.38. Set vars_key_column parameter
 ...
@@ -980,7 +990,7 @@ modparam("dialog", "vars_key_column", "vars_key_name")
 
    The column name in the database to store the keys of a variable.
 
-   Default value is "dialog_value".
+   Default value is “dialog_value”.
 
    Example 1.39. Set vars_value_column parameter
 ...
@@ -991,7 +1001,7 @@ modparam("dialog", "vars_value_column", "vars_value_name")
 
    List of names for profiles with values.
 
-   Default value is "empty".
+   Default value is “empty”.
 
    Example 1.40. Set profiles_with_value parameter
 ...
@@ -1002,7 +1012,7 @@ modparam("dialog", "profiles_with_value", "caller ; my_profile")
 
    List of names for profiles without values.
 
-   Default value is "empty".
+   Default value is “empty”.
 
    Example 1.41. Set profiles_no_value parameter
 ...
@@ -1013,7 +1023,7 @@ modparam("dialog", "profiles_no_value", "inbound ; outbound")
 
    SIP address to be used in From header when initiating a call bridge.
 
-   Default value is "sip:controller@kamailio.org".
+   Default value is “sip:controller@kamailio.org”.
 
    Example 1.42. Set bridge_controller parameter
 ...
@@ -1024,7 +1034,7 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 
    SIP address to be used in Contact header when doing a call bridge.
 
-   Default value is "sip:controller@kamailio.org:5060".
+   Default value is “sip:controller@kamailio.org:5060”.
 
    Example 1.43. Set bridge_contact parameter
 ...
@@ -1047,7 +1057,7 @@ modparam("dialog", "bridge_contact", "sip:ctd@127.0.0.1:5060")
      * 1 - IN-SCRIPT - execute initial callbacks during script execution,
        i.e., right after dlg_manage() is called;
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.44. Set initial_cbs_inscript parameter
 ...
@@ -1059,7 +1069,7 @@ modparam("dialog", "initial_cbs_inscript", 0)
    If set to 1, BYE requests will be sent out for each dialog that timed
    out. It is an alternative to $dlg_ctx(timeout_bye)=1 for all dialogs.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.45. Set send_bye parameter
 ...
@@ -1073,7 +1083,7 @@ modparam("dialog", "send_bye", 1)
    is destroyed when negative reply is sent out (less internal
    complexity).
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.46. Set wait_ack parameter
 ...
@@ -1086,7 +1096,7 @@ modparam("dialog", "wait_ack", 0)
    dialog keep alives (SIP OPTIONS requests within dialog). The value
    represents the number of seconds.
 
-   Default value is "0" (no keep alive).
+   Default value is “0” (no keep alive).
 
    Example 1.47. Set ka_timer parameter
 ...
@@ -1101,7 +1111,7 @@ modparam("dialog", "ka_timer", 10)
    dialog setup or previous keep-alive. The value represents the number of
    seconds.
 
-   Default value is "0" (no keep alive).
+   Default value is “0” (no keep alive).
 
    Example 1.48. Set ka_interval parameter
 ...
@@ -1127,7 +1137,7 @@ modparam("dialog", "ka_interval", 300)
    6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
    6.16. dlg_set_property(attr)
 
-6.1. set_dlg_profile(profile,[value])
+6.1.  set_dlg_profile(profile,[value])
 
    Inserts the current dialog into a profile. Note that if the profile
    does not support values, they will be silently discarded. Also, there
@@ -1149,7 +1159,7 @@ set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
 ...
 
-6.2. unset_dlg_profile(profile,[value])
+6.2.  unset_dlg_profile(profile,[value])
 
    Removes the current dialog from a profile.
 
@@ -1168,7 +1178,7 @@ unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
 ...
 
-6.3. is_in_profile(profile,[value])
+6.3.  is_in_profile(profile,[value])
 
    Checks if the current dialog belongs to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1196,7 +1206,7 @@ if (is_in_profile("caller","XX")) {
 }
 ...
 
-6.4. get_profile_size(profile,[value],size)
+6.4.  get_profile_size(profile,[value],size)
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1223,7 +1233,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
     xlog("currently, the user $fu has $avp(size) active outgoing calls\n");
 ...
 
-6.5. dlg_isflagset(flag)
+6.5.  dlg_isflagset(flag)
 
    Check if the dialog flag is set or not.
 
@@ -1241,7 +1251,7 @@ if(dlg_isflagset("1"))
 }
 ...
 
-6.6. dlg_setflag(flag)
+6.6.  dlg_setflag(flag)
 
    Set the dialog flag.
 
@@ -1256,7 +1266,7 @@ if(dlg_isflagset("1"))
 dlg_setflag("1");
 ...
 
-6.7. dlg_resetflag(flag)
+6.7.  dlg_resetflag(flag)
 
    Reset the dialog flag.
 
@@ -1271,7 +1281,7 @@ dlg_setflag("1");
 redlg_setflag("1");
 ...
 
-6.8. dlg_bye(side)
+6.8.  dlg_bye(side)
 
    Send BYE to both parties of a dialog.
 
@@ -1287,7 +1297,7 @@ redlg_setflag("1");
 dlg_bye("all");
 ...
 
-6.9. dlg_refer(side, address)
+6.9.  dlg_refer(side, address)
 
    Refer the 'side' to a new SIP 'address'.
 
@@ -1304,7 +1314,7 @@ dlg_bye("all");
 dlg_refer("caller", "sip:announcement@kamailio.org");
 ...
 
-6.10. dlg_manage()
+6.10.  dlg_manage()
 
    Process current SIP request with dialog module. It is an alternative to
    setting dialog flag for initial INVITE and Route-parameter-callback
@@ -1328,13 +1338,13 @@ route {
 }
 ...
 
-6.11. dlg_bridge(from, to, op)
+6.11.  dlg_bridge(from, to, op)
 
    Bridge 'from' SIP address to 'to' SIP address via outbound proxy 'op'.
 
    Meaning of the parameters is as follows:
      * from - SIP address of first side to call.
-     * to - SIP address to refer "from" to.
+     * to - SIP address to refer “from” to.
      * op - outbound proxy SIP address.
 
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
@@ -1346,7 +1356,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
 ...
 
-6.12. dlg_get(callid, ftag, ttag)
+6.12.  dlg_get(callid, ftag, ttag)
 
    Search and set current dialog based on Call-ID, From-Tag and To-Tag
    parameters.
@@ -1367,7 +1377,7 @@ if(dlg_get("abcdef", "123", "456"))
 }
 ...
 
-6.13. is_known_dlg()
+6.13.  is_known_dlg()
 
    This function checks if the current SIP message being processed belongs
    to any transaction within an active dialog that the dialog module is
@@ -1392,7 +1402,7 @@ if(!uri == myself) {
 }
 ...
 
-6.14. dlg_set_timeout(timeout [, h_entry, h_id])
+6.14.  dlg_set_timeout(timeout [, h_entry, h_id])
 
    Set the dialog timeout. Dialog timeout will be updated if it was
    already set. If h_entry and h_id parameters are not provided, the
@@ -1415,7 +1425,7 @@ if(dlg_set_timeout("180", "123", "456"))
 }
 ...
 
-6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
+6.15.  dlg_set_timeout_by_profile(profile, [value], timeout)
 
    Like dlg_set_timeout(), but simultaneously sets the timeout of all
    dialogs in a given profile. Can be constrained by profile value.
@@ -1437,7 +1447,7 @@ if(dlg_set_timeout("180", "123", "456"))
 dlg_set_timeout_by_profile("users", "abc123", "3");
 ...
 
-6.16. dlg_set_property(attr)
+6.16.  dlg_set_property(attr)
 
    Set a dialog property - an attribute that enable/disable various
    behaviours (e.g., sending keep alive requests).
@@ -1526,12 +1536,12 @@ dlg_set_property("ka-dst");
 
 8.2. dlg_list_ctx
 
-   The same as the "dlg_list" but including in the dialog description the
+   The same as the “dlg_list” but including in the dialog description the
    associated context from modules sitting on top of the dialog module.
 
    Name: dlg_list_ctx
 
-   Parameters: see "dlg_list"
+   Parameters: see “dlg_list”
 
    MI FIFO Command Format:
                 :dlg_list_ctx:_reply_fifo_file_
@@ -1664,7 +1674,7 @@ dlg_set_property("ka-dst");
 
 9.2. dlg.list_ctx
 
-   The same as the "dlg_list" but including in the dialog description the
+   The same as the “dlg_list” but including in the dialog description the
    associated context from modules sitting on top of the dialog module.
 
    Name: dlg.list_ctx
@@ -1689,13 +1699,13 @@ dlg_set_property("ka-dst");
 
 9.4. dlg.dlg_list_ctx
 
-   The same as the "dlg.list_ctx" but including in the dialog description
+   The same as the “dlg.list_ctx” but including in the dialog description
    the associated context from modules sitting on top of the dialog
    module.
 
    Name: dlg.dlg_list_ctx
 
-   Parameters: see "dlg_list"
+   Parameters: see “dlg_list”
 
    RPC Command Format:
                 serctl dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
@@ -1852,7 +1862,7 @@ Chapter 2. Developer Guide
    1.1. register_dlgcb (dialog, type, cb, param, free_param_cb)
    1.2. terminate_dlg (dlg, hdrs)
 
-1.1. register_dlgcb (dialog, type, cb, param, free_param_cb)
+1.1.  register_dlgcb (dialog, type, cb, param, free_param_cb)
 
    Register a new callback to the dialog.
 
@@ -1894,14 +1904,14 @@ Chapter 2. Developer Guide
           + DLGCB_SPIRALED - called when the dialog matches a spiraling
             request - it's a per dialog type.
           + DLGCB_DESTROY
-     * dialog_cb cb - callback function to be called. Prototype is: "void
+     * dialog_cb cb - callback function to be called. Prototype is: “void
        (dialog_cb) (struct dlg_cell* dlg, int type, struct dlg_cb_params *
-       params); "
+       params); ”
      * void *param - parameter to be passed to the callback function.
      * param_free callback_param_free - callback function to be called to
-       free the param. Prototype is: "void (param_free_cb) (void *param);"
+       free the param. Prototype is: “void (param_free_cb) (void *param);”
 
-1.2. terminate_dlg (dlg, hdrs)
+1.2.  terminate_dlg (dlg, hdrs)
 
    Terminate a Dialog
 
@@ -1912,46 +1922,46 @@ Chapter 2. Developer Guide
 
 Chapter 3. Frequently Asked Questions
 
-   3.1. What happend with "use_tight_match" parameter?
+   3.1. What happend with “use_tight_match” parameter?
    3.2. Where can I find more about Kamailio?
    3.3. Where can I post a question about this module?
    3.4. How can I report a bug?
 
    3.1.
 
-   What happend with "use_tight_match" parameter?
+       What happend with “use_tight_match” parameter?
 
-   The parameter was removed with version 1.3 as the option of tight
-   matching became mandatory and not configurable. Now, the tight matching
-   is done all the time (when using DID matching).
+       The parameter was removed with version 1.3 as the option of tight
+       matching became mandatory and not configurable. Now, the tight matching
+       is done all the time (when using DID matching).
 
    3.2.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    3.3.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    3.4.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+       Please follow the guidelines provided at:
+       http://sip-router.org/tracker.
