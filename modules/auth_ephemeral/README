@@ -104,7 +104,7 @@ Chapter 1. Admin Guide
 
    The request should contain the following parameters:
      * service - specifies the desired service (msrp, sip, etc)
-     * username - a user identifier for the service
+     * username - an optional user identifier for the service
      * ttl - an optional TTL request for the lifetime of the credentials,
        in seconds.
 
@@ -114,9 +114,11 @@ GET /?service=sip&username=foobar;&ttl=86400;
 1.1.2. Response
 
    The response should include the following parameters:
-     * username - the username to use, which is a combination of the
-       username parameter from the request, with a timestamp in time_t
-       format, colon-separated.
+     * username - the username to use with the service, which is a
+       combination of the username parameter from the request and a
+       timestamp in time_t format, colon-separated. If a username was not
+       included in the request this parameter will just include the
+       timestamp.
      * password - the password to use; this value is computed from the
        secret key and the returned username value, by performing
        base64(hmac-sha1(secret key, returned username)).

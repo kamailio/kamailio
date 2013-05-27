@@ -46,7 +46,6 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	unsigned char password[base64_enc_len(hmac_len)];
 	str spassword;
 
-	LM_INFO("using secret: %.*s\n", _secret->len, _secret->s);
 	if (HMAC(EVP_sha1(), _secret->s, _secret->len,
 			(unsigned char *) _username->whole.s,
 			_username->whole.len, hmac_sha1, &hmac_len) == NULL) {
@@ -57,11 +56,11 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	spassword.len = base64_enc(hmac_sha1, hmac_len, password,
 					base64_enc_len(hmac_len));
 	spassword.s = (char *) password;
-	LM_INFO("calculated password: %.*s\n", spassword.len, spassword.s);
+	LM_DBG("calculated password: %.*s\n", spassword.len, spassword.s);
 
 	eph_auth_api.calc_HA1(HA_MD5, &_username->whole, _domain, &spassword,
 				0, 0, _ha1);
-	LM_INFO("HA1 string calculated: %s\n", _ha1);
+	LM_DBG("calculated HA1: %s\n", _ha1);
 
 	return 0;
 }
@@ -72,6 +71,8 @@ static int do_auth(struct sip_msg* msg, struct hdr_field *h, str *realm,
 	int ret;
 	char ha1[256];
 	auth_body_t *cred = (auth_body_t*) h->parsed;
+
+	LM_DBG("secret: %.*s\n", secret->len, secret->s);
 
 	ret = get_ha1(&cred->digest.username, realm, secret, ha1);
 	if (ret < 0)
@@ -101,11 +102,9 @@ static int do_auth(struct sip_msg* msg, struct hdr_field *h, str *realm,
 
 static int verify_timestamp(str* username)
 {
-	int pos = 0;
+	int pos = 0, cur_time = (int) time(NULL);
 	unsigned int expires;
 	str time_str = {0, 0};
-
-	LM_INFO("username: %.*s\n", username->len, username->s);
 
 	while (pos < username->len && username->s[pos] != ':')
 		pos++;
@@ -117,19 +116,19 @@ static int verify_timestamp(str* username)
 	}
 	else
 	{
-		LM_ERR("unable to extract timestamp from username\n");
-		return -1;
+		time_str.s = username->s;
+		time_str.len = username->len;
 	}
 
-	LM_INFO("username timestamp: %.*s\n", time_str.len, time_str.s);
-
+	LM_DBG("username timestamp: %.*s\n", time_str.len, time_str.s);
 	if (str2int(&time_str, &expires) < 0)
 	{
 		LM_ERR("unable to convert timestamp to int\n");
 		return -1;
 	}
 
-	if ((int) time(NULL) > expires)
+	LM_DBG("current time: %d\n", cur_time);
+	if (cur_time > expires)
 	{
 		LM_WARN("username has expired\n");
 		return -1;
@@ -144,6 +143,10 @@ static int digest_authenticate(struct sip_msg* msg, str *realm,
 	struct hdr_field* h;
 	int ret;
 	struct secret *secret_struct = secret_list;
+	str username;
+
+	LM_DBG("realm: %.*s\n", realm->len, realm->s);
+	LM_DBG("method: %.*s\n", method->len, method->s);
 
 	ret = eph_auth_api.pre_auth(msg, realm, hftype, &h, NULL);
 	switch(ret) {
@@ -175,8 +178,10 @@ static int digest_authenticate(struct sip_msg* msg, str *realm,
 			return AUTH_OK;
 	}
 
-	if (verify_timestamp(&((auth_body_t*) h->parsed)->digest.username.whole)
-			< 0)
+	username = ((auth_body_t *) h->parsed)->digest.username.whole;
+	LM_DBG("username: %.*s\n", username.len, username.s);
+
+	if (verify_timestamp(&username) < 0)
 	{
 		LM_ERR("invalid timestamp in username\n");
 		return AUTH_ERROR;

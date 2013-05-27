@@ -56,8 +56,8 @@
 	(msrp, sip, etc)</para>
 	</listitem>
 	<listitem>
-	<para><emphasis>username</emphasis> - a user identifier for the
-	service</para>
+	<para><emphasis>username</emphasis> - an optional user identifier for
+	the service</para>
 	</listitem>
 	<listitem>
 	<para><emphasis>ttl</emphasis> - an optional TTL request for the
@@ -77,9 +77,11 @@ GET /?service=sip&amp;username=foobar;&amp;ttl=86400;
 	The response should include the following parameters:
 	<itemizedlist>
 	<listitem>
-	<para><emphasis>username</emphasis> - the username to use, which is a
-	combination of the username parameter from the request, with a timestamp
-	in time_t format, colon-separated.</para>
+	<para><emphasis>username</emphasis> - the username to use with the
+	service, which is a combination of the username parameter from the
+	request and a timestamp in time_t format, colon-separated. If a username
+	was not included in the request this parameter will just include the
+	timestamp.</para>
 	</listitem>
 	<listitem>
 	<para><emphasis>password</emphasis> - the password to use; this value is
