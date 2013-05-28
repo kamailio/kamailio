@@ -237,7 +237,11 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
             goto error;
         }
         
-        LM_DBG("Updated contacts: %.*s\n", data->contact_header->data_len, data->contact_header->buf);
+        if (data->contact_header) {
+            LM_DBG("Updated contacts: %.*s\n", data->contact_header->data_len, data->contact_header->buf);
+        } else {
+            LM_DBG("Updated unreg contact\n");
+        }
         
     }
 
