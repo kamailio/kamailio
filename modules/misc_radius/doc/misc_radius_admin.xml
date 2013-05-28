@@ -307,7 +307,9 @@ modparam("misc_radius", "use_sip_uri_host", 1)
 		<title><varname>common_response</varname> (integer)</title>
 		<para>
 		Set it to 1 if you need common radius response attributes to
-		be added as AVPs.
+		be added as AVPs in <function moreinfo="none">radius_load_caller_avps</function>
+        and <function moreinfo="none">radius_load_callee_avps</function>
+        with name as radius attribute name and value as radius attribute value.
 		</para>
 		<para>
 		Default value is <quote>0</quote>.
@@ -316,9 +318,35 @@ modparam("misc_radius", "use_sip_uri_host", 1)
 		<title><varname>common_response</varname> parameter usage</title>
 		<programlisting format="linespecific">
 ...
-modparam("misc_radius", "common_response", 21)
+modparam("misc_radius", "common_response", 1)
+...
+radius_load_caller_avps($fU);
+...
 </programlisting>
-		</example>
+    </example>
+	<example>
+		<title>radius response with <varname>common_response</varname> value 1</title>
+		<programlisting format="linespecific">
+...
+    Sending Access-Accept of id 60 to 192.168.25.32 port 59736
+    Session-Timeout = 4261674
+    next-hop-ip = "SIP/00111222333444@cisco-out"
+    SIP-AVP = "email:sr-users@lists.sip-router.org session-timeout#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
+    session-protocol = "SIP"
+...
+
+$avp(Session-Timeout) has integer value 4261674
+$avp(next-hop-ip) has string value "SIP/005555777888@cisco-out"
+$avp(session-protocol) has string value "SIP"
+$avp(SIP-AVP) has string value  "email:sr-users@lists.sip-router.org session-timeout#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
+
+...
+    When recieving negative response, check appropriate avp's:
+    $avp(Reply-Message) = "Not enough money on deposit '-89.83'. Rejected"
+    $avp(Filter-Id) = "neg_deposit"
+...
+</programlisting>
+    </example>
 	</section>
 
 	</section>
