@@ -192,21 +192,23 @@ static void generate_avps(struct attr *attrs, VALUE_PAIR* received)
 }
 
 /* Macro to add extra attribute */
-#define ADD_EXTRA_AVPAIR(_attrs, _attr, _val, _len)			\
-	do {								\
-		if ((_len) != 0) {						\
-			if ((_len) == -1) {						\
-				if (_attrs[_attr].t != PW_TYPE_INTEGER) {		\
-					LM_ERR("attribute %d is not of type integer\n",	\
-							_attrs[_attr].v);				\
-					goto error;						\
-				}							\
-			}								\
+#define ADD_EXTRA_AVPAIR(_attrs, _attr, _val, _len)	\
+	do { \
+		if ((_len) != 0) { \
+			if ((_len) == -1) { \
+				if (_attrs[_attr].t != PW_TYPE_INTEGER) { \
+					if (_attrs[_attr].t != PW_TYPE_IPADDR) { \
+						LM_ERR("attribute %d is not of type integer or ipaddr\n", \
+							_attrs[_attr].v); \
+						goto error; \
+					} \
+				} \
+			} \
 			if (!rc_avpair_add( rh, &send, _attrs[_attr].v, _val, _len, 0)) { \
 				LM_ERR("failed to add %s, %d\n", _attrs[_attr].n, _attr); \
-				goto error;						\
-			}								\
-		}								\
+				goto error; \
+			} \
+		} \
 	}while(0)
 
 
@@ -274,6 +276,7 @@ int radius_load_caller_avps(struct sip_msg* _m, char* _caller, char* _s2)
 		return 1;
 	} else {
 		rc_avpair_free(send);
+		if (common_response) generate_avps_rad(received);
 		rc_avpair_free(received);
 #ifdef REJECT_RC
 		if (res == REJECT_RC) {
@@ -359,6 +362,7 @@ int radius_load_callee_avps(struct sip_msg* _m, char* _callee, char* _s2)
 		return 1;
 	} else {
 		rc_avpair_free(send);
+		if (common_response) generate_avps_rad(received);
 		rc_avpair_free(received);
 #ifdef REJECT_RC
 		if (res == REJECT_RC) {
