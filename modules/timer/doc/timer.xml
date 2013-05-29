@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="timer" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="timer" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>timer module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Tomas</firstname>
@@ -19,10 +20,11 @@
 	    <holder>iptelorg GmbH</holder>
 	</copyright>
 
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>timer module</title>
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="timer.overview">
 		<title>Overview</title>
 		<para>
@@ -210,6 +212,7 @@ route[TEST] {
 			</programlisting>
 
 		</example>
-    </section>
-</section>
+	</section>
+    </chapter>
+</book>
 
