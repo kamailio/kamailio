@@ -25,7 +25,8 @@
 
     </bookinfo>
 
-    <title>Xprint Module</title>
+    <chapter>
+    <title>Admin Guide</title>
 
     <section id="xprint.overview">
 	<title>Overview</title>
@@ -35,13 +36,13 @@
 		for strings with specifiers. If you want to print log messages
 		from configuration file, use the real module named 'xlog'.
 	</para>
-    </section>
 	<para>
 	    This module provides the possibility to print user formatted log or
 	    debug messages from SER scripts, similar to printf function but now
 	    a specifier is replaced with a part of the SIP request. <xref
 	    linkend="implemented_specifiers"/> shows what can be printed out.
 	</para>
+    </section>
 
     <section id="implemented_specifiers">
 	<title>Implemented Specifiers</title>
@@ -297,6 +298,9 @@
 
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
+    </chapter>
+    <chapter>
+    <title>Developer Guide</title>
     <xi:include href="api.xml"/>
-
+    </chapter>
 </book>
