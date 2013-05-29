@@ -7,8 +7,9 @@
 
 ]>
 
-<section id="gflags" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="gflags" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>cfg_rpc Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Miklos</firstname>
@@ -20,10 +21,11 @@
 	    <year>2007</year>
 	    <holder>iptelorg GmbH</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>cfg_rpc Module</title>
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="cfg_rpc.overview">
 	<title>Overview</title>
 	<para>
@@ -77,6 +79,7 @@
 	</section>
 
     <xi:include href="rpc.xml"/>
+    </chapter>
 
-</section>
+</book>
 
