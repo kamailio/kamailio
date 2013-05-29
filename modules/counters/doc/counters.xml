@@ -28,7 +28,8 @@
 	</copyright>
 	</bookinfo>
 
-
+	<chapter>
+	<title>Admin Guide</title>
 	<section id="cnts.overview">
 	<title>Overview</title>
 	<para>
@@ -40,6 +41,6 @@
 	<xi:include href="counters_params.xml"/>
 	<xi:include href="counters_functions.xml"/>
 	<xi:include href="counters_rpc.xml"/>
-
+	</chapter>
 </book>
 
