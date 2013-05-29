@@ -20,45 +20,6 @@
     </bookinfo>
 
 
-    <section id="xmlops.overview">
-	<title>Overview</title>
-	<para>
-		This is a module implementing functions and pseudo-variables for
-		XML operations.
-	</para>
-    </section>
-	<section>
-	<title>Dependencies</title>
-		<section>
-		<title>Kamailio Modules</title>
-			<para>
-			The following modules must be loaded before this module:
-			</para>
-			<itemizedlist>
-			<listitem>
-			<para>
-				<emphasis>none</emphasis>.
-			</para>
-			</listitem>
-			</itemizedlist>
-		</section>
-		<section>
-		<title>External Libraries or Applications</title>
-			<para>
-			The following libraries or applications must be installed before running
-			kamailio with this module loaded:
-			</para>
-			<itemizedlist>
-			<listitem>
-			<para>
-				<emphasis>libxml</emphasis> - for compilation from source, the 
-				development headers from this library are needed as well.
-			</para>
-			</listitem>
-			</itemizedlist>
-		</section>
-    </section>
-
     <xi:include href="xmlops_admin.xml"/>
 
 </book>
