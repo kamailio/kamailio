@@ -2,9 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="avp_db" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
-	<title>uid_avp_db Module</title>
+<book id="uid_avp_db" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>UID AVP DB Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Jiri</firstname>
@@ -18,11 +18,12 @@
 	    <year>2005</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>Avp_db Module</title>
-    
-    <section id="avp_db.overview">
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="uid_avp_db.overview">
 	<title>Overview</title>
 	<para>
 	    This module contains several functions that can be used to
@@ -47,7 +48,7 @@
 	</para>
     </section>
     
-    <section id="avp_db.dep">
+    <section id="uid_avp_db.dep">
 	<title>Dependencies</title>
 	<para>
 	    A database module, such as mysql, postgres, or dbtext.
@@ -62,4 +63,5 @@
 	<para><programlisting><include xmlns="http://www.w3.org/2001/XInclude"
 href="avp_dialogs.cfg" parse="text"/></programlisting></para>
 	</section>
-</section>
+    </chapter>
+</book>
