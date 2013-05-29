@@ -1,3 +1,4 @@
+
 XMLOPS Module
 
 Daniel-Constantin Mierla
@@ -6,17 +7,55 @@ Daniel-Constantin Mierla
    <miconda@gmail.com>
 
    Copyright © 2009 asipto.com
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. buf_size (integer)
+              3.2. xml_ns (str)
+
+        4. Pseudo-Variables
+
+              4.1. $xml(name=>spec) 
 
    List of Examples
 
-   1. Set buf_size parameter
-   2. Set xml_ns parameter
-   3. xml usage
+   1.1. Set buf_size parameter
+   1.2. Set xml_ns parameter
+   1.3. xml usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. buf_size (integer)
+        3.2. xml_ns (str)
+
+   4. Pseudo-Variables
+
+        4.1. $xml(name=>spec) 
 
 1. Overview
 
-   This is a module implementing functions and pseudo-variables for XML
+   This  is  a module implementing functions and pseudo-variables for XML
    operations.
 
 2. Dependencies
@@ -31,7 +70,7 @@ Daniel-Constantin Mierla
 
 2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed before
+   The  following  libraries  or  applications  must  be installed before
    running kamailio with this module loaded:
      * libxml - for compilation from source, the development headers from
        this library are needed as well.
@@ -40,7 +79,6 @@ Daniel-Constantin Mierla
 
    3.1. buf_size (integer)
    3.2. xml_ns (str)
-   3.3. Pseudo-Variables
 
 3.1. buf_size (integer)
 
@@ -48,29 +86,31 @@ Daniel-Constantin Mierla
 
    Default value is 4096.
 
-   Example 1. Set buf_size parameter
+   Example 1.1. Set buf_size parameter
 ...
 modparam("xmlops", "buf_size", 8192)
 ...
 
 3.2. xml_ns (str)
 
-   Register xml namespace prefix. Parameter value must have the format:
+   Register  xml  namespace prefix. Parameter value must have the format:
    'prefix=uri'.
 
-   Example 2. Set xml_ns parameter
+   Example 1.2. Set xml_ns parameter
 ...
 modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
 ...
 
-3.3. Pseudo-Variables
+4. Pseudo-Variables
 
-3.3. Pseudo-Variables
+   4.1. $xml(name=>spec) 
 
-   Pseudo-variable for XML document operations using xpath syntax. For
+4.1.  $xml(name=>spec)
+
+   Pseudo-variable  for  XML  document operations using xpath syntax. For
    more see the Pseudo-Variables Cookbook.
 
-   Example 3. xml usage
+   Example 1.3. xml usage
 ...
 $xml(x=>doc)
     = '<?xml version="1.0" encoding="UTF-8"?><a><b>test</b></a>';

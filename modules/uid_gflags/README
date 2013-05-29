@@ -1,36 +1,64 @@
-1. UID Gflags Module
+
+UID Gflags Module
 
 Jiri Kuthan
 
    <jiri@iptel.org>
 
    Copyright © 2004 FhG FOKUS
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Parameters
+   Table of Contents
 
-        1.2.1. initial (integer)
+   1. Admin Guide
 
-   1.3. Functions
+        1. Overview
+        2. Parameters
 
-        1.3.1. set_gflag(flag_num)
-        1.3.2. reset_ugflag(flag_num)
-        1.3.3. is_ugflag(flag_num)
+              2.1. initial (integer)
 
-   1.4. FIFO Interface
-   1.5. XMLRPC Interface
+        3. Functions
 
-1.1. Overview
+              3.1. set_gflag(flag_num)
+              3.2. reset_ugflag(flag_num)
+              3.3. is_ugflag(flag_num)
 
-   The module implements global flags. The difference between the global
-   flags and flags that can be used in the configuration file or AVPs is
-   that they the scope of the global flags is not limited to the SIP
-   message or transaction being processed. Global flags are always
+        4. FIFO Interface
+        5. XMLRPC Interface
+
+   List of Examples
+
+   1.1. set_ugflag usage
+   1.2. reset_ugflag usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Parameters
+
+        2.1. initial (integer)
+
+   3. Functions
+
+        3.1. set_gflag(flag_num)
+        3.2. reset_ugflag(flag_num)
+        3.3. is_ugflag(flag_num)
+
+   4. FIFO Interface
+   5. XMLRPC Interface
+
+1. Overview
+
+   The  module implements global flags. The difference between the global
+   flags  and flags that can be used in the configuration file or AVPs is
+   that  they  the  scope  of  the global flags is not limited to the SIP
+   message  or  transaction  being  processed.  Global  flags  are always
    available, their contents is not forgotten when a SIP transaction gets
    destroyed in SER.
 
-   Global flags can be accessed from the configuration script, for
+   Global  flags  can  be  accessed  from  the  configuration script, for
    example:
 if (is_ugflag("1")) {
     t_relay_to_udp("10.0.0.1", "5060");
@@ -38,76 +66,82 @@ if (is_ugflag("1")) {
     t_relay_to_udp("10.0.0.2", "5060");
 };
 
-   The value of the global flags can be manipulated by external tools such
-   as the web interface of SER or cmd line administration tools. One
-   particular application of global flags could be runtime configuration
+   The  value  of  the  global flags can be manipulated by external tools
+   such as the web interface of SER or cmd line administration tools. One
+   particular  application of global flags could be runtime configuration
    changes without the need to restart SER.
 
-1.2. Parameters
+2. Parameters
 
-1.2.1. initial (integer)
+   2.1. initial (integer)
 
-   The initial value of global flags. Each bit in the integer represents
+2.1. initial (integer)
+
+   The  initial value of global flags. Each bit in the integer represents
    one flag.
 
    Default value is 0.
 
-1.3. Functions
+3. Functions
 
-1.3.1. set_gflag(flag_num)
+   3.1. set_gflag(flag_num)
+   3.2. reset_ugflag(flag_num)
+   3.3. is_ugflag(flag_num)
 
-   Set the flag identified by flag_num to 1. The range of flag_num is 0 to
-   31.
+3.1. set_gflag(flag_num)
 
-   Example 1. set_ugflag usage
+   Set  the  flag identified by flag_num to 1. The range of flag_num is 0
+   to 31.
+
+   Example 1.1. set_ugflag usage
 ...
 set_ugflag("2");
 ...
 
-1.3.2. reset_ugflag(flag_num)
+3.2. reset_ugflag(flag_num)
 
-   Set the flag identified by flag_num to 0. The range of flag_num is 0 to
-   31.
+   Set  the  flag identified by flag_num to 0. The range of flag_num is 0
+   to 31.
 
-   Example 2. reset_ugflag usage
+   Example 1.2. reset_ugflag usage
 ...
 reset_ugflag("2");
 ...
 
-1.3.3. is_ugflag(flag_num)
+3.3. is_ugflag(flag_num)
 
-   Returns 1 when flag identified by flag_num is set, 0 otherwise. The
+   Returns  1  when  flag identified by flag_num is set, 0 otherwise. The
    range of flag_num parameter is 0 to 31.
 
-1.4. FIFO Interface
+4. FIFO Interface
 
-   The state of the global flags can be read and modified over the FIFO
-   interface of SER. This module implements the following FIFO interface
+   The  state  of the global flags can be read and modified over the FIFO
+   interface  of SER. This module implements the following FIFO interface
    functions:
      * set_gflag - Set the value of a flag to 1. The function accepts one
        parameter which is the number of the flag to be set.
      * reset_gflag - Reset the value of a flag to 0. The function accepts
        one parameter which is the number of the flag to be reset.
-     * is_gflag - Return the status of a flag. The FIFO function would
-       return TRUE if the flag is set and FALSE if it is not set. The only
-       parameter of this function is the number of the flag.
+     * is_gflag  -  Return  the status of a flag. The FIFO function would
+       return  TRUE  if  the  flag is set and FALSE if it is not set. The
+       only parameter of this function is the number of the flag.
 
-1.5. XMLRPC Interface
+5. XMLRPC Interface
 
    The state of the global flags can be read and modified over the XMLRPC
-   interface. This module implements the following XMLRPC interface
+   interface.  This  module  implements  the  following  XMLRPC interface
    commands:
-     * gflags.set - Set the value of a flag to 1. The function accepts one
-       parameter which is the number of the flag to be set.
-     * gflags.reset - Reset the value of a flag to 0. The function accepts
-       one parameter which is the number of the flag to be reset.
-     * gflags.is_set - Return the status of a flag. The FIFO function
-       would return TRUE if the flag is set and FALSE if it is not set.
+     * gflags.set  -  Set  the value of a flag to 1. The function accepts
+       one parameter which is the number of the flag to be set.
+     * gflags.reset  -  Reset  the  value  of  a  flag to 0. The function
+       accepts one parameter which is the number of the flag to be reset.
+     * gflags.is_set  -  Return  the  status of a flag. The FIFO function
+       would  return  TRUE if the flag is set and FALSE if it is not set.
        The only parameter of this function is the number of the flag.
      * gflags.flush - Flush the state of global flags into database.
      * gflags.dump - Return the status of all flags. The value is TRUE if
        the flag is set and FALSE if the flag is not set. The function has
        no parameters.
-     * global.reload - Reload values from global_attrs DB table. This
+     * global.reload  -  Reload  values  from global_attrs DB table. This
        function does not have any parameters. There is no return value on
        success.

@@ -1,195 +1,260 @@
-1. cfg_rpc Module
+
+cfg_rpc Module
 
 Miklos Tirpak
 
    <miklos@iptel.org>
 
    Copyright © 2007 iptelorg GmbH
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
+   Table of Contents
 
-        1.2.1. SIP Router Modules
-        1.2.2. External Libraries or Applications
+   1. Admin Guide
 
-   1.3. RPC Interface
+        1. Overview
+        2. Dependencies
 
-        1.3.1. cfg.list
-        1.3.2. cfg.get
-        1.3.3. cfg.seti
-        1.3.4. cfg.set_now_int
-        1.3.5. cfg.sets
-        1.3.6. cfg.set_now_string
-        1.3.7. cfg.set
-        1.3.8. cfg.del
-        1.3.9. cfg.set_delayed_int
-        1.3.10. cfg.set_delayed_string
-        1.3.11. cfg.set_delayed
-        1.3.12. cfg.del_delayed
-        1.3.13. cfg.commit
-        1.3.14. cfg.rollback
-        1.3.15. cfg.help
-        1.3.16. cfg.diff
-        1.3.17. cfg.add_group_inst
-        1.3.18. cfg.del_group_inst
+              2.1. SIP Router Modules
+              2.2. External Libraries or Applications
 
-1.1. Overview
+        3. RPC Interface
 
-   The module implements RPC commands to set and get configuration
-   variables on-the-fly, that are declared by SIP Router core and by the
+              3.1. cfg.list
+              3.2. cfg.get
+              3.3. cfg.seti
+              3.4. cfg.set_now_int
+              3.5. cfg.sets
+              3.6. cfg.set_now_string
+              3.7. cfg.set
+              3.8. cfg.del
+              3.9. cfg.set_delayed_int
+              3.10. cfg.set_delayed_string
+              3.11. cfg.set_delayed
+              3.12. cfg.del_delayed
+              3.13. cfg.commit
+              3.14. cfg.rollback
+              3.15. cfg.help
+              3.16. cfg.diff
+              3.17. cfg.add_group_inst
+              3.18. cfg.del_group_inst
+
+   List of Examples
+
+   1.1. Use cfg.get RPC command
+   1.2. Use cfg.get RPC command
+   1.3. Use cfg.seti RPC command
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. SIP Router Modules
+        2.2. External Libraries or Applications
+
+   3. RPC Interface
+
+        3.1. cfg.list
+        3.2. cfg.get
+        3.3. cfg.seti
+        3.4. cfg.set_now_int
+        3.5. cfg.sets
+        3.6. cfg.set_now_string
+        3.7. cfg.set
+        3.8. cfg.del
+        3.9. cfg.set_delayed_int
+        3.10. cfg.set_delayed_string
+        3.11. cfg.set_delayed
+        3.12. cfg.del_delayed
+        3.13. cfg.commit
+        3.14. cfg.rollback
+        3.15. cfg.help
+        3.16. cfg.diff
+        3.17. cfg.add_group_inst
+        3.18. cfg.del_group_inst
+
+1. Overview
+
+   The  module  implements  RPC  commands  to  set  and get configuration
+   variables  on-the-fly, that are declared by SIP Router core and by the
    modules.
 
-   For example, it can be used to fine-tune values for global parameters
-   such as debug, tcp/sctp/dns attributes, a.s.o. without the need of
+   For  example, it can be used to fine-tune values for global parameters
+   such  as  debug,  tcp/sctp/dns  attributes, a.s.o. without the need of
    restart.
 
-   RPC connector modules, such as "ctl" or "xmlrpc", although not a
-   dependecy, should be loaded in order to execute the RPC commands
-   exported by this module. When ctl module is loaded, the tool 'kamcmd'
+   RPC  connector  modules,  such  as  "ctl"  or "xmlrpc", although not a
+   dependecy,  should  be  loaded  in  order  to execute the RPC commands
+   exported  by this module. When ctl module is loaded, the tool 'kamcmd'
    can be used to execute the RPC commands implemented in this module.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. SIP Router Modules
+   2.1. SIP Router Modules
+   2.2. External Libraries or Applications
+
+2.1. SIP Router Modules
 
    The following modules must be loaded before this module:
      * No dependencies on other SIP Router modules.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed before
+   The  following  libraries  or  applications  must  be installed before
    running SIP Router with this module loaded:
      * None.
 
-1.3. RPC Interface
+3. RPC Interface
 
-   The module implements the RPC commands documented in the next sections.
+   3.1. cfg.list
+   3.2. cfg.get
+   3.3. cfg.seti
+   3.4. cfg.set_now_int
+   3.5. cfg.sets
+   3.6. cfg.set_now_string
+   3.7. cfg.set
+   3.8. cfg.del
+   3.9. cfg.set_delayed_int
+   3.10. cfg.set_delayed_string
+   3.11. cfg.set_delayed
+   3.12. cfg.del_delayed
+   3.13. cfg.commit
+   3.14. cfg.rollback
+   3.15. cfg.help
+   3.16. cfg.diff
+   3.17. cfg.add_group_inst
+   3.18. cfg.del_group_inst
 
-1.3.1. cfg.list
+   The  module  implements  the  RPC  commands  documented  in  the  next
+   sections.
 
-   cfg.list - List the configuration variables. The function has one
+3.1. cfg.list
+
+   cfg.list  -  List  the  configuration  variables. The function has one
    optional parameter: group name.
 
-   Example 1. Use cfg.get RPC command
+   Example 1.1. Use cfg.get RPC command
 ...
 # kamcmd cfg.list
 ...
 
-1.3.2. cfg.get
+3.2. cfg.get
 
-   cfg.get - Get the value of a configuration variable. The function
-   accepts two parameters: group name, variable name. The group name can
+   cfg.get  -  Get  the  value  of a configuration variable. The function
+   accepts  two parameters: group name, variable name. The group name can
    optionally contain the group instance id, for example foo[5].
 
-   Example 2. Use cfg.get RPC command
+   Example 1.2. Use cfg.get RPC command
 ...
 # kamcmd cfg.get core debug
 ...
 
-1.3.3. cfg.seti
+3.3. cfg.seti
 
-   cfg.seti - Set the value of a configuration variable and commit the
+   cfg.seti  -  Set  the value of a configuration variable and commit the
    change immediately. The function accepts three parameters: group name,
-   variable name, integer value. The group name can optionally contain the
-   group instance id, for example foo[5].
+   variable  name,  integer  value. The group name can optionally contain
+   the group instance id, for example foo[5].
 
-   Example 3. Use cfg.seti RPC command
+   Example 1.3. Use cfg.seti RPC command
 ...
 # kamcmd cfg.seti core debug 1
 ...
 
-1.3.4. cfg.set_now_int
+3.4. cfg.set_now_int
 
    cfg.set_now_int - This is an alias to the command cfg.seti.
 
-1.3.5. cfg.sets
+3.5. cfg.sets
 
-   cfg.sets - Set the value of a configuration variable and commit the
+   cfg.sets  -  Set  the value of a configuration variable and commit the
    change immediately. The function accepts three parameters: group name,
    variable name, string value. The group name can optionally contain the
    group instance id, for example foo[5].
 
-1.3.6. cfg.set_now_string
+3.6. cfg.set_now_string
 
    cfg.set_now_string - This is an alias to the command cfg.sets.
 
-1.3.7. cfg.set
+3.7. cfg.set
 
-   cfg.set - Set the value of a configuration variable and commit the
-   change immediately. This is a wrapper command for cfg.set_now_int and
-   cfg.set_now_string depending on the type of the value provided. The
-   function accepts three parameters: group name, variable name,
-   int/string value. The group name can optionally contain the group
+   cfg.set  -  Set  the  value of a configuration variable and commit the
+   change  immediately. This is a wrapper command for cfg.set_now_int and
+   cfg.set_now_string  depending  on  the type of the value provided. The
+   function   accepts   three  parameters:  group  name,  variable  name,
+   int/string  value.  The  group  name  can optionally contain the group
    instance id, for example foo[5].
 
-1.3.8. cfg.del
+3.8. cfg.del
 
-   cfg.del - Delete the value of a configuration variable from a group
-   instance and commit the change immediately. The value is reset to the
+   cfg.del  -  Delete  the value of a configuration variable from a group
+   instance  and commit the change immediately. The value is reset to the
    default value and it follows the changes of that. The function accepts
    two parameters: group name, variable name. The group name must contain
    the group instance id, for example foo[5].
 
-1.3.9. cfg.set_delayed_int
+3.9. cfg.set_delayed_int
 
-   cfg.set_delayed_int - Prepare the change of a configuration variable,
-   but does not commit the new value yet. The function accepts three
-   parameters: group name, variable name, integer value. The group name
+   cfg.set_delayed_int  - Prepare the change of a configuration variable,
+   but  does  not  commit  the  new value yet. The function accepts three
+   parameters:  group  name, variable name, integer value. The group name
    can optionally contain the group instance id, for example foo[5].
 
-1.3.10. cfg.set_delayed_string
+3.10. cfg.set_delayed_string
 
-   cfg.set_delayed_string - Prepare the change of a configuration
-   variable, but does not commit the new value yet. The function accepts
-   three parameters: group name, variable name, string value. The group
+   cfg.set_delayed_string   -  Prepare  the  change  of  a  configuration
+   variable,  but does not commit the new value yet. The function accepts
+   three  parameters:  group name, variable name, string value. The group
    name can optionally contain the group instance id, for example foo[5].
 
-1.3.11. cfg.set_delayed
+3.11. cfg.set_delayed
 
-   cfg.set_delayed - Prepare the change of a configuration variable, but
-   does not commit the new value yet. This is a wrapper command for
-   cfg.set_delayed_int and cfg.set_delayed_string depending on the type of
-   the value provided. The function accepts three parameters: group name,
-   variable name, int/string value. The group name can optionally contain
-   the group instance id, for example foo[5].
+   cfg.set_delayed  - Prepare the change of a configuration variable, but
+   does  not  commit  the  new  value  yet. This is a wrapper command for
+   cfg.set_delayed_int  and  cfg.set_delayed_string depending on the type
+   of  the  value  provided. The function accepts three parameters: group
+   name,  variable  name, int/string value. The group name can optionally
+   contain the group instance id, for example foo[5].
 
-1.3.12. cfg.del_delayed
+3.12. cfg.del_delayed
 
    cfg.del_delayed - Prepare the deletion of the value of a configuration
-   variable from a group instance, but does not commit the change yet. The
-   value is reset to the default value and it follows the changes of that.
-   The function accepts two parameters: group name, variable name. The
-   group name must contain the group instance id, for example foo[5].
+   variable  from  a  group instance, but does not commit the change yet.
+   The  value is reset to the default value and it follows the changes of
+   that.  The function accepts two parameters: group name, variable name.
+   The group name must contain the group instance id, for example foo[5].
 
-1.3.13. cfg.commit
+3.13. cfg.commit
 
    cfg.commit - Commit the previously prepared configuration changes. The
    function does not have any parameters.
 
-1.3.14. cfg.rollback
+3.14. cfg.rollback
 
-   cfg.rollback - Drop the prepared configuration changes. The function
+   cfg.rollback  -  Drop the prepared configuration changes. The function
    does not have any parameters.
 
-1.3.15. cfg.help
+3.15. cfg.help
 
-   cfg.help - Print the description of a configuration variable. The
+   cfg.help  -  Print  the  description  of a configuration variable. The
    function accepts two parameters: group name, variable name.
 
-1.3.16. cfg.diff
+3.16. cfg.diff
 
-   cfg.diff - List the pending configuration changes that have not been
+   cfg.diff  -  List the pending configuration changes that have not been
    committed yet. The function does not have any parameters.
 
-1.3.17. cfg.add_group_inst
+3.17. cfg.add_group_inst
 
-   cfg.add_group_inst - Add a new instance to an existing configuration
-   group. The function accepts one parameter: group name[instance id], for
-   example foo[5].
+   cfg.add_group_inst  -  Add a new instance to an existing configuration
+   group.  The  function  accepts one parameter: group name[instance id],
+   for example foo[5].
 
-1.3.18. cfg.del_group_inst
+3.18. cfg.del_group_inst
 
-   cfg.del_group_inst - Delete an instance of an existing configuration
-   group. The function accepts one parameter: group name[instance id], for
-   example foo[5].
+   cfg.del_group_inst  -  Delete an instance of an existing configuration
+   group.  The  function  accepts one parameter: group name[instance id],
+   for example foo[5].

@@ -1,3 +1,4 @@
+
 The Ctl Module
 
 Andrei Pelinescu-Onciul
@@ -5,40 +6,87 @@ Andrei Pelinescu-Onciul
    iptelorg GmbH
 
    Copyright © 2009 iptelorg GmbH
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. BINRPC
+        3. Parameters
+
+              3.1. binrpc (string)
+              3.2. mode (integer)
+              3.3. user (integer or string)
+              3.4. group (integer or string)
+              3.5. fifo (integer)
+              3.6. autoconversion (integer)
+              3.7. binrpc_max_body_size (integer)
+              3.8. binrpc_struct_max_body_size (integer)
+
+        4. SIP-router RPC Functions
+
+              4.1. ctl.listen
+              4.2. ctl.connections
+              4.3. ctl.who
 
    List of Examples
 
-   1. kamcmd example usage
-   2. Set binrpc parameter
-   3. Set mode parameter
-   4. Set user parameter
-   5. Set group parameter
-   6. Set fifo parameter
-   7. Set the autoconversion parameter
-   8. Set the binrpc_max_body_size parameter
-   9. Set the binrpc_struct_max_body_size parameter
-   10. print usage
-   11. ctl.connections usage
-   12. ctl.who usage
+   1.1. kamcmd example usage
+   1.2. Set binrpc parameter
+   1.3. Set mode parameter
+   1.4. Set user parameter
+   1.5. Set group parameter
+   1.6. Set fifo parameter
+   1.7. Set the autoconversion parameter 
+   1.8. Set the binrpc_max_body_size parameter 
+   1.9. Set the binrpc_struct_max_body_size parameter 
+   1.10. print usage
+   1.11. ctl.connections usage
+   1.12. ctl.who usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. BINRPC
+   3. Parameters
+
+        3.1. binrpc (string)
+        3.2. mode (integer)
+        3.3. user (integer or string)
+        3.4. group (integer or string)
+        3.5. fifo (integer)
+        3.6. autoconversion (integer)
+        3.7. binrpc_max_body_size (integer)
+        3.8. binrpc_struct_max_body_size (integer)
+
+   4. SIP-router RPC Functions
+
+        4.1. ctl.listen
+        4.2. ctl.connections
+        4.3. ctl.who
 
 1. Overview
 
-   This module implements the binrpc transport interface for Kamailio
+   This  module  implements  the  binrpc transport interface for Kamailio
    RPCs. It supports various transports over which it speaks binrpc: Unix
    datagram sockets, Unix stream sockets, UDP and TCP. It also supports a
-   backward compatible FIFO interface (using the old Kamailio FIFO
+   backward  compatible  FIFO  interface  (using  the  old  Kamailio FIFO
    protocol).
 
    By default (if no parameters are changed in the config file) it uses a
-   Unix stream socket under /tmp: /tmp/ser_ctl. This socket is also the
+   Unix  stream  socket under /tmp: /tmp/ser_ctl. This socket is also the
    default for kamcmd.
 
    In general it's used in conjunction with kamcmd. kamcmd is a Unix tool
-   for invoking Kamailio RPC functions. It can be used both in interactive
-   mode (supports tab-completion and history) or command line mode.
+   for   invoking  Kamailio  RPC  functions.  It  can  be  used  both  in
+   interactive mode (supports tab-completion and history) or command line
+   mode.
 
-   Example 1. kamcmd example usage
+   Example 1.1. kamcmd example usage
 $ kamcmd ps
 11262   attendant
 11268   udp receiver child=0 sock=127.0.0.1:5060
@@ -56,11 +104,11 @@ $ kamcmd ps
 
 2. BINRPC
 
-   binrpc is a ser proprietary binary protocol for invoking rpcs. It was
-   designed such that it would minimize the packet sizes and it would be
+   binrpc  is a ser proprietary binary protocol for invoking rpcs. It was
+   designed  such that it would minimize the packet sizes and it would be
    very fast to parse (as opposed to XML-rpc).
 
-   The binrpc encoding format is fully documented inside
+   The    binrpc    encoding    format   is   fully   documented   inside
    modules/ctl/binrpc.h.
 
 3. Parameters
@@ -76,19 +124,19 @@ $ kamcmd ps
 
 3.1. binrpc (string)
 
-   Specifies the transport used for the binrpc protocol. The following
-   transport protocol are supported: Unix datagram sockets, Unix stream
+   Specifies  the  transport  used for the binrpc protocol. The following
+   transport  protocol  are supported: Unix datagram sockets, Unix stream
    sockets, UDP and TCP.
 
    The format is: [ protocol:] address_port|path .
 
      * For Unix sockets: [unixd|unixs|unix]:path where "unixd" means Unix
-       datagram sockets and "unix" "unixs" mean Unix stream sockets.
-       Examples: "unixd:/tmp/unix_dgram", "unixs:/tmp/unix_stream",
+       datagram  sockets  and  "unix"  "unixs"  mean Unix stream sockets.
+       Examples:    "unixd:/tmp/unix_dgram",    "unixs:/tmp/unix_stream",
        "unix:/tmp/unix_stream".
-     * For UDP or TCP sockets: [udp|tcp]:address:port. If the address is
+     * For  UDP or TCP sockets: [udp|tcp]:address:port. If the address is
        "*" or missing, it will bind to all the local addresses (0.0.0.0).
-       Examples: "udp:localhost:2046", "tcp:localhost:2046", "tcp:3012",
+       Examples:  "udp:localhost:2046", "tcp:localhost:2046", "tcp:3012",
        "udp:*:3012".
 
    If the protocol part is missing and the address/path part looks like a
@@ -97,13 +145,13 @@ $ kamcmd ps
      * "/tmp/unix_test" - equivalent to "unixs:/tmp/unix_test".
      * "localhost:3000" - equivalent to "udp:localhost:3000".
 
-   Multiple transports / listen addresses can be specified, just by
+   Multiple  transports  /  listen  addresses  can  be specified, just by
    setting the parameter multiple times.
 
    Default:"unix:/tmp/ser_ctl" (Unix stream socket). The default value is
    used only if no binrpc parameter is found in the config file.
 
-   Example 2. Set binrpc parameter
+   Example 1.2. Set binrpc parameter
 loadmodule "ctl"
 # optional listen addresses, if no one is specified,
 # ctl will listen on unixs:/tmp/ser_ctl
@@ -125,7 +173,7 @@ modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
 
    Default: 0600.
 
-   Example 3. Set mode parameter
+   Example 1.3. Set mode parameter
 modparam("ctl", "mode", 0600) # permissions
 
 3.3. user (integer or string)
@@ -134,7 +182,7 @@ modparam("ctl", "mode", 0600) # permissions
 
    Default: not set (the user under which SER runs).
 
-   Example 4. Set user parameter
+   Example 1.4. Set user parameter
 modparam("ctl", "user", "andrei")
 
 3.4. group (integer or string)
@@ -143,22 +191,23 @@ modparam("ctl", "user", "andrei")
 
    Default: not set (the group under which SER runs).
 
-   Example 5. Set group parameter
+   Example 1.5. Set group parameter
 modparam("ctl", "group", 100)
 
 3.5. fifo (integer)
 
    fifo used for the obsolete fifo protocol. The fifo protocol can be run
-   over a real fifo, over UDP or over TCP. Format:
-   [protocol:]path|address. If no protocol is specified the default is
-   "fifo". Examples: "fifo:/tmp/ser_fifo", "/tmp/ser_fifo2", "udp:*:2050",
-   "tcp:localhost:2050". For more details on the UDP and TCP formats see
-   binrpc. Multiple fifos or fifo transports can be used in the same time
-   (just by setting the fifo parameter multiple times in the config).
+   over    a    real    fifo,    over    UDP   or   over   TCP.   Format:
+   [protocol:]path|address.  If  no  protocol is specified the default is
+   "fifo".      Examples:     "fifo:/tmp/ser_fifo",     "/tmp/ser_fifo2",
+   "udp:*:2050",  "tcp:localhost:2050".  For  more details on the UDP and
+   TCP  formats see binrpc. Multiple fifos or fifo transports can be used
+   in the same time (just by setting the fifo parameter multiple times in
+   the config).
 
    Default: not set (no fifo will be used).
 
-   Example 6. Set fifo parameter
+   Example 1.6. Set fifo parameter
 # old fifo support
 modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # clasic fifo
 modparam("ctl", "fifo", "/tmp/ser_fifo2")
@@ -167,8 +216,8 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
 
 3.6. autoconversion (integer)
 
-   Enable or disable automatic type conversion globally, for all the
-   methods parameters. If on, a type mismatch in a method parameter will
+   Enable  or  disable  automatic  type  conversion globally, for all the
+   methods  parameters. If on, a type mismatch in a method parameter will
    not cause a fault if it is possible to automatically convert it to the
    expected type.
 
@@ -176,30 +225,30 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
 
    It is recommended to leave this parameter to its default off value and
    fix instead the client application (which should use the proper types)
-   or to modify the target rpc to accept any type (see the rpc scan '.'
+   or  to  modify the target rpc to accept any type (see the rpc scan '.'
    modifier).
 
-   Example 7. Set the autoconversion parameter
+   Example 1.7. Set the autoconversion parameter 
 modparam("ctl", "autoconversion", 1)
 
 3.7. binrpc_max_body_size (integer)
 
-   Set the size of binrpc buffer for RPC reply. Value represents
+   Set  the  size  of  binrpc  buffer  for  RPC  reply.  Value represents
    kilobytes.
 
    Default: 4 (meaning 4KB);
 
-   Example 8. Set the binrpc_max_body_size parameter
+   Example 1.8. Set the binrpc_max_body_size parameter 
 modparam("ctl", "binrpc_max_body_size", 10)
 
 3.8. binrpc_struct_max_body_size (integer)
 
-   Set the size of binrpc structure buffer for RPC reply. Value represents
-   kilobytes.
+   Set  the  size  of  binrpc  structure  buffer  for  RPC  reply.  Value
+   represents kilobytes.
 
    Default: 1 (meaning 1KB);
 
-   Example 9. Set the binrpc_struct_max_body_size parameter
+   Example 1.9. Set the binrpc_struct_max_body_size parameter 
 modparam("ctl", "binrpc_struct_max_body_size", 3)
 
 4. SIP-router RPC Functions
@@ -212,7 +261,7 @@ modparam("ctl", "binrpc_struct_max_body_size", 3)
 
    List all the sockets on which the ctl module listens.
 
-   Example 10. print usage
+   Example 1.10. print usage
  $ kamcmd -f"[%v] %v:%v %v\n" ctl.listen
 [binrpc] unix_stream:/tmp/ser_ctl
 
@@ -222,7 +271,7 @@ modparam("ctl", "binrpc_struct_max_body_size", 3)
 
    Returns the number of open binrpc connections (to the ctl module).
 
-   Example 11. ctl.connections usage
+   Example 1.11. ctl.connections usage
  $ kamcmd ctl.connections
 1
 
@@ -230,7 +279,7 @@ modparam("ctl", "binrpc_struct_max_body_size", 3)
 
    List open binrpc connections (to the ctl module).
 
-   Example 12. ctl.who usage
+   Example 1.12. ctl.who usage
  $ kamcmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
 [binrpc] unix_stream: <anonymous unix socket>  -> /tmp/ser_ctl
 

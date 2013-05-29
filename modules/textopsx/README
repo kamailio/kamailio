@@ -1,4 +1,5 @@
-1. Textopsx Module
+
+Textopsx Module
 
 Andrei Pelinescu-Onciul
 
@@ -10,49 +11,118 @@ Daniel-Constantin Mierla
    <miconda@gmail.com>
 
    Copyright © 2003 FhG FOKUS
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Functions
+   Table of Contents
 
-        1.2.1. msg_apply_changes()
-        1.2.2. change_reply_status(code, reason)
-        1.2.3. remove_body()
-        1.2.4. keep_hf(regexp)
-        1.2.5. fnmatch(value, expr [, flags])
-        1.2.6. append_hf_value(hf, hvalue)
-        1.2.7. insert_hf_value(hf, hvalue)
-        1.2.8. remove_hf_value(hf_par)
-        1.2.9. remove_hf_value2(hf_par)
-        1.2.10. assign_hf_value(hf, hvalue)
-        1.2.11. assign_hf_value2(hf, hvalue)
-        1.2.12. include_hf_value(hf, hvalue)
-        1.2.13. exclude_hf_value(hf, hvalue)
-        1.2.14. hf_value_exists(hf, hvalue)
-        1.2.15. Selects
+   1. Admin Guide
 
-              1.2.15.1. @hf_value
-              1.2.15.2. @hf_value2
-              1.2.15.3. @hf_value_exists
+        1. Overview
+        2. Functions
 
-1.1. Overview
+              2.1. msg_apply_changes() 
+              2.2. change_reply_status(code, reason) 
+              2.3. remove_body() 
+              2.4. keep_hf(regexp) 
+              2.5. fnmatch(value, expr [, flags]) 
+              2.6. append_hf_value(hf, hvalue) 
+              2.7. insert_hf_value(hf, hvalue) 
+              2.8. remove_hf_value(hf_par) 
+              2.9. remove_hf_value2(hf_par) 
+              2.10. assign_hf_value(hf, hvalue) 
+              2.11. assign_hf_value2(hf, hvalue) 
+              2.12. include_hf_value(hf, hvalue) 
+              2.13. exclude_hf_value(hf, hvalue) 
+              2.14. hf_value_exists(hf, hvalue) 
+              2.15. Selects
 
-   This module implements functions for SIP message text operations in
-   routing block configurations. It adds new features similar to the
+                    2.15.1. @hf_value
+                    2.15.2. @hf_value2
+                    2.15.3. @hf_value_exists
+
+   List of Examples
+
+   1.1. msg_apply_changes() usage
+   1.2. change_reply_status usage
+   1.3. remove_body() usage
+   1.4. keep_hf() usage
+   1.5. fnmatch() usage
+   1.6. append_hf_value usage
+   1.7. insert_hf_value usage
+   1.8. remove_hf_value usage
+   1.9. remove_hf_value2 usage
+   1.10. assign_hf_value usage
+   1.11. assign_hf_value2 usage
+   1.12. include_hf_value usage
+   1.13. exclude_hf_value usage
+   1.14. hf_value_exists usage
+   1.15. @hf_value select usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Functions
+
+        2.1. msg_apply_changes() 
+        2.2. change_reply_status(code, reason) 
+        2.3. remove_body() 
+        2.4. keep_hf(regexp) 
+        2.5. fnmatch(value, expr [, flags]) 
+        2.6. append_hf_value(hf, hvalue) 
+        2.7. insert_hf_value(hf, hvalue) 
+        2.8. remove_hf_value(hf_par) 
+        2.9. remove_hf_value2(hf_par) 
+        2.10. assign_hf_value(hf, hvalue) 
+        2.11. assign_hf_value2(hf, hvalue) 
+        2.12. include_hf_value(hf, hvalue) 
+        2.13. exclude_hf_value(hf, hvalue) 
+        2.14. hf_value_exists(hf, hvalue) 
+        2.15. Selects
+
+              2.15.1. @hf_value
+              2.15.2. @hf_value2
+              2.15.3. @hf_value_exists
+
+1. Overview
+
+   This  module  implements  functions for SIP message text operations in
+   routing  block  configurations.  It  adds  new features similar to the
    textops module (textops eXtentions).
 
-1.2. Functions
+2. Functions
 
-1.2.1. msg_apply_changes()
+   2.1. msg_apply_changes() 
+   2.2. change_reply_status(code, reason) 
+   2.3. remove_body() 
+   2.4. keep_hf(regexp) 
+   2.5. fnmatch(value, expr [, flags]) 
+   2.6. append_hf_value(hf, hvalue) 
+   2.7. insert_hf_value(hf, hvalue) 
+   2.8. remove_hf_value(hf_par) 
+   2.9. remove_hf_value2(hf_par) 
+   2.10. assign_hf_value(hf, hvalue) 
+   2.11. assign_hf_value2(hf, hvalue) 
+   2.12. include_hf_value(hf, hvalue) 
+   2.13. exclude_hf_value(hf, hvalue) 
+   2.14. hf_value_exists(hf, hvalue) 
+   2.15. Selects
 
-   Use this function to apply changes performed on SIP request content. Be
-   careful when using this function; due to special handling of changes to
-   the SIP message buffer so far, using this function might change the
-   behaviour of your config. Do test your config properly!
+        2.15.1. @hf_value
+        2.15.2. @hf_value2
+        2.15.3. @hf_value_exists
+
+2.1.  msg_apply_changes()
+
+   Use  this  function to apply changes performed on SIP request content.
+   Be  careful  when  using  this  function;  due  to special handling of
+   changes  to  the  SIP message buffer so far, using this function might
+   change the behaviour of your config. Do test your config properly!
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1. msg_apply_changes() usage
+   Example 1.1. msg_apply_changes() usage
 ...
 append_hf("My-Header: yes\r\n");
 if(msg_apply_changes())
@@ -65,7 +135,7 @@ if(msg_apply_changes())
 }
 ...
 
-1.2.2. change_reply_status(code, reason)
+2.2.  change_reply_status(code, reason)
 
    Intercept a SIP reply (in an onreply_route) and change its status code
    and reason phrase prior to forwarding it.
@@ -76,7 +146,7 @@ if(msg_apply_changes())
 
    This function can be used from ONREPLY_ROUTE.
 
-   Example 2. change_reply_status usage
+   Example 1.2. change_reply_status usage
 ...
 onreply_route {
     if (@status == "603") {
@@ -86,43 +156,43 @@ onreply_route {
 }
 ...
 
-1.2.3. remove_body()
+2.3.  remove_body()
 
    Use this function to remove the body of SIP requests or replies.
 
    This function can be used from ANY_ROUTE.
 
-   Example 3. remove_body() usage
+   Example 1.3. remove_body() usage
 ...
 remove_body();
 ...
 
-1.2.4. keep_hf(regexp)
+2.4.  keep_hf(regexp)
 
    Remove headers that don't match the regular expression regexp. Several
-   header are ignored always (thus not removed): Via, From, To, Call-ID,
-   CSeq, Content-Lenght, Content-Type, Max-Forwards, Contact, Route,
+   header  are ignored always (thus not removed): Via, From, To, Call-ID,
+   CSeq,  Content-Lenght,  Content-Type,  Max-Forwards,  Contact,  Route,
    Record-Route -- these can be removed one by one with remove_hf().
 
    This function can be used from ANY_ROUTE.
 
-   Example 4. keep_hf() usage
+   Example 1.4. keep_hf() usage
 ...
 keep_hf("User-Agent");
 ...
 
-1.2.5. fnmatch(value, expr [, flags])
+2.5.  fnmatch(value, expr [, flags])
 
-   Match the value against the expr using shell-style pattern for file
-   name matching (see man page for C function fnmatch()). It is known to
+   Match  the  value  against the expr using shell-style pattern for file
+   name  matching (see man page for C function fnmatch()). It is known to
    be faster and use less-memory than regular expressions.
 
-   Parameter 'flags' is optional and can be 'i' to do case insensitive
+   Parameter  'flags'  is  optional and can be 'i' to do case insensitive
    matching.
 
    This function can be used from ANY_ROUTE.
 
-   Example 5. fnmatch() usage
+   Example 1.5. fnmatch() usage
 ...
 if(fnmatch("$rU", "123*"))
 {
@@ -130,57 +200,57 @@ if(fnmatch("$rU", "123*"))
 }
 ...
 
-1.2.6. append_hf_value(hf, hvalue)
+2.6.  append_hf_value(hf, hvalue)
 
    Append new header value after an existing header, if no index acquired
-   append at the end of list. Note that a header may consist of comma
+   append  at  the  end  of list. Note that a header may consist of comma
    delimited list of values.
 
    Meaning of the parameters is as follows:
-     * hf - Header field to be appended. Format: HFNAME [ [IDX] ]. If
-       index is not specified new header is inserted at the end of
+     * hf  -  Header  field  to be appended. Format: HFNAME [ [IDX] ]. If
+       index  is  not  specified  new  header  is  inserted at the end of
        message.
      * hvalue - Value to be added, config var formatting supported.
 
-   Example 6. append_hf_value usage
+   Example 1.6. append_hf_value usage
 ...
 append_hf_value("foo", "gogo;stamp=$Ts")   # add new header
 append_hf_value("foo[1]", "gogo")  # add new value behind first value
-append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if n
-ot exists add new header
+append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if
+not exists add new header
 ...
 
-1.2.7. insert_hf_value(hf, hvalue)
+2.7.  insert_hf_value(hf, hvalue)
 
-   Insert new header value before an existing header, if no index acquired
-   insert before first hf header. Note that a header may consist of comma
-   delimited list of values. To insert value behing last value use
-   appenf_hf_value.
+   Insert  new  header  value  before  an  existing  header,  if no index
+   acquired insert before first hf header. Note that a header may consist
+   of  comma  delimited list of values. To insert value behing last value
+   use appenf_hf_value.
 
    Meaning of the parameters is as follows:
-     * hf - Header field to be appended. Format: HFNAME [ [IDX] ]. If
-       index is not specified new header is inserted at the top of
+     * hf  -  Header  field  to be appended. Format: HFNAME [ [IDX] ]. If
+       index  is  not  specified  new  header  is  inserted at the top of
        message.
      * hvalue - Value to be added, config var formatting supported.
 
-   Example 7. insert_hf_value usage
+   Example 1.7. insert_hf_value usage
 ...
 insert_hf_value("foo[2]", "gogo")
 insert_hf_value("foo", "$avp(foo)")   # add new header at the top of list
 insert_hf_value("foo[1]", "gogo") # try add to the first header
 ...
 
-1.2.8. remove_hf_value(hf_par)
+2.8.  remove_hf_value(hf_par)
 
-   Remove the header value from existing header, Note that a header may
+   Remove  the  header value from existing header, Note that a header may
    consist of comma delimited list of values.
 
    Meaning of the parameters is as follows:
-     * hf_par - Header field/param to be removed. Format: HFNAME [ [IDX] ]
-       [. PARAM ] If asterisk is specified as index then all values are
+     * hf_par  - Header field/param to be removed. Format: HFNAME [ [IDX]
+       ] [. PARAM ] If asterisk is specified as index then all values are
        affected.
 
-   Example 8. remove_hf_value usage
+   Example 1.8. remove_hf_value usage
 ...
 remove_hf_value("foo")  # remove foo[1]
 remove_hf_value("foo[*]")  # remove all foo's headers
@@ -189,39 +259,39 @@ remove_hf_value("foo.bar")  # delete parameter
 remove_hf_value("foo[*].bar") # for each foo delete bar parameters
 ...
 
-1.2.9. remove_hf_value2(hf_par)
+2.9.  remove_hf_value2(hf_par)
 
-   Remove specified header or parameter. It is expected header in
-   Authorization format (comma delimiters are not treated as multi-value
+   Remove  specified  header  or  parameter.  It  is  expected  header in
+   Authorization  format (comma delimiters are not treated as multi-value
    delimiters).
 
    Meaning of the parameters is as follows:
-     * hf_par - Header/param to be removed. Format: HFNAME [ [IDX] ] [.
-       PARAM ] If asterisk is specified as index then all values are
+     * hf_par  -  Header/param to be removed. Format: HFNAME [ [IDX] ] [.
+       PARAM  ]  If  asterisk  is  specified as index then all values are
        affected.
 
-   Example 9. remove_hf_value2 usage
+   Example 1.9. remove_hf_value2 usage
 ...
 remove_hf_value2("foo")  # remove foo[1]
-remove_hf_value2("foo[*]")  # remove all foo's headers, the same as remove_hf_he
-ader("foo[*]");
+remove_hf_value2("foo[*]")  # remove all foo's headers, the same as remove_hf_h
+eader("foo[*]");
 remove_hf_value2("foo[-1]") # last foo
 remove_hf_value2("foo.bar")  # delete parameter
 remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
 ...
 
-1.2.10. assign_hf_value(hf, hvalue)
+2.10.  assign_hf_value(hf, hvalue)
 
    Assign value to specified header value / param.
 
    Meaning of the parameters is as follows:
-     * hf_para - Header field value / param to be appended. Format: HFNAME
-       [ [IDX] ] [. PARAM] If asterisk is specified as index then all
-       values are affected.
+     * hf_para  -  Header  field  value  /  param to be appended. Format:
+       HFNAME  [ [IDX] ] [. PARAM] If asterisk is specified as index then
+       all values are affected.
      * hvalue - Value to be assigned, config var formatting supported. If
        value is empty then no equal sign apears in param.
 
-   Example 10. assign_hf_value usage
+   Example 1.10. assign_hf_value usage
 ...
 assign_hf_value("foo", "gogo")  # foo[1]
 assign_hf_value("foo[-1]", "gogo")  # foo[last_foo]
@@ -232,27 +302,27 @@ assign_hf_value("foo[*]", "")  # remove all foo's, empty value remains
 assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
 ...
 
-1.2.11. assign_hf_value2(hf, hvalue)
+2.11.  assign_hf_value2(hf, hvalue)
 
-   Assign value to specified header. It is expected header in
-   Authorization format (comma delimiters are not treated as multi-value
+   Assign   value   to   specified  header.  It  is  expected  header  in
+   Authorization  format (comma delimiters are not treated as multi-value
    delimiters).
 
    Meaning of the parameters is as follows:
-     * hf_para - Header field value / param to be appended. Format: HFNAME
-       [ [IDX] ] [. PARAM] If asterisk is specified as index then all
-       values are affected.
+     * hf_para  -  Header  field  value  /  param to be appended. Format:
+       HFNAME  [ [IDX] ] [. PARAM] If asterisk is specified as index then
+       all values are affected.
      * hvalue - Value to be assigned, config var formatting supported. If
        value is empty then no equal sign apears in param.
 
-   Example 11. assign_hf_value2 usage
+   Example 1.11. assign_hf_value2 usage
 ...
 assign_hf_value2("Authorization.integrity-protected", "\"yes\"")
 assign_hf_value2("foo[-1]", "gogo")  # foo[last_foo]
 assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
 ...
 
-1.2.12. include_hf_value(hf, hvalue)
+2.12.  include_hf_value(hf, hvalue)
 
    Add value in set if not exists, eg. "Supported: path,100rel".
 
@@ -260,12 +330,12 @@ assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
      * hf - Header field name to be affected.
      * hvalue - config var formatting supported.
 
-   Example 12. include_hf_value usage
+   Example 1.12. include_hf_value usage
 ...
 include_hf_value("Supported", "path");
 ...
 
-1.2.13. exclude_hf_value(hf, hvalue)
+2.13.  exclude_hf_value(hf, hvalue)
 
    Remove value from set if exists, eg. "Supported: path,100rel".
 
@@ -273,22 +343,22 @@ include_hf_value("Supported", "path");
      * hf - Header field name to be affected.
      * hvalue - config formatting supported.
 
-   Example 13. exclude_hf_value usage
+   Example 1.13. exclude_hf_value usage
 ...
 exclude_hf_value("Supported", "100rel");
 ...
 
-1.2.14. hf_value_exists(hf, hvalue)
+2.14.  hf_value_exists(hf, hvalue)
 
-   Check if value exists in set. Alternate select
+   Check     if     value     exists    in    set.    Alternate    select
    @hf_value_exists.HF.VALUE may be used. It returns one or zero.
 
    Meaning of the parameters is as follows:
-     * hf - Header field name to be affected. Underscores are treated as
+     * hf  - Header field name to be affected. Underscores are treated as
        dashes.
      * hvalue - config var formatting supported.
 
-   Example 14. hf_value_exists usage
+   Example 1.14. hf_value_exists usage
 ...
 if (hf_value_exists("Supported", "100rel")) {
 
@@ -299,38 +369,39 @@ if (@hf_value_exists.supported.path == "1") {
 }
 ...
 
-1.2.15. Selects
+2.15. Selects
 
-1.2.15.1. @hf_value
+2.15.1. @hf_value
 
-   Get value of required header-value or param. Note that functions called
-   'value2' works with Authorization-like headers where comma is not
-   treated as value delimiter. Formats: @hf_value.HFNAME[IDX] # idx value,
-   negative value counts from bottom @hf_value.HFNAME.PARAM_NAME
-   @hf_value.HFNAME[IDX].PARAM_NAME @hf_value.HFNAME.p.PARAM_NAME # or
-   .param., useful if requred called "uri", "p", "param"
-   @hf_value.HFNAME[IDX].p.PARAM_NAME # dtto @hf_value.HFNAME[IDX].uri #
-   (< & > excluded) @hf_value.HFNAME[*] # return comma delimited list of
+   Get  value  of  required  header-value  or  param. Note that functions
+   called  'value2'  works with Authorization-like headers where comma is
+   not  treated  as value delimiter. Formats: @hf_value.HFNAME[IDX] # idx
+   value,  negative  value counts from bottom @hf_value.HFNAME.PARAM_NAME
+   @hf_value.HFNAME[IDX].PARAM_NAME  @hf_value.HFNAME.p.PARAM_NAME  #  or
+   .param.,    useful    if    requred   called   "uri",   "p",   "param"
+   @hf_value.HFNAME[IDX].p.PARAM_NAME  # dtto @hf_value.HFNAME[IDX].uri #
+   (<  & > excluded) @hf_value.HFNAME[*] # return comma delimited list of
    all values (combines headers) @hf_value.HFNAME # the same as above [*]
-   but may be parsed by cfg.y @hf_value.HFNAME[*].uri # return comma
-   delimited list of uris (< & > excluded) @hf_value.HFNAME.uri # the same
-   as above [*] but may be parsed by cfg.y @hf_value.HFNAME[IDX].name #
-   returns name part, quotes excluded @hf_value.HFNAME.name # returns name
-   part of the first value @hf_value2.HFNAME # returns value of first
-   header @hf_value2.HFNAME[IDX] # returns value of idx's header
-   @hf_value2.HFNAME.PARAM_NAME @hf_value2.HFNAME[IDX].PARAM_NAME
-   @hf_value.HFNAME[IDX].uri # return URI, quotes excluded
-   @hf_value.HFNAME.p.uri # returns param named uri, not URI itself
-   @hf_value.HFNAME.p.name # returns param named name, not name itself
-   @hf_value.HFNAME[IDX].uri.name # any sel_any_uri nested features may be
-   used @hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr
+   but  may  be  parsed  by  cfg.y @hf_value.HFNAME[*].uri # return comma
+   delimited  list  of  uris  (< & > excluded) @hf_value.HFNAME.uri # the
+   same as above [*] but may be parsed by cfg.y
+   @hf_value.HFNAME[IDX].name   #  returns  name  part,  quotes  excluded
+   @hf_value.HFNAME.name   #   returns  name  part  of  the  first  value
+   @hf_value2.HFNAME     #     returns     value    of    first    header
+   @hf_value2.HFNAME[IDX]    #    returns    value    of   idx's   header
+   @hf_value2.HFNAME.PARAM_NAME         @hf_value2.HFNAME[IDX].PARAM_NAME
+   @hf_value.HFNAME[IDX].uri    #    return    URI,    quotes    excluded
+   @hf_value.HFNAME.p.uri  #  returns  param  named  uri,  not URI itself
+   @hf_value.HFNAME.p.name  #  returns  param named name, not name itself
+   @hf_value.HFNAME[IDX].uri.name  #  any sel_any_uri nested features may
+   be used @hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr
 
    Meaning of the parameters is as follows:
      * HFNAME - Header field name. Underscores are treated as dashes.
      * IDX - Value index, negative value counts from bottom
      * PARAM_NAME - name of parameter
 
-   Example 15. @hf_value select usage
+   Example 1.15. @hf_value select usage
 ...
 $a = @hf_value.my_header[1].my_param;
 xplog("L_ERR", "$sel(@hf_value.via[-1]), $sel(@hf_value.from.tag)\n");
@@ -342,10 +413,10 @@ $rr = @hf_value.route.uri;
 $prt = @hf_value2.authorization.integrity_protected;
 ...
 
-1.2.15.2. @hf_value2
+2.15.2. @hf_value2
 
    TBA.
 
-1.2.15.3. @hf_value_exists
+2.15.3. @hf_value_exists
 
    TBA.

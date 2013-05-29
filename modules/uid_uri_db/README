@@ -1,159 +1,214 @@
-1. UID Uri_db Module
+
+UID Uri_db Module
 
 Jan Janak
 
    FhG FOKUS
 
    Copyright © 2003 FhG FOKUS
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. Parameters
+   Table of Contents
 
-        1.3.1. db_url (string)
-        1.3.2. uri_table (string)
-        1.3.3. uri_user_column (string)
-        1.3.4. uri_domain_column (string)
-        1.3.5. uri_uriuser_column (string)
-        1.3.6. subscriber_table (string)
-        1.3.7. subscriber_user_column (string)
-        1.3.8. subscriber_domain_column (string)
+   1. Admin Guide
 
-   1.4. Functions
+        1. Overview
+        2. Dependencies
+        3. Parameters
 
-        1.4.1. check_to()
-        1.4.2. check_from()
-        1.4.3. does_uri_exist()
+              3.1. db_url (string)
+              3.2. uri_table (string)
+              3.3. uri_user_column (string)
+              3.4. uri_domain_column (string)
+              3.5. uri_uriuser_column (string)
+              3.6. subscriber_table (string)
+              3.7. subscriber_user_column (string)
+              3.8. subscriber_domain_column (string)
 
-1.1. Overview
+        4. Functions
+
+              4.1. check_to() 
+              4.2. check_from() 
+              4.3. does_uri_exist() 
+
+   List of Examples
+
+   1.1. Set db_url parameter
+   1.2. Set uri_table parameter
+   1.3. Set uri_user_column parameter
+   1.4. Set uri_domain_column parameter
+   1.5. Set uri_uriuser_column parameter
+   1.6. Set subscriber_table parameter
+   1.7. Set subscriber_user_column parameter
+   1.8. Set subscriber_domain_column parameter
+   1.9. check_to usage
+   1.10. check_from usage
+   1.11. does_uri_exist usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. uri_table (string)
+        3.3. uri_user_column (string)
+        3.4. uri_domain_column (string)
+        3.5. uri_uriuser_column (string)
+        3.6. subscriber_table (string)
+        3.7. subscriber_user_column (string)
+        3.8. subscriber_domain_column (string)
+
+   4. Functions
+
+        4.1. check_to() 
+        4.2. check_from() 
+        4.3. does_uri_exist() 
+
+1. Overview
 
    Various checks related to SIP URI.
 
-1.2. Dependencies
+2. Dependencies
 
    The following modules must be loaded before this module:
      * A SER database module.
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. db_url (string)
+   3.1. db_url (string)
+   3.2. uri_table (string)
+   3.3. uri_user_column (string)
+   3.4. uri_domain_column (string)
+   3.5. uri_uriuser_column (string)
+   3.6. subscriber_table (string)
+   3.7. subscriber_user_column (string)
+   3.8. subscriber_domain_column (string)
+
+3.1. db_url (string)
 
    URL of the database to be used.
 
    Default value is "mysql://serro:47serro11@localhost/ser".
 
-   Example 1. Set db_url parameter
+   Example 1.1. Set db_url parameter
 ...
 modparam("module", "db_url", "mysql://username:password@localhost/ser")
 ...
 
-1.3.2. uri_table (string)
+3.2. uri_table (string)
 
    Table containing list of allowed URIs for each user.
 
    Default value is "uri".
 
-   Example 2. Set uri_table parameter
+   Example 1.2. Set uri_table parameter
 ...
 modparam("module", "uri_table", "uri")
 ...
 
-1.3.3. uri_user_column (string)
+3.3. uri_user_column (string)
 
    Column holding usernames in the URI table.
 
    Default value is "username".
 
-   Example 3. Set uri_user_column parameter
+   Example 1.3. Set uri_user_column parameter
 ...
 modparam("module", "uri_user_column", "username")
 ...
 
-1.3.4. uri_domain_column (string)
+3.4. uri_domain_column (string)
 
    Column holding domain in the URI table.
 
    Default value is "domain".
 
-   Example 4. Set uri_domain_column parameter
+   Example 1.4. Set uri_domain_column parameter
 ...
 modparam("module", "uri_domain_column", "domain")
 ...
 
-1.3.5. uri_uriuser_column (string)
+3.5. uri_uriuser_column (string)
 
    Column holding URI username in the URI table.
 
    Default value is "uri_user".
 
-   Example 5. Set uri_uriuser_column parameter
+   Example 1.5. Set uri_uriuser_column parameter
 ...
 modparam("module", "uri_uriuser_column", "uri_user")
 ...
 
-1.3.6. subscriber_table (string)
+3.6. subscriber_table (string)
 
    Name of the subscriber table.
 
    Default value is "subscriber".
 
-   Example 6. Set subscriber_table parameter
+   Example 1.6. Set subscriber_table parameter
 ...
 modparam("module", "subscriber_table", "subscriber")
 ...
 
-1.3.7. subscriber_user_column (string)
+3.7. subscriber_user_column (string)
 
    Column holding username in subscriber table.
 
    Default value is "username".
 
-   Example 7. Set subscriber_user_column parameter
+   Example 1.7. Set subscriber_user_column parameter
 ...
 modparam("module", "subscriber_user_column", "username")
 ...
 
-1.3.8. subscriber_domain_column (string)
+3.8. subscriber_domain_column (string)
 
    Column holding domains in the subscriber table.
 
    Default value is "domain".
 
-   Example 8. Set subscriber_domain_column parameter
+   Example 1.8. Set subscriber_domain_column parameter
 ...
 modparam("module", "subscriber_domain_column", "domain")
 ...
 
-1.4. Functions
+4. Functions
 
-1.4.1. check_to()
+   4.1. check_to() 
+   4.2. check_from() 
+   4.3. does_uri_exist() 
+
+4.1.  check_to()
 
    Check To username against URI table or digest credentials.
 
-   Example 9. check_to usage
+   Example 1.9. check_to usage
 ...
 if (check_to()) {
     ...
 };
 ...
 
-1.4.2. check_from()
+4.2.  check_from()
 
    Check From username against URI table or digest credentials.
 
-   Example 10. check_from usage
+   Example 1.10. check_from usage
 ...
 if (check_from()) {
     ...
 };
 ...
 
-1.4.3. does_uri_exist()
+4.3.  does_uri_exist()
 
    Check if username in the request URI belongs to an existing user.
 
-   Example 11. does_uri_exist usage
+   Example 1.11. does_uri_exist usage
 ...
 if (does_uri_exist()) {
     ...

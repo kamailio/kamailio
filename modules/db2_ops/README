@@ -1,50 +1,110 @@
-1. db2_ops module
+
+db2_ops module
 
 Tomas Mandys
 
    Iptel.org
 
    Copyright © 2007 Tomas Mandys
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. ABNF syntax
-   1.4. Parameters
+   Table of Contents
 
-        1.4.1. db_url (string)
-        1.4.2. declare_query (string)
-        1.4.3. declare_handle (string)
+   1. Admin Guide
 
-   1.5. Functions
+        1. Overview
+        2. Dependencies
+        3. ABNF syntax
+        4. Parameters
 
-        1.5.1. db_query(query | query_id [,handle] )
-        1.5.2. db_close(handle)
-        1.5.3. db_first(handle)
-        1.5.4. db_next(handle)
-        1.5.5. db_seek(handle, row_no)
-        1.5.6. db_foreach(handle, route)
-        1.5.7. db_proper()
-        1.5.8. @db.query.query_id
-        1.5.9. @db.query.query_id.count
-        1.5.10. @db.query.query_id.is_empty
-        1.5.11. @db.query.query_id.field[m]
-        1.5.12. @db.query.query_id.row[n]
-        1.5.13. @db.query.query_id.row[n].field[m]
-        1.5.14. @db.fetch.handle
-        1.5.15. @db.fetch.handle.row_no
+              4.1. db_url (string)
+              4.2. declare_query (string)
+              4.3. declare_handle (string)
 
-   1.6. Examples
+        5. Functions
 
-1.1. Overview
+              5.1. db_query(query | query_id [,handle] ) 
+              5.2. db_close(handle) 
+              5.3. db_first(handle) 
+              5.4. db_next(handle) 
+              5.5. db_seek(handle, row_no) 
+              5.6. db_foreach(handle, route) 
+              5.7. db_proper() 
+              5.8. @db.query.query_id 
+              5.9. @db.query.query_id.count 
+              5.10. @db.query.query_id.is_empty 
+              5.11. @db.query.query_id.field[m] 
+              5.12. @db.query.query_id.row[n] 
+              5.13. @db.query.query_id.row[n].field[m] 
+              5.14. @db.fetch.handle 
+              5.15. @db.fetch.handle.row_no 
+
+        6. Examples
+
+   List of Examples
+
+   1.1. Example db_url
+   1.2. Example declare_query
+   1.3. Example declare_handle
+   1.4. db_query usage
+   1.5. db_close usage
+   1.6. db_first usage
+   1.7. db_next usage
+   1.8. db_seek usage
+   1.9. db_foreach usage
+   1.10. db_proper usage
+   1.11. db.query.query_id usage
+   1.12. db.query.query_id.count usage
+   1.13. db.query.query_id.is_empty usage
+   1.14. db.query.query_id.field[m] usage
+   1.15. db.query.query_id.row[n] usage
+   1.16. db.query.query_id.row[n].field[m] usage
+   1.17. db.fetch.handle usage
+   1.18. db.fetch.handle.row_no usage
+   1.19. db_ops common example
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. ABNF syntax
+   4. Parameters
+
+        4.1. db_url (string)
+        4.2. declare_query (string)
+        4.3. declare_handle (string)
+
+   5. Functions
+
+        5.1. db_query(query | query_id [,handle] ) 
+        5.2. db_close(handle) 
+        5.3. db_first(handle) 
+        5.4. db_next(handle) 
+        5.5. db_seek(handle, row_no) 
+        5.6. db_foreach(handle, route) 
+        5.7. db_proper() 
+        5.8. @db.query.query_id 
+        5.9. @db.query.query_id.count 
+        5.10. @db.query.query_id.is_empty 
+        5.11. @db.query.query_id.field[m] 
+        5.12. @db.query.query_id.row[n] 
+        5.13. @db.query.query_id.row[n].field[m] 
+        5.14. @db.fetch.handle 
+        5.15. @db.fetch.handle.row_no 
+
+   6. Examples
+
+1. Overview
 
    The module introduces possibility to run SQL queries from script.
 
-1.2. Dependencies
+2. Dependencies
 
    none
 
-1.3. ABNF syntax
+3. ABNF syntax
 
         xltext = text_parsed_by_xl_lib
         database = type "://" user:psw "@" host "/" database_name
@@ -54,84 +114,104 @@ Tomas Mandys
         where = fields
         ops = op [ "," op ... ]
         order = field
-        type = "s" | "i" | "d" | "f" | "t" ; enables to force particular type wh
-en writing to db driver (string/int/double/float/datetime), valueable especially
- for datetime
+        type = "s" | "i" | "d" | "f" | "t" ; enables to force particular type w
+hen writing to db driver (string/int/double/float/datetime), valueable especial
+ly for datetime
         value = [type ":"] xltext
         values = value [ "," value ...]
         extra_op = name "=" [type ":"] text
         extra_ops = extra_op [ "," extra_op]
 
-        select = [database "/"] "select/" table "/" fields "/" where "/" ops "/"
- order "/" values [ "/" extra_ops ]
-        insert = [database "/"] "insert/" table "/" fields "/" values [ "/" extr
-a_ops ]
-        update = [database "/"] "update/" table "/" fields "/" where "/" ops "/"
- values [ "/" extra_ops ]
-        replace = [database "/"] "replace/" table "/" fields "/" values [ "/" ex
-tra_ops ]
-        delete = [database "/"] "delete/" table "/" where "/" ops "/" values [ "
-/" extra_ops ]
+        select = [database "/"] "select/" table "/" fields "/" where "/" ops "/
+" order "/" values [ "/" extra_ops ]
+        insert = [database "/"] "insert/" table "/" fields "/" values [ "/" ext
+ra_ops ]
+        update = [database "/"] "update/" table "/" fields "/" where "/" ops "/
+" values [ "/" extra_ops ]
+        replace = [database "/"] "replace/" table "/" fields "/" values [ "/" e
+xtra_ops ]
+        delete = [database "/"] "delete/" table "/" where "/" ops "/" values [
+"/" extra_ops ]
         raw_query = [database "/"] "select ...." | "insert ..." [[ / "values" [
-"/" extra_ops ]]  # not delimited by "/"
+ "/" extra_ops ]]  # not delimited by "/"
         query = (select | insert | update | replace | delete | raw_query)
         query_id = alphanum
         handle = alphanum  (plain text possible but alphanum recommended)
         declare_query_param = query_id "=" query
         declare_handle_param = handle
 
-1.4. Parameters
+4. Parameters
 
-1.4.1. db_url (string)
+   4.1. db_url (string)
+   4.2. declare_query (string)
+   4.3. declare_handle (string)
+
+4.1. db_url (string)
 
    Default database URL.
 
    The format is:
                         db_url = database
 
-   Example 1. Example db_url
+   Example 1.1. Example db_url
         ...
         modparam("db_ops", "db_url", "mysql://ser:123@127.0.0.1:12345/ser");
         ...
 
-1.4.2. declare_query (string)
+4.2. declare_query (string)
 
    Declare query_id for @db.query_id (see select syntax) or for reference
-   from db_query(query_id). Queries are pre-compiled therefore volatile
+   from  db_query(query_id).  Queries are pre-compiled therefore volatile
    stuff must be passed via parameters (AVP or so).
 
    The format is:
                         declare_query = declare_query_param
 
-   Example 2. Example declare_query
+   Example 1.2. Example declare_query
         ...
-        modparam("db_ops", "declare_query", "sel1=select/location/received/uid//
-/%$f.uid");
+        modparam("db_ops", "declare_query", "sel1=select/location/received/uid/
+//%$f.uid");
         ...
 
-1.4.3. declare_handle (string)
+4.3. declare_handle (string)
 
    Declare handle for fetching.
 
    The format is:
                         declare_handle = declare_handle_param
 
-   Example 3. Example declare_handle
+   Example 1.3. Example declare_handle
         ...
         modparam("db_ops", "declare_handle", "my_handle");
         ...
 
-1.5. Functions
+5. Functions
 
-1.5.1. db_query(query | query_id [,handle] )
+   5.1. db_query(query | query_id [,handle] ) 
+   5.2. db_close(handle) 
+   5.3. db_first(handle) 
+   5.4. db_next(handle) 
+   5.5. db_seek(handle, row_no) 
+   5.6. db_foreach(handle, route) 
+   5.7. db_proper() 
+   5.8. @db.query.query_id 
+   5.9. @db.query.query_id.count 
+   5.10. @db.query.query_id.is_empty 
+   5.11. @db.query.query_id.field[m] 
+   5.12. @db.query.query_id.row[n] 
+   5.13. @db.query.query_id.row[n].field[m] 
+   5.14. @db.fetch.handle 
+   5.15. @db.fetch.handle.row_no 
 
-   Executes query and in case of SELECT returns result via handle, seeks
+5.1.  db_query(query | query_id [,handle] )
+
+   Executes  query and in case of SELECT returns result via handle, seeks
    the first record and returns TRUE if table is not empty. The result is
-   accesible using @db.fetch select. See also declare_handle. Query_id
+   accesible  using  @db.fetch  select. See also declare_handle. Query_id
    references to query declared using declare_query, handle references to
    query declared using declare_handle.
 
-   Example 4. db_query usage
+   Example 1.4. db_query usage
         ...
         db_query("delete/silo///");
         if (db_query("select/silo/body/uid//inc_time/%$f.uid", my_handle)) {
@@ -142,58 +222,58 @@ tra_ops ]
 
         }
 
-1.5.2. db_close(handle)
+5.2.  db_close(handle)
 
-   Close table that has been opened using db_query. Note all close after
+   Close  table that has been opened using db_query. Note all close after
    script processing automatically.
 
-   Example 5. db_close usage
+   Example 1.5. db_close usage
         ...
         db_close(my_handle);
         ...
 
-1.5.3. db_first(handle)
+5.3.  db_first(handle)
 
-   Returns TRUE if table is not empty. Note that rewind might not be
+   Returns  TRUE  if  table  is  not empty. Note that rewind might not be
    supported by particular db driver.
 
-   Example 6. db_first usage
+   Example 1.6. db_first usage
         ...
         if (db_first(my_handle)) {
         ...
         }
         ...
 
-1.5.4. db_next(handle)
+5.4.  db_next(handle)
 
    Moves to the next record and returns TRUE if not EOF.
 
-   Example 7. db_next usage
+   Example 1.7. db_next usage
         ...
         if (db_next(my_handle)) {
         ...
         }
         ...
 
-1.5.5. db_seek(handle, row_no)
+5.5.  db_seek(handle, row_no)
 
-   Seeks at the row no (origin is zero) and Returns TRUE in case of
+   Seeks  at  the  row  no  (origin  is zero) and Returns TRUE in case of
    success. Backward seek might not be supported by db driver.
 
-   Example 8. db_seek usage
+   Example 1.8. db_seek usage
         ...
         if (db_seek(my_handle, $row_no)) {
         ...
         }
         ...
 
-1.5.6. db_foreach(handle, route)
+5.6.  db_foreach(handle, route)
 
    Call specific route for each row, loop is interrupted if route returns
    code <= 0. Return code of the last route call is returned as result of
    db_foreach (or -1 when no select is empty).
 
-   Example 9. db_foreach usage
+   Example 1.9. db_foreach usage
         route["print_row"] {
         ....
         }
@@ -204,86 +284,87 @@ tra_ops ]
         }
         ...
 
-1.5.7. db_proper()
+5.7.  db_proper()
 
-   Hack which enables using db_ops queries in failure route. Call it at
+   Hack  which  enables using db_ops queries in failure route. Call it at
    the beginning of failure_route block.
 
-   Example 10. db_proper usage
+   Example 1.10. db_proper usage
         failure_route["my_failure"] {
                 db_proper();
                 db_query(my_query, my_handle);
         ....
         }
 
-1.5.8. @db.query.query_id
+5.8.  @db.query.query_id
 
    Returns value of the first row and the first field.
 
-   Example 11. db.query.query_id usage
+   Example 1.11. db.query.query_id usage
         if (@db.query.my_query == "my") {
         ....
         }
 
-1.5.9. @db.query.query_id.count
+5.9.  @db.query.query_id.count
 
    Returns number of rows in select query.
 
-   Example 12. db.query.query_id.count usage
+   Example 1.12. db.query.query_id.count usage
         if (@db.query.my_query.count == "2") {
         ....
         }
 
-1.5.10. @db.query.query_id.is_empty
+5.10.  @db.query.query_id.is_empty
 
    Returns 1 if select query is empty.
 
-   Example 13. db.query.query_id.is_empty usage
+   Example 1.13. db.query.query_id.is_empty usage
         if (@db.query.my_query.is_query == "1") {
                 # query is empty
         }
 
-1.5.11. @db.query.query_id.field[m]
+5.11.  @db.query.query_id.field[m]
 
-   Returns value of the first row and the m-th field. @*.field supports
+   Returns  value  of the first row and the m-th field. @*.field supports
    select_any_uri and select_any_nameaddr.
 
-   Example 14. db.query.query_id.field[m] usage
+   Example 1.14. db.query.query_id.field[m] usage
         if (@db.query.my_query.field[2] == "xyz") {
                 ...
         }
 
-1.5.12. @db.query.query_id.row[n]
+5.12.  @db.query.query_id.row[n]
 
-   Returns value of the n-th row and the first field, negative values
+   Returns  value  of  the  n-th row and the first field, negative values
    count from the end (-1 == last row).
 
-   Example 15. db.query.query_id.row[n] usage
+   Example 1.15. db.query.query_id.row[n] usage
         if (@db.query.my_query.row[2] == "xyz") {
                 ...
         }
 
-1.5.13. @db.query.query_id.row[n].field[m]
+5.13.  @db.query.query_id.row[n].field[m]
 
-   Returns value of the n-th row and the m-th field. @*.field supports
+   Returns  value  of  the n-th row and the m-th field. @*.field supports
    select_any_uri and select_any_nameaddr.
 
-   Example 16. db.query.query_id.row[n].field[m] usage
+   Example 1.16. db.query.query_id.row[n].field[m] usage
         if (@db.query.my_query.row[2].field[1] == "xyz") {
                 ...
         }
 
-1.5.14. @db.fetch.handle
+5.14.  @db.fetch.handle
 
-   Similar functionality as @db.query selects with exception that
+   Similar   functionality  as  @db.query  selects  with  exception  that
    operation is performed at query has been opened by db_query.
 
-   @db.fetch.handle.count invalidates current record, do db_seek/db_first!
+   @db.fetch.handle.count      invalidates     current     record,     do
+   db_seek/db_first!
 
    Note all opened queries are closed in POST_SCRIPT callback not to leak
    memory.
 
-   Example 17. db.fetch.handle usage
+   Example 1.17. db.fetch.handle usage
         db_query(sel1, my_handle);
         if (@db.fetch.my_handle.is_empty == "0") {
                 if (@db.fetch.my_handle == "xyz") {
@@ -292,11 +373,11 @@ tra_ops ]
         }
         db_close(my_handle);
 
-1.5.15. @db.fetch.handle.row_no
+5.15.  @db.fetch.handle.row_no
 
    Returns current row number (origin is zero).
 
-   Example 18. db.fetch.handle.row_no usage
+   Example 1.18. db.fetch.handle.row_no usage
         db_query(sel1, my_handle);
         ...
         db_next(my_handle);
@@ -310,59 +391,60 @@ tra_ops ]
         if (@db.fetch.my_handle.count == "10") {
                 ...
         }
-        if (@db.fetch.my_handle.row_no == "1") {        # always false because .
-count has invalidated current record!
+        if (@db.fetch.my_handle.row_no == "1") {        # always false because
+.count has invalidated current record!
 
         }
         db_close(my_handle);
 
-1.6. Examples
+6. Examples
 
-   Example 19. db_ops common example
-modparam("db_ops", "declare_query", "sel1=select/location/received/uid///%$f.uid
-");
-modparam("db_ops", "declare_query", "sel2=select/subscriber/email_address,greeti
-ng/uid,allow_find///%$uidparam,1");
-modparam("db_ops", "declare_query", "sel3=select/silo/body/uid//inc_time/%$f.uid
-");
-modparam("db_ops", "declare_query", "del1=delete from location where expires<now
-()"); # raw query
+   Example 1.19. db_ops common example
+modparam("db_ops", "declare_query", "sel1=select/location/received/uid///%$f.ui
+d");
+modparam("db_ops", "declare_query", "sel2=select/subscriber/email_address,greet
+ing/uid,allow_find///%$uidparam,1");
+modparam("db_ops", "declare_query", "sel3=select/silo/body/uid//inc_time/%$f.ui
+d");
+modparam("db_ops", "declare_query", "del1=delete from location where expires<no
+w()"); # raw query
 
-# @db.query.sel1             ..  SELECT received FROM location WHERE uid = "%$f.
-uid"
-# @db.query.sel1.count       ..  SELECT count(*) FROM location WHERE uid = "%$f.
-uid"
+# @db.query.sel1             ..  SELECT received FROM location WHERE uid = "%$f
+.uid"
+# @db.query.sel1.count       ..  SELECT count(*) FROM location WHERE uid = "%$f
+.uid"
 # @db.query.sel2.field[0]    ..  SELECT email_address FROM subscriber WHERE uid
-= "%$f.uid" AND allow_find=1
-# @db.query.sel2.field[1]    ..  SELECT greeting FROM subscriber WHERE uid = "%$
-f.uid" AND allow_find=1
-# @db.query.sel3.count       ..  SELECT count(*) FROM silo WHERE uid = "%$f.uid"
+ = "%$f.uid" AND allow_find=1
+# @db.query.sel2.field[1]    ..  SELECT greeting FROM subscriber WHERE uid = "%
+$f.uid" AND allow_find=1
+# @db.query.sel3.count       ..  SELECT count(*) FROM silo WHERE uid = "%$f.uid
+"
 # @db.query.sel1.is_empty
 
 
 db_query("delete/silo///");     #  DELETE FROM silo
-db_query("delete/silo/expired/<=/%Ts");     #  DELETE FROM silo WHERE expired <=
- now;
-db_query("insert/foo/bar,rab,abr,rbs/%$f.id,'hello world %fu',1,2");  # INSERT I
-NTO foo(bar,rab,abr,rbs) VALUES ("%$f.id","hello world %fu",1,2)
-db_query("update/foo/rab,abr/bar//'hello world %f',1,2,%$f.id");      # UPDATE f
-oo SET rab="hello world %fu",rbs=45 WHERE bar="%$f.id"
+db_query("delete/silo/expired/<=/%Ts");     #  DELETE FROM silo WHERE expired <
+= now;
+db_query("insert/foo/bar,rab,abr,rbs/%$f.id,'hello world %fu',1,2");  # INSERT
+INTO foo(bar,rab,abr,rbs) VALUES ("%$f.id","hello world %fu",1,2)
+db_query("update/foo/rab,abr/bar//'hello world %f',1,2,%$f.id");      # UPDATE
+foo SET rab="hello world %fu",rbs=45 WHERE bar="%$f.id"
 
 db_query("mysql://pretorian:sandra@net/delete/fbi/identities//");
 
-if (db_query("select/silo/body/uid//inc_time/%$f.uid", my_handle)) { #  SELECT b
-ody FROM silo WHERE uid = "%$f.uid" ORDER BY inc_time
+if (db_query("select/silo/body/uid//inc_time/%$f.uid", my_handle)) { #  SELECT
+body FROM silo WHERE uid = "%$f.uid" ORDER BY inc_time
     @db.fetch.my_handle             ..  get first raw
     if (db_next(my_handle)) {
         @db.fetch.my_handle      ..  get second raw
     }
 }
 
-if (db_query("select/silo/src_addr,dest_addr,body/uid//inc_time/%$t.uid", my_nex
-t_handle)) { # SELECT src_addr,dest_addr,body FROM silo WHERE uid = "%$t.uid" OR
-DER BY inc_time
-    @db.fetch.my_next_handle.row[-1].field[1]   .. get last dest_addr, not suppo
-rted now!
+if (db_query("select/silo/src_addr,dest_addr,body/uid//inc_time/%$t.uid", my_ne
+xt_handle)) { # SELECT src_addr,dest_addr,body FROM silo WHERE uid = "%$t.uid"
+ORDER BY inc_time
+    @db.fetch.my_next_handle.row[-1].field[1]   .. get last dest_addr, not supp
+orted now!
 }
 db_close(my_handle);
 db_close(my_next_handle);
@@ -397,20 +479,20 @@ modparam("timer", "declare_timer", "timer_route,1000,,enable");
 
 modparam("db_ops", "db_url", "mysql://admin:123456789@127.0.0.1:12345/ser");
 
-modparam("db_ops", "declare_query", "q1=select/location/uid,aor,contact,received
-//////"); #key=location_key,key_omit=i:3");
-modparam("db_ops", "declare_query", "q2=select/location/uid,aor,contact,received
-/uid///%$f.uid/key=location_key,key_omit=i:1");
+modparam("db_ops", "declare_query", "q1=select/location/uid,aor,contact,receive
+d//////"); #key=location_key,key_omit=i:3");
+modparam("db_ops", "declare_query", "q2=select/location/uid,aor,contact,receive
+d/uid///%$f.uid/key=location_key,key_omit=i:1");
 # select raw query not yet supported
-modparam("db_ops", "declare_query", "q3=select uid,aor,contact,received from loc
-ation where uid=?/%$f.uid");
-modparam("db_ops", "declare_query", "q4=mysql://admin:123456789@127.0.0.1:12345/
-ser/replace/location/uid,aor,contact,received,expires,q,callid,cseq,user_agent,i
-nstance,path,service_route,assoc_uri,flags,nated_contact,term_toi/QWERTY,aor@qqq
-,1.2.3.4:5678,1.2.3.4:5678;proto=tcp,d:1000,0.8,CAALL,6543,bubak,INSTANCE@bubak,
-sip:path_to_localhost,,,0,1,,");
-modparam("db_ops", "declare_query", "q5=mysql://admin:123456789@127.0.0.1:12345/
-ser/delete from location where uid=?/s:QWERTY");
+modparam("db_ops", "declare_query", "q3=select uid,aor,contact,received from lo
+cation where uid=?/%$f.uid");
+modparam("db_ops", "declare_query", "q4=mysql://admin:123456789@127.0.0.1:12345
+/ser/replace/location/uid,aor,contact,received,expires,q,callid,cseq,user_agent
+,instance,path,service_route,assoc_uri,flags,nated_contact,term_toi/QWERTY,aor@
+qqq,1.2.3.4:5678,1.2.3.4:5678;proto=tcp,d:1000,0.8,CAALL,6543,bubak,INSTANCE@bu
+bak,sip:path_to_localhost,,,0,1,,");
+modparam("db_ops", "declare_query", "q5=mysql://admin:123456789@127.0.0.1:12345
+/ser/delete from location where uid=?/s:QWERTY");
 
 modparam("db_ops", "declare_handle", "h0");
 modparam("db_ops", "declare_handle", "h1");
@@ -419,18 +501,18 @@ route["print_count"] {
 # testing count
         xplog("L_INFO", "print count\n");
         db_query("q1", "h1");
-        xplog("L_INFO", "fetch: row_no: %@db.fetch.h1.row_no, count: %@db.fetch.
-h1.count, row_no: %@db.fetch.h1.row_no, is_empty: %@db.fetch.h1.is_empty, row_no
-: %@db.fetch.h1.row_no\n");
+        xplog("L_INFO", "fetch: row_no: %@db.fetch.h1.row_no, count: %@db.fetch
+.h1.count, row_no: %@db.fetch.h1.row_no, is_empty: %@db.fetch.h1.is_empty, row_
+no: %@db.fetch.h1.row_no\n");
 
-        xplog("L_INFO", "query: is_empty: %@db.query.q1.is_empty, count: %@db.qu
-ery.q1.count\n");
+        xplog("L_INFO", "query: is_empty: %@db.query.q1.is_empty, count: %@db.q
+uery.q1.count\n");
 }
 
 route["print_record"] {
-        xplog("L_INFO","row_no: %@db.fetch.h0.row_no, record: %@db.fetch.h0.fiel
-d[0], %@db.fetch.h0.field[1],  %@db.fetch.h0.field[2],  %@db.fetch.h0.field[3]\n
-");
+        xplog("L_INFO","row_no: %@db.fetch.h0.row_no, record: %@db.fetch.h0.fie
+ld[0], %@db.fetch.h0.field[1],  %@db.fetch.h0.field[2],  %@db.fetch.h0.field[3]
+\n");
 
 }
 
@@ -485,12 +567,12 @@ route["db_test"] {
         db_foreach("h0", "print_record");
 
         xplog("L_INFO", "query test\n");
-        xplog("L_INFO", "#0: %@db.query.q1.row[0].field[0], %@db.query.q1.row[0]
-.field[1], %@db.query.q1.row[0].field[2], %@db.query.q1.row[0].field[3]\n");
-        xplog("L_INFO", "#1: %@db.query.q1.row[1].field[0], %@db.query.q1.row[1]
-.field[1], %@db.query.q1.row[1].field[2], %@db.query.q1.row[1].field[3]\n");
-        xplog("L_INFO", "#3: %@db.query.q1.row[3].field[0], %@db.query.q1.row[3]
-.field[1], %@db.query.q1.row[3].field[2], %@db.query.q1.row[3].field[3]\n");
+        xplog("L_INFO", "#0: %@db.query.q1.row[0].field[0], %@db.query.q1.row[0
+].field[1], %@db.query.q1.row[0].field[2], %@db.query.q1.row[0].field[3]\n");
+        xplog("L_INFO", "#1: %@db.query.q1.row[1].field[0], %@db.query.q1.row[1
+].field[1], %@db.query.q1.row[1].field[2], %@db.query.q1.row[1].field[3]\n");
+        xplog("L_INFO", "#3: %@db.query.q1.row[3].field[0], %@db.query.q1.row[3
+].field[1], %@db.query.q1.row[3].field[2], %@db.query.q1.row[3].field[3]\n");
 
 
 }

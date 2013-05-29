@@ -1,95 +1,153 @@
-1. SMS Module
+
+SMS Module
 
 Bogdan Iancu
 
    FhG FOKUS
 
    Copyright © 2003 FhG FOKUS
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
+   Table of Contents
 
-        1.1.1. Hardware Requirements
-        1.1.2. Numbering Plan
-        1.1.3. Address Mapping
+   1. Admin Guide
 
-   1.2. Dependencies
-   1.3. Parameters
+        1. Overview
 
-        1.3.1. modems (string)
-        1.3.2. networks (string)
-        1.3.3. links (string)
-        1.3.4. default_net (string)
-        1.3.5. max_sms_parts (integer)
-        1.3.6. domain_str (string)
-        1.3.7. use_contact (integer)
-        1.3.8. sms_report_type (integer)
+              1.1. Hardware Requirements
+              1.2. Numbering Plan
+              1.3. Address Mapping
 
-   1.4. Functions
+        2. Dependencies
+        3. Parameters
 
-        1.4.1. sms_send_msg_to_net(network_name)
-        1.4.2. sms_send_msg()
+              3.1. modems (string)
+              3.2. networks (string)
+              3.3. links (string)
+              3.4. default_net (string)
+              3.5. max_sms_parts (integer)
+              3.6. domain_str (string)
+              3.7. use_contact (integer)
+              3.8. sms_report_type (integer)
 
-1.1. Overview
+        4. Functions
 
-   This module provides a way of communication between SIP network (via
+              4.1. sms_send_msg_to_net(network_name) 
+              4.2. sms_send_msg() 
+
+   List of Examples
+
+   1.1. Set modems parameter
+   1.2. Set networks parameter
+   1.3. Set links parameter
+   1.4. Set default_net parameter
+   1.5. Set max_sms_parts parameter
+   1.6. Set domain_str parameter
+   1.7. Set use_contact parameter
+   1.8. Set sms_report_type parameter
+   1.9. sms_send_msg_to_net usage
+   1.10. sms_send_msg usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+
+        1.1. Hardware Requirements
+        1.2. Numbering Plan
+        1.3. Address Mapping
+
+   2. Dependencies
+   3. Parameters
+
+        3.1. modems (string)
+        3.2. networks (string)
+        3.3. links (string)
+        3.4. default_net (string)
+        3.5. max_sms_parts (integer)
+        3.6. domain_str (string)
+        3.7. use_contact (integer)
+        3.8. sms_report_type (integer)
+
+   4. Functions
+
+        4.1. sms_send_msg_to_net(network_name) 
+        4.2. sms_send_msg() 
+
+1. Overview
+
+   1.1. Hardware Requirements
+   1.2. Numbering Plan
+   1.3. Address Mapping
+
+   This  module  provides a way of communication between SIP network (via
    SIP MESSAGE) and GSM networks (via ShortMessageService). Communication
-   is possible from SIP to SMS and vice versa. The module provides
-   facilities like SMS confirmation--the gateway can confirm to the SIP
-   user if his message really reached its destination as a SMS--or
-   multi-part messages--if a SIP messages is too long it will be split and
-   sent as multiple SMS.
+   is  possible  from  SIP  to  SMS  and  vice versa. The module provides
+   facilities  like  SMS confirmation--the gateway can confirm to the SIP
+   user  if  his  message  really  reached  its  destination as a SMS--or
+   multi-part  messages--if  a  SIP messages is too long it will be split
+   and sent as multiple SMS.
 
-   Errors occurred because of an invalid number or a too long message or
-   because of an internal modem malfunction are reported back to the SIP
+   Errors  occurred because of an invalid number or a too long message or
+   because  of an internal modem malfunction are reported back to the SIP
    user via a SIP message containing explanations regarding the error.
 
-1.1.1. Hardware Requirements
+1.1. Hardware Requirements
 
-   The SMS module needs a GSM modem to be able to send/receive the SMS
-   messages. Usually, this kind of modems are externals, linked to the
-   machine via serial cable. The modem can be a dedicated one (as the ones
-   provided by FALCOM) or can be a GSM telephone that has an internal
-   modem (as the latest mobile phones from NOKIA and ERICSSON).
+   The  SMS  module  needs a GSM modem to be able to send/receive the SMS
+   messages.  Usually,  this  kind of modems are externals, linked to the
+   machine  via  serial  cable.  The modem can be a dedicated one (as the
+   ones  provided  by  FALCOM)  or  can  be  a  GSM telephone that has an
+   internal modem (as the latest mobile phones from NOKIA and ERICSSON).
 
-1.1.2. Numbering Plan
+1.2. Numbering Plan
 
-   The gateway accepts and advertises phone numbers in international
-   format, more specific like: +(international code)(area code)(number).
-   Ex: Germany, D1 = +49 170 5678181 Romania, Connex = +40 722 123456 A
-   number in this format is expected to be placed as username into RURI or
-   in the To header. If RURI misses the username, the To header will be
-   consider. Also, the gateway will advertise in this format the username
-   in Contact headers (in SIP replies and requests) and in From headers
-   (in SIP requests).
+   The  gateway  accepts  and  advertises  phone numbers in international
+   format,  more specific like: +(international code)(area code)(number).
+   Ex:  Germany,  D1 = +49 170 5678181 Romania, Connex = +40 722 123456 A
+   number  in  this format is expected to be placed as username into RURI
+   or  in  the To header. If RURI misses the username, the To header will
+   be  consider.  Also,  the  gateway  will  advertise in this format the
+   username  in Contact headers (in SIP replies and requests) and in From
+   headers (in SIP requests).
 
-1.1.3. Address Mapping
+1.3. Address Mapping
 
-   To identify the destination number of the SMS, the gateway expects to
-   have a mobile number in username of the SIP destination address (for
-   example sip:+401704678811@iptel.org). For the reverse direction,
-   because the gateway has only one GSM number, the destination SIP
-   address has to be encapsulated into the SMS body. The gateway expects
-   to find a SIP address at the beginning of the SMS body in
-   "sip:user.host" format. Everything before the SIP address will be
-   discarded, the useful text begins exactly after the address (for
-   example SMS="For sip:user@host hello world!!" -> SIP="hello world"),
-   view configuration for disable this behavior (modems parameters 's' y
-   't'). In order to facilitate replying, the gateway sends all the SMS
-   messages with a header containing the source SIP address in the
-   following format: "From sip:user@host (if you reply DONOT remove
-   it)<new_line>". When an SMS-reply is received having this header (all
-   of it or truncated at the end), the header will be left out (it will
+   To  identify the destination number of the SMS, the gateway expects to
+   have  a  mobile number in username of the SIP destination address (for
+   example   sip:+401704678811@iptel.org).  For  the  reverse  direction,
+   because  the  gateway  has  only  one  GSM number, the destination SIP
+   address  has to be encapsulated into the SMS body. The gateway expects
+   to   find  a  SIP  address  at  the  beginning  of  the  SMS  body  in
+   "sip:user.host"  format.  Everything  before  the  SIP address will be
+   discarded,  the  useful  text  begins  exactly  after the address (for
+   example  SMS="For  sip:user@host hello world!!" -> SIP="hello world"),
+   view  configuration for disable this behavior (modems parameters 's' y
+   't').  In  order to facilitate replying, the gateway sends all the SMS
+   messages  with  a  header  containing  the  source  SIP address in the
+   following  format:  "From  sip:user@host  (if  you  reply DONOT remove
+   it)<new_line>".  When an SMS-reply is received having this header (all
+   of  it  or truncated at the end), the header will be left out (it will
    not be in the SIP message).
 
-1.2. Dependencies
+2. Dependencies
 
    The following modules must be loaded before this module:
      * tm - Transaction Manager.
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. modems (string)
+   3.1. modems (string)
+   3.2. networks (string)
+   3.3. links (string)
+   3.4. default_net (string)
+   3.5. max_sms_parts (integer)
+   3.6. domain_str (string)
+   3.7. use_contact (integer)
+   3.8. sms_report_type (integer)
+
+3.1. modems (string)
 
    Define and configure one or more GSM modems.
 modems_value     = modem_definition *( ";" modem_definition )
@@ -98,36 +156,36 @@ list_of_params   = modem_param *( ";" modem_param )
 modem_param      = name "=" value
 
    The following parameters can be used:
-     * d=device (mandatory) - Device associated with modem (/dev/ttyS0,
+     * d=device  (mandatory)  - Device associated with modem (/dev/ttyS0,
        /dev/modem, etc.).
      * p=pin (optional) - SIM PIN - default is NULL.
      * m=mode (optional) - Modem working mode
        ("ASCII","OLD","DIGICOM","NEW"). Default value is "NEW".
-     * c=SMS_Center (optional) - SMS center number for that modem. Default
-       is the SMS center set on the SIM card.
+     * c=SMS_Center  (optional)  -  SMS  center  number  for  that modem.
+       Default is the SMS center set on the SIM card.
      * b=baudrate (optional) - Default is 19600.
-     * r=retry (optional) - How many times to try to re-send a SMS that
+     * r=retry  (optional)  - How many times to try to re-send a SMS that
        reported error. Default is twice.
-     * l=looping (optional) - Time for modem to wait before performing a
+     * l=looping  (optional) - Time for modem to wait before performing a
        new check for incomimg/outgoing SMS/SIP_MSG. Default is 20.
      * t=to (optional) - uri for sip header TO. Default is NULL.
      * s=scan (optional) - Values: 0: NOT SCAN uri from body sms, use URI
-       in t=to. 1: SCAN uri from body sms (normal mode, default mode,
-       clasic mode) 2: SCAN MIX (both modes), First SCAN Default is 1
+       in  t=to.  1:  SCAN  uri from body sms (normal mode, default mode,
+       clasic  mode)  2:  SCAN  MIX (both modes), First SCAN Default is 1
        (SCAN).
 
 Note
 
    No default value, the parameter is mandatory.
 
-   Example 1. Set modems parameter
+   Example 1.1. Set modems parameter
 ...
 modparam("sms", "modems", "Nokia[d=/dev/ttyS1;s=0;t=sip:p-cscf@cidra.com.ar]")
 modparam("sms", "modems", "Nokia [d=/dev/ttyS1;b=9600;m=new;l=30] ")
 modparam("sms", "modems", "Nokia[d=/dev/ttyS1];Siemens[d=/dev/ttyS2]")
 ...
 
-1.3.2. networks (string)
+3.2. networks (string)
 
    Define and configure used GSM networks.
 networks_value = net_definition *( ";" net_definition )
@@ -136,25 +194,25 @@ list_of_params = set_param *( ";" set_param )
 set_param      = name "=" value
 
    The following parameters can be used:
-     * m=msx_sms_per_call (optional) - Maximum number of SMS send /
-       received from that net in one modem loop. Default is 10. This
+     * m=msx_sms_per_call  (optional)  -  Maximum  number  of  SMS send /
+       received  from  that  net  in  one modem loop. Default is 10. This
        parameter was introduced to avoid starvation.
-       Example of the starvation--a modem can send SMS for more than 1
-       networks. If you have a huge number of SMS for the first network
-       and the number of incoming SIP messages is equal to the sent SMS
-       per same unit of time, the modem will never get to send SMS for the
-       next networks.
+       Example  of  the  starvation--a modem can send SMS for more than 1
+       networks.  If  you have a huge number of SMS for the first network
+       and  the  number of incoming SIP messages is equal to the sent SMS
+       per  same  unit  of time, the modem will never get to send SMS for
+       the next networks.
 
 Note
 
    No default value, the parameter is mandatory.
 
-   Example 2. Set networks parameter
+   Example 1.2. Set networks parameter
 ...
 modparam("sms", "networks", "D1 [m=10] ;d2[ m=20]")
 ...
 
-1.3.3. links (string)
+3.3. links (string)
 
    Define from which network each modem should send SMS.
 links_value = modem_assoc *( ";" modem_assoc )
@@ -165,96 +223,99 @@ Note
 
    No default value, the parameter is mandatory.
 
-   Example 3. Set links parameter
+   Example 1.3. Set links parameter
 ...
 modparam("sms", "links", "NOKIA[D1;d2]")
 ...
 
    The modem NOKIA will send SMS from D1 and D2 net (in this order !). if
-   in a net queue are more then max_sms_per_call SMS the modem will not
+   in  a  net queue are more then max_sms_per_call SMS the modem will not
    sleep before starting the next loop ! Shortly, if messages are waiting
    to be sent, the modem will not go in sleep.
 
-1.3.4. default_net (string)
+3.4. default_net (string)
 
-   The default network to use. If no one specified, the first defined
-   network is used. This parameter is useful only if the "sms_send_msg"
-   exported function is used (see Section 1.4, "Functions").
+   The  default  network  to  use. If no one specified, the first defined
+   network  is  used. This parameter is useful only if the "sms_send_msg"
+   exported function is used (see Section 4, "Functions").
 
-   Example 4. Set default_net parameter
+   Example 1.4. Set default_net parameter
 ...
 modparam("sms", "default_net", "D1")
 ...
 
-1.3.5. max_sms_parts (integer)
+3.5. max_sms_parts (integer)
 
-   Shows in how many parts (SMS messages) a SIP message can be split. If
+   Shows  in how many parts (SMS messages) a SIP message can be split. If
    exceeded, the SIP message will be sent truncated and the SIP user will
    get back another message containing the unsent part.
 
    Default value is 4.
 
-   Example 5. Set max_sms_parts parameter
+   Example 1.5. Set max_sms_parts parameter
 ...
 modparam("sms", "max_sms_parts", 10)
 ...
 
-1.3.6. domain_str (string)
+3.6. domain_str (string)
 
-   Specify a fake domain name to be used by the gateway. The Contact
-   headers and the From header from request will be construct based on
-   this fake domain name. It's useful when the gateway is transparently
+   Specify  a  fake  domain  name  to be used by the gateway. The Contact
+   headers  and  the  From header from request will be construct based on
+   this  fake  domain name. It's useful when the gateway is transparently
    hidden behind a proxy/register (located on different machines).
 
    Default is the name of the machine the gateway is running on.
 
-   Example 6. Set domain_str parameter
+   Example 1.6. Set domain_str parameter
 ...
 modparam("sms", "domain_str", "foo.bar")
 ...
 
-1.3.7. use_contact (integer)
+3.7. use_contact (integer)
 
    If a contact header should be added to the outgoing SIP messages. Even
    if the SIP draft forbids this, some UAS require it.
 
    Default is 0 (no).
 
-   Example 7. Set use_contact parameter
+   Example 1.7. Set use_contact parameter
 ...
 modparam("sms", "use_contact", 1)
 ...
 
-1.3.8. sms_report_type (integer)
+3.8. sms_report_type (integer)
 
-   If the modem should ask for SMS confirmation from the SMS Center. If
-   the SMSC reply with an error code, the gateway will send back to SIP
-   user a SIP message containing the text (or part of it) that couldn't be
-   send. Two report mechanisms are implemented:
+   If  the  modem should ask for SMS confirmation from the SMS Center. If
+   the  SMSC  reply with an error code, the gateway will send back to SIP
+   user  a  SIP message containing the text (or part of it) that couldn't
+   be send. Two report mechanisms are implemented:
      * 1 - the reports are delivered by the GSM device as SMS reports (so
        far supported only by Nokia modems);
-     * 2 - the reports are delivered as async. CDS responses (supported by
-       almost all modems, except Ericsson).
+     * 2  -  the reports are delivered as async. CDS responses (supported
+       by almost all modems, except Ericsson).
 
    Default is 0 (no report).
 
-   Example 8. Set sms_report_type parameter
+   Example 1.8. Set sms_report_type parameter
 ...
 modparam("sms", "sms_report_type", 1)
 ...
 
-1.4. Functions
+4. Functions
 
-1.4.1. sms_send_msg_to_net(network_name)
+   4.1. sms_send_msg_to_net(network_name) 
+   4.2. sms_send_msg() 
 
-   Put the SIP msg in the specified network queue. The function return
+4.1.  sms_send_msg_to_net(network_name)
+
+   Put  the  SIP  msg in the specified network queue. The function return
    error if the number encapsulated into SIP message is malformed, if the
    content_type is incorrect or because of some internal failures.
 
    Meaning of the parameters is as follows:
      * network_name - Name of network.
 
-   Example 9. sms_send_msg_to_net usage
+   Example 1.9. sms_send_msg_to_net usage
 ...
 if (sms_send_msg_to_net("D1"))
 {
@@ -273,11 +334,11 @@ if (sms_send_msg_to_net("D1"))
 };
 ...
 
-1.4.2. sms_send_msg()
+4.2.  sms_send_msg()
 
    The same as the previous one, but use the default network queue.
 
-   Example 10. sms_send_msg usage
+   Example 1.10. sms_send_msg usage
 ...
 if (sms_send_msg_to_net())
 {

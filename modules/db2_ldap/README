@@ -1,75 +1,100 @@
-1. db2_ldap module
+
+db2_ldap module
 
 Jan Janak
 
    Iptel.org
 
    Copyright © 2008 Iptel.org GmBH
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. Parameters
+   Table of Contents
 
-        1.3.1. config (string)
-        1.3.2. reconnect_attempt (integer)
+   1. Admin Guide
 
-   1.4. Functions
+        1. Overview
+        2. Dependencies
+        3. Parameters
 
-1.1. Overview
+              3.1. config (string)
+              3.2. reconnect_attempt (integer)
 
-   The LDAP module is database driver, i.e. it implements DBv2 API
-   functions. The goal is map database query defined by table, matching
-   fields and result fields to LDAP search in sub-tree defined by root,
-   object class, attributes and pass it to the OpenLDAP which communicates
-   with the LDAP server.
+        4. Functions
 
-   This procedure is sometimes tricky because the LDAP does not support
-   all database features or supports them in different manner. Here we
+   List of Examples
+
+   1.1. URI example
+   1.2. Example config
+   1.3. Configuration file example
+   1.4. Example reconnect_attempt
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Parameters
+
+        3.1. config (string)
+        3.2. reconnect_attempt (integer)
+
+   4. Functions
+
+1. Overview
+
+   The  LDAP  module  is  database  driver,  i.e.  it implements DBv2 API
+   functions.  The  goal is map database query defined by table, matching
+   fields  and  result fields to LDAP search in sub-tree defined by root,
+   object   class,   attributes   and  pass  it  to  the  OpenLDAP  which
+   communicates with the LDAP server.
+
+   This  procedure  is sometimes tricky because the LDAP does not support
+   all  database  features  or supports them in different manner. Here we
    must express especially filtering and multi-values. The multi-value is
-   de facto array of single values. If the LDAP module get a multi-value
-   field then generates record for every single value, respectively for
+   de  facto array of single values. If the LDAP module get a multi-value
+   field  then  generates record for every single value, respectively for
    every combination in case the more fields contain multi-value.
 
-   The LDAP supports natively "AND", "OR", "NOT" logical operators and
-   "equal", "non-equal", "less-or-equal" and "greater-or-equal" comparison
-   operators. Therefore "less" and "greater" operators are mapped as
-   "less/greater-or-equal-AND-not-equal". It's important realize it when
-   the attribute which will be used for filtering may contain multi-value.
-   The LDAP server evaluates comparison operator on multi-value so that
-   the result for record is true if the condition is satisfied for any
-   single value. The single values not satisfying condition are not
-   truncated. It implies two cases for positive comparison, e.g. "equal",
-   the result contains values not satisfying the condition, the case may
-   be handled by additional filter in the LDAP module, the negative
-   comparison, e.g. "non-equal", does not return record at all. Because
-   the LDAP module cannot know if the LDAP attribute may logically contain
-   multi-value so there is introduced DB API option client_side_filtering
-   which forces filtering such fields in the LDAP module, i.e. the LDAP
-   server returns larger result set because the filtering condition is not
-   passed there.
+   The  LDAP  supports  natively "AND", "OR", "NOT" logical operators and
+   "equal",    "non-equal",    "less-or-equal"   and   "greater-or-equal"
+   comparison  operators.  Therefore  "less"  and "greater" operators are
+   mapped   as   "less/greater-or-equal-AND-not-equal".   It's  important
+   realize  it  when  the  attribute which will be used for filtering may
+   contain  multi-value. The LDAP server evaluates comparison operator on
+   multi-value  so that the result for record is true if the condition is
+   satisfied  for  any  single  value.  The  single values not satisfying
+   condition  are  not  truncated.  It  implies  two  cases  for positive
+   comparison,  e.g.  "equal",  the result contains values not satisfying
+   the  condition,  the  case  may be handled by additional filter in the
+   LDAP  module,  the  negative  comparison,  e.g.  "non-equal", does not
+   return  record at all. Because the LDAP module cannot know if the LDAP
+   attribute  may logically contain multi-value so there is introduced DB
+   API option client_side_filtering which forces filtering such fields in
+   the  LDAP  module,  i.e.  the  LDAP  server  returns larger result set
+   because the filtering condition is not passed there.
 
-   The syntax of client_side_filtering value is comma delimited of field
-   names which won't be used for server-side filter if such a field
-   appears in a match condition. Instead records will be filtered out in
+   The  syntax of client_side_filtering value is comma delimited of field
+   names  which  won't  be  used  for  server-side filter if such a field
+   appears  in a match condition. Instead records will be filtered out in
    module. It implies such fields MUST exist in result field list.
 
-   The necessary condition of successful filtering of particular attribute
-   at the LDAP server is correct attribute definition. The
-   "equal"/"non-equal" operator requires equality matching rule, the
+   The   necessary   condition  of  successful  filtering  of  particular
+   attribute  at  the  LDAP  server  is correct attribute definition. The
+   "equal"/"non-equal"  operator  requires  equality  matching  rule, the
    "greater"/"less" operator requires ordering matching rule. If required
    matching rule is missing the LDAP server silently returns empty result
-   set. In case of double filtering both at the LDAP servar and the LDAP
-   module, e.g. multi-value and equal comparison, check the LDAP server
-   matching rule satisfies your needs or use client_side_filtering
+   set.  In case of double filtering both at the LDAP servar and the LDAP
+   module,  e.g.  multi-value and equal comparison, check the LDAP server
+   matching  rule  satisfies  your  needs  or  use  client_side_filtering
    feature.
 
-   The LDAP server may be identified either complete specification of
-   host, user, password in URI or is specification reference to connection
-   section of config file. Note in the second case there is only one
-   slash.
+   The  LDAP  server  may  be identified either complete specification of
+   host,   user,  password  in  URI  or  is  specification  reference  to
+   connection  section  of  config file. Note in the second case there is
+   only one slash.
 
-   Example 1. URI example
+   Example 1.1. URI example
         ...
         modparam("auth", "db_url", "ldap://admin:heslo@127.0.0.1");
 
@@ -84,29 +109,32 @@ Jan Janak
      * optional referral chasing by OpenLDAP
      * optional reference chasing by OpenLDAP
 
-1.2. Dependencies
+2. Dependencies
 
    none
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. config (string)
+   3.1. config (string)
+   3.2. reconnect_attempt (integer)
+
+3.1. config (string)
 
    Default value is ldap.cfg.
 
-   The filename (relatively to ser config file) of mapping database to
+   The  filename  (relatively  to ser config file) of mapping database to
    LDAP definition. It is the main configuration file for the LDAP module
-   in SER. The configuration file maps database table names used in SER to
-   LDAP directory sub-trees to be searched. In addition to that the
+   in  SER.  The configuration file maps database table names used in SER
+   to  LDAP  directory  sub-trees to be searched. In addition to that the
    configuration file also allows to configure the LDAP search filter and
    maps database field names to LDAP attribute names and vice versa.
 
-   Example 2. Example config
+   Example 1.2. Example config
         ...
         modparam("ldap", "config", "my-ldap.cfg");
         ...
 
-   Example 3. Configuration file example
+   Example 1.3. Configuration file example
 # Supported Attribute Type Names:
 #  * GeneralizedTime
 #  * Integer
@@ -212,18 +240,18 @@ field_map = type : (Integer) serAttrType
 field_map = value : serAttrValue
 field_map = flags : (BitString) serFlags
 
-1.3.2. reconnect_attempt (integer)
+3.2. reconnect_attempt (integer)
 
    Default value is 3.
 
-   Number of reconnect attempts when connection to the LDAP server is
+   Number  of  reconnect  attempts  when connection to the LDAP server is
    lost.
 
-   Example 4. Example reconnect_attempt
+   Example 1.4. Example reconnect_attempt
         ...
         modparam("ldap", "reconnect_attempt", "5");
         ...
 
-1.4. Functions
+4. Functions
 
    none

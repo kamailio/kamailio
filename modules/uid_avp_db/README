@@ -1,4 +1,5 @@
-1. uid_avp_db Module
+
+UID AVP DB Module
 
 Jiri Kuthan
 
@@ -6,144 +7,199 @@ Jiri Kuthan
    <jiri@iptel.org>
 
    Copyright © 2004, 2005 FhG FOKUS
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. Parameters
+   Table of Contents
 
-        1.3.1. db_url (string)
-        1.3.2. user_attrs_table (string)
-        1.3.3. uri_attrs_table (string)
-        1.3.4. uid_column (string)
-        1.3.5. username_column (string)
-        1.3.6. did_column (string)
-        1.3.7. name (string)
-        1.3.8. value_column (string)
-        1.3.9. type_column (string)
-        1.3.10. flags_column (string)
-        1.3.11. scheme_column (string)
-        1.3.12. attr_group (string)
-        1.3.13. auto_unlock_extra_attrs (string)
+   1. Admin Guide
 
-   1.4. Functions
+        1. Overview
+        2. Dependencies
+        3. Parameters
 
-        1.4.1. load_attrs (track, id)
-        1.4.2. load_extra_attrs (group_id, id)
-        1.4.3. save_extra_attrs (group_id, id)
-        1.4.4. remove_extra_attrs (group_id, id)
-        1.4.5. lock_extra_attrs (group_id, id)
-        1.4.6. unlock_extra_attrs (group_id, id)
+              3.1. db_url (string)
+              3.2. user_attrs_table (string)
+              3.3. uri_attrs_table (string)
+              3.4. uid_column (string)
+              3.5. username_column (string)
+              3.6. did_column (string)
+              3.7. name (string)
+              3.8. value_column (string)
+              3.9. type_column (string)
+              3.10. flags_column (string)
+              3.11. scheme_column (string)
+              3.12. attr_group (string)
+              3.13. auto_unlock_extra_attrs (string)
 
-   1.5. Example extra attributes usage
+        4. Functions
 
-1.1. Overview
+              4.1. load_attrs (track, id)
+              4.2. load_extra_attrs (group_id, id)
+              4.3. save_extra_attrs (group_id, id)
+              4.4. remove_extra_attrs (group_id, id)
+              4.5. lock_extra_attrs (group_id, id)
+              4.6. unlock_extra_attrs (group_id, id)
 
-   This module contains several functions that can be used to manipulate
-   the contents of AVPs (Attribute-Value pairs). The AVPs are variables
-   attached to the SIP message being processed. Each variable has its name
-   and value. AVPs can be used to store arbitrary data or as a means of
-   inter-module comminication.
+        5. Example extra attributes usage
 
-   You may also want to check the avpops module which is more flexible and
-   contains more functions. In future SER releases the avp module will be
-   probably deprecated in favor of avpops module.
+   List of Examples
 
-   Domain module operates in caching mode. Domain module reads the default
-   values of AVPs into cache memory when the module is loaded. After that
-   default values is re-read only when module is given avp_list_reload
-   fifo command. Any changes in usr_preferences_types table must thus be
-   followed by avp_list_reload command in order to reflect them in module
-   behavior.
+   1.1. attribute group definition
 
-1.2. Dependencies
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. user_attrs_table (string)
+        3.3. uri_attrs_table (string)
+        3.4. uid_column (string)
+        3.5. username_column (string)
+        3.6. did_column (string)
+        3.7. name (string)
+        3.8. value_column (string)
+        3.9. type_column (string)
+        3.10. flags_column (string)
+        3.11. scheme_column (string)
+        3.12. attr_group (string)
+        3.13. auto_unlock_extra_attrs (string)
+
+   4. Functions
+
+        4.1. load_attrs (track, id)
+        4.2. load_extra_attrs (group_id, id)
+        4.3. save_extra_attrs (group_id, id)
+        4.4. remove_extra_attrs (group_id, id)
+        4.5. lock_extra_attrs (group_id, id)
+        4.6. unlock_extra_attrs (group_id, id)
+
+   5. Example extra attributes usage
+
+1. Overview
+
+   This  module contains several functions that can be used to manipulate
+   the  contents  of AVPs (Attribute-Value pairs). The AVPs are variables
+   attached  to  the  SIP  message being processed. Each variable has its
+   name and value. AVPs can be used to store arbitrary data or as a means
+   of inter-module comminication.
+
+   You  may  also  want to check the avpops module which is more flexible
+   and  contains  more  functions.  In future SER releases the avp module
+   will be probably deprecated in favor of avpops module.
+
+   Domain  module  operates  in  caching  mode.  Domain  module reads the
+   default  values  of  AVPs into cache memory when the module is loaded.
+   After  that  default  values  is  re-read  only  when  module is given
+   avp_list_reload  fifo  command.  Any  changes in usr_preferences_types
+   table  must  thus  be  followed by avp_list_reload command in order to
+   reflect them in module behavior.
+
+2. Dependencies
 
    A database module, such as mysql, postgres, or dbtext.
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. db_url (string)
+   3.1. db_url (string)
+   3.2. user_attrs_table (string)
+   3.3. uri_attrs_table (string)
+   3.4. uid_column (string)
+   3.5. username_column (string)
+   3.6. did_column (string)
+   3.7. name (string)
+   3.8. value_column (string)
+   3.9. type_column (string)
+   3.10. flags_column (string)
+   3.11. scheme_column (string)
+   3.12. attr_group (string)
+   3.13. auto_unlock_extra_attrs (string)
+
+3.1. db_url (string)
 
    The URL of the database to be used.
 
    Default value is "mysql://ser:heslo@localhost/ser".
 
-1.3.2. user_attrs_table (string)
+3.2. user_attrs_table (string)
 
    Name of the table with user attributes.
 
    Default value is "user_attrs".
 
-1.3.3. uri_attrs_table (string)
+3.3. uri_attrs_table (string)
 
    Name of the table with uri attributes.
 
    Default value is "uri_attrs".
 
-1.3.4. uid_column (string)
+3.4. uid_column (string)
 
    Name of the column that stores UID in the user attributes table.
 
    Default value is "uid".
 
-1.3.5. username_column (string)
+3.5. username_column (string)
 
-   Name of the column containing the username of the subscriber in uri
+   Name  of  the  column containing the username of the subscriber in uri
    attributes table.
 
    Default value is "username".
 
-1.3.6. did_column (string)
+3.6. did_column (string)
 
    Name of the column in uri attributes table containing the ID of domain
    that the subscriber belongs to.
 
    Default value is "did".
 
-1.3.7. name (string)
+3.7. name (string)
 
    The name of the column containing attribute names.
 
    Default value is "name".
 
-1.3.8. value_column (string)
+3.8. value_column (string)
 
    The name of the column containing attribute values.
 
    Default value is "value".
 
-1.3.9. type_column (string)
+3.9. type_column (string)
 
    The name of the column containing attribute value type.
 
    Default value is "type".
 
-1.3.10. flags_column (string)
+3.10. flags_column (string)
 
    The name of the column containing attribute flags.
 
    Default value is "flags".
 
-1.3.11. scheme_column (string)
+3.11. scheme_column (string)
 
-   The name of the column containing subscriber's scheme in uri
+   The   name  of  the  column  containing  subscriber's  scheme  in  uri
    attributes.
 
    Default value is "scheme".
 
-1.3.12. attr_group (string)
+3.12. attr_group (string)
 
-   'Extra attribute' group definition. It can be repeated to define more
+   'Extra  attribute' group definition. It can be repeated to define more
    attribute groups.
 
-   The group definition contains one or more assignments in the form
+   The  group  definition  contains  one  or more assignments in the form
    key=value. Possible keys are:
 
    id
           Attribute group identifier. Must be set.
 
    table
-          Table name used for storing attributes from this attribute
+          Table  name  used  for  storing  attributes from this attribute
           group. Must be set.
 
    flag
@@ -154,26 +210,26 @@ Jiri Kuthan
           Column name holding key. Default value is "id".
 
    name_column
-          Column name used for storing attribute name. Default value is
+          Column  name  used for storing attribute name. Default value is
           "name".
 
    value_column
-          Column name used for storing attribute value. Default value is
+          Column  name used for storing attribute value. Default value is
           "value".
 
    type_column
-          Column name used for storing attribute type. Default value is
+          Column  name  used for storing attribute type. Default value is
           "type".
 
    flags_column
-          Column name used for storing attribute flags. Default value is
+          Column  name used for storing attribute flags. Default value is
           "flags".
 
    None defined by default.
 
-   Example 1. attribute group definition
-modparam("avp_db", "attr_group", "id=dlg,flag=dialog_flag,table=dlg_attrs,key_co
-lumn=dlg_id");
+   Example 1.1. attribute group definition
+modparam("avp_db", "attr_group", "id=dlg,flag=dialog_flag,table=dlg_attrs,key_c
+olumn=dlg_id");
 
    Table used for these attributes:
 mysql> describe dlg_attrs;
@@ -197,104 +253,111 @@ route {
         ...
 }
 
-1.3.13. auto_unlock_extra_attrs (string)
+3.13. auto_unlock_extra_attrs (string)
 
-   Determines the action when any of the 'extra attributes' lock is
+   Determines  the  action  when  any  of  the 'extra attributes' lock is
    detected when routing script execution was finished. When the value of
-   this parameter is zero (default) BUG level message is logged, but the
-   lock is kept, so another process trying to obtain the lock might get
+   this  parameter is zero (default) BUG level message is logged, but the
+   lock  is  kept, so another process trying to obtain the lock might get
    stuck. If the value is nonzero, DEBUG level message is sent to the log
    and all the locks are released.
 
    Default value is 0.
 
-1.4. Functions
+4. Functions
 
-1.4.1. load_attrs (track, id)
+   4.1. load_attrs (track, id)
+   4.2. load_extra_attrs (group_id, id)
+   4.3. save_extra_attrs (group_id, id)
+   4.4. remove_extra_attrs (group_id, id)
+   4.5. lock_extra_attrs (group_id, id)
+   4.6. unlock_extra_attrs (group_id, id)
+
+4.1. load_attrs (track, id)
 
    Loads attributes from the database.
 
    track
 
         $fu
-                Load user attributes into from track. In this case the
+                Load  user  attributes  into from track. In this case the
                 second parameter is UID used to search attributes.
 
         $tu
-                Load user attributes into to track. In this case the
+                Load  user  attributes  into  to  track. In this case the
                 second parameter is UID used to search attributes.
 
         $fr
-                Load uri attributes into from track. In this case the
+                Load  uri  attributes  into  from track. In this case the
                 second parameter is URI used to search attributes.
 
         $tr
-                Load uri attributes into to track. In this case the second
-                parameter is URI used to search attributes.
+                Load  uri  attributes  into  to  track.  In this case the
+                second parameter is URI used to search attributes.
 
    id
-          Identifier used for searching attributes. When searching for
-          user attributes it is UID, when searchnig uri attributes it is
+          Identifier  used  for  searching attributes. When searching for
+          user  attributes it is UID, when searchnig uri attributes it is
           URI.
 
-1.4.2. load_extra_attrs (group_id, id)
+4.2. load_extra_attrs (group_id, id)
 
    Loads 'extra attributes' stored by previous call to save_extra_attrs.
 
    group_id
-          Identifies attribute group, see Section 1.3.12, "attr_group
+          Identifies   attribute  group,  see  Section 3.12,  "attr_group
           (string)".
 
    id
           Identifies attributes which should be loaded.
 
-1.4.3. save_extra_attrs (group_id, id)
+4.3. save_extra_attrs (group_id, id)
 
    Saves 'extra attributes' flagged by group flag under given id.
 
    group_id
-          Identifies attribute group, see Section 1.3.12, "attr_group
+          Identifies   attribute  group,  see  Section 3.12,  "attr_group
           (string)".
 
    id
           Identifier stored with flagged attributes.
 
-1.4.4. remove_extra_attrs (group_id, id)
+4.4. remove_extra_attrs (group_id, id)
 
    Removes all extra attributes with given id.
 
    group_id
-          Identifies attribute group, see Section 1.3.12, "attr_group
+          Identifies   attribute  group,  see  Section 3.12,  "attr_group
           (string)".
 
    id
           Identifies attributes which should be removed.
 
-1.4.5. lock_extra_attrs (group_id, id)
+4.5. lock_extra_attrs (group_id, id)
 
-   Locks extra attributes. Currently locks whole attribute group (not only
-   id).
+   Locks  extra  attributes.  Currently  locks whole attribute group (not
+   only id).
 
    group_id
-          Identifies attribute group, see Section 1.3.12, "attr_group
+          Identifies   attribute  group,  see  Section 3.12,  "attr_group
           (string)".
 
    id
           Identifies attributes which should be locked.
 
-1.4.6. unlock_extra_attrs (group_id, id)
+4.6. unlock_extra_attrs (group_id, id)
 
    Unlocks extra attributes. Currently unlocks whole attribute group (not
    only id).
 
    group_id
-          Identifies attribute group, see Section 1.3.12, "attr_group
+          Identifies   attribute  group,  see  Section 3.12,  "attr_group
           (string)".
 
    id
           Identifies attributes which should be unlocked.
 
-1.5. Example extra attributes usage
+5. Example extra attributes usage
 
 debug=3
 memdbg=5
@@ -332,8 +395,8 @@ loadmodule "/home/kubartv/SER/lib/ser/modules/gflags.so"
 modparam("usrloc", "db_mode", 1);
 modparam("usrloc|avp_db", "db_url", "mysql://ser:heslo@127.0.0.1/ser")
 
-modparam("avp_db", "attr_group", "id=dlg,flag=dialog_flag,table=dlg_attrs,key_co
-lumn=dlg_id");
+modparam("avp_db", "attr_group", "id=dlg,flag=dialog_flag,table=dlg_attrs,key_c
+olumn=dlg_id");
 
 modparam("gflags", "load_global_attrs", 1);
 
@@ -353,7 +416,7 @@ route["create_dialog"] {
 
 onreply_route["dialog_creation_reply"] {
         xplog("L_ERR", "dialog creation reply (%rs, %@cseq.method) [%@from.tag,
-%@to.tag]\n");
+ %@to.tag]\n");
 
         $res = @msg.response.code;
         xplog("L_ERR", " ... response: %$res\n");
@@ -362,15 +425,15 @@ onreply_route["dialog_creation_reply"] {
                 break;
         }
         if ($res < 101) {
-                xplog("L_ERR", " ... I won't create dialog from 100 response.\n"
-);
+                xplog("L_ERR", " ... I won't create dialog from 100 response.\n
+");
                 break;
         }
 
-        del_attr("$id"); # xlset_attr works strange when the attribute already e
-xists
-        xlset_attr("$id", "call-id:%@call_id caller_tag:%@from.tag callee_tag:%@
-to.tag");
+        del_attr("$id"); # xlset_attr works strange when the attribute already
+exists
+        xlset_attr("$id", "call-id:%@call_id caller_tag:%@from.tag callee_tag:%
+@to.tag");
         if ($res > 299) {
                 xplog("L_ERR", " ... dialog terminated\n");
                 remove_extra_attrs("dlg", "$id");
@@ -409,8 +472,8 @@ route["save_dialog"] {
                 # use this if you want to delete destroyed dialogs:
                 # remove_extra_attrs("dlg", "$id");
 
-                # else if you want leave them in DB (with the time of terminatio
-n)
+                # else if you want leave them in DB (with the time of terminati
+on)
                 $dlg_destroyed_at = @sys.now.local;
 
                 # set flag for attributes with name beggining with dlg_
@@ -431,8 +494,8 @@ route["load_dialog_data"] {
 
         del_attr("$dlg_init_method"); # used as flag of succesful read of data
 
-        # delete all used dlg attrs (because load_extra_attrs doesn't delete the
-m itself before adding)
+        # delete all used dlg attrs (because load_extra_attrs doesn't delete th
+em itself before adding)
         del_attr("$dlg_init_method");
         del_attr("$dlg_caller");
         del_attr("$dlg_callee");
@@ -453,20 +516,20 @@ route["load_dialog"] {
         # tries to load dialog according tags and callid
 
         # try to load dialog
-        del_attr("$id"); # xlset_attr works strange when the attribute already e
-xists
-        xlset_attr("$id", "call-id:%@call_id caller_tag:%@from.tag callee_tag:%@
-to.tag");
+        del_attr("$id"); # xlset_attr works strange when the attribute already
+exists
+        xlset_attr("$id", "call-id:%@call_id caller_tag:%@from.tag callee_tag:%
+@to.tag");
         if (route("load_dialog_data")) {
                 $dir = "caller2callee";
                 return 1;
         }
 
         # try to load dialog in other direction
-        del_attr("$id"); # xlset_attr works strange when the attribute already e
-xists
-        xlset_attr("$id", "call-id:%@call_id caller_tag:%@to.tag callee_tag:%@fr
-om.tag");
+        del_attr("$id"); # xlset_attr works strange when the attribute already
+exists
+        xlset_attr("$id", "call-id:%@call_id caller_tag:%@to.tag callee_tag:%@f
+rom.tag");
         if (route("load_dialog_data")) {
                 $dir = "callee2caller";
                 return 1;
@@ -482,8 +545,8 @@ route["update_dialog_reply"] {
                 # target refresh for INVITE dialogs
 
                 if ($dir == "caller2calle") { # if request from caller
-                        $dlg_callee = @contact; # update callee's contact (respo
-nse!)
+                        $dlg_callee = @contact; # update callee's contact (resp
+onse!)
                 }
                 else {
                         $dlg_caller = @contact;
@@ -499,8 +562,8 @@ route["update_dialog"] {
                 # target refresh for INVITE dialogs
 
                 if ($dir == "caller2calle") { # if request from caller
-                        $dlg_caller = @contact; # update caller's contact (reque
-st!)
+                        $dlg_caller = @contact; # update caller's contact (requ
+est!)
                 }
                 else {
                         $dlg_callee = @contact;
@@ -508,19 +571,19 @@ st!)
         }
 
         if ($dir == "caller2callee") { # if request from caller
-                # TODO: verify CSeq before modifying and return 500 if lower tha
-n last one
+                # TODO: verify CSeq before modifying and return 500 if lower th
+an last one
                 $dlg_caller_cseq = @cseq.num;
         }
         else {
-                # TODO: verify CSeq before modifying and return 500 if lower tha
-n last one
+                # TODO: verify CSeq before modifying and return 500 if lower th
+an last one
                 $dlg_callee_cseq = @cseq.num;
         }
 
         if (method=="BYE") {
-                $dlg_status = "pre-destroyed"; # to see that BYE already went th
-rough
+                $dlg_status = "pre-destroyed"; # to see that BYE already went t
+hrough
         }
         return 1;
 }
@@ -540,7 +603,7 @@ route["trace_dialog"] {
 onreply_route["dialog_reply"] {
         if ($id) {
                 xplog("L_ERR", "In-dialog reply (%rs, %@cseq.method) [%@to.tag,
-%@from.tag]\n");
+ %@from.tag]\n");
                 if (!route("load_dialog")) {
                         xplog("L_ERR", "Can't load dialog data\n");
                 }
@@ -599,7 +662,8 @@ route {
                 # initial request or non-dialog message
                 if (method=="INVITE") {
                         route("create_dialog");
-                        # we don't save the dialog here because AVPs will be set
+                        # we don't save the dialog here because AVPs will be se
+t
                         # when reply comes and the dialog will be stored then
                 }
                 else {
@@ -615,8 +679,8 @@ route {
                         t_on_reply("dialog_reply");
                 }
                 else {
-                        xplog("L_ERR", "Message within unknown dialog: %@cseq, t
-o_tag=%@to.tag from_tag=%@from.tag\n");
+                        xplog("L_ERR", "Message within unknown dialog: %@cseq,
+to_tag=%@to.tag from_tag=%@from.tag\n");
                 }
         }
 
