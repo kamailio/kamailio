@@ -27,8 +27,10 @@
 			<holder>iptelorg GmbH</holder>
 		</copyright>
 	</bookinfo>
+	<toc></toc>
 
-
+	<chapter>
+	<title>Admin Guide</title>
 	<section id="malloc_test.overview">
 		<title>Overview</title>
 		<para>
@@ -43,4 +45,5 @@
 	<xi:include href="malloc_test_params.xml"/>
 	<xi:include href="malloc_test_functions.xml"/>
 	<xi:include href="malloc_test_rpc.xml"/>
+	</chapter>
 </book>
