@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="domain" xmlns:xi="http://www.w3.org/2001/XInclude">
-	<sectioninfo>
+<book id="uid_domain" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+		<title>UID Domain Module</title>
 		<authorgroup>
 			<author>
 				<firstname>Juha</firstname>
@@ -15,11 +16,11 @@
 			<year>2002-2010</year>
 			<holder>Juha Heinanen</holder>
 		</copyright>
-	</sectioninfo>
-	
-	<title>UID Domain Module</title>
-	
-	<section id="domain.overview">
+	</bookinfo>
+	<toc></toc>
+	<chapter>
+		<title>Admin Guide</title>
+	<section id="uid_domain.overview">
 		<title>Overview</title>
 		<para>Domain modules, as the name suggests, implements support for
 		multiple independent virtual domains hosted on one SIP server. This is
@@ -209,7 +210,7 @@ iptel
 		</section>
 	</section>
 	
-	<section id="domain.dep">
+	<section id="uid_domain.dep">
 		<title>Dependencies</title>
 		<para>
 			The module depends on the following modules (in the other words
@@ -222,7 +223,7 @@ iptel
 		</para>
 	</section>
 	
-	<section id="known_limitations">
+	<section id="uid_domain.known_limitations">
 		<title>Known Limitations</title>
 		<para>
 			There is an unlikely race condition on domain list update.  If a process uses a table,
@@ -235,5 +236,5 @@ iptel
 	<xi:include href="functions.xml"/>
 	<xi:include href="fifo.xml"/>
 	<xi:include href="domain_api.xml"/>
-	
-</section>
+	</chapter>
+</book>
