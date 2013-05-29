@@ -35,7 +35,7 @@
 #include "action.h"
 
 union lval_u{
-	pv_spec_t pvs;
+	pv_spec_t *pvs;
 	avp_spec_t avps;
 };
 

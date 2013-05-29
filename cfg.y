@@ -2611,17 +2611,10 @@ attr_id_any_str:
 	;
 
 pvar:	PVAR {
-			pv_spec=pkg_malloc(sizeof(*pv_spec));
-			if (!pv_spec) {
-				yyerror("Not enough memory");
-				YYABORT;
-			}
-			memset(pv_spec, 0, sizeof(*pv_spec));
 			s_tmp.s=$1; s_tmp.len=strlen($1);
-			if (pv_parse_spec(&s_tmp, pv_spec)==0){
-				yyerror("unknown script pseudo variable %s", $1 );
-				pkg_free(pv_spec);
-				pv_spec=0;
+			pv_spec=pv_cache_get(&s_tmp);
+			if (!pv_spec) {
+				yyerror("Can't get from cache: %s", $1);
 				YYABORT;
 			}
 			$$=pv_spec;
@@ -2636,12 +2629,8 @@ avp_pvar:	AVP_OR_PVAR {
 				}
 				memset(lval_tmp, 0, sizeof(*lval_tmp));
 				s_tmp.s=$1; s_tmp.len=strlen(s_tmp.s);
-				if (pv_parse_spec2(&s_tmp, &lval_tmp->lv.pvs, 1)==0){
-					/* not a pvar, try avps */
-					/* lval_tmp might be partially filled by the failed
-					   pv_parse_spec2() (especially if the avp name is the
-					   same as a pv class) => clean it again */
-					memset(lval_tmp, 0, sizeof(*lval_tmp));
+				lval_tmp->lv.pvs = pv_cache_get(&s_tmp);
+				if (lval_tmp->lv.pvs==NULL){
 					lval_tmp->lv.avps.type|= AVP_NAME_STR;
 					lval_tmp->lv.avps.name.s.s = s_tmp.s+1;
 					lval_tmp->lv.avps.name.s.len = s_tmp.len-1;
@@ -2688,15 +2677,14 @@ lval: attr_id_ass {
 						yyerror("Not enough memory");
 						YYABORT;
 					}
-					lval_tmp->type=LV_PVAR; lval_tmp->lv.pvs=*($1);
-					pkg_free($1); /* free the pvar spec we just copied */
+					lval_tmp->type=LV_PVAR; lval_tmp->lv.pvs=$1;
 					$$=lval_tmp;
 				}
 	| avp_pvar    {
 					if (($1)->type==LV_PVAR){
-						if (!pv_is_w(&($1)->lv.pvs))
+						if (!pv_is_w($1->lv.pvs))
 							yyerror("read only pvar in assignment left side");
-						if ($1->lv.pvs.trans!=0)
+						if ($1->lv.pvs->trans!=0)
 							yyerror("pvar with transformations in assignment"
 									" left side");
 					}
@@ -2715,7 +2703,7 @@ rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
 									$$=mk_rve_rval(RV_AVP, &$1->lv.avps);
 									break;
 								case LV_PVAR:
-									$$=mk_rve_rval(RV_PVAR, &$1->lv.pvs);
+									$$=mk_rve_rval(RV_PVAR, $1->lv.pvs);
 									break;
 								default:
 									yyerror("BUG: invalid lvalue type ");

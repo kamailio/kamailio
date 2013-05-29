@@ -255,7 +255,7 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 		pv_get_null(msg, 0, &pval)
 	
 	destroy_pval=0;
-	pvar=&lv->lv.pvs;
+	pvar=lv->lv.pvs;
 	if (unlikely(!pv_is_w(pvar))){
 		ERR("read only pvar\n");
 		goto error;
