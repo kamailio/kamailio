@@ -26,7 +26,8 @@
 	</copyright>
     </bookinfo>
 
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="flatstore.overview">
 	<title>Overview</title>
 	<para>
@@ -132,5 +133,5 @@ mv acc_4.log acc_3.log.20050605
     </section>
 
     <xi:include href="db_flatstore_params.xml"/>
-
+    </chapter>
 </book>
