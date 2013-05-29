@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="ldap" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="ldap" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>db2_ldap module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Jan</firstname>
@@ -19,10 +20,11 @@
 	    <holder>Iptel.org GmBH</holder>
 	</copyright>
 
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>db2_ldap module</title>
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="ldap.overview">
 		<title>Overview</title>
 		<para>
@@ -306,6 +308,6 @@ field_map = flags : (BitString) serFlags
 		none
 		</para>
 	</section>
-
-</section>
+    </chapter>
+</book>
 
