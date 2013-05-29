@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="textopsx" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="textopsx" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>Textopsx Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Andrei</firstname>
@@ -24,10 +25,11 @@
 	    <year>2003</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>Textopsx Module</title>
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="textops.overview">
 	<title>Overview</title>
 	<para>
@@ -38,6 +40,6 @@
     </section>
 
     <xi:include href="functions.xml"/>
-
-</section>
+    </chapter>
+</book>
 
