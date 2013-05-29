@@ -28,8 +28,10 @@
 	    <holder>FhG FOKUS</holder>
 	</copyright>
     </bookinfo>
+    <toc></toc>
 
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="sl.overview">
 	<title>Overview</title>
 	<para>
@@ -69,5 +71,5 @@
     <xi:include href="sl_params.xml"/>
     <xi:include href="sl_functions.xml"/>
     <xi:include href="sl_stats.xml"/>
-
+    </chapter>
 </book>
