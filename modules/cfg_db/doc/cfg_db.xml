@@ -27,6 +27,8 @@
 
     </bookinfo>
 
+    <chapter>
+	<title>Admin Guide</title>
 	<section id="cfg_db.overview">
 		<title>Overview</title>
 		<para>
@@ -108,5 +110,6 @@
 
 		</example>
     </section>
+    </chapter>
 </book>
 
