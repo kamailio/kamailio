@@ -9,8 +9,9 @@
 	]
 >
 
-<section id="tm" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="tm" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    	<title>TM Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Jiri</firstname>
@@ -34,11 +35,12 @@
 		<year>2008</year>
 		<holder>Juha Heinanen</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>TM Module</title>
-
-    <section>
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="tm.overview">
 	<title>Overview</title>
 	<para>
 	    The <acronym>TM</acronym> module enables stateful processing of SIP
@@ -349,5 +351,5 @@ failure_route["serial"]
     <xi:include href="functions.xml"/>
     <xi:include href="api.xml"/>
     <xi:include href="event_routes.xml"/>
-
-</section>
+    </chapter>
+</book>
