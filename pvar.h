@@ -207,6 +207,7 @@ int pv_free_extra_list(void);
 
 int pv_locate_name(str *in);
 pv_spec_t* pv_cache_get(str *name);
+str* pv_cache_get_name(pv_spec_t *spec);
 
 /*! \brief PV helper functions */
 int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);

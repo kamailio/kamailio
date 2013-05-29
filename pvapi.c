@@ -357,6 +357,36 @@ pv_spec_t* pv_cache_get(str *name)
 	return pv_cache_add(&tname);
 }
 
+str* pv_cache_get_name(pv_spec_t *spec)
+{
+	int i;
+	pv_cache_t *pvi;
+	if(spec==NULL)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+
+	if(_pv_cache_set==0)
+		return NULL;
+
+	for(i=0;i<PV_CACHE_SIZE;i++)
+	{
+		pvi = _pv_cache[i];
+		while(pvi)
+		{
+			if(&pvi->spec == spec)
+			{
+				LM_DBG("pvar[%p]->name[%.*s] found in cache\n", spec,
+					pvi->pvname.len, pvi->pvname.s);
+				return &pvi->pvname;
+			}
+			pvi = pvi->next;
+		}
+	}
+	return NULL;
+}
+
 /**
  *
  */
