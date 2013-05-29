@@ -7,7 +7,7 @@ CREATE TABLE dr_gateways (
     pri_prefix VARCHAR(64) DEFAULT NULL,
     attrs VARCHAR(255) DEFAULT NULL,
     description VARCHAR(128) DEFAULT '' NOT NULL
-) ENGINE=MyISAM;
+);
 
 INSERT INTO version (table_name, table_version) values ('dr_rules','3');
 CREATE TABLE dr_rules (
@@ -19,14 +19,14 @@ CREATE TABLE dr_rules (
     routeid VARCHAR(64) NOT NULL,
     gwlist VARCHAR(255) NOT NULL,
     description VARCHAR(128) DEFAULT '' NOT NULL
-) ENGINE=MyISAM;
+);
 
 INSERT INTO version (table_name, table_version) values ('dr_gw_lists','1');
 CREATE TABLE dr_gw_lists (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     gwlist VARCHAR(255) NOT NULL,
     description VARCHAR(128) DEFAULT '' NOT NULL
-) ENGINE=MyISAM;
+);
 
 INSERT INTO version (table_name, table_version) values ('dr_groups','2');
 CREATE TABLE dr_groups (
@@ -35,5 +35,5 @@ CREATE TABLE dr_groups (
     domain VARCHAR(128) DEFAULT '' NOT NULL,
     groupid INT(11) UNSIGNED DEFAULT 0 NOT NULL,
     description VARCHAR(128) DEFAULT '' NOT NULL
-) ENGINE=MyISAM;
+);
 

@@ -10,7 +10,7 @@ CREATE TABLE rls_presentity (
     auth_state INT(11) NOT NULL,
     reason VARCHAR(64) NOT NULL,
     CONSTRAINT rls_presentity_idx UNIQUE (rlsubs_did, resource_uri)
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX rlsubs_idx ON rls_presentity (rlsubs_did);
 CREATE INDEX updated_idx ON rls_presentity (updated);
@@ -43,7 +43,7 @@ CREATE TABLE rls_watchers (
     from_domain VARCHAR(64) NOT NULL,
     updated INT(11) NOT NULL,
     CONSTRAINT rls_watcher_idx UNIQUE (callid, to_tag, from_tag)
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX rls_watchers_update ON rls_watchers (watcher_username, watcher_domain, event);
 CREATE INDEX rls_watchers_expires ON rls_watchers (expires);

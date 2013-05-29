@@ -5,5 +5,5 @@ CREATE TABLE purplemap (
     ext_user VARCHAR(128) NOT NULL,
     ext_prot VARCHAR(16) NOT NULL,
     ext_pass VARCHAR(64)
-) ENGINE=MyISAM;
+);
 

@@ -13,7 +13,7 @@ CREATE TABLE silo (
     extra_hdrs TEXT DEFAULT '' NOT NULL,
     callid VARCHAR(128) DEFAULT '' NOT NULL,
     status INT DEFAULT 0 NOT NULL
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX account_idx ON silo (username, domain);
 

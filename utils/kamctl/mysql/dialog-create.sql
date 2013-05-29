@@ -24,7 +24,7 @@ CREATE TABLE dialog (
     toroute_name VARCHAR(32),
     req_uri VARCHAR(128) NOT NULL,
     xdata VARCHAR(512)
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX hash_idx ON dialog (hash_entry, hash_id);
 
@@ -35,7 +35,7 @@ CREATE TABLE dialog_vars (
     hash_id INT(10) UNSIGNED NOT NULL,
     dialog_key VARCHAR(128) NOT NULL,
     dialog_value VARCHAR(512) NOT NULL
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX hash_idx ON dialog_vars (hash_entry, hash_id);
 

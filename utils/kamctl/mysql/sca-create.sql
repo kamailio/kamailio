@@ -14,7 +14,7 @@ CREATE TABLE sca_subscriptions (
     notify_cseq INT(11) NOT NULL,
     subscribe_cseq INT(11) NOT NULL,
     CONSTRAINT sca_subscriptions_idx UNIQUE (subscriber, call_id, from_tag, to_tag)
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX sca_expires_idx ON sca_subscriptions (expires);
 CREATE INDEX sca_subscribers_idx ON sca_subscriptions (subscriber, event);

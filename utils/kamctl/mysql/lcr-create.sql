@@ -14,7 +14,7 @@ CREATE TABLE lcr_gw (
     tag VARCHAR(64) DEFAULT NULL,
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     defunct INT UNSIGNED DEFAULT NULL
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX lcr_id_idx ON lcr_gw (lcr_id);
 
@@ -27,7 +27,7 @@ CREATE TABLE lcr_rule_target (
     priority TINYINT UNSIGNED NOT NULL,
     weight INT UNSIGNED DEFAULT 1 NOT NULL,
     CONSTRAINT rule_id_gw_id_idx UNIQUE (rule_id, gw_id)
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX lcr_id_idx ON lcr_rule_target (lcr_id);
 
@@ -41,5 +41,5 @@ CREATE TABLE lcr_rule (
     stopper INT UNSIGNED DEFAULT 0 NOT NULL,
     enabled INT UNSIGNED DEFAULT 1 NOT NULL,
     CONSTRAINT lcr_id_prefix_from_uri_idx UNIQUE (lcr_id, prefix, from_uri)
-) ENGINE=MyISAM;
+);
 

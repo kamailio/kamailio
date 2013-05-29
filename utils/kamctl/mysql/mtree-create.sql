@@ -4,7 +4,7 @@ CREATE TABLE mtree (
     tprefix VARCHAR(32) DEFAULT '' NOT NULL,
     tvalue VARCHAR(128) DEFAULT '' NOT NULL,
     CONSTRAINT tprefix_idx UNIQUE (tprefix)
-) ENGINE=MyISAM;
+);
 
 INSERT INTO version (table_name, table_version) values ('mtrees','2');
 CREATE TABLE mtrees (
@@ -13,5 +13,5 @@ CREATE TABLE mtrees (
     tprefix VARCHAR(32) DEFAULT '' NOT NULL,
     tvalue VARCHAR(128) DEFAULT '' NOT NULL,
     CONSTRAINT tname_tprefix_tvalue_idx UNIQUE (tname, tprefix, tvalue)
-) ENGINE=MyISAM;
+);
 

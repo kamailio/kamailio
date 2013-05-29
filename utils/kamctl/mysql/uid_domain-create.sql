@@ -5,7 +5,7 @@ CREATE TABLE uid_domain (
     domain VARCHAR(64) NOT NULL,
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     CONSTRAINT domain_idx UNIQUE (domain)
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX did_idx ON uid_domain (did);
 
@@ -18,7 +18,7 @@ CREATE TABLE uid_domain_attrs (
     value VARCHAR(128),
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     CONSTRAINT domain_attr_idx UNIQUE (did, name, value)
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX domain_did ON uid_domain_attrs (did, flags);
 

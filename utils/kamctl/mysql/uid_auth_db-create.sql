@@ -9,7 +9,7 @@ CREATE TABLE uid_credentials (
     ha1 VARCHAR(32) NOT NULL,
     ha1b VARCHAR(32) DEFAULT '' NOT NULL,
     uid VARCHAR(64) NOT NULL
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX cred_idx ON uid_credentials (auth_username, did);
 CREATE INDEX uid ON uid_credentials (uid);

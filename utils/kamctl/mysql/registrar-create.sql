@@ -20,7 +20,7 @@ CREATE TABLE aliases (
     instance VARCHAR(255) DEFAULT NULL,
     reg_id INT(11) DEFAULT 0 NOT NULL,
     CONSTRAINT ruid_idx UNIQUE (ruid)
-) ENGINE=MyISAM;
+);
 
 CREATE INDEX alias_idx ON aliases (username, domain, contact);
 
