@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="gflags" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="gflags" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>UID Gflags Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Jiri</firstname>
@@ -15,10 +16,11 @@
 	    <year>2004</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>UID Gflags Module</title>
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="uid_gflags.overview">
 	<title>Overview</title>
 	<para>
@@ -50,7 +52,8 @@ if (is_ugflag("1")) {
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
     <xi:include href="fifo.xml"/>
-	 <xi:include href="xmlrpc.xml"/>
+    <xi:include href="xmlrpc.xml"/>
+    </chapter>
 
-</section>
+</book>
 
