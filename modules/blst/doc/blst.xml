@@ -21,7 +21,8 @@
 	</copyright>
     </bookinfo>
 
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="blst.overview">
 	<title>Overview</title>
 	<para>
@@ -30,6 +31,6 @@
     </section>
 
     <xi:include href="blst_functions.xml"/>
-
+    </chapter>
 </book>
 
