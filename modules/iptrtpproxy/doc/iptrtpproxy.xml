@@ -26,10 +26,8 @@
 	    <year>2007</year>
 	    <holder>Tomas Mandys</holder>
 	</copyright>
-
     </bookinfo>
-
-
-	<xi:include href="iptrtpproxy_admin.xml"/>
+    <toc></toc>
+    <xi:include href="iptrtpproxy_admin.xml"/>
 </book>
 
