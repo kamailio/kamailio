@@ -36,6 +36,8 @@
 
     <title>The AVP Module</title>
 
+    <chapter>
+	<title>Admin Guide</title>
     <section>
 	<title>Overview</title>
 	<para>
@@ -54,5 +56,5 @@
 
     <xi:include href="avp_functions.xml"/>
     <xi:include href="avp_params.xml"/>
-
+    </chapter>
 </book>
