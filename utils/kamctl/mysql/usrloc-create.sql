@@ -20,7 +20,7 @@ CREATE TABLE location (
     instance VARCHAR(255) DEFAULT NULL,
     reg_id INT(11) DEFAULT 0 NOT NULL,
     CONSTRAINT ruid_idx UNIQUE (ruid)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX account_contact_idx ON location (username, domain, contact);
 CREATE INDEX expires_idx ON location (expires);
@@ -35,7 +35,7 @@ CREATE TABLE location_attrs (
     atype INT(11) DEFAULT 0 NOT NULL,
     avalue VARCHAR(255) DEFAULT '' NOT NULL,
     last_modified DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX account_record_idx ON location_attrs (username, domain, ruid);
 CREATE INDEX last_modified_idx ON location_attrs (last_modified);

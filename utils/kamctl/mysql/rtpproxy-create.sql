@@ -6,5 +6,5 @@ CREATE TABLE rtpproxy (
     flags INT DEFAULT 0 NOT NULL,
     weight INT DEFAULT 1 NOT NULL,
     description VARCHAR(64) DEFAULT '' NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 

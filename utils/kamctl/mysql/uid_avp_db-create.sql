@@ -7,5 +7,5 @@ CREATE TABLE uid_user_attrs (
     type INT DEFAULT 0 NOT NULL,
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     CONSTRAINT userattrs_idx UNIQUE (uid, name, value)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 

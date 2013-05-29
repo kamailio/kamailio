@@ -7,5 +7,5 @@ CREATE TABLE dispatcher (
     priority INT DEFAULT 0 NOT NULL,
     attrs VARCHAR(128) DEFAULT '' NOT NULL,
     description VARCHAR(64) DEFAULT '' NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 

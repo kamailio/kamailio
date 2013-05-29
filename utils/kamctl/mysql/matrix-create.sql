@@ -3,7 +3,7 @@ CREATE TABLE matrix (
     first INT(10) NOT NULL,
     second SMALLINT(10) NOT NULL,
     res INT(10) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX matrix_idx ON matrix (first, second);
 

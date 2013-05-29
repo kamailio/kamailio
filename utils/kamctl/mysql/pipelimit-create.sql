@@ -4,5 +4,5 @@ CREATE TABLE pl_pipes (
     pipeid VARCHAR(64) DEFAULT '' NOT NULL,
     algorithm VARCHAR(32) DEFAULT '' NOT NULL,
     plimit INT DEFAULT 0 NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 

@@ -12,5 +12,5 @@ CREATE TABLE uacreg (
     auth_proxy VARCHAR(64) DEFAULT '' NOT NULL,
     expires INT DEFAULT 0 NOT NULL,
     CONSTRAINT l_uuid_idx UNIQUE (l_uuid)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 

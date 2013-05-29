@@ -12,7 +12,7 @@ CREATE TABLE sip_trace (
     toip VARCHAR(50) DEFAULT '' NOT NULL,
     fromtag VARCHAR(64) DEFAULT '' NOT NULL,
     direction VARCHAR(4) DEFAULT '' NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX traced_user_idx ON sip_trace (traced_user);
 CREATE INDEX date_idx ON sip_trace (time_stamp);

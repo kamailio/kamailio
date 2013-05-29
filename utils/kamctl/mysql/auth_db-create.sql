@@ -9,7 +9,7 @@ CREATE TABLE subscriber (
     ha1b VARCHAR(64) DEFAULT '' NOT NULL,
     rpid VARCHAR(64) DEFAULT NULL,
     CONSTRAINT account_idx UNIQUE (username, domain)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX username_idx ON subscriber (username);
 

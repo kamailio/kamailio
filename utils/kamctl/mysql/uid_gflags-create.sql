@@ -6,5 +6,5 @@ CREATE TABLE uid_global_attrs (
     value VARCHAR(128),
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     CONSTRAINT global_attrs_idx UNIQUE (name, value)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 

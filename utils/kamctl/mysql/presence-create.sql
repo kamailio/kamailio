@@ -10,7 +10,7 @@ CREATE TABLE presentity (
     body BLOB NOT NULL,
     sender VARCHAR(128) NOT NULL,
     CONSTRAINT presentity_idx UNIQUE (username, domain, event, etag)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX presentity_expires ON presentity (expires);
 CREATE INDEX account_idx ON presentity (username, domain, event);
@@ -43,7 +43,7 @@ CREATE TABLE active_watchers (
     updated INT(11) NOT NULL,
     updated_winfo INT(11) NOT NULL,
     CONSTRAINT active_watchers_idx UNIQUE (callid, to_tag, from_tag)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX active_watchers_expires ON active_watchers (expires);
 CREATE INDEX active_watchers_pres ON active_watchers (presentity_uri, event);
@@ -61,7 +61,7 @@ CREATE TABLE watchers (
     reason VARCHAR(64),
     inserted_time INT(11) NOT NULL,
     CONSTRAINT watcher_idx UNIQUE (presentity_uri, watcher_username, watcher_domain, event)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('xcap','4');
 CREATE TABLE xcap (
@@ -75,7 +75,7 @@ CREATE TABLE xcap (
     doc_uri VARCHAR(255) NOT NULL,
     port INT(11) NOT NULL,
     CONSTRAINT doc_uri_idx UNIQUE (doc_uri)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX account_doc_type_idx ON xcap (username, domain, doc_type);
 CREATE INDEX account_doc_type_uri_idx ON xcap (username, domain, doc_type, doc_uri);
@@ -103,7 +103,7 @@ CREATE TABLE pua (
     version INT(11) NOT NULL,
     extra_headers TEXT NOT NULL,
     CONSTRAINT pua_idx UNIQUE (etag, tuple_id, call_id, from_tag)
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 
 CREATE INDEX expires_idx ON pua (expires);
 CREATE INDEX dialog1_idx ON pua (pres_id, pres_uri);
