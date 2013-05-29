@@ -1,4 +1,5 @@
-1. Auth_db Module
+
+UID Auth DB Module
 
 Jan Janak
 
@@ -10,216 +11,273 @@ Jakob Schlyter
    <jakob@schlyter.se>
 
    Copyright © 2002, 2003 FhG FOKUS
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. Parameters
+   Table of Contents
 
-        1.3.1. db_url (string)
-        1.3.2. user_column (string)
-        1.3.3. domain_column (string)
-        1.3.4. password_column (string)
-        1.3.5. rpid_column (string)
-        1.3.6. calculate_ha1 (integer)
-        1.3.7. plain_password_column (string)
-        1.3.8. password_column_2 (string)
-        1.3.9. use_rpid (integer)
+   1. Admin Guide
 
-   1.4. Functions
+        1. Overview
+        2. Dependencies
+        3. Parameters
 
-        1.4.1. www_authorize(realm, table)
-        1.4.2. proxy_authorize(realm, table)
+              3.1. db_url (string)
+              3.2. user_column (string)
+              3.3. domain_column (string)
+              3.4. password_column (string)
+              3.5. rpid_column (string)
+              3.6. calculate_ha1 (integer)
+              3.7. plain_password_column (string)
+              3.8. password_column_2 (string)
+              3.9. use_rpid (integer)
 
-1.1. Overview
+        4. Functions
 
-   This module contains all authentication related functions that need the
-   access to the database. This module should be used together with auth
-   module, it cannot be used independently because it depends on the
-   module. Select this module if you want to use database to store
+              4.1. www_authorize(realm, table)
+              4.2. proxy_authorize(realm, table)
+
+   List of Examples
+
+   1.1. db_url parameter usage
+   1.2. user_column usage
+   1.3. domain_column usage
+   1.4. password_column usage
+   1.5. rpid_column usage
+   1.6. calculate_ha1usage
+   1.7. plain_password_column usage
+   1.8. password_column_2 usage
+   1.9. use_rpidusage
+   1.10. www_authorize usage
+   1.11. proxy_authorize usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. user_column (string)
+        3.3. domain_column (string)
+        3.4. password_column (string)
+        3.5. rpid_column (string)
+        3.6. calculate_ha1 (integer)
+        3.7. plain_password_column (string)
+        3.8. password_column_2 (string)
+        3.9. use_rpid (integer)
+
+   4. Functions
+
+        4.1. www_authorize(realm, table)
+        4.2. proxy_authorize(realm, table)
+
+1. Overview
+
+   This  module  contains  all authentication related functions that need
+   the  access  to the database. This module should be used together with
+   auth module, it cannot be used independently because it depends on the
+   module.  Select  this  module  if  you  want  to use database to store
    authentication information like subscriber usernames and passwords. If
    you want to use radius authentication, then use auth_radius instead.
 
-1.2. Dependencies
+2. Dependencies
 
-   The module depends on the following modules (in the other words the
+   The  module  depends  on the following modules (in the other words the
    listed modules must be loaded before this module):
      * auth.  Generic authentication functions.
      * database.  Any database module (currently mysql, postgres, dbtext)
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. db_url (string)
+   3.1. db_url (string)
+   3.2. user_column (string)
+   3.3. domain_column (string)
+   3.4. password_column (string)
+   3.5. rpid_column (string)
+   3.6. calculate_ha1 (integer)
+   3.7. plain_password_column (string)
+   3.8. password_column_2 (string)
+   3.9. use_rpid (integer)
+
+3.1. db_url (string)
 
    This is URL of the database to be used. Value of the parameter depends
-   on the database module used. For example for mysql and postgres modules
-   this is something like mysql://username:password@host:port/database.
-   For dbtext module (which stores data in plaintext files) it is
-   directory in which the database resides.
+   on  the  database  module  used.  For  example  for mysql and postgres
+   modules this is something like
+   mysql://username:password@host:port/database. For dbtext module (which
+   stores  data in plaintext files) it is directory in which the database
+   resides.
 
    Default value is "mysql://serro:47serro11@localhost/ser".
 
-   Example 1. db_url parameter usage
+   Example 1.1. db_url parameter usage
 modparam("auth_db", "db_url", "mysql://foo:bar@foobar.org/ser")
 
-1.3.2. user_column (string)
+3.2. user_column (string)
 
-   This is the name of the column holding usernames. Default value is fine
-   for most people. Use the parameter if you really need to change it.
+   This  is  the  name  of the column holding usernames. Default value is
+   fine  for  most people. Use the parameter if you really need to change
+   it.
 
    Default value is "username".
 
-   Example 2. user_column usage
+   Example 1.2. user_column usage
 modparam("auth_db", "user_column", "user")
 
-1.3.3. domain_column (string)
+3.3. domain_column (string)
 
    This is the name of the column holding domains of users. Default value
-   is fine for most people. Use the parameter if you really need to change
-   it.
+   is  fine  for  most  people.  Use  the parameter if you really need to
+   change it.
 
    Default value is "domain".
 
-   Example 3. domain_column usage
+   Example 1.3. domain_column usage
 modparam("auth_db", "domain_column", "domain")
 
-1.3.4. password_column (string)
+3.4. password_column (string)
 
-   This is the name of the column holding passwords. Passwords can be
+   This  is  the  name  of the column holding passwords. Passwords can be
    either stored as plain text or pre-calculated HA1 strings. HA1 strings
-   are MD5 hashes of username, password, and realm. HA1 strings are more
-   safe because the server doesn't need to know plaintext passwords and
+   are  MD5 hashes of username, password, and realm. HA1 strings are more
+   safe  because  the server doesn't need to know plaintext passwords and
    they cannot be obtained from HA1 strings.
 
    Default value is "ha1".
 
-   Example 4. password_column usage
+   Example 1.4. password_column usage
 modparam("auth_db", "password_column", "password")
 
-1.3.5. rpid_column (string)
+3.5. rpid_column (string)
 
-   This is the name of the column holding information for the
-   Remote-Party-ID header field. Default value is fine for most people.
+   This   is   the  name  of  the  column  holding  information  for  the
+   Remote-Party-ID  header  field. Default value is fine for most people.
    Use the parameter if you really need to change it.
 
    Default value is "rpid".
 
-   Example 5. rpid_column usage
+   Example 1.5. rpid_column usage
 modparam("auth_db", "rpid_column", "remote_party_id")
 
-1.3.6. calculate_ha1 (integer)
+3.6. calculate_ha1 (integer)
 
-   This parameter tells server whether it should read plaintext password
+   This  parameter tells server whether it should read plaintext password
    from the database or HA1 string. If the parameter is set to 1 then the
    server will assume that the column pointed to by plain_password_column
-   contains plaintext passwords and it will calculate HA1 strings on the
+   contains  plaintext passwords and it will calculate HA1 strings on the
    fly.
 
    If the parameter is set to 0 then the server assumes that the database
-   contains HA1 strings directly and will not calculate them. In this case
-   it will use value of password_column as name of column with HA1
-   password. If username parameter of credentials contains also @domain
-   (some user agents put domain in username parameter), then column
-   pointed to by password_column_2 parameter will be used instead. This
-   column should also contain HA1 strings but they should be calculated
-   including the domain in the username parameter (as opposed to
-   password_column which (when containing HA1 strings) should always
+   contains  HA1  strings  directly  and will not calculate them. In this
+   case  it  will use value of password_column as name of column with HA1
+   password.  If  username parameter of credentials contains also @domain
+   (some  user  agents  put  domain  in  username parameter), then column
+   pointed  to  by password_column_2 parameter will be used instead. This
+   column  should  also contain HA1 strings but they should be calculated
+   including  the  domain  in  the  username  parameter  (as  opposed  to
+   password_column  which  (when  containing  HA1  strings) should always
    contains HA1 strings calculated without domain in username.
 
-   This ensures that the authentication will always work when using
+   This  ensures  that  the  authentication  will  always work when using
    pre-calculated HA1 string, not depending on the presence of the domain
    in username.
 
    Default value of this parameter is 0.
 
-   Example 6. calculate_ha1usage
+   Example 1.6. calculate_ha1usage
 modparam("auth_db", "calculate_ha1", 1)
 
-1.3.7. plain_password_column (string)
+3.7. plain_password_column (string)
 
-   This parameter holds the name of column holding plain text password.
+   This  parameter  holds the name of column holding plain text password.
    This column is used when calculate_ha1 is set.
 
    Default value is "password".
 
-   Example 7. plain_password_column usage
+   Example 1.7. plain_password_column usage
 modparam("auth_db", "plain_password_column", "password")
 
-1.3.8. password_column_2 (string)
+3.8. password_column_2 (string)
 
-   As described in the previous section this parameter contains name of
-   column holding pre-calculated HA1 string that were calculated including
-   the domain in the username. This parameter is used only when
+   As  described  in the previous section this parameter contains name of
+   column   holding   pre-calculated  HA1  string  that  were  calculated
+   including the domain in the username. This parameter is used only when
    calculate_ha1 is set to 0 and user agent send a credentials containing
    the domain in the username.
 
    Default value of the parameter is ha1b.
 
-   Example 8. password_column_2 usage
+   Example 1.8. password_column_2 usage
 modparam("auth_db", "password_column_2", "ha1_2")
 
-1.3.9. use_rpid (integer)
+3.9. use_rpid (integer)
 
-   This parameter specifies whether the server should fetch a value for
+   This  parameter  specifies whether the server should fetch a value for
    the Remote-Party-ID header field from the database.
 
-   If the parameter is set to 1 the server expects to find a value for
+   If  the  parameter  is set to 1 the server expects to find a value for
    this header in the column specified by the rpid_column parameter.
 
    Default value of this parameter is 0.
 
-   Example 9. use_rpidusage
+   Example 1.9. use_rpidusage
 modparam("auth_db", "use_rpid", 1)
 
-1.4. Functions
+4. Functions
 
-1.4.1. www_authorize(realm, table)
+   4.1. www_authorize(realm, table)
+   4.2. proxy_authorize(realm, table)
 
-   The function verifies credentials according to RFC2617. If the
-   credentials are verified successfully then the function will succeed
-   and mark the credentials as authorized (marked credentials can be later
-   used by some other functions). If the function was unable to verify the
-   credentials for some reason then it will fail and the script should
-   call www_challenge which will challenge the user again.
+4.1. www_authorize(realm, table)
+
+   The  function  verifies  credentials  according  to  RFC2617.  If  the
+   credentials  are  verified successfully then the function will succeed
+   and  mark  the  credentials  as  authorized (marked credentials can be
+   later  used  by  some  other functions). If the function was unable to
+   verify  the  credentials  for  some  reason  then it will fail and the
+   script should call www_challenge which will challenge the user again.
 
    Meaning of the parameters is as follows:
-     * realm.  Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use.
-       Usually this is domain of the host the server is running on. If an
-       empty string "" is used then the server will generate it from the
-       request. In case of REGISTER requests To header field domain will
-       be used (because this header field represents a user being
-       registered), for all other messages From header field domain will
-       be used.
-     * table.  Table to be used to lookup usernames and passwords (usually
-       subscribers table).
+     * realm.   Realm  is  a  opaque  string  that  the user agent should
+       present to the user so he can decide what username and password to
+       use.  Usually this is domain of the host the server is running on.
+       If  an  empty  string  "" is used then the server will generate it
+       from  the  request.  In  case of REGISTER requests To header field
+       domain  will  be used (because this header field represents a user
+       being registered), for all other messages From header field domain
+       will be used.
+     * table.   Table  to  be  used  to  lookup  usernames  and passwords
+       (usually subscribers table).
 
-   Example 10. www_authorize usage
+   Example 1.10. www_authorize usage
 ...
 if (www_authorize("iptel.org", "subscriber")) {
     www_challenge("iptel.org", "1");
 };
 ...
 
-1.4.2. proxy_authorize(realm, table)
+4.2. proxy_authorize(realm, table)
 
-   The function verifies credentials according to RFC2617. If the
-   credentials are verified successfully then the function will succeed
-   and mark the credentials as authorized (marked credentials can be later
-   used by some other functions). If the function was unable to verify the
-   credentials for some reason then it will fail and the script should
-   call proxy_challenge which will challenge the user again.
+   The  function  verifies  credentials  according  to  RFC2617.  If  the
+   credentials  are  verified successfully then the function will succeed
+   and  mark  the  credentials  as  authorized (marked credentials can be
+   later  used  by  some  other functions). If the function was unable to
+   verify  the  credentials  for  some  reason  then it will fail and the
+   script  should  call  proxy_challenge  which  will  challenge the user
+   again.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use.
-       Usually this is domain of the host the server is running on.
-       If an empty string "" is used then the server will generate it from
-       the request. From header field domain will be used as realm.
-     * table - Table to be used to lookup usernames and passwords (usually
-       subscribers table).
+     * realm  -  Realm  is  a  opaque  string  that the user agent should
+       present to the user so he can decide what username and password to
+       use. Usually this is domain of the host the server is running on.
+       If  an  empty  string  "" is used then the server will generate it
+       from the request. From header field domain will be used as realm.
+     * table  -  Table  to  be  used  to  lookup  usernames and passwords
+       (usually subscribers table).
 
-   Example 11. proxy_authorize usage
+   Example 1.11. proxy_authorize usage
 ...
 if (!proxy_authorize("", "subscriber)) {
     proxy_challenge("", "1");  # Realm will be autogenerated

@@ -1,4 +1,5 @@
-1. TM Module
+
+TM Module
 
 Jiri Kuthan
 
@@ -11,229 +12,445 @@ Juha Heinanen
    Copyright © 2003 FhG FOKUS
 
    Copyright © 2008 Juha Heinanen
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Serial Forking Based on Q Value
-   1.3. Known Issues
-   1.4. Parameters
+   Table of Contents
 
-        1.4.1. fr_timer (integer)
-        1.4.2. fr_inv_timer (integer)
-        1.4.3. max_inv_lifetime (integer)
-        1.4.4. max_noninv_lifetime (integer)
-        1.4.5. wt_timer (integer)
-        1.4.6. delete_timer (integer)
-        1.4.7. retr_timer1 (integer)
-        1.4.8. retr_timer2 (integer)
-        1.4.9. noisy_ctimer (integer)
-        1.4.10. restart_fr_on_each_reply (integer)
-        1.4.11. auto_inv_100 (integer)
-        1.4.12. auto_inv_100_reason (string)
-        1.4.13. unix_tx_timeout (integer)
-        1.4.14. aggregate_challenges (integer)
-        1.4.15. reparse_invite (integer)
-        1.4.16. ac_extra_hdrs (string)
-        1.4.17. blst_503 (integer)
-        1.4.18. blst_503_def_timeout (integer)
-        1.4.19. blst_503_min_timeout (integer)
-        1.4.20. blst_503_max_timeout (integer)
-        1.4.21. blst_methods_add (unsigned integer)
-        1.4.22. blst_methods_lookup (unsigned integer)
-        1.4.23. cancel_b_method (integer)
-        1.4.24. reparse_on_dns_failover (integer)
-        1.4.25. on_sl_reply (string)
-        1.4.26. contacts_avp (string)
-        1.4.27. contact_flows_avp (string)
-        1.4.28. fr_timer_avp (string)
-        1.4.29. fr_inv_timer_avp (string)
-        1.4.30. unmatched_cancel (string)
-        1.4.31. ruri_matching (integer)
-        1.4.32. via1_matching (integer)
-        1.4.33. callid_matching (integer)
-        1.4.34. pass_provisional_replies (integer)
-        1.4.35. default_code (integer)
-        1.4.36. default_reason (string)
-        1.4.37. disable_6xx_block (integer)
-        1.4.38. local_ack_mode (integer)
-        1.4.39. failure_reply_mode (integer)
-        1.4.40. faked_reply_prio (integer)
-        1.4.41. local_cancel_reason (boolean)
-        1.4.42. e2e_cancel_reason (boolean)
-        1.4.43. remap_503_500 (boolean)
-        1.4.44. failure_exec_mode (boolean)
+   1. Admin Guide
 
-   1.5. Functions
+        1. Overview
+        2. Serial Forking Based on Q Value
+        3. Known Issues
+        4. Parameters
 
-        1.5.1. t_relay([host, port])
-        1.5.2. t_relay_to_udp([ip, port])
-        1.5.3. t_relay_to_tcp([ip, port])
-        1.5.4. t_relay_to_tls([ip, port])
-        1.5.5. t_relay_to_sctp([ip, port])
-        1.5.6. t_on_failure(failure_route)
-        1.5.7. t_on_branch_failure(branch_failure_route)
-        1.5.8. t_on_reply(onreply_route)
-        1.5.9. t_on_branch(branch_route)
-        1.5.10. t_newtran()
-        1.5.11. t_reply(code, reason_phrase)
-        1.5.12. t_lookup_request()
-        1.5.13. t_retransmit_reply()
-        1.5.14. t_release()
-        1.5.15. t_forward_nonack([ip, port])
-        1.5.16. t_forward_nonack_udp(ip, port)
-        1.5.17. t_forward_nonack_tcp(ip, port)
-        1.5.18. t_forward_nonack_tls(ip, port)
-        1.5.19. t_forward_nonack_sctp(ip, port)
-        1.5.20. t_set_fr(fr_inv_timeout [, fr_timeout])
-        1.5.21. t_reset_fr()
-        1.5.22. t_set_max_lifetime(inv_lifetime, noninv_lifetime)
-        1.5.23. t_reset_max_lifetime()
-        1.5.24. t_set_retr(retr_t1_interval, retr_t2_interval)
-        1.5.25. t_reset_retr()
-        1.5.26. t_set_auto_inv_100(0|1)
-        1.5.27. t_branch_timeout()
-        1.5.28. t_branch_replied()
-        1.5.29. t_any_timeout()
-        1.5.30. t_any_replied()
-        1.5.31. t_grep_status("code")
-        1.5.32. t_is_canceled()
-        1.5.33. t_is_expired()
-        1.5.34. t_relay_cancel()
-        1.5.35. t_lookup_cancel([1])
-        1.5.36. t_drop_replies([mode])
-        1.5.37. t_save_lumps()
-        1.5.38. t_load_contacts()
-        1.5.39. t_next_contacts()
-        1.5.40. t_next_contact_flow()
-        1.5.41. t_check_trans()
-        1.5.42. t_set_disable_6xx(0|1)
-        1.5.43. t_set_disable_failover(0|1)
-        1.5.44. t_replicate(params)
-        1.5.45. t_relay_to(proxy, flags)
-        1.5.46. t_set_no_e2e_cancel_reason(0|1)
-        1.5.47. t_is_set(target)
+              4.1. fr_timer (integer)
+              4.2. fr_inv_timer (integer)
+              4.3. max_inv_lifetime (integer)
+              4.4. max_noninv_lifetime (integer)
+              4.5. wt_timer (integer)
+              4.6. delete_timer (integer)
+              4.7. retr_timer1 (integer)
+              4.8. retr_timer2 (integer)
+              4.9. noisy_ctimer (integer)
+              4.10. restart_fr_on_each_reply (integer)
+              4.11. auto_inv_100 (integer)
+              4.12. auto_inv_100_reason (string)
+              4.13. unix_tx_timeout (integer)
+              4.14. aggregate_challenges (integer)
+              4.15. reparse_invite (integer)
+              4.16. ac_extra_hdrs (string)
+              4.17. blst_503 (integer)
+              4.18. blst_503_def_timeout (integer)
+              4.19. blst_503_min_timeout (integer)
+              4.20. blst_503_max_timeout (integer)
+              4.21. blst_methods_add (unsigned integer)
+              4.22. blst_methods_lookup (unsigned integer)
+              4.23. cancel_b_method (integer)
+              4.24. reparse_on_dns_failover (integer)
+              4.25. on_sl_reply (string)
+              4.26. contacts_avp (string)
+              4.27. contact_flows_avp (string)
+              4.28. fr_timer_avp (string)
+              4.29. fr_inv_timer_avp (string)
+              4.30. unmatched_cancel (string)
+              4.31. ruri_matching (integer)
+              4.32. via1_matching (integer)
+              4.33. callid_matching (integer)
+              4.34. pass_provisional_replies (integer)
+              4.35. default_code (integer)
+              4.36. default_reason (string)
+              4.37. disable_6xx_block (integer)
+              4.38. local_ack_mode (integer)
+              4.39. failure_reply_mode (integer)
+              4.40. faked_reply_prio (integer)
+              4.41. local_cancel_reason (boolean)
+              4.42. e2e_cancel_reason (boolean)
+              4.43. remap_503_500 (boolean)
+              4.44. failure_exec_mode (boolean)
 
-   1.6. TM Module API
+        5. Functions
 
-        1.6.1. Defines
-        1.6.2. Functions
+              5.1. t_relay([host, port]) 
+              5.2. t_relay_to_udp([ip, port]) 
+              5.3. t_relay_to_tcp([ip, port]) 
+              5.4. t_relay_to_tls([ip, port]) 
+              5.5. t_relay_to_sctp([ip, port]) 
+              5.6. t_on_failure(failure_route) 
+              5.7. t_on_branch_failure(branch_failure_route) 
+              5.8. t_on_reply(onreply_route) 
+              5.9. t_on_branch(branch_route) 
+              5.10. t_newtran() 
+              5.11. t_reply(code, reason_phrase) 
+              5.12. t_lookup_request() 
+              5.13. t_retransmit_reply() 
+              5.14. t_release() 
+              5.15. t_forward_nonack([ip, port]) 
+              5.16. t_forward_nonack_udp(ip, port) 
+              5.17. t_forward_nonack_tcp(ip, port) 
+              5.18. t_forward_nonack_tls(ip, port) 
+              5.19. t_forward_nonack_sctp(ip, port) 
+              5.20. t_set_fr(fr_inv_timeout [, fr_timeout]) 
+              5.21. t_reset_fr() 
+              5.22. t_set_max_lifetime(inv_lifetime, noninv_lifetime) 
+              5.23. t_reset_max_lifetime() 
+              5.24. t_set_retr(retr_t1_interval, retr_t2_interval) 
+              5.25. t_reset_retr() 
+              5.26. t_set_auto_inv_100(0|1) 
+              5.27. t_branch_timeout() 
+              5.28. t_branch_replied() 
+              5.29. t_any_timeout() 
+              5.30. t_any_replied() 
+              5.31. t_grep_status("code") 
+              5.32. t_is_canceled() 
+              5.33. t_is_expired() 
+              5.34. t_relay_cancel() 
+              5.35. t_lookup_cancel([1]) 
+              5.36. t_drop_replies([mode]) 
+              5.37. t_save_lumps() 
+              5.38. t_load_contacts() 
+              5.39. t_next_contacts() 
+              5.40. t_next_contact_flow() 
+              5.41. t_check_trans() 
+              5.42. t_set_disable_6xx(0|1) 
+              5.43. t_set_disable_failover(0|1) 
+              5.44. t_replicate(params) 
+              5.45. t_relay_to(proxy, flags) 
+              5.46. t_set_no_e2e_cancel_reason(0|1) 
+              5.47. t_is_set(target) 
 
-              1.6.2.1. register_tmcb(cb_type, cb_func)
-              1.6.2.2. load_tm(*import_structure)
-              1.6.2.3. int t_suspend(struct sip_msg *msg, unsigned int
-                      *hash_index, unsigned int *label)
+        6. TM Module API
 
-              1.6.2.4. int t_continue(unsigned int hash_index, unsigned
-                      int label, struct action *route)
+              6.1. Defines
+              6.2. Functions
 
-              1.6.2.5. int t_cancel_suspend(unsigned int hash_index,
-                      unsigned int label)
+                    6.2.1. register_tmcb(cb_type, cb_func) 
+                    6.2.2. load_tm(*import_structure) 
+                    6.2.3. int t_suspend(struct sip_msg *msg, unsigned
+                            int *hash_index, unsigned int *label) 
 
-   1.7. Event Routes
+                    6.2.4. int t_continue(unsigned int hash_index,
+                            unsigned int label, struct action *route) 
 
-        1.7.1. event_route[tm:branch-failure]
+                    6.2.5. int t_cancel_suspend(unsigned int hash_index,
+                            unsigned int label) 
 
-1.1. Overview
+        7. Event Routes
 
-   The TM module enables stateful processing of SIP transactions. Stateful
-   logic is costly in terms of memory and CPU. The main use is services
-   that inherently need state. For example, transaction-based accounting
-   (module acc) needs to process transaction state as opposed to
-   individual messages. Any kind of forking must be implemented
-   transaction statefully. By using transaction states you trade CPU
-   caused by retransmission processing for memory. That only makes sense
-   if CPU consumption per request is huge. For example, if you want to
-   avoid costly DNS resolution for every retransmission of a request to an
-   unresolvable destination, use stateful mode. Then, only the initial
+              7.1. event_route[tm:branch-failure] 
+
+   List of Examples
+
+   1.1. Set fr_timer parameter
+   1.2. Set fr_inv_timer parameter
+   1.3. Set max_inv_lifetime parameter
+   1.4. Set max_noninv_lifetime parameter
+   1.5. Set wt_timer parameter
+   1.6. Set delete_timer parameter
+   1.7. Set retr_timer1 parameter
+   1.8. Set retr_timer2 parameter
+   1.9. Set noisy_ctimer parameter
+   1.10. Set restart_fr_on_each_reply parameter
+   1.11. Set auto_inv_100 parameter
+   1.12. Set auto_inv_100_reason parameter
+   1.13. Set unix_tx_timeout parameter
+   1.14. Set aggregate_challenges parameter
+   1.15. Set reparse_invite parameter
+   1.16. Set ac_extra_hdrs parameter
+   1.17. Set blst_503 parameter
+   1.18. Set blst_503_def_timeout parameter
+   1.19. Set blst_503_min_timeout parameter
+   1.20. Set blst_503_max_timeout parameter
+   1.21. Set blst_methods_add parameter
+   1.22. Set blst_methods_lookup parameter
+   1.23. Set cancel_b_method parameter
+   1.24. Set reparse_on_dns_failover parameter
+   1.25. Set on_sl_reply parameter
+   1.26. Set contacts_avp parameter
+   1.27. Set contact_flows_avp parameter
+   1.28. Set fr_timer_avp parameter
+   1.29. Set fr_inv_timer_avp parameter
+   1.30. Set unmatched_cancel parameter
+   1.31. Set ruri_matching parameter
+   1.32. Set via1_matching parameter
+   1.33. Set callid_matching parameter
+   1.34. Set pass_provisional_replies parameter 
+   1.35. Set default_code parameter 
+   1.36. Set default_reason parameter 
+   1.37. Set disable_6xx_block parameter
+   1.38. Set local_ack_mode parameter
+   1.39. Set failure_reply_mode parameter
+   1.40. Set faked_reply_prio parameter
+   1.41. Set local_cancel_reason parameter
+   1.42. Set e2e_cancel_reason parameter
+   1.43. Set remap_503_500 parameter
+   1.44. Set failure_exec_mode parameter
+   1.45. t_relay usage
+   1.46. t_relay_to_udp usage
+   1.47. t_on_failure usage
+   1.48. t_on_branch_failure usage
+   1.49. t_on_reply usage
+   1.50. t_on_branch usage
+   1.51. t_newtran usage
+   1.52. t_reply usage
+   1.53. t_lookup_request usage
+   1.54. t_retransmit_reply usage
+   1.55. t_release usage
+   1.56. t_forward_nonack usage
+   1.57. t_set_fr usage
+   1.58. t_reset_fr usage
+   1.59. t_set_max_lifetime usage
+   1.60. t_reset_max_lifetime usage
+   1.61. t_set_retr usage
+   1.62. t_reset_retr usage
+   1.63. t_set_auto_inv_100 usage
+   1.64. t_branch_timeout usage
+   1.65. t_branch_replied usage
+   1.66. t_any_timeout usage
+   1.67. t_any_replied usage
+   1.68. t_grep_status usage
+   1.69. t_is_canceled usage
+   1.70. t_is_expired usage
+   1.71. t_relay_cancel usage
+   1.72. t_lookup_cancel usage
+   1.73. t_drop_replies() usage
+   1.74. t_save_lumps() usage
+   1.75. t_load_contacts usage
+   1.76. t_next_contacts usage
+   1.77. t_next_contact_flow usage
+   1.78. t_check_trans usage
+   1.79. t_set_disable_6xx usage
+   1.80. t_set_disable_failover usage
+   1.81. t_replicate usage
+   1.82. t_replicate usage
+   1.83. t_set_no_e2e_cancel_reason usage
+   1.84. t_replicate usage
+   1.85. event_route[tm:branch-failure] usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Serial Forking Based on Q Value
+   3. Known Issues
+   4. Parameters
+
+        4.1. fr_timer (integer)
+        4.2. fr_inv_timer (integer)
+        4.3. max_inv_lifetime (integer)
+        4.4. max_noninv_lifetime (integer)
+        4.5. wt_timer (integer)
+        4.6. delete_timer (integer)
+        4.7. retr_timer1 (integer)
+        4.8. retr_timer2 (integer)
+        4.9. noisy_ctimer (integer)
+        4.10. restart_fr_on_each_reply (integer)
+        4.11. auto_inv_100 (integer)
+        4.12. auto_inv_100_reason (string)
+        4.13. unix_tx_timeout (integer)
+        4.14. aggregate_challenges (integer)
+        4.15. reparse_invite (integer)
+        4.16. ac_extra_hdrs (string)
+        4.17. blst_503 (integer)
+        4.18. blst_503_def_timeout (integer)
+        4.19. blst_503_min_timeout (integer)
+        4.20. blst_503_max_timeout (integer)
+        4.21. blst_methods_add (unsigned integer)
+        4.22. blst_methods_lookup (unsigned integer)
+        4.23. cancel_b_method (integer)
+        4.24. reparse_on_dns_failover (integer)
+        4.25. on_sl_reply (string)
+        4.26. contacts_avp (string)
+        4.27. contact_flows_avp (string)
+        4.28. fr_timer_avp (string)
+        4.29. fr_inv_timer_avp (string)
+        4.30. unmatched_cancel (string)
+        4.31. ruri_matching (integer)
+        4.32. via1_matching (integer)
+        4.33. callid_matching (integer)
+        4.34. pass_provisional_replies (integer)
+        4.35. default_code (integer)
+        4.36. default_reason (string)
+        4.37. disable_6xx_block (integer)
+        4.38. local_ack_mode (integer)
+        4.39. failure_reply_mode (integer)
+        4.40. faked_reply_prio (integer)
+        4.41. local_cancel_reason (boolean)
+        4.42. e2e_cancel_reason (boolean)
+        4.43. remap_503_500 (boolean)
+        4.44. failure_exec_mode (boolean)
+
+   5. Functions
+
+        5.1. t_relay([host, port]) 
+        5.2. t_relay_to_udp([ip, port]) 
+        5.3. t_relay_to_tcp([ip, port]) 
+        5.4. t_relay_to_tls([ip, port]) 
+        5.5. t_relay_to_sctp([ip, port]) 
+        5.6. t_on_failure(failure_route) 
+        5.7. t_on_branch_failure(branch_failure_route) 
+        5.8. t_on_reply(onreply_route) 
+        5.9. t_on_branch(branch_route) 
+        5.10. t_newtran() 
+        5.11. t_reply(code, reason_phrase) 
+        5.12. t_lookup_request() 
+        5.13. t_retransmit_reply() 
+        5.14. t_release() 
+        5.15. t_forward_nonack([ip, port]) 
+        5.16. t_forward_nonack_udp(ip, port) 
+        5.17. t_forward_nonack_tcp(ip, port) 
+        5.18. t_forward_nonack_tls(ip, port) 
+        5.19. t_forward_nonack_sctp(ip, port) 
+        5.20. t_set_fr(fr_inv_timeout [, fr_timeout]) 
+        5.21. t_reset_fr() 
+        5.22. t_set_max_lifetime(inv_lifetime, noninv_lifetime) 
+        5.23. t_reset_max_lifetime() 
+        5.24. t_set_retr(retr_t1_interval, retr_t2_interval) 
+        5.25. t_reset_retr() 
+        5.26. t_set_auto_inv_100(0|1) 
+        5.27. t_branch_timeout() 
+        5.28. t_branch_replied() 
+        5.29. t_any_timeout() 
+        5.30. t_any_replied() 
+        5.31. t_grep_status("code") 
+        5.32. t_is_canceled() 
+        5.33. t_is_expired() 
+        5.34. t_relay_cancel() 
+        5.35. t_lookup_cancel([1]) 
+        5.36. t_drop_replies([mode]) 
+        5.37. t_save_lumps() 
+        5.38. t_load_contacts() 
+        5.39. t_next_contacts() 
+        5.40. t_next_contact_flow() 
+        5.41. t_check_trans() 
+        5.42. t_set_disable_6xx(0|1) 
+        5.43. t_set_disable_failover(0|1) 
+        5.44. t_replicate(params) 
+        5.45. t_relay_to(proxy, flags) 
+        5.46. t_set_no_e2e_cancel_reason(0|1) 
+        5.47. t_is_set(target) 
+
+   6. TM Module API
+
+        6.1. Defines
+        6.2. Functions
+
+              6.2.1. register_tmcb(cb_type, cb_func) 
+              6.2.2. load_tm(*import_structure) 
+              6.2.3. int t_suspend(struct sip_msg *msg, unsigned int
+                      *hash_index, unsigned int *label) 
+
+              6.2.4. int t_continue(unsigned int hash_index, unsigned int
+                      label, struct action *route) 
+
+              6.2.5. int t_cancel_suspend(unsigned int hash_index,
+                      unsigned int label) 
+
+   7. Event Routes
+
+        7.1. event_route[tm:branch-failure] 
+
+1. Overview
+
+   The  TM  module  enables  stateful  processing  of  SIP  transactions.
+   Stateful  logic  is costly in terms of memory and CPU. The main use is
+   services  that  inherently  need state. For example, transaction-based
+   accounting  (module acc) needs to process transaction state as opposed
+   to  individual  messages.  Any  kind  of  forking  must be implemented
+   transaction  statefully.  By  using  transaction  states you trade CPU
+   caused  by retransmission processing for memory. That only makes sense
+   if  CPU  consumption  per request is huge. For example, if you want to
+   avoid  costly  DNS resolution for every retransmission of a request to
+   an unresolvable destination, use stateful mode. Then, only the initial
    message burdens server by DNS queries, subsequent retransmissions will
-   be dropped and will not result in more processes blocked by DNS
+   be  dropped  and  will  not  result  in  more processes blocked by DNS
    resolution. The price is more memory consumption and higher processing
    latency.
 
    From the admin's perspective, these are the major functions : t_relay,
-   t_relay_to_udp and t_relay_to_tcp. All of them setup transaction state,
-   absorb retransmissions from upstream, generate downstream
+   t_relay_to_udp  and  t_relay_to_tcp.  All  of  them  setup transaction
+   state,  absorb  retransmissions  from  upstream,  generate  downstream
    retransmissions and correlate replies to requests. t_relay forwards to
-   current URI (be it original request's URI or a URI changed by some of
-   URI-modifying functions, such as sethost). t_relay_to_udp and
-   t_relay_to_tcp forward to a specific address over UDP or TCP
+   current  URI (be it original request's URI or a URI changed by some of
+   URI-modifying   functions,   such   as  sethost).  t_relay_to_udp  and
+   t_relay_to_tcp   forward  to  a  specific  address  over  UDP  or  TCP
    respectively.
 
-   In general, if TM is used, it copies clones of received SIP messages in
-   shared memory. That costs memory and also CPU time (memcpys, lookups,
-   shmem locks, etc.) Note that non-TM functions operate over the received
-   message in private memory, that means that any core operations will
-   have no effect on statefully processed messages after creating the
-   transactional state. For example, calling record_route after t_relay is
-   pretty useless, as the RR is added to privately held message whereas
-   its TM clone is being forwarded.
+   In  general,  if TM is used, it copies clones of received SIP messages
+   in  shared  memory.  That  costs  memory  and  also CPU time (memcpys,
+   lookups,  shmem  locks,  etc.) Note that non-TM functions operate over
+   the  received  message  in  private  memory,  that means that any core
+   operations  will have no effect on statefully processed messages after
+   creating  the  transactional  state. For example, calling record_route
+   after  t_relay is pretty useless, as the RR is added to privately held
+   message whereas its TM clone is being forwarded.
 
-   The TM module is quite big and uneasy to program --lots of mutexes,
-   shared memory access, malloc and free, timers--you really need to be
+   The  TM  module  is quite big and uneasy to program --lots of mutexes,
+   shared  memory  access, malloc and free, timers--you really need to be
    careful when you do anything. To simplify TM programming, there is the
-   instrument of callbacks. The callback mechanisms allow programmers to
+   instrument  of callbacks. The callback mechanisms allow programmers to
    register their functions to a specific event. See t_hooks.h for a list
    of possible events.
 
-   Other things programmers may want to know is UAC--it is a very
-   simplistic code which allows you to generate your own transactions.
-   Particularly useful for things like NOTIFYs or IM gateways. The UAC
-   takes care of all the transaction machinery: retransmissions, FR
+   Other  things  programmers  may  want  to  know  is  UAC--it is a very
+   simplistic  code  which  allows you to generate your own transactions.
+   Particularly  useful  for  things like NOTIFYs or IM gateways. The UAC
+   takes  care  of  all  the  transaction  machinery: retransmissions, FR
    timeouts, forking, etc. See t_uac prototype in uac.h for more details.
-   If you want to see the transaction result the code can register for a
+   If  you want to see the transaction result the code can register for a
    callback.
 
 Note
 
-   Several Kamailio TM module functions are now implemented in the TMX
-   module: "modules_k/tmx". Check it to see if what you are looking for is
-   there.
+   Several  Kamailio  TM  module functions are now implemented in the TMX
+   module:  "modules_k/tmx".  Check it to see if what you are looking for
+   is there.
 
-1.2. Serial Forking Based on Q Value
+2. Serial Forking Based on Q Value
 
    A single SIP INVITE request may be forked to multiple destinations. We
-   call the set of all such destinations a "destination set". Individual
-   elements within the destination sets are called branches. The script
-   writer can add URIs to the destination set from the configuration file,
-   or they can be loaded from the user location database. Each registered
-   contact then becomes one branch in the destination set.
+   call  the set of all such destinations a "destination set". Individual
+   elements  within  the destination sets are called branches. The script
+   writer  can  add  URIs  to  the destination set from the configuration
+   file,  or  they  can  be  loaded from the user location database. Each
+   registered contact then becomes one branch in the destination set.
 
-   The default behavior of the TM module, if it encounters a SIP message
-   with multiple branches in the destination set, is to forward the SIP
-   message to all the branches in parallel. That means it sends the
-   message to all the branch destinations before it waits for replies from
-   any of them. This is the default behavior if you call t_relay() and
-   similar functions without any other arguments.
+   The  default behavior of the TM module, if it encounters a SIP message
+   with  multiple  branches in the destination set, is to forward the SIP
+   message  to  all  the  branches  in  parallel. That means it sends the
+   message  to  all  the  branch destinations before it waits for replies
+   from  any  of them. This is the default behavior if you call t_relay()
+   and similar functions without any other arguments.
 
    Another approach of handling multiple branches in a destination set is
    serial forking. When configured to do serial forking, the server takes
-   the first branch out of the destination set, forwards the message to
-   its destination and waits for a reply or timeout. Only after a reply
-   has been received or a timeout occurred, the server takes another
-   destination from the destination set and tries again, until it receives
-   a positive final reply or until all branches from the destination set
-   have been tried.
+   the  first  branch out of the destination set, forwards the message to
+   its  destination  and waits for a reply or timeout. Only after a reply
+   has  been  received  or  a  timeout occurred, the server takes another
+   destination  from  the  destination  set  and  tries  again,  until it
+   receives  a  positive  final  reply  or  until  all  branches from the
+   destination set have been tried.
 
-   Yet another, more sophisticated, way of handling multiple branches is
+   Yet  another, more sophisticated, way of handling multiple branches is
    combined serial/parallel forking, where individual branches within the
    destination set are assigned priorities. The order in which individual
-   branches are tried is then determined by their relative priority within
-   the destination set. Branches can be tried sequentially in the
+   branches  are  tried  is  then  determined  by their relative priority
+   within  the destination set. Branches can be tried sequentially in the
    descending priority order and all branches that have the same priority
    can be tried in parallel. Such combined serial/parallel forking can be
    achieved in the TM module with the help of functions t_load_contacts()
    and t_next_contacts().
 
-   Every branch in the destination set is assigned a priority number, also
-   known as the "q value". The q value is a floating point number in a
-   range 0 to 1.0. The higher the q value number, the more priority is
+   Every  branch  in  the  destination set is assigned a priority number,
+   also known as the "q value". The q value is a floating point number in
+   a  range 0 to 1.0. The higher the q value number, the more priority is
    given to the particular branch in the destination set. Branches with q
-   value 1.0 have maximum priority, such branches should be always be
+   value  1.0  have  maximum  priority, such branches should be always be
    tried first in serial forking. Branches with q value 0 have the lowest
    priority and they should by tried after all other branches with higher
    priority in the destination set.
 
-   As an example, consider the following simple configuration file. When
+   As  an example, consider the following simple configuration file. When
    the server receives an INVITE, it creates four branches with usernames
    A through D and then forwards the request using t_relay():
 route {
@@ -246,10 +463,10 @@ route {
   break;
 }
 
-   With this configuration the server forwards the request to all four
-   branches at once, performing parallel forking as described above. We
+   With  this  configuration  the server forwards the request to all four
+   branches  at  once, performing parallel forking as described above. We
    did not set the q value for individual branches in this example but we
-   can do that by slightly modifying the arguments given to
+   can   do   that   by   slightly   modifying  the  arguments  given  to
    append_branch():
 route {
   seturi("sip:a@example.com");
@@ -261,19 +478,19 @@ route {
   break;
 }
 
-   Here we assigned q value 0.5 to branches B and C and q value 1.0 to
+   Here  we  assigned  q value 0.5 to branches B and C and q value 1.0 to
    branch D. We did not specify any q value for branch A and in that case
-   it is assumed that its q value is the lowest from all branches within
-   the destination set. If you try to run this example again, you will
-   figure out that nothing changed, t_relay() still forward the message to
-   all branches in parallel.
+   it  is assumed that its q value is the lowest from all branches within
+   the  destination  set.  If you try to run this example again, you will
+   figure  out  that nothing changed, t_relay() still forward the message
+   to all branches in parallel.
 
-   We now want to implement the combined serial/parallel forking. Branch D
-   should be tried first, because its q value is 1.0. Branches B and C
-   should be tried in parallel, but only after D finishes. Branch A should
-   be tried after B and C finished, because its q value (the default) is
-   the lowest of all. To do that, we need to introduce two new functions
-   into our example and two tm module parameters:
+   We  now want to implement the combined serial/parallel forking. Branch
+   D  should be tried first, because its q value is 1.0. Branches B and C
+   should  be  tried  in  parallel,  but  only after D finishes. Branch A
+   should  be  tried  after  B  and  C finished, because its q value (the
+   default)  is  the  lowest of all. To do that, we need to introduce two
+   new functions into our example and two tm module parameters:
 modparam("tm", "contacts_avp", "tm_contacts");
 modparam("tm", "contact_flows_avp", "tm_contact_flows");
 
@@ -290,23 +507,23 @@ route {
   break;
 }
 
-   First of all, the tm module parameters are mandatory if the two new
+   First  of  all,  the tm module parameters are mandatory if the two new
    functions are used. Function t_load_contacts() takes all branches from
    the destination set, sorts them according to their q values and stores
-   them in the AVP configured in the modparam. The function also clears
-   the destination set, which means that it removes all branches
+   them  in  the AVP configured in the modparam. The function also clears
+   the  destination  set,  which  means  that  it  removes  all  branches
    configured before with seturi() and append_branch().
 
-   Function t_next_contacts() takes the AVP created by the previous
-   function and extract the branches with highest q values from it. In our
-   example it is branch D. That branch is then put back into the
-   destination set and when the script finally reaches t_relay(), the
-   destination set only contains branch D and the request will be
+   Function  t_next_contacts()  takes  the  AVP  created  by the previous
+   function  and  extract  the branches with highest q values from it. In
+   our  example  it  is  branch  D. That branch is then put back into the
+   destination  set  and  when  the script finally reaches t_relay(), the
+   destination  set  only  contains  branch  D  and  the  request will be
    forwarded there.
 
-   We achieved the first step of serial forking, but this is not
-   sufficient. Now we also need to forward to other branches with lower
-   priority values when branch D finishes. To do that, we need to extend
+   We  achieved  the  first  step  of  serial  forking,  but  this is not
+   sufficient.  Now  we also need to forward to other branches with lower
+   priority  values when branch D finishes. To do that, we need to extend
    the configuration file again and introduce a failure_route section:
 modparam("tm", "contacts_avp", "tm_contacts");
 
@@ -334,52 +551,97 @@ failure_route["serial"]
   t_relay();
 }
 
-   The failure_route section will be executed when branch D finishes. It
-   executes t_next_contacts() again and this time the function retrieves
-   branches B and C from the AVP and adds them to the destination set.
-   Here we need to check the return value of the function, because a
-   negative value indicates that there were no more branches, in that case
-   the failure_route should just terminate and forward the response from
-   branch D upstream.
+   The  failure_route section will be executed when branch D finishes. It
+   executes  t_next_contacts() again and this time the function retrieves
+   branches  B  and  C from the AVP and adds them to the destination set.
+   Here  we  need  to  check  the return value of the function, because a
+   negative  value  indicates  that  there were no more branches, in that
+   case  the failure_route should just terminate and forward the response
+   from branch D upstream.
 
-   If t_next_contact() returns a positive value then we have more new
-   branches to try and we need to setup the failure_route again and call
-   t_relay(). In our example the request will now be forwarded to branches
-   B and C in paralell, because they were both added to the destination
-   set by t_next_contacts() at the same time.
+   If  t_next_contact()  returns  a  positive value then we have more new
+   branches  to try and we need to setup the failure_route again and call
+   t_relay().  In  our  example  the  request  will  now  be forwarded to
+   branches  B  and  C  in  paralell, because they were both added to the
+   destination set by t_next_contacts() at the same time.
 
-   When branches B and C finish, the failure_route block is executed
-   again, this time t_next_contacts() puts the final branch A into the
+   When  branches  B  and  C  finish, the failure_route block is executed
+   again,  this  time  t_next_contacts() puts the final branch A into the
    destination set and t_relay() forwards the request there.
 
-   And that's the whole example, we achieved combined serial/parallel
-   forking based on the q value of individual branches. In real-world
-   configuration files the script writer would need to check the return
-   value of all functions and restart_fr_on_each_reply. The destination
-   set would not be configured directly in the configuration file, but can
-   be retrieved from the user location database. In that case registered
-   contacts will be stored in the destination set as branches and their q
-   values (provided by UAs) will be used.
+   And  that's  the  whole  example, we achieved combined serial/parallel
+   forking  based  on  the  q value of individual branches. In real-world
+   configuration  files  the script writer would need to check the return
+   value  of  all functions and restart_fr_on_each_reply. The destination
+   set  would  not  be configured directly in the configuration file, but
+   can  be  retrieved  from  the  user  location  database.  In that case
+   registered  contacts will be stored in the destination set as branches
+   and their q values (provided by UAs) will be used.
 
-1.3. Known Issues
+3. Known Issues
 
-     * Possibly, performance could be improved by not parsing non-INVITEs,
-       as they do not be replied with 100, and do not result in
-       ACK/CANCELs, and other things which take parsing. However, we need
-       to rethink whether we don't need parsed headers later for something
-       else. Remember, when we now store a request in sh_mem, we can't
-       apply any pkg_mem operations to it any more. (that might be
-       redesigned too).
-     * Another performance improvement may be achieved by not parsing CSeq
-       in replies until reply branch matches branch of an INVITE/CANCEL in
-       transaction table.
+     * Possibly,   performance   could   be   improved   by  not  parsing
+       non-INVITEs, as they do not be replied with 100, and do not result
+       in  ACK/CANCELs,  and other things which take parsing. However, we
+       need  to  rethink  whether  we don't need parsed headers later for
+       something  else.  Remember, when we now store a request in sh_mem,
+       we  can't apply any pkg_mem operations to it any more. (that might
+       be redesigned too).
+     * Another  performance  improvement  may  be achieved by not parsing
+       CSeq   in   replies  until  reply  branch  matches  branch  of  an
+       INVITE/CANCEL in transaction table.
      * t_replicate should be done more cleanly--Vias, Routes, etc. should
-       be removed from a message prior to replicating it (well, does not
+       be  removed from a message prior to replicating it (well, does not
        matter any longer so much as there is a new replication module).
 
-1.4. Parameters
+4. Parameters
 
-1.4.1. fr_timer (integer)
+   4.1. fr_timer (integer)
+   4.2. fr_inv_timer (integer)
+   4.3. max_inv_lifetime (integer)
+   4.4. max_noninv_lifetime (integer)
+   4.5. wt_timer (integer)
+   4.6. delete_timer (integer)
+   4.7. retr_timer1 (integer)
+   4.8. retr_timer2 (integer)
+   4.9. noisy_ctimer (integer)
+   4.10. restart_fr_on_each_reply (integer)
+   4.11. auto_inv_100 (integer)
+   4.12. auto_inv_100_reason (string)
+   4.13. unix_tx_timeout (integer)
+   4.14. aggregate_challenges (integer)
+   4.15. reparse_invite (integer)
+   4.16. ac_extra_hdrs (string)
+   4.17. blst_503 (integer)
+   4.18. blst_503_def_timeout (integer)
+   4.19. blst_503_min_timeout (integer)
+   4.20. blst_503_max_timeout (integer)
+   4.21. blst_methods_add (unsigned integer)
+   4.22. blst_methods_lookup (unsigned integer)
+   4.23. cancel_b_method (integer)
+   4.24. reparse_on_dns_failover (integer)
+   4.25. on_sl_reply (string)
+   4.26. contacts_avp (string)
+   4.27. contact_flows_avp (string)
+   4.28. fr_timer_avp (string)
+   4.29. fr_inv_timer_avp (string)
+   4.30. unmatched_cancel (string)
+   4.31. ruri_matching (integer)
+   4.32. via1_matching (integer)
+   4.33. callid_matching (integer)
+   4.34. pass_provisional_replies (integer)
+   4.35. default_code (integer)
+   4.36. default_reason (string)
+   4.37. disable_6xx_block (integer)
+   4.38. local_ack_mode (integer)
+   4.39. failure_reply_mode (integer)
+   4.40. faked_reply_prio (integer)
+   4.41. local_cancel_reason (boolean)
+   4.42. e2e_cancel_reason (boolean)
+   4.43. remap_503_500 (boolean)
+   4.44. failure_exec_mode (boolean)
+
+4.1. fr_timer (integer)
 
    Timer which hits if no final reply for a request or ACK for a negative
    INVITE reply arrives (in milliseconds).
@@ -388,210 +650,212 @@ failure_route["serial"]
 
    See also: t_set_fr(), max_noninv_lifetime.
 
-   Example 1. Set fr_timer parameter
+   Example 1.1. Set fr_timer parameter
 ...
 modparam("tm", "fr_timer", 10000)
 ...
 
-1.4.2. fr_inv_timer (integer)
+4.2. fr_inv_timer (integer)
 
-   Timer which hits if no final reply for an INVITE arrives after a
+   Timer  which  hits  if  no  final  reply for an INVITE arrives after a
    provisional message was received (in milliseconds).
 
-   Note: this timer can be restarted when a provisional response is
+   Note:  this  timer  can  be  restarted  when a provisional response is
    received. For more details see restart_fr_on_each_reply.
 
    Default value is 120000 ms (120 seconds).
 
    See also: t_set_fr(), max_inv_lifetime.
 
-   Example 2. Set fr_inv_timer parameter
+   Example 1.2. Set fr_inv_timer parameter
 ...
 modparam("tm", "fr_inv_timer", 180000)
 ...
 
-1.4.3. max_inv_lifetime (integer)
+4.3. max_inv_lifetime (integer)
 
-   Maximum time an INVITE transaction is allowed to be active (in
-   milliseconds). After this interval has passed from the transaction
-   creation, the transaction will be either moved into the wait state or
-   in the final response retransmission state, irrespective of the
+   Maximum  time  an  INVITE  transaction  is  allowed  to  be active (in
+   milliseconds).  After  this  interval  has passed from the transaction
+   creation,  the transaction will be either moved into the wait state or
+   in  the  final  response  retransmission  state,  irrespective  of the
    transaction fr_inv_timer and fr_timer values.
 
-   An INVITE transaction will be kept in memory for maximum:
-   max_inv_lifetime+fr_timer(from the ack to the final reply
+   An   INVITE   transaction   will   be  kept  in  memory  for  maximum:
+   max_inv_lifetime+fr_timer(from    the   ack   to   the   final   reply
    wait)+wt_timer.
 
-   The main difference between this timer and fr_inv_timer is that the
-   fr_inv_timer is per branch, while max_inv_lifetime is per the whole
-   transaction. Even on a per branch basis fr_inv_timer could be
-   restarted. For example, by default if restart_fr_on_each_reply is not
-   cleared, the fr_inv_timer will be restarted for each received
-   provisional reply. Even if restart_fr_on_each_reply is not set the
-   fr_inv_timer will still be restarted for each increasing reply (e.g.
-   180, 181, 182, ...). Another example when a transaction can live
-   substantially more then its fr_inv_timer and where max_inv_lifetime
-   will help is when dns failover is used (each failed dns destination can
-   introduce a new branch).
+   The  main  difference  between this timer and fr_inv_timer is that the
+   fr_inv_timer  is  per  branch, while max_inv_lifetime is per the whole
+   transaction.  Even  on  a  per  branch  basis  fr_inv_timer  could  be
+   restarted.  For example, by default if restart_fr_on_each_reply is not
+   cleared,   the  fr_inv_timer  will  be  restarted  for  each  received
+   provisional  reply.  Even  if  restart_fr_on_each_reply is not set the
+   fr_inv_timer  will  still be restarted for each increasing reply (e.g.
+   180,  181,  182,  ...).  Another  example  when a transaction can live
+   substantially  more  then  its fr_inv_timer and where max_inv_lifetime
+   will  help  is  when dns failover is used (each failed dns destination
+   can introduce a new branch).
 
-   The default value is 180000 ms (180 seconds - the rfc3261 timer C
+   The  default  value  is  180000  ms (180 seconds - the rfc3261 timer C
    value).
 
-   See also: max_noninv_lifetime, t_set_max_lifetime() (allows changing
-   max_inv_lifetime on a per transaction basis), t_reset_max_lifetime
+   See  also:  max_noninv_lifetime, t_set_max_lifetime() (allows changing
+   max_inv_lifetime  on  a  per  transaction basis), t_reset_max_lifetime
    fr_timer, wt_timer, restart_fr_on_each_reply.
 
-   Example 3. Set max_inv_lifetime parameter
+   Example 1.3. Set max_inv_lifetime parameter
 ...
 modparam("tm", "max_inv_lifetime", 150000)
 ...
 
-1.4.4. max_noninv_lifetime (integer)
+4.4. max_noninv_lifetime (integer)
 
-   Maximum time a non-INVITE transaction is allowed to be active (in
-   milliseconds). After this interval has passed from the transaction
-   creation, the transaction will be either moved into the wait state or
-   in the final response retransmission state, irrespective of the
+   Maximum  time  a  non-INVITE  transaction  is allowed to be active (in
+   milliseconds).  After  this  interval  has passed from the transaction
+   creation,  the transaction will be either moved into the wait state or
+   in  the  final  response  retransmission  state,  irrespective  of the
    transaction fr_timer value. It's the same as max_inv_lifetime, but for
    non-INVITEs.
 
-   A non-INVITE transaction will be kept in memory for maximum:
+   A   non-INVITE  transaction  will  be  kept  in  memory  for  maximum:
    max_noninv_lifetime+wt_timer.
 
-   The main difference between this timer and fr_timer is that the
-   fr_timer is per branch, while max_noninv_lifetime is per the whole
+   The  main  difference  between  this  timer  and  fr_timer is that the
+   fr_timer  is  per  branch,  while max_noninv_lifetime is per the whole
    transaction. An example when a transaction can live substantially more
-   then its fr_timer and where max_noninv_lifetime will help is when dns
-   failover is used (each failed dns destination can introduce a new
+   then  its fr_timer and where max_noninv_lifetime will help is when dns
+   failover  is  used  (each  failed  dns destination can introduce a new
    branch).
 
-   The default value is 32000 ms (32 seconds - the rfc3261 timer F value).
+   The  default  value  is  32000  ms  (32  seconds - the rfc3261 timer F
+   value).
 
-   See also: max_inv_lifetime, t_set_max_lifetime() (allows changing
-   max_noninv_lifetime on a per transaction basis), t_reset_max_lifetime
+   See  also:  max_inv_lifetime,  t_set_max_lifetime()  (allows  changing
+   max_noninv_lifetime  on a per transaction basis), t_reset_max_lifetime
    fr_timer, wt_timer.
 
-   Example 4. Set max_noninv_lifetime parameter
+   Example 1.4. Set max_noninv_lifetime parameter
 ...
 modparam("tm", "max_noninv_lifetime", 30000)
 ...
 
-1.4.5. wt_timer (integer)
+4.5. wt_timer (integer)
 
-   Time for which a transaction stays in memory to absorb delayed messages
-   after it completed (in milliseconds); also, when this timer hits,
-   retransmission of local cancels is stopped (a puristic but complex
-   behavior would be not to enter wait state until local branches are
-   finished by a final reply or FR timer--we simplified).
+   Time  for  which  a  transaction  stays  in  memory  to absorb delayed
+   messages  after  it completed (in milliseconds); also, when this timer
+   hits,  retransmission  of  local  cancels  is  stopped (a puristic but
+   complex behavior would be not to enter wait state until local branches
+   are finished by a final reply or FR timer--we simplified).
 
    Default value is 5000 ms (5 seconds).
 
-   Example 5. Set wt_timer parameter
+   Example 1.5. Set wt_timer parameter
 ...
 modparam("tm", "wt_timer", 1000)
 ...
 
-1.4.6. delete_timer (integer)
+4.6. delete_timer (integer)
 
-   Time after which a to-be-deleted transaction currently ref-ed by a
+   Time  after  which  a  to-be-deleted transaction currently ref-ed by a
    process will be tried to be deleted again (in milliseconds).
 
-   Note: this parameter is obsolete for ser 2.1 (in 2.1 the transaction is
-   deleted the moment it's not referenced anymore).
+   Note:  this  parameter is obsolete for ser 2.1 (in 2.1 the transaction
+   is deleted the moment it's not referenced anymore).
 
    Default value is 200 milliseconds.
 
-   Example 6. Set delete_timer parameter
+   Example 1.6. Set delete_timer parameter
 ...
 modparam("tm", "delete_timer", 100)
 ...
 
-1.4.7. retr_timer1 (integer)
+4.7. retr_timer1 (integer)
 
    Initial retransmission period (in milliseconds).
 
    Default value is 500 milliseconds.
 
-   Example 7. Set retr_timer1 parameter
+   Example 1.7. Set retr_timer1 parameter
 ...
 modparam("tm", "retr_timer1", 1000)
 ...
 
-1.4.8. retr_timer2 (integer)
+4.8. retr_timer2 (integer)
 
-   Maximum retransmission period (in milliseconds). The retransmission
-   interval starts with retr_timer1 and increases until it reaches this
+   Maximum  retransmission  period  (in milliseconds). The retransmission
+   interval  starts  with retr_timer1 and increases until it reaches this
    value. After this it stays constant at retr_timer2.
 
    Default value is 4000 milliseconds.
 
-   Example 8. Set retr_timer2 parameter
+   Example 1.8. Set retr_timer2 parameter
 ...
 modparam("tm", "retr_timer2", 2000)
 ...
 
-1.4.9. noisy_ctimer (integer)
+4.9. noisy_ctimer (integer)
 
-   If set, INVITE transactions that time-out (FR INV timer) will be always
-   replied. If it's not set, the transaction has only one branch and no
-   response was ever received on this branch, it will be silently dropped
-   (no 408 reply will be generated) This behavior is overridden if a
-   request is forked, the transaction has a failure route or callback, or
-   some functionality explicitly turned it on for a transaction (like acc
-   does to avoid unaccounted transactions due to expired timer). Turn this
-   off only if you know the client UACs will timeout and their timeout
-   interval for INVITEs is lower or equal than tm's fr_inv_timer.
+   If  set,  INVITE  transactions  that  time-out  (FR INV timer) will be
+   always  replied.  If it's not set, the transaction has only one branch
+   and  no response was ever received on this branch, it will be silently
+   dropped  (no  408 reply will be generated) This behavior is overridden
+   if  a  request  is  forked,  the  transaction  has  a failure route or
+   callback,  or  some  functionality  explicitly  turned  it  on  for  a
+   transaction  (like  acc  does to avoid unaccounted transactions due to
+   expired  timer).  Turn  this off only if you know the client UACs will
+   timeout  and their timeout interval for INVITEs is lower or equal than
+   tm's fr_inv_timer.
 
    Default value is 1 (on).
 
-   Example 9. Set noisy_ctimer parameter
+   Example 1.9. Set noisy_ctimer parameter
 ...
 modparam("tm", "noisy_ctimer", 1)
 ...
 
-1.4.10. restart_fr_on_each_reply (integer)
+4.10. restart_fr_on_each_reply (integer)
 
-   If set (default), the fr_inv_timer for an INVITE transaction will be
-   restarted for each provisional reply received (rfc3261 mandated
-   behaviour). If not set, the fr_inv_timer will be restarted only for the
-   first provisional replies and for increasing replies greater or equal
-   180 (e.g. 180, 181, 182, 185, ...).
+   If  set  (default), the fr_inv_timer for an INVITE transaction will be
+   restarted  for  each  provisional  reply  received  (rfc3261  mandated
+   behaviour).  If  not  set, the fr_inv_timer will be restarted only for
+   the  first  provisional  replies and for increasing replies greater or
+   equal 180 (e.g. 180, 181, 182, 185, ...).
 
-   Setting it to 0 is especially useful when dealing with bad UAs that
-   continuously retransmit 180s, not allowing the transaction to timeout
-   (and thus making impossible the implementation of certain services,
+   Setting  it  to  0 is especially useful when dealing with bad UAs that
+   continuously  retransmit 180s, not allowing the transaction to timeout
+   (and  thus  making  impossible the implementation of certain services,
    like automatic voicemail after x seconds).
 
    Default value is 1 (on).
 
    See also: fr_inv_timer, max_inv_lifetime.
 
-   Example 10. Set restart_fr_on_each_reply parameter
+   Example 1.10. Set restart_fr_on_each_reply parameter
 ...
 modparam("tm", "restart_fr_on_each_reply", 0)
 ...
 
-1.4.11. auto_inv_100 (integer)
+4.11. auto_inv_100 (integer)
 
    If set (default) tm will automatically send and 100 reply to INVITEs.
 
-   Setting it to 0 one can be used to enable doing first some tests or
-   pre-processing on the INVITE and only if some conditions are met
-   manually send a 100 (using t_reply()). Note however that in this case
-   all the 100s have to be sent "by hand". t_set_auto_inv_100() might help
-   to selectively turn off this feature only for some specific
+   Setting  it  to  0 one can be used to enable doing first some tests or
+   pre-processing  on  the  INVITE  and  only  if some conditions are met
+   manually  send a 100 (using t_reply()). Note however that in this case
+   all  the  100s  have  to be sent "by hand". t_set_auto_inv_100() might
+   help  to  selectively  turn  off  this  feature only for some specific
    transactions.
 
    Default value is 1 (on).
 
    See also: t_set_auto_inv_100() auto_inv_100_reason.
 
-   Example 11. Set auto_inv_100 parameter
+   Example 1.11. Set auto_inv_100 parameter
 ...
 modparam("tm", "auto_inv_100", 0)
 ...
 
-1.4.12. auto_inv_100_reason (string)
+4.12. auto_inv_100_reason (string)
 
    Set reason text of the automatically send 100 to an INVITE.
 
@@ -599,261 +863,261 @@ modparam("tm", "auto_inv_100", 0)
 
    See also: auto_inv_100.
 
-   Example 12. Set auto_inv_100_reason parameter
+   Example 1.12. Set auto_inv_100_reason parameter
 ...
 modparam("tm", "auto_inv_100_reason", "Trying")
 ...
 
-1.4.13. unix_tx_timeout (integer)
+4.13. unix_tx_timeout (integer)
 
    Unix socket transmission timeout, in milliseconds.
 
-   If unix sockets are used (e.g.: to communicate with sems) and sending a
-   message on a unix socket takes longer then unix_tx_timeout, the send
+   If  unix sockets are used (e.g.: to communicate with sems) and sending
+   a message on a unix socket takes longer then unix_tx_timeout, the send
    will fail.
 
    The default value is 500 milliseconds.
 
-   Example 13. Set unix_tx_timeout parameter
+   Example 1.13. Set unix_tx_timeout parameter
 ...
 modparam("tm", "unix_tx_timeout", 250)
 ...
 
-1.4.14. aggregate_challenges (integer)
+4.14. aggregate_challenges (integer)
 
-   If set (default), the final reply is a 401 or a 407 and more then one
-   branch received a 401 or 407, then all the WWW-Authenticate and
-   Proxy-Authenticate headers from all the 401 and 407 replies will be
-   aggregated in a new final reply. If only one branch received the
-   winning 401 or 407 then this reply will be forwarded (no new one will
-   be built). If 0 only the first 401, or if no 401 was received the first
-   407, will be forwarded (no header aggregation).
+   If  set (default), the final reply is a 401 or a 407 and more then one
+   branch  received  a  401  or  407,  then  all the WWW-Authenticate and
+   Proxy-Authenticate  headers  from  all the 401 and 407 replies will be
+   aggregated  in  a  new  final  reply.  If only one branch received the
+   winning  401 or 407 then this reply will be forwarded (no new one will
+   be  built).  If  0  only  the first 401, or if no 401 was received the
+   first 407, will be forwarded (no header aggregation).
 
    Default value is 1 (required by rfc3261).
 
-   Example 14. Set aggregate_challenges parameter
+   Example 1.14. Set aggregate_challenges parameter
 ...
 modparam("tm", "aggregate_challenges", 0)
 ...
 
-1.4.15. reparse_invite (integer)
+4.15. reparse_invite (integer)
 
    If set (default), the CANCEL and negative ACK requests are constructed
-   from the INVITE message which was sent out instead of building them
-   from the received request. The disadvantage is that the outgoing INVITE
-   has to be partially re-parsed, the advantage is that the CANCEL/ACK is
-   always RFC 3261-compliant, it always contains the same route-set as the
-   INVITE message. Do not disable the INVITE re-parsing for example in the
-   following cases:
+   from  the  INVITE  message which was sent out instead of building them
+   from  the  received  request.  The  disadvantage  is that the outgoing
+   INVITE  has  to  be  partially  re-parsed,  the  advantage is that the
+   CANCEL/ACK  is  always RFC 3261-compliant, it always contains the same
+   route-set  as the INVITE message. Do not disable the INVITE re-parsing
+   for example in the following cases:
 
-   - The INVITE contains a preloaded route-set, and SER forwards the
-   message to the next hop according to the Route header. The Route header
-   is not removed in the CANCEL without reparse_invite=1.
+   -  The  INVITE  contains  a  preloaded route-set, and SER forwards the
+   message  to  the  next  hop  according  to the Route header. The Route
+   header is not removed in the CANCEL without reparse_invite=1.
 
-   - SER record-routes, thus an in-dialog INVITE contains a Route header
-   which is removed during loose routing. If the in-dialog INVITE is
-   rejected, the negative ACK still contains the Route header without
+   -  SER record-routes, thus an in-dialog INVITE contains a Route header
+   which  is  removed  during  loose  routing. If the in-dialog INVITE is
+   rejected,  the  negative  ACK  still contains the Route header without
    reparse_invite=1.
 
    Default value is 1.
 
-   Example 15. Set reparse_invite parameter
+   Example 1.15. Set reparse_invite parameter
 ...
 modparam("tm", "reparse_invite", 0)
 ...
 
-1.4.16. ac_extra_hdrs (string)
+4.16. ac_extra_hdrs (string)
 
-   Header fields prefixed by this parameter value are included in the
-   CANCEL and negative ACK messages if they were present in the outgoing
+   Header  fields  prefixed  by  this parameter value are included in the
+   CANCEL  and negative ACK messages if they were present in the outgoing
    INVITE.
 
-   Note, that the parameter value effects only those headers which are not
-   covered by RFC-3261 (which are neither mandatory nor prohibited in
-   CANCEL and ACK), and the parameter can be used only together with
+   Note,  that  the  parameter value effects only those headers which are
+   not covered by RFC-3261 (which are neither mandatory nor prohibited in
+   CANCEL  and  ACK),  and  the  parameter can be used only together with
    reparse_invite=1.
 
    Default value is "".
 
-   Example 16. Set ac_extra_hdrs parameter
+   Example 1.16. Set ac_extra_hdrs parameter
 ...
 modparam("tm", "ac_extra_hdrs", "myfavoriteheaders-")
 ...
 
-1.4.17. blst_503 (integer)
+4.17. blst_503 (integer)
 
    If set and the blacklist support is enabled, every 503 reply source is
    added to the blacklist. The initial blacklist timeout (or ttl) depends
    on the presence of a Retry-After header in the reply and the values of
-   the following tm parameters: blst_503_def_timeout, blst_503_min_timeout
-   and blst_503_max_timeout.
+   the      following      tm      parameters:      blst_503_def_timeout,
+   blst_503_min_timeout and blst_503_max_timeout.
 
-   WARNING:blindly allowing 503 blacklisting could be very easily
+   WARNING:blindly   allowing  503  blacklisting  could  be  very  easily
    exploited for DOS attacks in most network setups.
 
    The default value is 0 (disabled due to the reasons above).
 
-   Example 17. Set blst_503 parameter
+   Example 1.17. Set blst_503 parameter
 ...
 modparam("tm", "blst_503", 1)
 ...
 
-1.4.18. blst_503_def_timeout (integer)
+4.18. blst_503_def_timeout (integer)
 
-   Blacklist interval in seconds for a 503 reply with no Retry-After
-   header. See also blst_503, blst_503_min_timeout and
+   Blacklist  interval  in  seconds  for  a 503 reply with no Retry-After
+   header.     See     also     blst_503,     blst_503_min_timeout    and
    blst_503_max_timeout.
 
-   The default value is 0, which means that if no Retry-After header is
-   present, the 503 reply source will not be blacklisted (rfc conformant
+   The  default  value is 0, which means that if no Retry-After header is
+   present,  the 503 reply source will not be blacklisted (rfc conformant
    behaviour).
 
-   Example 18. Set blst_503_def_timeout parameter
+   Example 1.18. Set blst_503_def_timeout parameter
 ...
 modparam("tm", "blst_503_def_timeout", 120)
 ...
 
-1.4.19. blst_503_min_timeout (integer)
+4.19. blst_503_min_timeout (integer)
 
-   Minimum blacklist interval in seconds for a 503 reply with a
-   Retry-After header. It will be used if the Retry-After value is
-   smaller. See also blst_503, blst_503_def_timeout and
+   Minimum  blacklist  interval  in  seconds  for  a  503  reply  with  a
+   Retry-After  header.  It  will  be  used  if  the Retry-After value is
+   smaller.     See     also     blst_503,    blst_503_def_timeout    and
    blst_503_max_timeout.
 
    The default value is 0
 
-   Example 19. Set blst_503_min_timeout parameter
+   Example 1.19. Set blst_503_min_timeout parameter
 ...
 modparam("tm", "blst_503_min_timeout", 30)
 ...
 
-1.4.20. blst_503_max_timeout (integer)
+4.20. blst_503_max_timeout (integer)
 
-   Maximum blacklist interval in seconds for a 503 reply with a
-   Retry-After header. It will be used if the Retry-After value is
-   greater. See also blst_503, blst_503_def_timeout and
+   Maximum  blacklist  interval  in  seconds  for  a  503  reply  with  a
+   Retry-After  header.  It  will  be  used  if  the Retry-After value is
+   greater.     See     also     blst_503,    blst_503_def_timeout    and
    blst_503_min_timeout.
 
    The default value is 3600
 
-   Example 20. Set blst_503_max_timeout parameter
+   Example 1.20. Set blst_503_max_timeout parameter
 ...
 modparam("tm", "blst_503_max_timeout", 604800)
 ...
 
-1.4.21. blst_methods_add (unsigned integer)
+4.21. blst_methods_add (unsigned integer)
 
-   Bitmap of method types that trigger blacklisting on transaction
-   timeouts. (This setting has no effect on blacklisting because of send
+   Bitmap  of  method  types  that  trigger  blacklisting  on transaction
+   timeouts.  (This setting has no effect on blacklisting because of send
    failures.)
 
-   The following values are associated to the request methods: INVITE=1,
-   CANCEL=2, ACK=4 (not retransmitted, thus, never times-out), BYE=8,
-   INFO=16, REGISTER=32, SUBSCRIBE=64, NOTIFY=126, OTHER=256 (all the
+   The  following values are associated to the request methods: INVITE=1,
+   CANCEL=2,  ACK=4  (not  retransmitted,  thus, never times-out), BYE=8,
+   INFO=16,  REGISTER=32,  SUBSCRIBE=64,  NOTIFY=126,  OTHER=256 (all the
    unknown types). Check parser/msg_parser.h for farther details.
 
-   Change the value carefully, because requests not having provisional
-   response (everything but INVITE) can easily cause the next hop to be
-   inserted into the blacklist by mistake. For exmaple the next hop is a
-   proxy, it is alive, but waiting for the response of the UAS, and has
+   Change  the  value  carefully, because requests not having provisional
+   response  (everything  but INVITE) can easily cause the next hop to be
+   inserted  into the blacklist by mistake. For exmaple the next hop is a
+   proxy,  it  is alive, but waiting for the response of the UAS, and has
    higher fr_timer value.
 
    The default value is 1, only INVITEs trigger blacklisting
 
-   Example 21. Set blst_methods_add parameter
+   Example 1.21. Set blst_methods_add parameter
 ...
 # INVITEs and REGISTERs trigger blacklisting
 modparam("tm", "blst_methods_add", 33)
 ...
 
-1.4.22. blst_methods_lookup (unsigned integer)
+4.22. blst_methods_lookup (unsigned integer)
 
-   Bitmap of method types that are looked-up in the blacklist before
+   Bitmap  of  method  types  that  are looked-up in the blacklist before
    statefull forwarding. See also blst_methods_add
 
    The default value is 4294967287, every method type except BYE. (We try
    to deliver BYEs no matter what)
 
-   Example 22. Set blst_methods_lookup parameter
+   Example 1.22. Set blst_methods_lookup parameter
 ...
 # lookup only INVITEs
 modparam("tm", "blst_methods_lookup", 1)
 ...
 
-1.4.23. cancel_b_method (integer)
+4.23. cancel_b_method (integer)
 
-   Method used when attempting to CANCEL an unreplied transaction branch
-   (a branch where no reply greater the 99 was received). The possible
+   Method  used when attempting to CANCEL an unreplied transaction branch
+   (a  branch  where  no reply greater the 99 was received). The possible
    values are 0, 1, and 2.
 
-   0 will immediately stop the request (INVITE) retransmission on the
-   branch and it will behave as if the branch was immediately replied with
-   a 487 (a fake internal 487 reply). The advantage is the unreplied
-   branches will be terminated immediately. However it introduces a race
+   0  will  immediately  stop  the request (INVITE) retransmission on the
+   branch  and  it  will  behave as if the branch was immediately replied
+   with a 487 (a fake internal 487 reply). The advantage is the unreplied
+   branches  will be terminated immediately. However it introduces a race
    risk with a possible slightly delayed 2xx reply. In this case we could
-   have an UA receiving a 2xx after a 487. Moreover this risk is greatly
-   amplified by packet loss (e.g. if an 180 is lost the branch will look
+   have  an UA receiving a 2xx after a 487. Moreover this risk is greatly
+   amplified  by packet loss (e.g. if an 180 is lost the branch will look
    as unreplied and a CANCEL will silently drop the branch, but a 2xx can
-   still come at a later time). This is the behaviour for ser versions
+   still  come  at  a later time). This is the behaviour for ser versions
    older then 2.1.
 
-   1 will keep retransmitting the request on unreplied branches. If a
+   1  will  keep  retransmitting  the request on unreplied branches. If a
    provisional answer is later received a CANCEL will be immediately sent
    back (attempting to quickly trigger a 487). This approach is race free
-   and avoids the 2xx after 487 problem, but it's more resource intensive:
-   faced with a branch towards and UA that doesn't answer, a CANCEL
-   attempt will keep the transaction alive for the whole timeout interval
-   (fr_timer).
+   and  avoids  the  2xx  after  487  problem,  but  it's  more  resource
+   intensive:  faced  with a branch towards and UA that doesn't answer, a
+   CANCEL  attempt  will keep the transaction alive for the whole timeout
+   interval (fr_timer).
 
    2 will send and retransmit CANCEL even on unreplied branches, stopping
-   the request retransmissions. This has the same advantages as 1 and also
-   avoids the extra roundtrip in the case of the provisional reply, but
-   it's not RFC 3261 conforming (the RFC allows sending CANCELs only on
-   pending branches).
+   the  request  retransmissions.  This  has the same advantages as 1 and
+   also  avoids the extra roundtrip in the case of the provisional reply,
+   but  it's not RFC 3261 conforming (the RFC allows sending CANCELs only
+   on pending branches).
 
    The default value is 1.
 
-   Example 23. Set cancel_b_method parameter
+   Example 1.23. Set cancel_b_method parameter
 ...
 modparam("tm", "cancel_b_method", 1)
 ...
 
-1.4.24. reparse_on_dns_failover (integer)
+4.24. reparse_on_dns_failover (integer)
 
-   If set to 1, the SIP message after a DNS failover is constructed from
-   the outgoing message buffer of the failed branch instead of from the
+   If  set to 1, the SIP message after a DNS failover is constructed from
+   the  outgoing  message buffer of the failed branch instead of from the
    received request.
 
-   It must be set if multiple branches are installed, the SIP message is
-   modified differently in them, and at least one of them can result in
+   It  must be set if multiple branches are installed, the SIP message is
+   modified  differently  in them, and at least one of them can result in
    DNS failover. If the parameter is not set the per-branch modifications
    are lost after the failover.
 
-   Note: If the parameter is set, branch route block and
+   Note:   If   the   parameter   is   set,   branch   route   block  and
    TMCB_REQUEST_FWDED callback are not called in case of the failover.
 
-   Disadvantage: only the via header is replaced in the message buffer, so
-   the outgoing socket address is not corrected in any other part of the
-   message. It is dangerous on multihomed hosts: when the new SIP request
-   after the DNS failover is sent via different interface than the first
-   request, the message can contain incorrect ip address in the
+   Disadvantage:  only  the via header is replaced in the message buffer,
+   so  the  outgoing socket address is not corrected in any other part of
+   the  message.  It  is  dangerous on multihomed hosts: when the new SIP
+   request  after  the  DNS failover is sent via different interface than
+   the first request, the message can contain incorrect ip address in the
    Record-Route header for instance.
 
    Default value is 1.
 
-   Example 24. Set reparse_on_dns_failover parameter
+   Example 1.24. Set reparse_on_dns_failover parameter
 ...
 modparam("tm", "reparse_on_dns_failover", 0)
 ...
 
-1.4.25. on_sl_reply (string)
+4.25. on_sl_reply (string)
 
-   Sets reply route block, to which control is passed when a reply is
-   received that has no associated transaction. The reply is passed to the
-   core for stateless forwarding after the route block execution unless it
-   returns 0.
+   Sets  reply  route  block,  to which control is passed when a reply is
+   received  that  has  no associated transaction. The reply is passed to
+   the  core  for  stateless  forwarding  after the route block execution
+   unless it returns 0.
 
-   Example 25. Set on_sl_reply parameter
+   Example 1.25. Set on_sl_reply parameter
 ...
 modparam("tm", "on_sl_reply", "stateless_replies")
 ...
@@ -863,132 +1127,133 @@ onreply_route["stateless_replies"] {
         return 0;
 }
 
-1.4.26. contacts_avp (string)
+4.26. contacts_avp (string)
 
-   This is the name of an XAVP that t_load_contacts() function uses to
-   store contacts of the destination set and that t_next_contacts()
+   This  is  the  name of an XAVP that t_load_contacts() function uses to
+   store  contacts  of  the  destination  set  and that t_next_contacts()
    function uses to restore those contacts.
 
    Default value is "NULL" (t_load_contacts()/t_next_contacts() functions
-   are disabled).
+   are disabled). 
 
-   Example 26. Set contacts_avp parameter
+   Example 1.26. Set contacts_avp parameter
 ...
 modparam("tm", "contacts_avp", "tm_contacts")
 ...
 
-1.4.27. contact_flows_avp (string)
+4.27. contact_flows_avp (string)
 
-   This is the name of an XAVP that t_next_contacts() function uses to
-   store contacts (if any) that it skipped, because they contained same
-   +sip.instance value than some other contact, and that
+   This  is  the  name of an XAVP that t_next_contacts() function uses to
+   store  contacts  (if any) that it skipped, because they contained same
+   +sip.instance    value    than    some   other   contact,   and   that
    t_next_contact_flows() function uses to restore those contacts.
 
-   Default value is "NULL". This parameter MUST be set if variable
-   contacts_avp is set.
+   Default  value  is  "NULL".  This  parameter  MUST  be set if variable
+   contacts_avp is set. 
 
-   Example 27. Set contact_flows_avp parameter
+   Example 1.27. Set contact_flows_avp parameter
 ...
 modparam("tm", "contact_flows_avp", "tm_contact_flows")
 ...
 
-1.4.28. fr_timer_avp (string)
+4.28. fr_timer_avp (string)
 
    The value of fr_timer timer can be overriden on per-transaction basis.
-   The administrator can provide a value to be used for a particular
-   transaction in an AVP. This parameter contains the name of the AVP that
-   will be checked. If the AVP exists then its value will be used for the
-   fr_timer timer, effectively overriding the value configured in fr_timer
-   parameter for the current transaction.
+   The  administrator  can  provide  a  value to be used for a particular
+   transaction  in  an  AVP.  This parameter contains the name of the AVP
+   that  will  be  checked. If the AVP exists then its value will be used
+   for the fr_timer timer, effectively overriding the value configured in
+   fr_timer parameter for the current transaction.
 
-   The value of this parameter is the the name of the AVP to be checked,
+   The  value of this parameter is the the name of the AVP to be checked,
    without the $ character or "$avp" prefix.
 
 Note
 
-   The value of the AVP is expected to be expressed in seconds and not
+   The  value  of  the AVP is expected to be expressed in seconds and not
    milliseconds (unlike the rest of the timers).
 
-   This parameter is kept for backwards compatibility (hence its value
-   expressed in seconds instead of milliseconds and its arcane way of
-   specifying the avps). The recommended replacement is using t_set_fr()
+   This  parameter  is  kept for backwards compatibility (hence its value
+   expressed  in  seconds  instead  of milliseconds and its arcane way of
+   specifying  the avps). The recommended replacement is using t_set_fr()
    on a per transaction basis.
 
    See also: t_set_fr(), fr_timer.
 
-   In Kamailio compatibility mode (defined by #!KAMAILIO), the value of
-   the parameter must be the name of an AVP in pseudo-variable format:
+   In  Kamailio  compatibility mode (defined by #!KAMAILIO), the value of
+   the  parameter  must  be the name of an AVP in pseudo-variable format:
    $avp(name). In SER compatibility mode it must by just AVP name.
 
-   Example 28. Set fr_timer_avp parameter
+   Example 1.28. Set fr_timer_avp parameter
 ...
 modparam("tm", "fr_timer_avp", "i:708")
 # K mode
 modparam("tm", "fr_timer_avp", "$avp(i:708)")
 ...
 
-1.4.29. fr_inv_timer_avp (string)
+4.29. fr_inv_timer_avp (string)
 
-   The value of fr_inv_timer timer can be overriden on per-transaction
-   basis. The administrator can provide a value to be used for a
-   particular transaction in an AVP. This parameter contains the name of
-   the AVP that will be checked. If the AVP exists, is non-empty and
-   non-zero then its value will be used for the fr_inv_timer timer,
-   effectively overriding the value configured in fr_inv_timer parameter
+   The  value  of  fr_inv_timer timer can be overriden on per-transaction
+   basis.  The  administrator  can  provide  a  value  to  be  used for a
+   particular  transaction in an AVP. This parameter contains the name of
+   the  AVP  that  will  be  checked. If the AVP exists, is non-empty and
+   non-zero  then  its  value  will  be  used for the fr_inv_timer timer,
+   effectively  overriding the value configured in fr_inv_timer parameter
    for the current transaction.
 
-   The value of this parameter is the the name of the AVP to be checked,
+   The  value of this parameter is the the name of the AVP to be checked,
    without the $ character or "$avp" prefix.
 
 Note
 
-   The value of the AVP is expected to be expressed in seconds and not
+   The  value  of  the AVP is expected to be expressed in seconds and not
    milliseconds (unlike the rest of the timers).
 
-   This parameter is kept for backwards compatibility (hence its value
-   expressed in seconds instead of milliseconds and its arcane way of
-   specifying the avps). The recommended replacement is using t_set_fr()
+   This  parameter  is  kept for backwards compatibility (hence its value
+   expressed  in  seconds  instead  of milliseconds and its arcane way of
+   specifying  the avps). The recommended replacement is using t_set_fr()
    on a per transaction basis.
 
    See also: t_set_fr(), fr_inv_timer.
 
-   In Kamailio compatibility mode (defined by #!KAMAILIO), the value of
-   the parameter must be the name of an AVP in pseudo-variable format:
+   In  Kamailio  compatibility mode (defined by #!KAMAILIO), the value of
+   the  parameter  must  be the name of an AVP in pseudo-variable format:
    $avp(name). In SER compatibility mode it must by just AVP name.
 
-   Example 29. Set fr_inv_timer_avp parameter
+   Example 1.29. Set fr_inv_timer_avp parameter
 ...
 modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 # K mode
 modparam("tm", "fr_inv_timer_avp", "$avp(my_fr_inv_timer)")
 ...
 
-1.4.30. unmatched_cancel (string)
+4.30. unmatched_cancel (string)
 
-   This parameter selects between forwarding CANCELs that do not match any
-   transaction statefully (0, default value), statelessly (1) or dropping
-   them (2). Note that the statefull forwarding has an additional hidden
-   advantage: tm will be able to recognize INVITEs that arrive after their
-   CANCEL. Note also that this feature could be used to try a memory
-   exhaustion DOS attack against a proxy that authenticates all requests,
-   by continuously flooding the victim with CANCELs to random destinations
-   (since the CANCEL cannot be authenticated, each received bogus CANCEL
-   will create a new transaction that will live by default 30s).
+   This  parameter  selects  between forwarding CANCELs that do not match
+   any  transaction  statefully  (0,  default  value), statelessly (1) or
+   dropping   them  (2).  Note  that  the  statefull  forwarding  has  an
+   additional hidden advantage: tm will be able to recognize INVITEs that
+   arrive  after  their CANCEL. Note also that this feature could be used
+   to   try   a  memory  exhaustion  DOS  attack  against  a  proxy  that
+   authenticates  all  requests, by continuously flooding the victim with
+   CANCELs   to   random   destinations   (since  the  CANCEL  cannot  be
+   authenticated,   each   received   bogus  CANCEL  will  create  a  new
+   transaction that will live by default 30s).
 
    Default value is 0.
 
-   Example 30. Set unmatched_cancel parameter
+   Example 1.30. Set unmatched_cancel parameter
 ...
 modparam("tm", "unmatched_cancel", "2")
 ...
 
-1.4.31. ruri_matching (integer)
+4.31. ruri_matching (integer)
 
-   If set it will also try to match the request uri when doing pre-3261
-   transaction matching (the via branch parameter does not contain the
+   If  set  it will also try to match the request uri when doing pre-3261
+   transaction  matching  (the  via branch parameter does not contain the
    3261 cookie).
 
-   The only reason to have it not set is for interoperability with old,
+   The  only  reason to have it not set is for interoperability with old,
    broken implementations.
 
    Default value is 1 (on).
@@ -996,18 +1261,18 @@ modparam("tm", "unmatched_cancel", "2")
    Can be set at runtime, e.g.:
         $ kamcmd cfg.set_now_int tm ruri_matching 0
 
-   Example 31. Set ruri_matching parameter
+   Example 1.31. Set ruri_matching parameter
 ...
 modparam("tm", "ruri_matching", 1)
 ...
 
-1.4.32. via1_matching (integer)
+4.32. via1_matching (integer)
 
-   If set it will also try to match the topmost via when doing pre-3261
-   transaction matching (the via branch parameter does not contain the
+   If  set  it will also try to match the topmost via when doing pre-3261
+   transaction  matching  (the  via branch parameter does not contain the
    3261 cookie).
 
-   The only reason to have it not set is for interoperability with old,
+   The  only  reason to have it not set is for interoperability with old,
    broken implementations.
 
    Default value is 1 (on).
@@ -1015,20 +1280,20 @@ modparam("tm", "ruri_matching", 1)
    Can be set at runtime, e.g.:
         $ kamcmd cfg.set_now_int tm via1_matching 0
 
-   Example 32. Set via1_matching parameter
+   Example 1.32. Set via1_matching parameter
 ...
 modparam("tm", "via1_matching", 1)
 ...
 
-1.4.33. callid_matching (integer)
+4.33. callid_matching (integer)
 
-   If set it will also try to match the callid when doing transaction
+   If  set  it  will  also try to match the callid when doing transaction
    matching.
 
-   Turn on if you don't want replies/requests from broken clients who send
-   a mangled Call-ID to match the transaction. For example when the other
-   side won't recognise the response anyway because of changed Call-ID,
-   this setting will prevent accounting records to be created or
+   Turn  on  if  you  don't want replies/requests from broken clients who
+   send  a mangled Call-ID to match the transaction. For example when the
+   other  side  won't  recognise  the  response anyway because of changed
+   Call-ID, this setting will prevent accounting records to be created or
    failure_route to be skipped.
 
    Default value is 0 (off).
@@ -1036,14 +1301,14 @@ modparam("tm", "via1_matching", 1)
    Can be set at runtime, e.g.:
         $ sercmd cfg.set_now_int tm callid_matching 0
 
-   Example 33. Set callid_matching parameter
+   Example 1.33. Set callid_matching parameter
 ...
 modparam("tm", "callid_matching", 1)
 ...
 
-1.4.34. pass_provisional_replies (integer)
+4.34. pass_provisional_replies (integer)
 
-   If set, TMCB_LOCAL_REPONSE_OUT tm registered callbacks will be called
+   If  set, TMCB_LOCAL_REPONSE_OUT tm registered callbacks will be called
    also for provisional replies.
 
    Default value is 0 (off).
@@ -1051,29 +1316,30 @@ modparam("tm", "callid_matching", 1)
    Can be set at runtime, e.g.:
         $ kamcmd cfg.set_now_int tm pass_provisional_replies 1
 
-   Example 34. Set pass_provisional_replies parameter
+   Example 1.34. Set pass_provisional_replies parameter 
 ...
 modparam("tm", "pass_provisional_replies", 1)
 ...
 
-1.4.35. default_code (integer)
+4.35. default_code (integer)
 
-   Default response code sent by t_reply() if it cannot retrieve its
-   parameters (e.g. inexistent avp). Valid values are between 400 and 699.
+   Default  response  code  sent  by  t_reply() if it cannot retrieve its
+   parameters  (e.g.  inexistent  avp).  Valid values are between 400 and
+   699.
 
    Default value is 500.
 
    Can be set at runtime, e.g.:
         $ kamcmd cfg.set_now_int tm default_code 505
 
-   Example 35. Set default_code parameter
+   Example 1.35. Set default_code parameter 
 ...
 modparam("tm", "default_code", 501)
 ...
 
-1.4.36. default_reason (string)
+4.36. default_reason (string)
 
-   Default SIP reason phrase sent by t_reply() if it cannot retrieve its
+   Default  SIP reason phrase sent by t_reply() if it cannot retrieve its
    parameters (e.g. inexistent avp).
 
    Default value is "Server Internal Error".
@@ -1081,21 +1347,21 @@ modparam("tm", "default_code", 501)
    Can be set at runtime, e.g.:
         $ kamcmd cfg.set_now_string tm default_reason "Unknown error"
 
-   Example 36. Set default_reason parameter
+   Example 1.36. Set default_reason parameter 
 ...
 modparam("tm", "default_reason", "Unknown reason")
 ...
 
-1.4.37. disable_6xx_block (integer)
+4.37. disable_6xx_block (integer)
 
    If set tm will treat all the 6xx replies like normal replies (warning:
    this would be non-rfc conformant behaviour).
 
-   If not set (default) receiving a 6xx will cancel all the running
-   parallel branches, will stop dns failover and forking. However serial
+   If  not  set  (default)  receiving  a  6xx will cancel all the running
+   parallel  branches, will stop dns failover and forking. However serial
    forking using append_branch() in the failure_route will still work.
 
-   It can be overwritten on a per transaction basis using
+   It   can   be   overwritten   on   a   per   transaction  basis  using
    t_set_disable_6xx().
 
    Default value is 0 (off, rfc conformant behaviour).
@@ -1105,106 +1371,108 @@ modparam("tm", "default_reason", "Unknown reason")
 
    See also: t_set_disable_6xx().
 
-   Example 37. Set disable_6xx_block parameter
+   Example 1.37. Set disable_6xx_block parameter
 ...
 modparam("tm", "disable_6xx_block", 1)
 ...
 
-1.4.38. local_ack_mode (integer)
+4.38. local_ack_mode (integer)
 
-   It controls where locally generated ACKs for 2xx replies to local
-   transactions (transactions created via t_uac*() either thorugh the tm
+   It  controls  where  locally  generated  ACKs for 2xx replies to local
+   transactions  (transactions created via t_uac*() either thorugh the tm
    api or via RPC/mi/fifo) are sent.
 
    It has 3 possible values:
-     * 0 - the ACK destination is choosen according to the rfc: the next
-       hop is found using the contact and the route set and then DNS
+     * 0  - the ACK destination is choosen according to the rfc: the next
+       hop  is  found  using  the  contact and the route set and then DNS
        resolution is used on it.
-     * 1 - the ACK is sent to the same address as the corresponding INVITE
-       branch.
+     * 1  -  the  ACK  is  sent  to the same address as the corresponding
+       INVITE branch.
      * 2 - the ACK is sent to the source of the 2xx reply.
 
 Note
 
-   Mode 1 and 2 break the rfc, but are useful to deal with some simple UAs
-   behind the NAT cases (no different routing for the ACK and the contact
-   contains an address behind the NAT).
+   Mode  1  and  2 break the rfc, but are useful to deal with some simple
+   UAs  behind  the  NAT  cases (no different routing for the ACK and the
+   contact contains an address behind the NAT).
 
    The default value is 0 (rfc conformant behaviour).
 
    Can be set at runtime, e.g.:
         $ kamcmd cfg.set_now_int tm local_ack_mode 0
 
-   Example 38. Set local_ack_mode parameter
+   Example 1.38. Set local_ack_mode parameter
 ...
 modparam("tm", "local_ack_mode", 1)
 ...
 
-1.4.39. failure_reply_mode (integer)
+4.39. failure_reply_mode (integer)
 
-   It controls how branches are managed and replies are selected for
-   failure_route handling: keep all, drop all, drop last branches in SIP
+   It  controls  how  branches  are  managed and replies are selected for
+   failure_route  handling: keep all, drop all, drop last branches in SIP
    serial forking handling.
 
    To control per transaction see t_drop_replies().
 
    It has 4 possible values:
-     * 0 - all branches are kept, no matter a new leg of serial forking
+     * 0  -  all branches are kept, no matter a new leg of serial forking
        has been started. Beware that if the new leg fails, you may get in
-       failure_route a reply code from a branch of previous serial forking
-       legs (e.g., if in first leg you got a 3xx, then you handled the
-       redirection in failure route, sent to a new destination and this
-       one timeout, you will get again the 3xx). Use t_drop_replies() on
-       per transaction fashion to control the behavior you want. It is the
-       default behaviour comming from SER 2.1.x.
+       failure_route  a  reply  code  from  a  branch  of previous serial
+       forking  legs  (e.g.,  if  in  first  leg  you got a 3xx, then you
+       handled   the   redirection  in  failure  route,  sent  to  a  new
+       destination and this one timeout, you will get again the 3xx). Use
+       t_drop_replies()   on  per  transaction  fashion  to  control  the
+       behavior  you  want.  It is the default behaviour comming from SER
+       2.1.x.
      * 1 - all branches are discarded by default. You can still overwrite
        the behaviour via t_drop_replies()
      * 2 - by default only the branches of previous leg of serial forking
        are discarded
-     * 3 - all previous branches are discarded if there is a new serial
-       forking leg. This is the default behaviour coming from Kamailio
-       1.5.x. Use this mode if you don't want to handle in a per
-       transaction fashion with t_drop_replies(). It ensures that you will
-       get the winning reply from the branches of last serial forking step
-       (e.g., if in first step you get 3xx, then you forward to a new
-       destination, you will get in failure_route the reply coming from
-       that destination or a local timeout).
+     * 3  -  all previous branches are discarded if there is a new serial
+       forking  leg.  This  is the default behaviour coming from Kamailio
+       1.5.x.  Use  this  mode  if  you  don't  want  to  handle in a per
+       transaction  fashion  with  t_drop_replies().  It ensures that you
+       will  get  the  winning  reply  from  the  branches of last serial
+       forking step (e.g., if in first step you get 3xx, then you forward
+       to  a  new  destination,  you  will get in failure_route the reply
+       coming from that destination or a local timeout).
 
    The default value is 0.
 
-   Example 39. Set failure_reply_mode parameter
+   Example 1.39. Set failure_reply_mode parameter
 ...
 modparam("tm", "failure_reply_mode", 3)
 ...
 
-1.4.40. faked_reply_prio (integer)
+4.40. faked_reply_prio (integer)
 
-   It controls how branch selection is done. It allows to give a penalty
+   It  controls how branch selection is done. It allows to give a penalty
    to faked replies such as the infamous 408 on branch timeout.
 
-   Internally, every reply is assigned a priority between 0 (high prio)
+   Internally,  every  reply is assigned a priority between 0 (high prio)
    and 32000 (low prio). With this parameter the priority of fake replies
    can be adjusted.
      * 0 - disabled (default)
      * < 0 - priority is increased by given amount.
-     * > 0 - priority is decreased by given amount. Do not make it higer
-       than 10000 or faked replies will even loose from 1xx clsss replies.
+     * >  0 - priority is decreased by given amount. Do not make it higer
+       than  10000  or  faked  replies  will  even  loose  from 1xx clsss
+       replies.
 
    The default value is 0.
 
-   To let received replies win from a locally generated 408, set this
+   To  let  received  replies  win from a locally generated 408, set this
    value to 2000.
 
-   Example 40. Set faked_reply_prio parameter
+   Example 1.40. Set faked_reply_prio parameter
 ...
 modparam("tm", "faked_reply_prio", 2000)
 ...
 
-1.4.41. local_cancel_reason (boolean)
+4.41. local_cancel_reason (boolean)
 
-   Enables/disables adding reason headers (RFC 3326) for CANCELs generated
-   due to receiving a final reply. The reason header added will look like:
-   "Reason: SIP;cause=<final_reply_code>".
+   Enables/disables   adding   reason  headers  (RFC  3326)  for  CANCELs
+   generated due to receiving a final reply. The reason header added will
+   look like: "Reason: SIP;cause=<final_reply_code>".
 
    Default value is 1 (enabled).
 
@@ -1213,16 +1481,16 @@ modparam("tm", "faked_reply_prio", 2000)
 
    See also: e2e_cancel_reason.
 
-   Example 41. Set local_cancel_reason parameter
+   Example 1.41. Set local_cancel_reason parameter
 ...
 modparam("tm", "local_cancel_reason", 0)
 ...
 
-1.4.42. e2e_cancel_reason (boolean)
+4.42. e2e_cancel_reason (boolean)
 
-   Enables/disables adding reason headers (RFC 3326) for CANCELs generated
-   due to a received CANCEL. If enabled the reason headers from received
-   CANCELs will be copied into the generated hop-by-hop CANCELs.
+   Enables/disables   adding   reason  headers  (RFC  3326)  for  CANCELs
+   generated due to a received CANCEL. If enabled the reason headers from
+   received CANCELs will be copied into the generated hop-by-hop CANCELs.
 
    Default value is 1 (enabled).
 
@@ -1231,61 +1499,110 @@ modparam("tm", "local_cancel_reason", 0)
 
    See also: t_set_no_e2e_cancel_reason() and local_cancel_reason.
 
-   Example 42. Set e2e_cancel_reason parameter
+   Example 1.42. Set e2e_cancel_reason parameter
 ...
 modparam("tm", "e2e_cancel_reason", 0)
 ...
 
-1.4.43. remap_503_500 (boolean)
+4.43. remap_503_500 (boolean)
 
    Enables/disables conversion of 503 response code to 500. By default it
-   is enabled, based on the SIP RFC requirement. This is global setting
-   for all received replies handled by TM. To do it per transaction basis,
-   let this option disabled, set a failure route and then do
+   is  enabled,  based on the SIP RFC requirement. This is global setting
+   for  all  received  replies  handled  by  TM. To do it per transaction
+   basis,  let  this  option  disabled,  set  a failure route and then do
    t_reply("500", "...") inside it.
 
    Default value is 1 (enabled).
 
-   Example 43. Set remap_503_500 parameter
+   Example 1.43. Set remap_503_500 parameter
 ...
 modparam("tm", "remap_503_500", 0)
 ...
 
-1.4.44. failure_exec_mode (boolean)
+4.44. failure_exec_mode (boolean)
 
    Add local failed branches in timer to be cosidered for failure routing
-   blocks. If disabled, relay functions will return false in case the
+   blocks.  If  disabled,  relay  functions will return false in case the
    branch could not be forwarded (default behaviour before v4.1.0).
 
    Default value is 0 (disabled).
 
-   Example 44. Set failure_exec_mode parameter
+   Example 1.44. Set failure_exec_mode parameter
 ...
 modparam("tm", "failure_exec_mode", 1)
 ...
 
-1.5. Functions
+5. Functions
 
-1.5.1. t_relay([host, port])
+   5.1. t_relay([host, port]) 
+   5.2. t_relay_to_udp([ip, port]) 
+   5.3. t_relay_to_tcp([ip, port]) 
+   5.4. t_relay_to_tls([ip, port]) 
+   5.5. t_relay_to_sctp([ip, port]) 
+   5.6. t_on_failure(failure_route) 
+   5.7. t_on_branch_failure(branch_failure_route) 
+   5.8. t_on_reply(onreply_route) 
+   5.9. t_on_branch(branch_route) 
+   5.10. t_newtran() 
+   5.11. t_reply(code, reason_phrase) 
+   5.12. t_lookup_request() 
+   5.13. t_retransmit_reply() 
+   5.14. t_release() 
+   5.15. t_forward_nonack([ip, port]) 
+   5.16. t_forward_nonack_udp(ip, port) 
+   5.17. t_forward_nonack_tcp(ip, port) 
+   5.18. t_forward_nonack_tls(ip, port) 
+   5.19. t_forward_nonack_sctp(ip, port) 
+   5.20. t_set_fr(fr_inv_timeout [, fr_timeout]) 
+   5.21. t_reset_fr() 
+   5.22. t_set_max_lifetime(inv_lifetime, noninv_lifetime) 
+   5.23. t_reset_max_lifetime() 
+   5.24. t_set_retr(retr_t1_interval, retr_t2_interval) 
+   5.25. t_reset_retr() 
+   5.26. t_set_auto_inv_100(0|1) 
+   5.27. t_branch_timeout() 
+   5.28. t_branch_replied() 
+   5.29. t_any_timeout() 
+   5.30. t_any_replied() 
+   5.31. t_grep_status("code") 
+   5.32. t_is_canceled() 
+   5.33. t_is_expired() 
+   5.34. t_relay_cancel() 
+   5.35. t_lookup_cancel([1]) 
+   5.36. t_drop_replies([mode]) 
+   5.37. t_save_lumps() 
+   5.38. t_load_contacts() 
+   5.39. t_next_contacts() 
+   5.40. t_next_contact_flow() 
+   5.41. t_check_trans() 
+   5.42. t_set_disable_6xx(0|1) 
+   5.43. t_set_disable_failover(0|1) 
+   5.44. t_replicate(params) 
+   5.45. t_relay_to(proxy, flags) 
+   5.46. t_set_no_e2e_cancel_reason(0|1) 
+   5.47. t_is_set(target) 
 
-   Relay a message statefully either to the destination indicated in the
-   current URI (if called without any parameters) or to the specified host
-   and port. In the later case (host and port specified) the protocol used
-   is the same protocol on which the message was received.
+5.1.  t_relay([host, port])
 
-   t_relay() is the statefull version for forward() while t_relay(host,
+   Relay  a message statefully either to the destination indicated in the
+   current  URI  (if  called  without any parameters) or to the specified
+   host  and  port.  In  the  later  case  (host  and port specified) the
+   protocol used is the same protocol on which the message was received.
+
+   t_relay()  is  the statefull version for forward() while t_relay(host,
    port) is similar to forward(host, port).
 
-   In the forward to uri case (t_relay()), if the original URI was
-   rewritten (by UsrLoc, RR, strip/prefix, etc.) the new URI will be
-   taken). The destination (including the protocol) is determined from the
-   uri, using SIP specific DNS resolving if needed (NAPTR, SRV a.s.o
+   In  the  forward  to  uri  case  (t_relay()),  if the original URI was
+   rewritten  (by  UsrLoc,  RR,  strip/prefix,  etc.) the new URI will be
+   taken).  The  destination  (including the protocol) is determined from
+   the  uri, using SIP specific DNS resolving if needed (NAPTR, SRV a.s.o
    depending also on the dns options).
 
-   Returns a negative value on failure -- you may still want to send a
-   negative reply upstream statelessly not to leave upstream UAC in lurch.
+   Returns  a  negative  value on failure -- you may still want to send a
+   negative  reply  upstream  statelessly  not  to  leave upstream UAC in
+   lurch.
 
-   Example 45. t_relay usage
+   Example 1.45. t_relay usage
 ...
 if (!t_relay())
 {
@@ -1294,25 +1611,25 @@ if (!t_relay())
 };
 ...
 
-1.5.2. t_relay_to_udp([ip, port])
+5.2.  t_relay_to_udp([ip, port])
 
-   Relay a message statefully using a fixed protocol either to the
-   specified fixed destination or to a destination derived from the
-   message uri (if the host address and port are not specified). These
+   Relay  a  message  statefully  using  a  fixed  protocol either to the
+   specified  fixed  destination  or  to  a  destination derived from the
+   message  uri  (if  the host address and port are not specified). These
    along with t_relay are the functions most users want to use--all other
    are mostly for programming. Programmers interested in writing TM logic
-   should review how t_relay is implemented in tm.c and how TM callbacks
+   should  review how t_relay is implemented in tm.c and how TM callbacks
    work.
 
    Meaning of the parameters is as follows:
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   If no parameters are specified the message is sent to a destination
-   derived from the message uri (using sip sepcific DNS lookups), but with
-   the protocol corresponding to the function name.
+   If  no  parameters  are specified the message is sent to a destination
+   derived  from  the  message  uri (using sip sepcific DNS lookups), but
+   with the protocol corresponding to the function name.
 
-   Example 46. t_relay_to_udp usage
+   Example 1.46. t_relay_to_udp usage
 ...
 if (src_ip==10.0.0.0/8)
         t_relay_to_udp("1.2.3.4", "5060"); # sent to 1.2.3.4:5060 over udp
@@ -1320,39 +1637,39 @@ else
         t_relay_to_tcp(); # relay to msg. uri, but over tcp
 ...
 
-1.5.3. t_relay_to_tcp([ip, port])
+5.3.  t_relay_to_tcp([ip, port])
 
    See function t_relay_to_udp([ip, port]).
 
-1.5.4. t_relay_to_tls([ip, port])
+5.4.  t_relay_to_tls([ip, port])
 
    See function t_relay_to_udp([ip, port]).
 
-1.5.5. t_relay_to_sctp([ip, port])
+5.5.  t_relay_to_sctp([ip, port])
 
    See function t_relay_to_udp([ip, port]).
 
-1.5.6. t_on_failure(failure_route)
+5.6.  t_on_failure(failure_route)
 
-   Sets failure routing block, to which control is passed after a
-   transaction completed with a negative result but before sending a final
-   reply. In the referred block, you can either start a new branch (good
-   for services such as forward_on_no_reply) or send a final reply on your
-   own (good for example for message silo, which received a negative reply
-   from upstream and wants to tell upstream "202 I will take care of it").
-   Note that the set of commands which are usable within failure_routes is
-   strictly limited to rewriting URI, initiating new branches, logging,
-   and sending stateful replies (t_reply). Any other commands may result
-   in unpredictable behavior and possible server failure. Note that
-   whenever failure_route is entered, uri is reset to value which it had
-   on relaying. If it temporarily changed during a reply_route processing,
-   subsequent reply_route will ignore the changed value and use again the
-   original one.
+   Sets  failure  routing  block,  to  which  control  is  passed after a
+   transaction  completed  with  a  negative  result but before sending a
+   final  reply. In the referred block, you can either start a new branch
+   (good  for services such as forward_on_no_reply) or send a final reply
+   on  your  own  (good  for  example  for message silo, which received a
+   negative  reply  from  upstream and wants to tell upstream "202 I will
+   take  care  of  it").  Note  that the set of commands which are usable
+   within failure_routes is strictly limited to rewriting URI, initiating
+   new  branches,  logging,  and  sending stateful replies (t_reply). Any
+   other  commands  may  result  in  unpredictable  behavior and possible
+   server  failure.  Note  that whenever failure_route is entered, uri is
+   reset  to  value  which  it had on relaying. If it temporarily changed
+   during  a  reply_route  processing, subsequent reply_route will ignore
+   the changed value and use again the original one.
 
    Meaning of the parameters is as follows:
      * failure_route - Failure route block to be called.
 
-   Example 47. t_on_failure usage
+   Example 1.47. t_on_failure usage
 ...
 route {
     t_on_failure("1");
@@ -1366,29 +1683,29 @@ failure_route[1] {
 }
 ...
 
-   See test/onr.cfg for a more complex example of combination of serial
+   See  test/onr.cfg  for a more complex example of combination of serial
    with parallel forking.
 
-1.5.7. t_on_branch_failure(branch_failure_route)
+5.7.  t_on_branch_failure(branch_failure_route)
 
-   Sets the branch_failure routing block, to which control is passed on
-   each negative response to a transaction. This route is run before
-   deciding if the transaction is complete. In the referred block, you can
-   start a new branch which is required for failover of multiple outbound
-   flows (RFC 5626). Note that the set of commands which are usable within
-   a branch_failure route is limited to a subset of the failure_rotue
-   commands including logging, rewriting URI and initiating new branches.
-   Any other commands may generate errors or result in unpredictable
-   behavior. Note that whenever failure_route is entered, uri is reset to
-   value which it had on relaying. If it temporarily changed during a
-   reply_route processing, subsequent reply_route will ignore the changed
-   value and use again the original one.
+   Sets  the  branch_failure routing block, to which control is passed on
+   each  negative  response  to  a  transaction. This route is run before
+   deciding  if  the  transaction is complete. In the referred block, you
+   can  start  a  new  branch  which is required for failover of multiple
+   outbound  flows  (RFC  5626).  Note that the set of commands which are
+   usable  within  a  branch_failure  route is limited to a subset of the
+   failure_rotue commands including logging, rewriting URI and initiating
+   new  branches.  Any  other  commands  may generate errors or result in
+   unpredictable  behavior.  Note that whenever failure_route is entered,
+   uri  is  reset  to  value  which it had on relaying. If it temporarily
+   changed  during  a reply_route processing, subsequent reply_route will
+   ignore the changed value and use again the original one.
 
    Function Parameters:
-     * branch_failure_route - Name of the branch_failure route block to be
-       called (it is prefixed internally with 'tm:branch-failure:').
+     * branch_failure_route  -  Name of the branch_failure route block to
+       be called (it is prefixed internally with 'tm:branch-failure:').
 
-   Example 48. t_on_branch_failure usage
+   Example 1.48. t_on_branch_failure usage
 ...
 route {
     t_on_branch_failure("myroute");
@@ -1402,16 +1719,16 @@ event_route[tm:branch-failure:myroute] {
 }
 ...
 
-1.5.8. t_on_reply(onreply_route)
+5.8.  t_on_reply(onreply_route)
 
-   Sets the reply routing block, to which control is passed when a reply
+   Sets  the reply routing block, to which control is passed when a reply
    for the current transaction is received. Note that the set of commands
    which are usable within onreply_routes is limited.
 
    Meaning of the parameters is as follows:
      * onreply_route - Onreply route block to be called.
 
-   Example 49. t_on_reply usage
+   Example 1.49. t_on_reply usage
 ...
 loadmodule "/usr/local/lib/ser/modules/nathelper.so"
 ...
@@ -1424,26 +1741,26 @@ route {
 onreply_route[1] {
         if (status=~ "(183)|2[0-9][0-9]"){
                 force_rtp_proxy();
-                search_append('^(Contact|m)[ \t]*:.*sip:[^>[:cntrl:]]*', ';nat=y
-es');
+                search_append('^(Contact|m)[ \t]*:.*sip:[^>[:cntrl:]]*', ';nat=
+yes');
         }
         if (nat_uac_test("1")){
                 fix_nated_contact();
         }
 }
 
-1.5.9. t_on_branch(branch_route)
+5.9.  t_on_branch(branch_route)
 
-   Sets the branch routing block, to which control is passed after forking
-   (when a new branch is created). For now branch routes are intended only
-   for last minute changes of the SIP messages (like adding new headers).
-   Note that the set of commands which are usable within branch_routes is
-   very limited. It is not possible to generate a reply.
+   Sets  the  branch  routing  block,  to  which  control is passed after
+   forking  (when  a  new  branch  is created). For now branch routes are
+   intended only for last minute changes of the SIP messages (like adding
+   new  headers).  Note  that the set of commands which are usable within
+   branch_routes is very limited. It is not possible to generate a reply.
 
    Meaning of the parameters is as follows:
      * branch_route - branch route block to be called.
 
-   Example 50. t_on_branch usage
+   Example 1.50. t_on_branch usage
 ...
 route {
         t_on_branch("1");
@@ -1456,13 +1773,13 @@ branch_route[1] {
         }
 }
 
-1.5.10. t_newtran()
+5.10.  t_newtran()
 
-   Creates a new transaction, returns a negative value on error. This is
-   the only way a script can add a new transaction in an atomic way.
+   Creates  a new transaction, returns a negative value on error. This is
+   the  only  way  a  script  can add a new transaction in an atomic way.
    Typically, it is used to deploy a UAS.
 
-   Example 51. t_newtran usage
+   Example 1.51. t_newtran usage
 ...
 if (t_newtran()) {
     log("UAS logic");
@@ -1472,103 +1789,103 @@ if (t_newtran()) {
 
    See test/uas.cfg for more examples.
 
-1.5.11. t_reply(code, reason_phrase)
+5.11.  t_reply(code, reason_phrase)
 
-   Sends a stateful reply after a transaction has been established. See
+   Sends  a  stateful reply after a transaction has been established. See
    t_newtran for usage.
 
    Meaning of the parameters is as follows:
      * code - Reply code number.
      * reason_phrase - Reason string.
 
-   Example 52. t_reply usage
+   Example 1.52. t_reply usage
 ...
 t_reply("404", "Not found");
 ...
 
-1.5.12. t_lookup_request()
+5.12.  t_lookup_request()
 
-   Checks if a transaction exists. Returns a positive value if so,
-   negative otherwise. Most likely you will not want to use it, as a
-   typical application of a look-up is to introduce a new transaction if
-   none was found. However this is safely (atomically) done using
+   Checks  if  a  transaction  exists.  Returns  a  positive value if so,
+   negative  otherwise.  Most  likely  you  will not want to use it, as a
+   typical  application of a look-up is to introduce a new transaction if
+   none  was  found.  However  this  is  safely  (atomically)  done using
    t_newtran.
 
-   Example 53. t_lookup_request usage
+   Example 1.53. t_lookup_request usage
 ...
 if (t_lookup_request()) {
     ...
 };
 ...
 
-1.5.13. t_retransmit_reply()
+5.13.  t_retransmit_reply()
 
    Retransmits a reply sent previously by UAS transaction.
 
-   Example 54. t_retransmit_reply usage
+   Example 1.54. t_retransmit_reply usage
 ...
 t_retransmit_reply();
 ...
 
-1.5.14. t_release()
+5.14.  t_release()
 
-   Remove transaction from memory (it will be first put on a wait timer to
-   absorb delayed messages).
+   Remove  transaction  from memory (it will be first put on a wait timer
+   to absorb delayed messages).
 
-   Example 55. t_release usage
+   Example 1.55. t_release usage
 ...
 t_release();
 ...
 
-1.5.15. t_forward_nonack([ip, port])
+5.15.  t_forward_nonack([ip, port])
 
-   Mainly for internal usage -- forward a non-ACK request statefully.
+   Mainly  for  internal  usage  -- forward a non-ACK request statefully.
    Variants of this functions can enforce a specific transport protocol.
 
    Meaning of the parameters is as follows:
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 56. t_forward_nonack usage
+   Example 1.56. t_forward_nonack usage
 ...
 t_forward_nonack("1.2.3.4", "5060");
 ...
 
-1.5.16. t_forward_nonack_udp(ip, port)
+5.16.  t_forward_nonack_udp(ip, port)
 
    See function t_forward_nonack([ip, port]).
 
-1.5.17. t_forward_nonack_tcp(ip, port)
+5.17.  t_forward_nonack_tcp(ip, port)
 
    See function t_forward_nonack([ip, port]).
 
-1.5.18. t_forward_nonack_tls(ip, port)
+5.18.  t_forward_nonack_tls(ip, port)
 
    See function t_forward_nonack([ip, port]).
 
-1.5.19. t_forward_nonack_sctp(ip, port)
+5.19.  t_forward_nonack_sctp(ip, port)
 
    See function t_forward_nonack([ip, port]).
 
-1.5.20. t_set_fr(fr_inv_timeout [, fr_timeout])
+5.20.  t_set_fr(fr_inv_timeout [, fr_timeout])
 
-   Sets the fr_inv_timeout and optionally fr_timeout for the current
-   transaction or for transactions created during the same script
+   Sets  the  fr_inv_timeout  and  optionally  fr_timeout for the current
+   transaction  or  for  transactions  created  during  the  same  script
    invocation, after calling this function. If the transaction is already
-   created (e.g called after t_relay() or in an onreply_route) all the
+   created  (e.g  called  after t_relay() or in an onreply_route) all the
    branches will have their final response timeout updated on-the-fly. If
    one of the parameters is 0, its value won't be changed.
 
    Meaning of the parameters is as follows:
-     * fr_inv_timeout - new final response timeout (in milliseconds) for
+     * fr_inv_timeout  - new final response timeout (in milliseconds) for
        INVITEs. See also fr_inv_timer.
-       fr_timeout - new final response timeout (in milliseconds) for
-       non-INVITE transaction, or INVITEs which haven't received yet a
+       fr_timeout  -  new  final  response  timeout (in milliseconds) for
+       non-INVITE  transaction,  or  INVITEs which haven't received yet a
        provisional response. See also fr_timer.
 
    See also: fr_timer, fr_inv_timer, t_reset_fr().
 
-   Example 57. t_set_fr usage
+   Example 1.57. t_set_fr usage
 ...
 route {
         t_set_fr(10000); # set only fr invite timeout to 10s
@@ -1584,18 +1901,18 @@ branch_route[1] {
         }
 }
 
-1.5.21. t_reset_fr()
+5.21.  t_reset_fr()
 
-   Resets the fr_inv_timer and fr_timer for the current transaction to the
-   default values (set using the tm module parameters fr_inv_timer and
-   fr_timer).
+   Resets  the  fr_inv_timer  and fr_timer for the current transaction to
+   the  default  values  (set using the tm module parameters fr_inv_timer
+   and fr_timer).
 
    It will effectively cancel any previous calls to t_set_fr for the same
    transaction.
 
    See also: fr_timer, fr_inv_timer, t_set_fr.
 
-   Example 58. t_reset_fr usage
+   Example 1.58. t_reset_fr usage
 ...
 route {
 ...
@@ -1603,25 +1920,25 @@ route {
 ...
 }
 
-1.5.22. t_set_max_lifetime(inv_lifetime, noninv_lifetime)
+5.22.  t_set_max_lifetime(inv_lifetime, noninv_lifetime)
 
-   Sets the maximum lifetime for the current INVITE or non-INVITE
-   transaction, or for transactions created during the same script
-   invocation, after calling this function (that's why it takes values for
-   both INVITE and non-INVITE). If one of the parameters is 0, its value
-   won't be changed.
+   Sets  the  maximum  lifetime  for  the  current  INVITE  or non-INVITE
+   transaction,  or  for  transactions  created  during  the  same script
+   invocation,  after  calling  this function (that's why it takes values
+   for  both  INVITE  and non-INVITE). If one of the parameters is 0, its
+   value won't be changed.
 
    It works as a per transaction max_inv_lifetime or max_noninv_lifetime.
 
    Meaning of the parameters is as follows:
-     * inv_lifetime - maximum INVITE transaction lifetime (in
+     * inv_lifetime   -   maximum   INVITE   transaction   lifetime   (in
        milliseconds). See also max_inv_lifetime.
-       noninv_lifetime - maximum non-INVITE transaction lifetime (in
+       noninv_lifetime  -  maximum  non-INVITE  transaction  lifetime (in
        milliseconds). See also max_noninv_lifetime.
 
    See also: max_inv_lifetime, max_noninv_lifetime, t_reset_max_lifetime.
 
-   Example 59. t_set_max_lifetime usage
+   Example 1.59. t_set_max_lifetime usage
 ...
 route {
     if (src_ip=1.2.3.4)
@@ -1632,18 +1949,18 @@ route {
                                           # INVITE and to 15s if not
 }
 
-1.5.23. t_reset_max_lifetime()
+5.23.  t_reset_max_lifetime()
 
-   Resets the the maximum lifetime for the current INVITE or non-INVITE
-   transaction to the default value (set using the tm module parameter
+   Resets  the  the maximum lifetime for the current INVITE or non-INVITE
+   transaction  to  the  default value (set using the tm module parameter
    max_inv_lifetime or max_noninv_lifetime).
 
-   It will effectively cancel any previous calls to t_set_max_lifetime for
-   the same transaction.
+   It  will  effectively  cancel any previous calls to t_set_max_lifetime
+   for the same transaction.
 
    See also: max_inv_lifetime, max_noninv_lifetime, t_set_max_lifetime.
 
-   Example 60. t_reset_max_lifetime usage
+   Example 1.60. t_reset_max_lifetime usage
 ...
 route {
 ...
@@ -1651,37 +1968,37 @@ route {
 ...
 }
 
-1.5.24. t_set_retr(retr_t1_interval, retr_t2_interval)
+5.24.  t_set_retr(retr_t1_interval, retr_t2_interval)
 
-   Sets the retr_t1_interval and retr_t2_interval for the current
-   transaction or for transactions created during the same script
-   invocation, after calling this function. If one of the parameters is 0,
-   it's value won't be changed. If the transaction is already created (e.g
-   called after t_relay() or in an onreply_route) all the existing
+   Sets   the  retr_t1_interval  and  retr_t2_interval  for  the  current
+   transaction  or  for  transactions  created  during  the  same  script
+   invocation,  after  calling this function. If one of the parameters is
+   0,  it's value won't be changed. If the transaction is already created
+   (e.g  called  after t_relay() or in an onreply_route) all the existing
    branches will have their retransmissions intervals updated on-the-fly:
-   if the retransmission interval for the branch has not yet reached T2
-   the interval will be reset to retr_t1_interval, else to
-   retr_t2_interval. Note that the change will happen after the current
-   interval expires (after the next retransmission, the next-next
-   retransmission will take place at retr_t1_interval or
+   if  the  retransmission interval for the branch has not yet reached T2
+   the   interval   will   be   reset   to   retr_t1_interval,   else  to
+   retr_t2_interval.  Note  that the change will happen after the current
+   interval   expires  (after  the  next  retransmission,  the  next-next
+   retransmission    will    take    place    at    retr_t1_interval   or
    retr_t2_interval). All new branches of the same transaction will start
-   with the new values. This function will work even if it's called in the
-   script before a transaction creating function (e.g.: t_set_retr(500,
-   4000); t_relay()). All new transaction created after this function
-   call, during the same script invocation will use the new values. Note
-   that this function will work only if tm is compile with
-   -DTM_DIFF_RT_TIMEOUT (which increases every transaction size with 4
+   with  the  new  values. This function will work even if it's called in
+   the   script   before   a   transaction   creating   function   (e.g.:
+   t_set_retr(500,  4000);  t_relay()). All new transaction created after
+   this function call, during the same script invocation will use the new
+   values.  Note  that this function will work only if tm is compile with
+   -DTM_DIFF_RT_TIMEOUT  (which  increases  every transaction size with 4
    bytes).
 
    Meaning of the parameters is as follows:
-     * retr_t1_interval - new T1 retransmission interval (in
+     * retr_t1_interval    -   new   T1   retransmission   interval   (in
        milliseconds). See also retr_t1_timeout.
        retr_t2_interval - new T2 (or maximum) retransmission interval (in
        milliseconds). See also retr_t2_timeout.
 
    See also: retr_timer1, retr_timer2, t_reset_retr().
 
-   Example 61. t_set_retr usage
+   Example 1.61. t_set_retr usage
 ...
 route {
         t_set_retr(250, 0); # set only T1 to 250 ms
@@ -1697,18 +2014,18 @@ branch_route[1] {
         }
 }
 
-1.5.25. t_reset_retr()
+5.25.  t_reset_retr()
 
-   Resets the retr_timer1 and retr_timer2 for the current transaction to
+   Resets  the retr_timer1 and retr_timer2 for the current transaction to
    the default values (set using the tm module parameters retr_timer1 and
    retr_timer2).
 
-   It will effectively cancel any previous calls to t_set_retr for the
+   It  will  effectively  cancel any previous calls to t_set_retr for the
    same transaction.
 
    See also: retr_timer1, retr_timer2, t_set_retr.
 
-   Example 62. t_reset_retr usage
+   Example 1.62. t_reset_retr usage
 ...
 route {
 ...
@@ -1716,15 +2033,15 @@ route {
 ...
 }
 
-1.5.26. t_set_auto_inv_100(0|1)
+5.26.  t_set_auto_inv_100(0|1)
 
-   Switch automatically sending 100 replies to INVITEs on/off on a per
+   Switch  automatically  sending  100 replies to INVITEs on/off on a per
    transaction basis. It overrides the auto_inv_100 value for the current
    transaction.
 
    See also: auto_inv_100.
 
-   Example 63. t_set_auto_inv_100 usage
+   Example 1.63. t_set_auto_inv_100 usage
 ...
 route {
 ...
@@ -1733,13 +2050,13 @@ route {
 ...
 }
 
-1.5.27. t_branch_timeout()
+5.27.  t_branch_timeout()
 
-   Returns true if the failure route is executed for a branch that did
-   timeout. It can be used from failure_route and branch-failure event
+   Returns  true  if  the failure route is executed for a branch that did
+   timeout.  It  can  be used from failure_route and branch-failure event
    route.
 
-   Example 64. t_branch_timeout usage
+   Example 1.64. t_branch_timeout usage
 ...
 failure_route[0]{
         if (t_branch_timeout()){
@@ -1748,14 +2065,14 @@ failure_route[0]{
         }
 }
 
-1.5.28. t_branch_replied()
+5.28.  t_branch_replied()
 
-   Returns true if the failure route is executed for a branch that did
-   receive at least one reply in the past (the "current" reply is not
-   taken into account). It can be used from failure_route and
+   Returns  true  if  the failure route is executed for a branch that did
+   receive  at  least  one  reply in the past (the "current" reply is not
+   taken   into   account).   It  can  be  used  from  failure_route  and
    branch-failure event route.
 
-   Example 65. t_branch_replied usage
+   Example 1.65. t_branch_replied usage
 ...
 failure_route[0]{
         if (t_branch_timeout()){
@@ -1767,12 +2084,12 @@ failure_route[0]{
         }
 }
 
-1.5.29. t_any_timeout()
+5.29.  t_any_timeout()
 
-   Returns true if at least one of the current transactions branches did
+   Returns  true if at least one of the current transactions branches did
    timeout.
 
-   Example 66. t_any_timeout usage
+   Example 1.66. t_any_timeout usage
 ...
 failure_route[0]{
         if (!t_branch_timeout()){
@@ -1783,13 +2100,13 @@ failure_route[0]{
         }
 }
 
-1.5.30. t_any_replied()
+5.30.  t_any_replied()
 
-   Returns true if at least one of the current transactions branches did
-   receive some reply in the past. If called from a failure or onreply
+   Returns  true if at least one of the current transactions branches did
+   receive  some  reply  in the past. If called from a failure or onreply
    route, the "current" reply is not taken into account.
 
-   Example 67. t_any_replied usage
+   Example 1.67. t_any_replied usage
 ...
 onreply_route[0]{
         if (!t_any_replied()){
@@ -1798,12 +2115,12 @@ onreply_route[0]{
         }
 }
 
-1.5.31. t_grep_status("code")
+5.31.  t_grep_status("code")
 
-   Returns true if "code" is the final reply received (or locally
+   Returns  true  if  "code"  is  the  final  reply  received (or locally
    generated) in at least one of the current transactions branches.
 
-   Example 68. t_grep_status usage
+   Example 1.68. t_grep_status usage
 ...
 onreply_route[0]{
         if (t_grep_status("486")){
@@ -1812,11 +2129,11 @@ onreply_route[0]{
         }
 }
 
-1.5.32. t_is_canceled()
+5.32.  t_is_canceled()
 
    Returns true if the current transaction was canceled.
 
-   Example 69. t_is_canceled usage
+   Example 1.69. t_is_canceled usage
 ...
 failure_route[0]{
         if (t_is_canceled()){
@@ -1825,12 +2142,12 @@ failure_route[0]{
         }
 }
 
-1.5.33. t_is_expired()
+5.33.  t_is_expired()
 
    Returns true if the current transaction has already been expired, i.e.
    the max_inv_lifetime/max_noninv_lifetime interval has already elapsed.
 
-   Example 70. t_is_expired usage
+   Example 1.70. t_is_expired usage
 ...
 failure_route[0]{
         if (t_is_expired()){
@@ -1839,19 +2156,19 @@ failure_route[0]{
         }
 }
 
-1.5.34. t_relay_cancel()
+5.34.  t_relay_cancel()
 
-   Forwards the CANCEL if the corresponding INVITE transaction exists. The
-   function is supposed to be used at the very beginning of the script,
-   because the CANCELs can be caught and the rest of the script can be
-   bypassed this way. Do not disable reparse_invite module parameter, and
-   call t_relay_cancel() right after the sanity tests.
+   Forwards  the  CANCEL  if the corresponding INVITE transaction exists.
+   The  function  is  supposed  to  be  used at the very beginning of the
+   script,  because  the CANCELs can be caught and the rest of the script
+   can  be  bypassed  this  way.  Do  not  disable  reparse_invite module
+   parameter, and call t_relay_cancel() right after the sanity tests.
 
    Return value is 0 (drop) if the corresponding INVITE was found and the
-   CANCELs were successfully sent to the pending branches, true if the
+   CANCELs  were  successfully  sent to the pending branches, true if the
    INVITE was not found, and false in case of any error.
 
-   Example 71. t_relay_cancel usage
+   Example 1.71. t_relay_cancel usage
 if (method == CANCEL) {
         if (!t_relay_cancel()) {  # implicit drop if relaying was successful,
                                   # nothing to do
@@ -1864,21 +2181,21 @@ if (method == CANCEL) {
         # do the same as for INVITEs
 }
 
-1.5.35. t_lookup_cancel([1])
+5.35.  t_lookup_cancel([1])
 
-   Returns true if the corresponding INVITE transaction exists for a
-   CANCEL request. The function can be called at the beginning of the
+   Returns  true  if  the  corresponding  INVITE transaction exists for a
+   CANCEL  request.  The  function  can be called at the beginning of the
    script to check whether or not the CANCEL can be immediately forwarded
-   bypassing the rest of the script. Note however that t_relay_cancel
-   includes t_lookup_cancel as well, therefore it is not needed to
-   explicitly call this function unless something has to be logged for
+   bypassing  the  rest  of  the script. Note however that t_relay_cancel
+   includes  t_lookup_cancel  as  well,  therefore  it  is  not needed to
+   explicitly  call  this  function unless something has to be logged for
    example.
 
-   If the function parameter (optional) is set to 1, the message flags are
-   overwritten with the flags of the INVITE. isflagset() can be used to
-   check the flags of the previously forwarded INVITE in this case.
+   If  the  function  parameter (optional) is set to 1, the message flags
+   are  overwritten with the flags of the INVITE. isflagset() can be used
+   to check the flags of the previously forwarded INVITE in this case.
 
-   Example 72. t_lookup_cancel usage
+   Example 1.72. t_lookup_cancel usage
 if (method == CANCEL) {
         if (t_lookup_cancel()) {
                 log("INVITE transaction exists");
@@ -1896,19 +2213,19 @@ if (method == CANCEL) {
         # do the same as for INVITEs
 }
 
-1.5.36. t_drop_replies([mode])
+5.36.  t_drop_replies([mode])
 
-   Drops all the previously received replies in failure_route block to
+   Drops  all  the  previously received replies in failure_route block to
    make sure that none of them is picked up again.
 
-   The parameter 'mode' controls which replies are dropped: 'a' or missing
-   - all replies are dropped; 'l' - replies received for last set of
-   branches are dropped; 'n' - no reply is dropped.
+   The  parameter  'mode'  controls  which  replies  are  dropped: 'a' or
+   missing - all replies are dropped; 'l' - replies received for last set
+   of branches are dropped; 'n' - no reply is dropped.
 
-   Dropping replies works only if a new branch is added to the
+   Dropping  replies  works  only  if  a  new  branch  is  added  to  the
    transaction, or it is explicitly replied in the script!
 
-   Example 73. t_drop_replies() usage
+   Example 1.73. t_drop_replies() usage
 ...
 failure_route[0]{
         if (t_check_status("5[0-9][0-9]")){
@@ -1924,22 +2241,22 @@ failure_route[0]{
         }
 }
 
-1.5.37. t_save_lumps()
+5.37.  t_save_lumps()
 
-   Forces the modifications of the processed SIP message to be saved in
-   shared memory before t_relay() is called. The new branches which are
-   created in failure_route will contain the same modifications, and any
+   Forces  the  modifications of the processed SIP message to be saved in
+   shared  memory  before t_relay() is called. The new branches which are
+   created  in failure_route will contain the same modifications, and any
    other modification after t_save_lumps() will be lost.
 
-   Note that t_relay() automatically saves the modifications when it is
-   called the first time, there is no need for t_save_lumps() unless
-   message changes between t_save_lumps() and t_relay() must not be
+   Note  that  t_relay() automatically saves the modifications when it is
+   called  the  first  time,  there  is no need for t_save_lumps() unless
+   message  changes  between  t_save_lumps()  and  t_relay()  must not be
    propagated to failure_route.
 
-   The transaction must be created by t_newtran() before calling
+   The   transaction  must  be  created  by  t_newtran()  before  calling
    t_save_lumps().
 
-   Example 74. t_save_lumps() usage
+   Example 1.74. t_save_lumps() usage
 route {
         ...
         t_newtran();
@@ -1964,41 +2281,41 @@ failure_route[1] {
         t_relay();
 }
 
-1.5.38. t_load_contacts()
+5.38.  t_load_contacts()
 
    This is the first of the three functions that can be used to implement
-   serial/parallel forking based on q and +sip.instance values of
+   serial/parallel  forking  based  on  q  and  +sip.instance  values  of
    individual branches in the destination set.
 
-   Function t_load_contacts() removes all branches from the current
+   Function  t_load_contacts()  removes  all  branches  from  the current
    destination set and stores them into the XAVP whose name is configured
-   with the parameter contacts_avp. Note that you have to configure this
-   parameter before you can use the function, the parameter is set to NULL
-   by default, which disables the function.
+   with  the parameter contacts_avp. Note that you have to configure this
+   parameter  before  you  can  use the function, the parameter is set to
+   NULL by default, which disables the function.
 
-   If the destination set contains only one branch, the function does
+   If  the  destination  set  contains only one branch, the function does
    nothing.
 
-   If the current destination set contains more than one branch, the
-   function sorts them according to increasing value of the q parameter
+   If  the  current  destination  set  contains more than one branch, the
+   function  sorts  them according to increasing value of the q parameter
    and then stores the branches in reverse order into the XAVP.
 
-   The q parameter of a branch contains a value from range 0-1.0 and it
+   The  q  parameter of a branch contains a value from range 0-1.0 and it
    expresses relative preferrence of the branch among all branches in the
-   destination set. The higher the q value the more preference the user
-   agent gave to the branch. Branches with higher q values will be tried
+   destination  set.  The higher the q value the more preference the user
+   agent  gave to the branch. Branches with higher q values will be tried
    before branches with lower ones when serial forking takes place.
 
-   After calling t_load_contacts(), function t_next_contacts() and
-   possibly also t_next_contact_flow() need to be called one or more times
-   in order to retrieve the branches based on their q value.
+   After   calling   t_load_contacts(),  function  t_next_contacts()  and
+   possibly  also  t_next_contact_flow()  need  to  be called one or more
+   times in order to retrieve the branches based on their q value.
 
-   Function returns 1 if loading of contacts succeeded or there was
+   Function  returns  1  if  loading  of  contacts succeeded or there was
    nothing to do. In case of an error, function returns -1 (see syslog).
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 75. t_load_contacts usage
+   Example 1.75. t_load_contacts usage
 ...
 if (!t_load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load contacts");
@@ -2006,40 +2323,40 @@ if (!t_load_contacts()) {
 };
 ...
 
-1.5.39. t_next_contacts()
+5.39.  t_next_contacts()
 
-   Function t_next_contacts() is the second of the three functions that
-   can be used to implement serial/parallel forking based on the q value
+   Function  t_next_contacts()  is the second of the three functions that
+   can  be used to implement serial/parallel forking based on the q value
    of the individual branches in a destination set.
 
-   The function adds to request a new destination set that includes the
-   highest priority contacts in contacts_avp, but only one contact with
+   The  function  adds to request a new destination set that includes the
+   highest  priority  contacts in contacts_avp, but only one contact with
    the same +sip.instance value is included. Duplicate contacts are added
-   to contact_flows_avp for later consumption by function
+   to    contact_flows_avp    for    later    consumption   by   function
    next_contact_flow(). Upon each call, Request URI is rewritten with the
-   first contact and the remaining contacts (if any) are added as
-   branches. Then all highest priority contacts are removed from
+   first  contact  and  the  remaining  contacts  (if  any)  are added as
+   branches.   Then  all  highest  priority  contacts  are  removed  from
    contacts_avp.
 
    Function does nothing if contact_avp has no values.
 
    Function returns 1 if contacts_avp was not empty and a destination set
-   was successfully added, returns -2 if contacts_avp was empty and thus
-   there was nothing to do, and returns -1 in case of an error (see
+   was  successfully added, returns -2 if contacts_avp was empty and thus
+   there  was  nothing  to  do,  and  returns -1 in case of an error (see
    syslog). Function can be called from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Note that if you use t_load_contacts and t_next_contacts functions then
-   you should also set the value of restart_fr_on_each_reply parameter to
-   0. If you do not do that, it can happen that a broken user agent that
-   retransmits 180 periodically will keep resetting the fr_inv_timer value
-   and serial forking never happens.
+   Note  that  if  you  use t_load_contacts and t_next_contacts functions
+   then  you  should  also  set  the  value  of  restart_fr_on_each_reply
+   parameter  to  0.  If  you do not do that, it can happen that a broken
+   user  agent  that retransmits 180 periodically will keep resetting the
+   fr_inv_timer value and serial forking never happens.
 
-   Before calling t_relay(), you can check if the previous call of
-   next_contacts() consumed all branches by checking if contact_avp and
-   contact_flows_avp are not anymore set. Based on that test, you can then
-   use t_set_fr() function to set timers according to your needs.
+   Before  calling  t_relay(),  you  can  check  if  the previous call of
+   next_contacts()  consumed  all branches by checking if contact_avp and
+   contact_flows_avp  are  not  anymore  set. Based on that test, you can
+   then use t_set_fr() function to set timers according to your needs.
 
-   Example 76. t_next_contacts usage
+   Example 1.76. t_next_contacts usage
 ...
 # First call after t_load_contacts() when transaction does not exist yet
 # and contacts should be available
@@ -2058,25 +2375,26 @@ if (!t_next_contacts()) {
 };
 ...
 
-1.5.40. t_next_contact_flow()
+5.40.  t_next_contact_flow()
 
    Function t_next_contact_flow() is the last of the three functions that
-   can be used to implement serial/parallel forking based on the q value
+   can  be used to implement serial/parallel forking based on the q value
    and instance value of individual branches in a destination set.
 
-   Function adds a new branch to the request that includes the first
+   Function  adds  a  new  branch  to the request that includes the first
    contact from contact_flows_avp that matches the +sip.instance value of
-   the flow that has failed. Upon each call, Request URI is rewritten with
-   the contact. The used contact is removed from contact_flows_avp.
+   the  flow  that  has  failed. Upon each call, Request URI is rewritten
+   with the contact. The used contact is removed from contact_flows_avp.
 
    Function does nothing if there are no contact_flows_avp values.
 
-   Function returns 1 if contact_flows_avp was not empty and a destination
-   set was successfully added, returns -2 if contacts_avp was empty and
-   thus there was nothing to do, and returns -1 in case of an error (see
-   syslog). This function can be used from a BRANCH_FAILURE event route.
+   Function   returns   1  if  contact_flows_avp  was  not  empty  and  a
+   destination set was successfully added, returns -2 if contacts_avp was
+   empty  and  thus there was nothing to do, and returns -1 in case of an
+   error  (see  syslog).  This function can be used from a BRANCH_FAILURE
+   event route.
 
-   Example 77. t_next_contact_flow usage
+   Example 1.77. t_next_contact_flow usage
 ...
 event_route[tm:branch-failure:outbound]
 {
@@ -2088,59 +2406,59 @@ event_route[tm:branch-failure:outbound]
         }
 ...
 
-1.5.41. t_check_trans()
+5.41.  t_check_trans()
 
-   t_check_trans() can be used to quickly check if a message belongs or is
-   related to a transaction. It behaves differently for different types of
-   messages:
-     * For a SIP Reply it returns true if the reply belongs to an existing
-       transaction and false otherwise.
+   t_check_trans()  can  be used to quickly check if a message belongs or
+   is  related  to  a  transaction.  It behaves differently for different
+   types of messages:
+     * For  a  SIP  Reply  it  returns  true  if  the reply belongs to an
+       existing transaction and false otherwise.
      * For a CANCEL it behaves exactly as t_lookup_cancel(): returns true
-       if a corresponding INVITE transaction exists for the CANCEL and
+       if  a  corresponding  INVITE transaction exists for the CANCEL and
        false otherwise.
-     * For ACKs to negative replies or for ACKs to local transactions it
-       will terminate the script if the ACK belongs to a transaction (it
+     * For  ACKs to negative replies or for ACKs to local transactions it
+       will  terminate the script if the ACK belongs to a transaction (it
        would make very little sense to process an ACK to a negative reply
-       for an existing transaction in some other way then to simply pass
+       for  an existing transaction in some other way then to simply pass
        it to tm) or return false if not.
-     * For end-to-end ACKs (ACKs to 2xx responses for forwarded INVITE
-       transactions) it will return true if the corresponding INVITE
+     * For  end-to-end  ACKs  (ACKs to 2xx responses for forwarded INVITE
+       transactions)  it  will  return  true  if the corresponding INVITE
        transaction is found and still active and false if not.
 
 Note
        Note that the e2e ACK matching is more of a hint then a certainty.
-       A delayed e2e ACK might arrive after the transaction wait time
-       elapses, when the INVITE transaction no longer exists and thus
-       would not match anything. There are also cases when tm would not
-       keep all the information needed for e2e ACK matching (since this is
-       not needed for a statefull proxy and it requires additional memory,
-       tm will not keep this information unless needed by some other
-       module or callbacks).
-     * For other requests (non ACKs and non CANCELs), it will terminate
-       the script for retransmissions and return false for new requests
+       A  delayed  e2e  ACK  might arrive after the transaction wait time
+       elapses,  when  the  INVITE  transaction no longer exists and thus
+       would  not  match anything. There are also cases when tm would not
+       keep  all  the information needed for e2e ACK matching (since this
+       is  not  needed  for  a statefull proxy and it requires additional
+       memory,  tm  will  not keep this information unless needed by some
+       other module or callbacks).
+     * For  other  requests (non ACKs and non CANCELs), it will terminate
+       the  script  for retransmissions and return false for new requests
        (for which no transaction exists yet).
 
 Note
 
-   An important difference from kamailio version is that for an ACK to
-   negative reply or for a local transaction, the script execution will be
-   immediately stopped and the message handled by tm, instead of returning
-   true.
+   An  important  difference  from kamailio version is that for an ACK to
+   negative  reply  or for a local transaction, the script execution will
+   be  immediately  stopped  and  the  message  handled by tm, instead of
+   returning true.
 
-   t_check_trans() functionality for requests, except for the e2e ACK
-   matching, can be replicated in the script using t_lookup_cancel() and
+   t_check_trans()  functionality  for  requests,  except for the e2e ACK
+   matching,  can be replicated in the script using t_lookup_cancel() and
    t_lookup_request().
 
    See also: t_lookup_request(), t_lookup_cancel().
 
-   Example 78. t_check_trans usage
+   Example 1.78. t_check_trans usage
 if ( method == "CANCEL" && !t_check_trans())
         sl_reply("403", "cancel out of the blue forbidden");
 # note: in this example t_check_trans() can be replaced by t_lookup_cancel()
 
-1.5.42. t_set_disable_6xx(0|1)
+5.42.  t_set_disable_6xx(0|1)
 
-   Turn off/on 6xx replies special rfc conformant handling on a per
+   Turn  off/on  6xx  replies  special  rfc  conformant handling on a per
    transaction basis. If turned off (t_set_disable_6xx("1")) 6XXs will be
    treated like normal replies.
 
@@ -2148,7 +2466,7 @@ if ( method == "CANCEL" && !t_check_trans())
 
    See also: disable_6xx_block.
 
-   Example 79. t_set_disable_6xx usage
+   Example 1.79. t_set_disable_6xx usage
 ...
 route {
 ...
@@ -2157,13 +2475,13 @@ route {
 ...
 }
 
-1.5.43. t_set_disable_failover(0|1)
+5.43.  t_set_disable_failover(0|1)
 
    Turn off/on dns failover on a per transaction basis.
 
    See also: use_dns_failover.
 
-   Example 80. t_set_disable_failover usage
+   Example 1.80. t_set_disable_failover usage
 ...
 route {
 ...
@@ -2172,7 +2490,7 @@ route {
 ...
 }
 
-1.5.44. t_replicate(params)
+5.44.  t_replicate(params)
 
    Replicate the SIP request to a specific address.
 
@@ -2186,15 +2504,15 @@ route {
      * t_replicate_to(proto, hostport)
 
    Meaning of the parameters is as follows:
-     * uri - SIP URI where the message should be sent. It can be given via
-       a script variable.
+     * uri  -  SIP  URI where the message should be sent. It can be given
+       via a script variable.
      * host - host address where the message should be sent.
      * port - port number.
      * proto - transport protocol to be used.
-     * hostport - address in "host:port" format. It can be given via an
+     * hostport  -  address in "host:port" format. It can be given via an
        AVP.
 
-   Example 81. t_replicate usage
+   Example 1.81. t_replicate usage
 ...
 # sent to 1.2.3.4:5060 over tcp
 t_replicate("sip:1.2.3.4:5060;transport=tcp");
@@ -2207,9 +2525,9 @@ t_replicate("sip:$var(h);transport=tls");
 t_replicate_to_udp("1.2.3.4", "5060");
 ...
 
-1.5.45. t_relay_to(proxy, flags)
+5.45.  t_relay_to(proxy, flags)
 
-   Forward the SIP request to a specific address, controlling internal
+   Forward  the  SIP  request to a specific address, controlling internal
    behavior via flags.
 
    There are several function prototypes:
@@ -2219,17 +2537,17 @@ t_replicate_to_udp("1.2.3.4", "5060");
      * t_relay_to(proxy, flags)
 
    Meaning of the parameters is as follows:
-     * proxy - address where the request should be sent. Format is:
-       "proto:host:port" - any of proto or port can be ommitted, along
+     * proxy  -  address  where  the  request  should be sent. Format is:
+       "proto:host:port"  -  any  of proto or port can be ommitted, along
        with the semicolon after or before.
-     * flags - bitmask integer value to control the internal behavior.
+     * flags  -  bitmask  integer value to control the internal behavior.
        Bits can be:
           + 0x01 - do not generate 100 reply.
-          + 0x02 - do not generate reply on internal error (NOTE: has no
+          + 0x02  - do not generate reply on internal error (NOTE: has no
             effect anymore).
           + 0x04 - disable dns failover.
 
-   Example 82. t_replicate usage
+   Example 1.82. t_replicate usage
 ...
 # sent to 1.2.3.4:5060 over tcp
 t_relay_to("tcp:1.2.3.4:5060");
@@ -2241,58 +2559,72 @@ t_relay_to("tls:1.2.3.4");
 t_relay_to("0x01");
 ...
 
-1.5.46. t_set_no_e2e_cancel_reason(0|1)
+5.46.  t_set_no_e2e_cancel_reason(0|1)
 
-   Enables/disables reason header (RFC 3326) copying from the triggering
-   received CANCEL to the generated hop-by-hop CANCEL. 0 enables and 1
+   Enables/disables  reason header (RFC 3326) copying from the triggering
+   received  CANCEL  to  the generated hop-by-hop CANCEL. 0 enables and 1
    disables.
 
-   It overrides the e2e_cancel_reason setting (module parameter) for the
+   It  overrides the e2e_cancel_reason setting (module parameter) for the
    current transaction.
 
    See also: e2e_cancel_reason.
 
-   Example 83. t_set_no_e2e_cancel_reason usage
+   Example 1.83. t_set_no_e2e_cancel_reason usage
 ...
 route {
 ...
         if (src_ip!=10.0.0.0/8) #  don't trust CANCELs from the outside
-                t_set_no_e2e_cancel_reason(1); # turn off CANCEL reason header c
-opying
+                t_set_no_e2e_cancel_reason(1); # turn off CANCEL reason header
+copying
 ...
 }
 
-1.5.47. t_is_set(target)
+5.47.  t_is_set(target)
 
-   Return true if the attribute specified by 'target' is set for
+   Return  true  if  the  attribute  specified  by  'target'  is  set for
    transaction.
 
    The target parameter can be:
-     * branch_route - the function returns true if a branch route is set
+     * branch_route  - the function returns true if a branch route is set
        to be executed.
-     * failure_route - the function returns true if a failure route is set
-       to be executed.
-     * onreply_route - the function returns true if an onreply route is
+     * failure_route  -  the  function returns true if a failure route is
+       set to be executed.
+     * onreply_route  -  the function returns true if an onreply route is
        set to be executed.
 
-   Example 84. t_replicate usage
+   Example 1.84. t_replicate usage
 ...
 if(!t_is_set("failure_route"))
     LM_DBG("no failure route will be executed for current transaction\n");
 ...
 
-1.6. TM Module API
+6. TM Module API
 
-   There are applications which would like to generate SIP transactions
+   6.1. Defines
+   6.2. Functions
+
+        6.2.1. register_tmcb(cb_type, cb_func) 
+        6.2.2. load_tm(*import_structure) 
+        6.2.3. int t_suspend(struct sip_msg *msg, unsigned int
+                *hash_index, unsigned int *label) 
+
+        6.2.4. int t_continue(unsigned int hash_index, unsigned int
+                label, struct action *route) 
+
+        6.2.5. int t_cancel_suspend(unsigned int hash_index, unsigned int
+                label) 
+
+   There  are  applications which would like to generate SIP transactions
    without too big involvement in SIP stack, transaction management, etc.
-   An example of such an application is sending instant messages from a
-   website. To address needs of such apps, SIP-router accepts requests for
-   new transactions via the management interface. If you want to enable
-   this feature, start the management interface server by configuring the
-   proper modules.
+   An  example  of such an application is sending instant messages from a
+   website.  To  address  needs of such apps, SIP-router accepts requests
+   for  new  transactions  via  the  management interface. If you want to
+   enable   this  feature,  start  the  management  interface  server  by
+   configuring the proper modules.
 
-   An application can easily launch a new transaction by writing a
-   transaction request to this interface. The request must follow very
+   An  application  can  easily  launch  a  new  transaction by writing a
+   transaction  request  to  this interface. The request must follow very
    simple format, which for the basic FIFO interface is
  :t_uac_from:[<file_name>]\n
  <method>\n
@@ -2303,11 +2635,11 @@ if(!t_is_set("failure_route"))
  .\n
  \n
 
-   (Filename is to where a report will be dumped. ser assumes /tmp as
+   (Filename  is  to  where  a report will be dumped. ser assumes /tmp as
    file's directory.)
 
-   Note the request write must be atomic, otherwise it might get
-   intermixed with writes from other writers. You can easily use it via
+   Note  the  request  write  must  be  atomic,  otherwise  it  might get
+   intermixed  with  writes from other writers. You can easily use it via
    Unix command-line tools, see the following example:
 [jiri@bat jiri]$ cat > /tmp/ser_fifo
 :t_uac_from:xxx
@@ -2326,28 +2658,28 @@ end of body
 
    or cat test/transaction.fifo > /tmp/ser_fifo
 
-1.6.1. Defines
+6.1. Defines
 
-     * ACK_TAG enables stricter matching of acknowledgments including
-       to-tags. Without it, to-tags are ignored. It is disabled by default
-       for two reasons:
-          + It eliminates an unlikely race condition in which
-            transaction's to-tag is being rewritten by a 200 OK whereas an
-            ACK is being looked up by to-tag.
+     * ACK_TAG  enables  stricter  matching  of acknowledgments including
+       to-tags.  Without  it,  to-tags  are  ignored.  It  is disabled by
+       default for two reasons:
+          + It   eliminates   an   unlikely   race   condition  in  which
+            transaction's  to-tag  is being rewritten by a 200 OK whereas
+            an ACK is being looked up by to-tag.
           + It makes UACs happy who set wrong to-tags.
        It should not make a difference, as there may be only one negative
-       reply sent upstream and 200/ACKs are not matched as they constitute
-       another transaction. It will make no difference at all when the new
-       magic cookie matching is enabled anyway.
-     * CANCEL_TAG similarly enables strict matching of CANCELs including
-       to-tags--act of mercy to UACs, who screw up the to-tags (however,
-       it still depends on how forgiving the downstream UAS is). Like with
-       ACK_TAG, all this complex transactions matching goes with RFC3261's
-       magic cookie away anyway.
+       reply   sent  upstream  and  200/ACKs  are  not  matched  as  they
+       constitute  another transaction. It will make no difference at all
+       when the new magic cookie matching is enabled anyway.
+     * CANCEL_TAG  similarly enables strict matching of CANCELs including
+       to-tags--act  of mercy to UACs, who screw up the to-tags (however,
+       it  still  depends  on  how forgiving the downstream UAS is). Like
+       with  ACK_TAG,  all  this  complex transactions matching goes with
+       RFC3261's magic cookie away anyway.
 
-1.6.2. Functions
+6.2. Functions
 
-1.6.2.1. register_tmcb(cb_type, cb_func)
+6.2.1.  register_tmcb(cb_type, cb_func)
 
    For programmatic use only--register a function to be called back on an
    event. See t_hooks.h for more details.
@@ -2356,29 +2688,29 @@ end of body
      * cb_type - Callback type.
      * cb_func - Callback function.
 
-1.6.2.2. load_tm(*import_structure)
+6.2.2.  load_tm(*import_structure)
 
-   For programmatic use only--import exported TM functions. See the acc
+   For  programmatic  use only--import exported TM functions. See the acc
    module for an example of use.
 
    Meaning of the parameters is as follows:
      * import_structure - Pointer to the import structure.
 
-1.6.2.3. int t_suspend(struct sip_msg *msg, unsigned int *hash_index,
+6.2.3.  int t_suspend(struct sip_msg *msg, unsigned int *hash_index,
 unsigned int *label)
 
-   For programmatic use only. This function together with t_continue() can
-   be used to implement asynchronous actions: t_suspend() saves the
-   transaction, returns its identifiers, and t_continue() continues the
+   For  programmatic  use  only. This function together with t_continue()
+   can  be  used to implement asynchronous actions: t_suspend() saves the
+   transaction,  returns  its identifiers, and t_continue() continues the
    SIP request processing. (The request processing does not continue from
-   the same point in the script, a separate route block defined by the
-   parameter of t_continue() is executed instead. The reply lock is held
-   during the route block execution.) FR timer is ticking while the
-   transaction is suspended, and the transaction's failure route is
+   the  same  point  in the script, a separate route block defined by the
+   parameter  of t_continue() is executed instead. The reply lock is held
+   during  the  route  block  execution.)  FR  timer is ticking while the
+   transaction  is  suspended,  and  the  transaction's  failure route is
    executed if t_continue() is not called in time.
 
    Missing: message lumps are saved by t_suspend() and are not updated by
-   the subsequent t_relay(). This means that the modifications made
+   the  subsequent  t_relay().  This  means  that  the modifications made
    between them are lost.
 
    Meaning of the parameters is as follows:
@@ -2389,26 +2721,26 @@ unsigned int *label)
    Return value: 0 - success, <0 - error.
 
    Usage: Allocate a memory block for storing the transaction identifiers
-   (hash_index and label), and for storing also any variable related to
-   the async query. Before calling t_suspend(), register for the following
-   callbacks, and pass the pointer to the allocated shared memory as a
-   parameter: TMCB_ON_FAILURE, TMCB_DESTROY, and TMCB_E2ECANCEL_IN (in
-   case of INVITE transaction). The async operation can be cancelled, if
-   it is still pending, when TMCB_ON_FAILURE or TMCB_E2ECANCEL_IN is
-   called. TMCB_DESTROY is suitable to free the shared memory allocated
-   for the async and SIP transaction identifiers. Once the async query
-   result is available call t_continue(), see below. The SIP transaction
-   must exist before calling t_suspend(), and the module function calling
-   t_suspend() should return 0 to make sure that the script processing
-   does not continue.
+   (hash_index  and  label), and for storing also any variable related to
+   the   async  query.  Before  calling  t_suspend(),  register  for  the
+   following  callbacks,  and  pass  the  pointer to the allocated shared
+   memory    as   a   parameter:   TMCB_ON_FAILURE,   TMCB_DESTROY,   and
+   TMCB_E2ECANCEL_IN (in case of INVITE transaction). The async operation
+   can  be  cancelled,  if  it  is still pending, when TMCB_ON_FAILURE or
+   TMCB_E2ECANCEL_IN  is  called.  TMCB_DESTROY  is  suitable to free the
+   shared memory allocated for the async and SIP transaction identifiers.
+   Once the async query result is available call t_continue(), see below.
+   The  SIP  transaction  must  exist before calling t_suspend(), and the
+   module  function calling t_suspend() should return 0 to make sure that
+   the script processing does not continue.
 
-1.6.2.4. int t_continue(unsigned int hash_index, unsigned int label, struct
+6.2.4.  int t_continue(unsigned int hash_index, unsigned int label, struct
 action *route)
 
-   For programmatic use only. This function is the pair of t_suspend(),
-   and is supposed to be called when the asynchronous query result is
-   available. The function executes a route block with the saved SIP
-   message. It is possible to add more branches to the transaction, or
+   For  programmatic  use only. This function is the pair of t_suspend(),
+   and  is  supposed  to  be called when the asynchronous query result is
+   available.  The  function  executes  a  route block with the saved SIP
+   message.  It  is  possible to add more branches to the transaction, or
    send a reply from the route block.
 
    Meaning of the parameters is as follows:
@@ -2418,12 +2750,12 @@ action *route)
 
    Return value: 0 - success, <0 - error.
 
-1.6.2.5. int t_cancel_suspend(unsigned int hash_index, unsigned int label)
+6.2.5.  int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 
-   For programmatic use only. This function is for revoking t_suspend()
-   from the same process as it was executed before. t_cancel_suspend() can
-   be used when something fails after t_suspend() has already been
-   executed and it turns out that the transcation should not have been
+   For  programmatic  use only. This function is for revoking t_suspend()
+   from  the  same  process as it was executed before. t_cancel_suspend()
+   can  be  used  when something fails after t_suspend() has already been
+   executed  and  it  turns out that the transcation should not have been
    suspended. The function cancels the FR timer of the transacation.
 
    The message lumps are saved by t_suspend() which cannot be restored.
@@ -2434,19 +2766,21 @@ action *route)
 
    Return value: 0 - success, <0 - error.
 
-1.7. Event Routes
+7. Event Routes
 
-1.7.1. event_route[tm:branch-failure]
+   7.1. event_route[tm:branch-failure] 
 
-   Named branch failure routes can be defined to run when when a failure
-   response is received. This allows handling failures on individual
+7.1.  event_route[tm:branch-failure]
+
+   Named  branch failure routes can be defined to run when when a failure
+   response  is  received.  This  allows  handling failures on individual
    branches, for example, retrying an alternative outbound flow.
 
-   The format of the event_route name is "tm:branch-failure:<name>" and is
-   enabled with the t_on_branch_failure function. This event_route uses
-   the BRANCH_FAILURE_ROUTE route type.
+   The  format  of the event_route name is "tm:branch-failure:<name>" and
+   is  enabled  with  the  t_on_branch_failure function. This event_route
+   uses the BRANCH_FAILURE_ROUTE route type.
 
-   Example 85. event_route[tm:branch-failure] usage
+   Example 1.85. event_route[tm:branch-failure] usage
 ...
 route {
     t_on_branch_failure("myroute");

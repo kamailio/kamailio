@@ -1,82 +1,190 @@
-1. TLS Module
+
+TLS Module
 
 Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
    Copyright © 2007 iptelorg GmbH
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Quick Start
-   1.3. Important Notes
-   1.4. Compiling the TLS Module
-   1.5. TLS and Low Memory
-   1.6. TLS Debugging
-   1.7. Known Limitations
-   1.8. Quick Certificate Howto
-   1.9. Parameters
+   Table of Contents
 
-        1.9.1. tls_method (string)
-        1.9.2. certificate (string)
-        1.9.3. private_key (string)
-        1.9.4. ca_list (string)
-        1.9.5. crl (string)
-        1.9.6. verify_certificate (boolean)
-        1.9.7. verify_depth (integer)
-        1.9.8. require_certificate (boolean)
-        1.9.9. cipher_list (string)
-        1.9.10. send_timeout (int)
-        1.9.11. handshake_timeout (int)
-        1.9.12. connection_timeout (int)
-        1.9.13. tls_disable_compression (boolean)
-        1.9.14. ssl_release_buffers (integer)
-        1.9.15. ssl_free_list_max_len (integer)
-        1.9.16. ssl_max_send_fragment (integer)
-        1.9.17. ssl_read_ahead (boolean)
-        1.9.18. send_close_notify (boolean)
-        1.9.19. con_ct_wq_max (integer)
-        1.9.20. ct_wq_max (integer)
-        1.9.21. ct_wq_blk_size (integer)
-        1.9.22. tls_log (int)
-        1.9.23. tls_debug (int)
-        1.9.24. low_mem_threshold1 (integer)
-        1.9.25. low_mem_threshold2 (integer)
-        1.9.26. tls_force_run (boolean)
-        1.9.27. session_cache (boolean)
-        1.9.28. session_id (str)
-        1.9.29. renegotiation (boolean)
-        1.9.30. config (string)
+   1. Admin Guide
 
-   1.10. Functions
+        1. Overview
+        2. Quick Start
+        3. Important Notes
+        4. Compiling the TLS Module
+        5. TLS and Low Memory
+        6. TLS Debugging
+        7. Known Limitations
+        8. Quick Certificate Howto
+        9. Parameters
 
-        1.10.1. is_peer_verified()
+              9.1. tls_method (string)
+              9.2. certificate (string)
+              9.3. private_key (string)
+              9.4. ca_list (string)
+              9.5. crl (string)
+              9.6. verify_certificate (boolean)
+              9.7. verify_depth (integer)
+              9.8. require_certificate (boolean)
+              9.9. cipher_list (string)
+              9.10. send_timeout (int)
+              9.11. handshake_timeout (int)
+              9.12. connection_timeout (int)
+              9.13. tls_disable_compression (boolean)
+              9.14. ssl_release_buffers (integer)
+              9.15. ssl_free_list_max_len (integer)
+              9.16. ssl_max_send_fragment (integer)
+              9.17. ssl_read_ahead (boolean)
+              9.18. send_close_notify (boolean)
+              9.19. con_ct_wq_max (integer)
+              9.20. ct_wq_max (integer)
+              9.21. ct_wq_blk_size (integer)
+              9.22. tls_log (int)
+              9.23. tls_debug (int)
+              9.24. low_mem_threshold1 (integer)
+              9.25. low_mem_threshold2 (integer)
+              9.26. tls_force_run (boolean)
+              9.27. session_cache (boolean)
+              9.28. session_id (str)
+              9.29. renegotiation (boolean)
+              9.30. config (string)
 
-   1.11. RPC Commands
+        10. Functions
 
-        1.11.1. tls.info
-        1.11.2. tls.list
-        1.11.3. tls.options
-        1.11.4. tls.reload
+              10.1. is_peer_verified()
 
-   1.12. History
+        11. RPC Commands
 
-1.1. Overview
+              11.1. tls.info
+              11.2. tls.list
+              11.3. tls.options
+              11.4. tls.reload
 
-   This module implements the TLS transport for Kamailio using the OpenSSL
-   library (http://www.openssl.org). To enable the TLS support this module
-   must be loaded and enable_tls=yes must be added to the Kamailio config
-   file
+        12. History
 
-1.2. Quick Start
+   List of Examples
+
+   1.1. quick start config
+   1.2. Compiling TLS with Debug Messages
+   1.3. Set tls_method parameter
+   1.4. Set certificate parameter
+   1.5. Set private_key parameter
+   1.6. Set ca_list parameter
+   1.7. Set crl parameter
+   1.8. Set verify_certificate parameter
+   1.9. Set verify_depth parameter
+   1.10. Set require_certificate parameter
+   1.11. Set cipher_list parameter
+   1.12. Set connection_timeout parameter
+   1.13. Set tls.connection_timeout at runtime
+   1.14. Set tls_disable_compression parameter
+   1.15. Set ssl_release_buffers parameter
+   1.16. Set ssl_freelist_max_len parameter
+   1.17. Set ssl_max_send_fragment parameter
+   1.18. Set ssl_read_ahead parameter
+   1.19. Set send_close_notify parameter
+   1.20. Set tls.send_close_notify at runtime
+   1.21. Set con_ct_wq_max parameter
+   1.22. Set tls.con_ct_wq_max at runtime
+   1.23. Set ct_wq_max parameter
+   1.24. Set tls.ct_wq_max at runtime
+   1.25. Set ct_wq_blk_size parameter
+   1.26. Set tls.ct_wq_max at runtime
+   1.27. Set tls_log parameter
+   1.28. Set tls.log at runtime
+   1.29. Set tls_debug parameter
+   1.30. Set tls.debug at runtime
+   1.31. Set low_mem_threshold1 parameter
+   1.32. Set tls.low_mem_threshold1 at runtime
+   1.33. Set low_mem_threshold2 parameter
+   1.34. Set tls.low_mem_threshold2 at runtime
+   1.35. Set tls_force_run parameter
+   1.36. Set session_cache parameter
+   1.37. Set session_id parameter
+   1.38. Set renegotiation parameter
+   1.39. Short config file
+   1.40. Set config parameter
+   1.41. Change and reload tls config at runtime
+   1.42. is_peer_verified usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Quick Start
+   3. Important Notes
+   4. Compiling the TLS Module
+   5. TLS and Low Memory
+   6. TLS Debugging
+   7. Known Limitations
+   8. Quick Certificate Howto
+   9. Parameters
+
+        9.1. tls_method (string)
+        9.2. certificate (string)
+        9.3. private_key (string)
+        9.4. ca_list (string)
+        9.5. crl (string)
+        9.6. verify_certificate (boolean)
+        9.7. verify_depth (integer)
+        9.8. require_certificate (boolean)
+        9.9. cipher_list (string)
+        9.10. send_timeout (int)
+        9.11. handshake_timeout (int)
+        9.12. connection_timeout (int)
+        9.13. tls_disable_compression (boolean)
+        9.14. ssl_release_buffers (integer)
+        9.15. ssl_free_list_max_len (integer)
+        9.16. ssl_max_send_fragment (integer)
+        9.17. ssl_read_ahead (boolean)
+        9.18. send_close_notify (boolean)
+        9.19. con_ct_wq_max (integer)
+        9.20. ct_wq_max (integer)
+        9.21. ct_wq_blk_size (integer)
+        9.22. tls_log (int)
+        9.23. tls_debug (int)
+        9.24. low_mem_threshold1 (integer)
+        9.25. low_mem_threshold2 (integer)
+        9.26. tls_force_run (boolean)
+        9.27. session_cache (boolean)
+        9.28. session_id (str)
+        9.29. renegotiation (boolean)
+        9.30. config (string)
+
+   10. Functions
+
+        10.1. is_peer_verified()
+
+   11. RPC Commands
+
+        11.1. tls.info
+        11.2. tls.list
+        11.3. tls.options
+        11.4. tls.reload
+
+   12. History
+
+1. Overview
+
+   This  module  implements  the  TLS  transport  for  Kamailio using the
+   OpenSSL  library  (http://www.openssl.org).  To enable the TLS support
+   this  module  must  be  loaded and enable_tls=yes must be added to the
+   Kamailio config file
+
+2. Quick Start
 
    Make sure you have a proper certificate and private key and either use
-   the certificate and private_key module parameters, or make sure the
+   the  certificate  and  private_key module parameters, or make sure the
    certificate and key are in the same PEM file, named cert.pem an placed
-   in [your-cfg-install-prefix]/etc/kamailio/. Don't forget to load the
+   in  [your-cfg-install-prefix]/etc/kamailio/.  Don't forget to load the
    tls module and to enable TLS (add enable_tls=yes to your config).
 
-   Example 1. quick start config
+   Example 1.1. quick start config
 #...
 loadmodule "modules/tls/tls.so"
 
@@ -90,54 +198,55 @@ route{
         # ....
 }
 
-1.3. Important Notes
+3. Important Notes
 
-   The TLS module needs some special options enabled when compiling
+   The  TLS  module  needs  some  special  options enabled when compiling
    Kamailio. These options are enabled by default, however in case you're
-   using a modified Kamailio version or Makefile, make sure that you
-   enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1
-   which will take care of both options). To quickly check if your
-   Kamailio version was compiled with these options, run kamailio -V and
+   using  a  modified  Kamailio  version  or Makefile, make sure that you
+   enable  -DUSE_TLS  and  -DTLS_HOOKS  (or compile with make TLS_HOOKS=1
+   which  will  take  care  of  both  options).  To quickly check if your
+   Kamailio  version was compiled with these options, run kamailio -V and
    look for USE_TLS and TLS_HOOKS among the flags.
 
-   This module includes several workarounds for various Openssl bugs (like
-   compression and Kerberos using the wrong memory allocations functions,
-   low memory problems a.s.o). On startup it will try to enable the needed
-   workarounds based on the openssl library version. Each time a known
-   problem is detected and a workaround is enabled, a message will be
-   logged. In general it is recommended to compile this module on the same
-   machine or a similar machine to where kamailio will be run or to link
-   it statically with libssl. For example if on the compile machine
-   openssl does not have the kerberos support enabled, but on the target
-   machine a kerberos enabled openssl library is installed, kamailio
-   cannot apply the needed workarounds and will refuse to start. The same
-   thing will happen if the openssl versions are too different (to force
-   kamailio startup anyway, see the tls_force_run module parameter).
+   This  module  includes  several  workarounds  for various Openssl bugs
+   (like  compression  and  Kerberos  using  the wrong memory allocations
+   functions,  low  memory  problems  a.s.o).  On  startup it will try to
+   enable  the  needed  workarounds based on the openssl library version.
+   Each  time  a known problem is detected and a workaround is enabled, a
+   message  will  be logged. In general it is recommended to compile this
+   module on the same machine or a similar machine to where kamailio will
+   be  run  or  to  link it statically with libssl. For example if on the
+   compile  machine  openssl  does not have the kerberos support enabled,
+   but  on  the  target  machine  a  kerberos  enabled openssl library is
+   installed,  kamailio  cannot  apply  the  needed  workarounds and will
+   refuse  to  start.  The same thing will happen if the openssl versions
+   are   too  different  (to  force  kamailio  startup  anyway,  see  the
+   tls_force_run module parameter).
 
-   Try to avoid using keys larger then 1024 bytes. Large keys
-   significantly slow down the TLS connection handshake, thus limiting the
-   maximum Kamailio TLS connection rate.
+   Try   to   avoid  using  keys  larger  then  1024  bytes.  Large  keys
+   significantly  slow  down  the TLS connection handshake, thus limiting
+   the maximum Kamailio TLS connection rate.
 
-   Compression is fully supported if you have a new enough Openssl version
-   (starting with 0.9.8). Although there are some problems with zlib
-   compression in currently deployed Openssl versions (up to and including
-   0.9.8d, see openssl bug #1468), the TLS module will automatically
-   switch to its own fixed version. Note however that starting with sr 3.1
-   compression is not enabled by default, due to the huge extra memory
-   consumption that it causes (about 10x more memory). To enable it use
-   modparam("tls", "tls_disable_compression", 0) (see
+   Compression  is  fully  supported  if  you  have  a new enough Openssl
+   version  (starting  with 0.9.8). Although there are some problems with
+   zlib  compression  in  currently  deployed Openssl versions (up to and
+   including  0.9.8d,  see  openssl  bug  #1468),  the  TLS  module  will
+   automatically  switch  to  its  own  fixed  version. Note however that
+   starting with sr 3.1 compression is not enabled by default, due to the
+   huge  extra memory consumption that it causes (about 10x more memory).
+   To  enable  it  use modparam("tls", "tls_disable_compression", 0) (see
    tls_disable_compression).
 
-   The TLS module includes workarounds for the following known openssl
-   bugs: openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression
-   is enabled, for versions between 0.9.8 and 0.9.8c), openssl #1468 (fix
-   zlib compression memory allocation), openssl #1467 (kerberos support
-   will be disabled if the openssl version is less than 0.9.8e-beta1) and
-   openssl #1491 (stop using tls in low memory situations due to the very
-   high risk of openssl crashing or leaking memory). The bug reports can
-   be viewed at http://rt.openssl.org/.
+   The  TLS  module  includes workarounds for the following known openssl
+   bugs:    openssl   #1204   (disable   SS_OP_TLS_BLOCK_PADDING_BUG   if
+   compression  is  enabled,  for  versions  between  0.9.8  and 0.9.8c),
+   openssl  #1468 (fix zlib compression memory allocation), openssl #1467
+   (kerberos support will be disabled if the openssl version is less than
+   0.9.8e-beta1)  and  openssl  #1491  (stop  using  tls  in  low  memory
+   situations  due  to  the very high risk of openssl crashing or leaking
+   memory). The bug reports can be viewed at http://rt.openssl.org/.
 
-1.4. Compiling the TLS Module
+4. Compiling the TLS Module
 
    In most case compiling the TLS module is as simple as:
 make -C modules/tls
@@ -150,79 +259,79 @@ make all include_modules=tls
 
    .
 
-   However in some cases the openssl library requires linking with other
+   However  in some cases the openssl library requires linking with other
    libraries. For example compiling the openssl library with kerberos and
-   zlib-shared support will require linking the tls module with libkrb5
-   and libz. In this case just add TLS_EXTRA_LIBS="library list" to make's
-   command line. E.g.:
+   zlib-shared  support  will require linking the tls module with libkrb5
+   and  libz.  In  this  case  just  add TLS_EXTRA_LIBS="library list" to
+   make's command line. E.g.:
 make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 
-   In general, if Kamailio fails to start with a symbol not found error
-   when trying to load the tls module (check the log), it means some
+   In  general,  if Kamailio fails to start with a symbol not found error
+   when  trying  to  load  the  tls module (check the log), it means some
    needed library was not linked and it must be added to TLS_EXTRA_LIBS
 
-1.5. TLS and Low Memory
+5. TLS and Low Memory
 
    The openssl library doesn't handle very well low memory situations. If
    memory allocations start to fail (due to memory shortage), openssl can
-   crash or cause memory leaks (making the memory shortage even worse). As
-   of this writing all openssl versions were affected (includind 0.9.8e),
-   see openssl bug #1491. The tls module has some workarounds for
-   preventing this problem (see low_mem_treshold1 and low_mem_threshold2),
-   however starting Kamailio with enough shared memory is higly
-   recommended. When this is not possible a quick way to significantly
-   reduce openssl memory usage it to disable compression (see
-   tls_disable_compression).
+   crash  or  cause memory leaks (making the memory shortage even worse).
+   As  of  this  writing  all  openssl  versions were affected (includind
+   0.9.8e),  see  openssl  bug #1491. The tls module has some workarounds
+   for    preventing    this    problem    (see   low_mem_treshold1   and
+   low_mem_threshold2),  however  starting  Kamailio  with  enough shared
+   memory  is higly recommended. When this is not possible a quick way to
+   significantly  reduce  openssl  memory usage it to disable compression
+   (see tls_disable_compression).
 
-1.6. TLS Debugging
+6. TLS Debugging
 
-   Debugging messages can be selectively enabled by recompiling the tls
+   Debugging  messages  can be selectively enabled by recompiling the tls
    module with a combination of the following defines:
      * TLS_WR_DEBUG - debug messages for the write/send part.
      * TLS_RD_DEBUG - debug messages for the read/receive part.
      * TLS_BIO_DEBUG - debug messages for the custom BIO.
 
-   Example 2. Compiling TLS with Debug Messages
+   Example 1.2. Compiling TLS with Debug Messages
 make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 
    To change the level at which the debug messages are logged, change the
    tls_debug module parameter.
 
-1.7. Known Limitations
+7. Known Limitations
 
-   The private key must not encrypted (Kamailio cannot ask you for a
+   The  private  key  must  not  encrypted (Kamailio cannot ask you for a
    password on startup).
 
-   The TLS certificate verifications ignores the certificate name, subject
-   altname and ip extensions, it just checks if the certificate is signed
-   by a recognized CA. One can use the select framework to try to overcome
-   this limitation (check in the script for the contents of various
-   certificate fields), but this is not only slow, but also not exactly
-   standard conforming (the verification should happen during TLS
+   The  TLS  certificate  verifications  ignores  the  certificate  name,
+   subject  altname  and ip extensions, it just checks if the certificate
+   is  signed by a recognized CA. One can use the select framework to try
+   to  overcome  this limitation (check in the script for the contents of
+   various  certificate  fields), but this is not only slow, but also not
+   exactly standard conforming (the verification should happen during TLS
    connection establishment and not after).
 
    TLS specific config reloading is not safe, so for now better don't use
    it, especially under heavy traffic.
 
-   This documentation is incomplete. The provided selects are not
+   This  documentation  is  incomplete.  The  provided  selects  are  not
    documented. A list with all the ones implemented by the TLS module can
-   be seen under doc/select_list/select_tls.txt or or
-   http://sip-router.org/docbook/sip-router/branch/master/select_list/sele
-   ct_list.html#select_list.tls.
+   be     seen     under     doc/select_list/select_tls.txt     or     or
+   http://sip-router.org/docbook/sip-router/branch/master/select_list/sel
+   ect_list.html#select_list.tls.
 
-1.8. Quick Certificate Howto
+8. Quick Certificate Howto
 
-   There are various ways to create, sign certificates and manage small
-   CAs (Certificate Authorities). If you want a GUI, try tinyca
-   (http://tinyca.sm-zone.net/), a very nice and small CA management
-   application. If you are in a hurry and everything you have are the
+   There  are  various ways to create, sign certificates and manage small
+   CAs   (Certificate  Authorities).  If  you  want  a  GUI,  try  tinyca
+   (http://tinyca.sm-zone.net/),  a  very  nice  and  small CA management
+   application.  If  you  are  in a hurry and everything you have are the
    installed openssl libraries and utilities, read on.
 
    Assumptions: we run our own CA.
 
-   Warning: in this example no key is encrypted. The client and server
+   Warning:  in  this  example no key is encrypted. The client and server
    private keys must not be encrypted (Kamailio doesn't support encrypted
-   keys), so make sure the corresponding files are readable only by
+   keys),  so  make  sure  the  corresponding  files are readable only by
    trusted people. You should use a password for your CA private key.
 
 Assumptions
@@ -258,8 +367,8 @@ RANDFILE        = $dir/private/.rand    # private random number file
 If this is not the case create a new openssl config file that uses the above
 paths for the default CA and add to all the openssl commands:
  -config filename. E.g.:
-        openssl ca -config my_openssl.cnf -in kamailio1_cert_req.pem -out kamail
-io1_cert.pem
+        openssl ca -config my_openssl.cnf -in kamailio1_cert_req.pem -out kamai
+lio1_cert.pem
 
 
 Creating CA certificate
@@ -281,16 +390,16 @@ Creating CA certificate
         chmod 600 demoCA/private/cakey.pem
 
 3. create CA self-signed certificate
-        openssl req -out demoCA/cacert.pem   -x509 -new -key demoCA/private/cake
-y.pem
+        openssl req -out demoCA/cacert.pem   -x509 -new -key demoCA/private/cak
+ey.pem
 
 
 Creating a server/client certificate
 ------------------------------------
 1. create a certificate request (and its private key in privkey.pem)
         openssl req -out kamailio1_cert_req.pem -new -nodes
-        WARNING: the organization name should be the same as in the CA certifica
-te.
+        WARNING: the organization name should be the same as in the CA certific
+ate.
 
 2. sign it with the ca certificate
         openssl ca -in kamailio1_cert_req.pem -out kamailio1_cert.pem
@@ -309,13 +418,14 @@ Setting Kamailio to use the certificate
          this is the default place Kamailio searches for).
 
 3. set up Kamailio.cfg to use the certificate
-        if your Kamailio certificate name is different from cert.pem or it is no
-t
+        if your Kamailio certificate name is different from cert.pem or it is n
+ot
         placed in Kamailio cfg. directory, add to your kamailio.cfg:
                 modparam("tls", "certificate", "/path/cert_file_name")
 
 4. set up Kamailio to use the private key
-        if your private key is not contained in the same file as the certificate
+        if your private key is not contained in the same file as the certificat
+e
         (or the certificate name is not the default cert.pem), add to your
          Kamailio.cfg:
                 modparam("tls", "private_key", "/path/private_key_file")
@@ -343,111 +453,144 @@ Revoking a certificate and using a CRL
 4. set up Kamailio to use the CRL:
                 modparam("tls", "crl", "path/my_crl.pem")
 
-1.9. Parameters
+9. Parameters
 
-1.9.1. tls_method (string)
+   9.1. tls_method (string)
+   9.2. certificate (string)
+   9.3. private_key (string)
+   9.4. ca_list (string)
+   9.5. crl (string)
+   9.6. verify_certificate (boolean)
+   9.7. verify_depth (integer)
+   9.8. require_certificate (boolean)
+   9.9. cipher_list (string)
+   9.10. send_timeout (int)
+   9.11. handshake_timeout (int)
+   9.12. connection_timeout (int)
+   9.13. tls_disable_compression (boolean)
+   9.14. ssl_release_buffers (integer)
+   9.15. ssl_free_list_max_len (integer)
+   9.16. ssl_max_send_fragment (integer)
+   9.17. ssl_read_ahead (boolean)
+   9.18. send_close_notify (boolean)
+   9.19. con_ct_wq_max (integer)
+   9.20. ct_wq_max (integer)
+   9.21. ct_wq_blk_size (integer)
+   9.22. tls_log (int)
+   9.23. tls_debug (int)
+   9.24. low_mem_threshold1 (integer)
+   9.25. low_mem_threshold2 (integer)
+   9.26. tls_force_run (boolean)
+   9.27. session_cache (boolean)
+   9.28. session_id (str)
+   9.29. renegotiation (boolean)
+   9.30. config (string)
+
+9.1. tls_method (string)
 
    Sets the SSL/TLS protocol method. Possible values are:
-     * TLSv1 - only TLSv1 connections are accepted. This is the default
+     * TLSv1  -  only TLSv1 connections are accepted. This is the default
        and recommended method (if you want to be rfc3261 conformant don't
        change it).
      * SSLv3 - only SSLv3 connections are accepted
-     * SSLv2 - only SSLv2 connections, for old clients. Note: you
+     * SSLv2  -  only  SSLv2  connections,  for  old  clients.  Note: you
        shouldn't use SSLv2 for anything which should be highly secure.
-     * SSLv23 - any of the above methods will be accepted, with the
+     * SSLv23  -  any  of  the  above  methods will be accepted, with the
        following limitation: the initial SSL hello message must be V2 (in
-       the initial hello all the supported protocols are advertised
-       enabling switching to a higher and more secure version). This means
-       connections from SSLv3 or TLSv1 clients will not be accepted.
+       the  initial  hello  all  the  supported  protocols are advertised
+       enabling  switching  to  a  higher  and more secure version). This
+       means  connections  from  SSLv3  or  TLSv1  clients  will  not  be
+       accepted.
 
-   If rfc3261 conformance is desired, TLSv1 must be used. For
+   If   rfc3261   conformance   is  desired,  TLSv1  must  be  used.  For
    compatibility with older clients SSLv23 is a good option.
 
-   Example 3. Set tls_method parameter
+   Example 1.3. Set tls_method parameter
 ...
 modparam("tls", "tls_method", "TLSv1")
 ...
 
-1.9.2. certificate (string)
+9.2. certificate (string)
 
-   Sets the certificate file name. The certificate file can also contain
+   Sets  the certificate file name. The certificate file can also contain
    the private key in PEM format.
 
-   If the file name starts with a '.' the path will be relative to the
-   working directory (at runtime). If it starts with a '/' it will be an
-   absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for kamailio -f
+   If  the  file  name starts with a '.' the path will be relative to the
+   working  directory (at runtime). If it starts with a '/' it will be an
+   absolute  path  and  if  it starts with anything else the path will be
+   relative  to  the  main  config  file directory (e.g.: for kamailio -f
    /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
-   Warning: try not to use certificate with keys longer then 1024 bytes.
-   Longer keys will severely impact performance, in particular the TLS
+   Warning:  try not to use certificate with keys longer then 1024 bytes.
+   Longer  keys  will  severely impact performance, in particular the TLS
    connection rate.
 
    The default value is [SER_CFG_DIR]/cert.pem.
 
-   Example 4. Set certificate parameter
+   Example 1.4. Set certificate parameter
 ...
 modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 ...
 
-1.9.3. private_key (string)
+9.3. private_key (string)
 
    Sets the private key file name.
 
-   If the file name starts with a '.' the path will be relative to the
-   working directory (at runtime). If it starts with a '/' it will be an
-   absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for kamailio -f
+   If  the  file  name starts with a '.' the path will be relative to the
+   working  directory (at runtime). If it starts with a '/' it will be an
+   absolute  path  and  if  it starts with anything else the path will be
+   relative  to  the  main  config  file directory (e.g.: for kamailio -f
    /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
-   Note: the private key can be contained in the same file as the
-   certificate (just append it to the certificate file, e.g.: cat pkey.pem
-   >> cert.pem)
+   Note:  the  private  key  can  be  contained  in  the same file as the
+   certificate  (just  append  it  to  the  certificate  file,  e.g.: cat
+   pkey.pem >> cert.pem)
 
    The default value is [SER_CFG_DIR]/cert.pem.
 
-   Example 5. Set private_key parameter
+   Example 1.5. Set private_key parameter
 ...
 modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
 ...
 
-1.9.4. ca_list (string)
+9.4. ca_list (string)
 
-   Sets the CA list file name. This file contains a list of all the
-   trusted CAs certificates. If a signature in a certificate chain belongs
-   to one of the listed CAs, the authentication will succeed.
+   Sets  the  CA  list  file  name.  This file contains a list of all the
+   trusted  CAs  certificates.  If  a  signature  in  a certificate chain
+   belongs to one of the listed CAs, the authentication will succeed.
 
-   If the file name starts with a '.' the path will be relative to the
-   working directory (at runtime). If it starts with a '/' it will be an
-   absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for kamailio -f
+   If  the  file  name starts with a '.' the path will be relative to the
+   working  directory (at runtime). If it starts with a '/' it will be an
+   absolute  path  and  if  it starts with anything else the path will be
+   relative  to  the  main  config  file directory (e.g.: for kamailio -f
    /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
    By default the CA file is not set.
 
    An easy way to create the CA list is to append each trusted trusted CA
-   certificate in the PEM format to one file, e.g.: for f in
+   certificate   in   the  PEM  format  to  one  file,  e.g.:  for  f  in
    trusted_cas/*.pem ; do cat "$f" >> ca_list.pem ; done .
 
-   See also verify_certificate, verify_depth, require_certificate and crl.
+   See  also  verify_certificate,  verify_depth,  require_certificate and
+   crl.
 
-   Example 6. Set ca_list parameter
+   Example 1.6. Set ca_list parameter
 ...
 modparam("tls", "ca_list", "/usr/local/etc/kamailio/ca_list.pem")
 ...
 
-1.9.5. crl (string)
+9.5. crl (string)
 
-   Sets the certificate revocation list file name. This file contains a
-   list of revoked certificates. Any attempt to verify a revoked
+   Sets  the  certificate revocation list file name. This file contains a
+   list  of  revoked  certificates.  Any  attempt  to  verify  a  revoked
    certificate will fail.
 
    If not set, no crl list will be used.
 
-   If the file name starts with a '.' the path will be relative to the
-   working directory (at runtime). If it starts with a '/' it will be an
-   absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for kamailio -f
+   If  the  file  name starts with a '.' the path will be relative to the
+   working  directory (at runtime). If it starts with a '/' it will be an
+   absolute  path  and  if  it starts with anything else the path will be
+   relative  to  the  main  config  file directory (e.g.: for kamailio -f
    /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
 Note
@@ -457,8 +600,8 @@ Note
 
    By default the crl file is not set.
 
-   To update the crl in a running Kamailio, make sure you configure tls
-   via a separate tls config file (the config modparam) and issue a
+   To  update  the crl in a running Kamailio, make sure you configure tls
+   via  a  separate  tls  config  file  (the config modparam) and issue a
    tls.reload RPC call, e.g.:
  $ kamcmd tls.reload
 
@@ -475,87 +618,87 @@ Note
    To display the CRL contents use:
  $ openssl crl -in crl.pem -noout -text
 
-   See also ca_list, verify_certificate, verify_depth and
+   See     also    ca_list,    verify_certificate,    verify_depth    and
    require_certificate.
 
-   Example 7. Set crl parameter
+   Example 1.7. Set crl parameter
 ...
 modparam("tls", "crl", "/usr/local/etc/kamailio/crl.pem")
 ...
 
-1.9.6. verify_certificate (boolean)
+9.6. verify_certificate (boolean)
 
-   If enabled it will force certificate verification. For more information
-   see the verify(1) openssl man page.
+   If   enabled   it   will  force  certificate  verification.  For  more
+   information see the verify(1) openssl man page.
 
-   Note: the certificate verification will always fail if the ca_list is
+   Note:  the certificate verification will always fail if the ca_list is
    empty.
 
    See also: ca_list, require_certificate, verify_depth.
 
    By default the certificate verification is off.
 
-   Example 8. Set verify_certificate parameter
+   Example 1.8. Set verify_certificate parameter
 ...
 modparam("tls", "verify_certificate", 1)
 ...
 
-1.9.7. verify_depth (integer)
+9.7. verify_depth (integer)
 
-   Sets how far up the certificate chain will the certificate verification
-   go in the search for a trusted CA.
+   Sets   how   far   up  the  certificate  chain  will  the  certificate
+   verification go in the search for a trusted CA.
 
    See also: ca_list, require_certificate, verify_certificate,
 
    The default value is 9.
 
-   Example 9. Set verify_depth parameter
+   Example 1.9. Set verify_depth parameter
 ...
 modparam("tls", "verify_depth", 9)
 ...
 
-1.9.8. require_certificate (boolean)
+9.8. require_certificate (boolean)
 
-   When enabled it will require a certificate from a client. If the client
-   does not offer a certificate and verify_certificate is on, the
+   When  enabled  it  will  require  a  certificate from a client. If the
+   client  does not offer a certificate and verify_certificate is on, the
    certificate verification will fail.
 
    The default value is off.
 
-   Example 10. Set require_certificate parameter
+   Example 1.10. Set require_certificate parameter
 ...
 modparam("tls", "require_certificate", 1)
 ...
 
-1.9.9. cipher_list (string)
+9.9. cipher_list (string)
 
    Sets the list of accepted ciphers. The list consists of cipher strings
-   separated by colons. For more information on the cipher list format see
-   the cipher(1) openssl man page.
+   separated  by  colons.  For more information on the cipher list format
+   see the cipher(1) openssl man page.
 
-   The default value is not set (all the Openssl supported ciphers are
+   The  default  value  is not set (all the Openssl supported ciphers are
    enabled).
 
-   Example 11. Set cipher_list parameter
+   Example 1.11. Set cipher_list parameter
 ...
 modparam("tls", "cipher_list", "HIGH")
 ...
 
-1.9.10. send_timeout (int)
+9.10. send_timeout (int)
 
    This parameter is obsolete and cannot be used in newer TLS versions (>
-   Kamailio 3.0). In these versions the send_timeout is replaced by
+   Kamailio  3.0).  In  these  versions  the  send_timeout is replaced by
    tcp_send_timeout (common with all the tcp connections).
 
-1.9.11. handshake_timeout (int)
+9.11. handshake_timeout (int)
 
    This parameter is obsolete and cannot be used in newer TLS versions (>
-   Kamailio 3.0). In these versions the handshake_timeout is replaced by
+   Kamailio  3.0). In these versions the handshake_timeout is replaced by
    tcp_connect_timeout (common with all the tcp connections).
 
-1.9.12. connection_timeout (int)
+9.12. connection_timeout (int)
 
-   Sets the amount of time after which an idle TLS connection will be
+   Sets  the  amount  of  time after which an idle TLS connection will be
    closed, if no I/O ever occured after the initial open. If an I/O event
    occurs, the timeout will be extended with tcp_connection_lifetime. The
    value is expressed in seconds.
@@ -564,389 +707,393 @@ modparam("tls", "cipher_list", "HIGH")
 
    If the value set is -1, the connection will never be close on idle.
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.connection_timeout.
 
-   Example 12. Set connection_timeout parameter
+   Example 1.12. Set connection_timeout parameter
 ...
 modparam("tls", "connection_timeout", 60)
 ...
 
-   Example 13. Set tls.connection_timeout at runtime
+   Example 1.13. Set tls.connection_timeout at runtime
  $ kamcmd cfg.set_now_int tls connection_timeout 180
 
-1.9.13. tls_disable_compression (boolean)
+9.13. tls_disable_compression (boolean)
 
-   If set compression over SSL/TLS will be disabled. Note that compression
-   uses a lot of memory (about 10x more then with the compression
-   disabled), so if you want to minimize memory usage is a good idea to
-   disable it.
+   If   set   compression  over  SSL/TLS  will  be  disabled.  Note  that
+   compression  uses  a  lot  of  memory  (about  10x  more then with the
+   compression  disabled),  so  if you want to minimize memory usage is a
+   good idea to disable it.
 
    By default compression is disabled.
 
-   Example 14. Set tls_disable_compression parameter
+   Example 1.14. Set tls_disable_compression parameter
 ...
 modparam("tls", "tls_disable_compression", 0) # enable
 ...
 
-1.9.14. ssl_release_buffers (integer)
+9.14. ssl_release_buffers (integer)
 
-   Release internal OpenSSL read or write buffers as soon as they are no
-   longer needed. Combined with ssl_free_list_max_len has the potential of
-   saving a lot of memory ( ~ 32k per connection in the default
-   configuration, or 16k + ssl_max_send_fragment). For sr versions > 3.0
-   it makes little sense to disable it (0) since the tls module already
+   Release  internal OpenSSL read or write buffers as soon as they are no
+   longer  needed.  Combined with ssl_free_list_max_len has the potential
+   of  saving  a  lot  of  memory  (  ~ 32k per connection in the default
+   configuration,  or 16k + ssl_max_send_fragment). For sr versions > 3.0
+   it  makes  little sense to disable it (0) since the tls module already
    has its own internal buffering.
 
-   A value of -1 would not change this option from its openssl default.
+   A  value  of -1 would not change this option from its openssl default.
    Use 0 or 1 for enable/disable.
 
    By default the value is 1 (enabled).
 
 Note
 
-   This option is supported only for OpenSSL versions >= 1.0.0. On all the
-   other versions attempting to change the default will trigger an error.
+   This  option  is  supported only for OpenSSL versions >= 1.0.0. On all
+   the  other  versions  attempting to change the default will trigger an
+   error.
 
-   Example 15. Set ssl_release_buffers parameter
+   Example 1.15. Set ssl_release_buffers parameter
 modparam("tls", "ssl_release_buffers", 1)
 
-1.9.15. ssl_free_list_max_len (integer)
+9.15. ssl_free_list_max_len (integer)
 
-   Sets the maximum number of free memory chunks, that OpenSSL will keep
+   Sets  the maximum number of free memory chunks, that OpenSSL will keep
    per connection. Setting it to 0 would cause any unused memory chunk to
    be immediately freed, reducing the memory footprint. A too large value
    would result in extra memory consumption.
 
    Should be combined with ssl_release_buffers.
 
-   A value of -1 has a special meaning: the OpenSSL default will be used
-   (no attempt on changing the value will be made). For OpenSSL 1.0 the
+   A  value of -1 has a special meaning: the OpenSSL default will be used
+   (no  attempt  on changing the value will be made). For OpenSSL 1.0 the
    internal default is 32.
 
    By default the value is 0 (no freelist).
 
 Note
 
-   This option is supported only for OpenSSL versions >= 1.0.0. On all the
-   other versions attempting to change the default will trigger an error.
+   This  option  is  supported only for OpenSSL versions >= 1.0.0. On all
+   the  other  versions  attempting to change the default will trigger an
+   error.
 
-   Example 16. Set ssl_freelist_max_len parameter
+   Example 1.16. Set ssl_freelist_max_len parameter
 modparam("tls", "ssl_freelist_max_len", 0)
 
-1.9.16. ssl_max_send_fragment (integer)
+9.16. ssl_max_send_fragment (integer)
 
-   Sets the maximum number of bytes (from the clear text) sent into one
-   TLS or SSL record. Valid values are between 512 and 16384. Note however
-   that even valid low values might not be big enough to allow a
+   Sets  the  maximum number of bytes (from the clear text) sent into one
+   TLS  or  SSL  record.  Valid  values  are  between 512 and 16384. Note
+   however  that even valid low values might not be big enough to allow a
    succesfull handshake (try minimum 1024).
 
-   Lower values would lead to less memory usage, but values lower then the
-   typical Kamailio write size would incur a slight performance penalty.
-   Good values are bigger then the size of the biggest SIP packet one
-   normally expects to forward. For example in most setups 2048 would be a
-   good value.
+   Lower  values  would  lead to less memory usage, but values lower then
+   the  typical  Kamailio  write  size  would  incur a slight performance
+   penalty.  Good  values  are  bigger  then  the size of the biggest SIP
+   packet  one  normally  expects  to forward. For example in most setups
+   2048 would be a good value.
 
 Note
 
    Values on the lower side, even if valid (> 512), might not allow for a
    succesfull initial handshake. This happens if the certificate does not
-   fit inside one send fragment. Values lower then 1024 should not be
-   used. Even with higher values, if the handshake fails, try increasing
+   fit  inside  one  send  fragment. Values lower then 1024 should not be
+   used.  Even with higher values, if the handshake fails, try increasing
    the value.
 
-   A value of -1 has a special meaning: the OpenSSL default will be used
+   A  value of -1 has a special meaning: the OpenSSL default will be used
    (no attempt on changing the value will be made).
 
-   By default the value is -1 (the OpenSSL default, which at least in
+   By  default  the  value  is -1 (the OpenSSL default, which at least in
    OpenSSL 1.0.0 is ~ 16k).
 
 Note
 
-   This option is supported only for OpenSSL versions >= 0.9.9. On all the
-   other versions attempting to change the default will trigger an error.
+   This  option  is  supported only for OpenSSL versions >= 0.9.9. On all
+   the  other  versions  attempting to change the default will trigger an
+   error.
 
-   Example 17. Set ssl_max_send_fragment parameter
+   Example 1.17. Set ssl_max_send_fragment parameter
 modparam("tls", "ssl_max_send_fragment", 4096)
 
-1.9.17. ssl_read_ahead (boolean)
+9.17. ssl_read_ahead (boolean)
 
    Enables read ahead, reducing the number of internal OpenSSL BIO read()
-   calls. This option has only debugging value, in normal circumstances it
-   should not be changed from the default.
+   calls.  This  option has only debugging value, in normal circumstances
+   it should not be changed from the default.
 
-   When disabled OpenSSL will make at least 2 BIO read() calls per
-   received record: one to get the record header and one to get the rest
+   When  disabled  OpenSSL  will  make  at  least  2 BIO read() calls per
+   received  record: one to get the record header and one to get the rest
    of the record.
 
    The TLS module buffers internally all read()s and defines its own fast
-   BIO so enabling this option would only cause more memory consumption
+   BIO  so  enabling this option would only cause more memory consumption
    and a minor slow-down (extra memcpy).
 
-   A value of -1 has a special meaning: the OpenSSL default will be used
+   A  value of -1 has a special meaning: the OpenSSL default will be used
    (no attempt on changing the value will be made).
 
    By default the value is 0 (disabled).
 
-   Example 18. Set ssl_read_ahead parameter
+   Example 1.18. Set ssl_read_ahead parameter
 modparam("tls", "ssl_read_ahead", 1)
 
-1.9.18. send_close_notify (boolean)
+9.18. send_close_notify (boolean)
 
-   Enables/disables sending close notify alerts prior to closing the
-   corresponding TCP connection. Sending the close notify prior to tcp
-   shutdown is "nicer" from a TLS point of view, but it has a measurable
-   performance impact. Default: off. Can be set at runtime
+   Enables/disables  sending  close  notify  alerts  prior to closing the
+   corresponding  TCP  connection.  Sending the close notify prior to tcp
+   shutdown  is "nicer" from a TLS point of view, but it has a measurable
+   performance   impact.   Default:   off.   Can   be   set   at  runtime
    (tls.send_close_notify).
 
    The default value is 0 (off).
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.send_close_notify.
 
-   Example 19. Set send_close_notify parameter
+   Example 1.19. Set send_close_notify parameter
 ...
 modparam("tls", "send_close_notify", 1)
 ...
 
-   Example 20. Set tls.send_close_notify at runtime
+   Example 1.20. Set tls.send_close_notify at runtime
  $ kamcmd cfg.set_now_int tls send_close_notify 1
 
-1.9.19. con_ct_wq_max (integer)
+9.19. con_ct_wq_max (integer)
 
-   Sets the maximum allowed per connection clear-text send queue size in
-   bytes. This queue is used when data cannot be encrypted and sent
+   Sets  the maximum allowed per connection clear-text send queue size in
+   bytes.  This  queue  is  used  when  data cannot be encrypted and sent
    immediately because of an ongoing TLS/SSL level renegotiation.
 
    The default value is 65536 (64 Kb).
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.con_ct_wq_max.
 
-   Example 21. Set con_ct_wq_max parameter
+   Example 1.21. Set con_ct_wq_max parameter
 ...
 modparam("tls", "con_ct_wq_max", 1048576)
 ...
 
-   Example 22. Set tls.con_ct_wq_max at runtime
+   Example 1.22. Set tls.con_ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls con_ct_wq_max 1048576
 
-1.9.20. ct_wq_max (integer)
+9.20. ct_wq_max (integer)
 
-   Sets the maximum total number of bytes queued in all the clear-text
-   send queues. These queues are used when data cannot be encrypted and
+   Sets  the  maximum  total number of bytes queued in all the clear-text
+   send  queues.  These queues are used when data cannot be encrypted and
    sent immediately because of an ongoing TLS/SSL level renegotiation.
 
    The default value is 10485760 (10 Mb).
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.ct_wq_max.
 
-   Example 23. Set ct_wq_max parameter
+   Example 1.23. Set ct_wq_max parameter
 ...
 modparam("tls", "ct_wq_max", 4194304)
 ...
 
-   Example 24. Set tls.ct_wq_max at runtime
+   Example 1.24. Set tls.ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls ct_wq_max 4194304
 
-1.9.21. ct_wq_blk_size (integer)
+9.21. ct_wq_blk_size (integer)
 
-   Minimum block size for the internal clear-text send queues (debugging /
-   advanced tunning). Good values are multiple of typical datagram sizes.
+   Minimum  block size for the internal clear-text send queues (debugging
+   /  advanced  tunning).  Good  values  are multiple of typical datagram
+   sizes.
 
    The default value is 4096.
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.ct_wq_blk_size.
 
-   Example 25. Set ct_wq_blk_size parameter
+   Example 1.25. Set ct_wq_blk_size parameter
 ...
 modparam("tls", "ct_wq_blk_size", 2048)
 ...
 
-   Example 26. Set tls.ct_wq_max at runtime
+   Example 1.26. Set tls.ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls ct_wq_blk_size 2048
 
-1.9.22. tls_log (int)
+9.22. tls_log (int)
 
    Sets the log level at which TLS related messages will be logged.
 
    The default value is 3 (L_DBG).
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.log.
 
-   Example 27. Set tls_log parameter
+   Example 1.27. Set tls_log parameter
 ...
 # ignore TLS messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 
-   Example 28. Set tls.log at runtime
+   Example 1.28. Set tls.log at runtime
  $ kamcmd cfg.set_now_int tls log 10
 
-1.9.23. tls_debug (int)
+9.23. tls_debug (int)
 
-   Sets the log level at which TLS debug messages will be logged. Note
+   Sets  the  log  level at which TLS debug messages will be logged. Note
    that TLS debug messages are enabled only if the TLS module is compiled
-   with debugging enabled (e.g. -DTLS_WR_DEBUG, -DTLS_RD_DEBUG or
+   with   debugging   enabled  (e.g.  -DTLS_WR_DEBUG,  -DTLS_RD_DEBUG  or
    -DTLS_BIO_DEBUG).
 
    The default value is 3 (L_DBG).
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.debug.
 
-   Example 29. Set tls_debug parameter
+   Example 1.29. Set tls_debug parameter
 ...
 # ignore TLS debug messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_debug", 10)
 ...
 
-   Example 30. Set tls.debug at runtime
+   Example 1.30. Set tls.debug at runtime
  $ kamcmd cfg.set_now_int tls debug 10
 
-1.9.24. low_mem_threshold1 (integer)
+9.24. low_mem_threshold1 (integer)
 
    Sets the minimal free memory from which attempts to open or accept new
    TLS connections will start to fail. The value is expressed in KB.
 
-   The default value depends on whether the openssl library used handles
-   well low memory situations (openssl bug #1491). As of this writing this
-   is not true for any openssl version (including 0.9.8e).
+   The  default value depends on whether the openssl library used handles
+   well  low  memory  situations  (openssl bug #1491). As of this writing
+   this is not true for any openssl version (including 0.9.8e).
 
-   If an ill-behaved openssl version is detected, a very conservative
-   value is choosed, which depends on the maximum possible number of
-   simultaneously created TLS connections (and hence on the process
+   If  an  ill-behaved  openssl  version is detected, a very conservative
+   value  is  choosed,  which  depends  on the maximum possible number of
+   simultaneously  created  TLS  connections  (and  hence  on the process
    number).
 
    The following values have a special meaning:
      * -1 - use the default value
      * 0 - disable (TLS connections will not fail preemptively)
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.low_mem_threshold1.
 
    See also low_mem_threshold2.
 
-   Example 31. Set low_mem_threshold1 parameter
+   Example 1.31. Set low_mem_threshold1 parameter
 ...
 modparam("tls", "low_mem_threshold1", -1)
 ...
 
-   Example 32. Set tls.low_mem_threshold1 at runtime
+   Example 1.32. Set tls.low_mem_threshold1 at runtime
  $ kamcmd cfg.set_now_int tls low_mem_threshold1 2048
 
-1.9.25. low_mem_threshold2 (integer)
+9.25. low_mem_threshold2 (integer)
 
-   Sets the minimal free memory from which TLS operations on already
+   Sets  the  minimal  free  memory  from which TLS operations on already
    established TLS connections will start to fail preemptively. The value
    is expressed in KB.
 
-   The default value depends on whether the openssl library used handles
-   well low memory situations (openssl bug #1491). As of this writing this
-   is not true for any openssl version (including 0.9.8e).
+   The  default value depends on whether the openssl library used handles
+   well  low  memory  situations  (openssl bug #1491). As of this writing
+   this is not true for any openssl version (including 0.9.8e).
 
-   If an ill-behaved openssl version is detected, a very conservative
-   value is choosed, which depends on the maximum possible number of
-   simultaneously created TLS connections (and hence on the process
+   If  an  ill-behaved  openssl  version is detected, a very conservative
+   value  is  choosed,  which  depends  on the maximum possible number of
+   simultaneously  created  TLS  connections  (and  hence  on the process
    number).
 
    The following values have a special meaning:
      * -1 - use the default value
      * 0 - disable (TLS operations will not fail preemptively)
 
-   It can be changed also at runtime, via the RPC interface and config
+   It  can  be  changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.low_mem_threshold2.
 
    See also low_mem_threshold1.
 
-   Example 33. Set low_mem_threshold2 parameter
+   Example 1.33. Set low_mem_threshold2 parameter
 ...
 modparam("tls", "low_mem_threshold2", -1)
 ...
 
-   Example 34. Set tls.low_mem_threshold2 at runtime
+   Example 1.34. Set tls.low_mem_threshold2 at runtime
  $ kamcmd cfg.set_now_int tls low_mem_threshold2 1024
 
-1.9.26. tls_force_run (boolean)
+9.26. tls_force_run (boolean)
 
-   If enabled Kamailio will start even if some of the openssl sanity
+   If  enabled  Kamailio  will  start  even if some of the openssl sanity
    checks fail (turn it on at your own risk).
 
-   Currently failing any of the following sanity checks will not allow
+   Currently  failing  any  of the following sanity checks will not allow
    Kamailio to start:
-     * the version of the library the TLS module was compiled with is "too
-       different" from the library used at runtime. The versions should
-       have the same major, minor and fix level (e.g.: 0.9.8a and 0.9.8c
-       are ok, but 0.9.8 and 0.9.9 are not)
-     * the openssl library used at compile time and the one used at
+     * the  version  of  the  library the TLS module was compiled with is
+       "too  different"  from  the  library used at runtime. The versions
+       should  have the same major, minor and fix level (e.g.: 0.9.8a and
+       0.9.8c are ok, but 0.9.8 and 0.9.9 are not)
+     * the  openssl  library  used  at  compile  time and the one used at
        runtime have different kerberos options
 
    By default tls_force_run is disabled.
 
-   Example 35. Set tls_force_run parameter
+   Example 1.35. Set tls_force_run parameter
 ...
 modparam("tls", "tls_force_run", 11)
 ...
 
-1.9.27. session_cache (boolean)
+9.27. session_cache (boolean)
 
-   If enabled Kamailio will do caching of the TLS sessions data,
+   If  enabled  Kamailio  will  do  caching  of  the  TLS  sessions data,
    generation a session_id and sending it back to client.
 
    By default TLS session caching is disabled (0).
 
-   Example 36. Set session_cache parameter
+   Example 1.36. Set session_cache parameter
 ...
 modparam("tls", "session_cache", 1)
 ...
 
-1.9.28. session_id (str)
+9.28. session_id (str)
 
    The value for session ID context, making sense when session caching is
    enabled.
 
    By default TLS session_id is "sip-router-tls-3.1".
 
-   Example 37. Set session_id parameter
+   Example 1.37. Set session_id parameter
 ...
 modparam("tls", "session_id", "my-session-id-context")
 ...
 
-1.9.29. renegotiation (boolean)
+9.29. renegotiation (boolean)
 
-   If enabled Kamailio will allow renegotiations of TLS connection
-   initiated by the client. This may expose to a security risk if the
-   client is not a trusted peer and keeps renegotiating, consuming CPU and
-   bandwidth resources.
+   If  enabled  Kamailio  will  allow  renegotiations  of  TLS connection
+   initiated  by  the  client.  This may expose to a security risk if the
+   client  is  not  a trusted peer and keeps renegotiating, consuming CPU
+   and bandwidth resources.
 
    By default TLS renegotiation is disabled (0).
 
-   Example 38. Set renegotiation parameter
+   Example 1.38. Set renegotiation parameter
 ...
 modparam("tls", "renegotiation", 1)
 ...
 
-1.9.30. config (string)
+9.30. config (string)
 
    Sets the name of the TLS specific config file.
 
-   If set the TLS module will load a special config file, in which
-   different TLS parameters can be specified on a per role (server or
-   client) and domain basis (for now only IPs). The corresponding module
+   If  set  the  TLS  module  will  load  a special config file, in which
+   different  TLS  parameters  can  be specified on a per role (server or
+   client)  and domain basis (for now only IPs). The corresponding module
    parameters will be ignored.
 
-   If the file name starts with a '.' the path will be relative to the
-   working directory (at runtime). If it starts with a '/' it will be an
-   absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for kamailio -f
+   If  the  file  name starts with a '.' the path will be relative to the
+   working  directory (at runtime). If it starts with a '/' it will be an
+   absolute  path  and  if  it starts with anything else the path will be
+   relative  to  the  main  config  file directory (e.g.: for kamailio -f
    /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
    By default no config file is specified.
 
-   The following parameters can be set in the config file, for each
+   The  following  parameters  can  be  set  in the config file, for each
    domain:
      * tls_method
      * verify_certificate
@@ -958,17 +1105,17 @@ modparam("tls", "renegotiation", 1)
      * crl
      * cipher_list
 
-   All the parameters that take filenames as values will be resolved using
-   the same rules as for the tls config filename itself: starting with a
-   '.' means relative to the working directory, a '/' means an absolute
-   path and anything else a path relative to the directory of the current
-   Kamailio main config file.
+   All  the  parameters  that  take  filenames as values will be resolved
+   using  the  same rules as for the tls config filename itself: starting
+   with  a  '.'  means  relative to the working directory, a '/' means an
+   absolute  path  and  anything else a path relative to the directory of
+   the current Kamailio main config file.
 
    Kamailio acts as a server when it accepts a connection and as a client
-   when it initiates a new connection by itself (it connects to
+   when  it  initiates  a  new  connection  by  itself  (it  connects  to
    something).
 
-   Example 39. Short config file
+   Example 1.39. Short config file
 [server:default]
 method = TLSv1
 verify_certificate = yes
@@ -992,81 +1139,88 @@ certificate = local_cert.pem
 verify_depth = 3
 ca_list = local_ca.pem
 
-   For a more complete example check the tls.cfg distributed with the
+   For  a  more  complete  example check the tls.cfg distributed with the
    Kamailio source (kamailio/modules/tls/tls.cfg).
 
-   Example 40. Set config parameter
+   Example 1.40. Set config parameter
 ...
 modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 ...
 
-   It can be changed also at runtime. The new config will not be loaded
+   It  can  be changed also at runtime. The new config will not be loaded
    immediately, but after the first tls.reload RPC call.
 
-   Example 41. Change and reload tls config at runtime
+   Example 1.41. Change and reload tls config at runtime
  $ kamcmd cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ kamcmd tls.reload
 
-1.10. Functions
+10. Functions
 
-1.10.1. is_peer_verified()
+   10.1. is_peer_verified()
 
-   Returns true if the connection on which the message was received is TLS
-   , the peer presented an X509 certificate and the certificate chain
+10.1. is_peer_verified()
+
+   Returns  true  if  the connection on which the message was received is
+   TLS , the peer presented an X509 certificate and the certificate chain
    verified ok. It can be used only in a request route.
 
-   Example 42. is_peer_verified usage
+   Example 1.42. is_peer_verified usage
         if (proto==TLS && !is_peer_verified()){
                 sl_send_reply("400", "No certificate or verification failed");
                 drop;
         }
 
-1.11. RPC Commands
+11. RPC Commands
 
-1.11.1. tls.info
+   11.1. tls.info
+   11.2. tls.list
+   11.3. tls.options
+   11.4. tls.reload
 
-   List internal information related to the TLS module in a short list -
+11.1. tls.info
+
+   List  internal information related to the TLS module in a short list -
    max connections, opened connections and the write queue size.
 
    Parameters:
      * None.
 
-1.11.2. tls.list
+11.2. tls.list
 
    List details about all active TLS connections.
 
    Parameters:
      * None.
 
-1.11.3. tls.options
+11.3. tls.options
 
    List the current TLS configuration.
 
    Parameters:
      * None.
 
-1.11.4. tls.reload
+11.4. tls.reload
 
-   Reload the external TLS configuration file. (Does not reload modparam()
-   parameters)
+   Reload   the   external  TLS  configuration  file.  (Does  not  reload
+   modparam() parameters)
 
    Parameters:
      * None.
 
-1.12. History
+12. History
 
-   This module was put together by Jan Janak <jan@iptel.org> from code
+   This  module  was  put together by Jan Janak <jan@iptel.org> from code
    based on the experimental tls core addon
-   (http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/), code
-   originally written by Peter Griffiths and later maintained by Cesc
-   Santasusana and from an iptelorg tls code addon, written by Andrei
-   Pelinescu-Onciul <andrei@iptel.org>. Jan also added support for
-   multiple domains, a tls specific config, config reloading and a tls
+   (http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/),
+   code  originally  written  by  Peter Griffiths and later maintained by
+   Cesc  Santasusana  and  from  an  iptelorg  tls code addon, written by
+   Andrei Pelinescu-Onciul <andrei@iptel.org>. Jan also added support for
+   multiple  domains,  a  tls specific config, config reloading and a tls
    specific select framework.
 
-   For Kamailio 3.1 most of the TLS specific code was completely
-   re-written to add support for asynchronous TLS and fix several long
+   For  Kamailio  3.1  most  of  the  TLS  specific  code  was completely
+   re-written  to  add  support for asynchronous TLS and fix several long
    standing bugs.
 
-   The code is currently maintained by Andrei Pelinescu-Onciul
+   The   code   is   currently   maintained  by  Andrei  Pelinescu-Onciul
    <andrei@iptel.org>.

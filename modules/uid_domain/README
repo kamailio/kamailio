@@ -1,95 +1,166 @@
-1. UID Domain Module
+
+UID Domain Module
 
 Juha Heinanen
 
    <jh@tutpro.com>
 
    Copyright © 2002-2010 Juha Heinanen
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
+   Table of Contents
 
-        1.1.1. Virtual Domains
-        1.1.2. Domain-level Configuration Attributes
-        1.1.3. Caching
+   1. Admin Guide
 
-   1.2. Dependencies
-   1.3. Known Limitations
-   1.4. Parameters
+        1. Overview
 
-        1.4.1. db_url (string)
-        1.4.2. db_mode (integer)
-        1.4.3. domain_table (string)
-        1.4.4. did_col (string)
-        1.4.5. domain_col (string)
-        1.4.6. flags_col (string)
-        1.4.7. domattr_table (string)
-        1.4.8. domattr_did (string)
-        1.4.9. domattr_name (string)
-        1.4.10. domattr_type (string)
-        1.4.11. domattr_value (string)
-        1.4.12. domattr_flags (string)
-        1.4.13. load_domain_attrs (integer)
+              1.1. Virtual Domains
+              1.2. Domain-level Configuration Attributes
+              1.3. Caching
 
-   1.5. Functions
+        2. Dependencies
+        3. Known Limitations
+        4. Parameters
 
-        1.5.1. is_local(domain)
-        1.5.2. lookup_domain(attr_group, domain)
+              4.1. db_url (string)
+              4.2. db_mode (integer)
+              4.3. domain_table (string)
+              4.4. did_col (string)
+              4.5. domain_col (string)
+              4.6. flags_col (string)
+              4.7. domattr_table (string)
+              4.8. domattr_did (string)
+              4.9. domattr_name (string)
+              4.10. domattr_type (string)
+              4.11. domattr_value (string)
+              4.12. domattr_flags (string)
+              4.13. load_domain_attrs (integer)
 
-   1.6. FIFO Interface
+        5. Functions
 
-        1.6.1. domain.reload
-        1.6.2. domain.dump
+              5.1. is_local(domain)
+              5.2. lookup_domain(attr_group, domain)
 
-   1.7. Internal API
+        6. FIFO Interface
 
-1.1. Overview
+              6.1. domain.reload
+              6.2. domain.dump
 
-   Domain modules, as the name suggests, implements support for multiple
-   independent virtual domains hosted on one SIP server. This is often
+        7. Internal API
+
+   List of Examples
+
+   1.1. Virtual Domain iptel.org
+   1.2. Database Representation of Virtual Domain
+   1.3. Table domain_attrs
+   1.4. Setting db_url parameter
+   1.5. Setting db_mode parameter
+   1.6. Setting domain_table parameter
+   1.7. Setting did_col parameter
+   1.8. Setting domain_col parameter
+   1.9. Setting flags_col parameter
+   1.10. Setting domattrs_table parameter
+   1.11. Setting domattrs_did parameter
+   1.12. Setting domattrs_name parameter
+   1.13. Setting domattrs_type parameter
+   1.14. Setting domattrs_value parameter
+   1.15. Setting domattrs_flags parameter
+   1.16. Setting load_domain_attrs parameter
+   1.17. is_uri_host_local_local usage
+   1.18. lookup_domain usage
+   1.19. Calling load_domain_api
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+
+        1.1. Virtual Domains
+        1.2. Domain-level Configuration Attributes
+        1.3. Caching
+
+   2. Dependencies
+   3. Known Limitations
+   4. Parameters
+
+        4.1. db_url (string)
+        4.2. db_mode (integer)
+        4.3. domain_table (string)
+        4.4. did_col (string)
+        4.5. domain_col (string)
+        4.6. flags_col (string)
+        4.7. domattr_table (string)
+        4.8. domattr_did (string)
+        4.9. domattr_name (string)
+        4.10. domattr_type (string)
+        4.11. domattr_value (string)
+        4.12. domattr_flags (string)
+        4.13. load_domain_attrs (integer)
+
+   5. Functions
+
+        5.1. is_local(domain)
+        5.2. lookup_domain(attr_group, domain)
+
+   6. FIFO Interface
+
+        6.1. domain.reload
+        6.2. domain.dump
+
+   7. Internal API
+
+1. Overview
+
+   1.1. Virtual Domains
+   1.2. Domain-level Configuration Attributes
+   1.3. Caching
+
+   Domain  modules, as the name suggests, implements support for multiple
+   independent  virtual  domains  hosted on one SIP server. This is often
    useful if you have multiple domain names and you want to make them all
    work and appear as one. Alternatively you might find the module useful
-   if you want to run a shared SIP service for multiple independent
-   customers. The module stores all supported domains and associated
-   configuration in a database table. Most of the information can be
+   if  you  want  to  run  a  shared SIP service for multiple independent
+   customers.  The  module  stores  all  supported domains and associated
+   configuration  in  a  database  table.  Most of the information can be
    cached in memory for performance reasons.
 
-1.1.1. Virtual Domains
+1.1. Virtual Domains
 
-   The domain module adds support for so-called virtual domains. A virtual
-   domain is just a collection of domain names and associated
-   configuration information identified by a unique identifier. We refer
-   to the domain identifier as DID elsewhere in the documentation. DID
+   The  domain  module  adds  support  for  so-called  virtual domains. A
+   virtual  domain  is  just  a collection of domain names and associated
+   configuration  information identified by a unique identifier. We refer
+   to  the  domain  identifier as DID elsewhere in the documentation. DID
    stands for "Domain IDentifier". In traditional POST world the term DID
    has a different meaning though. Please be aware that this is just pure
    coincidence.
 
-   All domain names that belong to one virtual domain are interchangeable.
-   From SIP server's perspective there is no difference between them. They
-   can be used in SIP URIs interchangeably and the behavior of the SIP
-   server will not be affected. This is called "domain name normalization"
-   and it is one of the steps performed early during SIP message
-   processing.
+   All   domain   names   that   belong   to   one   virtual  domain  are
+   interchangeable.  From SIP server's perspective there is no difference
+   between  them.  They  can  be used in SIP URIs interchangeably and the
+   behavior  of  the  SIP  server  will  not  be affected. This is called
+   "domain name normalization" and it is one of the steps performed early
+   during SIP message processing.
 
-   The DID identifier can be anything. To the SIP server DIDs are just
+   The  DID  identifier  can be anything. To the SIP server DIDs are just
    opaque strings and what format you choose depends on your requirements
-   and the type of the setup. You can use numbers in smaller setups if the
-   size of the data is a concern. You can set the DID to the canonical
-   domain name of the domain. You can use RFC 4122 style UUIDs if your
-   setup is large and distributed. You can use anything as long as it can
-   be represented as string. The only requirement is that the identifier
-   of each virtual domain must be unique.
+   and  the  type  of the setup. You can use numbers in smaller setups if
+   the  size  of  the  data  is  a  concern.  You  can set the DID to the
+   canonical  domain name of the domain. You can use RFC 4122 style UUIDs
+   if  your  setup is large and distributed. You can use anything as long
+   as  it  can be represented as string. The only requirement is that the
+   identifier of each virtual domain must be unique.
 
-   The following example illustrates how one virtual domain can be
+   The  following  example  illustrates  how  one  virtual  domain can be
    represented. The iptel.org domain runs a public SIP service. The users
-   of the service can use SIP URIs of form sip:username@iptel.org. The SIP
-   service is distributed, there is a number of SIP servers. The SIP
-   servers are also available through a number of other domain names, such
-   as sip.iptel.org, proxy.iptel.org and so on. We created one virtual
-   domain in the domain module and added all such domain names to the
-   virtual domain:
+   of  the  service  can use SIP URIs of form sip:username@iptel.org. The
+   SIP  service is distributed, there is a number of SIP servers. The SIP
+   servers  are  also  available  through a number of other domain names,
+   such  as  sip.iptel.org,  proxy.iptel.org  and  so  on. We created one
+   virtual domain in the domain module and added all such domain names to
+   the virtual domain:
 
-   Example 1. Virtual Domain iptel.org
+   Example 1.1. Virtual Domain iptel.org
 iptel
   |
   +---iptel.org
@@ -97,20 +168,20 @@ iptel
   +---proxy.iptel.org
   +---213.192.59.75
 
-   In the example above, we chose "iptel" as the unique identifier for the
-   virtual domain. This identifier is permanent. It never changes. Over
-   time we may change domain names assigned to this virtual domain, but
-   this identifier never changes. The main reason why virtual domain
+   In  the  example  above, we chose "iptel" as the unique identifier for
+   the  virtual  domain.  This identifier is permanent. It never changes.
+   Over  time we may change domain names assigned to this virtual domain,
+   but  this identifier never changes. The main reason why virtual domain
    identifiers must never change is that because they are referenced from
-   other tables, for example the accounting table. The data in the
-   accounting table is long-lived, usually archived, and this ensures that
-   the data will still reference correct virtual domain, no matter what
-   domain names are assigned to it.
+   other  tables,  for  example  the  accounting  table.  The data in the
+   accounting  table  is  long-lived,  usually archived, and this ensures
+   that  the  data will still reference correct virtual domain, no matter
+   what domain names are assigned to it.
 
-   The virtual domain described above will be stored in the domain table
+   The  virtual domain described above will be stored in the domain table
    in the database:
 
-   Example 2. Database Representation of Virtual Domain
+   Example 1.2. Database Representation of Virtual Domain
 +-------+-----------------+-------+
 | did   | domain          | flags |
 +-------+-----------------+-------+
@@ -120,44 +191,44 @@ iptel
 | iptel | 213.192.59.75   |    33 |
 +-------+-----------------+-------+
 
-   Because all domain names that belong to one particular virtual domain
-   are equal, it does not matter which domain name is used in the host
-   part of the SIP URI. Thus an imaginary user joe with SIP URI
-   sip:joe@iptel.org will also be reachable as sip:joe@sip.iptel.org,
-   sip:joe@proxy.iptel.org, and sip:joe@213.192.59.75. If we add a new
-   domain name to this virtual domain then joe will also be able to use
-   the new domain name in his SIP URI, without the need to change
+   Because  all domain names that belong to one particular virtual domain
+   are  equal,  it  does not matter which domain name is used in the host
+   part  of  the  SIP  URI.  Thus  an  imaginary  user  joe  with SIP URI
+   sip:joe@iptel.org  will  also  be  reachable as sip:joe@sip.iptel.org,
+   sip:joe@proxy.iptel.org,  and  sip:joe@213.192.59.75.  If we add a new
+   domain  name  to this virtual domain then joe will also be able to use
+   the  new  domain  name  in  his  SIP  URI,  without the need to change
    anything.
 
-1.1.2. Domain-level Configuration Attributes
+1.2. Domain-level Configuration Attributes
 
-   In addition to a number of domain names, each virtual domain can also
-   have extra configuration information associated with it. The
-   possibility to configure the SIP server sightly differently in each
-   virtual domain is, in fact, the main reason why we introduced the
-   concept of virtual domains. We wanted to have one SIP server which will
-   provide SIP service to multiple different customers and each of the
-   customers may have slightly different configuration requirements.
+   In  addition to a number of domain names, each virtual domain can also
+   have   extra   configuration   information  associated  with  it.  The
+   possibility  to  configure  the SIP server sightly differently in each
+   virtual  domain  is,  in  fact,  the main reason why we introduced the
+   concept  of  virtual  domains.  We wanted to have one SIP server which
+   will  provide  SIP service to multiple different customers and each of
+   the  customers may have slightly different configuration requirements.
    That's how domain-level configuration attributes were born.
 
    Because the administrator of the SIP server seldom knows configuration
-   requirements in advance, we decided to implement a generic solution and
-   store all configuration options in named attributes. Named attributes
-   are just like variables, they have a name and they have a value.
-   Attributes are accessible from the configuration script of the SIP
-   server. Domain-level attributes are attributes that are associated with
-   a particular virtual domain. They can be used to store additional
-   configuration for the entire virtual domain, that is all users that
-   belong (or have SIP URI) in that particular virtual domain.
-   Domain-level attributes can be overridden be user-level attributes with
-   the same name configured for a particular user. In other words a domain
-   level attribute will only be effective if no user-level attribute with
-   the same name exists.
+   requirements  in  advance,  we decided to implement a generic solution
+   and  store  all  configuration  options  in  named  attributes.  Named
+   attributes  are  just like variables, they have a name and they have a
+   value.  Attributes are accessible from the configuration script of the
+   SIP server. Domain-level attributes are attributes that are associated
+   with a particular virtual domain. They can be used to store additional
+   configuration  for  the  entire virtual domain, that is all users that
+   belong   (or   have  SIP  URI)  in  that  particular  virtual  domain.
+   Domain-level  attributes  can  be  overridden be user-level attributes
+   with  the same name configured for a particular user. In other words a
+   domain  level  attribute  will  only  be  effective  if  no user-level
+   attribute with the same name exists.
 
-   Domain-level attributes are stored in a separate table. The name of the
-   table is domain_attrs and it is defined as follows:
+   Domain-level  attributes  are  stored in a separate table. The name of
+   the table is domain_attrs and it is defined as follows:
 
-   Example 3. Table domain_attrs
+   Example 1.3. Table domain_attrs
 +-------+------------------+------+-----+---------+-------+
 | Field | Type             | Null | Key | Default | Extra |
 +-------+------------------+------+-----+---------+-------+
@@ -168,287 +239,306 @@ iptel
 | flags | int(10) unsigned | NO   |     | 0       |       |
 +-------+------------------+------+-----+---------+-------+
 
-   Each attribute has name, type and value. A single attribute can have
-   multiple values and in that case it will occupy more rows in the table.
-   Each attribute is associated with a particular virtual domain using the
-   DID identifier. Domain-level attributes can contain just about
-   anything. It is a generic configuration mechanism and it is up to you
-   to define a list of attribute that are meaningful in your setup and use
-   those attributes in the routing part of the configuration file.
+   Each  attribute  has name, type and value. A single attribute can have
+   multiple  values  and  in  that  case  it will occupy more rows in the
+   table.  Each  attribute is associated with a particular virtual domain
+   using  the  DID  identifier.  Domain-level attributes can contain just
+   about  anything.  It is a generic configuration mechanism and it is up
+   to you to define a list of attribute that are meaningful in your setup
+   and  use  those  attributes  in  the routing part of the configuration
+   file.
 
-   Attributes for a particular virtual-domain are made available to script
-   function by the lookup_domain function. This is the function that is
-   used to map domain names to DIDs. One of the side-effects of the
-   function is that it makes domain-level attributes available to script
-   function if a matching virtual domain is found.
+   Attributes  for  a  particular  virtual-domain  are  made available to
+   script  function  by  the lookup_domain function. This is the function
+   that  is  used to map domain names to DIDs. One of the side-effects of
+   the  function  is  that  it makes domain-level attributes available to
+   script function if a matching virtual domain is found.
 
-   When caching is enabled, all attributes from domain_attrs table are
-   cached in memory, just like virtual domain themselves. If you disable
-   caching then the domain module will attempt to load attributes from the
-   database each time you call lookup_domain. Attributes cached in memory
-   can be realoaded with the domain.reload management function.
+   When  caching  is  enabled, all attributes from domain_attrs table are
+   cached  in memory, just like virtual domain themselves. If you disable
+   caching  then  the  domain module will attempt to load attributes from
+   the  database  each  time you call lookup_domain. Attributes cached in
+   memory can be realoaded with the domain.reload management function.
 
-1.1.3. Caching
+1.3. Caching
 
-   Domain module operates in caching or non-caching mode depending on
+   Domain  module  operates  in  caching or non-caching mode depending on
    value of module parameter db_mode. In caching mode domain module reads
-   the contents of domain table into cache memory when the module is
-   loaded. After that domain table is re-read only when module is given
-   domain_reload fifo command. Any changes in domain table must thus be
-   followed by domain_reload command in order to reflect them in module
-   behavior. In non-caching mode domain module always queries domain table
-   in the database.
+   the  contents  of  domain  table  into cache memory when the module is
+   loaded.  After  that domain table is re-read only when module is given
+   domain_reload  fifo  command. Any changes in domain table must thus be
+   followed  by  domain_reload command in order to reflect them in module
+   behavior.  In  non-caching  mode  domain  module always queries domain
+   table in the database.
 
-   Caching is implemented using a hash table. The size of the hash table
-   is given by HASH_SIZE constant defined in domain_mod.h. Its "factory
-   default" value is 128. Caching mode is highly recommended if you want
+   Caching  is implemented using a hash table. The size of the hash table
+   is  given  by HASH_SIZE constant defined in domain_mod.h. Its "factory
+   default"  value is 128. Caching mode is highly recommended if you want
    to use domain-level attributes.
 
-1.2. Dependencies
+2. Dependencies
 
-   The module depends on the following modules (in the other words the
+   The  module  depends  on the following modules (in the other words the
    listed modules must be loaded before this module):
      * database - Any database module
 
-1.3. Known Limitations
+3. Known Limitations
 
-   There is an unlikely race condition on domain list update. If a process
-   uses a table, which is reloaded at the same time twice through FIFO,
-   the second reload will delete the original table still in use by the
-   process.
+   There  is  an  unlikely  race  condition  on  domain list update. If a
+   process uses a table, which is reloaded at the same time twice through
+   FIFO, the second reload will delete the original table still in use by
+   the process.
 
-1.4. Parameters
+4. Parameters
 
-1.4.1. db_url (string)
+   4.1. db_url (string)
+   4.2. db_mode (integer)
+   4.3. domain_table (string)
+   4.4. did_col (string)
+   4.5. domain_col (string)
+   4.6. flags_col (string)
+   4.7. domattr_table (string)
+   4.8. domattr_did (string)
+   4.9. domattr_name (string)
+   4.10. domattr_type (string)
+   4.11. domattr_value (string)
+   4.12. domattr_flags (string)
+   4.13. load_domain_attrs (integer)
+
+4.1. db_url (string)
 
    This is URL of the database to be used.
 
    Default value is "mysql://serro:47serro11@localhost/ser"
 
-   Example 4. Setting db_url parameter
+   Example 1.4. Setting db_url parameter
 modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 
-1.4.2. db_mode (integer)
+4.2. db_mode (integer)
 
-   Database mode. Value 0 means non-caching, 1 means caching is enabled.
-   It is highly recommended to enable caching if you want to use
+   Database  mode. Value 0 means non-caching, 1 means caching is enabled.
+   It  is  highly  recommended  to  enable  caching  if  you  want to use
    domain-level attributes.
 
    Default value is 1 (caching).
 
-   Example 5. Setting db_mode parameter
+   Example 1.5. Setting db_mode parameter
 modparam("domain", "db_mode", 0)   # Do not use caching
 
-1.4.3. domain_table (string)
+4.3. domain_table (string)
 
-   Name of table containing names of local domains that the proxy is
-   responsible for. Local users must have in their SIP URI a host part
+   Name  of  table  containing  names  of local domains that the proxy is
+   responsible  for.  Local  users must have in their SIP URI a host part
    that is equal to one of the domains stored in this table.
 
    Default value is "domain".
 
-   Example 6. Setting domain_table parameter
+   Example 1.6. Setting domain_table parameter
 modparam("domain", "domain_table", "new_name")
 
-1.4.4. did_col (string)
+4.4. did_col (string)
 
-   This is the name of the column in domain table that contains the unique
-   identifiers of virtual domains. Domains names found in this table are
-   arranged into virtual domains. Each virtual domain must have a unique
-   identifier and it can contain one or more domain names.
+   This  is  the  name  of  the  column in domain table that contains the
+   unique  identifiers  of  virtual  domains. Domains names found in this
+   table are arranged into virtual domains. Each virtual domain must have
+   a unique identifier and it can contain one or more domain names.
 
    Default value is "did".
 
-   Example 7. Setting did_col parameter
+   Example 1.7. Setting did_col parameter
 modparam("domain", "did_col", "did")
 
-1.4.5. domain_col (string)
+4.5. domain_col (string)
 
    Name of column containing domain names in the domain table.
 
    Default value is "domain".
 
-   Example 8. Setting domain_col parameter
+   Example 1.8. Setting domain_col parameter
 modparam("domain", "domain_col", "domain")
 
-1.4.6. flags_col (string)
+4.6. flags_col (string)
 
-   This is the name of the column in domain table which stores various
-   flags. Each row in the table has a bunch of generic flags that can be
-   used mark the row disabled, deleted, etc. The flags allow for more
-   flexible administration of the data in the database and they are
+   This  is  the  name of the column in domain table which stores various
+   flags.  Each row in the table has a bunch of generic flags that can be
+   used  mark  the  row  disabled, deleted, etc. The flags allow for more
+   flexible  administration  of  the  data  in  the database and they are
    present in several other tables too.
 
    Default value is "flags".
 
-   Example 9. Setting flags_col parameter
+   Example 1.9. Setting flags_col parameter
 modparam("domain", "flags_col", "domain")
 
-1.4.7. domattr_table (string)
+4.7. domattr_table (string)
 
-   This parameter can be used to configure the name of the table that is
-   used to store domain-level attributes. Domain level attributes are
-   attributes that are associated with a particular virtual domain. They
-   are typically used to store additional domain-wide settings that should
-   apply to all users who belong to the domain.
+   This  parameter can be used to configure the name of the table that is
+   used  to  store  domain-level  attributes. Domain level attributes are
+   attributes  that are associated with a particular virtual domain. They
+   are  typically  used  to  store  additional  domain-wide settings that
+   should apply to all users who belong to the domain.
 
    Default value is "domain_attrs".
 
-   Example 10. Setting domattrs_table parameter
+   Example 1.10. Setting domattrs_table parameter
 modparam("domain", "domattr_table", "domain_attrs")
 
-1.4.8. domattr_did (string)
+4.8. domattr_did (string)
 
    Use this parameter to configure the name of the column in domain_attrs
-   table that is used to store the did of the virtual domain the attribute
-   belongs to. Normally there is no need to configure this parameter,
-   unless you want adapt to module to a different database schema.
+   table  that  is  used  to  store  the  did  of  the virtual domain the
+   attribute  belongs  to.  Normally  there  is no need to configure this
+   parameter,  unless  you  want  adapt to module to a different database
+   schema.
 
    Default value is "did".
 
-   Example 11. Setting domattrs_did parameter
+   Example 1.11. Setting domattrs_did parameter
 modparam("domain", "domattr_did", "did")
 
-1.4.9. domattr_name (string)
+4.9. domattr_name (string)
 
    Use this parameter to configure the name of the column in domain_attrs
-   table that is used to store the name of the attribute. Normally there
-   is no need to configure this parameter, unless you want adapt to module
-   to a different database schema.
+   table  that is used to store the name of the attribute. Normally there
+   is  no  need  to  configure  this  parameter, unless you want adapt to
+   module to a different database schema.
 
    Default value is "name".
 
-   Example 12. Setting domattrs_name parameter
+   Example 1.12. Setting domattrs_name parameter
 modparam("domain", "domattr_name", "name")
 
-1.4.10. domattr_type (string)
+4.10. domattr_type (string)
 
    Use this parameter to configure the name of the column in domain_attrs
-   table that is used to store the type of the attribute. Normally there
-   is no need to configure this parameter, unless you want adapt to module
-   to a different database schema.
+   table  that is used to store the type of the attribute. Normally there
+   is  no  need  to  configure  this  parameter, unless you want adapt to
+   module to a different database schema.
 
    Default value is "type".
 
-   Example 13. Setting domattrs_type parameter
+   Example 1.13. Setting domattrs_type parameter
 modparam("domain", "domattr_type", "type")
 
-1.4.11. domattr_value (string)
+4.11. domattr_value (string)
 
    Use this parameter to configure the name of the column in domain_attrs
    table that is used to store the value of the attribute. Normally there
-   is no need to configure this parameter, unless you want adapt to module
-   to a different database schema.
+   is  no  need  to  configure  this  parameter, unless you want adapt to
+   module to a different database schema.
 
    Default value is "value".
 
-   Example 14. Setting domattrs_value parameter
+   Example 1.14. Setting domattrs_value parameter
 modparam("domain", "domattr_value", "value")
 
-1.4.12. domattr_flags (string)
+4.12. domattr_flags (string)
 
-   This is the name of the column in domain_attrs table which stores
+   This  is  the  name  of  the column in domain_attrs table which stores
    various flags. Each row in the table has a bunch of generic flags that
-   can be used mark the row disabled, deleted, etc. The flags allow for
-   more flexible administration of the data in the database and they are
-   present in several other tables too. You do not have to touch this
+   can  be  used mark the row disabled, deleted, etc. The flags allow for
+   more  flexible administration of the data in the database and they are
+   present  in  several  other  tables too. You do not have to touch this
    parameter under normal circumstances.
 
    Default value is "flags".
 
-   Example 15. Setting domattrs_flags parameter
+   Example 1.15. Setting domattrs_flags parameter
 modparam("domain", "domattr_flags", "flags")
 
-1.4.13. load_domain_attrs (integer)
+4.13. load_domain_attrs (integer)
 
-   This parameter can be used to enable/disable user of domain-level
-   attributes. Domain-level attributes are variables that can be used to
-   store additional configuration that applies to the whole virtual domain
-   and all users within the virtual domain. Domain-level attributes are
-   stored in domain_attrs. If you set this parameter to a non-zero value
-   then the server will make domain-level attributes available to the
-   script every time you call function lookup_domain. If you set the
-   parameter to 0 then domain-level attributes will be ignored, the domain
-   module will not load them from the database and the lookup function
-   will not make them available to the script.
+   This  parameter  can  be  used  to enable/disable user of domain-level
+   attributes.  Domain-level attributes are variables that can be used to
+   store  additional  configuration  that  applies  to  the whole virtual
+   domain   and   all  users  within  the  virtual  domain.  Domain-level
+   attributes  are stored in domain_attrs. If you set this parameter to a
+   non-zero  value  then  the  server  will  make domain-level attributes
+   available to the script every time you call function lookup_domain. If
+   you  set  the  parameter  to  0  then  domain-level attributes will be
+   ignored,  the  domain  module will not load them from the database and
+   the lookup function will not make them available to the script.
 
    Default value is 0.
 
-   Example 16. Setting load_domain_attrs parameter
+   Example 1.16. Setting load_domain_attrs parameter
 modparam("domain", "load_domain_attrs", 1)
 
-1.5. Functions
+5. Functions
 
-1.5.1. is_local(domain)
+   5.1. is_local(domain)
+   5.2. lookup_domain(attr_group, domain)
 
-   This function can be used to test whether a given domain name in
-   parameter belongs to one of the virtual domains defined in the domain
+5.1. is_local(domain)
+
+   This  function  can  be  used  to  test whether a given domain name in
+   parameter  belongs to one of the virtual domains defined in the domain
    table. Such domain name is said to be local. The function returns 1 if
    the domain name is found in the domain table and -1 otherwise.
 
-   The first parameter of the function can be anything that returns a
-   string with domain name. In its simplest form it can be a string with
-   domain name: is_local("iptel.org"). You can also test a domain name
-   stored in an attribute: is_local("$my_domain"). And finally you can
-   test a domain name present in the SIP message with selects:
+   The  first  parameter  of  the function can be anything that returns a
+   string  with domain name. In its simplest form it can be a string with
+   domain  name:  is_local("iptel.org").  You can also test a domain name
+   stored  in  an  attribute: is_local("$my_domain"). And finally you can
+   test   a  domain  name  present  in  the  SIP  message  with  selects:
    is_local("@ruri.host").
 
-   Note: Unlike function lookup_domain, this function does not make domain
-   attributes of the virtual domain available to the script. Domain
-   attributes are simply ignored by this function.
+   Note:  Unlike  function  lookup_domain,  this  function  does not make
+   domain  attributes  of  the  virtual  domain  available to the script.
+   Domain attributes are simply ignored by this function.
 
-   Example 17. is_uri_host_local_local usage
+   Example 1.17. is_uri_host_local_local usage
 ...
 if (is_local("@ruri.host")) {
     /* Domain part of Request-URI is local */
 }
 ...
 
-1.5.2. lookup_domain(attr_group, domain)
+5.2. lookup_domain(attr_group, domain)
 
-   This is the main function of the domain module. It can be used to
-   implement support for virtual domains in the SIP server. Each virtual
+   This  is  the  main  function  of the domain module. It can be used to
+   implement  support for virtual domains in the SIP server. Each virtual
    domain is identified by a unique identifier (opaque string) and it can
-   have one or more associated domain names. Given a domain name in the
-   second parameter, this function finds the associated virtual domain
-   identifier (known as DID) and stores it in an attribute for later user.
-   In addition to that the function also loads all domain-level attributes
-   for the virtual domain and makes them available to the configuration
-   script.
+   have  one  or more associated domain names. Given a domain name in the
+   second  parameter,  this  function finds the associated virtual domain
+   identifier  (known  as  DID)  and  stores it in an attribute for later
+   user.  In  addition  to  that the function also loads all domain-level
+   attributes  for  the  virtual  domain  and makes them available to the
+   configuration script.
 
    The first parameter of the function identifies the group of attributes
-   where the DID and domain-level attributes shall be stored. The value of
-   the first parameter can be either "$fd" for the domain-level attribute
-   group that belongs to the calling party (From), or "$td" for the
-   domain-level attribute group that belongs to the called party
+   where  the  DID and domain-level attributes shall be stored. The value
+   of  the  first  parameter  can  be  either  "$fd" for the domain-level
+   attribute group that belongs to the calling party (From), or "$td" for
+   the  domain-level  attribute  group  that  belongs to the called party
    (Request-URI).
 
    The value of the second parameter can be a simple string, an attribute
    name, or a select. See the documentation of function is_local for more
    details.
 
-   If a match is found then the DID of the virtual domain will be stored
-   either in $fd.did or in $td.did, depending on the value of the first
-   parameter. In addition to that domain-level attributes, if any, will be
-   available as either $fd.<name> or $td.</name>.
+   If  a match is found then the DID of the virtual domain will be stored
+   either  in  $fd.did or in $td.did, depending on the value of the first
+   parameter.  In  addition to that domain-level attributes, if any, will
+   be available as either $fd.<name> or $td.</name>.
 
-   The function returns 1 when a matching virtual domain for the given
+   The  function  returns  1 when a matching virtual domain for the given
    domain name was found and -1 otherwise.
 
-   The following example shows a typical use of the function. In a multi
-   domain setup, one has to typically figure out where the both the
-   calling and the called domains are local (i.e. configured on the server
-   as the domains the server is responsible for). This is typically done
-   by calling function lookup_domain twice, once with the hostname part of
-   the From header as parameter and secondly with the hostname part of the
-   Request-URI as parameter.
+   The  following example shows a typical use of the function. In a multi
+   domain  setup,  one  has  to  typically  figure out where the both the
+   calling  and  the  called  domains  are  local (i.e. configured on the
+   server  as  the  domains  the  server  is  responsible  for).  This is
+   typically  done by calling function lookup_domain twice, once with the
+   hostname  part  of  the From header as parameter and secondly with the
+   hostname part of the Request-URI as parameter.
 
-   The type of the situation can be then determined from the value of
-   corresponding attributes ($td.did and $fd.did). A non-existing
-   attribute value indicates that the domain name is not local (it does
+   The  type  of  the  situation can be then determined from the value of
+   corresponding   attributes   ($td.did  and  $fd.did).  A  non-existing
+   attribute  value  indicates that the domain name is not local (it does
    not belong to any virtual domain configured in the domain table).
 
-   Example 18. lookup_domain usage
+   Example 1.18. lookup_domain usage
 lookup_domain("$fd", "@from.uri.host");
 lookup_domain("$td", "@ruri.host");
 
@@ -475,33 +565,36 @@ if ($fd.did && $td.did) {
     # virtual domain hosted on the same server
 }
 
-1.6. FIFO Interface
+6. FIFO Interface
 
-1.6.1. domain.reload
+   6.1. domain.reload
+   6.2. domain.dump
 
-   Causes domain module to re-read the contents of domain table into cache
-   memory. If domain-level attributes are used then it will also re-load
-   the contents of the domain_attrs table in the memory cache.
+6.1. domain.reload
 
-1.6.2. domain.dump
+   Causes  domain  module  to  re-read  the contents of domain table into
+   cache  memory.  If  domain-level attributes are used then it will also
+   re-load the contents of the domain_attrs table in the memory cache.
 
-   Causes domain module to dump hash indexes and domain names in its cache
-   memory.
+6.2. domain.dump
 
-1.7. Internal API
+   Causes  domain  module  to  dump  hash indexes and domain names in its
+   cache memory.
 
-   The domain module has an internal API which can be used to access
-   additional functions of the module (i.e. functions that are normally
+7. Internal API
+
+   The  domain  module  has  an  internal API which can be used to access
+   additional  functions  of the module (i.e. functions that are normally
    not available from the routing script). Currently the API exports only
-   the function is_domain_local. That function can be used to determine
-   whether a given domain name is on the list of locally configured domain
-   names.
+   the  function  is_domain_local. That function can be used to determine
+   whether  a  given  domain  name  is  on the list of locally configured
+   domain names.
 
-   If you want to use the internal API of domain module from your module
-   then you need to include the header file domain_api.h and call
+   If  you want to use the internal API of domain module from your module
+   then  you  need  to  include  the  header  file  domain_api.h and call
    load_domain_api first.
 
-   Example 19. Calling load_domain_api
+   Example 1.19. Calling load_domain_api
 #include "../domain/domain_api.h"
 
 domain_api_t dom_api;
@@ -510,7 +603,7 @@ if (load_domain_api(&dom_api) != 0) {
     /* error */
 }
 
-   After that you can call function is_domain_local whose pointer is
+   After  that  you  can  call  function is_domain_local whose pointer is
    stored in the initialized data structure:
 str tmp = STR_STATIC_INIT("mydomain.com");
 

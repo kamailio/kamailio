@@ -1,3 +1,4 @@
+
 The AVP module
 
 Jiri Kuthan
@@ -11,35 +12,109 @@ Michal Matyska
    <michal@iptel.org>
 
    Copyright © 2004, 2005, 2006 FhG FOKUS, iptelorg GmbH
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Functions
+
+              2.1. set_iattr(attribute,value)
+              2.2. flags2attr("$avp")
+              2.3. set_sattr(attribute,value)
+              2.4. print_attr($attribute)
+              2.5. attr2uri($attribute[,uri-part])
+              2.6. attr_exists(attribute)
+              2.7. attr_equals(attribute, value)
+              2.8. attr_equals_xl(attribute, xl_format)
+              2.9. dump_attrs()
+              2.10. xlset_attr($attribute, xl_format)
+              2.11. xlfix_attr($attribute)
+              2.12. insert_attr_hf(name)
+              2.13. insert_attr_hf(header_name, $avp_name)
+              2.14. append_attr_hf(name)
+              2.15. append_attr_hf(header_name, $avp_name)
+              2.16. replace_attr_hf(name)
+              2.17. replace_attr_hf(header_name, $avp_name)
+              2.18. attr_to_reply(name)
+              2.19. attr_to_reply(header_name, $avp_name)
+              2.20. attr_destination($avp_name)
+              2.21. xlset_destination(xl_format)
+              2.22. subst_attr($avp_name, subst_re)
+              2.23. del_attr($avp_name)
+              2.24. hdr_body2attrs(headername, prefix)
+              2.25. hdr_body2attrs2(headername, prefix)
+
+        3. Parameters
+
+              3.1. xlbuf_size (integer)
 
    List of Examples
 
-   1. set_iattr usage
-   2. flags2attr usage
-   3. set_sattr usage
-   4. attr_exists usage
-   5. attr_equals_xl usage
-   6. insert_attr_hf usage
-   7. attr_to_reply usage
-   8. attr_destination usage
-   9. xlset_destination usage
-   10. subst_attr usage
-   11. del_attr usage
-   12. hdr_body2attrs and hdr_body2attrs2 usage
-   13. Set xlbuf_size parameter
+   1.1. set_iattr usage
+   1.2. flags2attr usage
+   1.3. set_sattr usage
+   1.4. attr_exists usage
+   1.5. attr_equals_xl usage
+   1.6. insert_attr_hf usage
+   1.7. attr_to_reply usage
+   1.8. attr_destination usage
+   1.9. xlset_destination usage
+   1.10. subst_attr usage
+   1.11. del_attr usage
+   1.12. hdr_body2attrs and hdr_body2attrs2 usage
+   1.13. Set xlbuf_size parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Functions
+
+        2.1. set_iattr(attribute,value)
+        2.2. flags2attr("$avp")
+        2.3. set_sattr(attribute,value)
+        2.4. print_attr($attribute)
+        2.5. attr2uri($attribute[,uri-part])
+        2.6. attr_exists(attribute)
+        2.7. attr_equals(attribute, value)
+        2.8. attr_equals_xl(attribute, xl_format)
+        2.9. dump_attrs()
+        2.10. xlset_attr($attribute, xl_format)
+        2.11. xlfix_attr($attribute)
+        2.12. insert_attr_hf(name)
+        2.13. insert_attr_hf(header_name, $avp_name)
+        2.14. append_attr_hf(name)
+        2.15. append_attr_hf(header_name, $avp_name)
+        2.16. replace_attr_hf(name)
+        2.17. replace_attr_hf(header_name, $avp_name)
+        2.18. attr_to_reply(name)
+        2.19. attr_to_reply(header_name, $avp_name)
+        2.20. attr_destination($avp_name)
+        2.21. xlset_destination(xl_format)
+        2.22. subst_attr($avp_name, subst_re)
+        2.23. del_attr($avp_name)
+        2.24. hdr_body2attrs(headername, prefix)
+        2.25. hdr_body2attrs2(headername, prefix)
+
+   3. Parameters
+
+        3.1. xlbuf_size (integer)
 
 1. Overview
 
-   This module contains several functions that can be used to manipulate
-   the contents of AVPs (Attribute-Value pairs). The AVPs are variables
-   attached to the SIP message being processed. Each variable has its name
-   and value. AVPs can be used to store arbitrary data or as a means of
-   inter-module communication.
+   This  module contains several functions that can be used to manipulate
+   the  contents  of AVPs (Attribute-Value pairs). The AVPs are variables
+   attached  to  the  SIP  message being processed. Each variable has its
+   name and value. AVPs can be used to store arbitrary data or as a means
+   of inter-module communication.
 
-   You may also want to check the avpops module which is more flexible and
-   contains more functions. In future Kamailio releases the avp module
-   will be probably deprecated in favor of avpops module.
+   You  may  also  want to check the avpops module which is more flexible
+   and  contains  more  functions.  In  future  Kamailio releases the avp
+   module will be probably deprecated in favor of avpops module.
 
 2. Functions
 
@@ -77,7 +152,7 @@ Michal Matyska
      * attribute - The name of the AVP to be created.
      * value - Integer value of the AVP.
 
-   Example 1. set_iattr usage
+   Example 1.1. set_iattr usage
 ...
 set_iattr("fr_inv_timer", "60")
 ...
@@ -86,7 +161,7 @@ set_iattr("fr_inv_timer", "60")
 
    Store the current state of Kamailio flags into the specified AVP.
 
-   Example 2. flags2attr usage
+   Example 1.2. flags2attr usage
 ...
 flags2attr("$msg_flags")
 ...
@@ -99,7 +174,7 @@ flags2attr("$msg_flags")
      * attribute - The name of the AVP to be created.
      * value - String value of the AVP.
 
-   Example 3. set_sattr usage
+   Example 1.3. set_sattr usage
 ...
 set_sattr("called_number", "1234")
 ...
@@ -113,31 +188,31 @@ set_sattr("called_number", "1234")
 
 2.5. attr2uri($attribute[,uri-part])
 
-   Rewrite the whole Request-URI of the message being processed with the
-   value of an AVP, or if an uri-part is specified, rewrite only that
+   Rewrite  the whole Request-URI of the message being processed with the
+   value  of  an  AVP,  or if an uri-part is specified, rewrite only that
    specific part.
 
    Meaning of the parameter is as follows:
      * $attribute - The name of the AVP.
      * uri-part - The name of the part of the uri that will be rewritten.
-       The supported values are: "prefix", "uri", "username", "user",
-       "usernamepassword", "userpass", "domain", "host", "domainport",
-       "hostport", "port", "strip", "strip_tail". "prefix" will add the
-       AVP as a prefix to the username (equivalent to prefix("string")),
-       "strip" and "strip_tail" expect a number in the AVP and they will
-       remove the specified number of characters from the beginning,
-       respective the end of the username part of the uri. The rest of the
-       uri-part values names are self-explaining.
+       The  supported  values  are:  "prefix", "uri", "username", "user",
+       "usernamepassword",  "userpass",  "domain",  "host", "domainport",
+       "hostport",  "port",  "strip", "strip_tail". "prefix" will add the
+       AVP  as a prefix to the username (equivalent to prefix("string")),
+       "strip"  and "strip_tail" expect a number in the AVP and they will
+       remove  the  specified  number  of  characters from the beginning,
+       respective  the  end  of the username part of the uri. The rest of
+       the uri-part values names are self-explaining.
 
 2.6. attr_exists(attribute)
 
-   Test for the existence of AVP with given name. The function returns 1
+   Test  for the existence of AVP with given name. The function returns 1
    if given AVP exists and -1 if not.
 
    Meaning of the parameter is as follows:
      * attribute - The name of the AVP.
 
-   Example 4. attr_exists usage
+   Example 1.4. attr_exists usage
 ...
 if (attr_exists("saved_ruri")) {
     attr2uri("saved_uri");
@@ -148,9 +223,9 @@ if (attr_exists("saved_ruri")) {
 
 2.7. attr_equals(attribute, value)
 
-   Test whether an AVP with given name and value exists. The function
-   returns 1 if the AVP with given name and value exists and -1 if not.
-   The value of the AVP is compared string-wise. The comparison is case
+   Test  whether  an  AVP  with given name and value exists. The function
+   returns  1  if the AVP with given name and value exists and -1 if not.
+   The  value  of the AVP is compared string-wise. The comparison is case
    sensitive.
 
    Meaning of the parameter is as follows:
@@ -159,20 +234,20 @@ if (attr_exists("saved_ruri")) {
 
 2.8. attr_equals_xl(attribute, xl_format)
 
-   Test whether an AVP with given name and value exists. The function
-   returns 1 if the AVP with given name and value exists and -1 if not.
-   The value of the AVP is compared string-wise to the result of xprint
+   Test  whether  an  AVP  with given name and value exists. The function
+   returns  1  if the AVP with given name and value exists and -1 if not.
+   The  value  of the AVP is compared string-wise to the result of xprint
    formatting call. The comparison is case sensitive.
 
    Meaning of the parameter is as follows:
      * attribute - The name of the AVP.
-     * xl_format - The xprint formatting string, result of which is looked
-       for in AVP.
+     * xl_format  -  The  xprint  formatting  string,  result of which is
+       looked for in AVP.
 
-   Note: You must ensure, that the xprint module is loaded to be able to
+   Note:  You must ensure, that the xprint module is loaded to be able to
    use this function.
 
-   Example 5. attr_equals_xl usage
+   Example 1.5. attr_equals_xl usage
 ...
 if (attr_equals_xl("my_avp", "%ct")) {
   # my_avp has value equal to current Contact header field
@@ -189,15 +264,15 @@ if (attr_equals_xl("my_avp", "%ct")) {
 
 2.10. xlset_attr($attribute, xl_format)
 
-   Creates new AVP identified by attribute and assigns the result string
+   Creates  new AVP identified by attribute and assigns the result string
    of xprint formatting rules as its value.
 
    Meaning of the parameter is as follows:
      * $attribute - The name of the AVP.
-     * xl_format - String used for xprint formatting. For detailed info
+     * xl_format  -  String used for xprint formatting. For detailed info
        see documentation of xprint module.
 
-   Note: You must ensure, that the xprint module is loaded to be able to
+   Note:  You must ensure, that the xprint module is loaded to be able to
    use this function.
 
 2.11. xlfix_attr($attribute)
@@ -209,33 +284,33 @@ if (attr_equals_xl("my_avp", "%ct")) {
 
 2.12. insert_attr_hf(name)
 
-   Inserts new header into the request, which is beeing forwarded. The AVP
-   name is the name of the header field. If you need to insert header with
-   name which differs from the AVP name use insert_attr_hf(header_name,
-   $avp_name) instead.
+   Inserts  new  header  into the request, which is beeing forwarded. The
+   AVP name is the name of the header field. If you need to insert header
+   with     name    which    differs    from    the    AVP    name    use
+   insert_attr_hf(header_name, $avp_name) instead.
 
-   Inserting means putting the header to the beginning of the request,
+   Inserting  means  putting  the header to the beginning of the request,
    before any others.
 
    Meaning of the parameter is as follows:
-     * name - The name of the header field which is inserted into
-       forwarded request as well as name of AVP which's value is put as
+     * name  -  The  name  of  the  header  field  which is inserted into
+       forwarded  request  as well as name of AVP which's value is put as
        the header field value.
 
 2.13. insert_attr_hf(header_name, $avp_name)
 
    Inserts new header into the request, which is beeing forwarded.
 
-   Inserting means putting the header to the beginning of the request,
+   Inserting  means  putting  the header to the beginning of the request,
    before any others.
 
    Meaning of the parameter is as follows:
-     * header_name - The name of the header field which is inserted into
+     * header_name  - The name of the header field which is inserted into
        forwarded request.
-     * $avp_name - The name of AVP which's value is put as the header
+     * $avp_name  -  The  name  of AVP which's value is put as the header
        field value.
 
-   Example 6. insert_attr_hf usage
+   Example 1.6. insert_attr_hf usage
 ...
 set_sattr("my_route","<sip:user@host:port;lr>");
 insert_attr_hf("Route", "$my_route");
@@ -243,86 +318,87 @@ insert_attr_hf("Route", "$my_route");
 
 2.14. append_attr_hf(name)
 
-   Appends new header into the request, which is beeing forwarded. The AVP
-   name is the name of the header field. If you need to append header with
-   name which differs from the AVP name use append_attr_hf(header_name,
-   $avp_name) instead.
+   Appends  new  header  into the request, which is beeing forwarded. The
+   AVP name is the name of the header field. If you need to append header
+   with     name    which    differs    from    the    AVP    name    use
+   append_attr_hf(header_name, $avp_name) instead.
 
-   Appending means putting the header to the end of the request, after any
-   others.
+   Appending  means  putting  the header to the end of the request, after
+   any others.
 
    Meaning of the parameter is as follows:
-     * name - The name of the header field which is appended into
-       forwarded request as well as name of AVP which's value is put as
+     * name  -  The  name  of  the  header  field  which is appended into
+       forwarded  request  as well as name of AVP which's value is put as
        the header field value.
 
 2.15. append_attr_hf(header_name, $avp_name)
 
    Appends new header into the request, which is beeing forwarded.
 
-   Appending means putting the header to the end of the request, after any
-   others.
+   Appending  means  putting  the header to the end of the request, after
+   any others.
 
    Meaning of the parameter is as follows:
-     * header_name - The name of the header field which is appended into
+     * header_name  - The name of the header field which is appended into
        forwarded request.
-     * $avp_name - The name of AVP which's value is put as the header
+     * $avp_name  -  The  name  of AVP which's value is put as the header
        field value.
 
 2.16. replace_attr_hf(name)
 
-   Replaces header in the request, which is beeing forwarded. The AVP name
-   is the same as the name of the header field. If you need to replace
-   header with name which differs from the AVP name use
+   Replaces  header  in  the  request, which is beeing forwarded. The AVP
+   name  is  the  same  as  the  name of the header field. If you need to
+   replace  header  with  name  which  differs  from  the  AVP  name  use
    replace_attr_hf(header_name, $avp_name) instead.
 
-   Replacing means removing all the headers with specified name and
+   Replacing  means  removing  all  the  headers  with specified name and
    appending new one at the end, with the value from AVP.
 
    Meaning of the parameter is as follows:
      * name - The name of the header field which is replaced in forwarded
-       request as well as name of AVP which's value is put as the header
+       request  as well as name of AVP which's value is put as the header
        field value.
 
 2.17. replace_attr_hf(header_name, $avp_name)
 
    Replaces header in the request, which is beeing forwarded.
 
-   Replacing means removing all the headers with specified name and
+   Replacing  means  removing  all  the  headers  with specified name and
    appending new one at the end, with the value from AVP.
 
    Meaning of the parameter is as follows:
-     * header_name - The name of the header field which is replaced in
+     * header_name  -  The  name of the header field which is replaced in
        forwarded request.
-     * $avp_name - The name of AVP which's value is put as the header
+     * $avp_name  -  The  name  of AVP which's value is put as the header
        field value.
 
 2.18. attr_to_reply(name)
 
-   Appends new header into the reply at the request time processing. The
+   Appends  new header into the reply at the request time processing. The
    AVP name is the name of the header field. If you need to append header
-   with name which differs from the AVP name use
+   with     name    which    differs    from    the    AVP    name    use
    attr_to_reply(header_name, $avp_name) instead.
 
-   If you need to append headers during reply processing you can use
+   If  you  need  to  append  headers during reply processing you can use
    insert_attr_hf and append_attr_hf. This function stores data and waits
    for the reply being created.
 
    Meaning of the parameter is as follows:
-     * name - The name of the header field which is appended into reply as
-       well as name of AVP which's value is put as the header field value.
+     * name  -  The name of the header field which is appended into reply
+       as  well  as  name of AVP which's value is put as the header field
+       value.
 
 2.19. attr_to_reply(header_name, $avp_name)
 
    Appends new header into the reply at the request time processing.
 
    Meaning of the parameter is as follows:
-     * header_name - The name of the header field which is appended into
+     * header_name  - The name of the header field which is appended into
        reply.
-     * $avp_name - The name of AVP which's value is put as the header
+     * $avp_name  -  The  name  of AVP which's value is put as the header
        field value.
 
-   Example 7. attr_to_reply usage
+   Example 1.7. attr_to_reply usage
 ...
 xlset_attr("$my_route","<sip:%Hf:5080;lr>";
 attr_to_reply("P-Hint-Route", "my_route");
@@ -330,15 +406,15 @@ attr_to_reply("P-Hint-Route", "my_route");
 
 2.20. attr_destination($avp_name)
 
-   Sets the destination of the forwarded request to the value of AVP,
-   which must be either a SIP URI or a string in nameaddr format (e.g.
+   Sets  the  destination  of  the forwarded request to the value of AVP,
+   which  must  be  either a SIP URI or a string in nameaddr format (e.g.
    "Foo Bar" <sip:uri>).
 
    Meaning of the parameter is as follows:
-     * $avp_name - The name of AVP which's value is used for further
+     * $avp_name  -  The  name  of  AVP which's value is used for further
        request forwarding.
 
-   Example 8. attr_destination usage
+   Example 1.8. attr_destination usage
 ...
 xlset_attr("$my_route","<sip:%<next_host>:%<next_port>;myparam=a123;lr>");
 insert_attr_hf("Route", "$my_route");
@@ -348,17 +424,18 @@ t_relay();
 
 2.21. xlset_destination(xl_format)
 
-   Sets the destination of the forwarded request to the value of result of
-   xprint formatted string. Either SIP URI or nameaddr format is allowed.
+   Sets  the  destination of the forwarded request to the value of result
+   of  xprint  formatted  string.  Either  SIP  URI or nameaddr format is
+   allowed.
 
    Meaning of the parameter is as follows:
-     * xl_format - xprint module formatting string, the result is used for
-       request forwarding.
+     * xl_format  -  xprint  module formatting string, the result is used
+       for request forwarding.
 
-   Note: You must ensure, that the xprint module is loaded to be able to
+   Note:  You must ensure, that the xprint module is loaded to be able to
    use this function.
 
-   Example 9. xlset_destination usage
+   Example 1.9. xlset_destination usage
 ...
 xlset_destination("%<next_host>:%<next_port>");
 t_relay();
@@ -366,16 +443,16 @@ t_relay();
 
 2.22. subst_attr($avp_name, subst_re)
 
-   The value of the AVP identified by $avp_name name is matched and
-   substitued according to the subst_re sed like expression. Result of the
-   substitution is then stored in the original AVP.
+   The  value  of  the  AVP  identified  by $avp_name name is matched and
+   substitued  according  to  the subst_re sed like expression. Result of
+   the substitution is then stored in the original AVP.
 
    Meaning of the parameter is as follows:
-     * $avp_name - Name of the AVP which will be used for the
+     * $avp_name   -  Name  of  the  AVP  which  will  be  used  for  the
        substitution.
      * subst_re - SED like match&replace regullar expression.
 
-   Example 10. subst_attr usage
+   Example 1.10. subst_attr usage
 ...
 subst_attr("$uri","/tel:[0-9]*/sip:\1@foo.bar;user=phone/");
 ...
@@ -387,7 +464,7 @@ subst_attr("$uri","/tel:[0-9]*/sip:\1@foo.bar;user=phone/");
    Meaning of the parameter is as follows:
      * $avp_name - Name of the AVP which will be deleted.
 
-   Example 11. del_attr usage
+   Example 1.11. del_attr usage
 ...
 failure_route[1] {
         if (status=~4[0-9][0-9]) {
@@ -402,48 +479,48 @@ failure_route[1] {
 
 2.24. hdr_body2attrs(headername, prefix)
 
-   Function parses a header body content scans for fld1=val1,fld2=val2,...
-   and creates bunch of avps prefixfld1:= val1, prefixfld2:= val2, .... If
-   possible stores values as integers.
+   Function     parses     a    header    body    content    scans    for
+   fld1=val1,fld2=val2,...  and  creates bunch of avps prefixfld1:= val1,
+   prefixfld2:= val2, .... If possible stores values as integers.
 
    Meaning of the parameter is as follows:
-     * headername - The header name, which will be scanned for the
+     * headername  -  The  header  name,  which  will  be scanned for the
        name=value pairs.
-       If you want to create only AVPs with integer value use "/i" postfix
-       to the header name.
+       If  you  want  to  create  only  AVPs  with integer value use "/i"
+       postfix to the header name.
        If you want to create only AVPs with string value use "/s" postfix
        to the header name.
-     * prefix - The prefix, which is added before the name parsed from the
-       header body.
+     * prefix  -  The  prefix, which is added before the name parsed from
+       the header body.
 
 2.25. hdr_body2attrs2(headername, prefix)
 
-   Function parses a header body content scans for
-   fld1=val1,val2;fld2=val3,... and creates bunch of avps prefixfld1#1:=
-   val1, prefixfld1#2:= val2, prefixfld2:=val3 .... If possible stores
+   Function     parses     a    header    body    content    scans    for
+   fld1=val1,val2;fld2=val3,...  and creates bunch of avps prefixfld1#1:=
+   val1,  prefixfld1#2:=  val2,  prefixfld2:=val3 .... If possible stores
    values as integers.
 
    Meaning of the parameter is as follows:
-     * headername - The header name, which will be scanned for the
+     * headername  -  The  header  name,  which  will  be scanned for the
        name=value pairs.
-       If you want to create only AVPs with integer value use "/i" postfix
-       to the header name.
+       If  you  want  to  create  only  AVPs  with integer value use "/i"
+       postfix to the header name.
        If you want to create only AVPs with string value use "/s" postfix
        to the header name.
-     * prefix - The prefix, which is added before the name parsed from the
-       header body.
+     * prefix  -  The  prefix, which is added before the name parsed from
+       the header body.
 
-   Example 12. hdr_body2attrs and hdr_body2attrs2 usage
+   Example 1.12. hdr_body2attrs and hdr_body2attrs2 usage
 if (method=="BYE") {
         # QoS reporting
         if (search("^User-Agent: AVM FRITZ!Box Fon*")) {
                 hdr_body2attrs2("X-RTP-Stat/i", "QoS_");
-                xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{X-RTP
--Stat}\n");
+                xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{X-RT
+P-Stat}\n");
         } else if (search("^User-Agent: Sipura/*")) {
                 hdr_body2attrs("P-RTP-Stat/i", "QoS_");
-                xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{P-RTP
--Stat}\n");
+                xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{P-RT
+P-Stat}\n");
         }
 }
 # AVP QoS_xx now contain the values from appropriate header
@@ -455,14 +532,14 @@ if (method=="BYE") {
 
 3.1. xlbuf_size (integer)
 
-   Defines size of internal buffer for all xprint formatting calls. If you
-   don't use xprint formatting calls, you can set it to 0 to preserve some
-   memory, if you get errors while formatting due to buffer size, you can
-   enlarge it.
+   Defines  size  of  internal buffer for all xprint formatting calls. If
+   you don't use xprint formatting calls, you can set it to 0 to preserve
+   some  memory,  if  you get errors while formatting due to buffer size,
+   you can enlarge it.
 
    Default value is 256.
 
-   Example 13. Set xlbuf_size parameter
+   Example 1.13. Set xlbuf_size parameter
 ...
 modparam("avp", "xlbuf_size", 1024)
 ...

@@ -1,3 +1,4 @@
+
 The Mangler Module - SDP mangling
 
 Gabriel Vasile
@@ -5,16 +6,50 @@ Gabriel Vasile
    FhG FOKUS
 
    Copyright © 2003 FhG FOKUS
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Parameters
+
+              2.1. contact_flds_separator (string)
+
+        3. Functions
+
+              3.1. sdp_mangle_ip(pattern, newip) 
+              3.2. sdp_mangle_port(offset) 
+              3.3. encode_contact(encoding_prefix) 
+              3.4. decode_contact() 
+              3.5. decode_contact_header() 
 
    List of Examples
 
-   1. Set db_url parameter
-   2. sdp_mangle_ip usage
-   3. sdp_mangle_port usage
-   4. encode_contact usage
-   5. decode_contact usage
-   6. decode_contact_header usage
+   1.1. Set db_url parameter
+   1.2. sdp_mangle_ip usage
+   1.3. sdp_mangle_port usage
+   1.4. encode_contact usage
+   1.5. decode_contact usage
+   1.6. decode_contact_header usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Parameters
+
+        2.1. contact_flds_separator (string)
+
+   3. Functions
+
+        3.1. sdp_mangle_ip(pattern, newip) 
+        3.2. sdp_mangle_port(offset) 
+        3.3. encode_contact(encoding_prefix) 
+        3.4. decode_contact() 
+        3.5. decode_contact_header() 
 
 1. Overview
 
@@ -26,64 +61,66 @@ Gabriel Vasile
 
 2.1. contact_flds_separator (string)
 
-   First char of this parameter is used as separator for encoding/decoding
-   Contact header. If you set this parameter to "-", then an encoded uri
-   might look sip:user-password-ip-port-protocol@PublicIP
+   First   char   of   this   parameter   is   used   as   separator  for
+   encoding/decoding  Contact  header.  If you set this parameter to "-",
+   then an encoded uri might look
+   sip:user-password-ip-port-protocol@PublicIP
 
 Warning
 
-   First char of this field must be set to a value which is not used
-   inside username,password or other fields of contact.Otherwise it is
+   First  char  of  this  field  must be set to a value which is not used
+   inside  username,password  or  other fields of contact.Otherwise it is
    possible for the decoding step to fail/produce wrong results.
 
    Default value is "*".
 
-   Example 1. Set db_url parameter
+   Example 1.1. Set db_url parameter
 ...
 modparam("mangler", "contact_flds_separator", "-")
 ...
 
 3. Functions
 
-   3.1. sdp_mangle_ip(pattern, newip)
-   3.2. sdp_mangle_port(offset)
-   3.3. encode_contact(encoding_prefix)
-   3.4. decode_contact()
-   3.5. decode_contact_header()
+   3.1. sdp_mangle_ip(pattern, newip) 
+   3.2. sdp_mangle_port(offset) 
+   3.3. encode_contact(encoding_prefix) 
+   3.4. decode_contact() 
+   3.5. decode_contact_header() 
 
 3.1.  sdp_mangle_ip(pattern, newip)
 
-   Changes IP addresses inside SDP package in lines describing connections
-   like c=IN IP4 . Currently this function only changes IP4 addresses
-   since IP6 probably will not need to traverse NAT :)
+   Changes   IP   addresses   inside  SDP  package  in  lines  describing
+   connections  like  c=IN IP4 . Currently this function only changes IP4
+   addresses since IP6 probably will not need to traverse NAT :)
 
    The function returns negative on error, or number of replacements + 1.
 
    Meaning of the parameters is as follows:
      * pattern - A ip address/mask pair used to match IP's located inside
-       SDP package in lines c=IN IP4 ip. This line will only be changed if
-       located IP is in the network described by this pattern. Examples of
-       valid patterns are "10.0.0.0/255.0.0.0" or "10.0.0.0/8" etc.
-     * newip - A string representing the new IP to be put inside SDP
+       SDP  package  in lines c=IN IP4 ip. This line will only be changed
+       if  located  IP  is  in  the  network  described  by this pattern.
+       Examples   of   valid   patterns   are   "10.0.0.0/255.0.0.0"   or
+       "10.0.0.0/8" etc.
+     * newip  -  A  string  representing  the new IP to be put inside SDP
        package if old IP address matches pattern.
 
-   Example 2. sdp_mangle_ip usage
+   Example 1.2. sdp_mangle_ip usage
 ...
 sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 ...
 
 3.2.  sdp_mangle_port(offset)
 
-   Changes ports inside SDP package in lines describing media like m=audio
-   13451.
+   Changes  ports  inside  SDP  package  in  lines  describing media like
+   m=audio 13451.
 
    The function returns negative on error, or number of replacements + 1.
 
    Meaning of the parameters is as follows:
-     * offset - A string representing an integer which will be
+     * offset   -   A  string  representing  an  integer  which  will  be
        added/subtracted from the located port.
 
-   Example 3. sdp_mangle_port usage
+   Example 1.3. sdp_mangle_port usage
 ...
 sdp_mangle_port("-12000");
 ...
@@ -91,51 +128,52 @@ sdp_mangle_port("-12000");
 3.3.  encode_contact(encoding_prefix)
 
    This function will encode uri-s inside Contact header in the following
-   manner sip:username:password@ip:port;transport=protocol goes
-   sip:enc_pref*username*ip*port*protocol@public_ip. "*" (asterisk) is the
-   default separator.
+   manner      sip:username:password@ip:port;transport=protocol      goes
+   sip:enc_pref*username*ip*port*protocol@public_ip.  "*"  (asterisk)  is
+   the default separator.
 
    The function returns negative on error, 1 on success.
 
    Meaning of the parameters is as follows:
-     * encoding_prefix - Something to allow us to determine that a contact
-       is encoded public ip--a routable IP, most probably you should put
-       your external IP of your NAT box.
+     * encoding_prefix  -  Something  to  allow  us  to  determine that a
+       contact  is  encoded  public  ip--a routable IP, most probably you
+       should put your external IP of your NAT box.
 
-   Example 4. encode_contact usage
+   Example 1.4. encode_contact usage
 ...
 if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 ...
 
 3.4.  decode_contact()
 
-   This function will decode the URI in first line in packets which come
+   This  function will decode the URI in first line in packets which come
    with encoded URI in the following manner
-   sip:enc_pref*username*ip*port*protocol*src_ip*src_port*src_proto@public
-   _ip;parameters is converted to sip:username:password@ip:port;parameters
-   and will set destination URI to sip:src_ip:src_port;transport=src_proto
-   (so that the next forward() or t_relay() will send the message back to
-   src_ip:src_port using src_proto). It uses the default set parameter for
-   contact encoding separator.
+   sip:enc_pref*username*ip*port*protocol*src_ip*src_port*src_proto@publi
+   c_ip;parameters is converted to
+   sip:username:password@ip:port;parameters  and will set destination URI
+   to sip:src_ip:src_port;transport=src_proto (so that the next forward()
+   or  t_relay()  will  send  the  message  back to src_ip:src_port using
+   src_proto).  It  uses  the  default set parameter for contact encoding
+   separator.
 
    The function returns negative on error, 1 on success.
 
-   Example 5. decode_contact usage
+   Example 1.5. decode_contact usage
 ...
 if (uri =~ "^enc*") { decode_contact(); }
 ...
 
 3.5.  decode_contact_header()
 
-   This function will decode URIs inside Contact header in the same manner
-   as decode_contact(). The difference is that no dst_uri is set (src_ip,
-   src_port and src_proto are ignored) and instead of changing the request
-   uri, the Contact header URI is modified. It uses the default set
-   parameter for contact encoding separator.
+   This  function  will  decode  URIs  inside  Contact header in the same
+   manner  as  decode_contact(). The difference is that no dst_uri is set
+   (src_ip,  src_port  and src_proto are ignored) and instead of changing
+   the  request  uri,  the  Contact  header  URI is modified. It uses the
+   default set parameter for contact encoding separator.
 
    The function returns negative on error, 1 on success.
 
-   Example 6. decode_contact_header usage
+   Example 1.6. decode_contact_header usage
 ...
 if (uri =~ "^enc*") { decode_contact_header(); }
 ...

@@ -1,3 +1,4 @@
+
 The Xprint Module
 
 Elena-Ramona Modroiu
@@ -5,24 +6,76 @@ Elena-Ramona Modroiu
    Asipto
 
    Copyright © 2003 FhG FOKUS
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Implemented Specifiers
+        3. Parameters
+
+              3.1. buf_size (integer)
+
+        4. Functions
+
+              4.1. xplog(level, format) 
+              4.2. xpdbg(format) 
+
+   2. Developer Guide
+
+        1. Module API
+
+              1.1. Functions
+
+                    1.1.1. int xbind(xl_api_t *xl_api) 
+                    1.1.2. int xparse(char *s, xl_elog_p *el) 
+                    1.1.3. int shm_xparse(char *s, xl_elog_p *el) 
+                    1.1.4. int xparse2(char *s, xl_elog_p *el,
+                            xl_parse_cb cb) 
+
+                    1.1.5. int shm_xparse2(char *s, xl_elog_p *el,
+                            xl_parse_cb cb) 
+
+                    1.1.6. xfree(xl_elog_p el) 
+                    1.1.7. shm_xfree(xl_elog_p el) 
+                    1.1.8. int xprint(struct sip_msg* msg, xl_elog_p el,
+                            char *buf, int *len) 
+
+                    1.1.9. str *xnulstr() 
 
    List of Examples
 
-   1. Set buf_size parameter
-   2. xplog usage
-   3. xpdbg usage
+   1.1. Set buf_size parameter
+   1.2. xplog usage
+   1.3. xpdbg usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Implemented Specifiers
+   3. Parameters
+
+        3.1. buf_size (integer)
+
+   4. Functions
+
+        4.1. xplog(level, format) 
+        4.2. xpdbg(format) 
 
 1. Overview
 
-   IMPORTANT: this is former xlog module from SIP Express Router (SER)
-   kept because it is used by other modules via API to get the value for
-   strings with specifiers. If you want to print log messages from
+   IMPORTANT:  this  is  former xlog module from SIP Express Router (SER)
+   kept  because it is used by other modules via API to get the value for
+   strings  with  specifiers.  If  you  want  to  print log messages from
    configuration file, use the real module named 'xlog'.
 
-   This module provides the possibility to print user formatted log or
-   debug messages from SER scripts, similar to printf function but now a
-   specifier is replaced with a part of the SIP request. Section 2,
+   This  module  provides  the possibility to print user formatted log or
+   debug  messages from SER scripts, similar to printf function but now a
+   specifier  is  replaced  with  a  part  of the SIP request. Section 2,
    "Implemented Specifiers" shows what can be printed out.
 
 2. Implemented Specifiers
@@ -33,14 +86,14 @@ Elena-Ramona Modroiu
      * %ci : call-id
      * %cs : cseq
      * %ct : contact header
-     * %Cxy : color printing based on escape sequences (x - foreground
-       color, y - background color). The values for colors: x - default
-       color of the terminal; s - Black; r - Red; g - Green; y - Yellow; b
-       - Blue; p - Purple; c - Cyan; w - White
+     * %Cxy  :  color  printing based on escape sequences (x - foreground
+       color,  y  - background color). The values for colors: x - default
+       color  of the terminal; s - Black; r - Red; g - Green; y - Yellow;
+       b - Blue; p - Purple; c - Cyan; w - White
      * %ds : destination set
      * %fu : 'From' uri
      * %ft : 'From' tag
-     * %Hn : host's hostname (if system hostname is FQDN, part before
+     * %Hn  :  host's  hostname  (if system hostname is FQDN, part before
        first .)
      * %Hd : host's domain (if system hosntame is FQDN, part behind first
        .)
@@ -59,7 +112,7 @@ Elena-Ramona Modroiu
      * %rr : reply's reason
      * %rs : reply's status
      * %rt : 'Refer-To' uri
-     * %Ri : IP address of the interface where the request has been
+     * %Ri  :  IP  address  of  the  interface where the request has been
        received
      * %Rp : received port
      * %si : IP source address
@@ -72,32 +125,32 @@ Elena-Ramona Modroiu
      * %ua : User agent header field
      * %uq : unique id (per SER's process) - to make really unique id use
        %uq-%px-%mx or %uq-%px-%Tx
-     * %{name[N]} : print the body of the Nth header identified by 'name'.
-       If [N] is omitted then the body of the first header is printed. The
-       first header is got when N=0, for the second N=1, a.s.o. To print
-       the last header of that type, use -1, no other negative values are
-       supported now. No white spaces are allowed inside the specifier
-       (before }, before or after {, [, ] symbols). When N='*', all
-       headers of that type are printed.
-       The module should identify most of compact header names (the ones
+     * %{name[N]}  :  print  the  body  of  the  Nth header identified by
+       'name'.  If  [N]  is  omitted then the body of the first header is
+       printed.  The  first  header  is got when N=0, for the second N=1,
+       a.s.o.  To  print  the  last header of that type, use -1, no other
+       negative  values  are  supported  now. No white spaces are allowed
+       inside  the specifier (before }, before or after {, [, ] symbols).
+       When N='*', all headers of that type are printed.
+       The  module should identify most of compact header names (the ones
        recognized by ser which should be all at this moment), if not, the
        compact form has to be specified explicitely. It is recommended to
-       use dedicated specifiers for headers (e.g., %ua for user agent
+       use  dedicated  specifiers  for  headers (e.g., %ua for user agent
        header), if they are available -- they are faster.
      * %<name[N]> : print the value of AVP optionally %indexed by the [N]
        value It uses AVPs subindexing, e.g. if you don't specify subindex
        and there are more AVPs with the same name, the result is NULL. To
-       specify first AVP use [1], negative values are indexes counted
+       specify  first  AVP  use  [1], negative values are indexes counted
        backward through the list.
-     * %@select.framework[N].value : print the value of select framework
-       call. For detailed info what calls are available see select
+     * %@select.framework[N].value  : print the value of select framework
+       call.  For  detailed  info  what  calls  are  available see select
        framework documentation (and modules documentation, as modules can
        extend select framework calls).
      * %| or %(space) : end of %@select.framework identifier. If you need
-       to concatenate select framework call and another non-whitespace
-       literal, you need to explicitelly set the end of the select
+       to  concatenate  select  framework call and another non-whitespace
+       literal,  you  need  to  explicitelly  set  the  end of the select
        framework identifier.
-       E.g. %@ruri.user%|@%@ruri.host converts all featured request uri
+       E.g.  %@ruri.user%|@%@ruri.host  converts all featured request uri
        into user@host form only.
 
 3. Parameters
@@ -110,15 +163,15 @@ Elena-Ramona Modroiu
 
    Default value is 4096.
 
-   Example 1. Set buf_size parameter
+   Example 1.1. Set buf_size parameter
 ...
 modparam("xprint", "buf_size", 8192)
 ...
 
 4. Functions
 
-   4.1. xplog(level, format)
-   4.2. xpdbg(format)
+   4.1. xplog(level, format) 
+   4.2. xpdbg(format) 
 
 4.1.  xplog(level, format)
 
@@ -136,7 +189,7 @@ modparam("xprint", "buf_size", 8192)
        What really matters is the third letter of the value.
      * format - The formatted string to be printed.
 
-   Example 2. xplog usage
+   Example 1.2. xplog usage
 ...
 xplog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 ...
@@ -148,41 +201,63 @@ xplog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
    Meaning of the parameters is as follows:
      * format - The formatted string to be printed.
 
-   Example 3. xpdbg usage
+   Example 1.3. xpdbg usage
 ...
 xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 ...
 
-5. Module API
+Chapter 2. Developer Guide
 
-   5.1. Functions
+   Table of Contents
 
-        5.1.1. int xbind(xl_api_t *xl_api)
-        5.1.2. int xparse(char *s, xl_elog_p *el)
-        5.1.3. int shm_xparse(char *s, xl_elog_p *el)
-        5.1.4. int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
-        5.1.5. int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
-        5.1.6. xfree(xl_elog_p el)
-        5.1.7. shm_xfree(xl_elog_p el)
-        5.1.8. int xprint(struct sip_msg* msg, xl_elog_p el, char *buf,
-                int *len)
+   1. Module API
 
-        5.1.9. str *xnulstr()
+        1.1. Functions
 
-5.1. Functions
+              1.1.1. int xbind(xl_api_t *xl_api) 
+              1.1.2. int xparse(char *s, xl_elog_p *el) 
+              1.1.3. int shm_xparse(char *s, xl_elog_p *el) 
+              1.1.4. int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb) 
+              1.1.5. int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb
+                      cb) 
 
-5.1.1.  int xbind(xl_api_t *xl_api)
+              1.1.6. xfree(xl_elog_p el) 
+              1.1.7. shm_xfree(xl_elog_p el) 
+              1.1.8. int xprint(struct sip_msg* msg, xl_elog_p el, char
+                      *buf, int *len) 
+
+              1.1.9. str *xnulstr() 
+
+1. Module API
+
+   1.1. Functions
+
+        1.1.1. int xbind(xl_api_t *xl_api) 
+        1.1.2. int xparse(char *s, xl_elog_p *el) 
+        1.1.3. int shm_xparse(char *s, xl_elog_p *el) 
+        1.1.4. int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb) 
+        1.1.5. int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb) 
+        1.1.6. xfree(xl_elog_p el) 
+        1.1.7. shm_xfree(xl_elog_p el) 
+        1.1.8. int xprint(struct sip_msg* msg, xl_elog_p el, char *buf,
+                int *len) 
+
+        1.1.9. str *xnulstr() 
+
+1.1. Functions
+
+1.1.1.  int xbind(xl_api_t *xl_api)
 
    Bind to the xprint module API.
 
    Meaning of the parameters is as follows:
-     * xl_api - structure that the xprint module functions are bind to.
-       The functions can be executed as xl_api.xparse(),
+     * xl_api  -  structure that the xprint module functions are bind to.
+       The    functions    can    be    executed    as   xl_api.xparse(),
        xl_api.xprint()...
 
    Return value: 0 - success, <0 - error.
 
-5.1.2.  int xparse(char *s, xl_elog_p *el)
+1.1.2.  int xparse(char *s, xl_elog_p *el)
 
    Parse an xl-formatted string in private memory.
 
@@ -192,30 +267,30 @@ xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 
    Return value: 0 - success, <0 - error.
 
-5.1.3.  int shm_xparse(char *s, xl_elog_p *el)
+1.1.3.  int shm_xparse(char *s, xl_elog_p *el)
 
-   Parse an xl-formatted string in shared memory. See xparse() function
+   Parse  an  xl-formatted string in shared memory. See xparse() function
    for details.
 
-5.1.4.  int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
+1.1.4.  int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
 
-   Parse an xl-formatted string in private memory. This function is able
-   to identify regular expression back references, for example \1, \2,
-   \3... When a back reference is found the callback function is called
-   that is supposed to farther parse the back reference and fill in the
+   Parse  an xl-formatted string in private memory. This function is able
+   to  identify  regular  expression back references, for example \1, \2,
+   \3...  When  a back reference is found the callback function is called
+   that  is  supposed to farther parse the back reference and fill in the
    xl_elog structure.
 
    Meaning of the parameters is as follows:
      * s - string to be parsed.
      * el - returned xl-lib list.
-     * cb - callback function for parsing the regular expression back
+     * cb  -  callback  function  for parsing the regular expression back
        references.
 
-   The prototype of the callback function is: typedef int (*xl_parse_cb)
+   The  prototype of the callback function is: typedef int (*xl_parse_cb)
    (str *s, int shm, xl_elog_p el);
 
    Parameters of the callback function:
-     * s - regular expression back reference to be parsed (without the
+     * s  -  regular  expression back reference to be parsed (without the
        leading '\' character).
      * shm - indicates whether or not shared memory needs to be used. (1:
        shared memory, 0: private memory)
@@ -224,26 +299,26 @@ xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 
    Return value: 0 - success, <0 - error.
 
-5.1.5.  int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
+1.1.5.  int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
 
-   Parse an xl-formatted string in shared memory supporting regular
+   Parse  an  xl-formatted  string  in  shared  memory supporting regular
    expression back references. See xparse2() function for details.
 
-5.1.6.  xfree(xl_elog_p el)
+1.1.6.  xfree(xl_elog_p el)
 
    Free the xl-lib list allocated by xparse() or xparse2().
 
    Meaning of the parameters is as follows:
      * el - xl-lib list to be freed.
 
-5.1.7.  shm_xfree(xl_elog_p el)
+1.1.7.  shm_xfree(xl_elog_p el)
 
    Free the xl-lib list allocated by shm_xparse() or shm_xparse2().
 
    Meaning of the parameters is as follows:
      * el - xl-lib list to be freed.
 
-5.1.8.  int xprint(struct sip_msg* msg, xl_elog_p el, char *buf, int *len)
+1.1.8.  int xprint(struct sip_msg* msg, xl_elog_p el, char *buf, int *len)
 
    Evaluate the xl-formatted string and print the result into a buffer.
 
@@ -251,11 +326,11 @@ xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
      * msg - SIP message pointer.
      * el - xl-lib list to be evaluated.
      * buf - pre-allocated buffer that is filled in with the result.
-     * len - length of the printed string. len needs to be set to the
+     * len  -  length  of  the printed string. len needs to be set to the
        maximum length of the result buffer before calling this function.
 
    Return value: 0 - success, <0 - error.
 
-5.1.9.  str *xnulstr()
+1.1.9.  str *xnulstr()
 
    Return the string "<null>".

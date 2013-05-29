@@ -1,38 +1,145 @@
-The Auth_identity module
+
+SIP Authenticated Identity Module
 
 Gergely Kovacs
 
    Iptel.org
 
    Copyright © 2007 Iptel.org
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+        3. Compilation
+        4. Installation And Running
+        5. Parameters
+
+              5.1. privatekey_path (string)
+              5.2. certificate_path (string)
+              5.3. certificate_url (string)
+              5.4. msg_timeout (integer)
+              5.5. auth_validity_time (integer)
+              5.6. callid_cache_limit (integer)
+              5.7. certificate_cache_limit (integer)
+              5.8. cainfo_path (string)
+              5.9. accept_pem_certs ([0|1])
+
+        6. Functions
+
+              6.1. auth_date_proc() 
+
+                    6.1.1. Dependencies
+
+              6.2. auth_add_identity() 
+
+                    6.2.1. Dependencies
+
+              6.3. vrfy_check_date() 
+
+                    6.3.1. Dependencies
+
+              6.4. vrfy_get_certificate() 
+
+                    6.4.1. Dependencies
+
+              6.5. vrfy_check_certificate() 
+
+                    6.5.1. Dependencies
+
+              6.6. vrfy_check_msgvalidity() 
+
+                    6.6.1. Dependencies
+
+              6.7. vrfy_check_callid() 
+
+                    6.7.1. Dependencies
+
+        7. Authorizer service examples
+        8. Verifier service examples
 
    List of Examples
 
-   1. Set privatekey_path parameter
-   2. Set certificate_path parameter
-   3. Set certificate_url parameter
-   4. Set msg_timeout parameter
-   5. Set auth_validity_time parameter
-   6. Set auth_validity_time parameter
-   7. Set certificate_cache_limit parameter
-   8. Set cainfo_path parameter
-   9. Set accept_pem_certs parameter
+   1.1. Set privatekey_path parameter
+   1.2. Set certificate_path parameter 
+   1.3. Set certificate_url parameter 
+   1.4. Set msg_timeout parameter 
+   1.5. Set auth_validity_time parameter 
+   1.6. Set auth_validity_time parameter 
+   1.7. Set certificate_cache_limit parameter 
+   1.8. Set cainfo_path parameter 
+   1.9. Set accept_pem_certs parameter 
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Compilation
+   4. Installation And Running
+   5. Parameters
+
+        5.1. privatekey_path (string)
+        5.2. certificate_path (string)
+        5.3. certificate_url (string)
+        5.4. msg_timeout (integer)
+        5.5. auth_validity_time (integer)
+        5.6. callid_cache_limit (integer)
+        5.7. certificate_cache_limit (integer)
+        5.8. cainfo_path (string)
+        5.9. accept_pem_certs ([0|1])
+
+   6. Functions
+
+        6.1. auth_date_proc() 
+
+              6.1.1. Dependencies
+
+        6.2. auth_add_identity() 
+
+              6.2.1. Dependencies
+
+        6.3. vrfy_check_date() 
+
+              6.3.1. Dependencies
+
+        6.4. vrfy_get_certificate() 
+
+              6.4.1. Dependencies
+
+        6.5. vrfy_check_certificate() 
+
+              6.5.1. Dependencies
+
+        6.6. vrfy_check_msgvalidity() 
+
+              6.6.1. Dependencies
+
+        6.7. vrfy_check_callid() 
+
+              6.7.1. Dependencies
+
+   7. Authorizer service examples
+   8. Verifier service examples
 
 1. Overview
 
    Auth Identity module provides functionalities for securely identifying
-   originators of SIP messages. It implements the SIP Identity standard
-   where a SIP proxy signs messages that is sent to other domains. This
+   originators  of  SIP messages. It implements the SIP Identity standard
+   where  a  SIP proxy signs messages that is sent to other domains. This
    module has two basic services:
-     * authorizer - authorizes a message and adds Identity and
+     * authorizer   -   authorizes   a  message  and  adds  Identity  and
        Identity-Info headers
      * verifier - verifies an authorized message
 
    Known limitations in this version:
      * authorizer and verifier support all SIP requests except for CANCEL
        and REGISTER
-     * verifier does not support the subjectAltName extension of
+     * verifier   does   not  support  the  subjectAltName  extension  of
        certificates
 
 2. Dependencies
@@ -45,16 +152,16 @@ Gergely Kovacs
      * OpenSSL (version 0.9.8 or higher) for cryptographic functions
      * libcurl for HTTP, HTTPS functions
 
-   If you'd like to use TLS module too then use the corresponding LIB line
-   in auth_identity's Makefile
+   If  you'd  like  to  use TLS module too then use the corresponding LIB
+   line in auth_identity's Makefile
 
 4. Installation And Running
 
    the Authorizer service needs to make the public key, which conveyed in
-   a certificate, available over HTTPS or HTTP for verifiers. The domain
-   the authorizer is responsible for and the domain part of the URL of the
-   certificate must be the same. This service needs access to the private
-   key too.
+   a  certificate, available over HTTPS or HTTP for verifiers. The domain
+   the  authorizer  is  responsible for and the domain part of the URL of
+   the  certificate  must  be  the same. This service needs access to the
+   private key too.
 
 5. Parameters
 
@@ -77,7 +184,7 @@ Gergely Kovacs
 
    This parameter is required by authentication service.
 
-   Example 1. Set privatekey_path parameter
+   Example 1.1. Set privatekey_path parameter
 ...
 modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
 ...
@@ -91,7 +198,7 @@ modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
 
    This parameter is required by authentication service.
 
-   Example 2. Set certificate_path parameter
+   Example 1.2. Set certificate_path parameter 
 ...
 modparam("auth_identity","certificate_path","/var/www/ssl/mycert.pem")
 ...
@@ -100,13 +207,13 @@ modparam("auth_identity","certificate_path","/var/www/ssl/mycert.pem")
 
    Note: this parameter is for authorizer service.
 
-   The url where certificate is available for other verifier services.
-   (value of Identity-info header) The certificate should be in DER
+   The  url  where  certificate is available for other verifier services.
+   (value  of  Identity-info  header)  The  certificate  should be in DER
    format.
 
    This parameter is required by authentication service.
 
-   Example 3. Set certificate_url parameter
+   Example 1.3. Set certificate_url parameter 
 ...
 modparam("auth_identity","certificate_url","https://foo.bar/mycert.der")
 ...
@@ -115,13 +222,13 @@ modparam("auth_identity","certificate_url","https://foo.bar/mycert.der")
 
    Note: this parameter is for authorizer service.
 
-   If the Date header of message which is needed to be authenticated
-   contains a time different by more than this seconds from the current
+   If  the  Date  header  of  message which is needed to be authenticated
+   contains  a  time different by more than this seconds from the current
    time noted by the authentication service then it rejects the message.
 
    This parameter is optional. The default value is "600".
 
-   Example 4. Set msg_timeout parameter
+   Example 1.4. Set msg_timeout parameter 
 ...
 modparam("auth_identity","msg_timeout",600)
 ...
@@ -130,13 +237,13 @@ modparam("auth_identity","msg_timeout",600)
 
    Note: this parameter is for verifier service.
 
-   The validity time of an authenticated message. The message will be
+   The  validity  time  of  an authenticated message. The message will be
    refused if it contains a time different by more than this seconds from
    the current time noted by the verification service.
 
    This parameter is optional. The default value is "3600".
 
-   Example 5. Set auth_validity_time parameter
+   Example 1.5. Set auth_validity_time parameter 
 ...
 modparam("auth_identity","auth_validity_time",3600)
 ...
@@ -145,15 +252,15 @@ modparam("auth_identity","auth_validity_time",3600)
 
    Note: this parameter is for verifier service.
 
-   The number of Call-IDs stored in order to recognize call replay
-   attacks. A Call-ID is stored auth_validity_time long and uses
+   The  number  of  Call-IDs  stored  in  order  to recognize call replay
+   attacks.   A  Call-ID  is  stored  auth_validity_time  long  and  uses
    approximately 100 bytes memory.
 
-   This parameter is optional. The default value is "32768". (you should
-   increase the size of shared memory with -m command line switch if you
+   This  parameter is optional. The default value is "32768". (you should
+   increase  the size of shared memory with -m command line switch if you
    liked to store more callid than 10000)
 
-   Example 6. Set auth_validity_time parameter
+   Example 1.6. Set auth_validity_time parameter 
 ...
 modparam("auth_identity","callid_cache_limit",32768)
 ...
@@ -163,12 +270,12 @@ modparam("auth_identity","callid_cache_limit",32768)
    Note: this parameter is for verifier service.
 
    The number of certificates stored in order to avoid needless download.
-   A certificate is stored until its expiration date and uses
+   A   certificate   is   stored  until  its  expiration  date  and  uses
    approximately 600 bytes memory.
 
    This parameter is optional. The default value is "4096".
 
-   Example 7. Set certificate_cache_limit parameter
+   Example 1.7. Set certificate_cache_limit parameter 
 ...
 modparam("auth_identity","certificate_cache_limit",4096)
 ...
@@ -177,13 +284,13 @@ modparam("auth_identity","certificate_cache_limit",4096)
 
    Note: this parameter is for verifier service.
 
-   A file of trusted certificates. The file should contain multiple
-   certificates in PEM format concatenated together. It could be useful
+   A  file  of  trusted  certificates.  The  file should contain multiple
+   certificates  in  PEM format concatenated together. It could be useful
    for verifying a certificate signed by a private CA.
 
    This parameter is optional. It has not got default value.
 
-   Example 8. Set cainfo_path parameter
+   Example 1.8. Set cainfo_path parameter 
 ...
 modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
 ...
@@ -196,38 +303,38 @@ modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
 
    This parameter is optional. The default value is "0".
 
-   Example 9. Set accept_pem_certs parameter
+   Example 1.9. Set accept_pem_certs parameter 
 ...
 modparam("auth_identity","accept_pem_certs",1)
 ...
 
 6. Functions
 
-   6.1. auth_date_proc()
+   6.1. auth_date_proc() 
 
         6.1.1. Dependencies
 
-   6.2. auth_add_identity()
+   6.2. auth_add_identity() 
 
         6.2.1. Dependencies
 
-   6.3. vrfy_check_date()
+   6.3. vrfy_check_date() 
 
         6.3.1. Dependencies
 
-   6.4. vrfy_get_certificate()
+   6.4. vrfy_get_certificate() 
 
         6.4.1. Dependencies
 
-   6.5. vrfy_check_certificate()
+   6.5. vrfy_check_certificate() 
 
         6.5.1. Dependencies
 
-   6.6. vrfy_check_msgvalidity()
+   6.6. vrfy_check_msgvalidity() 
 
         6.6.1. Dependencies
 
-   6.7. vrfy_check_callid()
+   6.7. vrfy_check_callid() 
 
         6.7.1. Dependencies
 
@@ -235,12 +342,12 @@ modparam("auth_identity","accept_pem_certs",1)
 
    Note: this function is for authorizer service.
 
-   If a message, the auth service should authorize, contains Date header
-   then this function checks whether it falls in message timeout (set by
-   msg_timeout parameter). If there is not any Date header then the module
-   adds one. This function also checks whether the certificate of the
-   authentication service (set by certificate_path parameter) has been
-   expired.
+   If  a message, the auth service should authorize, contains Date header
+   then  this function checks whether it falls in message timeout (set by
+   msg_timeout  parameter).  If  there  is  not  any Date header then the
+   module  adds one. This function also checks whether the certificate of
+   the  authentication  service  (set  by certificate_path parameter) has
+   been expired.
 
 6.1.1. Dependencies
 
@@ -250,17 +357,17 @@ modparam("auth_identity","accept_pem_certs",1)
 
    Note: this function is for authorizer service.
 
-   Assembles digest-string from the message, calculates its SHA1 hash,
+   Assembles  digest-string  from  the message, calculates its SHA1 hash,
    encrypts it with the private key (set by privatekey_path parameter) of
-   the authorizer service, base64 encodes it and adds to the outgoing
-   message as the value of Identity header. This function also adds
-   Identity-Info header which contains an URI (set by certificate_url
+   the  authorizer  service,  base64  encodes it and adds to the outgoing
+   message  as  the  value  of  Identity  header. This function also adds
+   Identity-Info  header  which  contains  an URI (set by certificate_url
    parameter) from which the certificate of auth service can be acquired.
 
-   Note: this function needs the final outgoing message for authorization,
-   so no module may modify any digest string related headers (From, To,
-   Call-ID, CSeq, Date, Contact) and body after auth_add_identity()'s been
-   called
+   Note:   this   function   needs   the   final   outgoing  message  for
+   authorization,  so  no  module  may  modify  any digest string related
+   headers  (From,  To,  Call-ID,  CSeq,  Date,  Contact)  and body after
+   auth_add_identity()'s been called
 
 6.2.1. Dependencies
 
@@ -270,7 +377,7 @@ modparam("auth_identity","accept_pem_certs",1)
 
    Note: this function is for verifier service.
 
-   Checks Date header of the incoming message whether falls in validity
+   Checks  Date  header of the incoming message whether falls in validity
    time (set by auth_validity_time parameter)
 
 6.3.1. Dependencies
@@ -281,9 +388,9 @@ modparam("auth_identity","accept_pem_certs",1)
 
    Note: this function is for verifier service.
 
-   Tries to get certificate defined by the value of Identity-info header
-   from certificate table (which size is set by certificate_cache_limit
-   parameter). If the required certificate is not found there then this
+   Tries  to get certificate defined by the value of Identity-info header
+   from  certificate  table (which size is set by certificate_cache_limit
+   parameter).  If  the required certificate is not found there then this
    function downloads it.
 
 6.4.1. Dependencies
@@ -294,9 +401,9 @@ modparam("auth_identity","accept_pem_certs",1)
 
    Note: this function is for verifier service.
 
-   Checks whether the downloaded certificate is valid (is not expired, its
-   subject and the domain part of the URL are the same) and adds it to
-   certificate table.
+   Checks  whether  the  downloaded certificate is valid (is not expired,
+   its  subject  and the domain part of the URL are the same) and adds it
+   to certificate table.
 
 6.5.1. Dependencies
 
@@ -306,22 +413,22 @@ modparam("auth_identity","accept_pem_certs",1)
 
    Note: this function is for verifier service.
 
-   Assembles digest-string from the message, create SHA1 hash and compares
-   it with the decrypted value of Identity header.
+   Assembles  digest-string  from  the  message,  create  SHA1  hash  and
+   compares it with the decrypted value of Identity header.
 
 6.6.1. Dependencies
 
-   vrfy_get_certificate() must be called before and
+   vrfy_get_certificate()      must      be     called     before     and
    vrfy_check_certificate() should be called before
 
 6.7.  vrfy_check_callid()
 
    Note: this function is for verifier service.
 
-   Checks whether the current call's been already processed in validity
-   time (set by auth_validity_time) to recognize call replay attacks. If
+   Checks  whether  the current call's been already processed in validity
+   time  (set by auth_validity_time) to recognize call replay attacks. If
    this call (identified by Call-id, Cseq, and tag of From header triple)
-   has not been replayed then adds it to callid table (which size is set
+   has  not been replayed then adds it to callid table (which size is set
    by callid_cache_limit parameter).
 
 6.7.1. Dependencies

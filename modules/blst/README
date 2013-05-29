@@ -1,3 +1,4 @@
+
 Blst Module - Blacklist Management
 
 Andrei Pelinescu-Onciul
@@ -5,16 +6,48 @@ Andrei Pelinescu-Onciul
    iptelorg GmbH
 
    Copyright © 2007 iptelorg GmbH
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Functions
+
+              2.1. blst_add([timeout]) 
+              2.2. blst_add_retry_after(min, max) 
+              2.3. blst_del() 
+              2.4. blst_is_blacklisted() 
+              2.5. blst_set_ignore([flags]) 
+              2.6. blst_rpl_set_ignore([flags]) 
+              2.7. blst_clear_ignore([flags]) 
+              2.8. blst_rpl_clear_ignore([flags]) 
 
    List of Examples
 
-   1. blst_add usage
-   2. blst_add_retry_after usage
-   3. blst_del usage
-   4. blst_is_blacklisted usage
-   5. blst_set_ignore usage
-   6. blst_clear_ignore usage
+   1.1. blst_add usage
+   1.2. blst_add_retry_after usage
+   1.3. blst_del usage
+   1.4. blst_is_blacklisted usage
+   1.5. blst_set_ignore usage
+   1.6. blst_clear_ignore usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Functions
+
+        2.1. blst_add([timeout]) 
+        2.2. blst_add_retry_after(min, max) 
+        2.3. blst_del() 
+        2.4. blst_is_blacklisted() 
+        2.5. blst_set_ignore([flags]) 
+        2.6. blst_rpl_set_ignore([flags]) 
+        2.7. blst_clear_ignore([flags]) 
+        2.8. blst_rpl_clear_ignore([flags]) 
 
 1. Overview
 
@@ -22,22 +55,22 @@ Andrei Pelinescu-Onciul
 
 2. Functions
 
-   2.1. blst_add([timeout])
-   2.2. blst_add_retry_after(min, max)
-   2.3. blst_del()
-   2.4. blst_is_blacklisted()
-   2.5. blst_set_ignore([flags])
-   2.6. blst_rpl_set_ignore([flags])
-   2.7. blst_clear_ignore([flags])
-   2.8. blst_rpl_clear_ignore([flags])
+   2.1. blst_add([timeout]) 
+   2.2. blst_add_retry_after(min, max) 
+   2.3. blst_del() 
+   2.4. blst_is_blacklisted() 
+   2.5. blst_set_ignore([flags]) 
+   2.6. blst_rpl_set_ignore([flags]) 
+   2.7. blst_clear_ignore([flags]) 
+   2.8. blst_rpl_clear_ignore([flags]) 
 
 2.1.  blst_add([timeout])
 
-   Adds the source of the current message to the blacklist for timeout
-   seconds. If timeout is missing or 0 it uses the default blacklist
+   Adds  the  source  of the current message to the blacklist for timeout
+   seconds.  If  timeout  is  missing  or 0 it uses the default blacklist
    timeout (dst_blacklist_expire).
 
-   Example 1. blst_add usage
+   Example 1.1. blst_add usage
 ...
 if (src_ip==10.0.0.0/9)
     blst_add(30); # 30 s
@@ -47,14 +80,14 @@ else
 
 2.2.  blst_add_retry_after(min, max)
 
-   Adds the source of the current message to the blacklist for the time
-   interval specified in the Retry-After header. If the Retry-After header
-   is missing, it will fail (returns false). If the Retry-After value is
-   less than min, then min seconds will be used instead. If the
-   Retry-After value is greater than max, then max seconds will be used
+   Adds  the  source of the current message to the blacklist for the time
+   interval  specified  in  the  Retry-After  header.  If the Retry-After
+   header  is  missing,  it will fail (returns false). If the Retry-After
+   value  is less than min, then min seconds will be used instead. If the
+   Retry-After  value  is greater than max, then max seconds will be used
    instead.
 
-   Example 2. blst_add_retry_after usage
+   Example 1.2. blst_add_retry_after usage
 ...
 # on_reply route
 if (msg_status==503){ # blacklist 503 source for Retry-After seconds
@@ -65,11 +98,11 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 
 2.3.  blst_del()
 
-   Removes the source of the current message from the blacklist. If the
-   address is not present in the blacklist at the time of the call it
+   Removes  the  source of the current message from the blacklist. If the
+   address  is  not  present  in the blacklist at the time of the call it
    returns false.
 
-   Example 3. blst_del usage
+   Example 1.3. blst_del usage
 ...
     blst_del();
 ...
@@ -78,7 +111,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 
    Returns true if the source of the current message is blacklisted.
 
-   Example 4. blst_is_blacklisted usage
+   Example 1.4. blst_is_blacklisted usage
 ...
     if (blst_is_blacklisted()){
         log("message from a blacklisted source");
@@ -88,24 +121,24 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 
 2.5.  blst_set_ignore([flags])
 
-   Set errors that will not be taken into account when deciding whether to
-   blacklist a destination for the current message or a local reply to the
-   current message.
+   Set  errors  that will not be taken into account when deciding whether
+   to blacklist a destination for the current message or a local reply to
+   the current message.
 
-   blst_set_ignore(..) works for forwarding the current message and
-   blst_rpl_set_ignore(...) works for local replies to the current
+   blst_set_ignore(..)  works  for  forwarding  the  current  message and
+   blst_rpl_set_ignore(...)  works  for  local  replies  to  the  current
    message.
 
-   The variants of these functions with no parameters will ignore
+   The  variants  of  these  functions  with  no  parameters  will ignore
    everything (equivalent to passing 0xff).
 
-   The flags are stored internally as a bitmask, and are applied by
+   The  flags  are  stored  internally  as  a bitmask, and are applied by
    bitwise ANDing them together. The following flags are available:
      * 0x02 - generic send error (send denied/ failed).
      * 0x04 - connect failed (TCP, TLS or SCTP).
      * 0x08 - ICMP error (not currently used).
      * 0x10 - SIP transaction timeout.
-     * 0x20 - 503 reply (statefull mode only). For more details see
+     * 0x20  -  503  reply  (statefull  mode  only). For more details see
        tmblst_503.
 
 Note
@@ -114,7 +147,7 @@ Note
    per message. The connection blacklist ignore flags are inherithed from
    the message that caused the connection establishment.
 
-   Example 5. blst_set_ignore usage
+   Example 1.5. blst_set_ignore usage
     blst_set_ignore(6); # ignore send and connect errors
 
 2.6.  blst_rpl_set_ignore([flags])
@@ -123,12 +156,12 @@ Note
 
 2.7.  blst_clear_ignore([flags])
 
-   Clears blacklist ignore flags previously set by the corresponding
+   Clears  blacklist  ignore  flags  previously  set by the corresponding
    blst_set_ignore(...) or blst_rpl_set_ignore(...) functions.
 
    See also blst_set_ignore.
 
-   Example 6. blst_clear_ignore usage
+   Example 1.6. blst_clear_ignore usage
     blst_clear_ignore(4); # ignore connect errors
 
 2.8.  blst_rpl_clear_ignore([flags])

@@ -1,3 +1,4 @@
+
 prefix_route Module
 
 Alfred E. Heggestad
@@ -7,25 +8,69 @@ Alfred E. Heggestad
    Copyright © 2007 Alfred E. Heggestad
 
    Copyright © 2008 Telio Telecom AS
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Parameters
+
+              2.1. db_url (string)
+              2.2. db_table (string)
+              2.3. exit (int)
+
+        3. Functions
+
+              3.1. prefix_route([user])
+
+        4. RPC Commands
+
+              4.1. prefix_route.reload
+              4.2. prefix_route.dump
+
+        5. Database Structure
 
    List of Examples
 
-   1. Setting db_url parameter
-   2. Setting db_table parameter
-   3. Setting exit parameter
-   4. prefix_route() usage
-   5. Sample data
+   1.1. Setting db_url parameter
+   1.2. Setting db_table parameter
+   1.3. Setting exit parameter
+   1.4. prefix_route() usage
+   1.5. Sample data
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Parameters
+
+        2.1. db_url (string)
+        2.2. db_table (string)
+        2.3. exit (int)
+
+   3. Functions
+
+        3.1. prefix_route([user])
+
+   4. RPC Commands
+
+        4.1. prefix_route.reload
+        4.2. prefix_route.dump
+
+   5. Database Structure
 
 1. Overview
 
-   The prefix_route module does routing based on a set of prefixes from
-   the database. The prefix rule-set is loaded from the database into a
-   binary tree in memory, either on startup or when issuing the
-   "prefix_route.reload" RPC command. When calling the "prefix_route()"
-   function from the ser.cfg configuration script, it will try to match
-   the user part of the request URI with the best matching route. If a
-   route is found, it will be used for further processing. If not found
+   The  prefix_route  module does routing based on a set of prefixes from
+   the  database.  The prefix rule-set is loaded from the database into a
+   binary  tree  in  memory,  either  on  startup  or  when  issuing  the
+   "prefix_route.reload"  RPC  command. When calling the "prefix_route()"
+   function  from  the ser.cfg configuration script, it will try to match
+   the  user  part  of the request URI with the best matching route. If a
+   route  is  found, it will be used for further processing. If not found
    normal processing will continue.
 
    Development was sponsored by Telio Telecom.
@@ -42,7 +87,7 @@ Alfred E. Heggestad
 
    Default value is "mysql://ser@localhost/ser"
 
-   Example 1. Setting db_url parameter
+   Example 1.1. Setting db_url parameter
 ...
 modparam("prefix_route", "db_url", "mysql://ser:pass@db_host/ser")
 ...
@@ -53,19 +98,19 @@ modparam("prefix_route", "db_url", "mysql://ser:pass@db_host/ser")
 
    Default value is "prefix_route".
 
-   Example 2. Setting db_table parameter
+   Example 1.2. Setting db_table parameter
 ...
 modparam("prefix_route", "db_table", "new_prefix_route")
 ...
 
 2.3. exit (int)
 
-   If set, exit the execution of the configuration file when a route block
-   is executed upon matching a prefix. Otherwise return 1 (true).
+   If  set,  exit  the  execution  of the configuration file when a route
+   block is executed upon matching a prefix. Otherwise return 1 (true).
 
    Default value is 1 (on).
 
-   Example 3. Setting exit parameter
+   Example 1.3. Setting exit parameter
 ...
 modparam("prefix_route", "exit", 0)
 ...
@@ -76,14 +121,14 @@ modparam("prefix_route", "exit", 0)
 
 3.1. prefix_route([user])
 
-   This function tries to find a route from the user part of the request
+   This  function tries to find a route from the user part of the request
    URI (if no parameter is provided), or from the value of the parameter.
    The parameter can contain config variables.
 
    If a route is found, it will be used for further processing. Otherwise
    the function will return false.
 
-   Example 4. prefix_route() usage
+   Example 1.4. prefix_route() usage
 ...
   if (!prefix_route()) {
       xlog("L_ERR", "prefix_route(): no matching routes\n");
@@ -116,7 +161,7 @@ modparam("prefix_route", "exit", 0)
      * route - varchar(64) - Route name
      * comment - varchar(64) - Free-form comment
 
-   Example 5. Sample data
+   Example 1.5. Sample data
 ...
    +--------+-------+---------------+
    | prefix | route | comment       |

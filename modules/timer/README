@@ -1,46 +1,81 @@
-1. timer module
+
+timer module
 
 Tomas Mandys
 
    Iptel.org
 
    Copyright © 2007 iptelorg GmbH
-     __________________________________________________________________
+     _________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. ABNF syntax
-   1.4. Parameters
+   Table of Contents
 
-        1.4.1. declare_timer (string)
+   1. Admin Guide
 
-   1.5. Functions
+        1. Overview
+        2. Dependencies
+        3. ABNF syntax
+        4. Parameters
 
-        1.5.1. timer_enable(timer_id, enable_disable)
-        1.5.2. @timer.timer.timer_id.enabled
-        1.5.3. @timer.executed
+              4.1. declare_timer (string)
 
-   1.6. Examples
+        5. Functions
 
-1.1. Overview
+              5.1. timer_enable(timer_id, enable_disable) 
+              5.2. @timer.timer.timer_id.enabled 
+              5.3. @timer.executed 
+
+        6. Examples
+
+   List of Examples
+
+   1.1. Example declare_timer
+   1.2. timer_enable usage
+   1.3. timer.timer.timer_id.enabled usage
+   1.4. timer.executed usage
+   1.5. timer common example
+   1.6. Using timer module for testing a functionality
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. ABNF syntax
+   4. Parameters
+
+        4.1. declare_timer (string)
+
+   5. Functions
+
+        5.1. timer_enable(timer_id, enable_disable) 
+        5.2. @timer.timer.timer_id.enabled 
+        5.3. @timer.executed 
+
+   6. Examples
+
+1. Overview
 
    The module supports triggering specific route block on timer.
 
-1.2. Dependencies
+2. Dependencies
 
    none
 
-1.3. ABNF syntax
+3. ABNF syntax
 
         timer_id = alphanum
         slow_fast = "slow" | "fast"
-        declare_timer_syntax = timer_id "=" (route#|route_name) "," interval ","
- slow_fast "," ["enable"]
+        declare_timer_syntax = timer_id "=" (route#|route_name) "," interval ",
+" slow_fast "," ["enable"]
         enable_disable = "0" | "1"
 
-1.4. Parameters
+4. Parameters
 
-1.4.1. declare_timer (string)
+   4.1. declare_timer (string)
+
+4.1. declare_timer (string)
 
    Declares timer route which will be called in specific interval.
 
@@ -48,58 +83,62 @@ Tomas Mandys
                         declare_timer = declare_timer_syntax
 
    timer_id is timer identifier, route is handler to be called when timer
-   is triggered, interval is timer interval in milliseconds, slow_fast
+   is  triggered,  interval  is timer interval in milliseconds, slow_fast
    determines if handler will be hooked in slow or fast timer queue, fast
-   timer handler returns as quickly as possible, slow timer handler may
+   timer  handler  returns as quickly as possible, slow timer handler may
    spend longer time, see ser/doc/timers.txt documentation. Use enable to
    enable timer when ser is starting, otherwise use timer_enable to start
    it later.
 
-   Example 1. Example declare_timer
+   Example 1.1. Example declare_timer
         ...
-        modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,enab
-le");
+        modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,ena
+ble");
         ...
 
-1.5. Functions
+5. Functions
 
-1.5.1. timer_enable(timer_id, enable_disable)
+   5.1. timer_enable(timer_id, enable_disable) 
+   5.2. @timer.timer.timer_id.enabled 
+   5.3. @timer.executed 
 
-   Enable/disable timer route specified by timer_id. Because of timer core
-   API the callback is not disabled immediately but is removed from
-   handler by itself not to decrease performance. Disabling and enabling
-   in sequence may be tricky. timer_id references to timer declared by
+5.1.  timer_enable(timer_id, enable_disable)
+
+   Enable/disable  timer  route  specified  by timer_id. Because of timer
+   core  API the callback is not disabled immediately but is removed from
+   handler  by itself not to decrease performance. Disabling and enabling
+   in  sequence  may  be tricky. timer_id references to timer declared by
    declare_timer.
 
-   Example 2. timer_enable usage
+   Example 1.2. timer_enable usage
         ...
         timer_enable("MY_TIMER", 1);
         ...
 
-1.5.2. @timer.timer.timer_id.enabled
+5.2.  @timer.timer.timer_id.enabled
 
    Return true ("1") if timer specified by timer_id is enabled, otherwise
    returns false ("0").
 
-   Example 3. timer.timer.timer_id.enabled usage
+   Example 1.3. timer.timer.timer_id.enabled usage
         if (@timer.timer.MY_TIMER.enabled == "1") {
         ....
         }
 
-1.5.3. @timer.executed
+5.3.  @timer.executed
 
    Returns name of timer which has been executed, i.e. non empty value is
    returned only when handler is being processed.
 
-   Example 4. timer.executed usage
+   Example 1.4. timer.executed usage
         if (@timer.executed != "") {
                 # timer is being handled
         ....
         }
 
-1.6. Examples
+6. Examples
 
-   Example 5. timer common example
+   Example 1.5. timer common example
 loadmodule "modules/xprint/xprint.so"
 loadmodule "modules/timer/timer.so"
 
@@ -121,11 +160,11 @@ route["ONTIMER2"] {
         route("print");
 }
 
-   Example 6. Using timer module for testing a functionality
+   Example 1.6. Using timer module for testing a functionality
 
-   The timer module may be used to test a functionality being developed
-   and not requiring real request.A developer may put tested code in route
-   section which is called once after ser starts.
+   The  timer  module may be used to test a functionality being developed
+   and  not  requiring  real  request.A  developer may put tested code in
+   route section which is called once after ser starts.
 loadmodule "timer";
 loadmodule "xprint";
 

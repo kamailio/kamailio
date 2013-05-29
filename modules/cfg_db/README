@@ -1,3 +1,4 @@
+
 The configuration database module - cfg_db
 
 Tomas Mandys
@@ -5,40 +6,68 @@ Tomas Mandys
    Iptel.org
 
    Copyright © 2008 Tomas Mandys
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+        3. Parameters
+
+              3.1. db_url (string)
+              3.2. transl_tbl (string) := "cfg_transl"
+              3.3. custom_tbl (string) := "cfg_custom"
+
+        4. Examples
 
    List of Examples
 
-   1. Example db_url
-   2. Content of tables
+   1.1. Example db_url
+   1.2. Content of tables
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. transl_tbl (string) := "cfg_transl"
+        3.3. custom_tbl (string) := "cfg_custom"
+
+   4. Examples
 
 1. Overview
 
-   The module implements a database driver for the configuration
-   parameters API. When configuration parameters are being declared
-   (typically when starting) API then driver is notified and has chance to
-   set value (of any parameter) based on value taken from database. It's
-   primarily targeted for interfacing with 3rd party software which is
-   aware of the Kamailio configuration.
+   The   module  implements  a  database  driver  for  the  configuration
+   parameters  API.  When  configuration  parameters  are  being declared
+   (typically  when  starting) API then driver is notified and has chance
+   to  set  value  (of any parameter) based on value taken from database.
+   It's  primarily targeted for interfacing with 3rd party software which
+   is aware of the Kamailio configuration.
 
-   A parameter is uniquely identified by a group_name plus a name, which
-   is used by the driver to check if a value can be found. Because
-   configuration parameters may be spread in many tables, a translation
-   table is used to indicate where to start searching. Multiple look-up
+   A  parameter is uniquely identified by a group_name plus a name, which
+   is  used  by  the  driver  to  check  if a value can be found. Because
+   configuration  parameters  may be spread in many tables, a translation
+   table  is  used to indicate where to start searching. Multiple look-up
    tables may be defined for single parameter, tables are searched in the
    first round by exact match until parameter is found, all tables listed
-   with wildcard (asterisk) in group name are searched in the second
+   with  wildcard  (asterisk)  in  group  name are searched in the second
    round. If a parameter is not found then its value is left unchanged.
 
-   Configuration parameters are normally declared in C code and this
+   Configuration  parameters  are  normally  declared  in C code and this
    module additionally supports also declaring custom parameters in extra
-   table. Such parameters may be used typically in script only. All
-   parameters listed in the table are declared in the first step, values
-   are initialized in the second step using the same procedure as C-code
+   table.  Such  parameters  may  be  used  typically in script only. All
+   parameters  listed in the table are declared in the first step, values
+   are  initialized in the second step using the same procedure as C-code
    parameters.
 
-   The module does not reflect changes made in parameters when SER is
-   running. It just declares variables and assigns values when SER is
+   The  module  does  not  reflect changes made in parameters when SER is
+   running.  It  just  declares  variables and assigns values when SER is
    starting. That's all.
 
 2. Dependencies
@@ -58,7 +87,7 @@ Tomas Mandys
    The format is:
                 db_url = database
 
-   Example 1. Example db_url
+   Example 1.1. Example db_url
 loadmodule("mysql.so");
 loadmodule("cfg_db.so");
 ...
@@ -67,33 +96,33 @@ modparam("cfg_db", "db_url", "mysql://SER:123@127.0.0.1:12345/SER");
 
 3.2. transl_tbl (string) := "cfg_transl"
 
-   Name of table used for pointing group_name+name into configuration
-   table. If empty/null field values are found then default values will be
-   used. The default values are declared in record having group_name
-   called <default>. The C-code "absolutely" default values ("cfg_var",
-   "group_name", "name", "value"). The other keyword is asterisk * which
-   matches all parameters and will be used if parameter is not explicitely
-   mentioned.
+   Name  of  table  used  for pointing group_name+name into configuration
+   table.  If  empty/null field values are found then default values will
+   be  used.  The default values are declared in record having group_name
+   called  <default>.  The C-code "absolutely" default values ("cfg_var",
+   "group_name",  "name", "value"). The other keyword is asterisk * which
+   matches   all  parameters  and  will  be  used  if  parameter  is  not
+   explicitely mentioned.
 
 3.3. custom_tbl (string) := "cfg_custom"
 
-   Name of table used for extra param declaration (group_name, name, type,
-   min/max value, description).
+   Name  of  table  used  for  extra param declaration (group_name, name,
+   type, min/max value, description).
 
 4. Examples
 
-   Example 2. Content of tables
+   Example 1.2. Content of tables
         cfg_transl table:
-        group_name|name|cfg_table|cfg_table_group_name_field|cfg_table_name_fiel
-d|cfg_table_value_field
+        group_name|name|cfg_table|cfg_table_group_name_field|cfg_table_name_fie
+ld|cfg_table_value_field
         core|use_dst_blacklist|cfg_dns|||
         core|dst_blacklist_mem|cfg_dns|||
         core|dst_blacklist_expire|||
-        my|route_addr|cfg_my|my_group_name|my_name|my_value     ; overrides <def
-ault> values
+        my|route_addr|cfg_my|my_group_name|my_name|my_value     ; overrides <de
+fault> values
         my|use_rtp_proxy|cfg_my|my_group_name|my_name|my_value
-        *|*|||| ; matches all param ids, points to tables defined in row <defaul
-t>
+        *|*|||| ; matches all param ids, points to tables defined in row <defau
+lt>
         <default>||cfg_var|group_name|name|value  ; default cfg_table* values
 
         cfg_custom table:

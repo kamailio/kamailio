@@ -1,3 +1,4 @@
+
 Counters Module
 
 Andrei Pelinescu-Onciul
@@ -5,25 +6,75 @@ Andrei Pelinescu-Onciul
    iptelorg GmbH
 
    Copyright © 2010 iptelorg GmbH
-     __________________________________________________________________
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Parameters
+
+              2.1. script_counter
+              2.2. script_cnt_grp_name
+
+        3. Functions
+
+              3.1. cnt_inc([group.]name) 
+              3.2. cnt_add([group.]name, number) 
+              3.3. cnt_reset([group.]name) 
+
+        4. counters RPC Functions
+
+              4.1. cnt.get group counter_name
+              4.2. cnt.reset group counter_name
+              4.3. cnt.grps_list
+              4.4. cnt.var_list group
+              4.5. cnt.grp_get_all
+              4.6. cnt.help group counter_name
 
    List of Examples
 
-   1. Create a new script_counter
-   2. Set script_cnt_grp_name in the config file
-   3. cnt_inc usage
-   4. cnt_add usage
-   5. cnt_reset usage
-   6. cnt.get grp counter_name usage
-   7. cnt.reset grp name usage
-   8. cnt.grps_list usage
-   9. cnt.var_list group usage
-   10. cnt.var_list group usage
-   11. cnt.help grp name usage
+   1.1. Create a new script_counter 
+   1.2. Set script_cnt_grp_name in the config file 
+   1.3. cnt_inc usage
+   1.4. cnt_add usage
+   1.5. cnt_reset usage
+   1.6. cnt.get grp counter_name usage
+   1.7. cnt.reset grp name usage
+   1.8. cnt.grps_list usage
+   1.9. cnt.var_list group usage
+   1.10. cnt.var_list group usage
+   1.11. cnt.help grp name usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Parameters
+
+        2.1. script_counter
+        2.2. script_cnt_grp_name
+
+   3. Functions
+
+        3.1. cnt_inc([group.]name) 
+        3.2. cnt_add([group.]name, number) 
+        3.3. cnt_reset([group.]name) 
+
+   4. counters RPC Functions
+
+        4.1. cnt.get group counter_name
+        4.2. cnt.reset group counter_name
+        4.3. cnt.grps_list
+        4.4. cnt.var_list group
+        4.5. cnt.grp_get_all
+        4.6. cnt.help group counter_name
 
 1. Overview
 
-   This module exports counters/statistics manipulating script functions
+   This  module exports counters/statistics manipulating script functions
    and RPCs.
 
 2. Parameters
@@ -34,15 +85,15 @@ Andrei Pelinescu-Onciul
 2.1. script_counter
 
    Define a new counter that can be used from the script. The declaration
-   might include a group in front of the counter name, separated with '.'.
-   It might also include a counter description string (help message),
-   separated from the name with a ' ' or ':'. If the group is missing, the
-   group defined in the script_cnt_grp_name module parameter will be used
-   (the default is "script"). If the description is missing, the default
-   is "custom script counter". The format of the declaration is:
-   [group.]name[( |:)description].
+   might  include  a  group  in front of the counter name, separated with
+   '.'.  It  might  also  include  a  counter  description  string  (help
+   message),  separated  from the name with a ' ' or ':'. If the group is
+   missing, the group defined in the script_cnt_grp_name module parameter
+   will be used (the default is "script"). If the description is missing,
+   the  default is "custom script counter". The format of the declaration
+   is: [group.]name[( |:)description].
 
-   Example 1.  Create a new script_counter
+   Example 1.1.  Create a new script_counter 
 modparam("counters", "script_counter", "foo")  # script.foo
 modparam("counters", "script_counter", "test.bar")  # test.bar
 modparam("counters", "script_counter", "baz example counter")  # script.baz
@@ -50,27 +101,27 @@ modparam("counters", "script_counter", "test.x:another example") # test.x
 
 2.2. script_cnt_grp_name
 
-   Group name that will be used for the counters defined via the
+   Group  name  that  will  be  used  for  the  counters  defined via the
    script_counter module parameter which do not have a specified group.
 
    Default: "script".
 
-   Example 2.  Set script_cnt_grp_name in the config file
+   Example 1.2.  Set script_cnt_grp_name in the config file 
 modparam("counters", "script_cnt_grp_name", "my_counters")
 
 3. Functions
 
-   3.1. cnt_inc([group.]name)
-   3.2. cnt_add([group.]name, number)
-   3.3. cnt_reset([group.]name)
+   3.1. cnt_inc([group.]name) 
+   3.2. cnt_add([group.]name, number) 
+   3.3. cnt_reset([group.]name) 
 
 3.1.  cnt_inc([group.]name)
 
-   Increments the counter group.name. The counter must be defined using
+   Increments  the  counter group.name. The counter must be defined using
    the script_counter module parameter. If the group name is missing, the
    group specified by the script_cnt_grp_name modparam will be used.
 
-   Example 3. cnt_inc usage
+   Example 1.3. cnt_inc usage
 ...
 modparam("counters", "script_counter", "reqs")
 modparam("counters", "script_counter", "out.reqs  forwarded requests")
@@ -84,11 +135,11 @@ route {
 
 3.2.  cnt_add([group.]name, number)
 
-   Adds number the counter group.name. The counter must be defined using
+   Adds  number the counter group.name. The counter must be defined using
    the script_counter module parameter. If the group name is missing, the
    group specified by the script_cnt_grp_name modparam will be used.
 
-   Example 4. cnt_add usage
+   Example 1.4. cnt_add usage
 ...
 modparam("counters", "script_counter", "reqs10  reqs times 10")
 ...
@@ -99,11 +150,11 @@ route {
 
 3.3.  cnt_reset([group.]name)
 
-   Resets the counter group.name. The counter must be defined using the
-   script_counter module parameter. If the group name is missing, the
+   Resets  the  counter group.name. The counter must be defined using the
+   script_counter  module  parameter.  If  the group name is missing, the
    group specified by the script_cnt_grp_name modparam will be used.
 
-   Example 5. cnt_reset usage
+   Example 1.5. cnt_reset usage
 ...
 modparam("counters", "script_counter", "reqs")
 ...
@@ -126,41 +177,41 @@ route {
 
    Get the value of the counter identified by group.counter_name.
 
-   Example 6. cnt.get grp counter_name usage
- $ sercmd cnt.get script foo
+   Example 1.6. cnt.get grp counter_name usage
+ $ kamcmd cnt.get script foo
 
 4.2.  cnt.reset group counter_name
 
    Resets the counter identified by group.counter_name.
 
-   Example 7. cnt.reset grp name usage
- $ sercmd cnt.reset script foo
+   Example 1.7. cnt.reset grp name usage
+ $ kamcmd cnt.reset script foo
 
 4.3.  cnt.grps_list
 
    Lists all the declared counter groups.
 
-   Example 8. cnt.grps_list usage
- $ sercmd cnt.grps_list
+   Example 1.8. cnt.grps_list usage
+ $ kamcmd cnt.grps_list
 
 4.4.  cnt.var_list group
 
-   Lists all the names of all the counters belonging to the specified
+   Lists  all  the  names  of all the counters belonging to the specified
    group.
 
-   Example 9. cnt.var_list group usage
- $ sercmd cnt.var_list script
+   Example 1.9. cnt.var_list group usage
+ $ kamcmd cnt.var_list script
 
 4.5.  cnt.grp_get_all
 
    Lists all the counter names and their values in the specified group.
 
-   Example 10. cnt.var_list group usage
- $ sercmd cnt.grp_get_all script
+   Example 1.10. cnt.var_list group usage
+ $ kamcmd cnt.grp_get_all script
 
 4.6.  cnt.help group counter_name
 
    Displays the counter description.
 
-   Example 11. cnt.help grp name usage
- $ sercmd cnt.help script foo
+   Example 1.11. cnt.help grp name usage
+ $ kamcmd cnt.help script foo
