@@ -21,7 +21,10 @@
 	    <holder>Telio Telecom AS</holder>
 	</copyright>
     </bookinfo>
+    <toc></toc>
 
+    <chapter>
+	<title>Admin Guide</title>
     <section id="prefixroute.overview">
 	<title>Overview</title>
 	<para>
@@ -42,6 +45,6 @@
     <xi:include href="prefix_route_functions.xml"/>
     <xi:include href="prefix_route_rpc.xml"/>
     <xi:include href="prefix_route_extra.xml"/>
-
+    </chapter>
 </book>
 
