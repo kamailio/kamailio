@@ -11,7 +11,7 @@
 
 <book id="auth_identity" xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-	<title>The Auth_identity module</title>
+        <title>SIP Authenticated Identity Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Gergely</firstname>
@@ -27,10 +27,11 @@
 	    <holder>Iptel.org</holder>
 	</copyright>
     </bookinfo>
+    <toc></toc>
 
-    <title>SIP Authenticated Identity Module</title>
-
-    <section>
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="auth_identity.overview">
 	<title>Overview</title>
 	<para>
 		Auth Identity module provides functionalities for securely identifying
@@ -224,4 +225,5 @@ route[VERIFY]
 ...
 ]]></programlisting>
 	</section>
+	</chapter>
 </book>
