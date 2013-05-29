@@ -21,7 +21,8 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="mangler.overview">
 	<title>Overview</title>
 	<para>
@@ -31,5 +32,5 @@
 
     <xi:include href="mangler_params.xml"/>
     <xi:include href="mangler_functions.xml"/>
-
+    </chapter>
 </book>
