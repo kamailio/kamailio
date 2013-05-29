@@ -8,7 +8,7 @@ CREATE TABLE acc (
     sip_code VARCHAR(3) DEFAULT '' NOT NULL,
     sip_reason VARCHAR(32) DEFAULT '' NOT NULL,
     time DATETIME NOT NULL
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE INDEX callid_idx ON acc (callid);
 
@@ -22,7 +22,7 @@ CREATE TABLE missed_calls (
     sip_code VARCHAR(3) DEFAULT '' NOT NULL,
     sip_reason VARCHAR(32) DEFAULT '' NOT NULL,
     time DATETIME NOT NULL
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE INDEX callid_idx ON missed_calls (callid);
 

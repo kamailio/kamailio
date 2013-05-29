@@ -6,5 +6,5 @@ CREATE TABLE htable (
     value_type INT DEFAULT 0 NOT NULL,
     key_value VARCHAR(128) DEFAULT '' NOT NULL,
     expires INT DEFAULT 0 NOT NULL
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 

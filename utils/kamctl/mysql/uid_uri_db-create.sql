@@ -6,7 +6,7 @@ CREATE TABLE uid_uri (
     username VARCHAR(64) NOT NULL,
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     scheme VARCHAR(8) DEFAULT 'sip' NOT NULL
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE INDEX uri_idx1 ON uid_uri (username, did, scheme);
 CREATE INDEX uri_uid ON uid_uri (uid);
@@ -22,5 +22,5 @@ CREATE TABLE uid_uri_attrs (
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     scheme VARCHAR(8) DEFAULT 'sip' NOT NULL,
     CONSTRAINT uriattrs_idx UNIQUE (username, did, name, value, scheme)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 

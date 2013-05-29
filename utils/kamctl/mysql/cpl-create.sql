@@ -6,5 +6,5 @@ CREATE TABLE cpl (
     cpl_xml TEXT,
     cpl_bin TEXT,
     CONSTRAINT account_idx UNIQUE (username, domain)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 

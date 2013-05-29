@@ -6,5 +6,5 @@ CREATE TABLE uri (
     uri_user VARCHAR(64) DEFAULT '' NOT NULL,
     last_modified DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL,
     CONSTRAINT account_idx UNIQUE (username, domain, uri_user)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 

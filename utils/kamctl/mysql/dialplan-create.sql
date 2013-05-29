@@ -9,5 +9,5 @@ CREATE TABLE dialplan (
     subst_exp VARCHAR(64) NOT NULL,
     repl_exp VARCHAR(32) NOT NULL,
     attrs VARCHAR(32) NOT NULL
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 

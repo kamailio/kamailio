@@ -5,7 +5,7 @@ CREATE TABLE trusted (
     proto VARCHAR(4) NOT NULL,
     from_pattern VARCHAR(64) DEFAULT NULL,
     tag VARCHAR(64)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE INDEX peer_idx ON trusted (src_ip);
 
@@ -17,5 +17,5 @@ CREATE TABLE address (
     mask INT DEFAULT 32 NOT NULL,
     port SMALLINT(5) UNSIGNED DEFAULT 0 NOT NULL,
     tag VARCHAR(64)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
