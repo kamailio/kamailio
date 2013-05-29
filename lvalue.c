@@ -36,7 +36,16 @@
 #include "dprint.h"
 #include "route.h"
 
+/* callback to log assign actions */
+static log_assign_action_f _log_assign_action = NULL;
 
+/**
+ * @brief set callback function log assign actions
+ */
+void set_log_assign_action_cb(log_assign_action_f f)
+{
+	_log_assign_action = f;
+}
 
 /**
  * @brief eval rve and assign the result to an avp
@@ -405,6 +414,11 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 		ERR("assignment failed at pos: (%d,%d-%d,%d)\n",
 			rve->fpos.s_line, rve->fpos.s_col,
 			rve->fpos.e_line, rve->fpos.e_col);
+	}
+	else
+	{
+		if(unlikely(_log_assign_action!=NULL))
+			_log_assign_action(msg, lv);
 	}
 	rval_destroy(rv);
 	return ret;

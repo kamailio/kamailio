@@ -51,7 +51,8 @@ struct lvalue{
 /* lval operators */
 #define EQ_T 254 /* k compatibility */
 
-
+typedef int (*log_assign_action_f)(struct sip_msg* msg, struct lvalue *lv);
+void set_log_assign_action_cb(log_assign_action_f f);
 
 /** eval rve and assign the result to lv
  * lv=eval(rve)
