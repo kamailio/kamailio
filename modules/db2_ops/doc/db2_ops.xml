@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="db2_ops" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="db2_ops" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>db2_ops module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Tomas</firstname>
@@ -19,10 +20,11 @@
 	    <holder>Tomas Mandys</holder>
 	</copyright>
 
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>db2_ops module</title>
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="db_ops.overview">
 		<title>Overview</title>
 		<para>
@@ -474,7 +476,7 @@
 
 	</section>
 
-    <section id="db_ops.examples">
+        <section id="db_ops.examples">
 		<title>Examples</title>
 		<example>
 			<title>db_ops common example</title>
@@ -638,6 +640,7 @@ route["timer_route"] {
 }
 			</programlisting>
 		</example>
-    </section>
-</section>
+	</section>
+    </chapter>
+</book>
 
