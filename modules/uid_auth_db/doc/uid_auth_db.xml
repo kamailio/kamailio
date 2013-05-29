@@ -2,9 +2,10 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="auth_db" xmlns:xi="http://www.w3.org/2001/XInclude">
+<book id="uid_auth_db" xmlns:xi="http://www.w3.org/2001/XInclude">
 
-    <sectioninfo>
+    <bookinfo>
+        <title>UID Auth DB Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Jan</firstname>
@@ -24,11 +25,12 @@
 	    <year>2003</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-
-    </sectioninfo>
-    <title>Auth_db Module</title>
+    </bookinfo>
+    <toc></toc>
     
-    <section id="auth_db.overview">
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="uid_auth_db.overview">
 	<title>Overview</title>
 	<para>
 	    This module contains all authentication related functions that need
@@ -41,7 +43,7 @@
 	</para>
     </section>
 
-    <section id="auth_db.dep">
+    <section id="uid_auth_db.dep">
 	<title>Dependencies</title>
 	<para>
 	    The module depends on the following modules (in the other words the listed modules
@@ -69,5 +71,5 @@
     
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
-
-</section>
+    </chapter>
+</book>
