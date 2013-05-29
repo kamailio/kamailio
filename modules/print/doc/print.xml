@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="print" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="print" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>Print Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Andrei</firstname>
@@ -18,10 +19,11 @@
 	    <year>2003</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
+    <toc></toc>
 
-    <title>Print Module</title>
-
+    <chapter>
+	<title>Admin Guide</title>
     <section id="print.overview">
 	<title>Overview</title>
 	<para>
@@ -34,6 +36,6 @@
     
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
-
-</section>
+    </chapter>
+</book>
 
