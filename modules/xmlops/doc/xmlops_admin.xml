@@ -2,10 +2,51 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
+<chapter>
+	<title>Admin Guide</title>
+    <section id="xmlops.overview">
+	<title>Overview</title>
+	<para>
+		This is a module implementing functions and pseudo-variables for
+		XML operations.
+	</para>
+    </section>
+	<section id="xmlops.deps">
+	<title>Dependencies</title>
+		<section>
+		<title>Kamailio Modules</title>
+			<para>
+			The following modules must be loaded before this module:
+			</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+		<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed before running
+			kamailio with this module loaded:
+			</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis> - for compilation from source, the 
+				development headers from this library are needed as well.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+    </section>
+
 <section id="xmlops.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>Parameters</title>
 
-    <section id="buf_size">
+    <section id="xmlops.p.buf_size">
 	<title><varname>buf_size</varname> (integer)</title>
 	<para>
 	    Maximum size of the XML buffer.
@@ -23,7 +64,7 @@ modparam("xmlops", "buf_size", 8192)
 	</example>
     </section>
 
-	<section id="xml_ns">
+	<section id="xmlops.p.xml_ns">
 		<title><varname>xml_ns</varname> (str)</title>
 		<para>
 		Register xml namespace prefix. Parameter value must have the format:
@@ -37,10 +78,11 @@ modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
 </programlisting>
 		</example>
 	</section>
+</section>
 
-
-	<section id="pv-xml">
+<section id="xmlops.pvs">
     <title>Pseudo-Variables</title>
+	<section>
 		<title>
 		<function moreinfo="none">$xml(name=>spec)</function>
 		</title>
@@ -60,5 +102,5 @@ $xml(x=&gt;xpath:/a/b) = "1234";
 </programlisting>
 		</example>
 	</section>
-
 </section>
+</chapter>
