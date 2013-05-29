@@ -25,9 +25,10 @@
 		<year>2009</year>
 		<holder>iptelorg GmbH</holder>
 	</copyright>
-	</bookinfo>
+    </bookinfo>
 
-
+    <chapter>
+	<title>Admin Guide</title>
 	<section id="ctl.overview">
 	<title>Overview</title>
 	<para>
@@ -85,6 +86,6 @@ $ &sercmd; ps
 
     <xi:include href="ctl_params.xml"/>
     <xi:include href="ctl_rpc.xml"/>
-
+    </chapter>
 </book>
 
