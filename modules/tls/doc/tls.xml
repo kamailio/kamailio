@@ -8,8 +8,9 @@
 
 ]>
 
-<section id="tls" xmlns:xi="http://www.w3.org/2001/XInclude">
-	<sectioninfo>
+<book id="tls" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>TLS Module</title>
 	<authorgroup>
 		<author>
 		<firstname>Andrei</firstname>
@@ -24,17 +25,18 @@
 		<year>2007</year>
 		<holder>iptelorg GmbH</holder>
 	</copyright>
-	</sectioninfo>
+	</bookinfo>
+	<toc></toc>
 
-	<title>TLS Module</title>
-
-		<section id="tls.overview">
+	<chapter>
+	<title>Admin Guide</title>
+	<section id="tls.overview">
 		<title>Overview</title>
 		<para>
 			This module implements the TLS transport for &kamailio; using the <ulink url="http://www.openssl.org">OpenSSL library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the Kamailio config file 
 		</para>
-		</section>
-		<section id="tls.quick_start">
+	</section>
+	<section id="tls.quick_start">
 		<title>Quick Start</title>
 		<para>
 			Make sure you have a proper certificate and private key and either use the certificate and private_key module parameters, or make sure the certificate and key are in the same PEM file, named cert.pem an placed in [your-cfg-install-prefix]/etc/kamailio/. Don't forget to load the tls module and to enable TLS (add <emphasis>enable_tls=yes</emphasis> to your config).
@@ -56,9 +58,9 @@ route{
 }
 		</programlisting>
 		</example>
-		</section>
+	</section>
 
-		<section id="tls.notes">
+	<section id="tls.notes">
 		<title>Important Notes</title>
 		<para>
 			The TLS module needs some special options enabled when compiling Kamailio. These options are enabled by default, however in case you're using a modified Kamailio version or Makefile, make sure that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care of both options). To quickly check if your Kamailio version was compiled with these options, run kamailio -V and look for USE_TLS and TLS_HOOKS among the flags.
@@ -81,10 +83,10 @@ route{
 			The TLS module includes workarounds for the following known openssl bugs:  openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled, for versions between 0.9.8 and 0.9.8c), openssl #1468 (fix zlib compression memory allocation), openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1) and openssl #1491 (stop using tls in low memory situations due to the very high risk of openssl crashing or leaking memory). The bug reports can be viewed at
   <ulink url="http://rt.openssl.org/">http://rt.openssl.org/</ulink>.
 		</para>
-		</section>
+	</section>
 
 
-		<section id="tls.compile">
+	<section id="tls.compile">
 		<title>Compiling the TLS Module</title>
 		<para>
 			In most case compiling the TLS module is as simple as:
@@ -110,16 +112,16 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 		<para>
 			In general, if Kamailio fails to start with a symbol not found error when trying to load the tls module (check the log), it means some needed library was not linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
 		</para>
-		</section>
+	</section>
 
-		<section id="tls.low_memory">
+	<section id="tls.low_memory">
 		<title>TLS and Low Memory</title>
 		<para>
 			The openssl library doesn't handle very well low memory situations. If memory allocations start to fail (due to memory shortage), openssl can crash or cause memory leaks (making the memory shortage even worse). As of this writing all openssl versions were affected (includind 0.9.8e), see openssl bug #1491. The tls module has some workarounds for preventing this problem (see <varname>low_mem_treshold1</varname> and <varname>low_mem_threshold2</varname>), however starting Kamailio with enough shared memory is higly recommended. When this is not possible a quick way to significantly reduce openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).
 		</para>
-		</section>
+	</section>
 
-		<section id="tls.debugging">
+	<section id="tls.debugging">
 		<title>TLS Debugging</title>
 		<para>
 			Debugging messages can be selectively enabled by recompiling
@@ -153,9 +155,9 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 			To change the level at which the debug messages are logged,
 			change the <varname>tls_debug</varname> module parameter.
 		</para>
-		</section>
+	</section>
 
-		<section id="tls.known_limitations">
+	<section id="tls.known_limitations">
 		<title>Known Limitations</title>
 		<para>
 			The private key must not encrypted (Kamailio cannot ask you for a password on startup).
@@ -174,13 +176,13 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 			or <ulink url="http://sip-router.org/docbook/sip-router/branch/master/select_list/select_list.html#select_list.tls">
 			http://sip-router.org/docbook/sip-router/branch/master/select_list/select_list.html#select_list.tls</ulink>.
 		</para>
-		</section>
+	</section>
 
 	<xi:include href="certs_howto.xml"/>
 	<xi:include href="params.xml"/>
 	<xi:include href="functions.xml"/>
 	<xi:include href="rpc.xml"/>
 	<xi:include href="history.xml"/>
-
-</section>
+	</chapter>
+</book>
 
