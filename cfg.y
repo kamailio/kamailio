@@ -2696,7 +2696,7 @@ rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
 	| STRING			{	s_tmp.s=$1; s_tmp.len=strlen($1);
 							$$=mk_rve_rval(RV_STR, &s_tmp); }
 	| attr_id_any		{$$=mk_rve_rval(RV_AVP, $1); pkg_free($1); }
-	| pvar				{$$=mk_rve_rval(RV_PVAR, $1); pkg_free($1); }
+	| pvar				{$$=mk_rve_rval(RV_PVAR, $1); }
 	| avp_pvar			{
 							switch($1->type){
 								case LV_AVP:
