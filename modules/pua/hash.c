@@ -334,8 +334,10 @@ int convert_temporary_dialog(ua_pres_t *dialog)
 	temp_dialog = get_temporary_dialog(dialog, hash_code);
 	if (temp_dialog)
 		delete_htable(temp_dialog, hash_code);
-	else
+	else {
+		lock_release(&HashT->p_records[hash_code].lock);
 		return -1;
+	}
 
 	insert_htable(dialog, hash_code);
 
