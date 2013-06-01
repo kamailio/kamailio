@@ -89,6 +89,7 @@ Bogdan-Andrei Iancu
               6.6. ul.add
               6.7. ul.db_users
               6.8. ul.db_contacts
+              6.9. ul.db_expired_contacts
 
         7. Statistics
 
@@ -225,6 +226,7 @@ Chapter 1. Admin Guide
         6.6. ul.add
         6.7. ul.db_users
         6.8. ul.db_contacts
+        6.9. ul.db_expired_contacts
 
    7. Statistics
 
@@ -842,6 +844,7 @@ modparam("usrloc", "db_ops_ruid", 1)
    6.6. ul.add
    6.7. ul.db_users
    6.8. ul.db_contacts
+   6.9. ul.db_expired_contacts
 
 6.1.  ul.dump
 
@@ -900,7 +903,8 @@ modparam("usrloc", "db_ops_ruid", 1)
 
 6.7.  ul.db_users
 
-   Tell number of different users (AoRs) in a location table.
+   Tell number of different users (AoRs) in a location table that have
+   unexpired contacts.
 
    Parameters:
      * table name - location table where the users are looked for, for
@@ -908,7 +912,15 @@ modparam("usrloc", "db_ops_ruid", 1)
 
 6.8.  ul.db_contacts
 
-   Tell number of contacts in a location table.
+   Tell number of unexpired contacts in a location table.
+
+   Parameters:
+     * table name - location table where the contacts are looked for, for
+       example, location.
+
+6.9.  ul.db_expired_contacts
+
+   Tell number of expired contacts in a location table.
 
    Parameters:
      * table name - location table where the contacts are looked for, for

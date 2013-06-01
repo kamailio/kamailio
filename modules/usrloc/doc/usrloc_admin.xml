@@ -1163,7 +1163,7 @@ modparam("usrloc", "db_ops_ruid", 1)
 		<function moreinfo="none">ul.db_users</function>
 		</title>
 		<para>
-		Tell number of different users (AoRs) in a location table.
+		Tell number of different users (AoRs) in a location table that have unexpired contacts.
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>
@@ -1178,7 +1178,22 @@ modparam("usrloc", "db_ops_ruid", 1)
 		<function moreinfo="none">ul.db_contacts</function>
 		</title>
 		<para>
-		Tell number of contacts in a location table.
+		Tell number of unexpired contacts in a location table.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - location table where the contacts are looked for, for example, location.
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul.db_expired_contacts</function>
+		</title>
+		<para>
+		Tell number of expired contacts in a location table.
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>
