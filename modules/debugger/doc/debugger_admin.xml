@@ -281,8 +281,29 @@ modparam("debugger", "mod_level", "tm=3")
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+	    <title><varname>log_assign</varname> (int)</title>
+	    <para>
+		Enable or disable log assign actions on config (0 - disabled, 1 - enabled).
+	    </para>
+		<para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_assign</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_assign", 1)
+...
+</programlisting>
+	    </example>
 	</section>
-	
+
+	</section>
+
     <section>
 	<title>Functions</title>
  	<section>

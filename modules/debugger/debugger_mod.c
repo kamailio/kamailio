@@ -57,6 +57,7 @@ extern int _dbg_step_usleep;
 extern int _dbg_step_loops;
 
 static char * _dbg_cfgtrace_facility_str = 0;
+static int _dbg_log_assign = 0;
 
 static cmd_export_t cmds[]={
 	{"dbg_breakpoint", (cmd_function)w_dbg_breakpoint, 1,
@@ -70,6 +71,7 @@ static param_export_t params[]={
 	{"log_level",         INT_PARAM, &_dbg_cfgtrace_level},
 	{"log_facility",      STR_PARAM, &_dbg_cfgtrace_facility_str},
 	{"log_prefix",        STR_PARAM, &_dbg_cfgtrace_prefix},
+	{"log_assign",        INT_PARAM, &_dbg_log_assign},
 	{"step_usleep",       INT_PARAM, &_dbg_step_usleep},
 	{"step_loops",        INT_PARAM, &_dbg_step_loops},
 	{"mod_hash_size",     INT_PARAM, &default_dbg_cfg.mod_hash_size},
@@ -133,6 +135,10 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(_dbg_log_assign>0)
+	{
+		dbg_init_pvcache();
+	}
 	return dbg_init_bp_list();
 }
 
@@ -144,6 +150,7 @@ static int child_init(int rank)
 	LM_DBG("rank is (%d)\n", rank);
 	if (rank==PROC_INIT) {
 		dbg_enable_mod_levels();
+		dbg_enable_log_assign();
 		return dbg_init_pid_list();
 	}
 	return dbg_init_mypid();

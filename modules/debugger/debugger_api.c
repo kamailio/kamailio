@@ -36,6 +36,8 @@
 #include "../../route_struct.h"
 #include "../../mem/shm_mem.h"
 #include "../../locking.h"
+#include "../../lvalue.h"
+#include "../../hashes.h"
 
 #include "debugger_act.h"
 #include "debugger_api.h"
@@ -895,7 +897,6 @@ int dbg_init_rpc(void)
 	return 0;
 }
 
-
 typedef struct _dbg_mod_level {
 	str name;
 	unsigned int hashid;
@@ -1107,6 +1108,169 @@ void dbg_enable_mod_levels(void)
 	if(_dbg_mod_table==NULL)
 		return;
 	set_module_debug_level_cb(dbg_get_mod_debug_level);
+}
+
+#define DBG_PVCACHE_SIZE 32
+
+typedef struct _dbg_pvcache {
+	pv_spec_t *spec;
+	str *pvname;
+	struct _dbg_pvcache *next;
+} dbg_pvcache_t;
+
+static dbg_pvcache_t **_dbg_pvcache = NULL;
+
+void dbg_init_pvcache()
+{
+	_dbg_pvcache = (dbg_pvcache_t**)pkg_malloc(sizeof(dbg_pvcache_t*)*DBG_PVCACHE_SIZE);
+	memset(_dbg_pvcache, 0, sizeof(dbg_pvcache_t*)*DBG_PVCACHE_SIZE);
+}
+
+int dbg_assign_add(str *name, pv_spec_t *spec)
+{
+	dbg_pvcache_t *pvn, *last, *next;
+	unsigned int pvid;
+	//unsigned i = 0;
+
+	if(name==NULL||spec==NULL)
+		return -1;
+
+	if(_dbg_pvcache==NULL)
+		return -1;
+
+	pvid = get_hash1_raw((char *)&spec, sizeof(pv_spec_t*));
+	pvn = (dbg_pvcache_t*)pkg_malloc(sizeof(dbg_pvcache_t));
+	if(pvn==0)
+	{
+		LM_ERR("no more memory\n");
+		return -1;
+	}
+	memset(pvn, 0, sizeof(dbg_pvcache_t));
+	pvn->pvname = name;
+	pvn->spec = spec;
+	next = _dbg_pvcache[pvid%DBG_PVCACHE_SIZE];
+	if(next==NULL)
+	{
+		_dbg_pvcache[pvid%DBG_PVCACHE_SIZE] = pvn;
+	}
+	else
+	{
+		while(next)
+		{
+			//i++;
+			last = next;
+			next = next->next;
+		}
+		last->next = pvn;
+	}
+	/*LM_DBG("spec[%p] pvar[%.*s] added in cache[%d][%d]\n", spec,
+		name->len, name->s, pvid%DBG_PVCACHE_SIZE, i);*/
+	return 0;
+}
+
+str *_dbg_pvcache_lookup(pv_spec_t *spec)
+{
+	dbg_pvcache_t *pvi;
+	unsigned int pvid;
+	str *name = NULL;
+	//unsigned int i = 0;
+
+	if(spec==NULL)
+		return NULL;
+
+	if(_dbg_pvcache==NULL)
+		return NULL;
+
+	pvid = get_hash1_raw((char *)&spec, sizeof(pv_spec_t*));
+	pvi = _dbg_pvcache[pvid%DBG_PVCACHE_SIZE];
+	while(pvi)
+	{
+		if(pvi->spec==spec) {
+			/*LM_DBG("spec[%p] pvar[%.*s] found in cache[%d][%d]\n", spec,
+				pvi->pvname->len, pvi->pvname->s, pvid%DBG_PVCACHE_SIZE, i);*/
+			return pvi->pvname;
+		}
+		//i++;
+		pvi = pvi->next;
+	}
+	name = pv_cache_get_name(spec);
+	if(name!=NULL)
+	{
+		/*LM_DBG("Add name[%.*s] to pvcache\n", name->len, name->s);*/
+		dbg_assign_add(name, spec);
+	}
+	return name;
+}
+
+int _dbg_log_assign_action_avp(struct sip_msg* msg, struct lvalue* lv)
+{
+	int_str avp_val;
+	avp_t* avp;
+	avp_spec_t* avp_s = &lv->lv.avps;
+	avp = search_avp_by_index(avp_s->type, avp_s->name,
+				&avp_val, avp_s->index);
+	if (likely(avp)){
+		if (avp->flags&(AVP_VAL_STR)){
+			LM_DBG("%.*s:\"%.*s\"\n", avp_s->name.s.len, avp_s->name.s.s,
+				avp_val.s.len, avp_val.s.s);
+		}else{
+			LM_DBG("%.*s:%d\n", avp_s->name.s.len, avp_s->name.s.s,
+				avp_val.n);
+		}
+	}
+	return 0;
+}
+
+int _dbg_log_assign_action_pvar(struct sip_msg* msg, struct lvalue* lv)
+{
+	pv_value_t value;
+	pv_spec_t* pvar = lv->lv.pvs;
+	str def_name = {"unknown", 7};
+	str *name = _dbg_pvcache_lookup(pvar);
+
+	if(name==NULL)
+		name = &def_name;
+	if(pv_get_spec_value(msg, pvar, &value)!=0)
+	{
+		LM_ERR("can't get value\n");
+		return -1;
+	}
+
+	if(value.flags&(PV_VAL_NULL|PV_VAL_EMPTY|PV_VAL_NONE)){
+		LM_DBG("%.*s: $null\n", name->len, name->s);
+	}else if(value.flags&(PV_VAL_INT)){
+		LM_DBG("%.*s:%d\n", name->len, name->s, value.ri);
+	}else if(value.flags&(PV_VAL_STR)){
+		LM_DBG("%.*s:\"%.*s\"\n", name->len, name->s, value.rs.len, value.rs.s);
+	}
+	return 0;
+}
+
+int dbg_log_assign(struct sip_msg* msg, struct lvalue *lv)
+{
+	if(lv==NULL)
+	{
+		LM_ERR("left value is NULL\n");
+		return -1;
+	}
+	switch(lv->type){
+		case LV_AVP:
+			return _dbg_log_assign_action_avp(msg, lv);
+			break;
+		case LV_PVAR:
+			return _dbg_log_assign_action_pvar(msg, lv);
+			break;
+		case LV_NONE:
+			break;
+	}
+	return 0;
+}
+
+void dbg_enable_log_assign(void)
+{
+	if(_dbg_pvcache==NULL)
+		return;
+	set_log_assign_action_cb(dbg_log_assign);
 }
 
 int dbg_level_mode_fixup(void *temp_handle,

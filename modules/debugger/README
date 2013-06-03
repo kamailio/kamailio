@@ -35,6 +35,7 @@ Daniel-Constantin Mierla
               3.8. mod_hash_size (int)
               3.9. mod_level_mode (int)
               3.10. mod_level (str)
+              3.11. log_assign (int)
 
         4. Functions
 
@@ -61,7 +62,8 @@ Daniel-Constantin Mierla
    1.8. Set mod_hash_size parameter
    1.9. Set mod_level_mode parameter
    1.10. Set mod_level parameter
-   1.11. dbg_breakpoint usage
+   1.11. Set log_assign parameter
+   1.12. dbg_breakpoint usage
 
 Chapter 1. Admin Guide
 
@@ -85,6 +87,7 @@ Chapter 1. Admin Guide
         3.8. mod_hash_size (int)
         3.9. mod_level_mode (int)
         3.10. mod_level (str)
+        3.11. log_assign (int)
 
    4. Functions
 
@@ -150,6 +153,7 @@ Chapter 1. Admin Guide
    3.8. mod_hash_size (int)
    3.9. mod_level_mode (int)
    3.10. mod_level (str)
+   3.11. log_assign (int)
 
 3.1. cfgtrace (int)
 
@@ -275,6 +279,18 @@ modparam("debugger", "mod_level", "core=3")
 modparam("debugger", "mod_level", "tm=3")
 ...
 
+3.11. log_assign (int)
+
+   Enable or disable log assign actions on config (0 - disabled, 1 -
+   enabled).
+
+   Default value is "0".
+
+   Example 1.11. Set log_assign parameter
+...
+modparam("debugger", "log_assign", 1)
+...
+
 4. Functions
 
    4.1. dbg_breakpoint(mode)
@@ -288,7 +304,7 @@ modparam("debugger", "mod_level", "tm=3")
    Note that this version of the module does not export this anchors to
    RPC for interactive debugging (temporarily disabled).
 
-   Example 1.11. dbg_breakpoint usage
+   Example 1.12. dbg_breakpoint usage
 ...
 if($si=="10.0.0.10")
         dbg_breakpoint("1");
