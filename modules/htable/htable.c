@@ -530,6 +530,14 @@ static const char* htable_get_doc[2] = {
 	"Get one key from a hash table.",
 	0
 };
+static const char* htable_sets_doc[2] = {
+	"Set one key in a hash table to a string value.",
+	0
+};
+static const char* htable_seti_doc[2] = {
+	"Set one key in a hash table to an integer value.",
+	0
+};
 static const char* htable_list_doc[2] = {
 	"List all htables.",
 	0
@@ -616,6 +624,67 @@ error:
 	return;
 }
 
+/*! \brief RPC htable.sets command to set one item to string value */
+static void htable_rpc_sets(rpc_t* rpc, void* c) {
+	str htname, keyname;
+	int_str keyvalue;
+	ht_t *ht;
+
+	if (rpc->scan(c, "SS.S", &htname, &keyname, &keyvalue.s) < 3) {
+		rpc->fault(c, 500,
+				"Not enough parameters (htable name, key name and value)");
+		return;
+	}
+
+	/* Find the htable */
+	ht = ht_get_table(&htname);
+	if (!ht) {
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+	
+	if(ht_set_cell(ht, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0)
+	{
+		LM_ERR("cannot set $ht(%.*s=>%.*s)\n", htname.len, htname.s,
+				keyname.len, keyname.s);
+		rpc->fault(c, 500, "Failed to set the item");
+		return;
+	}
+
+	return;
+}
+
+/*! \brief RPC htable.seti command to set one item to integer value */
+static void htable_rpc_seti(rpc_t* rpc, void* c) {
+	str htname, keyname;
+	int_str keyvalue;
+	ht_t *ht;
+
+	if (rpc->scan(c, "SS.d", &htname, &keyname, &keyvalue.n) < 3) {
+		rpc->fault(c, 500,
+				"Not enough parameters (htable name, key name and value)");
+		return;
+	}
+
+	/* Find the htable */
+	ht = ht_get_table(&htname);
+	if (!ht) {
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+	
+	if(ht_set_cell(ht, &keyname, 0, &keyvalue, 1)!=0)
+	{
+		LM_ERR("cannot set $ht(%.*s=>%.*s)\n", htname.len, htname.s,
+				keyname.len, keyname.s);
+		rpc->fault(c, 500, "Failed to set the item");
+		return;
+	}
+
+	return;
+}
+
+/*! \brief RPC htable.dump command to print content of a hash table */
 static void  htable_rpc_dump(rpc_t* rpc, void* c)
 {
 	str htname;
@@ -741,6 +810,7 @@ error:
 	return;
 }
 
+/*! \brief RPC htable.reload command to reload content of a hash table */
 static void htable_rpc_reload(rpc_t* rpc, void* c)
 {
 	str htname;
@@ -822,6 +892,8 @@ rpc_export_t htable_rpc[] = {
 	{"htable.dump", htable_rpc_dump, htable_dump_doc, 0},
 	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
 	{"htable.get", htable_rpc_get, htable_get_doc, 0},
+	{"htable.sets", htable_rpc_sets, htable_sets_doc, 0},
+	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
 	{"htable.listTables", htable_rpc_list, htable_list_doc, 0},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
 	{0, 0, 0, 0}
