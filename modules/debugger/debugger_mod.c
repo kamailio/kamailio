@@ -137,7 +137,11 @@ static int mod_init(void)
 
 	if(_dbg_log_assign>0)
 	{
-		dbg_init_pvcache();
+		if(dbg_init_pvcache()!=0)
+		{
+			LM_ERR("failed to create pvcache\n");
+			return -1;
+		}
 	}
 	return dbg_init_bp_list();
 }

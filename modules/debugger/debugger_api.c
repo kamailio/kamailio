@@ -1120,17 +1120,22 @@ typedef struct _dbg_pvcache {
 
 static dbg_pvcache_t **_dbg_pvcache = NULL;
 
-void dbg_init_pvcache()
+int dbg_init_pvcache()
 {
 	_dbg_pvcache = (dbg_pvcache_t**)pkg_malloc(sizeof(dbg_pvcache_t*)*DBG_PVCACHE_SIZE);
+	if(_dbg_pvcache==NULL)
+	{
+		LM_ERR("no more memory.\n");
+		return -1;
+	}
 	memset(_dbg_pvcache, 0, sizeof(dbg_pvcache_t*)*DBG_PVCACHE_SIZE);
+	return 0;
 }
 
 int dbg_assign_add(str *name, pv_spec_t *spec)
 {
 	dbg_pvcache_t *pvn, *last, *next;
 	unsigned int pvid;
-	//unsigned i = 0;
 
 	if(name==NULL||spec==NULL)
 		return -1;
@@ -1140,7 +1145,7 @@ int dbg_assign_add(str *name, pv_spec_t *spec)
 
 	pvid = get_hash1_raw((char *)&spec, sizeof(pv_spec_t*));
 	pvn = (dbg_pvcache_t*)pkg_malloc(sizeof(dbg_pvcache_t));
-	if(pvn==0)
+	if(pvn==NULL)
 	{
 		LM_ERR("no more memory\n");
 		return -1;
@@ -1157,14 +1162,11 @@ int dbg_assign_add(str *name, pv_spec_t *spec)
 	{
 		while(next)
 		{
-			//i++;
 			last = next;
 			next = next->next;
 		}
 		last->next = pvn;
 	}
-	/*LM_DBG("spec[%p] pvar[%.*s] added in cache[%d][%d]\n", spec,
-		name->len, name->s, pvid%DBG_PVCACHE_SIZE, i);*/
 	return 0;
 }
 
@@ -1173,7 +1175,6 @@ str *_dbg_pvcache_lookup(pv_spec_t *spec)
 	dbg_pvcache_t *pvi;
 	unsigned int pvid;
 	str *name = NULL;
-	//unsigned int i = 0;
 
 	if(spec==NULL)
 		return NULL;
@@ -1186,11 +1187,8 @@ str *_dbg_pvcache_lookup(pv_spec_t *spec)
 	while(pvi)
 	{
 		if(pvi->spec==spec) {
-			/*LM_DBG("spec[%p] pvar[%.*s] found in cache[%d][%d]\n", spec,
-				pvi->pvname->len, pvi->pvname->s, pvid%DBG_PVCACHE_SIZE, i);*/
 			return pvi->pvname;
 		}
-		//i++;
 		pvi = pvi->next;
 	}
 	name = pv_cache_get_name(spec);
