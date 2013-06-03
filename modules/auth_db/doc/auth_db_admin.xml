@@ -327,12 +327,26 @@ modparam("auth_db", "version_table", 0)
 			occurred and no reply was sent out;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-2 (invalid password)</emphasis> - valid user, but 
-			wrong password;
+			<emphasis>-2 (invalid password)</emphasis> - wrong password;
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-3 (invalid user)</emphasis> - authentication user does
 			not exist.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-4 (nonce expired)</emphasis> - the nonce has expired
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-5 (no credentials)</emphasis> - request does not contain
+			an Authorization header with the correct realm.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-6 (nonce reused)</emphasis> - the nonce has already been
+			used to authenticate a previous request
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-8 (authuser mismatch)</emphasis> - depending on the method, th
+			From/To/RURI user does not match the authentication user (see auth_check() function).
 			</para></listitem>
 		</itemizedlist>
 		<para>Meaning of the parameters is as follows:</para>
@@ -479,6 +493,8 @@ if (!proxy_authorize("$fd", "subscriber)) {
 		the function checks if authentication username matches From/To header
 		username, and Request-URI in case of PUBLISH.
 		</para>
+		<para>Negative return codes have the same meaning as for
+			www_authenticate().</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
