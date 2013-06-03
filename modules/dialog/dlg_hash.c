@@ -209,6 +209,7 @@ int dlg_ka_run(ticks_t ti)
 		/* append to tail */
 		if(dka!=NULL)
 		{
+			dka->katime = ti + dlg_ka_interval;
 			lock_get(dlg_ka_list_lock);
 			if(*dlg_ka_list_tail!=NULL)
 				(*dlg_ka_list_tail)->next = dka;
