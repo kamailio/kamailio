@@ -733,6 +733,66 @@ kamcmd htable.get students anna
 ...
 </programlisting>
 	</section>
+       <section>
+                <title>
+                <function moreinfo="none">htable.sets htable key value</function>
+                </title>
+                <para>
+					Set an item in hash table to string value.
+                </para>
+                <para>
+                Name: <emphasis>htable.sets</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>htable : Name of the hash table</para>
+                        </listitem>
+                        <listitem><para>key : Key name in the hash table</para>
+                        </listitem>
+                        <listitem><para>Value : String value for the item</para>
+                        </listitem>
+
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+# Set $sht(test=>x)
+kamcmd htable.sets test x abc
+...
+</programlisting>
+	</section>
+       <section>
+                <title>
+                <function moreinfo="none">htable.seti htable key value</function>
+                </title>
+                <para>
+					Set an item in hash table to integer value.
+                </para>
+                <para>
+                Name: <emphasis>htable.seti</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>htable : Name of the hash table</para>
+                        </listitem>
+                        <listitem><para>key : Key name in the hash table</para>
+                        </listitem>
+                        <listitem><para>Value : Integer value for the item</para>
+                        </listitem>
+
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+# Set $sht(test=>x)
+kamcmd htable.sets test x 123
+...
+</programlisting>
+	</section>
         <section>
                 <title>
                 <function moreinfo="none">htable.dump htable</function>

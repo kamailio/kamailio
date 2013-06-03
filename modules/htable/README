@@ -17,7 +17,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright (c) 2008-2011 http://www.asipto.com
+   Copyright © 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -63,9 +63,11 @@ Alex Balashov
 
               7.1. htable.get htable key
               7.2. htable.delete htable key
-              7.3. htable.dump htable
-              7.4. htable.reload htable
-              7.5. htable.listTables
+              7.3. htable.sets htable key value
+              7.4. htable.seti htable key value
+              7.5. htable.dump htable
+              7.6. htable.reload htable
+              7.7. htable.listTables
 
         8. Event routes
 
@@ -134,9 +136,11 @@ Chapter 1. Admin Guide
 
         7.1. htable.get htable key
         7.2. htable.delete htable key
-        7.3. htable.dump htable
-        7.4. htable.reload htable
-        7.5. htable.listTables
+        7.3. htable.sets htable key value
+        7.4. htable.seti htable key value
+        7.5. htable.dump htable
+        7.6. htable.reload htable
+        7.7. htable.listTables
 
    8. Event routes
 
@@ -160,7 +164,7 @@ Chapter 1. Admin Guide
    You can read more about hash tables at:
    http://en.wikipedia.org/wiki/Hash_table.
 
-   The "name" can be a static string or can include pseudo- variables that
+   The “name” can be a static string or can include pseudo- variables that
    will be replaced at runtime.
 
    Example 1.1. Accessing $sht(htname=>key)
@@ -183,7 +187,7 @@ $sht(a=>$ci::srcip) = $si;
    the failed authentications per user and one for storing the time of
    last authentication attempt. To ensure unique name per user, the hash
    table uses a combination of authentication username and text
-   "::auth_count" and "::last_auth".
+   “::auth_count” and “::last_auth”.
 
    Example 1.2. Dictionary attack limitation
 ...
@@ -553,9 +557,11 @@ sht_rm_value_re("ha=>.*");
 
    7.1. htable.get htable key
    7.2. htable.delete htable key
-   7.3. htable.dump htable
-   7.4. htable.reload htable
-   7.5. htable.listTables
+   7.3. htable.sets htable key value
+   7.4. htable.seti htable key value
+   7.5. htable.dump htable
+   7.6. htable.reload htable
+   7.7. htable.listTables
 
 7.1.  htable.get htable key
 
@@ -589,7 +595,41 @@ kamcmd htable.get students daniel
 kamcmd htable.get students anna
 ...
 
-7.3.  htable.dump htable
+7.3.  htable.sets htable key value
+
+   Set an item in hash table to string value.
+
+   Name: htable.sets
+
+   Parameters:
+     * htable : Name of the hash table
+     * key : Key name in the hash table
+     * Value : String value for the item
+
+   Example:
+...
+# Set $sht(test=>x)
+kamcmd htable.sets test x abc
+...
+
+7.4.  htable.seti htable key value
+
+   Set an item in hash table to integer value.
+
+   Name: htable.seti
+
+   Parameters:
+     * htable : Name of the hash table
+     * key : Key name in the hash table
+     * Value : Integer value for the item
+
+   Example:
+...
+# Set $sht(test=>x)
+kamcmd htable.sets test x 123
+...
+
+7.5.  htable.dump htable
 
    Lists all the values in a hash table
 
@@ -603,7 +643,7 @@ kamcmd htable.get students anna
 kamcmd htable.dump ipban
 ...
 
-7.4.  htable.reload htable
+7.6.  htable.reload htable
 
    Reload hash table from database.
 
@@ -617,7 +657,7 @@ kamcmd htable.dump ipban
 kamcmd htable.reload ipban
 ...
 
-7.5.  htable.listTables
+7.7.  htable.listTables
 
    Lists all defined tables
 
