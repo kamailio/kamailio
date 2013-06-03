@@ -1038,6 +1038,26 @@ install_initd_debian install-initd-debian:
         --home /var/run/$(NAME) $(NAME)
 	chown $(NAME):$(NAME) /var/run/$(NAME)
 
+.PHONY: install_initd_centos install-initd-centos
+install_initd_centos install-initd-centos:
+	sed -e "s#KAM=/usr/sbin/kamailio#KAM=$(bin_prefix)/$(bin_dir)$(NAME)#g" \
+		-e "s#PROG=kamailio#PROG=$(NAME)#g" \
+		-e "s#DEFAULTS=/etc/default/kamailio#DEFAULTS=/etc/default/$(NAME)#g" \
+		-e "s#PID_FILE=/var/run/kamailio.pid#PID_FILE=/var/run/$(NAME).pid#g" \
+		-e "s#LOCK_FILE=/var/lock/subsys/kamailio#LOCK_FILE=/var/lock/subsys/$(NAME)#g" \
+		-e "s#KAMCFG=/etc/kamailio/kamailio.cfg#KAMCFG=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
+		< pkg/kamailio/rpm/kamailio.init \
+		> /etc/init.d/$(NAME)
+	chmod +x /etc/init.d/$(NAME)
+	sed -e "s#RUN_KAMAILIO=no#RUN_KAMAILIO=yes#g" \
+		-e "s#USER=kamailio#USER=$(NAME)#g" \
+		-e "s#GROUP=kamailio#GROUP=$(NAME)#g" \
+		< pkg/kamailio/rpm/kamailio.default \
+		> /etc/default/$(NAME)
+	/usr/sbin/groupadd -r $(NAME)
+	/usr/sbin/useradd -r -g $(NAME) -s /bin/false -c "Kamailio Daemon" \
+                  -d ${lib_prefix}/${lib_dir} $(NAME)
+
 .PHONY: dbschema
 dbschema:
 	-@echo "Build database schemas"
