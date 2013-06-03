@@ -1,4 +1,3 @@
-
 Auth_db Module
 
 Jan Janak
@@ -25,10 +24,10 @@ Jan Janak
 
    <jan@iptel.org>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
 
-   Copyright � 2005 Voice Sistem SRL
-     _________________________________________________________________
+   Copyright © 2005 Voice Sistem SRL
+     __________________________________________________________________
 
    Table of Contents
 
@@ -54,12 +53,12 @@ Jan Janak
 
         4. Functions
 
-              4.1. www_authenticate(realm, table [, method]) 
-              4.2. www_authorize(realm, table) 
-              4.3. proxy_authenticate(realm, table) 
-              4.4. proxy_authorize(realm, table) 
-              4.5. auth_check(realm, table, flags) 
-              4.6. is_subscriber(uri, dbtable, flags) 
+              4.1. www_authenticate(realm, table [, method])
+              4.2. www_authorize(realm, table)
+              4.3. proxy_authenticate(realm, table)
+              4.4. proxy_authorize(realm, table)
+              4.5. auth_check(realm, table, flags)
+              4.6. is_subscriber(uri, dbtable, flags)
 
    List of Examples
 
@@ -101,19 +100,19 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. www_authenticate(realm, table [, method]) 
-        4.2. www_authorize(realm, table) 
-        4.3. proxy_authenticate(realm, table) 
-        4.4. proxy_authorize(realm, table) 
-        4.5. auth_check(realm, table, flags) 
-        4.6. is_subscriber(uri, dbtable, flags) 
+        4.1. www_authenticate(realm, table [, method])
+        4.2. www_authorize(realm, table)
+        4.3. proxy_authenticate(realm, table)
+        4.4. proxy_authorize(realm, table)
+        4.5. auth_check(realm, table, flags)
+        4.6. is_subscriber(uri, dbtable, flags)
 
 1. Overview
 
-   This  module  contains  all authentication related functions that need
-   the  access  to the database. This module should be used together with
-   auth module, it cannot be used independently because it depends on the
-   module.  Select  this  module  if  you  want  to use database to store
+   This module contains all authentication related functions that need the
+   access to the database. This module should be used together with auth
+   module, it cannot be used independently because it depends on the
+   module. Select this module if you want to use database to store
    authentication information like subscriber usernames and passwords. If
    you want to use radius authentication, then use auth_radius instead.
 
@@ -124,15 +123,14 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The  module  depends  on the following modules (in the other words the
+   The module depends on the following modules (in the other words the
    listed modules must be loaded before this module):
      * auth -- Generic authentication functions
-     * database  --  Any  database  module  (currently  mysql,  postgres,
-       dbtext)
+     * database -- Any database module (currently mysql, postgres, dbtext)
 
 2.2. External Libraries or Applications
 
-   The  following  libraries  or  applications  must  be installed before
+   The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * none
 
@@ -151,13 +149,12 @@ Chapter 1. Admin Guide
 3.1. db_url (string)
 
    This is URL of the database to be used. Value of the parameter depends
-   on  the  database  module  used.  For  example  for mysql and postgres
-   modules this is something like
-   mysql://username:password@host:port/database. For dbtext module (which
-   stores  data in plaintext files) it is directory in which the database
-   resides.
+   on the database module used. For example for mysql and postgres modules
+   this is something like mysql://username:password@host:port/database.
+   For dbtext module (which stores data in plaintext files) it is
+   directory in which the database resides.
 
-   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio". 
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.1. db_url parameter usage
 ...
@@ -166,11 +163,10 @@ modparam("auth_db", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 3.2. user_column (string)
 
-   This  is  the  name  of the column holding usernames. Default value is
-   fine  for  most people. Use the parameter if you really need to change
-   it.
+   This is the name of the column holding usernames. Default value is fine
+   for most people. Use the parameter if you really need to change it.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.2. user_column parameter usage
 ...
@@ -180,10 +176,10 @@ modparam("auth_db", "user_column", "user")
 3.3. domain_column (string)
 
    This is the name of the column holding domains of users. Default value
-   is  fine  for  most  people.  Use  the parameter if you really need to
-   change it.
+   is fine for most people. Use the parameter if you really need to change
+   it.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.3. domain_column parameter usage
 ...
@@ -192,13 +188,13 @@ modparam("auth_db", "domain_column", "domain")
 
 3.4. password_column (string)
 
-   This  is  the  name  of the column holding passwords. Passwords can be
+   This is the name of the column holding passwords. Passwords can be
    either stored as plain text or pre-calculated HA1 strings. HA1 strings
-   are  MD5 hashes of username, password, and realm. HA1 strings are more
-   safe  because  the server doesn't need to know plaintext passwords and
+   are MD5 hashes of username, password, and realm. HA1 strings are more
+   safe because the server doesn't need to know plaintext passwords and
    they cannot be obtained from HA1 strings.
 
-   Default value is "ha1".
+   Default value is “ha1”.
 
    Example 1.4. password_column parameter usage
 ...
@@ -207,9 +203,9 @@ modparam("auth_db", "password_column", "password")
 
 3.5. password_column_2 (string)
 
-   As  described  in the previous section this parameter contains name of
-   column   holding   pre-calculated  HA1  string  that  were  calculated
-   including the domain in the username. This parameter is used only when
+   As described in the previous section this parameter contains name of
+   column holding pre-calculated HA1 string that were calculated including
+   the domain in the username. This parameter is used only when
    calculate_ha1 is set to 0 and user agent send a credentials containing
    the domain in the username.
 
@@ -226,23 +222,23 @@ modparam("auth_db", "password_column_2", "ha1_2")
    HA1 string or plaintext passwords for authentification.
 
    If the parameter is set to 0 and the username parameter of credentials
-   contains  also  "@domain"  (some  user agents append the domain to the
-   username  parameter), then the server will use the HA1 values from the
-   column specified in the "password_column_2" parameter. If the username
+   contains also “@domain” (some user agents append the domain to the
+   username parameter), then the server will use the HA1 values from the
+   column specified in the “password_column_2” parameter. If the username
    parameter doesn't contain a domain, the server will use the HA1 values
-   from the column given in the "password_column"parameter.
+   from the column given in the “password_column”parameter.
 
-   If  the  parameter  is  set to 1 then the HA1 value will be calculated
-   from the column specified in the "password_column" parameter.
+   If the parameter is set to 1 then the HA1 value will be calculated from
+   the column specified in the “password_column” parameter.
 
-   The "password_column_2"column contain also HA1 strings but they should
-   be  calculated  including  the  domain  in  the username parameter (as
-   opposed  to password_column which (when containing HA1 strings) should
+   The “password_column_2”column contain also HA1 strings but they should
+   be calculated including the domain in the username parameter (as
+   opposed to password_column which (when containing HA1 strings) should
    always contains HA1 strings calculated without domain in username.
 
-   This  ensures  that  the  authentication  will  always work when using
-   pre-calculated  HA1  strings,  not  depending  on  the presence of the
-   domain in username.
+   This ensures that the authentication will always work when using
+   pre-calculated HA1 strings, not depending on the presence of the domain
+   in username.
 
    Default value of this parameter is 0.
 
@@ -253,15 +249,15 @@ modparam("auth_db", "calculate_ha1", 1)
 
 3.7. use_domain (integer)
 
-   If  true  (not  0),  domain  will  be also used when looking up in the
-   subscriber  table.  If  you  have a multi-domain setup, it is strongly
-   recommended  to  turn  on this parameter to avoid username overlapping
+   If true (not 0), domain will be also used when looking up in the
+   subscriber table. If you have a multi-domain setup, it is strongly
+   recommended to turn on this parameter to avoid username overlapping
    between domains.
 
-   IMPORTANT:  before  turning on this parameter, be sure that the domain
+   IMPORTANT: before turning on this parameter, be sure that the domain
    column in subscriber table is properly populated.
 
-   Default value is "0 (false)".
+   Default value is “0 (false)”.
 
    Example 1.7. use_domain parameter usage
 ...
@@ -272,15 +268,15 @@ modparam("auth_db", "use_domain", 1)
 
    This parameter specifies of credentials to be fetch from database when
    the authentication is performed. The loaded credentials will be stored
-   in  AVPs.  If the AVP name is not specificaly given, it will be used a
+   in AVPs. If the AVP name is not specificaly given, it will be used a
    NAME AVP with the same name as the column name.
 
    Parameter syntax:
-     * load_credentials = credential (';' credential)* 
-     * credential = (avp_specification '=' column_name) | (column_name) 
-     * avp_specification = '$avp(' + 'i:'ID | 's:'NAME | alias + ')' 
+     * load_credentials = credential (';' credential)*
+     * credential = (avp_specification '=' column_name) | (column_name)
+     * avp_specification = '$avp(' + 'i:'ID | 's:'NAME | alias + ')'
 
-   Default value of this parameter is "rpid".
+   Default value of this parameter is “rpid”.
 
    Example 1.8. load_credentials parameter usage
 ...
@@ -291,10 +287,10 @@ modparam("auth_db", "load_credentials", "$avp(i:123)=rpid;email_address")
 
 3.9. version_table (integer)
 
-   If  set to 0, the module will skip checking the version for subscriber
+   If set to 0, the module will skip checking the version for subscriber
    table.
 
-   Default value is "1 (check for table version)".
+   Default value is “1 (check for table version)”.
 
    Example 1.9. version_table parameter usage
 ...
@@ -303,45 +299,51 @@ modparam("auth_db", "version_table", 0)
 
 4. Functions
 
-   4.1. www_authenticate(realm, table [, method]) 
-   4.2. www_authorize(realm, table) 
-   4.3. proxy_authenticate(realm, table) 
-   4.4. proxy_authorize(realm, table) 
-   4.5. auth_check(realm, table, flags) 
-   4.6. is_subscriber(uri, dbtable, flags) 
+   4.1. www_authenticate(realm, table [, method])
+   4.2. www_authorize(realm, table)
+   4.3. proxy_authenticate(realm, table)
+   4.4. proxy_authorize(realm, table)
+   4.5. auth_check(realm, table, flags)
+   4.6. is_subscriber(uri, dbtable, flags)
 
 4.1.  www_authenticate(realm, table [, method])
 
    Name alias: www_authorize(realm, table)
 
-   The  function  verifies  credentials  according  to  RFC2617.  If  the
-   credentials  are  verified successfully then the function will succeed
-   and  mark  the  credentials  as  authorized (marked credentials can be
-   later  used  by  some  other functions). If the function was unable to
-   verify  the  credentials  for  some  reason  then it will fail and the
-   script should call www_challenge which will challenge the user again.
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will succeed
+   and mark the credentials as authorized (marked credentials can be later
+   used by some other functions). If the function was unable to verify the
+   credentials for some reason then it will fail and the script should
+   call www_challenge which will challenge the user again.
 
    Negative codes may be interpreted as follows:
-     * -1  (generic error) - some generic error occurred and no reply was
+     * -1 (generic error) - some generic error occurred and no reply was
        sent out;
-     * -2 (invalid password) - valid user, but wrong password;
+     * -2 (invalid password) - wrong password;
      * -3 (invalid user) - authentication user does not exist.
+     * -4 (nonce expired) - the nonce has expired
+     * -5 (no credentials) - request does not contain an Authorization
+       header with the correct realm.
+     * -6 (nonce reused) - the nonce has already been used to authenticate
+       a previous request
+     * -8 (authuser mismatch) - depending on the method, th From/To/RURI
+       user does not match the authentication user (see auth_check()
+       function).
 
    Meaning of the parameters is as follows:
-     * realm  -  Realm  is  a  opaque  string  that the user agent should
-       present to the user so he can decide what username and password to
-       use. Usually this is domain of the host the server is running on.
-       It  must  not  be empty string "". In case of REGISTER requests To
+     * realm - Realm is a opaque string that the user agent should present
+       to the user so he can decide what username and password to use.
+       Usually this is domain of the host the server is running on.
+       It must not be empty string “”. In case of REGISTER requests To
        header field domain (e.g., variable $td) can be used (because this
-       header  field represents the user being registered), for all other
-       messages  From  header  field  domain  can be used (e.g., variable
-       $fd).
+       header field represents the user being registered), for all other
+       messages From header field domain can be used (e.g., variable $fd).
        The string may contain pseudo variables.
-     * table  -  Table  to  be  used  to  lookup  usernames and passwords
-       (usually subscribers table).
-     * method  - the method to be used for authentication. This parameter
-       is   optional   and  if  not  set  is  the  first  "word"  on  the
-       request-line.
+     * table - Table to be used to lookup usernames and passwords (usually
+       subscribers table).
+     * method - the method to be used for authentication. This parameter
+       is optional and if not set is the first "word" on the request-line.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -354,35 +356,34 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 
 4.2.  www_authorize(realm, table)
 
-   It  is  same  function as www_authenticate(realm, table). This name is
-   kept  for  backward  compatibility,  since it was named this way first
-   time by it actually does user authentication.
+   It is same function as www_authenticate(realm, table). This name is
+   kept for backward compatibility, since it was named this way first time
+   by it actually does user authentication.
 
 4.3.  proxy_authenticate(realm, table)
 
    Name alias: proxy_authorize(realm, table)
 
-   The  function  verifies  credentials  according  to  RFC2617.  If  the
-   credentials  are  verified successfully then the function will succeed
-   and  mark  the  credentials  as  authorized (marked credentials can be
-   later  used  by  some  other functions). If the function was unable to
-   verify  the  credentials  for  some  reason  then it will fail and the
-   script  should  call  proxy_challenge  which  will  challenge the user
-   again.
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will succeed
+   and mark the credentials as authorized (marked credentials can be later
+   used by some other functions). If the function was unable to verify the
+   credentials for some reason then it will fail and the script should
+   call proxy_challenge which will challenge the user again.
 
    Negative return codes have the same meaning as for www_authenticate().
 
    Meaning of the parameters is as follows:
-     * realm  -  Realm  is  a  opaque  string  that the user agent should
-       present to the user so he can decide what username and password to
-       use. Usually this is domain of the host the server is running on.
-       It  must not be empty string "". Apart of a static string, typical
+     * realm - Realm is a opaque string that the user agent should present
+       to the user so he can decide what username and password to use.
+       Usually this is domain of the host the server is running on.
+       It must not be empty string “”. Apart of a static string, typical
        value is From header field domain (e.g., variable $fd).
-       If  an  empty  string  "" is used then the server will generate it
-       from the request. From header field domain will be used as realm.
+       If an empty string “” is used then the server will generate it from
+       the request. From header field domain will be used as realm.
        The string may contain pseudo variables.
-     * table  -  Table  to  be  used  to  lookup  usernames and passwords
-       (usually subscribers table).
+     * table - Table to be used to lookup usernames and passwords (usually
+       subscribers table).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -395,39 +396,41 @@ if (!proxy_authorize("$fd", "subscriber)) {
 
 4.4.  proxy_authorize(realm, table)
 
-   It  is same function as proxy_authenticate(realm, table). This name is
-   kept  for  backward  compatibility,  since it was named this way first
-   time but it actually does user authentication.
+   It is same function as proxy_authenticate(realm, table). This name is
+   kept for backward compatibility, since it was named this way first time
+   but it actually does user authentication.
 
 4.5.  auth_check(realm, table, flags)
 
-   The  function  combines  the  functionalities  of www_authenticate and
-   proxy_authenticate,  first  being  exectuted  if  the SIP request is a
+   The function combines the functionalities of www_authenticate and
+   proxy_authenticate, first being exectuted if the SIP request is a
    REGISTER, the second for the rest.
 
    In addition, a matter of flags parameter value, the function checks if
-   authentication   username   matches   From/To   header  username,  and
+   authentication username matches From/To header username, and
    Request-URI in case of PUBLISH.
 
+   Negative return codes have the same meaning as for www_authenticate().
+
    Meaning of the parameters is as follows:
-     * realm  -  Realm  is  a  opaque  string  that the user agent should
-       present to the user so he can decide what username and password to
-       use. Usually this is domain of the host the server is running on.
-       It  must not be empty string "". Apart of a static string, typical
+     * realm - Realm is a opaque string that the user agent should present
+       to the user so he can decide what username and password to use.
+       Usually this is domain of the host the server is running on.
+       It must not be empty string “”. Apart of a static string, typical
        value is From header field domain (e.g., variable $fd).
        The string may contain pseudo variables.
-     * table  -  Table  to  be  used  to  lookup  usernames and passwords
-       (usually subscribers table).
+     * table - Table to be used to lookup usernames and passwords (usually
+       subscribers table).
        The string may contain pseudo variables.
-     * flags  - set of flags to control the behaviour of the function. If
+     * flags - set of flags to control the behaviour of the function. If
        it is 1, then the function will check to see if the authentication
-       username  matches  either  To  or  From  header username. REGISTER
-       requests:  From and To must match the authentication user. PUBLISH
-       requests:  From,  To and Request-URI must match the authentication
-       user.   All   other   requests:   From   header   must  match  the
-       authentication user.
-       Additionally  all domains in the checked URIs and the realm in the
-       authentication  header will be checked to match the provided realm
+       username matches either To or From header username. REGISTER
+       requests: From and To must match the authentication user. PUBLISH
+       requests: From, To and Request-URI must match the authentication
+       user. All other requests: From header must match the authentication
+       user.
+       Additionally all domains in the checked URIs and the realm in the
+       authentication header will be checked to match the provided realm
        parameter.
        The string may contain pseudo variables.
 
@@ -443,22 +446,22 @@ if (!auth_check("$fd", "subscriber", "1")) {
 
 4.6.  is_subscriber(uri, dbtable, flags)
 
-   The  function checks if there is a subscriber corresponding to the AoR
-   in   uri   parameter.   It   uses  same  database  connection  as  for
+   The function checks if there is a subscriber corresponding to the AoR
+   in uri parameter. It uses same database connection as for
    authentication functions.
 
-   In   addition,   if   the   subscriber   record  is  found,  then  the
+   In addition, if the subscriber record is found, then the
    load_credentials attributes are loaded. An use case can be loading the
    credential attributes for callee.
 
    Meaning of the parameters is as follows:
      * uri - a valid SIP URI value to identify the subscriber. The string
        may contain pseudo variables.
-     * dbtable  - Table to be used to lookup username and domain from URI
-       (usually   subscriber   table).  The  string  may  contain  pseudo
+     * dbtable - Table to be used to lookup username and domain from URI
+       (usually subscriber table). The string may contain pseudo
        variables.
-     * flags  - set of flags to control the behaviour of the function. If
-       it  is 1, then the function will use the domain part of the URI to
+     * flags - set of flags to control the behaviour of the function. If
+       it is 1, then the function will use the domain part of the URI to
        perform the database table search.
        The parameter may be a pseudo variable.
 
