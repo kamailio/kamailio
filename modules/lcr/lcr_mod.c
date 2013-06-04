@@ -402,7 +402,7 @@ static void lcr_db_close(void)
  */
 static int mod_init(void)
 {
-    pv_spec_t avp_spec;
+    pv_spec_t *avp_spec;
     str s;
     unsigned short avp_flags;
     unsigned int i;
@@ -475,13 +475,13 @@ static int mod_init(void)
 
     if (gw_uri_avp_param && *gw_uri_avp_param) {
 	s.s = gw_uri_avp_param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, &avp_spec)==0
-	    || avp_spec.type!=PVT_AVP) {
+    avp_spec = pv_cache_get(&s);
+	if (avp_spec==NULL|| avp_spec->type!=PVT_AVP) {
 	    LM_ERR("malformed or non AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
-	
-	if (pv_get_avp_name(0, &(avp_spec.pvp), &gw_uri_avp, &avp_flags) != 0) {
+
+	if (pv_get_avp_name(0, &(avp_spec->pvp), &gw_uri_avp, &avp_flags) != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
@@ -493,14 +493,14 @@ static int mod_init(void)
 
     if (ruri_user_avp_param && *ruri_user_avp_param) {
 	s.s = ruri_user_avp_param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, &avp_spec)==0
-	    || avp_spec.type!=PVT_AVP) {
+    avp_spec = pv_cache_get(&s);
+	if (avp_spec==NULL || avp_spec->type!=PVT_AVP) {
 	    LM_ERR("malformed or non AVP definition <%s>\n",
 		   ruri_user_avp_param);
 	    return -1;
 	}
-	
-	if (pv_get_avp_name(0, &(avp_spec.pvp), &ruri_user_avp, &avp_flags)
+
+	if (pv_get_avp_name(0, &(avp_spec->pvp), &ruri_user_avp, &avp_flags)
 	    != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", ruri_user_avp_param);
 	    return -1;
@@ -513,11 +513,12 @@ static int mod_init(void)
 
     if (tag_avp_param) {
 	s.s = tag_avp_param; s.len = strlen(s.s);
-	if ((pv_parse_spec(&s, &avp_spec)==0) || (avp_spec.type!=PVT_AVP)) {
+    avp_spec = pv_cache_get(&s);
+	if (avp_spec==NULL || (avp_spec->type!=PVT_AVP)) {
 	    LM_ERR("malformed or non AVP definition <%s>\n", tag_avp_param);
 	    return -1;
 	}
-	if (pv_get_avp_name(0, &(avp_spec.pvp), &tag_avp, &avp_flags) != 0) {
+	if (pv_get_avp_name(0, &(avp_spec->pvp), &tag_avp, &avp_flags) != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", tag_avp_param);
 	    return -1;
 	}
@@ -526,11 +527,12 @@ static int mod_init(void)
 
     if (flags_avp_param) {
 	s.s = flags_avp_param; s.len = strlen(s.s);
-	if ((pv_parse_spec(&s, &avp_spec)==0) || (avp_spec.type != PVT_AVP)) {
+    avp_spec = pv_cache_get(&s);
+	if (avp_spec==NULL || (avp_spec->type != PVT_AVP)) {
 	    LM_ERR("malformed or non AVP definition <%s>\n", flags_avp_param);
 	    return -1;
 	}
-	if (pv_get_avp_name(0, &(avp_spec.pvp), &flags_avp, &avp_flags) != 0) {
+	if (pv_get_avp_name(0, &(avp_spec->pvp), &flags_avp, &avp_flags) != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", flags_avp_param);
 	    return -1;
 	}
@@ -540,13 +542,13 @@ static int mod_init(void)
     if (defunct_capability_param > 0) {
 	if (defunct_gw_avp_param && *defunct_gw_avp_param) {
 	    s.s = defunct_gw_avp_param; s.len = strlen(s.s);
-	    if ((pv_parse_spec(&s, &avp_spec) == 0) ||
-		(avp_spec.type != PVT_AVP)) {
+        avp_spec = pv_cache_get(&s);
+	    if (avp_spec==NULL || (avp_spec->type != PVT_AVP)) {
 		LM_ERR("malformed or non AVP definition <%s>\n",
 		       defunct_gw_avp_param);
 		return -1;
 	    }
-	    if (pv_get_avp_name(0, &(avp_spec.pvp), &defunct_gw_avp,
+	    if (pv_get_avp_name(0, &(avp_spec->pvp), &defunct_gw_avp,
 				&avp_flags) != 0) {
 		LM_ERR("invalid AVP definition <%s>\n", defunct_gw_avp_param);
 		return -1;
@@ -558,13 +560,13 @@ static int mod_init(void)
 	}
 	if (lcr_id_avp_param && *lcr_id_avp_param) {
 	    s.s = lcr_id_avp_param; s.len = strlen(s.s);
-	    if ((pv_parse_spec(&s, &avp_spec) == 0) ||
-		(avp_spec.type != PVT_AVP)) {
+        avp_spec = pv_cache_get(&s);
+	    if (avp_spec==NULL || (avp_spec->type != PVT_AVP)) {
 		LM_ERR("malformed or non AVP definition <%s>\n",
 		       lcr_id_avp_param);
 		return -1;
 	    }
-	    if (pv_get_avp_name(0, &(avp_spec.pvp), &lcr_id_avp,
+	    if (pv_get_avp_name(0, &(avp_spec->pvp), &lcr_id_avp,
 				&avp_flags) != 0) {
 		LM_ERR("invalid AVP definition <%s>\n", lcr_id_avp_param);
 		return -1;
