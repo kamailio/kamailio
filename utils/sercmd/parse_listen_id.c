@@ -42,11 +42,25 @@
 #define pkg_malloc malloc
 #define pkg_free   free
 
+#ifdef EXTRA_DEBUG
+static int _debug = 1;
+#else
+static int _debug = 0;
+#endif
+
 #ifdef __SUNPRO_C
-#define DBG(...)
+#define DBG(...) \
+	do { \
+		if(_debug==1) \
+			fprintf(stderr,  __VA_ARGS__); \
+	} while(0)
 #define LOG(lev, ...) fprintf(stderr,  __VA_ARGS__)
 #else
-#define DBG(fmt, args...)
+#define DBG(fmt, args...) \
+	do { \
+		if(_debug==1) \
+			fprintf(stderr, fmt, ## args); \
+	} while(0)
 #define LOG(lev, fmt, args...) fprintf(stderr, fmt, ## args)
 #endif
 
