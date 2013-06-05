@@ -44,6 +44,16 @@
  */
 
 #include "mark.h"
+#include "../../str.h"
+#include "../../data_lump.h"
+
+const str psu_hdr_s = str_init("P-Served-User: <%.*s>;sescase=%.*s;regstate=%.*s\r\n");
+const str sescase_orig = str_init("orig");
+const str sescase_term = str_init("term");
+const str regstate_reg = str_init("reg");
+const str regstate_unreg = str_init("unreg");
+
+extern int add_p_served_user;
 
 /** base16 char constants */
 char *hexchars = "0123456789abcdef";
@@ -243,6 +253,9 @@ int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark) {
 	if (match)
 		as = match->server_name;
 	isc_mark_write_route(msg, &as, &route);
+	if (add_p_served_user) {
+	    isc_mark_write_psu(msg, mark);
+	}
 	LM_DBG("isc_mark_set: NEW mark <%s>\n", chr_mark);
 
 	return 1;
@@ -291,3 +304,60 @@ inline int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark) {
 	return 1;
 }
 
+/**
+ *  Inserts the P-Served-User header on a SIP message
+ *  as specified in RFC 5502
+ *  @param msg - SIP message
+ *  @param mark - the mark containing all required information
+ *  @returns 1 on success, else 0
+ */
+int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark) {
+    struct lump *l = msg->add_rm;
+    int hlen;
+    char * hstr = NULL;
+    const str *regstate, *sescase;
+
+    switch(mark->direction) {
+    case IFC_ORIGINATING_SESSION:
+        regstate = &regstate_reg;
+        sescase = &sescase_orig;
+        break;
+    case IFC_TERMINATING_SESSION:
+        regstate = &regstate_reg;
+        sescase = &sescase_term;
+        break;
+    case IFC_TERMINATING_UNREGISTERED:
+        regstate = &regstate_unreg;
+        sescase = &sescase_term;
+        break;
+    default:
+        LM_ERR("isc_mark_write_psu: unknown direction: %d\n", mark->direction);
+        return 0;
+    }
+
+    hlen = psu_hdr_s.len - /* 3 "%.*s" */ 12 + mark->aor.len + regstate->len + sescase->len + 1;
+    hstr = pkg_malloc(hlen);
+    if (hstr == NULL) {
+        LM_ERR("isc_mark_write_psu: could not allocate %d bytes\n", hlen);
+        return 0;
+    }
+
+    int ret = snprintf(hstr, hlen, psu_hdr_s.s,
+            mark->aor.len, mark->aor.s,
+            sescase->len, sescase->s,
+            regstate->len, regstate->s);
+    if (ret >= hlen) {
+        LM_ERR("isc_mark_write_psu: invalid string buffer size: %d, required: %d\n", hlen, ret);
+        pkg_free(hstr);
+        return 0;
+    }
+
+    LM_DBG("isc_mark_write_psu: %.*s\n", hlen - 3 /* don't print \r\n\0 */, hstr);
+    if (append_new_lump(&l, hstr, hlen - 1, HDR_OTHER_T) == 0) {
+        LM_ERR("isc_mark_write_psu: append_new_lump(%p, \"%.*s\\\r\\n\", %d, 0) failed\n", &l, hlen - 3 /* don't print \r\n\0 */, hstr, hlen - 1);
+        pkg_free(hstr);
+        return 0;
+    }
+    /* hstr will be deallocated when msg will be destroyed */
+    return 1;
+}

@@ -126,6 +126,26 @@ modparam("ims_isc", "isc_fr_inv_timeout", 20000)
         </programlisting>
       </example>
     </section>
+
+    <section>
+      <title><varname>add_p_served_user</varname> (integer)</title>
+
+      <para>This boolean indicates if a P-Served-User should be added on the ISC
+      interface, according to RFC 5502.</para>
+
+      <para><emphasis> Default value is 0 (false)</emphasis></para>
+
+      <example>
+        <title><varname>add_p_served_user</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_isc", "add_p_served_user", 1)
+# p-served user header will be enabled
+...
+        </programlisting>
+      </example>
+    </section>
     </section>
 
     <section>

@@ -62,6 +62,7 @@ str isc_my_uri_sip = {0, 0}; /**< Uri of myself to loop the message in str with 
 int isc_expires_grace = 120; /**< expires value to add to the expires in the 3rd party register*/
 int isc_fr_timeout = 5000; /**< default ISC response timeout in ms */
 int isc_fr_inv_timeout = 20000; /**< default ISC invite response timeout in ms */
+int add_p_served_user = 0; /**< should the P-Served-User header be inserted? */
 
 /** module functions */
 static int mod_init(void);
@@ -92,6 +93,7 @@ static param_export_t params[] = {
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 consider it dead. Has to be lower than SIP transaction timeout
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 to prevent downstream timeouts. Not too small though because
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 AS are usually slow as hell... */
+    { "add_p_served_user", INT_PARAM, &add_p_served_user}, /**< boolean indicating if the P-Served-User (RFC5502) should be added on the ISC interface or not */
     { 0, 0, 0}
 };
 
