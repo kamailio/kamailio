@@ -411,11 +411,13 @@ success:
         stateful_request_reply_async(t, t->uas.request, 401, MSG_401_CHALLENGE);
 
 done:
-    start_reg_await_timer(avlist[0]); //start the timer to remove stale or unused Auth Vectors
+    if (avlist) {
+        start_reg_await_timer(avlist[0]); //start the timer to remove stale or unused Auth Vectors
 
-    //now we add it to the queue as sent as we have already sent the challenge and used it and set the status to SENT
-    if (!add_auth_vector(private_identity, public_identity, avlist[0]))
-        free_auth_vector(avlist[0]);
+        //now we add it to the queue as sent as we have already sent the challenge and used it and set the status to SENT
+        if (!add_auth_vector(private_identity, public_identity, avlist[0]))
+            free_auth_vector(avlist[0]);
+    }
 
     //free memory
     if (maa) cdpb.AAAFreeMessage(&maa);
