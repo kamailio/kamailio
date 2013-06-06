@@ -66,7 +66,7 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 
 	if (parse_uri(uri->s, uri->len, puri) < 0) {
 		rerrno = R_AOR_PARSE;
-		LM_ERR("failed to parse Address of Record\n");
+		LM_ERR("failed to parse AoR [%.*s]\n", uri->len, uri->s);
 		return -1;
 	}
 	
