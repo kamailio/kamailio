@@ -355,17 +355,18 @@ sleep("1");
 
 4.6. usleep(time)
 
-   Waits "time" milli-seconds.
+   Waits "time" micro-seconds.
 
    Meaning of the parameters is as follows:
-     * time - Time to wait in milli-seconds.
+     * time - Time to wait in micro-seconds (1/1000000 of a second).
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.10. usleep usage
 ...
-usleep("500");
+# wait 5 miliseconds
+usleep("5000");
 ...
 
 4.7. abort()
