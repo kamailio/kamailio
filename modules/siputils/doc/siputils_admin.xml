@@ -274,7 +274,7 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 
 	<section>
 	<title>Functions</title>
-		<section>
+		<section id="siputils.f.ring_insert_callid">
 			<title>
 				<function moreinfo="none">ring_insert_callid()</function>
 			</title>
@@ -298,8 +298,8 @@ ring_insert_callid();
 ...
 				</programlisting>
 			</example>
-		</section>
-			<section>
+	</section>
+	<section id="siputils.f.options_reply">
 		<title>
 		<function moreinfo="none">options_reply()</function>
 		</title>
@@ -340,7 +340,7 @@ if (uri==myself) {
 		</example>
 	</section>
 
-	<section>
+	<section id="siputils.f.is_user">
 		<title>
 		<function moreinfo="none">is_user(username)</function>
 		</title>
@@ -368,7 +368,7 @@ if (is_user("john")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.has_totag()">
 		<title>
 		<function moreinfo="none">has_totag()</function>
 		</title>
@@ -390,7 +390,7 @@ if (has_totag()) {
 		</example>
 	</section>
 	<section>
-		<title>
+		<title id="siputils.f.uri_param">
 		<function moreinfo="none">uri_param(param)</function>
 		</title>
 		<para>
@@ -417,7 +417,7 @@ if (uri_param("param1")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.uri_param_value">
 		<title>
 		<function moreinfo="none">uri_param(param,value)</function>
 		</title>
@@ -449,7 +449,7 @@ if (uri_param("param1","value1")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.add_uri_param">
 		<title>
 		<function moreinfo="none">add_uri_param(param)</function>
 		</title>
@@ -476,7 +476,7 @@ add_uri_param("nat=yes");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.get_uri_param">
 		<title>
 		<function moreinfo="none">get_uri_param(name, var)</function>
 		</title>
@@ -505,7 +505,7 @@ get_uri_param("nat", "$var(nat)");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.tel2sip">
 		<title>
 		<function moreinfo="none">tel2sip(uri, hostpart, result)</function>
 		</title>
@@ -553,7 +553,7 @@ tel2sip("$ru", $fd", "$ru");
 		</example>
 	</section>
 
-	<section>
+	<section id="siputils.f.is_e164">
 		<title>
 		<function moreinfo="none">is_e164(pseudo-variable)</function>
 		</title>
@@ -581,7 +581,7 @@ if (is_e164("$avp(i:705)") {
 		</example>
 	</section>
 
-	<section>
+	<section id="siputils.f.is_uri_user_e164">
 		<title>
 		<function moreinfo="none">is_uri_user_e164(pseudo-variable)</function>
 		</title>
@@ -608,7 +608,7 @@ if (is_uri_user_e164("$avp(i:705)") {
 		</example>
 	</section>
 
-	<section>
+	<section id="siputils.f.encode_contact">
 		<title>
 		<function moreinfo="none">encode_contact(encoding_prefix,hostpart)</function>
 		</title>
@@ -654,7 +654,7 @@ if (src_ip == 10.0.0.0/8) encode_contact("natted_client","1.2.3.4");
 		</example>
 	</section>
 
-	<section>
+	<section id="siputils.f.decode_contact">
 		<title>
 		<function moreinfo="none">decode_contact()</function>
 		</title>
@@ -681,7 +681,7 @@ if (uri =~ "^sip:natted_client") { decode_contact(); }
 		</example>
 	</section>
 
-	<section>
+	<section id="siputils.f.decode_contact_header">
 		<title>
 		<function moreinfo="none">decode_contact_header()</function>
 		</title>
@@ -711,7 +711,7 @@ reply_route[2] {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.cmp_uri">
 		<title>
 		<function moreinfo="none">cmp_uri(str1, str2)</function>
 		</title>
@@ -735,7 +735,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 		</example>
 	</section>
 
-	<section>
+	<section id="siputils.f.cmp_aor">
 		<title>
 		<function moreinfo="none">cmp_aor(str1, str2)</function>
 		</title>
@@ -759,32 +759,7 @@ if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
 </programlisting>
 		</example>
 	</section>
-	<section>
-		<title>
-			<function moreinfo="none">is_rpid_user_e164()</function>
-		</title>
-		<para>
-		The function checks if the SIP URI received from the database or 
-		radius server and will potentially be used in Remote-Party-ID header 
-		field contains an E164 number (+followed by up to 15 decimal digits) 
-		in its user part.  Check fails, if no such SIP URI exists 
-		(i.e. radius server or database didn't provide this information).
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title>is_rpid_user_e164 usage</title>
-		<programlisting format="linespecific">
-...
-if (is_rpid_user_e164()) {
-    # do something here
-};
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="append-rpid-hf-no-params">
+	<section  id="siputils.f.append_rpid_hf">
 		<title>
 			<function moreinfo="none">append_rpid_hf()</function></title>
 		<para>
@@ -807,13 +782,13 @@ append_rpid_hf();  # Append Remote-Party-ID header field
 </programlisting>
 		</example>
 	</section>
-	<section id="append-rpid-hf-params">
+	<section id="siputils.f.append_rpid_hf_params">
 		<title>
 			<function moreinfo="none">append_rpid_hf(prefix, suffix)</function>
 		</title>
 		<para>
 		This function is the same as 
-		<xref linkend="append-rpid-hf-no-params"/>. The only difference is
+		<xref linkend="siputils.f.append_rpid_hf"/>. The only difference is
 		that it accepts two parameters--prefix and suffix to be added to 
 		Remote-Party-ID header field. This function ignores rpid_prefix and 
 		rpid_suffix parameters, instead of that allows to set them in every 
@@ -850,7 +825,7 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 		</example>
 	</section>
 	<section>
-		<title>
+		<title id="siputils.f.is_rpid_user_e164">
 			<function moreinfo="none">is_rpid_user_e164()</function>
 		</title>
 		<para>
@@ -874,7 +849,7 @@ if (is_rpid_user_e164()) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.set_uri_user">
 		<title>
 			<function moreinfo="none">set_uri_user(uri, user)</function>
 		</title>
@@ -896,7 +871,7 @@ set_uri_user("$var(uri)", "$var(user)");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.set_uri_host">
 		<title>
 			<function moreinfo="none">set_uri_host(uri, host)</function>
 		</title>
@@ -918,7 +893,7 @@ set_uri_host("$var(uri)", "$var(host)");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.is_request">
 		<title>
 		<function moreinfo="none">is_request()</function>
 		</title>
@@ -939,7 +914,7 @@ if (is_request()) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.f.is_reply">
 		<title>
 		<function moreinfo="none">is_reply()</function>
 		</title>
@@ -960,7 +935,7 @@ if (is_reply()) {
 </programlisting>
 		</example>
 	</section>
-	<section id="is-gruu">
+	<section id="siputils.f.is_gruu">
 		<title>
 			<function moreinfo="none">is_gruu([uri])</function>
 		</title>
@@ -989,7 +964,7 @@ if(is_gruu()) { ... }
 </programlisting>
 		</example>
 	</section>
-	<section id="is-supported">
+	<section id="siputils.f.is_supported">
 		<title>
 			<function moreinfo="none">is_supported(option)</function>
 		</title>
@@ -1008,6 +983,31 @@ if(is_gruu()) { ... }
 		<programlisting format="linespecific">
 ...
 if (is_supported("outbound")) { ... }
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siputils.f.is_first_hop">
+		<title>
+			<function moreinfo="none">is_first_hop()</function>
+		</title>
+		<para>
+		The function returns true if the proxy is first hop after the
+		original sender. For incoming SIP requests, it means there is only
+		one Via header. For incoming SIP replies, it means that top
+		Record-Route URI is 'myself' and source address is not matching it
+		(to avoid detecting in case of local loops). Note that it does not
+		detect spirals, which can have the condition for replies true also
+		in the case of additional SIP reply receival.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title>is_first_hop() usage</title>
+		<programlisting format="linespecific">
+...
+if(is_first_hop()) { ... }
 ...
 </programlisting>
 		</example>

@@ -173,6 +173,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"is_supported",  (cmd_function)w_is_supported,                    1, fixup_option,
 		0, ANY_ROUTE},
+	{"is_first_hop",  (cmd_function)w_is_first_hop,                    0, 0,
+		0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
