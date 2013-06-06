@@ -125,8 +125,10 @@ struct module_exports exports= {
 
 static int mod_init( void )
 {
-	if (radius_config==NULL || radius_config[0]=='\0')
-		return 0;
+	if (radius_config==NULL || radius_config[0]=='\0') {
+		LM_ERR("radius config file not set\n");
+		return -1;
+	}
 	
 	/* bind the ACC API */
 	if (acc_load_api(&accb)<0) {
