@@ -880,8 +880,11 @@ add_contact_alias_0_f(struct sip_msg* msg, char* str1, char* str2)
     }
 
     /* Compare source ip and port against contact uri */
-    if (((ip = str2ip(&(uri.host))) == NULL) &&
-	((ip = str2ip6(&(uri.host))) == NULL)) {
+    if (((ip = str2ip(&(uri.host))) == NULL)
+#ifdef USE_IPV6
+	&& ((ip = str2ip6(&(uri.host))) == NULL)
+#endif
+	) {
 	LM_DBG("contact uri host is not an ip address\n");
     } else {
 	if (ip_addr_cmp(ip, &(msg->rcv.src_ip)) &&
