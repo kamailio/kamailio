@@ -681,7 +681,7 @@ deb-stable:
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	else \
-		ln -s pkg/$(MAIN_NAME)/deb/squeeze debian; \
+		ln -s pkg/$(MAIN_NAME)/deb/wheezy debian; \
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	fi
