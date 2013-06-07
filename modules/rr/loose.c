@@ -568,7 +568,6 @@ static inline int after_strict(struct sip_msg* _m)
 	char* rem_off;
 	str uri;
 	struct socket_info *si;
-	int use_ob, next_is_strict;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -584,13 +583,7 @@ static inline int after_strict(struct sip_msg* _m)
 		return RR_ERROR;
 	}
 
-	next_is_strict = is_strict(&puri.params);
-	if ((use_ob = process_outbound(_m, puri.user, &uri)) < 0) {
-		LM_ERR("processing outbound flow-token\n");
-		return FLOW_TOKEN_BROKEN;
-	}
-
-	if (!use_ob && enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
+	if ( enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
 		/* double route may occure due different IP and port, so force as
 		 * send interface the one advertise in second Route */
 		si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
@@ -627,7 +620,6 @@ static inline int after_strict(struct sip_msg* _m)
 			LM_ERR("failed to parse URI\n");
 			return RR_ERROR;
 		}
-		next_is_strict = is_strict(&puri.params);
 	} 
 
 	/* set the hooks for the param
@@ -636,7 +628,7 @@ static inline int after_strict(struct sip_msg* _m)
 	routed_msg_id = _m->id;
 	routed_params = _m->parsed_uri.params;
 
-	if (next_is_strict) {
+	if (is_strict(&puri.params)) {
 		LM_DBG("Next hop: '%.*s' is strict router\n", uri.len, ZSW(uri.s));
 		/* Previous hop was a strict router and the next hop is strict
 		 * router too. There is no need to save R-URI again because it
@@ -647,11 +639,9 @@ static inline int after_strict(struct sip_msg* _m)
 		 * always be a strict router because endpoints don't use ;lr parameter
 		 * In this case we will simply put the URI in R-URI and forward it, 
 		 * which will work perfectly */
-		if (!use_ob) {
-			if(get_maddr_uri(&uri, &puri)!=0) {
-				LM_ERR("failed to check maddr\n");
-				return RR_ERROR;
-			}
+		if(get_maddr_uri(&uri, &puri)!=0) {
+			LM_ERR("failed to check maddr\n");
+			return RR_ERROR;
 		}
 		if (rewrite_uri(_m, &uri) < 0) {
 			LM_ERR("failed to rewrite request URI\n");
@@ -673,11 +663,9 @@ static inline int after_strict(struct sip_msg* _m)
 		LM_DBG("Next hop: '%.*s' is loose router\n",
 			uri.len, ZSW(uri.s));
 
-		if (!use_ob) {
-			if(get_maddr_uri(&uri, &puri)!=0) {
-				LM_ERR("failed to check maddr\n");
-				return RR_ERROR;
-			}
+		if(get_maddr_uri(&uri, &puri)!=0) {
+			LM_ERR("failed to check maddr\n");
+			return RR_ERROR;
 		}
 		if (set_dst_uri(_m, &uri) < 0) {
 			LM_ERR("failed to set dst_uri\n");
