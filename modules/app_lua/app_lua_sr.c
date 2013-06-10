@@ -989,6 +989,14 @@ static int lua_sr_pv_sets (lua_State *L)
 		LM_ERR("to few parameters [%d]\n",lua_gettop(L));
 		return 0;
 	}
+
+	if(!lua_isstring(L, -1))
+	{
+		LM_ERR("Cannot convert to a string when assigning value to variable: %s\n",
+			   lua_tostring(L, -2));
+		return 0;
+	}
+
 	memset(&val, 0, sizeof(pv_value_t));
 	val.rs.s = (char*)lua_tostring(L, -1);
 	val.rs.len = strlen(val.rs.s);
