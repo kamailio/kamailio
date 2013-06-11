@@ -689,7 +689,7 @@ modparam("registrar", "xavp_cfg", "reg")
 		<title>Set <varname>xavp_rcd</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("registrar", "xavp_cfg", "ulrcd")
+modparam("registrar", "xavp_rcd", "ulrcd")
 ...
 		</programlisting>
 		</example>
