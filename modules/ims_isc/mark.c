@@ -338,7 +338,7 @@ int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark) {
     hlen = psu_hdr_s.len - /* 3 "%.*s" */ 12 + mark->aor.len + regstate->len + sescase->len + 1;
     hstr = pkg_malloc(hlen);
     if (hstr == NULL) {
-        LM_ERR("isc_mark_write_psu: could not allocate %d bytes\n", hlen);
+        LM_ERR("isc_mark_write_psu: could not allocate %zu bytes\n", hlen);
         return 0;
     }
 
@@ -347,14 +347,14 @@ int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark) {
             sescase->len, sescase->s,
             regstate->len, regstate->s);
     if (ret >= hlen) {
-        LM_ERR("isc_mark_write_psu: invalid string buffer size: %d, required: %d\n", hlen, ret);
+        LM_ERR("isc_mark_write_psu: invalid string buffer size: %zu, required: %d\n", hlen, ret);
         pkg_free(hstr);
         return 0;
     }
 
-    LM_DBG("isc_mark_write_psu: %.*s\n", hlen - 3 /* don't print \r\n\0 */, hstr);
+    LM_DBG("isc_mark_write_psu: %.*s\n", (int)hlen - 3 /* don't print \r\n\0 */, hstr);
     if (append_new_lump(&l, hstr, hlen - 1, HDR_OTHER_T) == 0) {
-        LM_ERR("isc_mark_write_psu: append_new_lump(%p, \"%.*s\\\r\\n\", %d, 0) failed\n", &l, hlen - 3 /* don't print \r\n\0 */, hstr, hlen - 1);
+        LM_ERR("isc_mark_write_psu: append_new_lump(%p, \"%.*s\\\r\\n\", %zu, 0) failed\n", &l, (int)hlen - 3 /* don't print \r\n\0 */, hstr, hlen - 1);
         pkg_free(hstr);
         return 0;
     }
