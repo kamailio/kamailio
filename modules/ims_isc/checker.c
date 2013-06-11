@@ -57,15 +57,32 @@ static int isc_check_headers(ims_spt *spt, struct hdr_field *headers) {
 	char buf[256];
 	regex_t header_comp, content_comp;
 	i = headers;
+
+    if (spt->sip_header.header.len >= sizeof(buf)) {
+        LM_ERR("Header name \"%.*s\" is to long to be processed (max %d bytes)\n", spt->sip_header.header.len, spt->sip_header.header.s, (int) (sizeof(buf) - 1));
+        return FALSE;
+    }
+    if (spt->sip_header.content.len >= sizeof(buf)) {
+        LM_ERR("Header content \"%.*s\" is to long to be processed (max %d bytes)\n", spt->sip_header.content.len, spt->sip_header.content.s, (int) (sizeof(buf) - 1));
+        return FALSE;
+    }
+
 	/* compile the regex for header name */
 	memcpy(buf, spt->sip_header.header.s, spt->sip_header.header.len);
 	buf[spt->sip_header.header.len] = 0;
-	regcomp(&(header_comp), buf, REG_ICASE | REG_EXTENDED);
+	if (regcomp(&(header_comp), buf, REG_ICASE | REG_EXTENDED) != 0) {
+	    LM_ERR("Error compiling the following regexp for header name: %.*s\n", spt->sip_header.header.len, spt->sip_header.header.s);
+	    return FALSE;
+	}
 
 	/* compile the regex for content */
 	memcpy(buf, spt->sip_header.content.s, spt->sip_header.content.len);
 	buf[spt->sip_header.content.len] = 0;
-	regcomp(&(content_comp), buf, REG_ICASE | REG_EXTENDED);
+	if(regcomp(&(content_comp), buf, REG_ICASE | REG_EXTENDED) != 0) {
+	    LM_ERR("Error compiling the following regexp for header content: %.*s\n", spt->sip_header.content.len, spt->sip_header.content.s);
+	    regfree(&(header_comp));
+	    return FALSE;
+	}
 
 	LM_DBG("isc_check_headers: Looking for Header[%.*s(%d)] %.*s \n",
 			spt->sip_header.header.len, spt->sip_header.header.s, spt->sip_header.type, spt->sip_header.content.len, spt->sip_header.content.s);
