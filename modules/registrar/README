@@ -16,7 +16,7 @@ Edited by
 
 Bogdan-Andre Iancu
 
-   Copyright (c) 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -626,7 +626,7 @@ modparam("registrar", "xavp_cfg", "reg")
 
    Example 1.21. Set xavp_rcd parameter
 ...
-modparam("registrar", "xavp_cfg", "ulrcd")
+modparam("registrar", "xavp_rcd", "ulrcd")
 ...
 
 3.23. gruu_enabled (integer)
@@ -725,7 +725,7 @@ modparam("registrar", "flow_timer", 25)
    4.7. reg_fetch_contacts(domain, uri, profile)
    4.8. reg_free_contacts(profile)
 
-4.1.  save(domain, [, flags [, uri]])
+4.1. save(domain, [, flags [, uri]])
 
    The function processes a REGISTER message. It can add, remove or modify
    usrloc records depending on Contact and Expires HFs in the REGISTER
@@ -769,7 +769,7 @@ save("location", "0x01");
 save("location", "0x00", "sip:test@kamailio.org");
 ...
 
-4.2.  lookup(domain [, uri])
+4.2. lookup(domain [, uri])
 
    The function extracts username from Request-URI and tries to find all
    contacts for the username in usrloc. If there are no such contacts, -1
@@ -809,7 +809,7 @@ switch ($retcode) {
 };
 ...
 
-4.3.  lookup_branches(domain)
+4.3. lookup_branches(domain)
 
    The function performs lookup(domain) on r-uri and additional branches
    (only branches that have no other attributes set than uri).
@@ -826,7 +826,7 @@ switch ($retcode) {
 lookup_branches("location");
 ...
 
-4.4.  registered(domain [, uri])
+4.4. registered(domain [, uri])
 
    The function returns true if the AOR in the Request-URI is registered,
    false otherwise. The function does not modify the message being
@@ -848,7 +848,7 @@ if (registered("location")) {
 };
 ...
 
-4.5.  add_sock_hdr(hdr_name)
+4.5. add_sock_hdr(hdr_name)
 
    Adds to the current REGISTER request a new header with "hdr_name" which
    contains the description of the received socket (proto:ip:port)
@@ -865,7 +865,7 @@ if (registered("location")) {
 add_sock_hdr("Sock-Info");
 ...
 
-4.6.  unregister(domain, uri[, ruid])
+4.6. unregister(domain, uri[, ruid])
 
    The function removes contacts associated with 'uri'. If 'ruid' is
    provided a specific contact is removed, if 'ruid' is not provided all
@@ -891,7 +891,7 @@ unregister("location", "$ru", "$ulc(caller=>ruid)");
 unregister("location", "", "$ruid");
 ...
 
-4.7.  reg_fetch_contacts(domain, uri, profile)
+4.7. reg_fetch_contacts(domain, uri, profile)
 
    The function fetches the contacts for 'uri' from table 'domain' to
    pseudo-variable $ulc(profile).
@@ -913,7 +913,7 @@ reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 ...
 
-4.8.  reg_free_contacts(profile)
+4.8. reg_free_contacts(profile)
 
    The function frees the contacts from pseudo-variable $ulc(profile).
    Should be called to release the content of a profile. Anyhow, fetching
@@ -1056,60 +1056,60 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       What happend with the old "nat_flag" module parameter?
+   What happend with the old "nat_flag" module parameter?
 
-       In was removed, as the module internally loads this value from the
-       "USRLOC" module (see the "nat_bflag" USRLOC parameter).
+   In was removed, as the module internally loads this value from the
+   "USRLOC" module (see the "nat_bflag" USRLOC parameter).
 
    2.2.
 
-       What happend with the old "use_domain" module parameter?
+   What happend with the old "use_domain" module parameter?
 
-       In was removed, as the module internally loads this option from the
-       "USRLOC" module. This was done in order to simplify the configuration.
+   In was removed, as the module internally loads this option from the
+   "USRLOC" module. This was done in order to simplify the configuration.
 
    2.3.
 
-       What happend with the old "save_noreply" and "save_memory" functions?
+   What happend with the old "save_noreply" and "save_memory" functions?
 
-       There functions were merged into the new "save(domain,flags)"
-       functions. If a reply should be sent or if the DB should be updated
-       also is controlled via the flags.
+   There functions were merged into the new "save(domain,flags)"
+   functions. If a reply should be sent or if the DB should be updated
+   also is controlled via the flags.
 
    2.4.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.5.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.6.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.
 
    2.7.
 
-       What happened to the desc_time_order parameter?
+   What happened to the desc_time_order parameter?
 
-       It was removed, as its functionality was migrated into usrloc module,
-       were there is a parameter with the same name.
+   It was removed, as its functionality was migrated into usrloc module,
+   were there is a parameter with the same name.
