@@ -546,15 +546,20 @@ void xavp_print_list(sr_xavp_t **head)
  * $xavp(test[0]=>two) = "2"
  * $xavp(test[0]=>three) = 3
  * $xavp(test[0]=>four) = $xavp(whatever)
+ * $xavp(test[0]=>two) = "other 2"
  *
  * xavp_get_list_keys_names(test[0]) returns
  * {"one", "two", "three", "four"}
+ *
+ * free the struct str_list afterwards
+ * but do *NO* free the strings inside
  */
 struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp)
 {
 	sr_xavp_t *avp = NULL;
 	struct str_list *result = NULL;
 	struct str_list *r = NULL;
+	struct str_list *f = NULL;
 	int total = 0;
 
 	if(xavp==NULL){
@@ -585,14 +590,27 @@ struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp)
 
 	while(avp)
 	{
-		r = append_str_list(avp->name.s, avp->name.len, &r, &total);
-		if(r==NULL){
-			while(result){
-				r = result;
-				result = result->next;
-				pkg_free(r);
+		f = result;
+		while(f)
+		{
+			if((avp->name.len==f->s.len)&&
+				(strncmp(avp->name.s, f->s.s, f->s.len)==0))
+			{
+				break; /* name already on list */
 			}
-			return 0;
+			f = f->next;
+		}
+		if (f==NULL)
+		{
+			r = append_str_list(avp->name.s, avp->name.len, &r, &total);
+			if(r==NULL){
+				while(result){
+					r = result;
+					result = result->next;
+					pkg_free(r);
+				}
+				return 0;
+			}
 		}
 		avp = avp->next;
 	}
