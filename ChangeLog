@@ -1,3 +1,715 @@
+===================== 2013-06-12 Version 4.0.2 Released =====================
+
+===================== Changes Since Version 4.0.1 ===========================
+
+commit f6fc38aab505aab1301024b58581ebec9a7181c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 12 15:50:45 2013 +0200
+
+    Makefile.defs: version set to 4.0.2
+
+commit d4df824c3f16cf934d9056e94f8f44ae0bf3016f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 12 12:29:39 2013 +0200
+
+    pkg/rpm: version set to 4.0.2 in spec files
+
+commit 963fcd0ccfac6cccdc27b3a2d7a14d207ed7c516
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 12 12:29:16 2013 +0200
+
+    pkg/deb: version set to 4.0.2 in spec files
+
+commit d54024f873c641c21da197ee7eb3a49746f58229
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 12 09:14:14 2013 +0200
+
+    registrar: regenerated the readme file
+
+commit 81b61679cabd2470becf86700b777cc496f1d330
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 12 09:11:56 2013 +0200
+
+    mtree: use debug level for log message when invalid character in value to be matched
+    
+    - more verbose message when an invalid database record is found
+
+commit 6b0d759f0dabf36c529c6c7d22c8333e7a8731e1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 11 18:39:31 2013 +0200
+
+    registrar: fixed typo in example of xavp_rcd parameter
+    (cherry picked from commit c228851e068a080050c79107c760f8ab5ffae967)
+
+commit 3f1f50068b96ea4bde1a7255842bf07683cbed8a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 11 18:37:32 2013 +0200
+
+    registrar: more debug messages when adding ruid xavp
+    
+    - free local ruid xavp if cannot be added to root list
+    (cherry picked from commit 9589466916305146fb4f982542c3f3a51126dcef)
+
+commit 56ba8ea8b1f1f26ccc36dfb073e1559eca4d77b1
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Tue Jun 11 16:34:49 2013 +0200
+
+    modules/ims_isc: several safety checks
+    
+    - fixed potential buffer overflow
+    - fixed potential crash if regcomp fails
+
+commit 9ee53f2abe580026c83d62b0edf1f6288dc0111a
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Mon Jun 10 12:14:54 2013 +0200
+
+    app_lua: solve crash when setting a variable not convertible to string.
+    (cherry picked from commit 4af0bc13901525a5638c2c64b863f377e033903f)
+
+commit c3f4bda21273a5172dbfe048c5a1a14216f6d047
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Tue May 28 17:53:07 2013 +0200
+
+    modules/ims_registrar_scscf: safety check for log line when recieving an SAR_UNREGISTERED_USER response
+
+commit 1fefe2feae9fec5621d949fe3857fcf8fb62068e
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri Jun 7 12:09:38 2013 -0400
+
+    Makefile: update de-stable target: squeeze -> wheezy
+    (cherry picked from commit fd8dfb71d0eeae891ad0c83ff332929d54f3a3ec)
+
+commit a9089d05121e05287ce91fddb12769acfae866c8
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri Jun 7 11:17:10 2013 -0400
+
+    nathelper: fix IPV6 compiler warning
+
+commit 21747d786a4e0f8f606baeeb4f39166d351b824b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 6 11:47:10 2013 +0200
+
+    cfgutils: updated docs to specify correct time unit for usleep
+    
+    - it is microseconds, pointed by David K
+    (cherry picked from commit 8e937d260d0ff41f50be56e0a46ede44554f3f99)
+
+commit e52f1d6e5702bce8031d224f006627ab3fc3f859
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 6 09:09:14 2013 +0200
+
+    kamailio.cfg: reset $du for voicemail re-routing in failure route
+    (cherry picked from commit c4b29f6fac6155b9b087737df5956b687ff4e36a)
+
+commit 3dc0b79993863f7399b1cb579d81f3637370e35a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 5 22:44:13 2013 +0200
+
+    kamailio.cfg: few updates related to nat traversal
+    
+    - added "co" flags to rtpproxy_manage() to change all IPs in sdp, many
+      phone get confused if only media ip is changed
+    - add nat=yes parameter only for in branch route to avoid multiple
+      occurences
+    (cherry picked from commit 0193489cca56f58b512f5379c078c98a366c17e2)
+
+commit 72b483393b5e7c85096a79fd999caf17edde69b6
+Author: Jason Penton <jason.penton@smilecoms.com>
+Date:   Wed Jun 5 08:58:29 2013 +0200
+
+    module/ims_auth: protection against crash if there is no auth vector initialised.
+    	- patch submitted by Camille Oudot
+    (cherry picked from commit 4b65964dbe1f38bcf867301d43933f9bbf91ab7d)
+
+commit 51fc2140e1d0708ed213d4903552c2f98a39a5da
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 3 20:53:05 2013 +0200
+
+    dialog: shift next timer run for keepalives of dialog
+    
+    - reported by Daniel Tryba
+    (cherry picked from commit a17a32e5f7a3120c200d6e48fe91d7aa1dfd28b1)
+
+commit de9607079be932be6effe40573b3219724f4393e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 27 16:54:02 2013 +0200
+
+    core: enclose uri in angle brakets for redirect contact header
+    
+    - safer for uri with parameters and no q
+    - reported by Dan Bogos
+    (cherry picked from commit 74bf08ef30cf18fb609c2c067584f1515ede23da)
+
+commit f01889d6e717892d38df8c267e20c269dbc83b0e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 26 10:43:24 2013 +0200
+
+    dmq: many safety checks for mem mallocs and function return codes
+    
+    - added license header in the files
+    (cherry picked from commit 1977645ceb12ca2d0f2f767046606f6c5ae2c3bb)
+
+commit 2c04dd88c8911f3a67f3f94a5ad11b1ab865aca9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 25 16:30:33 2013 +0200
+
+    protoshoot: use Makefile pattern for utils
+    
+    - link to libsctp if SCTP support is enabled
+    (cherry picked from commit 1bdbdb64e4862ddb69c2bf13be0f9be93968bb1e)
+
+commit cd1120c6500bb396af9b5410ecd535160c2ba9d7
+Author: Konstantin Mosesov <ez@voipgroup.org.ua>
+Date:   Sat May 18 13:56:22 2013 +0300
+
+    parser/sdp: Fixed segfault in sdp_print() when no SDP body.
+    
+    - Failed scenario:
+    remove_body();
+    msg_apply_changes();
+    sdp_print("1");
+    
+    - Result: sdp=0x0
+    (cherry picked from commit e81b3aac19ab567813d6cb21fcba3d9bd6e1cc90)
+
+commit edde8d20806aca248e3a1c1e439084988d62d361
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 17 00:46:42 2013 +0200
+
+    core: fixed printing function name in log message
+    
+    - based on http://gcc.gnu.org/onlinedocs/gcc/Function-Names.html
+    (cherry picked from commit e081c2880b46174ad836ab1f56e3062bb17b4332)
+
+commit 959cab2009427fd850318980914dd0e91b3cbff8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 15 22:45:18 2013 +0200
+
+    pv: clone result of several string transformations
+    
+    - it is safer for assigning back to the same variable on which the
+      transformation was applied
+    - reported by Martin Mikkelsen
+    (cherry picked from commit fe7e4a5152674aa9c81c09dd2fc9938d9e9e762e)
+
+commit c3017b2e79e47edd88f2b4917afd4794d4e6ef11
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 14 19:52:45 2013 +0200
+
+    utils/misc: updated vim syntax file
+    (cherry picked from commit 6038bae188863f541994976d299c38f50b0a699b)
+
+commit 90a8f28c01d804dccc50112af3235fb886e57d89
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 13 10:59:20 2013 +0200
+
+    core: debug message to show mapping of routing block names to ids
+    (cherry picked from commit 80e8058d9acea7c994819d043456fd1b449b048b)
+
+commit 369143aeeab0761edd70ab42cbac5648194f8a55
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sun May 12 16:10:40 2013 +0300
+
+    modules/presence: downgraded unsupported event syslog message
+    
+    - Downgraded unsupported event syslog message from error to notice.
+    (cherry picked from commit afdae93c5eba15496498be292c0c99608d801757)
+
+commit 2c4bc8619c61993c02eccaada7dca5f5c84199af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 7 19:15:36 2013 +0200
+
+    core: get rid of deferencing type-punned warning in deb wheezy
+    
+    - reported by Victor Seva
+    (cherry picked from commit 81d3eebd51089686949ab22da60166d4f3a460a7)
+
+commit 62071fddff1793254e3d615ccb956bbb7ce5ccca
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Thu May 2 21:17:57 2013 +0200
+
+    mangler: fix double definition of contact_flds_separator, reported from ld
+    (cherry picked from commit 003d87edc23f62de98a1a22db03b12ea58abcbc6)
+
+commit bb9a8ea4dcff649c06395efbe4f3aa2cc4f269f5
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Mon Apr 29 20:54:52 2013 +0100
+
+    modules/websocket: fixed mandatory headers check
+    (cherry picked from commit 8f74c57605fdd1d31c7808a3b8afc79cc981b370)
+
+commit 61f68eae79b09898cec4a90f298c562f4c2f9a93
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Mon Apr 29 20:38:06 2013 +0100
+
+    modules/websocket: doubled the size of the buffer for adding headers to WebSocket handshake responses
+    (cherry picked from commit a2e7f65ee8b86d37a6772619ae10087a05219192)
+
+commit 6eb6d92af2fe55d14b255bb5c5c939cc2f78ba79
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 7 11:00:51 2013 +0200
+
+    modules/rr: completely reverted after_strict() to its pre-outbound form
+    
+    - backported from c9448d9657f0e5792072c6803643c8d9075d711a by Peter
+      Dunkley
+
+commit 4b8f5eea61310a7d2545d06d513697b0c8631289
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Jun 6 15:21:19 2013 -0400
+
+    registrar: print bogus AoR in error log
+    (cherry picked from commit e41230071e367015ecf794c147c60fda0bcd1907)
+
+commit 3a64a12e056670766da7e49a0275c1240d6d229a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 31 17:05:40 2013 +0200
+
+    pua: release lock on not finding temp dialog
+    
+    - patch by Halina Nowak
+    (cherry picked from commit 09cc2207b265d51dcbc28279623bf9c597fa3b46)
+
+commit be5c2e31c6498d916762b87b6d5e76403f9f1824
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 15:49:52 2013 +0100
+
+    documentation: Rebuild auth README
+
+commit 6978f42ae854385b437f637f7e6ce3fced33474c
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 15:46:18 2013 +0100
+
+    documentation: Rebuild all modified READMEs
+
+commit 96aff46759acd1df1a585866c1ce9295cb2810b1
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:10:31 2013 +0100
+
+    auth_identity: Fix TOC in documentation
+    (cherry picked from commit d4743ac526184ce3234518234ca77c715ca2f6b6)
+
+commit 203ba3e9c51852b245448ab44f4a7c181919cd33
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:11:23 2013 +0100
+
+    avp: Fix TOC in documentation
+    (cherry picked from commit 973973bef43acac5cdbae930427b6e347746a337)
+
+commit ce1da89afedc38e606446527bf218ea9eb032221
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:37:03 2013 +0100
+
+    blst: Fix TOC in documentation
+    (cherry picked from commit f53afaaf8c7fe65507ebe179a05049c64b380632)
+
+commit 479199a575a3cb4a8385cbf8ad8ece5d798e09f1
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:37:26 2013 +0100
+
+    cfg_db: Fix TOC in documentation
+    (cherry picked from commit c209510de26aadc7ff01506dca42ec0b39904f0a)
+
+commit 3d6e26cd8b2188b6236c98977c4c312c2320d3bd
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:37:45 2013 +0100
+
+    cfg_rpc: Fix TOC in documentation
+    (cherry picked from commit ca060e774dd95b0831b2efeea9b355ba3a4fc068)
+
+commit 67716c6c5cf5fbe89e69df5dc86db0f7dce7ed3c
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:38:07 2013 +0100
+
+    counters: Fix TOC in documentation
+    (cherry picked from commit 2980ba3881325102835297bc5cdf5b3199a8f9b7)
+
+commit 183562260acce4b5fcaeb1831b4c50757dfb9dbd
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:38:25 2013 +0100
+
+    ctl: Fix TOC in documentation
+    (cherry picked from commit cff735c7d4933d8fac54471897173a6b6c75bd4f)
+
+commit 43e15fa83ef1e5b043f1d2aca69864030f21dc81
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:38:43 2013 +0100
+
+    db2_ldap: Fix TOC in documentation
+    (cherry picked from commit 2e4e4d54015f850b377beb30a72cc4e0b2cb1cce)
+
+commit e6ee88798b26af044afe5d407cdb4c637171fb70
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:39:45 2013 +0100
+
+    db2_ops: Fix TOC in documentation
+    (cherry picked from commit f29709478f3492741803cf8ce100d6aa843de6be)
+
+commit d680a29621d81e4bd99a79c20474ff275eb364ee
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:40:06 2013 +0100
+
+    db_flatstore: Fix TOC in documentation
+    (cherry picked from commit 86b0c38c38822c93ccd3f2a80f629f35c83877bf)
+
+commit 2483b36569ca27db9e1952afdf9de6a838de3b4b
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:40:31 2013 +0100
+
+    iptrtpproxy: Fix TOC in documentation
+    (cherry picked from commit aaa7c1ca5b61ab156dc548647b5021cdfce79df8)
+
+commit f281fc57de32fe4ed23e5cfc44039ec4d83b43e3
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:40:54 2013 +0100
+
+    malloc_test: Fix TOC in documentation
+    (cherry picked from commit fa90c51bb3c1eace5ca3ef75bb0656ad00512081)
+
+commit f2d0437086f2208036affbf4a6a43fd5c47f27aa
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:41:28 2013 +0100
+
+    mangler: Fix TOC in documentation
+    (cherry picked from commit 0587120366a1e434c4b037aa9aea13ad47c00949)
+
+commit 88ba330fff5556d893a426acc1c1b96b1443ca72
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:41:51 2013 +0100
+
+    prefix_route: Fix TOC in documentation
+    (cherry picked from commit 0fec2b0e212a3578474ce4eb7165d218a5008741)
+
+commit 2b73d4a7a584891e3ce4087002418039bfcfa842
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:42:05 2013 +0100
+
+    print: Fix TOC in documentation
+    (cherry picked from commit 2a7b143ac5e16da2ef5a1b249a041a009fe2403c)
+
+commit 36fcb32c129a43bd8056a7b8bc3e0b44e0f266d0
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:42:20 2013 +0100
+
+    print_lib: Fix TOC in documentation
+    (cherry picked from commit c6a6057ad0a121b5fb756c05ebe7ae8819ad1eea)
+
+commit adaa412871b4e489ff41ba585365711cf2df5965
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:42:35 2013 +0100
+
+    sanity: Fix TOC in documentation
+    (cherry picked from commit 0428706c4c8ebb8ab55e29acea02e574a3f7301f)
+
+commit 461b1e248f0d3f749282f2145c4176bb979b5e66
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:42:54 2013 +0100
+
+    sl: Fix TOC in documentation
+    (cherry picked from commit 47c467fd2ea2351112acadd1f2b7317b97a15a86)
+
+commit de89f88a99ce546c73a4dcf52c37c42078dce972
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:43:09 2013 +0100
+
+    sms: Fix TOC in documentation
+    (cherry picked from commit 30a01b64344ae050a79cce83f56de56032580138)
+
+commit d115fa0291aa927f2ff8ceec67f29732c7faa69b
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:43:24 2013 +0100
+
+    textopsx: Fix TOC in documentation
+    (cherry picked from commit ec8c442d890d875cc412b24fdfafc4bac2d43d7e)
+
+commit 07f8341cc900dcb3b1c794f90d661619ce9d96bf
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:43:42 2013 +0100
+
+    timer: Fix TOC in documentation
+    (cherry picked from commit e7b02dfc716f39465600170059559af042642062)
+
+commit b66db21b7ece75e8ab241a2c3e910c606bca8519
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:43:57 2013 +0100
+
+    tls: Fix TOC in documentation
+    (cherry picked from commit 935607223847032559156c22e0a0988fd32e9d17)
+
+commit 04b1687078f26fceb7b50384c0b2f1f4a349e4a1
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 15:10:38 2013 +0100
+
+    tm: Fix TOC in documentation
+
+commit 7e3b141db106062141e18365601039ed382125e7
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:44:28 2013 +0100
+
+    xmlops: Fix TOC in documentation
+    (cherry picked from commit 285142447f23aa317a0a0d5b3e6e57d3afa78961)
+
+commit 5b0dc97812273d4f2cde2e4fd63df5c29c84165b
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:44:45 2013 +0100
+
+    xprint: Fix TOC in documentation
+    (cherry picked from commit 3a1c8104aca76ee1d0f3565c1179c67685d5e838)
+
+commit fc0b618fe2dfc8c54093e61c763bd3052fb27a86
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:45:28 2013 +0100
+
+    uid_auth_db: Fix TOC in documentation
+    (cherry picked from commit 740e37bd1f6e2370bae02b5e8d6d4fab8e89eaa9)
+
+commit 665573c8561aa69641b64062b2b5cd720914c925
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:45:49 2013 +0100
+
+    uid_avp_db: Fix TOC in documentation
+    (cherry picked from commit bdfb7274ffeffaf99ad8b4aeebf9b9493685f7b7)
+
+commit 6e996037deb698e8cb40a010c45004136ce74f7f
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:46:04 2013 +0100
+
+    uid_domain: Fix TOC in documentation
+    (cherry picked from commit a20b97560d35f367b0a8d8b203e9566e42acde52)
+
+commit 0f1f2f37546f6c4b0f7c7a27df684a81c8e5a8fa
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:46:24 2013 +0100
+
+    uid_gflags: Fix TOC in documentation
+    (cherry picked from commit 396363a78875af7fc6444705d5482d579d5ac0c5)
+
+commit 27e630e4fa8346b19f712ee5b7c5028bbfbf20ef
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed May 29 14:46:40 2013 +0100
+
+    uid_uri_db: Fix TOC in documentation
+    (cherry picked from commit 10d5ed156a59d8e8a000bd7cecec5bf968853c69)
+
+commit 817d5dfdd8fbae905c64c41672f197143b6f563c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 29 10:49:40 2013 +0200
+
+    topoh: safety check for Via header when removed from script
+    
+    - reported by Guillaume Bour, FS#300
+    (cherry picked from commit b480ac55508e5d9b92cc9560e0b1d338d04f3b11)
+
+commit 3a431ed6b79762162a907164d4fa3b76c6b6aaa6
+Author: Klaus Darilion <klaus.mailinglists@pernau.at>
+Date:   Mon May 27 10:48:00 2013 +0000
+
+    modules/dialog: regenerate README
+
+commit 59adebfe3ae6f18a337833d0df62ee67e161bff5
+Author: Klaus Darilion <klaus.mailinglists@pernau.at>
+Date:   Mon May 27 10:44:03 2013 +0000
+
+    modules/dialog: improve documentation of DID matching
+    (cherry picked from commit 68209cc2b15c2c0674d7cf4529607e148e3fc1b4)
+
+commit 533f2238d9d14ed8ef0a367ce574aef8052c0452
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 26 16:14:51 2013 +0200
+
+    topoh: safety check for SIP messages
+    
+    - received callback can be executed for non-sip messages
+    - reported by Julia
+    (cherry picked from commit 352a7dccf2570af857d7e2e50fed600c4762278d)
+
+commit b5f362f4ddbc932daad611996d3e9abf2d91cd12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 23 12:06:45 2013 +0200
+
+    auth: add chapter tag around sections for Admin Guide
+    
+    - the ToC isn't properly generated otherwise
+    - reported by Andrew Pogrebennyk
+    (cherry picked from commit 76c883eb88359f6075712f648a1dfc675872487a)
+
+commit 721b0adc4addad2ed2da1579af21fc9b66915ddc
+Author: Klaus Darilion <klaus.mailinglists@pernau.at>
+Date:   Tue May 21 12:39:15 2013 +0000
+
+    modules/auth_db: detailed documentation of URI checking in auth_check function
+
+commit 9a75da1e9a302868729b171ad76dcf15404487e5
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Fri May 17 12:34:54 2013 +0200
+
+    modules/uac: update README after avoiding adding quotes in uac_replace_* functions
+
+commit 5eced6635b0a2165c9c107fb6031901459159b2d
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Thu May 16 12:06:55 2013 +0200
+
+    modules/uac: avoid adding double quotes in uac_replace_* functions
+    
+    - updated uac doc with a note and examples.
+    (cherry picked from commit 251c0218e7d5e09f43a2b834a5450c20bb4f6d60)
+
+commit 55f7def6b4ed889a27a19164faa0dd7f854fa983
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 25 14:50:41 2013 -0400
+
+    snmpstats: fix cross-compilation
+    (cherry picked from commit 5e96920289cbf448ac684d8cb1333d75f65a729a)
+
+commit 70ab195f753956a3f891d992787a76c2c4ff643b
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sat Apr 6 22:04:51 2013 +0200
+
+    snmpstats fix typo in Makefile.
+    (cherry picked from commit bddf66407ef7521f3d1f1e941b4c1e104e59d1ef)
+
+commit f86be5e0aa282dc58680f28d01161437901fa2c8
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sat Apr 6 22:02:48 2013 +0200
+
+    snmpstats Add disabled section in Makefile for compilation on Centos systems
+    
+    Net-SNMP and snmpd can be built with embedded perl and libwrap support. If that's
+    the case on your system you need to enable the EMBEDDED_PERL section in the
+    Makefile. Maybe this could be enabled automatically.
+    (cherry picked from commit 7bbf8fece2cc93c5b1ddd2c3dcc12e8a920dd54d)
+
+commit f92eee8eecab6d0fa505011b20a57dea242fa982
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 20 13:16:27 2013 -0400
+
+    kamailio/utils/sercmd: remove unused but set variable
+    (cherry picked from commit 67609608aa4306de9a34a28a3a31880ad0d17e8e)
+
+commit 320bf55cbfea89b145d41c938f75a7bf70f40613
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 20 13:15:08 2013 -0400
+
+    kamailio/utils/sercmd: remove unused but set variable
+    (cherry picked from commit b7a41ef47ad5d7fa90e577673cc2f38ab5ef2237)
+
+commit 24e4d3dbd79ccb2e42aabcaaa17e391dc60d36d9
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 20 13:13:27 2013 -0400
+
+    kamailio/utils/sercmd: remove unused but set variable
+    (cherry picked from commit ff94115921a08ba4da29baf2761db47bd0b7f8f5)
+
+commit 5f9d169e797425b0501de42ba2af196018166c71
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 20 13:23:49 2013 -0400
+
+    p_usrloc: commenting out unused db_timer_udomain() to get rid of compiler warnings
+
+commit 56b8856f84aebd86c4e78232f8f2f37fead7b4f3
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Sat Apr 13 15:37:18 2013 -0400
+
+    tls: fix compiler warning
+     - tls_config.c:61:19: warning: ât.val.sâ is used uninitialized in this function [-Wuninitialized]
+
+commit 3a18564eb905d93b85b9e0527fa40cd85eb2e3b7
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 20 13:02:16 2013 -0400
+
+    auth_diameter: remove unused but set variable
+    (cherry picked from commit 387adace552c22eaf15a049b23694bcd79cea3a8)
+
+commit 68021c3247b096fabc287fc6d129bce463cbfa97
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 20 13:00:27 2013 -0400
+
+    auth_diameter: remove unused but set variable
+    (cherry picked from commit 941c48ae6909994ae090c9d52766cd4dd5d4f938)
+
+commit b654a0d650af61bd4ec7212b48d71ccf7243e473
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 16:03:50 2013 -0400
+
+    seas: fix warning [-Wunused-result]
+     - ignoring return value of write, declared with attribute warn_unused_result [-Wunused-result]
+    (cherry picked from commit e3c0a3abb6045e841fbb4b1b61a518b2b87a217d)
+
+commit d3999770dec8628a214423bcdcc510d90a39dc40
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 16:01:16 2013 -0400
+
+    seas: fix compiler warning [-Wunused-but-set-variable]
+    (cherry picked from commit c0f4b6cf664ac552d0c994e99adb13991a37ef28)
+
+commit 3141c87bc4270ca2534250500dfdefa66c79a48f
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 15:54:14 2013 -0400
+
+    seas: fix compiler warning [-Wunused-but-set-variable]
+    (cherry picked from commit 12cd241d95b8d38cea6e60676b752f8ef8a2ed8c)
+
+commit 2fe9c5d1f7b0640b1e50976f4187d7362d6a3343
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 15:51:50 2013 -0400
+
+    seas: fix compiler warning [-Wunused-but-set-variable]
+    (cherry picked from commit 21e51107a5a08b182abc7bffbac1fec1be27950b)
+
+commit 250b90ed1ec6ee34e883a4cbf6ff55865752a2d9
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 15:50:25 2013 -0400
+
+    seas: fix compiler warning:
+     - warning: variable flags set but not used [-Wunused-but-set-variable]
+    (cherry picked from commit 2abf2d4a42c05004319e682d2ad07d69bf2fc89e)
+
+commit cb971e61a573d2a024ada52b6036a1cdc56ee68e
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 15:48:03 2013 -0400
+
+    seas: fix compiler warning:
+     - warning: variable flags set but not used [-Wunused-but-set-variable]
+    (cherry picked from commit 21386829d819c06c42871cf5b68d0d3a63ef0222)
+
+commit 15ec4ac4c0e815d648bbdf0e676227b93860f290
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 15:45:50 2013 -0400
+
+    seas: fix compiler warning
+     - warning: variable flags2 set but not used [-Wunused-but-set-variable]
+    (cherry picked from commit 200eddad28abd6bc51da3285dd52d5f8c88c4e56)
+
+commit d74129f1d80a38e29b152351d1c0cf4c1faffce4
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 15:42:40 2013 -0400
+
+    seas: fix compiler warning:
+     - warning: variable falgs set but not used [-Wunused-but-set-variable]
+    (cherry picked from commit 63736be1e4d2d6e82a0f7be6a85a96ee66c10146)
+
+commit 9374ee177e5c962eee8c47a1ff30683596114c7b
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Apr 18 14:09:09 2013 -0400
+
+    dns_cache.c: fix compiler warnings
+     - warningÃ¢sr_sums[*].r_sum may be used uninitialized in this function [-Wuninitialized]
+     - warningÃ¢sr_sums[*].rr may be used uninitialized in this function [-Wuninitialized]
+    (cherry picked from commit b3c8f92fe48ac90802c989c74c3a34cfea065861)
+
+commit e7a8752ad427f8f23df25edc6bd2e7ba531ac6c4
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri May 3 19:53:12 2013 +0300
+
+    modules/rls: added support for escaped chars in rls-services document
+    (cherry picked from commit fa9b8664a3b7c7a035c738a37b8ef0ef44190cb8)
+
+commit 19bcbfcacbc442488e93f8c684fd815323d3fcf7
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Mon Apr 29 11:26:18 2013 -0400
+
+    db_mysql: add cast to remove compile warning
+
 ===================== 2013-04-25 Version 4.0.1 Released =====================
 
 ===================== Changes Since Version 4.0.0 ===========================
