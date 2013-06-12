@@ -566,7 +566,9 @@ static int mt_load_db(str *tname)
 			if(tprefix.s==NULL || tvalue.s==NULL
 					|| tprefix.len<=0 || tvalue.len<=0)
 			{
-				LM_ERR("Error - bad values in db (%p:%p)\n", tprefix.s, tvalue.s);
+				LM_ERR("Error - bad record in db"
+						" (prefix: %p/%d - value: %p/%d)\n",
+						tprefix.s, tprefix.len, tvalue.s, tvalue.len);
 				continue;
 			}
 
