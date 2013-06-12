@@ -622,7 +622,7 @@ modparam("registrar", "xavp_cfg", "reg")
 
    Example 1.21. Set xavp_rcd parameter
 ...
-modparam("registrar", "xavp_cfg", "ulrcd")
+modparam("registrar", "xavp_rcd", "ulrcd")
 ...
 
 3.23. gruu_enabled (integer)
