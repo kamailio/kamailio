@@ -30,6 +30,7 @@
 #include "../../timer_proc.h"
 
 #include "sca.h"
+#include "sca_appearance.h"
 #include "sca_db.h"
 #include "sca_call_info.h"
 #include "sca_rpc.h"
@@ -326,8 +327,7 @@ sca_mod_init( void )
 
     sca_subscriptions_restore_from_db( sca );
 
-    /* start timer to clear expired subscriptions */
-    register_timer( sca_subscription_purge_expired, sca,
+    register_timer( sca_appearance_purge_stale, sca,
 		    sca->cfg->purge_expired_interval );
 
     /*

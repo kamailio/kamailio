@@ -812,7 +812,8 @@ sca_call_info_uri_update( str *aor, sca_call_info *call_info,
 		STR_FMT( &to->uri ), STR_FMT( call_id ),
 		STR_FMT( &app->dialog.id ));
 
-	if ( sca_appearance_update_unsafe( app, SCA_APPEARANCE_STATE_ACTIVE,
+	if ( sca_appearance_update_unsafe( app,
+		SCA_APPEARANCE_STATE_ACTIVE_PENDING,
 		&from->display, &from->uri, &dialog, contact_uri,
 		&from->uri ) < 0 ) {
 	    sca_appearance_state_to_str( call_info->state, &state_str );
@@ -1442,8 +1443,10 @@ done:
 sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
 {
     struct to_body	*to;
+    sca_appearance	*app = NULL;
     str			from_aor = STR_NULL;
     str			to_aor = STR_NULL;
+    int			slot_idx = -1;
 
     if ( !(type & TMCB_E2EACK_IN)) {
 	return;
@@ -1465,10 +1468,23 @@ sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
 
     sca_call_info_ack_from_handler( params->req, &from_aor, &to_aor );
 
-    if ( !sca_uri_is_shared_appearance( sca, &to_aor )) {
+    if ( !sca_uri_lock_if_shared_appearance( sca, &to_aor, &slot_idx )) {
 	LM_DBG( "sca_call_info_ack_cb: %.*s is not a shared appearance",
 		STR_FMT( &to_aor ));
 	goto done;
+    }
+
+    /* on ACK, ensure SCA callee state is promoted to ACTIVE. */
+    app = sca_appearance_for_tags_unsafe( sca, &to_aor,
+		&params->req->callid->body, &to->tag_value, NULL, slot_idx );
+    if ( app && app->state == SCA_APPEARANCE_STATE_ACTIVE_PENDING ) {
+	LM_DBG( "promoting %.*s appearance-index %d to active",
+		STR_FMT( &to_aor ), app->index );
+	sca_appearance_update_state_unsafe( app, SCA_APPEARANCE_STATE_ACTIVE );
+    }
+
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->appearances, slot_idx );
     }
 
     if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {

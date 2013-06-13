@@ -33,6 +33,7 @@ enum {
     SCA_APPEARANCE_STATE_SEIZED,
     SCA_APPEARANCE_STATE_PROGRESSING,
     SCA_APPEARANCE_STATE_ALERTING,
+    SCA_APPEARANCE_STATE_ACTIVE_PENDING,
     SCA_APPEARANCE_STATE_ACTIVE,
     SCA_APPEARANCE_STATE_HELD,
     SCA_APPEARANCE_STATE_HELD_PRIVATE,
@@ -58,6 +59,13 @@ enum {
 };
 #define SCA_APPEARANCE_INDEX_UNAVAILABLE	-2
 
+/*
+ * maximum lifetime of an active, pending appearance.
+ * enough to allow retransmissions of the caller's
+ * ACK. on receipt of the caller's ACK, we promote
+ * the SCA callee's state to active.
+ */
+#define SCA_APPEARANCE_STATE_PENDING_TTL	30
 
 extern const str SCA_APPEARANCE_INDEX_STR;
 extern const str SCA_APPEARANCE_STATE_STR;
@@ -154,4 +162,6 @@ void		sca_appearance_free( sca_appearance * );
 int		sca_uri_is_shared_appearance( sca_mod *, str * );
 int		sca_uri_lock_shared_appearance( sca_mod *, str * );
 int		sca_uri_lock_if_shared_appearance( sca_mod *, str *, int * );
+
+void		sca_appearance_purge_stale( unsigned int, void * );
 #endif /* SCA_APPEARANCE_H */

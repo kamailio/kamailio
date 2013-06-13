@@ -28,6 +28,7 @@
 #include "sca.h"
 #include "sca_appearance.h"
 #include "sca_hash.h"
+#include "sca_notify.h"
 #include "sca_util.h"
 
 const str SCA_APPEARANCE_INDEX_STR = STR_STATIC_INIT( "appearance-index" );
@@ -44,11 +45,13 @@ const str SCA_APPEARANCE_STATE_STR_HELD_PRIVATE = STR_STATIC_INIT("held-private"
 const str SCA_APPEARANCE_STATE_STR_UNKNOWN = STR_STATIC_INIT( "unknown" );
 
 
+/* STR_ACTIVE is repeated, once for ACTIVE_PENDING, once for ACTIVE */
 const str	*state_names[] = {
 			&SCA_APPEARANCE_STATE_STR_IDLE,
 			&SCA_APPEARANCE_STATE_STR_SEIZED,
 			&SCA_APPEARANCE_STATE_STR_PROGRESSING,
 			&SCA_APPEARANCE_STATE_STR_ALERTING,
+			&SCA_APPEARANCE_STATE_STR_ACTIVE,
 			&SCA_APPEARANCE_STATE_STR_ACTIVE,
 			&SCA_APPEARANCE_STATE_STR_HELD,
 			&SCA_APPEARANCE_STATE_STR_HELD_PRIVATE,
@@ -1208,4 +1211,121 @@ done:
     }
 
     return( app );
+}
+
+    void
+sca_appearance_purge_stale( unsigned int ticks, void *param )
+{
+    struct notify_list {
+	struct notify_list	*next;
+	str			aor;
+    };
+
+    sca_mod		*scam = (sca_mod *)param;
+    sca_hash_table	*ht;
+    sca_hash_entry	*ent;
+    sca_appearance_list	*app_list;
+    sca_appearance	**cur_app, **tmp_app, *app = NULL;
+    struct notify_list	*notify_list = NULL, *tmp_nl;
+    int			i;
+    int			unlinked;
+    time_t		now;
+
+    LM_INFO( "SCA: purging stale appearances" );
+
+    assert( scam != NULL );
+    assert( scam->appearances != NULL );
+
+    now = time( NULL );
+
+    ht = scam->appearances;
+    for ( i = 0; i < ht->size; i++ ) {
+	sca_hash_table_lock_index( ht, i );
+
+	for ( ent = ht->slots[ i ].entries; ent != NULL; ent = ent->next ) {
+	    app_list = (sca_appearance_list *)ent->value;
+	    if ( app_list == NULL ) {
+		continue;
+	    }
+
+	    unlinked = 0;
+
+	    for ( cur_app = &app_list->appearances; *cur_app != NULL;
+			cur_app = tmp_app ) {
+		tmp_app = &(*cur_app)->next;
+
+		if ((*cur_app)->state != SCA_APPEARANCE_STATE_ACTIVE_PENDING ) {
+		    continue;
+		}
+		if (( now - (*cur_app)->times.mtime ) <
+			SCA_APPEARANCE_STATE_PENDING_TTL ) {
+		    continue;
+		}
+
+		/* unlink stale appearance */
+		app = *cur_app;
+		*cur_app = (*cur_app)->next;
+		tmp_app = cur_app;
+
+		if ( app ) {
+		    sca_appearance_free( app );
+		}
+
+		if ( unlinked ) {
+		    /* we've already added this AoR to the NOTIFY list */
+		    continue;
+		}
+		unlinked++;
+
+		/*
+		 * can't notify while slot is locked. make a list of AoRs to
+		 * notify after unlocking.
+		 */
+		tmp_nl = (struct notify_list *)pkg_malloc(
+				sizeof( struct notify_list ));
+		if ( tmp_nl == NULL ) {
+		    LM_ERR( "sca_appearance_purge_stale: failed to pkg_malloc "
+			    "notify list entry for %.*s",
+			    STR_FMT( &app_list->aor ));
+		    continue;
+		}
+
+		tmp_nl->aor.s = (char *)pkg_malloc( app_list->aor.len );
+		if ( tmp_nl->aor.s == NULL ) {
+		    LM_ERR( "sca_appearance_purge_stale: failed to pkg_malloc "
+			    "space for copy of %.*s",
+			    STR_FMT( &app_list->aor ));
+		    pkg_free( tmp_nl );
+		    continue;
+		}
+		SCA_STR_COPY( &tmp_nl->aor, &app_list->aor );
+
+		/* simple insert-at-head. order doesn't matter. */
+		tmp_nl->next = notify_list;
+		notify_list = tmp_nl;
+	    }
+	}
+
+	sca_hash_table_unlock_index( ht, i );
+
+	for ( ; notify_list != NULL; notify_list = tmp_nl ) {
+	    tmp_nl = notify_list->next;
+
+	    LM_INFO( "sca_appearance_purge_stale: notifying %.*s call-info "
+		    "subscribers", STR_FMT( &notify_list->aor ));
+
+	    if ( sca_notify_call_info_subscribers( scam,
+			&notify_list->aor ) < 0 ) {
+		LM_ERR( "sca_appearance_purge_stale: failed to send "
+			"call-info NOTIFY %.*s subscribers",
+			STR_FMT( &notify_list->aor ));
+		/* fall through, free memory anyway */
+	    }
+
+	    if ( notify_list->aor.s ) {
+		pkg_free( notify_list->aor.s );
+	    }
+	    pkg_free( notify_list );
+	}
+    }
 }
