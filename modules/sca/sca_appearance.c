@@ -1087,6 +1087,60 @@ done:
     return( rc );
 }
 
+    int
+sca_appearance_owner_release_all( str *aor, str *owner )
+{
+    sca_appearance_list	*app_list = NULL;
+    sca_appearance	*app, **cur_app, **tmp_app;
+    sca_hash_slot	*slot;
+    sca_hash_entry	*ent;
+    int			slot_idx = -1;
+    int			released = -1;
+
+    slot_idx = sca_uri_lock_shared_appearance( sca, aor );
+    slot = sca_hash_table_slot_for_index( sca->appearances, slot_idx );
+
+    for ( ent = slot->entries; ent != NULL; ent = ent->next ) {
+	if ( ent->compare( aor, ent->value ) == 0 ) {
+	    app_list = (sca_appearance_list *)ent->value;
+	    break;
+	}
+    }
+
+    released = 0;
+
+    if ( app_list == NULL ) {
+	LM_DBG( "sca_appearance_owner_release_all: No appearances for %.*s",
+		STR_FMT( aor ));
+	goto done;
+    }
+
+    for ( cur_app = &app_list->appearances; *cur_app != NULL;
+		cur_app = tmp_app ) {
+	tmp_app = &(*cur_app)->next;
+
+	if ( !SCA_STR_EQ( owner, &(*cur_app)->owner )) {
+	    continue;
+	}
+
+	app = *cur_app;
+	*cur_app = (*cur_app)->next;
+	tmp_app = cur_app;
+
+	if ( app ) {
+	    sca_appearance_free( app );
+	    released++;
+	}
+    }
+
+done:
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->appearances, slot_idx );
+    }
+
+    return( released );
+}
+
     sca_appearance *
 sca_appearance_for_index_unsafe( sca_mod *scam, str *aor, int app_idx,
 	int slot_idx )
