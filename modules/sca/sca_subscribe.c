@@ -1120,6 +1120,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     int			app_idx = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
     int			idx = -1;
     int			rc = -1;
+    int			released = 0;
 
     if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
 	LM_ERR( "header parsing failed: bad request" );
@@ -1227,6 +1228,22 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 		}
 		req_sub.index = app_idx;
 	    }
+	} else {
+	    if ( SCA_STR_EMPTY( to_tag )) {
+		/*
+		 * if the subscriber owns any active appearances, clear them.
+		 * we assume that an out-of-dialog SUBSCRIBE for a subscriber
+		 * with active appearances is indicative of a reboot.
+		 */
+		released = sca_appearance_owner_release_all(
+						&req_sub.target_aor,
+						&req_sub.subscriber );
+		if ( released ) {
+		    LM_INFO( "sca_handle_subscribe: released %d appearances "
+				"for subscriber %.*s", released,
+				STR_FMT( &req_sub.subscriber ));
+		}
+	    }
 	}
     } else {
 	/* in-dialog request, but we didn't find it. */
@@ -1268,6 +1285,9 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	}
     }
 
+    sca_hash_table_unlock_index( sca->subscriptions, idx );
+    idx = -1;
+
     status = sca_ok_status_for_event( event_type );
     status_text = sca_ok_text_for_event( event_type );
     if ( sca_subscription_reply( sca, status, status_text, event_type,
@@ -1287,7 +1307,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	goto done;
     }
 
-    if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
+    if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE || released ) {
 	if ( sca_notify_call_info_subscribers( sca, &req_sub.target_aor) < 0 ) {
 	    LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
 		    sca_event_name_from_type( req_sub.event ),
