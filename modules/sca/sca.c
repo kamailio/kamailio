@@ -327,6 +327,8 @@ sca_mod_init( void )
 
     sca_subscriptions_restore_from_db( sca );
 
+    register_timer( sca_subscription_purge_expired, sca,
+		    sca->cfg->purge_expired_interval );
     register_timer( sca_appearance_purge_stale, sca,
 		    sca->cfg->purge_expired_interval );
 
