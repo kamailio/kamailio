@@ -2151,6 +2151,28 @@ subscriber() {
 			fi
 			;;
 
+		show)
+			if [ $# -ne 2 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+			shift
+
+			set_user $1
+
+			case $DBENGINE in
+				MYSQL|mysql|MySQL)
+					QUERY="SELECT * FROM $SUB_TABLE \
+WHERE $SUBSCRIBER_COLUMN='$OSERUSER' AND $REALM_COLUMN='$OSERDOMAIN'\G"
+				;;
+				*)
+					QUERY="SELECT * FROM $SUB_TABLE \
+WHERE $SUBSCRIBER_COLUMN='$OSERUSER' AND $REALM_COLUMN='$OSERDOMAIN';"
+				;;
+			esac
+			$DBROCMD "$QUERY"
+			;;
+
 		passwd)
 			if [ $# -ne 3 ] ; then
 				usage_subscriber
@@ -2513,6 +2535,10 @@ case $1 in
 		;;
 
 	add)
+		subscriber "$@"
+		;;
+
+	show)
 		subscriber "$@"
 		;;
 

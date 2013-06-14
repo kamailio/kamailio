@@ -422,6 +422,7 @@ usage_subscriber() {
 	echo
 cat <<EOF
  add <username> <password> .......... add a new subscriber (*)
+ show <username> .................... show subscriber attributes (*)
  passwd <username> <passwd> ......... change user's password (*)
  rm <username> ...................... delete a user (*)
 EOF
