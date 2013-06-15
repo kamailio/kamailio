@@ -127,6 +127,7 @@
 
 
 extern int tm_failure_exec_mode;
+extern int tm_dns_reuse_rcv_socket;
 
 static int goto_on_branch = 0, branch_route = 0;
 
@@ -1073,14 +1074,16 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 							&old_uac->path,
 							 (old_uac->request.dst.send_flags.f &
 								SND_F_FORCE_SOCKET)?
-									old_uac->request.dst.send_sock:0,
+									old_uac->request.dst.send_sock:
+									((tm_dns_reuse_rcv_socket)
+											?msg->rcv.bind_address:0),
 							old_uac->request.dst.send_flags,
 							old_uac->request.dst.proto,
 							old_uac->request.buffer,
 							old_uac->request.buffer_len,
 							&old_uac->instance, &old_uac->ruid,
 							&old_uac->location_ua);
-			}else
+			} else {
 				/* add_uac will use dns_h => next_hop will be ignored.
 				 * Unfortunately we can't reuse the old buffer, the branch id
 				 *  must be changed and the send_socket might be different =>
@@ -1088,11 +1091,14 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 				ret=add_uac(t,  msg, &old_uac->uri, 0, &old_uac->path, 0,
 							 (old_uac->request.dst.send_flags.f &
 								SND_F_FORCE_SOCKET)?
-									old_uac->request.dst.send_sock:0,
+									old_uac->request.dst.send_sock:
+									((tm_dns_reuse_rcv_socket)
+											?msg->rcv.bind_address:0),
 							old_uac->request.dst.send_flags,
 							old_uac->request.dst.proto, UAC_DNS_FAILOVER_F,
 							&old_uac->instance, &old_uac->ruid,
 							&old_uac->location_ua);
+			}
 
 			if (ret<0){
 				/* failed, delete the copied dns_h */
