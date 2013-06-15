@@ -1001,6 +1001,11 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 		t->uac[branch].location_ua.s[location_ua->len]=0;
 		memcpy( t->uac[branch].location_ua.s, location_ua->s, location_ua->len);
 	}
+
+	t->uac[branch].on_reply = t->on_reply;
+	t->uac[branch].on_failure = t->on_failure;
+	t->uac[branch].on_branch_failure = t->on_branch_failure;
+
 	membar_write(); /* to allow lockless ops (e.g. prepare_to_cancel()) we want
 					   to be sure everything above is fully written before
 					   updating branches no. */
