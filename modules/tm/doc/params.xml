@@ -1378,4 +1378,34 @@ modparam("tm", "failure_exec_mode", 1)
 		</example>
 	</section>
 
+
+	<section id="tm.p.dns_reuse_rcv_socket">
+		<title><varname>dns_reuse_rcv_socket</varname> (boolean)</title>
+		<para>
+			Control reuse of the receive socket for additional branches added
+			by dns failover. If set to 1, the receive socket is used for
+			sending out the new branches, unless the socket is forced
+			explicitely in configuration file. If set to 0, selected socket
+			is done depending on value of global parameter mhomed (if mhomed=0,
+			then the first listen socket is used, otherwise the socket is
+			selected based on routing rules).
+		</para>
+		<para>
+			Do enable it with caution, it might create troubles on dns results
+			with different transport layer. Better let it disabled and enable
+			mhomed.
+		</para>
+		<para>
+			Default value is 0 (disabled).
+		</para>
+		<example>
+			<title>Set <varname>dns_reuse_rcv_socket</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "dns_reuse_rcv_socket", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
 </section>
