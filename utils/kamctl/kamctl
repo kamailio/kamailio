@@ -2524,6 +2524,25 @@ tls_ca() {
 	fi
 }
 
+extcmd() {
+	if [ -f $ETCDIR/kamctl.${1}.ext ]; then
+		. $ETCDIR/kamctl.${1}.ext
+	else
+		if [ -f ~/.kamctl/kamctl.${1}.ext ]; then
+			. ~/.kamctl/kamctl.${1}.ext
+		else
+			return
+		fi
+	fi
+
+	XCMD=cmd_${1}
+
+	shift
+	$XCMD "$@"
+
+	exit 1
+}
+
 #
 ##### ================================================ #####
 ### main command switch
@@ -2705,6 +2724,8 @@ case $1 in
 		;;
 		
 	*)
+		extcmd "$@"
+
 		usage
 		exit 1
 		;;
