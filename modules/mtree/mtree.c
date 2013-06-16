@@ -309,7 +309,7 @@ is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch)
 		/* check validity */
 		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255)
 		{
-			LM_BG("not matching char at %d in [%.*s]\n",
+			LM_DBG("not matching char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
 			return NULL;
 		}
