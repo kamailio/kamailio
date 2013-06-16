@@ -227,7 +227,13 @@ int th_prepare_msg(sip_msg_t *msg)
 		LM_ERR("cannot parse FROM header\n");
 		return 3;
 	}
-	
+
+	if(get_to(msg)==NULL)
+	{
+		LM_ERR("cannot parse TO header\n");
+		return 3;
+	}
+
 	return 0;
 }
 
