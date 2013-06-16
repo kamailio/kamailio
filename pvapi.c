@@ -41,7 +41,6 @@
 #include "pvar.h"
 
 #define PV_TABLE_SIZE	32  /*!< pseudo-variables table size */
-#define PV_CACHE_SIZE	32  /*!< pseudo-variables table size */
 #define TR_TABLE_SIZE	16  /*!< transformations table size */
 
 
@@ -57,14 +56,6 @@ typedef struct _pv_item
 
 static pv_item_t* _pv_table[PV_TABLE_SIZE];
 static int _pv_table_set = 0;
-
-typedef struct _pv_cache
-{
-	str pvname;
-	unsigned int pvid;
-	pv_spec_t spec;
-	struct _pv_cache *next;
-} pv_cache_t;
 
 static pv_cache_t* _pv_cache[PV_CACHE_SIZE];
 static int _pv_cache_set = 0;
@@ -87,6 +78,14 @@ void pv_init_cache(void)
 	_pv_cache_set = 1;
 }
 
+/**
+ *
+ */
+pv_cache_t **pv_cache_get_table(void)
+{
+	if(_pv_cache_set==1) return _pv_cache;
+	return NULL;
+}
 
 /**
  * @brief Check if a char is valid according to the PV syntax

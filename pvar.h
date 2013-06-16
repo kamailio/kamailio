@@ -226,6 +226,22 @@ int pv_get_intstrval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, int ival, str *sval);
 
 /**
+ * Core PV Cache
+ */
+typedef struct _pv_cache
+{
+	str pvname;
+	unsigned int pvid;
+	pv_spec_t spec;
+	struct _pv_cache *next;
+} pv_cache_t;
+
+#define PV_CACHE_SIZE	32  /*!< pseudo-variables cache table size */
+
+pv_cache_t **pv_cache_get_table(void);
+
+
+/**
  * Transformations
  */
 #define TR_LBRACKET_STR		"{"
