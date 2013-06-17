@@ -78,7 +78,7 @@ enum _pv_type {
 	PVT_DSTURI,           PVT_COLOR,             PVT_BRANCH,
 	PVT_FROM,             PVT_TO,                PVT_OURI,
 	PVT_SCRIPTVAR,        PVT_MSG_BODY,          PVT_CONTEXT,
-	PVT_OTHER,            PVT_EXTRA /* keep it last */
+	PVT_XAVP,             PVT_OTHER,             PVT_EXTRA /* keep it last */
 };
 
 typedef enum _pv_type pv_type_t;
