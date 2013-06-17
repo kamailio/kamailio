@@ -133,7 +133,7 @@ static param_export_t params[]={
 	{"reply_reason",   STR_PARAM,                &pl_drop_reason.s},
 	{"db_url",            STR_PARAM,             &pl_db_url},
 	{"plp_table_name",    STR_PARAM,             &rlp_table_name},
-	{"plp_pipeid_colunm",    STR_PARAM,             &rlp_pipeid_col},
+	{"plp_pipeid_column",    STR_PARAM,             &rlp_pipeid_col},
 	{"plp_limit_column",     STR_PARAM,             &rlp_limit_col},
 	{"plp_algorithm_column", STR_PARAM,             &rlp_algorithm_col},
 
