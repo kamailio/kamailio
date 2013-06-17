@@ -92,7 +92,7 @@ static cmd_export_t cmds[]={
 
 struct module_exports exports = {
 	"app_lua",
-	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,
@@ -104,6 +104,12 @@ struct module_exports exports = {
 	mod_destroy,    /* destroy function */
 	child_init      /* per child init function */
 };
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	*dlflags = RTLD_NOW | RTLD_GLOBAL;
+	return 0;
+}
 
 /**
  * init module function
