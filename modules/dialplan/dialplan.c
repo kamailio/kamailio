@@ -164,7 +164,9 @@ static int mod_init(void)
 		attr_pvar_s.len = strlen(attr_pvar_s.s);
 		attr_pvar = pv_cache_get(&attr_pvar_s);
 		if( (attr_pvar==NULL) ||
-				((attr_pvar->type != PVT_AVP) && (attr_pvar->type!=PVT_SCRIPTVAR))) {
+				((attr_pvar->type != PVT_AVP) &&
+				 (attr_pvar->type != PVT_XAVP) &&
+				 (attr_pvar->type!=PVT_SCRIPTVAR))) {
 			LM_ERR("invalid pvar name\n");
 			return -1;
 		}
@@ -244,7 +246,7 @@ static int dp_get_ivalue(struct sip_msg* msg, dp_param_p dp, int *val)
 
 	if( pv_get_spec_value( msg, dp->v.sp[0], &value)!=0
 			|| value.flags&(PV_VAL_NULL|PV_VAL_EMPTY) || !(value.flags&PV_VAL_INT)) {
-		LM_ERR("no AVP or SCRIPTVAR found (error in scripts)\n");
+		LM_ERR("no AVP, XAVP or SCRIPTVAR found (error in scripts)\n");
 		return -1;
 	}
 	*val = value.ri;
@@ -260,7 +262,7 @@ static int dp_get_svalue(struct sip_msg * msg, pv_spec_t *spec, str* val)
 
 	if ( pv_get_spec_value(msg,spec,&value)!=0 || value.flags&PV_VAL_NULL
 			|| value.flags&PV_VAL_EMPTY || !(value.flags&PV_VAL_STR)){
-		LM_ERR("no AVP or SCRIPTVAR found (error in scripts)\n");
+		LM_ERR("no AVP, XAVP or SCRIPTVAR found (error in scripts)\n");
 		return -1;
 	}
 
@@ -369,20 +371,22 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 #define verify_par_type(_par_no, _spec)\
 	do{\
 		if( ((_par_no == 1) \
-					&& (_spec->type != PVT_AVP) && (_spec->type!=PVT_SCRIPTVAR) )\
+					&& (_spec->type != PVT_AVP) && (_spec->type != PVT_XAVP) && \
+					(_spec->type!=PVT_SCRIPTVAR) )\
 				||((_par_no == 2) \
-					&& (_spec->type != PVT_AVP) && (_spec->type!=PVT_SCRIPTVAR) \
+					&& (_spec->type != PVT_AVP) && (_spec->type != PVT_XAVP) && \
+					(_spec->type!=PVT_SCRIPTVAR) \
 					&& (_spec->type!=PVT_RURI) && (_spec->type!=PVT_RURI_USERNAME))){\
 			\
-			LM_ERR("Unsupported Parameter TYPE\n");\
+			LM_ERR("Unsupported Parameter TYPE[%d]\n", _spec->type);\
 			return E_UNSPEC;\
 		}\
 	}while(0);
 
 
-/* first param: DPID: type: INT, AVP, SVAR
+/* first param: DPID: type: INT, AVP, XAVP, SVAR
  * second param: SRC type: any psedo variable type
- * second param: DST type: RURI, RURI_USERNAME, AVP, SVAR, N/A
+ * second param: DST type: RURI, RURI_USERNAME, AVP, XAVP, SVAR, N/A
  * default value for the second param: $ru.user/$ru.user
  */
 static int dp_trans_fixup(void ** param, int param_no){
@@ -392,7 +396,7 @@ static int dp_trans_fixup(void ** param, int param_no){
 	char *p, *s=NULL;
 	str lstr;
 
-	if(param_no!=1 && param_no!=2) 
+	if(param_no!=1 && param_no!=2)
 		return 0;
 
 	p = (char*)*param;
