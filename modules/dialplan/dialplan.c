@@ -160,14 +160,10 @@ static int mod_init(void)
 	attrs_column.len    = strlen(attrs_column.s);
 
 	if(attr_pvar_s.s) {
-		attr_pvar = (pv_spec_t *)shm_malloc(sizeof(pv_spec_t));
-		if(!attr_pvar){
-			LM_ERR("out of shm memory\n");
-			return -1;
-		}
 
 		attr_pvar_s.len = strlen(attr_pvar_s.s);
-		if( (pv_parse_spec(&attr_pvar_s, attr_pvar)==NULL) ||
+		attr_pvar = pv_cache_get(&attr_pvar_s);
+		if( (attr_pvar==NULL) ||
 				((attr_pvar->type != PVT_AVP) && (attr_pvar->type!=PVT_SCRIPTVAR))) {
 			LM_ERR("invalid pvar name\n");
 			return -1;
@@ -182,13 +178,15 @@ static int mod_init(void)
 	memset(default_par2, 0, sizeof(dp_param_t));
 
 	default_param_s.len = strlen(default_param_s.s);
-	if (pv_parse_spec( &default_param_s, &default_par2->v.sp[0])==NULL) {
+	default_par2->v.sp[0] = pv_cache_get(&default_param_s);
+	if (default_par2->v.sp[0]==NULL) {
 		LM_ERR("input pv is invalid\n");
 		return -1;
 	}
 
 	default_param_s.len = strlen(default_param_s.s);
-	if (pv_parse_spec( &default_param_s, &default_par2->v.sp[1])==NULL) {
+	default_par2->v.sp[1] = pv_cache_get(&default_param_s);
+	if (default_par2->v.sp[1]==NULL) {
 		LM_ERR("output pv is invalid\n");
 		return -1;
 	}
@@ -242,9 +240,9 @@ static int dp_get_ivalue(struct sip_msg* msg, dp_param_p dp, int *val)
 		return 0;
 	}
 
-	LM_DBG("searching %d\n",dp->v.sp[0].type);
+	LM_DBG("searching %d\n",dp->v.sp[0]->type);
 
-	if( pv_get_spec_value( msg, &dp->v.sp[0], &value)!=0
+	if( pv_get_spec_value( msg, dp->v.sp[0], &value)!=0
 			|| value.flags&(PV_VAL_NULL|PV_VAL_EMPTY) || !(value.flags&PV_VAL_INT)) {
 		LM_ERR("no AVP or SCRIPTVAR found (error in scripts)\n");
 		return -1;
@@ -254,13 +252,13 @@ static int dp_get_ivalue(struct sip_msg* msg, dp_param_p dp, int *val)
 }
 
 
-static int dp_get_svalue(struct sip_msg * msg, pv_spec_t spec, str* val)
+static int dp_get_svalue(struct sip_msg * msg, pv_spec_t *spec, str* val)
 {
 	pv_value_t value;
 
-	LM_DBG("searching %d \n", spec.type);
+	LM_DBG("searching %d \n", spec->type);
 
-	if ( pv_get_spec_value(msg,&spec,&value)!=0 || value.flags&PV_VAL_NULL
+	if ( pv_get_spec_value(msg,spec,&value)!=0 || value.flags&PV_VAL_NULL
 			|| value.flags&PV_VAL_EMPTY || !(value.flags&PV_VAL_STR)){
 		LM_ERR("no AVP or SCRIPTVAR found (error in scripts)\n");
 		return -1;
@@ -280,7 +278,7 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags = PV_VAL_STR;
 
-	no_change = (dest->type == PVT_NONE) || (!repl->s) || (!repl->len);
+	no_change = (dest==NULL) || (dest->type == PVT_NONE) || (!repl->s) || (!repl->len);
 
 	if (no_change)
 		goto set_attr_pvar;
@@ -358,7 +356,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 			input.len, input.s, idp->dp_id, output.len, output.s);
 
 	/*set the output*/
-	if (dp_update(msg, &repl_par->v.sp[0], &repl_par->v.sp[1], 
+	if (dp_update(msg, repl_par->v.sp[0], repl_par->v.sp[1],
 				&output, attrs_par) !=0){
 		LM_ERR("cannot set the output\n");
 		return -1;
@@ -371,10 +369,10 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 #define verify_par_type(_par_no, _spec)\
 	do{\
 		if( ((_par_no == 1) \
-					&& ((_spec).type != PVT_AVP) && ((_spec).type!=PVT_SCRIPTVAR) )\
+					&& (_spec->type != PVT_AVP) && (_spec->type!=PVT_SCRIPTVAR) )\
 				||((_par_no == 2) \
-					&& ((_spec).type != PVT_AVP) && ((_spec).type!=PVT_SCRIPTVAR) \
-					&& ((_spec).type!=PVT_RURI) && (_spec.type!=PVT_RURI_USERNAME))){\
+					&& (_spec->type != PVT_AVP) && (_spec->type!=PVT_SCRIPTVAR) \
+					&& (_spec->type!=PVT_RURI) && (_spec->type!=PVT_RURI_USERNAME))){\
 			\
 			LM_ERR("Unsupported Parameter TYPE\n");\
 			return E_UNSPEC;\
@@ -426,7 +424,8 @@ static int dp_trans_fixup(void ** param, int param_no){
 			dp_par->v.id = dpid;
 		}else{
 			lstr.s = p; lstr.len = strlen(p);
-			if (pv_parse_spec( &lstr, &dp_par->v.sp[0])==NULL)
+			dp_par->v.sp[0] = pv_cache_get(&lstr);
+			if (dp_par->v.sp[0]==NULL)
 				goto error;
 
 			verify_par_type(param_no, dp_par->v.sp[0]);
@@ -442,16 +441,16 @@ static int dp_trans_fixup(void ** param, int param_no){
 		}
 
 		lstr.s = p; lstr.len = strlen(p);
-		if(pv_parse_spec( &lstr, &dp_par->v.sp[0])==NULL)
+		dp_par->v.sp[0] = pv_cache_get(&lstr);
+		if(dp_par->v.sp[0]==NULL)
 			goto error;
 
 		if (s != 0) {
 			lstr.s = s; lstr.len = strlen(s);
-			if (pv_parse_spec( &lstr, &dp_par->v.sp[1] )==NULL)
+			dp_par->v.sp[1] = pv_cache_get(&lstr);
+			if (dp_par->v.sp[1]==NULL)
 				goto error;
 			verify_par_type(param_no, dp_par->v.sp[1]);
-		} else {
-			dp_par->v.sp[1].type = PVT_NONE;
 		}
 
 		dp_par->type = DP_VAL_SPEC;

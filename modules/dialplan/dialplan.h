@@ -83,7 +83,7 @@ typedef struct dp_param{
 	int type;
 	union {
 		int id;
-		pv_spec_t sp[2];
+		pv_spec_t* sp[2];
 	} v;
 }dp_param_t, *dp_param_p;
 
