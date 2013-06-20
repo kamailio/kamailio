@@ -42,7 +42,6 @@
 #include "../../locking.h"
 #include "../../lock_ops.h"
 #include "../../str_hash.h"
-//#include "../../timer.h"
 #include "../../timer_proc.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../parser/parse_from.h"
@@ -52,7 +51,6 @@
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/contact/contact.h"
 #include "../../parser/parse_rr.h"
-//#include "../../lib/kcore/parser_helpers.h"
 #include "../../mod_fix.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
@@ -66,11 +64,12 @@
 #include "cnxcc_sip_msg_faker.h"
 #include "cnxcc_check.h"
 #include "cnxcc_rpc.h"
+#include "cnxcc_select.h"
 
 MODULE_VERSION
 
 #define HT_SIZE						229
-#define MODULE_NAME					"CNXCC"
+#define MODULE_NAME					"cnxcc"
 #define NUMBER_OF_TIMERS			2
 
 #define TRUE						1
@@ -106,6 +105,10 @@ static int pv_get_calls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
  */
 static int set_max_time(struct sip_msg* msg, char* number, char* str2);
 static int set_max_credit(struct sip_msg* msg, char *str_pv_client, char *str_pv_credit, char *str_pv_cps, char *str_pv_inip, char *str_pv_finp);
+static int set_max_channels(struct sip_msg* msg, char* str_pv_client, char* str_pv_max_chan);
+static int get_channel_count(struct sip_msg* msg, char* str_pv_client, char* str_pv_max_chan);
+static int terminate_all(struct sip_msg* msg, char* str_pv_client);
+
 static void start_billing(str *callid, str tags[2]);
 static void setup_billing(str *callid, unsigned int h_entry, unsigned int h_id);
 static void stop_billing(str *callid);
@@ -140,6 +143,10 @@ static cmd_export_t cmds[] =
 {
 	{"cnxcc_set_max_time",   (cmd_function) set_max_time, 2, fixup_pvar_pvar, fixup_free_pvar_pvar, ANY_ROUTE},
 	{"cnxcc_set_max_credit",   (cmd_function) set_max_credit, 5, fixup_par, NULL, ANY_ROUTE},
+	{"cnxcc_set_max_channels",   (cmd_function) set_max_channels, 2, fixup_pvar_pvar, NULL, ANY_ROUTE},
+	{"cnxcc_get_channel_count",   (cmd_function) get_channel_count, 2, fixup_pvar_pvar, NULL, ANY_ROUTE},
+	{"cnxcc_terminate_all",   (cmd_function) terminate_all, 1, fixup_pvar_null, NULL, ANY_ROUTE},
+
 	{0,0,0,0,0,0}
 };
 
@@ -176,10 +183,19 @@ rpc_export_t ul_rpc[] =
     {0, 0, 0, 0}
 };
 
+/* selects declaration */
+select_row_t sel_declaration[] = {
+        { NULL, SEL_PARAM_STR, STR_STATIC_INIT("cnxcc"), sel_root, SEL_PARAM_EXPECTED},
+        { sel_root, SEL_PARAM_STR, STR_STATIC_INIT("channels"), sel_channels, SEL_PARAM_EXPECTED|CONSUME_NEXT_STR|FIXUP_CALL},
+        { sel_channels, SEL_PARAM_STR, STR_STATIC_INIT("count"), sel_channels_count, 0},
+
+        { NULL, SEL_PARAM_STR, STR_NULL, NULL, 0}
+};
+
 /** module exports */
 struct module_exports exports =
 {
-	"cnxcc",
+	MODULE_NAME,
 	DEFAULT_DLFLAGS, 	/* dlopen flags */
 	cmds,
 	params,
@@ -217,7 +233,7 @@ static int fixup_par(void** param, int param_no)
 
 static int mod_init(void)
 {
-	LM_ALERT("Loading " MODULE_NAME " module\n");
+	LM_INFO("Loading " MODULE_NAME " module\n");
 
 	_data.cs_route_number = route_get(&event_rt, "cnxcc:call-shutdown");
 
@@ -240,6 +256,8 @@ static int mod_init(void)
 	_data.time.call_data_by_cid 		= shm_malloc(sizeof(struct str_hash_table));
 	_data.money.credit_data_by_client	= shm_malloc(sizeof(struct str_hash_table));
 	_data.money.call_data_by_cid 		= shm_malloc(sizeof(struct str_hash_table));
+	_data.channel.credit_data_by_client	= shm_malloc(sizeof(struct str_hash_table));
+	_data.channel.call_data_by_cid 		= shm_malloc(sizeof(struct str_hash_table));
 
 	_data.stats							= (stats_t *) shm_malloc(sizeof(stats_t));
 
@@ -265,9 +283,16 @@ static int mod_init(void)
 	if (init_hashtable(_data.money.call_data_by_cid) != 0)
 		return -1;
 
+	if (init_hashtable(_data.channel.credit_data_by_client) != 0)
+		return -1;
+
+	if (init_hashtable(_data.channel.call_data_by_cid) != 0)
+		return -1;
+
 	lock_init(&_data.lock);
 	lock_init(&_data.time.lock);
 	lock_init(&_data.money.lock);
+	lock_init(&_data.channel.lock);
 
 	register_mi_cmd(mi_credit_control_stats, "cnxcc_stats", NULL, NULL, 0);
 
@@ -290,6 +315,8 @@ static int mod_init(void)
 	}
 
 	_dlgbinds.register_dlgcb(NULL, DLGCB_CREATED, dialog_created_callback, NULL, NULL);
+
+	 register_select_table(sel_declaration);
 
 	return 0;
 }
@@ -397,6 +424,7 @@ int try_get_credit_data_entry(str *client_id, credit_data_t **credit_data)
 	hash_tables_t *hts				= NULL;
 	*credit_data					= NULL;
 
+	/* by money */
 	hts					= &_data.money;
 	lock_get(&hts->lock);
 
@@ -411,10 +439,26 @@ int try_get_credit_data_entry(str *client_id, credit_data_t **credit_data)
 
 	lock_release(&hts->lock);
 
+	/* by time */
 	hts					= &_data.time;
 	lock_get(&hts->lock);
 
-	cd_entry			= str_hash_get(hts->call_data_by_cid, client_id->s, client_id->len);
+	cd_entry			= str_hash_get(hts->credit_data_by_client, client_id->s, client_id->len);
+
+	if (cd_entry != NULL)
+	{
+		*credit_data	= cd_entry->u.p;
+		lock_release(&hts->lock);
+		return 0;
+	}
+
+	lock_release(&hts->lock);
+
+	/* by channel */
+	hts					= &_data.channel;
+	lock_get(&hts->lock);
+
+	cd_entry			= str_hash_get(hts->credit_data_by_client, client_id->s, client_id->len);
 
 	if (cd_entry != NULL)
 	{
@@ -434,6 +478,7 @@ int try_get_call_entry(str *callid, call_t **call, hash_tables_t **hts)
 
 	*call					= NULL;
 
+	/* by money */
 	*hts					= &_data.money;
 	lock_get(&(*hts)->lock);
 
@@ -448,7 +493,23 @@ int try_get_call_entry(str *callid, call_t **call, hash_tables_t **hts)
 
 	lock_release(&(*hts)->lock);
 
+	/* by time */
 	*hts				= &_data.time;
+	lock_get(&(*hts)->lock);
+
+	call_entry			= str_hash_get((*hts)->call_data_by_cid, callid->s, callid->len);
+
+	if (call_entry != NULL)
+	{
+		*call	= call_entry->u.p;
+		lock_release(&(*hts)->lock);
+		return 0;
+	}
+
+	lock_release(&(*hts)->lock);
+
+	/* by channel */
+	*hts				= &_data.channel;
 	lock_get(&(*hts)->lock);
 
 	call_entry			= str_hash_get((*hts)->call_data_by_cid, callid->s, callid->len);
@@ -800,8 +861,13 @@ static void free_call(call_t *call)
 
 		if (e == NULL)
 		{
-			LM_ERR("Call [%.*s] not found. Couldn't be able to free it from hashtable", call->sip_data.callid.len, call->sip_data.callid.s);
-			return;
+			e			= str_hash_get(_data.channel.call_data_by_cid, call->sip_data.callid.s, call->sip_data.callid.len);
+
+			if (e == NULL)
+			{
+				LM_ERR("Call [%.*s] not found. Couldn't be able to free it from hashtable", call->sip_data.callid.len, call->sip_data.callid.s);
+				return;
+			}
 		}
 	}
 
@@ -841,9 +907,29 @@ static int shm_str_hash_alloc(struct str_hash_table *ht, int size)
 
 static credit_data_t *get_or_create_credit_data_entry(str *client_id, credit_type_t type)
 {
-	struct str_hash_table *ht	= type == CREDIT_MONEY ? _data.money.credit_data_by_client : _data.time.credit_data_by_client;
-	gen_lock_t *lock			= type == CREDIT_MONEY ? &_data.money.lock : &_data.time.lock;
+	struct str_hash_table *ht	= NULL;
+	gen_lock_t *lock			= NULL;
 	struct str_hash_entry *e	= NULL;
+
+	switch(type)
+	{
+	case CREDIT_MONEY:
+		ht		= _data.money.credit_data_by_client;
+		lock	=  &_data.money.lock;
+		break;
+	case CREDIT_TIME:
+		ht		= _data.time.credit_data_by_client;
+		lock	=  &_data.time.lock;
+		break;
+	case CREDIT_CHANNEL:
+		ht		= _data.channel.credit_data_by_client;
+		lock	=  &_data.channel.lock;
+		break;
+	default:
+		LM_ERR("Something went terribly wrong");
+		return NULL;
+	}
+
 
 	lock_get(lock);
 	e							= str_hash_get(ht, client_id->s, client_id->len);
@@ -1121,11 +1207,95 @@ error:
 	return NULL;
 }
 
+static call_t *alloc_new_call_by_channel(credit_data_t *credit_data, struct sip_msg *msg, int max_chan)
+{
+	call_t *call		= NULL;
+
+	lock_get(&credit_data->lock);
+
+	if (credit_data->call_list == NULL)
+	{
+		LM_ERR("Credit data call list is NULL\n");
+		goto error;
+	}
+
+	call 				= shm_malloc(sizeof(call_t));
+	if (call == NULL)
+	{
+		LM_ERR("No shared memory left\n");
+		goto error;
+	}
+
+	if ( (!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) != 0) ||
+		   shm_str_dup(&call->sip_data.callid, &msg->callid->body) != 0 )
+	{
+		LM_ERR("Error processing CALLID hdr\n");
+		goto error;
+	}
+
+	call->sip_data.to_tag.s		= NULL;
+	call->sip_data.to_tag.len 	= 0;
+	call->sip_data.from_tag.s	= NULL;
+	call->sip_data.from_tag.len = 0;
+
+	call->consumed_amount		= 0;
+	call->confirmed				= FALSE;
+	call->max_amount			= max_chan;
+
+	/*
+	 * Reference the client_id from the root of the list
+	 */
+	call->client_id.s			= credit_data->call_list->client_id.s;
+	call->client_id.len			= credit_data->call_list->client_id.len;
+
+	/*
+	 * Insert the newly created call to the list of calls
+	 */
+	clist_insert(credit_data->call_list, call, next, prev);
+
+	lock_init(&call->lock);
+
+	/*
+	 * Increase the number of calls for this client. This call is not yet confirmed.
+	 */
+	credit_data->number_of_calls++;
+
+	lock_release(&credit_data->lock);
+
+	LM_DBG("New call allocated for client [%.*s]\n", call->client_id.len, call->client_id.s);
+
+
+	return call;
+
+error:
+	lock_release(&credit_data->lock);
+	return NULL;
+}
+
 static int add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 {
+	struct str_hash_table *ht	= NULL;
+	gen_lock_t *lock			= NULL;
 	struct str_hash_entry *e	= NULL;
-	struct str_hash_table *ht	= type == CREDIT_MONEY ? _data.money.call_data_by_cid : _data.time.call_data_by_cid;
-	gen_lock_t *lock			= type == CREDIT_MONEY ? &_data.money.lock : &_data.time.lock;
+
+	switch(type)
+	{
+	case CREDIT_MONEY:
+		ht		= _data.money.call_data_by_cid;
+		lock	=  &_data.money.lock;
+		break;
+	case CREDIT_TIME:
+		ht		= _data.time.call_data_by_cid;
+		lock	=  &_data.time.lock;
+		break;
+	case CREDIT_CHANNEL:
+		ht		= _data.channel.call_data_by_cid;
+		lock	=  &_data.channel.lock;
+		break;
+	default:
+		LM_ERR("Something went terribly wrong");
+		return -1;
+	}
 
 	e	= str_hash_get(ht, cid->s, cid->len);
 
@@ -1326,11 +1496,182 @@ static int set_max_credit(struct sip_msg* msg,
 	}
 	else
 	{
-		LM_ALERT("MSG was not a request\n");
+		LM_ALERT("MSG was not an INVITE\n");
 		return -1;
 	}
 
 	return 1;
+}
+
+static int terminate_all(struct sip_msg* msg, char* str_pv_client)
+{
+	credit_data_t *credit_data 	= NULL;
+	pv_spec_t *client_id_spec	= (pv_spec_t *) str_pv_client;
+
+	pv_value_t client_id_val;
+
+	if (pv_get_spec_value(msg, client_id_spec, &client_id_val) != 0)
+	{
+		LM_ERR("[%.*s]: can't get client_id pvar value\n", msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	if (client_id_val.rs.len == 0 || client_id_val.rs.s == NULL)
+	{
+		LM_ERR("[%.*s]: client ID cannot be null\n", msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	if (try_get_credit_data_entry(&client_id_val.rs, &credit_data) != 0)
+	{
+		LM_DBG("[%.*s] not found\n", msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	terminate_all_calls(credit_data);
+
+	return 1;
+}
+
+static int get_channel_count(struct sip_msg* msg, char* str_pv_client, char* str_pv_chan_count)
+{
+	credit_data_t *credit_data 	= NULL;
+	pv_spec_t *chan_count_spec	= (pv_spec_t *) str_pv_chan_count,
+			  *client_id_spec	= (pv_spec_t *) str_pv_client;
+
+	pv_value_t chan_count_val, client_id_val;
+	int value					= -1;
+
+	if (pv_get_spec_value(msg, client_id_spec, &client_id_val) != 0)
+	{
+		LM_ERR("[%.*s]: can't get client_id pvar value\n", msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	if (client_id_val.rs.len == 0 || client_id_val.rs.s == NULL)
+	{
+		LM_ERR("[%.*s]: client ID cannot be null\n", msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	if (try_get_credit_data_entry(&client_id_val.rs, &credit_data) == 0)
+		value	= credit_data->number_of_calls;
+	else
+		LM_ALERT("[%.*s] not found\n", msg->callid->body.len, msg->callid->body.s);
+
+	if (!pv_is_w(chan_count_spec))
+	{
+		LM_ERR("pvar is not writable");
+		return -1;
+	}
+
+	memset(&chan_count_val, 0, sizeof(chan_count_val));
+
+	chan_count_val.flags 	= PV_VAL_STR;
+
+	if (value > 0)
+		chan_count_val.rs.s 	= int2str(value, &chan_count_val.rs.len);
+	else
+	{
+		char buff[2]			= { '-', '1' };
+		chan_count_val.rs.s 	= buff;
+		chan_count_val.rs.len	= 2;
+	}
+
+	if (pv_set_spec_value(msg, chan_count_spec, 0, &chan_count_val) != 0)
+	{
+		LM_ERR("Error writing value to pvar");
+		return -1;
+	}
+
+	return 1;
+}
+
+static int set_max_channels(struct sip_msg* msg, char* str_pv_client, char* str_pv_max_chan)
+{
+	credit_data_t *credit_data 	= NULL;
+	call_t *call				= NULL;
+	pv_spec_t *max_chan_spec	= (pv_spec_t *) str_pv_max_chan,
+			  *client_id_spec	= (pv_spec_t *) str_pv_client;
+	pv_value_t max_chan_val, client_id_val;
+	int max_chan				= 0;
+
+	set_ctrl_flag(msg);
+
+	if (parse_headers(msg, HDR_CALLID_F, 0) != 0)
+	{
+		LM_ERR("Error parsing Call-ID");
+		return -1;
+	}
+
+	if (msg->first_line.type == SIP_REQUEST && msg->first_line.u.request.method_value == METHOD_INVITE)
+	{
+		if (has_to_tag(msg))
+		{
+			LM_ERR("INVITE is a reINVITE\n");
+			return -1;
+		}
+
+		if (pv_get_spec_value(msg, max_chan_spec, &max_chan_val) != 0)
+		{
+			LM_ERR("Can't get max_chan pvar value\n");
+			return -1;
+		}
+		max_chan	= max_chan_val.ri;
+
+		if (max_chan <= 0)
+		{
+			LM_ERR("[%.*s] MAX_CHAN cannot be less than or equal to zero: %d\n", msg->callid->body.len, msg->callid->body.s, max_chan);
+			return -1;
+		}
+
+		if (pv_get_spec_value(msg, client_id_spec, &client_id_val) != 0)
+		{
+			LM_ERR("[%.*s]: can't get client_id pvar value\n", msg->callid->body.len, msg->callid->body.s);
+			return -1;
+		}
+
+		if (client_id_val.rs.len == 0 || client_id_val.rs.s == NULL)
+		{
+			LM_ERR("[%.*s]: client ID cannot be null\n", msg->callid->body.len, msg->callid->body.s);
+			return -1;
+		}
+
+		LM_DBG("Setting up new call for client [%.*s], max-chan[%d], call-id[%.*s]\n", client_id_val.rs.len, client_id_val.rs.s,
+																		max_chan,
+																		msg->callid->body.len, msg->callid->body.s);
+
+		if ((credit_data = get_or_create_credit_data_entry(&client_id_val.rs, CREDIT_CHANNEL)) == NULL)
+		{
+			LM_ERR("Error retrieving credit data from shared memory for client [%.*s]\n", client_id_val.rs.len, client_id_val.rs.s);
+			return -1;
+		}
+
+		if (credit_data->number_of_calls + 1 > max_chan)
+			return -2; // you have, between calls being setup plus those established, more than you maximum quota
+
+		if (credit_data->concurrent_calls + 1 > max_chan)
+			return -3; // you have the max amount of established calls already
+
+		if ((call = alloc_new_call_by_channel(credit_data, msg, max_chan)) == NULL)
+		{
+			LM_ERR("Unable to allocate new call for client [%.*s]\n", client_id_val.rs.len, client_id_val.rs.s);
+			return -1;
+		}
+
+		if (add_call_by_cid(&call->sip_data.callid, call, CREDIT_CHANNEL) != 0)
+		{
+			LM_ERR("Unable to allocate new cid_by_client for client [%.*s]\n", client_id_val.rs.len, client_id_val.rs.s);
+			return -1;
+		}
+
+		return 1;
+	}
+	else
+	{
+		LM_ALERT("MSG was not an INVITE\n");
+		return -1;
+	}
 }
 
 static int set_max_time(struct sip_msg* msg, char* str_pv_client, char* str_pv_maxsecs)
@@ -1407,7 +1748,7 @@ static int set_max_time(struct sip_msg* msg, char* str_pv_client, char* str_pv_m
 	}
 	else
 	{
-		LM_ALERT("MSG was not a request\n");
+		LM_ALERT("MSG was not an INVITE\n");
 		return -1;
 	}
 

@@ -22,12 +22,11 @@
  *
  */
 
-#ifndef CNXCC_RPC_H_
-#define CNXCC_RPC_H_
+#ifndef CNXCC_SELECT_H_
+#define CNXCC_SELECT_H_
 
-void rpc_active_clients(rpc_t* rpc, void* ctx);
-void rpc_kill_call(rpc_t* rpc, void* ctx);
-void rpc_active_clients(rpc_t* rpc, void* ctx);
-void rpc_check_client_stats(rpc_t* rpc, void* ctx);
+int sel_root(str* res, select_t* s, struct sip_msg* msg);
+int sel_channels(str* res, select_t* s, struct sip_msg* msg);
+int sel_channels_count(str* res, select_t* s, struct sip_msg* msg);
 
-#endif /* CNXCC_RPC_H_ */
+#endif /* CNXCC_SELECT_H_ */

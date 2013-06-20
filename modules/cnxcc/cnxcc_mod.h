@@ -24,7 +24,6 @@
 #ifndef _CNXCC_MOD_H
 #define _CNXCC_MOD_H
 
-// 3,778
 #include "../../locking.h"
 #include "../../str_hash.h"
 #include "../../parser/parse_rr.h"
@@ -48,7 +47,8 @@ typedef enum cnxpvtypes
 typedef enum credit_type
 {
 	CREDIT_TIME,
-	CREDIT_MONEY
+	CREDIT_MONEY,
+	CREDIT_CHANNEL
 } credit_type_t;
 
 typedef struct hash_tables
@@ -65,6 +65,7 @@ typedef struct data
 
 	hash_tables_t time;
 	hash_tables_t money;
+	hash_tables_t channel;
 
 	/*struct str_hash_table *credit_data_by_client;
 	struct str_hash_table *call_data_by_cid;*/
@@ -82,7 +83,6 @@ typedef struct data
 	flag_t ctrl_flag;
 
 	int check_period;
-	int number_of_timers;
 
 } data_t;
 
