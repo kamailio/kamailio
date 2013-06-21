@@ -6,14 +6,24 @@
 
     <title>Parameters</title>
     
-    <section id="auth.auth_checks">
-	<title>
-	  <varname>auth_checks_register</varname>,
-	  <varname>auth_checks_no_dlg</varname>, and
-	  <varname>auth_checks_in_dlg</varname> (flags)
-	</title>
+    <section id="auth.p.auth_checks_register">
+	<title><varname>auth_checks_register</varname> (flags)</title>
 	<para>
-	These three module parameters control which optional integrity
+		See description of parameter <varname>auth_checks_in_dlg</varname>.
+	</para>
+	</section>
+
+    <section id="auth.p.auth_checks_no_dlg">
+	<title><varname>auth_checks_no_dlg</varname> (flags)</title>
+	<para>
+		See description of parameter <varname>auth_checks_in_dlg</varname>.
+	</para>
+	</section>
+
+    <section id="auth.p.auth_checks_in_dlg">
+		<title><varname>auth_checks_in_dlg</varname> (flags)</title>
+	<para>
+		These three module parameters control which optional integrity
         checks will be performed on the SIP message carrying digest response
         during digest authentication. <varname>auth_check_register</varname>
         controls integrity checks to be performed on REGISTER messages,
@@ -125,7 +135,7 @@ modparam("auth", "auth_checks_in_dlg", 15)
 	</example>
     </section>
 
-    <section id="qop">
+    <section id="auth.p.qop">
 	<title><varname>qop</varname> (string)</title>
 	<para>
 		If set, enable <emphasis>qop</emphasis> for challenges: each challenge
@@ -161,7 +171,7 @@ modparam("auth", "qop", "auth")   # set qop=auth
 	</example>
     </section>
 
-    <section id="nonce_count">
+    <section id="auth.p.nonce_count">
 	<title><varname>nonce_count</varname> (boolean)</title>
 	<para>
 		If enabled the received <emphasis>nc</emphasis> value is remembered 
@@ -285,7 +295,7 @@ route{
 	</example>
     </section>
 
-	<section id="one_time_nonce">
+	<section id="auth.p.one_time_nonce">
 	<title><varname>one_time_nonce</varname> (boolean)</title>
 	<para>
 		If set to 1 nonce reuse is disabled: each nonce is allowed only once,
@@ -352,7 +362,7 @@ modparam("auth", "one_time_nonce", 1)
 	</example>
 	</section>
 
-    <section id="nid_pool_no">
+    <section id="auth.p.nid_pool_no">
 	<title><varname>nid_pool_no</varname> (integer)</title>
 	<para>
 		Controls the number of partitions for the 
@@ -404,7 +414,7 @@ modparam("auth", "nid_pool_no", 4)
 	</example>
     </section>
 
-    <section id="nc_array_size">
+    <section id="auth.p.nc_array_size">
 	<title><varname>nc_array_size</varname> (integer)</title>
 	<para>
 		Maximum number of in-flight nonces for <varname>nonce_count</varname>.
@@ -443,7 +453,7 @@ modparam("auth", "nc_array_size", 4194304)   # 4Mb
 	</example>
     </section>
 
-    <section id="nc_array_order">
+    <section id="auth.p.nc_array_order">
 	<title><varname>nc_array_order</varname> (integer)</title>
 	<para>
 		Equivalent to <varname>nc_array_size</varname>, but instead of 
@@ -473,7 +483,7 @@ modparam("auth", "nc_array_order", 22)   # 4Mb
 	</example>
     </section>
 
-    <section id="otn_in_flight_no">
+    <section id="auth.p.otn_in_flight_no">
 	<title><varname>otn_in_flight_no</varname> (integer)</title>
 	<para>
 		Maximum number of in-flight nonces for 
@@ -515,7 +525,7 @@ modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
 	</example>
     </section>
 
-    <section id="otn_in_flight_order">
+    <section id="auth.p.otn_in_flight_order">
 	<title><varname>otn_in_flight_order</varname> (integer)</title>
 	<para>
 		Equivalent to <varname>otn_in_flight_no</varname>, but instead of
@@ -546,7 +556,7 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 	</example>
     </section>
 
-    <section id="auth.secret">
+    <section id="auth.p.secret">
 	<title><varname>secret</varname> (string)</title>
 	<para>Secret phrase used to calculate the nonce value used to challenge
 	the client for authentication.</para>
@@ -571,7 +581,7 @@ modparam("auth", "secret", "johndoessecretphrase")
 	</example>
     </section>
 
-    <section id="nonce_expire">
+    <section id="auth.p.nonce_expire">
 	<title><varname>nonce_expire</varname> (integer)</title>
 	<para>
 	    Nonces have limited lifetime. After a given period of time nonces
@@ -596,7 +606,7 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 	</example>
     </section>
 
-	<section id="nonce_auth_max_drift">
+	<section id="auth.p.nonce_auth_max_drift">
 	<title><varname>nonce_auth_max_drift</varname> (integer)</title>
 	<para>
 		Maximum difference in seconds between a nonce creation time and the
@@ -628,7 +638,7 @@ modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 	</example>
     </section>
 
-	<section id="force_stateless_reply">
+	<section id="auth.p.force_stateless_reply">
 	<title><varname>force_stateless_reply</varname> (boolean)</title>
 	<para>
 		If set to 1, <function>www_challenge()</function> and
@@ -647,7 +657,7 @@ modparam("auth", "force_stateless_reply", 1)
 	</example>
 	</section>
 
-	<section id="realm_prefix">
+	<section id="auth.p.realm_prefix">
 		<title><varname>realm_prefix</varname> (string)</title>
 		<para>
 			Prefix to be automatically strip from realm. As an alternative to
@@ -669,7 +679,7 @@ modparam("auth", "realm_prefix", "sip.")
 		</example>
 	</section>
 
-	<section id="auth.use_domain">
+	<section id="auth.p.use_domain">
 	<title><varname>use_domain</varname> (boolean)</title>
 	<para>
 		If set to 1, <function>pv_auth_check()</function> uses

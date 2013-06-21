@@ -1,4 +1,3 @@
-
 The Auth Module
 
 Jan Janak
@@ -17,7 +16,7 @@ Daniel-Constantin Mierla
    <miconda@gmail.com>
 
    Copyright © 2002, 2003 FhG FOKUS
-     _________________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
@@ -27,35 +26,35 @@ Daniel-Constantin Mierla
         2. Dependencies
         3. Parameters
 
-              3.1. auth_checks_register, auth_checks_no_dlg, and
-                      auth_checks_in_dlg (flags) 
-
-              3.2. qop (string)
-              3.3. nonce_count (boolean)
-              3.4. one_time_nonce (boolean)
-              3.5. nid_pool_no (integer)
-              3.6. nc_array_size (integer)
-              3.7. nc_array_order (integer)
-              3.8. otn_in_flight_no (integer)
-              3.9. otn_in_flight_order (integer)
-              3.10. secret (string)
-              3.11. nonce_expire (integer)
-              3.12. nonce_auth_max_drift (integer)
-              3.13. force_stateless_reply (boolean)
-              3.14. realm_prefix (string)
-              3.15. use_domain (boolean)
+              3.1. auth_checks_register (flags)
+              3.2. auth_checks_no_dlg (flags)
+              3.3. auth_checks_in_dlg (flags)
+              3.4. qop (string)
+              3.5. nonce_count (boolean)
+              3.6. one_time_nonce (boolean)
+              3.7. nid_pool_no (integer)
+              3.8. nc_array_size (integer)
+              3.9. nc_array_order (integer)
+              3.10. otn_in_flight_no (integer)
+              3.11. otn_in_flight_order (integer)
+              3.12. secret (string)
+              3.13. nonce_expire (integer)
+              3.14. nonce_auth_max_drift (integer)
+              3.15. force_stateless_reply (boolean)
+              3.16. realm_prefix (string)
+              3.17. use_domain (boolean)
 
         4. Functions
 
               4.1. consume_credentials()
               4.2. has_credentials(realm)
-              4.3. www_challenge(realm, flags) 
-              4.4. proxy_challenge(realm, flags) 
-              4.5. auth_challenge(realm, flags) 
-              4.6. pv_www_authenticate(realm, passwd, flags [, method]) 
-              4.7. pv_proxy_authenticate(realm, passwd, flags) 
-              4.8. pv_auth_check(realm, passwd, flags, checks) 
-              4.9. auth_get_www_authenticate(realm, flags, pvdest) 
+              4.3. www_challenge(realm, flags)
+              4.4. proxy_challenge(realm, flags)
+              4.5. auth_challenge(realm, flags)
+              4.6. pv_www_authenticate(realm, passwd, flags [, method])
+              4.7. pv_proxy_authenticate(realm, passwd, flags)
+              4.8. pv_auth_check(realm, passwd, flags, checks)
+              4.9. auth_get_www_authenticate(realm, flags, pvdest)
 
    List of Examples
 
@@ -92,49 +91,49 @@ Chapter 1. Admin Guide
    2. Dependencies
    3. Parameters
 
-        3.1. auth_checks_register, auth_checks_no_dlg, and
-                auth_checks_in_dlg (flags) 
-
-        3.2. qop (string)
-        3.3. nonce_count (boolean)
-        3.4. one_time_nonce (boolean)
-        3.5. nid_pool_no (integer)
-        3.6. nc_array_size (integer)
-        3.7. nc_array_order (integer)
-        3.8. otn_in_flight_no (integer)
-        3.9. otn_in_flight_order (integer)
-        3.10. secret (string)
-        3.11. nonce_expire (integer)
-        3.12. nonce_auth_max_drift (integer)
-        3.13. force_stateless_reply (boolean)
-        3.14. realm_prefix (string)
-        3.15. use_domain (boolean)
+        3.1. auth_checks_register (flags)
+        3.2. auth_checks_no_dlg (flags)
+        3.3. auth_checks_in_dlg (flags)
+        3.4. qop (string)
+        3.5. nonce_count (boolean)
+        3.6. one_time_nonce (boolean)
+        3.7. nid_pool_no (integer)
+        3.8. nc_array_size (integer)
+        3.9. nc_array_order (integer)
+        3.10. otn_in_flight_no (integer)
+        3.11. otn_in_flight_order (integer)
+        3.12. secret (string)
+        3.13. nonce_expire (integer)
+        3.14. nonce_auth_max_drift (integer)
+        3.15. force_stateless_reply (boolean)
+        3.16. realm_prefix (string)
+        3.17. use_domain (boolean)
 
    4. Functions
 
         4.1. consume_credentials()
         4.2. has_credentials(realm)
-        4.3. www_challenge(realm, flags) 
-        4.4. proxy_challenge(realm, flags) 
-        4.5. auth_challenge(realm, flags) 
-        4.6. pv_www_authenticate(realm, passwd, flags [, method]) 
-        4.7. pv_proxy_authenticate(realm, passwd, flags) 
-        4.8. pv_auth_check(realm, passwd, flags, checks) 
-        4.9. auth_get_www_authenticate(realm, flags, pvdest) 
+        4.3. www_challenge(realm, flags)
+        4.4. proxy_challenge(realm, flags)
+        4.5. auth_challenge(realm, flags)
+        4.6. pv_www_authenticate(realm, passwd, flags [, method])
+        4.7. pv_proxy_authenticate(realm, passwd, flags)
+        4.8. pv_auth_check(realm, passwd, flags, checks)
+        4.9. auth_get_www_authenticate(realm, flags, pvdest)
 
 1. Overview
 
-   This  is  a  generic  module that itself doesn't provide all functions
+   This is a generic module that itself doesn't provide all functions
    necessary for authentication but provides functions that are needed by
-   all  other  authentication  related  modules (so called authentication
+   all other authentication related modules (so called authentication
    backends).
 
-   We  decided  to  divide  the  authentication code into several modules
-   because  there  are  now  more  than  one backends (currently database
-   authentication  and  radius  are  supported). This allows us to create
-   separate  packages  so  users  can  install and load only the required
-   functionality.  This  also allows us to avoid unnecessary dependencies
-   in the binary packages.
+   We decided to divide the authentication code into several modules
+   because there are now more than one backends (currently database
+   authentication and radius are supported). This allows us to create
+   separate packages so users can install and load only the required
+   functionality. This also allows us to avoid unnecessary dependencies in
+   the binary packages.
 
 2. Dependencies
 
@@ -142,57 +141,64 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   3.1. auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
-          (flags) 
+   3.1. auth_checks_register (flags)
+   3.2. auth_checks_no_dlg (flags)
+   3.3. auth_checks_in_dlg (flags)
+   3.4. qop (string)
+   3.5. nonce_count (boolean)
+   3.6. one_time_nonce (boolean)
+   3.7. nid_pool_no (integer)
+   3.8. nc_array_size (integer)
+   3.9. nc_array_order (integer)
+   3.10. otn_in_flight_no (integer)
+   3.11. otn_in_flight_order (integer)
+   3.12. secret (string)
+   3.13. nonce_expire (integer)
+   3.14. nonce_auth_max_drift (integer)
+   3.15. force_stateless_reply (boolean)
+   3.16. realm_prefix (string)
+   3.17. use_domain (boolean)
 
-   3.2. qop (string)
-   3.3. nonce_count (boolean)
-   3.4. one_time_nonce (boolean)
-   3.5. nid_pool_no (integer)
-   3.6. nc_array_size (integer)
-   3.7. nc_array_order (integer)
-   3.8. otn_in_flight_no (integer)
-   3.9. otn_in_flight_order (integer)
-   3.10. secret (string)
-   3.11. nonce_expire (integer)
-   3.12. nonce_auth_max_drift (integer)
-   3.13. force_stateless_reply (boolean)
-   3.14. realm_prefix (string)
-   3.15. use_domain (boolean)
+3.1. auth_checks_register (flags)
 
-3.1.  auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
-(flags)
+   See description of parameter auth_checks_in_dlg.
 
-   These  three module parameters control which optional integrity checks
-   will  be  performed on the SIP message carrying digest response during
-   digest  authentication.  auth_check_register controls integrity checks
-   to  be  performed  on  REGISTER  messages, auth_checks_no_dlg controls
-   which optional integrity checks will be performed on SIP requests that
-   have  no  To  header  field  or no To tag (in other words the requests
-   either  establishing  or outside dialogs). auth_checks_in_dlg controls
-   which  integrity  checks  will  be  performed  on  SIP requests within
-   dialogs,  such  as  BYE  or re-INVITE. The default value for all three
-   parameters is 0 (old behaviour, no extra checks). The set of integrity
-   checks  that can be performed on REGISTERs is typically different from
-   sets  of  integrity checks that can be performed for other SIP request
-   types, hence we have three independent module parameters.
+3.2. auth_checks_no_dlg (flags)
 
-   Without  the  extra checks the nonce will protect only against expired
-   values.  Some reply attacks are still possible in the expire "window".
-   A possible workaround is to always force qop authentication and always
-   check  the  uri from the authorization header, but this would not work
-   if an upstream proxy rewrites the uri and it will also not work with a
-   lot of UA implementations.
+   See description of parameter auth_checks_in_dlg.
+
+3.3. auth_checks_in_dlg (flags)
+
+   These three module parameters control which optional integrity checks
+   will be performed on the SIP message carrying digest response during
+   digest authentication. auth_check_register controls integrity checks to
+   be performed on REGISTER messages, auth_checks_no_dlg controls which
+   optional integrity checks will be performed on SIP requests that have
+   no To header field or no To tag (in other words the requests either
+   establishing or outside dialogs). auth_checks_in_dlg controls which
+   integrity checks will be performed on SIP requests within dialogs, such
+   as BYE or re-INVITE. The default value for all three parameters is 0
+   (old behaviour, no extra checks). The set of integrity checks that can
+   be performed on REGISTERs is typically different from sets of integrity
+   checks that can be performed for other SIP request types, hence we have
+   three independent module parameters.
+
+   Without the extra checks the nonce will protect only against expired
+   values. Some reply attacks are still possible in the expire "window". A
+   possible workaround is to always force qop authentication and always
+   check the uri from the authorization header, but this would not work if
+   an upstream proxy rewrites the uri and it will also not work with a lot
+   of UA implementations.
 
    In this case the nonce value will be used only to hold the expire time
    (see nonce_expire) and an MD5 over it and some secret (the MD5 is used
    to make sure that nobody tampers with the nonce expire time).
 
-   When  the  extra  checks are enabled, the nonce will include and extra
-   MD5  over  the selected part/parts of the message (see below) and some
-   other  secret.  This will be used to check if the selected part of the
-   message  is  the  same  when  an  UA  tries  to  reuse the nonce, thus
-   protecting or severely limiting reply attacks.
+   When the extra checks are enabled, the nonce will include and extra MD5
+   over the selected part/parts of the message (see below) and some other
+   secret. This will be used to check if the selected part of the message
+   is the same when an UA tries to reuse the nonce, thus protecting or
+   severely limiting reply attacks.
 
    The possible flag values for all three parameters are:
      * 1 for checking if the message uri changed (uses the whole uri)
@@ -200,27 +206,27 @@ Chapter 1. Admin Guide
      * 4 for checking the from tag
      * 8 for checking the source ip (see nonce.h).
 
-   For  example  setting  auth_checks_register  to  3  would check if the
-   callid  or the request uri changed from the REGISTER message for which
-   the  original  nonce  was generated (this would allow nonce reuse only
-   within  the  same  UA and for the expire time). Note that enabling the
-   extra  checks  will  limit  nonce  caching  by  UAs,  requiring  extra
-   challenges and roundtrips, but will provide much better protection.
+   For example setting auth_checks_register to 3 would check if the callid
+   or the request uri changed from the REGISTER message for which the
+   original nonce was generated (this would allow nonce reuse only within
+   the same UA and for the expire time). Note that enabling the extra
+   checks will limit nonce caching by UAs, requiring extra challenges and
+   roundtrips, but will provide much better protection.
 
 Warning
 
-   Do    not    enable   the   from   tag   check   (4)   for   REGISTERs
+   Do not enable the from tag check (4) for REGISTERs
    (auth_checks_register) and out-of-dialog messages (auth_checks_no_dlg)
-   unless  you  are sure that all your user agents do not change the from
+   unless you are sure that all your user agents do not change the from
    tag when challenged. Some user agents will also change the callid when
-   the  challenged request is not in-dialog, so avoid enabling the callid
-   check   (2)   for   messages   that   are   not   part   of  a  dialog
+   the challenged request is not in-dialog, so avoid enabling the callid
+   check (2) for messages that are not part of a dialog
    (auth_checks_no_dlg). In some rare case this will also have to be done
    for REGISTERs.
 
    When the secret parameter is set and the extra checks are enabled, the
-   first  half of the secret will be used for the expire time MD5 and the
-   other  half  for  the  extra  checks MD5, so make sure you have a long
+   first half of the secret will be used for the expire time MD5 and the
+   other half for the extra checks MD5, so make sure you have a long
    secret (32 chars or longer are recommended).
 
    Example 1.1. Setting the auth_checks_register module parameter
@@ -246,15 +252,15 @@ modparam("auth", "auth_checks_in_dlg", 15)
 
 ...
 
-3.2. qop (string)
+3.4. qop (string)
 
-   If  set,  enable qop for challenges: each challenge will include a qop
-   parameter.  This  is  the  recommended way, but some older non rfc3261
-   compliant  UAs  might get confused and might not authenticate properly
-   if qop is enabled.
+   If set, enable qop for challenges: each challenge will include a qop
+   parameter. This is the recommended way, but some older non rfc3261
+   compliant UAs might get confused and might not authenticate properly if
+   qop is enabled.
 
-   Enabling  qop  together  with  nonce_count will provide extra-security
-   (protection  against  replay attacks) while still allowing credentials
+   Enabling qop together with nonce_count will provide extra-security
+   (protection against replay attacks) while still allowing credentials
    caching at the UA side and thus not compromising performance.
 
    The possible values are: "auth", "auth-int" and "" (unset).
@@ -268,48 +274,48 @@ modparam("auth", "auth_checks_in_dlg", 15)
 modparam("auth", "qop", "auth")   # set qop=auth
 ...
 
-3.3. nonce_count (boolean)
+3.5. nonce_count (boolean)
 
    If enabled the received nc value is remembered and checked against the
-   older  value  (for a successful authentication the received nc must be
-   greater  then  the  previously  received  one,  see  rfc2617  for more
-   details).  This  will  provide protection against replay attacks while
+   older value (for a successful authentication the received nc must be
+   greater then the previously received one, see rfc2617 for more
+   details). This will provide protection against replay attacks while
    still allowing credentials caching at the UA side.
 
    It depends on qop being enabled (if qop is not enabled, the challenges
-   won't  include  qop and so the UA will probably not include the qop or
-   nc parameters in its response).
+   won't include qop and so the UA will probably not include the qop or nc
+   parameters in its response).
 
    If a response doesn't include qop or nc (for example obsolete UAs that
-   don't  support  them)  the  response  will be checked according to the
-   other   enabled  nonce  checks,  in  this  order:  one_time_nonce  and
-   auth_check_*.  If  a response includes nc only the normal nonce_expire
-   checks  and  the  nonce_count  checks will be performed, all the other
-   checks will be ignored.
+   don't support them) the response will be checked according to the other
+   enabled nonce checks, in this order: one_time_nonce and auth_check_*.
+   If a response includes nc only the normal nonce_expire checks and the
+   nonce_count checks will be performed, all the other checks will be
+   ignored.
 
-   The  nonce_count  checks  work by tracking a limited number of nonces.
-   The maximum number of tracked nonces is set using the nc_array_size or
-   nc_array_order  parameters.  If this number is exceeded, older entries
-   will  be  overwritten.  As  long  as the maximum rate of challengeable
-   messages  per  average  response time is lower then nc_array_size, the
-   nonce_count  checks  should  work  flawlessly. For optimum performance
-   (maximum   reuse   of  cache  credentials)  nc_array_size  divided  by
-   nid_pool_no  should  be  lower then the message rate multiplied by the
+   The nonce_count checks work by tracking a limited number of nonces. The
+   maximum number of tracked nonces is set using the nc_array_size or
+   nc_array_order parameters. If this number is exceeded, older entries
+   will be overwritten. As long as the maximum rate of challengeable
+   messages per average response time is lower then nc_array_size, the
+   nonce_count checks should work flawlessly. For optimum performance
+   (maximum reuse of cache credentials) nc_array_size divided by
+   nid_pool_no should be lower then the message rate multiplied by the
    desired nonce_expire.
 
    The maximum accepted nc value is 255. If nc becomes greater then this,
    the nonce will be considered stale and the UA will be re-challenged.
 
-   Note:   nonce_count  should  be  enabled  only  in  stateful  mode  (a
-   transaction  should  be  created  prior to the authentication check to
-   absorb  possible  retransmissions  and  all the replies should be sent
-   statefuly,  using  t_reply()).  If  nonce_count and the authentication
+   Note: nonce_count should be enabled only in stateful mode (a
+   transaction should be created prior to the authentication check to
+   absorb possible retransmissions and all the replies should be sent
+   statefuly, using t_reply()). If nonce_count and the authentication
    checks are used in the stateless mode then all retransmissions will be
    challenged.
 
    The default value is 0 (off).
 
-   See    also:    qop,   nc_array_size,   nc_array_order,   nid_pool_no,
+   See also: qop, nc_array_size, nc_array_order, nid_pool_no,
    nonce_expire. one_time_nonce.
 
    Example 1.3. nonce_count example
@@ -364,42 +370,42 @@ route{
         }
 ...
 
-3.4. one_time_nonce (boolean)
+3.6. one_time_nonce (boolean)
 
-   If  set to 1 nonce reuse is disabled: each nonce is allowed only once,
-   in  the  first  reponse  to  a  challenge.  All  the  messages will be
-   challenged,  even  retransmissions.  Stateful  mode should be used, to
-   catch   retransmissions   before   the  authentication  checks  (using
-   t_newtran()  before  the  authentication  checks  and  sending all the
+   If set to 1 nonce reuse is disabled: each nonce is allowed only once,
+   in the first reponse to a challenge. All the messages will be
+   challenged, even retransmissions. Stateful mode should be used, to
+   catch retransmissions before the authentication checks (using
+   t_newtran() before the authentication checks and sending all the
    replies with t_reply()).
 
-   one_time_nonce  provides  enhanced  replay  protections at the cost of
-   invalidating  UA  side  credentials caching, challenging every message
-   (and  thus  generating  extra  messages  and  extra  round-trips)  and
-   requiring  stateful  mode.  In  general  qop and nonce_count should be
-   prefered  (if  possible)  with  fallback  to auth_checks_*. Due to the
-   disadvantages  listed above, one_time_nonce should be used only if the
-   extra  checks provided by auth_checks_register, auth_checks_no_dlg and
+   one_time_nonce provides enhanced replay protections at the cost of
+   invalidating UA side credentials caching, challenging every message
+   (and thus generating extra messages and extra round-trips) and
+   requiring stateful mode. In general qop and nonce_count should be
+   prefered (if possible) with fallback to auth_checks_*. Due to the
+   disadvantages listed above, one_time_nonce should be used only if the
+   extra checks provided by auth_checks_register, auth_checks_no_dlg and
    auth_checks_in_dlg are deemed insufficient for a specific setup.
 
-   Compared  to nonce_count, one_time_nonce provides the same protection,
-   but  at  a  higher message cost. The only advantages are that it works
-   with  user agents that do not support qop and nc and that it uses less
+   Compared to nonce_count, one_time_nonce provides the same protection,
+   but at a higher message cost. The only advantages are that it works
+   with user agents that do not support qop and nc and that it uses less
    memory for the same supported number of maximum in-flight nonces (by a
    factor of 8). one_time_nonce can be used as fallback from nonce_count,
-   when  the UA doesn't support nc (it happens automatically when both of
+   when the UA doesn't support nc (it happens automatically when both of
    them are enabled).
 
    Like nonce_count, one_time_nonce works by tracking a limited number of
-   nonces.  The  maximum  number  of  tracked  nonces  is  set  using the
-   otn_in_flight_no  or otn_in_flight_order parameters. If this number is
-   exceeded,  older  entries  will be overwritten. As long as the maximum
+   nonces. The maximum number of tracked nonces is set using the
+   otn_in_flight_no or otn_in_flight_order parameters. If this number is
+   exceeded, older entries will be overwritten. As long as the maximum
    rate of challengeable messages per average response time is lower then
    otn_in_flight_no, the one_time_nonce checks should work flawlessly.
 
    The default value is 0 (off).
 
-   See   also:  otn_in_flight_no,  otn_in_flight_order,  nid_pool_no  and
+   See also: otn_in_flight_no, otn_in_flight_order, nid_pool_no and
    nonce_count.
 
    Example 1.4. one_time_nonce example
@@ -408,35 +414,35 @@ modparam("auth", "one_time_nonce", 1)
 # Note: stateful mode should be used, see the nonce_count example
 ...
 
-3.5. nid_pool_no (integer)
+3.7. nid_pool_no (integer)
 
-   Controls   the   number   of   partitions   for  the  nonce_count  and
+   Controls the number of partitions for the nonce_count and
    one_time_nonce arrays (it's common to both of them to reduce the nonce
    size).
 
-   Instead  of  using single arrays for keeping nonce state, these arrays
-   can  be  divided into more partitions. Each ser process is assigned to
-   one  of these partitions, allowing for higher concurrency on multi-CPU
-   machines.  Besides  increasing performance, increasing nid_pool_no has
-   also  a  negative  effect:  it  could  decrease  the maximum supported
-   in-flight  nonces  in certain conditions. In the worst case, when only
-   one  ser  process  receives  most  of  the traffic (e.g. very busy tcp
+   Instead of using single arrays for keeping nonce state, these arrays
+   can be divided into more partitions. Each ser process is assigned to
+   one of these partitions, allowing for higher concurrency on multi-CPU
+   machines. Besides increasing performance, increasing nid_pool_no has
+   also a negative effect: it could decrease the maximum supported
+   in-flight nonces in certain conditions. In the worst case, when only
+   one ser process receives most of the traffic (e.g. very busy tcp
    connection between two proxies), the in-flight nonces could be limited
-   to  the  array size (nc_array_size for nonce_count or otn_in_flight_no
-   for  one_time_nonce)  divided  by the partitions number (nid_pool_no).
-   However  for  normal  traffic, when the process receiving a message is
+   to the array size (nc_array_size for nonce_count or otn_in_flight_no
+   for one_time_nonce) divided by the partitions number (nid_pool_no).
+   However for normal traffic, when the process receiving a message is
    either random or chosen in a round-robin fashion the maximum in-flight
-   nonces  number  will  be  very  little  influenced by nid_pool_no (the
-   messages  will  be  close  to  equally  distributed to processes using
+   nonces number will be very little influenced by nid_pool_no (the
+   messages will be close to equally distributed to processes using
    different partitions).
 
-   nid_pool_no  value  should  be  one  of: 1, 2, 4, 8, 16, 32 or 64 (the
-   maximum  value  is 64 and all values should be of the form 2^k or else
+   nid_pool_no value should be one of: 1, 2, 4, 8, 16, 32 or 64 (the
+   maximum value is 64 and all values should be of the form 2^k or else
    they will be rounded down to 2^k).
 
    The default value is 1.
 
-   See    also:    nonce_count,    one_time_nonce,    nc_array_size   and
+   See also: nonce_count, one_time_nonce, nc_array_size and
    otn_in_flight_no.
 
    Example 1.5. nid_pool_no example
@@ -444,21 +450,20 @@ modparam("auth", "one_time_nonce", 1)
 modparam("auth", "nid_pool_no", 4)
 ...
 
-3.6. nc_array_size (integer)
+3.8. nc_array_size (integer)
 
-   Maximum  number of in-flight nonces for nonce_count. It represents the
-   maximum  nonces  for  which  state  will  be kept. When this number is
-   exceeded,  state  for the older nonces will be discarded to make space
+   Maximum number of in-flight nonces for nonce_count. It represents the
+   maximum nonces for which state will be kept. When this number is
+   exceeded, state for the older nonces will be discarded to make space
    for new ones (see nonce_count for more details).
 
-   The  value  should  be of the form 2^k. If it's not it will be rounded
-   down  to  2^k  (for example a value of 1000000 will be rounded down to
+   The value should be of the form 2^k. If it's not it will be rounded
+   down to 2^k (for example a value of 1000000 will be rounded down to
    2^19=524288). nc_array_order can be used to directly specify the power
    of 2 (e.g. nc_array_order set to 20 is equivalent to nc_array_size set
    to 1048576).
 
-   The  memory  used  to  keep  the  nonce state will be nc_array_size in
-   bytes.
+   The memory used to keep the nonce state will be nc_array_size in bytes.
 
    The default value is 1048576 (1M in-flight nonces, using 1Mb memory).
 
@@ -469,10 +474,10 @@ modparam("auth", "nid_pool_no", 4)
 modparam("auth", "nc_array_size", 4194304)   # 4Mb
 ...
 
-3.7. nc_array_order (integer)
+3.9. nc_array_order (integer)
 
-   Equivalent  to  nc_array_size,  but instead of directly specifying the
-   size,   its   value   is  the  power  at  which  2  should  be  raised
+   Equivalent to nc_array_size, but instead of directly specifying the
+   size, its value is the power at which 2 should be raised
    (log2(nc_array_size)).
 
    nc_array_size = 2^nc_array_order. For more details see nc_array_size.
@@ -486,25 +491,24 @@ modparam("auth", "nc_array_size", 4194304)   # 4Mb
 modparam("auth", "nc_array_order", 22)   # 4Mb
 ...
 
-3.8. otn_in_flight_no (integer)
+3.10. otn_in_flight_no (integer)
 
-   Maximum  number  of in-flight nonces for one_time_nonce. It represents
-   the  maximum number of nonces remembered for the one-time-nonce check.
-   When  this  number is exceeded, information about older nonces will be
-   discarded  and  overwritten  with  information about the new generated
-   ones (see one_time_nonce for more details).
+   Maximum number of in-flight nonces for one_time_nonce. It represents
+   the maximum number of nonces remembered for the one-time-nonce check.
+   When this number is exceeded, information about older nonces will be
+   discarded and overwritten with information about the new generated ones
+   (see one_time_nonce for more details).
 
-   The  value  should  be of the form 2^k. If it's not it will be rounded
-   down  to  2^k  (for example a value of 1000000 will be rounded down to
-   2^19=524288).  otn_in_flight_no  can  be  used to directly specify the
-   power  of  2  (e.g.  otn_in_flight_order  set  to  19 is equivalent to
+   The value should be of the form 2^k. If it's not it will be rounded
+   down to 2^k (for example a value of 1000000 will be rounded down to
+   2^19=524288). otn_in_flight_no can be used to directly specify the
+   power of 2 (e.g. otn_in_flight_order set to 19 is equivalent to
    otn_in_fligh_number set to 524288).
 
-   The   memory   used   to  keep  the  nonce  information  will  be  the
+   The memory used to keep the nonce information will be the
    otn_in_flight_no divided by 8 (only 1 bit of state is kept per nonce).
 
-   The  default  value  is  1048576  (1M  in-flight  nonces,  using 128Kb
-   memory).
+   The default value is 1048576 (1M in-flight nonces, using 128Kb memory).
 
    See also: one_time_nonce and nid_pool_no.
 
@@ -513,13 +517,13 @@ modparam("auth", "nc_array_order", 22)   # 4Mb
 modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
 ...
 
-3.9. otn_in_flight_order (integer)
+3.11. otn_in_flight_order (integer)
 
    Equivalent to otn_in_flight_no, but instead of directly specifying the
-   size,   its   value   is  the  power  at  which  2  should  be  raised
+   size, its value is the power at which 2 should be raised
    (log2(otn_in_flight_no)).
 
-   otn_in_flight_no   =   2^otn_in_flight_order.  For  more  details  see
+   otn_in_flight_no = 2^otn_in_flight_order. For more details see
    otn_in_flight_order.
 
    The default value is 20 (1M in-flight nonces, using 128Kb memory).
@@ -531,18 +535,18 @@ modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
 modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 ...
 
-3.10. secret (string)
+3.12. secret (string)
 
-   Secret  phrase used to calculate the nonce value used to challenge the
+   Secret phrase used to calculate the nonce value used to challenge the
    client for authentication.
 
-   If  you  use  multiple servers in your installation, and would like to
-   authenticate  on  the second server against the nonce generated at the
+   If you use multiple servers in your installation, and would like to
+   authenticate on the second server against the nonce generated at the
    first one its necessary to explicitly set the secret to the same value
-   on  all servers. However, as the use of a shared (and fixed) secret as
-   nonce  is insecure, it is much better is to stay with the default. Any
-   clients  should  send  the  authenticated  request  to the server that
-   issued the challenge.
+   on all servers. However, as the use of a shared (and fixed) secret as
+   nonce is insecure, it is much better is to stay with the default. Any
+   clients should send the authenticated request to the server that issued
+   the challenge.
 
    Default value is randomly generated string.
 
@@ -551,14 +555,14 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 modparam("auth", "secret", "johndoessecretphrase")
 ...
 
-3.11. nonce_expire (integer)
+3.13. nonce_expire (integer)
 
    Nonces have limited lifetime. After a given period of time nonces will
-   be  considered invalid. This is to protect replay attacks. Credentials
-   containing  a  stale  nonce will be not authorized, but the user agent
-   will  be  challenged again. This time the challenge will contain stale
-   parameter  which  will  indicate to the client that it doesn't have to
-   disturb  user  by asking for username and password, it can recalculate
+   be considered invalid. This is to protect replay attacks. Credentials
+   containing a stale nonce will be not authorized, but the user agent
+   will be challenged again. This time the challenge will contain stale
+   parameter which will indicate to the client that it doesn't have to
+   disturb user by asking for username and password, it can recalculate
    credentials using existing username and password.
 
    The value is in seconds and default value is 300 seconds.
@@ -568,19 +572,18 @@ modparam("auth", "secret", "johndoessecretphrase")
 modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 ...
 
-3.12. nonce_auth_max_drift (integer)
+3.14. nonce_auth_max_drift (integer)
 
-   Maximum  difference  in  seconds between a nonce creation time and the
+   Maximum difference in seconds between a nonce creation time and the
    current time, if the nonce creation time appears to be in the future.
 
    In some cases, like shortly after a system time backward adjustment or
-   when   the   current   proxy  is  part  of  a  cluster  which  is  not
+   when the current proxy is part of a cluster which is not
    time-synchronized, it's possible to receive a nonce with creation time
-   in  the  future.  In  this  case  if  the  difference  is greater then
-   nonce_auth_max_drift   seconds,   consider   the   nonce   stale   and
-   re-challenge  (otherwise  after  a  dramatic time change backwards, it
-   might  happen  that some previously generated nonces will be valid for
-   too much time).
+   in the future. In this case if the difference is greater then
+   nonce_auth_max_drift seconds, consider the nonce stale and re-challenge
+   (otherwise after a dramatic time change backwards, it might happen that
+   some previously generated nonces will be valid for too much time).
 
    The default value is 3 seconds
 
@@ -591,11 +594,11 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 ...
 
-3.13. force_stateless_reply (boolean)
+3.15. force_stateless_reply (boolean)
 
-   If  set  to  1,  www_challenge()  and proxy_challenge() functions send
-   reply  statelessly no matter if transaction exists or not. If set to 0
-   (default),   reply  is  sent  statefully  if  transaction  exists  and
+   If set to 1, www_challenge() and proxy_challenge() functions send reply
+   statelessly no matter if transaction exists or not. If set to 0
+   (default), reply is sent statefully if transaction exists and
    stelelessly otherwise.
 
    Example 1.13. force_stateless_reply example
@@ -603,13 +606,13 @@ modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 modparam("auth", "force_stateless_reply", 1)
 ...
 
-3.14. realm_prefix (string)
+3.16. realm_prefix (string)
 
-   Prefix  to be automatically strip from realm. As an alternative to SRV
-   records  (not  all SIP clients support SRV lookup), a subdomain of the
-   master  domain  can be defined for SIP purposes (like sip.mydomain.net
-   pointing  to  same  IP address as the SRV record for mydomain.net). By
-   ignoring  the realm_prefix "sip.", at authentication, sip.mydomain.net
+   Prefix to be automatically strip from realm. As an alternative to SRV
+   records (not all SIP clients support SRV lookup), a subdomain of the
+   master domain can be defined for SIP purposes (like sip.mydomain.net
+   pointing to same IP address as the SRV record for mydomain.net). By
+   ignoring the realm_prefix "sip.", at authentication, sip.mydomain.net
    will be equivalent to mydomain.net .
 
    Default value is empty string.
@@ -617,9 +620,9 @@ modparam("auth", "force_stateless_reply", 1)
    Example 1.14. realm_prefix parameter example
 modparam("auth", "realm_prefix", "sip.")
 
-3.15. use_domain (boolean)
+3.17. use_domain (boolean)
 
-   If  set  to  1, pv_auth_check() uses domain parts of the URIs to check
+   If set to 1, pv_auth_check() uses domain parts of the URIs to check
    user identity.
 
    Example 1.15. force_stateless_reply example
@@ -631,24 +634,23 @@ modparam("auth", "use_domain", 1)
 
    4.1. consume_credentials()
    4.2. has_credentials(realm)
-   4.3. www_challenge(realm, flags) 
-   4.4. proxy_challenge(realm, flags) 
-   4.5. auth_challenge(realm, flags) 
-   4.6. pv_www_authenticate(realm, passwd, flags [, method]) 
-   4.7. pv_proxy_authenticate(realm, passwd, flags) 
-   4.8. pv_auth_check(realm, passwd, flags, checks) 
-   4.9. auth_get_www_authenticate(realm, flags, pvdest) 
+   4.3. www_challenge(realm, flags)
+   4.4. proxy_challenge(realm, flags)
+   4.5. auth_challenge(realm, flags)
+   4.6. pv_www_authenticate(realm, passwd, flags [, method])
+   4.7. pv_proxy_authenticate(realm, passwd, flags)
+   4.8. pv_auth_check(realm, passwd, flags, checks)
+   4.9. auth_get_www_authenticate(realm, flags, pvdest)
 
 4.1. consume_credentials()
 
-   This  function  removes  previously authorized credential headers from
-   the  message  being  processed  by  the  server.  That  means that the
-   downstream  message  will  not  contain credentials there were used by
-   this  server.  This ensures that the proxy will not reveal information
-   about  credentials  used  to  downstream elements and also the message
-   will  be  a  little  bit  shorter.  The  function must be called after
-   www_authorize,        proxy_authorize,       www_authenticate       or
-   proxy_authenticate.
+   This function removes previously authorized credential headers from the
+   message being processed by the server. That means that the downstream
+   message will not contain credentials there were used by this server.
+   This ensures that the proxy will not reveal information about
+   credentials used to downstream elements and also the message will be a
+   little bit shorter. The function must be called after www_authorize,
+   proxy_authorize, www_authenticate or proxy_authenticate.
 
    Example 1.16. consume_credentials example
 ...
@@ -659,8 +661,8 @@ if (www_authenticate("realm", "subscriber")) {
 
 4.2. has_credentials(realm)
 
-   This  function  returns  true  of  the  request  has  Autorization  or
-   Proxy-Authorization  header  with provided realm. The parameter can be
+   This function returns true of the request has Autorization or
+   Proxy-Authorization header with provided realm. The parameter can be
    string with pseudo-variables.
 
    Example 1.17. consume_credentials example
@@ -670,31 +672,31 @@ if (has_credentials("myrealm")) {
 }
 ...
 
-4.3.  www_challenge(realm, flags)
+4.3. www_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a WWW-Authorize
-   header  field  containing  a  digest challenge, it will put the header
-   field  into  a  response  generated  from  the  request  the server is
+   header field containing a digest challenge, it will put the header
+   field into a response generated from the request the server is
    processing and send the reply. Upon reception of such a reply the user
-   agent  should  compute  credentials  and  retry  the request. For more
-   information  regarding  digest  authentication see RFC2617. See module
+   agent should compute credentials and retry the request. For more
+   information regarding digest authentication see RFC2617. See module
    parameter force_stateless_reply regarding sending of the reply.
 
    Meaning of the parameters is as follows:
-     * realm  -  Realm  is  a  opaque  string  that the user agent should
-       present to the user so he can decide what username and password to
-       use. Usually this is domain of the host the server is running on.
-       It  must not be empty string "". In case of REGISTER requests, the
-       To  header  field domain (e.g., variable $td) can be used (because
-       this  header  field represents the user being registered), for all
-       other  messages  From  header  field  domain  can  be  used (e.g.,
-       variable $fd).
+     * realm - Realm is a opaque string that the user agent should present
+       to the user so he can decide what username and password to use.
+       Usually this is domain of the host the server is running on.
+       It must not be empty string "". In case of REGISTER requests, the
+       To header field domain (e.g., variable $td) can be used (because
+       this header field represents the user being registered), for all
+       other messages From header field domain can be used (e.g., variable
+       $fd).
        The string may contain pseudo variables.
      * flags - Value of this parameter can be a bitmask of following:
           + 1 - build challenge header with qop=auth
           + 2 - build challenge header with qop=auth-int
-          + 4   -   do   not  send  '500  Internal  Server  Error'  reply
-            automatically  in  failure  cases  (error code is returned to
+          + 4 - do not send '500 Internal Server Error' reply
+            automatically in failure cases (error code is returned to
             config)
           + 16 - build challenge header with stale=true
 
@@ -707,17 +709,17 @@ if (!www_authenticate("$td", "subscriber")) {
 }
 ...
 
-4.4.  proxy_challenge(realm, flags)
+4.4. proxy_challenge(realm, flags)
 
-   The   function   challenges   a   user   agent.  It  will  generate  a
-   Proxy-Authorize  header  field  containing a digest challenge, it will
-   put  the  header  field into a response generated from the request the
-   server  is  processing  and  send  the reply. Upon reception of such a
-   reply the user agent should compute credentials and retry the request.
-   For  more information regarding digest authentication see RFC2617. See
-   module parameter force_stateless_reply regarding sending of the reply.
+   The function challenges a user agent. It will generate a
+   Proxy-Authorize header field containing a digest challenge, it will put
+   the header field into a response generated from the request the server
+   is processing and send the reply. Upon reception of such a reply the
+   user agent should compute credentials and retry the request. For more
+   information regarding digest authentication see RFC2617. See module
+   parameter force_stateless_reply regarding sending of the reply.
 
-   Meaning   of   the   parameters   is   the   same   as   for  function
+   Meaning of the parameters is the same as for function
    www_challenge(realm, flags)
 
    This function can be used from REQUEST_ROUTE.
@@ -729,15 +731,15 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 };
 ...
 
-4.5.  auth_challenge(realm, flags)
+4.5. auth_challenge(realm, flags)
 
-   The  function  challenges a user agent for authentication. It combines
-   the   functions  www_challenge()  and  proxy_challenge(),  by  calling
-   internally  the first one for REGISTER requests and the second one for
+   The function challenges a user agent for authentication. It combines
+   the functions www_challenge() and proxy_challenge(), by calling
+   internally the first one for REGISTER requests and the second one for
    the rest of other request types.
 
-   Meaning    of    the    parameters    the   same   as   for   function
-   www_challenge(realm, flags)
+   Meaning of the parameters the same as for function www_challenge(realm,
+   flags)
 
    This function can be used from REQUEST_ROUTE.
 
@@ -748,52 +750,49 @@ if (!auth_check("$fd", "subscriber", "1")) {
 };
 ...
 
-4.6.  pv_www_authenticate(realm, passwd, flags [, method])
+4.6. pv_www_authenticate(realm, passwd, flags [, method])
 
-   The  function  verifies  credentials  according  to  RFC2617.  If  the
-   credentials  are  verified successfully then the function will succeed
-   and  mark  the  credentials  as  authorized (marked credentials can be
-   later  used  by  some  other functions). If the function was unable to
-   verify  the  credentials  for  some  reason  then it will fail and the
-   script should call www_challenge which will challenge the user again.
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will succeed
+   and mark the credentials as authorized (marked credentials can be later
+   used by some other functions). If the function was unable to verify the
+   credentials for some reason then it will fail and the script should
+   call www_challenge which will challenge the user again.
 
    Negative codes may be interpreted as follows:
-     * -1  (generic error) - some generic error occurred and no reply was
+     * -1 (generic error) - some generic error occurred and no reply was
        sent out;
      * -2 (invalid password) - wrong password;
      * -3 (invalid user) - authentication user does not exist.
      * -4 (nonce expired) - the nonce has expired
-     * -5  (no  credentials)  - request does not contain an Authorization
+     * -5 (no credentials) - request does not contain an Authorization
        header with the correct realm.
-     * -6   (nonce   reused)  -  the  nonce  has  already  been  used  to
-       authenticate a previous request
+     * -6 (nonce reused) - the nonce has already been used to authenticate
+       a previous request
 
    Meaning of the parameters is as follows:
-     * realm  -  Realm  is  a  opaque  string  that the user agent should
-       present to the user so he can decide what username and password to
-       use. Usually this is domain of the host the server is running on.
-       It  must  not  be empty string "". In case of REGISTER requests To
+     * realm - Realm is a opaque string that the user agent should present
+       to the user so he can decide what username and password to use.
+       Usually this is domain of the host the server is running on.
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., varibale $td) can be used (because this
-       header  field  represents  a user being registered), for all other
-       messages  From  header  field  domain  can be used (e.g., varibale
-       $fd).
+       header field represents a user being registered), for all other
+       messages From header field domain can be used (e.g., varibale $fd).
        The string may contain pseudo variables.
-     * passwd  -  the password to be used for authentication. Can contain
+     * passwd - the password to be used for authentication. Can contain
        config variables. The Username is taken from Auth header.
      * flags - the value of this parameter can be a bitmask of following:
           + 1 - the value of password parameter is HA1 format
           + 2 - build challenge header with no qop and add it to avp
           + 4 - build challenge header with qop=auth and add it to avp
-          + 8  -  build  challenge header with qop=auth-int and add it to
-            avp
+          + 8 - build challenge header with qop=auth-int and add it to avp
           + 16 - build challenge header with stale=true
-     * method  - the method to be used for authentication. This parameter
-       is   optional   and  if  not  set  is  the  first  "word"  on  the
-       request-line.
+     * method - the method to be used for authentication. This parameter
+       is optional and if not set is the first "word" on the request-line.
 
-   When  challenge  header  is built and stored in avp, append_to_reply()
-   and  the  sl reply functions can be used to send appropriate SIP reply
-   to challenge for authentication.
+   When challenge header is built and stored in avp, append_to_reply() and
+   the sl reply functions can be used to send appropriate SIP reply to
+   challenge for authentication.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -804,19 +803,18 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 };
 ...
 
-4.7.  pv_proxy_authenticate(realm, passwd, flags)
+4.7. pv_proxy_authenticate(realm, passwd, flags)
 
-   The  function  verifies  credentials  according  to  RFC2617.  If  the
-   credentials  are  verified successfully then the function will succeed
-   and  mark  the  credentials  as  authorized (marked credentials can be
-   later  used  by  some  other functions). If the function was unable to
-   verify  the  credentials  for  some  reason  then it will fail and the
-   script  should  call  proxy_challenge  which  will  challenge the user
-   again.  For  more  about  the  negative  return  codes,  see the above
-   function.
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will succeed
+   and mark the credentials as authorized (marked credentials can be later
+   used by some other functions). If the function was unable to verify the
+   credentials for some reason then it will fail and the script should
+   call proxy_challenge which will challenge the user again. For more
+   about the negative return codes, see the above function.
 
-   Meaning of the parameters is the same as for
-   pv_www_authenticate(realm, passwd, flags)
+   Meaning of the parameters is the same as for pv_www_authenticate(realm,
+   passwd, flags)
 
    This function can be used from REQUEST_ROUTE.
 
@@ -828,20 +826,20 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 };
 ...
 
-4.8.  pv_auth_check(realm, passwd, flags, checks)
+4.8. pv_auth_check(realm, passwd, flags, checks)
 
-   The  function  combines the functionalities of pv_www_authenticate and
-   pv_proxy_authenticate,  first  being exectuted if the SIP request is a
+   The function combines the functionalities of pv_www_authenticate and
+   pv_proxy_authenticate, first being exectuted if the SIP request is a
    REGISTER, the second for the rest.
 
-   Meaning   of   the   first   three  parameters  is  the  same  as  for
+   Meaning of the first three parameters is the same as for
    pv_www_authenticate(realm, passwd, flags).
 
    Parameter checks can be used to control the behaviour of the function.
-   If  it is 1, then the function will check to see if the authentication
-   username  matches  either  To  or  From  header  username, a matter of
-   whether  it  is  for a REGISTER request or not. The parameter may be a
-   pseudo variable.
+   If it is 1, then the function will check to see if the authentication
+   username matches either To or From header username, a matter of whether
+   it is for a REGISTER request or not. The parameter may be a pseudo
+   variable.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -853,12 +851,12 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 };
 ...
 
-4.9.  auth_get_www_authenticate(realm, flags, pvdest)
+4.9. auth_get_www_authenticate(realm, flags, pvdest)
 
-   Build  WWW-Authentication  header  and  set  the  resulting  value  in
-   'pvdest' pseudo-variable parameter.
+   Build WWW-Authentication header and set the resulting value in 'pvdest'
+   pseudo-variable parameter.
 
-   Meaning  of  the  realm  and  flags  parameters  is  the  same  as for
+   Meaning of the realm and flags parameters is the same as for
    pv_www_authenticate(realm, passwd, flags)
 
    This function can be used from ANY_ROUTE.

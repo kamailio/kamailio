@@ -6,7 +6,7 @@
 
     <title>Functions</title>
     
-    <section id="consume_credentials">
+    <section id="auth.f.consume_credentials">
 	<title><function>consume_credentials()</function></title>
 	<para>
 	    This function removes previously authorized credential headers from the
@@ -31,7 +31,7 @@ if (www_authenticate("realm", "subscriber")) {
 	    </programlisting>
 	</example>
     </section>
-    <section id="has_credentials">
+    <section id="auth.f.has_credentials">
 	<title><function>has_credentials(realm)</function></title>
 	<para>
 		This function returns true of the request has Autorization or
@@ -49,7 +49,7 @@ if (has_credentials("myrealm")) {
 	    </programlisting>
 	</example>
     </section>
-	<section id="www_challenge">
+	<section id="auth.f.www_challenge">
 		<title>
 			<function moreinfo="none">www_challenge(realm, flags)</function>
 		</title>
@@ -122,7 +122,7 @@ if (!www_authenticate("$td", "subscriber")) {
 		</example>
 	</section>
 
-	<section id="proxy_challenge">
+	<section id="auth.f.proxy_challenge">
 		<title>
 			<function moreinfo="none">proxy_challenge(realm, flags)</function>
 		</title>
@@ -152,7 +152,7 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 		</example>
 	</section>
 
-	<section id="auth_challenge">
+	<section id="auth.f.auth_challenge">
 		<title>
 			<function moreinfo="none">auth_challenge(realm, flags)</function>
 		</title>
@@ -179,7 +179,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		</example>
 	</section>
 
-	<section id="pv_www_authenticate">
+	<section id="auth.f.pv_www_authenticate">
 		<title>
 		<function moreinfo="none">pv_www_authenticate(realm, passwd, flags [, method])</function>
 		</title>
@@ -297,7 +297,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 		</example>
 	</section>
 
-	<section id="pv_proxy_authenticate">
+	<section id="auth.f.pv_proxy_authenticate">
 		<title>
 			<function moreinfo="none">pv_proxy_authenticate(realm, passwd, flags)</function>
 		</title>
@@ -331,7 +331,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 		</example>
 	</section>
 
-	<section id="pv_auth_check">
+	<section id="auth.f.pv_auth_check">
 		<title>
 			<function moreinfo="none">pv_auth_check(realm, passwd, flags, checks)</function>
 		</title>
@@ -368,7 +368,7 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 		</example>
 	</section>
 
-	<section id="auth_get_www_authenticate">
+	<section id="auth.f.auth_get_www_authenticate">
 		<title>
 			<function moreinfo="none">auth_get_www_authenticate(realm, flags, pvdest)</function>
 		</title>
