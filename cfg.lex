@@ -540,7 +540,7 @@ CR			\n
 EVENT_RT_NAME [a-zA-Z][0-9a-zA-Z-]*(":"[a-zA-Z][0-9a-zA-Z-]*)+
 
 
-COM_LINE	#
+COM_LINE	"#"|"//"
 COM_START	"/\*"
 COM_END		"\*/"
 
