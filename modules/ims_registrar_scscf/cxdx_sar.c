@@ -249,7 +249,8 @@ success:
     update_stat(accepted_registrations, 1);
 
 done:
-    reg_send_reply_transactional(t->uas.request, data->contact_header, t);
+    if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
+        reg_send_reply_transactional(t->uas.request, data->contact_header, t);
     LM_DBG("DBG:SAR Async CDP callback: ... Done resuming transaction\n");
     set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
     set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
@@ -274,7 +275,8 @@ done:
     return;
 
 error:
-    reg_send_reply_transactional(t->uas.request, data->contact_header, t);
+    if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
+        reg_send_reply_transactional(t->uas.request, data->contact_header, t);
 
 error_no_send: //if we don't have the transaction then we can't send a transaction response
     update_stat(rejected_registrations, 1);

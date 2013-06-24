@@ -926,20 +926,37 @@ error:
 
 }
 
-int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction) {
+int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction, char* route) {
     str private_identity = {0, 0}, public_identity = {0, 0};
     int assignment_type = AVP_IMS_SAR_NO_ASSIGNMENT;
     int data_available = AVP_IMS_SAR_USER_DATA_NOT_AVAILABLE;
     int require_user_data = 1;
     rerrno = R_FINE;
     tm_cell_t *t = 0;
+    str route_name;
 
     saved_transaction_t* saved_t;
     cfg_action_t* cfg_action;
 
-    sar_param_t* ap = (sar_param_t*) str1;
-    cfg_action = ap->paction->next;
-
+    udomain_t* _d = (udomain_t*) str1;
+    
+    if (fixup_get_svalue(_m, (gparam_t*) route, &route_name) != 0) {
+        LM_ERR("no async route block for assign_server_unreg\n");
+        return -1;
+    }
+    
+    LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
+    int ri = route_get(&main_rt, route_name.s);
+    if (ri < 0) {
+        LM_ERR("unable to find route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+    cfg_action = main_rt.rlist[ri];
+    if (cfg_action == NULL) {
+        LM_ERR("empty action lists in route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+    
     LM_DBG("Assigning unregistered user for direction [%.*s]\n", direction->len, direction->s);
 
     enum cscf_dialog_direction dir = cscf_get_dialog_direction(direction->s);
@@ -995,7 +1012,7 @@ int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction) {
     saved_t->expires = 1; //not a dereg as this is server_assign_unreg
     saved_t->require_user_data = require_user_data;
     saved_t->sar_assignment_type = assignment_type;
-    saved_t->domain = (udomain_t*) ap->param;
+    saved_t->domain = (udomain_t*) _d;
 
     saved_t->contact_header = 0;
 
