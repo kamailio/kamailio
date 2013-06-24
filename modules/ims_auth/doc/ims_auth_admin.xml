@@ -210,11 +210,11 @@ modparam("ims_auth", "registration_default_algorithm", "HSS-Selected")
       <quote>auth,auth-int</quote>.</para>
 
       <example>
-        <title><varname>load_credentials</varname> parameter usage</title>
+        <title><varname>registration_qop</varname> parameter usage</title>
 
         <programlisting format="linespecific">
 ...
-modparam("ims_auth", "load_credentials", "auth-int")
+modparam("ims_auth", "registration_qop", "auth-int")
 ...
 </programlisting>
       </example>
@@ -246,7 +246,7 @@ modparam("ims_auth", "cxdx_forced_peer", "hss.ims.smilecoms.com")
       <para>Default value is <quote>ims.smilecoms.com</quote>.</para>
 
       <example>
-        <title><varname>version_table</varname> parameter usage</title>
+        <title><varname>cxdx_dest_realm</varname> parameter usage</title>
 
         <programlisting format="linespecific">
 ...
@@ -255,6 +255,64 @@ modparam("ims_auth", "cxdx_dest_realm", "ims.smilecoms.com")
 </programlisting>
       </example>
     </section>
+
+    <section>
+      <title><varname>max_nonce_reuse</varname> (integer)</title>
+
+      <para>Defines, how many times a nonce can be reused (provided nc is incremented)</para>
+
+      <para>Default value is <quote>0</quote> (don't allow reuse).</para>
+
+      <example>
+        <title><varname>max_nonce_reuse</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "max_nonce_reuse", 1)
+...
+</programlisting>
+      </example>
+    </section>
+
+  </section>
+
+    <section>
+      <title><varname>add_authinfo_hdr</varname> (integer)</title>
+
+      <para>Should an Authentication-Info header be added on 200 OK responses?</para>
+
+      <para>Default value is <quote>1</quote> (add Authentication-Info header).</para>
+
+      <example>
+        <title><varname>add_authinfo_hdr</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "add_authinfo_hdr", 0)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ignore_failed_auth</varname> (integer)</title>
+
+      <para>Ignore invalid passwords (only IMPI/IMPU is checked).</para>
+      <para>It should be used only for testing, e.g. load balancing with SIPP where we dont want to worry about auth.</para>
+
+      <para>Default value is <quote>0</quote> (don't ingnore the failed authentication).</para>
+
+      <example>
+        <title><varname>ignore_failed_auth</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "ignore_failed_auth", 1)
+...
+</programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>
