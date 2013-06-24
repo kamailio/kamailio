@@ -154,7 +154,6 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
         goto error;
     }
 
-
     //get each individual element from the MAA
     cxdx_get_result_code(maa, &rc);
     cxdx_get_experimental_result_code(maa, &experimental_rc);
@@ -387,6 +386,8 @@ success:
 
         //TODO need to confirm that removing this has done no problems
         //tmp->auth_data->code = -tmp->auth_data->code;
+
+	LM_DBG("Added new auth-vector.\n");
 
         tmp = tmp->next;
     }

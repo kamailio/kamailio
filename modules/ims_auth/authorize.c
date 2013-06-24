@@ -47,6 +47,7 @@
 #include "../../ut.h"
 #include "../../str.h"
 #include "../../basex.h"
+#include "../../hashes.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "../../dprint.h"
@@ -85,6 +86,7 @@ extern int add_authinfo_hdr;
 extern int max_nonce_reuse;
 extern str scscf_name_str;
 extern int ignore_failed_auth;
+extern int av_check_only_impu;
 
 auth_hash_slot_t *auth_data; /**< Authentication vector hash table */
 extern int auth_data_hash_size; /**< authentication vector hash table size */
@@ -1162,6 +1164,12 @@ void free_auth_userdata(auth_userdata * aud) {
  * @returns the hash % Auth_data->size
  */
 inline unsigned int get_hash_auth(str private_identity, str public_identity) {
+if (av_check_only_impu)
+	return core_hash(&public_identity, 0, auth_data_hash_size);
+else
+	return core_hash(&public_identity, 0, auth_data_hash_size);
+/*
+
 
 #define h_inc h+=v^(v>>3)
     char* p;
@@ -1192,6 +1200,7 @@ inline unsigned int get_hash_auth(str private_identity, str public_identity) {
     h = ((h)+(h >> 11))+((h >> 13)+(h >> 23));
     return (h) % auth_data_hash_size;
 #undef h_inc
+*/
 }
 
 /**
@@ -1209,13 +1218,29 @@ auth_userdata * get_auth_userdata(str private_identity, str public_identity) {
     hash = get_hash_auth(private_identity, public_identity);
     auth_data_lock(hash);
     aud = auth_data[hash].head;
+    if (av_check_only_impu)
+      LM_DBG("Searching auth_userdata for IMPU %.*s (Hash %d)\n", public_identity.len, public_identity.s, hash);
+    else
+      LM_DBG("Searching auth_userdata for IMPU %.*s / IMPI %.*s (Hash %d)\n", public_identity.len, public_identity.s,
+        private_identity.len, private_identity.s, hash);
+
     while (aud) {
-        if (aud->private_identity.len == private_identity.len &&
-                aud->public_identity.len == public_identity.len &&
-                memcmp(aud->private_identity.s, private_identity.s, private_identity.len) == 0 &&
-                memcmp(aud->public_identity.s, public_identity.s, public_identity.len) == 0) {
-            return aud;
-        }
+	if (av_check_only_impu) {
+		if (aud->public_identity.len == public_identity.len &&
+		        memcmp(aud->public_identity.s, public_identity.s, public_identity.len) == 0) {
+                    LM_DBG("Found auth_userdata\n");
+		    return aud;
+		}
+	} else {
+		if (aud->private_identity.len == private_identity.len &&
+		        aud->public_identity.len == public_identity.len &&
+		        memcmp(aud->private_identity.s, private_identity.s, private_identity.len) == 0 &&
+		        memcmp(aud->public_identity.s, public_identity.s, public_identity.len) == 0) {
+                    LM_DBG("Found auth_userdata\n");
+		    return aud;
+		}
+	}
+
         aud = aud->next;
     }
     /* if we get here, there is no auth_userdata for this user */
@@ -1407,6 +1432,11 @@ int add_auth_vector(str private_identity, str public_identity, auth_vector * av)
     auth_userdata *aud;
     aud = get_auth_userdata(private_identity, public_identity);
     if (!aud) goto error;
+
+     LM_DBG("Adding auth_vector (status %d) for IMPU %.*s / IMPI %.*s (Hash %d)\n", av->status,
+	public_identity.len, public_identity.s,
+        private_identity.len, private_identity.s, aud->hash);
+
 
     av->prev = aud->tail;
     av->next = 0;

@@ -86,6 +86,7 @@ int av_request_at_once = 1; /**< how many auth vectors to request in a MAR 				*
 int av_request_at_sync = 1; /**< how many auth vectors to request in a sync MAR 		*/
 char *registration_qop = "auth,auth-int"; /**< the qop options to put in the authorization challenges */
 str registration_qop_str = {0, 0}; /**< the qop options to put in the authorization challenges */
+int av_check_only_impu = 0; /**< Should we check IMPU (0) or IMPU and IMPI (1), when searching for authentication vectors? */
 static str s_qop_s = {", qop=\"", 7};
 static str s_qop_e = {"\"", 1};
 
@@ -139,6 +140,7 @@ static param_export_t params[] = {
     {"registration_default_algorithm", STR_PARAM, &registration_default_algorithm},
     {"registration_qop", STR_PARAM, &registration_qop},
     {"ignore_failed_auth", INT_PARAM, &ignore_failed_auth},
+    {"av_check_only_impu", INT_PARAM, &av_check_only_impu},
     {"cxdx_forced_peer", STR_PARAM, &cxdx_forced_peer_s},
     {"cxdx_dest_realm", STR_PARAM, &cxdx_dest_realm_s},
     {0, 0, 0}

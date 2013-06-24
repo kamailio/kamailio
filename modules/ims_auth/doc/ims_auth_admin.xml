@@ -313,6 +313,27 @@ modparam("ims_auth", "ignore_failed_auth", 1)
       </example>
     </section>
 
+    <section>
+      <title><varname>av_check_only_impu</varname> (integer)</title>
+
+      <para>When storing the authentication vectors for an account, use either IMPI/IMPU (=0, default) or IMPU (=1).</para>
+      <para>In case the IMPI is different from the IMPU, this option needs to be enabled to allow registration from
+        classic "SIP-clients", such as Snom phones and others, as they do not send an authentication username in the first REGISTER.</para>
+      <para>Default value is <quote>0</quote> (store authentication vectors based on IMPI/IMPU).</para>
+
+      <example>
+        <title><varname>av_check_only_impu</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "av_check_only_impu", 1)
+...
+</programlisting>
+      </example>
+    </section>
+
+
+
   </section>
 
   <section>
