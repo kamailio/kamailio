@@ -1060,7 +1060,7 @@ error:
  */
 //int save(struct sip_msg* msg, udomain_t* _d) {
 
-int save(struct sip_msg* msg, char* str1) {
+int save(struct sip_msg* msg, char* str1, char *route) {
     int expires;
     int require_user_data = 0;
     int data_available;
@@ -1068,6 +1068,9 @@ int save(struct sip_msg* msg, char* str1) {
     int st;
     str public_identity, private_identity, realm;
     int sar_assignment_type = AVP_IMS_SAR_NO_ASSIGNMENT;
+    str route_name;
+    
+    udomain_t* _d = (udomain_t*) str1;
 
     rerrno = R_FINE;
     get_act_time();
@@ -1079,8 +1082,22 @@ int save(struct sip_msg* msg, char* str1) {
 
     contact_for_header_t* contact_header = 0;
 
-    sar_param_t* ap = (sar_param_t*) str1;
-    cfg_action = ap->paction->next;
+    if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
+        LM_ERR("no async route block for assign_server_unreg\n");
+        return -1;
+    }
+    
+    LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
+    int ri = route_get(&main_rt, route_name.s);
+    if (ri < 0) {
+        LM_ERR("unable to find route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+    cfg_action = main_rt.rlist[ri];
+    if (cfg_action == NULL) {
+        LM_ERR("empty action lists in route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
 
     //check which route block we are in - if not request then we fail out.
     if (!is_route_type(REQUEST_ROUTE)) {
@@ -1123,7 +1140,7 @@ int save(struct sip_msg* msg, char* str1) {
 
     expires = cscf_get_max_expires(msg, 0); //check all contacts for max expires
     if (expires != 0) { //if <0 then no expires was found in which case we treat as reg/re-reg with default expires.
-        if (is_impu_registered((udomain_t*) ap->param, &public_identity)) {
+        if (is_impu_registered(_d, &public_identity)) {
             LM_DBG("preparing for SAR assignment for RE-REGISTRATION <%.*s>\n", public_identity.len, public_identity.s);
             sar_assignment_type = AVP_IMS_SAR_RE_REGISTRATION;
         } else {
@@ -1152,7 +1169,7 @@ int save(struct sip_msg* msg, char* str1) {
             //unregister the requested contacts, if none left at the end then send a SAR, otherwise return successfully
             LM_DBG("need to unregister contacts\n");
             //lets update the contacts - we need to know if all were deleted or not for the public identity
-            int res = update_contacts_new(msg, (udomain_t*) ap->param, &public_identity, sar_assignment_type, 0, 0, 0, 0, 0, &contact_header);
+            int res = update_contacts_new(msg, _d, &public_identity, sar_assignment_type, 0, 0, 0, 0, 0, &contact_header);
             if (res <= 0) {
                 LM_ERR("Error processing REGISTER for de-registration\n");
                 free_contact_buf(contact_header);
@@ -1207,7 +1224,8 @@ int save(struct sip_msg* msg, char* str1) {
     saved_t->expires = expires;
     saved_t->require_user_data = require_user_data;
     saved_t->sar_assignment_type = sar_assignment_type;
-    saved_t->domain = (udomain_t*) ap->param;
+    
+    saved_t->domain = _d;
 
     saved_t->public_identity.s = (char*) shm_malloc(public_identity.len + 1);
     if (!saved_t->public_identity.s) {

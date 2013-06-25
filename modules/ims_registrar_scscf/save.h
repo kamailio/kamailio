@@ -58,7 +58,7 @@
  */
 int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction, char* route);
 
-int save(struct sip_msg* msg, char* str1);
+int save(struct sip_msg* msg, char* str1, char* route);
 
 int unregister(struct sip_msg* _m, char* _d, char* _uri);
 

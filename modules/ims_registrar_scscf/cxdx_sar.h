@@ -47,14 +47,6 @@
 #define CXDX_SAR_H
 
 
-typedef struct sar_param {
-	int type;
-        udomain_t* param;
-	cfg_action_t *paction;
-} sar_param_t;
-
-
-
 extern struct cdp_binds cdpb;
 extern str cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */
 extern str cxdx_dest_realm;
