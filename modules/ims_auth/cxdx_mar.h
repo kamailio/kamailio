@@ -57,12 +57,6 @@ extern str cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to 
 extern str cxdx_dest_realm;
 extern struct tm_binds tmb;
 
-typedef struct mar_param {
-	int type;
-        char* param;
-	cfg_action_t *paction;
-} mar_param_t;
-
 typedef struct saved_transaction {
 	unsigned int tindex;
 	unsigned int tlabel;

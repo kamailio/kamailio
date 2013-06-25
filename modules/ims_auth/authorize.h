@@ -133,13 +133,13 @@ void auth_db_close(void);
  * Authorize using Proxy-Authorization header field
  */
 int proxy_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
-int proxy_challenge(struct sip_msg* msg, char* _realm, char* str2);
+int proxy_challenge(struct sip_msg* msg, char* route, char* _realm, char* str2);
 
 /*
  * Authorize using WWW-Authorization header field
  */
 int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
-int www_challenge(struct sip_msg* msg, char* _realm, char* str2);
+int www_challenge(struct sip_msg* msg, char* route, char* _realm, char* str2);
 
 
 /*

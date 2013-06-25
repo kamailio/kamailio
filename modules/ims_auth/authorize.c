@@ -270,22 +270,38 @@ int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table) {
     return digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T);
 }
  */
-int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth) {
+int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, char *route) {
 
     str realm = {0, 0};
     unsigned int aud_hash;
     str private_identity, public_identity, auts = {0, 0}, nonce = {0, 0};
     auth_vector *av = 0;
     int algo_type;
+    
+    str route_name;
 
     saved_transaction_t* saved_t;
     tm_cell_t *t = 0;
     cfg_action_t* cfg_action;
 
-    mar_param_t* ap = (mar_param_t*) str1;
-    cfg_action = ap->paction->next;
+    if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
+        LM_ERR("no async route block for assign_server_unreg\n");
+        return -1;
+    }
+    
+    LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
+    int ri = route_get(&main_rt, route_name.s);
+    if (ri < 0) {
+        LM_ERR("unable to find route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+    cfg_action = main_rt.rlist[ri];
+    if (cfg_action == NULL) {
+        LM_ERR("empty action lists in route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
 
-    if (get_str_fparam(&realm, msg, (fparam_t*) ap->param) < 0) {
+    if (get_str_fparam(&realm, msg, (fparam_t*) str1) < 0) {
         LM_ERR("failed to get realm value\n");
         return CSCF_RETURN_ERROR;
     }
@@ -455,12 +471,12 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth) {
     return CSCF_RETURN_BREAK;
 }
 
-int www_challenge(struct sip_msg* msg, char* str1, char* str2) {
-    return challenge(msg, str1, str2, 0);
+int www_challenge(struct sip_msg* msg, char* _route, char* str1, char* str2) {
+    return challenge(msg, str1, str2, 0, _route);
 }
 
-int proxy_challenge(struct sip_msg* msg, char* str1, char* str2) {
-    return challenge(msg, str1, str2, 1);
+int proxy_challenge(struct sip_msg* msg, char* _route, char* str1, char* str2) {
+    return challenge(msg, str1, str2, 1, _route);
 }
 
 /**

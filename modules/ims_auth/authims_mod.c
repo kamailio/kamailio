@@ -67,7 +67,8 @@ static void destroy(void);
 static int mod_init(void);
 
 static int auth_fixup(void** param, int param_no);
-static int challenge_fixup(void** param, int param_no);
+static int auth_fixup_async(void** param, int param_no);
+static int challenge_fixup_async(void** param, int param_no);
 
 struct cdp_binds cdpb;
 
@@ -117,9 +118,9 @@ int ignore_failed_auth = 0;
  */
 static cmd_export_t cmds[] = {
     {"ims_www_authenticate", (cmd_function) www_authenticate, 1, auth_fixup, 0, REQUEST_ROUTE},
-    {"ims_www_challenge", (cmd_function) www_challenge, 1, challenge_fixup, 0, REQUEST_ROUTE},
+    {"ims_www_challenge", (cmd_function) www_challenge, 2, challenge_fixup_async, 0, REQUEST_ROUTE},
     {"ims_proxy_authenticate", (cmd_function) proxy_authenticate, 1, auth_fixup, 0, REQUEST_ROUTE},
-    {"ims_proxy_challenge", (cmd_function) proxy_challenge, 1, auth_fixup, 0, REQUEST_ROUTE},
+    {"ims_proxy_challenge", (cmd_function) proxy_challenge, 2, auth_fixup_async, 0, REQUEST_ROUTE},
     {"bind_ims_auth", (cmd_function) bind_ims_auth, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0}
 };
@@ -268,30 +269,22 @@ static void destroy(void) {
 /*
  * Convert the char* parameters
  */
-static int challenge_fixup(void** param, int param_no) {
+static int challenge_fixup_async(void** param, int param_no) {
 
     if (strlen((char*) *param) <= 0) {
         LM_ERR("empty parameter %d not allowed\n", param_no);
         return -1;
     }
 
-    if (param_no == 1) {
+    if (param_no == 1) {        //route name - static or dynamic string (config vars)
+        if (fixup_spve_null(param, param_no) < 0)
+            return -1;
+        return 0;
+    } else if (param_no == 2) {
         if (fixup_var_str_12(param, 1) == -1) {
             LM_ERR("Erroring doing fixup on challenge");
             return -1;
         }
-        mar_param_t *ap;
-        ap = (mar_param_t*) pkg_malloc(sizeof (mar_param_t));
-        if (ap == NULL) {
-            LM_ERR("no more pkg\n");
-            return -1;
-        }
-        memset(ap, 0, sizeof (mar_param_t));
-        ap->paction = get_action_from_param(param, param_no);
-
-        ap->param = (char*) *param;
-
-        *param = (void*) ap;
     }
 
     return 0;
@@ -307,7 +300,29 @@ static int auth_fixup(void** param, int param_no) {
     }
 
     if (param_no == 1) {
-        //return fixup_var_str_12(param, 1);
+        if (fixup_var_str_12(param, 1) == -1) {
+            LM_ERR("Erroring doing fixup on auth");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+/*
+ * Convert the char* parameters
+ */
+static int auth_fixup_async(void** param, int param_no) {
+    if (strlen((char*) *param) <= 0) {
+        LM_ERR("empty parameter %d not allowed\n", param_no);
+        return -1;
+    }
+
+    if (param_no == 1) {        //route name - static or dynamic string (config vars)
+        if (fixup_spve_null(param, param_no) < 0)
+            return -1;
+        return 0;
+    } else if (param_no == 2) {
         if (fixup_var_str_12(param, 1) == -1) {
             LM_ERR("Erroring doing fixup on auth");
             return -1;
