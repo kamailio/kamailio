@@ -106,8 +106,8 @@ static int fixup_uar(void** param, int param_no);
 static int fixup_lir(void** param, int param_no);
 
 static cmd_export_t cmds[] = {
-    {"I_perform_user_authorization_request", (cmd_function) I_perform_user_authorization_request, 1, fixup_uar, 0, REQUEST_ROUTE},
-    {"I_perform_location_information_request", (cmd_function) I_perform_location_information_request, 1, fixup_lir, 0, REQUEST_ROUTE},
+    {"I_perform_user_authorization_request", (cmd_function) I_perform_user_authorization_request, 2, fixup_uar, 0, REQUEST_ROUTE},
+    {"I_perform_location_information_request", (cmd_function) I_perform_location_information_request, 2, fixup_lir, 0, REQUEST_ROUTE},
     {"I_scscf_select", (cmd_function) I_scscf_select, 1, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"I_scscf_drop", (cmd_function) I_scscf_drop, 0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
     { 0, 0, 0, 0, 0, 0}
@@ -274,38 +274,35 @@ static int mod_init(void) {
 
 static int fixup_uar(void** param, int param_no)
 {
-	uar_param_t *ap;
-	if(param_no!=1)
-		return 0;
-	ap = (uar_param_t*)pkg_malloc(sizeof(uar_param_t));
-	if(ap==NULL)
-	{
-		LM_ERR("no more pkg\n");
-		return -1;
-	}
-	memset(ap, 0, sizeof(uar_param_t));
-	ap->paction = get_action_from_param(param, param_no);
-	if(fixup_igp_null(param, param_no)<0)
-		return -1;
-	ap->ivalue = (gparam_t*)(*param);
-	*param = (void*)ap;
-	return 0;
+    if (strlen((char*) *param) <= 0) {
+        LM_ERR("empty parameter %d not allowed\n", param_no);
+        return -1;
+    }
+
+    if (param_no == 1) {        //route name - static or dynamic string (config vars)
+        if (fixup_spve_null(param, param_no) < 0){
+            LM_ERR("fixup spve failed on %d\n", param_no);
+            return -1;
+        }
+        return 0;
+    }
+    return 0;
+    
 }
 
 static int fixup_lir(void** param, int param_no)
 {
-	lir_param_t *ap;
-	if(param_no!=1)
-		return 0;
-	ap = (lir_param_t*)pkg_malloc(sizeof(lir_param_t));
-	if(ap==NULL)
-	{
-		LM_ERR("no more pkg\n");
-		return -1;
-	}
-	memset(ap, 0, sizeof(lir_param_t));
-	ap->paction = get_action_from_param(param, param_no);
-	*param = (void*)ap;
-	return 0;
+	if (strlen((char*) *param) <= 0) {
+        LM_ERR("empty parameter %d not allowed\n", param_no);
+        return -1;
+        }
+
+        if (param_no == 1) {        //route name - static or dynamic string (config vars)
+            if (fixup_spve_null(param, param_no) < 0)
+                return -1;
+            return 0;
+        } 
+        return 0;
+    
 }
 

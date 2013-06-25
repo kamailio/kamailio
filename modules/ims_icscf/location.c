@@ -45,6 +45,7 @@
 
 #include "location.h"
 #include "../../action.h" /* run_actions */
+#include "../../mod_fix.h"
 #include "cxdx_lir.h"
 
 extern int route_lir_user_unknown_no; 
@@ -54,17 +55,33 @@ extern int route_lir_user_unknown_no;
  * @param msg - sip message
  * @returns 1 on success or 0 on failure
  */
-int I_perform_location_information_request(struct sip_msg* msg, char* str1, char* str2) {
+int I_perform_location_information_request(struct sip_msg* msg, char* route, char* str1, char* str2) {
     str public_identity = {0, 0};
     int orig = 0;
     
     tm_cell_t *t = 0;
     saved_lir_transaction_t* saved_t;
     
+    str route_name;
+    
      cfg_action_t* cfg_action;
 
-    lir_param_t* ap = (lir_param_t*) str1;
-    cfg_action = ap->paction->next;
+     if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
+        LM_ERR("no async route block for assign_server_unreg\n");
+        return -1;
+    }
+    
+    LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
+    int ri = route_get(&main_rt, route_name.s);
+    if (ri < 0) {
+        LM_ERR("unable to find route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+    cfg_action = main_rt.rlist[ri];
+    if (cfg_action == NULL) {
+        LM_ERR("empty action lists in route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
     
     LM_DBG("DBG:I_LIR: Starting ...\n");
     /* check if we received what we should */

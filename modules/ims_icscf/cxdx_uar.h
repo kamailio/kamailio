@@ -52,12 +52,6 @@ extern struct cdp_binds cdpb; /**< Structure with pointers to cdp funcs 		*/
 extern str cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */
 extern str cxdx_dest_realm;
 
-typedef struct uar_param {
-	int type;
-	gparam_t *ivalue;
-	cfg_action_t *paction;
-} uar_param_t;
-
 typedef struct saved_transaction {
 	unsigned int tindex;
 	unsigned int tlabel;

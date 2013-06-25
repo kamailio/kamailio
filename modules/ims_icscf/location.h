@@ -60,7 +60,7 @@ extern struct cdp_binds cdpb;//cdp binds functions
  * @param msg - sip message
  * @returns 1 on success or 0 on failure
  */
-int I_perform_location_information_request(struct sip_msg* msg, char* str1, char* str2);
+int I_perform_location_information_request(struct sip_msg* msg, char* route, char* str1, char* str2);
 
 
 #endif

@@ -57,11 +57,6 @@ extern str cxdx_dest_realm;
 struct sip_msg;
 
 
-typedef struct lir_param {
-	int type;
-	cfg_action_t *paction;
-} lir_param_t;
-
 typedef struct saved_lir_transaction {
 	unsigned int tindex;
 	unsigned int tlabel;

@@ -46,6 +46,7 @@
 
 #include "registration.h"
 #include "../../action.h" /* run_actions */
+#include "../../mod_fix.h"
 #include "cxdx_uar.h"
 
 extern int route_uar_user_unknown_no;
@@ -54,11 +55,9 @@ extern int route_uar_user_unknown_no;
  * Perform User Authorization Request.
  * creates and send the user authorization query
  * @param msg - the SIP message
- * @param str1 - the realm
- * @param str2 - if to do capabilities
  * @returns true if OK, false if not
  */
-int I_perform_user_authorization_request(struct sip_msg* msg, char* str1, char* str2) {
+int I_perform_user_authorization_request(struct sip_msg* msg, char* route, char* str1, char* str2) {
     str private_identity, public_identity, visited_network_id;
     int authorization_type = AVP_IMS_UAR_REGISTRATION;
     int expires = 3600;
@@ -72,13 +71,30 @@ int I_perform_user_authorization_request(struct sip_msg* msg, char* str1, char* 
     tm_cell_t *t = 0;
     int intvalue_param;
     cfg_action_t* cfg_action;
+    
+    str route_name;
 
-    uar_param_t* ap = (uar_param_t*) str1;
-    if (fixup_get_ivalue(msg, ap->ivalue, &intvalue_param) != 0) {
+    if (fixup_get_ivalue(msg, (gparam_t*) str1, &intvalue_param) != 0) {
         LM_ERR("no int value param passed\n");
         return CSCF_RETURN_ERROR;
     }
-    cfg_action = ap->paction->next;
+    if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
+        LM_ERR("no async route block for assign_server_unreg\n");
+        return -1;
+    }
+    
+    LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
+    int ri = route_get(&main_rt, route_name.s);
+    if (ri < 0) {
+        LM_ERR("unable to find route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+    cfg_action = main_rt.rlist[ri];
+    if (cfg_action == NULL) {
+        LM_ERR("empty action lists in route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+
 
     realm = cscf_get_realm_from_ruri(msg);
 
