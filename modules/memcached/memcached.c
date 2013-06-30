@@ -43,7 +43,9 @@ unsigned int mcd_expire = 0;
 /*! cache storage mode, set or add */
 unsigned int mcd_mode = 0;
 /*! server timeout in ms*/
-int mcd_timeout = 5000;
+unsigned int mcd_timeout = 5000;
+/*! Internal or system memory manager, default is system */
+unsigned int mcd_memory = 0;
 /*! memcached handle */
 struct memcached_st *memcached_h;
 /*! memcached server list */
@@ -76,9 +78,10 @@ static pv_export_t mod_pvs[] = {
  */
 static param_export_t params[] = {
 	{"servers", STR_PARAM, &mcd_srv_str },
-	{"expire",   INT_PARAM, &mcd_expire },
+	{"expire",  INT_PARAM, &mcd_expire },
 	{"timeout", INT_PARAM, &mcd_timeout },
 	{"mode",    INT_PARAM, &mcd_mode },
+	{"memory",  INT_PARAM, &mcd_memory },
 	{0, 0, 0}
 };
 
@@ -105,10 +108,12 @@ struct module_exports exports = {
 /*!
  * \brief Wrapper functions around our internal memory management
  * \param mem freed memory
+ * \note pkg_free does not allow NULL pointer as standard free, therefore we check it here
  * \see pkg_free
  */
 static inline void mcd_free(memcached_st *ptr, void *mem, void *context) {
-	pkg_free(mem);
+        if (mem)
+        	pkg_free(mem);
 }
 
 
@@ -201,17 +206,21 @@ static int mod_init(void) {
 	}
 	LM_DBG("allocated new server handle at %p", memcached_h);
 
-	LM_DBG("set memory manager callbacks");
-	rc = memcached_set_memory_allocators(memcached_h, (memcached_malloc_fn)mcd_malloc,
+	if (mcd_memory == 1) {
+		LM_INFO("Use internal kamailio memory manager for memcached client library");
+		rc = memcached_set_memory_allocators(memcached_h, (memcached_malloc_fn)mcd_malloc,
 					     (memcached_free_fn)mcd_free, (memcached_realloc_fn)mcd_realloc,
 					     (memcached_calloc_fn)mcd_calloc, NULL);
-	if (rc == MEMCACHED_SUCCESS) {
-		LM_DBG("memory manager callbacks set");
+		if (rc == MEMCACHED_SUCCESS) {
+			LM_DBG("memory manager callbacks set");
+		} else {
+			LM_ERR("memory manager callbacks not set, returned %s.\n", memcached_strerror(memcached_h, rc));
+			return -1;
+		}
 	} else {
-		LM_ERR("memory manager callbacks not set, returned %s.\n", memcached_strerror(memcached_h, rc));
-		return -1;
+		LM_INFO("Use system memory manager for memcached client library");
 	}
-	
+
         servers = memcached_server_list_append(servers, server, atoi(port), &rc);
 	
 	if (memcached_behavior_set(memcached_h, MEMCACHED_BEHAVIOR_CONNECT_TIMEOUT, mcd_timeout) != MEMCACHED_SUCCESS) {
@@ -241,20 +250,10 @@ static int mod_init(void) {
  * \brief Module shutdown function
  */
 static void mod_destroy(void) {
-	memcached_return rc;
-	
 	if (servers != NULL)
 		memcached_server_list_free(servers);
 	
-	/* unset custom memory manager to enable clean shutdown of in system memory allocated server structure */
-	LM_DBG("remove memory manager callbacks");
-	rc = memcached_set_memory_allocators(memcached_h, NULL, NULL, NULL, NULL, NULL);
-	if (rc == MEMCACHED_SUCCESS) {
-		LM_DBG("memory manager callbacks removed");
-	} else {
-		LM_ERR("memory manager callbacks not removed, returned %s but continue anyway.\n", memcached_strerror(memcached_h, rc));
-	}
-	
-	if (memcached_h != NULL)
-		memcached_free(memcached_h);
+	/* Crash on shutdown with internal memory manager, even if we disable the mm callbacks */
+	if (mcd_memory != 1 && memcached_h != NULL)
+		        memcached_free(memcached_h);
 }

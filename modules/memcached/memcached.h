@@ -35,7 +35,9 @@ extern unsigned int mcd_expire;
 /*! cache storage mode, set or add */
 extern unsigned int mcd_mode;
 /*! server timeout */
-extern int mcd_timeout;
+extern unsigned int mcd_timeout;
+/*! Internal or system memory manager */
+extern unsigned int mcd_memory;
 /*! memcached handle */
 extern struct memcached_st* memcached_h;
 /*! memcached server list */
