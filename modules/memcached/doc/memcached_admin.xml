@@ -241,6 +241,32 @@ modparam("memcached", "timeout", 10000)
 			</programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>memory</varname> (integer)</title>
+		<para>
+			The memory mode for the memcached client library. The library can
+			use the system memory manager or the internal memory manager from
+			&kamailio;. The system memory manager configuration is the default,
+			most implementations (like other projects) probably use this
+			approach as well. The internal memory configuration should be
+			faster and protects better against memory leaks that could bring
+			down your server, as the available memory pool is limited by the
+			&kamailio; configuration.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>0</quote> (use system memory manager).
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>memory</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("memcached", "memory", 1)
+...
+			</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 		<section>

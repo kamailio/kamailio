@@ -27,6 +27,7 @@ Henning Westerholt
               4.2. expire (integer)
               4.3. mode (integer)
               4.4. timeout (integer)
+              4.5. memory (integer)
 
         5.
 
@@ -42,6 +43,7 @@ Henning Westerholt
    1.6. Set expire parameter
    1.7. Set mode parameter
    1.8. Set timeout parameter
+   1.9. Set memory parameter
 
 Chapter 1. Admin Guide
 
@@ -64,6 +66,7 @@ Chapter 1. Admin Guide
         4.2. expire (integer)
         4.3. mode (integer)
         4.4. timeout (integer)
+        4.5. memory (integer)
 
    5.
 
@@ -176,6 +179,7 @@ xlog("stored value is $mct(test)"); # will return <null>
    4.2. expire (integer)
    4.3. mode (integer)
    4.4. timeout (integer)
+   4.5. memory (integer)
 
 4.1. servers (str)
 
@@ -236,6 +240,23 @@ modparam("memcached", "mode", 0)
    Example 1.8. Set timeout parameter
 ...
 modparam("memcached", "timeout", 10000)
+...
+
+4.5. memory (integer)
+
+   The memory mode for the memcached client library. The library can use
+   the system memory manager or the internal memory manager from Kamailio.
+   The system memory manager configuration is the default, most
+   implementations (like other projects) probably use this approach as
+   well. The internal memory configuration should be faster and protects
+   better against memory leaks that could bring down your server, as the
+   available memory pool is limited by the Kamailio configuration.
+
+   Default value is “0” (use system memory manager).
+
+   Example 1.9. Set memory parameter
+...
+modparam("memcached", "memory", 1)
 ...
 
    5.1. Exported pseudo-variables
