@@ -1,3 +1,4 @@
+
 Memcached Module
 
 Henning Westerholt
@@ -12,9 +13,8 @@ Henning Westerholt
         1. Overview
         2. Implementation notes
 
-              2.1. Error behaviour
-              2.2. Data safety
-              2.3. Size restrictions
+              2.1. Data safety
+              2.2. Size restrictions
 
         3. Dependencies
 
@@ -36,11 +36,12 @@ Henning Westerholt
 
    1.1. Storing and retrieving entries
    1.2. Using atomic operations
-   1.3. Modifying expire time for existing entries
-   1.4. Set servers parameter
-   1.5. Set expire parameter
-   1.6. Set mode parameter
-   1.7. Set timeout parameter
+   1.3. Set custom expire time when adding an entry
+   1.4. Modifying expire time for existing entries
+   1.5. Set servers parameter
+   1.6. Set expire parameter
+   1.7. Set mode parameter
+   1.8. Set timeout parameter
 
 Chapter 1. Admin Guide
 
@@ -49,9 +50,8 @@ Chapter 1. Admin Guide
    1. Overview
    2. Implementation notes
 
-        2.1. Error behaviour
-        2.2. Data safety
-        2.3. Size restrictions
+        2.1. Data safety
+        2.2. Size restrictions
 
    3. Dependencies
 
@@ -98,7 +98,15 @@ $mcdec(cnt) = 1; # decrement by 1
 xlog("counter is now $mct(cnt)");
 ...
 
-   Example 1.3. Modifying expire time for existing entries
+   Example 1.3. Set custom expire time when adding an entry
+...
+$mct(test=>10) = 1;
+xlog("stored value is $mct(test)");
+# sleep 10 seconds
+xlog("stored value is $mct(test)"); # will return <null>
+...
+
+   Example 1.4. Modifying expire time for existing entries
 ...
 $mct(test) = 1;
 xlog("stored value is $mct(test)");
@@ -116,26 +124,13 @@ xlog("stored value is $mct(test)"); # will return <null>
 
 2. Implementation notes
 
-   2.1. Error behaviour
-   2.2. Data safety
-   2.3. Size restrictions
+   2.1. Data safety
+   2.2. Size restrictions
 
    Important notes about made assumptions and adaptions that were
    necessary for the proper integration of this library into Kamailio.
 
-2.1. Error behaviour
-
-   The used memcache library has a rather conservative approach to error
-   handling. In the default configuration each error with severity above
-   “WARN” will lead to a immediately exit (or even an abort) of the
-   execution, causing also a shutdown of Kamailio. This is of course not
-   optimal from a availability point of view. Therefore in the internal
-   error handler this is overriden. This means that we err a bit on the
-   side of data integrity in order to get a sufficient availability. But
-   even with this changes some problems in the memcache server can lead to
-   problems in the library and subsequently also in the server.
-
-2.2. Data safety
+2.1. Data safety
 
    Don't store data in memcached that you don't also have somewhere else.
    This system was designed as fast cache, and not for persistent storage.
@@ -145,12 +140,13 @@ xlog("stored value is $mct(test)"); # will return <null>
    in it where it would be a problem when it disappear from one moment to
    the other.
 
-2.3. Size restrictions
+2.2. Size restrictions
 
    The maximum key length that is supported from memcached is 250
    characters. In order to support longer keys in the Kamailio
    configuration script they are hashed with MD5. This should normally be
-   safe against collisions, as the value space is sufficient large enough.
+   safe against collisions, as the value space is sufficiently large
+   enough.
 
    The maximum value size that is supported is 1MB. The reason for this is
    the internal memory manager used from memcached. But normally this
@@ -171,7 +167,7 @@ xlog("stored value is $mct(test)"); # will return <null>
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * the libmemcache library.
+     * the libmemcached library.
      * the memcached server implementation.
 
 4. Parameters
@@ -187,16 +183,15 @@ xlog("stored value is $mct(test)"); # will return <null>
 
    Default value is “localhost:11211”.
 
-   Example 1.4. Set servers parameter
+   Example 1.5. Set servers parameter
 ...
 modparam("memcached", "servers", "localhost:11211")
 ...
 
 4.2. expire (integer)
 
-   The default expire value of all entries in memcached in seconds. The
-   maximal value is 2592000 (about 30 days). You can also specify an
-   arbitrary unix time stamp in the future. A value of zero means that no
+   The default expire value of entries in memcached in seconds. The
+   maximal value is 2592000 (about 30 days). A value of zero means that no
    automatic expiration is done, memcached will then delete the least used
    items when the cache gets full.
 
@@ -206,12 +201,13 @@ modparam("memcached", "servers", "localhost:11211")
    Items can also be deleted before there expire time when the available
    space in memory is exhausted.
 
-   Its possible to override this default value later on by setting a
-   different timeout for this key with the mctex pseudo-variable.
+   It is possible to override this default value when adding a key with
+   the mct psuedo-variable, or later on by setting a different timeout for
+   an existing key with the mctex pseudo-variable.
 
    Default value is “10800”s (3h).
 
-   Example 1.5. Set expire parameter
+   Example 1.6. Set expire parameter
 ...
 modparam("memcached", "expire", 10800)
 ...
@@ -226,7 +222,7 @@ modparam("memcached", "expire", 10800)
 
    Default value is “0” (overwrite).
 
-   Example 1.6. Set mode parameter
+   Example 1.7. Set mode parameter
 ...
 modparam("memcached", "mode", 0)
 ...
@@ -237,7 +233,7 @@ modparam("memcached", "mode", 0)
 
    Default value is “5000” (5s).
 
-   Example 1.7. Set timeout parameter
+   Example 1.8. Set timeout parameter
 ...
 modparam("memcached", "timeout", 10000)
 ...
@@ -247,9 +243,10 @@ modparam("memcached", "timeout", 10000)
 5.1. Exported pseudo-variables
 
      * $mct(key)
+     * $mct(key=>expiry)
      * $mcinc(key)
      * $mcdec(key)
      * $mctex(key)
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/dokuwiki/.
+   http://www.kamailio.org/wiki/.

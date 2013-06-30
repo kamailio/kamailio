@@ -47,6 +47,17 @@ xlog("counter is now $mct(cnt)");
 ...
 			</programlisting>
 		</example>
+                <example>
+                <title>Set custom expire time when adding an entry</title>
+                        <programlisting format="linespecific">
+...
+$mct(test=>10) = 1;
+xlog("stored value is $mct(test)");
+# sleep 10 seconds
+xlog("stored value is $mct(test)"); # will return &lt;null&gt;
+...
+                        </programlisting>
+                </example>
 		<example>
 		<title>Modifying expire time for existing entries</title>
 			<programlisting format="linespecific">
@@ -75,18 +86,6 @@ xlog("stored value is $mct(test)"); # will return &lt;null&gt;
 			integration of this library into &kamailio;.
 		</para>
 	<section>
-		<title>Error behaviour</title>
-		<para>
-			The used memcache library has a rather conservative approach to error handling. In the
-			default configuration each error with severity above <quote>WARN</quote> will lead to a
-			immediately exit (or even an abort) of the execution, causing also a shutdown of &kamailio;.
-			This is of course not optimal from a availability point of view. Therefore in the internal error
-			handler this is overriden. This means that we err a bit on the side of data integrity in order to
-			get a sufficient availability. But even with this changes some problems in the memcache server
-			can lead to problems in the library and subsequently also in the server.
-		</para>
-	</section>
-	<section>
 		<title>Data safety</title>
 		<para>
 			Don't store data in memcached that you don't also have somewhere else. This system was
@@ -101,7 +100,7 @@ xlog("stored value is $mct(test)"); # will return &lt;null&gt;
 		<para>
 			The maximum key length that is supported from memcached is 250 characters. In order
 			to support longer keys in the &kamailio; configuration script they are hashed with MD5.
-			This should normally be safe against collisions, as the value space is sufficient large enough.
+			This should normally be safe against collisions, as the value space is sufficiently large enough.
 		</para>
 		<para>
 			The maximum value size that is supported is 1MB. The reason for this is the internal memory
@@ -133,7 +132,7 @@ xlog("stored value is $mct(test)"); # will return &lt;null&gt;
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>the <ulink url="http://freshmeat.net/projects/libmemcache/">libmemcache</ulink> library</emphasis>.
+				<emphasis>the <ulink url="http://libmemcached.org/">libmemcached</ulink> library</emphasis>.
 			</para>
 			</listitem>
 			<listitem>
@@ -171,9 +170,8 @@ modparam("memcached", "servers", "localhost:11211")
 	<section>
 		<title><varname>expire</varname> (integer)</title>
 		<para>
-			The default expire value of all entries in memcached in seconds. The maximal
-			value is 2592000 (about 30 days). You can also specify an arbitrary unix time
-			stamp in the future. A value of zero means that no automatic expiration is done,
+			The default expire value of entries in memcached in seconds. The maximal
+			value is 2592000 (about 30 days). A value of zero means that no automatic expiration is done,
 			memcached will then delete the least used items when the cache gets full.
 		</para>
 		<para>
@@ -183,8 +181,9 @@ modparam("memcached", "servers", "localhost:11211")
 			before there expire time when the available space in memory is exhausted.
 		</para>
 		<para>
-			Its possible to override this default value later on by setting a different
-			timeout for this key with the <emphasis>mctex</emphasis> pseudo-variable.
+			It is possible to override this default value when adding a key with the
+			<emphasis>mct</emphasis> psuedo-variable, or later on by setting a different
+			timeout for an existing key with the <emphasis>mctex</emphasis> pseudo-variable.
 		</para>
 		<para>
 		<emphasis>
@@ -250,6 +249,9 @@ modparam("memcached", "timeout", 10000)
 			<listitem><para>
 				<emphasis>$mct(key)</emphasis>
 			</para></listitem>
+                        <listitem><para>
+                                <emphasis>$mct(key=>expiry)</emphasis>
+                        </para></listitem>
 			<listitem><para>
 				<emphasis>$mcinc(key)</emphasis>
 			</para></listitem>
