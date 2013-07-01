@@ -1249,21 +1249,28 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	}
 
 	if ( (event==DLG_EVENT_REQ || event==DLG_EVENT_REQACK)
-	&& new_state==DLG_STATE_CONFIRMED) {
+	&& (new_state==DLG_STATE_CONFIRMED || new_state==DLG_STATE_EARLY)) {
 
 		timeout = get_dlg_timeout(req);
 		if (timeout!=default_timeout) {
 			dlg->lifetime = timeout;
 		}
-		if (update_dlg_timer( &dlg->tl, dlg->lifetime )==-1) {
-			LM_ERR("failed to update dialog lifetime\n");
+		if (new_state!=DLG_STATE_EARLY) {
+			if (update_dlg_timer( &dlg->tl, dlg->lifetime )==-1) {
+				LM_ERR("failed to update dialog lifetime\n");
+			} else {
+				dlg->dflags |= DLG_FLAG_CHANGED;
+			}
 		}
-		if (update_cseqs(dlg, req, dir)!=0) {
-			LM_ERR("cseqs update failed\n");
-		} else {
-			dlg->dflags |= DLG_FLAG_CHANGED;
-			if ( dlg_db_mode==DB_MODE_REALTIME )
-				update_dialog_dbinfo(dlg);
+		if(event != DLG_EVENT_REQACK) {
+			if(update_cseqs(dlg, req, dir)!=0) {
+				LM_ERR("cseqs update failed\n");
+			} else {
+				dlg->dflags |= DLG_FLAG_CHANGED;
+			}
+		}
+		if(dlg_db_mode==DB_MODE_REALTIME && (dlg->dflags&DLG_FLAG_CHANGED)) {
+			update_dialog_dbinfo(dlg);
 		}
 
 		if (old_state==DLG_STATE_CONFIRMED_NA) {
