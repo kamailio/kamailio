@@ -839,14 +839,44 @@ dlg_terminate("all", "Insufficient QoS");
         </section>
 
         <section>
-            <title>
-                <function moreinfo="none">dlg_get(callid, ftag, ttag)</function>
-            </title>
-            <para>
-                    This function is currently not supported by the dialog_ng module.
-                    To be incorporated in the future.
-            </para>
-        </section>
+		<title>
+		<function moreinfo="none">dlg_get(callid, ftag, ttag)</function>
+		</title>
+		<para>
+			Search and set current dialog based on Call-ID, From-Tag and To-Tag
+			parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>callid</emphasis> - SIP call-id.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ftag</emphasis> - SIP From tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ttag</emphasis> - SIP To tag.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_get</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(dlg_get("abcdef", "123", "456"))
+{
+	dlg_bye("all");
+}
+...
+</programlisting>
+		</example>
+	</section>
 	
         <section>
             <title>
