@@ -220,7 +220,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		cseq = (get_cseq(msg))->number;
 	} else {
 		/* use the same as in request */
-		cseq = dlg->cseq[DLG_CALLER_LEG];
+		cseq = dlg->cseq[DLG_CALLEE_LEG];
 	}
 
 	/* extract the contact address */
