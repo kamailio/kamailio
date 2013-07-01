@@ -423,9 +423,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						case PROTO_UDP:
 #ifdef USE_TCP
 						case PROTO_TCP:
+						case PROTO_WS:
 #endif
 #ifdef USE_TLS
 						case PROTO_TLS:
+						case PROTO_WSS:
 #endif
 #ifdef USE_SCTP
 						case PROTO_SCTP:
