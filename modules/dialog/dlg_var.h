@@ -41,6 +41,7 @@ typedef struct _dlg_ctx {
 	dlg_iuid_t iuid;
 	int set;
 	unsigned int dir;
+	int t;
 } dlg_ctx_t;
 
 /* A dialog-variable */

@@ -721,11 +721,14 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	if (dlg==NULL) {
 		if((req->flags&dlg_flag)!=dlg_flag)
 			return;
+		LM_DBG("dialog creation on config flag\n");
 		dlg_new_dialog(req, t, 1);
 		dlg = dlg_get_ctx_dialog();
 	}
 	if (dlg!=NULL) {
+		LM_DBG("dialog added to tm callbacks\n");
 		dlg_set_tm_callbacks(t, req, dlg, spiral_detected);
+		_dlg_ctx.t = 1;
 		dlg_release(dlg);
 	}
 }
@@ -1515,8 +1518,13 @@ int dlg_manage(sip_msg_t *msg)
 		dlg = dlg_get_ctx_dialog();
 		if(dlg==NULL)
 			return -1;
-		if(t!=NULL)
+		if(t!=NULL) {
 			dlg_set_tm_callbacks(t, msg, dlg, spiral_detected);
+			_dlg_ctx.t = 1;
+			LM_DBG("dialog created on existing transaction\n");
+		} else {
+			LM_DBG("dialog created before transaction\n");
+		}
 		dlg_release(dlg);
 	}
 	return 1;

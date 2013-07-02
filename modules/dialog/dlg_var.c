@@ -22,6 +22,7 @@
  */
 		       
 #include "../../route.h"
+#include "../../script_cb.h"
 #include "../../pvapi.h"
 
 #include "dlg_var.h"
@@ -38,8 +39,19 @@ struct dlg_var * var_table = 0;
 /*! ID of the current message */
 int msg_id;
 
-int dlg_cfg_cb(struct sip_msg *foo, unsigned int flags, void *bar)
+int dlg_cfg_cb(sip_msg_t *msg, unsigned int flags, void *cbp)
 {
+	dlg_cell_t *dlg;
+	if(flags&POST_SCRIPT_CB) {
+		dlg = dlg_get_ctx_dialog();
+		if(dlg!=NULL) {
+			if(_dlg_ctx.t==0 && dlg->state==DLG_STATE_UNCONFIRMED) {
+				LM_DBG("new dialog with no trasaction after config execution\n");
+				dlg_release(dlg);
+			}
+			dlg_release(dlg);
+		}
+	}
 	memset(&_dlg_ctx, 0, sizeof(dlg_ctx_t));
 
 	return 1;
