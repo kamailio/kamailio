@@ -564,7 +564,7 @@ void tls_h_tcpconn_clean(struct tcp_connection *c)
 	/*
 	* runs within global tcp lock
 	*/
-	if (c->type != PROTO_TLS) {
+	if ((c->type != PROTO_TLS) && (c->type != PROTO_WSS)) {
 		BUG("Bad connection structure\n");
 		abort();
 	}
