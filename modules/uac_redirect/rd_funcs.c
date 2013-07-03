@@ -290,8 +290,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 				scontacts[i]->uri.s);
 		if(sruid_next(&_redirect_sruid)==0) {
 			if(append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i],
-						bflags, 0, &_redirect_sruid.uid, 0,
-						&_redirect_sruid.uid, &_redirect_sruid.uid)<0) {
+						bflags, 0, &_redirect_sruid.uid, 0)<0) {
 				LM_ERR("failed to add contact to dset\n");
 			} else {
 				added++;
