@@ -32,10 +32,13 @@
 #include "../../dprint.h"
 #include "../../qvalue.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../lib/srutils/sruid.h"
 #include "../../qvalue.h"
 #include "rd_filter.h"
 #include "rd_funcs.h"
 
+
+extern sruid_t _redirect_sruid;
 
 #define MAX_CONTACTS_PER_REPLY   16
 #define DEFAULT_Q_VALUE          10
@@ -115,7 +118,7 @@ error:
 
 
 /* returns the number of contacts put in the sorted array */
-static int sort_contacts(contact_t *ct_list, contact_t **ct_array,
+static int sort_contacts(hdr_field_t *chdr, contact_t **ct_array,
 														qvalue_t *q_array)
 {
 	param_t *q_para;
@@ -123,48 +126,54 @@ static int sort_contacts(contact_t *ct_list, contact_t **ct_array,
 	int n;
 	int i,j;
 	char backup;
+	contact_t *ct_list;
+	hdr_field_t *hdr;
 
 	n = 0; /* number of sorted contacts */
 
-	for( ; ct_list ; ct_list = ct_list->next ) {
-		/* check the filters first */
-		backup = ct_list->uri.s[ct_list->uri.len];
-		ct_list->uri.s[ct_list->uri.len] = 0;
-		if ( run_filters( ct_list->uri.s )==-1 ){
+	for(hdr=chdr; hdr; hdr=hdr->next) {
+		if(hdr->type != HDR_CONTACT_T) continue;
+		ct_list = ((contact_body_t*)hdr->parsed)->contacts;
+		for( ; ct_list ; ct_list = ct_list->next ) {
+			/* check the filters first */
+			backup = ct_list->uri.s[ct_list->uri.len];
+			ct_list->uri.s[ct_list->uri.len] = 0;
+			if ( run_filters( ct_list->uri.s )==-1 ){
+				ct_list->uri.s[ct_list->uri.len] = backup;
+				continue;
+			}
 			ct_list->uri.s[ct_list->uri.len] = backup;
-			continue;
-		}
-		ct_list->uri.s[ct_list->uri.len] = backup;
-		/* does the contact has a q val? */
-		q_para = ct_list->q;
-		if (q_para==0 || q_para->body.len==0) {
-			q = DEFAULT_Q_VALUE;
-		} else {
-			if (str2q( &q, q_para->body.s, q_para->body.len)!=0) {
-				LM_ERR("invalid q param\n");
-				/* skip this contact */
-				continue;
+			/* does the contact has a q val? */
+			q_para = ct_list->q;
+			if (q_para==0 || q_para->body.len==0) {
+				q = DEFAULT_Q_VALUE;
+			} else {
+				if (str2q( &q, q_para->body.s, q_para->body.len)!=0) {
+					LM_ERR("invalid q param\n");
+					/* skip this contact */
+					continue;
+				}
 			}
-		}
-		LM_DBG("sort_contacts: <%.*s> q=%d\n",
-				ct_list->uri.len,ct_list->uri.s,q);
-		/*insert the contact into the sorted array */
-		for(i=0;i<n;i++) {
-			/* keep in mind that the contact list is reversts */
-			if (q_array[i]<=q)
-				continue;
-			break;
-		}
-		if (i!=MAX_CONTACTS_PER_REPLY) {
-			/* insert the contact at this position */
-			for( j=n-1-1*(n==MAX_CONTACTS_PER_REPLY) ; j>=i ; j-- ) {
-				ct_array[j+1] = ct_array[j];
-				q_array[j+1] = q_array[j];
+			LM_DBG("sort_contacts: <%.*s> q=%d\n",
+					ct_list->uri.len,ct_list->uri.s,q);
+			/*insert the contact into the sorted array */
+			for(i=0;i<n;i++) {
+				/* keep in mind that the contact list is reversts */
+				if (q_array[i]<=q)
+					continue;
+				break;
 			}
-			ct_array[j+1] = ct_list;
-			q_array[j+1] = q;
-			if (n!=MAX_CONTACTS_PER_REPLY)
-				n++;
+			if (i!=MAX_CONTACTS_PER_REPLY) {
+				/* insert the contact at this position */
+				for( j=n-1-1*(n==MAX_CONTACTS_PER_REPLY) ; j>=i ; j-- ) {
+					ct_array[j+1] = ct_array[j];
+					q_array[j+1] = q_array[j];
+				}
+				ct_array[j+1] = ct_list;
+				q_array[j+1] = q;
+				if (n!=MAX_CONTACTS_PER_REPLY)
+					n++;
+			}
 		}
 	}
 	return n;
@@ -211,7 +220,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 			memcpy( &dup_rpl, sh_rpl, sizeof(struct sip_msg) );
 			dup = 2;
 			/* ok -> force the parsing of contact header */
-			if ( parse_headers( &dup_rpl, HDR_CONTACT_F, 0)<0 ) {
+			if ( parse_headers( &dup_rpl, HDR_EOH_F, 0)<0 ) {
 				LM_ERR("dup_rpl parse failed\n");
 				ret = -1;
 				goto restore;
@@ -224,7 +233,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		} else {
 			dup = 3;
 			/* force the parsing of contact header */
-			if ( parse_headers( sh_rpl, HDR_CONTACT_F, 0)<0 ) {
+			if ( parse_headers( sh_rpl, HDR_EOH_F, 0)<0 ) {
 				LM_ERR("sh_rpl parse failed\n");
 				ret = -1;
 				goto restore;
@@ -239,17 +248,22 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		contact_hdr = sh_rpl->contact;
 	}
 
-	/* parse the body of contact header */
-	if (contact_hdr->parsed==0) {
-		if ( parse_contact(contact_hdr)<0 ) {
-			LM_ERR("contact hdr parse failed\n");
-			ret = -1;
-			goto restore;
+	/* parse the body of contact headers */
+	hdr = contact_hdr;
+	while(hdr) {
+		if (hdr->type == HDR_CONTACT_T) {
+			if (hdr->parsed==0) {
+				if(parse_contact(hdr) < 0) {
+					LM_ERR("failed to parse Contact body\n");
+					ret = -1;
+					goto restore;
+				}
+				if (dup==0)
+					dup = 1;
+				}
 		}
-		if (dup==0)
-			dup = 1;
+		hdr = hdr->next;
 	}
-
 
 	/* we have the contact header and its body parsed -> sort the contacts
 	 * based on the q value */
@@ -258,7 +272,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		LM_DBG("contact hdr has no contacts\n");
 		goto restore;
 	}
-	n = sort_contacts( contacts, scontacts, sqvalues);
+	n = sort_contacts(contact_hdr, scontacts, sqvalues);
 	if (n==0) {
 		LM_DBG("no contacts left after filtering\n");
 		goto restore;
@@ -274,17 +288,22 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	for ( i=0 ; i<n ; i++ ) {
 		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len,
 				scontacts[i]->uri.s);
-		if (km_append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i],
-					bflags, 0)<0) {
-			LM_ERR("failed to add contact to dset\n");
-		} else {
-			added++;
-			if (rd_acc_fct!=0 && reason) {
-				/* log the redirect */
-				req->new_uri =  scontacts[i]->uri;
-				//FIXME
-				rd_acc_fct( req, (char*)reason, acc_db_table);
+		if(sruid_next(&_redirect_sruid)==0) {
+			if(append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i],
+						bflags, 0, &_redirect_sruid.uid, 0,
+						&_redirect_sruid.uid, &_redirect_sruid.uid)<0) {
+				LM_ERR("failed to add contact to dset\n");
+			} else {
+				added++;
+				if (rd_acc_fct!=0 && reason) {
+					/* log the redirect */
+					req->new_uri =  scontacts[i]->uri;
+					//FIXME
+					rd_acc_fct( req, (char*)reason, acc_db_table);
+				}
 			}
+		} else {
+			LM_ERR("failed to generate ruid for a new branch\n");
 		}
 	}
 
