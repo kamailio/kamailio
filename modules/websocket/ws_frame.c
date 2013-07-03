@@ -228,6 +228,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	if ((con = tcpconn_get(frame->wsc->id, 0, 0, 0, 0)) == NULL)
 	{
 		LM_WARN("TCP/TLS connection get failed\n");
+		pkg_free(send_buf);
 		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 			LM_ERR("removing WebSocket connection\n");
 		return -1;
@@ -239,6 +240,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 		{
 			LM_ERR("removing WebSocket connection\n");
+			pkg_free(send_buf);
 			return -1;
 		}
 	}
@@ -249,6 +251,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		{
 			STATS_TX_DROPS;
 			LM_WARN("TCP disabled\n");
+			pkg_free(send_buf);
 			return -1;
 		}		
 	}
@@ -259,6 +262,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		{
 			STATS_TX_DROPS;
 			LM_WARN("TLS disabled\n");
+			pkg_free(send_buf);
 			return -1;
 		}		
 	}
@@ -313,15 +317,15 @@ static int close_connection(ws_connection_t *wsc, ws_close_type_t type,
 	char *data;
 	ws_frame_t frame;
 
-	data = pkg_malloc(sizeof(char) * (reason.len + 2));
-	if (data == NULL)
-	{
-		LM_ERR("allocating pkg memory\n");
-		return -1;
-	}
-
 	if (wsc->state == WS_S_OPEN)
 	{
+		data = pkg_malloc(sizeof(char) * (reason.len + 2));
+		if (data == NULL)
+		{
+			LM_ERR("allocating pkg memory\n");
+			return -1;
+		}
+
 		data[0] = (status & 0xff00) >> 8;
 		data[1] = (status & 0x00ff) >> 0;
 		memcpy(&data[2], reason.s, reason.len);
