@@ -32,6 +32,7 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "../../lib/srutils/sruid.h"
 #include "../../modules/tm/tm_load.h"
 #include "rd_funcs.h"
 #include "rd_filter.h"
@@ -56,9 +57,12 @@ unsigned int bflags = 0;
 #define ACCEPT_RULE_STR "accept"
 #define DENY_RULE_STR   "deny"
 
+/* sruid to get internal uid */
+sruid_t _redirect_sruid;
 
 
 static int redirect_init(void);
+static int child_init(int rank);
 static int w_set_deny(struct sip_msg* msg, char *dir, char *foo);
 static int w_set_accept(struct sip_msg* msg, char *dir, char *foo);
 static int w_get_redirect1(struct sip_msg* msg, char *dir, char *foo);
@@ -103,7 +107,7 @@ struct module_exports exports = {
 	redirect_init, /* Module initialization function */
 	0,
 	0,
-	(child_init_function) 0 /* per-child init function */
+	child_init /* per-child init function */
 };
 
 
@@ -295,11 +299,20 @@ static int redirect_init(void)
 	}
 	add_default_filter( DENY_FILTER, filter);
 
+	if(sruid_init(&_redirect_sruid, '-', "rdir", SRUID_INC)<0)
+		return -1;
+
 	return 0;
 error:
 	return -1;
 }
 
+static int child_init(int rank)
+{
+	if(sruid_init(&_redirect_sruid, '-', "rdir", SRUID_INC)<0)
+		return -1;
+	return 0;
+}
 
 static inline void msg_tracer(struct sip_msg* msg, int reset)
 {
