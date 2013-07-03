@@ -90,7 +90,7 @@ int wsconn_init(void)
 
 	wsconn_id_hash =
 		(ws_connection_t **) shm_malloc(TCP_ID_HASH_SIZE *
-						sizeof(ws_connection_t));
+						sizeof(ws_connection_t*));
 	if (wsconn_id_hash == NULL)
 	{
 		LM_ERR("allocating WebSocket hash-table\n");
@@ -364,7 +364,7 @@ static int add_node(struct mi_root *tree, ws_connection_t *wsc)
 
 		dst_proto = (con->rcv.proto == PROTO_WS) ? "ws" : "wss";
 		memset(dst_ip, 0, IP6_MAX_STR_SIZE + 1);
-		ip_addr2sbuf(&con->rcv.dst_ip, src_ip, IP6_MAX_STR_SIZE);
+		ip_addr2sbuf(&con->rcv.dst_ip, dst_ip, IP6_MAX_STR_SIZE);
 
 		pong = wsc->awaiting_pong ? "awaiting Pong, " : "";
 
