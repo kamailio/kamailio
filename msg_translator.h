@@ -87,6 +87,8 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg,
 char * build_res_buf_from_sip_res(struct sip_msg* msg,
 				unsigned int *returned_len);
 
+char * generate_res_buf_from_sip_res(struct sip_msg* msg,
+				unsigned int *returned_len, unsigned int mode);
 
 char * build_res_buf_from_sip_req(unsigned int code,
 				str *text,
