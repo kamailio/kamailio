@@ -79,7 +79,7 @@ extern select_row_t sel_declaration[];
 /* cfg functions */
 static cmd_export_t cmds[] = {
 	{"msg_apply_changes",    (cmd_function)msg_apply_changes_f,     0,
-		0, REQUEST_ROUTE },
+		0, REQUEST_ROUTE|ONREPLY_ROUTE },
 	{"change_reply_status",	 change_reply_status_f,	                2,
 		change_reply_status_fixup, ONREPLY_ROUTE },
 	{"remove_body",          (cmd_function)w_remove_body_f,         0,
@@ -152,7 +152,7 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 	str obuf;
 	sip_msg_t tmp;
 
-	if(get_route_type()!=REQUEST_ROUTE)
+	if(msg->first_line.type!=SIP_REPLY && get_route_type()!=REQUEST_ROUTE)
 	{
 		LM_ERR("invalid usage - not in request route\n");
 		return -1;
@@ -160,9 +160,14 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 
 	init_dest_info(&dst);
 	dst.proto = PROTO_UDP;
-	obuf.s = build_req_buf_from_sip_req(msg,
-			(unsigned int*)&obuf.len, &dst,
-			BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
+	if(msg->first_line.type == SIP_REPLY) {
+		obuf.s = generate_res_buf_from_sip_res(msg,
+				(unsigned int*)&obuf.len, BUILD_NO_VIA1_UPDATE);
+	} else {
+		obuf.s = build_req_buf_from_sip_req(msg,
+				(unsigned int*)&obuf.len, &dst,
+				BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
+	}
 	if(obuf.s == NULL)
 	{
 		LM_ERR("couldn't update msg buffer content\n");
@@ -216,9 +221,9 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 	pkg_free(obuf.s);
 
 	/* reparse the message */
-	LM_DBG("SIP Request content updated - reparsing\n");
+	LM_DBG("SIP message content updated - reparsing\n");
 	if (parse_msg(msg->buf, msg->len, msg)!=0){
-		LM_ERR("parse_msg failed\n");
+		LM_ERR("parsing new sip message failed\n");
 		return -1;
 	}
 
