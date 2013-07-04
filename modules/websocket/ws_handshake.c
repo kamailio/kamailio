@@ -154,7 +154,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 	if (con->type != PROTO_TCP && con->type != PROTO_TLS)
 	{
 		LM_ERR("unsupported transport: %d", con->type);
-		return 0;
+		goto end;
 	}
 
 	if (parse_headers(msg, HDR_EOH_F, 0) < 0)
@@ -162,7 +162,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 		LM_ERR("error parsing headers\n");
 		ws_send_reply(msg, 500, &str_status_internal_server_error,
 				NULL);
-		return 0;
+		goto end;
 	}
 
 	/* Process HTTP headers */
@@ -209,7 +209,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 				ws_send_reply(msg, 400,
 						&str_status_bad_request,
 						NULL);
-				return 0;
+				goto end;
 			}
 
 			LM_DBG("found %.*s: %.*s\n",
@@ -253,7 +253,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 				ws_send_reply(msg, 400,
 						&str_status_bad_request,
 						NULL);
-				return 0;
+				goto end;
 			}
 
 			str2sint(&hdr->body, &version);
@@ -271,7 +271,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 				ws_send_reply(msg, 426,
 						&str_status_upgrade_required,
 						&headers);
-				return 0;
+				goto end;
 			}
 
 			LM_DBG("found %.*s: %.*s\n",
@@ -291,7 +291,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 				ws_send_reply(msg, 400,
 						&str_status_bad_request,
 						NULL);
-				return 0;
+				goto end;
 			}
 
 			LM_DBG("found %.*s: %.*s\n",
@@ -337,7 +337,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 					str_hdr_sec_websocket_version.s,
 					WS_VERSION);
 		ws_send_reply(msg, 400, &str_status_bad_request, &headers);
-		return 0;
+		goto end;
 	}
 
 	/* Construct reply_key */
@@ -348,7 +348,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 		LM_ERR("allocating pkg memory\n");
 		ws_send_reply(msg, 500, &str_status_internal_server_error,
 				NULL);
-		return 0;
+		goto end;
 	}
 	memcpy(reply_key.s, key.s, key.len);
 	memcpy(reply_key.s + key.len, str_ws_guid.s, str_ws_guid.len);
@@ -424,7 +424,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 		if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) != NULL)
 			wsconn_rm(wsc, WSCONN_EVENTROUTE_NO);
 
-		return 0;
+		goto end;
 	}
 	else
 	{
@@ -434,7 +434,12 @@ int ws_handle_handshake(struct sip_msg *msg)
 			update_stat(ws_msrp_successful_handshakes, 1);
 	}
 
+	tcpconn_put(con);
 	return 1;
+end:
+	if (con)
+		tcpconn_put(con);
+	return 0;
 }
 
 struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param)

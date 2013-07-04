@@ -356,6 +356,7 @@ void wsconn_close_now(ws_connection_t *wsc)
 		return;
 	}
 
+	tcpconn_put(con);
 	con->send_flags.f |= SND_F_CON_CLOSE;
 	con->state = S_CONN_BAD;
 	con->timeout = get_ticks_raw();
@@ -422,8 +423,12 @@ static int add_node(struct mi_root *tree, ws_connection_t *wsc)
 					pong,
 					interval,
 					sub_protocol) == 0)
+		{
+			tcpconn_put(con);
 			return -1;
+		}
 
+		tcpconn_put(con);
 		return 1;
 	}
 	else
