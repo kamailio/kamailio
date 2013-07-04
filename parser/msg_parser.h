@@ -119,6 +119,7 @@ typedef enum request_method {
 #define FL_SDP_BODY     (1 << 12)  /*!< msg has SDP in body */
 #define FL_USE_UAC_FROM      (1<<13)  /* take FROM hdr from UAC instead of UAS*/
 #define FL_USE_UAC_TO        (1<<14)  /* take TO hdr from UAC instead of UAS */
+#define FL_TM_RPL_MATCHED    (1<<15)  /* tm matched reply already */
 
 /* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
