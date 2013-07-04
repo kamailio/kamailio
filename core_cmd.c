@@ -772,8 +772,12 @@ static void core_tcp_list(rpc_t* rpc, void* c)
 			/* tcp data */
 			if (con->rcv.proto == PROTO_TCP)
 				type = "TCP";
-			else if (con->rcv.proto == PROTO_TCP)
+			else if (con->rcv.proto == PROTO_TLS)
 				type = "TLS";
+			else if (con->rcv.proto == PROTO_WSS)
+				type = "WSS";
+			else if (con->rcv.proto == PROTO_WS)
+				type = "WS";
 			else
 				type = "UNKNOWN";
 
@@ -811,11 +815,12 @@ static void core_tcp_list(rpc_t* rpc, void* c)
 				default:
 					state = "UNKNOWN";
 			}
-			rpc->struct_add(handle, "dssdsdsd",
+			rpc->struct_add(handle, "dssddsdsd",
 					"id", con->id,
 					"type", type,
 					"state", state,
 					"timeout", timeout,
+					"ref_count", con->refcnt,
 					"src_ip", src_ip,
 					"src_port", con->rcv.src_port,
 					"dst_ip", dst_ip,
