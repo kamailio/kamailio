@@ -5,18 +5,18 @@
 <section id="textopsx.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>Functions</title>
 
-	<section id="textopsx.msg_apply_changes">
+	<section id="textopsx.f.msg_apply_changes">
 		<title>
 		<function moreinfo="none">msg_apply_changes()</function>
 		</title>
 		<para>
-		Use this function to apply changes performed on SIP request content. Be
+		Use this function to apply changes performed on SIP message content. Be
 		careful when using this function;  due to special handling of changes
 		to the SIP message buffer so far, using this function might change
 		the behaviour of your config.  Do test your config properly!
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>msg_apply_changes()</function> usage</title>
@@ -36,7 +36,7 @@ if(msg_apply_changes())
 		</example>
 	</section>
 
-    <section id="textopsx.change_reply_status">
+    <section id="textopsx.f.change_reply_status">
 	<title>
 	    <function>change_reply_status(code, reason)</function>
 	</title>
@@ -73,7 +73,7 @@ onreply_route {
 	</example>
     </section>
 
-	<section id="textopsx.remove_body">
+	<section id="textopsx.f.remove_body">
 		<title>
 		<function moreinfo="none">remove_body()</function>
 		</title>
@@ -93,7 +93,7 @@ remove_body();
 		</example>
 	</section>
 
-	<section id="textopsx.keep_hf">
+	<section id="textopsx.f.keep_hf">
 		<title>
 		<function moreinfo="none">keep_hf(regexp)</function>
 		</title>
@@ -117,7 +117,7 @@ keep_hf("User-Agent");
 		</example>
 	</section>
 
-	<section id="textopsx.fnmatch">
+	<section id="textopsx.f.fnmatch">
 		<title>
 		<function moreinfo="none">fnmatch(value, expr [, flags])</function>
 		</title>
@@ -146,7 +146,7 @@ if(fnmatch("$rU", "123*"))
 		</example>
 	</section>
 
-    <section id="append_hf_value">
+    <section id="textopsx.f.append_hf_value">
 	<title>
 	    <function>append_hf_value(hf, hvalue)</function>
 	</title>
@@ -178,7 +178,7 @@ append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if n
 	</example>
     </section>
 
-    <section id="insert_hf_value">
+    <section id="textopsx.f.insert_hf_value">
 	<title>
 	    <function>insert_hf_value(hf, hvalue)</function>
 	</title>
@@ -211,7 +211,7 @@ insert_hf_value("foo[1]", "gogo") # try add to the first header
 	</example>
     </section>
 
-    <section id="remove_hf_value">
+    <section id="textopsx.f.remove_hf_value">
 	<title>
 	    <function>remove_hf_value(hf_par)</function>
 	</title>
@@ -240,7 +240,7 @@ remove_hf_value("foo[*].bar") # for each foo delete bar parameters
 	</example>
     </section>
 
-    <section id="remove_hf_value2">
+    <section id="textopsx.f.remove_hf_value2">
 	<title>
 	    <function>remove_hf_value2(hf_par)</function>
 	</title>
@@ -270,7 +270,7 @@ remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
 	</example>
     </section>
 
-    <section id="assign_hf_value">
+    <section id="textopsx.f.assign_hf_value">
 	<title>
 	    <function>assign_hf_value(hf, hvalue)</function>
 	</title>
@@ -307,7 +307,7 @@ assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
 	</example>
     </section>
 
-    <section id="assign_hf_value2">
+    <section id="textopsx.f.assign_hf_value2">
 	<title>
 	    <function>assign_hf_value2(hf, hvalue)</function>
 	</title>
@@ -339,7 +339,7 @@ assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
 	</example>
     </section>
 
-    <section id="include_hf_value">
+    <section id="textopsx.f.include_hf_value">
 	<title>
 	    <function>include_hf_value(hf, hvalue)</function>
 	</title>
@@ -367,7 +367,7 @@ include_hf_value("Supported", "path");
 	</example>
     </section>
 
-    <section id="exclude_hf_value">
+    <section id="textopsx.f.exclude_hf_value">
 	<title>
 	    <function>exclude_hf_value(hf, hvalue)</function>
 	</title>
@@ -395,7 +395,7 @@ exclude_hf_value("Supported", "100rel");
 	</example>
     </section>
 
-    <section id="hf_value_exists">
+    <section id="textopsx.f.hf_value_exists">
 	<title>
 	    <function>hf_value_exists(hf, hvalue)</function>
 	</title>
@@ -432,7 +432,7 @@ if (@hf_value_exists.supported.path == "1") {
 
 	<section>
 	<title>Selects</title>
-    <section id="sel.hf_value">
+    <section id="textopsx.sel.hf_value">
 	<title>@hf_value</title>
 	<para>
 		Get value of required header-value or param. Note that functions called 'value2'
@@ -492,13 +492,13 @@ $prt = @hf_value2.authorization.integrity_protected;
 	    </programlisting>
 	</example>
     </section>
-    <section id="sel.hf_value2">
+    <section id="textopsx.sel.hf_value2">
 	<title>@hf_value2</title>
 	<para>
 		TBA.
 	</para>
     </section>
-    <section id="sel.hf_value_exists">
+    <section id="textopsx.sel.hf_value_exists">
 	<title>@hf_value_exists</title>
 	<para>
 		TBA.
