@@ -134,6 +134,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	union sockaddr_union local_addr;
 	struct tcp_connection *con = NULL;
 	struct ws_event_info wsev;
+	int ret;
 #endif
 	
 	outb.s = buf;
@@ -162,13 +163,13 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			con = tcpconn_get(dst->id, 0, 0, 0, 0);
 		else {
 			LM_CRIT("BUG: msg_send called with null_id & to\n");
-			return -1;
+			goto error;
 		}
 
 		if (con == NULL)
 		{
 			LM_WARN("TCP/TLS connection for WebSocket could not be found\n");
-			return -1;
+			goto error;
 		}
 
 		memset(&wsev, 0, sizeof(ws_event_info_t));
@@ -176,7 +177,9 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 		wsev.buf = outb.s;
 		wsev.len = outb.len;
 		wsev.id = con->id;
-		return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+		tcpconn_put(con);
+		return ret;
 	}
 #endif
 
