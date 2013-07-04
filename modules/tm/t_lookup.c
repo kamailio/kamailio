@@ -1001,33 +1001,38 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		REF_UNSAFE( T );
 		UNLOCK_HASH(hash_index);
 		DBG("DEBUG: t_reply_matching: reply matched (T=%p)!\n",T);
-		/* if this is a 200 for INVITE, we will wish to store to-tags to be
-		 * able to distinguish retransmissions later and not to call
- 		 * TMCB_RESPONSE_OUT uselessly; we do it only if callbacks are
-		 * enabled -- except callback customers, nobody cares about 
-		 * retransmissions of multiple 200/INV or ACK/200s
-		 */
-		if (unlikely( is_invite(p_cell) && p_msg->REPLY_STATUS>=200 
-			&& p_msg->REPLY_STATUS<300 
-			&& ((!is_local(p_cell) &&
-				has_tran_tmcbs(p_cell, 
-					TMCB_RESPONSE_OUT|TMCB_RESPONSE_READY
-					|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) )
-			|| (is_local(p_cell)&&has_tran_tmcbs(p_cell, TMCB_LOCAL_COMPLETED))
-		)) ) {
-			if (parse_headers(p_msg, HDR_TO_F, 0)==-1) {
-				LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
+		if(likely(!(p_msg->msg_flags&FL_TM_RPL_MATCHED))) {
+			/* if this is a 200 for INVITE, we will wish to store to-tags to be
+			 * able to distinguish retransmissions later and not to call
+			 * TMCB_RESPONSE_OUT uselessly; we do it only if callbacks are
+			 * enabled -- except callback customers, nobody cares about
+			 * retransmissions of multiple 200/INV or ACK/200s
+			 */
+			if (unlikely( is_invite(p_cell) && p_msg->REPLY_STATUS>=200
+				&& p_msg->REPLY_STATUS<300
+				&& ((!is_local(p_cell) &&
+					has_tran_tmcbs(p_cell,
+						TMCB_RESPONSE_OUT|TMCB_RESPONSE_READY
+						|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) )
+				|| (is_local(p_cell)&&has_tran_tmcbs(p_cell, TMCB_LOCAL_COMPLETED))
+			)) ) {
+				if (parse_headers(p_msg, HDR_TO_F, 0)==-1) {
+					LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
+				}
 			}
-		}
-		if (unlikely(has_tran_tmcbs(T, TMCB_RESPONSE_IN |
-										TMCB_LOCAL_RESPONSE_IN))){
-			if (!is_local(p_cell)) {
-				run_trans_callbacks( TMCB_RESPONSE_IN, T, T->uas.request,
-										p_msg, p_msg->REPLY_STATUS);
-			}else{
-				run_trans_callbacks( TMCB_LOCAL_RESPONSE_IN, T, T->uas.request,
-										p_msg, p_msg->REPLY_STATUS);
+			if (unlikely(has_tran_tmcbs(T, TMCB_RESPONSE_IN |
+											TMCB_LOCAL_RESPONSE_IN))){
+				if (!is_local(p_cell)) {
+					run_trans_callbacks( TMCB_RESPONSE_IN, T, T->uas.request,
+											p_msg, p_msg->REPLY_STATUS);
+				}else{
+					run_trans_callbacks( TMCB_LOCAL_RESPONSE_IN, T, T->uas.request,
+											p_msg, p_msg->REPLY_STATUS);
+				}
 			}
+			p_msg->msg_flags |= FL_TM_RPL_MATCHED;
+		} else {
+			DBG("reply in callbacks already done (T=%p)!\n", T);
 		}
 		return 1;
 	} /* for cycle */
