@@ -138,6 +138,7 @@ int dlg_db_mode_param = DB_MODE_NONE;
 str dlg_xavp_cfg = {0};
 int dlg_ka_timer = 0;
 int dlg_ka_interval = 0;
+int dlg_clean_timer = 90;
 
 /* db stuff */
 static str db_url = str_init(DEFAULT_DB_URL);
@@ -147,6 +148,7 @@ static int pv_get_dlg_count( struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 void dlg_ka_timer_exec(unsigned int ticks, void* param);
+void dlg_clean_timer_exec(unsigned int ticks, void* param);
 
 /* commands wrappers and fixups */
 static int fixup_profile(void** param, int param_no);
@@ -697,8 +699,13 @@ static int mod_init(void)
 	}
 
 	destroy_dlg_callbacks( DLGCB_LOADED );
+
+	/* timer process to send keep alive requests */
 	if(dlg_ka_timer>0 && dlg_ka_interval>0)
 		register_sync_timers(1);
+
+	/* timer process to clean old unconfirmed dialogs */
+	register_sync_timers(1);
 
 	return 0;
 }
@@ -708,11 +715,18 @@ static int child_init(int rank)
 {
 	dlg_db_mode = dlg_db_mode_param;
 
-	if(rank==PROC_MAIN && dlg_ka_timer>0 && dlg_ka_interval>0)
-	{
-		if(fork_sync_timer(PROC_TIMER, "Dialog KA Timer", 1 /*socks flag*/,
-				dlg_ka_timer_exec, NULL, dlg_ka_timer /*sec*/)<0) {
-			LM_ERR("failed to start ka timer routine as process\n");
+	if(rank==PROC_MAIN) {
+		if(dlg_ka_timer>0 && dlg_ka_interval>0) {
+			if(fork_sync_timer(PROC_TIMER, "Dialog KA Timer", 1 /*socks flag*/,
+					dlg_ka_timer_exec, NULL, dlg_ka_timer /*sec*/)<0) {
+				LM_ERR("failed to start ka timer routine as process\n");
+				return -1; /* error */
+			}
+		}
+
+		if(fork_sync_timer(PROC_TIMER, "Dialog Clean Timer", 1 /*socks flag*/,
+					dlg_clean_timer_exec, NULL, dlg_clean_timer /*sec*/)<0) {
+			LM_ERR("failed to start clean timer routine as process\n");
 			return -1; /* error */
 		}
 	}
@@ -1219,6 +1233,11 @@ static int w_dlg_set_timeout_by_profile2(struct sip_msg *msg,
 void dlg_ka_timer_exec(unsigned int ticks, void* param)
 {
 	dlg_ka_run(ticks);
+}
+
+void dlg_clean_timer_exec(unsigned int ticks, void* param)
+{
+	dlg_clean_run(ticks);
 }
 
 static int fixup_dlg_bye(void** param, int param_no)

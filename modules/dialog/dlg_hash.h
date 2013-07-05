@@ -114,6 +114,7 @@ typedef struct dlg_cell
 	unsigned int         h_entry;	/*!< index of hash table entry (the slot number) */
 	unsigned int         state;		/*!< dialog state */
 	unsigned int         lifetime;		/*!< dialog lifetime */
+	unsigned int         init_ts;		/*!< init (creation) time (absolute UNIX ts)*/
 	unsigned int         start_ts;		/*!< start time  (absolute UNIX ts)*/
 	unsigned int         dflags;		/*!< internal dialog memory flags */
 	unsigned int         iflags;		/*!< internal dialog persistent flags */
@@ -526,6 +527,8 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 int dlg_ka_add(dlg_cell_t *dlg);
 
 int dlg_ka_run(ticks_t ti);
+
+int dlg_clean_run(ticks_t ti);
 
 /*!
  * \brief Update dialog lifetime - for internal callers.
