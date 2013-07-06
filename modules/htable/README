@@ -51,6 +51,8 @@ Alex Balashov
               4.1. sht_print()
               4.2. sht_rm_name_re(htable=>regexp)
               4.3. sht_rm_value_re(htable=>regexp)
+              4.4. sht_lock(htable=>key)
+              4.5. sht_unlock(htable=>key)
 
         5. Exported pseudo-variables
         6. MI Commands
@@ -92,6 +94,8 @@ Alex Balashov
    1.15. sht_print usage
    1.16. sht_rm_name_re usage
    1.17. sht_rm_value_re usage
+   1.18. sht_lock usage
+   1.19. sht_unlock usage
 
 Chapter 1. Admin Guide
 
@@ -124,6 +128,8 @@ Chapter 1. Admin Guide
         4.1. sht_print()
         4.2. sht_rm_name_re(htable=>regexp)
         4.3. sht_rm_value_re(htable=>regexp)
+        4.4. sht_lock(htable=>key)
+        4.5. sht_unlock(htable=>key)
 
    5. Exported pseudo-variables
    6. MI Commands
@@ -450,6 +456,8 @@ modparam("htable", "db_expires", 1)
    4.1. sht_print()
    4.2. sht_rm_name_re(htable=>regexp)
    4.3. sht_rm_value_re(htable=>regexp)
+   4.4. sht_lock(htable=>key)
+   4.5. sht_unlock(htable=>key)
 
 4.1.  sht_print()
 
@@ -488,6 +496,30 @@ sht_rm_name_re("ha=>.*");
    Example 1.17. sht_rm_value_re usage
 ...
 sht_rm_value_re("ha=>.*");
+...
+
+4.4.  sht_lock(htable=>key)
+
+   Lock the slot in htable corespoding to the key item.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.18. sht_lock usage
+...
+sht_lock("ha=>test");
+...
+
+4.5.  sht_unlock(htable=>key)
+
+   Unlock the slot in htable corespoding to the key item.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19. sht_unlock usage
+...
+sht_lock("ha=>test");
+$sht(ha=>test) = $sht(ha=>test) + 10;
+sht_unlock("ha=>test");
 ...
 
 5. Exported pseudo-variables
