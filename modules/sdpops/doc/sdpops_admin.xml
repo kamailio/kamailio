@@ -253,6 +253,52 @@ sdp_remove_media("video");
 	</section>
 	<section>
 	    <title>
+		<function moreinfo="none">sdp_with_transport(type)</function>
+	    </title>
+	    <para>
+		Return true of the SDP has 'media=media port type ...' line. Useful to check
+		the transport of the RTP sessions, such as 'RTP/AVP', 'RTP/SAVP' or 'RTP/SAVPF'. The
+		parameter can be static string or variable holding the transport type.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_with_transport</function> usage</title>
+		<programlisting format="linespecific">
+...
+# check for RTP/SAVP stream
+if(sdp_with_transport("RTP/SAVP"))
+{
+    # the session has a SRTP/SAVP stream
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_remove_transport(type)</function>
+	    </title>
+	    <para>
+		Remove the streams that match on 'm=media port type ...' line. The
+		parameter can be static string or variable holding the transport type.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_remove_transport</function> usage</title>
+		<programlisting format="linespecific">
+...
+# remove stream with transport RTP/AVP
+sdp_remove_transport("RTP/AVP");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
 		<function moreinfo="none">sdp_with_codecs_by_id(list)</function>
 	    </title>
 	    <para>
