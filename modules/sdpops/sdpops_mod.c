@@ -47,9 +47,11 @@ static int w_sdp_remove_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
+static int w_sdp_with_transport(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar);
+static int w_sdp_remove_transport(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 static int w_sdp_get(sip_msg_t* msg, char *bar);
 static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar);
@@ -76,6 +78,10 @@ static cmd_export_t cmds[] = {
 	{"sdp_with_media",             (cmd_function)w_sdp_with_media,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_remove_media",             (cmd_function)w_sdp_remove_media,
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_with_transport",         (cmd_function)w_sdp_with_transport,
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_remove_transport",       (cmd_function)w_sdp_remove_transport,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_with_codecs_by_id",      (cmd_function)w_sdp_with_codecs_by_id,
 		1, fixup_spve_null,  0, ANY_ROUTE},
@@ -888,6 +894,174 @@ static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar)
 	return 1;
 }
 
+/** 
+ * @brief check 'media' matches the value of any 'm=media port value ...' lines
+ * @return -1 - error; 0 - not found; 1 - found
+ */
+static int sdp_with_transport(sip_msg_t *msg, str *transport)
+{
+	int sdp_session_num;
+	int sdp_stream_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to search for transport type: [%.*s]\n",
+			transport->len, transport->s);
+
+	sdp_session_num = 0;
+	for(;;)
+	{
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
+		for(;;)
+		{
+			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+			if(!sdp_stream) break;
+
+			LM_DBG("stream %d of %d - transport [%.*s]\n",
+				sdp_stream_num, sdp_session_num,
+				sdp_stream->transport.len, sdp_stream->transport.s);
+			if(transport->len==sdp_stream->transport.len
+					&& strncasecmp(sdp_stream->transport.s, transport->s,
+							transport->len)==0)
+				return 1;
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int w_sdp_with_transport(sip_msg_t* msg, char* transport, char *bar)
+{
+	str ltransport = {0, 0};
+
+	if(transport==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)transport, &ltransport)!=0)
+	{
+		LM_ERR("unable to get the transport value\n");
+		return -1;
+	}
+
+	if(sdp_with_transport(msg, &ltransport)<=0)
+		return -1;
+	return 1;
+}
+
+/**
+ * @brief remove streams matching the m=media port 'transport'
+ * @return -1 - error; 0 - not found; >=1 - found
+ */
+static int sdp_remove_transport(sip_msg_t *msg, str *transport)
+{
+	sdp_info_t *sdp = NULL;
+	int sdp_session_num;
+	int sdp_stream_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
+	sdp_stream_cell_t* nxt_stream;
+	int ret = 0;
+	char *dstart = NULL;
+	int dlen = 0;
+	struct lump *anchor;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to search for transport type: [%.*s]\n",
+			transport->len, transport->s);
+
+	sdp = (sdp_info_t*)msg->body;
+
+	sdp_session_num = 0;
+	for(;;)
+	{
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
+		for(;;)
+		{
+			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+			if(!sdp_stream) break;
+
+			LM_DBG("stream %d of %d - transport [%.*s]\n",
+				sdp_stream_num, sdp_session_num,
+				sdp_stream->transport.len, sdp_stream->transport.s);
+			if(transport->len==sdp_stream->transport.len
+					&& strncasecmp(sdp_stream->transport.s, transport->s,
+							transport->len)==0)
+			{
+				/* found - remove */
+				LM_DBG("removing transport stream: %.*s", transport->len, transport->s);
+				nxt_stream = get_sdp_stream(msg, sdp_session_num,
+								sdp_stream_num+1);
+				/* skip back 'm=' */
+				dstart = sdp_stream->media.s - 2;
+				if(!nxt_stream) {
+					/* delete to end of sdp */
+					dlen = (int)(sdp->text.s + sdp->text.len - dstart);
+				} else {
+					/* delete to start of next stream */
+					dlen = (int)(nxt_stream->media.s - 2 - dstart);
+				}
+				anchor = del_lump(msg, dstart - msg->buf, dlen, 0);
+				if (anchor == NULL) {
+					LM_ERR("failed to remove transport type [%.*s]\n",
+						 transport->len, transport->s);
+					return -1;
+				}
+
+				ret++;
+			}
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+
+	return ret;
+}
+
+
+/**
+ *
+ */
+static int w_sdp_remove_transport(sip_msg_t* msg, char* transport, char *bar)
+{
+	str ltransport = {0, 0};
+
+	if(transport==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)transport, &ltransport)!=0)
+	{
+		LM_ERR("unable to get the transport value\n");
+		return -1;
+	}
+
+	if(sdp_remove_transport(msg, &ltransport)<=0)
+		return -1;
+	return 1;
+}
 
 /**
  *
