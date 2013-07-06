@@ -36,10 +36,6 @@
 #include "ht_db.h"
 
 
-#define ht_compute_hash(_s)        core_case_hash(_s,0,0)
-#define ht_get_entry(_h,_size)    (_h)&((_size)-1)
-
-
 ht_t *_ht_root = NULL;
 
 typedef struct _keyvalue {
