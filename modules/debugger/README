@@ -40,6 +40,7 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. dbg_breakpoint(mode)
+              4.2. dbg_pv_dump([mask] [, level])
 
         5. Exported RPC Functions
 
@@ -64,6 +65,7 @@ Daniel-Constantin Mierla
    1.10. Set mod_level parameter
    1.11. Set log_assign parameter
    1.12. dbg_breakpoint usage
+   1.13. dbg_pv_dump usage
 
 Chapter 1. Admin Guide
 
@@ -92,6 +94,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. dbg_breakpoint(mode)
+        4.2. dbg_pv_dump([mask] [, level])
 
    5. Exported RPC Functions
 
@@ -294,6 +297,7 @@ modparam("debugger", "log_assign", 1)
 4. Functions
 
    4.1. dbg_breakpoint(mode)
+   4.2. dbg_pv_dump([mask] [, level])
 
 4.1. dbg_breakpoint(mode)
 
@@ -309,6 +313,51 @@ modparam("debugger", "log_assign", 1)
 if($si=="10.0.0.10")
         dbg_breakpoint("1");
 ...
+
+4.2. dbg_pv_dump([mask] [, level])
+
+   Prints the content of pv_cache on json format. Defaults are mask=31 and
+   level = "L_DBG"
+
+   mask - Controls the content to dump:
+     * 1 - dump null values
+     * 2 - dump avp vars
+     * 4 - dump script vars
+     * 8 - dump xavp vars
+     * 16 - dump DP_OTHER vars
+
+   level - The level that will be used in LOG function. It can be:
+     * L_ALERT - log level -5
+     * L_BUG - log level -4
+     * L_CRIT - log level -3
+     * L_ERR - log level -1
+     * L_WARN - log level 0
+     * L_NOTICE - log level 1
+     * L_INFO - log level 2
+     * L_DBG - log level 3
+
+   Example 1.13. dbg_pv_dump usage
+...
+$var(temp) = 1;
+$avp(s:more_avp) = 2;
+$avp(s:more_avp) = 3;
+$xavp(x=>more) = "bye";
+$xavp(x[0]=>more) = "hi";
+$xavp(x[0]=>other) = 1;
+$xavp(x[0]=>other) = 2;
+$xavp(x=>different) = "foo";
+$var(empty) = $null;
+
+dbg_pv_dump(30, "L_DBG");
+...
+
+   Output
+...
+ 4(30943) DEBUG: debugger [debugger_api.c:1613]: dbg_dump_json(): {"$sp":37597,"
+$var(rc)":0,"$var(temp)":1,"$avp(more_avp)":[3,2],"$si":"127.0.0.1","$rc":0,"$xa
+vp(x)":[{"different":["foo"]},{"other":[2,1],"more":["hi","bye"]}],"$T_branch_id
+x":0,"$var(empty)":0}
+ ...
 
 5. Exported RPC Functions
 
