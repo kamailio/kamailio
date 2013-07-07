@@ -329,7 +329,92 @@ if($si=="10.0.0.10")
 </programlisting>
 	    </example>
 	</section>
-	
+
+	<section>
+	    <title>
+		<function moreinfo="none">dbg_pv_dump([mask] [, level])</function>
+	    </title>
+	    <para>
+			Prints the content of pv_cache on json format.
+			Defaults are mask=31 and level = "L_DBG"
+	    </para>
+		<para>
+		</para>
+		<itemizedlist>
+			<para><emphasis>mask</emphasis> - Controls the content to dump:
+			</para>
+			<itemizedlist>
+			<listitem><para>
+			  1 - dump null values
+			</para></listitem>
+			<listitem><para>
+			  2 - dump avp vars
+			</para></listitem>
+			<listitem><para>
+			  4 - dump script vars
+			</para></listitem>
+			<listitem><para>
+			  8 - dump xavp vars
+			</para></listitem>
+			<listitem><para>
+			  16 - dump DP_OTHER vars
+			</para></listitem>
+			</itemizedlist>
+			<para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
+			</para>
+			<itemizedlist>
+			<listitem><para>
+				L_ALERT - log level -5
+			</para></listitem>
+			<listitem><para>
+				L_BUG - log level -4
+			</para></listitem>
+			<listitem><para>
+				L_CRIT - log level -3
+			</para></listitem>
+			<listitem><para>
+				L_ERR - log level -1
+			</para></listitem>
+			<listitem><para>
+				L_WARN - log level 0
+			</para></listitem>
+			<listitem><para>
+				L_NOTICE - log level 1
+			</para></listitem>
+			<listitem><para>
+				L_INFO - log level 2
+			</para></listitem>
+			<listitem><para>
+				L_DBG - log level 3
+				</para></listitem>
+			</itemizedlist>
+		</itemizedlist>
+		<example>
+		<title><function>dbg_pv_dump</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(temp) = 1;
+$avp(s:more_avp) = 2;
+$avp(s:more_avp) = 3;
+$xavp(x=>more) = "bye";
+$xavp(x[0]=>more) = "hi";
+$xavp(x[0]=>other) = 1;
+$xavp(x[0]=>other) = 2;
+$xavp(x=>different) = "foo";
+$var(empty) = $null;
+
+dbg_pv_dump(30, "L_DBG");
+...
+</programlisting>
+		<para>Output</para>
+		<programlisting format="linespecific">
+...
+ 4(30943) DEBUG: debugger [debugger_api.c:1613]: dbg_dump_json(): {"$sp":37597,"$var(rc)":0,"$var(temp)":1,"$avp(more_avp)":[3,2],"$si":"127.0.0.1","$rc":0,"$xavp(x)":[{"different":["foo"]},{"other":[2,1],"more":["hi","bye"]}],"$T_branch_idx":0,"$var(empty)":0}
+ ...
+</programlisting>
+	    </example>
+	</section>
+
     </section>
 	
 	<section>
