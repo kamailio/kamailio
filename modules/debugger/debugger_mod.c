@@ -47,6 +47,9 @@ static int w_dbg_breakpoint(struct sip_msg* msg, char* point, char* str2);
 static int fixup_dbg_breakpoint(void** param, int param_no);
 static int dbg_mod_level_param(modparam_t type, void *val);
 
+static int fixup_dbg_pv_dump(void** param, int param_no);
+static int w_dbg_dump(struct sip_msg* msg, char* mask, char* level);
+
 /* parameters */
 extern int _dbg_cfgtrace;
 extern int _dbg_breakpoint;
@@ -62,6 +65,12 @@ static int _dbg_log_assign = 0;
 static cmd_export_t cmds[]={
 	{"dbg_breakpoint", (cmd_function)w_dbg_breakpoint, 1,
 		fixup_dbg_breakpoint, 0, ANY_ROUTE},
+	{"dbg_pv_dump", (cmd_function)w_dbg_dump, 0,
+		fixup_dbg_pv_dump, 0, ANY_ROUTE},
+	{"dbg_pv_dump", (cmd_function)w_dbg_dump, 1,
+		fixup_dbg_pv_dump, 0, ANY_ROUTE},
+	{"dbg_pv_dump", (cmd_function)w_dbg_dump, 2,
+		fixup_dbg_pv_dump, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -172,6 +181,64 @@ static void mod_destroy(void)
  */
 static int w_dbg_breakpoint(struct sip_msg* msg, char* point, char* str2)
 {
+	return 1;
+}
+
+/**
+ * fixup for cfg dbg_pv_dump
+ */
+static int fixup_dbg_pv_dump(void** param, int param_no)
+{
+	unsigned int mask;
+	int level;
+	str s = STR_NULL;
+
+	switch(param_no)
+	{
+		case 2:
+			switch(((char*)(*param))[2])
+			{
+				case 'A': level = L_ALERT; break;
+				case 'B': level = L_BUG; break;
+				case 'C': level = L_CRIT2; break;
+				case 'E': level = L_ERR; break;
+				case 'W': level = L_WARN; break;
+				case 'N': level = L_NOTICE; break;
+				case 'I': level = L_INFO; break;
+				case 'D': level = L_DBG; break;
+				default:
+					LM_ERR("unknown log level\n");
+					return E_UNSPEC;
+			}
+			*param = (void*)(long)level;
+		break;
+		case 1:
+			s.s = *param;
+			s.len = strlen(s.s);
+			if(str2int(&s, &mask) == 0) {
+				*param = (void*)(long)mask;
+			}
+			else return E_UNSPEC;
+		break;
+	}
+
+    return 0;
+}
+
+/**
+ * dump pv_cache contents as json
+ */
+static int w_dbg_dump(struct sip_msg* msg, char* mask, char* level)
+{
+	unsigned int umask = DBG_DP_ALL;
+	int ilevel = L_DBG;
+	if(level!=NULL){
+		ilevel = (int)(long)level;
+	}
+	if(mask!=NULL){
+		umask = (unsigned int)(unsigned long)mask;
+	}
+	dbg_dump_json(msg, umask, ilevel);
 	return 1;
 }
 

@@ -39,5 +39,13 @@ void dbg_enable_mod_levels(void);
 
 int dbg_init_pvcache(void);
 void dbg_enable_log_assign(void);
+
+#define DBG_DP_NULL			1
+#define DBG_DP_AVP			2
+#define DBG_DP_SCRIPTVAR	4
+#define DBG_DP_XAVP			8
+#define DBG_DP_OTHER		16
+#define DBG_DP_ALL			31
+int dbg_dump_json(struct sip_msg* msg, unsigned int mask, int level);
 #endif
 
