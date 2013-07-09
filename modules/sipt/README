@@ -71,8 +71,7 @@ Chapter 1. Admin Guide
    Module for updating ISUP encapuslated in SIP (SIP-T/SIP-I)
 
    The sipt module can be used to update various ss7 headers contained
-   inside a message. If you want to call modify methods multiple times, be
-   sure to call msg_apply_changes from the textopsx package
+   inside a message.
 
 2. Dependencies
 

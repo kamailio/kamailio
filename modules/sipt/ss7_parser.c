@@ -81,10 +81,11 @@ static void isup_put_number(unsigned char *dest, char *src, int *len, int *oddev
 		*oddeven = 0;
 		*len = numlen/2;
 	}
+	
 
 	while (i < numlen) {
 		if (!(i % 2))
-			dest[i/2] |= char2digit(src[i]) & 0xf;
+			dest[i/2] = char2digit(src[i]) & 0xf;
 		else
 		{
 			dest[i/2] |= (char2digit(src[i]) << 4) & 0xf0;
@@ -267,23 +268,19 @@ int isup_get_called_party_nai(unsigned char *buf, int len)
 	return message->called_party_number[1]&0x7F;
 }
 
-int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, int len, unsigned char * obuf, int olen)
+int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, int nai, unsigned char *buf, int len)
 {
-	int offset = 0, offset2 = 0;
-	int res;
-	char optparams;
-	unsigned char *param_pointer = NULL;
+	int offset = 0;
+	int res, res2;
+	struct isup_iam_fixed * orig_message = (struct isup_iam_fixed*)buf;
+	unsigned char tmp_buf[255];
 
 
 	// not an iam? do nothing
-	if(buf[0] != ISUP_IAM)
+	if(orig_message->type != ISUP_IAM)
 	{
-		int l = len > olen ? olen : len;
-		memcpy((void*)obuf, (void *)(buf), l);
-		return l;
+		return 1;
 	}
-
-	memset(obuf, 0, olen);
 
 	// bounds checking
 	if(hops > 31)
@@ -294,11 +291,8 @@ int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, 
 
 
 	/* Copy the fixed parms */
-	memcpy((void*)obuf, (void *)(buf), 6);
 	len -= 6;
-	olen -= 6;
 	offset += 6;
-	offset2 += 6;
 
 	if (len < 1)
 		return -1;
@@ -306,41 +300,29 @@ int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, 
 	/* IAM has one Fixed variable param, Called party number, we need to modify this */
 
 	// pointer to fixed part (2)
-	obuf[offset2++]=buf[offset++];
-
+	offset++;
 
 	//pointer to optional part (to update later)
-	param_pointer = (obuf+offset2);
-	optparams = buf[offset];
-	offset2++;
 	offset++;
 	len--;
-	olen--;
 
 
-	// add the new mandatory fixed header
-	res = encode_called_party(dest, buf+offset+1, nai, obuf+offset2+1, olen-1);
-	obuf[offset2] = (char)res;
-
-	offset2 += res+1;
-	olen -= res+1;
+	// modify the mandatory fixed header
+	res2 = encode_called_party(dest, buf+offset+1, nai, tmp_buf+1, 255-1);
+	tmp_buf[0] = (char)res2;
+	res = buf[offset]+1;
 	
-	res = buf[offset];
-	offset += res+1;
-	len -= res+1;
+	replace_body_segment(mangle, offset,res,tmp_buf, res2+1);
 
-
+	offset += res;
+	len -= res;
 	
 	if (len < 1 )
 		return -1;
 
 
-	
-	// set the pointer to the optional part
-	param_pointer[0] = (char)((obuf+offset2) - param_pointer);
-
 	/* Optional paramter parsing code */
-	if (optparams) {
+	if (orig_message->optional_pointer) {
 
 		bool has_hops = 0;
 		
@@ -352,14 +334,14 @@ int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, 
 			switch(optparm->type)
 			{
 				case ISUP_PARM_HOP_COUNTER:
-					obuf[offset2++] = ISUP_PARM_HOP_COUNTER;
-					obuf[offset2++] = 1;
-					obuf[offset2++] = ((optparm->data[0]&0x1F)-1)&0x1F;
+					tmp_buf[0] = ISUP_PARM_HOP_COUNTER;
+					tmp_buf[1] = 1;
+					tmp_buf[2] = ((optparm->data[0]&0x1F)-1)&0x1F;
+					replace_body_segment(mangle, offset, res, tmp_buf, 3);
 					has_hops = 1;
 					break;
 				default:
-					memcpy((void*)(obuf+offset2), (void *)(buf + offset), res);
-					offset2 += res;
+					break;
 			}
 
 			len -= res;
@@ -367,45 +349,34 @@ int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, 
 		}
 
 		// add missing headers
-		if(!has_hops)
+		if(!has_hops && len >= 0)
 		{
-			obuf[offset2++] = ISUP_PARM_HOP_COUNTER;
-			obuf[offset2++] = 1;
-			obuf[offset2++] = hops & 0x1F;
+			tmp_buf[0] = ISUP_PARM_HOP_COUNTER;
+			tmp_buf[1] = 1;
+			tmp_buf[2] = hops & 0x1F;
 			has_hops = 1;
+			add_body_segment(mangle, offset,tmp_buf,3);
 		}
-
-		// nicely null terminate it
-		obuf[offset2++] = 0;
 	}
 
-	return offset2;
+	return offset;
 }
 
-int isup_update_calling(char * origin, int nai, int presentation, int screening, unsigned char * buf, int len, unsigned char * obuf, int olen)
+int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int presentation, int screening, unsigned char * buf, int len)
 {
-	int offset = 0, offset2 = 0;
+	int offset = 0;
 	int res;
-	struct isup_iam_fixed * message = (struct isup_iam_fixed*)obuf;
 	struct isup_iam_fixed * orig_message = (struct isup_iam_fixed*)buf;
 
 	// not an iam? do nothing
 	if(orig_message->type != ISUP_IAM)
 	{
-		int l = len > olen ? olen : len;
-		memcpy((void*)obuf, (void *)(buf), l);
-		return l;
+		return 1;
 	}
 
-	/* Message Type = 1 */
-	memset(obuf, 0, olen);
-
 	/* Copy the fixed parms */
-	memcpy((void*)obuf, (void *)(buf), offsetof(struct isup_iam_fixed, called_party_number));
 	len -= offsetof(struct isup_iam_fixed, called_party_number);
-	olen -= offsetof(struct isup_iam_fixed, called_party_number);
 	offset += offsetof(struct isup_iam_fixed, called_party_number);
-	offset2 += offsetof(struct isup_iam_fixed, called_party_number);
 
 	if (len < 1)
 		return -1;
@@ -416,21 +387,12 @@ int isup_update_calling(char * origin, int nai, int presentation, int screening,
 
 	// add the new mandatory fixed header
 	res = buf[offset];
-	memcpy((void*)(obuf+offset2), (void *)(buf+offset), res+1);
 	offset += res+1;
-	offset2 += res+1;
 	len -= res+1;
-	olen -= res+1;
-
-
 	
 	if (len < 1 )
 		return -1;
 
-
-	
-	// set the pointer to the optional part (there will be at least one optional header when we are done)
-	message->optional_pointer = (char)(offset2 - offsetof(struct isup_iam_fixed, optional_pointer));
 
 	/* Optional paramter parsing code */
 	if (orig_message->optional_pointer) {
@@ -440,44 +402,40 @@ int isup_update_calling(char * origin, int nai, int presentation, int screening,
 		while ((len > 0) && (buf[offset] != 0)) {
 			int res2 = 0;
 			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
+			unsigned char new_party[255];
 
 
 			res = optparm->len+2;
 			switch(optparm->type)
 			{
 				case ISUP_PARM_CALLING_PARTY_NUM:
-					obuf[offset2++] = ISUP_PARM_CALLING_PARTY_NUM;
-					res2 = encode_calling_party(origin, nai, presentation, screening, obuf+offset2+1, olen-1);
-					obuf[offset2] = (char)res2;
+					res2 = encode_calling_party(origin, nai, presentation, screening, &new_party[1], 255-1);
+					new_party[0] = (char)res2;
+					replace_body_segment(mangle, offset+1,(int)buf[offset+1],new_party, res2+1);
 
-					offset2 += res2+1;
-					olen -= res2+1;
 					has_calling = 1;
 					break;
 				default:
-					memcpy((void*)(obuf+offset2), (void *)(buf + offset), res);
-					offset2 += res;
+					break;
 			}
 
 			len -= res;
 			offset += res;
 		}
 
-		// add missing headers
-		if(!has_calling)
-		{
-			obuf[offset2++] = ISUP_PARM_CALLING_PARTY_NUM;
-			res = encode_calling_party(origin, nai, presentation, screening, obuf+offset2+1, olen-1);
-			obuf[offset2] = (char)res;
 
-			offset2 += res+1;
-			olen -= res+1;
-			has_calling = 1;
+		// add missing headers
+		if(!has_calling && len >= 0)
+		{
+			unsigned char new_party[255];
+			new_party[0] = ISUP_PARM_CALLING_PARTY_NUM;
+			res = encode_calling_party(origin, nai, presentation, screening, new_party+2, 255-2);
+			new_party[1] = (char)res;
+
+			add_body_segment(mangle, offset,new_party, res+2);
 		}
 
-		// nicely null terminate it
-		obuf[offset2++] = 0;
 	}
 
-	return offset2;
+	return offset;
 }

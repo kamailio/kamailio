@@ -19,8 +19,7 @@
 	<para>Module for updating ISUP encapuslated in SIP (SIP-T/SIP-I)</para>
 	<para>
 	The sipt module can be used to update various ss7 headers contained inside
-	a message.  If you want to call modify methods multiple times, be sure to call
-	msg_apply_changes from the textopsx package
+	a message. 
 	</para>
 	</section>
 	<section>

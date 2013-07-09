@@ -24,6 +24,8 @@
  * 
  */
 
+#include "sdp_mangle.h"
+
 #ifndef _SIPT_SS7_H_
 #define _SIPT_SS7_H_
 
@@ -179,8 +181,8 @@ int isup_get_calling_party_nai(unsigned char *buf, int len);
 int isup_get_called_party_nai(unsigned char *buf, int len);
 int isup_get_screening(unsigned char *buf, int len);
 int isup_get_presentation(unsigned char *buf, int len);
-int isup_update_destination(char * dest, int hops, int nai, unsigned char *buf, int len, unsigned char * obuf, int olen);
-int isup_update_calling(char * origin, int nai, int presentation, int screening, unsigned char * buf, int len, unsigned char * obuf, int olen);
+int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, int nai, unsigned char *buf, int len);
+int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int presentation, int screening, unsigned char * buf, int len);
 
 
 #endif
