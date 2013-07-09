@@ -127,61 +127,6 @@ struct module_exports exports = {
 	0            /* per-child init function */
 };
 
-/*! \brief returns the value of boundary parameter from the Contect-Type HF */
-static inline int get_boundary_param(struct sip_msg *msg, str *boundary)
-{
-        str     s;
-        char    *c;
-        param_t *p, *list;
-
-#define is_boundary(c) \
-        (((c)[0] == 'b' || (c)[0] == 'B') && \
-        ((c)[1] == 'o' || (c)[1] == 'O') && \
-        ((c)[2] == 'u' || (c)[2] == 'U') && \
-        ((c)[3] == 'n' || (c)[3] == 'N') && \
-        ((c)[4] == 'd' || (c)[4] == 'D') && \
-        ((c)[5] == 'a' || (c)[5] == 'A') && \
-        ((c)[6] == 'r' || (c)[6] == 'R') && \
-        ((c)[7] == 'y' || (c)[7] == 'Y'))
-
-#define boundary_param_len (sizeof("boundary")-1)
-
-        /* get the pointer to the beginning of the parameter list */
-        s.s = msg->content_type->body.s;
-        s.len = msg->content_type->body.len;
-        c = find_not_quoted(&s, ';');
-        if (!c)
-                return -1;
-        c++;
-        s.len = s.len - (c - s.s);
-        s.s = c;
-        trim_leading(&s);
-
-        if (s.len <= 0)
-                return -1;
-
-        /* parse the parameter list, and search for boundary */
-        if (parse_params(&s, CLASS_ANY, NULL, &list)<0)
-                return -1;
-
-        boundary->s = NULL;
-        for (p = list; p; p = p->next)
-                if ((p->name.len == boundary_param_len) &&
-                        is_boundary(p->name.s)
-                ) {
-                        boundary->s = p->body.s;
-                        boundary->len = p->body.len;
-                        break;
-                }
-        free_params(list);
-        if (!boundary->s || !boundary->len)
-                return -1;
-
-        DBG("boundary is \"%.*s\"\n",
-                boundary->len, boundary->s);
-        return 0;
-}
-
 static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
@@ -366,8 +311,6 @@ static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops
 		return -1;
 	}
 
-
-
 	return 1;
 }
 
@@ -425,9 +368,6 @@ static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char
 		LM_DBG("error updating IAM\n");
 		return -1;
 	}
-
-
-
 
 	return 1;
 }
