@@ -1151,42 +1151,40 @@ static int lua_sr_push_str_list_table(lua_State *L, struct str_list *list) {
 	return 1;
 }
 
+static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp);
+
 /**
- * creates and push a table to the lua stack with
- * the elements of the xavp
+ * creates and push a table for the key name in xavp
  */
-static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp) {
+static void lua_sr_push_xavp_name_table(lua_State *L, sr_xavp_t *xavp, str name) {
 	lua_Number i = 1;
-	sr_xavp_t *avp = NULL;
+	lua_Number elem = 1;
+	sr_xavp_t *avp = xavp;
 
-	if(xavp->val.type!=SR_XTYPE_XAVP){
-		LM_ERR("%s not xavp?\n", xavp->name.s);
-		return 0;
+	while(avp!=NULL&&!STR_EQ(avp->name,name))
+	{
+		avp = avp->next;
 	}
-	avp = xavp->val.v.xavp;
-
 	lua_newtable(L);
+
 	while(avp!=NULL){
+		lua_pushnumber(L, elem);
 		switch(avp->val.type) {
 			case SR_XTYPE_NULL:
 				lua_pushnil(L);
-				lua_setfield(L, -2, avp->name.s);
 			break;
 			case SR_XTYPE_INT:
 				i = avp->val.v.i;
 				lua_pushnumber(L, i);
-				lua_setfield(L, -2, avp->name.s);
 			break;
 			case SR_XTYPE_STR:
 				lua_pushlstring(L, avp->val.v.s.s, avp->val.v.s.len);
-				lua_setfield(L, -2, avp->name.s);
 			break;
 			case SR_XTYPE_TIME:
 			case SR_XTYPE_LONG:
 			case SR_XTYPE_LLONG:
 			case SR_XTYPE_DATA:
 				lua_pushnil(L);
-				lua_setfield(L, -2, avp->name.s);
 				LM_WARN("XAVP type:%d value not supported\n", avp->val.type);
 			break;
 			case SR_XTYPE_XAVP:
@@ -1194,11 +1192,48 @@ static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp) {
 					LM_ERR("xavp:%.*s subtable error. Nil value added\n", avp->name.len, avp->name.s);
 					lua_pushnil(L);
 				}
-				lua_setfield(L, -2, avp->name.s);
+			break;
+			default:
+				LM_ERR("xavp:%.*s unknown type: %d. Nil value added\n",
+					avp->name.len, avp->name.s, avp->val.type);
+				lua_pushnil(L);
 			break;
 		}
-		avp = avp->next;
+		lua_rawset(L, -3);
+		elem = elem + 1;
+		avp = xavp_get_next(avp);
 	}
+	lua_setfield(L, -2, name.s);
+}
+
+/**
+ * creates and push a table to the lua stack with
+ * the elements of the xavp
+ */
+static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp) {
+	sr_xavp_t *avp = NULL;
+	struct str_list *keys;
+	struct str_list *k;
+
+	if(xavp->val.type!=SR_XTYPE_XAVP){
+		LM_ERR("%s not xavp?\n", xavp->name.s);
+		return 0;
+	}
+	avp = xavp->val.v.xavp;
+	keys = xavp_get_list_key_names(xavp);
+
+	lua_newtable(L);
+	if(keys!=NULL)
+	{
+		do
+		{
+			lua_sr_push_xavp_name_table(L, avp, keys->s);
+			k = keys;
+			keys = keys->next;
+			pkg_free(k);
+		}while(keys!=NULL);
+	}
+
 	return 1;
 }
 
