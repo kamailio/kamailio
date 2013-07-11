@@ -45,6 +45,10 @@
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../../cfg/cfg.h"
+#include "../../stats.h"
+
+#include <dirent.h>
+#include <sys/stat.h>
 
 static tls_domains_cfg_t* cfg = NULL;
 static tls_domain_t* domain = NULL;
@@ -336,29 +340,106 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
  */
 tls_domains_cfg_t* tls_load_config(str* filename)
 {
-	cfg_parser_t* parser;
-	str empty;
+    cfg_parser_t* parser;
+    str empty;
+    struct stat file_status;
+    char tmp_name[13] = "configXXXXXX";
+    str filename_str;
+    DIR *dir;
+    struct dirent *ent;
+    int out_fd, in_fd, filename_is_directory;
+    char *file_path, ch;
 
-	parser = NULL;
-	if ((cfg = tls_new_cfg()) == NULL) goto error;
+    parser = NULL;
+    memset(&file_status, 0, sizeof(struct stat));
+    dir = (DIR *)NULL;
+    in_fd = out_fd = filename_is_directory = 0;
+    file_path = (char *)0;
 
-	empty.s = 0;
-	empty.len = 0;
-	if ((parser = cfg_parser_init(&empty, filename)) == NULL) {
-		ERR("tls: Error while initializing configuration file parser.\n");
-		goto error;
+    if ((cfg = tls_new_cfg()) == NULL) goto error;
+
+    if (stat(filename->s, &file_status) != 0) {
+	LOG(L_ERR, "cannot stat config file %s\n", filename->s);
+	goto error;
+    }
+    if (S_ISDIR(file_status.st_mode)) {
+	filename_is_directory = 1;
+	dir = opendir(filename->s);
+	if (dir == NULL) {
+	    LOG(L_ERR, "cannot open directory file %s\n", filename->s);
+	    goto error;
 	}
+	out_fd = mkstemp(&(tmp_name[0]));
+	if (out_fd == -1) {
+	    LOG(L_ERR, "cannot make tmp file %s\n", &(tmp_name[0]));
+	    goto error;
+	}
+	while ((ent = readdir(dir)) != NULL) {
+	    file_path = pkg_malloc(filename->len + 1 + 256);
+	    memcpy(file_path, filename->s, filename->len);
+	    file_path[filename->len] = '/';
+	    strcpy(file_path + filename->len + 1, ent->d_name);
+	    if (stat(file_path, &file_status) != 0) {
+		LOG(L_ERR, "cannot get status of config file %s\n",
+		    file_path);
+		goto error;
+	    }
+	    if (S_ISREG(file_status.st_mode)) {
+		in_fd = open(file_path, O_RDONLY);
+		if (in_fd == -1) {
+		    LOG(L_ERR, "cannot open config file %s\n",
+			file_path);
+		    goto error;
+		}
+		pkg_free(file_path);
+		while (read(in_fd, &ch, 1)) {
+		    write(out_fd, &ch, 1);
+		}
+		close(in_fd);
+		in_fd = 0;
+		ch = '\n';
+		write(out_fd, &ch, 1);
+	    }
+	}
+	closedir(dir);
+	close(out_fd);
+	dir = (DIR *)NULL;
+	out_fd = 0;
+    }
 
-	cfg_section_parser(parser, parse_domain, NULL);
+    empty.s = 0;
+    empty.len = 0;
+    if (filename_is_directory) {
+	filename_str.s = &(tmp_name[0]);
+	filename_str.len = strlen(&(tmp_name[0]));
+	if ((parser = cfg_parser_init(&empty, &filename_str)) == NULL) {
+	    ERR("tls: Error while initializing configuration file parser.\n");
+	    unlink(&(tmp_name[0]));
+	    goto error;
+	}
+	unlink(&(tmp_name[0]));
+    } else {
+	if ((parser = cfg_parser_init(&empty, filename)) == NULL) {
+	    ERR("tls: Error while initializing configuration file parser.\n");
+	    goto error;
+	}	
+    }
 
-	if (sr_cfg_parse(parser)) goto error;
-	cfg_parser_close(parser);
-	return cfg;
+    cfg_section_parser(parser, parse_domain, NULL);
+    if (sr_cfg_parse(parser)) goto error;
+    cfg_parser_close(parser);
+    return cfg;
 
  error:
-	if (parser) cfg_parser_close(parser);
-	if (cfg) tls_free_cfg(cfg);
-	return 0;
+    if (dir) closedir(dir);
+    if (out_fd > 0) {
+	close(out_fd);
+	unlink(&(tmp_name[0]));
+    }
+    if (file_path) pkg_free(file_path);
+    if (parser) cfg_parser_close(parser);
+    if (cfg) tls_free_cfg(cfg);
+    return 0;
 }
 
 
