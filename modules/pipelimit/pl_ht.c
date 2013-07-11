@@ -675,16 +675,14 @@ void rpc_pl_set_pipe(rpc_t *rpc, void *c)
 
 	it->algo = algo_id;
 	it->limit = limit;
+	pl_pipe_release(&pipeid);
 
 	if (check_feedback_setpoints(0)) {
-		pl_pipe_release(&pipeid);
 		LM_ERR("feedback limits don't match\n");
 		rpc->fault(c, 400, "Feedback limits don't match");
 		return;
 	} else {
 		*_pl_pid_setpoint = 0.01 * (double)_pl_cfg_setpoint;
 	}
-
-	pl_pipe_release(&pipeid);
 }
 
