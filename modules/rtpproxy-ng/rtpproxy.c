@@ -283,13 +283,15 @@ enum rtpp_operation {
 	OP_ANSWER,
 	OP_DELETE,
 	OP_START_RECORDING,
+	OP_QUERY,
 };
 
 static const char *command_strings[] = {
-	[1] = "offer",
-	[2] = "answer",
-	[3] = "delete",
-	[4] = "start recording",
+	[OP_OFFER]		= "offer",
+	[OP_ANSWER]		= "answer",
+	[OP_DELETE]		= "delete",
+	[OP_START_RECORDING]	= "start recording",
+	[OP_QUERY]		= "query",
 };
 
 static char *gencookie();
@@ -1364,6 +1366,23 @@ static int rtpp_function_call_simple(struct sip_msg *msg, enum rtpp_operation op
 	return 1;
 }
 
+static bencode_item_t *rtpp_function_call_ok(bencode_buffer_t *bencbuf, struct sip_msg *msg,
+		enum rtpp_operation op, const char *flags_str, str *body) {
+	bencode_item_t *ret;
+
+	ret = rtpp_function_call(bencbuf, msg, op, flags_str, body);
+	if (!ret)
+		return NULL;
+
+	if (bencode_dictionary_get_strcmp(ret, "result", "ok")) {
+		LM_ERR("proxy didn't return \"ok\" result\n");
+		bencode_buffer_free(bencbuf);
+		return NULL;
+	}
+
+	return ret;
+}
+
 
 
 static int
@@ -1865,14 +1884,9 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 	str body, newbody;
 	struct lump *anchor;
 
-	dict = rtpp_function_call(&bencbuf, msg, offer ? OP_OFFER : OP_ANSWER, str1, &body);
+	dict = rtpp_function_call_ok(&bencbuf, msg, offer ? OP_OFFER : OP_ANSWER, str1, &body);
 	if (!dict)
 		return -1;
-
-	if (bencode_dictionary_get_strcmp(dict, "result", "ok")) {
-		LM_ERR("proxy didn't return \"ok\" result\n");
-		goto error;
-	}
 
 	if (!bencode_dictionary_get_str_dup(dict, "sdp", &newbody)) {
 		LM_ERR("failed to extract sdp body from proxy reply\n");
@@ -1913,59 +1927,40 @@ static int
 pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 		  pv_value_t *res)
 {
-#if 0
-    str ret_val = {0, 0};
-    int nitems;
-    str callid = {0, 0};
-    str from_tag = {0, 0};
-    str to_tag = {0, 0};
-    struct rtpp_node *node;
-    struct iovec v[1 + 4 + 3 + 1] = {{NULL, 0}, {"Q", 1}, {" ", 1}, {NULL, 0},
-		{" ", 1}, {NULL, 0}, {";1 ", 3}, {";1", }, {NULL, 0}};
+	bencode_buffer_t bencbuf;
+	bencode_item_t *dict, *tot, *in, *out;
+	static char buf[256];
+	str ret;
 
-    if (get_callid(msg, &callid) == -1 || callid.len == 0) {
-        LM_ERR("can't get Call-Id field\n");
-		return pv_get_null(msg, param, res);
-    }
-    if (get_to_tag(msg, &to_tag) == -1) {
-        LM_ERR("can't get To tag\n");
-		return pv_get_null(msg, param, res);
-    }
-    if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
-        LM_ERR("can't get From tag\n");
-		return pv_get_null(msg, param, res);
-    }
-    if(msg->id != current_msg_id){
-        selected_rtpp_set = default_rtpp_set;
-    }
+	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL);
+	if (!dict)
+		return -1;
 
-    STR2IOVEC(callid, v[3]);
-    STR2IOVEC(from_tag, v[5]);
-    STR2IOVEC(to_tag, v[7]);
-    node = select_rtpp_node(callid, 1);
-    if (!node) {
-        LM_ERR("no available proxies\n");
-        return -1;
-    }
-    nitems = 8;
-    if (msg->first_line.type == SIP_REPLY) {
-        if (to_tag.len == 0)
-            return -1;
-        STR2IOVEC(to_tag, v[5]);
-        STR2IOVEC(from_tag, v[7]);
-    } else {
-        STR2IOVEC(from_tag, v[5]);
-        STR2IOVEC(to_tag, v[7]);
-        if (to_tag.len <= 0)
-            nitems = 6;
-    }
-    ret_val.s = send_rtpp_command(node, v, nitems);
-	if(ret_val.s==NULL)
-		return pv_get_null(msg, param, res);
-    ret_val.len = strlen(ret_val.s);
-    return pv_get_strval(msg, param, res, &ret_val);
-#else
-	return 1;
-#endif
+	tot = bencode_dictionary_get_expect(dict, "totals", BENCODE_DICTIONARY);
+	in = bencode_dictionary_get_expect(tot, "input", BENCODE_DICTIONARY);
+	in = bencode_dictionary_get_expect(in, "rtp", BENCODE_DICTIONARY);
+	out = bencode_dictionary_get_expect(tot, "output", BENCODE_DICTIONARY);
+	out = bencode_dictionary_get_expect(out, "rtp", BENCODE_DICTIONARY);
+
+	if (!in || !out)
+		goto error;
+
+	ret.s = buf;
+	ret.len = snprintf(buf, sizeof(buf),
+			"Input: %lli bytes, %lli packets, %lli errors; "
+			"Output: %lli bytes, %lli packets, %lli errors",
+			bencode_dictionary_get_integer(in, "bytes", -1),
+			bencode_dictionary_get_integer(in, "packets", -1),
+			bencode_dictionary_get_integer(in, "errors", -1),
+			bencode_dictionary_get_integer(out, "bytes", -1),
+			bencode_dictionary_get_integer(out, "packets", -1),
+			bencode_dictionary_get_integer(out, "errors", -1));
+
+	bencode_buffer_free(&bencbuf);
+	return pv_get_strval(msg, param, res, &ret);
+
+error:
+	bencode_buffer_free(&bencbuf);
+	return -1;
 }
 

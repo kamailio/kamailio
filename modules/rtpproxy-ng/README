@@ -74,10 +74,11 @@ Richard Fuchs
               5.4. rtpproxy_destroy([flags])
               5.5. unforce_rtp_proxy()
               5.6. rtpproxy_manage([flags [, ip_address]])
+              5.7. start_recording()
 
         6. Exported Pseudo Variables
 
-              6.1. $rtpstart
+              6.1. $rtpstat
 
         7. MI Commands
 
@@ -98,9 +99,10 @@ Richard Fuchs
    1.8. rtpproxy_answer usage
    1.9. rtpproxy_destroy usage
    1.10. rtpproxy_manage usage
-   1.11. $rtpstat-Usage
-   1.12. nh_enable_rtpp usage
-   1.13. nh_show_rtpp usage
+   1.11. start_recording usage
+   1.12. $rtpstat Usage
+   1.13. nh_enable_rtpp usage
+   1.14. nh_show_rtpp usage
 
 Chapter 1. Admin Guide
 
@@ -129,10 +131,11 @@ Chapter 1. Admin Guide
         5.4. rtpproxy_destroy([flags])
         5.5. unforce_rtp_proxy()
         5.6. rtpproxy_manage([flags [, ip_address]])
+        5.7. start_recording()
 
    6. Exported Pseudo Variables
 
-        6.1. $rtpstart
+        6.1. $rtpstat
 
    7. MI Commands
 
@@ -278,6 +281,7 @@ modparam("rtpproxy-ng", "extra_id_pv", "$avp(extra_id)")
    5.4. rtpproxy_destroy([flags])
    5.5. unforce_rtp_proxy()
    5.6. rtpproxy_manage([flags [, ip_address]])
+   5.7. start_recording()
 
 5.1.  set_rtp_proxy_set(setid)
 
@@ -538,18 +542,31 @@ rtpproxy_destroy();
 rtpproxy_manage();
 ...
 
+5.7.  start_recording()
+
+   This function will send a signal to the RTP Proxy to record the RTP
+   stream on the RTP Proxy. This function is not supported by
+   ngcp-mediaproxy-ng at the moment!
+
+   This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.11. start_recording usage
+...
+start_recording();
+...
+
 6. Exported Pseudo Variables
 
-   6.1. $rtpstart
+   6.1. $rtpstat
 
-6.1. $rtpstart
+6.1. $rtpstat
 
-   Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from
-   the RTP-Proxy are provided as a string and it does contain several
-   packet-counters. The statistics must be retrieved before the session is
+   Returns the RTP Statistics from the RTP Proxy. The RTP Statistics from
+   the RTP Proxy are provided as a string and it does contain several
+   packet counters. The statistics must be retrieved before the session is
    deleted (before unforce_rtpproxy()).
 
-   Example 1.11. $rtpstat-Usage
+   Example 1.12. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -572,7 +589,7 @@ rtpproxy_manage();
    NOTE: if a rtpproxy is defined multiple times (in the same or diferente
    sete), all of its instances will be enables/disabled.
 
-   Example 1.12.  nh_enable_rtpp usage
+   Example 1.13.  nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -584,7 +601,7 @@ $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.13.  nh_show_rtpp usage
+   Example 1.14.  nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp
 ...

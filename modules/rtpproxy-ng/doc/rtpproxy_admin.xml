@@ -710,14 +710,15 @@ rtpproxy_manage();
 	    These functions can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 	</para>
 	</section>
+-->
 	<section>
 		<title>
 		<function moreinfo="none">start_recording()</function>
 		</title>
 		<para>
-		This function will send a signal to the RTP-Proxy to record
-		the RTP stream on the RTP-Proxy.
-		<emphasis>This function is only supported by Sippy RTPproxy at the moment!</emphasis>
+		This function will send a signal to the RTP Proxy to record
+		the RTP stream on the RTP Proxy.
+		<emphasis>This function is not supported by ngcp-mediaproxy-ng at the moment!</emphasis>
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
@@ -731,6 +732,7 @@ start_recording();
 		</programlisting>
 		</example>
 	</section>
+<!--
 	<section id="rtpproxy_stop_stream2uas">
 	<title>
 	    <function>rtpproxy_stop_stream2uas(prompt_name, count)</function>
@@ -747,15 +749,15 @@ start_recording();
 	<section>
 		<title>Exported Pseudo Variables</title>
 		<section>
-			<title><function moreinfo="none">$rtpstart</function></title>
+			<title><function moreinfo="none">$rtpstat</function></title>
 			<para>
-			Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from the RTP-Proxy
-			are provided as a string and it does contain several packet-counters. The statistics
+			Returns the RTP Statistics from the RTP Proxy. The RTP Statistics from the RTP Proxy
+			are provided as a string and it does contain several packet counters. The statistics
 			must be retrieved before the session is deleted	(before <function>unforce_rtpproxy()</function>).
 			</para>
 
 		<example>
-		<title>$rtpstat-Usage</title>
+		<title>$rtpstat Usage</title>
 		<programlisting format="linespecific">
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
