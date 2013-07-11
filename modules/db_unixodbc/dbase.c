@@ -38,7 +38,7 @@
 #include "../../dprint.h"
 #include "../../lib/srdb1/db_query.h"
 #include "val.h"
-#include "connnection.h"
+#include "connection.h"
 #include "row.h"
 #include "res.h"
 #include "list.h"
