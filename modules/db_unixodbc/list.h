@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "con.h"
+#include "connection.h"
 
 
 typedef struct list

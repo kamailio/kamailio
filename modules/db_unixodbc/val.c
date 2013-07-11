@@ -34,7 +34,7 @@
 #include "../../lib/srdb1/db_ut.h"
 #include "db_unixodbc.h"
 #include "val.h"
-#include "con.h"
+#include "connection.h"
 
 /*
  * Used when converting the query to a result

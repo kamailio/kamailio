@@ -31,7 +31,7 @@
  *  2006-05-05  extract_error passes back last error state on return (sgupta)
  */
 
-#include "con.h"
+#include "connection.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"

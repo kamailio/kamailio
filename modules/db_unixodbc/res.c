@@ -34,7 +34,7 @@
 #include "../../dprint.h"
 #include "row.h"
 #include "../../lib/srdb1/db_res.h"
-#include "con.h"
+#include "connection.h"
 #include "res.h"
 #include "list.h"
 #include <stdlib.h>
