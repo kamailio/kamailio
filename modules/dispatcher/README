@@ -14,7 +14,7 @@ Edited by
 
 Carsten Bock
 
-   ng-voice.com
+   ng-voice GmbH
 
    Copyright © 2004 FhG FOKUS
 
@@ -52,17 +52,18 @@ Carsten Bock
               3.15. attrs_avp (str)
               3.16. hash_pvar (str)
               3.17. setid_pvname (str)
-              3.18. ds_ping_method (string)
-              3.19. ds_ping_from (string)
-              3.20. ds_ping_interval (int)
-              3.21. ds_probing_threshhold (int)
-              3.22. ds_ping_reply_codes (string)
-              3.23. ds_probing_mode (int)
-              3.24. ds_hash_size (int)
-              3.25. ds_hash_expire (int)
-              3.26. ds_hash_initexpire (int)
-              3.27. ds_hash_check_interval (int)
-              3.28. outbound_proxy (str)
+              3.18. attrs_pvname (str)
+              3.19. ds_ping_method (string)
+              3.20. ds_ping_from (string)
+              3.21. ds_ping_interval (int)
+              3.22. ds_probing_threshhold (int)
+              3.23. ds_ping_reply_codes (string)
+              3.24. ds_probing_mode (int)
+              3.25. ds_hash_size (int)
+              3.26. ds_hash_expire (int)
+              3.27. ds_hash_initexpire (int)
+              3.28. ds_hash_check_interval (int)
+              3.29. outbound_proxy (str)
 
         4. Functions
 
@@ -119,23 +120,24 @@ Carsten Bock
    1.16. Use $avp(i:273) for hashing:
    1.17. Use combination of PVs for hashing:
    1.18. Set the "setid_pvname" parameter
-   1.19. Set the "ds_ping_method" parameter
-   1.20. Set the "ds_ping_from" parameter
-   1.21. Set the "ds_ping_interval" parameter
-   1.22. Set the "ds_probing_threshhold" parameter
-   1.23. Set the "ds_ping_reply_codes" parameter
-   1.24. Set the "ds_probing_mode" parameter
-   1.25. Set the "ds_hash_size" parameter
-   1.26. Set the "ds_hash_expire" parameter
-   1.27. Set the "ds_hash_initexpire" parameter
-   1.28. Set the "ds_hash_check_interval" parameter
-   1.29. Set the "outbound_proxy" parameter
-   1.30. ds_select_dst usage
-   1.31. ds_mark_dst usage
+   1.19. Set the "attrs_pvname" parameter
+   1.20. Set the "ds_ping_method" parameter
+   1.21. Set the "ds_ping_from" parameter
+   1.22. Set the "ds_ping_interval" parameter
+   1.23. Set the "ds_probing_threshhold" parameter
+   1.24. Set the "ds_ping_reply_codes" parameter
+   1.25. Set the "ds_probing_mode" parameter
+   1.26. Set the "ds_hash_size" parameter
+   1.27. Set the "ds_hash_expire" parameter
+   1.28. Set the "ds_hash_initexpire" parameter
+   1.29. Set the "ds_hash_check_interval" parameter
+   1.30. Set the "outbound_proxy" parameter
+   1.31. ds_select_dst usage
    1.32. ds_mark_dst usage
-   1.33. ds_load_unset usage
-   1.34. dispatcher list file
-   1.35. Kamailio config script - sample dispatcher usage
+   1.33. ds_mark_dst usage
+   1.34. ds_load_unset usage
+   1.35. dispatcher list file
+   1.36. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -166,17 +168,18 @@ Chapter 1. Admin Guide
         3.15. attrs_avp (str)
         3.16. hash_pvar (str)
         3.17. setid_pvname (str)
-        3.18. ds_ping_method (string)
-        3.19. ds_ping_from (string)
-        3.20. ds_ping_interval (int)
-        3.21. ds_probing_threshhold (int)
-        3.22. ds_ping_reply_codes (string)
-        3.23. ds_probing_mode (int)
-        3.24. ds_hash_size (int)
-        3.25. ds_hash_expire (int)
-        3.26. ds_hash_initexpire (int)
-        3.27. ds_hash_check_interval (int)
-        3.28. outbound_proxy (str)
+        3.18. attrs_pvname (str)
+        3.19. ds_ping_method (string)
+        3.20. ds_ping_from (string)
+        3.21. ds_ping_interval (int)
+        3.22. ds_probing_threshhold (int)
+        3.23. ds_ping_reply_codes (string)
+        3.24. ds_probing_mode (int)
+        3.25. ds_hash_size (int)
+        3.26. ds_hash_expire (int)
+        3.27. ds_hash_initexpire (int)
+        3.28. ds_hash_check_interval (int)
+        3.29. outbound_proxy (str)
 
    4. Functions
 
@@ -264,17 +267,18 @@ Chapter 1. Admin Guide
    3.15. attrs_avp (str)
    3.16. hash_pvar (str)
    3.17. setid_pvname (str)
-   3.18. ds_ping_method (string)
-   3.19. ds_ping_from (string)
-   3.20. ds_ping_interval (int)
-   3.21. ds_probing_threshhold (int)
-   3.22. ds_ping_reply_codes (string)
-   3.23. ds_probing_mode (int)
-   3.24. ds_hash_size (int)
-   3.25. ds_hash_expire (int)
-   3.26. ds_hash_initexpire (int)
-   3.27. ds_hash_check_interval (int)
-   3.28. outbound_proxy (str)
+   3.18. attrs_pvname (str)
+   3.19. ds_ping_method (string)
+   3.20. ds_ping_from (string)
+   3.21. ds_ping_interval (int)
+   3.22. ds_probing_threshhold (int)
+   3.23. ds_ping_reply_codes (string)
+   3.24. ds_probing_mode (int)
+   3.25. ds_hash_size (int)
+   3.26. ds_hash_expire (int)
+   3.27. ds_hash_initexpire (int)
+   3.28. ds_hash_check_interval (int)
+   3.29. outbound_proxy (str)
 
 3.1. list_file (string)
 
@@ -521,7 +525,19 @@ Note
  modparam("dispatcher", "setid_pvname", "$var(setid)")
  ...
 
-3.18. ds_ping_method (string)
+3.18. attrs_pvname (str)
+
+   The name of the PV where to store the attributes of matching address
+   when calling ds_is_from_list().
+
+   Default value is "null" - don't set PV.
+
+   Example 1.19. Set the "attrs_pvname" parameter
+ ...
+ modparam("dispatcher", "attrs_pvname", "$var(attrs)")
+ ...
+
+3.19. ds_ping_method (string)
 
    With this method you can define, with which method you want to probe
    the gateways. Pinging gateways feature depends on ds_ping_interval
@@ -529,12 +545,12 @@ Note
 
    Default value is "OPTIONS".
 
-   Example 1.19. Set the "ds_ping_method" parameter
+   Example 1.20. Set the "ds_ping_method" parameter
  ...
  modparam("dispatcher", "ds_ping_method", "INFO")
  ...
 
-3.19. ds_ping_from (string)
+3.20. ds_ping_from (string)
 
    With this Method you can define the "From:"-Line for the request, sent
    to the failed gateways. This method is only available, if compiled with
@@ -542,12 +558,12 @@ Note
 
    Default value is "sip:dispatcher@localhost".
 
-   Example 1.20. Set the "ds_ping_from" parameter
+   Example 1.21. Set the "ds_ping_from" parameter
  ...
  modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
  ...
 
-3.20. ds_ping_interval (int)
+3.21. ds_ping_interval (int)
 
    With this parameter you can define the interval for sending a request
    to a gateway marked as inactive upon a failed request routing to it.
@@ -556,12 +572,12 @@ Note
 
    Default value is "0".
 
-   Example 1.21. Set the "ds_ping_interval" parameter
+   Example 1.22. Set the "ds_ping_interval" parameter
  ...
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
-3.21. ds_probing_threshhold (int)
+3.22. ds_probing_threshhold (int)
 
    If you want to set a gateway into inactive mode, there can be a
    specific number of failed requests until it will change from "active"
@@ -572,12 +588,12 @@ Note
 
    Default value is "1" (set inactive with first failure).
 
-   Example 1.22. Set the "ds_probing_threshhold" parameter
+   Example 1.23. Set the "ds_probing_threshhold" parameter
  ...
  modparam("dispatcher", "ds_probing_threshhold", 10)
  ...
 
-3.22. ds_ping_reply_codes (string)
+3.23. ds_ping_reply_codes (string)
 
    This parameter defines the valid response codes, which are accepted as
    a valid reply to the PING-Method. It is a list separated by colons,
@@ -589,13 +605,13 @@ Note
 
    Default value is "" (only 200 OK is accepted).
 
-   Example 1.23. Set the "ds_ping_reply_codes" parameter
+   Example 1.24. Set the "ds_ping_reply_codes" parameter
  ...
  modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=
 3")
  ...
 
-3.23. ds_probing_mode (int)
+3.24. ds_probing_mode (int)
 
    Controls what gateways are tested to see if they are reachable. If set
    to 0, only the gateways with state PROBING are tested; if set to 1, all
@@ -605,12 +621,12 @@ Note
 
    Default value is "0".
 
-   Example 1.24. Set the "ds_probing_mode" parameter
+   Example 1.25. Set the "ds_probing_mode" parameter
  ...
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
 
-3.24. ds_hash_size (int)
+3.25. ds_hash_size (int)
 
    The value to be used as power of two to set the number of slots to hash
    table storing data for call load dispatching (e.g., value 8 will create
@@ -619,24 +635,24 @@ Note
 
    Default value is "0".
 
-   Example 1.25. Set the "ds_hash_size" parameter
+   Example 1.26. Set the "ds_hash_size" parameter
  ...
  modparam("dispatcher", "ds_hash_size", 9)
  ...
 
-3.25. ds_hash_expire (int)
+3.26. ds_hash_expire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    BYE was received meanwhile.
 
    Default value is "7200".
 
-   Example 1.26. Set the "ds_hash_expire" parameter
+   Example 1.27. Set the "ds_hash_expire" parameter
  ...
  modparam("dispatcher", "ds_hash_expire", 3600)
  ...
 
-3.26. ds_hash_initexpire (int)
+3.27. ds_hash_initexpire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    200 for INVITE was received meanwhile and state updated with
@@ -644,30 +660,30 @@ Note
 
    Default value is "7200".
 
-   Example 1.27. Set the "ds_hash_initexpire" parameter
+   Example 1.28. Set the "ds_hash_initexpire" parameter
  ...
  modparam("dispatcher", "ds_hash_initexpire", 60)
  ...
 
-3.27. ds_hash_check_interval (int)
+3.28. ds_hash_check_interval (int)
 
    Time interval in seconds to scan internal hash table with call load
    dispatching data for expired items.
 
    Default value is "30".
 
-   Example 1.28. Set the "ds_hash_check_interval" parameter
+   Example 1.29. Set the "ds_hash_check_interval" parameter
  ...
  modparam("dispatcher", "ds_hash_check_interval", 60)
  ...
 
-3.28. outbound_proxy (str)
+3.29. outbound_proxy (str)
 
    SIP URI of outbound proxy to be used when sending pings.
 
    By default no outbound proxy is defined.
 
-   Example 1.29. Set the "outbound_proxy" parameter
+   Example 1.30. Set the "outbound_proxy" parameter
  ...
  modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
  ...
@@ -683,7 +699,7 @@ Note
    4.7. ds_load_update()
    4.8. ds_load_unset()
 
-4.1.  ds_select_dst(set, alg)
+4.1. ds_select_dst(set, alg)
 
    The method selects a destination from addresses set. It returns true if
    a new destination is set.
@@ -733,7 +749,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. ds_select_dst usage
+   Example 1.31. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -741,7 +757,7 @@ $var(a) = 4;
 ds_select_dst("1", "$var(a)");
 ...
 
-4.2.  ds_select_domain(set, alg)
+4.2. ds_select_domain(set, alg)
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
@@ -754,21 +770,21 @@ ds_select_dst("1", "$var(a)");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.3.  ds_next_dst()
+4.3. ds_next_dst()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.4.  ds_next_domain()
+4.4. ds_next_domain()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.5.  ds_mark_dst([state])
+4.5. ds_mark_dst([state])
 
    Mark the last used address from destination set as inactive ("i"/"I"),
    active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T"). Apart of
@@ -795,7 +811,7 @@ ds_select_dst("1", "$var(a)");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. ds_mark_dst usage
+   Example 1.32. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -805,7 +821,7 @@ failure_route[tryagain] {
 }
 ...
 
-4.6.  ds_is_from_list([groupid])
+4.6. ds_is_from_list([groupid])
 
    This function returns true, if the current request comes from a host in
    the given group of the dispatcher-list; otherwise false.
@@ -817,14 +833,14 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.32. ds_mark_dst usage
+   Example 1.33. ds_mark_dst usage
 ...
 if(ds_is_from_list("10")) {
     ...
 }
 ...
 
-4.7.  ds_load_update()
+4.7. ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -835,14 +851,14 @@ if(ds_is_from_list("10")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.8.  ds_load_unset()
+4.8. ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.33. ds_load_unset usage
+   Example 1.34. ds_load_unset usage
 ...
 route {
     ...
@@ -872,7 +888,7 @@ onreply_route {
    5.2. ds_list
    5.3. ds_reload
 
-5.1.  ds_set_state
+5.1. ds_set_state
 
    Sets the status for a destination address (can be use to mark the
    destination as active or inactive).
@@ -897,7 +913,7 @@ onreply_route {
                 _address_
                 _empty_line_
 
-5.2.  ds_list
+5.2. ds_list
 
    It lists the groups and included destinations.
 
@@ -909,7 +925,7 @@ onreply_route {
                 :ds_list:_reply_fifo_file_
                 _empty_line_
 
-5.3.  ds_reload
+5.3. ds_reload
 
    It reloads the groups and included destinations. For algorithm 10 (call
    load distribution), old internal list of active calls is destroyed
@@ -929,7 +945,7 @@ onreply_route {
    6.2. dispatcher.list
    6.3. dispatcher.reload
 
-6.1.  dispatcher.set_state
+6.1. dispatcher.set_state
 
    Sets the state for a destination address (can be use to mark the
    destination as active or inactive).
@@ -953,7 +969,7 @@ onreply_route {
 kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 ...
 
-6.2.  dispatcher.list
+6.2. dispatcher.list
 
    Lists the groups and included destinations.
 
@@ -964,7 +980,7 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
    Example:
                 kamcmd dispatcher.list
 
-6.3.  dispatcher.reload
+6.3. dispatcher.reload
 
    Reloads the groups and included destinations. The command is disabled
    for call load based dispatching (algorithm 10) since removal of
@@ -1014,7 +1030,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.34. dispatcher list file
+   Example 1.35. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1039,7 +1055,7 @@ r,opt)
 
    Next picture shows a sample usage of the dispatcher module.
 
-   Example 1.35. Kamailio config script - sample dispatcher usage
+   Example 1.36. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
@@ -1329,7 +1345,7 @@ failure_route[RTF_DISPATCH] {
    8.1. dispatcher:dst-down
    8.2. dispatcher:dst-up
 
-8.1.  dispatcher:dst-down
+8.1. dispatcher:dst-down
 
    When defined, the module calls event_route[dispatcher:ds-down] when a
    destination goes down (becomes probing). A typical use case is to
@@ -1340,7 +1356,7 @@ event_route[dispatcher:dst-down] {
 }
 ...
 
-8.2.  dispatcher:dst-up
+8.2. dispatcher:dst-up
 
    When defined, the module calls event_route[dispatcher:ds-up] when a
    destination that was previously down (probing) comes up. A typical use

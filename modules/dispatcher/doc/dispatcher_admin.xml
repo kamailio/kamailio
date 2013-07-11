@@ -473,8 +473,27 @@ modparam("dispatcher", "force_dst", 1)
  ...
  </programlisting>
  		</example>
- 	</section>
-
+	</section>
+	<section id="dispatcher.p.attrs_pvname">
+		<title><varname>attrs_pvname</varname> (str)</title>
+		<para>
+		The name of the PV where to store the attributes of matching address
+		when calling ds_is_from_list().
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>null</quote> - don't set PV.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>attrs_pvname</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "attrs_pvname", "$var(attrs)")
+ ...
+ </programlisting>
+		</example>
+	</section>
  	<section>
  		<title><varname>ds_ping_method</varname> (string)</title>
  		<para>
