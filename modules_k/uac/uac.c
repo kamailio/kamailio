@@ -289,7 +289,7 @@ static int mod_init(void)
 			if (!uac_rrb.append_fromtag) {
 				LM_ERR("'append_fromtag' RR param is not enabled"
 					" - required by AUTO restore mode!"
-					" Or you should set from_restore_mode param to 'none'\n");
+					" Or you should set restore_mode param to 'none'\n");
 				goto error;
 			}
 			/* get all requests doing loose route */
