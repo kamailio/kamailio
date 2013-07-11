@@ -87,6 +87,8 @@ extern pv_elem_t * hash_param_model;
 
 extern str ds_setid_pvname;
 extern pv_spec_t ds_setid_pv;
+extern str ds_attrs_pvname;
+extern pv_spec_t ds_attrs_pv;
 
 /* Structure containing pointers to TM-functions */
 extern struct tm_binds tmb;
