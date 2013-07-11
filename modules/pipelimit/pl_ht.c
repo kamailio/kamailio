@@ -566,15 +566,14 @@ struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param)
 	it->algo = algo_id;
 	it->limit = limit;
 
+	pl_pipe_release(&pipeid);
+
 	if (check_feedback_setpoints(0)) {
-		pl_pipe_release(&pipeid);
 		LM_ERR("feedback limits don't match\n");
 		goto error;
 	} else {
 		*_pl_pid_setpoint = 0.01 * (double)_pl_cfg_setpoint;
 	}
-
-	pl_pipe_release(&pipeid);
 
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 error:
