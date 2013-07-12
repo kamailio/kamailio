@@ -529,6 +529,51 @@ if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
 
     </section>
 
+    <section id="ipops.f.dns_nc_match_ip">
+      <title>
+        <function moreinfo="none">dns_nc_match_ip(hostname, ipaddr)</function>
+      </title>
+
+      <para>
+		  Returns TRUE if ipaddr is associated by DNS to hostname. FALSE otherwise. It
+		  does not use the internal DNS cache, but directly getaddrinfo(...).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddress.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_nc_match_ip</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (!dns_nc_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
   </section>
  
 </chapter>
