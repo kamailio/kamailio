@@ -218,10 +218,6 @@ static void mod_destroy(void)
 		shm_free(default_par2);
 		default_par2 = NULL;
 	}
-	if(attr_pvar){
-		shm_free(attr_pvar);
-		attr_pvar = NULL;
-	}
 	destroy_data();
 }
 

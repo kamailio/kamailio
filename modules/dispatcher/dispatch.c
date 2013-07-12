@@ -2244,6 +2244,18 @@ int ds_is_from_list(struct sip_msg *_m, int group)
 							return -2;
 						}
 					}
+					if(ds_attrs_pvname.s!=0 && list->dlist[j].attrs.body.len>0)
+					{
+						memset(&val, 0, sizeof(pv_value_t));
+						val.flags = PV_VAL_STR;
+						val.rs = list->dlist[j].attrs.body;
+						if(ds_attrs_pv.setf(_m, &ds_attrs_pv.pvp,
+									(int)EQ_T, &val)<0)
+						{
+							LM_ERR("setting attrs pv failed\n");
+							return -3;
+						}
+					}
 					return 1;
 				}
 			}

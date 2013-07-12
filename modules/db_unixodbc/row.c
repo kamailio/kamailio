@@ -35,7 +35,7 @@
 #include "../../lib/srdb1/db_val.h"
 #include "val.h"
 #include "row.h"
-#include "con.h"
+#include "connection.h"
 
 /*
  * Convert a row from result into db API representation

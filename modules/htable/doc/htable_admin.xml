@@ -570,6 +570,46 @@ sht_rm_value_re("ha=>.*");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_lock">
+		<title>
+		<function moreinfo="none">sht_lock(htable=>key)</function>
+		</title>
+		<para>
+			Lock the slot in htable corespoding to the key item.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_lock</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_lock("ha=>test");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_unlock">
+		<title>
+		<function moreinfo="none">sht_unlock(htable=>key)</function>
+		</title>
+		<para>
+			Unlock the slot in htable corespoding to the key item.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_unlock</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_lock("ha=>test");
+$sht(ha=>test) = $sht(ha=>test) + 10;
+sht_unlock("ha=>test");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 		<section>
 		<title>Exported pseudo-variables</title>

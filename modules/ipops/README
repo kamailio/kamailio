@@ -36,6 +36,8 @@ Iñaki Baz Castillo
               4.8. compare_pure_ips (ip1, ip2)
               4.9. is_ip_rfc1918 (ip)
               4.10. is_in_subnet (ip, subnet)
+              4.11. dns_sys_match_ip(hostname, ipaddr)
+              4.12. dns_int_match_ip(hostname, ipaddr)
 
    List of Examples
 
@@ -49,6 +51,8 @@ Iñaki Baz Castillo
    1.8. compare_pure_ips usage
    1.9. is_ip_rfc1918 usage
    1.10. is_in_subnet usage
+   1.11. dns_sys_match_ip usage
+   1.12. dns_int_match_ip usage
 
 Chapter 1. Admin Guide
 
@@ -73,6 +77,8 @@ Chapter 1. Admin Guide
         4.8. compare_pure_ips (ip1, ip2)
         4.9. is_ip_rfc1918 (ip)
         4.10. is_in_subnet (ip, subnet)
+        4.11. dns_sys_match_ip(hostname, ipaddr)
+        4.12. dns_int_match_ip(hostname, ipaddr)
 
 1. Overview
 
@@ -124,6 +130,8 @@ Chapter 1. Admin Guide
    4.8. compare_pure_ips (ip1, ip2)
    4.9. is_ip_rfc1918 (ip)
    4.10. is_in_subnet (ip, subnet)
+   4.11. dns_sys_match_ip(hostname, ipaddr)
+   4.12. dns_int_match_ip(hostname, ipaddr)
 
 4.1. is_ip (ip)
 
@@ -327,5 +335,52 @@ if (is_ip_rfc1918("10.0.123.123")) {
 ...
 if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
   xlog("L_INFO", "it's in the subnet\n");
+}
+...
+
+4.11. dns_sys_match_ip(hostname, ipaddr)
+
+   Returns TRUE if ipaddr is associated by DNS to hostname. FALSE
+   otherwise. It does not use the internal DNS resolver, but directly
+   getaddrinfo(...). All addresses returned for the hostname are checked.
+   Note that some hosts may return different lists of IP addresses for
+   each query, if the DNS server is configured in that way (e.g., for
+   providing load balancing through DNS).
+
+   Parameters:
+     * ipaddr - string or pseudo-variable containing the ip address.
+     * hostname - string or pseudo-variable containing the hostname. The
+       resulting IP addresses from DNS query are compared with ipaddr.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. dns_sys_match_ip usage
+...
+if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
+}
+...
+
+4.12. dns_int_match_ip(hostname, ipaddr)
+
+   Returns TRUE if ipaddr is associated by DNS to hostname. FALSE
+   otherwise. It uses internal DNS resolver. At this moment, the function
+   might not check all the IP addresses as returned by dns_sys_match_ip(),
+   because the internal resolver targets to discover the first address to
+   be used for relaying SIP traffic. Thus is better to use
+   dns_sys_match_ip() if the host you want to check has many IP addresses,
+   in different address famililies (IPv4/6).
+
+   Parameters:
+     * ipaddr - string or pseudo-variable containing the ip address.
+     * hostname - string or pseudo-variable containing the hostname. The
+       resulting IP addresses from DNS query are compared with ipaddr.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. dns_int_match_ip usage
+...
+if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
 }
 ...

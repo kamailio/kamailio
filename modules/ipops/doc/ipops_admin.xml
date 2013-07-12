@@ -529,6 +529,103 @@ if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
 
     </section>
 
+    <section id="ipops.f.dns_sys_match_ip">
+      <title>
+        <function moreinfo="none">dns_sys_match_ip(hostname, ipaddr)</function>
+      </title>
+
+      <para>
+		  Returns TRUE if ipaddr is associated by DNS to hostname. FALSE otherwise. It
+		  does not use the internal DNS resolver, but directly getaddrinfo(...). All
+		  addresses returned for the hostname are checked. Note that some hosts may
+		  return different lists of IP addresses for each query, if the DNS server
+		  is configured in that way (e.g., for providing load balancing through DNS).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddr.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_sys_match_ip</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.dns_int_match_ip">
+      <title>
+        <function moreinfo="none">dns_int_match_ip(hostname, ipaddr)</function>
+      </title>
+
+      <para>
+		  Returns TRUE if ipaddr is associated by DNS to hostname. FALSE otherwise. It
+		  uses internal DNS resolver. At this moment, the function might not check all
+		  the IP addresses as returned by dns_sys_match_ip(), because the internal
+		  resolver targets to discover the first address to be used for relaying
+		  SIP traffic. Thus is better to use dns_sys_match_ip() if the host you want
+		  to check has many IP addresses, in different address famililies (IPv4/6).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddr.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_int_match_ip</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
   </section>
  
 </chapter>

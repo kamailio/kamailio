@@ -915,16 +915,16 @@ modparam("tls", "renegotiation", 1)
 	<section id="tls.p.config">
 	<title><varname>config</varname> (string)</title>
 	<para>
-		Sets the name of the TLS specific config file.
+		Sets the name of the TLS specific config file or config directory.
 	</para>
 	<para>
-		If set the TLS module will load a special config file, in which
+		If set the TLS module will load a special config file or config files from config directory, in which
 		different TLS parameters can be specified on a per role (server or
 		client) and domain basis (for now only IPs). The corresponding module
 		parameters will be ignored.
 	</para>
 	<para>
-		If the file name starts with a '.' the path will be relative to the
+		If the file or directory name starts with a '.' the path will be relative to the
 		working directory (<emphasis>at runtime</emphasis>). If it starts
 		with a '/' it will be an absolute path and if it starts with anything
 		else the path will be relative to the main config file directory

@@ -104,6 +104,82 @@ char *tr_set_crt_buffer(void)
 		val->rs.s = _tr_buffer; \
 	} while(0);
 
+/* -- helper functions */
+
+/* Converts a hex character to its integer value */
+static char pv_from_hex(char ch)
+{
+	return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+}
+
+/* Converts an integer value to its hex character */
+static char pv_to_hex(char code)
+{
+	static char hex[] = "0123456789abcdef";
+	return hex[code & 15];
+}
+
+/*! \brief
+ *  URL Encodes a string for use in a HTTP query
+ */
+static int urlencode_param(str *sin, str *sout)
+{
+	char *at, *p;
+
+	at = sout->s;
+	p  = sin->s;
+
+	if (sin==NULL || sout==NULL || sin->s==NULL || sout->s==NULL ||
+			sin->len<0 || sout->len < 3*sin->len+1)
+		return -1;
+
+	while (p < sin->s+sin->len) {
+		if (isalnum(*p) || *p == '-' || *p == '_' || *p == '.' || *p == '~')
+			*at++ = *p;
+		else if (*p == ' ')
+			*at++ = '+';
+		else
+			*at++ = '%', *at++ = pv_to_hex(*p >> 4), *at++ = pv_to_hex(*p & 15);
+		p++;
+	}
+
+	*at = 0;
+	sout->len = at - sout->s;
+	LM_DBG("urlencoded string is <%s>\n", sout->s);
+
+	return 0;
+}
+
+/* URL Decode a string */
+static int urldecode_param(str *sin, str *sout) {
+	char *at, *p;
+
+	at = sout->s;
+	p  = sin->s;
+
+	while (p < sin->s+sin->len) {
+		if (*p == '%') {
+			if (p[1] && p[2]) {
+				*at++ = pv_from_hex(p[1]) << 4 | pv_from_hex(p[2]);
+				p += 2;
+			}
+		} else if (*p == '+') {
+			*at++ = ' ';
+		} else {
+			*at++ = *p;
+		}
+		p++;
+	}
+
+	*at = 0;
+	sout->len = at - sout->s;
+
+	LM_DBG("urldecoded string is <%s>\n", sout->s);
+	return 0;
+}
+
+/* -- transformations functions */
+
 /*!
  * \brief Evaluate string transformations
  * \param msg SIP message
@@ -825,6 +901,34 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.s = _tr_buffer;
 			val->rs.s[j] = '\0';
 			val->rs.len = j;
+			break;
+
+		case TR_S_URLENCODEPARAM:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len>TR_BUFFER_SIZE-1)
+				return -1;
+			st.s = _tr_buffer;
+			st.len = TR_BUFFER_SIZE;
+			if (urlencode_param(&val->rs, &st) < 0)
+				return -1;
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs = st;
+			break;
+
+		case TR_S_URLDECODEPARAM:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len>TR_BUFFER_SIZE-1)
+				return -1;
+			st.s = _tr_buffer;
+			st.len = TR_BUFFER_SIZE;
+			if (urldecode_param(&val->rs, &st) < 0)
+				return -1;
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs = st;
 			break;
 
 		default:
@@ -2060,6 +2164,12 @@ char* tr_parse_string(str* in, trans_t *t)
 				in->len, in->s);
 			goto error;
 		}
+		goto done;
+	} else if(name.len==15 && strncasecmp(name.s, "urlencode.param", 15)==0) {
+		t->subtype = TR_S_URLENCODEPARAM;
+		goto done;
+	} else if(name.len==15 && strncasecmp(name.s, "urldecode.param", 15)==0) {
+		t->subtype = TR_S_URLDECODEPARAM;
 		goto done;
 	}
 

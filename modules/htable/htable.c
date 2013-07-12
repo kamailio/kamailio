@@ -32,6 +32,7 @@
 #include "../../timer.h"
 #include "../../route.h"
 #include "../../dprint.h"
+#include "../../hashes.h"
 #include "../../ut.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
@@ -58,9 +59,11 @@ static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
 
-static int fixup_ht_rm(void** param, int param_no);
+static int fixup_ht_key(void** param, int param_no);
 static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
+static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
+static int ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
 
 int ht_param(modparam_t type, void* val);
 
@@ -96,9 +99,13 @@ static mi_export_t mi_cmds[] = {
 static cmd_export_t cmds[]={
 	{"sht_print",       (cmd_function)ht_print,        0, 0, 0,
 		ANY_ROUTE},
-	{"sht_rm_name_re",  (cmd_function)ht_rm_name_re,   1, fixup_ht_rm, 0,
+	{"sht_rm_name_re",  (cmd_function)ht_rm_name_re,   1, fixup_ht_key, 0,
 		ANY_ROUTE},
-	{"sht_rm_value_re", (cmd_function)ht_rm_value_re,  1, fixup_ht_rm, 0,
+	{"sht_rm_value_re", (cmd_function)ht_rm_value_re,  1, fixup_ht_key, 0,
+		ANY_ROUTE},
+	{"sht_lock",        (cmd_function)ht_slot_lock,    1, fixup_ht_key, 0,
+		ANY_ROUTE},
+	{"sht_unlock",      (cmd_function)ht_slot_unlock,  1, fixup_ht_key, 0,
 		ANY_ROUTE},
 	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
 		ANY_ROUTE},
@@ -245,7 +252,7 @@ static int ht_print(struct sip_msg *msg, char *s1, char *s2)
 	return 1;
 }
 
-static int fixup_ht_rm(void** param, int param_no)
+static int fixup_ht_key(void** param, int param_no)
 {
 	pv_spec_t *sp;
 	str s;
@@ -324,6 +331,89 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
 	return 1;
 }
 
+/**
+ * lock the slot for a given key in a hash table
+ */
+static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo)
+{
+	ht_pv_t *hpv;
+	str skey;
+	pv_spec_t *sp;
+	unsigned int hid;
+	unsigned int idx;
+
+	sp = (pv_spec_t*)key;
+
+	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
+
+	if(hpv->ht==NULL)
+	{
+		hpv->ht = ht_get_table(&hpv->htname);
+		if(hpv->ht==NULL) {
+			LM_ERR("cannot get $ht root\n");
+			return -11;
+		}
+	}
+	if(pv_printf_s(msg, hpv->pve, &skey)!=0)
+	{
+		LM_ERR("cannot get $ht key\n");
+		return -1;
+	}
+
+	hid = ht_compute_hash(&skey);
+
+	idx = ht_get_entry(hid, hpv->ht->htsize);
+
+	LM_DBG("unlocking slot %.*s[%u] for key %.*s\n",
+			hpv->htname.len, hpv->htname.s,
+			idx, skey.len, skey.s);
+
+	lock_get(&hpv->ht->entries[idx].lock);
+
+	return 1;
+}
+
+/**
+ * unlock the slot for a given key in a hash table
+ */
+static int ht_slot_unlock(struct sip_msg* msg, char* key, char* foo)
+{
+	ht_pv_t *hpv;
+	str skey;
+	pv_spec_t *sp;
+	unsigned int hid;
+	unsigned int idx;
+
+	sp = (pv_spec_t*)key;
+
+	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
+
+	if(hpv->ht==NULL)
+	{
+		hpv->ht = ht_get_table(&hpv->htname);
+		if(hpv->ht==NULL) {
+			LM_ERR("cannot get $ht root\n");
+			return -11;
+		}
+	}
+	if(pv_printf_s(msg, hpv->pve, &skey)!=0)
+	{
+		LM_ERR("cannot get $ht key\n");
+		return -1;
+	}
+
+	hid = ht_compute_hash(&skey);
+
+	idx = ht_get_entry(hid, hpv->ht->htsize);
+
+	LM_DBG("unlocking slot %.*s[%u] for key %.*s\n",
+			hpv->htname.len, hpv->htname.s,
+			idx, skey.len, skey.s);
+
+	lock_release(&hpv->ht->entries[idx].lock);
+
+	return 1;
+}
 
 int ht_param(modparam_t type, void *val)
 {

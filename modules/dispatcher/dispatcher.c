@@ -136,6 +136,8 @@ str ds_table_name        = str_init(DS_TABLE_NAME);
 
 str ds_setid_pvname   = {NULL, 0};
 pv_spec_t ds_setid_pv;
+str ds_attrs_pvname   = {NULL, 0};
+pv_spec_t ds_attrs_pv;
 
 /** module functions */
 static int mod_init(void);
@@ -181,7 +183,7 @@ static cmd_export_t cmds[]={
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list0, 0,
 		0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list1, 1,
-		fixup_uint_null, 0, ANY_ROUTE},
+		fixup_igp_null, 0, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
@@ -211,6 +213,7 @@ static param_export_t params[]={
 	{"attrs_avp",       STR_PARAM, &attrs_avp_param.s},
 	{"hash_pvar",       STR_PARAM, &hash_pvar_param.s},
 	{"setid_pvname",    STR_PARAM, &ds_setid_pvname.s},
+	{"attrs_pvname",    STR_PARAM, &ds_attrs_pvname.s},
 	{"ds_probing_threshhold", INT_PARAM, &probing_threshhold},
 	{"ds_ping_method",     STR_PARAM, &ds_ping_method.s},
 	{"ds_ping_from",       STR_PARAM, &ds_ping_from.s},
@@ -282,6 +285,8 @@ static int mod_init(void)
 		hash_pvar_param.len = strlen(hash_pvar_param.s);
 	if (ds_setid_pvname.s)
 		ds_setid_pvname.len = strlen(ds_setid_pvname.s);
+	if (ds_attrs_pvname.s)
+		ds_attrs_pvname.len = strlen(ds_attrs_pvname.s);
 	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
 	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
 	if (ds_outbound_proxy.s) ds_outbound_proxy.len = strlen(ds_outbound_proxy.s);
@@ -462,6 +467,17 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if(ds_attrs_pvname.s!=0)
+	{
+		if(pv_parse_spec(&ds_attrs_pvname, &ds_attrs_pv)==NULL
+				|| !pv_is_w(&ds_attrs_pv))
+		{
+			LM_ERR("[%s]- invalid attrs_pvname\n", ds_attrs_pvname.s);
+			return -1;
+		}
+	}
+
 	if (dstid_avp_param.s && dstid_avp_param.len > 0)
 	{
 		if(ds_hash_size>0)
@@ -791,7 +807,13 @@ static int w_ds_is_from_list0(struct sip_msg *msg, char *str1, char *str2)
 
 static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
 {
-	return ds_is_from_list(msg, (int)(long)set);
+	int s;
+	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
+	{
+		LM_ERR("cannot get set id value\n");
+		return -1;
+	}
+	return ds_is_from_list(msg, s);
 }
 
 static int ds_parse_reply_codes() {

@@ -40,12 +40,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <arpa/inet.h>
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../str.h"
 #include "../../mod_fix.h"
 #include "../../pvar.h"
+#include "../../resolve.h"
 #include "api.h"
 #include "ip_parser.h"
 #include "rfc1918_parser.h"
@@ -83,6 +87,8 @@ static int w_compare_ips(struct sip_msg*, char*, char*);
 static int w_compare_pure_ips(struct sip_msg*, char*, char*);
 static int w_is_ip_rfc1918(struct sip_msg*, char*);
 static int w_ip_is_in_subnet(struct sip_msg*, char*, char*);
+static int w_dns_sys_match_ip(sip_msg_t*, char*, char*);
+static int w_dns_int_match_ip(sip_msg_t*, char*, char*);
 
 
 /*
@@ -110,6 +116,10 @@ static cmd_export_t cmds[] =
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "is_in_subnet", (cmd_function)w_ip_is_in_subnet, 2, fixup_spve_spve, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
+  { "dns_sys_match_ip", (cmd_function)w_dns_sys_match_ip, 2, fixup_spve_spve, 0,
+  ANY_ROUTE },
+  { "dns_int_match_ip", (cmd_function)w_dns_int_match_ip, 2, fixup_spve_spve, 0,
+  ANY_ROUTE },
   { "bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0 }
 };
@@ -595,4 +605,130 @@ static int w_is_ip_rfc1918(struct sip_msg* _msg, char* _s)
     return 1;
   else
     return -1;
+}
+
+static inline ip_addr_t *strtoipX(str *ips)
+{
+	/* try to figure out INET class */
+	if(ips->s[0] == '[' || memchr(ips->s, ':', ips->len)!=NULL)
+	{
+		/* IPv6 */
+		return str2ip6(ips);
+	} else {
+		/* IPv4 */
+		return str2ip(ips);
+	}
+}
+
+static int w_dns_sys_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
+{
+	struct addrinfo hints, *res, *p;
+	int status;
+	ip_addr_t *ipa;
+	void *addr;
+	str hns;
+	str ips;
+	struct sockaddr_in *ipv4;
+	struct sockaddr_in6 *ipv6;
+
+	if (fixup_get_svalue(msg, (gparam_p)hnp, &hns))
+	{
+		LM_ERR("cannot evaluate hostname parameter\n");
+		return -2;
+	}
+
+	if (fixup_get_svalue(msg, (gparam_p)ipp, &ips))
+	{
+		LM_ERR("cannot evaluate ip address parameter\n");
+		return -2;
+	}
+
+	ipa = strtoipX(&ips);
+	if(ipa==NULL)
+	{
+		LM_ERR("invalid ip address: %.*s\n", ips.len, ips.s);
+		return -3;
+	}
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC; /* allow any of AF_INET or AF_INET6 */
+
+	if ((status = getaddrinfo(hns.s, NULL, &hints, &res)) != 0)
+	{
+        LM_ERR("getaddrinfo: %s\n", gai_strerror(status));
+        return -4;
+    }
+
+	for(p = res;p != NULL; p = p->ai_next)
+	{
+		if(p->ai_family==ipa->af)
+		{
+			if (p->ai_family==AF_INET)
+			{
+				ipv4 = (struct sockaddr_in *)p->ai_addr;
+				addr = &(ipv4->sin_addr);
+			} else {
+				ipv6 = (struct sockaddr_in6 *)p->ai_addr;
+				addr = &(ipv6->sin6_addr);
+			}
+			if(memcmp(ipa->u.addr, addr, ipa->len)==0)
+			{
+				/* matched IP */
+				freeaddrinfo(res);
+				return 1;
+			}
+		}
+    }
+	freeaddrinfo(res);
+
+	return -1;
+}
+
+static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
+{
+	ip_addr_t *ipa;
+	str hns;
+	str ips;
+	struct hostent* he;
+	char ** h;
+	int ret;
+
+	if (fixup_get_svalue(msg, (gparam_p)hnp, &hns))
+	{
+		LM_ERR("cannot evaluate hostname parameter\n");
+		return -2;
+	}
+
+	if (fixup_get_svalue(msg, (gparam_p)ipp, &ips))
+	{
+		LM_ERR("cannot evaluate ip address parameter\n");
+		return -2;
+	}
+
+	ipa = strtoipX(&ips);
+	if(ipa==NULL)
+	{
+		LM_ERR("invalid ip address: %.*s\n", ips.len, ips.s);
+		return -3;
+	}
+
+	he=resolvehost(hns.s);
+	if (he==0) {
+		DBG("could not resolve %s\n", hns.s);
+		return -4;
+	}
+	ret = 0;
+	if (he->h_addrtype==ipa->af)
+	{
+		for(h=he->h_addr_list; (*h); h++)
+		{
+			if(memcmp(ipa->u.addr, *h, ipa->len)==0)
+			{
+				/* match */
+				return 1;
+			}
+		}
+	}
+	/* no match */
+	return -1;
 }

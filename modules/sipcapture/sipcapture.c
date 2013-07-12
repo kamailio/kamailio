@@ -721,7 +721,7 @@ static int sip_capture_prepare(sip_msg_t *msg)
         /* We need parse all headers */
         if (parse_headers(msg, HDR_CALLID_F|HDR_EOH_F, 0) != 0) {
                 LM_ERR("cannot parse headers\n");
-                return -1;
+                return 0;
         }
 
         return 0;
