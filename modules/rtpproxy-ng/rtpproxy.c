@@ -296,9 +296,9 @@ static const char *command_strings[] = {
 
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
-static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
+static int unforce_rtp_proxy_f(struct sip_msg *, const char *, char *);
 static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy(struct sip_msg *, char *, char *, int, int);
+static int force_rtp_proxy(struct sip_msg *, const char *, const str *, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
 static int rtpproxy_answer1_f(struct sip_msg *, char *, char *);
 static int rtpproxy_answer2_f(struct sip_msg *, char *, char *);
@@ -1088,7 +1088,7 @@ static const char *transports[] = {
 };
 
 static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_msg *msg,
-	enum rtpp_operation op, const char *flags_str, str *body_out)
+	enum rtpp_operation op, const char *flags_str, const str *force_addr, str *body_out)
 {
 	bencode_item_t *dict, *flags, *direction, *replace, *item;
 	str callid, from_tag, to_tag, body, viabranch, error;
@@ -1292,6 +1292,9 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	) );
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
 
+	if (force_addr && force_addr->len)
+		bencode_dictionary_add_str(dict, "media address", force_addr);
+
 	if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER))
 	{
@@ -1359,7 +1362,7 @@ error:
 static int rtpp_function_call_simple(struct sip_msg *msg, enum rtpp_operation op, const char *flags_str) {
 	bencode_buffer_t bencbuf;
 
-	if (!rtpp_function_call(&bencbuf, msg, op, flags_str, NULL))
+	if (!rtpp_function_call(&bencbuf, msg, op, flags_str, NULL, NULL))
 		return -1;
 
 	bencode_buffer_free(&bencbuf);
@@ -1367,10 +1370,10 @@ static int rtpp_function_call_simple(struct sip_msg *msg, enum rtpp_operation op
 }
 
 static bencode_item_t *rtpp_function_call_ok(bencode_buffer_t *bencbuf, struct sip_msg *msg,
-		enum rtpp_operation op, const char *flags_str, str *body) {
+		enum rtpp_operation op, const char *flags_str, const str *force_addr, str *body) {
 	bencode_item_t *ret;
 
-	ret = rtpp_function_call(bencbuf, msg, op, flags_str, body);
+	ret = rtpp_function_call(bencbuf, msg, op, flags_str, force_addr, body);
 	if (!ret)
 		return NULL;
 
@@ -1667,7 +1670,7 @@ get_extra_id(struct sip_msg* msg, str *id_str) {
 
 
 static int
-unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+unforce_rtp_proxy_f(struct sip_msg* msg, const char* str1, char* str2)
 {
 	return rtpp_function_call_simple(msg, OP_DELETE, str1);
 }
@@ -1716,10 +1719,8 @@ set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 }
 
 static int
-rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
+rtpproxy_manage(struct sip_msg *msg, const char *flags, const str *force_addr)
 {
-	char *cp = NULL;
-	char newip[IP_ADDR_MAX_STR_SIZE];
 	int method;
 	int nosdp;
 
@@ -1739,12 +1740,6 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
 		return unforce_rtp_proxy_f(msg, flags, 0);
 
-	if(ip==NULL)
-	{
-		cp = ip_addr2a(&msg->rcv.dst_ip);
-		strcpy(newip, cp);
-	}
-
 	if(msg->msg_flags & FL_SDP_BODY)
 		nosdp = 0;
 	else
@@ -1752,11 +1747,9 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 
 	if(msg->first_line.type == SIP_REQUEST) {
 		if(method==METHOD_ACK && nosdp==0)
-			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
-					(ip!=NULL)?1:0);
+			return force_rtp_proxy(msg, flags, force_addr, OP_ANSWER);
 		if(method==METHOD_UPDATE && nosdp==0)
-			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
-					(ip!=NULL)?1:0);
+			return force_rtp_proxy(msg, flags, force_addr, OP_OFFER);
 		if(method==METHOD_INVITE && nosdp==0) {
 			msg->msg_flags |= FL_SDP_BODY;
 			if(tmb.t_gett!=NULL && tmb.t_gett()!=NULL
@@ -1764,25 +1757,20 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
 			if(route_type==FAILURE_ROUTE)
 				return unforce_rtp_proxy_f(msg, flags, 0);
-			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
-					(ip!=NULL)?1:0);
+			return force_rtp_proxy(msg, flags, force_addr, OP_OFFER);
 		}
 	} else if(msg->first_line.type == SIP_REPLY) {
 		if(msg->first_line.u.reply.statuscode>=300)
 			return unforce_rtp_proxy_f(msg, flags, 0);
 		if(nosdp==0) {
 			if(method==METHOD_UPDATE)
-				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
-					(ip!=NULL)?1:0);
+				return force_rtp_proxy(msg, flags, force_addr, OP_ANSWER);
 			if(tmb.t_gett==NULL || tmb.t_gett()==NULL
 					|| tmb.t_gett()==T_UNDEFINED)
-				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
-					(ip!=NULL)?1:0);
+				return force_rtp_proxy(msg, flags, force_addr, OP_ANSWER);
 			if(tmb.t_gett()->uas.request->msg_flags & FL_SDP_BODY)
-				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
-					(ip!=NULL)?1:0);
-			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
-					(ip!=NULL)?1:0);
+				return force_rtp_proxy(msg, flags, force_addr, OP_ANSWER);
+			return force_rtp_proxy(msg, flags, force_addr, OP_OFFER);
 		}
 	}
 	return -1;
@@ -1809,24 +1797,19 @@ rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip)
 	str ip_str;
 	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
 	fixup_get_svalue(msg, (gparam_p)ip, &ip_str);
-	return rtpproxy_manage(msg, flag_str.s, ip_str.s);
+	return rtpproxy_manage(msg, flag_str.s, &ip_str);
 }
 
 static int
 rtpproxy_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
-        char *cp;
-        char newip[IP_ADDR_MAX_STR_SIZE];
 	str flags;
-
-        cp = ip_addr2a(&msg->rcv.dst_ip);
-        strcpy(newip, cp);
 
 	if (str1)
 		get_str_fparam(&flags, msg, (fparam_t *) str1);
 	else
 		flags.s = NULL;
-	return force_rtp_proxy(msg, flags.s, newip, 1, 0);
+	return force_rtp_proxy(msg, flags.s, NULL, OP_OFFER);
 }
 
 static int
@@ -1836,28 +1819,23 @@ rtpproxy_offer2_f(struct sip_msg *msg, char *param1, char *param2)
 
 	get_str_fparam(&flags, msg, (fparam_t *) param1);
 	get_str_fparam(&new_ip, msg, (fparam_t *) param2);
-	return force_rtp_proxy(msg, flags.s, new_ip.s, 1, 1);
+	return force_rtp_proxy(msg, flags.s, &new_ip, OP_OFFER);
 }
 
 static int
 rtpproxy_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
-        char *cp;
-        char newip[IP_ADDR_MAX_STR_SIZE];
 	str flags;
 
 	if (msg->first_line.type == SIP_REQUEST)
 		if (msg->first_line.u.request.method_value != METHOD_ACK)
 			return -1;
 
-        cp = ip_addr2a(&msg->rcv.dst_ip);
-        strcpy(newip, cp);
-
 	if (str1)
 		get_str_fparam(&flags, msg, (fparam_t *) str1);
 	else
 		flags.s = NULL;
-	return force_rtp_proxy(msg, flags.s, newip, 0, 0);
+	return force_rtp_proxy(msg, flags.s, NULL, OP_ANSWER);
 }
 
 static int
@@ -1872,19 +1850,18 @@ rtpproxy_answer2_f(struct sip_msg *msg, char *param1, char *param2)
 
 	get_str_fparam(&flags, msg, (fparam_t *) param1);
 	get_str_fparam(&new_ip, msg, (fparam_t *) param2);
-	return force_rtp_proxy(msg, flags.s, new_ip.s, 0, 1);
+	return force_rtp_proxy(msg, flags.s, &new_ip, OP_ANSWER);
 }
 
-/* XXX forcedIP */
 static int
-force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forcedIP)
+force_rtp_proxy(struct sip_msg *msg, const char *flags, const str *force_addr, int op)
 {
 	bencode_buffer_t bencbuf;
 	bencode_item_t *dict;
 	str body, newbody;
 	struct lump *anchor;
 
-	dict = rtpp_function_call_ok(&bencbuf, msg, offer ? OP_OFFER : OP_ANSWER, str1, &body);
+	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, force_addr, &body);
 	if (!dict)
 		return -1;
 
@@ -1932,7 +1909,7 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 	static char buf[256];
 	str ret;
 
-	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL);
+	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL, NULL);
 	if (!dict)
 		return -1;
 
