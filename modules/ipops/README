@@ -38,6 +38,7 @@ Iñaki Baz Castillo
               4.10. is_in_subnet (ip, subnet)
               4.11. dns_sys_match_ip(hostname, ipaddr)
               4.12. dns_int_match_ip(hostname, ipaddr)
+              4.13. dns_query(hostname, pvid)
 
    List of Examples
 
@@ -53,6 +54,7 @@ Iñaki Baz Castillo
    1.10. is_in_subnet usage
    1.11. dns_sys_match_ip usage
    1.12. dns_int_match_ip usage
+   1.13. dns_query usage
 
 Chapter 1. Admin Guide
 
@@ -79,6 +81,7 @@ Chapter 1. Admin Guide
         4.10. is_in_subnet (ip, subnet)
         4.11. dns_sys_match_ip(hostname, ipaddr)
         4.12. dns_int_match_ip(hostname, ipaddr)
+        4.13. dns_query(hostname, pvid)
 
 1. Overview
 
@@ -132,6 +135,7 @@ Chapter 1. Admin Guide
    4.10. is_in_subnet (ip, subnet)
    4.11. dns_sys_match_ip(hostname, ipaddr)
    4.12. dns_int_match_ip(hostname, ipaddr)
+   4.13. dns_query(hostname, pvid)
 
 4.1. is_ip (ip)
 
@@ -348,9 +352,9 @@ if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
    providing load balancing through DNS).
 
    Parameters:
-     * ipaddr - string or pseudo-variable containing the ip address.
      * hostname - string or pseudo-variable containing the hostname. The
        resulting IP addresses from DNS query are compared with ipaddr.
+     * ipaddr - string or pseudo-variable containing the ip address.
 
    This function can be used from ANY_ROUTE.
 
@@ -372,9 +376,9 @@ if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
    in different address famililies (IPv4/6).
 
    Parameters:
-     * ipaddr - string or pseudo-variable containing the ip address.
      * hostname - string or pseudo-variable containing the hostname. The
        resulting IP addresses from DNS query are compared with ipaddr.
+     * ipaddr - string or pseudo-variable containing the ip address.
 
    This function can be used from ANY_ROUTE.
 
@@ -382,5 +386,33 @@ if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
 ...
 if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
     xdbg("ip address not associated with hostname\n");
+}
+...
+
+4.13. dns_query(hostname, pvid)
+
+   Store the IP addresses and their type that correspond to hostname in a
+   config variable $dns(pvid=>key).
+
+   Parameters:
+     * hostname - string or pseudo-variable containing the hostname. The
+       resulting IP addresses from DNS query are compared with ipaddr.
+     * pvid - container id for script variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. dns_query usage
+...
+if(dns_query("test.com", "xyz"))
+{
+    xlog(" number of addresses: $dns(xyz=>count)\n");
+    xlog(" ipv4 address found: $dns(xyz=>ipv4)\n");
+    xlog(" ipv6 address found: $dns(xyz=>ipv6)\n");
+    $var(i) = 0;
+    while($var(i)<$dns(xyz=>count)) {
+        xlog(" #[$var(i)] type ($dns(xyz=>type[$var(i)]))"
+             " addr [$dns(xyz=>addr[$var(i)])]\n");
+        $var(i) = $var(i) + 1;
+    }
 }
 ...

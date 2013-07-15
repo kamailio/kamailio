@@ -547,13 +547,13 @@ if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
       <itemizedlist>
         <listitem>
           <para>
-            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddr.
           </para>
         </listitem>
         <listitem>
           <para>
-			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
-			  The resulting IP addresses from DNS query are compared with ipaddr.
+            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
           </para>
         </listitem>
       </itemizedlist>
@@ -596,13 +596,13 @@ if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
       <itemizedlist>
         <listitem>
           <para>
-            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddr.
           </para>
         </listitem>
         <listitem>
           <para>
-			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
-			  The resulting IP addresses from DNS query are compared with ipaddr.
+            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
           </para>
         </listitem>
       </itemizedlist>
@@ -619,6 +619,60 @@ if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
 ...
 if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
     xdbg("ip address not associated with hostname\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.dns_query">
+      <title>
+        <function moreinfo="none">dns_query(hostname, pvid)</function>
+      </title>
+
+      <para>
+		  Store the IP addresses and their type that correspond to hostname
+		  in a config variable $dns(pvid=>key).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddr.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pvid</emphasis> - container id for script variable.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_query</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if(dns_query("test.com", "xyz"))
+{
+    xlog(" number of addresses: $dns(xyz=>count)\n");
+    xlog(" ipv4 address found: $dns(xyz=>ipv4)\n");
+    xlog(" ipv6 address found: $dns(xyz=>ipv6)\n");
+    $var(i) = 0;
+    while($var(i)&lt;$dns(xyz=>count)) {
+        xlog(" #[$var(i)] type ($dns(xyz=>type[$var(i)]))"
+             " addr [$dns(xyz=>addr[$var(i)])]\n");
+        $var(i) = $var(i) + 1;
+    }
 }
 ...
         </programlisting>
