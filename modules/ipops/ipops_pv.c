@@ -375,6 +375,8 @@ int dns_update_pv(str *hostname, str *name)
 
 	/* reset the counter */
 	dr->count = 0;
+	dr->ipv4  = 0;
+	dr->ipv6  = 0;
 
 	strncpy(dr->hostname, hostname->s, hostname->len);
 	dr->hostname[hostname->len] = '\0';
