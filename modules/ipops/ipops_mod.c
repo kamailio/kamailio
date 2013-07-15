@@ -51,6 +51,7 @@
 #include "../../pvar.h"
 #include "../../resolve.h"
 #include "api.h"
+#include "ipops_pv.h"
 #include "ip_parser.h"
 #include "rfc1918_parser.h"
 
@@ -90,6 +91,13 @@ static int w_ip_is_in_subnet(struct sip_msg*, char*, char*);
 static int w_dns_sys_match_ip(sip_msg_t*, char*, char*);
 static int w_dns_int_match_ip(sip_msg_t*, char*, char*);
 
+static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
+
+static pv_export_t mod_pvs[] = {
+	{ {"dns", sizeof("dns")-1}, PVT_OTHER, pv_get_dns, 0,
+		pv_parse_dns_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 /*
  * Exported functions
@@ -120,6 +128,8 @@ static cmd_export_t cmds[] =
   ANY_ROUTE },
   { "dns_int_match_ip", (cmd_function)w_dns_int_match_ip, 2, fixup_spve_spve, 0,
   ANY_ROUTE },
+  { "dns_query", (cmd_function)w_dns_query, 2, fixup_spve_spve, 0,
+  ANY_ROUTE },
   { "bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0 }
 };
@@ -135,7 +145,7 @@ struct module_exports exports = {
   0,                         /*!< exported parameters */
   0,                         /*!< exported statistics */
   0,                         /*!< exported MI functions */
-  0,                         /*!< exported pseudo-variables */
+  mod_pvs,                   /*!< exported pseudo-variables */
   0,                         /*!< extra processes */
   0,                         /*!< module initialization function */
   (response_function) 0,     /*!< response handling function */
@@ -652,6 +662,8 @@ static int w_dns_sys_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC; /* allow any of AF_INET or AF_INET6 */
+	// hints.ai_socktype = SOCK_STREAM;
+	hints.ai_socktype = SOCK_DGRAM;
 
 	if ((status = getaddrinfo(hns.s, NULL, &hints, &res)) != 0)
 	{
@@ -731,4 +743,32 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 	}
 	/* no match */
 	return -1;
+}
+
+/**
+ *
+ */
+static int w_dns_query(struct sip_msg* msg, char* str1, char* str2)
+{
+	str hostname;
+	str name;
+
+	if(msg==NULL)
+	{
+		LM_ERR("received null msg\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)str1, &hostname)<0)
+	{
+		LM_ERR("cannot get the hostname\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)str2, &name)<0)
+	{
+		LM_ERR("cannot get the pv container name\n");
+		return -1;
+	}
+
+	return dns_update_pv(&hostname, &name);
 }
