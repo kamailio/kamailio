@@ -112,7 +112,8 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	shm_free(ob_key.s);
+	if (ob_key.s)
+		shm_free(ob_key.s);
 }
 
 /* Structure of flow-token
