@@ -854,7 +854,7 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 	</section>
 
 	<section id="usrloc.p.db_ops_ruid">
-		<title><varname>db_ops_ruid</varname> (string)</title>
+		<title><varname>db_ops_ruid</varname> (int)</title>
 		<para>
 			If set to 1, database queries for update or delete are done using
 			ruid value. If it is set to 0, the old style using aor, contact and
