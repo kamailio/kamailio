@@ -410,7 +410,7 @@ int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity) {
 		/* Check length: */
 		if (identity.len == p->public_identity.len) {
 			/* Check contents: */
-			if (strncasecmp(identity.s, p->public_identity.s, identity.len) != 0) {
+			if (strncasecmp(identity.s, p->public_identity.s, identity.len) == 0) {
 				LM_DBG("Match!\n");
 				goto success;
 			}
