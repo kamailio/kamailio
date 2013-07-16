@@ -147,14 +147,15 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	/* LM_DBG("number of bodies in total [n]=%d, number of useful bodies [j]=%d\n", n, j ); */
 
 	/* create the new NOTIFY body  */
-    if ( (pres_user->len + pres_domain->len + 1) > MAX_URI_SIZE) {
+    if ( (pres_user->len + pres_domain->len + 1 + 4 + 1) >= MAX_URI_SIZE) {
         LM_ERR("entity URI too long, maximum=%d\n", MAX_URI_SIZE);
         return NULL;
     }
-    memcpy(buf, pres_user->s, pres_user->len);
-    buf[pres_user->len] = '@';
-    memcpy(buf + pres_user->len + 1, pres_domain->s, pres_domain->len);
-    buf[pres_user->len + 1 + pres_domain->len]= '\0';
+	memcpy(buf, "sip:", 4);
+	memcpy(buf+4, pres_user->s, pres_user->len);
+	buf[pres_user->len+4] = '@';
+	memcpy(buf + pres_user->len + 5, pres_domain->s, pres_domain->len);
+	buf[pres_user->len + 5 + pres_domain->len]= '\0';
 
     doc = xmlNewDoc(BAD_CAST "1.0");
     if(doc==0)
