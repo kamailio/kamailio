@@ -924,7 +924,7 @@ error:
 
 /* returns -1 on error, 0 on success
  * sets proto */
-static int parse_proto(unsigned char* s, long len, int* proto)
+int parse_proto(unsigned char* s, long len, int* proto)
 {
 #define PROTO2UINT3(a, b, c) ((	(((unsigned int)(a))<<16)+ \
 								(((unsigned int)(b))<<8)+  \

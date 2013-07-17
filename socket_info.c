@@ -2057,3 +2057,97 @@ void init_proto_order()
 }
 
 
+/**
+ * parse '[port:]host[:port]' string to a broken down structure
+ */
+int parse_protohostport(str* ins, sr_phostp_t *r)
+{
+	char* first; /* first ':' occurrence */
+	char* second; /* second ':' occurrence */
+	char* p;
+	int bracket;
+	char* tmp;
+
+	first=second=0;
+	bracket=0;
+	memset(r, 0, sizeof(sr_phostp_t));
+
+	/* find the first 2 ':', ignoring possible ipv6 addresses
+	 * (substrings between [])
+	 */
+	for(p=ins->s; p<ins->s+ins->len; p++){
+		switch(*p){
+			case '[':
+				bracket++;
+				if (bracket>1) goto error_brackets;
+				break;
+			case ']':
+				bracket--;
+				if (bracket<0) goto error_brackets;
+				break;
+			case ':':
+				if (bracket==0){
+					if (first==0) first=p;
+					else if( second==0) second=p;
+					else goto error_colons;
+				}
+				break;
+		}
+	}
+	if (p==ins->s) return -1;
+	if (*(p-1)==':') goto error_colons;
+
+	if (first==0) { /* no ':' => only host */
+		r->host.s=ins->s;
+		r->host.len=(int)(p-ins->s);
+		goto end;
+	}
+	if (second) { /* 2 ':' found => check if valid */
+		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
+			goto error_proto;
+		r->port=strtol(second+1, &tmp, 10);
+		if ((tmp==0)||(*tmp)||(tmp==second+1)) goto error_port;
+		r->host.s=first+1;
+		r->host.len=(int)(second-r->host.s);
+		goto end;
+	}
+	/* only 1 ':' found => it's either proto:host or host:port */
+	r->port=strtol(first+1, &tmp, 10);
+	if ((tmp==0)||(*tmp)||(tmp==first+1)){
+		/* invalid port => it's proto:host */
+		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
+			goto error_proto;
+		r->host.s=first+1;
+		r->host.len=(int)(p-r->host.s);
+	}else{
+		/* valid port => its host:port */
+		r->host.s=ins->s;
+		r->host.len=(int)(first-r->host.s);
+	}
+end:
+	return 0;
+error_brackets:
+	LOG(L_ERR, "too many brackets in %.*s\n", ins->len, ins->s);
+	return -1;
+error_colons:
+	LOG(L_ERR, "too many colons in %.*s\n", ins->len, ins->s);
+	return -1;
+error_proto:
+	LOG(L_ERR, "bad protocol in %.*s\n", ins->len, ins->s);
+	return -1;
+error_port:
+	LOG(L_ERR, "bad port number in %.*s\n", ins->len, ins->s);
+	return -1;
+}
+
+/**
+ * lookup a local socket by '[port:]host[:port]' string
+ */
+struct socket_info* lookup_local_socket(str *phostp)
+{
+	sr_phostp_t r;
+	if(parse_protohostport(phostp, &r)<0)
+		return NULL;
+	return grep_sock_info(&r.host, (unsigned short)r.port,
+			(unsigned short)r.proto);
+}

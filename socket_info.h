@@ -105,6 +105,8 @@ struct socket_info** get_sock_info_list(unsigned short proto);
 int parse_phostport(char* s, char** host, int* hlen,
 								 int* port, int* proto);
 
+int parse_proto(unsigned char* s, long len, int* proto);
+
 char* get_valid_proto_name(unsigned short proto);
 
 /* helper function:
@@ -142,5 +144,13 @@ inline static struct socket_info* get_first_socket(void)
 	return 0;
 }
 
+/* structure to break down 'proto:host:port' */
+typedef struct _sr_phostp {
+	int proto;
+	str host;
+	int port;
+} sr_phostp_t;
+
+struct socket_info* lookup_local_socket(str *phostp);
 
 #endif
