@@ -58,6 +58,8 @@ typedef struct _uac_send_info {
 	str   s_body;
 	char  b_ouri[MAX_URI_SIZE];
 	str   s_ouri;
+	char  b_sock[MAX_URI_SIZE];
+	str   s_sock;
 	char  b_auser[128];
 	str   s_auser;
 	char  b_apasswd[64];
@@ -87,6 +89,7 @@ uac_send_info_t *uac_send_info_clone(uac_send_info_t *ur)
 	tp->s_auser.s   = tp->b_auser;
 	tp->s_apasswd.s = tp->b_apasswd;
 	tp->s_callid.s  = tp->b_callid;
+	tp->s_sock.s    = tp->b_sock;
 
 	return tp;
 }
@@ -141,6 +144,10 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
 			if(_uac_req.s_callid.len<=0)
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res, &_uac_req.s_callid);
+		case 12:
+			if(_uac_req.s_sock.len<=0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_uac_req.s_sock);
 		default:
 			return pv_get_uintval(msg, param, res, _uac_req.flags);
 	}
@@ -379,9 +386,29 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-                        memcpy(_uac_req.s_callid.s, val->rs.s, val->rs.len);
-                        _uac_req.s_callid.s[val->rs.len] = '\0';
-                        _uac_req.s_callid.len = val->rs.len;
+			memcpy(_uac_req.s_callid.s, val->rs.s, val->rs.len);
+			_uac_req.s_callid.s[val->rs.len] = '\0';
+			_uac_req.s_callid.len = val->rs.len;
+			break;
+		case 12:
+			if(val==NULL)
+			{
+				_uac_req.s_apasswd.len = 0;
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("Invalid socket pv type\n");
+				return -1;
+			}
+			if(val->rs.len>=MAX_URI_SIZE)
+			{
+				LM_ERR("Value size too big\n");
+				return -1;
+			}
+			memcpy(_uac_req.s_sock.s, val->rs.s, val->rs.len);
+			_uac_req.s_sock.s[val->rs.len] = '\0';
+			_uac_req.s_sock.len = val->rs.len;
 			break;
 	}
 	return 0;
@@ -412,6 +439,8 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else if(strncmp(in->s, "ouri", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
+			else if(strncmp(in->s, "sock", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 12;
 			else goto error;
 		break;
 		case 5:
@@ -464,7 +493,8 @@ void uac_req_init(void)
 	_uac_req.s_method.s = _uac_req.b_method;
 	_uac_req.s_auser.s  = _uac_req.b_auser;
 	_uac_req.s_apasswd.s  = _uac_req.b_apasswd;
-	_uac_req.s_callid.s  = _uac_req.b_callid;
+	_uac_req.s_callid.s   = _uac_req.b_callid;
+	_uac_req.s_sock.s     = _uac_req.b_sock;
 	return;
 }
 
@@ -592,6 +622,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	uac_r.method = &tp->s_method;
 	uac_r.headers = &s_hdrs;
 	uac_r.body = (tp->s_body.len <= 0) ? NULL : &tp->s_body;
+	uac_r.ssock = (tp->s_sock.len <= 0) ? NULL : &tp->s_sock;
 	uac_r.dialog = &tmdlg;
 	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 	ret = tmb.t_request_within(&uac_r);
@@ -623,6 +654,7 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 	uac_r.method = &_uac_req.s_method;
 	uac_r.headers = (_uac_req.s_hdrs.len <= 0) ? NULL : &_uac_req.s_hdrs;
 	uac_r.body = (_uac_req.s_body.len <= 0) ? NULL : &_uac_req.s_body;
+	uac_r.ssock = (_uac_req.s_sock.len <= 0) ? NULL : &_uac_req.s_sock;
 	if(_uac_req.s_auser.len > 0 && _uac_req.s_apasswd.len>0)
 	{
 		tp = uac_send_info_clone(&_uac_req);
