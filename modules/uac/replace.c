@@ -39,6 +39,7 @@
 #include "../../parser/parse_from.h"
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
+#include "../../route.h"
 #include "../../modules/tm/h_table.h"
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
@@ -251,10 +252,12 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 	str * dlgvar_names;
 
 	uac_flag = (hdr==msg->from)?FL_USE_UAC_FROM:FL_USE_UAC_TO;
-	if(msg->msg_flags & uac_flag)
-	{
-		LM_ERR("Called uac_replace multiple times on the message\n");
-		return -1;
+	if(get_route_type()==REQUEST_ROUTE) {
+		if(msg->msg_flags & uac_flag)
+		{
+			LM_ERR("Called uac_replace multiple times on the message\n");
+			return -1;
+		}
 	}
 
 	/* consistency check! in AUTO mode, do NOT allow URI changing
