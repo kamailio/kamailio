@@ -1785,32 +1785,6 @@ ifeq ($(OS), linux)
 	ifeq ($(NO_SELECT),)
 		C_DEFS+=-DHAVE_SELECT
 	endif
-	# sctp support
-	ifeq ($(SCTP),1)
-		# test to see if the devfiles and lib are installed
-		sctp_dev_locations := /usr/include/netinet/sctp.h \
-								$(LOCALBASE)/include/netinet/sctp.h
-		sctp_lib_locations := /usr/lib/libsctp.so \
-								/usr/lib64/libsctp.so \
-								$(LOCALBASE)/usr/local/lib/libsctp.so
-		sctp_dev_path := $(wildcard $(sctp_dev_locations))
-		sctp_lib_path := $(wildcard $(sctp_lib_locations))
-		ifeq ($(sctp_dev_path),)
-$(info "sctp development files not installed -- sctp disabled")
-			override SCTP := 
-		endif
-		ifeq ($(sctp_lib_path),)
-$(info "sctp libraries not installed -- sctp disabled")
-			override SCTP := 
-		endif
-		
-		ifeq ($(SCTP),1)
-			# use lksctp
-			C_DEFS+=-DUSE_SCTP
-			# link to libsctp is needed only for sctp module
-			# LIBS+=-lsctp
-		endif
-	endif # SCTP
 endif
 
 ifeq  ($(OS), solaris)
@@ -1885,26 +1859,6 @@ ifeq ($(OS), freebsd)
 		C_DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
-	# sctp support
-	ifeq ($(SCTP),1)
-		# test to see if the devfiles and lib are installed
-		sctp_dev_locations := /usr/include/netinet/sctp.h \
-								$(LOCALBASE)/include/netinet/sctp.h
-		sctp_dev_path := $(wildcard $(sctp_dev_locations))
-		ifeq ($(sctp_dev_path),)
-$(info "sctp development files not installed -- sctp disabled")
-			override SCTP := 
-		endif
-		ifeq ($(shell [ $(OSREL_N) -lt 7000 ] && echo sctp), sctp)
-$(info "old freebsd version (>= 7.0 needed) -- sctp disabled")
-			override SCTP := 
-		endif
-		
-		ifeq ($(SCTP),1)
-			C_DEFS+=-DUSE_SCTP
-			LIBS+=  # no extra libs needed on freebsd
-		endif
-	endif # SCTP
 endif
 
 ifeq ($(OS), dragonfly)
@@ -1927,29 +1881,6 @@ ifeq ($(OS), dragonfly)
 		C_DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
-	# sctp support
-	ifeq ($(SCTP),1)
-		# test to see if the devfiles and lib are installed
-		sctp_dev_locations := /usr/include/netinet/sctp.h \
-								$(LOCALBASE)/include/netinet/sctp.h
-		sctp_dev_path := $(wildcard $(sctp_dev_locations))
-		ifeq ($(sctp_dev_path),)
-$(info "sctp development files not installed -- sctp disabled")
-			override SCTP :=
-		endif
-		# FIXME: don't know what's the status of SCTP on dragonfly
-		#        (we suppose the 2.6 version is >= the version in
-		#         in freebsd 7.0)
-		ifeq ($(shell [ $(OSREL_N) -lt 2006 ] && echo sctp), sctp)
-$(info "old dragonfly version (>= 2.6 needed) -- sctp disabled")
-			override SCTP :=
-		endif
-		
-		ifeq ($(SCTP),1)
-			C_DEFS+=-DUSE_SCTP
-			LIBS+=  # no extra libs needed on freebsd
-		endif
-	endif # SCTP
 endif
 
 ifeq ($(OS), openbsd)
