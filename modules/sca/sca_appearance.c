@@ -1283,7 +1283,7 @@ sca_appearance_purge_stale( unsigned int ticks, void *param )
     struct notify_list	*notify_list = NULL, *tmp_nl;
     int			i;
     int			unlinked;
-    time_t		now;
+    time_t		now, ttl;
 
     LM_INFO( "SCA: purging stale appearances" );
 
@@ -1308,11 +1308,21 @@ sca_appearance_purge_stale( unsigned int ticks, void *param )
 			cur_app = tmp_app ) {
 		tmp_app = &(*cur_app)->next;
 
-		if ((*cur_app)->state != SCA_APPEARANCE_STATE_ACTIVE_PENDING ) {
-		    continue;
+		switch ((*cur_app)->state ) {
+		case SCA_APPEARANCE_STATE_ACTIVE_PENDING:
+		    ttl = SCA_APPEARANCE_STATE_PENDING_TTL;
+		    break;
+
+		case SCA_APPEARANCE_STATE_SEIZED:
+		    ttl = SCA_APPEARANCE_STATE_SEIZED_TTL;
+		    break;
+
+		default:
+		    /* XXX for now just skip other appearances */
+		    ttl = now + 60;
+		    break;
 		}
-		if (( now - (*cur_app)->times.mtime ) <
-			SCA_APPEARANCE_STATE_PENDING_TTL ) {
+		if (( now - (*cur_app)->times.mtime ) < ttl ) {
 		    continue;
 		}
 
