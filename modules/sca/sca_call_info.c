@@ -1946,11 +1946,6 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
     /* reset rc to -1 so we don't end up returning 0 to the script */
     rc = -1;
 
-    if ( sca_call_info_header_remove( msg ) < 0 ) {
-	LM_ERR( "Failed to remove Call-Info header" );
-	return( -1 );
-    }
-
     /* reconcile mismatched Contact users and To/From URIs */
     if ( msg->first_line.type == SIP_REQUEST ) {
 	if ( sca_create_canonical_aor( msg, &from_aor ) < 0 ) {
@@ -1982,6 +1977,28 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
     if ( sca_uri_is_shared_appearance( sca, &to_aor )) {
 	call_info.ua_shared |= SCA_CALL_INFO_SHARED_CALLEE;
     }
+
+    if ( call_info_hdr == NULL ) {
+	if ( SCA_CALL_INFO_IS_SHARED_CALLER( &call_info ) &&
+		msg->first_line.type == SIP_REQUEST ) {
+	    if ( !sca_subscription_aor_has_subscribers(
+				SCA_EVENT_TYPE_CALL_INFO, &from_aor )) {
+		call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLER;
+	    }
+	} else if ( SCA_CALL_INFO_IS_SHARED_CALLEE( &call_info ) &&
+		msg->first_line.type == SIP_REPLY ) {
+	    if ( !sca_subscription_aor_has_subscribers(
+				SCA_EVENT_TYPE_CALL_INFO, &to_aor )) {
+		call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLEE;
+	    }
+	}
+    }
+
+    if ( sca_call_info_header_remove( msg ) < 0 ) {
+	LM_ERR( "Failed to remove Call-Info header" );
+	return( -1 );
+    }
+
     if ( call_info.ua_shared == SCA_CALL_INFO_SHARED_NONE ) {
 	LM_DBG( "Neither %.*s nor %.*s are SCA AoRs",
 		STR_FMT( &from_aor ), STR_FMT( &to_aor ));

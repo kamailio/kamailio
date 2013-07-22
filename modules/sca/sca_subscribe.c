@@ -558,6 +558,50 @@ sca_subscription_db_update_timer( unsigned int ticks, void *param )
     }
 }
 
+    int
+sca_subscription_aor_has_subscribers( int event, str *aor )
+{
+    sca_hash_slot	*slot;
+    sca_hash_entry	*e;
+    sca_subscription	*sub;
+    str			sub_key = STR_NULL;
+    char		*event_name;
+    int			len;
+    int			subscribers = 0;
+    int			slot_idx = -1;
+
+    event_name = sca_event_name_from_type( event );
+    len = aor->len + strlen( event_name );
+    sub_key.s = (char *)pkg_malloc( len );
+    if ( sub_key.s == NULL ) {
+	LM_ERR( "Failed to pkg_malloc key to look up %s "
+		"subscription for %.*s", event_name, STR_FMT( aor ));
+	return( -1 );
+    }
+    SCA_STR_COPY( &sub_key, aor );
+    SCA_STR_APPEND_CSTR( &sub_key, event_name );
+
+    slot_idx = sca_hash_table_index_for_key( sca->subscriptions, &sub_key );
+    pkg_free( sub_key.s );
+    sub_key.len = 0;
+
+    slot = sca_hash_table_slot_for_index( sca->subscriptions, slot_idx );
+    sca_hash_table_lock_index( sca->subscriptions, slot_idx );
+
+    for ( e = slot->entries; e != NULL; e = e->next ) {
+	sub = (sca_subscription *)e->value;
+
+	if ( SCA_STR_EQ( &sub->target_aor, aor )) {
+	    subscribers = 1;
+	    break;
+	}
+    }
+
+    sca_hash_table_unlock_index( sca->subscriptions, slot_idx );
+
+    return( subscribers );
+}
+
     sca_subscription *
 sca_subscription_create( str *aor, int event, str *subscriber,
 	unsigned int notify_cseq, unsigned int subscribe_cseq, int expire_delta,
