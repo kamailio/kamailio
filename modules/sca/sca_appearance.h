@@ -65,7 +65,13 @@ enum {
  * ACK. on receipt of the caller's ACK, we promote
  * the SCA callee's state to active.
  */
-#define SCA_APPEARANCE_STATE_PENDING_TTL	30
+enum {
+    /* Polycoms aggressively resubscribe line-seizes, give them time */
+    SCA_APPEARANCE_STATE_SEIZED_TTL	= 120,
+
+    /* enough time to allow retransmissions (~32s) */
+    SCA_APPEARANCE_STATE_PENDING_TTL	= 35,
+};
 
 extern const str SCA_APPEARANCE_INDEX_STR;
 extern const str SCA_APPEARANCE_STATE_STR;
