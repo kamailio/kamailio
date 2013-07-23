@@ -196,6 +196,26 @@ modparam("sipcapture", "capture_on", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="sipcapture.p.capture_mode">
+                <title><varname>capture_mode</varname> (integer)</title>
+                <para>
+				This parameter can be used for defining a capture mode which can be used in
+				the sip_capture calls as a parameter. A capture mode has a name and some parameters.
+				It must be defined in the format: name=>param1=val1;param2=val2;...
+				The parameters are db_url, table_name, mt_mode and hash_source (optional).
+				Multiple capture modes can be defined by using this parameter multiple times.
+				After this, the capture modes can be used like:
+				sip_capture ("", "CAPTURE_MODE");
+				</para>
+                <example>
+                <title>capture_mode example</title>
+                <programlisting format="linespecific">
+modparam("sipcapture", "capture_mode", "mode1=>db_url=mysql://user:passwd@host/dbname1;table_name=homer_capture1|homer_capture2;mt_mode=hash;hash_source=call_id;")
+modparam("sipcapture", "capture_mode", "mode2=>db_url=mysql://user:passwd@host/dbname2;table_name=homer_capture3|homer_capture4;mt_mode=rand;")
+</programlisting>
+                </example>
+        </section>
 	<section id="sipcapture.p.hep_capture_on">
                 <title><varname>hep_capture_on</varname> (integer)</title>
                 <para>
