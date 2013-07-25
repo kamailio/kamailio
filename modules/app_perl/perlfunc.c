@@ -127,15 +127,14 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 		return -1;
 	}
 
+	ENTER;				/* everything created after here */
+	SAVETMPS;			/* ...is a temporary variable.   */
+	PUSHMARK(SP);		/* remember the stack pointer    */
+	XPUSHs(m);			/* Our reference to the stack... */
+
 	m = sv_newmortal();
 	sv_setref_pv(m, "Kamailio::Message", (void *)_msg);
 	SvREADONLY_on(SvRV(m));
-
-
-	ENTER;				/* everything created after here */
-	SAVETMPS;			/* ...is a temporary variable.   */
-	PUSHMARK(SP);			/* remember the stack pointer    */
-	XPUSHs(m);			/* Our reference to the stack... */
 
 	if (mystr)
 		XPUSHs(sv_2mortal(newSVpv(mystr, strlen(mystr))));
