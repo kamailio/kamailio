@@ -57,6 +57,7 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 	int n;
 	int i;
 	int first_branch;
+	char code_buf[INT2STR_MAX_LEN];
 
 	/* get transaction */
 	t = rd_tmb.t_gett();
@@ -95,6 +96,9 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 		}
 		if (max==0)
 			continue;
+		/* put the response code into the acc_param reason struct */
+		reason->code = t->uac[i].last_received;
+		reason->code_s.s = int2bstr((unsigned long)reason->code, code_buf, &reason->code_s.len);
 		/* get the contact from it */
 		n = shmcontact2dset( msg, t->uac[i].reply, max, reason, bflags);
 		if ( n<0 ) {
