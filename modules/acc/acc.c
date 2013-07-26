@@ -241,13 +241,15 @@ int acc_log_request( struct sip_msg *rq)
 		memcpy(p, log_attrs[i].s, log_attrs[i].len);
 		p += log_attrs[i].len;
 		*(p++) = A_EQ_CHR;
-		memcpy(p, val_arr[i].s, val_arr[i].len);
-		p += val_arr[i].len;
+		if (val_arr[i].s != NULL) {
+			memcpy(p, val_arr[i].s, val_arr[i].len);
+			p += val_arr[i].len;
+		}
 	}
 
 	/* get per leg attributes */
 	if ( leg_info ) {
-	        n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m, 1);
+		n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m, 1);
 		do {
 			for (i=m; i<m+n; i++) {
 				if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
@@ -259,10 +261,12 @@ int acc_log_request( struct sip_msg *rq)
 				memcpy(p, log_attrs[i].s, log_attrs[i].len);
 				p += log_attrs[i].len;
 				*(p++) = A_EQ_CHR;
-				memcpy(p, val_arr[i].s, val_arr[i].len);
-				p += val_arr[i].len;
+				if (val_arr[i].s != NULL) {
+					memcpy(p, val_arr[i].s, val_arr[i].len);
+					p += val_arr[i].len;
+				}
 			}
-		}while (p!=log_msg_end && (n=legs2strar(leg_info,rq,val_arr+m,
+		} while (p!=log_msg_end && (n=legs2strar(leg_info,rq,val_arr+m,
 							int_arr+m,type_arr+m,
 							0))!=0);
 	}

@@ -220,7 +220,7 @@ int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 	if(acc_db_set_table_name(rq, (void*)table, NULL)<0) {
 		LM_ERR("cannot set table name\n");
 		return -1;
-    }
+	}
 	env_set_to( rq->to );
 	env_set_comment((struct acc_param*)comment);
 	return acc_db_request(rq);
