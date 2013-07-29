@@ -95,14 +95,43 @@ MODULE_VERSION
 
 #define NR_KEYS 36
 
+/*multiple table mode*/
+enum e_mt_mode{
+	mode_random = 1,
+	mode_hash,
+	mode_round_robin,
+	mode_error
+};
+
+
+typedef struct _capture_mode_data {
+	unsigned int id;
+	str name;
+	str db_url;
+	db1_con_t *db_con;
+	db_func_t db_funcs;
+	str * table_names;
+	unsigned int no_tables;
+	enum e_mt_mode mtmode;
+	enum hash_source hash_source;
+	unsigned int rr_idx;
+	stat_var* sipcapture_req;
+	stat_var* sipcapture_rpl;
+	struct _capture_mode_data * next;
+}_capture_mode_data_t;
+
+_capture_mode_data_t * capture_modes_root = NULL;
+_capture_mode_data_t * capture_def = NULL;
+
 /* module function prototypes */
 static int mod_init(void);
 static int sipcapture_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
 static int sipcapture_fixup(void** param, int param_no);
-static int sip_capture(struct sip_msg *msg, str *dtable);
-static int w_sip_capture(struct sip_msg* _m, char* _table, char* s2);
+static int sip_capture(struct sip_msg *msg, str *dtable,  _capture_mode_data_t *cm_data);
+
+static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t * _cm_data, char* s2);
 int init_rawsock_children(void);
 int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
@@ -189,25 +218,19 @@ static struct sock_filter BPF_code[] = { { 0x28, 0, 0, 0x0000000c }, { 0x15, 0, 
 };
 #endif
 
-db1_con_t *db_con = NULL; 		/*!< database connection */
-db_func_t db_funcs;      		/*!< Database functions */
+//db1_con_t *db_con = NULL; 		/*!< database connection */
+//db_func_t db_funcs;      		/*!< Database functions */
 
-str* table_names = NULL;
-char* table_name_cpy = NULL;
+//str* table_names = NULL;
+
 unsigned int no_tables = 0;
 
-/*multiple table mode*/
-enum e_mt_mode{
-	mode_random = 1,
-	mode_hash,
-	mode_round_robin,
-	mode_error
-};
+
 
 enum e_mt_mode mtmode = mode_random ;
 enum hash_source source = hs_error;
 
-unsigned int rr_idx = 0;
+//unsigned int rr_idx = 0;
 
 struct hep_timehdr* heptime;
 
@@ -218,9 +241,12 @@ struct hep_timehdr* heptime;
 static cmd_export_t cmds[] = {
 	{"sip_capture", (cmd_function)w_sip_capture, 0, 0, 0, ANY_ROUTE},
 	{"sip_capture", (cmd_function)w_sip_capture, 1, sipcapture_fixup, 0, ANY_ROUTE },	                         
+	{"sip_capture", (cmd_function)w_sip_capture, 2, sipcapture_fixup, 0, ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
+
+int capture_mode_param(modparam_t type, void *val);
 
 /*! \brief
  * Exported parameters
@@ -279,8 +305,11 @@ static param_export_t params[] = {
         {"promiscious_on",  		INT_PARAM, &promisc_on   },		
         {"raw_moni_bpf_on",  		INT_PARAM, &bpf_on   },		
         {"callid_aleg_header",          STR_PARAM, &callid_aleg_header.s},
-	{0, 0, 0}
+        {"capture_mode",		STR_PARAM|USE_FUNC_PARAM, (void *)capture_mode_param},
+		{0, 0, 0}
 };
+
+
 
 /*! \brief
  * MI commands
@@ -292,7 +321,7 @@ static mi_export_t mi_cmds[] = {
 
 
 #ifdef STATISTICS
-stat_var* sipcapture_req;
+/*stat_var* sipcapture_req;
 stat_var* sipcapture_rpl;
 
 stat_export_t sipcapture_stats[] = {
@@ -300,6 +329,8 @@ stat_export_t sipcapture_stats[] = {
 	{"captured_replies"  ,  0,  &sipcapture_rpl  },
 	{0,0,0}
 };
+*/
+stat_export_t *sipcapture_stats = NULL;
 #endif
 
 /*! \brief module exports */
@@ -309,7 +340,8 @@ struct module_exports exports = {
 	cmds,       /*!< Exported functions */
 	params,     /*!< Exported parameters */
 #ifdef STATISTICS
-	sipcapture_stats,  /*!< exported statistics */
+//	sipcapture_stats,  /*!< exported statistics */
+	0,
 #else
 	0,          /*!< exported statistics */
 #endif
@@ -323,13 +355,22 @@ struct module_exports exports = {
 };
 
 
-static int mt_init(void) {
+
+/* returns number of tables if successful
+ * <0 if failed
+ */
+int parse_table_names (str table_name, str ** table_names){
 
 	char *p = NULL;
-	int i = 0;
+	unsigned int no_tables;
+	char * table_name_cpy;
+	unsigned int i;
 
 	/*parse and save table names*/
 	no_tables = 1;
+	i = 0;
+
+	str * names;
 
 	table_name_cpy = (char *) pkg_malloc(sizeof(char) * table_name.len + 1 );
 	if (table_name_cpy == NULL){
@@ -350,8 +391,8 @@ static int mt_init(void) {
 		p++;
 	}
 
-	table_names = (str*)pkg_malloc(sizeof(str) * no_tables);
-	if(table_names == NULL) {
+	names = (str*)pkg_malloc(sizeof(str) * no_tables);
+	if(names == NULL) {
 		LM_ERR("no more pkg memory left\n");
 		return -1;
 	}
@@ -359,55 +400,292 @@ static int mt_init(void) {
 	while (p != NULL)
 	{
 		LM_INFO ("INFO: table name:%s\n",p);
-		table_names[i].s =  p;
-		table_names[i].len = strlen (p);
+		names[i].len = strlen (p);
+		names[i].s =  (char *)pkg_malloc(sizeof(char) *names[i].len);
+		memcpy(names[i].s, p, names[i].len);
 		i++;
 		p = strtok (NULL, "| \t");
 	}
 
-	if (strcmp (mt_mode.s, "rand") ==0)
-	{
-		mtmode = mode_random;
+	pkg_free(table_name_cpy);
+
+	*table_names = names;
+
+	return no_tables;
+
+}
+
+/* checks for some missing fields*/
+int check_capture_mode ( _capture_mode_data_t * n) {
+
+
+	if (!n->db_url.s || !n->db_url.len){
+		LM_ERR("db_url not set\n");
+		goto error;
 	}
-	else if (strcmp (mt_mode.s, "round_robin") ==0)
-	{
-		mtmode = mode_round_robin;
+
+	if (!n->mtmode ){
+		LM_ERR("mt_mode not set\n");
+		goto error;
 	}
-	else if (strcmp (mt_mode.s, "hash") == 0)
-	{
-		mtmode = mode_hash;
+	else if (!n->no_tables || !n->table_names){
+		LM_ERR("table names not set\n");
+		goto error;
 	}
-	else {
-		LM_ERR("ERROR: sipcapture: mod_init: multiple tables mode unrecognized\n");
+	return 0;
+
+	error:
+	LM_ERR("parsing capture_mode: not all needed parameters are set. Please check again\n");
+	return -1;
+}
+
+int capture_mode_set_params (_capture_mode_data_t * n, str * params){
+
+
+	param_t * params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+	db_func_t db_funcs;
+
+	str s;
+	LM_DBG("to tokenize: [%.*s]\n", params->len, params->s);
+	if ( n == NULL || params == NULL)
 		return -1;
-		
-	}
+	s = *params;
 
-
-	if ( mtmode == mode_hash && (source = get_hash_source (hash_source.s) ) == hs_error)
-	{
-		LM_ERR("ERROR: sipcapture: mod_init: hash source unrecognized\n");
+	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0)
 		return -1;
+	for (pit = params_list; pit; pit=pit->next)
+	{
+		LM_DBG("parameter is [%.*s]\n",pit->name.len, pit->name.s );
+		LM_DBG("parameter value is [%.*s]\n", pit->body.len, pit->body.s);
+		if (pit->name.len == 6 && strncmp (pit->name.s, "db_url", pit->name.len)==0){
+
+			n->db_url.len =pit->body.len;
+			n->db_url.s = (char*)pkg_malloc(sizeof(char) * n->db_url.len);
+			if (!n->db_url.s){
+				LM_ERR("no more pkg memory\n");
+				goto error;
+			}
+			memcpy(n->db_url.s, pit->body.s,n->db_url.len );
+
+			if (db_bind_mod(&n->db_url, &db_funcs)){
+
+				LM_ERR("parsing capture_mode: could not bind db funcs for url:[%.*s]\n", n->db_url.len, n->db_url.s);
+				goto error;
+			}
+			n->db_funcs = db_funcs;
+
+			if (!DB_CAPABILITY(n->db_funcs, DB_CAP_INSERT))
+			{
+				LM_ERR("parsing capture_mode: database modules does not provide all functions needed"
+						" by module\n");
+					goto error;
+			}
+
+		}
+
+		else if (pit->name.len == 10 && strncmp (pit->name.s, "table_name", pit->name.len)==0){
+			if ((n->no_tables = parse_table_names(pit->body, &n->table_names))<0){
+				LM_ERR("parsing capture_mode: table name parsing failed\n");
+				goto error;
+			}
+
+		}
+		else if (pit->name.len == 7 && strncmp (pit->name.s, "mt_mode", pit->name.len)==0){
+
+			if (pit->body.len == 4 && strncmp(pit->body.s, "rand",pit->body.len ) ==0)
+			{
+				n->mtmode  = mode_random;
+			}
+			else if (pit->body.len == 11 && strncmp(pit->body.s, "round_robin",pit->body.len ) ==0)
+			{
+				n->mtmode = mode_round_robin;
+			}
+			else if (pit->body.len == 4 && strncmp(pit->body.s, "hash", pit->body.len) ==0)
+			{
+				n->mtmode = mode_hash;
+			}
+			else {
+				LM_ERR("parsing capture_mode: capture mode not recognized: [%.*s]\n", pit->body.len, pit->body.s);
+				goto error;
+
+			}
+		}
+		else if (pit->name.len == 11 && strncmp (pit->name.s, "hash_source", pit->name.len)==0){
+			if ( (n->hash_source = get_hash_source (pit->body.s))  == hs_error)
+			{
+				LM_ERR("parsing capture_mode: hash source unrecognized: [%.*s]\n", pit->body.len, pit->body.s);
+				goto error;
+			}
+		}
+
+
+	}
+	if (n->mtmode == mode_hash && ( n->hash_source == 0 || n->hash_source == hs_error )){
+		LM_WARN("Hash mode set, but no hash source provided for [%.*s]. Will consider hashing by call id.\n", n->name.len, n->name.s);
+		n->hash_source = hs_call_id;
 	}
 
-	srand(time(NULL));
+	if ( check_capture_mode(n)){
+		goto error;
+	}
 
+	return 0;
+
+error:
+	if (n->db_url.s){
+		pkg_free(n->db_url.s);
+	}
+	return -1;
+
+
+
+
+
+}
+
+void * capture_mode_init(str *name, str * params) {
+
+	_capture_mode_data_t * n = NULL;
+	unsigned int id;
+
+	if (!name || name->len == 0){
+		LM_ERR("capture_mode name is empty\n");
+		goto error;
+	}
+	if (!params || params->len == 0){
+		LM_ERR("capture_mode params are empty\n");
+		goto error;
+	}
+	id = core_case_hash(name, 0, 0);
+	n = (_capture_mode_data_t *) pkg_malloc(sizeof(_capture_mode_data_t));
+	if (!n){
+		LM_ERR("no more pkg memory\n");
+		goto error;
+	}
+	memset (n, 0,sizeof(_capture_mode_data_t) );
+	n->id = id;
+	n->name.len = name->len;
+	n->name.s = (char *)pkg_malloc(sizeof(char) * n->name.len);
+	if (!n->name.s){
+		LM_ERR("no more pkg memory\n");
+		goto error;
+	}
+	memcpy(n->name.s, name->s, n->name.len);
+	n->db_con = (db1_con_t *)pkg_malloc(sizeof(db1_con_t));
+	if (!n->db_con){
+		LM_ERR("no more pkg memory\n");
+		goto error;
+	}
+	n->table_names = (str *)pkg_malloc(sizeof(str));
+	if (!n->table_names){
+		LM_ERR("no more pkg memory\n");
+		goto error;
+	}
+
+
+
+	if (capture_mode_set_params (n, params)<0){
+		LM_ERR("capture mode parsing failed\n");
+		goto error;
+	}
+
+	n->next = capture_modes_root;
+	capture_modes_root = n;
+	return n;
+
+error:
+	if (n->name.s){
+		pkg_free(n->name.s);
+	}
+	if (n->db_con){
+		pkg_free(n->db_con);
+	}
+	if (n->table_names){
+		pkg_free(n->table_names);
+	}
+	if (n){
+		pkg_free(n);
+	}
 	return 0;
 
 }
 
+/*parse name=>param1=>val1;param2=>val2;..*/
+int capture_mode_param(modparam_t type, void *val){
+
+
+	str name;
+	str in;
+	str tok;
+	char * p;
+
+	in.s = val;
+	in.len = strlen(in.s);
+	p = in.s;
+
+	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	name.s = p;
+	while(p < in.s + in.len)
+	{
+		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+			break;
+		p++;
+	}
+
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	name.len = p - name.s;
+	if(*p!='=')
+	{
+		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+			p++;
+		if(p>in.s+in.len || *p=='\0' || *p!='=')
+			goto error;
+	}
+	p++;
+	if(*p!='>')
+		goto error;
+	p++;
+	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	tok.s = p;
+	tok.len = in.len + (int)(in.s - p);
+
+	LM_DBG("capture_mode name: [%.*s] data: [%.*s]\n", name.len, name.s, tok.len, tok.s);
+	if (!capture_mode_init(&name, &tok)){
+		return -1;
+	}
+	return 0;
+
+	error:
+		LM_ERR("invalid parameter [%.*s] at [%d]\n", in.len, in.s,
+				(int)(p-in.s));
+		return -1;
+}
+
+
+
+
+
+
 /*! \brief Initialize sipcapture module */
 static int mod_init(void) {
 
+
 	struct ip_addr *ip = NULL;
+	char * def_params = NULL;
 
 #ifdef STATISTICS
-	/* register statistics */
-	if (register_module_stats(exports.name, sipcapture_stats)!=0)
-	{
-		LM_ERR("failed to register core statistics\n");
-		return -1;
-	}
+	int cnt = 0;
+	int i = 0;
+	char * stat_name = NULL;
+	_capture_mode_data_t * c = NULL;
+	int def;
 #endif
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
@@ -468,29 +746,78 @@ static int mod_init(void) {
 	if(raw_interface.s)
 		raw_interface.len = strlen(raw_interface.s);     	
 
-	/* Find a database module */
-	if (db_bind_mod(&db_url, &db_funcs))
-	{
-		LM_ERR("unable to bind database module\n");
-		return -1;
-	}
-	if (!DB_CAPABILITY(db_funcs, DB_CAP_INSERT))
-	{
-		LM_ERR("database modules does not provide all functions needed"
-				" by module\n");
-		return -1;
-	}
 
-	/*Check the table name*/
-	if(!table_name.len) {	
+	/*Check the table name - if table_name is empty and no capture modes are defined, then error*/
+	if(!table_name.len && capture_modes_root == NULL) {
 		LM_ERR("ERROR: sipcapture: mod_init: table_name is not defined or empty\n");
 		return -1;
 	}
 
-	if (mt_init () <0)
+
+	/*create a default capture mode using the default parameters*/
+	def_params = (char *) pkg_malloc(snprintf(NULL, 0, "db_url=%s;table_name=%s;mt_mode=%s;hash_source=%s",db_url.s, table_name.s, mt_mode.s,hash_source.s) + 1);
+	sprintf(def_params, "db_url=%s;table_name=%s;mt_mode=%s;hash_source=%s",db_url.s, table_name.s, mt_mode.s,hash_source.s);
+
+	str def_name,  def_par;
+	def_name.s= strdup("default");
+	def_name.len = 7;
+	def_par.s = def_params;
+	def_par.len = strlen (def_params);
+
+	LM_DBG("def_params is: %s\n", def_params);
+
+
+	if ((capture_def =capture_mode_init(&def_name, &def_par)) == NULL){
+		LM_WARN("Default capture mode configuration failed. Suppose sip_capture calls will use other defined capture modes.\n");
+	}
+
+	pkg_free(def_params);
+
+
+#ifdef STATISTICS
+
+	c = capture_modes_root;
+	while (c){
+		cnt++;
+		c=c->next;
+	}
+	/*requests and replies for each mode + 1 zero-filled stat_export */
+	stat_export_t *stats = (stat_export_t *) shm_malloc(sizeof(stat_export_t) * cnt * 2 + 1 );
+
+	c = capture_modes_root;
+
+	while (c){
+		/*for the default capture_mode, don't add it's name to the stat name*/
+		def = (capture_def && c == capture_def)?1:0;
+		stat_name = (char *)shm_malloc(sizeof (char) * snprintf(NULL, 0 , (def)?"captured_requests":"captured_requests[%.*s]", c->name.len, c->name.s) + 1);
+		sprintf(stat_name, (def)?"captured_requests":"captured_requests[%.*s]", c->name.len, c->name.s);
+		stats[i].name = stat_name;
+		stats[i].flags = 0;
+		stats[i].stat_pointer = &c->sipcapture_req;
+		i++;
+		stat_name = (char *)shm_malloc(sizeof (char) * snprintf(NULL, 0 , (def)?"captured_replies":"captured_replies[%.*s]", c->name.len, c->name.s) + 1);
+		sprintf(stat_name, (def)?"captured_replies":"captured_replies[%.*s]", c->name.len, c->name.s);
+		stats[i].name = stat_name;
+		stats[i].flags = 0;
+		stats[i].stat_pointer = &c->sipcapture_rpl;
+		i++;
+		c=c->next;
+	}
+	stats[i].name = 0;
+	stats[i].flags = 0;
+	stats[i].stat_pointer = 0;
+
+	sipcapture_stats = stats;
+
+	/* register statistics */
+	if (register_module_stats(exports.name, sipcapture_stats)!=0)
 	{
+		LM_ERR("failed to register core statistics\n");
 		return -1;
 	}
+#endif
+
+	srand(time(NULL));
 
 
 	if(db_insert_mode) {
@@ -586,14 +913,42 @@ error:
 
 static int sipcapture_fixup(void** param, int param_no)
 {
-        if (param_no == 1) {
+
+		_capture_mode_data_t *con;
+
+		str val;
+		unsigned int id;
+
+        if (param_no == 1 ) {
                 return fixup_var_pve_str_12(param, 1);
+        }
+        if (param_no == 2 ){
+
+			val.s = (char *)*param;
+			val.len = strlen((char *)*param);
+
+
+			con = capture_modes_root;
+			id = core_case_hash (&val, 0 , 0);
+			while (con){
+				if (id == con->id && con->name.len == val.len
+						&& strncmp(con->name.s, val.s, val.len) == 0){
+					*param = (void *)con;
+					LM_DBG("found capture mode :[%.*s]\n",con->name.len, con->name.s);
+					return 0;
+				}
+				con = con->next;
+			}
+
+			LM_ERR("no capture mode found\n");
+			return -1;
+
         }
         
         return 0;
 } 
    
-static int w_sip_capture(struct sip_msg* _m, char* _table, char* s2)
+static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t * cm_data, char* s2)
 {
         str table = {0};
         
@@ -603,7 +958,7 @@ static int w_sip_capture(struct sip_msg* _m, char* _table, char* s2)
                 return -1;
         }
 
-        return sip_capture(_m, (table.len>0)?&table:NULL);
+        return sip_capture(_m, (table.len>0)?&table:NULL, cm_data );
 }
 
 
@@ -633,6 +988,9 @@ int extract_host_port(void)
 
 static int child_init(int rank)
 {
+
+	_capture_mode_data_t * c;
+
 	if (rank == PROC_MAIN && (ipip_capture_on || moni_capture_on)) {
                 if (init_rawsock_children() < 0) return -1;
         }
@@ -640,23 +998,34 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	db_con = db_funcs.init(&db_url);
-	if (!db_con)
-	{
-		LM_ERR("unable to connect to database. Please check configuration.\n");
-		return -1;
+
+	c = capture_modes_root;
+
+	while (c){
+		if (!c->db_url.s || !c->db_url.len ){
+			LM_ERR("DB URL not set for capture mode:[%.*s]", c->name.len, c->name.s);
+			return -1;
+		}
+		c->db_con = c->db_funcs.init(&c->db_url);
+		if (!c->db_con)
+		{
+			LM_ERR("unable to connect to database [%.*s] from capture_mode param.\n", c->db_url.len, c->db_url.s);
+			return -1;
+		}
+	    if (c->mtmode ==mode_round_robin && rank > 0)
+	    {
+			c->rr_idx = rank % c->no_tables;
+	    }
+		c = c->next;
 	}
-	
+
+
 	heptime = (struct hep_timehdr*)pkg_malloc(sizeof(struct hep_timehdr));
         if(heptime==NULL) {
                 LM_ERR("no more pkg memory left\n");
                 return -1;
         }
 
-    if (mtmode ==mode_round_robin && rank > 0)
-    {
-		rr_idx = rank % no_tables;
-    }
 
 	return 0;
 }
@@ -687,8 +1056,33 @@ int init_rawsock_children(void)
 
 static void destroy(void)
 {
-	if (db_con!=NULL)
-		db_funcs.close(db_con);
+	//if (capture_def->db_con!=NULL)
+	//	capture_def->db_funcs.close(capture_def->db_con);
+
+	/*free content from the linked list*/
+	_capture_mode_data_t * c;
+
+	c = capture_modes_root;
+
+	while (c){
+		if (c->name.s){
+			pkg_free(c->name.s);
+		}
+		if (c->db_url.s){
+			pkg_free(c->name.s);
+		}
+		if (c->db_con){
+			c->db_funcs.close(c->db_con);
+			pkg_free(c->db_con);
+		}
+		if (c->table_names){
+			pkg_free(c->table_names);
+		}
+
+		pkg_free(c);
+		c = c->next;
+	}
+
 	if (capture_on_flag)
 		shm_free(capture_on_flag);
 		
@@ -708,12 +1102,10 @@ static void destroy(void)
 		close(raw_sock_desc);
 	}
 
-	if (table_name_cpy){
-		pkg_free(table_name_cpy);
-	}
-	if (table_names){
-		pkg_free(table_names);
-	}
+
+//	if (table_names){
+//		pkg_free(table_names);
+//	}
 }
 
 static int sip_capture_prepare(sip_msg_t *msg)
@@ -727,13 +1119,21 @@ static int sip_capture_prepare(sip_msg_t *msg)
         return 0;
 }
 
-static int sip_capture_store(struct _sipcapture_object *sco, str *dtable)
+static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _capture_mode_data_t * cm_data)
 {
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 
 	str tmp;
 	int ii = 0;
+	str *table = NULL;
+	_capture_mode_data_t *c = NULL;
+
+	c = (cm_data)? cm_data:capture_def;
+	if (!c){
+		LM_ERR("no connection mode available to store data\n");
+		return -1;
+	}
 
 	if(sco==NULL)
 	{
@@ -939,36 +1339,47 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable)
 
 	db_vals[35].val.blob_val = tmp;
 
-	if (no_tables > 0 ){
-		if ( mtmode == mode_hash ){
-			ii = hash_func ( sco, source , no_tables);
-			LM_DBG ("hash idx is:%d\n", ii);
-		}
-		else if (mtmode == mode_random )
-		{
-			ii = rand() % no_tables;
-			LM_DBG("rand idx is:%d\n", ii);
-		}
-		else if (mtmode == mode_round_robin)
-		{
-			ii = rr_idx;
-			rr_idx = (rr_idx +1) % no_tables;
-			LM_DBG("round robin idx is:%d\n", ii);
-		}
+	if (dtable){
+		table = dtable;
 	}
 
+	else if (c->no_tables > 0 ){
+
+		if ( c->mtmode == mode_hash ){
+			ii = hash_func ( sco, c->hash_source , c->no_tables);
+			if (ii < 0){
+				LM_ERR("hashing failed\n");
+				return -1;
+			}
+			LM_DBG ("hash idx is:%d\n", ii);
+		}
+		else if (c->mtmode == mode_random )
+		{
+			ii = rand() % c->no_tables;
+			LM_DBG("rand idx is:%d\n", ii);
+		}
+		else if (c->mtmode == mode_round_robin)
+		{
+			ii = c->rr_idx;
+			c->rr_idx = (c->rr_idx +1) % c->no_tables;
+			LM_DBG("round robin idx is:%d\n", ii);
+		}
+		table = &c->table_names[ii];
+	}
+
+
 	/* check dynamic table */
-	LM_DBG("insert into homer table: [%.*s]\n", (dtable)?dtable->len:table_names[ii].len, (dtable)?dtable->s:table_names[ii].s);
-	db_funcs.use_table(db_con, (dtable)?dtable:&table_names[ii]);
+	LM_DBG("insert into homer table: [%.*s]\n", table->len, table->s);
+	c->db_funcs.use_table(c->db_con, table);
 
 	LM_DBG("storing info...\n");
 	
-	if(db_insert_mode==1 && db_funcs.insert_delayed!=NULL) {
-                if (db_funcs.insert_delayed(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+	if(db_insert_mode==1 && c->db_funcs.insert_delayed!=NULL) {
+                if (c->db_funcs.insert_delayed(c->db_con, db_keys, db_vals, NR_KEYS) < 0) {
                 	LM_ERR("failed to insert delayed into database\n");
                         goto error;
                 }
-        } else if (db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+        } else if (c->db_funcs.insert(c->db_con, db_keys, db_vals, NR_KEYS) < 0) {
 		LM_ERR("failed to insert into database\n");
                 goto error;               
 	}
@@ -983,7 +1394,7 @@ error:
 	return -1;
 }
 
-static int sip_capture(struct sip_msg *msg, str *_table)
+static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * cm_data)
 {
 	struct _sipcapture_object sco;
 	struct sip_uri from, to, contact;
@@ -1035,7 +1446,7 @@ static int sip_capture(struct sip_msg *msg, str *_table)
 		EMPTY_STR(sco.ruri_user);		
 	}
 	else {		
-		LM_ERR("unknow type [%i]\n", msg->first_line.type);	
+		LM_ERR("unknown type [%i]\n", msg->first_line.type);
 		EMPTY_STR(sco.method);
 		EMPTY_STR(sco.reply_reason);
 		EMPTY_STR(sco.ruri);
@@ -1285,13 +1696,13 @@ static int sip_capture(struct sip_msg *msg, str *_table)
         
 #ifdef STATISTICS
 	if(msg->first_line.type==SIP_REPLY) {
-		sco.stat = sipcapture_rpl;
+		sco.stat = cm_data->sipcapture_rpl;
 	} else {
-		sco.stat = sipcapture_req;
+		sco.stat = cm_data->sipcapture_req;
 	}
 #endif
 	//LM_DBG("DONE");
-	return sip_capture_store(&sco, _table);
+	return sip_capture_store(&sco, _table, cm_data);
 }
 
 #define capture_is_off(_msg) \

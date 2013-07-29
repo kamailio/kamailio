@@ -1103,7 +1103,7 @@ uninstall:
 			echo "rm ${bin_prefix}/${bin_dir}kamctl" ; \
 			echo "rm ${bin_prefix}/${bin_dir}kamdbctl" ; \
 		fi ; \
-		echo "rm ${bin_prefix}/${bin_dir}sercmd" ; \
+		echo "rm ${bin_prefix}/${bin_dir}kamcmd" ; \
 		echo "rm ${man_prefix}/${man_dir}man5/$(MAIN_NAME).cfg.5" ; \
 		echo "rm ${man_prefix}/${man_dir}man8/$(MAIN_NAME).8" ; \
 		if [ "${FLAVOUR}" = "kamailio" ] ; then \

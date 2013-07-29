@@ -426,13 +426,14 @@ done:
         shm_free(avlist);
         avlist = 0;
     }
-    struct auth_data_item *tmp1 = adi_list->first;
-    while (tmp1) {
-        struct auth_data_item *tmp2 = tmp1->next;
-        shm_free(tmp1);
-        tmp1 = tmp2;
-    }
+
     if (adi_list) {
+        struct auth_data_item *tmp1 = adi_list->first;
+        while (tmp1) {
+            struct auth_data_item *tmp2 = tmp1->next;
+            shm_free(tmp1);
+            tmp1 = tmp2;
+        }
         shm_free(adi_list);
         adi_list = 0;
     }

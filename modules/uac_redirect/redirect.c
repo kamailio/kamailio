@@ -164,25 +164,24 @@ static int get_redirect_fixup(void** param, int param_no)
 
 		pkg_free(*param);
 		*param=(void*)(long)( (((unsigned short)maxt)<<8) | maxb);
-
 	} else if (param_no==2) {
 		/* acc function loaded? */
-		if (rd_acc_fct!=0)
-			return 0;
-		/* must import the acc stuff */
-		if (acc_fct_s==0 || acc_fct_s[0]==0) {
-			LM_ERR("acc support enabled, but no acc function defined\n");
-			return E_UNSPEC;
+		if (rd_acc_fct==0) {
+			/* must import the acc stuff */
+			if (acc_fct_s==0 || acc_fct_s[0]==0) {
+				LM_ERR("acc support enabled, but no acc function defined\n");
+				return E_UNSPEC;
+			}
+			fct = find_export(acc_fct_s, 2, REQUEST_ROUTE);
+			if ( fct==0 )
+				fct = find_export(acc_fct_s, 1, REQUEST_ROUTE);
+			if ( fct==0 ) {
+				LM_ERR("cannot import %s function; is acc loaded and proper "
+					"compiled?\n", acc_fct_s);
+				return E_UNSPEC;
+			}
+			rd_acc_fct = fct;
 		}
-		fct = find_export(acc_fct_s, 2, REQUEST_ROUTE);
-		if ( fct==0 )
-			fct = find_export(acc_fct_s, 1, REQUEST_ROUTE);
-		if ( fct==0 ) {
-			LM_ERR("cannot import %s function; is acc loaded and proper "
-				"compiled?\n", acc_fct_s);
-			return E_UNSPEC;
-		}
-		rd_acc_fct = fct;
 		/* set the reason str */
 		accp = (struct acc_param*)pkg_malloc(sizeof(struct acc_param));
 		if (accp==0) {
@@ -264,12 +263,21 @@ static int regexp_compile(char *re_s, regex_t **re)
 static int redirect_init(void)
 {
 	regex_t *filter;
+	void *p;
 
 	/* load the TM API */
 	if (load_tm_api(&rd_tmb)!=0) {
 		LM_ERR("failed to load TM API\n");
 		goto error;
 	}
+
+	p = (void*)acc_db_table;
+	/* fixup table name */
+	if(fixup_var_pve_str_12(&p, 1)<0) {
+		LM_ERR("failed to fixup acc db table\n");
+		goto error;
+	}
+	acc_db_table = p;
 
 	/* init filter */
 	init_filters();
