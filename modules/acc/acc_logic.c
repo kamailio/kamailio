@@ -197,6 +197,8 @@ int acc_db_set_table_name(struct sip_msg *msg, void *param, str *table)
 			return -1;
 		}
 		strncpy(db_table_name_buf, dbtable.s, dbtable.len);
+                /* FS#327: since the buffer is static terminate the table name */
+                db_table_name_buf[dbtable.len] = '\0';
 		env_set_text(db_table_name_buf, dbtable.len);
 	} else {
 		if(table==NULL) {
