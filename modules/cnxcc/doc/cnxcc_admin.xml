@@ -37,6 +37,11 @@
 		If your accounting program does not maintain the state of the call in real time, this module can provide you
 		that ability.
 	</para>
+	<para>
+		Cnxcc can also provide more common means of monitoring, i.e., by time limit or by maximum simultaneous calls.
+	</para>
+
+
     </section>
 
     <section>
@@ -120,6 +125,13 @@ modparam("cnxcc", "credit_check_period", 1)
 			<emphasis>-1 - failed, error logged</emphasis>
 		    </para>
 		    </listitem>
+
+		    <listitem>
+		    <para>
+			<emphasis>-2 - failed, credit value is less than initial pulse value</emphasis>
+		    </para>
+		    </listitem>
+
 		</itemizedlist>
 	    </para>
 	    <example>
@@ -168,13 +180,115 @@ cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)", "$var(initia
 $var(customer) = "john-doe-123-basic";
 $var(max_time) = 120;
 
-cnxcc_set_max_tim ("$var(customer)", "$var(max_time)");
+cnxcc_set_max_time("$var(customer)", "$var(max_time)");
+...
+		</programlisting>
+            </example>
+        </section>
+
+    	<section>
+            <title>
+                <function moreinfo="none">cnxcc_set_max_channel()</function>
+            </title>
+            <para>
+		Specifies a limit for the number of simultaneous calls
+            </para>
+            <para>
+                <emphasis>Return code:</emphasis>
+                <itemizedlist>
+                    <listitem>
+                    <para>
+                        <emphasis>1 - successful</emphasis>
+                    </para>
+                    </listitem>
+                     
+                    <listitem>
+                    <para>
+                        <emphasis>-1 - failed, error logged</emphasis>
+                    </para>
+                    </listitem>
+
+                    <listitem>
+                    <para>
+                        <emphasis>-2 - failed, calls established plus calls being established result in more than the limit you specified</emphasis>
+                    </para>
+                    </listitem>
+		    
+		    <listitem>
+                    <para>
+                        <emphasis>-3 - failed, number of calls established is more than the limit you specified</emphasis>
+                    </para>
+                    </listitem>
+
+                </itemizedlist>
+            </para>
+            <example>
+		<title>cnxcc_set_max_time()</title>
+                <programlisting format="linespecific">
+...
+$var(customer)  = "john-doe-123-basic";
+$var(max_chan)  = 2;
+$var(retcode)   = cnxcc_set_max_channels("$var(customer)", "$var(max_chan)");
+
+if ($var(retcode) == -1) {
+	xlog("Error setting up credit control");
+	return;
+}
+
+if ($var(retcode) &lt; -1) {
+        xlog("Too many channels for customer");
+        sl_send_reply(403, "Forbidden");
+
+        if (!cnxcc_terminate_all("$var(customer)")) {
+		xlog("Error terminating customer's calls");
+	}
+
+	exit;
+}
+
+...
+		</programlisting>
+            </example>
+    	</section>
+	
+    	<section>
+            <title>
+                <function moreinfo="none">cnxcc_terminate_all()</function>
+            </title>
+            <para>
+		Terminates all calls of the specified customer/profile
+            </para>
+            <para>
+                <emphasis>Return code:</emphasis>
+                <itemizedlist>
+                    <listitem>
+                    <para>
+                        <emphasis>1 - successful</emphasis>
+                    </para>
+                    </listitem>
+                     
+                    <listitem>
+                    <para>
+                        <emphasis>-1 - failed, error logged</emphasis>
+                    </para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <example>
+		<title>cnxcc_set_max_time()</title>
+                <programlisting format="linespecific">
+...
+$var(customer)  = "john-doe-123-basic";
+
+if (!cnxcc_terminate_all("$var(customer)")) {
+	xlog("Error terminating customer's calls");
+}
 ...
 		</programlisting>
             </example>
         </section>
     </section>
-    
+   
     <section>
 	<title>Exported RPC Commands</title>
 
