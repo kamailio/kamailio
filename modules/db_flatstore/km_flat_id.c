@@ -35,6 +35,8 @@
 struct flat_id* new_flat_id(char* dir, char* table)
 {
 	struct flat_id* ptr;
+	char* t;
+	int t_len;
 
 	if (!dir || !table) {
 		LM_ERR("invalid parameter(s)\n");
@@ -48,10 +50,20 @@ struct flat_id* new_flat_id(char* dir, char* table)
 	}
 	memset(ptr, 0, sizeof(struct flat_id));
 
+	/* alloc memory for the table name */
+	t_len = strlen(table);
+	t = (char*)pkg_malloc(t_len);
+	if (!t) {
+		LM_ERR("no pkg memory left\n");
+		return 0;
+	}
+	memset(t, 0, t_len);
+
 	ptr->dir.s = dir;
 	ptr->dir.len = strlen(dir);
-	ptr->table.s = table;
-	ptr->table.len = strlen(table);
+	memcpy(t, table, t_len);
+	ptr->table.s = t;
+	ptr->table.len = t_len;
 
 	return ptr;
 }
@@ -78,5 +90,7 @@ unsigned char cmp_flat_id(struct flat_id* id1, struct flat_id* id2)
 void free_flat_id(struct flat_id* id)
 {
 	if (!id) return;
+	if (id->table.s)
+		pkg_free(id->table.s);
 	pkg_free(id);
 }
