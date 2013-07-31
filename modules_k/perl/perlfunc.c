@@ -131,11 +131,12 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	ENTER;				/* everything created after here */
 	SAVETMPS;			/* ...is a temporary variable.   */
 	PUSHMARK(SP);			/* remember the stack pointer    */
-	XPUSHs(m);			/* Our reference to the stack... */
 
 	m = sv_newmortal();
 	sv_setref_pv(m, "OpenSER::Message", (void *)_msg);
 	SvREADONLY_on(SvRV(m));
+
+	XPUSHs(m);			/* Our reference to the stack... */
 
 	if (mystr)
 		XPUSHs(sv_2mortal(newSVpv(mystr, strlen(mystr))));
