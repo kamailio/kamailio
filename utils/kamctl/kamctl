@@ -992,6 +992,24 @@ db_ops() {
 			QUERY="select * FROM $1\\G;"
 			$DBROCMD "$QUERY"
 			;;
+		smatch)
+			shift
+			if [ $# -ne 3 ] ; then
+				merr "missing parameters"
+				exit 1
+			fi
+			QUERY="SELECT * FROM $1 WHERE $2='$3'\\G;"
+			$DBROCMD "$QUERY"
+			;;
+		nmatch)
+			shift
+			if [ $# -ne 3 ] ; then
+				merr "missing parameters"
+				exit 1
+			fi
+			QUERY="SELECT * FROM $1 WHERE $2=$3\\G;"
+			$DBROCMD "$QUERY"
+			;;
 		*)
 			usage_db_ops
 			exit 1

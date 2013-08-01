@@ -61,6 +61,10 @@ cat <<EOF
                                        \$id variable
  db show <table> ..................... display table content
  db showg <table> .................... display formatted table content
+ db smatch <table> <key> <value>...... display record from table that has
+           ........................... column key equal to value as string
+ db nmatch <table> <key> <value>...... display record from table that has
+           ........................... column key equal to value as non-string
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_db_ops"
