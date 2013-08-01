@@ -52,9 +52,10 @@ struct flat_id* new_flat_id(char* dir, char* table)
 
 	/* alloc memory for the table name */
 	t_len = strlen(table);
-	t = (char*)pkg_malloc(t_len);
+	t = (char*)pkg_malloc(t_len+1);
 	if (!t) {
 		LM_ERR("no pkg memory left\n");
+		pkg_free(ptr);
 		return 0;
 	}
 	memset(t, 0, t_len);
@@ -62,6 +63,7 @@ struct flat_id* new_flat_id(char* dir, char* table)
 	ptr->dir.s = dir;
 	ptr->dir.len = strlen(dir);
 	memcpy(t, table, t_len);
+	t[t_len] = '\0';
 	ptr->table.s = t;
 	ptr->table.len = t_len;
 
