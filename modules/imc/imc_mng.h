@@ -37,11 +37,11 @@
 #include "../../str.h"
 #include "../../parser/parse_from.h"
 
-#define IMC_MEMBER_OWNER	1<<0
-#define IMC_MEMBER_ADMIN	1<<1
-#define IMC_MEMBER_INVITED	1<<2
-#define IMC_MEMBER_DELETED  1<<3
-#define IMC_MEMBER_SKIP     1<<4
+#define IMC_MEMBER_OWNER	(1<<0)
+#define IMC_MEMBER_ADMIN	(1<<1)
+#define IMC_MEMBER_INVITED	(1<<2)
+#define IMC_MEMBER_DELETED  (1<<3)
+#define IMC_MEMBER_SKIP     (1<<4)
 
 typedef struct _imc_member
 {
@@ -54,8 +54,8 @@ typedef struct _imc_member
 	struct _imc_member * prev;
 } imc_member_t, *imc_member_p;
 
-#define IMC_ROOM_PRIV	1<<0
-#define IMC_ROOM_DELETED 1<<1
+#define IMC_ROOM_PRIV		(1<<0)
+#define IMC_ROOM_DELETED	(1<<1)
 typedef struct del_member
 {
 	str room_name;
