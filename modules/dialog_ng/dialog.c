@@ -321,6 +321,7 @@ int load_dlg(struct dlg_binds *dlgb) {
     dlgb->set_dlg_var = api_set_dlg_variable;
     dlgb->get_dlg_var = api_get_dlg_variable;
     dlgb->terminate_dlg = w_api_terminate_dlg;
+    dlgb->lookup_terminate_dlg = w_api_lookup_terminate_dlg;
     dlgb->get_dlg_expires = api_get_dlg_expires;
     dlgb->get_dlg = dlg_get_msg_dialog;
 

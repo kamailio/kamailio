@@ -200,6 +200,35 @@
                 </listitem>
             </itemizedlist>
         </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">lookup_terminate_dlg (unsigned int h_entry, unsigned int h_id, hdrs)</function>
+            </title>
+            <para>
+		Terminate a Dialog identified by h_entry and h_id (similar to dlg_end_dlg command via XMLRPC).
+            </para>
+            <para>Meaning of parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>unsigned int h_entry</emphasis> - Number of the table, where to find the dialog
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>unsigned int h_id</emphasis> - Number of the entry in the table, where to find the dialog
+			terminate.
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>str* hdrs</emphasis> - string containg extra headers (full format) 
+			to be added to the BYE requests of the dialog.
+                    </para>
+                </listitem>
+            </itemizedlist>
+        </section>
         
         <section>
             <title>

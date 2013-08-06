@@ -53,6 +53,7 @@ int free_tm_dlg(dlg_t *td);
 int dlg_bye(struct dlg_cell *dlg, str *hdrs, int side);
 int dlg_bye_all(struct dlg_cell *dlg, str *hdrs);
 int w_api_terminate_dlg(str *call_id, str *from_tag, str *to_tag, str *hdrs, str* reason);
+int w_api_lookup_terminate_dlg(unsigned int h_entry, unsigned int h_id, str *hdrs);
 int dlg_terminate(struct dlg_cell *dlg, struct sip_msg* msg, str *reason, int side, str *extra_headers);
 
 #endif

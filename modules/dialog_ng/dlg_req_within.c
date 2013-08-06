@@ -519,3 +519,21 @@ int dlg_bye_all(struct dlg_cell *dlg, str *hdrs) {
 
 }
 
+
+/* Wrapper for terminating dialog from API - from other modules */
+int w_api_lookup_terminate_dlg(unsigned int h_entry, unsigned int h_id, str *hdrs) {
+    struct dlg_cell *dlg;
+
+    dlg = lookup_dlg(h_entry, h_id); //increments ref count!
+
+    if (!dlg) {
+        LM_ERR("Asked to tear down non existent dialog\n");
+        return -1;
+    }
+
+    unref_dlg(dlg, 1);
+
+    return dlg_terminate(dlg, NULL, NULL/*reason*/, 2, hdrs);
+
+}
+

@@ -27,7 +27,7 @@
                 <firstname>Carsten</firstname>
                 <surname>Bock</surname>
                 <affiliation>
-                    <orgname>ng-voice.com</orgname>
+                    <orgname>ng-voice GmbH</orgname>
                 </affiliation>
                 <address>
                     <email>carsten@ng-voice.com</email>
@@ -88,7 +88,7 @@
             <holder>Voice Sistem SRL</holder>
         </copyright>
         <copyright>
-            <year>2011</year>
+            <year>2011-2013</year>
             <holder>Carsten Bock, http://www.ng-voice.com</holder>
         </copyright>
     </bookinfo>
