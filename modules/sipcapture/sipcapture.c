@@ -573,11 +573,6 @@ void * capture_mode_init(str *name, str * params) {
 		goto error;
 	}
 	memcpy(n->name.s, name->s, n->name.len);
-	n->db_con = (db1_con_t *)pkg_malloc(sizeof(db1_con_t));
-	if (!n->db_con){
-		LM_ERR("no more pkg memory\n");
-		goto error;
-	}
 	n->table_names = (str *)pkg_malloc(sizeof(str));
 	if (!n->table_names){
 		LM_ERR("no more pkg memory\n");
@@ -598,9 +593,6 @@ void * capture_mode_init(str *name, str * params) {
 error:
 	if (n->name.s){
 		pkg_free(n->name.s);
-	}
-	if (n->db_con){
-		pkg_free(n->db_con);
 	}
 	if (n->table_names){
 		pkg_free(n->table_names);
@@ -1073,7 +1065,6 @@ static void destroy(void)
 		}
 		if (c->db_con){
 			c->db_funcs.close(c->db_con);
-			pkg_free(c->db_con);
 		}
 		if (c->table_names){
 			pkg_free(c->table_names);
@@ -1696,9 +1687,9 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
         
 #ifdef STATISTICS
 	if(msg->first_line.type==SIP_REPLY) {
-		sco.stat = cm_data->sipcapture_rpl;
+		sco.stat = (cm_data)?cm_data->sipcapture_rpl:capture_def->sipcapture_rpl;
 	} else {
-		sco.stat = cm_data->sipcapture_req;
+		sco.stat = (cm_data)?cm_data->sipcapture_req:capture_def->sipcapture_req;
 	}
 #endif
 	//LM_DBG("DONE");
