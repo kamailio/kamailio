@@ -1,3 +1,309 @@
+===================== 2013-08-12 Version 3.3.5 Released =====================
+
+===================== Changes Since Version 3.3.4 ===========================
+
+commit b68c8e9a5b9f6dc3538c97e78f4779a77550a39e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 12 16:51:39 2013 +0200
+
+    Makefile.defs: version set to 3.3.5
+
+commit f2b89129941c93ffae99c2d2b35990333b339eb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 31 13:51:34 2013 +0200
+
+    perl: push the sip msg structure to perl after initializing it
+    
+    - reported by David Cunningham
+    - backport from amster commit 341f810dca0cc0596e22f2ac1bca86de0b8d142d
+
+commit fe571b1cc75132994fb94879e294dfc79c2e2787
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 25 11:47:12 2013 +0200
+
+    perl: move initialization of SIP message var after initialization of temporary environment
+    
+    - upon a report by David Cunningham of a leak in operating system
+      memory
+    - backport from master commit 6ff74701652a11497bd82ee3ba2ac7547d1ce666
+
+commit 211ef44012b744f05db1ff17cf23f824727ee6da
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 12 00:44:51 2013 +0200
+
+    core: avoid doing dns srv again after naptr function that includes srv lookup
+    
+    (cherry picked from commit 80935f9e8bbe20e5c320828183999b5d395ec34c)
+
+commit dabdfd48f3961d10d83c296066c04f30d4d2e303
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jul 11 16:13:09 2013 +0200
+
+    modules/uac: use the proper parameter name on error message. (Closes: FS#239)
+
+commit 8e98fd0a708f96c98b942b1fcfa77a5b6e45496d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 15 22:45:18 2013 +0200
+
+    pv: clone result of several string transformations
+    
+    - it is safer for assigning back to the same variable on which the
+      transformation was applied
+    - reported by Martin Mikkelsen
+    (cherry picked from commit fe7e4a5152674aa9c81c09dd2fc9938d9e9e762e)
+    
+    Conflicts:
+    	modules_k/pv/pv_trans.c
+
+commit cd97c66880bc1597d64dd7e075428fcc25a537ee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 26 16:14:51 2013 +0200
+
+    topoh: safety check for SIP messages
+    
+    - received callback can be executed for non-sip messages
+    - reported by Julia
+    (cherry picked from commit 352a7dccf2570af857d7e2e50fed600c4762278d)
+    (cherry picked from commit 533f2238d9d14ed8ef0a367ce574aef8052c0452)
+
+commit 1c0dbfdc4e2288896b7c533dfbc3275afb910869
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Apr 24 22:01:59 2013 +0100
+
+    modules/presence_xml: fixed issue with parsing some pres-rules documents
+    
+    - pres-rules that contain external links in a <conditions /> node don't
+      have to have <identity /> nodes in the <conditions /> node.
+    - Kamailio returns an error when it finds a <conditions /> node with
+      no <identity /> node inside it.
+    - Kamailio doesn't support external links, but it should skip over
+      the <conditions /> nodes that contain them rather than return
+      an error as later <conditions /> nodes may contain entries it can
+      work with.
+    (cherry picked from commit ac99219b0a850e0305eaf661b028536cfc28e2cb)
+
+commit bcc0888bea5b5e0d105de7e5ebcedc8e1b8836ae
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Fri Apr 19 11:04:39 2013 +0200
+
+    rr: use port.len to check for buffer overflow instead of max port len
+    
+        - reported by Kevin Wojtysiak
+        (from commit 28a8b87885e373bee8cc81985277ae718973fdfd)
+
+commit 0e9eafc25ca3240f690469116cee8ff3708eeee7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 9 00:18:35 2013 +0200
+
+    parser: safety check for max port length in URI
+    
+    - can't be longer than 5, a port being 16b value
+    - reported by Kevin Wojtysiak
+    (cherry picked from commit 13fd48f89555f5421e8285669e303bcefe44f149)
+
+commit a3a61d084fa03206cf447f6bd9ae9c8c3d81c8c6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 10 23:53:26 2013 +0100
+
+    core: try to detect ipv6 addresses only when USE_IPV6 is used
+    
+    - reported by Juha Heinanen
+    (cherry picked from commit b035aa9f2cc19d387b1b8f33a7888ffee27a4138)
+
+commit 38556ad62e91467e563df2b7c5a6365297359a61
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Tue Mar 19 15:32:25 2013 +0100
+
+    rtpproxy: fix spelling error in docs, reported from Victor V. Kustov, coyote at bks dot tv
+    (cherry picked from commit a0b01f77de163cf7ea9d71d5293a1bfa20d31fa6)
+
+commit 04e4eb6f67df41bdac3ff62a45f7b9266dac43b5
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Mar 5 15:55:11 2013 +0000
+
+    pkg/kamailio/(centos|fedora): updated ver in .spec
+
+commit f8c8f281e53d8dc2f94c2db4155bbb147e67b15e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 18:19:34 2013 +0100
+
+    ChangeLog: updated for release of v3.3.4
+
+commit be7cd45df003462a74e5cc1e0ca092dbfc0a6617
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 18:16:12 2013 +0100
+
+    Makefile.defs: version set to 3.3.4
+
+commit 8f9d90abddb19fe7fe97ee42d2cf653dfaa4b7e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 18:15:51 2013 +0100
+
+    pkg: version set to 3.3.4 in deb specs
+
+commit b923fb0385dd86fd77edda524de0456a670b648b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 18:12:27 2013 +0100
+
+    pkg: version set to 3.3.4 for rpm specs
+
+commit fdf285621eee4f5c78def8ca824a9f8d53dd286b
+Author: Konstantin Mosesov <ez@voipgroup.org.ua>
+Date:   Mon Feb 25 15:35:19 2013 +0200
+
+    app_python: Bugfix for rewrite_ruri (backport from 4.x)
+    
+    *) Fixed a bug in msg_rewrite_ruri discovered by "V Tone" <vtone001@gmail.com>.
+    *) Removed 'python exception' when do_action returns error. Reason: it is not an exception.
+    *) Removed abort() if first_line type is invalid.
+
+commit bb01d3161f45e071ff0035968d91dd007b7207c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 14:04:37 2013 +0100
+
+    kamailio.cfg: fixed typos to speeddial
+    
+    - backport of 0fd954bc6a8f94ac5e8087f6b8abdba372505c6e
+
+commit 3c8ed67cffe5ea1a73cd6f8f1c35be24cade46cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 21 10:40:07 2013 +0100
+
+    core: dns - prevent queries for IPv4/6 address literals
+    
+    - prevent A queries for IPv6 address literals or AAAA queries for IPv4
+      address literals
+    - patch by Simon Perreault
+    (cherry picked from commit 9e6f0268097d81c0e06c7fe33599d0763ed38179)
+
+commit b4861e720ba432addd5c197c9994181168d292c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 11 23:40:53 2013 +0100
+
+    msrp: return proper value for $msrp(code)
+    
+    - internally there is an offset of 10000 to the value in the msrp reply
+    - reported by Peter Dunkley
+    (cherry picked from commit 1690eafbb599842f0507ad41c1590fcbba8c7630)
+
+commit bc157c710d740715e78a26ac7299b2e6bb616cae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 13:58:55 2013 +0100
+
+    msilo: safety check for freeing tmp_extra_headers
+    
+    - it can be a static empty buffer
+    - reported by Stoyan Mihaylov
+    - backport of 23b84739a72c5cca1fd397fbe1a7468a621cc2e6
+
+commit 5e26e688af8967fdcb4daf218432e8d569eeade6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 13:15:22 2013 +0100
+
+    pua_reginfo: fix setting lengths of contact attributes
+    
+    - fix also for warning from FS#255 reported by Ovidiu Sas
+    - backport from f76bd09d4800ea63552c11002d7f6f72569e78ed
+
+commit 2475a1beb3f9feb47dfa742c186baa329cb81241
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 13:10:59 2013 +0100
+
+    modules/sqlops: Check if pv_spec is available before trying to use it.
+    
+    Instead of segfaulting when the script writer has not specified enough PV
+    specs to hold all the query's result columns, bail out with an error message.
+    - backport of a21750ff6fcf87d8e3f54597bdd3f1171846e6cb
+
+commit 8d93eea7c92b797caae8ce9817e90ecb7d9e3d31
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 25 11:38:38 2013 +0100
+
+    core: end simple pv name (e.g., $xy) at end of line
+    
+    - cfg parser was throwing error if last token in a line was $xy as pv
+      with \n was not found
+    (cherry picked from commit d2d6b4b932c7df6e6620a256692be5ef049356a3)
+
+commit 7fab57ff91fc395c1450503706b3f734fb9473c3
+Author: Richard Brady <rnbrady@gmail.com>
+Date:   Tue Jan 22 17:19:31 2013 +0100
+
+    json: proper handling of empty values for json documents
+    (cherry picked from commit 15e1ae6720136a698326a0b53f6db8eef73e3e5a)
+
+commit 08b5506618b1b4e590c55e89eea7bd2f0abcd796
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 13:03:34 2013 +0100
+
+    siputils: fix decode2format fuction to handle ; in userpart
+    
+    - backported from ff22a1cbc2b817d63611b3da967d8245e11cb84c
+
+commit 514f6cc66e5220779188aad15f3b3eeeace7aabf
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Jan 20 14:18:55 2013 +0000
+
+    core: fixed bug in PV caching that broke the use of the $$ symbol
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit c059041a71a1b7175243c366316108ce370fffa7)
+
+commit a1502e5ca1470276ca6d7c82956fee9a5390348b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 16 22:37:08 2013 +0100
+
+    dialog: fix for is_in_profile()
+    
+    - function was broken, reported by Klaus Darilion
+    (cherry picked from commit 83eafc8d8f767f4705d5f76ad0ffd4349a06c927)
+
+commit 3e497b15bbcc2587736ae0f817deec1d913b26c0
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Fri Jan 18 10:21:50 2013 -0500
+
+    tmrec: fix example given in docs
+
+commit b1398b2faa5a01b652a8c265b93c4846e35f97d9
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Fri Jan 11 11:07:45 2013 +0200
+
+    dialog: fix bug when detect_spirals enabled
+    
+    If detect_spirals enabled and the caller sent an Invite which received a
+    negative response and then immediately sent another Invite with the
+    same callid and tag, the module did not create a dialog record for the
+    second Invite. It wrongly concluded that the Invite is spiraled. This
+    resulted in missing CDR for that call.
+    Behavior observed if the first Invite has a small Session-Timer interval
+    and receives a 422 reply. When the phone sent the second Invite with a
+    larger Session-Timer, which could have been successful, it was not recorded
+    by the dialog module.
+    (cherry picked from commit 5a78a8b8ec104550a37d8e2ae9005bf87d21e00f)
+
+commit a650507c5e9c7abb1ebdf8f60768a9fbdd23c189
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Jan 9 12:34:27 2013 -0500
+
+    pv(k): Remove read-only empty strings that might be attempted to be written to
+
+commit 6dda5c447f656c99cc84956b161cc9c977b06dd3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 6 15:24:39 2013 +0100
+
+    dialog: fixed ka_timer linking
+    
+    - patch by Rinor Hoxha
+    (cherry picked from commit ddcef074088df261ce3fb98adfbb1b76b73c30a6)
+
+commit 76ea03ceb485f09d1ba1b9091e95ffdeba3616df
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Dec 19 01:48:17 2012 +0000
+
+    pkg/kamailio/fedora/17: Updated boxgrinder appliance
+    (cherry picked from commit 70b3ea024d9eb42f974b4de37a555bcb384405e9)
+
+
 ===================== 2013-02-25 Version 3.3.4 Released =====================
 
 ===================== Changes Since Version 3.3.3 ===========================
