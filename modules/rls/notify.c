@@ -1073,6 +1073,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 			else
 			{
 				LM_ERR("unable to parse URI for <resource-list/>\n");
+				xmlFree(uri.s);
 				return -1;
 			}
 		}
