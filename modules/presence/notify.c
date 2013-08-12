@@ -2667,9 +2667,6 @@ int process_dialogs(int round, int presence_winfo)
 	int updated = 0;
 	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
-	if (++subset > (pres_waitn_time * pres_notifier_poll_rate) -1)
-		subset = 0;
-
 	query_cols[n_query_cols] = &str_updated_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
@@ -2999,6 +2996,9 @@ void pres_timer_send_notify(unsigned int ticks, void *param)
 	int process_num = *((int *) param);
 	int round = subset + (pres_waitn_time * pres_notifier_poll_rate
 				* process_num);
+
+	if (++subset > (pres_waitn_time * pres_notifier_poll_rate) -1)
+		subset = 0;
 
 	if (process_dialogs(round, 0) < 0)
 	{
