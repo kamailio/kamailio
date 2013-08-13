@@ -33,6 +33,7 @@
 #include "../../mod_fix.h"
 #include "../../parser/parse_param.h"
 #include "../../shm_init.h"
+#include "../../script_cb.h"
 
 #include "debugger_api.h"
 #include "debugger_config.h"
@@ -58,6 +59,7 @@ extern int _dbg_cfgtrace_facility;
 extern char *_dbg_cfgtrace_prefix;
 extern int _dbg_step_usleep;
 extern int _dbg_step_loops;
+extern int _dbg_reset_msgid;
 
 static char * _dbg_cfgtrace_facility_str = 0;
 static int _dbg_log_assign = 0;
@@ -86,6 +88,7 @@ static param_export_t params[]={
 	{"mod_hash_size",     INT_PARAM, &default_dbg_cfg.mod_hash_size},
 	{"mod_level_mode",    INT_PARAM, &default_dbg_cfg.mod_level_mode},
 	{"mod_level",         STR_PARAM|USE_FUNC_PARAM, (void*)dbg_mod_level_param},
+	{"reset_msgid",       INT_PARAM, &_dbg_reset_msgid},
 	{0, 0, 0}
 };
 
@@ -149,6 +152,15 @@ static int mod_init(void)
 		if(dbg_init_pvcache()!=0)
 		{
 			LM_ERR("failed to create pvcache\n");
+			return -1;
+		}
+	}
+	if(_dbg_reset_msgid==1)
+	{
+		unsigned int ALL = REQUEST_CB+FAILURE_CB+ONREPLY_CB
+		  +BRANCH_CB+ONSEND_CB+ERROR_CB+LOCAL_CB+EVENT_CB+BRANCH_FAILURE_CB;
+		if (register_script_cb(dbg_msgid_filter, PRE_SCRIPT_CB|ALL, 0) != 0) {
+			LM_ERR("could not insert callback");
 			return -1;
 		}
 	}

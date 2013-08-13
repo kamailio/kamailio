@@ -40,6 +40,16 @@ void dbg_enable_mod_levels(void);
 int dbg_init_pvcache(void);
 void dbg_enable_log_assign(void);
 
+/*!
+ * \brief Callback function that checks if reset_msgid is set
+ *  and modifies msg->id if necessary.
+ * \param msg SIP message
+ * \param flags unused
+ * \param bar unused
+ * \return 1 on success, -1 on failure
+ */
+int dbg_msgid_filter(struct sip_msg *msg, unsigned int flags, void *bar);
+
 #define DBG_DP_NULL			1
 #define DBG_DP_AVP			2
 #define DBG_DP_SCRIPTVAR	4

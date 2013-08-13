@@ -415,6 +415,27 @@ dbg_pv_dump(30, "L_DBG");
 	    </example>
 	</section>
 
+	<section>
+	    <title><varname>reset_msgid</varname> (int)</title>
+	    <para>
+		Used to enable or disable the ability to reset the msgid ($mi)
+		through the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> - feature disabled.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>reset_msgid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "reset_msgid", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
     </section>
 	
 	<section>
@@ -572,6 +593,29 @@ dbg_pv_dump(30, "L_DBG");
         <programlisting  format="linespecific">
 		dbg.mod_level core 3
 		dbg.mod_level tm 3
+		</programlisting>
+    </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dbg.reset_msgid</function>
+		</title>
+		<para>
+			Resets the message sequence ($mi). Internally there is no real change.
+			This can be useful for unit test cases in order to be able to replicate
+			exactly the same kamailio output.
+
+			You need to set the debugger parameter reset_msgid to 1 to activate this
+			functionallity.
+		</para>
+		<para>
+		Name: <emphasis>dbg.reset_msgid</emphasis>
+		</para>
+		<para>
+		Examples of use with &sercmd;:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.reset_msgid
 		</programlisting>
     </section>
 

@@ -180,6 +180,11 @@ int _dbg_step_usleep = 100000;
 int _dbg_step_loops = 200;
 
 /**
+ * disabled by default
+ */
+int _dbg_reset_msgid = 0;
+
+/**
  *
  */
 typedef struct _dbg_cmd
@@ -199,6 +204,9 @@ typedef struct _dbg_pid
 	unsigned int state;
 	dbg_cmd_t in;
 	dbg_cmd_t out;
+	gen_lock_t *lock;
+	unsigned int reset_msgid; /* flag to reset the id */
+	unsigned int msgid_base; /* real id since the reset */
 } dbg_pid_t;
 
 /**
@@ -226,6 +234,48 @@ typedef struct _dbg_bp
  *
  */
 static dbg_bp_t *_dbg_bp_list = NULL;
+
+/* defined later */
+int dbg_get_pid_index(unsigned int pid);
+
+/*!
+ * \brief Callback function that checks if reset_msgid is set
+ *  and modifies msg->id if necessary.
+ * \param msg SIP message
+ * \param flags unused
+ * \param bar unused
+ * \return 1 on success, -1 on failure
+ */
+int dbg_msgid_filter(struct sip_msg *msg, unsigned int flags, void *bar)
+{
+	unsigned int process_no = my_pid();
+	int indx = dbg_get_pid_index(process_no);
+	unsigned int msgid_base = 0;
+	unsigned int msgid_new = 0;
+	if(indx<0) return -1;
+	LM_DBG("process_no:%d indx:%d\n", process_no, indx);
+	lock_get(_dbg_pid_list[indx].lock);
+	if(_dbg_pid_list[indx].reset_msgid==1)
+	{
+		LM_DBG("reset_msgid! msgid_base:%d\n", msg->id);
+		_dbg_pid_list[indx].reset_msgid = 0;
+		_dbg_pid_list[indx].msgid_base = msg->id - 1;
+	}
+	msgid_base = _dbg_pid_list[indx].msgid_base;
+	lock_release(_dbg_pid_list[indx].lock);
+	msgid_new = msg->id - msgid_base;
+	LM_DBG("msg->id:%d msgid_base:%d -> %d\n", msg->id, msgid_base, msgid_new);
+	if(msgid_new>0)
+	{
+		msg->id = msgid_new;
+		return 1;
+	}
+	else
+	{
+		LM_WARN("msgid_new<=0??\n");
+		return -1;
+	}
+}
 
 /**
  * callback executed for each cfg action
@@ -497,6 +547,22 @@ int dbg_init_mypid(void)
 		_dbg_pid_list[process_no].set |= DBG_ABKPOINT_ON;
 	if(_dbg_cfgtrace==1)
 		_dbg_pid_list[process_no].set |= DBG_CFGTRACE_ON;
+	if(_dbg_reset_msgid==1)
+	{
+		LM_DBG("[%d] create locks\n", process_no);
+		_dbg_pid_list[process_no].lock = lock_alloc();
+		if(_dbg_pid_list[process_no].lock==NULL)
+		{
+			LM_ERR("cannot allocate the lock\n");
+			return -1;
+		}
+		if(lock_init(_dbg_pid_list[process_no].lock)==NULL)
+		{
+			LM_ERR("cannot init the lock\n");
+			lock_dealloc(_dbg_pid_list[process_no].lock);
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -879,11 +945,45 @@ static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
 /**
  *
  */
+static const char* dbg_rpc_reset_msgid_doc[2] = {
+	"Reset msgid on all process",
+	0
+};
+
+static void dbg_rpc_reset_msgid(rpc_t* rpc, void* ctx){
+	int i;
+	if (_dbg_reset_msgid==0)
+	{
+		rpc->fault(ctx, 500, "reset_msgid is 0. Set it to 1 to enable.");
+		return;
+	}
+	if(_dbg_pid_list==NULL)
+	{
+		rpc->fault(ctx, 500, "_dbg_pid_list is NULL");
+		return;
+	}
+	LM_DBG("set reset_msgid\n");
+	for(i=0; i<_dbg_pid_no; i++)
+	{
+		if (_dbg_pid_list[i].lock!=NULL)
+		{
+			lock_get(_dbg_pid_list[i].lock);
+			_dbg_pid_list[i].reset_msgid = 1;
+			lock_release(_dbg_pid_list[i].lock);
+		}
+	}
+	rpc->add(ctx, "s", "200 ok");
+}
+
+/**
+ *
+ */
 rpc_export_t dbg_rpc[] = {
 	{"dbg.bp",        dbg_rpc_bp,        dbg_rpc_bp_doc,        0},
 	{"dbg.ls",        dbg_rpc_list,      dbg_rpc_list_doc,      0},
 	{"dbg.trace",     dbg_rpc_trace,     dbg_rpc_trace_doc,     0},
 	{"dbg.mod_level", dbg_rpc_mod_level, dbg_rpc_mod_level_doc, 0},
+	{"dbg.reset_msgid", dbg_rpc_reset_msgid, dbg_rpc_reset_msgid_doc, 0},
 	{0, 0, 0, 0}
 };
 
