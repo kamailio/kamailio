@@ -93,6 +93,11 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 {
 	ucontact_t *c;
 
+	if(unlikely(_ci->ruid.len<=0)) {
+		LM_ERR("no ruid for aor: %.*s\n", _aor->len, ZSW(_aor->s));
+		return 0;
+	}
+
 	c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
 	if (!c) {
 		LM_ERR("no more shm memory\n");
@@ -464,6 +469,11 @@ int db_insert_ucontact(ucontact_t* _c)
 	
 	if (_c->flags & FL_MEM) {
 		return 0;
+	}
+	if(unlikely(_c->ruid.len<=0)) {
+		LM_ERR("invalid ruid for aor: %.*s\n",
+				_c->aor->len, ZSW(_c->aor->s));
+		return -1;
 	}
 
 	keys[0] = &user_col;
