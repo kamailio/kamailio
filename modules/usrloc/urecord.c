@@ -333,7 +333,9 @@ static inline void wb_timer(urecord_t* _r)
 			/* Should we remove the contact from the database ? */
 			if (st_expired_ucontact(t) == 1) {
 				if (db_delete_ucontact(t) < 0) {
-					LM_ERR("failed to delete contact from the database\n");
+					LM_ERR("failed to delete contact from the database"
+							" (aor: %.*s)\n",
+							ptr->aor->len, ZSW(ptr->aor->s));
 				}
 			}
 
@@ -349,7 +351,9 @@ static inline void wb_timer(urecord_t* _r)
 
 			case 1: /* insert */
 				if (db_insert_ucontact(ptr) < 0) {
-					LM_ERR("inserting contact into database failed\n");
+					LM_ERR("inserting contact into database failed"
+							" (aor: %.*s)\n",
+							ptr->aor->len, ZSW(ptr->aor->s));
 					ptr->state = old_state;
 				}
 				break;
@@ -360,7 +364,8 @@ static inline void wb_timer(urecord_t* _r)
 				else
 					res = db_update_ucontact(ptr);
 				if (res < 0) {
-					LM_ERR("updating contact in db failed\n");
+					LM_ERR("updating contact in db failed (aor: %.*s)\n",
+							ptr->aor->len, ZSW(ptr->aor->s));
 					ptr->state = old_state;
 				}
 				break;
