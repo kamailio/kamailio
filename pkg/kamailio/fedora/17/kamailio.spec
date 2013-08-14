@@ -1,6 +1,6 @@
 %define name	kamailio
 %define ver	4.1.0
-%define rel	dev6%{dist}
+%define rel	dev7.1%{dist}
 
 
 
@@ -1155,6 +1155,8 @@ fi
 
 
 %changelog
+* Wed Aug 14 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev7
 * Mon May 27 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Created package for auth_ephemeral module
 * Sun May 26 2013 Peter Dunkley <peter@dunkley.me.uk>
