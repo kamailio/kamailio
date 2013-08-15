@@ -1,3 +1,340 @@
+===================== 2013-08-15 Version 4.0.3 Released =====================
+
+===================== Changes Since Version 4.0.2 ===========================
+
+commit a75a8a140e53ef8cee58d670b3954e7ac4cdb1b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 15 15:33:55 2013 +0200
+
+    Makefile.defs: version set to 4.0.3
+
+commit c67ac0b5ef5183947acf02d496eb5899dad0ba9b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 16 17:17:36 2013 +0200
+
+    topoh: safety check for To header
+    
+    - protection for the case when sanity module checks are not enabled
+    - reported in FS#303 by Michel de Weerd
+    
+    (cherry picked from commit 4f3d04d547c66a1b59398cf80e93974175141514)
+
+commit 2ffedf0e6bd3d9231988fbb70153bd6d72ae63ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 4 11:48:26 2013 +0200
+
+    tm: avoid double execution of response-in callbacks
+    
+    - double execution of response-in callbacks could happen when using tm
+      pvs inside core reply route, being done in transaction matching
+      function, which is executed again by tm reply received function
+    
+    (cherry picked from commit d4cef7f5e49105c65df9651a1ad086b035f8ffdb)
+
+commit 9e231ae7f6a80abf686448e1593195b9012c2e8c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 4 11:47:18 2013 +0200
+
+    core: new internam sip msg flag FL_TM_RPL_MATCHED
+    
+    - mark sip reply when matched first time by tm
+    - used to avoid double execution of response-in callbacks
+    
+    (cherry picked from commit 230a138991b25f7f9b07b4f9cbeffbdd6acef2e8)
+
+commit 58322807c275ce07be6a339dd5db2416f1905470
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 20 10:01:25 2013 +0200
+
+    Makefile: sercmd renamed to kamcmd in uninstall option
+    
+    (cherry picked from commit ab601ea9a1b2561c2eaa860583cdeed478b9ea8d)
+
+commit 17f2611e668af139399c21677d3503c0c5a6a860
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Aug 4 14:22:41 2013 +0200
+
+    imc: wrap bit shift defines in parenthesis
+    
+    - avoid priority conflicts when using the defines
+    - reported by Shankar
+    
+    (cherry picked from commit e6e0419a46c3e5127d07c95390931d10b2a01c3b)
+
+commit 75e20d79763094fccaacddf127699ce9f22e973a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 15 10:38:26 2013 +0200
+
+    pkg/rpm: version set to 4.0.3 in spec files
+
+commit 701b5faef517a65208907e771d2c3b7b015afb19
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 15 10:37:15 2013 +0200
+
+    pkg/deb: version set to 4.0.3 in spec files
+
+commit 3898507f56eefe5c9d8e72b37280e0d133f6e357
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 13 09:37:21 2013 +0200
+
+    usrloc: safety checks to catch empty ruid
+    
+    (cherry picked from commit b0e9132ccd1e8385b8b4faf72db806320d48e2f5)
+
+commit e59bb3303252c0b47f6027ae2b99a11096521154
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 13 09:19:02 2013 +0200
+
+    usrloc: more verbose log messages in case of failure to update db records
+    
+    (cherry picked from commit 66c8e730d59f9816f09573f5300e4463e5997876)
+
+commit d3be7fa1c47d12a1eb6e725729c6a0a2e481bc63
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Mon Aug 12 11:05:55 2013 +0100
+
+    rls: Fix memory leak in rls notify.c
+    
+    - xml is leaked in an error case
+
+commit a72a01a1cac4bd17e0aa91912ab158e73908d561
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Mon Aug 12 11:15:55 2013 +0100
+
+    presence: Iterate correctly around presence updates
+    
+    - timer_send_notify should increment the subset by one on each loop
+
+commit 6abd4b4d1eeea2c57a8bcfb071fadaca21efc20f
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Tue Jul 16 10:51:29 2013 +0100
+
+    outbound: Fix freeing null pointer in destroy function
+    
+    - Only appears in error cases, e.g. syntax check
+    (cherry picked from commit e88af0a02de79fac583c126f08d762f7ef3f1b01)
+
+commit d2f62dd1855faef35bea8eff932d250557868ae5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 1 15:58:59 2013 +0200
+
+    db_flatstore: free id pointer if no more space for table name
+    
+    - related to previus commit on this module
+    - keep table name null terminated
+    
+    (cherry picked from commit 6a981d3d922c914054d4c8dc7e672bb6a4ddb5f5)
+
+commit c50d559b4da94238a430c059dd02d74e63dd96fe
+Author: Federico Cabiddu <fcabiddu@orange-vallee.net>
+Date:   Mon Jul 29 07:59:34 2013 +0200
+
+    db_flatstore: fixup for new_flat_id function
+    
+    - locally copy table's name
+    
+    (cherry picked from commit 8fb0f711aaa611eac8b2776c7e5ae3c5e19243ac)
+
+commit 76b82480f74006d830afc9c9ae81ada25dbc7730
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 26 14:52:21 2013 +0200
+
+    uac_redirect: fixup for using acc table parameter
+    
+    - set reason parameter for acc function
+    - based on a patch by  Federico Cabiddu, FS#327
+    
+    (cherry picked from commit 3d33733f299dda595704108aef73a2912dc3069f)
+
+commit ece14d42fda4baefc4f0e8465faad17b678a6a4b
+Author: Federico Cabiddu <fcabiddu@orange-vallee.net>
+Date:   Mon Jul 29 07:59:13 2013 +0200
+
+    acc: acc_db_set_table_name fixup
+    
+    - add termination char to db_table_name_buf
+    
+    (cherry picked from commit 7ba6cbfcaf70cb546ea3a9f148a0f0b0bc38c16d)
+
+commit ea266beb3d678b36efeb82feeba6087df90d9f19
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 26 14:55:38 2013 +0200
+
+    acc: safety check for accounted values not to be NULL
+    
+    - based on a patch by  Federico Cabiddu, FS#327
+    
+    (cherry picked from commit fb3a5f7022ebd20fc516b5b8303a0274bda18258)
+
+commit 9f0a42dd31d765541c02d2b818dd52643589f59d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 2 23:32:37 2013 +0200
+
+    dialog: detect if no trasaction is created after config execution for new dialogs
+    
+    - release the dialog to avoid endless storage in state 1
+    
+    (cherry picked from commit fa0339b1906690f009786fc9ed92c73a8c9e6520)
+
+commit 369164c689950595b7e35c36a810ecd41aaa7a0a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 1 15:22:33 2013 +0200
+
+    dialog: increment cseq in early stage for PRACK and UPDATE
+    
+    - rework from a patch by Halina Nowak
+    
+    (cherry picked from commit 6cf3ab0ca6f38d1d2e60dbc644bb4d2fb563919a)
+
+commit 91f64af86eebde4a179a4d9cb6837994a587a967
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 1 14:51:03 2013 +0200
+
+    dialog: avoid realloc of memory for cseq when setting leg info
+    
+    - free already allocated structs when needed
+    - has part of a patch by Halina Nowak
+    
+    (cherry picked from commit 71d7dc6bc750406d510e0571e05da3966911cfea)
+
+commit 573096ad14c34364dad160bffd7e7ed5d007f5f6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 1 14:44:45 2013 +0200
+
+    dialog: fixed callee cseq reference
+    
+    - part of patch by Halina Nowak
+    
+    (cherry picked from commit ed6dbb0ca11206049bee9ab515ce071eb70e7b63)
+
+commit 3935fedf23f3bf2b6675182193cef6af3bbd903a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 31 12:22:12 2013 +0200
+
+    app_perl: push the sip msg structure to perl after initializing it
+    
+    - reported by David Cunningham
+    
+    (cherry picked from commit 341f810dca0cc0596e22f2ac1bca86de0b8d142d)
+
+commit 3438215263f20f63f0e69121113999f952334886
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Tue Jul 23 11:11:01 2013 +0200
+
+    modules/ims_registrar_scscf: safety check in async_cdp_callback
+    
+    (cherry-picked from commit 1aea13af9b3eea3788e90411bd94cb9e0b0c4ea3)
+
+commit 4471593e5f6e292d205bd84fb5912088bde32870
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 25 10:14:55 2013 +0200
+
+    app_perl: move initialization of SIP message var after initialization of temporary environment
+    
+    - upon a report by David Cunningham of a leak in operating system
+      memory
+    
+    (cherry picked from commit 6ff74701652a11497bd82ee3ba2ac7547d1ce666)
+
+commit 86864275e240be94d901fe21dde2472701e1669e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 17 20:19:28 2013 +0200
+
+    uac: restrict check of multiple from/to header changes to request route blocks
+    
+    - it can occur many times in due to branch route usage
+    - reported by Andrew Pogrebennyk, FS#323
+    
+    (cherry picked from commit d3a0a8b15af59846fdaee5d9ceae61484f1d7301)
+
+commit b7e890b309331a13eb92c5080d276036be5833ae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 17 00:04:06 2013 +0200
+
+    presence_dialoginfo: add schema to entity
+    
+    - patch by Pawel Sternal, FS#324
+    
+    (cherry picked from commit 716ffd2787a68734a21a1374c3dc6dd4783844bd)
+
+commit b87040d6839985ceb107e4a097df71afd8c69fa5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 16 21:43:42 2013 +0200
+
+    usrloc: fixed type for db_ops_parameter
+    
+    - reported by Alex Hermann
+
+commit fb9a6ff96355093baa59c4f0c5c8505cb7d29311
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 27 18:07:21 2013 +0300
+
+    modules/usrloc: fixed typo in db_ops_ruid param name
+    
+    (cherry picked from commit edebc03f65445f968accb58b5a761817aaee55e8)
+
+commit f8826df994a6baac9cfee219abafa3e1b82ee4f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 12 00:44:51 2013 +0200
+
+    core: avoid doing dns srv again after naptr function that includes srv lookup
+    
+    (cherry picked from commit 80935f9e8bbe20e5c320828183999b5d395ec34c)
+
+commit d821224ff33e7f7c43c6598482ab0870f728e763
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Jul 6 20:22:41 2013 +0200
+
+    modules/nathelper: remove natping_proceses limit
+    (cherry picked from commit edb00b0566595b509a7cdf9a1c7455ce6ee6c4c8)
+
+commit 3612981970e8002b3ab7f7d0324354e282205e2b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 11 14:36:02 2013 +0200
+
+    pipelimit: avoid double locking when changing pipe via rpc
+    
+    (cherry picked from commit 0c6fef5fdc2a586ebfa607d3b5344266c08ca996)
+
+commit 5e11ebf34bd525f02c7ff08b9520382c3aaf00f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 11 14:32:48 2013 +0200
+
+    pipelimit: avoid double locking when changing pipe via mi
+    
+    - reported by Krischan Udelhoven, FS#315
+    
+    (cherry picked from commit 04fd56dc1b84b70a04438ccbf719eb85177524ad)
+
+commit d8c3a23ad2a5c925b16d75f33fcb865f09d7f308
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 3 23:29:29 2013 +0200
+
+    uac_redirect: adapted previous backport to append_branch() prototype for v4.0
+
+commit 0227f5b61e1ea03e92a7fec9b177f602481fac84
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 3 23:23:40 2013 +0200
+
+    uac_redirect: fetch all contact headers in redirect replies
+    
+    - only first header was considered for redirect handling
+    - based on a report by Geoffrey Mina
+    - generate fake ruid (used as instance and user-agent) to satisfy the
+      requirements of t_load_contacts()/t_next_contacts()
+    
+    (cherry picked from commit c5081ad634742d88e56e4fcc097b756098119e4e)
+
+commit c4b51e9f51b4b2c4e908b4c4dc33b824021f1ca1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 17 11:00:29 2013 +0200
+
+    pipelimit: fixed typo in module parameter name
+    
+    - patch by Krischan Udelhoven
+    
+    (cherry picked from commit c5573dddc4c11898fb68365e9a311aff0f1690c8)
+
 ===================== 2013-06-12 Version 4.0.2 Released =====================
 
 ===================== Changes Since Version 4.0.1 ===========================
