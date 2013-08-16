@@ -443,10 +443,19 @@ int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsign
 	{
 		c = _d->table[i].first;
 		while(c) {
+			LM_DBG("Port %d (search %d), Proto %d (search %d), reg_state %s (search %s)\n",
+				c->received_port, _port, c->received_proto, _proto, 
+				reg_state_to_string(c->reg_state), reg_state_to_string(PCONTACT_REGISTERED)
+				);
 			// First check, if Proto and Port matches:
 			if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _port) && (c->received_proto == _proto)) {
+				LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
 				// Then check the length:
 				if (c->received_host.len == _host->len) {
+					LM_DBG("Received host %.*s (search %.*s)\n",
+						c->received_host.len, c->received_host.s,
+						_host->len, _host->s);
+
 					// Finally really compare the "received_host"
 					if (!memcmp(c->received_host.s, _host->s, _host->len)) {
 						*_c = c;
