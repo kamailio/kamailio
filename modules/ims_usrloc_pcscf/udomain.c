@@ -376,7 +376,7 @@ int update_pcontact(struct udomain* _d, struct pcontact_info* _ci, struct pconta
 		}
 	}
 
-	// update received info:
+	// update received info (if info is available):
 	if (_ci->received_host.len > 0) {
 		if (_c->received_host.s)
 			shm_free(_c->received_host.s);
