@@ -632,6 +632,10 @@ static const char* htable_list_doc[2] = {
 	"List all htables.",
 	0
 };
+static const char* htable_stats_doc[2] = {
+	"Statistics about htables.",
+	0
+};
 static const char* htable_reload_doc[2] = {
 	"Reload hash table.",
 	0
@@ -900,6 +904,60 @@ error:
 	return;
 }
 
+static void  htable_rpc_stats(rpc_t* rpc, void* c)
+{
+	ht_t *ht;
+	void* th;
+	unsigned int min;
+	unsigned int max;
+	unsigned int all;
+	unsigned int i;
+
+	ht = ht_get_root();
+	if(ht==NULL)
+	{
+		rpc->fault(c, 500, "No htables");
+		return;
+	}
+	while (ht != NULL)
+	{
+		/* add entry node */
+		if (rpc->add(c, "{", &th) < 0)
+		{
+			rpc->fault(c, 500, "Internal error creating structure rpc");
+			goto error;
+		}
+		all = 0;
+		max = 0;
+		min = 4294967295U;
+		for(i=0; i<ht->htsize; i++) {
+			lock_get(&ht->entries[i].lock);
+			if(ht->entries[i].esize<min)
+				min = ht->entries[i].esize;
+			if(ht->entries[i].esize>max)
+				max = ht->entries[i].esize;
+			all += ht->entries[i].esize;
+			lock_release(&ht->entries[i].lock);
+		}
+
+		if(rpc->struct_add(th, "Sddd",
+						"name", &ht->name,	/* str */
+						"slots", (int)ht->htsize,	/* uint */
+						"all", (int)all,	/* uint */
+						"min", (int)min,	/* uint */
+						"max", (int)max		/* uint */
+						) < 0) {
+			rpc->fault(c, 500, "Internal error creating rpc structure");
+			goto error;
+		}
+		ht = ht->next;
+	}
+
+error:
+	return;
+}
+
+
 /*! \brief RPC htable.reload command to reload content of a hash table */
 static void htable_rpc_reload(rpc_t* rpc, void* c)
 {
@@ -986,6 +1044,7 @@ rpc_export_t htable_rpc[] = {
 	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
 	{"htable.listTables", htable_rpc_list, htable_list_doc, 0},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
+	{"htable.stats", htable_rpc_stats, htable_stats_doc, 0},
 	{0, 0, 0, 0}
 };
 
