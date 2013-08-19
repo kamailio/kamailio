@@ -70,6 +70,7 @@ Alex Balashov
               7.5. htable.dump htable
               7.6. htable.reload htable
               7.7. htable.listTables
+              7.8. htable.stats
 
         8. Event routes
 
@@ -147,6 +148,7 @@ Chapter 1. Admin Guide
         7.5. htable.dump htable
         7.6. htable.reload htable
         7.7. htable.listTables
+        7.8. htable.stats
 
    8. Event routes
 
@@ -594,6 +596,7 @@ sht_unlock("ha=>test");
    7.5. htable.dump htable
    7.6. htable.reload htable
    7.7. htable.listTables
+   7.8. htable.stats
 
 7.1.  htable.get htable key
 
@@ -693,7 +696,7 @@ kamcmd htable.reload ipban
 
    Lists all defined tables
 
-   Name: dhtable.listTables
+   Name: htable.listTables
 
    Parameters:
      * None
@@ -701,6 +704,21 @@ kamcmd htable.reload ipban
    Example:
 ...
 kamcmd htable.listTables
+...
+
+7.8.  htable.stats
+
+   Get statistics for hash tables - name, number of slots, number of
+   items, max number of items per slot, min number of items per slot.
+
+   Name: htable.stats
+
+   Parameters:
+     * None
+
+   Example:
+...
+kamcmd htable.stats
 ...
 
 8. Event routes

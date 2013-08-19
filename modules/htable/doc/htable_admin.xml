@@ -891,7 +891,7 @@ kamcmd htable.reload ipban
 		Lists all defined tables
                 </para>
                 <para>
-                Name: <emphasis>dhtable.listTables</emphasis>
+                Name: <emphasis>htable.listTables</emphasis>
                 </para>
                 <para>Parameters:</para>
                 <itemizedlist>
@@ -905,6 +905,33 @@ kamcmd htable.reload ipban
 <programlisting  format="linespecific">
 ...
 kamcmd htable.listTables
+...
+</programlisting>
+	</section>
+    <section>
+          <title>
+                <function moreinfo="none">htable.stats</function>
+          </title>
+          <para>
+			  Get statistics for hash tables - name, number of slots,
+			  number of items, max number of items per slot, min number
+			  of items per slot.
+          </para>
+                <para>
+                Name: <emphasis>htable.stats</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>None</para>
+                        </listitem>
+
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+kamcmd htable.stats
 ...
 </programlisting>
 	</section>
