@@ -248,7 +248,7 @@ int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
 
 	if(size<=1)
 		ht->htsize = 8;
-	else if(size>14)
+	else if(size>31)
 		ht->htsize = 1<<14;
 	else ht->htsize = 1<<size;
 	ht->htid = htid;

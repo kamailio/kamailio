@@ -299,8 +299,8 @@ if(is_present_hf("Authorization"))
      * size - number specifying the size of hash table. Larger value means
        less collisions. The number of entries (aka slots or buckets) in
        the table is 2^size. The possible range for this value is from 2 to
-       14, smaller or larger values will be increased or decreased
-       respectivly.
+       31, smaller or larger values will be increased to 3 (8 slots) or
+       decreased to 14 (16384 slots).
      * autoexpire -time in seconds to delete an item from hash table if no
        update was done to it. If is missing or set to 0, the items won't
        expire.

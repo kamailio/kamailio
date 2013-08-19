@@ -236,8 +236,8 @@ if(is_present_hf("Authorization"))
 			<emphasis>size</emphasis> - number specifying the size of hash
 			table.  Larger value means less collisions. The number of entries
 			(aka slots or buckets) in the table is 2^size. The possible range
-			for this value is from 2 to 14, smaller or larger values will be
-			increased or decreased respectivly.
+			for this value is from 2 to 31, smaller or larger values will be
+			increased to 3 (8 slots) or decreased to 14 (16384 slots).
 		</para>
 		</listitem>
 		<listitem>
