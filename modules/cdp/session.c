@@ -116,10 +116,6 @@ void free_session(cdp_session_t *x)
 			case AUTH_SERVER_STATEFULL:
 				break;
 			case ACCT_CC_CLIENT:
-				if (x->u.generic_data) {
-					LM_ERR("free_session(): The session->u.generic_data should be freed and reset before dropping the session!"
-						"Possible memory leak!\n");
-				}
 				break;
 			default:
 				LM_ERR("free_session(): Unknown session type %d!\n",x->type);
@@ -415,7 +411,7 @@ void cdp_sessions_log()
 				case ACCT_CC_CLIENT:
 					LM_DBG(ANSI_GRAY"\tCCAcct State [%d] Charging Active [%c (%d)s] Reserved Units(valid=%ds) [%d] Generic [%p]\n",
 							x->u.cc_acc.state,
-							x->u.cc_acc.charging_start_time?'Y':'N',
+							(x->u.cc_acc.charging_start_time&&x->u.cc_acc.state!=ACC_CC_ST_DISCON)?'Y':'N',
 							x->u.cc_acc.charging_start_time?(int)((int)time(0) - (int)x->u.cc_acc.charging_start_time):-1,
 							x->u.cc_acc.reserved_units?(int)((int)x->u.cc_acc.last_reservation_request_time + x->u.cc_acc.reserved_units_validity_time) - (int)time(0):-1,
 							x->u.cc_acc.reserved_units,
@@ -441,8 +437,10 @@ int cdp_sessions_timer(time_t now, void* ptr)
 			switch (x->type){
 				case ACCT_CC_CLIENT:
 					if (x->u.cc_acc.type == ACC_CC_TYPE_SESSION) {
-						//check for old, stale sessions
-						if (time(0) > (x->u.cc_acc.discon_time + GRACE_DISCON_TIMEOUT)) {
+						//check for old, stale sessions, we need to do something more elegant
+						//here to ensure that if a CCR start record is sent and the client never sends anything
+						//else that we catch it and clean up the session from within CDP, calling all callbacks, etc
+						if ((time(0) > (x->u.cc_acc.discon_time + GRACE_DISCON_TIMEOUT)) && (x->u.cc_acc.state==ACC_CC_ST_DISCON)) {
 							cc_acc_client_stateful_sm_process(x, ACC_CC_EV_SESSION_STALE, 0);
 						}
 						//check reservation timers - again here we are assuming CC-Time applications
@@ -458,9 +456,12 @@ int cdp_sessions_timer(time_t now, void* ptr)
 							}
 
 						}
+						/* TODO: if reservation has expired we need to tear down the session. Ideally 
+						 * the client application (module) should do this but for completeness we should
+						 * put a failsafe here too.
+						 */
 					}
 					break;
-
 				case AUTH_CLIENT_STATEFULL:
 					if (x->u.auth.timeout>=0 && x->u.auth.timeout<=now){
 						//Session timeout
@@ -753,7 +754,8 @@ AAASession* AAACreateCCAccSession(AAASessionCallback_f *cb, int is_session, void
 
 	s = cdp_new_cc_acc_session(id, is_session);
 	if (s) {
-		s->u.auth.generic_data = generic_data;
+		if (generic_data) 
+			s->u.auth.generic_data = generic_data;
 		s->cb = cb;
 		if (s->cb)
 			(s->cb)(ACC_CC_EV_SESSION_CREATED, s);
@@ -768,7 +770,7 @@ AAASession* AAACreateCCAccSession(AAASessionCallback_f *cb, int is_session, void
 int AAAStartChargingCCAccSession(AAASession *s)
 {
 	if (s->type != ACCT_CC_CLIENT && s->u.cc_acc.type != ACC_CC_TYPE_SESSION) {
-		LM_ERR("Can't start charing on a credit-control session that is not session based\n");
+		LM_ERR("Can't start charging on a credit-control session that is not session based\n");
 		return -1;
 	}
 

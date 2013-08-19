@@ -245,10 +245,9 @@ inline int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMes
 	}
 
 	if (s) {
-		if (s->cb)
-			(s->cb)(ACC_CC_EV_SESSION_TIMEOUT, s);
 		AAASessionsUnlock(s->hash);
 	}
+
 	return ret;
 }
 
