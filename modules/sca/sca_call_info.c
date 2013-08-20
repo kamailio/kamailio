@@ -1142,11 +1142,10 @@ done:
 }
 
     static int
-sca_call_info_insert_asserted_identity( sip_msg_t *msg, str *contact_uri,
-	struct to_body *tf )
+sca_call_info_insert_asserted_identity( sip_msg_t *msg, str *display,
+	int ua_type )
 {
     struct lump		*anchor;
-    sip_uri_t		c_uri;
     str			aor = STR_NULL;
     str			hdr = STR_NULL;
     int			len;
@@ -1158,22 +1157,17 @@ sca_call_info_insert_asserted_identity( sip_msg_t *msg, str *contact_uri,
 	goto done;
     }
     
-    if ( parse_uri( contact_uri->s, contact_uri->len, &c_uri ) < 0 ) {
-	LM_ERR( "insert_asserted_identity: parse_uri %.*s failed",
-		STR_FMT( contact_uri ));
-	return( -1 );
-    }
-    if ( sca_aor_create_from_info( &aor, c_uri.type, &c_uri.user,
-		&GET_TO_PURI( msg )->host, &GET_TO_PURI( msg )->port ) < 0 ) {
-	LM_ERR( "insert_asserted_identity: sca_aor_create_from_info failed" );
-	return( -1 );
+    if ( sca_create_canonical_aor_for_ua( msg, &aor, ua_type ) < 0 ) {
+	LM_ERR( "sca_call_info_insert_asserted_identity: failed to create "
+		"canonical AoR" );
+	goto done;
     }
 
 #define SCA_P_ASSERTED_IDENTITY_HDR_PREFIX	"P-Asserted-Identity: "
 #define SCA_P_ASSERTED_IDENTITY_HDR_PREFIX_LEN	strlen("P-Asserted-Identity: ")
 
     len = SCA_P_ASSERTED_IDENTITY_HDR_PREFIX_LEN;
-    len += tf->display.len;
+    len += display->len;
     /* +1 for space, +1 for <, + 1 for > */
     len += 1 + 1 + aor.len + 1 + CRLF_LEN;
 
@@ -1187,7 +1181,7 @@ sca_call_info_insert_asserted_identity( sip_msg_t *msg, str *contact_uri,
 		    SCA_P_ASSERTED_IDENTITY_HDR_PREFIX_LEN );
     hdr.len = SCA_P_ASSERTED_IDENTITY_HDR_PREFIX_LEN;
 
-    SCA_STR_APPEND( &hdr, &tf->display );
+    SCA_STR_APPEND( &hdr, display );
 
     *(hdr.s + hdr.len) = ' ';
     hdr.len++;
@@ -1246,7 +1240,8 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 	goto done;
     }
 
-    if ( sca_call_info_insert_asserted_identity( msg, contact_uri, to ) < 0 ) {
+    if ( sca_call_info_insert_asserted_identity( msg, &to->display,
+		SCA_AOR_TYPE_UAS ) < 0 ) {
 	LM_WARN( "sca_call_info_invite_reply_200_handler: failed to "
 		"add P-Asserted-Identity header to response from %.*s",
 		STR_FMT( contact_uri ));
