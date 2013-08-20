@@ -340,7 +340,7 @@ sca_aor_create_from_info( str *aor, uri_type type, str *user, str *domain,
 }
 
     int
-sca_create_canonical_aor( sip_msg_t *msg, str *c_aor )
+sca_create_canonical_aor_for_ua( sip_msg_t *msg, str *c_aor, int ua_opts )
 {
     struct to_body	*tf = NULL;
     sip_uri_t		c_uri;
@@ -353,7 +353,15 @@ sca_create_canonical_aor( sip_msg_t *msg, str *c_aor )
 
     memset( c_aor, 0, sizeof( str ));
 
-    if ( msg->first_line.type == SIP_REQUEST ) {
+    if (( ua_opts & SCA_AOR_TYPE_AUTO )) {
+	if ( msg->first_line.type == SIP_REQUEST ) {
+	    ua_opts = SCA_AOR_TYPE_UAC;
+	} else {
+	    ua_opts = SCA_AOR_TYPE_UAS;
+	}
+    }
+
+    if (( ua_opts & SCA_AOR_TYPE_UAC )) {
 	if ( sca_get_msg_from_header( msg, &tf ) < 0 ) {
 	    LM_ERR( "sca_create_canonical_aor: failed to get From header" );
 	    goto done;
@@ -408,6 +416,12 @@ sca_create_canonical_aor( sip_msg_t *msg, str *c_aor )
 
 done:
     return( rc );
+}
+
+    int
+sca_create_canonical_aor( sip_msg_t *msg, str *c_aor )
+{
+    return( sca_create_canonical_aor_for_ua( msg, c_aor, SCA_AOR_TYPE_AUTO ));
 }
 
 /* XXX this considers any held stream to mean the call is on hold. correct? */

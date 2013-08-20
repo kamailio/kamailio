@@ -26,6 +26,12 @@
 
 #include "sca_common.h"
 
+enum {
+    SCA_AOR_TYPE_AUTO = (1 << 0),
+    SCA_AOR_TYPE_UAC = (1 << 1),
+    SCA_AOR_TYPE_UAS = (1 << 2),
+};
+
 /* get method, regardless of whether message is a request or response */
 int	sca_get_msg_method( sip_msg_t * );
 
@@ -55,6 +61,7 @@ int	sca_uri_build_aor( str *, int, str *, str * );
 
 int	sca_aor_create_from_info( str *, uri_type, str *, str *, str * );
 
+int	sca_create_canonical_aor_for_ua( sip_msg_t *, str *, int );
 int	sca_create_canonical_aor( sip_msg_t *, str * );
 
 /* convenient call hold detection */
