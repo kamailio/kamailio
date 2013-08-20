@@ -27,7 +27,7 @@
 
 	<para>
 	This &kamailio; module is written as a light-weight module, there is no 
-	dialog managment as in <emphasis>Nathelper</emphasis>. The reason is that such an API
+	dialog management as in <emphasis>Nathelper</emphasis>. The reason is that such an API
 	should be provided by core or a specialized dialog manager module.
 	Because such module is not in git, session information may be stored 
 	in extra attributes of the <emphasis>avp_db</emphasis> module and

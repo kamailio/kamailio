@@ -255,7 +255,7 @@ int add_event(pres_ev_t* event)
 	}
 	EvList->ev_count++;
 	
-	LM_DBG("succesfully added event: %.*s - len= %d\n",ev->name.len,
+	LM_DBG("successfully added event: %.*s - len= %d\n",ev->name.len,
 			ev->name.s, ev->name.len);
 done:
 	free_event_params(parsed_event.params.list, PKG_MEM_TYPE);

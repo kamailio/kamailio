@@ -369,7 +369,7 @@ encode2format (struct sip_msg* msg, str* uri, struct uri_format *format)
 				format->rcv_proto=s_sctp;
 				break;
 			default:
-				BUG("unkown proto %d\n", msg->rcv.proto);
+				BUG("unknown proto %d\n", msg->rcv.proto);
 		}
 	}else{
 		format->rcv_proto.s=0;

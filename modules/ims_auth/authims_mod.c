@@ -110,7 +110,7 @@ str cxdx_forced_peer;
 /* fixed parameter storage */
 str scscf_name_str; /**< fixed name of the S-CSCF 							*/
 
-/* used mainly in testing - load balancing with SIPP where we dont want to worry about auth */
+/* used mainly in testing - load balancing with SIPP where we don't want to worry about auth */
 int ignore_failed_auth = 0;
 
 /*

@@ -634,7 +634,7 @@ int update_phtable(presentity_t* presentity, str pres_uri, str body)
 	if(presentity->event->get_rules_doc(&presentity->user, &presentity->domain,
 				&xcap_doc)< 0)
 	{
-		LM_ERR("failed to retreive xcap document\n");
+		LM_ERR("failed to retrieve xcap document\n");
 		ret= -1;
 		goto done;
 	}

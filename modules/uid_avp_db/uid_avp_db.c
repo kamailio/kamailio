@@ -285,7 +285,7 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
     uri_type_to_str(puri.type, &(load_uri_attrs_cmd->match[2].v.lstr));
 
 	if (db_exec(&res, load_uri_attrs_cmd) < 0) {
-		ERR("Error while quering database\n");
+		ERR("Error while querying database\n");
 		return -1;
     }
     
@@ -307,7 +307,7 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
 	}
 
 	if (db_exec(&res, load_user_attrs_cmd) < 0) {
-		ERR("Error while quering database\n");
+		ERR("Error while querying database\n");
 		return -1;
     }
     

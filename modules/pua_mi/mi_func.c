@@ -220,7 +220,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	publ.event= get_event_flag(&event);
 	if(publ.event< 0)
 	{
-		LM_ERR("unkown event\n");
+		LM_ERR("unknown event\n");
 		return init_mi_tree(400, "Unknown event", 13);
 	}
 	if(content_type.len!= 1)
@@ -461,7 +461,7 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	subs.event= get_event_flag(&event);
 	if(subs.event< 0)
 	{
-		LM_ERR("unkown event\n");
+		LM_ERR("unknown event\n");
 		return init_mi_tree(400, "Unknown event", 13);
 	}
 

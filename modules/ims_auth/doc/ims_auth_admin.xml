@@ -296,7 +296,7 @@ modparam("ims_auth", "add_authinfo_hdr", 0)
       <title><varname>ignore_failed_auth</varname> (integer)</title>
 
       <para>Ignore invalid passwords (only IMPI/IMPU is checked).</para>
-      <para>It should be used only for testing, e.g. load balancing with SIPP where we dont want to worry about auth.</para>
+      <para>It should be used only for testing, e.g. load balancing with SIPP where we don't want to worry about auth.</para>
 
       <para>Default value is <quote>0</quote> (don't ingnore the failed authentication).</para>
 

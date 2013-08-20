@@ -343,7 +343,7 @@ int ims_icscf_db_get_capabilities(scscf_capabilities *cap[],int cap_cnt)
 	}
 
 	if (res->n == 0) {
-		LM_DBG("DBG:ims_icscf_db_get_capabilities: No Capabilites found... not critical...\n");
+		LM_DBG("DBG:ims_icscf_db_get_capabilities: No Capabilities found... not critical...\n");
 		return 1;
 	}
 	else {

@@ -417,8 +417,8 @@ void diameter_peer_destroy()
 		lock_release(shutdownx_lock);
 	}
 
-	/* wait for all childs to clean up nicely (acceptor, receiver, timer, workers) */
-	LM_INFO("destroy_diameter_peer(): Terminating all childs...\n");
+	/* wait for all children to clean up nicely (acceptor, receiver, timer, workers) */
+	LM_INFO("destroy_diameter_peer(): Terminating all children...\n");
 	while(pid_list->tail){
 		pid = dp_last_pid();
 		if (pid<=0||pid==getpid()){

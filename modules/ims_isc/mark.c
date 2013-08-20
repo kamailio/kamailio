@@ -165,7 +165,7 @@ void isc_mark_get(str x, isc_mark *mark) {
 				}
 				break;
 			default:
-				LM_ERR("isc_mark_get: unkown parameter found: %c !\n", x.s[i]);
+				LM_ERR("isc_mark_get: unknown parameter found: %c !\n", x.s[i]);
 			}
 			i = j + 1;
 		} else
