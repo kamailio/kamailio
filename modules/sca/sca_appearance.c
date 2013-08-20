@@ -386,6 +386,24 @@ done:
     return( rc );
 }
 
+    int
+sca_appearance_unregister( sca_mod *scam, str *aor )
+{
+    int			rc = 0;
+
+    assert( scam != NULL );
+    assert( aor != NULL );
+
+    if ( sca_uri_is_shared_appearance( scam, aor )) {
+	if (( rc = sca_hash_table_kv_delete( scam->appearances, aor )) == 0 ) {
+	    rc = 1;
+	    LM_INFO( "unregistered SCA AoR %.*s", STR_FMT( aor ));
+	}
+    }
+
+    return( rc );
+}
+
     sca_appearance *
 sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
 	int app_idx, int slot_idx, int *seize_error )

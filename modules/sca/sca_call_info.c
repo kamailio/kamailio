@@ -1979,12 +1979,14 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 	    if ( !sca_subscription_aor_has_subscribers(
 				SCA_EVENT_TYPE_CALL_INFO, &from_aor )) {
 		call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLER;
+		sca_appearance_unregister( sca, &from_aor );
 	    }
 	} else if ( SCA_CALL_INFO_IS_SHARED_CALLEE( &call_info ) &&
 		msg->first_line.type == SIP_REPLY ) {
 	    if ( !sca_subscription_aor_has_subscribers(
 				SCA_EVENT_TYPE_CALL_INFO, &to_aor )) {
 		call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLEE;
+		sca_appearance_unregister( sca, &to_aor );
 	    }
 	}
     }
