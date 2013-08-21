@@ -1069,6 +1069,8 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 	int            flags;
 	pv_value_t     xvalue;
 	char           backup;
+	regex_t	       re_temp;
+	regex_t	       *re;
 
 	/* look if the required avp(s) is/are present */
 	if(src->u.sval.type==PVT_AVP)
@@ -1228,14 +1230,24 @@ cycle2:
 			if (strncasecmp(avp_val.s.s,check_val.s.s,n)>=0)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_RE) {
+			if (val->opd&AVPOPS_VAL_PVAR) {
+				LM_DBG("compiling regexp <%.*s>\n", check_val.s.len, check_val.s.s);
+				if (regcomp(&re_temp, check_val.s.s,REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+				{
+					LM_ERR("bad re <%.*s>\n", check_val.s.len, check_val.s.s);
+					goto next;
+				}
+				re = &re_temp;
+			}
+			else re = (regex_t*)check_val.s.s;
 			backup  = avp_val.s.s[avp_val.s.len];
 			avp_val.s.s[avp_val.s.len] = '\0';
-			if (regexec((regex_t*)check_val.s.s, avp_val.s.s, 1, &pmatch,0)==0)
-			{
-				avp_val.s.s[avp_val.s.len] = backup;
-				return 1;
+			rt=regexec(re, avp_val.s.s, 1, &pmatch,0);
+			if (val->opd&AVPOPS_VAL_PVAR) {
+				regfree(re);
 			}
 			avp_val.s.s[avp_val.s.len] = backup;
+			if (rt==0) return 1;
 		} else if (val->ops&AVPOPS_OP_FM){
 			backup  = avp_val.s.s[avp_val.s.len];
 			avp_val.s.s[avp_val.s.len] = '\0';

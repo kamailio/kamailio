@@ -683,28 +683,23 @@ static int fixup_check_avp(void** param, int param_no)
 		/* if REGEXP op -> compile the expresion */
 		if (ap->ops&AVPOPS_OP_RE)
 		{
-			if ( (ap->opd&AVPOPS_VAL_STR)==0 )
+			if ( (ap->opd&AVPOPS_VAL_STR)!=0 )
 			{
-				LM_ERR("regexp operation requires string value\n");
-				return E_UNSPEC;
+				re = (regex_t*) pkg_malloc(sizeof(regex_t));
+				if (re==0)
+				{
+					LM_ERR("no more pkg mem\n");
+					return E_OUT_OF_MEM;
+				}
+				LM_DBG("compiling regexp <%.*s>\n", ap->u.s.len, ap->u.s.s);
+				if (regcomp(re, ap->u.s.s,REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+				{
+					pkg_free(re);
+					LM_ERR("bad re <%.*s>\n", ap->u.s.len, ap->u.s.s);
+					return E_BAD_RE;
+				}
+				ap->u.s.s = (char*)re;
 			}
-			re = pkg_malloc(sizeof(regex_t));
-			if (re==0)
-			{
-				LM_ERR("no more pkg mem\n");
-				return E_OUT_OF_MEM;
-			}
-			LM_DBG("compiling regexp <%.*s>\n", ap->u.s.len, ap->u.s.s);
-			if (regcomp(re, ap->u.s.s,
-						REG_EXTENDED|REG_ICASE|REG_NEWLINE))
-			{
-				pkg_free(re);
-				LM_ERR("bad re <%.*s>\n", ap->u.s.len, ap->u.s.s);
-				return E_BAD_RE;
-			}
-			/* free the string and link the regexp */
-			// pkg_free(ap->sval.p.s);
-			ap->u.s.s = (char*)re;
 		} else if (ap->ops&AVPOPS_OP_FM) {
 			if ( !( ap->opd&AVPOPS_VAL_PVAR ||
 			(!(ap->opd&AVPOPS_VAL_PVAR) && ap->opd&AVPOPS_VAL_STR) ) )
