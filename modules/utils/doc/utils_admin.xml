@@ -158,12 +158,17 @@ modparam("utils", "xcap_table", "pres_xcap")
 	<title>Functions</title>
 		<section id="utils.f.http_query">
 			<title>
-				<function moreinfo="none">http_query(url, result)</function>
+				<function moreinfo="none">http_query(url, [post-data], result)</function>
 			</title>
 			<para>
-			Sends HTTP GET request according to URL given in
+			Sends HTTP GET or POST request according to URL given in
 			<quote>url</quote> parameter, which is a string that may
 			contain pseudo variables.
+	    	        </para>
+			<para>
+			If you want to make a POST-Request, you have to define
+			the <quote>post</quote>-data, that should be submitted
+			in that request as the second parameter.
 	    	        </para>
 		        <para>
 			If HTTP server returns a class 2xx or 3xx reply,
@@ -183,7 +188,18 @@ modparam("utils", "xcap_table", "pres_xcap")
 				<title><function>http_query()</function> usage</title>
 				<programlisting format="linespecific">
 ...
+# GET-Request
 http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+           "$var(result)")
+switch ($retcode) {
+       ...
+}
+...
+				</programlisting>
+				<programlisting format="linespecific">
+...
+# POST-Request
+http_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
            "$var(result)")
 switch ($retcode) {
        ...
