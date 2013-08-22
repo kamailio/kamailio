@@ -1235,7 +1235,7 @@ int reload_tables()
 	request_uri_re = from_uri_re = 0;
     
 	do {
-	    LM_DBG("loading, cycle %d with <%d> rows", n++, RES_ROW_N(res));
+	    LM_DBG("loading, cycle %d with <%d> rows\n", n++, RES_ROW_N(res));
 	    for (i = 0; i < RES_ROW_N(res); i++) {
 
 		request_uri_re = from_uri_re = 0;
@@ -1447,7 +1447,7 @@ int reload_tables()
 
 	n = 0;
 	do {
-	    LM_DBG("loading, cycle %d with <%d> rows", n++, RES_ROW_N(res));
+	    LM_DBG("loading, cycle %d with <%d> rows\n", n++, RES_ROW_N(res));
 	    for (i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
 		if ((VAL_NULL(ROW_VALUES(row)) == 1) ||
@@ -1894,7 +1894,7 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 	    if ((rule->from_uri_len != 0) &&
 		(pcre_exec(rule->from_uri_re, NULL, from_uri.s,
 			   from_uri.len, 0, 0, NULL, 0) < 0)) {
-		LM_DBG("from uri <%.*s> did not match to from regex <%.*s>",
+		LM_DBG("from uri <%.*s> did not match to from regex <%.*s>\n",
 		       from_uri.len, from_uri.s, rule->from_uri_len,
 		       rule->from_uri);
 		goto next;
@@ -1904,7 +1904,7 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 	    if ((rule->request_uri_len != 0) &&
 		(pcre_exec(rule->request_uri_re, NULL, request_uri->s,
 			   request_uri->len, 0, 0, NULL, 0) < 0)) {
-		LM_DBG("request uri <%.*s> did not match to request regex <%.*s>",
+		LM_DBG("request uri <%.*s> did not match to request regex <%.*s>\n",
 		       request_uri->len, request_uri->s, rule->request_uri_len,
 		       rule->request_uri);
 		goto next;
@@ -2280,7 +2280,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	delete_avp(defunct_gw_avp_type, defunct_gw_avp);
 	val.n = gw_index;
 	add_avp(defunct_gw_avp_type, defunct_gw_avp, val);
-	LM_DBG("added defunct_gw_avp <%u>", addr.u.addr32[0]);
+	LM_DBG("added defunct_gw_avp <%u>\n", addr.u.addr32[0]);
     }
     
     return 1;
