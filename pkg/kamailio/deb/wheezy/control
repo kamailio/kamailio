@@ -448,3 +448,13 @@ Description: Kamailio - Websocket Module
  .
  This package contains the module implementing WebSocket transport layer.
 
+Package: kamailio-cassandra-modules
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${binary:Version}), libthrift-dev
+Description: Kamailio - Cassandra Module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package contains the modules for using cassandra as a database backend.
+

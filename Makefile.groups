@@ -340,6 +340,9 @@ module_group_ksctp=$(mod_list_sctp)
 # pkg auth_ephemeral module
 module_group_kautheph=$(mod_list_autheph)
 
+# pkg db_cassandra module
+module_group_kcassandra=$(mod_list_cassandra)
+
 # list of static modules
 #
 static_modules:=
