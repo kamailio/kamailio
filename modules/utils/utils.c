@@ -89,8 +89,10 @@ static int child_init(int);
 static void destroy(void);
 
 /* Fixup functions to be defined later */
-static int fixup_http_query(void** param, int param_no);
-static int fixup_free_http_query(void** param, int param_no);
+static int fixup_http_query_get(void** param, int param_no);
+static int fixup_free_http_query_get(void** param, int param_no);
+static int fixup_http_query_post(void** param, int param_no);
+static int fixup_free_http_query_post(void** param, int param_no);
 
 /* Wrappers for http_query to be defined later */
 static int w_http_query(struct sip_msg* _m, char* _url, char* _result);
