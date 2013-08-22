@@ -48,9 +48,11 @@ void sr_core_ert_init(void)
 	/* 0 - is not a valid index in event_route blocks list */
 	_sr_core_ert_list.init_parse_error = route_get(&event_rt,
 											"core:receive-parse-error");
-	if(_sr_core_ert_list.init_parse_error>=0
-			&& event_rt.rlist[_sr_core_ert_list.init_parse_error]!=NULL) {
+	if(_sr_core_ert_list.init_parse_error<=0
+				|| event_rt.rlist[_sr_core_ert_list.init_parse_error]==NULL) {
 		_sr_core_ert_list.init_parse_error = -1;
+	} else {
+		LM_DBG("event_route[core:receive-parse-error] is defined\n");
 	}
 }
 
