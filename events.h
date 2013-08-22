@@ -59,4 +59,12 @@ int sr_event_register_cb(int type, sr_event_cb_f f);
 int sr_event_exec(int type, void *data);
 int sr_event_enabled(int type);
 
+
+/* shortcut types for core event routes */
+/* initial parsing error in message receive function */
+#define SR_CORE_ERT_RECEIVE_PARSE_ERROR		1
+
+void sr_core_ert_init(void);
+void sr_core_ert_run(sip_msg_t *msg, int e);
+
 #endif

@@ -145,6 +145,7 @@
 #include "script_cb.h"
 #include "nonsip_hooks.h"
 #include "ut.h"
+#include "events.h"
 #include "signals.h"
 #ifdef USE_RAW_SOCKS
 #include "raw_sock.h"
@@ -2252,6 +2253,9 @@ try_again:
 	/* reinit if pv buffer size has been set in config */
 	if (pv_reinit_buffer()<0)
 		goto error;
+
+	/* init lookup for core event routes */
+	sr_core_ert_init();
 
 	if (dont_fork_cnt)
 		dont_fork = dont_fork_cnt;	/* override by command line */

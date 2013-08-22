@@ -27,10 +27,45 @@
 
 #include "dprint.h"
 #include "mem/mem.h"
+#include "route.h"
 #include "events.h"
 
 static sr_event_cb_t _sr_events_list;
 static int _sr_events_inited = 0;
+
+typedef struct _sr_core_ert {
+	int init_parse_error;
+} sr_core_ert_t;
+
+static sr_core_ert_t _sr_core_ert_list;
+
+/**
+ *
+ */
+void sr_core_ert_init(void)
+{
+	memset(&_sr_core_ert_list, 0, sizeof(sr_core_ert_t));
+	/* 0 - is not a valid index in event_route blocks list */
+	_sr_core_ert_list.init_parse_error = route_get(&event_rt,
+											"core:receive-parse-error");
+	if(_sr_core_ert_list.init_parse_error>=0
+			&& event_rt.rlist[_sr_core_ert_list.init_parse_error]!=NULL) {
+		_sr_core_ert_list.init_parse_error = -1;
+	}
+}
+
+/**
+ *
+ */
+void sr_core_ert_run(sip_msg_t *msg, int e)
+{
+	switch(e) {
+		case SR_CORE_ERT_RECEIVE_PARSE_ERROR:
+			if(likely(_sr_core_ert_list.init_parse_error<=0))
+				return;
+		break;
+	}
+}
 
 /**
  *
