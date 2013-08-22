@@ -186,6 +186,49 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
             </example>
         </section>
 
+        <section>
+            <title>
+                <function moreinfo="none">cnxcc_update_max_time()</function>
+            </title>
+            <para>
+		Updates max-time of an established and monitored call. This can be used to grant minimum values and to update them every short periods on time as a mean to prevent frauds and/or to mimic requested/granted units of time of Credit Control Application behavior.
+            </para>
+            <para>
+                <emphasis>Return code:</emphasis>
+                <itemizedlist>
+                    <listitem>
+                    <para>
+                        <emphasis>1 - successful</emphasis>
+                    </para>
+                    </listitem>
+                     
+                    <listitem>
+                    <para>
+                        <emphasis>-1 - failed, error logged</emphasis>
+                    </para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <example>
+		<title>cnxcc_update_max_time()</title>
+                <programlisting format="linespecific">
+...
+        $var(update_time)  = 5;
+        $var(client)       = "john-doe-123-basic";
+
+        if (!cnxcc_update_max_time("$var(client)",
+                                  "$var(update_time)")) {
+                xlog("Error updating max-time");
+                return;
+        }
+
+...
+		</programlisting>
+            </example>
+        </section>
+
+
+
     	<section>
             <title>
                 <function moreinfo="none">cnxcc_set_max_channel()</function>
@@ -223,7 +266,7 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
                 </itemizedlist>
             </para>
             <example>
-		<title>cnxcc_set_max_time()</title>
+		<title>cnxcc_set_max_channels()</title>
                 <programlisting format="linespecific">
 ...
 $var(customer)  = "john-doe-123-basic";

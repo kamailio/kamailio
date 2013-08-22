@@ -104,6 +104,7 @@ static int pv_get_calls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
  * Billing management functions
  */
 static int set_max_time(struct sip_msg* msg, char* number, char* str2);
+static int update_max_time(struct sip_msg* msg, char* number, char* str2);
 static int set_max_credit(struct sip_msg* msg, char *str_pv_client, char *str_pv_credit, char *str_pv_cps, char *str_pv_inip, char *str_pv_finp);
 static int set_max_channels(struct sip_msg* msg, char* str_pv_client, char* str_pv_max_chan);
 static int get_channel_count(struct sip_msg* msg, char* str_pv_client, char* str_pv_max_chan);
@@ -142,6 +143,7 @@ static pv_export_t mod_pvs[] =
 static cmd_export_t cmds[] =
 {
 	{"cnxcc_set_max_time",   (cmd_function) set_max_time, 2, fixup_pvar_pvar, fixup_free_pvar_pvar, ANY_ROUTE},
+	{"cnxcc_update_max_time",   (cmd_function) update_max_time, 2, fixup_pvar_pvar, fixup_free_pvar_pvar, ANY_ROUTE},
 	{"cnxcc_set_max_credit",   (cmd_function) set_max_credit, 5, fixup_par, NULL, ANY_ROUTE},
 	{"cnxcc_set_max_channels",   (cmd_function) set_max_channels, 2, fixup_pvar_pvar, NULL, ANY_ROUTE},
 	{"cnxcc_get_channel_count",   (cmd_function) get_channel_count, 2, fixup_pvar_pvar, NULL, ANY_ROUTE},
@@ -1751,6 +1753,97 @@ static int set_max_time(struct sip_msg* msg, char* str_pv_client, char* str_pv_m
 		LM_ALERT("MSG was not an INVITE\n");
 		return -1;
 	}
+
+	return 1;
+}
+
+static int update_max_time(struct sip_msg* msg, char* str_pv_client, char* str_pv_secs)
+{
+	credit_data_t *credit_data 	= NULL;
+	pv_spec_t *secs_spec		= (pv_spec_t *) str_pv_secs,
+		  *client_id_spec	= (pv_spec_t *) str_pv_client;
+	pv_value_t secs_val, client_id_val;
+	int secs				= 0;
+
+	set_ctrl_flag(msg);
+
+	if (parse_headers(msg, HDR_CALLID_F, 0) != 0)
+	{
+		LM_ERR("Error parsing Call-ID");
+		return -1;
+	}
+
+	if (pv_get_spec_value(msg, secs_spec, &secs_val) != 0)
+	{
+		LM_ERR("Can't get secs PV value\n");
+		return -1;
+	}
+	secs	= secs_val.ri;
+
+	if (secs <= 0)
+	{
+		LM_ERR("[%.*s] MAXSECS cannot be less than or equal to zero: %d\n", msg->callid->body.len, msg->callid->body.s, secs);
+		return -1;
+	}
+
+	if (pv_get_spec_value(msg, client_id_spec, &client_id_val) != 0)
+	{
+		LM_ERR("[%.*s]: can't get client_id PV value\n", msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	if (client_id_val.rs.len == 0 || client_id_val.rs.s == NULL)
+	{
+		LM_ERR("[%.*s]: client ID cannot be null\n", msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	LM_DBG("Updating call for client [%.*s], max-secs[%d], call-id[%.*s]\n", client_id_val.rs.len, client_id_val.rs.s,
+													secs,
+													msg->callid->body.len, msg->callid->body.s);
+
+
+
+	struct str_hash_table *ht	= NULL;
+	struct str_hash_entry *e	= NULL;
+	ht				= _data.time.credit_data_by_client;
+	double update_fraction		= secs;
+	call_t *call			= NULL,
+	       *tmp_call		= NULL;
+
+	lock_get(&_data.time.lock);
+	e							= str_hash_get(ht, client_id_val.rs.s, client_id_val.rs.len);
+	lock_release(&_data.time.lock);
+
+	if (e == NULL)
+	{
+		LM_ERR("Client [%.*s] was not found\n", e->key.len, e->key.s);
+		return -1;
+	}
+		
+	credit_data					= (credit_data_t *) e->u.p;
+
+	lock_get(&credit_data->lock);
+
+	LM_DBG("Updating max-secs for [%.*s] from [%f] to [%f]\n", e->key.len, e->key.s, credit_data->max_amount, credit_data->max_amount + secs);
+	
+	credit_data->max_amount				+= secs;
+
+	if (credit_data->number_of_calls > 0)
+		update_fraction	= secs / credit_data->number_of_calls;
+
+	clist_foreach_safe(credit_data->call_list, call, tmp_call, next)
+	{
+		if (!call->confirmed)
+			continue;
+		
+		call->max_amount	+= update_fraction;
+	}
+
+//redit_data->consumed_amount			= 0;
+
+
+	lock_release(&credit_data->lock);
 
 	return 1;
 }
