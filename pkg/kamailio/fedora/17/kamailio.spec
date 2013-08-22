@@ -1,6 +1,6 @@
 %define name	kamailio
 %define ver	4.1.0
-%define rel	dev7.1%{dist}
+%define rel	dev7.2%{dist}
 
 
 
@@ -613,6 +613,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.rr
 %doc %{_docdir}/kamailio/modules/README.rtimer
 %doc %{_docdir}/kamailio/modules/README.rtpproxy
+%doc %{_docdir}/kamailio/modules/README.rtpproxy-ng
 %doc %{_docdir}/kamailio/modules/README.sanity
 %doc %{_docdir}/kamailio/modules/README.sca
 %doc %{_docdir}/kamailio/modules/README.sdpops
@@ -753,6 +754,7 @@ fi
 %{_libdir}/kamailio/modules/rr.so
 %{_libdir}/kamailio/modules/rtimer.so
 %{_libdir}/kamailio/modules/rtpproxy.so
+%{_libdir}/kamailio/modules/rtpproxy-ng.so
 %{_libdir}/kamailio/modules/sanity.so
 %{_libdir}/kamailio/modules/sca.so
 %{_libdir}/kamailio/modules/seas.so
@@ -1155,6 +1157,8 @@ fi
 
 
 %changelog
+* Thu Aug 22 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Added rtpproxy-ng module to build
 * Wed Aug 14 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to dev7
 * Mon May 27 2013 Peter Dunkley <peter@dunkley.me.uk>
