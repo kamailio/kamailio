@@ -1499,7 +1499,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
 	    </listitem>
 	    <listitem>
 		<para><emphasis>0x02</emphasis> - do not generate reply on internal
-		error (NOTE: has no effect anymore).
+		error.
 		</para>
 	    </listitem>
 	    <listitem>
