@@ -291,6 +291,7 @@ static int t_set_disable_failover(struct sip_msg* msg, char* on_off, char* f);
 static int t_set_no_e2e_cancel_reason(struct sip_msg* msg, char* on_off,
 										char* f);
 #endif /* CANCEL_REASON_SUPPORT */
+static int t_set_disable_internal_reply(struct sip_msg* msg, char* on_off, char* f);
 static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
@@ -456,6 +457,8 @@ static cmd_export_t cmds[]={
 		fixup_var_int_1,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 #endif /* CANCEL_REASON_SUPPORT */
+	{"t_set_disable_internal_reply", t_set_disable_internal_reply, 1, fixup_var_int_1,
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_branch_timeout",  t_branch_timeout,         0, 0,
 	                FAILURE_ROUTE|EVENT_ROUTE},
 	{"t_branch_replied",  t_branch_replied,         0, 0,
@@ -1873,6 +1876,10 @@ T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
 #endif /* CANCEL_REASON_SUPPORT */
 
 
+/* disable internal negative reply for the current transaction */
+T_SET_FLAG_GEN_FUNC(t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
+
+
 /* script function, FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
  * returns true if the choosed "failure" branch failed because of a timeout, 
  * -1 otherwise */
@@ -2282,13 +2289,11 @@ inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
 			param.v.i = 0;
 			t_set_auto_inv_100(msg, (char*)(&param), 0);
 		}
-		/* no auto negative reply - not implemented */
-		/*
+		/* no auto negative reply */
 		if(fl&2) {
 			param.v.i = 1;
-			t_set_disable_internal_reply(msg, (char*)param, 0);
+			t_set_disable_internal_reply(msg, (char*)(&param), 0);
 		}
-		*/
 		/* no dns failover */
 		if(fl&4) {
 			param.v.i = 1;
