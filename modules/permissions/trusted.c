@@ -512,7 +512,7 @@ int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp)
 	return -1;
     }
 
-    if(proto.len<2 && proto.len>4)
+    if(proto.len<2 || proto.len>4)
 	goto error;
 
     switch(proto.s[0]) {
