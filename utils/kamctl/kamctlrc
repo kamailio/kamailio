@@ -122,7 +122,7 @@
 # CTLENGINE="FIFO"
 
 ## path to FIFO file
-# OSER_FIFO="FIFO"
+# FIFOPATH="/tmp/kamailio_fifo"
 
 ## check ACL names; default on (1); off (0)
 # VERIFY_ACL=1
