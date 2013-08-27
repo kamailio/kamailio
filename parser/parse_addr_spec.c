@@ -915,6 +915,7 @@ void free_to_params(struct to_body* const tb)
 		pkg_free(tp);
 		tp=foo;
 	}
+	tb->param_lst = NULL;
 }
 
 
