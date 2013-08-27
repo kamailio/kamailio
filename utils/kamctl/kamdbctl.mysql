@@ -345,6 +345,28 @@ dbuid_create () # pars: <database name>
 }  # end uid_create
 
 
+kamailio_add_tables () # params: <database name> <tables group name>
+{
+	if [ $# -ne 2 ] ; then
+		merr "kamailio_add_tables function takes two params"
+		exit 1
+	fi
+
+	minfo "creating group of tables [$2] into database [$1] ..."
+
+	if [ -e $DB_SCHEMA/$2-create.sql ]
+	then
+		sql_query $1 < $DB_SCHEMA/$2-create.sql
+		if [ $? -ne 0 ] ; then
+			merr "Creating group of tables [$2] failed"
+			exit 1
+		fi
+	else
+		merr "Script for creating group of tables [$2] not found"
+		exit 1
+	fi
+}  # end kamailio_add_tables
+
 migrate_table () # 4 paremeters (dst_table, dst_cols, src_table, src_cols)
 {
 	if [ $# -ne 4 ] ; then

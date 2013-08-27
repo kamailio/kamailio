@@ -107,6 +107,7 @@ usage: $COMMAND create <db name or db_path, optional> ...(creates a new database
        $COMMAND dbonly ..................................(creates empty database)
        $COMMAND grant ...................................(grant privileges to database)
        $COMMAND revoke ..................................(revoke privileges to database)
+       $COMMAND add-tables <gid> ........................(creates only tables groupped in gid)
 
        if you want to manipulate database as other database user than
        root, want to change database name from default value "$DBNAME",
