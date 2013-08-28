@@ -88,6 +88,9 @@ bencode_item_t *bencode_list(bencode_buffer_t *buf);
  * object is destroyed, the specified function will be called on this pointer. */
 void bencode_buffer_destroy_add(bencode_buffer_t *buf, free_func_t, void *);
 
+/* Returns the buffer associated with an item, or NULL if pointer given is NULL */
+static inline bencode_buffer_t *bencode_item_buffer(bencode_item_t *);
+
 
 
 
@@ -344,6 +347,12 @@ static inline bencode_item_t *bencode_dictionary_get_expect(bencode_item_t *dict
 
 /**************************/
 
+static inline bencode_buffer_t *bencode_item_buffer(bencode_item_t *i) {
+	if (!i)
+		return NULL;
+	return i->buffer;
+}
+
 static inline bencode_item_t *bencode_string(bencode_buffer_t *buf, const char *s) {
 	return bencode_string_len(buf, s, strlen(s));
 }
@@ -369,49 +378,49 @@ static inline bencode_item_t *bencode_dictionary_add(bencode_item_t *dict, const
 static inline bencode_item_t *bencode_dictionary_add_string(bencode_item_t *dict, const char *key, const char *val) {
 	if (!val)
 		return NULL;
-	return bencode_dictionary_add(dict, key, bencode_string(dict->buffer, val));
+	return bencode_dictionary_add(dict, key, bencode_string(bencode_item_buffer(dict), val));
 }
 
 static inline bencode_item_t *bencode_dictionary_add_string_dup(bencode_item_t *dict, const char *key, const char *val) {
 	if (!val)
 		return NULL;
-	return bencode_dictionary_add(dict, key, bencode_string_dup(dict->buffer, val));
+	return bencode_dictionary_add(dict, key, bencode_string_dup(bencode_item_buffer(dict), val));
 }
 
 static inline bencode_item_t *bencode_dictionary_add_str(bencode_item_t *dict, const char *key, const str *val) {
 	if (!val)
 		return NULL;
-	return bencode_dictionary_add(dict, key, bencode_str(dict->buffer, val));
+	return bencode_dictionary_add(dict, key, bencode_str(bencode_item_buffer(dict), val));
 }
 
 static inline bencode_item_t *bencode_dictionary_add_str_dup(bencode_item_t *dict, const char *key, const str *val) {
 	if (!val)
 		return NULL;
-	return bencode_dictionary_add(dict, key, bencode_str_dup(dict->buffer, val));
+	return bencode_dictionary_add(dict, key, bencode_str_dup(bencode_item_buffer(dict), val));
 }
 
 static inline bencode_item_t *bencode_dictionary_add_integer(bencode_item_t *dict, const char *key, long long int val) {
-	return bencode_dictionary_add(dict, key, bencode_integer(dict->buffer, val));
+	return bencode_dictionary_add(dict, key, bencode_integer(bencode_item_buffer(dict), val));
 }
 
 static inline bencode_item_t *bencode_dictionary_add_dictionary(bencode_item_t *dict, const char *key) {
-	return bencode_dictionary_add(dict, key, bencode_dictionary(dict->buffer));
+	return bencode_dictionary_add(dict, key, bencode_dictionary(bencode_item_buffer(dict)));
 }
 
 static inline bencode_item_t *bencode_dictionary_add_list(bencode_item_t *dict, const char *key) {
-	return bencode_dictionary_add(dict, key, bencode_list(dict->buffer));
+	return bencode_dictionary_add(dict, key, bencode_list(bencode_item_buffer(dict)));
 }
 
 static inline bencode_item_t *bencode_list_add_string(bencode_item_t *list, const char *s) {
-	return bencode_list_add(list, bencode_string(list->buffer, s));
+	return bencode_list_add(list, bencode_string(bencode_item_buffer(list), s));
 }
 
 static inline bencode_item_t *bencode_list_add_list(bencode_item_t *list) {
-	return bencode_list_add(list, bencode_list(list->buffer));
+	return bencode_list_add(list, bencode_list(bencode_item_buffer(list)));
 }
 
 static inline bencode_item_t *bencode_list_add_dictionary(bencode_item_t *list) {
-	return bencode_list_add(list, bencode_dictionary(list->buffer));
+	return bencode_list_add(list, bencode_dictionary(bencode_item_buffer(list)));
 }
 
 static inline bencode_item_t *bencode_dictionary_get(bencode_item_t *dict, const char *key) {
@@ -515,7 +524,7 @@ static inline str *bencode_get_str(bencode_item_t *in, str *out) {
 static inline bencode_item_t *bencode_dictionary_add_iovec(bencode_item_t *dict, const char *key,
 		const struct iovec *iov, int iov_cnt, int str_len)
 {
-	return bencode_dictionary_add(dict, key, bencode_string_iovec(dict->buffer, iov, iov_cnt, str_len));
+	return bencode_dictionary_add(dict, key, bencode_string_iovec(bencode_item_buffer(dict), iov, iov_cnt, str_len));
 }
 
 #endif
