@@ -455,7 +455,7 @@ static int mod_init(void)
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
-		LM_ERR("failed to register core statistics\n");
+		LM_ERR("failed to register %s statistics\n", exports.name);
 		return -1;
 	}
 #endif
