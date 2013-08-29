@@ -225,21 +225,21 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	return nl;
 
 error:
-	LOG(L_INFO, "ERROR:parse_first_line: bad %s first line\n",
+	LOG(L_DBG, "parse_first_line: bad %s first line\n",
 		(fl->type==SIP_REPLY)?"reply(status)":"request");
 
-	LOG(L_INFO, "ERROR: at line 0 char %d: \n", offset );
+	LOG(L_DBG, "at line 0 char %d: \n", offset );
 	prn=pkg_malloc( offset );
 	if (prn) {
 		for (t=0; t<offset; t++)
 			if (*(buffer+t)) *(prn+t)=*(buffer+t);
 			else *(prn+t)='°';
-		LOG(L_INFO, "ERROR: parsed so far: %.*s\n", offset, ZSW(prn) );
+		LOG(L_DBG, "parsed so far: %.*s\n", offset, ZSW(prn) );
 		pkg_free( prn );
 	};
 error1:
 	fl->type=SIP_INVALID;
-	LOG(L_INFO, "ERROR:parse_first_line: bad message\n");
+	LOG(L_ERR, "parse_first_line: bad message\n");
 	/* skip  line */
 	nl=eat_line(buffer,len);
 	return nl;
