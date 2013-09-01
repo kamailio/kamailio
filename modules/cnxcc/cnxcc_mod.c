@@ -1817,7 +1817,7 @@ static int update_max_time(struct sip_msg* msg, char* str_pv_client, char* str_p
 
 	if (e == NULL)
 	{
-		LM_ERR("Client [%.*s] was not found\n", e->key.len, e->key.s);
+		LM_ERR("Client [%.*s] was not found\n", client_id_val.rs.len, client_id_val.rs.s);
 		return -1;
 	}
 		
