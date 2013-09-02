@@ -425,6 +425,8 @@ cat <<EOF
  show <username> .................... show subscriber attributes (*)
  passwd <username> <passwd> ......... change user's password (*)
  rm <username> ...................... delete a user (*)
+ sets <username> <attr> <val> ....... set string attribute (column value)
+ setn <username> <attr> <val> ....... set numeric attribute (column value)
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_subscriber"

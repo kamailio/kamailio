@@ -2254,6 +2254,51 @@ and $REALM_COLUMN='$OSERDOMAIN';"
 			# and also all his contacts
 			$0 ul rm $1   > /dev/null 2>&1
 			;;
+		sets)
+			if [ $# -ne 4 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+			shift
+
+			is_user $1
+			if [ $? -ne 0 ] ; then
+				merr "non-existent user '$1'"
+				exit 1
+			fi
+
+			QUERY="update $SUB_TABLE set $2='$3' \
+WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "attribute change failed"
+			else
+				minfo "attribute change succeeded"
+			fi
+			;;
+		setn)
+			if [ $# -ne 4 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+			shift
+
+			is_user $1
+			if [ $? -ne 0 ] ; then
+				merr "non-existent user '$1'"
+				exit 1
+			fi
+
+			QUERY="update $SUB_TABLE set $2=$3 \
+WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "attribute change failed"
+			else
+				minfo "attribute change succeeded"
+			fi
+			;;
+
 	esac
 
 }
@@ -2584,6 +2629,14 @@ case $1 in
 		;;
 
 	rm)
+		subscriber "$@"
+		;;
+
+	sets)
+		subscriber "$@"
+		;;
+
+	setn)
 		subscriber "$@"
 		;;
 
