@@ -413,7 +413,7 @@ int acc_db_request( struct sip_msg *rq)
 	if(acc_time_mode==1) {
 		VAL_INT(db_vals+(m++)) = (int)acc_env.tv.tv_usec;
 	} else if(acc_time_mode==2) {
-		VAL_DOUBLE(db_vals+(m++)) = ((acc_env.tv.tv_sec * 1000)
+		VAL_DOUBLE(db_vals+(m++)) = ((double)(acc_env.tv.tv_sec * 1000)
 							+ (acc_env.tv.tv_usec / 1000)) / 1000;
 	}
 
