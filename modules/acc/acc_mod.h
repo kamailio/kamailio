@@ -92,6 +92,8 @@ extern str acc_cseqno_col;
 extern str acc_sipcode_col;
 extern str acc_sipreason_col;
 extern str acc_time_col;
+
+extern int acc_db_insert_mode;
 #endif /* SQL_ACC */
 
 /* time mode */

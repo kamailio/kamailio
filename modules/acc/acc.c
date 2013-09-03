@@ -90,7 +90,6 @@ extern struct acc_extra *dia_extra;
 static db_func_t acc_dbf;
 static db1_con_t* db_handle=0;
 extern struct acc_extra *db_extra;
-extern int acc_db_insert_mode;
 #endif
 
 /* arrays used to collect the values before being
@@ -309,6 +308,14 @@ int acc_log_request( struct sip_msg *rq)
 static db_key_t db_keys[ACC_CORE_LEN+2+MAX_ACC_EXTRA+MAX_ACC_LEG];
 static db_val_t db_vals[ACC_CORE_LEN+2+MAX_ACC_EXTRA+MAX_ACC_LEG];
 
+
+int acc_get_db_handlers(void **vf, void **vh) {
+	if(db_handle==0)
+		return -1;
+	*vf = (void*)&acc_dbf;
+	*vh = (void*)db_handle;
+	return 0;
+}
 
 static void acc_db_init_keys(void)
 {

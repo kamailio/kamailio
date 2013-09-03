@@ -1128,8 +1128,8 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
 		Should CDR-based logging be enabled?
 		</para>
 		<para>
-		0 - off (default)
-		1 - on
+		0 - off (default).
+		1 - on.
 		</para>
 		<example>
 		<title>cdr_enable example</title>
@@ -1191,10 +1191,10 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 	<section id="acc.p.cdr_start_id">
 		<title><varname>cdr_start_id</varname> (string)</title>
 		<para>
-		Modifying the start id which is used to store the start time.
+		Modifying the id which is used to store the start time.
 		</para>
 		<para>
-		Default value is 'st'
+		Default value is 'start_time'
 		</para>
 		<example>
 		<title>cdr_start_id example</title>
@@ -1206,10 +1206,10 @@ modparam("acc", "cdr_start_id", "start")
 	<section id="acc.p.cdr_end_id">
 		<title><varname>cdr_end_id</varname> (string)</title>
 		<para>
-		Modifying the end id which is used to store the end time.
+		Modifying the id which is used to store the end time.
 		</para>
 		<para>
-		Default value is 'et'
+		Default value is 'end_time'
 		</para>
 		<example>
 		<title>cdr_end_id example</title>
@@ -1221,15 +1221,46 @@ modparam("acc", "cdr_end_id", "end")
 	<section id="acc.p.cdr_duration_id">
 		<title><varname>cdr_duration_id</varname> (string)</title>
 		<para>
-		Modify the duration id which is used to store the duration.
+		Modify the id which is used to store the duration.
 		</para>
 		<para>
-		Default value is 'd'
+		Default value is 'duration'
 		</para>
 		<example>
 		<title>cdr_duration_id example</title>
 		<programlisting format="linespecific">
-modparam("acc", "cdr_duration_id", "start")
+modparam("acc", "cdr_duration_id", "d")
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.cdr_log_enable">
+		<title><varname>cdr_enable</varname> (int)</title>
+		<para>
+		Control if CDR-based accounting should be written to syslog.
+		</para>
+		<para>
+		0 - off.
+		1 - on (default).
+		</para>
+		<example>
+		<title>cdr_log_enable example</title>
+		<programlisting format="linespecific">
+modparam("acc", "cdr_log_enable", 0)
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.cdrs_table">
+		<title><varname>cdrs_table</varname> (str)</title>
+		<para>
+		Name of db table to store dialog-based CDRs.
+		</para>
+		<para>
+		Default value is "" (no db storage for dialog-based CDRs).
+		</para>
+		<example>
+		<title>cdrs_table example</title>
+		<programlisting format="linespecific">
+modparam("acc", "cdrs_table", "acc_cdrs")
 </programlisting>
 		</example>
 	</section>

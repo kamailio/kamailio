@@ -92,6 +92,7 @@ int  acc_db_init(const str* db_url);
 int  acc_db_init_child(const str* db_url);
 void acc_db_close(void);
 int  acc_db_request( struct sip_msg *req);
+int acc_get_db_handlers(void **vf, void **vh);
 #endif
 
 #ifdef RAD_ACC
