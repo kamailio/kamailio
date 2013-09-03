@@ -42,6 +42,7 @@
 #define CONFERENCE_EVENT    1<<4
 #define DIALOG_EVENT        1<<5
 #define REGINFO_EVENT       1<<6
+#define XCAPDIFF_EVENT      1<<7
 
 #define UL_PUBLISH          1<<0
 #define BLA_PUBLISH         1<<1
@@ -57,6 +58,8 @@
 #define PURPLE_PUBLISH      1<<11
 #define REGINFO_PUBLISH     1<<12
 #define REGINFO_SUBSCRIBE   1<<13
+#define XCAPDIFF_PUBLISH    1<<14
+#define XCAPDIFF_SUBSCRIBE  1<<15
 
 #define NO_UPDATEDB_FLAG    1<<0
 #define UPDATEDB_FLAG       1<<1

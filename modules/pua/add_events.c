@@ -98,6 +98,14 @@ int pua_add_events(void)
 		}
 	}
 	
+	/* add xcap-diff */
+	if(add_pua_event(XCAPDIFF_EVENT, "xcap-diff",
+				"application/xcap-diff+xml", 0)< 0)
+	{
+		LM_ERR("while adding event xcap-diff\n");
+		return -1;
+	}
+
 	return 0;
 
 }	
