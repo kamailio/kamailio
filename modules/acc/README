@@ -125,6 +125,8 @@ Sven Knoblich
               6.42. cdr_start_id (string)
               6.43. cdr_end_id (string)
               6.44. cdr_duration_id (string)
+              6.45. time_mode (int)
+              6.46. time_attr (str)
 
         7. Functions
 
@@ -181,10 +183,12 @@ Sven Knoblich
    1.42. cdr_start_id example
    1.43. cdr_end_id example
    1.44. cdr_duration_id example
-   1.45. acc_log_request usage
-   1.46. acc_db_request usage
-   1.47. acc_rad_request usage
-   1.48. acc_diam_request usage
+   1.45. time_mode example
+   1.46. time_attr example
+   1.47. acc_log_request usage
+   1.48. acc_db_request usage
+   1.49. acc_rad_request usage
+   1.50. acc_diam_request usage
 
 Chapter 1. Admin Guide
 
@@ -273,6 +277,8 @@ Chapter 1. Admin Guide
         6.42. cdr_start_id (string)
         6.43. cdr_end_id (string)
         6.44. cdr_duration_id (string)
+        6.45. time_mode (int)
+        6.46. time_attr (str)
 
    7. Functions
 
@@ -679,6 +685,8 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.42. cdr_start_id (string)
    6.43. cdr_end_id (string)
    6.44. cdr_duration_id (string)
+   6.45. time_mode (int)
+   6.46. time_attr (str)
 
 6.1. early_media (integer)
 
@@ -1145,6 +1153,33 @@ modparam("acc", "cdr_end_id", "end")
    Example 1.44. cdr_duration_id example
 modparam("acc", "cdr_duration_id", "start")
 
+6.45. time_mode (int)
+
+   Store additional value related to the time of event.
+
+   Values can be:
+     * 0 - (default), save only unix timestamp for syslog and datetime for
+       database.
+     * 1 - save microseconds part (does not include the seconds in the
+       value) in time_attr.
+     * 3 - save seconds.miliseconds in time_attr.
+
+   Example 1.45. time_mode example
+modparam("acc", "time_mode", 1)
+
+6.46. time_attr (str)
+
+   Name of the syslog attribute or database column where to store
+   additional value related to the time of event.
+
+   For db accounting, the column has to be of different types, depending
+   on time_mode value. When time_mode is:
+     * 1 - time_attr column has to be int.
+     * 2 - time_attr column has to be double.
+
+   Example 1.46. time_attr example
+modparam("acc", "time_attr", "micorsecs")
+
 7. Functions
 
    7.1. acc_log_request(comment)
@@ -1164,7 +1199,7 @@ modparam("acc", "cdr_duration_id", "start")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.45. acc_log_request usage
+   Example 1.47. acc_log_request usage
 ...
 acc_log_request("Some comment");
 ...
@@ -1182,7 +1217,7 @@ acc_log_request("Some comment");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.46. acc_db_request usage
+   Example 1.48. acc_db_request usage
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
@@ -1198,7 +1233,7 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.47. acc_rad_request usage
+   Example 1.49. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 ...
@@ -1213,7 +1248,7 @@ acc_rad_request("Some comment");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.48. acc_diam_request usage
+   Example 1.50. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 ...

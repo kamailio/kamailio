@@ -1233,6 +1233,62 @@ modparam("acc", "cdr_duration_id", "start")
 </programlisting>
 		</example>
 	</section>
+	<section id="acc.p.time_mode">
+		<title><varname>time_mode</varname> (int)</title>
+		<para>
+		Store additional value related to the time of event.
+		</para>
+		<para>
+		Values can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>0</emphasis> -  (default), save only unix
+				timestamp for syslog and datetime for database.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>1</emphasis> - save microseconds part (does not
+				include the seconds in the value) in time_attr.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>3</emphasis> - save seconds.miliseconds
+				in time_attr.</para>
+		</listitem>
+		</itemizedlist>
+
+		<example>
+		<title>time_mode example</title>
+		<programlisting format="linespecific">
+modparam("acc", "time_mode", 1)
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.time_attr">
+		<title><varname>time_attr</varname> (str)</title>
+		<para>
+		Name of the syslog attribute or database column where to store additional
+		value related to the time of event.
+		</para>
+		<para>
+		For db accounting, the column has to be of different types, depending on
+		time_mode value. When time_mode is:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>1</emphasis> - time_attr column has to be int.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>2</emphasis> - time_attr column has to be double.</para>
+		</listitem>
+		</itemizedlist>
+
+		<example>
+		<title>time_attr example</title>
+		<programlisting format="linespecific">
+modparam("acc", "time_attr", "micorsecs")
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
