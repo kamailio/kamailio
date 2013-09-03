@@ -94,5 +94,9 @@ extern str acc_sipreason_col;
 extern str acc_time_col;
 #endif /* SQL_ACC */
 
+/* time mode */
+extern int acc_time_mode;
+extern str acc_time_attr;
+
 
 #endif

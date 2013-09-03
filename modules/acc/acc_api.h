@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "../../str.h"
 #include "../../dprint.h"
@@ -57,6 +58,7 @@ typedef struct acc_enviroment {
 	struct hdr_field *to;
 	str text;
 	time_t ts;
+	struct timeval tv;
 } acc_enviroment_t;
 
 /* acc extra parameter */
@@ -104,7 +106,7 @@ typedef struct acc_engine {
 
 #define MAX_ACC_EXTRA 64
 #define MAX_ACC_LEG   16
-#define ACC_CORE_LEN 6
+#define ACC_CORE_LEN  6
 
 
 enum {TYPE_NULL = 0, TYPE_INT, TYPE_STR};

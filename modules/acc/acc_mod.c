@@ -110,6 +110,14 @@ static char* leg_info_str = 0;	/*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
 int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
 
+/* ----- time mode variables ------- */
+/*! \name AccTimeModeVariables  Time Mode Variables */
+/*@{*/
+
+int acc_time_mode  = 0;
+str acc_time_attr  = str_init("time_attr");
+
+/*@}*/
 
 /* ----- SYSLOG acc variables ----------- */
 /*! \name AccSyslogVariables  Syslog Variables */
@@ -138,7 +146,7 @@ str cdr_start_str = str_init("st");
 str cdr_end_str = str_init("et");
 str cdr_duration_str = str_init("d");
 
-/*@{*/
+/*@}*/
 
 /* ----- RADIUS acc variables ----------- */
 /*! \name AccRadiusVariables  Radius Variables */     
@@ -291,6 +299,9 @@ static param_export_t params[] = {
 	{"acc_time_column",      STR_PARAM, &acc_time_col.s       },
 	{"db_insert_mode",       INT_PARAM, &acc_db_insert_mode   },
 #endif
+	/* time-mode-specific */
+	{"time_mode",            INT_PARAM, &acc_time_mode        },
+	{"time_attr",            PARAM_STR, &acc_time_attr        },
 	{0,0,0}
 };
 
