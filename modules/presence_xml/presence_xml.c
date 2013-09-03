@@ -94,6 +94,7 @@ int disable_presence = 0;
 int disable_winfo    = 0;
 int disable_bla      = 1;
 int passive_mode     = 0;
+int disable_xcapdiff = 0;
 str xcapauth_userdel_reason = str_init("probation");
 
 /** SL API structure */
@@ -126,6 +127,7 @@ static param_export_t params[]={
 	{ "disable_presence",	INT_PARAM, &disable_presence },
 	{ "disable_winfo",		INT_PARAM, &disable_winfo },
 	{ "disable_bla",		INT_PARAM, &disable_bla },
+	{ "disable_xcapdiff",	INT_PARAM, &disable_xcapdiff },
 	{ "passive_mode",		INT_PARAM, &passive_mode },
 	{ "xcapauth_userdel_reason", STR_PARAM, &xcapauth_userdel_reason.s},
 	{ 0, 0, 0}
