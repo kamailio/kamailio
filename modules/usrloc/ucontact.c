@@ -135,6 +135,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->reg_id = _ci->reg_id;
 	c->last_modified = _ci->last_modified;
 	c->last_keepalive = _ci->last_modified;
+	c->tcpconn_id = _ci->tcpconn_id;
 #ifdef WITH_XAVP
 	ucontact_xavp_store(c);
 #endif

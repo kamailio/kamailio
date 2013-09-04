@@ -161,6 +161,7 @@ int timer_interval  = 60;				/*!< Timer interval in seconds */
 int db_mode         = 0;				/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
 int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
+int handle_lost_tcp = 0;
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
@@ -214,6 +215,7 @@ static param_export_t params[] = {
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",           INT_PARAM, &ul_hash_size    },
 	{"nat_bflag",           INT_PARAM, &nat_bflag       },
+	{"handle_lost_tcp",     INT_PARAM, &handle_lost_tcp },
 	{"preload",             STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param},
 	{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
 	{"timer_procs",         INT_PARAM, &ul_timer_procs},
@@ -387,6 +389,10 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if (handle_lost_tcp && db_mode == DB_ONLY)
+		LM_WARN("handle_lost_tcp option makes nothing in DB_ONLY mode\n");
+
 	init_flag = 1;
 
 	return 0;

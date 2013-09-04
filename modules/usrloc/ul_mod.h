@@ -84,6 +84,7 @@ extern int ul_hash_size;
 extern int ul_db_update_as_insert;
 extern int ul_db_check_update;
 extern int ul_keepalive_timeout;
+extern int handle_lost_tcp;
 
 /*! nat branch flag */
 extern unsigned int nat_bflag;

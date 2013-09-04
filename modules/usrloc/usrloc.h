@@ -91,6 +91,7 @@ typedef struct ucontact {
 	unsigned int methods;   /*!< Supported methods */
 	str instance;           /*!< SIP instance value - gruu */
 	unsigned int reg_id;    /*!< reg-id parameters */
+	int tcpconn_id;          /* unique tcp connection id */
 #ifdef WITH_XAVP
 	sr_xavp_t * xavp;       /*!< per contact xavps */
 #endif
@@ -116,6 +117,7 @@ typedef struct ucontact_info {
 	unsigned int methods;     /*!< supported methods */
 	str instance;             /*!< SIP instance value - gruu */
 	unsigned int reg_id;      /*!< reg-id parameters */
+	int tcpconn_id;
 #ifdef WITH_XAVP
 	sr_xavp_t * xavp;         /*!< per contact xavps */
 #endif

@@ -40,6 +40,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../hashes.h"
+#include "../../tcp_conn.h"
 #include "ul_mod.h"
 #include "usrloc.h"
 #include "utime.h"
@@ -221,6 +222,26 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 	free_ucontact(_c);
 }
 
+static inline int is_valid_tcpconn(ucontact_t *c)
+{
+	if (c->tcpconn_id == -1)
+		return 0; /* tcpconn_id is not present */
+	else
+		return 1; /* valid tcpconn_id */
+}
+
+static inline int is_tcp_alive(ucontact_t *c)
+{
+	struct tcp_connection *con = NULL;
+	int rc = 0;
+
+	if ((con = tcpconn_get(c->tcpconn_id, 0, 0, 0, 0))) {
+		tcpconn_put(con); /* refcnt-- */
+		rc = 1;
+	}
+
+	return rc;
+}
 
 /*!
  * \brief Expires timer for NO_DB db_mode
@@ -236,6 +257,11 @@ static inline void nodb_timer(urecord_t* _r)
 	ptr = _r->contacts;
 
 	while(ptr) {
+		if (handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
+			LM_DBG("tcp connection has been lost, expiring contact %.*s\n", ptr->c.len, ptr->c.s);
+			ptr->expires = UL_EXPIRED_TIME;
+		}
+
 		if (!VALID_CONTACT(ptr, act_time)) {
 			/* run callbacks for EXPIRE event */
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
@@ -296,7 +322,6 @@ static inline void wt_timer(urecord_t* _r)
 	}
 }
 
-
 /*!
  * \brief Write-back timer, used for WRITE_BACK db_mode
  *
@@ -316,6 +341,11 @@ static inline void wb_timer(urecord_t* _r)
 	ptr = _r->contacts;
 
 	while(ptr) {
+		if (handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
+			LM_DBG("tcp connection has been lost, expiring contact %.*s\n", ptr->c.len, ptr->c.s);
+			ptr->expires = UL_EXPIRED_TIME;
+		}
+
 		if (!VALID_CONTACT(ptr, act_time)) {
 			/* run callbacks for EXPIRE event */
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE)) {
