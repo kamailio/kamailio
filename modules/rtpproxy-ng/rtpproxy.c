@@ -428,7 +428,7 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
 	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage2,     2,
-		fixup_spve_str, fixup_free_spve_str,
+		fixup_spve_spve, fixup_free_spve_spve,
 		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
