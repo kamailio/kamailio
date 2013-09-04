@@ -40,7 +40,7 @@ ifeq ($(INSTALL_FLAVOUR),kamailio)
 # extra install for kamailio
 
 install-pgsql-scripts: $(bin_prefix)/$(bin_dir)
-		PGSQLON=yes make -C ../../utils/kamctl/ install-modules
+		PGSQLON=yes $(MAKE) -C ../../utils/kamctl/ install-modules
 
 install-scripts: install-pgsql-scripts
 
