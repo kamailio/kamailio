@@ -2018,7 +2018,7 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 	method = get_cseq(msg)->method_id;
 
 	if(!(method==METHOD_INVITE || method==METHOD_ACK || method==METHOD_CANCEL
-				|| method==METHOD_BYE || method==METHOD_UPDATE))
+				|| method==METHOD_BYE || method==METHOD_UPDATE || method==METHOD_PRACK))
 		return -1;
 
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
@@ -2039,6 +2039,9 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 		if(method==METHOD_ACK && nosdp==0)
 			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
 					(ip!=NULL)?1:0);
+		if(method==METHOD_PRACK && nosdp==0)
+			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
+					(ip!=NULL)?1:0);
 		if(method==METHOD_UPDATE && nosdp==0)
 			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
 					(ip!=NULL)?1:0);
@@ -2056,6 +2059,9 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 		if(msg->first_line.u.reply.statuscode>=300)
 			return unforce_rtp_proxy(msg, flags);
 		if(nosdp==0) {
+			if(method==METHOD_PRACK)
+				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
+					(ip!=NULL)?1:0);
 			if(method==METHOD_UPDATE)
 				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
 					(ip!=NULL)?1:0);
