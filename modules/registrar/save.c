@@ -263,6 +263,14 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsig
 			ci.sock = _m->rcv.bind_address;
 		}
 
+		/* set tcp connection id */
+		if (_m->rcv.proto==PROTO_TCP || _m->rcv.proto==PROTO_TLS
+		        || _m->rcv.proto==PROTO_WS  || _m->rcv.proto==PROTO_WSS) {
+			ci.tcpconn_id = _m->rcv.proto_reserved1;
+		} else {
+			ci.tcpconn_id = -1;
+		}
+
 		/* additional info from message */
 		if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
 		_m->user_agent->body.len>0 && _m->user_agent->body.len<MAX_UA_SIZE) {
@@ -496,7 +504,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 
 		/* hack to work with buggy clients having many contacts with same
 		 * address in one REGISTER - increase CSeq to detect if there was
-		 * one alredy added, then update */
+		 * one already added, then update */
 		ci->cseq++;
 		if ( r->contacts==0
 				|| ul.get_ucontact_by_instance(r, &_c->uri, ci, &c) != 0) {
