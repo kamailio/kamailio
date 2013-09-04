@@ -803,7 +803,8 @@ error_no_cca:
  * @returns #CSCF_RETURN_TRUE if OK, #CSCF_RETURN_ERROR on error
  */
 int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units) {
-	str session_id = { 0, 0 };
+	str session_id = { 0, 0 },
+		asserted_id	= { 0, 0 };
 	AAASession* cc_acc_session = NULL;
     Ro_CCR_t * ro_ccr_data = 0;
     AAAMessage * ccr = 0;
@@ -815,6 +816,11 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
 
+    if (msg->first_line.type != SIP_REQUEST) {
+    	LM_ERR("Ro_CCR() called from SIP reply.");
+    	return -1;
+    }
+
     //make sure we can get the dialog! if not, we can't continue
 	struct dlg_cell* dlg = dlgb.get_dlg(msg);
 	if (!dlg) {
@@ -822,11 +828,17 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 		return -1;
 	}
 
+	if ((asserted_id = cscf_get_asserted_identity(msg)).len == 0) {
+		LM_DBG("No P-Asserted-Identity hdr found. Using From hdr");
+
+		asserted_id	= dlg->from_uri;
+	}
+
 	dir = get_direction_as_int(direction);
 
 	//create a session object without auth and diameter session id - we will add this later.
 	new_session = build_new_ro_session(dir, 0, 0, &session_id, &dlg->callid,
-			&dlg->from_uri, &dlg->req_uri, dlg->h_entry, dlg->h_id,
+			&asserted_id, &msg->first_line.u.request.uri, dlg->h_entry, dlg->h_id,
 			reservation_units, 0);
 	if (!new_session) {
 		LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
