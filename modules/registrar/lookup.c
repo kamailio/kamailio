@@ -421,6 +421,11 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	ruri_b_ruid = msg->ruid;
 	ruri_b_ua = msg->location_ua;
 	reset_ruri_branch(msg);
+	/* set new uri buf to null, otherwise is freed or overwritten by
+	 * rewrite_uri() during branch lookup */
+	msg->new_uri.len=0;
+	msg->new_uri.s=0;
+	msg->parsed_uri_ok=0;
 
 	for(i=0; i<nr_branches_start; i++) {
 		crt = get_sip_branch(i);
@@ -490,7 +495,11 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 
 done:
 	reset_ruri_branch(msg);
+	/* new uri could be set to allocated buffer by branch lookup */
+	if(msg->new_uri.s!=NULL)
+		pkg_free(msg->new_uri.s);
 	msg->new_uri = ruri_b_uri;
+	ruri_mark_new();
 	msg->parsed_uri_ok = 0;
 	msg->dst_uri = ruri_b_dst_uri;
 	msg->path_vec = ruri_b_path;
