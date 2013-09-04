@@ -358,6 +358,15 @@ handle_ret:
 		/* we don't want to pass upstream any reply regarding replicating
 		 * a request; replicated branch must stop at us*/
 		if (likely(!replicate)) {
+			if(t->flags&T_DISABLE_INTERNAL_REPLY) {
+				/* flag set to don't generate the internal negative reply
+				 * - let the transaction live further, processing should
+				 *   continue in config */
+				DBG("not generating immediate reply for error %d\n", ser_error);
+				tm_error=ser_error;
+				ret = -4;
+				goto done;
+			}
 #ifdef TM_DELAYED_REPLY
 			/* current error in tm_error */
 			tm_error=ser_error;

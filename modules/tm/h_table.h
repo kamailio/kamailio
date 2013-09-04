@@ -299,6 +299,8 @@ struct totag_elem {
 #	define pass_provisional(_t_)	((_t_)->flags&T_PASS_PROVISIONAL_FLAG)
 #endif
 
+#define T_DISABLE_INTERNAL_REPLY (1<<12) /* don't send internal negative reply */
+
 /* unsigned short should be enough for a retr. timer: max. 65535 ms =>
  * max retr. = 65 s which should be enough and saves us 2*2 bytes */
 typedef unsigned short retr_timeout_t;
