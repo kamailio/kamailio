@@ -228,9 +228,15 @@ int th_prepare_msg(sip_msg_t *msg)
 		return 3;
 	}
 
-	if(get_to(msg)==NULL)
+	if(parse_to_header(msg)<0 || msg->to==NULL)
 	{
 		LM_ERR("cannot parse TO header\n");
+		return 3;
+	}
+
+	if(get_to(msg)==NULL)
+	{
+		LM_ERR("cannot get TO header\n");
 		return 3;
 	}
 
