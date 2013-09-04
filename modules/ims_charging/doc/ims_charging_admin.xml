@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+]>
+<!-- Auth_db Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>This module contains all methods related to the IMS charging control
+	functions performed by an network element (e.g. a S-CSCF) over the Ro
+	interface. This module is dependent on the CDP (C Diameter Peer)
+	modules for communicating with a Charging-Server as specified in 3GPP 
+	specification TS xx.xxx.
+    </para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The Following mouldes must be loaded before this module:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Dialog2</para>
+        </listitem>
+
+        <listitem>
+          <para>TM - Transaction Manager</para>
+        </listitem>
+
+        <listitem>
+          <para>CDP - C Diameter Peer</para>
+        </listitem>
+
+        <listitem>
+          <para>CDP_AVP - CDP AVP Applications</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>This modules requires the internal IMS library.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title><varname>origin_host</varname> (string)</title>
+
+      <para>origin_host.</para>
+
+      <para><emphasis> Default value is 'ims.smilecoms.com'.
+      </emphasis></para>
+
+      <example>
+        <title><varname>origin_host</varname> origin_host</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "origin_host", "ims.smilecoms.com")
+...
+        </programlisting>
+      </example>
+    </section>
+
+  </section>
+
+  <section>
+    <title>Functions</title>
+
+    <section>
+      <title><function
+      moreinfo="none">Ro_CCR(domain)</function></title>
+
+      <para>Perform a CCR on Diameter Ro interface for Charging</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain</emphasis> that usrloc_pcscf uses to store 
+          user information.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <para>p.s. this is executed asynchronously. See example on how to
+      retrieve return value</para>
+
+      <example>
+        <title>Ro_CCR</title>
+
+        <programlisting format="linespecific">
+...
+	xlog("L_DBG","Sending initial CCR Request for call\n");
+	$var(cc_ret) = Ro_CCR("orig", "SCUR", "", "30");
+	if ($var(cc_ret) != 0) {
+		xlog("L_DBG","CCR Request failure\n");
+		sl_send_reply("402","Payment required");
+		exit;
+	}
+...
+</programlisting>
+      </example>
+    </section>
+    
+   </section>
+
+  <section>
+    <title>Statistics</title>
+
+    <section>
+      <title>AAR Timeouts (aar_timeouts)</title>
+
+      <para>The number of timeouts on sending a AAR. i.e. no response to
+      AAR.</para>
+    </section>
+
+    <section>
+      <title>Average AAR Response Time (aar_avg_response_time)</title>
+
+      <para>The average response time in milliseconds for AAR-AAA
+      transaction.</para>
+    </section>
+  </section>
+</chapter>
