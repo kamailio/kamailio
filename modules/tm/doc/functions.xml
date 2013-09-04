@@ -1380,6 +1380,26 @@ route {
 	</example>
 	</section>
 
+	<section id="tm.f.t_set_disable_internal_reply">
+	<title>
+		<function>t_set_disable_internal_reply(0|1)</function>
+	</title>
+		<para>
+		Turn off/on sending internally a SIP reply in case of relay errors.
+		</para>
+		<example>
+		<title><function>t_set_disable_internal_reply</function> usage</title>
+		<programlisting>
+...
+t_set_disable_internal_reply(1); # turn off sending internal reply on error
+if(!t_relay()) {
+   send_reply("500", "Server error");
+}
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="t_replicate">
 	<title>
 	    <function>t_replicate(params)</function>
