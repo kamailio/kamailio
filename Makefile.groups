@@ -146,7 +146,7 @@ mod_list_mono=app_mono
 # - modules related to IMS extensions
 mod_list_ims=cdp cdp_avp dialog_ng ims_auth ims_isc ims_icscf ims_qos \
 			   ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
-			   ims_usrloc_scscf
+			   ims_usrloc_scscf ims_charging
 
 # - modules depending on osp toolkit library
 mod_list_osp=osp
