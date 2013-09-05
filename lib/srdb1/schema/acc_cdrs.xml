@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="acc_cdrs" xmlns:db="http://docbook.org/ns/docbook">
+    <name>acc_cdrs</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the ACC module to report on CDRs relying on dialog callbacks. More information is available at: &KAMAILIO_MOD_DOC;acc.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column>
+        <name>start_time</name>
+        <type>string</type>
+        <size>32</size>
+        <description>Start time</description>
+        <default/>
+    </column>
+
+    <column>
+        <name>end_time</name>
+        <type>string</type>
+        <size>32</size>
+        <description>End time</description>
+        <default/>
+    </column>
+
+    <column>
+        <name>duration</name>
+        <type>string</type>
+        <size>32</size>
+        <description>Duration</description>
+        <default/>
+    </column>
+
+    <index>
+        <name>start_time_idx</name>
+        <colref linkend="start_time"/>
+    </index>
+</table>
