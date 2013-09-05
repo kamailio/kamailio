@@ -1234,7 +1234,7 @@ modparam("acc", "cdr_duration_id", "d")
 		</example>
 	</section>
 	<section id="acc.p.cdr_log_enable">
-		<title><varname>cdr_enable</varname> (int)</title>
+		<title><varname>cdr_log_enable</varname> (int)</title>
 		<para>
 		Control if CDR-based accounting should be written to syslog.
 		</para>

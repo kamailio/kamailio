@@ -125,7 +125,7 @@ Sven Knoblich
               6.42. cdr_start_id (string)
               6.43. cdr_end_id (string)
               6.44. cdr_duration_id (string)
-              6.45. cdr_enable (int)
+              6.45. cdr_log_enable (int)
               6.46. cdrs_table (str)
               6.47. time_mode (int)
               6.48. time_attr (str)
@@ -281,7 +281,7 @@ Chapter 1. Admin Guide
         6.42. cdr_start_id (string)
         6.43. cdr_end_id (string)
         6.44. cdr_duration_id (string)
-        6.45. cdr_enable (int)
+        6.45. cdr_log_enable (int)
         6.46. cdrs_table (str)
         6.47. time_mode (int)
         6.48. time_attr (str)
@@ -691,7 +691,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.42. cdr_start_id (string)
    6.43. cdr_end_id (string)
    6.44. cdr_duration_id (string)
-   6.45. cdr_enable (int)
+   6.45. cdr_log_enable (int)
    6.46. cdrs_table (str)
    6.47. time_mode (int)
    6.48. time_attr (str)
@@ -1161,7 +1161,7 @@ modparam("acc", "cdr_end_id", "end")
    Example 1.44. cdr_duration_id example
 modparam("acc", "cdr_duration_id", "d")
 
-6.45. cdr_enable (int)
+6.45. cdr_log_enable (int)
 
    Control if CDR-based accounting should be written to syslog.
 
