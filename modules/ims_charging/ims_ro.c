@@ -329,7 +329,7 @@ int get_sip_header_info(struct sip_msg * req,
         int32_t * acc_record_type,
         str * sip_method,
         str * event, uint32_t * expires,
-        str * callid, str * from_uri, str * to_uri) {
+        str * callid, str * asserted_id_uri, str * to_uri) {
 
     sip_method->s = req->first_line.u.request.method.s;
     sip_method->len = req->first_line.u.request.method.len;
@@ -345,16 +345,21 @@ int get_sip_header_info(struct sip_msg * req,
     *expires = cscf_get_expires_hdr(req, 0);
     *callid = cscf_get_call_id(req, NULL);
 
-    if (!cscf_get_from_uri(req, from_uri))
-        goto error;
+    if ((*asserted_id_uri = cscf_get_asserted_identity(req)).len == 0) {
+    	LM_DBG("No P-Asserted-Identity hdr found. Using From hdr");
 
-    if (!cscf_get_to_uri(req, to_uri))
-        goto error;
+    	if (!cscf_get_from_uri(req, asserted_id_uri)) {
+    		LM_ERR("Error assigning P-Asserted-Identity using From hdr");
+    		goto error;
+    	}
+    }
+
+    *to_uri	= req->first_line.u.request.uri;
 
     LM_DBG("retrieved sip info : sip_method %.*s acc_record_type %i, event %.*s expires %u "
             "call_id %.*s from_uri %.*s to_uri %.*s\n",
             sip_method->len, sip_method->s, *acc_record_type, event->len, event->s, *expires,
-            callid->len, callid->s, from_uri->len, from_uri->s, to_uri->len, to_uri->s);
+            callid->len, callid->s, asserted_id_uri->len, asserted_id_uri->s, to_uri->len, to_uri->s);
 
     return 1;
 error:
@@ -804,7 +809,7 @@ error_no_cca:
  */
 int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units) {
 	str session_id = { 0, 0 },
-		asserted_id	= { 0, 0 };
+		asserted_id_uri	= { 0, 0 };
 	AAASession* cc_acc_session = NULL;
     Ro_CCR_t * ro_ccr_data = 0;
     AAAMessage * ccr = 0;
@@ -815,6 +820,8 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
+
+    LM_ALERT("here 1");
 
     if (msg->first_line.type != SIP_REQUEST) {
     	LM_ERR("Ro_CCR() called from SIP reply.");
@@ -828,23 +835,23 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 		return -1;
 	}
 
-	if ((asserted_id = cscf_get_asserted_identity(msg)).len == 0) {
+	if ((asserted_id_uri = cscf_get_asserted_identity(msg)).len == 0) {
 		LM_DBG("No P-Asserted-Identity hdr found. Using From hdr");
 
-		asserted_id	= dlg->from_uri;
+		asserted_id_uri	= dlg->from_uri;
 	}
 
 	dir = get_direction_as_int(direction);
 
 	//create a session object without auth and diameter session id - we will add this later.
 	new_session = build_new_ro_session(dir, 0, 0, &session_id, &dlg->callid,
-			&asserted_id, &msg->first_line.u.request.uri, dlg->h_entry, dlg->h_id,
+			&asserted_id_uri, &msg->first_line.u.request.uri, dlg->h_entry, dlg->h_id,
 			reservation_units, 0);
 	if (!new_session) {
 		LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
 		return -1;
 	}
-
+	LM_ALERT("here 3");
     if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &cc_acc_session))
         goto error;
 
@@ -890,12 +897,13 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     }
 
     //get sip from URI for request
-    str from_sip_uri;
+    /*str from_sip_uri;
 
     if (!cscf_get_from_uri(msg, &from_sip_uri)) {//TODO fix
         return 0;
-    }
-    if (!Ro_add_subscription_id(ccr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &from_sip_uri)) {
+    } */
+
+    if (!Ro_add_subscription_id(ccr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &asserted_id_uri)) {
         LM_ERR("Problem adding Subscription ID data\n");
         goto error;
     }
