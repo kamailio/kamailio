@@ -10,6 +10,8 @@ METADATA_DEFAULTS
 NIL|0
 acc|
 acc|4
+acc_cdrs|
+acc_cdrs|1
 active_watchers|
 active_watchers|11
 address|
