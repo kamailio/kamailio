@@ -26,7 +26,7 @@
         <description>unique ID</description>
     </column>
 
-    <column>
+	<column id="start_time">
         <name>start_time</name>
         <type>string</type>
         <size>32</size>
