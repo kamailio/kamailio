@@ -116,6 +116,7 @@ int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
 
 int acc_time_mode  = 0;
 str acc_time_attr  = str_init("time_attr");
+str acc_time_exten  = str_init("time_exten");
 
 /*@}*/
 
@@ -306,6 +307,7 @@ static param_export_t params[] = {
 	/* time-mode-specific */
 	{"time_mode",            INT_PARAM, &acc_time_mode        },
 	{"time_attr",            PARAM_STR, &acc_time_attr        },
+	{"time_exten",           PARAM_STR, &acc_time_exten       },
 	{"cdrs_table",           PARAM_STR, &acc_cdrs_table       },
 	{0,0,0}
 };

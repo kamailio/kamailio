@@ -99,6 +99,7 @@ extern int acc_db_insert_mode;
 /* time mode */
 extern int acc_time_mode;
 extern str acc_time_attr;
+extern str acc_time_exten;
 
 
 #endif

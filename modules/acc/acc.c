@@ -93,10 +93,11 @@ extern struct acc_extra *db_extra;
 #endif
 
 /* arrays used to collect the values before being
- * pushed to the storage backend (whatever used) */
-static str val_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+2];
-static int int_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+2];
-static char type_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+2];
+ * pushed to the storage backend (whatever used)
+ * (3 = datetime + max 2 from time_mode) */
+static str val_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
+static int int_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
+static char type_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
 
 /********************************************
  *        acc CORE function
@@ -279,7 +280,7 @@ int acc_log_request( struct sip_msg *rq)
 	if(acc_time_mode==1) {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%u%s",
 			acc_env.text.len, acc_env.text.s,(unsigned long) acc_env.ts,
-			acc_time_attr.s, (unsigned int)acc_env.tv.tv_usec,
+			acc_time_exten.s, (unsigned int)acc_env.tv.tv_usec,
 			log_msg);
 	} else if(acc_time_mode==2) {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%.3f%s",
@@ -304,9 +305,10 @@ int acc_log_request( struct sip_msg *rq)
 
 #ifdef SQL_ACC
 
-/* caution: keys need to be aligned to core format */
-static db_key_t db_keys[ACC_CORE_LEN+2+MAX_ACC_EXTRA+MAX_ACC_LEG];
-static db_val_t db_vals[ACC_CORE_LEN+2+MAX_ACC_EXTRA+MAX_ACC_LEG];
+/* caution: keys need to be aligned to core format
+ * (3 = datetime + max 2 from time_mode) */
+static db_key_t db_keys[ACC_CORE_LEN+3+MAX_ACC_EXTRA+MAX_ACC_LEG];
+static db_val_t db_vals[ACC_CORE_LEN+3+MAX_ACC_EXTRA+MAX_ACC_LEG];
 
 
 int acc_get_db_handlers(void **vf, void **vh) {
@@ -336,7 +338,10 @@ static void acc_db_init_keys(void)
 	db_keys[n++] = &acc_time_col;
 	time_idx = n-1;
 	if(acc_time_mode==1 || acc_time_mode==2) {
-		db_keys[n++] = &acc_time_attr;;
+		db_keys[n++] = &acc_time_attr;
+		if(acc_time_mode==1) {
+			db_keys[n++] = &acc_time_exten;
+		}
 	}
 
 	/* init the extra db keys */
@@ -355,6 +360,7 @@ static void acc_db_init_keys(void)
 	VAL_TYPE(db_vals+time_idx)=DB1_DATETIME;
 	if(acc_time_mode==1) {
 		VAL_TYPE(db_vals+time_idx+1)=DB1_INT;
+		VAL_TYPE(db_vals+time_idx+2)=DB1_INT;
 	} else if(acc_time_mode==2) {
 		VAL_TYPE(db_vals+time_idx+1)=DB1_DOUBLE;
 	}
@@ -418,6 +424,8 @@ int acc_db_request( struct sip_msg *rq)
 	VAL_TIME(db_vals+(m++)) = acc_env.ts;
 	/* extra time value */
 	if(acc_time_mode==1) {
+		VAL_INT(db_vals+(m++)) = (int)acc_env.tv.tv_sec;
+		i++;
 		VAL_INT(db_vals+(m++)) = (int)acc_env.tv.tv_usec;
 		i++;
 	} else if(acc_time_mode==2) {

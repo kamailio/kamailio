@@ -129,6 +129,7 @@ Sven Knoblich
               6.46. cdrs_table (str)
               6.47. time_mode (int)
               6.48. time_attr (str)
+              6.49. time_exten (str)
 
         7. Functions
 
@@ -189,10 +190,11 @@ Sven Knoblich
    1.46. cdrs_table example
    1.47. time_mode example
    1.48. time_attr example
-   1.49. acc_log_request usage
-   1.50. acc_db_request usage
-   1.51. acc_rad_request usage
-   1.52. acc_diam_request usage
+   1.49. time_exten example
+   1.50. acc_log_request usage
+   1.51. acc_db_request usage
+   1.52. acc_rad_request usage
+   1.53. acc_diam_request usage
 
 Chapter 1. Admin Guide
 
@@ -285,6 +287,7 @@ Chapter 1. Admin Guide
         6.46. cdrs_table (str)
         6.47. time_mode (int)
         6.48. time_attr (str)
+        6.49. time_exten (str)
 
    7. Functions
 
@@ -695,6 +698,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.46. cdrs_table (str)
    6.47. time_mode (int)
    6.48. time_attr (str)
+   6.49. time_exten (str)
 
 6.1. early_media (integer)
 
@@ -1186,8 +1190,7 @@ modparam("acc", "cdrs_table", "acc_cdrs")
    Values can be:
      * 0 - (default), save only unix timestamp for syslog and datetime for
        database.
-     * 1 - save microseconds part (does not include the seconds in the
-       value) in time_attr.
+     * 1 - save seconds in time_attr and microseconds in time_exten.
      * 3 - save seconds.miliseconds in time_attr.
 
    Example 1.47. time_mode example
@@ -1203,8 +1206,22 @@ modparam("acc", "time_mode", 1)
      * 1 - time_attr column has to be int.
      * 2 - time_attr column has to be double.
 
+   For time_mode=1, this attribute is not written in syslog, because time
+   value is already unix timestamp, but in db accounting time value is
+   datetime and requires a function to get the timestamp.
+
    Example 1.48. time_attr example
-modparam("acc", "time_attr", "micorsecs")
+modparam("acc", "time_attr", "seconds")
+
+6.49. time_exten (str)
+
+   Name of the syslog attribute or database column where to store extended
+   value related to the time of event.
+
+   It is used now only for time_mode=1 and database column has to be int:
+
+   Example 1.49. time_exten example
+modparam("acc", "time_exten", "micorsecs")
 
 7. Functions
 
@@ -1225,7 +1242,7 @@ modparam("acc", "time_attr", "micorsecs")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.49. acc_log_request usage
+   Example 1.50. acc_log_request usage
 ...
 acc_log_request("Some comment");
 ...
@@ -1243,7 +1260,7 @@ acc_log_request("Some comment");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.50. acc_db_request usage
+   Example 1.51. acc_db_request usage
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
@@ -1259,7 +1276,7 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. acc_rad_request usage
+   Example 1.52. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 ...
@@ -1274,7 +1291,7 @@ acc_rad_request("Some comment");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.52. acc_diam_request usage
+   Example 1.53. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 ...

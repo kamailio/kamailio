@@ -1278,8 +1278,8 @@ modparam("acc", "cdrs_table", "acc_cdrs")
 				timestamp for syslog and datetime for database.</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>1</emphasis> - save microseconds part (does not
-				include the seconds in the value) in time_attr.</para>
+			<para><emphasis>1</emphasis> - save seconds in time_attr and
+				microseconds in time_exten.</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>3</emphasis> - save seconds.miliseconds
@@ -1312,11 +1312,31 @@ modparam("acc", "time_mode", 1)
 			<para><emphasis>2</emphasis> - time_attr column has to be double.</para>
 		</listitem>
 		</itemizedlist>
-
+		<para>
+		For time_mode=1, this attribute is not written in syslog, because time
+		value is already unix timestamp, but in db accounting time value is
+		datetime and requires a function to get the timestamp.
+		</para>
 		<example>
 		<title>time_attr example</title>
 		<programlisting format="linespecific">
-modparam("acc", "time_attr", "micorsecs")
+modparam("acc", "time_attr", "seconds")
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.time_exten">
+		<title><varname>time_exten</varname> (str)</title>
+		<para>
+		Name of the syslog attribute or database column where to store extended
+		value related to the time of event.
+		</para>
+		<para>
+		It is used now only for time_mode=1 and database column has to be int:
+		</para>
+		<example>
+		<title>time_exten example</title>
+		<programlisting format="linespecific">
+modparam("acc", "time_exten", "micorsecs")
 </programlisting>
 		</example>
 	</section>
