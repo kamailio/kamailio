@@ -246,3 +246,24 @@ done
 
 minfo "Extra tables succesfully created."
 }  # end extra_create
+
+
+dbuid_create () # pars: <database name>
+{
+	if [ $# -ne 1 ] ; then
+		merr "dbuid_create function takes one param"
+		exit 1
+	fi
+
+	minfo "creating uid tables into $1 ..."
+
+	for TABLE in $DBUID_MODULES; do
+		mdbg "Creating uid table: $TABLE"
+		sql_query $1 < $DB_SCHEMA/$TABLE-create.sql
+		if [ $? -ne 0 ] ; then
+			merr "Creating uid tables failed at $TABLE!"
+			exit 1
+			fi
+		done
+	minfo "UID tables succesfully created."
+}  # end uid_create
