@@ -838,6 +838,7 @@ endif
 
 ifeq ($(ARCH), arm6)
 	use_fast_lock=yes
+	C_DEFS+=-DNOSMP # very unlikely to have an smp arm
 endif
 
 ifeq ($(ARCH), ppc)
