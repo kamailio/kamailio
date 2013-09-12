@@ -21,10 +21,22 @@
 			<email>jh@tutpro.com</email>
 		</address>
 		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<address>
+			<email>carsten@ng-voice.com</email>
+		</address>
+		</author>
 	</authorgroup>
 	<copyright>
 		<year>2008-2009</year>
 		<holder>Juha Heinanen</holder>
+	</copyright>
+	<copyright>
+		<year>2013</year>
+		<holder>Carsten Bock, ng-voice GmbH</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>

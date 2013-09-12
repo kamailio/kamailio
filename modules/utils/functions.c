@@ -2,6 +2,7 @@
  * script functions of utils module
  *
  * Copyright (C) 2008 Juha Heinanen
+ * Copyright (C) 2013 Carsten Bock, ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -70,12 +71,12 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream)
  * Performs http_query and saves possible result (first body line of reply)
  * to pvar.
  */
-int http_query(struct sip_msg* _m, char* _url, char* _dst)
+int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 {
     CURL *curl;
     CURLcode res;  
-    str value;
-    char *url, *at;
+    str value, post_value;
+    char *url, *at, *post;
     char* stream;
     long stat;
     pv_spec_t *dst;
@@ -103,6 +104,28 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst)
     *(url + value.len) = (char)0;
     curl_easy_setopt(curl, CURLOPT_URL, url);
 
+    if (_post) {
+        /* Now specify we want to POST data */ 
+	curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+    	if (fixup_get_svalue(_m, (gparam_p)_post, &post_value) != 0) {
+		LM_ERR("cannot get post value\n");
+		pkg_free(url);
+		return -1;
+    	}
+        post = pkg_malloc(post_value.len + 1);
+        if (post == NULL) {
+		curl_easy_cleanup(curl);
+		pkg_free(url);
+        	LM_ERR("cannot allocate pkg memory for post\n");
+        	return -1;
+	}
+	memcpy(post, post_value.s, post_value.len);
+	*(post + post_value.len) = (char)0;
+ 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post);
+    }
+       
+
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)http_query_timeout);
 
@@ -112,6 +135,9 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst)
 
     res = curl_easy_perform(curl);  
     pkg_free(url);
+    if (_post) {
+	pkg_free(post);
+    }
     curl_easy_cleanup(curl);
 
     if (res != CURLE_OK) {

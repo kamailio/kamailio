@@ -2,6 +2,7 @@
  * headers of script functions of utils module
  *
  * Copyright (C) 2008 Juha Heinanen
+ * Copyright (C) 2013 Carsten Bock, ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -39,7 +40,7 @@
  * Performs http_query and saves possible result (first body line of reply)
  * to pvar.
  */
-int http_query(struct sip_msg* _m, char* _page, char* _params, char* _dst);
+int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post);
 
 
 #endif /* UTILS_FUNCTIONS_H */
