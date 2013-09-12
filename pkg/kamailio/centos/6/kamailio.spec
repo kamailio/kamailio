@@ -24,11 +24,11 @@ Conflicts:	kamailio-perl < %ver, kamailio-postgresql < %ver
 Conflicts:	kamailio-presence < %ver, kamailio-purple < %ver
 Conflicts:	kamailio-python < %ver, kamailio-regex < %ver
 Conflicts:	kamailio-sctp < %ver, kamailio-snmpstats < %ver
-Conflicts:	kamailio-sqlite < %ver, kamailio-stun < %ver
-Conflicts:	kamailio-tls < %ver, kamailio-unixODBC < %ver
-Conflicts:	kamailio-utils < %ver, kamailio-websocket < %ver
-Conflicts:	kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
-Conflicts:	kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
+Conflicts:	kamailio-sqlite < %ver, kamailio-tls < %ver
+Conflicts:	kamailio-unixODBC < %ver, kamailio-utils < %ver
+Conflicts:	kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
+Conflicts:	kamailio-xmlops < %ver, kamailio-xmlrpc < %ver
+Conflicts:	kamailio-xmpp < %ver
 BuildRequires:	bison, flex, gcc, make, redhat-rpm-config
 
 %description
@@ -256,17 +256,6 @@ BuildRequires:	sqlite-devel
 SQLite database connectivity for Kamailio.
 
 
-%package	stun
-Summary:	Limited STUN (RFC 5389) support for Kamailio.
-Group:		System Environment/Daemons
-Requires:	openssl, kamailio = %ver
-BuildRequires:	openssl-devel
-
-%description	stun
-Limited RFC 5389, "Session Traversal Utilities for NAT (STUN)" support for
-Kamailio.
-
-
 %package	tls
 Summary:	TLS transport for Kamailio.
 Group:		System Environment/Daemons
@@ -362,7 +351,7 @@ make every-module skip_modules="app_java db_cassandra db_oracle dnssec \
 	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
 	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound ksctp kstun kautheph"
+	kims koutbound ksctp kautheph"
 make utils
 
 
@@ -376,7 +365,7 @@ make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
 	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
 	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound ksctp kstun kautheph"
+	kims koutbound ksctp kautheph"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -506,6 +495,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sqlops
 %doc %{_docdir}/kamailio/modules/README.sst
 %doc %{_docdir}/kamailio/modules/README.statistics
+%doc %{_docdir}/kamailio/modules/README.stun
 %doc %{_docdir}/kamailio/modules/README.textops
 %doc %{_docdir}/kamailio/modules/README.textopsx
 %doc %{_docdir}/kamailio/modules/README.timer
@@ -643,6 +633,7 @@ fi
 %{_libdir}/kamailio/modules/sqlops.so
 %{_libdir}/kamailio/modules/sst.so
 %{_libdir}/kamailio/modules/statistics.so
+%{_libdir}/kamailio/modules/stun.so
 %{_libdir}/kamailio/modules/textops.so
 %{_libdir}/kamailio/modules/textopsx.so
 %{_libdir}/kamailio/modules/timer.so
@@ -924,12 +915,6 @@ fi
 %{_datadir}/kamailio/db_sqlite/*
 
 
-%files		stun
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.stun
-%{_libdir}/kamailio/modules/stun.so
-
-
 %files		tls
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.tls
@@ -982,6 +967,9 @@ fi
 
 
 %changelog
+* Thu Sep 12 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
+  - stun no longer depends on OpenSSL so it has been moved to the standard
+    module set
 * Wed Sep 11 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
   - Removed Fedora stuff as I am only maintaining this for CentOS now
   - Updated rel to dev8
