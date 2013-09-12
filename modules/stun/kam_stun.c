@@ -24,7 +24,6 @@
  */
 
 #include <arpa/inet.h>
-#include <openssl/sha.h>
 #include "kam_stun.h"
 #include "../../forward.h"
 

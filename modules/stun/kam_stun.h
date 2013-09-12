@@ -26,8 +26,6 @@
 #ifndef _kam_stun_h
 #define _kam_stun_h
 
-#include <openssl/sha.h>
-
 #include "../../str.h"
 #include "../../tcp_conn.h"
 #include "../../ip_addr.h"
@@ -105,6 +103,10 @@
 #define	FATAL_ERROR		-1
 #define IP_ADDR			4
 #define XOR			1
+
+#ifndef SHA_DIGEST_LENGTH
+#define SHA_DIGEST_LENGTH	20
+#endif
 
 /** padd len to a multiple of sz.
  *  sz must be a power of the form 2^k (e.g. 2, 4, 8, 16 ...)
