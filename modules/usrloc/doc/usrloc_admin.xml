@@ -875,6 +875,26 @@ modparam("usrloc", "db_ops_ruid", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.handle_lost_tcp">
+		<title><varname>handle_lost_tcp</varname> (int)</title>
+		<para>
+			If set to 1, Kamailio will remove location records made via
+			TCP/TLS/WS/WSS transports when it looses corresponding tcp connections.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		<example>
+		<title>Set <varname>handle_lost_tcp</varname> parameter</title>
+		<programlist format="linespecific">
+...
+modparam("usrloc", "handle_lost_tcp", 1)
+...
+<programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

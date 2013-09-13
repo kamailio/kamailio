@@ -351,6 +351,9 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		ci.reg_id = VAL_UINT(vals+15);
 	}
 
+	/* tcp connection id */
+	ci.tcpconn_id = -1;
+
 	return &ci;
 }
 

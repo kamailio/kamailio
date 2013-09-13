@@ -307,6 +307,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 	_c->last_keepalive = _ci->last_modified;
 	_c->flags = _ci->flags;
 	_c->cflags = _ci->cflags;
+	_c->tcpconn_id = _ci->tcpconn_id;
 
 	return 0;
 }
