@@ -94,6 +94,8 @@ int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			{
 				LM_ERR("subst result too big %d, increase buffer size\n",
 						result->len);
+				pkg_free(result->s);
+				pkg_free(result);
 				goto error;
 			}
 			memcpy(tr_txt_buf, result->s, result->len);
