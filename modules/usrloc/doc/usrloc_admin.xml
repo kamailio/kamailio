@@ -885,13 +885,14 @@ modparam("usrloc", "db_ops_ruid", 1)
 		<emphasis>
 			Default value is <quote>0</quote>.
 		</emphasis>
+		</para>
 		<example>
 		<title>Set <varname>handle_lost_tcp</varname> parameter</title>
-		<programlist format="linespecific">
+		<programlisting format="linespecific">
 ...
 modparam("usrloc", "handle_lost_tcp", 1)
 ...
-<programlisting>
+</programlisting>
 		</example>
 	</section>
 
