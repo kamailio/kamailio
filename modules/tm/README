@@ -110,14 +110,15 @@ Juha Heinanen
               5.38. t_load_contacts()
               5.39. t_next_contacts()
               5.40. t_next_contact_flow()
-              5.41. t_check_trans()
-              5.42. t_set_disable_6xx(0|1)
-              5.43. t_set_disable_failover(0|1)
-              5.44. t_set_disable_internal_reply(0|1)
-              5.45. t_replicate(params)
-              5.46. t_relay_to(proxy, flags)
-              5.47. t_set_no_e2e_cancel_reason(0|1)
-              5.48. t_is_set(target)
+              5.41. t_check_status(re)
+              5.42. t_check_trans()
+              5.43. t_set_disable_6xx(0|1)
+              5.44. t_set_disable_failover(0|1)
+              5.45. t_set_disable_internal_reply(0|1)
+              5.46. t_replicate(params)
+              5.47. t_relay_to(proxy, flags)
+              5.48. t_set_no_e2e_cancel_reason(0|1)
+              5.49. t_is_set(target)
 
         6. TM Module API
 
@@ -219,15 +220,16 @@ Juha Heinanen
    1.76. t_load_contacts usage
    1.77. t_next_contacts usage
    1.78. t_next_contact_flow usage
-   1.79. t_check_trans usage
-   1.80. t_set_disable_6xx usage
-   1.81. t_set_disable_failover usage
-   1.82. t_set_disable_internal_reply usage
-   1.83. t_replicate usage
+   1.79. t_check_status usage
+   1.80. t_check_trans usage
+   1.81. t_set_disable_6xx usage
+   1.82. t_set_disable_failover usage
+   1.83. t_set_disable_internal_reply usage
    1.84. t_replicate usage
-   1.85. t_set_no_e2e_cancel_reason usage
-   1.86. t_replicate usage
-   1.87. event_route[tm:branch-failure] usage
+   1.85. t_replicate usage
+   1.86. t_set_no_e2e_cancel_reason usage
+   1.87. t_replicate usage
+   1.88. event_route[tm:branch-failure] usage
 
 Chapter 1. Admin Guide
 
@@ -326,14 +328,15 @@ Chapter 1. Admin Guide
         5.38. t_load_contacts()
         5.39. t_next_contacts()
         5.40. t_next_contact_flow()
-        5.41. t_check_trans()
-        5.42. t_set_disable_6xx(0|1)
-        5.43. t_set_disable_failover(0|1)
-        5.44. t_set_disable_internal_reply(0|1)
-        5.45. t_replicate(params)
-        5.46. t_relay_to(proxy, flags)
-        5.47. t_set_no_e2e_cancel_reason(0|1)
-        5.48. t_is_set(target)
+        5.41. t_check_status(re)
+        5.42. t_check_trans()
+        5.43. t_set_disable_6xx(0|1)
+        5.44. t_set_disable_failover(0|1)
+        5.45. t_set_disable_internal_reply(0|1)
+        5.46. t_replicate(params)
+        5.47. t_relay_to(proxy, flags)
+        5.48. t_set_no_e2e_cancel_reason(0|1)
+        5.49. t_is_set(target)
 
    6. TM Module API
 
@@ -1594,14 +1597,15 @@ modparam("tm", "dns_reuse_rcv_socket", 1)
    5.38. t_load_contacts()
    5.39. t_next_contacts()
    5.40. t_next_contact_flow()
-   5.41. t_check_trans()
-   5.42. t_set_disable_6xx(0|1)
-   5.43. t_set_disable_failover(0|1)
-   5.44. t_set_disable_internal_reply(0|1)
-   5.45. t_replicate(params)
-   5.46. t_relay_to(proxy, flags)
-   5.47. t_set_no_e2e_cancel_reason(0|1)
-   5.48. t_is_set(target)
+   5.41. t_check_status(re)
+   5.42. t_check_trans()
+   5.43. t_set_disable_6xx(0|1)
+   5.44. t_set_disable_failover(0|1)
+   5.45. t_set_disable_internal_reply(0|1)
+   5.46. t_replicate(params)
+   5.47. t_relay_to(proxy, flags)
+   5.48. t_set_no_e2e_cancel_reason(0|1)
+   5.49. t_is_set(target)
 
 5.1. t_relay([host, port])
 
@@ -2425,7 +2429,25 @@ event_route[tm:branch-failure:outbound]
         }
 ...
 
-5.41. t_check_trans()
+5.41. t_check_status(re)
+
+   Returns true if the regular expresion "re" match the reply code of the
+   response message as follows:
+     * in routing block - the code of the last sent reply.
+     * in on_reply block - the code of the current received reply.
+     * in on_failure block - the code of the selected negative final
+       reply.
+
+   This function can be used from ANY_ROUTE .
+
+   Example 1.79. t_check_status usage
+...
+if (t_check_status("(487)|(408)")) {
+    log("487 or 408 negative reply\n");
+}
+...
+
+5.42. t_check_trans()
 
    t_check_trans() can be used to quickly check if a message belongs or is
    related to a transaction. It behaves differently for different types of
@@ -2470,12 +2492,12 @@ Note
 
    See also: t_lookup_request(), t_lookup_cancel().
 
-   Example 1.79. t_check_trans usage
+   Example 1.80. t_check_trans usage
 if ( method == "CANCEL" && !t_check_trans())
         sl_reply("403", "cancel out of the blue forbidden");
 # note: in this example t_check_trans() can be replaced by t_lookup_cancel()
 
-5.42. t_set_disable_6xx(0|1)
+5.43. t_set_disable_6xx(0|1)
 
    Turn off/on 6xx replies special rfc conformant handling on a per
    transaction basis. If turned off (t_set_disable_6xx("1")) 6XXs will be
@@ -2485,7 +2507,7 @@ if ( method == "CANCEL" && !t_check_trans())
 
    See also: disable_6xx_block.
 
-   Example 1.80. t_set_disable_6xx usage
+   Example 1.81. t_set_disable_6xx usage
 ...
 route {
 ...
@@ -2494,13 +2516,13 @@ route {
 ...
 }
 
-5.43. t_set_disable_failover(0|1)
+5.44. t_set_disable_failover(0|1)
 
    Turn off/on dns failover on a per transaction basis.
 
    See also: use_dns_failover.
 
-   Example 1.81. t_set_disable_failover usage
+   Example 1.82. t_set_disable_failover usage
 ...
 route {
 ...
@@ -2509,11 +2531,11 @@ route {
 ...
 }
 
-5.44. t_set_disable_internal_reply(0|1)
+5.45. t_set_disable_internal_reply(0|1)
 
    Turn off/on sending internally a SIP reply in case of relay errors.
 
-   Example 1.82. t_set_disable_internal_reply usage
+   Example 1.83. t_set_disable_internal_reply usage
 ...
 t_set_disable_internal_reply(1); # turn off sending internal reply on error
 if(!t_relay()) {
@@ -2521,7 +2543,7 @@ if(!t_relay()) {
 }
 ...
 
-5.45. t_replicate(params)
+5.46. t_replicate(params)
 
    Replicate the SIP request to a specific address.
 
@@ -2543,7 +2565,7 @@ if(!t_relay()) {
      * hostport - address in "host:port" format. It can be given via an
        AVP.
 
-   Example 1.83. t_replicate usage
+   Example 1.84. t_replicate usage
 ...
 # sent to 1.2.3.4:5060 over tcp
 t_replicate("sip:1.2.3.4:5060;transport=tcp");
@@ -2556,7 +2578,7 @@ t_replicate("sip:$var(h);transport=tls");
 t_replicate_to_udp("1.2.3.4", "5060");
 ...
 
-5.46. t_relay_to(proxy, flags)
+5.47. t_relay_to(proxy, flags)
 
    Forward the SIP request to a specific address, controlling internal
    behavior via flags.
@@ -2577,7 +2599,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
           + 0x02 - do not generate reply on internal error.
           + 0x04 - disable dns failover.
 
-   Example 1.84. t_replicate usage
+   Example 1.85. t_replicate usage
 ...
 # sent to 1.2.3.4:5060 over tcp
 t_relay_to("tcp:1.2.3.4:5060");
@@ -2589,7 +2611,7 @@ t_relay_to("tls:1.2.3.4");
 t_relay_to("0x01");
 ...
 
-5.47. t_set_no_e2e_cancel_reason(0|1)
+5.48. t_set_no_e2e_cancel_reason(0|1)
 
    Enables/disables reason header (RFC 3326) copying from the triggering
    received CANCEL to the generated hop-by-hop CANCEL. 0 enables and 1
@@ -2600,7 +2622,7 @@ t_relay_to("0x01");
 
    See also: e2e_cancel_reason.
 
-   Example 1.85. t_set_no_e2e_cancel_reason usage
+   Example 1.86. t_set_no_e2e_cancel_reason usage
 ...
 route {
 ...
@@ -2610,7 +2632,7 @@ opying
 ...
 }
 
-5.48. t_is_set(target)
+5.49. t_is_set(target)
 
    Return true if the attribute specified by 'target' is set for
    transaction.
@@ -2623,7 +2645,7 @@ opying
      * onreply_route - the function returns true if an onreply route is
        set to be executed.
 
-   Example 1.86. t_replicate usage
+   Example 1.87. t_replicate usage
 ...
 if(!t_is_set("failure_route"))
     LM_DBG("no failure route will be executed for current transaction\n");
@@ -2810,7 +2832,7 @@ action *route)
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.87. event_route[tm:branch-failure] usage
+   Example 1.88. event_route[tm:branch-failure] usage
 ...
 route {
     t_on_branch_failure("myroute");
