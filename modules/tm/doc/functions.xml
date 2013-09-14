@@ -1247,7 +1247,47 @@ if (!t_next_contact_flows())
 		</example>
 	</section>
 
-	<section id="t_check_trans">
+	<section id="tm.f.t_check_status">
+		<title>
+		<function moreinfo="none">t_check_status(re)</function>
+		</title>
+		<para>
+		Returns true if the regular expresion <quote>re</quote> match the
+		reply code of the response message as follows:
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>in routing block</emphasis> - the code of the
+			last sent reply.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>in on_reply block</emphasis> - the code of the
+			current received reply.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>in on_failure block</emphasis> - the code of the
+			selected negative final reply.
+			</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE .
+		</para>
+		<example>
+		<title><function>t_check_status</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_check_status("(487)|(408)")) {
+    log("487 or 408 negative reply\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.f.t_check_trans">
 	<title>
 		<function>t_check_trans()</function>
 	</title>
