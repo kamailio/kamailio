@@ -14,12 +14,17 @@
 	
 	<section>
 	<title>Overview</title>
-	<para> The DMQ module implements a distributed message passing system on top of Kamailio.
-	The DMQ nodes within the system are grouped in a logical entity called DMQ bus and are able to
-	communicate with each others by sending/receiving messages (either by broadcast or sending a DMQ
-	message to a specific node).
-	The system transparently deals with node discovery, node consistency within the DMQ bus, retransmissions,
-	etc.
+	<para>
+	The DMQ module implements a distributed message queue on top of Kamailio in order to enable the 
+	passing/replication of data between multiple instances. The DMQ "nodes" within the system are grouped 
+	in a logical entity called the DMQ "bus" and are able to communicate with each other by 
+	sending/receiving messages (either by broadcast or directly to a specific node). The system 
+	transparently deals with node discovery, consistency, retransmissions, etc.
+	</para>
+	<para>
+	Other entities ("peers") are then able to utlize the DMQ bus to pass messages between themselves. 
+	Peers are grouped by name in order to ensure the correct messages are passed to the relevant peers. 
+	This grouping of peers can be compared to a topic in a typical pub/sub system.
 	</para>
 	
 	</section>
@@ -51,8 +56,8 @@
 			<listitem>
 			<para>
 				<emphasis>
-				Each peer needs to use its own serialization mechanism.
-				Some examples are libtpl, protobuf.
+				The DMQ module itself has no external dependencies. However, each peer will need 
+				to use its own (de)serialization mechanism. Some examples are libtpl, protobuf.
 				</emphasis>.
 			</para>
 			</listitem>
@@ -63,44 +68,140 @@
 	<section>
 	<title>Parameters</title>
 	<section>
-		<title><varname>dmq_server_address</varname>(str)</title>
+		<title><varname>server_address</varname>(str)</title>
 		<para>
-		The local server address.
+		The local server address. This is the interface over which the DMQ engine will send/receive messages.
 		</para>
 		<para>
-		The modules needs it to know on which interface the DMQ engine should send and receive messages.
-		</para>
-		<para>
-		<emphasis>Default value is <quote>NULL</quote>.	
-		</emphasis>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>dmq_server_address</varname> parameter</title>
+		<title>Set <varname>server_address</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dmq", "dmq_server_address", "&defaultdb;")
+modparam("dmq", "server_address", "sip:10.0.0.20:5060")
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>dmq_notification_address</varname>(str)</title>
+		<title><varname>notification_address</varname>(str)</title>
 		<para>
-		The address of the DMQ node from which the local node should retrieve initial information.
+		The address of another DMQ node from which the local node should retrieve initial information about all other nodes.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.
-		</emphasis>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>dmq_notification_address</varname> parameter</title>
+		<title>Set <varname>notification_address</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dmq", "dmq_notification_address", "&defaultdb;")
+modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
 ...
 </programlisting>
 		</example>
 	</section>
+        <section>
+                <title><varname>num_workers</varname>(int)</title>
+                <para>
+                The number of worker threads for sending/receiving messages.
+                </para>
+                <para>
+                <emphasis>Default value is <quote>2</quote>.</emphasis>
+                </para>
+                <example>
+                <title>Set <varname>num_workers</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("dmq", "num_threads", 4)
+...
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title><varname>ping_interval</varname>(int)</title>
+                <para>
+                The number of seconds between node pings (for checking status of other nodes).
+                </para>
+                <para>
+                <emphasis>Minimum value is <quote>60</quote> (default).</emphasis>
+                </para>
+                <example>
+                <title>Set <varname>ping_interval</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("dmq", "ping_interval", 90)
+...
+</programlisting>
+                </example>
+        </section>
 	</section>
+
+	<section>
+        <title>Functions</title>
+        <section>
+                <title>
+                <function moreinfo="none">dmq_handle_message()</function>
+                </title>
+                <para>
+                Handles a DMQ message by passing it to the appropriate local peer (module). 
+		The peer is identified by the user part of the To header.
+                </para>
+                <para>
+                This function can be used from REQUEST_ROUTE.
+                </para>
+
+                <example>
+                <title><function>dmq_handle_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+        if(is_method("KDMQ"))
+        {
+                dmq_handle_message();
+        }
+...
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title>
+               	<function moreinfo="none">dmq_send_message(peer, node, body)</function>
+                </title>
+                <para>
+                Sends a DMQ message directly from config file.
+                </para>
+		<para>Meaning of parameters:</para>
+                <itemizedlist>
+	                <listitem>
+        	                <para>
+               	        	<emphasis>peer</emphasis> - name of peer that should handle the message.
+                        	</para>
+	                </listitem>
+        	        <listitem>
+                	        <para>
+                       		<emphasis>node</emphasis> - the node to which the message should be sent.
+	                        </para>
+        	        </listitem>
+                	<listitem>
+                        	<para>
+	                        <emphasis>body</emphasis> - the message body.
+	                        </para>
+	                </listitem>
+		</itemizedlist>
+                <para>
+                This function can be used from any route.
+                </para>
+
+                <example>
+                <title><function>dmq_send_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+	dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...\n");
+...
+</programlisting>
+                </example>
+        </section>
+	</section>
+
 </chapter>
 

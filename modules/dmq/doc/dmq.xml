@@ -21,18 +21,31 @@
 		<email>bucur_marius_ovidiu@yahoo.com</email>
 		</address>
 	    </author>
-	    <editor>
-		<firstname>Marius Ovidiu</firstname>
-		<surname>Bucur</surname>
-		<address>
-		    <email>bucur_marius_ovidiu@yahoo.com</email>
-		</address>
-	    </editor>
+            <author>
+                <firstname>Charles</firstname>
+                <surname>Chance</surname>
+		<affiliation>Sipcentric Ltd.</affiliation>
+            </author>
+            <editor>
+                <firstname>Marius Ovidiu</firstname>
+                <surname>Bucur</surname>
+                <address>
+                <email>bucur_marius_ovidiu@yahoo.com</email>
+                </address>
+            </editor>
+            <editor>
+                <firstname>Charles</firstname>
+                <surname>Chance</surname>
+            </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2011</year>
 	    <holder>Marius Bucur</holder>
 	</copyright>
+        <copyright>
+            <year>2013</year>
+            <holder>Charles Chance, Sipcentric Ltd.</holder>
+        </copyright>
   </bookinfo>
     <toc></toc>
     
