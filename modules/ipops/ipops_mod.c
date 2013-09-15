@@ -703,7 +703,6 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 	str ips;
 	struct hostent* he;
 	char ** h;
-	int ret;
 
 	if (fixup_get_svalue(msg, (gparam_p)hnp, &hns))
 	{
@@ -729,7 +728,7 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 		DBG("could not resolve %s\n", hns.s);
 		return -4;
 	}
-	ret = 0;
+
 	if (he->h_addrtype==ipa->af)
 	{
 		for(h=he->h_addr_list; (*h); h++)
