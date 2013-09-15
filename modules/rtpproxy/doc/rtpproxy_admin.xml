@@ -494,14 +494,14 @@ rtpproxy_offer();
 route {
 ...
     if (is_method("INVITE")) {
-        if (has_sdp()) {
+        if (has_body("application/sdp")) {
             if (rtpproxy_offer())
                 t_on_reply("1");
         } else {
             t_on_reply("2");
         }
     }
-    if (is_method("ACK") &amp;&amp; has_sdp())
+    if (is_method("ACK") &amp;&amp; has_body("application/sdp"))
         rtpproxy_answer();
 ...
 }
@@ -509,7 +509,7 @@ route {
 onreply_route[1]
 {
 ...
-    if (has_sdp())
+    if (has_body("application/sdp"))
         rtpproxy_answer();
 ...
 }
@@ -517,7 +517,7 @@ onreply_route[1]
 onreply_route[2]
 {
 ...
-    if (has_sdp())
+    if (has_body("application/sdp"))
         rtpproxy_offer();
 ...
 }
