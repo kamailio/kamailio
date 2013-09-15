@@ -1995,7 +1995,7 @@ error:
  */
 static int open_doc(rpc_ctx_t* ctx, sip_msg_t* msg)
 {
-	str doc;
+	str doc = {NULL,0};
 	xmlNodePtr root;
 	xmlNodePtr cur;
 	struct xmlrpc_reply* reply;
@@ -2396,7 +2396,7 @@ static int xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
 static int select_method(str* res, struct select* s, sip_msg_t* msg)
 {
 	static char buf[1024];
-	str doc;
+	str doc = {NULL,0};
 	xmlDocPtr xmldoc;
 	xmlNodePtr cur;
 	char* method;
