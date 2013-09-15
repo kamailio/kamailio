@@ -68,6 +68,7 @@ int run_actions(struct run_act_ctx* c, struct action* a, struct sip_msg* msg);
 
 int run_top_route(struct action* a, sip_msg_t* msg, struct run_act_ctx* c);
 
+cfg_action_t *get_cfg_crt_action(void);
 
 #ifdef USE_LONGJMP
 int run_actions_safe(struct run_act_ctx* c, struct action* a,
