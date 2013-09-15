@@ -70,7 +70,7 @@ struct sip_uri dmq_server_uri;
 
 str dmq_notification_address = {0, 0};
 struct sip_uri dmq_notification_uri;
-int ping_interval = 4;
+int ping_interval = MIN_PING_INTERVAL;
 
 /* TM bind */
 struct tm_binds tmb;
@@ -99,6 +99,7 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 3, send_dmq_fixup, 0,
 		ANY_ROUTE},
+        {"bind_dmq",        (cmd_function)bind_dmq,       0, 0,              0},
 	{0, 0, 0, 0, 0, 0}
 };
 
