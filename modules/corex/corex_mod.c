@@ -30,6 +30,7 @@
 
 #include "corex_lib.h"
 #include "corex_rpc.h"
+#include "corex_var.h"
 
 MODULE_VERSION
 
@@ -42,6 +43,13 @@ int corex_alias_subdomains_param(modparam_t type, void *val);
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
+
+static pv_export_t mod_pvs[] = {
+	{ {"cfg", (sizeof("cfg")-1)}, PVT_OTHER, pv_get_cfg, 0,
+		pv_parse_cfg_name, 0, 0, 0 },
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 static cmd_export_t cmds[]={
 	{"append_branch", (cmd_function)w_append_branch, 0, 0,
@@ -76,7 +84,7 @@ struct module_exports exports = {
 	params,
 	0,
 	0,              /* exported MI functions */
-	0,              /* exported pseudo-variables */
+	mod_pvs,        /* exported pseudo-variables */
 	0,              /* extra processes */
 	mod_init,       /* module initialization function */
 	0,              /* response function */
