@@ -114,12 +114,27 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 /* current action executed from config file */
 static cfg_action_t *_cfg_crt_action = 0;
 
-/* return currect action executed from config file */
+/* return current action executed from config file */
 cfg_action_t *get_cfg_crt_action(void)
 {
 	return _cfg_crt_action;
 }
 
+/* return line in config for current executed action */
+int get_cfg_crt_line(void)
+{
+	if(_cfg_crt_action==0)
+		return 0;
+	return _cfg_crt_action->cline;
+}
+
+/* return name of config for current executed action */
+char *get_cfg_crt_name(void)
+{
+	if(_cfg_crt_action==0)
+		return 0;
+	return _cfg_crt_action->cfile;
+}
 
 /* handle the exit code of a module function call.
  * (used internally in do_action())
