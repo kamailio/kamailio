@@ -92,7 +92,7 @@ static ds_ht_t *_dsht_load = NULL;
 extern int ds_force_dst;
 
 static db_func_t ds_dbf;
-static db1_con_t* ds_db_handle=0;
+static db1_con_t* ds_db_handle=NULL;
 
 ds_set_t **ds_lists=NULL;
 
@@ -655,8 +655,8 @@ int init_ds_db(void)
 		return -1;
 	}
 
-	if(ds_connect_db()!=0){
-
+	if(ds_connect_db()!=0)
+	{
 		LM_ERR("unable to connect to the database\n");
 		return -1;
 	}
@@ -684,6 +684,26 @@ int init_ds_db(void)
 		ret = 0;
 	}
 
+	ds_disconnect_db();
+
+	return ret;
+}
+
+/*! \brief reload groups of destinations from DB*/
+int ds_reload_db(void)
+{
+	int ret;
+
+	if(ds_connect_db()!=0)
+	{
+		LM_ERR("unable to connect to the database\n");
+		return -1;
+	}
+	ret = ds_load_db();
+	if (ret == -2)
+	{
+		LM_WARN("failure while loading one or more dispatcher entries\n");
+	}
 	ds_disconnect_db();
 
 	return ret;

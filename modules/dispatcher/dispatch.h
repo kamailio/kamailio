@@ -105,6 +105,7 @@ int ds_load_list(char *lfile);
 int ds_connect_db(void);
 void ds_disconnect_db(void);
 int ds_load_db(void);
+int ds_reload_db(void);
 int ds_destroy_list(void);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);

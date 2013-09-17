@@ -792,7 +792,7 @@ static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
 		if (ds_load_list(dslistfile)!=0)
 			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
 	} else {
-		if(ds_load_db()<0)
+		if(ds_reload_db()<0)
 			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
 	}
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
@@ -956,7 +956,7 @@ static void dispatcher_rpc_reload(rpc_t* rpc, void* ctx)
 			return;
 		}
 	} else {
-		if(ds_load_db()<0) {
+		if(ds_reload_db()<0) {
 			rpc->fault(ctx, 500, "Reload Failed");
 			return;
 		}
