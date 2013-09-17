@@ -37,12 +37,12 @@ Daniel-Constantin Mierla
               3.10. mod_level (str)
               3.11. log_assign (int)
               3.12. cfgpkgcheck (int)
+              3.13. reset_msgid (int)
 
         4. Functions
 
               4.1. dbg_breakpoint(mode)
               4.2. dbg_pv_dump([mask] [, level])
-              4.3. reset_msgid (int)
 
         5. Exported RPC Functions
 
@@ -68,9 +68,9 @@ Daniel-Constantin Mierla
    1.10. Set mod_level parameter
    1.11. Set log_assign parameter
    1.12. Set cfgpkgcheck parameter
-   1.13. dbg_breakpoint usage
-   1.14. dbg_pv_dump usage
-   1.15. Set reset_msgid parameter
+   1.13. Set reset_msgid parameter
+   1.14. dbg_breakpoint usage
+   1.15. dbg_pv_dump usage
 
 Chapter 1. Admin Guide
 
@@ -96,12 +96,12 @@ Chapter 1. Admin Guide
         3.10. mod_level (str)
         3.11. log_assign (int)
         3.12. cfgpkgcheck (int)
+        3.13. reset_msgid (int)
 
    4. Functions
 
         4.1. dbg_breakpoint(mode)
         4.2. dbg_pv_dump([mask] [, level])
-        4.3. reset_msgid (int)
 
    5. Exported RPC Functions
 
@@ -166,6 +166,7 @@ Chapter 1. Admin Guide
    3.10. mod_level (str)
    3.11. log_assign (int)
    3.12. cfgpkgcheck (int)
+   3.13. reset_msgid (int)
 
 3.1. cfgtrace (int)
 
@@ -315,11 +316,22 @@ modparam("debugger", "log_assign", 1)
 modparam("debugger", "cfgpkgcheck", 1)
 ...
 
+3.13. reset_msgid (int)
+
+   Used to enable or disable the ability to reset the msgid ($mi) through
+   the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
+
+   Default value is "0" - feature disabled.
+
+   Example 1.13. Set reset_msgid parameter
+...
+modparam("debugger", "reset_msgid", 1)
+...
+
 4. Functions
 
    4.1. dbg_breakpoint(mode)
    4.2. dbg_pv_dump([mask] [, level])
-   4.3. reset_msgid (int)
 
 4.1. dbg_breakpoint(mode)
 
@@ -330,7 +342,7 @@ modparam("debugger", "cfgpkgcheck", 1)
    Note that this version of the module does not export this anchors to
    RPC for interactive debugging (temporarily disabled).
 
-   Example 1.13. dbg_breakpoint usage
+   Example 1.14. dbg_breakpoint usage
 ...
 if($si=="10.0.0.10")
         dbg_breakpoint("1");
@@ -358,7 +370,7 @@ if($si=="10.0.0.10")
      * L_INFO - log level 2
      * L_DBG - log level 3
 
-   Example 1.14. dbg_pv_dump usage
+   Example 1.15. dbg_pv_dump usage
 ...
 $var(temp) = 1;
 $avp(s:more_avp) = 2;
@@ -380,18 +392,6 @@ $var(rc)":0,"$var(temp)":1,"$avp(more_avp)":[3,2],"$si":"127.0.0.1","$rc":0,"$xa
 vp(x)":[{"different":["foo"]},{"other":[2,1],"more":["hi","bye"]}],"$T_branch_id
 x":0,"$var(empty)":0}
  ...
-
-4.3. reset_msgid (int)
-
-   Used to enable or disable the ability to reset the msgid ($mi) through
-   the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
-
-   Default value is "0" - feature disabled.
-
-   Example 1.15. Set reset_msgid parameter
-...
-modparam("debugger", "reset_msgid", 1)
-...
 
 5. Exported RPC Functions
 

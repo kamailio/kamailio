@@ -74,7 +74,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="dbg.p.cfgtrace">
 	    <title><varname>cfgtrace</varname> (int)</title>
 	    <para>
 			Control whether the config script trace is enabled or disabled
@@ -96,7 +96,7 @@ modparam("debugger", "cfgtrace", 1)
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.breakpoint">
 	    <title><varname>breakpoint</varname> (int)</title>
 	    <para>
 			Control whether every line (global) breakpoint is enabled
@@ -117,7 +117,7 @@ modparam("debugger", "breakpoint", 1)
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.log_level">
 	    <title><varname>log_level</varname> (int)</title>
 	    <para>
 			What log level is to be used to print module-specific messages.
@@ -137,7 +137,7 @@ modparam("debugger", "log_level", 1)
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.log_facility">
 	    <title><varname>log_facility</varname> (str)</title>
 	    <para>
 			Which log facility is to be used to print module-specific messages.
@@ -159,7 +159,7 @@ modparam("debugger", "log_facility", "LOG_DAEMON")
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.log_prefix">
 	    <title><varname>log_prefix</varname> (str)</title>
 	    <para>
 			String to print before any module-specific messages.
@@ -179,7 +179,7 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.step_usleep">
 	    <title><varname>step_usleep</varname> (int)</title>
 	    <para>
 			Microseconds to sleep before checking for new commands when
@@ -200,7 +200,7 @@ modparam("debugger", "step_usleep", 500000)
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.step_loops">
 	    <title><varname>step_loops</varname> (int)</title>
 	    <para>
 			How many sleeps of 'step_usleep' the RPC process performs when
@@ -223,11 +223,12 @@ modparam("debugger", "step_loops", 100)
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.mod_hash_size">
 	    <title><varname>mod_hash_size</varname> (int)</title>
 	    <para>
 		Used to compute power of two as size of internal hash table to store levels
-		per module (e.g., if its set to 4, internal hash table has 16 slots). This parameter is accesible readonly via the Kamailio config framework.
+		per module (e.g., if its set to 4, internal hash table has 16 slots). This
+		parameter is accesible readonly via the Kamailio config framework.
 	    </para>
 	    <para>
 		<emphasis>
@@ -244,10 +245,11 @@ modparam("debugger", "mod_hash_size", 5)
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.mod_level_mode">
 	    <title><varname>mod_level_mode</varname> (int)</title>
 	    <para>
-        Enable or disable per module log level (0 - disabled, 1 - enabled). This parameter is tunable via the Kamailio config framework.
+			Enable or disable per module log level (0 - disabled, 1 - enabled).
+			This parameter is tunable via the Kamailio config framework.
 	    </para>
 	    <para>
 		<emphasis>
@@ -264,7 +266,7 @@ modparam("debugger", "mod_level_mode", 1)
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.mod_level">
 	    <title><varname>mod_level</varname> (str)</title>
 	    <para>
 		Specify module log level - the value must be in the format:
@@ -282,7 +284,7 @@ modparam("debugger", "mod_level", "tm=3")
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.p.log_assign">
 	    <title><varname>log_assign</varname> (int)</title>
 	    <para>
 		Enable or disable log assign actions on config (0 - disabled, 1 - enabled).
@@ -323,11 +325,32 @@ modparam("debugger", "cfgpkgcheck", 1)
 	    </example>
 	</section>
 
+	<section id="dbg.p.reset_msgid">
+	    <title><varname>reset_msgid</varname> (int)</title>
+	    <para>
+		Used to enable or disable the ability to reset the msgid ($mi)
+		through the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> - feature disabled.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>reset_msgid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "reset_msgid", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 
     <section>
 	<title>Functions</title>
- 	<section>
+ 	<section id="dbg.f.db_breakpoint">
 	    <title>
 		<function moreinfo="none">dbg_breakpoint(mode)</function>
 	    </title>
@@ -351,7 +374,7 @@ if($si=="10.0.0.10")
 	    </example>
 	</section>
 
-	<section>
+	<section id="dbg.f.dbg_pv_dump">
 	    <title>
 		<function moreinfo="none">dbg_pv_dump([mask] [, level])</function>
 	    </title>
@@ -432,27 +455,6 @@ dbg_pv_dump(30, "L_DBG");
 ...
  4(30943) DEBUG: debugger [debugger_api.c:1613]: dbg_dump_json(): {"$sp":37597,"$var(rc)":0,"$var(temp)":1,"$avp(more_avp)":[3,2],"$si":"127.0.0.1","$rc":0,"$xavp(x)":[{"different":["foo"]},{"other":[2,1],"more":["hi","bye"]}],"$T_branch_idx":0,"$var(empty)":0}
  ...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>reset_msgid</varname> (int)</title>
-	    <para>
-		Used to enable or disable the ability to reset the msgid ($mi)
-		through the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>0</quote> - feature disabled.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>reset_msgid</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("debugger", "reset_msgid", 1)
-...
 </programlisting>
 	    </example>
 	</section>
