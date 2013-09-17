@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -36,6 +36,7 @@ Daniel-Constantin Mierla
               3.9. mod_level_mode (int)
               3.10. mod_level (str)
               3.11. log_assign (int)
+              3.12. cfgpkgcheck (int)
 
         4. Functions
 
@@ -66,9 +67,10 @@ Daniel-Constantin Mierla
    1.9. Set mod_level_mode parameter
    1.10. Set mod_level parameter
    1.11. Set log_assign parameter
-   1.12. dbg_breakpoint usage
-   1.13. dbg_pv_dump usage
-   1.14. Set reset_msgid parameter
+   1.12. Set cfgpkgcheck parameter
+   1.13. dbg_breakpoint usage
+   1.14. dbg_pv_dump usage
+   1.15. Set reset_msgid parameter
 
 Chapter 1. Admin Guide
 
@@ -93,6 +95,7 @@ Chapter 1. Admin Guide
         3.9. mod_level_mode (int)
         3.10. mod_level (str)
         3.11. log_assign (int)
+        3.12. cfgpkgcheck (int)
 
    4. Functions
 
@@ -162,6 +165,7 @@ Chapter 1. Admin Guide
    3.9. mod_level_mode (int)
    3.10. mod_level (str)
    3.11. log_assign (int)
+   3.12. cfgpkgcheck (int)
 
 3.1. cfgtrace (int)
 
@@ -169,7 +173,7 @@ Chapter 1. Admin Guide
    startup. You can change the value at runtime without restart, globally
    or per process.
 
-   Default value is “0” (disabled).
+   Default value is "0" (disabled).
 
    Example 1.1. Set cfgtrace parameter
 ...
@@ -181,7 +185,7 @@ modparam("debugger", "cfgtrace", 1)
    Control whether every line (global) breakpoint is enabled or disabled
    at startup.
 
-   Default value is “0” (disabled).
+   Default value is "0" (disabled).
 
    Example 1.2. Set breakpoint parameter
 ...
@@ -192,7 +196,7 @@ modparam("debugger", "breakpoint", 1)
 
    What log level is to be used to print module-specific messages.
 
-   Default value is “-1” (L_ERR).
+   Default value is "-1" (L_ERR).
 
    Example 1.3. Set log_level parameter
 ...
@@ -205,7 +209,7 @@ modparam("debugger", "log_level", 1)
    using this setting, you can configure syslog to send debug messages to
    a separate log channel, like a specific kamailio-debug log file.
 
-   Default value is “NULL” (default from core).
+   Default value is "NULL" (default from core).
 
    Example 1.4. Set log_facility parameter
 ...
@@ -216,7 +220,7 @@ modparam("debugger", "log_facility", "LOG_DAEMON")
 
    String to print before any module-specific messages.
 
-   Default value is “*** cfgtrace:”.
+   Default value is "*** cfgtrace:".
 
    Example 1.5. Set log_prefix parameter
 ...
@@ -228,7 +232,7 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
    Microseconds to sleep before checking for new commands when waiting at
    a breakpoint.
 
-   Default value is “100000” (that is 0.1 sec).
+   Default value is "100000" (that is 0.1 sec).
 
    Example 1.6. Set step_usleep parameter
 ...
@@ -242,7 +246,7 @@ modparam("debugger", "step_usleep", 500000)
    blocking RPC process forever in case the worker process 'forgets' to
    write back a reply.
 
-   Default value is “200”.
+   Default value is "200".
 
    Example 1.7. Set step_loops parameter
 ...
@@ -256,7 +260,7 @@ modparam("debugger", "step_loops", 100)
    slots). This parameter is accesible readonly via the Kamailio config
    framework.
 
-   Default value is “0” - feature disabled.
+   Default value is "0" - feature disabled.
 
    Example 1.8. Set mod_hash_size parameter
 ...
@@ -268,7 +272,7 @@ modparam("debugger", "mod_hash_size", 5)
    Enable or disable per module log level (0 - disabled, 1 - enabled).
    This parameter is tunable via the Kamailio config framework.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.9. Set mod_level_mode parameter
 ...
@@ -292,11 +296,23 @@ modparam("debugger", "mod_level", "tm=3")
    Enable or disable log assign actions on config (0 - disabled, 1 -
    enabled).
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.11. Set log_assign parameter
 ...
 modparam("debugger", "log_assign", 1)
+...
+
+3.12. cfgpkgcheck (int)
+
+   If set, before each config action is done pkg memory check, useful to
+   detect buffer overflows.
+
+   Default value is "0" (disabled).
+
+   Example 1.12. Set cfgpkgcheck parameter
+...
+modparam("debugger", "cfgpkgcheck", 1)
 ...
 
 4. Functions
@@ -305,7 +321,7 @@ modparam("debugger", "log_assign", 1)
    4.2. dbg_pv_dump([mask] [, level])
    4.3. reset_msgid (int)
 
-4.1.  dbg_breakpoint(mode)
+4.1. dbg_breakpoint(mode)
 
    Anchor a breakpoint at the current line of the config (the one on which
    this function is called). The 'mode' specifies whether the breakpoint
@@ -314,13 +330,13 @@ modparam("debugger", "log_assign", 1)
    Note that this version of the module does not export this anchors to
    RPC for interactive debugging (temporarily disabled).
 
-   Example 1.12. dbg_breakpoint usage
+   Example 1.13. dbg_breakpoint usage
 ...
 if($si=="10.0.0.10")
         dbg_breakpoint("1");
 ...
 
-4.2.  dbg_pv_dump([mask] [, level])
+4.2. dbg_pv_dump([mask] [, level])
 
    Prints the content of pv_cache on json format. Defaults are mask=31 and
    level = "L_DBG"
@@ -342,7 +358,7 @@ if($si=="10.0.0.10")
      * L_INFO - log level 2
      * L_DBG - log level 3
 
-   Example 1.13. dbg_pv_dump usage
+   Example 1.14. dbg_pv_dump usage
 ...
 $var(temp) = 1;
 $avp(s:more_avp) = 2;
@@ -370,9 +386,9 @@ x":0,"$var(empty)":0}
    Used to enable or disable the ability to reset the msgid ($mi) through
    the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
 
-   Default value is “0” - feature disabled.
+   Default value is "0" - feature disabled.
 
-   Example 1.14. Set reset_msgid parameter
+   Example 1.15. Set reset_msgid parameter
 ...
 modparam("debugger", "reset_msgid", 1)
 ...
@@ -385,7 +401,7 @@ modparam("debugger", "reset_msgid", 1)
    5.4. dbg.mod_level
    5.5. dbg.reset_msgid
 
-5.1.  dbg.ls
+5.1. dbg.ls
 
    List Kamailio processes with info related to interactive debugging.
 
@@ -399,7 +415,7 @@ modparam("debugger", "reset_msgid", 1)
                 dbg.ls
                 dbg.ls 1234
 
-5.2.  dbg.trace
+5.2. dbg.trace
 
    Control config script running trace.
 
@@ -416,7 +432,7 @@ modparam("debugger", "reset_msgid", 1)
                 dbg.trace off
                 dbg.trace on 1234
 
-5.3.  dbg.bp
+5.3. dbg.bp
 
    Control breakpoints and config execution.
 
@@ -454,7 +470,7 @@ modparam("debugger", "reset_msgid", 1)
                 dbg.bp eval 1234 $fu
                 dbg.bp move 1234
 
-5.4.  dbg.mod_level
+5.4. dbg.mod_level
 
    Specify module log level.
 
@@ -468,7 +484,7 @@ modparam("debugger", "reset_msgid", 1)
                 dbg.mod_level core 3
                 dbg.mod_level tm 3
 
-5.5.  dbg.reset_msgid
+5.5. dbg.reset_msgid
 
    Resets the message sequence ($mi). Internally there is no real change.
    This can be useful for unit test cases in order to be able to replicate

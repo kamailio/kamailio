@@ -302,6 +302,27 @@ modparam("debugger", "log_assign", 1)
 	    </example>
 	</section>
 
+	<section id="dbg.p.cfgpkgcheck">
+	    <title><varname>cfgpkgcheck</varname> (int)</title>
+	    <para>
+			If set, before each config action is done pkg memory check,
+			useful to detect buffer overflows.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cfgpkgcheck</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "cfgpkgcheck", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 
     <section>
