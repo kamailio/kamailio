@@ -152,6 +152,11 @@ int _dbg_cfgtrace = 0;
 /**
  *
  */
+int _dbg_cfgpkgcheck = 0;
+
+/**
+ *
+ */
 int _dbg_breakpoint = 0;
 
 /**
@@ -301,6 +306,17 @@ int dbg_cfg_trace(void *data)
 		return 0;
 
 	an = dbg_get_action_name(a);
+
+	if(_dbg_cfgpkgcheck!=0)
+	{
+#ifdef q_malloc_h
+		LM_DBG("checking pkg memory before action %.*s (line %d)\n",
+				an->len, an->s, a->cline);
+		qm_check(mem_block);
+#else
+		LM_DBG("cfg pkg check is disbled due to missing qm handler\n");
+#endif
+	}
 
 	if(_dbg_pid_list[process_no].set&DBG_CFGTRACE_ON)
 	{

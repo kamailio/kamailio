@@ -53,6 +53,7 @@ static int w_dbg_dump(struct sip_msg* msg, char* mask, char* level);
 
 /* parameters */
 extern int _dbg_cfgtrace;
+extern int _dbg_cfgpkgcheck;
 extern int _dbg_breakpoint;
 extern int _dbg_cfgtrace_level;
 extern int _dbg_cfgtrace_facility;
@@ -89,6 +90,7 @@ static param_export_t params[]={
 	{"mod_level_mode",    INT_PARAM, &default_dbg_cfg.mod_level_mode},
 	{"mod_level",         STR_PARAM|USE_FUNC_PARAM, (void*)dbg_mod_level_param},
 	{"reset_msgid",       INT_PARAM, &_dbg_reset_msgid},
+	{"cfgpkgcheck",       INT_PARAM, &_dbg_cfgpkgcheck},
 	{0, 0, 0}
 };
 
