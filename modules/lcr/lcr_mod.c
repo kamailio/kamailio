@@ -2676,7 +2676,7 @@ static int to_any_gw_2(struct sip_msg* _m, char* _addr, char* _transport)
     if ((ip = str2ip(&addr_str)) != NULL)
 	dst_addr = *ip;
 #ifdef USE_IPV6
-    if ((ip = str2ip6(&addr_str)) != NULL)
+    else if ((ip = str2ip6(&addr_str)) != NULL)
 	dst_addr = *ip;
 #endif
     else {
