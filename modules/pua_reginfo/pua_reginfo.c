@@ -25,6 +25,7 @@
 #include "../pua/pua_bind.h"
 /* Bindings to usrloc */
 #include "../usrloc/usrloc.h"
+#include "../../lib/srutils/sruid.h"
 
 #include "pua_reginfo.h"
 #include "subscribe.h"
@@ -43,6 +44,7 @@ str server_address = {NULL, 0};
 
 int publish_reginfo = 1;
 
+sruid_t _reginfo_sruid;
 
 /** Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -161,6 +163,10 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if(sruid_init(&_reginfo_sruid, (char)'-', "regi", SRUID_INC)<0)
+		return -1;
+
 	return 0;
 }
 

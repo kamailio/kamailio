@@ -26,6 +26,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_uri.h"
 #include "../../modules/usrloc/usrloc.h"
+#include "../../lib/srutils/sruid.h"
 #include <libxml/parser.h>
 #include "pua_reginfo.h"
 
@@ -62,7 +63,10 @@
 #define RESULT_CONTACTS_FOUND 1
 #define RESULT_NO_CONTACTS 2
 
-int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str callid, int cseq, int expires, int event, str contact_uri) {
+extern sruid_t _reginfo_sruid;
+
+int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str callid,
+		int cseq, int expires, int event, str contact_uri) {
 	str no_str = {0, 0};
 	static str no_ua = str_init("n/a");
 	static ucontact_info_t ci;
@@ -101,6 +105,13 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 
 	/* set expire time */
 	ci.expires = time(0) + expires;
+
+	/* set ruid */
+	if(sruid_next(&_reginfo_sruid) < 0) {
+		LM_ERR("failed to generate ruid");
+	} else {
+		ci.ruid = _reginfo_sruid.uid;
+	}
 
 	/* Now we start looking for the contact: */
 	if (((*ul_record)->contacts == 0)
