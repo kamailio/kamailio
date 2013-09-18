@@ -362,6 +362,11 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 		return -1;
 	}
 
+	if(msg->body == NULL) {
+		LM_DBG("No sdp body\n");
+		return -1;
+	}
+
 	body.s = ((sdp_info_t*)msg->body)->raw_sdp.s;
 	body.len = ((sdp_info_t*)msg->body)->raw_sdp.len;
 
