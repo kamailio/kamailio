@@ -374,7 +374,8 @@ next_contact:
 next_registration:
 		// if (ul_record) ul.release_urecord(ul_record);		
 		/* Unlock the domain for this AOR: */
-		ul.unlock_udomain(domain, &aor);
+		if (aor.len > 0)
+			ul.unlock_udomain(domain, &aor);
 
 		registrations = registrations->next;
 	}
