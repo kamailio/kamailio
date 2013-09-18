@@ -1,18 +1,21 @@
-$Id$
 
 
-                Welcome to Kamailio v4.0!
+Kamailio v4.1
+=============
 
-                http://www.kamailio.org/
-                ==========================
+http://www.kamailio.org
 
-I.   About Kamailio
-II.  Feature List
-III. Getting started
-IV.  About the project
-V.   Obtaining Help
-VI.  More Information
+Table of contents
+  I.   About Kamailio
+  II.  Feature List
+  III. Getting started
+  IV.  About the project
+  V.   Obtaining Help
+  VI.  More Information
 
+
+I. About Kamailio
+=================
 
 Kamailio is an industrial-strength, free server for realtime communication,
 based on the Session Initiation Protocol (SIP RFC3261). 
