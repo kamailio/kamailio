@@ -240,7 +240,7 @@ static int lua_sr_modf (lua_State *L)
 				goto error;
 			}
 		} else {
-			for(i=1; i<=argc; i++)
+			for(i=1; i<argc; i++)
 			{
 				if(expf->fixup(&(act->val[i+1].u.data), i)<0)
 				{
@@ -256,7 +256,7 @@ static int lua_sr_modf (lua_State *L)
 
 	/* free fixups */
 	if (expf->fixup) {
-		for(i=1; i<=argc; i++)
+		for(i=1; i<argc; i++)
 		{
 			if ((act->val[i+1].type == MODFIXUP_ST) && (act->val[i+1].u.data))
 			{
