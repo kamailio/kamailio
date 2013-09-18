@@ -2661,7 +2661,7 @@ static int to_any_gw_2(struct sip_msg* _m, char* _addr, char* _transport)
     addr_str.len = strlen(_addr);
     if ((ip = str2ip(&addr_str)) != NULL)
 	dst_addr = *ip;
-    if ((ip = str2ip6(&addr_str)) != NULL)
+    else if ((ip = str2ip6(&addr_str)) != NULL)
 	dst_addr = *ip;
     else {
 	LM_ERR("addr param value %s is not an IP address\n", _addr);
