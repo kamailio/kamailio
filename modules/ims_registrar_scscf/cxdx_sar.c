@@ -101,6 +101,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
 
     str xml_data = {0, 0}, ccf1 = {0, 0}, ccf2 = {0, 0}, ecf1 = {0, 0}, ecf2 = {0, 0};
     ims_subscription* s = 0;
+    rerrno = R_FINE;
 
     if (!param) {
         LM_DBG("No transaction data this must have been called from usrloc cb impu deleted - just log result code and then exit");
