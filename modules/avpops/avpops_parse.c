@@ -69,7 +69,8 @@ struct fis_param *avpops_parse_pvar(char *in)
 	}
 	memset( ap, 0, sizeof(struct fis_param));
 	s.s = in; s.len = strlen(s.s);
-	if(pv_parse_spec(&s, &ap->u.sval)==0)
+	ap->u.sval = pv_cache_get(&s);
+	if(ap->u.sval==NULL)
 	{
 		pkg_free(ap);
 		return NULL;
@@ -87,7 +88,6 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 	str   tmp;
 	str   s0;
 	char  have_scheme;
-	char *p;
 	char *p0;
 	unsigned int flags;
 
@@ -129,12 +129,12 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 				goto error;
 			}
 		}
-		dbp->a.u.sval.pvp.pvn.u.isname.type |= (flags<<8)&0xff00;
+		dbp->a.u.sval->pvp.pvn.u.isname.type |= (flags<<8)&0xff00;
 		dbp->a.type = AVPOPS_VAL_NONE;
 	} else {
 		s0.s = s; s0.len = strlen(s0.s);
-		p = pv_parse_spec(&s0, &dbp->a.u.sval);
-		if (p==0 || *p!='\0' || dbp->a.u.sval.type!=PVT_AVP)
+		dbp->a.u.sval = pv_cache_get(&s0);
+		if (dbp->a.u.sval==0 || dbp->a.u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad param - expected : $avp(name) or int/str value\n");
 			return E_UNSPEC;
@@ -147,22 +147,22 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 	if (dbp->a.type == AVPOPS_VAL_PVAR)
 	{
 		dbp->a.opd = AVPOPS_VAL_PVAR;
-		if(pv_has_sname(&dbp->a.u.sval))
+		if(pv_has_sname(dbp->a.u.sval))
 		{
 			dbp->sa.s=(char*)pkg_malloc(
-					dbp->a.u.sval.pvp.pvn.u.isname.name.s.len+1);
+					dbp->a.u.sval->pvp.pvn.u.isname.name.s.len+1);
 			if (dbp->sa.s==0)
 			{
 				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
-			memcpy(dbp->sa.s, dbp->a.u.sval.pvp.pvn.u.isname.name.s.s,
-					dbp->a.u.sval.pvp.pvn.u.isname.name.s.len);
-			dbp->sa.len = dbp->a.u.sval.pvp.pvn.u.isname.name.s.len;
+			memcpy(dbp->sa.s, dbp->a.u.sval->pvp.pvn.u.isname.name.s.s,
+					dbp->a.u.sval->pvp.pvn.u.isname.name.s.len);
+			dbp->sa.len = dbp->a.u.sval->pvp.pvn.u.isname.name.s.len;
 			dbp->sa.s[dbp->sa.len] = 0;
 			dbp->a.opd = AVPOPS_VAL_PVAR|AVPOPS_VAL_STR;
-		} else if(pv_has_iname(&dbp->a.u.sval)) {
-			ul = (unsigned long)dbp->a.u.sval.pvp.pvn.u.isname.name.n;
+		} else if(pv_has_iname(dbp->a.u.sval)) {
+			ul = (unsigned long)dbp->a.u.sval->pvp.pvn.u.isname.name.n;
 			tmp.s = int2str( ul, &(tmp.len) );
 			dbp->sa.s = (char*)pkg_malloc( tmp.len + 1 );
 			if (dbp->sa.s==0)
@@ -514,7 +514,7 @@ struct fis_param* parse_check_value(char *s)
 			LM_ERR("unable to get pseudo-variable\n");
 			goto error;
 		}
-		if (vp->u.sval.type==PVT_NULL)
+		if (vp->u.sval->type==PVT_NULL)
 		{
 			LM_ERR("bad param; expected : $pseudo-variable or int/str value\n");
 			goto error;
@@ -620,7 +620,7 @@ struct fis_param* parse_op_value(char *s)
 			LM_ERR("unable to get pseudo-variable\n");
 			goto error;
 		}
-		if (vp->u.sval.type==PVT_NULL)
+		if (vp->u.sval->type==PVT_NULL)
 		{
 			LM_ERR("bad param; expected : $pseudo-variable or int/str value\n");
 			goto error;

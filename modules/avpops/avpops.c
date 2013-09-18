@@ -266,16 +266,16 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		} else {
 			/* is a variable $xxxxx */
 			s.len = strlen(s.s);
-			p = pv_parse_spec(&s, &sp->u.sval);
-			if (p==0 || sp->u.sval.type==PVT_NULL || sp->u.sval.type==PVT_EMPTY)
+			sp->u.sval = pv_cache_get(&s);
+			if (sp->u.sval==0 || sp->u.sval->type==PVT_NULL || sp->u.sval->type==PVT_EMPTY)
 			{
 				LM_ERR("bad param 1; "
 					"expected : $pseudo-variable or int/str value\n");
 				return E_UNSPEC;
 			}
 			
-			if(sp->u.sval.type==PVT_RURI || sp->u.sval.type==PVT_FROM
-					|| sp->u.sval.type==PVT_TO || sp->u.sval.type==PVT_OURI)
+			if(sp->u.sval->type==PVT_RURI || sp->u.sval->type==PVT_FROM
+					|| sp->u.sval->type==PVT_TO || sp->u.sval->type==PVT_OURI)
 			{
 				sp->opd = ((flags==0)?AVPOPS_FLAG_URI0:flags)|AVPOPS_VAL_PVAR;
 			} else {
@@ -396,7 +396,7 @@ static int fixup_delete_avp(void** param, int param_no)
 					" pseudo-variable in param \n");
 				return E_UNSPEC;
 			}
-			if (ap->u.sval.type!=PVT_AVP)
+			if (ap->u.sval->type!=PVT_AVP)
 			{
 				LM_ERR("bad param; expected : $avp(name)\n");
 				return E_UNSPEC;
@@ -500,7 +500,7 @@ static int fixup_copy_avp(void** param, int param_no)
 	}
 
 	/* attr name is mandatory */
-	if (ap->u.sval.type!=PVT_AVP)
+	if (ap->u.sval->type!=PVT_AVP)
 	{
 		LM_ERR("you must specify only AVP as parameter\n");
 		return E_UNSPEC;
@@ -566,7 +566,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 
-		switch(ap->u.sval.type) {
+		switch(ap->u.sval->type) {
 			case PVT_RURI:
 				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_RURI;
 				if ( p && !(
@@ -623,7 +623,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 			LM_ERR("unable to get pseudo-variable in param 2\n");
 			return E_OUT_OF_MEM;
 		}
-		if (ap->u.sval.type==PVT_NULL)
+		if (ap->u.sval->type==PVT_NULL)
 		{
 			LM_ERR("bad param 2; expected : $pseudo-variable ...\n");
 			pkg_free(ap);
@@ -669,7 +669,7 @@ static int fixup_check_avp(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 		/* attr name is mandatory */
-		if (ap->u.sval.type==PVT_NULL)
+		if (ap->u.sval->type==PVT_NULL)
 		{
 			LM_ERR("null pseudo-variable in param 1\n");
 			return E_UNSPEC;
@@ -745,7 +745,7 @@ static int fixup_subst(void** param, int param_no)
 			LM_ERR("unable to get pseudo-variable in param 2 [%s]\n", s);
 			return E_OUT_OF_MEM;
 		}
-		if (ap->u.sval.type!=PVT_AVP)
+		if (ap->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			pkg_free(av);
@@ -779,7 +779,7 @@ static int fixup_subst(void** param, int param_no)
 					return E_OUT_OF_MEM;
 				}
 			
-				if (ap->u.sval.type!=PVT_AVP)
+				if (ap->u.sval->type!=PVT_AVP)
 				{
 					LM_ERR("bad attribute name <%s>!\n", s);
 					pkg_free(av);
@@ -865,7 +865,7 @@ static int fixup_op_avp(void** param, int param_no)
 			LM_ERR("unable to get pseudo-variable in param 1\n");
 			return E_OUT_OF_MEM;
 		}
-		if (av[0]->u.sval.type!=PVT_AVP)
+		if (av[0]->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			pkg_free(av);
@@ -884,7 +884,7 @@ static int fixup_op_avp(void** param, int param_no)
 			LM_ERR("unable to get pseudo-variable in param 1 (2)\n");
 			return E_OUT_OF_MEM;
 		}
-		if (ap->u.sval.type!=PVT_AVP)
+		if (ap->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name/alias <%s>!\n", s);
 			pkg_free(av);
@@ -930,7 +930,7 @@ static int fixup_is_avp_set(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 		
-		if (ap->u.sval.type!=PVT_AVP)
+		if (ap->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			return E_UNSPEC;

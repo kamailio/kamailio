@@ -104,7 +104,7 @@ struct fis_param
 	int     opd;       /* operand flags */
 	int     type;
 	union {
-		pv_spec_t sval;    /* values int or str */
+		pv_spec_t *sval;    /* values int or str */
 		int n;
 		str s;
 	} u;
