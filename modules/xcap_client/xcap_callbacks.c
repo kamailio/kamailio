@@ -78,6 +78,6 @@ void destroy_xcapcb_list(void)
 	{
 		prev_xcb= xcb;
 		xcb= xcb->next;
-		shm_free(xcb);
+		shm_free(prev_xcb);
 	}
 }
