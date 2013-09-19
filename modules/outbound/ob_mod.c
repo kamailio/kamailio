@@ -214,7 +214,7 @@ int decode_flow_token(struct sip_msg *msg, struct receive_info **rcv, str flow_t
 {
 	int pos = FLOW_TOKEN_START_POS, flow_length, i;
 
-	if (msg->flow.decoded)
+	if (msg->ldv.flow.decoded)
 		goto end;
 
 	if (flow_token.s == NULL)
@@ -263,31 +263,31 @@ int decode_flow_token(struct sip_msg *msg, struct receive_info **rcv, str flow_t
 	/* Decode protocol information */
 	if (unenc_flow_token[pos] & 0x80)
 	{
-		msg->flow.rcv.dst_ip.af = msg->flow.rcv.src_ip.af = AF_INET6;
-		msg->flow.rcv.dst_ip.len = msg->flow.rcv.src_ip.len = 16;
+		msg->ldv.flow.rcv.dst_ip.af = msg->ldv.flow.rcv.src_ip.af = AF_INET6;
+		msg->ldv.flow.rcv.dst_ip.len = msg->ldv.flow.rcv.src_ip.len = 16;
 	}
 	else
 	{
-		msg->flow.rcv.dst_ip.af = msg->flow.rcv.src_ip.af = AF_INET;
-		msg->flow.rcv.dst_ip.len = msg->flow.rcv.src_ip.len = 4;
+		msg->ldv.flow.rcv.dst_ip.af = msg->ldv.flow.rcv.src_ip.af = AF_INET;
+		msg->ldv.flow.rcv.dst_ip.len = msg->ldv.flow.rcv.src_ip.len = 4;
 	}
-	msg->flow.rcv.proto = unenc_flow_token[pos++] & 0x7f;
+	msg->ldv.flow.rcv.proto = unenc_flow_token[pos++] & 0x7f;
 
 	/* Decode destination address */
-	for (i = 0; i < (msg->flow.rcv.dst_ip.af == AF_INET6 ? 16 : 4); i++)
-		msg->flow.rcv.dst_ip.u.addr[i] = unenc_flow_token[pos++];
-	msg->flow.rcv.dst_port = unenc_flow_token[pos++] << 8;
-	msg->flow.rcv.dst_port |= unenc_flow_token[pos++];
+	for (i = 0; i < (msg->ldv.flow.rcv.dst_ip.af == AF_INET6 ? 16 : 4); i++)
+		msg->ldv.flow.rcv.dst_ip.u.addr[i] = unenc_flow_token[pos++];
+	msg->ldv.flow.rcv.dst_port = unenc_flow_token[pos++] << 8;
+	msg->ldv.flow.rcv.dst_port |= unenc_flow_token[pos++];
 
 	/* Decode source address */
-	for (i = 0; i < (msg->flow.rcv.src_ip.af == AF_INET6 ? 16 : 4); i++)
-		msg->flow.rcv.src_ip.u.addr[i] = unenc_flow_token[pos++];
-	msg->flow.rcv.src_port = unenc_flow_token[pos++] << 8;
-	msg->flow.rcv.src_port |= unenc_flow_token[pos++];
-	msg->flow.decoded = 1;
+	for (i = 0; i < (msg->ldv.flow.rcv.src_ip.af == AF_INET6 ? 16 : 4); i++)
+		msg->ldv.flow.rcv.src_ip.u.addr[i] = unenc_flow_token[pos++];
+	msg->ldv.flow.rcv.src_port = unenc_flow_token[pos++] << 8;
+	msg->ldv.flow.rcv.src_port |= unenc_flow_token[pos++];
+	msg->ldv.flow.decoded = 1;
 
 end:
-	*rcv = &msg->flow.rcv;
+	*rcv = &msg->ldv.flow.rcv;
 	return 0;
 }
 
