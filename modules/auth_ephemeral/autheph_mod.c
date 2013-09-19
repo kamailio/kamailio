@@ -28,14 +28,17 @@
 
 #include "autheph_mod.h"
 #include "authorize.h"
+#include "checks.h"
 
 MODULE_VERSION
 
 static int mod_init(void);
 static void destroy(void);
 
-static int secret_param(modparam_t type, void* param);
+static int secret_param(modparam_t _type, void *_val);
 struct secret *secret_list = NULL;
+
+autheph_username_format_t autheph_username_format = AUTHEPH_USERNAME_IETF;
 
 auth_api_s_t eph_auth_api;
 
@@ -53,7 +56,24 @@ static cmd_export_t cmds[]=
 	{ "autheph_proxy", (cmd_function) autheph_proxy,
 	  1, fixup_var_str_1, 0,
 	  REQUEST_ROUTE },
-
+	{ "autheph_authenticate", (cmd_function) autheph_authenticate,
+	  2, fixup_var_str_12, 0,
+	  REQUEST_ROUTE },
+	{ "autheph_check_from", (cmd_function) autheph_check_from0,
+	  0, 0, 0,
+	  REQUEST_ROUTE },
+	{ "autheph_check_from", (cmd_function) autheph_check_from1,
+	  1, fixup_var_str_1, 0,
+	  REQUEST_ROUTE },
+	{ "autheph_check_to", (cmd_function) autheph_check_to0,
+	  0, 0, 0,
+	  REQUEST_ROUTE },
+	{ "autheph_check_to", (cmd_function) autheph_check_to1,
+	  1, fixup_var_str_1, 0,
+	  REQUEST_ROUTE },
+	{ "autheph_check_timestamp", (cmd_function) autheph_check_timestamp,
+	  1, fixup_var_str_1, 0,
+	  REQUEST_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -61,6 +81,8 @@ static param_export_t params[]=
 {
 	{ "secret",		STR_PARAM|USE_FUNC_PARAM,
 	  (void *) secret_param },
+	{ "username_format",	INT_PARAM,
+	  &autheph_username_format },
 	{0, 0, 0}
 };
 
@@ -90,18 +112,38 @@ static int mod_init(void)
 		return -1;
 	}
 
-	bind_auth = (bind_auth_s_t) find_export("bind_auth_s", 0, 0);
-	if (!bind_auth)
+	switch(autheph_username_format)
 	{
-		LM_ERR("unable to find bind_auth function. Check if you have"
-			" loaded the auth module.\n");
-		return -2;
+	case AUTHEPH_USERNAME_NON_IETF:
+		LM_WARN("the %d value for the username_format modparam is "
+			"deprecated. You should update the web-service that "
+			"generates credentials to use the format specified in "
+			"draft-uberti-rtcweb-turn-rest.\n",
+			autheph_username_format);
+		/* Fall-thru */
+	case AUTHEPH_USERNAME_IETF:
+		break;
+
+	default:
+		LM_ERR("bad value for username_format modparam: %d\n",
+			autheph_username_format);
+		return -1;
 	}
 
-	if (bind_auth(&eph_auth_api) < 0)
+	bind_auth = (bind_auth_s_t) find_export("bind_auth_s", 0, 0);
+	if (bind_auth)
 	{
-		LM_ERR("unable to bind to auth module\n");
-		return -3;
+		if (bind_auth(&eph_auth_api) < 0)
+		{
+			LM_ERR("unable to bind to auth module\n");
+			return -1;
+		}
+	}
+	else
+	{
+		memset(&eph_auth_api, 0, sizeof(auth_api_s_t));
+		LM_INFO("auth module not loaded - digest authentication and "
+			"check functions will not be available\n");
 	}
 
 	return 0;
@@ -124,7 +166,7 @@ static void destroy(void)
 	}
 }
 
-static int add_secret(str secret_key)
+static inline int add_secret(str _secret_key)
 {
 	struct secret *secret_struct;
 
@@ -138,31 +180,31 @@ static int add_secret(str secret_key)
 	memset(secret_struct, 0, sizeof (struct secret));
 	secret_struct->next = secret_list;
 	secret_list = secret_struct;
-	secret_struct->secret_key = secret_key;
+	secret_struct->secret_key = _secret_key;
 
 	return 0;
 }
 
-static int secret_param(modparam_t type, void *val)
+static int secret_param(modparam_t _type, void *_val)
 {
 	str sval;
 
-	if (val == NULL)
+	if (_val == NULL)
 	{
 		LM_ERR("bad parameter\n");
 		return -1;
 	}
 
-	LM_INFO("adding %s to secret list\n", (char *) val);
+	LM_INFO("adding %s to secret list\n", (char *) _val);
 
-	sval.len = strlen((char *) val);
+	sval.len = strlen((char *) _val);
 	sval.s = (char *) shm_malloc(sizeof(char) * sval.len);
 	if (sval.s == NULL)
 	{
 		LM_ERR("unable to allocate shared memory\n");
 		return -1;
 	}
-	memcpy(sval.s, (char *) val, sval.len);
+	memcpy(sval.s, (char *) _val, sval.len);
 
 	return add_secret(sval);
 }

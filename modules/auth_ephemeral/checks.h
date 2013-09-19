@@ -20,25 +20,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef AUTHEPH_MOD_H
-#define AUTHEPH_MOD_H
+#ifndef CHECKS_H
+#define CHECKS_H
 
-#include "../../str.h"
-#include "../../modules/auth/api.h"
+#include "../../parser/msg_parser.h"
 
-struct secret
-{
-	str secret_key;
-	struct secret *next;
-};
-extern struct secret *secret_list;
+int autheph_check_from0(struct sip_msg *_m);
+int autheph_check_from1(struct sip_msg *_m, char *_username);
+int autheph_check_to0(struct sip_msg *_m);
+int autheph_check_to1(struct sip_msg *_m, char *_username);
+int autheph_check_timestamp(struct sip_msg *_m, char *_username);
 
 typedef enum {
-	AUTHEPH_USERNAME_NON_IETF	= 0,
-	AUTHEPH_USERNAME_IETF		= 1,
-} autheph_username_format_t;
-extern autheph_username_format_t autheph_username_format;
+	CHECK_NO_USER	= -2,
+	CHECK_ERROR	= -1,
+	CHECK_OK	= 1
+} autheph_check_result_t;
 
-extern auth_api_s_t eph_auth_api;
-
-#endif /* AUTHEPH_MOD_H */
+#endif /* CHECKS_H */

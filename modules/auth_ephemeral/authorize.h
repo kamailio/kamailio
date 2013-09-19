@@ -23,11 +23,15 @@
 #ifndef AUTHORIZE_H
 #define AUTHORIZE_H
 
+#include "../../str.h"
 #include "../../parser/msg_parser.h"
 
-int autheph_check(struct sip_msg* _m, char* _realm);
-int autheph_www(struct sip_msg* _m, char* _realm);
-int autheph_www2(struct sip_msg* _m, char* _realm, char *_method);
-int autheph_proxy(struct sip_msg* _m, char* _realm);
+int autheph_verify_timestamp(str *_username);
+
+int autheph_check(struct sip_msg *_m, char *_realm);
+int autheph_www(struct sip_msg *_m, char *_realm);
+int autheph_www2(struct sip_msg *_m, char *_realm, char *_method);
+int autheph_proxy(struct sip_msg *_m, char *_realm);
+int autheph_authenticate(struct sip_msg *_m, char *_username, char *_password);
 
 #endif /* AUTHORIZE_H */
