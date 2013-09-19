@@ -367,6 +367,12 @@ typedef struct sip_msg {
 		int decoded;
 		struct receive_info rcv;
 	} flow;
+
+	/* IMPORTANT: when adding new fields in this structure (sip_msg_t),
+	 * be sure it is freed in free_sip_msg() and it is cloned or reset
+	 * to shm structure for transaction - see sip_msg_clone.c. In tm
+	 * module, take care of these fields for faked environemt used for
+	 * runing failure handlers - see modules/tm/t_reply.c */
 } sip_msg_t;
 
 /*! \brief pointer to a fakes message which was never received ;
