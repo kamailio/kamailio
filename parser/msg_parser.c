@@ -734,6 +734,7 @@ void free_sip_msg(struct sip_msg* const msg)
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
 	if (msg->body_lumps)  free_lump_list(msg->body_lumps);
 	if (msg->reply_lump)   free_reply_lump(msg->reply_lump);
+	msg_ldata_reset(msg);
 	/* don't free anymore -- now a pointer to a static buffer */
 #	ifdef DYN_BUF
 	pkg_free(msg->buf);
@@ -950,6 +951,16 @@ void reset_ua(struct sip_msg* const msg)
 	}
 	msg->location_ua.s = 0;
 	msg->location_ua.len = 0;
+}
+
+/**
+ * reset content of msg->ldv (msg_ldata_t structure)
+ */
+void msg_ldata_reset(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return;
+	memset(&msg->ldv, 0, sizeof(msg_ldata_t));
 }
 
 

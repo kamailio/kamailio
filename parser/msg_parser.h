@@ -253,6 +253,19 @@ typedef struct msg_body {
 /* pre-declaration, to include sys/time.h in .c */
 struct timeval;
 
+/* structure for cached decoded flow for outbound */
+typedef struct ocd_flow {
+		int decoded;
+		struct receive_info rcv;
+} ocd_flow_t;
+
+/* structure holding fields that don't have to be cloned in shm
+ * - its content is memset'ed to in shm clone
+ * - add to msg_ldata_reset() if a field uses dynamic memory */
+typedef struct msg_ldata {
+	ocd_flow_t flow;
+} msg_ldata_t;
+
 /*! \brief The SIP message */
 typedef struct sip_msg {
 	unsigned int id;               /*!< message id, unique/process*/
@@ -363,10 +376,9 @@ typedef struct sip_msg {
 	str ruid;
 	str location_ua;
 
-	struct {
-		int decoded;
-		struct receive_info rcv;
-	} flow;
+	/* structure with fields that are needed for local processing
+	 * - not cloned to shm, reset to 0 in the clone */
+	msg_ldata_t ldv;
 
 	/* IMPORTANT: when adding new fields in this structure (sip_msg_t),
 	 * be sure it is freed in free_sip_msg() and it is cloned or reset
@@ -513,5 +525,10 @@ int msg_ctx_id_match(const sip_msg_t* const msg, const msg_ctx_id_t* const mid);
  * set msg time value
  */
 int msg_set_time(sip_msg_t* const msg);
+
+/**
+ * reset content of msg->ldv (msg_ldata_t structure)
+ */
+void msg_ldata_reset(sip_msg_t*);
 
 #endif
