@@ -114,6 +114,7 @@ int parse_pai_header(struct sip_msg* const msg)
 	p_id_body_t *pai_b;
 	p_id_body_t **prev_pid_b;
 	hdr_field_t *hf;
+	void **vp;
 
 	if ( !msg->pai )
 	{
@@ -130,7 +131,8 @@ int parse_pai_header(struct sip_msg* const msg)
 	if ( msg->pai->parsed )
 		return 0;
 
-	prev_pid_b = (p_id_body_t**)(&msg->pai->parsed);
+	vp = &msg->pai->parsed;
+	prev_pid_b = (p_id_body_t**)vp;
 
 	for (hf = msg->pai; hf != NULL; hf = next_sibling_hdr(hf))
 	{
