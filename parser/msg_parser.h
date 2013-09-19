@@ -347,25 +347,19 @@ typedef struct sip_msg {
 	struct lump_rpl *reply_lump; /*!< only for localy generated replies !!!*/
 
 	/*! \brief str add_to_branch;
-	   whatever whoever want to append to branch comes here
-	*/
+	   whatever whoever want to append to Via branch comes here */
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
 	int add_to_branch_len;
 
 	unsigned int  hash_index; /*!< index to TM hash table; stored in core to avoid unnecessary calculations */
-	unsigned int msg_flags; /*!< flags used by core */
-	     /* allows to set various flags on the message; may be used for
-	      *	simple inter-module communication or remembering processing state
-	      * reached
-	      */
-	flag_t flags;
+	unsigned int msg_flags; /*!< internal flags used by core */
+	flag_t flags; /*!< config flags */
 	str set_global_address;
 	str set_global_port;
-	struct socket_info* force_send_socket; /* force sending on this socket,
-											  if ser */
+	struct socket_info* force_send_socket; /*!< force sending on this socket */
 	str path_vec;
-        str instance;
-        unsigned int reg_id;
+	str instance;
+	unsigned int reg_id;
 	str ruid;
 	str location_ua;
 
