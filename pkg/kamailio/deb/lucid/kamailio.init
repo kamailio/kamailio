@@ -39,7 +39,7 @@ check_kamailio_config ()
 {
   # Check if kamailio configuration is valid before starting the server.
   set +e
-  out=$($DAEMON -M $PKG_MEMORY -c 2>&1 > /dev/null)
+  out=$($DAEMON -f $CFGFILE -M $PKG_MEMORY -c 2>&1 > /dev/null)
   retcode=$?
   set -e
   if [ "$retcode" != '0' ]; then
