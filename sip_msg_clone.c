@@ -550,6 +550,8 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 	new_msg->location_ua.len=0;
 	/* reg_id is not cloned (it's reset instead) */
 	new_msg->reg_id=0;
+	/* local data struct is not cloned (it's reset instead) */
+	memset(&new_msg->ldv, 0, sizeof(msg_ldata_t));
 	/* message buffers(org and scratch pad) */
 	memcpy( p , org_msg->buf, org_msg->len);
 	/* ZT to be safer */
