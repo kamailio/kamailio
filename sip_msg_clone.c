@@ -539,6 +539,17 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 	/* path_vec is not cloned (it's reset instead) */
 	new_msg->path_vec.s=0;
 	new_msg->path_vec.len=0;
+	/* instance is not cloned (it's reset instead) */
+	new_msg->instance.s=0;
+	new_msg->instance.len=0;
+	/* ruid is not cloned (it's reset instead) */
+	new_msg->ruid.s=0;
+	new_msg->ruid.len=0;
+	/* location ua is not cloned (it's reset instead) */
+	new_msg->location_ua.s=0;
+	new_msg->location_ua.len=0;
+	/* reg_id is not cloned (it's reset instead) */
+	new_msg->reg_id=0;
 	/* message buffers(org and scratch pad) */
 	memcpy( p , org_msg->buf, org_msg->len);
 	/* ZT to be safer */
