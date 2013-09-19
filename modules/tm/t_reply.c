@@ -997,6 +997,7 @@ void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 	reset_instance(faked_req);
 	reset_ruid(faked_req);
 	reset_ua(faked_req);
+	msg_ldata_reset(faked_req);
 }
 
 
