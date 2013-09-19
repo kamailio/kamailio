@@ -432,6 +432,8 @@ inline static char* get_body(struct sip_msg* const msg)
 	return msg->unparsed + offset;
 }
 
+/*! \brief If the new_uri is set, then reset it */
+void reset_new_uri(struct sip_msg* const msg);
 
 /*! \brief
  * Make a private copy of the string and assign it to dst_uri

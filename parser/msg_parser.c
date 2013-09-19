@@ -723,9 +723,12 @@ void free_reply_lump( struct lump_rpl *lump)
 /*only the content*/
 void free_sip_msg(struct sip_msg* const msg)
 {
-	if (msg->new_uri.s) { pkg_free(msg->new_uri.s); msg->new_uri.len=0; }
-	if (msg->dst_uri.s) { pkg_free(msg->dst_uri.s); msg->dst_uri.len=0; }
-	if (msg->path_vec.s) { pkg_free(msg->path_vec.s); msg->path_vec.len=0; }
+	reset_new_uri(msg);
+	reset_dst_uri(msg);
+	reset_path_vector(msg);
+	reset_instance(msg);
+	reset_ruid(msg);
+	reset_ua(msg);
 	if (msg->headers)     free_hdr_field_lst(msg->headers);
 	if (msg->body && msg->body->free) msg->body->free(&msg->body);
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
@@ -735,6 +738,19 @@ void free_sip_msg(struct sip_msg* const msg)
 #	ifdef DYN_BUF
 	pkg_free(msg->buf);
 #	endif
+}
+
+/**
+ * reset new uri value
+ */
+void reset_new_uri(struct sip_msg* const msg)
+{
+	if(msg->new_uri.s != 0) {
+		pkg_free(msg->new_uri.s);
+	}
+	msg->new_uri.s = 0;
+	msg->new_uri.len = 0;
+	msg->parsed_uri_ok = 0;
 }
 
 
