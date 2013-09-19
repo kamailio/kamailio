@@ -761,7 +761,7 @@ sca_call_info_uri_update( str *aor, sca_call_info *call_info,
 	     STR_FMT( contact_uri ), STR_FMT( call_id ), call_info->index );
 
     if ( !sca_uri_is_shared_appearance( sca, aor )) {
-	return( 0 );
+	return( 1 );
     }
 
     dialog.id.s = dlg_buf;
