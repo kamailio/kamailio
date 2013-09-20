@@ -45,6 +45,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../mem/mem.h"
+#include "../../xavp.h"
 #include "avpops_impl.h"
 #include "avpops_db.h"
 
@@ -1051,6 +1052,86 @@ error:
 	return -1;
 }
 
+int get_xavp(struct sip_msg *msg, pv_xavp_name_t *xname,
+		sr_xavp_t **avp, int *flag)
+{
+	int idxf = 0;
+	int idx = 0;
+	int count;
+
+	if(xname==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if(xname->index.type==PVT_EXTRA)
+	{
+		/* get the index */
+		if(pv_get_spec_index(msg, &xname->index.pvp, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+		LM_DBG("key1 idx:%d idxf:%d\n", idx, idxf);
+		if(idxf==PV_IDX_ALL)
+			LM_ERR("idx:* at first key not implemented. Using idx:0\n");
+	}
+	/* fix the index */
+	if(idx<0)
+	{
+		count = xavp_count(&xname->name, NULL);
+		idx = count + idx;
+	}
+	*avp = xavp_get_by_index(&xname->name, idx, NULL);
+	if(*avp==NULL)
+		return -1;
+	if(xname->next==NULL)
+		return 0;
+
+	idx = 0;
+	idxf = 0;
+	if(xname->next->index.type==PVT_EXTRA)
+	{
+		/* get the index */
+		if(pv_get_spec_index(msg, &xname->next->index.pvp, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+		LM_DBG("key2 idx:%d idxf:%d\n", idx, idxf);
+		*flag=idxf;
+	}
+	/* fix the index */
+	if(idx<0)
+	{
+		count = xavp_count(&xname->next->name, &(*avp)->val.v.xavp);
+		idx = count + idx;
+	}
+	*avp = xavp_get_by_index(&xname->next->name, idx, &(*avp)->val.v.xavp);
+	if(*avp==NULL)
+		return -1;
+	return 1;
+}
+
+int check_xavp_param(struct sip_msg* msg, pv_spec_p spec, sr_xavp_t **xavp,
+	int *flag)
+{
+	int res;
+	pv_xavp_name_t *xname = (pv_xavp_name_t*)spec->pvp.pvn.u.dname;
+	res = get_xavp(msg, xname, xavp, flag);
+	if(res<=0)
+	{
+		if(res==0)
+			LM_ERR("xavp has to have key2\n");
+		LM_DBG("no dst xavp found\n");
+		goto error;
+	}
+	return 1;
+error:
+	return -1;
+}
+
 int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 													struct fis_param* val)
 {
@@ -1071,6 +1152,8 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 	char           backup;
 	regex_t	       re_temp;
 	regex_t	       *re;
+	sr_xavp_t         *xavp2 = NULL;
+	int               xavp_flags=0;
 
 	/* look if the required avp(s) is/are present */
 	if(src->u.sval->type==PVT_AVP)
@@ -1138,6 +1221,30 @@ cycle1:
 				goto error;
 			}
 			check_flags = avp2->flags;
+		}
+		else if(val->u.sval->type==PVT_XAVP)
+		{
+			avp2 = 0;
+			if(xavp2==NULL)
+			{
+				if(check_xavp_param(msg, val->u.sval, &xavp2, &xavp_flags)<0)
+				{
+					goto error;
+				}
+			}
+			if(xavp2->val.type!=SR_XTYPE_INT&&xavp2->val.type!=SR_XTYPE_STR)
+			{
+				LM_ERR("cannot dst value is not INT or STR\n");
+				goto error;
+			}
+			check_flags = 0;
+			if(xavp2->val.type==SR_XTYPE_INT)
+			{
+				check_val.n = xavp2->val.v.i;
+			} else {
+				check_flags = AVP_VAL_STR;
+				check_val.s = xavp2->val.v.s;
+			}
 		} else {
 			avp2 = 0;
 			if(pv_get_spec_value(msg, val->u.sval, &xvalue)!=0)
@@ -1308,6 +1415,11 @@ next:
 	{
 		check_flags = avp2->flags;
 		goto cycle2;
+	} else if ((xavp2!=NULL) && (xavp_flags&PV_IDX_ALL)
+		&& (xavp2=xavp_get_next(xavp2))!=NULL)
+	{
+		LM_DBG("xavp->next\n");
+		goto cycle1;
 	/* cycle for the first value -> next avp */
 	} else {
 		if(avp1 && val->ops&AVPOPS_FLAG_ALL)
