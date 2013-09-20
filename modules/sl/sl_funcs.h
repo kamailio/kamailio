@@ -48,4 +48,6 @@ int sl_reply_error(struct sip_msg *msg);
 
 int sl_get_reply_totag(struct sip_msg *msg, str *totag);
 
+void sl_lookup_event_routes(void);
+
 #endif

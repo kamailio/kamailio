@@ -75,7 +75,24 @@ static char           *tag_suffix;
    we do not filter */
 static unsigned int  *sl_timeout;
 
-extern int _sl_filtered_ack_route;
+static int _sl_filtered_ack_route = -1; /* default disabled */
+
+static int _sl_evrt_local_response = -1; /* default disabled */
+
+/*!
+ * lookup sl event routes
+ */
+void sl_lookup_event_routes(void)
+{
+	_sl_filtered_ack_route=route_lookup(&event_rt, "sl:filtered-ack");
+	if (_sl_filtered_ack_route>=0 && event_rt.rlist[_sl_filtered_ack_route]==0)
+		_sl_filtered_ack_route=-1; /* disable */
+
+	 _sl_evrt_local_response = route_lookup(&event_rt, "sl:local-response");
+	if (_sl_evrt_local_response>=0
+			&& event_rt.rlist[_sl_evrt_local_response]!=NULL)
+		_sl_evrt_local_response = -1;
+}
 
 /*!
  * init sl internal structures
@@ -207,8 +224,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	ret = msg_send(&dst, buf.s, buf.len);
 	mhomed=backup_mhomed;
 
-	rt = route_lookup(&event_rt, "sl:local-response");
-	if (unlikely(rt >= 0 && event_rt.rlist[rt] != NULL))
+	if (unlikely(_sl_evrt_local_response >= 0))
 	{
 		if (likely(build_sip_msg_from_buf(&pmsg, buf.s, buf.len,
 				inc_msg_no()) == 0))
