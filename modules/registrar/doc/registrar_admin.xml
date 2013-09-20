@@ -911,7 +911,7 @@ modparam("registrar", "flow_timer", 25)
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and REPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>save</function> usage</title>

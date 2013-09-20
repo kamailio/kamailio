@@ -760,7 +760,8 @@ modparam("registrar", "flow_timer", 25)
        3 - contacts deleted.
        4 - contacts returned.
 
-   This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
+   REPLY_ROUTE.
 
    Example 1.26. save usage
 ...
