@@ -31,6 +31,10 @@
 dmq_peer_t* register_dmq_peer(dmq_peer_t* peer)
 {
 	dmq_peer_t* new_peer;
+	if (!peer_list) {
+		LM_ERR("peer list not initialized\n");
+		return NULL;
+	}
 	lock_get(&peer_list->lock);
 	if(search_peer_list(peer_list, peer)) {
 		LM_ERR("peer already exists: %.*s %.*s\n", peer->peer_id.len, peer->peer_id.s,

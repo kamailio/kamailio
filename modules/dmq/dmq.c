@@ -32,27 +32,21 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../usr_avp.h"
-#include "../../modules/tm/tm_load.h"
-#include "../../parser/parse_uri.h"
-#include "../../modules/sl/sl.h"
 #include "../../pt.h"
 #include "../../lib/kmi/mi.h"
 #include "../../hashes.h"
+#include "../../mod_fix.h"
+
 #include "dmq.h"
 #include "dmq_funcs.h"
-#include "peer.h"
 #include "bind_dmq.h"
-#include "worker.h"
+#include "message.h"
 #include "notification_peer.h"
 #include "dmqnode.h"
-#include "../../mod_fix.h"
 
 static int mod_init(void);
 static int child_init(int);

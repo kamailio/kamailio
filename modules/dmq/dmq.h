@@ -32,7 +32,6 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../parser/parse_uri.h"
 #include "../../modules/sl/sl.h"
-#include "bind_dmq.h"
 #include "peer.h"
 #include "worker.h"
 
@@ -56,23 +55,6 @@ extern str dmq_200_rpl;
 extern str dmq_400_rpl;
 extern str dmq_500_rpl;
 extern str dmq_404_rpl;
-
-static inline int dmq_load_api(dmq_api_t* api) {
-	bind_dmq_f binddmq;
-	binddmq = (bind_dmq_f)find_export("bind_dmq", 0, 0);
-	if ( binddmq == 0) {
-		LM_ERR("cannot find bind_dmq\n");
-		return -1;
-	}
-	if (binddmq(api) < 0)
-	{
-		LM_ERR("cannot bind dmq api\n");
-		return -1;
-	}
-	return 0;
-}
-
-int dmq_handle_message(struct sip_msg* msg, char* str1 ,char* str2);
 
 #endif
 

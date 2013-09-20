@@ -1,6 +1,3 @@
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h"
-#include "../../sip_msg_clone.h"
 /*
  * $Id$
  *
@@ -27,6 +24,9 @@
  */
 
 
+#include "../../parser/parse_to.h"
+#include "../../parser/parse_uri.h"
+#include "../../sip_msg_clone.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
