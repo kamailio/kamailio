@@ -288,5 +288,15 @@ void tr_param_free(tr_param_t *tp);
 
 int register_trans_mod(char *mod_name, tr_export_t *items);
 
+
+/**
+ * XAVP
+ */
+typedef struct _pv_xavp_name {
+	str name;
+	pv_spec_t index;
+	struct _pv_xavp_name *next;
+} pv_xavp_name_t;
+
 #endif
 

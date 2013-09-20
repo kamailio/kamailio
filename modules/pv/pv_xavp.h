@@ -23,12 +23,6 @@
 
 #include "../../pvar.h"
 
-typedef struct _pv_xavp_name {
-	str name;
-	pv_spec_t index;
-	struct _pv_xavp_name *next;
-} pv_xavp_name_t;
-
 int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_set_xavp(struct sip_msg* msg, pv_param_t *param,
