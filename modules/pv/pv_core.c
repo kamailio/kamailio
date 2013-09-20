@@ -33,6 +33,7 @@
 #include "../../data_lump.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../tcp_conn.h"
+#include "../../pvapi.h"
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -71,10 +72,6 @@ int _pv_pid = 0;
 
 #define PV_FIELD_DELIM ", "
 #define PV_FIELD_DELIM_LEN (sizeof(PV_FIELD_DELIM) - 1)
-#define PV_LOCAL_BUF_SIZE	511
-
-static char pv_local_buf[PV_LOCAL_BUF_SIZE+1];
-
 
 int pv_get_msgid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
@@ -1378,7 +1375,7 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 	qvalue_t q;
 	int cnt, i;
 	unsigned int qlen;
-	char *p, *qbuf;
+	char *p, *qbuf, *p_ini;
 
 	if(msg==NULL || res==NULL)
 		return -1;
@@ -1402,15 +1399,15 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);   
 
 	s.len += (cnt - 1) * PV_FIELD_DELIM_LEN;
-
-	if (s.len + 1 > PV_LOCAL_BUF_SIZE)
+	if (s.len + 1 > pv_get_buffer_size())
 	{
 		LM_ERR("local buffer length exceeded\n");
 		return pv_get_null(msg, param, res);
 	}
 
 	i = 0;
-	p = pv_local_buf;
+	p_ini = pv_get_buffer();
+	p = p_ini;
 
 	while ((uri.s = get_branch(i, &uri.len, &q, 0, 0, 0, 0, 0, 0, 0)))
 	{
@@ -1439,7 +1436,7 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 		i++;
 	}
 
-	s.s = &(pv_local_buf[0]);
+	s.s = &(p_ini[0]);
 	return pv_get_strval(msg, param, res, &s);
 }
 
@@ -1453,7 +1450,8 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	struct usr_avp *avp0;
 	int idx;
 	int idxf;
-	char *p;
+	char *p, *p_ini;
+	int p_size;
 	int n=0;
 	struct search_state state;
 
@@ -1491,11 +1489,13 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	}
 	if(idxf==PV_IDX_ALL)
 	{
-		p = pv_local_buf;
+		p_ini = pv_get_buffer();
+		p = p_ini;
+		p_size = pv_get_buffer_size();
 		do {
-			if(p!=pv_local_buf)
+			if(p!=p_ini)
 			{
-				if(p-pv_local_buf+PV_FIELD_DELIM_LEN+1>PV_LOCAL_BUF_SIZE)
+				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size)
 				{
 					LM_ERR("local buffer length exceeded\n");
 					return pv_get_null(msg, param, res);
@@ -1510,7 +1510,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				res->rs.s = int2str(avp_value.n, &res->rs.len);
 			}
 			
-			if(p-pv_local_buf+res->rs.len+1>PV_LOCAL_BUF_SIZE)
+			if(p-p_ini+res->rs.len+1>p_size)
 			{
 				LM_ERR("local buffer length exceeded!\n");
 				return pv_get_null(msg, param, res);
@@ -1518,9 +1518,8 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			memcpy(p, res->rs.s, res->rs.len);
 			p += res->rs.len;
 		} while ((avp=search_next_avp(&state, &avp_value))!=0);
-		*p = 0;
-		res->rs.s = pv_local_buf;
-		res->rs.len = p - pv_local_buf;
+		res->rs.s = p_ini;
+		res->rs.len = p - p_ini;
 		return 0;
 	}
 
@@ -1579,8 +1578,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	pv_value_t tv;
 	struct hdr_field *hf;
 	struct hdr_field *hf0;
-	char *p;
-	int n;
+	char *p, *p_ini;
+	int n, p_size;
 
 	if(msg==NULL || res==NULL || param==NULL)
 		return -1;
@@ -1639,11 +1638,13 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	}
 	if(idxf==PV_IDX_ALL)
 	{
-		p = pv_local_buf;
+		p_ini = pv_get_buffer();
+		p = p_ini;
+		p_size = pv_get_buffer_size();
 		do {
-			if(p!=pv_local_buf)
+			if(p!=p_ini)
 			{
-				if(p-pv_local_buf+PV_FIELD_DELIM_LEN+1>PV_LOCAL_BUF_SIZE)
+				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size)
 				{
 					LM_ERR("local buffer length exceeded\n");
 					return pv_get_null(msg, param, res);
@@ -1651,10 +1652,10 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				memcpy(p, PV_FIELD_DELIM, PV_FIELD_DELIM_LEN);
 				p += PV_FIELD_DELIM_LEN;
 			}
-			if(p-pv_local_buf+hf->body.len+1>PV_LOCAL_BUF_SIZE)
+			if(p-p_ini+hf->body.len+1>p_size)
 			{
 				LM_ERR("local buffer length exceeded [%d/%d]!\n",
-						(int)(p-pv_local_buf+hf->body.len+1),
+						(int)(p-p_ini+hf->body.len+1),
 						hf->body.len);
 				return pv_get_null(msg, param, res);
 			}
@@ -1673,9 +1674,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				}
 			}
 		} while (hf);
-		*p = 0;
-		res->rs.s = pv_local_buf;
-		res->rs.len = p - pv_local_buf;
+		res->rs.s = p_ini;
+		res->rs.len = p - p_ini;
 		return 0;
 	}
 
@@ -2740,14 +2740,15 @@ int pv_parse_hdr_name(pv_spec_p sp, str *in)
 		return 0;
 	}
 
-	if(in->len>=PV_LOCAL_BUF_SIZE-1)
+	if(in->len>=pv_get_buffer_size()-1)
 	{
 		LM_ERR("name too long\n");
 		return -1;
 	}
-	memcpy(pv_local_buf, in->s, in->len);
-	pv_local_buf[in->len] = ':';
-	s.s = pv_local_buf;
+	p = pv_get_buffer();
+	memcpy(p, in->s, in->len);
+	p[in->len] = ':';
+	s.s = p;
 	s.len = in->len+1;
 
 	if (parse_hname2(s.s, s.s + ((s.len<4)?4:s.len), &hdr)==0)
