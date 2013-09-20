@@ -150,7 +150,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	int backup_mhomed, ret;
 	str text;
 
-	int rt, backup_rt;
+	int backup_rt;
 	struct run_act_ctx ctx;
 	struct sip_msg pmsg;
 
@@ -293,7 +293,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 			backup_rt = get_route_type();
 			set_route_type(LOCAL_ROUTE);
 			init_run_actions_ctx(&ctx);
-			run_top_route(event_rt.rlist[rt], &pmsg, 0);
+			run_top_route(event_rt.rlist[_sl_evrt_local_response], &pmsg, 0);
 			set_route_type(backup_rt);
 			p_onsend=0;
 
