@@ -171,11 +171,11 @@ static pv_export_t mod_pvs[] = {
  */
 static cmd_export_t cmds[] = {
 	{"save",         (cmd_function)w_save2,       1,  save_fixup, 0,
-			REQUEST_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"save",         (cmd_function)w_save2,       2,  save_fixup, 0,
-			REQUEST_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"save",         (cmd_function)w_save3,       3,  save_fixup, 0,
-			REQUEST_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"lookup",       (cmd_function)w_lookup,      1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"lookup",       (cmd_function)w_lookup,      2,  domain_uri_fixup, 0,
