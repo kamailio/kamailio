@@ -364,7 +364,8 @@ modparam("registrar", "received_avp", "$avp(s:rcv)")
 		<title><varname>received_param</varname> (string)</title>
 		<para>
 		The name of the parameter that will be appended to Contacts of 
-		200 OK when the received URI was set by nathelper module.
+		200 OK when the received URI was set by nathelper module. If the
+		value is empty string, then the parameter is not appended anymore.
 		</para>
 		<para>
 		<emphasis>

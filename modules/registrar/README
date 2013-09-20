@@ -441,7 +441,8 @@ modparam("registrar", "received_avp", "$avp(s:rcv)")
 3.11. received_param (string)
 
    The name of the parameter that will be appended to Contacts of 200 OK
-   when the received URI was set by nathelper module.
+   when the received URI was set by nathelper module. If the value is
+   empty string, then the parameter is not appended anymore.
 
    Default value is "received".
 
