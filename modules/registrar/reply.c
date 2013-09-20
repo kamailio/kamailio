@@ -111,7 +111,7 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str *host, int mode)
 			qlen = len_q(c->q);
 			if (qlen) len += Q_PARAM_LEN + qlen;
 			len += EXPIRES_PARAM_LEN + INT2STR_MAX_LEN;
-			if (c->received.s) {
+			if (rcv_param.len>0 && c->received.s) {
 				len += 1 /* ; */ 
 					+ rcv_param.len 
 					+ 1 /* = */ 
@@ -252,7 +252,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 			memcpy(p, cp, len);
 			p += len;
 
-			if (c->received.s) {
+			if (rcv_param.len>0 && c->received.s) {
 				*p++ = ';';
 				memcpy(p, rcv_param.s, rcv_param.len);
 				p += rcv_param.len;
