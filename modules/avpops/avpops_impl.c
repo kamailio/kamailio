@@ -1114,7 +1114,7 @@ int get_xavp(struct sip_msg *msg, pv_xavp_name_t *xname,
 	return 1;
 }
 
-int check_xavp_param(struct sip_msg* msg, pv_spec_p spec, sr_xavp_t **xavp,
+int get_xavp_param(struct sip_msg* msg, pv_spec_p spec, sr_xavp_t **xavp,
 	int *flag)
 {
 	int res;
@@ -1130,6 +1130,20 @@ int check_xavp_param(struct sip_msg* msg, pv_spec_p spec, sr_xavp_t **xavp,
 	return 1;
 error:
 	return -1;
+}
+
+int set_val_xavp(sr_xavp_t *xavp, int_str *avp_val, int *flag)
+{
+	if(xavp->val.type!=SR_XTYPE_INT&&xavp->val.type!=SR_XTYPE_STR)
+		return -1;
+	if(xavp->val.type==SR_XTYPE_INT)
+	{
+		avp_val->n = xavp->val.v.i;
+	} else {
+		*flag = AVP_VAL_STR;
+		avp_val->s = xavp->val.v.s;
+	}
+	return 1;
 }
 
 int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
@@ -1152,8 +1166,10 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 	char           backup;
 	regex_t	       re_temp;
 	regex_t	       *re;
-	sr_xavp_t         *xavp2 = NULL;
-	int               xavp_flags=0;
+	sr_xavp_t         *xavp1 = NULL; // first parameter
+	sr_xavp_t         *xavp2 = NULL; // second parameter
+	int               xavp1_flags=0;
+	int               xavp2_flags=0;
 
 	/* look if the required avp(s) is/are present */
 	if(src->u.sval->type==PVT_AVP)
@@ -1171,6 +1187,19 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 			goto error;
 		}
 		flags = avp1->flags;
+	} else if(src->u.sval->type==PVT_XAVP)
+	{
+		avp1 = 0;
+		flags = 0;
+		LM_DBG("xavp1 found!");
+		/* search for the xavp */
+		if(get_xavp_param(msg, src->u.sval, &xavp1, &xavp1_flags)<0)
+			goto error;
+		if(set_val_xavp(xavp1, &avp_val, &flags)<0)
+		{
+			LM_ERR("src value is not INT or STR\n");
+			goto next;
+		}
 	} else {
 		avp1 = 0;
 		flags = 0;
@@ -1226,24 +1255,12 @@ cycle1:
 		{
 			avp2 = 0;
 			if(xavp2==NULL)
-			{
-				if(check_xavp_param(msg, val->u.sval, &xavp2, &xavp_flags)<0)
-				{
+				if(get_xavp_param(msg, val->u.sval, &xavp2, &xavp2_flags)<0)
 					goto error;
-				}
-			}
-			if(xavp2->val.type!=SR_XTYPE_INT&&xavp2->val.type!=SR_XTYPE_STR)
+			if(set_val_xavp(xavp2, &check_val, &check_flags)<0)
 			{
-				LM_ERR("cannot dst value is not INT or STR\n");
-				goto error;
-			}
-			check_flags = 0;
-			if(xavp2->val.type==SR_XTYPE_INT)
-			{
-				check_val.n = xavp2->val.v.i;
-			} else {
-				check_flags = AVP_VAL_STR;
-				check_val.s = xavp2->val.v.s;
+				LM_ERR("dst value is not INT or STR\n");
+				goto next;
 			}
 		} else {
 			avp2 = 0;
@@ -1415,10 +1432,10 @@ next:
 	{
 		check_flags = avp2->flags;
 		goto cycle2;
-	} else if ((xavp2!=NULL) && (xavp_flags&PV_IDX_ALL)
+	} else if ((xavp2!=NULL) && (xavp2_flags&PV_IDX_ALL)
 		&& (xavp2=xavp_get_next(xavp2))!=NULL)
 	{
-		LM_DBG("xavp->next\n");
+		LM_DBG("xavp2->next\n");
 		goto cycle1;
 	/* cycle for the first value -> next avp */
 	} else {
@@ -1427,6 +1444,21 @@ next:
 			avp1=search_next_avp(&st1, &avp_val);
 			if (avp1)
 				goto cycle1;
+		}
+		else if((xavp1!=NULL) && (xavp1_flags&PV_IDX_ALL))
+		{
+			xavp1=xavp_get_next(xavp1);
+			if (xavp1!=NULL)
+			{
+				LM_DBG("xavp1->next\n");
+				xavp2 = NULL;
+				if(set_val_xavp(xavp1, &avp_val, &flags)<0)
+				{
+					LM_ERR("src value is not INT or STR\n");
+					goto next;
+				}
+				goto cycle1;
+			}
 		}
 	}
 
