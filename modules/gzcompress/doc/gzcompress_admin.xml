@@ -18,7 +18,8 @@
 	<para>
 		This module is able to detect compressed body in received SIP message
 		and decompress it as well as compress the body for outgoing SIP
-		message.
+		message. It works also for received HTTP request and replied HTTP
+		response (&kamailio; cannot work in HTTP proxy mode).
 	</para>
 	<para>
 		The decision of whether to do compression or decompression is made
@@ -160,6 +161,71 @@ modparam("gzcompress", "sanity_checks", 1)
 			None.
 		</para>
 	</section>
+	</section>
+	<section>
+	<title>Config File</title>
+	<para>
+		Next example shows how to enable compression for forwarded requests,
+		as well as replying with compressed body for HTTP requests. For SIP,
+		the request is recevied and forwarded to itself once, just for the
+		sake of showing a simple example.
+	</para>
+		<example>
+		<title>Enable body compression</title>
+		<programlisting format="linespecific">
+...
+<![CDATA[
+#!KAMAILIO
+
+debug=3
+memdbg=5
+memlog=5
+
+children=2
+
+log_stderror=yes
+listen=udp:127.0.0.1:5060
+listen=tcp:127.0.0.1:5060
+
+tcp_accept_no_cl=yes
+http_reply_parse=yes
+
+mpath="modules/"
+
+loadmodule "sl.so"
+loadmodule "pv.so"
+loadmodule "xlog.so"
+loadmodule "corex.so"
+loadmodule "textops.so"
+loadmodule "xhttp.so"
+loadmodule "gzcompress.so"
+
+modparam("gzcompress", "header_value", "deflate")
+
+request_route {
+	xlog("received sip request from $si:$sp\r\n");
+
+	if(src_port==5060) {
+		remove_hf("Content-Encoding");
+		$du = "sip:127.0.0.1:9";
+	} else {
+		append_hf("Content-Encoding: gzip\r\n");
+		$du = "sip:127.0.0.1:5060";
+	}
+	forward();
+	exit;
+}
+
+event_route[xhttp:request] {
+	xlog("received http request from $si:$sp\r\n");
+	append_to_reply("Content-Encoding: deflate\r\n");
+    xhttp_reply("200", "OK", "text/html",
+        "<html><body>OK - [$si:$sp]</body></html>");
+}
+]]>
+...
+</programlisting>
+		</example>
 	</section>
 </chapter>
 
