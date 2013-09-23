@@ -45,7 +45,7 @@
 #include "../mem/mem.h"
 #include "../ut.h"
 
-int http_reply_hack = 0;
+int http_reply_parse = 0;
 
 /* grammar:
 	request  =  method SP uri SP version CRLF
@@ -98,7 +98,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 			fl->type=SIP_REPLY;
 			fl->u.reply.version.len=SIP_VERSION_LEN;
 			tmp=buffer+SIP_VERSION_LEN;
-	} else if (http_reply_hack != 0 && 
+	} else if (http_reply_parse != 0 &&
 		 	(*tmp=='H' || *tmp=='h') &&
 			/* 'HTTP/1.' */
 			strncasecmp( tmp+1, HTTP_VERSION+1, HTTP_VERSION_LEN-1)==0 &&

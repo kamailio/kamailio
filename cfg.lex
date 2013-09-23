@@ -476,7 +476,7 @@ KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
 MAX_WLOOPS		"max_while_loops"
 PVBUFSIZE		"pv_buffer_size"
 PVBUFSLOTS		"pv_buffer_slots"
-HTTP_REPLY_HACK		"http_reply_hack"
+HTTP_REPLY_PARSE		"http_reply_hack"|"http_reply_parse"
 VERSION_TABLE_CFG		"version_table"
 
 SERVER_ID     "server_id"
@@ -910,8 +910,8 @@ IMPORTFILE      "import_file"
 									return PVBUFSIZE; }
 <INITIAL>{PVBUFSLOTS}			{	count(); yylval.strval=yytext;
 									return PVBUFSLOTS; }
-<INITIAL>{HTTP_REPLY_HACK}		{	count(); yylval.strval=yytext;
-									return HTTP_REPLY_HACK; }
+<INITIAL>{HTTP_REPLY_PARSE}		{	count(); yylval.strval=yytext;
+									return HTTP_REPLY_PARSE; }
 <INITIAL>{VERSION_TABLE_CFG}  { count(); yylval.strval=yytext; return VERSION_TABLE_CFG;}
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}

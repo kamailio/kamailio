@@ -531,7 +531,7 @@ extern char *finame;
 %token MAX_WLOOPS
 %token PVBUFSIZE
 %token PVBUFSLOTS
-%token HTTP_REPLY_HACK
+%token HTTP_REPLY_PARSE
 %token VERSION_TABLE_CFG
 %token CFG_DESCRIPTION
 %token SERVER_ID
@@ -1553,8 +1553,8 @@ assign_stm:
 	| PVBUFSIZE EQUAL error { yyerror("number expected"); }
 	| PVBUFSLOTS EQUAL NUMBER { pv_set_buffer_slots($3); }
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
-	| HTTP_REPLY_HACK EQUAL NUMBER { http_reply_hack=$3; }
-	| HTTP_REPLY_HACK EQUAL error { yyerror("boolean value expected"); }
+	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
+	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
     | LATENCY_LOG EQUAL NUMBER { default_core_cfg.latency_log=$3; }
 	| LATENCY_LOG EQUAL error  { yyerror("number  expected"); }
