@@ -63,7 +63,7 @@ int gzc_msg_sent(void *data);
 
 /** module parameters */
 static str _gzc_hdr_name = str_init("Content-Encoding");
-static str _gzc_hdr_value = str_init("gzip");
+static str _gzc_hdr_value = str_init("deflate");
 
 static int _gzc_sanity_checks = 0;
 static sanity_api_t scb = {0};
