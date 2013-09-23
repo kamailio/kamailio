@@ -30,9 +30,6 @@ Daniel-Constantin Mierla
               3.3. sanity_checks (integer)
 
         4. Functions
-
-              4.1.
-
         5. Config File
 
    List of Examples
@@ -59,9 +56,6 @@ Chapter 1. Admin Guide
         3.3. sanity_checks (integer)
 
    4. Functions
-
-        4.1.
-
    5. Config File
 
 1. Overview
@@ -163,8 +157,6 @@ modparam("gzcompress", "sanity_checks", 1)
 
 4. Functions
 
-   4.1.
-
    None.
 
 5. Config File
@@ -211,7 +203,7 @@ request_route {
                 remove_hf("Content-Encoding");
                 $du = "sip:127.0.0.1:9";
         } else {
-                append_hf("Content-Encoding: gzip\r\n");
+                append_hf("Content-Encoding: deflate\r\n");
                 $du = "sip:127.0.0.1:5060";
         }
         forward();

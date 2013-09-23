@@ -156,11 +156,9 @@ modparam("gzcompress", "sanity_checks", 1)
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
 		<para>
 			None.
 		</para>
-	</section>
 	</section>
 	<section>
 	<title>Config File</title>
@@ -209,7 +207,7 @@ request_route {
 		remove_hf("Content-Encoding");
 		$du = "sip:127.0.0.1:9";
 	} else {
-		append_hf("Content-Encoding: gzip\r\n");
+		append_hf("Content-Encoding: deflate\r\n");
 		$du = "sip:127.0.0.1:5060";
 	}
 	forward();
