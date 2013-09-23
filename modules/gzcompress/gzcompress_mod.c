@@ -132,13 +132,19 @@ int gzc_prepare_msg(sip_msg_t *msg)
 
 	if(msg->first_line.type==SIP_REQUEST)
 	{
-		if(!IS_SIP(msg))
+		if(!IS_SIP(msg) && !IS_HTTP(msg))
 		{
-			LM_DBG("non sip request message\n");
+			LM_DBG("non sip or http request\n");
 			return 1;
 		}
-	} else if(msg->first_line.type!=SIP_REPLY) {
-		LM_DBG("non sip message\n");
+	} else if(msg->first_line.type==SIP_REPLY) {
+		if(!IS_SIP_REPLY(msg) && !IS_HTTP_REPLY(msg))
+		{
+			LM_DBG("non sip or http response\n");
+			return 1;
+		}
+	} else {
+		LM_DBG("non sip or http message\n");
 		return 1;
 	}
 
@@ -146,24 +152,6 @@ int gzc_prepare_msg(sip_msg_t *msg)
 	{
 		LM_DBG("parsing headers failed");
 		return 2;
-	}
-
-	if(parse_from_header(msg)<0)
-	{
-		LM_ERR("cannot parse FROM header\n");
-		return 3;
-	}
-
-	if(parse_to_header(msg)<0 || msg->to==NULL)
-	{
-		LM_ERR("cannot parse TO header\n");
-		return 3;
-	}
-
-	if(get_to(msg)==NULL)
-	{
-		LM_ERR("cannot get TO header\n");
-		return 3;
 	}
 
 	return 0;
