@@ -93,7 +93,7 @@ Chapter 1. Admin Guide
 
    An use case can be when having peering traffic between two Kamailio
    servers. Before relaying to the other Kamailio, use in config file:
-   append_hf("Content-Encoding: gzip\r\n").
+   append_hf("Content-Encoding: deflate\r\n").
 
 2. Dependencies
 
@@ -134,11 +134,11 @@ modparam("gzcompress", "header_name", "Encoded")
    Name of the header that indicates compression or decompression has to
    be done.
 
-   Default value is "gzip".
+   Default value is "deflate".
 
    Example 1.2. Set header_value parameter
 ...
-modparam("gzcompress", "header_value", "tgz")
+modparam("gzcompress", "header_value", "gzip")
 ...
 
 3.3. sanity_checks (integer)

@@ -54,7 +54,7 @@
 	<para>
 		An use case can be when having peering traffic between two Kamailio
 		servers. Before relaying to the other Kamailio,  use
-		in config file: append_hf("Content-Encoding: gzip\r\n").
+		in config file: append_hf("Content-Encoding: deflate\r\n").
 	</para>
 	</section>
 	<section>
@@ -117,14 +117,14 @@ modparam("gzcompress", "header_name", "Encoded")
 		</para>
 		<para>
 		<emphasis>
-			Default value is "gzip".
+			Default value is "deflate".
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>header_value</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("gzcompress", "header_value", "tgz")
+modparam("gzcompress", "header_value", "gzip")
 ...
 </programlisting>
 		</example>
