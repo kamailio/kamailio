@@ -544,9 +544,22 @@ avp_pushto("$br","$avp(i:680)");
 ...
 avp_check("$avp(i:678)", "lt/i:345/g");
 avp_check("$fd","eq/$td/I");
-avp_check("$avp(s:foo)","gt/$avp($bar)/g");
+avp_check("$avp(s:foo)","gt/$avp($var(bar))/g");
 avp_check("$avp(s:foo)","re/sip:.*@bar.net/g");
 avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
+...
+
+   NOTE: you can use a xavp variable ($xavp(key1[indx1]=>key2[indx2])) as
+   first or second parameter. If you want to check all the values of the
+   key2 you should use [*] at indx2. The [*] index is not allowed at
+   indx1.
+...
+avp_check("$xavp(op[0]=>lt[0])", "lt/i:345/g");
+avp_check("$xavp(op=>fd","eq/$td/I");
+avp_check("$xavp(op[1]=>foo[*])","gt/$avp($var(bar))/g");
+avp_check("$avp(s:foo)","re/$xavp(op[0]=>re[*]/g");
+$var(id)=2;
+avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
 ...
 
 5.8. avp_copy(old_name,new_name)
