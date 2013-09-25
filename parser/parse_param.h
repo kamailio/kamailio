@@ -167,6 +167,19 @@ extern inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *
  */
 int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p);
 
+/*! \brief
+ * Parse parameters
+ *  \param _s is string containing parameters
+ *  \param _c is class of parameters
+ *  \param _h is pointer to structure that will be filled with pointer to well known parameters
+ * linked list of parsed parameters will be stored in the variable _p is pointing to
+ * \param separator single character separator
+ * \return The function returns 0 on success and negative number
+ * on an error
+ */
+int parse_params2(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p,
+			char separator);
+
 
 /*! \brief
  * Free linked list of parameters
