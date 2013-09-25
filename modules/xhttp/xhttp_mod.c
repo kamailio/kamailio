@@ -45,6 +45,7 @@
 #include "../../pvar.h"
 
 #include "api.h"
+#include "xhttp_trans.h"
 
 MODULE_VERSION
 
@@ -106,6 +107,13 @@ struct module_exports exports= {
 	0           /* per-child init function */
 };
 
+static tr_export_t mod_trans[] = {
+	{ {"url", sizeof("url")-1},
+		xhttp_tr_parse_url },
+
+	{ { 0, 0 }, 0 }
+};
+
 /** 
  * 
  */
@@ -160,6 +168,11 @@ static int mod_init(void)
 		}
 	}
 	return 0;
+}
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	return register_trans_mod(path, mod_trans);
 }
 
 /** 
