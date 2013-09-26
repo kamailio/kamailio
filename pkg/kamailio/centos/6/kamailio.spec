@@ -1,6 +1,6 @@
 %define name	kamailio
 %define ver	4.1.0
-%define rel	dev8.0%{dist}
+%define rel	dev9.0%{dist}
 
 
 
@@ -17,18 +17,18 @@ Vendor:		kamailio.org
 BuildRoot:	%{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:	kamailio-auth-ephemeral < %ver, kamailio-auth-identity < %ver
 Conflicts:	kamailio-bdb < %ver, kamailio-cdp < %ver, kamailio-cdp < %ver
-Conflicts:	kamailio-dialplan < %ver, kamailio-ims < %ver
-Conflicts:	kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
-Conflicts:	kamailio-mysql < %ver, kamailio-outbound < %ver
-Conflicts:	kamailio-perl < %ver, kamailio-postgresql < %ver
-Conflicts:	kamailio-presence < %ver, kamailio-purple < %ver
-Conflicts:	kamailio-python < %ver, kamailio-regex < %ver
-Conflicts:	kamailio-sctp < %ver, kamailio-snmpstats < %ver
-Conflicts:	kamailio-sqlite < %ver, kamailio-tls < %ver
-Conflicts:	kamailio-unixODBC < %ver, kamailio-utils < %ver
-Conflicts:	kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
-Conflicts:	kamailio-xmlops < %ver, kamailio-xmlrpc < %ver
-Conflicts:	kamailio-xmpp < %ver
+Conflicts:	kamailio-dialplan < %ver, kamailio-gzcompress < %ver
+Conflicts:	kamailio-ims < %ver, kamailio-lcr < %ver, kamailio-ldap < %ver
+Conflicts:	kamailio-lua < %ver, kamailio-mysql < %ver
+Conflicts:	kamailio-outbound < %ver, kamailio-perl < %ver
+Conflicts:	kamailio-postgresql < %ver, kamailio-presence < %ver
+Conflicts:	kamailio-purple < %ver, kamailio-python < %ver
+Conflicts:	kamailio-regex < %ver, kamailio-sctp < %ver
+Conflicts:	kamailio-snmpstats < %ver, kamailio-sqlite < %ver
+Conflicts:	kamailio-tls < %ver, kamailio-unixODBC < %ver
+Conflicts:	kamailio-utils < %ver, kamailio-websocket < %ver
+Conflicts:	kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
+Conflicts:	kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 BuildRequires:	bison, flex, gcc, make, redhat-rpm-config
 
 %description
@@ -102,6 +102,16 @@ BuildRequires:	pcre-devel
 
 %description	dialplan
 String translations based on rules for Kamailio.
+
+
+%package	gzcompress
+Summary:	Compressed body (SIP and HTTP) handling for kamailio.
+Group:		System Environment/Daemons
+Requires:	zlib, kamailio = %ver
+BuildRequires:	zlib-devel
+
+%description	gzcompress
+Compressed body (SIP and HTTP) handling for kamailio.
 
 
 %package	ims
@@ -730,6 +740,12 @@ fi
 %{_libdir}/kamailio/modules/dialplan.so
 
 
+%files		gzcompress
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.gzcompress
+%{_libdir}/kamailio/modules/gzcompress.so
+
+
 %files		ims
 %defattr(-,root,root)
 %{_libdir}/kamailio/libkamailio_ims.so
@@ -967,6 +983,9 @@ fi
 
 
 %changelog
+* Thu Sep 26 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
+  - Updated rel to dev9
+  - Added gzcompress module to .spec
 * Thu Sep 12 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
   - stun no longer depends on OpenSSL so it has been moved to the standard
     module set
