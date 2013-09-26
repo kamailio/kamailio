@@ -390,40 +390,14 @@ str * get_asserted_identity(struct sip_msg* _m) {
  * Add proper asserted identies based on registration
  */
 int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity) {
-	// Get the contact:
-	pcontact_t * c = getContactP(_m, _d);
-	// Public identities of this contact
-	ppublic_t * p;
-	
-	// Contact not found => Identity not asserted.
-	if (c == NULL) return -2;
+	str received_host = {0, 0};
+	char srcip[50];	
 
-	/* Lock this record while working with the data: */
-	ul.lock_udomain(_d, &c->aor);
-
-	LM_DBG("Checking identity: %.*s\n", identity.len, identity.s);
-
-	LM_DBG("AOR of contact: %.*s\n", c->aor.len, c->aor.s);
-
-	for (p = c->head; p; p = p->next) {
-		LM_DBG("Public identity: %.*s\n", p->public_identity.len, p->public_identity.s);
-		/* Check length: */
-		if (identity.len == p->public_identity.len) {
-			/* Check contents: */
-			if (strncasecmp(identity.s, p->public_identity.s, identity.len) == 0) {
-				LM_DBG("Match!\n");
-				goto success;
-			}
-		} else LM_DBG("Length does not match.\n");
-	}
-
-	// We should only get here, if we failed:
-	/* Unlock domain */
-	ul.unlock_udomain(_d, &c->aor);
-	return -1;
-success:
-	/* Unlock domain */
-	ul.unlock_udomain(_d, &c->aor);
-	return 1;
+	received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+	received_host.s = srcip;
+	if (ul.assert_identity(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, &identity) == 0)
+		return -1;
+	else
+		return 1;
 }
 

@@ -433,12 +433,6 @@ int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsign
 	int i;
 	struct pcontact* c;
 
-	if (_d->table) {
-		for(i = 0; i < _d->size; i++) {
-		}
-	}
-
-
 	for(i=0; i<_d->size; i++)
 	{
 		c = _d->table[i].first;
@@ -467,6 +461,52 @@ int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsign
 		}
 	}
 	return 1; /* Nothing found */
+}
+
+
+int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity) {
+	int i;
+	struct pcontact* c;
+	// Public identities of this contact
+	struct ppublic * p;
+
+	for(i=0; i<_d->size; i++)
+	{
+		c = _d->table[i].first;
+		while(c) {
+			LM_DBG("Port %d (search %d), Proto %d (search %d), reg_state %s (search %s)\n",
+				c->received_port, _port, c->received_proto, _proto, 
+				reg_state_to_string(c->reg_state), reg_state_to_string(PCONTACT_REGISTERED)
+				);
+			// First check, if Proto and Port matches:
+			if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _port) && (c->received_proto == _proto)) {
+				LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
+				// Then check the length:
+				if (c->received_host.len == _host->len) {
+					LM_DBG("Received host %.*s (search %.*s)\n",
+						c->received_host.len, c->received_host.s,
+						_host->len, _host->s);
+
+					// Finally really compare the "received_host"
+					if (!memcmp(c->received_host.s, _host->s, _host->len)) {
+						for (p = c->head; p; p = p->next) {
+							LM_DBG("Public identity: %.*s\n", p->public_identity.len, p->public_identity.s);
+							/* Check length: */
+							if (_identity->len == p->public_identity.len) {
+								/* Check contents: */
+								if (strncasecmp(_identity->s, p->public_identity.s, _identity->len) == 0) {
+									LM_DBG("Match!\n");
+									return 1;
+								}
+							} else LM_DBG("Length does not match.\n");
+						}
+					}
+				}
+			}
+			c = c->next;
+		}
+	}
+	return 0; /* Nothing found */
 }
 
 int delete_pcontact(udomain_t* _d, str* _aor, struct pcontact* _c)

@@ -195,6 +195,8 @@ typedef int (*get_pcontact_t)(struct udomain* _d, str* _contact, struct pcontact
 
 typedef int (*get_pcontact_by_src_t)(struct udomain* _d, str * _host, unsigned short _port, unsigned short _proto, struct pcontact** _c);
 
+typedef int (*assert_identity_t)(struct udomain* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
+
 typedef int (*insert_pcontact_t)(struct udomain* _d, str* _aor, struct pcontact_info* ci, struct pcontact** _c);
 typedef int (*delete_pcontact_t)(struct udomain* _d, str* _aor, struct pcontact* _c);
 typedef int (*update_pcontact_t)(struct udomain* _d, struct pcontact_info* ci, struct pcontact* _c);
@@ -220,6 +222,7 @@ typedef struct usrloc_api {
 	delete_pcontact_t delete_pcontact;
 	get_pcontact_t get_pcontact;
 	get_pcontact_by_src_t get_pcontact_by_src;
+	assert_identity_t assert_identity;
 
 	update_pcontact_t update_pcontact;
 	update_rx_regsession_t update_rx_regsession;
