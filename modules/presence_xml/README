@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright © 2007 Voice Sistem SRL
+   Copyright � 2007 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -144,7 +144,7 @@ Chapter 1. Admin Guide
 
    The database URL.
 
-   Default value is “mysql://openser:openserrw@localhost/openser”.
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
@@ -155,7 +155,7 @@ modparam("presence_xml", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    The name of the database table where XCAP documents are stored.
 
-   Default value is “xcap”.
+   Default value is "xcap".
 
    Example 1.2. Set xcap_table parameter
 ...
@@ -166,7 +166,7 @@ modparam("presence_xml", "xcap_table", "xcaps")
 
    Set this parameter to disable the handling of the "presence" event.
 
-   Default value: “0”.
+   Default value: "0".
 
    Example 1.3. Set disable_presence parameter
 ...
@@ -178,7 +178,7 @@ modparam("presence_xml", "disable_presence", 1)
    Set this parameter to disable the handling of the "presence.winfo"
    event.
 
-   Default value: “0”.
+   Default value: "0".
 
    Example 1.4. Set disable_winfo parameter
 ...
@@ -189,7 +189,7 @@ modparam("presence_xml", "disable_winfo", 1)
 
    Set this parameter to disable the handling of the "dialog;sla" event.
 
-   Default value: “1” (0 - enabled, 1 - disabled).
+   Default value: "1" (0 - enabled, 1 - disabled).
 
    Example 1.5. Set disable_bla parameter
 ...
@@ -209,7 +209,7 @@ modparam("presence_xml", "disable_bla", 1)
    Note: When switching from one value to another, the watchers table must
    be emptied.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.6. Set force_active parameter
 ...
@@ -229,9 +229,9 @@ modparam("presence_xml", "force_active", 1)
    database and, if needed, send NOTIFY updates.
 
    Otherwise, it uses xcap_client module to fetch documents from the XCAP
-   servers with HTTP requests. This mode is currently not supported.
+   servers with HTTP requests.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.7. Set integrated_xcap_server parameter
 ...
@@ -257,7 +257,7 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
    no connection to database. Useful when needing only to use $xml(...)
    pseudoc-variable.
 
-   Default value: “0” (0 - active mode, 1 - passive mode).
+   Default value: "0" (0 - active mode, 1 - passive mode).
 
    Example 1.9. Set passive_mode parameter
 ...
@@ -274,7 +274,7 @@ modparam("presence_xml", "passive_mode", 1)
    ones defined by the RFC 3265, this parameter offers the possibility for
    the admin to decide which one he wishes to use.
 
-   Default value: “probation” . Since probation also accepts a retry-after
+   Default value: "probation" . Since probation also accepts a retry-after
    parameter to specify after at least how may seconds the client should
    reattempt to resubscribe, you can include this in the parameter also.
 
@@ -289,7 +289,7 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
    4.1. pres_check_basic(presentity_uri, status)
    4.2. pres_check_activities(presentity_uri, activity)
 
-4.1.  pres_check_basic(presentity_uri, status)
+4.1. pres_check_basic(presentity_uri, status)
 
    Checks the /presence/tuple/status/basic nodes in the presentity for
    presentity_uri against the value in status.
@@ -312,7 +312,7 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
     }
 ...
 
-4.2.  pres_check_activities(presentity_uri, activity)
+4.2. pres_check_activities(presentity_uri, activity)
 
    Checks whether a /presence/person/activities/activity node exists in
    the presentity for presentity_uri.
@@ -339,7 +339,7 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
 
 5. Installation
 
-   The module requires one table in Kamailio database: “xcap”. The SQL
+   The module requires one table in Kamailio database: "xcap". The SQL
    syntax to create it can be found in presence-create.sql script in the
    database directories in the kamailio/scripts folder. You can also find
    the complete database documentation on the project webpage,
@@ -350,7 +350,7 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
      * $xml(name=>spec)
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/dokuwiki/.
+   http://www.kamailio.org/wiki/.
 
 Chapter 2. Developer Guide
 
