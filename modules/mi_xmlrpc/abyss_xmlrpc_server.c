@@ -941,8 +941,9 @@ uriPathParm(const xmlrpc_server_abyss_parms * const parmsP,
 }
 
 
-
+#ifdef XMLRPC_OLD_VERSION
 static xmlrpc_server_shutdown_fn shutdownAbyss;
+#endif
 
 static void
 shutdownAbyss(xmlrpc_env * const envP,
