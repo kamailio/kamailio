@@ -235,8 +235,7 @@ modparam("presence_xml", "force_active", 1)
 		</para>
 		<para>
 		Otherwise, it uses xcap_client module to fetch documents 
-		from the XCAP servers with HTTP requests.  This mode is
-		currently not supported.</para>
+		from the XCAP servers with HTTP requests.</para>
 		<para>
 		<emphasis>Default value is <quote>0</quote>.
 		</emphasis>
