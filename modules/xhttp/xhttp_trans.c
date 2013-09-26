@@ -30,6 +30,9 @@ enum _tr_xhttpurl_subtype { TR_XHTTPURL_NONE = 0, TR_XHTTPURL_PATH,
 enum _tr_xhttpquerystring_subtype { TR_XHTTPUTLQUERYSTRING_NONE = 0,
 	TR_XHTTPURLQUERYSTRING_VALUE};
 
+static str _httpurl_str = {0, 0};
+static int _httpurl_querystring_pos = 0;
+
 int xhttp_tr_eval_xhttpurl(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		pv_value_t *val)
 {
@@ -44,28 +47,45 @@ int xhttp_tr_eval_xhttpurl(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		val->flags = PV_VAL_STR;
 	}
 
+	if (_httpurl_str.len == 0 || _httpurl_str.len != val->rs.len
+		|| strncmp(_httpurl_str.s, val->rs.s, val->rs.len) != 0)
+	{
+		if (val->rs.len > _httpurl_str.len)
+		{
+			if (_httpurl_str.s) pkg_free(_httpurl_str.s);
+			_httpurl_str.s = (char *) pkg_malloc(
+					(val->rs.len + 1) * sizeof(char));
+			if (_httpurl_str.s == NULL)
+			{
+				LM_ERR("allocating package memory\n");
+				memset(&_httpurl_str.s, 0, sizeof(str));
+				return -1;
+			}
+		}
+		_httpurl_str.len = val->rs.len;
+		memcpy(_httpurl_str.s, val->rs.s, val->rs.len);
+
+		while (val->rs.s[pos] != '?' && pos < val->rs.len) pos++;
+		_httpurl_querystring_pos = (pos >= val->rs.len) ? 0 : pos + 1;
+	}
+
 	switch (subtype)
 	{
 	case TR_XHTTPURL_PATH:
-		while (val->rs.s[pos] != '?' && pos < val->rs.len)
-			pos++;
-
-		val->rs.len = pos;
+		val->rs.len = (_httpurl_querystring_pos == 0)
+				? val->rs.len : _httpurl_querystring_pos - 1;
 		break;
 
 	case TR_XHTTPURL_QUERYSTRING:
-		while (val->rs.s[pos] != '?' && pos < val->rs.len)
-			pos++;
-
-		if (pos >= val->rs.len)
+		if (_httpurl_querystring_pos == 0)
 		{
 			val->rs.s[0] = '\0';
 			val->rs.len = 0;
 			break;
 		}
 
-		val->rs.s = &val->rs.s[pos + 1];
-		val->rs.len = val->rs.len - pos - 1;
+		val->rs.s = &val->rs.s[_httpurl_querystring_pos];
+		val->rs.len = val->rs.len - _httpurl_querystring_pos;
 		break;
 
 	default:
