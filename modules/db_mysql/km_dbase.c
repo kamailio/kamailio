@@ -510,7 +510,7 @@ int db_mysql_affected_rows(const db1_con_t* _h)
 int db_mysql_start_transaction(db1_con_t* _h, db_locking_t _l)
 {
 	str begin_str = str_init("BEGIN");
-	str lock_start_str = str_init("LOCK TABLE ");
+	str lock_start_str = str_init("LOCK TABLES ");
 	str lock_end_str  = str_init(" WRITE");
 	str lock_str = {0, 0};
 
@@ -559,6 +559,7 @@ int db_mysql_start_transaction(db1_con_t* _h, db_locking_t _l)
 		}
 
 		if (lock_str.s) pkg_free(lock_str.s);
+		CON_LOCKEDTABLES(_h) = 1;
 		break;
 
 	default:
@@ -572,6 +573,35 @@ error:
 	if (lock_str.s) pkg_free(lock_str.s);
 	db_mysql_abort_transaction(_h);
 	return -1;
+}
+
+/**
+ * Unlock tables in the session
+ * \param _h database handle
+ * \return 0 on success, negative on failure
+ */
+int db_mysql_unlock_tables(db1_con_t* _h)
+{
+	str query_str = str_init("UNLOCK TABLES");
+
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_LOCKEDTABLES(_h) == 0) {
+		LM_DBG("no active locked tables\n");
+		return 0;
+	}
+
+	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	CON_LOCKEDTABLES(_h) = 0;
+	return 0;
 }
 
 /**
@@ -603,6 +633,10 @@ int db_mysql_end_transaction(db1_con_t* _h)
  	   raw_query fails, and the calling module does an abort_transaction()
 	   to clean-up, a ROLLBACK will be sent to the DB. */
 	CON_TRANSACTION(_h) = 0;
+
+	if(db_mysql_unlock_tables(_h)<0)
+		return -1;
+
 	return 0;
 }
 
@@ -614,6 +648,7 @@ int db_mysql_end_transaction(db1_con_t* _h)
 int db_mysql_abort_transaction(db1_con_t* _h)
 {
 	str query_str = str_init("ROLLBACK");
+	int ret;
 
 	if (!_h) {
 		LM_ERR("invalid parameter value\n");
@@ -622,7 +657,8 @@ int db_mysql_abort_transaction(db1_con_t* _h)
 
 	if (CON_TRANSACTION(_h) == 0) {
 		LM_DBG("nothing to rollback\n");
-		return 0;
+		ret = 0;
+		goto done;
 	}
 
 	/* Whether the rollback succeeds or not we need to _end_ the
@@ -632,10 +668,15 @@ int db_mysql_abort_transaction(db1_con_t* _h)
 	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
 	{
 		LM_ERR("executing raw_query\n");
-		return -1;
+		ret = -1;
+		goto done;
 	}
 
-	return 1;
+	ret = 1;
+
+done:
+	db_mysql_unlock_tables(_h);
+	return ret;
 }
 
 
