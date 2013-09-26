@@ -1113,6 +1113,7 @@ done:
 
 static str _tr_params_str = {0, 0};
 static param_t* _tr_params_list = NULL;
+static char _tr_params_separator = ';';
 
 
 /*!
@@ -1136,31 +1137,30 @@ int tr_eval_paramlist(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
 		return -1;
 
-	if(_tr_params_str.len==0 || _tr_params_str.len!=val->rs.len ||
-			strncmp(_tr_params_str.s, val->rs.s, val->rs.len)!=0)
+	if (tp != NULL)
 	{
 		if (subtype == TR_PL_COUNT)
 		{
-			if (tp != NULL)
-			{
-				if(tp->type != TR_PARAM_STRING
-						|| tp->v.s.len != 1)
-					return -1;
+			if(tp->type != TR_PARAM_STRING || tp->v.s.len != 1)
+				return -1;
 
-					separator = tp->v.s.s[0];
-			}
+				separator = tp->v.s.s[0];
 		}
-		else
+		else if (tp->next != NULL)
 		{
-			if(tp->next != NULL)
-			{
-				if(tp->next->type != TR_PARAM_STRING
-						|| tp->next->v.s.len != 1)
-					return -1;
+			if(tp->next->type != TR_PARAM_STRING
+					|| tp->next->v.s.len != 1)
+				return -1;
 
-				separator = tp->next->v.s.s[0];
-			}
+			separator = tp->next->v.s.s[0];
 		}
+	}
+
+	if(_tr_params_str.len==0 || _tr_params_str.len!=val->rs.len ||
+			strncmp(_tr_params_str.s, val->rs.s, val->rs.len)!=0 ||
+			_tr_params_separator != separator)
+	{
+		_tr_params_separator = separator;
 
 		if(val->rs.len>_tr_params_str.len)
 		{
@@ -1192,7 +1192,7 @@ int tr_eval_paramlist(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		/* parse params */
 		sv = _tr_params_str;
 		if (parse_params2(&sv, CLASS_ANY, &phooks, &_tr_params_list,
-					separator)<0)
+					_tr_params_separator)<0)
 			return -1;
 	}
 	
