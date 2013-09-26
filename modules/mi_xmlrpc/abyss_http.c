@@ -544,12 +544,12 @@ RequestRead(TSession * const sessionP) {
 }
 
 
-
+#ifdef XMLRPC_OLD_VERSION
 char *RequestHeaderValue(TSession *r,char *name)
 {
     return (TableFind(&r->request_headers,name));
 }
-
+#endif
 
 
 abyss_bool
