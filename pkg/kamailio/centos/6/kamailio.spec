@@ -446,6 +446,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.db2_ops
 %doc %{_docdir}/kamailio/modules/README.debugger
 %doc %{_docdir}/kamailio/modules/README.dialog
+%doc %{_docdir}/kamailio/modules/README.dialog_ng
 %doc %{_docdir}/kamailio/modules/README.dispatcher
 %doc %{_docdir}/kamailio/modules/README.diversion
 %doc %{_docdir}/kamailio/modules/README.dmq
@@ -562,10 +563,10 @@ fi
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
 %{_libdir}/kamailio/modules/alias_db.so
+%{_libdir}/kamailio/modules/async.so
 %{_libdir}/kamailio/modules/auth.so
 %{_libdir}/kamailio/modules/auth_db.so
 %{_libdir}/kamailio/modules/auth_diameter.so
-%{_libdir}/kamailio/modules/async.so
 %{_libdir}/kamailio/modules/avp.so
 %{_libdir}/kamailio/modules/avpops.so
 %{_libdir}/kamailio/modules/benchmark.so
@@ -579,11 +580,12 @@ fi
 %{_libdir}/kamailio/modules/counters.so
 %{_libdir}/kamailio/modules/ctl.so
 %{_libdir}/kamailio/modules/db_cluster.so
-%{_libdir}/kamailio/modules/db_text.so
 %{_libdir}/kamailio/modules/db_flatstore.so
+%{_libdir}/kamailio/modules/db_text.so
 %{_libdir}/kamailio/modules/db2_ops.so
 %{_libdir}/kamailio/modules/debugger.so
 %{_libdir}/kamailio/modules/dialog.so
+%{_libdir}/kamailio/modules/dialog_ng.so
 %{_libdir}/kamailio/modules/dispatcher.so
 %{_libdir}/kamailio/modules/diversion.so
 %{_libdir}/kamailio/modules/dmq.so
@@ -631,13 +633,13 @@ fi
 %{_libdir}/kamailio/modules/rtpproxy-ng.so
 %{_libdir}/kamailio/modules/sanity.so
 %{_libdir}/kamailio/modules/sca.so
+%{_libdir}/kamailio/modules/sdpops.so
 %{_libdir}/kamailio/modules/seas.so
 %{_libdir}/kamailio/modules/sipcapture.so
 %{_libdir}/kamailio/modules/sipt.so
 %{_libdir}/kamailio/modules/siptrace.so
 %{_libdir}/kamailio/modules/siputils.so
 %{_libdir}/kamailio/modules/sl.so
-%{_libdir}/kamailio/modules/sdpops.so
 %{_libdir}/kamailio/modules/sms.so
 %{_libdir}/kamailio/modules/speeddial.so
 %{_libdir}/kamailio/modules/sqlops.so
@@ -751,8 +753,6 @@ fi
 %{_libdir}/kamailio/libkamailio_ims.so
 %{_libdir}/kamailio/libkamailio_ims.so.0
 %{_libdir}/kamailio/libkamailio_ims.so.0.1
-%doc %{_docdir}/kamailio/modules/README.dialog_ng
-%{_libdir}/kamailio/modules/dialog_ng.so
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %{_libdir}/kamailio/modules/ims_auth.so
 %doc %{_docdir}/kamailio/modules/README.ims_icscf
@@ -983,181 +983,51 @@ fi
 
 
 %changelog
-* Thu Sep 26 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
-  - Updated rel to dev9
-  - Added gzcompress module to .spec
-* Thu Sep 12 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
-  - stun no longer depends on OpenSSL so it has been moved to the standard
-    module set
-* Wed Sep 11 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
+* Fri Sep 27 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
+  - Consolidating changelog for 4.1.0 into a single entry...
+  - Added new modules to main package:
+    - cnxcc
+    - gzcompress
+    - rtpproxy-ng
+    - sipt
+    - stun
+  - Added new packages for new modules:
+    - auth_ephemeral
+    - sctp
+  - Moved existing modules to different packages:
+    - tls to own package
+    - dialog_ng to main package
+    - auth_identity to main package (previously not built for CentOS)
   - Removed Fedora stuff as I am only maintaining this for CentOS now
-  - Updated rel to dev8
-* Thu Aug 22 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Added rtpproxy-ng module to build
-* Wed Aug 14 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to dev7
-* Mon May 27 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Created package for auth_ephemeral module
-* Sun May 26 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Created package for sctp module
-  - Updated rel to dev6
-* Sat May 18 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Refactored .spec
-  - Put tls module back in its own .spec (OpenSSL no longer needed by core as
-    stun is in its own module)
-  - Updated rel to dev5
-* Wed Apr 24 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to dev3
-* Wed Apr 10 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Added sipt module to .spec
-  - Updated rel to dev2
-* Fri Mar 29 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Added stun module to .spec
-  - Updated rel to dev1
-* Wed Mar 27 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Added cnxcc module to .spec
-* Thu Mar 7 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Added build requirement for docbook2X for Fedora builds
-* Wed Mar 6 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Restored perl related files
-* Tue Mar 5 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to dev0 and ver to 4.1.0
-  - Re-ordered file to make it internally consistent
   - Updated make commands to match updated module groups
-  - Added auth_identity back in
-  - Temporarily commented out perl related files as perl modules do not appear
-    to be working
-* Sun Jan 20 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to pre1
+  - Updated version to 4.1.0
+* Mon Mar 11 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
+  - Consolidating changelog for 4.0.0 into a single entry...
+  - Added new modules to main package:
+    - corex
+    - sca
+  - Added new packages for new modules:
+    - cdp (cdp, cdp_avp)
+    - ims (dialog_ng, ims_auth, ims_icscf, ims_isc, ims_qos,
+      ims_registrar_pcscf, ims_registrar_scscf, ims_usrloc_pcscf,
+      ims_usrloc_scscf)
+    - outbound
+    - websocket
+    - xhttp_pi
+  - Moved existing modules to different packages:
+    - Various SER modules added to main package (avp, db2_ops, mangler, timer,
+      uid_auth_db, uid_avp_db, uid_domain, uid_gflags, uid_uri_db, print,
+      print_lib, xprint)
+    - db2_ldap SER module added to ldap package
+    - tls to main package (as OpenSSL was needed in core for STUN)
   - Moved modules from modules_k/ to modules/
   - Renamed perl modules
-* Fri Jan 11 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to pre0
-* Thu Jan 10 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - More IMS updates
-* Tue Jan 8 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Changed dialog2 to dialog_ng
-  - Renamed all IMS modules (prepended ims_)
-* Sun Jan 6 2013 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated ver to 4.0.0 and rel to dev8
-* Mon Dec 31 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added dialog2 and IMS modules to the build
-* Fri Dec 21 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added db2_ldap, db2_ops, and timer to the build
-  - Added uid_auth_db, uid_avp_db, uid_domain, uid_gflags, uid_uri_db, print,
-    and print_lib to the build
-* Thu Dec 13 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added xhttp_pi framework examples to the installation
-  - Added xhttp_pi README to the installation
-* Wed Dec 12 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added mangler module to the build
-  - Tidied up make commands used to build and install
-* Sun Dec 9 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to dev7
-  - Added avp, sca, and xprint modules to the build
-  - Moved xlog from modules_k to modules
-* Fri Nov 9 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to dev5
-* Tue Oct 30 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added xhttp_pi module to RPM builds
-* Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Set ownership of /etc/kamailio to kamailio.kamailio
   - Added installation of auth.7.gz for Fedora now that manpages are built for
     Fedora
-  - Added "make utils" to the build section (when it's not there utils get
-    built during the install - which isn't right)
   - SCTP and STUN now included in this build
-  - Removed kamailio-tls package - tls module now in main kamailio RPM as that
-    has openssl as a dependency for STUN
-* Sun Sep 17 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added corex module to RPM builds
-  - Updated rel to dev4
-* Sun Aug 19 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to dev3
-* Mon Aug 13 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added Outbound module
-* Fri Jul 13 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to dev2
-* Thu Jul 5 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added kamailio-cdp RPM for cdp and cdp_avp modules
-* Tue Jul 3 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updates to websocket module
-* Sat Jun 30 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to dev1
-  - Removed %_sharedir and replaced with standard macro %_datadir
-* Sat Jun 23 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added websocket module
-* Mon Jun 11 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated ver to 3.4.0 and rel to dev0
-* Mon Jun 4 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added a number of %dir lines to make sure the RPMs are properly cleaned up
-    on uninstall
-* Sat Jun 2 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added %postun section to reload systemd on Fedora after uninstall
-  - Added build requirement for redhat-rpm-config so debuginfo RPMs get built
-* Fri Jun 1 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Tweak to the pkg/kamailio/fedora directory structure
-  - Tested with Fedora 17
-* Thu May 31 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to pre3
-  - Combined Fedora/CentOS .spec in preparation for Fedora 17
-* Sun May 20 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - First version created for Kamailio 3.3.0. Based on spec-file for Fedora
-    created by myself (in turn based on an older spec-file for CentOS created
-    by Ovidiu Sas).
-  - Tested with CentOS 6.2 x86_64.
-  - Builds all Kamailio 3.3.0 modules (modules/modules_k) except:
-    - modules/app_mono: Requires mono which is not in the CentOS 6 repo
-    - modules/auth_identity: Conflicts with TLS unless statically linked (which
-      requires changes to Makefile and is impractical for generic RPM building)
-    - modules/db_cassandra: Requires Cassandra and Thrift which are not in the
-      CentOS 6 repo
-    - modules/geoip: Requires GeoIP which is not in the CentOS 6 repo
-    - modules/iptrtpproxy: Needs local copy of iptables source to build
-      (impractical for generic RPM building)
-    - modules/json: Requires json-c whish is not in the CentOS 6 repo
-    - modules/jsonrpc-c: Requires json-c whish is not in the CentOS 6 repo
-    - modules/ndb_redis: Requires hiredis which is not in the CentOS 6 repo
-    - modules/peering: Requires radiusclient-ng which is not in the CentOS 6
-      repo
-    - modules_k/acc_radius: Requires radiusclient-ng which is not in the CentOS
-      6 repo
-    - modules_k/auth_radius: Required radiusclient-ng which is not in the
-      CentOS 6 repo
-    - modules_k/carrierroute: Requires libconfuse which is not in the CentOS 6
-      repo
-    - modules_k/db_oracle: Requires Oracle which is not in the CentOS 6 repo
-      (and is closed-source)
-    - modules_k/memcached: Module compilation appears to require an older
-      version of libmemcached-devel than the one in the CentOS 6 repo
-    - modules_k/mi_xmlrpc: Requires libxmlrpc-c3 which is not in the CentOS 6
-      repo
-    - modules_k/misc_radius: Requires radiusclient-ng which is not in the
-      CentOS 6 repo
-    - modules_k/osp: Requires OSP Toolkit which is not in the CentOS 6 repo
-* Fri May 18 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Added missing BuildRequires (gcc).
-  - Added .fc16 to rel.  This makes it easy to tell which distribution the RPMs
-    are built for.
-* Thu May 17 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Updated rel to pre2.
-* Mon May 7 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - Changed to use systemd instead of SysV init.
-* Sun May 6 2012 Peter Dunkley <peter@dunkley.me.uk>
-  - First version created for Kamailio 3.3.0. Based on spec-file for CentOS
-    created by Ovidiu Sas.
-  - Tested with Fedora 16 x86_64.
-  - Builds all Kamailio 3.3.0 modules (modules/modules_k) except:
-    - modules/auth_identity: Conflicts with TLS unless statically linked (which
-      requires changes to Makefile and is impractical for generic RPM building)
-    - modules/db_cassandra: Requires Thrift which is not in the F16 repo
-    - modules/iptrtpproxy: Needs local copy of iptables source to build
-      (impractical for generic RPM building)
-    - modules_k/db_oracle: Requires Oracle which is not in the F16 repo
-      (and is closed-source)
-    - modules_k/memcached: Module compilation appears to require an older
-      version of libmemcached-devel than the one in the F16 repo
-    - modules_k/mi_xmlrpc: The F16 repo contains an unsupported version of
-      libxmlrpc-c3, and there is an compilation error due to the module code
-      using an unknown type ('TString')
-    - modules_k/osp: Requires OSP Toolkit which is not in the F16 repo
+  - Refactored .spec
+  - Updated ver to 4.0.0
+* Mon Jun 18 2012 Peter Dunkley <peter.dunkley@crocodilertc.net>
+  - Consolidating changelog for 3.3.0 into a single entry...
+  - See revision control for details this far back

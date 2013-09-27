@@ -1,0 +1,29 @@
+The following modules are not included in CentOS 6 builds because they have
+dependencies that cannot be met by the standard CentOS YUM repos, require
+complex compilation steps, or are obsolete.
+
+If you need any of these modules you will need to find (and possibly build) and
+install the dependencies and then do a manual build of Kamailio.
+
+* acc_radius		requires radiusclient-ng 0.5.0 or higher
+* app_java		requires various Java packages (which may be
+			available) and has a complex build process
+* app_mono		requires mono-devel
+* auth_radius		requires radiusclient-ng 0.5.0 or higher
+* carrierroute		requires libconfuse
+* db_cassandra		requires thrift 0.6.1 or 0.7.0
+* db_oracle		requires instantclient-sdk-10.2.0.3
+* dnssec		requires libval
+* geoip			requires libgeoip
+* iptrtpproxy		requires custom Kernel module builds. If you want to
+			use an in-kernel RTP proxy try the rtpproxy-ng module
+			along with mediaproxy-ng from SipWise
+* jabber		this module is obsolete
+* json			requires libjson
+* jsonrpc-c		requires libjson
+* memcached		requires a different version of libmemcached from that
+			available with CentOS
+* misc_radius		requires radiusclient-ng 0.5.6 or higher
+* ndb_redis		requires hiredis
+* osp			requires the OSP Toolkit
+* peering		requires radiusclient-ng 0.5.0 or higher
