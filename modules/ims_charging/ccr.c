@@ -281,7 +281,7 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca) {
                                 switch (z->code) {
                                     case AVP_CC_Time:
                                         mscc->granted_service_unit->cc_time = get_4bytes(z->data.s);
-					break;
+                                        break;
                                     default:
                                         LM_ERR("Unsupported Granted Service Unit with code:[%d]\n", z->code);
                                 }

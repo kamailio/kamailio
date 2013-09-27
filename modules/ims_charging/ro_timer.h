@@ -11,6 +11,8 @@
 #include "../../locking.h"
 #include "../../timer.h"
 
+extern struct interim_ccr *i_req;
+
 /*! ro timeout list */
 struct ro_tl {
     struct ro_tl *next;
@@ -84,6 +86,8 @@ void ro_timer_routine(unsigned int ticks, void * attr);
  * If we cant we need to put a new timer to kill the call at the appropriate time
  */
 void ro_session_ontimeout(struct ro_tl *tl);
+
+void resume_ro_session_ontimeout(struct interim_ccr *i_req);
 
 #endif	/* RO_TIMER_H */
 

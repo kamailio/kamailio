@@ -236,6 +236,7 @@ static inline struct ro_tl* get_expired_ro_sessions(unsigned int time) {
 void ro_timer_routine(unsigned int ticks, void * attr) {
 
     struct ro_tl *tl, *ctl;
+    LM_DBG("getting expired ro-sessions");
 
     tl = get_expired_ro_sessions(ticks);
 
@@ -248,36 +249,124 @@ void ro_timer_routine(unsigned int ticks, void * attr) {
     }
 }
 
+void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
+	time_t now = time(0);
+	time_t used_secs;
+	struct ro_session_entry *ro_session_entry = NULL;
+
+	if (!i_req) {
+		LM_ERR("This is so wrong: i_req is NULL\n");
+		return;
+	}
+
+	LM_DBG("credit=%d credit_valid_for=%d", i_req->new_credit, i_req->credit_valid_for);
+
+	used_secs = now - i_req->ro_session->last_event_timestamp;
+
+	/* check to make sure diameter server is giving us sane values */
+	if (i_req->new_credit > i_req->credit_valid_for) {
+		LM_WARN("That's weird, Diameter server gave us credit with a lower validity period :D. Setting reserved time to validity perioud instead \n");
+		i_req->new_credit = i_req->credit_valid_for;
+	}
+
+	if (i_req->new_credit > 0) {
+		//now insert the new timer
+		i_req->ro_session->last_event_timestamp = time(0);
+		i_req->ro_session->event_type = answered;
+		i_req->ro_session->valid_for = i_req->credit_valid_for;
+
+		int ret = 0;
+		if (i_req->is_final_allocation) {
+			LM_DBG("This is a final allocation and call will end in %i seconds\n", i_req->new_credit);
+			i_req->ro_session->event_type = no_more_credit;
+			ret = insert_ro_timer(&i_req->ro_session->ro_tl, i_req->new_credit);
+		}
+		else {
+			int timer_timeout = i_req->new_credit;
+
+			if (i_req->new_credit > ro_timer_buffer /*TIMEOUTBUFFER*/) {
+
+				// We haven't finished using our 1st block of units, and we need to set the timer to
+				// (new_credit - ro_timer_buffer[5 secs]) to ensure we get new credit before our previous
+				// reservation is exhausted. This will only be done the first time, because the timer
+				// will always be fired 5 seconds before we run out of time thanks to this operation
+
+				if ((now - i_req->ro_session->start_time) /* call time */ < i_req->ro_session->reserved_secs)
+					timer_timeout = i_req->new_credit - ro_timer_buffer;
+				else
+					timer_timeout = i_req->new_credit;
+			}
+
+			ret = insert_ro_timer(&i_req->ro_session->ro_tl, timer_timeout);
+
+		}
+
+		// update to the new block of units we got
+		i_req->ro_session->reserved_secs = i_req->new_credit;
+
+		if (ret != 0) {
+			LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
+					i_req->ro_session->ro_session_id.len, i_req->ro_session->ro_session_id.s);
+		}
+		else {
+			ref_ro_session_unsafe(i_req->ro_session, 1);
+		}
+	}
+	else {
+		/* just put the timer back in with however many seconds are left (if any!!! in which case we need to kill */
+		/* also update the event type to no_more_credit to save on processing the next time we get here */
+		i_req->ro_session->event_type = no_more_credit;
+		int whatsleft = i_req->ro_session->reserved_secs - used_secs;
+		if (whatsleft <= 0) {
+			LM_WARN("Immediately killing call due to no more credit\n");
+			dlgb.lookup_terminate_dlg(i_req->ro_session->dlg_h_entry, i_req->ro_session->dlg_h_id, NULL );
+		}
+		else {
+			LM_DBG("No more credit for user - letting call run out of money in [%i] seconds", whatsleft);
+			int ret = insert_ro_timer(&i_req->ro_session->ro_tl, whatsleft);
+			if (ret != 0) {
+				LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
+						i_req->ro_session->ro_session_id.len, i_req->ro_session->ro_session_id.s);
+			}
+			else {
+				ref_ro_session_unsafe(i_req->ro_session, 1);
+			}
+		}
+	}
+
+	ro_session_entry = &(ro_session_table->entries[i_req->ro_session->h_entry]);
+
+	ro_session_unlock(ro_session_table, ro_session_entry);
+	unref_ro_session(i_req->ro_session, 1);//unref from the initial timer that fired this event.
+
+	shm_free(i_req);
+	LM_DBG("Exiting async ccr interim nicely");
+}
+
 /* this is the function called when a we need to request more funds/credit. We need to try and reserve more credit.
  * If we cant we need to put a new timer to kill the call at the appropriate time
  */
 void ro_session_ontimeout(struct ro_tl *tl) {
-	time_t now;
-	time_t used_secs;
-	time_t call_time;
-
-	struct dlg_cell *dlg = 0;
-
-	int new_credit = 0;
-	int credit_valid_for = 0;
-	unsigned int is_final_allocation = 0;
+	time_t now,  used_secs, call_time;
 
 	LM_DBG("We have a fired timer [p=%p] and tl=[%i].\n", tl, tl->timeout);
 
 	/* find the session id for this timer*/
-	struct ro_session_entry *ro_session_entry = 0;
+	struct ro_session_entry *ro_session_entry = NULL;
 
 	struct ro_session* ro_session;
 	ro_session = ((struct ro_session*) ((char *) (tl)
 			- (unsigned long) (&((struct ro_session*) 0)->ro_tl)));
 
 	if (!ro_session) {
-		LM_ERR("cant find a session. This is bad");
+		LM_ERR("Can't find a session. This is bad");
 		return;
 	}
 	
 	ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
 	ro_session_lock(ro_session_table, ro_session_entry);
+
+	LM_DBG("event-type=%d", ro_session->event_type);
 
 	switch (ro_session->event_type) {
 	case answered:
@@ -306,66 +395,13 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 					interim_request_credits/* new reservation request amount */,
 					(unsigned int) used_secs/* charged seconds from previous reservation */);
 
-			/* apply for more credit */
-			//TODO: we still need to make this async so we don't hog our timer process and cause chaos
-			send_ccr_interim(ro_session, &ro_session->from_uri,
-					&ro_session->to_uri, &new_credit, &credit_valid_for,
-					(unsigned int) used_secs,
-					interim_request_credits,
-					&is_final_allocation);
-
-			/* check to make sure diameter server is giving us sane values */
-			if (new_credit > credit_valid_for) {
-				LM_WARN("That's weird, Diameter server gave us credit with a lower validity period :D. Setting reserved time to validity perioud instead \n");
-				new_credit = credit_valid_for;
-			}
-
-			if (new_credit > 0) {
-				//now insert the new timer
-				ro_session->last_event_timestamp = time(0);
-				ro_session->event_type = answered;
-				ro_session->reserved_secs = new_credit;
-				ro_session->valid_for = credit_valid_for;
-
-				int ret = 0;
-				if (is_final_allocation) {
-					LM_DBG("This is a final allocation and call will end in %i seconds\n", new_credit);
-					ro_session->event_type = no_more_credit;
-					ret = insert_ro_timer(&ro_session->ro_tl, new_credit);
-				} else {
-					if (new_credit > ro_timer_buffer /*TIMEOUTBUFFER*/)
-						ret = insert_ro_timer(&ro_session->ro_tl,
-								new_credit - ro_timer_buffer/*TIMEOUTBUFFER*/);
-					else
-						ret = insert_ro_timer(&ro_session->ro_tl, new_credit);
-				}
-				if (ret != 0) {
-					LM_CRIT("unable to insert timer for Ro Session [%.*s]\n", 
-						ro_session->ro_session_id.len, ro_session->ro_session_id.s); 
-				} else {
-					ref_ro_session_unsafe(ro_session, 1);
-				}
-			} else {
-				/* just put the timer back in with however many seconds are left (if any!!! in which case we need to kill */
-				/* also update the event type to no_more_credit to save on processing the next time we get here */
-				ro_session->event_type = no_more_credit;
-				int whatsleft = ro_session->reserved_secs - used_secs;
-				if (whatsleft <= 0) {
-					LM_WARN("Immediately killing call due to no more credit\n");
-					unsigned int i = 0;
-					dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id, NULL );
-				} else {
-					LM_DBG("No more credit for user - letting call run out of money in [%i] seconds", whatsleft);
-					int ret = insert_ro_timer(&ro_session->ro_tl, whatsleft);
-					if (ret != 0) {
-						LM_CRIT("unable to insert timer for Ro Session [%.*s]\n", 
-							ro_session->ro_session_id.len, ro_session->ro_session_id.s); 
-					} else {
-						ref_ro_session_unsafe(ro_session, 1);
-					}
-				}
-			}
-		} else {
+			// Apply for more credit.
+			//
+			// The function call will return immediately and we will receive the reply asynchronously via a callback
+			send_ccr_interim(ro_session, (unsigned int) used_secs, interim_request_credits);
+			return;
+		}
+		else {
 			LM_ERR("Hmmm, the session we have either doesn't have all the data or something else has gone wrong.\n");
 			/* put the timer back so the call will be killed according to previous timeout. */
 			ro_session->event_type = unknown_error;
@@ -374,26 +410,28 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 			if (ret != 0) {
 				LM_CRIT("unable to insert timer for Ro Session [%.*s]\n", 
 					ro_session->ro_session_id.len, ro_session->ro_session_id.s); 
-			} else {
+			}
+			else {
 				ref_ro_session_unsafe(ro_session, 1);
 			}
 			LM_ERR("Immediately killing call due to unknown error\n");
-			unsigned int i = 0;
 			dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id, NULL );
 		}
+
 		break;
-	case no_more_credit:
-		LM_DBG("Call/session must be ended - no more funds.\n");
-//		break;
-	case unknown_error:
-		LM_ERR("last event caused an error. We will now tear down this session.\n");
 	default:
-		LM_ERR("Diameter call session - unknown event [%d]\n", ro_session->event_type);
-		unsigned int i = 0;
+		LM_ERR("Diameter call session - event [%d]\n", ro_session->event_type);
+
+		if (ro_session->event_type == no_more_credit)
+			LM_INFO("Call/session must be ended - no more funds.\n");
+		else if (ro_session->event_type == unknown_error)
+			LM_ERR("last event caused an error. We will now tear down this session.\n");
+
 		dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id, NULL );
 	}
+
 	ro_session_unlock(ro_session_table, ro_session_entry);
-	unref_ro_session(ro_session,1);//unref from the initial timer that fired this event.
+	unref_ro_session(ro_session, 1); //unref from the initial timer that fired this event.
 
 	return;
 }

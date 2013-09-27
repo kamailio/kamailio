@@ -133,13 +133,11 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 				} else {
 					unref++;
 				}
-				// if (ro_session->event_type != pending) {
-					LM_DBG("Sending CCR STOP on Ro_Session [%p]\n", ro_session);
-					send_ccr_stop(ro_session);
-					ro_session->active = 0;
-				// } else {
-				// 	LM_WARN("not sending CCR STOP as Ro Session [%p] not in correct state\n", ro_session);
-				// }
+
+				LM_DBG("Sending CCR STOP on Ro_Session [%p]\n", ro_session);
+				send_ccr_stop(ro_session);
+				ro_session->active = 0;
+
 				ro_session_unlock(ro_session_table, ro_session_entry);
 				unref_ro_session(ro_session, 2+unref);
 			}

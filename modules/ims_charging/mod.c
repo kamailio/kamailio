@@ -54,13 +54,13 @@ int cdp_event_latency_loglevel = 0; /*log-level to use to report slow processing
 static int mod_init(void);
 static int mod_child_init(int);
 static void mod_destroy(void);
-static int w_ro_ccr(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units);
+static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* charge_type, str* unit_type, int reservation_units);
 //void ro_session_ontimeout(struct ro_tl *tl);
 
 static int ro_fixup(void **param, int param_no);
 
 static cmd_export_t cmds[] = {
-		{ "Ro_CCR", 	(cmd_function) w_ro_ccr, 4, ro_fixup, 0, REQUEST_ROUTE },
+		{ "Ro_CCR", 	(cmd_function) w_ro_ccr, 5, ro_fixup, 0, REQUEST_ROUTE },
 		{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -249,7 +249,7 @@ static void mod_destroy(void) {
 
 }
 
-static int w_ro_ccr(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units) {
+static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* charge_type, str* unit_type, int reservation_units) {
 	/* PSEUDOCODE/NOTES
 	 * 1. What mode are we in - terminating or originating
 	 * 2. check request type - 	IEC - Immediate Event Charging
@@ -263,35 +263,66 @@ static int w_ro_ccr(struct sip_msg *msg, str* direction, str* charge_type, str* 
 	 *
 	 *
 	 */
-	LM_DBG("Ro CCR initiated: direction:%.*s, charge_type:%.*s, unit_type:%.*s, reservation_units:%i",
+	cfg_action_t* cfg_action;
+	tm_cell_t *t;
+	unsigned int tindex = 0,
+				 tlabel = 0;
+
+	LM_DBG("Ro CCR initiated: direction:%.*s, charge_type:%.*s, unit_type:%.*s, reservation_units:%i, route_name:%.*s",
 			direction->len, direction->s,
 			charge_type->len, charge_type->s,
 			unit_type->len, unit_type->s,
-			reservation_units);
+			reservation_units,
+			route_name->len, route_name->s);
 
 //	if (msg->REQ_METHOD != METHOD_INVITE)
 //		return RO_RETURN_FALSE;
 //
-	int ret = Ro_Send_CCR(msg, direction, charge_type, unit_type, reservation_units);
+	LM_DBG("Looking for route block [%.*s]\n", route_name->len, route_name->s);
 
-	if (ret != 0) {
-		LM_DBG("RO_CCR failed\n");
-		return RO_RETURN_FALSE;
-	} else {
-		LM_DBG("RO_CCR_success\n");
-		return RO_RETURN_TRUE;
+	int ri = route_get(&main_rt, route_name->s);
+	if (ri < 0) {
+		LM_ERR("unable to find route block [%.*s]\n", route_name->len, route_name->s);
+		return RO_RETURN_ERROR;
+	}
+	
+	cfg_action = main_rt.rlist[ri];
+	if (!cfg_action) {
+		LM_ERR("empty action lists in route block [%.*s]\n", route_name->len, route_name->s);
+		return RO_RETURN_ERROR;
+    }
+
+	//before we send lets suspend the transaction
+	t = tmb.t_gett();
+	if (t == NULL || t == T_UNDEFINED) {
+		if (tmb.t_newtran(msg) < 0) {
+			LM_ERR("cannot create the transaction for CCR async\n");
+			return RO_RETURN_ERROR;
+		}
+		t = tmb.t_gett();
+		if (t == NULL || t == T_UNDEFINED) {
+			LM_ERR("cannot lookup the transaction\n");
+			return RO_RETURN_ERROR;
+		}
 	}
 
-	return RO_RETURN_FALSE;
+	LM_DBG("Suspending SIP TM transaction\n");
+	if (tmb.t_suspend(msg, &tindex, &tlabel) < 0) {
+		LM_ERR("failed to suspend the TM processing\n");
+		return RO_RETURN_ERROR;
+	}
+
+	LM_DBG("index=%d label=%d\n", tindex, tlabel);
+	return Ro_Send_CCR(msg, direction, charge_type, unit_type, reservation_units, cfg_action, tindex, tlabel);
 }
 
 static int ro_fixup(void **param, int param_no) {
 	str s;
 	unsigned int num;
 
-	if (param_no > 0 && param_no <= 3) {
+	if (param_no > 0 && param_no <= 4) {
 		return fixup_var_str_12(param, param_no);
-	} else if (param_no == 4) {
+	} else if (param_no == 5) {
 		/*convert to int */
 		s.s = (char*)*param;
 		s.len = strlen(s.s);

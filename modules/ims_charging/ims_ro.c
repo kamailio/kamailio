@@ -35,9 +35,23 @@ extern client_ro_cfg cfg;
 extern struct dlg_binds dlgb;
 extern cdp_avp_bind_t *cdp_avp;
 
+struct session_setup_data {
+	struct ro_session *ro_session;
+
+	cfg_action_t* action;
+	unsigned int tindex;
+	unsigned int tlabel;
+};
+
 struct dlg_binds* dlgb_p;
+extern struct tm_binds tmb;
 
 int interim_request_credits;
+
+static int create_cca_return_code(int result);
+static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
+static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
+static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 
 void credit_control_session_callback(int event, void* session) {
 	switch (event) {
@@ -500,21 +514,22 @@ error:
     return 0;
 }
 
-void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri, int *new_credit,
-		int *credit_valid_for, unsigned int used,
-		unsigned int reserve, unsigned int *is_final_allocation)
-{
+void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned int reserve) {
     AAASession * auth = 0;
-    Ro_CCR_t * ro_ccr_data = 0;
+
     AAAMessage * ccr = 0;
-    Ro_CCA_t *ro_cca_data = 0;
+    Ro_CCR_t *ro_ccr_data = 0;
     ims_information_t *ims_info = 0;
     int32_t acc_record_type;
     subscription_id_t subscr;
     time_stamps_t *time_stamps;
+	struct interim_ccr *i_req = shm_malloc(sizeof(struct interim_ccr));
 
     event_type_t *event_type;
     int node_role = 0;
+
+	memset(i_req, 0, sizeof(sizeof(struct interim_ccr)));
+    i_req->ro_session	= ro_session;
 
     str sip_method = str_init("dummy");
     str sip_event = str_init("dummy");
@@ -523,7 +538,11 @@ void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri,
 
     event_type = new_event_type(&sip_method, &sip_event, 0);
 
-    LM_DBG("Sending interim CCR request for (usage:new) [%i:%i] seconds for user [%.*s] using session id [%.*s]", used, reserve, from_uri->len, from_uri->s, ro_session->ro_session_id.len, ro_session->ro_session_id.s);
+    LM_DBG("Sending interim CCR request for (usage:new) [%i:%i] seconds for user [%.*s] using session id [%.*s]",
+    						used,
+    						reserve,
+    						ro_session->from_uri.len, ro_session->from_uri.s,
+    						ro_session->ro_session_id.len, ro_session->ro_session_id.s);
 
     req_timestamp = time(0);
 
@@ -532,45 +551,46 @@ void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri,
 
     if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->from_uri, &ro_session->to_uri, 0, 0, 0, node_role)))
         goto error;
+
     LM_DBG("Created IMS information\n");
 
     event_type = 0;
 
     subscr.type = Subscription_Type_IMPU;
     //TODO: need to check which direction. for ORIG we use from_uri. for TERM we use to_uri
-    subscr.id.s = from_uri->s;
-    subscr.id.len = from_uri->len;
+    subscr.id.s = ro_session->from_uri.s;
+    subscr.id.len = ro_session->from_uri.len;
 
     acc_record_type = AAA_ACCT_INTERIM;
 
-    ro_ccr_data = new_Ro_CCR(acc_record_type, from_uri, ims_info, &subscr);
+    ro_ccr_data = new_Ro_CCR(acc_record_type, &ro_session->from_uri, ims_info, &subscr);
     if (!ro_ccr_data) {
         LM_ERR("dlg_create_ro_session: no memory left for generic\n");
-        goto out_of_memory;
-    }
-    ims_info = 0;
-
-    LM_DBG("Created Ro data\n");
-
-    if (!ro_ccr_data)
         goto error;
+    }
+    ims_info = NULL;
 
     auth = cdpb.AAAGetCCAccSession(ro_session->ro_session_id);
     if (!auth) {
         LM_DBG("Diameter Auth Session has timed out.... creating a new one.\n");
         /* lets try and recreate this session */
         //TODO: make a CC App session auth = cdpb.AAASession(ro_session->auth_appid, ro_session->auth_session_type, ro_session->ro_session_id); //TODO: would like this session to last longer (see session timeout in cdp
+        //BUG("Oh shit, session timed out and I don't know how to create a new one.");
+
+        auth = cdpb.AAAMakeSession(ro_session->auth_appid, ro_session->auth_session_type, ro_session->ro_session_id); //TODO: would like this session to last longer (see session timeout in cdp
         if (!auth)
             goto error;
     }
+
     //don't send INTERIM record if session is not in OPEN state (it could already be waiting for a previous response, etc)
     if (auth->u.cc_acc.state != ACC_CC_ST_OPEN) {
-	    LM_DBG("ignoring interim update on CC session not in correct state, currently in state [%d]\n", auth->u.cc_acc.state);
+	    LM_WARN("ignoring interim update on CC session not in correct state, currently in state [%d]\n", auth->u.cc_acc.state);
 	    goto error;
     }
 
     if (!(ccr = Ro_new_ccr(auth, ro_ccr_data)))
         goto error;
+
     if (!Ro_add_vendor_specific_appid(ccr, IMS_vendor_id_3GPP, IMS_Ro, 0/*acct id*/)) {
         LM_ERR("Problem adding Vendor specific ID\n");
     }
@@ -597,52 +617,26 @@ void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri,
         LM_ERR("Problem adding Multiple Service Credit Control data\n");
     }
 
-    LM_DBG("Sending CCR Diameter message (Synchronously).\n");
-    /* send sunchronously so we can respond to callplan (cfg file), so a decision can be made to process the invite */
+    LM_DBG("Sending CCR Diameter message.\n");
+
     cdpb.AAASessionsUnlock(auth->hash);
-    AAAMessage *cca = cdpb.AAASendRecvMessageToPeer(ccr, &cfg.destination_host);
 
-    /* check response */
-
-    if (cca == NULL) {
-        LM_ERR("Error reserving credit for CCA.\n");
-        goto error_no_cca;
-    }
-
-    ro_cca_data = Ro_parse_CCA_avps(cca);
-
-    if (ro_cca_data == NULL) {
-        LM_ERR("Could not parse CCA message response.\n");
-        goto error;
-    }
-    if (ro_cca_data->resultcode != 2001) {
-        LM_ERR("Got bad CCA result code [%d] - reservation failed", ro_cca_data->resultcode);
-        goto error;
-    } else {
-        LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i].\n", ro_cca_data->mscc->granted_service_unit->cc_time, ro_cca_data->mscc->validity_time);
-    }
-
-    *new_credit = ro_cca_data->mscc->granted_service_unit->cc_time;
-    *credit_valid_for = ro_cca_data->mscc->validity_time;
-
-    if (ro_cca_data->mscc->final_unit_action && (ro_cca_data->mscc->final_unit_action->action == 0)) {
-        *is_final_allocation = 1;
-    }
+    //AAAMessage *cca = cdpb.AAASendRecvMessageToPeer(ccr, &cfg.destination_host);
+    cdpb.AAASendMessageToPeer(ccr, &cfg.destination_host, resume_on_interim_ccr, (void *) i_req);
 
 //    cdpb.AAASessionsUnlock(auth->hash);
 
     Ro_free_CCR(ro_ccr_data);
-    Ro_free_CCA(ro_cca_data);
-    cdpb.AAAFreeMessage(&cca);
-    return;
 
-out_of_memory:
-    error :
-            Ro_free_CCA(ro_cca_data);
-error_no_cca:
-    *new_credit = *credit_valid_for = 0;
-    LM_ERR("error trying to reserve interim credit\n");
-    Ro_free_CCR(ro_ccr_data);
+    return;
+error:
+	LM_ERR("error trying to reserve interim credit\n");
+
+	if (ro_ccr_data)
+		Ro_free_CCR(ro_ccr_data);
+
+	if (ccr)
+		cdpb.AAAFreeMessage(&ccr);
 
     if (auth) {
     	cdpb.AAASessionsUnlock(auth->hash);
@@ -651,16 +645,70 @@ error_no_cca:
     return;
 }
 
+static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
+	struct interim_ccr *i_req	= (struct interim_ccr *) param;
+	Ro_CCA_t * ro_cca_data = NULL;
+
+	if (!i_req) {
+		LM_ERR("This is so wrong: ro session is NULL\n");
+		goto error;
+	}
+
+	if (cca == NULL) {
+		LM_ERR("Error reserving credit for CCA.\n");
+		goto error;
+	}
+
+	ro_cca_data = Ro_parse_CCA_avps(cca);
+
+	if (ro_cca_data == NULL) {
+		LM_ERR("Could not parse CCA message response.\n");
+		goto error;
+	}
+
+	if (ro_cca_data->resultcode != 2001) {
+		LM_ERR("Got bad CCA result code [%d] - reservation failed", ro_cca_data->resultcode);
+		goto error;
+	} else {
+		LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i].\n", ro_cca_data->mscc->granted_service_unit->cc_time, ro_cca_data->mscc->validity_time);
+	}
+
+	i_req->new_credit = ro_cca_data->mscc->granted_service_unit->cc_time;
+	i_req->credit_valid_for = ro_cca_data->mscc->validity_time;
+	i_req->is_final_allocation	= 0;
+
+	if (ro_cca_data->mscc->final_unit_action && (ro_cca_data->mscc->final_unit_action->action == 0))
+		i_req->is_final_allocation = 1;
+
+	Ro_free_CCA(ro_cca_data);
+	cdpb.AAAFreeMessage(&cca);
+
+	goto success;
+
+error:
+	if (ro_cca_data)
+		Ro_free_CCA(ro_cca_data);
+
+	if (ro_cca_data)
+		cdpb.AAAFreeMessage(&cca);
+
+	if (i_req) {
+		i_req->credit_valid_for = 0;
+		i_req->new_credit = 0;
+	}
+
+success:
+	resume_ro_session_ontimeout(i_req);
+}
+
 void send_ccr_stop(struct ro_session *ro_session) {
     AAASession * auth = 0;
     Ro_CCR_t * ro_ccr_data = 0;
     AAAMessage * ccr = 0;
-    Ro_CCA_t *ro_cca_data = 0;
     ims_information_t *ims_info = 0;
     int32_t acc_record_type;
     subscription_id_t subscr;
     time_stamps_t *time_stamps;
-    //time_stamps_t *ptime_stamps = &time_stamps;
     unsigned int used = 0;
 
     if (ro_session->event_type != pending) {
@@ -683,10 +731,10 @@ void send_ccr_stop(struct ro_session *ro_session) {
     req_timestamp = time(0);
 
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, NULL, NULL)))
-        goto error;
+        goto error0;
 
     if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->from_uri, &ro_session->to_uri, 0, 0, 0, node_role)))
-        goto error;
+        goto error0;
     
     event_type = 0;
 
@@ -698,7 +746,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
     ro_ccr_data = new_Ro_CCR(acc_record_type, &ro_session->from_uri, ims_info, &subscr);
     if (!ro_ccr_data) {
         LM_ERR("dlg_create_ro_session: no memory left for generic\n");
-        goto out_of_memory;
+        goto error0;
     }
     ims_info = 0;
 
@@ -706,20 +754,17 @@ void send_ccr_stop(struct ro_session *ro_session) {
 
     auth = cdpb.AAAGetCCAccSession(ro_session->ro_session_id);
 
-    if (!ro_ccr_data)
-        goto error;
-
     if (!auth) {
         LM_DBG("Diameter Auth Session has timed out.... creating a new one.\n");
         /* lets try and recreate this session */
         auth = cdpb.AAAMakeSession(ro_session->auth_appid, ro_session->auth_session_type, ro_session->ro_session_id); //TODO: would like this session to last longer (see session timeout in cdp
         if (!auth)
-            goto error;
+            goto error1;
     }
 
 
     if (!(ccr = Ro_new_ccr(auth, ro_ccr_data)))
-        goto error;
+        goto error1;
 
     LM_DBG("Created new CCR\n");
 
@@ -756,39 +801,14 @@ void send_ccr_stop(struct ro_session *ro_session) {
         LM_ERR("problem add Termination cause AVP to STOP record.\n");
     }
 
-    /* send sunchronously so we can respond to callplan (cfg file), so a decision can be made to process the invite */
     cdpb.AAASessionsUnlock(auth->hash);
-    AAAMessage *cca = cdpb.AAASendRecvMessageToPeer(ccr, &cfg.destination_host);
-
-    /* check response */
-    if (cca == NULL) {
-        LM_ERR("Error on CCR STOP Record, CCA is NULL...\n");
-        goto error_no_cca;
-    }
-
-    ro_cca_data = Ro_parse_CCA_avps(cca);
-
-    if (ro_cca_data == NULL) {
-        LM_DBG("Could not parse CCA message response.\n");
-        goto error;
-    }
-    if (ro_cca_data->resultcode != 2001) {
-        LM_ERR("Got bad CCA result code for STOP record - [%d]\n", ro_cca_data->resultcode);
-        goto error;
-    } else {
-        LM_DBG("Valid CCA response for STOP record\n");
-    }
+    cdpb.AAASendMessageToPeer(ccr, &cfg.destination_host, resume_on_termination_ccr, NULL);
 
     Ro_free_CCR(ro_ccr_data);
-    Ro_free_CCA(ro_cca_data);
-    cdpb.AAAFreeMessage(&cca);
 
     return;
 
-out_of_memory:
-error :
-	Ro_free_CCA(ro_cca_data);
-error_no_cca:
+error1:
     LM_ERR("error on Ro STOP record\n");
     Ro_free_CCR(ro_ccr_data);
 
@@ -796,43 +816,83 @@ error_no_cca:
     	cdpb.AAASessionsUnlock(auth->hash);
     	cdpb.AAADropCCAccSession(auth);
     }
+
+error0:
     return;
 
 }
 
+static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
+    Ro_CCA_t *ro_cca_data = NULL;
+
+    if (!cca) {
+    	LM_ERR("Error in termination CCR.\n");
+        return;
+    }
+
+    ro_cca_data = Ro_parse_CCA_avps(cca);
+
+    if (ro_cca_data == NULL) {
+    	LM_DBG("Could not parse CCA message response.\n");
+    	return;
+    }
+
+    if (ro_cca_data->resultcode != 2001) {
+    	LM_ERR("Got bad CCA result code for STOP record - [%d]\n", ro_cca_data->resultcode);
+        goto error;
+    }
+    else {
+    	LM_DBG("Valid CCA response for STOP record\n");
+    }
+
+    Ro_free_CCA(ro_cca_data);
+    cdpb.AAAFreeMessage(&cca);
+
+    return;
+
+error:
+	Ro_free_CCA(ro_cca_data);
+}
+
+
+
 /**
  * Send a CCR to the OCS based on the SIP message (INVITE ONLY)
  * @param msg - SIP message
- * @param str1 - number of seconds to reserve
- * @param str2 - not used
+ * @param direction - orig|term
+ * @param charge_type - IEC (Immediate Event Charging), ECUR (Event Charging with Unit Reservation), SCUR (Session Charging with Unit Reservation)
+ * @param unit_type - unused
+ * @param reservation_units - units to try to reserve
+ * @param reservation_units - config route to call when receiving a CCA
+ * @param tindex - transaction index
+ * @param tindex - transaction label
+ *
  * @returns #CSCF_RETURN_TRUE if OK, #CSCF_RETURN_ERROR on error
  */
-int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units) {
+int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units,
+						cfg_action_t* action, unsigned int tindex, unsigned int tlabel) {
 	str session_id = { 0, 0 },
 		asserted_id_uri	= { 0, 0 };
 	AAASession* cc_acc_session = NULL;
     Ro_CCR_t * ro_ccr_data = 0;
     AAAMessage * ccr = 0;
     int dir = 0;
-    Ro_CCA_t *ro_cca_data = 0;
     struct ro_session *new_session = 0;
-    int is_session = 1; //session based not event based
+    struct session_setup_data *ssd = shm_malloc(sizeof(struct session_setup_data)); // lookup structure used to load session info from cdp callback on CCA
 
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
 
-    LM_ALERT("here 1");
-
     if (msg->first_line.type != SIP_REQUEST) {
     	LM_ERR("Ro_CCR() called from SIP reply.");
-    	return -1;
+    	goto error;
     }
 
     //make sure we can get the dialog! if not, we can't continue
 	struct dlg_cell* dlg = dlgb.get_dlg(msg);
 	if (!dlg) {
 		LM_DBG("Unable to find dialog and cannot do Ro charging without it\n");
-		return -1;
+		goto error;
 	}
 
 	if ((asserted_id_uri = cscf_get_asserted_identity(msg)).len == 0) {
@@ -847,46 +907,44 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 	new_session = build_new_ro_session(dir, 0, 0, &session_id, &dlg->callid,
 			&asserted_id_uri, &msg->first_line.u.request.uri, dlg->h_entry, dlg->h_id,
 			reservation_units, 0);
+
 	if (!new_session) {
 		LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
-		return -1;
+		goto error;
 	}
-	LM_ALERT("here 3");
+
+	ssd->action	= action;
+	ssd->tindex	= tindex;
+	ssd->tlabel	= tlabel;
+	ssd->ro_session	= new_session;
+
     if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &cc_acc_session))
         goto error;
 
     if (!ro_ccr_data)
         goto error;
 
-    if (!cc_acc_session) goto error;
-
-//    if (dlgb.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, dlg_reply, (void*)new_session ,NULL ) != 0) {
-//    	LM_ERR("cannot register callback for dialog confirmation\n");
-//    }
-//    if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY
-//    		, dlg_terminated, (void*)new_session, NULL ) != 0) {
-//    	LM_ERR("cannot register callback for dialog termination\n");
-//    }
+    if (!cc_acc_session)
+    	goto error;
 
     if (!(ccr = Ro_new_ccr(cc_acc_session, ro_ccr_data)))
         goto error;
 
-//    if (!ro_add_destination_realm_avp(ccr, cfg.destination_realm)) {
-//    	LM_ERR("Problem adding Destination Realm\n");
-//    	goto error;
-//    }
     if (!Ro_add_vendor_specific_appid(ccr, IMS_vendor_id_3GPP, IMS_Ro, 0)) {
         LM_ERR("Problem adding Vendor specific ID\n");
         goto error;
     }
+
     if (!Ro_add_cc_request(ccr, cc_event_type, cc_event_number)) {
         LM_ERR("Problem adding CC-Request data\n");
         goto error;
     }
+
     if (!Ro_add_event_timestamp(ccr, time(NULL))) {
         LM_ERR("Problem adding Event-Timestamp data\n");
         goto error;
     }
+
     str mac; //TODO - this is terrible
     mac.s = "00:00:00:00:00:00";
     mac.len = strlen(mac.s);
@@ -895,13 +953,6 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
         LM_ERR("Problem adding User-Equipment data\n");
         goto error;
     }
-
-    //get sip from URI for request
-    /*str from_sip_uri;
-
-    if (!cscf_get_from_uri(msg, &from_sip_uri)) {//TODO fix
-        return 0;
-    } */
 
     if (!Ro_add_subscription_id(ccr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &asserted_id_uri)) {
         LM_ERR("Problem adding Subscription ID data\n");
@@ -925,34 +976,12 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     /* send synchronously so we can respond to callplan (cfg file), so a decision can be made to process the invite */
     cdpb.AAASessionsUnlock(cc_acc_session->hash);
 
-    AAAMessage *cca = cdpb.AAASendRecvMessageToPeer(ccr, &cfg.destination_host);
-
-    if (cca == NULL) {
-        LM_ERR("Error reserving credit for CCA.\n");
-        goto error;
-    }
-    ro_cca_data = Ro_parse_CCA_avps(cca);
-
-    if (ro_cca_data == NULL) {
-        LM_ERR("Could not parse CCA message response.\n");
-        goto error;
-    }
-    if (ro_cca_data->resultcode != 2001) {
-        LM_ERR("Got bad CCA result code - reservation failed");
-        goto error;
-    }
-
-    LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i]\n",
-		ro_cca_data->mscc->granted_service_unit->cc_time, 
-		ro_cca_data->mscc->validity_time);
-
-    new_session->last_event_timestamp = time(0);
-    new_session->event_type = pending;
-    new_session->reserved_secs = ro_cca_data->mscc->granted_service_unit->cc_time;
-    new_session->valid_for = ro_cca_data->mscc->validity_time;
+    //AAAMessage *cca = cdpb.AAASendRecvMessageToPeer(ccr, &cfg.destination_host);
+    cdpb.AAASendMessageToPeer(ccr, &cfg.destination_host, resume_on_initial_ccr, (void *) ssd);
 
     Ro_free_CCR(ro_ccr_data);
-    Ro_free_CCA(ro_cca_data);
+
+/*    Ro_free_CCA(ro_cca_data);
     if (cca){
     	LM_DBG("Freeing CCA message\n");
     	cdpb.AAAFreeMessage(&cca);
@@ -960,26 +989,121 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 
     link_ro_session(new_session, 1);            //create extra ref for the fact that dialog has a handle in the callbacks
     unref_ro_session(new_session, 1);
-    
+*/
     //TODO: if the following fail, we should clean up the Ro session.......
     if (dlgb.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, dlg_reply, (void*)new_session ,NULL ) != 0) {
     	LM_CRIT("cannot register callback for dialog confirmation\n");
+    	goto error;
     }
+
     if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY
     		, dlg_terminated, (void*)new_session, NULL ) != 0) {
     	LM_CRIT("cannot register callback for dialog termination\n");
+    	goto error;
     }
 
-    return 0;
+    return RO_RETURN_TRUE;
+
 error:
     Ro_free_CCR(ro_ccr_data);
-    Ro_free_CCA(ro_cca_data);
     if (cc_acc_session) {
-    	cdpb.AAASessionsUnlock(cc_acc_session->hash);
-    	cdpb.AAADropSession(cc_acc_session);
+        	cdpb.AAASessionsUnlock(cc_acc_session->hash);
+        	cdpb.AAADropSession(cc_acc_session);
     }
+
+    if (ssd)
+    	pkg_free(ssd);
+/* Ro_free_CCA(ro_cca_data);
+    */
     LM_DBG("Trying to reserve credit on initial INVITE failed.\n");
-    return -1;
+    return RO_RETURN_ERROR;
+}
+
+static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
+    Ro_CCA_t *ro_cca_data = NULL;
+    struct cell *t = NULL;
+    struct session_setup_data *ssd = (struct session_setup_data *) param;
+    int error_code	= RO_RETURN_ERROR;
+
+    if (!cca) {
+    	LM_ERR("Error reserving credit for CCA.\n");
+    	error_code	= RO_RETURN_ERROR;
+        goto error0;
+    }
+
+    if (!ssd) {
+    	LM_ERR("Session lookup data is NULL.\n");
+    	error_code	= RO_RETURN_ERROR;
+    	goto error0;
+    }
+
+    // we make sure the transaction exists
+	if (tmb.t_lookup_ident(&t, ssd->tindex, ssd->tlabel) < 0) {
+		LM_ERR("t_continue: transaction not found\n");
+		error_code	= RO_RETURN_ERROR;
+		goto error1;
+	}
+
+	// we bring the list of AVPs of the transaction to the current context
+    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+    set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+    set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+    set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
+
+    ro_cca_data = Ro_parse_CCA_avps(cca);
+
+    if (!ro_cca_data) {
+    	LM_ERR("Could not parse CCA message response.\n");
+    	error_code	= RO_RETURN_ERROR;
+        goto error0;
+    }
+
+    if (ro_cca_data->resultcode != 2001) {
+    	LM_ERR("Got bad CCA result code - reservation failed");
+    	error_code	= RO_RETURN_FALSE;
+        goto error1;
+    }
+
+    LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i]\n",
+    			ro_cca_data->mscc->granted_service_unit->cc_time,
+    			ro_cca_data->mscc->validity_time);
+
+    ssd->ro_session->last_event_timestamp = time(0);
+    ssd->ro_session->event_type = pending;
+    ssd->ro_session->reserved_secs = ro_cca_data->mscc->granted_service_unit->cc_time;
+    ssd->ro_session->valid_for = ro_cca_data->mscc->validity_time;
+
+    Ro_free_CCA(ro_cca_data);
+
+    LM_DBG("Freeing CCA message\n");
+    cdpb.AAAFreeMessage(&cca);
+
+    link_ro_session(ssd->ro_session, 1);            //create extra ref for the fact that dialog has a handle in the callbacks
+    unref_ro_session(ssd->ro_session, 1);
+
+    create_cca_return_code(RO_RETURN_TRUE);
+
+    if (t)
+    	tmb.unref_cell(t);
+
+    tmb.t_continue(ssd->tindex, ssd->tlabel, ssd->action);
+    shm_free(ssd);
+    return;
+
+error1:
+	Ro_free_CCA(ro_cca_data);
+
+error0:
+    LM_DBG("Trying to reserve credit on initial INVITE failed on cdp callback\n");
+    create_cca_return_code(error_code);
+
+    if (t)
+    	tmb.unref_cell(t);
+
+    tmb.t_continue(ssd->tindex, ssd->tlabel, ssd->action);
+    shm_free(ssd);
 }
 
 void remove_aaa_session(str *session_id) {
@@ -1003,4 +1127,38 @@ int get_direction_as_int(str* direction) {
 		}
 	}
 	return RO_UNKNOWN_DIRECTION;
+}
+
+static int create_cca_return_code(int result) {
+    int rc;
+    int_str avp_val, avp_name;
+    avp_name.s.s = RO_AVP_CCA_RETURN_CODE;
+    avp_name.s.len = RO_AVP_CCA_RETURN_CODE_LENGTH;
+
+    avp_val.n = result;
+
+    /*switch(result) {
+    case RO_RETURN_FALSE:
+    	avp_val.s.s = RO_RETURN_FALSE_STR;
+    	break;
+    case RO_RETURN_ERROR:
+    	avp_val.s.s = RO_RETURN_ERROR_STR;
+    	break;
+    default:
+    	if (result >= 0)
+    		break;
+
+    	avp_val.s.s = "??";
+    }
+
+    avp_val.s.len = 2; */
+
+    rc = add_avp(AVP_NAME_STR, avp_name, avp_val);
+
+    if (rc < 0)
+        LM_ERR("Couldn't create ["RO_AVP_CCA_RETURN_CODE"] AVP\n");
+    else
+    	LM_DBG("Created AVP ["RO_AVP_CCA_RETURN_CODE"] successfully: value=[%d]\n", result);
+
+    return 1;
 }

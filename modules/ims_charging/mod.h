@@ -24,7 +24,11 @@
 #define RO_RETURN_TRUE	1
 /** Return false in the routing script */
 #define RO_RETURN_FALSE -1
+#define RO_RETURN_FALSE_STR "-1"
 /** Return error in the routing script */
 #define RO_RETURN_ERROR -2
+#define RO_RETURN_ERROR_STR "-2"
 
+#define RO_AVP_CCA_RETURN_CODE "cca_return_code"
+#define RO_AVP_CCA_RETURN_CODE_LENGTH 15
 #endif /* MOD_H_ */
