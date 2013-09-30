@@ -45,6 +45,7 @@
 												<title>External Libraries or Applications</title>
 												<para>This modules requires the internal IMS library.</para>
 								</section>
+</section>
 								<section>
 												<title>Understanding Charging in the IP-Multimedia-Subsystem (IMS)</title>
 												<para>Before each service usage, the charging system must be asked for permission (credit authorization). The charging server must make a decision: Either authorize or deny the session.
@@ -133,7 +134,6 @@ As a result, we have the following three scenarios:
 																</mediaobject>
 												</section>
 								</section>
-				</section>
 				<section>
 								<title>Parameters</title>
 								<section>
