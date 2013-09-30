@@ -33,6 +33,7 @@
 
 #include "../../action.h"
 #include "../../script_cb.h"
+#include "../../dset.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -104,6 +105,12 @@ int t_suspend(struct sip_msg *msg,
 		return -1;
 	}
 
+	/* backup some extra info that can be used in continuation logic */
+	t->async_backup.backup_route = get_route_type();
+	t->async_backup.backup_branch = get_t_branch();
+	t->async_backup.ruri_new = ruri_get_forking_state();
+
+
 	return 0;
 }
 
@@ -140,14 +147,29 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 	/* The transaction has to be locked to protect it
 	 * form calling t_continue() multiple times simultaneously */
-	LOCK_REPLIES(t);
-
-	/* Try to find the blind UAC, and cancel its fr timer.
-	 * We assume that the last blind uac called t_continue(). */
-	for (	branch = t->nr_of_outgoings-1;
-		branch >= 0 && t->uac[branch].request.buffer;
-		branch--);
-
+	LOCK_ASYNC_CONTINUE(t);
+	t->flags |= T_ASYNC_CONTINUE;   /* we can now know anywhere in kamailio 
+					 * that we are executing post a suspend */
+	
+	/* which route block type were we in when we were suspended */
+	int cb_type = REQUEST_CB_TYPE;
+        switch (t->async_backup.backup_route) {
+            case REQUEST_ROUTE:
+                cb_type = REQUEST_CB_TYPE;
+                break;
+            case FAILURE_ROUTE:
+                cb_type = FAILURE_CB_TYPE;
+                break;
+            case TM_ONREPLY_ROUTE:
+                 cb_type = ONREPLY_CB_TYPE;
+                break;
+            case BRANCH_ROUTE:
+                cb_type = BRANCH_CB_TYPE;
+                break;
+        }
+	
+	branch = t->async_backup.blind_uac;	/* get the branch of the blind UAC setup 
+						 * during suspend */
 	if (branch >= 0) {
 		stop_rb_timers(&t->uac[branch].request);
 
@@ -155,20 +177,15 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			/* Either t_continue() has already been
 			 * called or the branch has already timed out.
 			 * Needless to continue. */
-			UNLOCK_REPLIES(t);
+			UNLOCK_ASYNC_CONTINUE(t);
 			UNREF(t); /* t_unref would kill the transaction */
 			return 1;
 		}
 
-		/* Set last_received to something >= 200,
-		 * the actual value does not matter, the branch
-		 * will never be picked up for response forwarding.
-		 * If last_received is lower than 200,
-		 * then the branch may tried to be cancelled later,
-		 * for example when t_reply() is called from
-		 * a failure route => deadlock, because both
-		 * of them need the reply lock to be held. */
-		t->uac[branch].last_received=500;
+		/*we really don't need this next line anymore otherwise we will 
+		  never be able to forward replies after a (t_relay) on this branch.
+		  We want to try and treat this branch as 'normal' (as if it were a normal req, not async)' */
+		//t->uac[branch].last_received=500;
 		uac = &t->uac[branch];
 	}
 	/* else
@@ -183,22 +200,19 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		ret = -1;
 		goto kill_trans;
 	}
-	faked_env( t, &faked_req);
+	faked_env( t, &faked_req, 1);
 
-	/* The sip msg is a faked msg just like in failure route
-	 * therefore execute the pre- and post-script callbacks
-	 * of failure route (Miklos)
-	 */
-	if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
+	/* execute the pre/post -script callbacks based on original route block */
+	if (exec_pre_script_cb(&faked_req, cb_type)>0) {
 		if (run_top_route(route, &faked_req, 0)<0)
 			LOG(L_ERR, "ERROR: t_continue: Error in run_top_route\n");
-		exec_post_script_cb(&faked_req, FAILURE_CB_TYPE);
+		exec_post_script_cb(&faked_req, cb_type);
 	}
 
 	/* TODO: save_msg_lumps should clone the lumps to shm mem */
 
 	/* restore original environment and free the fake msg */
-	faked_env( t, 0);
+	faked_env( t, 0, 1);
 	free_faked_req(&faked_req, t);
 
 	/* update the flags */
@@ -224,7 +238,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		}
 	}
 
-	UNLOCK_REPLIES(t);
+	UNLOCK_ASYNC_CONTINUE(t);
 
 	/* unref the transaction */
 	t_unref(t->uas.request);
@@ -241,10 +255,10 @@ kill_trans:
 			"reply generation failed\n");
 		/* The transaction must be explicitely released,
 		 * no more timer is running */
-		UNLOCK_REPLIES(t);
+		UNLOCK_ASYNC_CONTINUE(t);
 		t_release_transaction(t);
 	} else {
-		UNLOCK_REPLIES(t);
+		UNLOCK_ASYNC_CONTINUE(t);
 	}
 
 	t_unref(t->uas.request);

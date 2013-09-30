@@ -235,7 +235,7 @@ void t_drop_replies(int v);
 
 void rpc_reply(rpc_t* rpc, void* c);
 
-void faked_env( struct cell *t,struct sip_msg *msg);
+void faked_env( struct cell *t,struct sip_msg *msg, int is_async_env);
 int fake_req(struct sip_msg *faked_req,
 		struct sip_msg *shmem_msg, int extra_flags, struct ua_client *uac);
 

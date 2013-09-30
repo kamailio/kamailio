@@ -76,6 +76,7 @@ void lock_cleanup(void);
 
 int init_cell_lock( struct cell *cell );
 int init_entry_lock( struct s_table* ht, struct entry *entry );
+int init_async_lock( struct cell *cell );
 
 
 int release_cell_lock( struct cell *cell );
