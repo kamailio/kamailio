@@ -2830,8 +2830,10 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 	naptr_bmp_t tried_bmp;
 	struct dns_hash_entry* e;
 	char n_proto;
+	char origproto;
 	str srv_name;
 
+	origproto=*proto;
 	he=0;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LOG(L_WARN, "WARNING: dns_sip_resolvehost: called before dns cache"
@@ -2872,7 +2874,13 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 		dns_hash_put(e);
 	}
 naptr_not_found:
-	return no_naptr_srv_sip_resolvehost(name,port,proto);
+	*proto = origproto;
+	he = no_naptr_srv_sip_resolvehost(name,port,proto);
+	/* fallback all the way down to A/AAAA */
+	if (he==0) {
+		he=dns_get_he(name,dns_flags);
+	}
+   return he;
 }
 #endif /* USE_NAPTR */
 
