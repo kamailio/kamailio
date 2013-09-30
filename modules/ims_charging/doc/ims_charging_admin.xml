@@ -117,7 +117,7 @@ As a result, we have the following three scenarios:
 																</itemizedlist>
 												</section>
 												<section>
-																<title>Online Charging (Ro)</title>
+																<title>Online Charging (Ro): A practical example</title>
 																<para>But how does it look in reality? Let us make a more practical example:</para>
 																<para>Let us assume we have a subscriber, who has sufficient credit for 75 seconds of talking. The subscriber initiates a call; as we do not know, how long the call will take, we start with requesting credit for 30 seconds (CCR-Request, we could request any duration, e.g. 2 hours, but it would probably block other calls if we reserve all the required credit).</para>
 																<para>The call proceeds, so after 30 seconds we send another CCR-Request with the indication that we used the reserved 30 seconds and that we request another 30 seconds. We reduce the account of the subscriber by 30 seconds, so he has a credit of 45 seconds. Since 45 seconds is more than the requested 30 seconds, this second request can also easily be accepted and another 30 seconds can be granted. After this request, the account is at 45 seconds and we still (or again) have 30 seconds reserved.</para>
