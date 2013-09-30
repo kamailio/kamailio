@@ -231,6 +231,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 		{
 			LM_ERR("removing WebSocket connection\n");
+			tcpconn_put(con);
 			pkg_free(send_buf);
 			return -1;
 		}
@@ -243,6 +244,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 			STATS_TX_DROPS;
 			LM_WARN("TCP disabled\n");
 			pkg_free(send_buf);
+			tcpconn_put(con);
 			return -1;
 		}		
 	}
@@ -254,6 +256,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 			STATS_TX_DROPS;
 			LM_WARN("TLS disabled\n");
 			pkg_free(send_buf);
+			tcpconn_put(con);
 			return -1;
 		}		
 	}
@@ -280,12 +283,14 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		update_stat(ws_failed_connections, 1);
 		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 			LM_ERR("removing WebSocket connection\n");
+		tcpconn_put(con);
 		return -1;
 	}
 
 	update_stat(ws_transmitted_frames, 1);
 
 	pkg_free(send_buf);
+	tcpconn_put(con);
 	return 0;
 }
 
