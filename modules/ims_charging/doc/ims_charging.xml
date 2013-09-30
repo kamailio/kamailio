@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+ "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"
+[
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+]>
+<book>
+  <bookinfo>
+    <title>The IMS Charging Module</title>
+    <authorgroup>
+      <author>
+        <firstname>Jason</firstname>
+        <surname>Penton</surname>
+        <affiliation>
+          <orgname>Smile Communications</orgname>
+        </affiliation>
+        <email>jason.penton@smilecoms.com</email>
+      </author>
+      <author>
+        <firstname>Carsten</firstname>
+        <surname>Bock</surname>
+        <affiliation>
+          <orgname>ng-voice GmbH</orgname>
+        </affiliation>
+        <email>carsten@ng-voice.com</email>
+      </author>
+      <author>
+        <firstname>Carlos</firstname>
+        <surname>Ruiz Diaz</surname>
+        <affiliation>
+          <orgname>ng-voice GmbH</orgname>
+        </affiliation>
+        <email>carlos@ng-voice.com</email>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2013</year>
+      <holder>Smile Communications</holder>
+    </copyright>
+    <copyright>
+      <year>2013</year>
+      <holder>ng-voice GmbH</holder>
+    </copyright>
+  </bookinfo>
+  <toc />
+  <xi:include href="ims_charging_admin.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+</book>
+
