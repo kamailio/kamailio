@@ -417,7 +417,6 @@ error:
 int reg_get_crt_max_contacts(void)
 {
 	int n;
-	sr_xavp_t *ravp=NULL;
 	sr_xavp_t *vavp=NULL;
 	str vname = {"max_contacts", 12};
 
@@ -425,23 +424,15 @@ int reg_get_crt_max_contacts(void)
 
 	if(reg_xavp_cfg.s!=NULL)
 	{
-		ravp = xavp_get(&reg_xavp_cfg, NULL);
-		if(ravp!=NULL && ravp->val.type==SR_XTYPE_XAVP)
+		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &vname);
+		if(vavp!=NULL)
 		{
-			vavp = xavp_get(&vname, ravp->val.v.xavp);
-			if(vavp!=NULL && vavp->val.type==SR_XTYPE_INT)
-			{
-				n = vavp->val.v.i;
-				LM_ERR("using max contacts value from xavp: %d\n", n);
-			} else {
-				ravp = NULL;
-			}
-		} else {
-			ravp = NULL;
+			n = vavp->val.v.i;
+			LM_DBG("using max contacts value from xavp: %d\n", n);
 		}
 	}
 
-	if(ravp==NULL)
+	if(vavp==NULL)
 	{
 		n = cfg_get(registrar, registrar_cfg, max_contacts);
 	}
