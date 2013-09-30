@@ -1,4 +1,13 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Admin Guide -->
 <chapter>
   <title>Admin Guide</title>
   <section>
@@ -16,7 +25,7 @@
       <para>The Following mouldes must be loaded before this module:</para>
       <itemizedlist>
         <listitem>
-          <para>Dialog2</para>
+          <para>Dialog_ng</para>
         </listitem>
         <listitem>
           <para>TM - Transaction Manager</para>
@@ -506,13 +515,58 @@
   <section>
     <title>Statistics</title>
     <section>
-      <title>CCR Timeouts (ccr_timeouts)</title>
-      <para>The number of timeouts on sending a CCR. i.e. no response to CCR.</para>
+      <title>Initial CCRs (initial_ccrs)</title>
+      <para>The number of initial CCRs, i.e., the CCRs that were sent for the initial INVITEs.</para>
     </section>
     <section>
-      <title>Average CCR Response Time (ccr_avg_response_time)</title>
-      <para>The average response time in milliseconds for CCR-CCA transaction.</para>
+      <title>Interim CCRs (interim_ccrs)</title>
+      <para>The number of CCRs sent within established sessions.</para>
     </section>
+    <section>
+      <title>Final CCRs (final_ccrs)</title>
+      <para>The number of CCRs sent to terminate a session.</para>
+    </section>
+    <section>
+      <title>Sucessful initial CCRs (successful_initial_ccrs)</title>
+      <para>Initial CCRs that ended with DIAMETER_SUCCESS response code.</para>
+    </section>
+    <section>
+      <title>Sucessful interim CCRs (successful_interim_ccrs)</title>
+      <para>Interim CCRs that ended with DIAMETER_SUCCESS response code.</para>
+    </section>
+    <section>
+      <title>Sucessful final CCRs (successful_final_ccrs)</title>
+      <para>Final CCRs that ended with DIAMETER_SUCCESS response code.</para>
+    </section>
+    <section>
+      <title>Failed initial CCRs (failed_initial_ccrs)</title>
+      <para>Initial CCRs that ended with no DIAMETER_SUCCESS response or with some other error during processing.</para>
+    </section>
+    <section>
+      <title>Failed interim CCRs (failed_interim_ccrs)</title>
+      <para>Interim CCRs that ended with no DIAMETER_SUCCESS response or with some other error during processing.</para>
+    </section>
+    <section>
+      <title>Failed final CCRs (failed_final_ccrs)</title>
+      <para>Final CCRs that ended with no DIAMETER_SUCCESS response or with some other error during processing.</para>
+    </section>
+    <section>
+      <title>CCRs average response time (ccr_avg_response_time)</title>
+      <para>Average CCA arrival time in milliseconds.</para>
+    </section>
+    <section>
+      <title>CCRs responses time (ccr_responses_time)</title>
+      <para>Total CCA arrival time in milliseconds.</para>
+    </section>
+    <section>
+      <title>Billed seconds (billed_secs)</title>
+      <para>Number of seconds billed in total.</para>
+    </section>
+    <section>
+      <title>Killed calls (killed_calls)</title>
+      <para>Number of calls that were killed due to lack of credit.</para>
+    </section>
+
   </section>
 </chapter>
 

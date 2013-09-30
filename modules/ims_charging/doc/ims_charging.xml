@@ -18,22 +18,22 @@
         </affiliation>
         <email>jason.penton@smilecoms.com</email>
       </author>
-      <editor>
+      <author>
         <firstname>Carsten</firstname>
         <surname>Bock</surname>
         <affiliation>
           <orgname>ng-voice GmbH</orgname>
         </affiliation>
         <email>carsten@ng-voice.com</email>
-      </editor>
-      <editor>
+      </author>
+      <author>
         <firstname>Carlos</firstname>
         <surname>Ruiz Diaz</surname>
         <affiliation>
           <orgname>ng-voice GmbH</orgname>
         </affiliation>
         <email>carlos@ng-voice.com</email>
-      </editor>
+      </author>
     </authorgroup>
     <copyright>
       <year>2013</year>
