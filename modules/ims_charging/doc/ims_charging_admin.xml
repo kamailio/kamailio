@@ -48,14 +48,14 @@
 								<section>
 												<title>Understanding Charging in the IP-Multimedia-Subsystem (IMS)</title>
 												<para>Before each service usage, the charging system must be asked for permission (credit authorization). The charging server must make a decision: Either authorize or deny the session.
-For postpaid scenarios this is fairly easy: The charging-server only needs to collect the usage data for processing it at the end of the month. As no realtime account updating is needed, this is often called „offline-charging“.
-For prepaid scenarios the charging server needs to know the user's account balance and it will need to update the account in real-time. This is often referred to as „online-charging“.
-
+For postpaid scenarios this is fairly easy: The charging-server only needs to collect the usage data for processing it at the end of the month. As no realtime account updating is needed, this is often called "offline-charging".
+For prepaid scenarios the charging server needs to know the user's account balance and it will need to update the account in real-time. This is often referred to as "online-charging".</para>
+<para>
 Question: What is the double of the Radius?
-Answer: It's the Diameter!
-
-As quite often, we use the Diameter-Protocol to do the Charging in the IMS. And as quite often, IMS uses a huge bunch of acronyms to describe the different interfaces: We call the diameter-interface for offline-charging the „Rf“-interface and the interface for online charging the „Ro“-interface.
-
+Answer: It's the Diameter!</para>
+<para>
+As quite often, we use the Diameter-Protocol to do the Charging in the IMS. And as quite often, IMS uses a huge bunch of acronyms to describe the different interfaces: We call the diameter-interface for offline-charging the "Rf"-interface and the interface for online charging the "Ro"-interface.</para>
+<para>
 Each system, that needs this credit authorization, have to be equipped with a proper charging trigger, a so-called charging-trigger-function (CTF) in order to communicate with the charging-server (also called charging-function):
     </para>
 												<mediaobject>
