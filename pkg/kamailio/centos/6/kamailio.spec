@@ -16,19 +16,19 @@ URL:		http://kamailio.org/
 Vendor:		kamailio.org
 BuildRoot:	%{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:	kamailio-auth-ephemeral < %ver, kamailio-auth-identity < %ver
-Conflicts:	kamailio-bdb < %ver, kamailio-cdp < %ver, kamailio-cdp < %ver
-Conflicts:	kamailio-dialplan < %ver, kamailio-gzcompress < %ver
-Conflicts:	kamailio-ims < %ver, kamailio-lcr < %ver, kamailio-ldap < %ver
-Conflicts:	kamailio-lua < %ver, kamailio-mysql < %ver
-Conflicts:	kamailio-outbound < %ver, kamailio-perl < %ver
-Conflicts:	kamailio-postgresql < %ver, kamailio-presence < %ver
-Conflicts:	kamailio-purple < %ver, kamailio-python < %ver
-Conflicts:	kamailio-regex < %ver, kamailio-sctp < %ver
-Conflicts:	kamailio-snmpstats < %ver, kamailio-sqlite < %ver
-Conflicts:	kamailio-tls < %ver, kamailio-unixODBC < %ver
-Conflicts:	kamailio-utils < %ver, kamailio-websocket < %ver
-Conflicts:	kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
-Conflicts:	kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
+Conflicts:	kamailio-bdb < %ver, kamailio-dialplan < %ver
+Conflicts:	kamailio-gzcompress < %ver, kamailio-ims < %ver
+Conflicts:	kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
+Conflicts:	kamailio-mysql < %ver, kamailio-outbound < %ver
+Conflicts:	kamailio-perl < %ver, kamailio-postgresql < %ver
+Conflicts:	kamailio-presence < %ver, kamailio-purple < %ver
+Conflicts:	kamailio-python < %ver, kamailio-regex < %ver
+Conflicts:	kamailio-sctp < %ver, kamailio-snmpstats < %ver
+Conflicts:	kamailio-sqlite < %ver, kamailio-tls < %ver
+Conflicts:	kamailio-unixODBC < %ver, kamailio-utils < %ver
+Conflicts:	kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
+Conflicts:	kamailio-xmlops < %ver, kamailio-xmlrpc < %ver
+Conflicts:	kamailio-xmpp < %ver
 BuildRequires:	bison, flex, gcc, make, redhat-rpm-config
 
 %description
@@ -74,16 +74,6 @@ BuildRequires:	db4-devel
 Berkeley database connectivity for Kamailio.
 
 
-%package	cdp
-Summary:	C Diameter Peer module and extensions module for Kamailio.
-Group:		System Environment/Daemons
-Requires:	libxml2, kamailio = %ver
-BuildRequires:	libxml2-devel
-
-%description	cdp
-C Diameter Peer module and extensions module for Kamailio.
-
-
 %package	cpl
 Summary:	CPL (Call Processing Language) interpreter for Kamailio.
 Group:		System Environment/Daemons
@@ -117,7 +107,7 @@ Compressed body (SIP and HTTP) handling for kamailio.
 %package	ims
 Summary:	IMS modules and extensions module for Kamailio.
 Group:		System Environment/Daemons
-Requires:	libxml2, kamailio = %ver, kamailio-cdp = %ver
+Requires:	libxml2, kamailio = %ver
 BuildRequires:	libxml2-devel
 
 %description	ims
@@ -722,14 +712,6 @@ fi
 %{_datadir}/kamailio/db_berkeley/*
 
 
-%files		cdp
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.cdp
-%{_libdir}/kamailio/modules/cdp.so
-%doc %{_docdir}/kamailio/modules/README.cdp_avp
-%{_libdir}/kamailio/modules/cdp_avp.so
-
-
 %files		cpl
 %defattr(-,root,root)
 %{_docdir}/kamailio/modules/README.cpl-c
@@ -753,8 +735,14 @@ fi
 %{_libdir}/kamailio/libkamailio_ims.so
 %{_libdir}/kamailio/libkamailio_ims.so.0
 %{_libdir}/kamailio/libkamailio_ims.so.0.1
+%doc %{_docdir}/kamailio/modules/README.cdp
+%{_libdir}/kamailio/modules/cdp.so
+%doc %{_docdir}/kamailio/modules/README.cdp_avp
+%{_libdir}/kamailio/modules/cdp_avp.so
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %{_libdir}/kamailio/modules/ims_auth.so
+%doc %{_docdir}/kamailio/modules/README.ims_charging
+%{_libdir}/kamailio/modules/ims_charging.so
 %doc %{_docdir}/kamailio/modules/README.ims_icscf
 %{_libdir}/kamailio/modules/ims_icscf.so
 %doc %{_docdir}/kamailio/modules/README.ims_isc
@@ -983,21 +971,23 @@ fi
 
 
 %changelog
-* Fri Sep 27 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
+* Mon Sep 30 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
   - Consolidating changelog for 4.1.0 into a single entry...
   - Added new modules to main package:
     - cnxcc
     - gzcompress
     - rtpproxy-ng
     - sipt
-    - stun
+    - stun (STUN functionality moved from compile time in core to own module)
+  - Added ims_charging module to ims package
   - Added new packages for new modules:
     - auth_ephemeral
-    - sctp
+    - sctp (SCTP functionality moved from compile time in core to own module)
   - Moved existing modules to different packages:
-    - tls to own package
-    - dialog_ng to main package
     - auth_identity to main package (previously not built for CentOS)
+    - cdp and cdp_avp to ims package
+    - dialog_ng to main package
+    - tls to own package
   - Removed Fedora stuff as I am only maintaining this for CentOS now
   - Refactored .spec
   - Updated make commands to match updated module groups
