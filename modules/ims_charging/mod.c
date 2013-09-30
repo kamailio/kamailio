@@ -107,7 +107,7 @@ stat_export_t charging_stats[] = {
     {"successful_interim_ccr", STAT_NO_RESET, &successful_interim_ccrs},
     {"successful_final_ccrs", STAT_NO_RESET, &successful_final_ccrs},
     {"failed_initial_ccrs", STAT_IS_FUNC, (stat_var**) get_failed_initial_ccrs},
-    {"failed_interim_ccr", STAT_IS_FUNC, (stat_var**) get_failed_interim_ccrs},
+    {"failed_interim_ccrs", STAT_IS_FUNC, (stat_var**) get_failed_interim_ccrs},
     {"failed_final_ccrs", STAT_IS_FUNC, (stat_var**) get_failed_final_ccrs},
     {"ccr_avg_response_time", STAT_IS_FUNC, (stat_var**) get_ccr_avg_response_time},
     {"ccr_responses_time", STAT_NO_RESET, &ccr_responses_time},
