@@ -26,43 +26,43 @@ Carsten Bock
 
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
-              2.3. Understanding Charging in the IP-Multimedia-Subsystem
-                      (IMS)
 
-                    2.3.1. Offline Charging (Rf)
-                    2.3.2. Online Charging (Ro)
-                    2.3.3. Online Charging (Ro): A practical example
+        3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
 
-        3. Parameters
+              3.1. Offline Charging (Rf)
+              3.2. Online Charging (Ro)
+              3.3. Online Charging (Ro): A practical example
 
-              3.1. hash_size (int)
-              3.2. interim_update_credits (int)
-              3.3. timer_buffer (int)
-              3.4. ro_forced_peer (string)
-              3.5. ro_auth_expiry (integer)
-              3.6. ro_auth_expiry (integer)
-              3.7. cdp_event_latency (integer)
-              3.8. cdp_event_threshold (integer)
-              3.9. cdp_event_latency_log (integer)
-              3.10. origin_host (string)
-              3.11. origin_realm (string)
-              3.12. destination_host (string)
-              3.13. destination_realm (string)
-              3.14. service_context_id_root (string)
-              3.15. service_context_id_ext (string)
-              3.16. service_context_id_mnc (string)
-              3.17. service_context_id_mcc (string)
-              3.18. service_context_id_release (string)
+        4. Parameters
 
-        4. Functions
+              4.1. hash_size (int)
+              4.2. interim_update_credits (int)
+              4.3. timer_buffer (int)
+              4.4. ro_forced_peer (string)
+              4.5. ro_auth_expiry (integer)
+              4.6. ro_auth_expiry (integer)
+              4.7. cdp_event_latency (integer)
+              4.8. cdp_event_threshold (integer)
+              4.9. cdp_event_latency_log (integer)
+              4.10. origin_host (string)
+              4.11. origin_realm (string)
+              4.12. destination_host (string)
+              4.13. destination_realm (string)
+              4.14. service_context_id_root (string)
+              4.15. service_context_id_ext (string)
+              4.16. service_context_id_mnc (string)
+              4.17. service_context_id_mcc (string)
+              4.18. service_context_id_release (string)
 
-              4.1. Ro_CCR(route_name, direction, charge_type, unit_type,
+        5. Functions
+
+              5.1. Ro_CCR(route_name, direction, charge_type, unit_type,
                       reservation_units)
 
-        5. Statistics
+        6. Statistics
 
-              5.1. CCR Timeouts (ccr_timeouts)
-              5.2. Average CCR Response Time (ccr_avg_response_time)
+              6.1. CCR Timeouts (ccr_timeouts)
+              6.2. Average CCR Response Time (ccr_avg_response_time)
 
    List of Examples
 
@@ -95,42 +95,43 @@ Chapter 1. Admin Guide
 
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
-        2.3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
 
-              2.3.1. Offline Charging (Rf)
-              2.3.2. Online Charging (Ro)
-              2.3.3. Online Charging (Ro): A practical example
+   3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
 
-   3. Parameters
+        3.1. Offline Charging (Rf)
+        3.2. Online Charging (Ro)
+        3.3. Online Charging (Ro): A practical example
 
-        3.1. hash_size (int)
-        3.2. interim_update_credits (int)
-        3.3. timer_buffer (int)
-        3.4. ro_forced_peer (string)
-        3.5. ro_auth_expiry (integer)
-        3.6. ro_auth_expiry (integer)
-        3.7. cdp_event_latency (integer)
-        3.8. cdp_event_threshold (integer)
-        3.9. cdp_event_latency_log (integer)
-        3.10. origin_host (string)
-        3.11. origin_realm (string)
-        3.12. destination_host (string)
-        3.13. destination_realm (string)
-        3.14. service_context_id_root (string)
-        3.15. service_context_id_ext (string)
-        3.16. service_context_id_mnc (string)
-        3.17. service_context_id_mcc (string)
-        3.18. service_context_id_release (string)
+   4. Parameters
 
-   4. Functions
+        4.1. hash_size (int)
+        4.2. interim_update_credits (int)
+        4.3. timer_buffer (int)
+        4.4. ro_forced_peer (string)
+        4.5. ro_auth_expiry (integer)
+        4.6. ro_auth_expiry (integer)
+        4.7. cdp_event_latency (integer)
+        4.8. cdp_event_threshold (integer)
+        4.9. cdp_event_latency_log (integer)
+        4.10. origin_host (string)
+        4.11. origin_realm (string)
+        4.12. destination_host (string)
+        4.13. destination_realm (string)
+        4.14. service_context_id_root (string)
+        4.15. service_context_id_ext (string)
+        4.16. service_context_id_mnc (string)
+        4.17. service_context_id_mcc (string)
+        4.18. service_context_id_release (string)
 
-        4.1. Ro_CCR(route_name, direction, charge_type, unit_type,
+   5. Functions
+
+        5.1. Ro_CCR(route_name, direction, charge_type, unit_type,
                 reservation_units)
 
-   5. Statistics
+   6. Statistics
 
-        5.1. CCR Timeouts (ccr_timeouts)
-        5.2. Average CCR Response Time (ccr_avg_response_time)
+        6.1. CCR Timeouts (ccr_timeouts)
+        6.2. Average CCR Response Time (ccr_avg_response_time)
 
 1. Overview
 
@@ -146,11 +147,6 @@ Chapter 1. Admin Guide
 
    2.1. Kamailio Modules
    2.2. External Libraries or Applications
-   2.3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
-
-        2.3.1. Offline Charging (Rf)
-        2.3.2. Online Charging (Ro)
-        2.3.3. Online Charging (Ro): A practical example
 
 2.1. Kamailio Modules
 
@@ -164,7 +160,11 @@ Chapter 1. Admin Guide
 
    This modules requires the internal IMS library.
 
-2.3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
+3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
+
+   3.1. Offline Charging (Rf)
+   3.2. Online Charging (Ro)
+   3.3. Online Charging (Ro): A practical example
 
    Before each service usage, the charging system must be asked for
    permission (credit authorization). The charging server must make a
@@ -190,7 +190,7 @@ Chapter 1. Admin Guide
    charging-function):
    [charging1.png]
 
-2.3.1. Offline Charging (Rf)
+3.1. Offline Charging (Rf)
 
    For the offlinc charging (Rf), we have the following two
    diameter-messages:
@@ -208,7 +208,7 @@ Chapter 1. Admin Guide
      * EVENT_RECORD - used for event-based accounting, e.g. a short
        message or similar
 
-2.3.2. Online Charging (Ro)
+3.2. Online Charging (Ro)
 
    For online charging (Ro), this get's a little bit more complicated. The
    charging function needs to perform credit control before allowing
@@ -234,7 +234,7 @@ Chapter 1. Admin Guide
      * Session Charging with Unit Reservation (SCUR) (of type
        Session-based charging)
 
-2.3.3. Online Charging (Ro): A practical example
+3.3. Online Charging (Ro): A practical example
 
    But how does it look in reality? Let us make a more practical example:
 
@@ -280,28 +280,28 @@ Chapter 1. Admin Guide
    example:
    [charging2.png]
 
-3. Parameters
+4. Parameters
 
-   3.1. hash_size (int)
-   3.2. interim_update_credits (int)
-   3.3. timer_buffer (int)
-   3.4. ro_forced_peer (string)
-   3.5. ro_auth_expiry (integer)
-   3.6. ro_auth_expiry (integer)
-   3.7. cdp_event_latency (integer)
-   3.8. cdp_event_threshold (integer)
-   3.9. cdp_event_latency_log (integer)
-   3.10. origin_host (string)
-   3.11. origin_realm (string)
-   3.12. destination_host (string)
-   3.13. destination_realm (string)
-   3.14. service_context_id_root (string)
-   3.15. service_context_id_ext (string)
-   3.16. service_context_id_mnc (string)
-   3.17. service_context_id_mcc (string)
-   3.18. service_context_id_release (string)
+   4.1. hash_size (int)
+   4.2. interim_update_credits (int)
+   4.3. timer_buffer (int)
+   4.4. ro_forced_peer (string)
+   4.5. ro_auth_expiry (integer)
+   4.6. ro_auth_expiry (integer)
+   4.7. cdp_event_latency (integer)
+   4.8. cdp_event_threshold (integer)
+   4.9. cdp_event_latency_log (integer)
+   4.10. origin_host (string)
+   4.11. origin_realm (string)
+   4.12. destination_host (string)
+   4.13. destination_realm (string)
+   4.14. service_context_id_root (string)
+   4.15. service_context_id_ext (string)
+   4.16. service_context_id_mnc (string)
+   4.17. service_context_id_mcc (string)
+   4.18. service_context_id_release (string)
 
-3.1.  hash_size (int)
+4.1.  hash_size (int)
 
    The size of the hash table internally used to keep the
    Diameter-Ro-Session. A larger table is much faster but consumes more
@@ -319,7 +319,7 @@ Chapter 1. Admin Guide
 modparam("ims_charging", "hash_size", 1024)
 ...
 
-3.2.  interim_update_credits (int)
+4.2.  interim_update_credits (int)
 
    How much credit should be requested interim request? At the start of
    the call, we request the amout of seconds as per Command. For each
@@ -332,7 +332,7 @@ modparam("ims_charging", "hash_size", 1024)
 modparam("ims_charging", "interim_update_credits", 600)
 ...
 
-3.3.  timer_buffer (int)
+4.3.  timer_buffer (int)
 
    How many seconds before expiry of our credit should we request more
    credit?
@@ -344,7 +344,7 @@ modparam("ims_charging", "interim_update_credits", 600)
 modparam("ims_charging", "timer_buffer", 10)
 ...
 
-3.4.  ro_forced_peer (string)
+4.4.  ro_forced_peer (string)
 
    This is the optional name of the origin host of the Diameter server
    (typically a Charging Server). If not set then realm routing is used.
@@ -356,7 +356,7 @@ modparam("ims_charging", "timer_buffer", 10)
 modparam("ims_charging", "ro_forced_peer", "ocs.ims.smilecoms.com")
 ...
 
-3.5.  ro_auth_expiry (integer)
+4.5.  ro_auth_expiry (integer)
 
    This is the expiry length in seconds of the initiated Diameter
    sessions.
@@ -368,7 +368,7 @@ modparam("ims_charging", "ro_forced_peer", "ocs.ims.smilecoms.com")
 modparam("ims_charging", "ro_auth_expiry", 14400)
 ...
 
-3.6.  ro_auth_expiry (integer)
+4.6.  ro_auth_expiry (integer)
 
    This is the expiry length in seconds of the initiated Diameter
    sessions.
@@ -380,7 +380,7 @@ modparam("ims_charging", "ro_auth_expiry", 14400)
 modparam("ims_charging", "ro_auth_expiry", 14400)
 ...
 
-3.7.  cdp_event_latency (integer)
+4.7.  cdp_event_latency (integer)
 
    This is a flag to determine whether or slow CDP responses should be
    reported in the log file. 1 is enabled and 0 is disabled.
@@ -392,7 +392,7 @@ modparam("ims_charging", "ro_auth_expiry", 14400)
 modparam("ims_charging", "cdp_event_latency", 1)
 ...
 
-3.8.  cdp_event_threshold (integer)
+4.8.  cdp_event_threshold (integer)
 
    This time in milliseconds is the limit we should report a CDP response
    as slow. i.e. if a CDP response exceeds this limit it will be reported
@@ -406,7 +406,7 @@ modparam("ims_charging", "cdp_event_latency", 1)
 modparam("ims_charging", "cdp_event_threshold", 500)
 ...
 
-3.9.  cdp_event_latency_log (integer)
+4.9.  cdp_event_latency_log (integer)
 
    This time log level at which we should report slow CDP responses. 0 is
    ERROR, 1 is WARN, 2 is INFO and 3 is DEBUG. This is only relevant is
@@ -419,7 +419,7 @@ modparam("ims_charging", "cdp_event_threshold", 500)
 modparam("ims_charging", "cdp_event_latency_log", 1)
 ...
 
-3.10.  origin_host (string)
+4.10.  origin_host (string)
 
    Origin host to be used in Diameter messages to charging-server.
 
@@ -430,7 +430,7 @@ modparam("ims_charging", "cdp_event_latency_log", 1)
 modparam("ims_charging", "origin_host", "scscf.kamailio-ims.org")
 ...
 
-3.11.  origin_realm (string)
+4.11.  origin_realm (string)
 
    Origin Realm to be used in Diameter messages to charging-server.
 
@@ -441,7 +441,7 @@ modparam("ims_charging", "origin_host", "scscf.kamailio-ims.org")
 modparam("ims_charging", "origin_realm", "kamailio-ims.org")
 ...
 
-3.12.  destination_host (string)
+4.12.  destination_host (string)
 
    Destination host to be used in Diameter messages to charging-server.
 
@@ -452,7 +452,7 @@ modparam("ims_charging", "origin_realm", "kamailio-ims.org")
 modparam("ims_charging", "destination_host", "ocs.kamailio-ims.org")
 ...
 
-3.13.  destination_realm (string)
+4.13.  destination_realm (string)
 
    Destination realm to be used in Diameter messages to charging-server.
 
@@ -463,7 +463,7 @@ modparam("ims_charging", "destination_host", "ocs.kamailio-ims.org")
 modparam("ims_charging", "destination_realm", "kamailio-ims.org")
 ...
 
-3.14.  service_context_id_root (string)
+4.14.  service_context_id_root (string)
 
    This defines a root-element of the Service-Context-Id AVP used in the
    diameter-message
@@ -501,7 +501,7 @@ modparam("ims_charging", "destination_realm", "kamailio-ims.org")
 modparam("ims_charging", "service_context_id_root", "calls@kamailio-ims.org")
 ...
 
-3.15.  service_context_id_ext (string)
+4.15.  service_context_id_ext (string)
 
    This defines the extension of the Service-Context-Id AVP used in the
    diameter-message.
@@ -513,7 +513,7 @@ modparam("ims_charging", "service_context_id_root", "calls@kamailio-ims.org")
 modparam("ims_charging", "service_context_id_ext", "ext2")
 ...
 
-3.16.  service_context_id_mnc (string)
+4.16.  service_context_id_mnc (string)
 
    This defines Mobile-Network-Code (MNC) of the Service-Context-Id AVP
    used in the diameter-message.
@@ -525,7 +525,7 @@ modparam("ims_charging", "service_context_id_ext", "ext2")
 modparam("ims_charging", "service_context_id_mnc", "42")
 ...
 
-3.17.  service_context_id_mcc (string)
+4.17.  service_context_id_mcc (string)
 
    This defines Mobile-Country-Code (MCC) of the Service-Context-Id AVP
    used in the diameter-message.
@@ -540,7 +540,7 @@ modparam("ims_charging", "service_context_id_mnc", "42")
 modparam("ims_charging", "service_context_id_mcc", "262")
 ...
 
-3.18.  service_context_id_release (string)
+4.18.  service_context_id_release (string)
 
    This defines Release of the Service-Context-Id AVP used in the
    diameter-message.
@@ -552,12 +552,12 @@ modparam("ims_charging", "service_context_id_mcc", "262")
 modparam("ims_charging", "service_context_id_release", "262")
 ...
 
-4. Functions
+5. Functions
 
-   4.1. Ro_CCR(route_name, direction, charge_type, unit_type,
+   5.1. Ro_CCR(route_name, direction, charge_type, unit_type,
           reservation_units)
 
-4.1.  Ro_CCR(route_name, direction, charge_type, unit_type,
+5.1.  Ro_CCR(route_name, direction, charge_type, unit_type,
 reservation_units)
 
    Perform a CCR on Diameter Ro interface for Charging
@@ -613,15 +613,15 @@ code)] \n");
 
 ...
 
-5. Statistics
+6. Statistics
 
-   5.1. CCR Timeouts (ccr_timeouts)
-   5.2. Average CCR Response Time (ccr_avg_response_time)
+   6.1. CCR Timeouts (ccr_timeouts)
+   6.2. Average CCR Response Time (ccr_avg_response_time)
 
-5.1. CCR Timeouts (ccr_timeouts)
+6.1. CCR Timeouts (ccr_timeouts)
 
    The number of timeouts on sending a CCR. i.e. no response to CCR.
 
-5.2. Average CCR Response Time (ccr_avg_response_time)
+6.2. Average CCR Response Time (ccr_avg_response_time)
 
    The average response time in milliseconds for CCR-CCA transaction.
