@@ -12,6 +12,7 @@
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/mod_export.h"
 #include "../../parser/parse_to.h"
+#include "stats.h"
 #include "ro_timer.h"
 #include "ro_session_hash.h"
 #include "ims_ro.h"
@@ -49,6 +50,16 @@ int ro_auth_expiry = 7200;
 int cdp_event_latency = 1; /*flag: report slow processing of CDP callback events or not - default enabled */
 int cdp_event_threshold = 500; /*time in ms above which we should report slow processing of CDP callback event - default 500ms*/
 int cdp_event_latency_loglevel = 0; /*log-level to use to report slow processing of CDP callback event - default ERROR*/
+
+stat_var *initial_ccrs;
+stat_var *interim_ccrs;
+stat_var *final_ccrs;
+stat_var *successful_initial_ccrs;
+stat_var *successful_interim_ccrs;
+stat_var *successful_final_ccrs;
+stat_var *ccr_responses_time;
+stat_var *billed_secs;
+stat_var *killed_calls;
 
 /** module functions */
 static int mod_init(void);
@@ -88,17 +99,28 @@ static param_export_t params[] = {
 		{ 0, 0, 0 }
 };
 
-stat_export_t mod_stats[] = {
-		/*{"ccr_avg_response_time" ,  STAT_IS_FUNC, 	(stat_var**)get_avg_ccr_response_time	},*/
-		/*{"ccr_timeouts" ,  			0, 				(stat_var**)&stat_ccr_timeouts  		},*/
-		{ 0, 0, 0 }
+stat_export_t charging_stats[] = {
+    {"initial_ccrs", STAT_NO_RESET, &initial_ccrs},
+    {"interim_ccrs", STAT_NO_RESET, &interim_ccrs},
+    {"final_ccrs", STAT_NO_RESET, &final_ccrs},
+    {"successful_initial_ccrs", STAT_NO_RESET, &successful_initial_ccrs},
+    {"successful_interim_ccr", STAT_NO_RESET, &successful_interim_ccrs},
+    {"successful_final_ccrs", STAT_NO_RESET, &successful_final_ccrs},
+    {"failed_initial_ccrs", STAT_IS_FUNC, (stat_var**) get_failed_initial_ccrs},
+    {"failed_interim_ccr", STAT_IS_FUNC, (stat_var**) get_failed_interim_ccrs},
+    {"failed_final_ccrs", STAT_IS_FUNC, (stat_var**) get_failed_final_ccrs},
+    {"ccr_avg_response_time", STAT_IS_FUNC, (stat_var**) get_ccr_avg_response_time},
+    {"ccr_responses_time", STAT_NO_RESET, &ccr_responses_time},
+    {"billed_secs", STAT_NO_RESET, &billed_secs},
+    {"killed_calls", STAT_NO_RESET, &killed_calls},
+    {0, 0, 0}
 };
 
 /** module exports */
-struct module_exports exports = { "ims_charging", DEFAULT_DLFLAGS, /* dlopen flags */
+struct module_exports exports = { MOD_NAME, DEFAULT_DLFLAGS, /* dlopen flags */
 		cmds, 		/* Exported functions */
 		params, 	/* Exported params */
-		0, 			/* exported statistics */
+		charging_stats,	/* exported statistics */
 		0, 			/* exported MI functions */
 		0, 			/* exported pseudo-variables */
 		0, 			/* extra processes */
@@ -233,9 +255,20 @@ static int mod_init(void) {
 		goto error;
 	}
 
+	 /* register statistics */
+	if (register_module_stats(exports.name, charging_stats) != 0) {
+		LM_ERR("failed to register core statistics\n");
+		return -1;
+	}
+
+	/*if (register_stat(MOD_NAME, "ccr_responses_time", &ccr_responses_time, 0)) {
+		LM_ERR("failed to register core statistics\n");
+		return -1;
+	}*/
+
 	return 0;
 
-	error:
+error:
 	LM_ERR("Failed to initialise ims_qos module\n");
 	return RO_RETURN_FALSE;
 
@@ -275,9 +308,11 @@ static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* c
 			reservation_units,
 			route_name->len, route_name->s);
 
-//	if (msg->REQ_METHOD != METHOD_INVITE)
-//		return RO_RETURN_FALSE;
-//
+    if (msg->first_line.type != SIP_REQUEST) {
+    	LM_ERR("Ro_CCR() called from SIP reply.");
+    	return -1;
+    }
+
 	LM_DBG("Looking for route block [%.*s]\n", route_name->len, route_name->s);
 
 	int ri = route_get(&main_rt, route_name->s);
@@ -312,7 +347,6 @@ static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* c
 		return RO_RETURN_ERROR;
 	}
 
-	LM_DBG("index=%d label=%d\n", tindex, tlabel);
 	return Ro_Send_CCR(msg, direction, charge_type, unit_type, reservation_units, cfg_action, tindex, tlabel);
 }
 

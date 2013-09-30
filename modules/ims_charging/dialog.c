@@ -112,7 +112,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 			if ((ro_session = lookup_ro_session(dlg->h_entry, &dlg->callid, 0, 0))) {
 				ro_session_entry =
 						&(ro_session_table->entries[ro_session->h_entry]);
-				
+
 				//if the Ro session is not active we don't need to do anything. This prevents
 				//double processing for various dialog_terminated callback events.
 				//If however, the call was never answered, then we can continue as normal
@@ -137,7 +137,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 				LM_DBG("Sending CCR STOP on Ro_Session [%p]\n", ro_session);
 				send_ccr_stop(ro_session);
 				ro_session->active = 0;
-
+				//ro_session->start_time;
 				ro_session_unlock(ro_session_table, ro_session_entry);
 				unref_ro_session(ro_session, 2+unref);
 			}

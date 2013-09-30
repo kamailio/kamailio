@@ -14,6 +14,7 @@
 #include "ro_timer.h"
 #include "ro_session_hash.h"
 #include "ims_ro.h"
+#include "stats.h"
 
 extern int interim_request_credits;
 extern int ro_timer_buffer;
@@ -374,6 +375,8 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 		used_secs = now - ro_session->last_event_timestamp;
 		call_time = now - ro_session->start_time;
 
+		update_stat(billed_secs, used_secs);
+
 		if (ro_session->callid.s != NULL
 				&& ro_session->dlg_h_entry	> 0
 				&& ro_session->dlg_h_id > 0
@@ -429,6 +432,8 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 
 		dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id, NULL );
 	}
+
+	update_stat(killed_calls, 1);
 
 	ro_session_unlock(ro_session_table, ro_session_entry);
 	unref_ro_session(ro_session, 1); //unref from the initial timer that fired this event.

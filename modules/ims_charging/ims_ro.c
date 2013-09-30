@@ -28,6 +28,7 @@
 #include "ccr.h"
 #include "config.h"
 #include "ro_session_hash.h"
+#include "stats.h"
 
 extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
@@ -628,6 +629,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
 
     Ro_free_CCR(ro_ccr_data);
 
+    update_stat(interim_ccrs, 1);
     return;
 error:
 	LM_ERR("error trying to reserve interim credit\n");
@@ -648,6 +650,8 @@ error:
 static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
 	struct interim_ccr *i_req	= (struct interim_ccr *) param;
 	Ro_CCA_t * ro_cca_data = NULL;
+
+    update_stat(ccr_responses_time, elapsed_msecs);
 
 	if (!i_req) {
 		LM_ERR("This is so wrong: ro session is NULL\n");
@@ -683,6 +687,7 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
 	Ro_free_CCA(ro_cca_data);
 	cdpb.AAAFreeMessage(&cca);
 
+	update_stat(successful_interim_ccrs, 1);
 	goto success;
 
 error:
@@ -714,6 +719,8 @@ void send_ccr_stop(struct ro_session *ro_session) {
     if (ro_session->event_type != pending) {
         used = time(0) - ro_session->last_event_timestamp;
     }
+
+    update_stat(billed_secs, used);
 
     event_type_t *event_type;
     int node_role = 0;
@@ -806,6 +813,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
 
     Ro_free_CCR(ro_ccr_data);
 
+    update_stat(final_ccrs, 1);
     return;
 
 error1:
@@ -824,6 +832,8 @@ error0:
 
 static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
     Ro_CCA_t *ro_cca_data = NULL;
+
+    update_stat(ccr_responses_time, elapsed_msecs);
 
     if (!cca) {
     	LM_ERR("Error in termination CCR.\n");
@@ -847,6 +857,8 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
 
     Ro_free_CCA(ro_cca_data);
     cdpb.AAAFreeMessage(&cca);
+
+    update_stat(successful_final_ccrs, 1);
 
     return;
 
@@ -882,11 +894,6 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
-
-    if (msg->first_line.type != SIP_REQUEST) {
-    	LM_ERR("Ro_CCR() called from SIP reply.");
-    	goto error;
-    }
 
     //make sure we can get the dialog! if not, we can't continue
 	struct dlg_cell* dlg = dlgb.get_dlg(msg);
@@ -973,23 +980,11 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     LM_DBG("new CC Ro Session ID: [%.*s]\n", cc_acc_session->id.len, cc_acc_session->id.s);
 
     LM_DBG("Sending CCR Diameter message.\n");
-    /* send synchronously so we can respond to callplan (cfg file), so a decision can be made to process the invite */
     cdpb.AAASessionsUnlock(cc_acc_session->hash);
-
-    //AAAMessage *cca = cdpb.AAASendRecvMessageToPeer(ccr, &cfg.destination_host);
     cdpb.AAASendMessageToPeer(ccr, &cfg.destination_host, resume_on_initial_ccr, (void *) ssd);
 
     Ro_free_CCR(ro_ccr_data);
 
-/*    Ro_free_CCA(ro_cca_data);
-    if (cca){
-    	LM_DBG("Freeing CCA message\n");
-    	cdpb.AAAFreeMessage(&cca);
-    }
-
-    link_ro_session(new_session, 1);            //create extra ref for the fact that dialog has a handle in the callbacks
-    unref_ro_session(new_session, 1);
-*/
     //TODO: if the following fail, we should clean up the Ro session.......
     if (dlgb.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, dlg_reply, (void*)new_session ,NULL ) != 0) {
     	LM_CRIT("cannot register callback for dialog confirmation\n");
@@ -1002,6 +997,8 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     	goto error;
     }
 
+    update_stat(initial_ccrs, 1);
+
     return RO_RETURN_TRUE;
 
 error:
@@ -1013,8 +1010,7 @@ error:
 
     if (ssd)
     	pkg_free(ssd);
-/* Ro_free_CCA(ro_cca_data);
-    */
+
     LM_DBG("Trying to reserve credit on initial INVITE failed.\n");
     return RO_RETURN_ERROR;
 }
@@ -1024,6 +1020,8 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     struct cell *t = NULL;
     struct session_setup_data *ssd = (struct session_setup_data *) param;
     int error_code	= RO_RETURN_ERROR;
+
+    update_stat(ccr_responses_time, elapsed_msecs);
 
     if (!cca) {
     	LM_ERR("Error reserving credit for CCA.\n");
@@ -1090,6 +1088,8 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 
     tmb.t_continue(ssd->tindex, ssd->tlabel, ssd->action);
     shm_free(ssd);
+
+    update_stat(successful_initial_ccrs, 1);
     return;
 
 error1:
@@ -1153,7 +1153,7 @@ static int create_cca_return_code(int result) {
 
     avp_val.s.len = 2; */
 
-    rc = add_avp(AVP_NAME_STR, avp_name, avp_val);
+    rc = add_avp(AVP_NAME_STR/*|AVP_VAL_STR*/, avp_name, avp_val);
 
     if (rc < 0)
         LM_ERR("Couldn't create ["RO_AVP_CCA_RETURN_CODE"] AVP\n");
