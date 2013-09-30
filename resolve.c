@@ -1519,20 +1519,7 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 			}
 			if (default_order){
 				for (i=0; i<list_len;i++) {
-					switch ( srv_proto_list[i].proto) {
-						case PROTO_UDP:
-							srv_proto_list[i].proto_pref=4;
-							break;
-						case PROTO_TCP:
-							srv_proto_list[i].proto_pref=3;
-							break;
-						case PROTO_TLS:
-							srv_proto_list[i].proto_pref=2;
-							break;
-						case PROTO_SCTP:
-							srv_proto_list[i].proto_pref=1;
-							break;
-					}
+					srv_proto_list[i].proto_pref=proto_pref_score(i);;
 				}
 			}
 
@@ -1592,6 +1579,9 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 			if ((port)&&(*port==0)){
 				*port=(srv_proto_list[i].proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we don't find another */
 			}
+			if ((proto)&&(*proto==0)){
+				*proto = PROTO_UDP;
+			}
 			srv_name.s=tmp_srv;
 			srv_name.len=len;
 			#ifdef USE_DNS_CACHE
@@ -1632,9 +1622,9 @@ struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
 	char n_proto;
 	str srv_name;
 	naptr_bmp_t tried_bmp; /* tried bitmap */
+	char origproto;
 
-
-
+	origproto = *proto;
 	naptr_head=0;
 	he=0;
 	if (name->len >= MAX_DNS_NAME) {
@@ -1673,7 +1663,12 @@ struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
 #endif
 	}
 	/* fallback to srv lookup */
+	*proto = origproto;
 	he=no_naptr_srv_sip_resolvehost(name,port,proto);
+	/* fallback all the way down to A/AAAA */
+	if (he==0) {
+		he=dns_get_he(name,dns_flags);
+	}
 end:
 	if (naptr_head)
 		free_rdata_list(naptr_head);
