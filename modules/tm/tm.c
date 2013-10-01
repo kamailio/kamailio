@@ -303,6 +303,7 @@ static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_check_trans(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_is_set(struct sip_msg* msg, char* target, char* bar);
+static int w_t_use_uac_headers(sip_msg_t* msg, char* foo, char* bar);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -482,6 +483,8 @@ static cmd_export_t cmds[]={
 	{"t_check_trans",	  w_t_check_trans,			0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE },
 	{"t_is_set",	      w_t_is_set,				1, fixup_t_is_set,
+			ANY_ROUTE },
+	{"t_use_uac_headers",  w_t_use_uac_headers,		0, 0,
 			ANY_ROUTE },
 
 	{"t_load_contacts", t_load_contacts,            0, 0,
@@ -2304,6 +2307,18 @@ inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
 }
 
 
+static int w_t_use_uac_headers(sip_msg_t* msg, char* foo, char* bar)
+{
+	tm_cell_t *t;
+
+	t=get_t();
+	if (t!=NULL && t!=T_UNDEFINED) {
+		t->uas.request->msg_flags |= FL_USE_UAC_FROM|FL_USE_UAC_TO;
+	}
+	msg->msg_flags |= FL_USE_UAC_FROM|FL_USE_UAC_TO;
+
+	return 1;
+}
 
 /* rpc docs */
 
