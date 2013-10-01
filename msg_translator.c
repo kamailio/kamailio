@@ -2509,9 +2509,11 @@ char* via_builder( unsigned int *len,
 		} else if (con->rcv.proto==PROTO_WSS) {
 			memcpy(line_buf+MY_VIA_LEN-4, "WSS ", 4);
 		} else {
+			tcpconn_put(con);
 			LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", con->rcv.proto);
 			return 0;
 		}
+		tcpconn_put(con);
 	}else if (send_info->proto==PROTO_WSS){
 		memcpy(line_buf+MY_VIA_LEN-4, "WSS ", 4);
 	}else{
