@@ -1701,4 +1701,24 @@ if(!t_is_set("failure_route"))
 	</example>
     </section>
 
+	<section id="tm.f.t_use_uac_headers">
+	<title>
+	    <function>t_use_uac_headers()</function>
+	</title>
+	<para>
+	Set internal flags to tell tm to use UAC side for building headers for
+	local generated requests (ACK, CANCEL) - useful when changing From/To
+	headers using other functions than uac_replace_[from|to]().
+	</para>
+	<para>It returns true.</para>
+	<example>
+	    <title><function>t_use_uac_headers</function> usage</title>
+	    <programlisting>
+...
+t_use_uac_headers();
+...
+	    </programlisting>
+	</example>
+    </section>
+
 </section>

@@ -119,6 +119,7 @@ Juha Heinanen
               5.47. t_relay_to(proxy, flags)
               5.48. t_set_no_e2e_cancel_reason(0|1)
               5.49. t_is_set(target)
+              5.50. t_use_uac_headers()
 
         6. TM Module API
 
@@ -229,7 +230,8 @@ Juha Heinanen
    1.85. t_replicate usage
    1.86. t_set_no_e2e_cancel_reason usage
    1.87. t_replicate usage
-   1.88. event_route[tm:branch-failure] usage
+   1.88. t_use_uac_headers usage
+   1.89. event_route[tm:branch-failure] usage
 
 Chapter 1. Admin Guide
 
@@ -337,6 +339,7 @@ Chapter 1. Admin Guide
         5.47. t_relay_to(proxy, flags)
         5.48. t_set_no_e2e_cancel_reason(0|1)
         5.49. t_is_set(target)
+        5.50. t_use_uac_headers()
 
    6. TM Module API
 
@@ -1606,6 +1609,7 @@ modparam("tm", "dns_reuse_rcv_socket", 1)
    5.47. t_relay_to(proxy, flags)
    5.48. t_set_no_e2e_cancel_reason(0|1)
    5.49. t_is_set(target)
+   5.50. t_use_uac_headers()
 
 5.1. t_relay([host, port])
 
@@ -2651,6 +2655,19 @@ if(!t_is_set("failure_route"))
     LM_DBG("no failure route will be executed for current transaction\n");
 ...
 
+5.50. t_use_uac_headers()
+
+   Set internal flags to tell tm to use UAC side for building headers for
+   local generated requests (ACK, CANCEL) - useful when changing From/To
+   headers using other functions than uac_replace_[from|to]().
+
+   It returns true.
+
+   Example 1.88. t_use_uac_headers usage
+...
+t_use_uac_headers();
+...
+
 6. TM Module API
 
    6.1. Defines
@@ -2832,7 +2849,7 @@ action *route)
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.88. event_route[tm:branch-failure] usage
+   Example 1.89. event_route[tm:branch-failure] usage
 ...
 route {
     t_on_branch_failure("myroute");
