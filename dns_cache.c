@@ -2670,6 +2670,10 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 	}else{
 		srv_proto=PROTO_UDP;
 	}
+	if(srv_proto==PROTO_WS || srv_proto==PROTO_WS) {
+		/* no srv records for web sockets */
+		return 0;
+	}
 	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
 	if ((port)&&(*port==0)){
 		*port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
