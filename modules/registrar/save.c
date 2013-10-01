@@ -144,7 +144,7 @@ static struct socket_info *get_sock_val(struct sip_msg *msg)
 	str hosts;
 	int port;
 	int proto;
-	char c;
+	char c = 0;
 
 	if(sock_hdr_name.len>0) {
 		if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
@@ -185,7 +185,7 @@ static struct socket_info *get_sock_val(struct sip_msg *msg)
 			socks.len, socks.s);
 		return 0;
 	}
-	if(sock_hdr_name.len>0) {
+	if(sock_hdr_name.len>0 && c!=0) {
 		socks.s[socks.len] = c;
 	}
 	sock = grep_sock_info(&hosts,(unsigned short)port,(unsigned short)proto);
