@@ -509,7 +509,7 @@ int db_mysql_affected_rows(const db1_con_t* _h)
  */
 int db_mysql_start_transaction(db1_con_t* _h, db_locking_t _l)
 {
-	str begin_str = str_init("BEGIN");
+	str begin_str = str_init("SET autocommit=0");
 	str lock_start_str = str_init("LOCK TABLES ");
 	str lock_end_str  = str_init(" WRITE");
 	str lock_str = {0, 0};
@@ -611,7 +611,8 @@ int db_mysql_unlock_tables(db1_con_t* _h)
  */
 int db_mysql_end_transaction(db1_con_t* _h)
 {
-	str query_str = str_init("COMMIT");
+	str commit_query_str = str_init("COMMIT");
+	str set_query_str = str_init("SET autocommit=1");
 
 	if (!_h) {
 		LM_ERR("invalid parameter value\n");
@@ -623,7 +624,13 @@ int db_mysql_end_transaction(db1_con_t* _h)
 		return -1;
 	}
 
-	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
+	if (db_mysql_raw_query(_h, &commit_query_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	if (db_mysql_raw_query(_h, &set_query_str, NULL) < 0)
 	{
 		LM_ERR("executing raw_query\n");
 		return -1;
@@ -647,7 +654,8 @@ int db_mysql_end_transaction(db1_con_t* _h)
  */
 int db_mysql_abort_transaction(db1_con_t* _h)
 {
-	str query_str = str_init("ROLLBACK");
+	str rollback_query_str = str_init("ROLLBACK");
+	str set_query_str = str_init("SET autocommit=1");
 	int ret;
 
 	if (!_h) {
@@ -665,7 +673,14 @@ int db_mysql_abort_transaction(db1_con_t* _h)
  	   transaction now or all future starts will fail */
 	CON_TRANSACTION(_h) = 0;
 
-	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
+	if (db_mysql_raw_query(_h, &rollback_query_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		ret = -1;
+		goto done;
+	}
+
+	if (db_mysql_raw_query(_h, &set_query_str, NULL) < 0)
 	{
 		LM_ERR("executing raw_query\n");
 		ret = -1;
