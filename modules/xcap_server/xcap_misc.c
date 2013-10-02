@@ -586,7 +586,7 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 		goto error;
 	}
 	outbuf->s = (char*)pkg_malloc(size+1);
-	if(size<=0)
+	if(outbuf->s==NULL)
 	{
 		LM_ERR("no pkg for output\n");
 		xmlFree(xmem);
