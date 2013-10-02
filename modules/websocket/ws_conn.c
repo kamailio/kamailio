@@ -440,10 +440,7 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 	int h, connections = 0, truncated = 0, order = 0, found = 0;
 	ws_connection_t *wsc;
 	struct mi_node *node = NULL;
-	struct mi_root *rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	
-	if (!rpl_tree)
-		return 0;
+	struct mi_root *rpl_tree;
 
 	node = cmd->node.kids;
 	if (node != NULL)
@@ -476,6 +473,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 		}
 	}
 
+	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree == NULL)
+		return 0;
+
 	WSCONN_LOCK;
 	if (order == 0)
 	{
@@ -485,7 +486,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 			while(wsc)
 			{
 				if ((found = add_node(rpl_tree, wsc)) < 0)
+				{
+					free_mi_tree(rpl_tree);
 					return 0;
+				}
 
 
 				connections += found;
@@ -508,7 +512,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 		while (wsc)
 		{
 			if ((found = add_node(rpl_tree, wsc)) < 0)
+			{
+				free_mi_tree(rpl_tree);
 				return 0;
+			}
 
 			connections += found;
 			if (connections >= MAX_WS_CONNS_DUMP)
@@ -526,7 +533,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 		while (wsc)
 		{
 			if ((found = add_node(rpl_tree, wsc)) < 0)
+			{
+				free_mi_tree(rpl_tree);
 				return 0;
+			}
 
 			connections += found;
 			if (connections >= MAX_WS_CONNS_DUMP)
@@ -544,7 +554,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 				"%d WebSocket connection%s found%s",
 				connections, connections == 1 ? "" : "s",
 				truncated == 1 ? "(truncated)" : "") == 0)
+	{
+		free_mi_tree(rpl_tree);
 		return 0;
+	}
 
 	return rpl_tree;
 }

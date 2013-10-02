@@ -125,6 +125,7 @@ static str str_status_too_many_params = str_init("Too many parameters");
 static str str_status_bad_param = str_init("Bad connection ID parameter");
 static str str_status_error_closing = str_init("Error closing connection");
 static str str_status_error_sending = str_init("Error sending frame");
+static str str_status_string_error = str_init("Error converting string to int");
 
 static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 {
@@ -726,7 +727,11 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 
 	node = cmd->node.kids;
 	if (node == NULL)
-		return 0;
+	{
+		LM_WARN("no connection ID parameter\n");
+		return init_mi_tree(400, str_status_empty_param.s,
+					str_status_empty_param.len);
+	}
 	if (node->value.s == NULL || node->value.len == 0)
 	{
 		LM_WARN("empty connection ID parameter\n");
@@ -736,7 +741,8 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 	if (str2int(&node->value, &id) < 0)
 	{
 		LM_ERR("converting string to int\n");
-		return 0;
+		return init_mi_tree(400, str_status_string_error.s,
+					str_status_string_error.len);
 	}
 	if (node->next != NULL)
 	{
@@ -772,7 +778,11 @@ static struct mi_root *mi_ping_pong(struct mi_root *cmd, void *param,
 
 	node = cmd->node.kids;
 	if (node == NULL)
-		return 0;
+	{
+		LM_WARN("no connection ID parameter\n");
+		return init_mi_tree(400, str_status_empty_param.s,
+					str_status_empty_param.len);
+	}
 	if (node->value.s == NULL || node->value.len == 0)
 	{
 		LM_WARN("empty connection ID parameter\n");
@@ -782,7 +792,8 @@ static struct mi_root *mi_ping_pong(struct mi_root *cmd, void *param,
 	if (str2int(&node->value, &id) < 0)
 	{
 		LM_ERR("converting string to int\n");
-		return 0;
+		return init_mi_tree(400, str_status_string_error.s,
+					str_status_string_error.len);
 	}
 	if (node->next != NULL)
 	{
