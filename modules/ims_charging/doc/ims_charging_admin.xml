@@ -185,8 +185,11 @@
       <example>
         <title>
         <varname>hash_size</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "hash_size", 1024)
-        ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "hash_size", 1024)
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -201,8 +204,11 @@
       <example>
         <title>
         <varname>interim_update_credits</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging",
-        "interim_update_credits", 600) ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "interim_update_credits", 600)
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -215,8 +221,11 @@
       <example>
         <title>
         <varname>timer_buffer</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "timer_buffer", 10)
-        ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "timer_buffer", 10)
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -230,8 +239,11 @@
       <example>
         <title>
         <varname>ro_forced_peer</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "ro_forced_peer",
-        "ocs.ims.smilecoms.com") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "ro_forced_peer", "ocs.ims.smilecoms.com")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -244,8 +256,11 @@
       <example>
         <title>
         <varname>ro_auth_expiry</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "ro_auth_expiry", 14400)
-        ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "ro_auth_expiry", 14400)
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -258,8 +273,11 @@
       <example>
         <title>
         <varname>ro_auth_expiry</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "ro_auth_expiry", 14400)
-        ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "ro_auth_expiry", 14400)
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -273,8 +291,11 @@
       <example>
         <title>
         <varname>cdp_event_latency</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "cdp_event_latency", 1)
-        ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "cdp_event_latency", 1)
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -289,8 +310,11 @@
       <example>
         <title>
         <varname>cdp_event_threshold</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "cdp_event_threshold",
-        500) ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "cdp_event_threshold", 500)
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -305,8 +329,11 @@
       <example>
         <title>
         <varname>cdp_event_latency_log</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "cdp_event_latency_log",
-        1) ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "cdp_event_latency_log", 1)
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -319,8 +346,11 @@
       <example>
         <title>
         <varname>origin_host</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "origin_host",
-        "scscf.kamailio-ims.org") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "origin_host", "scscf.kamailio-ims.org")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -333,8 +363,11 @@
       <example>
         <title>
         <varname>origin_realm</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "origin_realm",
-        "kamailio-ims.org") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "origin_realm", "kamailio-ims.org")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -347,8 +380,11 @@
       <example>
         <title>
         <varname>destination_host</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "destination_host",
-        "ocs.kamailio-ims.org") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "destination_host", "ocs.kamailio-ims.org")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -361,8 +397,11 @@
       <example>
         <title>
         <varname>destination_realm</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging", "destination_realm",
-        "kamailio-ims.org") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "destination_realm", "kamailio-ims.org")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -376,8 +415,9 @@
       service provider, by the service element manufacturer, or by a standardization body, and MUST
       uniquely identify a given Diameter credit-control service specific document. The format of
       the Service-Context-Id is:</para>
-      <programlisting format="linespecific">"service-context" "@" "domain" service-context =
-      Token</programlisting>
+      <programlisting format="linespecific">
+"service-context" "@" "domain" service-context = Token
+      </programlisting>
       <para>The Token is an arbitrary string of characters and digits.</para>
       <para>'domain' represents the entity that allocated the Service-Context-Id. It can be
       ietf.org, 3gpp.org, etc., if the identifier is allocated by a standardization body, or it can
@@ -394,8 +434,11 @@
       <example>
         <title>
         <varname>service_context_id_root</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging",
-        "service_context_id_root", "calls@kamailio-ims.org") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "service_context_id_root", "calls@kamailio-ims.org")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -409,8 +452,11 @@
       <example>
         <title>
         <varname>service_context_id_ext</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging",
-        "service_context_id_ext", "ext2") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "service_context_id_ext", "ext2")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -424,8 +470,11 @@
       <example>
         <title>
         <varname>service_context_id_mnc</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging",
-        "service_context_id_mnc", "42") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "service_context_id_mnc", "42")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -440,8 +489,11 @@
       <example>
         <title>
         <varname>service_context_id_mcc</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging",
-        "service_context_id_mcc", "262") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "service_context_id_mcc", "262")
+...
+        </programlisting>
       </example>
     </section>
     <section>
@@ -454,8 +506,11 @@
       <example>
         <title>
         <varname>service_context_id_release</varname>parameter usage</title>
-        <programlisting format="linespecific">... modparam("ims_charging",
-        "service_context_id_release", "262") ...</programlisting>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "service_context_id_release", "262")
+...
+        </programlisting>
       </example>
     </section>
   </section>
@@ -500,15 +555,35 @@
       value.</para>
       <example>
         <title>Ro_CCR</title>
-        <programlisting format="linespecific">... xlog("L_DBG","Sending initial CCR Request for
-        call\n"); Ro_CCR("CHARGING_CCR_REPLY", "orig", "SCUR", "", "30"); }
-        route[CHARGING_CCR_REPLY] { xlog("L_DBG","cca_return code is $avp(s:cca_return_code)\n");
-        switch ($avp(s:cca_return_code)){ case 1: #success xlog("L_DBG", "CCR success - will route
-        message\n"); route(Finalize_Orig); break; case -1: #failure xlog("L_ERR", "CCR failure -
-        error response sent from module\n"); sl_send_reply("402","Payment required"); break; case
-        -2: #error xlog("L_ERR", "CCR error - error response sent from module\n");
-        sl_send_reply("500", "Charging Error"); break; default: xlog("L_ERR", "Unknown return code
-        from CCR: [$avp(s:cca_return_code)] \n"); break; } exit; } ...</programlisting>
+        <programlisting format="linespecific">
+...
+  xlog("L_DBG","Sending initial CCR Request for call\n");
+  Ro_CCR("CHARGING_CCR_REPLY", "orig", "SCUR", "", "30");
+}
+
+route[CHARGING_CCR_REPLY] 
+  xlog("L_DBG","cca_return code is $avp(s:cca_return_code)\n");
+  switch ($avp(s:cca_return_code)) {
+    case 1: #success
+        xlog("L_DBG", "CCR success - will route message\n");
+        route(Finalize_Orig);
+        break;
+    case -1: #failure
+        xlog("L_ERR", "CCR failure - error response sent from module\n");
+        sl_send_reply("402","Payment required");
+        break;
+    case -2: #error
+        xlog("L_ERR", "CCR error - error response sent from module\n");
+        sl_send_reply("500", "Charging Error");
+        break;
+    default:
+        xlog("L_ERR", "Unknown return code from CCR: [$avp(s:cca_return_code)] \n");
+        break;
+  }
+  exit;
+  }
+...
+        </programlisting>
       </example>
     </section>
   </section>
