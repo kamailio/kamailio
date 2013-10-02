@@ -170,6 +170,11 @@ void set_ruri_q(qvalue_t q);
 
 
 /*! \brief
+ * Get src ip, port and proto as SIP uri or proxy address
+ */
+int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode);
+
+/*! \brief
  * Get the q value of the Request-URI
  */
 qvalue_t get_ruri_q(void);

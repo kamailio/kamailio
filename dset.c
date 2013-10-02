@@ -605,3 +605,117 @@ int rewrite_uri(struct sip_msg* _m, str* _s)
 	return 1;
 }
 
+/**
+ * return src ip, port and proto as a SIP uri or proxy address
+ * - value stored in a static buffer
+ * - mode=0 return uri, mode=1 return proxy address
+ */
+int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
+{
+	static char buf[80];
+	char* p;
+	str ip, port;
+	int len;
+	str proto;
+
+	if (msg==NULL || uri==NULL) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	ip.s = ip_addr2a(&msg->rcv.src_ip);
+	ip.len = strlen(ip.s);
+
+	port.s = int2str(msg->rcv.src_port, &port.len);
+
+	switch(msg->rcv.proto) {
+		case PROTO_NONE:
+		case PROTO_UDP:
+			if(mode==0) {
+				proto.s = 0; /* Do not add transport parameter, UDP is default */
+				proto.len = 0;
+			} else {
+				proto.s = "udp";
+				proto.len = 3;
+			}
+		break;
+
+		case PROTO_TCP:
+			proto.s = "tcp";
+			proto.len = 3;
+		break;
+
+		case PROTO_TLS:
+			proto.s = "tls";
+			proto.len = 3;
+		break;
+
+		case PROTO_SCTP:
+			proto.s = "sctp";
+			proto.len = 4;
+		break;
+
+		case PROTO_WS:
+		case PROTO_WSS:
+			proto.s = "ws";
+			proto.len = 2;
+		break;
+
+		default:
+			LM_ERR("unknown transport protocol\n");
+		return -1;
+	}
+
+	len = ip.len + 2*(msg->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
+	if (mode==0) {
+		len += 4;
+		if(proto.s) {
+			len += TRANSPORT_PARAM_LEN;
+			len += proto.len;
+		}
+	} else {
+		len += proto.len + 1;
+	}
+
+	if (len > 79) {
+		LM_ERR("buffer too small\n");
+		return -1;
+	}
+
+	p = buf;
+	if(mode==0) {
+		memcpy(p, "sip:", 4);
+		p += 4;
+	} else {
+		memcpy(p, proto.s, proto.len);
+		p += proto.len;
+		*p++ = ':';
+	}
+
+	if (msg->rcv.src_ip.af==AF_INET6)
+		*p++ = '[';
+	memcpy(p, ip.s, ip.len);
+	p += ip.len;
+	if (msg->rcv.src_ip.af==AF_INET6)
+		*p++ = ']';
+
+	*p++ = ':';
+
+	memcpy(p, port.s, port.len);
+	p += port.len;
+
+	if (mode==0 && proto.s) {
+		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		p += TRANSPORT_PARAM_LEN;
+
+		memcpy(p, proto.s, proto.len);
+		p += proto.len;
+	}
+
+	uri->s = buf;
+	uri->len = len;
+	uri->s[uri->len] = '\0';
+
+	return 0;
+}
+
