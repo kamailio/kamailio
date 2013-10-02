@@ -28,6 +28,7 @@
 #include "memcached.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
+#include "../../pvapi.h"
 #include "../pv/pv_svar.h"
 #include "../../md5utils.h"
 
@@ -199,10 +200,15 @@ int pv_get_mcd_value(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	trim_len(res_str.len, res_str.s, res_str);
 
 	if(return_flags&VAR_VAL_STR) {
-		 if (pkg_str_dup(&(res->rs), &res_str) < 0) {
-			LM_ERR("could not copy string\n");
+		res->rs.s = pv_get_buffer();
+		res->rs.len = pv_get_buffer_size();
+		if(res_str.len>=res->rs.len) {
+			LM_ERR("value is too big (%d) - increase pv buffer size\n", res_str.len);
 			goto errout;
 		}
+		memcpy(res->rs.s, res_str.s, res_str.len);
+		res->rs.len = res_str.len;
+		res->rs.s[res->rs.len] = '\0';
 		res->flags = PV_VAL_STR;
 	} else {
 		if (str2int(&res_str, &res_int) < 0) {
