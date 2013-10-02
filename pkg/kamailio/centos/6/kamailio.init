@@ -97,10 +97,8 @@ if test "$DUMP_CORE" = "yes" ; then
     ulimit -c unlimited
 
     # directory for the core dump files
-    # COREDIR=/home/corefiles
-    # [ -d $COREDIR ] || mkdir $COREDIR
-    # chmod 777 $COREDIR
-    # echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
+    COREDIR=/tmp
+    echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
 fi
 
 OPTIONS="-P $PID_FILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP $EXTRA_OPTIONS"
