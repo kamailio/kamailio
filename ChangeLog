@@ -1,3 +1,650 @@
+===================== 2013-10-02 Version 4.0.4 Released =====================
+
+===================== Changes Since Version 4.0.3 ===========================
+
+commit 69d5e22b21ad4cb163e39f68a123cae3cf99e1c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 2 16:54:14 2013 +0200
+
+    Makefile.defs: version set to 4.0.4
+
+commit 00cfb136d9532aa5e7cf2a40848e62b7df1692fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 2 16:50:37 2013 +0200
+
+    pkg/rpm: updated version to 4.0.4 in spec files
+
+commit 6b26032ee8b581983d547657c9d229645cf2bd0e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 2 16:50:05 2013 +0200
+
+    pkg/deb: updated version to 4.0.4 in specs
+
+commit f8ae762545b85ead432f67bcb6969bc92f01b93d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 20 11:18:09 2013 +0200
+
+    registrar: note about empty value for received_param
+    
+    (cherry picked from commit e35fe9c6095361414565b1099dea1ad5950fb38d)
+
+commit fc410ae69c6b371538f457947fd3a2946dc492cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 20 11:15:16 2013 +0200
+
+    registrar: if rcv_parm value is empty, don't add received to contacts in 200ok reply
+    
+    - otherwise results in malformed value
+    
+    (cherry picked from commit 2f213e313a86e16665f6d0acfec959bf23f72b7d)
+
+commit cbe6d2dc199e552576501a74b3cafbceeb048385
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed Oct 2 10:04:35 2013 +0100
+
+    xcap_server: Fix memory allocation check bug in xcap_misc
+    
+    - Would cause crash if out of package memory
+    (cherry picked from commit 165a351d18fd0f1639087c8eb5d9294e46a6e2b7)
+
+commit 82a23f22c1bba400304a7f44523e8db8b09ae295
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 26 13:23:46 2013 +0200
+
+    presence_xml: updated docs about integrated_xcap_server
+    
+    (cherry picked from commit 8e35cef8716bbd0caa406a5080e93acb3c881c41)
+
+commit 3a927389f2667fa3e453f30604b5448ca99f4d77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 26 12:59:59 2013 +0200
+
+    mi_rpc: compatibility with libxmlrpc-c3 library on wheezy
+    
+    - patch by Muhammad Shahzad
+    
+    (cherry picked from commit baa4fccc2870df102a66089d6e9b6ca1ff47fc25)
+
+commit 9f3f494289ab25d2a4a35672e21d1b1c76cfbd6b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 30 16:49:26 2013 +0200
+
+    app_perl: use local buffer to print dynamic string in pv_sprintf()
+    
+    - avoid pkg malloc for temporary need
+    - fix leak in case of fmt parse error, discovered on a report by Dragos
+      Oancea
+    
+    (cherry picked from commit 1c3e761fbd087ee578ce305d89f6b8ee4e9ab79d)
+
+commit 3253fcb7e7ef628727799a92ca68739dba3d10ca
+Author: Ãyvind Kolbu <oyvind.kolbu@usit.uio.no>
+Date:   Mon Sep 30 11:15:13 2013 +0200
+
+    core: resolve down to A/AAAA records when no naptr records
+    
+    - try all protocols, not only UDP
+    
+    (cherry picked from commit b50888cf447ea3a3315e665c97f71a07bb687337)
+
+commit b49899f75052ea4e23125c7af3e60dd3ab141aae
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Thu Sep 19 13:49:24 2013 -0400
+
+    modules/sca: fix return value of sca_call_info_uri_update()
+    
+    - return value of 0 can bubble up as return value of sca_call_info_update(),
+      causing early script termination (exported function returning 0 in script
+      is equivalent to "exit")
+    - report and patch from Timo TerÃ¤s
+    (cherry picked from commit 844c398bba30452f0b136895b9f928cc17e5c80b)
+
+commit c9551e55a8a0d46de69bb49fc3eb8376fd737ccb
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Tue Aug 20 15:54:17 2013 -0400
+
+    modules/sca: AoR should not be treated as SCA if there are no subscribers.
+    (cherry picked from commit a8fb905e8bf27093dcf86866ae946431ed441a41)
+
+commit 22268940a63747e1ef3faf47b40c493c8f34a7b3
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Tue Aug 20 15:14:26 2013 -0400
+
+    modules/sca: improved handling of host-only Contact URIs
+    (cherry picked from commit bf747c2d65aeaa74d1cea4e0a531607415e8d17d)
+
+commit 1672b92eb5d7eb7d07741c24bfec912e1e6b7acf
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Jul 22 00:48:46 2013 -0400
+
+    modules/sca: restore missing prototype.
+    
+    sca_subscription_aor_has_subscribers
+    (cherry picked from commit 7bf7e9f858faab2329e5edf3d988bef76ac2c804)
+
+commit 92c6c3b680047962721bb48134345012e7f631db
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Jul 22 00:42:18 2013 -0400
+
+    modules/sca: detect when an AoR is no longer SCA.
+    
+    Don't, for example, create an appearance for callees that do not send
+    a Call-Info header, and whose AoR also has no subscribers.
+    (cherry picked from commit 3464f62565dd153cb87af71a71df5db2306d74a1)
+
+commit 2f767f2b3454dc0bad206c0b7aa04b8a2550be25
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Jul 22 00:37:32 2013 -0400
+
+    modules/sca: Clear stale line-seize appearances via timer.
+    
+    Some badly behaved/buggy UAs don't know when to say when.
+    (cherry picked from commit 8416a1c65d26ac81b71e08274f9292a7f7713fff)
+
+commit b15a586fd6eb226318d7111a0e14c312ec56ad8f
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Thu Jun 13 16:06:10 2013 -0400
+
+    modules/sca: fix regression: restore purge expired timer
+    (cherry picked from commit d5f259f7ce04b012f7704ba433f167d034548e09)
+
+commit b1faa930bd69333eda47291a6354fb2bda59b822
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Thu Jun 13 15:34:00 2013 -0400
+
+    modules/sca: clear appearance on receipt of out-of-dialog SUBSCRIBE
+    
+    - If a call-info SUBSCRIBE with no To-tag arrives from a subscriber
+      with an active subscription, release any appearances owned by the
+      subscriber, on the assumption that the subscriber has lost track
+      of SCA (reboot, power/network loss).
+    (cherry picked from commit c6280e2eb9c2e1243d5d4ab78b8b683c8239a4b9)
+
+commit 0d0a6c2d0de9b56c31ce3de59ec0c9e9bd86241b
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Thu Jun 13 15:30:40 2013 -0400
+
+    modules/sca: detect and clear orphaned appearances caused by answer glare
+    
+    - set appearance state created by SCA callee answer to ACTIVE_PENDING,
+      and promote to ACTIVE on ACK from caller. If no ACK from caller is
+      received within 30 seconds (enough time for retransmission to fail),
+      the ACTIVE_PENDING appearance will be cleared by the
+      sca_appearance_purge_stale timer.
+    (cherry picked from commit a9014c2b9edd200cf0032fdb30405710afc97c0b)
+
+commit 67bd5d6d315c89089d54dbf01531e79fe832339f
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Wed May 15 16:13:23 2013 -0400
+
+    modules/sca: reconcile Contact and From URIs in ACK callback.
+    
+    - fix Music-on-Hold in Polycoms when SCA caller has MoH enabled and SCA callee
+      does SCA hold/pickup with identical To & From URIs. Previously, module would
+      end up looking up an appearance for callee in ACK callback instead of caller.
+    (cherry picked from commit ba2f749d4a894f6890601ce3d2ff3697b78c5b73)
+
+commit 68898fdd936c5aa34377b894240dfd460315f23e
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Tue May 14 16:25:06 2013 -0400
+
+    modules/sca: improved BYE handling.
+    
+    - Clear appearances for both legs on BYE request if possible.
+    (cherry picked from commit 71f012de15bd4fecce006c35b9452854818f03af)
+
+commit b765ed287e61c43e299fad8396b22759a04cb7d9
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Tue May 14 16:23:46 2013 -0400
+
+    modules/sca: free previous appearance owner, callee, dialog if non-NULL.
+    (cherry picked from commit 6a126232767256a2495c846184acaec788576591)
+
+commit 87daab43172e780de06378773e50bf1f48cb1793
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Thu May 2 15:12:16 2013 -0400
+
+    modules/sca: change logging level for failed lookup by appearance-index.
+    
+    - appearance-index won't be found yet if SCA callee is answering, logging
+      at WARN is misleading.
+    (cherry picked from commit 95b38c4d239f0098e94eafb1c3ddc8834fc767e0)
+
+commit f547e09bfe791e485d7b15d3238e4f84242654be
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Tue Apr 30 23:31:12 2013 -0400
+
+    modules/sca: space-separate dialog tags in sca.all_appearances output
+    (cherry picked from commit 16243261d7cc6dc3e03db9c589209b534d6dab74)
+
+commit d16ee1a19c681726b35da78f120a05317b294ce1
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Tue Apr 30 23:10:10 2013 -0400
+
+    modules/sca: track appearance times.
+    
+    Include time of last state chance in sca.all_appearances output.
+    (cherry picked from commit da3f7cbd955311309665ab0e6958e009f183f795)
+
+commit 86930557070857aecf8110ead7b6e5e3761fb796
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Wed Apr 24 11:30:35 2013 -0400
+
+    modules/sca: add sca.subscription_count to rpc exports list.
+    (cherry picked from commit 1d361c70b5ed87e0808bc446be327f21d8725a3f)
+
+commit b1bd9727e91991649bc37cd8c79cd3876876da92
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Wed Apr 24 01:18:27 2013 -0400
+
+    modules/sca: RPC: fix sca.show_subscription, add sca.subscription_count
+    
+    - sca.subscription_count will eventually be subsumed by sca.stats.
+    (cherry picked from commit f156eb0f82bb729e773027e44f1e7f930418dc93)
+
+commit 5ca4e8e743e1e7e61c7218858a68c9c83b4618f1
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Thu Apr 18 13:52:10 2013 -0400
+
+    modules/sca: fall back to tag lookup if lookup by index fails.
+    
+    - Fix appearance tracking for SCA implementations with inconsistent
+      Call-Info header inclusion.
+    (cherry picked from commit c41806685483546d00324d351ca72143a2a6c787)
+
+commit f4169c46d885b0d6568961bc302d0be0173a697d
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Apr 15 20:16:36 2013 -0400
+
+    modules/sca: add SCA_DB_DEFAULT_FETCH_ROW_COUNT
+    (cherry picked from commit 2292666bf234a168120b1c1504bea86300a440ea)
+
+commit e57b740d35590e7a8049cf82c38deb49a414f816
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Apr 15 20:11:08 2013 -0400
+
+    modules/sca: use DB fetch queries when restoring subscribers from database.
+    
+    - Previously used standard query, exhausting pkg memory when subscriber
+      count is high.
+    (cherry picked from commit c9f47e608f655b3558e7c0c319f32b189732cf34)
+
+commit 4f7b9ac3c64c4baf20b8da76e947c777a073ef61
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Apr 15 20:09:01 2013 -0400
+
+    modules/sca: only check if callee is SCA if callee_aor has a value.
+    (cherry picked from commit d1ef3000b9db99c51d5c37134af2c679ce017a82)
+
+commit 8c790ae25cb5927166bbf154233ca74e36b1d225
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Apr 15 17:17:05 2013 -0400
+
+    modules/sca: add check for empty AoR in lock_shared_appearance calls.
+    
+    - Sanity checking
+    (cherry picked from commit 8ce54ef9b33ef533b3f4474b2c68c9ae454db458)
+
+commit 940d60dc398383aede76b01cfa7618fb11081da6
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Thu Apr 11 22:34:10 2013 -0400
+
+    modules/sca: clear appearance on t_reply with error after receiving 18x.
+    
+    - Receiving a 18x provisional reply triggers line-seize subscription
+      termination. Releasing the seized appearance while processing a t_reply
+      with an error status *after* getting a 18x would fail because
+      sca_subscription_terminate could not find a matching line-seize
+      subscription. In that case, look up appearance by tags and release it.
+    (cherry picked from commit aa0c84475140dc44186c68e9c544367553c891c2)
+
+commit d220cdbf8eb9d6c0d7108c81cd1ba762a2fa8938
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Apr 8 15:01:41 2013 -0400
+
+    modules/sca: reduce verbosity of RPC sca.all_subscriptions output
+    
+    - accommodate more subscriptions without hitting kamcmd buffer limits.
+    (cherry picked from commit a9e555e6e41271e015c47d29ba85276673d3b7b6)
+
+commit 2a072eeea166c93a9419f6249b52c30da9367c3d
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Wed Apr 3 14:54:36 2013 -0400
+
+    modules/sca: ensure line-seize sub update uses index from request
+    
+    - lazy removal of line-seize subscriptions that were not used for a
+      call could lead to failure to release expired seized appearance.
+      Client must have a lingering, expired line-seize subscription that
+      hasn't yet been purged by the timer, and indices must not match.
+      Fix ensures that the appearance-index from the new line-seize
+      subscription overwrites the index left over from the expired one.
+    (cherry picked from commit 43cc6015e8604e309672da4d754b5022d1e256c9)
+
+commit 47aeade304e6731354ff190eb07b2e01a8059a25
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Wed Apr 3 14:46:27 2013 -0400
+
+    modules/sca: fix SCA_CALL_INFO_EMPTY macro
+    
+    - test should be a logical OR, not AND.
+    (cherry picked from commit 3339e7a5bd205599fed63f82536626732b3f23d9)
+
+commit bbd4f9e7f4e27ecc73a5703c1a4acd0331a47f5c
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Fri Mar 15 17:01:23 2013 -0400
+
+    modules/sca: process BYE without Call-Info from shared line.
+    
+    - Ciscos & Aastras don't seem include Call-Info header in BYE. Look up
+      dialog by tags and release associated appearance-index.
+    (cherry picked from commit 287cccf2af17e5f2f8fe09c41025b4d27bb4fda9)
+
+commit eb130422b65cb4ed418c9ed0b9398a069fff397f
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Fri Mar 15 10:22:26 2013 -0400
+
+    sca: reduce log level to DBG when replacing RURI when retrieving held call.
+    (cherry picked from commit a51bc822f70f4185b55455456dc147205cbbbdc7)
+
+commit 489fd1ba70db6aefc68f037eadf92877b1f2e6cf
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Fri Mar 1 16:33:59 2013 -0500
+
+    sca: fix private hold handling
+    
+    - private hold call-info was being ignored in hold reINVITEs, causing
+      inaccurate "active" notifications to go to subscribers.
+    (cherry picked from commit 81b5473f5a191a5aa81295acf0d96a22160f7f31)
+
+commit 888ea024de803c4d01be15cb30929339790a09ef
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Mon Mar 4 23:13:53 2013 -0500
+
+    sca: fix regression dropping Expires header from SUBSCRIBE replies.
+    
+    - extra_headers.len lacked Expires header length after snprintf.
+    (cherry picked from commit 3b557293a33f6f3003fdd62a45e02cf8736b534e)
+
+commit 18593c16f5a4a7504a0de890b2bbc9025cff049f
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Sun Mar 3 17:01:53 2013 -0500
+
+    sca: move SUBSCRIBE response handling to sca_subscription_reply
+    
+    - create necessary headers, pass to newly generic sca_reply function.
+    (cherry picked from commit d528c27b6fa69530bfde4a6ce83c5d4dcc6499a5)
+
+commit 08b6b184dcab912edf8d58d8867f74f13c50c2da
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Sun Mar 3 17:00:44 2013 -0500
+
+    sca: reject out-of-dialog attempts to seize privately held call.
+    
+    - per spec, reject with 403 Forbidden.
+    (cherry picked from commit e565748048d7a6b6fda0a28959e092380c5bc26a)
+
+commit 5f017710a95d21ef89a936ca28ef73f5d80081e2
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Sun Mar 3 16:59:23 2013 -0500
+
+    sca: make sca_reply a generic reply function.
+    
+    - take a pre-filled extra_headers parameter instead, add with add_lump_rpl.
+    (cherry picked from commit d6d71b0e217226fe43491a0e9ba75ec0a6649cd5)
+
+commit 8972be270b422a5a1eef39249162e2abcde0feda
+Author: Andrew Mortensen <admorten@isc.upenn.edu>
+Date:   Thu Feb 14 16:55:36 2013 -0500
+
+    sca: fix race condition when two endpoints seize same index simultaneously
+    
+    - return 480 Temporarily Unavailable to loser of race.
+    (cherry picked from commit 522d06e75bf3c549af007701332f7db53a1b5ab6)
+
+commit e2642ea25cc19344d6e3e7f71e9df1cd7ef2532d
+Author: Peter Dunkley <peter.dunkley@crocodilertc.net>
+Date:   Tue Oct 1 10:52:01 2013 +0100
+
+    core: fix TCP connection leak
+    
+    - patch provided by Vitally Aleksandrov
+    (cherry picked from commit 6cfd13cbddd1869ffbc947fdecd77d18a3fcb886)
+
+commit a7e7d9277f503ab42055b4b3be130e3f4a6fcae1
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Mon Sep 30 10:44:27 2013 +0100
+
+    modules/websocket: Fix connection leaks
+    
+    - Decrease the TCP connection reference count after each use
+    (cherry picked from commit 27474179bdeef0ddaba05389f510446a387d85e1)
+    
+    Resolved conflicts due to new feeatures in master:
+    
+    	modules/websocket/ws_conn.c
+    	modules/websocket/ws_handshake.c
+
+commit d5eadc90ebdb6460b43d304de86a37893263ce2d
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Thu Jul 4 10:30:51 2013 +0100
+
+    core: Fix connection leak with websockets
+    
+    - Decrease connection ref count after using connection
+    (cherry picked from commit ffdae5987b99b9bfd39992d407a3a0a33aa772ab)
+
+commit 1e774166724e0bdd2c43091b3b19c1b82d197242
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed Jul 3 10:39:32 2013 +0100
+
+    modules/tls: Free TLS data for secure websocket connections
+    (cherry picked from commit 074f12c5a444188aa023797ac70e2d38d225cb18)
+
+commit 76319cf9600b71364e3cd6509f61da2f60b2f10f
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed Jul 3 10:46:44 2013 +0100
+
+    modules/websocket: Fix pkg memory leaks
+    
+    - Fix pkg memory leaks in error cases
+    - Fix incorrect memory allocation size for ws connections
+    - Fix typo in websocket stats
+    (cherry picked from commit d0f88e19577d9b914922f83049075b7786f3d8df)
+
+commit 77a53b8df680808a20c73953f1e5348df5d309d2
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Thu Jul 4 09:33:56 2013 +0100
+
+    core: Improve tcp stats output
+    
+    - Add connection ref count
+    - Add websocket protocols
+    (cherry picked from commit fb4dc4b7b866239a90a4d6441ed319664697edab)
+
+commit 052dfbe29933bf773ba5d109a530c2b2f7ecb59c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 19 15:59:18 2013 +0200
+
+    pkg: kamailio - provide -f $CFGFILE to init.d config check function
+    
+    - reported by Grant Bagdasarian
+    
+    (cherry picked from commit f7fe8b68ffb100fbaa27344e4bee7ba69c760584)
+
+commit 38157fdbdadd1ff2a0ac902088082ad96b0c2f04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 19 14:06:46 2013 +0200
+
+    core: reset fields from sip_msg_t in shm cloned structure
+    
+    - instance was pointing to pkg
+
+commit 1550ce9a0ffa012daf413a0abee5d80bd7cc60de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 19 14:05:21 2013 +0200
+
+    tm: reset faked request fields that can be set in failure handlers
+
+commit 3ca71bbf4f61c83d8e82c988d0789d147f81f30b
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed Sep 18 21:34:16 2013 +0100
+
+    modules/sdpops: Check for valid sdp body in sdp_remove_line_by_prefix
+    
+    - Fixes crash when used on requests with no body
+
+commit 84b21f2e9f602032d5950069cbd1dbf3ac416fcb
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed Sep 18 21:58:12 2013 +0100
+
+    modules/app_lua: Fix off-by-one error in modf
+    
+    - Fixes calling sr.modf with additional parameters
+
+commit 8ffa88060ebfd0634c0cebfea43189a8e1545b4b
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Sep 18 08:29:41 2013 +0300
+
+    modules/lcr: fixed checking of IPv4 address in to_any_gw_2 function
+
+commit a331af11519765e863ddad68878f7c5d571d0823
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Sun Sep 15 16:38:34 2013 -0400
+
+    xhttp_pi: fix crash when checking bad configs
+    (cherry picked from commit d1219dc0d0c5e2eab0672a439aa7ce6486c31ba3)
+
+commit c79fb705391b90813a501165049ac79aff80928f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 14 11:08:23 2013 +0200
+
+    tm: docs - no event_routes.xml in this version
+    
+    - readme regenerated
+
+commit 07a8f0da3d8f3d1ec4b3e4e88db485e5015a31f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 14 09:46:23 2013 +0200
+
+    tm: added missing documentation for t_check_status()
+    
+    (cherry picked from commit f328b864418020b1e166b13804fe173110500d75)
+    
+    Conflicts:
+    	modules/tm/doc/functions.xml
+
+commit 120b736c14b3dae780cfc9ef7fc8fd1c79d32d92
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 10 14:14:52 2013 +0200
+
+    kamdbctl: added missing dbuid tables group creation
+    
+    - patch by elactrum [at] jamailca.com
+    (cherry picked from commit 6f17209a70e84d91976ea42b476ae248b9b37501)
+
+commit 51f40460096d9c249ce34d9b4fbecf366b5f974e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Sep 9 16:52:47 2013 +0200
+
+    uac_redirect: get_redirect() check reason value before using it.
+    
+    This fix a core dump when get_redirects() config fuction is called with just
+    the one parameter.
+    (cherry picked from commit abf0026782c0ba4643feb25ded022e8c12725584)
+
+commit 9c8fd38683d9f6531b0d6ee966d81d878095bf6a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 22:59:13 2013 +0200
+
+    registrar: reset r-uri pointer after backup in lookup_branches()
+    
+    - otherwise can be invalidated by next branch lookup
+    
+    (cherry picked from commit 9b44e4b48862947f2ea634c6dd611ce7c07546a2)
+
+commit d8739609c85cb00da9486b3f91d0c4834048485f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 13:04:23 2013 +0200
+
+    topoh: safety check for missing To header
+    
+    - based on a patch by Michel de Weerd, FS#303
+    
+    (cherry picked from commit 362d374a61953aee3cf9f96eadaef63c5f22763e)
+
+commit 756e30f5c33ef4ab122b333b4d1b6ce80cec0f2f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 12:33:45 2013 +0200
+
+    db_postgres: use variable for make tool in module Makefile
+    
+    - fixes builds in BSD systems
+    - patch by Victor (coyote), FS#335
+    
+    (cherry picked from commit 7abd496560c6274680d451f49355ad1f6a14a6a7)
+
+commit 796d53ddec3fe12dcb93d4a4c293de0f610581d5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 11:54:07 2013 +0200
+
+    tm: readme regenerated from xml files
+
+commit e7a00bb913fc24be894a668317dd2f2ac143cbed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 11:53:28 2013 +0200
+
+    tm: updated xml docs with t_set_disable_internal_reply()
+    
+    - backported from 6073949aa224ea7a973058891a88a58cc0841860
+
+commit 55587b6bd035f2ab10f73c6c9bde95628688e799
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 23 21:03:13 2013 +0200
+
+    tm: removed note about no-implentation for no-reply flag for t_relay_to()
+    
+    (cherry picked from commit ef9b69bbb54302e9985dd37d79831b6f80463fc1)
+
+commit 98ba4cec3ca2caef40725c3884e7dd5693d6c3c1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 11:44:23 2013 +0200
+
+    rtpproxy: updated rtpproxy_manage() to handle PRACKs with sdp
+    
+    (cherry picked from commit 2aa5095252f9434c7c2a63ecb130bdaf1346fde9)
+
+commit 3d836040bdb6d191e6f6a54e37fe680e1e3973d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 11:47:36 2013 +0200
+
+    tm: re-added the option for no-internal reply on error
+    
+    - new function t_set_disable_internal_reply(0|1) to disable|enable this
+      option per transaction
+    - t_relay_to() flags re-enabled for this option
+    - backport of 0f2f9c85eff0b6ad35b4c58dfcde74c8a65559d6
+
+commit 2a224a569cea270d8db84438f163b9f309569df9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 22 00:14:53 2013 +0200
+
+    core: print src address details if initial message parsing fails
+    
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit 3ccf4b43e81bd2654cb306a3c2cc21b97cb51f62)
+
+commit fd4a2dde96a692c165f382839c3bef8636dfd9e2
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Aug 22 08:20:52 2013 +0300
+
+    modules/lcr: added some linefeed chars missing from syslog messages
+    
+    - Patch provided by Kevin Scott Adams.
+    (cherry picked from commit d03651fb4c3a6b50923029e121eed201fb1ff550)
+
+
 ===================== 2013-08-15 Version 4.0.3 Released =====================
 
 ===================== Changes Since Version 4.0.2 ===========================
