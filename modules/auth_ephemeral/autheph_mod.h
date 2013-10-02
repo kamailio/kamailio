@@ -23,12 +23,14 @@
 #ifndef AUTHEPH_MOD_H
 #define AUTHEPH_MOD_H
 
+#include "../../locking.h"
 #include "../../str.h"
 #include "../../modules/auth/api.h"
 
 struct secret
 {
 	str secret_key;
+	struct secret *prev;
 	struct secret *next;
 };
 extern struct secret *secret_list;
@@ -40,5 +42,9 @@ typedef enum {
 extern autheph_username_format_t autheph_username_format;
 
 extern auth_api_s_t eph_auth_api;
+
+extern gen_lock_t *autheph_secret_lock;
+#define SECRET_LOCK	lock_get(autheph_secret_lock)
+#define SECRET_UNLOCK	lock_release(autheph_secret_lock)
 
 #endif /* AUTHEPH_MOD_H */

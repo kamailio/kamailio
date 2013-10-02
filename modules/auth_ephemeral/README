@@ -39,6 +39,12 @@ Peter Dunkley
               4.6. autheph_check_to([username])
               4.7. autheph_check_timestamp(username)
 
+        5. MI Commands
+
+              5.1. autheph.add_secret
+              5.2. autheph.dump_secrets
+              5.3. autheph.rm_secret
+
    List of Examples
 
    1.1. Request example
@@ -83,6 +89,12 @@ Chapter 1. Admin Guide
         4.5. autheph_check_from([username])
         4.6. autheph_check_to([username])
         4.7. autheph_check_timestamp(username)
+
+   5. MI Commands
+
+        5.1. autheph.add_secret
+        5.2. autheph.dump_secrets
+        5.3. autheph.rm_secret
 
 1. Overview
 
@@ -421,3 +433,65 @@ if (!autheph_check_timestamp("$var(username)")) {
     exit;
 }
 ...
+
+5. MI Commands
+
+   5.1. autheph.add_secret
+   5.2. autheph.dump_secrets
+   5.3. autheph.rm_secret
+
+5.1. autheph.add_secret
+
+   Add a secret to the head of the shared secret list. The secret will be
+   the first one tried during future authentication attempts. This MI
+   command allows you to update the shared secret list without having to
+   restart Kamailio.
+
+Note
+
+   If you want your new shared secret list to persist across restarts you
+   must add it to your Kamailio configuration file.
+
+   Name: autheph.add_secret
+
+   Parameters:
+     * secret
+
+   MI FIFO Command Format:
+                        :autheph.add_secret:fifo_reply
+                        kamailio_rules
+                        _empty_line_
+
+5.2. autheph.dump_secrets
+
+   Dump the set of shared secrets.
+
+   Name: autheph.dump_secrets
+
+   Parameters:
+     * none
+
+   MI FIFO Command Format:
+                        :autheph.dump_secrets:fifo_reply
+                        _empty_line_
+
+5.3. autheph.rm_secret
+
+   Remove the secret with the specified integer ID. This MI command allows
+   you to update the shared secret list without having to restart
+   Kamailio.
+
+Note
+
+   If you want your new shared secret list to persist across restarts you
+   must add it to your Kamailio configuration file.
+
+   Name: autheph.rm_secret
+
+   Parameters:
+     * ID - the ID of the secret to remove
+
+   MI FIFO Command Format:
+                        :autheph.rm_secret:fifo_reply
+                        0
+                        _empty_line_

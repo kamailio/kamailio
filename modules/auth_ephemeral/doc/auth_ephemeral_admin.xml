@@ -502,5 +502,73 @@ if (!autheph_check_timestamp("$var(username)")) {
 		</example>
 	</section>
 	</section>
+
+	<section>
+	<title>MI Commands</title>
+	<section id="auth_eph.m.autheph.add_secret">
+		<title><function moreinfo="none">autheph.add_secret</function></title>
+		<para>Add a secret to the head of the shared secret list. The
+		secret will be the first one tried during future authentication
+		attempts. This MI command allows you to update the shared secret
+		list without having to restart Kamailio.</para>
+		<note><para>If you want your new shared secret list to persist
+		across restarts you must add it to your Kamailio configuration
+		file.</para></note>
+		<para>Name: <emphasis>autheph.add_secret</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>secret</para>
+			</listitem>
+		</itemizedlist>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:autheph.add_secret:fifo_reply
+			kamailio_rules
+			_empty_line_
+</programlisting>
+	</section>
+
+	<section id="auth_eph.m.autheph.dump_secrets">
+		<title><function moreinfo="none">autheph.dump_secrets</function></title>
+		<para>Dump the set of shared secrets.</para>
+		<para>Name: <emphasis>autheph.dump_secrets</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>none</emphasis></para>
+			</listitem>
+		</itemizedlist>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:autheph.dump_secrets:fifo_reply
+			_empty_line_
+</programlisting>
+	</section>
+
+	<section id="auth_eph.m.autheph.rm_secret">
+		<title><function moreinfo="none">autheph.rm_secret</function></title>
+		<para>Remove the secret with the specified integer ID.  This MI
+		command allows you to update the shared secret list without
+		having to restart Kamailio.</para>
+		<note><para>If you want your new shared secret list to persist
+		across restarts you must add it to your Kamailio configuration
+		file.</para></note>
+		<para>Name: <emphasis>autheph.rm_secret</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>ID - the ID of the secret to remove</para>
+			</listitem>
+		</itemizedlist>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:autheph.rm_secret:fifo_reply
+			0
+			_empty_line_
+</programlisting>
+	</section>
+
+	</section>
 </chapter>
 

@@ -170,7 +170,7 @@ static inline int digest_authenticate(struct sip_msg *_m, str *_realm,
 {
 	struct hdr_field* h;
 	int ret;
-	struct secret *secret_struct = secret_list;
+	struct secret *secret_struct;
 	str username;
 
 	LM_DBG("realm: %.*s\n", _realm->len, _realm->s);
@@ -216,6 +216,8 @@ static inline int digest_authenticate(struct sip_msg *_m, str *_realm,
 		return AUTH_ERROR;
 	}
 
+	SECRET_LOCK;
+	secret_struct = secret_list;
 	while (secret_struct != NULL)
 	{
 		ret = do_auth(_m, h, _realm, _method,
@@ -226,6 +228,7 @@ static inline int digest_authenticate(struct sip_msg *_m, str *_realm,
 		}
 		secret_struct = secret_struct->next;
 	}
+	SECRET_UNLOCK;
 
 	return ret;
 }
@@ -407,7 +410,7 @@ int autheph_authenticate(struct sip_msg *_m, char *_username, char *_password)
 	str susername, spassword;
 	char generated_password[base64_enc_len(SHA_DIGEST_LENGTH)];
 	str sgenerated_password;
-	struct secret *secret_struct = secret_list;
+	struct secret *secret_struct;
 
 	if (_m == NULL || _username == NULL || _password == NULL)
 	{
@@ -449,6 +452,8 @@ int autheph_authenticate(struct sip_msg *_m, char *_username, char *_password)
 	LM_DBG("password: %.*s\n", spassword.len, spassword.s);
 
 	sgenerated_password.s = generated_password;
+	SECRET_LOCK;
+	secret_struct = secret_list;
 	while (secret_struct != NULL)
 	{
 		LM_DBG("trying secret: %.*s\n",
@@ -462,11 +467,13 @@ int autheph_authenticate(struct sip_msg *_m, char *_username, char *_password)
 			if (strncmp(spassword.s, sgenerated_password.s,
 					spassword.len) == 0)
 			{
+				SECRET_UNLOCK;
 				return AUTH_OK;
 			}
 		}
 		secret_struct = secret_struct->next;
 	}
+	SECRET_UNLOCK;
 
 	return AUTH_ERROR;
 }
