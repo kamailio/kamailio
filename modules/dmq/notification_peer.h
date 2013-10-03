@@ -33,6 +33,8 @@
 #include "peer.h"
 #include "dmq_funcs.h"
 
+extern str notification_content_type;
+
 int add_notification_peer();
 int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp);
 int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg);

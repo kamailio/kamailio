@@ -60,7 +60,7 @@ typedef struct dmq_api {
         <section>
                 <title>
                 <function moreinfo="none">bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
-                dmq_resp_cback_t* resp_cback, int max_forwards)</function>
+                dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)</function>
                 </title>
                 <para>
                 Broadcast a DMQ message to all nodes in the DMQ bus excluding self, 
@@ -80,7 +80,7 @@ typedef struct dmq_api {
         <section>
                 <title>
                 <function moreinfo="none">send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
-                dmq_resp_cback_t* resp_cback, int max_forwards)</function>
+                dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)</function>
                 </title>
                 <para>
                 Send a DMQ message to a single node.

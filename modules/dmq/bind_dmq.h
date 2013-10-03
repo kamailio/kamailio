@@ -31,9 +31,9 @@
 #include "dmq_funcs.h"
 
 typedef int (*bcast_message_t)(dmq_peer_t* peer, str* body, dmq_node_t* except,
-		dmq_resp_cback_t* resp_cback, int max_forwards);
+		dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type);
 typedef int (*send_message_t)(dmq_peer_t* peer, str* body, dmq_node_t* node,
-		dmq_resp_cback_t* resp_cback, int max_forwards);
+		dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type);
 
 typedef struct dmq_api {
 	register_dmq_peer_t register_dmq_peer;

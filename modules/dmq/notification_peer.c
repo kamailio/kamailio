@@ -26,7 +26,7 @@
 
 #include "notification_peer.h"
 
-static str notification_content_type = str_init("text/plain");
+str notification_content_type = str_init("text/plain");
 dmq_resp_cback_t notification_callback = {&notification_resp_callback_f, 0};
 
 /**
@@ -191,7 +191,7 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 	if(nodes_recv > 0 && maxforwards > 0) {
 		/* maxforwards is set to 0 so that the message is will not be in a spiral */
 		bcast_dmq_message(dmq_notification_peer, response_body, 0,
-				&notification_callback, maxforwards);
+				&notification_callback, maxforwards, &notification_content_type);
 	}
 	LM_DBG("broadcasted message\n");
 	pkg_free(response_body);
@@ -267,7 +267,7 @@ int request_nodelist(dmq_node_t* node, int forward)
 		return -1;
 	}
 	ret = dmq_send_message(dmq_notification_peer, body, node,
-			&notification_callback, forward);
+			&notification_callback, forward, &notification_content_type);
 	pkg_free(body->s);
 	pkg_free(body);
 	return ret;

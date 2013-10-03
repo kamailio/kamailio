@@ -165,7 +165,7 @@ modparam("dmq", "ping_interval", 90)
         </section>
         <section>
                 <title>
-               	<function moreinfo="none">dmq_send_message(peer, node, body)</function>
+               	<function moreinfo="none">dmq_send_message(peer, node, body, content_type)</function>
                 </title>
                 <para>
                 Sends a DMQ message directly from config file.
@@ -187,6 +187,11 @@ modparam("dmq", "ping_interval", 90)
 	                        <emphasis>body</emphasis> - the message body.
 	                        </para>
 	                </listitem>
+                	<listitem>
+                        	<para>
+	                        <emphasis>content_type</emphasis> - the MIME type of the message body.
+	                        </para>
+	                </listitem>
 		</itemizedlist>
                 <para>
                 This function can be used from any route.
@@ -196,7 +201,7 @@ modparam("dmq", "ping_interval", 90)
                 <title><function>dmq_send_message</function> usage</title>
                 <programlisting format="linespecific">
 ...
-	dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...\n");
+	dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...", "text/plain");
 ...
 </programlisting>
                 </example>
