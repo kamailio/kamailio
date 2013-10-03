@@ -31,4 +31,7 @@
 
 #define RO_AVP_CCA_RETURN_CODE "cca_return_code"
 #define RO_AVP_CCA_RETURN_CODE_LENGTH 15
+
+#define RO_MAC_AVP_NAME	"$avp(ro_mac_value)"
+
 #endif /* MOD_H_ */
