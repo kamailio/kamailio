@@ -39,17 +39,19 @@ Charles Chance
         4. Functions
 
               4.1. dmq_handle_message()
-              4.2. dmq_send_message(peer, node, body)
+              4.2. dmq_send_message(peer, node, body, content_type)
 
    2. Developer Guide
 
         1. dmq_load_api(dmq_api_t* api)
         2. register_dmq_peer(dmq_peer_t* peer)
         3. bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
-                dmq_resp_cback_t* resp_cback, int max_forwards)
+                dmq_resp_cback_t* resp_cback, int max_forwards, str*
+                content_type)
 
         4. send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
-                dmq_resp_cback_t* resp_cback, int max_forwards)
+                dmq_resp_cback_t* resp_cback, int max_forwards, str*
+                content_type)
 
    List of Examples
 
@@ -84,7 +86,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. dmq_handle_message()
-        4.2. dmq_send_message(peer, node, body)
+        4.2. dmq_send_message(peer, node, body, content_type)
 
 1. Overview
 
@@ -176,7 +178,7 @@ modparam("dmq", "ping_interval", 90)
 4. Functions
 
    4.1. dmq_handle_message()
-   4.2. dmq_send_message(peer, node, body)
+   4.2. dmq_send_message(peer, node, body, content_type)
 
 4.1.  dmq_handle_message()
 
@@ -193,7 +195,7 @@ modparam("dmq", "ping_interval", 90)
         }
 ...
 
-4.2.  dmq_send_message(peer, node, body)
+4.2.  dmq_send_message(peer, node, body, content_type)
 
    Sends a DMQ message directly from config file.
 
@@ -201,13 +203,14 @@ modparam("dmq", "ping_interval", 90)
      * peer - name of peer that should handle the message.
      * node - the node to which the message should be sent.
      * body - the message body.
+     * content_type - the MIME type of the message body.
 
    This function can be used from any route.
 
    Example 1.6. dmq_send_message usage
 ...
-        dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...\n")
-;
+        dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...", "
+text/plain");
 ...
 
 Chapter 2. Developer Guide
@@ -217,10 +220,12 @@ Chapter 2. Developer Guide
    1. dmq_load_api(dmq_api_t* api)
    2. register_dmq_peer(dmq_peer_t* peer)
    3. bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
-          dmq_resp_cback_t* resp_cback, int max_forwards)
+          dmq_resp_cback_t* resp_cback, int max_forwards, str*
+          content_type)
 
    4. send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
-          dmq_resp_cback_t* resp_cback, int max_forwards)
+          dmq_resp_cback_t* resp_cback, int max_forwards, str*
+          content_type)
 
    The module provides the following functions that can be used in other
    Kamailio modules.
@@ -250,7 +255,7 @@ typedef struct dmq_api {
 ...
 
 3.  bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
-dmq_resp_cback_t* resp_cback, int max_forwards)
+dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)
 
    Broadcast a DMQ message to all nodes in the DMQ bus excluding self,
    inactive nodes and "except" if specified.
@@ -261,7 +266,7 @@ dmq_resp_cback_t* resp_cback, int max_forwards)
 ...
 
 4.  send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
-dmq_resp_cback_t* resp_cback, int max_forwards)
+dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)
 
    Send a DMQ message to a single node.
 
