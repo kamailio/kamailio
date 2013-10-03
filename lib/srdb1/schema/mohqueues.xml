@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="mohqueues" xmlns:db="http://docbook.org/ns/docbook">
+  <name>mohqueues</name>
+  <version>1</version>
+  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+  <description>
+    <db:para>This table is used by the mohqueue module to store queue definitions. This is a read-only table from the viewpoint of the module. More information about the mohqueue module can be found at: &KAMAILIO_MOD_DOC;mohqueue.html
+    </db:para>
+  </description>
+
+  <column id="id">
+    <name>id</name>
+    <type>unsigned int</type>
+    <size>&table_id_len;</size>
+    <autoincrement/>
+    <primary/>
+    <type db="dbtext">int,auto</type>
+    <description>Unique ID</description>
+  </column>
+
+  <column id="name">
+    <name>name</name>
+    <type>string</type>
+    <size>25</size>
+    <description>queue name</description>
+  </column>
+
+  <column id="uri">
+    <name>uri</name>
+    <type>string</type>
+    <size>100</size>
+    <description>URI for the queue</description>
+  </column>
+
+  <column id="mohdir">
+    <name>mohdir</name>
+    <type>string</type>
+    <size>100</size>
+    <null/>
+    <description>directory for MOH files</description>
+  </column>
+
+  <column id="mohfile">
+    <name>mohfile</name>
+    <type>string</type>
+    <size>100</size>
+    <description>base name for the MOH file</description>
+  </column>
+
+  <column id="debug">
+    <name>debug</name>
+    <type>int</type>
+    <description>debug flag</description>
+  </column>
+
+  <index>
+    <name>mohqueue_uri_idx</name>
+    <colref linkend="uri" />
+    <unique/>
+  </index>
+
+  <index>
+    <name>mohqueue_name_idx</name>
+    <colref linkend="name" />
+    <unique/>
+  </index>
+</table>
