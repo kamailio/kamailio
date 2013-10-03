@@ -288,6 +288,7 @@ static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_0_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_3_f(struct sip_msg *, char *, char *, char *);
+static int set_contact_alias_f(struct sip_msg* msg, char* str1, char* str2);
 static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
 static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
@@ -368,6 +369,9 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"add_contact_alias",  (cmd_function)add_contact_alias_3_f,  3,
 		fixup_add_contact_alias, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"set_contact_alias",  (cmd_function)set_contact_alias_f,  0,
+		0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"handle_ruri_alias",  (cmd_function)handle_ruri_alias_f,    0,
 		0, 0,
@@ -836,6 +840,72 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		len = len1;
 	hostport.s[0] = temp[0];
 	c->uri.s[c->uri.len] = temp[1];
+	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_T) == 0) {
+		pkg_free(buf);
+		return -1;
+	}
+	c->uri.s = buf;
+	c->uri.len = len;
+
+	return 1;
+}
+
+/*
+ * Replaces ip:port pair in the Contact: field with the source address
+ * of the packet.
+ */
+static int
+set_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	char nbuf[MAX_URI_SIZE];
+	str nuri;
+	int br;
+
+	int offset, len;
+	char *buf;
+	contact_t *c;
+	struct lump *anchor;
+	struct sip_uri uri;
+
+	nuri.s = nbuf;
+	nuri.len = MAX_URI_SIZE;
+	if (get_contact_uri(msg, &uri, &c) == -1)
+		return -1;
+	if ((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
+		LM_ERR("you can't update contact twice, check your config!\n");
+		return -1;
+	}
+
+	if(uri_add_rcv_alias(msg, &c->uri, &nuri)<0) {
+		LM_DBG("cannot add the alias parameter\n");
+		return -1;
+	}
+
+	br = 1;
+	if(c->uri.s[-1]=='<')
+		br = 0;
+
+
+	len = nuri.len + 2*br;
+	buf = pkg_malloc(len + 1);
+	if (buf == NULL) {
+		LM_ERR("out of pkg memory\n");
+		return -1;
+	}
+	if(br==1) {
+		buf[0] = '<';
+		strncpy(buf+1, nuri.s, nuri.len);
+		buf[len-1] = '>';
+	} else {
+		strncpy(buf, nuri.s, nuri.len);
+	}
+	buf[len] = '\0';
+
+	offset = c->uri.s - msg->buf;
+	anchor = del_lump(msg, offset, c->uri.len, HDR_CONTACT_T);
+	if (anchor == 0)
+		return -1;
+
 	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_T) == 0) {
 		pkg_free(buf);
 		return -1;
