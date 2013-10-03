@@ -397,7 +397,7 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir, str *hdrs)
 	else
 		di->loc_seq.value -= 1;
 
-	LM_DBG("sending BYE to %s\n", (dir==DLG_CALLER_LEG)?"caller":"callee");
+	LM_DBG("sending OPTIONS to %s\n", (dir==DLG_CALLER_LEG)?"caller":"callee");
 
 	iuid = dlg_get_iuid_shm_clone(dlg);
 	if(iuid==NULL)
@@ -411,7 +411,7 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir, str *hdrs)
 	result = d_tmb.t_request_within(&uac_r);
 
 	if(result < 0){
-		LM_ERR("failed to send the BYE request\n");
+		LM_ERR("failed to send the OPTIONS request\n");
 		goto err;
 	}
 
