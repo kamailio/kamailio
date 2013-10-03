@@ -697,6 +697,36 @@ fix_nated_register();
 		</example>
 	</section>
 
+	<section id="nathelper.set_contact_alias">
+		<title>
+		<function moreinfo="none">set_contact_alias()</function>
+		</title>
+		<para>
+		Adds ;alias=ip~port~transport parameter to contact URI
+		containing received ip, port, and transport protocol. The new
+		contact URI is immediately visible to other modules in the
+		way fix_nated_contact() does it.
+		</para>
+		<para>
+		This function can be used from
+		REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE, and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>set_contact_alias</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if (!is_present_hf("Record-Route")) {
+        if (!set_contact_alias()) {
+            xlog("L_ERR", "Error in aliasing contact $ct\n");
+            send_reply("400", "Bad request");
+            exit;
+        };
+    };
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

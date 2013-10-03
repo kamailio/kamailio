@@ -24,13 +24,13 @@ Edited by
 
 Ovidiu Sas
 
-   Copyright © 2003-2008 Sippy Software, Inc.
+   Copyright � 2003-2008 Sippy Software, Inc.
 
-   Copyright © 2005 Voice Sistem SRL
+   Copyright � 2005 Voice Sistem SRL
 
-   Copyright © 2009 TuTPro Inc.
+   Copyright � 2009 TuTPro Inc.
 
-   Copyright © 2010 VoIPEmbedded Inc.
+   Copyright � 2010 VoIPEmbedded Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -69,6 +69,7 @@ Ovidiu Sas
               5.6. is_rfc1918(ip_address)
               5.7. add_contact_alias([ip_addr, port, proto])
               5.8. handle_ruri_alias()
+              5.9. set_contact_alias()
 
         6. Exported Pseudo Variables
 
@@ -105,10 +106,11 @@ Ovidiu Sas
    1.16. fix_nated_register usage
    1.17. add_contact_alias usage
    1.18. handle_ruri_alias usage
-   1.19. $rr_count usage
-   1.20. $rr_top_count usage
-   1.21. nh_enable_ping usage
-   1.22. @nathelper.rewrite_contact usage
+   1.19. set_contact_alias usage
+   1.20. $rr_count usage
+   1.21. $rr_top_count usage
+   1.22. nh_enable_ping usage
+   1.23. @nathelper.rewrite_contact usage
 
 Chapter 1. Admin Guide
 
@@ -146,6 +148,7 @@ Chapter 1. Admin Guide
         5.6. is_rfc1918(ip_address)
         5.7. add_contact_alias([ip_addr, port, proto])
         5.8. handle_ruri_alias()
+        5.9. set_contact_alias()
 
    6. Exported Pseudo Variables
 
@@ -240,7 +243,7 @@ Chapter 1. Admin Guide
    Socket to be used when sending NAT pings for UDP communication. If no
    one specified, the OS will choose a socket.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.1. Set force_socket parameter
 ...
@@ -267,7 +270,7 @@ modparam("nathelper", "natping_interval", 10)
 
 4.3. ping_nated_only (integer)
 
-   If this variable is set then only contacts that have “behind_NAT” flag
+   If this variable is set then only contacts that have "behind_NAT" flag
    in user location database set will get ping.
 
    Default value is 0.
@@ -342,7 +345,7 @@ modparam("nathelper", "sipping_bflag", 7)
    feature, you have to set this parameter. The SIP request pinging will
    be used only for requests marked so.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.8. Set sipping_from parameter
 ...
@@ -354,7 +357,7 @@ modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
    The parameter sets the SIP method to be used in generating the SIP
    requests for NAT ping purposes.
 
-   Default value is “OPTIONS”.
+   Default value is "OPTIONS".
 
    Example 1.9. Set sipping_method parameter
 ...
@@ -386,7 +389,7 @@ Note
 
    The string must be a complete SDP line, including the EOH (\r\n).
 
-   Default value is “a=nortpproxy:yes\r\n”.
+   Default value is "a=nortpproxy:yes\r\n".
 
    Example 1.11. Set nortpproxy_str parameter
 ...
@@ -405,7 +408,7 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
    Keepalives are sent stateless, not using TM module. The value of this
    parameter has to be few times higher than natping_interval.
 
-   Default value is “0” (feature disabled).
+   Default value is "0" (feature disabled).
 
    Example 1.12. Set keepalive_timeout parameter
 ...
@@ -422,8 +425,9 @@ modparam("nathelper", "keepalive_timeout", 120)
    5.6. is_rfc1918(ip_address)
    5.7. add_contact_alias([ip_addr, port, proto])
    5.8. handle_ruri_alias()
+   5.9. set_contact_alias()
 
-5.1.  fix_nated_contact()
+5.1. fix_nated_contact()
 
    Rewrites Contact HF to contain request's source address:port.
 
@@ -435,20 +439,20 @@ modparam("nathelper", "keepalive_timeout", 120)
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
 
-5.2.  fix_nated_sdp(flags [, ip_address])
+5.2. fix_nated_sdp(flags [, ip_address])
 
    Alters the SDP information in orer to facilitate NAT traversal. What
-   changes to be performed may be controled via the “flags” parameter.
+   changes to be performed may be controled via the "flags" parameter.
    Return value is -1 if error occurred, 1 if ip's were replaced, 2 if no
    ip's were replaced.
 
    Meaning of the parameters is as follows:
      * flags - the value may be a bitwise OR of the following flags:
-          + 0x01 - adds “a=direction:active” SDP line;
+          + 0x01 - adds "a=direction:active" SDP line;
           + 0x02 - rewrite media IP address (c=) with source address of
             the message or the provided IP address (the provide IP address
             take precedence over the source address).
-          + 0x04 - adds “a=nortpproxy:yes” SDP line;
+          + 0x04 - adds "a=nortpproxy:yes" SDP line;
           + 0x08 - rewrite IP from origin description (o=) with source
             address of the message or the provided IP address (the provide
             IP address take precedence over the source address).
@@ -465,7 +469,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
 
-5.3.  add_rcv_param([flag]),
+5.3. add_rcv_param([flag]),
 
    Add received parameter to Contact header fields or Contact URI. The
    parameter will contain URI created from the source IP, port, and
@@ -489,7 +493,7 @@ add_rcv_param(); # add the parameter to the Contact header
 add_rcv_param("1"); # add the parameter to the Contact URI
 ...
 
-5.4.  fix_nated_register()
+5.4. fix_nated_register()
 
    The function creates a URI consisting of the source IP, port, and
    protocol and stores the URI in an Attribute-Value-Pair. The URI will be
@@ -507,7 +511,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 fix_nated_register();
 ...
 
-5.5.  nat_uac_test(flags)
+5.5. nat_uac_test(flags)
 
    Tries to guess if client's request originated behind a nat. The
    parameter determines what heuristics is used.
@@ -533,14 +537,14 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-5.6.  is_rfc1918(ip_address)
+5.6. is_rfc1918(ip_address)
 
    Determines if the address in the parameter is an rfc1918 address. The
    parameter allows pseudo-variables usage.
 
    This function can be used from ANY_ROUTE.
 
-5.7.  add_contact_alias([ip_addr, port, proto])
+5.7. add_contact_alias([ip_addr, port, proto])
 
    Adds ;alias=ip~port~transport parameter to contact URI containing
    either received ip, port, and transport protocol or those given as
@@ -560,7 +564,7 @@ fix_nated_register();
     };
 ...
 
-5.8.  handle_ruri_alias()
+5.8. handle_ruri_alias()
 
    Checks if Request URI has alias param and if so, removes it and sets
    $du based on its value. Note that this means that routing of request is
@@ -595,6 +599,27 @@ fix_nated_register();
     };
 ...
 
+5.9. set_contact_alias()
+
+   Adds ;alias=ip~port~transport parameter to contact URI containing
+   received ip, port, and transport protocol. The new contact URI is
+   immediately visible to other modules in the way fix_nated_contact()
+   does it.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE, and FAILURE_ROUTE.
+
+   Example 1.19. set_contact_alias usage
+...
+    if (!is_present_hf("Record-Route")) {
+        if (!set_contact_alias()) {
+            xlog("L_ERR", "Error in aliasing contact $ct\n");
+            send_reply("400", "Bad request");
+            exit;
+        };
+    };
+...
+
 6. Exported Pseudo Variables
 
    6.1. $rr_count
@@ -604,7 +629,7 @@ fix_nated_register();
 
    Number of Record Routes in received SIP request or reply.
 
-   Example 1.19. $rr_count usage
+   Example 1.20. $rr_count usage
 ...
     $avp(rr_count) = $rr_count;
 ...
@@ -616,7 +641,7 @@ fix_nated_register();
    value of $rr_top_count is 1. If there is no Record Route(s), value of
    $rr_top_count is 0.
 
-   Example 1.20. $rr_top_count usage
+   Example 1.21. $rr_top_count usage
 ...
     if ($rr_count == $avp(rr_count) + $rr_top_count) {
         route(ADD_CONTACT_ALIAS);
@@ -634,7 +659,7 @@ fix_nated_register();
 
    The function takes only one parameter - a number in decimal format.
 
-   Example 1.21. nh_enable_ping usage
+   Example 1.22. nh_enable_ping usage
 ...
 $ kamctl fifo nh_enable_ping 1
 ...
@@ -649,7 +674,7 @@ $ kamctl fifo nh_enable_ping 1
    counted from 1. Only IP:port is rewritten, remaining part are left
    unchanged. Full nameaddr is supported.
 
-   Example 1.22. @nathelper.rewrite_contact usage
+   Example 1.23. @nathelper.rewrite_contact usage
 ...
 $c = @nathelper.rewrite_contact[1];
 ...
@@ -657,45 +682,45 @@ $c2 = @nathelper.rewrite_contact[1].nameaddr.uri;
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with “rtpproxy_disable” parameter?
+   2.1. What happend with "rtpproxy_disable" parameter?
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
 
    2.1.
 
-       What happend with “rtpproxy_disable” parameter?
+   What happend with "rtpproxy_disable" parameter?
 
-       It was removed as it became obsolete - now “rtpproxy_sock” can take
-       empty value to disable the rtpproxy functionality.
+   It was removed as it became obsolete - now "rtpproxy_sock" can take
+   empty value to disable the rtpproxy functionality.
 
    2.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.
