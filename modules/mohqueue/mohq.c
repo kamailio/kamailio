@@ -38,7 +38,6 @@ int fixup_count (void **, int);
 static int mod_child_init (int);
 static void mod_destroy (void);
 static int mod_init (void);
-int str_fixup (void **, int);
 
 /**********
 * global varbs
@@ -55,9 +54,9 @@ static cmd_export_t mod_cmds [] = {
   { "mohq_count", (cmd_function) mohq_count, 2, fixup_count, 0,
     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
   { "mohq_process", (cmd_function) mohq_process, 0, NULL, 0, REQUEST_ROUTE },
-  { "mohq_retrieve", (cmd_function) mohq_retrieve, 2, str_fixup, 0,
+  { "mohq_retrieve", (cmd_function) mohq_retrieve, 2, fixup_spve_spve, 0,
     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-  { "mohq_send", (cmd_function) mohq_send, 1, str_fixup, 0, REQUEST_ROUTE },
+  { "mohq_send", (cmd_function) mohq_send, 1, fixup_spve_spve, 0, REQUEST_ROUTE },
   { NULL, NULL, -1, 0, 0 },
 };
 
@@ -117,7 +116,9 @@ int fixup_count (void **param, int param_no)
 
 {
 if (param_no == 1)
-  { return str_fixup (param, param_no); }
+  { return fixup_spve_spve (param, 1); }
+if (param_no == 2)
+  { return fixup_pvar_null (param, 1); }
 return 0;
 }
 
@@ -408,12 +409,6 @@ if (!pmod_data->fn_rtp_stream_s)
   LM_ERR ("Unable to load rtpproxy_stream2uas");
   goto initerr;
   }
-pmod_data->fn_rtp_stop_stream = find_export ("rtpproxy_stop_stream2uas", 0, 0);
-if (!pmod_data->fn_rtp_stop_stream)
-  {
-  LM_ERR ("Unable to load rtpproxy_stop_stream2uas");
-  goto initerr;
-  }
 pmod_data->fn_rtp_destroy = find_export ("rtpproxy_destroy", 0, 0);
 if (!pmod_data->fn_rtp_destroy)
   {
@@ -444,30 +439,4 @@ if (pmod_data->pcall_lock->plock)
 shm_free (pmod_data);
 pmod_data = NULL;
 return -1;
-}
-
-/**********
-* String Fixup
-*
-* INPUT:
-*   Arg (1) = parameter array pointer
-*   Arg (1) = parameter number
-* OUTPUT: -1 if failed; 0 if saved as pv_elem_t
-**********/
-
-int str_fixup (void **param, int param_no)
-
-{
-pv_elem_t *ppv = NULL;
-str pstr [1];
-
-pstr->s = (char *)(*param);
-pstr->len = strlen (pstr->s);
-if (pv_parse_format (pstr, &ppv) < 0)
-  {
-  LM_ERR ("Invalid string format (%s)", pstr->s);
-  return E_UNSPEC;
-  }
-*param = (void*)ppv;
-return 0;
 }

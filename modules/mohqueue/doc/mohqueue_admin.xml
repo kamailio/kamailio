@@ -19,14 +19,12 @@ The mohqueue module diverts INVITE requests into a
 <ulink url="http://en.wikipedia.org/wiki/Music_on_hold">Music On
 Hold (MOH)</ulink> queue where the caller can listen to recorded
 audio until an operator is available to take the call. When an
-operator is available, a function can be used to put the oldest
-call for a queue on hold, disable the audio stream, and initiate
-an unattended transfer to a specified URI using a REFER command.
-If successful, the call is removed from the queue. If the transfer
-fails, the hold is turned off and the audio stream is reenabled.
+operator is available, a function can be used to transfer the oldest
+call in a queue to an operator using an unattended transfer (REFER)
+to a specified URI. If successful, the call is removed from the queue.
     </para>
     <para>
-While in queue, recorded audio is streamed to the caller in an
+While in queue, recorded audio is streamed to the caller in an endless
 loop using the rtpproxy module and application. Each queue can be
 configured to use different audio files.
     </para>
@@ -145,7 +143,8 @@ modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
 Defines the maximum number of calls that can be placed in queue.
 It is the sum of all calls in all queues. It must be in the range
 of 1 to 5000. <emphasis>NOTE:</emphasis> it may be limited by the
-processing power of the server.
+processing power of the server or the number of available rtpproxy
+ports.
       </para>
       <para>
 <emphasis>None. If not set by the module it must be defined in the
@@ -187,8 +186,7 @@ header field along with the RURI to find a match, except in the case
 of a CANCEL which matches only on the RURI.
       </para>
       <para>
-This function has no parameters and must be called from the main
-(request) route.
+This function has no parameters and must be called from a request route.
       </para>
       <para>
 <emphasis>Return code:</emphasis>

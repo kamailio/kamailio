@@ -36,6 +36,8 @@
 #include "../../flags.h"
 #include "../../hashes.h"
 #include "../../locking.h"
+#include "../../lvalue.h"
+#include "../../mod_fix.h"
 #include "../../sr_module.h"
 #include "../../str.h"
 

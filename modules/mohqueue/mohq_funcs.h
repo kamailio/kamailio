@@ -31,10 +31,10 @@
 rtpmap **find_MOH (char *, char *);
 struct mi_root *mi_debug (struct mi_root *, void *);
 struct mi_root *mi_drop_call (struct mi_root *, void *);
-int mohq_count (sip_msg_t *, pv_elem_t *, char *);
+int mohq_count (sip_msg_t *, char *, pv_spec_t *);
 void mohq_debug (mohq_lst *, char *, ...);
 int mohq_process (sip_msg_t *);
-int mohq_retrieve (sip_msg_t *, pv_elem_t *, pv_elem_t *);
-int mohq_send (sip_msg_t *, pv_elem_t *);
+int mohq_retrieve (sip_msg_t *, char *, char *);
+int mohq_send (sip_msg_t *, char *);
 
 #endif /* MOHQ_FUNCS_H */
