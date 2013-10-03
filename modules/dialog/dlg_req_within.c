@@ -34,6 +34,7 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../socket_info.h"
+#include "../../dset.h"
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/kmi/tree.h"
@@ -70,14 +71,39 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	dlg_t* td = NULL;
 	str cseq;
 	unsigned int loc_seq;
+	char nbuf[MAX_URI_SIZE];
+	char dbuf[80];
+	str nuri;
+	str duri;
+	size_t sz;
+	char *p;
 
-	td = (dlg_t*)pkg_malloc(sizeof(dlg_t));
+	/*remote target--- Request URI*/
+	if(cell->contact[dir].s==0 || cell->contact[dir].len==0){
+		LM_ERR("no contact available\n");
+		goto error;
+	}
+	/*restore alias parameter*/
+	nuri.s = nbuf;
+	nuri.len = MAX_URI_SIZE;
+	duri.s = dbuf;
+	duri.len = 80;
+	if(uri_restore_rcv_alias(&cell->contact[dir], &nuri, &duri)<0) {
+		nuri.len = 0;
+		duri.len = 0;
+	}
+	if(nuri.len>0 && duri.len>0) {
+		sz = sizeof(dlg_t) + (nuri.len+duri.len+2)*sizeof(char);
+	} else {
+		sz = sizeof(dlg_t);
+	}
+	td = (dlg_t*)pkg_malloc(sz);
 	if(!td){
 	
 		LM_ERR("out of pkg memory\n");
 		return NULL;
 	}
-	memset(td, 0, sizeof(dlg_t));
+	memset(td, 0, sz);
 
 	/*local sequence number*/
 	cseq = (dir == DLG_CALLER_LEG) ?	cell->cseq[DLG_CALLEE_LEG]:
@@ -100,13 +126,22 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 		}
 	} 
 
-	/*remote target--- Request URI*/
-	if(cell->contact[dir].s==0 || cell->contact[dir].len==0){
-
-		LM_ERR("no contact available\n");
-		goto error;
+	if(nuri.len>0 && duri.len>0) {
+		/* req uri */
+		p = (char*)td + sizeof(dlg_t);
+		strncpy(p, nuri.s, nuri.len);
+		p[nuri.len] = '\0';
+		td->rem_target.s = p;
+		td->rem_target.len = nuri.len;
+		/* dst uri */
+		p += nuri.len + 1;
+		strncpy(p, duri.s, duri.len);
+		p[duri.len] = '\0';
+		td->dst_uri.s = p;
+		td->dst_uri.len = duri.len;
+	} else {
+		td->rem_target = cell->contact[dir];
 	}
-	td->rem_target = cell->contact[dir];
 
 	td->rem_uri	=   (dir == DLG_CALLER_LEG)?	cell->from_uri: cell->to_uri;
 	td->loc_uri	=	(dir == DLG_CALLER_LEG)?	cell->to_uri: cell->from_uri;
