@@ -162,6 +162,15 @@ static int pv_get_mcd_value_helper(struct sip_msg *msg, str *key,
 	return 0;
 }
 
+static void pv_free_mcd_value(char** buf) {
+	if (*buf!=NULL) {
+		if (mcd_memory) {
+			pkg_free(*buf);
+		} else {
+			free(*buf);
+		}
+	}
+}
 
 /*!
  * \brief Get a cached value from memcached
@@ -187,7 +196,7 @@ int pv_get_mcd_value(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 		return pv_get_null(msg, param, res);
 
 	if (pv_get_mcd_value_helper(msg, &key, &return_value, &return_flags) < 0) {
-		return pv_get_null(msg, param, res);
+		goto errout;
 	}
 
 
@@ -220,9 +229,11 @@ int pv_get_mcd_value(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 		res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 	}
 
+	pv_free_mcd_value(&return_value);
 	return 0;
 
 errout:
+	pv_free_mcd_value(&return_value);
 	return pv_get_null(msg, param, res);
 }
 
@@ -314,8 +325,11 @@ static int pv_mcd_atomic_helper(struct sip_msg* msg, pv_param_t *param, int op, 
 		return -1;
 
 	if (pv_get_mcd_value_helper(msg, &key, &return_value, &return_flags) < 0) {
+		pv_free_mcd_value(&return_value);
 		return -1;
 	}
+
+	pv_free_mcd_value(&return_value);
 
 	if(return_flags&VAR_VAL_STR) {
 		LM_ERR("could not do atomic operations on string for key %.*s\n", key.len, key.s);
@@ -328,6 +342,7 @@ static int pv_mcd_atomic_helper(struct sip_msg* msg, pv_param_t *param, int op, 
 	}
 
 	return 0;
+
 }
 
 
@@ -371,9 +386,9 @@ int pv_set_mcd_expire(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t
 {
 	str key;
 	unsigned int expiry = mcd_expire;
-        char *return_value;
-        uint32_t return_flags;
-        memcached_return rc;
+	char *return_value;
+	uint32_t return_flags;
+	memcached_return rc;
 
 	if (!(val->flags&PV_VAL_INT)) {
 		LM_ERR("invalid value %.*s for expire time, strings not allowed\n",
@@ -385,17 +400,22 @@ int pv_set_mcd_expire(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t
 		return -1;
 
 	if (pv_get_mcd_value_helper(msg, &key, &return_value, &return_flags) < 0) {
-		return -1;
+		goto errout;
 	}
 
 	LM_DBG("set expire time %d for key %.*s with flag %d\n", val->ri, key.len, key.s, return_flags);
 
 	if ((rc= memcached_set(memcached_h, key.s, key.len, return_value, strlen(return_value), val->ri, return_flags)) != MEMCACHED_SUCCESS) {
 		LM_ERR("could not set expire time %d for key %.*s - error was %s\n", val->ri, key.len, key.s, memcached_strerror(memcached_h, rc));
-		return -1;
+		goto errout;
 	}
 
+	pv_free_mcd_value(&return_value);
 	return 0;
+
+errout:
+	pv_free_mcd_value(&return_value);
+	return -1;
 }
 
 
