@@ -75,6 +75,7 @@
 extern struct acc_extra *log_extra;
 extern struct acc_extra *leg_info;
 extern struct acc_enviroment acc_env;
+extern char *acc_time_format;
 
 #ifdef RAD_ACC
 extern struct acc_extra *rad_extra;
@@ -98,6 +99,9 @@ extern struct acc_extra *db_extra;
 static str val_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
 static int int_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
 static char type_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
+
+#define ACC_TIME_FORMAT_SIZE	128
+static char acc_time_format_buf[ACC_TIME_FORMAT_SIZE];
 
 /********************************************
  *        acc CORE function
@@ -226,6 +230,7 @@ int acc_log_request( struct sip_msg *rq)
 	int n;
 	int m;
 	int i;
+	struct tm *t;
 
 	/* get default values */
 	m = core2strar( rq, val_arr, int_arr, type_arr);
@@ -279,19 +284,34 @@ int acc_log_request( struct sip_msg *rq)
 
 	if(acc_time_mode==1) {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%u%s",
-			acc_env.text.len, acc_env.text.s,(unsigned long) acc_env.ts,
+			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
 			acc_time_exten.s, (unsigned int)acc_env.tv.tv_usec,
 			log_msg);
 	} else if(acc_time_mode==2) {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%.3f%s",
-			acc_env.text.len, acc_env.text.s,(unsigned long) acc_env.ts,
+			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
 			acc_time_attr.s,
 			(((double)(acc_env.tv.tv_sec * 1000)
 							+ (acc_env.tv.tv_usec / 1000)) / 1000),
 			log_msg);
+	} else if(acc_time_mode==3 || acc_time_mode==4) {
+		if(acc_time_mode==3) {
+			t = localtime(&acc_env.ts);
+		} else {
+			t = gmtime(&acc_env.ts);
+		}
+		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
+					acc_time_format, t)<0) {
+			acc_time_format_buf[0] = '\0';
+		}
+		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%s%s",
+			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
+			acc_time_attr.s,
+			acc_time_format_buf,
+			log_msg);
 	} else {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu%s",
-			acc_env.text.len, acc_env.text.s,(unsigned long) acc_env.ts,
+			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
 			log_msg);
 	}
 
@@ -337,7 +357,8 @@ static void acc_db_init_keys(void)
 	db_keys[n++] = &acc_sipreason_col;
 	db_keys[n++] = &acc_time_col;
 	time_idx = n-1;
-	if(acc_time_mode==1 || acc_time_mode==2) {
+	if(acc_time_mode==1 || acc_time_mode==2
+			|| acc_time_mode==3 || acc_time_mode==4) {
 		db_keys[n++] = &acc_time_attr;
 		if(acc_time_mode==1) {
 			db_keys[n++] = &acc_time_exten;
@@ -363,6 +384,8 @@ static void acc_db_init_keys(void)
 		VAL_TYPE(db_vals+time_idx+2)=DB1_INT;
 	} else if(acc_time_mode==2) {
 		VAL_TYPE(db_vals+time_idx+1)=DB1_DOUBLE;
+	} else if(acc_time_mode==3 || acc_time_mode==4) {
+		VAL_TYPE(db_vals+time_idx+1)=DB1_STRING;
 	}
 }
 
@@ -414,6 +437,7 @@ int acc_db_request( struct sip_msg *rq)
 	int m;
 	int n;
 	int i;
+	struct tm *t;
 
 	/* formated database columns */
 	m = core2strar( rq, val_arr, int_arr, type_arr );
@@ -431,6 +455,18 @@ int acc_db_request( struct sip_msg *rq)
 	} else if(acc_time_mode==2) {
 		VAL_DOUBLE(db_vals+(m++)) = ((double)(acc_env.tv.tv_sec * 1000)
 							+ (acc_env.tv.tv_usec / 1000)) / 1000;
+		i++;
+	} else if(acc_time_mode==3 || acc_time_mode==4) {
+		if(acc_time_mode==3) {
+			t = localtime(&acc_env.ts);
+		} else {
+			t = gmtime(&acc_env.ts);
+		}
+		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
+					acc_time_format, t)<0) {
+			acc_time_format_buf[0] = '\0';
+		}
+		VAL_STRING(db_vals+(m++)) = acc_time_format_buf;
 		i++;
 	}
 

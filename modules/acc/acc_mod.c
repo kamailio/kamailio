@@ -109,6 +109,7 @@ unsigned short failed_filter[MAX_FAILED_FILTER_COUNT + 1];
 static char* leg_info_str = 0;	/*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
 int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
+char *acc_time_format = "%Y-%m-%d %H:%M:%S";
 
 /* ----- time mode variables ------- */
 /*! \name AccTimeModeVariables  Time Mode Variables */
@@ -309,6 +310,7 @@ static param_export_t params[] = {
 	{"time_attr",            PARAM_STR, &acc_time_attr        },
 	{"time_exten",           PARAM_STR, &acc_time_exten       },
 	{"cdrs_table",           PARAM_STR, &acc_cdrs_table       },
+	{"time_format",          STR_PARAM, &acc_time_format      },
 	{0,0,0}
 };
 
