@@ -58,6 +58,7 @@ Ovidiu Sas
               4.10. natping_disable_bflag (integer)
               4.11. nortpproxy_str (string)
               4.12. keepalive_timeout (int)
+              4.13. udpping_from_path (int)
 
         5. Functions
 
@@ -100,17 +101,18 @@ Ovidiu Sas
    1.10. Set natping_disable_bflag parameter
    1.11. Set nortpproxy_str parameter
    1.12. Set keepalive_timeout parameter
-   1.13. fix_nated_contact usage
-   1.14. fix_nated_sdp usage
-   1.15. add_rcv_paramer usage
-   1.16. fix_nated_register usage
-   1.17. add_contact_alias usage
-   1.18. handle_ruri_alias usage
-   1.19. set_contact_alias usage
-   1.20. $rr_count usage
-   1.21. $rr_top_count usage
-   1.22. nh_enable_ping usage
-   1.23. @nathelper.rewrite_contact usage
+   1.13. Set udpping_from_path parameter
+   1.14. fix_nated_contact usage
+   1.15. fix_nated_sdp usage
+   1.16. add_rcv_paramer usage
+   1.17. fix_nated_register usage
+   1.18. add_contact_alias usage
+   1.19. handle_ruri_alias usage
+   1.20. set_contact_alias usage
+   1.21. $rr_count usage
+   1.22. $rr_top_count usage
+   1.23. nh_enable_ping usage
+   1.24. @nathelper.rewrite_contact usage
 
 Chapter 1. Admin Guide
 
@@ -137,6 +139,7 @@ Chapter 1. Admin Guide
         4.10. natping_disable_bflag (integer)
         4.11. nortpproxy_str (string)
         4.12. keepalive_timeout (int)
+        4.13. udpping_from_path (int)
 
    5. Functions
 
@@ -237,6 +240,7 @@ Chapter 1. Admin Guide
    4.10. natping_disable_bflag (integer)
    4.11. nortpproxy_str (string)
    4.12. keepalive_timeout (int)
+   4.13. udpping_from_path (int)
 
 4.1. force_socket (string)
 
@@ -415,6 +419,18 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 modparam("nathelper", "keepalive_timeout", 120)
 ...
 
+4.13. udpping_from_path (int)
+
+   Enable sending UDP pings (keepalives) using raw socket from Path
+   address.
+
+   Default value is "0" (feature disabled).
+
+   Example 1.13. Set udpping_from_path parameter
+...
+modparam("nathelper", "udpping_from_path", 1)
+...
+
 5. Functions
 
    5.1. fix_nated_contact()
@@ -434,7 +450,7 @@ modparam("nathelper", "keepalive_timeout", 120)
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.13. fix_nated_contact usage
+   Example 1.14. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
@@ -464,7 +480,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.14. fix_nated_sdp usage
+   Example 1.15. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
@@ -486,7 +502,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.15. add_rcv_paramer usage
+   Example 1.16. add_rcv_paramer usage
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
@@ -506,7 +522,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.16. fix_nated_register usage
+   Example 1.17. fix_nated_register usage
 ...
 fix_nated_register();
 ...
@@ -553,7 +569,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.
 
-   Example 1.17. add_contact_alias usage
+   Example 1.18. add_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!add_contact_alias("$var(src_ip)", "$Rp", "tcp")) {
@@ -580,7 +596,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
 
-   Example 1.18. handle_ruri_alias usage
+   Example 1.19. handle_ruri_alias usage
 ...
     if ($du == "") {
         handle_ruri_alias();
@@ -609,7 +625,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and FAILURE_ROUTE.
 
-   Example 1.19. set_contact_alias usage
+   Example 1.20. set_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!set_contact_alias()) {
@@ -629,7 +645,7 @@ fix_nated_register();
 
    Number of Record Routes in received SIP request or reply.
 
-   Example 1.20. $rr_count usage
+   Example 1.21. $rr_count usage
 ...
     $avp(rr_count) = $rr_count;
 ...
@@ -641,7 +657,7 @@ fix_nated_register();
    value of $rr_top_count is 1. If there is no Record Route(s), value of
    $rr_top_count is 0.
 
-   Example 1.21. $rr_top_count usage
+   Example 1.22. $rr_top_count usage
 ...
     if ($rr_count == $avp(rr_count) + $rr_top_count) {
         route(ADD_CONTACT_ALIAS);
@@ -659,7 +675,7 @@ fix_nated_register();
 
    The function takes only one parameter - a number in decimal format.
 
-   Example 1.22. nh_enable_ping usage
+   Example 1.23. nh_enable_ping usage
 ...
 $ kamctl fifo nh_enable_ping 1
 ...
@@ -674,7 +690,7 @@ $ kamctl fifo nh_enable_ping 1
    counted from 1. Only IP:port is rewritten, remaining part are left
    unchanged. Full nameaddr is supported.
 
-   Example 1.23. @nathelper.rewrite_contact usage
+   Example 1.24. @nathelper.rewrite_contact usage
 ...
 $c = @nathelper.rewrite_contact[1];
 ...

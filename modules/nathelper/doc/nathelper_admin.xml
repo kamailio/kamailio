@@ -404,6 +404,26 @@ modparam("nathelper", "keepalive_timeout", 120)
 </programlisting>
 		</example>
 	</section>
+	<section id="nathelper.p.udpping_from_path">
+		<title><varname>udpping_from_path</varname> (int)</title>
+		<para>
+		Enable sending UDP pings (keepalives) using raw socket from Path
+		address.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (feature disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>udpping_from_path</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "udpping_from_path", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 
