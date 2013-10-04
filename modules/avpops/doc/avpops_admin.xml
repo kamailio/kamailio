@@ -29,6 +29,11 @@
 		testing/checking the value of an AVP.
 		</para>
 		<para>
+		If you just need a way to execute SQL statements in a
+		&kamailio; configuration script, please consider use the
+		<emphasis>sqlops</emphasis> module instead.
+		</para>
+		<para>
 		AVPs are persistent per SIP transaction, being available in "route", 
 		"branch_route" and "failure_route". A tutorial providing more information (detailed
 		explanations and commented examples) can be found on the SIP-router web site.
@@ -500,6 +505,8 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 			</title>
 			<para>
 			Make a database query and store the result in AVPs.
+			This command is deprecated, please use the more
+			flexible and advanced <emphasis>sqlops</emphasis> module instead.
 			</para>
 			<para>
 			The meaning and usage of the parameters:
