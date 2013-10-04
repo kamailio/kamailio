@@ -350,6 +350,7 @@ static unsigned short rcv_avp_type = 0;
 static int_str rcv_avp_name;
 
 static char *natping_socket = 0;
+static int udpping_from_path = 0;
 static int raw_sock = -1;
 static unsigned int raw_ip = 0;
 static unsigned short raw_port = 0;
@@ -421,6 +422,7 @@ static param_export_t params[] = {
 	{"natping_processes",     INT_PARAM, &natping_processes     },
 	{"natping_socket",        STR_PARAM, &natping_socket        },
 	{"keepalive_timeout",     INT_PARAM, &nh_keepalive_timeout  },
+	{"udpping_from_path",     INT_PARAM, &udpping_from_path     },
 
 	{0, 0, 0}
 };
@@ -633,8 +635,8 @@ mod_init(void)
 	}
 
 	/* create raw socket? */
-	if (natping_socket && natping_socket[0]) {
-		if (get_natping_socket( natping_socket, &raw_ip, &raw_port)!=0)
+	if ((natping_socket && natping_socket[0]) ||  udpping_from_path) {
+		if ((!udpping_from_path) && get_natping_socket( natping_socket, &raw_ip, &raw_port)!=0)
 			return -1;
 		if (init_raw_socket() < 0)
 			return -1;
@@ -1986,6 +1988,53 @@ static int send_raw(const char *buf, int buf_len, union sockaddr_union *to,
 	return sendto(raw_sock, packet, len, 0, (struct sockaddr *) to, sizeof(struct sockaddr_in));
 }
 
+/**
+ * quick function to extract ip:port from path
+ */
+static char *extract_last_path_ip(str path)
+{
+	/* used for raw UDP ping which works only on IPv4 */
+	static char ip[24];
+	char *start = NULL, *end = NULL, *p;
+	int i;
+	int path_depth = 0;
+	int max_path_depth;
+
+	max_path_depth = udpping_from_path - 1;
+
+	if (!path.len || !path.s) return NULL;
+
+	p = path.s;
+	for (i = 0; i < path.len; i++) {
+		if (!strncmp("<sip:", p, 5) && i < path.len - 4) {
+			start = p + 5;
+
+			end = NULL;
+		}
+		if ((*p == ';' || *p == '>') && !end) {
+			end = p;
+			if (max_path_depth) {
+				path_depth++;
+				if (path_depth >= max_path_depth) {
+					break;
+				}
+			}
+		}
+		p++;
+	}
+	if (start && end) {
+		int len = end - start;
+		if (len > sizeof(ip) -1) {
+			return NULL;
+		}
+		memcpy(ip, start, len);
+		ip[len] = '\0';
+		return (char *) ip;
+	} else {
+		return NULL;
+	}
+}
+
 
 static void
 nh_timer(unsigned int ticks, void *timer_idx)
@@ -2004,6 +2053,9 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	unsigned int flags;
 	char proto;
 	struct dest_info dst;
+	char *path_ip_str = NULL;
+	unsigned int path_ip = 0;
+	unsigned short path_port = 0;
 
 	if((*natping_state) == 0)
 		goto done;
@@ -2079,6 +2131,20 @@ nh_timer(unsigned int ticks, void *timer_idx)
 				LM_ERR("can't parse contact dst_uri\n");
 				continue;
 			}
+		} else if (path.len && udpping_from_path) {
+			path_ip_str = extract_last_path_ip(path);
+			if (path_ip_str == NULL) {
+				LM_ERR( "ERROR:nathelper:nh_timer: unable to parse path from location\n");
+				continue;
+			}
+			if (get_natping_socket(path_ip_str, &path_ip, &path_port)) {
+				LM_ERR("could not parse path host for udpping_from_path\n");
+				continue;
+			}
+			if (parse_uri(c.s, c.len, &curi) < 0) {
+				LM_ERR("can't parse contact uri\n");
+				continue;
+			}
 		} else {
 			/* send to the contact/received */
 			if (parse_uri(c.s, c.len, &curi) < 0) {
@@ -2121,6 +2187,11 @@ nh_timer(unsigned int ticks, void *timer_idx)
 			if (send_raw((char*)sbuf, sizeof(sbuf), &dst.to, raw_ip, 
 						 raw_port)<0) {
 				LM_ERR("send_raw failed\n");
+			}
+		} else if (udpping_from_path) {
+			if (send_raw((char*)sbuf, sizeof(sbuf), &dst.to, path_ip, 
+						 path_port)<0) {
+				LM_ERR("send_raw from path failed\n");
 			}
 		} else {
 			if (udp_send(&dst, (char *)sbuf, sizeof(sbuf))<0 ) {
