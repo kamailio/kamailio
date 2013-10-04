@@ -233,8 +233,8 @@ static int dp_get_ivalue(struct sip_msg* msg, dp_param_p dp, int *val)
 	pv_value_t value;
 
 	if(dp->type==DP_VAL_INT) {
-		LM_DBG("integer value\n");
 		*val = dp->v.id;
+		LM_DBG("dpid is %d from constant argument\n", *val);
 		return 0;
 	}
 
@@ -246,6 +246,7 @@ static int dp_get_ivalue(struct sip_msg* msg, dp_param_p dp, int *val)
 		return -1;
 	}
 	*val = value.ri;
+	LM_DBG("dpid is %d from pv argument\n", *val);
 	return 0;
 }
 
