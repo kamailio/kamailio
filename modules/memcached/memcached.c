@@ -106,7 +106,7 @@ struct module_exports exports = {
 
 
 /*!
- * \brief Wrapper functions around our internal memory management
+ * \brief Wrapper functions around our internal memory management for libmemcache callback
  * \param mem freed memory
  * \note pkg_free does not allow NULL pointer as standard free, therefore we check it here
  * \see pkg_free
@@ -118,7 +118,7 @@ static inline void mcd_free(memcached_st *ptr, void *mem, void *context) {
 
 
 /*!
- * \brief Wrapper functions around our internal memory management
+ * \brief Wrapper functions around our internal memory management for libmemcache callback
  * \param size allocated size
  * \return allocated memory, or NULL on failure
  * \see pkg_malloc
@@ -129,7 +129,7 @@ static inline void* mcd_malloc(memcached_st *ptr, const size_t size, void *conte
 
 
 /*!
- * \brief Wrapper functions around our internal memory management
+ * \brief Wrapper functions around our internal memory management for libmemcache callback
  * \param mem pointer to allocated memory
  * \param size new size of memory area
  * \return allocated memory, or NULL on failure
@@ -141,7 +141,7 @@ static inline void* mcd_realloc(memcached_st *ptr, void *mem, const size_t size,
 
 
 /*!
- * \brief Wrapper functions around our internal memory management
+ * \brief Wrapper functions around our internal memory management for libmemcache callback
  * \param mem pointer to allocated memory
  * \param size new size of memory area
  * \return allocated memory, or NULL on failure
