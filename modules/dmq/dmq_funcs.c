@@ -166,7 +166,7 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
 {
 	uac_req_t uac_r;
 	str str_hdr = {0, 0};
-	str from, to, req_uri;
+	str from, to;
 	dmq_cback_param_t* cb_param = NULL;
 	int result = 0;
 	int len = 0;
@@ -199,11 +199,10 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
 		LM_ERR("error building to string\n");
 		goto error;
 	}
-	req_uri = to;
 	
 	set_uac_req(&uac_r, &dmq_request_method, &str_hdr, body, NULL,
 			TMCB_LOCAL_COMPLETED, dmq_tm_callback, (void*)cb_param);
-	result = tmb.t_request(&uac_r, &req_uri,
+	result = tmb.t_request(&uac_r, &to,
 			       &to, &from,
 			       NULL);
 	if(result < 0) {
@@ -211,9 +210,15 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
 		goto error;
 	}
 	pkg_free(str_hdr.s);
+	pkg_free(from.s);
+	pkg_free(to.s);
 	return 0;
 error:
 	pkg_free(str_hdr.s);
+	if (from.s!=NULL) 
+		pkg_free(from.s);
+	if (to.s!=NULL) 
+		pkg_free(to.s);
 	return -1;
 }
 
