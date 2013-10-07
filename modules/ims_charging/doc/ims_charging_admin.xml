@@ -634,6 +634,10 @@ route[CHARGING_CCR_REPLY]
       <para>Total CCA arrival time in milliseconds.</para>
     </section>
     <section>
+      <title>CCRs requests, which ended with a timeout (ccr_timeouts)</title>
+      <para>Number of CCR-Requests, which ran into an timeout.</para>
+    </section>
+    <section>
       <title>Billed seconds (billed_secs)</title>
       <para>Number of seconds billed in total.</para>
     </section>

@@ -60,6 +60,7 @@ stat_var *successful_final_ccrs;
 stat_var *ccr_responses_time;
 stat_var *billed_secs;
 stat_var *killed_calls;
+stat_var *ccr_timeouts;
 
 /** module functions */
 static int mod_init(void);
@@ -113,6 +114,7 @@ stat_export_t charging_stats[] = {
     {"ccr_responses_time", STAT_NO_RESET, &ccr_responses_time},
     {"billed_secs", STAT_NO_RESET, &billed_secs},
     {"killed_calls", STAT_NO_RESET, &killed_calls},
+    {"ccr_timeouts", STAT_NO_RESET, &ccr_timeouts},
     {0, 0, 0}
 };
 

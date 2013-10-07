@@ -75,8 +75,11 @@ Carlos Ruiz Diaz
               6.9. Failed final CCRs (failed_final_ccrs)
               6.10. CCRs average response time (ccr_avg_response_time)
               6.11. CCRs responses time (ccr_responses_time)
-              6.12. Billed seconds (billed_secs)
-              6.13. Killed calls (killed_calls)
+              6.12. CCRs requests, which ended with a timeout
+                      (ccr_timeouts)
+
+              6.13. Billed seconds (billed_secs)
+              6.14. Killed calls (killed_calls)
 
    List of Examples
 
@@ -155,8 +158,9 @@ Chapter 1. Admin Guide
         6.9. Failed final CCRs (failed_final_ccrs)
         6.10. CCRs average response time (ccr_avg_response_time)
         6.11. CCRs responses time (ccr_responses_time)
-        6.12. Billed seconds (billed_secs)
-        6.13. Killed calls (killed_calls)
+        6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+        6.13. Billed seconds (billed_secs)
+        6.14. Killed calls (killed_calls)
 
 1. Overview
 
@@ -645,8 +649,9 @@ n");
    6.9. Failed final CCRs (failed_final_ccrs)
    6.10. CCRs average response time (ccr_avg_response_time)
    6.11. CCRs responses time (ccr_responses_time)
-   6.12. Billed seconds (billed_secs)
-   6.13. Killed calls (killed_calls)
+   6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+   6.13. Billed seconds (billed_secs)
+   6.14. Killed calls (killed_calls)
 
 6.1. Initial CCRs (initial_ccrs)
 
@@ -696,10 +701,14 @@ n");
 
    Total CCA arrival time in milliseconds.
 
-6.12. Billed seconds (billed_secs)
+6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+
+   Number of CCR-Requests, which ran into an timeout.
+
+6.13. Billed seconds (billed_secs)
 
    Number of seconds billed in total.
 
-6.13. Killed calls (killed_calls)
+6.14. Killed calls (killed_calls)
 
    Number of calls that were killed due to lack of credit.

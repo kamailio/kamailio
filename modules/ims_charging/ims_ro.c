@@ -651,6 +651,12 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
 	struct interim_ccr *i_req	= (struct interim_ccr *) param;
 	Ro_CCA_t * ro_cca_data = NULL;
 
+    if (is_timeout) {
+        update_stat(ccr_timeouts, 1);
+        LM_ERR("Transaction timeout - did not get CCA\n");
+        goto error;
+    }
+
     update_stat(ccr_responses_time, elapsed_msecs);
 
 	if (!i_req) {
@@ -832,6 +838,12 @@ error0:
 
 static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
     Ro_CCA_t *ro_cca_data = NULL;
+
+    if (is_timeout) {
+        update_stat(ccr_timeouts, 1);
+        LM_ERR("Transaction timeout - did not get CCA\n");
+        goto error;
+    }
 
     update_stat(ccr_responses_time, elapsed_msecs);
 
@@ -1021,6 +1033,13 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     struct session_setup_data *ssd = (struct session_setup_data *) param;
     int error_code	= RO_RETURN_ERROR;
 
+    if (is_timeout) {
+        update_stat(ccr_timeouts, 1);
+        LM_ERR("Transaction timeout - did not get CCA\n");
+	error_code =  RO_RETURN_ERROR;
+        goto error0;
+    }
+
     update_stat(ccr_responses_time, elapsed_msecs);
 
     if (!cca) {
@@ -1039,7 +1058,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 	if (tmb.t_lookup_ident(&t, ssd->tindex, ssd->tlabel) < 0) {
 		LM_ERR("t_continue: transaction not found\n");
 		error_code	= RO_RETURN_ERROR;
-		goto error1;
+		goto error0;
 	}
 
 	// we bring the list of AVPs of the transaction to the current context
