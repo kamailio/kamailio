@@ -44,12 +44,14 @@
 #include "ht_db.h"
 #include "ht_var.h"
 #include "api.h"
+#include "ht_dmq.h"
 
 
 MODULE_VERSION
 
 int  ht_timer_interval = 20;
 int  ht_db_expires_flag = 0;
+int  ht_enable_dmq = 0;
 
 static int htable_init_rpc(void);
 
@@ -124,6 +126,7 @@ static param_export_t params[]={
 	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
 	{"timer_interval",     INT_PARAM, &ht_timer_interval},
 	{"db_expires",         INT_PARAM, &ht_db_expires_flag},
+	{"enable_dmq",         INT_PARAM, &ht_enable_dmq},
 	{0,0,0}
 };
 
@@ -188,6 +191,12 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if (ht_enable_dmq>0 && ht_dmq_initialize()!=0) {
+		LM_ERR("failed to initialize dmq integration\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -286,6 +295,7 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo)
 	str sre;
 	pv_spec_t *sp;
 	sp = (pv_spec_t*)key;
+	int_str isval;
 
 	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
 
@@ -299,6 +309,12 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo)
 	{
 		LM_ERR("cannot get $ht expression\n");
 		return -1;
+	}
+	if (hpv->ht->dmqreplicate>0) {
+		isval.s = sre;
+		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &hpv->htname, NULL, AVP_VAL_STR, &isval, 0)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
 	}
 	if(ht_rm_cell_re(&sre, hpv->ht, 0)<0)
 		return -1;
@@ -311,6 +327,7 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
 	str sre;
 	pv_spec_t *sp;
 	sp = (pv_spec_t*)key;
+	int_str isval;
 
 	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
 
@@ -326,6 +343,12 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
 		return -1;
 	}
 
+	if (hpv->ht->dmqreplicate>0) {
+		isval.s = sre;
+		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &hpv->htname, NULL, AVP_VAL_STR, &isval, 1)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
+	}
 	if(ht_rm_cell_re(&sre, hpv->ht, 1)<0)
 		return -1;
 	return 1;
@@ -531,6 +554,10 @@ static struct mi_root* ht_mi_delete(struct mi_root* cmd_tree, void* param) {
 	if (!ht)
 		return init_mi_tree(404, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &ht->name, key, 0, NULL, 0)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}
+
 	ht_del_cell(ht, key);
 
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
@@ -655,6 +682,10 @@ static void htable_rpc_delete(rpc_t* rpc, void* c) {
 		return;
 	}
 
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &ht->name, &keyname, 0, NULL, 0)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}
+
 	ht_del_cell(ht, &keyname);
 }
 
@@ -737,6 +768,10 @@ static void htable_rpc_sets(rpc_t* rpc, void* c) {
 		return;
 	}
 	
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}
+
 	if(ht_set_cell(ht, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0)
 	{
 		LM_ERR("cannot set $ht(%.*s=>%.*s)\n", htname.len, htname.s,
@@ -765,6 +800,10 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 	if (!ht) {
 		rpc->fault(c, 500, "No such htable");
 		return;
+	}
+
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname, 0, &keyvalue, 1)!=0) {
+		LM_ERR("dmq relication failed\n");
 	}
 	
 	if(ht_set_cell(ht, &keyname, 0, &keyvalue, 1)!=0)
@@ -886,13 +925,14 @@ static void  htable_rpc_list(rpc_t* rpc, void* c)
 			dbname[0] = '\0';
 		}
 
-		if(rpc->struct_add(th, "Ssdddd",
+		if(rpc->struct_add(th, "Ssddddd",
 						"name", &ht->name,	/* String */
 						"dbtable", &dbname ,	/* Char * */
 						"dbmode", (int)  ht->dbmode,		/* u int */
 						"expire", (int) ht->htexpire,		/* u int */
 						"updateexpire", ht->updateexpire,	/* int */
-						"size", (int) ht->htsize		/* u int */
+						"size", (int) ht->htsize,			/* u int */
+						"dmqreplicate", ht->dmqreplicate	/* int */
 						) < 0) {
 			rpc->fault(c, 500, "Internal error creating data rpc");
 			goto error;

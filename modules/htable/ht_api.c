@@ -218,7 +218,7 @@ ht_t* ht_get_table(str *name)
 }
 
 int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
-		int itype, int_str *ival, int updateexpire)
+		int itype, int_str *ival, int updateexpire, int dmqreplicate)
 {
 	unsigned int htid;
 	ht_t *ht;
@@ -261,7 +261,7 @@ int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
 	ht->flags = itype;
 	if(ival!=NULL)
 		ht->initval = *ival;
-
+	ht->dmqreplicate = dmqreplicate;
 	ht->next = _ht_root;
 	_ht_root = ht;
 	return 0;
@@ -761,6 +761,7 @@ int ht_table_spec(char *spec)
 	unsigned int size = 4;
 	unsigned int dbmode = 0;
 	unsigned int updateexpire = 1;
+	unsigned int dmqreplicate = 0;
 	str in;
 	str tok;
 	param_t *pit=NULL;
@@ -817,11 +818,16 @@ int ht_table_spec(char *spec)
 				goto error;
 
 			LM_DBG("htable [%.*s] - updateexpire [%u]\n", name.len, name.s, updateexpire); 
+		} else if(pit->name.len == 12 && strncmp(pit->name.s, "dmqreplicate", 12) == 0) {
+			if(str2int(&tok, &dmqreplicate) != 0)
+				goto error;
+
+			LM_DBG("htable [%.*s] - dmqreplicate [%u]\n", name.len, name.s, dmqreplicate); 
 		} else { goto error; }
 	}
 
 	return ht_add_table(&name, autoexpire, &dbtable, size, dbmode,
-			itype, &ival, updateexpire);
+			itype, &ival, updateexpire, dmqreplicate);
 
 error:
 	LM_ERR("invalid htable parameter [%.*s]\n", in.len, in.s);
