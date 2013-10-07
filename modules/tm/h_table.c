@@ -380,6 +380,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
 	init_synonym_id(new_cell);
 	init_cell_lock(  new_cell );
+	init_async_lock( new_cell );
 	t_stats_created();
 	return new_cell;
 
