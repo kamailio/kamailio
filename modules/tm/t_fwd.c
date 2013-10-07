@@ -630,6 +630,7 @@ error03:
 	i_req->parsed_uri_ok=parsed_uri_ok_bak;
 	i_req->path_vec=path_bak;
 	i_req->instance=instance_bak;
+	i_req->ruid=ruid_bak;
 	i_req->location_ua=ua_bak;
 	
 	/* Delete the duplicated lump lists, this will also delete
