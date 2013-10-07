@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Admin Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+  <title>&adminguide;</title>
+
+  <section id="overview">
+    <title>Overview</title>
+    <para>
+The mohqueue module diverts INVITE requests into a
+<ulink url="http://en.wikipedia.org/wiki/Music_on_hold">Music On
+Hold (MOH)</ulink> queue where the caller can listen to recorded
+audio until an operator is available to take the call. When an
+operator is available, a function can be used to transfer the oldest
+call in a queue to an operator using an unattended transfer (REFER)
+to a specified URI. If successful, the call is removed from the queue.
+    </para>
+    <para>
+While in queue, recorded audio is streamed to the caller in an endless
+loop using the rtpproxy module and application. Each queue can be
+configured to use different audio files.
+    </para>
+    <para>
+The queues are defined in the database which allows for dynamic
+configuration of the queues. Each queue is assigned a specific
+URI to respond to and a location for the audio files.
+    </para>
+    <para>
+As each call arrives the database is updated to show the call
+status which allows outside processes to inspect the queue. It
+can also be inspected using a function to see how many calls are
+currently in queue.
+    </para>
+    <para>
+While in queue, all SIP messages for a call must pass through
+the mohqueue module so that it can accurately detect the call
+status.
+    </para>
+  </section>
+
+  <section id="dependencies">
+    <title>Dependencies</title>
+
+    <section id="mod.depends">
+      <title>Kamailio Modules</title>
+      <para>
+The following modules must be loaded before this module:
+        <itemizedlist>
+          <listitem><emphasis>a database module</emphasis></listitem>
+          <listitem><emphasis>sl module</emphasis></listitem>
+          <listitem><emphasis>tm module</emphasis></listitem>
+          <listitem><emphasis>rtpproxy module</emphasis></listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+    <section id="app.depends">
+      <title>External Libraries or Applications</title>
+      <para>
+The rtpproxy applications supported by the rtpproxy module (e.g.
+<ulink url="http://www.b2bua.org/wiki/RTPproxy">
+http://www.b2bua.org/wiki/RTPproxy</ulink>).
+      </para>
+    </section>
+
+  </section>
+
+  <section id="parameters">
+    <title>Parameters</title>
+
+    <section id="url.parms">
+      <title><varname>db_url</varname> (str)</title>
+      <para>
+The URL to connect to the database for the mohqueue tables.
+      </para>
+      <para>
+<emphasis>Default value for Kamailio.</emphasis>
+      </para>
+      <example>
+        <title>Set <varname>db_url</varname>:</title>
+        <programlisting format="linespecific">
+...
+modparam ("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section id="table.parms">
+      <title><varname>db_qtable</varname> and <varname>db_ctable</varname> (str)</title>
+      <para>
+<varname>db_qtable</varname> is the name of the table that defines
+the queues and <varname>db_ctable</varname> is the table that
+maintains the call status.
+      </para>
+      <para>
+<emphasis>"MOHQUEUES" for <varname>db_qtable</varname> and
+"MOHQCALLS" for <varname>db_ctable</varname>.</emphasis>
+      </para>
+      <example>
+        <title>Set table names:</title>
+        <programlisting format="linespecific">
+...
+modparam ("mohqueue", "db_qtable", "mqueues")
+modparam ("mohqueue", "db_ctable", "mcalls")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section id="dir.parms">
+      <title><varname>mohdir</varname> (str)</title>
+      <para>
+Path to the directory where the audio files are stored. Audio files
+are usually relative to this directory although the value can be
+overridden by a directory specified in the queues table.
+      </para>
+      <para>
+<emphasis>None. If not set by the module it must be defined in the
+queues table.</emphasis>
+      </para>
+      <example>
+        <title>Set default directory for audio files:</title>
+        <programlisting format="linespecific">
+...
+modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section id="maxcalls.parms">
+      <title><varname>moh_maxcalls</varname> (integer)</title>
+      <para>
+Defines the maximum number of calls that can be placed in queue.
+It is the sum of all calls in all queues. It must be in the range
+of 1 to 5000. <emphasis>NOTE:</emphasis> it may be limited by the
+processing power of the server or the number of available rtpproxy
+ports.
+      </para>
+      <para>
+<emphasis>None. If not set by the module it must be defined in the
+queues table.</emphasis>
+      </para>
+      <example>
+        <title>Set default directory for audio files:</title>
+        <programlisting format="linespecific">
+...
+modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
+...
+        </programlisting>
+      </example>
+    </section>
+
+  </section>
+
+  <section id="functions">
+    <title>Functions</title>
+
+    <section id="proc.func">
+      <title>
+        <function moreinfo="none">mohq_process ()</function>
+      </title>
+      <para>
+Checks to see if the current SIP message involves a queue. If it
+does it will process the message and return a TRUE value.
+      </para>
+      <para>
+In order for mohqueue to detect changes in the call it is necessary
+that all messages involving the call be processed through this
+function. The easiest way is to accomplish this is to place it at
+the beginning of the main route of the script.
+      </para>
+      <para>
+mohqueue calls are identified by an RURI that matches a queue URI.
+Once a call is placed in queue it checks the <varname>To</varname>
+header field along with the RURI to find a match, except in the case
+of a CANCEL which matches only on the RURI.
+      </para>
+      <para>
+This function has no parameters and must be called from a request route.
+      </para>
+      <para>
+<emphasis>Return code:</emphasis>
+        <itemizedlist>
+          <listitem>
+            <emphasis>TRUE=successful and call in queue</emphasis>
+          </listitem>
+          <listitem>
+            <emphasis>FALSE=failed, unrecognized URI or unable to place in queue</emphasis>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <example>
+        <title><function>mohq_process</function> usage:</title>
+        <programlisting format="linespecific">
+...
+request_route {
+  # main route with limited processing
+...
+  # MOH queue?
+  if (mohq_process ()) {
+    xlog ("L_DBG", "Handled by mohqueue");
+    exit;
+  }
+  # An error or not a MOH queue message; continue processing
+...
+}
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section id="send.func">
+      <title>
+        <function moreinfo="none">mohq_send (queue_name)</function>
+      </title>
+      <para>
+Normally calls enter the queue with an initial INVITE message that
+1) has a RURI that matches a queue URI and 2) is passed through
+<function>mohq_proc ()</function>, which is the preferred method.
+      </para>
+      <para>
+This function is used when you wish to send a call into a queue that
+does not match the queue URI.
+      </para>
+      <para>
+It has only one parameter, the name of the queue, and must be called
+from the request route with an initial INVITE message. The queue name
+can be passed as a literal or pseudo-variable.
+      </para>
+      <para>
+<emphasis>Return code:</emphasis>
+        <itemizedlist>
+          <listitem>
+            <emphasis>TRUE=successful and call in queue</emphasis>
+          </listitem>
+          <listitem>
+            <emphasis>FALSE=failed, unable to place in queue</emphasis>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <example>
+        <title><function>mohq_send</function> usage:</title>
+        <programlisting format="linespecific">
+...
+  # call is initial INVITE and ready for queue?
+  if (some test) {
+    if (mohq_send ("main")) {
+      xlog ("L_DBG", "Sent call to main mohqueue");
+      exit;
+    }
+    # failed to enter queue!
+    ...
+  }
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section id="retrieve.func">
+      <title>
+        <function moreinfo="none">mohq_retrieve (queue_name, URI)</function>
+      </title>
+      <para>
+Retrieves the oldest call in a queue and redirects it to a URI.
+Although the function returns, the transfer of the call may not have
+completed since the new URI (operator) must answer the call.
+      </para>
+      <para>
+It has two parameters, the queue name and the URI to REFER the call
+to, both which can be passed as literals or pseudo-variables. It can
+be called from any route.
+      </para>
+      <para>
+<emphasis>Return code:</emphasis>
+        <itemizedlist>
+          <listitem>
+            <emphasis>TRUE=successful, transfer started</emphasis>
+          </listitem>
+          <listitem>
+            <emphasis>FALSE=failed, parameters are incorrect or there are no calls in queue</emphasis>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <example>
+        <title><function>mohq_retrieve</function> usage:</title>
+        <programlisting format="linespecific">
+...
+#!define MOHQNAME "operators"
+#!define CGROUP   "sip:operators@10.211.64.5"
+...
+  # redirect oldest call to operator call group
+  if (mohq_retrieve (MOHQNAME, CGROUP)) {
+      xlog ("L_DBG", "Retrieved call from mohqueue");
+      exit;
+    }
+  # queue is empty or something went wrong
+  }
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section id="count.func">
+      <title>
+        <function moreinfo="none">mohq_count (queue_name, pvar)</function>
+      </title>
+      <para>
+Finds the number of calls that are in a queue. It will not count
+calls that are in the process of entering or exiting the queue.
+      </para>
+      <para>
+The function has two parameters, the name of the queue and the
+pseudo-variable which receives the count. The queue name can be
+passed as a literal or a pseudo-variable. It can be called from
+any route.
+      </para>
+      <para>
+<emphasis>Return code:</emphasis>
+        <itemizedlist>
+          <listitem>
+            <emphasis>TRUE=successful, pseudo-variable contains count</emphasis>
+          </listitem>
+          <listitem>
+            <emphasis>FALSE=failed, parameters are incorrect</emphasis>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <example>
+        <title><function>mohq_count</function> usage:</title>
+        <programlisting format="linespecific">
+...
+$var(mohq) = "operators";
+...
+  # more than 10 calls?
+  mohq_count ("$var(mohq)", "$var(mohqcnt)");
+  if ($var(mohqcnt) > 10) {
+    xlog ("L_WARN", "$var(mohq) queue has $var(mohqcnt) calls!");
+  }
+...
+        </programlisting>
+      </example>
+    </section>
+
+  </section>
+
+  <section id="database">
+    <title>Database Schema</title>
+      <para>
+mohqueue uses two external database tables to manage the queues and
+provide status information to outside processes. Internally, it keeps
+a volatile database in memory of call status. If the module is
+restarted it loses the internal database and clears the external
+one.
+      </para>
+      <para>
+On a reqular basis it checks the external table that defines the
+queues to see if the definition has changed. It makes this check
+under the following conditions: the queue has not been checked in the
+last 60 seconds <emphasis>AND</emphasis> no call is currently in
+queue or transitioning in or out. The last condition prevents
+existing calls from being adversely affected by queue redefinitions.
+      </para>
+
+    <section id="mohqueues.dbase">
+      <title>MOHQUEUES Table</title>
+      <para>
+This table controls the definition of the queue. The name is set by
+the <ulink url="#table.parms">db_qtable</ulink> parameter. There is
+no internal function to modify the table so it must be configured
+externally. It contains the following fields:
+        <itemizedlist>
+          <listitem>
+<emphasis>id</emphasis> (integer): unique identifier that is created
+automatically. <emphasis>Do not attempt to change this value.</emphasis>
+          </listitem>
+          <listitem>
+<emphasis>name</emphasis> (25-character string, required): the queue name.
+Duplicate names are not allowed.
+          </listitem>
+          <listitem>
+<emphasis>uri</emphasis> (100-character string, required): the URI of
+the queue. It should not include any parameters or headers (e.g.
+"sip:user@host;maddr=239.255.255.1" or "sip:user@host?subject=project")
+although it will match any RURI that contains this URI even if the
+RURI has parameters or headers. Duplicates are not allowed.
+          </listitem>
+          <listitem>
+<emphasis>mohdir</emphasis> (100-character string, optional): path to
+the directory where the audio files for the queue are stored. This path
+overrides the one provided by the <ulink url="#dir.parms">mohdir</ulink>
+parameter. If the directory is not accessible by the module the queue
+is not activated.
+          </listitem>
+          <listitem>
+<emphasis>mohfile</emphasis> (100-character string, required): the
+base name of the audio file. See the section about
+<ulink url="#audiofiles">audio files</ulink> for more information
+about file names. If no files matching this name are found in the
+directory the queue is not activated.
+          </listitem>
+          <listitem>
+<emphasis>debug</emphasis> (integer, required): enables debugging
+messages for the queue. If non-zero, it will send debugging messages
+to the log for conditions that involve the queue, whether or not
+Kamailio has logging enabled for debugging. If zero, it depends on
+Kamailio's log level.
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+    <section id="mohqcalls.dbase">
+      <title>MOHQCALLS Table</title>
+      <para>
+This table contains the status of calls that are in queue, or
+transitioning in or out of a queue. The name is set by the
+<ulink url="#table.parms">db_ctable</ulink> parameter. This table
+is read-only for external processes and its contents should
+<emphasis>not be modified</emphasis>. It contains the following
+fields:
+        <itemizedlist>
+          <listitem>
+<emphasis>id</emphasis> (integer): unique identifier that is created
+automatically.
+          </listitem>
+          <listitem>
+<emphasis>mohq_id</emphasis> (integer, required): the id value of the
+queue.
+          </listitem>
+          <listitem>
+<emphasis>call_status</emphasis> (integer, required): the status of
+the call. 1=entering; 2=in queue (listening to MOH); 3=leaving
+          </listitem>
+          <listitem>
+<emphasis>call_from</emphasis> (100-character string, required): the
+contents of the <varname>From</varname> header field.
+          </listitem>
+          <listitem>
+<emphasis>call_id</emphasis> (100-character string, required): the
+contents of the <varname>Call-ID</varname> header field.
+          </listitem>
+          <listitem>
+<emphasis>call_contact</emphasis> (100-character string, optional):
+the contents of the <varname>Contact</varname> header field, if it
+exists.
+          </listitem>
+          <listitem>
+<emphasis>call_time</emphasis> (datetime, required): time the call
+entered the queue. If a <ulink url="#retrieve.func">retrieve</ulink>
+fails this time is not changed.
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+  </section>
+  <section id="audiofiles">
+    <title>Audio Files</title>
+      <para>
+When rtpproxy negotiates to determine which media to use in the audio
+stream it uses the files in the MOH directory as defined by the
+<ulink url="#mohqueues.dbase">MOHQUEUES</ulink> table. The table
+defines the location of the files and the base name used to identify
+each. The actual stream type depends on the RTP payload number that
+is part of the name. The complete file name for each stream is
+composed of <varname>mohdir/mohfile.type</varname>. For example,
+<varname>/var/kamailio/MOH/HeWillCall.8</varname> would be the file
+for payload type 8 (PCMA/8000).
+      </para>
+      <para>
+The supported types and their order of preference are:
+        <itemizedlist>
+          <listitem><emphasis>9</emphasis>: G722/8000</listitem>
+          <listitem><emphasis>0</emphasis>: PCMU/8000</listitem>
+          <listitem><emphasis>8</emphasis>: PCMA/8000</listitem>
+          <listitem><emphasis>18</emphasis>: G729/8000</listitem>
+          <listitem><emphasis>3</emphasis>: GSM/8000</listitem>
+          <listitem><emphasis>4</emphasis>: G723/8000</listitem>
+          <listitem><emphasis>15</emphasis>: G728/8000</listitem>
+          <listitem><emphasis>5</emphasis>: DVI4/8000</listitem>
+          <listitem><emphasis>7</emphasis>: LPC/8000</listitem>
+          <listitem><emphasis>12</emphasis>: QCELP/8000</listitem>
+          <listitem><emphasis>13</emphasis>: CN/8000</listitem>
+          <listitem><emphasis>16</emphasis>: DVI4/11025</listitem>
+          <listitem><emphasis>6</emphasis>: DVI4/16000</listitem>
+          <listitem><emphasis>17</emphasis>: DVI4/22050</listitem>
+          <listitem><emphasis>10</emphasis>: L16/44100</listitem>
+          <listitem><emphasis>11</emphasis>: L16/44100</listitem>
+          <listitem><emphasis>14</emphasis>: MPA/90000</listitem>
+        </itemizedlist>
+      </para>
+      <para>
+See <ulink url="http://en.wikipedia.org/wiki/RTP_audio_video_profile">
+RTP Audio Video Profile</ulink> for more information about RTP
+payload types.
+      </para>
+
+  </section>
+
+</chapter>

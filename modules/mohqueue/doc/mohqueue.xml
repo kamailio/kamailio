@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+  <bookinfo>
+    <title>mohqueue Module</title>
+    <productname class="trade">&kamailioname;</productname>
+    <authorgroup>
+      <author>
+        <firstname>Robert</firstname>
+        <surname>Boisvert</surname>
+        <address>
+          <email>rdbprog@gmail.com</email>
+        </address>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2013</year>
+      <holder>Robert Boisvert, rdbprog@gmail.com</holder>
+    </copyright>
+  </bookinfo>
+  <toc></toc>
+  <xi:include href="mohqueue_admin.xml" />
+</book>
