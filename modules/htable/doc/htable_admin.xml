@@ -31,6 +31,10 @@
 		be adjusted per itme via assignment operation at runtime.
 	</para>
 	<para>
+		Replication between multiple servers is performed automatically (if 
+		enabled) via the DMQ module.
+	</para>
+	<para>
 		You can read more about hash tables at:
 		http://en.wikipedia.org/wiki/Hash_table.
 	</para>
@@ -121,7 +125,7 @@ if(is_present_hf("Authorization"))
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				<emphasis>If DMQ replication is enabled, the DMQ module must be loaded first.</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -272,6 +276,11 @@ if(is_present_hf("Authorization"))
 			<emphasis>updateexpire</emphasis> - if set to 1 (default), the time until expiration of an item is reset when that item is updated.  Certain uses of htable may dictate that updates should not reset the expiration timeout, however, in which case this attribute can be set to 0.
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>dmqreplicate</emphasis> - if set to 1, any actions (set, update, delete etc.) performed upon entries in this table will be replicated to other nodes (htable peers). Please note, module parameter "enable_dmq" must also be set in order for this to apply (see below). Default is 0 (no replication).
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>
@@ -284,7 +293,7 @@ if(is_present_hf("Authorization"))
 ...
 modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
 modparam("htable", "htable", "b=&gt;size=5;")
-modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;")
+modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;dmqreplicate=1;")
 ...
 </programlisting>
 		</example>
@@ -500,6 +509,33 @@ modparam("htable", "timer_mode", 1)
 		<programlisting format="linespecific">
 ...
 modparam("htable", "db_expires", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>enable_dmq</varname> (integer)</title>
+		<para>
+			If set to 1, will enable DMQ replication of actions performed upon 
+			entries in all tables having "dmqreplicate" parameter set. Any update 
+			action performed via psuedo-variables, MI and RPC commands will be 
+			repeated on all other nodes. Therefore, it is important to ensure the
+			table definition (size, autoexpire etc.) is identical across all instances.
+		</para>
+		<para>
+			Currently, values are not replicated on load from DB as it is expected 
+			that in these cases, all servers will load their values from the same DB.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_dmq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "enable_dmq", 1)
 ...
 </programlisting>
 		</example>
