@@ -2324,7 +2324,7 @@ void mohq_debug (mohq_lst *pmohq, char *pfmt, ...)
 * o reset log level
 **********/
 
-int nsys_log = get_debug_level ();
+int nsys_log = get_debug_level (LOG_MNAME, LOG_MNAME_LEN);
 int nmohq_log = (pmohq->mohq_flags & MOHQF_DBG) ? L_DBG : L_INFO;
 if (nmohq_log < L_DBG && nsys_log < L_DBG)
   { return; }
