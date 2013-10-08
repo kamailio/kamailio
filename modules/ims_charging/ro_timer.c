@@ -363,10 +363,12 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 		LM_ERR("Can't find a session. This is bad");
 		return;
 	}
-	
+
+//	LM_ALERT("LOCKING... ");	
 	ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
 	ro_session_lock(ro_session_table, ro_session_entry);
-
+//	LM_ALERT("LOCKED!");
+	
 	LM_DBG("event-type=%d", ro_session->event_type);
 
 	switch (ro_session->event_type) {

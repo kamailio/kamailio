@@ -80,7 +80,7 @@ void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 //		ro_session_unlock(ro_session_table, ro_session_entry);
 
 		cdpb.AAAStartChargingCCAccSession(cdp_session);
-		cdpb.AAASessionsUnlock(cdp_session->hash);		
+//		cdpb.AAASessionsUnlock(cdp_session->hash);		
 		
 //		unref_ro_session(session, 1);	DONT need this anymore because we don't do lookup so no addition to ref counter
 	}

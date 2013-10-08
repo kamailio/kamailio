@@ -698,8 +698,8 @@ error:
 	if (ro_cca_data)
 		Ro_free_CCA(ro_cca_data);
 
-	if (ro_cca_data)
-		cdpb.AAAFreeMessage(&cca);
+//	if (ro_cca_data)
+	cdpb.AAAFreeMessage(&cca);
 
 	if (i_req) {
 		i_req->credit_valid_for = 0;
@@ -861,15 +861,14 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
     	LM_DBG("Valid CCA response for STOP record\n");
     }
 
-    Ro_free_CCA(ro_cca_data);
-    cdpb.AAAFreeMessage(&cca);
+//   Ro_free_CCA(ro_cca_data);
+//   cdpb.AAAFreeMessage(&cca);
 
     update_stat(successful_final_ccrs, 1);
 
-    return;
-
 error:
 	Ro_free_CCA(ro_cca_data);
+    cdpb.AAAFreeMessage(&cca);
 }
 
 
@@ -1111,6 +1110,8 @@ error1:
 error0:
     LM_DBG("Trying to reserve credit on initial INVITE failed on cdp callback\n");
     create_cca_return_code(error_code);
+
+    cdpb.AAAFreeMessage(&cca);
 
     if (t)
     	tmb.unref_cell(t);
