@@ -19,6 +19,10 @@ enum ro_session_event_type {
     unknown_error
 };
 
+struct diameter_avp_value {
+	str mac;
+};
+
 struct ro_session {
 	str cdp_session_id;
     volatile int ref;
@@ -43,6 +47,8 @@ struct ro_session {
     int auth_appid;
     int auth_session_type;
     int active;
+
+    struct diameter_avp_value avp_value;
 };
 
 /*! entries in the main ro_session table */
@@ -164,7 +170,7 @@ void link_ro_session(struct ro_session *ro_session, int n);
 
 void remove_aaa_session(str *session_id);
 
-struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *from_uri, str* to_uri, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout);
+struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *from_uri, str* to_uri, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout);
 
 /*!
  * \brief Refefence a ro_session with locking

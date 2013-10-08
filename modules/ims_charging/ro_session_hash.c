@@ -138,6 +138,8 @@ inline void destroy_ro_session(struct ro_session *ro_session) {
     if (ro_session->ro_session_id.s && (ro_session->ro_session_id.len > 0)) {
         shm_free(ro_session->ro_session_id.s);
     }
+
+
     shm_free(ro_session);
 }
 
@@ -172,10 +174,10 @@ void destroy_dlg_table(void) {
     return;
 }
 
-struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *from_uri, str* to_uri, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout){
+struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *from_uri, str* to_uri, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout){
     LM_DBG("Building Ro Session **********");
     char *p;
-    unsigned int len = session_id->len + callid->len + from_uri->len + to_uri->len + sizeof (struct ro_session);
+    unsigned int len = session_id->len + callid->len + from_uri->len + to_uri->len + mac->len + sizeof (struct ro_session);
     struct ro_session *new_ro_session = (struct ro_session*) shm_malloc(len);
 
     if (!new_ro_session) {
@@ -228,6 +230,11 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     memcpy(p, to_uri->s, to_uri->len);
     p += to_uri->len;
 
+    new_ro_session->avp_value.mac.s		= p;
+    new_ro_session->avp_value.mac.len	= mac->len;
+    memcpy(p, mac->s, mac->len);
+
+    p += mac->len;
 
     if (p != (((char*) new_ro_session) + len)) {
         LM_ERR("buffer overflow\n");
