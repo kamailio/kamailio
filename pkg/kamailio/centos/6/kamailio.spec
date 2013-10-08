@@ -1,6 +1,6 @@
 %define name	kamailio
 %define ver	4.1.0
-%define rel	dev9.0%{dist}
+%define rel	dev9.4%{dist}
 
 
 
@@ -458,6 +458,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.mi_datagram
 %doc %{_docdir}/kamailio/modules/README.mi_fifo
 %doc %{_docdir}/kamailio/modules/README.mi_rpc
+%doc %{_docdir}/kamailio/modules/README.mohqueue
 %doc %{_docdir}/kamailio/modules/README.mqueue
 %doc %{_docdir}/kamailio/modules/README.msilo
 %doc %{_docdir}/kamailio/modules/README.msrp
@@ -597,6 +598,7 @@ fi
 %{_libdir}/kamailio/modules/mi_datagram.so
 %{_libdir}/kamailio/modules/mi_fifo.so
 %{_libdir}/kamailio/modules/mi_rpc.so
+%{_libdir}/kamailio/modules/mohqueue.so
 %{_libdir}/kamailio/modules/mqueue.so
 %{_libdir}/kamailio/modules/msilo.so
 %{_libdir}/kamailio/modules/msrp.so
@@ -971,11 +973,12 @@ fi
 
 
 %changelog
-* Mon Sep 30 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
+* Mon Oct 7 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
   - Consolidating changelog for 4.1.0 into a single entry...
   - Added new modules to main package:
     - cnxcc
     - gzcompress
+    - mohqueue
     - rtpproxy-ng
     - sipt
     - stun (STUN functionality moved from compile time in core to own module)
