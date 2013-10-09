@@ -910,7 +910,7 @@ void faked_env(struct cell *t, struct sip_msg *msg, int is_async_env) {
 		} else {
 			/*we don't need to restore anything as there was no "environment" prior 
 						    to continuing (we are in a different process)*/
-			LM_WARN("nothing to restore in async continue, useless call\n");
+			LOG(L_DBG, "nothing to restore in async continue, useless call\n");
 		}
 	}
 }
