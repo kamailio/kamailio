@@ -131,7 +131,7 @@ static int mod_init(void);
 static void mod_destroy(void);
 
 static int initial_prob = 10;
-static int *probability;
+static int *probability = NULL;
 
 static char config_hash[MD5_LEN];
 static char* hash_file = NULL;
