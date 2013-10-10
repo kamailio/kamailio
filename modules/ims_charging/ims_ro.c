@@ -1150,6 +1150,8 @@ static int create_cca_return_code(int result) {
     avp_name.s.len = RO_AVP_CCA_RETURN_CODE_LENGTH;
 
     avp_val.n = result;
+    avp_val.s.s = RO_RETURN_TRUE_STR;	//assume true
+    avp_val.s.len = 1;
 
     switch(result) {
     case RO_RETURN_FALSE:

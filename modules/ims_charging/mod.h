@@ -22,6 +22,7 @@
 #define RO_RETURN_BREAK	0
 /** Return true in the routing script */
 #define RO_RETURN_TRUE	1
+#define RO_RETURN_TRUE_STR "1"
 /** Return false in the routing script */
 #define RO_RETURN_FALSE -1
 #define RO_RETURN_FALSE_STR "-1"
