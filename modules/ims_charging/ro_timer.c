@@ -118,6 +118,8 @@ int insert_ro_timer(struct ro_tl *tl, int interval) {
     tl->timeout = get_ticks() + interval;
     insert_ro_timer_unsafe(tl);
 
+
+    LM_DBG("TIMER inserted");
     lock_release(roi_timer->lock);
 
     return 0;
@@ -141,7 +143,7 @@ static inline void remove_ro_timer_unsafe(struct ro_tl *tl) {
  */
 int remove_ro_timer(struct ro_tl *tl) {
     lock_get(roi_timer->lock);
-
+	
     if (tl->prev == NULL && tl->timeout == 0) {
         lock_release(roi_timer->lock);
         return 1;
@@ -153,7 +155,7 @@ int remove_ro_timer(struct ro_tl *tl) {
         lock_release(roi_timer->lock);
         return -1;
     }
-
+    LM_DBG("TIMER REMOVED");
     remove_ro_timer_unsafe(tl);
     tl->next = NULL;
     tl->prev = NULL;
@@ -337,8 +339,8 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
 
 	ro_session_entry = &(ro_session_table->entries[i_req->ro_session->h_entry]);
 
+	unref_ro_session_unsafe(i_req->ro_session, 1, ro_session_entry);//unref from the initial timer that fired this event.
 	ro_session_unlock(ro_session_table, ro_session_entry);
-	unref_ro_session(i_req->ro_session, 1);//unref from the initial timer that fired this event.
 
 	shm_free(i_req);
 	LM_DBG("Exiting async ccr interim nicely");
@@ -363,12 +365,20 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 		LM_ERR("Can't find a session. This is bad");
 		return;
 	}
-	
+
+//	LM_ALERT("LOCKING... ");	
 	ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
 	ro_session_lock(ro_session_table, ro_session_entry);
-
+//	LM_ALERT("LOCKED!");
+	
 	LM_DBG("event-type=%d", ro_session->event_type);
-
+	
+//	if (!ro_session->active) {
+//		LM_ALERT("Looks like this session was terminated while requesting more units");
+//		goto exit;
+//		return;
+//	}
+	
 	switch (ro_session->event_type) {
 	case answered:
 		now = time(0);
@@ -435,8 +445,8 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 
 	update_stat(killed_calls, 1);
 
+	unref_ro_session_unsafe(ro_session, 1, ro_session_entry); //unref from the initial timer that fired this event.
 	ro_session_unlock(ro_session_table, ro_session_entry);
-	unref_ro_session(ro_session, 1); //unref from the initial timer that fired this event.
 
 	return;
 }

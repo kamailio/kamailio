@@ -22,12 +22,25 @@
 #define RO_RETURN_BREAK	0
 /** Return true in the routing script */
 #define RO_RETURN_TRUE	1
+#define RO_RETURN_TRUE_STR "1"
 /** Return false in the routing script */
 #define RO_RETURN_FALSE -1
 #define RO_RETURN_FALSE_STR "-1"
 /** Return error in the routing script */
 #define RO_RETURN_ERROR -2
 #define RO_RETURN_ERROR_STR "-2"
+
+/** Diameter Termination Cause Codes */
+#define TERM_CAUSE_LOGOUT 1
+#define TERM_CAUSE_SERVICE_NOT_PROVIDED 2
+#define TERM_CAUSE_BAD_ANSWER 3
+#define TERM_CAUSE_ADMINISTRATIVE 4
+#define TERM_CAUSE_LINK_BROKEN 5
+#define TERM_CAUSE_AUTH_EXPIRED 6
+#define TERM_CAUSE_USER_MOVED 7
+#define TERM_CAUSE_SESSION_TIMEOUT 8
+
+
 
 #define RO_AVP_CCA_RETURN_CODE "cca_return_code"
 #define RO_AVP_CCA_RETURN_CODE_LENGTH 15

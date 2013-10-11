@@ -19,6 +19,7 @@ extern stat_var *successful_final_ccrs;
 extern stat_var *ccr_responses_time;
 extern stat_var *billed_secs;
 extern stat_var *killed_calls;
+extern stat_var *ccr_timeouts;
 
 unsigned long get_failed_initial_ccrs();
 unsigned long get_failed_interim_ccrs();

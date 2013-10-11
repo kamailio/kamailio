@@ -75,8 +75,11 @@ Carlos Ruiz Diaz
               6.9. Failed final CCRs (failed_final_ccrs)
               6.10. CCRs average response time (ccr_avg_response_time)
               6.11. CCRs responses time (ccr_responses_time)
-              6.12. Billed seconds (billed_secs)
-              6.13. Killed calls (killed_calls)
+              6.12. CCRs requests, which ended with a timeout
+                      (ccr_timeouts)
+
+              6.13. Billed seconds (billed_secs)
+              6.14. Killed calls (killed_calls)
 
    List of Examples
 
@@ -155,8 +158,9 @@ Chapter 1. Admin Guide
         6.9. Failed final CCRs (failed_final_ccrs)
         6.10. CCRs average response time (ccr_avg_response_time)
         6.11. CCRs responses time (ccr_responses_time)
-        6.12. Billed seconds (billed_secs)
-        6.13. Killed calls (killed_calls)
+        6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+        6.13. Billed seconds (billed_secs)
+        6.14. Killed calls (killed_calls)
 
 1. Overview
 
@@ -340,8 +344,9 @@ Chapter 1. Admin Guide
    Default value is 4096.
 
    Example 1.1.  hash_sizeparameter usage
-... modparam("ims_charging", "hash_size", 1024)
-        ...
+...
+modparam("ims_charging", "hash_size", 1024)
+...
 
 4.2.  interim_update_credits(int)
 
@@ -352,8 +357,9 @@ Chapter 1. Admin Guide
    Default value is 30.
 
    Example 1.2.  interim_update_creditsparameter usage
-... modparam("ims_charging",
-        "interim_update_credits", 600) ...
+...
+modparam("ims_charging", "interim_update_credits", 600)
+...
 
 4.3.  timer_buffer(int)
 
@@ -363,8 +369,9 @@ Chapter 1. Admin Guide
    Default value is 8.
 
    Example 1.3.  timer_bufferparameter usage
-... modparam("ims_charging", "timer_buffer", 10)
-        ...
+...
+modparam("ims_charging", "timer_buffer", 10)
+...
 
 4.4.  ro_forced_peer(string)
 
@@ -374,8 +381,9 @@ Chapter 1. Admin Guide
    Default value is ''.
 
    Example 1.4.  ro_forced_peerparameter usage
-... modparam("ims_charging", "ro_forced_peer",
-        "ocs.ims.smilecoms.com") ...
+...
+modparam("ims_charging", "ro_forced_peer", "ocs.ims.smilecoms.com")
+...
 
 4.5.  ro_auth_expiry(integer)
 
@@ -385,8 +393,9 @@ Chapter 1. Admin Guide
    Default value is 7200.
 
    Example 1.5.  ro_auth_expiryparameter usage
-... modparam("ims_charging", "ro_auth_expiry", 14400)
-        ...
+...
+modparam("ims_charging", "ro_auth_expiry", 14400)
+...
 
 4.6.  ro_auth_expiry(integer)
 
@@ -396,8 +405,9 @@ Chapter 1. Admin Guide
    Default value is 7200.
 
    Example 1.6.  ro_auth_expiryparameter usage
-... modparam("ims_charging", "ro_auth_expiry", 14400)
-        ...
+...
+modparam("ims_charging", "ro_auth_expiry", 14400)
+...
 
 4.7.  cdp_event_latency(integer)
 
@@ -407,8 +417,9 @@ Chapter 1. Admin Guide
    Default value is 1.
 
    Example 1.7.  cdp_event_latencyparameter usage
-... modparam("ims_charging", "cdp_event_latency", 1)
-        ...
+...
+modparam("ims_charging", "cdp_event_latency", 1)
+...
 
 4.8.  cdp_event_threshold(integer)
 
@@ -420,8 +431,9 @@ Chapter 1. Admin Guide
    Default value is 500.
 
    Example 1.8.  cdp_event_thresholdparameter usage
-... modparam("ims_charging", "cdp_event_threshold",
-        500) ...
+...
+modparam("ims_charging", "cdp_event_threshold", 500)
+...
 
 4.9.  cdp_event_latency_log(integer)
 
@@ -432,8 +444,9 @@ Chapter 1. Admin Guide
    Default value is 0.
 
    Example 1.9.  cdp_event_latency_logparameter usage
-... modparam("ims_charging", "cdp_event_latency_log",
-        1) ...
+...
+modparam("ims_charging", "cdp_event_latency_log", 1)
+...
 
 4.10.  origin_host(string)
 
@@ -442,8 +455,9 @@ Chapter 1. Admin Guide
    Default value is "scscf.ims.smilecoms.com".
 
    Example 1.10.  origin_hostparameter usage
-... modparam("ims_charging", "origin_host",
-        "scscf.kamailio-ims.org") ...
+...
+modparam("ims_charging", "origin_host", "scscf.kamailio-ims.org")
+...
 
 4.11.  origin_realm(string)
 
@@ -452,8 +466,9 @@ Chapter 1. Admin Guide
    Default value is "ims.smilecome.com".
 
    Example 1.11.  origin_realmparameter usage
-... modparam("ims_charging", "origin_realm",
-        "kamailio-ims.org") ...
+...
+modparam("ims_charging", "origin_realm", "kamailio-ims.org")
+...
 
 4.12.  destination_host(string)
 
@@ -462,8 +477,9 @@ Chapter 1. Admin Guide
    Default value is 5s.
 
    Example 1.12.  destination_hostparameter usage
-... modparam("ims_charging", "destination_host",
-        "ocs.kamailio-ims.org") ...
+...
+modparam("ims_charging", "destination_host", "ocs.kamailio-ims.org")
+...
 
 4.13.  destination_realm(string)
 
@@ -472,8 +488,9 @@ Chapter 1. Admin Guide
    Default value is "ims.smilecoms.com".
 
    Example 1.13.  destination_realmparameter usage
-... modparam("ims_charging", "destination_realm",
-        "kamailio-ims.org") ...
+...
+modparam("ims_charging", "destination_realm", "kamailio-ims.org")
+...
 
 4.14.  service_context_id_root(string)
 
@@ -487,8 +504,7 @@ Chapter 1. Admin Guide
    provider, by the service element manufacturer, or by a standardization
    body, and MUST uniquely identify a given Diameter credit-control
    service specific document. The format of the Service-Context-Id is:
-"service-context" "@" "domain" service-context =
-      Token
+"service-context" "@" "domain" service-context = Token
 
    The Token is an arbitrary string of characters and digits.
 
@@ -508,8 +524,9 @@ Chapter 1. Admin Guide
    Default value is "32260@3gpp.org".
 
    Example 1.14.  service_context_id_rootparameter usage
-... modparam("ims_charging",
-        "service_context_id_root", "calls@kamailio-ims.org") ...
+...
+modparam("ims_charging", "service_context_id_root", "calls@kamailio-ims.org")
+...
 
 4.15.  service_context_id_ext(string)
 
@@ -519,8 +536,9 @@ Chapter 1. Admin Guide
    Default value is "ext".
 
    Example 1.15.  service_context_id_extparameter usage
-... modparam("ims_charging",
-        "service_context_id_ext", "ext2") ...
+...
+modparam("ims_charging", "service_context_id_ext", "ext2")
+...
 
 4.16.  service_context_id_mnc(string)
 
@@ -530,8 +548,9 @@ Chapter 1. Admin Guide
    Default value is "01".
 
    Example 1.16.  service_context_id_mncparameter usage
-... modparam("ims_charging",
-        "service_context_id_mnc", "42") ...
+...
+modparam("ims_charging", "service_context_id_mnc", "42")
+...
 
 4.17.  service_context_id_mcc(string)
 
@@ -544,8 +563,9 @@ Chapter 1. Admin Guide
    Default value is "001".
 
    Example 1.17.  service_context_id_mccparameter usage
-... modparam("ims_charging",
-        "service_context_id_mcc", "262") ...
+...
+modparam("ims_charging", "service_context_id_mcc", "262")
+...
 
 4.18.  service_context_id_release(string)
 
@@ -555,8 +575,9 @@ Chapter 1. Admin Guide
    Default value is "8" (Release 8).
 
    Example 1.18.  service_context_id_releaseparameter usage
-... modparam("ims_charging",
-        "service_context_id_release", "262") ...
+...
+modparam("ims_charging", "service_context_id_release", "262")
+...
 
 5. Functions
 
@@ -586,21 +607,34 @@ reservation_units)
    return value.
 
    Example 1.19. Ro_CCR
-... xlog("L_DBG","Sending initial CCR Request for
-        call\n"); Ro_CCR("CHARGING_CCR_REPLY", "orig", "SCUR", "", "30"); }
-        route[CHARGING_CCR_REPLY] { xlog("L_DBG","cca_return code is $avp(s:cca_
-return_code)\n");
-        switch ($avp(s:cca_return_code)){ case 1: #success xlog("L_DBG", "CCR su
-ccess - will route
-        message\n"); route(Finalize_Orig); break; case -1: #failure xlog("L_ERR"
-, "CCR failure -
-        error response sent from module\n"); sl_send_reply("402","Payment requir
-ed"); break; case
-        -2: #error xlog("L_ERR", "CCR error - error response sent from module\n"
-);
-        sl_send_reply("500", "Charging Error"); break; default: xlog("L_ERR", "U
-nknown return code
-        from CCR: [$avp(s:cca_return_code)] \n"); break; } exit; } ...
+...
+  xlog("L_DBG","Sending initial CCR Request for call\n");
+  Ro_CCR("CHARGING_CCR_REPLY", "orig", "SCUR", "", "30");
+}
+
+route[CHARGING_CCR_REPLY]
+  xlog("L_DBG","cca_return code is $avp(s:cca_return_code)\n");
+  switch ($avp(s:cca_return_code)) {
+    case 1: #success
+        xlog("L_DBG", "CCR success - will route message\n");
+        route(Finalize_Orig);
+        break;
+    case -1: #failure
+        xlog("L_ERR", "CCR failure - error response sent from module\n");
+        sl_send_reply("402","Payment required");
+        break;
+    case -2: #error
+        xlog("L_ERR", "CCR error - error response sent from module\n");
+        sl_send_reply("500", "Charging Error");
+        break;
+    default:
+        xlog("L_ERR", "Unknown return code from CCR: [$avp(s:cca_return_code)] \
+n");
+        break;
+  }
+  exit;
+  }
+...
 
 6. Statistics
 
@@ -615,8 +649,9 @@ nknown return code
    6.9. Failed final CCRs (failed_final_ccrs)
    6.10. CCRs average response time (ccr_avg_response_time)
    6.11. CCRs responses time (ccr_responses_time)
-   6.12. Billed seconds (billed_secs)
-   6.13. Killed calls (killed_calls)
+   6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+   6.13. Billed seconds (billed_secs)
+   6.14. Killed calls (killed_calls)
 
 6.1. Initial CCRs (initial_ccrs)
 
@@ -666,10 +701,14 @@ nknown return code
 
    Total CCA arrival time in milliseconds.
 
-6.12. Billed seconds (billed_secs)
+6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+
+   Number of CCR-Requests, which ran into an timeout.
+
+6.13. Billed seconds (billed_secs)
 
    Number of seconds billed in total.
 
-6.13. Killed calls (killed_calls)
+6.14. Killed calls (killed_calls)
 
    Number of calls that were killed due to lack of credit.

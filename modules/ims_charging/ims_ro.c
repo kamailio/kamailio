@@ -206,7 +206,7 @@ inline int Ro_add_user_equipment_info(AAAMessage *msg, unsigned int type, str va
     return Ro_add_avp(msg, group.s, group.len, AVP_User_Equipment_Info, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_termination_casue(AAAMessage *msg, unsigned int term_code) {
+inline int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
     char x[4];
     str s = {x, 4};
     uint32_t code = htonl(term_code);
@@ -649,6 +649,12 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
 	struct interim_ccr *i_req	= (struct interim_ccr *) param;
 	Ro_CCA_t * ro_cca_data = NULL;
 
+    if (is_timeout) {
+        update_stat(ccr_timeouts, 1);
+        LM_ERR("Transaction timeout - did not get CCA\n");
+        goto error;
+    }
+
     update_stat(ccr_responses_time, elapsed_msecs);
 
 	if (!i_req) {
@@ -692,8 +698,8 @@ error:
 	if (ro_cca_data)
 		Ro_free_CCA(ro_cca_data);
 
-	if (ro_cca_data)
-		cdpb.AAAFreeMessage(&cca);
+//	if (ro_cca_data)
+	cdpb.AAAFreeMessage(&cca);
 
 	if (i_req) {
 		i_req->credit_valid_for = 0;
@@ -798,7 +804,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
         LM_ERR("Problem adding Multiple Service Credit Control data\n");
     }
     
-    if (!Ro_add_termination_casue(ccr, 4)) {
+    if (!Ro_add_termination_cause(ccr, TERM_CAUSE_LOGOUT)) {
         LM_ERR("problem add Termination cause AVP to STOP record.\n");
     }
 
@@ -827,6 +833,12 @@ error0:
 static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
     Ro_CCA_t *ro_cca_data = NULL;
 
+    if (is_timeout) {
+        update_stat(ccr_timeouts, 1);
+        LM_ERR("Transaction timeout - did not get CCA\n");
+        goto error;
+    }
+
     update_stat(ccr_responses_time, elapsed_msecs);
 
     if (!cca) {
@@ -849,15 +861,14 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
     	LM_DBG("Valid CCA response for STOP record\n");
     }
 
-    Ro_free_CCA(ro_cca_data);
-    cdpb.AAAFreeMessage(&cca);
+//   Ro_free_CCA(ro_cca_data);
+//   cdpb.AAAFreeMessage(&cca);
 
     update_stat(successful_final_ccrs, 1);
 
-    return;
-
 error:
 	Ro_free_CCA(ro_cca_data);
+    cdpb.AAAFreeMessage(&cca);
 }
 
 
@@ -980,12 +991,12 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     Ro_free_CCR(ro_ccr_data);
 
     //TODO: if the following fail, we should clean up the Ro session.......
-    if (dlgb.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, dlg_reply, (void*)new_session ,NULL ) != 0) {
+    if (dlgb.register_dlgcb(dlg, /* DLGCB_RESPONSE_FWDED */ DLGCB_CONFIRMED, dlg_reply, (void*)new_session ,NULL ) != 0) {
     	LM_CRIT("cannot register callback for dialog confirmation\n");
     	goto error;
     }
 
-    if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY
+    if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED /*| DLGCB_DESTROY */
     		, dlg_terminated, (void*)new_session, NULL ) != 0) {
     	LM_CRIT("cannot register callback for dialog termination\n");
     	goto error;
@@ -1015,6 +1026,13 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     struct session_setup_data *ssd = (struct session_setup_data *) param;
     int error_code	= RO_RETURN_ERROR;
 
+    if (is_timeout) {
+        update_stat(ccr_timeouts, 1);
+        LM_ERR("Transaction timeout - did not get CCA\n");
+	error_code =  RO_RETURN_ERROR;
+        goto error0;
+    }
+
     update_stat(ccr_responses_time, elapsed_msecs);
 
     if (!cca) {
@@ -1033,7 +1051,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 	if (tmb.t_lookup_ident(&t, ssd->tindex, ssd->tlabel) < 0) {
 		LM_ERR("t_continue: transaction not found\n");
 		error_code	= RO_RETURN_ERROR;
-		goto error1;
+		goto error0;
 	}
 
 	// we bring the list of AVPs of the transaction to the current context
@@ -1093,6 +1111,8 @@ error0:
     LM_DBG("Trying to reserve credit on initial INVITE failed on cdp callback\n");
     create_cca_return_code(error_code);
 
+    cdpb.AAAFreeMessage(&cca);
+
     if (t)
     	tmb.unref_cell(t);
 
@@ -1130,6 +1150,8 @@ static int create_cca_return_code(int result) {
     avp_name.s.len = RO_AVP_CCA_RETURN_CODE_LENGTH;
 
     avp_val.n = result;
+    avp_val.s.s = RO_RETURN_TRUE_STR;	//assume true
+    avp_val.s.len = 1;
 
     switch(result) {
     case RO_RETURN_FALSE:
