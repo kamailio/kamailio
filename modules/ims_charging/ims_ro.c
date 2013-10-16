@@ -991,12 +991,12 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     Ro_free_CCR(ro_ccr_data);
 
     //TODO: if the following fail, we should clean up the Ro session.......
-    if (dlgb.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, dlg_reply, (void*)new_session ,NULL ) != 0) {
+    if (dlgb.register_dlgcb(dlg, /* DLGCB_RESPONSE_FWDED */ DLGCB_CONFIRMED, dlg_reply, (void*)new_session ,NULL ) != 0) {
     	LM_CRIT("cannot register callback for dialog confirmation\n");
     	goto error;
     }
 
-    if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY
+    if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED /*| DLGCB_DESTROY */
     		, dlg_terminated, (void*)new_session, NULL ) != 0) {
     	LM_CRIT("cannot register callback for dialog termination\n");
     	goto error;

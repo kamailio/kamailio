@@ -42,12 +42,17 @@ void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 		ro_session_entry = &(ro_session_table->entries[session->h_entry]);
 		ro_session_lock(ro_session_table, ro_session_entry);
 
+		if (session->active) {
+			LM_CRIT("Why the heck am i receiving a double confirmation of the dialog? Ignoring... ");
+			ro_session_unlock(ro_session_table, ro_session_entry);
+			return;
+		}
+	
 		time_since_last_event = now - session->last_event_timestamp;
 		session->start_time = session->last_event_timestamp = now;
 		session->event_type = answered;
 		session->active = 1;
 		
-		ro_session_unlock(ro_session_table, ro_session_entry);
 
 		/* check to make sure that the validity of the credit is enough for the bundle */
 		int ret = 0;
@@ -64,12 +69,16 @@ void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 				ret = insert_ro_timer(&session->ro_tl, session->valid_for);
 			}
 		}
+
+
 		if (ret != 0) {
 			LM_CRIT("unable to insert timer for Ro Session [%.*s]\n", session->ro_session_id.len, session->ro_session_id.s); 
 		} else {
-			ref_ro_session(session, 1);
+			ref_ro_session_unsafe(session, 1); // lock already acquired
 		}
 				
+		ro_session_unlock(ro_session_table, ro_session_entry);
+
 		AAASession* cdp_session = cdpb.AAAGetCCAccSession(session->ro_session_id);
 		if (!cdp_session) {
 			LM_ERR("could not find find CC App CDP session for session [%.*s]\n", session->ro_session_id.len, session->ro_session_id.s);
@@ -121,25 +130,29 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 					LM_ERR("Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);
 					continue;
 				}
-				
+			
+	
 				ro_session_lock(ro_session_table, ro_session_entry);
-				int ret = remove_ro_timer(&ro_session->ro_tl);
-				if (ret < 0) {
-					LM_CRIT("unable to unlink the timer on ro_session %p [%.*s]\n", 
-						ro_session, ro_session->cdp_session_id.len, ro_session->cdp_session_id.s);
-				} else if (ret > 0) {
-					LM_WARN("inconsistent ro timer data on ro_session %p [%.*s]\n",
-						ro_session, ro_session->cdp_session_id.len, ro_session->cdp_session_id.s);						
-				} else {
-					unref++;
+
+				if (ro_session->active) { // if the call was never activated, there's no timer to remove
+					int ret = remove_ro_timer(&ro_session->ro_tl);
+					if (ret < 0) {
+						LM_CRIT("unable to unlink the timer on ro_session %p [%.*s]\n", 
+							ro_session, ro_session->cdp_session_id.len, ro_session->cdp_session_id.s);
+					} else if (ret > 0) {
+						LM_WARN("inconsistent ro timer data on ro_session %p [%.*s]\n",
+							ro_session, ro_session->cdp_session_id.len, ro_session->cdp_session_id.s);						
+					} else {
+						unref++;
+					}
 				}
 
 				LM_DBG("Sending CCR STOP on Ro_Session [%p]\n", ro_session);
 				send_ccr_stop(ro_session);
 				ro_session->active = 0;
 				//ro_session->start_time;
+				unref_ro_session_unsafe(ro_session, 2+unref, ro_session_entry); //lock already acquired
 				ro_session_unlock(ro_session_table, ro_session_entry);
-				unref_ro_session(ro_session, 2+unref);
 			}
 		}
 	}
