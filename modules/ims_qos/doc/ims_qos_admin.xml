@@ -193,7 +193,7 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
 
     <section>
       <title><function
-      moreinfo="none">Rx_AAR_Register(domain)</function></title>
+      moreinfo="none">Rx_AAR_Register(route_block, domain)</function></title>
 
       <para>Perform a AAR on Diameter RX interface to subscribe to signalling 
       status. This purpose of this is tell a Diameter server (typically a PCRF)
@@ -204,6 +204,9 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
       <para>Meaning of the parameters is as follows:</para>
 
       <itemizedlist>
+        <listitem>
+          <para>Route block to resume after async UAR Diameter reply.</para>
+        </listitem>
         <listitem>
           <para><emphasis>domain</emphasis> that usrloc_pcscf uses to store 
           user information.</para>
@@ -220,8 +223,12 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
 
         <programlisting format="linespecific">
 ...
-    Rx_AAR_Register("location");
-    
+if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
+    exit;
+}
+...
+route[REG_AAR_REPLY]
+{
     switch ($avp(s:aar_return_code)) {
         case 1:
             xlog("L_DBG", "Diameter: AAR success on subscription to signalling\n");
@@ -231,7 +238,6 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
             t_reply("403", "Can't register to QoS for signalling");
             exit;
     }
-
 ...
 </programlisting>
       </example>
@@ -239,7 +245,7 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
     
     <section>
       <title><function
-      moreinfo="none">Rx_AAR(domain)</function></title>
+      moreinfo="none">Rx_AAR(route_block, direction)</function></title>
 
       <para>Perform a AAR on Diameter RX interface to request resource 
       authorisation from a Diameter server (typically a PCRF). For more details 
@@ -249,8 +255,11 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>domain</emphasis> that usrloc_pcscf uses to store 
-          user information.</para>
+          <para>Route block to resume after async UAR Diameter reply.</para>
+        </listitem>
+        <listitem>
+          <para><emphasis>direction</emphasis>the direction of this message - 
+          orig, term, etc.</para>
         </listitem>
       </itemizedlist>
 
@@ -264,18 +273,19 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
 
         <programlisting format="linespecific">
 ...
-    Rx_AAR("location");
-    
-    switch ($avp(s:aar_return_code)) {
-        case 1:
-            xlog("L_DBG", "Diameter: AAR success\n");
-            break;
-        default:
-            xlog("L_ERR", "Diameter: AAR failed\n");
-            t_reply("403", "QoS not authorized");
-            exit;
-    }
-
+if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig")==0){
+    exit;
+}
+...
+route[ORIGN_SESSION_AAR_REPLY]
+{
+    if ($avp(s:aar_return_code) != 1) {
+        xlog("L_ERR", "IMS: AAR failed Orig\n");
+        dlg_terminate("all", "Sorry no QoS available");
+    } else {
+        xlog("L_DBG", "Diameter: Orig AAR success on media authorization\n");
+    } 
+}
 ...
 </programlisting>
       </example>

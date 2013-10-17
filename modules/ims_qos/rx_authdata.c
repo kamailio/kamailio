@@ -79,6 +79,7 @@ int create_new_regsessiondata(str* domain, str* aor, rx_authsessiondata_t** sess
 	memset(p_session_data, 0, len);
 
 	p_session_data->subscribed_to_signaling_path_status = 1;
+        p_session_data->must_terminate_dialog = 0; /*irrelevent for reg session data this will always be 0 */
 
 	char* p = (char*)(p_session_data + 1);
 	p_session_data->domain.s = p;
@@ -112,6 +113,7 @@ int create_new_callsessiondata(str* callid, str* ftag, str* ttag, rx_authsession
 	}
 	memset(call_session_data, 0, len);
 	call_session_data->subscribed_to_signaling_path_status = 0; //this is for a media session not regitration
+        call_session_data->must_terminate_dialog = 0; //this is used to determine if the dialog must be torn down when the CDP session terminates
 
 	char *p = (char*)(call_session_data + 1);
 

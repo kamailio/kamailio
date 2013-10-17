@@ -49,17 +49,6 @@
 
 #define MOD_NAME "ims_qos"
 
-/** Return and break the execution of routing script */
-#define RX_RETURN_BREAK	0 
-/** Return true in the routing script */
-#define RX_RETURN_TRUE	1
-/** Return positive but indicate AAR not viable and wasnt sent */
-#define RX_RETURN_AAR_NA	2
-/** Return false in the routing script */
-#define RX_RETURN_FALSE -1
-/** Return error in the routing script */
-#define RX_RETURN_ERROR -2
-
 /** callback functions */
 
 struct AAAMessage;

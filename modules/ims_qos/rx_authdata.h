@@ -69,6 +69,7 @@ typedef struct rx_authsessiondata {
     int subscribed_to_signaling_path_status; // 0 not subscribed 1 is subscribed
     str domain;				//the domain the registration aor belongs to (for registration)
     str registration_aor; //the aor if this rx session is a subscription to signalling status
+    int must_terminate_dialog; //0 means when this session terminates it must not terminate the relevant dialog, 1 means it must terminate the dialog
 } rx_authsessiondata_t;
 
 int create_new_regsessiondata(str* domain, str* aor, rx_authsessiondata_t** session_data);

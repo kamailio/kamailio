@@ -58,6 +58,8 @@
 #include "rx_avp.h"
 #include "rx_str.h"
 
+#include "../../lib/ims/ims_getters.h"
+
 extern str IMS_Serv_AVP_val;
 
 int rx_send_str(str *rx_session_id) {
@@ -72,7 +74,7 @@ int rx_send_str(str *rx_session_id) {
 
     if (!rx_session_id || !rx_session_id->s || !rx_session_id->len) {
         LM_ERR("Dialog has no Rx session associated\n");
-        return RX_RETURN_FALSE;
+        return CSCF_RETURN_FALSE;
     }else
     {
         LM_DBG("Rx session id exists\n");
@@ -82,8 +84,8 @@ int rx_send_str(str *rx_session_id) {
     LM_DBG("About to try get Auth session\n");
     auth = cdpb.AAAGetAuthSession(*rx_session_id);
     if (!auth) {
-        LM_ERR("Could not get Auth Session for session id: [%.*s]\n", rx_session_id->len, rx_session_id->s);
-        return RX_RETURN_FALSE;
+        LM_DBG("Could not get Auth Session for session id: [%.*s] - this is fine as this might have been started by already sending an STR\n", rx_session_id->len, rx_session_id->s);
+        return CSCF_RETURN_FALSE;
     }else{
         LM_DBG("Retrieved Auth Session for session id: [%.*s]\n", rx_session_id->len, rx_session_id->s);
     }
@@ -155,7 +157,7 @@ int rx_send_str(str *rx_session_id) {
 
     LM_DBG("Successfully sent Rx STR for session: [%.*s]\n", rx_session_id->len, rx_session_id->s);
 
-    return RX_RETURN_TRUE;
+    return CSCF_RETURN_TRUE;
 
 error:
     LM_DBG("Error sending Rx STR for session: [%.*s]\n", rx_session_id->len, rx_session_id->s);
@@ -166,5 +168,5 @@ error:
         auth = 0;
     }
 
-    return RX_RETURN_FALSE;
+    return CSCF_RETURN_FALSE;
 }

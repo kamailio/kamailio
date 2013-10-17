@@ -65,6 +65,7 @@
 
 #include "mod.h"
 
+#include "../../lib/ims/useful_defs.h"
 #define macro_name(_rc)	#_rc
 
 //extern struct tm_binds tmb;
@@ -74,7 +75,101 @@ str IMS_Serv_AVP_val = {"IMS Services", 12};
 str IMS_Em_Serv_AVP_val = {"Emergency IMS Call", 18};
 str IMS_Reg_AVP_val = {"IMS Registration", 16};
 
-void async_cdp_callback(int is_timeout, void *param, AAAMessage *aaa, long elapsed_msecs) {
+static void free_dialog_data(void *data) {
+    str *rx_session_id = (str*) data;
+    if (rx_session_id) {
+        if (rx_session_id->s) {
+            shm_free(rx_session_id->s);
+            rx_session_id->s = 0;
+        }
+        shm_free(rx_session_id);
+        rx_session_id = 0;
+    }
+
+}
+
+void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elapsed_msecs) {
+    struct cell *t = 0;
+    unsigned int cdp_result;
+    int result = CSCF_RETURN_ERROR;
+
+    LM_DBG("Received AAR callback\n");
+    saved_transaction_t* data = (saved_transaction_t*) param;
+
+    LM_DBG("received AAA answer");
+
+    if (tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
+        LM_ERR("t_continue: transaction not found\n");
+        goto error;
+    } else {
+        LM_DBG("t_continue: transaction found\n");
+    }
+    //we have T, lets restore our state (esp. for AVPs)
+    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+    set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+    set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+    set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
+
+    if (is_timeout != 0) {
+        LM_ERR("Error timeout when sending AAR message via CDP\n");
+        update_stat(stat_aar_timeouts, 1);
+        goto error;
+    }
+    if (!aaa) {
+        LM_ERR("Error sending message via CDP\n");
+        goto error;
+    }
+
+    update_stat(aar_replies_received, 1);
+    update_stat(aar_replies_response_time, elapsed_msecs);
+
+    /* Process the response to AAR, retrieving result code and associated Rx session ID */
+    if (rx_process_aaa(aaa, &cdp_result) < 0) {
+        LM_ERR("Failed to process AAA from PCRF\n"); //puri.host.len, puri.host.s);
+        goto error;
+    }
+
+    if (cdp_result >= 2000 && cdp_result < 3000) {
+        LM_DBG("Success, received code: [%i] from PCRF for AAR request\n", cdp_result);
+
+        LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len, aaa->sessionId->data.s);
+
+        str * passed_rx_session_id = shm_malloc(sizeof (struct _str));
+        passed_rx_session_id->s = 0;
+        passed_rx_session_id->len = 0;
+        STR_SHM_DUP(*passed_rx_session_id, aaa->sessionId->data, "cb_passed_rx_session_id");
+        LM_DBG("passed rx session id [%.*s]", passed_rx_session_id->len, passed_rx_session_id->s);
+
+        dlgb.register_dlgcb_nodlg(&data->callid, &data->ftag, &data->ttag, DLGCB_TERMINATED | DLGCB_DESTROY | DLGCB_EXPIRED, callback_dialog_terminated, (void*) (passed_rx_session_id), free_dialog_data);
+        result = CSCF_RETURN_TRUE;
+    } else {
+        LM_DBG("Received negative reply from PCRF for AAR Request\n");
+        //we don't free rx_authdata_p here - it is free-ed when the CDP session expires
+        goto error; // if its not a success then that means i want to reject this call!
+    }
+
+    //set success response code AVP
+    create_return_code(result);
+    goto done;
+
+out_of_memory:
+    error :
+            //set failure response code
+            create_return_code(result);
+
+done:
+    if (t) tmb.unref_cell(t);
+    //free memory
+    if (aaa)
+        cdpb.AAAFreeMessage(&aaa);
+
+    tmb.t_continue(data->tindex, data->tlabel, data->act);
+    free_saved_transaction_global_data(data);
+}
+
+void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long elapsed_msecs) {
     struct cell *t = 0;
     pcontact_t* pcontact;
     unsigned int cdp_result;
@@ -139,12 +234,12 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
     }
 
     if (cdp_result >= 2000 && cdp_result < 3000) {
-    	if (is_rereg) {
-    		LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the the subscription was successful\n");
-    		result = CSCF_RETURN_TRUE;
-    		create_return_code(result);
-    		goto done;
-    	}
+        if (is_rereg) {
+            LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the the subscription was successful\n");
+            result = CSCF_RETURN_TRUE;
+            create_return_code(result);
+            goto done;
+        }
         LM_DBG("Success, received code: [%i] from PCRF for AAR request (contact: [%.*s]), (auth session id: %.*s)\n",
                 cdp_result, local_data->contact.len, local_data->contact.s,
                 local_data->auth_session_id.len, local_data->auth_session_id.s);
@@ -166,7 +261,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
             ul.unlock_udomain(domain_t, &local_data->contact);
             goto error;
         }
-        memset(&ci, 0, sizeof(struct pcontact_info));
+        memset(&ci, 0, sizeof (struct pcontact_info));
         ci.reg_state = PCONTACT_REG_PENDING_AAR;
         ci.num_service_routes = 0;
         ci.num_public_ids = 0;
@@ -231,17 +326,17 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
     sdp_stream_cell_t* req_sdp_stream, *rpl_sdp_stream;
 
     if (!req || !rpl) {
-        return RX_RETURN_FALSE;
+        return CSCF_RETURN_FALSE;
     }
 
     if (parse_sdp(req) < 0) {
         LM_ERR("Unable to parse req SDP\n");
-        return RX_RETURN_FALSE;
+        return CSCF_RETURN_FALSE;
     }
 
     if (parse_sdp(rpl) < 0) {
         LM_ERR("Unable to parse res SDP\n");
-        return RX_RETURN_FALSE;
+        return CSCF_RETURN_FALSE;
     }
 
     sdp_session_num = 0;
@@ -312,13 +407,18 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
  * @returns AAA message or NULL on error
  */
 
-AAAMessage *rx_send_aar(struct sip_msg *req, struct sip_msg *res,
-        AAASession* auth, str* callid, str* ftag, str* ttag, char* direction,
-        rx_authsessiondata_t **rx_authdata) {
+int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
+        AAASession* auth, char* direction, saved_transaction_t* saved_t_data) {
+
     AAAMessage* aar = 0;
-    AAAMessage* aaa = 0;
+
+
+    //AAAMessage* aaa = 0;
+
+
     AAA_AVP* avp = 0;
     char x[4];
+    int ret = 0;
 
     str ip;
     uint16_t ip_version;
@@ -444,11 +544,21 @@ AAAMessage *rx_send_aar(struct sip_msg *req, struct sip_msg *res,
 
     LM_DBG("sending AAR to PCRF\n");
     if (rx_forced_peer.len)
-        aaa = cdpb.AAASendRecvMessageToPeer(aar, &rx_forced_peer);
+        ret = cdpb.AAASendMessageToPeer(aar, &rx_forced_peer,
+            (void*) async_aar_callback, (void*) saved_t_data);
     else
-        aaa = cdpb.AAASendRecvMessage(aar);
+        ret = cdpb.AAASendMessage(aar, (void*) async_aar_callback,
+            (void*) saved_t_data);
 
-    return aaa;
+    return ret;
+
+    //    LM_DBG("sending AAR to PCRF\n");
+    //    if (rx_forced_peer.len)
+    //        aaa = cdpb.AAASendRecvMessageToPeer(aar, &rx_forced_peer);
+    //    else
+    //        aaa = cdpb.AAASendRecvMessage(aar);
+    //
+    //    return aaa;
 
 error:
     LM_ERR("unexpected error\n");
@@ -459,7 +569,7 @@ error:
         cdpb.AAADropAuthSession(auth);
         auth = 0;
     }
-    return NULL;
+    return ret;
 }
 
 /**
@@ -470,8 +580,9 @@ error:
  * @param ip_version - AF_INET or AF_INET6
  * @returns int >0 if sent AAR successfully, otherwise 0
  */
+
 int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip,
-        uint16_t *ip_version, str *aor, saved_transaction_local_t* saved_t_data) {
+        uint16_t *ip_version, saved_transaction_local_t* saved_t_data) {
     AAAMessage* aar = 0;
     int ret = 0;
     AAA_AVP* avp = 0;
@@ -531,9 +642,9 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip,
     LM_DBG("sending AAR to PCRF\n");
     if (rx_forced_peer.len)
         ret = cdpb.AAASendMessageToPeer(aar, &rx_forced_peer,
-            (void*) async_cdp_callback, (void*) saved_t_data);
+            (void*) async_aar_reg_callback, (void*) saved_t_data);
     else
-        ret = cdpb.AAASendMessage(aar, (void*) async_cdp_callback,
+        ret = cdpb.AAASendMessage(aar, (void*) async_aar_reg_callback,
             (void*) saved_t_data);
 
     return ret;
@@ -573,16 +684,27 @@ enum dialog_direction get_dialog_direction(char *direction) {
 void free_saved_transaction_global_data(saved_transaction_t* data) {
     if (!data)
         return;
-
-    lock_dealloc(data->lock);
-    lock_destroy(data->lock);
+    if (data->callid.s && data->callid.len) {
+        shm_free(data->callid.s);
+        data->callid.len = 0;
+    }
+    if (data->ftag.s && data->ftag.len) {
+        shm_free(data->ftag.s);
+        data->ftag.len = 0;
+    }
+    if (data->ttag.s && data->ttag.len) {
+        shm_free(data->ttag.s);
+        data->ttag.len = 0;
+    }
+    if (data->lock) {
+        lock_dealloc(data->lock);
+        lock_destroy(data->lock);
+    }
     shm_free(data);
 }
 
 void free_saved_transaction_data(saved_transaction_local_t* data) {
     if (!data)
         return;
-
-
     shm_free(data);
 }

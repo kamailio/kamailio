@@ -56,6 +56,8 @@
 #include "rx_avp.h"
 #include "mod.h"
 
+#include "../../lib/ims/ims_getters.h"
+
 /**< Structure with pointers to cdp funcs, global variable defined in mod.c  */
 extern struct cdp_binds cdpb;
 extern cdp_avp_bind_t *cdp_avp;
@@ -86,7 +88,7 @@ inline int rx_add_avp(AAAMessage *m, char *d, int len, int avp_code,
         cdpb.AAAFreeAVP(&avp);
         return 0;
     }
-    return RX_RETURN_TRUE;
+    return CSCF_RETURN_TRUE;
 }
 
 /**
@@ -122,7 +124,7 @@ static inline int rx_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_
         avp->prev = 0;
     }
 
-    return RX_RETURN_TRUE;
+    return CSCF_RETURN_TRUE;
 }
 
 /**
@@ -272,7 +274,7 @@ inline int rx_add_destination_realm_avp(AAAMessage *msg, str data) {
  * Creates and adds an Acct-Application-Id AVP.
  * @param msg - the Diameter message to add to.
  * @param data - the value for the AVP payload
- * @return RX_RETURN_TRUE on success or 0 on error
+ * @return CSCF_RETURN_TRUE on success or 0 on error
  */
 inline int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data) {
     char x[4];
@@ -292,7 +294,7 @@ inline int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data) {
  * @param msg - the Diameter message to add to.
  * @param r - the sip_message to extract the data from.
  * @param tag - originating (0) terminating (1)
- * @return RX_RETURN_TRUE on success or 0 on error
+ * @return CSCF_RETURN_TRUE on success or 0 on error
  * 
  */
 
@@ -503,8 +505,11 @@ static str permit_out = {"permit out ", 11};
 static str permit_in = {"permit in ", 10};
 static str from_s = {" from ", 6};
 static str to_s = {" to ", 4};
-static char * permit_out_with_ports = "permit out %i from %.*s %u to %.*s %u %s";
-static char * permit_in_with_ports = "permit in %i from %.*s %u to %.*s %u %s";
+//removed final %s - this is options which Rx 29.214 says will not be used for flow-description AVP
+static char * permit_out_with_ports = "permit out %i from %.*s %u to %.*s %u";
+//static char * permit_out_with_ports = "permit out %i from %.*s %u to %.*s %u %s";
+static char * permit_in_with_ports = "permit in %i from %.*s %u to %.*s %u";
+//static char * permit_in_with_ports = "permit in %i from %.*s %u to %.*s %u %s";
 
 AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
         str *ipA, str *portA,
@@ -549,13 +554,13 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
     }
 
     set_4bytes(x, number);
-
+    
     flow_number = cdpb.AAACreateAVP(AVP_IMS_Flow_Number,
             AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
             IMS_vendor_id_3GPP, x, 4,
             AVP_DUPLICATE_DATA);
     cdpb.AAAAddAVPToList(&list, flow_number);
-
+    
     /*IMS Flow descriptions*/
     /*first flow is the receive flow*/
     flow_data.len = snprintf(flow_data.s, len, permit_out_with_ports, proto_int,
