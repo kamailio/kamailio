@@ -5,9 +5,9 @@ complex compilation steps, or are obsolete.
 If you need any of these modules you will need to find (and possibly build) and
 install the dependencies and then do a manual build of Kamailio.
 
+Ordered by module name:
 * acc_radius		requires radiusclient-ng 0.5.0 or higher
-* app_java		requires various Java packages (which may be
-			available) and has a complex build process
+* app_java		requires libgcj-4.7 (CentOS 6 contains libgcj-4.4.7)
 * app_mono		requires mono-devel
 * auth_radius		requires radiusclient-ng 0.5.0 or higher
 * carrierroute		requires libconfuse
@@ -22,8 +22,23 @@ install the dependencies and then do a manual build of Kamailio.
 * json			requires libjson
 * jsonrpc-c		requires libjson
 * memcached		requires a different version of libmemcached from that
-			available with CentOS
+			available with CentOS 6
 * misc_radius		requires radiusclient-ng 0.5.6 or higher
 * ndb_redis		requires hiredis
 * osp			requires the OSP Toolkit
 * peering		requires radiusclient-ng 0.5.0 or higher
+
+Ordered by unmet dependency:
+* hiredis				ndb_redis
+* instantclient-sdk-10.2.0.3		db_oracle
+* libconfuse				carrierroute
+* libgcj-4.7				app_java
+* libgeoip				geoip
+* libjson				json, jsonrpc-c
+* libmemcached (wrong version in EL 6)	memcached
+* libval				dnssec
+* mono-devel				app_mono
+* OSP Toolkit				osp
+* radiusclient-ng 0.5.0 or higher	acc_radius, auth_radius, peering
+* radiusclient-ng 0.5.6 or higher	misc_radius
+* thrift 0.6.1 or 0.7.0			db_cassandra
