@@ -457,6 +457,13 @@ int dns_reinit_fixup(void *handle, str *gname, str *name, void **val);
 int dns_try_ipv6_fixup(void *handle, str *gname, str *name, void **val);
 void reinit_naptr_proto_prefs(str *gname, str *name);
 
+struct dns_srv_proto {
+	char proto;
+	int proto_pref;
+};
+void create_srv_name(char proto, str *name, char *srv);
+size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list);
+
 #ifdef DNS_WATCHDOG_SUPPORT
 /* callback function that is called by the child processes
  * when they reinitialize the resolver

@@ -1193,7 +1193,7 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 	srv_head=0;
 	srv_target=0;
 	if (name->len >= MAX_DNS_NAME) {
-		LOG(L_ERR, "sip_resolvehost: domain name too long\n");
+		LOG(L_ERR, "srv_sip_resolvehost: domain name too long\n");
 		he=0;
 		goto end;
 	}
@@ -1236,37 +1236,19 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 			goto end;
 		}
 		if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
-			LOG(L_WARN, "WARNING: sip_resolvehost: domain name too long (%d),"
+			LOG(L_WARN, "WARNING: srv_sip_resolvehost: domain name too long (%d),"
 						" unable to perform SRV lookup\n", name->len);
 		}else{
 			
 			switch(srv_proto){
-				case PROTO_NONE: /* no proto specified, use udp */
-					if (proto)
-						*proto=PROTO_UDP;
-					/* no break */
 				case PROTO_UDP:
-					memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
-					memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
-					tmp[SRV_UDP_PREFIX_LEN + name->len] = '\0';
-					break;
 				case PROTO_TCP:
-					memcpy(tmp, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
-					memcpy(tmp+SRV_TCP_PREFIX_LEN, name->s, name->len);
-					tmp[SRV_TCP_PREFIX_LEN + name->len] = '\0';
-					break;
 				case PROTO_TLS:
-					memcpy(tmp, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
-					memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
-					tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
-					break;
 				case PROTO_SCTP:
-					memcpy(tmp, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
-					memcpy(tmp+SRV_SCTP_PREFIX_LEN, name->s, name->len);
-					tmp[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
+					create_srv_name(srv_proto, name, tmp);
 					break;
 				default:
-					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
+					LOG(L_CRIT, "BUG: srv_sip_resolvehost: unknown proto %d\n",
 							srv_proto);
 					he=0;
 					goto end;
@@ -1278,7 +1260,7 @@ do_srv:
 				if (l->type!=T_SRV) continue; 
 				srv=(struct srv_rdata*) l->rdata;
 				if (srv==0){
-					LOG(L_CRIT, "sip_resolvehost: BUG: null rdata\n");
+					LOG(L_CRIT, "srv_sip_resolvehost: BUG: null rdata\n");
 					/* cleanup on exit only */
 					break;
 				}
@@ -1286,7 +1268,7 @@ do_srv:
 				if (he!=0){
 					/* we found it*/
 #ifdef RESOLVE_DBG
-					DBG("sip_resolvehost: found SRV(%s) = %s:%d in AR\n",
+					DBG("srv_sip_resolvehost: found SRV(%s) = %s:%d in AR\n",
 							srv_target, srv->name, srv->port);
 #endif
 					*port=srv->port;
@@ -1299,7 +1281,7 @@ do_srv:
 				if (l->type!=T_SRV) continue; /*should never happen*/
 				srv=(struct srv_rdata*) l->rdata;
 				if (srv==0){
-					LOG(L_CRIT, "sip_resolvehost: BUG: null rdata\n");
+					LOG(L_CRIT, "srv_sip_resolvehost: BUG: null rdata\n");
 					/* cleanup on exit only */
 					break;
 				}
@@ -1307,7 +1289,7 @@ do_srv:
 				if (he!=0){
 					/* we found it*/
 #ifdef RESOLVE_DBG
-					DBG("sip_resolvehost: SRV(%s) = %s:%d\n",
+					DBG("srv_sip_resolvehost: SRV(%s) = %s:%d\n",
 							srv_target, srv->name, srv->port);
 #endif
 					*port=srv->port;
@@ -1323,12 +1305,11 @@ do_srv:
 			}
 			/* cleanup on exit */
 #ifdef RESOLVE_DBG
-			DBG("sip_resolvehost: no SRV record found for %.*s," 
+			DBG("srv_sip_resolvehost: no SRV record found for %.*s," 
 					" trying 'normal' lookup...\n", name->len, name->s);
 #endif
 		}
 	}
-/*skip_srv:*/
 	if (likely(!zt)){
 		memcpy(tmp, name->s, name->len);
 		tmp[name->len] = '\0';
@@ -1429,6 +1410,89 @@ end:
 	return 0;
 }
 
+/* Prepend srv prefix according to the proto. */
+void create_srv_name(char proto, str *name, char *srv) {
+	switch (proto) {
+		case PROTO_UDP:
+			memcpy(srv, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
+			memcpy(srv+SRV_UDP_PREFIX_LEN, name->s, name->len);
+			srv[SRV_UDP_PREFIX_LEN + name->len] = '\0';
+			break;
+		case PROTO_TCP:
+			memcpy(srv, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
+			memcpy(srv+SRV_TCP_PREFIX_LEN, name->s, name->len);
+			srv[SRV_TCP_PREFIX_LEN + name->len] = '\0';
+			break;
+		case PROTO_TLS:
+			memcpy(srv, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
+			memcpy(srv+SRV_TLS_PREFIX_LEN, name->s, name->len);
+			srv[SRV_TLS_PREFIX_LEN + name->len] = '\0';
+			break;
+		case PROTO_SCTP:
+			memcpy(srv, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
+			memcpy(srv+SRV_SCTP_PREFIX_LEN, name->s, name->len);
+			srv[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
+			break;
+		default:
+			LOG(L_CRIT, "BUG: %s: unknown proto %d\n", __func__, proto);
+	}
+}
+
+size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list) {
+	struct dns_srv_proto tmp;
+	size_t i,j,list_len;
+	int default_order,max;
+
+	/* if proto available, then add only the forced protocol to the list */
+	if (proto && *proto!=PROTO_NONE){
+		list[0].proto=*proto;
+		list_len=1;
+	} else {
+		list_len = 0;
+		/*get protocols and preference scores, and add availble protocol(s) and score(s) to the list*/
+		for (i=PROTO_UDP; i<PROTO_LAST;i++) {
+			tmp.proto_pref = proto_pref_score(i);
+			/* if -1 so disabled continue with next protocol*/
+			if (naptr_proto_supported(i) == 0) {
+				continue;
+			} else {
+				list[i-1].proto_pref=tmp.proto_pref;
+				list[i-1].proto=i;
+				list_len++;
+			}
+		};
+
+		/* if all protocol prefence scores equal, then set the perference to default values: udp,tcp,tls,sctp */
+		for (i=1; i<list_len;i++) {
+			if(list[0].proto_pref!=list[i].proto_pref){
+				default_order=0;
+			}
+		}
+		if (default_order){
+			for (i=0; i<list_len;i++) {
+				list[i].proto_pref=proto_pref_score(i);
+			}
+		}
+
+		/* sorting the list */
+		for (i=0;i<list_len-1;i++) {
+			max=i;
+			for (j=i+1;j<list_len;j++) {
+				if (list[j].proto_pref>list[max].proto_pref) { 
+					max=j; 
+				}
+			}
+			if (i!=max) {
+				tmp=list[i];
+				list[i]=list[max];
+				list[max]=tmp;
+			}
+		}
+
+	}
+	return list_len;
+}
+
 /* Resolves SRV if no naptr found. 
  * It reuse dns_pref values and according that resolves supported protocols. 
  * If dns_pref are equal then it use udp,tcp,tls,sctp order.
@@ -1438,19 +1502,14 @@ end:
 
 struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, char* proto)
 {
-	struct dns_srv_proto_t {
-		char proto;
-		int proto_pref;
-	} srv_proto_list[PROTO_LAST], tmp_srv_element;
+	struct dns_srv_proto srv_proto_list[PROTO_LAST];
 	struct hostent* he;
 	struct ip_addr* ip;
 	str srv_name;
 	static char tmp_srv[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
-	int len;
-	unsigned char i,j,max,default_order=0,list_len=0;
+	size_t i,list_len;
 	/* init variables */
 	he=0;
-	len=0;
 
 	/* check if it's an ip address */
 	if (((ip=str2ip(name))!=0)
@@ -1471,86 +1530,18 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 		LOG(L_WARN, "WARNING: no_naptr_srv_sip_resolvehost: domain name too long"
 						" (%d), unable to perform SRV lookup\n", name->len);
 	} else {
-		/* if proto available, then add only the forced protocol to the list */
-		if (proto && *proto!=PROTO_NONE){
-			srv_proto_list[0].proto=*proto;
-			list_len=1;
-		} else {
-	
-			/*get protocols and preference scores, and add availble protocol(s) and score(s) to the list*/
-			for (i=PROTO_UDP; i<PROTO_LAST;i++) {
-				tmp_srv_element.proto_pref = proto_pref_score(i);
-				/* if -1 so disabled continue with next protocol*/
-				if (naptr_proto_supported(i) == 0 ) {
-					continue;
-				} else {
-					srv_proto_list[i-1].proto_pref=tmp_srv_element.proto_pref;
-					srv_proto_list[i-1].proto=i;
-					list_len++;
-				}
-			};
-
-			/* if all protocol prefence scores equal, then set the perference to default values: udp,tcp,tls,sctp */
-			for (i=1; i<list_len;i++) {
-				if(srv_proto_list[0].proto_pref!=srv_proto_list[i].proto_pref){
-					default_order=0;
-				}
-			}
-			if (default_order){
-				for (i=0; i<list_len;i++) {
-					srv_proto_list[i].proto_pref=proto_pref_score(i);;
-				}
-			}
-
-			/* sorting the list */
-			for (i=0;i<list_len-1;i++) {
-				max=i;
-				for (j=i+1;j<list_len;j++) {
-					if (srv_proto_list[j].proto_pref>srv_proto_list[max].proto_pref) { 
-						max=j; 
-					}
-				}
-				if (i!=max) {
-					tmp_srv_element=srv_proto_list[i];
-					srv_proto_list[i]=srv_proto_list[max];
-					srv_proto_list[max]=tmp_srv_element;
-				}
-			}
-
-		}
 		/* looping on the ordered list until we found a protocol what has srv record */
+		list_len = create_srv_pref_list(proto, srv_proto_list);
 		for (i=0; i<list_len;i++) {	
 			switch (srv_proto_list[i].proto) {
-				case PROTO_NONE: /* no proto specified, use udp */
-					if (proto)
-						*proto=PROTO_UDP;
-					/* no break */
 				case PROTO_UDP:
-					memcpy(tmp_srv, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
-					memcpy(tmp_srv+SRV_UDP_PREFIX_LEN, name->s, name->len);
-					tmp_srv[SRV_UDP_PREFIX_LEN + name->len] = '\0';
-					len=SRV_UDP_PREFIX_LEN + name->len;
-					break;
 				case PROTO_TCP:
-					memcpy(tmp_srv, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
-					memcpy(tmp_srv+SRV_TCP_PREFIX_LEN, name->s, name->len);
-					tmp_srv[SRV_TCP_PREFIX_LEN + name->len] = '\0';
-					len=SRV_TCP_PREFIX_LEN + name->len;
-					break;
 				case PROTO_TLS:
-					memcpy(tmp_srv, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
-					memcpy(tmp_srv+SRV_TLS_PREFIX_LEN, name->s, name->len);
-					tmp_srv[SRV_TLS_PREFIX_LEN + name->len] = '\0';
-					len=SRV_TLS_PREFIX_LEN + name->len;
-					break;
 				case PROTO_SCTP:
-					memcpy(tmp_srv, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
-					memcpy(tmp_srv+SRV_SCTP_PREFIX_LEN, name->s, name->len);
-					tmp_srv[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
-					len=SRV_SCTP_PREFIX_LEN + name->len;
+					create_srv_name(srv_proto_list[i].proto, name, tmp_srv);
 					break;
 				default:
-					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
+					LOG(L_CRIT, "BUG: no_naptr_srv_sip_resolvehost: unknown proto %d\n",
 							(int)srv_proto_list[i].proto);
 					return 0;
 			}
@@ -1562,13 +1553,14 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 				*proto = PROTO_UDP;
 			}
 			srv_name.s=tmp_srv;
-			srv_name.len=len;
+			srv_name.len=strlen(tmp_srv);
 			#ifdef USE_DNS_CACHE
 			he=dns_srv_get_he(&srv_name, port, dns_flags);
 			#else
 			he=srv_sip_resolvehost(&srv_name, 0, port, proto, 1, 0);
 			#endif
 			if (he!=0) {
+				*proto = srv_proto_list[i].proto;
 				return he;
 			}
 		}
