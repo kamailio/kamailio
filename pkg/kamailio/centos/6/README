@@ -6,39 +6,24 @@ If you need any of these modules you will need to find (and possibly build) and
 install the dependencies and then do a manual build of Kamailio.
 
 Ordered by module name:
-* acc_radius		requires radiusclient-ng 0.5.0 or higher
 * app_java		requires libgcj-4.7 (CentOS 6 contains libgcj-4.4.7)
-* app_mono		requires mono-devel
-* auth_radius		requires radiusclient-ng 0.5.0 or higher
-* carrierroute		requires libconfuse
+* app_mono		requires mono-devel-??? (EPEL contains
+			mono-devel 2.4.3.1)
 * db_cassandra		requires thrift 0.6.1 or 0.7.0
 * db_oracle		requires instantclient-sdk-10.2.0.3
-* dnssec		requires libval
-* geoip			requires libgeoip
-* iptrtpproxy		requires custom Kernel module builds. If you want to
-			use an in-kernel RTP proxy try the rtpproxy-ng module
-			along with mediaproxy-ng from SipWise
+* iptrtpproxy		this module is obsolete
 * jabber		this module is obsolete
-* json			requires libjson
-* jsonrpc-c		requires libjson
-* memcached		requires a different version of libmemcached from that
-			available with CentOS 6
-* misc_radius		requires radiusclient-ng 0.5.6 or higher
-* ndb_redis		requires hiredis
+* memcached		requires libmemcached > 0.38 (CentOS contains
+			libmemcached 0.31)
+* mi_xmlrpc		requires xmlrpc-c 0.9.10 or 1.06.[10-30] (CentOS 6
+			contains xmlrpc-c 1.16.24)
 * osp			requires the OSP Toolkit
-* peering		requires radiusclient-ng 0.5.0 or higher
 
 Ordered by unmet dependency:
-* hiredis				ndb_redis
 * instantclient-sdk-10.2.0.3		db_oracle
-* libconfuse				carrierroute
 * libgcj-4.7				app_java
-* libgeoip				geoip
-* libjson				json, jsonrpc-c
-* libmemcached (wrong version in EL 6)	memcached
-* libval				dnssec
-* mono-devel				app_mono
+* libmemcached > 0.38			memcached
+* mono-devel-???			app_mono
 * OSP Toolkit				osp
-* radiusclient-ng 0.5.0 or higher	acc_radius, auth_radius, peering
-* radiusclient-ng 0.5.6 or higher	misc_radius
 * thrift 0.6.1 or 0.7.0			db_cassandra
+* xmlrpc-c 0.9.10 or 1.06.[10-30]	mi_xmlrpc
