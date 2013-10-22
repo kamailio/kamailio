@@ -57,6 +57,8 @@
 #include "worker.h"
 #include "diameter_api.h"
 
+#include "../../cfg/cfg_struct.h"
+
 /* defined in ../diameter_peer.c */
 int dp_add_pid(pid_t pid);
 void dp_del_pid(pid_t pid);
@@ -315,6 +317,7 @@ void worker_process(int id) {
     /* init the application level for this child */
     while (1) {
         if (shutdownx && (*shutdownx)) break;
+	cfg_update();
         t = take_task();
         if (!t.msg) {
             if (shutdownx && (*shutdownx)) break;

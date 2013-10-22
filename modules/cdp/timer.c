@@ -53,6 +53,8 @@
 
 #include "timer.h"
 
+#include "../../cfg/cfg_struct.h"
+
 
 /* defined in ../diameter_peer.c */
 int dp_add_pid(pid_t pid);
@@ -83,6 +85,7 @@ void timer_loop()
 	while(1){
 		if (shutdownx && *shutdownx) break;
 		now = time(0);
+		cfg_update();
 	
 		do {
 			cb = 0;

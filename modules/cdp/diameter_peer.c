@@ -62,6 +62,7 @@
 #include "session.h"
 
 #include "../../pt.h"
+#include "../../cfg/cfg_struct.h"
 
 dp_config *config=0;		/**< Configuration for this diameter peer 	*/
 
@@ -304,6 +305,7 @@ int diameter_peer_start(int blocking)
 		if (pid==0) {
 			srandom(time(0)*k);
 			snprintf(pt[process_no].desc, MAX_PT_DESC,"cdp worker child=%d", k );
+			if (cfg_child_init()) return 0;
 			worker_process(k);
 			LM_CRIT("init_diameter_peer(): worker_process finished without exit!\n");
 			exit(-1);
@@ -330,6 +332,7 @@ int diameter_peer_start(int blocking)
 		srandom(time(0)*k);
 		snprintf(pt[process_no].desc, MAX_PT_DESC,
 				"cdp receiver peer unknown");
+		if (cfg_child_init()) return 0;
 		receiver_process(NULL);
 		LM_CRIT("init_diameter_peer(): receiver_process finished without exit!\n");
 		exit(-1);
@@ -349,6 +352,7 @@ int diameter_peer_start(int blocking)
 			srandom(time(0)*k);
 				snprintf(pt[process_no].desc, MAX_PT_DESC,
 					"cdp_receiver_peer=%.*s", p->fqdn.len,p->fqdn.s );
+			if (cfg_child_init()) return 0;
 			receiver_process(p);
 			LM_CRIT("init_diameter_peer(): receiver_process finished without exit!\n");
 			exit(-1);
@@ -367,6 +371,7 @@ int diameter_peer_start(int blocking)
 		return 0;
 	}
 	if (pid==0) {
+		if (cfg_child_init()) return 0;
 		acceptor_process(config);
 		LM_CRIT("init_diameter_peer(): acceptor_process finished without exit!\n");
 		exit(-1);
@@ -377,6 +382,7 @@ int diameter_peer_start(int blocking)
 	/* fork/become timer */
 	if (blocking) {
 		dp_add_pid(getpid());
+		if (cfg_child_init()) return 0;
 		timer_process(1);
 	}
 	else{
@@ -386,6 +392,7 @@ int diameter_peer_start(int blocking)
 			return 0;
 		}
 		if (pid==0) {
+			if (cfg_child_init()) return 0;
 			timer_process(0);
 			LM_CRIT("init_diameter_peer(): timer_process finished without exit!\n");
 			exit(-1);

@@ -69,6 +69,8 @@
 
 #include "receiver.h"
 
+#include "../../cfg/cfg_struct.h"
+
 extern dp_config *config;		/**< Configuration for this diameter peer 	*/
 
 int dp_add_pid(pid_t pid);
@@ -643,6 +645,7 @@ int receive_loop(peer *original_peer)
 
 		while(!n){
 			if (shutdownx&&*shutdownx) break;
+			cfg_update();
 
 			log_serviced_peers();
 

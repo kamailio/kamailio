@@ -52,6 +52,8 @@
 #include "config.h"
 #include "cdp_load.h"
 
+#include "../../cfg/cfg_struct.h"
+
 MODULE_VERSION
 
 char* config_file="DiameterPeer.xml"; 	/**< default DiameterPeer configuration filename */
@@ -219,6 +221,7 @@ static int cdp_init( void )
 		return 1;
 	}
 	register_procs(2+config->workers + 2 * config->peers_cnt);
+	cfg_register_child(2+config->workers + 2 * config->peers_cnt);
 	return 0;
 }
 

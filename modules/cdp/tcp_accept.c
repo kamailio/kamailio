@@ -63,6 +63,8 @@
 #include "tcp_accept.h"
 #include "receiver.h"
 
+#include "../../cfg/cfg_struct.h"
+
 /* defined in ../diameter_peer.c */
 int dp_add_pid(pid_t pid);
 
@@ -204,6 +206,8 @@ void accept_loop()
 
 	while(1){
 		if (shutdownx && *shutdownx) break;
+		
+		cfg_update();
 		
 		timeout.tv_sec=2;
 		timeout.tv_usec=0;	
