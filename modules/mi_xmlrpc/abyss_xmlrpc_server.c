@@ -1028,7 +1028,7 @@ xmlrpc_server_abyss(xmlrpc_env *                      const envP,
         xmlrpc_faultf(envP,
                       "You must specify members at least up through "
                       "'registryP' in the server parameters argument.  "
-                      "That would mean the parameter size would be >= %u "
+                      "That would mean the parameter size would be >= %lu "
                       "but you specified a size of %u",
                       XMLRPC_APSIZE(registryP), parmSize);
     else {
