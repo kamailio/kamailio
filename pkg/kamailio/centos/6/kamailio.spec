@@ -1,6 +1,6 @@
 %define name	kamailio
 %define ver	4.1.0
-%define rel	dev9.4%{dist}
+%define rel	pre1.1%{dist}
 
 
 
@@ -16,19 +16,22 @@ URL:		http://kamailio.org/
 Vendor:		kamailio.org
 BuildRoot:	%{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:	kamailio-auth-ephemeral < %ver, kamailio-auth-identity < %ver
-Conflicts:	kamailio-bdb < %ver, kamailio-dialplan < %ver
+Conflicts:	kamailio-bdb < %ver, kamailio-carrierroute < %ver,
+Conflicts:	kamailio-cpl < %ver, kamailio-dialplan < %ver
+Conflicts:	kamailio-dnssec < %ver, kamailio-geoip < %ver
 Conflicts:	kamailio-gzcompress < %ver, kamailio-ims < %ver
-Conflicts:	kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
-Conflicts:	kamailio-mysql < %ver, kamailio-outbound < %ver
-Conflicts:	kamailio-perl < %ver, kamailio-postgresql < %ver
-Conflicts:	kamailio-presence < %ver, kamailio-purple < %ver
-Conflicts:	kamailio-python < %ver, kamailio-regex < %ver
-Conflicts:	kamailio-sctp < %ver, kamailio-snmpstats < %ver
-Conflicts:	kamailio-sqlite < %ver, kamailio-tls < %ver
-Conflicts:	kamailio-unixODBC < %ver, kamailio-utils < %ver
-Conflicts:	kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
-Conflicts:	kamailio-xmlops < %ver, kamailio-xmlrpc < %ver
-Conflicts:	kamailio-xmpp < %ver
+Conflicts:	kamailio-json < %ver, kamailio-lcr < %ver, kamailio-ldap < %ver
+Conflicts:	kamailio-lua < %ver, kamailio-mysql < %ver
+Conflicts:	kamailio-outbound < %ver, kamailio-perl < %ver
+Conflicts:	kamailio-postgresql < %ver, kamailio-presence < %ver
+Conflicts:	kamailio-purple < %ver, kamailio-python < %ver
+Conflicts:	kamailio-radius < % ver, kamailio-redis < %ver
+Conflicts:	kamailio-regex < %ver, kamailio-sctp < %ver
+Conflicts:	kamailio-snmpstats < %ver, kamailio-sqlite < %ver
+Conflicts:	kamailio-tls < %ver, kamailio-unixodbc < %ver
+Conflicts:	kamailio-utils < %ver, kamailio-websocket < %ver
+Conflicts:	kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
+Conflicts:	kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 BuildRequires:	bison, flex, gcc, make, redhat-rpm-config
 
 %description
@@ -74,6 +77,16 @@ BuildRequires:	db4-devel
 Berkeley database connectivity for Kamailio.
 
 
+%package	carrierroute
+Summary:	The carrierroute module for Kamailio.
+Group:		System Environment/Daemons
+Requires:	epel-release, libconfuse, kamailio = %ver
+BuildRequires:	epel-release, libconfuse-devel
+
+%description	carrierroute
+The carrierroute module for Kamailio.
+
+
 %package	cpl
 Summary:	CPL (Call Processing Language) interpreter for Kamailio.
 Group:		System Environment/Daemons
@@ -94,6 +107,26 @@ BuildRequires:	pcre-devel
 String translations based on rules for Kamailio.
 
 
+%package	dnssec
+Summary:	DNSSEC support for Kamailio.
+Group:		System Environment/Daemons
+Requires:	epel-release, dnssec-tools-libs, kamailio = %ver
+BuildRequires:	epel-release, dnssec-tools-libs-devel
+
+%description	dnssec
+DNSSEC support for Kamailio.
+
+
+%package	geoip
+Summary:	MaxMind GeoIP support for Kamailio.
+Group:		System Environment/Daemons
+Requires:	epel-release, GeoIP, kamailio = %ver
+BuildRequires:	epel-release, GeoIP-devel
+
+%description	geoip
+MaxMind GeoIP support for Kamailio.
+
+
 %package	gzcompress
 Summary:	Compressed body (SIP and HTTP) handling for kamailio.
 Group:		System Environment/Daemons
@@ -112,6 +145,16 @@ BuildRequires:	libxml2-devel
 
 %description	ims
 IMS modules and extensions module for Kamailio.
+
+
+%package	json
+Summary:	json string handling and RPC modules for Kamailio.
+Group:		System Environment/Daemons
+Requires:	epel-release, json-c, libevent, kamailio = %ver
+BuildRequires:	epel-release, json-c-devel, libevent-devel
+
+%description	json
+json string handling and RPC modules for Kamailio.
 
 
 %package	lcr
@@ -216,6 +259,26 @@ BuildRequires:	python-devel
 Python extensions for Kamailio.
 
 
+%package	radius
+Summary:	RADIUS modules for Kamailio.
+Group:		System Environment/Daemons
+Requires:	epel-release, radiusclient-ng, kamailio = %ver
+BuildRequires:	epel-release, radiusclient-ng-devel
+
+%description	radius
+RADIUS modules for Kamailio.
+
+
+%package	redis
+Summary:	Redis configuration file support for Kamailio.
+Group:		System Environment/Daemons
+Requires:	epel-release, hiredis, kamailio = %ver
+BuildRequires:	epel-release, hiredis-devel
+
+%description	redis
+Redis configuration file support for Kamailio.
+
+
 %package	regex
 Summary:	PCRE mtaching operations for Kamailio.
 Group:		System Environment/Daemons
@@ -266,13 +329,13 @@ BuildRequires:	openssl-devel
 TLS transport for Kamailio.
 
 
-%package	unixODBC
+%package	unixodbc
 Summary:	unixODBC database connectivity for Kamailio.
 Group:		System Environment/Daemons
 Requires:	unixODBC, kamailio = %ver
 BuildRequires:	unixODBC-devel
 
-%description	unixODBC
+%description	unixodbc
 unixODBC database connectivity for Kamailio.
 
 
@@ -317,13 +380,13 @@ XML operation functions for Kamailio.
 
 
 %package	xmlrpc
-Summary:	XMLRPC trasnport and encoding for Kamailio RPCs.
+Summary:	XMLRPC transport and encoding for Kamailio RPCs and MI commands.
 Group:		System Environment/Daemons
-Requires:	libxml2, kamailio = %ver
-BuildRequires:	libxml2-devel
+Requires:	libxml2, xmlrpc-c, kamailio = %ver
+BuildRequires:	libxml2-devel, xmlrpc-c-devel
 
 %description	xmlrpc
-XMLRPC trasnport and encoding for Kamailio RPCs.
+XMLRPC transport and encoding for Kamailio RPCs and MI commands.
 
 
 %package	xmpp
@@ -346,12 +409,12 @@ SIP/XMPP IM gateway for Kamailio.
 make cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT \
 	cfg_target=/%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
-make every-module skip_modules="app_java db_cassandra db_oracle dnssec \
-	iptrtpproxy memcached mi_xmlrpc osp" \
-	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
-	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
-	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound ksctp kautheph"
+make every-module skip_modules="app_java app_mono db_cassandra \
+	db_oracle iptrtpproxy jabber memcached osp" \
+	group_include="kstandard kautheph kberkeley kcarrierroute kcpl kdnssec \
+	kgeoip kims kjson kldap klua kmi_xmlrpc kmysql koutbound kperl \
+	kpostgres kpresence kpurple kpython kradius kredis ksctp ksnmpstats \
+	ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
 make utils
 
 
@@ -360,12 +423,12 @@ make utils
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
 make install
-make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
-	memcached mi_xmlrpc osp" \
-	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
-	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
-	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound ksctp kautheph"
+make install-modules-all skip_modules="app_java app_mono db_cassandra \
+	db_oracle iptrtpproxy jabber memcached osp" \
+	group_include="kstandard kautheph kberkeley kcarrierroute kcpl kdnssec \
+	kgeoip kims kjson kldap klua kmi_xmlrpc kmysql koutbound kperl \
+	kpostgres kpresence kpurple kpython kradius kredis ksctp ksnmpstats \
+	ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -714,6 +777,12 @@ fi
 %{_datadir}/kamailio/db_berkeley/*
 
 
+%files		carrierroute
+%defattr(-,root,root)
+%{_docdir}/kamailio/modules/README.carrierroute
+%{_libdir}/kamailio/modules/carrierroute.so
+
+
 %files		cpl
 %defattr(-,root,root)
 %{_docdir}/kamailio/modules/README.cpl-c
@@ -724,6 +793,18 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.dialplan
 %{_libdir}/kamailio/modules/dialplan.so
+
+
+%files		dnssec
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.dnssec
+%{_libdir}/kamailio/modules/dnssec.so
+
+
+%files		geoip
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.geoip
+%{_libdir}/kamailio/modules/geoip.so
 
 
 %files		gzcompress
@@ -737,28 +818,37 @@ fi
 %{_libdir}/kamailio/libkamailio_ims.so
 %{_libdir}/kamailio/libkamailio_ims.so.0
 %{_libdir}/kamailio/libkamailio_ims.so.0.1
+
 %doc %{_docdir}/kamailio/modules/README.cdp
-%{_libdir}/kamailio/modules/cdp.so
 %doc %{_docdir}/kamailio/modules/README.cdp_avp
-%{_libdir}/kamailio/modules/cdp_avp.so
 %doc %{_docdir}/kamailio/modules/README.ims_auth
-%{_libdir}/kamailio/modules/ims_auth.so
 %doc %{_docdir}/kamailio/modules/README.ims_charging
-%{_libdir}/kamailio/modules/ims_charging.so
 %doc %{_docdir}/kamailio/modules/README.ims_icscf
-%{_libdir}/kamailio/modules/ims_icscf.so
 %doc %{_docdir}/kamailio/modules/README.ims_isc
-%{_libdir}/kamailio/modules/ims_isc.so
 %doc %{_docdir}/kamailio/modules/README.ims_qos
-%{_libdir}/kamailio/modules/ims_qos.so
 #%doc %{_docdir}/kamailio/modules/README.ims_registrar_pcscf
-%{_libdir}/kamailio/modules/ims_registrar_pcscf.so
 #%doc %{_docdir}/kamailio/modules/README.ims_registrar_scscf
-%{_libdir}/kamailio/modules/ims_registrar_scscf.so
 %doc %{_docdir}/kamailio/modules/README.ims_usrloc_pcscf
-%{_libdir}/kamailio/modules/ims_usrloc_pcscf.so
 #%doc %{_docdir}/kamailio/modules/README.ims_usrloc_scscf
+%{_libdir}/kamailio/modules/cdp.so
+%{_libdir}/kamailio/modules/cdp_avp.so
+%{_libdir}/kamailio/modules/ims_auth.so
+%{_libdir}/kamailio/modules/ims_charging.so
+%{_libdir}/kamailio/modules/ims_icscf.so
+%{_libdir}/kamailio/modules/ims_isc.so
+%{_libdir}/kamailio/modules/ims_qos.so
+%{_libdir}/kamailio/modules/ims_registrar_pcscf.so
+%{_libdir}/kamailio/modules/ims_registrar_scscf.so
+%{_libdir}/kamailio/modules/ims_usrloc_pcscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_scscf.so
+
+
+%files		json
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.json
+%doc %{_docdir}/kamailio/modules/README.jsonrpc-c
+%{_libdir}/kamailio/modules/json.so
+%{_libdir}/kamailio/modules/jsonrpc-c.so
 
 
 %files		lcr
@@ -893,6 +983,24 @@ fi
 %{_libdir}/kamailio/modules/app_python.so
 
 
+%files		radius
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.acc_radius
+%doc %{_docdir}/kamailio/modules/README.auth_radius
+%doc %{_docdir}/kamailio/modules/README.misc_radius
+%doc %{_docdir}/kamailio/modules/README.peering
+%{_libdir}/kamailio/modules/acc_radius.so
+%{_libdir}/kamailio/modules/auth_radius.so
+%{_libdir}/kamailio/modules/misc_radius.so
+%{_libdir}/kamailio/modules/peering.so
+
+
+%files		redis
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.ndb_redis
+%{_libdir}/kamailio/modules/ndb_redis.so
+
+
 %files		regex
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.regex
@@ -927,7 +1035,7 @@ fi
 %{_libdir}/kamailio/modules/tls.so
 
 
-%files		unixODBC
+%files		unixodbc
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.db_unixodbc
 %{_libdir}/kamailio/modules/db_unixodbc.so
@@ -963,6 +1071,8 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.xmlrpc
 %{_libdir}/kamailio/modules/xmlrpc.so
+%doc %{_docdir}/kamailio/modules/README.mi_xmlrpc
+%{_libdir}/kamailio/modules/mi_xmlrpc.so
 
 
 %files		xmpp
@@ -983,6 +1093,7 @@ fi
     - sipt
     - stun (STUN functionality moved from compile time in core to own module)
   - Added ims_charging module to ims package
+  - Added mi_xmlrpc to xmlrpc package
   - Added new packages for new modules:
     - auth_ephemeral
     - sctp (SCTP functionality moved from compile time in core to own module)
@@ -991,6 +1102,13 @@ fi
     - cdp and cdp_avp to ims package
     - dialog_ng to main package
     - tls to own package
+  - Added packages for (new and existing) modules that require EPEL:
+    - carrierroute in own package
+    - dnssec in own package
+    - geoip in own package
+    - json and jsonrpc-c in new json package
+    - redis in own package
+    - acc_radius, auth_radius, misc_radius, and peering in new radius package
   - Removed Fedora stuff as I am only maintaining this for CentOS now
   - Refactored .spec
   - Updated make commands to match updated module groups
