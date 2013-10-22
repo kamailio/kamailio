@@ -15,8 +15,6 @@ Ordered by module name:
 * jabber		this module is obsolete
 * memcached		requires libmemcached > 0.38 (CentOS contains
 			libmemcached 0.31)
-* mi_xmlrpc		requires xmlrpc-c 0.9.10 or 1.06.[10-30] (CentOS 6
-			contains xmlrpc-c 1.16.24)
 * osp			requires the OSP Toolkit
 
 Ordered by unmet dependency:
@@ -26,4 +24,3 @@ Ordered by unmet dependency:
 * mono-devel-???			app_mono
 * OSP Toolkit				osp
 * thrift 0.6.1 or 0.7.0			db_cassandra
-* xmlrpc-c 0.9.10 or 1.06.[10-30]	mi_xmlrpc
