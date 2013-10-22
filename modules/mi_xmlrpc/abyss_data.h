@@ -18,6 +18,8 @@ typedef struct
 	int size;
 } TString;
 
+abyss_bool StringAlloc(TString *s);
+void StringFree(TString *s);
 #endif
 
 /*********************************************************************

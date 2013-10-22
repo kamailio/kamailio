@@ -943,7 +943,6 @@ uriPathParm(const xmlrpc_server_abyss_parms * const parmsP,
 
 #ifdef XMLRPC_OLD_VERSION
 static xmlrpc_server_shutdown_fn shutdownAbyss;
-#endif
 
 static void
 shutdownAbyss(xmlrpc_env * const envP,
@@ -969,7 +968,7 @@ shutdownAbyss(xmlrpc_env * const envP,
     
     ServerTerminate(serverP);
 }
-
+#endif
 
 
 static void
@@ -998,12 +997,12 @@ normalLevelAbyssRun(xmlrpc_env *                      const envP,
 
         ServerUseSigchld(&server);
         
-        if (0)
+        //if (0)
             /* Too much of a security risk.  In 1.07, there is a server
                parameter to enable this.
             */
-            xmlrpc_registry_set_shutdown(parmsP->registryP,
-                                         &shutdownAbyss, &server);
+        //    xmlrpc_registry_set_shutdown(parmsP->registryP,
+        //                                 &shutdownAbyss, &server);
         
         ServerRun(&server);
 
@@ -1029,7 +1028,7 @@ xmlrpc_server_abyss(xmlrpc_env *                      const envP,
         xmlrpc_faultf(envP,
                       "You must specify members at least up through "
                       "'registryP' in the server parameters argument.  "
-                      "That would mean the parameter size would be >= %lu "
+                      "That would mean the parameter size would be >= %u "
                       "but you specified a size of %u",
                       XMLRPC_APSIZE(registryP), parmSize);
     else {

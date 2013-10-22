@@ -42,8 +42,8 @@ ifeq ($(OLD),yes)
 else
 ifeq ($(NEW),yes)
 	# nothing to do
-else
-$(warning			You are using an unsupported libxmlrpc-c3 \
+#else
+#$(warning			You are using an unsupported libxmlrpc-c3 \
 					 version  ($(XMLRPC_VER)), compile at your own risk!)
 endif
 endif
