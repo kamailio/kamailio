@@ -380,13 +380,13 @@ XML operation functions for Kamailio.
 
 
 %package	xmlrpc
-Summary:	XMLRPC trasnport and encoding for Kamailio RPCs.
+Summary:	XMLRPC transport and encoding for Kamailio RPCs and MI commands.
 Group:		System Environment/Daemons
-Requires:	libxml2, kamailio = %ver
-BuildRequires:	libxml2-devel
+Requires:	libxml2, xmlrpc-c, kamailio = %ver
+BuildRequires:	libxml2-devel, xmlrpc-c-devel
 
 %description	xmlrpc
-XMLRPC trasnport and encoding for Kamailio RPCs.
+XMLRPC transport and encoding for Kamailio RPCs and MI commands.
 
 
 %package	xmpp
@@ -410,11 +410,11 @@ make cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT \
 	cfg_target=/%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
 make every-module skip_modules="app_java app_mono db_cassandra \
-	db_oracle iptrtpproxy jabber memcached mi_xmlrpc osp" \
+	db_oracle iptrtpproxy jabber memcached osp" \
 	group_include="kstandard kautheph kberkeley kcarrierroute kcpl kdnssec \
-	kgeoip kims kjson kldap klua kmysql koutbound kperl kpostgres \
-	kpresence kpurple kpython kradius kredis ksctp ksnmpstats ksqlite \
-	ktls kunixodbc kutils kwebsocket kxml kxmpp" 
+	kgeoip kims kjson kldap klua kmi_xmlrpc kmysql koutbound kperl \
+	kpostgres kpresence kpurple kpython kradius kredis ksctp ksnmpstats \
+	ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
 make utils
 
 
@@ -424,11 +424,11 @@ make utils
 
 make install
 make install-modules-all skip_modules="app_java app_mono db_cassandra \
-	db_oracle iptrtpproxy jabber memcached mi_xmlrpc osp" \
+	db_oracle iptrtpproxy jabber memcached osp" \
 	group_include="kstandard kautheph kberkeley kcarrierroute kcpl kdnssec \
-	kgeoip kims kjson kldap klua kmysql koutbound kperl kpostgres \
-	kpresence kpurple kpython kradius kredis ksctp ksnmpstats ksqlite \
-	ktls kunixodbc kutils kwebsocket kxml kxmpp"
+	kgeoip kims kjson kldap klua kmi_xmlrpc kmysql koutbound kperl \
+	kpostgres kpresence kpurple kpython kradius kredis ksctp ksnmpstats \
+	ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -1071,6 +1071,8 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.xmlrpc
 %{_libdir}/kamailio/modules/xmlrpc.so
+%doc %{_docdir}/kamailio/modules/README.mi_xmlrpc
+%{_libdir}/kamailio/modules/mi_xmlrpc.so
 
 
 %files		xmpp
@@ -1091,6 +1093,7 @@ fi
     - sipt
     - stun (STUN functionality moved from compile time in core to own module)
   - Added ims_charging module to ims package
+  - Added mi_xmlrpc to xmlrpc package
   - Added new packages for new modules:
     - auth_ephemeral
     - sctp (SCTP functionality moved from compile time in core to own module)
