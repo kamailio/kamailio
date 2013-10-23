@@ -28,6 +28,7 @@
 #include "worker.h"
 #include "../../data_lump_rpl.h"
 #include "../../mod_fix.h"
+#include "../../sip_msg_clone.h"
 
 /**
  * @brief set the body of a response
@@ -131,17 +132,31 @@ void worker_loop(int id)
 int add_dmq_job(struct sip_msg* msg, dmq_peer_t* peer)
 {
 	int i, found_available = 0;
-	int ret;
 	dmq_job_t new_job = { 0 };
 	dmq_worker_t* worker;
+	struct sip_msg* cloned_msg = NULL;
+	int cloned_msg_len;
 
-	ret = 0;
+	/* Pre-parse headers so they are included in our clone. Parsing later
+	 * will result in linking pkg structures to shm msg, eventually leading 
+	 * to memory errors. */
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
+	cloned_msg = sip_msg_shm_clone(msg, &cloned_msg_len, 1);
+	if(!cloned_msg) {
+		LM_ERR("error cloning sip message\n");
+		return -1;
+	}
+
 	new_job.f = peer->callback;
-	new_job.msg = msg;
+	new_job.msg = cloned_msg;
 	new_job.orig_peer = peer;
 	if(!num_workers) {
 		LM_ERR("error in add_dmq_job: no workers spawned\n");
-		return -1;
+		goto error;
 	}
 	/* initialize the worker with the first one */
 	worker = workers;
@@ -162,9 +177,16 @@ int add_dmq_job(struct sip_msg* msg, dmq_peer_t* peer)
 				" to the least busy one [%d %d]\n",
 				worker->pid, job_queue_size(worker->queue));
 	}
-	ret = job_queue_push(worker->queue, &new_job);
+	if (job_queue_push(worker->queue, &new_job)<0) {
+		goto error;
+	}
 	lock_release(&worker->lock);
-	return ret;
+	return 0;
+error:
+	if (cloned_msg!=NULL) {
+		shm_free(cloned_msg);
+	}
+	return -1;
 }
 
 /**

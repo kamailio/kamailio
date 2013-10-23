@@ -30,6 +30,7 @@
 #include "../../atomic_ops.h"
 #include "../../parser/msg_parser.h"
 
+
 typedef struct dmq_job {
 	peer_callback_t f;
 	struct sip_msg* msg;

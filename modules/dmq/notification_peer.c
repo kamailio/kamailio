@@ -162,11 +162,6 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 	unsigned int maxforwards = 1;
 	/* received dmqnode list */
 	LM_DBG("dmq triggered from dmq_notification_callback\n");
-	/* parse the message headers */
-	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
-		LM_ERR("error parsing message headers\n");
-		goto error;
-	}
 	
 	/* extract the maxforwards value, if any */
 	if(msg->maxforwards) {
