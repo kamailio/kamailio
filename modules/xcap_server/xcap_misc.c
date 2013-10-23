@@ -334,15 +334,15 @@ int xcaps_xpath_get(str *inbuf, str *xpaths, str *outbuf)
 		LM_ERR("unable to evaluate xpath expression [%s]\n", xpaths->s);
 		goto error;
 	}
-    nodes = xpathObj->nodesetval;
-	if(nodes==NULL)
+	nodes = xpathObj->nodesetval;
+	if(nodes==NULL || nodes->nodeNr==0 || nodes->nodeTab == NULL)
 	{
 		outbuf->len = 0;
 		outbuf->s[outbuf->len] = '\0';
 		goto done;
 	}
 	size = nodes->nodeNr;
-    p = outbuf->s;
+	p = outbuf->s;
 	end = outbuf->s + outbuf->len;
 	for(i = 0; i < size; ++i)
 	{
