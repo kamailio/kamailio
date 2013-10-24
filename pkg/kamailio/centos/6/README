@@ -1,26 +1,29 @@
 The following modules are not included in CentOS 6 builds because they have
-dependencies that cannot be met by the standard CentOS YUM repos, require
-complex compilation steps, or are obsolete.
+dependencies that cannot be met by the base or EPEL CentOS YUM repos or are
+obsolete.
 
-If you need any of these modules you will need to find (and possibly build) and
-install the dependencies and then do a manual build of Kamailio.
+Obsolete modules
+----------------
+* iptrtpproxy		use the rtpproxy-ng module with mediaproxy-ng instead
+* jabber		use the xmpp and pua_xmpp modules instead
+
+Modules with unmet dependencies
+-------------------------------
+Note: If you need any of these modules you will need to find (and possibly
+      build) and install the dependencies and then do a manual build of
+      Kamailio.
 
 Ordered by module name:
-* app_java		requires libgcj-4.7 (CentOS 6 contains libgcj-4.4.7)
-* app_mono		requires mono-devel-??? (EPEL contains
-			mono-devel 2.4.3.1)
-* db_cassandra		requires thrift 0.6.1 or 0.7.0
-* db_oracle		requires instantclient-sdk-10.2.0.3
-* iptrtpproxy		this module is obsolete
-* jabber		this module is obsolete
-* memcached		requires libmemcached > 0.38 (CentOS contains
-			libmemcached 0.31)
-* osp			requires the OSP Toolkit
+* app_java	requires libgcj-4.7 (base contains libgcj-4.4.7)
+* app_mono	requires mono-devel-??? or higher (EPEL contains
+		mono-devel 2.4.3.1)
+* db_cassandra	requires thrift 0.6.1 or 0.7.0
+* db_oracle	requires instantclient-sdk-10.2.0.3
+* osp		requires the OSP Toolkit
 
 Ordered by unmet dependency:
-* instantclient-sdk-10.2.0.3		db_oracle
-* libgcj-4.7				app_java
-* libmemcached > 0.38			memcached
-* mono-devel-???			app_mono
-* OSP Toolkit				osp
-* thrift 0.6.1 or 0.7.0			db_cassandra
+* instantclient-sdk-10.2.0.3	db_oracle
+* libgcj-4.7			app_java
+* mono-devel-??? or higher	app_mono
+* OSP Toolkit			osp
+* thrift 0.6.1 or 0.7.0		db_cassandra

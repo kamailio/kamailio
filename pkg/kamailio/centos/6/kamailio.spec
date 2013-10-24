@@ -1,6 +1,6 @@
 %define name	kamailio
 %define ver	4.1.0
-%define rel	pre1.1%{dist}
+%define rel	pre1.3%{dist}
 
 
 
@@ -15,13 +15,13 @@ Source:		http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
 URL:		http://kamailio.org/
 Vendor:		kamailio.org
 BuildRoot:	%{_tmppath}/%{name}-%{ver}-buildroot
-Conflicts:	kamailio-auth-ephemeral < %ver, kamailio-auth-identity < %ver
-Conflicts:	kamailio-bdb < %ver, kamailio-carrierroute < %ver,
-Conflicts:	kamailio-cpl < %ver, kamailio-dialplan < %ver
-Conflicts:	kamailio-dnssec < %ver, kamailio-geoip < %ver
-Conflicts:	kamailio-gzcompress < %ver, kamailio-ims < %ver
-Conflicts:	kamailio-json < %ver, kamailio-lcr < %ver, kamailio-ldap < %ver
-Conflicts:	kamailio-lua < %ver, kamailio-mysql < %ver
+Conflicts:	kamailio-auth-ephemeral < %ver, kamailio-bdb < %ver
+Conflicts:	kamailio-carrierroute < %ver, kamailio-cpl < %ver
+Conflicts:	kamailio-dialplan < %ver, kamailio-dnssec < %ver
+Conflicts:	kamailio-geoip < %ver, kamailio-gzcompress < %ver
+Conflicts:	kamailio-ims < %ver, kamailio-json < %ver, kamailio-lcr < %ver
+Conflicts:	kamailio-ldap < %ver, kamailio-lua < %ver
+Conflicts:	kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:	kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:	kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:	kamailio-purple < %ver, kamailio-python < %ver
@@ -55,16 +55,6 @@ BuildRequires:	openssl-devel
 
 %description auth-ephemeral
 Functions for authentication using ephemeral credentials.
-
-
-%package	auth-identity
-Summary:	Functions for secure identification of originators of SIP messages for Kamailio.
-Group:		System Environment/Daemons
-Requires:	libcurl, openssl, kamailio = %ver
-BuildRequires:	libcurl-devel, openssl-devel
-
-%description auth-identity
-Functions for secure identification of originators of SIP messages for Kamailio.
 
 
 %package	bdb
@@ -185,6 +175,16 @@ BuildRequires:	lua-devel
 
 %description	lua
 Lua extensions for Kamailio.
+
+
+%package	memcached
+Summary:	memcached configuration file support for Kamailio.
+Group:		System Environment/Daemons
+Requires:	libmemcached, kamailio = %ver
+BuildRequires:	libmemcached-devel
+
+%description	memcached
+memcached configuration file support for Kamailio.
 
 
 %package	mysql
@@ -410,11 +410,11 @@ make cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT \
 	cfg_target=/%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
 make every-module skip_modules="app_java app_mono db_cassandra \
-	db_oracle iptrtpproxy jabber memcached osp" \
+	db_oracle iptrtpproxy jabber osp" \
 	group_include="kstandard kautheph kberkeley kcarrierroute kcpl kdnssec \
-	kgeoip kims kjson kldap klua kmi_xmlrpc kmysql koutbound kperl \
-	kpostgres kpresence kpurple kpython kradius kredis ksctp ksnmpstats \
-	ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
+	kgeoip kims kjson kldap klua kmemcached kmi_xmlrpc kmysql koutbound \
+	kperl kpostgres kpresence kpurple kpython kradius kredis ksctp \
+	ksnmpstats ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
 make utils
 
 
@@ -424,11 +424,11 @@ make utils
 
 make install
 make install-modules-all skip_modules="app_java app_mono db_cassandra \
-	db_oracle iptrtpproxy jabber memcached osp" \
+	db_oracle iptrtpproxy jabber osp" \
 	group_include="kstandard kautheph kberkeley kcarrierroute kcpl kdnssec \
-	kgeoip kims kjson kldap klua kmi_xmlrpc kmysql koutbound kperl \
-	kpostgres kpresence kpurple kpython kradius kredis ksctp ksnmpstats \
-	ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
+	kgeoip kims kjson kldap klua kmemcached kmi_xmlrpc kmysql koutbound \
+	kperl kpostgres kpresence kpurple kpython kradius kredis ksctp \
+	ksnmpstats ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -760,12 +760,6 @@ fi
 %{_libdir}/kamailio/modules/auth_ephemeral.so
 
 
-%files		auth-identity
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.auth_identity
-%{_libdir}/kamailio/modules/auth_identity.so
-
-
 %files		bdb
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.db_berkeley
@@ -871,6 +865,12 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.app_lua
 %{_libdir}/kamailio/modules/app_lua.so
+
+
+%files		memcached
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.memcached
+%{_libdir}/kamailio/modules/memcached.so
 
 
 %files		mysql
@@ -1031,7 +1031,9 @@ fi
 
 %files		tls
 %defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.auth_identity
 %doc %{_docdir}/kamailio/modules/README.tls
+%{_libdir}/kamailio/modules/auth_identity.so
 %{_libdir}/kamailio/modules/tls.so
 
 
@@ -1092,15 +1094,17 @@ fi
     - rtpproxy-ng
     - sipt
     - stun (STUN functionality moved from compile time in core to own module)
-  - Added ims_charging module to ims package
-  - Added mi_xmlrpc to xmlrpc package
+  - Added new modules to other packages:
+    - ims_charging module to ims package
   - Added new packages for new modules:
     - auth_ephemeral
     - sctp (SCTP functionality moved from compile time in core to own module)
   - Moved existing modules to different packages:
-    - auth_identity to main package (previously not built for CentOS)
+    - auth_identity to tls package (previously not built for CentOS)
     - cdp and cdp_avp to ims package
     - dialog_ng to main package
+    - memcached to own package (previously not built for CentOS)
+    - mi_xmlrpc to own package (previously not built for CentOS)
     - tls to own package
   - Added packages for (new and existing) modules that require EPEL:
     - carrierroute in own package
