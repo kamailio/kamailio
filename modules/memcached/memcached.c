@@ -106,7 +106,7 @@ struct module_exports exports = {
 
 
 /*!
- * \brief Wrapper functions around our internal memory management for libmemcache callback
+ * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
  * \param mem freed memory
  * \note pkg_free does not allow NULL pointer as standard free, therefore we check it here
  * \see pkg_free
@@ -116,9 +116,20 @@ static inline void mcd_free(memcached_st *ptr, void *mem, void *context) {
         	pkg_free(mem);
 }
 
+/*!
+ * \brief Wrapper functions around our internal memory management for libmemcached (version < 0.38) callback
+ * \param mem freed memory
+ * \note pkg_free does not allow NULL pointer as standard free, therefore we check it here
+ * \see pkg_free
+ */
+ static inline void mcd_free_compat(memcached_st *ptr, void *mem) {
+        if (mem)
+                pkg_free(mem);
+}
+
 
 /*!
- * \brief Wrapper functions around our internal memory management for libmemcache callback
+ * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
  * \param size allocated size
  * \return allocated memory, or NULL on failure
  * \see pkg_malloc
@@ -127,9 +138,19 @@ static inline void* mcd_malloc(memcached_st *ptr, const size_t size, void *conte
 	return pkg_malloc(size);
 }
 
+/*!
+ * \brief Wrapper functions around our internal memory management for libmemcached (version < 0.38) callback
+ * \param size allocated size
+ * \return allocated memory, or NULL on failure
+ * \see pkg_malloc
+ */
+ static inline void* mcd_malloc_compat(memcached_st *ptr, const size_t size) {
+        return pkg_malloc(size);
+}
+
 
 /*!
- * \brief Wrapper functions around our internal memory management for libmemcache callback
+ * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
  * \param mem pointer to allocated memory
  * \param size new size of memory area
  * \return allocated memory, or NULL on failure
@@ -139,9 +160,20 @@ static inline void* mcd_realloc(memcached_st *ptr, void *mem, const size_t size,
  	return pkg_realloc(mem, size);
 }
 
+/*!
+ * \brief Wrapper functions around our internal memory management for libmemcached (version < 0.38) callback
+ * \param mem pointer to allocated memory
+ * \param size new size of memory area
+ * \return allocated memory, or NULL on failure
+ * \see pkg_realloc
+ */
+static inline void* mcd_realloc_compat(memcached_st *ptr, void *mem, const size_t size) {
+        return pkg_realloc(mem, size);
+}
+
 
 /*!
- * \brief Wrapper functions around our internal memory management for libmemcache callback
+ * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
  * \param mem pointer to allocated memory
  * \param size new size of memory area
  * \return allocated memory, or NULL on failure
@@ -156,6 +188,24 @@ static inline void * mcd_calloc(memcached_st *ptr, size_t nelem, const size_t el
 	}
 	return tmp;
 }
+
+/*!
+ * \brief Wrapper functions around our internal memory management for libmemcached (version < 0.38) callback
+ * \param mem pointer to allocated memory
+ * \param size new size of memory area
+ * \return allocated memory, or NULL on failure
+ * \see pkg_malloc
+ * \todo this is not optimal, 	use internal calloc implemention which is not exported yet
+ */
+static inline void * mcd_calloc_compat(memcached_st *ptr, size_t nelem, const size_t elsize) {
+        void* tmp = NULL;
+        tmp = pkg_malloc(nelem * elsize);
+        if (tmp != NULL) {
+                memset(tmp, 0, nelem * elsize);
+        }
+        return tmp;
+}
+
 
 /**
  * \brief Callback to check if we could connect successfully to a server
@@ -206,25 +256,33 @@ static int mod_init(void) {
 	}
 	LM_DBG("allocated new server handle at %p", memcached_h);
 
-	if (mcd_memory == 1) {
-		LM_INFO("Use internal kamailio memory manager for memcached client library");
-		rc = memcached_set_memory_allocators(memcached_h, (memcached_malloc_fn)mcd_malloc,
-					     (memcached_free_fn)mcd_free, (memcached_realloc_fn)mcd_realloc,
-					     (memcached_calloc_fn)mcd_calloc, NULL);
+        if (mcd_memory == 1) {
+                LM_INFO("Use internal kamailio memory manager for memcached client library\n");
+
+#if LIBMEMCACHED_VERSION_HEX >= 0x00038000
+                rc = memcached_set_memory_allocators(memcached_h, (memcached_malloc_fn)mcd_malloc,
+                                             (memcached_free_fn)mcd_free, (memcached_realloc_fn)mcd_realloc,
+                                             (memcached_calloc_fn)mcd_calloc, NULL);
+#else
+                rc = memcached_set_memory_allocators(memcached_h, (memcached_malloc_function)mcd_malloc_compat,
+                                             (memcached_free_function)mcd_free_compat, (memcached_realloc_function)mcd_realloc_compat,
+                                             (memcached_calloc_function)mcd_calloc_compat);
+#endif
+
 		if (rc == MEMCACHED_SUCCESS) {
-			LM_DBG("memory manager callbacks set");
+			LM_DBG("memory manager callbacks set\n");
 		} else {
 			LM_ERR("memory manager callbacks not set, returned %s.\n", memcached_strerror(memcached_h, rc));
 			return -1;
 		}
 	} else {
-		LM_INFO("Use system memory manager for memcached client library");
+		LM_INFO("Use system memory manager for memcached client library\n");
 	}
 
         servers = memcached_server_list_append(servers, server, atoi(port), &rc);
 	
 	if (memcached_behavior_set(memcached_h, MEMCACHED_BEHAVIOR_CONNECT_TIMEOUT, mcd_timeout) != MEMCACHED_SUCCESS) {
-		LM_ERR("could not set server connection timeout");
+		LM_ERR("could not set server connection timeout\n");
 		return -1;
 	}
 	rc = memcached_server_push(memcached_h, servers);
