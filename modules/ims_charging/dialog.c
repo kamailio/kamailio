@@ -39,7 +39,9 @@ void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 			LM_ERR("Ro Session object is NULL...... aborting\n");
 			return;
 		}
+
 		ro_session_entry = &(ro_session_table->entries[session->h_entry]);
+
 		ro_session_lock(ro_session_table, ro_session_entry);
 
 		if (session->active) {

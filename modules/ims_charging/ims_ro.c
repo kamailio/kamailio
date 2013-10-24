@@ -642,6 +642,16 @@ error:
     	cdpb.AAASessionsUnlock(auth->hash);
     	cdpb.AAADropCCAccSession(auth);
     }
+
+    shm_free(i_req);
+    //
+    // since callback function will be never called because of the error, we need to release the lock on the session
+    // to it can be reused later.
+    //
+    struct ro_session_entry *ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
+    unref_ro_session_unsafe(ro_session, 1, ro_session_entry);//unref from the initial timer that fired this event.
+    ro_session_unlock(ro_session_table, ro_session_entry);
+
     return;
 }
 
@@ -1029,7 +1039,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     if (is_timeout) {
         update_stat(ccr_timeouts, 1);
         LM_ERR("Transaction timeout - did not get CCA\n");
-	error_code =  RO_RETURN_ERROR;
+        error_code =  RO_RETURN_ERROR;
         goto error0;
     }
 
