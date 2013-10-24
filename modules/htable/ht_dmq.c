@@ -101,11 +101,6 @@ int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 
 	/* received dmq message */
 	LM_DBG("dmq message received\n");
-	/* parse the message headers */
-	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
-		LM_ERR("error parsing message headers\n");
-		goto error;
-	}
 	
 	if(!msg->content_length) {
 		LM_ERR("no content length header found\n");
