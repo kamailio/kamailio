@@ -2520,7 +2520,7 @@ int reply_received( struct sip_msg  *p_msg )
 		}
 #endif
         
-	if (unlikely(p_msg->flags&FL_RPL_SUSPENDED)) {
+	if (unlikely(p_msg->msg_flags&FL_RPL_SUSPENDED)) {
 		goto skip_send_reply;
 		/* suspend the reply (async), no error */
 	}

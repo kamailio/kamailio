@@ -107,7 +107,7 @@ int t_suspend(struct sip_msg *msg,
 		}
 	}else{
 		LOG(L_DBG,"DEBUG: t_suspend_reply: This is a suspend on reply - setting msg flag to SUSPEND\n");
-		msg->flags |= FL_RPL_SUSPENDED;
+		msg->msg_flags |= FL_RPL_SUSPENDED;
 		/* this is a reply suspend find which branch */
 
 		if (t_check( msg  , &branch )==-1){
@@ -280,8 +280,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		/* this is a continue from a reply suspend */
 
 		LOG(L_DBG,"DEBUG: t_continue_reply: Disabling suspend branch");
-		t->uac[branch].reply->flags &= ~FL_RPL_SUSPENDED;
-		if (t->uas.request) t->uas.request->flags&= ~FL_RPL_SUSPENDED;
+		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
+		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
 
 		LOG(L_DBG,"DEBUG: t_continue_reply: Setting up faked environment");
 		if (!fake_resp(&faked_resp, t->uac[branch].reply, 0 /* extra flags */, 0)) {
@@ -482,8 +482,8 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 
 		LOG(L_DBG,"DEBUG: t_cancel_suspend_reply: This is a cancel suspend for a response\n");
 
-		t->uac[branch].reply->flags &= ~FL_RPL_SUSPENDED;
-		if (t->uas.request) t->uas.request->flags&= ~FL_RPL_SUSPENDED;
+		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
+		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
         }
 	
 	return 0;
