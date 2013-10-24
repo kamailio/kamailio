@@ -14,7 +14,6 @@ Note: If you need any of these modules you will need to find (and possibly
       Kamailio.
 
 Ordered by module name:
-* app_java	requires libgcj-4.7 (base contains libgcj-4.4.7)
 * app_mono	requires mono-devel-??? or higher (EPEL contains
 		mono-devel 2.4.3.1)
 * db_cassandra	requires thrift 0.6.1 or 0.7.0
@@ -23,7 +22,6 @@ Ordered by module name:
 
 Ordered by unmet dependency:
 * instantclient-sdk-10.2.0.3	db_oracle
-* libgcj-4.7			app_java
 * mono-devel-??? or higher	app_mono
 * OSP Toolkit			osp
 * thrift 0.6.1 or 0.7.0		db_cassandra

@@ -1,6 +1,6 @@
 %define name	kamailio
 %define ver	4.1.0
-%define rel	pre1.3%{dist}
+%define rel	pre1.4%{dist}
 
 
 
@@ -19,8 +19,8 @@ Conflicts:	kamailio-auth-ephemeral < %ver, kamailio-bdb < %ver
 Conflicts:	kamailio-carrierroute < %ver, kamailio-cpl < %ver
 Conflicts:	kamailio-dialplan < %ver, kamailio-dnssec < %ver
 Conflicts:	kamailio-geoip < %ver, kamailio-gzcompress < %ver
-Conflicts:	kamailio-ims < %ver, kamailio-json < %ver, kamailio-lcr < %ver
-Conflicts:	kamailio-ldap < %ver, kamailio-lua < %ver
+Conflicts:	kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
+Conflicts:	kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:	kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:	kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:	kamailio-postgresql < %ver, kamailio-presence < %ver
@@ -135,6 +135,16 @@ BuildRequires:	libxml2-devel
 
 %description	ims
 IMS modules and extensions module for Kamailio.
+
+
+%package	java
+Summary:	Java extensions for Kamailio.
+Group:		System Environment/Daemons
+Requires:	libgcj, java-1.6.0-openjdk, kamailio = %ver
+BuildRequires:	libgcj-devel, java-1.6.0-openjdk-devel, ant
+
+%description	java
+Java extensions for Kamailio.
 
 
 %package	json
@@ -409,12 +419,16 @@ SIP/XMPP IM gateway for Kamailio.
 make cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT \
 	cfg_target=/%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
-make every-module skip_modules="app_java app_mono db_cassandra \
-	db_oracle iptrtpproxy jabber osp" \
-	group_include="kstandard kautheph kberkeley kcarrierroute kcpl kdnssec \
-	kgeoip kims kjson kldap klua kmemcached kmi_xmlrpc kmysql koutbound \
-	kperl kpostgres kpresence kpurple kpython kradius kredis ksctp \
-	ksnmpstats ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
+make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
+	jabber osp" \
+	group_include="kstandard kautheph kberkeley kcarrierroute kcpl \
+	kdnssec kgeoip kims kjava kjson kldap klua kmemcached kmi_xmlrpc \
+	kmysql koutbound kperl kpostgres kpresence kpurple kpython kradius \
+	kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils kwebsocket \
+	kxml kxmpp" 
+cd modules/app_java/kamailio_java_folder/java
+ant
+cd ../../../..
 make utils
 
 
@@ -423,12 +437,19 @@ make utils
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
 make install
-make install-modules-all skip_modules="app_java app_mono db_cassandra \
-	db_oracle iptrtpproxy jabber osp" \
-	group_include="kstandard kautheph kberkeley kcarrierroute kcpl kdnssec \
-	kgeoip kims kjson kldap klua kmemcached kmi_xmlrpc kmysql koutbound \
-	kperl kpostgres kpresence kpurple kpython kradius kredis ksctp \
-	ksnmpstats ksqlite ktls kunixodbc kutils kwebsocket kxml kxmpp" 
+make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
+	iptrtpproxy jabber osp" \
+	group_include="kstandard kautheph kberkeley kcarrierroute kcpl \
+	kdnssec kgeoip kims kjava kjson kldap klua kmemcached kmi_xmlrpc \
+	kmysql koutbound kperl kpostgres kpresence kpurple kpython kradius \
+	kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils kwebsocket \
+	kxml kxmpp" 
+
+mkdir -p $RPM_BUILD_ROOT/%{_libdir}/kamailio/java
+install -m644 modules/app_java/kamailio_java_folder/java/Kamailio.class \
+	$RPM_BUILD_ROOT/%{_libdir}/kamailio/java
+install -m644 modules/app_java/kamailio_java_folder/java/kamailio.jar \
+	$RPM_BUILD_ROOT/%{_libdir}/kamailio/java
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -837,6 +858,15 @@ fi
 %{_libdir}/kamailio/modules/ims_usrloc_scscf.so
 
 
+%files		java
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.app_java
+%{_libdir}/kamailio/modules/app_java.so
+%dir %{_libdir}/kamailio/java
+%{_libdir}/kamailio/java/Kamailio.class
+%{_libdir}/kamailio/java/kamailio.jar
+
+
 %files		json
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.json
@@ -1097,6 +1127,7 @@ fi
   - Added new modules to other packages:
     - ims_charging module to ims package
   - Added new packages for new modules:
+    - app_java
     - auth_ephemeral
     - sctp (SCTP functionality moved from compile time in core to own module)
   - Moved existing modules to different packages:
