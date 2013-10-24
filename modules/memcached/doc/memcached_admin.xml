@@ -132,7 +132,7 @@ xlog("stored value is $mct(test)"); # will return &lt;null&gt;
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>the <ulink url="http://libmemcached.org/">libmemcached</ulink> library (version 0.38 or higher)</emphasis>.
+				<emphasis>the <ulink url="http://libmemcached.org/">libmemcached</ulink> library</emphasis>.
 			</para>
 			</listitem>
 			<listitem>

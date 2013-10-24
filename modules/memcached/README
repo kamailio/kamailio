@@ -169,7 +169,7 @@ xlog("stored value is $mct(test)"); # will return <null>
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * the libmemcached library (version 0.38 or higher).
+     * the libmemcached library.
      * the memcached server implementation.
 
 4. Parameters
