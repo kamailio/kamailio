@@ -285,7 +285,7 @@ int cancel_branch( struct cell *t, int branch,
 			(t->uas.request && t->uas.request->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO))) {
 		/* build the CANCEL from the INVITE which was sent out */
 		cancel = build_local_reparse(t, branch, &len, CANCEL, CANCEL_LEN,
-									 (t->uas.request->msg_flags&FL_USE_UAC_TO)?0:&t->to
+									 (t->uas.request && t->uas.request->msg_flags&FL_USE_UAC_TO)?0:&t->to
 	#ifdef CANCEL_REASON_SUPPORT
 									 , reason
 	#endif /* CANCEL_REASON_SUPPORT */
