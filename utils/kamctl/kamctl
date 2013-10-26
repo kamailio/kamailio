@@ -343,7 +343,7 @@ acl() {
 
 				QUERY="insert into $ACL_TABLE ($ACL_USER_COLUMN,\
 $ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN,$ACL_DOMAIN_COLUMN ) values \
-('$OSERUSER','$1', now(), '$OSERDOMAIN' );"
+('$OSERUSER','$1', $DBFNOW, '$OSERDOMAIN' );"
 				$DBCMD "$QUERY"
 				if [ $? -ne 0 ] ; then
 					merr "acl - SQL Error"
@@ -795,7 +795,7 @@ FROM $AVP_TABLE $CLAUSE;"
 			QUERY="INSERT INTO $AVP_TABLE \
 ($AVP_UUID_COLUMN,$AVP_USER_COLUMN,$AVP_DOMAIN_COLUMN,$AVP_ATTRIBUTE_COLUMN,\
 $AVP_TYPE_COLUMN,$AVP_VALUE_COLUMN,$AVP_MODIFIED_COLUMN) \
-VALUES ('$AVP_UUID','$OSERUSER','$OSERDOMAIN','$2',$3,'$4',NOW());"
+VALUES ('$AVP_UUID','$OSERUSER','$OSERDOMAIN','$2',$3,'$4',$DBFNOW);"
 			# echo "Query: $QUERY"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
@@ -1047,7 +1047,7 @@ domain() {
 				exit 0
 			fi
 			QUERY="insert into $DOMAIN_TABLE ($DO_DOMAIN_COLUMN, \
-			$DO_LAST_MODIFIED_COLUMN) VALUES ('$1',now());"
+			$DO_LAST_MODIFIED_COLUMN) VALUES ('$1',$DBFNOW);"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "domain - SQL Error"

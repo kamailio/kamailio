@@ -31,6 +31,8 @@ if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="root"
 fi
 
+DBFNOW="now()"
+
 #params: none
 # output: DBRWPW
 prompt_pw() {
