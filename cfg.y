@@ -2756,8 +2756,24 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr BIN_LSHIFT rval_expr {$$=mk_rve2(RVE_BLSHIFT_OP, $1,  $3);}
 		| rval_expr BIN_RSHIFT rval_expr {$$=mk_rve2(RVE_BRSHIFT_OP, $1,  $3);}
 		| rval_expr rve_cmpop rval_expr %prec GT { $$=mk_rve2( $2, $1, $3);}
-		| rval_expr rve_equalop rval_expr %prec EQUAL_T
-			{ $$=mk_rve2( $2, $1, $3);}
+		| rval_expr rve_equalop rval_expr %prec EQUAL_T {
+			/* comparing with $null => treat as defined or !defined */
+			if($3->op==RVE_RVAL_OP && $3->left.rval.type==RV_PVAR
+					&& $3->left.rval.v.pvs.type==PVT_NULL) {
+				if($2==RVE_DIFF_OP || $2==RVE_IDIFF_OP
+						|| $2==RVE_STRDIFF_OP) {
+					DBG("comparison with $null switched to notdefined operator\n");
+					$$=mk_rve1(RVE_DEFINED_OP, $1);
+				} else {
+					DBG("comparison with $null switched to defined operator\n");
+					$$=mk_rve1(RVE_NOTDEFINED_OP, $1);
+				}
+				/* free rve struct for $null */
+				rve_destroy($3);
+			} else {
+				$$=mk_rve2($2, $1, $3);
+			}
+		}
 		| rval_expr LOG_AND rval_expr	{ $$=mk_rve2(RVE_LAND_OP, $1, $3);}
 		| rval_expr LOG_OR rval_expr	{ $$=mk_rve2(RVE_LOR_OP, $1, $3);}
 		| LPAREN rval_expr RPAREN		{ $$=$2;}

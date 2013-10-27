@@ -87,6 +87,7 @@ enum rval_expr_op{
 	RVE_MATCH_OP,  /**< 2 members, string ~),  returns left matches re(right) */
 	/* avp, pvars a.s.o */
 	RVE_DEFINED_OP, /**< one member, returns is_defined(val) (bool) */
+	RVE_NOTDEFINED_OP, /**< one member, returns is_not_defined(val) (bool) */
 	RVE_INT_OP,   /**< one member, returns (int)val  (int) */
 	RVE_STR_OP    /**< one member, returns (str)val  (str) */
 };
