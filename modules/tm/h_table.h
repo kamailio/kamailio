@@ -215,6 +215,7 @@ typedef struct ua_client
 {
 	/* if we store a reply (branch picking), this is where it is */
 	struct sip_msg  *reply;
+	char *end_reply;	/* pointer to end of sip_msg so we know the shm blocked used in clone...(used in async replies) */
 	struct retr_buf  request;
 	/* we maintain a separate copy of cancel rather than
 	   reuse the structure for original request; the 

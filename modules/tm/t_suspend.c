@@ -119,12 +119,14 @@ int t_suspend(struct sip_msg *msg,
 
 		LOG(L_DBG,"DEBUG: t_suspend_reply:Cloning reply message to t->uac[branch].reply\n");
 
-		t->uac[branch].reply = sip_msg_cloner( msg, 0 );
+		int sip_msg_len = 0;
+		t->uac[branch].reply = sip_msg_cloner( msg, &sip_msg_len );
 
 		if (! t->uac[branch].reply ) {
 			LOG(L_ERR, "ERROR: t_suspend_reply: can't alloc' clone memory\n");
 			return -1;
 		}
+		t->uac[branch].end_reply = ((char*)t->uac[branch].reply) + sip_msg_len;
 
 		LOG(L_DBG,"DEBUG: t_suspend_reply: Saving transaction data\n");
 		t->uac[branch].reply->flags = msg->flags;
@@ -156,7 +158,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		struct action *route)
 {
 	struct cell	*t;
-	struct sip_msg	faked_req, faked_resp;
+	struct sip_msg	faked_req;
 	struct cancel_info cancel_data;
 	int	branch;
 	struct ua_client *uac =NULL;
@@ -283,27 +285,19 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
 		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
 
-		LOG(L_DBG,"DEBUG: t_continue_reply: Setting up faked environment");
-		if (!fake_resp(&faked_resp, t->uac[branch].reply, 0 /* extra flags */, 0)) {
-			LOG(L_ERR, "ERROR: t_continue_reply: fake_resp failed\n");
-			ret = -1;
-			goto kill_trans;
-		}
-
-		faked_env( t, &faked_resp, 1);
+		faked_env( t, t->uac[branch].reply, 1);
 
 		LOG(L_DBG,"DEBUG: Running pre script\n");
-		if (exec_pre_script_cb(&faked_resp, cb_type)>0) {
-			if (run_top_route(route, &faked_resp, 0)<0){
+		if (exec_pre_script_cb(t->uac[branch].reply, cb_type)>0) {
+			if (run_top_route(route, t->uac[branch].reply, 0)<0){
 				LOG(L_ERR, "ERROR: t_continue_reply: Error in run_top_route\n");
 			}
 			LOG(L_DBG,"DEBUG: t_continue_reply: Running exec post script\n");
-			exec_post_script_cb(&faked_resp, cb_type);
+			exec_post_script_cb(t->uac[branch].reply, cb_type);
 		}
 
 		LOG(L_DBG,"DEBUG: t_continue_reply: Restoring previous environment");
 		faked_env( t, 0, 1);
-		free_faked_resp(&faked_resp, t, branch);
 
 		int reply_status;
 
@@ -387,6 +381,38 @@ done:
 		/* unref the transaction */
 		t_unref(t->uac[branch].reply);
 		LOG(L_DBG,"DEBUG: t_continue_reply: Freeing earlier cloned reply\n");
+		/* free header's parsed structures that were added by failure handlers */
+		struct hdr_field* hdr;
+		struct hdr_field* prev = 0;
+		struct hdr_field* tmp = 0;
+		for( hdr=t->uac[branch].reply->headers ; hdr ; hdr=hdr->next ) {
+			if ( hdr->parsed && hdr_allocs_parse(hdr) &&
+				(hdr->parsed<(void*)t->uac[branch].reply ||
+				hdr->parsed>=(void*)t->uac[branch].end_reply)) {
+				clean_hdr_field(hdr);
+				hdr->parsed = 0;
+			}
+		}
+
+		/* now go through hdr_fields themselves and remove the pkg allocated space */
+		hdr = t->uac[branch].reply->headers;
+		while (hdr) {
+			if ( hdr && ((void*)hdr<(void*)t->uac[branch].reply ||
+				(void*)hdr>=(void*)t->uac[branch].end_reply)) {
+				//this header needs to be freed and removed form the list.
+				if (!prev) {
+					t->uac[branch].reply->headers = hdr->next;
+				} else {
+					prev->next = hdr->next;
+				}
+				tmp = hdr;
+				hdr = hdr->next;
+				pkg_free(tmp);
+			} else {
+				prev = hdr;
+				hdr = hdr->next;
+			}
+		}
 		sip_msg_free(t->uac[branch].reply);
 		t->uac[branch].reply = 0;
 	}
