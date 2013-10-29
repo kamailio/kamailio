@@ -384,15 +384,14 @@ done:
 		/* unref the transaction */
 		t_unref(t->uac[branch].reply);
 		LOG(L_DBG,"DEBUG: t_continue_reply: Freeing earlier cloned reply\n");
-		/* free header's parsed structures that were added by failure handlers */
 
+		/* free lumps that were added during reply processing */
 		del_nonshm_lump( &(t->uac[branch].reply->add_rm) );
 		del_nonshm_lump( &(t->uac[branch].reply->body_lumps) );
 		del_nonshm_lump_rpl( &(t->uac[branch].reply->reply_lump) );
 
-		struct hdr_field* hdr;
-		struct hdr_field* prev = 0;
-		struct hdr_field* tmp = 0;
+		/* free header's parsed structures that were added */
+		struct hdr_field *hdr, *prev = 0, *tmp = 0;
 		for( hdr=t->uac[branch].reply->headers ; hdr ; hdr=hdr->next ) {
 			if ( hdr->parsed && hdr_allocs_parse(hdr) &&
 				(hdr->parsed<(void*)t->uac[branch].reply ||
