@@ -36,11 +36,12 @@ INSTALL_DBUID_TABLES=${INSTALL_DBUID_TABLES:-ask}
 STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases domain domain_attrs
 		grp uri speed_dial lcr_gw lcr_rule lcr_rule_target pdt subscriber
 		location location_attrs re_grp trusted address missed_calls
-		usr_preferences aliases silo dialog dialog_vars dispatcher dialplan}
+		usr_preferences aliases silo dialog dialog_vars dispatcher dialplan
+		acc_cdrs}
 EXTRA_TABLES=${EXTRA_TABLES:-imc_members imc_rooms cpl sip_trace domainpolicy
 		carrierroute carrier_name domain_name carrierfailureroute userblacklist
 		globalblacklist htable purplemap uacreg pl_pipes mtree mtrees
-		sca_subscriptions}
+		sca_subscriptions mohqcalls mohqueues}
 PRESENCE_TABLES=${PRESENCE_TABLES:-presentity active_watchers watchers xcap 
 		pua rls_presentity rls_watchers}
 DBUID_TABLES=${UID_TABLES:-uid_credentials uid_domain uid_domain_attrs
@@ -80,7 +81,7 @@ STANDARD_MODULES=${STANDARD_MODULES:-standard acc lcr domain group
 PRESENCE_MODULES=${PRESENCE_MODULES:-presence rls}
 
 EXTRA_MODULES=${EXTRA_MODULES:-imc cpl siptrace domainpolicy carrierroute
-		userblacklist htable purple uac pipelimit mtree sca}
+		userblacklist htable purple uac pipelimit mtree sca mohqueue}
 
 DBUID_MODULES=${UID_MODULES:-uid_auth_db uid_avp_db uid_domain uid_gflags
 		uid_uri_db}
