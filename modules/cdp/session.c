@@ -448,13 +448,16 @@ int cdp_sessions_timer(time_t now, void* ptr)
 						int res_valid_for = x->u.cc_acc.reserved_units_validity_time;
 						int last_reservation = x->u.cc_acc.reserved_units;
 						int buffer_time = 15; //15 seconds - TODO: add as config parameter
-						if (last_res_timestamp) {
-							//we have obv already started reservations
-							if ((last_res_timestamp + res_valid_for) < (time(0) + last_reservation + buffer_time)) {
-								LM_DBG("reservation about to expire, sending callback\n");
-								cc_acc_client_stateful_sm_process(x, ACC_CC_EV_RSVN_WARNING, 0);
-							}
+						//we should check for reservation expiries if the state is open
+						if(x->u.cc_acc.state==ACC_CC_ST_OPEN){
+						    if (last_res_timestamp) {
+							    //we have obv already started reservations
+							    if ((last_res_timestamp + res_valid_for) < (time(0) + last_reservation + buffer_time)) {
+								    LM_DBG("reservation about to expire, sending callback\n");
+								    cc_acc_client_stateful_sm_process(x, ACC_CC_EV_RSVN_WARNING, 0);
+							    }
 
+						    }
 						}
 						/* TODO: if reservation has expired we need to tear down the session. Ideally 
 						 * the client application (module) should do this but for completeness we should
