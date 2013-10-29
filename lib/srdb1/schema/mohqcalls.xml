@@ -64,7 +64,6 @@
   <column id="call_time">
     <name>call_time</name>
     <type>datetime</type>
-    <default db="oracle">to_date('','yyyy-mm-dd hh24:mi:ss')</default>
     <description>time when call first entered queue</description>
   </column>
 
