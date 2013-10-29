@@ -380,6 +380,8 @@ done:
 		/* unref the transaction */
 		t_unref(t->uas.request);
 	}else{
+		struct hdr_field *hdr, *prev = 0, *tmp = 0;
+
 		tm_ctx_set_branch_index(T_BR_UNDEFINED);        
 		/* unref the transaction */
 		t_unref(t->uac[branch].reply);
@@ -391,7 +393,6 @@ done:
 		del_nonshm_lump_rpl( &(t->uac[branch].reply->reply_lump) );
 
 		/* free header's parsed structures that were added */
-		struct hdr_field *hdr, *prev = 0, *tmp = 0;
 		for( hdr=t->uac[branch].reply->headers ; hdr ; hdr=hdr->next ) {
 			if ( hdr->parsed && hdr_allocs_parse(hdr) &&
 				(hdr->parsed<(void*)t->uac[branch].reply ||
