@@ -323,8 +323,8 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	print_publ(publ);
 	if((error=pua_send_publish(publ))< 0)
 	{
-		LM_ERR("while sending publish\n");
-		if(type & UL_CONTACT_UPDATE && error == ERR_PUBLISH_NO_BODY) {
+		LM_ERR("while sending publish for ul event %d\n", type);
+		if((type & UL_CONTACT_UPDATE) && error == ERR_PUBLISH_NO_BODY) {
 			/* This error can occur if Kamailio was restarted/stopped and for any reason couldn't store a pua
 			 * entry in 'pua' DB table. It can also occur if 'pua' table is cleaned externally while Kamailio
 			 * is stopped so cannot retrieve these entries from DB when restarting.
