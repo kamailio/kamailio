@@ -215,7 +215,7 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 				LM_DBG("hdr is %p\n", hdr);
 				LM_DBG("r is %p\n", r);
 				if (r)
-					LM_ERR("Next Route is %.*s\n", r->nameaddr.uri.len, r->nameaddr.uri.s);
+					LM_DBG("Next Route is %.*s\n", r->nameaddr.uri.len, r->nameaddr.uri.s);
 			}
 			/* Then check the following headers: */
 			for (i=0; i< c->num_service_routes; i++) {
