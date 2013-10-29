@@ -1,0 +1,2 @@
+id(int,auto) name(string) uri(string) mohdir(string,null) mohfile(string) debug(int) 
+mohqueues:1

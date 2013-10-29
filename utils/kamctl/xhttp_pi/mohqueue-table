@@ -1,0 +1,23 @@
+	<!-- Declaration of mohqcalls table-->
+	<db_table id="mohqcalls">
+		<table_name>mohqcalls</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>mohq_id</field><type>DB1_INT</type></column>
+		<column><field>call_id</field><type>DB1_STR</type></column>
+		<column><field>call_status</field><type>DB1_INT</type></column>
+		<column><field>call_from</field><type>DB1_STR</type></column>
+		<column><field>call_contact</field><type>DB1_STR</type></column>
+		<column><field>call_time</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of mohqueues table-->
+	<db_table id="mohqueues">
+		<table_name>mohqueues</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>uri</field><type>DB1_STR</type></column>
+		<column><field>mohdir</field><type>DB1_STR</type></column>
+		<column><field>mohfile</field><type>DB1_STR</type></column>
+		<column><field>debug</field><type>DB1_INT</type></column>
+	</db_table>

@@ -393,6 +393,29 @@
 		<column><field>second</field><type>DB1_INT</type></column>
 		<column><field>res</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of mohqcalls table-->
+	<db_table id="mohqcalls">
+		<table_name>mohqcalls</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>mohq_id</field><type>DB1_INT</type></column>
+		<column><field>call_id</field><type>DB1_STR</type></column>
+		<column><field>call_status</field><type>DB1_INT</type></column>
+		<column><field>call_from</field><type>DB1_STR</type></column>
+		<column><field>call_contact</field><type>DB1_STR</type></column>
+		<column><field>call_time</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of mohqueues table-->
+	<db_table id="mohqueues">
+		<table_name>mohqueues</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>uri</field><type>DB1_STR</type></column>
+		<column><field>mohdir</field><type>DB1_STR</type></column>
+		<column><field>mohfile</field><type>DB1_STR</type></column>
+		<column><field>debug</field><type>DB1_INT</type></column>
+	</db_table>
 	<!-- Declaration of silo table-->
 	<db_table id="silo">
 		<table_name>silo</table_name>
@@ -2412,6 +2435,103 @@
 				<col><field>second</field></col>
 				<col><field>res</field></col>
 			</query_cols>
+		</cmd>
+	</mod>
+	<!-- mohqcalls provisionning -->
+	<mod><mod_name>mohqcalls</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>mohqcalls</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>mohq_id</field></col>
+				<col><field>call_id</field></col>
+				<col><field>call_status</field></col>
+				<col><field>call_from</field></col>
+				<col><field>call_contact</field></col>
+				<col><field>call_time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>mohqcalls</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>mohq_id</field></col>
+				<col><field>call_id</field></col>
+				<col><field>call_status</field></col>
+				<col><field>call_from</field></col>
+				<col><field>call_contact</field></col>
+				<col><field>call_time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>mohqcalls</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>mohq_id</field></col>
+				<col><field>call_id</field></col>
+				<col><field>call_status</field></col>
+				<col><field>call_from</field></col>
+				<col><field>call_contact</field></col>
+				<col><field>call_time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>mohqcalls</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
+	</mod>
+	<!-- mohqueues provisionning -->
+	<mod><mod_name>mohqueues</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>mohqueues</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>name</field></col>
+				<col><field>uri</field></col>
+				<col><field>mohdir</field></col>
+				<col><field>mohfile</field></col>
+				<col><field>debug</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>mohqueues</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>name</field></col>
+				<col><field>uri</field></col>
+				<col><field>mohdir</field></col>
+				<col><field>mohfile</field></col>
+				<col><field>debug</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>mohqueues</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>name</field></col>
+				<col><field>uri</field></col>
+				<col><field>mohdir</field></col>
+				<col><field>mohfile</field></col>
+				<col><field>debug</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>mohqueues</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- silo provisionning -->
