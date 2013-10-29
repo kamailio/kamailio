@@ -47,6 +47,9 @@
 
 #include "t_suspend.h"
 
+#include "../../data_lump.h"
+#include "../../data_lump_rpl.h"
+
 /* Suspends the transaction for later use.
  * Save the returned hash_index and label to get
  * back to the SIP request processing, see the readme.
@@ -382,6 +385,11 @@ done:
 		t_unref(t->uac[branch].reply);
 		LOG(L_DBG,"DEBUG: t_continue_reply: Freeing earlier cloned reply\n");
 		/* free header's parsed structures that were added by failure handlers */
+
+		del_nonshm_lump( &(t->uac[branch].reply->add_rm) );
+		del_nonshm_lump( &(t->uac[branch].reply->body_lumps) );
+		del_nonshm_lump_rpl( &(t->uac[branch].reply->reply_lump) );
+
 		struct hdr_field* hdr;
 		struct hdr_field* prev = 0;
 		struct hdr_field* tmp = 0;
