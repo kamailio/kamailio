@@ -402,7 +402,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 		update_stat(billed_secs, used_secs);
 
 		if (ro_session->callid.s != NULL
-				&& ro_session->dlg_h_entry	> 0
+				&& ro_session->dlg_h_entry	>= 0
 				&& ro_session->dlg_h_id > 0
 				&& ro_session->ro_session_id.s != NULL)
 		{
