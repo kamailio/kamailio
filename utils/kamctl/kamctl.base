@@ -310,6 +310,8 @@ DISPATCHER_ID_COLUMN=id
 DISPATCHER_SETID_COLUMN=setid
 DISPATCHER_DESTINATION_COLUMN=destination
 DISPATCHER_FLAGS_COLUMN=flags
+DISPATCHER_PRIORITY_COLUMN=priority
+DISPATCHER_ATTRS_COLUMN=attrs
 DISPATCHER_DESCRIPTION_COLUMN=description
 
 # dialplan tables
@@ -468,15 +470,15 @@ usage_dispatcher() {
 	mecho " -- command 'dispatcher' - manage dispatcher"
 	echo
 cat <<EOF
-   * Examples:  dispatcher addgw 1 sip:1.2.3.1:5050 1 'outbound gateway'
-   *            dispatcher addgw 2 sip:1.2.3.4:5050 3 ''
-   *            dispatcher rmgw 4
+   * Examples: dispatcher add 1 sip:1.2.3.1:5050 1 5 'prefix=123' 'gw one'
+   *           dispatcher add 2 sip:1.2.3.4:5050 3 0
+   *           dispatcher rm 4
  dispatcher show ..................... show dispatcher gateways
  dispatcher reload ................... reload dispatcher gateways
  dispatcher dump ..................... show in memory dispatcher gateways
- dispatcher addgw <setid> <destination> <flags> <description>
+ dispatcher add <setid> <destination> [flags] [priority] [attrs] [description]
             .......................... add gateway
- dispatcher rmgw <id> ................ delete gateway
+ dispatcher rm <id> .................. delete gateway
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dispatcher"

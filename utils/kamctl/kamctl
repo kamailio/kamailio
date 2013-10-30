@@ -1564,27 +1564,44 @@ dispatcher() {
 			QUERY="select * FROM $DISPATCHER_TABLE ORDER BY $DISPATCHER_SETID_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
-		addgw)
+		addgw|add)
 			shift
-			if [ $# -lt 3 ] ; then
+			if [ $# -lt 2 ] ; then
 				merr "too few parameters"
 				usage_dispatcher
 				exit 1
 			fi
 
-			if [ $# -gt 3 ] ; then
-				DISPATCHER_DESCRIPTION=$4
-			else
-				DISPATCHER_DESCRIPTION=""
-			fi 
-
 			DISPATCHER_SETID=$1
 			DISPATCHER_DESTINATION=$2
-			DISPATCHER_FLAGS=$3
+
+			if [ $# -gt 2 ] ; then
+				DISPATCHER_FLAGS=$3
+			else
+				DISPATCHER_FLAGS=0
+			fi
+
+			if [ $# -gt 3 ] ; then
+				DISPATCHER_PRIORITY=$4
+			else
+				DISPATCHER_PRIORITY=0
+			fi
+
+			if [ $# -gt 4 ] ; then
+				DISPATCHER_ATTRS=$5
+			else
+				DISPATCHER_ATTRS=""
+			fi
+
+			if [ $# -gt 5 ] ; then
+				DISPATCHER_DESCRIPTION=$6
+			else
+				DISPATCHER_DESCRIPTION=""
+			fi
 
 			QUERY="insert into $DISPATCHER_TABLE \
-				( $DISPATCHER_SETID_COLUMN, $DISPATCHER_DESTINATION_COLUMN, $DISPATCHER_FLAGS_COLUMN, $DISPATCHER_DESCRIPTION_COLUMN ) \
-				VALUES ($DISPATCHER_SETID,'$DISPATCHER_DESTINATION',$DISPATCHER_FLAGS,'$DISPATCHER_DESCRIPTION');"
+				( $DISPATCHER_SETID_COLUMN, $DISPATCHER_DESTINATION_COLUMN, $DISPATCHER_FLAGS_COLUMN, $DISPATCHER_PRIORITY_COLUMN, $DISPATCHER_ATTRS_COLUMN, $DISPATCHER_DESCRIPTION_COLUMN ) \
+				VALUES ($DISPATCHER_SETID,'$DISPATCHER_DESTINATION',$DISPATCHER_FLAGS,$DISPATCHER_PRIORITY,'$DISPATCHER_ATTRS','$DISPATCHER_DESCRIPTION');"
 			$DBCMD "$QUERY"
 
 			if [ $? -ne 0 ] ; then
@@ -1592,9 +1609,8 @@ dispatcher() {
 				exit 1
 			fi
 
-			$CTLCMD ds_reload
 			;;
-		rmgw)
+		rmgw|rm)
 			shift
 			if [ $# -ne 1 ] ; then
 				merr "missing gateway id to be removed"
@@ -1609,7 +1625,6 @@ dispatcher() {
 				exit 1
 			fi
 
-			$CTLCMD ds_reload
 			;;
 		reload)
 			$CTLCMD ds_reload
