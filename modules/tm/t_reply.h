@@ -238,11 +238,8 @@ void rpc_reply(rpc_t* rpc, void* c);
 void faked_env( struct cell *t,struct sip_msg *msg, int is_async_env);
 int fake_req(struct sip_msg *faked_req,
 		struct sip_msg *shmem_msg, int extra_flags, struct ua_client *uac);
-int fake_resp(struct sip_msg *faked_req,
-		struct sip_msg *shmem_msg, int extra_flags, struct ua_client *uac);
 
 void free_faked_req(struct sip_msg *faked_req, struct cell *t);
-void free_faked_resp(struct sip_msg *faked_req, struct cell *t, int branch);
 
 typedef int (*tget_picked_f)(void);
 int t_get_picked_branch(void);
