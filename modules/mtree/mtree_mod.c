@@ -291,6 +291,9 @@ static int mod_init(void)
 
 		while(pt!=NULL)
 		{
+		        LM_DBG("loading from tree <%.*s>\n",
+			        pt->tname.len, pt->tname.s);
+
 			/* loading all information from database */
 			if(mt_load_db(&pt->tname)!=0)
 			{
@@ -491,12 +494,20 @@ error:
 static int mt_load_db(str *tname)
 {
 	db_key_t db_cols[3] = {&tprefix_column, &tvalue_column};
+	db_key_t key_cols[1];
+	db_op_t op[1] = {OP_EQ};
+	db_val_t vals[1];
 	str tprefix, tvalue;
 	db1_res_t* db_res = NULL;
 	int i, ret;
 	m_tree_t new_tree; 
 	m_tree_t *old_tree = NULL; 
 	mt_node_t *bk_head = NULL; 
+
+	key_cols[0] = &tname_column;
+	VAL_TYPE(vals) = DB1_STRING;
+	VAL_NULL(vals) = 0;
+	VAL_STRING(vals) = tname->s;
 
 	if(db_con==NULL)
 	{
@@ -521,7 +532,7 @@ static int mt_load_db(str *tname)
 	}
 
 	if (DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
-		if(mt_dbf.query(db_con, 0, 0, 0, db_cols, 0, 2, 0, 0) < 0)
+		if(mt_dbf.query(db_con, key_cols, op, vals, db_cols, 1, 2, 0, 0) < 0)
 		{
 			LM_ERR("Error while querying db\n");
 			return -1;
