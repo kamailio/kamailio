@@ -1028,6 +1028,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 			uri.len = strlen(uri.s);
 			if (uri.len > MAX_URI_SIZE-1) {
 			    LM_ERR("XCAP URI is too long\n");
+			    xmlFree(uri.s);
 			    return -1;
 			}
 			LM_DBG("got resource-list uri <%.*s>\n", uri.len, uri.s);
@@ -1036,6 +1037,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 			unescaped_uri.len = 0;
 			if (un_escape(&uri, &unescaped_uri) < 0) {
 			    LM_ERR("Error un-escaping XCAP URI\n");
+			    xmlFree(uri.s);
 			    return -1;
 			}
 			unescaped_uri.s[unescaped_uri.len] = 0;
@@ -1047,7 +1049,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 					&& (hostname.len == 0
 						|| check_self(&hostname, 0, PROTO_NONE) == 1))
 				{
-					LM_DBG("fetching local <resource-list/>\n");
+					LM_DBG("fetching local <resource-list - %.*s>\n", uri.len, uri.s);
 					if (rls_get_resource_list(&rl_uri, &username, &domain, &rl_node, &rl_doc)>0)
 					{
 						LM_DBG("calling myself for rl_node\n");
@@ -1057,7 +1059,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 					}
 					else
 					{
-						LM_ERR("<resource-list/> not found\n");
+						LM_ERR("<resource-list - %.*s> not found\n", uri.len, uri.s);
 						xmlFree(uri.s);
 						return -1;
 					}
@@ -1065,14 +1067,14 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 				}
 				else
 				{
-					LM_ERR("<resource-list/> is not local - unsupported at this time\n");
+					LM_ERR("<resource-list - %.*s> is not local - unsupported at this time\n", uri.len, uri.s);
 					xmlFree(uri.s);
 					return -1;
 				}
 			}
 			else
 			{
-				LM_ERR("unable to parse URI for <resource-list/>\n");
+				LM_ERR("unable to parse URI for <resource-list - %.*s>\n", uri.len, uri.s);
 				xmlFree(uri.s);
 				return -1;
 			}
