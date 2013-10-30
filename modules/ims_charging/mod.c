@@ -241,22 +241,6 @@ static int mod_init(void) {
 		return -1;
 	}
 
-	/* init timer lists*/
-	if (init_ro_timer(ro_session_ontimeout) != 0) {
-		LM_ERR("cannot init timer list\n");
-		return -1;
-	}
-
-
-	/* bind to dialog module */
-	if (!(load_dlg = (load_dlg_f) find_export("load_dlg", 0, 0))) {
-		LM_ERR("mod_init: can not import load_dlg. This module requires Kamailio dialog moduile.\n");
-	}
-
-	if (load_dlg(&dlgb) == -1) {
-		goto error;
-	}
-
 	 /* register statistics */
 	if (register_module_stats(exports.name, charging_stats) != 0) {
 		LM_ERR("failed to register core statistics\n");
