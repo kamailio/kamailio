@@ -97,7 +97,12 @@ modparam("mtree", "db_table", "mymtrees")
 	<section>
 	    <title><varname>mtree</varname> (string)</title>
 	    <para>
-		Definition of memory tree
+		Definition of memory tree with parameters name, dbtable,
+		type, and multi.  Name is name of the tree, dbtable is name
+		of dbtable where tree is stored, type is type of tree elements
+		(0 = string, 2 = integer), and multi tells if dbtable can
+		contain more than one tree (0 = one tree, 1 = more than
+		one tree identified by tname column). 
 	    </para>
 	    <para>
 		<emphasis>
@@ -108,7 +113,7 @@ modparam("mtree", "db_table", "mymtrees")
 		<title>Set <varname>mtree</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mtree", "mtree", "name=mytable;dbtable=routes;type=0;")
+modparam("mtree", "mtree", "name=mytree;dbtable=routes;type=0;multi=1")
 ...
 </programlisting>
 	    </example>

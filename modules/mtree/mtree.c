@@ -98,7 +98,7 @@ int mt_init_list_head(void)
 /**
  *
  */
-m_tree_t* mt_init_tree(str* tname, str *dbtable, int type)
+m_tree_t* mt_init_tree(str* tname, str *dbtable, int type, int multi)
 {
 	m_tree_t *pt = NULL;
 
@@ -111,6 +111,7 @@ m_tree_t* mt_init_tree(str* tname, str *dbtable, int type)
 	memset(pt, 0, sizeof(m_tree_t));
 
 	pt->type = type;
+	pt->multi = multi;
 	pt->tname.s = (char*)shm_malloc((1+tname->len)*sizeof(char));
 	if(pt->tname.s==NULL)
 	{
@@ -155,6 +156,9 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 		LM_ERR("max prefix len exceeded\n");
 		return -1;
 	}
+
+	LM_DBG("adding to tree <%.*s> of type <%d>\n", pt->tname.len,
+	       pt->tname.s, pt->type);
 
 	if ((pt->type == MT_TREE_IVAL) && (str2sint(svalue, &ivalue) != 0)) {
 		LM_ERR("bad integer string <%.*s>\n", svalue->len, svalue->s);
@@ -720,6 +724,9 @@ int mt_table_spec(char* val)
 		} else if(pit->name.len==4
 				&& strncasecmp(pit->name.s, "type", 4)==0) {
 			str2sint(&pit->body, &tmp.type);
+		} else if(pit->name.len==5
+				&& strncasecmp(pit->name.s, "multi", 5)==0) {
+			str2sint(&pit->body, &tmp.multi);
 		}  else if(pit->name.len==7
 				&& strncasecmp(pit->name.s, "dbtable", 7)==0) {
 			tmp.dbtable = pit->body;
@@ -740,7 +747,11 @@ int mt_table_spec(char* val)
 		LM_ERR("unknown tree type <%d>\n", tmp.type);
 		goto error;
 	}
-
+	if ((tmp.multi != 0) && (tmp.multi != 1)) {
+		LM_ERR("unknown multi value <%d>\n", tmp.multi);
+		goto error;
+	}
+	
 	/* check for same tree */
 	if(_ptree == 0)
 	{
@@ -773,7 +784,8 @@ int mt_table_spec(char* val)
 	{
 		LM_DBG("adding new tname [%s]\n", tmp.tname.s);
 
-		ndl = mt_init_tree(&tmp.tname, &tmp.dbtable, tmp.type);
+		ndl = mt_init_tree(&tmp.tname, &tmp.dbtable, tmp.type,
+				   tmp.multi);
 		if(ndl==NULL)
 		{
 			LM_ERR("no more shm memory\n");
@@ -797,7 +809,8 @@ error:
 	return -1;
 }
 
-m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, int type)
+m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, int type,
+		      int multi)
 {
 	m_tree_t *it = NULL;
 	m_tree_t *prev = NULL;
@@ -824,7 +837,7 @@ m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, int type)
 	{
 		LM_DBG("adding new tname [%s]\n", tname->s);
 
-		ndl = mt_init_tree(tname, dbtable, type);
+		ndl = mt_init_tree(tname, dbtable, type, multi);
 		if(ndl==NULL)
 		{
 			LM_ERR("no more shm memory\n");

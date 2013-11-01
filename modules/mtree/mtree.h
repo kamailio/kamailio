@@ -66,6 +66,7 @@ typedef struct _m_tree
 	str tname;
 	str dbtable;
 	int type;
+	int multi;
 	unsigned int nrnodes;
 	unsigned int nritems;
 	unsigned int memsize;
@@ -84,7 +85,7 @@ is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch);
 int mt_match_prefix(struct sip_msg *msg, m_tree_t *pt,
 		    str *tomatch, int mode);
 
-m_tree_t* mt_init_tree(str* tname, str* dbtable, int type);
+m_tree_t* mt_init_tree(str* tname, str* dbtable, int type, int multi);
 void mt_free_tree(m_tree_t *pt);
 int mt_print_tree(m_tree_t *pt);
 void mt_free_node(mt_node_t *pn, int type);
@@ -100,7 +101,7 @@ int mt_defined_trees(void);
 m_tree_t *mt_swap_list_head(m_tree_t *ntree);
 int mt_init_list_head(void);
 m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable,
-		int type);
+		      int type, int multi);
 
 #endif
 
