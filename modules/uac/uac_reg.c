@@ -646,7 +646,7 @@ error:
 		ri->flags |= UAC_REG_DISABLED;
 done:
 	if(ri)
-		ri->flags &= ~UAC_REG_ONGOING|UAC_REG_AUTHSENT;
+		ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
 	shm_free(uuid);
 }
 
