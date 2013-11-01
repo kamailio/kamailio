@@ -301,6 +301,9 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		received_found = 0; /* not found yet */
 		m = _m; /* remember the message */
 	}
+	else {
+		memset( &ci.instance, 0, sizeof(str));
+	}
 
 	if(_c!=0) {
 		/* hook uri address - should be more than 'sip:' chars */
