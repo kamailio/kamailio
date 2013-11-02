@@ -61,8 +61,8 @@ start() {
 	echo -n $"Starting $PROG: "
 	daemon $KAM $OPTIONS >/dev/null 2>/dev/null
 	RETVAL=$?
-	echo
 	[ $RETVAL = 0 ] && touch $LOCK_FILE && success
+	echo
 	return $RETVAL
 }
 
