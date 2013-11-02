@@ -32,6 +32,7 @@
 #include "../../tcp_info.h"
 #include "../../timer.h"
 #include "../../cfg/cfg.h"
+#include "../../dprint.h"
 #include "tls_init.h"
 #include "tls_mod.h"
 #include "tls_domain.h"

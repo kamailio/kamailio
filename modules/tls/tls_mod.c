@@ -60,6 +60,7 @@
 #include "../../shm_init.h"
 #include "../../rpc_lookup.h"
 #include "../../cfg/cfg.h"
+#include "../../dprint.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
