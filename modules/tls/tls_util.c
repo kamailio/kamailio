@@ -30,6 +30,7 @@
 #include <libgen.h>
 #include "../../mem/shm_mem.h"
 #include "../../globals.h"
+#include "../../dprint.h"
 #include "tls_mod.h"
 #include "tls_util.h"
 /*!

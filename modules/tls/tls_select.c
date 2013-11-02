@@ -38,6 +38,7 @@
 #include "../../tcp_conn.h"
 #include "../../ut.h"
 #include "../../cfg/cfg.h"
+#include "../../dprint.h"
 #include "tls_server.h"
 #include "tls_select.h"
 #include "tls_mod.h"

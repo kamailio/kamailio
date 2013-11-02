@@ -33,6 +33,7 @@
 #include "../../ut.h"
 #include "../../pt.h"
 #include "../../mem/shm_mem.h"
+#include "../../dprint.h"
 
 struct cfg_group_tls default_tls_cfg = {
 	0, /* tls_force_run */
