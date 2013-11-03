@@ -460,10 +460,17 @@ int tls_parse_method(str* method)
     opt = cfg_lookup_token(methods, method);
     if (!opt) return -1;
 
+#if OPENSSL_VERSION_NUMBER < 0x01000000L
+	if(opt->val == TLS_USE_TLSv1_1) {
+		LM_ERR("tls v1.1 not supported by this libssl version: %ld\n",
+				(long)OPENSSL_VERSION_NUMBER);
+		return -1;
+	}
+#endif
 #if OPENSSL_VERSION_NUMBER < 0x1000105fL
 	if(opt->val == TLS_USE_TLSv1_2) {
 		LM_ERR("tls v1.2 not supported by this libssl version: %ld\n",
-				OPENSSL_VERSION_NUMBER);
+				(long)OPENSSL_VERSION_NUMBER);
 		return -1;
 	}
 #endif
