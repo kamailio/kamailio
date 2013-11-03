@@ -21,7 +21,20 @@
 	<itemizedlist>
 			<listitem>
 				<para>
-				<emphasis>TLSv1</emphasis> - only TLSv1 connections are accepted. This is the default and recommended method (if you want to be rfc3261  conformant don't change it).
+				<emphasis>TLSv1.1</emphasis> - only TLSv1.2 connections are accepted
+				(available starting with openssl/libssl v1.0.1e)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>TLSv1.1</emphasis> - only TLSv1.1 connections are accepted
+				(available starting with openssl/libssl v1.0.0)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>TLSv1</emphasis> - only TLSv1 connections are accepted.
+				This is the default value.
 				</para>
 			</listitem>
 			<listitem>
@@ -31,12 +44,18 @@
 			</listitem>
 			<listitem>
 				<para>
-				<emphasis>SSLv2</emphasis> - only SSLv2 connections, for old clients. Note: you shouldn't use SSLv2 for anything which should be highly secure.
+				<emphasis>SSLv2</emphasis> - only SSLv2 connections, for old clients.
+				Note: you shouldn't use SSLv2 for anything which should be highly secure.
+				Newer versions of libssl don't include support for it anymore.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				<emphasis>SSLv23</emphasis> - any of the above methods will be accepted, with the following limitation: the initial SSL hello message must be V2 (in the initial hello all the supported protocols are advertised enabling switching to a higher and more secure version). This means connections from SSLv3 or TLSv1 clients will not be accepted.
+				<emphasis>SSLv23</emphasis> - any of the SSLv2, SSLv3 and TLSv1 methods
+				will be accepted, with the following limitation: the initial SSL hello
+				message must be V2 (in the initial hello all the supported protocols
+				are advertised enabling switching to a higher and more secure version).
+				This means connections from SSLv3 or TLSv1 clients will be accepted.
 				</para>
 			</listitem>
 	</itemizedlist>
