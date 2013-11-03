@@ -132,7 +132,7 @@ to compile on the  _target_ system)"
 int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
 #endif
 
-const SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
+const SSL_METHOD* ssl_methods[TLS_METHOD_MAX];
 
 #ifdef NO_TLS_MALLOC_DBG
 #undef TLS_MALLOC_DBG /* extra malloc debug info from openssl */
@@ -350,14 +350,24 @@ static void init_ssl_methods(void)
 	ssl_methods[TLS_USE_SSLv3_cli - 1] = SSLv3_client_method();
 	ssl_methods[TLS_USE_SSLv3_srv - 1] = SSLv3_server_method();
 	ssl_methods[TLS_USE_SSLv3 - 1] = SSLv3_method();
-	
+
 	ssl_methods[TLS_USE_TLSv1_cli - 1] = TLSv1_client_method();
 	ssl_methods[TLS_USE_TLSv1_srv - 1] = TLSv1_server_method();
 	ssl_methods[TLS_USE_TLSv1 - 1] = TLSv1_method();
-	
+
 	ssl_methods[TLS_USE_SSLv23_cli - 1] = SSLv23_client_method();
 	ssl_methods[TLS_USE_SSLv23_srv - 1] = SSLv23_server_method();
 	ssl_methods[TLS_USE_SSLv23 - 1] = SSLv23_method();
+
+	ssl_methods[TLS_USE_TLSv1_1_cli - 1] = TLSv1_1_client_method();
+	ssl_methods[TLS_USE_TLSv1_1_srv - 1] = TLSv1_1_server_method();
+	ssl_methods[TLS_USE_TLSv1_1 - 1] = TLSv1_1_method();
+
+#if OPENSSL_VERSION_NUMBER >= 0x1000105fL
+	ssl_methods[TLS_USE_TLSv1_2_cli - 1] = TLSv1_2_client_method();
+	ssl_methods[TLS_USE_TLSv1_2_srv - 1] = TLSv1_2_server_method();
+	ssl_methods[TLS_USE_TLSv1_2 - 1] = TLSv1_2_method();
+#endif
 }
 
 

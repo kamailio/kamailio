@@ -119,10 +119,12 @@ static int parse_ipv4(struct ip_addr* ip, cfg_token_t* token,
 
 
 static cfg_option_t methods[] = { 
-	{"SSLv2",  .val = TLS_USE_SSLv2},
-	{"SSLv3",  .val = TLS_USE_SSLv3},
-	{"SSLv23", .val = TLS_USE_SSLv23},
-	{"TLSv1",  .val = TLS_USE_TLSv1},
+	{"SSLv2",   .val = TLS_USE_SSLv2},
+	{"SSLv3",   .val = TLS_USE_SSLv3},
+	{"SSLv23",  .val = TLS_USE_SSLv23},
+	{"TLSv1",   .val = TLS_USE_TLSv1},
+	{"TLSv1.1", .val = TLS_USE_TLSv1_1},
+	{"TLSv1.2", .val = TLS_USE_TLSv1_2},
 	{0}
 };
 
@@ -457,6 +459,14 @@ int tls_parse_method(str* method)
 
     opt = cfg_lookup_token(methods, method);
     if (!opt) return -1;
+
+#if OPENSSL_VERSION_NUMBER < 0x1000105fL
+	if(opt->val == TLS_USE_TLSv1_2) {
+		LM_ERR("tls v1.2 not supported by this libssl version: %ld\n",
+				OPENSSL_VERSION_NUMBER);
+		return -1;
+	}
+#endif
 
     return opt->val;
 }
