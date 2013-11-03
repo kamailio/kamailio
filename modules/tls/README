@@ -4,7 +4,7 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright (c) 2007 iptelorg GmbH
+   Copyright © 2007 iptelorg GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -486,17 +486,22 @@ Revoking a certificate and using a CRL
 9.1. tls_method (string)
 
    Sets the SSL/TLS protocol method. Possible values are:
+     * TLSv1.1 - only TLSv1.2 connections are accepted (available starting
+       with openssl/libssl v1.0.1e)
+     * TLSv1.1 - only TLSv1.1 connections are accepted (available starting
+       with openssl/libssl v1.0.0)
      * TLSv1 - only TLSv1 connections are accepted. This is the default
-       and recommended method (if you want to be rfc3261 conformant don't
-       change it).
+       value.
      * SSLv3 - only SSLv3 connections are accepted
      * SSLv2 - only SSLv2 connections, for old clients. Note: you
        shouldn't use SSLv2 for anything which should be highly secure.
-     * SSLv23 - any of the above methods will be accepted, with the
-       following limitation: the initial SSL hello message must be V2 (in
-       the initial hello all the supported protocols are advertised
-       enabling switching to a higher and more secure version). This means
-       connections from SSLv3 or TLSv1 clients will not be accepted.
+       Newer versions of libssl don't include support for it anymore.
+     * SSLv23 - any of the SSLv2, SSLv3 and TLSv1 methods will be
+       accepted, with the following limitation: the initial SSL hello
+       message must be V2 (in the initial hello all the supported
+       protocols are advertised enabling switching to a higher and more
+       secure version). This means connections from SSLv3 or TLSv1 clients
+       will be accepted.
 
    If rfc3261 conformance is desired, TLSv1 must be used. For
    compatibility with older clients SSLv23 is a good option.
