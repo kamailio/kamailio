@@ -46,6 +46,8 @@ int publish_reginfo = 1;
 
 sruid_t _reginfo_sruid;
 
+int reginfo_use_domain = 0;
+
 /** Fixup functions */
 static int domain_fixup(void** param, int param_no);
 
@@ -166,6 +168,11 @@ static int mod_init(void)
 
 	if(sruid_init(&_reginfo_sruid, (char)'-', "regi", SRUID_INC)<0)
 		return -1;
+
+	/*
+	 * Import use_domain parameter from usrloc
+	 */
+	reginfo_use_domain = ul.use_domain;
 
 	return 0;
 }

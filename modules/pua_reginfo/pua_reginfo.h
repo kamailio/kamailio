@@ -34,4 +34,6 @@ str server_address;
 extern usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
 extern pua_api_t pua; /*!< Structure containing pointers to PUA functions*/
 
+extern int reginfo_use_domain;
+
 #endif
