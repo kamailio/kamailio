@@ -90,7 +90,7 @@ void sl_lookup_event_routes(void)
 
 	 _sl_evrt_local_response = route_lookup(&event_rt, "sl:local-response");
 	if (_sl_evrt_local_response>=0
-			&& event_rt.rlist[_sl_evrt_local_response]!=NULL)
+			&& event_rt.rlist[_sl_evrt_local_response]==NULL)
 		_sl_evrt_local_response = -1;
 }
 
