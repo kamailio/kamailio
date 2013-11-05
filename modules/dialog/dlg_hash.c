@@ -484,18 +484,24 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 					str *cseq, unsigned int leg)
 {
 	char *p;
+	str cs = {"0", 1};
+
+	/* if we don't have cseq, set it to 0 */
+	if(cseq->len>0) {
+		cs = *cseq;
+	}
 
 	if(dlg->tag[leg].s)
 		shm_free(dlg->tag[leg].s);
 	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len + contact->len );
 
 	if(dlg->cseq[leg].s) {
-		if (dlg->cseq[leg].len < cseq->len) {
+		if (dlg->cseq[leg].len < cs.len) {
 			shm_free(dlg->cseq[leg].s);
-			dlg->cseq[leg].s = (char*)shm_malloc(cseq->len);
+			dlg->cseq[leg].s = (char*)shm_malloc(cs.len);
 		}
 	} else {
-		dlg->cseq[leg].s = (char*)shm_malloc( cseq->len );
+		dlg->cseq[leg].s = (char*)shm_malloc( cs.len );
 	}
 
 	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL) {
@@ -531,8 +537,8 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 	}
 
 	/* cseq */
-	dlg->cseq[leg].len = cseq->len;
-	memcpy( dlg->cseq[leg].s, cseq->s, cseq->len);
+	dlg->cseq[leg].len = cs.len;
+	memcpy( dlg->cseq[leg].s, cs.s, cs.len);
 
 	return 0;
 }
