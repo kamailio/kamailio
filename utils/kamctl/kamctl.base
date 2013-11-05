@@ -314,6 +314,11 @@ DISPATCHER_PRIORITY_COLUMN=priority
 DISPATCHER_ATTRS_COLUMN=attrs
 DISPATCHER_DESCRIPTION_COLUMN=description
 
+# dialog tables
+if [ -z "$DIALOG_TABLE" ] ; then
+	DIALOG_TABLE=dialog
+fi
+
 # dialplan tables
 if [ -z "$DIALPLAN_TABLE" ] ; then
 	DIALPLAN_TABLE=dialplan
@@ -482,6 +487,19 @@ cat <<EOF
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dispatcher"
+
+usage_dialog() {
+	echo
+	mecho " -- command 'dialog' - manage dialog records"
+	echo
+cat <<EOF
+   * Examples: dialog show
+   *           dialog showdb
+ dialog show ..................... show in-memory dialog records
+ dialog showdb ................... show database dialog records
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dialog"
 
 usage_dialplan() {
 	echo

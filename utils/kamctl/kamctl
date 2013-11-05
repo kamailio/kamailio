@@ -1550,7 +1550,6 @@ cr() {
 	esac
 }
 
-
 #
 ##### ------------------------------------------------ #####
 ### DISPATCHER management
@@ -1636,6 +1635,30 @@ dispatcher() {
 
 		*)
 			usage_dispatcher
+			exit 1
+
+	esac
+}
+
+#
+##### ------------------------------------------------ #####
+### DIALOG management
+#
+dialog() {
+	case $1 in
+		show|list)
+			require_ctlengine
+			mecho "dialog memory records"
+			$CTLCMD dlg_list
+			;;
+		showdb)
+			require_dbengine
+			mecho "dialog database records"
+			QUERY="select * FROM $DIALOG_TABLE ORDER BY id; "
+			$DBROCMD "$QUERY"
+			;;
+		*)
+			usage_dialog
 			exit 1
 
 	esac
@@ -2730,6 +2753,11 @@ case $1 in
 	dispatcher)
 		shift
 		dispatcher "$@"
+		;;
+
+	dialog)
+		shift
+		dialog "$@"
 		;;
 
 	dialplan)
