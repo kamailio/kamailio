@@ -82,14 +82,14 @@ unsigned short pubruri_callee_avp_type;
 int_str pubruri_callee_avp_name;
 
 /* Module parameter variables */
-int include_callid      = DEF_INCLUDE_CALLID;
-int include_localremote = DEF_INCLUDE_LOCALREMOTE;
-int include_tags        = DEF_INCLUDE_TAGS;
-int override_lifetime   = DEF_OVERRIDE_LIFETIME;
-int caller_confirmed    = DEF_CALLER_ALWAYS_CONFIRMED;
-int include_req_uri     = DEF_INCLUDE_REQ_URI;
-int send_publish_flag = DEF_SEND_PUBLISH_FLAG;
-int use_pubruri_avps    = DEF_USE_PUBRURI_AVPS;
+int include_callid         = DEF_INCLUDE_CALLID;
+int include_localremote    = DEF_INCLUDE_LOCALREMOTE;
+int include_tags           = DEF_INCLUDE_TAGS;
+int override_lifetime      = DEF_OVERRIDE_LIFETIME;
+int caller_confirmed       = DEF_CALLER_ALWAYS_CONFIRMED;
+int include_req_uri        = DEF_INCLUDE_REQ_URI;
+int send_publish_flag      = DEF_SEND_PUBLISH_FLAG;
+int use_pubruri_avps       = DEF_USE_PUBRURI_AVPS;
 char * pubruri_caller_avp  = DEF_PUBRURI_CALLER_AVP;
 char * pubruri_callee_avp  = DEF_PUBRURI_CALLEE_AVP;
 
@@ -112,7 +112,7 @@ static param_export_t params[]={
 	{"override_lifetime",   INT_PARAM, &override_lifetime },
 	{"caller_confirmed",    INT_PARAM, &caller_confirmed },
 	{"include_req_uri",     INT_PARAM, &include_req_uri },
-	{"send_publish_flag"	,	 INT_PARAM, &send_publish_flag },
+	{"send_publish_flag",   INT_PARAM, &send_publish_flag },
 	{"use_pubruri_avps",    INT_PARAM, &use_pubruri_avps },
 	{"pubruri_caller_avp",  STR_PARAM, &pubruri_caller_avp },
 	{"pubruri_callee_avp",  STR_PARAM, &pubruri_callee_avp },
@@ -120,20 +120,20 @@ static param_export_t params[]={
 };
 
 struct module_exports exports= {
-	"pua_dialoginfo",		/* module name */
-	DEFAULT_DLFLAGS,		/* dlopen flags */
-	cmds,					/* exported functions */
-	params,					/* exported parameters */
-	0,						/* exported statistics */
-	0,						/* exported MI functions */
-	0,						/* exported pseudo-variables */
-	0,						/* extra processes */
-	mod_init,				/* module initialization function */
-	0,						/* response handling function */
-	0,						/* destroy function */
-	NULL					/* per-child init function */
+	"pua_dialoginfo",    /* module name */
+	DEFAULT_DLFLAGS,     /* dlopen flags */
+	cmds,                /* exported functions */
+	params,              /* exported parameters */
+	0,                   /* exported statistics */
+	0,                   /* exported MI functions */
+	0,                   /* exported pseudo-variables */
+	0,                   /* extra processes */
+	mod_init,            /* module initialization function */
+	0,                   /* response handling function */
+	0,                   /* destroy function */
+	NULL                 /* per-child init function */
 };
-	
+
 
 #ifdef PUA_DIALOGINFO_DEBUG
 static void
@@ -149,41 +149,41 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 		LM_ERR("dialog callback: tag[1] = %.*s", dlg->tag[1].len, dlg->tag[1].s);
 	}
 
-if (type != DLGCB_DESTROY) {
-	msg = dlg_get_valid_msg(_params);
-	if (!msg) {
-		LM_ERR("no SIP message available in callback parameters\n");
-		return;
-	}
+	if (type != DLGCB_DESTROY) {
+		msg = dlg_get_valid_msg(_params);
+		if (!msg) {
+			LM_ERR("no SIP message available in callback parameters\n");
+			return;
+		}
 
-	/* get to tag*/
-	if ( !msg->to) {
-		// to header not defined, parse to header
-		LM_ERR("to header not defined, parse to header\n");
-		if (parse_headers(msg, HDR_TO_F,0)<0) {
-			//parser error
-			LM_ERR("parsing of to-header failed\n");
-			tag.s = 0;
-			tag.len = 0;
-		} else if (!msg->to) {
-			// to header still not defined
-			LM_ERR("no to although to-header is parsed: bad reply or missing TO hdr :-/\n");
-			tag.s = 0;
-			tag.len = 0;
-		} else 
+		/* get to tag*/
+		if ( !msg->to) {
+			// to header not defined, parse to header
+			LM_ERR("to header not defined, parse to header\n");
+			if (parse_headers(msg, HDR_TO_F,0)<0) {
+				//parser error
+				LM_ERR("parsing of to-header failed\n");
+				tag.s = 0;
+				tag.len = 0;
+			} else if (!msg->to) {
+				// to header still not defined
+				LM_ERR("no to although to-header is parsed: bad reply or missing TO hdr :-/\n");
+				tag.s = 0;
+				tag.len = 0;
+			} else 
+				tag = get_to(msg)->tag_value;
+		} else {
 			tag = get_to(msg)->tag_value;
-	} else {
-		tag = get_to(msg)->tag_value;
-		if (tag.s==0 || tag.len==0) {
-			LM_ERR("missing TAG param in TO hdr :-/\n");
-			tag.s = 0;
-			tag.len = 0;
+			if (tag.s==0 || tag.len==0) {
+				LM_ERR("missing TAG param in TO hdr :-/\n");
+				tag.s = 0;
+				tag.len = 0;
+			}
+		}
+		if (tag.s) {
+			LM_ERR("dialog callback: msg->to->parsed->tag_value = %.*s", tag.len, tag.s);
 		}
 	}
-	if (tag.s) {
-		LM_ERR("dialog callback: msg->to->parsed->tag_value = %.*s", tag.len, tag.s);
-	}
-}
 
 	switch (type) {
 	case DLGCB_FAILED:
@@ -315,7 +315,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
  *  Be careful: returns NULL pointer if no avp present!
  *
  */
-struct str_list*  get_str_list(unsigned short avp_flags, int_str avp_name) {
+struct str_list* get_str_list(unsigned short avp_flags, int_str avp_name) {
 
 	int_str avp_value;
 	unsigned int len;
@@ -383,11 +383,11 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 			dlg->req_uri.len +
 			dlg->contact[0].len;
 
-    dlginfo = (struct dlginfo_cell*)shm_malloc( len );
-    if (dlginfo==0) {
-        LM_ERR("no more shm mem (%d)\n",len);
-        return;
-    }
+	dlginfo = (struct dlginfo_cell*)shm_malloc( len );
+	if (dlginfo==0) {
+		LM_ERR("no more shm mem (%d)\n",len);
+		return;
+	}
 	memset( dlginfo, 0, len);
 
 	/* copy from dlg structure to dlginfo structure */

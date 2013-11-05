@@ -73,24 +73,24 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		LM_ERR("entity URI '%.*s' too long, maximum=%d\n",entity->len, entity->s, MAX_URI_SIZE);
 		return NULL;
 	}
-    memcpy(buf, entity->s, entity->len);
+	memcpy(buf, entity->s, entity->len);
 	buf[entity->len]= '\0';
 
-	/* create the Publish body  */
+	/* create the Publish body */
 	doc = xmlNewDoc(BAD_CAST "1.0");
 	if(doc==0)
 		return NULL;
 
-    root_node = xmlNewNode(NULL, BAD_CAST "dialog-info");
+	root_node = xmlNewNode(NULL, BAD_CAST "dialog-info");
 	if(root_node==0)
 		goto error;
-    
+
 	xmlDocSetRootElement(doc, root_node);
 
-    xmlNewProp(root_node, BAD_CAST "xmlns",
+	xmlNewProp(root_node, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:dialog-info");
 	/* we set the version to 0 but it should be set to the correct value
-       in the pua module */
+	in the pua module */
 	xmlNewProp(root_node, BAD_CAST "version",
 			BAD_CAST "0");
 	xmlNewProp(root_node, BAD_CAST  "state",
@@ -100,12 +100,12 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 
 	/* RFC 3245 differs between id and call-id. For example if a call
 	   is forked and 2 early dialogs are established, we should send 2
-	    PUBLISH requests, both have the same call-id but different id.
-	    Thus, id could be for example derived from the totag.
+	   PUBLISH requests, both have the same call-id but different id.
+	   Thus, id could be for example derived from the totag.
 
-	    Currently the dialog module does not support multiple dialogs.
-	    Thus, it does no make sense to differ here between multiple dialog.
-	    Thus, id and call-id will be populated identically */
+	   Currently the dialog module does not support multiple dialogs.
+	   Thus, it does no make sense to differ here between multiple dialog.
+	   Thus, id and call-id will be populated identically */
 
 	/* dialog tag */
 	dialog_node =xmlNewChild(root_node, NULL, BAD_CAST "dialog", NULL) ;
@@ -119,7 +119,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		LM_ERR("call-id '%.*s' too long, maximum=%d\n", callid->len, callid->s, MAX_URI_SIZE);
 		return NULL;
 	}
-    memcpy(buf, callid->s, callid->len);
+	memcpy(buf, callid->s, callid->len);
 	buf[callid->len]= '\0';
 
 	xmlNewProp(dialog_node, BAD_CAST "id", BAD_CAST buf);
@@ -132,7 +132,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 				LM_ERR("localtag '%.*s' too long, maximum=%d\n", localtag->len, localtag->s, MAX_URI_SIZE);
 				return NULL;
 			}
-		    memcpy(buf, localtag->s, localtag->len);
+			memcpy(buf, localtag->s, localtag->len);
 			buf[localtag->len]= '\0';
 			xmlNewProp(dialog_node, BAD_CAST "local-tag", BAD_CAST buf);
 		}
@@ -141,7 +141,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 				LM_ERR("remotetag '%.*s' too long, maximum=%d\n", remotetag->len, remotetag->s, MAX_URI_SIZE);
 				return NULL;
 			}
-		    memcpy(buf, remotetag->s, remotetag->len);
+			memcpy(buf, remotetag->s, remotetag->len);
 			buf[remotetag->len]= '\0';
 			xmlNewProp(dialog_node, BAD_CAST "remote-tag", BAD_CAST buf);
 		}
@@ -174,7 +174,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 			LM_ERR("peer '%.*s' too long, maximum=%d\n", peer->len, peer->s, MAX_URI_SIZE);
 			return NULL;
 		}
-    	memcpy(buf, peer->s, peer->len);
+		memcpy(buf, peer->s, peer->len);
 		buf[peer->len]= '\0';
 
 		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "identity", BAD_CAST buf) ;
@@ -207,7 +207,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 			LM_ERR("entity '%.*s' too long, maximum=%d\n", entity->len, entity->s, MAX_URI_SIZE);
 			return NULL;
 		}
-    	memcpy(buf, entity->s, entity->len);
+		memcpy(buf, entity->s, entity->len);
 		buf[entity->len]= '\0';
 
 		tag_node = xmlNewChild(local_node, NULL, BAD_CAST "identity", BAD_CAST buf) ;
@@ -242,9 +242,9 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 
 	LM_DBG("new_body:\n%.*s\n",body->len, body->s);
 
-    /*free the document */
+	/*free the document */
 	xmlFreeDoc(doc);
-    xmlCleanupParser();
+	xmlCleanupParser();
 
 	return body;
 
@@ -269,15 +269,15 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	publ_info_t* publ= NULL;
 	int size= 0;
 	str content_type;
-    struct sip_uri ruri_uri;
+	struct sip_uri ruri_uri;
 
 
-    if (parse_uri(ruri->s, ruri->len, &ruri_uri) < 0) {
+	if (parse_uri(ruri->s, ruri->len, &ruri_uri) < 0) {
 		LM_ERR("failed to parse the PUBLISH R-URI\n");
 		return;
 	}
 
-    if(do_pubruri_localcheck) {
+	if(do_pubruri_localcheck) {
 
 		/* send PUBLISH only if the receiver PUBLISH R-URI is local*/
 		if (!check_self(&(ruri_uri.host), 0, 0)) {
@@ -285,7 +285,7 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 			return;
 		}
 
-    }
+	}
 
 	content_type.s= "application/dialog-info+xml";
 	content_type.len= 27;
@@ -299,8 +299,8 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	size= sizeof(publ_info_t) 
 			+ sizeof(str) 			/* *pres_uri */
 			+ ( ruri->len 		/* pres_uri->s */
-			  + callid->len + 16	/* id.s */
-			  + content_type.len	/* content_type.s */
+			+ callid->len + 16	/* id.s */
+			+ content_type.len	/* content_type.s */
 			)*sizeof(char); 
 	
 	if(body)
