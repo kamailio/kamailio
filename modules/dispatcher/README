@@ -56,7 +56,7 @@ Carsten Bock
               3.19. ds_ping_method (string)
               3.20. ds_ping_from (string)
               3.21. ds_ping_interval (int)
-              3.22. ds_probing_threshhold (int)
+              3.22. ds_probing_threshold (int)
               3.23. ds_ping_reply_codes (string)
               3.24. ds_probing_mode (int)
               3.25. ds_hash_size (int)
@@ -172,7 +172,7 @@ Chapter 1. Admin Guide
         3.19. ds_ping_method (string)
         3.20. ds_ping_from (string)
         3.21. ds_ping_interval (int)
-        3.22. ds_probing_threshhold (int)
+        3.22. ds_probing_threshold (int)
         3.23. ds_ping_reply_codes (string)
         3.24. ds_probing_mode (int)
         3.25. ds_hash_size (int)
@@ -271,7 +271,7 @@ Chapter 1. Admin Guide
    3.19. ds_ping_method (string)
    3.20. ds_ping_from (string)
    3.21. ds_ping_interval (int)
-   3.22. ds_probing_threshhold (int)
+   3.22. ds_probing_threshold (int)
    3.23. ds_ping_reply_codes (string)
    3.24. ds_probing_mode (int)
    3.25. ds_hash_size (int)
@@ -577,7 +577,7 @@ Note
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
-3.22. ds_probing_threshhold (int)
+3.22. ds_probing_threshold (int)
 
    If you want to set a gateway into inactive mode, there can be a
    specific number of failed requests until it will change from "active"
