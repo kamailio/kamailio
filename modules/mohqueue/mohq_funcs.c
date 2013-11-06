@@ -1530,8 +1530,13 @@ else
   {
   LM_ERR ("%sCall (%s) REFER error (%d)", pfncname,
     pcall->call_from, nreply);
-  pcall->call_state = CLSTA_INQUEUE;
-  update_call_rec (pcall);
+  if (nreply == 481)
+    { delete_call (pcall); }
+  else
+    {
+    pcall->call_state = CLSTA_INQUEUE;
+    update_call_rec (pcall);
+    }
   }
 return;
 }
