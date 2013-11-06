@@ -21,7 +21,7 @@
 	<itemizedlist>
 			<listitem>
 				<para>
-				<emphasis>TLSv1.1</emphasis> - only TLSv1.2 connections are accepted
+				<emphasis>TLSv1.2</emphasis> - only TLSv1.2 connections are accepted
 				(available starting with openssl/libssl v1.0.1e)
 				</para>
 			</listitem>
