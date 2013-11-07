@@ -48,7 +48,7 @@ struct _sca_call_info {
 typedef struct _sca_call_info		sca_call_info;
 
 #define SCA_CALL_INFO_EMPTY( ci1 ) \
-	((ci1) != NULL || \
+	((void*)(ci1) == NULL || \
 		((ci1)->index == SCA_CALL_INFO_APPEARANCE_INDEX_ANY && \
 		(ci1)->state == SCA_APPEARANCE_STATE_UNKNOWN))
 
