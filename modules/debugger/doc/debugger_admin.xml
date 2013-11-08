@@ -464,7 +464,7 @@ dbg_pv_dump(30, "L_DBG");
 	<section>
 		<title>Exported RPC Functions</title>
 
-	<section>
+	<section id="dbg.r.ls">
 		<title>
 		<function moreinfo="none">dbg.ls</function>
 		</title>
@@ -489,7 +489,7 @@ dbg_pv_dump(30, "L_DBG");
 		</programlisting>
     </section>
 
-	<section>
+	<section id="dbg.r.trace">
 		<title>
 		<function moreinfo="none">dbg.trace</function>
 		</title>
@@ -518,7 +518,7 @@ dbg_pv_dump(30, "L_DBG");
 		</programlisting>
     </section>
 
-	<section>
+	<section id="dbg.r.bp">
 		<title>
 		<function moreinfo="none">dbg.bp</function>
 		</title>
@@ -594,7 +594,7 @@ dbg_pv_dump(30, "L_DBG");
 		</programlisting>
     </section>
 
-    <section>
+    <section id="dbg.r.mod_level">
 		<title>
 		<function moreinfo="none">dbg.mod_level</function>
 		</title>
@@ -619,7 +619,7 @@ dbg_pv_dump(30, "L_DBG");
 		</programlisting>
     </section>
 
-	<section>
+	<section id="dbg.r.reset_msgid">
 		<title>
 		<function moreinfo="none">dbg.reset_msgid</function>
 		</title>
