@@ -361,7 +361,7 @@ static void init_ssl_methods(void)
 	ssl_methods[TLS_USE_SSLv23_srv - 1] = SSLv23_server_method();
 	ssl_methods[TLS_USE_SSLv23 - 1] = SSLv23_method();
 
-#if OPENSSL_VERSION_NUMBER >= 0x01000000L
+#if OPENSSL_VERSION_NUMBER >= 0x1000100fL
 	ssl_methods[TLS_USE_TLSv1_1_cli - 1] = TLSv1_1_client_method();
 	ssl_methods[TLS_USE_TLSv1_1_srv - 1] = TLSv1_1_server_method();
 	ssl_methods[TLS_USE_TLSv1_1 - 1] = TLSv1_1_method();

@@ -28,7 +28,7 @@
 			<listitem>
 				<para>
 				<emphasis>TLSv1.1</emphasis> - only TLSv1.1 connections are accepted
-				(available starting with openssl/libssl v1.0.0)
+				(available starting with openssl/libssl v1.0.1)
 				</para>
 			</listitem>
 			<listitem>
