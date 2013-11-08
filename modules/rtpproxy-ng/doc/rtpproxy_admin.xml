@@ -99,7 +99,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="rtpproxy-ng.p.rtpproxy_sock">
 		<title><varname>rtpproxy_sock</varname> (string)</title>
 		<para>
 		Definition of socket(s) used to connect to (a set) RTPProxy. It may
@@ -128,7 +128,7 @@ modparam("rtpproxy-ng", "rtpproxy_sock",
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy-ng.p.rtpproxy_disable_tout">
 		<title><varname>rtpproxy_disable_tout</varname> (integer)</title>
 		<para>
 		Once an RTP proxy was found unreachable and marked as disabled, the rtpproxy-ng
@@ -149,7 +149,7 @@ modparam("rtpproxy-ng", "rtpproxy_disable_tout", 20)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy-ng.p.rtpproxy_tout">
 		<title><varname>rtpproxy_tout</varname> (integer)</title>
 		<para>
 		Timeout value in waiting for reply from RTP proxy.
@@ -168,7 +168,7 @@ modparam("rtpproxy-ng", "rtpproxy_tout", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy-ng.p.rtpproxy_retr">
 		<title><varname>rtpproxy_retr</varname> (integer)</title>
 		<para>
 		How many times the module should retry to send and receive after
@@ -214,7 +214,7 @@ modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 		</example>
 	</section>
 -->
-	<section>
+	<section id="rtpproxy-ng.p.extra_id_pv">
 		<title><varname>extra_id_pv</varname> (string)</title>
 		<para>
 			The parameter sets the PV defination to use when the <quote>b</quote>
@@ -236,7 +236,7 @@ modparam("rtpproxy-ng", "extra_id_pv", "$avp(extra_id)")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="rtpproxy-ng.f.set_rtp_proxy_set">
 		<title>
 		<function moreinfo="none">set_rtp_proxy_set(setid)</function>
 		</title>
@@ -260,7 +260,7 @@ rtpproxy_offer();
 </programlisting>
 		</example>
 	</section>
-        <section>
+        <section id="rtpproxy-ng.f.rtpproxy_offer">
                 <title>
                 <function moreinfo="none">rtpproxy_offer([flags [, ip_address]])</function>
                 </title>
@@ -468,7 +468,7 @@ onreply_route[2]
 </programlisting>
                 </example>
 	</section>
-        <section>
+        <section id="rtpproxy-ng.f.rtpproxy_answer">
                 <title>
                 <function moreinfo="none">rtpproxy_answer([flags [, ip_address]])</function>
                 </title>
@@ -493,7 +493,7 @@ onreply_route[2]
 		</para>
 		</example>
         </section>
-	<section>
+	<section id="rtpproxy-ng.f.rtpproxy_destroy">
 		<title>
 		<function moreinfo="none">rtpproxy_destroy([flags])</function>
 		</title>
@@ -547,7 +547,7 @@ rtpproxy_destroy();
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy-ng.f.unforce_rtp_proxy">
 		<title>
 		<function moreinfo="none">unforce_rtp_proxy()</function>
 		</title>
@@ -556,7 +556,7 @@ rtpproxy_destroy();
 		</para>
 	</section>
 
-    <section>
+    <section id="rtpproxy-ng.f.rtpproxy_manage">
         <title>
         <function moreinfo="none">rtpproxy_manage([flags [, ip_address]])</function>
         </title>
@@ -711,7 +711,7 @@ rtpproxy_manage();
 	</para>
 	</section>
 -->
-	<section>
+	<section id="rtpproxy-ng.f.start_recording">
 		<title>
 		<function moreinfo="none">start_recording()</function>
 		</title>
@@ -770,7 +770,7 @@ start_recording();
 
 	<section>
 		<title><acronym>MI</acronym> Commands</title>
-		<section>
+		<section id="rtpproxy-ng.m.nh_enable_rtpp">
 			<title><function moreinfo="none">nh_enable_rtpp</function></title>
 			<para>
 			Enables a rtp proxy if parameter value is greater than 0.
@@ -798,7 +798,7 @@ $ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 			</example>
 		</section>
 
-			<section>
+			<section id="rtpproxy-ng.m.nh_show_rtpp">
 			<title><function moreinfo="none">nh_show_rtpp</function></title>
 			<para>
 			Displays all the rtp proxies and their information: set and
