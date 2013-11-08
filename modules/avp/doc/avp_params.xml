@@ -8,7 +8,7 @@
 
     <title>Parameters</title>
 
-    <section id="xlbuf_size">
+    <section id="avp.p.xlbuf_size">
     <title><varname>xlbuf_size</varname> (integer)</title>
     <para>
 		Defines size of internal buffer for all xprint formatting calls. If you
