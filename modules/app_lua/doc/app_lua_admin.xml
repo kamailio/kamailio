@@ -11,9 +11,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
@@ -80,7 +80,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="app_lua.p.load">
 	    <title><varname>load</varname> (string)</title>
 	    <para>
 			Set the path to the Lua script to be loaded at startup. Then you
@@ -102,7 +102,7 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 	    </example>
 	</section>
 
-	<section>
+	<section id="app_lua.p.register">
 	    <title><varname>register</varname> (string)</title>
 	    <para>
 			Use this function to register optional SIP Router submodules
@@ -249,7 +249,7 @@ modparam("app_lua", "register", "sl")
 	    </example>
 	</section>
 
-	<section>
+	<section id="app_lua.p.reload">
 	    <title><varname>reload</varname> (boolean)</title>
 	    <para>
 			If reload is 1 enables the ability to reload the
@@ -271,10 +271,10 @@ modparam("app_lua", "reload", 1)
 	</section>
 
 	</section>
-	
+
     <section>
 	<title>Functions</title>
- 	<section>
+ 	<section id="app_lua.f.lua_dotfile">
 	    <title>
 		<function moreinfo="none">lua_dofile(path)</function>
 	    </title>
@@ -291,8 +291,8 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 </programlisting>
 	    </example>
 	</section>
-	
- 	<section>
+
+ 	<section id="app_lua.f.lua_dostring">
 	    <title>
 		<function moreinfo="none">lua_dostring(script)</function>
 	    </title>
@@ -313,7 +313,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 	    </example>
 	</section>
 
-	<section>
+	<section id="app_lua.f.lua_run">
 	    <title>
 		<function moreinfo="none">lua_run(function, params)</function>
 	    </title>
@@ -338,7 +338,7 @@ lua_run("lua_funcx", "$rU", "2");
 	    </example>
 	</section>
 
-	<section>
+	<section id="app_lua.f.lua_runstring">
 	    <title>
 		<function moreinfo="none">lua_runstring(script)</function>
 	    </title>
@@ -359,12 +359,12 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 </programlisting>
 	    </example>
 	</section>
-	
+
     </section>
 
     <section>
         <title>Exported RPC Commands</title>
-        <section>
+        <section id="app_lua.r.list">
             <title>
             <function moreinfo="none">app_lua.list</function>
             </title>
@@ -383,7 +383,7 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
                 &sercmd; app_lua.lists
             </programlisting>
         </section>
-        <section>
+        <section id="app_lua.r.reload">
             <title>
             <function moreinfo="none">app_lua.reload</function>
             </title>
