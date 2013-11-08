@@ -104,7 +104,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="usrloc.p.nat_bflag">
 		<title><varname>nat_bflag</varname> (integer)</title>
 		<para>
 		The index of the branch flag to be used as NAT marker (if the contact 
@@ -126,7 +126,7 @@ modparam("usrloc", "nat_bflag", 3)
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.user_column">
 		<title><varname>user_column</varname> (string)</title>
 		<para>
 		Name of database column containing usernames.
@@ -146,7 +146,7 @@ modparam("usrloc", "user_column", "username")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.domain_column">
 		<title><varname>domain_column</varname> (string)</title>
 		<para>
 		Name of database column containing domains.
@@ -166,7 +166,7 @@ modparam("usrloc", "domain_column", "domain")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.contact_column">
 		<title><varname>contact_column</varname> (string)</title>
 		<para>
 		Name of database column containing contacts.
@@ -186,7 +186,7 @@ modparam("usrloc", "contact_column", "contact")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.expires_column">
 		<title><varname>expires_column</varname> (string)</title>
 		<para>
 		Name of database column containing expires value.
@@ -206,7 +206,7 @@ modparam("usrloc", "expires_column", "expires")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.q_column">
 		<title><varname>q_column</varname> (string)</title>
 		<para>
 		Name of database column containing q values.
@@ -226,7 +226,7 @@ modparam("usrloc", "q_column", "q")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.callid_column">
 		<title><varname>callid_column</varname> (string)</title>
 		<para>
 		Name of database column containing Call-ID values.
@@ -246,7 +246,7 @@ modparam("usrloc", "callid_column", "callid")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.cseq_column">
 		<title><varname>cseq_column</varname> (string)</title>
 		<para>
 		Name of database column containing Cseq.
@@ -266,7 +266,7 @@ modparam("usrloc", "cseq_column", "cseq")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.methods_column">
 		<title><varname>methods_column</varname> (string)</title>
 		<para>
 		Name of database column containing supported methods.
@@ -286,7 +286,7 @@ modparam("usrloc", "methods_column", "methods")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.flags_column">
 		<title><varname>flags_column</varname> (string)</title>
 		<para>
 		Name of database column to save the internal flags of the record.
@@ -306,7 +306,7 @@ modparam("usrloc", "flags_column", "flags")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.cflags_column">
 		<title><varname>cflags_column</varname> (string)</title>
 		<para>
 		Name of database column to save the branch/contact flags of the record.
@@ -326,7 +326,7 @@ modparam("usrloc", "cflags_column", "cflags")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.user_agent_column">
 		<title><varname>user_agent_column</varname> (string)</title>
 		<para>
 		Name of database column containing user-agent values.
@@ -346,7 +346,7 @@ modparam("usrloc", "user_agent_column", "user_agent")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.received_column">
 		<title><varname>received_column</varname> (string)</title>
 		<para>
 		Name of database column containing the source IP, port, and protocol from the REGISTER
@@ -367,7 +367,7 @@ modparam("usrloc", "received_column", "received")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.socket_column">
 		<title><varname>socket_column</varname> (string)</title>
 		<para>
 		Name of database column containing the received socket information (IP:port)
@@ -388,7 +388,7 @@ modparam("usrloc", "socket_column", "socket")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.path_column">
 		<title><varname>path_column</varname> (string)</title>
 		<para>
 		Name of database column containing the Path header.
@@ -408,7 +408,7 @@ modparam("usrloc", "path_column", "path")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.ruid_column">
 		<title><varname>ruid_column</varname> (string)</title>
 		<para>
 		Name of database column containing the Kamailio record unique id.
@@ -428,7 +428,7 @@ modparam("usrloc", "ruid_column", "myruid")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.instance_column">
 		<title><varname>instance_column</varname> (string)</title>
 		<para>
 		Name of database column containing the SIP instance ID (GRUU - RFC5627).
@@ -449,7 +449,7 @@ modparam("usrloc", "instance_column", "myinstance")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		If the domain part of the user should be also saved and used for
@@ -471,7 +471,7 @@ modparam("usrloc", "use_domain", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.desc_time_order">
 		<title><varname>desc_time_order</varname> (integer)</title>
 		<para>
 		If the user's contacts should be kept timestamp ordered; otherwise the
@@ -493,7 +493,7 @@ modparam("usrloc", "desc_time_order", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.timer_interval">
 		<title><varname>timer_interval</varname> (integer)</title>
 		<para>
 		Number of seconds between two timer runs. The module uses a timer to 
@@ -515,7 +515,7 @@ modparam("usrloc", "timer_interval", 120)
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		&url; of the database that should be used.
@@ -535,7 +535,7 @@ modparam("usrloc", "db_url", "&exampledb;")
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.db_mode">
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
 		The usrloc module can utilize a database for persistent contact storage.
@@ -620,7 +620,7 @@ modparam("usrloc", "db_mode", 2)
 		</example>
 	</section>
 
-	<section id="matching-mode">
+	<section id="usrloc.p.matching_mode">
 		<title><varname>matching_mode</varname> (integer)</title>
 		<para>
 		What contact matching algorithm to be used. Refer to section 
@@ -664,7 +664,7 @@ modparam("usrloc", "matching_mode", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.cseq_delay">
 		<title><varname>cseq_delay</varname> (integer)</title>
 		<para>
 		Delay (in seconds) for accepting as retransmissions register requests
@@ -694,7 +694,7 @@ modparam("usrloc", "cseq_delay", 5)
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.fetch_rows">
 		<title><varname>fetch_rows</varname> (integer)</title>
 		<para>
 		The number of the rows to be fetched at once from database
@@ -718,7 +718,7 @@ modparam("usrloc", "fetch_rows", 3000)
 		</example>
 	</section>
 
-	<section>
+	<section id="usrloc.p.hash_size">
 		<title><varname>hash_size</varname> (integer)</title>
 		<para>
 		The number of entries of the hash table used by usrloc to store the
@@ -740,7 +740,7 @@ modparam("usrloc", "hash_size", 10)
 		</example>
 	</section>
 
-	<section id="preload">
+	<section id="usrloc.p.preload">
 		<title><varname>preload</varname> (string)</title>
 		<para>
 		Preload location table given as value. A location table is loaded
@@ -763,7 +763,7 @@ modparam("usrloc", "preload", "location")
 		</example>
 	</section>
 
-	<section id="db_update_as_insert">
+	<section id="usrloc.p.db_update_as_insert">
 		<title><varname>db_update_as_insert</varname> (string)</title>
 		<para>
 			Set this parameter if you want to do INSERT DB operations
@@ -785,7 +785,7 @@ modparam("usrloc", "db_update_as_insert", 1)
 		</example>
 	</section>
 
-	<section id="db_check_update">
+	<section id="usrloc.p.db_check_update">
 		<title><varname>db_check_update</varname> (string)</title>
 		<para>
 			Set this parameter to 1 if you want to do DB INSERT if the number
@@ -809,7 +809,7 @@ modparam("usrloc", "db_check_update", 1)
 		</example>
 	</section>
 
-	<section id="timer_procs">
+	<section id="usrloc.p.timer_procs">
 		<title><varname>timer_procs</varname> (string)</title>
 		<para>
 			Number of timer processes to be started by module. Timer processes
@@ -832,7 +832,7 @@ modparam("usrloc", "timer_procs", 4)
 		</example>
 	</section>
 
-	<section id="xavp_contact">
+	<section id="usrloc.p.xavp_contact">
 		<title><varname>xavp_contact</varname> (string)</title>
 		<para>
 		The name of XAVP storring the attributes per contact. They are saved
@@ -908,7 +908,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 	<section>
 	<title>MI Commands</title>
 
-	<section>
+	<section id="usrloc.m.ul_rm">
 		<title>
 		<function moreinfo="none">ul_rm</function>
 		</title>
@@ -929,7 +929,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="usrloc.m.ul_rm_contact">
 		<title>
 		<function moreinfo="none">ul_rm_contact</function>
 		</title>
@@ -953,7 +953,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="usrloc.m.ul_dump">
 		<title>
 		<function moreinfo="none">ul_dump</function>
 		</title>
@@ -970,7 +970,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="usrloc.m.ul_flush">
 		<title>
 		<function moreinfo="none">ul_flush</function>
 		</title>
@@ -979,7 +979,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</para>
 	</section>
 
-	<section>
+	<section id="usrloc.m.ul_add">
 		<title>
 		<function moreinfo="none">ul_add</function>
 		</title>
@@ -1024,7 +1024,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="usrloc.m.ul_show_contact">
 		<title>
 		<function moreinfo="none">ul_show_contact</function>
 		</title>
@@ -1049,7 +1049,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 	<section>
 	<title>RPC Commands</title>
 
-	<section>
+	<section id="usrloc.r.dump">
 		<title>
 		<function moreinfo="none">ul.dump</function>
 		</title>
@@ -1063,7 +1063,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 			</para></listitem>
 		</itemizedlist>
 	</section>
-	<section>
+	<section id="usrloc.r.lookup">
 		<title>
 		<function moreinfo="none">ul.lookup table AOR</function>
 		</title>
@@ -1083,7 +1083,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 			</para></listitem>
 		</itemizedlist>
 	</section>
-	<section>
+	<section id="usrloc.r.rm">
 		<title>
 		<function moreinfo="none">ul.rm table AOR</function>
 		</title>
@@ -1103,7 +1103,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 			</para></listitem>
 		</itemizedlist>
 	</section>
-	<section>
+	<section id="usrloc.r.rm_contact">
 		<title>
 		<function moreinfo="none">ul.rm_contact table AOR contact</function>
 		</title>
@@ -1126,7 +1126,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 			</para></listitem>
 		</itemizedlist>
 	</section>
-	<section>
+	<section id="usrloc.r.flush">
 		<title>
 		<function moreinfo="none">ul.flush</function>
 		</title>
@@ -1134,7 +1134,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		Triggers the flush of USRLOC memory cache into DB.
 		</para>
 	</section>
-	<section>
+	<section id="usrloc.r.add">
 		<title>
 		<function moreinfo="none">ul.add</function>
 		</title>
@@ -1179,7 +1179,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="usrloc.r.db_users">
 		<title>
 		<function moreinfo="none">ul.db_users</function>
 		</title>
@@ -1194,7 +1194,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="usrloc.r.db_contacts">
 		<title>
 		<function moreinfo="none">ul.db_contacts</function>
 		</title>
@@ -1209,7 +1209,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="usrloc.r.db_expired_contacts">
 		<title>
 		<function moreinfo="none">ul.db_expired_contacts</function>
 		</title>
@@ -1232,7 +1232,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		<para>
 		Exported statistics are listed in the next sections.
 		</para>
-		<section>
+		<section id="usrloc.s.users">
 		<title>users</title>
 			<para>
 			Number of AOR existing in the USRLOC memory cache for that domain
@@ -1240,7 +1240,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 			used domain (Ex: location).
 			</para>
 		</section>
-		<section>
+		<section id="usrloc.s.contacts">
 		<title>contacts</title>
 			<para>
 			Number of contacts existing in the USRLOC memory cache for that 
@@ -1248,7 +1248,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 			each used domain (Ex: location).
 			</para>
 		</section>
-		<section>
+		<section id="usrloc.s.expires">
 		<title>expires</title>
 			<para>
 			Total number of expired contacts for that domain - can be resetted;
@@ -1256,7 +1256,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
 			(Ex: location).
 			</para>
 		</section>
-		<section>
+		<section id="usrloc.s.registered_users">
 		<title>registered_users</title>
 			<para>
 			Total number of AOR existing in the USRLOC memory cache for all
