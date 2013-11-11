@@ -1285,9 +1285,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	item = bencode_list(bencbuf);
 	bencode_dictionary_add(dict, "received-from", item);
 	bencode_list_add_string(item, (msg->rcv.src_ip.af == AF_INET) ? "IP4" : (
-#ifdef USE_IPV6
 		(msg->rcv.src_ip.af == AF_INET6) ? "IP6" :
-#endif
 		"?"
 	) );
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
