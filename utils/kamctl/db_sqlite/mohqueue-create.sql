@@ -6,7 +6,7 @@ CREATE TABLE mohqcalls (
     call_status INTEGER NOT NULL,
     call_from VARCHAR(100) NOT NULL,
     call_contact VARCHAR(100),
-    call_time TIMESTAMP WITHOUT TIME ZONE DEFAULT 'to_date('','yyyy-mm-dd hh24:mi:ss')' NOT NULL,
+    call_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     CONSTRAINT mohqcalls_mohqcalls_idx UNIQUE (call_id)
 );
 
