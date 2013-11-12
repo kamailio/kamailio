@@ -409,6 +409,7 @@ extern char *finame;
 %token DNS_SERVERS_NO
 %token DNS_USE_SEARCH
 %token DNS_SEARCH_FMATCH
+%token DNS_NAPTR_IGNORE_RFC
 %token DNS_CACHE_INIT
 %token DNS_USE_CACHE
 %token DNS_USE_FAILOVER
@@ -865,6 +866,8 @@ assign_stm:
 	| DNS_USE_SEARCH error { yyerror("boolean value expected"); }
 	| DNS_SEARCH_FMATCH EQUAL NUMBER   { default_core_cfg.dns_search_fmatch=$3; }
 	| DNS_SEARCH_FMATCH error { yyerror("boolean value expected"); }
+	| DNS_NAPTR_IGNORE_RFC EQUAL NUMBER   { default_core_cfg.dns_naptr_ignore_rfc=$3; }
+	| DNS_NAPTR_IGNORE_RFC error { yyerror("boolean value expected"); }
 	| DNS_CACHE_INIT EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_init=$3); }
 	| DNS_CACHE_INIT error { yyerror("boolean value expected"); }
 	| DNS_USE_CACHE EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.use_dns_cache=$3); }

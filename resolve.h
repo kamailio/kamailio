@@ -455,7 +455,7 @@ int resolv_init(void);
 void resolv_reinit(str *gname, str *name);
 int dns_reinit_fixup(void *handle, str *gname, str *name, void **val);
 int dns_try_ipv6_fixup(void *handle, str *gname, str *name, void **val);
-void reinit_naptr_proto_prefs(str *gname, str *name);
+void reinit_proto_prefs(str *gname, str *name);
 
 struct dns_srv_proto {
 	char proto;

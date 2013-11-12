@@ -80,6 +80,7 @@ struct cfg_group_core {
 	int dns_search_list;
 	int dns_search_fmatch;
 	int dns_reinit;
+	int dns_naptr_ignore_rfc;
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
 	int use_dns_cache;

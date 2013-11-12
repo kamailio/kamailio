@@ -360,6 +360,7 @@ DNS_RETR_NO		dns_retr_no
 DNS_SERVERS_NO	dns_servers_no
 DNS_USE_SEARCH	dns_use_search_list
 DNS_SEARCH_FMATCH	dns_search_full_match
+DNS_NAPTR_IGNORE_RFC	dns_naptr_ignore_rfc
 /* dns cache */
 DNS_CACHE_INIT	dns_cache_init
 DNS_USE_CACHE	use_dns_cache
@@ -724,6 +725,8 @@ IMPORTFILE      "import_file"
 								return DNS_USE_SEARCH; }
 <INITIAL>{DNS_SEARCH_FMATCH}	{ count(); yylval.strval=yytext;
 								return DNS_SEARCH_FMATCH; }
+<INITIAL>{DNS_NAPTR_IGNORE_RFC}	{ count(); yylval.strval=yytext;
+								return DNS_NAPTR_IGNORE_RFC; }
 <INITIAL>{DNS_CACHE_INIT}	{ count(); yylval.strval=yytext;
 								return DNS_CACHE_INIT; }
 <INITIAL>{DNS_USE_CACHE}	{ count(); yylval.strval=yytext;

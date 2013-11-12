@@ -92,22 +92,57 @@ counter_def_t dns_cnt_defs[] =  {
 #ifdef USE_NAPTR
 static int naptr_proto_pref[PROTO_LAST+1];
 #endif
+static int srv_proto_pref[PROTO_LAST+1];
 
 #ifdef USE_NAPTR
-void init_naptr_proto_prefs()
+static void init_naptr_proto_prefs()
 {
+	int ignore_rfc, udp, tcp, tls, sctp;
+
 	if ((PROTO_UDP > PROTO_LAST) || (PROTO_TCP > PROTO_LAST) ||
 		(PROTO_TLS > PROTO_LAST) || (PROTO_SCTP > PROTO_LAST)){
 		BUG("init_naptr_proto_prefs: array too small \n");
 		return;
 	}
-	naptr_proto_pref[PROTO_UDP]=cfg_get(core, core_cfg, dns_udp_pref);
-	naptr_proto_pref[PROTO_TCP]=cfg_get(core, core_cfg, dns_tcp_pref);
-	naptr_proto_pref[PROTO_TLS]=cfg_get(core, core_cfg, dns_tls_pref);
-	naptr_proto_pref[PROTO_SCTP]=cfg_get(core, core_cfg, dns_sctp_pref);
+
+	ignore_rfc = cfg_get(core, core_cfg, dns_naptr_ignore_rfc);
+	udp = cfg_get(core, core_cfg, dns_udp_pref);
+	tcp = cfg_get(core, core_cfg, dns_tcp_pref);
+	tls = cfg_get(core, core_cfg, dns_tls_pref);
+	sctp = cfg_get(core, core_cfg, dns_sctp_pref);
+
+	/* Old implementation ignored the Order field in the NAPTR RR and
+	 * thus violated a MUST in RFC 2915. Currently still the default. */
+	if (ignore_rfc) {
+		naptr_proto_pref[PROTO_UDP] = udp;
+		naptr_proto_pref[PROTO_TCP] = tcp;
+		naptr_proto_pref[PROTO_TLS] = tls;
+		naptr_proto_pref[PROTO_SCTP] = sctp;
+	} else {
+		/* If value is less than 0, proto is disabled, otherwise
+		 * ignored. */
+		naptr_proto_pref[PROTO_UDP] = udp < 0 ? udp : 1;
+		naptr_proto_pref[PROTO_TCP] = tcp < 0 ? tcp : 1;
+		naptr_proto_pref[PROTO_TLS] = tls < 0 ? tls : 1;
+		naptr_proto_pref[PROTO_SCTP] = sctp < 0 ? sctp : 1;
+	}
 }
 
 #endif /* USE_NAPTR */
+
+static void init_srv_proto_prefs()
+{
+	if ((PROTO_UDP > PROTO_LAST) || (PROTO_TCP > PROTO_LAST) ||
+		(PROTO_TLS > PROTO_LAST) || (PROTO_SCTP > PROTO_LAST)){
+		BUG("init_srv_proto_prefs: array too small \n");
+		return;
+	}
+
+	srv_proto_pref[PROTO_UDP] = cfg_get(core, core_cfg, dns_udp_pref);
+	srv_proto_pref[PROTO_TCP] = cfg_get(core, core_cfg, dns_tcp_pref);
+	srv_proto_pref[PROTO_TLS] = cfg_get(core, core_cfg, dns_tls_pref);
+	srv_proto_pref[PROTO_SCTP] = cfg_get(core, core_cfg, dns_sctp_pref);
+}
 
 #ifdef DNS_WATCHDOG_SUPPORT
 static on_resolv_reinit	on_resolv_reinit_cb = NULL;
@@ -178,9 +213,7 @@ int resolv_init(void)
 	int res = -1;
 	_resolv_init();
 
-#ifdef USE_NAPTR
-	init_naptr_proto_prefs();
-#endif
+	reinit_proto_prefs(NULL,NULL);
 	/* init counter API only at startup
 	 * This function must be called before DNS cache init method (if available)
 	 */
@@ -212,12 +245,13 @@ int dns_reinit_fixup(void *handle, str *gname, str *name, void **val)
 	return 0;
 }
 
-/* wrapper function to recalculate the naptr protocol preferences */
-void reinit_naptr_proto_prefs(str *gname, str *name)
+/* wrapper function to recalculate the naptr and srv protocol preferences */
+void reinit_proto_prefs(str *gname, str *name)
 {
 #ifdef USE_NAPTR
 	init_naptr_proto_prefs();
 #endif
+	init_srv_proto_prefs();
 }
 
 /* fixup function for dns_try_ipv6
@@ -1080,10 +1114,17 @@ char naptr_get_sip_proto(struct naptr_rdata* n)
 
 
 
-inline static int proto_pref_score(char proto)
+inline static int naptr_proto_pref_score(char proto)
 {
 	if ((proto>=PROTO_UDP) && (proto<= PROTO_LAST))
 		return naptr_proto_pref[(int)proto];
+	return 0;
+}
+
+inline static int srv_proto_pref_score(char proto)
+{
+	if ((proto>=PROTO_UDP) && (proto<= PROTO_LAST))
+		return srv_proto_pref[(int)proto];
 	return 0;
 }
 
@@ -1092,7 +1133,7 @@ inline static int proto_pref_score(char proto)
 /* returns true if we support the protocol */
 int naptr_proto_supported(char proto)
 {
-	if (proto_pref_score(proto)<0)
+	if (naptr_proto_pref_score(proto)<0)
 		return 0;
 	switch(proto){
 		case PROTO_UDP:
@@ -1119,7 +1160,7 @@ int naptr_proto_supported(char proto)
 /* returns true if new_proto is preferred over old_proto */
 int naptr_proto_preferred(char new_proto, char old_proto)
 {
-	return proto_pref_score(new_proto)>proto_pref_score(old_proto);
+	return naptr_proto_pref_score(new_proto)>naptr_proto_pref_score(old_proto);
 }
 
 
@@ -1451,7 +1492,7 @@ size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list) {
 		list_len = 0;
 		/*get protocols and preference scores, and add availble protocol(s) and score(s) to the list*/
 		for (i=PROTO_UDP; i<PROTO_LAST;i++) {
-			tmp.proto_pref = proto_pref_score(i);
+			tmp.proto_pref = srv_proto_pref_score(i);
 			/* if -1 so disabled continue with next protocol*/
 			if (naptr_proto_supported(i) == 0) {
 				continue;
@@ -1470,7 +1511,7 @@ size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list) {
 		}
 		if (default_order){
 			for (i=0; i<list_len;i++) {
-				list[i].proto_pref=proto_pref_score(i);
+				list[i].proto_pref=srv_proto_pref_score(i);
 			}
 		}
 

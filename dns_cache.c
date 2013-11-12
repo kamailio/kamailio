@@ -3291,12 +3291,11 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 						srv_name.len=strlen(tmp);
 						if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0)
 						{
-							*proto = srv_proto_list[i].proto;
+							h->proto = *proto = srv_proto_list[i].proto;
 #ifdef DNS_CACHE_DEBUG
 							DBG("dns_srv_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
 #endif
-							/* proto already set */
 							return ret;
 						}
 					}
