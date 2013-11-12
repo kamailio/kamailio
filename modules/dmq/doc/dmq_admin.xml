@@ -67,7 +67,7 @@
 	
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="dmq.p.server_address">
 		<title><varname>server_address</varname>(str)</title>
 		<para>
 		The local server address. This is the interface over which the DMQ engine will send/receive messages.
@@ -84,7 +84,7 @@ modparam("dmq", "server_address", "sip:10.0.0.20:5060")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dmq.p.notification_address">
 		<title><varname>notification_address</varname>(str)</title>
 		<para>
 		The address of another DMQ node from which the local node should retrieve initial information about all other nodes.
@@ -101,7 +101,7 @@ modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
 </programlisting>
 		</example>
 	</section>
-        <section>
+        <section id="dmq.p.num_workers">
                 <title><varname>num_workers</varname>(int)</title>
                 <para>
                 The number of worker threads for sending/receiving messages.
@@ -118,7 +118,7 @@ modparam("dmq", "num_threads", 4)
 </programlisting>
                 </example>
         </section>
-        <section>
+        <section id="dmq.p.ping_interval">
                 <title><varname>ping_interval</varname>(int)</title>
                 <para>
                 The number of seconds between node pings (for checking status of other nodes).
@@ -139,7 +139,7 @@ modparam("dmq", "ping_interval", 90)
 
 	<section>
         <title>Functions</title>
-        <section>
+        <section id="dmq.f.dmq_handle_message">
                 <title>
                 <function moreinfo="none">dmq_handle_message()</function>
                 </title>
@@ -163,7 +163,7 @@ modparam("dmq", "ping_interval", 90)
 </programlisting>
                 </example>
         </section>
-        <section>
+        <section id="dmq.f.dmq_send_message">
                 <title>
                	<function moreinfo="none">dmq_send_message(peer, node, body, content_type)</function>
                 </title>
