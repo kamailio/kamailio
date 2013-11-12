@@ -99,7 +99,7 @@
 		<title>Set <varname>default_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pua_bla", "default_domain", "kamailio.org")
+modparam("pua_reginfo", "default_domain", "kamailio.org")
 ...
 </programlisting>
 		</example>

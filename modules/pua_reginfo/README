@@ -125,7 +125,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set default_domain parameter
 ...
-modparam("pua_bla", "default_domain", "kamailio.org")
+modparam("pua_reginfo", "default_domain", "kamailio.org")
 ...
 
 3.2. publish_reginfo(int)
