@@ -72,6 +72,8 @@ sl_api_t slb;
  */
 static void destroy(void);
 
+/* environment pointer needed to init perl interpreter */
+extern char **environ;
 
 /*
  * Module initialization function prototype
@@ -321,6 +323,9 @@ struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param)
 static int mod_init(void) {
 
 	int ret = 0;
+	int argc = 1;
+	char *argt[] = { MOD_NAME, NULL };
+	char **argv;
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -339,7 +344,8 @@ static int mod_init(void) {
 		return -1;
 	}
 
-	PERL_SYS_INIT3(NULL, NULL, &environ);
+	argv = argt;
+	PERL_SYS_INIT3(&argc, &argv, &environ);
 
 	if ((my_perl = parser_init())) {
 		ret = 0;
