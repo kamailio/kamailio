@@ -42,4 +42,6 @@ int perl_exec_simple2(struct sip_msg* _msg, char* fnc, char* str2);
 int perl_exec1(struct sip_msg* _msg, char* fnc, char *foobar);
 int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr);
 
+int app_perl_reset_interpreter(void);
+
 #endif /* PERL_FUNC_H */
