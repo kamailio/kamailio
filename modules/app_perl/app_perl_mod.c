@@ -40,6 +40,9 @@
 #include "../../modules/rr/api.h"
 #include "../../modules/sl/sl.h"
 
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
+
 /* lock_ops.h defines union semun, perl does not need to redefine it */
 #ifdef USE_SYSV_SEM
 # define HAS_UNION_SEMUN
@@ -73,6 +76,8 @@ PerlInterpreter *my_perl = NULL;
 
 /** SL API structure */
 sl_api_t slb;
+
+static int ap_init_rpc(void);
 
 /*
  * Module destroy function prototype
@@ -329,7 +334,6 @@ struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param)
  */
 static int mod_init(void) {
 
-	int ret = 0;
 	int argc = 1;
 	char *argt[] = { MOD_NAME, NULL };
 	char **argv;
@@ -339,6 +343,12 @@ static int mod_init(void) {
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
+	if(ap_init_rpc()<0)
+	{
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -394,6 +404,10 @@ error:
  */
 static void destroy(void)
 {
+	if(_ap_reset_cycles!=NULL)
+		shm_free(_ap_reset_cycles);
+	_ap_reset_cycles = NULL;
+
 	if(my_perl==NULL)
 		return;
 	unload_perl(my_perl);
@@ -435,5 +449,91 @@ int app_perl_reset_interpreter(void)
 				(int)t2.tv_sec, (int)t2.tv_usec);
 	_ap_exec_cycles = 0;
 
+	return 0;
+}
+
+/*** RPC implementation ***/
+
+static const char* app_perl_rpc_set_reset_cycles_doc[3] = {
+	"Set the value for reset_cycles",
+	"Has one parmeter with int value",
+	0
+};
+
+
+/*
+ * RPC command to set the value for reset_cycles
+ */
+static void app_perl_rpc_set_reset_cycles(rpc_t* rpc, void* ctx)
+{
+	int rsv;
+
+	if(rpc->scan(ctx, "d", &rsv)<1)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(rsv<=0)
+		rsv = 0;
+
+	LM_DBG("new reset cycle value is %d\n", rsv);
+
+	*_ap_reset_cycles = rsv;
+
+	return;
+}
+
+static const char* app_perl_rpc_get_reset_cycles_doc[2] = {
+	"Get the value for reset_cycles",
+	0
+};
+
+
+/*
+ * RPC command to set the value for reset_cycles
+ */
+static void app_perl_rpc_get_reset_cycles(rpc_t* rpc, void* ctx)
+{
+	int rsv;
+	void* th;
+
+	rsv = *_ap_reset_cycles;
+
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+
+	if(rpc->struct_add(th, "d", "reset_cycles", rsv)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error adding reset cycles");
+		return;
+	}
+	LM_DBG("reset cycle value is %d\n", rsv);
+
+	return;
+}
+
+
+rpc_export_t app_perl_rpc_cmds[] = {
+	{"app_perl.set_reset_cycles", app_perl_rpc_set_reset_cycles,
+		app_perl_rpc_set_reset_cycles_doc,   0},
+	{"app_perl.get_reset_cycles", app_perl_rpc_get_reset_cycles,
+		app_perl_rpc_get_reset_cycles_doc,   0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * register RPC commands
+ */
+static int ap_init_rpc(void)
+{
+	if (rpc_register_array(app_perl_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }
