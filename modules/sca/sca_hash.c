@@ -264,7 +264,7 @@ sca_hash_table_slot_kv_delete_unsafe( sca_hash_slot *slot, str *key )
 {
     sca_hash_entry	*e;
 
-    e = sca_hash_table_slot_kv_find_unsafe( slot, key );
+    e = sca_hash_table_slot_kv_find_entry_unsafe( slot, key );
     if ( e == NULL ) {
 	return( -1 );
     }
