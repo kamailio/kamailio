@@ -335,7 +335,7 @@ static inline void wb_timer(urecord_t* _r)
 				if (db_delete_ucontact(t) < 0) {
 					LM_ERR("failed to delete contact from the database"
 							" (aor: %.*s)\n",
-							ptr->aor->len, ZSW(ptr->aor->s));
+							t->aor->len, ZSW(t->aor->s));
 				}
 			}
 
