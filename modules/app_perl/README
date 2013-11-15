@@ -8,7 +8,7 @@ Edited by
 
 Bastian Friedrich
 
-   Copyright © 2007 Collax GmbH
+   Copyright � 2007 Collax GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -27,11 +27,17 @@ Bastian Friedrich
 
               5.1. filename (string)
               5.2. modpath (string)
+              5.3. reset_cycles (int)
 
         6. Functions
 
               6.1. perl_exec_simple(func, [param])
               6.2. perl_exec(func, [param])
+
+        7. RPC Commands
+
+              7.1. app_perl.set_reset_cycles
+              7.2. app_perl.get_reset_cycles
 
    2. Kamailio Perl API
 
@@ -187,8 +193,11 @@ Bastian Friedrich
 
    1.1. Set filename parameter
    1.2. Set modpath parameter
-   1.3. perl_exec_simple() usage
-   1.4. perl_exec() usage
+   1.3. Set reset_cycles parameter
+   1.4. perl_exec_simple() usage
+   1.5. perl_exec() usage
+   1.6. app_perl.set_reset_cycles usage
+   1.7. app_perl.get_reset_cycles usage
 
 Chapter 1. Admin Guide
 
@@ -206,11 +215,17 @@ Chapter 1. Admin Guide
 
         5.1. filename (string)
         5.2. modpath (string)
+        5.3. reset_cycles (int)
 
    6. Functions
 
         6.1. perl_exec_simple(func, [param])
         6.2. perl_exec(func, [param])
+
+   7. RPC Commands
+
+        7.1. app_perl.set_reset_cycles
+        7.2. app_perl.get_reset_cycles
 
 1. Overview
 
@@ -312,39 +327,60 @@ if (perl_exec("ldap_alias")) {
      * IPC::Shareable perl module from CPAN
 
    Although SuSE delivers a lot of perl modules, others may have to be
-   fetched from CPAN. Consider using the program “cpan2rpm” - which, in
+   fetched from CPAN. Consider using the program "cpan2rpm" - which, in
    turn, is available on CPAN. It creates RPM files from CPAN.
 
 5. Parameters
 
    5.1. filename (string)
    5.2. modpath (string)
+   5.3. reset_cycles (int)
 
 5.1. filename (string)
 
    This is the file name of your script. This may be set once only, but it
-   may include an arbitary number of functions and “use” as many Perl
+   may include an arbitary number of functions and "use" as many Perl
    module as necessary.
 
-   May not be empty!
+   Must not be empty!
 
    Example 1.1. Set filename parameter
 ...
-modparam("perl", "filename", "/home/test/kamailio/myperl.pl")
+modparam("app_perl", "filename", "/home/test/kamailio/myperl.pl")
 ...
 
 5.2. modpath (string)
 
    The path to the Perl modules included (Kamailio.pm et.al). It is not
    absolutely crucial to set this path, as you may install the Modules in
-   Perl's standard path, or update the “%INC” variable from within your
+   Perl's standard path, or update the "%INC" variable from within your
    script. Using this module parameter is the standard behavior, though.
-   Multiple paths may be specified by separating them with a “:”
+   Multiple paths may be specified by separating them with a ":"
    character. The maximum is 10 paths.
 
    Example 1.2. Set modpath parameter
 ...
-modparam("perl", "modpath", "/usr/local/lib/kamailio/perl/")
+modparam("app_perl", "modpath", "/usr/local/lib/kamailio/perl/")
+...
+
+5.3. reset_cycles (int)
+
+   The number of execution cycles after which the embedded perl
+   interpreter is reset. Sometimes is hard to track the scope of variables
+   in all used perl modules and that can result in leaks of system memory.
+   Resetting the interpreter cleans the memory space.
+
+   When the interpreter is reset, the perl script is loaded again. Note
+   that not all Kamailio processes will reset the interpreter at the same
+   time. Each will do it when it has executed the script for the number of
+   reset_cycles. Also, be aware that the reset of the interpreter is
+   taking a bit of time (in the order of tens of mili-seconds).
+
+   Default value is 0 - never reset the interpreter.
+
+   Example 1.3. Set reset_cycles parameter
+...
+modparam("app_perl", "reset_cycles", 100000)
 ...
 
 6. Functions
@@ -352,7 +388,7 @@ modparam("perl", "modpath", "/usr/local/lib/kamailio/perl/")
    6.1. perl_exec_simple(func, [param])
    6.2. perl_exec(func, [param])
 
-6.1.  perl_exec_simple(func, [param])
+6.1. perl_exec_simple(func, [param])
 
    Calls a perl function without passing it the current SIP message. May
    be used for very simple simple requests that do not have to fiddle with
@@ -365,14 +401,14 @@ modparam("perl", "modpath", "/usr/local/lib/kamailio/perl/")
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE and BRANCH_ROUTE.
 
-   Example 1.3. perl_exec_simple() usage
+   Example 1.4. perl_exec_simple() usage
 ...
 if (method=="INVITE") {
         perl_exec_simple("dosomething", "on invite messages");
 };
 ...
 
-6.2.  perl_exec(func, [param])
+6.2. perl_exec(func, [param])
 
    Calls a perl function with passing it the current SIP message. The SIP
    message is reflected by a Perl module that gives you access to the
@@ -384,11 +420,35 @@ if (method=="INVITE") {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE and BRANCH_ROUTE.
 
-   Example 1.4. perl_exec() usage
+   Example 1.5. perl_exec() usage
 ...
 if (perl_exec("ldapalias")) {
         ...
 };
+...
+
+7. RPC Commands
+
+   7.1. app_perl.set_reset_cycles
+   7.2. app_perl.get_reset_cycles
+
+7.1. app_perl.set_reset_cycles
+
+   Set the value of the reset_cycle. The command has one integer
+   parameter.
+
+   Example 1.6. app_perl.set_reset_cycles usage
+...
+kamcmd app_perl.set_reset_cycles 20000
+...
+
+7.2. app_perl.get_reset_cycles
+
+   Return the value of the reset_cycle.
+
+   Example 1.7. app_perl.get_reset_cycles usage
+...
+kamcmd app_perl.get_reset_cycles
 ...
 
 Chapter 2. Kamailio Perl API
@@ -602,7 +662,7 @@ Kamailio::log(L_INFO, "foobar");
 
    my $ruri = $m->getRURI();
 
-   getRURI returns a string. See “getParsedRURI()” below how to receive a
+   getRURI returns a string. See "getParsedRURI()" below how to receive a
    parsed structure.
 
    This function is valid in request messages only.
@@ -1445,11 +1505,11 @@ Chapter 3. Perl samples
         1.1.9. phonenumbers.pl
         1.1.10. pseudovars.pl
 
-   There are a number of example scripts in the “samples/”. They are
+   There are a number of example scripts in the "samples/". They are
    documented well. Read them, it will explain a lot to you :)
 
    If you want to use any of these scripts directly in your
-   implementation, you can use Perl's “require” mechanism to import them
+   implementation, you can use Perl's "require" mechanism to import them
    (just remember that you need to use quotes when require'ing .pl files).
 
 1.1. Script descriptions
@@ -1486,7 +1546,7 @@ Chapter 3. Perl samples
    functions from within perl, and the different types of functions you
    can offer for Kamailio access.
 
-   “exportedfuncs” simply demonstrates that you can use the moduleFunction
+   "exportedfuncs" simply demonstrates that you can use the moduleFunction
    method to call functions offered by other modules. The results are
    equivalent to calling these functions from your config file. In the
    demonstrated case, telephone calls with a destination number beginning
@@ -1496,13 +1556,13 @@ Chapter 3. Perl samples
    Please note that the moduleFunction method is not fully available in
    Kamailio 1.2. See the method's documentation for details.
 
-   “paramfunc” shows that you can pass arbitrary strings to perl
+   "paramfunc" shows that you can pass arbitrary strings to perl
    functions. Do with them whatever you want :)
 
-   “autotest” demonstrates that unknown functions in Kamailio::Message
+   "autotest" demonstrates that unknown functions in Kamailio::Message
    objects are automatically transformed into calls to module functions.
 
-   The “diefunc”s show that dying perl scripts - by "manual" dying, or
+   The "diefunc"s show that dying perl scripts - by "manual" dying, or
    because of script errors - are handled by the Kamailio package. The
    error message is logged through Kamailio's logging mechanism. Please
    note that this only works correctly if you do NOT overwrite the default
@@ -1514,22 +1574,22 @@ Chapter 3. Perl samples
    processing SIP messages. This sample script demonstrates access to
    header names and values within two sample functions.
 
-   “headernames” extracts all header names and logs their names.
+   "headernames" extracts all header names and logs their names.
 
-   “someheaders” logs the contents of the two headers, “To” and
-   “WWW-Contact”. As you can see, headers that occur more than once are
+   "someheaders" logs the contents of the two headers, "To" and
+   "WWW-Contact". As you can see, headers that occur more than once are
    retrieved as an array, which may be accessed by Perl's array accessing
    methods.
 
 1.1.6. logging.pl
 
    For debugging purposes, you probably want to write messages to the
-   syslog. The “logdemo” shows three ways to access the Kamailio log
+   syslog. The "logdemo" shows three ways to access the Kamailio log
    function: it is available through the Kamailio class as well as through
    the Kamailio::Message class.
 
    Remember that you can use exported functions from other modules. You
-   may thus as well use the “xlog” module and it's xlog function.
+   may thus as well use the "xlog" module and it's xlog function.
 
    The L_INFO, L_DBG, L_ERR, L_CRIT... constants are available through the
    Kamailio::Constants package.
@@ -1558,7 +1618,7 @@ Chapter 3. Perl samples
 
 1.1.10. pseudovars.pl
 
-   This script demonstrates the Perl module's “pseudoVar” method. It may
+   This script demonstrates the Perl module's "pseudoVar" method. It may
    be used to retrieve the values of current pseudo variables.
 
    You might notice that there is no particular function for setting
@@ -1574,48 +1634,48 @@ Chapter 4. Frequently Asked Questions
 
    4.1.
 
-       Are there known bugs in the Perl module?
+   Are there known bugs in the Perl module?
 
-       The Perl module does have a few shortcomings that may be regarded as
-       bugs.
-         * Missing module functions. Not all functions of other modules are
-           available for Perl access. The reason for this is a design property
-           of Kamailio. Making available more functions is work in progress.
-         * Perl and threads. Perl itself is, when compiled with the correct
-           parameters, thread safe; unfortunately, not all Perl modules are.
-           The DBI modules, especially (but not restricted to) DBI::ODBC are
-           known NOT to be thread safe.
-           Using DBI::ODBC -- and possibly other non-thread-safe Perl
-           extensions -- may result in erroneous behavior of Kamailio,
-           including (but not restricted to) server crashes and wrong routing.
+   The Perl module does have a few shortcomings that may be regarded as
+   bugs.
+     * Missing module functions. Not all functions of other modules are
+       available for Perl access. The reason for this is a design property
+       of Kamailio. Making available more functions is work in progress.
+     * Perl and threads. Perl itself is, when compiled with the correct
+       parameters, thread safe; unfortunately, not all Perl modules are.
+       The DBI modules, especially (but not restricted to) DBI::ODBC are
+       known NOT to be thread safe.
+       Using DBI::ODBC -- and possibly other non-thread-safe Perl
+       extensions -- may result in erroneous behavior of Kamailio,
+       including (but not restricted to) server crashes and wrong routing.
 
    4.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    4.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    4.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.
