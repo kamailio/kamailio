@@ -31,9 +31,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <sys/time.h>
 
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../modules/rr/api.h"
 #include "../../modules/sl/sl.h"
@@ -60,6 +62,11 @@ char *modpath = NULL;
 /* Allow unsafe module functions - functions with fixups. This will create
  * memory leaks, the variable thus is not documented! */
 int unsafemodfnc = 0;
+
+/* number of execution cycles after which perl interpreter is reset */
+int _ap_reset_cycles_init = 0;
+int _ap_exec_cycles = 0;
+int *_ap_reset_cycles = 0;
 
 /* Reference to the running Perl interpreter instance */
 PerlInterpreter *my_perl = NULL;
@@ -115,6 +122,7 @@ static param_export_t params[] = {
 	{"filename", STR_PARAM, &filename},
 	{"modpath", STR_PARAM, &modpath},
 	{"unsafemodfnc", INT_PARAM, &unsafemodfnc},
+	{"reset_cycles", INT_PARAM, &_ap_reset_cycles_init},
 	{ 0, 0, 0 }
 };
 
@@ -275,7 +283,8 @@ int unload_perl(PerlInterpreter *p) {
  * Reinitializes the interpreter. Works, but execution for _all_
  * children is difficult.
  */
-int perl_reload(struct sip_msg *m, char *a, char *b) {
+int perl_reload(void)
+{
 
 	PerlInterpreter *new_perl;
 
@@ -291,9 +300,9 @@ int perl_reload(struct sip_msg *m, char *a, char *b) {
 #warning This binary will be unsupported.
 		PL_exit_flags |= PERL_EXIT_EXPECTED;
 #endif
-		return 1;
-	} else {
 		return 0;
+	} else {
+		return -1;
 	}
 
 }
@@ -305,10 +314,10 @@ int perl_reload(struct sip_msg *m, char *a, char *b) {
  */
 struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param)
 {
-	if (perl_reload(NULL, NULL, NULL)) {
-		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	} else {
+	if (perl_reload()<0) {
 		return init_mi_tree( 500, "Perl reload failed", 18);
+	} else {
+		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	}
 
 }
@@ -324,6 +333,8 @@ static int mod_init(void) {
 	int argc = 1;
 	char *argt[] = { MOD_NAME, NULL };
 	char **argv;
+	struct timeval t1;
+	struct timeval t2;
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -342,22 +353,39 @@ static int mod_init(void) {
 		return -1;
 	}
 
+	_ap_reset_cycles = shm_malloc(sizeof(int));
+	if(_ap_reset_cycles == NULL) {
+		LM_ERR("no more shared memory\n");
+		return -1;
+	}
+	*_ap_reset_cycles = _ap_reset_cycles_init;
+
 	argv = argt;
 	PERL_SYS_INIT3(&argc, &argv, &environ);
 
-	if ((my_perl = parser_init())) {
-		ret = 0;
+	gettimeofday(&t1, NULL);
+	my_perl = parser_init();
+	gettimeofday(&t2, NULL);
+
+	if (my_perl==NULL)
+		goto error;
+
+	LM_INFO("perl interpreter has been initialized (%d.%06d => %d.%06d)\n",
+				(int)t1.tv_sec, (int)t1.tv_usec,
+				(int)t2.tv_sec, (int)t2.tv_usec);
+
 #ifdef PERL_EXIT_DESTRUCT_END
-		PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 #else
-		PL_exit_flags |= PERL_EXIT_EXPECTED;
+	PL_exit_flags |= PERL_EXIT_EXPECTED;
 #endif
+	return 0;
 
-	} else {
-		ret = -1;
-	}
-
-	return ret;
+error:
+	if(_ap_reset_cycles!=NULL)
+		shm_free(_ap_reset_cycles);
+	_ap_reset_cycles = NULL;
+	return -1;
 }
 
 /*
@@ -371,4 +399,41 @@ static void destroy(void)
 	unload_perl(my_perl);
 	PERL_SYS_TERM();
 	my_perl = NULL;
+}
+
+
+/**
+ * count executions and rest interpreter
+ *
+ */
+int app_perl_reset_interpreter(void)
+{
+	struct timeval t1;
+	struct timeval t2;
+
+	if(*_ap_reset_cycles==0)
+		return 0;
+
+	_ap_exec_cycles++;
+	LM_DBG("perl interpreter exec cycle [%d/%d]\n",
+				_ap_exec_cycles, *_ap_reset_cycles);
+
+	if(_ap_exec_cycles<=*_ap_reset_cycles)
+		return 0;
+
+	gettimeofday(&t1, NULL);
+	if (perl_reload()<0) {
+		LM_ERR("perl interpreter cannot be reset [%d/%d]\n",
+				_ap_exec_cycles, *_ap_reset_cycles);
+		return -1;
+	}
+	gettimeofday(&t2, NULL);
+
+	LM_INFO("perl interpreter has been reset [%d/%d] (%d.%06d => %d.%06d)\n",
+				_ap_exec_cycles, *_ap_reset_cycles,
+				(int)t1.tv_sec, (int)t1.tv_usec,
+				(int)t2.tv_sec, (int)t2.tv_usec);
+	_ap_exec_cycles = 0;
+
+	return 0;
 }

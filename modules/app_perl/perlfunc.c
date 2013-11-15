@@ -58,6 +58,7 @@ int perl_checkfnc(char *fnc) {
 
 int perl_exec_simple(char* fnc, char* args[], int flags) {
 
+	app_perl_reset_interpreter();
 	if (perl_checkfnc(fnc)) {
 		LM_DBG("running perl function \"%s\"", fnc);
 
@@ -93,6 +94,8 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	int retval;
 	SV *m;
 	str reason;
+
+	app_perl_reset_interpreter();
 
 	dSP;
 
