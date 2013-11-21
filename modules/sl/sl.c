@@ -99,7 +99,7 @@ static cmd_export_t cmds[]={
 	{"sl_reply",       w_sl_send_reply,             2, fixup_sl_reply,
 		REQUEST_ROUTE},
 	{"send_reply",     w_send_reply,                2, fixup_sl_reply,
-		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"sl_reply_error", w_sl_reply_error,            0, 0,
 		REQUEST_ROUTE},
 	{"sl_forward_reply",  w_sl_forward_reply0,      0, 0,
@@ -281,6 +281,9 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 			goto done;
 		}
 	}
+
+	if(msg->first_line.type==SIP_REPLY)
+		goto error;
 
 	LM_DBG("reply in stateless mode (sl)\n");
 	ret = sl_send_reply(msg, code, r);
