@@ -426,6 +426,9 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	}
 #endif
 
+	new_cell->uac[0].on_reply = new_cell->on_reply;
+	new_cell->uac[0].on_failure = new_cell->on_failure;
+
 	new_cell->method.s = buf;
 	new_cell->method.len = uac_r->method->len;
 
