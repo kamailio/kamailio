@@ -1,4 +1,3 @@
-
 The SL Module - Statless request handling
 
 Bogdan Iancu
@@ -10,7 +9,7 @@ Daniel-Constantin Mierla
    asipto.com
 
    Copyright © 2003 FhG FOKUS
-     _________________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
@@ -25,10 +24,10 @@ Daniel-Constantin Mierla
 
         3. Functions
 
-              3.1. sl_send_reply(code, reason) 
-              3.2. send_reply(code, reason) 
-              3.3. sl_reply_error() 
-              3.4. sl_forward _reply([ code, [ reason ] ]) 
+              3.1. sl_send_reply(code, reason)
+              3.2. send_reply(code, reason)
+              3.3. sl_reply_error()
+              3.4. sl_forward _reply([ code, [ reason ] ])
 
         4. Statistics
 
@@ -80,10 +79,10 @@ Chapter 1. Admin Guide
 
    3. Functions
 
-        3.1. sl_send_reply(code, reason) 
-        3.2. send_reply(code, reason) 
-        3.3. sl_reply_error() 
-        3.4. sl_forward _reply([ code, [ reason ] ]) 
+        3.1. sl_send_reply(code, reason)
+        3.2. send_reply(code, reason)
+        3.3. sl_reply_error()
+        3.4. sl_forward _reply([ code, [ reason ] ])
 
    4. Statistics
 
@@ -114,31 +113,30 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The  SL  module  allows the SIP server to act as a stateless UA server
-   and  generate  replies  to SIP requests without keeping state. That is
+   The SL module allows the SIP server to act as a stateless UA server and
+   generate replies to SIP requests without keeping state. That is
    beneficial in many scenarios, in which you wish not to burden server's
    memory and scale well.
 
-   The  SL module needs to filter ACKs sent after a local stateless reply
+   The SL module needs to filter ACKs sent after a local stateless reply
    to an INVITE was generated. To recognize such ACKs, ser adds a special
    "signature" in to-tags. This signature is sought for in incoming ACKs,
    and if included, the ACKs are absorbed.
 
-   To  speed  up  the  filtering  process,  the  module  uses  a  timeout
-   mechanism.  When a reply is sent, a timer us set. As long as the timer
-   is  valid,  the  incoming  ACK  requests  will be checked using TO tag
-   value.  Once the timer expires, all the ACK messages are let through -
-   a long time passed till it sent a reply, so it does not expect any ACK
-   that have to be blocked.
+   To speed up the filtering process, the module uses a timeout mechanism.
+   When a reply is sent, a timer us set. As long as the timer is valid,
+   the incoming ACK requests will be checked using TO tag value. Once the
+   timer expires, all the ACK messages are let through - a long time
+   passed till it sent a reply, so it does not expect any ACK that have to
+   be blocked.
 
-   The  ACK  filtering  may  fail  in some rare cases. If you think these
-   matter  to  you, better use stateful processing (TM module) for INVITE
-   processing.  Particularly,  the  problem  happens  when  a UA sends an
-   INVITE  which  already  has a to-tag in it (e.g., a re-INVITE) and the
-   server  want  to  reply  to it. Then, it will keep the current to-tag,
-   which  will  be  mirrored  in  ACK. SER will not see its signature and
-   forward the ACK downstream. Caused harm is not bad--just a useless ACK
-   is forwarded.
+   The ACK filtering may fail in some rare cases. If you think these
+   matter to you, better use stateful processing (TM module) for INVITE
+   processing. Particularly, the problem happens when a UA sends an INVITE
+   which already has a to-tag in it (e.g., a re-INVITE) and the server
+   want to reply to it. Then, it will keep the current to-tag, which will
+   be mirrored in ACK. SER will not see its signature and forward the ACK
+   downstream. Caused harm is not bad--just a useless ACK is forwarded.
 
 2. Parameters
 
@@ -170,7 +168,7 @@ modparam("sl", "default_reason", "Server Error")
 
 2.3. bind_tm (int)
 
-   Controls  if SL module should attempt to bind to TM module in order to
+   Controls if SL module should attempt to bind to TM module in order to
    send stateful reply when the transaction is created.
 
    Default value is 1 (enabled).
@@ -182,17 +180,16 @@ modparam("sl", "bind_tm", 0)  # feature disabled
 
 3. Functions
 
-   3.1. sl_send_reply(code, reason) 
-   3.2. send_reply(code, reason) 
-   3.3. sl_reply_error() 
-   3.4. sl_forward _reply([ code, [ reason ] ]) 
+   3.1. sl_send_reply(code, reason)
+   3.2. send_reply(code, reason)
+   3.3. sl_reply_error()
+   3.4. sl_forward _reply([ code, [ reason ] ])
 
-3.1.  sl_send_reply(code, reason)
+3.1. sl_send_reply(code, reason)
 
-   For  the  current  request, a reply is sent back having the given code
-   and  text  reason. The reply is sent stateless, totally independent of
-   the  Transaction  module  and  with no retransmission for the INVITE's
-   replies.
+   For the current request, a reply is sent back having the given code and
+   text reason. The reply is sent stateless, totally independent of the
+   Transaction module and with no retransmission for the INVITE's replies.
 
    Meaning of the parameters is as follows:
      * code - Return code.
@@ -203,19 +200,20 @@ modparam("sl", "bind_tm", 0)  # feature disabled
 sl_send_reply("404", "Not found");
 ...
 
-3.2.  send_reply(code, reason)
+3.2. send_reply(code, reason)
 
-   For  the  current  request, a reply is sent back having the given code
-   and text reason. The reply is sent stateful or stateless, depending of
-   the  TM  module: if a transaction exists for the current request, then
-   the reply is sent statefully, otherwise stateless.
+   For the current request, a reply is sent back having the given code and
+   text reason. The reply is sent stateful or stateless, depending of the
+   TM module: if a transaction exists for the current request, then the
+   reply is sent statefully, otherwise stateless.
 
    Meaning of the parameters is as follows:
      * code - Return code.
      * reason - Reason phrase.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  FAILURE_ROUTE,
-   BRANCH_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE. It can
+   be used on ONREPLY_ROUTE executed by tm module (upon a t_on_reply()
+   callback).
 
    Example 1.5. send_reply usage
 ...
@@ -224,10 +222,10 @@ send_reply("404", "Not found");
 send_reply("403", "Invalid user - $fU");
 ...
 
-3.3.  sl_reply_error()
+3.3. sl_reply_error()
 
-   Sends  back  an error reply describing the nature of the last internal
-   error.  Usually  this  function should be used after a script function
+   Sends back an error reply describing the nature of the last internal
+   error. Usually this function should be used after a script function
    that returned an error code.
 
    Example 1.6. sl_reply_error usage
@@ -235,11 +233,11 @@ send_reply("403", "Invalid user - $fU");
 sl_reply_error();
 ...
 
-3.4.  sl_forward _reply([ code, [ reason ] ])
+3.4. sl_forward _reply([ code, [ reason ] ])
 
-   Forward  statelessy the current received SIP reply, with the option to
-   change  the status code and reason text. The new code has to be in the
-   same  class.  The received reply is forwarded as well by core when the
+   Forward statelessy the current received SIP reply, with the option to
+   change the status code and reason text. The new code has to be in the
+   same class. The received reply is forwarded as well by core when the
    config execution ended, unless it is dropped from config.
 
    Meaning of the parameters is as follows:
