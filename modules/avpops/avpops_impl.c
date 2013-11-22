@@ -1152,8 +1152,8 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 	struct search_state st1, st2;
 	unsigned short    name_type1;
 	unsigned short    name_type2;
-	struct usr_avp    *avp1;
-	struct usr_avp    *avp2;
+	struct usr_avp    *avp1 = NULL;
+	struct usr_avp    *avp2 = NULL;
 	regmatch_t        pmatch;
 	int_str           avp_name1;
 	int_str           avp_name2;
@@ -1253,7 +1253,6 @@ cycle1:
 		}
 		else if(val->u.sval->type==PVT_XAVP)
 		{
-			avp2 = 0;
 			if(xavp2==NULL)
 				if(get_xavp_param(msg, val->u.sval, &xavp2, &xavp2_flags)<0)
 					goto error;
@@ -1263,7 +1262,6 @@ cycle1:
 				goto next;
 			}
 		} else {
-			avp2 = 0;
 			if(pv_get_spec_value(msg, val->u.sval, &xvalue)!=0)
 			{
 				LM_ERR("cannot get dst value\n");
@@ -1286,7 +1284,6 @@ cycle1:
 			check_val.s = val->u.s;
 			check_flags = AVP_VAL_STR;
 		}
-		avp2 = 0;
 	}
 
 cycle2:
