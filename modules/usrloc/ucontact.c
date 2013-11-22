@@ -650,8 +650,8 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	db_val_t vals1[4];
 	int n1;
 
-	db_key_t keys2[14];
-	db_val_t vals2[14];
+	db_key_t keys2[15];
+	db_val_t vals2[15];
 	int nr_cols2;
 
 
@@ -782,6 +782,13 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	vals2[nr_cols2].val.int_val = (int)_c->reg_id;
 	nr_cols2++;
 
+	keys2[nr_cols2] = &contact_col;
+	vals2[nr_cols2].type = DB1_STR;
+	vals2[nr_cols2].nul = 0;
+	vals2[nr_cols2].val.str_val = _c->c;
+	LM_DBG("contact:%.*s\n", vals2[nr_cols2].val.str_val.len, vals2[nr_cols2].val.str_val.s);
+	nr_cols2++;
+
 	if (use_domain) {
 		keys1[n1] = &domain_col;
 		vals1[n1].type = DB1_STR;
@@ -850,8 +857,8 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 	db_val_t vals1[1];
 	int n1;
 
-	db_key_t keys2[14];
-	db_val_t vals2[14];
+	db_key_t keys2[15];
+	db_val_t vals2[15];
 	int n2;
 
 
@@ -976,6 +983,13 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 	vals2[n2].type = DB1_INT;
 	vals2[n2].nul = 0;
 	vals2[n2].val.int_val = (int)_c->reg_id;
+	n2++;
+
+	keys2[n2] = &contact_col;
+	vals2[n2].type = DB1_STR;
+	vals2[n2].nul = 0;
+	vals2[n2].val.str_val = _c->c;
+	LM_DBG("contact:%.*s\n", vals2[n2].val.str_val.len, vals2[n2].val.str_val.s);
 	n2++;
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
