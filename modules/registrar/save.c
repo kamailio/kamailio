@@ -716,10 +716,10 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 				ptr=_r->contacts;
 				while(ptr)
 				{
-					ptr0 = ptr;
+					ptr0 = ptr->next;
 					if(ptr!=c)
 						ul.delete_ucontact(_r, ptr);
-					ptr=ptr0->next;
+					ptr=ptr0;
 				}
 				updated=1;
 			}
@@ -746,12 +746,31 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 					ptr=_r->contacts;
 					while(ptr)
 					{
-						ptr0 = ptr;
+						ptr0 = ptr->next;
 						if(ptr!=c)
 							ul.delete_ucontact(_r, ptr);
-						ptr=ptr0->next;
+						ptr=ptr0;
 					}
 					updated=1;
+				}
+				/* If call-id has changed then delete all records with this sip.instance
+				   then insert new record */
+				if (ci->instance.s != NULL &&
+					(ci->callid->len != c->callid.len ||
+						strncmp(ci->callid->s, c->callid.s, ci->callid->len) != 0))
+				{
+					ptr = _r->contacts;
+					while (ptr)
+					{
+						ptr0 = ptr->next;
+						if ((ptr != c) && ptr->instance.len == c->instance.len &&
+							strncmp(ptr->instance.s, c->instance.s, ptr->instance.len) == 0)
+						{
+							ul.delete_ucontact(_r, ptr);
+						}
+						ptr = ptr0;
+					}
+					updated = 1;
 				}
 				if (ul.update_ucontact(_r, c, ci) < 0) {
 					rerrno = R_UL_UPD_C;
