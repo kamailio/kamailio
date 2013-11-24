@@ -82,6 +82,8 @@ struct tm_binds {
 	free_dlg_f         free_dlg;
 	print_dlg_f        print_dlg;
 	tgett_f            t_gett;
+	tgett_branch_f     t_gett_branch;
+	tsett_f            t_sett;
 	calculate_hooks_f  calculate_hooks;
 	t_uac_t            t_uac;
 	t_uac_with_ids_t   t_uac_with_ids;
