@@ -86,10 +86,13 @@ int t_check_msg(struct sip_msg* , int *branch );
 
 typedef struct cell * (*tgett_f)(void);
 struct cell *get_t(void);
+
+typedef int (*tgett_branch_f)(void);
 int get_t_branch(void);
 
 /* use carefully or better not at all -- current transaction is 
  * primarily set by lookup functions */
+typedef void (*tsett_f)(struct cell *t, int branch);
 void set_t(struct cell *t, int branch);
 
 

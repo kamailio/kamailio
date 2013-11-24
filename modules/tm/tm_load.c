@@ -105,6 +105,8 @@ int load_tm( struct tm_binds *tmb)
 	tmb->free_dlg = free_dlg;
 	tmb->print_dlg = print_dlg;
 	tmb->t_gett = get_t;
+	tmb->t_gett_branch = get_t_branch;
+	tmb->t_sett = set_t;
 	tmb->calculate_hooks = w_calculate_hooks;
 	tmb->t_uac = t_uac;
 	tmb->t_uac_with_ids = t_uac_with_ids;
