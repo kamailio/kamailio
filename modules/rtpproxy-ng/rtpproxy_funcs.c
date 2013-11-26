@@ -257,7 +257,10 @@ int extract_body(struct sip_msg *msg, str *body )
 		} /* end of while */
 		if(c==1)
 		{
-			while(rest && (*rest=='\r' || *rest=='\n')) rest++;
+			if (rest < p2 && *rest == '\r') rest++;
+			if (rest < p2 && *rest == '\n') rest++;
+			if (rest < p2 && p2[-1] == '\n') p2--;
+			if (rest < p2 && p2[-1] == '\r') p2--;
 			body->s = rest;
 			body->len = p2-rest;
 			goto done;
