@@ -349,7 +349,7 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 		}
 
 		LM_DBG("Setting dst_uri to <%.*s> \n", c->service_routes[0].len,
-			c->service_routes[i].s);
+			c->service_routes[0].s);
 
 		if (set_dst_uri(_m, &c->service_routes[0]) !=0 ) {
 			LM_ERR("Error setting new dst uri\n");
