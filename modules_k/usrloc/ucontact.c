@@ -745,6 +745,153 @@ int db_update_ucontact(ucontact_t* _c)
 	return 0;
 }
 
+/*!
+ * \brief Update contact in the database by instance reg_id
+ * \param _c updated contact
+ * \return 0 on success, -1 on failure
+ */
+int db_update_ucontact_instance(ucontact_t* _c)
+{
+	db_key_t keys1[2];
+	db_val_t vals1[2];
+
+	db_key_t keys2[13];
+	db_val_t vals2[13];
+	int nr_cols2;
+
+
+	if (_c->flags & FL_MEM) {
+		return 0;
+	}
+
+	if(_c->instance.len<=0) {
+		LM_ERR("updating record in database failed - empty instance\n");
+		return -1;
+	}
+
+	keys1[0] = &instance_col;
+	keys1[1] = &reg_id_col;
+	keys2[0] = &expires_col;
+	keys2[1] = &q_col;
+	keys2[2] = &cseq_col;
+	keys2[3] = &flags_col;
+	keys2[4] = &cflags_col;
+	keys2[5] = &user_agent_col;
+	keys2[6] = &received_col;
+	keys2[7] = &path_col;
+	keys2[8] = &sock_col;
+	keys2[9] = &methods_col;
+	keys2[10] = &last_mod_col;
+	keys2[11] = &ruid_col;
+	keys2[12] = &contact_col;
+
+	vals1[0].type = DB1_STR;
+	vals1[0].nul = 0;
+	vals1[0].val.str_val = _c->instance;
+
+	vals1[1].type = DB1_INT;
+	vals1[1].nul = 0;
+	vals1[1].val.int_val = (int)_c->reg_id;
+
+	vals2[0].type = DB1_DATETIME;
+	vals2[0].nul = 0;
+	vals2[0].val.time_val = _c->expires;
+
+	vals2[1].type = DB1_DOUBLE;
+	vals2[1].nul = 0;
+	vals2[1].val.double_val = q2double(_c->q);
+
+	vals2[2].type = DB1_INT;
+	vals2[2].nul = 0;
+	vals2[2].val.int_val = _c->cseq;
+
+	vals2[3].type = DB1_INT;
+	vals2[3].nul = 0;
+	vals2[3].val.bitmap_val = _c->flags;
+
+	vals2[4].type = DB1_INT;
+	vals2[4].nul = 0;
+	vals2[4].val.bitmap_val = _c->cflags;
+
+	vals2[5].type = DB1_STR;
+	vals2[5].nul = 0;
+	vals2[5].val.str_val = _c->user_agent;
+
+	vals2[6].type = DB1_STR;
+	if (_c->received.s == 0) {
+		vals2[6].nul = 1;
+	} else {
+		vals2[6].nul = 0;
+		vals2[6].val.str_val = _c->received;
+	}
+
+	vals2[7].type = DB1_STR;
+	if (_c->path.s == 0) {
+		vals2[7].nul = 1;
+	} else {
+		vals2[7].nul = 0;
+		vals2[7].val.str_val = _c->path;
+	}
+
+	vals2[8].type = DB1_STR;
+	if (_c->sock) {
+		vals2[8].val.str_val = _c->sock->sock_str;
+		vals2[8].nul = 0;
+	} else {
+		vals2[8].nul = 1;
+	}
+
+	vals2[9].type = DB1_BITMAP;
+	if (_c->methods == 0xFFFFFFFF) {
+		vals2[9].nul = 1;
+	} else {
+		vals2[9].val.bitmap_val = _c->methods;
+		vals2[9].nul = 0;
+	}
+
+	vals2[10].type = DB1_DATETIME;
+	vals2[10].nul = 0;
+	vals2[10].val.time_val = _c->last_modified;
+
+	nr_cols2 = 11;
+	if(_c->ruid.len>0)
+	{
+		vals2[nr_cols2].type = DB1_STR;
+		vals2[nr_cols2].nul = 0;
+		vals2[nr_cols2].val.str_val = _c->ruid;
+	} else {
+		vals2[nr_cols2].nul = 1;
+	}
+	nr_cols2++;
+
+	vals2[nr_cols2].type = DB1_STR;
+	vals2[nr_cols2].nul = 0;
+	vals2[nr_cols2].val.str_val.s = _c->c.s;
+	vals2[nr_cols2].val.str_val.len = _c->c.len;
+	nr_cols2++;
+
+	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
+		LM_ERR("sql use_table failed\n");
+		return -1;
+	}
+
+	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2,
+		2, nr_cols2) < 0) {
+		LM_ERR("updating database failed\n");
+		return -1;
+	}
+
+	if (ul_db_check_update==1 && ul_dbf.affected_rows) {
+		/* supposed to be an UPDATE, but if affected rows is 0, then try
+		 * to do an INSERT */
+		if(ul_dbf.affected_rows(ul_dbh)==0) {
+			LM_DBG("affected rows by UPDATE was 0, doing an INSERT\n");
+			return db_insert_ucontact(_c);
+		}
+	}
+
+	return 0;
+}
 
 /*!
  * \brief Delete contact from the database
@@ -909,8 +1056,12 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (ul_db_update_as_insert)
 			res = db_insert_ucontact(_c);
-		else
-			res = db_update_ucontact(_c);
+		else {
+			if (_c->instance.len<=0)
+				res = db_update_ucontact(_c);
+			else
+				res = db_update_ucontact_instance(_c);
+		}
 
 		if (res < 0) {
 			LM_ERR("failed to update database\n");
