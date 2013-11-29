@@ -154,7 +154,7 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 
     ul.lock_udomain((udomain_t*) _t, &presentity_uri);
     res = ul.get_impurecord((udomain_t*) _t, &presentity_uri, &r);
-
+    
     if (res > 0) {
         LM_DBG("'%.*s' Not found in usrloc\n", presentity_uri.len, presentity_uri.s);
         ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
@@ -196,7 +196,7 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     c = r->contacts;
 
     while (c) {
-        if (c->path.len) {
+	if (c->path.len) {
             for (i = 0; i < c->path.len - asserted_id.len; i++)
                 if (strncasecmp(c->path.s + i, asserted_id.s, asserted_id.len) == 0) {
                     LM_DBG("Identity found in Path <%.*s>\n",
@@ -208,7 +208,8 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
         }
         c = c->next;
     }
-
+    
+    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
 
 done:
     if (presentity_uri.s) shm_free(presentity_uri.s);
