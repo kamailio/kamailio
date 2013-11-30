@@ -1,7 +1,7 @@
 /*
  * ndb_cassandra.c
  *
- * Copyright (C) 2012 Indigital Telecom.
+ * Copyright (C) 2013 Indigital Telecom.
  *
  * Author: Luis Martin Gil
  *         <luis.martin.gil@indigital.net>
@@ -25,7 +25,7 @@
  *
  * History:
  * -------
- * 2012-05: Initial version @lmartin
+ * 2013-11: Initial version luismartingil
  */
 /*! \file
  * \brief SIP-router indigital :: Module core
