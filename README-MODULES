@@ -118,6 +118,7 @@ mqueue			Message queue system for configuration file
 nat_traversal		NAT :: NAT traversal module
 nathelper		NAT :: NAT traversal module :: RTPproxy (SIPPY software)
 ndb_redis		Connector to REDIS NoSQL Database engine
+ndb_cassandra		Connector to Apache Cassandra
 osp			Open Settlement Protocol support
 outbound		SIP Outbound Implementation
 p_usrloc		Partitioned and distributed user location services

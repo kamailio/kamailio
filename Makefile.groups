@@ -54,7 +54,7 @@ mod_list_postgres=db_postgres
 mod_list_unixodbc=db_unixodbc
 
 # - modules depending on mysql cassandra library
-mod_list_cassandra=db_cassandra
+mod_list_cassandra=db_cassandra ndb_cassandra
 
 # - modules depending on xml2 library
 mod_list_cpl=cpl-c
