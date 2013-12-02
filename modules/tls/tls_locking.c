@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * TLS module
  *
  * Copyright (C) 2007 iptelorg GmbH 
  *
@@ -15,13 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * tls locking and atomic ops related init functions
- *
- * History:
- * --------
- *  2007-01-22  created by andrei
- */
+
 /*!
  * \file
  * \brief SIP-router TLS support :: Locking

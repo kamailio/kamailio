@@ -1,9 +1,6 @@
 /*
- * $Id$
- *
  * TLS module - main server part
  * 
- * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2005-2010 iptelorg GmbH
  *
  * This file is part of SIP-router, a free SIP server.

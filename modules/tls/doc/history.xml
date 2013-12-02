@@ -8,25 +8,26 @@
 
 ]>
 
-<section id="tls.history">
-    <sectioninfo>
-    </sectioninfo>
-
+<section id="tls.status">
+	<title>Status</title>
+	<section id="tls.license">
+	<title>License</title>
+		<para>
+			Most of the code for this module has been released under BSD by
+			iptelorg. The GPL parts are released with an exception to link
+			with OpenSSL toolkit software components.
+		</para>
+	</section>
+	<section id="tls.history">
 	<title>History</title>
 		<para>
-			This module was put together by Jan Janak <email>jan@iptel.org</email> from code 
-			based on the experimental tls core addon (<ulink url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/">http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/</ulink>), 
-			code originally written by Peter Griffiths and later maintained by Cesc Santasusana and 
-			from an iptelorg tls code addon, written by Andrei Pelinescu-Onciul <email>andrei@iptel.org</email>.
-			Jan also added support for multiple domains, a tls specific config, config reloading and a 
-			tls specific select framework.
-		</para>
-		<para>
-			For &kamailio; 3.1 most of the TLS specific code was completely
+			For version 3.1 most of the TLS specific code was completely
 			re-written to add support for asynchronous TLS and fix several
 			long standing bugs.
 		</para>
 		<para>
-			The code is currently maintained by Andrei Pelinescu-Onciul <email>andrei@iptel.org</email>.
+			The code is currently maintained by Andrei Pelinescu-Onciul
+			<email>andrei@iptel.org</email>.
 		</para>
+	</section>
 </section>
