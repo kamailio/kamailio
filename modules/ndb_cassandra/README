@@ -1,106 +1,137 @@
-ndb_cassandra - Cassandra module for (http://kamailio.org/)
+NDB_CASSANDRA Module
 
 Luis Martin Gil
-   <luis.martin.gil@indigital.net>
+
    <martingil.luis@gmail.com>
 
-   INdigital Telecom
+Edited by
 
-   Copyright Â© 2012 INdigital Telecom
-   __________________________________________________________________
+Luis Martin Gil
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. Parameters
-   	1.3.1.  host (string)
-	1.3.2.  port (int)
+   <martingil.luis@gmail.com>
 
-   1.4. Functions
-   	1.4.1.  cass_insert(keyspace, column_family, key, column, value)
-	1.4.2.  cass_retrieve(keyspace, column_family, key, column, value)
+   Copyright © 2013 www.indigital.net
+     __________________________________________________________________
 
-   1.5. Example
-   	1.5.1.  Set up schema in Cassandra using cassandra-cli
-	1.5.2.  Kamailio script configuration
-	1.5.3.  Desired Kamailio log ouput
-   	1.5.4.  Example output when compiling the module
+   Table of Contents
 
+   1. Admin Guide
 
-1.1. Overview
+        1. Overview
+        2. Dependencies
 
-     Apache Cassandra is an open source distributed database management system.
-     It is designed to handle very large amounts of data spread out across many
-     servers. It is a NoSQL solution.
-    
-     The module allows the insertion and retrieval of information from Cassandra
-     clusters. This is not a DB driver module.
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
+        3. Parameters
 
-1.2. Dependencies
-     This module depends on the thrift library version 0.7.0. Please install
-     this library in order to be able to successful compile this module. You 
-     can find this library at http://thrift.apache.org/
+              3.1. host (str)
 
+        4. Functions
 
-1.3. Parameters
-     1.3.1  host (string) : host of Cassandra node.
-     1.3.2  port (int) : port of Cassandra node.
+              4.1. cass_insert(keyspace, column_family, key, column,
+                      value)
 
+              4.2. cass_retrieve(keyspace, column_family, key, column,
+                      value)
 
-1.4. Functions
+   List of Examples
 
-1.4.1.  int cass_insert(keyspace, column_family, key, column, value)
-   Inserts the value for the given key, column, column_family and keyspace.
-   There must be an existing keyspace called 'keyspace' with a column_family
-   called 'column_family' in the targeted Cassandra node.
+   1.1. Set host and port parameters
+   1.2. Example usage
 
-   Meaning of the parameters is as follows:
-     * keyspace - keyspace to use. (IN)
-     * column_family - column_family to use. (IN)
-     * key - key to use. (IN)
-     * column - column to use. (IN)
-     * value - value to insert (IN)
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. host (str)
+
+   4. Functions
+
+        4.1. cass_insert(keyspace, column_family, key, column, value)
+        4.2. cass_retrieve(keyspace, column_family, key, column, value)
+
+1. Overview
+
+   Apache Cassandra is an open source distributed database management
+   system. It is designed to handle very large amounts of data spread out
+   across many servers. It is a NoSQL solution.
+
+   The module allows the insertion and retrieval of information from
+   Cassandra clusters. This is not a DB driver module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   This module depends on the thrift library version 0.7.0. Please install
+   this library in order to be able to successful compile this module. You
+   can find this library at http://thrift.apache.org/
+     * thrift 0.7.0 - available at http://thrift.apache.org/
+
+3. Parameters
+
+   3.1. host (str)
+
+3.1. host (str)
+
+3.1. host (str)
+
+   Host of Cassandra node.
+
+   Port of Cassandra node.
+
+   Example 1.1. Set host and port parameters
+...
+modparam("ndb_cassandra", "host", "10.22.22.190")
+modparam("ndb_cassandra", "port", 9160)
+...
+
+4. Functions
+
+   4.1. cass_insert(keyspace, column_family, key, column, value)
+   4.2. cass_retrieve(keyspace, column_family, key, column, value)
+
+4.1. cass_insert(keyspace, column_family, key, column, value)
+
+   Inserts the value for the given key, column, column_family and
+   keyspace. There must be an existing keyspace called 'keyspace' with a
+   column_family called 'column_family' in the targeted Cassandra node.
 
    Return integer needs to be checked:
-   - ret < 0, error
-   - ret > 0, success
+     * ret < 0, error
+     * ret > 0, success
 
+4.2. cass_retrieve(keyspace, column_family, key, column, value)
 
-1.4.2. int cass_retrieve(keyspace, column_family, key, column, value)
-   Retrieves the value for the given key, column, column_family and keyspace.
-   There must be an existing keyspace called 'keyspace' with a column_family
-   called 'column_family' in the targeted Cassandra node.
+   Retrieves the value for the given key, column, column_family and
+   keyspace. There must be an existing keyspace called 'keyspace' with a
+   column_family called 'column_family' in the targeted Cassandra node.
 
-   Meaning of the parameters is as follows:
-     * keyspace - keyspace to use. (IN)
-     * column_family - column_family to use. (IN)
-     * key - key to use. (IN)
-     * column - column to use. (IN)
-     * value - value to insert (OUT)
+   value will be returned as well as a integer return code.
 
    Return integer needs to be checked:
-   - ret < 0, error
-   - ret > 0, success
+     * ret < 0, error
+     * ret > 0, success
 
-
-1.5 Example
-
-1.5.1.  Set up schema in Cassandra using cassandra-cli
-...
-drop keyspace indigital;
-create keyspace indigital;
-use indigital;
-
-create column family 'employees' with comparator='UTF8Type' and default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
-update column family 'employees' with column_metadata =
-       [
-       {column_name: name, validation_class: UTF8Type, index_type: KEYS}
-       ];
-assume 'employees' keys as utf8;
-...
-
-1.5.2.  Kamailio script configuration
-...
+   Example 1.2. Example usage
+              ...
     loadmodule "ndb_cassandra.so"
     # (...)
     modparam("ndb_cassandra", "host", "10.22.22.190")
@@ -112,8 +143,10 @@ assume 'employees' keys as utf8;
     $var(column_family) = "employees";
     $var(column) = "name";
     $var(val_write) = "TestMyName"; # To be written
-    if (cass_insert("$var(keyspace)", "$var(column_family)", "$ru", "$var(column)", "$var(val_write)") > 0) {
-       xlog("L_DBG", "ndb_cassandra. Sucess while inserting to Cassandra. val_write: \"$var(val_write)\"");
+    if (cass_insert("$var(keyspace)", "$var(column_family)", "$ru", "$var(column
+)", "$var(val_write)") > 0) {
+       xlog("L_DBG", "ndb_cassandra. Sucess while inserting to Cassandra. val_wr
+ite: \"$var(val_write)\"");
     } else {
        xlog("L_DBG", "ndb_cassandra. Error while inserting to Cassandra");
     }
@@ -121,42 +154,15 @@ assume 'employees' keys as utf8;
     # Retrieving from cassandra
     $var(keyspace) = "indigital";
     $var(column_family) = "employees";
-    $var(key) = "sip:10.22.22.110"; # Before we saved our $ru, which was 'sip:10.22.22.110'
+    $var(key) = "sip:10.22.22.110"; # Before we saved our $ru, which was 'sip:10
+.22.22.110'
     $var(column) = "name";
     $var(val_read) = ""; # To be read
-    if (cass_retrieve("$var(keyspace)", "$var(column_family)", "$var(key)", "$var(column)", "$var(val_read)") > 0) {
-       xlog("L_DBG", "ndb_cassandra. Sucess while reading from Cassandra. val_read: \"$var(val_read)\"");
+    if (cass_retrieve("$var(keyspace)", "$var(column_family)", "$var(key)", "$va
+r(column)", "$var(val_read)") > 0) {
+       xlog("L_DBG", "ndb_cassandra. Sucess while reading from Cassandra. val_re
+ad: \"$var(val_read)\"");
     } else {
        xlog("L_DBG", "ndb_cassandra. Error while reading from Cassandra");
     }
-...
-
-
-1.5.3.  Desired Kamailio log ouput
-...
-DEBUG: <script>: Testing ndb_cassandra module.
-DEBUG: ndb_cassandra [ndb_cassandra.c:237]: cass_insert_f(): Insert.   employees['sip:10.22.22.110']['name'] <== 'TestMyName'
-DEBUG: ndb_cassandra [ndb_cassandra.c:244]: cass_insert_f(): Insert.   done!
-DEBUG: <script>: ndb_cassandra. Sucess while inserting to Cassandra. val_write: "TestMyName"
-DEBUG: ndb_cassandra [ndb_cassandra.c:279]: cass_retrieve_f(): Retrieve.   employees['sip:10.22.22.110']['name'] ==>
-DEBUG: ndb_cassandra [ndb_cassandra.c:287]: cass_retrieve_f(): Retrieve.   done! value:'TestMyName'
-DEBUG: <script>: ndb_cassandra. Sucess while reading from Cassandra. val_read: "TestMyName"
-...
-
-
-1.5.4.  Example output when compiling the module (centos6.4, 64bits)
-...
-CC (gcc) [M ndb_cassandra.so]		ndb_cassandra.o
-make[2]: `libsrdb2.so.1.0' is up to date.
-make[2]: `libsrdb1.so.1.0' is up to date.
-make[2]: `libkmi.so.1.0' is up to date.
-Compiling thrift_wrapper.cpp
-g++ -fPIC -DPIC -g -O9 -funroll-loops -Wcast-align -m64 -minline-all-stringops -falign-loops -ftree-vectorize -fno-strict-overflow -mtune=opteron -Wall -Wno-write-strings -Wno-deprecated -Wno-unused-function -Wno-sign-compare -Wno-strict-aliasing -fPIC -DPIC -g -O9 -funroll-loops -Wcast-align -m64 -minline-all-stringops -falign-loops -ftree-vectorize -fno-strict-overflow -mtune=opteron -Wall  -DNAME='"kamailio"' -DVERSION='"4.0.3"' -DARCH='"x86_64"' -DOS='linux_' -DOS_QUOTED='"linux"' -DCOMPILER='"gcc 4.4.7"' -D__CPU_x86_64 -D__OS_linux -DSER_VER=4000003 -DCFG_DIR='"/usr/local/etc/kamailio/"' -DPKG_MALLOC -DSHM_MEM -DSHM_MMAP -DDNS_IP_HACK -DUSE_IPV6 -DUSE_MCAST -DUSE_TCP -DDISABLE_NAGLE -DHAVE_RESOLV_RES -DUSE_DNS_CACHE -DUSE_DNS_FAILOVER -DUSE_DST_BLACKLIST -DUSE_NAPTR -DWITH_XAVP -DMEM_JOIN_FREE -DUSE_TLS -DTLS_HOOKS -DUSE_CORE_STATS -DSTATISTICS -DMALLOC_STATS -DWITH_AS_SUPPORT -DFAST_LOCK -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 -DCC_GCC_LIKE_ASM -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD -DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H -DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER -DUSE_RAW_SOCKS -DHAVE_EPOLL -DHAVE_SIGIO_RT -DSIGINFO64_WORKARROUND -DUSE_FUTEX -DHAVE_SELECT  -I/usr/local/include/thrift -DKAMAILIO_MOD_INTERFACE -DMOD_NAME='"ndb_cassandra"' -c thrift_wrapper.cpp -o thrift_wrapper.o
-Compiling cassandra_constants.cpp
-g++ -fPIC -DPIC -g -O9 -funroll-loops -Wcast-align -m64 -minline-all-stringops -falign-loops -ftree-vectorize -fno-strict-overflow -mtune=opteron -Wall -Wno-write-strings -Wno-deprecated -Wno-unused-function -Wno-sign-compare -Wno-strict-aliasing -I/usr/local/include/thrift -c cassandra_constants.cpp -o cassandra_constants.o
-Compiling cassandra_types.cpp
-g++ -fPIC -DPIC -g -O9 -funroll-loops -Wcast-align -m64 -minline-all-stringops -falign-loops -ftree-vectorize -fno-strict-overflow -mtune=opteron -Wall -Wno-write-strings -Wno-deprecated -Wno-unused-function -Wno-sign-compare -Wno-strict-aliasing -I/usr/local/include/thrift -c cassandra_types.cpp -o cassandra_types.o
-Compiling Cassandra.cpp
-g++ -fPIC -DPIC -g -O9 -funroll-loops -Wcast-align -m64 -minline-all-stringops -falign-loops -ftree-vectorize -fno-strict-overflow -mtune=opteron -Wall -Wno-write-strings -Wno-deprecated -Wno-unused-function -Wno-sign-compare -Wno-strict-aliasing -I/usr/local/include/thrift -c Cassandra.cpp -o Cassandra.o
-LD (g++) [M ndb_cassandra.so]	      		   ndb_cassandra.so
-...
+              ...

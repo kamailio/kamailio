@@ -95,10 +95,10 @@ modparam("ndb_cassandra", "port", 9160)
 	      Return integer needs to be checked:
 	      <itemizedlist>
 		<listitem>
-		  <para>ret < 0, error</para>
+		  <para>ret &lt; 0, error</para>
 		</listitem>
 		<listitem>
-		  <para>ret > 0, success</para>
+		  <para>ret &gt; 0, success</para>
 		  </listitem>
 		</itemizedlist>
 	      </para>
@@ -120,12 +120,12 @@ modparam("ndb_cassandra", "port", 9160)
 	    <itemizedlist>
 	      <listitem>
 		<para>
-		  ret < 0, error
+		  ret &lt; 0, error
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  ret > 0, success
+		  ret &gt; 0, success
 		  </para>
 		</listitem>
 	      </itemizedlist>
