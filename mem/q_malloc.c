@@ -368,6 +368,8 @@ void* qm_malloc(struct qm_block* qm, unsigned long size)
 	MDBG("qm_malloc(%p, %lu) called from %s: %s(%d)\n", qm, size, file, func,
 			line);
 #endif
+	/*malloc(0) should return a valid pointer according to specs*/
+	if(unlikely(size==0)) size=4;
 	/*size must be a multiple of 8*/
 	size=ROUNDUP(size);
 	if (size>(qm->size-qm->real_used)) return 0;
