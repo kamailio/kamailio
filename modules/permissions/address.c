@@ -253,6 +253,31 @@ dberror:
 	return -1;
 }
 
+/*
+ * Wrapper to reload addr table from mi or rpc
+ * we need to open the db_handle
+ */
+int reload_address_table_cmd(void)
+{
+	if (!db_handle) {
+		db_handle = perm_dbf.init(&db_url);
+		if (!db_handle) {
+			LM_ERR("unable to connect database\n");
+			return -1;
+		}
+	}
+
+	if (reload_address_table () != 1) {
+		perm_dbf.close(db_handle);
+		db_handle = 0;
+		return -1;
+	}
+
+	perm_dbf.close(db_handle);
+	db_handle = 0;
+
+	return 1;
+}
 
 /*
  * Initialize data structures

@@ -114,7 +114,7 @@ void rpc_trusted_dump(rpc_t* rpc, void* c) {
  */
 struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
 {
-    if (reload_address_table () == 1) {
+    if (reload_address_table_cmd () == 1) {
 	return init_mi_tree( 200, MI_SSTR(MI_OK));
     } else {
 	return init_mi_tree( 400, MI_SSTR("Address table reload failed"));
@@ -125,7 +125,7 @@ struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
  * RPC function to reload address table
  */
 void rpc_address_reload(rpc_t* rpc, void* c) {
-	if (reload_address_table () != 1) {
+	if (reload_address_table_cmd () != 1) {
 		rpc->fault(c, 500, "Reload failed.");
 		return;
 	}
