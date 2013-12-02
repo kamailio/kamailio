@@ -63,7 +63,10 @@ Andrei Pelinescu-Onciul
               11.3. tls.options
               11.4. tls.reload
 
-        12. History
+        12. Status
+
+              12.1. License
+              12.2. History
 
    List of Examples
 
@@ -166,7 +169,10 @@ Chapter 1. Admin Guide
         11.3. tls.options
         11.4. tls.reload
 
-   12. History
+   12. Status
+
+        12.1. License
+        12.2. History
 
 1. Overview
 
@@ -486,10 +492,10 @@ Revoking a certificate and using a CRL
 9.1. tls_method (string)
 
    Sets the SSL/TLS protocol method. Possible values are:
-     * TLSv1.1 - only TLSv1.2 connections are accepted (available starting
+     * TLSv1.2 - only TLSv1.2 connections are accepted (available starting
        with openssl/libssl v1.0.1e)
      * TLSv1.1 - only TLSv1.1 connections are accepted (available starting
-       with openssl/libssl v1.0.0)
+       with openssl/libssl v1.0.1)
      * TLSv1 - only TLSv1 connections are accepted. This is the default
        value.
      * SSLv3 - only SSLv3 connections are accepted
@@ -1204,20 +1210,21 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
    Parameters:
      * None.
 
-12. History
+12. Status
 
-   This module was put together by Jan Janak <jan@iptel.org> from code
-   based on the experimental tls core addon
-   (http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/), code
-   originally written by Peter Griffiths and later maintained by Cesc
-   Santasusana and from an iptelorg tls code addon, written by Andrei
-   Pelinescu-Onciul <andrei@iptel.org>. Jan also added support for
-   multiple domains, a tls specific config, config reloading and a tls
-   specific select framework.
+   12.1. License
+   12.2. History
 
-   For Kamailio 3.1 most of the TLS specific code was completely
-   re-written to add support for asynchronous TLS and fix several long
-   standing bugs.
+12.1. License
+
+   Most of the code for this module has been released under BSD by
+   iptelorg. The GPL parts are released with an exception to link with
+   OpenSSL toolkit software components.
+
+12.2. History
+
+   For version 3.1 most of the TLS specific code was completely re-written
+   to add support for asynchronous TLS and fix several long standing bugs.
 
    The code is currently maintained by Andrei Pelinescu-Onciul
    <andrei@iptel.org>.

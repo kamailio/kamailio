@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * TLS module
  *
  * Copyright (C) 2007 iptelorg GmbH 
  *

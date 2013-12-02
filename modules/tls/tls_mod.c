@@ -1,43 +1,21 @@
 /*
- * $Id$
+ * TLS module
  *
- * TLS module - module interface
+ * Copyright (C) 2007 iptelorg GmbH 
  *
- * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
- * Copyright (C) 2005,2006 iptelorg GmbH
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * This file is part of SIP-router, a free SIP server.
- *
- * SIP-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * SIP-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * -------
- * 2003-03-11: New module interface (janakj)
- * 2003-03-16: flags export parameter added (janakj)
- * 2003-04-05: default_uri #define used (jiri)
- * 2003-04-06: db connection closed in mod_init (janakj)
- * 2004-06-06  updated to the new DB api, cleanup: static dbf & handler,
- *              calls to domain_db_{bind,init,close,ver} (andrei)
- * 2007-02-09  updated to the new tls_hooks api and renamed tls hooks hanlder
- *              functions to avoid conflicts: s/tls_/tls_h_/   (andrei)
- * 2010-03-19  new parameters to control advanced openssl lib options
- *              (mostly work on 1.0.0+): ssl_release_buffers, ssl_read_ahead,
- *              ssl_freelist_max_len, ssl_max_send_fragment   (andrei)
- * 2010-05-27  migrated to the runtime cfg framework (andrei)
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /** SIP-router TLS support :: Module interface.
  * @file
  * @ingroup tls
