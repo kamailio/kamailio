@@ -232,6 +232,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		pkg_free(send_buf);
 		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 			LM_ERR("removing WebSocket connection\n");
+		frame->wsc = NULL;
 		return -1;
 	}
 	init_dst_from_rcv(&dst, &con->rcv);
@@ -243,8 +244,10 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 			LM_ERR("removing WebSocket connection\n");
 			tcpconn_put(con);
 			pkg_free(send_buf);
+			frame->wsc = NULL;
 			return -1;
 		}
+		frame->wsc = NULL;
 	}
 
 	if (dst.proto == PROTO_WS)
@@ -297,6 +300,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 			update_stat(ws_msrp_failed_connections, 1);
 		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 			LM_ERR("removing WebSocket connection\n");
+		frame->wsc = NULL;
 		tcpconn_put(con);
 		return -1;
 	}
@@ -317,11 +321,19 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	return 0;
 }
 
-static int close_connection(ws_connection_t *wsc, ws_close_type_t type,
+static int close_connection(ws_connection_t **p_wsc, ws_close_type_t type,
 				short int status, str reason)
 {
 	char *data;
 	ws_frame_t frame;
+	ws_connection_t * wsc = NULL;
+	int sub_proto = -1;
+	if (!p_wsc || !(*p_wsc))
+	{
+		LM_ERR("Invalid parameters\n");
+		return -1;
+	}
+	wsc = *p_wsc;
 
 	if (wsc->state == WS_S_OPEN)
 	{
@@ -342,6 +354,7 @@ static int close_connection(ws_connection_t *wsc, ws_close_type_t type,
 		frame.payload_len = reason.len + 2;
 		frame.payload_data = data;
 		frame.wsc = wsc;
+		sub_proto = wsc->sub_protocol;
 
 		if (encode_and_send_ws_frame(&frame,
 			type ==
@@ -367,16 +380,20 @@ static int close_connection(ws_connection_t *wsc, ws_close_type_t type,
 		else
 		{
 			update_stat(ws_remote_closed_connections, 1);
-			if (frame.wsc->sub_protocol == SUB_PROTOCOL_SIP)
+			if (sub_proto == SUB_PROTOCOL_SIP)
 				update_stat(ws_sip_remote_closed_connections,
 						1);
-			else if (frame.wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+			else if (sub_proto == SUB_PROTOCOL_MSRP)
 				update_stat(ws_msrp_remote_closed_connections,
 						1);
+			*p_wsc = NULL;
 		}
 	}
 	else /* if (frame->wsc->state == WS_S_CLOSING) */
+	{
 		wsconn_close_now(wsc);
+		*p_wsc = NULL;
+	}
 
 	return 0;
 }
@@ -402,7 +419,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	if (len < 2)
 	{
 		LM_WARN("message is too short\n");
-		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+		if (close_connection(&frame->wsc, LOCAL_CLOSE, 1002,
 					str_status_protocol_error) < 0)
 			LM_ERR("closing connection\n");
 		return -1;
@@ -418,7 +435,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	{
 		LM_WARN("WebSocket fragmentation not supported in the sip "
 			"sub-protocol\n");
-		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+		if (close_connection(&frame->wsc, LOCAL_CLOSE, 1002,
 					str_status_protocol_error) < 0)
 			LM_ERR("closing connection\n");
 		return -1;
@@ -427,7 +444,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	if (frame->rsv1 || frame->rsv2 || frame->rsv3)
 	{
 		LM_WARN("WebSocket reserved fields with non-zero values\n");
-		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+		if (close_connection(&frame->wsc, LOCAL_CLOSE, 1002,
 					str_status_protocol_error) < 0)
 			LM_ERR("closing connection\n");
 		return -1;
@@ -451,7 +468,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	default:
 		LM_WARN("unsupported opcode: 0x%x\n",
 			(unsigned char) frame->opcode);
-		if (close_connection(frame->wsc, LOCAL_CLOSE, 1008,
+		if (close_connection(&frame->wsc, LOCAL_CLOSE, 1008,
 					str_status_unsupported_opcode) < 0)
 			LM_ERR("closing connection\n");
 		return -1;
@@ -461,7 +478,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	{
 		LM_WARN("this is a server - all received messages must be "
 			"masked\n");
-		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+		if (close_connection(&frame->wsc, LOCAL_CLOSE, 1002,
 					str_status_protocol_error) < 0)
 			LM_ERR("closing connection\n");
 		return -1;
@@ -474,7 +491,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 		if (len < 4)
 		{
 			LM_WARN("message is too short\n");
-			if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+			if (close_connection(&frame->wsc, LOCAL_CLOSE, 1002,
 						str_status_protocol_error) < 0)
 				LM_ERR("closing connection\n");
 			return -1;
@@ -489,7 +506,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 		if (len < 10)
 		{
 			LM_WARN("message is too short\n");
-			if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+			if (close_connection(&frame->wsc, LOCAL_CLOSE, 1002,
 						str_status_protocol_error) < 0)
 				LM_ERR("closing connection\n");
 			return -1;
@@ -500,7 +517,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 			|| (buf[4] & 0xff) != 0 || (buf[5] & 0xff) != 0)
 		{
 			LM_WARN("message is too long\n");
-			if (close_connection(frame->wsc, LOCAL_CLOSE, 1009,
+			if (close_connection(&frame->wsc, LOCAL_CLOSE, 1009,
 						str_status_message_too_big) < 0)
 				LM_ERR("closing connection\n");
 			return -1;
@@ -528,7 +545,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	{
 		LM_WARN("message not complete frame size %u but received %u\n",
 			frame->payload_len + mask_start + 4, len);
-		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+		if (close_connection(&frame->wsc, LOCAL_CLOSE, 1002,
 					str_status_protocol_error) < 0)
 			LM_ERR("closing connection\n");
 		return -1;
@@ -564,7 +581,7 @@ static int handle_close(ws_frame_t *frame)
 
 	LM_DBG("Rx Close: %hu %.*s\n", code, reason.len, reason.s);
 
-	if (close_connection(frame->wsc,
+	if (close_connection(&frame->wsc,
 		frame->wsc->state == WS_S_OPEN ? REMOTE_CLOSE : LOCAL_CLOSE,
 		1000, str_status_normal_closure) < 0)
 	{
@@ -758,7 +775,7 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 					str_status_bad_param.len);
 	}
 
-	if (close_connection(wsc, LOCAL_CLOSE, 1000,
+	if (close_connection(&wsc, LOCAL_CLOSE, 1000,
 				str_status_normal_closure) < 0)
 	{
 		LM_WARN("closing connection\n");
@@ -861,7 +878,7 @@ int ws_close(sip_msg_t *msg)
 		return -1;
 	}
 
-	return (close_connection(wsc, LOCAL_CLOSE, 1000,
+	return (close_connection(&wsc, LOCAL_CLOSE, 1000,
 				 str_status_normal_closure) == 0) ? 1: 0;
 }
 
@@ -886,7 +903,7 @@ int ws_close2(sip_msg_t *msg, char *_status, char *_reason)
 		return -1;
 	}
 
-	return (close_connection(wsc, LOCAL_CLOSE, status, reason) == 0) ? 1: 0;
+	return (close_connection(&wsc, LOCAL_CLOSE, status, reason) == 0) ? 1: 0;
 }
 
 int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con)
@@ -916,5 +933,5 @@ int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con)
 		return -1;
 	}
 
-	return (close_connection(wsc, LOCAL_CLOSE, status, reason) == 0) ? 1: 0;
+	return (close_connection(&wsc, LOCAL_CLOSE, status, reason) == 0) ? 1: 0;
 }

@@ -122,7 +122,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0}, origin = {0, 0};
 	unsigned char sha1[SHA_DIGEST_LENGTH];
 	unsigned int hdr_flags = 0, sub_protocol = 0;
-	int version;
+	int version = 0;
 	struct hdr_field *hdr = msg->headers;
 	struct tcp_connection *con;
 	ws_connection_t *wsc;
