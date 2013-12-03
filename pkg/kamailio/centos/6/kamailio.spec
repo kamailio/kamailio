@@ -1,6 +1,6 @@
 %define name	kamailio
-%define ver	4.1.0
-%define rel	pre1.4%{dist}
+%define ver	4.2.0
+%define rel	dev0.0%{dist}
 
 
 
@@ -420,7 +420,7 @@ make cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT \
 	cfg_target=/%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
-	jabber osp" \
+	jabber ndb_cassandra osp" \
 	group_include="kstandard kautheph kberkeley kcarrierroute kcpl \
 	kdnssec kgeoip kims kjava kjson kldap klua kmemcached kmi_xmlrpc \
 	kmysql koutbound kperl kpostgres kpresence kpurple kpython kradius \
@@ -1115,6 +1115,8 @@ fi
 
 
 %changelog
+* Tue Dec 3 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
+  - Updated version to 4.2.0
 * Mon Oct 7 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
   - Consolidating changelog for 4.1.0 into a single entry...
   - Added new modules to main package:

@@ -18,6 +18,7 @@ Ordered by module name:
 		mono-devel 2.4.3.1)
 * db_cassandra	requires thrift 0.6.1 or 0.7.0
 * db_oracle	requires instantclient-sdk-10.2.0.3
+* ndb_cassandra	requires thrift 0.7.0
 * osp		requires the OSP Toolkit
 
 Ordered by unmet dependency:
@@ -25,3 +26,4 @@ Ordered by unmet dependency:
 * mono-devel-??? or higher	app_mono
 * OSP Toolkit			osp
 * thrift 0.6.1 or 0.7.0		db_cassandra
+* thrift 0.7.0			ndb_cassandra
