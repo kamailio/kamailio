@@ -37,6 +37,7 @@ Build-Depends: bison,
                libxml2-dev,
                libxmlrpc-c3-dev,
                libunistring-dev,
+               libval-dev,
                python,
                python-dev,
                unixodbc-dev,
@@ -56,6 +57,7 @@ Suggests: kamailio-autheph-modules,
           kamailio-carrierroute-modules,
           kamailio-cpl-modules,
           kamailio-dbg,
+          kamailio-dnssec-modules,
           kamailio-java-modules,
           kamailio-ldap-modules,
           kamailio-lua-modules,
@@ -501,3 +503,14 @@ Description: contains the app_java module
  .
  This package provides the app_java module, an extension allowing to
  execute embedded Java applications within configuration file.
+
+Package: kamailio-dnssec-modules
+Architecture: any
+Depends: kamailio (= ${Source-Version}),
+         ${shlibs:Depends}
+Description: contains the dnssec module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the dnssec module for Kamailio.
