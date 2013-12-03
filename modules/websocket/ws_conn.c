@@ -138,7 +138,6 @@ static inline void _wsconn_rm(ws_connection_t *wsc)
 		update_stat(ws_msrp_current_connections, -1);
 
 	shm_free(wsc);
-	wsc = NULL;
 }
 
 void wsconn_destroy(void)
