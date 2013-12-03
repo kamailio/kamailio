@@ -41,7 +41,7 @@
 		&kamailio; with this module loaded:
 		<itemizedlist>
 		<listitem>
-		<para><emphasis>OpenSSL</emphasis>.</para>
+		<para><emphasis>none</emphasis>.</para>
 		</listitem>
 		</itemizedlist>
 		</para>
