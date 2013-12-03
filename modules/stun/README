@@ -4,9 +4,9 @@ Peter Dunkley
 
    Crocodile RCS Ltd
 
-   Copyright Â© 2013 Crocodile RCS Ltd
+   Copyright © 2013 Crocodile RCS Ltd
 
-   Copyright Â© 2001-2003 FhG Fokus
+   Copyright © 2001-2003 FhG Fokus
      __________________________________________________________________
 
    Table of Contents
@@ -57,7 +57,7 @@ Chapter 1. Admin Guide
 
    The following libraries must be installed before running Kamailio with
    this module loaded:
-     * OpenSSL.
+     * none.
 
 3. Parameters
 
