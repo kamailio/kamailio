@@ -2624,7 +2624,8 @@ struct hostent* dns_resolvehost(char* name)
 		ret =  _resolvehost(name);
 		if(unlikely(!ret)){
 			/* increment dns error counter */
-			counter_inc(dns_cnts_h.failed_dns_req);
+			if(counters_initialized())
+				counter_inc(dns_cnts_h.failed_dns_req);
 		}
 		return ret;
 	}
