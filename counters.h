@@ -87,6 +87,7 @@ extern int _cnts_row_len; /* number of elements per row */
 
 
 
+int counters_initialized(void);
 int init_counters(void);
 void destroy_counters(void);
 int counters_prefork_init(int max_process_no);
