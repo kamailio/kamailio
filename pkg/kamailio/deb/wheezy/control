@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Jon Bonilla <manwe@aholab.ehu.es>
 Build-Depends: bison,
                debhelper (>= 5),
+               default-jdk,
                docbook-xml,
                dpatch,
                dpkg-dev (>= 1.13.19),
@@ -28,6 +29,7 @@ Build-Depends: bison,
                libradiusclient-ng-dev,
                libreadline-dev,
                libsasl2-dev,
+               libsctp-dev,
                libsnmp-dev,
                libsqlite3-dev,
                libssl-dev,
@@ -48,10 +50,12 @@ Depends: adduser,
          ${misc:Depends},
          ${shlibs:Depends}
 Conflicts: kamailio-regex-modules
-Suggests: kamailio-berkeley-modules,
+Suggests: kamailio-autheph-modules,
+          kamailio-berkeley-modules,
           kamailio-carrierroute-modules,
           kamailio-cpl-modules,
           kamailio-dbg,
+          kamailio-java-modules,
           kamailio-ldap-modules,
           kamailio-lua-modules,
           kamailio-mono-modules,
@@ -61,6 +65,7 @@ Suggests: kamailio-berkeley-modules,
           kamailio-presence-modules,
           kamailio-python-modules,
           kamailio-radius-modules,
+          kamailio-sctp-modules,
           kamailio-snmpstats-modules,
           kamailio-tls-modules,
           kamailio-unixodbc-modules,
@@ -448,3 +453,37 @@ Description: Kamailio - Websocket Module
  .
  This package contains the module implementing WebSocket transport layer.
 
+Package: kamailio-autheph-modules
+Architecture: any
+Depends: kamailio (= ${binary:Version}),
+         ${shlibs:Depends}
+Description: authentication using ephemeral credentials module for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the ephemeral module for Kamailio.
+
+Package: kamailio-sctp-modules
+Architecture: any
+Depends: kamailio (= ${binary:Version}),
+         ${shlibs:Depends}
+Description: authentication using ephemeral credentials module for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the sctp module for Kamailio.
+
+Package: kamailio-java-modules
+Architecture: any
+Depends: kamailio (= ${Source-Version}),
+         default-jre,
+         ${shlibs:Depends}
+Description: contains the app_java module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the app_java module, an extension allowing to
+ execute embedded Java applications within configuration file.

@@ -42,7 +42,8 @@ MODULES_SP=
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils purple memcached tls \
 			   snmpstats carrierroute xmpp cpl lua python geoip \
-			   redis sqlite json mono ims outbound websocket
+			   redis sqlite json mono ims outbound websocket \
+			   autheph sctp java
 
 # name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
 LIBDIR ?= lib
