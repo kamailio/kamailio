@@ -2,6 +2,422 @@
 
 ===================== Changes Since Version 4.0.0 ===========================
 
+commit 4ffd05e4664ca0af4dd101bedf12b40b251446aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 4 15:33:14 2013 +0100
+
+    Makefile.defs: version set to 4.1.0
+    
+    - new major release
+
+commit 3ad1f6afffe8250a3695ac8233bdb746bcfdcecf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 4 15:02:22 2013 +0100
+
+    doc/rpc_list: regenerated the lists of rpc commands
+    
+    (cherry picked from commit 2ffeea75931600e2da70d696a9965a5b7329211b)
+
+commit ab21be6c76bc2b3010d937bbf1d0b2d2fd3a7e7b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 4 14:34:04 2013 +0100
+
+    doc/rpc_list: added sctp in the list of modules exporting rpc commands
+    
+    (cherry picked from commit 56c772fbd1490a7cef3f748c61d1c7d7be3167a3)
+
+commit 8f488c2ec4919052dfb12e8135b672411957c44e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 15 10:08:12 2013 +0100
+
+    app_perl: docs updated with reset_cycles parameter and rpc commands
+    
+    (cherry picked from commit b1f4dbeef93511563164de2f030f510f5a2cf2d9)
+
+commit c1b11585f72c5b80efdf6c79d0b76391a4dbdef1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 15 09:52:29 2013 +0100
+
+    app_perl: added rpc commands to set/get the value for reset_cycles
+    
+    (cherry picked from commit de2c39a1857d74443c6b1fa4f06cbb18d3dd8026)
+
+commit 6a654f18f579aaf812a325a0b1a678ace5236051
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 15 09:28:25 2013 +0100
+
+    app_perl: added mechanism to avoid leaks specific to persistent perl interpreter
+    
+    - it is not easy to track the scope of variables, especially in libs,
+      the solution being to re-init the interpreter
+    - new module parameter reset_cycles to specify the number of execution
+      cycles after which the interpreter is reset. Default is 0 - don't
+      reset at all
+    
+    (cherry picked from commit b5527627601c9e41ebbfaccb98bc2cf0bc003bdb)
+
+commit 8991684e94def6efa74d827753c2fe1c3e6d9d97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 23:00:32 2013 +0100
+
+    app_perl: declare extern environ variable
+    
+    - without it doesn't compile on darwin and it is recommended way to do
+    - provide some fake argc and argv to PERL_SYS_INIT3() to avoid compile
+      warnings
+    
+    (cherry picked from commit 34ad8c295b45bc52cc5a071bf2b5651865389f94)
+
+commit 99c4af0c61994e59d902defcf985a865a8d6b8f0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Dec 4 11:46:29 2013 +0100
+
+    pkg/kamailio/deb: update changelog
+
+commit fb7e342ce500cc21e9f15a15f51e3b0ecad29310
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Dec 4 09:10:37 2013 +0100
+
+    pkg/kamailio/deb: add new modules
+    
+    (cherry picked from commit e043c3a44b163e511e62af5c7290fb587141b400)
+
+commit 983a1b29096c5bd2ef0db6f5cab80bfc1a5d326a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 3 16:46:32 2013 +0100
+
+    pkg/kamailio/deb: add jessie release
+    
+    (cherry picked from commit daee150595e6fabdf53aa66425d32234ec7bbde7)
+
+commit 6fc672fc4153c85c3742928d7c7e897f1f7387c7
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 3 16:11:00 2013 +0100
+
+    pkg/kamailio/deb: Add dnssec module ( jessie only )
+    
+    (cherry picked from commit 50b1c3a52c150201a563060cd1059a49ada89af2)
+
+commit c11fb2733024d7739e183c842cef4a386e090131
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 3 15:51:41 2013 +0100
+
+    pkg/kamailio/deb: add new modules app_java, autheph, sctp
+    
+    (cherry picked from commit 450d7ecb49a64e71dd28273b470911bd933bc209)
+
+commit 0a9055c1989aee3878d11a931daad8c971b15835
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 3 16:42:06 2013 +0100
+
+    pkg/kamailio/deb/debian: fix mono deps
+    
+    (cherry picked from commit f17c51fe48149a6b7634cee2e36ee463e1ee9fef)
+
+commit a3169d02d7527110941fab8de25ba75aae759ce1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 3 23:38:41 2013 +0100
+
+    core: don't increment failed dns query counter for reverse dns lookup at startup
+    
+    - it can happen before counters are intialized, thus check that before
+    - reported by Hugh Waite, FS#375
+    
+    (cherry picked from commit 89c6d73dd51eb9b96f50d3f04219612fa7725224)
+
+commit a165fa668378da5c312a0c268aaf158ff583127f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 3 23:38:08 2013 +0100
+
+    core: added function to check if counters have been initialized
+    
+    (cherry picked from commit 8161152b320f3b430523ea08e86a56f79405c2f4)
+
+commit 48a3412afe166f5cbd41a057a22a3333337a2856
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Tue Dec 3 13:00:55 2013 +0000
+
+    websocket: Set pointers to NULL when freeing ws connection strcutures
+     - Fixes double free crash FS#364
+     - Reported by Vitaliy Aleksandrov
+    (cherry picked from commit 95749afb7129e2909b449b79706f0de5d06a3c5d)
+
+commit a31988d657edef079525fa68096dc537e78708c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 3 12:54:00 2013 +0100
+
+    stun: refreshed readme file
+
+commit 41cc8aa248ea1e736bb3d069b32430cc1e54c0af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 3 12:50:29 2013 +0100
+
+    stun: updated docs to reflect that it no longer depends on external libs
+    
+    (cherry picked from commit 305e7b5693e71d2027f8e6462129f8c9f01ad76d)
+
+commit 3c491913dac5060639278f1e645205b1a3959ad3
+Author: Peter Dunkley <peter.dunkley@crocodilertc.net>
+Date:   Tue Dec 3 01:34:52 2013 +0000
+
+    pkg/kamailio/centos: Updated rel in .spec in preparation for 4.1.0 release
+
+commit 23b582a7ea67c6a6fd8347533020e8b4c0de2dbd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 23:21:24 2013 +0100
+
+    kamailio.cfg: updated the comment about kamailio version
+
+commit 5dc07807bf08aca8b600c90f9d700b49ef0ad454
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 22:01:34 2013 +0100
+
+    kamailio.cfg: use set_contact_alias() instead of add_contact_alias()
+    
+    (cherry picked from commit 66ed11c90e38d948fd75f908b3edd409bca74134)
+
+commit 284f4ef38c3928516e9c4a78b4768de716b850b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 20:42:12 2013 +0100
+
+    mem: malloc(0) should return a valid pointer for free according to specs
+    
+    (cherry picked from commit f61ff34aac7c7bae3a96fb698a899c8a0e692a9f)
+
+commit 0d0d230ab09da4cd2e6d8331d1feed5b6172cfa1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 19:40:04 2013 +0100
+
+    Makefile.defs: version set to 4.1.0-rc2
+
+commit f7ed69d75746dc55e5a48a7a18602124e73cd3cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 24 16:06:41 2013 +0100
+
+    tmx: backup and restore existing T and branch pointers for t_cancel_callid()
+    
+    - reported and initial patch by Guillaume Bour
+    
+    (cherry picked from commit 60372d613544af1f8f06122eb77fa2a9636a6c3a)
+
+commit 09fb0aae62761ce4f251ab22c6ab9cde55e2c663
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 24 16:05:49 2013 +0100
+
+    tm: exported set_t() and get_t_branch() viam tm api
+    
+    - allows to backup and restore pointers to T and branch
+    
+    (cherry picked from commit 777dd5e28ff6b4fcc3b1c44e841eb415c974075f)
+
+commit f06c0421f2d08aa9ec15330dbe7c270b7c67eef4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 21 17:37:33 2013 +0100
+
+    tm: propagate reply/failure route indexes to local uac branch
+    
+    - affects the updates done in event_route[tm:local-request]
+    - reported by Pawel Sternal, FS#371
+    
+    (cherry picked from commit 715ba52de2031786fd9f05832d5bf73d17d46e47)
+
+commit d3a6f48d379097afc649b16237df46581b251084
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 18:17:34 2013 +0100
+
+    tls: clarified licensing based on development history
+    
+    - some were c&p as they refered to files related to components that were
+      developed later than the (c) year (e.g., selects)
+    - added openssl exception to gpl parts based on agreement from the
+      developers of those components - most of the code was released long time
+      ago under BSD by iptelorg. Code was rewrote for 3.1 when asynchronous
+      support was developed.
+    
+    (cherry picked from commit 7771e9cdb58ea1cef008e2a70f53c5f183c26ebe)
+
+commit 4ff3866652be6752e5167071ce02b888acda0e75
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Mon Dec 2 17:05:35 2013 +0100
+
+    permissions: re-init db connection for reload cmd
+    
+    - some workers for specific mi/rpc commands may not have a db connection from the start
+    
+    (cherry picked from commit cb23be9456c178957399ec9d8ce8a1420d50fc32)
+
+commit a5f8d36ac011be12a9582999a8d6480541106439
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Tue Nov 26 16:08:35 2013 +0100
+
+    modules/ims_registrar_pcscf: fix log
+
+commit 424711ec889661a1212e63f9b0e9761a6e4ed069
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Thu Nov 28 12:16:05 2013 +0100
+
+    modules/ndb_redis: solved bug in second call to redisvCommand.
+    
+    (cherry picked from commit 52a34d269931f6f3a50b3fc532405624b9e38d23)
+
+commit 0b85493f3c1bc7c6cbd48f39aea9d3ecc135d4ff
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Tue Nov 26 10:36:18 2013 -0500
+
+    rtpproxy-ng: remove trailing double \r\n from multipart SDP
+
+commit 553d6aff9eecaec38547910d4dd46fcd71b57583
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Fri Nov 22 09:39:40 2013 +0000
+
+    modules/avpops: Fix 'uninitialised variable' warning
+    (cherry picked from commit 54020b00893ee259baee714d7d17adc6d31f9112)
+
+commit 20822c5227962508d13bce48a653e594cbfaeff1
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Fri Nov 22 09:35:55 2013 +0000
+
+    modules/usrloc: Update contact field when updating a contact in the DB
+    - Fixes FS#368
+    (cherry picked from commit a55018deb431ef32ee2bcd45610903327850757d)
+
+commit 18afdc79aeb2b46c6eda4b66e40efae49d524701
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Fri Nov 22 09:28:38 2013 +0000
+
+    modules/registrar: Invalidate temporary GRUUs when the Call-ID changes for a sip.instance
+    - Fixes FS#368
+    (cherry picked from commit 27eba09b603b265ce4213d238c132249189ae6e8)
+
+commit b6c109a38f8fca82005166ed73d370a2f974a3db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 21 20:24:20 2013 +0100
+
+    sl: README updated
+
+commit 93428405a7d9bba3aee3bf317ea76f232739c9af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 21 19:14:17 2013 +0100
+
+    sl: docs updated to reflect usage of send_reply()
+    
+    (cherry picked from commit e7b73f7e0160eac1ca445201fbf796df0dd13ce0)
+
+commit 6125176d04c75d3a3f0b57119696eca2f63c3645
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 21 19:09:43 2013 +0100
+
+    sl: allow send_reply() in the route block types supported by t_reply() and sl_send_reply()
+    
+    - reported by Juha Heinanen, FS#362
+    
+    (cherry picked from commit c77aaf38eafe1d3549d266feebf76ac0b50738ea)
+
+commit 7e74944eb6a55a5e9a817a894af1ebbbc8ce9733
+Author: Timo TerÃ¤s <timo.teras@iki.fi>
+Date:   Fri Nov 15 16:06:25 2013 +0200
+
+    modules/sca: fix hash entry deletion
+    
+    sca_hash_table_slot_kv_delete_unsafe() uses internally sca_hash_entry
+    but incorrectly called sca_hash_table_slot_kv_find_unsafe() to
+    initialize the entry. That function returns the node value, not the
+    node itself. Use instead sca_hash_table_slot_kv_find_entry_unsafe().
+    
+    Should fix the crash in FS#366.
+    
+    (cherry picked from commit 56e4f4518028e73f9ebd053242a100a5c3b7eb53)
+
+commit 85e9202d14eda0a43d566aa14c0df47a78eb24f3
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri Nov 15 09:08:03 2013 -0500
+
+    usrloc: fix crash while printing error log
+     - fix a copy/paste error that lead to a NULL pointer
+    (cherry picked from commit 10115f88637d1371a8ddeb5fe9c36c31ada49fc4)
+
+commit 82d4a39a4f7cd81afbcaed8de8bec0e3a7747e53
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 16:12:27 2013 +0100
+
+    Makefile.defs: version set to 4.1.0-rc1
+    
+    - dedicated brach 4.1 has been created for release series 4.1.x
+
+commit 8c7aa83346e18792d9a622c63c83cff81dcc144b
+Author: Jason Penton <jason.penton@smilecoms.com>
+Date:   Wed Nov 13 15:12:48 2013 +0200
+
+    modules/dialog_ng: fixed double shm memory free
+    	- happens when calling get_dlg function from cfg file
+
+commit 1710c596b9a9383d2aa48d3432b6ada429981863
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 13 10:38:17 2013 +0100
+
+    Makefile.defs: version set to 4.1.0-pre2
+
+commit 644ffab0450d49aa36cfa803a41eff9db1ddb13a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 13 10:37:17 2013 +0100
+
+    Makefile.defs: enabled memory debugging
+    
+    - to be kept for the rest of testing period to spot eventual buffer
+      overflows
+
+commit 254d0c43a84ec87801e58b4f990a2029c0e27c6f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 12 21:03:01 2013 +0100
+
+    tm: init sock_str to null value if no sock pointer is set in branch
+    
+    - case of creating branches from a 3xx reply
+    - reported by juliabo [at] gmail
+    - identation made coherent with tm module style
+
+commit 5d80155a69f3c9865196e377ac0ecef16cd39cfe
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Tue Nov 12 17:28:51 2013 +0000
+
+    memcached: add section ids in documentation
+
+commit a65ee19108b1cdff31ec93b25020af0c9eab8080
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Tue Nov 12 17:28:15 2013 +0000
+
+    dmq: add section ids in documentation
+
+commit 35ae624ba939b736bb2f52cd5fb4908deec0a133
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 12 15:50:51 2013 +0100
+
+    pua_reginfo: fixed typo related to module name in docs example
+    
+    - reported by Marius Pedersen
+
+commit a9fc979c839b44411e3c34076591c64c16d2fe87
+Author: Ãyvind Kolbu <oyvind.kolbu@usit.uio.no>
+Date:   Tue Nov 12 15:47:30 2013 +0100
+
+    core: respect order field in NAPTR, as required by RFC 2915
+    
+    - the beaviour is controlled by core parameter dns_naptr_ignore_rfc
+    - default is 1, preserving current behaviouf to ignore rfc requirements
+      (for backward compatibility)
+
+commit 96e021babe6da540ac8e47f35b30bb0fd7146245
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Mon Nov 11 12:40:05 2013 -0500
+
+    rtpproxy-ng: remove code artifact that broke IPv6 received-from addresses
+
+commit 3bcf5579c8e47422378fcf6dfaa361e3fd126ce5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 11 12:23:29 2013 +0100
+
+    ChangeLog: set the content with changes since branching for 4.0
+
 commit 7436e3f66782597d66d052ee9c87bdb3b91756ef
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Mon Nov 11 11:21:21 2013 +0100
