@@ -321,6 +321,24 @@ modparam("rtpproxy", "table_name", "my_rtpp_sets")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>rtp_inst_avp</varname> (string)</title>
+		<para>
+			An avp to store the chosen RTPProxy IP address.
+			If this parameter is set, the IP address and port of the instance chosen in a rtpproxy_manage() call will be stored in the given AVP.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>rtp_inst_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpproxy", "rtp_inst_avp", "$avp(RTP_INSTANCE)")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

@@ -308,6 +308,8 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
+static int set_rtp_inst_avp(const str * const uri);
+
 /* Pseudo-Variables */
 static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
@@ -337,6 +339,9 @@ struct rtpp_set * default_rtpp_set=0;
 static char *ice_candidate_priority_avp_param = NULL;
 static int ice_candidate_priority_avp_type;
 static int_str ice_candidate_priority_avp;
+static char *rtp_inst_avp_param = NULL;
+static int rtp_inst_avp_type;
+static int_str rtp_inst_avp;
 
 /* array with the sockets used by rtpporxy (per process)*/
 static unsigned int rtpp_no = 0;
@@ -437,6 +442,7 @@ static param_export_t params[] = {
 	{"extra_id_pv",           STR_PARAM, &extra_id_pv_param.s },
 	{"db_url",                STR_PARAM, &rtpp_db_url.s },
 	{"table_name",            STR_PARAM, &rtpp_table_name.s },
+	{"rtp_inst_avp",          STR_PARAM, &rtp_inst_avp_param },
 	{0, 0, 0}
 };
 
@@ -968,6 +974,19 @@ mod_init(void)
 		return -1;
 	    }
 	    ice_candidate_priority_avp_type = avp_flags;
+	}
+
+	if (rtp_inst_avp_param) {
+	    s.s = rtp_inst_avp_param; s.len = strlen(s.s);
+	    if (pv_parse_spec(&s, &avp_spec) == 0 || avp_spec.type != PVT_AVP) {
+		LM_ERR("malformed or non AVP definition <%s>\n", rtp_inst_avp_param);
+		return -1;
+	    }
+	    if (pv_get_avp_name(0, &(avp_spec.pvp), &rtp_inst_avp, &avp_flags) != 0) {
+		LM_ERR("invalid AVP definition <%s>\n", rtp_inst_avp_param);
+		return -1;
+	    }
+	    rtp_inst_avp_type = avp_flags;
 	}
 
 	if (extra_id_pv_param.s && *extra_id_pv_param.s) {
@@ -1761,6 +1780,9 @@ select_rtpp_node(str callid, int do_test)
 		node = selected_rtpp_set->rn_first;
 		if (node->rn_disabled && node->rn_recheck_ticks <= get_ticks())
 			node->rn_disabled = rtpp_test(node, 1, 0);
+		if (!node->rn_disabled) {
+			set_rtp_inst_avp(&node->rn_url);
+		}
 		return node->rn_disabled ? NULL : node;
 	}
 
@@ -1811,6 +1833,7 @@ found:
 		if (node->rn_disabled)
 			goto retry;
 	}
+	set_rtp_inst_avp(&node->rn_url);
 	return node;
 }
 
@@ -2985,5 +3008,20 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);
     ret_val.len = strlen(ret_val.s);
     return pv_get_strval(msg, param, res, &ret_val);
+}
+
+static int set_rtp_inst_avp(const str * const uri) {
+	int_str avp_val;
+	avp_val.s = *uri;
+
+	if (rtp_inst_avp_param == NULL)
+		return 0;
+
+	if (add_avp(AVP_VAL_STR | rtp_inst_avp_type, rtp_inst_avp, avp_val) != 0)
+	{
+		LM_ERR("Failed to add RTPProxy URI to avp\n");
+		return -1;
+	}
+	return 0;
 }
 

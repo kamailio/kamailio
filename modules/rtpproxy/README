@@ -63,6 +63,7 @@ Carsten Bock
               4.8. extra_id_pv (string)
               4.9. db_url (string)
               4.10. table_name (string)
+              4.11. rtp_inst_avp (string)
 
         5. Functions
 
@@ -101,16 +102,17 @@ Carsten Bock
    1.8. Set extra_id_pv parameter
    1.9. Set db_url parameter
    1.10. Set table_name parameter
-   1.11. set_rtp_proxy_set usage
-   1.12. rtpproxy_offer usage
-   1.13. rtpproxy_answer usage
-   1.14. rtpproxy_destroy usage
-   1.15. rtpproxy_manage usage
-   1.16. rtpproxy_stream2xxx usage
-   1.17. start_recording usage
-   1.18. $rtpstat-Usage
-   1.19. nh_enable_rtpp usage
-   1.20. nh_show_rtpp usage
+   1.11. Set rtp_inst_avp parameter
+   1.12. set_rtp_proxy_set usage
+   1.13. rtpproxy_offer usage
+   1.14. rtpproxy_answer usage
+   1.15. rtpproxy_destroy usage
+   1.16. rtpproxy_manage usage
+   1.17. rtpproxy_stream2xxx usage
+   1.18. start_recording usage
+   1.19. $rtpstat-Usage
+   1.20. nh_enable_rtpp usage
+   1.21. nh_show_rtpp usage
 
 Chapter 1. Admin Guide
 
@@ -135,6 +137,7 @@ Chapter 1. Admin Guide
         4.8. extra_id_pv (string)
         4.9. db_url (string)
         4.10. table_name (string)
+        4.11. rtp_inst_avp (string)
 
    5. Functions
 
@@ -222,6 +225,7 @@ Chapter 1. Admin Guide
    4.8. extra_id_pv (string)
    4.9. db_url (string)
    4.10. table_name (string)
+   4.11. rtp_inst_avp (string)
 
 4.1. rtpproxy_sock (string)
 
@@ -377,6 +381,19 @@ modparam("rtpproxy", "db_url", "mysql://user:passwb@localhost/database")
 modparam("rtpproxy", "table_name", "my_rtpp_sets")
 ...
 
+4.11. rtp_inst_avp (string)
+
+   An  avp  to store the chosen RTPProxy IP address. If this parameter is
+   set,   the   IP   address  and  port  of  the  instance  chosen  in  a
+   rtpproxy_manage() call will be stored in the given AVP.
+
+   By default, this parameter is not set.
+
+   Example 1.11. Set rtp_inst_avp parameter
+...
+modparam("rtpproxy", "rtp_inst_avp", "$avp(RTP_INSTANCE)")
+...
+
 5. Functions
 
    5.1. set_rtp_proxy_set(setid) 
@@ -401,7 +418,7 @@ modparam("rtpproxy", "table_name", "my_rtpp_sets")
    This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.11. set_rtp_proxy_set usage
+   Example 1.12. set_rtp_proxy_set usage
 ...
 set_rtp_proxy_set("2");
 rtpproxy_offer();
@@ -507,7 +524,7 @@ rtpproxy_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. rtpproxy_offer usage
+   Example 1.13. rtpproxy_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -551,7 +568,7 @@ onreply_route[2]
    This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.13. rtpproxy_answer usage
+   Example 1.14. rtpproxy_answer usage
 
    See rtpproxy_offer() function example above for example.
 
@@ -587,7 +604,7 @@ onreply_route[2]
             unused  rtpproxy  call  when  200 OK is received on a branch,
             where rtpproxy is not needed.
 
-   Example 1.14. rtpproxy_destroy usage
+   Example 1.15. rtpproxy_destroy usage
 ...
 rtpproxy_destroy();
 ...
@@ -621,7 +638,7 @@ rtpproxy_destroy();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. rtpproxy_manage usage
+   Example 1.16. rtpproxy_manage usage
 ...
 rtpproxy_manage();
 ...
@@ -657,7 +674,7 @@ rtpproxy_manage();
        -1  means  that it will be streaming in a loop indefinitely, until
        the appropriate rtpproxy_stop_stream2xxx is issued.
 
-   Example 1.16. rtpproxy_stream2xxx usage
+   Example 1.17. rtpproxy_stream2xxx usage
 ...
     if (is_method("INVITE")) {
         rtpproxy_offer();
@@ -690,7 +707,7 @@ rtpproxy_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.17. start_recording usage
+   Example 1.18. start_recording usage
 ...
 start_recording();
 ...
@@ -710,7 +727,7 @@ start_recording();
    packet-counters.  The  statistics must be retrieved before the session
    is deleted (before unforce_rtpproxy()).
 
-   Example 1.18. $rtpstat-Usage
+   Example 1.19. $rtpstat-Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -733,7 +750,7 @@ start_recording();
    NOTE:  if  a  rtpproxy  is  defined  multiple  times  (in  the same or
    diferente sete), all of its instances will be enables/disabled.
 
-   Example 1.19.  nh_enable_rtpp usage
+   Example 1.20.  nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -745,7 +762,7 @@ $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.20.  nh_show_rtpp usage
+   Example 1.21.  nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp
 ...
