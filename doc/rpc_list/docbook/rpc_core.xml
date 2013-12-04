@@ -171,28 +171,6 @@ RPC Exports for core
 </para>
 </section>
 
-<section id="core.sctp_options"><title>core.sctp_options</title>
-<para>
-        Returns active sctp options. With one parameter it returns the
-        sctp options set in the kernel for a specific
-        socket(debugging), with 0 filled in for non-kernel related
-        options. The parameter can be: &quot;default&quot; |
-        &quot;first&quot; | address[:port] . With no parameters it
-        returns ser&apos;s idea of the current sctp options (intended
-        non-debugging use).
-</para>
-<para>
-</para>
-</section>
-
-<section id="core.sctp_info"><title>core.sctp_info</title>
-<para>
-        Returns sctp related info.
-</para>
-<para>
-</para>
-</section>
-
 <section id="core.udp4_raw_info"><title>core.udp4_raw_info</title>
 <para>
         Returns udp4_raw related info.

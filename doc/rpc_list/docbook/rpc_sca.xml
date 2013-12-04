@@ -16,6 +16,14 @@ RPC Exports for sca
 </para>
 </section>
 
+<section id="sca.subscription_count"><title>sca.subscription_count</title>
+<para>
+        Documentation missing (sca_rpc_subscription_count_doc).
+</para>
+<para>
+</para>
+</section>
+
 <section id="sca.show_subscription"><title>sca.show_subscription</title>
 <para>
         Documentation missing (sca_rpc_show_subscription_doc).
