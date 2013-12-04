@@ -905,9 +905,9 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
     if (populate_leg_info(dlg, req, t, DLG_CALLER_LEG,
             &(get_from(req)->tag_value)) != 0) {
         LM_ERR("could not add further info to the dialog\n");
-        shm_free(dlg);
         lock_destroy(dlg->dlg_out_entries_lock);
         lock_dealloc(dlg->dlg_out_entries_lock);
+        shm_free(dlg);
         return -1;
     }
 
