@@ -13,3 +13,9 @@ RPC Exports for debugger
  3. dbg.trace
         Config trace command
 
+ 4. dbg.mod_level
+        Specify module log level
+
+ 5. dbg.reset_msgid
+        Reset msgid on all process
+

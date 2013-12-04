@@ -13,6 +13,18 @@ RPC Exports for htable
  3. htable.get
         Get one key from a hash table.
 
- 4. htable.listTables
+ 4. htable.sets
+        Set one key in a hash table to a string value.
+
+ 5. htable.seti
+        Set one key in a hash table to an integer value.
+
+ 6. htable.listTables
         List all htables.
+
+ 7. htable.reload
+        Reload hash table.
+
+ 8. htable.stats
+        Statistics about htables.
 

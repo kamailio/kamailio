@@ -72,94 +72,83 @@ RPC Exports for core
 19. core.tcp_list
         Returns tcp connections details.
 
-20. core.sctp_options
-        Returns active sctp options. With one parameter it returns the
-        sctp options set in the kernel for a specific
-        socket(debugging), with 0 filled in for non-kernel related
-        options. The parameter can be: "default" | "first" |
-        address[:port] . With no parameters it returns ser's idea of
-        the current sctp options (intended non-debugging use).
-
-21. core.sctp_info
-        Returns sctp related info.
-
-22. core.udp4_raw_info
+20. core.udp4_raw_info
         Returns udp4_raw related info.
 
-23. core.aliases_list
+21. core.aliases_list
         List local SIP server host aliases
 
-24. core.sockets_list
+22. core.sockets_list
         List local SIP server listen sockets
 
-25. dns.mem_info
+23. dns.mem_info
         dns cache memory info.
 
-26. dns.debug
+24. dns.debug
         dns debug  info.
 
-27. dns.debug_all
+25. dns.debug_all
         complete dns debug  dump
 
-28. dns.view
+26. dns.view
         dns cache dump in a human-readable format
 
-29. dns.lookup
+27. dns.lookup
         perform a dns lookup
 
-30. dns.delete_all
+28. dns.delete_all
         deletes all the non-permanent entries from the DNS cache
 
-31. dns.delete_all_force
+29. dns.delete_all_force
         deletes all the entries from the DNS cache including the
         permanent ones
 
-32. dns.add_a
+30. dns.add_a
         adds an A record to the DNS cache
 
-33. dns.add_aaaa
+31. dns.add_aaaa
         adds an AAAA record to the DNS cache
 
-34. dns.add_srv
+32. dns.add_srv
         adds an SRV record to the DNS cache
 
-35. dns.delete_a
+33. dns.delete_a
         deletes an A record from the DNS cache
 
-36. dns.delete_aaaa
+34. dns.delete_aaaa
         deletes an AAAA record from the DNS cache
 
-37. dns.delete_srv
+35. dns.delete_srv
         deletes an SRV record from the DNS cache
 
-38. dns.delete_naptr
+36. dns.delete_naptr
         deletes a NAPTR record from the DNS cache
 
-39. dns.delete_cname
+37. dns.delete_cname
         deletes a CNAME record from the DNS cache
 
-40. dns.delete_txt
+38. dns.delete_txt
         deletes a TXT record from the DNS cache
 
-41. dns.delete_ebl
+39. dns.delete_ebl
         deletes an EBL record from the DNS cache
 
-42. dns.delete_ptr
+40. dns.delete_ptr
         deletes an PTR record from the DNS cache
 
-43. dst_blacklist.mem_info
+41. dst_blacklist.mem_info
         dst blacklist memory usage info.
 
-44. dst_blacklist.debug
+42. dst_blacklist.debug
         dst blacklist  debug  info.
 
-45. dst_blacklist.view
+43. dst_blacklist.view
         dst blacklist dump in human-readable format.
 
-46. dst_blacklist.delete_all
+44. dst_blacklist.delete_all
         Deletes all the entries from the dst blacklist except the
         permanent ones.
 
-47. dst_blacklist.add
+45. dst_blacklist.add
         Adds a new entry to the dst blacklist.
 

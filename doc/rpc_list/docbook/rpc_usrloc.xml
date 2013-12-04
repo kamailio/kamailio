@@ -24,4 +24,63 @@ RPC Exports for usrloc
 </para>
 </section>
 
+<section id="ul.rm"><title>ul.rm</title>
+<para>
+        Delete a address of record including its contacts
+</para>
+<para>
+</para>
+</section>
+
+<section id="ul.rm_contact"><title>ul.rm_contact</title>
+<para>
+        Delete a contact from an AOR record
+</para>
+<para>
+</para>
+</section>
+
+<section id="ul.flush"><title>ul.flush</title>
+<para>
+        Flush the usrloc memory cache to DB
+</para>
+<para>
+</para>
+</section>
+
+<section id="ul.add"><title>ul.add</title>
+<para>
+        Add a new contact for an address of record
+</para>
+<para>
+</para>
+</section>
+
+<section id="ul.db_users"><title>ul.db_users</title>
+<para>
+        Tell number of different unexpired users (AoRs) in database
+        table (db_mode!=0 only)
+</para>
+<para>
+</para>
+</section>
+
+<section id="ul.db_contacts"><title>ul.db_contacts</title>
+<para>
+        Tell number of unexpired contacts in database table (db_mode=3
+        only)
+</para>
+<para>
+</para>
+</section>
+
+<section id="ul.db_expired_contacts"><title>ul.db_expired_contacts</title>
+<para>
+        Tell number of expired contacts in database table (db_mode=3
+        only)
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

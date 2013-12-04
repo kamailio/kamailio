@@ -32,9 +32,41 @@ RPC Exports for htable
 </para>
 </section>
 
+<section id="htable.sets"><title>htable.sets</title>
+<para>
+        Set one key in a hash table to a string value.
+</para>
+<para>
+</para>
+</section>
+
+<section id="htable.seti"><title>htable.seti</title>
+<para>
+        Set one key in a hash table to an integer value.
+</para>
+<para>
+</para>
+</section>
+
 <section id="htable.listTables"><title>htable.listTables</title>
 <para>
         List all htables.
+</para>
+<para>
+</para>
+</section>
+
+<section id="htable.reload"><title>htable.reload</title>
+<para>
+        Reload hash table.
+</para>
+<para>
+</para>
+</section>
+
+<section id="htable.stats"><title>htable.stats</title>
+<para>
+        Statistics about htables.
 </para>
 <para>
 </para>

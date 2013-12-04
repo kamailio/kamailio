@@ -7,3 +7,6 @@ RPC Exports for mtree
  1. mtree.summary
         Print summary of loaded mtree tables
 
+ 2. mtree.reload
+        Reload mtrees from database to memory
+

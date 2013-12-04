@@ -7,31 +7,34 @@ RPC Exports for sca
  1. sca.all_subscriptions
         Documentation missing (sca_rpc_show_all_subscriptions_doc).
 
- 2. sca.show_subscription
+ 2. sca.subscription_count
+        Documentation missing (sca_rpc_subscription_count_doc).
+
+ 3. sca.show_subscription
         Documentation missing (sca_rpc_show_subscription_doc).
 
- 3. sca.subscribers
+ 4. sca.subscribers
         Documentation missing (sca_rpc_show_subscribers_doc).
 
- 4. sca.deactivate_all_subscriptions
+ 5. sca.deactivate_all_subscriptions
         Documentation missing
         (sca_rpc_deactivate_all_subscriptions_doc).
 
- 5. sca.deactivate_subscription
+ 6. sca.deactivate_subscription
         Documentation missing (sca_rpc_deactivate_subscription_doc).
 
- 6. sca.all_appearances
+ 7. sca.all_appearances
         Documentation missing (sca_rpc_show_all_appearances_doc).
 
- 7. sca.show_appearance
+ 8. sca.show_appearance
         Documentation missing (sca_rpc_show_appearance_doc).
 
- 8. sca.seize_appearance
+ 9. sca.seize_appearance
         Documentation missing (sca_rpc_seize_appearance_doc).
 
- 9. sca.update_appearance
+10. sca.update_appearance
         Documentation missing (sca_rpc_update_appearance_doc).
 
-10. sca.release_appearance
+11. sca.release_appearance
         Documentation missing (sca_rpc_release_appearance_doc).
 
