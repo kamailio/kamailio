@@ -1,3 +1,9 @@
+kamailio (4.1.0) unstable; urgency=low
+
+  * update to 4.1.0
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Wed, 04 Dec 2013 11:42:27 +0100
+
 kamailio (4.0.0) unstable; urgency=low
 
   * update to 4.0.0 from upstream
