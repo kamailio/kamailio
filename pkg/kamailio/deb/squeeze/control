@@ -26,6 +26,7 @@ Build-Depends: bison,
                libradiusclient-ng-dev,
                libreadline-dev,
                libsasl2-dev,
+               libsctp-dev,
                libsnmp-dev,
                libsqlite3-dev,
                libssl-dev,
@@ -421,3 +422,24 @@ Description: Kamailio - Websocket Module
  .
  This package contains the module implementing WebSocket transport layer.
 
+Package: kamailio-autheph-modules
+Architecture: any
+Depends: kamailio (= ${binary:Version}),
+         ${shlibs:Depends}
+Description: authentication using ephemeral credentials module for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the ephemeral module for Kamailio.
+
+Package: kamailio-sctp-modules
+Architecture: any
+Depends: kamailio (= ${binary:Version}),
+         ${shlibs:Depends}
+Description: authentication using ephemeral credentials module for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the sctp module for Kamailio.

@@ -29,7 +29,7 @@ EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy
 
 # possible module directories that can appear in MODULES_SP
 # (only used for deducing a module name)
-MDIRS=modules modules_s modules_k
+MDIRS=modules
 
 # modules packaged in separate packages (complete with full modules_* path)
 # with the package name: kamailio-$(module_name)-module
@@ -42,7 +42,8 @@ MODULES_SP=
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils purple memcached tls \
 			   snmpstats carrierroute xmpp cpl lua python geoip \
-			   sqlite ims
+			   sqlite json ims outbound websocket \
+			   autheph sctp
 
 # name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
 LIBDIR ?= lib
