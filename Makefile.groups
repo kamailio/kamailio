@@ -13,7 +13,7 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   mediaproxy mi_datagram mi_fifo mi_rpc mqueue \
 				   nat_traversal nathelper path pike pv ratelimit rr rtimer \
 				   rtpproxy sanity sdpops siputils sl statistics textops \
-				   textopsx tm tmx topoh xlog rtpproxy-ng stun
+				   textopsx tm tmx topoh xlog rtpproxy-ng stun sipt
 
 # - extra used modules, with no extra dependency
 mod_list_extra=avp auth_diameter call_control cnxcc dmq domainpolicy msrp pdb \
@@ -23,7 +23,7 @@ mod_list_extra=avp auth_diameter call_control cnxcc dmq domainpolicy msrp pdb \
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
 			  db_cluster dialog dispatcher domain drouting group \
-			  htable imc matrix msilo mtree p_usrloc pdt permissions \
+			  htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 			  pipelimit prefix_route registrar sipcapture siptrace speeddial \
 			  sqlops uac uri_db userblacklist usrloc
 
@@ -154,6 +154,9 @@ mod_list_java=app_java
 # - modules depending on iptables library
 mod_list_iptrtpproxy=iptrtpproxy
 
+# - modules depending on gzip library
+mod_list_gzcompress=gzcompress
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -175,7 +178,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_iptrtpproxy) $(mod_list_mi_xmlrpc) \
 			   $(mod_list_outbound) $(mod_list_osp) \
 			   $(mod_list_java) $(mod_list_dnssec) \
-			   $(mod_list_sctp) $(mod_list_autheph))
+			   $(mod_list_sctp) $(mod_list_autheph) \
+			   $(mod_list_gzcompress))
 
 
 
@@ -332,6 +336,9 @@ module_group_ksctp=$(mod_list_sctp)
 
 # pkg auth_ephemeral module
 module_group_kautheph=$(mod_list_autheph)
+
+# pkg gzcompress module
+module_group_kgzcompress=$(mod_list_gzcompress)
 
 # list of static modules
 #
