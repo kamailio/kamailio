@@ -162,7 +162,7 @@ int int_to_static_buffer(str* res, int val)
 {
 	char *c;
 	c = int2str(abs(val), &res->len);
-	res->s = get_static_buffer(res->len+(val<0)?1:0);
+	res->s = get_static_buffer(res->len+((val<0)?1:0));
 	if (!res->s) return -1;
 	if (val < 0) {
 		res->s[0] = '-';	
