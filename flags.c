@@ -74,7 +74,7 @@ int flag_in_range( flag_t flag ) {
 			flag, MAX_FLAG );
 		return 0;
 	}
-	if (flag<0) {
+	if ((int)flag<0) {
 		LOG(L_ERR, "ERROR: message flag (%d) must be in range %d..%d\n",
 			flag, 0, MAX_FLAG );
 		return 0;
