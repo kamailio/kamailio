@@ -486,7 +486,7 @@ int capture_mode_set_params (_capture_mode_data_t * n, str * params){
 		}
 
 		else if (pit->name.len == 10 && strncmp (pit->name.s, "table_name", pit->name.len)==0){
-			if ((n->no_tables = parse_table_names(pit->body, &n->table_names))<0){
+			if ((int)(n->no_tables = parse_table_names(pit->body, &n->table_names))<0){
 				LM_ERR("parsing capture_mode: table name parsing failed\n");
 				goto error;
 			}
@@ -781,14 +781,14 @@ static int mod_init(void) {
 	while (c){
 		/*for the default capture_mode, don't add it's name to the stat name*/
 		def = (capture_def && c == capture_def)?1:0;
-		stat_name = (char *)shm_malloc(sizeof (char) * snprintf(NULL, 0 , (def)?"captured_requests":"captured_requests[%.*s]", c->name.len, c->name.s) + 1);
-		sprintf(stat_name, (def)?"captured_requests":"captured_requests[%.*s]", c->name.len, c->name.s);
+		stat_name = (char *)shm_malloc(sizeof (char) * (snprintf(NULL, 0 , (def)?"captured_requests%.*s":"captured_requests[%.*s]", (def)?0:c->name.len, (def)?"":c->name.s) + 1));
+		sprintf(stat_name, (def)?"captured_requests%.*s":"captured_requests[%.*s]", (def)?0:c->name.len, (def)?"":c->name.s);
 		stats[i].name = stat_name;
 		stats[i].flags = 0;
 		stats[i].stat_pointer = &c->sipcapture_req;
 		i++;
-		stat_name = (char *)shm_malloc(sizeof (char) * snprintf(NULL, 0 , (def)?"captured_replies":"captured_replies[%.*s]", c->name.len, c->name.s) + 1);
-		sprintf(stat_name, (def)?"captured_replies":"captured_replies[%.*s]", c->name.len, c->name.s);
+		stat_name = (char *)shm_malloc(sizeof (char) * (snprintf(NULL, 0 , (def)?"captured_replies%.*s":"captured_replies[%.*s]", (def)?0:c->name.len, (def)?"":c->name.s) + 1));
+		sprintf(stat_name, (def)?"captured_replies%.*s":"captured_replies[%.*s]", (def)?0:c->name.len, (def)?"":c->name.s);
 		stats[i].name = stat_name;
 		stats[i].flags = 0;
 		stats[i].stat_pointer = &c->sipcapture_rpl;
