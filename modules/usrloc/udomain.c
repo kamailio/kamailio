@@ -1245,8 +1245,8 @@ int uldb_preload_attrs(udomain_t *_d)
 			}
 
 			if (use_domain) {
-				domain.s = (char*)VAL_STRING(ROW_VALUES(row) + 6);
-				if (VAL_NULL(ROW_VALUES(row)+6) || domain.s==0 || domain.s[0]==0){
+				domain.s = (char*)VAL_STRING(ROW_VALUES(row) + 5);
+				if (VAL_NULL(ROW_VALUES(row)+5) || domain.s==0 || domain.s[0]==0){
 					LM_CRIT("empty domain record for user %.*s...skipping\n",
 							user.len, user.s);
 					continue;
