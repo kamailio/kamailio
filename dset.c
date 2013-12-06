@@ -90,7 +90,7 @@ branch_t *get_sip_branch(int idx)
 		return NULL;
 	if(idx<0)
 	{
-		if(nr_branches + idx >= 0)
+		if((int)nr_branches + idx >= 0)
 			return &branches[nr_branches+idx];
 		return NULL;
 	}
@@ -109,7 +109,7 @@ int drop_sip_branch(int idx)
 {
 	if(nr_branches==0 || idx>=nr_branches)
 		return 0;
-	if(idx<0 && nr_branches+idx<0)
+	if(idx<0 && (int)nr_branches+idx<0)
 		return 0;
 	/* last branch */
 	if(idx==nr_branches-1)

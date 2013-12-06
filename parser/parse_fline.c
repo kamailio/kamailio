@@ -233,7 +233,7 @@ error:
 	if (prn) {
 		for (t=0; t<offset; t++)
 			if (*(buffer+t)) *(prn+t)=*(buffer+t);
-			else *(prn+t)='°';
+			else *(prn+t)=176; /* '°' */
 		LOG(L_DBG, "parsed so far: %.*s\n", offset, ZSW(prn) );
 		pkg_free( prn );
 	};

@@ -1575,7 +1575,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 		 */
 		/* no need for Content-Length if it's and UDP packet and
 		 * it hasn't Content-Length already */
-		if ((msg->content_length==0)){
+		if (msg->content_length==0){
 		    /* content-length doesn't exist, append it */
 			/* msg->unparsed should point just before the final crlf
 			 * - whole message was parsed by the above parse_headers
