@@ -13,14 +13,15 @@
 static struct TopListItem_t *top_list_root = 0;
 static struct TopListItem_t *top_list_iter = 0;
 
-static char buff[128];
+#define PIKE_BUFF_SIZE	128
+static char buff[PIKE_BUFF_SIZE];
 
 struct TopListItem_t *pike_top_get_root() { return top_list_root; }
 
 char *pike_top_print_addr( unsigned char *ip, int iplen, char *buff, int buffsize )
 {
 	unsigned short *ipv6_ptr = (unsigned short *)ip;
-	memset( buff, 0, sizeof(buff));
+	memset(buff, 0, PIKE_BUFF_SIZE*sizeof(char));
 	
 	DBG("pike:top:print_addr(iplen: %d, buffsize: %d)", iplen, buffsize);
 	
