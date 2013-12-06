@@ -757,7 +757,7 @@ process:
 			ERR("File separator missing\n");
 			goto consume;
 		}
-		if ((file_sep == context.method)) {
+		if (file_sep == context.method) {
 			ERR("Empty command\n");
 			goto consume;
 		}
