@@ -42,7 +42,7 @@ SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 include ../../Makefile.modules
 
-install_module_custom:
+install-cfg:
 	echo "installing mibs ..."
 	mkdir -p $(INSTALLMIBDIR)
 	$(INSTALL_CFG) mibs/KAMAILIO* $(INSTALLMIBDIR)
