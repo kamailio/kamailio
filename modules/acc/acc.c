@@ -301,7 +301,7 @@ int acc_log_request( struct sip_msg *rq)
 			t = gmtime(&acc_env.ts);
 		}
 		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
-					acc_time_format, t)<0) {
+					acc_time_format, t)<=0) {
 			acc_time_format_buf[0] = '\0';
 		}
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%s%s",
@@ -463,7 +463,7 @@ int acc_db_request( struct sip_msg *rq)
 			t = gmtime(&acc_env.ts);
 		}
 		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
-					acc_time_format, t)<0) {
+					acc_time_format, t)<=0) {
 			acc_time_format_buf[0] = '\0';
 		}
 		VAL_STRING(db_vals+(m++)) = acc_time_format_buf;
