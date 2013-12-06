@@ -191,12 +191,12 @@ int reload_address_table(void)
 		//	goto dberror;
 		} else {
 			if(ipa->af == AF_INET6) {
-				if(mask<0 || mask>128) {
+				if((int)mask<0 || mask>128) {
 					LM_DBG("failure during IP mask check for v6\n");
 					goto dberror;
 				}
 			} else {
-				if(mask<0 || mask>32) {
+				if((int)mask<0 || mask>32) {
 					LM_DBG("failure during IP mask check for v4\n");
 					goto dberror;
 				}
