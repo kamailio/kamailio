@@ -2849,12 +2849,12 @@ error:
 
 int pv_parse_flag_param(pv_spec_p sp, str *in)
 {
-	unsigned int n;
+	int n;
 
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
 
-	if (str2int(in, &n) != 0)
+	if (str2sint(in, &n) != 0)
 	{
 		if ((n = get_flag_no(in->s, in->len)) < 0)
 		{
