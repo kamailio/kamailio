@@ -55,7 +55,7 @@ struct cfg_group_maxfwd {
 };
 
 static struct cfg_group_maxfwd default_maxfwd_cfg = {
-	max_limit:16
+	.max_limit=16
 };
 
 static void *maxfwd_cfg = &default_maxfwd_cfg;
