@@ -168,8 +168,8 @@ int sdp_remove_str_codec_id_attrs(sip_msg_t* msg,
 	payload = sdp_stream->payload_attr;
 	while (payload) {
 		LM_DBG("a= ... for codec %.*s/%.*s\n",
-			payload->rtp_payload.len, payload->rtp_payload.s,
-			payload->rtp_enc.len, payload->rtp_enc.s);
+				payload->rtp_payload.len, payload->rtp_payload.s,
+				payload->rtp_enc.len, payload->rtp_enc.s);
 		if(rm_codec->len==payload->rtp_payload.len
 				&& strncmp(payload->rtp_payload.s, rm_codec->s,
 					rm_codec->len)==0) {
@@ -181,8 +181,8 @@ int sdp_remove_str_codec_id_attrs(sip_msg_t* msg,
 							aline.len, 0);
 					if (anchor == NULL) {
 						LM_ERR("failed to remove [%.*s] inside [%.*s]\n",
-							rm_codec->len, rm_codec->s,
-							aline.len, aline.s);
+								rm_codec->len, rm_codec->s,
+								aline.len, aline.s);
 						return -1;
 					}
 				}
@@ -195,8 +195,8 @@ int sdp_remove_str_codec_id_attrs(sip_msg_t* msg,
 							aline.len, 0);
 					if (anchor == NULL) {
 						LM_ERR("failed to remove [%.*s] inside [%.*s]\n",
-							rm_codec->len, rm_codec->s,
-							aline.len, aline.s);
+								rm_codec->len, rm_codec->s,
+								aline.len, aline.s);
 						return -1;
 					}
 				}
@@ -226,7 +226,7 @@ int sdp_codec_in_str(str *allcodecs, str* codec, char delim)
 			if(codec->len <= allcodecs->len-i) {
 				if(strncmp(&allcodecs->s[i], codec->s, codec->len)==0) {
 					if(&allcodecs->s[i+codec->len]
-									== &allcodecs->s[allcodecs->len]
+							== &allcodecs->s[allcodecs->len]
 							|| allcodecs->s[i+codec->len] == delim) {
 						/* match */
 						return 1;
@@ -263,12 +263,12 @@ int sdp_remove_str_codec_id(sip_msg_t* msg, str *allcodecs, str* rmcodec)
 			if(rmcodec->len <= allcodecs->len-i) {
 				if(strncmp(&allcodecs->s[i], rmcodec->s, rmcodec->len)==0) {
 					if(&allcodecs->s[i+rmcodec->len]
-									== &allcodecs->s[allcodecs->len]
+							== &allcodecs->s[allcodecs->len]
 							|| allcodecs->s[i+rmcodec->len] == ' ') {
 						/* match - remove also the space before codec id */
 						LM_DBG("found codec [%.*s] inside [%.*s]\n",
-									rmcodec->len, rmcodec->s,
-									allcodecs->len, allcodecs->s);
+								rmcodec->len, rmcodec->s,
+								allcodecs->len, allcodecs->s);
 						anchor = del_lump(msg, &allcodecs->s[i-1] - msg->buf,
 								rmcodec->len+1, 0);
 						if (anchor == NULL) {
@@ -332,8 +332,8 @@ int sdp_remove_codecs_by_id(sip_msg_t* msg, str* codecs)
 			if(!sdp_stream) break;
 
 			LM_DBG("stream %d of %d - payloads [%.*s]\n",
-				sdp_stream_num, sdp_session_num, 
-				sdp_stream->payloads.len, sdp_stream->payloads.s);
+					sdp_stream_num, sdp_session_num, 
+					sdp_stream->payloads.len, sdp_stream->payloads.s);
 			sdp_codecs = sdp_stream->payloads;
 			tmp_codecs = *codecs;
 			while(str_find_token(&tmp_codecs, &rm_codec, ',')==0
@@ -598,8 +598,8 @@ int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs, str *media)
 			if(!sdp_stream) break;
 
 			LM_DBG("stream %d of %d - payloads [%.*s]\n",
-				sdp_stream_num, sdp_session_num,
-				sdp_stream->payloads.len, sdp_stream->payloads.s);
+					sdp_stream_num, sdp_session_num,
+					sdp_stream->payloads.len, sdp_stream->payloads.s);
 			if((media==NULL)
 					|| (media->len==sdp_stream->media.len
 						&& strncasecmp(sdp_stream->media.s, media->s,
@@ -615,8 +615,8 @@ int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs, str *media)
 
 					if(sdp_codec_in_str(codecs, &rm_codec, ',')==0) {
 						LM_DBG("codecs [%.*s] - remove [%.*s]\n",
-							sdp_codecs.len, sdp_codecs.s,
-							rm_codec.len, rm_codec.s);
+								sdp_codecs.len, sdp_codecs.s,
+								rm_codec.len, rm_codec.s);
 						sdp_remove_str_codec_id(msg, &sdp_codecs, &rm_codec);
 						sdp_remove_str_codec_id_attrs(msg, sdp_stream, &rm_codec);
 					}
@@ -761,11 +761,11 @@ static int sdp_with_media(sip_msg_t *msg, str *media)
 			if(!sdp_stream) break;
 
 			LM_DBG("stream %d of %d - media [%.*s]\n",
-				sdp_stream_num, sdp_session_num,
-				sdp_stream->media.len, sdp_stream->media.s);
+					sdp_stream_num, sdp_session_num,
+					sdp_stream->media.len, sdp_stream->media.s);
 			if(media->len==sdp_stream->media.len
 					&& strncasecmp(sdp_stream->media.s, media->s,
-							media->len)==0)
+						media->len)==0)
 				return 1;
 			sdp_stream_num++;
 		}
@@ -838,16 +838,16 @@ static int sdp_remove_media(sip_msg_t *msg, str *media)
 			if(!sdp_stream) break;
 
 			LM_DBG("stream %d of %d - media [%.*s]\n",
-				sdp_stream_num, sdp_session_num,
-				sdp_stream->media.len, sdp_stream->media.s);
+					sdp_stream_num, sdp_session_num,
+					sdp_stream->media.len, sdp_stream->media.s);
 			if(media->len==sdp_stream->media.len
 					&& strncasecmp(sdp_stream->media.s, media->s,
-							media->len)==0)
+						media->len)==0)
 			{
 				/* found - remove */
 				LM_DBG("removing media stream: %.*s", media->len, media->s);
 				nxt_stream = get_sdp_stream(msg, sdp_session_num,
-								sdp_stream_num+1);
+						sdp_stream_num+1);
 				/* skip back 'm=' */
 				dstart = sdp_stream->media.s - 2;
 				if(!nxt_stream) {
@@ -860,7 +860,7 @@ static int sdp_remove_media(sip_msg_t *msg, str *media)
 				anchor = del_lump(msg, dstart - msg->buf, dlen, 0);
 				if (anchor == NULL) {
 					LM_ERR("failed to remove media type [%.*s]\n",
-						 media->len, media->s);
+							media->len, media->s);
 					return -1;
 				}
 
@@ -930,11 +930,11 @@ static int sdp_with_transport(sip_msg_t *msg, str *transport)
 			if(!sdp_stream) break;
 
 			LM_DBG("stream %d of %d - transport [%.*s]\n",
-				sdp_stream_num, sdp_session_num,
-				sdp_stream->transport.len, sdp_stream->transport.s);
+					sdp_stream_num, sdp_session_num,
+					sdp_stream->transport.len, sdp_stream->transport.s);
 			if(transport->len==sdp_stream->transport.len
 					&& strncasecmp(sdp_stream->transport.s, transport->s,
-							transport->len)==0)
+						transport->len)==0)
 				return 1;
 			sdp_stream_num++;
 		}
@@ -1007,16 +1007,16 @@ static int sdp_remove_transport(sip_msg_t *msg, str *transport)
 			if(!sdp_stream) break;
 
 			LM_DBG("stream %d of %d - transport [%.*s]\n",
-				sdp_stream_num, sdp_session_num,
-				sdp_stream->transport.len, sdp_stream->transport.s);
+					sdp_stream_num, sdp_session_num,
+					sdp_stream->transport.len, sdp_stream->transport.s);
 			if(transport->len==sdp_stream->transport.len
 					&& strncasecmp(sdp_stream->transport.s, transport->s,
-							transport->len)==0)
+						transport->len)==0)
 			{
 				/* found - remove */
 				LM_DBG("removing transport stream: %.*s", transport->len, transport->s);
 				nxt_stream = get_sdp_stream(msg, sdp_session_num,
-								sdp_stream_num+1);
+						sdp_stream_num+1);
 				/* skip back 'm=' */
 				dstart = sdp_stream->media.s - 2;
 				if(!nxt_stream) {
@@ -1029,7 +1029,7 @@ static int sdp_remove_transport(sip_msg_t *msg, str *transport)
 				anchor = del_lump(msg, dstart - msg->buf, dlen, 0);
 				if (anchor == NULL) {
 					LM_ERR("failed to remove transport type [%.*s]\n",
-						 transport->len, transport->s);
+							transport->len, transport->s);
 					return -1;
 				}
 
@@ -1111,8 +1111,8 @@ int sdp_with_codecs_by_id(sip_msg_t* msg, str* codecs)
 			if(!sdp_stream) break;
 
 			LM_DBG("stream %d of %d - payloads [%.*s]\n",
-				sdp_stream_num, sdp_session_num,
-				sdp_stream->payloads.len, sdp_stream->payloads.s);
+					sdp_stream_num, sdp_session_num,
+					sdp_stream->payloads.len, sdp_stream->payloads.s);
 			sdp_codecs = sdp_stream->payloads;
 			tmp_codecs = *codecs;
 			while(str_find_token(&tmp_codecs, &fnd_codec, ',')==0
@@ -1123,13 +1123,13 @@ int sdp_with_codecs_by_id(sip_msg_t* msg, str* codecs)
 
 				if(sdp_codec_in_str(&sdp_codecs, &fnd_codec, ' ')==0) {
 					LM_DBG("codecs [%.*s] - not found [%.*s]\n",
-						sdp_codecs.len, sdp_codecs.s,
-						fnd_codec.len, fnd_codec.s);
+							sdp_codecs.len, sdp_codecs.s,
+							fnd_codec.len, fnd_codec.s);
 					notfound = 1;
 				} else {
 					LM_DBG("codecs [%.*s] - found [%.*s]\n",
-						sdp_codecs.len, sdp_codecs.s,
-						fnd_codec.len, fnd_codec.s);
+							sdp_codecs.len, sdp_codecs.s,
+							fnd_codec.len, fnd_codec.s);
 					foundone = 1;
 				}
 			}
@@ -1250,7 +1250,7 @@ static int w_sdp_get(sip_msg_t* msg, char *avp)
 	str s;
 	pv_spec_t *avp_spec = NULL;
 	int sdp_missing=1;
-	
+
 	s.s = avp; s.len = strlen(s.s);
 	if (pv_locate_name(&s) != s.len)
 	{
@@ -1275,7 +1275,7 @@ static int w_sdp_get(sip_msg_t* msg, char *avp)
 		return -1;
 	}
 	sdp = (sdp_info_t*)msg->body;
-	
+
 	if (sdp_missing) {
 		LM_DBG("No SDP\n");
 		return -2;
@@ -1286,10 +1286,10 @@ static int w_sdp_get(sip_msg_t* msg, char *avp)
 	}
 	if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)
 	{
-	  LM_ERR("Failed to add SDP avp");
-	  return -1;
+		LM_ERR("Failed to add SDP avp");
+		return -1;
 	}
-	
+
 	return 1;
 }
 
@@ -1314,16 +1314,16 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 	char* p = NULL;
 	str s;
 	str sline;
-        int_str avp_val;
-        int_str avp_name;
-        pv_spec_t *avp_spec = NULL;
-        static unsigned short avp_type = 0;
+	int_str avp_val;
+	int_str avp_name;
+	pv_spec_t *avp_spec = NULL;
+	static unsigned short avp_type = 0;
 	int sdp_missing=1;
 
 	if (s_line == NULL || strlen(s_line) <= 0)
 	{
 		LM_ERR("Search string is null or empty\n");
-		    return -1;
+		return -1;
 	}
 	sline.s = s_line;
 	sline.len = strlen(s_line);
@@ -1337,10 +1337,10 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 
 	sdp = (sdp_info_t *)msg->body;
 
-        if (sdp_missing || sdp == NULL)
+	if (sdp_missing || sdp == NULL)
 	{
-                LM_DBG("No SDP\n");
-                return -2;
+		LM_DBG("No SDP\n");
+		return -2;
 	}
 
 	body.s = sdp->raw_sdp.s;
@@ -1360,29 +1360,29 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 	if (avp == NULL || strlen(avp) <= 0)
 	{
 		LM_ERR("avp variable is null or empty\n");
-		    return -1;
+		return -1;
 	}
 
 	s.s = avp;
 	s.len = strlen(s.s);
 
 	if (pv_locate_name(&s) != s.len)
-        {
-                LM_ERR("invalid parameter\n");
-                return -1;
-        }
+	{
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
 
-        if (((avp_spec = pv_cache_get(&s)) == NULL)
-                        || avp_spec->type!=PVT_AVP) {
-                LM_ERR("malformed or non AVP %s AVP definition\n", avp);
-                return -1;
-        }
+	if (((avp_spec = pv_cache_get(&s)) == NULL)
+			|| avp_spec->type!=PVT_AVP) {
+		LM_ERR("malformed or non AVP %s AVP definition\n", avp);
+		return -1;
+	}
 
-        if(pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type)!=0)
-        {
-                LM_ERR("[%s]- invalid AVP definition\n", avp);
-                return -1;
-        }
+	if(pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type)!=0)
+	{
+		LM_ERR("[%s]- invalid AVP definition\n", avp);
+		return -1;
+	}
 
 	p = find_sdp_line(body.s, body.s+body.len, sline.s[0]);
 	while (p != NULL)
@@ -1395,21 +1395,21 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 
 		if (strncmp(line.s, sline.s, sline.len) == 0)
 		{
-            		avp_val.s.s = line.s;
-            		avp_val.s.len = line.len;
+			avp_val.s.s = line.s;
+			avp_val.s.len = line.len;
 
-			// remove ending \r\n if exists
+			/* skip ending \r\n if exists */
 			if (avp_val.s.s[line.len-2] == '\r' && avp_val.s.s[line.len-1] == '\n')
 			{
-			    avp_val.s.s[line.len-2] = '\0';
-			    avp_val.s.len -= 2;
+				/* add_avp() clones to shm and adds 0-terminating char */
+				avp_val.s.len -= 2;
 			}
 
-    			if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)
-    			{
-        		    LM_ERR("Failed to add SDP line avp");
-        		    return -1;
-    			}
+			if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)
+			{
+				LM_ERR("Failed to add SDP line avp");
+				return -1;
+			}
 
 			return 1;
 		}
