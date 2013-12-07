@@ -488,14 +488,24 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 		il->next = (struct instance_list *)0;
 		set_instance(msg, &instance);
 	} else {
+		instance.s = 0;
 		instance.len = 0;
 	}
 
 	vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
-	ruid = vavp->val.v.s;
-
+	if (vavp != NULL) {
+		ruid = vavp->val.v.s;
+	} else {
+		ruid.s = 0;
+		ruid.len = 0;
+	}
 	vavp = xavp_get(&ua_name, xavp->val.v.xavp);
-	location_ua = vavp->val.v.s;
+	if (vavp != NULL) {
+		location_ua = vavp->val.v.s;
+	} else {
+		location_ua.s = 0;
+		location_ua.len = 0;
+	}
 
 	/* Rewrite Request-URI */
 	rewrite_uri(msg, &uri);
@@ -582,10 +592,20 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 		flags = vavp->val.v.i;
 
 		vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
-		ruid = vavp->val.v.s;
+		if (vavp != NULL) {
+			ruid = vavp->val.v.s;
+		} else {
+			ruid.s = 0;
+			ruid.len = 0;
+		}
 
 		vavp = xavp_get(&ua_name, xavp->val.v.xavp);
-		location_ua = vavp->val.v.s;
+		if (vavp != NULL) {
+			location_ua = vavp->val.v.s;
+		} else {
+			location_ua.s = 0;
+			location_ua.len = 0;
+		}
 
 		vavp = xavp_get(&instance_name, xavp->val.v.xavp);
 		if (vavp != NULL) {
@@ -623,6 +643,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 				il = ilp;
 			}
 		} else {
+			instance.s = 0;
 			instance.len = 0;
 		}
 
@@ -632,7 +653,8 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 				dst_uri.len, (dst_uri.len > 0)?dst_uri.s:"",
 				path.len, (path.len>0)?path.s:"",
 				instance.len, (instance.len>0)?instance.s:"",
-				ruid.len, ruid.s, location_ua.len, location_ua.s);
+				ruid.len, (ruid.len>0)?ruid.s:"",
+				location_ua.len, (location_ua.len>0)?location_ua.s:"");
 		if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
 					&ruid, &location_ua) != 1) {
 			LM_ERR("appending branch failed\n");
