@@ -1,7 +1,7 @@
 /** 
  * Functions to force or check the service-routes
  *
- * Copyright (c) 2012 Carsten Bock, ng-voice GmbH
+ * Copyright (c) 2013 Carsten Bock, ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -112,16 +112,49 @@ static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr)
  */
 pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 	ppublic_t * p;
+	contact_body_t *b = 0;
 	str received_host = {0, 0};
+	contact_t *ct;
 	char srcip[50];	
 
 	if (_m->id != current_msg_id) {
 		current_msg_id = _m->id;
 		c = NULL;
-		received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-		received_host.s = srcip;
-		if (ul.get_pcontact_by_src(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, &c) == 1)
-			LM_WARN("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
+
+		b = cscf_parse_contacts(_m);
+
+		if (!b || !b->contacts) {
+			LM_DBG("No contacts found\n");
+			return NULL;
+		}
+
+		for (ct = b->contacts; ct; ct = ct->next) {
+			if (ul.get_pcontact(_d, &ct->uri, &c) == 1) {
+				if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _m->rcv.src_port) && (c->received_proto == _m->rcv.proto)) {
+					received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+					received_host.s = srcip;
+					LM_DBG("Received host len %d (search %d)\n", c->received_host.len, received_host.len);
+					// Then check the length:
+					if (c->received_host.len == received_host.len) {
+						LM_DBG("Received host %.*s (search %.*s)\n",
+							c->received_host.len, c->received_host.s,
+							received_host.len, received_host.s);
+
+						// Finally really compare the "received_host"
+						if (!memcmp(c->received_host.s, received_host.s, received_host.len))
+							break;
+						c = NULL;
+					}
+				}
+			}
+		}
+		if (c == NULL) {
+			LM_WARN("Contact not found based on Contact, trying IP/Port/Proto\n");
+			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+			received_host.s = srcip;
+			if (ul.get_pcontact_by_src(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, &c) == 1)
+				LM_DBG("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
+		}
 	}
 	asserted_identity = NULL;
 	if (c) {
@@ -370,9 +403,7 @@ error:
  * Check, if source is registered.
  */
 int is_registered(struct sip_msg* _m, udomain_t* _d) {
-	if (getContactP(_m, _d) != NULL) return 1;		//I think Carsten wrote this but IMO it should be based on Via, not received IP
-//	if (getContactP_from_via(_m, _d) != NULL) return 1;	// It was really intended that way :-)
-
+	if (getContactP(_m, _d) != NULL) return 1;
 	return -1;	
 }
 
@@ -390,9 +421,26 @@ str * get_asserted_identity(struct sip_msg* _m) {
  * Add proper asserted identies based on registration
  */
 int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity) {
+	// Public identities of this contact
+	struct ppublic * p;
+
+	if (getContactP(_m, _d) != NULL) {
+		for (p = c->head; p; p = p->next) {
+			LM_DBG("Public identity: %.*s\n", p->public_identity.len, p->public_identity.s);
+			/* Check length: */
+			if (identity.len == p->public_identity.len) {
+				/* Check contents: */
+				if (strncasecmp(identity.s, p->public_identity.s, identity.len) == 0) {
+					LM_DBG("Match!\n");
+					return 1;
+				}
+			} else LM_DBG("Length does not match.\n");
+		}
+	}
+	LM_WARN("Contact not found based on Contact, trying IP/Port/Proto\n");
 	str received_host = {0, 0};
 	char srcip[50];	
-
+	
 	received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 	received_host.s = srcip;
 	if (ul.assert_identity(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, &identity) == 0)
