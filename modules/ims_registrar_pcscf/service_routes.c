@@ -129,7 +129,7 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 		}
 
 		for (ct = b->contacts; ct; ct = ct->next) {
-			if (ul.get_pcontact(_d, &ct->uri, &c) == 1) {
+			if (ul.get_pcontact(_d, &ct->uri, &c) == 0) {
 				if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _m->rcv.src_port) && (c->received_proto == _m->rcv.proto)) {
 					received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 					received_host.s = srcip;
