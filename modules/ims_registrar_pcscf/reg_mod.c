@@ -394,12 +394,13 @@ static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri)
 }
 
 /*
- * Returns the current RTP-Statistics from the RTP-Proxy
+ * Get the asserted Identity for the current user
  */
 static int
 pv_get_asserted_identity_f(struct sip_msg *msg, pv_param_t *param,
 		  pv_value_t *res)
 {
-    str * ret_val = get_asserted_identity(msg);
-    return pv_get_strval(msg, param, res, ret_val);
+	str * ret_val = get_asserted_identity(msg);
+	if (ret_val != NULL) return pv_get_strval(msg, param, res, ret_val);
+	else return -1;
 }
