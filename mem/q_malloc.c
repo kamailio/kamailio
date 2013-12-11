@@ -473,6 +473,12 @@ void qm_free(struct qm_block* qm, void* p)
 	MDBG("qm_free: freeing frag. %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
 #endif
+	if (unlikely(f->u.is_free)){
+		LM_INFO("freeing a free fragment (%p/%p) - ignore\n",
+				f, p);
+		return;
+	}
+
 	size=f->size;
 	qm->used-=size;
 	qm->real_used-=size;
