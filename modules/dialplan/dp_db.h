@@ -48,7 +48,7 @@
 #define ATTRS_COL				"attrs"
 
 
-#define DP_TABLE_VERSION		1
+#define DP_TABLE_VERSION		2
 #define DP_TABLE_COL_NO 		8
 
 extern str dp_db_url;

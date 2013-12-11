@@ -9,7 +9,7 @@
 
 <table id="dialplan" xmlns:db="http://docbook.org/ns/docbook">
     <name>dialplan</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the dialplan module for the translation rules. More information is available at: &KAMAILIO_MOD_DOC;dialplan.html
@@ -71,14 +71,14 @@
     <column id="repl_exp">
         <name>repl_exp</name>
         <type>string</type>
-        <size>32</size>
+        <size>64</size>
         <description>Replacement expresion (sed like).</description>
     </column>
 
     <column id="attrs">
         <name>attrs</name>
         <type>string</type>
-        <size>32</size>
+        <size>64</size>
         <description>General attributes string to be returned in case of rule matching.</description>
     </column>
  
