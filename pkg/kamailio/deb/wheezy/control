@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Jon Bonilla <manwe@aholab.ehu.es>
 Build-Depends: bison,
                debhelper (>= 5),
-               default-jdk,
+               gcj-jdk,
                docbook-xml,
                dpatch,
                dpkg-dev (>= 1.13.19),
@@ -478,7 +478,7 @@ Description: authentication using ephemeral credentials module for Kamailio
 Package: kamailio-java-modules
 Architecture: any
 Depends: kamailio (= ${Source-Version}),
-         default-jre,
+         gcj-jre,
          ${shlibs:Depends}
 Description: contains the app_java module
  Kamailio is a very fast and flexible SIP (RFC3261)
