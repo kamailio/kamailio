@@ -56,6 +56,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "ims_getters.h"
+#include "../../parser/parse_ppi_pai.h"
 
 
 /**
@@ -389,45 +390,13 @@ str s_asserted_identity={"P-Asserted-Identity",19};
  */
 str cscf_get_asserted_identity(struct sip_msg *msg)
 {
-	name_addr_t id;
-	struct hdr_field *h;
-	rr_t *r;
-	memset(&id,0,sizeof(name_addr_t));
-	if (!msg) return id.uri;
-	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
-		return id.uri;
+	str uri = {0,0};
+	if (!msg) return uri;
+	if((parse_pai_header(msg) == 0) && (msg->pai) && (msg->pai->parsed)) {
+		to_body_t *pai = get_pai(msg)->id;
+		return pai->uri;
 	}
-	h = msg->headers;
-	while(h)
-	{
-		if (h->name.len == s_asserted_identity.len  &&
-				strncasecmp(h->name.s,s_asserted_identity.s,s_asserted_identity.len)==0)
-		{
-			if (parse_rr(h)<0){
-				//This might be an old client
-				LM_CRIT("WARN:cscf_get_asserted_identity: P-Asserted-Identity header must contain a Nameaddr!!! Fix the client!\n");
-				id.name.s = h->body.s;
-				id.name.len = 0;
-				id.len = h->body.len;
-				id.uri = h->body;
-				while(id.uri.len && (id.uri.s[0]==' ' || id.uri.s[0]=='\t' || id.uri.s[0]=='<')){
-					id.uri.s = id.uri.s+1;
-					id.uri.len --;
-				}
-				while(id.uri.len && (id.uri.s[id.uri.len-1]==' ' || id.uri.s[id.uri.len-1]=='\t' || id.uri.s[id.uri.len-1]=='>')){
-					id.uri.len--;
-				}
-				return id.uri;	
-			}
-			r = (rr_t*) h->parsed;
-			id = r->nameaddr; 
-			free_rr(&r);
-			h->parsed=r;
-			return id.uri;
-		}
-		h = h->next;
-	}
-	return id.uri;
+	return uri;
 }
 
 static str phone_context_s={";phone-context=",15};
