@@ -1093,7 +1093,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
-		LOG(L_WARN,"Warning: run_branch_failure_handlers: no UAC support (%d, %d) \n",
+		LOG(L_WARN,"no UAC support (%d, %d) \n",
 			on_branch_failure, t->tmcb_hl.reg_types);
 		return 0;
 	}
@@ -1101,13 +1101,13 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	/* don't start faking anything if we don't have to */
 	if (unlikely((on_branch_failure < 0) && !has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE))) {
 		LOG(L_WARN,
-			"Warning: run_failure_handlers: no branch_failure handler (%d, %d)\n",
+			"no branch_failure handler (%d, %d)\n",
 			on_branch_failure, t->tmcb_hl.reg_types);
 		return 1;
 	}
 
 	if (!fake_req(&faked_req, shmem_msg, extra_flags, &t->uac[picked_branch])) {
-		LOG(L_ERR, "ERROR: run_branch_failure_handlers: fake_req failed\n");
+		LOG(L_ERR, "fake_req failed\n");
 		return 0;
 	}
 	/* fake also the env. conforming to the fake msg */
@@ -1124,7 +1124,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		if (exec_pre_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE)>0) {
 			/* run a branch_failure_route action if some was marked */
 			if (run_top_route(event_rt.rlist[on_branch_failure], &faked_req, 0)<0)
-				LOG(L_ERR, "ERROR: run_branch_failure_handlers: Error in run_top_route\n");
+				LOG(L_ERR, "error in run_top_route\n");
 			exec_post_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE);
 		}
 		/* update message flags, if changed in branch_failure route */
@@ -1357,9 +1357,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* also append the current reply to the transaction to
 		 * make it available in failure routes - a kind of "fake"
 		 * save of the final reply per branch */
-		Trans->uac[branch].reply = reply;
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_BRANCH_FAILURE_RO|TMCB_ON_BRANCH_FAILURE)
-						|| (Trans->uac[picked_branch].on_branch_failure) )) {
+						|| (Trans->uac[branch].on_branch_failure) )) {
+			Trans->uac[branch].reply = reply;
 			extra_flags=
 				((Trans->uac[branch].request.flags & F_RB_TIMEOUT)?
 							FL_TIMEOUT:0) | 
@@ -1369,6 +1369,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			picked_branch = branch;
 			run_branch_failure_handlers( Trans, Trans->uac[branch].reply,
 									new_code, extra_flags);
+			Trans->uac[branch].reply = 0;
 		}
 
 
