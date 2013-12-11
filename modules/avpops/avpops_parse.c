@@ -129,6 +129,14 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 				goto error;
 			}
 		}
+		/* no pv to lookup, create one to store flags details */
+		dbp->a.u.sval = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+		if(dbp->a.u.sval==NULL)
+		{
+			LM_ERR("no more pkg\n");
+			goto error;
+		}
+		memset(dbp->a.u.sval, 0, sizeof(pv_spec_t));
 		dbp->a.u.sval->pvp.pvn.u.isname.type |= (flags<<8)&0xff00;
 		dbp->a.type = AVPOPS_VAL_NONE;
 	} else {
