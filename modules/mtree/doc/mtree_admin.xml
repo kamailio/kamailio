@@ -421,6 +421,40 @@ mt_match("mytree", "$rU", "0");
 		_empty_line_
 		</programlisting>
     </section>
+
+    <section>
+		<title>
+		<function moreinfo="none">mt_match</function>
+		</title>
+		<para>
+		Match prefix value against mtree.
+		</para>
+		<para>
+		Name: <emphasis>mt_match</emphasis>
+		</para>
+		<para>Parameters: <emphasis>3</emphasis></para>
+		<itemizedlist>
+            <listitem>
+            <para><emphasis>Name of mtree</emphasis></para>
+            </listitem>
+            <listitem>
+            <para><emphasis>Prefix to match</emphasis></para>
+            </listitem>
+            <listitem>
+            <para><emphasis>Mode of matching</emphasis></para>
+            </listitem>
+        </itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:mt_match:_reply_fifo_file_
+		_mtree_
+		_prefix_
+		_mode_
+		_empty_line_
+		</programlisting>
+    </section>
     </section><!-- MI commands -->
 	<section>
 	<title>RPC Commands</title>
@@ -443,6 +477,20 @@ mt_match("mytree", "$rU", "0");
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>_mtree_</para> - name of mtree or empty string meaning all mtrees</listitem>	  
+		</itemizedlist>
+        </section>
+    <section>
+		<title>
+		<function moreinfo="none">mtree.match</function>
+		</title>
+		<para>
+		Match prefix value against mtree
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_</para> - name of mtree</listitem>
+			<listitem><para>_prefix_</para> - match prefix</listitem>
+			<listitem><para>_mode_</para> - matching mode</listitem>
 		</itemizedlist>
         </section>
     	</section><!-- RPC commands -->

@@ -20,9 +20,9 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright (c) 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
 
-   Copyright (c) 2011 Juha Heinanen
+   Copyright © 2011 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -60,11 +60,13 @@ Juha Heinanen
               5.1. mt_list
               5.2. mt_reload
               5.3. mt_summary
+              5.4. mt_match
 
         6. RPC Commands
 
               6.1. mtree.summary
               6.2. mtree.reload
+              6.3. mtree.match
 
    List of Examples
 
@@ -118,11 +120,13 @@ Chapter 1. Admin Guide
         5.1. mt_list
         5.2. mt_reload
         5.3. mt_summary
+        5.4. mt_match
 
    6. RPC Commands
 
         6.1. mtree.summary
         6.2. mtree.reload
+        6.3. mtree.match
 
 1. Overview
 
@@ -316,7 +320,7 @@ modparam("mtree", "mt_allow_duplicates", 1)
 
    4.1. mt_match(mtree, pv, mode)
 
-4.1.  mt_match(mtree, pv, mode)
+4.1. mt_match(mtree, pv, mode)
 
    Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
    of 'mode' is NOT 2, sets a value of the longest matching prefix to
@@ -336,8 +340,9 @@ mt_match("mytree", "$rU", "0");
    5.1. mt_list
    5.2. mt_reload
    5.3. mt_summary
+   5.4. mt_match
 
-5.1.  mt_list
+5.1. mt_list
 
    List content of a tree.
 
@@ -351,7 +356,7 @@ mt_match("mytree", "$rU", "0");
                 _mtname_
                 _empty_line_
 
-5.2.  mt_reload
+5.2. mt_reload
 
    Reload mtree from database.
 
@@ -366,7 +371,7 @@ mt_match("mytree", "$rU", "0");
                 _mtname_
                 _empty_line_
 
-5.3.  mt_summary
+5.3. mt_summary
 
    List usage summary for all trees.
 
@@ -378,21 +383,52 @@ mt_match("mytree", "$rU", "0");
                 :mt_summary:_reply_fifo_file_
                 _empty_line_
 
+5.4. mt_match
+
+   Match prefix value against mtree.
+
+   Name: mt_match
+
+   Parameters: 3
+     * Name of mtree
+     * Prefix to match
+     * Mode of matching
+
+   MI FIFO Command Format:
+                :mt_match:_reply_fifo_file_
+                _mtree_
+                _prefix_
+                _mode_
+                _empty_line_
+
 6. RPC Commands
 
    6.1. mtree.summary
    6.2. mtree.reload
+   6.3. mtree.match
 
-6.1.  mtree.summary
+6.1. mtree.summary
 
    List usage summary for all trees.
 
    Parameters: none.
 
-6.2.  mtree.reload
+6.2. mtree.reload
 
    Reload mtree from database to memory.
 
    Parameters:
      * _mtree_
        - name of mtree or empty string meaning all mtrees
+
+6.3. mtree.match
+
+   Match prefix value against mtree
+
+   Parameters:
+     * _mtree_
+       - name of mtree
+     * _prefix_
+       - match prefix
+     * _mode_
+       - matching mode

@@ -119,6 +119,7 @@ static int mt_match(struct sip_msg *msg, gparam_t *dm, gparam_t *var,
 static struct mi_root* mt_mi_reload(struct mi_root*, void* param);
 static struct mi_root* mt_mi_list(struct mi_root*, void* param);
 static struct mi_root* mt_mi_summary(struct mi_root*, void* param);
+static struct mi_root* mt_mi_match(struct mi_root*, void* param);
 
 static int mt_load_db(m_tree_t *pt);
 static int mt_load_db_trees();
@@ -153,6 +154,7 @@ static mi_export_t mi_cmds[] = {
 	{ "mt_reload",  mt_mi_reload,  0,  0,  mi_child_init },
 	{ "mt_list",    mt_mi_list,    0,  0,  0 },
 	{ "mt_summary", mt_mi_summary, 0,  0,  0 },
+	{ "mt_match", mt_mi_match, 0,  0,  0 },
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -1116,9 +1118,77 @@ static const char* rpc_mtree_reload_doc[2] = {
 	0
 };
 
+void rpc_mtree_match(rpc_t* rpc, void* ctx)
+{
+	str tname = STR_NULL;
+	str tomatch = STR_NULL;
+	int mode = -1;
+
+	m_tree_t *tr;
+
+	if(!mt_defined_trees())
+	{
+		rpc->fault(ctx, 500, "Empty tree list.");
+		return;
+	}
+
+	if (rpc->scan(ctx, ".SSd", &tname, &tomatch, &mode) < 3) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	if (mode !=0 && mode != 2) {
+		rpc->fault(ctx, 500, "Invalid parameter 'mode'");
+		return;
+	}
+
+again:
+	lock_get( mt_lock );
+	if (mt_reload_flag) {
+		lock_release( mt_lock );
+		sleep_us(5);
+		goto again;
+	}
+	mt_tree_refcnt++;
+	lock_release( mt_lock );
+
+	tr = mt_get_tree(&tname);
+	if(tr==NULL)
+	{
+		/* no tree with such name*/
+		rpc->fault(ctx, 404, "Not found tree");
+		goto error;
+	}
+
+	if(mt_rpc_match_prefix(rpc, ctx, tr, &tomatch, mode)<0)
+	{
+		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
+				tname.len, tname.s,
+				tomatch.len, tomatch.s);
+		rpc->fault(ctx, 404, "Not found");
+	}
+
+error:
+	lock_get( mt_lock );
+	mt_tree_refcnt--;
+	lock_release( mt_lock );
+
+}
+
+static const char* rpc_mtree_match_doc[6] = {
+	"Match prefix value against mtree",
+	"uses three required parametes",
+	"tname - tree name",
+	"prefix - prefix for matching",
+	"mode - mode for matching (0 or 2)",
+	0
+};
+
+
 rpc_export_t mtree_rpc[] = {
 	{"mtree.summary", rpc_mtree_summary, rpc_mtree_summary_doc, 0},
 	{"mtree.reload", rpc_mtree_reload, rpc_mtree_reload_doc, 0},
+	{"mtree.match", rpc_mtree_match, rpc_mtree_match_doc, 0},
 	{0, 0, 0, 0}
 };
 
@@ -1130,4 +1200,104 @@ static int mtree_init_rpc(void)
 		return -1;
 	}
 	return 0;
+}
+
+struct mi_root* mt_mi_match(struct mi_root* cmd_tree, void* param)
+{
+	m_tree_t *tr;
+	struct mi_root* rpl_tree = NULL;
+	struct mi_node* node = NULL;
+
+	str tname, prefix, mode_param;
+	str bad_tname_param = STR_STATIC_INIT("Bad tname parameter");
+	str bad_prefix_param = STR_STATIC_INIT("Bad prefix parameter");
+	str bad_mode_param = STR_STATIC_INIT("Bad mode parameter");
+	int mode;
+
+	if(!mt_defined_trees())
+	{
+		LM_ERR("empty tree list\n");
+		return init_mi_tree( 500, "No trees", 8);
+	}
+
+	/* read tree name */
+	node = cmd_tree->node.kids;
+	if(node != NULL)
+	{
+		tname = node->value;
+		if(tname.s == NULL || tname.len== 0)
+			return init_mi_tree( 400, bad_tname_param.s, bad_tname_param.len);
+	}
+	else
+	{
+		return init_mi_tree( 400, bad_tname_param.s, bad_tname_param.len);
+	}
+
+	/* read given prefix */
+	node = node->next;
+	if(node != NULL)
+	{
+		prefix = node->value;
+		if(prefix.s == NULL || prefix.len== 0)
+			return init_mi_tree( 400, bad_prefix_param.s, bad_prefix_param.len);
+	}
+	else
+	{
+		return init_mi_tree( 400, bad_prefix_param.s, bad_prefix_param.len);
+	}
+
+	/* read mode parameter (required) */
+	node = node->next;
+	if (node != NULL)
+	{
+		mode_param = node->value;
+		if (mode_param.s == NULL || mode_param.len == 0 ||
+				str2int(&mode_param, (unsigned int*)&mode))
+			mode = -1;
+
+		if (mode != 0 && mode != 2)
+			return init_mi_tree( 400, bad_mode_param.s, bad_mode_param.len);
+	}
+	else
+	{
+		return init_mi_tree( 400, bad_mode_param.s, bad_mode_param.len);
+	}
+
+again:
+	lock_get( mt_lock );
+	if (mt_reload_flag) {
+		lock_release( mt_lock );
+		sleep_us(5);
+		goto again;
+	}
+	mt_tree_refcnt++;
+	lock_release( mt_lock );
+
+	tr = mt_get_tree(&tname);
+	if(tr==NULL)
+	{
+		/* no tree with such name*/
+		rpl_tree = init_mi_tree( 404, "Not found tree", 14);
+		goto error;
+	}
+
+	rpl_tree = init_mi_tree( 200, "OK", 2);
+	if (rpl_tree == NULL)
+		goto error;
+
+	if(mt_mi_match_prefix(&rpl_tree->node, tr, &prefix, mode)<0)
+	{
+		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
+				tname.len, tname.s,
+				prefix.len, prefix.s);
+		free_mi_tree(rpl_tree);
+		rpl_tree = init_mi_tree( 404, "Not found tvalue", 16);
+	}
+
+error:
+	lock_get( mt_lock );
+	mt_tree_refcnt--;
+	lock_release( mt_lock );
+
+	return rpl_tree;
 }
