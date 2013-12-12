@@ -62,7 +62,7 @@ KamailioSIPTransportProtocol ::= TEXTUAL-CONVENTION
                             tcp(2),
                             sctp(3),
                             tls(4),
-                            sctp_tls(5),
+                            sctptls(5),
 			    ws(6),
 			    wss(7)
            }
@@ -79,14 +79,13 @@ KamailioSIPEntityRole ::= TEXTUAL-CONVENTION
 		operation of a SIP outbound edge proxy node.
 		Kamailio adds the role 'sipcaptureServer' for
 		operation of a Homer SIPcapture node."
-		"
            SYNTAX BITS {
                             other(0),
                             userAgent(1),
                             proxyServer(2),
                             redirectServer(3),
-                            registrarServer(4)
-                            edgeproxyServer(5)
+                            registrarServer(4),
+                            edgeproxyServer(5),
                             sipcaptureServer(6)
            }
 
