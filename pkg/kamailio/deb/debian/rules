@@ -18,6 +18,9 @@
 #  -- already set in compat
 export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) debug"
 
+# java stuff using libgcj12
+export JAVA_HOME=/usr/lib/jvm/java-gcj-4.6
+
 # modules not in the "main" kamailio package
 EXCLUDED_MODULES= 
 
