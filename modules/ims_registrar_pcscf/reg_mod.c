@@ -143,7 +143,7 @@ static param_export_t params[] = {
 
 	{"received_avp",       STR_PARAM, &rcv_avp_param       					},
 
-	{"is_registered_fallback2ip",	INT_PARAM, &pending_reg_expires					},
+	{"is_registered_fallback2ip",	INT_PARAM, &is_registered_fallback2ip	},
 
 
 //	{"ims_mode",           INT_PARAM, &registrar_ims_mode                  	}, /* 0-PCSCF ; 1-SCSCF */
