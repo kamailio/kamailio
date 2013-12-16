@@ -57,6 +57,7 @@
 
 extern unsigned short rcv_avp_type;
 extern int_str rcv_avp_name;
+extern int is_registered_fallback2ip;
 
 #endif /* REG_MOD_H */
 

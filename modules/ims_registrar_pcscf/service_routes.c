@@ -123,33 +123,33 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 
 		b = cscf_parse_contacts(_m);
 
-		if (!b || !b->contacts) {
-			LM_DBG("No contacts found\n");
-			return NULL;
-		}
+		if (b && b->contacts) {
+			for (ct = b->contacts; ct; ct = ct->next) {
+				if (ul.get_pcontact(_d, &ct->uri, &c) == 0) {
+					if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _m->rcv.src_port) && (c->received_proto == _m->rcv.proto)) {
+						received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+						received_host.s = srcip;
+						LM_DBG("Received host len %d (search %d)\n", c->received_host.len, received_host.len);
+						// Then check the length:
+						if (c->received_host.len == received_host.len) {
+							LM_DBG("Received host %.*s (search %.*s)\n",
+								c->received_host.len, c->received_host.s,
+								received_host.len, received_host.s);
 
-		for (ct = b->contacts; ct; ct = ct->next) {
-			if (ul.get_pcontact(_d, &ct->uri, &c) == 0) {
-				if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _m->rcv.src_port) && (c->received_proto == _m->rcv.proto)) {
-					received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-					received_host.s = srcip;
-					LM_DBG("Received host len %d (search %d)\n", c->received_host.len, received_host.len);
-					// Then check the length:
-					if (c->received_host.len == received_host.len) {
-						LM_DBG("Received host %.*s (search %.*s)\n",
-							c->received_host.len, c->received_host.s,
-							received_host.len, received_host.s);
-
-						// Finally really compare the "received_host"
-						if (!memcmp(c->received_host.s, received_host.s, received_host.len))
-							break;
-						c = NULL;
+							// Finally really compare the "received_host"
+							if (!memcmp(c->received_host.s, received_host.s, received_host.len))
+								break;
+							c = NULL;
+						}
 					}
 				}
 			}
+		} else {
+			LM_WARN("No contact-header found\n");
 		}
-		if (c == NULL) {
-			LM_WARN("Contact not found based on Contact, trying IP/Port/Proto\n");
+
+		if ((c == NULL) && (is_registered_fallback2ip > 0)) {
+			LM_WARN("Contact not found based on Contact-header, trying IP/Port/Proto\n");
 			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 			received_host.s = srcip;
 			if (ul.get_pcontact_by_src(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, &c) == 1)

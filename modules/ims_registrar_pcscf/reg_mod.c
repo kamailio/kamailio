@@ -79,6 +79,8 @@ char * pcscf_uri = "sip:pcscf.ims.smilecoms.com:4060";
 str pcscf_uri_str;
 unsigned int pending_reg_expires = 30;			/**!< parameter for expiry time of a pending registration before receiving confirmation from SCSCF */
 
+int is_registered_fallback2ip = 0;
+
 char* rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
@@ -140,6 +142,8 @@ static param_export_t params[] = {
 	{"pending_reg_expires",	INT_PARAM, &pending_reg_expires					},
 
 	{"received_avp",       STR_PARAM, &rcv_avp_param       					},
+
+	{"is_registered_fallback2ip",	INT_PARAM, &pending_reg_expires					},
 
 
 //	{"ims_mode",           INT_PARAM, &registrar_ims_mode                  	}, /* 0-PCSCF ; 1-SCSCF */
