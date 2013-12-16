@@ -1,5 +1,5 @@
 Kamailio for Debian
-------------------
+-------------------
 
 * init script check for fork=no
 -------------------------------
@@ -15,7 +15,7 @@ as a conffile.
 
 
 * Kamailio setup
----------------
+----------------
 
 To setup Kamailio, you need to:
  - configure Kamailio properly to suit your needs
@@ -35,4 +35,5 @@ Set the DUMP_CORE parameter in /etc/default/kamailio to "yes" if you want to
 get a core dump in case Kamailio crashes. The debug symbols for Kamailio are
 provided by the kamailio-dbg package.
 
--- Julien BLACHE <jblache@debian.org>, Fri, 08 Sep 2006 14:43:21 +0200
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Wed, 11 Dec 2013 16:07:11 +0100

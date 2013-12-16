@@ -3,6 +3,7 @@ kamailio (4.2.0~dev0) unstable; urgency=low
   * Added packages:
     - kamailio-autheph-modules
     - kamailio-sctp-modules
+    - kamailio-java-modules
 
  --  Victor Seva <linuxmaniac@torreviejawireless.org>  Tue, 03 Dec 2013 14:26:58 +0100
 
