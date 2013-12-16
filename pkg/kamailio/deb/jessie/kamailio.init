@@ -3,238 +3,159 @@
 ### BEGIN INIT INFO
 # Provides:          kamailio
 # Required-Start:    $syslog $network $local_fs $remote_fs $time
+# Should-Start:      $named slapd mysql postgresql snmpd radiusd
+# Should-Stop:       $named slapd mysql postgresql snmpd radiusd
 # Required-Stop:     $syslog $network $local_fs $remote_fs
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Should-Start:      postgresql mysql radius
-# Should-Stop:       postgresql mysql radius
 # Short-Description: Start the Kamailio SIP proxy server
 # Description:       Start the Kamailio SIP proxy server
 ### END INIT INFO
 
+. /lib/lsb/init-functions
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/kamailio
 NAME=kamailio
-DESC=Kamailio
+DESC="Kamailio SIP server"
 HOMEDIR=/var/run/kamailio
 PIDFILE=$HOMEDIR/$NAME.pid
 DEFAULTS=/etc/default/kamailio
-CFGFILE=/etc/kamailio/kamailio.cfg
 RUN_KAMAILIO=no
-
+USER=kamailio
+GROUP=kamailio
+# Amount of memory to allocate for the running Kamailio server (in Mb)
+MEMORY=64
+DUMP_CORE=no
 
 # Do not start kamailio if fork=no is set in the config file
-# otherwise the boot process will just stop.
+# otherwise the boot process will just stop
 check_fork ()
 {
-  if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" $CFGFILE; then
-    echo "Not starting $DESC: fork=no specified in config file. Run /etc/init.d/kamailio debug instead."
-    exit 1
-  fi
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/kamailio/kamailio.cfg; then
+	log_failure_msg "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio debug instead"
+	exit 0
+    fi
 }
-
 
 check_kamailio_config ()
 {
-  # Check if kamailio configuration is valid before starting the server.
-  set +e
-  out=$($DAEMON -f $CFGFILE -M $PKG_MEMORY -c 2>&1 > /dev/null)
-  retcode=$?
-  set -e
-  if [ "$retcode" != '0' ]; then
-    echo "Not starting $DESC: invalid configuration file!"
-    echo -e "\n$out\n"
-    exit 1
-  fi
+	# Check if kamailio configuration is valid before starting the server
+	set +e
+	out=$($DAEMON -c 2>&1 > /dev/null)
+	retcode=$?
+	set -e
+	if [ "$retcode" != '0' ]; then
+	    log_failure_msg "Not starting $DESC: invalid configuration file!"
+	    log_failure_msg
+	    log_failure_msg "$out"
+	    log_faiulre_msg
+	    exit 1
+	fi
 }
-
-
-check_homedir ()
-{
-  # Create HOMEDIR directory in case it doesn't exist.
-  # Useful in Ubuntu as /var/run/ content is deleted in shutdown.
-  if [ ! -d $HOMEDIR ]; then
-    mkdir $HOMEDIR
-  fi
-
-  # Set the appropiate owner and group
-  chown ${USER}:${GROUP} $HOMEDIR
-}
-
 
 create_radius_seqfile ()
 {
-  # Create a radius sequence file to be used by the radius client if
-  # radius accounting is enabled. This is needed to avoid any issue
-  # with the file not being writable if kamailio first starts as user
-  # root because DUMP_CORE is enabled and creates this file as user
-  # root and then later it switches back to user kamailio and cannot
-  # write to the file. If the file exists before kamailio starts, it
-  # won't change it's ownership and will be writable for both root
-  # and kamailio, no matter what options are chosen at install time
-  RADIUS_SEQ_FILE=$HOMEDIR/kamailio_radius.seq
+    # Create a radius sequence file to be used by the radius client if
+    # radius accounting is enabled. This is needed to avoid any issue
+    # with the file not being writable if kamailio first starts as user
+    # root because DUMP_CORE is enabled and creates this file as user
+    # root and then later it switches back to user kamailio and cannot
+    # write to the file. If the file exists before kamailio starts, it
+    # won't change it's ownership and will be writable for both root
+    # and kamailio, no matter what options are chosen at install time
+    RADIUS_SEQ_FILE=/var/run/kamailio/kamailio_radius.seq
+    if [ -d /var/run/kamailio ]; then
+	chown ${USER}:${GROUP} /var/run/kamailio
 
-  if [ ! -f $RADIUS_SEQ_FILE ]; then
-      touch $RADIUS_SEQ_FILE
-  fi
+	if [ ! -f $RADIUS_SEQ_FILE ]; then
+	    touch $RADIUS_SEQ_FILE
+	fi
 
-  chown ${USER}:${GROUP} $RADIUS_SEQ_FILE
-  chmod 660 $RADIUS_SEQ_FILE
+	chown ${USER}:${GROUP} $RADIUS_SEQ_FILE
+	chmod 660 $RADIUS_SEQ_FILE
+    fi
 }
 
+test -f $DAEMON || exit 0
 
-if [ ! -f $DAEMON ]; then
-  echo "No $DESC daemon at $DAEMON."
-  case "$1" in
-  status)
-    # LSB - 4: program or service status is unknown.
-    exit 4
-    ;;
-  *)
-    # LSB - 5: program is not installed.
-    exit 5
-    ;;
-  esac
-fi
-
-
-# Load startup options if available.
+# Load startup options if available
 if [ -f $DEFAULTS ]; then
-  . $DEFAULTS || true
+   . $DEFAULTS || true
 fi
-
 
 if [ "$RUN_KAMAILIO" != "yes" ]; then
-  echo "$DESC not yet configured. Edit $DEFAULTS first."
-  exit 0
+    log_failure_msg "Kamailio not yet configured. Edit /etc/default/kamailio first."
+    exit 0
 fi
-
 
 set -e
 
-
-SHM_MEMORY=$((`echo $SHM_MEMORY | sed -e 's/[^0-9]//g'`))
-PKG_MEMORY=$((`echo $PKG_MEMORY | sed -e 's/[^0-9]//g'`))
-[ $SHM_MEMORY -le 0 ] && SHM_MEMORY=64
-[ $PKG_MEMORY -le 0 ] && PKG_MEMORY=4
+MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
 [ -z "$USER" ]  && USER=kamailio
 [ -z "$GROUP" ] && GROUP=kamailio
-
+[ $MEMORY -le 0 ] && MEMORY=32
 
 if test "$DUMP_CORE" = "yes" ; then
-  # set proper ulimit.
-  ulimit -c unlimited
-
-  # directory for the core dump files.
-  # COREDIR=/tmp/corefiles
-  # [ -d $COREDIR ] || mkdir $COREDIR
-  # chmod 777 $COREDIR
-  # echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
+    # set proper ulimit
+    ulimit -c unlimited
+    
+    # directory for the core dump files
+    # COREDIR=/home/corefiles
+    # [ -d $COREDIR ] || mkdir $COREDIR
+    # chmod 777 $COREDIR
+    # echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
 fi
 
-
-if [ "$SSD_SUID" != "yes" ]; then
-  OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP"
-  SSDOPTS=""
-else
-  OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY"
-  SSDOPTS="--chuid $USER:$GROUP"
+# /var/run can be a tmpfs
+if [ ! -d $HOMEDIR ]; then
+    mkdir -p $HOMEDIR
 fi
 
-
-start_kamailio_daemon ()
-{
-  start-stop-daemon --start --quiet --pidfile $PIDFILE $SSDOPTS \
-    --exec $DAEMON -- $OPTIONS
-  res=$?
-
-  echo -n "$NAME "
-  if [ $res -eq 0 ] ; then
-    echo "started."
-    exit 0
-  else
-    if [ ! -r "$PIDFILE" ]; then
-      echo "error, failed to start."
-      exit 1
-    elif read pid < "$PIDFILE" && ps -p "$pid" > /dev/null 2>&1; then
-      echo "already running."
-      exit 0
-    else
-      echo "error, failed to start ($PIDFILE exists)."
-      exit 1
-    fi
-  fi
-}
-
+OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
 
 case "$1" in
   start|debug)
-    check_kamailio_config
-    check_homedir
-    create_radius_seqfile
+	check_kamailio_config
+	create_radius_seqfile
 
-    if [ "$1" != "debug" ]; then
-      check_fork
-    fi
+	if [ "$1" != "debug" ]; then
+	    check_fork
+	fi
 
-    echo "Starting $DESC:"
-    set +e
-    start_kamailio_daemon
-    ;;
-
+	log_daemon_msg "Starting $DESC: $NAME"
+	start-stop-daemon --start --quiet --pidfile $PIDFILE \
+		--exec $DAEMON -- $OPTIONS || log_failure_msg " already running"
+	log_end_msg 0
+	;;
   stop)
-    echo -n "Stopping $DESC: $NAME "
-    set +e
-    start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE \
-      --exec $DAEMON
-
-    if [ $? -eq 0 ] ; then
-      echo "stopped."
-      exit 0
-    else
-      echo "failed to stop."
-      exit 1
-    fi
-    ;;
-    
+	log_daemon_msg "Stopping $DESC: $NAME"
+	start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE \
+		--exec $DAEMON
+	log_end_msg 0
+	;;
   restart|force-reload)
-    check_kamailio_config
-    check_homedir
-    create_radius_seqfile
+	check_kamailio_config
+	create_radius_seqfile
 
-    echo "Restarting $DESC:"
-    set +e
-    start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE --retry=5 \
-      --exec $DAEMON
-    if [ $? -ne 0 ] ; then
-      echo "$NAME failed to stop."
-      exit 1
-    fi
-    start_kamailio_daemon
-    ;;
-
+	log_daemon_msg "Restarting $DESC: $NAME"
+	start-stop-daemon --oknodo --stop --quiet --pidfile \
+		$PIDFILE --exec $DAEMON
+	sleep 1
+	start-stop-daemon --start --quiet --pidfile \
+		$PIDFILE --exec $DAEMON  -- $OPTIONS
+	log_end_msg 0
+	;;
   status)
-    echo -n "Status of $DESC: $NAME "
-    if [ ! -r "$PIDFILE" ]; then
-      echo "is not running."
-      exit 3
-    fi
-    if read pid < "$PIDFILE" && ps -p "$pid" > /dev/null 2>&1; then
-      echo "is running."
-      exit 0
-    else
-      echo "is not running but $PIDFILE exists."
-      exit 1
-    fi
-    ;;
-
+	log_daemon_msg "Status of $DESC: "
+	
+	status_of_porc "$PIDFILE" $NAME $NAME
+	;;
   *)
-    N=/etc/init.d/$NAME
-    echo "Usage: $N {start|stop|restart|force-reload|debug|status}" >&2
-    exit 1
-    ;;
+	N=/etc/init.d/$NAME
+	echo "Usage: $N {start|stop|restart|force-reload|status|debug}" >&2
+	exit 1
+	;;
 esac
-
 
 exit 0
