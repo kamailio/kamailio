@@ -141,6 +141,13 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
             goto error_no_send;
         }
 
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
+
         get_act_time();
 
         if (is_timeout) {
@@ -253,12 +260,6 @@ done:
     if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
         reg_send_reply_transactional(t->uas.request, data->contact_header, t);
     LM_DBG("DBG:SAR Async CDP callback: ... Done resuming transaction\n");
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
     create_return_code(result);
 
@@ -278,6 +279,8 @@ done:
 error:
     if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
         reg_send_reply_transactional(t->uas.request, data->contact_header, t);
+		
+    create_return_code(-2);
 
 error_no_send: //if we don't have the transaction then we can't send a transaction response
     update_stat(rejected_registrations, 1);
