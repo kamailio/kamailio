@@ -53,6 +53,15 @@ if [ -z "$AWK" ] ; then
 	fi
 	AWK="$TOOLPATH"
 fi
+if [ -z "$GDB" ] ; then
+	locate_tool gdb
+	if [ -z "$TOOLPATH" ] ; then
+		# now error, but we can look for alternative names if it is the case
+		echo "error: 'gdb' tool not found: set GDB variable to correct tool path"
+		exit
+	fi
+	GDB="$TOOLPATH"
+fi
 if [ -z "$MD5" ]; then
 	locate_tool md5sum md5
 	if [ -z "$TOOLPATH" ] ; then
@@ -340,9 +349,10 @@ DIALPLAN_ATTRS_COLUMN=attrs
 
 usage_base() {
 	echo
-	mecho " -- command 'start|stop|restart'"
+	mecho " -- command 'start|stop|restart|trap'"
 	echo
 cat <<EOF
+ trap ............................... trap with gdb Kamailio processes
  restart ............................ restart Kamailio
  start .............................. start Kamailio
  stop ............................... stop Kamailio

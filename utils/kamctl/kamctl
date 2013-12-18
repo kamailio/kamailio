@@ -2644,6 +2644,29 @@ extcmd() {
 	exit 1
 }
 
+##### ================================================ #####
+### trap with gdb kamailio processes
+#
+
+kamailio_trap() {
+	DATE=`/bin/date +%Y%m%d_%H%M%S`
+	LOG_FILE=/tmp/gdb_kamailio_$DATE
+	minfo "Trap file: $LOG_FILE"
+	$SERCTLCMD ps > $LOG_FILE
+	echo -n "Trapping Kamailio with gdb: "
+	PID_TIMESTAMP_VECTOR=`sed -e 's/\([0-9]*\).*/\1/' $LOG_FILE`
+	for pid in $PID_TIMESTAMP_VECTOR
+	do
+		echo -n "."
+		PID=`echo $pid | cut -d '-' -f 1`
+		echo "" >> $LOG_FILE
+		echo "---start $PID -----------------------------------------------------" >> $LOG_FILE
+		$GDB kamailio $PID -batch --eval-command="bt full" &>> $LOG_FILE
+		echo "---end $PID -------------------------------------------------------" >> $LOG_FILE
+	done
+	echo "."
+}
+
 #
 ##### ================================================ #####
 ### main command switch
@@ -2823,6 +2846,11 @@ case $1 in
 	tls)
 		shift
 		tls_ca "$@"
+		;;
+
+	trap)
+		require_ctlengine
+		kamailio_trap
 		;;
 
 	start)
