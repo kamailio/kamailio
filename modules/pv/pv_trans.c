@@ -1025,7 +1025,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->ri = _tr_parsed_uri.port_no;
 			break;
 		case TR_URI_PARAMS:
-			val->rs = (_tr_parsed_uri.params.s)?_tr_parsed_uri.params:_tr_empty;
+			val->rs = (_tr_parsed_uri.sip_params.s)?_tr_parsed_uri.sip_params:_tr_empty;
 			break;
 		case TR_URI_PARAM:
 			if(tp==NULL)
@@ -1033,7 +1033,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				LM_ERR("param invalid parameters\n");
 				return -1;
 			}
-			if(_tr_parsed_uri.params.len<=0)
+			if(_tr_parsed_uri.sip_params.len<=0)
 			{
 				val->rs = _tr_empty;
 				val->flags = PV_VAL_STR;
@@ -1043,7 +1043,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 
 			if(_tr_uri_params == NULL)
 			{
-				sv = _tr_parsed_uri.params;
+				sv = _tr_parsed_uri.sip_params;
 				if (parse_params(&sv, CLASS_ANY, &phooks, &_tr_uri_params)<0)
 					return -1;
 			}
