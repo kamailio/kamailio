@@ -1,3 +1,110 @@
+===================== 2013-12-18 Version 3.3.6 Released =====================
+
+===================== Changes Since Version 3.3.5 ===========================
+
+commit 2cc9e1dae56bc8c4a78e7cb01d4f5719c618c213
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 19 16:45:42 2013 +0100
+
+    Makefile.defs: version set to 3.3.6
+
+commit 4cc43066cb2b9dcfc3c0d0d5ab67b28dd2c19189
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 19 16:45:09 2013 +0100
+
+    pkg/rpm: updated specs to version to 3.3.6
+
+commit 7157d105c1efb10db7852adffbf55ec2803b3d44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 19 16:44:22 2013 +0100
+
+    pkg/debian: updated specs to version to 3.3.6
+
+commit ee62d8542dbc6f9391e59018560e17a0459e7a64
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 20 11:15:16 2013 +0200
+
+    registrar: if rcv_parm value is empty, don't add received to contacts in 200ok reply
+    
+    - otherwise results in malformed value
+    
+    (cherry picked from commit 2f213e313a86e16665f6d0acfec959bf23f72b7d)
+    (cherry picked from commit fc410ae69c6b371538f457947fd3a2946dc492cd)
+
+commit efd3fad94f179b27ac364c16df6cd69d27d814c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 20:42:12 2013 +0100
+
+    mem: malloc(0) should return a valid pointer for free according to specs
+    
+    (cherry picked from commit f61ff34aac7c7bae3a96fb698a899c8a0e692a9f)
+    (cherry picked from commit e605174dab9b86ce06689d184b4b9d81288f1193)
+
+commit aa43b51c87e025d9526f31059dee55c2199e970f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 19 16:24:32 2013 +0100
+
+    core: declared static and extern inline prototypes for gcc (clang) on mac os x
+
+commit 7ad6202d80d5fee7248db732a789d37e48b24d1e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 16:33:04 2013 +0100
+
+    Makefile.defs: compiler optimization level made variable
+    
+    - allow using -O3 for clang, which gives error on the former default -O9
+    
+    (cherry picked from commit 0713c0de50f8c2f4da2ee0ef33b0505c37792392)
+    
+    Conflicts:
+    	Makefile.defs
+
+commit 16dcfd515424a23cd0706de64eea822c88df0c58
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Mon Sep 17 17:21:02 2012 +0300
+
+    Makefiles.defs: clang compiles to O9
+    
+    (cherry picked from commit 5273948a6eeb6f6fe878696dce54880cabb0ef7c)
+
+commit 8cd628522a4258f32923fe58595677b300292b97
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Mon Sep 17 10:17:41 2012 +0300
+
+    Provide inline linkage for non-gcc compilers(like clang)
+    
+    Inline method in headers should be declared extern.
+    
+    (cherry picked from commit 2e5145ecdd8368c947ea93b98449ebd997824ce2)
+
+commit e53fdcd77f918c634119c8188f35d5fd3873b48e
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Sep 14 13:17:24 2012 +0300
+
+    core: Added support for the clang compiler
+    
+    Support for clang, a C compiler from the LLVM suite has been added.
+    Install clang and run 'make cfg CC=clang && make' for building. GCC Inline assembly is supported.
+    TODO: clean warning caused by clang (-Wunused-variable, etc)
+    
+    (cherry picked from commit 452c543de61d413351a5ac0816adc137d150824b)
+
+commit f0203464ddc1e6f4b90d8d8d2bf0ff953760ba6c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Nov 1 15:33:08 2013 +0100
+
+    registrar: clean static values at pack_ci
+    
+    - backport from master 66185905850cd2ac9ab933776184da0f0882e5ac
+
+commit 5a71476e054975a659628aeec89a51a1d0a326f4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Nov 29 12:03:14 2013 +0100
+
+    usrloc: db_update contact by instance + reg_id
+    
+    - backport from master f67171cf3be1ade0e1c9dd013d560c87b3fd4359
+
 ===================== 2013-08-12 Version 3.3.5 Released =====================
 
 ===================== Changes Since Version 3.3.4 ===========================
