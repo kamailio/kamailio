@@ -2649,6 +2649,10 @@ extcmd() {
 #
 
 kamailio_trap() {
+	if [ -z "$GDB" ] ; then
+		merr "'gdb' tool not found: set GDB variable to correct tool path"
+		exit
+	fi
 	DATE=`/bin/date +%Y%m%d_%H%M%S`
 	LOG_FILE=/tmp/gdb_kamailio_$DATE
 	minfo "Trap file: $LOG_FILE"
@@ -2661,7 +2665,7 @@ kamailio_trap() {
 		PID=`echo $pid | cut -d '-' -f 1`
 		echo "" >> $LOG_FILE
 		echo "---start $PID -----------------------------------------------------" >> $LOG_FILE
-		$GDB kamailio $PID -batch --eval-command="bt full" &>> $LOG_FILE
+		$GDB kamailio $PID -batch --eval-command="bt full" & >> $LOG_FILE
 		echo "---end $PID -------------------------------------------------------" >> $LOG_FILE
 	done
 	echo "."
