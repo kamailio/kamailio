@@ -344,11 +344,20 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 {
 	str new_uri_bk = {0, 0};
 	int flags_to_reset = 0;
+	int br = -1;
 
-	/* set as new_uri the last branch */
+	/* get winning branch index, if set */
 	if (t->relayed_reply_branch>=0) {
+		br = t->relayed_reply_branch;
+	} else {
+		if(code>=300) {
+			br = tmb.t_get_picked_branch();
+		}
+	}
+	/* set as new_uri the one from selected branch */
+	if (br>=0) {
 		new_uri_bk = req->new_uri;
-		req->new_uri = t->uac[t->relayed_reply_branch].uri;
+		req->new_uri = t->uac[br].uri;
 		req->parsed_uri_ok = 0;
 	} else {
 		new_uri_bk.len = -1;
@@ -416,6 +425,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 											struct sip_msg *reply, int code)
 {
 	str new_uri_bk;
+	int br = -1;
 
 	/* acc_onreply is bound to TMCB_REPLY which may be called
 	   from _reply, like when FR hits; we should not miss this
@@ -426,10 +436,19 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	if (!should_acc_reply(req, reply, code))
 		return;
 
-	/* for reply processing, set as new_uri the winning branch */
+	/* get winning branch index, if set */
 	if (t->relayed_reply_branch>=0) {
+		br = t->relayed_reply_branch;
+	} else {
+		if(code>=300) {
+			br = tmb.t_get_picked_branch();
+		}
+	}
+
+	/* for reply processing, set as new_uri the one from selected branch */
+	if (br>=0) {
 		new_uri_bk = req->new_uri;
-		req->new_uri = t->uac[t->relayed_reply_branch].uri;
+		req->new_uri = t->uac[br].uri;
 		req->parsed_uri_ok = 0;
 	} else {
 		new_uri_bk.len = -1;
