@@ -24,13 +24,13 @@ Edited by
 
 Sas Ovidiu
 
-   Copyright � 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2008 Sippy Software, Inc.
 
-   Copyright � 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright � 2009 TuTPro Inc.
+   Copyright © 2009 TuTPro Inc.
 
-   Copyright � 2010 VoIPEmbedded Inc.
+   Copyright © 2010 VoIPEmbedded Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -44,7 +44,7 @@ Sas Ovidiu
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. rtpproxy_sock (string)
               4.2. rtpproxy_disable_tout (integer)
@@ -54,7 +54,7 @@ Sas Ovidiu
               4.6. nortpproxy_str (string)
               4.7. timeout_socket (string)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. set_rtp_proxy_set()
               5.2. rtpproxy_offer([flags [, ip_address]])
@@ -70,7 +70,7 @@ Sas Ovidiu
 
         6. Exported Pseudo Variables
 
-              6.1. $rtpstart
+              6.1. $rtpstat
 
         7. MI Commands
 
@@ -110,7 +110,7 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. rtpproxy_sock (string)
         4.2. rtpproxy_disable_tout (integer)
@@ -120,7 +120,7 @@ Chapter 1. Admin Guide
         4.6. nortpproxy_str (string)
         4.7. timeout_socket (string)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. set_rtp_proxy_set()
         5.2. rtpproxy_offer([flags [, ip_address]])
@@ -136,7 +136,7 @@ Chapter 1. Admin Guide
 
    6. Exported Pseudo Variables
 
-        6.1. $rtpstart
+        6.1. $rtpstat
 
    7. MI Commands
 
@@ -162,7 +162,7 @@ Chapter 1. Admin Guide
    load-balancing will be performed over a set and the user has the
    ability to choose what set should be used. The set is selected via its
    id - the id being defined along with the set. Refer to the
-   "rtpproxy_sock" module parameter definition for syntax description.
+   “rtpproxy_sock” module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
    the weight of each rtpproxy from the set.
@@ -195,7 +195,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-4. Exported Parameters
+4. Parameters
 
    4.1. rtpproxy_sock (string)
    4.2. rtpproxy_disable_tout (integer)
@@ -210,7 +210,7 @@ Chapter 1. Admin Guide
    Definition of socket(s) used to connect to (a set) RTPProxy. It may
    specify a UNIX socket or an IPv4/IPv6 UDP socket.
 
-   Default value is "NONE" (disabled).
+   Default value is “NONE” (disabled).
 
    Example 1.1. Set rtpproxy_sock parameter
 ...
@@ -232,7 +232,7 @@ modparam("rtpproxy", "rtpproxy_sock",
    will not attempt to establish communication to RTPProxy for
    rtpproxy_disable_tout seconds.
 
-   Default value is "60".
+   Default value is “60”.
 
    Example 1.2. Set rtpproxy_disable_tout parameter
 ...
@@ -243,7 +243,7 @@ modparam("rtpproxy", "rtpproxy_disable_tout", 20)
 
    Timeout value in waiting for reply from RTPProxy.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.3. Set rtpproxy_tout parameter
 ...
@@ -255,7 +255,7 @@ modparam("rtpproxy", "rtpproxy_tout", 2)
    How many times rtpproxy should retry to send and receive after timeout
    was generated.
 
-   Default value is "5".
+   Default value is “5”.
 
    Example 1.4. Set rtpproxy_retr parameter
 ...
@@ -267,7 +267,7 @@ modparam("rtpproxy", "rtpproxy_retr", 2)
    Socket to be forced in communicating to RTPProxy. It makes sense only
    for UDP communication. If no one specified, the OS will choose.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.5. Set force_socket parameter
 ...
@@ -285,7 +285,7 @@ Note
 
    The string must be a complete SDP line, including the EOH (\r\n).
 
-   Default value is "a=nortpproxy:yes\r\n".
+   Default value is “a=nortpproxy:yes\r\n”.
 
    Example 1.6. Set nortpproxy_str parameter
 ...
@@ -300,14 +300,14 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
    If it is an empty string, no timeout socket will be transmitted to the
    RTP-Proxy.
 
-   Default value is "" (nothing).
+   Default value is “” (nothing).
 
    Example 1.7. Set timeout_socket parameter
 ...
 modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 ...
 
-5. Exported Functions
+5. Functions
 
    5.1. set_rtp_proxy_set()
    5.2. rtpproxy_offer([flags [, ip_address]])
@@ -321,7 +321,7 @@ modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
    5.10. start_recording()
    5.11. rtpproxy_stop_stream2uas(prompt_name, count)
 
-5.1. set_rtp_proxy_set()
+5.1.  set_rtp_proxy_set()
 
    Sets the Id of the rtpproxy set to be used for the next
    unforce_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer() command.
@@ -335,7 +335,7 @@ set_rtp_proxy_set("2");
 rtpproxy_offer();
 ...
 
-5.2. rtpproxy_offer([flags [, ip_address]])
+5.2.  rtpproxy_offer([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on INVITE for the cases the SDPs are in INVITE and 200 OK
@@ -345,7 +345,7 @@ rtpproxy_offer();
      * flags - flags to turn on some features.
           + a - flags that UA from which message is received doesn't
             support symmetric RTP. (automatically sets the 'r' flag)
-          + l - force "lookup", that is, only rewrite SDP when
+          + l - force “lookup”, that is, only rewrite SDP when
             corresponding session is already exists in the RTP proxy. By
             default is on when the session is to be completed.
           + i, e - these flags specify the direction of the SIP message.
@@ -423,7 +423,7 @@ onreply_route[2]
 ...
 }
 
-5.3. rtpproxy_answer([flags [, ip_address]])
+5.3.  rtpproxy_answer([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on 200 OK for the cases the SDPs are in INVITE and 200 OK
@@ -439,7 +439,7 @@ onreply_route[2]
 
    See rtpproxy_offer() function example above for example.
 
-5.4. rtpproxy_destroy()
+5.4.  rtpproxy_destroy()
 
    Tears down the RTPProxy session for the current call.
 
@@ -450,11 +450,11 @@ onreply_route[2]
 rtpproxy_destroy();
 ...
 
-5.5. unforce_rtp_proxy()
+5.5.  unforce_rtp_proxy()
 
    Same as rtpproxy_destroy().
 
-5.6. rtpproxy_manage([flags [, ip_address]])
+5.6.  rtpproxy_manage([flags [, ip_address]])
 
    Manage the RTPProxy session - it combines the functionality of
    rtpproxy_offer(), rtpproxy_answer() and unfroce_rtpproxy(), detecting
@@ -482,7 +482,7 @@ rtpproxy_destroy();
 rtpproxy_manage();
 ...
 
-5.7. rtpproxy_stream2uac(prompt_name, count),
+5.7.  rtpproxy_stream2uac(prompt_name, count),
 
    Instruct the RTPproxy to stream prompt/announcement pre-encoded with
    the makeann command from the RTPproxy distribution. The uac/uas suffix
@@ -524,11 +524,11 @@ rtpproxy_manage();
     };
 ...
 
-5.8. rtpproxy_stream2uas(prompt_name, count)
+5.8.  rtpproxy_stream2uas(prompt_name, count)
 
    See function rtpproxy_stream2uac(prompt_name, count).
 
-5.9. rtpproxy_stop_stream2uac(),
+5.9.  rtpproxy_stop_stream2uac(),
 
    Stop streaming of announcement/prompt/MOH started previously by the
    respective rtpproxy_stream2xxx. The uac/uas suffix selects whose
@@ -537,7 +537,7 @@ rtpproxy_manage();
 
    These functions can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-5.10. start_recording()
+5.10.  start_recording()
 
    This command will send a signal to the RTP-Proxy to record the RTP
    stream on the RTP-Proxy.
@@ -549,15 +549,15 @@ rtpproxy_manage();
 start_recording();
 ...
 
-5.11. rtpproxy_stop_stream2uas(prompt_name, count)
+5.11.  rtpproxy_stop_stream2uas(prompt_name, count)
 
    See function rtpproxy_stop_stream2uac(prompt_name, count).
 
 6. Exported Pseudo Variables
 
-   6.1. $rtpstart
+   6.1. $rtpstat
 
-6.1. $rtpstart
+6.1. $rtpstat
 
    Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from
    the RTP-Proxy are provided as a string and it does contain several
@@ -587,7 +587,7 @@ start_recording();
    NOTE: if a rtpproxy is defined multiple times (in the same or diferente
    sete), all its instances will be enables/disabled.
 
-   Example 1.16. nh_enable_rtpp usage
+   Example 1.16.  nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -599,52 +599,52 @@ $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.17. nh_show_rtpp usage
+   Example 1.17.  nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp
 ...
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with "rtpproxy_disable" parameter?
+   2.1. What happend with “rtpproxy_disable” parameter?
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
 
    2.1.
 
-   What happend with "rtpproxy_disable" parameter?
+       What happend with “rtpproxy_disable” parameter?
 
-   It was removed as it became obsolete - now "rtpproxy_sock" can take
-   empty value to disable the rtpproxy functionality.
+       It was removed as it became obsolete - now “rtpproxy_sock” can take
+       empty value to disable the rtpproxy functionality.
 
    2.2.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.3.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    2.4.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+       Please follow the guidelines provided at:
+       http://sip-router.org/tracker.
