@@ -1,3 +1,285 @@
+===================== 2013-12-20 Version 4.0.5 Released =====================
+
+===================== Changes Since Version 4.0.4 ===========================
+
+commit 01802b9cfbf270f9a801493ff23eb91b066d8e69
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 20 17:25:17 2013 +0100
+
+    Makefile.defs: version set to 4.0.5
+
+commit b4d7ed8616dd1e66dd33345078dd903833f68152
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 20 17:23:31 2013 +0100
+
+    pkg/rpm:  set version to 4.0.5 in specs
+
+commit 1a5c2d6f97585a7f0dc19102b46136ad4a5346cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 20 17:21:11 2013 +0100
+
+    pkg/debian: set version to 4.0.5 in specs
+
+commit 298913ee2e36d11c26ce5c320059e822c97d31e9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:23:17 2013 +0100
+
+    maxforwards: use standard format instead of GNU old-style field designator
+    
+    (cherry picked from commit cd04947b0ccb1c861274483f458bfc7f4329accb)
+
+commit 53655beed57d0165931790683046614e70a8acfd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:34:49 2013 +0100
+
+    ratelimit: signed check for pipe number in rpc_set_queue()
+    
+    - rpc can reand signed value
+    
+    (cherry picked from commit ed034d4d9096d8c77269828c8efdafb26eac5372)
+
+commit 58206a77d9ba2335793f66adc27f4eb89e062bb9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:30:49 2013 +0100
+
+    pike: memset of address print buffer with proper size
+    
+    (cherry picked from commit d54eb083f59fb55ccbc79e49b5b3e05426bd3795)
+
+commit e9ef639beb37e1379a2a62bfaac13a4b64ba7d75
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 19:03:08 2013 +0100
+
+    tls: removed unsigned int comparison with <0
+    
+    (cherry picked from commit 7d6dc390bac2b49615444bcbad74cd39f3c82302)
+
+commit ea6b37271c7ca222650a58dc717b7a203483cc6a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:20:16 2013 +0100
+
+    ctl: removed not needed extra paranthesis
+    
+    (cherry picked from commit efda774f6391f1e909a9967898c64fb25f53eeba)
+
+commit 3bfbc96ae673a570e6bc56a89e8ca6e677eb9388
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:15:22 2013 +0100
+
+    pv: use int index for looking up flag index
+    
+    - some functions used for check may return negative on error
+    
+    (cherry picked from commit 30359b3cfce2ce909153e06b1954778c4eababa7)
+
+commit 2e08848cdb16fa717897b6b70fde4dc9ef3c34a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 9 10:06:15 2013 +0100
+
+    usrloc: avoid double locking when preloading attributes
+    
+    - reported by Seudin Kasumovic, FS#378
+    
+    (cherry picked from commit 888635bfa3719afeeea6f5f0d407aa862ceb34ac)
+    (cherry picked from commit 8df9d2336e7de2648288cf8ff6821e6820d88da9)
+
+commit aee55e1bdc9fefd2082ba1e13d88a1ab2c70a37f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 16 09:26:03 2013 +0100
+
+    db_flatstore: update timestamp for kamailio specific rpc rotate
+    
+    - do also in 'rotate' command, not only in 'k_rotate'
+    - from a patch by Abdelkader Allam
+    
+    (cherry picked from commit b15aefa31e45f1ad6a45b64905f9fae24e0f790e)
+    (cherry picked from commit d75bc3b69151a9d0391309e6bb51784f3b6b9a83)
+
+commit b4f7f2e8a0cf1178b31ed7a7a84725fd25b36940
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 17:16:25 2013 +0100
+
+    core: fixed several clang compiler warnings
+    
+    (cherry picked from commit f0fb6f1e9fbb2f7f0c2bed5ba0d50a56cf5cf444)
+    (cherry picked from commit 90681624c54f0ec0b1259e205bcc0274316b4549)
+    
+    Conflicts:
+    	parser/parse_fline.c
+
+commit 3c1ac9fa2664978c8cfd5b4a217df0163699c0b1
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Tue Nov 26 16:08:35 2013 +0100
+
+    modules/ims_registrar_pcscf: fix log
+
+commit bd7eaa50b6f24a6404294d66e5ab91fcb04be3da
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Dec 19 16:21:25 2013 +0200
+
+    modules/pv: fixed params and param transformation
+    
+    - params need to be taken from sip_params field of sip_uri struct
+    (cherry picked from commit e54b3ec673cb32664a1e8de2e591190f22216724)
+
+commit 060f90439f7a91f42c983f6c6d19a3131f476258
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 11 09:49:52 2013 +0100
+
+    core: safety check for double free in q_malloc as in f_malloc
+    
+    (cherry picked from commit 943a5941f5ab479803fb30e19e9fa607f0f0fe14)
+
+commit 33d71771185812cba24f6213c7d8e4b9831b9b5a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:02:36 2013 +0100
+
+    usrloc: proper index for domain column when laoding extra attributes
+    
+    - patch by Seudin Kasumovic, FS#377
+    
+    (cherry picked from commit 551524cfc83b922c23e2d26f8cc5950df2a0af54)
+
+commit ba788ba35e8df637c3f91bd942e20808f1238b3b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 16:33:04 2013 +0100
+
+    Makefile.defs: compiler optimization level made variable
+    
+    - allow using -O3 for clang, which gives error on the former default -O9
+    
+    (cherry picked from commit 0713c0de50f8c2f4da2ee0ef33b0505c37792392)
+
+commit 9b1882ecade859474ee9faf8a4ccc1ac061e7baa
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Thu Dec 5 09:30:56 2013 +0000
+
+    dialog_ng: Fix segfault in dlg_new_dialog
+    (cherry picked from commit 32f9c9187a9d886c46b24ee38173274da63febda)
+
+commit e605174dab9b86ce06689d184b4b9d81288f1193
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 20:42:12 2013 +0100
+
+    mem: malloc(0) should return a valid pointer for free according to specs
+    
+    (cherry picked from commit f61ff34aac7c7bae3a96fb698a899c8a0e692a9f)
+
+commit 7aba649db775a00e28dc75a9145a3da50f797776
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Mon Dec 2 17:05:35 2013 +0100
+
+    permissions: re-init db connection for reload cmd
+    
+    - some workers for specific mi/rpc commands may not have a db connection from the start
+    
+    (cherry picked from commit cb23be9456c178957399ec9d8ce8a1420d50fc32)
+
+commit 24cb002f5af4cdbf6a54e8abf4bf31e311aff4cf
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Nov 1 15:33:08 2013 +0100
+
+    registrar: clean static values at pack_ci
+    
+    (cherry picked from commit 66185905850cd2ac9ab933776184da0f0882e5ac)
+
+commit 32a4710d4ab7e3b03121154cbc609c6ac41d17b2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Nov 29 14:23:47 2013 +0100
+
+    usrloc: db_update contact by instance + reg-id
+    - backport from master f67171c
+
+commit 5ae035c420a5f30d862878825fac5ae9dbda53c8
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Thu Nov 28 12:16:05 2013 +0100
+
+    modules/ndb_redis: solved bug in second call to redisvCommand.
+    
+    (cherry picked from commit 52a34d269931f6f3a50b3fc532405624b9e38d23)
+
+commit 1103009d674b2bf7a6c31e4d351d832370dded58
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 5 10:33:55 2013 +0100
+
+    dialog: init cseq to 0 if not available yet for one side
+    
+    - based on a report by Morten Isaksen
+    
+    (cherry picked from commit 082a6c43938cf8e3839d46fd070e391bd522d4ed)
+
+commit edd13668492c7c09242f19620ad763922e92a186
+Author: Timo TerÃ¤s <timo.teras@iki.fi>
+Date:   Fri Nov 15 16:06:25 2013 +0200
+
+    modules/sca: fix hash entry deletion
+    
+    sca_hash_table_slot_kv_delete_unsafe() uses internally sca_hash_entry
+    but incorrectly called sca_hash_table_slot_kv_find_unsafe() to
+    initialize the entry. That function returns the node value, not the
+    node itself. Use instead sca_hash_table_slot_kv_find_entry_unsafe().
+    
+    Should fix the crash in FS#366.
+    
+    (cherry picked from commit 56e4f4518028e73f9ebd053242a100a5c3b7eb53)
+
+commit c3e5b2cbf941d7463abdfe5df53a803b2a877d09
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 12 21:06:15 2013 +0100
+
+    itm: init sock_str to null value if no sock pointer is set in branch
+    
+    - case of creating branches from a 3xx reply
+    - reported by juliabo [at] gmail
+    - identation made coherent with tm module style
+    - corresponding to master commit 254d0c43a84ec87801e58b4f990a2029c0e27c6f
+
+commit fd17595f31f3e4edeea707c5049a883fa8410dfe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 2 19:28:36 2013 +0100
+
+    tls: include dprint.h where log functions are used
+    
+    (cherry picked from commit 039f52deb384c71ecfb578e2cd648153dd9937d1)
+
+commit 63a823ff275e84d18c0d67dc2aa1baee2e332ffe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 1 09:39:32 2013 +0100
+
+    uac: reset registration authentication flag
+    
+    - reported by  rene montilva (fs#352)
+    
+    (cherry picked from commit bc66a385e8a282638c8d5cfa566f971c62cd341b)
+
+commit d17ff203507956f4ce37ee9c64c17b586cfcb437
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed Oct 30 17:12:05 2013 +0000
+
+    modules/rls: Fix memory leak in rls
+    - Leak would occur in two error cases
+    - Also improved diagnostics to display uri on various failures
+    (cherry picked from commit 52ac54133f70776a2dfe54e1789de8b1cae02a05)
+
+commit 49e566ab80a8458ba229c77149a6011ea5d0df28
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Thu Oct 24 12:34:05 2013 -0400
+
+    tm: fix possible segfault in cancel_branch()
+
+commit c035965d7ed820470d4aedc4dc1dca7e048906b1
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Oct 23 14:53:04 2013 +0100
+
+    modules/xcap_server: fixed fetching of an element (GET with XPath)
+    
+    - This is a mandatory part of XCAP and DELETE/PUT of elements (using XPath)
+      is supported in xcap_server.
+    - The code to get a node from a document was all in there but never called.
+    
+    (cherry picked from commit 6b8b8a050e4490302d1f1f940a7fda95784cce46)
+
+
 ===================== 2013-10-02 Version 4.0.4 Released =====================
 
 ===================== Changes Since Version 4.0.3 ===========================
