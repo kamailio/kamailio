@@ -137,8 +137,8 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
         goto done;
     }
 
-    //get the target/presentity URI from the request uri
-    presentity_uri = cscf_get_public_identity_from_requri(msg);
+    //get the target/presentity URI from To header
+    cscf_get_to_uri(msg, &presentity_uri);
 
 
     asserted_id = cscf_get_asserted_identity(msg);
@@ -215,10 +215,8 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
 
 done:
-    if (presentity_uri.s) shm_free(presentity_uri.s);
     return ret;
 error:
-    if (presentity_uri.s) shm_free(presentity_uri.s);
     ret = CSCF_RETURN_ERROR;
     return ret;
 }
@@ -410,8 +408,8 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
         }
     }
 
-    //get the presentity uri from the request uri
-    presentity_uri = cscf_get_public_identity_from_requri(msg);
+    //get the presentity uri from To Header
+    cscf_get_to_uri(msg, &presentity_uri);
 
     //get the watcher uri from the to header
     cscf_get_from_uri(msg, &watcher_impu);
@@ -551,12 +549,10 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 
     //free memory
     if (record_route.s) pkg_free(record_route.s);
-    if (presentity_uri.s) shm_free(presentity_uri.s);
     return ret;
 error:
     //free memory
     if (record_route.s) pkg_free(record_route.s);
-    if (presentity_uri.s) shm_free(presentity_uri.s);
 
     return ret;
 }
