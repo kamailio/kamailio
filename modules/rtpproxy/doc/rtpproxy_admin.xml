@@ -645,7 +645,7 @@ start_recording();
 	<section>
 		<title>Exported Pseudo Variables</title>
 		<section>
-			<title><function moreinfo="none">$rtpstart</function></title>
+			<title><function moreinfo="none">$rtpstat</function></title>
 			<para>
 			Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from the RTP-Proxy
 			are provided as a string and it does contain several packet-counters. The statistics
