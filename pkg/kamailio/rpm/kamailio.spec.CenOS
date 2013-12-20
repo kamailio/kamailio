@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver     4.0.4
+%define ver     4.0.5
 %define rel     0
 %define _sharedir %{_prefix}/share
 
