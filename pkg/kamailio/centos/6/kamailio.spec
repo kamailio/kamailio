@@ -422,10 +422,10 @@ make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 	jabber ndb_cassandra osp" \
 	group_include="kstandard kautheph kberkeley kcarrierroute kcpl \
-	kdnssec kgeoip kims kjava kjson kldap klua kmemcached kmi_xmlrpc \
-	kmysql koutbound kperl kpostgres kpresence kpurple kpython kradius \
-	kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils kwebsocket \
-	kxml kxmpp" 
+	kdnssec kgeoip kgzcompress kims kjava kjson kldap klua kmemcached \
+	kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpurple kpython \
+	kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
+	kwebsocket kxml kxmpp"
 cd modules/app_java/kamailio_java_folder/java
 ant
 cd ../../../..
@@ -440,10 +440,10 @@ make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 	iptrtpproxy jabber osp" \
 	group_include="kstandard kautheph kberkeley kcarrierroute kcpl \
-	kdnssec kgeoip kims kjava kjson kldap klua kmemcached kmi_xmlrpc \
-	kmysql koutbound kperl kpostgres kpresence kpurple kpython kradius \
-	kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils kwebsocket \
-	kxml kxmpp" 
+	kdnssec kgeoip kgzcompress kims kjava kjson kldap klua kmemcached \
+	kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpurple kpython \
+	kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
+	kwebsocket kxml kxmpp"
 
 mkdir -p $RPM_BUILD_ROOT/%{_libdir}/kamailio/java
 install -m644 modules/app_java/kamailio_java_folder/java/Kamailio.class \
