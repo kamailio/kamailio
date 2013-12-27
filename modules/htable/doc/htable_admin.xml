@@ -210,7 +210,7 @@ if(is_present_hf("Authorization"))
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="htable.p.htable">
 		<title><varname>htable</varname> (str)</title>
 		<para>
 		The definition of a hash table. The value of the parameter must have the
@@ -298,7 +298,7 @@ modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;dmqreplicat
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.db_url">
 		<title><varname>db_url</varname> (str)</title>
 		<para>
 			The URL to connect to database for loading values in hash
@@ -318,7 +318,7 @@ modparam("htable", "db_url", "&defaultdb;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.key_name_column">
 		<title><varname>key_name_column</varname> (str)</title>
 		<para>
 			The name of the column containing hash table key name.
@@ -337,7 +337,7 @@ modparam("htable", "key_name_column", "kname")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.key_type_column">
 		<title><varname>key_type_column</varname> (str)</title>
 		<para>
 			The name of the column containing hash table key type.
@@ -356,7 +356,7 @@ modparam("htable", "key_type_column", "ktype")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.value_type_column">
 		<title><varname>value_type_column</varname> (str)</title>
 		<para>
 			The name of the column containing hash table value type.
@@ -375,7 +375,7 @@ modparam("htable", "value_type_column", "vtype")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.key_value_column">
 		<title><varname>key_value_column</varname> (str)</title>
 		<para>
 			The name of the column containing hash table key value.
@@ -394,7 +394,7 @@ modparam("htable", "key_value_column", "kvalue")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.expires_column">
 		<title><varname>expires_column</varname> (str)</title>
 		<para>
 			The name of the column containing expires type.
@@ -413,7 +413,7 @@ modparam("htable", "expires", "expiry")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.array_size_suffix">
 		<title><varname>array_size_suffix</varname> (str)</title>
 		<para>
 			The suffix to be added to store the number of items in an
@@ -433,7 +433,7 @@ modparam("htable", "array_size_suffix", "-count")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.fetch_rows">
 		<title><varname>fetch_rows</varname> (integer)</title>
 		<para>
 		How many rows to fetch at once from database.
@@ -452,7 +452,7 @@ modparam("htable", "fetch_rows", 1000)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.timer_interval">
 		<title><varname>timer_interval</varname> (integer)</title>
 		<para>
 		Interval in seconds to check for expired htable values.
@@ -471,7 +471,7 @@ modparam("htable", "timer_interval", 10)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.timer_mode">
 		<title><varname>timer_mode</varname> (integer)</title>
 		<para>
 		If set to 1, will start a new timer process. If set to 0
@@ -492,7 +492,7 @@ modparam("htable", "timer_mode", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.db_expires">
 		<title><varname>db_expires</varname> (integer)</title>
 		<para>
 			If set to 1, will load/save the expires values of the items in
@@ -513,7 +513,7 @@ modparam("htable", "db_expires", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.enable_dmq">
 		<title><varname>enable_dmq</varname> (integer)</title>
 		<para>
 			If set to 1, will enable DMQ replication of actions performed upon 
@@ -543,7 +543,7 @@ modparam("htable", "enable_dmq", 1)
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="htable.f.sht_print">
 		<title>
 		<function moreinfo="none">sht_print()</function>
 		</title>
@@ -564,7 +564,7 @@ sht_print();
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.f.sht_rm_name_re">
 		<title>
 		<function moreinfo="none">sht_rm_name_re(htable=>regexp)</function>
 		</title>
@@ -585,7 +585,7 @@ sht_rm_name_re("ha=>.*");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.f.sht_rm_value_re">
 		<title>
 		<function moreinfo="none">sht_rm_value_re(htable=>regexp)</function>
 		</title>
