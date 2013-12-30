@@ -2903,8 +2903,7 @@ int pv_parse_flag_param(pv_spec_p sp, str *in)
 			LM_ERR("flag not declared: [%.*s]\n", in->len, in->s);
 			return -1;
 		}
-	}
-	if (check_flag(n) < 0)
+	} else if (check_flag(n) < 0)
 	{
 		LM_ERR("bad flag value: [%.*s]\n", in->len, in->s);
 		return -1;
