@@ -1017,7 +1017,8 @@ static int child_init(int rank)
                 LM_ERR("no more pkg memory left\n");
                 return -1;
         }
-
+        
+	heptime->tv_sec = 0;
 
 	return 0;
 }
