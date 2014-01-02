@@ -1477,7 +1477,7 @@ modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="acc.f.acc_log_request">
 		<title>
 			<function moreinfo="none">acc_log_request(comment)</function>
 		</title>
@@ -1493,6 +1493,7 @@ modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1504,11 +1505,14 @@ modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 		<programlisting format="linespecific">
 ...
 acc_log_request("Some comment");
+$var(code) = 404;
+$avp(reason) = "Not found";
+acc_log_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.f.acc_db_request">
 		<title>
 			<function moreinfo="none">acc_db_request(comment, table)</function>
 		</title>
@@ -1523,7 +1527,9 @@ acc_log_request("Some comment");
 		</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>comment</emphasis> - Comment to be appended.</para>
+			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
+			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>table</emphasis> - Database table to be used. It
@@ -1539,11 +1545,12 @@ acc_log_request("Some comment");
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
+acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 ...
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.f.acc_rad_request">
 		<title>
 			<function moreinfo="none">acc_rad_request(comment)</function>
 		</title>
@@ -1558,6 +1565,7 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1569,11 +1577,12 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 		<programlisting format="linespecific">
 ...
 acc_rad_request("Some comment");
+acc_rad_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.f.acc_diam_request">
 		<title>
 			<function moreinfo="none">acc_diam_request(comment)</function>
 		</title>
@@ -1587,6 +1596,7 @@ acc_rad_request("Some comment");
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1598,6 +1608,7 @@ acc_rad_request("Some comment");
 		<programlisting format="linespecific">
 ...
 acc_diam_request("Some comment");
+acc_diam_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>
