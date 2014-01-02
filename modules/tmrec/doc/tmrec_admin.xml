@@ -127,7 +127,8 @@ modparam("tmrec", "separator", ";")
 			be small enough such that subsequent intervals do not overlap. 
 			For non-recurring intervals, durations of any positive length are 
 			permitted.  Zero-length duration means <quote>forever</quote>. 
-			Negative-length durations are not allowed.
+			Negative-length durations are not allowed. See RFC 2445 for
+			the format of duration.
 			</para>
 		</listitem>
 		<listitem>
@@ -274,9 +275,9 @@ modparam("tmrec", "separator", ";")
 		<title><function>tmrec_match</function> usage</title>
 		<programlisting format="linespecific">
 ...
-	if(tmrec_match("20120101T000000|24H|weekly|||SA,SU")
+	if(tmrec_match("20120101T000000|PT24H|weekly|||SA,SU")
         xdbg("it is weekend!\n");
-    if(tmrec_match("20120101T083000|10H|weekly|||MO,TU,WE,TH,FR")
+    if(tmrec_match("20120101T083000|PT10H|weekly|||MO,TU,WE,TH,FR")
         xdbg("it is with working hours\n");
 ...
 </programlisting>
