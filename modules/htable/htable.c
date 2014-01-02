@@ -490,7 +490,7 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree( 500, "no such hash table", 18);
 	}
 	memcpy(&nht, ht, sizeof(ht_t));
-	nht.entries = (ht_entry_t*)shm_malloc(nht.htsize*sizeof(ht_entry_t));
+	nht.entries = (ht_entry_t*)pkg_malloc(nht.htsize*sizeof(ht_entry_t));
 	if(nht.entries == NULL)
 	{
 		ht_db_close_con();
@@ -525,6 +525,7 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 			ht_cell_free(it);
 		}
 	}
+	pkg_free(nht.entries);
 	ht_db_close_con();
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
