@@ -10,7 +10,7 @@ Ramona-Elena Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright © 2004, 2005 Voice Sistem SRL
+   Copyright � 2004, 2005 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -242,7 +242,7 @@ modparam("avpops","use_domain",1)
 
    Name of column containing the uuid (unique user id).
 
-   Default value is “uuid”.
+   Default value is "uuid".
 
    Example 1.5. Set uuid_column parameter
 ...
@@ -253,7 +253,7 @@ modparam("avpops","uuid_column","uuid")
 
    Name of column containing the username.
 
-   Default value is “username”.
+   Default value is "username".
 
    Example 1.6. Set username_column parameter
 ...
@@ -264,7 +264,7 @@ modparam("avpops","username_column","username")
 
    Name of column containing the domain name.
 
-   Default value is “domain”.
+   Default value is "domain".
 
    Example 1.7. Set domain_column parameter
 ...
@@ -275,7 +275,7 @@ modparam("avpops","domain_column","domain")
 
    Name of column containing the attribute name (AVP name).
 
-   Default value is “attribute”.
+   Default value is "attribute".
 
    Example 1.8. Set attribute_column parameter
 ...
@@ -286,7 +286,7 @@ modparam("avpops","attribute_column","attribute")
 
    Name of column containing the AVP value.
 
-   Default value is “value”.
+   Default value is "value".
 
    Example 1.9. Set value_column parameter
 ...
@@ -297,7 +297,7 @@ modparam("avpops","value_column","value")
 
    Name of integer column containing the AVP type.
 
-   Default value is “type”.
+   Default value is "type".
 
    Possible column values are
      * 0 - AVP with string name and string value
@@ -325,7 +325,7 @@ modparam("avpops","type_column","type")
           + 'value_type='('integer'|'string')
           + 'table='string
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.11. Set db_scheme parameter
 ...
@@ -349,7 +349,7 @@ modparam("avpops","db_scheme",
    5.12. is_avp_set(name)
    5.13. avp_print()
 
-5.1.  avp_db_load(source,name)
+5.1. avp_db_load(source,name)
 
    Loads from DB into memory the AVPs corresponding to the given source.
    If given, it sets the script flags for loaded AVPs. It returns true if
@@ -387,7 +387,7 @@ avp_db_load("$uuid","$avp(s:404fwd)/fwd_table");
 avp_db_load("$ru","$avp(i1:123)/$some_scheme");
 ...
 
-5.2.  avp_db_store(source,name)
+5.2. avp_db_store(source,name)
 
    Stores to DB the AVPs corresponding to the given source.
 
@@ -403,7 +403,7 @@ avp_db_store("$tu","$avp(i:678)");
 avp_db_store("$ru/username","$avp(email)");
 ...
 
-5.3.  avp_db_delete(source,name)
+5.3. avp_db_delete(source,name)
 
    Deletes from DB the AVPs corresponding to the given source.
 
@@ -420,7 +420,7 @@ avp_db_delete("$ru/username","$avp(email)");
 avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 ...
 
-5.4.  avp_db_query(query[,dest])
+5.4. avp_db_query(query[,dest])
 
    Make a database query and store the result in AVPs. This command is
    deprecated, please use the more flexible and advanced sqlops module
@@ -436,8 +436,8 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
        used in the query makes you vulnerable to SQL injection, e.g. make
        it possible for an outside attacker to alter your database content.
      * dest - a list with AVP names where to store the result. The format
-       is “$avp(name1);$avp(name2);...”. If this parameter is ommited, the
-       result is stored in “$avp(i:1);$avp(i:2);...”. If the result gives
+       is "$avp(name1);$avp(name2);...". If this parameter is ommited, the
+       result is stored in "$avp(i:1);$avp(i:2);...". If the result gives
        many rows, then multiple AVPs with corresponding name will be
        added. The value type of the AVP (string or integer) will be
        derived from the type of the columns. Please note that only this
@@ -460,7 +460,7 @@ avp_db_query("select password, ha1 from subscriber where username='$tu'",
 avp_db_query("delete from subscriber");
 ...
 
-5.5.  avp_delete(name)
+5.5. avp_delete(name)
 
    Deletes from memory the AVPs with name or, if empty, all AVPs.
 
@@ -482,7 +482,7 @@ avp_delete("i");
 avp_delete("a3");
 ...
 
-5.6.  avp_pushto(destination,name)
+5.6. avp_pushto(destination,name)
 
    Pushes the value of AVP(s) into the SIP message.
 
@@ -512,7 +512,7 @@ avp_pushto("$du","$avp(i:679)");
 avp_pushto("$br","$avp(i:680)");
 ...
 
-5.7.  avp_check(name,op_value)
+5.7. avp_check(name,op_value)
 
    Checks the value of the AVP(s) against an operator and value.
 
@@ -567,7 +567,7 @@ $var(id)=2;
 avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
 ...
 
-5.8.  avp_copy(old_name,new_name)
+5.8. avp_copy(old_name,new_name)
 
    Copy / move an avp under a new name.
 
@@ -588,7 +588,7 @@ avp_copy("$avp(i:678)", "$avp(s:345)/g");
 avp_copy("$avp(old)","$avp(new)/gd");
 ...
 
-5.9.  avp_printf(dest, format)
+5.9. avp_printf(dest, format)
 
    NOTE: since Kamailio 1.3.0 the function has been moved to core and it
    is an alias to pv_printf().
@@ -612,7 +612,7 @@ avp_copy("$avp(old)","$avp(new)/gd");
 avp_printf("$avp(i:20)", "This is a $rm request with call-id $hdr(call-id)");
 ...
 
-5.10.  avp_subst(avps, subst)
+5.10. avp_subst(avps, subst)
 
    Perl/sed-like subst applied to AVPs having string value.
 
@@ -654,7 +654,7 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    after the first src_avp is processed, it will be added in avp list and
    next processing will use it.
 
-5.11.  avp_op(name,op_value)
+5.11. avp_op(name,op_value)
 
    Different integer operations with avps.
 
@@ -686,7 +686,7 @@ avp_op("$avp(i:678)", "add/i:345/g");
 avp_op("$avp(number)","sub/$avp(number2)/d");
 ...
 
-5.12.  is_avp_set(name)
+5.12. is_avp_set(name)
 
    Check if any AVP with name is set.
 
@@ -705,7 +705,7 @@ if(is_avp_set("$avp(i:678)"))
     log("AVP with integer id 678 exists\n");
 ...
 
-5.13.  avp_print()
+5.13. avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.

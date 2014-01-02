@@ -2771,12 +2771,12 @@ int *label)
    For programmatic use only. This function together with t_continue() can
    be used to implement asynchronous actions: t_suspend() saves the
    transaction, returns its identifiers, and t_continue() continues the
-   SIP request processing. (The request processing does not continue from
-   the same point in the script, a separate route block defined by the
-   parameter of t_continue() is executed instead. The reply lock is held
-   during the route block execution.) FR timer is ticking while the
-   transaction is suspended, and the transaction's failure route is
-   executed if t_continue() is not called in time.
+   SIP request/response processing. (The request/response processing does
+   not continue from the same point in the script, a separate route block
+   defined by the parameter of t_continue() is executed instead. The reply
+   lock is held during the route block execution.) FR timer is ticking
+   while the transaction is suspended, and the transaction's failure route
+   is executed if t_continue() is not called in time.
 
    Missing: message lumps are saved by t_suspend() and are not updated by
    the subsequent t_relay(). This means that the modifications made

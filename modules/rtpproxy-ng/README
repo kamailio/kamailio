@@ -36,15 +36,15 @@ Richard Fuchs
 
    Sipwise GmbH
 
-   Copyright © 2003-2008 Sippy Software, Inc.
+   Copyright � 2003-2008 Sippy Software, Inc.
 
-   Copyright © 2005 Voice Sistem SRL
+   Copyright � 2005 Voice Sistem SRL
 
-   Copyright © 2009-2012 TuTPro Inc.
+   Copyright � 2009-2012 TuTPro Inc.
 
-   Copyright © 2010 VoIPEmbedded Inc.
+   Copyright � 2010 VoIPEmbedded Inc.
 
-   Copyright © 2013 Sipwise GmbH
+   Copyright � 2013 Sipwise GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -161,7 +161,7 @@ Chapter 1. Admin Guide
    The module allows definition of several sets of rtpproxies.
    Load-balancing will be performed over a set and the admin has the
    ability to choose what set should be used. The set is selected via its
-   id - the id being defined with the set. Refer to the “rtpproxy_sock”
+   id - the id being defined with the set. Refer to the "rtpproxy_sock"
    module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
@@ -208,7 +208,7 @@ Chapter 1. Admin Guide
    Definition of socket(s) used to connect to (a set) RTPProxy. It may
    specify a UNIX socket or an IPv4/IPv6 UDP socket.
 
-   Default value is “NONE” (disabled).
+   Default value is "NONE" (disabled).
 
    Example 1.1. Set rtpproxy_sock parameter
 ...
@@ -230,7 +230,7 @@ modparam("rtpproxy-ng", "rtpproxy_sock",
    rtpproxy-ng module will not attempt to establish communication to that
    RTP proxy for rtpproxy_disable_tout seconds.
 
-   Default value is “60”.
+   Default value is "60".
 
    Example 1.2. Set rtpproxy_disable_tout parameter
 ...
@@ -241,7 +241,7 @@ modparam("rtpproxy-ng", "rtpproxy_disable_tout", 20)
 
    Timeout value in waiting for reply from RTP proxy.
 
-   Default value is “1”.
+   Default value is "1".
 
    Example 1.3. Set rtpproxy_tout parameter
 ...
@@ -253,7 +253,7 @@ modparam("rtpproxy-ng", "rtpproxy_tout", 2)
    How many times the module should retry to send and receive after
    timeout was generated.
 
-   Default value is “5”.
+   Default value is "5".
 
    Example 1.4. Set rtpproxy_retr parameter
 ...
@@ -262,11 +262,11 @@ modparam("rtpproxy-ng", "rtpproxy_retr", 2)
 
 4.5. extra_id_pv (string)
 
-   The parameter sets the PV defination to use when the “b” parameter is
+   The parameter sets the PV defination to use when the "b" parameter is
    used on unforce_rtp_proxy(), rtpproxy_offer(), rtpproxy_answer() or
    rtpproxy_manage() command.
 
-   Default is empty, the “b” parameter may not be used then.
+   Default is empty, the "b" parameter may not be used then.
 
    Example 1.5. Set extra_id_pv parameter
 ...
@@ -283,7 +283,7 @@ modparam("rtpproxy-ng", "extra_id_pv", "$avp(extra_id)")
    5.6. rtpproxy_manage([flags [, ip_address]])
    5.7. start_recording()
 
-5.1.  set_rtp_proxy_set(setid)
+5.1. set_rtp_proxy_set(setid)
 
    Sets the Id of the rtpproxy set to be used for the next
    unforce_rtp_proxy(), rtpproxy_offer(), rtpproxy_answer() or
@@ -299,7 +299,7 @@ set_rtp_proxy_set("2");
 rtpproxy_offer();
 ...
 
-5.2.  rtpproxy_offer([flags [, ip_address]])
+5.2. rtpproxy_offer([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on INVITE for the cases the SDPs are in INVITE and 200 OK
@@ -309,16 +309,16 @@ rtpproxy_offer();
      * flags - flags to turn on some features.
           + 1 - append first Via branch to Call-ID when sending command to
             rtpproxy. This can be used to create one media session per
-            branch on the rtpproxy. When sending a subsequent “delete”
+            branch on the rtpproxy. When sending a subsequent "delete"
             command to the rtpproxy, you can then stop just the session
             for a specific branch when passing the flag '1' or '2' in the
-            “unforce_rtpproxy”, or stop all sessions for a call when not
+            "unforce_rtpproxy", or stop all sessions for a call when not
             passing one of those two flags there. This is especially
             useful if you have serially forked call scenarios where
-            rtpproxy gets an “offer” command for a new branch, and then a
-            “delete” command for the previous branch, which would
+            rtpproxy gets an "offer" command for a new branch, and then a
+            "delete" command for the previous branch, which would
             otherwise delete the full call, breaking the subsequent
-            “answer” for the new branch. This flag is only supported by
+            "answer" for the new branch. This flag is only supported by
             the ngcp-mediaproxy-ng rtpproxy at the moment!
           + 2 - append second Via branch to Call-ID when sending command
             to rtpproxy. See flag '1' for its meaning.
@@ -332,12 +332,12 @@ rtpproxy_offer();
             but is usefull when forking to multiple destinations on
             different address families or network segments, requiring
             different rtpproxy parameters. The variable value is taken
-            from the “extra_id_pv”. When used, it must be used in every
+            from the "extra_id_pv". When used, it must be used in every
             call to rtpproxy_manage(), rtpproxy_offer(), rtpproxy_answer()
             and rtpproxy_destroy() with the same contents of the PV. The b
             parameter may not be used in conjunction with the 1, 2 or 3
             parameter to use the Via branch in the Call-ID.
-          + l - force “lookup”, that is, only rewrite SDP when
+          + l - force "lookup", that is, only rewrite SDP when
             corresponding session already exists in the RTP proxy. By
             default is on when the session is to be completed.
           + i, e - these flags specify the direction of the SIP message.
@@ -455,7 +455,7 @@ onreply_route[2]
 ...
 }
 
-5.3.  rtpproxy_answer([flags [, ip_address]])
+5.3. rtpproxy_answer([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on 200 OK for the cases the SDPs are in INVITE and 200 OK
@@ -471,7 +471,7 @@ onreply_route[2]
 
    See rtpproxy_offer() function example above for example.
 
-5.4.  rtpproxy_destroy([flags])
+5.4. rtpproxy_destroy([flags])
 
    Tears down the RTPProxy session for the current call.
 
@@ -481,16 +481,16 @@ onreply_route[2]
      * flags - flags to turn on some features.
           + 1 - append first Via branch to Call-ID when sending command to
             rtpproxy. This can be used to create one media session per
-            branch on the rtpproxy. When sending a subsequent “delete”
+            branch on the rtpproxy. When sending a subsequent "delete"
             command to the rtpproxy, you can then stop just the session
             for a specific branch when passing the flag '1' or '2' in the
-            “unforce_rtpproxy”, or stop all sessions for a call when not
+            "unforce_rtpproxy", or stop all sessions for a call when not
             passing one of those two flags there. This is especially
             useful if you have serially forked call scenarios where
-            rtpproxy gets an “update” command for a new branch, and then a
-            “delete” command for the previous branch, which would
+            rtpproxy gets an "update" command for a new branch, and then a
+            "delete" command for the previous branch, which would
             otherwise delete the full call, breaking the subsequent
-            “lookup” for the new branch. This flag is only supported by
+            "lookup" for the new branch. This flag is only supported by
             the ngcp-mediaproxy-ng rtpproxy at the moment!
           + 2 - append second Via branch to Call-ID when sending command
             to rtpproxy. See flag '1' for its meaning.
@@ -498,7 +498,7 @@ onreply_route[2]
             command to rtpproxy. See rtpproxy_offer() for details.
             <listitem>
             </listitem>
-            t - do not include To tag to “delete” command to rtpproxy thus
+            t - do not include To tag to "delete" command to rtpproxy thus
             causing full call to be deleted. Useful for deleting unused
             rtpproxy call when 200 OK is received on a branch, where
             rtpproxy is not needed.
@@ -508,11 +508,11 @@ onreply_route[2]
 rtpproxy_destroy();
 ...
 
-5.5.  unforce_rtp_proxy()
+5.5. unforce_rtp_proxy()
 
    Same as rtpproxy_destroy().
 
-5.6.  rtpproxy_manage([flags [, ip_address]])
+5.6. rtpproxy_manage([flags [, ip_address]])
 
    Manage the RTPProxy session - it combines the functionality of
    rtpproxy_offer(), rtpproxy_answer() and unforce_rtpproxy(), detecting
@@ -542,7 +542,7 @@ rtpproxy_destroy();
 rtpproxy_manage();
 ...
 
-5.7.  start_recording()
+5.7. start_recording()
 
    This function will send a signal to the RTP Proxy to record the RTP
    stream on the RTP Proxy. This function is not supported by
@@ -589,7 +589,7 @@ start_recording();
    NOTE: if a rtpproxy is defined multiple times (in the same or diferente
    sete), all of its instances will be enables/disabled.
 
-   Example 1.13.  nh_enable_rtpp usage
+   Example 1.13. nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -601,52 +601,52 @@ $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.14.  nh_show_rtpp usage
+   Example 1.14. nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp
 ...
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with “rtpproxy_disable” parameter?
+   2.1. What happend with "rtpproxy_disable" parameter?
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
 
    2.1.
 
-       What happend with “rtpproxy_disable” parameter?
+   What happend with "rtpproxy_disable" parameter?
 
-       It was removed as it became obsolete - now “rtpproxy_sock” can take
-       empty value to disable the rtpproxy functionality.
+   It was removed as it became obsolete - now "rtpproxy_sock" can take
+   empty value to disable the rtpproxy functionality.
 
    2.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.

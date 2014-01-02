@@ -275,8 +275,7 @@ Chapter 1. Admin Guide
        retransmissions in this case.
 
    To find out how to control/select the contact maching algorithm, please
-   see the module parameter matching_mode - Section 3.23, "matching_mode
-   (integer)".
+   see the module parameter matching_mode - ???.
 
 2. Dependencies
 
