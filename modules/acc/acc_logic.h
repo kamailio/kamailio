@@ -41,7 +41,7 @@
 #include "../../modules/tm/t_hooks.h"
 #include "acc_api.h"
 
-
+int acc_parse_code(char *p, struct acc_param *param);
 void acc_onreq( struct cell* t, int type, struct tmcb_params *ps );
 
 int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo);

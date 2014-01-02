@@ -355,15 +355,21 @@ static int acc_fixup(void** param, int param_no)
 		memset( accp, 0, sizeof(struct acc_param));
 		accp->reason.s = p;
 		accp->reason.len = strlen(p);
-		/* any code? */
-		if (accp->reason.len>=3 && isdigit((int)p[0])
-		&& isdigit((int)p[1]) && isdigit((int)p[2]) ) {
-			accp->code = (p[0]-'0')*100 + (p[1]-'0')*10 + (p[2]-'0');
-			accp->code_s.s = p;
-			accp->code_s.len = 3;
-			accp->reason.s += 3;
-			for( ; isspace((int)accp->reason.s[0]) ; accp->reason.s++ );
-			accp->reason.len = strlen(accp->reason.s);
+		if (strchr(p,PV_MARKER)!=NULL) { /* is a variable $xxxxx */
+			if (pv_parse_format(&accp->reason, &accp->elem)<0)
+			{
+				LM_ERR("bad param 1; "
+					"parse format error [%.*s]\n", accp->reason.len, accp->reason.s);
+				return E_UNSPEC;
+			}
+		}
+		else {
+			if(acc_parse_code(p,accp)<0)
+			{
+				LM_ERR("bad param 1;"
+					"parse code error\n");
+				return E_UNSPEC;
+			}
 		}
 		*param = (void*)accp;
 #ifdef SQL_ACC

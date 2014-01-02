@@ -166,14 +166,49 @@ static inline int acc_preparse_req(struct sip_msg *req)
 	return 0;
 }
 
+int acc_parse_code(char *p, struct acc_param *param)
+{
+	if (p==NULL||param==NULL)
+		return -1;
 
+	/* any code? */
+	if (param->reason.len>=3 && isdigit((int)p[0])
+	&& isdigit((int)p[1]) && isdigit((int)p[2]) ) {
+		param->code = (p[0]-'0')*100 + (p[1]-'0')*10 + (p[2]-'0');
+		param->code_s.s = p;
+		param->code_s.len = 3;
+		param->reason.s += 3;
+		for( ; isspace((int)param->reason.s[0]) ; param->reason.s++ );
+		param->reason.len = strlen(param->reason.s);
+	}
+	return 0;
+}
+
+int acc_get_param_value(struct sip_msg *rq, struct acc_param *param)
+{
+	if(param->elem!=NULL) {
+		if(pv_printf_s(rq, param->elem, &param->reason)==-1) {
+			LM_ERR("Can't get value for %.*s\n", param->reason.len, param->reason.s);
+			return -1;
+		}
+		if(acc_parse_code(param->reason.s, param)<0)
+		{
+			LM_ERR("Can't parse code\n");
+			return -1;
+		}
+	}
+	return 0;
+}
 
 int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo)
 {
+	struct acc_param *param = (struct acc_param*)comment;
 	if (acc_preparse_req(rq)<0)
 		return -1;
+	if(acc_get_param_value(rq, param)<0)
+		return -1;
 	env_set_to( rq->to );
-	env_set_comment((struct acc_param*)comment);
+	env_set_comment(param);
 	env_set_text( ACC_REQUEST, ACC_REQUEST_LEN);
 	return acc_log_request(rq);
 }
@@ -212,6 +247,7 @@ int acc_db_set_table_name(struct sip_msg *msg, void *param, str *table)
 
 int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 {
+	struct acc_param *param = (struct acc_param*)comment;
 	if (!table) {
 		LM_ERR("db support not configured\n");
 		return -1;
@@ -222,8 +258,10 @@ int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 		LM_ERR("cannot set table name\n");
 		return -1;
 	}
+	if(acc_get_param_value(rq, param)<0)
+		return -1;
 	env_set_to( rq->to );
-	env_set_comment((struct acc_param*)comment);
+	env_set_comment(param);
 	return acc_db_request(rq);
 }
 #endif
@@ -232,10 +270,13 @@ int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 #ifdef RAD_ACC
 int w_acc_rad_request(struct sip_msg *rq, char *comment, char *foo)
 {
+	struct acc_param *param = (struct acc_param*)comment;
 	if (acc_preparse_req(rq)<0)
 		return -1;
+	if(acc_get_param_value(rq, param)<0)
+		return -1;
 	env_set_to( rq->to );
-	env_set_comment((struct acc_param*)comment);
+	env_set_comment(param);
 	return acc_rad_request(rq);
 }
 #endif
@@ -244,10 +285,13 @@ int w_acc_rad_request(struct sip_msg *rq, char *comment, char *foo)
 #ifdef DIAM_ACC
 int w_acc_diam_request(struct sip_msg *rq, char *comment, char *foo)
 {
+	struct acc_param *param = (struct acc_param*)comment;
 	if (acc_preparse_req(rq)<0)
 		return -1;
+	if(acc_get_param_value(rq, param)<0)
+		return -1;
 	env_set_to( rq->to );
-	env_set_comment((struct acc_param*)comment);
+	env_set_comment(param);
 	return acc_diam_request(rq);
 }
 #endif
