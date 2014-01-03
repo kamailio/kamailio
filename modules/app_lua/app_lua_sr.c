@@ -1151,12 +1151,15 @@ static int lua_sr_push_str_list_table(lua_State *L, struct str_list *list) {
 	return 1;
 }
 
-static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp);
+static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp, const int simple_flag);
 
 /**
  * creates and push a table for the key name in xavp
+ * if simple_flag is != 0 it will return only the first value
  */
-static void lua_sr_push_xavp_name_table(lua_State *L, sr_xavp_t *xavp, str name) {
+static void lua_sr_push_xavp_name_table(lua_State *L, sr_xavp_t *xavp,
+	str name, const int simple_flag)
+{
 	lua_Number i = 1;
 	lua_Number elem = 1;
 	sr_xavp_t *avp = xavp;
@@ -1165,10 +1168,11 @@ static void lua_sr_push_xavp_name_table(lua_State *L, sr_xavp_t *xavp, str name)
 	{
 		avp = avp->next;
 	}
-	lua_newtable(L);
+
+	if(simple_flag==0) lua_newtable(L);
 
 	while(avp!=NULL){
-		lua_pushnumber(L, elem);
+		if(simple_flag==0) lua_pushnumber(L, elem);
 		switch(avp->val.type) {
 			case SR_XTYPE_NULL:
 				lua_pushnil(L);
@@ -1188,8 +1192,9 @@ static void lua_sr_push_xavp_name_table(lua_State *L, sr_xavp_t *xavp, str name)
 				LM_WARN("XAVP type:%d value not supported\n", avp->val.type);
 			break;
 			case SR_XTYPE_XAVP:
-				if(!lua_sr_push_xavp_table(L,avp->val.v.xavp)){
-					LM_ERR("xavp:%.*s subtable error. Nil value added\n", avp->name.len, avp->name.s);
+				if(!lua_sr_push_xavp_table(L,avp->val.v.xavp, simple_flag)){
+					LM_ERR("xavp:%.*s subtable error. Nil value added\n",
+						avp->name.len, avp->name.s);
 					lua_pushnil(L);
 				}
 			break;
@@ -1199,18 +1204,25 @@ static void lua_sr_push_xavp_name_table(lua_State *L, sr_xavp_t *xavp, str name)
 				lua_pushnil(L);
 			break;
 		}
-		lua_rawset(L, -3);
-		elem = elem + 1;
-		avp = xavp_get_next(avp);
+		if(simple_flag==0)
+		{
+			lua_rawset(L, -3);
+			elem = elem + 1;
+			avp = xavp_get_next(avp);
+		}
+		else {
+			lua_setfield(L, -2, name.s);
+			avp = NULL;
+		}
 	}
-	lua_setfield(L, -2, name.s);
+	if(simple_flag==0) lua_setfield(L, -2, name.s);
 }
 
 /**
  * creates and push a table to the lua stack with
  * the elements of the xavp
  */
-static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp) {
+static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp, const int simple_flag) {
 	sr_xavp_t *avp = NULL;
 	struct str_list *keys;
 	struct str_list *k;
@@ -1227,64 +1239,13 @@ static int lua_sr_push_xavp_table(lua_State *L, sr_xavp_t *xavp) {
 	{
 		do
 		{
-			lua_sr_push_xavp_name_table(L, avp, keys->s);
+			lua_sr_push_xavp_name_table(L, avp, keys->s, simple_flag);
 			k = keys;
 			keys = keys->next;
 			pkg_free(k);
 		}while(keys!=NULL);
 	}
 
-	return 1;
-}
-
- /**
- * creates and push a table to the lua stack with
- * only the firsts elements of the xavp
- */
-static int lua_sr_push_xavp_table_simple(lua_State *L, sr_xavp_t *xavp) {
-	lua_Number i = 1;
-	sr_xavp_t *avp = NULL;
-
-	if(xavp->val.type!=SR_XTYPE_XAVP){
-		LM_ERR("%s not xavp?\n", xavp->name.s);
-		return 0;
-	}
-	avp = xavp->val.v.xavp;
-
-	lua_newtable(L);
-	while(avp!=NULL){
-		switch(avp->val.type) {
-			case SR_XTYPE_NULL:
-				lua_pushnil(L);
-				lua_setfield(L, -2, avp->name.s);
-			break;
-			case SR_XTYPE_INT:
-				i = avp->val.v.i;
-				lua_pushnumber(L, i);
-				lua_setfield(L, -2, avp->name.s);
-			break;
-			case SR_XTYPE_STR:
-				lua_pushlstring(L, avp->val.v.s.s, avp->val.v.s.len);
-				lua_setfield(L, -2, avp->name.s);
-			break;
-			case SR_XTYPE_TIME:
-			case SR_XTYPE_LONG:
-			case SR_XTYPE_LLONG:
-			case SR_XTYPE_DATA:
-				lua_pushnil(L);
-				lua_setfield(L, -2, avp->name.s);
-				LM_WARN("XAVP type:%d value not supported\n", avp->val.type);
-			break;
-			case SR_XTYPE_XAVP:
-				if(!lua_sr_push_xavp_table(L,avp->val.v.xavp)){
-					LM_ERR("xavp:%.*s subtable error. Nil value added\n", avp->name.len, avp->name.s);
-					lua_pushnil(L);
-				}
-				lua_setfield(L, -2, avp->name.s);
-			break;
-		}
-		avp = avp->next;
-	}
 	return 1;
 }
 
@@ -1363,9 +1324,9 @@ static int lua_sr_xavp_get(lua_State *L)
 		indx = xavp_size + indx;
 	}
 
+	avp = xavp_get_by_index(&xavp_name, indx, NULL);
 	do
 	{
-		avp = xavp_get_by_index(&xavp_name, indx, NULL);
 		if(avp==NULL){
 			LM_ERR("can't get xavp:%.*s index:%d\n", xavp_name.len, xavp_name.s, indx);
 			lua_pushnil(L);
@@ -1375,20 +1336,13 @@ static int lua_sr_xavp_get(lua_State *L)
 			lua_pushnumber(L, elem);
 			elem = elem + 1;
 		}
-		if (simple_flag != 0)
-		{
-			lua_sr_push_xavp_table_simple(L, avp);
-		}
-		else
-		{
-			lua_sr_push_xavp_table(L, avp);
-		}
-		if(all_flag==0) return 1;
-		else {
+		lua_sr_push_xavp_table(L, avp, simple_flag);
+		if(all_flag!=0) {
 			lua_rawset(L, -3);
 			indx = indx + 1;
 			avp = xavp_get_by_index(&xavp_name, indx, NULL);
 		}
+		else return 1;
 	}while(avp!=NULL);
 
 	return 1;
