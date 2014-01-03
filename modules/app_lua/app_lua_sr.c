@@ -1299,7 +1299,10 @@ static int lua_sr_xavp_get(lua_State *L)
 	sr_xavp_t *avp;
 	int num_param = 0;
 	int param = -1;
+	int all_flag = 0;
 	int simple_flag = 0;
+	lua_Number elem = 1;
+	int xavp_size = 0;
 
 	env_L = sr_lua_env_get();
 	num_param = lua_gettop(L);
@@ -1322,32 +1325,72 @@ static int lua_sr_xavp_get(lua_State *L)
 
 	if(!lua_isnumber(L, param))
 	{
-		LM_ERR("invalid int parameter\n");
-		return 0;
-	}
-	indx = lua_tointeger(L, param);
-	param = param - 1;
-
-	xavp_name.s = (char*)lua_tostring(L, param);
-	if(xavp_name.s==NULL || env_L->msg==NULL)
-		return 0;
-	xavp_name.len = strlen(xavp_name.s);
-
-	avp = xavp_get_by_index(&xavp_name, indx, NULL);
-	if(avp==NULL){
-		LM_ERR("can't get xavp:%.*s index:%d\n", xavp_name.len, xavp_name.s, indx);
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (simple_flag != 0)
-	{
-		lua_sr_push_xavp_table_simple(L, avp);
+		if(lua_isnil(L, param))
+		{
+			all_flag = 1;
+		}
+		else
+		{
+			LM_ERR("invalid parameter, must be int or nil\n");
+			return 0;
+		}
 	}
 	else
 	{
-		lua_sr_push_xavp_table(L, avp);
+		indx = lua_tointeger(L, param);
 	}
+	param = param - 1;
+	xavp_name.s = (char*)lua_tostring(L, param);
+	if(xavp_name.s==NULL || env_L->msg==NULL)
+	{
+		LM_ERR("No xavp name in %d param\n", param);
+		return 0;
+	}
+	xavp_name.len = strlen(xavp_name.s);
+	if(all_flag>0) {
+		indx = 0;
+		lua_newtable(L);
+	}
+	xavp_size = xavp_count(&xavp_name, NULL);
+	if(indx<0)
+	{
+		if((indx*-1)>xavp_size)
+		{
+			LM_ERR("can't get xavp:%.*s index:%d\n", xavp_name.len, xavp_name.s, indx);
+			lua_pushnil(L);
+			return 1;
+		}
+		indx = xavp_size + indx;
+	}
+
+	do
+	{
+		avp = xavp_get_by_index(&xavp_name, indx, NULL);
+		if(avp==NULL){
+			LM_ERR("can't get xavp:%.*s index:%d\n", xavp_name.len, xavp_name.s, indx);
+			lua_pushnil(L);
+			return 1;
+		}
+		if(all_flag!=0) {
+			lua_pushnumber(L, elem);
+			elem = elem + 1;
+		}
+		if (simple_flag != 0)
+		{
+			lua_sr_push_xavp_table_simple(L, avp);
+		}
+		else
+		{
+			lua_sr_push_xavp_table(L, avp);
+		}
+		if(all_flag==0) return 1;
+		else {
+			lua_rawset(L, -3);
+			indx = indx + 1;
+			avp = xavp_get_by_index(&xavp_name, indx, NULL);
+		}
+	}while(avp!=NULL);
+
 	return 1;
 }
 
