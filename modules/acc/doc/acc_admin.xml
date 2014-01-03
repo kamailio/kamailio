@@ -1093,7 +1093,9 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
 		<para>
 		If set to 1, use INSERT DELAYED to add records to accounting tables
 		when the DB driver has support for it. If no INSERT DELAYED support
-		is offered by DB driver, then standard INSERT is used.
+		is offered by DB driver, then standard INSERT is used. Beware that
+		MySQL InnoDB engine doesn't support INSERT DELAYED, thus be sure
+		the acc tables are defined with different type (e.g., MyISAM).
 		</para>
 		<para>
 		Default value is 0 (no INSERT DELAYED).
