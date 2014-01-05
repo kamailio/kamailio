@@ -19,6 +19,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
+ *
  */
 
 #include <limits.h>
