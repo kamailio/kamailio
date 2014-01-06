@@ -2,6 +2,7 @@
  * TLS module
  *
  * Copyright (C) 2005 iptelorg GmbH
+ * Copyright (C) 2013 Motorola Solutions, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 
 #define _GNU_SOURCE 1 /* Needed for strndup */
 
@@ -66,7 +68,7 @@ int shm_asciiz_dup(char** dest, char* val)
  */
 void collect_garbage(void)
 {
-	tls_domains_cfg_t* prev, *cur;
+	tls_domains_cfg_t *prev, *cur, *next;
 
 	     /* Make sure we do not run two garbage collectors
 	      * at the same time
@@ -80,14 +82,16 @@ void collect_garbage(void)
 	cur = (*tls_domains_cfg)->next;
 
 	while(cur) {
+		next = cur->next;
 		if (cur->ref_count == 0) {
-			     /* Not referenced by any existing connection */
+			/* Not referenced by any existing connection */
 			prev->next = cur->next;
 			tls_free_cfg(cur);
+		} else {
+			/* Only update prev if we didn't remove cur */
+			prev = cur;
 		}
-
-		prev = cur;
-		cur = cur->next;
+		cur = next;
 	}
 
 	lock_release(tls_domains_cfg_lock);

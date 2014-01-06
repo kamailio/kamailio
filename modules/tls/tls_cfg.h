@@ -2,6 +2,7 @@
  * TLS module
  * 
  * Copyright (C) 2010 iptelorg GmbH
+ * Copyright (C) 2013 Motorola Solutions, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -101,7 +102,7 @@ struct cfg_group_tls {
 
 
 extern struct cfg_group_tls default_tls_cfg;
-extern void* tls_cfg;
+extern volatile void* tls_cfg;
 extern cfg_def_t tls_cfg_def[];
 
 

@@ -2,6 +2,7 @@
  * TLS module
  *
  * Copyright (C) 2005,2006 iptelorg GmbH
+ * Copyright (C) 2013 Motorola Solutions, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +23,6 @@
  * @ingroup tls
  * Module: @ref tls
  */
-
 
 #include <stdlib.h>
 #include <openssl/ssl.h>
@@ -119,6 +119,7 @@ void tls_free_cfg(tls_domains_cfg_t* cfg)
 	}
 	if (cfg->srv_default) tls_free_domain(cfg->srv_default);
 	if (cfg->cli_default) tls_free_domain(cfg->cli_default);
+	shm_free(cfg);
 }
 
 
