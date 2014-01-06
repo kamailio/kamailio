@@ -141,6 +141,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	struct dest_info dst;
 	union sockaddr_union *from = NULL;
 	union sockaddr_union local_addr;
+	int sub_proto;
 
 	LM_DBG("encoding WebSocket frame\n");
 
@@ -165,6 +166,8 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		LM_ERR("WebSocket reserved fields with non-zero values\n");
 		return -1;
 	}
+
+	sub_proto = frame->wsc->sub_protocol;
 
 	switch(frame->opcode)
 	{
@@ -299,9 +302,9 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		LM_ERR("sending WebSocket frame\n");
 		pkg_free(send_buf);
 		update_stat(ws_failed_connections, 1);
-		if (frame->wsc->sub_protocol == SUB_PROTOCOL_SIP)
+		if (sub_proto == SUB_PROTOCOL_SIP)
 			update_stat(ws_sip_failed_connections, 1);
-		else if (frame->wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+		else if (sub_proto == SUB_PROTOCOL_MSRP)
 			update_stat(ws_msrp_failed_connections, 1);
 		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 			LM_ERR("removing WebSocket connection\n");
