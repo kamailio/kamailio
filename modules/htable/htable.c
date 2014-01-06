@@ -490,7 +490,8 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree( 500, "no such hash table", 18);
 	}
 	memcpy(&nht, ht, sizeof(ht_t));
-	nht.entries = (ht_entry_t*)pkg_malloc(nht.htsize*sizeof(ht_entry_t));
+	/* it's temporary operation - use system malloc */
+	nht.entries = (ht_entry_t*)malloc(nht.htsize*sizeof(ht_entry_t));
 	if(nht.entries == NULL)
 	{
 		ht_db_close_con();
@@ -500,6 +501,18 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 
 	if(ht_db_load_table(&nht, &ht->dbtable, 0)<0)
 	{
+		/* free any entry set if it was a partial load */
+		for(i=0; i<nht.htsize; i++)
+		{
+			first = nht.entries[i].first;
+			while(first)
+			{
+				it = first;
+				first = first->next;
+				ht_cell_free(it);
+			}
+		}
+		free(nht.entries);
 		ht_db_close_con();
 		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
 	}
@@ -525,7 +538,7 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 			ht_cell_free(it);
 		}
 	}
-	pkg_free(nht.entries);
+	free(nht.entries);
 	ht_db_close_con();
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
