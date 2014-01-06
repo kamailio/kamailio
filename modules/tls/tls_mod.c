@@ -2,6 +2,7 @@
  * TLS module
  *
  * Copyright (C) 2007 iptelorg GmbH 
+ * Copyright (C) Motorola Solutions, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -278,7 +279,7 @@ static int mod_init(void)
 	}
 	/* declare configuration */
 	if (cfg_declare("tls", tls_cfg_def, &default_tls_cfg,
-							cfg_sizeof(tls), &tls_cfg)) {
+							cfg_sizeof(tls), (void **)&tls_cfg)) {
 		ERR("failed to register the configuration\n");
 		return -1;
 	}
