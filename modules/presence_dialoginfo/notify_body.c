@@ -32,6 +32,12 @@
  */
 
 #define MAX_INT_LEN 11 /* 2^32: 10 chars + 1 char sign */
+#define DEF_TRYING_NODE 1
+#define DEF_PROCEEDING_NODE 2
+#define DEF_EARLY_NODE 4
+#define DEF_CONFIRMED_NODE 8
+#define DEF_TERMINATED_NODE 16
+
 
 #include <string.h>
 #include <stdlib.h>
@@ -103,6 +109,9 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	xmlNodePtr terminated_node = NULL;
 	xmlNodePtr early_node = NULL;
 	xmlNodePtr confirmed_node = NULL;
+	xmlNodePtr proceed_node = NULL;
+	xmlNodePtr trying_node = NULL;
+
 
 	char *state = NULL;
 	xmlChar *dialog_id = NULL;
@@ -236,39 +245,61 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 							LM_DBG("state element content = %s\n", state);
 							if (strcasecmp(state,"terminated") == 0)
 							{
+								LM_DBG("found terminated state\n" );
 								terminated_node = node;
 							} else if (strcasecmp(state,"confirmed") == 0 && node_id == i) {
 								/*  here we check if confirmed is terminated or not
 								 *  if it is not we are in the middle of the conversation
 								 */
-								if(check_relevant_state(dialog_id, xml_array, j) > 1)
+								if(check_relevant_state(dialog_id, xml_array, j) >= DEF_TERMINATED_NODE)
 								{
-									LM_DBG("confirmed state for dialog %s, but it was terminated\n", dialog_id );
+									LM_DBG("confirmed state for dialog %s, but it is not latest state\n", dialog_id );
 								}else{
-									LM_DBG("confirmed state for dialog %s, and it is not terminated\n", dialog_id );
+									LM_DBG("confirmed state for dialog %s and latest state for this dialog\n", dialog_id );
 									confirmed_node = node;
 								}
 
 
 							} else if (strcasecmp(state,"early") == 0 && node_id == i) {
-								if(check_relevant_state(dialog_id, xml_array, j)  > 0)
+								if(check_relevant_state(dialog_id, xml_array, j)  >= DEF_CONFIRMED_NODE)
 								{
-									LM_DBG("early state for dialog %s, but it was confirmed or terminated\n", dialog_id );
+									LM_DBG("early state for dialog %s, but it is not latest state\n", dialog_id );
 								}else{
-									LM_DBG("early state for dialog %s and it is still relevant\n", dialog_id );
+									LM_DBG("early state for dialog %s and latest state for this dialog\n", dialog_id );
 									early_node = node;
+								}
+							} else if (strcasecmp(state,"proceeding") == 0 && node_id == i) {
+								if(check_relevant_state(dialog_id, xml_array, j)  >= DEF_EARLY_NODE)
+								{
+									LM_DBG("proceeding state for dialog %s, but it is not latest state\n", dialog_id );
+								}else{
+									LM_DBG("proceeding state for dialog %s and latest state for this dialog\n", dialog_id );
+									proceed_node = node;
+								}
+							} else if (strcasecmp(state,"trying") == 0 && node_id == i) {
+								if(check_relevant_state(dialog_id, xml_array, j)  >= DEF_PROCEEDING_NODE)
+								{
+									LM_DBG("trying state for dialog %s, but it is not latest state\n", dialog_id );
+								}else{
+									LM_DBG("trying state for dialog %s and latest state for this dialog\n", dialog_id );
+									trying_node = node;
 								}
 							}
 							if(early_node != NULL) {
 								winner_dialog_node = early_node;
-							} else {
-								if(confirmed_node != NULL)
-								{
+							} else if(confirmed_node != NULL) {
 									winner_dialog_node = confirmed_node;
-								}else {
+							} else if(proceed_node != NULL) {
+									winner_dialog_node = proceed_node;
+							} else if(trying_node != NULL) {
+									winner_dialog_node = trying_node;
+							} else if(terminated_node != NULL) {
 									winner_dialog_node = terminated_node;
-								}
+							} else {
+								/* assume a failure somewhere and all above nodes are NULL */
+								winner_dialog_node = node;
 							}
+							/*
 							if(winner_dialog_node == NULL) {
 								priority = get_dialog_state_priority(state);
 								if (priority > winner_priority) {
@@ -277,6 +308,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 									winner_dialog_node = node;
 								}
 							}
+							*/
 							xmlFree(state);
 						}
 					}
@@ -336,7 +368,7 @@ error:
 	return NULL;
 }
 
-
+/*
 int get_dialog_state_priority(char *state) {
 	if (strcasecmp(state,"terminated") == 0)
 		return 0;
@@ -351,8 +383,9 @@ int get_dialog_state_priority(char *state) {
 
 	return 0;
 }
+*/
 
-/* returns 2 -> terminated, 1 -> confirmed, 3 -> both */
+/* returns 16 -> terminated, 8 -> confirmed, 4 -> early */
 int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_nodes)
 {
 	int result = 0;
@@ -391,7 +424,7 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 							{
 								LM_DBG ("Found terminated in dialog %s\n",
 										dialog_id);
-								result += 2;
+								result += DEF_TERMINATED_NODE;
 							}
 							/* check if state is confirmed for this dialog. */
 							if ((strcasecmp (state, "confirmed") == 0)
@@ -399,8 +432,30 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
 							{
 								LM_DBG ("Found confirmed in dialog %s\n", dialog_id);
-								result += 1;
+								result += DEF_CONFIRMED_NODE;
 							}
+							if ((strcasecmp (state, "early") == 0)
+									&& (node_id == i) && (node_id >= 0)
+									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
+							{
+								LM_DBG ("Found early in dialog %s\n", dialog_id);
+								result += DEF_EARLY_NODE;
+							}
+							if ((strcasecmp (state, "proceeding") == 0)
+									&& (node_id == i) && (node_id >= 0)
+									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
+							{
+								LM_DBG ("Found proceeding in dialog %s\n", dialog_id);
+								result += DEF_PROCEEDING_NODE;
+							}
+							if ((strcasecmp (state, "trying") == 0)
+									&& (node_id == i) && (node_id >= 0)
+									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
+							{
+								LM_DBG ("Found trying in dialog %s\n", dialog_id);
+								result += DEF_TRYING_NODE;
+							}
+
 
 							xmlFree (state);
 						}
