@@ -1022,8 +1022,8 @@ int db_update_ucontact_instance(ucontact_t* _c)
 {
 	str auser;
 	str adomain;
-	db_key_t keys1[2];
-	db_val_t vals1[2];
+	db_key_t keys1[4];
+	db_val_t vals1[4];
 	int n1;
 
 	db_key_t keys2[13];
@@ -1041,6 +1041,13 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	}
 
 	n1 = 0;
+	keys1[n1] = &user_col;
+	vals1[n1].type = DB1_STR;
+	vals1[n1].nul = 0;
+	vals1[n1].val.str_val = *_c->aor;
+	LM_DBG("aor:%.*s\n", vals1[n1].val.str_val.len, vals1[n1].val.str_val.s);
+	n1++;
+
 	keys1[n1] = &instance_col;
 	vals1[n1].type = DB1_STR;
 	vals1[n1].nul = 0;
@@ -1150,6 +1157,29 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	LM_DBG("contact:%.*s\n", vals2[n2].val.str_val.len, vals2[n2].val.str_val.s);
 	n2++;
 
+	auser = *_c->aor;
+	if (use_domain) {
+		keys1[n1] = &domain_col;
+		vals1[n1].type = DB1_STR;
+		vals1[n1].nul = 0;
+		adomain.s = memchr(_c->aor->s, '@', _c->aor->len);
+		if (adomain.s==0) {
+			vals1[0].val.str_val.len = 0;
+			vals1[n1].val.str_val = *_c->aor;
+			auser.len = 0;
+			adomain = *_c->aor;
+		} else {
+			vals1[0].val.str_val.len = adomain.s - _c->aor->s;
+			vals1[n1].val.str_val.s = adomain.s + 1;
+			vals1[n1].val.str_val.len = _c->aor->s + _c->aor->len - adomain.s - 1;
+			auser.len = adomain.s - _c->aor->s;
+			adomain.s++;
+			adomain.len = _c->aor->s +
+				_c->aor->len - adomain.s;
+		}
+		n1++;
+	}
+
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
 		return -1;
@@ -1171,18 +1201,7 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	}
 
 	/* delete old db attrs and add the current list */
-	auser = *_c->aor;
-	if (use_domain) {
-		adomain.s = memchr(_c->aor->s, '@', _c->aor->len);
-		if (adomain.s==0) {
-			auser.len = 0;
-			adomain = *_c->aor;
-		} else {
-			auser.len = adomain.s - _c->aor->s;
-			adomain.s++;
-			adomain.len = _c->aor->s + _c->aor->len - adomain.s;
-		}
-
+    if (use_domain) {
 		uldb_delete_attrs(_c->domain, &auser,
 				&adomain, &_c->ruid);
 		uldb_insert_attrs(_c->domain, &auser,
