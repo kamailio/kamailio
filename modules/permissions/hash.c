@@ -486,6 +486,7 @@ int find_group_in_addr_hash_table(struct addr_list** table,
 {
 	struct addr_list *np;
 	str addr_str;
+	avp_value_t val;
 
 	addr_str.s = (char*)addr->u.addr;
 	addr_str.len = 4;
@@ -493,6 +494,15 @@ int find_group_in_addr_hash_table(struct addr_list** table,
 	for (np = table[perm_hash(addr_str)]; np != NULL; np = np->next) {
 		if (((np->port == 0) || (np->port == port))
 				&& ip_addr_cmp(&np->addr, addr)) {
+
+			if (tag_avp.n && np->tag.s) {
+				val.s = np->tag;
+				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
+					LM_ERR("setting of tag_avp failed\n");
+					return -1;
+				}
+			}
+
 			return np->grp;
 		}
 	}
@@ -710,6 +720,7 @@ int find_group_in_subnet_table(struct subnet* table,
 		ip_addr_t *addr, unsigned int port)
 {
 	unsigned int count, i;
+	avp_value_t val;
 
 	count = table[PERM_MAX_SUBNETS].grp;
 
@@ -717,7 +728,16 @@ int find_group_in_subnet_table(struct subnet* table,
 	while (i < count) {
 		if ( ((table[i].port == port) || (table[i].port == 0))
 			&& (ip_addr_match_net(addr, &table[i].subnet, table[i].mask)==0))
+		{
+			if (tag_avp.n && table[i].tag.s) {
+				val.s = table[i].tag;
+				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
+					LM_ERR("setting of tag_avp failed\n");
+					return -1;
+				}
+			}
 			return table[i].grp;
+		}
 		i++;
 	}
 

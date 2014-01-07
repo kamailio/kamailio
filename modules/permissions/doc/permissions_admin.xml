@@ -687,7 +687,8 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 		<para>
 		Tag mode for allow_trusted(). 0 sets only the tag of the
 		first match. 1 adds the tags of all matches to the avp. In addition
-		the return value of allow_trusted() is the number of matches.
+		the return value of allow_trusted() is the number of matches. This
+		parameter is not used for address table matching functions.
 		</para>
 		<para>
 		<emphasis>
