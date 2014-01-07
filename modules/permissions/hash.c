@@ -729,8 +729,8 @@ int find_group_in_subnet_table(struct subnet* table,
 		if ( ((table[i].port == port) || (table[i].port == 0))
 			&& (ip_addr_match_net(addr, &table[i].subnet, table[i].mask)==0))
 		{
-			if (tag_avp.n && np->tag.s) {
-				val.s = np->tag;
+			if (tag_avp.n && table[i].tag.s) {
+				val.s = table[i].tag;
 				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
 					LM_ERR("setting of tag_avp failed\n");
 					return -1;
