@@ -752,8 +752,9 @@ int db_update_ucontact(ucontact_t* _c)
  */
 int db_update_ucontact_instance(ucontact_t* _c)
 {
-	db_key_t keys1[2];
-	db_val_t vals1[2];
+	char* dom;
+	db_key_t keys1[4];
+	db_val_t vals1[4];
 
 	db_key_t keys2[13];
 	db_val_t vals2[13];
@@ -769,8 +770,9 @@ int db_update_ucontact_instance(ucontact_t* _c)
 		return -1;
 	}
 
-	keys1[0] = &instance_col;
-	keys1[1] = &reg_id_col;
+	keys1[0] = &user_col;
+	keys1[1] = &instance_col;
+	keys1[2] = &reg_id_col;
 	keys2[0] = &expires_col;
 	keys2[1] = &q_col;
 	keys2[2] = &cseq_col;
@@ -787,11 +789,15 @@ int db_update_ucontact_instance(ucontact_t* _c)
 
 	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;
-	vals1[0].val.str_val = _c->instance;
+	vals1[0].val.str_val = *_c->aor;
 
-	vals1[1].type = DB1_INT;
+	vals1[1].type = DB1_STR;
 	vals1[1].nul = 0;
-	vals1[1].val.int_val = (int)_c->reg_id;
+	vals1[1].val.str_val = _c->instance;
+
+	vals1[2].type = DB1_INT;
+	vals1[2].nul = 0;
+	vals1[2].val.int_val = (int)_c->reg_id;
 
 	vals2[0].type = DB1_DATETIME;
 	vals2[0].nul = 0;
@@ -869,6 +875,20 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	vals2[nr_cols2].val.str_val.s = _c->c.s;
 	vals2[nr_cols2].val.str_val.len = _c->c.len;
 	nr_cols2++;
+
+	if (use_domain) {
+		vals1[3].type = DB1_STR;
+		vals1[3].nul = 0;
+		dom = memchr(_c->aor->s, '@', _c->aor->len);
+		if (dom==0) {
+			vals1[0].val.str_val.len = 0;
+			vals1[3].val.str_val = *_c->aor;
+		} else {
+			vals1[0].val.str_val.len = dom - _c->aor->s;
+			vals1[3].val.str_val.s = dom + 1;
+			vals1[3].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		}
+	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
