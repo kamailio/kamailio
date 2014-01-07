@@ -119,6 +119,7 @@ rtpproxy_stream(struct sip_msg* msg, str *pname, int count, int stream2uac)
           "node.  Please upgrade the RTPproxy and try again.\n");
         return -1;
     }
+    set_rtp_inst_pvar(msg, &node->rn_url);
     nitems = 11;
     if (stream2uac == 0) {
         if (to_tag.len == 0)
@@ -202,6 +203,7 @@ rtpproxy_stop_stream(struct sip_msg* msg, int stream2uac)
           "node.  Please upgrade the RTPproxy and try again.\n");
         return -1;
     }
+    set_rtp_inst_pvar(msg, &node->rn_url);
     nitems = 9;
     if (stream2uac == 0) {
         if (to_tag.len == 0)

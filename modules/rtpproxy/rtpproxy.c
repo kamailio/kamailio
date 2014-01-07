@@ -308,8 +308,6 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
-static int set_rtp_inst_avp(const str * const uri);
-
 /* Pseudo-Variables */
 static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
@@ -339,9 +337,8 @@ struct rtpp_set * default_rtpp_set=0;
 static char *ice_candidate_priority_avp_param = NULL;
 static int ice_candidate_priority_avp_type;
 static int_str ice_candidate_priority_avp;
-static char *rtp_inst_avp_param = NULL;
-static int rtp_inst_avp_type;
-static int_str rtp_inst_avp;
+static str rtp_inst_pv_param = {NULL, 0};
+static pv_spec_t *rtp_inst_pvar = NULL;
 
 /* array with the sockets used by rtpporxy (per process)*/
 static unsigned int rtpp_no = 0;
@@ -442,7 +439,7 @@ static param_export_t params[] = {
 	{"extra_id_pv",           STR_PARAM, &extra_id_pv_param.s },
 	{"db_url",                STR_PARAM, &rtpp_db_url.s },
 	{"table_name",            STR_PARAM, &rtpp_table_name.s },
-	{"rtp_inst_avp",          STR_PARAM, &rtp_inst_avp_param },
+	{"rtp_inst_pvar",         STR_PARAM, &rtp_inst_pv_param.s },
 	{0, 0, 0}
 };
 
@@ -976,17 +973,16 @@ mod_init(void)
 	    ice_candidate_priority_avp_type = avp_flags;
 	}
 
-	if (rtp_inst_avp_param) {
-	    s.s = rtp_inst_avp_param; s.len = strlen(s.s);
-	    if (pv_parse_spec(&s, &avp_spec) == 0 || avp_spec.type != PVT_AVP) {
-		LM_ERR("malformed or non AVP definition <%s>\n", rtp_inst_avp_param);
+	if (rtp_inst_pv_param.s) {
+	    rtp_inst_pv_param.len = strlen(rtp_inst_pv_param.s);
+	    rtp_inst_pvar = pv_cache_get(&rtp_inst_pv_param);
+	    if ((rtp_inst_pvar == NULL) ||
+	    	((rtp_inst_pvar->type != PVT_AVP) &&
+	    	 (rtp_inst_pvar->type != PVT_XAVP) &&
+	    	 (rtp_inst_pvar->type != PVT_SCRIPTVAR))) {
+		LM_ERR("Invalid pvar name <%.*s>\n", rtp_inst_pv_param.len, rtp_inst_pv_param.s);
 		return -1;
 	    }
-	    if (pv_get_avp_name(0, &(avp_spec.pvp), &rtp_inst_avp, &avp_flags) != 0) {
-		LM_ERR("invalid AVP definition <%s>\n", rtp_inst_avp_param);
-		return -1;
-	    }
-	    rtp_inst_avp_type = avp_flags;
 	}
 
 	if (extra_id_pv_param.s && *extra_id_pv_param.s) {
@@ -1780,9 +1776,6 @@ select_rtpp_node(str callid, int do_test)
 		node = selected_rtpp_set->rn_first;
 		if (node->rn_disabled && node->rn_recheck_ticks <= get_ticks())
 			node->rn_disabled = rtpp_test(node, 1, 0);
-		if (!node->rn_disabled) {
-			set_rtp_inst_avp(&node->rn_url);
-		}
 		return node->rn_disabled ? NULL : node;
 	}
 
@@ -1833,7 +1826,6 @@ found:
 		if (node->rn_disabled)
 			goto retry;
 	}
-	set_rtp_inst_avp(&node->rn_url);
 	return node;
 }
 
@@ -1983,6 +1975,7 @@ unforce_rtp_proxy(struct sip_msg* msg, char* flags)
 		LM_ERR("no available proxies\n");
 		return -1;
 	}
+    	set_rtp_inst_pvar(msg, &node->rn_url);
 	send_rtpp_command(node, v, (to_tag.len > 0) ? 10 : 8);
 
 	return 1;
@@ -2654,6 +2647,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 					LM_ERR("no available proxies\n");
 					FORCE_RTP_PROXY_RET (-3);
 				}
+				set_rtp_inst_pvar(msg, &node->rn_url);
 				if (rep_opts.oidx > 0) {
 					if (node->rn_rep_supported == 0) {
 						LM_WARN("re-packetization is requested but is not "
@@ -2933,6 +2927,7 @@ static int start_recording_f(struct sip_msg* msg, char *foo, char *bar)
 		LM_ERR("no available proxies\n");
 		return -1;
 	}
+	set_rtp_inst_pvar(msg, &node->rn_url);
 
 	nitems = 8;
 	if (msg->first_line.type == SIP_REPLY) {
@@ -2991,6 +2986,7 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
         LM_ERR("no available proxies\n");
         return -1;
     }
+    set_rtp_inst_pvar(msg, &node->rn_url);
     nitems = 8;
     if (msg->first_line.type == SIP_REPLY) {
         if (to_tag.len == 0)
@@ -3010,16 +3006,19 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
     return pv_get_strval(msg, param, res, &ret_val);
 }
 
-static int set_rtp_inst_avp(const str * const uri) {
-	int_str avp_val;
-	avp_val.s = *uri;
+int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri) {
+	pv_value_t val;
 
-	if (rtp_inst_avp_param == NULL)
+	if (rtp_inst_pvar == NULL)
 		return 0;
 
-	if (add_avp(AVP_VAL_STR | rtp_inst_avp_type, rtp_inst_avp, avp_val) != 0)
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_STR;
+	val.rs = *uri;
+
+	if (rtp_inst_pvar->setf(msg, &rtp_inst_pvar->pvp, (int)EQ_T, &val) < 0)
 	{
-		LM_ERR("Failed to add RTPProxy URI to avp\n");
+		LM_ERR("Failed to add RTPProxy URI to pvar\n");
 		return -1;
 	}
 	return 0;

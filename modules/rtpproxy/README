@@ -63,7 +63,7 @@ Carsten Bock
               4.8. extra_id_pv (string)
               4.9. db_url (string)
               4.10. table_name (string)
-              4.11. rtp_inst_avp (string)
+              4.11. rtp_inst_pvar (string)
 
         5. Functions
 
@@ -102,7 +102,7 @@ Carsten Bock
    1.8. Set extra_id_pv parameter
    1.9. Set db_url parameter
    1.10. Set table_name parameter
-   1.11. Set rtp_inst_avp parameter
+   1.11. Set rtp_inst_pvar parameter
    1.12. set_rtp_proxy_set usage
    1.13. rtpproxy_offer usage
    1.14. rtpproxy_answer usage
@@ -137,7 +137,7 @@ Chapter 1. Admin Guide
         4.8. extra_id_pv (string)
         4.9. db_url (string)
         4.10. table_name (string)
-        4.11. rtp_inst_avp (string)
+        4.11. rtp_inst_pvar (string)
 
    5. Functions
 
@@ -225,7 +225,7 @@ Chapter 1. Admin Guide
    4.8. extra_id_pv (string)
    4.9. db_url (string)
    4.10. table_name (string)
-   4.11. rtp_inst_avp (string)
+   4.11. rtp_inst_pvar (string)
 
 4.1. rtpproxy_sock (string)
 
@@ -381,17 +381,17 @@ modparam("rtpproxy", "db_url", "mysql://user:passwb@localhost/database")
 modparam("rtpproxy", "table_name", "my_rtpp_sets")
 ...
 
-4.11. rtp_inst_avp (string)
+4.11. rtp_inst_pvar (string)
 
-   An  avp  to store the chosen RTPProxy IP address. If this parameter is
-   set,   the   IP   address  and  port  of  the  instance  chosen  in  a
-   rtpproxy_manage() call will be stored in the given AVP.
+   A  pseudo  variable  to  store the chosen RTPProxy IP address. If this
+   parameter  is set, the IP address and port of the instance chosen will
+   be stored in the given variable.
 
    By default, this parameter is not set.
 
-   Example 1.11. Set rtp_inst_avp parameter
+   Example 1.11. Set rtp_inst_pvar parameter
 ...
-modparam("rtpproxy", "rtp_inst_avp", "$avp(RTP_INSTANCE)")
+modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 ...
 
 5. Functions

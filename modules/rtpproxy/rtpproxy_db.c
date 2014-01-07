@@ -24,6 +24,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_res.h"
 
+#include "../../parser/msg_parser.h"
 #include "rtpproxy.h"
 
 #define RTPP_TABLE_VERSION 1

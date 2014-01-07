@@ -72,6 +72,8 @@ char *send_rtpp_command(struct rtpp_node *, struct iovec *, int);
 struct rtpp_set *get_rtpp_set(str *set_name);
 int insert_rtpp_node(struct rtpp_set *const rtpp_list, const str *const url, const int weight, const int disabled);
 
+int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
+
 int init_rtpproxy_db(void);
 
 extern str rtpp_db_url;
