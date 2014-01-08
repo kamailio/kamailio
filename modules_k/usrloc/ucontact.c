@@ -756,8 +756,8 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	db_key_t keys1[4];
 	db_val_t vals1[4];
 
-	db_key_t keys2[13];
-	db_val_t vals2[13];
+	db_key_t keys2[14];
+	db_val_t vals2[14];
 	int nr_cols2;
 
 
@@ -784,8 +784,9 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	keys2[8] = &sock_col;
 	keys2[9] = &methods_col;
 	keys2[10] = &last_mod_col;
-	keys2[11] = &ruid_col;
-	keys2[12] = &contact_col;
+	keys2[11] = &callid_col;
+	keys2[12] = &ruid_col;
+	keys2[13] = &contact_col;
 
 	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;
@@ -859,7 +860,11 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	vals2[10].nul = 0;
 	vals2[10].val.time_val = _c->last_modified;
 
-	nr_cols2 = 11;
+	vals2[11].type = DB1_STR;
+	vals2[11].nul = 0;
+	vals2[11].val.str_val = _c->callid;
+
+	nr_cols2 = 12;
 	if(_c->ruid.len>0)
 	{
 		vals2[nr_cols2].type = DB1_STR;
