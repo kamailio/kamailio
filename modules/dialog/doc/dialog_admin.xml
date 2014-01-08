@@ -1235,6 +1235,28 @@ modparam("dialog", "ka_interval", 300)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>timeout_noreset</varname> (int)</title>
+		<para>
+           If set to 1, the dialog timeout won't be reset each
+			time a sequential request is processed.
+			It is an alternative to dlg_set_property("timeout-noreset") for all dialogs.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_noreset</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "timeout_noreset", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
@@ -1802,8 +1824,17 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>attr</emphasis> - name of property. It can be:
-				'ka-src' - send keep alive OPTION requests to caller;
-				'ka-dst' - send keep alive OPTION requests to callee.
+				<itemizedlist>
+					<listitem>
+						'ka-src' - send keep alive OPTION requests to caller
+					</listitem>
+					<listitem>
+						'ka-dst' - send keep alive OPTION requests to callee
+					</listitem>
+					<listitem>
+						'timeout-noreset' - don't reset timeout on in-dialog messages reception
+					</listitem>
+				</itemizedlist>
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1813,7 +1844,11 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 			within dialog, with the scope of detecting if the destination is
 			still in the call. If the keep alive request results in a local
 			timeout or '481 Call Leg/Transaction Does Not Exist', then the
-			dialog is ended from the server.
+            dialog is ended from the server.
+		</para>
+		<para>
+            If 'timeout-noreset' is set, dialog timeout won't be reset upon reception
+            of in-dialog messages (default behavior).
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -1824,6 +1859,7 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 ...
 dlg_set_property("ka-src");
 dlg_set_property("ka-dst");
+dlg_set_property("timeout-noreset");
 ...
 </programlisting>
 		</example>
