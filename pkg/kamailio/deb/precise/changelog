@@ -1,3 +1,9 @@
+kamailio (4.2.0~dev1) unstable; urgency=medium
+
+  * update version to 4.2.0~dev1
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Wed, 08 Jan 2014 19:13:30 +0100
+
 kamailio (4.2.0~dev0) unstable; urgency=low
 
   * Added packages:
@@ -17,12 +23,6 @@ kamailio (3.4.0~dev0) unstable; urgency=low
   * update version to 3.4.0~dev0
 
  -- Jon Bonilla <manwe@aholab.ehu.es>  Wed, 15 Jun 2012 03:15:00 +0100
-
-kamailio (3.3-dev) unstable; urgency=low
-
-  * Set version to 3.3-dev for dev builds
-
- -- Jon Bonilla <manwe@aholab.ehu.es>  Wed, 19 Oct 2011 17:24:00 +0100
 
 kamailio (3.2.0) unstable; urgency=low
 
