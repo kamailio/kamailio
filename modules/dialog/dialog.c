@@ -123,7 +123,7 @@ int active_dlgs_cnt = 0;
 int early_dlgs_cnt = 0;
 int detect_spirals = 1;
 int dlg_send_bye = 0;
-int timeout_noreset = 0;
+int dlg_timeout_noreset = 0;
 stat_var *active_dlgs = 0;
 stat_var *processed_dlgs = 0;
 stat_var *expired_dlgs = 0;
@@ -282,7 +282,7 @@ static param_export_t mod_params[]={
 	{ "xavp_cfg",              STR_PARAM, &dlg_xavp_cfg.s           },
 	{ "ka_timer",              INT_PARAM, &dlg_ka_timer             },
 	{ "ka_interval",           INT_PARAM, &dlg_ka_interval          },
-	{ "timeout_noreset",       INT_PARAM, &timeout_noreset          },
+	{ "timeout_noreset",       INT_PARAM, &dlg_timeout_noreset      },
 	{ 0,0,0 }
 };
 
@@ -579,8 +579,9 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (timeout_noreset != 0 && timeout_noreset != 1) {
-		LM_ERR("invalid value %d for timeout_noreset param!!\n",timeout_noreset);
+	if (dlg_timeout_noreset != 0 && dlg_timeout_noreset != 1) {
+		LM_ERR("invalid value %d for timeout_noreset param!!\n",
+				dlg_timeout_noreset);
 		return -1;
 	}
 
