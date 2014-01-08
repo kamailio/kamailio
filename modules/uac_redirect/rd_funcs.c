@@ -223,7 +223,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		/* contact header is not parsed */
 		if ( sh_rpl->msg_flags&FL_SHM_CLONE ) {
 			/* duplicate the reply into private memory to be able 
-			 * to parse it and after words to free the parsed mems */
+			 * to parse it and afterwards to free the parsed mems */
 			memcpy( &dup_rpl, sh_rpl, sizeof(struct sip_msg) );
 			dup = 2;
 			/* ok -> force the parsing of contact header */
