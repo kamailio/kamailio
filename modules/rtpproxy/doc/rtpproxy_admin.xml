@@ -324,8 +324,8 @@ modparam("rtpproxy", "table_name", "my_rtpp_sets")
 	<section>
 		<title><varname>rtp_inst_pvar</varname> (string)</title>
 		<para>
-			A pseudo variable to store the chosen RTPProxy IP address.
-			If this parameter is set, the IP address and port of the instance chosen will be stored in the given variable.
+			A pseudo variable to store the chosen RTPProxy address.
+			If this parameter is set, the instance URL will be stored in the given variable.
 		</para>
 		<para>
 			By default, this parameter is not set.
@@ -335,6 +335,19 @@ modparam("rtpproxy", "table_name", "my_rtpp_sets")
 		<programlisting format="linespecific">
 ...
 modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
+...
+</programlisting>
+		</example>
+		<example>
+		<title><varname>rtp_inst_pvar</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("rtpproxy", "rtpproxy_sock",
+	"udp:localhost:12221 udp:localhost:12222")
+modparam("rtpproxy", "rtp_inst_pvar", "$var(RTP_INSTANCE)")
+...
+rtpproxy_manage("eiro");
+xlog("L_INFO", "Chose rtpp instance $var(RTP_INSTANCE)\n");
+# This will display 'udp:localhost:12222'
 ...
 </programlisting>
 		</example>
@@ -855,7 +868,7 @@ start_recording();
 			</para>
 			<para>
 			NOTE: if a rtpproxy is defined multiple times (in the same or
-			diferente sete), all of its instances will be enables/disabled.
+			different sets), all of its instances will be enabled/disabled.
 			</para>
 			<example>
 			<title>
