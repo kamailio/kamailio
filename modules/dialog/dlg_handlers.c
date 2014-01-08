@@ -82,6 +82,7 @@ static int       default_timeout;	/*!< default dialog timeout */
 static int       seq_match_mode;	/*!< dlg_match mode */ 
 static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
 extern int       detect_spirals;
+extern int       timeout_noreset;
 extern int       initial_cbs_inscript;
 extern int       dlg_send_bye;
 extern int       dlg_event_rt[DLG_EVENTRT_MAX];
@@ -1085,7 +1086,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	dlg_cell_t *dlg;
 	dlg_iuid_t *iuid;
 	str val, callid, ftag, ttag;
-	int h_entry, h_id, new_state, old_state, unref, event, timeout;
+	int h_entry, h_id, new_state, old_state, unref, event, timeout, reset;
 	unsigned int dir;
 	int ret = 0;
 
@@ -1258,7 +1259,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		if (timeout!=default_timeout) {
 			dlg->lifetime = timeout;
 		}
-		if (new_state!=DLG_STATE_EARLY) {
+		reset = !((dlg->iflags & DLG_IFLAG_TIMER_NORESET) || timeout_noreset)
+
+		if ((new_state!=DLG_STATE_EARLY) && (old_state!=DLG_STATE_CONFIRMED || reset)) {
 			if (update_dlg_timer( &dlg->tl, dlg->lifetime )==-1) {
 				LM_ERR("failed to update dialog lifetime\n");
 			} else {

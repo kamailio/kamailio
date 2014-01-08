@@ -123,6 +123,7 @@ int active_dlgs_cnt = 0;
 int early_dlgs_cnt = 0;
 int detect_spirals = 1;
 int dlg_send_bye = 0;
+int timeout_noreset = 0;
 stat_var *active_dlgs = 0;
 stat_var *processed_dlgs = 0;
 stat_var *expired_dlgs = 0;
@@ -281,6 +282,7 @@ static param_export_t mod_params[]={
 	{ "xavp_cfg",              STR_PARAM, &dlg_xavp_cfg.s           },
 	{ "ka_timer",              INT_PARAM, &dlg_ka_timer             },
 	{ "ka_interval",           INT_PARAM, &dlg_ka_interval          },
+	{ "timeout_noreset",       INT_PARAM, &timeout_noreset          },
 	{ 0,0,0 }
 };
 
@@ -574,6 +576,11 @@ static int mod_init(void)
 
 	if (detect_spirals != 0 && detect_spirals != 1) {
 		LM_ERR("invalid value %d for detect_spirals param!!\n",detect_spirals);
+		return -1;
+	}
+
+	if (timeout_noreset != 0 && timeout_noreset != 1) {
+		LM_ERR("invalid value %d for timeout_noreset param!!\n",timeout_noreset);
 		return -1;
 	}
 
@@ -1191,6 +1198,13 @@ static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
 		d = dlg_get_by_iuid(&dctx->iuid);
 		if(d!=NULL) {
 			d->iflags |= DLG_IFLAG_KA_DST;
+			dlg_release(d);
+		}
+	} else if(val.len==15 && strncmp(val.s, "timeout-noreset", 15)==0) {
+		dctx->iflags |= DLG_IFLAG_TIMER_NORESET;
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags |= DLG_IFLAG_TIMER_NORESET;
 			dlg_release(d);
 		}
 	} else {
