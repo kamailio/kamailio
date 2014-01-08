@@ -1259,7 +1259,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		if (timeout!=default_timeout) {
 			dlg->lifetime = timeout;
 		}
-		reset = !((dlg->iflags & DLG_IFLAG_TIMER_NORESET) || timeout_noreset)
+		reset = !((dlg->iflags & DLG_IFLAG_TIMER_NORESET) || timeout_noreset);
 
 		if ((new_state!=DLG_STATE_EARLY) && (old_state!=DLG_STATE_CONFIRMED || reset)) {
 			if (update_dlg_timer( &dlg->tl, dlg->lifetime )==-1) {
