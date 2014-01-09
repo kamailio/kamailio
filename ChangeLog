@@ -1,4 +1,477 @@
-===================== 2013-XY-XY Version 4.1.0 Released =====================
+===================== 2014-01-09 Version 4.1.1 Released =====================
+
+===================== Changes Since Version 4.1.0 ===========================
+
+commit b9e86b9fd8f7102838b0012f6ebfecd55ef607be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 15:59:01 2014 +0100
+
+    Makefile.defs: version set to 4.1.1
+
+commit 497d0c5ad34250106782bc9a424e872d341305b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 15:58:08 2014 +0100
+
+    pkg/deb: versio set to 4.1.1 in deb specs
+
+commit 1e5f78ae7934112e502a1573aa2490ea647b08d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 15:54:31 2014 +0100
+
+    pkg/rpm: versio set to 4.1.1 in rpm specs
+
+commit 32aacba6663f0836c8599c588d8d6d708af5afa3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 8 19:06:19 2014 +0100
+
+    htable, permissions, print: regenerated readme files
+
+commit af04ad88d6db1b2e3cf7d9cd99906c83d58f4f9d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 7 10:23:11 2014 +0100
+
+    permissions: fixed previous commit which used invalid variable
+    
+    - reported by Kelvin Chua
+    
+    (cherry picked from commit 34d9088d74cb8269960cc20912a675a67598e7d7)
+
+commit 11ff3de741b95fea003fa5e91ceb69df15fd0fd6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 7 00:58:20 2014 +0100
+
+    presence_dialoginfo: handle all states to get most relevant xml
+    
+    - patch from FS#341
+    
+    (cherry picked from commit f845465eb96770e0c02c92ae862cdc94f561e29e)
+
+commit 9af6dbd51e3085d111c54b778b03d191a6a31060
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 7 00:10:34 2014 +0100
+
+    tls: the pointer of cfg structure
+    
+    - synchronize when updating the list of tls configs and their reference
+      count
+    - with parts from patch by Ding Ma, FS#380, contributed under BSD license
+    
+    (cherry picked from commit 208934d47ac1585d42029234267bcceab40ae218)
+
+commit b55c87afd5a02b8c6244e8557879da9a09e02c22
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 6 19:51:41 2014 +0100
+
+    permissions: note about peer tag mode that applies only for allow_trusted()
+    
+    (cherry picked from commit 15f8a92baf58ee70e837b3b7e7f208b1a2678a0a)
+
+commit 4ec0be8deaab21050015a3b7828a667f40c8f150
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 6 19:48:54 2014 +0100
+
+    permissions: set peer tag avp for allow_address_group()
+    
+    - also for allow_source_address_group()
+    - reported by Kelvin Chua
+    
+    (cherry picked from commit 0c67042fa629ee4744cfc31a15e571b7340b0881)
+
+commit 93f493645f424bc34a0e641f89ed08766a542de4
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Tue Dec 31 23:24:02 2013 +0100
+
+    modules/sipcapture:  Fixed bad timestamp in the raw socket mode
+    
+    HEPpy New Year!
+    
+    (cherry picked from commit cc34c8e2c1e0eeafa0088c2d159260e4b10652c9)
+
+commit 7552d77f3184777a0b12cdf3354013f2bc4f546d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 27 23:31:41 2013 +0100
+
+    htable: added section id for functions and parameters
+    
+    (cherry picked from commit 0e0b8cd883718bb5d19999e800159add7714f69e)
+
+commit c00a33aa378d886b8e0d3a6370b9df2e3559b021
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 19 21:15:12 2013 +0100
+
+    acc: use r-uri winning branch even for local generated replies
+    
+    - it was only for received and relayed replies
+    - reported by Kelvin Chua
+    
+    (cherry picked from commit 81b9c83b2fa3bd32d502a1ae9014cc7d6747e710)
+
+commit d1c3ebe4ac3fdfab5d3360bff76e3c22561d95b1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 19:03:08 2013 +0100
+
+    tls: removed unsigned int comparison with <0
+    
+    (cherry picked from commit 7d6dc390bac2b49615444bcbad74cd39f3c82302)
+
+commit 04778b76c3afa0090db421ec7258f443dc1f2899
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:54:52 2013 +0100
+
+    sipcapture: fixed clang compile warnings
+    
+    - extra parameters for sprintf() match format specifiers
+    
+    (cherry picked from commit b131f4402cf604bbe90123aa95a6cbc8412c2de0)
+
+commit 90f8cee3bf20d4ae3c89b08809de749b5176a084
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:34:49 2013 +0100
+
+    ratelimit: signed check for pipe number in rpc_set_queue()
+    
+    - rpc can reand signed value
+    
+    (cherry picked from commit ed034d4d9096d8c77269828c8efdafb26eac5372)
+
+commit b1bffbe734bf7718a5d5b61ba2e55801160c49e1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:30:49 2013 +0100
+
+    pike: memset of address print buffer with proper size
+    
+    (cherry picked from commit d54eb083f59fb55ccbc79e49b5b3e05426bd3795)
+
+commit 7e35f56d3f3955e6e815cda80c4e7c21835ac24d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:25:30 2013 +0100
+
+    permissions: signess warning fix
+    
+    (cherry picked from commit 26e04f2053c9f33333bbbf79af6897428a1d9a88)
+
+commit 5481307088c7fda489495a99a163a782d901b6e4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:23:17 2013 +0100
+
+    maxforwards: use standard format instead of GNU old-style field designator
+    
+    (cherry picked from commit cd04947b0ccb1c861274483f458bfc7f4329accb)
+
+commit d7d84da459884897f4cc5b84fc19c266831e8fcb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:20:16 2013 +0100
+
+    ctl: removed not needed extra paranthesis
+    
+    (cherry picked from commit efda774f6391f1e909a9967898c64fb25f53eeba)
+
+commit bb9df83f99523c58acae1d5278457ba6128966a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:18:48 2013 +0100
+
+    acc: strftime() returns 0 on error
+    
+    (cherry picked from commit 89262590e4d47e480fb4984f18e12b4e4edb4ca6)
+
+commit 7323998af0f1d71dbc22d699979e45fb512fa3aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:15:22 2013 +0100
+
+    pv: use int index for looking up flag index
+    
+    - some functions used for check may return negative on error
+    
+    (cherry picked from commit 30359b3cfce2ce909153e06b1954778c4eababa7)
+
+commit eab7927a930c9781603538d0b2ae4595b1e5c586
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 11:41:38 2013 +0100
+
+    snmpstats: use install-cfg target to deploy MIBs
+    
+    - existing target was no longer valid from v3.0
+    
+    (cherry picked from commit a8d0d9e9224c2e7399c95c533dff67a6303891d2)
+
+commit e53117a038961b912ebb95c8a07468f87c161db2
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Wed Dec 11 13:47:57 2013 +0100
+
+    lib/ims: Replaced custom getter for P-Asserted-Identity with the Parser from Core
+    (cherry picked from commit af1734cea213b2a07c9d725fff158cd4899725d1)
+
+commit 723bf45840b02e70bcb1c7f9c11a2e64e4f303db
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Dec 9 20:07:12 2013 +0100
+
+    ims_registrar_pcscf: Bugfix: Properly handle the case, when we do not have a Asserted Identity
+    (cherry picked from commit 6b0bcff43c0b3c22f399211aeb7e9279f7c35814)
+
+commit bf0a544d135b029ad381746b380bb6f71c52aee7
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Dec 9 23:00:08 2013 +0100
+
+    Improved Free at cscf_get_service_route(), caused a reproducable crash
+    (cherry picked from commit caa9954d3c017ce741245d8f2b338158caf2270f)
+
+commit d6480f98aef45b8c569ef9edf90c6cf1604cc2f8
+Author: Carlos Ruiz Diaz <carlos.ruizdiaz@gmail.com>
+Date:   Wed Dec 18 15:28:39 2013 -0300
+
+    ims_registrar_scscf: fix crash caused by an uninitialized AVP
+    (cherry picked from commit 52d727dc249a88b31348b008045cc6071ab215a7)
+
+commit 2dd36bbae6f05ea0c980e58f247ac7e4f737f6a6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jan 7 13:59:37 2014 +0100
+
+    usrloc: add user_col to the update contact query with instance
+    
+    (cherry picked from commit b393656c1113eb3630470389f142c53fbc085a90)
+
+commit f97723dd17d5bf9e0d2dd02982cfbca0146b7e99
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 6 23:11:33 2014 +0100
+
+    websocket: store sub protocol value for later use in encode_and_send_ws_frame()
+    
+    - the ws connection pointer can be set null if the browser closes the
+      connection
+    - patch by Vitaliy Aleksandrov, FS#364
+    
+    (cherry picked from commit 438eafc92ecf9d3b52f95c9952bc26b147fdf328)
+
+commit 3bfb9030dda5776744efc4f408557e044b4ebb75
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 6 22:52:11 2014 +0100
+
+    htable: free temporary slots used to reload hash table via rpc command
+    
+    - use system memory for temporary slots
+    
+    (cherry picked from commit f35c49085bdcc623ef45aa33a99af3265d3e6eeb)
+
+commit 2b450f573bdbcb88d0418a43a6707875f050eb33
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 6 22:46:48 2014 +0100
+
+    htable: use system malloc for temporary allocation of hash table realod slots
+    
+    - copes better with large number of slots, without a need to use shm
+    
+    (cherry picked from commit 13626ccffeaa7654c58576c3d1cc417dea865ca9)
+
+commit 75e904f2c2034075383b412e2dcb18c6fb01c7c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 2 13:22:28 2014 +0100
+
+    htable: use pkg for temporary hash table slots used for reload
+    
+    - free the temporary slots after reload, reported in FS#385
+    
+    (cherry picked from commit 53689b55632c6208e6326f1a5f4b3c45da216f43)
+
+commit 71463b06efa2997950aaf1ef088076258fe8a03a
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Jan 5 18:16:04 2014 +0000
+
+    modules/websocket: added OpenSSL licensing exception
+    
+    (cherry picked from commit 661d7d3a6231713861a8a1236dd7d783113c2890)
+
+commit bdb3a86c4453790a91de5aa2320de5b5bb26ad5c
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Jan 5 18:15:33 2014 +0000
+
+    modules/outbound: added OpenSSL licensing exception
+    
+    (cherry picked from commit 6741c47ad75806355cd7564d419df56acc68987b)
+
+commit fb364e0b29ce388574a61ebc4a428c559c411a2a
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Jan 5 18:15:07 2014 +0000
+
+    modules/auth_ephemeral: added OpenSSL licensing exception
+    
+    (cherry picked from commit 99960be1d55df2ba4ca596c42c8e78e36dad3cf1)
+
+commit df0218611b8f27ccaa924b8f88560c2e81966823
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 2 11:25:56 2014 +0100
+
+    tmrec: updated the examples with tmrec duration
+    
+    - hint to read rfc2445 for duration format
+    
+    (cherry picked from commit 99d1170469c60206992c083f2ba0e9dc6b580d37)
+
+commit 2ac00f9083846b958da5396cb4f5a51527957324
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 3 10:11:26 2014 +0100
+
+    acc: regenerated README
+
+commit 4ac82cdf92ae6c0e2ff9c1238bfe28cfcefea99c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 3 10:04:39 2014 +0100
+
+    acc: added note about MySQL InnoDB not supporting INSERT DELAYED
+    
+    - reported by Daniel Tryba
+    
+    (cherry picked from commit d26eff22c8a543c63a40cd7d91bb3c70f04aabc6)
+
+commit a4060da5e1fe1e64c224ff32d669a699a0d5cd1d
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Dec 26 17:51:04 2013 +0200
+
+    modules/pua: added some missing lock releases
+    (cherry picked from commit 4eb338611e716e7a32f252acbae52bace6047a0a)
+
+commit 9e8c3f90e9467153b1e63a257ccdfb09adc4ecfd
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Dec 19 16:21:25 2013 +0200
+
+    modules/pv: fixed params and param transformation
+    
+    - params need to be taken from sip_params field of sip_uri struct
+    (cherry picked from commit e54b3ec673cb32664a1e8de2e591190f22216724)
+
+commit d75bc3b69151a9d0391309e6bb51784f3b6b9a83
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 16 09:26:03 2013 +0100
+
+    db_flatstore: update timestamp for kamailio specific rpc rotate
+    
+    - do also in 'rotate' command, not only in 'k_rotate'
+    - from a patch by Abdelkader Allam
+    
+    (cherry picked from commit b15aefa31e45f1ad6a45b64905f9fae24e0f790e)
+
+commit 98ecf7d2c5753357fd2c1d1e8e72f425e4d48f9b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 12 15:50:27 2013 +0100
+
+    snmpstats: fixe MIB file definitions
+    
+    - patch by takeshi, FS#363
+    
+    (cherry picked from commit ab75785aa707f10fdbccfb0531a0f35e820f5ebc)
+
+commit 5b869a7c1c584f2762610c5310e7281375c8103d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 11 23:58:11 2013 +0100
+
+    tm: reset temporary linking of reply to transaction after branch failure route execution
+    
+    - reported by Robert Boisvert, FS#379
+    
+    (cherry picked from commit 0ebc983a422cd5ee4baa39bb3ef3bdbeeefd4571)
+
+commit e96a8b80fd253777e1d001ad778c5a62473ba010
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 11 23:01:41 2013 +0100
+
+    avpops: create a local pv structure when parameter is only flags
+    
+    - flags details are stored inside it
+    - fixes crash at startup reported by Kevin Scott Adams, FS#381
+    
+    (cherry picked from commit 3c88f1de9d647db8a14bae45af1fa3b34f74d4e6)
+
+commit eaeb74f5b6af5be13f88de93729998f13e9a06b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 11 09:49:52 2013 +0100
+
+    core: safety check for double free in q_malloc as in f_malloc
+    
+    (cherry picked from commit 943a5941f5ab479803fb30e19e9fa607f0f0fe14)
+
+commit 8df9d2336e7de2648288cf8ff6821e6820d88da9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 9 10:06:15 2013 +0100
+
+    usrloc: avoid double locking when preloading attributes
+    
+    - reported by Seudin Kasumovic, FS#378
+    
+    (cherry picked from commit 888635bfa3719afeeea6f5f0d407aa862ceb34ac)
+
+commit efb2670ef03b69cb0ae26e7c9ac427c995ffbacf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 9 10:05:11 2013 +0100
+
+    registrar: handle error case when deleting contact fails for unregister()
+    
+    - reformatted file
+    
+    (cherry picked from commit 67d218e29457ffd75148c8c520b26ec6f3f41719)
+
+commit f08c9545016da2bb974a1a8ded82c7aa25e9b704
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 7 13:35:45 2013 +0100
+
+    tm: safety checks inside t_next_contacts()
+    
+    (cherry picked from commit 21027d0c17558f3a1a4797049448cbbdfe50554f)
+
+commit 45ea3c6de26def1fa704f3e444bd37800ca09d9f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 18:02:36 2013 +0100
+
+    usrloc: proper index for domain column when laoding extra attributes
+    
+    - patch by Seudin Kasumovic, FS#377
+    
+    (cherry picked from commit 551524cfc83b922c23e2d26f8cc5950df2a0af54)
+
+commit 90681624c54f0ec0b1259e205bcc0274316b4549
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 17:16:25 2013 +0100
+
+    core: fixed several clang compiler warnings
+    
+    (cherry picked from commit f0fb6f1e9fbb2f7f0c2bed5ba0d50a56cf5cf444)
+
+commit 5552d9f733a6423d4d940f9b93a6808de0800a1d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 16:33:04 2013 +0100
+
+    Makefile.defs: compiler optimization level made variable
+    
+    - allow using -O3 for clang, which gives error on the former default -O9
+    
+    (cherry picked from commit 0713c0de50f8c2f4da2ee0ef33b0505c37792392)
+
+commit c56e66287d4456692bdad0f2454896ffd342cf0d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 6 11:32:41 2013 +0100
+
+    sdpops: fix setting 0 instead of \r for sdp_get_line_startswith()
+    
+    - reported by Tuan Viet Nguyen
+    
+    (cherry picked from commit 041b12dc6e5ad88e981d44180436a90518cbcf0d)
+
+commit bd5335ac84bdb8854a7b7dab41136fe6abd01c9f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 5 09:58:38 2013 +0100
+
+    Makefile.groups: include gzcompress, sipt and mohqueue in packaging groups
+    
+    (cherry picked from commit 4dcbd1b1cbd4854607d286094c42d257623c548d)
+
+commit 7cc7bde95757ea8861c07acafeb528e09e0b52ac
+Author: Hugh Waite <hugh.waite@crocodile-rcs.com>
+Date:   Wed Dec 4 22:37:31 2013 +0000
+
+    dialog_ng: Fix segfault in dlg_new_dialog
+    
+    (cherry picked from commit 32f9c9187a9d886c46b24ee38173274da63febda)
+
+
+===================== 2013-12-04 Version 4.1.0 Released =====================
 
 ===================== Changes Since Version 4.0.0 ===========================
 
