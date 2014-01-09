@@ -14,10 +14,10 @@ ifeq ($(BUILDER),)
 	DEFS +=-I$(LOCALBASE)/include
 	BUILDAGENTLIBS =-L$(LOCALBASE)/lib -lnetsnmpmibs -lnetsnmpagent \
 		-lnetsnmphelpers -lnetsnmp
-	INSTALLMIBDIR = $(cfg-prefix)/share/snmp/mibs
+	INSTALLMIBDIR =  $(share_prefix)/share/snmp/mibs
 else
 	BUILDAGENTLIBS = $(shell net-snmp-config --netsnmp-agent-libs)
-	INSTALLMIBDIR = $(cfg-prefix)$(shell net-snmp-config --prefix)/share/snmp/mibs
+	INSTALLMIBDIR = $(share_prefix)$(shell net-snmp-config --prefix)/share/snmp/mibs
 endif 
 
 ifeq ($(EMBEDDED_PERL),1)
