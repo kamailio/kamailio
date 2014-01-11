@@ -89,8 +89,7 @@ extern int ignore_failed_auth;
 extern int av_check_only_impu;
 
 auth_hash_slot_t *auth_data; /**< Authentication vector hash table */
-extern int auth_data_hash_size; /**< authentication vector hash table size */
-
+static int act_auth_data_hash_size = 0; /**< authentication vector hash table size */
 
 static str empty_s = {0, 0};
 
@@ -192,7 +191,7 @@ void reg_await_timer(unsigned int ticks, void* param) {
     int i;
 
     LM_DBG("Looking for expired/useless at %d\n", ticks);
-    for (i = 0; i < auth_data_hash_size; i++) {
+    for (i = 0; i < act_auth_data_hash_size; i++) {
         auth_data_lock(i);
         aud = auth_data[i].head;
         while (aud) {
@@ -704,8 +703,27 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
                     &qop_str,
                     qop == QOP_AUTHINT,
                     &msg->first_line.u.request.method, &uri, hbody, expected);
-            LM_INFO("UE said: %.*s and we  expect %.*s ha1 %.*s (%.*s)\n",
-                    response16.len, response16.s, /*av->authorization.len,av->authorization.s,*/32, expected, 32, ha1, msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
+            LM_INFO("UE said: %.*s and we expect %.*s ha1 %.*s (%.*s)\n",
+                    response16.len, response16.s, 
+                    /*av->authorization.len,av->authorization.s,*/32, expected,
+                    32, ha1,
+                    msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
+            break;
+        case AUTH_SIP_DIGEST:
+        case AUTH_DIGEST:
+            // memcpy of received HA1
+            memcpy(ha1, av->authorization.s, HASHHEXLEN); 
+            calc_response(ha1, &(av->authenticate),
+                    &nc,
+                    &cnonce,
+                    &qop_str,
+                    qop == QOP_AUTHINT,
+                    &msg->first_line.u.request.method, &uri, hbody, expected);
+            LM_INFO("UE said: %.*s and we expect %.*s ha1 %.*s (%.*s)\n",
+                    response16.len, response16.s, 
+                    32,expected, 
+                    32,ha1, 
+                    msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
             break;
         default:
             LM_ERR("algorithm %.*s is not handled.\n",
@@ -902,11 +920,11 @@ int auth_data_init(int size) {
         return 0;
     }
     memset(auth_data, 0, sizeof (auth_hash_slot_t) * size);
-    auth_data_hash_size = size;
     for (i = 0; i < size; i++) {
         auth_data[i].lock = lock_alloc();
         lock_init(auth_data[i].lock);
     }
+    act_auth_data_hash_size = size;
     return 1;
 }
 
@@ -915,7 +933,7 @@ int auth_data_init(int size) {
 void auth_data_destroy() {
     int i;
     auth_userdata *aud, *next;
-    for (i = 0; i < auth_data_hash_size; i++) {
+    for (i = 0; i < act_auth_data_hash_size; i++) {
         auth_data_lock(i);
         lock_destroy(auth_data[i].lock);
         lock_dealloc(auth_data[i].lock);
@@ -1181,9 +1199,9 @@ void free_auth_userdata(auth_userdata * aud) {
  */
 inline unsigned int get_hash_auth(str private_identity, str public_identity) {
 if (av_check_only_impu)
-	return core_hash(&public_identity, 0, auth_data_hash_size);
+	return core_hash(&public_identity, 0, act_auth_data_hash_size);
 else
-	return core_hash(&public_identity, 0, auth_data_hash_size);
+	return core_hash(&public_identity, 0, act_auth_data_hash_size);
 /*
 
 
