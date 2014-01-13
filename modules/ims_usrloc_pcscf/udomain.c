@@ -56,8 +56,11 @@
 #include "usrloc.h"
 #include "utime.h"
 #include "usrloc.h"
+#include "usrloc_db.h"
 
 #include "../../lib/ims/useful_defs.h"
+
+extern int db_mode;
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -303,6 +306,7 @@ void unlock_ulslot(udomain_t* _d, int i)
 #endif
 }
 
+//TODO: this should be removed...
 int update_rx_regsession(struct udomain* _d, str* session_id, struct pcontact* _c) {
 	if (session_id->len > 0 && session_id->s) {
 		if (_c->rx_session_id.len > 0 && _c->rx_session_id.s) {
@@ -385,7 +389,28 @@ int update_pcontact(struct udomain* _d, struct pcontact_info* _ci, struct pconta
 	if (_ci->received_port > 0) _c->received_port = _ci->received_port;
 	if (_ci->received_proto > 0) _c->received_proto = _ci->received_proto;
 
+	//update Rx reg session information
+	if (_ci->rx_regsession_id && _ci->rx_regsession_id->len>0 && _ci->rx_regsession_id->s) {
+		if (_c->rx_session_id.len > 0 && _c->rx_session_id.s) {
+			_c->rx_session_id.len = 0;
+			shm_free(_c->rx_session_id.s);
+		}
+		_c->rx_session_id.s = shm_malloc(_ci->rx_regsession_id->len);
+		if (!_c->rx_session_id.s) {
+			LM_ERR("no more shm_mem\n");
+			return -1;
+		}
+		memcpy(_c->rx_session_id.s, _ci->rx_regsession_id->s, _ci->rx_regsession_id->len);
+		_c->rx_session_id.len = _ci->rx_regsession_id->len;
+	}
+
 	//TODO: update path, etc
+
+	if (db_mode == WRITE_THROUGH && db_update_pcontact(_c) != 0) {
+		LM_ERR("Error updating record in DB");
+		return -1;
+	}
+
 	run_ul_callbacks(PCSCF_CONTACT_UPDATE, _c);
 	return 0;
 
@@ -402,6 +427,12 @@ int insert_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci
     if (exists_ulcb_type(PCSCF_CONTACT_INSERT)) {
 		run_ul_create_callbacks(*_c);
 	}
+
+	if (db_mode == WRITE_THROUGH && db_insert_pcontact(*_c) != 0) {
+		LM_ERR("error inserting contact into db");
+		goto error;
+	}
+
     return 0;
 
 error:
@@ -516,10 +547,269 @@ int delete_pcontact(udomain_t* _d, str* _aor, struct pcontact* _c)
 			return 0;
 		}
 	}
+
 	if (exists_ulcb_type(PCSCF_CONTACT_DELETE)) {
 		run_ul_callbacks(PCSCF_CONTACT_DELETE, _c);
 	}
 	mem_delete_pcontact(_d, _c);
 
+	if (db_mode == WRITE_THROUGH && db_delete_pcontact(_c) != 0) {
+		LM_ERR("Error deleting contact from DB");
+		return -1;
+	}
+
 	return 0;
 }
+
+/*!
+ * \brief Convert database values into pcontact_info
+ *
+ * Convert database values into pcontact_info,
+ * expects 10 rows (aor, contact, received, rx_session_id_col
+ * reg_state, expires, socket, service_routes_col, public_ids, path
+ * \param vals database values
+ * \param contact contact
+ * \return pointer to the ucontact_info on success, 0 on failure
+ */
+static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
+{
+	static pcontact_info_t ci;
+	static str received, path, rx_session_id, implicit_impus, tmpstr, service_routes;
+	static str *impu_list, *service_route_list;
+	int flag=0, n;
+	char *p, *q=0;
+
+	memset( &ci, 0, sizeof(pcontact_info_t));
+
+	received.s = (char*) VAL_STRING(vals + 2);
+	if (VAL_NULL(vals+2) || !received.s || !received.s[0]) {
+		received.len = 0;
+		received.s = 0;
+	} else {
+		received.len = strlen(received.s);
+	}
+	ci.received_host = received;
+
+	rx_session_id.s = (char*) VAL_STRING(vals + 3);
+	if (VAL_NULL(vals+3) || !rx_session_id.s || !rx_session_id.s[0]) {
+		rx_session_id.len = 0;
+		rx_session_id.s = 0;
+		LM_DBG("2\n");
+	} else {
+		rx_session_id.len = strlen(rx_session_id.s);
+	}
+	ci.rx_regsession_id = &rx_session_id;
+	if (VAL_NULL(vals + 4)) {
+		LM_CRIT("empty registration state in DB\n");
+		return 0;
+	}
+	ci.reg_state = VAL_INT(vals + 4);
+	if (VAL_NULL(vals + 5)) {
+		LM_CRIT("empty expire\n");
+		return 0;
+	}
+	ci.expires = VAL_TIME(vals + 5);
+	path.s  = (char*)VAL_STRING(vals+9);
+		if (VAL_NULL(vals+9) || !path.s || !path.s[0]) {
+			path.len = 0;
+			path.s = 0;
+		} else {
+			path.len = strlen(path.s);
+		}
+	ci.path = &path;
+
+	//public IDs - implicit set
+	implicit_impus.s = (char*) VAL_STRING(vals + 8);
+	if (!VAL_NULL(vals + 8) && implicit_impus.s && implicit_impus.s[0]) {
+		//how many
+		n=0;
+		p = implicit_impus.s;
+		while (*p) {
+			if ((*p) == '<') {
+				n++;
+			}
+			p++;
+		}
+		impu_list = pkg_malloc(sizeof(str) * n);
+
+		n=0;
+		p = implicit_impus.s;
+		while (*p) {
+			if (*p == '<') {
+				q = p + 1;
+				flag = 1;
+			}
+			if (*p == '>') {
+				if (flag) {
+					tmpstr.s = q;
+					tmpstr.len = p - q;
+					impu_list[n++] = tmpstr;
+				}
+				flag = 0;
+			}
+			p++;
+		}
+		ci.num_public_ids = n;
+		ci.public_ids = impu_list;
+	}
+
+	//service routes
+	service_routes.s = (char*) VAL_STRING(vals + 7);
+	if (!VAL_NULL(vals + 7) && service_routes.s && service_routes.s[0]) {
+		//how many
+		n = 0;
+		p = service_routes.s;
+		while (*p) {
+			if ((*p) == '<') {
+				n++;
+			}
+			p++;
+		}
+		service_route_list = pkg_malloc(sizeof(str) * n);
+
+		n = 0;
+		p = service_routes.s;
+		while (*p) {
+			if (*p == '<') {
+				q = p + 1;
+				flag = 1;
+			}
+			if (*p == '>') {
+				if (flag) {
+					tmpstr.s = q;
+					tmpstr.len = p - q;
+					service_route_list[n++] = tmpstr;
+				}
+				flag = 0;
+			}
+			p++;
+		}
+		ci.num_service_routes = n;
+		ci.service_routes = service_route_list;
+	}
+
+	return &ci;
+}
+
+/*!
+ * \brief Load all records from a udomain
+ *
+ * Load all records from a udomain, useful to populate the
+ * memory cache on startup.
+ * \param _c database connection
+ * \param _d loaded domain
+ * \return 0 on success, -1 on failure
+ */
+int preload_udomain(db1_con_t* _c, udomain_t* _d)
+{
+	pcontact_info_t *ci;
+	db_row_t *row;
+	db_key_t columns[18];
+	db1_res_t* res = NULL;
+	str aor, contact;
+	int i, n;
+
+	pcontact_t* c;
+
+	LM_DBG("pre-loading domain from DB\n");
+
+	columns[0] = &domain_col;
+	columns[1] = &aor_col;
+	columns[2] = &contact_col;
+	columns[3] = &received_col;
+	columns[4] = &rx_session_id_col;
+	columns[5] = &reg_state_col;
+	columns[6] = &expires_col;
+	columns[7] = &socket_col;
+	columns[8] = &service_routes_col;
+	columns[9] = &public_ids_col;
+	columns[10] = &path_col;
+
+	if (ul_dbf.use_table(_c, _d->name) < 0) {
+		LM_ERR("sql use_table failed\n");
+		return -1;
+	}
+
+#ifdef EXTRA_DEBUG
+	LM_NOTICE("load start time [%d]\n", (int)time(NULL));
+#endif
+
+	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 11, 0, 0) < 0) {
+			LM_ERR("db_query (1) failed\n");
+			return -1;
+		}
+		if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows)<0) {
+			LM_ERR("fetching rows failed\n");
+			return -1;
+		}
+	} else {
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 11, 0, &res) < 0) {
+			LM_ERR("db_query failed\n");
+			return -1;
+		}
+	}
+
+	if (RES_ROW_N(res) == 0) {
+		LM_DBG("table is empty\n");
+		ul_dbf.free_result(_c, res);
+		return 0;
+	}
+
+	LM_DBG("%d rows returned in preload\n", RES_ROW_N(res));
+
+	n = 0;
+	do {
+		LM_DBG("loading records - cycle [%d]\n", ++n);
+		for(i = 0; i < RES_ROW_N(res); i++) {
+			row = RES_ROWS(res) + i;
+
+			aor.s = (char*) VAL_STRING(ROW_VALUES(row) + 1);
+			if (VAL_NULL(ROW_VALUES(row) + 1) || aor.s == 0 || aor.s[0] == 0) {
+				LM_CRIT("empty aor record in table %s...skipping\n", _d->name->s);
+				continue;
+			}
+			aor.len = strlen(aor.s);
+
+			ci = dbrow2info( ROW_VALUES(row)+1, &contact);
+			if (ci==0) {
+				LM_ERR("usrloc record for %.*s in table %s\n",
+						aor.len, aor.s, _d->name->s);
+				continue;
+			}
+			lock_udomain(_d, &aor);
+
+			if ( (mem_insert_pcontact(_d, &aor, ci, &c)) != 0) {
+				LM_ERR("inserting contact failed\n");
+				unlock_udomain(_d, &aor);
+				goto error1;
+			}
+			unlock_udomain(_d, &aor);
+		}
+
+		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+			if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows)<0) {
+				LM_ERR("fetching rows (1) failed\n");
+				ul_dbf.free_result(_c, res);
+				return -1;
+			}
+		} else {
+			break;
+		}
+	} while(RES_ROW_N(res)>0);
+
+	ul_dbf.free_result(_c, res);
+
+#ifdef EXTRA_DEBUG
+	LM_NOTICE("load end time [%d]\n", (int)time(NULL));
+#endif
+
+	return 0;
+error1:
+	free_pcontact(c);
+
+	ul_dbf.free_result(_c, res);
+	return -1;
+}
+
+

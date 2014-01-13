@@ -57,6 +57,7 @@
 #include "ul_rpc.h"
 #include "ul_callback.h"
 #include "usrloc.h"
+#include "usrloc_db.h"
 
 MODULE_VERSION
 
@@ -75,10 +76,16 @@ extern int ul_locks_no;
  * Module parameters and their default values
  */
 str usrloc_debug_file = str_init(DEFAULT_DBG_FILE);
-int timer_interval  = 60;				/*!< Timer interval in seconds */
 int usrloc_debug 	= 0;
 int ul_hash_size = 9;
 int init_flag = 0;
+str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
+int timer_interval  = 60;						/*!< Timer interval in seconds */
+int db_mode         = 0;						/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
+int ul_fetch_rows = 2000;
+
+db1_con_t* ul_dbh = 0;
+db_func_t ul_dbf; 
 
 /*! \brief
  * Exported functions
@@ -96,6 +103,10 @@ static param_export_t params[] = {
 	{"timer_interval",    INT_PARAM, &timer_interval  },
 	{"usrloc_debug_file", STR_PARAM, &usrloc_debug_file.s},
 	{"enable_debug_file", INT_PARAM, &usrloc_debug},
+
+	{"db_url",              STR_PARAM, &db_url.s        },
+	{"timer_interval",      INT_PARAM, &timer_interval  },
+	{"db_mode",             INT_PARAM, &db_mode         },
 	{0, 0, 0}
 };
 
@@ -160,6 +171,9 @@ static int mod_init(void) {
 		return -1;
 	}
 
+
+	db_url.len = strlen(db_url.s);
+
 	/* Regsiter RPC */
 	if (rpc_register_array(ul_rpc) != 0) {
 		LM_ERR("failed to register RPC commands\n");
@@ -176,13 +190,65 @@ static int mod_init(void) {
 		return -1;
 	}
 
+	/* Shall we use database ? */
+	if (db_mode != NO_DB) { /* Yes */
+		if(ul_fetch_rows<=0) {
+			LM_ERR("invalid fetch_rows number '%d'\n", ul_fetch_rows);
+			return -1;
+		}
+
+		if (init_db(&db_url, timer_interval, ul_fetch_rows) != 0) {
+			LM_ERR("Error initializing db connection\n");
+			return -1;
+		}
+		LM_DBG("Running in DB mode %i\n", db_mode);
+	}
+
 	init_flag = 1;
 
 	return 0;
 }
 
-static int child_init(int rank)
+static int child_init(int _rank)
 {
+	dlist_t* ptr;
+
+	/* connecting to DB ? */
+	switch (db_mode) {
+		case NO_DB:
+			return 0;
+		case WRITE_THROUGH:
+			/* connect to db only from SIP workers, TIMER and MAIN processes */
+			if (_rank<=0 && _rank!=PROC_TIMER && _rank!=PROC_MAIN)
+				return 0;
+			break;
+		case WRITE_BACK:
+			/* connect to db only from TIMER (for flush), from MAIN (for
+			 * final flush() and from child 1 for preload */
+			if (_rank!=PROC_TIMER && _rank!=PROC_MAIN && _rank!=PROC_SIPINIT)
+				return 0;
+			break;
+	}
+
+	LM_DBG("Connecting to usrloc_pcscf DB for rank %d\n", _rank);
+	if (connect_db(&db_url) != 0) {
+		LM_ERR("child(%d): failed to connect to database\n", _rank);
+		return -1;
+	}
+	/* _rank==PROC_SIPINIT is used even when fork is disabled */
+	if (_rank==PROC_SIPINIT && db_mode!=DB_ONLY) {
+		// if cache is used, populate domains from DB
+		for( ptr=root ; ptr ; ptr=ptr->next) {
+			LM_DBG("Preloading domain %.*s\n", ptr->name.len, ptr->name.s);
+			if (preload_udomain(ul_dbh, ptr->d) < 0) {
+				LM_ERR("child(%d): failed to preload domain '%.*s'\n",
+						_rank, ptr->name.len, ZSW(ptr->name.s));
+				return -1;
+			}
+//			uldb_preload_attrs(ptr->d);
+		}
+	}
+
 	return 0;
 }
 
@@ -196,6 +262,12 @@ static void destroy(void)
 
 	/* free callbacks list */
 	destroy_ulcb_list();
+
+	free_service_route_buf();
+	free_impu_buf();
+
+	if (db_mode)
+		destroy_db();
 }
 
 

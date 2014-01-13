@@ -54,6 +54,11 @@
 #include "../../modules/tm/dlg.h"
 #include "../cdp/diameter_ims_code_avp.h"
 
+#define NO_DB         0
+#define WRITE_THROUGH 1
+//#define WRITE_BACK    2		//not implemented yet
+//#define DB_ONLY		  3		//not implemented yet
+
 #define VALID_CONTACT(c, t)   ((c->expires>t) || (c->expires==0))
 
 struct hslot;		/*!< Hash table slot */
@@ -142,7 +147,7 @@ static inline char* reg_state_to_string(enum pcontact_reg_states reg_state) {
 			return "registration pending";
 		case PCONTACT_DEREGISTERED:
 			return "unregistered";
-                case PCONTACT_DEREG_PENDING_PUBLISH:
+		case PCONTACT_DEREG_PENDING_PUBLISH:
 			return "deregistration pending, publish sent";
 		case PCONTACT_REG_PENDING_AAR:
 			return "registration pending, aar sent";

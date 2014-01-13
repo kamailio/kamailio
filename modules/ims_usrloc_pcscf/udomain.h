@@ -81,4 +81,6 @@ int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsign
 int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
 int delete_pcontact(udomain_t* _d, str* _aor, struct pcontact* _r);
 
+int preload_udomain(db1_con_t* _c, udomain_t* _d);
+
 #endif

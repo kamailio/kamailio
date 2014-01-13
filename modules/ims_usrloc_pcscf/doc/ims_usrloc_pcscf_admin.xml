@@ -72,7 +72,7 @@
 
       <para>The number of entries of the hash table used by to store the
       contact records is 2^hash_size. For hash_size=4, the number of entries
-      of the hash table is 16. </para>
+      of the hash table is 16.</para>
 
       <para><emphasis> Default value is 9. </emphasis></para>
 
@@ -90,7 +90,7 @@ modparam("ims_usrloc_pcscf", "hash_size", 10)
       <title>timer_interval (int)</title>
 
       <para>Number of seconds between two timer runs. The module uses timer to
-      delete expired contacts. </para>
+      delete expired contacts.</para>
 
       <para><emphasis> Default value is 60. </emphasis></para>
 
@@ -103,14 +103,65 @@ modparam("ims_usrloc_pcscf", "timer_interval", 30)
 </programlisting>
       </example>
     </section>
+
+    <section>
+      <title>db_url (int)</title>
+
+      <para>Database URL</para>
+
+      <para><emphasis>Default value is
+      &ldquo;mysql://kamailio:kamailiorw@localhost/kamailio&rdquor;.</emphasis></para>
+
+      <example>
+        <title>Set db_url parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>db_mode (int)</title>
+
+      <para>This is the database mode to be used for the PCSCF usrloc data
+      persistent storage. Currently this module supports the Write-Through
+      scheme only.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>0 - This disables DB mode. Only memory will be used for usrloc
+          and data will not survive a restart.</para>
+        </listitem>
+
+        <listitem>
+          <para>1 - Write-Through Scheme. All changes to usrloc are
+          immediately refelcted in the database. This is slow but very
+          reliable. This mode will ensure that no registration data is lost as
+          a result of a restart or crash.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para><emphasis>Default value is 0.</emphasis></para>
+
+      <example>
+        <title>Set db_mode parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "db_mode", 1)
+...
+</programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
     <title>Functions</title>
 
     <section>
-      <para>There are no exported functions that could be used in scripts.
-      </para>
+      <para>There are no exported functions that could be used in
+      scripts.</para>
     </section>
   </section>
 
@@ -129,7 +180,7 @@ modparam("ims_usrloc_pcscf", "timer_interval", 30)
   <section>
     <title>Statistics</title>
 
-    <para>Exported statistics are listed in the next sections. </para>
+    <para>Exported statistics are listed in the next sections.</para>
 
     <section>
       <title>registered contacts</title>

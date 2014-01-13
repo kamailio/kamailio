@@ -55,6 +55,9 @@
 #include "ul_callback.h"
 #include "usrloc.h"
 #include "../../lib/ims/useful_defs.h"
+#include "usrloc_db.h"
+
+extern int db_mode;
 
 /*! retransmission detection interval in seconds */
 int cseq_delay = 20;
@@ -126,7 +129,7 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 
 	(*_c)->aor.s = (char*) shm_malloc(_contact->len);
 	if ((*_c)->aor.s == 0) {
-		LM_ERR("no more share memory\n");
+		LM_ERR("no more shared memory\n");
 		shm_free(*_c);
 		*_c = 0;
 		return -2;
@@ -238,6 +241,11 @@ static inline void nodb_timer(pcontact_t* _c)
 		if (exists_ulcb_type(PCSCF_CONTACT_EXPIRE)) {
 			run_ul_callbacks(PCSCF_CONTACT_EXPIRE, _c);
 		}
+
+		if (db_mode == WRITE_THROUGH && db_delete_pcontact(_c) != 0) {
+			LM_ERR("Error deleting ims_usrloc_pcscf record in DB");
+		}
+
 		update_stat(_c->slot->d->expired, 1);
 		mem_delete_pcontact(_c->slot->d, _c);
 		return;
