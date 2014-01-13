@@ -56,8 +56,8 @@
 
 #define NO_DB         0
 #define WRITE_THROUGH 1
-//#define WRITE_BACK    2		//not implemented yet
-//#define DB_ONLY		  3		//not implemented yet
+#define WRITE_BACK    2		//not implemented yet
+#define DB_ONLY	      3		//not implemented yet
 
 #define VALID_CONTACT(c, t)   ((c->expires>t) || (c->expires==0))
 
