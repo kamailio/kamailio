@@ -17,7 +17,7 @@ ifeq ($(BUILDER),)
 	INSTALLMIBDIR =  $(share_prefix)/share/snmp/mibs
 else
 	BUILDAGENTLIBS = $(shell net-snmp-config --netsnmp-agent-libs)
-	INSTALLMIBDIR = $(share_prefix)$(shell net-snmp-config --prefix)/share/snmp/mibs
+	INSTALLMIBDIR = $(basedir)$(shell net-snmp-config --prefix)/share/snmp/mibs
 endif 
 
 ifeq ($(EMBEDDED_PERL),1)
