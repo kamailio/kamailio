@@ -17,6 +17,7 @@ SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 
 ifneq ($(OS),darwin)
 	LIBS += -lrt
+	LIBS += -lpthread
 endif
 
 include ../../Makefile.modules
