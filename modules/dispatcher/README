@@ -1081,6 +1081,9 @@ r,opt)
 #     - define WITH_DEBUG
 #
 
+#!ifndef DBURL
+#!define DBURL "mysql://kamailio:kamailiorw@localhost/kamailio"
+#!endif
 
 ####### Global Parameters #########
 
@@ -1168,8 +1171,7 @@ modparam("tm", "fr_timer", 2000)
 modparam("tm", "fr_inv_timer", 40000)
 
 # ----- dispatcher params -----
-modparam("dispatcher", "db_url",
-        "mysql://openser:openserro@localhost/openser")
+modparam("dispatcher", "db_url", DBURL)
 modparam("dispatcher", "table_name", "dispatcher")
 modparam("dispatcher", "flags", 2)
 modparam("dispatcher", "dst_avp", "$avp(AVP_DST)")
@@ -1228,8 +1230,6 @@ route {
 
         # dispatch destinations
         route(DISPATCH);
-
-        route(RELAY);
 }
 
 
@@ -1317,7 +1317,8 @@ route[DISPATCH] {
         }
         xlog("L_DBG", "--- SCRIPT: going to <$ru> via <$du>\n");
         t_on_failure("RTF_DISPATCH");
-        return;
+        route(RELAY);
+        exit;
 }
 
 # Sample failure route
