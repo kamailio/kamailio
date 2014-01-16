@@ -308,11 +308,15 @@ int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, 
 
 
 	// modify the mandatory fixed header
-	res2 = encode_called_party(dest, buf+offset+1, nai, tmp_buf+1, 255-1);
-	tmp_buf[0] = (char)res2;
+	res2 = encode_called_party(dest, buf+offset+1, nai, tmp_buf+2, 255-1);
+	tmp_buf[1] = (char)res2;
 	res = buf[offset]+1;
+
+	// set the new optional part pointer
+	tmp_buf[0] = (char)res2+2;
 	
-	replace_body_segment(mangle, offset,res,tmp_buf, res2+1);
+	// replace the mandatory fixed header + optional pointer
+	replace_body_segment(mangle, offset - 1,res+1,tmp_buf, res2+2);
 
 	offset += res;
 	len -= res;
