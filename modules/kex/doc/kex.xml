@@ -24,15 +24,29 @@
 		</otheraddr>
 		</address>
 	    </author>
+	    <author>
+		<firstname>Ovidiu</firstname><surname>Sas</surname>
+		<affiliation><orgname>VoIP Embedded, Inc.</orgname></affiliation>
+	    </author>
 	    <editor>
 		<firstname>Daniel-Constantin</firstname>
 		<surname>Mierla</surname>
 		<email>miconda@gmail.com</email>
 	    </editor>
+	    <editor>
+		<firstname>Ovidiu</firstname><surname>Sas</surname>
+		<email>osas@voipembedded.com.com</email>
+	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2009</year>
 	    <holder>Daniel-Constantin Mierla</holder>
+	</copyright>
+	<copyright>
+		<year>2014</year>
+		<holder>
+		<ulink url="http://www.voipembedded.com">VoIP Embedded, Inc.</ulink>
+		</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
