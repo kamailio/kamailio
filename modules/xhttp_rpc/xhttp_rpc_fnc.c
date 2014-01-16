@@ -310,7 +310,16 @@ void xhttp_rpc_get_next_arg(rpc_ctx_t* ctx, str *arg)
 	int i;
 
 	trim_leading(&ctx->arg2scan);
-	if (ctx->arg2scan.len) {
+
+	if (ctx->arg2scan.len<=0) {
+		*arg = XHTTP_RPC_NULL_ARG;
+		return;
+	}
+	if (ctx->arg2scan.len==1 && ctx->arg2scan.s[0]=='\0') {
+		*arg = XHTTP_RPC_NULL_ARG;
+		return;
+	}
+	else {
 		*arg = ctx->arg2scan;
 		for(i=1; i<arg->len-1; i++) {
 			if(arg->s[i]==' '||arg->s[i]=='\t'||
@@ -322,8 +331,6 @@ void xhttp_rpc_get_next_arg(rpc_ctx_t* ctx, str *arg)
 		i++;
 		ctx->arg2scan.s += i;
 		ctx->arg2scan.len -= i;
-	} else {
-		*arg = XHTTP_RPC_NULL_ARG;
 	}
 	return;
 }
