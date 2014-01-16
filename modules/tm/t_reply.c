@@ -856,62 +856,57 @@ void faked_env(struct cell *t, struct sip_msg *msg, int is_async_env) {
 		 * otherwise the actions would attempt to look the transaction
 		 * up (unnecessary overhead, refcounting)
 		 */
-		if (!is_async_env) {
-			/* backup */
-			backup_t = get_t();
-			backup_branch = get_t_branch();
-			backup_msgid = global_msg_id;
-			/* fake transaction and message id */
-			global_msg_id = msg->id;
-			set_t(t, T_BR_UNDEFINED);
 
-			/* make available the avp list from transaction */
-			backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-			backup_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-			backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-			backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-			backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-			backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
-#ifdef WITH_XAVP
-			backup_xavps = xavp_set_list(&t->xavps_list);
-#endif
-			/* set default send address to the saved value */
-			backup_si = bind_address;
-			bind_address = t->uac[0].request.dst.send_sock;
-			/* backup lump lists */
-			backup_add_rm = t->uas.request->add_rm;
-			backup_body_lumps = t->uas.request->body_lumps;
-			backup_reply_lump = t->uas.request->reply_lump;
-		} else {
-			global_msg_id = msg->id;
+		/* backup */
+		backup_t = get_t();
+		backup_branch = get_t_branch();
+		backup_msgid = global_msg_id;
+		/* fake transaction and message id */
+		global_msg_id = msg->id;
+
+		if (is_async_env) {
 			set_t(t, t->async_backup.backup_branch);
-		}
-	} else {
-		if (!is_async_env) {
-			/* restore original environment */
-			set_t(backup_t, backup_branch);
-			global_msg_id = backup_msgid;
-			set_route_type(backup_route_type);
-			/* restore original avp list */
-			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from);
-			set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to);
-			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from);
-			set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to);
-			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from);
-			set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to);
-#ifdef WITH_XAVP
-			xavp_set_list(backup_xavps);
-#endif
-			bind_address = backup_si;
-			/* restore lump lists */
-			t->uas.request->add_rm = backup_add_rm;
-			t->uas.request->body_lumps = backup_body_lumps;
-			t->uas.request->reply_lump = backup_reply_lump;
 		} else {
-			/*we don't need to restore anything as there was no "environment" prior 
-						    to continuing (we are in a different process)*/
-			LOG(L_DBG, "nothing to restore in async continue, useless call\n");
+			set_t(t, T_BR_UNDEFINED);
 		}
+
+		/* make available the avp list from transaction */
+		backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+		backup_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+		backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
+#ifdef WITH_XAVP
+		backup_xavps = xavp_set_list(&t->xavps_list);
+#endif
+		/* set default send address to the saved value */
+		backup_si = bind_address;
+		bind_address = t->uac[0].request.dst.send_sock;
+		/* backup lump lists */
+		backup_add_rm = t->uas.request->add_rm;
+		backup_body_lumps = t->uas.request->body_lumps;
+		backup_reply_lump = t->uas.request->reply_lump;
+	} else {
+		/* restore original environment */
+		set_t(backup_t, backup_branch);
+		global_msg_id = backup_msgid;
+		set_route_type(backup_route_type);
+		/* restore original avp list */
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to);
+#ifdef WITH_XAVP
+		xavp_set_list(backup_xavps);
+#endif
+		bind_address = backup_si;
+		/* restore lump lists */
+		t->uas.request->add_rm = backup_add_rm;
+		t->uas.request->body_lumps = backup_body_lumps;
+		t->uas.request->reply_lump = backup_reply_lump;
 	}
 }
 
