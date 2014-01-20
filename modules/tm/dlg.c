@@ -1216,6 +1216,9 @@ void free_dlg(dlg_t* _d)
 	if (_d->rem_target.s) shm_free(_d->rem_target.s);
 	if (_d->dst_uri.s) shm_free(_d->dst_uri.s);
 
+	if (_d->loc_dname.s) shm_free(_d->loc_dname.s);
+	if (_d->rem_dname.s) shm_free(_d->rem_dname.s);
+
 	     /* Free all routes in the route set */
 	shm_free_rr(&_d->route_set);
 	shm_free(_d);
