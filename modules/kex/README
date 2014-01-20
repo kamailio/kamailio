@@ -5,57 +5,72 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
+Ovidiu Sas
+
+   VoIP Embedded, Inc.
+
 Edited by
 
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2009 Daniel-Constantin Mierla
+Edited by
+
+Ovidiu Sas
+
+   <osas@voipembedded.com.com>
+
+   Copyright © 2009 Daniel-Constantin Mierla
+
+   Copyright © 2014 VoIP Embedded, Inc.
      __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1. Overview
-        2. Dependencies
+        1.1. Overview
+        1.2. Dependencies
 
-              2.1. Kamailio Modules
-              2.2. External Libraries or Applications
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
 
-        3. Functions
+        1.3. Functions
 
-              3.1. setsflag(flag)
-              3.2. issflagset(flag)
-              3.3. resetsflag(flag)
-              3.4. setbflag(flag [, branch])
-              3.5. isbflagset(flag [, branch])
-              3.6. resetbflag(flag [, branch])
-              3.7. setdsturi(uri)
-              3.8. resetdsturi()
-              3.9. isdsturiset()
-              3.10. pv_printf(var, str)
-              3.11. is_myself(uri)
-              3.12. setdebug(level)
-              3.13. resetdebug()
-              3.14. km_append_branch([uri])
+              1.3.1. setsflag(flag)
+              1.3.2. issflagset(flag)
+              1.3.3. resetsflag(flag)
+              1.3.4. setbflag(flag [, branch])
+              1.3.5. isbflagset(flag [, branch])
+              1.3.6. resetbflag(flag [, branch])
+              1.3.7. setdsturi(uri)
+              1.3.8. resetdsturi()
+              1.3.9. isdsturiset()
+              1.3.10. pv_printf(var, str)
+              1.3.11. is_myself(uri)
+              1.3.12. setdebug(level)
+              1.3.13. resetdebug()
+              1.3.14. km_append_branch([uri])
 
-        4. MI Commands
+        1.4. MI Commands
 
-              4.1. arg
-              4.2. kill
-              4.3. pwd
-              4.4. uptime
-              4.5. version
-              4.6. which
-              4.7. get_statistics
-              4.8. reset_statistics
-              4.9. clear_statistics
+              1.4.1. arg
+              1.4.2. kill
+              1.4.3. pwd
+              1.4.4. uptime
+              1.4.5. version
+              1.4.6. which
+              1.4.7. get_statistics
+              1.4.8. reset_statistics
+              1.4.9. clear_statistics
 
-        5. RPC Commands
+        1.5. RPC Commands
 
-              5.1. pkg.stats
+              1.5.1. pkg.stats
+              1.5.2. stats.get_statistics
+              1.5.3. stats.reset_statistics
+              1.5.4. stats.clear_statistics
 
    List of Examples
 
@@ -75,87 +90,28 @@ Daniel-Constantin Mierla
 
 Chapter 1. Admin Guide
 
-   Table of Contents
-
-   1. Overview
-   2. Dependencies
-
-        2.1. Kamailio Modules
-        2.2. External Libraries or Applications
-
-   3. Functions
-
-        3.1. setsflag(flag)
-        3.2. issflagset(flag)
-        3.3. resetsflag(flag)
-        3.4. setbflag(flag [, branch])
-        3.5. isbflagset(flag [, branch])
-        3.6. resetbflag(flag [, branch])
-        3.7. setdsturi(uri)
-        3.8. resetdsturi()
-        3.9. isdsturiset()
-        3.10. pv_printf(var, str)
-        3.11. is_myself(uri)
-        3.12. setdebug(level)
-        3.13. resetdebug()
-        3.14. km_append_branch([uri])
-
-   4. MI Commands
-
-        4.1. arg
-        4.2. kill
-        4.3. pwd
-        4.4. uptime
-        4.5. version
-        4.6. which
-        4.7. get_statistics
-        4.8. reset_statistics
-        4.9. clear_statistics
-
-   5. RPC Commands
-
-        5.1. pkg.stats
-
-1. Overview
+1.1. Overview
 
    This module collects extensions from Kamailio core.
 
    Kamailio Core CookBook is available at: http://kamailio.org/dokuwiki/
 
-2. Dependencies
+1.2. Dependencies
 
-   2.1. Kamailio Modules
-   2.2. External Libraries or Applications
-
-2.1. Kamailio Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * No dependencies on other Kamailio modules.
 
-2.2. External Libraries or Applications
+1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-3. Functions
+1.3. Functions
 
-   3.1. setsflag(flag)
-   3.2. issflagset(flag)
-   3.3. resetsflag(flag)
-   3.4. setbflag(flag [, branch])
-   3.5. isbflagset(flag [, branch])
-   3.6. resetbflag(flag [, branch])
-   3.7. setdsturi(uri)
-   3.8. resetdsturi()
-   3.9. isdsturiset()
-   3.10. pv_printf(var, str)
-   3.11. is_myself(uri)
-   3.12. setdebug(level)
-   3.13. resetdebug()
-   3.14. km_append_branch([uri])
-
-3.1. setsflag(flag)
+1.3.1. setsflag(flag)
 
    Set the script flag.
 
@@ -173,7 +129,7 @@ $var(flag) = 11;
 setsflag("$var(flag)");
 ...
 
-3.2. issflagset(flag)
+1.3.2. issflagset(flag)
 
    Return true of the script flag is set.
 
@@ -191,7 +147,7 @@ if(issflagset("1"))
 }
 ...
 
-3.3. resetsflag(flag)
+1.3.3. resetsflag(flag)
 
    Reset the script flag.
 
@@ -206,7 +162,7 @@ if(issflagset("1"))
 resetsflag("1");
 ...
 
-3.4. setbflag(flag [, branch])
+1.3.4. setbflag(flag [, branch])
 
    Set the branch flag.
 
@@ -227,7 +183,7 @@ $var(flag) = 11;
 setbflag("$var(flag)", "1");
 ...
 
-3.5. isbflagset(flag [, branch])
+1.3.5. isbflagset(flag [, branch])
 
    Return true of the branch flag is set.
 
@@ -248,7 +204,7 @@ if(isbflagset("1"))
 }
 ...
 
-3.6. resetbflag(flag [, branch])
+1.3.6. resetbflag(flag [, branch])
 
    Reset the branch flag.
 
@@ -266,7 +222,7 @@ if(isbflagset("1"))
 resetbflag("1");
 ...
 
-3.7. setdsturi(uri)
+1.3.7. setdsturi(uri)
 
    Set the destination address URI (outbound proxy address).
 
@@ -283,7 +239,7 @@ resetbflag("1");
 setdsturi("sip:10.0.0.10");
 ...
 
-3.8. resetdsturi()
+1.3.8. resetdsturi()
 
    Reset the destination address URI (outbound proxy address).
 
@@ -294,7 +250,7 @@ setdsturi("sip:10.0.0.10");
 resetdsturi();
 ...
 
-3.9. isdsturiset()
+1.3.9. isdsturiset()
 
    Check if the destination address URI (outbound proxy address) is set.
 
@@ -308,7 +264,7 @@ if(isdsturiset())
 }
 ...
 
-3.10. pv_printf(var, str)
+1.3.10. pv_printf(var, str)
 
    Evalues the str and sets the resulting value to variable var. For
    backward compatibility reasons, the same function can be executed via
@@ -327,7 +283,7 @@ pv_printf("$ru", "sip:$rU@$fd");
 pv_printf("$avp(x)", "From: $fU - To: $tU");
 ...
 
-3.11. is_myself(uri)
+1.3.11. is_myself(uri)
 
    Check if the parameter matches the 'myself' condition (i.e., is a local
    IP or domain).
@@ -346,7 +302,7 @@ if(is_myself("$fu")) {
 }
 ...
 
-3.12. setdebug(level)
+1.3.12. setdebug(level)
 
    Set the debug log level per process.
 
@@ -364,7 +320,7 @@ $var(level) = 2;
 setdebug("$var(level)");
 ...
 
-3.13. resetdebug()
+1.3.13. resetdebug()
 
    Reset the local debug log level back to the value of core parameter
    'debug'.
@@ -376,24 +332,14 @@ setdebug("$var(level)");
 resetdebug();
 ...
 
-3.14. km_append_branch([uri])
+1.3.14. km_append_branch([uri])
 
    This function was replaced by append_branch() from corex module,
    starting with version 4.0.0.
 
-4. MI Commands
+1.4. MI Commands
 
-   4.1. arg
-   4.2. kill
-   4.3. pwd
-   4.4. uptime
-   4.5. version
-   4.6. which
-   4.7. get_statistics
-   4.8. reset_statistics
-   4.9. clear_statistics
-
-4.1. arg
+1.4.1.  arg
 
    Print command line arguments.
 
@@ -405,7 +351,7 @@ resetdebug();
                 :arg:_reply_fifo_file_
                 _empty_line_
 
-4.2. kill
+1.4.2.  kill
 
    Kill the application.
 
@@ -417,7 +363,7 @@ resetdebug();
                 :kill:_reply_fifo_file_
                 _empty_line_
 
-4.3. pwd
+1.4.3.  pwd
 
    Print working directory.
 
@@ -429,7 +375,7 @@ resetdebug();
                 :pwd:_reply_fifo_file_
                 _empty_line_
 
-4.4. uptime
+1.4.4.  uptime
 
    Print uptime.
 
@@ -441,7 +387,7 @@ resetdebug();
                 :uptime:_reply_fifo_file_
                 _empty_line_
 
-4.5. version
+1.4.5.  version
 
    Print version information.
 
@@ -453,7 +399,7 @@ resetdebug();
                 :version:_reply_fifo_file_
                 _empty_line_
 
-4.6. which
+1.4.6.  which
 
    Print list of available MI commands.
 
@@ -465,7 +411,7 @@ resetdebug();
                 :which:_reply_fifo_file_
                 _empty_line_
 
-4.7. get_statistics
+1.4.7.  get_statistics
 
    Print the list of available internal statistics.
 
@@ -481,7 +427,7 @@ resetdebug();
                 _statsid_
                 _empty_line_
 
-4.8. reset_statistics
+1.4.8.  reset_statistics
 
    Reset internal statistics.
 
@@ -494,7 +440,7 @@ resetdebug();
                 _statsid_
                 _empty_line_
 
-4.9. clear_statistics
+1.4.9.  clear_statistics
 
    Return statistics and reset their value in one command.
 
@@ -507,11 +453,9 @@ resetdebug();
                 _statsid_
                 _empty_line_
 
-5. RPC Commands
+1.5. RPC Commands
 
-   5.1. pkg.stats
-
-5.1. pkg.stats
+1.5.1.  pkg.stats
 
    Print private memory (pkg) usage statistics per process. It can take
    optinally a filter to print statistics only for a specific process or
@@ -528,3 +472,42 @@ resetdebug();
                 kamcmd pkg.stats pid 1234
                 kamcmd pkg.stats rank 1
                 kamcmd pkg.stats index 10
+
+1.5.2.  stats.get_statistics
+
+   Print the list of available internal statistics.
+
+   Parameters: statsid - which statistics to be printed. If set to 'all'
+   then all statistics are printed; if set to 'statsgroup:' then all
+   statistics in the group are printed; if set to 'statsname' then the
+   statistics identified by the name is printed.
+
+   Examples:
+                kamcmd stats.get_statistics all
+                kamcmd stats.get_statistics core:
+                kamcmd stats.get_statistics unsupported_methods
+                kamcmd stats.get_statistics shmem: fwd_requests fwd_replies
+
+1.5.3.  stats.reset_statistics
+
+   Reset internal statistics.
+
+   Parameters: statsid - same as for get_statistics.
+
+   Examples:
+                kamcmd stats.reset_statistics all
+                kamcmd stats.reset_statistics core:
+                kamcmd stats.reset_statistics unsupported_methods
+                kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
+
+1.5.4.  stats.clear_statistics
+
+   Return statistics and reset their value in one command.
+
+   Parameters: statsid - same as for get_statistics.
+
+   Examples:
+                kamcmd stats.reset_statistics all
+                kamcmd stats.reset_statistics core:
+                kamcmd stats.reset_statistics unsupported_methods
+                kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
