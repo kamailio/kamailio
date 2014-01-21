@@ -24,7 +24,7 @@
 	</para>
 	<para>
 		The module can be used as a stateless load balancer, it does not
-		depend on any call state tracing module. It requires the TM module if
+		depend on any call state tracking module. It requires the TM module if
 		you enable auto-discovery of active/inactive gateways.
 	</para>
 	<para>
@@ -741,7 +741,15 @@ modparam("dispatcher", "force_dst", 1)
 		</title>
 		<para>
 		The method selects a destination from addresses set. It returns true if
-		a new destination is set.
+		a new destination is set. The selected address is set to dst_uri field
+		(aka the outbound proxy address or the $du variable), not being visible
+		in the SIP request.
+		</para>
+		<para>
+		If the bit 2 in 'flags' parameter is set, the rest of the addresses from
+		the destination set is stored in AVP list. You can use 'ds_next_dst()'
+		to use next address in order to achieve serial forking to all possible
+		destinations.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -875,7 +883,7 @@ ds_select_dst("1", "$var(a)");
  		<function moreinfo="none">ds_select_domain(set, alg)</function>
  		</title>
  		<para>
- 		The method selects a destination from addresses set  and rewrites the
+ 		The method selects a destination from addresses set and rewrites the
  		host and port from R-URI. The parameters have same meaning as for
  		ds_select_dst().
  		</para>
