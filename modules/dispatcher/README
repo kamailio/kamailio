@@ -223,7 +223,7 @@ Chapter 1. Admin Guide
    message attributes.
 
    The module can be used as a stateless load balancer, it does not depend
-   on any call state tracing module. It requires the TM module if you
+   on any call state tracking module. It requires the TM module if you
    enable auto-discovery of active/inactive gateways.
 
    It is very lightweight, therefore suitable for handling heavy SIP
@@ -702,7 +702,14 @@ Note
 4.1. ds_select_dst(set, alg)
 
    The method selects a destination from addresses set. It returns true if
-   a new destination is set.
+   a new destination is set. The selected address is set to dst_uri field
+   (aka the outbound proxy address or the $du variable), not being visible
+   in the SIP request.
+
+   If the bit 2 in 'flags' parameter is set, the rest of the addresses
+   from the destination set is stored in AVP list. You can use
+   'ds_next_dst()' to use next address in order to achieve serial forking
+   to all possible destinations.
 
    Meaning of the parameters is as follows:
      * set - the id of the set from where to pick up destination address.
@@ -1081,6 +1088,9 @@ r,opt)
 #     - define WITH_DEBUG
 #
 
+#!ifndef DBURL
+#!define DBURL "mysql://kamailio:kamailiorw@localhost/kamailio"
+#!endif
 
 ####### Global Parameters #########
 
@@ -1168,8 +1178,7 @@ modparam("tm", "fr_timer", 2000)
 modparam("tm", "fr_inv_timer", 40000)
 
 # ----- dispatcher params -----
-modparam("dispatcher", "db_url",
-        "mysql://openser:openserro@localhost/openser")
+modparam("dispatcher", "db_url", DBURL)
 modparam("dispatcher", "table_name", "dispatcher")
 modparam("dispatcher", "flags", 2)
 modparam("dispatcher", "dst_avp", "$avp(AVP_DST)")
@@ -1228,8 +1237,6 @@ route {
 
         # dispatch destinations
         route(DISPATCH);
-
-        route(RELAY);
 }
 
 
@@ -1317,7 +1324,8 @@ route[DISPATCH] {
         }
         xlog("L_DBG", "--- SCRIPT: going to <$ru> via <$du>\n");
         t_on_failure("RTF_DISPATCH");
-        return;
+        route(RELAY);
+        exit;
 }
 
 # Sample failure route
