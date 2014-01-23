@@ -89,7 +89,7 @@ int *rls_notifier_id = NULL;
 str db_url = str_init(DEFAULT_DB_URL);
 str xcap_db_url = str_init("");
 str rlpres_db_url = str_init("");
-int hash_size = 512;
+int hash_size = 9;
 shtable_t rls_table;
 contains_event_t pres_contains_event;
 search_event_t pres_search_event;
