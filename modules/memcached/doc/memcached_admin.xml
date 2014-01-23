@@ -146,7 +146,7 @@ xlog("stored value is $mct(test)"); # will return &lt;null&gt;
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section id="dmq.p.servers">
+	<section id="memcached.p.servers">
 		<title><varname>servers</varname> (str)</title>
 		<para>
 		The servers to connect to. At the moment only one server is supported.
@@ -167,7 +167,7 @@ modparam("memcached", "servers", "localhost:11211")
 			</programlisting>
 		</example>
 	</section>
-	<section id="dmq.p.expire">
+	<section id="memcached.p.expire">
 		<title><varname>expire</varname> (integer)</title>
 		<para>
 			The default expire value of entries in memcached in seconds. The maximal
@@ -199,7 +199,7 @@ modparam("memcached", "expire", 10800)
 </programlisting>
 		</example>
 	</section>
-	<section id="dmq.p.mode">
+	<section id="memcached.p.mode">
 		<title><varname>mode</varname> (integer)</title>
 		<para>
 			The used storage mode for the memcached module for write access
@@ -222,7 +222,7 @@ modparam("memcached", "mode", 0)
 </programlisting>
 		</example>
 	</section>
-	<section id="dmq.p.timeout">
+	<section id="memcached.p.timeout">
 		<title><varname>timeout</varname> (integer)</title>
 		<para>
 			The timeout for the memcache servers access in milliseconds.
@@ -241,7 +241,7 @@ modparam("memcached", "timeout", 10000)
 			</programlisting>
 		</example>
 	</section>
-	<section id="dmq.p.memory">
+	<section id="memcached.p.memory">
 		<title><varname>memory</varname> (integer)</title>
 		<para>
 			The memory mode for the memcached client library. The library can
