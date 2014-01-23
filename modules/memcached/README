@@ -27,6 +27,7 @@ Henning Westerholt
               4.3. mode (integer)
               4.4. timeout (integer)
               4.5. memory (integer)
+              4.6. stringify (integer)
 
         5.
 
@@ -43,6 +44,7 @@ Henning Westerholt
    1.7. Set mode parameter
    1.8. Set timeout parameter
    1.9. Set memory parameter
+   1.10. Set stringify parameter
 
 Chapter 1. Admin Guide
 
@@ -66,6 +68,7 @@ Chapter 1. Admin Guide
         4.3. mode (integer)
         4.4. timeout (integer)
         4.5. memory (integer)
+        4.6. stringify (integer)
 
    5.
 
@@ -179,6 +182,7 @@ xlog("stored value is $mct(test)"); # will return <null>
    4.3. mode (integer)
    4.4. timeout (integer)
    4.5. memory (integer)
+   4.6. stringify (integer)
 
 4.1. servers (str)
 
@@ -256,6 +260,21 @@ modparam("memcached", "timeout", 10000)
    Example 1.9. Set memory parameter
 ...
 modparam("memcached", "memory", 1)
+...
+
+4.6. stringify (integer)
+
+   The string mode for the memcached module. By default the module checks
+   the flags for each returned value from the memcached library to decide
+   to evaluate it as string or numerical value. If you need
+   interoperability with existing applications that are not able to set
+   this flag, you can force the module to evaluate all values as strings.
+
+   Default value is “0” (don't force string values).
+
+   Example 1.10. Set stringify parameter
+...
+modparam("memcached", "stringify", 1)
 ...
 
    5.1. Exported pseudo-variables

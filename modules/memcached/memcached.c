@@ -46,6 +46,8 @@ unsigned int mcd_mode = 0;
 unsigned int mcd_timeout = 5000;
 /*! Internal or system memory manager, default is system */
 unsigned int mcd_memory = 0;
+/*! stringify all values retrieved from memcached, default false */
+unsigned int mcd_stringify = 0;
 /*! memcached handle */
 struct memcached_st *memcached_h;
 /*! memcached server list */
@@ -77,11 +79,12 @@ static pv_export_t mod_pvs[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"servers", STR_PARAM, &mcd_srv_str },
-	{"expire",  INT_PARAM, &mcd_expire },
-	{"timeout", INT_PARAM, &mcd_timeout },
-	{"mode",    INT_PARAM, &mcd_mode },
-	{"memory",  INT_PARAM, &mcd_memory },
+	{"servers",   STR_PARAM, &mcd_srv_str },
+	{"expire",    INT_PARAM, &mcd_expire },
+	{"timeout",   INT_PARAM, &mcd_timeout },
+	{"mode",      INT_PARAM, &mcd_mode },
+	{"memory",    INT_PARAM, &mcd_memory },
+	{"stringify", INT_PARAM, &mcd_stringify },
 	{0, 0, 0}
 };
 
@@ -239,7 +242,7 @@ static int mod_init(void) {
 		port = "11211";
 		len = strlen(mcd_srv_str) ;
 	}
-	
+
 	server = pkg_malloc(len);
 	if (server == NULL) {
 		PKG_MEM_ERROR;
@@ -280,7 +283,7 @@ static int mod_init(void) {
 	}
 
         servers = memcached_server_list_append(servers, server, atoi(port), &rc);
-	
+
 	if (memcached_behavior_set(memcached_h, MEMCACHED_BEHAVIOR_CONNECT_TIMEOUT, mcd_timeout) != MEMCACHED_SUCCESS) {
 		LM_ERR("could not set server connection timeout\n");
 		return -1;
@@ -298,7 +301,7 @@ static int mod_init(void) {
 	/** \todo FIXME logic to handle connection errors on startup
 	memcached_server_cursor(memcached_h, (const memcached_server_fn*) &mcd_check_connection, NULL, 1);
 	*/
-	
+
 	LM_INFO("libmemcached version is %s\n", memcached_lib_version());
 	return 0;
 }
@@ -310,7 +313,7 @@ static int mod_init(void) {
 static void mod_destroy(void) {
 	if (servers != NULL)
 		memcached_server_list_free(servers);
-	
+
 	/* Crash on shutdown with internal memory manager, even if we disable the mm callbacks */
 	if (mcd_memory != 1 && memcached_h != NULL)
 		        memcached_free(memcached_h);

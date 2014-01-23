@@ -45,12 +45,12 @@ static inline int pv_mcd_key_expiry_split_str(str *data, str *key, unsigned int 
 	str str_exp;
 	str_exp.s = NULL;
 	str_exp.len = 0;
-	
+
 	if (data == NULL || data->s == NULL || data->len <= 0) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
-	
+
 	p = data->s;
 	key->s = p;
 	key->len = 0;
@@ -208,7 +208,7 @@ int pv_get_mcd_value(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 
 	trim_len(res_str.len, res_str.s, res_str);
 
-	if(return_flags&VAR_VAL_STR) {
+	if(return_flags&VAR_VAL_STR || mcd_stringify) {
 		res->rs.s = pv_get_buffer();
 		res->rs.len = pv_get_buffer_size();
 		if(res_str.len>=res->rs.len) {
@@ -314,7 +314,7 @@ static int pv_mcd_atomic_helper(struct sip_msg* msg, pv_param_t *param, int op, 
 	char *return_value;
 	uint32_t return_flags;
 	memcached_return rc;
-	
+
 	if (!(val->flags&PV_VAL_INT)) {
 		LM_ERR("invalid value %.*s for atomic operation, strings not allowed\n",
 			val->rs.len, val->rs.s);

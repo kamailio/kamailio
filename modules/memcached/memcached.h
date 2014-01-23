@@ -38,6 +38,8 @@ extern unsigned int mcd_mode;
 extern unsigned int mcd_timeout;
 /*! Internal or system memory manager */
 extern unsigned int mcd_memory;
+/*! stringify all values retrieved from memcached */
+extern unsigned int mcd_stringify;
 /*! memcached handle */
 extern struct memcached_st* memcached_h;
 /*! memcached server list */

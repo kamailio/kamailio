@@ -267,6 +267,30 @@ modparam("memcached", "memory", 1)
 			</programlisting>
 		</example>
 	</section>
+	<section id="memcached.p.stringify">
+		<title><varname>stringify</varname> (integer)</title>
+		<para>
+			The string mode for the memcached module. By default the module
+			checks the flags for each returned value from the memcached library
+			to decide to evaluate it as string or numerical value. If you need
+			interoperability with existing applications that are not able to
+			set this flag, you can force the module to evaluate all values as
+			strings.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>0</quote> (don't force string values).
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>stringify</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("memcached", "stringify", 1)
+...
+			</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 		<section>
