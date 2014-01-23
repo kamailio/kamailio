@@ -415,6 +415,11 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0;
 
+	pid = my_pid();
+	
+	if(library_mode)
+		return 0;
+
 	if (rank == PROC_MAIN)
 	{
 		int i;
@@ -437,11 +442,6 @@ static int child_init(int rank)
 
 		return 0;
 	}
-
-	pid = my_pid();
-	
-	if(library_mode)
-		return 0;
 
 	if (pa_dbf.init==0)
 	{
