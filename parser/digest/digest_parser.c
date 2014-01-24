@@ -275,12 +275,20 @@ static inline void parse_username(struct username* _u)
 	_u->user = _u->whole;
 	if (_u->whole.len <= 2) return;
 
+	/* get domain - it can be: username@domain */
 	d = q_memchr(_u->whole.s, '@', _u->whole.len);
 
 	if (d) {
 		_u->domain.s = d + 1;
 		_u->domain.len = _u->whole.len - (d - _u->whole.s) - 1;
 		_u->user.len = d - _u->user.s;
+	}
+
+	/* get user - it can be: sip:username@domain */
+	d = q_memchr(_u->user.s, ':', _u->user.len);
+	if (d) {
+		_u->user.len = _u->user.s + _u->user.len - d - 1;
+		_u->user.s = d + 1;
 	}
 }
 
