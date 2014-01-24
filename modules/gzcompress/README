@@ -131,7 +131,7 @@ modparam("gzcompress", "header_name", "Encoded")
 
 3.2. header_value (str)
 
-   Name of the header that indicates compression or decompression has to
+   Value of the header that indicates compression or decompression has to
    be done.
 
    Default value is "deflate".
