@@ -113,7 +113,7 @@ modparam("gzcompress", "header_name", "Encoded")
 	<section id="gzcompress.p.header_value">
 		<title><varname>header_value</varname> (str)</title>
 		<para>
-			Name of the header that indicates compression or decompression has
+			Value of the header that indicates compression or decompression has
 			to be done.
 		</para>
 		<para>
