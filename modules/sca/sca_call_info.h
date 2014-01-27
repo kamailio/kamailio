@@ -35,6 +35,8 @@ enum {
     SCA_CALL_INFO_SHARED_CALLER = (1 << 0),
     SCA_CALL_INFO_SHARED_CALLEE = (1 << 1),
 };
+#define SCA_CALL_INFO_SHARED_BOTH \
+	(SCA_CALL_INFO_SHARED_CALLER | SCA_CALL_INFO_SHARED_CALLEE)
 
 struct _sca_call_info {
     str		sca_uri;

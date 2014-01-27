@@ -1885,6 +1885,7 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
     int			i;
     int			method;
     int			rc = -1;
+    int			update_mask = SCA_CALL_INFO_SHARED_BOTH;
 
     method = sca_get_msg_method( msg );
 
@@ -1903,6 +1904,29 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
     if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
 	LM_ERR( "header parsing failed: bad request" );
 	return( -1 );
+    }
+
+    if ( p1 != NULL ) {
+	if ( get_int_fparam( &update_mask, msg, (fparam_t *)p1 ) < 0 ) {
+	    LM_ERR( "sca_call_info_update: argument 1: bad value "
+		    "(integer expected)" );
+	    return( -1 );
+	}
+
+	switch ( update_mask ) {
+	case SCA_CALL_INFO_SHARED_NONE:
+	    update_mask = SCA_CALL_INFO_SHARED_BOTH;
+	    break;
+
+	case SCA_CALL_INFO_SHARED_CALLER:
+	case SCA_CALL_INFO_SHARED_CALLEE:
+	    break;
+
+	default:
+	    LM_ERR( "sca_call_info_update: argument 1: invalid value "
+		    "(0, 1 or 2 expected)" );
+	    return( -1 );
+	}
     }
 
     memset( &call_info, 0, sizeof( sca_call_info ));
@@ -1967,10 +1991,14 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 
     /* early check to see if we're dealing with any SCA endpoints */
     if ( sca_uri_is_shared_appearance( sca, &from_aor )) {
-	call_info.ua_shared |= SCA_CALL_INFO_SHARED_CALLER;
+	if (( update_mask & SCA_CALL_INFO_SHARED_CALLER )) {
+	    call_info.ua_shared |= SCA_CALL_INFO_SHARED_CALLER;
+	}
     }
     if ( sca_uri_is_shared_appearance( sca, &to_aor )) {
-	call_info.ua_shared |= SCA_CALL_INFO_SHARED_CALLEE;
+	if (( update_mask & SCA_CALL_INFO_SHARED_CALLEE )) {
+	    call_info.ua_shared |= SCA_CALL_INFO_SHARED_CALLEE;
+	}
     }
 
     if ( call_info_hdr == NULL ) {
