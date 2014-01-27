@@ -1288,11 +1288,9 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 		"parse_uri <%.*s> failed", STR_FMT( contact_uri ));
 	goto done;
     }
-    if ( sca_aor_create_from_info( &app_uri_aor, c_uri.type, &c_uri.user,
-		&GET_TO_PURI( msg )->host, &GET_TO_PURI( msg )->port ) < 0 ) {
+    if ( sca_create_canonical_aor( msg, &app_uri_aor ) < 0 ) {
 	LM_ERR( "sca_call_info_invite_200_reply_handler: "
-		"sca_aor_create_from_info %.*s and %.*s failed",
-		STR_FMT( contact_uri ), STR_FMT( &to->uri ));
+		"sca_create_canonical_aor failed" );
 	goto done;
     }
 
