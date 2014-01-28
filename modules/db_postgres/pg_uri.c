@@ -118,7 +118,7 @@ static int parse_postgres_uri(struct pg_uri* res, str* uri)
 
 	prev_token = 0;
 
-	if (!res || !res) {
+	if (!res || !uri) {
 		goto err;
 	}
 	
