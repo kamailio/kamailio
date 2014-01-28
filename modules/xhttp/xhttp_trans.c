@@ -65,7 +65,7 @@ int xhttp_tr_eval_xhttpurl(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		_httpurl_str.len = val->rs.len;
 		memcpy(_httpurl_str.s, val->rs.s, val->rs.len);
 
-		while (val->rs.s[pos] != '?' && pos < val->rs.len) pos++;
+		while (pos < val->rs.len && val->rs.s[pos] != '?') pos++;
 		_httpurl_querystring_pos = (pos >= val->rs.len) ? 0 : pos + 1;
 	}
 
