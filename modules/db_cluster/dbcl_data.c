@@ -249,7 +249,7 @@ int dbcl_cls_set_connections(dbcl_cls_t *cls, str *cons)
 			goto error;
 		}
 		i = s.s[0] - '0';
-		if(s.s[1]!='s' && s.s[1]!='S' && s.s[1]!='r' && s.s[1]!='r')
+		if(s.s[1]!='s' && s.s[1]!='S' && s.s[1]!='r' && s.s[1]!='R')
 		{
 			LM_ERR("invalid parameter [%.*s] for connection id [%.*s]\n",
 					pit->body.len, pit->body.s,
@@ -277,7 +277,7 @@ int dbcl_cls_set_connections(dbcl_cls_t *cls, str *cons)
 			goto error;
 		}
 		i = s.s[2] - '0';
-		if(s.s[3]!='s' && s.s[3]!='S' && s.s[3]!='r' && s.s[3]!='r'
+		if(s.s[3]!='s' && s.s[3]!='S' && s.s[3]!='r' && s.s[3]!='R'
 				 && s.s[3]!='p' && s.s[3]!='P')
 		{
 			LM_ERR("invalid parameter [%.*s] for connection id [%.*s]\n",
