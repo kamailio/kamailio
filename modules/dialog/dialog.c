@@ -90,6 +90,8 @@
 MODULE_VERSION
 
 
+#define RPC_DATE_BUF_LEN 21
+
 static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy(void);
@@ -1445,9 +1447,28 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 		int with_context)
 {
 	rpc_cb_ctx_t rpc_cb;
+	time_t _start_ts, _stop_ts;
+	struct tm *_start_t, *_stop_t;
+	char _start_date_buf[RPC_DATE_BUF_LEN]="UNSPECIFIED";
+	char _stop_date_buf[RPC_DATE_BUF_LEN]="UNSPECIFIED";
 
-	rpc->printf(c, "hash:%u:%u state:%u ref_count:%u timestart:%u timeout:%u",
-		dlg->h_entry, dlg->h_id, dlg->state, dlg->ref, dlg->start_ts, dlg->tl.timeout);
+	_start_ts = (time_t)dlg->start_ts;
+	if (_start_ts) {
+		_start_t = localtime(&_start_ts);
+		strftime(_start_date_buf, RPC_DATE_BUF_LEN - 1,
+			"%Y-%m-%d %H:%M:%S", _start_t);
+		if (dlg->tl.timeout) {
+			_stop_ts = (time_t)(dlg->tl.timeout);
+			_stop_t = localtime(&_stop_ts);
+			strftime(_stop_date_buf, RPC_DATE_BUF_LEN - 1,
+				"%Y-%m-%d %H:%M:%S", _stop_t);
+		}
+	}
+
+	rpc->printf(c, "hash:%u:%u state:%u ref_count:%u "
+		"timestart:%u timeout:%u lifetime:%u datestart:%s datestop:%s",
+		dlg->h_entry, dlg->h_id, dlg->state, dlg->ref, _start_ts, dlg->tl.timeout, dlg->lifetime,
+		_start_date_buf, _stop_date_buf);
 	rpc->printf(c, "\tcallid:%.*s from_tag:%.*s to_tag:%.*s",
 		dlg->callid.len, dlg->callid.s,
 		dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
