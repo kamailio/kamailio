@@ -4404,7 +4404,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 			c->wbuf_q.queued);
 	
 	tcp_async=cfg_get(tcp, tcp_cfg, async);
-	if (likely(TICKS_LT(t, c->timeout) && ( !tcp_async | _wbufq_empty(c) |
+	if (likely(TICKS_LT(t, c->timeout) && ( !tcp_async || _wbufq_empty(c) ||
 					TICKS_LT(t, c->wbuf_q.wr_timeout)) )){
 		if (unlikely(tcp_async && _wbufq_non_empty(c)))
 			return (ticks_t)MIN_unsigned(c->timeout-t, c->wbuf_q.wr_timeout-t);

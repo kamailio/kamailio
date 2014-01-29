@@ -433,7 +433,7 @@ Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends},
          ${shlibs:Depends},
-         gjc-jre,
+         gcj-jre,
          kamailio (= ${binary:Version})
 Description: contains the app_java module
  Kamailio is a very fast and flexible SIP (RFC3261)

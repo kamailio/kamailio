@@ -113,7 +113,7 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 
 	prev_token = 0;
 
-	if (!res || !res) {
+	if (!res || !uri) {
 		goto err;
 	}
 	
