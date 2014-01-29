@@ -1649,7 +1649,7 @@ static int get_counters_list(int s)
 		grp->var_no = 0;
 		grp->var_names=malloc(sizeof(str)*grp->cnt_vars_no);
 		if (grp->var_names==0) goto error_mem;
-		memset(grp->var_names, 0, sizeof(str)*grp->var_no);
+		memset(grp->var_names, 0, sizeof(str)*grp->cnt_vars_no);
 		for (r=0; r<grp->cnt_vars_no; r++) {
 			if (grp->cnt_vars_array[r].type!=BINRPC_T_STR)
 				continue;
