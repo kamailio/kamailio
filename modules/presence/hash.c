@@ -275,7 +275,7 @@ int insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 	return 0;
 }
 
-int delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag)
+int delete_shtable(shtable_t htable,unsigned int hash_code,subs_t* subs)
 {
 	subs_t* s= NULL, *ps= NULL;
 	int found= -1;
@@ -287,8 +287,12 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag)
 		
 	while(s)
 	{
-		if(s->to_tag.len== to_tag.len &&
-				strncmp(s->to_tag.s, to_tag.s, to_tag.len)== 0)
+		if(s->callid.len==subs->callid.len &&
+				strncmp(s->callid.s, subs->callid.s, subs->callid.len)==0 &&
+			s->to_tag.len== subs->to_tag.len &&
+				strncmp(s->to_tag.s, subs->to_tag.s, subs->to_tag.len)==0 &&
+			s->from_tag.len== subs->from_tag.len &&
+				strncmp(s->from_tag.s, subs->from_tag.s, subs->from_tag.len)== 0)
 		{
 			found= s->local_cseq +1;
 			ps->next= s->next;

@@ -78,7 +78,7 @@ struct subscription* search_shtable(shtable_t htable, str callid,str to_tag,str 
 
 int insert_shtable(shtable_t htable, unsigned int hash_code, struct subscription* subs);
 
-int delete_shtable(shtable_t htable, unsigned int hash_code, str to_tag);
+int delete_shtable(shtable_t htable, unsigned int hash_code, struct subscription* subs);
 
 int update_shtable(shtable_t htable, unsigned int hash_code, struct subscription* subs,
 		int type);
@@ -99,7 +99,7 @@ typedef int (*insert_shtable_t)(shtable_t htable, unsigned int hash_code,
 		struct subscription* subs);
 
 typedef int (*delete_shtable_t)(shtable_t htable, unsigned int hash_code,
-		str to_tag);
+		struct subscription* subs);
 
 typedef int (*update_shtable_t)(shtable_t htable, unsigned int hash_code,
 		struct subscription* subs, int type);
