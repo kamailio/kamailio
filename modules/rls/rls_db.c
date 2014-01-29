@@ -85,7 +85,7 @@ subs_t* rls_search_shtable(shtable_t htable,str callid,str to_tag,
 
 /******************************************************************************/
 
-int rls_delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag)
+int rls_delete_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 {
   LM_ERR( "rls_delete_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
   return(-1);

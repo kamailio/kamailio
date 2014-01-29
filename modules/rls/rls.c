@@ -119,7 +119,7 @@ extern void rls_destroy_shtable(shtable_t htable, int hash_size);
 extern int rls_insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs);
 extern subs_t* rls_search_shtable(shtable_t htable,str callid,str to_tag,
 		str from_tag,unsigned int hash_code);
-extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag);
+extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs);
 extern int rls_update_shtable(shtable_t htable,unsigned int hash_code, 
 		subs_t* subs, int type);
 extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
