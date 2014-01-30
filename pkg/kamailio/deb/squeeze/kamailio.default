@@ -3,31 +3,21 @@
 #
 
 # Set to yes to enable kamailio, once configured properly.
-RUN_KAMAILIO=no
+#RUN_KAMAILIO=yes
 
 # User to run as
-USER=kamailio
+#USER=kamailio
 
 # Group to run as
-GROUP=kamailio
+#GROUP=kamailio
 
-# Amount of shared memory to allocate for the running Kamailio server (in Mb)
-SHM_MEMORY=64
-
-# Amount of private memory for each Kamailio process (in Mb)
-PKG_MEMORY=4
-
-# Switch to USER and GROUP by start-stop-daemon or by kamailio itself
-# - with recent kernels, changing user ID inside applicaton prevents
-#   dumping core files. If the value is 'yes', the suid is done by
-#   start-stop-daemon, otherwise it is done by kamailio itself
-SSD_SUID=no
+# Amount of memory to allocate for the running Kamailio server (in Mb)
+#MEMORY=64
 
 # Enable the server to leave a core file when it crashes.
 # Set this to 'yes' to enable Kamailio to leave a core file when it crashes
 # or 'no' to disable this feature. This option is case sensitive and only
 # accepts 'yes' and 'no' and only in lowercase letters.
-# On some systems (e.g. Ubuntu 6.10, Debian 4.0) it is necessary to specify
-# a directory for the core files to get a dump. Look into the kamailio
-# init file for an example configuration.
-DUMP_CORE=no
+# On some systems it is necessary to specify a directory for the core files
+# to get a dump. Look into the kamailio init file for an example configuration.
+#DUMP_CORE=yes
