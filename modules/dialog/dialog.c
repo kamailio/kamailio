@@ -1458,7 +1458,7 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 		strftime(_start_date_buf, RPC_DATE_BUF_LEN - 1,
 			"%Y-%m-%d %H:%M:%S", _start_t);
 		if (dlg->tl.timeout) {
-			_stop_ts = (time_t)(dlg->tl.timeout);
+			_stop_ts = time(0) + dlg->tl.timeout - get_ticks();
 			_stop_t = localtime(&_stop_ts);
 			strftime(_stop_date_buf, RPC_DATE_BUF_LEN - 1,
 				"%Y-%m-%d %H:%M:%S", _stop_t);
