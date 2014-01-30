@@ -149,6 +149,9 @@ int pres_waitn_time = 5;
 int pres_notifier_poll_rate = 10;
 int pres_notifier_processes = 1;
 
+int db_table_lock_type = 1;
+db_locking_t db_table_lock = DB_LOCKING_WRITE;
+
 int *pres_notifier_id = NULL;
 
 int phtable_size= 9;
@@ -199,6 +202,7 @@ static param_export_t params[]={
 	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},
 	{ "send_fast_notify",       INT_PARAM, &send_fast_notify},
 	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
+	{ "db_table_lock_type",     INT_PARAM, &db_table_lock_type},
     {0,0,0}
 };
 
@@ -400,6 +404,9 @@ static int mod_init(void)
 
 		register_basic_timers(pres_notifier_processes);
 	}
+
+	if (db_table_lock_type != 1)
+		db_table_lock = DB_LOCKING_NONE;
 
 	pa_dbf.close(pa_db);
 	pa_db = NULL;

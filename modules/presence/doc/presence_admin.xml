@@ -575,6 +575,28 @@ modparam("presence", "fetch_rows", 1000)
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title><varname>db_table_lock_type</varname> (integer)</title>
+	    <para>
+		Enable (=1) or disable (=0) the Locks for table during an transaction.
+		Locking only the "current" table causes problems with a MySQL-Databases
+		in "DB-Only" mode.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1 (Write Lock for the Tables).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_table_lock_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "db_table_lock_type", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+
 
 </section>
 

@@ -94,6 +94,8 @@ extern int pres_notifier_processes;
 extern int phtable_size;
 extern phtable_t* pres_htable;
 
+extern db_locking_t db_table_lock;
+
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri);
 
