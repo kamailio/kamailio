@@ -551,12 +551,13 @@ int delete_pcontact(udomain_t* _d, str* _aor, struct pcontact* _c)
 	if (exists_ulcb_type(PCSCF_CONTACT_DELETE)) {
 		run_ul_callbacks(PCSCF_CONTACT_DELETE, _c);
 	}
-	mem_delete_pcontact(_d, _c);
 
 	if (db_mode == WRITE_THROUGH && db_delete_pcontact(_c) != 0) {
 		LM_ERR("Error deleting contact from DB");
 		return -1;
 	}
+
+	mem_delete_pcontact(_d, _c);
 
 	return 0;
 }
