@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# Hook for automatic backports at buildserver.net
+#
+# Target dist: Debian Squeeze
+DIST=squeeze
+
+rm -rf ${DIST}
+cp -r debian ${DIST}
+
+# remove Multi-arch
+sed -i -e 's#^DEB_HOST_MULTIARCH.*$##' -e 's#^LIBDIR ?= lib/$(DEB_HOST_MULTIARCH)#LIBDIR ?= lib#' ${DIST}/rules
+if [ -e ${DIST}/patches/series ]; then
+  sed -i -e 's#multiarch_support.patch#no_lib64_on_64_bits.patch#' ${DIST}/patches/series
+fi
+sed -i -e '/^Multi-Arch: .*/d' ${DIST}/control
+
+# Downgrade to debhelper 8 compat
+sed -i -e  's#debhelper[^,$]*[\ ,$]\+\(.*\)$#debhelper (>= 8), \1#' ${DIST}/control
+echo 8 > ${DIST}/compat
+
+# Hardening flags
+sed -i -e '/dpkg-dev/d' ${DIST}/control
+sed -i -e '/^include.*buildflags.mk/d' -e '/.*dpkg-buildflags --export=configure.*/d' ${DIST}/rules
+if [ -e ${DIST}/patches/series ]; then
+  sed -i -e '/hardening_flags.patch/d' ${DIST}/patches/series
+fi
+
+# No purple module:
+sed -i -e '/libpurple-dev/d' -e '/^Package: kamailio-purple-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ purple[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ purple/' ${DIST}/rules
+
+# No libhiredis:
+sed -i -e '/libhiredis-dev/d' -e '/^Package: kamailio-redis-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ redis[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ redis/' ${DIST}/rules
+
+# No mono module
+sed -i -e '/libmono-2.0-dev/d' -e '/^Package: kamailio-mono-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ mono[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mono/' ${DIST}/rules
+
+# db-util version
+sed -i -e 's/db-util/db4.8-util/' ${DIST}/control
+
+# clean backports scripts
+rm -rf ${DIST}/backports
+exit 0
