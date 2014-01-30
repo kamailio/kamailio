@@ -426,7 +426,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 			if (pa_dbf.start_transaction)
 			{
-				if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+				if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 				{
 					LM_ERR("in start_transaction\n");
 					goto error;
@@ -1195,7 +1195,7 @@ int mark_presentity_for_delete(presentity_t *pres)
 
 	if (pa_dbf.start_transaction)
 	{
-		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;

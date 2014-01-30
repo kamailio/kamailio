@@ -1335,7 +1335,7 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 
 	if (pa_dbf.start_transaction)
 	{
-		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -2701,7 +2701,7 @@ int process_dialogs(int round, int presence_winfo)
 
 	if (pa_dbf.start_transaction)
 	{
-		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -2810,7 +2810,7 @@ int process_dialogs(int round, int presence_winfo)
 
 		if (pa_dbf.start_transaction)
 		{
-			if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+			if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 			{
 				LM_ERR("in start_transaction\n");
 				goto error;

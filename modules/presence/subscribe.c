@@ -863,7 +863,7 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 			LM_ERR("unsuccessful use_table sql operation\n");
 			goto error;
 		}
-		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -1662,7 +1662,7 @@ void update_db_subs_timer_notifier(void)
 
 	if (pa_dbf.start_transaction)
 	{
-		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
