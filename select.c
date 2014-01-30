@@ -432,7 +432,7 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 	orig_level = select_level;
 	ret = 0;
 	for (	select_level=0;
-		(ret == 0) && (s->f[select_level] !=0 ) && (select_level<MAX_NESTED_CALLS);
+		(ret == 0) && (select_level<MAX_NESTED_CALLS) && (s->f[select_level] !=0 );
 		select_level++
 	) {
 		ret = s->f[select_level](res, s, msg);
