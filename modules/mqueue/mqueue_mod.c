@@ -59,6 +59,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_mq_name, 0, 0, 0 },
 	{ {"mqv", sizeof("mqv")-1}, PVT_OTHER, pv_get_mqv, 0,
 		pv_parse_mq_name, 0, 0, 0 },
+	{ {"mq_size", sizeof("mq_size")-1}, PVT_OTHER, pv_get_mq_size, 0,
+		pv_parse_mq_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 

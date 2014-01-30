@@ -456,6 +456,31 @@ int pv_get_mqv(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &mp->item->val);
 }
 
+/**
+ *
+ */
+int pv_get_mq_size(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	int mqs = -1;
+	str *in = pv_get_mq_name(msg, &param->pvn.u.isname.name.s);
+
+	if (in == NULL)
+	{
+		LM_ERR("failed to get mq name\n");
+		return -1;
+	}
+
+	mqs = _mq_get_csize(in);
+
+	if (mqs < 0)
+	{
+		LM_ERR("mqueue not found: %.*s\n", in->len, in->s);
+		return -1;
+	}
+
+	return pv_get_sintval(msg, param, res, mqs);
+}
 /* Return head->csize for a given queue */
 
 int _mq_get_csize(str *name) 
