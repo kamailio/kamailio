@@ -110,7 +110,7 @@ build-indep: build-stamp
 build-stamp: configure-stamp
 	dh_testdir
 	# Add here commands to compile the package.
-	$(MAKE) all quiet=verbose
+	$(MAKE) all
 	# make groups
 	$(call PACKAGE_GRP_BUILD_template)
 	# make single-module packages

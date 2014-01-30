@@ -9,10 +9,15 @@ UPVERSION:=$(shell dpkg-parsechangelog | sed -ne 's/^Version: \(\([0-9]\+\):\)\?
 FILENAME := kamailio_$(UPVERSION).orig.tar.gz
 URL := http://www.kamailio.org/pub/kamailio/$(UPVERSION)/src/kamailio-$(UPVERSION)_src.tar.gz
 
+
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+DPKG_EXPORT_BUILDFLAGS = 1
+
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-# java stuff using libgcj12
+# stuff using libgcj12
 export JAVA_HOME=/usr/lib/jvm/java-gcj-4.6
 
 # modules not in the "main" kamailio package
@@ -21,7 +26,7 @@ EXCLUDED_MODULES=
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
 # they will be excluded from compile and install of all
-EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy purple
+EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy java dnssec sctp purple redis mono
 
 # module groups that are packaged in seperate packages
 # (with the name kamailio-$(group_name)-modules)
@@ -30,8 +35,8 @@ EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy purple
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils lua memcached \
 			   snmpstats carrierroute xmpp cpl python geoip\
-			   sqlite json ims sctp \
-			   tls outbound websocket autheph
+			   sqlite json ims \
+			   tls outbound websocket autheph 
 
 # name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
 LIBDIR ?= lib
@@ -79,6 +84,10 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
+# CFLAGS + CPPFLAGS -> CC_EXTRA_OPTS
+# LDFLAGS -> LD_EXTRA_OPTS
+sed -e 's/" CPPFLAGS="/ /' -e 's/CFLAGS/CC_EXTRA_OPTS/g' -e 's/LDFLAGS/LD_EXTRA_OPTS/g')
+
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
@@ -87,7 +96,9 @@ configure-stamp:
 			cfg_target=/etc/kamailio/ \
 			basedir=$(CURDIR)/debian/kamailio \
 			skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
+			$(CUSTOM_BUILDFLAGS) \
 			group_include="kstandard"
+
 	touch configure-stamp
 
 
@@ -97,7 +108,7 @@ build-indep: build-stamp
 build-stamp: configure-stamp
 	dh_testdir
 	# Add here commands to compile the package.
-	$(MAKE) all quiet=verbose
+	$(MAKE) all
 	# make groups
 	$(call PACKAGE_GRP_BUILD_template)
 	# make single-module packages
