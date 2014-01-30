@@ -34,7 +34,6 @@ Build-Depends: bison,
     libsqlite3-dev,
     libunistring-dev,
     libxml2-dev,
-    libxmlrpc-c3-dev,
     openssl,
     python,
     python-dev,
@@ -50,7 +49,23 @@ Architecture: linux-any
 Multi-Arch: foreign
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}, python, adduser
-Suggests: kamailio-mysql-modules, kamailio-postgres-modules, kamailio-unixodbc-modules, kamailio-cpl-modules, kamailio-radius-modules, kamailio-presence-modules, kamailio-xml-modules, kamailio-perl-modules, kamailio-snmpstats-modules, kamailio-xmpp-modules, kamailio-carrierroute-modules, kamailio-berkeley-modules, kamailio-ldap-modules, kamailio-python-modules, kamailio-redis-modules, kamailio-lua-modules, kamailio-mono-modules
+Suggests: kamailio-berkeley-modules,
+          kamailio-carrierroute-modules,
+          kamailio-cpl-modules,
+          kamailio-dbg,
+          kamailio-ldap-modules,
+          kamailio-lua-modules,
+          kamailio-mysql-modules,
+          kamailio-perl-modules,
+          kamailio-postgres-modules,
+          kamailio-presence-modules,
+          kamailio-python-modules,
+          kamailio-radius-modules,
+          kamailio-snmpstats-modules,
+          kamailio-tls-modules,
+          kamailio-unixodbc-modules,
+          kamailio-xml-modules,
+          kamailio-xmpp-modules
 Description: very fast and configurable SIP proxy
  Kamailio is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, Kamailio can handle thousands calls
