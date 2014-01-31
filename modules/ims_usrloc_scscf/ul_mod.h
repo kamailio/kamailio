@@ -67,12 +67,23 @@
 #define UL_TABLE_VERSION 1004
 
 #include "../../lib/ims/useful_defs.h"
+#include "../presence/event_list.h"
+#include "../presence/hash.h"
 
 extern int timer_interval;
 extern int desc_time_order;
 extern int cseq_delay;
 extern int ul_fetch_rows;
 extern int ul_hash_size;
+
+/* functions imported from presence to handle subscribe hash table */
+extern new_shtable_t pres_new_shtable;
+extern insert_shtable_t pres_insert_shtable;
+extern search_shtable_t pres_search_shtable;
+extern update_shtable_t pres_update_shtable;
+extern delete_shtable_t pres_delete_shtable;
+extern destroy_shtable_t pres_destroy_shtable;
+extern extract_sdialog_info_t pres_extract_sdialog_info;
 
 /*
  * Matching algorithms

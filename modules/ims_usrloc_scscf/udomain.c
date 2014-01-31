@@ -65,6 +65,8 @@
 #include "usrloc.h"
 #include "bin_utils.h"
 
+extern int unreg_validity;
+
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
 {
@@ -322,19 +324,27 @@ void mem_timer_udomain(udomain_t* _d)
 			t = ptr;
 			ptr = ptr->next;
 
-			if (t->reg_state == IMPU_NOT_REGISTERED) {
+			if (t->reg_state == IMPU_NOT_REGISTERED && t->shead == 0) {
 				//remove it - housekeeping - not sure why its still here...?
 				if (exists_ulcb_type(t->cbs, UL_IMPU_NR_DELETE))
 					run_ul_callbacks(t->cbs, UL_IMPU_NR_DELETE, t, NULL);
 				mem_delete_impurecord(_d, t);
 			} else if (t->reg_state == IMPU_UNREGISTERED) {//Remove IMPU record if it is in state IMPU_UNREGISTERED and has expired
-				if (time_now >= t->expires) {
+			    
+				if (time_now >= t->expires) {//check here and only remove if no subscribes - if there is a subscribe then bump the validity by unreg_validity
+				    if(t->shead != 0){
+					LM_DBG("This impurecord still has subscriptions - extending the expiry");
+					t->expires = time(NULL) + unreg_validity;
+				    } else {
 					if (exists_ulcb_type(t->cbs, UL_IMPU_UNREG_EXPIRED))
 						run_ul_callbacks(t->cbs, UL_IMPU_UNREG_EXPIRED, t, NULL);
 					mem_delete_impurecord(_d, t);
+				    }
 				}
-			} else if (t->reg_state != IMPU_UNREGISTERED && t->contacts == 0) { /* Remove the entire record if it is empty IFF it is not an UNREGISTERED RECORD */
-																				/* TS 23.228 5.3.2.1 (release 11) */
+			//} else if (t->reg_state != IMPU_UNREGISTERED && t->contacts == 0) { /* Remove the entire record if it is empty IFF it is not an UNREGISTERED RECORD */
+			} else if (t->reg_state != IMPU_UNREGISTERED && t->contacts == 0 && t->shead == 0) { /* Remove the entire record if it is empty IFF it is not an UNREGISTERED RECORD */
+																								/* TS 23.228 5.3.2.1 (release 11) */
+				//need a way of distinguishing between deletes that need a SAR (expired) and deletes that do not need a SAR (explicit de reg)
 				//we only want to send one SAR for each implicit IMPU set
 				//make sure all IMPU's associated with this set are de-registered before calling the callbacks
 				int first=1;
@@ -358,7 +368,7 @@ void mem_timer_udomain(udomain_t* _d)
 						} else {
 							//set all other implicits to not registered
 							if (update_impurecord(_d, &impu->public_identity, IMPU_NOT_REGISTERED,
-														-1/*barring*/, 0/*is_primary*/, NULL, NULL, NULL, NULL, NULL, &temp_impu) != 0) {
+														-1/*barring*/, -1 /*do not change send sar on delete */, 0/*is_primary*/, NULL, NULL, NULL, NULL, NULL, &temp_impu) != 0) {
 								LM_ERR("Unable to update impurecord for <%.*s>\n", impu->public_identity.len, impu->public_identity.s);
 							}
 						}

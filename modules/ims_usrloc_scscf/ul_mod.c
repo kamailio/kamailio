@@ -60,6 +60,9 @@
 #include "usrloc.h"
 #include "hslot_sp.h"
 
+#include "../presence/bind_presence.h"
+#include "../presence/hash.h"
+
 MODULE_VERSION
 
 #define DEFAULT_DBG_FILE "/var/log/usrloc_debug"
@@ -96,6 +99,17 @@ int subs_hash_size = 9;					/*!<number of ims subscription slots*/
 unsigned int nat_bflag = (unsigned int)-1;
 unsigned int init_flag = 0;
 
+int sub_dialog_hash_size = 9;
+shtable_t sub_dialog_table;
+
+new_shtable_t pres_new_shtable;
+insert_shtable_t pres_insert_shtable;
+search_shtable_t pres_search_shtable;
+update_shtable_t pres_update_shtable;
+delete_shtable_t pres_delete_shtable;
+destroy_shtable_t pres_destroy_shtable;
+extract_sdialog_info_t pres_extract_sdialog_info;
+
 /*! \brief
  * Exported functions
  */
@@ -125,6 +139,7 @@ static param_export_t params[] = {
     {"unreg_validity",		INT_PARAM, &unreg_validity},
     {"maxcontact_behaviour", INT_PARAM, &maxcontact_behaviour},
     {"maxcontact",			INT_PARAM, &maxcontact},
+    {"sub_dialog_hash_size", INT_PARAM, &sub_dialog_hash_size},
 	{0, 0, 0}
 };
 
@@ -216,6 +231,50 @@ static int mod_init(void) {
 		return -1;
 	}
 
+	/* presence binding for subscribe processing*/
+	presence_api_t pres;
+	bind_presence_t bind_presence;
+
+	bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);
+	if (!bind_presence) {
+	    LM_ERR("can't bind presence\n");
+	    return -1;
+	}
+	if (bind_presence(&pres) < 0) {
+	    LM_ERR("can't bind pua\n");
+	    return -1;
+	}
+
+	pres_extract_sdialog_info= pres.extract_sdialog_info;
+	pres_new_shtable          = pres.new_shtable;
+	pres_destroy_shtable      = pres.destroy_shtable;
+	pres_insert_shtable       = pres.insert_shtable;
+	pres_delete_shtable       = pres.delete_shtable;
+	pres_update_shtable       = pres.update_shtable;
+	pres_search_shtable       = pres.search_shtable;
+
+
+	if(!pres_new_shtable || !pres_destroy_shtable || !pres_insert_shtable || !pres_delete_shtable
+		     || !pres_update_shtable || !pres_search_shtable || !pres_extract_sdialog_info) {
+	    LM_ERR("could not import add_event\n");
+	    return -1;
+	}
+
+	/* subscriber dialog hash table */
+	if(sub_dialog_hash_size<=1) {
+	    sub_dialog_hash_size= 512;
+	}
+	else {
+	    sub_dialog_hash_size = 1<<sub_dialog_hash_size;
+	}
+
+	sub_dialog_table= pres_new_shtable(sub_dialog_hash_size);
+	if(sub_dialog_table== NULL)
+	{
+		LM_ERR("while creating new hash table\n");
+		return -1;
+	}
+
 	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
@@ -235,7 +294,7 @@ static int mod_init(void) {
 	}
 
 	init_flag = 1;
-
+	
 	return 0;
 }
 
@@ -251,6 +310,10 @@ static int child_init(int rank)
  */
 static void destroy(void)
 {
+	if(sub_dialog_table)
+	{
+	    pres_destroy_shtable(sub_dialog_table, sub_dialog_hash_size);
+	}	
 	free_all_udomains();
 	ul_destroy_locks();
 

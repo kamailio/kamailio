@@ -43,6 +43,9 @@
  * 
  */
 
+#ifndef SUBSCRIBE_USRLOC_H
+#define SUBSCRIBE_USRLOC_H
+
 #include "usrloc.h"
 
 reg_subscriber* new_subscriber(str* presentity_uri, str* watcher_uri,
@@ -66,8 +69,12 @@ int update_subscriber(impurecord_t* urec,
 
 void delete_subscriber(impurecord_t* urec, reg_subscriber *s);
 
-void external_delete_subscriber(reg_subscriber *s, udomain_t* _t);
+void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domain);
 
 void free_subscriber(reg_subscriber *s);
 
 int valid_subscriber(reg_subscriber *s);
+
+str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_tag);
+
+#endif /* SUBSCRIBE_USRLOC_H */

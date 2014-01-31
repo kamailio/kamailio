@@ -67,6 +67,9 @@ extern int unreg_validity;
 extern int maxcontact_behaviour;
 extern int maxcontact;
 
+extern int sub_dialog_hash_size;
+extern shtable_t sub_dialog_table;
+
 /*!
  * \brief Create and initialize new record structure
  * \param _dom domain name
@@ -109,6 +112,7 @@ int new_impurecord(str* _dom, str* public_identity, int reg_state, int barring, 
     if (barring >= 0) { //just in case we call this with no barring -1 will ignore
         (*_r)->barring = barring;
     }
+    (*_r)->send_sar_on_delete = 1; /*defaults to 1 */
     if (ccf1 && ccf1->len > 0) STR_SHM_DUP((*_r)->ccf1, *ccf1, "CCF1");
     if (ccf2 && ccf2->len > 0) STR_SHM_DUP((*_r)->ccf2, *ccf2, "CCF2");
     if (ecf1 && ecf1->len > 0) STR_SHM_DUP((*_r)->ecf1, *ecf1, "ECF1");
@@ -330,8 +334,11 @@ void mem_delete_ucontact(impurecord_t* _r, ucontact_t* _c) {
  */
 static inline void nodb_timer(impurecord_t* _r) {
     ucontact_t* ptr, *t;
+    
+    unsigned int hash_code = 0;
 
     reg_subscriber *s;
+    subs_t* sub_dialog;
 
     get_act_time();
 
@@ -346,6 +353,20 @@ static inline void nodb_timer(impurecord_t* _r) {
             LM_DBG("DBG:registrar_timer: Subscriber with watcher_contact <%.*s> and presentity uri <%.*s> is valid and expires in %d seconds.\n",
                     s->watcher_contact.len, s->watcher_contact.s, s->presentity_uri.len, s->presentity_uri.s,
                     (unsigned int) (s->expires - time(NULL)));
+	    hash_code = core_hash(&s->call_id, &s->to_tag, sub_dialog_hash_size);
+	    LM_DBG("Hash size: <%i>", sub_dialog_hash_size);
+	    LM_DBG("Searching sub dialog hash info with call_id: <%.*s> and ttag <%.*s> ftag <%.*s> and hash code <%i>", s->call_id.len, s->call_id.s, s->to_tag.len, s->to_tag.s, s->from_tag.len, s->from_tag.s, hash_code);
+	    /* search the record in hash table */
+	    lock_get(&sub_dialog_table[hash_code].lock);
+	    sub_dialog= pres_search_shtable(sub_dialog_table, s->call_id, s->to_tag, s->from_tag, hash_code);
+	    if(sub_dialog== NULL)
+	    {
+		LM_ERR("DBG:registrar_timer: Subscription has no dialog record in hash table\n");
+	    }else {
+		LM_DBG("DBG:registrar_timer: Subscription has dialog record in hash table with presentity uri <%.*s>\n", sub_dialog->pres_uri.len, sub_dialog->pres_uri.s);
+	    }
+	    
+	    lock_release(&sub_dialog_table[hash_code].lock);
         }
         s = s->next;
     }
@@ -451,22 +472,6 @@ int insert_ucontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
  */
 int delete_ucontact(impurecord_t* _r, struct ucontact* _c) {
     int ret = 0;
-    reg_subscriber *s;
-
-    //Richard added this  - fix to remove subscribes that have presentity and watcher uri same as a contact aor that is being removed
-    s = _r->shead;
-    LM_DBG("Checking if there is a subscription to this IMPU that has same watcher contact as this contact");
-    while (s) {
-        
-        LM_DBG("Subscription for this impurecord: watcher uri [%.*s] presentity uri [%.*s] watcher contact [%.*s] ", s->watcher_uri.len, s->watcher_uri.s, 
-                s->presentity_uri.len, s->presentity_uri.s, s->watcher_contact.len, s->watcher_contact.s);
-        LM_DBG("Contact to be removed [%.*s] ", _c->c.len, _c->c.s);
-        if ((s->watcher_contact.len == _c->c.len) && (strncasecmp(s->watcher_contact.s, _c->c.s, _c->c.len) == 0)) {
-            LM_DBG("This contact has a subscription to its own status - so going to delete the subscription");
-            delete_subscriber(_r, s);
-        }
-        s = s->next;
-    }
     
     if (exists_ulcb_type(_c->cbs, UL_CONTACT_DELETE)) {
         run_ul_callbacks(_c->cbs, UL_CONTACT_DELETE, _r, _c);
@@ -680,7 +685,7 @@ void free_ims_subscription_data(ims_subscription *s) {
  * make sure yuo lock the domain before calling this and unlock it afterwards
  * return: 0 on success, -1 on failure
  */
-int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r) {
+int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r) {
     int res;
 
     res = get_impurecord(_d, public_identity, _r);
@@ -704,8 +709,8 @@ int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
                 return 0;
             }
         } else {
-            LM_ERR("no IMPU found to update and data not valid to create new one\n");
-            return -1;
+            LM_DBG("no IMPU found to update and data not valid to create new one - not a problem record was probably removed as it has no contacts\n");
+            return 0;
         }
 
     }
@@ -718,6 +723,9 @@ int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
         (*_r)->expires = time(NULL) + unreg_validity;
     }
     if (barring >= 0) (*_r)->barring = barring;
+    
+    if (send_sar_on_delete >= 0) (*_r)->send_sar_on_delete = send_sar_on_delete;
+    
     if (ccf1) {
         if ((*_r)->ccf1.s)
             shm_free((*_r)->ccf1.s);

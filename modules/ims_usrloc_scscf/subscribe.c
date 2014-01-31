@@ -48,7 +48,17 @@
 #include "utime.h"
 #include "udomain.h"
 
+#include "../presence/subscribe.h"
+#include "../presence/utils_func.h"
+#include "../presence/hash.h"
 
+#include "../../hashes.h"
+
+#include "ul_mod.h"
+
+
+extern int sub_dialog_hash_size;
+extern shtable_t sub_dialog_table;
 
 int get_subscriber(impurecord_t* urec, str *presentity_uri, str *watcher_contact, int event, reg_subscriber** r_subscriber) {
     
@@ -86,11 +96,15 @@ int get_subscriber(impurecord_t* urec, str *presentity_uri, str *watcher_contact
 }
 
 reg_subscriber* new_subscriber(str* presentity_uri, str* watcher_uri, str* watcher_contact, subscriber_data_t* subscriber_data) {
+    subs_t subs;
     reg_subscriber *s;
 
     int len;
     char *p;
-
+    unsigned int hash_code = 0;
+    
+    memset(&subs, 0, sizeof(subs_t));
+    
     len = sizeof (reg_subscriber) + subscriber_data->callid->len
             + subscriber_data->ftag->len + subscriber_data->ttag->len
             + watcher_contact->len + watcher_uri->len + presentity_uri->len
@@ -158,8 +172,63 @@ reg_subscriber* new_subscriber(str* presentity_uri, str* watcher_uri, str* watch
         free_subscriber(s);
         return 0;
     }
+    
+    /*This lets us get presentity URI info for subsequent SUBSCRIBEs that don't have presentity URI as req URI*/
+    
+    subs.pres_uri = s->presentity_uri;
+    subs.from_tag = s->from_tag;
+    subs.to_tag = s->to_tag;
+    subs.callid = s->call_id;
+    
+    hash_code = core_hash(&subs.callid, &subs.to_tag, sub_dialog_hash_size);
+    
+    LM_DBG("Adding sub dialog hash info with call_id: <%.*s> and ttag <%.*s> amd ftag <%.*s> and hash code <%d>", subs.callid.len, subs.callid.s, subs.to_tag.len, subs.to_tag.s, subs.from_tag.len,  subs.from_tag.s, hash_code);
+    
+    if (pres_insert_shtable(sub_dialog_table, hash_code, &subs))
+    {
+	LM_ERR("while adding new subscription\n");
+	return 0;
+    }
 
     return s;
+}
+
+/* Used for subsequent SUBSCRIBE messages to get presentity URI from dialog struct*/
+/* NB: free returned result str when done from shm */
+str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_tag) {
+    subs_t* s;
+    unsigned int hash_code = 0;
+    str pres_uri = {0,0};
+    
+    hash_code = core_hash(callid, to_tag, sub_dialog_hash_size);
+    
+    /* search the record in hash table */
+    lock_get(&sub_dialog_table[hash_code].lock);
+
+    LM_DBG("Searching sub dialog hash info with call_id: <%.*s> and ttag <%.*s> and ftag <%.*s> and hash code <%d>", callid->len, callid->s, to_tag->len, to_tag->s, from_tag->len, from_tag->s, hash_code);
+    
+    s= pres_search_shtable(sub_dialog_table, *callid,
+		    *to_tag, *from_tag, hash_code);
+    if(s== NULL)
+    {
+	    LM_DBG("Subscriber dialog record not found in hash table\n");
+	    lock_release(&sub_dialog_table[hash_code].lock);
+	    return pres_uri;
+    }
+
+    //make copy of pres_uri
+    pres_uri.s = (char*) shm_malloc(s->pres_uri.len);
+    if (pres_uri.s==0) {
+	LM_ERR("no more shm mem\n");
+	return pres_uri;
+    }
+    memcpy(pres_uri.s, s->pres_uri.s, s->pres_uri.len);
+    pres_uri.len = s->pres_uri.len;
+    
+    lock_release(&sub_dialog_table[hash_code].lock);
+    
+    LM_DBG("Found subscriber dialog record in hash table with pres_uri: [%.*s]", pres_uri.len, pres_uri.s);
+    return pres_uri;
 }
 
 int add_subscriber(impurecord_t* urec,
@@ -203,16 +272,17 @@ int update_subscriber(impurecord_t* urec,
     }
 }
 
-void external_delete_subscriber(reg_subscriber *s, udomain_t* _t) {
+
+void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domain) {
     LM_DBG("Deleting subscriber");
     impurecord_t* urec;
-
+   
     LM_DBG("Updating reg subscription in IMPU record");
 
-    lock_udomain(_t, &s->presentity_uri);
+    if(lock_domain) lock_udomain(_t, &s->presentity_uri);
     int res = get_impurecord(_t, &s->presentity_uri, &urec);
     if (res != 0) {
-        unlock_udomain(_t, &s->presentity_uri);
+        if(lock_domain) unlock_udomain(_t, &s->presentity_uri);
         return;
     }
 
@@ -223,7 +293,7 @@ void external_delete_subscriber(reg_subscriber *s, udomain_t* _t) {
     LM_DBG("About to free subscriber memory");
     free_subscriber(s);
 
-    unlock_udomain(_t, &s->presentity_uri);
+    if(lock_domain) unlock_udomain(_t, &s->presentity_uri);
 
 }
 
@@ -238,7 +308,28 @@ void delete_subscriber(impurecord_t* urec, reg_subscriber *s) {
 }
 
 void free_subscriber(reg_subscriber *s) {
+    
+    unsigned int hash_code=0;
+    subs_t subs;
+    
     LM_DBG("Freeing subscriber memory");
+    
+    memset(&subs, 0, sizeof(subs_t));
+    
+    subs.pres_uri = s->presentity_uri;
+    subs.from_tag = s->from_tag;
+    subs.to_tag = s->to_tag;
+    subs.callid = s->call_id;
+    
+    /* delete from cache table */
+    hash_code= core_hash(&s->call_id, &s->to_tag, sub_dialog_hash_size);
+    
+    LM_DBG("Removing sub dialog hash info with call_id: <%.*s> and ttag <%.*s> and ftag <%.*s> and hash code <%d>", s->call_id.len, s->call_id.s, s->to_tag.len, s->to_tag.s, s->from_tag.len, s->from_tag.s, hash_code);
+    if(pres_delete_shtable(sub_dialog_table,hash_code, &subs)< 0)
+    {
+	    LM_ERR("record not found in hash table\n");
+    }
+    
     if (s) {
         shm_free(s);
     }

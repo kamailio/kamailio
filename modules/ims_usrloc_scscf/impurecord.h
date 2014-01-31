@@ -180,6 +180,6 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path,
 		int _cseq,
 		struct ucontact** _co);
 
-int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
+int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
 #endif

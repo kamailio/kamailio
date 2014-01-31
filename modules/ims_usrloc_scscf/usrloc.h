@@ -349,6 +349,7 @@ typedef struct impurecord {
     ucontact_t* contacts; 			/*!< One or more contact fields */
     reg_subscriber *shead, *stail; 	/**< list of subscribers attached			*/
     time_t expires; 				/*!< timer when this IMPU expires - currently only used for unreg IMPU */
+    int send_sar_on_delete;			/* used to distinguish between explicit contact removal and contact expiry - SAR only sent on contact expiry*/
 
     struct hslot* slot; 			/*!< Collision slot in the hash table array we belong to */
     struct ulcb_head_list* cbs;		/**< individual callbacks per impurecord */
@@ -373,7 +374,7 @@ typedef int (*get_impurecord_t)(struct udomain* _d, str* _aor, struct impurecord
 
 typedef int (*delete_impurecord_t)(struct udomain* _d, str* _aor, struct impurecord* _r);
 
-typedef int (*update_impurecord_t)(struct udomain* _d, str* public_identity, int reg_state, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
+typedef int (*update_impurecord_t)(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
 typedef int (*update_ucontact_t)(struct impurecord* _r, struct ucontact* _c, struct ucontact_info* _ci);
 
@@ -399,7 +400,7 @@ typedef int (*update_subscriber_t)(impurecord_t* urec,
         str *watcher_uri, str *watcher_contact,
         int *expires, reg_subscriber** _reg_subscriber);
 
-typedef void (*external_delete_subscriber_t)(reg_subscriber *s, udomain_t* _t);
+typedef void (*external_delete_subscriber_t)(reg_subscriber *s, udomain_t* _t, int lock_domain);
 
 //typedef int (*get_subscriber_t)(udomain_t* _d, impurecord_t* urec, str *watcher_contact, str *presentity_uri, int event, reg_subscriber** reg_subscriber);
 typedef int (*get_subscriber_t)(impurecord_t* urec, str *watcher_contact, str *presentity_uri, int event, reg_subscriber** reg_subscriber);
@@ -413,6 +414,8 @@ typedef int (*add_subscriber_t)(impurecord_t* urec,
 		subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber);
 
 typedef int (*get_impus_from_subscription_as_string_t)(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus);
+
+typedef str (*get_presentity_from_subscriber_dialog_t)(str *callid, str *to_tag, str *from_tag);
 
 /*! usrloc API export structure */
 typedef struct usrloc_api {
@@ -445,6 +448,9 @@ typedef struct usrloc_api {
     get_impus_from_subscription_as_string_t get_impus_from_subscription_as_string;
 
     register_ulcb_t register_ulcb;
+    
+    get_presentity_from_subscriber_dialog_t get_presentity_from_subscriber_dialog;
+    
 } usrloc_api_t;
 
 /*! usrloc API export bind function */

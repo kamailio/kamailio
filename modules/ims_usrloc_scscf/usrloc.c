@@ -96,6 +96,8 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->update_subscriber = update_subscriber;
 
 	api->get_impus_from_subscription_as_string = get_impus_from_subscription_as_string;
+	
+	api->get_presentity_from_subscriber_dialog = get_presentity_from_subscriber_dialog;
         
     api->register_ulcb = register_ulcb;
 
