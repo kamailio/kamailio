@@ -1047,6 +1047,11 @@ fi
 %defattr(-,root,root)
 %{_docdir}/kamailio/modules/README.snmpstats
 %{_libdir}/kamailio/modules/snmpstats.so
+%{_datadir}/snmp/mibs/KAMAILIO-MIB
+%{_datadir}/snmp/mibs/KAMAILIO-REG-MIB
+%{_datadir}/snmp/mibs/KAMAILIO-SIP-COMMON-MIB
+%{_datadir}/snmp/mibs/KAMAILIO-SIP-SERVER-MIB
+%{_datadir}/snmp/mibs/KAMAILIO-TC
 
 
 %files		sqlite
