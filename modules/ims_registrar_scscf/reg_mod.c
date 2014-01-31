@@ -195,6 +195,8 @@ static cmd_export_t cmds[] = {
     {"reg_free_contacts", (cmd_function) pv_free_contacts, 1, fixup_str_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"can_subscribe_to_reg", (cmd_function) can_subscribe_to_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
     {"subscribe_to_reg", (cmd_function) subscribe_to_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
+    {"can_publish_reg", (cmd_function) can_publish_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
+    {"publish_reg", (cmd_function) publish_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
     //{"bind_registrar", (cmd_function) bind_registrar, 0, 0, 0, 0},  TODO put this back in !
     {0, 0, 0, 0, 0, 0}
 };

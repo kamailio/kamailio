@@ -66,5 +66,6 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
         str* public_identity, int assignment_type, ims_subscription** s,
         str* ccf1, str* ccf2, str* ecf1, str* ecf2, contact_for_header_t** contact_header);
 
+struct sip_msg* get_request_from_reply(struct sip_msg *reply);
 
 #endif /* SAVE_H */

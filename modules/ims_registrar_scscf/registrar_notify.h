@@ -53,6 +53,7 @@
 
 #define MSG_REG_SUBSCRIBE_OK "Subscription to REG saved"
 #define MSG_REG_UNSUBSCRIBE_OK "Subscription to REG dropped"
+#define MSG_REG_PUBLISH_OK "Publish to REG saved"
 
 
 
@@ -111,6 +112,10 @@ enum {
 int can_subscribe_to_reg(struct sip_msg *msg, char *str1, char *str2);
 
 int subscribe_to_reg(struct sip_msg *msg, char *str1, char *str2);
+
+int can_publish_reg(struct sip_msg *msg, char *str1, char *str2);
+
+int publish_reg(struct sip_msg *msg, char *str1, char *str2);
 
 int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str *contact);
 
