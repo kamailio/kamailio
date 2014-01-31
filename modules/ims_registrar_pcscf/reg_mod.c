@@ -60,7 +60,8 @@
 #include "../../mod_fix.h"
 
 /* Bindings to PUA */
-//#include "../../modules_k/pua/pua_bind.h"
+#include "../pua/pua_bind.h"
+#include "notify.h"
 
 #include "reg_mod.h"
 #include "save.h"
@@ -71,8 +72,11 @@ MODULE_VERSION
 usrloc_api_t ul;						/**!< Structure containing pointers to usrloc functions*/
 sl_api_t slb;							/**!< SL API structure */
 struct tm_binds tmb;					/**!< TM API structure */
-//pua_api_t pua; 							/**!< PUA API structure */
+pua_api_t pua; 							/**!< PUA API structure */
 
+int publish_reginfo = 0;
+int subscribe_to_reginfo = 0;
+int subscription_expires = 3600;
 
 time_t time_now;
 char * pcscf_uri = "sip:pcscf.ims.smilecoms.com:4060";
@@ -97,6 +101,7 @@ static int w_save_pending(struct sip_msg* _m, char* _d, char* _cflags);
 static int w_follows_service_routes(struct sip_msg* _m, char* _d, char* _foo);
 static int w_force_service_routes(struct sip_msg* _m, char* _d, char* _foo);
 static int w_is_registered(struct sip_msg* _m, char* _d, char* _foo);
+static int w_reginfo_handle_notify(struct sip_msg* _m, char* _d, char* _foo);
 
 static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri);
 
@@ -130,6 +135,8 @@ static cmd_export_t cmds[] = {
 
 	{"pcscf_assert_identity", (cmd_function)w_assert_identity,      2,  	assert_identity_fixup, 	0,		REQUEST_ROUTE },
 
+	{"reginfo_handle_notify", (cmd_function)w_reginfo_handle_notify, 1, domain_fixup, 0, REQUEST_ROUTE},
+	
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -144,11 +151,12 @@ static param_export_t params[] = {
 	{"received_avp",       STR_PARAM, &rcv_avp_param       					},
 
 	{"is_registered_fallback2ip",	INT_PARAM, &is_registered_fallback2ip	},
+	
+	{"publish_reginfo", INT_PARAM, &publish_reginfo},
+        {"subscribe_to_reginfo", INT_PARAM, &subscribe_to_reginfo},
+        {"subscription_expires",INT_PARAM, &subscription_expires        },
 
 
-//	{"ims_mode",           INT_PARAM, &registrar_ims_mode                  	}, /* 0-PCSCF ; 1-SCSCF */
-//	{"subscription_max_expires",INT_PARAM, &subscription_max_expires       	},
-//	{"subscription_min_expires",INT_PARAM, &subscription_min_expires       	},
 //	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
 	{0, 0, 0}
 };
@@ -217,7 +225,7 @@ int fix_parameters() {
  */
 static int mod_init(void) {
 	bind_usrloc_t bind_usrloc;
-//	bind_pua_t bind_pua;
+	bind_pua_t bind_pua;
 
 	if (!fix_parameters()) goto error;
 
@@ -246,26 +254,32 @@ static int mod_init(void) {
 	}
 	LM_DBG("Successfully bound to PCSCF Usrloc module\n");
 
-	/* Bind to PUA: */
-//	bind_pua = (bind_pua_t) find_export("bind_pua", 1, 0);
-//	if (!bind_pua) {
-//		LM_ERR("Can't bind pua\n");
-//		return -1;
-//	}
-//	if (bind_pua(&pua) < 0) {
-//		LM_ERR("Can't bind pua\n");
-//		return -1;
-//	}
-//	/* Check for Publish/Subscribe methods */
-//	if (pua.send_publish == NULL) {
-//		LM_ERR("Could not import send_publish\n");
-//		return -1;
-//	}
-//	if (pua.send_subscribe == NULL) {
-//		LM_ERR("Could not import send_subscribe\n");
-//		return -1;
-//	}
-//	LM_DBG("Successfully bound to PUA module\n");
+       if(subscribe_to_reginfo == 1){
+               /* Bind to PUA: */
+               bind_pua = (bind_pua_t) find_export("bind_pua", 1, 0);
+               if (!bind_pua) {
+                       LM_ERR("Can't bind pua\n");
+                       return -1;
+               }
+               if (bind_pua(&pua) < 0) {
+                       LM_ERR("Can't bind pua\n");
+                       return -1;
+               }
+               /* Check for Publish/Subscribe methods */
+               if (pua.send_publish == NULL) {
+                       LM_ERR("Could not import send_publish\n");
+                       return -1;
+               }
+               if (pua.send_subscribe == NULL) {
+                       LM_ERR("Could not import send_subscribe\n");
+                       return -1;
+               }
+	       if (pua.get_subs_list == NULL) {
+                       LM_ERR("Could not import get_subs_list\n");
+                       return -1;
+               }
+	       LM_DBG("Successfully bound to PUA module\n");
+       }
 
 	return 0;
 
@@ -377,6 +391,11 @@ static int w_force_service_routes(struct sip_msg* _m, char* _d, char* _foo)
 static int w_is_registered(struct sip_msg* _m, char* _d, char* _foo)
 {
 	return is_registered(_m, (udomain_t*)_d);
+}
+
+static int w_reginfo_handle_notify(struct sip_msg* _m, char* _d, char* _foo)
+{
+       return reginfo_handle_notify(_m, _d, _foo);
 }
 
 static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri) {
