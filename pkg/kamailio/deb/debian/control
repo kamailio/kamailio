@@ -43,7 +43,7 @@ Build-Depends: bison,
                python-dev,
                unixodbc-dev,
                xsltproc
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: http://www.kamailio.org/
 Vcs-git: git://anonscm.debian.org/pkg-voip/kamailio.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-voip/kamailio.git
@@ -512,7 +512,7 @@ Package: kamailio-dnssec-modules
 Architecture: linux-any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: kamailio (= ${Source-Version}), ${shlibs:Depends}
+Depends: kamailio (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
 Description: contains the dnssec module
  Kamailio is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, Kamailio can handle thousands calls
@@ -524,7 +524,7 @@ Package: kamailio-autheph-modules
 Architecture: linux-any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: kamailio (= ${binary:Version}), ${shlibs:Depends}
+Depends: kamailio (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
 Description: authentication using ephemeral credentials module for Kamailio
  Kamailio is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, Kamailio can handle thousands calls
@@ -534,6 +534,7 @@ Description: authentication using ephemeral credentials module for Kamailio
 
 Package: kamailio-nth
 Architecture: any
+Pre-Depends: ${misc:Pre-Depends}
 Depends: binutils,
          bison,
          bvi,
@@ -549,7 +550,8 @@ Depends: binutils,
          screen,
          sipsak,
          tcpdump,
-         vim
+         vim,
+         ${misc:Depends}
 Description: Kamailio - package for "nice to have" installation
- This is a meta-package for easy installation various useful tools that may be
+ This is a metapackage for easy installation various useful tools that may be
  handy on server with Kamailio installed.
