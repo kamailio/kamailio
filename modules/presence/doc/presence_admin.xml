@@ -578,9 +578,15 @@ modparam("presence", "fetch_rows", 1000)
 	<section>
 	    <title><varname>db_table_lock_type</varname> (integer)</title>
 	    <para>
-		Enable (=1) or disable (=0) the Locks for table during an transaction.
-		Locking only the "current" table causes problems with a MySQL-Databases
-		in "DB-Only" mode.
+		Enable (=1) or disable (=0) the Locks for table during an
+		transaction. Locking only the "current" table causes problems
+		with a MySQL-Databases in "DB-Only" mode.
+	    </para>
+	    <para>
+		In order to use the Presence-Module in "DB_ONLY"-mode with a 
+		MySQL-Backend, set this parameter to "0", otherwise the 
+		MySQL-Operations will fail. The Presence-Module will generate
+		a "500 Server error" due to the failed MySQL-queries.
 	    </para>
 	    <para>
 		<emphasis>
