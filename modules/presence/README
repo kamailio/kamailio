@@ -16,9 +16,9 @@ Edited by
 
 Juha Heinanen
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
 
-   Copyright � 2009 Juha Heinanen
+   Copyright © 2009 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -54,6 +54,7 @@ Juha Heinanen
               3.19. enable_sphere_check (int)
               3.20. timeout_rm_subs (int)
               3.21. fetch_rows (integer)
+              3.22. db_table_lock_type (integer)
 
         4. Functions
 
@@ -119,11 +120,12 @@ Juha Heinanen
    1.19. Set enable_sphere_check parameter
    1.20. Set timeout_rm_subs parameter
    1.21. Set fetch_rows parameter
-   1.22. handle_publish usage
-   1.23. handle_subscribe usage
-   1.24. pres_auth_status usage
-   1.25. pres_refresh_watchers usage
-   1.26. pres_update_watchers usage
+   1.22. Set db_table_lock_type parameter
+   1.23. handle_publish usage
+   1.24. handle_subscribe usage
+   1.25. pres_auth_status usage
+   1.26. pres_refresh_watchers usage
+   1.27. pres_update_watchers usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -159,6 +161,7 @@ Chapter 1. Admin Guide
         3.19. enable_sphere_check (int)
         3.20. timeout_rm_subs (int)
         3.21. fetch_rows (integer)
+        3.22. db_table_lock_type (integer)
 
    4. Functions
 
@@ -245,6 +248,7 @@ Chapter 1. Admin Guide
    3.19. enable_sphere_check (int)
    3.20. timeout_rm_subs (int)
    3.21. fetch_rows (integer)
+   3.22. db_table_lock_type (integer)
 
 3.1. db_url(str)
 
@@ -253,7 +257,7 @@ Chapter 1. Admin Guide
    If set, the module is a fully operational presence server. Otherwise,
    it is used as a 'library', for its exported functions.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -265,7 +269,7 @@ modparam("presence", "db_url",
 
    The name of the db table where PUBLISH presence information is stored.
 
-   Default value is "presentity".
+   Default value is “presentity”.
 
    Example 1.2. Set presentity_table parameter
 ...
@@ -277,7 +281,7 @@ modparam("presence", "presentity_table", "presentity")
    The name of the db table where active subscription information is
    stored.
 
-   Default value is "active_watchers".
+   Default value is “active_watchers”.
 
    Example 1.3. Set active_watchers_table parameter
 ...
@@ -288,7 +292,7 @@ modparam("presence", "active_watchers_table", "active_watchers")
 
    The name of the db table where subscription states are stored.
 
-   Default value is "watchers".
+   Default value is “watchers”.
 
    Example 1.4. Set watchers_table parameter
 ...
@@ -300,7 +304,7 @@ modparam("presence", "watchers_table", "watchers")
    The period in seconds between checks if there are expired messages
    stored in database.
 
-   Default value is "100". A zero or negative value disables this
+   Default value is “100”. A zero or negative value disables this
    activity.
 
    Example 1.5. Set clean_period parameter
@@ -313,7 +317,7 @@ modparam("presence", "clean_period", 100)
    The period at which to synchronize cached subscriber info with the
    database.
 
-   Default value is "100". A zero or negative value disables
+   Default value is “100”. A zero or negative value disables
    synchronization.
 
    Example 1.6. Set db_update_period parameter
@@ -331,7 +335,7 @@ modparam("presence", "db_update_period", 100)
    than 0. When notifier_processes is less than or equal to 0 NOTIFY
    requests are sent immediately.
 
-   Default value is "5".
+   Default value is “5”.
 
    Example 1.7. Set waitn_time parameter
 ...
@@ -348,7 +352,7 @@ modparam("presence", "waitn_time", 10)
    Separate notifier processes are only run when subs_db_mode is 3 (DB
    only mode).
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.8. Set notifier_poll_rate parameter
 ...
@@ -368,7 +372,7 @@ modparam("presence", "notifier_poll_rate", 20)
    NOTIFY requests can be sent on a dialog at the same time, there are
    race conditions which result in CSeq re-use.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.9. Set notifier_processes parameter
 ...
@@ -380,7 +384,7 @@ modparam("presence", "notifier_processes", 2)
    The prefix used when generating to_tag when sending replies for
    SUBSCRIBE requests.
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.10. Set to_tag_pref parameter
 ...
@@ -393,7 +397,7 @@ modparam("presence", "to_tag_pref", 'pres')
    when sending a 200OK for a publish. It is used for forcing the client
    to send an update before the old publish expires.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.11. Set expires_offset parameter
 ...
@@ -405,7 +409,7 @@ modparam("presence", "expires_offset", 10)
    The the maximum admissible expires value for PUBLISH/SUBSCRIBE message
    (in seconds).
 
-   Default value is "3600".
+   Default value is “3600”.
 
    Example 1.12. Set max_expires parameter
 ...
@@ -476,7 +480,7 @@ modparam("presence", "subs_db_mode", 1)
    database or there are other external entities inserting data into the
    presentity table.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.15. Set publ_cache parameter
 ...
@@ -489,7 +493,7 @@ modparam("presence", "publ_cache", 0)
    This parameter will be used as the power of 2 when computing table
    size.
 
-   Default value is "9 (512)".
+   Default value is “9 (512)”.
 
    Example 1.16. Set subs_htable_size parameter
 ...
@@ -501,7 +505,7 @@ modparam("presence", "subs_htable_size", 11)
    The size of the in-memory hash table to store publish records. This
    parameter will be used as the power of 2 when computing table size.
 
-   Default value is "9 (512)".
+   Default value is “9 (512)”.
 
    Example 1.17. Set pres_htable_size parameter
 ...
@@ -516,7 +520,7 @@ modparam("presence", "pres_htable_size", 11)
    empty NOTIFY to an message-summary event. This parameter is enabled by
    default, thus addering to the standard.
 
-   Default value is "1 ".
+   Default value is “1 ”.
 
    Example 1.18. Set send_fast_notify parameter
 ...
@@ -531,7 +535,7 @@ modparam("presence", "send_fast_notify", 0)
    this check requires extra processing that should be avoided if this
    feature is not supported by the clients.
 
-   Default value is "0 ".
+   Default value is “0 ”.
 
    Example 1.19. Set enable_sphere_check parameter
 ...
@@ -546,7 +550,7 @@ modparam("presence", "enable_sphere_check", 1)
    on. Disabling this will keep subscriptions active on unreliable
    networks.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.20. Set timeout_rm_subs parameter
 ...
@@ -562,6 +566,24 @@ modparam("presence", "timeout_rm_subs", 0)
    Example 1.21. Set fetch_rows parameter
 ...
 modparam("presence", "fetch_rows", 1000)
+...
+
+3.22. db_table_lock_type (integer)
+
+   Enable (=1) or disable (=0) the Locks for table during an transaction.
+   Locking only the "current" table causes problems with a MySQL-Databases
+   in "DB-Only" mode.
+
+   In order to use the Presence-Module in "DB_ONLY"-mode with a
+   MySQL-Backend, set this parameter to "0", otherwise the
+   MySQL-Operations will fail. The Presence-Module will generate a "500
+   Server error" due to the failed MySQL-queries.
+
+   Default value is 1 (Write Lock for the Tables).
+
+   Example 1.22. Set db_table_lock_type parameter
+...
+modparam("presence", "db_table_lock_type", 0)
 ...
 
 4. Functions
@@ -592,7 +614,7 @@ modparam("presence", "fetch_rows", 1000)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.22. handle_publish usage
+   Example 1.23. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -623,7 +645,7 @@ modparam("presence", "fetch_rows", 1000)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.23. handle_subscribe usage
+   Example 1.24. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -640,7 +662,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.24. pres_auth_status usage
+   Example 1.25. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -676,7 +698,7 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. pres_refresh_watchers usage
+   Example 1.26. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
@@ -694,7 +716,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. pres_update_watchers usage
+   Example 1.27. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
