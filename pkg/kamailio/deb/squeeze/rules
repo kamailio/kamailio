@@ -150,6 +150,7 @@ binary-common:
 	dh_installcron
 	dh_installman
 	dh_installinfo
+	dh_lintian
 	dh_installchangelogs ChangeLog
 	dh_link
 	dh_strip --dbg-package=kamailio-dbg
