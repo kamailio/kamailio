@@ -1634,6 +1634,14 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	else if((tmphdr[3] = get_hdr_by_name(msg,"P-RTP-Stat", 10)) != NULL) {
 		sco.rtp_stat =  tmphdr[3]->body;
 	}	                         	
+	/* X-Siemens-RTP-stats */	
+	else if((tmphdr[3] = get_hdr_by_name(msg,"X-Siemens-RTP-stats", 19)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}	                         
+	/* X-NG-RTP-STATS */	
+	else if((tmphdr[3] = get_hdr_by_name(msg,"X-NG-RTP-STATS", 14)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}	                         	
 	/* RTP-RxStat */
         else if((tmphdr[3] = get_hdr_by_name(msg,"RTP-RxStat", 10)) != NULL) {
                 if(tmphdr[3]->body.len > 250) tmphdr[3]->body.len = 250;
