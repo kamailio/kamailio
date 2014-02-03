@@ -34,7 +34,7 @@ Build-Depends: bison,
                unixodbc-dev,
                xsltproc,
                zlib1g-dev
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: http://www.kamailio.org/
 Vcs-git: git://anonscm.debian.org/pkg-voip/kamailio.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-voip/kamailio.git
@@ -397,6 +397,7 @@ Description: Websocket module for kamailio
 
 Package: kamailio-nth
 Architecture: any
+Pre-Depends: ${misc:Pre-Depends}
 Depends: binutils,
          bison,
          bvi,
@@ -412,7 +413,8 @@ Depends: binutils,
          screen,
          sipsak,
          tcpdump,
-         vim
+         vim,
+         ${misc:Depends}
 Description: Kamailio - package for "nice to have" installation
- This is a meta-package for easy installation various useful tools that may be
+ This is a metapackage for easy installation various useful tools that may be
  handy on server with Kamailio installed.
