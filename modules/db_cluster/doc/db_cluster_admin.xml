@@ -80,9 +80,9 @@
 		<programlisting format="linespecific">
 ...
 modparam("db_cluster", "connection",
-             "con1=>mysql://openser:openser@localhost/kamailio1")
+             "con1=>mysql://kamailio:kamailiorw@localhost/kamailio1")
 modparam("db_cluster", "connection",
-             "con2=>mysql://openser:openser@localhost/kamailio2")
+             "con2=>mysql://kamailio:kamailiorw@localhost/kamailio2")
 ...
 </programlisting>
 		</example>
@@ -176,9 +176,9 @@ modparam("db_cluster", "inactive_interval", 180)
 		<programlisting format="linespecific">
 ...
 modparam("db_cluster", "connection",
-             "c1=&gt;mysql://openser:openserrw@localhost/kamailio1")
+             "c1=&gt;mysql://kamailio:kamailiorw@localhost/kamailio1")
 modparam("db_cluster", "connection",
-             "c2=&gt;mysql://openser:openserrw@localhost/kamailio2")
+             "c2=&gt;mysql://kamailio:kamailiorw@localhost/kamailio2")
 modparam("db_cluster", "cluster", "k1=&gt;c1=9r9p;c2=9r9p")
 
 modparam("acc", "db_url", "cluster://k1")
