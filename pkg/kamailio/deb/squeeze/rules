@@ -32,7 +32,7 @@ EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy purple redis mono
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils lua memcached \
 			   snmpstats carrierroute xmpp cpl python geoip\
-			   sqlite json ims tls
+			   sqlite json tls
 
 # name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
 LIBDIR ?= lib
