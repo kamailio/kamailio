@@ -1488,7 +1488,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
 	    </listitem>
 	</itemizedlist>
 	<example>
-	    <title><function>t_replicate</function> usage</title>
+	    <title><function>t_relay_to</function> usage</title>
 	    <programlisting>
 ...
 # sent to 1.2.3.4:5060 over tcp
