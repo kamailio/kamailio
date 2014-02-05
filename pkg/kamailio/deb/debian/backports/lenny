@@ -32,7 +32,6 @@ sed -i -e '/libgeoip-dev/d' -e '/^Package: kamailio-geoip-modules/,/^$/d' \
 sed -i -e 's/ geoip[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ geoip/' ${DIST}/rules
 
-
 # No json module:
 sed -i -e '/libevent-dev/d' -e '/libjson0-dev/d' -e '/^Package: kamailio-json-modules/,/^$/d' \
 	${DIST}/control
@@ -47,9 +46,22 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ redis/' ${DIST}/rules
 
 # No mono module
 sed -i -e '/libmono-2.0-dev/d' -e '/^Package: kamailio-mono-modules/,/^$/d' \
+	-e '/kamailio-mono-modules/d' \
 	${DIST}/control
 sed -i -e 's/ mono[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mono/' ${DIST}/rules
+
+# No websocket module
+sed -i -e '/libunistring-dev/d' -e '/^Package: kamailio-websocket-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ websocket[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ websocket/' ${DIST}/rules
+
+# No outbound module
+sed -i -e '/^Package: kamailio-outbound-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ outbound[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ outbound/' ${DIST}/rules
 
 # db-util version
 sed -i -e 's/db-util/db4.8-util/' ${DIST}/control
