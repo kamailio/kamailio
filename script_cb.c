@@ -162,8 +162,8 @@ int exec_pre_script_cb( struct sip_msg *msg, enum script_cb_type type)
 	unsigned int	flags;
 
 #ifdef EXTRA_DEBUG
-	if (type >= SCRIPT_CB_NUM) {
-		LOG(L_BUG, "exec_pre_script_cb: Uknown callback type\n");
+	if (type > SCRIPT_CB_NUM) {
+		LOG(L_BUG, "Uknown callback type\n");
 		abort();
 	}
 #endif
@@ -185,7 +185,7 @@ int exec_post_script_cb( struct sip_msg *msg, enum script_cb_type type)
 	unsigned int	flags;
 
 #ifdef EXTRA_DEBUG
-	if (type >= SCRIPT_CB_NUM) {
+	if (type > SCRIPT_CB_NUM) {
 		LOG(L_BUG, "exec_pre_script_cb: Uknown callback type\n");
 		abort();
 	}
