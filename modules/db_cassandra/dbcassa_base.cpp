@@ -440,6 +440,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
 	int key_len=0, seckey_len = 0;
 	int no_kc, no_sec_kc;
 	dbcassa_table_p tbc;
+	char pk[256];
 
 	/** Lock table schema and construct primary and secondary key **/
 	if(_k) {
@@ -496,7 +497,14 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
 		} else { /* the table doesn't have any secondary key defined */
 			if(_c) {
 				for(int i=0; i< _nc; i++) {
-					sp.column_names.push_back(_c[i]->s);
+					/*sp.column_names.push_back(_c[i]->s);*/
+					if(_c[i]->len>255) {
+						LM_ERR("column key is too long [%.*s]\n", _c[i]->len, _c[i]->s);
+						return ColumnVecPtr(NULL);
+					}
+					memcpy(pk, _c[i]->s, _c[i]->len);
+					pk[_c[i]->len] = '\0';
+					sp.column_names.push_back(pk);
 					LM_DBG("Query col: %s\n", _c[i]->s);
 				}
 				LM_DBG("get %d columns\n", _nc);
