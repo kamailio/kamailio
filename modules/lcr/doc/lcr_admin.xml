@@ -996,6 +996,136 @@ modparam("lcr", "fetch_rows", 3000)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>ping_interval</varname> (integer)</title>
+		<para>
+		  Interval in seconds for sending OPTIONS ping requests
+		  to gateways that, due to failures, have been marked
+		  as inactive by inactivate_gw() function call.
+		  If an inactive gateway later gives a valid response (see
+		  <varname>ping_valid_reply_codes</varname>) to a ping
+		  request, it is marked again as active.
+		</para>
+		<para>
+		  If value of this parameter is greater
+		  than zero, tm module must have been loaded and
+		  parameters <varname>lcr_id_avp</varname> and
+		  <varname>defunct_gw_avp</varname> must have been defined.
+		  Value <quote>0</quote> disables sending of OPTIONS ping
+		  requests to failed gateways.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Set <varname>ping_interval</varname> parameter
+		</title>
+<programlisting format="linespecific">
+...
+modparam("lcr", "ping_interval", 15)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ping_inactive_threshold</varname> (integer)</title>
+		<para>
+		  Tells after how many failures (= inactivate_gw() function
+		  calls) a gateway is marked as inactive.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>, i.e., gateway is
+			marked inactive after first failure.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Set <varname>ping_inactive_threshold</varname> parameter
+		</title>
+<programlisting format="linespecific">
+...
+modparam("lcr", "ping_inactive_threshold", 3)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ping_valid_reply_codes</varname> (string)</title>
+		<para>
+		  A comma separated list of SIP reply codes, which are
+		  accepted as valid replies to OPTIONS ping requests.
+		  Reply codes 2xx are by default accepted as valid replies and
+		  they don't need to be listed here.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>, i.e., only 2xx
+			replies are considered as valid replies.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Set <varname>ping_valid_reply_codes</varname> parameter
+		</title>
+<programlisting format="linespecific">
+...
+modparam("lcr", "ping_valid_reply_codes", "403,405,501")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ping_from</varname> (string)</title>
+		<para>
+		  From URI used in OPTIONS ping requests.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>sip:pinger@localhost</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Set <varname>ping_from</varname> parameter
+		</title>
+<programlisting format="linespecific">
+...
+modparam("lcr", "ping_from", "sip:proxy.operator.com")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ping_socket</varname> (string)</title>
+		<para>
+		  Socket to be used for sending OPTIONS ping request.  If not
+		  set or set to <quote></quote>, default socket is used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Set <varname>ping_socket</varname> parameter
+		</title>
+<programlisting format="linespecific">
+...
+modparam("lcr", "ping_socket", "192.98.102.10:5060")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -1097,6 +1227,38 @@ if (!next_gw()) {
 };
 ...
 </programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">inactivate_gw()</function>
+		</title>	
+		<para>
+		Inactivates the gateway denoted by lcr_id_avp and defunct_gw_avp
+		(which were set by previous next_gw() call).  Use of this
+		function requires that <varname>ping_interval</varname> module
+		parameter has been set to a positive value allowing an
+		inactivated gateway to be automatically activated by a positive
+		response to OPTIONS ping request.
+		</para>
+		<para>
+		Returns 1 on success and -1 in case of error (see syslog).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>inactivate_gw</function> usage</title>
+		<programlisting format="linespecific">
+...
+failure_route [GW_FAILURE] {
+...
+    if (t_check_status("408|503")) {
+        inactivate_gw();
+    };
+...
+		</programlisting>
 		</example>
 	</section>
 

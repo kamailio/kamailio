@@ -63,8 +63,7 @@ static void dump_gws(rpc_t* rpc, void* c)
 {
     void* st;
     unsigned int i, j;
-    enum sip_protos transport;
-    str gw_name, hostname, params;
+    str scheme, gw_name, hostname, params, transport;
     str prefix, tag;
     struct gw_info *gws;
     char buf[INT2STR_MAX_LEN], *start;
@@ -82,11 +81,9 @@ static void dump_gws(rpc_t* rpc, void* c)
 	    gw_name.s=gws[i].gw_name;
 	    gw_name.len=gws[i].gw_name_len;
 	    rpc->struct_add(st, "S", "gw_name", &gw_name);
-	    if (gws[i].scheme == SIP_URI_T) {
-		rpc->struct_add(st, "s", "scheme", "sip");
-	    } else {
-		rpc->struct_add(st, "s", "scheme", "sips");
-	    }
+	    scheme.s=gws[i].scheme;
+	    scheme.len=gws[i].scheme_len;
+	    rpc->struct_add(st, "S", "scheme", &scheme);
 	    switch (gws[i].ip_addr.af) {
 	    case AF_INET:
 		rpc->struct_printf(st, "ip_addr", "%d.%d.%d.%d",
@@ -117,39 +114,21 @@ static void dump_gws(rpc_t* rpc, void* c)
 	    params.s=gws[i].params;
 	    params.len=gws[i].params_len;
 	    rpc->struct_add(st, "S", "params", &params);
-	    transport = gws[i].transport;
-	    switch(transport){
-	    case PROTO_UDP:
-		rpc->struct_add(st, "s", "transport", "UDP");
-		break;
-	    case PROTO_TCP:
-		rpc->struct_add(st, "s", "transport", "TCP");
-		break;
-	    case PROTO_TLS:
-		rpc->struct_add(st, "s", "transport", "TLS");
-		break;
-	    case PROTO_SCTP:
-		rpc->struct_add(st, "s", "transport", "SCTP");
-		break;
-	    case PROTO_OTHER:
-		rpc->struct_add(st, "s", "transport", "OTHER");
-		break;
-            case PROTO_WS:
-            case PROTO_WSS:
-	    case PROTO_NONE:
-		break;
-	    }
+	    transport.s=gws[i].transport;
+	    transport.len=gws[i].transport_len;
+	    rpc->struct_add(st, "S", "transport", &transport);
 	    prefix.s=gws[i].prefix;
 	    prefix.len=gws[i].prefix_len;
 	    tag.s=gws[i].tag;
 	    tag.len=gws[i].tag_len;
 	    start = int2strbuf(gws[i].defunct_until, &(buf[0]), INT2STR_MAX_LEN,
 			       &len);
-	    rpc->struct_add(st, "dSSds",
+	    rpc->struct_add(st, "dSSdds",
 			    "strip",  gws[i].strip,
 			    "prefix", &prefix,
 			    "tag",    &tag,
 			    "flags",  gws[i].flags,
+			    "state",  gws[i].state,
 			    "defunct_until",  start
 			    );
 	}
