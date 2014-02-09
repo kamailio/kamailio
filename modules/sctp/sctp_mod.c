@@ -37,9 +37,7 @@
 MODULE_VERSION
 
 static int mod_init(void);
-#ifdef USE_SCTP
 static int sctp_mod_pre_init(void);
-#endif
 
 
 static cmd_export_t cmds[]={
@@ -124,7 +122,6 @@ static int mod_init(void)
 #endif /* USE_SCTP */
 }
 
-#ifdef USE_SCTP
 static int sctp_mod_pre_init(void)
 {
 	sctp_srapi_t api;
@@ -146,4 +143,3 @@ static int sctp_mod_pre_init(void)
 	}
 	return 0;
 }
-#endif
