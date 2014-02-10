@@ -59,6 +59,7 @@ MODULE_VERSION
 
 #define CANONICAL_URI_AVP_SPEC "$avp(s:can_uri)"
 #define SIGNALING_IP_AVP_SPEC  "$avp(s:signaling_ip)"
+#define SIP_APPLICATION_AVP_SPEC "$avp(s:sip_application)"
 
 // Although `AF_LOCAL' is mandated by POSIX.1g, `AF_UNIX' is portable to
 // more systems.  `AF_UNIX' was the traditional name stemming from BSD, so
@@ -134,6 +135,9 @@ static AVP_Param canonical_uri_avp = {str_init(CANONICAL_URI_AVP_SPEC), {0}, 0};
 /* The AVP where the caller signaling IP is stored (if defined) */
 static AVP_Param signaling_ip_avp = {str_init(SIGNALING_IP_AVP_SPEC), {0}, 0};
 
+/* The AVP where the SIP application type is stored (if defined) */
+static AVP_Param sip_application_avp = {str_init(SIP_APPLICATION_AVP_SPEC), {0}, 0};
+
 
 struct dlg_binds dlg_api;
 static int dialog_flag = -1;
@@ -157,6 +161,7 @@ static param_export_t parameters[] = {
     {"diverter_avp_id",     INT_PARAM, &diverter_avp_id},
     {"canonical_uri_avp",   STR_PARAM, &(canonical_uri_avp.spec.s)},
     {"signaling_ip_avp",    STR_PARAM, &(signaling_ip_avp.spec.s)},
+    {"sip_application_avp", STR_PARAM, &(sip_application_avp.spec.s)},
     {0, 0, 0}
 };
 
@@ -204,6 +209,7 @@ typedef struct CallInfo {
     str callid;
     str from;
     str from_tag;
+    str sip_application;
 } CallInfo;
 
 
@@ -416,6 +422,22 @@ get_signaling_ip(struct sip_msg* msg)
     return value.s;
 }
 
+// Get SIP application type
+static str
+get_sip_application(struct sip_msg* msg)
+{
+    int_str value;
+
+    if (!search_first_avp(sip_application_avp.type | AVP_VAL_STR,
+                          sip_application_avp.name, &value, NULL) ||
+        !value.s.s || value.s.len==0) {
+
+        value.s.s = "audio";
+        value.s.len = strlen(value.s.s);
+    }
+
+    return value.s;
+}
 
 static str
 get_diverter(struct sip_msg *msg)
@@ -534,6 +556,7 @@ get_call_info(struct sip_msg *msg, CallControlAction action)
         call_info.ruri = get_canonical_request_uri(msg);
         call_info.diverter = get_diverter(msg);
         call_info.source_ip = get_signaling_ip(msg);
+        call_info.sip_application = get_sip_application(msg);
     }
 
     call_info.action = action;
@@ -604,13 +627,15 @@ make_default_request(CallInfo *call)
                        "callid: %.*s\r\n"
                        "from: %.*s\r\n"
                        "fromtag: %.*s\r\n"
+                       "sip_application: %.*s\r\n"
                        "\r\n",
                        call->ruri.len, call->ruri.s,
                        call->diverter.len, call->diverter.s,
                        call->source_ip.len, call->source_ip.s,
                        call->callid.len, call->callid.s,
                        call->from.len, call->from.s,
-                       call->from_tag.len, call->from_tag.s);
+                       call->from_tag.len, call->from_tag.s,
+                       call->sip_application.len, call->sip_application.s);
 
         if (len >= sizeof(request)) {
             LOG(L_ERR, "callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
@@ -1070,6 +1095,21 @@ mod_init(void)
     }
     if (pv_get_avp_name(0, &(avp_spec.pvp), &(signaling_ip_avp.name), &(signaling_ip_avp.type))!=0) {
         LOG(L_CRIT, "invalid AVP specification for signaling_ip_avp: `%s'\n", signaling_ip_avp.spec.s);
+        return -1;
+    }
+
+    // initialize the sip_application_avp structure
+    if (sip_application_avp.spec.s==NULL || *(sip_application_avp.spec.s)==0) {
+        LOG(L_ERR, "missing/empty sip_application_avp parameter. using default.\n");
+        sip_application_avp.spec.s = SIP_APPLICATION_AVP_SPEC;
+    }
+    sip_application_avp.spec.len = strlen(sip_application_avp.spec.s);
+    if (pv_parse_spec(&(sip_application_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
+        LOG(L_CRIT, "invalid AVP specification for sip_application_avp: `%s'\n", sip_application_avp.spec.s);
+        return -1;
+    }
+    if (pv_get_avp_name(0, &(avp_spec.pvp), &(sip_application_avp.name), &(sip_application_avp.type))!=0) {
+        LOG(L_CRIT, "invalid AVP specification for sip_application_avp: `%s'\n", sip_application_avp.spec.s);
         return -1;
     }
 
