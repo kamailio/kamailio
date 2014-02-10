@@ -106,7 +106,8 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
 	if (ul.get_pcontact(_d, &contact_uri, &pcontact) != 0) { //contact does not exist
 	    if (contact_state == STATE_TERMINATED) {
 		LM_DBG("This contact: <%.*s> is in state terminated and is not in usrloc, ignore\n", contact_uri.len, contact_uri.s);
-		return 1;
+		ret = RESULT_CONTACTS_FOUND;
+		goto done;
 	    }
 		LM_DBG("This contact: <%.*s> is in state active and is not in usrloc so adding it to usrloc, expires: %d which is in %d seconds\n", contact_uri.len, contact_uri.s, expires, expires-local_time_now);
 		if (ul.insert_pcontact(_d, &contact_uri, &ci, &pcontact) != 0) {
