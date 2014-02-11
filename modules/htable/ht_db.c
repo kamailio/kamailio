@@ -261,6 +261,11 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				hname = kname;
 			}
 			vtype = RES_ROWS(db_res)[i].values[2].val.int_val;
+			if (RES_ROWS(db_res)[i].values[3].type != DB1_STRING) {
+				LM_ERR("Wrong db type [%d] for key_value column\n",
+					RES_ROWS(db_res)[i].values[3].type);
+				goto error;
+			}
 			kvalue.s = (char*)(RES_ROWS(db_res)[i].values[3].val.string_val);
 			if(kvalue.s==NULL) {
 				LM_ERR("null value in row %d\n", i);
