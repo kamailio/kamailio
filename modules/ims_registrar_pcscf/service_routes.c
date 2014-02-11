@@ -22,6 +22,7 @@
 
 #include "service_routes.h"
 #include "reg_mod.h"
+#include "save.h"
 #include "../../data_lump.h"
 #include "../../lib/ims/ims_getters.h"
 
@@ -418,25 +419,31 @@ str * get_asserted_identity(struct sip_msg* _m) {
 }
 
 /**
- * Add proper asserted identies based on registration
+ * checked if passed identity is an asserted identity
  */
 int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity) {
 	// Public identities of this contact
 	struct ppublic * p;
-
+	//remove <> braces if there are
+	if(identity.s[0]=='<' && identity.s[identity.len-1]=='>') {
+		identity.s++;
+		identity.len -= 2;
+	}
+	LM_DBG("Identity to assert: %.*s\n", identity.len, identity.s);
+	
 	if (getContactP(_m, _d) != NULL) {
 		for (p = c->head; p; p = p->next) {
 			LM_DBG("Public identity: %.*s\n", p->public_identity.len, p->public_identity.s);
-			/* Check length: */
-			if (identity.len == p->public_identity.len) {
-				/* Check contents: */
-				if (strncasecmp(identity.s, p->public_identity.s, identity.len) == 0) {
-					LM_DBG("Match!\n");
-					return 1;
-				}
-			} else LM_DBG("Length does not match.\n");
+			    /* Check length: */
+			    if (identity.len == p->public_identity.len) {
+				    /* Check contents: */
+				    if (strncasecmp(identity.s, p->public_identity.s, identity.len) == 0) {
+					    LM_DBG("Match!\n");
+					    return 1;
+				    }
+			    } else LM_DBG("Length does not match.\n");
+			}
 		}
-	}
 	LM_WARN("Contact not found based on Contact, trying IP/Port/Proto\n");
 	str received_host = {0, 0};
 	char srcip[50];	
@@ -447,5 +454,61 @@ int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity) {
 		return -1;
 	else
 		return 1;
+}
+
+
+/**
+ * Add proper asserted identities based on registration
+ */
+
+static str p_asserted_identity_s={"P-Asserted-Identity: ",21};
+static str p_asserted_identity_m={"<",1};
+static str p_asserted_identity_e={">\r\n",3};
+
+int assert_called_identity(struct sip_msg* _m, udomain_t* _d) {
+	
+	int ret=CSCF_RETURN_FALSE;
+	str called_party_id={0,0},x={0,0};
+	struct sip_msg* req;
+	struct hdr_field *h=0;
+		
+	//get request from reply
+	req = get_request_from_reply(_m);
+	if (!req) {
+		LM_ERR("Unable to get request from reply for REGISTER. No transaction\n");
+		goto error;
+	}
+	
+	called_party_id = cscf_get_called_party_id(req, &h);
+	
+		
+	if (!called_party_id.len){
+		goto error;	
+	}else{
+		LM_DBG("Called Party ID from request: %.*s\n", called_party_id.len, called_party_id.s);	
+		x.len = p_asserted_identity_s.len+p_asserted_identity_m.len+called_party_id.len+p_asserted_identity_e.len;
+		x.s = pkg_malloc(x.len);
+		if (!x.s){
+			LM_ERR("P_assert_called_identity: Error allocating %d bytes\n",	x.len);
+			x.len=0;
+			goto error;		
+		}
+		x.len=0;
+		STR_APPEND(x,p_asserted_identity_s);
+		STR_APPEND(x,p_asserted_identity_m);
+		STR_APPEND(x,called_party_id);
+		STR_APPEND(x,p_asserted_identity_e);
+		
+		if (cscf_add_header(_m,&x,HDR_OTHER_T))
+			ret = CSCF_RETURN_TRUE;
+		else
+		    goto error;
+	}
+	
+	return ret;
+	
+error:
+	ret=CSCF_RETURN_FALSE;
+	return ret;
 }
 

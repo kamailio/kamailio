@@ -51,4 +51,9 @@ str * get_asserted_identity(struct sip_msg* _m);
  */
 int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity);
 
+/**
+ * Assert a given called identity of a user
+ */
+int assert_called_identity(struct sip_msg* _m, udomain_t* _d);
+
 #endif /* SERVICE_ROUTES_H */

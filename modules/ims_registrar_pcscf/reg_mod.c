@@ -104,6 +104,7 @@ static int w_is_registered(struct sip_msg* _m, char* _d, char* _foo);
 static int w_reginfo_handle_notify(struct sip_msg* _m, char* _d, char* _foo);
 
 static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri);
+static int w_assert_called_identity(struct sip_msg* _m, char* _d, char* _foo);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -131,9 +132,10 @@ static cmd_export_t cmds[] = {
 	{"pcscf_follows_service_routes", (cmd_function)w_follows_service_routes,       	1,  	save_fixup2, 	0,		REQUEST_ROUTE },
 	{"pcscf_force_service_routes", (cmd_function)w_force_service_routes,       	1,  	save_fixup2, 	0,		REQUEST_ROUTE },
 
-	{"pcscf_is_registered", (cmd_function)w_is_registered,       	1,  	save_fixup2, 	0,		REQUEST_ROUTE },
+	{"pcscf_is_registered", (cmd_function)w_is_registered,       	1,  	save_fixup2, 	0,		REQUEST_ROUTE|ONREPLY_ROUTE },
 
 	{"pcscf_assert_identity", (cmd_function)w_assert_identity,      2,  	assert_identity_fixup, 	0,		REQUEST_ROUTE },
+	{"pcscf_assert_called_identity", (cmd_function)w_assert_called_identity,      1,  	assert_identity_fixup, 	0,		ONREPLY_ROUTE },
 
 	{"reginfo_handle_notify", (cmd_function)w_reginfo_handle_notify, 1, domain_fixup, 0, REQUEST_ROUTE},
 	
@@ -414,6 +416,10 @@ static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri)
 	}
 
 	return assert_identity( _m, (udomain_t*)_d, identity);
+}
+
+static int w_assert_called_identity(struct sip_msg* _m, char* _d, char* _foo) {
+	return assert_called_identity( _m, (udomain_t*)_d);
 }
 
 /*
