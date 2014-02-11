@@ -412,8 +412,9 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
 
     AAAMessage* aar = 0;
 
-
-    //AAAMessage* aaa = 0;
+    
+    str identifier;
+    int identifier_type;
 
 
     AAA_AVP* avp = 0;
@@ -488,15 +489,38 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
     }
 
     LM_DBG("Adding subscription id...\n");
-    /* Add Subscription ID AVP*/
-    int identifier_type = AVP_Subscription_Id_Type_SIP_URI; //we only do IMPU now
-    //to get the SIP URI I use the dlg direction - if its mo I get the from uri from the req, if its mt I get the to uri from the req
-    str identifier;
+    //if its mo we use p_asserted_identity in request - if that not there we use from_uri
+    //if its mt we use p_asserted_identity in reply - if that not there we use to_uri
+    
     if (dlg_direction == DLG_MOBILE_ORIGINATING) {
-        cscf_get_from_uri(req, &identifier);
+	LM_DBG("originating direction\n");
+	if ((identifier = cscf_get_asserted_identity(req)).len == 0) {
+	    LM_DBG("No P-Asserted-Identity hdr found in request. Using From hdr in req");
+
+	    if (!cscf_get_from_uri(req, &identifier)) {
+		    LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
+		    goto error;
+	    }
+	}
     } else {
-        cscf_get_to_uri(req, &identifier);
+	LM_DBG("terminating direction\n");
+	if ((identifier = cscf_get_asserted_identity(res)).len == 0) {
+	    LM_DBG("No P-Asserted-Identity hdr found in response. Using To hdr in resp");
+
+	    if (!cscf_get_to_uri(res, &identifier)) {
+		    LM_ERR("Error assigning P-Asserted-Identity using To hdr in resp");
+		    goto error;
+	    }
+	}
     }
+    
+    if (strncasecmp(identifier.s,"tel:",4)==0) {
+	identifier_type = AVP_Subscription_Id_Type_E164; //
+    }else{
+	identifier_type = AVP_Subscription_Id_Type_SIP_URI; //default is END_USER_SIP_URI
+    }
+    
+    
     rx_add_subscription_id_avp(aar, identifier, identifier_type);
 
     LM_DBG("Adding reservation priority...\n");
@@ -552,14 +576,6 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
 
     return ret;
 
-    //    LM_DBG("sending AAR to PCRF\n");
-    //    if (rx_forced_peer.len)
-    //        aaa = cdpb.AAASendRecvMessageToPeer(aar, &rx_forced_peer);
-    //    else
-    //        aaa = cdpb.AAASendRecvMessage(aar);
-    //
-    //    return aaa;
-
 error:
     LM_ERR("unexpected error\n");
     if (aar)
@@ -587,6 +603,7 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip,
     int ret = 0;
     AAA_AVP* avp = 0;
     char x[4];
+    str identifier;
 
     LM_DBG("Send AAR register\n");
 
@@ -614,8 +631,9 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip,
     }
 
     /* Add Subscription ID AVP*/
-    str identifier;
-    cscf_get_from_uri(msg, &identifier);
+    
+    identifier = cscf_get_public_identity(msg);
+    
     int identifier_type = AVP_Subscription_Id_Type_SIP_URI; //we only do IMPU now
     rx_add_subscription_id_avp(aar, identifier, identifier_type);
 
