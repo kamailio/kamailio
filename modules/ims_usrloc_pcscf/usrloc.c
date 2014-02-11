@@ -51,6 +51,7 @@
 #include "ul_mod.h"
 
 extern unsigned int init_flag;
+extern int hashing_type;
 
 int bind_usrloc(usrloc_api_t* api) {
 	if (!api) {
@@ -82,4 +83,64 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->register_ulcb = register_ulcb;
 
 	return 0;
+}
+
+/* function to convert contact aor to only have data after @ - ie strip user part */
+int aor_to_contact(str* aor, str* contact) {
+	char* p;
+	int ret = 0;	//success
+
+	contact->s = aor->s;
+	contact->len = aor->len;
+	if (memcmp(aor->s, "sip:", 4) == 0) {
+		contact->s = aor->s + 4;
+		contact->len-=4;
+	}
+
+	if ((p=memchr(contact->s, '@', contact->len))) {
+		contact->len -= (p - contact->s + 1);
+		contact->s = p+1;
+	}
+
+	if ((p=memchr(contact->s, ';', contact->len))) {
+		contact->len = p - contact->s;
+	}
+
+	if ((p=memchr(contact->s, '>', contact->len))) {
+		contact->len = p - contact->s;
+	}
+
+	return ret;
+}
+
+/* return the slot id for inserting contacts in the hash */
+unsigned int get_hash_slot(udomain_t* _d, str* _aor){
+	str contact;
+	unsigned int sl;
+
+	if ((hashing_type == 0) /*use full AOR for hash*/ || (aor_to_contact(_aor, &contact) != 0)) {
+		if (hashing_type!=0) {
+			LM_DBG("Unable to get contact host:port from contact header... falling back to full AOR\n");
+		}
+		sl = core_hash(_aor, 0, _d->size);
+	} else {
+		sl = core_hash(&contact, 0, _d->size);
+	}
+
+	return sl;
+}
+
+unsigned int get_aor_hash(udomain_t* _d, str* _aor) {
+	str contact;
+	unsigned int aorhash;
+
+	if ((hashing_type == 0) || (aor_to_contact(_aor, &contact) != 0)) {
+		if (hashing_type !=0) {
+			LM_DBG("Unable to get contact host:port from contact header... falling back to full AOR\n");
+		}
+		aorhash = core_hash(_aor, 0, 0);
+	} else {
+		aorhash = core_hash(&contact, 0, 0);
+	}
+	return aorhash;
 }

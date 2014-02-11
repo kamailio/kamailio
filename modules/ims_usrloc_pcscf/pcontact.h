@@ -69,6 +69,9 @@ void mem_delete_ppublic(pcontact_t* _r/*, ucontact_t* _c*/);
 void timer_pcontact(pcontact_t* _r);
 int delete_ppublic(pcontact_t* _r/*, struct ucontact* _c*/);
 int get_ppublic(pcontact_t* _r);
+int aor_to_contact(str* aor, str* contact);
+unsigned int get_hash_slot(udomain_t* _d, str* _aor);
+unsigned int get_aor_hash(udomain_t* _d, str* _aor);
 
 
 #endif

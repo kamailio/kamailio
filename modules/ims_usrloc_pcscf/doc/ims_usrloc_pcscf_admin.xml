@@ -154,6 +154,56 @@ modparam("ims_usrloc_pcscf", "db_mode", 1)
 </programlisting>
       </example>
     </section>
+
+    <section>
+      <title>hashing_type (int)</title>
+
+      <para>This is used to specify how contacts are stored in the internal
+      memory hashing structures. This is an important parameter, not only for
+      efficiency, but also for functionality. IMS can get rather confusing
+      when it comes to contacts, SIP URIs and Implicitly registered SIP URIs
+      (IMPUs). Originally the hash for storage of contacts was performed over
+      the full contact URI viz (27821234567@10.0.0.10:12345;user=phone). This
+      scheme is useful (from a performance perspective) in circumstances where
+      you have many SIP URIs being registered from the same host/port.
+      However, this causes problems in IMS environments where an implicit
+      registration set of IMPU's is implicitly registered on behalf of a UA
+      when it registers. This is because the implicit contact being used in
+      subsequent requests could use a different SIP URI, for example
+      john.doe@10.0.0.10:12345. In this case the P-CSCF would not be able to
+      retrieve the initial contact as the hash over the different contact
+      would in most cases be different. It was therefore proposed to hash the
+      contact by IP:PORT only, effectively identifying a "device" - assuming a
+      1-1 relationship between an IP:PORT pair. In our example, we would get
+      to the same hash slot using the second SIP URI as we got using the
+      initial registered SIP URI. Within this slot we can now search for the
+      appropriate contact (remember there are still collision possibilities)
+      and then traverse through the linked list if iumplcit IMPUs to find the
+      contact currently being used. Of course if it is not found, then you can
+      deny the request.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>0 - This uses the original hash over AOR method. By default we
+          are backwards compatible...</para>
+        </listitem>
+
+        <listitem>
+          <para>1 - Use the newer hash over IP:PORT.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para><emphasis>Default value is 0.</emphasis></para>
+
+      <example>
+        <title>Set hashing_type parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "hashing_type", 1)
+...
+</programlisting>
+      </example>
+    </section>
   </section>
 
   <section>

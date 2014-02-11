@@ -58,6 +58,7 @@
 #include "usrloc_db.h"
 
 extern int db_mode;
+extern int hashing_type;
 
 /*! retransmission detection interval in seconds */
 int cseq_delay = 20;
@@ -114,6 +115,7 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 	int i;
 	ppublic_t* ppublic_ptr;
 	int is_default = 1;
+	str contact_host_port;
 
 	*_c = (pcontact_t*)shm_malloc(sizeof(pcontact_t));
 	if (*_c == 0) {
@@ -137,7 +139,16 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 	memcpy((*_c)->aor.s, _contact->s, _contact->len);
 	(*_c)->aor.len = _contact->len;
 	(*_c)->domain = (str*)_d;
-	(*_c)->aorhash = core_hash(_contact, 0, 0);
+
+
+	if ((hashing_type==0) || aor_to_contact(_contact, &contact_host_port) != 0) {
+		if (hashing_type != 0){
+			LM_DBG("failed to clean contact to host:port, falling back to full AOR - [%.*s]\n", _contact->len, _contact->s);
+		}
+		(*_c)->aorhash = core_hash(_contact, 0, 0);
+	} else {
+		(*_c)->aorhash = core_hash(&contact_host_port, 0, 0);
+	}
 	(*_c)->expires = _ci->expires;
 	(*_c)->reg_state = _ci->reg_state;
 

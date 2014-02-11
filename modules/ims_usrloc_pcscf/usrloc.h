@@ -239,4 +239,6 @@ typedef struct usrloc_api {
 /*! usrloc API export bind function */
 typedef int (*bind_usrloc_t)(usrloc_api_t* api);
 
+int aor_to_contact(str* aor, str* contact);
+
 #endif

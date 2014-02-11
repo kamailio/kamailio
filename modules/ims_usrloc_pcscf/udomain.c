@@ -267,7 +267,8 @@ void mem_timer_udomain(udomain_t* _d)
 void lock_udomain(udomain_t* _d, str* _aor)
 {
 	unsigned int sl;
-	sl = core_hash(_aor, 0, _d->size);
+
+	sl = get_hash_slot(_d, _aor);
 
 #ifdef GEN_LOCK_T_PREFERED
 	lock_get(_d->table[sl].lock);
@@ -279,7 +280,7 @@ void lock_udomain(udomain_t* _d, str* _aor)
 void unlock_udomain(udomain_t* _d, str* _aor)
 {
 	unsigned int sl;
-	sl = core_hash(_aor, 0, _d->size);
+	sl = get_hash_slot(_d, _aor);
 #ifdef GEN_LOCK_T_PREFERED
 	lock_release(_d->table[sl].lock);
 #else
@@ -440,21 +441,67 @@ error:
 }
 
 int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
-	unsigned int sl, i, aorhash;
+	unsigned int sl, i, aorhash, len, len2;
 	struct pcontact* c;
+	char *ptr, *ptr2;
+	ppublic_t* impu;
 
 	/* search in cache */
-	aorhash = core_hash(_contact, 0, 0);
+	aorhash = get_aor_hash(_d, _contact);
 	sl = aorhash & (_d->size - 1);
 	c = _d->table[sl].first;
 
 	for (i = 0; i < _d->table[sl].n; i++) {
+		LM_DBG("Searching for contact in P-CSCF usrloc [%.*s]\n",
+				_contact->len,
+				_contact->s);
+
 		if ((c->aorhash == aorhash) && (c->aor.len == _contact->len)
 				&& !memcmp(c->aor.s, _contact->s, _contact->len)) {
 			*_c = c;
 			return 0;
 		}
 
+		/* hash is correct, but contacts differ. Let's check if maybe the UA is using a different user part
+		 * which was part of his implicit set
+		 */
+		ptr2 = ptr = _contact->s;
+
+		if ((c->aorhash == aorhash)) {
+			len2 = len = _contact->len;
+
+			/* double check domain part is the same - this is to ensure that we don't false match on a collision that has a similar
+			 * userpart in the list of impus... (very unlikely but safer this way).
+			 */
+			ptr = memchr(_contact->s, '@', _contact->len);
+			if (ptr) {
+				len = (ptr - _contact->s);
+				ptr2 = ptr + 1;
+				len2 = _contact->len - (ptr2 - _contact->s);
+			}
+
+			ptr = memchr(c->aor.s, '@', c->aor.len);
+			if (!ptr)
+				ptr = c->aor.s;
+			else
+				ptr = ptr + 1;
+
+			if ((len2 <= c->aor.len) && (memcmp(ptr2, ptr, len2)==0)) {
+				impu = c->head;
+				while (impu) {
+					LM_DBG("comparing first %d chars of impu [%.*s] for contact [%.*s]\n",
+							len,
+							impu->public_identity.len, impu->public_identity.s,
+							_contact->len, _contact->s);
+					if (memcmp(impu->public_identity.s, _contact->s, len) == 0) {
+						//match
+						*_c = c;
+						return 0;
+					}
+					impu = impu->next;
+				}
+			}
+		}
 		c = c->next;
 	}
 	return 1; /* Nothing found */

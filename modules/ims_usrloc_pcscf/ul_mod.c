@@ -82,7 +82,8 @@ int init_flag = 0;
 str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 int timer_interval  = 60;						/*!< Timer interval in seconds */
 int db_mode         = 0;						/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
-int ul_fetch_rows = 2000;
+int ul_fetch_rows 	= 2000;
+int hashing_type 	= 0;						/*!< has type for storing P-CSCF contacts - 0 - use full contact AOR, 1 - use IP:PORT only */
 
 db1_con_t* ul_dbh = 0;
 db_func_t ul_dbf; 
@@ -107,6 +108,7 @@ static param_export_t params[] = {
 	{"db_url",              STR_PARAM, &db_url.s        },
 	{"timer_interval",      INT_PARAM, &timer_interval  },
 	{"db_mode",             INT_PARAM, &db_mode         },
+	{"hashing_type",		INT_PARAM, &hashing_type	},
 	{0, 0, 0}
 };
 
