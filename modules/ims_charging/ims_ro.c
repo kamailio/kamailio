@@ -458,10 +458,15 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     event_type = 0;
     time_stamps = 0;
 
-    subscr.type = Subscription_Type_IMPU;
+    
     subscr.id.s = from_uri.s;
     subscr.id.len = from_uri.len;
-
+    if (strncasecmp(subscr.id.s,"tel:",4)==0) {
+	subscr.type = Subscription_Type_MSISDN;
+    }else{
+	subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
+    }
+    
     ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr);
     if (!ro_ccr_data) {
         LM_ERR("dlg_create_ro_session: no memory left for generic\n");
