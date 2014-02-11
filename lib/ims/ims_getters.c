@@ -1473,3 +1473,41 @@ int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr)
 	return nr;
 }
 
+static str s_called_party_id={"P-Called-Party-ID",17};
+/**
+ * Looks for the P-Called-Party-ID header and extracts its content.
+ * @param msg - the sip message
+ * @param hr - ptr to return the found hdr_field 
+ * @returns the P-Called_Party-ID
+ */
+str cscf_get_called_party_id(struct sip_msg *msg,struct hdr_field **hr)
+{
+	str id={0,0};
+	struct hdr_field *h;
+	if (hr) *hr=0;
+	if (!msg) return id;
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		return id;
+	}
+	h = msg->headers;
+	while(h)
+	{
+		if (h->name.len == s_called_party_id.len  &&
+			strncasecmp(h->name.s,s_called_party_id.s,s_called_party_id.len)==0)
+		{
+			id = h->body;
+			while(id.len && (id.s[0]==' ' || id.s[0]=='\t' || id.s[0]=='<')){
+				id.s = id.s+1;
+				id.len --;
+			}
+			while(id.len && (id.s[id.len-1]==' ' || id.s[id.len-1]=='\t' || id.s[id.len-1]=='>')){
+				id.len--;
+			}	
+			if (hr) *hr = h;
+			return id;
+		}
+		h = h->next;
+	}
+	return id;
+}
+
