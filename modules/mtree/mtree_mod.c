@@ -1177,7 +1177,7 @@ error:
 
 static const char* rpc_mtree_match_doc[6] = {
 	"Match prefix value against mtree",
-	"uses three required parametes",
+	"uses three required parameters",
 	"tname - tree name",
 	"prefix - prefix for matching",
 	"mode - mode for matching (0 or 2)",

@@ -326,7 +326,7 @@ static int use_outbound_register(struct sip_msg *msg)
 		
 		if (contact->reg_id)
 		{
-			LM_DBG("found REGISTER with ;reg-id paramter on"
+			LM_DBG("found REGISTER with ;reg-id parameter on"
 				" Contact-URI - outbound used\n");
 			return 1;
 		}

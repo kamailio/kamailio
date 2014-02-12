@@ -652,7 +652,7 @@ int dr_already_choosen(rt_info_t* rt_info, int* local_gwlist, int lgw_size, int 
 
 	for ( l = 0; l<lgw_size; l++ ) {
 		if ( rt_info->pgwl[local_gwlist[l]].pgw == rt_info->pgwl[check].pgw ) {
-			LM_INFO("Gateway already choosen %.*s, local_gwlist[%d]=%d, %d\n",
+			LM_INFO("Gateway already chosen %.*s, local_gwlist[%d]=%d, %d\n",
 					rt_info->pgwl[check].pgw->ip.len, rt_info->pgwl[check].pgw->ip.s, l, local_gwlist[l], check);
 			return 1;
 		}

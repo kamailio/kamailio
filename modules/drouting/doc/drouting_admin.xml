@@ -957,7 +957,7 @@ modparam("drouting", "drl_table", "my_gw_lists")
 			was tried already.
 			</para>
 			<para>
-			Ex: 1,2,3; 1,2,3; 1,2,3 -> no gateway will be choosen twice. So in case there
+			Ex: 1,2,3; 1,2,3; 1,2,3 -> no gateway will be chosen twice. So in case there
 			are 2 failures, all the three gateways (1,2,3) will be tried in a random order.
 			</para>
 		</listitem>

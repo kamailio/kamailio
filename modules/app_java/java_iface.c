@@ -126,7 +126,7 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
 
     if (param == NULL && strcmp(signature, "V"))
     {
-	LM_ERR("java_method_exec(): no paramter (parameter is NULL) but signature '%s' is not equals to 'V'.\n", signature);
+	LM_ERR("java_method_exec(): no parameter (parameter is NULL) but signature '%s' is not equals to 'V'.\n", signature);
 	return -1;
     }
 

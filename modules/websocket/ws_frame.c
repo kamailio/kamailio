@@ -672,7 +672,7 @@ int ws_frame_receive(void *data)
 			}
 			else
 			{
-				LM_ERR("no callback registerd for MSRP\n");
+				LM_ERR("no callback registered for MSRP\n");
 				return -1;
 			}
 		}
