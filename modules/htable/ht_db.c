@@ -223,7 +223,19 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			}
 
 			cnt++;
-			ktype = RES_ROWS(db_res)[i].values[1].val.int_val;
+			switch(RES_ROWS(db_res)[i].values[1].type)
+			{
+			case DB1_INT:
+				ktype = RES_ROWS(db_res)[i].values[1].val.int_val;
+				break;
+			case DB1_BIGINT:
+				ktype = RES_ROWS(db_res)[i].values[1].val.ll_val;
+				break;
+			default:
+				LM_ERR("Wrong db type [%d] for key_type column\n",
+					RES_ROWS(db_res)[i].values[1].type);
+				goto error;
+			}
 			if(last_ktype==1)
 			{
 				if(pname.len>0
@@ -260,24 +272,87 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			} else {
 				hname = kname;
 			}
-			vtype = RES_ROWS(db_res)[i].values[2].val.int_val;
-			if (RES_ROWS(db_res)[i].values[3].type != DB1_STRING) {
-				LM_ERR("Wrong db type [%d] for key_value column\n",
-					RES_ROWS(db_res)[i].values[3].type);
+			switch(RES_ROWS(db_res)[i].values[2].type)
+			{
+			case DB1_INT:
+				vtype = RES_ROWS(db_res)[i].values[2].val.int_val;
+				break;
+			case DB1_BIGINT:
+				vtype = RES_ROWS(db_res)[i].values[2].val.ll_val;
+				break;
+			default:
+				LM_ERR("Wrong db type [%d] for value_type column\n",
+					RES_ROWS(db_res)[i].values[2].type);
 				goto error;
 			}
-			kvalue.s = (char*)(RES_ROWS(db_res)[i].values[3].val.string_val);
-			if(kvalue.s==NULL) {
-				LM_ERR("null value in row %d\n", i);
-				goto error;
-			}
-			kvalue.len = strlen(kvalue.s);
 
 			/* add to hash */
 			if(vtype==1)
-				str2sint(&kvalue, &val.n);
-			else
-				val.s = kvalue;
+			{
+				switch(RES_ROWS(db_res)[i].values[3].type)
+				{
+				case DB1_STR:
+					kvalue = RES_ROWS(db_res)[i].values[3].val.str_val;
+					if(kvalue.s==NULL) {
+						LM_ERR("null value in row %d\n", i);
+						goto error;
+					}
+					str2sint(&kvalue, &val.n);
+					break;
+				case DB1_STRING:
+					kvalue.s = (char*)(RES_ROWS(db_res)[i].values[3].val.string_val);
+					if(kvalue.s==NULL) {
+						LM_ERR("null value in row %d\n", i);
+						goto error;
+					}
+					kvalue.len = strlen(kvalue.s);
+					str2sint(&kvalue, &val.n);
+					break;
+				case DB1_INT:
+					val.n = RES_ROWS(db_res)[i].values[3].val.int_val;
+					break;
+				case DB1_BIGINT:
+					val.n = RES_ROWS(db_res)[i].values[3].val.ll_val;
+					break;
+				default:
+					LM_ERR("Wrong db type [%d] for key_value column\n",
+						RES_ROWS(db_res)[i].values[3].type);
+					goto error;
+				}
+			} else {
+				switch(RES_ROWS(db_res)[i].values[3].type)
+				{
+				case DB1_STR:
+					kvalue = RES_ROWS(db_res)[i].values[3].val.str_val;
+					if(kvalue.s==NULL) {
+						LM_ERR("null value in row %d\n", i);
+						goto error;
+					}
+					val.s = kvalue;
+					break;
+				case DB1_STRING:
+					kvalue.s = (char*)(RES_ROWS(db_res)[i].values[3].val.string_val);
+					if(kvalue.s==NULL) {
+						LM_ERR("null value in row %d\n", i);
+						goto error;
+					}
+					kvalue.len = strlen(kvalue.s);
+					val.s = kvalue;
+					break;
+				case DB1_INT:
+					kvalue.s = int2str(RES_ROWS(db_res)[i].values[3].val.int_val, &kvalue.len);
+					val.s = kvalue;
+					break;
+				case DB1_BIGINT:
+					kvalue.s = int2str(RES_ROWS(db_res)[i].values[3].val.ll_val, &kvalue.len);
+					val.s = kvalue;
+					break;
+				default:
+					LM_ERR("Wrong db type [%d] for key_value column\n",
+						RES_ROWS(db_res)[i].values[3].type);
+					goto error;
+				}
+			}
 				
 			if(ht_set_cell(ht, &hname, (vtype)?0:AVP_VAL_STR, &val, mode))
 			{
