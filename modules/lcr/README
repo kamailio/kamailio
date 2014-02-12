@@ -64,7 +64,7 @@ Juha Heinanen
               3.37. dont_strip_or_tag_flag (integer)
               3.38. fetch_rows (integer)
               3.39. ping_interval (integer)
-              3.40. ping_inactive_threshold (integer)
+              3.40. ping_inactivate_threshold (integer)
               3.41. ping_valid_reply_codes (string)
               3.42. ping_from (string)
               3.43. ping_socket (string)
@@ -199,7 +199,7 @@ Chapter 1. Admin Guide
         3.37. dont_strip_or_tag_flag (integer)
         3.38. fetch_rows (integer)
         3.39. ping_interval (integer)
-        3.40. ping_inactive_threshold (integer)
+        3.40. ping_inactivate_threshold (integer)
         3.41. ping_valid_reply_codes (string)
         3.42. ping_from (string)
         3.43. ping_socket (string)
@@ -351,7 +351,7 @@ Chapter 1. Admin Guide
    3.37. dont_strip_or_tag_flag (integer)
    3.38. fetch_rows (integer)
    3.39. ping_interval (integer)
-   3.40. ping_inactive_threshold (integer)
+   3.40. ping_inactivate_threshold (integer)
    3.41. ping_valid_reply_codes (string)
    3.42. ping_from (string)
    3.43. ping_socket (string)
@@ -831,7 +831,7 @@ modparam("lcr", "fetch_rows", 3000)
 modparam("lcr", "ping_interval", 15)
 ...
 
-3.40. ping_inactive_threshold (integer)
+3.40. ping_inactivate_threshold (integer)
 
    Tells after how many failures (= inactivate_gw() function calls) a
    gateway is marked as inactive.

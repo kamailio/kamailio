@@ -1032,7 +1032,7 @@ modparam("lcr", "ping_interval", 15)
 	</section>
 
 	<section>
-		<title><varname>ping_inactive_threshold</varname> (integer)</title>
+		<title><varname>ping_inactivate_threshold</varname> (integer)</title>
 		<para>
 		  Tells after how many failures (= inactivate_gw() function
 		  calls) a gateway is marked as inactive.
@@ -1040,16 +1040,16 @@ modparam("lcr", "ping_interval", 15)
 		<para>
 		<emphasis>
 			Default value is <quote>1</quote>, i.e., gateway is
-			marked inactive after first failure.
+			inactivated after first failure.
 		</emphasis>
 		</para>
 		<example>
 		<title>
-		Set <varname>ping_inactive_threshold</varname> parameter
+		Set <varname>ping_inactivate_threshold</varname> parameter
 		</title>
 <programlisting format="linespecific">
 ...
-modparam("lcr", "ping_inactive_threshold", 3)
+modparam("lcr", "ping_inactivate_threshold", 3)
 ...
 </programlisting>
 		</example>
