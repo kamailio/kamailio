@@ -407,7 +407,7 @@ int get_timestamps(struct sip_msg * req, struct sip_msg * reply, time_t * req_ti
  *
  */
 
-Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, AAASession ** authp, int dir) {
+Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, AAASession ** authp, int dir, str asserted_identity, str called_asserted_identity, str subscription_id, int subscription_id_type) {
 
     Ro_CCR_t * ro_ccr_data = 0;
     AAASession * auth = NULL;
@@ -427,17 +427,9 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
 
     if (!get_sip_header_info(req, reply, &acc_record_type, &sip_method, &event, &expires, &callid, &from_uri, &to_uri))
         goto error;
-    if (dir == RO_ORIG_DIRECTION) {
-        user_name.s = from_uri.s;
-        user_name.len = from_uri.len;
-    } else if (dir == RO_TERM_DIRECTION){
-        user_name.s = to_uri.s;
-        user_name.len = to_uri.len;
-    } else {
-    	LM_CRIT("don't know what to do in unknown mode - should we even get here\n");
-    	goto error;
-    }
-
+    user_name.s = subscription_id.s;
+    user_name.len = subscription_id.len;
+	
     /*	if(!get_ims_charging_info(req, reply, &icid, &orig_ioi, &term_ioi))
                     goto error;
      */
@@ -453,19 +445,15 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, &reply_timestamp, NULL)))
         goto error;
 
-    if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &from_uri, &to_uri, &icid, &orig_ioi, &term_ioi, dir)))
+    if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &asserted_identity, &called_asserted_identity, &icid, &orig_ioi, &term_ioi, dir)))
         goto error;
     event_type = 0;
     time_stamps = 0;
 
     
-    subscr.id.s = from_uri.s;
-    subscr.id.len = from_uri.len;
-    if (strncasecmp(subscr.id.s,"tel:",4)==0) {
-	subscr.type = Subscription_Type_MSISDN;
-    }else{
-	subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
-    }
+    subscr.id.s = subscription_id.s;
+    subscr.id.len = subscription_id.len;
+    subscr.type = subscription_id_type;
     
     ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr);
     if (!ro_ccr_data) {
@@ -504,12 +492,12 @@ error :
     return NULL;
 }
 
-int sip_create_ro_ccr_data(struct sip_msg * msg, int dir, Ro_CCR_t ** ro_ccr_data, AAASession ** auth) {
+int sip_create_ro_ccr_data(struct sip_msg * msg, int dir, Ro_CCR_t ** ro_ccr_data, AAASession ** auth, str asserted_identity, str called_asserted_identity, str subscription_id, int subscription_id_type) {
 
     if (msg->first_line.type == SIP_REQUEST) {
         /*end of session*/
         if (strncmp(msg->first_line.u.request.method.s, "INVITE", 6) == 0) {
-            if (!(*ro_ccr_data = dlg_create_ro_session(msg, NULL, auth, dir)))
+            if (!(*ro_ccr_data = dlg_create_ro_session(msg, NULL, auth, dir, asserted_identity, called_asserted_identity, subscription_id, subscription_id_type)))
                 goto error;
         }
     } else {
@@ -540,6 +528,8 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
 
     str sip_method = str_init("dummy");
     str sip_event = str_init("dummy");
+    
+    str user_name = {0, 0};
 
     time_t req_timestamp;
 
@@ -548,7 +538,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     LM_DBG("Sending interim CCR request for (usage:new) [%i:%i] seconds for user [%.*s] using session id [%.*s]",
     						used,
     						reserve,
-    						ro_session->from_uri.len, ro_session->from_uri.s,
+    						ro_session->asserted_identity.len, ro_session->asserted_identity.s,
     						ro_session->ro_session_id.len, ro_session->ro_session_id.s);
 
     req_timestamp = time(0);
@@ -556,23 +546,39 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, NULL, NULL)))
         goto error;
 
-    if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->from_uri, &ro_session->to_uri, 0, 0, 0, node_role)))
+    if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->asserted_identity, &ro_session->called_asserted_identity, 0, 0, 0, node_role)))
         goto error;
 
     LM_DBG("Created IMS information\n");
 
     event_type = 0;
 
-    subscr.type = Subscription_Type_IMPU;
-    //TODO: need to check which direction. for ORIG we use from_uri. for TERM we use to_uri
-    subscr.id.s = ro_session->from_uri.s;
-    subscr.id.len = ro_session->from_uri.len;
+    if (ro_session->direction == RO_ORIG_DIRECTION) {
+        subscr.id = ro_session->asserted_identity;
+        
+	
+    } else if (ro_session->direction == RO_TERM_DIRECTION){
+        subscr.id = ro_session->called_asserted_identity;
+    } else {
+    	LM_CRIT("don't know what to do in unknown mode - should we even get here\n");
+    	goto error;
+    }
+    
+    //getting subscription id type
+    if (strncasecmp(subscr.id.s,"tel:",4)==0) {
+	subscr.type = Subscription_Type_MSISDN;
+    }else{
+	subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
+    }
+    
+    user_name.s = subscr.id.s;
+    user_name.len = subscr.id.len;
 
     acc_record_type = AAA_ACCT_INTERIM;
 
-    ro_ccr_data = new_Ro_CCR(acc_record_type, &ro_session->from_uri, ims_info, &subscr);
+    ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr);
     if (!ro_ccr_data) {
-        LM_ERR("dlg_create_ro_session: no memory left for generic\n");
+        LM_ERR("no memory left for generic\n");
         goto error;
     }
     ims_info = NULL;
@@ -734,7 +740,8 @@ void send_ccr_stop(struct ro_session *ro_session) {
     subscription_id_t subscr;
     time_stamps_t *time_stamps;
     unsigned int used = 0;
-
+    str user_name = {0, 0};
+    
     if (ro_session->event_type != pending) {
         used = time(0) - ro_session->last_event_timestamp;
     }
@@ -750,26 +757,45 @@ void send_ccr_stop(struct ro_session *ro_session) {
     time_t req_timestamp;
 
     event_type = new_event_type(&sip_method, &sip_event, 0);
-
+    
     LM_DBG("Sending CCR STOP request for for user:[%.*s] using session id:[%.*s] and units:[%d]\n",
-    		ro_session->from_uri.len, ro_session->from_uri.s, ro_session->ro_session_id.len, ro_session->ro_session_id.s, used);
+    		ro_session->asserted_identity.len, ro_session->asserted_identity.s, ro_session->ro_session_id.len, ro_session->ro_session_id.s, used);
 
     req_timestamp = time(0);
 
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, NULL, NULL)))
         goto error0;
 
-    if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->from_uri, &ro_session->to_uri, 0, 0, 0, node_role)))
+    if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->asserted_identity, &ro_session->called_asserted_identity, 0, 0, 0, node_role)))
         goto error0;
     
     event_type = 0;
 
-    subscr.type = Subscription_Type_IMPU;
-    subscr.id = ro_session->from_uri;
-
+    if (ro_session->direction == RO_ORIG_DIRECTION) {
+        subscr.id = ro_session->asserted_identity;
+        
+	
+    } else if (ro_session->direction == RO_TERM_DIRECTION){
+        subscr.id = ro_session->called_asserted_identity;
+    } else {
+    	LM_CRIT("don't know what to do in unknown mode - should we even get here\n");
+    	goto error0;
+    }
+    
+    //getting subscription id type
+    if (strncasecmp(subscr.id.s,"tel:",4)==0) {
+	subscr.type = Subscription_Type_MSISDN;
+    }else{
+	subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
+    }
+    
+    user_name.s = subscr.id.s;
+    user_name.len = subscr.id.len;
+    
+    
     acc_record_type = AAA_ACCT_STOP;
 
-    ro_ccr_data = new_Ro_CCR(acc_record_type, &ro_session->from_uri, ims_info, &subscr);
+    ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr);
     if (!ro_ccr_data) {
         LM_ERR("dlg_create_ro_session: no memory left for generic\n");
         goto error0;
@@ -811,7 +837,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
         LM_ERR("Problem adding User-Equipment data\n");
     }
     
-    if (!Ro_add_subscription_id(ccr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &ro_session->from_uri)) {
+    if (!Ro_add_subscription_id(ccr, subscr.type, &subscr.id)) {
         LM_ERR("Problem adding Subscription ID data\n");
     }
     
@@ -904,31 +930,64 @@ error:
 int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units,
 						cfg_action_t* action, unsigned int tindex, unsigned int tlabel) {
 	str session_id = { 0, 0 },
-		asserted_id_uri	= { 0, 0 };
-	AAASession* cc_acc_session = NULL;
+		called_asserted_identity = {0 , 0 },
+		subscription_id = {0 , 0 },
+	asserted_identity = {0 , 0 };
+    int subscription_id_type = AVP_EPC_Subscription_Id_Type_End_User_SIP_URI;
+    AAASession* cc_acc_session = NULL;
     Ro_CCR_t * ro_ccr_data = 0;
     AAAMessage * ccr = 0;
     int dir = 0;
     struct ro_session *new_session = 0;
     struct session_setup_data *ssd = shm_malloc(sizeof(struct session_setup_data)); // lookup structure used to load session info from cdp callback on CCA
 
+    struct hdr_field *h=0;
+    
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
 
     //make sure we can get the dialog! if not, we can't continue
-	struct dlg_cell* dlg = dlgb.get_dlg(msg);
-	if (!dlg) {
-		LM_DBG("Unable to find dialog and cannot do Ro charging without it\n");
-		goto error;
-	}
+    struct dlg_cell* dlg = dlgb.get_dlg(msg);
+    if (!dlg) {
+	    LM_DBG("Unable to find dialog and cannot do Ro charging without it\n");
+	    goto error;
+    }
 
-	if ((asserted_id_uri = cscf_get_asserted_identity(msg)).len == 0) {
-		LM_DBG("No P-Asserted-Identity hdr found. Using From hdr");
 
-		asserted_id_uri	= dlg->from_uri;
-	}
-
-	dir = get_direction_as_int(direction);
+    //getting asserted identity
+    if ((asserted_identity = cscf_get_asserted_identity(msg)).len == 0) {
+	    LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity");
+	    asserted_identity	= dlg->from_uri;
+    }
+    
+    
+    //getting called asserted identity
+    called_asserted_identity = cscf_get_called_party_id(msg, &h);
+    if (!called_asserted_identity.len){
+	    LM_DBG("No P-Called-Identity hdr found. Using request URI for called_asserted_identity");
+	    called_asserted_identity	= msg->first_line.u.request.uri;
+    }
+    
+    dir = get_direction_as_int(direction);
+    
+    if (dir == RO_ORIG_DIRECTION) {
+        subscription_id.s = asserted_identity.s;
+        subscription_id.len = asserted_identity.len;
+	
+    } else if (dir == RO_TERM_DIRECTION){
+        subscription_id.s = called_asserted_identity.s;
+        subscription_id.len = called_asserted_identity.len;
+    } else {
+    	LM_CRIT("don't know what to do in unknown mode - should we even get here\n");
+    	goto error;
+    }
+    
+    //getting subscription id type
+    if (strncasecmp(subscription_id.s,"tel:",4)==0) {
+	subscription_id_type = Subscription_Type_MSISDN;
+    }else{
+	subscription_id_type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
+    }
 
     str mac	= {0,0};
     if (get_mac_avp_value(msg, &mac) != 0)
@@ -936,7 +995,7 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 
 	//create a session object without auth and diameter session id - we will add this later.
 	new_session = build_new_ro_session(dir, 0, 0, &session_id, &dlg->callid,
-			&asserted_id_uri, &msg->first_line.u.request.uri, &mac, dlg->h_entry, dlg->h_id,
+			&asserted_identity, &called_asserted_identity, &mac, dlg->h_entry, dlg->h_id,
 			reservation_units, 0);
 
 	if (!new_session) {
@@ -949,7 +1008,7 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 	ssd->tlabel	= tlabel;
 	ssd->ro_session	= new_session;
 
-    if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &cc_acc_session))
+    if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &cc_acc_session, asserted_identity, called_asserted_identity, subscription_id, subscription_id_type))
         goto error;
 
     if (!ro_ccr_data)
@@ -981,7 +1040,7 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
         goto error;
     }
 
-    if (!Ro_add_subscription_id(ccr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &asserted_id_uri)) {
+    if (!Ro_add_subscription_id(ccr, subscription_id_type, &subscription_id)) {
         LM_ERR("Problem adding Subscription ID data\n");
         goto error;
     }

@@ -174,10 +174,10 @@ void destroy_dlg_table(void) {
     return;
 }
 
-struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *from_uri, str* to_uri, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout){
+struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout){
     LM_DBG("Building Ro Session **********");
     char *p;
-    unsigned int len = session_id->len + callid->len + from_uri->len + to_uri->len + mac->len + sizeof (struct ro_session);
+    unsigned int len = session_id->len + callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + sizeof (struct ro_session);
     struct ro_session *new_ro_session = (struct ro_session*) shm_malloc(len);
 
     if (!new_ro_session) {
@@ -220,15 +220,15 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     memcpy(p, session_id->s, session_id->len);
     p += session_id->len;
 
-    new_ro_session->from_uri.s = p;
-    new_ro_session->from_uri.len = from_uri->len;
-    memcpy(p, from_uri->s, from_uri->len);
-    p += from_uri->len;
+    new_ro_session->asserted_identity.s = p;
+    new_ro_session->asserted_identity.len = asserted_identity->len;
+    memcpy(p, asserted_identity->s, asserted_identity->len);
+    p += asserted_identity->len;
 
-    new_ro_session->to_uri.s = p;
-    new_ro_session->to_uri.len = to_uri->len;
-    memcpy(p, to_uri->s, to_uri->len);
-    p += to_uri->len;
+    new_ro_session->called_asserted_identity.s = p;
+    new_ro_session->called_asserted_identity.len = called_asserted_identity->len;
+    memcpy(p, called_asserted_identity->s, called_asserted_identity->len);
+    p += called_asserted_identity->len;
 
     new_ro_session->avp_value.mac.s		= p;
     new_ro_session->avp_value.mac.len	= mac->len;

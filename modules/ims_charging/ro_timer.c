@@ -409,8 +409,8 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 			LM_DBG("Found a session to re-apply for timing [%.*s] and user is [%.*s]\n",
 					ro_session->ro_session_id.len,
 					ro_session->ro_session_id.s,
-					ro_session->from_uri.len,
-					ro_session->from_uri.s);
+					ro_session->asserted_identity.len,
+					ro_session->asserted_identity.s);
 
 			LM_DBG("Call session has been active for %i seconds. The last reserved secs was [%i] and the last event was [%i seconds] ago",
 					(unsigned int) call_time,

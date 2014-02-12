@@ -31,8 +31,8 @@ struct ro_session {
     struct ro_session* prev;
     str ro_session_id;
     str callid;
-    str from_uri;
-    str to_uri;
+    str asserted_identity;
+    str called_asserted_identity;
     unsigned int hop_by_hop;
     struct ro_tl ro_tl;
     unsigned int reserved_secs;
@@ -170,7 +170,7 @@ void link_ro_session(struct ro_session *ro_session, int n);
 
 void remove_aaa_session(str *session_id);
 
-struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *from_uri, str* to_uri, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout);
+struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout);
 
 /*!
  * \brief Refefence a ro_session with locking
