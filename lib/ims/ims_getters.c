@@ -1334,8 +1334,8 @@ str* cscf_get_service_route(struct sip_msg *msg, int *size, int is_shm) {
 		while (h) {
 			if (h->name.len == 13
 					&& strncasecmp(h->name.s, "Service-Route", 13) == 0) {
-				h->parsed = 0;
 				r = (rr_t*) h->parsed;
+				h->parsed = 0;
 				free_rr(&r);
 			}
 			h = h->next;
