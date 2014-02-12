@@ -649,6 +649,8 @@ error:
 	return 0;
 }
 
+#define RPC_DATE_BUF_LEN 21
+
 static const char* htable_dump_doc[2] = {
 	"Dump the contents of hash table.",
 	0
@@ -710,6 +712,8 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 	ht_cell_t *htc;	/*!< One HT cell */
 	void* th;
 	void* vh;
+	struct tm *_expire_t;
+	char expire_buf[RPC_DATE_BUF_LEN]="NEVER";
 
 	if (rpc->scan(c, "SS", &htname, &keyname) < 2) {
 		rpc->fault(c, 500, "Not enough parameters (htable name and key name)");
@@ -742,14 +746,27 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 		goto error;
 	}
 
+	if (htc->expire) {
+		_expire_t = localtime(&htc->expire);
+		strftime(expire_buf, RPC_DATE_BUF_LEN - 1,
+			"%Y-%m-%d %H:%M:%S", _expire_t);
+	}
+	LM_NOTICE("got expire [%s]\n", expire_buf);
+
 	if(htc->flags&AVP_VAL_STR) {
-		if(rpc->struct_add(vh, "SS", "name",  &htc->name.s, "value", &htc->value.s)<0)
+		if(rpc->struct_add(vh, "SSds", "name",  &htc->name.s,
+							"value", &htc->value.s,
+							"flags", htc->flags,
+							"expire", expire_buf)<0)
 		{
 			rpc->fault(c, 500, "Internal error adding item");
 			goto error;
 		}
 	} else {
-		if(rpc->struct_add(vh, "Sd", "name",  &htc->name.s, "value", (int)htc->value.n))
+		if(rpc->struct_add(vh, "Sdds", "name",  &htc->name.s,
+							"value", (int)htc->value.n,
+							"flags", htc->flags,
+							"expire", expire_buf)<0)
 		{
 			rpc->fault(c, 500, "Internal error adding item");
 			goto error;
@@ -892,7 +909,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 				} else {
 					if(rpc->struct_add(vh, "Sd",
 							"name",  &it->name.s,
-							"value", (int)it->value.n))
+							"value", (int)it->value.n)<0)
 					{
 						rpc->fault(c, 500, "Internal error adding item");
 						goto error;
