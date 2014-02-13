@@ -2367,7 +2367,7 @@ static void ping_callback(struct cell *t, int type, struct tmcb_params *ps)
 	(check_extra_codes(ps->code) == 0)) {
 	if ((uri.len == gw->uri_len) &&
 	    (strncmp(uri.s, &(gw->uri[0]), uri.len) == 0)) {
-	    LM_DBG("activating gw with uri %.*s\n", uri.len, uri.s);
+	    LM_INFO("activating gw with uri %.*s\n", uri.len, uri.s);
 	    gw->state = GW_ACTIVE;
 	} else {
 	    LM_DBG("ignoring OPTIONS reply due to lcr.reload\n");
