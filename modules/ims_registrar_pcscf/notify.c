@@ -268,6 +268,7 @@ int process_body(struct sip_msg* msg, str notify_body, udomain_t * domain) {
 			    LM_ERR("wrong format[%.*s] - failed unsubscribing to reginfo\n",aor.len, aor.s);
 		    }
 		    reginfo_subscribe_real(msg, presentity_uri_pv, 0, 0);
+		    pv_elem_free_all(presentity_uri_pv);
 		}
 		
 		/* Now lets process the Contact's from this Registration: */
