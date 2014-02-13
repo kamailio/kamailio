@@ -2058,7 +2058,7 @@ next:
     add_gws_into_avps(gws, matched_gws, gw_index, &ruri_user);
 
     /* Add lcr_id into AVP */
-    if (defunct_capability_param > 0) {
+    if ((defunct_capability_param > 0) || (ping_interval_param > 0)) {
 	delete_avp(lcr_id_avp_type, lcr_id_avp);
 	val.n = lcr_id;
 	add_avp(lcr_id_avp_type, lcr_id_avp, val);
@@ -2513,7 +2513,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     }
 
     /* Add index of selected gw to defunct gw AVP */
-    if (defunct_capability_param > 0) {
+    if ((defunct_capability_param > 0) || (ping_interval_param > 0)) {
 	delete_avp(defunct_gw_avp_type, defunct_gw_avp);
 	val.n = gw_index;
 	add_avp(defunct_gw_avp_type, defunct_gw_avp, val);
