@@ -98,7 +98,7 @@ int I_perform_location_information_request(struct sip_msg* msg, char* route, cha
 
     /* extract data from message */
     if (orig) {
-        public_identity = cscf_get_asserted_identity(msg);
+        public_identity = cscf_get_asserted_identity(msg, 0);
     } else {
         public_identity = cscf_get_public_identity_from_requri(msg);
     }

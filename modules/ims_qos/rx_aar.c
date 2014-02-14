@@ -411,7 +411,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
         AAASession* auth, char* direction, saved_transaction_t* saved_t_data) {
 
     AAAMessage* aar = 0;
-
+    int must_free_asserted_identity = 0;
     
     str identifier;
     int identifier_type;
@@ -494,17 +494,20 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
     
     if (dlg_direction == DLG_MOBILE_ORIGINATING) {
 	LM_DBG("originating direction\n");
-	if ((identifier = cscf_get_asserted_identity(req)).len == 0) {
+	if ((identifier = cscf_get_asserted_identity(req, 1)).len == 0) {
 	    LM_DBG("No P-Asserted-Identity hdr found in request. Using From hdr in req");
 
 	    if (!cscf_get_from_uri(req, &identifier)) {
 		    LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
 		    goto error;
 	    }
+	} else {
+	                must_free_asserted_identity = 1;
 	}
     } else {
 	LM_DBG("terminating direction\n");
-	if ((identifier = cscf_get_asserted_identity(res)).len == 0) {
+
+	if ((identifier = cscf_get_asserted_identity(res, 0)).len == 0) {
 	    LM_DBG("No P-Asserted-Identity hdr found in response. Using To hdr in resp");
 
 	    if (!cscf_get_to_uri(res, &identifier)) {
@@ -522,6 +525,10 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
     
     
     rx_add_subscription_id_avp(aar, identifier, identifier_type);
+    if (must_free_asserted_identity) {
+            pkg_free(identifier.s);
+    }
+
 
     LM_DBG("Adding reservation priority...\n");
     /* Add Reservation Priority AVP*/

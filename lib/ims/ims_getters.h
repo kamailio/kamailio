@@ -153,9 +153,10 @@ int cscf_has_originating(struct sip_msg *msg, char *str1, char *str2);
 /**
  * Looks for the P-Asserted-Identity header and extracts its content
  * @param msg - the sip message
+ * @is_shm - is the message a shm message
  * @returns the asserted identity
  */
-str cscf_get_asserted_identity(struct sip_msg *msg);
+str cscf_get_asserted_identity(struct sip_msg *msg, int is_shm);
 /**
  * Extracts the realm from a SIP/TEL URI. 
  * - SIP - the hostname

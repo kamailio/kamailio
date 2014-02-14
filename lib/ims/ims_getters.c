@@ -388,13 +388,32 @@ str s_asserted_identity={"P-Asserted-Identity",19};
  * @param msg - the sip message
  * @returns the asserted identity
  */
-str cscf_get_asserted_identity(struct sip_msg *msg)
-{
-	str uri = {0,0};
-	if (!msg) return uri;
-	if((parse_pai_header(msg) == 0) && (msg->pai) && (msg->pai->parsed)) {
+str cscf_get_asserted_identity(struct sip_msg *msg, int is_shm) {
+	int len;
+	str uri = { 0, 0 };
+
+	if (!msg || !msg->pai)
+		return uri;
+
+	if ((parse_pai_header(msg) == 0) && (msg->pai) && (msg->pai->parsed)) {
 		to_body_t *pai = get_pai(msg)->id;
-		return pai->uri;
+		if (!is_shm)
+			return pai->uri;
+
+		//make a pkg malloc str to return to consuming function
+		len = pai->uri.len + 1;
+		uri.s = (char*) pkg_malloc(pai->uri.len + 1);
+		if (!uri.s) {
+			LM_ERR("no more pkg mem\n");
+			return uri;
+		}
+		memset(uri.s, 0, len);
+		memcpy(uri.s, pai->uri.s, pai->uri.len);
+		uri.len = pai->uri.len;
+
+		p_id_body_t* ptr = (p_id_body_t*) msg->pai->parsed;
+		msg->pai->parsed = 0;
+		free_pai_ppi_body(ptr);
 	}
 	return uri;
 }
@@ -855,7 +874,7 @@ int cscf_is_initial_request(struct sip_msg *msg)
 int cscf_get_originating_user( struct sip_msg * msg, str *uri )
 {
 	struct to_body * from;
-	*uri = cscf_get_asserted_identity(msg);
+	*uri = cscf_get_asserted_identity(msg, 0);
 	if (!uri->len) {		
 		/* Fallback to From header */
 		if ( parse_from_header( msg ) == -1 ) {

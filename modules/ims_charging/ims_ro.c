@@ -361,7 +361,7 @@ int get_sip_header_info(struct sip_msg * req,
     *expires = cscf_get_expires_hdr(req, 0);
     *callid = cscf_get_call_id(req, NULL);
 
-    if ((*asserted_id_uri = cscf_get_asserted_identity(req)).len == 0) {
+    if ((*asserted_id_uri = cscf_get_asserted_identity(req, 0)).len == 0) {
     	LM_DBG("No P-Asserted-Identity hdr found. Using From hdr");
 
     	if (!cscf_get_from_uri(req, asserted_id_uri)) {
@@ -955,7 +955,7 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 
 
     //getting asserted identity
-    if ((asserted_identity = cscf_get_asserted_identity(msg)).len == 0) {
+    if ((asserted_identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
 	    LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity");
 	    asserted_identity	= dlg->from_uri;
     }

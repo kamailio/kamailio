@@ -987,7 +987,7 @@ int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction, char* ro
     enum cscf_dialog_direction dir = cscf_get_dialog_direction(direction->s);
     switch (dir) {
         case CSCF_MOBILE_ORIGINATING:
-            public_identity = cscf_get_asserted_identity(_m);
+            public_identity = cscf_get_asserted_identity(_m, 0);
             break;
         case CSCF_MOBILE_TERMINATING:
             public_identity = cscf_get_public_identity_from_requri(_m);

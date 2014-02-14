@@ -153,7 +153,7 @@ int can_publish_reg(struct sip_msg *msg, char *_t, char *str2) {
 	    goto done;
 	}
 
-	asserted_id = cscf_get_asserted_identity(msg);
+	asserted_id = cscf_get_asserted_identity(msg, 0);
 	if (!asserted_id.len) {
 	    LM_ERR("P-Asserted-Identity empty.\n");
 	    goto error;
@@ -312,7 +312,7 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     }
 
 
-    asserted_id = cscf_get_asserted_identity(msg);
+    asserted_id = cscf_get_asserted_identity(msg, 0);
     if (!asserted_id.len) {
         LM_ERR("P-Asserted-Identity empty.\n");
         goto error;
