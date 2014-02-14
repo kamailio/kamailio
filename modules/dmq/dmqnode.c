@@ -228,8 +228,12 @@ dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri)
 void destroy_dmq_node(dmq_node_t* node, int shm)
 {
 	if(shm) {
+		if (node->params!=NULL)
+			shm_free_params(node->params);
 		shm_free_node(node);
 	} else {
+		if (node->params!=NULL)
+			free_params(node->params);
 		pkg_free_node(node);
 	}
 }
@@ -283,8 +287,6 @@ void shm_free_node(dmq_node_t* node)
 {
 	if (node->orig_uri.s!=NULL) 
 		shm_free(node->orig_uri.s);
-	if (node->params!=NULL) 
-		shm_free_params(node->params);
 	shm_free(node);
 }
 
@@ -295,8 +297,6 @@ void pkg_free_node(dmq_node_t* node)
 {
 	if (node->orig_uri.s!=NULL) 
 		pkg_free(node->orig_uri.s);
-        if (node->params!=NULL)
-                free_params(node->params);
 	pkg_free(node);
 }
 
@@ -312,7 +312,7 @@ int del_dmq_node(dmq_node_list_t* list, dmq_node_t* node)
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
 			*prev = cur->next;
-			shm_free_node(cur);
+			destroy_dmq_node(cur, 1);
 			lock_release(&list->lock);
 			return 1;
 		}
