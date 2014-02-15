@@ -52,7 +52,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream)
     /* Allocate memory and copy */
     char* data;
 
-    data = (char*)malloc((size* nmemb) + 1);
+    data = (char*)pkg_malloc((size* nmemb) + 1);
     if (data == NULL) {
 	LM_ERR("cannot allocate memory for stream\n");
 	return CURLE_WRITE_ERROR;
@@ -138,10 +138,12 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
     if (_post) {
 	pkg_free(post);
     }
-    curl_easy_cleanup(curl);
 
     if (res != CURLE_OK) {
 	LM_ERR("failed to perform curl\n");
+	curl_easy_cleanup(curl);
+	if(stream)
+	    pkg_free(stream);
 	return -1;
     }
 
@@ -157,11 +159,13 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 	}
 	val.rs.s = stream;
 	val.rs.len = at - stream;
-	LM_DBG("http)query result: %.*s\n", val.rs.len, val.rs.s);
+	LM_DBG("http_query result: %.*s\n", val.rs.len, val.rs.s);
 	val.flags = PV_VAL_STR;
 	dst = (pv_spec_t *)_dst;
 	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
     }
 	
+    curl_easy_cleanup(curl);
+    pkg_free(stream);
     return stat;
 }
