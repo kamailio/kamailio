@@ -36,15 +36,15 @@ Richard Fuchs
 
    Sipwise GmbH
 
-   Copyright © 2003-2008 Sippy Software, Inc.
+   Copyright (c) 2003-2008 Sippy Software, Inc.
 
-   Copyright © 2005 Voice Sistem SRL
+   Copyright (c) 2005 Voice Sistem SRL
 
-   Copyright © 2009-2012 TuTPro Inc.
+   Copyright (c) 2009-2014 TuTPro Inc.
 
-   Copyright © 2010 VoIPEmbedded Inc.
+   Copyright (c) 2010 VoIPEmbedded Inc.
 
-   Copyright © 2013 Sipwise GmbH
+   Copyright (c) 2013 Sipwise GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -65,6 +65,7 @@ Richard Fuchs
               4.3. rtpproxy_tout (integer)
               4.4. rtpproxy_retr (integer)
               4.5. extra_id_pv (string)
+              4.6. setid_avp (string)
 
         5. Functions
 
@@ -94,15 +95,16 @@ Richard Fuchs
    1.3. Set rtpproxy_tout parameter
    1.4. Set rtpproxy_retr parameter
    1.5. Set extra_id_pv parameter
-   1.6. set_rtp_proxy_set usage
-   1.7. rtpproxy_offer usage
-   1.8. rtpproxy_answer usage
-   1.9. rtpproxy_destroy usage
-   1.10. rtpproxy_manage usage
-   1.11. start_recording usage
-   1.12. $rtpstat Usage
-   1.13. nh_enable_rtpp usage
-   1.14. nh_show_rtpp usage
+   1.6. Set setid_avp parameter
+   1.7. set_rtp_proxy_set usage
+   1.8. rtpproxy_offer usage
+   1.9. rtpproxy_answer usage
+   1.10. rtpproxy_destroy usage
+   1.11. rtpproxy_manage usage
+   1.12. start_recording usage
+   1.13. $rtpstat Usage
+   1.14. nh_enable_rtpp usage
+   1.15. nh_show_rtpp usage
 
 Chapter 1. Admin Guide
 
@@ -122,6 +124,7 @@ Chapter 1. Admin Guide
         4.3. rtpproxy_tout (integer)
         4.4. rtpproxy_retr (integer)
         4.5. extra_id_pv (string)
+        4.6. setid_avp (string)
 
    5. Functions
 
@@ -171,12 +174,20 @@ Chapter 1. Admin Guide
    unforce_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer() functions -
    see the set_rtp_proxy_set() function.
 
+   Another way to select the set is to define setid_avp module parameter
+   and assign setid to the defined avp before calling rtpproxy_offer() or
+   rtpproxy_manage() function. If forwarding of the requests fails and
+   there is another branch to try, remember to unset the avp after calling
+   rtpproxy_destroy() function.
+
    For backward compatibility reasons, a set with no id take by default
    the id 0. Also if no set is explicitly set before unforce_rtp_proxy(),
    rtpproxy_offer() or rtpproxy_answer() the 0 id set will be used.
 
    IMPORTANT: if you use multiple sets, take care and use the same set for
-   both rtpproxy_offer()/rtpproxy_answer() and unforce_rtpproxy()!!
+   both rtpproxy_offer()/rtpproxy_answer() and unforce_rtpproxy()!! If the
+   set was selected using setid_avp, the avp needs to be set only once
+   before rtpproxy_offer() or rtpproxy_manage() call.
 
 3. Dependencies
 
@@ -202,6 +213,7 @@ Chapter 1. Admin Guide
    4.3. rtpproxy_tout (integer)
    4.4. rtpproxy_retr (integer)
    4.5. extra_id_pv (string)
+   4.6. setid_avp (string)
 
 4.1. rtpproxy_sock (string)
 
@@ -273,6 +285,19 @@ modparam("rtpproxy-ng", "rtpproxy_retr", 2)
 modparam("rtpproxy-ng", "extra_id_pv", "$avp(extra_id)")
 ...
 
+4.6. setid_avp (string)
+
+   The parameter defines an AVP that, if set, determines which rtpproxy
+   set rtpproxy_offer(), rtpproxy_answer(), rtpproxy_destroy(), and
+   rtpproxy_manage() functions use.
+
+   There is no default value.
+
+   Example 1.6. Set setid_avp parameter
+...
+modparam("rtpproxy-ng", "setid_avp", "$avp(setid)")
+...
+
 5. Functions
 
    5.1. set_rtp_proxy_set(setid)
@@ -283,7 +308,7 @@ modparam("rtpproxy-ng", "extra_id_pv", "$avp(extra_id)")
    5.6. rtpproxy_manage([flags [, ip_address]])
    5.7. start_recording()
 
-5.1. set_rtp_proxy_set(setid)
+5.1.  set_rtp_proxy_set(setid)
 
    Sets the Id of the rtpproxy set to be used for the next
    unforce_rtp_proxy(), rtpproxy_offer(), rtpproxy_answer() or
@@ -293,13 +318,13 @@ modparam("rtpproxy-ng", "extra_id_pv", "$avp(extra_id)")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.6. set_rtp_proxy_set usage
+   Example 1.7. set_rtp_proxy_set usage
 ...
 set_rtp_proxy_set("2");
 rtpproxy_offer();
 ...
 
-5.2. rtpproxy_offer([flags [, ip_address]])
+5.2.  rtpproxy_offer([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on INVITE for the cases the SDPs are in INVITE and 200 OK
@@ -423,7 +448,7 @@ rtpproxy_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.7. rtpproxy_offer usage
+   Example 1.8. rtpproxy_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -455,7 +480,7 @@ onreply_route[2]
 ...
 }
 
-5.3. rtpproxy_answer([flags [, ip_address]])
+5.3.  rtpproxy_answer([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on 200 OK for the cases the SDPs are in INVITE and 200 OK
@@ -467,11 +492,11 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.8. rtpproxy_answer usage
+   Example 1.9. rtpproxy_answer usage
 
    See rtpproxy_offer() function example above for example.
 
-5.4. rtpproxy_destroy([flags])
+5.4.  rtpproxy_destroy([flags])
 
    Tears down the RTPProxy session for the current call.
 
@@ -503,16 +528,16 @@ onreply_route[2]
             rtpproxy call when 200 OK is received on a branch, where
             rtpproxy is not needed.
 
-   Example 1.9. rtpproxy_destroy usage
+   Example 1.10. rtpproxy_destroy usage
 ...
 rtpproxy_destroy();
 ...
 
-5.5. unforce_rtp_proxy()
+5.5.  unforce_rtp_proxy()
 
    Same as rtpproxy_destroy().
 
-5.6. rtpproxy_manage([flags [, ip_address]])
+5.6.  rtpproxy_manage([flags [, ip_address]])
 
    Manage the RTPProxy session - it combines the functionality of
    rtpproxy_offer(), rtpproxy_answer() and unforce_rtpproxy(), detecting
@@ -537,12 +562,12 @@ rtpproxy_destroy();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. rtpproxy_manage usage
+   Example 1.11. rtpproxy_manage usage
 ...
 rtpproxy_manage();
 ...
 
-5.7. start_recording()
+5.7.  start_recording()
 
    This function will send a signal to the RTP Proxy to record the RTP
    stream on the RTP Proxy. This function is not supported by
@@ -550,7 +575,7 @@ rtpproxy_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.11. start_recording usage
+   Example 1.12. start_recording usage
 ...
 start_recording();
 ...
@@ -566,7 +591,7 @@ start_recording();
    packet counters. The statistics must be retrieved before the session is
    deleted (before unforce_rtpproxy()).
 
-   Example 1.12. $rtpstat Usage
+   Example 1.13. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -589,7 +614,7 @@ start_recording();
    NOTE: if a rtpproxy is defined multiple times (in the same or diferente
    sete), all of its instances will be enables/disabled.
 
-   Example 1.13. nh_enable_rtpp usage
+   Example 1.14.  nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -601,7 +626,7 @@ $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.14. nh_show_rtpp usage
+   Example 1.15.  nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp
 ...
@@ -615,38 +640,38 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with "rtpproxy_disable" parameter?
+       What happend with "rtpproxy_disable" parameter?
 
-   It was removed as it became obsolete - now "rtpproxy_sock" can take
-   empty value to disable the rtpproxy functionality.
+       It was removed as it became obsolete - now "rtpproxy_sock" can take
+       empty value to disable the rtpproxy functionality.
 
    2.2.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.3.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    2.4.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+       Please follow the guidelines provided at:
+       http://sip-router.org/tracker.

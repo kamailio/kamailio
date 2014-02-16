@@ -339,6 +339,7 @@ static int rtpproxy_tout = 1;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
+static char *setid_avp_param = NULL;
 
 static char ** rtpp_strings=0;
 static int rtpp_sets=0; /*used in rtpproxy_set_store()*/
@@ -353,6 +354,8 @@ struct rtpp_set * default_rtpp_set=0;
 static unsigned int rtpp_no = 0;
 static int *rtpp_socks = 0;
 
+static int     setid_avp_type;
+static int_str setid_avp;
 
 typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
@@ -449,6 +452,7 @@ static param_export_t params[] = {
 	{"timeout_socket",    	  STR_PARAM, &timeout_socket_str.s  },
 #endif
 	{"extra_id_pv",           STR_PARAM, &extra_id_pv_param.s },
+	{"setid_avp",             STR_PARAM, &setid_avp_param },
 	{0, 0, 0}
 };
 
@@ -892,6 +896,9 @@ static int
 mod_init(void)
 {
 	int i;
+	pv_spec_t *avp_spec;
+	unsigned short avp_flags;
+	str s;
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -932,6 +939,22 @@ mod_init(void)
 		}
 	} else {
 		extra_id_pv = NULL;
+	}
+
+	if (setid_avp_param) {
+	    s.s = setid_avp_param; s.len = strlen(s.s);
+	    avp_spec = pv_cache_get(&s);
+	    if (avp_spec==NULL || (avp_spec->type != PVT_AVP)) {
+		LM_ERR("malformed or non AVP definition <%s>\n",
+		       setid_avp_param);
+		return -1;
+	    }
+	    if (pv_get_avp_name(0, &(avp_spec->pvp), &setid_avp,
+				&avp_flags) != 0) {
+		LM_ERR("invalid AVP definition <%s>\n", setid_avp_param);
+		return -1;
+	    }
+	    setid_avp_type = avp_flags;
 	}
 
 	if (rtpp_strings)
@@ -1665,11 +1688,41 @@ get_extra_id(struct sip_msg* msg, str *id_str) {
 
 }
 
+static int
+set_rtp_proxy_set_from_avp(struct sip_msg *msg)
+{
+    struct usr_avp *avp;
+    int_str setid_val;
 
+    if ((setid_avp_param == NULL) ||
+	(avp = search_first_avp(setid_avp_type, setid_avp, &setid_val, 0))
+	== NULL)
+	return 1;
+
+    if (avp->flags&AVP_VAL_STR) {
+	LM_ERR("setid_avp must hold an integer value\n");
+	return -1;
+    }
+    
+    selected_rtpp_set = select_rtpp_set(setid_val.n);
+    if(selected_rtpp_set == NULL) {
+	LM_ERR("could not locate rtpproxy set %d\n", setid_val.n);
+	return -1;
+    }
+
+    LM_DBG("using rtpproxy set %d\n", setid_val.n);
+
+    current_msg_id = msg->id;
+    
+    return 1;
+}
 
 static int
 unforce_rtp_proxy_f(struct sip_msg* msg, const char* str1, char* str2)
 {
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
+
 	return rtpp_function_call_simple(msg, OP_DELETE, str1);
 }
 
@@ -1677,6 +1730,10 @@ static int
 unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str flags;
+
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
+
 	get_str_fparam(&flags, msg, (fparam_t *) str1);
 	return rtpp_function_call_simple(msg, OP_DELETE, flags.s);
 }
@@ -1777,6 +1834,10 @@ rtpproxy_manage(struct sip_msg *msg, const char *flags, const str *force_addr)
 static int
 rtpproxy_manage0(struct sip_msg *msg, char *flags, char *ip)
 {
+
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
+
 	return rtpproxy_manage(msg, 0, 0);
 }
 
@@ -1784,6 +1845,10 @@ static int
 rtpproxy_manage1(struct sip_msg *msg, char *flags, char *ip)
 {
 	str flag_str;
+
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
+
 	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
 	return rtpproxy_manage(msg, flag_str.s, 0);
 }
@@ -1793,6 +1858,10 @@ rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip)
 {
 	str flag_str;
 	str ip_str;
+
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
+
 	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
 	fixup_get_svalue(msg, (gparam_p)ip, &ip_str);
 	return rtpproxy_manage(msg, flag_str.s, &ip_str);
@@ -1802,6 +1871,9 @@ static int
 rtpproxy_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str flags;
+
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
 
 	if (str1)
 		get_str_fparam(&flags, msg, (fparam_t *) str1);
@@ -1815,6 +1887,9 @@ rtpproxy_offer2_f(struct sip_msg *msg, char *param1, char *param2)
 {
 	str flags, new_ip;
 
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
+
 	get_str_fparam(&flags, msg, (fparam_t *) param1);
 	get_str_fparam(&new_ip, msg, (fparam_t *) param2);
 	return force_rtp_proxy(msg, flags.s, &new_ip, OP_OFFER);
@@ -1824,6 +1899,9 @@ static int
 rtpproxy_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str flags;
+
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
 
 	if (msg->first_line.type == SIP_REQUEST)
 		if (msg->first_line.u.request.method_value != METHOD_ACK)
@@ -1841,6 +1919,9 @@ rtpproxy_answer2_f(struct sip_msg *msg, char *param1, char *param2)
 {
 
 	str flags, new_ip;
+
+	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	    return -1;
 
 	if (msg->first_line.type == SIP_REQUEST)
 		if (msg->first_line.u.request.method_value != METHOD_ACK)

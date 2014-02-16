@@ -54,6 +54,14 @@
 		functions - see the set_rtp_proxy_set() function.
 	</para>
 	<para>
+	        Another way to select the set is to define setid_avp
+	        module parameter and assign setid to the defined avp
+	        before calling rtpproxy_offer() or rtpproxy_manage()
+	        function.  If forwarding of the requests fails and
+	        there is another branch to try, remember to unset the
+	        avp after calling rtpproxy_destroy() function.
+	</para>
+	<para>
 		For backward compatibility reasons, a set with no id take by default
 		the id 0. Also if no set is explicitly set before
 		unforce_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
@@ -62,6 +70,8 @@
 	<para>
 		IMPORTANT: if you use multiple sets, take care and use the same set for
 		both rtpproxy_offer()/rtpproxy_answer() and unforce_rtpproxy()!!
+		If the set was selected using setid_avp, the avp needs to be
+		set only once before rtpproxy_offer() or rtpproxy_manage() call.
 	</para>
 	</section>
 
@@ -232,6 +242,29 @@ modparam("rtpproxy-ng", "extra_id_pv", "$avp(extra_id)")
 </programlisting>
 		</example>
 	</section>
+
+	<section id="rtpproxy-ng.p.setid_pv">
+		<title><varname>setid_avp</varname> (string)</title>
+		<para>
+			The parameter defines an AVP that, if set,
+			determines which rtpproxy set
+			rtpproxy_offer(), rtpproxy_answer(),
+			rtpproxy_destroy(), and rtpproxy_manage()
+			functions use.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<example>
+		<title>Set <varname>setid_avp</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpproxy-ng", "setid_avp", "$avp(setid)")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
