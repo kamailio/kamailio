@@ -1468,7 +1468,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 	struct sockaddr_un addr;
 	int fd, len, i, vcnt;
 	char *cp;
-	static char buf[4096];
+	static char buf[0x10000];
 	struct pollfd fds[1];
 	struct iovec *v;
 
