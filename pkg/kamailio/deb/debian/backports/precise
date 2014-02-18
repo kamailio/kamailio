@@ -20,6 +20,10 @@ sed -i -e '/libval-dev/d' -e '/^Package: kamailio-dnssec-modules/,/^$/d' \
 sed -i -e 's/ dnssec[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ dnssec/' ${DIST}/rules
 
+# use old radius-client-ng
+sed -i 's/libfreeradius-client-dev/libradiusclient-ng-dev/' ${DIST}/control
+sed -i -e '/FREERADIUS/d' ${DIST}/rules
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0

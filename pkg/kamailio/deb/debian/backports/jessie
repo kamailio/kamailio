@@ -2,7 +2,7 @@
 #
 # Hook for automatic backports at buildserver.net
 #
-# Target dist: Debian Wheezy
+# Target dist: Debian Jessie
 DIST=jessie
 
 rm -rf ${DIST}
