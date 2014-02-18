@@ -99,7 +99,7 @@ MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
 if test "$DUMP_CORE" = "yes" ; then
     # set proper ulimit
     ulimit -c unlimited
-    
+
     # directory for the core dump files
     # COREDIR=/home/corefiles
     # [ -d $COREDIR ] || mkdir $COREDIR
@@ -138,18 +138,14 @@ case "$1" in
 	check_kamailio_config
 	create_radius_seqfile
 
-	log_daemon_msg "Restarting $DESC: $NAME"
-	start-stop-daemon --oknodo --stop --quiet --pidfile \
-		$PIDFILE --exec $DAEMON
+	$0 stop
 	sleep 1
-	start-stop-daemon --start --quiet --pidfile \
-		$PIDFILE --exec $DAEMON  -- $OPTIONS
-	log_end_msg 0
+	$0 start
 	;;
   status)
 	log_daemon_msg "Status of $DESC: "
-	
-	status_of_porc "$PIDFILE" $NAME $NAME
+
+	status_of_proc -p"$PIDFILE" $NAME $NAME
 	;;
   *)
 	N=/etc/init.d/$NAME
