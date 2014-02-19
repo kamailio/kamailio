@@ -56,6 +56,7 @@
 #include "usrloc.h"
 #include "bin_utils.h"
 #include "subscribe.h"
+#include "usrloc_db.h"
 #include "../../lib/ims/useful_defs.h"
 
 /*! contact matching mode */
@@ -66,6 +67,7 @@ int cseq_delay = 20;
 extern int unreg_validity;
 extern int maxcontact_behaviour;
 extern int maxcontact;
+extern int db_mode;
 
 extern int sub_dialog_hash_size;
 extern shtable_t sub_dialog_table;
@@ -391,6 +393,10 @@ static inline void nodb_timer(impurecord_t* _r) {
             t = ptr;
             ptr = ptr->next;
 
+			if (db_mode == WRITE_THROUGH && db_delete_ucontact(_r, t) != 0) {
+				LM_ERR("error removing contact from DB [%.*s]... will still remove from memory\n", t->c.len, t->c.s);
+			}
+
             mem_delete_ucontact(_r, t);
             update_stat(_r->slot->d->expires, 1);
         } else {
@@ -454,6 +460,12 @@ int insert_ucontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
         return -1;
     }
 
+    /*DB?*/
+	if (db_mode == WRITE_THROUGH && db_insert_ucontact(_r, *_c) != 0) {
+		LM_ERR("error inserting contact into db");
+		return -1;
+	}
+
     if (exists_ulcb_type(NULL, UL_CONTACT_INSERT)) {
         run_ul_callbacks(NULL, UL_CONTACT_INSERT, _r, *_c);
     }
@@ -480,7 +492,11 @@ int delete_ucontact(impurecord_t* _r, struct ucontact* _c) {
         run_ul_callbacks(_r->cbs, UL_IMPU_DELETE_CONTACT, _r, _c);
     }
 
-    
+	/*DB?*/
+	if (db_mode == WRITE_THROUGH && db_delete_ucontact(_r, _c) != 0) {
+		LM_ERR("error removing contact from DB [%.*s]... will still remove from memory\n", _c->c.len, _c->c.s);
+
+	}
 
     mem_delete_ucontact(_r, _c);
 

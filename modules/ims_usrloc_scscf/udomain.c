@@ -64,8 +64,10 @@
 #include "utime.h"
 #include "usrloc.h"
 #include "bin_utils.h"
+#include "usrloc_db.h"
 
 extern int unreg_validity;
+extern int db_mode;
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -328,7 +330,7 @@ void mem_timer_udomain(udomain_t* _d)
 				//remove it - housekeeping - not sure why its still here...?
 				if (exists_ulcb_type(t->cbs, UL_IMPU_NR_DELETE))
 					run_ul_callbacks(t->cbs, UL_IMPU_NR_DELETE, t, NULL);
-				mem_delete_impurecord(_d, t);
+					delete_impurecord(_d, &t->public_identity, t);
 			} else if (t->reg_state == IMPU_UNREGISTERED) {//Remove IMPU record if it is in state IMPU_UNREGISTERED and has expired
 			    
 				if (time_now >= t->expires) {//check here and only remove if no subscribes - if there is a subscribe then bump the validity by unreg_validity
@@ -338,7 +340,7 @@ void mem_timer_udomain(udomain_t* _d)
 				    } else {
 					if (exists_ulcb_type(t->cbs, UL_IMPU_UNREG_EXPIRED))
 						run_ul_callbacks(t->cbs, UL_IMPU_UNREG_EXPIRED, t, NULL);
-					mem_delete_impurecord(_d, t);
+					delete_impurecord(_d, &t->public_identity, t);
 				    }
 				}
 			//} else if (t->reg_state != IMPU_UNREGISTERED && t->contacts == 0) { /* Remove the entire record if it is empty IFF it is not an UNREGISTERED RECORD */
@@ -382,7 +384,7 @@ void mem_timer_udomain(udomain_t* _d)
 					//now run a normal callback on our
 					if (exists_ulcb_type(t->cbs, UL_IMPU_REG_NC_DELETE))
 						run_ul_callbacks(t->cbs, UL_IMPU_REG_NC_DELETE, t, NULL);
-					mem_delete_impurecord(_d, t);
+						delete_impurecord(_d, &t->public_identity, t);
 				}
 			}
 		}
@@ -479,6 +481,13 @@ int insert_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
         LM_ERR("inserting record failed\n");
         goto error;
     }
+
+    /*DB?*/
+	if (db_mode == WRITE_THROUGH && db_insert_impurecord(_d, public_identity, reg_state, barring, s, ccf1, ccf2, ecf1, ecf2, _r) != 0) {
+		LM_ERR("error inserting contact into db");
+		goto error;
+	}
+
     return 0;
 
 error:
@@ -548,6 +557,13 @@ int delete_impurecord(udomain_t* _d, str* _aor, struct impurecord* _r)
 
 	if (exists_ulcb_type(_r->cbs, UL_IMPU_DELETE)) {
 	        run_ul_callbacks(_r->cbs, UL_IMPU_DELETE, _r, 0);
+	}
+
+	/*DB?*/
+	if (db_mode == WRITE_THROUGH
+			&& db_delete_impurecord(_d, _r) != 0) {
+		LM_ERR("error inserting contact into db");
+		return 0;
 	}
 
 	mem_delete_impurecord(_d, _r);
@@ -639,3 +655,4 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
 
 	return 0;
 }
+

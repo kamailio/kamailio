@@ -59,6 +59,7 @@
 #include "ul_callback.h"
 #include "usrloc.h"
 #include "hslot_sp.h"
+#include "usrloc_db.h"
 
 #include "../presence/bind_presence.h"
 #include "../presence/hash.h"
@@ -94,6 +95,11 @@ int maxcontact_behaviour = 0;			/*!< max contact behaviour - 0-disabled(default)
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
 int subs_hash_size = 9;					/*!<number of ims subscription slots*/
+
+int db_mode = 0;						/*!<database mode*/
+db1_con_t* ul_dbh = 0;
+db_func_t ul_dbf;
+str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 
 /* flags */
 unsigned int nat_bflag = (unsigned int)-1;
@@ -137,9 +143,11 @@ static param_export_t params[] = {
     {"user_data_xsd",     	STR_PARAM, &scscf_user_data_xsd},
     {"support_wildcardPSI",	INT_PARAM, &scscf_support_wildcardPSI},
     {"unreg_validity",		INT_PARAM, &unreg_validity},
-    {"maxcontact_behaviour", INT_PARAM, &maxcontact_behaviour},
+    {"maxcontact_behaviour",INT_PARAM, &maxcontact_behaviour},
     {"maxcontact",			INT_PARAM, &maxcontact},
-    {"sub_dialog_hash_size", INT_PARAM, &sub_dialog_hash_size},
+    {"sub_dialog_hash_size",INT_PARAM, &sub_dialog_hash_size},
+    {"db_mode",				INT_PARAM, &db_mode},
+    {"db_url", 				STR_PARAM, &db_url.s},
 	{0, 0, 0}
 };
 
@@ -195,6 +203,8 @@ static int mod_init(void) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+
+	db_url.len = strlen(db_url.s);
 
 	/* Compute the lengths of string parameters */
 	usrloc_debug_file.len = strlen(usrloc_debug_file.s);
@@ -275,6 +285,24 @@ static int mod_init(void) {
 		return -1;
 	}
 
+	/* Shall we use database ? */
+	if (db_mode != NO_DB) { /* Yes */
+		if (db_bind_mod(&db_url, &ul_dbf) < 0) { /* Find database module */
+			LM_ERR("failed to bind database module\n");
+			return -1;
+		}
+		if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
+			LM_ERR("database module does not implement all functions"
+					" needed by the module\n");
+			return -1;
+		}
+		if (ul_fetch_rows <= 0) {
+			LM_ERR("invalid fetch_rows number '%d'\n", ul_fetch_rows);
+			return -1;
+		}
+	}
+
+
 	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
@@ -301,6 +329,38 @@ static int mod_init(void) {
 
 static int child_init(int rank)
 {
+	dlist_t* ptr;
+
+	/* connecting to DB ? */
+	switch (db_mode) {
+	case NO_DB:
+		return 0;
+	case WRITE_THROUGH:
+		/* we need connection from working SIP and TIMER and MAIN
+		 * processes only */
+		if (rank <= 0 && rank != PROC_TIMER && rank != PROC_MAIN)
+			return 0;
+		break;
+	}
+
+	ul_dbh = ul_dbf.init(&db_url); /* Get a database connection per child */
+	if (!ul_dbh) {
+		LM_ERR("child(%d): failed to connect to database\n", rank);
+		return -1;
+	}
+
+	/* _rank==PROC_SIPINIT is used even when fork is disabled */
+	if (rank == PROC_SIPINIT && db_mode != DB_ONLY) {
+		/* if cache is used, populate from DB */
+		for (ptr = root; ptr; ptr = ptr->next) {
+			if (preload_udomain(ul_dbh, ptr->d) < 0) {
+				LM_ERR("child(%d): failed to preload domain '%.*s'\n",
+						rank, ptr->name.len, ZSW(ptr->name.s));
+				return -1;
+			}
+		}
+	}
+
 	return 0;
 }
 
@@ -308,12 +368,19 @@ static int child_init(int rank)
 /*! \brief
  * Module destroy function
  */
-static void destroy(void)
-{
-	if(sub_dialog_table)
-	{
-	    pres_destroy_shtable(sub_dialog_table, sub_dialog_hash_size);
-	}	
+static void destroy(void) {
+	if (sub_dialog_table) {
+		pres_destroy_shtable(sub_dialog_table, sub_dialog_hash_size);
+	}
+
+	if (ul_dbh) {
+		ul_unlock_locks();
+		if (synchronize_all_udomains() != 0) {
+			LM_ERR("flushing cache failed\n");
+		}
+		ul_dbf.close(ul_dbh);
+	}
+
 	free_all_udomains();
 	ul_destroy_locks();
 

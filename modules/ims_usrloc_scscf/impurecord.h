@@ -126,14 +126,6 @@ void mem_delete_ucontact(impurecord_t* _r, ucontact_t* _c);
 void timer_impurecord(impurecord_t* _r);
 
 
-/*!
- * \brief Delete a record from the database
- * \param _r deleted record
- * \return 0 on success, -1 on failure
- */
-int db_delete_impurecord(impurecord_t* _r);
-
-
 /* ===== Module interface ======== */
 
 

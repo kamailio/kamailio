@@ -96,31 +96,6 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
 int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
 
 
-/* ==== Database related functions ====== */
-
-/*!
- * \brief Insert contact into the database
- * \param _c inserted contact
- * \return 0 on success, -1 on failure
- */
-int db_insert_ucontact(ucontact_t* _c);
-
-
-/*!
- * \brief Update contact in the database
- * \param _c updated contact
- * \return 0 on success, -1 on failure
- */
-int db_update_ucontact(ucontact_t* _c);
-
-
-/*!
- * \brief Delete contact from the database
- * \param _c deleted contact
- * \return 0 on success, -1 on failure
- */
-int db_delete_ucontact(ucontact_t* _c);
-
 /* ====== Module interface ====== */
 
 /*!

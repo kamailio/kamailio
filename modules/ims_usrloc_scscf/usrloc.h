@@ -53,6 +53,14 @@
 #include "../../modules/tm/dlg.h"
 #include "../cdp/diameter_ims_code_avp.h"
 
+#define DEFAULT_DBG_FILE "/var/log/usrloc_debug"
+
+/* DB modes */
+#define NO_DB         0
+#define WRITE_THROUGH 1
+#define WRITE_BACK    2		//not implemented yet
+#define DB_ONLY	      3		//not implemented yet
+
 /*IMPU states*/
 #define IMS_USER_NOT_REGISTERED 0		/** User not registered */
 #define IMS_USER_REGISTERED 1			/** User registered */
