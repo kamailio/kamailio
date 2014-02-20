@@ -183,5 +183,6 @@ void async_timer_exec(unsigned int ticks, void *param)
 			break;
 		if(ai->act!=NULL)
 			tmb.t_continue(ai->tindex, ai->tlabel, ai->act);
+		shm_free(ai);
 	}
 }
