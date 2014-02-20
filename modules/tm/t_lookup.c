@@ -984,6 +984,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 			continue;
 
 		if (cfg_get(tm, tm_cfg, callid_matching) && 
+				p_cell->uas.request && p_cell->uas.request->callid &&
 		        (p_msg->callid->body.len != p_cell->uas.request->callid->body.len ||
 		         memcmp(p_msg->callid->body.s, p_cell->uas.request->callid->body.s, p_msg->callid->body.len) != 0)
 		) {
