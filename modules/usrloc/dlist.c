@@ -342,8 +342,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 
 					if(ul_keepalive_timeout>0 && c->last_keepalive>0)
 					{
-						if((c->cflags & nat_bflag) != 0 && c->sock!=NULL
-								&& c->sock->proto==PROTO_UDP)
+						if(c->sock!=NULL && c->sock->proto==PROTO_UDP)
 						{
 							if(c->last_keepalive+ul_keepalive_timeout < tnow)
 							{
