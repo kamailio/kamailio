@@ -50,6 +50,7 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 	register char* p;
 	register unsigned int val;
 	int len, pos = 0;
+	int case_found;
 
 	*sup = 0;
 
@@ -61,6 +62,7 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 		for (; pos < len && IS_DELIM(p); ++pos, ++p);
 
 		val = LOWER_DWORD(READ(p));
+		case_found = 0;
 		switch (val) {
 
 			/* "path" */
@@ -68,6 +70,7 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 				if(pos + 4 <= len && IS_DELIM(p+4)) {
 					*sup |= F_SUPPORTED_PATH;
 					pos += 5; p += 5;
+					case_found = 1;
 				}
 				break;
 
@@ -79,6 +82,7 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 					*sup |= F_SUPPORTED_100REL;
 					pos += SUPPORTED_100REL_LEN + 1;
 					p   += SUPPORTED_100REL_LEN + 1;
+					case_found = 1;
 				}
 				break;
 
@@ -89,37 +93,38 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 					*sup |= F_SUPPORTED_TIMER;
 					pos += SUPPORTED_TIMER_LEN + 1;
 					p   += SUPPORTED_TIMER_LEN + 1;
+					case_found = 1;
 				}
 				break;
+		}
 
+		if(case_found==0) {
 			/* extra supported or unknown */
-			default:
-				if(pos+SUPPORTED_EVENTLIST_LEN<=len
-						&& strncasecmp(p, SUPPORTED_EVENTLIST_STR,
-							SUPPORTED_EVENTLIST_LEN)==0
-						&& IS_DELIM(p+SUPPORTED_EVENTLIST_LEN) ) {
-					*sup |= F_SUPPORTED_EVENTLIST;
-					pos += SUPPORTED_EVENTLIST_LEN + 1;
-					p   += SUPPORTED_EVENTLIST_LEN + 1;
-				} else if(pos+SUPPORTED_GRUU_LEN<=len
-						&& strncasecmp(p, SUPPORTED_GRUU_STR,
-							SUPPORTED_GRUU_LEN)==0
-						&& IS_DELIM(p+SUPPORTED_GRUU_LEN)) {
-					*sup |= F_SUPPORTED_GRUU;
-					pos += SUPPORTED_GRUU_LEN + 1;
-					p   += SUPPORTED_GRUU_LEN + 1;
-				} else if(pos+SUPPORTED_OUTBOUND_LEN<=len
-						&& strncasecmp(p, SUPPORTED_OUTBOUND_STR,
-							SUPPORTED_OUTBOUND_LEN)==0
-						&& IS_DELIM(p+SUPPORTED_OUTBOUND_LEN)) {
-					*sup |= F_SUPPORTED_OUTBOUND;
-					pos += SUPPORTED_OUTBOUND_LEN + 1;
-					p   += SUPPORTED_OUTBOUND_LEN + 1;
-				} else {
-					/* skip element */
-					for (; pos < len && !IS_DELIM(p); ++pos, ++p);
-				}
-				break;
+			if(pos+SUPPORTED_EVENTLIST_LEN<=len
+					&& strncasecmp(p, SUPPORTED_EVENTLIST_STR,
+						SUPPORTED_EVENTLIST_LEN)==0
+					&& IS_DELIM(p+SUPPORTED_EVENTLIST_LEN) ) {
+				*sup |= F_SUPPORTED_EVENTLIST;
+				pos += SUPPORTED_EVENTLIST_LEN + 1;
+				p   += SUPPORTED_EVENTLIST_LEN + 1;
+			} else if(pos+SUPPORTED_GRUU_LEN<=len
+					&& strncasecmp(p, SUPPORTED_GRUU_STR,
+						SUPPORTED_GRUU_LEN)==0
+					&& IS_DELIM(p+SUPPORTED_GRUU_LEN)) {
+				*sup |= F_SUPPORTED_GRUU;
+				pos += SUPPORTED_GRUU_LEN + 1;
+				p   += SUPPORTED_GRUU_LEN + 1;
+			} else if(pos+SUPPORTED_OUTBOUND_LEN<=len
+					&& strncasecmp(p, SUPPORTED_OUTBOUND_STR,
+						SUPPORTED_OUTBOUND_LEN)==0
+					&& IS_DELIM(p+SUPPORTED_OUTBOUND_LEN)) {
+				*sup |= F_SUPPORTED_OUTBOUND;
+				pos += SUPPORTED_OUTBOUND_LEN + 1;
+				p   += SUPPORTED_OUTBOUND_LEN + 1;
+			} else {
+				/* skip element */
+				for (; pos < len && !IS_DELIM(p); ++pos, ++p);
+			}
 		}
 	}
 	
