@@ -67,11 +67,16 @@ static inline int get_expire_val(void)
 static inline int get_expires_hf(struct sip_msg* _m)
 {
 	exp_body_t* p;
+	int range;
 	if (_m->expires) {
 		p = (exp_body_t*)_m->expires->parsed;
 		if (p->valid) {
 			if (p->val != 0) {
-				return p->val + act_time;
+				range = cfg_get(registrar, registrar_cfg, default_expires_range);
+				if(likely(range==0))
+					return p->val + act_time;
+				return p->val + act_time - (float)range/100 * p->val
+						+ ((float)(rand()%100)/100) * ((float)range/100 * p->val);
 			} else return 0;
 		} else {
 			return act_time + get_expire_val();

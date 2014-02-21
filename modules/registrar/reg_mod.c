@@ -153,6 +153,7 @@ stat_var *max_expires_stat;
 stat_var *max_contacts_stat;
 stat_var *default_expire_stat;
 stat_var *default_expire_range_stat;
+stat_var *expire_range_stat;
 /** SL API structure */
 sl_api_t slb;
 
@@ -210,6 +211,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"default_expires",    INT_PARAM, &default_registrar_cfg.default_expires     		},
 	{"default_expires_range", INT_PARAM, &default_registrar_cfg.default_expires_range	},
+	{"expires_range",      INT_PARAM, &default_registrar_cfg.expires_range	},
 	{"default_q",          INT_PARAM, &default_registrar_cfg.default_q			},
 	{"append_branches",    INT_PARAM, &default_registrar_cfg.append_branches		},
 	{"case_sensitive",     INT_PARAM, &default_registrar_cfg.case_sensitive			},
@@ -244,6 +246,7 @@ stat_export_t mod_stats[] = {
 	{"max_contacts",      STAT_NO_RESET, &max_contacts_stat       },
 	{"default_expire",    STAT_NO_RESET, &default_expire_stat     },
 	{"default_expires_range", STAT_NO_RESET, &default_expire_range_stat },
+	{"expires_range",     STAT_NO_RESET, &expire_range_stat },
 	{"accepted_regs",                 0, &accepted_registrations  },
 	{"rejected_regs",                 0, &rejected_registrations  },
 	{0, 0, 0}
@@ -708,4 +711,8 @@ void max_expires_stats_update(str* gname, str* name){
 
 void default_expires_range_update(str* gname, str* name){
 	update_stat(default_expire_range_stat, cfg_get(registrar, registrar_cfg, default_expires_range));
+}
+
+void expires_range_update(str* gname, str* name){
+	update_stat(expire_range_stat, cfg_get(registrar, registrar_cfg, expires_range));
 }
