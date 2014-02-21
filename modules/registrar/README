@@ -37,30 +37,31 @@ Bogdan-Andre Iancu
 
               3.1. default_expires (integer)
               3.2. default_expires_range (integer)
-              3.3. min_expires (integer)
-              3.4. max_expires (integer)
-              3.5. default_q (integer)
-              3.6. realm_prefix (string)
-              3.7. append_branches (integer)
-              3.8. aor_avp (str)
-              3.9. case_sensitive (integer)
-              3.10. received_avp (str)
-              3.11. received_param (string)
-              3.12. max_contacts (integer)
-              3.13. retry_after (integer)
-              3.14. sock_flag (integer)
-              3.15. sock_hdr_name (string)
-              3.16. method_filtering (integer)
-              3.17. use_path (integer)
-              3.18. path_mode (integer)
-              3.19. path_use_received (integer)
-              3.20. reg_callid_avp (string)
-              3.21. xavp_cfg (string)
-              3.22. xavp_rcd (string)
-              3.23. gruu_enabled (integer)
-              3.24. outbound_mode (integer)
-              3.25. regid_mode (integer)
-              3.26. flow_timer (integer)
+              3.3. expires_range (integer)
+              3.4. min_expires (integer)
+              3.5. max_expires (integer)
+              3.6. default_q (integer)
+              3.7. realm_prefix (string)
+              3.8. append_branches (integer)
+              3.9. aor_avp (str)
+              3.10. case_sensitive (integer)
+              3.11. received_avp (str)
+              3.12. received_param (string)
+              3.13. max_contacts (integer)
+              3.14. retry_after (integer)
+              3.15. sock_flag (integer)
+              3.16. sock_hdr_name (string)
+              3.17. method_filtering (integer)
+              3.18. use_path (integer)
+              3.19. path_mode (integer)
+              3.20. path_use_received (integer)
+              3.21. reg_callid_avp (string)
+              3.22. xavp_cfg (string)
+              3.23. xavp_rcd (string)
+              3.24. gruu_enabled (integer)
+              3.25. outbound_mode (integer)
+              3.26. regid_mode (integer)
+              3.27. flow_timer (integer)
 
         4. Functions
 
@@ -95,39 +96,40 @@ Bogdan-Andre Iancu
 
    1.1. Set default_expires parameter
    1.2. Set default_expires_range parameter
-   1.3. Set min_expires parameter
-   1.4. Set max_expires parameter
-   1.5. Set default_q parameter
-   1.6. Set realm_prefix parameter
-   1.7. Set append_branches parameter
-   1.8. Set case_sensitive parameter
-   1.9. Set received_avp parameter
-   1.10. Set received_param parameter
-   1.11. Set max_contacts parameter
-   1.12. Set retry_after parameter
-   1.13. Set sock_flag parameter
-   1.14. Set sock_hdr_namer parameter
-   1.15. Set method_filtering parameter
-   1.16. Set use_path parameter
-   1.17. Set path_mode parameter
-   1.18. Set path_use_received parameter
-   1.19. Set reg_callid_avp parameter
-   1.20. Set xavp_cfg parameter
-   1.21. Set xavp_rcd parameter
-   1.22. Set gruu_enabled parameter
-   1.23. Set outbound_mode parameter
-   1.24. Set regid_mode parameter
-   1.25. Set flow_timer parameter
-   1.26. save usage
-   1.27. lookup usage
-   1.28. lookup_branches usage
-   1.29. registered usage
-   1.30. add_sock_hdr usage
-   1.31. unregister usage
-   1.32. reg_fetch_contacts usage
-   1.33. reg_free_contacts usage
-   1.34. event_route[usrloc:contact-expired] usage
-   1.35. $ulc(name) usage
+   1.3. Set expires_range parameter
+   1.4. Set min_expires parameter
+   1.5. Set max_expires parameter
+   1.6. Set default_q parameter
+   1.7. Set realm_prefix parameter
+   1.8. Set append_branches parameter
+   1.9. Set case_sensitive parameter
+   1.10. Set received_avp parameter
+   1.11. Set received_param parameter
+   1.12. Set max_contacts parameter
+   1.13. Set retry_after parameter
+   1.14. Set sock_flag parameter
+   1.15. Set sock_hdr_namer parameter
+   1.16. Set method_filtering parameter
+   1.17. Set use_path parameter
+   1.18. Set path_mode parameter
+   1.19. Set path_use_received parameter
+   1.20. Set reg_callid_avp parameter
+   1.21. Set xavp_cfg parameter
+   1.22. Set xavp_rcd parameter
+   1.23. Set gruu_enabled parameter
+   1.24. Set outbound_mode parameter
+   1.25. Set regid_mode parameter
+   1.26. Set flow_timer parameter
+   1.27. save usage
+   1.28. lookup usage
+   1.29. lookup_branches usage
+   1.30. registered usage
+   1.31. add_sock_hdr usage
+   1.32. unregister usage
+   1.33. reg_fetch_contacts usage
+   1.34. reg_free_contacts usage
+   1.35. event_route[usrloc:contact-expired] usage
+   1.36. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -147,30 +149,31 @@ Chapter 1. Admin Guide
 
         3.1. default_expires (integer)
         3.2. default_expires_range (integer)
-        3.3. min_expires (integer)
-        3.4. max_expires (integer)
-        3.5. default_q (integer)
-        3.6. realm_prefix (string)
-        3.7. append_branches (integer)
-        3.8. aor_avp (str)
-        3.9. case_sensitive (integer)
-        3.10. received_avp (str)
-        3.11. received_param (string)
-        3.12. max_contacts (integer)
-        3.13. retry_after (integer)
-        3.14. sock_flag (integer)
-        3.15. sock_hdr_name (string)
-        3.16. method_filtering (integer)
-        3.17. use_path (integer)
-        3.18. path_mode (integer)
-        3.19. path_use_received (integer)
-        3.20. reg_callid_avp (string)
-        3.21. xavp_cfg (string)
-        3.22. xavp_rcd (string)
-        3.23. gruu_enabled (integer)
-        3.24. outbound_mode (integer)
-        3.25. regid_mode (integer)
-        3.26. flow_timer (integer)
+        3.3. expires_range (integer)
+        3.4. min_expires (integer)
+        3.5. max_expires (integer)
+        3.6. default_q (integer)
+        3.7. realm_prefix (string)
+        3.8. append_branches (integer)
+        3.9. aor_avp (str)
+        3.10. case_sensitive (integer)
+        3.11. received_avp (str)
+        3.12. received_param (string)
+        3.13. max_contacts (integer)
+        3.14. retry_after (integer)
+        3.15. sock_flag (integer)
+        3.16. sock_hdr_name (string)
+        3.17. method_filtering (integer)
+        3.18. use_path (integer)
+        3.19. path_mode (integer)
+        3.20. path_use_received (integer)
+        3.21. reg_callid_avp (string)
+        3.22. xavp_cfg (string)
+        3.23. xavp_rcd (string)
+        3.24. gruu_enabled (integer)
+        3.25. outbound_mode (integer)
+        3.26. regid_mode (integer)
+        3.27. flow_timer (integer)
 
    4. Functions
 
@@ -267,30 +270,31 @@ Chapter 1. Admin Guide
 
    3.1. default_expires (integer)
    3.2. default_expires_range (integer)
-   3.3. min_expires (integer)
-   3.4. max_expires (integer)
-   3.5. default_q (integer)
-   3.6. realm_prefix (string)
-   3.7. append_branches (integer)
-   3.8. aor_avp (str)
-   3.9. case_sensitive (integer)
-   3.10. received_avp (str)
-   3.11. received_param (string)
-   3.12. max_contacts (integer)
-   3.13. retry_after (integer)
-   3.14. sock_flag (integer)
-   3.15. sock_hdr_name (string)
-   3.16. method_filtering (integer)
-   3.17. use_path (integer)
-   3.18. path_mode (integer)
-   3.19. path_use_received (integer)
-   3.20. reg_callid_avp (string)
-   3.21. xavp_cfg (string)
-   3.22. xavp_rcd (string)
-   3.23. gruu_enabled (integer)
-   3.24. outbound_mode (integer)
-   3.25. regid_mode (integer)
-   3.26. flow_timer (integer)
+   3.3. expires_range (integer)
+   3.4. min_expires (integer)
+   3.5. max_expires (integer)
+   3.6. default_q (integer)
+   3.7. realm_prefix (string)
+   3.8. append_branches (integer)
+   3.9. aor_avp (str)
+   3.10. case_sensitive (integer)
+   3.11. received_avp (str)
+   3.12. received_param (string)
+   3.13. max_contacts (integer)
+   3.14. retry_after (integer)
+   3.15. sock_flag (integer)
+   3.16. sock_hdr_name (string)
+   3.17. method_filtering (integer)
+   3.18. use_path (integer)
+   3.19. path_mode (integer)
+   3.20. path_use_received (integer)
+   3.21. reg_callid_avp (string)
+   3.22. xavp_cfg (string)
+   3.23. xavp_rcd (string)
+   3.24. gruu_enabled (integer)
+   3.25. outbound_mode (integer)
+   3.26. regid_mode (integer)
+   3.27. flow_timer (integer)
 
 3.1. default_expires (integer)
 
@@ -327,7 +331,22 @@ modparam("registrar", "default_expires", 1800)
 modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 ...
 
-3.3. min_expires (integer)
+3.3. expires_range (integer)
+
+   Similar to default_expires_range, but it applies to the incoming
+   expires value and it only lowers the value. Default in 0, meaning the
+   expires is left unmodified. This parameter can be modified via config
+   framework.
+
+   Default value is 0.
+
+   Example 1.3. Set expires_range parameter
+...
+modparam("registrar", "expires_range", 30) # expires within [0.7*expires .. expi
+res]
+...
+
+3.4. min_expires (integer)
 
    The minimum expires value of a Contact, values lower than this minimum
    will be automatically set to the minimum. Value 0 disables the
@@ -335,12 +354,12 @@ modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 
    Default value is 60.
 
-   Example 1.3. Set min_expires parameter
+   Example 1.4. Set min_expires parameter
 ...
 modparam("registrar", "min_expires", 60)
 ...
 
-3.4. max_expires (integer)
+3.5. max_expires (integer)
 
    The maximum expires value of a Contact, values higher than this maximum
    will be automatically set to the maximum. Value 0 disables the
@@ -348,12 +367,12 @@ modparam("registrar", "min_expires", 60)
 
    Default value is 0.
 
-   Example 1.4. Set max_expires parameter
+   Example 1.5. Set max_expires parameter
 ...
 modparam("registrar", "max_expires", 120)
 ...
 
-3.5. default_q (integer)
+3.6. default_q (integer)
 
    The parameter represents default q value for new contacts. Because
    Kamailio doesn't support float parameter types, the value in the
@@ -363,12 +382,12 @@ modparam("registrar", "max_expires", 120)
 
    Default value is 0.
 
-   Example 1.5. Set default_q parameter
+   Example 1.6. Set default_q parameter
 ...
 modparam("registrar", "default_q", 1000)
 ...
 
-3.6. realm_prefix (string)
+3.7. realm_prefix (string)
 
    Prefix to be automatically stripped from realm. As an alternative to
    SRV records (not all SIP clients support SRV lookup), a subdomain of
@@ -380,12 +399,12 @@ modparam("registrar", "default_q", 1000)
 
    Default value is NULL (none).
 
-   Example 1.6. Set realm_prefix parameter
+   Example 1.7. Set realm_prefix parameter
 ...
 modparam("registrar", "realm_prefix", "sip.")
 ...
 
-3.7. append_branches (integer)
+3.8. append_branches (integer)
 
    The parameter controls how lookup function processes multiple contacts.
    If there are multiple contacts for the given username in usrloc and
@@ -398,17 +417,17 @@ modparam("registrar", "realm_prefix", "sip.")
 
    Default value is 1.
 
-   Example 1.7. Set append_branches parameter
+   Example 1.8. Set append_branches parameter
 ...
 modparam("registrar", "append_branches", 0)
 ...
 
-3.8. aor_avp (str)
+3.9. aor_avp (str)
 
    This module parameter has been removed. Use the 'uri' parameter from
    functions (e.g., save, lookup, registered).
 
-3.9. case_sensitive (integer)
+3.10. case_sensitive (integer)
 
    If set to 1 then AOR comparison and also storing will be case
    sensitive, if set to 0 then AOR comparison and storing will be case
@@ -417,12 +436,12 @@ modparam("registrar", "append_branches", 0)
 
    Default value is 0.
 
-   Example 1.8. Set case_sensitive parameter
+   Example 1.9. Set case_sensitive parameter
 ...
 modparam("registrar", "case_sensitive", 1)
 ...
 
-3.10. received_avp (str)
+3.11. received_avp (str)
 
    Registrar will store the value of the AVP configured by this parameter
    in the received column in the user location database. It will leave the
@@ -437,12 +456,12 @@ Note
 
    Default value is "NULL" (disabled).
 
-   Example 1.9. Set received_avp parameter
+   Example 1.10. Set received_avp parameter
 ...
 modparam("registrar", "received_avp", "$avp(s:rcv)")
 ...
 
-3.11. received_param (string)
+3.12. received_param (string)
 
    The name of the parameter that will be appended to Contacts of 200 OK
    when the received URI was set by nathelper module. If the value is
@@ -450,12 +469,12 @@ modparam("registrar", "received_avp", "$avp(s:rcv)")
 
    Default value is "received".
 
-   Example 1.10. Set received_param parameter
+   Example 1.11. Set received_param parameter
 ...
 modparam("registrar", "received_param", "rcv")
 ...
 
-3.12. max_contacts (integer)
+3.13. max_contacts (integer)
 
    The parameter can be used to limit the number of contacts per AOR
    (Address of Record) in the user location database. Value 0 disables the
@@ -464,13 +483,13 @@ modparam("registrar", "received_param", "rcv")
 
    Default value is 0.
 
-   Example 1.11. Set max_contacts parameter
+   Example 1.12. Set max_contacts parameter
 ...
 # Allow no more than 10 contacts per AOR
 modparam("registrar", "max_contacts", 10)
 ...
 
-3.13. retry_after (integer)
+3.14. retry_after (integer)
 
    The registrar can generate 5xx reply to REGISTER in various situations.
    It can, for example, happen when the max_contacts parameter is set and
@@ -484,12 +503,12 @@ modparam("registrar", "max_contacts", 10)
 
    Default value is 0 (disabled).
 
-   Example 1.12. Set retry_after parameter
+   Example 1.13. Set retry_after parameter
 ...
 modparam("registrar", "retry_after", 30)
 ...
 
-3.14. sock_flag (integer)
+3.15. sock_flag (integer)
 
    Message flag to signal to register module to look into REGISTER request
    for a header which contains a socket description (IP:port). This socket
@@ -499,12 +518,12 @@ modparam("registrar", "retry_after", 30)
 
    Default value is -1 (no flag).
 
-   Example 1.13. Set sock_flag parameter
+   Example 1.14. Set sock_flag parameter
 ...
 modparam("registrar", "sock_flag", 18)
 ...
 
-3.15. sock_hdr_name (string)
+3.16. sock_hdr_name (string)
 
    Header which contains a socket description (proto:IP:port) to override
    the received socket info. The header will be read only if the flag
@@ -514,36 +533,36 @@ modparam("registrar", "sock_flag", 18)
 
    Default value is NULL.
 
-   Example 1.14. Set sock_hdr_namer parameter
+   Example 1.15. Set sock_hdr_namer parameter
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
 ...
 
-3.16. method_filtering (integer)
+3.17. method_filtering (integer)
 
    Tells if the contact filtering based on supported methods should be
    performed during lookup. It's enabled only if it has a non zero value.
 
    Default value is 0 (disabled).
 
-   Example 1.15. Set method_filtering parameter
+   Example 1.16. Set method_filtering parameter
 ...
 modparam("registrar", "method_filtering", 1)
 ...
 
-3.17. use_path (integer)
+3.18. use_path (integer)
 
    If set to 1, the Path header is handled according to the parameter This
    parameter can be modified via ser config framework. "path_mode".
 
    Default value is 0 (disabled).
 
-   Example 1.16. Set use_path parameter
+   Example 1.17. Set use_path parameter
 ...
 modparam("registrar", "use_path", 1)
 ...
 
-3.18. path_mode (integer)
+3.19. path_mode (integer)
 
    The registrar module implements three different modes regarding the
    response to a registration which includes one or more Path headers:
@@ -561,12 +580,12 @@ modparam("registrar", "use_path", 1)
 
    Default value is 2.
 
-   Example 1.17. Set path_mode parameter
+   Example 1.18. Set path_mode parameter
 ...
 modparam("registrar", "path_mode", 0)
 ...
 
-3.19. path_use_received (integer)
+3.20. path_use_received (integer)
 
    If set to 1, the "received" parameter of the first Path URI of a
    registration is set as received-uri and the NAT branch flag is set for
@@ -576,12 +595,12 @@ modparam("registrar", "path_mode", 0)
 
    Default value is 0 (disabled).
 
-   Example 1.18. Set path_use_received parameter
+   Example 1.19. Set path_use_received parameter
 ...
 modparam("registrar", "path_use_received", 1)
 ...
 
-3.20. reg_callid_avp (string)
+3.21. reg_callid_avp (string)
 
    If reg_callid_avp is defined and populated when registered() is
    invoked, the result is TRUE only if an active registration with the
@@ -589,12 +608,12 @@ modparam("registrar", "path_use_received", 1)
 
    Default value is NULL (disabled).
 
-   Example 1.19. Set reg_callid_avp parameter
+   Example 1.20. Set reg_callid_avp parameter
 ...
 modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 ...
 
-3.21. xavp_cfg (string)
+3.22. xavp_cfg (string)
 
    Defines the name of XAVP class to store runtime module config values.
    The values are stored as inner XAVPs, like $xavp(class=>attribute).
@@ -608,12 +627,12 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 
    Default value is NULL (disabled).
 
-   Example 1.20. Set xavp_cfg parameter
+   Example 1.21. Set xavp_cfg parameter
 ...
 modparam("registrar", "xavp_cfg", "reg")
 ...
 
-3.22. xavp_rcd (string)
+3.23. xavp_rcd (string)
 
    Defines the name of XAVP class to store details from the location
    records. The values are stored as inner XAVPs, like
@@ -625,12 +644,12 @@ modparam("registrar", "xavp_cfg", "reg")
 
    Default value is NULL (disabled).
 
-   Example 1.21. Set xavp_rcd parameter
+   Example 1.22. Set xavp_rcd parameter
 ...
 modparam("registrar", "xavp_rcd", "ulrcd")
 ...
 
-3.23. gruu_enabled (integer)
+3.24. gruu_enabled (integer)
 
    If set to 1 and GRUU "+sip.instance" parameter to Contact header of
    REGISTER is present, then the value of the parameter is saved to
@@ -640,12 +659,12 @@ modparam("registrar", "xavp_rcd", "ulrcd")
 
    Default value is 1 (enabled).
 
-   Example 1.22. Set gruu_enabled parameter
+   Example 1.23. Set gruu_enabled parameter
 ...
 modparam("registrar", "gruu_enabled", 0)
 ...
 
-3.24. outbound_mode (integer)
+3.25. outbound_mode (integer)
 
    If set to 0 this module will accept REGISTER requests that do not
    contain a Supported: header with the outbound options-tag. The 200 OK
@@ -667,12 +686,12 @@ modparam("registrar", "gruu_enabled", 0)
 
    Default value is 0.
 
-   Example 1.23. Set outbound_mode parameter
+   Example 1.24. Set outbound_mode parameter
 ...
 modparam("registrar", "outbound_mode", 2)
 ...
 
-3.25. regid_mode (integer)
+3.26. regid_mode (integer)
 
    If set to 0 this module will ignore regid contact param when saving
    REGISTER request if REGISTER request does not indicate support for
@@ -684,12 +703,12 @@ modparam("registrar", "outbound_mode", 2)
 
    Default value is 0.
 
-   Example 1.24. Set regid_mode parameter
+   Example 1.25. Set regid_mode parameter
 ...
 modparam("registrar", "regid_mode", 1)
 ...
 
-3.26. flow_timer (integer)
+3.27. flow_timer (integer)
 
    If set to 0 then this module will not add a Flow-Timer: header to 200
    OK responses to REGISTER requests.
@@ -710,7 +729,7 @@ modparam("registrar", "regid_mode", 1)
 
    Default value is 0.
 
-   Example 1.25. Set flow_timer parameter
+   Example 1.26. Set flow_timer parameter
 ...
 modparam("registrar", "flow_timer", 25)
 ...
@@ -764,7 +783,7 @@ modparam("registrar", "flow_timer", 25)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
    REPLY_ROUTE.
 
-   Example 1.26. save usage
+   Example 1.27. save usage
 ...
 save("location");
 save("location", "0x01");
@@ -797,7 +816,7 @@ save("location", "0x00", "sip:test@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. lookup usage
+   Example 1.28. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -823,7 +842,7 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. lookup_branches usage
+   Example 1.29. lookup_branches usage
 ...
 lookup_branches("location");
 ...
@@ -842,7 +861,7 @@ lookup_branches("location");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. registered usage
+   Example 1.30. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -862,7 +881,7 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.30. add_sock_hdr usage
+   Example 1.31. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
@@ -885,7 +904,7 @@ add_sock_hdr("Sock-Info");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. unregister usage
+   Example 1.32. unregister usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
@@ -909,7 +928,7 @@ unregister("location", "", "$ruid");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.32. reg_fetch_contacts usage
+   Example 1.33. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
@@ -928,7 +947,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.33. reg_free_contacts usage
+   Example 1.34. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
@@ -942,7 +961,7 @@ reg_free_contacts("callee");
    Executed when a contact in location table has expired. The variable
    $ulc(exp=>...) is filled with the attributes of the expired contact.
 
-   Example 1.34. event_route[usrloc:contact-expired] usage
+   Example 1.35. event_route[usrloc:contact-expired] usage
 ...
 event_route[usrloc:contact-expired] {
     xlog("expired contact for $ulc(exp->aor)\n");
@@ -1014,7 +1033,7 @@ event_route[usrloc:contact-expired] {
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.35. $ulc(name) usage
+   Example 1.36. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {

@@ -153,7 +153,7 @@ modparam("registrar", "default_expires", 1800)
 </programlisting>
 		</example>
 	</section>
-		<section>
+	<section>
 		<title><varname>default_expires_range</varname> (integer)</title>
 		<para>
 		This parameter specifies that the expiry used for newly created usrloc records
@@ -177,7 +177,27 @@ modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 </programlisting>
 		</example>
 	</section>
-	
+	<section>
+		<title><varname>expires_range</varname> (integer)</title>
+		<para>
+		Similar to default_expires_range, but it applies to the incoming expires
+		value and it only lowers the value. Default in 0, meaning the expires
+		is left unmodified. This parameter can be modified via config framework.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expires_range</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "expires_range", 30) # expires within [0.7*expires .. expires]
+...
+</programlisting>
+		</example>
+	</section>
 
 	<section>
 		<title><varname>min_expires</varname> (integer)</title>
