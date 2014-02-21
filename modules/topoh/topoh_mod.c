@@ -318,8 +318,9 @@ int th_msg_received(void *data)
 		if(msg.via2==0)
 		{
 			/* one Via in received reply -- it is for local generated request
-			 * - nothing to unhide */
-			goto done;
+			 * - nothing to unhide unless is CANCEL/ACK */
+			if((get_cseq(&msg)->method_id)&(METHOD_CANCEL))
+				goto done;
 		}
 
 		th_unmask_via(&msg, &th_cookie_value);
@@ -385,12 +386,6 @@ int th_msg_sent(void *data)
 		th_del_cookie(&msg);
 	if(msg.first_line.type==SIP_REQUEST)
 	{
-		if(msg.via2==0)
-		{
-			/* one Via in request sent out -- it is local generated
-			 * - nothing to hide */
-			goto done;
-		}
 		direction = (th_cookie_value.s[0]=='u')?1:0; /* upstream/downstram */
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
 		local = (th_cookie_value.s[0]!='d'&&th_cookie_value.s[0]!='u')?1:0;
