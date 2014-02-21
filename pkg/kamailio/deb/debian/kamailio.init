@@ -21,18 +21,21 @@ DESC="Kamailio SIP server"
 HOMEDIR=/var/run/kamailio
 PIDFILE=$HOMEDIR/$NAME.pid
 DEFAULTS=/etc/default/kamailio
+CFGFILE=/etc/kamailio/kamailio.cfg
 RUN_KAMAILIO=no
 USER=kamailio
 GROUP=kamailio
-# Amount of memory to allocate for the running Kamailio server (in Mb)
-MEMORY=64
+# Amount of shared and private memory to allocate
+# for the running Kamailio server (in Mb)
+SHM_MEMORY=64
+PKG_MEMORY=4
 DUMP_CORE=no
 
 # Do not start kamailio if fork=no is set in the config file
 # otherwise the boot process will just stop
 check_fork ()
 {
-    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/kamailio/kamailio.cfg; then
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" $CFGFILE; then
 	log_failure_msg "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio debug instead"
 	exit 0
     fi
@@ -42,7 +45,7 @@ check_kamailio_config ()
 {
 	# Check if kamailio configuration is valid before starting the server
 	set +e
-	out=$($DAEMON -c 2>&1 > /dev/null)
+	out=$($DAEMON -f $CFGFILE -M $PKG_MEMORY -c 2>&1 > /dev/null)
 	retcode=$?
 	set -e
 	if [ "$retcode" != '0' ]; then
@@ -91,10 +94,12 @@ fi
 
 set -e
 
-MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
+SHM_MEMORY=$((`echo $SHM_MEMORY | sed -e 's/[^0-9]//g'`))
+PKG_MEMORY=$((`echo $PKG_MEMORY | sed -e 's/[^0-9]//g'`))
 [ -z "$USER" ]  && USER=kamailio
 [ -z "$GROUP" ] && GROUP=kamailio
-[ $MEMORY -le 0 ] && MEMORY=32
+[ $SHM_MEMORY -le 0 ] && SHM_MEMORY=64
+[ $PKG_MEMORY -le 0 ] && PKG_MEMORY=4
 
 if test "$DUMP_CORE" = "yes" ; then
     # set proper ulimit
@@ -112,7 +117,7 @@ if [ ! -d $HOMEDIR ]; then
     mkdir -p $HOMEDIR
 fi
 
-OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
+OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP"
 
 case "$1" in
   start|debug)
