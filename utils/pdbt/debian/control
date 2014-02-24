@@ -7,7 +7,6 @@ Standards-Version: 3.6.2
 
 Package: pdb-tools
 Architecture: any
-Depends: ui-pdb-tools-config
 Description: Tools for handling the PDB
  Tools for building a mmap image of the PDB and running queries on this
  mmap image.
