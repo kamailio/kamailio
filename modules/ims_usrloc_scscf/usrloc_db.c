@@ -614,10 +614,8 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 
 			if (!VAL_NULL(vals + 7)) {
 				blob = VAL_BLOB(vals + 7);
-
-				bin_alloc(&x, VAL_BLOB(vals + 7).len);
-				memcpy(x.s, VAL_BLOB(vals + 7).s, VAL_BLOB(vals + 7).len);
-				x.s = blob.s;
+				bin_alloc(&x, blob.len);
+				memcpy(x.s, blob.s, blob.len);
 				x.len = blob.len;
 				x.max = 0;
 				subscription = bin_decode_ims_subscription(&x);
