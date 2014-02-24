@@ -685,7 +685,7 @@ Dialog_Param_add_candidate(Dialog_Param *param, char *candidate)
     if (param->callee_candidates.count == param->callee_candidates.size) {
         new_size = param->callee_candidates.size + URI_LIST_RESIZE_INCREMENT;
         LM_DBG("growing callee_candidates list size from %d to %d entries\n", param->callee_candidates.size, new_size);
-        new_uri = shm_realloc(param->callee_candidates.uri, new_size);
+        new_uri = shm_realloc(param->callee_candidates.uri, new_size * sizeof(char*));
         if (!new_uri) {
             LM_ERR("failed to grow callee_candidates uri list\n");
             return False;
