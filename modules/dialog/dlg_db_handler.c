@@ -414,7 +414,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			dlg_set_toroute(dlg, &toroute_name);
 
 			GET_STR_VALUE(xdata, values, 21, 0, 0);
-			if(xdata.s!=NULL)
+			if(xdata.s!=NULL && dlg->state!=DLG_STATE_DELETED)
 			{
 				srjson_InitDoc(&jdoc, NULL);
 				jdoc.buf = xdata;
