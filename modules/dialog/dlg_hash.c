@@ -984,6 +984,13 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 	}
 	*new_state = dlg->state;
 
+	/* remove the dialog from profiles when is not no longer active */
+	if(*new_state==DLG_STATE_DELETED && dlg->profile_links!=NULL
+				&& *old_state!=*new_state) {
+		destroy_linkers(dlg->profile_links);
+		dlg->profile_links = NULL;
+	}
+
 	dlg_unlock( d_table, d_entry);
 
 	LM_DBG("dialog %p changed from state %d to "
