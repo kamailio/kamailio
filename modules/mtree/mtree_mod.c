@@ -527,6 +527,10 @@ static int mt_load_db(m_tree_t *pt)
 	memcpy(&new_tree, old_tree, sizeof(m_tree_t));
 	new_tree.head = 0;
 	new_tree.next = 0;
+	new_tree.nrnodes = 0;
+	new_tree.nritems = 0;
+	new_tree.memsize = 0;
+
 
 	if (mt_dbf.use_table(db_con, &old_tree->dbtable) < 0)
 	{
