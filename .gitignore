@@ -30,8 +30,6 @@ test/udp_flood
 utils/gen_ha1/gen_ha1
 utils/sercmd/sercmd
 utils/sercmd/kamcmd
-utils/pdbt/pdb_server
-utils/pdbt/pdbt
 utils/protoshoot/protoshoot
 # Emacs backup files
 *~
