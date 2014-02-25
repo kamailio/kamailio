@@ -805,7 +805,7 @@ kamcmd htable.get students daniel
 <programlisting  format="linespecific">
 ...
 # Delete $sht(students=>anna)
-kamcmd htable.get students anna
+kamcmd htable.delete students anna
 ...
 </programlisting>
 	</section>
@@ -834,7 +834,7 @@ kamcmd htable.get students anna
                 </para>
 <programlisting  format="linespecific">
 ...
-# Set $sht(test=>x)
+# Set $sht(test=>x) as string
 kamcmd htable.sets test x abc
 ...
 </programlisting>
@@ -864,8 +864,8 @@ kamcmd htable.sets test x abc
                 </para>
 <programlisting  format="linespecific">
 ...
-# Set $sht(test=>x)
-kamcmd htable.sets test x 123
+# Set $sht(test=>x) as integer
+kamcmd htable.seti test x 123
 ...
 </programlisting>
 	</section>
