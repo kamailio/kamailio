@@ -17,6 +17,12 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
+Edited by
+
+Ovidiu Sas
+
+   <osas@voipembedded.com>
+
    Copyright © 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
@@ -81,24 +87,25 @@ Alex Balashov
 
    1.1. Accessing $sht(htname=>key)
    1.2. Dictionary attack limitation
-   1.3. Set hash_size parameter
-   1.4. Set db_url parameter
-   1.5. Set key_name_column parameter
-   1.6. Set key_type_column parameter
-   1.7. Set value_type_column parameter
-   1.8. Set key_value_column parameter
-   1.9. Set expires_column parameter
-   1.10. Set array_size_suffix parameter
-   1.11. Set fetch_rows parameter
-   1.12. Set timer_interval parameter
-   1.13. Set timer_mode parameter
-   1.14. Set db_expires parameter
-   1.15. Set enable_dmq parameter
-   1.16. sht_print usage
-   1.17. sht_rm_name_re usage
-   1.18. sht_rm_value_re usage
-   1.19. sht_lock usage
-   1.20. sht_unlock usage
+   1.3. Storring array values
+   1.4. Set hash_size parameter
+   1.5. Set db_url parameter
+   1.6. Set key_name_column parameter
+   1.7. Set key_type_column parameter
+   1.8. Set value_type_column parameter
+   1.9. Set key_value_column parameter
+   1.10. Set expires_column parameter
+   1.11. Set array_size_suffix parameter
+   1.12. Set fetch_rows parameter
+   1.13. Set timer_interval parameter
+   1.14. Set timer_mode parameter
+   1.15. Set db_expires parameter
+   1.16. Set enable_dmq parameter
+   1.17. sht_print usage
+   1.18. sht_rm_name_re usage
+   1.19. sht_rm_value_re usage
+   1.20. sht_lock usage
+   1.21. sht_unlock usage
 
 Chapter 1. Admin Guide
 
@@ -190,6 +197,102 @@ if(is_present_hf("Authorization"))
 }
 ...
 
+   The module also provides a way to store multiple values for a single
+   key. This is emulated by storing individual keys as 'key_name[n]',
+   where n is incremented for each key. The total number of keys is stored
+   in a dedicated key, by default: 'key_name::size'.
+
+   The array is built when the table is loaded in memory and afterwards
+   all the keys are treated as individual keys. If a particular entry in
+   the array is deleted, it is the administarator's responsability to
+   update the size of the array and any other elements (if required).
+
+   Example 1.3. Storring array values
+# Example of dbtext with multiple keys
+$ cat /usr/local/etc/kamailio/dbtext/htable
+1:key:1:0:value3:0
+2:key:1:0:value2:0
+3:key:1:0:value1:0
+
+# The array key will be loaded in memory in the following format:
+$ kamcmd htable.dump htable
+{
+        entry: 35
+        size: 1
+        slot: {
+                item: {
+                        name: key[0]
+                        value: value1
+                }
+        }
+}
+{
+        entry: 50
+        size: 1
+        slot: {
+                item: {
+                        name: key::size
+                        value: 3
+                }
+        }
+}
+{
+        entry: 67
+        size: 1
+        slot: {
+                item: {
+                        name: key[1]
+                        value: value2
+                }
+        }
+}
+{
+        entry: 227
+        size: 1
+        slot: {
+                item: {
+                        name: key[2]
+                        value: value3
+                }
+        }
+}
+
+# Now let's delete a particular entry in the array: key[0].
+$ kamcmd htable.delete htable key[0]
+
+# The array key will look like this after a key was deleted:
+$ kamcmd htable.dump htable
+{
+        entry: 50
+        size: 1
+        slot: {
+                item: {
+                        name: key::size
+                        value: 3
+                }
+        }
+}
+{
+        entry: 67
+        size: 1
+        slot: {
+                item: {
+                        name: key[1]
+                        value: value2
+                }
+        }
+}
+{
+        entry: 227
+        size: 1
+        slot: {
+                item: {
+                        name: key[2]
+                        value: value3
+                }
+        }
+}
+
 1.2. Dependencies
 
 1.2.1. Kamailio Modules
@@ -213,9 +316,11 @@ if(is_present_hf("Authorization"))
      * key name - string containing the name of the key.
      * key type - the type of the key
           + 0 - simple key - the key is added as 'key_name'.
-          + 1 - array key - the key is added as 'key_name[n]'. n is
+          + 1 - array key - the key is added as 'key_name[n]' - n is
             incremented for each key with this name to build an array in
-            hash table.
+            hash table. In addition, an additional key is built to hold
+            the total number of key in the array, by default
+            key_name::size (see array_size_suffix parameter).
      * value type - the type of the key value
           + 0 - value is string.
           + 1 - value is integer.
@@ -261,7 +366,7 @@ if(is_present_hf("Authorization"))
 
    Default value is NULL.
 
-   Example 1.3. Set hash_size parameter
+   Example 1.4. Set hash_size parameter
 ...
 modparam("htable", "htable", "a=>size=4;autoexpire=7200;dbtable=htable_a;")
 modparam("htable", "htable", "b=>size=5;")
@@ -276,7 +381,7 @@ modparam("htable", "htable", "c=>size=4;autoexpire=7200;initval=1;dmqreplicate=
 
    Default value is NULL (do not connect).
 
-   Example 1.4. Set db_url parameter
+   Example 1.5. Set db_url parameter
 ...
 modparam("htable", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 ...
@@ -287,7 +392,7 @@ modparam("htable", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 
    Default value is 'key_name'.
 
-   Example 1.5. Set key_name_column parameter
+   Example 1.6. Set key_name_column parameter
 ...
 modparam("htable", "key_name_column", "kname")
 ...
@@ -298,7 +403,7 @@ modparam("htable", "key_name_column", "kname")
 
    Default value is 'key_type'.
 
-   Example 1.6. Set key_type_column parameter
+   Example 1.7. Set key_type_column parameter
 ...
 modparam("htable", "key_type_column", "ktype")
 ...
@@ -309,7 +414,7 @@ modparam("htable", "key_type_column", "ktype")
 
    Default value is 'value_type'.
 
-   Example 1.7. Set value_type_column parameter
+   Example 1.8. Set value_type_column parameter
 ...
 modparam("htable", "value_type_column", "vtype")
 ...
@@ -320,7 +425,7 @@ modparam("htable", "value_type_column", "vtype")
 
    Default value is 'key_value'.
 
-   Example 1.8. Set key_value_column parameter
+   Example 1.9. Set key_value_column parameter
 ...
 modparam("htable", "key_value_column", "kvalue")
 ...
@@ -331,18 +436,19 @@ modparam("htable", "key_value_column", "kvalue")
 
    Default value is 'expires'.
 
-   Example 1.9. Set expires_column parameter
+   Example 1.10. Set expires_column parameter
 ...
 modparam("htable", "expires", "expiry")
 ...
 
 1.3.8. array_size_suffix (str)
 
-   The suffix to be added to store the number of items in an array.
+   The suffix to be added to store the number of items in an array (see
+   key type).
 
    Default value is '::size'.
 
-   Example 1.10. Set array_size_suffix parameter
+   Example 1.11. Set array_size_suffix parameter
 ...
 modparam("htable", "array_size_suffix", "-count")
 ...
@@ -353,7 +459,7 @@ modparam("htable", "array_size_suffix", "-count")
 
    Default value is 100.
 
-   Example 1.11. Set fetch_rows parameter
+   Example 1.12. Set fetch_rows parameter
 ...
 modparam("htable", "fetch_rows", 1000)
 ...
@@ -364,7 +470,7 @@ modparam("htable", "fetch_rows", 1000)
 
    Default value is 20.
 
-   Example 1.12. Set timer_interval parameter
+   Example 1.13. Set timer_interval parameter
 ...
 modparam("htable", "timer_interval", 10)
 ...
@@ -376,7 +482,7 @@ modparam("htable", "timer_interval", 10)
 
    Default value is 0.
 
-   Example 1.13. Set timer_mode parameter
+   Example 1.14. Set timer_mode parameter
 ...
 modparam("htable", "timer_mode", 1)
 ...
@@ -389,7 +495,7 @@ modparam("htable", "timer_mode", 1)
 
    Default value is 0.
 
-   Example 1.14. Set db_expires parameter
+   Example 1.15. Set db_expires parameter
 ...
 modparam("htable", "db_expires", 1)
 ...
@@ -409,7 +515,7 @@ modparam("htable", "db_expires", 1)
 
    Default value is 0.
 
-   Example 1.15. Set enable_dmq parameter
+   Example 1.16. Set enable_dmq parameter
 ...
 modparam("htable", "enable_dmq", 1)
 ...
@@ -424,7 +530,7 @@ modparam("htable", "enable_dmq", 1)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.16. sht_print usage
+   Example 1.17. sht_print usage
 ...
 sht_print();
 ...
@@ -437,7 +543,7 @@ sht_print();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.17. sht_rm_name_re usage
+   Example 1.18. sht_rm_name_re usage
 ...
 sht_rm_name_re("ha=>.*");
 ...
@@ -450,7 +556,7 @@ sht_rm_name_re("ha=>.*");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.18. sht_rm_value_re usage
+   Example 1.19. sht_rm_value_re usage
 ...
 sht_rm_value_re("ha=>.*");
 ...
@@ -461,7 +567,7 @@ sht_rm_value_re("ha=>.*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.19. sht_lock usage
+   Example 1.20. sht_lock usage
 ...
 sht_lock("ha=>test");
 ...
@@ -472,7 +578,7 @@ sht_lock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.20. sht_unlock usage
+   Example 1.21. sht_unlock usage
 ...
 sht_lock("ha=>test");
 $sht(ha=>test) = $sht(ha=>test) + 10;
@@ -554,6 +660,9 @@ sht_unlock("ha=>test");
 ...
 # Dump $sht(students=>daniel)
 kamcmd htable.get students daniel
+
+# Dump first entry in array key course $sht(students=>course[0])
+kamcmd htable.get students course[0]
 ...
 
 1.7.2.  htable.delete htable key
@@ -570,6 +679,9 @@ kamcmd htable.get students daniel
 ...
 # Delete $sht(students=>anna)
 kamcmd htable.delete students anna
+
+# Delete first entry in array key course $sht(students=>course[0])
+kamcmd htable.delete students course[0]
 ...
 
 1.7.3.  htable.sets htable key value
@@ -587,6 +699,9 @@ kamcmd htable.delete students anna
 ...
 # Set $sht(test=>x) as string
 kamcmd htable.sets test x abc
+
+# Set firsti entry in array key x $sht(test=>x[0]) as string
+kamcmd htable.sets test x[0] abc
 ...
 
 1.7.4.  htable.seti htable key value
@@ -604,6 +719,9 @@ kamcmd htable.sets test x abc
 ...
 # Set $sht(test=>x) as integer
 kamcmd htable.seti test x 123
+
+# Set firsti entry in array key x $sht(test=>x[0]) as integer
+kamcmd htable.sets test x[0] 123
 ...
 
 1.7.5.  htable.dump htable
