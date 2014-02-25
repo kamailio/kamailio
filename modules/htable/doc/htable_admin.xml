@@ -114,6 +114,108 @@ if(is_present_hf("Authorization"))
 ...
 </programlisting>
 	</example>
+	<para>
+		The module also provides a way to store multiple values for a single key.
+		This is emulated by storing individual keys as 'key_name[n]', where n is
+		incremented for each key.  The total number of keys is stored in a
+		dedicated key, by default: 'key_name::size'.
+	</para>
+	<para>
+		The array is built when the table is loaded in memory and afterwards all
+		the keys are treated as individual keys.
+		If a particular entry in the array is deleted, it is the administarator's
+		responsability to update the size of the array and any other elements
+		(if required).
+	</para>
+	<example>
+	<title>Storring array values</title>
+	<programlisting format="linespecific">
+# Example of dbtext with multiple keys
+$ cat /usr/local/etc/kamailio/dbtext/htable
+1:key:1:0:value3:0
+2:key:1:0:value2:0
+3:key:1:0:value1:0
+
+# The array key will be loaded in memory in the following format:
+$ kamcmd htable.dump htable
+{
+        entry: 35
+        size: 1
+        slot: {
+                item: {
+                        name: key[0]
+                        value: value1
+                }
+        }
+}
+{
+        entry: 50
+        size: 1
+        slot: {
+                item: {
+                        name: key::size
+                        value: 3
+                }
+        }
+}
+{
+        entry: 67
+        size: 1
+        slot: {
+                item: {
+                        name: key[1]
+                        value: value2
+                }
+        }
+}
+{
+        entry: 227
+        size: 1
+        slot: {
+                item: {
+                        name: key[2]
+                        value: value3
+                }
+        }
+}
+
+# Now let's delete a particular entry in the array: key[0].
+$ kamcmd htable.delete htable key[0]
+
+# The array key will look like this after a key was deleted:
+$ kamcmd htable.dump htable
+{
+        entry: 50
+        size: 1
+        slot: {
+                item: {
+                        name: key::size
+                        value: 3
+                }
+        }
+}
+{
+        entry: 67
+        size: 1
+        slot: {
+                item: {
+                        name: key[1]
+                        value: value2
+                }
+        }
+}
+{
+        entry: 227
+        size: 1
+        slot: {
+                item: {
+                        name: key[2]
+                        value: value3
+                }
+        }
+}
+</programlisting>
+	</example>
 
 	</section>
 	<section>
@@ -175,8 +277,10 @@ if(is_present_hf("Authorization"))
 				<listitem>
 				<para>
 					<emphasis>1</emphasis> - array key - the key is added
-					as 'key_name[n]'. n is incremented for each key with this
-					name to build an array in hash table.
+					as 'key_name[n]' - n is incremented for each key with this
+					name to build an array in hash table.  In addition, an additional
+					key is built to hold the total number of key in the array,
+					by default key_name::size (see array_size_suffix parameter).
 				</para>
 				</listitem>
 			</itemizedlist>
@@ -417,7 +521,7 @@ modparam("htable", "expires", "expiry")
 		<title><varname>array_size_suffix</varname> (str)</title>
 		<para>
 			The suffix to be added to store the number of items in an
-			array.
+			array (see key type).
 		</para>
 		<para>
 		<emphasis>
@@ -778,6 +882,9 @@ sht_unlock("ha=>test");
 ...
 # Dump $sht(students=>daniel)
 kamcmd htable.get students daniel
+
+# Dump first entry in array key course $sht(students=>course[0])
+kamcmd htable.get students course[0]
 ...
 </programlisting>
 	</section>
@@ -806,6 +913,9 @@ kamcmd htable.get students daniel
 ...
 # Delete $sht(students=>anna)
 kamcmd htable.delete students anna
+
+# Delete first entry in array key course $sht(students=>course[0])
+kamcmd htable.delete students course[0]
 ...
 </programlisting>
 	</section>
@@ -836,6 +946,9 @@ kamcmd htable.delete students anna
 ...
 # Set $sht(test=>x) as string
 kamcmd htable.sets test x abc
+
+# Set firsti entry in array key x $sht(test=>x[0]) as string
+kamcmd htable.sets test x[0] abc
 ...
 </programlisting>
 	</section>
@@ -866,6 +979,9 @@ kamcmd htable.sets test x abc
 ...
 # Set $sht(test=>x) as integer
 kamcmd htable.seti test x 123
+
+# Set firsti entry in array key x $sht(test=>x[0]) as integer
+kamcmd htable.sets test x[0] 123
 ...
 </programlisting>
 	</section>
