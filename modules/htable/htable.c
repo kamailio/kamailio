@@ -751,7 +751,6 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 		strftime(expire_buf, RPC_DATE_BUF_LEN - 1,
 			"%Y-%m-%d %H:%M:%S", _expire_t);
 	}
-	LM_NOTICE("got expire [%s]\n", expire_buf);
 
 	if(htc->flags&AVP_VAL_STR) {
 		if(rpc->struct_add(vh, "SSds", "name",  &htc->name.s,
