@@ -168,7 +168,7 @@ modparam("dmq", "ping_interval", 90)
                	<function moreinfo="none">dmq_send_message(peer, node, body, content_type)</function>
                 </title>
                 <para>
-                Sends a DMQ message directly from config file.
+                Sends a DMQ message directly from config file to a single node.
                 </para>
 		<para>Meaning of parameters:</para>
                 <itemizedlist>
@@ -202,6 +202,44 @@ modparam("dmq", "ping_interval", 90)
                 <programlisting format="linespecific">
 ...
 	dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...", "text/plain");
+...
+</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_bcast_message">
+                <title>
+                <function moreinfo="none">dmq_bcast_message(peer, body, content_type)</function>
+                </title>
+                <para>
+                Broadcasts a DMQ message from config file to all active nodes (except self).
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+                                <emphasis>peer</emphasis> - name of peer that should handle the message.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>body</emphasis> - the message body.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>content_type</emphasis> - the MIME type of the message body.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from any route.
+                </para>
+
+                <example>
+                <title><function>dmq_bcast_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+        dmq_bcast_message("peer_name", "Message body...", "text/plain");
 ...
 </programlisting>
                 </example>

@@ -86,6 +86,7 @@ static int child_init(int);
 static void destroy(void);
 static int handle_dmq_fixup(void** param, int param_no);
 static int send_dmq_fixup(void** param, int param_no);
+static int bcast_dmq_fixup(void** param, int param_no);
 static int parse_server_address(str* uri, struct sip_uri* parsed_uri);
 
 static cmd_export_t cmds[] = {
@@ -93,6 +94,8 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4, send_dmq_fixup, 0,
 		ANY_ROUTE},
+        {"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3, bcast_dmq_fixup, 0,
+                ANY_ROUTE},
         {"bind_dmq",        (cmd_function)bind_dmq,       0, 0,              0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -277,6 +280,11 @@ static int handle_dmq_fixup(void** param, int param_no)
 static int send_dmq_fixup(void** param, int param_no)
 {
 	return fixup_spve_null(param, 1);
+}
+
+static int bcast_dmq_fixup(void** param, int param_no)
+{
+        return fixup_spve_null(param, 1);
 }
 
 static int parse_server_address(str* uri, struct sip_uri* parsed_uri)

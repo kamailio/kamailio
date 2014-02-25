@@ -14,9 +14,9 @@ Edited by
 
 Charles Chance
 
-   Copyright � 2011 Marius Bucur
+   Copyright © 2011 Marius Bucur
 
-   Copyright � 2013 Charles Chance, Sipcentric Ltd.
+   Copyright © 2013 Charles Chance, Sipcentric Ltd.
      __________________________________________________________________
 
    Table of Contents
@@ -40,6 +40,7 @@ Charles Chance
 
               4.1. dmq_handle_message()
               4.2. dmq_send_message(peer, node, body, content_type)
+              4.3. dmq_bcast_message(peer, body, content_type)
 
    2. Developer Guide
 
@@ -61,6 +62,7 @@ Charles Chance
    1.4. Set ping_interval parameter
    1.5. dmq_handle_message usage
    1.6. dmq_send_message usage
+   1.7. dmq_bcast_message usage
    2.1. dmq_api_t structure
    2.2. register_dmq_peer usage
    2.3. bcast_message usage
@@ -87,6 +89,7 @@ Chapter 1. Admin Guide
 
         4.1. dmq_handle_message()
         4.2. dmq_send_message(peer, node, body, content_type)
+        4.3. dmq_bcast_message(peer, body, content_type)
 
 1. Overview
 
@@ -133,7 +136,7 @@ Chapter 1. Admin Guide
    The local server address. This is the interface over which the DMQ
    engine will send/receive messages.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set server_address parameter
 ...
@@ -145,7 +148,7 @@ modparam("dmq", "server_address", "sip:10.0.0.20:5060")
    The address of another DMQ node from which the local node should
    retrieve initial information about all other nodes.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.2. Set notification_address parameter
 ...
@@ -156,7 +159,7 @@ modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
 
    The number of worker threads for sending/receiving messages.
 
-   Default value is "2".
+   Default value is “2”.
 
    Example 1.3. Set num_workers parameter
 ...
@@ -168,7 +171,7 @@ modparam("dmq", "num_threads", 4)
    The number of seconds between node pings (for checking status of other
    nodes).
 
-   Minimum value is "60" (default).
+   Minimum value is “60” (default).
 
    Example 1.4. Set ping_interval parameter
 ...
@@ -179,8 +182,9 @@ modparam("dmq", "ping_interval", 90)
 
    4.1. dmq_handle_message()
    4.2. dmq_send_message(peer, node, body, content_type)
+   4.3. dmq_bcast_message(peer, body, content_type)
 
-4.1. dmq_handle_message()
+4.1.  dmq_handle_message()
 
    Handles a DMQ message by passing it to the appropriate local peer
    (module). The peer is identified by the user part of the To header.
@@ -195,9 +199,9 @@ modparam("dmq", "ping_interval", 90)
         }
 ...
 
-4.2. dmq_send_message(peer, node, body, content_type)
+4.2.  dmq_send_message(peer, node, body, content_type)
 
-   Sends a DMQ message directly from config file.
+   Sends a DMQ message directly from config file to a single node.
 
    Meaning of parameters:
      * peer - name of peer that should handle the message.
@@ -211,6 +215,23 @@ modparam("dmq", "ping_interval", 90)
 ...
         dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...", "
 text/plain");
+...
+
+4.3.  dmq_bcast_message(peer, body, content_type)
+
+   Broadcasts a DMQ message from config file to all active nodes (except
+   self).
+
+   Meaning of parameters:
+     * peer - name of peer that should handle the message.
+     * body - the message body.
+     * content_type - the MIME type of the message body.
+
+   This function can be used from any route.
+
+   Example 1.7. dmq_bcast_message usage
+...
+        dmq_bcast_message("peer_name", "Message body...", "text/plain");
 ...
 
 Chapter 2. Developer Guide
@@ -230,7 +251,7 @@ Chapter 2. Developer Guide
    The module provides the following functions that can be used in other
    Kamailio modules.
 
-1. dmq_load_api(dmq_api_t* api)
+1.  dmq_load_api(dmq_api_t* api)
 
    This function binds the DMQ module and fills the structure with the
    exported functions below.
@@ -244,7 +265,7 @@ typedef struct dmq_api {
 } dmq_api_t;
 ...
 
-2. register_dmq_peer(dmq_peer_t* peer)
+2.  register_dmq_peer(dmq_peer_t* peer)
 
    Registers an entity as a DMQ peer which permits receiving/sending
    messages between nodes which support the same peer.
@@ -254,7 +275,7 @@ typedef struct dmq_api {
         Example to follow.
 ...
 
-3. bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
+3.  bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
 dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)
 
    Broadcast a DMQ message to all nodes in the DMQ bus excluding self,
@@ -265,7 +286,7 @@ dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)
         Example to follow.
 ...
 
-4. send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
+4.  send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
 dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)
 
    Send a DMQ message to a single node.

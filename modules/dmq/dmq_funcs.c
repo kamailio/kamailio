@@ -250,7 +250,7 @@ int cfg_dmq_send_message(struct sip_msg* msg, char* peer, char* to, char* body, 
 	}
 
 	
-	LM_INFO("cfg_dmq_send_message: %.*s - %.*s - %.*s - %.*s\n",
+	LM_DBG("cfg_dmq_send_message: %.*s - %.*s - %.*s - %.*s\n",
 		peer_str.len, peer_str.s,
 		to_str.len, to_str.s,
 		body_str.len, body_str.s,
@@ -284,6 +284,59 @@ int cfg_dmq_send_message(struct sip_msg* msg, char* peer, char* to, char* body, 
 error:
 	return -1;
 }
+
+
+/**
+ * @brief config file function for broadcasting dmq message
+ */
+int cfg_dmq_bcast_message(struct sip_msg* msg, char* peer, char* body, char* content_type)
+{
+	str peer_str;
+	str body_str;
+	str ct_str;
+
+	if(get_str_fparam(&peer_str, msg, (fparam_t*)peer)<0) {
+		LM_ERR("cannot get peer value\n");
+		return -1;
+	}
+	if(get_str_fparam(&body_str, msg, (fparam_t*)body)<0) {
+		LM_ERR("cannot get body value\n");
+		return -1;
+	}
+	if(get_str_fparam(&ct_str, msg, (fparam_t*)content_type)<0) {
+		LM_ERR("cannot get content-type value\n");
+		return -1;
+	}
+
+	LM_DBG("cfg_dmq_bcast_message: %.*s - %.*s - %.*s\n",
+		peer_str.len, peer_str.s,
+		body_str.len, body_str.s,
+		ct_str.len, ct_str.s);
+
+	dmq_peer_t* destination_peer = find_peer(peer_str);
+	if(!destination_peer) {
+		LM_INFO("cannot find peer %.*s - adding it.\n", peer_str.len, peer_str.s);
+		dmq_peer_t new_peer;
+		new_peer.callback = empty_peer_callback;
+		new_peer.description.s = "";
+		new_peer.description.len = 0;
+		new_peer.peer_id = peer_str;
+		destination_peer = register_dmq_peer(&new_peer);
+		if(!destination_peer) {
+			LM_ERR("error in register_dmq_peer\n");
+			goto error;
+		}
+	}
+	if(bcast_dmq_message(destination_peer, &body_str, 0,
+			&notification_callback, 1, &ct_str) < 0) {
+		LM_ERR("cannot send dmq message\n");
+		goto error;
+	}
+	return 1;
+error:
+	return -1;
+}
+
 
 /**
  * @brief pings the servers in the nodelist
