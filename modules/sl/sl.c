@@ -433,7 +433,7 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 			goto restore;
 		}
 	}
-	ret = forward_reply(msg);
+	ret = forward_reply_nocb(msg);
 restore:
 	if(reason!=NULL) {
 		if(ldel!=NULL) {
