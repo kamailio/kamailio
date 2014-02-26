@@ -105,6 +105,10 @@ modparam("mtree", "db_table", "mymtrees")
 		one tree identified by tname column). 
 	    </para>
 	    <para>
+	    This parameter can be set many times to add more trees in
+	    memory.
+	    </para>
+	    <para>
 		<emphasis>
 		    Default value is <quote>none</quote>.
 		</emphasis>
@@ -113,7 +117,8 @@ modparam("mtree", "db_table", "mymtrees")
 		<title>Set <varname>mtree</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mtree", "mtree", "name=mytree;dbtable=routes;type=0;multi=1")
+modparam("mtree", "mtree", "name=mytree1;dbtable=routes1;type=0")
+modparam("mtree", "mtree", "name=mytree2;dbtable=routes2;type=0;multi=1")
 ...
 </programlisting>
 	    </example>
