@@ -438,6 +438,10 @@ semicolon_add_param:
 				}
 				break;
 			case ',':
+				if(status==PARA_VALUE_QUOTED) {
+					/* comma is allowed inside quoted values */
+					break;
+				}
 				if (allow_comma_sep)
 				{
 					switch (status)
