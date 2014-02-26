@@ -77,6 +77,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	*/
 	
 
+	offset = 0;
 	end=buffer+len;
 	/* see if it's a reply (status) */
 
@@ -239,7 +240,7 @@ error:
 	};
 error1:
 	fl->type=SIP_INVALID;
-	LOG(L_ERR, "parse_first_line: bad message\n");
+	LOG(L_ERR, "parse_first_line: bad message (offset: %d)\n", offset);
 	/* skip  line */
 	nl=eat_line(buffer,len);
 	return nl;
