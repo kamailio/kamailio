@@ -481,7 +481,8 @@ semicolon_add_param:
 					}
 					break;
 				} else {
-					if(status==S_PARA_VALUE && param->type==TAG_PARAM) {
+					if((status==S_PARA_VALUE || status==PARA_VALUE_TOKEN)
+							&& param->type==TAG_PARAM) {
 						/* if comma is not separator, allow it as part of value
 						 * - some user agents use it */
 						break;
