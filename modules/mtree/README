@@ -196,11 +196,14 @@ modparam("mtree", "db_table", "mymtrees")
    multi tells if dbtable can contain more than one tree (0 = one tree, 1
    = more than one tree identified by tname column).
 
+   This parameter can be set many times to add more trees in memory.
+
    Default value is "none".
 
    Example 1.3. Set mtree parameter
 ...
-modparam("mtree", "mtree", "name=mytree;dbtable=routes;type=0;multi=1")
+modparam("mtree", "mtree", "name=mytree1;dbtable=routes1;type=0")
+modparam("mtree", "mtree", "name=mytree2;dbtable=routes2;type=0;multi=1")
 ...
 
 3.4. tname_column (string)
