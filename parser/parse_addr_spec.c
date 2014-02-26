@@ -480,9 +480,12 @@ semicolon_add_param:
 							goto error;
 					}
 					break;
-				}
-				else
-				{
+				} else {
+					if(status==S_PARA_VALUE && param->type==TAG_PARAM) {
+						/* if comma is not separator, allow it as part of value
+						 * - some user agents use it */
+						break;
+					}
 					LOG( L_ERR, "ERROR parse_to_param : "
 							"invalid character ',' in status %d: <<%.*s>>\n",
 							status, (int)(tmp-buffer), ZSW(buffer));
