@@ -695,10 +695,10 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				ptr=_r->contacts;
 				while(ptr)
 				{
-					ptr0 = ptr;
+					ptr0 = ptr->next;
 					if(ptr!=c)
 						ul.delete_ucontact(_r, ptr);
-					ptr=ptr0->next;
+					ptr=ptr0;
 				}
 				updated=1;
 			}
@@ -725,10 +725,10 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 					ptr=_r->contacts;
 					while(ptr)
 					{
-						ptr0 = ptr;
+						ptr0 = ptr->next;
 						if(ptr!=c)
 							ul.delete_ucontact(_r, ptr);
-						ptr=ptr0->next;
+						ptr=ptr0;
 					}
 					updated=1;
 				}
