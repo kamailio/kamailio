@@ -247,6 +247,8 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 	gpv = (geoip_pv_t*)param->pvn.u.dname;
 	if(gpv==NULL)
 		return -1;
+	if(gpv->item==NULL)
+		return pv_get_null(msg, param, res);
 
 	switch(gpv->type)
 	{
