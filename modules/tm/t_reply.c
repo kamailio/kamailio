@@ -1845,8 +1845,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		 * or a stored message */
 		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
 		if (relayed_msg==FAKED_REPLY) {
-			relayed_code = branch==relay
-				? msg_status : t->uac[relay].last_received;
+			if(t->flags & T_CANCELED) {
+				/* transaction canceled - send 487 */
+				relayed_code = 487;
+			} else {
+				relayed_code = branch==relay
+					? msg_status : t->uac[relay].last_received;
+			}
 			/* use to_tag from the original request, or if not present,
 			 * generate a new one */
 			if (relayed_code>=180 && t->uas.request->to
