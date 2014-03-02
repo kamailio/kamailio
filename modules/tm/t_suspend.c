@@ -166,6 +166,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	int	branch;
 	struct ua_client *uac =NULL;
 	int	ret;
+	int cb_type;
 
 	if (t_lookup_ident(&t, hash_index, label) < 0) {
 		LOG(L_ERR, "ERROR: t_continue: transaction not found\n");
@@ -189,10 +190,10 @@ int t_continue(unsigned int hash_index, unsigned int label,
 					 * that we are executing post a suspend */
 	
 	/* which route block type were we in when we were suspended */
-	int cb_type = REQUEST_CB_TYPE;
+	cb_type =  FAILURE_CB_TYPE;;
 	switch (t->async_backup.backup_route) {
 		case REQUEST_ROUTE:
-			cb_type = REQUEST_CB_TYPE;
+			cb_type = FAILURE_CB_TYPE;
 			break;
 		case FAILURE_ROUTE:
 			cb_type = FAILURE_CB_TYPE;
@@ -201,7 +202,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			cb_type = ONREPLY_CB_TYPE;
 			break;
 		case BRANCH_ROUTE:
-			cb_type = BRANCH_CB_TYPE;
+			cb_type = FAILURE_CB_TYPE;
 			break;
 	}
 
