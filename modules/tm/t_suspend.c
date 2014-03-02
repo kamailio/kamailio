@@ -63,18 +63,17 @@ int t_suspend(struct sip_msg *msg,
 {
 	struct cell	*t;
 	int branch;
+	int sip_msg_len;
 
 	t = get_t();
 	if (!t || t == T_UNDEFINED) {
-		LOG(L_ERR, "ERROR: t_suspend: " \
-			"transaction has not been created yet\n");
+		LM_ERR("transaction has not been created yet\n");
 		return -1;
 	}
 
 	if (t->flags & T_CANCELED) {
 		/* The transaction has already been canceled */
-		LOG(L_DBG, "DEBUG: t_suspend: " \
-			"trying to suspend an already canceled transaction\n");
+		LM_DBG("trying to suspend an already canceled transaction\n");
 		ser_error = E_CANCELED;
 		return 1;
 	}
@@ -87,7 +86,7 @@ int t_suspend(struct sip_msg *msg,
 		) {
 			if (!t_reply( t, msg , 100 ,
 				cfg_get(tm, tm_cfg, tm_auto_inv_100_r)))
-				DBG("SER: ERROR: t_suspend (100)\n");
+				LM_DBG("suspending request processing - sending 100 reply\n");
 		}
 
 		if ((t->nr_of_outgoings==0) && /* if there had already been
@@ -95,8 +94,7 @@ int t_suspend(struct sip_msg *msg,
 			saved as well */
 			save_msg_lumps(t->uas.request, msg)
 		) {
-			LOG(L_ERR, "ERROR: t_suspend: " \
-				"failed to save the message lumps\n");
+			LM_ERR("failed to save the message lumps\n");
 			return -1;
 		}
 		/* save the message flags */
@@ -104,12 +102,11 @@ int t_suspend(struct sip_msg *msg,
 
 		/* add a blind UAC to let the fr timer running */
 		if (add_blind_uac() < 0) {
-			LOG(L_ERR, "ERROR: t_suspend: " \
-				"failed to add the blind UAC\n");
+			LM_ERR("failed to add the blind UAC\n");
 			return -1;
 		}
-	}else{
-		LOG(L_DBG,"DEBUG: t_suspend_reply: This is a suspend on reply - setting msg flag to SUSPEND\n");
+	} else {
+		LM_DBG("this is a suspend on reply - setting msg flag to SUSPEND\n");
 		msg->msg_flags |= FL_RPL_SUSPENDED;
 		/* this is a reply suspend find which branch */
 
@@ -118,24 +115,23 @@ int t_suspend(struct sip_msg *msg,
 				"failed find UAC branch\n");
 			return -1; 
 		}
-		LOG(L_DBG,"DEBUG: t_suspend_reply:Found a a match with branch id [%d]\n", branch);
+		LM_DBG("found a a match with branch id [%d] - "
+				"cloning reply message to t->uac[branch].reply\n", branch);
 
-		LOG(L_DBG,"DEBUG: t_suspend_reply:Cloning reply message to t->uac[branch].reply\n");
-
-		int sip_msg_len = 0;
+		sip_msg_len = 0;
 		t->uac[branch].reply = sip_msg_cloner( msg, &sip_msg_len );
 
 		if (! t->uac[branch].reply ) {
-			LOG(L_ERR, "ERROR: t_suspend_reply: can't alloc' clone memory\n");
+			LOG(L_ERR, "can't alloc' clone memory\n");
 			return -1;
 		}
 		t->uac[branch].end_reply = ((char*)t->uac[branch].reply) + sip_msg_len;
 
-		LOG(L_DBG,"DEBUG: t_suspend_reply: Saving transaction data\n");
+		LM_DBG("saving transaction data\n");
 		t->uac[branch].reply->flags = msg->flags;
 	}
 
-        *hash_index = t->hash_index;
+	*hash_index = t->hash_index;
 	*label = t->label;
 
 
