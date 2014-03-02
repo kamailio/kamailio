@@ -163,9 +163,14 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	struct ua_client *uac =NULL;
 	int	ret;
 	int cb_type;
+	int msg_status;
+	int last_uac_status;
+	int reply_status;
+	int do_put_on_wait;
+	struct hdr_field *hdr, *prev = 0, *tmp = 0;
 
 	if (t_lookup_ident(&t, hash_index, label) < 0) {
-		LOG(L_ERR, "ERROR: t_continue: transaction not found\n");
+		LM_ERR("transaction not found\n");
 		return -1;
 	}
 
@@ -231,7 +236,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 		/* fake the request and the environment, like in failure_route */
 		if (!fake_req(&faked_req, t->uas.request, 0 /* extra flags */, uac)) {
-			LOG(L_ERR, "ERROR: t_continue: fake_req failed\n");
+			LM_ERR("building fake_req failed\n");
 			ret = -1;
 			goto kill_trans;
 		}
@@ -240,7 +245,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		/* execute the pre/post -script callbacks based on original route block */
 		if (exec_pre_script_cb(&faked_req, cb_type)>0) {
 			if (run_top_route(route, &faked_req, 0)<0)
-				LOG(L_ERR, "ERROR: t_continue: Error in run_top_route\n");
+				LM_ERR("failure inside run_top_route\n");
 			exec_post_script_cb(&faked_req, cb_type);
 		}
 
@@ -273,39 +278,37 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			}
 		}
 
-	}else{
+	} else {
 		branch = t->async_backup.backup_branch;
 
 		init_cancel_info(&cancel_data);
 
-		LOG(L_DBG,"DEBUG: t_continue_reply: This a continue from a reply suspend\n");
-		/* this is a continue from a reply suspend */
+		LM_DBG("continuing from a suspended reply"
+				" - resetting the suspend branch flag\n");
 
-		LOG(L_DBG,"DEBUG: t_continue_reply: Disabling suspend branch");
 		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
 		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
 
 		faked_env( t, t->uac[branch].reply, 1);
 
-		LOG(L_DBG,"DEBUG: Running pre script\n");
 		if (exec_pre_script_cb(t->uac[branch].reply, cb_type)>0) {
 			if (run_top_route(route, t->uac[branch].reply, 0)<0){
 				LOG(L_ERR, "ERROR: t_continue_reply: Error in run_top_route\n");
 			}
-			LOG(L_DBG,"DEBUG: t_continue_reply: Running exec post script\n");
 			exec_post_script_cb(t->uac[branch].reply, cb_type);
 		}
 
-		LOG(L_DBG,"DEBUG: t_continue_reply: Restoring previous environment");
+		LM_DBG("restoring previous environment");
 		faked_env( t, 0, 1);
-
-		int reply_status;
 
 		/*lock transaction replies - will be unlocked when reply is relayed*/
 		LOCK_REPLIES( t );
 		if ( is_local(t) ) {
-			LOG(L_DBG,"DEBUG: t_continue_reply: t is local sending local reply with status code: [%d]\n", t->uac[branch].reply->first_line.u.reply.statuscode);
-			reply_status = local_reply( t, t->uac[branch].reply, branch, t->uac[branch].reply->first_line.u.reply.statuscode, &cancel_data );
+			LM_DBG("t is local - sending reply with status code: [%d]\n",
+					t->uac[branch].reply->first_line.u.reply.statuscode);
+			reply_status = local_reply( t, t->uac[branch].reply, branch,
+					t->uac[branch].reply->first_line.u.reply.statuscode,
+					&cancel_data );
 			if (reply_status == RPS_COMPLETED) {
 				/* no more UAC FR/RETR (if I received a 2xx, there may
 				* be still pending branches ...
@@ -322,12 +325,15 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			}
 
 		} else {
-			LOG(L_DBG,"DEBUG: t_continue_reply: t is NOT local sending relaying reply with status code: [%d]\n", t->uac[branch].reply->first_line.u.reply.statuscode);
-			int do_put_on_wait = 0;
+			LM_DBG("t is not local - relaying reply with status code: [%d]\n",
+					t->uac[branch].reply->first_line.u.reply.statuscode);
+			do_put_on_wait = 0;
 			if(t->uac[branch].reply->first_line.u.reply.statuscode>=200){
 				do_put_on_wait = 1;
 			}
-			reply_status=relay_reply( t, t->uac[branch].reply, branch, t->uac[branch].reply->first_line.u.reply.statuscode, &cancel_data, do_put_on_wait );
+			reply_status=relay_reply( t, t->uac[branch].reply, branch,
+					t->uac[branch].reply->first_line.u.reply.statuscode,
+					&cancel_data, do_put_on_wait );
 			if (reply_status == RPS_COMPLETED) {
 				/* no more UAC FR/RETR (if I received a 2xx, there may
 				be still pending branches ...
@@ -356,8 +362,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 		/* update FR/RETR timers on provisional replies */
 
-		int msg_status=t->uac[branch].reply->REPLY_STATUS;
-		int last_uac_status=t->uac[branch].last_received;
+		msg_status=t->uac[branch].reply->REPLY_STATUS;
+		last_uac_status=t->uac[branch].last_received;
 
 		if (is_invite(t) && msg_status<200 &&
 			( cfg_get(tm, tm_cfg, restart_fr_on_each_reply) ||
@@ -376,9 +382,7 @@ done:
 	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
 		/* unref the transaction */
 		t_unref(t->uas.request);
-	}else{
-		struct hdr_field *hdr, *prev = 0, *tmp = 0;
-
+	} else {
 		tm_ctx_set_branch_index(T_BR_UNDEFINED);        
 		/* unref the transaction */
 		t_unref(t->uac[branch].reply);
@@ -441,7 +445,7 @@ kill_trans:
 
 	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
 		t_unref(t->uas.request);
-	}else{
+	} else {
 		/* unref the transaction */
 		t_unref(t->uac[branch].reply);
 	}
