@@ -236,6 +236,8 @@ int db_insert_pcontact(struct pcontact* _c)
 
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = _c->received_port;
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = _c->received_proto;
+	VAL_NULL(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = 0;
+	VAL_NULL(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = 0;
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_PATH_IDX), _c->path);
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RX_SESSION_ID_IDX), _c->rx_session_id);
@@ -245,6 +247,8 @@ int db_insert_pcontact(struct pcontact* _c)
 
 	VAL_DOUBLE(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = _c->reg_state;
 	VAL_TIME(GET_FIELD_IDX(values, LP_EXPIRES_IDX)) = _c->expires;
+	VAL_NULL(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = 0;
+	VAL_NULL(GET_FIELD_IDX(values, LP_EXPIRES_IDX)) = 0;
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_SERVICE_ROUTES_IDX), _c->service_routes?(*_c->service_routes):empty_str);
 	VAL_NULL(GET_FIELD_IDX(values, LP_SERVICE_ROUTES_IDX)) = 1;
