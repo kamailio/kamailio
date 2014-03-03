@@ -165,7 +165,7 @@ static int sort_contacts(hdr_field_t *chdr, contact_t **ct_array,
 					ct_list->uri.len,ct_list->uri.s,q);
 			/*insert the contact into the sorted array */
 			for(i=0;i<n;i++) {
-				/* keep in mind that the contact list is reversts */
+				/* keep in mind that the contact list is reversed */
 				if (q_array[i]<=q)
 					continue;
 				break;
@@ -285,14 +285,18 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		goto restore;
 	}
 
-	/* to many branches ? */
+	i=0;
+
+	/* more branches than requested in the parameter
+	 * - add only the last ones from sorted array,
+	 *   because the order is by increasing q */
 	if (max!=-1 && n>max)
-		n = max;
+		i = n - max;
 
 	added = 0;
 
 	/* add the sortet contacts as branches in dset and log this! */
-	for ( i=0 ; i<n ; i++ ) {
+	for (  ; i<n ; i++ ) {
 		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len,
 				scontacts[i]->uri.s);
 		if(sruid_next(&_redirect_sruid)==0) {
