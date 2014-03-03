@@ -195,7 +195,7 @@ modparam("db_cluster", "max_query_length", 5)
 			sqlops.
 		</para>
 		<example>
-		<title>Set <varname>cluster</varname> parameter</title>
+		<title>Sample of usage</title>
 		<programlisting format="linespecific">
 ...
 modparam("db_cluster", "connection",

@@ -38,7 +38,7 @@ Daniel-Constantin Mierla
    1.2. Set cluster parameter
    1.3. Set inactive_interval parameter
    1.4. Set max_query_length parameter
-   1.5. Set cluster parameter
+   1.5. Sample of usage
 
 Chapter 1. Admin Guide
 
@@ -188,7 +188,7 @@ modparam("db_cluster", "max_query_length", 5)
    to be used for parallel writing from acc and round-robin reading by
    sqlops.
 
-   Example 1.5. Set cluster parameter
+   Example 1.5. Sample of usage
 ...
 modparam("db_cluster", "connection",
              "c1=>mysql://kamailio:kamailiorw@localhost/kamailio1")
