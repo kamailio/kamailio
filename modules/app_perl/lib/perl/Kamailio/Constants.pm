@@ -168,10 +168,10 @@ BEGIN {
 	const( L_ALERT	=> -3);
 	const( L_CRIT	=> -2);
 	const( L_ERR	=> -1);
-	const( L_WARN	=> 1);
-	const( L_NOTICE	=> 2);
-	const( L_INFO	=> 3);
-	const( L_DBG	=> 4);
+	const( L_WARN	=> 0);
+	const( L_NOTICE	=> 1);
+	const( L_INFO	=> 2);
+	const( L_DBG	=> 3);
 
 
 #####################
