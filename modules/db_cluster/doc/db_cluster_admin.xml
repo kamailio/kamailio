@@ -146,6 +146,29 @@ modparam("db_cluster", "inactive_interval", 180)
 </programlisting>
 		</example>
 	</section>
+	<section id="db_cluster.p.max_query_length">
+		<title><varname>max_query_length</varname> (int)</title>
+		<para>
+		How long (seconds) a failed db operation needs to last before
+		deactivating the connection for inactive_interval seconds. This
+		prevents disabling of connections that reply fast with error
+		codes, thus being active (e.g., due to primary key insert errors).
+		In such cases, the database server is active.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>max_query_length</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_cluster", "max_query_length", 5)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 		<title>Usage</title>

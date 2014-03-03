@@ -37,6 +37,7 @@ int dbcl_con_param(modparam_t type, void *val);
 int dbcl_cls_param(modparam_t type, void *val);
 
 int dbcl_inactive_interval = 300;
+int dbcl_max_query_length = 0;
 
 /*! \brief
  * DB Cluster module interface
@@ -53,6 +54,7 @@ static param_export_t params[] = {
 	{"connection",  STR_PARAM|USE_FUNC_PARAM, (void*)dbcl_con_param},
 	{"cluster",     STR_PARAM|USE_FUNC_PARAM, (void*)dbcl_cls_param},
 	{"inactive_interval",     INT_PARAM,    &dbcl_inactive_interval},
+	{"max_query_length",     INT_PARAM,    &dbcl_max_query_length},
 	{0, 0, 0}
 };
 
