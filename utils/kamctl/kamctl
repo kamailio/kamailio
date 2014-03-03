@@ -1010,6 +1010,13 @@ db_ops() {
 			QUERY="SELECT * FROM $1 WHERE $2=$3\\G;"
 			$DBROCMD "$QUERY"
 			;;
+		connect)
+			shift
+			if [ -z "$DBCMDCONNECT" ] ; then
+				merr "extension not implemented"
+				exit 1
+			fi
+			$DBCMDCONNECT
 		*)
 			usage_db_ops
 			exit 1
