@@ -228,13 +228,16 @@ void sql_reset_result(sql_result_t *res)
 	{
 		for(i=0; i<res->nrows; i++)
 		{
-			for(j=0; j<res->ncols; j++)
+			if(res->vals[i])
 			{
-				if(res->vals[i][j].flags&PV_VAL_STR
-						&& res->vals[i][j].value.s.len>0)
-					pkg_free(res->vals[i][j].value.s.s);
+				for(j=0; j<res->ncols; j++)
+				{
+					if(res->vals[i][j].flags&PV_VAL_STR
+							&& res->vals[i][j].value.s.len>0)
+						pkg_free(res->vals[i][j].value.s.s);
+				}
+				pkg_free(res->vals[i]);
 			}
-			pkg_free(res->vals[i]);
 		}
 		pkg_free(res->vals);
 		res->vals = NULL;
