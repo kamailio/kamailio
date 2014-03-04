@@ -257,6 +257,8 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 			{
 				if(gpv->item->r.flags&1)
 					return pv_get_null(msg, param, res);
+				if(gpv->item->r.record==NULL)
+					return pv_get_null(msg, param, res);
 				gpv->item->r.time_zone
 					= (char*)GeoIP_time_zone_by_country_and_region(
 						gpv->item->r.record->country_code,
@@ -266,11 +268,15 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 			return pv_geoip_get_strzval(msg, param, res,
 					gpv->item->r.time_zone);
 		case 2: /* zip */
+			if(gpv->item->r.record==NULL)
+				return pv_get_null(msg, param, res);
 			return pv_geoip_get_strzval(msg, param, res,
 					gpv->item->r.record->postal_code);
 		case 3: /* lat */
 			if((gpv->item->r.flags&2)==0)
 			{
+				if(gpv->item->r.record==NULL)
+					return pv_get_null(msg, param, res);
 				snprintf(gpv->item->r.latitude, 15, "%f",
 						gpv->item->r.record->latitude);
 				gpv->item->r.flags |= 2;
@@ -280,6 +286,8 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 		case 4: /* lon */
 			if((gpv->item->r.flags&4)==0)
 			{
+				if(gpv->item->r.record==NULL)
+					return pv_get_null(msg, param, res);
 				snprintf(gpv->item->r.longitude, 15, "%f",
 						gpv->item->r.record->longitude);
 				gpv->item->r.flags |= 4;
@@ -287,6 +295,8 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 			return pv_geoip_get_strzval(msg, param, res,
 					gpv->item->r.longitude);
 		case 5: /* dma */
+			if(gpv->item->r.record==NULL)
+				return pv_get_null(msg, param, res);
 			return pv_get_sintval(msg, param, res,
 					gpv->item->r.record->dma_code);
 		case 6: /* ips */
@@ -308,14 +318,20 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 			return pv_geoip_get_strzval(msg, param, res,
 					gpv->item->r.record->city);
 		case 9: /* area */
+			if(gpv->item->r.record==NULL)
+				return pv_get_null(msg, param, res);
 			return pv_get_sintval(msg, param, res,
 					gpv->item->r.record->area_code);
 		case 10: /* regc */
+			if(gpv->item->r.record==NULL)
+				return pv_get_null(msg, param, res);
 			return pv_geoip_get_strzval(msg, param, res,
 					gpv->item->r.record->region);
 		case 11: /* regn */
 			if((gpv->item->r.flags&16)==0)
 			{
+				if(gpv->item->r.record==NULL)
+					return pv_get_null(msg, param, res);
 				gpv->item->r.region_name
 						= (char*)GeoIP_region_name_by_code(
 							gpv->item->r.record->country_code,
@@ -325,9 +341,13 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 			return pv_geoip_get_strzval(msg, param, res,
 					gpv->item->r.region_name);
 		case 12: /* metro */
+			if(gpv->item->r.record==NULL)
+				return pv_get_null(msg, param, res);
 			return pv_get_sintval(msg, param, res,
 					gpv->item->r.record->metro_code);
 		default: /* cc */
+			if(gpv->item->r.record==NULL)
+				return pv_get_null(msg, param, res);
 			return pv_geoip_get_strzval(msg, param, res,
 					gpv->item->r.record->country_code);
 	}
