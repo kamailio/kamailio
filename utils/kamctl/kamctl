@@ -1017,6 +1017,7 @@ db_ops() {
 				exit 1
 			fi
 			$DBCMDCONNECT
+			;;
 		*)
 			usage_db_ops
 			exit 1
