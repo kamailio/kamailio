@@ -250,6 +250,8 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 	int i, j;
 	str sv;
 
+	if(res) sql_reset_result(res);
+
 	if(query==NULL)
 	{
 		LM_ERR("bad parameters\n");
@@ -274,7 +276,6 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 		return 3;
 	}
 
-	sql_reset_result(res);
 	res->ncols = RES_COL_N(db_res);
 	res->nrows = RES_ROW_N(db_res);
 	LM_DBG("rows [%d] cols [%d]\n", res->nrows, res->ncols);
