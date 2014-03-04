@@ -142,6 +142,8 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 								break;
 							c = NULL;
 						}
+					} else {
+						c = NULL;
 					}
 				}
 			}
