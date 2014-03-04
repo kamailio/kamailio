@@ -131,6 +131,10 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 		 * then, we will update on NOTIFY */
 		return 0;
 	}
+
+	// Set the structure to "0", to make sure it's properly initialized
+	memset(&ci, 0, sizeof(struct pcontact_info));
+
 	for (h = rpl->contact; h; h = h->next) {
 		if (h->type == HDR_CONTACT_T && h->parsed)
 			for (c = ((contact_body_t*) h->parsed)->contacts; c; c = c->next) {
