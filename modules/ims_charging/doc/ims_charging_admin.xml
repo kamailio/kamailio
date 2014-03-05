@@ -338,6 +338,28 @@ modparam("ims_charging", "cdp_event_latency_log", 1)
     </section>
     <section>
       <title>
+      <varname>single_ro_session_per_dialog</varname>(integer)</title>
+      <para>This tells the module whether it should do a single ro session per dialog no matter 
+	  how many times Ro_send_CCR is called from the config file or initiate an ro session 
+	  each time Ro_send_CCR is called.  It is useful for IMS charging where you might want 
+	  to  charge for on-net originating and off-net originating calls but always have only 
+	  a single ro session.
+      </para>
+      <para>
+        <emphasis>Default value is 0.</emphasis>
+      </para>
+      <example>
+        <title>
+        <varname>single_ro_session_per_dialog</varname>parameter usage</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "single_ro_session_per_dialog", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title>
       <varname>origin_host</varname>(string)</title>
       <para>Origin host to be used in Diameter messages to charging-server.</para>
       <para>
@@ -519,7 +541,7 @@ modparam("ims_charging", "service_context_id_release", "262")
     <section>
       <title>
         <function moreinfo="none">Ro_CCR(route_name, direction, charge_type, unit_type,
-        reservation_units)</function>
+        reservation_units, domain</function>
       </title>
       <para>Perform a CCR on Diameter Ro interface for Charging</para>
       <para>Meaning of the parameters is as follows:</para>
@@ -548,6 +570,10 @@ modparam("ims_charging", "service_context_id_release", "262")
           <para>
           <emphasis>reservation_units</emphasis>how many units (at the moment seconds) should be
           reservated at the moment.</para>
+        </listitem>
+	<listitem>
+          <para><emphasis>domain</emphasis>- Logical domain within
+          registrar.</para>
         </listitem>
       </itemizedlist>
       <para>This function can be used from REQUEST_ROUTE.</para>
