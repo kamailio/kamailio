@@ -258,7 +258,7 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
  *
  */
 rpc_export_t kex_pkg_rpc[] = {
-	{"pkg.stats", rpc_pkg_stats,  rpc_pkg_stats_doc,       0},
+	{"pkg.stats", rpc_pkg_stats,  rpc_pkg_stats_doc,       RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
