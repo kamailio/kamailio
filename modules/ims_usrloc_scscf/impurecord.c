@@ -58,6 +58,8 @@
 #include "subscribe.h"
 #include "usrloc_db.h"
 #include "../../lib/ims/useful_defs.h"
+#include "../../modules/dialog_ng/dlg_load.h"
+#include "../../modules/dialog_ng/dlg_hash.h"
 
 /*! contact matching mode */
 int matching_mode = CONTACT_ONLY;
@@ -71,6 +73,8 @@ extern int db_mode;
 
 extern int sub_dialog_hash_size;
 extern shtable_t sub_dialog_table;
+
+extern struct dlg_binds dlgb;
 
 /*!
  * \brief Create and initialize new record structure
@@ -322,6 +326,14 @@ void mem_remove_ucontact(impurecord_t* _r, ucontact_t* _c) {
  * \param _c deleted contact
  */
 void mem_delete_ucontact(impurecord_t* _r, ucontact_t* _c) {
+    
+    struct contact_dialog_data *dialog_data;
+    //tear down dialogs in dialog data list
+    for (dialog_data = _c->first_dialog_data; dialog_data;) {
+        dlgb.lookup_terminate_dlg(dialog_data->h_entry, dialog_data->h_id, NULL );
+        dialog_data = dialog_data->next;
+    }
+    
     mem_remove_ucontact(_r, _c);
     if_update_stat(_r->slot, _r->slot->d->contacts, -1);
     free_ucontact(_c);

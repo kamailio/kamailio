@@ -89,6 +89,8 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->delete_ucontact = delete_ucontact;
 	api->get_ucontact = get_ucontact;
 	api->update_ucontact = update_ucontact;
+	api->add_dialog_data_to_contact = add_dialog_data_to_contact;
+	api->remove_dialog_data_from_contact = remove_dialog_data_from_contact;
 
 	api->get_subscriber = get_subscriber;
 	api->add_subscriber = add_subscriber;

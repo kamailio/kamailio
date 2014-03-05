@@ -271,6 +271,15 @@ typedef struct security {
     float q;
 } security_t;
 
+/*! \brief Structure to hold dialog data used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed */
+typedef struct contact_dialog_data {
+    unsigned int h_entry;
+    unsigned int h_id;
+
+    struct contact_dialog_data* next; /*!< Next contact in the linked list */
+    struct contact_dialog_data* prev; /*!< Previous contact in the linked list */
+} contact_dialog_data_t;
+
 /*! \brief Main structure for handling of registered Contact data */
 typedef struct ucontact {
     str* domain; /*!< Pointer to domain name (NULL terminated) */
@@ -296,6 +305,9 @@ typedef struct ucontact {
     security_t *security; /**< Security-Client Information		*/
 
     struct ulcb_head_list* cbs;	/**< individual callbacks per contact */
+    
+    struct contact_dialog_data *first_dialog_data;
+    struct contact_dialog_data *last_dialog_data;
 
     struct ucontact* next; /*!< Next contact in the linked list */
     struct ucontact* prev; /*!< Previous contact in the linked list */
@@ -392,6 +404,10 @@ typedef int (*delete_ucontact_t)(struct impurecord* _r, struct ucontact* _c);
 
 typedef int (*get_ucontact_t)(struct impurecord* _r, str* _c, str* _callid, str* _path, int _cseq, struct ucontact** _co);
 
+typedef int (*add_dialog_data_to_contact_t)(struct ucontact* _c, unsigned int h_entry, unsigned int h_id);
+
+typedef int (*remove_dialog_data_from_contact_t)(struct ucontact* _c, unsigned int h_entry, unsigned int h_id);
+
 typedef void (*lock_udomain_t)(struct udomain* _d, str *_aor);
 
 typedef void (*unlock_udomain_t)(struct udomain* _d, str *_aor);
@@ -447,6 +463,9 @@ typedef struct usrloc_api {
     get_all_ucontacts_t get_all_ucontacts;
     update_ucontact_t update_ucontact;
     //update_user_profile_t update_user_profile;
+    
+    add_dialog_data_to_contact_t add_dialog_data_to_contact;
+    remove_dialog_data_from_contact_t remove_dialog_data_from_contact;
 
     add_subscriber_t add_subscriber;
     update_subscriber_t update_subscriber;

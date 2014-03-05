@@ -107,4 +107,8 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
  */
 int update_ucontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
 
+int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);
+
+int add_dialog_data_to_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);
+
 #endif
