@@ -229,7 +229,7 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     new_ro_session->called_asserted_identity.len = called_asserted_identity->len;
     memcpy(p, called_asserted_identity->s, called_asserted_identity->len);
     p += called_asserted_identity->len;
-
+    
     new_ro_session->avp_value.mac.s		= p;
     new_ro_session->avp_value.mac.len	= mac->len;
     memcpy(p, mac->s, mac->len);
@@ -281,4 +281,12 @@ not_found:
     return 0;
 }
 
-
+/*
+ * \brief free impu_data parcel
+ */
+void free_impu_data(struct impu_data *impu_data) {
+    if(impu_data){
+	shm_free(impu_data);
+	impu_data=0;
+    }
+}

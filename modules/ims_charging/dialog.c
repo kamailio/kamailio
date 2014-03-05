@@ -1,17 +1,30 @@
 #include "dialog.h"
 #include "ro_session_hash.h"
+#include "../ims_usrloc_scscf/usrloc.h"
+#include "../ims_usrloc_scscf/udomain.h"
 
 struct cdp_binds cdpb;
 
+extern usrloc_api_t ul;
+
 void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
-	struct sip_msg *reply = _params->rpl;
+	struct sip_msg *reply;
 	struct ro_session* session = 0;
 	struct ro_session_entry* ro_session_entry;
 	time_t now = time(0);
 	time_t time_since_last_event;
 
 	LM_DBG("dlg_reply callback entered\n");
-
+	
+	if (!_params) {
+		return;
+	}
+	
+	reply = _params->rpl;
+	if (!reply) {
+		LM_WARN("dlg_reply has no SIP reply associated.\n");
+	}
+	
 //	if (reply != FAKED_REPLY && reply->REPLY_STATUS == 200) {
 //		//get CC session from callback param
 //		char* cdp_session_id = (char*)*_params->param;
@@ -33,7 +46,7 @@ void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 
 	if (reply != FAKED_REPLY && reply->REPLY_STATUS == 200) {
 		LM_DBG("Call answered on dlg [%p] - search for Ro Session and initialise timers.\n", dlg);
-
+		
 		session = (struct ro_session*)*_params->param;
 		if (!session) {
 			LM_ERR("Ro Session object is NULL...... aborting\n");
@@ -97,30 +110,38 @@ void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 	}
 }
 
-/* this may be called for a number of callbacks related to tearing down a dialog so beware. */
 void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
-	int i;
+	//int i;
 	int unref = 0;
 	struct ro_session *ro_session = 0;
 	struct ro_session_entry *ro_session_entry;
-
+	struct sip_msg *request;
+	
 	LM_DBG("dialog [%p] terminated, lets send stop record\n", dlg);
 
 	if (!_params) {
 		return;
 	}
-
-	struct sip_msg *request = _params->req;
+	
+	ro_session = (struct ro_session*)*_params->param;
+	if (!ro_session) {
+		LM_ERR("Ro Session object is NULL...... aborting\n");
+		return;
+	}
+	
+	request = _params->req;
 	if (!request) {
 		LM_WARN("dlg_terminated has no SIP request associated.\n");
 	}
 
 	if (dlg && (dlg->callid.s && dlg->callid.len > 0)) {
-		/* find the session for this call, possibly both for orig and term*/
-		for (i=0; i<2; i++) {
+		
+	    
+	    /* find the session for this call, possibly both for orig and term*/
+		//for (i=0; i<2; i++) {
 			//TODO: try and get the Ro session specifically for terminating dialog or originating one
 			//currently the way we are doing is a hack.....
-			if ((ro_session = lookup_ro_session(dlg->h_entry, &dlg->callid, 0, 0))) {
+			//if ((ro_session = lookup_ro_session(dlg->h_entry, &dlg->callid, 0, 0))) {
 				ro_session_entry =
 						&(ro_session_table->entries[ro_session->h_entry]);
 
@@ -130,7 +151,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 				if (!ro_session->active && (ro_session->start_time != 0)) {
 					unref_ro_session(ro_session,1);
 					LM_ERR("Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);
-					continue;
+					return;
 				}
 			
 	
@@ -153,9 +174,79 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 				send_ccr_stop(ro_session);
 				ro_session->active = 0;
 				//ro_session->start_time;
-				unref_ro_session_unsafe(ro_session, 2+unref, ro_session_entry); //lock already acquired
+				unref_ro_session_unsafe(ro_session, 1+unref, ro_session_entry); //lock already acquired
+				//unref_ro_session_unsafe(ro_session, 2+unref, ro_session_entry); //lock already acquired
 				ro_session_unlock(ro_session_table, ro_session_entry);
-			}
-		}
+			//}
+		//}
 	}
 }
+
+void remove_dlg_data_from_contact(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
+        
+    struct impu_data *impu_data;
+    impurecord_t* implicit_impurecord = 0;
+    struct ucontact* ucontact;
+    str callid = {0, 0};
+    str path = {0, 0};
+    
+    LM_DBG("dialog [%p] terminated, lets remove dlg data from contact\n", dlg);
+    
+    if(_params && _params->param){
+	impu_data = (struct impu_data*)*_params->param;
+	if (!impu_data) {
+		LM_ERR("IMPU data object is NULL...... aborting\n");
+		return;
+	}
+	
+	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>:", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
+	LM_DBG("IMPU data domain <%.*s>", impu_data->d->name->len, impu_data->d->name->s);
+	
+	ul.lock_udomain(impu_data->d, &impu_data->identity);
+	if (ul.get_impurecord(impu_data->d, &impu_data->identity, &implicit_impurecord) != 0) {
+	    LM_DBG("usrloc does not have imprecord for implicity IMPU, ignore\n");
+	}else {
+	    if (ul.get_ucontact(implicit_impurecord, &impu_data->contact, &callid, &path, 0/*cseq*/,  &ucontact) != 0) { //contact does not exist
+		LM_DBG("This contact: <%.*s> is not in usrloc, ignore - NOTE: You need S-CSCF usrloc set to match_mode CONTACT_ONLY\n", impu_data->contact.len, impu_data->contact.s);
+	    } else {//contact exists so add dialog data to it
+		ul.remove_dialog_data_from_contact(ucontact, dlg->h_entry, dlg->h_id);
+	    }
+	}
+	ul.unlock_udomain(impu_data->d, &impu_data->identity);
+	free_impu_data(impu_data);
+    }
+}
+
+void add_dlg_data_to_contact(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
+    
+    struct impu_data *impu_data;
+    impurecord_t* implicit_impurecord = 0;
+    struct ucontact* ucontact;
+    str callid = {0, 0};
+    str path = {0, 0};
+    
+    LM_DBG("dialog [%p] confirmed, lets add dlg data to contact\n", dlg);
+    
+    if(_params && _params->param){
+	impu_data = (struct impu_data*)*_params->param;
+	if (!impu_data) {
+		LM_ERR("IMPU data object is NULL...... aborting\n");
+		return;
+	}
+	
+	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>:", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
+	LM_DBG("IMPU data domain <%.*s>", impu_data->d->name->len, impu_data->d->name->s);
+	
+	ul.lock_udomain(impu_data->d, &impu_data->identity);
+	if (ul.get_impurecord(impu_data->d, &impu_data->identity, &implicit_impurecord) != 0) {
+	    LM_DBG("usrloc does not have imprecord for implicity IMPU, ignore\n");
+	}else {
+	    if (ul.get_ucontact(implicit_impurecord, &impu_data->contact, &callid, &path, 0/*cseq*/,  &ucontact) != 0) { //contact does not exist
+		LM_DBG("This contact: <%.*s> is not in usrloc, ignore - NOTE: You need S-CSCF usrloc set to match_mode CONTACT_ONLY\n", impu_data->contact.len, impu_data->contact.s);
+	    } else {//contact exists so add dialog data to it
+		ul.add_dialog_data_to_contact(ucontact, dlg->h_entry, dlg->h_id);
+	    }
+	}
+	ul.unlock_udomain(impu_data->d, &impu_data->identity);
+    }
+} 

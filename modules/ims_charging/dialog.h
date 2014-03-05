@@ -10,5 +10,7 @@ extern int ro_timer_buffer;
 
 void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params);
 void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params);
+void add_dlg_data_to_contact(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params);
+void remove_dlg_data_from_contact(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params);
 
 #endif

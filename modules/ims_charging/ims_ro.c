@@ -65,7 +65,7 @@ void credit_control_session_callback(int event, void* session) {
 	}
 }
 
-int get_direction_as_int(str* direction);
+
 
 /**
  * Retrieves the SIP request that generated a diameter transaction
@@ -619,7 +619,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
         LM_ERR("Problem adding User-Equipment data\n");
     }
 
-    if (!Ro_add_subscription_id(ccr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &(subscr.id))) {
+    if (!Ro_add_subscription_id(ccr, subscr.type, &(subscr.id))) {
         LM_ERR("Problem adding Subscription ID data\n");
     }
 
@@ -925,9 +925,9 @@ error:
  * @param tindex - transaction index
  * @param tindex - transaction label
  *
- * @returns #CSCF_RETURN_TRUE if OK, #CSCF_RETURN_ERROR on error
+ * @returns #CSCF_RETURN_BREAK if OK, #CSCF_RETURN_ERROR on error
  */
-int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units,
+int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_type, str* unit_type, int reservation_units,
 						cfg_action_t* action, unsigned int tindex, unsigned int tlabel) {
 	str session_id = { 0, 0 },
 		called_asserted_identity = {0 , 0 },
@@ -937,7 +937,6 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     AAASession* cc_acc_session = NULL;
     Ro_CCR_t * ro_ccr_data = 0;
     AAAMessage * ccr = 0;
-    int dir = 0;
     struct ro_session *new_session = 0;
     struct session_setup_data *ssd = shm_malloc(sizeof(struct session_setup_data)); // lookup structure used to load session info from cdp callback on CCA
 
@@ -945,14 +944,6 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
-
-    //make sure we can get the dialog! if not, we can't continue
-    struct dlg_cell* dlg = dlgb.get_dlg(msg);
-    if (!dlg) {
-	    LM_DBG("Unable to find dialog and cannot do Ro charging without it\n");
-	    goto error;
-    }
-
 
     //getting asserted identity
     if ((asserted_identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
@@ -962,13 +953,10 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     
     
     //getting called asserted identity
-    called_asserted_identity = cscf_get_called_party_id(msg, &h);
-    if (!called_asserted_identity.len){
+    if ((called_asserted_identity = cscf_get_called_party_id(msg, &h)).len == 0) {
 	    LM_DBG("No P-Called-Identity hdr found. Using request URI for called_asserted_identity");
 	    called_asserted_identity	= msg->first_line.u.request.uri;
     }
-    
-    dir = get_direction_as_int(direction);
     
     if (dir == RO_ORIG_DIRECTION) {
         subscription_id.s = asserted_identity.s;
@@ -1078,7 +1066,7 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
 
     update_stat(initial_ccrs, 1);
 
-    return RO_RETURN_TRUE;
+    return RO_RETURN_BREAK;
 
 error:
     Ro_free_CCR(ro_ccr_data);
