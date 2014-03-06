@@ -1,3 +1,319 @@
+===================== 2014-03-06 Version 4.0.6 Released =====================
+
+===================== Changes Since Version 4.0.5 ===========================
+
+commit 69fef91369a2818872e00326d2d05c8fa9f7b946
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:45:08 2014 +0100
+
+    Makefile.defs: version set to 4.0.6
+
+commit 645f67f7ce88c8fb3e51dde13ee6ddc115e8eeaf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:44:14 2014 +0100
+
+    pkg/kamailio: version set to 4.0.6 in rpm specs
+
+commit ff71be5a3023578d52c2bc45a5097d0f4bf36d92
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:43:14 2014 +0100
+
+    pkg/kamailio: version set to 4.0.6 in deb specs
+
+commit dfc8d544f7435e39771f8a39f349b969ba730944
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 11:57:23 2014 +0100
+
+    tls: the pointer of cfg structure
+    
+    - synchronize when updating the list of tls configs and their reference
+      count
+    - with parts from patch by Ding Ma, FS#380, contributed under BSD
+      license
+    - backport of 208934d47ac1585d42029234267bcceab40ae218
+
+commit fe9c6ddd1d36ac7fabb303605e6a11dcd84fff1b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 11:35:26 2014 +0100
+
+    modules: bulk regeneration of README files
+    
+    - some modules had xml files updated, but no refresh for README files
+
+commit 9db02c00c7e821b3640dd2fa9161a60bcb0a1f44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 3 10:04:39 2014 +0100
+
+    acc: added note about MySQL InnoDB not supporting INSERT DELAYED
+    
+    - reported by Daniel Tryba
+    
+    (cherry picked from commit d26eff22c8a543c63a40cd7d91bb3c70f04aabc6)
+    (cherry picked from commit 4ac82cdf92ae6c0e2ff9c1238bfe28cfcefea99c)
+
+commit fbf78b84eaf9b7c8e2924db996807cd6851a3a00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 3 23:38:41 2013 +0100
+
+    core: don't increment failed dns query counter for reverse dns lookup at startup
+    
+    - it can happen before counters are intialized, thus check that before
+    - reported by Hugh Waite, FS#375
+    
+    (cherry picked from commit 89c6d73dd51eb9b96f50d3f04219612fa7725224)
+    (cherry picked from commit a3169d02d7527110941fab8de25ba75aae759ce1)
+
+commit 1208d0ac3890539f06ad6372cd11d5048cf572dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 3 23:38:08 2013 +0100
+
+    core: added function to check if counters have been initialized
+    
+    (cherry picked from commit 8161152b320f3b430523ea08e86a56f79405c2f4)
+    (cherry picked from commit a165fa668378da5c312a0c268aaf158ff583127f)
+
+commit 6121e8ee902d6b40bb50f20f0ce0a1315ede3500
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 24 16:05:49 2013 +0100
+
+    tm: exported set_t() and get_t_branch() viam tm api
+    
+    - allows to backup and restore pointers to T and branch
+    
+    (cherry picked from commit 777dd5e28ff6b4fcc3b1c44e841eb415c974075f)
+    (cherry picked from commit 09fb0aae62761ce4f251ab22c6ab9cde55e2c663)
+
+commit 211348ae0fa62282fb437fc97beeab6b10a1dbed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 24 16:06:41 2013 +0100
+
+    tmx: backup and restore existing T and branch pointers for t_cancel_callid()
+    
+    - reported and initial patch by Guillaume Bour
+    
+    (cherry picked from commit 60372d613544af1f8f06122eb77fa2a9636a6c3a)
+    (cherry picked from commit f7ed69d75746dc55e5a48a7a18602124e73cd3cd)
+
+commit 314fe0a20f47c81cd2bd54c4d0c63817752c7e44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 4 17:31:57 2014 +0100
+
+    sqlops: reset the result container before new query is executed
+    
+    - it was lost in commit 9b62514b4a90e169c9126b7bda6d87cc4c213ad2
+    - reported by Jonas BÃ¶ttner
+    
+    (cherry picked from commit 864127e6e02144c40c138d6921862b1512d01c66)
+    (cherry picked from commit 954fe136964296836113f5187f9cde91b197a567)
+
+commit 00f26f831133d770b9fd9ae5ea0026a125abcf40
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 4 09:59:07 2014 +0100
+
+    sqlops: safety check for result row field
+    
+    - it might not be set in case of a failure in the middle of result
+      conversion from db to internal memory
+    - freeing the partial result could result in a crash
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit f27df26ca01394250cbe12c5ccf694c6afd3707f)
+    (cherry picked from commit 20276e667631ec281851c2ef58d71863ae2318c4)
+
+commit f1845ecb7cc02c598ff90a9531a3cc2da489f20a
+Author: Torrey Searle <tsearle@gmail.com>
+Date:   Mon Mar 3 14:54:10 2014 +0100
+
+    app_perl: update constants for debug levels
+    (cherry picked from commit 6513ee05dd20253c0f555b18081f0eceb4baf7aa)
+
+commit 977cbc8a78caa50cf822bd39c39e7838e97fa511
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 27 23:47:06 2014 +0100
+
+    registar: proper unlinking deleted contact to avoid invalid memory access
+    
+    - based on a report and patch by Dragos Oancea
+
+commit 607b913c31f78d96f882bc91cbae870ff271aeca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 26 18:03:20 2014 +0100
+
+    sl: fixed use of forward_reply_nocb() in sl_forward_reply()
+    
+    - previous related commit was not doing it
+    
+    (cherry picked from commit 4133a44cc9b1702b3a36b9386464983d2fe9aedc)
+    (cherry picked from commit 91241caa2c2bc51b421d024c790493fdaf24c8ee)
+
+commit be06910670a08d4a6e1078f579477d86fc915334
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 24 21:32:45 2014 +0100
+
+    nat_traversal: proper size for realloc
+    
+    - reported by Venky
+    
+    (cherry picked from commit d9c34bec5ea0570f66df23e7e7d6f79f4721f04e)
+    (cherry picked from commit 26fd1d2fd24a1f4ee160ba24e2670b8e7a4e8176)
+
+commit 92f29137c8815ba5a4cf5cb98a1e1a10d4c7f9af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 21 15:48:36 2014 +0100
+
+    lib/kcore: fix loop on broken values matching the prefix of a good value in parse_supported()
+    
+    - reported by Savolainen Dmitri, FS#396
+
+commit 4b8ae380ddae2af57f1d0aeec6c728fe393e2734
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Feb 21 11:47:54 2014 +0100
+
+    pkg/kamailio/deb: init script. Get back SHM_MEMORY PKG_MEMORY and CFGFILE
+    
+    (cherry picked from commit f46beec41b3b5caa3977ddd452b3671bebf69069)
+
+commit ce060959dad97a346046b276633bfbc442aaf1e6
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Fri Feb 21 00:10:35 2014 +0100
+
+    tm: safety check for uas callid value when callid_matching is 1
+    
+    - according to the documentation is for UA that cannot match the
+      responses when call-id is changed, but is not the case of self
+      generated requests
+    - closes FS#390
+    
+    (cherry picked from commit 1787b4239f3494fe7a88b0868a807e86a3b92639)
+    (cherry picked from commit ef478ac0709a9bef99df0818f68b597f39ba7c3b)
+
+commit 133f88548ba16e3b2bb2929f4655d40ccda04ea2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 20 23:15:56 2014 +0100
+
+    async: free the async item after resuming the execution
+    
+    - reported by Surendra Pullaiah
+    
+    (cherry picked from commit c33583e6456d3500f8a9c870eb01a01d1a1fe8f4)
+    (cherry picked from commit 36c42be1a02fcb47d4b288136df81f424b690351)
+
+commit 4c71c9ba9797b6bc3b89f43a1c3856ad4e63dd87
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 18 16:30:28 2014 +0100
+
+    pkg/kamailio/deb: fix init script
+    
+    (cherry picked from commit 424ab9dd4abd9b11b7cf4642335652145128fa7c)
+
+commit 046f6d66868fd81c4716cfe2210eee4a36531f83
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 18 10:56:59 2014 +0100
+
+    pkg/kamailio/deb: fix lintian overrides
+
+commit e667cf0f35aab18ccd73f5bfe85857ddf3508ef8
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Feb 19 01:37:21 2014 +0200
+
+    modules/utils: http_query fixes
+    
+    - Credits to Guillaume Bour.
+
+commit 9c2b372615705199805186b6bc3346fbbfaea670
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Mon Feb 10 19:41:20 2014 -0500
+
+    htable: fix crash if key_value is not string
+    (cherry picked from commit 065439c0fbabe2806fcd615cec5e2445db59beec)
+
+commit 46b75d34f4941cb0e425183e70c8cf5eba7b6ab0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Feb 5 15:00:31 2014 +0100
+
+    pkg/kamailio/deb/debian: no websocket nor outbound on lenny.
+    
+    Remove kamailio-mono-modules from Suggests
+
+commit 403d553b30bfeb4aab5575666ab9638a7799317d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 5 09:52:19 2014 +0100
+
+    core: fix condition on script callback number done inside EXTRA_DEBUG
+    
+    - reported by Seudin Kasumovic, FS#388
+    
+    (cherry picked from commit 740d407be4e35ee945658365ae38a1bba30fafc7)
+
+commit 432ed7a665f07c42dadf44d2596d346a7c8863fd
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 4 21:24:34 2014 +0100
+
+    pkg/kamailio/deb: add missing dependence
+
+commit 259a99578a1e9f454a3cd027ac17f39b25c0aec0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 3 14:21:09 2014 +0100
+
+    pkg/kamailio/deb: clean lintian errors
+
+commit 6db8c1f426ed40e4ddcb2ba204816d9800302735
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 3 09:31:29 2014 +0100
+
+    pkg/kamailio/deb: wrap-and-sort control files
+
+commit ffff03d33273873076bf8bc92a84608b4271a1e3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 30 13:47:56 2014 +0100
+
+    pkg/kamailio/deb: unifying debian packaging
+
+commit 9c39db4c6cba2791d4c19772797b84179baffead
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Tue Feb 4 09:49:20 2014 +0100
+
+    tm: Fix docs on t_relay_to (Typo)
+    (as noticed by Victor V. Kustov)
+
+commit 68ecacc317cb617d1e507003d4c7d9a7856b2cfc
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Jan 16 18:02:31 2014 -0500
+
+    xhttp_rpc: fix arg parsing
+    (cherry picked from commit 3615f3c26405f1c1bcd3721674e9d87e4b589146)
+
+commit 7031c26ddb5b3bb32b1a44a9133e8f3c0893e567
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jan 7 13:59:37 2014 +0100
+
+    usrloc: add user_col to the update contact query with instance
+    
+    (cherry picked from commit b393656c1113eb3630470389f142c53fbc085a90)
+    (cherry picked from commit 2dd36bbae6f05ea0c980e58f247ac7e4f737f6a6)
+    
+    Conflicts:
+    	modules/usrloc/ucontact.c
+
+commit 7273c7cbc63d9cc44e9340859d9f5d1692fee4a6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 2 11:25:56 2014 +0100
+
+    tmrec: updated the examples with tmrec duration
+    
+    - hint to read rfc2445 for duration format
+    
+    (cherry picked from commit 99d1170469c60206992c083f2ba0e9dc6b580d37)
+    (cherry picked from commit df0218611b8f27ccaa924b8f88560c2e81966823)
+
+commit 1b98961522fd8a7eb73ecc7d1772541f8b81aabc
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Dec 26 17:51:04 2013 +0200
+
+    modules/pua: added some missing lock releases
+    (cherry picked from commit 4eb338611e716e7a32f252acbae52bace6047a0a)
+
+
 ===================== 2013-12-20 Version 4.0.5 Released =====================
 
 ===================== Changes Since Version 4.0.4 ===========================
