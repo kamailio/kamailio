@@ -533,15 +533,16 @@ fix_nated_register();
    parameter determines what heuristics is used.
 
    Meaning of the flags is as follows:
-     * 1 - Contact header field is searched for occurrence of RFC1918
-       addresses.
+     * 1 - Contact header field is searched for occurrence of RFC1918 or
+       rfc6598 addresses.
      * 2 - the "received" test is used: address in Via is compared against
        source IP address of signaling
-     * 4 - Top Most VIA is searched for occurrence of RFC1918 addresses
-     * 8 - SDP is searched for occurrence of RFC1918 addresses
+     * 4 - Top Most VIA is searched for occurrence of RFC1918 or rfc6598
+       addresses
+     * 8 - SDP is searched for occurrence of RFC1918 or rfc6598 addresses
      * 16 - test if the source port is different from the port in Via
-     * 32 - test if the source IP address of signaling is a RFC1918
-       address
+     * 32 - test if the source IP address of signaling is a RFC1918 or
+       rfc6598 address
      * 64 - test if the source connection of signaling is a WebSocket
      * 128 - test if the Contact URI port differs from the source port of
        the request (Warning: this is might be legal or even intended
@@ -555,8 +556,8 @@ fix_nated_register();
 
 5.6. is_rfc1918(ip_address)
 
-   Determines if the address in the parameter is an rfc1918 address. The
-   parameter allows pseudo-variables usage.
+   Determines if the address in the parameter is an rfc1918 or rfc6598
+   address. The parameter allows pseudo-variables usage.
 
    This function can be used from ANY_ROUTE.
 
