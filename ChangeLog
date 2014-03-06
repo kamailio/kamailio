@@ -1,3 +1,798 @@
+===================== 2014-03-06 Version 4.1.2 Released =====================
+
+===================== Changes Since Version 4.1.1 ===========================
+
+commit e9daf4ff4120e7cbfc6d99880c9679ea8051f18a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:49:19 2014 +0100
+
+    Makefile.defs: version set to 4.1.2
+
+commit 25f6290d2ffba6178a0d3a3ce3ab833808830e6b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:48:35 2014 +0100
+
+    pkg/kamailio: version set to 4.1.2 in rpm specs
+
+commit 73814ee9cf2df6c410120e383db628a983663c5b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:47:44 2014 +0100
+
+    pkg/kamailio: version set to 4.1.2 in deb specs
+
+commit 9eba669d45baeb16a8e2fab0b1201c6140f2c652
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 14:51:05 2014 +0100
+
+    nathelper: readme updated for carrier grade nat address space matching
+    
+    (cherry picked from commit 15537553aabfd59bb0fe2af45174ab4a4575120f)
+
+commit b2446a8ba6a80cf7b42839fb9aa04f5ed06767be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 14:49:22 2014 +0100
+
+    nathelper: mention the match of a natted address against rfc6598 (carrier grade nat)
+    
+    (cherry picked from commit 048448f059b64863d41ca146650f7d26b195cdce)
+
+commit a1db16222f16c75f2ed10aa023853e28772ab35a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 14:48:13 2014 +0100
+
+    nathelper: added carrier grade nat address space (rfc6598)
+    
+    (cherry picked from commit b992cfe8e88d069a0b3b0cfa31fe0d60a555cc4c)
+
+commit 71c276c092bb3f1e958b17de1bb146a9d9937b3f
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Thu Mar 6 13:35:46 2014 +0000
+
+    nat_traversal: added RFC6598 shared address space to client NAT tests
+    (cherry picked from commit 01f76bb99cfd4cebb580ed10ecd478049b038f48)
+
+commit 0487d889c7d04d2c63fec2fb573dce0cf6c55fd2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 09:49:51 2014 +0100
+
+    db_cassandra: return 0 in case of successful operations
+    
+    - following better DB APIv1 convention and avoiding inappropriate
+      failure detection in some modules
+    - reported and patch by Jay Binks
+    
+    (cherry picked from commit f475f2886f37b2a9cb5782ef1f5b9a6e94cee4dc)
+
+commit 3f03a9410cd3e68eaf53866621cd73d69660a787
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 4 09:43:39 2014 +0100
+
+    geoip: for safety checks for the case when geoip_match() is not executed
+    
+    - but the geoip pv is accessed
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit 56ed48bf48c3d78ff5d214833e09a5759f0b5928)
+
+commit 2e1d6ed943aeb53ef56695df65d43f0f160d02f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 3 19:15:30 2014 +0100
+
+    uac_redirect: select the contacts with highest q when a limit is set
+    
+    - reported by  Stefan Prelle, FS#349
+    
+    (cherry picked from commit a9b3286a5ace0f66852054634b46c0647c8d1271)
+
+commit 7745bf018deeaa4bdbb2a667c50209d480f96248
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 2 15:40:17 2014 +0100
+
+    tm: t_continue() polishing
+    
+    - variables declared at beginning of function to work on old C standard
+      compilers
+    - log messages compacted - function name and log level are prefixed
+      automatically
+    - stay under 80 chars per line to fit in text terminals
+    
+    (cherry picked from commit 47f6cfd76a9d801a83ca14b55926d389f6c3c2da)
+
+commit c99b81f10bbd08f15035097e7a77eb37fb823224
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 1 10:46:57 2014 +0100
+
+    tm: 487 Request Terminated has priority when transaction is cancelled and no reply received from downstream
+    
+    - for cancel_b_method 1, timeout was sent back even when transaction was
+      canceled
+    
+    (cherry picked from commit 6c3725d5535e0b5bff5c63251d37e7139f92321c)
+
+commit 02c99647d22e2d4d4fd6c4028b372d2a1aa140bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 27 08:48:42 2014 +0100
+
+    geoip: safety check to see if the result structure is filled
+    
+    - return $null if not
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit 721ffe3576e8e7891c27f8578eb244a857ede759)
+
+commit b6d8aa9675e80a1d701b4f33f11936b53e06f4e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 26 20:30:34 2014 +0100
+
+    parser/parse_fline: print offset in log message when failing to parse first line
+    
+    (cherry picked from commit a111b33ae7b64dbf9486f2fc4b7f3007f4015e77)
+
+commit 1dadf3e1ff4a725f8030d862a52470f2d400bb21
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 26 10:45:24 2014 +0100
+
+    mtree: enahced docs to specify that the mtree parameter can be set many times
+    
+    (cherry picked from commit 0b122416932030c9459f16d46438489b115941aa)
+
+commit 6f6a050872cbaf8a81b4133877c2867c5cdc7290
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 24 19:15:13 2014 +0100
+
+    dialog: don't add dialog profiles when loading from db and state is terminated
+    
+    (cherry picked from commit 9b88eb7ee2d243882383a44f601baa21fd679cd5)
+
+commit 549930641fd344046b8bf12eab0cc82fe47abf44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 24 18:53:55 2014 +0100
+
+    dialog: remove dialog from profile as soon as gets to terminated state
+    
+    (cherry picked from commit edf61acb57ed5e8ee0ca9ec1f796e43ce993be48)
+
+commit a0b05cf2fbefc1b3b67362407aa6be101a91606b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 24 18:17:00 2014 +0100
+
+    mtree: reset tree statistics upon reload
+    
+    - related to FS#398, reported by JoshE
+    
+    (cherry picked from commit 94bad4414b36334061ef0d3ec42747d672eaf058)
+
+commit b4cf30f4dc756ffa82d931b28eba74b26dce289d
+Author: David M. Lee <dlee@digium.com>
+Date:   Mon Feb 10 15:22:11 2014 -0600
+
+    call_control: Passthrough sip_application
+    
+    Current patches being submitted to CDRTool and the call_control daemon
+    allow for SIP application type to be specified. This allows audio or
+    video services to be rated differently, or even different ratings for
+    application subtypes (audio.inbound vs. audio.outbound).
+    
+    This patch allows the sip_application value to be passed through to the
+    call_control daemon.
+    
+    (cherry picked from commit 0a4519af5c1ea3f61362fba7451eb4acc479d488)
+
+commit 100b1f0f0943bf6b7c1d46e42d7b70ec5c9f5f4e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 21 18:26:34 2014 +0100
+
+    topoh: let replies for CANCEL requests be handled
+    
+    - CANCEL is hop by hop, but can have the call-id hidden when sending out
+    
+    (cherry picked from commit 376d8b3972d96b70d1e12cc57104475b2ee7ade8)
+
+commit 3eb337b9e81759f25f452ac9aa5d2386359822ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 21 17:58:19 2014 +0100
+
+    topoh: don't encode/decode content for local generated messages
+    
+    - requests generated by kamailio don't have headers that should be
+      hidden
+    - replies to them don't have anything hidden
+    - update as part of report from FS#390
+    
+    (cherry picked from commit 41f12e01b20a6b32d26297fbdf6ce17d40823ef2)
+
+commit 008e43e402a8e7aa088dd8c65db8c172a95ef313
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 3 11:40:43 2014 +0100
+
+    db_cluster: updated the old application name in doc examples
+    
+    (cherry picked from commit 32f688659fcc6f7c44d9095e585951780e277522)
+
+commit 7ae3db782aa4413efeeb11706b5fa65fe13529a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 30 12:14:48 2014 +0100
+
+    core: test the limits of nested select level before accessing array value
+    
+    (cherry picked from commit b61f173a8dc40592809912e137e42d8ffe1154fa)
+
+commit 46f2ebd0de82a6decea2229e85f63666686510ba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 30 12:12:44 2014 +0100
+
+    utils/db_berkeley: release file description in error cases
+    
+    (cherry picked from commit e7a0840a1334280650d4abb865843da0072adec6)
+
+commit 92a0157f83c8cdbf25452eb1994302912173fc53
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 29 22:10:09 2014 +0100
+
+    sercmd: memset with proper size
+    
+    (cherry picked from commit d0ebc7fa4b4b20bee83f57b3f0d0e6e75b5f0b08)
+
+commit b06c12f3d5db875bb0b70cc4d85b09fafeb84d34
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 28 18:54:50 2014 +0100
+
+    core: avoid warning of using bitwise operator with boolean result
+    
+    - on a report generated by cppcheck sent by David Binderman
+    
+    (cherry picked from commit cfb815e440804c2870126c1c098362d5a117f97c)
+
+commit f8bb8cbf1908125c41096abf3547af51d6c88d26
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 28 18:47:42 2014 +0100
+
+    core/parse_methods: removed duplicate check for same characters
+    
+    - on a report generated by cppcheck sent by David Binderman
+    
+    (cherry picked from commit 935f06eb8c34fe5fe82588cdd5b4af2f68c51466)
+
+commit 4599ae5c5d49836f6b9e0238a8743e8c72fe91ee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 28 18:43:13 2014 +0100
+
+    xhttp: check first the possition limits then access the data
+    
+    - in the eval function for the transformation
+    - on a report generated by cppcheck sent by David Binderman
+    
+    (cherry picked from commit 79bfabdc2ae35a5b280c6a23ff611a005dac333c)
+
+commit 90c7829dcbcc677454d297ed55be31404fafe070
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 28 18:39:19 2014 +0100
+
+    db_postgres: fixed condition checking the parameter for db uri parsing
+    
+    - on a report generated by cppcheck sent by David Binderman
+    
+    (cherry picked from commit 480b6d4dfc954fbbb8afb9dbbbf17b80dcdf71ce)
+
+commit 75203caf1a7a8c582b8eaff67af891b00100f232
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 28 18:36:21 2014 +0100
+
+    db_mysql: fixed condition checking the parameter for db uri parsing
+    
+    - on a report generated by cppcheck sent by David Binderman
+    
+    (cherry picked from commit c0b2e567b2a27d5d29ede39409d6299f7d375d87)
+
+commit 5556a88594d46030d978987eb387427f63875d73
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 28 18:30:30 2014 +0100
+
+    db_cluster: fix caseness in testing the connection flags for reading
+    
+    - on a report generated by cppcheck sent by David Binderman
+    
+    (cherry picked from commit 88a1a1b25b5228ef2e34ee01e0dd5d4e4f6ffe20)
+
+commit e70df7338330f2d3248c7ec0b6d81ff0f188617b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 24 15:43:59 2014 +0100
+
+    core/parser: handle the case when username field in auth header has proto scheme
+    
+    - some phones put there "sip:username@domain", so far it was handling
+      "username" and "username@domain"
+    
+    (cherry picked from commit e56ff0e6a5745321c6a4a5f362cc728177acef0d)
+
+commit b64064b15759217821d936732e2da0c129cf89d1
+Author: Jason Penton <jason.penton@gmail.com>
+Date:   Thu Jan 23 17:25:04 2014 +0200
+
+    modules/presence: fix crash in main/attendant process when using presence module in library mode
+    
+    (cherry picked from commit 20302744b22858e0e215e74e2a6656677881bb4a)
+
+commit b5e78a88838702088b9f0f0559aced1a5431281f
+Author: Richard Good <richard.good@smilecoms.com>
+Date:   Thu Jan 23 17:21:04 2014 +0200
+
+    modules/rls: changed default hash size from 512 to 9 to avoid overflow
+    
+    (cherry picked from commit 48bb4b562d7d7ec20b45dbe555836bb8969b988d)
+
+commit 3c8fe5c1a8f7b4469657199adc4056539fdf47d8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 20 17:24:18 2014 +0100
+
+    tm: free from and to display names that can be set for local request from seas module
+    
+    - reported and patch by Ziad Habchi
+    
+    (cherry picked from commit 1b53001ad3ad1e9bfd3e64f8e03c35d4e5f54e8d)
+
+commit e742cb638363ca2936b1f75fa7226f0127332146
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 6 16:03:27 2014 +0100
+
+    db_cassandra: clone key in a zero-termniated local buffer
+    
+    - rework from a patch by Jay Binks
+    
+    (cherry picked from commit 3cde37cf10795b4eb785ffd141a8b28e64864f5d)
+
+commit 520276f856474521cb419c11fa185ce9d6a8a285
+Author: Carlos Ruiz Diaz <carlos.ruizdiaz@gmail.com>
+Date:   Tue Jan 14 10:04:53 2014 -0300
+
+    db_cassandra: bug fixes for raw queries using sqlops
+    
+    (cherry picked from commit 2f9e8d2e122edc5b7950ee6ab0991851c9cd7bbd)
+
+commit 46912a606e345fbf76bb9794e0ef9c3851015c2a
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Mar 5 07:03:54 2014 +0200
+
+    modules/kex: ask pkg.stats to return array value
+    (cherry picked from commit 920f02bde0f7b6e3484850f4677c603b9c8740c8)
+
+commit 954fe136964296836113f5187f9cde91b197a567
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 4 17:31:57 2014 +0100
+
+    sqlops: reset the result container before new query is executed
+    
+    - it was lost in commit 9b62514b4a90e169c9126b7bda6d87cc4c213ad2
+    - reported by Jonas BÃ¶ttner
+    
+    (cherry picked from commit 864127e6e02144c40c138d6921862b1512d01c66)
+
+commit 20276e667631ec281851c2ef58d71863ae2318c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 4 09:59:07 2014 +0100
+
+    sqlops: safety check for result row field
+    
+    - it might not be set in case of a failure in the middle of result
+      conversion from db to internal memory
+    - freeing the partial result could result in a crash
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit f27df26ca01394250cbe12c5ccf694c6afd3707f)
+
+commit 07423627a1baf7ba96bc197f9ddc90f58854d26b
+Author: Torrey Searle <tsearle@gmail.com>
+Date:   Mon Mar 3 14:54:10 2014 +0100
+
+    app_perl: update constants for debug levels
+    (cherry picked from commit 6513ee05dd20253c0f555b18081f0eceb4baf7aa)
+
+commit 92aaaab324b37d75358b21825850ade8a3481cd5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 3 14:39:25 2014 +0100
+
+    kamctl: delete former fifo files if they exist
+    
+    - reported by Morten Tryfoss, FS#399
+    
+    (cherry picked from commit ec9e735955f58ef21bac21ba57eafd07db675e4d)
+
+commit 47836d773820da8aabe4a6ecb1dada285be1aa08
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 2 10:19:25 2014 +0100
+
+    tm: declare variable at the top of function declaration in t_suspend()
+    
+    - compliant with older versions of C standards
+    - simpliefied log messages
+    
+    (cherry picked from commit dce7353674ea3d93ade93c89bbb4652e7ec624be)
+
+commit 0c3d4e2199023b6d8d2e78806f6b0f56b8687a85
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 2 09:51:40 2014 +0100
+
+    tm: execute FAILURE_CB_TYPE callbacks for resuming suspended request
+    
+    - suspended request creates the transaction and a branch, callbacks
+      cannot executed anymore for request and branch route execution
+    - otherwise it results in crashes, reported by FS#400 and FS#404
+    
+    (cherry picked from commit 78c8eb1fa4b118661262fd6add9a0e9f60ca8cd1)
+
+commit 493e54de188f3ee03dd0c8a21ebcc4dd32e0c36e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 26 20:20:29 2014 +0100
+
+    parser/parse_addr_spec: comma allowd for start of tag value and mid tag value chars
+    
+    (cherry picked from commit a9e900a3dd5c958f3188376c3c4d3179c68e2c32)
+
+commit f4b178ec5e348c7bd0a4c936a0d72a3702d80146
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 26 19:52:10 2014 +0100
+
+    parser/parse_addr_spec: allow comma in tag parameter
+    
+    - some user agents uses it and it was in older versions
+    
+    (cherry picked from commit 6156d2572e06fa661ef23face24c38203485d81a)
+
+commit 0f3f76f23e8a32881a467dd9671d969617f0cb02
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 26 18:56:44 2014 +0100
+
+    parser/parse_addr_spec: allow comman inside quoted values no matter of being allowed separator
+    
+    - comma is valid inside quoted parameters values
+    
+    (cherry picked from commit 11e9f93d3bad8cfedcd55bdc4fc6c559309c4635)
+
+commit 91241caa2c2bc51b421d024c790493fdaf24c8ee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 26 18:03:20 2014 +0100
+
+    sl: fixed use of forward_reply_nocb() in sl_forward_reply()
+    
+    - previous related commit was not doing it
+    
+    (cherry picked from commit 4133a44cc9b1702b3a36b9386464983d2fe9aedc)
+
+commit e524394515e637b0cc586e1b4d482f2ea71ee749
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Feb 25 12:30:01 2014 -0500
+
+    htable: README enhancements for array keys
+    (cherry picked from commit 2847c47d7a2cbc15620d6f33b3641be1ca6207a7)
+
+commit def579c902f1adeaeacfa2b70a67cfb0e8a89225
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Feb 25 11:34:19 2014 -0500
+
+    htable: fix some copy/paste errors in README
+    (cherry picked from commit 2e4c13669ce025e0315b41a5eefa28fe2ca373a2)
+
+commit 26fd1d2fd24a1f4ee160ba24e2670b8e7a4e8176
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 24 21:32:45 2014 +0100
+
+    nat_traversal: proper size for realloc
+    
+    - reported by Venky
+    
+    (cherry picked from commit d9c34bec5ea0570f66df23e7e7d6f79f4721f04e)
+
+commit 774cefd9dfd2253923f95b12269cacbe6b315a77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 21 15:37:24 2014 +0100
+
+    core/parser: fix loop on broken values matching the prefix of a good value in parse_option_tag_body()
+    
+    - reported by Savolainen Dmitri, FS#396
+    
+    (cherry picked from commit 9ff18b15c24a933fa061663add3223b8256a88d1)
+
+commit 7cf0bc8c5a288d56f1decd305ee0a2dc952bd0dc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Feb 21 11:42:27 2014 +0100
+
+    pkg/kamailio/deb: init script. Get back SHM_MEMORY PKG_MEMORY and CFGFILE
+    
+    (cherry picked from commit f46beec41b3b5caa3977ddd452b3671bebf69069)
+
+commit ef478ac0709a9bef99df0818f68b597f39ba7c3b
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Fri Feb 21 00:10:35 2014 +0100
+
+    tm: safety check for uas callid value when callid_matching is 1
+    
+    - according to the documentation is for UA that cannot match the
+      responses when call-id is changed, but is not the case of self
+      generated requests
+    - closes FS#390
+    
+    (cherry picked from commit 1787b4239f3494fe7a88b0868a807e86a3b92639)
+
+commit 36c42be1a02fcb47d4b288136df81f424b690351
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 20 23:15:56 2014 +0100
+
+    async: free the async item after resuming the execution
+    
+    - reported by Surendra Pullaiah
+    
+    (cherry picked from commit c33583e6456d3500f8a9c870eb01a01d1a1fe8f4)
+
+commit 67dfcb7e64bf0ef3054b011ff98ace10ae609c09
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 20 11:04:49 2014 +0100
+
+    usrloc: remove the filter on nat_bflag for keepalive contact expiration
+    
+    - keepalives can be sent even for non-natted contacts
+    - reported by Kristian Kielhofner
+    
+    (cherry picked from commit aa2ee6e1d9482b486ebc3f45b26ea886a2f3dbf0)
+
+commit a7dc504075d3b5c74c6af6a3216338a0d604d1d8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 18 16:44:40 2014 +0100
+
+    pkg/kamailio/deb: use freeradius-client lib on sid and jessie
+    
+    (cherry picked from commit ba68be91bc206d27284cdaf9fb3ccc189fe33d4a)
+
+commit 65336def3106a06bd96cf46cd0aaa1883ee65f1c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 18 16:30:28 2014 +0100
+
+    pkg/kamailio/deb: fix init script
+    
+    (cherry picked from commit 424ab9dd4abd9b11b7cf4642335652145128fa7c)
+
+commit 68a3e5adcb2c3390d9ea1103d9fcf81f9c8773f0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Feb 12 14:00:16 2014 +0100
+
+    pkg/kamailio/deb: clean lintian warnings
+    
+    (cherry picked from commit c2a606c1b03b1014caa9053d64d43d09c4744d04)
+
+commit 01cee458a4f93f8fe13deac8ddf33ebb3f3afd85
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Feb 15 04:16:14 2014 +0200
+
+    modules/utils: fixed memory leak and possible crash
+    
+    - patch against 4.0 was provided by Guillaume Bour
+    (cherry picked from commit 92b947059dbde8ada3c757d7e6af48d79f9e7e12)
+
+commit 01c5ad7cb67bdb5d6140061aa0c2f8152f6f03cd
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Fri Feb 14 10:21:00 2014 +0000
+
+    dmq: fixed crash caused by freeing pointer too early on tm callback
+    (cherry picked from commit 8be7de6d1d383c2e0e476e739a6b3fa5101bac12)
+
+commit 80c70b7d423c3e137a7c7610928abc20fdc9a647
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Mon Feb 10 19:41:20 2014 -0500
+
+    htable: fix crash if key_value is not string
+    (cherry picked from commit 065439c0fbabe2806fcd615cec5e2445db59beec)
+
+commit c02f12d21539d4735a2ad9c840409c8512b2c3e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 5 09:52:19 2014 +0100
+
+    core: fix condition on script callback number done inside EXTRA_DEBUG
+    
+    - reported by Seudin Kasumovic, FS#388
+    
+    (cherry picked from commit 740d407be4e35ee945658365ae38a1bba30fafc7)
+
+commit 3e97f51e59b27ae4609ae3f650872e59e89e1c2a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 3 14:21:09 2014 +0100
+
+    pkg/kamailio/deb: clean lintian errors
+    
+    (cherry picked from commit 34720cbbf6f448a727a34164b690dabf393684ec)
+
+commit 6fad72bd5b9ca64261589f1059c7edbecc19c379
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 3 14:13:15 2014 +0100
+
+    pkg/kamailio/deb: update debian copyright file
+    
+    (cherry picked from commit e1904a040001c82d691fbb42f6149c692143c109)
+
+commit 316ac288977ff480e980b55426549c470233fe3c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 3 09:31:51 2014 +0100
+
+    pkg/kamailio/deb: wrap-and-sort control files
+
+commit 17c8242c7adaee70acedb96f01621e1b17dcc9bb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 30 14:26:03 2014 +0100
+
+    pkg/kamailio/deb: unifying debian packaging
+
+commit eb67bf1ddeb9945af754d5dcc9fd0b23788a1642
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Tue Feb 4 09:49:20 2014 +0100
+
+    tm: Fix docs on t_relay_to (Typo)
+    (as noticed by Victor V. Kustov)
+
+commit 1ec2dfbd836872df4663c059c26f410935a51b62
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Feb 3 10:05:35 2014 +0100
+
+    presence: Regenerated README
+
+commit 94d80b77f5bee00c8a2d27930dbd3b73a3ea0747
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Feb 3 09:58:59 2014 +0100
+
+    presence: Clarify the db_lock_type in the docs in conjunction with the mode DB_ONLY and a MySQL-Backend.
+
+commit f6dfa8d5e91b287ceccb84659448ee1aadbfc486
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Thu Jan 30 21:55:11 2014 +0100
+
+    presence: bugfix: Add option to disable per-Table lock for database layer
+    (causes trouble with MySQL in DB_ONLY mode)
+
+commit d0e32ab598ec13756da96dbc3651aaae72bfd92b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 12 08:53:59 2013 +0100
+
+    app_java: detect JAVA_HOME and use proper libgcj versioning
+    
+    (cherry picked from commit 5c1b8e0f0f5565aa69440a331c520fc549856092)
+
+commit 57f1daf848ce4a1a0d7cd0de1aac01ca358cf257
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jan 27 16:29:46 2014 +0100
+
+    pkg/kamailio/deb: fix typo on depends
+    
+    (cherry picked from commit b03e871a62f3895bfb70fe5b72b0142afa613684)
+
+commit 950223d980584c40f72f0a7bbbb7b32be990eef4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Dec 11 14:11:19 2013 +0100
+
+    pkg/kamailio/deb: removing lucid
+    
+    (cherry picked from commit a44d5311b583bc457b44550870dfbd4ea3fbcea4)
+    
+    Conflicts:
+    	pkg/kamailio/deb/lucid/changelog
+
+commit 5d83b84e5efbed81ebdf95ebb0d7653b1668af0b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 16 09:04:15 2013 +0100
+
+    pkg/kamailio/deb: merge changes from Debian
+    
+    (cherry picked from commit 09b7a15e24800a5617695722a43d92b6fedfd77f)
+    
+    Conflicts:
+    	pkg/kamailio/deb/squeeze/changelog
+
+commit 07cf3fd5e9f94a95663387a54ffd2d40c4f31677
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sun Dec 15 08:49:42 2013 +0100
+
+    pkg/kamailio/deb: add openssl dependence
+    
+    (cherry picked from commit 61e1237c158edb1c83a656dd91e7665867b8fe74)
+
+commit 524f3dff4e8d2058013e450c03888ee5be1e9cfe
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 12 10:09:07 2013 +0100
+
+    pkg/kamailio/deb: set JAVA_HOME and use libgcj12-dev instead of gcj-jdk
+    
+    (cherry picked from commit ded4959bf1954dc114c9503d8294e7287bf373e7)
+
+commit d619cc9aa2564bf325aa1c5d4e382c27cc00fb0a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Dec 11 13:48:36 2013 +0100
+
+    pkg/kamailio/deb: use gcj-* instead default-* one
+    
+    (cherry picked from commit 4d4ab8becd7d806f8cae43149aab1e73bbe54969)
+
+commit 5bc5726eed23da01f722067e69f0c02a92006ae5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 24 08:56:20 2014 +0100
+
+    gzcompress: fixed info about header_value parameter in docs
+    
+    (cherry picked from commit cbd525649237c3beb05ad7bcb38969fb3629b90e)
+
+commit ac7d551b29c2ce8e5ba3c668a1dcd8c5abfddfbe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 21 10:24:41 2014 +0100
+
+    dispatcher: readme regenerated with new sameple config and sections content
+
+commit 7a21f21d2e5d48fa83454a4ed2fa4a9671f9d015
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 21 10:13:51 2014 +0100
+
+    dispatcher: more details on how destination select functions work
+    
+    (cherry picked from commit f210c266311498393b93d66b41e8c08d89cbc731)
+
+commit 3c57dee17e154b8ff4daf72e76134e124a74652b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 15 17:00:45 2014 +0100
+
+    dispatcher: updated example config to use new db url attributes
+    
+    (cherry picked from commit a248b53249d76e6b53f72bc64acd4c14fb5db660)
+
+commit ab7f961dd22af7ce3cb451f30b116cc9a76bd4b5
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Jan 16 18:02:31 2014 -0500
+
+    xhttp_rpc: fix arg parsing
+    (cherry picked from commit 3615f3c26405f1c1bcd3721674e9d87e4b589146)
+
+commit 4fb71c24a119f53d75500c9bf69275634ea05a60
+Author: Jason Penton <jason.penton@gmail.com>
+Date:   Thu Jan 16 13:08:29 2014 +0200
+
+    modules/tm: fixed bug where AVPs are not restored correctly if async used within failure route
+    	- related to mail by JosÃ© Seabra on Jan 10 2014 entitiled - kamailio-4.1.1 avp issue within failure routes
+    
+    (cherry picked from commit f3f2f09beda60e1f7f4e6dfc0359f788991aeef6)
+
+commit e48703bd1cb12d5e8f2c29baf90d0c5e6af09b32
+Author: Torrey Searle <tsearle@gmail.com>
+Date:   Thu Jan 16 12:02:09 2014 +0100
+
+    modules/sipt: optional pointer should be updated when modifying called party
+    (cherry picked from commit ed33effd4a65302cd893ef2e8f0f8fcc3e88fb57)
+
+commit ac1f9f9b601f3a6f3e53d55c5a061f35df6524e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 14 08:59:17 2014 +0100
+
+    snmpstats: fixed path for deploying mibs when net-snmp-config is used
+    
+    (cherry picked from commit 777548d79f17a6eb81d241e18b22329e9654e951)
+
+commit fc0bad2c005048d73926cbf8637cd8ba10287bd8
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Jan 13 12:04:13 2014 +0100
+
+    ims_registrar_scscf: Fix memory corruption in build_contacts, in case no contacts available
+
+commit 67c12f48926c88b265db1501e1d211309bebdc7e
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Sat Jan 11 01:39:21 2014 +0100
+
+    ims_auth: Fix for SIP Digest (Segmentation fault)
+    - Fix by Marek Bazler (marek.bazler@acision.com)
+
+commit 620d9309a1bfe5e6f3ea0e93f40f267cd3f5f1bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 19:19:31 2014 +0100
+
+    snmpstats: use $(share_prefix) for deploying MIBS
+    
+    (cherry picked from commit 5dde71f7fb9715a18dabfe0beeb152b0821c6fb0)
+    
+    Conflicts:
+    	modules/snmpstats/Makefile
+
+
 ===================== 2014-01-09 Version 4.1.1 Released =====================
 
 ===================== Changes Since Version 4.1.0 ===========================
