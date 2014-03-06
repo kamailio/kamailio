@@ -1,3 +1,137 @@
+===================== 2014-03-04 Version 3.3.7 Released =====================
+
+===================== Changes Since Version 3.3.6 ===========================
+
+commit 980be54830c6dbca2d50e0ac1da34a240c858d9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:39:45 2014 +0100
+
+    Makefile.defs: version set to 3.3.7
+
+commit eb8361d235150411602e305d9509501b8a148084
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:38:28 2014 +0100
+
+    pkg/kamailio: version set to 3.3.7 in rpm specs
+
+commit 89e954b6d836f0f52fd10874c9a0084441334ee0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 6 15:37:18 2014 +0100
+
+    pkg/kamailio: version set to 3.3.7 in deb specs
+
+commit c1a4dda1b7a364a4ef0060f85b3d192993373d2e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 4 17:43:21 2014 +0100
+
+    sqlops: reset the result container before new query is executed
+    
+    - it was lost in commit 9b62514b4a90e169c9126b7bda6d87cc4c213ad2
+    - reported by Jonas BÃ¶ttner
+    
+    (cherry picked from commit 864127e6e02144c40c138d6921862b1512d01c66)
+    (cherry picked from commit 954fe136964296836113f5187f9cde91b197a567)
+
+commit d3d1e6947ffe4fbf02a1bddb64d2b9ca969c24a9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 4 12:04:13 2014 +0100
+
+    sqlops: safety check for result row field
+    
+    - it might not be set in case of a failure in the middle of result
+      conversion from db to internal memory
+    - freeing the partial result could result in a crash
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit f27df26ca01394250cbe12c5ccf694c6afd3707f)
+    (cherry picked from commit 20276e667631ec281851c2ef58d71863ae2318c4)
+
+commit 6b4db8e5d0a035e690dea80e8623be034895d236
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Feb 21 11:50:16 2014 +0100
+
+    pkg/kamailio/deb: init script. Get back SHM_MEMORY PKG_MEMORY and CFGFILE
+    
+    (cherry picked from commit f46beec41b3b5caa3977ddd452b3671bebf69069)
+
+commit b5ae856bcd8bb109d818b95633a7bebd114a35ca
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 18 16:30:28 2014 +0100
+
+    pkg/kamailio/deb: fix init script
+    
+    (cherry picked from commit 424ab9dd4abd9b11b7cf4642335652145128fa7c)
+    (cherry picked from commit 5f038ee927c40779296db080afab99ff3da47f05)
+
+commit 2ef06bf52d7768941299387e0fb43ad1be0a3291
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 18 10:45:01 2014 +0100
+
+    pkg/kamailio/deb: fix lintian override for tls
+
+commit 9f22f9f116aa2d7451cbd78346503db5f65083de
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 4 21:37:41 2014 +0100
+
+    pkg/kamailio/deb: no ims on 3.3 branch
+
+commit c0269b941d05bf0442baaf1402b9b107c71a3e6c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 4 17:34:30 2014 +0100
+
+    pkg/kamailio/deb: update lintian for backports
+
+commit 0e0a2add2e13319a8385a9c00c92cbc750b0a213
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 3 14:21:09 2014 +0100
+
+    pkg/kamailio/deb: clean lintian errors
+
+commit 3584046e8da85feee5a207e53e17d19ce46e968f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Feb 4 09:20:03 2014 +0100
+
+    pkg/kamailio/deb: update debian changelog
+
+commit 0a9136d1305b4d62f82f0992370f206da9d518d0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 3 09:30:42 2014 +0100
+
+    pkg/kamailio/deb: wrap-and-sort control files
+
+commit 2e676f6fe9cba7d3deaadbf77d1316078d483007
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 30 09:33:55 2014 +0100
+
+    pkg/kamailio/deb: unifying debian packaging
+
+commit ac7a5f69285a73e31dd5bb3d3729cdeca1abc892
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Tue Feb 4 09:49:20 2014 +0100
+
+    tm: Fix docs on t_relay_to (Typo)
+    (as noticed by Victor V. Kustov)
+
+commit 1011b1a626bd69ecb0aa1a8804aa401d8c933bcf
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jan 8 14:39:28 2014 +0100
+
+    modules_k/usrloc: add missing callid field to the update query at db_update_ucontact_instance function
+
+commit cd6dea02f4c8a9aa6c22357f66d4d15713b28797
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jan 7 14:29:17 2014 +0100
+
+    modules_k/usrloc: add user_col to the update contact query with instance
+    
+    backport of b393656c1113eb3630470389f142c53fbc085a90
+
+commit 1d5618ad356c16973b699ecea223424bcca9c513
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Dec 27 12:11:30 2013 +0200
+
+    modules_k/pua: added some missing lock releases (backport)
+
 ===================== 2013-12-18 Version 3.3.6 Released =====================
 
 ===================== Changes Since Version 3.3.5 ===========================
