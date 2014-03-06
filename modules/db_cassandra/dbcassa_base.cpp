@@ -570,7 +570,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
 			}
 			dbcassa_reconnect(CON_CASSA(_h));
 		} while(cassa_auto_reconnect && retr++ < cassa_retries);
-
+		LM_ERR("Failed to connect, retries exceeded.\n");
 	} catch (const oac::InvalidRequestException ir) {
 		LM_ERR("Failed Invalid query request: %s\n", ir.why.c_str());
 	} catch (const at::TException &tx) {
@@ -1062,7 +1062,7 @@ int db_cassa_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 done:
 	*_r = db_res;
 	LM_DBG("Exited with success\n");
-	return 1;
+	return 0;
 
 error:
 	if(db_res)
@@ -1208,14 +1208,14 @@ int db_cassa_modify(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 			if(CON_CASSA(_h)->con) {
 				try{
 					CON_CASSA(_h)->con->batch_mutate(CFMap, oac::ConsistencyLevel::ONE);
-					return 1;
+					return 0;
 				}  catch (const att::TTransportException &tx) {
 					LM_ERR("Failed to query: %s\n", tx.what());
 				}
 			}
 			dbcassa_reconnect(CON_CASSA(_h));
 		} while (cassa_auto_reconnect && retr++ < cassa_retries);
-
+		LM_ERR("Failed to connect, retries exceeded.\n");
 	} catch (const oac::InvalidRequestException ir) {
 		LM_ERR("Failed Invalid query request: %s\n", ir.why.c_str());
 	} catch (const at::TException &tx) {
@@ -1336,13 +1336,14 @@ int db_cassa_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 				if(CON_CASSA(_h)->con) {
 					try {
 						cassa_client->remove(row_key, cp, (int64_t)time(0), oac::ConsistencyLevel::ONE);
-						return 1;
+						return 0;
 					} catch  (const att::TTransportException &tx) {
 							LM_ERR("Failed to query: %s\n", tx.what());
 					}
 				}
 				dbcassa_reconnect(CON_CASSA(_h));
 			} while(cassa_auto_reconnect && retr++ < cassa_retries);
+			LM_ERR("Failed to connect, retries exceeded.\n");
 		} else {
 
 			if(!seckey_len) {
@@ -1395,7 +1396,7 @@ int db_cassa_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 				if(CON_CASSA(_h)->con) {
 					try {
 						cassa_client->batch_mutate(CFMap, oac::ConsistencyLevel::ONE);
-						return 1;
+						return 0;
 					} catch  (const att::TTransportException &tx) {
 							LM_ERR("Failed to query: %s\n", tx.what());
 					}
@@ -1403,7 +1404,7 @@ int db_cassa_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 				dbcassa_reconnect(CON_CASSA(_h));
 			} while(cassa_auto_reconnect && retr++ < cassa_retries);
 		}
-		return 1;
+		LM_ERR("Failed to connect, retries exceeded.\n");
 	} catch (const oac::InvalidRequestException ir) {
 		LM_ERR("Invalid query: %s\n", ir.why.c_str());
 	} catch (const at::TException &tx) {
