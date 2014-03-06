@@ -300,7 +300,7 @@ static int mod_init(void)
 	}
 	/* declare configuration */
 	if (cfg_declare("tls", tls_cfg_def, &default_tls_cfg,
-							cfg_sizeof(tls), &tls_cfg)) {
+							cfg_sizeof(tls), (void **)&tls_cfg)) {
 		ERR("failed to register the configuration\n");
 		return -1;
 	}

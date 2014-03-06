@@ -74,7 +74,7 @@ struct cfg_group_tls default_tls_cfg = {
 	0 /* send_close_notify (off by default)*/
 };
 
-void* tls_cfg = &default_tls_cfg;
+volatile void* tls_cfg = &default_tls_cfg;
 
 
 /* if *to<0 to=default_val, else if to>max_val to=max_val */

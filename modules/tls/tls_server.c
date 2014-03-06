@@ -151,13 +151,9 @@ static int tls_complete_init(struct tcp_connection* c)
 		goto error2;
 	}
 	     /* Get current TLS configuration and increase reference
-	      * count immediately. There is no need to lock the structure
-	      * here, because it does not get deleted immediately. When
-	      * SER reloads TLS configuration it will put the old configuration
-	      * on a garbage queue and delete it later, so we know here that
-	      * the pointer we get from *tls_domains_cfg will be valid for a while,
-		  * at least by the time this function finishes
+	      * count immediately.
 	      */
+	lock_get(tls_domains_cfg_lock);
 	cfg = *tls_domains_cfg;
 
 	     /* Increment the reference count in the configuration structure, this
@@ -165,6 +161,7 @@ static int tls_complete_init(struct tcp_connection* c)
 	      * not get deleted if there are still connection referencing its SSL_CTX
 	      */
 	cfg->ref_count++;
+	lock_release(tls_domains_cfg_lock);
 
 	if (c->flags & F_CONN_PASSIVE) {
 		state=S_TLS_ACCEPTING;

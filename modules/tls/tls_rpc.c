@@ -81,8 +81,10 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 	}
 
 	DBG("TLS configuration successfuly loaded");
+	lock_get(tls_domains_cfg_lock);
 	cfg->next = (*tls_domains_cfg);
 	*tls_domains_cfg = cfg;
+	lock_release(tls_domains_cfg_lock);
 	return;
 
  error:

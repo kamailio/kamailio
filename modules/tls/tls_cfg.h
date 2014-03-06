@@ -101,7 +101,7 @@ struct cfg_group_tls {
 
 
 extern struct cfg_group_tls default_tls_cfg;
-extern void* tls_cfg;
+extern volatile void* tls_cfg;
 extern cfg_def_t tls_cfg_def[];
 
 
