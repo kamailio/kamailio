@@ -587,7 +587,7 @@ fix_nated_register();
 		<itemizedlist>
 			<listitem><para>
 			<emphasis>1</emphasis> -  Contact header field is searched 
-			for occurrence of RFC1918 addresses.
+			for occurrence of RFC1918 or rfc6598 addresses.
 			</para></listitem>
 			<listitem><para>
 			<emphasis>2</emphasis> -  the "received" test is used: address
@@ -595,11 +595,11 @@ fix_nated_register();
 			</para></listitem>
 			<listitem><para>
 			<emphasis>4</emphasis> -  Top Most VIA is searched 
-			for occurrence of RFC1918 addresses
+			for occurrence of RFC1918 or rfc6598 addresses
 			</para></listitem>
 			<listitem><para>
 			<emphasis>8</emphasis> -  SDP is searched for occurrence of 
-			RFC1918 addresses
+			RFC1918 or rfc6598 addresses
 			</para></listitem>
 			<listitem><para>
 			<emphasis>16</emphasis> -  test if the source port is different
@@ -607,7 +607,7 @@ fix_nated_register();
 			</para></listitem>
 			<listitem><para>
 			<emphasis>32</emphasis> -  test if the source IP address of
-			signaling is a RFC1918 address
+			signaling is a RFC1918 or rfc6598 address
 			</para></listitem>
 			<listitem><para>
 			<emphasis>64</emphasis> -  test if the source connection of
@@ -633,7 +633,7 @@ fix_nated_register();
 		<function>is_rfc1918(ip_address)</function>
 		</title>
 		<para>
-			Determines if the address in the parameter is an rfc1918 address.
+			Determines if the address in the parameter is an rfc1918 or rfc6598 address.
 			The parameter allows pseudo-variables usage.
 		</para>
 		<para>
