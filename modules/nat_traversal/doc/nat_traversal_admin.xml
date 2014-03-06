@@ -515,7 +515,8 @@ modparam("nat_traversal", "keepalive_state_file", "/var/run/kamailio/keepalive_s
         <itemizedlist>
         <listitem><para>
           1 - tests if client has a private IP address (as defined by RFC1918)
-              in the Contact field of the SIP message.
+              or one from shared address space (RFC6598) in the Contact field 
+              of the SIP message.
         </para></listitem>
         <listitem><para>
           2 - tests if client has contacted &kamailio; from an address that
@@ -524,7 +525,8 @@ modparam("nat_traversal", "keepalive_state_file", "/var/run/kamailio/keepalive_s
         </para></listitem>
         <listitem><para>
           4 - tests if client has a private IP address (as defined by RFC1918)
-              in the top Via field of the SIP message.
+              or one from shared address space (RFC6598) in the top Via field 
+              of the SIP message.
         </para></listitem>
         </itemizedlist>
       </para>
