@@ -944,6 +944,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
     
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
+    int free_called_asserted_identity = 0;
 
     //getting asserted identity
     if ((asserted_identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
@@ -955,7 +956,8 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
     //getting called asserted identity
     if ((called_asserted_identity = cscf_get_called_party_id(msg, &h)).len == 0) {
 	    LM_DBG("No P-Called-Identity hdr found. Using request URI for called_asserted_identity");
-	    called_asserted_identity	= msg->first_line.u.request.uri;
+	    called_asserted_identity = cscf_get_public_identity_from_requri(msg);
+	    free_called_asserted_identity = 1;
     }
     
     if (dir == RO_ORIG_DIRECTION) {
@@ -1066,9 +1068,11 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
 
     update_stat(initial_ccrs, 1);
 
+    if(free_called_asserted_identity)  shm_free(called_asserted_identity.s);// shm_malloc in cscf_get_public_identity_from_requri	
     return RO_RETURN_BREAK;
 
 error:
+    if(free_called_asserted_identity)  shm_free(called_asserted_identity.s);// shm_malloc in cscf_get_public_identity_from_requri	
     Ro_free_CCR(ro_ccr_data);
     if (cc_acc_session) {
         	cdpb.AAASessionsUnlock(cc_acc_session->hash);

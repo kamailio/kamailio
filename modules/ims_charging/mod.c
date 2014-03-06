@@ -324,6 +324,7 @@ static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* c
 	struct dlg_cell* dlg;
 	unsigned int len;
 	struct ro_session *ro_session = 0;
+	int free_contact = 0;
 	
 	LM_DBG("Ro CCR initiated: direction:%.*s, charge_type:%.*s, unit_type:%.*s, reservation_units:%i, route_name:%.*s",
 			direction->len, direction->s,
@@ -366,19 +367,24 @@ static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* c
 			goto send_ccr;
 		}
 		//get callee contact from request URI
-		contact	= msg->first_line.u.request.uri;
+		contact = cscf_get_public_identity_from_requri(msg);
+		free_contact = 1;
 	    
 	} else {
 	    LM_CRIT("don't know what to do in unknown mode - should we even get here\n");
-	    return RO_RETURN_ERROR;
+	    ret = RO_RETURN_ERROR;
+	    goto done;
 	}
+	
+	LM_DBG("IMPU data to pass to usrloc:  contact <%.*s> identity <%.*s>\n", contact.len, contact.s, identity.len, identity.s);
 	
 	//create impu_data_parcel
 	len = identity.len + contact.len +  sizeof (struct impu_data);
 	impu_data = (struct impu_data*) shm_malloc(len);
 	if (!impu_data) {
 	    LM_ERR("Unable to allocate memory for impu_data, trying to send CCR\n");
-	    return RO_RETURN_ERROR;
+	    ret = RO_RETURN_ERROR;
+	    goto done;
 	}
 	memset(impu_data, 0, len);
 	
@@ -398,19 +404,22 @@ static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* c
 	if (p != (((char*) impu_data) + len)) {
 	    LM_ERR("buffer overflow creating impu data, trying to send CCR\n");
 	    shm_free(impu_data);
-	    return RO_RETURN_ERROR;
+	    ret = RO_RETURN_ERROR;
+	    goto done;
 	}
 	
 	
 	//reg for callbacks on confirmed and terminated
 	if (dlgb.register_dlgcb(dlg, /* DLGCB_RESPONSE_FWDED */ DLGCB_CONFIRMED, add_dlg_data_to_contact, (void*)impu_data ,NULL ) != 0) {
 	    LM_CRIT("cannot register callback for dialog confirmation\n");
-	    return RO_RETURN_ERROR;
+	    ret = RO_RETURN_ERROR;
+	    goto done;
 	}
 
 	if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED /*| DLGCB_DESTROY */, remove_dlg_data_from_contact, (void*)impu_data, NULL ) != 0) {
 	    LM_CRIT("cannot register callback for dialog termination\n");
-	    return RO_RETURN_ERROR;
+	    ret = RO_RETURN_ERROR;
+	    goto done;
 	}
 	
 send_ccr:
@@ -429,13 +438,15 @@ send_ccr:
 	int ri = route_get(&main_rt, route_name->s);
 	if (ri < 0) {
 		LM_ERR("unable to find route block [%.*s]\n", route_name->len, route_name->s);
-		return RO_RETURN_ERROR;
+		ret = RO_RETURN_ERROR;
+		goto done;
 	}
 	
 	cfg_action = main_rt.rlist[ri];
 	if (!cfg_action) {
 		LM_ERR("empty action lists in route block [%.*s]\n", route_name->len, route_name->s);
-		return RO_RETURN_ERROR;
+		ret = RO_RETURN_ERROR;
+		goto done;
 	}
 
 	//before we send lets suspend the transaction
@@ -443,19 +454,22 @@ send_ccr:
 	if (t == NULL || t == T_UNDEFINED) {
 		if (tmb.t_newtran(msg) < 0) {
 			LM_ERR("cannot create the transaction for CCR async\n");
-			return RO_RETURN_ERROR;
+			ret = RO_RETURN_ERROR;
+			goto done;
 		}
 		t = tmb.t_gett();
 		if (t == NULL || t == T_UNDEFINED) {
 			LM_ERR("cannot lookup the transaction\n");
-			return RO_RETURN_ERROR;
+			ret = RO_RETURN_ERROR;
+			goto done;
 		}
 	}
 
 	LM_DBG("Suspending SIP TM transaction\n");
 	if (tmb.t_suspend(msg, &tindex, &tlabel) < 0) {
 		LM_ERR("failed to suspend the TM processing\n");
-		return RO_RETURN_ERROR;
+		ret =  RO_RETURN_ERROR;
+		goto done;
 	}
 	
 	ret = Ro_Send_CCR(msg, dlg, dir, charge_type, unit_type, reservation_units, cfg_action, tindex, tlabel);
@@ -466,6 +480,7 @@ send_ccr:
 	}
     
 done:
+	if(free_contact)  shm_free(contact.s);// shm_malloc in cscf_get_public_identity_from_requri	
 	return ret;
 }
 
