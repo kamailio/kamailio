@@ -14,9 +14,9 @@ Vicente Hernando
 
    <vhernando@systemonenoc.com>
 
-   Copyright Â© 2011 asipto.com
+   Copyright © 2011 asipto.com
 
-   Copyright Â© 2012 www.systemonenoc.com
+   Copyright © 2012 www.systemonenoc.com
      __________________________________________________________________
 
    Table of Contents
@@ -124,7 +124,7 @@ modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
    4.1. redis_cmd(srvname, command, ..., replyid)
    4.2. redis_free(replyid)
 
-4.1.  redis_cmd(srvname, command, ..., replyid)
+4.1. redis_cmd(srvname, command, ..., replyid)
 
    Send a command to REDIS server identified by srvname. The reply will be
    stored in a local container identified by replyid. All the parameters
@@ -179,7 +179,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 }
 ...
 
-4.2.  redis_free(replyid)
+4.2. redis_free(replyid)
 
    Frees data in a previous reply from memory. After this function call,
    accessing to a freed replyid returns null value.

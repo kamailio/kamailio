@@ -10,7 +10,7 @@ Richard Good
 
    Smile Communications
 
-   Copyright Â© 2012 Smile Communications
+   Copyright © 2012 Smile Communications
      __________________________________________________________________
 
    Table of Contents
@@ -184,31 +184,31 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.2.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.3.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.

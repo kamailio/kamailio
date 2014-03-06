@@ -1,4 +1,3 @@
-
 The Iptrtpproxy module
 
 Tomas Mandys
@@ -6,7 +5,7 @@ Tomas Mandys
    Iptel.org
 
    Copyright © 2007 Tomas Mandys
-     _________________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
@@ -25,32 +24,32 @@ Tomas Mandys
 
         4. Functions
 
-              4.1. iptrtpproxy_alloc(gate_a_to_b [, existing_sess_ids]) 
-              4.2. iptrtpproxy_update(gate_a_to_b, session_ids) 
-              4.3. iptrtpproxy_adjust_timeout(gate_a_to_b, session_ids) 
-              4.4. iptrtpproxy_delete(session_ids) 
-              4.5. iptrtpproxy_authorize_media() 
-              4.6. iptrtpproxy_set_param(param, value) 
+              4.1. iptrtpproxy_alloc(gate_a_to_b [, existing_sess_ids])
+              4.2. iptrtpproxy_update(gate_a_to_b, session_ids)
+              4.3. iptrtpproxy_adjust_timeout(gate_a_to_b, session_ids)
+              4.4. iptrtpproxy_delete(session_ids)
+              4.5. iptrtpproxy_authorize_media()
+              4.6. iptrtpproxy_set_param(param, value)
               4.7.
-                      iptrtpproxy_set_param("(aggregation/switchboard)_by_sip
-                      _ip_(a/b)", sip_ip) 
+                      iptrtpproxy_set_param("(aggregation/switchboard)_by_sip_
+                      ip_(a/b)", sip_ip)
 
               4.8. iptrtpproxy_set_param("protected_session_ids",
-                      sess_ids) 
+                      sess_ids)
 
-              4.9. iptrtpproxy_set_param("o_name", value) 
-              4.10. iptrtpproxy_set_param("o_addr", value) 
-              4.11. iptrtpproxy_set_param("codec_set", value) 
-              4.12. iptrtpproxy_set_param("remove_codec_mask", value) 
+              4.9. iptrtpproxy_set_param("o_name", value)
+              4.10. iptrtpproxy_set_param("o_addr", value)
+              4.11. iptrtpproxy_set_param("codec_set", value)
+              4.12. iptrtpproxy_set_param("remove_codec_mask", value)
 
         5. Selects
 
-              5.1. @iptrtpproxy.session_ids 
-              5.2. @iptrtpproxy.sdp_ip 
-              5.3. @iptrtpproxy.o_name 
-              5.4. @iptrtpproxy.o_addr 
-              5.5. @iptrtpproxy.auth_rights 
-              5.6. @iptrtpproxy.active_media_num 
+              5.1. @iptrtpproxy.session_ids
+              5.2. @iptrtpproxy.sdp_ip
+              5.3. @iptrtpproxy.o_name
+              5.4. @iptrtpproxy.o_addr
+              5.5. @iptrtpproxy.auth_rights
+              5.6. @iptrtpproxy.active_media_num
 
    List of Examples
 
@@ -79,55 +78,55 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. iptrtpproxy_alloc(gate_a_to_b [, existing_sess_ids]) 
-        4.2. iptrtpproxy_update(gate_a_to_b, session_ids) 
-        4.3. iptrtpproxy_adjust_timeout(gate_a_to_b, session_ids) 
-        4.4. iptrtpproxy_delete(session_ids) 
-        4.5. iptrtpproxy_authorize_media() 
-        4.6. iptrtpproxy_set_param(param, value) 
+        4.1. iptrtpproxy_alloc(gate_a_to_b [, existing_sess_ids])
+        4.2. iptrtpproxy_update(gate_a_to_b, session_ids)
+        4.3. iptrtpproxy_adjust_timeout(gate_a_to_b, session_ids)
+        4.4. iptrtpproxy_delete(session_ids)
+        4.5. iptrtpproxy_authorize_media()
+        4.6. iptrtpproxy_set_param(param, value)
         4.7.
-                iptrtpproxy_set_param("(aggregation/switchboard)_by_sip_ip_(a
-                /b)", sip_ip) 
+                iptrtpproxy_set_param("(aggregation/switchboard)_by_sip_ip_(a/
+                b)", sip_ip)
 
-        4.8. iptrtpproxy_set_param("protected_session_ids", sess_ids) 
-        4.9. iptrtpproxy_set_param("o_name", value) 
-        4.10. iptrtpproxy_set_param("o_addr", value) 
-        4.11. iptrtpproxy_set_param("codec_set", value) 
-        4.12. iptrtpproxy_set_param("remove_codec_mask", value) 
+        4.8. iptrtpproxy_set_param("protected_session_ids", sess_ids)
+        4.9. iptrtpproxy_set_param("o_name", value)
+        4.10. iptrtpproxy_set_param("o_addr", value)
+        4.11. iptrtpproxy_set_param("codec_set", value)
+        4.12. iptrtpproxy_set_param("remove_codec_mask", value)
 
    5. Selects
 
-        5.1. @iptrtpproxy.session_ids 
-        5.2. @iptrtpproxy.sdp_ip 
-        5.3. @iptrtpproxy.o_name 
-        5.4. @iptrtpproxy.o_addr 
-        5.5. @iptrtpproxy.auth_rights 
-        5.6. @iptrtpproxy.active_media_num 
+        5.1. @iptrtpproxy.session_ids
+        5.2. @iptrtpproxy.sdp_ip
+        5.3. @iptrtpproxy.o_name
+        5.4. @iptrtpproxy.o_addr
+        5.5. @iptrtpproxy.auth_rights
+        5.6. @iptrtpproxy.active_media_num
 
 1. Overview
 
-   This   module   provides   similar   functionality  as  nathelper  but
-   communicates  with  netfilter  kernel  xt_RTPPROXY  module  using  the
-   libipt_RTPPROXY  userspace  library.  All  RTP streams are manipulated
-   directly  in  kernel space, no data is copied from kernel to userspace
+   This module provides similar functionality as nathelper but
+   communicates with netfilter kernel xt_RTPPROXY module using the
+   libipt_RTPPROXY userspace library. All RTP streams are manipulated
+   directly in kernel space, no data is copied from kernel to userspace
    and back, it reduces load and delay. See
    http://www.2p.cz/en/netfilter_rtp_proxy for more details.
 
-   This  Kamailio module is written as a light-weight module, there is no
-   dialog  managment  as  in  Nathelper.  The  reason is that such an API
-   should  be  provided  by  core or a specialized dialog manager module.
-   Because  such  module is not in git, session information may be stored
-   in  extra attributes of the avp_db module and the session id itself in
-   record route as cookie, see the rr module.
+   This Kamailio module is written as a light-weight module, there is no
+   dialog managment as in Nathelper. The reason is that such an API should
+   be provided by core or a specialized dialog manager module. Because
+   such module is not in git, session information may be stored in extra
+   attributes of the avp_db module and the session id itself in record
+   route as cookie, see the rr module.
 
-   It  should  be able to support all cases as re-invites when SIP client
-   offers  media  change in SDP and when number of medias in offer/answer
+   It should be able to support all cases as re-invites when SIP client
+   offers media change in SDP and when number of medias in offer/answer
    are different.
 
    Nathelper may be still used for testing if client is behind the NAT.
 
-   There  is  also  support for media authorization. Number of codec sets
-   may  be  defined.  When a message containing SDP offer/answer is being
+   There is also support for media authorization. Number of codec sets may
+   be defined. When a message containing SDP offer/answer is being
    processed then current codecs and streams may be inspected, removed or
    signallized according a codec set.
 
@@ -137,14 +136,14 @@ Chapter 1. Admin Guide
 
 2. Dependencies
 
-   The  following  libraries  or  applications  must  be installed before
+   The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * netfilter       xt_RTPPROXY       &      libipt_RTPPROXY,      see
+     * netfilter xt_RTPPROXY & libipt_RTPPROXY, see
        http://www.2p.cz/en/netfilter_rtp_proxy
 
 Note
 
-   The  modules Makefile must be edited and iptdir setup to the directory
+   The modules Makefile must be edited and iptdir setup to the directory
    with the iptable sources (if different from ~/iptables). Alternatively
    compile the module using:
                 make -C modules/iptrtpproxy iptdir=path_to_iptables_src
@@ -160,8 +159,8 @@ Note
 
 3.1. config (string)
 
-   References  iptrtpproxy.cfg,  see iptrtpproxy_helper. Default value is
-   /etc/iptrtpproxy.cfg.  If  only codec authorization is to be used then
+   References iptrtpproxy.cfg, see iptrtpproxy_helper. Default value is
+   /etc/iptrtpproxy.cfg. If only codec authorization is to be used then
    /dev/null may be used.
 
 3.2. switchboard (string)
@@ -173,26 +172,25 @@ Note
 
   name =  "aggregation" | "sip-addr-"
 
-   The  name  is  the  switchboard name as declared in config and will be
-   used  by  script  functions and references switchboard. It's mandatory
+   The name is the switchboard name as declared in config and will be used
+   by script functions and references switchboard. It's mandatory
    parameter. The special name * set values for all switchboards.
 
-   The  sip-addr  is  address used by iptrtpproxy_ser_param(by_sip_ip) to
-   find  a  switchboard  for  particular  connection.  If  not explicitly
-   configured  then  RTP  switchboard  gate  address  are  used  for this
-   feature.
+   The sip-addr is address used by iptrtpproxy_ser_param(by_sip_ip) to
+   find a switchboard for particular connection. If not explicitly
+   configured then RTP switchboard gate address are used for this feature.
 
-   The  aggregation enables to aggregate more switchboards in cluster and
-   to  widden  bandwidth.  Aggregation  will take sip-addr from the first
+   The aggregation enables to aggregate more switchboards in cluster and
+   to widden bandwidth. Aggregation will take sip-addr from the first
    switchboard of its.
 
    Example 1.1. Declare switchboard
         ...
         modparam("iptrtpproxy", "config", "/etc/iptrtpproxy.cfg");
-        modparam("iptrtpproxy", "switchboard", "name=my1;sip-addr-a=1.2.3.4;sip
--addr-b=5.6.7.8");
-        modparam("iptrtpproxy", "switchboard", "name=my2;sip-addr-a=2.3.4.5;sip
--addr-b=3.4.5.6;aggregation=my23");
+        modparam("iptrtpproxy", "switchboard", "name=my1;sip-addr-a=1.2.3.4;sip-
+addr-b=5.6.7.8");
+        modparam("iptrtpproxy", "switchboard", "name=my2;sip-addr-a=2.3.4.5;sip-
+addr-b=3.4.5.6;aggregation=my23");
         modparam("iptrtpproxy", "switchboard", "name=my3;aggregation=my23");
         modparam("iptrtpproxy", "switchboard", "name=*;aggregation=my123");
         ...
@@ -201,14 +199,14 @@ Note
 
    Timeout in seconds used for rerequest remote RTP proxy via RPC command
    after preceeding error. In other words if a RPC server is unresponsive
-   at  the  moment  then  next attempt will be forced after this timeout.
+   at the moment then next attempt will be forced after this timeout.
    Default value is 30.
 
 3.4. hostname (string)
 
-   The  hostname  used by RPC to identify machine where Ser is running to
-   communicate  which  RTP  proxy  via  local interface. Default value is
-   taken from system hostname.
+   The hostname used by RPC to identify machine where Ser is running to
+   communicate which RTP proxy via local interface. Default value is taken
+   from system hostname.
 
 3.5. declare_codec (string)
 
@@ -217,112 +215,110 @@ Note
 
 3.6. codec_set (string)
 
-   Declares  new  codec  set.  Codecs  are  declared  for each media type
+   Declares new codec set. Codecs are declared for each media type
    independently.
 
    The format is:
   "name=" value * ( ";" name "=" value )
 
   name =  "media_type" | "rights" | "codecs" | "max_streams" | ( "rtp" | "rtcp"
- ) "_" ( "bytes" | "packets" )
+) "_" ( "bytes" | "packets" )
 
   media_types = "audio" | "video" | "application" | "text" | "message" | "data"
- | "control" | "?" | "*"
+| "control" | "?" | "*"
 
    The name is the codec set name to be defined.
 
-   The  media_type  belongs  to  type at m= SDP line. Question mark means
+   The media_type belongs to type at m= SDP line. Question mark means
    "unknown media" type and asterisk "all media types".
 
-   The  max_streams  defines  how  many streams (m= lines) is allowed per
+   The max_streams defines how many streams (m= lines) is allowed per
    media type.
 
-   The  rights defines if particular codec is allowed 0, disallowed, i.e.
-   will  be  removed  if  bit  AND  operation  with  remove_codec_mask is
-   non-zero     or     its    presence    will    be    signallized    by
-   @iptrtpproxy.auth_rights (any other value).
+   The rights defines if particular codec is allowed 0, disallowed, i.e.
+   will be removed if bit AND operation with remove_codec_mask is non-zero
+   or its presence will be signallized by @iptrtpproxy.auth_rights (any
+   other value).
 
-   The  codecs comma separated list of codecs. Previous media_type&rights
+   The codecs comma separated list of codecs. Previous media_type&rights
    will be applied.
 
-   The  rtp/rtcp_bytes/packets  limits  bandwidth  per  media_type  (0 is
-   unlimited).     It     will     override    bandwidth    limited    by
+   The rtp/rtcp_bytes/packets limits bandwidth per media_type (0 is
+   unlimited). It will override bandwidth limited by
    iptrtpproxy_set_param("throttle_*").
 
    Example 1.2. Declare codec_set
         ...
         # enable all codecs, default state when codec is declared
-        modparam("iptrtpproxy", "codec_set", "name=cs1;media_type=*;max_streams
-=9999;rights=0;codecs=*");
+        modparam("iptrtpproxy", "codec_set", "name=cs1;media_type=*;max_streams=
+9999;rights=0;codecs=*");
         # allow only 2 audio and 1 video stream
-        modparam("iptrtpproxy", "codec_set", "name=cs2;media_type=*;max_streams
-=0;media_type=audio;max_streams=2;media_type=video;max_streams=1");
-        # dtto, allow only a few audio and video codecs, GSM codec is allowed b
-ut signallized
-        modparam("iptrtpproxy", "codec_set", "name=cs3;media_type=*;max_streams
-=0;rights=1;codecs=*;media_type=audio;max_streams=2;rights=0;codecs=PCMU,G729,G
-728,parityfec,telephone-events;rights=2;codecs=GSM;media_type=video;max_streams
-=1;rights=0;codecs=jpeg,parityfec");
+        modparam("iptrtpproxy", "codec_set", "name=cs2;media_type=*;max_streams=
+0;media_type=audio;max_streams=2;media_type=video;max_streams=1");
+        # dtto, allow only a few audio and video codecs, GSM codec is allowed bu
+t signallized
+        modparam("iptrtpproxy", "codec_set", "name=cs3;media_type=*;max_streams=
+0;rights=1;codecs=*;media_type=audio;max_streams=2;rights=0;codecs=PCMU,G729,G72
+8,parityfec,telephone-events;rights=2;codecs=GSM;media_type=video;max_streams=1;
+rights=0;codecs=jpeg,parityfec");
         # limit max. bandwidth for video¨
-        modparam("iptrtpproxy", "codec_set", "name=cs4;media_type=video;rtp_byt
-es=10000;rtcp_bytes=1000");
+        modparam("iptrtpproxy", "codec_set", "name=cs4;media_type=video;rtp_byte
+s=10000;rtcp_bytes=1000");
         ...
 
 4. Functions
 
-   4.1. iptrtpproxy_alloc(gate_a_to_b [, existing_sess_ids]) 
-   4.2. iptrtpproxy_update(gate_a_to_b, session_ids) 
-   4.3. iptrtpproxy_adjust_timeout(gate_a_to_b, session_ids) 
-   4.4. iptrtpproxy_delete(session_ids) 
-   4.5. iptrtpproxy_authorize_media() 
-   4.6. iptrtpproxy_set_param(param, value) 
-   4.7.
-          iptrtpproxy_set_param("(aggregation/switchboard)_by_sip_ip_(a/b)",
-          sip_ip) 
+   4.1. iptrtpproxy_alloc(gate_a_to_b [, existing_sess_ids])
+   4.2. iptrtpproxy_update(gate_a_to_b, session_ids)
+   4.3. iptrtpproxy_adjust_timeout(gate_a_to_b, session_ids)
+   4.4. iptrtpproxy_delete(session_ids)
+   4.5. iptrtpproxy_authorize_media()
+   4.6. iptrtpproxy_set_param(param, value)
+   4.7. iptrtpproxy_set_param("(aggregation/switchboard)_by_sip_ip_(a/b)",
+          sip_ip)
 
-   4.8. iptrtpproxy_set_param("protected_session_ids", sess_ids) 
-   4.9. iptrtpproxy_set_param("o_name", value) 
-   4.10. iptrtpproxy_set_param("o_addr", value) 
-   4.11. iptrtpproxy_set_param("codec_set", value) 
-   4.12. iptrtpproxy_set_param("remove_codec_mask", value) 
+   4.8. iptrtpproxy_set_param("protected_session_ids", sess_ids)
+   4.9. iptrtpproxy_set_param("o_name", value)
+   4.10. iptrtpproxy_set_param("o_addr", value)
+   4.11. iptrtpproxy_set_param("codec_set", value)
+   4.12. iptrtpproxy_set_param("remove_codec_mask", value)
 
-4.1.  iptrtpproxy_alloc(gate_a_to_b [, existing_sess_ids])
+4.1. iptrtpproxy_alloc(gate_a_to_b [, existing_sess_ids])
 
-   Parses  SDP  content  and  allocates for each RTP media stream one RTP
-   proxy   session.   SDP  is  updates  to  reflect  allocated  sessions.
-   Switchboard/aggregation  is set using iptrtpproxy_set_param(by_sip_ip)
+   Parses SDP content and allocates for each RTP media stream one RTP
+   proxy session. SDP is updates to reflect allocated sessions.
+   Switchboard/aggregation is set using iptrtpproxy_set_param(by_sip_ip)
    or iptrtpproxy_set_param("switchboard/aggregation").
 
-   Aggregation  supports load balancing among more RTP proxies controlled
-   by  RPC.  The  module  try  to  allocate  at  machines/switchboards in
-   following  order  (priorities)  not  yet  asked (or being heartbeated)
-   machines,  responsive  machines,  switchboards having percentualy more
+   Aggregation supports load balancing among more RTP proxies controlled
+   by RPC. The module try to allocate at machines/switchboards in
+   following order (priorities) not yet asked (or being heartbeated)
+   machines, responsive machines, switchboards having percentualy more
    free slots, non responsive machines.
 
-   Proxy   may   hide   caller   identity   provided  at  o=  line  using
-   @iptrtpproxy.o_name/addr     and    iptrtpproxy_set_param(o_name/addr)
-   functions.  But  the  script is responsible for rewritting to original
-   values  in  a  response  or  a  callee  initiated re-INVITE. Therefore
+   Proxy may hide caller identity provided at o= line using
+   @iptrtpproxy.o_name/addr and iptrtpproxy_set_param(o_name/addr)
+   functions. But the script is responsible for rewritting to original
+   values in a response or a callee initiated re-INVITE. Therefore
    original value need to be stored in-dialog.
-     * if  gate_a_to_b  bit 0 is set then SDP regards to gate-a to gate-b
+     * if gate_a_to_b bit 0 is set then SDP regards to gate-a to gate-b
        direction.
-     * protected_session_ids  list  of  existing sessions enables reusing
-       already  allocated  sessions  in  re-INVITE without allocating new
-       sessions  for each stream in SDP regardless a IP/port is required.
+     * protected_session_ids list of existing sessions enables reusing
+       already allocated sessions in re-INVITE without allocating new
+       sessions for each stream in SDP regardless a IP/port is required.
        It's mostly undesirable, typically "hold-on" is done via re-INVITE
        without any change. There is drawback because callee cannot change
-       IP:port  in 200OK which is legal case in RFC3264. But because some
-       non-RFC3264  compliant  phones dislike proactively changed IP:port
-       at RTP proxy it seems it's less evil.
-     * function  returns  true  is  a  session was created, identifier is
+       IP:port in 200OK which is legal case in RFC3264. But because some
+       non-RFC3264 compliant phones dislike proactively changed IP:port at
+       RTP proxy it seems it's less evil.
+     * function returns true is a session was created, identifier is
        available via select @iptrtpproxy.session_ids.
 
    Example 1.3. iptrtpproxy_alloc usage
         ...
-        if (!iptrtpproxy_set_param("aggregation_by_sip_ip_a", "@received.ip"))
-{
-                if (!iptrtpproxy_set_param("switchboard_by_sip_ip_a", "@receive
-d.ip")) {
+        if (!iptrtpproxy_set_param("aggregation_by_sip_ip_a", "@received.ip")) {
+                if (!iptrtpproxy_set_param("switchboard_by_sip_ip_a", "@received
+.ip")) {
                         t_reply("500", "RTP proxy error");
                         drop;
                 }
@@ -330,19 +326,19 @@ d.ip")) {
         eval_push("x:%@next_hop.src_ip");
         if (@eval.get[-1] == @received.ip) {
                 if (@iptrtpproxy.aggregation_a) {
-                        iptrtpproxy_set_param("aggregation_b", "@iptrtpproxy.ag
-gregation_a");
+                        iptrtpproxy_set_param("aggregation_b", "@iptrtpproxy.agg
+regation_a");
                 }
                 else {
-                        iptrtpproxy_set_param("switchboard_b", "@iptrtpproxy.sw
-itchboard_a");
+                        iptrtpproxy_set_param("switchboard_b", "@iptrtpproxy.swi
+tchboard_a");
                 }
         }
         else {
-                if (!iptrtpproxy_set_param("aggregation_by_sip_ip_b", "@eval.ge
-t[-1]")) {
-                        if (!iptrtpproxy_set_param("switchboard_by_sip_ip_b", "
-@eval.get[-1]")) {
+                if (!iptrtpproxy_set_param("aggregation_by_sip_ip_b", "@eval.get
+[-1]")) {
+                        if (!iptrtpproxy_set_param("switchboard_by_sip_ip_b", "@
+eval.get[-1]")) {
                                 t_reply("500", "RTP proxy error");
                                 drop;
                         }
@@ -357,22 +353,22 @@ t[-1]")) {
         $sess_ids = @iptrtpproxy.session_ids;
         ...
 
-4.2.  iptrtpproxy_update(gate_a_to_b, session_ids)
+4.2. iptrtpproxy_update(gate_a_to_b, session_ids)
 
-   Parses  SDP  content  and updates sessions provided by session_ids and
-   updates  SDP.  If  succesfull then session_ids may be changed (in case
-   e.g.  media  stream has port zero particular session is released), the
-   result   of  @iptrtpproxy.session_ids  should  be  stored  for  future
+   Parses SDP content and updates sessions provided by session_ids and
+   updates SDP. If succesfull then session_ids may be changed (in case
+   e.g. media stream has port zero particular session is released), the
+   result of @iptrtpproxy.session_ids should be stored for future
    in-dialog usage.
 
    The SDP contect is also affected by iptrtpproxy_set_param(o_name/addr)
-   functions.  If  a  stream  is  deactivated in SDP then Sessions may be
+   functions. If a stream is deactivated in SDP then Sessions may be
    deleted unless mentioned in protected_session_ids.
-     * if  gate_a_to_b  bit 0 is set then SDP regards to gate-a to gate-b
+     * if gate_a_to_b bit 0 is set then SDP regards to gate-a to gate-b
        direction.
-       if  gate_a_to_b  bit  1  is  set  then SDP is updated only, no RTP
-       session  are affected. Should be used when handling retransmission
-       in  onreply  route,  retransmission  replies  are  not eaten be tm
+       if gate_a_to_b bit 1 is set then SDP is updated only, no RTP
+       session are affected. Should be used when handling retransmission
+       in onreply route, retransmission replies are not eaten be tm
        module!
 
    Example 1.4. iptrtpproxy_update usage
@@ -384,11 +380,11 @@ t[-1]")) {
         }
         ...
 
-4.3.  iptrtpproxy_adjust_timeout(gate_a_to_b, session_ids)
+4.3. iptrtpproxy_adjust_timeout(gate_a_to_b, session_ids)
 
-   Adjust  timeout  for particular gate. It's useful in "200 OK" decrease
+   Adjust timeout for particular gate. It's useful in "200 OK" decrease
    timeout to learning timeout if INVITE has set (long) ringing timeout.
-     * if  gate_a_to_b  bit  0 is set then it regards to gate-a to gate-b
+     * if gate_a_to_b bit 0 is set then it regards to gate-a to gate-b
        direction.
 
    Example 1.5. iptrtpproxy_adjust_timeout usage
@@ -404,11 +400,11 @@ t[-1]")) {
         }
         ...
 
-4.4.  iptrtpproxy_delete(session_ids)
+4.4. iptrtpproxy_delete(session_ids)
 
-   Delete  sessions identified by session_ids. May be used when dialog is
-   being  destroyed  (BYE)  or  when  INVITE  failed in failure route. If
-   protected_session_ids  list is provided then this set is excluded from
+   Delete sessions identified by session_ids. May be used when dialog is
+   being destroyed (BYE) or when INVITE failed in failure route. If
+   protected_session_ids list is provided then this set is excluded from
    sessions to be deleted.
 
    Example 1.6. iptrtpproxy_delete usage
@@ -417,16 +413,16 @@ t[-1]")) {
         iptrtpproxy_delete($sess_ids);
         ...
 
-4.5.  iptrtpproxy_authorize_media()
+4.5. iptrtpproxy_authorize_media()
 
    Authorizes SDP media according currect codec_set. If bit AND operation
-   between  rights  in  codec  set and remove_codec_mask is non zero then
-   such  a  codec  are  to  be  removed.  The result may be obtained from
-   @iptrtpproxy.auth_rights  which  returns  max.  right  which  has been
+   between rights in codec set and remove_codec_mask is non zero then such
+   a codec are to be removed. The result may be obtained from
+   @iptrtpproxy.auth_rights which returns max. right which has been
    applied when processing all codecs of enabled streams.
 
-   The  function  MUST  NOT be called after iptrtpproxy_alloc/update! But
-   the function may be called several times to authorize using more codec
+   The function MUST NOT be called after iptrtpproxy_alloc/update! But the
+   function may be called several times to authorize using more codec
    sets.
 
    Example 1.7. iptrtpproxy_authorize_media usage
@@ -455,91 +451,90 @@ t[-1]")) {
         }
         ...
 
-4.6.  iptrtpproxy_set_param(param, value)
+4.6. iptrtpproxy_set_param(param, value)
 
    Set particular parameter needed mainly by
-   iptrtpproxy_alloc/update/adjust_timeout.   The   paramter   value   is
-   availble via @iptrtpproxy.<param>.
-     * Supported  parameters:  expiration_timeout, ttl, learning_timeout,
-       always_learn,    aggregation_a,    aggregation_b,   switchboard_a,
-       switchboard_b,        throttle_mark,       throttle_rtp_max_bytes,
-       throttle_rtp_max_packets,                 throttle_rtcp_max_bytes,
+   iptrtpproxy_alloc/update/adjust_timeout. The paramter value is availble
+   via @iptrtpproxy.<param>.
+     * Supported parameters: expiration_timeout, ttl, learning_timeout,
+       always_learn, aggregation_a, aggregation_b, switchboard_a,
+       switchboard_b, throttle_mark, throttle_rtp_max_bytes,
+       throttle_rtp_max_packets, throttle_rtcp_max_bytes,
        throttle_rtcp_max_packets.
 
-4.7.  iptrtpproxy_set_param("(aggregation/switchboard)_by_sip_ip_(a/b)",
+4.7. iptrtpproxy_set_param("(aggregation/switchboard)_by_sip_ip_(a/b)",
 sip_ip)
 
-   Find    corresponding    aggregation    or    switchboard    and   set
-   @iptrtpproxy.aggregation_a/b      or     @iptrtpproxy.switchboard_a/b.
-   Switchboards/aggregations  are  compared  against  sip-addr,  it allow
+   Find corresponding aggregation or switchboard and set
+   @iptrtpproxy.aggregation_a/b or @iptrtpproxy.switchboard_a/b.
+   Switchboards/aggregations are compared against sip-addr, it allow
    separate SIP and RTP traffic and RTP aggregation.
-     * sip_ip    IP   to   be   compared,   typically   @received.ip   or
+     * sip_ip IP to be compared, typically @received.ip or
        @next_hop.src_ip.
      * function returns true if switchboard/aggregation was found
 
-4.8.  iptrtpproxy_set_param("protected_session_ids", sess_ids)
+4.8. iptrtpproxy_set_param("protected_session_ids", sess_ids)
 
    Used for reusing sessions in iptrtpproxy_alloc, iptrtpproxy_update and
    iptrtpproxy_delete.
 
-4.9.  iptrtpproxy_set_param("o_name", value)
+4.9. iptrtpproxy_set_param("o_name", value)
 
-   Username  to  be  rewritten  at o= line by iptrtpproxy_alloc/update to
-   hide  caller  identity.  If  value  is  blank  then  username  is left
-   unchanged.
+   Username to be rewritten at o= line by iptrtpproxy_alloc/update to hide
+   caller identity. If value is blank then username is left unchanged.
 
-4.10.  iptrtpproxy_set_param("o_addr", value)
+4.10. iptrtpproxy_set_param("o_addr", value)
 
    Address to be rewritten at o= line by iptrtpproxy_alloc/update to hide
    caller identity. If value is blank then address is left unchanged.
 
-4.11.  iptrtpproxy_set_param("codec_set", value)
+4.11. iptrtpproxy_set_param("codec_set", value)
 
-   Codec  set  for  iptrtpproxy_authorize_media. Current codec set may be
+   Codec set for iptrtpproxy_authorize_media. Current codec set may be
    obtained by @iptrtpproxy.codec_set.
 
-4.12.  iptrtpproxy_set_param("remove_codec_mask", value)
+4.12. iptrtpproxy_set_param("remove_codec_mask", value)
 
    Mask used in iptrtpproxy_authorize_media. Current mask may be obtained
    by @iptrtpproxy.remove_codec_mask.
 
 5. Selects
 
-   5.1. @iptrtpproxy.session_ids 
-   5.2. @iptrtpproxy.sdp_ip 
-   5.3. @iptrtpproxy.o_name 
-   5.4. @iptrtpproxy.o_addr 
-   5.5. @iptrtpproxy.auth_rights 
-   5.6. @iptrtpproxy.active_media_num 
+   5.1. @iptrtpproxy.session_ids
+   5.2. @iptrtpproxy.sdp_ip
+   5.3. @iptrtpproxy.o_name
+   5.4. @iptrtpproxy.o_addr
+   5.5. @iptrtpproxy.auth_rights
+   5.6. @iptrtpproxy.active_media_num
 
-5.1.  @iptrtpproxy.session_ids
+5.1. @iptrtpproxy.session_ids
 
    Returns sessions allocated/updated in iptrtpproxy_alloc/update.
 
    The format is:
-switchboard_name [ ":" [ session_id "/" created ] * ( "," session_id "/" create
-d ) ] ]
+switchboard_name [ ":" [ session_id "/" created ] * ( "," session_id "/" created
+ ) ] ]
 session_id = * ( [0-9] )   ; empty when no session allocated
 created = timestamp
 
-5.2.  @iptrtpproxy.sdp_ip
+5.2. @iptrtpproxy.sdp_ip
 
    Return first rewritten IP provided at SDP c= line.
 
-5.3.  @iptrtpproxy.o_name
+5.3. @iptrtpproxy.o_name
 
    Return username from original o= line.
 
-5.4.  @iptrtpproxy.o_addr
+5.4. @iptrtpproxy.o_addr
 
    Return address from original o= line.
 
-5.5.  @iptrtpproxy.auth_rights
+5.5. @iptrtpproxy.auth_rights
 
    Result of iptrtpproxy_authorize_media.
 
-5.6.  @iptrtpproxy.active_media_num
+5.6. @iptrtpproxy.active_media_num
 
-   Returns     number     of     active    media    streams    in    SDP.
-   iptrtpproxy_authorize_media  may  disable  some streams, i.e. returned
+   Returns number of active media streams in SDP.
+   iptrtpproxy_authorize_media may disable some streams, i.e. returned
    value may change after authorization.

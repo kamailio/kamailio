@@ -15,9 +15,9 @@ Richard Good
    Smile Communications
    <richard.good@smilecoms.com>
 
-   Copyright © 2007 FhG FOKUS
+   Copyright � 2007 FhG FOKUS
 
-   Copyright © 2012 Smile Communications
+   Copyright � 2012 Smile Communications
      __________________________________________________________________
 
    Table of Contents
@@ -163,7 +163,7 @@ modparam("ims_auth", "name", "sip:scscf3.ims.smilecoms.com:6060")
    Default value is fine for most people. Use the parameter if you really
    need to change it.
 
-   Default value is “1024”.
+   Default value is "1024".
 
    Example 1.2. auth_data_hash_size parameter usage
 ...
@@ -175,7 +175,7 @@ modparam("ims_auth", "auth_data_hash_size", 1024)
    This is the time, in seconds, that a SENTauth vector is valid for. If
    there is no response ...
 
-   Default value is “60”.
+   Default value is "60".
 
    Example 1.3. auth_vector_timeout parameter usage
 ...
@@ -186,7 +186,7 @@ modparam("ims_auth", "auth_vector_timeout", "domain")
 
    Time, in seconds, an used auth vector is valid for.
 
-   Default value is “60”.
+   Default value is "60".
 
    Example 1.4. password_column parameter usage
 ...
@@ -224,7 +224,7 @@ modparam("ims_auth", "av_request_at_sync", 1)
      * MD5
      * HSS-Selected - HSS will decide on auth algorithm
 
-   Default value is “AKAv1-MD5”.
+   Default value is "AKAv1-MD5".
 
    Example 1.7. registration_default_algorithm parameter usage
 ...
@@ -235,7 +235,7 @@ modparam("ims_auth", "registration_default_algorithm", "HSS-Selected")
 
    The QOP options to put in the authorisation challenges.
 
-   Default value of this parameter is “auth,auth-int”.
+   Default value of this parameter is "auth,auth-int".
 
    Example 1.8. load_credentials parameter usage
 ...
@@ -246,7 +246,7 @@ modparam("ims_auth", "load_credentials", "auth-int")
 
    FQDN of Diameter Peer (HSS) to use for communication (MAR)
 
-   Default value is “”.
+   Default value is "".
 
    Example 1.9. cxdx_forced_peer parameter usage
 ...
@@ -257,7 +257,7 @@ modparam("ims_auth", "cxdx_forced_peer", "hss.ims.smilecoms.com")
 
    Destination realm to be used in Diameter messags to HSS
 
-   Default value is “ims.smilecoms.com”.
+   Default value is "ims.smilecoms.com".
 
    Example 1.10. version_table parameter usage
 ...
@@ -291,7 +291,7 @@ modparam("ims_auth", "cxdx_dest_realm", "ims.smilecoms.com")
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., variable $td) can be used (because this
        header field represents the user being registered), for all other
        messages From header field domain can be used (e.g., variable $fd).
@@ -331,9 +331,9 @@ if (!www_authorize("kamailio.org", "subscriber")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. Apart of a static strinh, typical
+       It must not be empty string "". Apart of a static strinh, typical
        value is From header field domain (e.g., variable $fd).
-       If an empty string “” is used then the server will generate it from
+       If an empty string "" is used then the server will generate it from
        the request. From header field domain will be used as realm.
        The string may contain pseudo variables.
      * table - Table to be used to lookup usernames and passwords (usually
@@ -365,9 +365,9 @@ if (!proxy_authorize("$fd", "subscriber)) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. Apart of a static strinh, typical
+       It must not be empty string "". Apart of a static strinh, typical
        value is From header field domain (e.g., variable $fd).
-       If an empty string “” is used then the server will generate it from
+       If an empty string "" is used then the server will generate it from
        the request. From header field domain will be used as realm.
        The string may contain pseudo variables.
      * table - Table to be used to lookup usernames and passwords (usually
