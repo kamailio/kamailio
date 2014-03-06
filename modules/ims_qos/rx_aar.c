@@ -509,11 +509,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
 
 	if ((identifier = cscf_get_asserted_identity(res, 0)).len == 0) {
 	    LM_DBG("No P-Asserted-Identity hdr found in response. Using To hdr in resp");
-
-	    if (!cscf_get_to_uri(res, &identifier)) {
-		    LM_ERR("Error assigning P-Asserted-Identity using To hdr in resp");
-		    goto error;
-	    }
+	    identifier = cscf_get_public_identity(res); //get public identity from to header
 	}
     }
     
