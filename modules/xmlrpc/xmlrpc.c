@@ -993,7 +993,7 @@ static int print_value(struct xmlrpc_reply* res,
 	case 'd':
 		prefix = int_prefix;
 		suffix = int_suffix;
-		body.s = int2str(va_arg(*ap, int), &body.len);
+		body.s = sint2str(va_arg(*ap, int), &body.len);
 		break;
 
 	case 'f':
