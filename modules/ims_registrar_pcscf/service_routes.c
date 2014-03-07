@@ -481,7 +481,7 @@ int assert_called_identity(struct sip_msg* _m, udomain_t* _d) {
 		goto error;
 	}
 	
-	called_party_id = cscf_get_called_party_id(req, &h);
+	called_party_id = cscf_get_public_identity_from_called_party_id(req, &h);
 	
 		
 	if (!called_party_id.len){

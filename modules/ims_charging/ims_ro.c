@@ -954,7 +954,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
     
     
     //getting called asserted identity
-    if ((called_asserted_identity = cscf_get_called_party_id(msg, &h)).len == 0) {
+    if ((called_asserted_identity = cscf_get_public_identity_from_called_party_id(msg, &h)).len == 0) {
 	    LM_DBG("No P-Called-Identity hdr found. Using request URI for called_asserted_identity");
 	    called_asserted_identity = cscf_get_public_identity_from_requri(msg);
 	    free_called_asserted_identity = 1;

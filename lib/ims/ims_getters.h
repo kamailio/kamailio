@@ -420,12 +420,12 @@ int cscf_add_header_rpl(struct sip_msg *msg, str *hdr);
 int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr);
 
 /**
- * Looks for the P-Called-Party-ID header and extracts its content.
+ * Looks for the P-Called-Party-ID header and extracts the public identity from it
  * @param msg - the sip message
  * @param hr - ptr to return the found hdr_field 
  * @returns the P-Called_Party-ID
  */
-str cscf_get_called_party_id(struct sip_msg *msg,struct hdr_field **hr);
+str cscf_get_public_identity_from_called_party_id(struct sip_msg *msg,struct hdr_field **hr);
 
 #endif
 

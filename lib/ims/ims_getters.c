@@ -1494,15 +1494,19 @@ int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr)
 
 static str s_called_party_id={"P-Called-Party-ID",17};
 /**
- * Looks for the P-Called-Party-ID header and extracts its content.
+ * Looks for the P-Called-Party-ID header and extracts the public identity from it
  * @param msg - the sip message
  * @param hr - ptr to return the found hdr_field 
  * @returns the P-Called_Party-ID
  */
-str cscf_get_called_party_id(struct sip_msg *msg,struct hdr_field **hr)
+str cscf_get_public_identity_from_called_party_id(struct sip_msg *msg,struct hdr_field **hr)
 {
 	str id={0,0};
 	struct hdr_field *h;
+	int after_semi_colon=0;
+	int len=0;
+	int i=0;
+	
 	if (hr) *hr=0;
 	if (!msg) return id;
 	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
@@ -1522,6 +1526,18 @@ str cscf_get_called_party_id(struct sip_msg *msg,struct hdr_field **hr)
 			while(id.len && (id.s[id.len-1]==' ' || id.s[id.len-1]=='\t' || id.s[id.len-1]=='>')){
 				id.len--;
 			}	
+			//get only text in front of ';' there might not even be a semi-colon
+			//this caters for extra information after the public identity - e.g. phone-context
+			len= id.len;
+			for(i=0; i<len;i++) {
+			    if(id.s[i]==';'){
+				//found semi-colon
+				after_semi_colon = 1;
+			    }
+			    if(after_semi_colon){
+				id.len--;
+			    }
+			}
 			if (hr) *hr = h;
 			return id;
 		}
