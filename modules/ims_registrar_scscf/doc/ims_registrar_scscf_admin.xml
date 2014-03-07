@@ -686,7 +686,83 @@ if (can_subscribe_to_reg("location")){
 </programlisting>
       </example>
     </section>
-  </section>
+        
+    <section>
+      <title><function
+      moreinfo="none">can_publish_reg(domain)</function></title>
+
+      <para>This function checks to see that a PUBLISH request is authorised
+      to publish for a particular identity. Only 3 entities can
+      publish:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>The user agent to it's own state</emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para>The P-CSCF specified in the path header for that user</para>
+        </listitem>
+
+        <listitem>
+          <para>Application Server (AS) not yet implemented</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain - Logical domain within
+          registrar.</emphasis></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE</para>
+
+      <example>
+        <title><function>can_publish_reg</function> usage</title>
+
+        <programlisting format="linespecific">...
+if (can_publish_reg("location")){
+    $var(ret)= publish_reg("location"); 
+}
+...
+</programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><function
+      moreinfo="none">publish_reg(domain)</function></title>
+
+      <para>Save the publish to the REG event for the UAC or the
+      appropriate P-CSCF (in the path to the UAC).</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain - Logical domain within
+          registrar.</emphasis></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE</para>
+
+      <example>
+        <title><function>publish_reg</function> usage</title>
+
+        <programlisting format="linespecific">...
+if (can_publish_reg("location")){
+    $var(ret)= publish_reg("location"); 
+}
+...
+</programlisting>
+      </example>
+    </section>
+    
+    </section>
 
   <section>
     <title>RPC Commands</title>
