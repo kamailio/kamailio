@@ -52,7 +52,7 @@ check_kamailio_config ()
 	    log_failure_msg "Not starting $DESC: invalid configuration file!"
 	    log_failure_msg
 	    log_failure_msg "$out"
-	    log_faiulre_msg
+	    log_failure_msg
 	    exit 1
 	fi
 }
