@@ -157,6 +157,9 @@ mod_list_iptrtpproxy=iptrtpproxy
 # - modules depending on gzip library
 mod_list_gzcompress=gzcompress
 
+# - modules depending on uuid library
+mod_list_uuid=uuid
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -179,7 +182,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_outbound) $(mod_list_osp) \
 			   $(mod_list_java) $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
-			   $(mod_list_gzcompress))
+			   $(mod_list_gzcompress) $(mod_list_uuid))
 
 
 
@@ -339,6 +342,9 @@ module_group_kautheph=$(mod_list_autheph)
 
 # pkg gzcompress module
 module_group_kgzcompress=$(mod_list_gzcompress)
+
+# pkg uuid module
+module_group_kuuid=$(mod_list_uuid)
 
 # list of static modules
 #
