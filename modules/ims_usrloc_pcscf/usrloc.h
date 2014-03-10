@@ -81,6 +81,12 @@ typedef struct {
 	str wildcarded_psi; /** if exists is the wildcarded psi					*/
 } ims_public_identity;
 
+/** TLS SA Information */
+typedef struct tls {
+	unsigned short port_tls; 	/**< Port UE TLS						*/
+	unsigned long session_hash;
+} tls_t;
+
 /** IPSec SA Information */
 typedef struct ipsec {
 	unsigned int spi_uc; 		/**< SPI Client to use					*/
@@ -103,6 +109,7 @@ typedef struct ipsec {
 typedef enum sec_type {
 	SECURITY_NONE = 0,
 	SECURITY_IPSEC = 1,
+	SECURITY_TLS = 2,
 } security_type;
 
 typedef struct security {
@@ -111,6 +118,7 @@ typedef struct security {
 
 	union {
 		ipsec_t *ipsec; 	/**< IPSec SA information, if any		*/
+		tls_t *tls;			/**< TLS SA information, if any		*/
 	} data;
 	float q;
 } security_t;
@@ -188,6 +196,8 @@ typedef struct pcontact {
 	time_t expires;							/*!< expires time for contact */
 	str* service_routes;					/*!< Array of service routes */
 	unsigned short num_service_routes;		/*!< Number of service routes */
+	security_t *security;	  				/**< Security-Client Information		*/
+	security_t *security_temp;	    		/**< Security-Client Information (temp)	*/
 	ppublic_t* head;						/*!< list of associated public identities */
 	ppublic_t* tail;
 	struct socket_info *sock; 				/*!< received socket */
