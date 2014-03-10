@@ -199,7 +199,7 @@ void remove_dlg_data_from_contact(struct dlg_cell *dlg, int type, struct dlg_cb_
 		return;
 	}
 	
-	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>:", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
+	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
 	LM_DBG("IMPU data domain <%.*s>", impu_data->d->name->len, impu_data->d->name->s);
 	
 	ul.lock_udomain(impu_data->d, &impu_data->identity);
@@ -234,7 +234,7 @@ void add_dlg_data_to_contact(struct dlg_cell *dlg, int type, struct dlg_cb_param
 		return;
 	}
 	
-	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>:", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
+	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
 	LM_DBG("IMPU data domain <%.*s>", impu_data->d->name->len, impu_data->d->name->s);
 	
 	ul.lock_udomain(impu_data->d, &impu_data->identity);
