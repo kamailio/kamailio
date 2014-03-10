@@ -830,15 +830,11 @@ int set_path_vector(struct sip_msg* msg, str* path)
 void reset_path_vector(struct sip_msg* const msg)
 {
 	/* only free path vector from pkg IFF it is still in pkg... - ie. if msg is shm we don't free... */
-	if (msg->path_vec.s && likely(msg->path_vec.s >= msg->buf && (msg->path_vec.s < (msg->buf + msg->len)))) {
+	if (!(msg->msg_flags&FL_SHM_CLONE)) {
 		pkg_free(msg->path_vec.s);
-	} else {
-		if (msg->path_vec.s)
-			/* don't reset path_vec if it is shm */
-			return;
+		msg->path_vec.s = 0;
+		msg->path_vec.len = 0;
 	}
-	msg->path_vec.s = 0;
-	msg->path_vec.len = 0;
 }
 
 
