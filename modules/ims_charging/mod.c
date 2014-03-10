@@ -367,7 +367,7 @@ static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* c
 			goto send_ccr;
 		}
 		//get callee contact from request URI
-		contact = cscf_get_public_identity_from_requri(msg);
+		contact = cscf_get_contact_from_requri(msg);
 		free_contact = 1;
 	    
 	} else {
