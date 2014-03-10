@@ -61,6 +61,7 @@
 #include "../../lib/ims/useful_defs.h"
 
 extern int db_mode;
+extern unsigned int hashing_type;
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -507,26 +508,45 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 	return 1; /* Nothing found */
 }
 
+/* can't assume we are locked here */
 int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, struct pcontact** _c) {
 	int i;
 	struct pcontact* c;
+	unsigned int aorhash, sl;
+	char c_contact[256], *p;
+	str s_contact;
 
-	for(i=0; i<_d->size; i++)
-	{
-		c = _d->table[i].first;
-		while(c) {
-			LM_DBG("Port %d (search %d), Proto %d (search %d), reg_state %s (search %s)\n",
-				c->received_port, _port, c->received_proto, _proto, 
-				reg_state_to_string(c->reg_state), reg_state_to_string(PCONTACT_REGISTERED)
-				);
+	if (hashing_type == 1) {//we hash on IP:PORT - so no need to search sequentially..
+		/* get_aor_hash in this mode expects to see contact as host:port */
+		memset(c_contact, 0, 256);
+		memcpy(c_contact, _host->s, _host->len);
+		p = c_contact + _host->len;
+		*p = ':';
+		p++;
+		sprintf(p,"%d", _port);
+		s_contact.s = c_contact;
+		s_contact.len = strlen(c_contact);
+
+		aorhash = get_aor_hash(_d, &s_contact);
+		sl = aorhash & (_d->size - 1);
+		c = _d->table[sl].first;
+
+		for (i = 0; i < _d->table[sl].n; i++) {
+			lock_ulslot(_d, i);
+			LM_DBG("Searching for contact in P-CSCF usrloc [%.*s]\n",
+					s_contact.len,
+					s_contact.s);
+
 			// First check, if Proto and Port matches:
-			if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _port) && (c->received_proto == _proto)) {
+			if ((c->reg_state == PCONTACT_REGISTERED)
+					&& (c->received_port == _port)
+					&& (c->received_proto == _proto)) {
 				LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
 				// Then check the length:
 				if (c->received_host.len == _host->len) {
 					LM_DBG("Received host %.*s (search %.*s)\n",
-						c->received_host.len, c->received_host.s,
-						_host->len, _host->s);
+							c->received_host.len, c->received_host.s,
+							_host->len, _host->s);
 
 					// Finally really compare the "received_host"
 					if (!memcmp(c->received_host.s, _host->s, _host->len)) {
@@ -535,7 +555,36 @@ int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsign
 					}
 				}
 			}
-			c = c->next;
+			unlock_ulslot(_d, i);
+		}
+	} else {
+		/* search sequentially */
+		for(i=0; i<_d->size; i++)
+		{
+			c = _d->table[i].first;
+			while(c) {
+				LM_DBG("Port %d (search %d), Proto %d (search %d), reg_state %s (search %s)\n",
+					c->received_port, _port, c->received_proto, _proto,
+					reg_state_to_string(c->reg_state), reg_state_to_string(PCONTACT_REGISTERED)
+					);
+				// First check, if Proto and Port matches:
+				if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _port) && (c->received_proto == _proto)) {
+					LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
+					// Then check the length:
+					if (c->received_host.len == _host->len) {
+						LM_DBG("Received host %.*s (search %.*s)\n",
+							c->received_host.len, c->received_host.s,
+							_host->len, _host->s);
+
+						// Finally really compare the "received_host"
+						if (!memcmp(c->received_host.s, _host->s, _host->len)) {
+							*_c = c;
+							return 0;
+						}
+					}
+				}
+				c = c->next;
+			}
 		}
 	}
 	return 1; /* Nothing found */

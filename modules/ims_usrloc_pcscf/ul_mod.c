@@ -247,7 +247,6 @@ static int child_init(int _rank)
 						_rank, ptr->name.len, ZSW(ptr->name.s));
 				return -1;
 			}
-//			uldb_preload_attrs(ptr->d);
 		}
 	}
 
