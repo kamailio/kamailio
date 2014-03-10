@@ -84,7 +84,8 @@ int corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq)
 		msg->dst_uri.s = 0;
 		msg->dst_uri.len = 0;
 		if(msg->path_vec.s!=0)
-			pkg_free(msg->path_vec.s);
+			if (likely(msg->path_vec.s >= msg->buf && (msg->path_vec.s < (msg->buf + msg->len))))
+				pkg_free(msg->path_vec.s);
 		msg->path_vec.s = 0;
 		msg->path_vec.len = 0;
 	}
