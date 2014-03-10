@@ -166,7 +166,7 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 	} else {
 		obuf.s = build_req_buf_from_sip_req(msg,
 				(unsigned int*)&obuf.len, &dst,
-				BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
+				BUILD_NO_PATH|BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
 	}
 	if(obuf.s == NULL)
 	{
