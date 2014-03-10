@@ -315,6 +315,62 @@ str cscf_get_public_identity_from_requri(struct sip_msg *msg)
 }
 
 /**
+ * Get the contact from the Request URI of the message
+ * NB: free returned result str when done from shm
+ * @param msg - the SIP message
+ * @returns the contact (don't forget to free from shm)
+ * 
+ * NOTE: should only be called when REQ URI has been converted sip:user@IP_ADDRESS:PORT or tel:IP_ADDRESS:PORT
+ */
+str cscf_get_contact_from_requri(struct sip_msg *msg)
+{
+	str pu={0,0};
+
+	if (msg->first_line.type!=SIP_REQUEST) {
+		return pu;
+	}
+	if (parse_sip_msg_uri(msg)<0){
+		return pu;
+	}
+	if(!msg->parsed_uri.port.len){
+	    return pu;
+	}
+
+	if(msg->parsed_uri.type==TEL_URI_T){
+		pu.len = 4 + msg->parsed_uri.user.len + msg->parsed_uri.port.len + 1 /*for colon before port*/;
+		pu.s = shm_malloc(pu.len+1);
+		if (!pu.s){
+                        LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d bytes\n", pu.len + 1);
+                        pu.len = 0;
+			goto done;
+                }
+		sprintf(pu.s,"tel:%.*s:%.*s",
+				msg->parsed_uri.user.len,
+				msg->parsed_uri.user.s,
+				msg->parsed_uri.port.len,
+				msg->parsed_uri.port.s);
+	}else{
+		pu.len = 4 + msg->parsed_uri.user.len + 1/*for @*/ + msg->parsed_uri.host.len + msg->parsed_uri.port.len + 1 /*for colon before port*/;
+		pu.s = shm_malloc(pu.len+1);
+		if (!pu.s){
+                        LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d bytes\n", pu.len + 1);
+                        pu.len = 0;
+			goto done;
+                }
+		sprintf(pu.s,"sip:%.*s@%.*s:%.*s",
+				msg->parsed_uri.user.len,
+				msg->parsed_uri.user.s,
+				msg->parsed_uri.host.len,
+				msg->parsed_uri.host.s,
+				msg->parsed_uri.port.len,
+				msg->parsed_uri.port.s);
+	}
+
+	done:
+	return pu;
+}
+
+/**
  * Finds if the message contains the orig parameter in the first Route header
  * @param msg - the SIP message
  * @param str1 - not used

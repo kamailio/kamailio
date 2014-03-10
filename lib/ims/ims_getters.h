@@ -177,6 +177,17 @@ str cscf_get_realm_from_ruri(struct sip_msg *msg);
  * @returns the public identity
  */
 str cscf_get_public_identity_from_requri(struct sip_msg *msg);
+
+/**
+ * Get the contact from the Request URI of the message
+ * NB: free returned result str when done from shm
+ * @param msg - the SIP message
+ * @returns the contact (don't forget to free from shm)
+ * 
+ * NOTE: should only be called when REQ URI has been converted sip:user@IP_ADDRESS:PORT or tel:IP_ADDRESS:PORT
+ */
+str cscf_get_contact_from_requri(struct sip_msg *msg);
+
 /**
  * Looks for the Call-ID header
  * @param msg - the sip message
