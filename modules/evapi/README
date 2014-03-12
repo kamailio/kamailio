@@ -1,0 +1,133 @@
+EVAPI Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. workers (int)
+              3.2. bind_addr (str)
+
+        4. Functions
+
+              4.1. evapi_relay(event, data)
+
+   List of Examples
+
+   1.1. Set workers parameter
+   1.2. Set bind_addr parameter
+   1.3. evapi_relay usage
+   1.4. TCP message
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. workers (int)
+        3.2. bind_addr (str)
+
+   4. Functions
+
+        4.1. evapi_relay(event, data)
+
+1. Overview
+
+   This module pushes event details to remote applications, via TCP.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libev
+
+3. Parameters
+
+   3.1. workers (int)
+   3.2. bind_addr (str)
+
+3.1. workers (int)
+
+   Number of worker processes to be started to handle incoming messages
+   from remote applications.
+
+   Default value is 1.
+
+   Example 1.1. Set workers parameter
+...
+modparam("async", "workers", 2)
+...
+
+3.2. bind_addr (str)
+
+   Local IP and port to listen on for incoming TCP connections.
+
+   Default value is "127.0.0.1:8448".
+
+   Example 1.2. Set bind_addr parameter
+...
+modparam("async", "bind_addr", "1.2.3.4:8228")
+...
+
+4. Functions
+
+   4.1. evapi_relay(event, data)
+
+4.1. evapi_relay(event, data)
+
+   Relay the event to connected applications. The format is netstring with
+   json payload.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.3. evapi_relay usage
+...
+evapi_relay("test", "{ \"fU\": \"$fU\" }");
+...
+
+   The above exaple will send the following message over tcp:
+
+   Example 1.4. TCP message
+...
+45:{
+ "event":"test",
+ "data":{ "fU": "test" }
+},
+...
