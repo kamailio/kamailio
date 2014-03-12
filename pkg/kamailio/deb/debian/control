@@ -14,6 +14,7 @@ Build-Depends: bison,
                libdb-dev (>= 4.6.19),
                libevent-dev,
                libexpat1-dev,
+               libfreeradius-client-dev,
                libgcj12-dev,
                libgeoip-dev (>= 1.4.5),
                libhiredis-dev (>= 0.10.0),
@@ -28,7 +29,6 @@ Build-Depends: bison,
                libperl-dev,
                libpq-dev,
                libpurple-dev,
-               libfreeradius-client-dev,
                libreadline-dev,
                libsasl2-dev,
                libsctp-dev,
@@ -42,7 +42,8 @@ Build-Depends: bison,
                python,
                python-dev,
                unixodbc-dev,
-               xsltproc
+               xsltproc,
+               zlib1g-dev
 Standards-Version: 3.9.5
 Homepage: http://www.kamailio.org/
 Vcs-git: git://anonscm.debian.org/pkg-voip/kamailio.git
@@ -531,6 +532,18 @@ Description: authentication using ephemeral credentials module for Kamailio
  per second even on low-budget hardware.
  .
  This package provides the ephemeral module for Kamailio.
+
+Package: kamailio-extra-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: kamailio (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
+Description: extra modules for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides: gzcompress
 
 Package: kamailio-nth
 Architecture: any
