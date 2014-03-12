@@ -28,7 +28,7 @@
 """
 import sys,re
 
-max_depth = 10
+max_depth = 120
 debug = 0
 
 re_main_route = re.compile("^([a-z]+_)*route[\s\t]*(?![\(\)])[\s\t]*\{?", re.I)
