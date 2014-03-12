@@ -160,6 +160,9 @@ mod_list_gzcompress=gzcompress
 # - modules depending on uuid library
 mod_list_uuid=uuid
 
+# - modules depending on ev library
+mod_list_ev=evapi
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -182,7 +185,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_outbound) $(mod_list_osp) \
 			   $(mod_list_java) $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
-			   $(mod_list_gzcompress) $(mod_list_uuid))
+			   $(mod_list_gzcompress) $(mod_list_uuid) \
+			   $(mod_list_ev))
 
 
 
@@ -345,6 +349,9 @@ module_group_kgzcompress=$(mod_list_gzcompress)
 
 # pkg uuid module
 module_group_kuuid=$(mod_list_uuid)
+
+# pkg libev modules
+module_group_kev=$(mod_list_ev)
 
 # list of static modules
 #
