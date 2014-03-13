@@ -42,6 +42,9 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   sqlite json mono ims sctp java \
 			   purple tls outbound websocket autheph dnssec
 
+# module groups to be packaged onto kamailio-extra-modules
+EXTRA_GROUPS=gzcompress uuid ev
+
 # name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
 LIBDIR ?= lib/$(DEB_HOST_MULTIARCH)
 
@@ -56,7 +59,7 @@ mod_name=$(subst db_,,$(lastword $(subst /, ,$(1))))
 
 define PACKAGE_GRP_BUILD_template
 	# package all the modules in PACKAGE_GROUPS in separate packages
-	$(foreach grp,$(PACKAGE_GROUPS),\
+	$(foreach grp,$(PACKAGE_GROUPS EXTRA_GROUPS),\
 		$(MAKE) every-module group_include="k$(grp)"
 	)
 endef
@@ -80,6 +83,23 @@ define PACKAGE_GRP_INSTALL_template
 	)
 endef
 
+define PACKAGE_EXTRA_INSTALL_template
+	$(foreach grp,$(EXTRA_GROUPS),\
+		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
+		basedir=$(CURDIR)/debian/kamailio-extra-modules \
+		cfg_prefix=$(CURDIR)/debian/kamailio-extra-modules \
+		doc-dir=share/doc/kamailio-extra-modules
+	)
+	# eliminate duplicate libs
+	-for d in $(DUP_LIBS_DIRS); do \
+		test "$$d" != "$(CURDIR)/debian/kamailio-extra-modules/usr/$(LIBDIR)/kamailio" &&\
+		for r in `find $$d -name 'lib*'|xargs`; do \
+			echo "removing extra lib `basename $$r` present also in $$d";\
+			rm -f $(CURDIR)/debian/kamailio-extra-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
+		done ; \
+	done
+	find $(CURDIR)/debian/kamailio-extra-modules -depth -empty -type d -exec rmdir {} \;
+endef
 
 ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -g
@@ -116,8 +136,6 @@ build-stamp: configure-stamp
 	$(MAKE) all
 	# make groups
 	$(call PACKAGE_GRP_BUILD_template)
-	# make single-module packages
-	$(call PACKAGE_MODULE_BUILD_template)
 	touch build-stamp
 
 clean:
@@ -137,6 +155,7 @@ install: build
 	$(MAKE) install LIBDIR=$(LIBDIR) group_include="kstandard"
 	# make group packages
 	$(call PACKAGE_GRP_INSTALL_template)
+	$(call PACKAGE_EXTRA_INSTALL_template)
 	mv $(CURDIR)/debian/kamailio-berkeley-modules/usr/sbin/kambdb_recover \
 		$(CURDIR)/debian/kamailio-berkeley-bin/usr/sbin/kambdb_recover
 	# install /etc/default/kamailio file
