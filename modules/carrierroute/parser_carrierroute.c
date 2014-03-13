@@ -57,7 +57,7 @@
  *
  * @return index of option inside option list, -1 not found
  */
-int get_option_position(char* opt_name, option_description* opt_list, int no_options){
+int get_option_position(const char* opt_name, const option_description* opt_list, int no_options){
 	int i;
 	for (i = 0; i<no_options; i++){
 		if (strcmp(opt_name, opt_list[i].name) == 0){
