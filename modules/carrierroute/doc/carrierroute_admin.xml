@@ -95,21 +95,6 @@
 	    	</itemizedlist>
 	    </para>
 	</section>
-	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
-		The following libraries or applications must be installed before running
-		&kamailio; with this module loaded:
-		<itemizedlist>
-		    <listitem>
-			<para>
-				<emphasis>libconfuse</emphasis>, a configuration file parser library.
-				( http://www.nongnu.org/confuse/ )
-			</para>
-		    </listitem>
-		</itemizedlist>
-	    </para>
-	</section>
     </section>
     <section>
 	<title>Parameters</title>
