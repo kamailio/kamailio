@@ -244,7 +244,19 @@ void free_pcontact(pcontact_t* _c) {
 
 static inline void nodb_timer(pcontact_t* _c)
 {
-	LM_DBG("Running nodb timer on <%.*s> which has expires %d and expires in %d seconds\n", _c->aor.len, _c->aor.s, (int)_c->expires, (int)(_c->expires - time(NULL)));
+	LM_DBG("Running nodb timer on <%.*s>, "
+			"Reg state: %s, "
+			"Expires: %d, "
+			"Expires in: %d seconds, "
+			"Received: %.*s:%d, "
+			"Proto: %d\n",
+			_c->aor.len, _c->aor.s,
+			reg_state_to_string(_c->reg_state),
+			(int)_c->expires,
+			(int)(_c->expires - time(NULL)),
+			_c->received_host.len, _c->received_host.s,
+			_c->received_port,
+			_c->received_proto);
 
 	get_act_time();
 	if ((_c->expires - act_time) <= -10) {//we've allowed some grace time TODO: add as parameter
