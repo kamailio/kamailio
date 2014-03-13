@@ -173,7 +173,6 @@ static int mod_init(void) {
 		return -1;
 	}
 
-
 	db_url.len = strlen(db_url.s);
 
 	/* Regsiter RPC */

@@ -660,7 +660,7 @@ int delete_pcontact(udomain_t* _d, str* _aor, struct pcontact* _c)
  * \brief Convert database values into pcontact_info
  *
  * Convert database values into pcontact_info,
- * expects 10 rows (aor, contact, received, rx_session_id_col
+ * expects 12 rows (aor, contact, received, received_port, received_proto, rx_session_id_col
  * reg_state, expires, socket, service_routes_col, public_ids, path
  * \param vals database values
  * \param contact contact
@@ -684,9 +684,11 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		received.len = strlen(received.s);
 	}
 	ci.received_host = received;
+	ci.received_port = VAL_INT(vals + 3);
+	ci.received_proto = VAL_INT(vals + 4);
 
-	rx_session_id.s = (char*) VAL_STRING(vals + 3);
-	if (VAL_NULL(vals+3) || !rx_session_id.s || !rx_session_id.s[0]) {
+	rx_session_id.s = (char*) VAL_STRING(vals + 5);
+	if (VAL_NULL(vals+5) || !rx_session_id.s || !rx_session_id.s[0]) {
 		rx_session_id.len = 0;
 		rx_session_id.s = 0;
 		LM_DBG("2\n");
@@ -694,18 +696,18 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		rx_session_id.len = strlen(rx_session_id.s);
 	}
 	ci.rx_regsession_id = &rx_session_id;
-	if (VAL_NULL(vals + 4)) {
+	if (VAL_NULL(vals + 6)) {
 		LM_CRIT("empty registration state in DB\n");
 		return 0;
 	}
-	ci.reg_state = VAL_INT(vals + 4);
-	if (VAL_NULL(vals + 5)) {
+	ci.reg_state = VAL_INT(vals + 6);
+	if (VAL_NULL(vals + 7)) {
 		LM_CRIT("empty expire\n");
 		return 0;
 	}
-	ci.expires = VAL_TIME(vals + 5);
-	path.s  = (char*)VAL_STRING(vals+9);
-		if (VAL_NULL(vals+9) || !path.s || !path.s[0]) {
+	ci.expires = VAL_TIME(vals + 7);
+	path.s  = (char*)VAL_STRING(vals+11);
+		if (VAL_NULL(vals+11) || !path.s || !path.s[0]) {
 			path.len = 0;
 			path.s = 0;
 		} else {
@@ -714,7 +716,7 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	ci.path = &path;
 
 	//public IDs - implicit set
-	implicit_impus.s = (char*) VAL_STRING(vals + 8);
+	implicit_impus.s = (char*) VAL_STRING(vals + 10);
 	if (!VAL_NULL(vals + 8) && implicit_impus.s && implicit_impus.s[0]) {
 		//how many
 		n=0;
@@ -749,8 +751,8 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	}
 
 	//service routes
-	service_routes.s = (char*) VAL_STRING(vals + 7);
-	if (!VAL_NULL(vals + 7) && service_routes.s && service_routes.s[0]) {
+	service_routes.s = (char*) VAL_STRING(vals + 9);
+	if (!VAL_NULL(vals + 9) && service_routes.s && service_routes.s[0]) {
 		//how many
 		n = 0;
 		p = service_routes.s;
@@ -812,13 +814,15 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 	columns[1] = &aor_col;
 	columns[2] = &contact_col;
 	columns[3] = &received_col;
-	columns[4] = &rx_session_id_col;
-	columns[5] = &reg_state_col;
-	columns[6] = &expires_col;
-	columns[7] = &socket_col;
-	columns[8] = &service_routes_col;
-	columns[9] = &public_ids_col;
-	columns[10] = &path_col;
+	columns[4] = &received_port_col;
+	columns[5] = &received_proto_col;
+	columns[6] = &rx_session_id_col;
+	columns[7] = &reg_state_col;
+	columns[8] = &expires_col;
+	columns[9] = &socket_col;
+	columns[10] = &service_routes_col;
+	columns[11] = &public_ids_col;
+	columns[12] = &path_col;
 
 	if (ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -830,7 +834,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 #endif
 
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 11, 0, 0) < 0) {
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 13, 0, 0) < 0) {
 			LM_ERR("db_query (1) failed\n");
 			return -1;
 		}
@@ -839,7 +843,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 			return -1;
 		}
 	} else {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 11, 0, &res) < 0) {
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 13, 0, &res) < 0) {
 			LM_ERR("db_query failed\n");
 			return -1;
 		}
