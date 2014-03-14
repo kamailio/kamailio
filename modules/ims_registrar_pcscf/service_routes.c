@@ -117,6 +117,7 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 	str received_host = {0, 0};
 	contact_t *ct;
 	char srcip[50];	
+	int security_server_port = -1;
 
 	if (_m->id != current_msg_id) {
 		current_msg_id = _m->id;
@@ -127,7 +128,27 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 		if (b && b->contacts) {
 			for (ct = b->contacts; ct; ct = ct->next) {
 				if (ul.get_pcontact(_d, &ct->uri, &c) == 0) {
-					if ((c->reg_state == PCONTACT_REGISTERED) && (c->received_port == _m->rcv.src_port) && (c->received_proto == _m->rcv.proto)) {
+					if (c->security) {
+						switch (c->security->type) {
+						case SECURITY_IPSEC:
+							security_server_port = c->security->data.ipsec->port_uc;
+							break;
+						case SECURITY_TLS:
+						case SECURITY_NONE:
+							break;
+						}
+					} else if (c->security_temp) {
+						switch (c->security->type) {
+						case SECURITY_IPSEC:
+							security_server_port = c->security->data.ipsec->port_uc;
+							break;
+						case SECURITY_TLS:
+						case SECURITY_NONE:
+							break;
+						}
+					}
+
+					if ((c->reg_state == PCONTACT_REGISTERED) && ((c->received_port == _m->rcv.src_port) || (security_server_port == _m->rcv.src_port)) && (c->received_proto == _m->rcv.proto)) {
 						received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 						received_host.s = srcip;
 						LM_DBG("Received host len %d (search %d)\n", c->received_host.len, received_host.len);
