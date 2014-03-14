@@ -2083,6 +2083,8 @@ try_again:
 	debug_save = default_core_cfg.debug;
 	if ((yyparse()!=0)||(cfg_errors)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
+		if (debug_flag) default_core_cfg.debug = debug_save;
+		pp_ifdef_level_check();
 
 		goto error;
 	}
@@ -2090,6 +2092,7 @@ try_again:
 		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}
 	if (debug_flag) default_core_cfg.debug = debug_save;
+	pp_ifdef_level_check();
 	print_rls();
 
 	/* options with higher priority than cfg file */
