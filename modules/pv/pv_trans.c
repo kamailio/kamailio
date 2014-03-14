@@ -47,6 +47,7 @@
 #include "../../parser/parse_nameaddr.h"
 
 #include "../../lib/kcore/strcommon.h"
+#include "../../sha2utils.h"
 #include "pv_trans.h"
 
 
@@ -234,6 +235,36 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->ri = 0;
 			val->rs.s = _tr_buffer;
 			val->rs.len = MD5_LEN;
+			break;
+		case TR_S_SHA256:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			compute_sha256(_tr_buffer, (u_int8_t*)val->rs.s, val->rs.len);
+			_tr_buffer[SHA256_LEN] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = SHA256_LEN;
+			break;
+		case TR_S_SHA384:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			compute_sha384(_tr_buffer, (u_int8_t*)val->rs.s, val->rs.len);
+			_tr_buffer[SHA384_LEN] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = SHA384_LEN;
+			break;
+		case TR_S_SHA512:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			compute_sha512(_tr_buffer, (u_int8_t*)val->rs.s, val->rs.len);
+			_tr_buffer[SHA512_LEN] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = SHA512_LEN;
 			break;
 		case TR_S_ENCODEHEXA:
 			if(!(val->flags&PV_VAL_STR))
@@ -1907,6 +1938,15 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==3 && strncasecmp(name.s, "md5", 3)==0) {
 		t->subtype = TR_S_MD5;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "sha256", 6)==0) {
+		t->subtype = TR_S_SHA256;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "sha384", 6)==0) {
+		t->subtype = TR_S_SHA384;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "sha512", 6)==0) {
+		t->subtype = TR_S_SHA512;
 		goto done;
 	} else if(name.len==7 && strncasecmp(name.s, "tolower", 7)==0) {
 		t->subtype = TR_S_TOLOWER;
