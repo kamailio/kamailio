@@ -1262,7 +1262,7 @@ reg_free_contacts("callee");
 		<programlisting format="linespecific">
 ...
 event_route[usrloc:contact-expired] {
-    xlog("expired contact for $ulc(exp->aor)\n");
+    xlog("expired contact for $ulc(exp=>aor)\n");
 }
 ...
 </programlisting>
