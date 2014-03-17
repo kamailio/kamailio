@@ -1224,6 +1224,7 @@ int fix_cfg_file(void)
 	
 	if (cfg_file == NULL) cfg_file = CFG_FILE;
 	if (cfg_file[0] == '/') return 0;
+	if (cfg_file[0] == '-' && strlen(cfg_file)==1) return 0;
 	
 	/* cfg_file contains a relative pathname, get the current
 	 * working directory and add it at the beginning
@@ -2044,7 +2045,11 @@ int main(int argc, char** argv)
 	if (fix_cfg_file() < 0) goto error;
 
 	/* load config file or die */
-	cfg_stream=fopen (cfg_file, "r");
+	if (cfg_file[0] == '-' && strlen(cfg_file)==1) {
+		cfg_stream=stdin;
+	} else {
+		cfg_stream=fopen (cfg_file, "r");
+	}
 	if (cfg_stream==0){
 		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
 				strerror(errno));
@@ -2083,6 +2088,8 @@ try_again:
 	debug_save = default_core_cfg.debug;
 	if ((yyparse()!=0)||(cfg_errors)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
+		if (debug_flag) default_core_cfg.debug = debug_save;
+		pp_ifdef_level_check();
 
 		goto error;
 	}
@@ -2090,6 +2097,7 @@ try_again:
 		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}
 	if (debug_flag) default_core_cfg.debug = debug_save;
+	pp_ifdef_level_check();
 	print_rls();
 
 	/* options with higher priority than cfg file */

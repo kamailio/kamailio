@@ -67,7 +67,7 @@
 		<title>Set <varname>workers</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async", "workers", 2)
+modparam("evapi", "workers", 2)
 ...
 </programlisting>
 		</example>
@@ -86,7 +86,7 @@ modparam("async", "workers", 2)
 		<title>Set <varname>bind_addr</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async", "bind_addr", "1.2.3.4:8228")
+modparam("evapi", "bind_addr", "1.2.3.4:8228")
 ...
 </programlisting>
 		</example>

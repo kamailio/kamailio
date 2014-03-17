@@ -92,7 +92,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set workers parameter
 ...
-modparam("async", "workers", 2)
+modparam("evapi", "workers", 2)
 ...
 
 3.2. bind_addr (str)
@@ -103,7 +103,7 @@ modparam("async", "workers", 2)
 
    Example 1.2. Set bind_addr parameter
 ...
-modparam("async", "bind_addr", "1.2.3.4:8228")
+modparam("evapi", "bind_addr", "1.2.3.4:8228")
 ...
 
 4. Functions

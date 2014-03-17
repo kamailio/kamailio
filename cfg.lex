@@ -1825,6 +1825,7 @@ static int pp_ifdef_type(int type)
 	}
 
 	pp_ifdef_stack[pp_sptr] = type;
+	pp_ifdef_level_update(1);
 	return 0;
 }
 
@@ -1867,6 +1868,7 @@ static void pp_else()
 static void pp_endif()
 {
 	pp_sptr--;
+	pp_ifdef_level_update(-1);
 	pp_update_state();
 }
 

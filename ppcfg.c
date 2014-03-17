@@ -39,6 +39,7 @@ typedef struct _pp_subst_rule {
 
 static pp_subst_rule_t *pp_subst_rules_head = NULL;
 static pp_subst_rule_t *pp_subst_rules_tail = NULL;
+static int _pp_ifdef_level = 0;
 
 int pp_subst_add(char *data)
 {
@@ -198,6 +199,28 @@ int pp_subst_run(char **data)
 	if(i!=0)
 		return 1;
 	return 0;
+}
+
+/**
+ *
+ */
+void pp_ifdef_level_update(int val)
+{
+	_pp_ifdef_level += val;
+}
+
+/**
+ *
+ */
+void pp_ifdef_level_check(void)
+{
+	if(_pp_ifdef_level!=0) {
+		LM_WARN("different number of preprocessor directives:"
+				" N(#!IF[N]DEF) - N(#!ENDIF) = %d\n", _pp_ifdef_level);
+	} else {
+		LM_DBG("same number of pairing preprocessor directives"
+			" #!IF[N]DEF - #!ENDIF\n");
+	}
 }
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
