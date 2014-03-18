@@ -749,47 +749,11 @@ append_to_reply("Foo: $rm at $Ts\r\n");
 
 	<section id="textops.f.append_hf">
 		<title>
-		<function moreinfo="none">append_hf(txt)</function>
+		<function moreinfo="none">append_hf(txt[, hdr])</function>
 		</title>
 		<para>
-			Appends 'txt' as header after the last header field. 
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>txt</emphasis> - Header field to be appended. The
-			value can contain pseudo-variables which will be replaced at run
-			time.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		Note: Headers which are added in main route cannot be removed in further routes
-		(e.g. failure routes). So, the idea is not to add there any headers that you 
-		might want to remove later. To add headers temporarely use the branch route 
-		because the changes you do there are per-branch.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE, BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>append_hf</function> usage</title>
-		<programlisting format="linespecific">
-...
-append_hf("P-hint: VOICEMAIL\r\n");
-append_hf("From-username: $fU\r\n");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section id="textops.f.append_hf">
-		<title>
-		<function moreinfo="none">append_hf(txt, hdr)</function>
-		</title>
-		<para>
-		Appends 'txt' as header after first 'hdr' header field.
+		Appends 'txt' as header after first header field or after
+		last 'hdr' header field.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -813,7 +777,7 @@ append_hf("From-username: $fU\r\n");
 		<title><function>append_hf</function> usage</title>
 		<programlisting format="linespecific">
 ...
-append_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
+append_hf("P-hint: VOICEMAIL\r\n");
 append_hf("From-username: $fU\r\n", "Call-ID");
 ...
 </programlisting>
@@ -822,42 +786,11 @@ append_hf("From-username: $fU\r\n", "Call-ID");
 
 	<section id="textops.f.insert_hf">
 		<title>
-		<function moreinfo="none">insert_hf(txt)</function>
+		<function moreinfo="none">insert_hf(txt[, hdr])</function>
 		</title>
 		<para>
-		Inserts 'txt' as header before the first header field.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>txt</emphasis> - Header field to be inserted. The
-			value can contain pseudo-variables which will be replaced at run
-			time.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE, BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>insert_hf</function> usage</title>
-		<programlisting format="linespecific">
-...
-insert_hf("P-hint: VOICEMAIL\r\n");
-insert_hf("To-username: $tU\r\n");
-...
-</programlisting>
-		</example>
-	</section>
-
-
-	<section id="textops.f.insert_hf">
-		<title>
-		<function moreinfo="none">insert_hf(txt, hdr)</function>
-		</title>
-		<para>
-		Inserts 'txt' as header before first 'hdr' header field.
+		Inserts 'txt' as header before the first header field or before
+		first 'hdr' header field if 'hdr' is given.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -881,6 +814,8 @@ insert_hf("To-username: $tU\r\n");
 		<title><function>insert_hf</function> usage</title>
 		<programlisting format="linespecific">
 ...
+insert_hf("P-hint: VOICEMAIL\r\n");
+insert_hf("To-username: $tU\r\n");
 insert_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
 insert_hf("To-username: $tU\r\n", "Call-ID");
 ...
