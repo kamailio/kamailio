@@ -30,7 +30,7 @@
 
 #include "../../str.h"
 #include "../../md5.h"
-#include "../../sha256.h"
+#include "../srutils/sha256.h"
 
 /*
  * add backslashes to special characters
