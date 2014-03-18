@@ -548,12 +548,11 @@ static int mt_load_db(m_tree_t *pt)
 		if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows)<0)
 		{
 			LM_ERR("Error while fetching result\n");
-			if (db_res)
-				mt_dbf.free_result(db_con, db_res);
 			goto error;
 		} else {
 			if(RES_ROW_N(db_res)==0)
 			{
+				mt_dbf.free_result(db_con, db_res);
 				return 0;
 			}
 		}
@@ -562,13 +561,25 @@ static int mt_load_db(m_tree_t *pt)
 						pt->multi, 2, 0, &db_res))!=0
 				|| RES_ROW_N(db_res)<=0 )
 		{
-			mt_dbf.free_result(db_con, db_res);
-			if( ret==0)
+			if(ret==0)
 			{
+				mt_dbf.free_result(db_con, db_res);
 				return 0;
 			} else {
 				goto error;
 			}
+		}
+	}
+
+	if(RES_ROW_N(db_res)>0)
+	{
+		if(RES_ROWS(db_res)[0].values[0].type != DB1_STRING
+				|| RES_ROWS(db_res)[0].values[1].type != DB1_STRING)
+		{
+			LM_ERR("wrond column types in db table (%d / %d)\n",
+					RES_ROWS(db_res)[0].values[0].type,
+					RES_ROWS(db_res)[0].values[1].type);
+			goto error;
 		}
 	}
 
@@ -577,10 +588,10 @@ static int mt_load_db(m_tree_t *pt)
 		{
 			/* check for NULL values ?!?! */
 			tprefix.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
-			tprefix.len = strlen(tprefix.s);
+			tprefix.len = strlen(ZSW(tprefix.s));
 
 			tvalue.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
-			tvalue.len = strlen(tvalue.s);
+			tvalue.len = strlen(ZSW(tvalue.s));
 
 			if(tprefix.s==NULL || tvalue.s==NULL
 					|| tprefix.len<=0 || tvalue.len<=0)
