@@ -58,6 +58,7 @@ extern int _dbg_breakpoint;
 extern int _dbg_cfgtrace_level;
 extern int _dbg_cfgtrace_facility;
 extern char *_dbg_cfgtrace_prefix;
+extern char *_dbg_cfgtrace_lname;
 extern int _dbg_step_usleep;
 extern int _dbg_step_loops;
 extern int _dbg_reset_msgid;
@@ -83,6 +84,7 @@ static param_export_t params[]={
 	{"log_level",         INT_PARAM, &_dbg_cfgtrace_level},
 	{"log_facility",      STR_PARAM, &_dbg_cfgtrace_facility_str},
 	{"log_prefix",        STR_PARAM, &_dbg_cfgtrace_prefix},
+	{"log_level_name",    STR_PARAM, &_dbg_cfgtrace_lname},
 	{"log_assign",        INT_PARAM, &_dbg_log_assign},
 	{"step_usleep",       INT_PARAM, &_dbg_step_usleep},
 	{"step_loops",        INT_PARAM, &_dbg_step_loops},

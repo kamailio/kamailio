@@ -137,6 +137,26 @@ modparam("debugger", "log_level", 1)
 	    </example>
 	</section>
 
+	<section id="dbg.p.log_level_name">
+	    <title><varname>log_level_name</varname> (str)</title>
+	    <para>
+			What log level name is to be used to print cfg trace messages.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote> (use default log names).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_level_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_level_name", "exec")
+...
+</programlisting>
+	    </example>
+	</section>
+
 	<section id="dbg.p.log_facility">
 	    <title><varname>log_facility</varname> (str)</title>
 	    <para>

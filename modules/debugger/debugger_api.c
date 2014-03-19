@@ -177,6 +177,11 @@ char *_dbg_cfgtrace_prefix = "*** cfgtrace:";
 /**
  *
  */
+char *_dbg_cfgtrace_lname = NULL;
+
+/**
+ *
+ */
 int _dbg_step_usleep = 100000;
 
 /**
@@ -322,8 +327,8 @@ int dbg_cfg_trace(void *data)
 	{
 		if(is_printable(_dbg_cfgtrace_level))
 		{
-			LOG_(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
-					_dbg_cfgtrace_prefix,
+			LOG__(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
+					_dbg_cfgtrace_lname, _dbg_cfgtrace_prefix,
 					" c=[%s] l=%d a=%d n=%.*s\n",
 					ZSW(a->cfile), a->cline, a->type, an->len, ZSW(an->s)
 				);
