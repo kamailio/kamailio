@@ -163,10 +163,12 @@ void dprint_term_color(char f, char b, str *obuf);
 #ifdef NO_LOG
 
 #	ifdef __SUNPRO_C
+#		define LOG__(facility, level, lname, prefix, fmt, ...)
 #		define LOG_(facility, level, prefix, fmt, ...)
 #		define LOG(level, fmt, ...)
 #		define LOG_FC(facility, level, fmt, ...)
 #	else
+#		define LOG__(facility, level, lname, prefix, fmt, args...)
 #		define LOG_(facility, level, prefix, fmt, args...)
 #		define LOG(level, fmt, args...)
 #		define LOG_FC(facility, level, fmt, args...)
@@ -185,7 +187,7 @@ void dprint_term_color(char f, char b, str *obuf);
 #	endif
 
 #	ifdef __SUNPRO_C
-#		define LOG_(facility, level, prefix, fmt, ...) \
+#		define LOG__(facility, level, lname, prefix, fmt, ...) \
 			do { \
 				if (unlikely(get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
 						DPRINT_NON_CRIT)) { \
@@ -195,7 +197,7 @@ void dprint_term_color(char f, char b, str *obuf);
 							if (unlikely(log_color)) dprint_color(level); \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
 									process_no, my_pid(), \
-									LOG_LEVEL2NAME(level), (prefix), \
+									(lname)?(lname):LOG_LEVEL2NAME(level), (prefix), \
 									__VA_ARGS__); \
 							if (unlikely(log_color)) dprint_color_reset(); \
 						} else { \
@@ -203,7 +205,8 @@ void dprint_term_color(char f, char b, str *obuf);
 								   (((facility) != DEFAULT_FACILITY) ? \
 									(facility) : \
 									cfg_get(core, core_cfg, log_facility)), \
-									"%s: %s" fmt, LOG_LEVEL2NAME(level),\
+									"%s: %s" fmt, \
+									(lname)?(lname):LOG_LEVEL2NAME(level),\
 									(prefix), __VA_ARGS__); \
 						} \
 					} else { \
@@ -231,7 +234,10 @@ void dprint_term_color(char f, char b, str *obuf);
 					DPRINT_CRIT_EXIT; \
 				} \
 			} while(0)
-			
+
+#		define LOG_(facility, level, lname, prefix, fmt, ...) \
+	LOG__(facility, level, NULL, prefix, fmt, __VA_ARGS__)
+
 #		ifdef LOG_FUNC_NAME
 #			define LOG(level, fmt, ...) \
 	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt,\
@@ -251,7 +257,7 @@ void dprint_term_color(char f, char b, str *obuf);
 #		endif /* LOG_FUNC_NAME */
 
 #	else /* ! __SUNPRO_C */
-#		define LOG_(facility, level, prefix, fmt, args...) \
+#		define LOG__(facility, level, lname, prefix, fmt, args...) \
 			do { \
 				if (get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
 						DPRINT_NON_CRIT) { \
@@ -261,7 +267,7 @@ void dprint_term_color(char f, char b, str *obuf);
 							if (unlikely(log_color)) dprint_color(level); \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
 									process_no, my_pid(), \
-									LOG_LEVEL2NAME(level), \
+									(lname)?(lname):LOG_LEVEL2NAME(level), \
 									(prefix) , ## args);\
 							if (unlikely(log_color)) dprint_color_reset(); \
 						} else { \
@@ -269,7 +275,8 @@ void dprint_term_color(char f, char b, str *obuf);
 								   (((facility) != DEFAULT_FACILITY) ? \
 									(facility) : \
 									cfg_get(core, core_cfg, log_facility)), \
-									"%s: %s" fmt, LOG_LEVEL2NAME(level),\
+									"%s: %s" fmt,\
+									(lname)?(lname):LOG_LEVEL2NAME(level),\
 									(prefix) , ## args); \
 						} \
 					} else { \
@@ -297,7 +304,10 @@ void dprint_term_color(char f, char b, str *obuf);
 					DPRINT_CRIT_EXIT; \
 				} \
 			} while(0)
-			
+
+#		define LOG_(facility, level, prefix, fmt, args...) \
+	LOG__(facility, level, NULL, prefix, fmt, ## args)
+
 #		ifdef LOG_FUNC_NAME
 #			define LOG(level, fmt, args...) \
 	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt ,\
