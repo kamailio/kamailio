@@ -167,11 +167,13 @@ void dprint_term_color(char f, char b, str *obuf);
 #		define LOG_(facility, level, prefix, fmt, ...)
 #		define LOG(level, fmt, ...)
 #		define LOG_FC(facility, level, fmt, ...)
+#		define LOG_LN(level, lname, fmt, ...)
 #	else
 #		define LOG__(facility, level, lname, prefix, fmt, args...)
 #		define LOG_(facility, level, prefix, fmt, args...)
 #		define LOG(level, fmt, args...)
 #		define LOG_FC(facility, level, fmt, args...)
+#		define LOG_LN(level, lname, fmt, args...)
 #	endif
 
 #else
@@ -246,6 +248,11 @@ void dprint_term_color(char f, char b, str *obuf);
 #			define LOG_FC(facility, level, fmt, ...) \
 	LOG_((facility), (level), LOC_INFO, "%s(): " fmt,\
 				_FUNC_NAME_, __VA_ARGS__)
+
+#			define LOG_LN(level, lname, fmt, ...) \
+	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, "%s(): " fmt,\
+				_FUNC_NAME_, __VA_ARGS__)
+
 #		else /* LOG_FUNC_NAME */
 
 #			define LOG(level, fmt, ...) \
@@ -253,6 +260,9 @@ void dprint_term_color(char f, char b, str *obuf);
 
 #			define LOG_FC(facility, level, fmt, ...) \
 	LOG_((facility), (level), LOC_INFO, fmt, __VA_ARGS__)
+
+#			define LOG_LN(level, lname, fmt, ...) \
+	LOG_(DEFAULT_FACILITY, (level), (lname), LOC_INFO, fmt, __VA_ARGS__)
 
 #		endif /* LOG_FUNC_NAME */
 
@@ -316,11 +326,17 @@ void dprint_term_color(char f, char b, str *obuf);
 #			define LOG_FC(facility, level, fmt, args...) \
 	LOG_((facility), (level), LOC_INFO, "%s(): " fmt , _FUNC_NAME_, ## args)
 
+#			define LOG_LN(level, lname, fmt, args...) \
+	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, "%s(): " fmt ,\
+			_FUNC_NAME_, ## args)
+
 #		else /* LOG_FUNC_NAME */
 #			define LOG(level, fmt, args...) \
 	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt , ## args)
 #			define LOG_FC(facility, level, fmt, args...) \
 	LOG_((facility), (level), LOC_INFO, fmt , ## args)
+#			define LOG_LN(level, lname, fmt, args...) \
+	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, fmt , ## args)
 
 #		endif /* LOG_FUNC_NAME */
 #	endif /* __SUNPRO_C */
