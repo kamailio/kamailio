@@ -23,13 +23,7 @@
 		</editor>
 	</authorgroup>
 	<copyright>
-		<year>2007</year>
+		<year>2014</year>
 		<holder>&kamailio; development Team</holder>
 	</copyright>
-	<revhistory>
-		<revision>
-			<revnumber>$Revision: 4594 $</revnumber>
-			<date>$Date: 2008-08-06 12:08:33 +0200 (Mi, 06 Aug 2008) $</date>
-		</revision>
-	</revhistory>
 </bookinfo>
