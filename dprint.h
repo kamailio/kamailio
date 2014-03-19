@@ -86,6 +86,7 @@
 /*
  * Log levels
  */
+#define L_NPRL		-6 /* (L_MIN-1) to skip printing level prefix */
 #define L_MIN		-5
 #define L_ALERT		-5
 #define L_BUG		-4
@@ -321,6 +322,7 @@ void dprint_term_color(char f, char b, str *obuf);
  */
 /*@ { */
 #ifdef __SUNPRO_C
+#	define NPRL(...)   LOG(L_NPRL,  __VA_ARGS__)
 #	define ALERT(...)  LOG(L_ALERT,  __VA_ARGS__)
 #	define BUG(...)    LOG(L_BUG,   __VA_ARGS__)
 #	define ERR(...)    LOG(L_ERR,    __VA_ARGS__)
@@ -340,6 +342,7 @@ void dprint_term_color(char f, char b, str *obuf);
 #	define DEBUG(...) DBG(__VA_ARGS__)
 
 #else /* ! __SUNPRO_C */
+#	define NPRL(fmt, args...)   LOG(L_NPRL,  fmt , ## args)
 #	define ALERT(fmt, args...)  LOG(L_ALERT,  fmt , ## args)
 #	define BUG(fmt, args...)    LOG(L_BUG,   fmt , ## args)
 #	define ERR(fmt, args...)    LOG(L_ERR,    fmt , ## args)
@@ -364,6 +367,7 @@ void dprint_term_color(char f, char b, str *obuf);
 
 #define LM_GEN1 LOG
 #define LM_GEN2 LOG_FC
+#define LM_NPRL NPRL
 #define LM_ALERT ALERT
 #define LM_CRIT  CRIT
 #define LM_ERR ERR
