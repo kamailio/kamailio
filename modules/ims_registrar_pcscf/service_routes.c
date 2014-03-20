@@ -127,7 +127,7 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 
 		if (b && b->contacts) {
 			for (ct = b->contacts; ct; ct = ct->next) {
-				if (ul.get_pcontact(_d, &ct->uri, &c) == 0) {
+				if (ul.get_pcontact(_d, &ct->uri, 1, &c) == 0) {
 					if (c->security) {
 						switch (c->security->type) {
 						case SECURITY_IPSEC:
@@ -176,7 +176,7 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 			LM_WARN("Contact not found based on Contact-header, trying IP/Port/Proto\n");
 			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 			received_host.s = srcip;
-			if (ul.get_pcontact_by_src(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, &c) == 1)
+			if (ul.get_pcontact_by_src(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, 1, &c) == 1)
 				LM_DBG("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
 		}
 	}
@@ -210,7 +210,7 @@ pcontact_t * getContactP_from_via(struct sip_msg* _m, udomain_t* _d) {
 		current_msg_id = _m->id;
 		c = NULL;
 		LM_DBG("Looking for <%d://%.*s:%d>\n", vb->proto, vb->host.len, vb->host.s, vb->port);
-		if (ul.get_pcontact_by_src(_d, &vb->host, vb->port, vb->proto, &c) == 1)
+		if (ul.get_pcontact_by_src(_d, &vb->host, vb->port, vb->proto, 1, &c) == 1)
 			LM_WARN("No entry in usrloc for %.*s:%i (Proto %i) found!\n", vb->host.len, vb->host.s, vb->port, vb->proto);
 	}
 

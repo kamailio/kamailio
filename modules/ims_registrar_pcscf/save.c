@@ -157,7 +157,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 				ci.received_proto = 0;
 
 				ul.lock_udomain(_d, &c->uri);
-				if (ul.get_pcontact(_d, &c->uri, &pcontact) != 0) { //need to insert new contact
+				if (ul.get_pcontact(_d, &c->uri, 0, &pcontact) != 0) { //need to insert new contact
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
 						LM_DBG("This is a de-registration for contact <%.*s> but contact is not in usrloc - ignore\n", c->uri.len, c->uri.s);
 						goto next_contact;
@@ -305,7 +305,7 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 		ci.received_port = 5060;
 
 	ul.lock_udomain(_d, &c->uri);
-	if (ul.get_pcontact(_d, &c->uri, &pcontact) != 0) { //need to insert new contact
+	if (ul.get_pcontact(_d, &c->uri, 0, &pcontact) != 0) { //need to insert new contact
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
 		if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
 			LM_ERR("Failed inserting new pcontact\n");
