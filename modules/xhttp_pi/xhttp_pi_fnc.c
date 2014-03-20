@@ -1357,7 +1357,7 @@ int ph_getCmds(ph_db_table_t *ph_db_tables, int ph_db_tables_size,
 								NULL,
 								&cmds->o_keys,
 								NULL,
-								&cmds->q_vals,
+								NULL,
 								&cmds->o_keys_size,
 								cmd_cols)!=0)
 							return -1;
