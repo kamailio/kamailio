@@ -297,6 +297,46 @@ int evapi_run_worker(int prank)
 /**
  *
  */
+int evapi_relay(str *evdata)
+{
+#define EVAPI_RELAY_FORMAT "%d:%.*s,"
+
+	int len;
+	int sbsize;
+	str *sbuf;
+
+	LM_DBG("relaying event data [%.*s]\n",
+			evdata->len, evdata->s);
+
+	sbsize = evdata->len;
+	sbuf = (str*)shm_malloc(sizeof(str) + ((sbsize+32) * sizeof(char)));
+	if(sbuf==NULL) {
+		LM_ERR("no more shared memory\n");
+		return -1;
+	}
+	sbuf->s = (char*)sbuf + sizeof(str);
+	sbuf->len = snprintf(sbuf->s, sbsize+32,
+			EVAPI_RELAY_FORMAT,
+			sbsize, evdata->len, evdata->s);
+	if(sbuf->len<=0 || sbuf->len>sbsize+32) {
+		shm_free(sbuf);
+		LM_ERR("cannot serialize event\n");
+		return -1;
+	}
+
+	len = write(_evapi_notify_sockets[1], &sbuf, sizeof(str*));
+	if(len<=0) {
+		LM_ERR("failed to pass the pointer to evapi dispatcher\n");
+		return -1;
+	}
+	LM_DBG("sent [%p] [%.*s] (%d)\n", sbuf, sbuf->len, sbuf->s, sbuf->len);
+	return 0;
+}
+
+#if 0
+/**
+ *
+ */
 int evapi_relay(str *event, str *data)
 {
 #define EVAPI_RELAY_FORMAT "%d:{\n \"event\":\"%.*s\",\n \"data\":%.*s\n},"
@@ -332,3 +372,4 @@ int evapi_relay(str *event, str *data)
 	LM_DBG("sent [%p] [%.*s] (%d)\n", sbuf, sbuf->len, sbuf->s, sbuf->len);
 	return 0;
 }
+#endif

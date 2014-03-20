@@ -33,6 +33,6 @@ int evapi_run_dispatcher(char *laddr, int lport);
 
 int evapi_run_worker(int prank);
 
-int evapi_relay(str *event, str *data);
+int evapi_relay(str *evdata);
 
 #endif

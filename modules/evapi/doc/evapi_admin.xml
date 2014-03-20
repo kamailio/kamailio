@@ -29,7 +29,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>none</emphasis>
+				<emphasis>tm</emphasis> - (optional) needed only by
+				evapi_async_relay()
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -95,13 +96,13 @@ modparam("evapi", "bind_addr", "1.2.3.4:8228")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="evapi.f.evapi_relay">
 	    <title>
-		<function moreinfo="none">evapi_relay(event, data)</function>
+		<function moreinfo="none">evapi_relay(evdata)</function>
 	    </title>
 	    <para>
-		Relay the event to connected applications. The format is netstring
-		with json payload.
+		Relay the event data give as parameter to connected applications.
+		The format on the network is netstring with evdata payload.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -110,7 +111,7 @@ modparam("evapi", "bind_addr", "1.2.3.4:8228")
 		<title><function>evapi_relay</function> usage</title>
 		<programlisting format="linespecific">
 ...
-evapi_relay("test", "{ \"fU\": \"$fU\" }");
+evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 ...
 </programlisting>
 	    </example>
@@ -121,10 +122,34 @@ evapi_relay("test", "{ \"fU\": \"$fU\" }");
 		<title>TCP message</title>
 		<programlisting format="linespecific">
 ...
-45:{
- "event":"test",
- "data":{ "fU": "test" }
+47:{
+ "event": "test",
+ "data": { "fU": "test" }
 },
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="evapi.f.evapi_async_relay">
+	    <title>
+		<function moreinfo="none">evapi_async_relay(evdata)</function>
+	    </title>
+	    <para>
+		Relay the event data give as parameter to connected applications.
+		The format on the network is netstring with evdata payload. Before
+		evaluating the parameter, the request processing is suspended using
+		tm module.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>evapi_async_relay</function> usage</title>
+		<programlisting format="linespecific">
+...
+evapi_relay("{ \"event\": \"suspend\",\n \"data\":"
+        " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
 ...
 </programlisting>
 	    </example>

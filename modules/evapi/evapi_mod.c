@@ -36,6 +36,8 @@
 #include "../../mod_fix.h"
 #include "../../cfg/cfg_struct.h"
 
+#include "../../modules/tm/tm_load.h"
+
 #include "evapi_dispatch.h"
 
 MODULE_VERSION
@@ -45,17 +47,21 @@ static char *_evapi_bind_addr = "127.0.0.1";
 static int   _evapi_bind_port = 8448;
 static char *_evapi_bind_param = NULL;
 
+static tm_api_t tmb;
 
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
 
-static int w_evapi_relay(struct sip_msg* msg, char* event, char* data);
+static int w_evapi_relay(struct sip_msg* msg, char* evdata, char* p2);
+static int w_evapi_async_relay(struct sip_msg* msg, char* evdata, char* p2);
 static int fixup_evapi_relay(void** param, int param_no);
 
 static cmd_export_t cmds[]={
-	{"evapi_relay", (cmd_function)w_evapi_relay, 2, fixup_evapi_relay,
+	{"evapi_relay",       (cmd_function)w_evapi_relay,       1, fixup_evapi_relay,
 		0, ANY_ROUTE},
+	{"evapi_async_relay", (cmd_function)w_evapi_async_relay, 1, fixup_evapi_relay,
+		0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -88,6 +94,12 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	char *p;
+
+	if(load_tm_api( &tmb ) < 0) {
+		LM_INFO("cannot load the TM-functions - async relay disabled\n");
+		memset(&tmb, 0, sizeof(tm_api_t));
+	}
+
 	if(_evapi_bind_param!=NULL) {
 		p = strchr(_evapi_bind_param, ':');
 		if(p!=NULL) {
@@ -175,25 +187,19 @@ static void mod_destroy(void)
 {
 }
 
-static int w_evapi_relay(sip_msg_t *msg, char *event, char *data)
+/**
+ *
+ */
+static int w_evapi_relay(sip_msg_t *msg, char *evdata, char *p2)
 {
-	str sevent;
 	str sdata;
 
-	if(event==0 || data==0) {
+	if(evdata==0) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)event, &sevent)!=0) {
-		LM_ERR("unable to get event\n");
-		return -1;
-	}
-	if(sevent.s==NULL || sevent.len == 0) {
-		LM_ERR("invalid event parameter\n");
-		return -1;
-	}
-	if(fixup_get_svalue(msg, (gparam_t*)data, &sdata)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
 		LM_ERR("unable to get data\n");
 		return -1;
 	}
@@ -201,14 +207,73 @@ static int w_evapi_relay(sip_msg_t *msg, char *event, char *data)
 		LM_ERR("invalid data parameter\n");
 		return -1;
 	}
-	if(evapi_relay(&sevent, &sdata)<0) {
-		LM_ERR("failed to relay event: %.*s\n", sevent.len, sevent.s);
+	if(evapi_relay(&sdata)<0) {
+		LM_ERR("failed to relay event: %.*s\n", sdata.len, sdata.s);
 		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_evapi_async_relay(sip_msg_t *msg, char *evdata, char *p2)
+{
+	str sdata;
+	unsigned int tindex;
+	unsigned int tlabel;
+	tm_cell_t *t = 0;
+
+	if(evdata==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(tmb.t_suspend==NULL) {
+		LM_ERR("evapi async relay is disabled - tm module not loaded\n");
+		return -1;
+	}
+
+	t = tmb.t_gett();
+	if (t==NULL || t==T_UNDEFINED)
+	{
+		if(tmb.t_newtran(msg)<0)
+		{
+			LM_ERR("cannot create the transaction\n");
+			return -1;
+		}
+		t = tmb.t_gett();
+		if (t==NULL || t==T_UNDEFINED)
+		{
+			LM_ERR("cannot lookup the transaction\n");
+			return -1;
+		}
+	}
+	if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
+	{
+		LM_ERR("failed to suppend request processing\n");
+		return -1;
+	}
+
+	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
+
+	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+		LM_ERR("unable to get data\n");
+		return -1;
+	}
+	if(sdata.s==NULL || sdata.len == 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+
+	if(evapi_relay(&sdata)<0) {
+		LM_ERR("failed to relay event: %.*s\n", sdata.len, sdata.s);
+		return -2;
 	}
 	return 1;
 }
 
 static int fixup_evapi_relay(void** param, int param_no)
 {
-	return fixup_spve_spve(param, param_no);
+	return fixup_spve_null(param, param_no);
 }
