@@ -548,12 +548,12 @@ static void destroy(void)
 /**
  *
  */
-static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
+static int w_ds_select(struct sip_msg* msg, char* set, char* alg, int mode)
 {
 	int a, s;
-
 	if(msg==NULL)
 		return -1;
+
 	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
 	{
 		LM_ERR("no dst set value\n");
@@ -565,7 +565,14 @@ static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
 		return -1;
 	}
 
-	return ds_select_dst(msg, s, a, 0 /*set dst uri*/);
+	return ds_select_dst(msg, s, a, mode);
+}
+/**
+ *
+ */
+static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
+{
+	return w_ds_select(msg, set, alg, 0 /*set dst uri*/);
 }
 
 /**
@@ -573,22 +580,7 @@ static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
  */
 static int w_ds_select_domain(struct sip_msg* msg, char* set, char* alg)
 {
-	int a, s;
-	if(msg==NULL)
-		return -1;
-
-	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
-	{
-		LM_ERR("no dst set value\n");
-		return -1;
-	}
-	if(fixup_get_ivalue(msg, (gparam_p)alg, &a)!=0)
-	{
-		LM_ERR("no alg value\n");
-		return -1;
-	}
-
-	return ds_select_dst(msg, s, a, 1/*set host port*/);
+	return w_ds_select(msg, set, alg, 1 /*set host port*/);
 }
 
 /**
