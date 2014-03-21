@@ -121,6 +121,7 @@ typedef enum request_method {
 #define FL_USE_UAC_TO        (1<<14)  /* take TO hdr from UAC instead of UAS */
 #define FL_TM_RPL_MATCHED    (1<<15)  /* tm matched reply already */
 #define FL_RPL_SUSPENDED     (1<<16)  /* for async reply processing */
+#define FL_BODY_MULTIPART    (1<<17)  /* body modified is multipart */
 
 /* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
