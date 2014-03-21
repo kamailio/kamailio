@@ -147,8 +147,9 @@
 #include "pt.h"
 #include "cfg/cfg.h"
 #include "parser/parse_to.h"
+#include "parser/parse_param.h"
 #include "forward.h"
-
+#include "str_list.h"
 
 #define append_str_trans(_dest,_src,_len,_msg) \
 	append_str( (_dest), (_src), (_len) );
@@ -1620,7 +1621,301 @@ error:
 	return -1;
 }
 
+static inline int find_line_start(char *text, unsigned int text_len,
+				  char **buf, unsigned int *buf_len)
+{
+	char *ch, *start;
+	unsigned int len;
 
+	start = *buf;
+	len = *buf_len;
+
+	while (text_len <= len) {
+		if (strncmp(text, start, text_len) == 0) {
+			*buf = start;
+			*buf_len = len;
+			return 1;
+		}
+		if ((ch = memchr(start, 13, len - 1))) {
+			if (*(ch + 1) != 10) {
+				LM_ERR("No LF after CR\n");
+				return 0;
+			}
+			len = len - (ch - start + 2);
+			start = ch + 2;
+		} else {
+			LM_ERR("No CRLF found\n");
+			return 0;
+		}
+	}
+	return 0;
+}
+
+static inline int get_line(str s)
+{
+	char *ch;
+
+	if ((ch = memchr(s.s, 13, s.len))) {
+		if (*(ch + 1) != 10) {
+			LM_ERR("No LF after CR\n");
+			return 0;
+		}
+		return ch - s.s + 2;
+	} else {
+		LM_ERR("No CRLF found\n");
+		return s.len;
+	}
+	return 0;
+}
+
+int replace_body(struct sip_msg *msg, str txt)
+{
+	struct lump *anchor;
+	char *buf;
+	str body = {0,0};
+
+	body.s = get_body(msg);
+	if(body.s==0)
+	{
+		LM_ERR("malformed sip message\n");
+		return 0;
+	}
+	body.len = msg->len -(int)(body.s-msg->buf);
+	LM_DBG("old size body[%d] actual[%d]\n", body.len, txt.len);
+	if(body.s+body.len>msg->buf+msg->len)
+	{
+		LM_ERR("invalid content length: %d\n", body.len);
+		return 0;
+	}
+	del_nonshm_lump( &(msg->body_lumps) );
+	msg->body_lumps = NULL;
+
+	if(del_lump(msg, body.s-msg->buf, body.len, 0) == 0)
+	{
+		LM_ERR("cannot delete existing body");
+		return 0;
+	}
+
+	anchor = anchor_lump(msg, body.s - msg->buf, 0, 0);
+	if(anchor==0)
+	{
+		LM_ERR("failed to get anchor\n");
+		return 0;
+	}
+
+	buf=pkg_malloc(sizeof(char)*txt.len);
+	if(buf==0)
+	{
+		PKG_MEM_ERROR;
+		return 0;
+	}
+	memcpy(buf, txt.s, txt.len);
+	if(insert_new_lump_after(anchor, buf, txt.len, 0)==0)
+	{
+		LM_ERR("failed to insert body lump\n");
+		pkg_free(buf);
+		return 0;
+	}
+	return 1;
+}
+
+/**
+ * returns the boundary defined by the Content-Type
+ * header
+ */
+int get_boundary(struct sip_msg* msg, str* boundary)
+{
+	str params;
+	param_t *p, *list;
+	param_hooks_t hooks;
+
+	params.s = memchr(msg->content_type->body.s, ';',
+		msg->content_type->body.len);
+	if (params.s == NULL)
+	{
+		LM_ERR("Content-Type hdr has no params\n");
+		return -1;
+	}
+	params.len = msg->content_type->body.len -
+		(params.s - msg->content_type->body.s);
+	if (parse_params(&params, CLASS_ANY, &hooks, &list) < 0)
+	{
+		LM_ERR("while parsing Content-Type params\n");
+		return -1;
+	}
+	boundary->s = NULL;
+	boundary->len = 0;
+	for (p = list; p; p = p->next) {
+		if ((p->name.len == 8)
+			&& (strncasecmp(p->name.s, "boundary", 8) == 0))
+		{
+			boundary->s = pkg_malloc(p->body.len + 2);
+			if (boundary->s == NULL)
+			{
+				free_params(list);
+				LM_ERR("no memory for boundary string\n");
+				return -1;
+			}
+			*(boundary->s) = '-';
+			*(boundary->s + 1) = '-';
+			memcpy(boundary->s + 2, p->body.s, p->body.len);
+			boundary->len = 2 + p->body.len;
+			LM_DBG("boundary is <%.*s>\n", boundary->len, boundary->s);
+			break;
+		}
+	}
+	free_params(list);
+	return 0;
+}
+
+int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
+{
+	str b = {0,0};
+	str fb = {0,0};
+	str ob = {0,0};
+	str bsuffix = {"\r\n", 2};
+	str fsuffix = {"--\r\n", 4};
+	str body = {0,0};
+	str buf = {0,0};
+	str tmp = {0,0};
+	struct str_list* lb = NULL;
+	struct str_list* lb_t = NULL;
+	int lb_found = 0;
+	int t, ret, lb_size;
+	char *pb;
+
+	if(!(msg->msg_flags&FL_BODY_MULTIPART)) return 0;
+	else
+	{
+		buf.s = build_body(msg, (unsigned int *)&buf.len, &ret, send_info);
+		if(ret) {
+			LM_ERR("Can't get body\n");
+			return -1;
+		}
+		tmp.s = buf.s;
+		t = tmp.len = buf.len;
+		if(get_boundary(msg, &ob)!=0) return -1;
+		if(str_append(&ob, &bsuffix, &b)!=0) {
+			LM_ERR("Can't append suffix to boundary\n");
+			goto error;
+		}
+		if(str_append(&ob, &fsuffix,&fb)!=0) {
+			LM_ERR("Can't append suffix to final boundary\n");
+			goto error;
+		}
+		ret = b.len-2;
+		while(t>0)
+		{
+			if(find_line_start(b.s, ret, &tmp.s,
+				(unsigned int *)&tmp.len))
+			{
+				/*LM_DBG("found t[%d] tmp.len[%d]:[%.*s]\n",
+					t, tmp.len, tmp.len, tmp.s);*/
+				if(!lb)
+				{
+					lb = pkg_malloc(sizeof(struct str_list));
+					if (!lb) {
+						PKG_MEM_ERROR;
+						goto error;
+					}
+					lb->s.s = tmp.s;
+					lb->s.len = tmp.len;
+					lb->next = 0;
+					lb_t = lb;
+				}
+				else
+				{
+					lb_t = append_str_list(tmp.s, tmp.len, &lb_t, &lb_size);
+				}
+				lb_found = lb_found + 1;
+				tmp.s = tmp.s + ret;
+				t =  t - ret;
+				tmp.len = tmp.len - ret;
+			}
+			else { t=0; }
+		}
+		if(lb_found<2)
+		{
+			LM_ERR("found[%d] wrong number of boundaries\n", lb_found);
+			goto error;
+		}
+		/* adding 2 chars in advance */
+		body.len = buf.len + 2;
+		body.s = pkg_malloc(sizeof(char)*body.len);
+		if (!body.s) {
+			PKG_MEM_ERROR;
+			goto error;
+		}
+		pb = body.s; body.len = 0;
+		lb_t = lb;
+		while(lb_t)
+		{
+			tmp.s = lb_t->s.s; tmp.len = lb_t->s.len;
+			tmp.len = get_line(lb_t->s);
+			if(tmp.len!=b.len || strncmp(b.s, tmp.s, b.len)!=0)
+			{
+				LM_DBG("malformed bondary in the middle\n");
+				memcpy(pb, b.s, b.len); body.len = body.len + b.len;
+				pb = pb + b.len;
+				t = lb_t->s.s - (lb_t->s.s + tmp.len);
+				memcpy(pb, lb_t->s.s+tmp.len, t); pb = pb + t;
+				/*LM_DBG("new chunk[%d][%.*s]\n", t, t, pb-t);*/
+			}
+			else {
+				t = lb_t->next->s.s - lb_t->s.s;
+				memcpy(pb, lb_t->s.s, t);
+				/*LM_DBG("copy[%d][%.*s]\n", t, t, pb);*/
+				pb = pb + t;
+			}
+			body.len = body.len + t;
+			/*LM_DBG("body[%d][%.*s]\n", body.len, body.len, body.s);*/
+			lb_t = lb_t->next;
+			if(!lb_t->next) lb_t = NULL;
+		}
+		/* last boundary */
+		tmp.s = lb->s.s; tmp.len = lb->s.len;
+		tmp.len = get_line(lb->s);
+		if(tmp.len!=fb.len || strncmp(fb.s, tmp.s, fb.len)!=0)
+		{
+			LM_DBG("last bondary without -- at the end\n");
+			memcpy(pb, fb.s, fb.len);
+			/*LM_DBG("new chunk[%d][%.*s]\n", fb.len, fb.len, pb);*/
+			pb = pb + fb.len;
+			body.len = body.len + fb.len;
+		}
+		else {
+			memcpy(pb, lb->s.s, lb->s.len); pb = pb + lb->s.len;
+			body.len = body.len + lb->s.len;
+			/*LM_DBG("copy[%d][%.*s]\n", lb->s.len, lb->s.len, pb - lb->s.len);*/
+		}
+		/*LM_DBG("body[%d][%.*s] expected[%ld]\n",
+			body.len, body.len, body.s, pb-body.s); */
+		if(!replace_body(msg, body))
+		{
+			LM_ERR("Can't replace body\n");
+			goto error;
+		}
+		msg->msg_flags &= ~FL_BODY_MULTIPART;
+		ret = 1;
+		goto clean;
+	}
+
+error:
+	ret = -1;
+clean:
+	if(ob.s) pkg_free(ob.s);
+	if(b.s) pkg_free(b.s);
+	if(fb.s) pkg_free(fb.s);
+	if(body.s) pkg_free(body.s);
+	if(buf.s) pkg_free(buf.s);
+	while(lb)
+	{
+		lb_t = lb->next;
+		pkg_free(lb);
+		lb = lb_t;
+	}
+	return ret;
+}
 
 /** builds a request in memory from another sip request.
   *
@@ -1700,6 +1995,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	path_buf.len=0;
 
 	flags=msg->msg_flags|global_req_flags;
+	if(check_boundaries(msg, send_info)<0){
+		LM_WARN("check_boundaries error\n");
+	}
 	/* Calculate message body difference and adjust Content-Length */
 	body_delta = lumps_len(msg, msg->body_lumps, send_info);
 	if (adjust_clen(msg, body_delta, send_info->proto) < 0) {
@@ -1955,8 +2253,6 @@ error00:
 	*returned_len=0;
 	return 0;
 }
-
-
 
 char * generate_res_buf_from_sip_res( struct sip_msg* msg,
 				unsigned int *returned_len, unsigned int mode)
