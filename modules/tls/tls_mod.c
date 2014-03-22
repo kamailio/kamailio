@@ -57,8 +57,6 @@
 	#error "conflict: CORE_TLS must _not_ be defined"
 #endif
 
-
-
 /*
  * FIXME:
  * - How do we ask for secret key password ? Mod_init is called after
@@ -344,6 +342,12 @@ static int mod_init(void)
 	if (tls_check_sockets(*tls_domains_cfg) < 0)
 		goto error;
 
+#ifndef OPENSSL_NO_ECDH
+	LM_INFO("With ECDH-Support!\n");
+#endif
+#ifndef OPENSSL_NO_DH
+	LM_INFO("With Diffie Hellman\n");
+#endif
 	return 0;
 error:
 	destroy_tls_h();
