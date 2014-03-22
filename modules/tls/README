@@ -4,7 +4,13 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright � 2007 iptelorg GmbH
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright © 2007 iptelorg GmbH
+
+   Copyright © 2014 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -273,6 +279,9 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
    In general, if Kamailio fails to start with a symbol not found error
    when trying to load the tls module (check the log), it means some
    needed library was not linked and it must be added to TLS_EXTRA_LIBS
+
+   Elliptic Curve Diffie-Hellman (EDCH)-Ciphers are only supported in
+   OpenSSL 1.0.0e and later.
 
 5. TLS and Low Memory
 
