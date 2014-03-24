@@ -332,6 +332,7 @@ int db_unixodbc_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrow
 	len = sizeof(db_row_t) * nrows;
 	RES_ROWS(*_r) = (struct db_row*)pkg_malloc(len);
 	if (!RES_ROWS(*_r)) {
+		pkg_free(temp_row);
 		LM_ERR("no memory left\n");
 		return -5;
 	}
@@ -359,6 +360,7 @@ int db_unixodbc_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrow
 
 		if (db_unixodbc_list_insert(&rowstart, &rows, columns, temp_row) < 0) {
 			LM_ERR("SQL result row insert failed\n");
+			pkg_free(RES_ROWS(*_r));
 			pkg_free(temp_row);
 			temp_row= NULL;
 			pkg_free(*_r);
@@ -380,6 +382,7 @@ int db_unixodbc_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrow
 	RES_ROW_N(*_r) = row_n;
 	if (!row_n) {
 		LM_DBG("no more rows to process for db fetch");
+		pkg_free(RES_ROWS(*_r));
 		RES_ROWS(*_r) = 0;
 		return 0;
 	}
