@@ -1055,11 +1055,12 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 	struct binrpc_val avp;
 	struct rpc_struct_l* rs;
 	
-	memset(&avp, 0, sizeof(struct binrpc_val));
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
+		memset(&avp, 0, sizeof(struct binrpc_val));
 		avp.name.s=va_arg(ap, char*);
-		avp.name.len=strlen(avp.name.s);
+		if (avp.name.s)
+			avp.name.len=strlen(avp.name.s);
 		switch(*fmt){
 			case 'd':
 			case 't':
@@ -1070,7 +1071,8 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 			case 's': /* asciiz */
 				avp.type=BINRPC_T_STR;
 				avp.u.strval.s=va_arg(ap, char*);
-				avp.u.strval.len=strlen(avp.u.strval.s);
+				if (avp.u.strval.s)
+					avp.u.strval.len=strlen(avp.u.strval.s);
 				break;
 			case 'S': /* str */
 				avp.type=BINRPC_T_STR;
