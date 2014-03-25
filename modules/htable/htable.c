@@ -572,6 +572,9 @@ static struct mi_root* ht_mi_delete(struct mi_root* cmd_tree, void* param) {
 		LM_ERR("dmq relication failed\n");
 	}
 
+	LM_DBG("deleting key [%.*s] from [%.*s]\n",
+		key->len, key->s, htname->len, htname->s);
+
 	ht_del_cell(ht, key);
 
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
