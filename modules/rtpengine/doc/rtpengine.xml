@@ -91,13 +91,13 @@
 		<holder><ulink url='http://www.voipembedded.com'>VoIPEmbedded Inc.</ulink></holder>
 	</copyright>
 	<copyright>
-		<year>2013</year>
+		<year>2013-2014</year>
 		<holder>Sipwise GmbH</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>
 
-	<xi:include href="rtpproxy_admin.xml"/>
-	<xi:include href="rtpproxy_faq.xml"/>
+	<xi:include href="rtpengine_admin.xml"/>
+	<xi:include href="rtpengine_faq.xml"/>
 
 </book>

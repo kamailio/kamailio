@@ -13,7 +13,7 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   mediaproxy mi_datagram mi_fifo mi_rpc mqueue \
 				   nat_traversal nathelper path pike pv ratelimit rr rtimer \
 				   rtpproxy sanity sdpops siputils sl statistics textops \
-				   textopsx tm tmx topoh xlog rtpproxy-ng stun sipt
+				   textopsx tm tmx topoh xlog rtpengine stun sipt
 
 # - extra used modules, with no extra dependency
 mod_list_extra=avp auth_diameter call_control cnxcc dmq domainpolicy msrp pdb \

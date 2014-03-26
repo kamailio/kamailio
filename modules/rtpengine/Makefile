@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=rtpproxy-ng.so
+NAME=rtpengine.so
 LIBS=
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE

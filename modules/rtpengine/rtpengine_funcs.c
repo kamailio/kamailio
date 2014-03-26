@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "rtpproxy_funcs.h"
+#include "rtpengine_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../ut.h"
