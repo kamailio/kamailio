@@ -362,9 +362,6 @@ static struct tm_binds tmb;
 /*0-> disabled, 1 ->enabled*/
 unsigned int *natping_state=0;
 
-#if 0
-static str timeout_socket_str = {0, 0};
-#endif
 static pv_elem_t *extra_id_pv = NULL;
 
 static cmd_export_t cmds[] = {
@@ -413,9 +410,6 @@ static param_export_t params[] = {
 	{"rtpengine_disable_tout", INT_PARAM, &rtpengine_disable_tout },
 	{"rtpengine_retr",         INT_PARAM, &rtpengine_retr         },
 	{"rtpengine_tout",         INT_PARAM, &rtpengine_tout         },
-#if 0
-	{"timeout_socket",    	  STR_PARAM, &timeout_socket_str.s  },
-#endif
 	{"extra_id_pv",           STR_PARAM, &extra_id_pv_param.s },
 	{"setid_avp",             STR_PARAM, &setid_avp_param },
 	{0, 0, 0}
@@ -898,14 +892,6 @@ mod_init(void)
 		if(rtpp_strings[i])
 			pkg_free(rtpp_strings[i]);
 	}
-#if 0
-	if (timeout_socket_str.s==NULL || timeout_socket_str.s[0]==0) {
-		timeout_socket_str.len = 0;
-		timeout_socket_str.s = NULL;
-	} else {
-		timeout_socket_str.len = strlen(timeout_socket_str.s);
-	}
-#endif
 
 	if (extra_id_pv_param.s && *extra_id_pv_param.s) {
 		extra_id_pv_param.len = strlen(extra_id_pv_param.s);
