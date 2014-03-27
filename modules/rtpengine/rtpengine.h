@@ -24,8 +24,8 @@
 */
 
 
-#ifndef _RTPPROXY_H
-#define _RTPPROXY_H
+#ifndef _RTPENGINE_H
+#define _RTPENGINE_H
 
 #include "bencode.h"
 #include "../../str.h"

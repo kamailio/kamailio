@@ -219,8 +219,8 @@
 #include "../../dset.h"
 #include "../../route.h"
 #include "../../modules/tm/tm_load.h"
-#include "rtpproxy.h"
-#include "rtpproxy_funcs.h"
+#include "rtpengine.h"
+#include "rtpengine_funcs.h"
 #include "bencode.h"
 
 MODULE_VERSION
@@ -268,22 +268,19 @@ MODULE_VERSION
 
 
 
-/* Supported version of the RTP proxy command protocol */
-#define	SUP_CPROTOVER	20040107
-/* Required additional version of the RTP proxy command protocol */
-#define	REQ_CPROTOVER	"20050322"
-/* Additional version necessary for re-packetization support */
-#define	REP_CPROTOVER	"20071116"
-#define	PTL_CPROTOVER	"20081102"
-
 #define	CPORT		"22222"
 
-enum rtpp_operation {
+enum rtpe_operation {
 	OP_OFFER = 1,
 	OP_ANSWER,
 	OP_DELETE,
 	OP_START_RECORDING,
 	OP_QUERY,
+};
+
+struct ng_flags_parse {
+	int via, to, packetize, transport;
+	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux;
 };
 
 static const char *command_strings[] = {
@@ -296,28 +293,25 @@ static const char *command_strings[] = {
 
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
-static int unforce_rtp_proxy_f(struct sip_msg *, const char *, char *);
-static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy(struct sip_msg *, const char *, const str *, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
-static int rtpproxy_answer1_f(struct sip_msg *, char *, char *);
-static int rtpproxy_answer2_f(struct sip_msg *, char *, char *);
-static int rtpproxy_offer1_f(struct sip_msg *, char *, char *);
-static int rtpproxy_offer2_f(struct sip_msg *, char *, char *);
-static int rtpproxy_manage0(struct sip_msg *msg, char *flags, char *ip);
-static int rtpproxy_manage1(struct sip_msg *msg, char *flags, char *ip);
-static int rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip);
+static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
+static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
+static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
+static int rtpengine_manage1_f(struct sip_msg *, char *, char *);
 
-static int add_rtpproxy_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
+static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_operation *, const char *);
+
+static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op);
+static int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
 static int fixup_set_id(void ** param, int param_no);
-static int set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2);
+static int set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2);
 static struct rtpp_set * select_rtpp_set(int id_set);
 static struct rtpp_node *select_rtpp_node(str, int);
 static char *send_rtpp_command(struct rtpp_node *, bencode_item_t *, int *);
 static int get_extra_id(struct sip_msg* msg, str *id_str);
 
-static int rtpproxy_set_store(modparam_t type, void * val);
-static int rtpproxy_add_rtpproxy_set( char * rtp_proxies);
+static int rtpengine_set_store(modparam_t type, void * val);
+static int rtpengine_add_rtpengine_set( char * rtp_proxies);
 
 static int mod_init(void);
 static int child_init(int);
@@ -333,16 +327,16 @@ static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
 		void* param);
 
 
-static int rtpproxy_disable_tout = 60;
-static int rtpproxy_retr = 5;
-static int rtpproxy_tout = 1;
+static int rtpengine_disable_tout = 60;
+static int rtpengine_retr = 5;
+static int rtpengine_tout = 1;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
 static char *setid_avp_param = NULL;
 
 static char ** rtpp_strings=0;
-static int rtpp_sets=0; /*used in rtpproxy_set_store()*/
+static int rtpp_sets=0; /*used in rtpengine_set_store()*/
 static int rtpp_set_count = 0;
 static unsigned int current_msg_id = (unsigned int)-1;
 /* RTP proxy balancing list */
@@ -368,70 +362,38 @@ static struct tm_binds tmb;
 /*0-> disabled, 1 ->enabled*/
 unsigned int *natping_state=0;
 
-#if 0
-static str timeout_socket_str = {0, 0};
-#endif
 static pv_elem_t *extra_id_pv = NULL;
 
 static cmd_export_t cmds[] = {
-	{"set_rtp_proxy_set",  (cmd_function)set_rtp_proxy_set_f,    1,
+	{"set_rtpengine_set",  (cmd_function)set_rtpengine_set_f,    1,
 		fixup_set_id, 0,
-		ANY_ROUTE},
-	{"unforce_rtp_proxy",  (cmd_function)unforce_rtp_proxy_f,    0,
-		0, 0,
-		ANY_ROUTE},
-	{"rtpproxy_destroy",   (cmd_function)unforce_rtp_proxy_f,    0,
-		0, 0,
-		ANY_ROUTE},
-	{"unforce_rtp_proxy",  (cmd_function)unforce_rtp_proxy1_f,    1,
-		fixup_spve_null, 0,
-		ANY_ROUTE},
-	{"rtpproxy_destroy",   (cmd_function)unforce_rtp_proxy1_f,    1,
-		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"start_recording",    (cmd_function)start_recording_f,      0,
 		0, 0,
 		ANY_ROUTE },
-	{"rtpproxy_offer",	(cmd_function)rtpproxy_offer1_f,     0,
+	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,     0,
 		0, 0,
 		ANY_ROUTE},
-	{"rtpproxy_offer",	(cmd_function)rtpproxy_offer1_f,     1,
+	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,     1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
-	{"rtpproxy_offer",	(cmd_function)rtpproxy_offer2_f,     2,
-		fixup_spve_spve, 0,
-		ANY_ROUTE},
-	{"rtpproxy_answer",	(cmd_function)rtpproxy_answer1_f,    0,
+	{"rtpengine_answer",	(cmd_function)rtpengine_answer1_f,    0,
 		0, 0,
 		ANY_ROUTE},
-	{"rtpproxy_answer",	(cmd_function)rtpproxy_answer1_f,    1,
+	{"rtpengine_answer",	(cmd_function)rtpengine_answer1_f,    1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
-	{"rtpproxy_answer",	(cmd_function)rtpproxy_answer2_f,    2,
-		fixup_spve_spve, 0,
-		ANY_ROUTE},
-#if 0
-	{"rtpproxy_stream2uac",(cmd_function)rtpproxy_stream2uac2_f, 2,
-		fixup_var_str_int, 0,
-		ANY_ROUTE },
-	{"rtpproxy_stream2uas",(cmd_function)rtpproxy_stream2uas2_f, 2,
-		fixup_var_str_int, 0,
-		ANY_ROUTE },
-	{"rtpproxy_stop_stream2uac",(cmd_function)rtpproxy_stop_stream2uac2_f,0,
-		NULL, 0,
-		ANY_ROUTE },
-	{"rtpproxy_stop_stream2uas",(cmd_function)rtpproxy_stop_stream2uas2_f,0,
-		NULL, 0,
-		ANY_ROUTE },
-#endif
-	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage0,     0,
+	{"rtpengine_manage",	(cmd_function)rtpengine_manage1_f,     0,
 		0, 0,
 		ANY_ROUTE},
-	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage1,     1,
-		fixup_spve_null, fixup_free_spve_null,
+	{"rtpengine_manage",	(cmd_function)rtpengine_manage1_f,     1,
+		fixup_spve_null, 0,
 		ANY_ROUTE},
-	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage2,     2,
-		fixup_spve_spve, fixup_free_spve_spve,
+	{"rtpengine_delete",  (cmd_function)rtpengine_delete1_f,    0,
+		0, 0,
+		ANY_ROUTE},
+	{"rtpengine_delete",  (cmd_function)rtpengine_delete1_f,    1,
+		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -443,14 +405,11 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{"rtpproxy_sock",         STR_PARAM|USE_FUNC_PARAM,
-	                         (void*)rtpproxy_set_store          },
-	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
-	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
-	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
-#if 0
-	{"timeout_socket",    	  STR_PARAM, &timeout_socket_str.s  },
-#endif
+	{"rtpengine_sock",         STR_PARAM|USE_FUNC_PARAM,
+	                         (void*)rtpengine_set_store          },
+	{"rtpengine_disable_tout", INT_PARAM, &rtpengine_disable_tout },
+	{"rtpengine_retr",         INT_PARAM, &rtpengine_retr         },
+	{"rtpengine_tout",         INT_PARAM, &rtpengine_tout         },
 	{"extra_id_pv",           STR_PARAM, &extra_id_pv_param.s },
 	{"setid_avp",             STR_PARAM, &setid_avp_param },
 	{0, 0, 0}
@@ -464,7 +423,7 @@ static mi_export_t mi_cmds[] = {
 
 
 struct module_exports exports = {
-	"rtpproxy-ng",
+	"rtpengine",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
@@ -479,7 +438,18 @@ struct module_exports exports = {
 };
 
 
-static int rtpproxy_set_store(modparam_t type, void * val){
+
+static inline int str_eq(const str *p, const char *q) {
+	int l = strlen(q);
+	if (p->len != l)
+		return 0;
+	if (memcmp(p->s, q, l))
+		return 0;
+	return 1;
+}
+
+
+static int rtpengine_set_store(modparam_t type, void * val){
 
 	char * p;
 	int len;
@@ -522,7 +492,7 @@ static int rtpproxy_set_store(modparam_t type, void * val){
 }
 
 
-static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
+static int add_rtpengine_socks(struct rtpp_set * rtpp_list,
 										char * rtpproxy){
 	/* Make rtp proxies list. */
 	char *p, *p1, *p2, *plim;
@@ -601,7 +571,7 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 /*	0-succes
  *  -1 - erorr
  * */
-static int rtpproxy_add_rtpproxy_set( char * rtp_proxies)
+static int rtpengine_add_rtpengine_set( char * rtp_proxies)
 {
 	char *p,*p2;
 	struct rtpp_set * rtpp_list;
@@ -668,7 +638,7 @@ static int rtpproxy_add_rtpproxy_set( char * rtp_proxies)
 		new_list = 0;
 	}
 
-	if(add_rtpproxy_socks(rtpp_list, rtp_proxies)!= 0){
+	if(add_rtpengine_socks(rtpp_list, rtp_proxies)!= 0){
 		/*if this list will not be inserted, clean it up*/
 		goto error;
 	}
@@ -912,7 +882,7 @@ mod_init(void)
 
 	/* storing the list of rtp proxy sets in shared memory*/
 	for(i=0;i<rtpp_sets;i++){
-		if(rtpproxy_add_rtpproxy_set(rtpp_strings[i]) !=0){
+		if(rtpengine_add_rtpengine_set(rtpp_strings[i]) !=0){
 			for(;i<rtpp_sets;i++)
 				if(rtpp_strings[i])
 					pkg_free(rtpp_strings[i]);
@@ -922,14 +892,6 @@ mod_init(void)
 		if(rtpp_strings[i])
 			pkg_free(rtpp_strings[i]);
 	}
-#if 0
-	if (timeout_socket_str.s==NULL || timeout_socket_str.s[0]==0) {
-		timeout_socket_str.len = 0;
-		timeout_socket_str.s = NULL;
-	} else {
-		timeout_socket_str.len = strlen(timeout_socket_str.s);
-	}
-#endif
 
 	if (extra_id_pv_param.s && *extra_id_pv_param.s) {
 		extra_id_pv_param.len = strlen(extra_id_pv_param.s);
@@ -1110,16 +1072,252 @@ static const char *transports[] = {
 	[0x03]	= "RTP/SAVPF",
 };
 
-static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_msg *msg,
-	enum rtpp_operation op, const char *flags_str, const str *force_addr, str *body_out)
+static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enum rtpe_operation *op,
+		const char *flags_str)
 {
-	bencode_item_t *dict, *flags, *direction, *replace, *item;
+	char *e;
+	const char *err;
+	str key, val;
+
+	if (!flags_str)
+		return 0;
+
+	while (1) {
+		while (*flags_str == ' ')
+			flags_str++;
+
+		key.s = (void *) flags_str;
+		val.len = key.len = -1;
+		val.s = NULL;
+
+		e = strpbrk(key.s, " =");
+		if (!e)
+			e = key.s + strlen(key.s);
+		else if (*e == '=') {
+			key.len = e - key.s;
+			val.s = e + 1;
+			e = strchr(val.s, ' ');
+			if (!e)
+				e = val.s + strlen(val.s);
+			val.len = e - val.s;
+		}
+
+		if (key.len == -1)
+			key.len = e - key.s;
+		if (!key.len)
+			break;
+
+		/* XXX make this prettier */
+		err = "unknown flag";
+		switch (key.len) {
+			case 3:
+				if (str_eq(&key, "ICE")) {
+					err = "missing value";
+					if (!val.s)
+						goto error;
+					err = "invalid value";
+					if (str_eq(&val, "force") || str_eq(&val, "remove"))
+						bencode_dictionary_add_str(ng_flags->dict, "ICE", &val);
+					else
+						goto error;
+				}
+				else if (str_eq(&key, "RTP")) {
+					ng_flags->transport |= 0x100;
+					ng_flags->transport &= ~0x001;
+				}
+				else if (str_eq(&key, "AVP")) {
+					ng_flags->transport |= 0x100;
+					ng_flags->transport &= ~0x002;
+				}
+				else
+					goto error;
+				break;
+
+			case 4:
+				if (str_eq(&key, "SRTP"))
+					ng_flags->transport |= 0x101;
+				else if (str_eq(&key, "AVPF"))
+					ng_flags->transport |= 0x102;
+				else
+					goto error;
+				break;
+
+			case 5:
+				if (str_eq(&key, "force"))
+					bencode_list_add_string(ng_flags->flags, "force");
+				else
+					goto error;
+				break;
+
+			case 6:
+				if (str_eq(&key, "to-tag"))
+					ng_flags->to = 1;
+				else
+					goto error;
+				break;
+
+			case 7:
+				if (str_eq(&key, "RTP/AVP"))
+					ng_flags->transport = 0x100;
+				else
+					goto error;
+				break;
+
+			case 8:
+				if (str_eq(&key, "internal"))
+					bencode_list_add_string(ng_flags->direction, "internal");
+				else if (str_eq(&key, "external"))
+					bencode_list_add_string(ng_flags->direction, "external");
+				else if (str_eq(&key, "RTP/AVPF"))
+					ng_flags->transport = 0x102;
+				else if (str_eq(&key, "RTP/SAVP"))
+					ng_flags->transport = 0x101;
+				else
+					goto error;
+				break;
+
+			case 9:
+				if (str_eq(&key, "symmetric"))
+					bencode_list_add_string(ng_flags->flags, "symmetric");
+				else if (str_eq(&key, "RTP/SAVPF"))
+					ng_flags->transport = 0x103;
+				else
+					goto error;
+				break;
+
+			case 10:
+				if (str_eq(&key, "via-branch")) {
+					err = "missing value";
+					if (!val.s)
+						goto error;
+					err = "invalid value";
+					if (*val.s == '1' || *val.s == '2')
+						ng_flags->via = *val.s - '0';
+					else if (str_eq(&val, "auto"))
+						ng_flags->via = 3;
+					else if (str_eq(&val, "extra"))
+						ng_flags->via = -1;
+					else
+						goto error;
+				}
+				else if (str_eq(&key, "asymmetric"))
+					bencode_list_add_string(ng_flags->flags, "asymmetric");
+				else
+					goto error;
+				break;
+
+			case 11:
+				if (str_eq(&key, "auto-bridge"))
+					bencode_list_add_string(ng_flags->flags, "auto-bridge");
+				else if (str_eq(&key, "repacketize")) {
+					err = "missing value";
+					if (!val.s)
+						goto error;
+					ng_flags->packetize = 0;
+					while (isdigit(*val.s)) {
+						ng_flags->packetize *= 10;
+						ng_flags->packetize += *val.s - '0';
+						val.s++;
+					}
+					err = "invalid value";
+					if (!ng_flags->packetize)
+						goto error;
+					bencode_dictionary_add_integer(ng_flags->dict, "repacketize", ng_flags->packetize);
+				}
+				else
+					goto error;
+				break;
+
+			case 12:
+				if (str_eq(&key, "force-answer")) {
+					err = "cannot force answer in non-offer command";
+					if (*op != OP_OFFER)
+						goto error;
+					*op = OP_ANSWER;
+				}
+				else
+					goto error;
+				break;
+			case 13:
+				if (str_eq(&key, "trust-address"))
+					bencode_list_add_string(ng_flags->flags, "trust-address");
+				else if (str_eq(&key, "media-address")) {
+					err = "missing value";
+					if (!val.s)
+						goto error;
+				}
+				else
+					goto error;
+				break;
+
+			case 14:
+				if (str_eq(&key, "replace-origin"))
+					bencode_list_add_string(ng_flags->replace, "origin");
+				else if (str_eq(&key, "address-family")) {
+					err = "missing value";
+					if (!val.s)
+						goto error;
+					err = "invalid value";
+					if (str_eq(&val, "IP4") || str_eq(&val, "IP6"))
+						bencode_dictionary_add_str(ng_flags->dict, "address family", &val);
+					else
+						goto error;
+				}
+				else if (str_eq(&key, "rtcp-mux-demux"))
+					bencode_list_add_string(ng_flags->rtcp_mux, "demux");
+				else if (str_eq(&key, "rtcp-mux-offer"))
+					bencode_list_add_string(ng_flags->rtcp_mux, "offer");
+				else
+					goto error;
+				break;
+
+			case 15:
+				if (str_eq(&key, "rtcp-mux-reject"))
+					bencode_list_add_string(ng_flags->rtcp_mux, "reject");
+				else if (str_eq(&key, "rtcp-mux-accept"))
+					bencode_list_add_string(ng_flags->rtcp_mux, "accept");
+				else
+					goto error;
+				break;
+
+			case 26:
+				if (str_eq(&key, "replace-session-connection"))
+					bencode_list_add_string(ng_flags->replace, "session-connection");
+				else
+					goto error;
+				break;
+
+			default:
+				goto error;
+		}
+
+		flags_str = e;
+	}
+
+	return 0;
+
+error:
+	if (val.s)
+		LM_ERR("error processing flag `%.*s' (value '%.*s'): %s\n", key.len, key.s,
+				val.len, val.s, err);
+	else
+		LM_ERR("error processing flag `%.*s': %s\n", key.len, key.s, err);
+	return -1;
+}
+
+static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_msg *msg,
+	enum rtpe_operation op, const char *flags_str, str *body_out)
+{
+	struct ng_flags_parse ng_flags;
+	bencode_item_t *item, *resp;
 	str callid, from_tag, to_tag, body, viabranch, error;
-	int via, to, ret, packetize, transport;
+	int ret;
 	struct rtpp_node *node;
 	char *cp;
 
 	/*** get & init basic stuff needed ***/
+
+	memset(&ng_flags, 0, sizeof(ng_flags));
 
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
 		LM_ERR("can't get Call-Id field\n");
@@ -1134,167 +1332,50 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		return NULL;
 	}
 	if (bencode_buffer_init(bencbuf)) {
-		LM_ERR("could not initialized bencode_buffer_t\n");
+		LM_ERR("could not initialize bencode_buffer_t\n");
 		return NULL;
 	}
-	dict = bencode_dictionary(bencbuf);
+	ng_flags.dict = bencode_dictionary(bencbuf);
 
-	flags = direction = replace = NULL;
 	if (op == OP_OFFER || op == OP_ANSWER) {
-		flags = bencode_list(bencbuf);
-		direction = bencode_list(bencbuf);
-		replace = bencode_list(bencbuf);
+		ng_flags.flags = bencode_list(bencbuf);
+		ng_flags.direction = bencode_list(bencbuf);
+		ng_flags.replace = bencode_list(bencbuf);
+		ng_flags.rtcp_mux = bencode_list(bencbuf);
 
 		if (extract_body(msg, &body) == -1) {
 			LM_ERR("can't extract body from the message\n");
 			goto error;
 		}
-		bencode_dictionary_add_str(dict, "sdp", &body);
+		bencode_dictionary_add_str(ng_flags.dict, "sdp", &body);
 	}
 
 	/*** parse flags & build dictionary ***/
 
-	via = 0;
-	to = (op == OP_DELETE) ? 0 : 1;
-	transport = 0;
+	ng_flags.to = (op == OP_DELETE) ? 0 : 1;
 
-	for (; flags_str && *flags_str; flags_str++) {
-		switch (*flags_str) {
-		case '1':
-		case '2':
-			via = *flags_str - '0';
-			break;
-
-		case '3':
-			if(msg && msg->first_line.type == SIP_REPLY)
-				via = 2;
-			else
-				via = 1;
-			break;
-
-		case 'b':
-		case 'B':
-			via = -1;
-			break;
-
-		case 'a':
-		case 'A':
-			bencode_list_add_string(flags, "asymmetric");
-			bencode_list_add_string(flags, "trust-address");
-			break;
-
-		case 'i':
-		case 'I':
-			bencode_list_add_string(direction, "internal");
-			break;
-
-		case 'e':
-		case 'E':
-			bencode_list_add_string(direction, "external");
-			break;
-
-		case 'l':
-		case 'L':
-			if (op != OP_OFFER) {
-				LM_ERR("Cannot force answer in non-offer command\n");
-				goto error;
-			}
-			op = OP_ANSWER;
-			break;
-
-		case 'r':
-		case 'R':
-			bencode_list_add_string(flags, "trust-address");
-			break;
-
-		case 'o':
-		case 'O':
-			bencode_list_add_string(replace, "origin");
-			break;
-
-		case 'c':
-		case 'C':
-			bencode_list_add_string(replace, "session-connection");
-			break;
-
-		case 'f':
-		case 'F':
-			bencode_list_add_string(flags, "force");
-			break;
-
-		case 'w':
-		case 'W':
-			bencode_list_add_string(flags, "symmetric");
-			break;
-
-		case 'x':
-		case 'X':
-			bencode_list_add_string(flags, "auto-bridge");
-			break;
-
-		case 't':
-		case 'T':
-			to = 1;
-			break;
-
-		case 'z':
-		case 'Z':
-			packetize = 0;
-			flags_str++;
-			while (isdigit(*flags_str)) {
-				packetize *= 10;
-				packetize += *flags_str - '0';
-				flags_str++;
-			}
-			if (packetize)
-				bencode_dictionary_add_integer(dict, "repacketize", packetize);
-			break;
-
-		case '-':
-			bencode_dictionary_add_string(dict, "ICE", "remove");
-			break;
-
-		case '+':
-			bencode_dictionary_add_string(dict, "ICE", "force");
-			break;
-
-		case 's':
-			transport |= 0x100;
-			transport &= ~0x001;
-			break;
-		case 'S':
-			transport |= 0x101;
-			break;
-		case 'p':
-			transport |= 0x100;
-			transport &= ~0x002;
-			break;
-		case 'P':
-			transport |= 0x102;
-			break;
-
-		default:
-			LM_ERR("unknown option `%c'\n", *flags_str);
-			goto error;
-		}
-	}
+	if (parse_flags(&ng_flags, msg, &op, flags_str))
+		goto error;
 
 	/* only add those if any flags were given at all */
-	if (direction && direction->child)
-		bencode_dictionary_add(dict, "direction", direction);
-	if (flags && flags->child)
-		bencode_dictionary_add(dict, "flags", flags);
-	if (replace && replace->child)
-		bencode_dictionary_add(dict, "replace", replace);
-	if ((transport & 0x100))
-		bencode_dictionary_add_string(dict, "transport-protocol", transports[transport & 0x003]);
+	if (ng_flags.direction && ng_flags.direction->child)
+		bencode_dictionary_add(ng_flags.dict, "direction", ng_flags.direction);
+	if (ng_flags.flags && ng_flags.flags->child)
+		bencode_dictionary_add(ng_flags.dict, "flags", ng_flags.flags);
+	if (ng_flags.replace && ng_flags.replace->child)
+		bencode_dictionary_add(ng_flags.dict, "replace", ng_flags.replace);
+	if ((ng_flags.transport & 0x100))
+		bencode_dictionary_add_string(ng_flags.dict, "transport-protocol",
+				transports[ng_flags.transport & 0x003]);
+	if (ng_flags.rtcp_mux && ng_flags.rtcp_mux->child)
+		bencode_dictionary_add(ng_flags.dict, "rtcp-mux", ng_flags.rtcp_mux);
 
-	bencode_dictionary_add_str(dict, "call-id", &callid);
+	bencode_dictionary_add_str(ng_flags.dict, "call-id", &callid);
 
-	if (via) {
-		if (via == 1 || via == 2)
-			ret = get_via_branch(msg, via, &viabranch);
-		else if (via == -1 && extra_id_pv)
+	if (ng_flags.via) {
+		if (ng_flags.via == 1 || ng_flags.via == 2)
+			ret = get_via_branch(msg, ng_flags.via, &viabranch);
+		else if (ng_flags.via == -1 && extra_id_pv)
 			ret = get_extra_id(msg, &viabranch);
 		else
 			ret = -1;
@@ -1302,37 +1383,34 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			LM_ERR("can't get Via branch/extra ID\n");
 			goto error;
 		}
-		bencode_dictionary_add_str(dict, "via-branch", &viabranch);
+		bencode_dictionary_add_str(ng_flags.dict, "via-branch", &viabranch);
 	}
 
 	item = bencode_list(bencbuf);
-	bencode_dictionary_add(dict, "received-from", item);
+	bencode_dictionary_add(ng_flags.dict, "received-from", item);
 	bencode_list_add_string(item, (msg->rcv.src_ip.af == AF_INET) ? "IP4" : (
 		(msg->rcv.src_ip.af == AF_INET6) ? "IP6" :
 		"?"
 	) );
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
 
-	if (force_addr && force_addr->len)
-		bencode_dictionary_add_str(dict, "media address", force_addr);
-
 	if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER))
 	{
-		bencode_dictionary_add_str(dict, "from-tag", &from_tag);
-		if (to && to_tag.s && to_tag.len)
-			bencode_dictionary_add_str(dict, "to-tag", &to_tag);
+		bencode_dictionary_add_str(ng_flags.dict, "from-tag", &from_tag);
+		if (ng_flags.to && to_tag.s && to_tag.len)
+			bencode_dictionary_add_str(ng_flags.dict, "to-tag", &to_tag);
 	}
 	else {
 		if (!to_tag.s || !to_tag.len) {
 			LM_ERR("No to-tag present\n");
 			goto error;
 		}
-		bencode_dictionary_add_str(dict, "from-tag", &to_tag);
-		bencode_dictionary_add_str(dict, "to-tag", &from_tag);
+		bencode_dictionary_add_str(ng_flags.dict, "from-tag", &to_tag);
+		bencode_dictionary_add_str(ng_flags.dict, "to-tag", &from_tag);
 	}
 
-	bencode_dictionary_add_string(dict, "command", command_strings[op]);
+	bencode_dictionary_add_string(ng_flags.dict, "command", command_strings[op]);
 
 	/*** send it out ***/
 
@@ -1351,19 +1429,19 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			goto error;
 		}
 
-		cp = send_rtpp_command(node, dict, &ret);
+		cp = send_rtpp_command(node, ng_flags.dict, &ret);
 	} while (cp == NULL);
 	LM_DBG("proxy reply: %.*s\n", ret, cp);
 
 	/*** process reply ***/
 
-	dict = bencode_decode_expect(bencbuf, cp, ret, BENCODE_DICTIONARY);
-	if (!dict) {
+	resp = bencode_decode_expect(bencbuf, cp, ret, BENCODE_DICTIONARY);
+	if (!resp) {
 		LM_ERR("failed to decode bencoded reply from proxy: %.*s\n", ret, cp);
 		goto error;
 	}
-	if (!bencode_dictionary_get_strcmp(dict, "result", "error")) {
-		if (!bencode_dictionary_get_str(dict, "error-reason", &error))
+	if (!bencode_dictionary_get_strcmp(resp, "result", "error")) {
+		if (!bencode_dictionary_get_str(resp, "error-reason", &error))
 			LM_ERR("proxy return error but didn't give an error reason: %.*s\n", ret, cp);
 		else
 			LM_ERR("proxy replied with error: %.*s\n", error.len, error.s);
@@ -1373,17 +1451,18 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	if (body_out)
 		*body_out = body;
 
-	return dict;
+	return resp;
 
 error:
 	bencode_buffer_free(bencbuf);
 	return NULL;
 }
 
-static int rtpp_function_call_simple(struct sip_msg *msg, enum rtpp_operation op, const char *flags_str) {
+static int rtpp_function_call_simple(struct sip_msg *msg, enum rtpe_operation op, const char *flags_str)
+{
 	bencode_buffer_t bencbuf;
 
-	if (!rtpp_function_call(&bencbuf, msg, op, flags_str, NULL, NULL))
+	if (!rtpp_function_call(&bencbuf, msg, op, flags_str, NULL))
 		return -1;
 
 	bencode_buffer_free(&bencbuf);
@@ -1391,10 +1470,11 @@ static int rtpp_function_call_simple(struct sip_msg *msg, enum rtpp_operation op
 }
 
 static bencode_item_t *rtpp_function_call_ok(bencode_buffer_t *bencbuf, struct sip_msg *msg,
-		enum rtpp_operation op, const char *flags_str, const str *force_addr, str *body) {
+		enum rtpe_operation op, const char *flags_str, str *body)
+{
 	bencode_item_t *ret;
 
-	ret = rtpp_function_call(bencbuf, msg, op, flags_str, force_addr, body);
+	ret = rtpp_function_call(bencbuf, msg, op, flags_str, body);
 	if (!ret)
 		return NULL;
 
@@ -1528,7 +1608,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		v[0].iov_base = gencookie();
 		v[0].iov_len = strlen(v[0].iov_base);
-		for (i = 0; i < rtpproxy_retr; i++) {
+		for (i = 0; i < rtpengine_retr; i++) {
 			do {
 				len = writev(rtpp_socks[node->idx], v, vcnt + 1);
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
@@ -1536,7 +1616,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				LM_ERR("can't send command to a RTP proxy\n");
 				goto badproxy;
 			}
-			while ((poll(fds, 1, rtpproxy_tout * 1000) == 1) &&
+			while ((poll(fds, 1, rtpengine_tout * 1000) == 1) &&
 			    (fds[0].revents & POLLIN) != 0) {
 				do {
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf)-1, 0);
@@ -1558,7 +1638,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				fds[0].revents = 0;
 			}
 		}
-		if (i == rtpproxy_retr) {
+		if (i == rtpengine_retr) {
 			LM_ERR("timeout waiting reply from a RTP proxy\n");
 			goto badproxy;
 		}
@@ -1571,7 +1651,7 @@ out:
 badproxy:
 	LM_ERR("proxy <%s> does not respond, disable it\n", node->rn_url.s);
 	node->rn_disabled = 1;
-	node->rn_recheck_ticks = get_ticks() + rtpproxy_disable_tout;
+	node->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
 
 	return NULL;
 }
@@ -1689,7 +1769,7 @@ get_extra_id(struct sip_msg* msg, str *id_str) {
 }
 
 static int
-set_rtp_proxy_set_from_avp(struct sip_msg *msg)
+set_rtpengine_set_from_avp(struct sip_msg *msg)
 {
     struct usr_avp *avp;
     int_str setid_val;
@@ -1710,38 +1790,36 @@ set_rtp_proxy_set_from_avp(struct sip_msg *msg)
 	return -1;
     }
 
-    LM_DBG("using rtpproxy set %d\n", setid_val.n);
+    LM_DBG("using rtpengine set %d\n", setid_val.n);
 
     current_msg_id = msg->id;
     
     return 1;
 }
 
-static int
-unforce_rtp_proxy_f(struct sip_msg* msg, const char* str1, char* str2)
-{
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
-	    return -1;
-
-	return rtpp_function_call_simple(msg, OP_DELETE, str1);
+static int rtpengine_delete(struct sip_msg *msg, const char *flags) {
+	return rtpp_function_call_simple(msg, OP_DELETE, flags);
 }
 
 static int
-unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
+rtpengine_delete1_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str flags;
 
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	if (set_rtpengine_set_from_avp(msg) == -1)
 	    return -1;
 
-	get_str_fparam(&flags, msg, (fparam_t *) str1);
-	return rtpp_function_call_simple(msg, OP_DELETE, flags.s);
+	flags.s = NULL;
+	if (str1)
+		get_str_fparam(&flags, msg, (fparam_t *) str1);
+
+	return rtpengine_delete(msg, flags.s);
 }
 
 /* This function assumes p points to a line of requested type. */
 
 static int
-set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
+set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2)
 {
 	rtpp_set_link_t *rtpl;
 	pv_value_t val;
@@ -1765,7 +1843,7 @@ set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 		}
 		selected_rtpp_set = select_rtpp_set(val.ri);
 		if(selected_rtpp_set==NULL) {
-			LM_ERR("could not locate rtpproxy set %d\n", val.ri);
+			LM_ERR("could not locate rtpengine set %d\n", val.ri);
 			return -1;
 		}
 		current_msg_id = msg->id;
@@ -1774,7 +1852,7 @@ set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 }
 
 static int
-rtpproxy_manage(struct sip_msg *msg, const char *flags, const str *force_addr)
+rtpengine_manage(struct sip_msg *msg, const char *flags)
 {
 	int method;
 	int nosdp;
@@ -1793,7 +1871,7 @@ rtpproxy_manage(struct sip_msg *msg, const char *flags, const str *force_addr)
 		return -1;
 
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
-		return unforce_rtp_proxy_f(msg, flags, 0);
+		return rtpengine_delete(msg, flags);
 
 	if(msg->msg_flags & FL_SDP_BODY)
 		nosdp = 0;
@@ -1802,145 +1880,91 @@ rtpproxy_manage(struct sip_msg *msg, const char *flags, const str *force_addr)
 
 	if(msg->first_line.type == SIP_REQUEST) {
 		if(method==METHOD_ACK && nosdp==0)
-			return force_rtp_proxy(msg, flags, force_addr, OP_ANSWER);
+			return rtpengine_offer_answer(msg, flags, OP_ANSWER);
 		if(method==METHOD_UPDATE && nosdp==0)
-			return force_rtp_proxy(msg, flags, force_addr, OP_OFFER);
+			return rtpengine_offer_answer(msg, flags, OP_OFFER);
 		if(method==METHOD_INVITE && nosdp==0) {
 			msg->msg_flags |= FL_SDP_BODY;
 			if(tmb.t_gett!=NULL && tmb.t_gett()!=NULL
 					&& tmb.t_gett()!=T_UNDEFINED)
 				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
 			if(route_type==FAILURE_ROUTE)
-				return unforce_rtp_proxy_f(msg, flags, 0);
-			return force_rtp_proxy(msg, flags, force_addr, OP_OFFER);
+				return rtpengine_delete(msg, flags);
+			return rtpengine_offer_answer(msg, flags, OP_OFFER);
 		}
 	} else if(msg->first_line.type == SIP_REPLY) {
 		if(msg->first_line.u.reply.statuscode>=300)
-			return unforce_rtp_proxy_f(msg, flags, 0);
+			return rtpengine_delete(msg, flags);
 		if(nosdp==0) {
 			if(method==METHOD_UPDATE)
-				return force_rtp_proxy(msg, flags, force_addr, OP_ANSWER);
+				return rtpengine_offer_answer(msg, flags, OP_ANSWER);
 			if(tmb.t_gett==NULL || tmb.t_gett()==NULL
 					|| tmb.t_gett()==T_UNDEFINED)
-				return force_rtp_proxy(msg, flags, force_addr, OP_ANSWER);
+				return rtpengine_offer_answer(msg, flags, OP_ANSWER);
 			if(tmb.t_gett()->uas.request->msg_flags & FL_SDP_BODY)
-				return force_rtp_proxy(msg, flags, force_addr, OP_ANSWER);
-			return force_rtp_proxy(msg, flags, force_addr, OP_OFFER);
+				return rtpengine_offer_answer(msg, flags, OP_ANSWER);
+			return rtpengine_offer_answer(msg, flags, OP_OFFER);
 		}
 	}
 	return -1;
 }
 
 static int
-rtpproxy_manage0(struct sip_msg *msg, char *flags, char *ip)
-{
-
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
-	    return -1;
-
-	return rtpproxy_manage(msg, 0, 0);
-}
-
-static int
-rtpproxy_manage1(struct sip_msg *msg, char *flags, char *ip)
-{
-	str flag_str;
-
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
-	    return -1;
-
-	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
-	return rtpproxy_manage(msg, flag_str.s, 0);
-}
-
-static int
-rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip)
-{
-	str flag_str;
-	str ip_str;
-
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
-	    return -1;
-
-	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
-	fixup_get_svalue(msg, (gparam_p)ip, &ip_str);
-	return rtpproxy_manage(msg, flag_str.s, &ip_str);
-}
-
-static int
-rtpproxy_offer1_f(struct sip_msg *msg, char *str1, char *str2)
+rtpengine_manage1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str flags;
 
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	if (set_rtpengine_set_from_avp(msg) == -1)
 	    return -1;
 
+	flags.s = NULL;
 	if (str1)
 		get_str_fparam(&flags, msg, (fparam_t *) str1);
-	else
-		flags.s = NULL;
-	return force_rtp_proxy(msg, flags.s, NULL, OP_OFFER);
+
+	return rtpengine_manage(msg, flags.s);
 }
 
 static int
-rtpproxy_offer2_f(struct sip_msg *msg, char *param1, char *param2)
-{
-	str flags, new_ip;
-
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
-	    return -1;
-
-	get_str_fparam(&flags, msg, (fparam_t *) param1);
-	get_str_fparam(&new_ip, msg, (fparam_t *) param2);
-	return force_rtp_proxy(msg, flags.s, &new_ip, OP_OFFER);
-}
-
-static int
-rtpproxy_answer1_f(struct sip_msg *msg, char *str1, char *str2)
+rtpengine_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str flags;
 
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
+	if (set_rtpengine_set_from_avp(msg) == -1)
+	    return -1;
+
+	flags.s = NULL;
+	if (str1)
+		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	return rtpengine_offer_answer(msg, flags.s, OP_OFFER);
+}
+
+static int
+rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	str flags;
+
+	if (set_rtpengine_set_from_avp(msg) == -1)
 	    return -1;
 
 	if (msg->first_line.type == SIP_REQUEST)
 		if (msg->first_line.u.request.method_value != METHOD_ACK)
 			return -1;
 
+	flags.s = NULL;
 	if (str1)
 		get_str_fparam(&flags, msg, (fparam_t *) str1);
-	else
-		flags.s = NULL;
-	return force_rtp_proxy(msg, flags.s, NULL, OP_ANSWER);
+	return rtpengine_offer_answer(msg, flags.s, OP_ANSWER);
 }
 
 static int
-rtpproxy_answer2_f(struct sip_msg *msg, char *param1, char *param2)
-{
-
-	str flags, new_ip;
-
-	if (set_rtp_proxy_set_from_avp(msg) == -1)
-	    return -1;
-
-	if (msg->first_line.type == SIP_REQUEST)
-		if (msg->first_line.u.request.method_value != METHOD_ACK)
-			return -1;
-
-	get_str_fparam(&flags, msg, (fparam_t *) param1);
-	get_str_fparam(&new_ip, msg, (fparam_t *) param2);
-	return force_rtp_proxy(msg, flags.s, &new_ip, OP_ANSWER);
-}
-
-static int
-force_rtp_proxy(struct sip_msg *msg, const char *flags, const str *force_addr, int op)
+rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op)
 {
 	bencode_buffer_t bencbuf;
 	bencode_item_t *dict;
 	str body, newbody;
 	struct lump *anchor;
 
-	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, force_addr, &body);
+	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, &body);
 	if (!dict)
 		return -1;
 
@@ -1988,7 +2012,7 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 	static char buf[256];
 	str ret;
 
-	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL, NULL);
+	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL);
 	if (!dict)
 		return -1;
 

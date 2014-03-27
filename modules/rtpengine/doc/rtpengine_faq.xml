@@ -15,13 +15,37 @@
     <qandaset defaultlabel="number">
 	<qandaentry>
 	    <question>
-		<para>What happend with <quote>rtpproxy_disable</quote> parameter?</para>
+		    <para>How do I migrate from <quote>rtpproxy</quote> or <quote>rtpproxy-ng</quote> to
+		    <quote>rtpengine</quote>?</para>
 	    </question>
 	    <answer>
 		<para>
-			It was removed as it became obsolete - now
-			<quote>rtpproxy_sock</quote> can take empty value to disable the
-			rtpproxy functionality.
+			For the most part, only the names of the functions have changed, with
+			<quote>rtpproxy</quote> in each name replaced with <quote>rtpengine</quote>.
+			For example, <quote>rtpproxy_manage()</quote> has become
+			<quote>rtpengine_manage()</quote>. A few name duplications have also been resolved,
+			for example there is now a single <quote>rtpengine_delete()</quote> instead of
+			<quote>unforce_rtp_proxy()</quote> and the identical <quote>rtpproxy_destroy()</quote>.
+		</para>
+		<para>
+			The largest difference to the old module is how flags are passed to
+			<quote>rtpengine_offer()</quote>, <quote>rtpengine_answer()</quote>,
+			<quote>rtpengine_manage()</quote> and <quote>rtpengine_delete()</quote>. Instead of
+			having a string of single-letter flags, they now take a string of space-separated
+			items, with each item being either a single token (word) or a <quote>key=value</quote>
+			pair.
+		</para>
+		<para>
+			For example, if you had a call <quote>rtpproxy_offer("FRWOC+PS");</quote>, this would
+			then become:
+		</para>
+		<programlisting>
+rtpengine_offer("force trust-address symmetric replace-origin replace-session-connection ICE=force RTP/SAVPF");
+		</programlisting>
+		<para>
+			Finally, if you were using the second paramater (explicit media address) to any of
+			these functions, this has been replaced by the <quote>media-address=...</quote>
+			option within the first string of flags.
 		</para>
 	    </answer>
 	</qandaentry>

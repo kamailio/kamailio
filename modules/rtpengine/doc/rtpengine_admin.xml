@@ -1,0 +1,725 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This is a module that enables media streams to be proxied
+		via an &rtp; proxy. The only &rtp; proxy currently known to work
+		with this module is the Sipwise rtpengine
+		<ulink url="https://github.com/sipwise/rtpengine"></ulink>.
+		The rtpengine module is a modified version of the original
+		rtpproxy module using a new control protocol. The module is
+		designed to be a drop-in replacement for the old module from
+		a configuration file point of view, however due to the
+		incompatible control protocol, it only works with &rtp; proxies
+		which specifically support it.
+	</para>
+	</section>
+
+	<section>
+	<title>Multiple &rtp; proxy usage</title>
+	<para>
+		The rtpengine module can support multiple &rtp; proxies for
+		balancing/distribution and control/selection purposes.
+	</para>
+	<para>
+		The module allows definition of several sets of rtpproxies.
+		Load-balancing will be performed over a set and the admin has the
+		ability to choose what set should be used. The set is selected via
+		its id - the id being defined with the set. Refer to the
+		<quote>rtpengine_sock</quote> module parameter definition for syntax
+		description.
+	</para>
+	<para>
+		The balancing inside a set is done automatically by the module based on
+		the weight of each &rtp; proxy from the set.
+	</para>
+	<para>
+		The selection of the set is done from script prior using
+		rtpengine_delete(), rtpengine_offer() or rtpengine_answer()
+		functions - see the set_rtpengine_set() function.
+	</para>
+	<para>
+	        Another way to select the set is to define setid_avp
+	        module parameter and assign setid to the defined avp
+	        before calling rtpengine_offer() or rtpengine_manage()
+	        function.  If forwarding of the requests fails and
+	        there is another branch to try, remember to unset the
+	        avp after calling rtpengine_delete() function.
+	</para>
+	<para>
+		For backward compatibility reasons, a set with no id take by default
+		the id 0. Also if no set is explicitly set before
+		rtpengine_delete(), rtpengine_offer() or rtpengine_answer()
+		the 0 id set will be used.
+	</para>
+	<para>
+		IMPORTANT: if you use multiple sets, take care and use the same set for
+		both rtpengine_offer()/rtpengine_answer() and rtpengine_delete()!!
+		If the set was selected using setid_avp, the avp needs to be
+		set only once before rtpengine_offer() or rtpengine_manage() call.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tm module</emphasis> - (optional) if you want to
+				have rtpengine_manage() fully functional
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="rtpengine.p.rtpengine_sock">
+		<title><varname>rtpengine_sock</varname> (string)</title>
+		<para>
+		Definition of socket(s) used to connect to (a set) &rtp; proxy. It may
+		specify a UNIX socket or an IPv4/IPv6 UDP socket.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NONE</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rtpengine_sock</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# single rtproxy
+modparam("rtpengine", "rtpengine_sock", "udp:localhost:12221")
+# multiple rtproxies for LB
+modparam("rtpengine", "rtpengine_sock",
+	"udp:localhost:12221 udp:localhost:12222")
+# multiple sets of multiple rtproxies
+modparam("rtpengine", "rtpengine_sock",
+	"1 == udp:localhost:12221 udp:localhost:12222")
+modparam("rtpengine", "rtpengine_sock",
+	"2 == udp:localhost:12225")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="rtpengine.p.rtpengine_disable_tout">
+		<title><varname>rtpengine_disable_tout</varname> (integer)</title>
+		<para>
+		Once an &rtp; proxy was found unreachable and marked as disabled, the rtpengine
+		module will not attempt to establish communication to that &rtp; proxy for
+		rtpengine_disable_tout seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>60</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rtpengine_disable_tout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "rtpengine_disable_tout", 20)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="rtpengine.p.rtpengine_tout">
+		<title><varname>rtpengine_tout</varname> (integer)</title>
+		<para>
+		Timeout value in waiting for reply from &rtp; proxy.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rtpengine_tout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "rtpengine_tout", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="rtpengine.p.rtpengine_retr">
+		<title><varname>rtpengine_retr</varname> (integer)</title>
+		<para>
+		How many times the module should retry to send and receive after
+		timeout was generated.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>5</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rtpengine_retr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "rtpengine_retr", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="rtpengine.p.extra_id_pv">
+		<title><varname>extra_id_pv</varname> (string)</title>
+		<para>
+			The parameter sets the PV defination to use when the <quote>b</quote>
+			parameter is used on rtpengine_delete(), rtpengine_offer(),
+			rtpengine_answer() or rtpengine_manage() command.
+		</para><para>
+			Default is empty, the <quote>b</quote> parameter may not be used then.
+		</para>
+		<example>
+		<title>Set <varname>extra_id_pv</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "extra_id_pv", "$avp(extra_id)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.setid_pv">
+		<title><varname>setid_avp</varname> (string)</title>
+		<para>
+			The parameter defines an AVP that, if set,
+			determines which &rtp; proxy set
+			rtpengine_offer(), rtpengine_answer(),
+			rtpengine_delete(), and rtpengine_manage()
+			functions use.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<example>
+		<title>Set <varname>setid_avp</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "setid_avp", "$avp(setid)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="rtpengine.f.set_rtpengine_set">
+		<title>
+		<function moreinfo="none">set_rtpengine_set(setid)</function>
+		</title>
+		<para>
+		Sets the ID of the &rtp; proxy set to be used for the next
+		rtpengine_delete(), rtpengine_offer(), rtpengine_answer()
+		or rtpengine_manage() command. The parameter can be an integer or
+		a config variable holding an integer.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+		BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>set_rtpengine_set</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_rtpengine_set("2");
+rtpengine_offer();
+...
+</programlisting>
+		</example>
+	</section>
+        <section id="rtpengine.f.rtpengine_offer">
+                <title>
+                <function moreinfo="none">rtpengine_offer([flags])</function>
+                </title>
+                <para>
+                Rewrites &sdp; body to ensure that media is passed through
+                an &rtp; proxy. To be invoked
+		on INVITE for the cases the SDPs are in INVITE and 200 OK and on 200 OK
+		when SDPs are in 200 OK and ACK.
+                </para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>flags</emphasis> - flags to turn on some features.
+			</para>
+			<para>The <quote>flags</quote> string is a list of space-separated items. Each item
+			is either an individual token, or a token in <quote>key=value</quote> format. The
+			possible tokens are described below.</para>
+			<itemizedlist>
+				<listitem><para>
+				<emphasis>via-branch=...</emphasis> - Include the <quote>branch</quote>
+				value of one of the <quote>Via</quote> headers in the request to the
+				&rtp; proxy. Possible values are:
+				<quote>1</quote> - use the first <quote>Via</quote> header;
+				<quote>2</quote> - use the second <quote>Via</quote> header;
+				<quote>auto</quote> - use the first <quote>Via</quote> header if this is
+				a request, or the second one if this is a reply;
+				<quote>extra</quote> - don't take the value from a header, but instead use
+				the value of the <quote>extra_id_pv</quote> variable.
+				This can be used to create one media session per branch
+				on the &rtp; proxy. When sending a subsequent <quote>delete</quote> command to
+				the &rtp; proxy, you can then stop just the session for a specific branch when
+				passing the flag '1' or '2' in the <quote>rtpengine_delete</quote>, or stop
+				all sessions for a call when not passing one of those two flags there. This is
+				especially useful if you have serially forked call scenarios where the &rtp; proxy
+				gets an <quote>offer</quote> command for a new branch, and then a
+				<quote>delete</quote> command for the previous branch, which would otherwise
+				delete the full call, breaking the subsequent <quote>answer</quote> for the
+				new branch. <emphasis>This flag is only supported by the Sipwise rtpengine
+				&rtp; proxy at the moment!</emphasis>
+				</para></listitem>
+				<listitem><para>
+				<emphasis>asymmetric</emphasis> - flags that UA from which message is
+				received doesn't support symmetric RTP. (automatically sets the 'r' flag)
+				</para></listitem>
+				<listitem><para>
+				<emphasis>force-answer</emphasis> - force <quote>answer</quote>, that is,
+				only rewrite &sdp; when corresponding session already exists
+				in the &rtp; proxy. By default is on when the session is to be
+				completed.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>internal, external</emphasis> - these flags specify the direction of
+				the SIP message. These flags only make sense when the &rtp; proxy is running
+				in bridge mode. <quote>internal</quote> corresponds to the proxy's first
+				interface, <quote>external</quote> corresponds to the &rtp; proxy's
+				second interface. You always have to specify two flags to define
+				the incoming network and the outgoing network. For example, <quote>internal
+				external</quote> should be
+				used for SIP message received from the local interface and sent out on the
+				external interface, and <quote>external internal</quote> vice versa. Other
+				options are <quote>internal internal</quote> and <quote>external
+				external</quote>.
+				So, for example if a SIP requests is processed with <quote>internal
+				external</quote> flags, the corresponding
+				response must be processed with <quote>internal external</quote> flags.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>auto-bridge</emphasis> - this flag an alternative to the
+				<quote>internal</quote> and <quote>external</quote> flags
+				in order to do automatic bridging between IPv4 on the
+				"internal network" and IPv6 on the "external network". Instead of
+				explicitly instructing the &rtp; proxy to select a particular address
+				family, the distinction is done by the given IP in the SDP body by
+				the RTP proxy itself. Not supported by Sipwise rtpengine.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>address-family=...</emphasis> - instructs the &rtp; proxy that the
+				recipient of this &sdp; body expects to see addresses of a particular family.
+				Possible values are <quote>IP4</quote> and <quote>IP6</quote>. For example,
+				if the &sdp; body contains IPv4 addresses but the recipient only speaks IPv6,
+				you would use <quote>address-family=IP6</quote> to bridge between the two
+				address families.
+				</para><para>
+				Sipwise rtpengine remembers the address family preference of each party after
+				it has seen an &sdp; body from them. This means that normally it is only
+				necessary to explicitly specify the address family in the <quote>offer</quote>,
+				but not in the <quote>answer</quote>.
+				</para><para>
+				Note: Please note, that this will only work properly with non-dual-stack user-agents or with
+				dual-stack clients according to RFC6157 (which suggest ICE for Dual-Stack implementations).
+				This short-cut will not work properly with RFC4091 (ANAT) compatible clients, which suggests
+				having different m-lines with different IP-protocols grouped together.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>force</emphasis> - instructs the &rtp; proxy to ignore marks
+				inserted by another &rtp; proxy in transit to indicate that the
+				session is already goes through another proxy. Allows creating
+				a chain of proxies. Not supported and ignored by Sipwise rtpengine.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>trust-address</emphasis> - flags that IP address in SDP should
+				be trusted. Without this flag, the &rtp; proxy ignores address in
+				the SDP and uses source address of the SIP message as media
+				address which is passed to the RTP proxy.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>replace-origin</emphasis> - flags that IP from the origin
+				description (o=) should be also changed.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>replace-session-connection</emphasis> - flags to change the session-level
+				SDP connection (c=) IP if media description also includes
+				connection information.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>symmetric</emphasis> - flags that for the UA from which
+				message is received, support symmetric RTP must be forced.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>repacketize=NN</emphasis> - requests the &rtp; proxy to perform
+				re-packetization of RTP traffic coming from the UA which
+				has sent the current message to increase or decrease payload
+				size per each RTP packet forwarded if possible.  The NN is the
+				target payload size in ms, for the most codecs its value should
+				be in 10ms increments, however for some codecs the increment
+				could differ (e.g. 30ms for GSM or 20ms for G.723).  The
+				&rtp; proxy would select the closest value supported by the codec.
+				This feature could be used for significantly reducing bandwith
+				overhead for low bitrate codecs, for example with G.729 going
+				from 10ms to 100ms saves two thirds of the network bandwith.
+				Not supported by Sipwise rtpengine.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>ICE=...</emphasis> - controls the &rtp; proxy's behaviour
+				regarding ICE attributes within the &sdp; body. Possible values
+				are: <quote>force</quote> - 
+				discard any ICE attributes already present in the &sdp; body
+				and then generate and insert new ICE data, leaving itself
+				as the <emphasis>only</emphasis> ICE candidates;
+				<quote>remove</quote> instructs the &rtp; proxy to discard
+				any ICE attributes and not insert any new ones into the &sdp;.
+				The default (if no <quote>ICE=...</quote> is given at all),
+				new ICE data will only be generated
+				if no ICE was present in the &sdp; originally; otherwise
+				the &rtp; proxy will only insert itself as an
+				<emphasis>additional</emphasis> ICE candidate. Other
+				&sdp; substitutions (c=, m=, etc) are unaffected by this flag.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>RTP, SRTP, AVP, AVPF</emphasis> - These flags control the &rtp;
+				transport protocol that should be used towards the recipient of
+				the &sdp;. If none of them are specified, the protocol given in
+				the &sdp; is left untouched. Otherwise, the <quote>SRTP</quote> flag indicates that
+				SRTP should be used, while <quote>RTP</quote> indicates that SRTP should not be used.
+				<quote>AVPF</quote> indicates that the advanced RTCP profile with feedback messages
+				should be used, and <quote>AVP</quote> indicates that the regular RTCP profile
+				should be used. See also the next set of flags below.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>RTP/AVP, RTP/SAVP, RTP/AVPF, RTP/SAVPF</emphasis> - these serve as
+				an alternative, more explicit way to select between the different &rtp; protocols
+				and profiles supported by the &rtp; proxy. For example, giving the flag
+				<quote>RTP/SAVPF</quote> has the same effect as giving the two flags
+				<quote>SRTP AVPF</quote>.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>to-tag</emphasis> - force inclusion of the <quote>To</quote> tag.
+				Normally, the <quote>To</quote> tag is always included when present, except
+				for <quote>delete</quote> messages. Including the <quote>To</quote> tag in
+				a <quote>delete</quote> messages allows you to be more selective about which
+				dialogues within a call are being torn down.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>rtcp-mux-demux</emphasis> - if rtcp-mux (RFC 5761) was
+				offered, make the &rtp; proxy accept the offer, but not offer it to the
+				recipient of this message.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>rtcp-mux-reject</emphasis> - if rtcp-mux was offered, make the
+				&rtp; proxy reject the offer, but still offer it to the recipient. Can be
+				combined with <quote>rtcp-mux-offer</quote> to always offer it.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>rtcp-mux-offer</emphasis> - make the &rtp; proxy offer rtcp-mux
+				to the recipient of this message, regardless of whether it was offered
+				originally or not.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>rtcp-mux-accept</emphasis> - if rtcp-mux was offered, make the
+				&rtp; proxy accept the offer and also offer it to the recipient of this
+				message. Can be combined with <quote>rtcp-mux-offer</quote> to always offer it.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>media-address=...</emphasis> - force a particular media address to
+				be used in the &sdp; body. Address family is detected automatically.
+				</para></listitem>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+                </para>
+		<example>
+		<title><function>rtpengine_offer</function> usage</title>
+		<programlisting format="linespecific">
+route {
+...
+    if (is_method("INVITE")) {
+        if (has_body("application/sdp")) {
+            if (rtpengine_offer())
+                t_on_reply("1");
+        } else {
+            t_on_reply("2");
+        }
+    }
+    if (is_method("ACK") &amp;&amp; has_body("application/sdp"))
+        rtpengine_answer();
+...
+}
+
+onreply_route[1]
+{
+...
+    if (has_body("application/sdp"))
+        rtpengine_answer();
+...
+}
+
+onreply_route[2]
+{
+...
+    if (has_body("application/sdp"))
+        rtpengine_offer();
+...
+}
+</programlisting>
+                </example>
+	</section>
+        <section id="rtpengine.f.rtpengine_answer">
+                <title>
+                <function moreinfo="none">rtpengine_answer([flags])</function>
+                </title>
+		<para>
+		Rewrites &sdp; body to ensure that media is passed through
+		an &rtp; proxy. To be invoked
+		on 200 OK for the cases the SDPs are in INVITE and 200 OK and on ACK
+		when SDPs are in 200 OK and ACK.
+		</para>
+		<para>
+		See rtpengine_offer() function description above for the meaning of the
+		parameters.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		 <title><function>rtpengine_answer</function> usage</title>
+		<para>
+		See rtpengine_offer() function example above for example.
+		</para>
+		</example>
+        </section>
+	<section id="rtpengine.f.rtpengine_delete">
+		<title>
+		<function moreinfo="none">rtpengine_delete([flags])</function>
+		</title>
+		<para>
+		Tears down the RTPProxy session for the current call.
+		</para>
+		<para>
+		See rtpengine_offer() function description above for the meaning of the
+		parameters. Note that not all flags make sense for a <quote>delete</quote>.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>rtpengine_delete</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtpengine_delete();
+...
+</programlisting>
+		</example>
+	</section>
+
+    <section id="rtpengine.f.rtpengine_manage">
+        <title>
+        <function moreinfo="none">rtpengine_manage([flags])</function>
+        </title>
+		<para>
+		Manage the RTPProxy session - it combines the functionality of
+		rtpengine_offer(), rtpengine_answer() and rtpengine_delete(), detecting
+		internally based on message type and method which one to execute.
+		</para>
+		<para>
+		It can take the same parameters as <function>rtpengine_offer().</function>
+		The flags parameter to rtpengine_manage() can be a configuration variable
+		containing the flags as a string.
+		</para>
+		<para>
+		Functionality:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			If INVITE with SDP, then do <function>rtpengine_offer()</function>
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			If INVITE with SDP, when the tm module is loaded, mark transaction with
+			internal flag FL_SDP_BODY to know that the 1xx and 2xx are for
+			<function>rtpengine_answer()</function>
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			If ACK with SDP, then do <function>rtpengine_answer()</function>
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			If BYE or CANCEL, or called within a FAILURE_ROUTE[], then do <function>rtpengine_delete()</function>
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			If reply to INVITE with code >= 300 do <function>rtpengine_delete()</function>
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			If reply with SDP to INVITE having code 1xx and 2xx, then
+			do <function>rtpengine_answer()</function> if the request had SDP or tm is not loaded,
+			otherwise do <function>rtpengine_offer()</function>
+			</para>
+		</listitem>
+	</itemizedlist>
+
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		 <title><function>rtpengine_manage</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtpengine_manage();
+...
+</programlisting>
+		</example>
+        </section>
+
+	<section id="rtpengine.f.start_recording">
+		<title>
+		<function moreinfo="none">start_recording()</function>
+		</title>
+		<para>
+		This function will send a signal to the &rtp; proxy to record
+		the RTP stream on the &rtp; proxy.
+		<emphasis>This function is not supported by Sipwise rtpengine at the moment!</emphasis>
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>start_recording</function> usage</title>
+		<programlisting format="linespecific">
+...
+start_recording();
+...
+		</programlisting>
+		</example>
+	</section>
+
+
+	</section>
+
+	<section>
+		<title>Exported Pseudo Variables</title>
+		<section>
+			<title><function moreinfo="none">$rtpstat</function></title>
+			<para>
+			Returns the &rtp; statistics from the &rtp; proxy. The &rtp; statistics from the &rtp; proxy
+			are provided as a string and it does contain several packet counters. The statistics
+			must be retrieved before the session is deleted	(before <function>rtpengine_delete()</function>).
+			</para>
+
+		<example>
+		<title>$rtpstat Usage</title>
+		<programlisting format="linespecific">
+...
+    append_hf("X-RTP-Statistics: $rtpstat\r\n");
+...
+		</programlisting>
+		</example>
+	        </section>
+
+	</section>
+
+	<section>
+		<title><acronym>MI</acronym> Commands</title>
+		<section id="rtpengine.m.nh_enable_rtpp">
+			<title><function moreinfo="none">nh_enable_rtpp</function></title>
+			<para>
+			Enables a &rtp; proxy if parameter value is greater than 0.
+			Disables it if a zero value is given.
+			</para>
+			<para>
+			The first parameter is the &rtp; proxy url (exactly as defined in
+			the config file).
+			</para>
+			<para>
+			The second parameter value must be a number in decimal.
+			</para>
+			<para>
+			NOTE: if a &rtp; proxy is defined multiple times (in the same or
+			diferente sete), all of its instances will be enables/disabled.
+			</para>
+			<example>
+			<title>
+			<function moreinfo="none">nh_enable_rtpp</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
+...
+			</programlisting>
+			</example>
+		</section>
+
+			<section id="rtpengine.m.nh_show_rtpp">
+			<title><function moreinfo="none">nh_show_rtpp</function></title>
+			<para>
+			Displays all the &rtp; proxies and their information: set and
+			status (disabled or not, weight and recheck_ticks).
+			</para>
+			<para>
+			No parameter.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">nh_show_rtpp</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &ctltool; fifo nh_show_rtpp
+...
+			</programlisting>
+			</example>
+		</section>
+	</section>
+
+</chapter>
+
