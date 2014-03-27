@@ -617,7 +617,7 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 
    Example 1.19. Set peer_tag_mode parameter
 ...
-modparam("permissions", "peer_tag_mode", "1")
+modparam("permissions", "peer_tag_mode", 1)
 ...
 
 4. Functions

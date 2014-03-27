@@ -688,7 +688,7 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 		<title>Set <varname>peer_tag_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("permissions", "peer_tag_mode", "1")
+modparam("permissions", "peer_tag_mode", 1)
 ...
 </programlisting>
 		</example>
