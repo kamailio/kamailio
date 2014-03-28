@@ -246,7 +246,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         LM_DBG("Registering for Usrloc callbacks on DELETE\n");
 
         ul.lock_udomain(domain_t, &local_data->contact);
-        if (ul.get_pcontact(domain_t, &local_data->contact, 0, &pcontact) != 0) {
+        if (ul.get_pcontact(domain_t, &local_data->contact, &pcontact) != 0) {
             LM_ERR("Shouldn't get here, can find contact....\n");
             ul.unlock_udomain(domain_t, &local_data->contact);
             goto error;

@@ -742,7 +742,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
         if (h->type == HDR_CONTACT_T && h->parsed) {
             for (c = ((contact_body_t*) h->parsed)->contacts; c; c = c->next) {
                 ul.lock_udomain(domain_t, &c->uri);
-                if (ul.get_pcontact(domain_t, &c->uri, 0, &pcontact) != 0) {
+                if (ul.get_pcontact(domain_t, &c->uri, &pcontact) != 0) {
                     LM_DBG("This contact does not exist in PCSCF usrloc - error in cfg file\n");
                     ul.unlock_udomain(domain_t, &c->uri);
                     lock_release(saved_t_data->lock);

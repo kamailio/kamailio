@@ -441,7 +441,7 @@ error:
     return -1;
 }
 
-int get_pcontact(udomain_t* _d, str* _contact, int is_registered, struct pcontact** _c) {
+int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 	unsigned int sl, i, aorhash, len, len2;
 	struct pcontact* c;
 	char *ptr, *ptr2;
@@ -490,16 +490,14 @@ int get_pcontact(udomain_t* _d, str* _contact, int is_registered, struct pcontac
 			if ((len2 <= c->aor.len) && (memcmp(ptr2, ptr, len2)==0)) {
 				impu = c->head;
 				while (impu) {
-					if ((is_registered == 0) || (c->reg_state == PCONTACT_REGISTERED)) {
-						LM_DBG("comparing first %d chars of impu [%.*s] for contact [%.*s]\n",
-								len,
-								impu->public_identity.len, impu->public_identity.s,
-								_contact->len, _contact->s);
-						if (memcmp(impu->public_identity.s, _contact->s, len) == 0) {
-							//match
-							*_c = c;
-							return 0;
-						}
+					LM_DBG("comparing first %d chars of impu [%.*s] for contact [%.*s]\n",
+							len,
+							impu->public_identity.len, impu->public_identity.s,
+							_contact->len, _contact->s);
+					if (memcmp(impu->public_identity.s, _contact->s, len) == 0) {
+						//match
+						*_c = c;
+						return 0;
 					}
 					impu = impu->next;
 				}
@@ -511,7 +509,7 @@ int get_pcontact(udomain_t* _d, str* _contact, int is_registered, struct pcontac
 }
 
 /* can't assume we are locked here */
-int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, int is_registered, struct pcontact** _c) {
+int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, struct pcontact** _c) {
 	int i;
 	struct pcontact* c;
 	unsigned int aorhash, sl;
@@ -538,21 +536,20 @@ int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsign
 			LM_DBG("Searching for contact in P-CSCF usrloc [%.*s]\n",
 					s_contact.len,
 					s_contact.s);
-			if ((is_registered == 0) || (c->reg_state == PCONTACT_REGISTERED)) {
-				// First check, if Proto and Port matches:
-				if ((c->received_port == _port) && (c->received_proto == _proto)) {
-					LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
-					// Then check the length:
-					if (c->received_host.len == _host->len) {
-						LM_DBG("Received host %.*s (search %.*s)\n",
-								c->received_host.len, c->received_host.s,
-								_host->len, _host->s);
 
-						// Finally really compare the "received_host"
-						if (!memcmp(c->received_host.s, _host->s, _host->len)) {
-							*_c = c;
-							return 0;
-						}
+			// First check, if Proto and Port matches:
+			if ((c->received_port == _port) && (c->received_proto == _proto)) {
+				LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
+				// Then check the length:
+				if (c->received_host.len == _host->len) {
+					LM_DBG("Received host %.*s (search %.*s)\n",
+							c->received_host.len, c->received_host.s,
+							_host->len, _host->s);
+
+					// Finally really compare the "received_host"
+					if (!memcmp(c->received_host.s, _host->s, _host->len)) {
+						*_c = c;
+						return 0;
 					}
 				}
 			}
@@ -568,21 +565,19 @@ int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsign
 					c->received_port, _port, c->received_proto, _proto,
 					reg_state_to_string(c->reg_state), reg_state_to_string(PCONTACT_REGISTERED)
 					);
-				if ((is_registered == 0) || (c->reg_state == PCONTACT_REGISTERED)) {
-					// First check, if Proto and Port matches:
-					if ((c->received_port == _port) && (c->received_proto == _proto)) {
-						LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
-						// Then check the length:
-						if (c->received_host.len == _host->len) {
-							LM_DBG("Received host %.*s (search %.*s)\n",
-								c->received_host.len, c->received_host.s,
-								_host->len, _host->s);
+				// First check, if Proto and Port matches:
+				if ((c->received_port == _port) && (c->received_proto == _proto)) {
+					LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
+					// Then check the length:
+					if (c->received_host.len == _host->len) {
+						LM_DBG("Received host %.*s (search %.*s)\n",
+							c->received_host.len, c->received_host.s,
+							_host->len, _host->s);
 
-							// Finally really compare the "received_host"
-							if (!memcmp(c->received_host.s, _host->s, _host->len)) {
-								*_c = c;
-								return 0;
-							}
+						// Finally really compare the "received_host"
+						if (!memcmp(c->received_host.s, _host->s, _host->len)) {
+							*_c = c;
+							return 0;
 						}
 					}
 				}
@@ -642,7 +637,7 @@ int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned s
 int delete_pcontact(udomain_t* _d, str* _aor, struct pcontact* _c)
 {
 	if (_c==0) {
-		if (get_pcontact(_d, _aor, 0, &_c) > 0) {
+		if (get_pcontact(_d, _aor, &_c) > 0) {
 			return 0;
 		}
 	}

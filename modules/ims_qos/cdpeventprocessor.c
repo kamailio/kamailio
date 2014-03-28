@@ -237,7 +237,7 @@ void cdp_cb_event_process() {
                         return;
                     }
                     ul.lock_udomain(domain, &p_session_data->registration_aor);
-                    if (ul.get_pcontact(domain, &p_session_data->registration_aor, 0,
+                    if (ul.get_pcontact(domain, &p_session_data->registration_aor,
                             &pcontact) != 0) {
                         LM_DBG("no contact found for terminated Rx reg session..... ignoring\n");
                     } else {
