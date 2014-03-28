@@ -56,6 +56,7 @@
 #include "usrloc.h"
 #include "../../lib/ims/useful_defs.h"
 #include "usrloc_db.h"
+#include "../../parser/parse_uri.h"
 
 extern int db_mode;
 extern int hashing_type;
@@ -115,7 +116,8 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 	int i;
 	ppublic_t* ppublic_ptr;
 	int is_default = 1;
-	str contact_host_port;
+	struct sip_uri sip_uri;
+
 
 	*_c = (pcontact_t*)shm_malloc(sizeof(pcontact_t));
 	if (*_c == 0) {
@@ -140,14 +142,23 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 	(*_c)->aor.len = _contact->len;
 	(*_c)->domain = (str*)_d;
 
+	if (parse_uri((*_c)->aor.s, (*_c)->aor.len, &sip_uri) != 0) {
+		LM_ERR("unable to determine contact host from uri [%.*s\n", (*_c)->aor.len, (*_c)->aor.s);
+		shm_free((*_c)->aor.s);
+		shm_free(*_c);
+		*_c = 0;
+		return -2;
+	}
+	(*_c)->contact_host.s = sip_uri.host.s;
+	(*_c)->contact_host.len = sip_uri.host.len;
+	(*_c)->contact_port = sip_uri.port_no;
+	(*_c)->contact_user.s = sip_uri.user.s;
+	(*_c)->contact_user.len = sip_uri.user.len;
 
-	if ((hashing_type==0) || aor_to_contact(_contact, &contact_host_port) != 0) {
-		if (hashing_type != 0){
-			LM_DBG("failed to clean contact to host:port, falling back to full AOR - [%.*s]\n", _contact->len, _contact->s);
-		}
+	if (hashing_type==0) {
 		(*_c)->aorhash = core_hash(_contact, 0, 0);
 	} else {
-		(*_c)->aorhash = core_hash(&contact_host_port, 0, 0);
+		(*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
 	}
 	(*_c)->expires = _ci->expires;
 	(*_c)->reg_state = _ci->reg_state;

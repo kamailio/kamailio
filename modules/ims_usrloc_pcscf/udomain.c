@@ -57,6 +57,7 @@
 #include "utime.h"
 #include "usrloc.h"
 #include "usrloc_db.h"
+#include "../../parser/parse_uri.h"
 
 #include "../../lib/ims/useful_defs.h"
 
@@ -441,11 +442,24 @@ error:
     return -1;
 }
 
+/*
+ * search for P-CSCF contact in usrloc
+ * @udomain_t* _d - domain to search in
+ * @str* _contact - contact to search for - should be a SIP URI
+ * @struct pontact** _c - contact to return to if found (null if not found)
+ * @return 0 if found <>0 if not
+ */
 int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
-	unsigned int sl, i, aorhash, len, len2;
+	unsigned int sl, i, aorhash;
 	struct pcontact* c;
-	char *ptr, *ptr2;
 	ppublic_t* impu;
+	struct sip_uri needle_uri, impu_uri;
+	int port_match = 0;
+
+	if (parse_uri(_contact->s, _contact->len, &needle_uri) != 0 ) {
+		LM_ERR("failed to parse search URI [%.*s]\n", _contact->len, _contact->s);
+		return 1;
+	}
 
 	/* search in cache */
 	aorhash = get_aor_hash(_d, _contact);
@@ -463,131 +477,118 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 			return 0;
 		}
 
-		/* hash is correct, but contacts differ. Let's check if maybe the UA is using a different user part
-		 * which was part of his implicit set
-		 */
-		ptr2 = ptr = _contact->s;
+		LM_DBG("Searching for [%.*s] and comparing to [%.*s]\n", _contact->len, _contact->s, c->aor.len, c->aor.s);
 
-		if ((c->aorhash == aorhash)) {
-			len2 = len = _contact->len;
+		/* hosts HAVE to match */
+		if ((needle_uri.host.len != c->received_host.len) || (memcmp(needle_uri.host.s, c->contact_host.s, needle_uri.host.len)!=0)) {
+			//can't possibly match
+			continue;
+		}
 
-			/* double check domain part is the same - this is to ensure that we don't false match on a collision that has a similar
-			 * userpart in the list of impus... (very unlikely but safer this way).
-			 */
-			ptr = memchr(_contact->s, '@', _contact->len);
-			if (ptr) {
-				len = (ptr - _contact->s);
-				ptr2 = ptr + 1;
-				len2 = _contact->len - (ptr2 - _contact->s);
-			}
-
-			ptr = memchr(c->aor.s, '@', c->aor.len);
-			if (!ptr)
-				ptr = c->aor.s;
-			else
-				ptr = ptr + 1;
-
-			if ((len2 <= c->aor.len) && (memcmp(ptr2, ptr, len2)==0)) {
-				impu = c->head;
-				while (impu) {
-					LM_DBG("comparing first %d chars of impu [%.*s] for contact [%.*s]\n",
-							len,
-							impu->public_identity.len, impu->public_identity.s,
-							_contact->len, _contact->s);
-					if (memcmp(impu->public_identity.s, _contact->s, len) == 0) {
-						//match
-						*_c = c;
-						return 0;
+		/* one of the ports must match, either the initial registered port, the received port, or one if the security ports (server) */
+		if ((needle_uri.port_no != c->contact_port)
+				&& (needle_uri.port_no != c->received_proto)) {
+			//check security ports
+			if (c->security) {
+				switch (c->security->type) {
+				case SECURITY_IPSEC: {
+					ipsec_t* ipsec = c->security->data.ipsec;
+					if (ipsec) {
+						LM_DBG("security server port is %d\n", ipsec->port_us);
+						LM_DBG("security client port is %d\n", ipsec->port_uc);
+						if (ipsec->port_us == needle_uri.port_no) {
+							LM_DBG("security port mathes contact\n");
+							port_match = 1;
+						}
 					}
-					impu = impu->next;
+					break;
+				}
+				case SECURITY_TLS:
+				case SECURITY_NONE:
+					LM_WARN("not implemented\n");
+					break;
 				}
 			}
+			if (!port_match && c->security_temp) {
+				switch (c->security_temp->type) {
+				case SECURITY_IPSEC: {
+					ipsec_t* ipsec = c->security_temp->data.ipsec;
+					if (ipsec) {
+						LM_DBG("temp security server port is %d\n", ipsec->port_us);
+						LM_DBG("temp security client port is %d\n", ipsec->port_uc);
+						if (ipsec->port_us == needle_uri.port_no) {
+							LM_DBG("temp security port mathes contact\n");
+							port_match = 1;
+						}
+					}
+					break;
+				}
+				case SECURITY_TLS:
+				case SECURITY_NONE:
+					LM_WARN("not implemented\n");
+					break;
+				}
+			}
+		} else {
+			port_match = 1;
 		}
+
+		if (!port_match)
+			continue;
+
+		/* user parts must match (if not wildcarded) with either primary contact OR with any userpart in the implicit set (associated URIs).. */
+		if (((needle_uri.user.len == 1)
+				&& (memcmp(needle_uri.user.s, "*", 1) == 0))
+				|| ((needle_uri.user.len == c->contact_user.len)
+						&& (memcmp(needle_uri.user.s, c->contact_user.s,
+								needle_uri.user.len) == 0))) {
+			*_c = c;
+			return 0;
+		}
+
+		/* check impus user parts */
+		impu = c->head;
+		while (impu) {
+			if (parse_uri(impu->public_identity.s, impu->public_identity.len, &impu_uri) != 0) {
+				LM_ERR("failed to parse IMPU URI [%.*s]...continuing\n", impu->public_identity.len, impu->public_identity.s);
+				continue;
+			}
+			LM_DBG("comparing first %d chars of impu [%.*s] for contact userpart [%.*s]\n",
+					needle_uri.user.len,
+					impu->public_identity.len, impu->public_identity.s,
+					needle_uri.user.len, needle_uri.user.s);
+			if (needle_uri.user.len == impu_uri.user.len && (memcmp(needle_uri.user.s, impu_uri.user.s, impu_uri.user.len)==0)) {
+				*_c = c;
+				return 0;
+			}
+			impu = impu->next;
+		}
+
 		c = c->next;
 	}
 	return 1; /* Nothing found */
 }
 
-/* can't assume we are locked here */
 int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, struct pcontact** _c) {
-	int i;
-	struct pcontact* c;
-	unsigned int aorhash, sl;
 	char c_contact[256], *p;
 	str s_contact;
+	int ret;
 
-	if (hashing_type == 1) {//we hash on IP:PORT - so no need to search sequentially..
-		/* get_aor_hash in this mode expects to see contact as host:port */
-		memset(c_contact, 0, 256);
-		memcpy(c_contact, _host->s, _host->len);
-		p = c_contact + _host->len;
-		*p = ':';
-		p++;
-		sprintf(p,"%d", _port);
-		s_contact.s = c_contact;
-		s_contact.len = strlen(c_contact);
+	memset(c_contact, 0, 256);
+	strncpy(c_contact, "sip:*@", 6);	//prepend *@ to host to wildcard on user search
+	p = c_contact + 6;
+	memcpy(p, _host->s, _host->len);
+	p = p + _host->len;
+	*p = ':';
+	p++;
+	sprintf(p, "%d", _port);
+	s_contact.s = c_contact;
+	s_contact.len = strlen(c_contact);
 
-		aorhash = get_aor_hash(_d, &s_contact);
-		sl = aorhash & (_d->size - 1);
-		c = _d->table[sl].first;
+	ret = get_pcontact(_d, &s_contact, _c);
 
-		for (i = 0; i < _d->table[sl].n; i++) {
-			lock_ulslot(_d, i);
-			LM_DBG("Searching for contact in P-CSCF usrloc [%.*s]\n",
-					s_contact.len,
-					s_contact.s);
-
-			// First check, if Proto and Port matches:
-			if ((c->received_port == _port) && (c->received_proto == _proto)) {
-				LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
-				// Then check the length:
-				if (c->received_host.len == _host->len) {
-					LM_DBG("Received host %.*s (search %.*s)\n",
-							c->received_host.len, c->received_host.s,
-							_host->len, _host->s);
-
-					// Finally really compare the "received_host"
-					if (!memcmp(c->received_host.s, _host->s, _host->len)) {
-						*_c = c;
-						return 0;
-					}
-				}
-			}
-			unlock_ulslot(_d, i);
-		}
-	} else {
-		/* search sequentially */
-		for(i=0; i<_d->size; i++)
-		{
-			c = _d->table[i].first;
-			while(c) {
-				LM_DBG("Port %d (search %d), Proto %d (search %d), reg_state %s (search %s)\n",
-					c->received_port, _port, c->received_proto, _proto,
-					reg_state_to_string(c->reg_state), reg_state_to_string(PCONTACT_REGISTERED)
-					);
-				// First check, if Proto and Port matches:
-				if ((c->received_port == _port) && (c->received_proto == _proto)) {
-					LM_DBG("Received host len %d (search %d)\n", c->received_host.len, _host->len);
-					// Then check the length:
-					if (c->received_host.len == _host->len) {
-						LM_DBG("Received host %.*s (search %.*s)\n",
-							c->received_host.len, c->received_host.s,
-							_host->len, _host->s);
-
-						// Finally really compare the "received_host"
-						if (!memcmp(c->received_host.s, _host->s, _host->len)) {
-							*_c = c;
-							return 0;
-						}
-					}
-				}
-				c = c->next;
-			}
-		}
-	}
-	return 1; /* Nothing found */
+	return ret;
 }
-
 
 int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity) {
 	int i;

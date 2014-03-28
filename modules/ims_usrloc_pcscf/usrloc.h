@@ -186,10 +186,13 @@ typedef struct pcontact {
 	struct hslot* slot; 					/*!< Collision slot in the hash table array we belong to */
 	str* domain; 							/*!< Pointer to domain we belong to (null terminated string) */
 	str aor;			 					/*!< Address of record */
-	// str received;           				/*!< IP+port+protocol we received the REGISTER from */
-	str received_host;
-	unsigned short received_port;
-	unsigned short received_proto; /*!< from transport */ ;
+	str contact_host;						/*!< host part of contact */
+	str contact_user;						/*!< user part of contact */
+	unsigned short contact_port;			/*!< port part of contact */
+	str callid;								/*!< Call-ID */
+	str received_host;						/*!< host part of src address where register came from */
+	unsigned short received_port;			/*!< port register was received from */
+	unsigned short received_proto; 			/*!< from transport */ ;
 	str path;               				/*!< Path header */
 	str rx_session_id;						/*!< Rx Session ID for registration Rx AF session - not used if not using diameter_rx */
 	enum pcontact_reg_states reg_state;		/*!< Reg state of contact */
@@ -248,7 +251,5 @@ typedef struct usrloc_api {
 
 /*! usrloc API export bind function */
 typedef int (*bind_usrloc_t)(usrloc_api_t* api);
-
-int aor_to_contact(str* aor, str* contact);
 
 #endif

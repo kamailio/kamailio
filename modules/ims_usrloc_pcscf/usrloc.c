@@ -49,6 +49,7 @@
 #include "udomain.h"
 #include "../../sr_module.h"
 #include "ul_mod.h"
+#include "../../parser/parse_uri.h"
 
 extern unsigned int init_flag;
 extern int hashing_type;
@@ -68,79 +69,48 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->get_udomain = get_udomain;
 	api->lock_udomain = lock_udomain;
 	api->unlock_udomain = unlock_udomain;
-
 	api->insert_pcontact = insert_pcontact;
 	api->delete_pcontact = delete_pcontact;
 	api->get_pcontact = get_pcontact;
 	api->get_pcontact_by_src = get_pcontact_by_src;
 	api->assert_identity = assert_identity;
-
 	api->update_pcontact = update_pcontact;
 	api->update_rx_regsession = update_rx_regsession;
-
 	api->get_all_ucontacts = get_all_ucontacts;
-
 	api->register_ulcb = register_ulcb;
 
 	return 0;
 }
 
-/* function to convert contact aor to only have data after @ - ie strip user part */
-int aor_to_contact(str* aor, str* contact) {
-	char* p;
-	int ret = 0;	//success
-
-	contact->s = aor->s;
-	contact->len = aor->len;
-	if (memcmp(aor->s, "sip:", 4) == 0) {
-		contact->s = aor->s + 4;
-		contact->len-=4;
-	}
-
-	if ((p=memchr(contact->s, '@', contact->len))) {
-		contact->len -= (p - contact->s + 1);
-		contact->s = p+1;
-	}
-
-	if ((p=memchr(contact->s, ';', contact->len))) {
-		contact->len = p - contact->s;
-	}
-
-	if ((p=memchr(contact->s, '>', contact->len))) {
-		contact->len = p - contact->s;
-	}
-
-	return ret;
-}
-
 /* return the slot id for inserting contacts in the hash */
 unsigned int get_hash_slot(udomain_t* _d, str* _aor){
-	str contact;
+	struct sip_uri contact_uri;
 	unsigned int sl;
 
-	if ((hashing_type == 0) /*use full AOR for hash*/ || (aor_to_contact(_aor, &contact) != 0)) {
+	if ((hashing_type == 0) /*use full AOR for hash*/ || (parse_uri(_aor->s, _aor->len, &contact_uri) != 0)) {
 		if (hashing_type!=0) {
-			LM_DBG("Unable to get contact host:port from contact header... falling back to full AOR\n");
+			LM_DBG("Unable to get contact host:port from contact header [%.*s]... falling back to full AOR\n", _aor->len, _aor->s);
 		}
 		sl = core_hash(_aor, 0, _d->size);
 	} else {
-		sl = core_hash(&contact, 0, _d->size);
+		sl = core_hash(&contact_uri.host, 0, _d->size);
 	}
 
 	return sl;
 }
 
 unsigned int get_aor_hash(udomain_t* _d, str* _aor) {
-	str contact;
+	struct sip_uri contact_uri;
 	unsigned int aorhash;
 
-	if ((hashing_type == 0) || (aor_to_contact(_aor, &contact) != 0)) {
+	if ((hashing_type == 0) || (parse_uri(_aor->s, _aor->len, &contact_uri) != 0)) {
 		if (hashing_type !=0) {
-			LM_DBG("Unable to get contact host:port from contact header... falling back to full AOR\n");
+			LM_DBG("Unable to get contact host:port from contact header [%.*s]... falling back to full AOR\n", _aor->len, _aor->s);
 		}
 		aorhash = core_hash(_aor, 0, 0);
 	} else {
-		aorhash = core_hash(&contact, 0, 0);
+		LM_DBG("using host in lookup [%.*s]\n", contact_uri.host.len, contact_uri.host.s);
+		aorhash = core_hash(&contact_uri.host, 0, 0);
 	}
 	return aorhash;
 }
