@@ -64,6 +64,32 @@ typedef enum location_pcscf_fields_idx {
 #define SERVICE_ROUTES_COL	"service_routes"
 #define SOCKET_COL			"socket"
 #define PUBLIC_IDS_COL		"public_ids"
+#define SECURITY_TYPE_COL	"security_type"
+#define PROTOCOL_COL		"protocol"
+#define MODE_COL			"mode"
+#define CK_COL				"ck"
+#define IK_COL				"ik"
+#define EALG_COL			"ealg"
+#define IALG_COL			"ialg"
+#define PORTUC_COL			"port_uc"
+#define PORTUS_COL			"port_us"
+#define SPIPC_COL			"spi_pc"
+#define SPIPS_COL			"spi_ps"
+#define SPIUC_COL			"spi_uc"
+#define SPIUS_COL			"spi_us"
+#define T_SECURITY_TYPE_COL	"t_security_type"
+#define T_PROTOCOL_COL		"t_protocol"
+#define T_MODE_COL			"t_mode"
+#define T_CK_COL			"t_ck"
+#define T_IK_COL			"t_ik"
+#define T_EALG_COL			"t_ealg"
+#define T_IALG_COL			"t_ialg"
+#define T_PORTUC_COL		"t_port_uc"
+#define T_PORTUS_COL		"t_port_us"
+#define T_SPIPC_COL			"t_spi_pc"
+#define T_SPIPS_COL			"t_spi_ps"
+#define T_SPIUC_COL			"t_spi_uc"
+#define T_SPIUS_COL			"t_spi_us"
 
 extern db1_con_t* ul_dbh;
 extern db_func_t ul_dbf;
@@ -102,5 +128,7 @@ void free_impu_buf(void);
 int db_insert_pcontact(pcontact_t* _c);
 int db_delete_pcontact(pcontact_t* _c);
 int db_update_pcontact(pcontact_t* _c);
+int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, security_t* _s);
+int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_t* _s);
 
 #endif /* USRLOC_DB_H_ */

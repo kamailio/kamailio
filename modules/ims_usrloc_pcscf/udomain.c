@@ -590,6 +590,25 @@ int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsign
 	return ret;
 }
 
+int update_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c) {
+	if (db_mode == WRITE_THROUGH && db_update_pcontact_security(_c, _t, _s) != 0) {
+		LM_ERR("Error updating security for contact in DB\n");
+		return -1;
+	}
+	_c->security = _s;
+	return 0;
+}
+
+int update_temp_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c) {
+	if (db_mode == WRITE_THROUGH && db_update_pcontact_security_temp(_c, _t, _s) != 0) {
+		LM_ERR("Error updating temp security for contact in DB\n");
+		return -1;
+	}
+	_c->security_temp = _s;
+	return 0;
+}
+
+
 int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity) {
 	int i;
 	struct pcontact* c;

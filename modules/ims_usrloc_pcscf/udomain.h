@@ -80,6 +80,8 @@ int get_pcontact(udomain_t* _d, str* _aor, struct pcontact** _r);
 int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, struct pcontact** _c);
 int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
 int delete_pcontact(udomain_t* _d, str* _aor, struct pcontact* _r);
+int update_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
+int update_temp_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
 
 int preload_udomain(db1_con_t* _c, udomain_t* _d);
 

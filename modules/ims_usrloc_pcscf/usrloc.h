@@ -226,6 +226,11 @@ typedef int (*register_udomain_t)(const char* _n, struct udomain** _d);
 typedef int (*get_udomain_t)(const char* _n, udomain_t** _d);
 typedef int (*get_all_ucontacts_t)(void* buf, int len, unsigned int flags, unsigned int part_idx, unsigned int part_max);
 
+/*security related API signatures */
+typedef int (*update_security_t)(struct udomain* _d, security_type _t, security_t* _s, struct pcontact* _c);
+typedef int (*update_temp_security_t)(struct udomain* _d, security_type _t, security_t* _s, struct pcontact* _c);
+
+
 /*! usrloc API export structure */
 typedef struct usrloc_api {
 	int use_domain; /*! use_domain module parameter */
@@ -245,6 +250,9 @@ typedef struct usrloc_api {
 	update_pcontact_t update_pcontact;
 	update_rx_regsession_t update_rx_regsession;
 	get_all_ucontacts_t get_all_ucontacts;
+
+	update_security_t update_security;
+	update_temp_security_t update_temp_security;
 
 	register_ulcb_t register_ulcb;
 } usrloc_api_t;
