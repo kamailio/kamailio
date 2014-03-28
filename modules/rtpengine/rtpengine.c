@@ -302,7 +302,6 @@ static int rtpengine_manage1_f(struct sip_msg *, char *, char *);
 static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_operation *, const char *);
 
 static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op);
-static int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
 static int fixup_set_id(void ** param, int param_no);
 static int set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2);
 static struct rtpp_set * select_rtpp_set(int id_set);
@@ -405,11 +404,14 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{"rtpengine_sock",         STR_PARAM|USE_FUNC_PARAM,
+	{"rtpengine_sock",        STR_PARAM|USE_FUNC_PARAM,
 	                         (void*)rtpengine_set_store          },
-	{"rtpengine_disable_tout", INT_PARAM, &rtpengine_disable_tout },
-	{"rtpengine_retr",         INT_PARAM, &rtpengine_retr         },
-	{"rtpengine_tout",         INT_PARAM, &rtpengine_tout         },
+	{"rtpengine_disable_tout",INT_PARAM, &rtpengine_disable_tout },
+	{"rtpengine_retr",        INT_PARAM, &rtpengine_retr         },
+	{"rtpengine_tout",        INT_PARAM, &rtpengine_tout         },
+	{"db_url",                STR_PARAM, &rtpp_db_url.s },
+	{"table_name",            STR_PARAM, &rtpp_table_name.s },
+	{"url_col",               STR_PARAM, &rtpp_url_col.s },
 	{"extra_id_pv",           STR_PARAM, &extra_id_pv_param.s },
 	{"setid_avp",             STR_PARAM, &setid_avp_param },
 	{0, 0, 0}
@@ -491,9 +493,75 @@ static int rtpengine_set_store(modparam_t type, void * val){
 	return 0;
 }
 
+struct rtpp_set *get_rtpp_set(int set_id)
+{
+	struct rtpp_set * rtpp_list;
+	unsigned int my_current_id = 0;
+	int new_list;
 
-static int add_rtpengine_socks(struct rtpp_set * rtpp_list,
-										char * rtpproxy){
+	if (set_id < DEFAULT_RTPP_SET_ID )
+	{
+		LM_ERR(" invalid rtpproxy set value [%d]\n",
+		       set_id);
+		return NULL;
+	}
+
+	my_current_id = set_id;
+	/*search for the current_id*/
+	rtpp_list = rtpp_set_list ? rtpp_set_list->rset_first : 0;
+	while( rtpp_list != 0 && rtpp_list->id_set!=my_current_id)
+		rtpp_list = rtpp_list->rset_next;
+
+	if (rtpp_list==NULL)
+	{	/*if a new id_set : add a new set of rtpp*/
+		rtpp_list = shm_malloc(sizeof(struct rtpp_set));
+		if(!rtpp_list)
+		{
+			LM_ERR("no shm memory left to create new rtpproxy set %d\n", my_current_id);
+			return NULL;
+		}
+		memset(rtpp_list, 0, sizeof(struct rtpp_set));
+		rtpp_list->id_set = my_current_id;
+		new_list = 1;
+	}
+	else {
+		new_list = 0;
+	}
+
+	if (new_list)
+	{
+		if(!rtpp_set_list){/*initialize the list of set*/
+			rtpp_set_list = shm_malloc(sizeof(struct rtpp_set_head));
+			if(!rtpp_set_list){
+				LM_ERR("no shm memory left to create list of proxysets\n");
+				return NULL;
+			}
+			memset(rtpp_set_list, 0, sizeof(struct rtpp_set_head));
+		}
+
+		/*update the list of set info*/
+		if (!rtpp_set_list->rset_first)
+		{
+			rtpp_set_list->rset_first = rtpp_list;
+		}
+		else
+		{
+			rtpp_set_list->rset_last->rset_next = rtpp_list;
+		}
+
+		rtpp_set_list->rset_last = rtpp_list;
+		rtpp_set_count++;
+
+		if(my_current_id == DEFAULT_RTPP_SET_ID){
+			default_rtpp_set = rtpp_list;
+		}
+	}
+	return rtpp_list;
+}
+
+
+int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy)
+{
 	/* Make rtp proxies list. */
 	char *p, *p1, *p2, *plim;
 	struct rtpp_node *pnode;
@@ -577,7 +645,6 @@ static int rtpengine_add_rtpengine_set( char * rtp_proxies)
 	struct rtpp_set * rtpp_list;
 	unsigned int my_current_id;
 	str id_set;
-	int new_list;
 
 	/* empty definition? */
 	p= rtp_proxies;
@@ -621,54 +688,16 @@ static int rtpengine_add_rtpengine_set( char * rtp_proxies)
 	}
 
 	/*search for the current_id*/
-	rtpp_list = rtpp_set_list ? rtpp_set_list->rset_first : 0;
-	while( rtpp_list != 0 && rtpp_list->id_set!=my_current_id)
-		rtpp_list = rtpp_list->rset_next;
+	rtpp_list = get_rtpp_set(my_current_id);
 
-	if(rtpp_list==NULL){	/*if a new id_set : add a new set of rtpp*/
-		rtpp_list = shm_malloc(sizeof(struct rtpp_set));
-		if(!rtpp_list){
-			LM_ERR("no shm memory left\n");
-			return -1;
-		}
-		memset(rtpp_list, 0, sizeof(struct rtpp_set));
-		rtpp_list->id_set = my_current_id;
-		new_list = 1;
-	} else {
-		new_list = 0;
+	if (rtpp_list != NULL)
+	{
+		if (add_rtpproxy_socks(rtpp_list, rtp_proxies) != 0)
+			goto error;
+		else
+			return 0;
 	}
 
-	if(add_rtpengine_socks(rtpp_list, rtp_proxies)!= 0){
-		/*if this list will not be inserted, clean it up*/
-		goto error;
-	}
-
-	if (new_list) {
-		if(!rtpp_set_list){/*initialize the list of set*/
-			rtpp_set_list = shm_malloc(sizeof(struct rtpp_set_head));
-			if(!rtpp_set_list){
-				LM_ERR("no shm memory left\n");
-				return -1;
-			}
-			memset(rtpp_set_list, 0, sizeof(struct rtpp_set_head));
-		}
-
-		/*update the list of set info*/
-		if(!rtpp_set_list->rset_first){
-			rtpp_set_list->rset_first = rtpp_list;
-		}else{
-			rtpp_set_list->rset_last->rset_next = rtpp_list;
-		}
-
-		rtpp_set_list->rset_last = rtpp_list;
-		rtpp_set_count++;
-
-		if(my_current_id == DEFAULT_RTPP_SET_ID){
-			default_rtpp_set = rtpp_list;
-		}
-	}
-
-	return 0;
 error:
 	return -1;
 }
@@ -876,21 +905,36 @@ mod_init(void)
 		return -1;
 	}
 
+	rtpp_table_name.len = strlen(rtpp_table_name.s);
+	rtpp_url_col.len = strlen(rtpp_url_col.s);
+
 	/* any rtpproxy configured? */
 	if(rtpp_set_list)
 		default_rtpp_set = select_rtpp_set(DEFAULT_RTPP_SET_ID);
 
-	/* storing the list of rtp proxy sets in shared memory*/
-	for(i=0;i<rtpp_sets;i++){
-		if(rtpengine_add_rtpengine_set(rtpp_strings[i]) !=0){
-			for(;i<rtpp_sets;i++)
-				if(rtpp_strings[i])
-					pkg_free(rtpp_strings[i]);
-			pkg_free(rtpp_strings);
+	if (rtpp_db_url.s == NULL)
+	{
+		/* storing the list of rtp proxy sets in shared memory*/
+		for(i=0;i<rtpp_sets;i++){
+			if(rtpengine_add_rtpengine_set(rtpp_strings[i]) !=0){
+				for(;i<rtpp_sets;i++)
+					if(rtpp_strings[i])
+						pkg_free(rtpp_strings[i]);
+				pkg_free(rtpp_strings);
+				return -1;
+			}
+			if(rtpp_strings[i])
+				pkg_free(rtpp_strings[i]);
+		}
+	}
+	else
+	{
+		LM_INFO("Loading rtp proxy definitions from DB\n");
+		if ( init_rtpproxy_db() < 0)
+		{
+			LM_ERR("error while loading rtp proxies from database\n");
 			return -1;
 		}
-		if(rtpp_strings[i])
-			pkg_free(rtpp_strings[i]);
 	}
 
 	if (extra_id_pv_param.s && *extra_id_pv_param.s) {
@@ -1783,7 +1827,7 @@ set_rtpengine_set_from_avp(struct sip_msg *msg)
 	LM_ERR("setid_avp must hold an integer value\n");
 	return -1;
     }
-    
+
     selected_rtpp_set = select_rtpp_set(setid_val.n);
     if(selected_rtpp_set == NULL) {
 	LM_ERR("could not locate rtpproxy set %d\n", setid_val.n);
@@ -1793,7 +1837,7 @@ set_rtpengine_set_from_avp(struct sip_msg *msg)
     LM_DBG("using rtpengine set %d\n", setid_val.n);
 
     current_msg_id = msg->id;
-    
+
     return 1;
 }
 
@@ -1823,11 +1867,14 @@ set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2)
 {
 	rtpp_set_link_t *rtpl;
 	pv_value_t val;
+	struct rtpp_node *node;
+	int nb_active_nodes;
 
 	rtpl = (rtpp_set_link_t*)str1;
 
 	current_msg_id = 0;
 	selected_rtpp_set = 0;
+	nb_active_nodes = 0;
 
 	if(rtpl->rset != NULL) {
 		current_msg_id = msg->id;
@@ -1847,6 +1894,26 @@ set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2)
 			return -1;
 		}
 		current_msg_id = msg->id;
+
+		node = selected_rtpp_set->rn_first;
+		while (node != NULL)
+		{
+		    if (node->rn_disabled == 0) nb_active_nodes++;
+		    node = node->rn_next;
+		}
+
+		if ( nb_active_nodes > 0 )
+		{
+			LM_DBG("rtpp: selected proxy set ID %d with %d active nodes.\n",
+			       current_msg_id, nb_active_nodes);
+			return nb_active_nodes;
+		}
+		else
+		{
+			LM_WARN("rtpp: selected proxy set ID %d but it has no active node.\n",
+			         current_msg_id);
+			return -2;
+		}
 	}
 	return 1;
 }

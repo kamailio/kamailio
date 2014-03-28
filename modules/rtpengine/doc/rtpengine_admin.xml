@@ -404,7 +404,7 @@ rtpengine_offer();
 				<listitem><para>
 				<emphasis>ICE=...</emphasis> - controls the &rtp; proxy's behaviour
 				regarding ICE attributes within the &sdp; body. Possible values
-				are: <quote>force</quote> - 
+				are: <quote>force</quote> -
 				discard any ICE attributes already present in the &sdp; body
 				and then generate and insert new ICE data, leaving itself
 				as the <emphasis>only</emphasis> ICE candidates;
