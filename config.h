@@ -66,9 +66,6 @@
 #define EVENT_RT_NO RT_NO 		/*!< event_route routing tables number */
 #define DEFAULT_RT 0 			/*!< default routing table */
 
-#define MAX_REC_LEV 100 		/*!< maximum number of recursive calls */
-#define ROUTE_MAX_REC_LEV 100 		/*!< maximum number of recursive calls for route()*/
-
 #define MAX_URI_SIZE 1024		/*!< Max URI size used when rewriting URIs */
 
 #define MAX_PATH_SIZE 256 		/*!< Maximum length of path header buffer */

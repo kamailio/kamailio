@@ -536,6 +536,7 @@ extern char *finame;
 %token VERSION_TABLE_CFG
 %token CFG_DESCRIPTION
 %token SERVER_ID
+%token MAX_RECURSIVE_LEVEL
 %token LATENCY_LOG
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
@@ -1559,6 +1560,7 @@ assign_stm:
 	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
 	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
+    | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | LATENCY_LOG EQUAL NUMBER { default_core_cfg.latency_log=$3; }
 	| LATENCY_LOG EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_DB EQUAL NUMBER { default_core_cfg.latency_limit_db=$3; }

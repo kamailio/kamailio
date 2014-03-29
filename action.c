@@ -114,6 +114,14 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 /* current action executed from config file */
 static cfg_action_t *_cfg_crt_action = 0;
 
+/*!< maximum number of recursive calls for blocks of actions */
+static unsigned int max_recursive_level = 256;
+
+void set_max_recursive_level(unsigned int lev)
+{
+	max_recursive_level = lev;
+}
+
 /* return current action executed from config file */
 cfg_action_t *get_cfg_crt_action(void)
 {
@@ -1567,7 +1575,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 
 	ret=E_UNSPEC;
 	h->rec_lev++;
-	if (unlikely(h->rec_lev>ROUTE_MAX_REC_LEV)){
+	if (unlikely(h->rec_lev>max_recursive_level)){
 		LOG(L_ERR, "WARNING: too many recursive routing table lookups (%d)"
 					" giving up!\n", h->rec_lev);
 		ret=E_UNSPEC;

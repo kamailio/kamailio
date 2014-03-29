@@ -482,6 +482,8 @@ VERSION_TABLE_CFG		"version_table"
 
 SERVER_ID     "server_id"
 
+MAX_RECURSIVE_LEVEL		"max_recursive_level"
+
 LATENCY_LOG				latency_log
 LATENCY_LIMIT_DB		latency_limit_db
 LATENCY_LIMIT_ACTION	latency_limit_action
@@ -917,6 +919,7 @@ IMPORTFILE      "import_file"
 									return HTTP_REPLY_PARSE; }
 <INITIAL>{VERSION_TABLE_CFG}  { count(); yylval.strval=yytext; return VERSION_TABLE_CFG;}
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
+<INITIAL>{MAX_RECURSIVE_LEVEL}  { count(); yylval.strval=yytext; return MAX_RECURSIVE_LEVEL;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}
 <INITIAL>{MSG_TIME}  { count(); yylval.strval=yytext; return MSG_TIME;}
 <INITIAL>{LATENCY_LIMIT_DB}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_DB;}

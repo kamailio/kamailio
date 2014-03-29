@@ -72,6 +72,8 @@ cfg_action_t *get_cfg_crt_action(void);
 int get_cfg_crt_line(void);
 char *get_cfg_crt_name(void);
 
+void set_max_recursive_level(unsigned int lev);
+
 #ifdef USE_LONGJMP
 int run_actions_safe(struct run_act_ctx* c, struct action* a,
 						struct sip_msg* msg);
