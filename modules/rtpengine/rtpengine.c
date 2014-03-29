@@ -692,7 +692,7 @@ static int rtpengine_add_rtpengine_set( char * rtp_proxies)
 
 	if (rtpp_list != NULL)
 	{
-		if (add_rtpproxy_socks(rtpp_list, rtp_proxies) != 0)
+		if (add_rtpengine_socks(rtpp_list, rtp_proxies) != 0)
 			goto error;
 		else
 			return 0;

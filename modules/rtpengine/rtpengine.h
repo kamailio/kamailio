@@ -63,7 +63,7 @@ struct rtpp_set_head{
 
 
 struct rtpp_set *get_rtpp_set(int set_id);
-int add_rtpproxy_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
+int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
 
 int init_rtpproxy_db(void);
 

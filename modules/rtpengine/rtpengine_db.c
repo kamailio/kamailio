@@ -112,7 +112,7 @@ static int rtpp_load_db(void)
 			continue;
 		}
 
-		if (add_rtpproxy_socks(rtpp_list, url.s) !=  0)
+		if (add_rtpengine_socks(rtpp_list, url.s) !=  0)
 		{
 			LM_ERR("error inserting '%.*s' into set %d\n", url.len, url.s, set_id);
 		}
