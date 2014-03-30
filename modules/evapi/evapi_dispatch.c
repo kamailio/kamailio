@@ -36,6 +36,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../lib/kcore/faked_msg.h"
 
 static int _evapi_notify_sockets[2];
 
@@ -50,6 +51,77 @@ typedef struct _evapi_client {
 
 #define EVAPI_MAX_CLIENTS	8
 static evapi_client_t _evapi_clients[EVAPI_MAX_CLIENTS];
+
+typedef struct _evapi_evroutes {
+	int con_new;
+	int con_closed;
+	int msg_received;
+} evapi_evroutes_t;
+
+static evapi_evroutes_t _evapi_rts;
+
+static int _evapi_con_idx = -1;
+
+/**
+ *
+ */
+void evapi_init_event_routes(void)
+{
+	memset(&_evapi_rts, 0, sizeof(evapi_evroutes_t));
+
+	_evapi_rts.con_new = route_get(&event_rt, "evapi:connection-new");
+	if (_evapi_rts.con_new < 0 || event_rt.rlist[_evapi_rts.con_new] == NULL)
+		_evapi_rts.con_new = -1;
+	_evapi_rts.con_closed = route_get(&event_rt, "evapi:connection-closed");
+	if (_evapi_rts.con_closed < 0 || event_rt.rlist[_evapi_rts.con_closed] == NULL)
+		_evapi_rts.con_closed = -1;
+	_evapi_rts.msg_received = route_get(&event_rt, "evapi:message-received");
+	if (_evapi_rts.msg_received < 0 || event_rt.rlist[_evapi_rts.msg_received] == NULL)
+		_evapi_rts.msg_received = -1;
+}
+
+/**
+ *
+ */
+int evapi_run_cfg_route(int conidx, int rt)
+{
+	int backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t *fmsg;
+
+	if(conidx<0)
+		return -1;
+
+	if(rt<0)
+		return 0;
+
+	fmsg = faked_msg_next();
+	backup_rt = get_route_type();
+	_evapi_con_idx = conidx;
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	_evapi_con_idx = -1;
+	set_route_type(backup_rt);
+	return 0;
+}
+
+/**
+ *
+ */
+int evapi_cfg_close_connection(void)
+{
+	if(_evapi_con_idx<0 || _evapi_con_idx>=EVAPI_MAX_CLIENTS)
+		return -1;
+	if(_evapi_clients[_evapi_con_idx].connected==1
+			&& _evapi_clients[_evapi_con_idx].sock > 0) {
+		close(_evapi_clients[_evapi_con_idx].sock);
+		_evapi_clients[_evapi_con_idx].connected = 0;
+		_evapi_clients[_evapi_con_idx].sock = 0;
+		return 0;
+	}
+	return -2;
+}
 
 /**
  *
@@ -129,22 +201,32 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		return;
 	}
 
-	if(rlen == 0) {
-		/* client is gone */
-		for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
-			if(_evapi_clients[i].connected==1 && _evapi_clients[i].sock==watcher->fd) {
-				_evapi_clients[i].connected = 0;
-				_evapi_clients[i].sock = 0;
-				break;
-			}
+	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
+		if(_evapi_clients[i].connected==1 && _evapi_clients[i].sock==watcher->fd) {
+			break;
 		}
-		ev_io_stop(loop, watcher);
-		free(watcher);
-		LM_INFO("client closing connection\n");
+	}
+	if(i==EVAPI_MAX_CLIENTS) {
+		LM_ERR("cannot lookup client socket %d\n", watcher->fd);
 		return;
 	}
 
-	LM_NOTICE("received [%.*s]\n", (int)rlen, rbuffer);
+	if(rlen == 0) {
+		/* client is gone */
+		evapi_run_cfg_route(i, _evapi_rts.con_closed);
+		_evapi_clients[i].connected = 0;
+		_evapi_clients[i].sock = 0;
+		ev_io_stop(loop, watcher);
+		free(watcher);
+		LM_INFO("client closing connection - pos [%d] addr [%s:%d]\n",
+				i, _evapi_clients[i].src_addr, _evapi_clients[i].src_port);
+		return;
+	}
+
+	LM_NOTICE("{%d} [%s:%d] - received [%.*s]\n",
+			i, _evapi_clients[i].src_addr, _evapi_clients[i].src_port,
+			(int)rlen, rbuffer);
+	evapi_run_cfg_route(i, _evapi_rts.msg_received);
 }
 
 /**
@@ -211,6 +293,11 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 
 	LM_DBG("new connection - pos[%d] from: [%s:%d]\n", i,
 			_evapi_clients[i].src_addr, _evapi_clients[i].src_port);
+
+	evapi_run_cfg_route(i, _evapi_rts.con_new);
+
+	if(_evapi_clients[i].connected == 0)
+		return;
 
 	/* start watcher to read messages from whatchers */
 	ev_io_init(evapi_client, evapi_recv_client, csock, EV_READ);

@@ -35,6 +35,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mod_fix.h"
 #include "../../cfg/cfg_struct.h"
+#include "../../lib/kcore/faked_msg.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -95,6 +96,12 @@ static int mod_init(void)
 {
 	char *p;
 
+	/* init faked sip msg */
+	if(faked_msg_init()<0) {
+		LM_ERR("failed to init faked sip msg\n");
+		return -1;
+	}
+
 	if(load_tm_api( &tmb ) < 0) {
 		LM_INFO("cannot load the TM-functions - async relay disabled\n");
 		memset(&tmb, 0, sizeof(tm_api_t));
@@ -118,6 +125,8 @@ static int mod_init(void)
 
 	/* add child to update local config framework structures */
 	cfg_register_child(1 + _evapi_workers);
+
+	evapi_init_event_routes();
 
 	return 0;
 }

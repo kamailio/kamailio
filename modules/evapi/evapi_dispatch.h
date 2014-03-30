@@ -35,4 +35,6 @@ int evapi_run_worker(int prank);
 
 int evapi_relay(str *evdata);
 
+void evapi_init_event_routes(void);
+
 #endif
