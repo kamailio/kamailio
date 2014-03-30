@@ -34,6 +34,7 @@
 #include "../../pvar.h"
 #include "../../mem/shm_mem.h"
 #include "../../mod_fix.h"
+#include "../../pvar.h"
 #include "../../cfg/cfg_struct.h"
 #include "../../lib/kcore/faked_msg.h"
 
@@ -72,6 +73,14 @@ static param_export_t params[]={
 	{0, 0, 0}
 };
 
+static pv_export_t mod_pvs[] = {
+	{ {"evapi", (sizeof("evapi")-1)}, PVT_OTHER, pv_get_evapi,
+		pv_set_evapi, pv_parse_evapi_name, 0, 0, 0},
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+
 struct module_exports exports = {
 	"evapi",
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -79,7 +88,7 @@ struct module_exports exports = {
 	params,
 	0,
 	0,              /* exported MI functions */
-	0,              /* exported pseudo-variables */
+	mod_pvs,        /* exported pseudo-variables */
 	0,              /* extra processes */
 	mod_init,       /* module initialization function */
 	0,              /* response function */

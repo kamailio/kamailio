@@ -23,6 +23,8 @@
 #ifndef _EVAPI_DISPATCH_
 #define _EVAPI_DISPATCH_
 
+#include "../../pvar.h"
+
 int evapi_init_notify_sockets(void);
 
 void evapi_close_notify_sockets_child(void);
@@ -36,5 +38,10 @@ int evapi_run_worker(int prank);
 int evapi_relay(str *evdata);
 
 void evapi_init_event_routes(void);
+
+int pv_parse_evapi_name(pv_spec_t *sp, str *in);
+int pv_get_evapi(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
+int pv_set_evapi(sip_msg_t *msg, pv_param_t *param, int op,
+		pv_value_t *val);
 
 #endif
