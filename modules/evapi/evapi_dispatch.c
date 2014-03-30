@@ -27,6 +27,8 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 
 #include <ev.h>
@@ -37,9 +39,13 @@
 
 static int _evapi_notify_sockets[2];
 
+#define EVAPI_IPADDR_SIZE	64
 typedef struct _evapi_client {
 	int connected;
 	int sock;
+	unsigned short af;
+	unsigned short src_port;
+	char src_addr[EVAPI_IPADDR_SIZE];
 } evapi_client_t;
 
 #define EVAPI_MAX_CLIENTS	8
@@ -146,7 +152,7 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
  */
 void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 {
-	struct sockaddr_in caddr;
+	struct sockaddr caddr;
 	socklen_t clen = sizeof(caddr);
 	int csock;
 	struct ev_io *evapi_client;
@@ -172,8 +178,28 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	}
 	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
 		if(_evapi_clients[i].connected==0) {
+			if (caddr.sa_family == AF_INET) {
+				_evapi_clients[i].src_port = ntohs(((struct sockaddr_in*)&caddr)->sin_port);
+				if(inet_ntop(AF_INET, &((struct sockaddr_in*)&caddr)->sin_addr,
+							_evapi_clients[i].src_addr,
+							EVAPI_IPADDR_SIZE)==NULL) {
+					LM_ERR("cannot convert ipv4 address\n");
+					close(csock);
+					return;
+				}
+			} else {
+				_evapi_clients[i].src_port = ntohs(((struct sockaddr_in6*)&caddr)->sin6_port);
+				if(inet_ntop(AF_INET6, &((struct sockaddr_in6*)&caddr)->sin6_addr,
+							_evapi_clients[i].src_addr,
+							EVAPI_IPADDR_SIZE)==NULL) {
+					LM_ERR("cannot convert ipv6 address\n");
+					close(csock);
+					return;
+				}
+			}
 			_evapi_clients[i].connected = 1;
 			_evapi_clients[i].sock = csock;
+			_evapi_clients[i].af = caddr.sa_family;
 			break;
 		}
 	}
@@ -182,6 +208,9 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 		close(csock);
 		return;
 	}
+
+	LM_DBG("new connection - pos[%d] from: [%s:%d]\n", i,
+			_evapi_clients[i].src_addr, _evapi_clients[i].src_port);
 
 	/* start watcher to read messages from whatchers */
 	ev_io_init(evapi_client, evapi_recv_client, csock, EV_READ);
