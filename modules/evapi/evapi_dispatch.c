@@ -66,15 +66,15 @@ typedef struct _evapi_evroutes {
 
 static evapi_evroutes_t _evapi_rts;
 
-static evapi_env_t _evapi_env_data;
-
 /**
  *
  */
-void evapi_env_reset(void)
+void evapi_env_reset(evapi_env_t *evenv)
 {
-	memset(&_evapi_env_data, 0, sizeof(evapi_env_t));
-	_evapi_env_data.conidx = -1;
+	if(evenv==0)
+		return;
+	memset(evenv, 0, sizeof(evapi_env_t));
+	evenv->conidx = -1;
 }
 
 /**
@@ -83,7 +83,6 @@ void evapi_env_reset(void)
 void evapi_init_event_routes(void)
 {
 	memset(&_evapi_rts, 0, sizeof(evapi_evroutes_t));
-	evapi_env_reset();
 
 	_evapi_rts.con_new = route_get(&event_rt, "evapi:connection-new");
 	if (_evapi_rts.con_new < 0 || event_rt.rlist[_evapi_rts.con_new] == NULL)
@@ -99,13 +98,14 @@ void evapi_init_event_routes(void)
 /**
  *
  */
-int evapi_run_cfg_route(int rt)
+int evapi_run_cfg_route(evapi_env_t *evenv, int rt)
 {
 	int backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
+	sip_msg_t tmsg;
 
-	if(_evapi_env_data.eset==0) {
+	if(evenv==0 || evenv->eset==0) {
 		LM_ERR("evapi env not set\n");
 		return -1;
 	}
@@ -114,26 +114,30 @@ int evapi_run_cfg_route(int rt)
 		return 0;
 
 	fmsg = faked_msg_next();
+	memcpy(&tmsg, fmsg, sizeof(sip_msg_t));
+	fmsg = &tmsg;
+	evapi_set_msg_env(fmsg, evenv);
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
 	run_top_route(event_rt.rlist[rt], fmsg, 0);
 	set_route_type(backup_rt);
+	evapi_set_msg_env(fmsg, NULL);
 	return 0;
 }
 
 /**
  *
  */
-int evapi_cfg_close_connection(void)
+int evapi_cfg_close_connection(int cidx)
 {
-	if(_evapi_env_data.conidx<0 || _evapi_env_data.conidx>=EVAPI_MAX_CLIENTS)
+	if(cidx<0 || cidx>=EVAPI_MAX_CLIENTS)
 		return -1;
-	if(_evapi_clients[_evapi_env_data.conidx].connected==1
-			&& _evapi_clients[_evapi_env_data.conidx].sock > 0) {
-		close(_evapi_clients[_evapi_env_data.conidx].sock);
-		_evapi_clients[_evapi_env_data.conidx].connected = 0;
-		_evapi_clients[_evapi_env_data.conidx].sock = 0;
+	if(_evapi_clients[cidx].connected==1
+			&& _evapi_clients[cidx].sock > 0) {
+		close(_evapi_clients[cidx].sock);
+		_evapi_clients[cidx].connected = 0;
+		_evapi_clients[cidx].sock = 0;
 		return 0;
 	}
 	return -2;
@@ -203,6 +207,7 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 	char rbuffer[CLIENT_BUFFER_SIZE];
 	ssize_t rlen;
 	int i;
+	evapi_env_t evenv;
 
 	if(EV_ERROR & revents) {
 		perror("received invalid event\n");
@@ -227,12 +232,12 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		return;
 	}
 
+	evapi_env_reset(&evenv);
 	if(rlen == 0) {
 		/* client is gone */
-		_evapi_env_data.eset = 1;
-		_evapi_env_data.conidx = i;
-		evapi_run_cfg_route(_evapi_rts.con_closed);
-		evapi_env_reset();
+		evenv.eset = 1;
+		evenv.conidx = i;
+		evapi_run_cfg_route(&evenv, _evapi_rts.con_closed);
 		_evapi_clients[i].connected = 0;
 		_evapi_clients[i].sock = 0;
 		ev_io_stop(loop, watcher);
@@ -247,12 +252,11 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 	LM_NOTICE("{%d} [%s:%d] - received [%.*s]\n",
 			i, _evapi_clients[i].src_addr, _evapi_clients[i].src_port,
 			(int)rlen, rbuffer);
-	_evapi_env_data.conidx = i;
-	_evapi_env_data.msg.s = rbuffer;
-	_evapi_env_data.msg.len = rlen;
-	_evapi_env_data.eset = 1;
-	evapi_run_cfg_route(_evapi_rts.msg_received);
-	evapi_env_reset();
+	evenv.conidx = i;
+	evenv.msg.s = rbuffer;
+	evenv.msg.len = rlen;
+	evenv.eset = 1;
+	evapi_run_cfg_route(&evenv, _evapi_rts.msg_received);
 }
 
 /**
@@ -265,6 +269,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	int csock;
 	struct ev_io *evapi_client;
 	int i;
+	evapi_env_t evenv;
 	
 	evapi_client = (struct ev_io*) malloc (sizeof(struct ev_io));
 	if(evapi_client==NULL) {
@@ -320,10 +325,10 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	LM_DBG("new connection - pos[%d] from: [%s:%d]\n", i,
 			_evapi_clients[i].src_addr, _evapi_clients[i].src_port);
 
-	_evapi_env_data.conidx = i;
-	_evapi_env_data.eset = 1;
-	evapi_run_cfg_route(_evapi_rts.con_new);
-	evapi_env_reset();
+	evapi_env_reset(&evenv);
+	evenv.conidx = i;
+	evenv.eset = 1;
+	evapi_run_cfg_route(&evenv, _evapi_rts.con_new);
 
 	if(_evapi_clients[i].connected == 0)
 		return;
@@ -564,30 +569,34 @@ error:
  */
 int pv_get_evapi(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
+	evapi_env_t *evenv;
+
 	if(param==NULL || res==NULL)
 		return -1;
 
-	if(_evapi_env_data.conidx<0 || _evapi_env_data.conidx>=EVAPI_MAX_CLIENTS)
+	evenv = (evapi_env_t*)msg->date;
+
+	if(evenv==NULL || evenv->conidx<0 || evenv->conidx>=EVAPI_MAX_CLIENTS)
 		return pv_get_null(msg, param, res);
 
-	if(_evapi_clients[_evapi_env_data.conidx].connected==0
-			&& _evapi_clients[_evapi_env_data.conidx].sock <= 0)
+	if(_evapi_clients[evenv->conidx].connected==0
+			&& _evapi_clients[evenv->conidx].sock <= 0)
 		return pv_get_null(msg, param, res);
 
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 0:
-			return pv_get_sintval(msg, param, res, _evapi_env_data.conidx);
+			return pv_get_sintval(msg, param, res, evenv->conidx);
 		case 1:
-			if(_evapi_env_data.msg.s==NULL)
+			if(evenv->msg.s==NULL)
 				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res, &_evapi_env_data.msg);
+			return pv_get_strval(msg, param, res, &evenv->msg);
 		case 2:
 			return pv_get_strzval(msg, param, res,
-					_evapi_clients[_evapi_env_data.conidx].src_addr);
+					_evapi_clients[evenv->conidx].src_addr);
 		case 3:
 			return pv_get_sintval(msg, param, res,
-					_evapi_clients[_evapi_env_data.conidx].src_port);
+					_evapi_clients[evenv->conidx].src_port);
 		default:
 			return pv_get_null(msg, param, res);
 	}
