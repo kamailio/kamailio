@@ -226,7 +226,7 @@ event_route[evapi:connection-closed] {
         </para>
         <programlisting  format="linespecific">
 ...
-event_route[evapi:connection-closed] {
+event_route[evapi:message-received] {
     xlog("received [$evapi(msg)] from $evapi(srcaddr):$evapi(srcport)\n");
 }
 ...

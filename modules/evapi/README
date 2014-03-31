@@ -218,7 +218,7 @@ event_route[evapi:connection-closed] {
    If defined, the module calls event_route[evapi:message-received] when a
    message is received from a client.
 ...
-event_route[evapi:connection-closed] {
+event_route[evapi:message-received] {
     xlog("received [$evapi(msg)] from $evapi(srcaddr):$evapi(srcport)\n");
 }
 ...
