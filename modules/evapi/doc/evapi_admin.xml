@@ -155,6 +155,105 @@ evapi_relay("{ \"event\": \"suspend\",\n \"data\":"
 	    </example>
 	</section>
 
+	<section id="evapi.f.evapi_close">
+	    <title>
+		<function moreinfo="none">evapi_close()</function>
+	    </title>
+	    <para>
+		Close evapi current client connection.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>evapi_evapi</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[evapi:connection-new] {
+  if($evapi(srcaddr)!="127.0.0.1") {
+    evapi_close();
+    exit;
+  }
+}
+...
+</programlisting>
+	    </example>
 	</section>
+
+	</section>
+
+    <section>
+    <title>Event routes</title>
+    <section>
+        <title>
+        <function moreinfo="none">evapi:connection-new</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[evapi:connection-new]
+			when a new client is connected.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[evapi:connection-new] {
+    xlog("new connection from $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+        </programlisting>
+	</section>
+    <section>
+        <title>
+        <function moreinfo="none">evapi:connection-closed</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[evapi:connection-closed]
+			when a client connection is closed.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[evapi:connection-closed] {
+    xlog("connection closed by $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+        </programlisting>
+    </section>
+    <section>
+        <title>
+        <function moreinfo="none">evapi:message-received</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[evapi:message-received]
+			when a message is received from a client.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[evapi:connection-closed] {
+    xlog("received [$evapi(msg)] from $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+        </programlisting>
+    </section>
+    </section>
+
+    <section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$evapi(srcaddr)</emphasis> - source ip
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$evapi(srcport)</emphasis> - source port
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$evapi(msg)</emphasis> - received event message
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$evapi(conidx)</emphasis> - internal connexion index
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
 </chapter>
 

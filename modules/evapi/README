@@ -32,6 +32,15 @@ Daniel-Constantin Mierla
 
               4.1. evapi_relay(evdata)
               4.2. evapi_async_relay(evdata)
+              4.3. evapi_close()
+
+        5. Event routes
+
+              5.1. evapi:connection-new
+              5.2. evapi:connection-closed
+              5.3. evapi:message-received
+
+        6. Exported pseudo-variables
 
    List of Examples
 
@@ -40,6 +49,7 @@ Daniel-Constantin Mierla
    1.3. evapi_relay usage
    1.4. TCP message
    1.5. evapi_async_relay usage
+   1.6. evapi_evapi usage
 
 Chapter 1. Admin Guide
 
@@ -60,6 +70,15 @@ Chapter 1. Admin Guide
 
         4.1. evapi_relay(evdata)
         4.2. evapi_async_relay(evdata)
+        4.3. evapi_close()
+
+   5. Event routes
+
+        5.1. evapi:connection-new
+        5.2. evapi:connection-closed
+        5.3. evapi:message-received
+
+   6. Exported pseudo-variables
 
 1. Overview
 
@@ -113,6 +132,7 @@ modparam("evapi", "bind_addr", "1.2.3.4:8228")
 
    4.1. evapi_relay(evdata)
    4.2. evapi_async_relay(evdata)
+   4.3. evapi_close()
 
 4.1. evapi_relay(evdata)
 
@@ -150,3 +170,65 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 evapi_relay("{ \"event\": \"suspend\",\n \"data\":"
         " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
 ...
+
+4.3. evapi_close()
+
+   Close evapi current client connection.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. evapi_evapi usage
+...
+event_route[evapi:connection-new] {
+  if($evapi(srcaddr)!="127.0.0.1") {
+    evapi_close();
+    exit;
+  }
+}
+...
+
+5. Event routes
+
+   5.1. evapi:connection-new
+   5.2. evapi:connection-closed
+   5.3. evapi:message-received
+
+5.1. evapi:connection-new
+
+   If defined, the module calls event_route[evapi:connection-new] when a
+   new client is connected.
+...
+event_route[evapi:connection-new] {
+    xlog("new connection from $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+
+5.2. evapi:connection-closed
+
+   If defined, the module calls event_route[evapi:connection-closed] when
+   a client connection is closed.
+...
+event_route[evapi:connection-closed] {
+    xlog("connection closed by $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+
+5.3. evapi:message-received
+
+   If defined, the module calls event_route[evapi:message-received] when a
+   message is received from a client.
+...
+event_route[evapi:connection-closed] {
+    xlog("received [$evapi(msg)] from $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+
+6. Exported pseudo-variables
+
+     * $evapi(srcaddr) - source ip
+     * $evapi(srcport) - source port
+     * $evapi(msg) - received event message
+     * $evapi(conidx) - internal connexion index
+
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/wiki/.
