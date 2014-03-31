@@ -48,6 +48,6 @@ int pv_set_evapi(sip_msg_t *msg, pv_param_t *param, int op,
 #define evapi_set_msg_env(_msg, _evenv) do { _msg->date=(hdr_field_t*)_evenv; } while(0)
 #define evapi_get_msg_env(_msg) ((evapi_env_t*)_msg->date)
 
-int evapi_cfg_close_connection(int cidx);
+int evapi_cfg_close(sip_msg_t *msg);
 
 #endif

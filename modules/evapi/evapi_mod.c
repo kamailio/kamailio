@@ -55,8 +55,9 @@ static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
 
-static int w_evapi_relay(struct sip_msg* msg, char* evdata, char* p2);
-static int w_evapi_async_relay(struct sip_msg* msg, char* evdata, char* p2);
+static int w_evapi_relay(sip_msg_t* msg, char* evdata, char* p2);
+static int w_evapi_async_relay(sip_msg_t* msg, char* evdata, char* p2);
+static int w_evapi_close(sip_msg_t* msg, char* p1, char* p2);
 static int fixup_evapi_relay(void** param, int param_no);
 
 static cmd_export_t cmds[]={
@@ -64,6 +65,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"evapi_async_relay", (cmd_function)w_evapi_async_relay, 1, fixup_evapi_relay,
 		0, REQUEST_ROUTE},
+	{"evapi_close",       (cmd_function)w_evapi_close,       1, NULL,
+		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -291,7 +294,22 @@ static int w_evapi_async_relay(sip_msg_t *msg, char *evdata, char *p2)
 	return 1;
 }
 
+/**
+ *
+ */
 static int fixup_evapi_relay(void** param, int param_no)
 {
 	return fixup_spve_null(param, param_no);
+}
+
+/**
+ *
+ */
+static int w_evapi_close(sip_msg_t* msg, char* p1, char* p2)
+{
+	int ret;
+	ret = evapi_cfg_close(msg);
+	if(ret>=0)
+		return ret+1;
+	return ret;
 }

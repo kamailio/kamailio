@@ -129,7 +129,7 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt)
 /**
  *
  */
-int evapi_cfg_close_connection(int cidx)
+int evapi_close_connection(int cidx)
 {
 	if(cidx<0 || cidx>=EVAPI_MAX_CLIENTS)
 		return -1;
@@ -141,6 +141,23 @@ int evapi_cfg_close_connection(int cidx)
 		return 0;
 	}
 	return -2;
+}
+
+/**
+ *
+ */
+int evapi_cfg_close(sip_msg_t *msg)
+{
+	evapi_env_t *evenv;
+
+	if(msg==NULL)
+		return -1;
+
+	evenv = (evapi_env_t*)msg->date;
+
+	if(evenv==NULL || evenv->conidx<0 || evenv->conidx>=EVAPI_MAX_CLIENTS)
+		return -1;
+	return evapi_close_connection(evenv->conidx);
 }
 
 /**
