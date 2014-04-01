@@ -252,31 +252,31 @@ do{	\
 		case '<':	\
 			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
 			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_LT);	\
-			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).s = (str).s + (temp_counter) + 1;	\
 			(temp_holder).len = (temp_counter) + 1;	\
 			break;	\
 		case '>':	\
 			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
 			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_GT);	\
-			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).s = (str).s + (temp_counter) + 1;	\
 			(temp_holder).len = (temp_counter) + 1;	\
 			break;	\
 		case '&':	\
 			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
 			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_AMP);	\
-			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).s = (str).s + (temp_counter) + 1;	\
 			(temp_holder).len = (temp_counter) + 1;	\
 			break;	\
 		case '"':	\
 			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
 			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_QUOT);	\
-			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).s = (str).s + (temp_counter) + 1;	\
 			(temp_holder).len = (temp_counter) + 1;	\
 			break;	\
 		case '\'':	\
 			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
 			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_SQUOT);	\
-			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).s = (str).s + (temp_counter) + 1;	\
 			(temp_holder).len = (temp_counter) + 1;	\
 			break;	\
 		}	\
@@ -385,7 +385,7 @@ static const str XHTTP_PI_Response_Foot = str_init(\
 "\n</center>\n<div align=\"center\" class=\"foot\" style=\"margin:20px auto\">"\
 	"<span style='margin-left:5px;'></span>"\
 	"<a href=\"http://kamailio.org\">Kamailio web site</a><br/>"\
-	"Copyright &copy; 2012-2013 <a href=\"http://www.voipembedded.com/\">VoIP Embedded Inc.</a>"\
+	"Copyright &copy; 2012-2014 <a href=\"http://www.voipembedded.com/\">VoIP Embedded Inc.</a>"\
 								". All rights reserved."\
 "</div></body></html>");
 
