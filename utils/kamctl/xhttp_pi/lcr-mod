@@ -4,7 +4,7 @@
 			<db_table_id>lcr_gw</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>lcr_id</field></col>
 				<col><field>gw_name</field></col>
 				<col><field>ip_addr</field></col>
@@ -75,7 +75,7 @@
 			<db_table_id>lcr_rule_target</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>lcr_id</field></col>
 				<col><field>rule_id</field></col>
 				<col><field>gw_id</field></col>
@@ -122,7 +122,7 @@
 			<db_table_id>lcr_rule</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>lcr_id</field></col>
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>

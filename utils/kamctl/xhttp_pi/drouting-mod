@@ -4,7 +4,7 @@
 			<db_table_id>dr_gateways</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>gwid</field></col>
+				<col><field>gwid</field><link_cmd>update</link_cmd></col>
 				<col><field>type</field></col>
 				<col><field>address</field></col>
 				<col><field>strip</field></col>
@@ -54,7 +54,7 @@
 			<db_table_id>dr_rules</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>ruleid</field></col>
+				<col><field>ruleid</field><link_cmd>update</link_cmd></col>
 				<col><field>groupid</field></col>
 				<col><field>prefix</field></col>
 				<col><field>timerec</field></col>
@@ -107,7 +107,7 @@
 			<db_table_id>dr_gw_lists</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>gwlist</field></col>
 				<col><field>description</field></col>
 			</query_cols>
@@ -145,7 +145,7 @@
 			<db_table_id>dr_groups</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>groupid</field></col>

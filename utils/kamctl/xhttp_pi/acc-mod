@@ -4,7 +4,7 @@
 			<db_table_id>acc</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>method</field></col>
 				<col><field>from_tag</field></col>
 				<col><field>to_tag</field></col>
@@ -57,7 +57,7 @@
 			<db_table_id>acc_cdrs</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>start_time</field></col>
 				<col><field>end_time</field></col>
 				<col><field>duration</field></col>
@@ -98,7 +98,7 @@
 			<db_table_id>missed_calls</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>method</field></col>
 				<col><field>from_tag</field></col>
 				<col><field>to_tag</field></col>

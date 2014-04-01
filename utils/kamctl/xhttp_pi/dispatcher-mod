@@ -4,7 +4,7 @@
 			<db_table_id>dispatcher</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>setid</field></col>
 				<col><field>destination</field></col>
 				<col><field>flags</field></col>

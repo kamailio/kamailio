@@ -4,7 +4,7 @@
 			<db_table_id>usr_preferences</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>uuid</field></col>
 				<col><field>username</field></col>
 				<col><field>domain</field></col>

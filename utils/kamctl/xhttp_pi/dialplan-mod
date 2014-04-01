@@ -4,7 +4,7 @@
 			<db_table_id>dialplan</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>dpid</field></col>
 				<col><field>pr</field></col>
 				<col><field>match_op</field></col>
