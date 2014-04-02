@@ -482,6 +482,7 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 		/* hosts HAVE to match */
 		if ((needle_uri.host.len != c->received_host.len) || (memcmp(needle_uri.host.s, c->contact_host.s, needle_uri.host.len)!=0)) {
 			//can't possibly match
+			c = c->next;
 			continue;
 		}
 
@@ -533,8 +534,10 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 			port_match = 1;
 		}
 
-		if (!port_match)
+		if (!port_match){
+			c = c->next;
 			continue;
+		}
 
 		/* user parts must match (if not wildcarded) with either primary contact OR with any userpart in the implicit set (associated URIs).. */
 		if (((needle_uri.user.len == 1)
@@ -551,6 +554,7 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 		while (impu) {
 			if (parse_uri(impu->public_identity.s, impu->public_identity.len, &impu_uri) != 0) {
 				LM_ERR("failed to parse IMPU URI [%.*s]...continuing\n", impu->public_identity.len, impu->public_identity.s);
+				impu = impu->next;
 				continue;
 			}
 			LM_DBG("comparing first %d chars of impu [%.*s] for contact userpart [%.*s]\n",
