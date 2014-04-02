@@ -14,6 +14,8 @@
 		Each col will have:
 		- a mandatory 'field' identifying the name of the field
 		- an optional 'value' identifing the given value
+		- an optional 'link_cmd' identifing the update cmd with prepared values
+			* only for query_cols for DB1_QUERY commands
 		- a mandatory 'operator' only for 'clause_cols'
 		The [clause|query|order_by]_cols can be:
 		- ov : optional with multiple 'col' with optional 'value'
