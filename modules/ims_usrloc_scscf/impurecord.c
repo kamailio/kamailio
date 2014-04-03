@@ -515,6 +515,35 @@ int delete_ucontact(impurecord_t* _r, struct ucontact* _c) {
     return ret;
 }
 
+
+/* function to convert contact aor to only have data after @ - ie strip user part */
+inline int aor_to_contact(str* aor, str* contact) {
+	char* p;
+	int ret = 0;	//success
+
+	contact->s = aor->s;
+	contact->len = aor->len;
+	if (memcmp(aor->s, "sip:", 4) == 0) {
+		contact->s = aor->s + 4;
+		contact->len-=4;
+	}
+
+	if ((p=memchr(contact->s, '@', contact->len))) {
+		contact->len -= (p - contact->s + 1);
+		contact->s = p+1;
+	}
+
+	if ((p=memchr(contact->s, ';', contact->len))) {
+		contact->len = p - contact->s;
+	}
+
+	if ((p=memchr(contact->s, '>', contact->len))) {
+		contact->len = p - contact->s;
+	}
+
+	return ret;
+}
+
 /*!
  * \brief Match a contact record to a contact string
  * \param ptr contact record
@@ -524,6 +553,27 @@ int delete_ucontact(impurecord_t* _r, struct ucontact* _c) {
 static inline struct ucontact* contact_match(ucontact_t* ptr, str* _c) {
     while (ptr) {
         if ((_c->len == ptr->c.len) && !memcmp(_c->s, ptr->c.s, _c->len)) {
+            return ptr;
+        }
+
+        ptr = ptr->next;
+    }
+    return 0;
+}
+
+/*!
+ * \brief Match a contact record to a contact string but only compare the ip port portion
+ * \param ptr contact record
+ * \param _c contact string
+ * \return ptr on successfull match, 0 when they not match
+ */
+static inline struct ucontact* contact_port_ip_match(ucontact_t* ptr, str* _c) {
+    str string_ip_port, contact_ip_port;
+    aor_to_contact(_c, &string_ip_port);//strip userpart from test contact
+
+    while (ptr) {
+	aor_to_contact(&ptr->c, &contact_ip_port);//strip userpart from contact
+	if ((string_ip_port.len == contact_ip_port.len) && !memcmp(string_ip_port.s, contact_ip_port.s, string_ip_port.len)) {
             return ptr;
         }
 
@@ -609,6 +659,9 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
         case CONTACT_PATH:
             ptr = contact_path_match(_r->contacts, _c, _path);
             break;
+	case CONTACT_PORT_IP_ONLY:
+	    ptr = contact_port_ip_match(_r->contacts, _c);
+	    break;
         default:
             LM_CRIT("unknown matching_mode %d\n", matching_mode);
             return -1;
