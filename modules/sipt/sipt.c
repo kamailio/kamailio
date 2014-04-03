@@ -134,7 +134,7 @@ static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value
 
 	if(body.s == NULL)
 	{
-		LM_ERR("No ISUP Message Found");
+		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
@@ -155,7 +155,7 @@ static int sipt_get_cpc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 	if(body.s == NULL)
 	{
-		LM_ERR("No ISUP Message Found");
+		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
@@ -176,7 +176,7 @@ static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv
 
 	if(body.s == NULL)
 	{
-		LM_ERR("No ISUP Message Found");
+		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
@@ -197,7 +197,7 @@ static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_valu
 
 	if(body.s == NULL)
 	{
-		LM_ERR("No ISUP Message Found");
+		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
@@ -218,7 +218,7 @@ static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t
 
 	if(body.s == NULL)
 	{
-		LM_ERR("No ISUP Message Found");
+		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
@@ -240,7 +240,7 @@ static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_
 
 	if(body.s == NULL)
 	{
-		LM_ERR("No ISUP Message Found");
+		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
@@ -271,7 +271,7 @@ static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops
 
 	if(body.s == NULL)
 	{
-		LM_ERR("No ISUP Message Found");
+		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 	str sdp;
@@ -334,7 +334,7 @@ static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char
 
 	if(body.s == NULL)
 	{
-		LM_ERR("No ISUP Message Found");
+		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
