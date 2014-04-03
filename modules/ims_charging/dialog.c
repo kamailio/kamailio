@@ -207,7 +207,7 @@ void remove_dlg_data_from_contact(struct dlg_cell *dlg, int type, struct dlg_cb_
 	    LM_DBG("usrloc does not have imprecord for implicity IMPU, ignore\n");
 	}else {
 	    if (ul.get_ucontact(implicit_impurecord, &impu_data->contact, &callid, &path, 0/*cseq*/,  &ucontact) != 0) { //contact does not exist
-		LM_DBG("This contact: <%.*s> is not in usrloc, ignore - NOTE: You need S-CSCF usrloc set to match_mode CONTACT_ONLY\n", impu_data->contact.len, impu_data->contact.s);
+		LM_DBG("This contact: <%.*s> is not in usrloc, ignore - NOTE: You need S-CSCF usrloc set to match_mode CONTACT_PORT_IP_ONLY\n", impu_data->contact.len, impu_data->contact.s);
 	    } else {//contact exists so add dialog data to it
 		ul.remove_dialog_data_from_contact(ucontact, dlg->h_entry, dlg->h_id);
 	    }
@@ -242,7 +242,7 @@ void add_dlg_data_to_contact(struct dlg_cell *dlg, int type, struct dlg_cb_param
 	    LM_DBG("usrloc does not have imprecord for implicity IMPU, ignore\n");
 	}else {
 	    if (ul.get_ucontact(implicit_impurecord, &impu_data->contact, &callid, &path, 0/*cseq*/,  &ucontact) != 0) { //contact does not exist
-		LM_DBG("This contact: <%.*s> is not in usrloc, ignore - NOTE: You need S-CSCF usrloc set to match_mode CONTACT_ONLY\n", impu_data->contact.len, impu_data->contact.s);
+		LM_DBG("This contact: <%.*s> is not in usrloc, ignore - NOTE: You need S-CSCF usrloc set to match_mode CONTACT_PORT_IP_ONLY\n", impu_data->contact.len, impu_data->contact.s);
 	    } else {//contact exists so add dialog data to it
 		ul.add_dialog_data_to_contact(ucontact, dlg->h_entry, dlg->h_id);
 	    }
