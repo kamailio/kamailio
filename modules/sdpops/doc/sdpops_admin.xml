@@ -278,6 +278,31 @@ if(sdp_with_transport("RTP/SAVP"))
 	</section>
 	<section>
 	    <title>
+		<function moreinfo="none">sdp_with_transport_like(string)</function>
+	    </title>
+	    <para>
+		Returns true if the SDP has 'media=media port type ...' line,
+		where type contains string. The
+		parameter can be static string or variable holding a string.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_with_transport_like</function> usage</title>
+		<programlisting format="linespecific">
+...
+# check for SAVPF stream
+if(sdp_with_transport("SAVPF"))
+{
+    # the session has a SAVPF stream, e.g., RTP/SAVPF or UDP/TLS/RTP/SAVPF
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
 		<function moreinfo="none">sdp_remove_transport(type)</function>
 	    </title>
 	    <para>
