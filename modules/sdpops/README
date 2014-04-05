@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright (c) 2011 asipto.com
+   Copyright © 2011 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -34,14 +34,13 @@ Daniel-Constantin Mierla
               4.6. sdp_with_media(type)
               4.7. sdp_remove_media(type)
               4.8. sdp_with_transport(type)
-              4.9. sdp_with_transport_like(string)
-              4.10. sdp_remove_transport(type)
-              4.11. sdp_with_codecs_by_id(list)
-              4.12. sdp_with_codecs_by_name(list)
-              4.13. sdp_print(level)
-              4.14. sdp_get(avpvar)
-              4.15. sdp_content()
-              4.16. sdp_get_line_startswith(avpvar, string)
+              4.9. sdp_remove_transport(type)
+              4.10. sdp_with_codecs_by_id(list)
+              4.11. sdp_with_codecs_by_name(list)
+              4.12. sdp_print(level)
+              4.13. sdp_get(avpvar)
+              4.14. sdp_content()
+              4.15. sdp_get_line_startswith(avpvar, string)
 
    List of Examples
 
@@ -53,14 +52,13 @@ Daniel-Constantin Mierla
    1.6. sdp_with_media usage
    1.7. sdp_remove_media usage
    1.8. sdp_with_transport usage
-   1.9. sdp_with_transport_like usage
-   1.10. sdp_remove_transport usage
-   1.11. sdp_with_codecs_by_id usage
-   1.12. sdp_with_codecs_by_name usage
-   1.13. sdp_print usage
-   1.14. sdp_get usage
-   1.15. sdp_content usage
-   1.16. sdp_get_line_startswith usage
+   1.9. sdp_remove_transport usage
+   1.10. sdp_with_codecs_by_id usage
+   1.11. sdp_with_codecs_by_name usage
+   1.12. sdp_print usage
+   1.13. sdp_get usage
+   1.14. sdp_content usage
+   1.15. sdp_get_line_startswith usage
 
 Chapter 1. Admin Guide
 
@@ -83,14 +81,13 @@ Chapter 1. Admin Guide
         4.6. sdp_with_media(type)
         4.7. sdp_remove_media(type)
         4.8. sdp_with_transport(type)
-        4.9. sdp_with_transport_like(string)
-        4.10. sdp_remove_transport(type)
-        4.11. sdp_with_codecs_by_id(list)
-        4.12. sdp_with_codecs_by_name(list)
-        4.13. sdp_print(level)
-        4.14. sdp_get(avpvar)
-        4.15. sdp_content()
-        4.16. sdp_get_line_startswith(avpvar, string)
+        4.9. sdp_remove_transport(type)
+        4.10. sdp_with_codecs_by_id(list)
+        4.11. sdp_with_codecs_by_name(list)
+        4.12. sdp_print(level)
+        4.13. sdp_get(avpvar)
+        4.14. sdp_content()
+        4.15. sdp_get_line_startswith(avpvar, string)
 
 1. Overview
 
@@ -132,14 +129,13 @@ Chapter 1. Admin Guide
    4.6. sdp_with_media(type)
    4.7. sdp_remove_media(type)
    4.8. sdp_with_transport(type)
-   4.9. sdp_with_transport_like(string)
-   4.10. sdp_remove_transport(type)
-   4.11. sdp_with_codecs_by_id(list)
-   4.12. sdp_with_codecs_by_name(list)
-   4.13. sdp_print(level)
-   4.14. sdp_get(avpvar)
-   4.15. sdp_content()
-   4.16. sdp_get_line_startswith(avpvar, string)
+   4.9. sdp_remove_transport(type)
+   4.10. sdp_with_codecs_by_id(list)
+   4.11. sdp_with_codecs_by_name(list)
+   4.12. sdp_print(level)
+   4.13. sdp_get(avpvar)
+   4.14. sdp_content()
+   4.15. sdp_get_line_startswith(avpvar, string)
 
 4.1.  sdp_remove_codecs_by_id(list)
 
@@ -282,37 +278,20 @@ if(sdp_with_transport("RTP/SAVP"))
 }
 ...
 
-4.9.  sdp_with_transport_like(string)
-
-   Returns true if the SDP has 'media=media port type ...' line, where
-   type contains string. The parameter can be static string or variable
-   holding a string.
-
-   This function can be used from ANY_ROUTE.
-
-   Example 1.9. sdp_with_transport_like usage
-...
-# check for SAVPF stream
-if(sdp_with_transport("SAVPF"))
-{
-    # the session has a SAVPF stream, e.g., RTP/SAVPF or UDP/TLS/RTP/SAVPF
-}
-...
-
-4.10.  sdp_remove_transport(type)
+4.9.  sdp_remove_transport(type)
 
    Remove the streams that match on 'm=media port type ...' line. The
    parameter can be static string or variable holding the transport type.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. sdp_remove_transport usage
+   Example 1.9. sdp_remove_transport usage
 ...
 # remove stream with transport RTP/AVP
 sdp_remove_transport("RTP/AVP");
 ...
 
-4.11.  sdp_with_codecs_by_id(list)
+4.10.  sdp_with_codecs_by_id(list)
 
    Returns true if any of the codecs provided in the parameter 'list' from
    all media streams is found in SDP payload. The parameter 'list' must be
@@ -321,7 +300,7 @@ sdp_remove_transport("RTP/AVP");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. sdp_with_codecs_by_id usage
+   Example 1.10. sdp_with_codecs_by_id usage
 ...
 # test for PCMU
 if(sdp_with_codecs_by_id("0")) { ... }
@@ -329,7 +308,7 @@ if(sdp_with_codecs_by_id("0")) { ... }
 if(sdp_with_codecs_by_id("0,8,3")) { ... }
 ...
 
-4.12.  sdp_with_codecs_by_name(list)
+4.11.  sdp_with_codecs_by_name(list)
 
    Returns true if any of the codecs provided in the parameter 'list' from
    all media streams is found in SDP payload. The parameter 'list' must be
@@ -338,7 +317,7 @@ if(sdp_with_codecs_by_id("0,8,3")) { ... }
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. sdp_with_codecs_by_name usage
+   Example 1.11. sdp_with_codecs_by_name usage
 ...
 # test for PCMU
 if(sdp_with_codecs_by_name("PCMU")) { ... }
@@ -346,45 +325,45 @@ if(sdp_with_codecs_by_name("PCMU")) { ... }
 if(sdp_with_codecs_by_name("PCMU,PCMA,GSM")) { ... }
 ...
 
-4.13.  sdp_print(level)
+4.12.  sdp_print(level)
 
    Print the SDP internal structure to log 'level'. The parameter can be
    static integer or variable holding the integer value of the log level.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. sdp_print usage
+   Example 1.12. sdp_print usage
 ...
 # print the SDP
 sdp_print("1");
 ...
 
-4.14.  sdp_get(avpvar)
+4.13.  sdp_get(avpvar)
 
    Store the SDP part of message body in an AVP. Return 1 if SDP is found,
    -1 on error and -2 if there is no SDP part in the message body.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. sdp_get usage
+   Example 1.13. sdp_get usage
 ...
 sdp_get("$avp(sdp)");
 ...
 
-4.15.  sdp_content()
+4.14.  sdp_content()
 
    Return true if the SIP message has SDP body or a SDP part in body.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. sdp_content usage
+   Example 1.14. sdp_content usage
 ...
 if(sdp_content()) {
     ...
 }
 ...
 
-4.16.  sdp_get_line_startswith(avpvar, string)
+4.15.  sdp_get_line_startswith(avpvar, string)
 
    Store the search part of SDP body message with line beginning with
    'string' in an AVP. Return 1 if 'string' is found in SDP, -1 on error
@@ -392,7 +371,7 @@ if(sdp_content()) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.16. sdp_get_line_startswith usage
+   Example 1.15. sdp_get_line_startswith usage
 ...
 if(sdp_get_line_startswith("$avp(mline)", "m=")) {
         xlog("m-line: $avp(mline)\n");

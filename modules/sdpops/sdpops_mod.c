@@ -48,7 +48,6 @@ static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_with_transport(sip_msg_t* msg, char* transport, char *bar);
-static int w_sdp_with_transport_like(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar);
@@ -81,8 +80,6 @@ static cmd_export_t cmds[] = {
 	{"sdp_remove_media",             (cmd_function)w_sdp_remove_media,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_with_transport",         (cmd_function)w_sdp_with_transport,
-		1, fixup_spve_null,  0, ANY_ROUTE},
-	{"sdp_with_transport_like",  (cmd_function)w_sdp_with_transport_like,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_remove_transport",       (cmd_function)w_sdp_remove_transport,
 		1, fixup_spve_null,  0, ANY_ROUTE},
@@ -902,45 +899,11 @@ static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar)
 	return 1;
 }
 
-
-/*
- * ser_memmem() returns the location of the first occurrence of data
- * pattern b2 of size len2 in memory block b1 of size len1 or
- * NULL if none is found. Obtained from NetBSD.
- */
-void *
-ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
-{
-        /* Initialize search pointer */
-        char *sp = (char *) b1;
-
-        /* Initialize pattern pointer */
-        char *pp = (char *) b2;
-
-        /* Initialize end of search address space pointer */
-        char *eos = sp + len1 - len2;
-
-        /* Sanity check */
-        if(!(b1 && b2 && len1 && len2))
-                return NULL;
-
-        while (sp <= eos) {
-                if (*sp == *pp)
-                        if (memcmp(sp, pp, len2) == 0)
-                                return sp;
-
-                        sp++;
-        }
-
-        return NULL;
-}
-
-
 /** 
  * @brief check 'media' matches the value of any 'm=media port value ...' lines
  * @return -1 - error; 0 - not found; 1 - found
  */
-static int sdp_with_transport(sip_msg_t *msg, str *transport, int like)
+static int sdp_with_transport(sip_msg_t *msg, str *transport)
 {
 	int sdp_session_num;
 	int sdp_stream_num;
@@ -969,16 +932,10 @@ static int sdp_with_transport(sip_msg_t *msg, str *transport, int like)
 			LM_DBG("stream %d of %d - transport [%.*s]\n",
 					sdp_stream_num, sdp_session_num,
 					sdp_stream->transport.len, sdp_stream->transport.s);
-			if (like == 0) {
-			    if(transport->len==sdp_stream->transport.len
-			       && strncasecmp(sdp_stream->transport.s, transport->s,
-					      transport->len)==0)
+			if(transport->len==sdp_stream->transport.len
+					&& strncasecmp(sdp_stream->transport.s, transport->s,
+						transport->len)==0)
 				return 1;
-			} else {
-			    if (ser_memmem(sdp_stream->transport.s, transport->s,
-					   sdp_stream->transport.len, transport->len)!=NULL)
-				return 1;
-			}
 			sdp_stream_num++;
 		}
 		sdp_session_num++;
@@ -1006,31 +963,7 @@ static int w_sdp_with_transport(sip_msg_t* msg, char* transport, char *bar)
 		return -1;
 	}
 
-	if(sdp_with_transport(msg, &ltransport, 0)<=0)
-		return -1;
-	return 1;
-}
-
-/**
- *
- */
-static int w_sdp_with_transport_like(sip_msg_t* msg, char* transport, char *bar)
-{
-	str ltransport = {0, 0};
-
-	if(transport==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)transport, &ltransport)!=0)
-	{
-		LM_ERR("unable to get the transport value\n");
-		return -1;
-	}
-
-	if(sdp_with_transport(msg, &ltransport, 1)<=0)
+	if(sdp_with_transport(msg, &ltransport)<=0)
 		return -1;
 	return 1;
 }
