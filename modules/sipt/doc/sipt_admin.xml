@@ -251,6 +251,28 @@ if($sipt_called_party_nai == 3)
 </programlisting>
 		</example>
 	</section>
+	<section id="sipt.v.sipt_event_info">
+		<title><varname>$sipt_event_info</varname></title>
+		<para>
+			Returns the value of the Event Info header
+			of the CPG message.
+			Returns -1 if there is a parsing error.
+		</para>
+		<table>
+			<title>Event Info Values</title>
+			<tgroup cols="2">
+				<tbody>
+					<row><entry>0</entry><entry>Spare</entry></row>
+					<row><entry>1</entry><entry>ALERTING</entry></row>
+					<row><entry>2</entry><entry>PROGRESS</entry></row>
+					<row><entry>3</entry><entry>In-band information or an appropriate pattern is now available</entry></row>
+					<row><entry>4</entry><entry>Call forward on busy</entry></row>
+					<row><entry>5</entry><entry>Call forward on no reply</entry></row>
+					<row><entry>6</entry><entry>Call forward unconditional</entry></row>
+				</tbody>
+			</tgroup>
+		</table>
+	</section>
 
 </section>
 </chapter>

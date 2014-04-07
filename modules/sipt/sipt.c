@@ -104,7 +104,7 @@ static pv_export_t mod_items[] = {
                 0, 0, 0, 0 },
         { {"sipt_hop_counter",  sizeof("sipt_hop_counter")-1}, PVT_OTHER,  sipt_get_hop_counter,    0,
                 0, 0, 0, 0 },
-        { {"sipt_event_info",  sizeof("sipt_cpc")-1}, PVT_OTHER,  sipt_get_event_info,    0,
+        { {"sipt_event_info",  sizeof("sipt_event_info")-1}, PVT_OTHER,  sipt_get_event_info,    0,
                 0, 0, 0, 0 },
         { {"sipt_cpc",  sizeof("sipt_cpc")-1}, PVT_OTHER,  sipt_get_cpc,    0,
                 0, 0, 0, 0 },
