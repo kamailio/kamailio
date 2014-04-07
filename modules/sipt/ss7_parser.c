@@ -143,33 +143,51 @@ static int encode_calling_party(char * number, int nai, int presentation, int sc
         return datalen + 2;
 }
 
-// returns start of specified optional header of IAM, otherwise return -1
+// returns start of specified optional header of IAM or CPG, otherwise return -1
 static int get_optional_header(unsigned char header, unsigned char *buf, int len)
 {
-	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
 	int offset = 0;
 	int res;
+	union isup_msg * message = (union isup_msg*)buf;
+	unsigned char optional_pointer = 0;
 
-	// not an iam? do nothing
-	if(message->type != ISUP_IAM)
+
+	if(message->type == ISUP_IAM)
 	{
+		len -= offsetof(struct isup_iam_fixed, optional_pointer);
+		offset += offsetof(struct isup_iam_fixed, optional_pointer);
+		optional_pointer = message->iam.optional_pointer;
+	}
+	else if(message->type == ISUP_ACM)
+	{
+		len -= offsetof(struct isup_acm_fixed, optional_pointer);
+		offset += offsetof(struct isup_acm_fixed, optional_pointer);
+		optional_pointer = message->acm.optional_pointer;
+	}
+	else if(message->type == ISUP_CPG)
+	{
+		len -= offsetof(struct isup_cpg_fixed, optional_pointer);
+		offset += offsetof(struct isup_cpg_fixed, optional_pointer);
+		optional_pointer = message->cpg.optional_pointer;
+	}
+	else
+	{
+		// don't recognize the type? do nothing
 		return -1;
 	}
 
-	len -= offsetof(struct isup_iam_fixed, optional_pointer);
-	offset += offsetof(struct isup_iam_fixed, optional_pointer);
 
 	if (len < 1)
 		return -1;
 
-	offset += message->optional_pointer;
-	len -= message->optional_pointer;
+	offset += optional_pointer;
+	len -= optional_pointer;
 
 	if (len < 1 )
 		return -1;
 
 	/* Optional paramter parsing code */
-	if (message->optional_pointer) {
+	if (optional_pointer) {
 		while ((len > 0) && (buf[offset] != 0)) {
 			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
 
@@ -195,6 +213,25 @@ int isup_get_hop_counter(unsigned char *buf, int len)
 		return buf[offset+2] & 0x1F;
 	}
 	return -1;
+}
+
+int isup_get_event_info(unsigned char *buf, int len)
+{
+	struct isup_cpg_fixed * message = (struct isup_cpg_fixed*)buf;
+
+	// not a CPG? do nothing
+	if(message->type != ISUP_CPG)
+	{
+		return -1;
+	}
+
+	/* Message Type = 1 */
+	len -= offsetof(struct isup_cpg_fixed, event_info);
+
+	if (len < 1)
+		return -1;
+
+	return (int)message->event_info;
 }
 
 int isup_get_cpc(unsigned char *buf, int len)

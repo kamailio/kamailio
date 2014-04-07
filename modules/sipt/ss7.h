@@ -163,7 +163,6 @@ struct isup_parm_opt {
 	unsigned char data[0];
 };
 
-
 struct isup_iam_fixed {
 	unsigned char type;
 	unsigned char nature_of_connection;
@@ -175,7 +174,29 @@ struct isup_iam_fixed {
 	unsigned char called_party_number[0];
 };
 
+struct isup_acm_fixed {
+	unsigned char type;
+	unsigned char backwards_call_ind[2];
+	unsigned char fixed_pointer;
+	unsigned char optional_pointer;
+};
+
+struct isup_cpg_fixed {
+	unsigned char type;
+	unsigned char event_info;
+	unsigned char fixed_pointer;
+	unsigned char optional_pointer;
+};
+
+union isup_msg {
+	unsigned char type;
+	struct isup_iam_fixed iam;
+	struct isup_acm_fixed acm;
+	struct isup_cpg_fixed cpg;
+};
+
 int isup_get_hop_counter(unsigned char *buf, int len);
+int isup_get_event_info(unsigned char *buf, int len);
 int isup_get_cpc(unsigned char *buf, int len);
 int isup_get_calling_party_nai(unsigned char *buf, int len);
 int isup_get_called_party_nai(unsigned char *buf, int len);
