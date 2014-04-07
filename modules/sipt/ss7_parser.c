@@ -452,7 +452,7 @@ int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int
 				case ISUP_PARM_CALLING_PARTY_NUM:
 					res2 = encode_calling_party(origin, nai, presentation, screening, &new_party[1], 255-1);
 					new_party[0] = (char)res2;
-					replace_body_segment(mangle, offset+1,(int)buf[offset+1],new_party, res2+1);
+					replace_body_segment(mangle, offset+1,(int)buf[offset+1]+1,new_party, res2+1);
 
 					has_calling = 1;
 					break;
