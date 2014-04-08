@@ -211,6 +211,34 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		&sercmd; corex.list_aliases
 		</programlisting>
     </section>
+	<section>
+		<title>
+		<function moreinfo="none">corex.shm_status</function>
+		</title>
+		<para>
+			Trigger shm status dump to syslog.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; corex.shm_status
+		</programlisting>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">corex.shm_summary</function>
+		</title>
+		<para>
+			Trigger shm summary dump to syslog.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; corex.shm_summary
+		</programlisting>
+    </section>
     </section>
 </chapter>
 
