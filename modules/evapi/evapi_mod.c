@@ -48,6 +48,7 @@ static int   _evapi_workers = 1;
 static char *_evapi_bind_addr = "127.0.0.1";
 static int   _evapi_bind_port = 8448;
 static char *_evapi_bind_param = NULL;
+static int   _evapi_netstring_format_param = 1;
 
 static tm_api_t tmb;
 
@@ -71,8 +72,9 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"workers",     INT_PARAM,   &_evapi_workers},
-	{"bind_addr",   STR_PARAM,   &_evapi_bind_param},
+	{"workers",           INT_PARAM,   &_evapi_workers},
+	{"bind_addr",         STR_PARAM,   &_evapi_bind_param},
+	{"netstring_format",  INT_PARAM,   &_evapi_netstring_format_param},
 	{0, 0, 0}
 };
 
@@ -138,7 +140,7 @@ static int mod_init(void)
 	/* add child to update local config framework structures */
 	cfg_register_child(1 + _evapi_workers);
 
-	evapi_init_event_routes();
+	evapi_init_environment(_evapi_netstring_format_param);
 
 	return 0;
 }

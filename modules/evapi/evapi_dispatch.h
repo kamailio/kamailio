@@ -37,7 +37,7 @@ int evapi_run_worker(int prank);
 
 int evapi_relay(str *evdata);
 
-void evapi_init_event_routes(void);
+void evapi_init_environment(int dformat);
 
 int pv_parse_evapi_name(pv_spec_t *sp, str *in);
 int pv_get_evapi(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
