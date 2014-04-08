@@ -53,7 +53,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="evapi.p.workers">
 		<title><varname>workers</varname> (int)</title>
 		<para>
 			Number of worker processes to be started to handle incoming messages
@@ -73,7 +73,7 @@ modparam("evapi", "workers", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="evapi.p.bind_addr">
 		<title><varname>bind_addr</varname> (str)</title>
 		<para>
 		Local IP and port to listen on for incoming TCP connections.
@@ -88,6 +88,26 @@ modparam("evapi", "workers", 2)
 		<programlisting format="linespecific">
 ...
 modparam("evapi", "bind_addr", "1.2.3.4:8228")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="evapi.p.netstring_format">
+		<title><varname>netstring_format</varname> (int)</title>
+		<para>
+			Control if messages from clients are encapsulated in netstring
+			format.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (netstring format).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>netstring_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "netstring_format", 0)
 ...
 </programlisting>
 		</example>

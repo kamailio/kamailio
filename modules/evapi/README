@@ -27,6 +27,7 @@ Daniel-Constantin Mierla
 
               3.1. workers (int)
               3.2. bind_addr (str)
+              3.3. netstring_format (int)
 
         4. Functions
 
@@ -46,10 +47,11 @@ Daniel-Constantin Mierla
 
    1.1. Set workers parameter
    1.2. Set bind_addr parameter
-   1.3. evapi_relay usage
-   1.4. TCP message
-   1.5. evapi_async_relay usage
-   1.6. evapi_evapi usage
+   1.3. Set netstring_format parameter
+   1.4. evapi_relay usage
+   1.5. TCP message
+   1.6. evapi_async_relay usage
+   1.7. evapi_evapi usage
 
 Chapter 1. Admin Guide
 
@@ -65,6 +67,7 @@ Chapter 1. Admin Guide
 
         3.1. workers (int)
         3.2. bind_addr (str)
+        3.3. netstring_format (int)
 
    4. Functions
 
@@ -104,6 +107,7 @@ Chapter 1. Admin Guide
 
    3.1. workers (int)
    3.2. bind_addr (str)
+   3.3. netstring_format (int)
 
 3.1. workers (int)
 
@@ -128,6 +132,17 @@ modparam("evapi", "workers", 2)
 modparam("evapi", "bind_addr", "1.2.3.4:8228")
 ...
 
+3.3. netstring_format (int)
+
+   Control if messages from clients are encapsulated in netstring format.
+
+   Default value is 1 (netstring format).
+
+   Example 1.3. Set netstring_format parameter
+...
+modparam("evapi", "netstring_format", 0)
+...
+
 4. Functions
 
    4.1. evapi_relay(evdata)
@@ -141,14 +156,14 @@ modparam("evapi", "bind_addr", "1.2.3.4:8228")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.3. evapi_relay usage
+   Example 1.4. evapi_relay usage
 ...
 evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 ...
 
    The above exaple will send the following message over tcp:
 
-   Example 1.4. TCP message
+   Example 1.5. TCP message
 ...
 47:{
  "event": "test",
@@ -165,7 +180,7 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.5. evapi_async_relay usage
+   Example 1.6. evapi_async_relay usage
 ...
 evapi_relay("{ \"event\": \"suspend\",\n \"data\":"
         " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
@@ -177,7 +192,7 @@ evapi_relay("{ \"event\": \"suspend\",\n \"data\":"
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.6. evapi_evapi usage
+   Example 1.7. evapi_evapi usage
 ...
 event_route[evapi:connection-new] {
   if($evapi(srcaddr)!="127.0.0.1") {
