@@ -178,6 +178,27 @@ modparam("sqlops", "sqlres", "ra")
 	</section>
 	<section>
 	<title>Functions</title>
+	<para>
+		Note that sql_query(), sql_xquery() and sql_pvquery() functions have
+		the following return values:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>-1</emphasis> - error in parameters or query execution
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>1</emphasis> - query successful, at least one row in resultset (for SELECTs)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>2</emphasis> - query successful, no rows returned
+		</para>
+		</listitem>
+	</itemizedlist>
 	<section>
 		<title>
 		<function moreinfo="none">sql_query(connection, query[, result])</function>
@@ -260,8 +281,12 @@ sql_result_free("ra");
 modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
 ...
 sql_xquery("ca", "select * from domain", "ra");
-  xlog("first domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
+xlog("first domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
 ...
+if (sql_xquery("ca", "select * from domain", "ra") == 1) {
+    xlog("domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
+}
+..
 </programlisting>
 		</example>
 	</section>
