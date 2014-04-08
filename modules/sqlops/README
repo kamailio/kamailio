@@ -170,7 +170,13 @@ modparam("sqlops", "sqlres", "ra")
    4.3. sql_pvquery(connection, query, result)
    4.4. sql_result_free(result)
 
-4.1.  sql_query(connection, query[, result])
+   Note that sql_query(), sql_xquery() and sql_pvquery() functions have
+   the following return values:
+     * -1 - error in parameters or query execution
+     * 1 - query successful, at least one row in resultset (for SELECTs)
+     * 2 - query successful, no rows returned
+
+4.1. sql_query(connection, query[, result])
 
    Make an SQL query using 'connection' and store data in 'result'.
      * connection - the name of the connection to be used for the query
@@ -193,7 +199,7 @@ xlog("number of rows in table domain: $dbr(ra=>rows)\n");
 sql_result_free("ra");
 ...
 
-4.2.  sql_xquery(connection, query, result)
+4.2. sql_xquery(connection, query, result)
 
    Make an SQL query using 'connection' and store data in 'result' xavp.
      * connection - the name of the connection to be used for the query
@@ -209,10 +215,14 @@ sql_result_free("ra");
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
 sql_xquery("ca", "select * from domain", "ra");
-  xlog("first domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
+xlog("first domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
 ...
+if (sql_xquery("ca", "select * from domain", "ra") == 1) {
+    xlog("domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
+}
+..
 
-4.3.  sql_pvquery(connection, query, result)
+4.3. sql_pvquery(connection, query, result)
 
    Make an SQL query using 'connection' and store data in arbitrary pseudo
    variables specified by 'result' parameter.
@@ -244,7 +254,7 @@ sql_pvquery("ca", "select 'col1', 2, NULL, 'sip:test@example.com'",
         "$var(a), $avp(col2), $xavp(item[0]=>s), $ru");
 ...
 
-4.4.  sql_result_free(result)
+4.4. sql_result_free(result)
 
    Free data in SQL 'result'.
 
