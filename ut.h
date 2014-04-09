@@ -902,4 +902,19 @@ char* get_abs_pathname(str* base, str* file);
  * search for needle in text
  */
 char *str_search(str *text, str *needle);
+
+/*
+ * ser_memmem() returns the location of the first occurrence of data
+ * pattern b2 of size len2 in memory block b1 of size len1 or
+ * NULL if none is found. Obtained from NetBSD.
+ */
+void * ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2);
+
+/*
+ * ser_memrmem() returns the location of the last occurrence of data
+ * pattern b2 of size len2 in memory block b1 of size len1 or
+ * NULL if none is found.
+ */
+void * ser_memrmem(const void *b1, const void *b2, size_t len1, size_t len2);
+
 #endif
