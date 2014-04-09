@@ -236,6 +236,12 @@ int reg_ht_add_byuuid(reg_uac_t *reg)
 	unsigned int slot;
 	reg_item_t *ri = NULL;
 
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return -1;
+	}
+
 	ri = (reg_item_t*)shm_malloc(sizeof(reg_item_t));
 	if(ri==NULL)
 	{
@@ -258,6 +264,12 @@ int reg_ht_add_byuser(reg_uac_t *reg)
 {
 	unsigned int slot;
 	reg_item_t *ri = NULL;
+
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return -1;
+	}
 
 	ri = (reg_item_t*)shm_malloc(sizeof(reg_item_t));
 	if(ri==NULL)
@@ -346,6 +358,12 @@ reg_uac_t *reg_ht_get_byuuid(str *uuid)
 	unsigned int slot;
 	reg_item_t *it = NULL;
 
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return NULL;
+	}
+
 	hash = reg_compute_hash(uuid);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
 	it = _reg_htable->entries[slot].byuuid;
@@ -369,6 +387,12 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 	unsigned int hash;
 	unsigned int slot;
 	reg_item_t *it = NULL;
+
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return NULL;
+	}
 
 	hash = reg_compute_hash(user);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
@@ -739,6 +763,9 @@ void uac_reg_timer(unsigned int ticks)
 	int i;
 	reg_item_t *it = NULL;
 	time_t tn;
+
+	if(_reg_htable==NULL)
+		return;
 
 	tn = time(NULL);
 	for(i=0; i<_reg_htable->htsize; i++)
