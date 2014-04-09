@@ -524,9 +524,16 @@ int evapi_relay(str *evdata)
 		return -1;
 	}
 	sbuf->s = (char*)sbuf + sizeof(str);
-	sbuf->len = snprintf(sbuf->s, sbsize+32,
-			EVAPI_RELAY_FORMAT,
-			sbsize, evdata->len, evdata->s);
+	if(_evapi_netstring_format) {
+		/* netstring encapsulation */
+		sbuf->len = snprintf(sbuf->s, sbsize+32,
+				EVAPI_RELAY_FORMAT,
+				sbsize, evdata->len, evdata->s);
+	} else {
+		sbuf->len = snprintf(sbuf->s, sbsize+32,
+				"%.*s",
+				evdata->len, evdata->s);
+	}
 	if(sbuf->len<=0 || sbuf->len>sbsize+32) {
 		shm_free(sbuf);
 		LM_ERR("cannot serialize event\n");
