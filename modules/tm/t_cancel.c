@@ -245,7 +245,12 @@ int cancel_branch( struct cell *t, int branch,
 			/* remove BUSY_BUFFER -- mark cancel buffer as not used */
 			pcbuf=&crb->buffer; /* workaround for type punning warnings */
 			atomic_set_long(pcbuf, 0);
-			if (flags & F_CANCEL_B_FAKE_REPLY){
+			/* try to relay auto-generated 487 canceling response only when
+			 * another one is not under relaying on the branch and there is
+			 * no forced response per transaction from script */
+			if((flags & F_CANCEL_B_FAKE_REPLY)
+					&& !(irb->flags&F_RB_RELAYREPLY)
+					&& !(t->flags&T_ADMIN_REPLY)) {
 				LOCK_REPLIES(t);
 				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1) == 
 										RPS_ERROR){
