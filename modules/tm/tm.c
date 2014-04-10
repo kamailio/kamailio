@@ -1319,6 +1319,7 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 	 * the safe version would lead to a deadlock
 	 */
 	 
+	t->flags |= T_ADMIN_REPLY;
 	if (is_route_type(FAILURE_ROUTE)) {
 		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
 		ret = t_reply_unsafe(t, msg, code, r);

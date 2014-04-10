@@ -155,6 +155,7 @@ enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8,
 #define F_RB_NH_STRICT	0x200 /* next hop is a strict router */
 /* must detect when neither loose nor strict flag is set -> two flags.
  * alternatively, 1x flag for strict/loose and 1x for loose|strict set/not */
+#define F_RB_RELAYREPLY	0x400 /* branch under relay reply condition */
 
 
 /* if canceled or intended to be canceled, return true */
@@ -320,6 +321,7 @@ typedef struct async_state {
 #define T_ASYNC_CONTINUE (1<<12) /* Is this transaction in a continuation after being suspended */
 
 #define T_DISABLE_INTERNAL_REPLY (1<<13) /* don't send internal negative reply */
+#define T_ADMIN_REPLY (1<<14) /* t reply sent by admin (e.g., from cfg script) */
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ms =>
  * max retr. = 65 s which should be enough and saves us 2*2 bytes */

@@ -345,6 +345,7 @@ static void fake_reply(struct cell *t, int branch, int code )
 	do_cancel_branch = is_invite(t) && prepare_cancel_branch(t, branch, 0);
 	/* mark branch as canceled */
 	t->uac[branch].request.flags|=F_RB_CANCELED;
+	t->uac[branch].request.flags|=F_RB_RELAYREPLY;
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, FAKED_REPLY, branch, 
 					  code, &cancel_data );
