@@ -132,7 +132,7 @@ int dlg_ka_add(dlg_cell_t *dlg)
 
 	if(dlg_ka_interval<=0)
 		return 0;
-	if(!(dlg->iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_SRC)))
+	if(!(dlg->iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_DST)))
 		return 0;
 
 	dka = (dlg_ka_t*)shm_malloc(sizeof(dlg_ka_t));
