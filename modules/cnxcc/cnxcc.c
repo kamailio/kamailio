@@ -28,17 +28,17 @@
 
 #include "cnxcc.h"
 
-inline void get_datetime(str *dest)
+void get_datetime(str *dest)
 {
 	timestamp2isodt(dest, get_current_timestamp());
 }
 
-inline unsigned int get_current_timestamp()
+unsigned int get_current_timestamp()
 {
 	return time(NULL);
 }
 
-inline int timestamp2isodt(str *dest, unsigned int timestamp)
+int timestamp2isodt(str *dest, unsigned int timestamp)
 {
 	time_t  		tim;
 	struct tm 		*tmPtr;
