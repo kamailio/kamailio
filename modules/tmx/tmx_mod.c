@@ -91,10 +91,8 @@ unsigned long tmx_stats_trans_5xx(void);
 unsigned long tmx_stats_trans_6xx(void);
 unsigned long tmx_stats_trans_inuse(void);
 unsigned long tmx_stats_trans_active(void);
-#if 0
 unsigned long tmx_stats_rcv_rpls(void);
 unsigned long tmx_stats_rld_rpls(void);
-#endif
 unsigned long tmx_stats_loc_rpls(void);
 
 static stat_export_t mod_stats[] = {
@@ -107,10 +105,8 @@ static stat_export_t mod_stats[] = {
 	{"6xx_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_6xx   },
 	{"inuse_transactions" ,  STAT_IS_FUNC, (stat_var**)tmx_stats_trans_inuse },
 	{"active_transactions" , STAT_IS_FUNC, (stat_var**)tmx_stats_trans_active},
-#if 0
 	{"received_replies" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_rcv_rpls    },
 	{"relayed_replies" ,     STAT_IS_FUNC, (stat_var**)tmx_stats_rld_rpls    },
-#endif
 	{"local_replies" ,       STAT_IS_FUNC, (stat_var**)tmx_stats_loc_rpls    },
 	{0,0,0}
 };
@@ -609,7 +605,7 @@ void tmx_stats_update(void)
 {
 	ticks_t t;
 	t = get_ticks();
-	if(t!=_tmx_stats_tm) {
+	if(t>_tmx_stats_tm+1) {
 		_tmx_tmb.get_stats(&_tmx_stats_all);
 		_tmx_stats_tm = t;
 	}
@@ -669,19 +665,26 @@ unsigned long tmx_stats_trans_active(void)
 	return (_tmx_stats_all.transactions - _tmx_stats_all.waiting);
 }
 
-#if 0
 unsigned long tmx_stats_rcv_rpls(void)
 {
 	tmx_stats_update();
-	return 0;
+	return _tmx_stats_all.completed_6xx
+		+ _tmx_stats_all.completed_5xx
+		+ _tmx_stats_all.completed_4xx
+		+ _tmx_stats_all.completed_3xx
+		+ _tmx_stats_all.completed_2xx;
 }
 
 unsigned long tmx_stats_rld_rpls(void)
 {
 	tmx_stats_update();
-	return 0;
+	return _tmx_stats_all.completed_6xx
+		+ _tmx_stats_all.completed_5xx
+		+ _tmx_stats_all.completed_4xx
+		+ _tmx_stats_all.completed_3xx
+		+ _tmx_stats_all.completed_2xx
+		- _tmx_stats_all.replied_locally;
 }
-#endif
 
 unsigned long tmx_stats_loc_rpls(void)
 {
