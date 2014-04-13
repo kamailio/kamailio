@@ -2641,30 +2641,21 @@ int pv_parse_cnt_name(pv_spec_p sp, str *in)
 	if(in->s==NULL || in->len<=0)
 		return -1;
 
+	pv = pv_cache_get(in);
 	pv = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	if(pv==NULL)
+	if(pv==NULL) {
+		LM_ERR("cannot find pv name [%.*s]\n", in->len, in->s);
 		return -1;
+	}
 
-	memset(pv, 0, sizeof(pv_spec_t));
-
-	if(pv_parse_spec(in, pv)==NULL)
-		goto error;
-
-	if(pv->type!=PVT_AVP)
-	{
+	if(pv->type!=PVT_AVP) {
 		LM_ERR("expected avp name instead of [%.*s]\n", in->len, in->s);
-		goto error;
+		return -1;
 	}
 
 	sp->pvp.pvn.u.dname = (void*)pv;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
 	return 0;
-
-error:
-	LM_ERR("invalid pv name [%.*s]\n", in->len, in->s);
-	if(pv!=NULL)
-		pkg_free(pv);
-	return -1;
 }
 
 
