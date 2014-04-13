@@ -293,7 +293,7 @@ if(sdp_with_transport("RTP/SAVP"))
 		<programlisting format="linespecific">
 ...
 # check for SAVPF stream
-if(sdp_with_transport("SAVPF"))
+if(sdp_with_transport_like("SAVPF"))
 {
     # the session has a SAVPF stream, e.g., RTP/SAVPF or UDP/TLS/RTP/SAVPF
 }
