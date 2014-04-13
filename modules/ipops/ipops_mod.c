@@ -96,6 +96,8 @@ static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
 static pv_export_t mod_pvs[] = {
 	{ {"dns", sizeof("dns")-1}, PVT_OTHER, pv_get_dns, 0,
 		pv_parse_dns_name, 0, 0, 0 },
+	{ {"HN", sizeof("HN")-1}, PVT_OTHER, pv_get_hn, 0,
+		pv_parse_hn_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 

@@ -35,5 +35,9 @@ int dns_init_pv(char *path);
 void dns_destroy_pv(void);
 int dns_update_pv(str *tomatch, str *name);
 
+int pv_parse_hn_name(pv_spec_p sp, str *in);
+int pv_get_hn(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 #endif
 
