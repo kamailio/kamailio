@@ -65,6 +65,7 @@
 #include "rpc_lookup.h"
 #include "sr_compat.h"
 #include "ppcfg.h"
+#include "async_task.h"
 
 #include <sys/stat.h>
 #include <regex.h>
@@ -842,6 +843,9 @@ int init_modules(void)
 {
 	struct sr_module* t;
 
+	if(async_task_init()<0)
+		return -1;
+
 	for(t = modules; t; t = t->next) {
 		if (t->exports.init_f) {
 			if (t->exports.init_f() != 0) {
@@ -891,6 +895,8 @@ int init_child(int rank)
 	}
 	DBG("init_child: initializing %s with rank %d\n", type, rank);
 
+	if(async_task_child_init(rank)<0)
+		return -1;
 
 	for(t = modules; t; t = t->next) {
 		if (t->exports.init_child_f) {
@@ -945,6 +951,9 @@ static int init_mod_child( struct sr_module* m, int rank )
  */
 int init_child(int rank)
 {
+	if(async_task_child_init(rank)<0)
+		return -1;
+
 	return init_mod_child(modules, rank);
 }
 
@@ -991,6 +1000,9 @@ int init_modules(void)
 	struct sr_module* t;
 	int i;
 	
+	if(async_task_init()<0)
+		return -1;
+
 	i = init_mod(modules);
 	if(i!=0)
 		return i;

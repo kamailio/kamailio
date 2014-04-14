@@ -141,6 +141,7 @@
 #include "rvalue.h"
 #include "sr_compat.h"
 #include "msg_translator.h"
+#include "async_task.h"
 
 #include "ppcfg.h"
 #include "pvapi.h"
@@ -439,6 +440,7 @@ extern char *finame;
 %token STAT
 %token CHILDREN
 %token SOCKET_WORKERS
+%token ASYNC_WORKERS
 %token CHECK_VIA
 %token PHONE2TEL
 %token MEMLOG
@@ -938,6 +940,8 @@ assign_stm:
 	| CHILDREN EQUAL error { yyerror("number expected"); }
 	| SOCKET_WORKERS EQUAL NUMBER { socket_workers=$3; }
 	| SOCKET_WORKERS EQUAL error { yyerror("number expected"); }
+	| ASYNC_WORKERS EQUAL NUMBER { async_task_set_workers($3); }
+	| ASYNC_WORKERS EQUAL error { yyerror("number expected"); }
 	| CHECK_VIA EQUAL NUMBER { check_via=$3; }
 	| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
 	| PHONE2TEL EQUAL NUMBER { phone2tel=$3; }

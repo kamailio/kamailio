@@ -392,6 +392,7 @@ MAXBUFFER maxbuffer
 SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
 SOCKET_WORKERS socket_workers
+ASYNC_WORKERS async_workers
 CHECK_VIA	check_via
 PHONE2TEL	phone2tel
 MEMLOG		"memlog"|"mem_log"
@@ -775,6 +776,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET_WORKERS}	{ count(); yylval.strval=yytext; return SOCKET_WORKERS; }
+<INITIAL>{ASYNC_WORKERS}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }

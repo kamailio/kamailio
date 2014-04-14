@@ -190,6 +190,7 @@
 #include "pv_core.h" /* register core pvars */
 #include "ppcfg.h"
 #include "sock_ut.h"
+#include "async_task.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
