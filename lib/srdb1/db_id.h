@@ -35,6 +35,7 @@
 
 /** Structure representing a database ID */
 struct db_id {
+	str   url;           /**< full URL clone */
 	char* scheme;        /**< URL scheme */
 	char* username;      /**< Username, case sensitive */
 	char* password;      /**< Password, case sensitive */

@@ -239,12 +239,12 @@ struct db_id* new_db_id(const str* url, db_pooling_t pooling)
 		return 0;
 	}
 
-	ptr = (struct db_id*)pkg_malloc(sizeof(struct db_id));
+	ptr = (struct db_id*)pkg_malloc(sizeof(struct db_id) + url->len + 1);
 	if (!ptr) {
 		LM_ERR("no private memory left\n");
 		goto err;
 	}
-	memset(ptr, 0, sizeof(struct db_id));
+	memset(ptr, 0, sizeof(struct db_id)+url->len+1);
 
 	if (parse_db_url(ptr, url) < 0) {
 		LM_ERR("error while parsing database URL: '%.*s' \n", url->len, url->s);
@@ -254,6 +254,9 @@ struct db_id* new_db_id(const str* url, db_pooling_t pooling)
 	if (pooling == DB_POOLING_NONE) ptr->poolid = ++poolid;
 	else ptr->poolid = 0;
 	ptr->pid = my_pid();
+	ptr->url.len = url->len;
+	strncpy(ptr->url.s, url->s, url->len);
+	ptr->url.s[url->len] = '\0';
 
 	return ptr;
 
