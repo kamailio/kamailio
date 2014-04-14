@@ -73,6 +73,7 @@ void sql_destroy(void);
 int sql_connect(void);
 
 int sql_do_query(sql_con_t *con, str *query, sql_result_t *res);
+int sql_do_query_async(sql_con_t *con, str *query);
 #ifdef WITH_XAVP
 int sql_do_xquery(sip_msg_t *msg, sql_con_t *con, pv_elem_t *query,
 		pv_elem_t *res);

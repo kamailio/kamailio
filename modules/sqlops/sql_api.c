@@ -415,6 +415,29 @@ error:
 	return -1;
 }
 
+int sql_do_query_async(sql_con_t *con, str *query)
+{
+	db1_res_t* db_res = NULL;
+	int i, j;
+	str sv;
+
+	if(query==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	if(con->dbf.raw_query_async==NULL) {
+		LM_ERR("the db driver module doesn't support async query\n");
+		return -1;
+	}
+	if(con->dbf.raw_query_async(con->dbh, query)!=0)
+	{
+		LM_ERR("cannot do the query\n");
+		return -1;
+	}
+	return 1;
+}
+
 #ifdef WITH_XAVP
 int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 		str *xavp)
