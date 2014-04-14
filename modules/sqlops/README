@@ -35,6 +35,7 @@ Daniel-Constantin Mierla
               4.2. sql_xquery(connection, query, result)
               4.3. sql_pvquery(connection, query, result)
               4.4. sql_result_free(result)
+              4.5. sql_query_async(connection, query)
 
         5. Exported pseudo-variables
 
@@ -49,8 +50,9 @@ Daniel-Constantin Mierla
    1.4. sql_xquery() usage
    1.5. sql_pvquery() usage
    1.6. sql_result_free() usage
-   1.7. $dbr(result=>key) usage
-   1.8. $sqlrows(con) usage
+   1.7. sql_query_async() usage
+   1.8. $dbr(result=>key) usage
+   1.9. $sqlrows(con) usage
 
 Chapter 1. Admin Guide
 
@@ -73,6 +75,7 @@ Chapter 1. Admin Guide
         4.2. sql_xquery(connection, query, result)
         4.3. sql_pvquery(connection, query, result)
         4.4. sql_result_free(result)
+        4.5. sql_query_async(connection, query)
 
    5. Exported pseudo-variables
 
@@ -169,6 +172,7 @@ modparam("sqlops", "sqlres", "ra")
    4.2. sql_xquery(connection, query, result)
    4.3. sql_pvquery(connection, query, result)
    4.4. sql_result_free(result)
+   4.5. sql_query_async(connection, query)
 
    Note that sql_query(), sql_xquery() and sql_pvquery() functions have
    the following return values:
@@ -270,6 +274,26 @@ xlog("number of rows in table domain: $dbr(ra=>rows)\n");
 sql_result_free("ra");
 ...
 
+4.5. sql_query_async(connection, query)
+
+   Make an async SQL query using 'connection', if implemented by db driver
+   module (e.g., db_mysql). The query is executed in another process and
+   result is not available back to config, thus it should be used only for
+   sql statements that don't return values (e.g., insert, delete,
+   update...).
+     * connection - the name of the connection to be used for the query
+       (defined via "sqlcon" parameter).
+     * query - SQL query string or pseudo-variables containing SQL query.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. sql_query_async() usage
+...
+modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
+...
+sql_query_async("ca", "delete from domain");
+...
+
 5. Exported pseudo-variables
 
    5.1. $dbr(result=>key)
@@ -290,7 +314,7 @@ sql_result_free("ra");
        integer.
      * colname[N] - return the name of the N-th column in the result set.
 
-   Example 1.7. $dbr(result=>key) usage
+   Example 1.8. $dbr(result=>key) usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -349,7 +373,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
 
    "con" must be the name identifying a DB connection.
 
-   Example 1.8. $sqlrows(con) usage
+   Example 1.9. $sqlrows(con) usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...

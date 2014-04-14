@@ -376,6 +376,46 @@ sql_result_free("ra");
 </programlisting>
 		</example>
 	</section>
+	<section id="sqlops.f.sql_query_async">
+		<title>
+		<function moreinfo="none">sql_query_async(connection, query)</function>
+		</title>
+		<para>
+			Make an async SQL query using 'connection', if implemented by db
+			driver module (e.g., db_mysql). The query is executed in another
+			process and result is not available back to config, thus it should
+			be used only for sql statements that don't return values (e.g.,
+			insert, delete, update...).
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>connection</emphasis> - the name of the connection
+				to be used for the query (defined via <quote>sqlcon</quote>
+				parameter).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>query</emphasis> - SQL query string or
+				pseudo-variables containing SQL query.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_query_async()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_query_async("ca", "delete from domain");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
