@@ -90,7 +90,7 @@ modparam("async", "workers", 2)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="async.f.async_route">
 	    <title>
 		<function moreinfo="none">async_route(routename, seconds)</function>
 	    </title>
@@ -133,7 +133,7 @@ route[RESUME] {
 	    </example>
 	</section>
 
-	<section>
+	<section id="async.f.async_sleep">
 	    <title>
 		<function moreinfo="none">async_sleep(seconds)</function>
 	    </title>
@@ -157,6 +157,51 @@ route[RESUME] {
 async_sleep("4");
 send_reply("404", "Not found");
 exit;
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="async.f.async_task_route">
+	    <title>
+		<function moreinfo="none">async_task_route(routename)</function>
+	    </title>
+	    <para>
+		Continue the processing of the SIP request with the route[routename]
+		in one of the processes from core asynchronous framework. The core
+		parameter async_workers has to be set to enable asynchronous
+		framework. The task is executed as soon as a process from asynchronous
+		framework is idle, there is no wait time for the task like for
+		async_route(...).
+		</para>
+		<para>
+		In case of internal errors, the function returns false, otherwise the
+		function exits the execution of the script at that moment (return
+		0 behaviour).
+		</para>
+		<para>
+		The routename parameter can be a static string or a dynamic string
+		value with config variables.
+		</para>
+		<para>
+		Since the SIP request handling is resumed in another process,
+		the config file execution state is practically lost. Therefore beware
+		that the execution of config after resume will end once the
+		route[routename] is finished.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>async_task_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_task_rroute("RESUME");
+...
+route[RESUME] {
+   send_reply("404", "Not found");
+   exit;
+}
 ...
 </programlisting>
 	    </example>
