@@ -183,6 +183,11 @@ static int db_write_cdr( struct dlg_cell* dialog,
 			LM_ERR("failed to insert delayed into database\n");
 			return -1;
 		}
+	} else if(acc_db_insert_mode==2 && df->insert_async!=NULL) {
+		if (df->insert_async(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+			LM_ERR("failed to insert async into database\n");
+			return -1;
+		}
 	} else {
 		if (df->insert(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
 			LM_ERR("failed to insert into database\n");

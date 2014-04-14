@@ -488,6 +488,11 @@ int acc_db_request( struct sip_msg *rq)
 				LM_ERR("failed to insert delayed into database\n");
 				return -1;
 			}
+		} else if(acc_db_insert_mode==2 && acc_dbf.insert_async!=NULL) {
+			if (acc_dbf.insert_async(db_handle, db_keys, db_vals, m) < 0) {
+				LM_ERR("failed to insert async into database\n");
+				return -1;
+			}
 		} else {
 			if (acc_dbf.insert(db_handle, db_keys, db_vals, m) < 0) {
 				LM_ERR("failed to insert into database\n");
@@ -502,6 +507,11 @@ int acc_db_request( struct sip_msg *rq)
 			if(acc_db_insert_mode==1 && acc_dbf.insert_delayed!=NULL) {
 				if(acc_dbf.insert_delayed(db_handle,db_keys,db_vals,m+n)<0) {
 					LM_ERR("failed to insert delayed into database\n");
+					return -1;
+				}
+			} else if(acc_db_insert_mode==2 && acc_dbf.insert_async!=NULL) {
+				if(acc_dbf.insert_async(db_handle,db_keys,db_vals,m+n)<0) {
+					LM_ERR("failed to insert async into database\n");
 					return -1;
 				}
 			} else {
