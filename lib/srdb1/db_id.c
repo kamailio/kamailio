@@ -254,6 +254,7 @@ struct db_id* new_db_id(const str* url, db_pooling_t pooling)
 	if (pooling == DB_POOLING_NONE) ptr->poolid = ++poolid;
 	else ptr->poolid = 0;
 	ptr->pid = my_pid();
+	ptr->url.s = (char*)ptr + sizeof(struct db_id);
 	ptr->url.len = url->len;
 	strncpy(ptr->url.s, url->s, url->len);
 	ptr->url.s[url->len] = '\0';

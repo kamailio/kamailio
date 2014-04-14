@@ -194,6 +194,23 @@ typedef int (*db_raw_query_f) (const db1_con_t* _h, const str* _s, db1_res_t** _
 
 
 /**
+ * \brief Raw SQL query via async framework.
+ *
+ * This function can be used to do database specific queries. Please
+ * use this function only if needed, as this creates portability issues
+ * for the different databases. Also keep in mind that you need to
+ * escape all external data sources that you use. You could use the
+ * escape_common and unescape_common functions in the core for this task.
+ * \see escape_common
+ * \see unescape_common
+ * \param _h structure representing database connection
+ * \param _s the SQL query
+ * \return returns 0 if everything is OK, otherwise returns value < 0
+ */
+typedef int (*db_raw_query_async_f) (const db1_con_t* _h, const str* _s);
+
+
+/**
  * \brief Free a result allocated by db_query.
  *
  * This function frees all memory allocated previously in db_query. Its
@@ -326,6 +343,21 @@ typedef int (*db_insert_update_f) (const db1_con_t* _h, const db_key_t* _k,
 typedef int (*db_insert_delayed_f) (const db1_con_t* _h, const db_key_t* _k,
 				const db_val_t* _v, const int _n);
 
+/**
+ * \brief Insert a row into the specified table via async framework.
+ *
+ * This function implements INSERT DELAYED SQL directive. It is possible to
+ * insert one or more rows in a table with delay using this function.
+ * \param _h database connection handle
+ * \param _k array of keys (column names)
+ * \param _v array of values for keys specified in _k parameter
+ * \param _n number of keys-value pairs int _k and _v parameters
+ * \return returns 0 if everything is OK, otherwise returns value < 0
+ */
+typedef int (*db_insert_async_f) (const db1_con_t* _h, const db_key_t* _k,
+				const db_val_t* _v, const int _n);
+
+
 
 /**
  * \brief Retrieve the number of affected rows for the last query.
@@ -388,11 +420,13 @@ typedef struct db_func {
 	                                            in a table */
 	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
 	db_insert_delayed_f insert_delayed;           /* Insert delayed into table */
+	db_insert_async_f insert_async;               /* Insert async into table */
 	db_affected_rows_f affected_rows; /* Numer of affected rows for last query */
 	db_start_transaction_f start_transaction; /* Start a single transaction consisting of multiple queries */
 	db_end_transaction_f end_transaction; /* End a transaction */
 	db_abort_transaction_f abort_transaction; /* Abort a transaction */
 	db_query_f        query_lock;    /* query a table and lock rows for update */
+	db_raw_query_async_f    raw_query_async;      /* Raw query - SQL */
 } db_func_t;
 
 
