@@ -100,6 +100,9 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(async_workers<=0)
+		return 0;
+
 	if(async_init_timer_list()<0) {
 		LM_ERR("cannot initialize internal structure\n");
 		return -1;
@@ -116,6 +119,9 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if (rank!=PROC_MAIN)
+		return 0;
+
+	if(async_workers<=0)
 		return 0;
 
 	if(fork_dummy_timer(PROC_TIMER, "ASYNC MOD TIMER", 1 /*socks flag*/,
@@ -144,6 +150,12 @@ static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2)
 	
 	if(msg==NULL)
 		return -1;
+
+	if(async_workers<=0)
+	{
+		LM_ERR("no async mod timer wokers\n");
+		return -1;
+	}
 
 	ap = (async_param_t*)sec;
 	if(fixup_get_ivalue(msg, ap->pinterval, &s)!=0)
@@ -202,6 +214,12 @@ static int w_async_route(struct sip_msg* msg, char* rt, char* sec)
 
 	if(msg==NULL)
 		return -1;
+
+	if(async_workers<=0)
+	{
+		LM_ERR("no async mod timer wokers\n");
+		return -1;
+	}
 
 	if(fixup_get_svalue(msg, (gparam_t*)rt, &rn)!=0)
 	{
