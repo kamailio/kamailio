@@ -119,6 +119,8 @@ int db_mysql_bind_api(db_func_t *dbb)
 	dbb->start_transaction= db_mysql_start_transaction;
 	dbb->end_transaction  = db_mysql_end_transaction;
 	dbb->abort_transaction= db_mysql_abort_transaction;
+	dbb->raw_query_async  = db_mysql_raw_query_async;
+	dbb->insert_async     = db_mysql_insert_async;
 
 	return 0;
 }
