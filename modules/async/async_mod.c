@@ -33,6 +33,7 @@
 #include "../../pvar.h"
 #include "../../timer_proc.h"
 #include "../../route_struct.h"
+#include "../../async_task.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_sleep.h"
@@ -49,6 +50,8 @@ static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2);
 static int fixup_async_sleep(void** param, int param_no);
 static int w_async_route(struct sip_msg* msg, char* rt, char* sec);
 static int fixup_async_route(void** param, int param_no);
+static int w_async_task_route(struct sip_msg* msg, char* rt, char* p2);
+static int fixup_async_task_route(void** param, int param_no);
 
 /* tm */
 struct tm_binds tmb;
@@ -58,6 +61,8 @@ static cmd_export_t cmds[]={
 	{"async_route", (cmd_function)w_async_route, 2, fixup_async_route,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"async_sleep", (cmd_function)w_async_sleep, 1, fixup_async_sleep,
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"async_task_route", (cmd_function)w_async_task_route, 1, fixup_async_task_route,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -129,6 +134,9 @@ static void mod_destroy(void)
 	async_destroy_timer_list();
 }
 
+/**
+ *
+ */
 static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2)
 {
 	int s;
@@ -159,6 +167,9 @@ static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2)
 	return -1;
 }
 
+/**
+ *
+ */
 static int fixup_async_sleep(void** param, int param_no)
 {
 	async_param_t *ap;
@@ -179,6 +190,9 @@ static int fixup_async_sleep(void** param, int param_no)
 	return 0;
 }
 
+/**
+ *
+ */
 static int w_async_route(struct sip_msg* msg, char* rt, char* sec)
 {
 	cfg_action_t *act;
@@ -220,6 +234,9 @@ static int w_async_route(struct sip_msg* msg, char* rt, char* sec)
 	return 0;
 }
 
+/**
+ *
+ */
 static int fixup_async_route(void** param, int param_no)
 {
 	if(param_no==1)
@@ -230,6 +247,63 @@ static int fixup_async_route(void** param, int param_no)
 	} else if(param_no==2) {
 		if(fixup_igp_null(param, 1)<0)
 			return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int w_async_task_route(struct sip_msg* msg, char* rt, char* sec)
+{
+	cfg_action_t *act;
+	str rn;
+	int ri;
+
+	if(msg==NULL)
+		return -1;
+
+	if(fixup_get_svalue(msg, (gparam_t*)rt, &rn)!=0)
+	{
+		LM_ERR("no async route block name\n");
+		return -1;
+	}
+
+	ri = route_get(&main_rt, rn.s);
+	if(ri<0)
+	{
+		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
+		return -1;
+	}
+	act = main_rt.rlist[ri];
+	if(act==NULL)
+	{
+		LM_ERR("empty action lists in route block [%.*s]\n", rn.len, rn.s);
+		return -1;
+	}
+
+	if(async_send_task(msg, act)<0)
+		return -1;
+	/* force exit in config */
+	return 0;
+}
+
+/**
+ *
+ */
+static int fixup_async_task_route(void** param, int param_no)
+{
+	if(!async_task_initialized()) {
+		LM_ERR("async task framework was not initialized"
+				" - set async_workers parameter in core\n");
+		return -1;
+	}
+
+	if(param_no==1)
+	{
+		if(fixup_spve_null(param, 1)<0)
+			return -1;
+		return 0;
 	}
 	return 0;
 }

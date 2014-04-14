@@ -42,8 +42,10 @@ int async_init_timer_list(void);
 
 int async_destroy_timer_list(void);
 
-int async_sleep(struct sip_msg* msg, int seconds, cfg_action_t *act);
+int async_sleep(sip_msg_t* msg, int seconds, cfg_action_t *act);
 
 void async_timer_exec(unsigned int ticks, void *param);
+
+int async_send_task(sip_msg_t* msg, cfg_action_t *act);
 
 #endif
