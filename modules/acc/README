@@ -1113,6 +1113,9 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
    InnoDB engine doesn't support INSERT DELAYED, thus be sure the acc
    tables are defined with different type (e.g., MyISAM).
 
+   If set to 2, async insert is used if the db driver module has support
+   for it. If not, then standard INSERT is used.
+
    Default value is 0 (no INSERT DELAYED).
 
    Example 1.32. db_insert_mode example
