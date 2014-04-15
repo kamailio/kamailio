@@ -210,6 +210,15 @@ void free_cell( struct cell* dead_cell )
 		if (unlikely(dead_cell->uac[i].path.s)) {
 			shm_free_unsafe(dead_cell->uac[i].path.s);
 		}
+		if (unlikely(dead_cell->uac[i].instance.s)) {
+			shm_free_unsafe(dead_cell->uac[i].instance.s);
+		}
+		if (unlikely(dead_cell->uac[i].ruid.s)) {
+			shm_free_unsafe(dead_cell->uac[i].ruid.s);
+		}
+		if (unlikely(dead_cell->uac[i].location_ua.s)) {
+			shm_free_unsafe(dead_cell->uac[i].location_ua.s);
+		}
 	}
 
 #ifdef WITH_AS_SUPPORT
