@@ -155,7 +155,7 @@ void add_contacts_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 
 	val.type = SR_XTYPE_XAVP;
 	val.v.xavp = record;
-	if(xavp_add_value(&contacts_avp, &val, NULL)) {
+	if(xavp_add_value(&contacts_avp, &val, NULL)==NULL) {
 		/* failed to add xavps to root list */
 		LM_ERR("failed to add xavps to root list\n");
 		xavp_destroy_list(&record);
