@@ -155,7 +155,11 @@ void add_contacts_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 
 	val.type = SR_XTYPE_XAVP;
 	val.v.xavp = record;
-	xavp_add_value(&contacts_avp, &val, NULL);
+	if(xavp_add_value(&contacts_avp, &val, NULL)) {
+		/* failed to add xavps to root list */
+		LM_ERR("failed to add xavps to root list\n");
+		xavp_destroy_list(&record);
+	}
 }
 
 /* 
@@ -383,7 +387,11 @@ void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 
 	val.type = SR_XTYPE_XAVP;
 	val.v.xavp = record;
-	xavp_add_value(&contact_flows_avp, &val, NULL);
+	if(xavp_add_value(&contact_flows_avp, &val, NULL)==NULL) {
+		/* failed to add xavps to root list */
+		LM_ERR("failed to add xavps to root list\n");
+		xavp_destroy_list(&record);
+	}
 }
 
 /*
@@ -449,13 +457,13 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 		if (parse_phostport(sock_str.s, &host.s, &host.len, &port, &proto)
 				!= 0) {
 			LM_ERR("parsing of socket info <%s> failed\n", sock_str.s);
-			xavp_destroy_list(&xavp_list);
+			xavp_rm(xavp_list, NULL);
 			return -1;
 		}
 		sock = grep_sock_info(&host, (unsigned short)port,
 				(unsigned short)proto);
 		if (sock == 0) {
-			xavp_destroy_list(&xavp_list);
+			xavp_rm(xavp_list, NULL);
 			return -1;
 		}
 	} else {
@@ -574,14 +582,14 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 					!= 0) {
 				LM_ERR("parsing of socket info <%s> failed\n", sock_str.s);
 				free_instance_list(il);
-				xavp_destroy_list(&xavp_list);
+				xavp_rm(xavp_list, NULL);
 				return -1;
 			}
 			sock = grep_sock_info(&host, (unsigned short)port,
 					(unsigned short)proto);
 			if (sock == 0) {
 				free_instance_list(il);
-				xavp_destroy_list(&xavp_list);
+				xavp_rm(xavp_list, NULL);
 				return -1;
 			}
 		} else {
@@ -659,7 +667,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 					&ruid, &location_ua) != 1) {
 			LM_ERR("appending branch failed\n");
 			free_instance_list(il);
-			xavp_destroy_list(&xavp_list);
+			xavp_rm(xavp_list, NULL);
 			return -1;
 		}
 
@@ -795,7 +803,7 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 		if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
 					&ruid, &location_ua) != 1) {
 			LM_ERR("appending branch failed\n");
-			xavp_destroy_list(&xavp_list);
+			xavp_rm(xavp_list, NULL);
 			return -1;
 		}
 
