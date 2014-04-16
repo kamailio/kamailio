@@ -190,12 +190,12 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 	if (db_mysql_convert_result(_h, *_r) < 0) {
 		LM_ERR("error while converting result\n");
 		LM_DBG("freeing result set at %p\n", _r);
-		pkg_free(*_r);
-		*_r = 0;
 		/* all mem on Kamailio API side is already freed by
 		 * db_mysql_convert_result in case of error, but we also need
-		 * to free the mem from the mysql lib side */
-		mysql_free_result(RES_RESULT(*_r));
+		 * to free the mem from the mysql lib side, internal pkg for it
+		 * and *_r */
+		db_mysql_free_result(_h, *_r);
+		*_r = 0;
 #if (MYSQL_VERSION_ID >= 40100)
 		while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) > 0 ) {
 			MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
