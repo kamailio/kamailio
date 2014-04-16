@@ -1099,10 +1099,10 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
 		</para>
 		<para>
 		If set to 2, async insert is used if the db driver module has
-		support for it. If not, then standard INSERT is used.
+		support for it and if async_workers core parameter value is greater than 0. If not, then standard INSERT is used.
 		</para>
 		<para>
-		Default value is 0 (no INSERT DELAYED).
+		Default value is 0 (no INSERT DELAYED nor async insert).
 		</para>
 		<example>
 		<title>db_insert_mode example</title>

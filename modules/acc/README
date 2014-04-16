@@ -29,11 +29,11 @@ Sven Knoblich
    1&1 Internet AG
    <sven.knoblich@1und1.de>
 
-   Copyright © 2002, 2003 FhG FOKUS
+   Copyright (c) 2002, 2003 FhG FOKUS
 
-   Copyright © 2004, 2006 Voice Sistem SRL
+   Copyright (c) 2004, 2006 Voice Sistem SRL
 
-   Copyright © 2011 1&1 Internet AG
+   Copyright (c) 2011 1&1 Internet AG
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -1114,9 +1114,10 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
    tables are defined with different type (e.g., MyISAM).
 
    If set to 2, async insert is used if the db driver module has support
-   for it. If not, then standard INSERT is used.
+   for it and if async_workers core parameter value is greater than 0. If
+   not, then standard INSERT is used.
 
-   Default value is 0 (no INSERT DELAYED).
+   Default value is 0 (no INSERT DELAYED nor async insert).
 
    Example 1.32. db_insert_mode example
 ...
@@ -1356,7 +1357,7 @@ modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
    7.3. acc_rad_request(comment)
    7.4. acc_diam_request(comment)
 
-7.1. acc_log_request(comment)
+7.1.  acc_log_request(comment)
 
    acc_request reports on a request, for example, it can be used to report
    on missed calls to off-line users who are replied 404 - Not Found. To
@@ -1377,7 +1378,7 @@ $avp(reason) = "Not found";
 acc_log_request("$var(code) Error: $avp(reason)");
 ...
 
-7.2. acc_db_request(comment, table)
+7.2.  acc_db_request(comment, table)
 
    Like acc_log_request, acc_db_request reports on a request. The report
    is sent to database at "db_url", in the table referred to in the second
@@ -1398,7 +1399,7 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 ...
 
-7.3. acc_rad_request(comment)
+7.3.  acc_rad_request(comment)
 
    Like acc_log_request, acc_rad_request reports on a request. It reports
    to radius server as configured in "radius_config".
@@ -1415,7 +1416,7 @@ acc_rad_request("Some comment");
 acc_rad_request("$var(code) Error: $avp(reason)");
 ...
 
-7.4. acc_diam_request(comment)
+7.4.  acc_diam_request(comment)
 
    Like acc_log_request, acc_diam_request reports on a request. It reports
    to the configured Diameter server.
@@ -1443,55 +1444,55 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with old log_fmt parameter
+       What happend with old log_fmt parameter
 
-   The parameter became obsolete with the restructure of the data logged
-   by ACC module (refer to the Overview chapter). For similar behaviour
-   you can use the extra accouting (see the coresponding chapter).
+       The parameter became obsolete with the restructure of the data logged
+       by ACC module (refer to the Overview chapter). For similar behaviour
+       you can use the extra accouting (see the coresponding chapter).
 
    2.2.
 
-   What happend with old multi_leg_enabled parameter
+       What happend with old multi_leg_enabled parameter
 
-   The parameter becaome obsolete by the addition of the new
-   multi_leg_info parameter. The multi-leg accouting is automatically
-   enabled when multi_leg_info is defined.
+       The parameter becaome obsolete by the addition of the new
+       multi_leg_info parameter. The multi-leg accouting is automatically
+       enabled when multi_leg_info is defined.
 
    2.3.
 
-   What happend with old src_leg_avp_id and dst_leg_avp_id parameters
+       What happend with old src_leg_avp_id and dst_leg_avp_id parameters
 
-   The parameter was replaced by the more generic new parameter
-   multi_leg_info. This allows logging (per-leg) of more information than
-   just dst and src.
+       The parameter was replaced by the more generic new parameter
+       multi_leg_info. This allows logging (per-leg) of more information than
+       just dst and src.
 
    2.4.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.5.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    2.6.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+       Please follow the guidelines provided at:
+       http://sip-router.org/tracker.
