@@ -69,6 +69,7 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 	}
 	
 	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
+		RES_COL_N(_r) = 0;
 		LM_ERR("could not allocate columns\n");
 		return -3;
 	}
@@ -173,6 +174,7 @@ static inline int db_mysql_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 
 	if (db_allocate_rows(_r) < 0) {
 		LM_ERR("could not allocate rows");
+		RES_ROW_N(_r) = 0;
 		return -2;
 	}
 
