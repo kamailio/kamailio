@@ -417,10 +417,6 @@ error:
 
 int sql_do_query_async(sql_con_t *con, str *query)
 {
-	db1_res_t* db_res = NULL;
-	int i, j;
-	str sv;
-
 	if(query==NULL)
 	{
 		LM_ERR("bad parameters\n");
