@@ -194,6 +194,7 @@ PerlInterpreter *parser_init(void) {
 	int modpathset_start = 0;
 	int modpathset_end = 0;
 	int i;
+	int pr;
 
 	new_perl = perl_alloc();
 
@@ -234,8 +235,9 @@ PerlInterpreter *parser_init(void) {
 	argv[argc] = filename; /* The script itself */
 	argc++;
 
-	if (perl_parse(new_perl, xs_init, argc, argv, NULL)) {
-		LM_ERR("failed to load perl file \"%s\".\n", argv[argc-1]);
+	pr=perl_parse(new_perl, xs_init, argc, argv, NULL);
+	if (pr) {
+		LM_ERR("failed to load perl file \"%s\" with code %d.\n", argv[argc-1], pr);
 		if (modpathset_start) {
 			for (i = modpathset_start; i <= modpathset_end; i++) {
 				pkg_free(argv[i]);
