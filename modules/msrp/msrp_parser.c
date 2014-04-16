@@ -81,7 +81,7 @@ int msrp_parse_frame(msrp_frame_t *mf)
 	}
 	if(msrp_parse_headers(mf)<0)
 	{
-		LM_ERR("unable to parse first line\n");
+		LM_ERR("unable to parse headers\n");
 		return -1;
 	}
 	return 0;
@@ -221,6 +221,10 @@ int msrp_parse_headers(msrp_frame_t *mf)
 	msrp_hdr_t *hdr;
 	msrp_hdr_t *last;
 
+	int fpath = 0; /* From path set */
+	int tpath = 0; /* To path set */
+	int any = 0; /* Any header set */
+
 	/* already parsed?!? */
 	if(mf->headers != NULL)
 		return 0;
@@ -291,10 +295,35 @@ int msrp_parse_headers(msrp_frame_t *mf)
 		}
 		msrp_hdr_set_type(hdr);
 	
+		if (hdr->htype == MSRP_HDR_TO_PATH) {
+		  tpath = 1;
+		  if (fpath || any) {
+		    LM_ERR("broken msrp frame message, To-Path must be the first header.\n");
+		    return -1;		    
+		  }
+		} else if (hdr->htype == MSRP_HDR_FROM_PATH) {
+		  fpath = 1;
+		  if (!tpath || any) {
+		    LM_ERR("broken msrp frame message, From-Path must be the second header.\n");
+		    return -1;
+		  }
+		} else {
+		  any = 1;
+		  if (!tpath || !fpath) {
+		    LM_ERR("broken msrp frame message, To-Path and From-Path must be defined before any header.\n");
+		    return -1;
+		  }
+		}
+		
 		LM_DBG("MSRP Header: (%p) [%.*s] [%d] [%.*s]\n",
 				hdr, hdr->name.len, hdr->name.s, hdr->htype,
 				hdr->body.len, hdr->body.s);
 		s = l + 1;
+	}
+
+	if (!tpath || !fpath) {
+	  LM_ERR("broken msrp frame message, To-Path and From-Path must be defined.\n");
+	  return -1;
 	}
 
 ateoh:
