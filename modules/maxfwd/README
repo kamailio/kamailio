@@ -107,7 +107,7 @@ Chapter 1. Admin Guide
    MAX-FORWARDS value allowed by RFC 3261. The value can be changed at
    runtime.
 
-   Default value is "16".
+   Default value is "70".
 
    Example 1.1. Set max_limit parameter
 ...
