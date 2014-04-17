@@ -293,24 +293,34 @@ int msrp_parse_headers(msrp_frame_t *mf)
 			last = hdr;
 		}
 		msrp_hdr_set_type(hdr);
-	
+
+		/* Checking for well-formed MSRP rfc4975 messages */
 		if (hdr->htype == MSRP_HDR_TO_PATH) {
-			tpath = 1;
-			if (fpath || any) {
+			if (tpath) {
+				LM_ERR("broken msrp frame message, Multiple To-Path not allowed.\n");
+				return -1;				
+			} else if (fpath || any) {
 				LM_ERR("broken msrp frame message, To-Path must be the first header.\n");
-				return -1;		    
+				return -1;
+			} else {
+				tpath = 1;
 			}
 		} else if (hdr->htype == MSRP_HDR_FROM_PATH) {
-			fpath = 1;
-			if (!tpath || any) {
-				LM_ERR("broken msrp frame message, From-Path must be the second header.\n");
+			if (fpath) {
+				LM_ERR("broken msrp frame message, Multiple From-Path not allowed.\n");
 				return -1;
+			} else if (!tpath || any) {
+				LM_ERR("broken msrp frame message, From-Path must be after To-Path.\n");
+				return -1;
+			} else {
+				fpath = 1;
 			}
 		} else {
-			any = 1;
 			if (!tpath || !fpath) {
 				LM_ERR("broken msrp frame message, To-Path and From-Path must be defined before any header.\n");
 				return -1;
+			} else {
+				any = 1;
 			}
 		}
 		
