@@ -452,6 +452,12 @@ static int mod_init(void)
 {
 	unsigned int n;
 
+	if(dlg_ka_interval!=0 && dlg_ka_interval<30) {
+		LM_ERR("ka interval too low (%d), has to be at least 30\n",
+				dlg_ka_interval);
+		return -1;
+	}
+
 	dlg_event_rt[DLG_EVENTRT_START] = route_lookup(&event_rt, "dialog:start");
 	dlg_event_rt[DLG_EVENTRT_END] = route_lookup(&event_rt, "dialog:end");
 	dlg_event_rt[DLG_EVENTRT_FAILED] = route_lookup(&event_rt, "dialog:failed");
