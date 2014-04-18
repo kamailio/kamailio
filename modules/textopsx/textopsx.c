@@ -1195,7 +1195,8 @@ static int assign_hf_process2_params(struct sip_msg* msg, struct hdr_field* hf, 
 static int insupddel_hf_value_f(struct sip_msg* msg, char* _hname, char* _val) {
 	struct hname_data* hname = (void*) _hname;
 	struct hdr_field* hf;
-	str val, hval1, hval2;
+	str val = {0};
+	str hval1, hval2;
 	int res;
 
 	if (_val) {
