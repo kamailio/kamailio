@@ -1068,7 +1068,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 			group = changed->group;
 		}
 
-		if (!changed->group_id_set && changed->var->def->on_set_child_cb) {
+		if (changed->group && !changed->group_id_set && changed->var->def->on_set_child_cb) {
 			s.s = changed->group->name;
 			s.len = changed->group->name_len;
 			s2.s = changed->var->def->name;
@@ -1135,12 +1135,12 @@ int cfg_commit(cfg_ctx_t *ctx)
 
 				group_inst = NULL; /* fore the look-up of group_inst */
 			}
-			if (!group_inst || (group_inst->id != changed->group_id)) {
+			if (group && (!group_inst || (group_inst->id != changed->group_id))) {
 				group_inst = cfg_find_group(CFG_GROUP_META(block, group),
 								group->size,
 								changed->group_id);
 			}
-			if (!group_inst) {
+			if (group && !group_inst) {
 				LOG(L_ERR, "ERROR: cfg_commit(): global group instance %.*s[%u] is not found\n",
 					group->name_len, group->name, changed->group_id);
 				goto error;
