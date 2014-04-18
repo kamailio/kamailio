@@ -802,7 +802,7 @@ int	dlg_set_timeout_by_profile(struct dlg_profile_table *profile,
 				}
 
 				ph = ph->next;
-			} while(ph != profile->entries[i].first);
+			} while(ph && ph != profile->entries[i].first);
 		}
 
 		lock_release(&profile->lock);
