@@ -171,11 +171,9 @@ static struct socket_info *get_sock_val(struct sip_msg *msg)
 	} else {
 		/* xavp */
 		if(reg_xavp_cfg.s!=NULL)
-		{
 			vavp = xavp_get_child_with_sval(&reg_xavp_cfg, &xsockname);
-			if(vavp==NULL || vavp->val.v.s.len<=0)
-				return 0;
-		}
+		if(vavp==NULL || vavp->val.v.s.len<=0)
+			return 0;
 		socks = vavp->val.v.s;
 	}
 	if (parse_phostport( socks.s, &hosts.s, &hosts.len,
