@@ -32,7 +32,7 @@
  */
 
 #ifndef _DP_DB_H_
-#define _DP_DB_H
+#define _DP_DB_H_
 
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
