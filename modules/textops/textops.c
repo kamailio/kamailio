@@ -1553,8 +1553,8 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	}
 
 	if (str2) {
-		memcpy(s+str1->len, REQ_LINE(msg).uri.s, REQ_LINE(msg).uri.len);
-		memcpy(s+str1->len+REQ_LINE(msg).uri.len, str2->s, str2->len );
+		memcpy(s+s0.len, REQ_LINE(msg).uri.s, REQ_LINE(msg).uri.len);
+		memcpy(s+s0.len+REQ_LINE(msg).uri.len, str2->s, str2->len );
 	}
 
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
@@ -2236,7 +2236,7 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 	char* begin;
 	struct subst_expr* se;
 	int off;
-	int nmatches;
+	int nmatches=0;
 	str body;
 	hdr_field_t *hf;
 	hdr_field_t *hfl = NULL;
