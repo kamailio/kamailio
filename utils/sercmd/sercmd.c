@@ -47,6 +47,7 @@
 #include <netinet/in.h> /* udp sock */
 #include <sys/uio.h> /* writev */
 #include <netdb.h> /* gethostbyname */
+#include <fcntl.h>
 #include <time.h> /* time */
 
 #ifdef USE_READLINE
@@ -718,8 +719,14 @@ static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
 				goto error;
 			}
 			msg_end=hdr_end+in_pkt->tlen;
-			if ((int)(msg_end-reply_buf)>max_reply_size)
+			if ((int)(msg_end-reply_buf)>max_reply_size) {
+				int flags = fcntl(s, F_GETFL, 0);
+				fcntl(s, F_SETFL, flags | O_NONBLOCK);
+				/* reading the rest from the socket */
+				while(read(s, reply_buf, max_reply_size)>0);
+				fcntl(s, F_SETFL, flags & (~O_NONBLOCK));
 				goto error_toolong;
+			}
 		}
 	}while(crt<msg_end);
 	
