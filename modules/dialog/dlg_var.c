@@ -444,9 +444,8 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 	if(param==NULL)
 		return -1;
 
-	if(val==NULL)
-		n = 0;
-	else
+	n = 0;
+	if(val!=NULL && val->flags&PV_VAL_INT)
 		n = val->ri;
 
 	switch(param->pvn.u.isname.name.n)
@@ -461,7 +460,7 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 			_dlg_ctx.to_bye = n;
 		break;
 		case 4:
-			if(val->flags&PV_VAL_STR) {
+			if(val && val->flags&PV_VAL_STR) {
 				if(val->rs.s[val->rs.len]=='\0'
 						&& val->rs.len<DLG_TOROUTE_SIZE) {
 					_dlg_ctx.to_route = route_lookup(&main_rt, val->rs.s);
