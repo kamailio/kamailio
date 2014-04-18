@@ -1003,7 +1003,7 @@ error:
 	else
 		LOG(L_ERR, "ERROR: new_add_var(): failed to add the additional variable instance: %.*s[%u].%.*s\n",
 			group_name->len, group_name->s, group_id,
-			var_name->len, var_name->s);
+			(var_name)?var_name->len:0, (var_name&&var_name->s)?var_name->s:"");
 
 	if (add_var)
 		pkg_free(add_var);
