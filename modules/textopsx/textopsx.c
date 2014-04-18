@@ -1040,8 +1040,9 @@ static void get_uri_and_skip_until_params(str *param_area, str *name, str *uri) 
 
 	name->len = 0;
 	uri->len = 0;
+	uri->s = 0;
 	uri_done = 0;
-        name->s = param_area->s;
+    name->s = param_area->s;
 	for (i=0; i<param_area->len && param_area->s[i]!=';'; ) {	/* [ *(token LSW)/quoted-string ] "<" addr-spec ">" | addr-spec */
 		/* skip name */
 		for (quoted=0, uri_pos=i; i<param_area->len; i++) {
@@ -1078,7 +1079,7 @@ static void get_uri_and_skip_until_params(str *param_area, str *name, str *uri) 
 			}
 		}
 	}
-        param_area->s+= i;
+    param_area->s+= i;
 	param_area->len-= i;
 	if (uri->s == name->s)
 		name->len = 0;
