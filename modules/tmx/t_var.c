@@ -397,7 +397,7 @@ int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
 		case FAILURE_ROUTE:
 			/* first get the transaction */
 			t = _tmx_tmb.t_gett();
-			if ( t == NULL && t == T_UNDEFINED ) {
+			if ( t == NULL || t == T_UNDEFINED ) {
 				return -1;
 			}
 			/* add the currently added branches to the number of
