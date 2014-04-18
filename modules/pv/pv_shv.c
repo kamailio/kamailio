@@ -775,7 +775,7 @@ int param_set_xvar( modparam_t type, void* val, int mode)
 	if(!shm_initialized()!=0)
 	{
 		LM_ERR("shm not initialized - cannot set value for PVs\n");
-		goto error;
+		return -1;
 	}
 
 	s.s = (char*)val;
