@@ -470,7 +470,6 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 		p += rr_param->len;
 		*(p++) = '=';
 		memcpy( p, replace.s, replace.len);
-		p += replace.len;
 
 		if (uac_rrb.add_rr_param( msg, &param)!=0)
 		{

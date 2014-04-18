@@ -432,8 +432,8 @@ int w_replace_from(struct sip_msg* msg, char* p1, char* p2)
 {
 	str uri_s;
 	str dsp_s;
-	str *uri;
-	str *dsp;
+	str *uri = NULL;
+	str *dsp = NULL;
 
 	if (p2==NULL) {
 		 p2 = p1;
@@ -499,8 +499,8 @@ static int w_replace_to(struct sip_msg* msg, char* p1, char* p2)
 {
 	str uri_s;
 	str dsp_s;
-	str *uri;
-	str *dsp;
+	str *uri = NULL;
+	str *dsp = NULL;
 
 	if (p2==NULL) {
 		p2 = p1;
@@ -526,6 +526,8 @@ static int w_replace_to(struct sip_msg* msg, char* p1, char* p2)
 		LM_ERR("failed to parse TO hdr\n");
 		return -1;
 	}
+
+	LM_DBG("dsp=%p (len=%d) , uri=%p (len=%d)\n",dsp,dsp?dsp->len:0,uri,uri?uri->len:0);
 
 	return (replace_uri(msg, dsp, uri, msg->to, &rr_to_param, &restore_to_avp, 0)==0)?1:-1;
 
