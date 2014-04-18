@@ -651,7 +651,7 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 	memcpy(p, rr_prefix, rr_prefix_len);
 	p += rr_prefix_len;
 
-	if (user->len) {
+	if (user && user->len) {
 		memcpy(p, user->s, user->len);
 		p += user->len;
 		*p = '@';
