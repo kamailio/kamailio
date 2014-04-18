@@ -364,15 +364,14 @@ int pv_parse_mq_name(pv_spec_t *sp, str *in)
 
 str *pv_get_mq_name(sip_msg_t *msg, str *in)
 {
-	str *queue;
+	static str queue;
+	pv_spec_t *pvs;
+	pv_value_t pvv;
 
 	if (in->s[0] != '$')
-		queue = in;
+		return in;
 	else
 	{
-		pv_spec_t *pvs;
-		pv_value_t pvv;
-
 		if (pv_locate_name(in) != in->len)
 		{
 			LM_ERR("invalid pv [%.*s]\n", in->len, in->s);
@@ -396,10 +395,10 @@ str *pv_get_mq_name(sip_msg_t *msg, str *in)
 			return NULL;
 		}
 
-		queue = &pvv.rs;
+		queue = pvv.rs;
 	}
 
-	return queue;
+	return &queue;
 }
 
 /**
