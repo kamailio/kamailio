@@ -69,6 +69,9 @@ sed -i -e 's/db-util/db4.8-util/' ${DIST}/control
 sed -i 's/libfreeradius-client-dev/libradiusclient-ng-dev/' ${DIST}/control
 sed -i -e '/FREERADIUS/d' ${DIST}/rules
 
+# use old json
+sed -i 's/libjson-c-dev/libjson0-dev/' ${DIST}/control
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
