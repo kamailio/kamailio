@@ -544,7 +544,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 
 	ret = rpc->scan(ctx, "SSSdfSddd", &table, &aor, &contact, &ci.expires,
 		&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods);
-	if(path.len==1 && (strncmp(temp.s, "0", 1)==0))	{
+	if(path.len==1 && (strncmp(path.s, "0", 1)==0))	{
 		LM_DBG("path == 0 -> unset\n");
 	}
 	else {
