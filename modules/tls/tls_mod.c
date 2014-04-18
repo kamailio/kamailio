@@ -400,7 +400,12 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 
 	c = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0,
 					cfg_get(tls, tls_cfg, con_lifetime));
-	if (c && c->type != PROTO_TLS) {
+	if (!c) {
+		ERR("connection no longer exits\n");
+		return -1;
+	}
+
+	if(c->type != PROTO_TLS) {
 		ERR("Connection found but is not TLS\n");
 		tcpconn_put(c);
 		return -1;
