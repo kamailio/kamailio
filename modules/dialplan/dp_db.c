@@ -360,7 +360,8 @@ dpl_node_t * build_rule(db_val_t * values)
 	struct subst_expr *repl_comp;
 	dpl_node_t * new_rule;
 	str match_exp, subst_exp, repl_exp, attrs;
-	int matchop, cap_cnt;
+	int matchop;
+	int cap_cnt=0;
 
 	matchop = VAL_INT(values+2);
 
