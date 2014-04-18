@@ -804,6 +804,7 @@ inline static str* binrpc_val_conv_str(struct binrpc_ctx* ctx,
 			s=int2str(v->u.intval, &len);
 			ret=ctl_malloc(sizeof(*ret)+len+1);
 			if (ret==0 || binrpc_gc_track(ctx, ret)!=0){
+				if(ret!=0) ctl_free(ret);
 				*err=E_BINRPC_OVERFLOW;
 				return 0;
 			}
