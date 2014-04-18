@@ -24,6 +24,9 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ dnssec/' ${DIST}/rules
 sed -i 's/libfreeradius-client-dev/libradiusclient-ng-dev/' ${DIST}/control
 sed -i -e '/FREERADIUS/d' ${DIST}/rules
 
+# use old json
+sed -i 's/libjson-c-dev/libjson0-dev/' ${DIST}/control
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
