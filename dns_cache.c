@@ -2367,10 +2367,12 @@ retry:
 found:
 #ifdef DNS_CACHE_DEBUG
 	DBG("dns_srv_get_nxt_rr(%p, %lx, %d, %u): selected %d/%d in grp. %d"
-			" (rand_w=%d, rr=%p p=%d w=%d rsum=%d)\n",
+			" (rand_w=%d, rr=%p rd=%p p=%d w=%d rsum=%d)\n",
 		e, (unsigned long)*tried, *no, now, i, idx, n, rand_w, r_sums[i].rr,
-		((struct srv_rdata*)r_sums[i].rr->rdata)->priority,
-		((struct srv_rdata*)r_sums[i].rr->rdata)->weight, r_sums[i].r_sum);
+		r_sums[i].rr->rdata,
+		(r_sums[i].rr->rdata)?((struct srv_rdata*)r_sums[i].rr->rdata)->priority:0,
+		(r_sums[i].rr->rdata)?((struct srv_rdata*)r_sums[i].rr->rdata)->weight:0,
+		r_sums[i].r_sum);
 #endif
 	/* i is the winner */
 	*no=n; /* grp. start */
