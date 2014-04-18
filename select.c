@@ -385,6 +385,10 @@ int resolve_select(select_t* s)
 		}
 	}
 
+	if (t==NULL) {
+		BUG ("final node not found\n");
+		goto not_found;
+	}
 	if (t->table[table_idx].flags & SEL_PARAM_EXPECTED) {
 		BUG ("final node has SEL_PARAM_EXPECTED set (no more parameters available)\n");
 		goto not_found;
