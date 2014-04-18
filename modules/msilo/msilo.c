@@ -1122,7 +1122,8 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 				msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 				goto error;
 			}
-			memcpy(tmp_extra_hdrs.s, extra_hdrs_str.s, extra_hdrs_str.len);
+			if(extra_hdrs_str.len>0)
+				memcpy(tmp_extra_hdrs.s, extra_hdrs_str.s, extra_hdrs_str.len);
 			memcpy(tmp_extra_hdrs.s+extra_hdrs_str.len, str_vals[4].s, str_vals[4].len);
 		} else {
 			tmp_extra_hdrs.len = 0;
@@ -1347,7 +1348,8 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	str puri;
 	time_t ttime;
 	uac_req_t uac_r;
-	str str_vals[4], hdr_str, body_str, extra_hdrs_str;
+	str str_vals[4], hdr_str, body_str;
+	str extra_hdrs_str = {0};
 	time_t stime;
 
 	if(ms_reminder.s==NULL)
