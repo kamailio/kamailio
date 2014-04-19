@@ -14,7 +14,7 @@ BUILDER = $(shell which pkg-config)
 ifeq ($(BUILDER),)
 	JSONC=$(shell ls $(SYSBASE)/include/lib/libjson*.so $(LOCALBASE)/lib/libjson*.so 2>/dev/null | grep json-c)
 else
-	JSONC=$(shell pkg-config --libs json-c 2>/dev/null | grep json-c.so)
+	JSONC=$(shell pkg-config --libs json-c 2>/dev/null | grep json-c)
 endif
 
 ifneq ($(JSONC),)
