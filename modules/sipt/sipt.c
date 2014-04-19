@@ -49,6 +49,53 @@ static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_valu
 static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
+/* New API */
+int sipt_parse_pv_name(pv_spec_p sp, str *in);
+static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+
+typedef struct _sipt_pv {
+        int type;
+        int sub_type;
+} sipt_pv_t;
+
+typedef struct sipt_header_map
+{
+	char * name;
+	unsigned int type;
+	struct sipt_subtype_map
+	{
+		char * name;
+		unsigned int type;
+	} subtypes[5];
+} sipt_header_map_t;
+
+static sipt_header_map_t sipt_header_mapping[] =
+{
+	{"CALLING_PARTY_CATEGORY", ISUP_PARM_CALLING_PARTY_CAT, 
+		{{NULL, 0}} },
+	{"CPC", ISUP_PARM_CALLING_PARTY_CAT, 
+		{{NULL, 0}} },
+	{"CALLING_PARTY_NUMBER", ISUP_PARM_CALLING_PARTY_NUM, 
+		{{"NATURE_OF_ADDRESS", 1}, 
+			{"NAI", 1},
+			{"SCREENING", 2},
+			{"PRESENTATION", 3},
+			{NULL, 0}
+		}},
+	{"CALLED_PARTY_NUMBER", ISUP_PARM_CALLED_PARTY_NUM,
+		{{"NATURE_OF_ADDRESS", 1}, 
+			{"NAI", 1},
+			{NULL, 0}
+		}},
+	{"HOP_COUNTER", ISUP_PARM_HOP_COUNTER, 
+		{{NULL, 0}} },
+	{"EVENT_INFO", ISUP_PARM_EVENT_INFO, 
+		{{NULL, 0}} },
+	{ NULL, 0, {}}
+};
+
+
+
 static int mod_init(void);
 static void mod_destroy(void);
 
@@ -104,14 +151,14 @@ static pv_export_t mod_items[] = {
                 0, 0, 0, 0 },
         { {"sipt_hop_counter",  sizeof("sipt_hop_counter")-1}, PVT_OTHER,  sipt_get_hop_counter,    0,
                 0, 0, 0, 0 },
-        { {"sipt_event_info",  sizeof("sipt_event_info")-1}, PVT_OTHER,  sipt_get_event_info,    0,
-                0, 0, 0, 0 },
         { {"sipt_cpc",  sizeof("sipt_cpc")-1}, PVT_OTHER,  sipt_get_cpc,    0,
                 0, 0, 0, 0 },
         { {"sipt_calling_party_nai",  sizeof("sipt_calling_party_nai")-1}, PVT_OTHER,  sipt_get_calling_party_nai,    0,
                 0, 0, 0, 0 },
         { {"sipt_called_party_nai",  sizeof("sipt_called_party_nai")-1}, PVT_OTHER,  sipt_get_called_party_nai,    0,
                 0, 0, 0, 0 },
+        { {"sipt",  sizeof("sipt")-1}, PVT_OTHER,  sipt_get_pv,    0,
+                sipt_parse_pv_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -276,6 +323,150 @@ static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_
 	
 	pv_get_sintval(msg, param, res, isup_get_called_party_nai((unsigned char*)body.s, body.len));
 	return 0;
+}
+
+int sipt_parse_pv_name(pv_spec_p sp, str *in)
+{
+        sipt_pv_t *spv=NULL;
+        char *p;
+        str pvtype;
+        str pvsubtype;
+        if(sp==NULL || in==NULL || in->len<=0)
+                return -1;
+
+        spv = (sipt_pv_t*)pkg_malloc(sizeof(sipt_pv_t));
+        if(spv==NULL)
+                return -1;
+
+        memset(spv, 0, sizeof(sipt_pv_t));
+
+	p = in->s;
+
+        while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+                p++;
+        if(p>in->s+in->len || *p=='\0')
+                goto error;
+
+	pvtype.s = p;
+
+        while(p < in->s + in->len)
+        {
+                if(*p=='.' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+                        break;
+                p++;
+        }
+        pvtype.len = p - pvtype.s;
+        if(p>in->s+in->len || *p=='\0')
+	{
+		// only one parameter stop parsing
+		pvsubtype.len = 0;
+		pvsubtype.s = NULL;
+                goto parse_parameters;
+	}
+
+        if(*p!='.')
+        {
+                while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+                        p++;
+                if(p>in->s+in->len || *p=='\0' || *p!='.')
+		{
+			// only one parameter w trailing whitespace
+			pvsubtype.len = 0;
+			pvsubtype.s = NULL;
+			goto parse_parameters;
+		}
+        }
+        p++;
+
+        pvsubtype.len = in->len - (int)(p - in->s);
+        pvsubtype.s = p;
+
+ 
+parse_parameters:
+        LM_DBG("sipt type[%.*s] - subtype[%.*s]\n", pvtype.len, pvtype.s,
+                        pvsubtype.len, pvsubtype.s);
+	int i = 0, j=0;
+
+	for(i=0;sipt_header_mapping[i].name != NULL; i++)
+	{
+		if(strncasecmp(pvtype.s, sipt_header_mapping[i].name, pvtype.len) == 0)
+		{
+			spv->type = sipt_header_mapping[i].type;
+
+			if(pvsubtype.len == 0)
+				break;
+
+			for(j=0;sipt_header_mapping[i].subtypes[j].name != NULL;j++)
+			{
+				if(strncasecmp(pvsubtype.s, sipt_header_mapping[i].subtypes[j].name, pvsubtype.len) == 0)
+				spv->sub_type = sipt_header_mapping[i].subtypes[j].type;
+			}
+			if(spv->sub_type == 0)
+			{
+				LM_ERR("Unknown SIPT subtype [%.*s]\n", pvsubtype.len, pvsubtype.s);
+				return -1;
+			}
+			break;
+		}
+	}
+
+	LM_DBG("Type=%d subtype=%d\n",spv->type, spv->sub_type);
+	if(spv->type == 0)
+	{
+		LM_ERR("Unknown SIPT type [%.*s]\n",pvtype.len, pvtype.s);
+		return -1;
+	}
+
+	sp->pvp.pvn.u.dname = (void*)spv;
+	sp->pvp.pvn.type = PV_NAME_OTHER;
+
+	return 0;
+error:
+        LM_ERR("error at PV sipt name: %.*s\n", in->len, in->s);
+        return -1;
+
+}
+
+static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+        sipt_pv_t *spv;
+
+        if(msg==NULL || param==NULL)
+                return -1;
+
+        spv = (sipt_pv_t*)param->pvn.u.dname;
+        if(spv==NULL)
+                return -1;
+
+        switch(spv->type)
+        {
+		case ISUP_PARM_CALLING_PARTY_CAT:
+			return sipt_get_cpc(msg, param, res);
+		case ISUP_PARM_CALLING_PARTY_NUM:
+			switch(spv->sub_type)
+			{
+				case 1: /* NAI */
+					return sipt_get_calling_party_nai(msg, param, res);
+				case 2: /* SCREENIG */
+					return sipt_get_screening(msg, param, res);
+				case 3: /* PRESENTATION */
+					return sipt_get_presentation(msg, param, res);
+			}
+			break;
+		case ISUP_PARM_CALLED_PARTY_NUM:
+			switch(spv->sub_type)
+			{
+				case 1: /* NAI */
+					return sipt_get_called_party_nai(msg, param, res);
+			}
+			break;
+		case ISUP_PARM_HOP_COUNTER:
+			return sipt_get_hop_counter(msg, param, res);
+		case ISUP_PARM_EVENT_INFO:
+			return sipt_get_event_info(msg, param, res);
+	}
+
+	return -1;
 }
 
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai)

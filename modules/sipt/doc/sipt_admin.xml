@@ -77,7 +77,7 @@ sipt_set_calling($fU, 4, 0, 3);
 <section>
         <title>Exported pseudo-variables</title>
 	<section id="sipt.v.sipt_presentation">
-		<title><varname>$sipt_presentation</varname></title>
+		<title><varname>$sipt(calling_party_number.presentation) / $sipt_presentation</varname></title>
 		<para>
 			Returns the value of the Address presentation restricted indicator contained in the
 			Calling Party Number header of the IAM message if it exists.
@@ -99,7 +99,7 @@ sipt_set_calling($fU, 4, 0, 3);
 			<programlisting format="linespecific">
 ...
 # add privacy header if restriction is requested 
-if($sipt_presentation == 1)
+if($sipt(calling_party_number.presentation) == 1)
 {
 	append_hf("Privacy: id\r\n");
 	$fn = "Anonymous";
@@ -110,7 +110,7 @@ if($sipt_presentation == 1)
 		</example>
 	</section>
 	<section id="sipt.v.sipt_screening">
-		<title><varname>$sipt_screening</varname></title>
+		<title><varname>$sipt(calling_party_number.screening) / $sipt_screening</varname></title>
 		<para>
 			Returns the value of the Screening Indicator contained in the
 			Calling Party Number header of the IAM message if it exists.
@@ -134,7 +134,7 @@ if($sipt_presentation == 1)
 
 # remove P-Asserted-Identity header if the screening isn't verified 
 # or network provided
-$avp(s:screening) = $sipt_screening;
+$avp(s:screening) = $sipt(calling_party_number.screening);
 if($avp(s:screening) != 1 &amp;&amp; $avp(s:screening) != 3)
 {
 	remove_hf("P-Asserted-Id");
@@ -145,7 +145,7 @@ if($avp(s:screening) != 1 &amp;&amp; $avp(s:screening) != 3)
 		</example>
 	</section>
 	<section id="sipt.v.sipt_hop_counter">
-		<title><varname>$sipt_hop_counter</varname></title>
+		<title><varname>$sipt(hop_counter) / $sipt_hop_counter</varname></title>
 		<para>
 			Returns the value of the Hop Counter for the IAM message if it exists.
 			Returns -1 if there isn't a hop counter.
@@ -155,7 +155,7 @@ if($avp(s:screening) != 1 &amp;&amp; $avp(s:screening) != 3)
 			<programlisting format="linespecific">
 ...
 # get the hop counter and update the Max-Forwards header if it exists
-$avp(s:hop) = $sipt_hop_counter;
+$avp(s:hop) = $sipt(hop_counter);
 if($avp(s:hop) > 0)
 {
 	remove_hf("Max-Forwards");
@@ -167,7 +167,7 @@ if($avp(s:hop) > 0)
 		</example>
 	</section>
 	<section id="sipt.v.sipt_cpc">
-		<title><varname>$sipt_cpc</varname></title>
+		<title><varname>$sipt(calling_party_category) / $sipt(cpc) / $sipt_cpc</varname></title>
 		<para>
 			Returns the value of the Calling Party Category for the IAM message.
 			Returns -1 if there is a parsing error.
@@ -177,14 +177,14 @@ if($avp(s:hop) > 0)
 			<programlisting format="linespecific">
 ...
 # get the Cpc code and set put it in a custom sip header
-append_hf("X-CPC: $sipt_cpc\r\n");
+append_hf("X-CPC: $sipt(cpc)\r\n");
 
 ...
 </programlisting>
 		</example>
 	</section>
 	<section id="sipt.v.sipt_calling_party_nai">
-		<title><varname>$sipt_calling_party_nai</varname></title>
+		<title><varname>$sipt(calling_party_number.nature_of_address) / $sipt.(calling_party_number.nai) / $sipt_calling_party_nai</varname></title>
 		<para>
 			Returns the value of the Nature of Address Indicator
 			of the Calling Party for the IAM message.
@@ -208,7 +208,7 @@ append_hf("X-CPC: $sipt_cpc\r\n");
 			<programlisting format="linespecific">
 ...
 # get the Calling Nai and add country code if national
-if($sipt_calling_party_nai == 3)
+if($sipt(calling_party_number.nai) == 3)
 {
 	$fU = "32" + "$fU";
 }
@@ -218,7 +218,7 @@ if($sipt_calling_party_nai == 3)
 		</example>
 	</section>
 	<section id="sipt.v.sipt_called_party_nai">
-		<title><varname>$sipt_called_party_nai</varname></title>
+		<title><varname>$sipt(called_party_number.nature_of_address) / $sipt(called_party_number.nai) / $sipt_called_party_nai</varname></title>
 		<para>
 			Returns the value of the Nature of Address Indicator
 			of the Called Party for the IAM message.
@@ -242,7 +242,7 @@ if($sipt_calling_party_nai == 3)
 			<programlisting format="linespecific">
 ...
 # get the Called Nai and add country code if national
-if($sipt_called_party_nai == 3)
+if($sipt(called_party_number.nai) == 3)
 {
 	$rU = "32" + "$rU";
 }
@@ -252,7 +252,7 @@ if($sipt_called_party_nai == 3)
 		</example>
 	</section>
 	<section id="sipt.v.sipt_event_info">
-		<title><varname>$sipt_event_info</varname></title>
+		<title><varname>$sipt(event_info)</varname></title>
 		<para>
 			Returns the value of the Event Info header
 			of the CPG message.
