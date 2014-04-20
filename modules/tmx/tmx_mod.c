@@ -124,6 +124,9 @@ static pv_export_t mod_pvs[] = {
 	{ {"T_reply_ruid", sizeof("T_reply_ruid")-1}, PVT_OTHER,
 		pv_get_tm_reply_ruid, 0,
 		 0, 0, 0, 0 },
+	{ {"T_reply_flags", sizeof("T_reply_flags")-1}, PVT_OTHER,
+		pv_get_tm_reply_flags, 0,
+		 0, 0, 0, 0 },
 	{ {"T_reply_code", sizeof("T_reply_code")-1}, PVT_OTHER,
 		pv_get_tm_reply_code, 0,
 		 0, 0, 0, 0 },
@@ -611,7 +614,7 @@ static int w_t_reuse_branch(struct sip_msg* msg, char *p1, char *p2)
 	    } else {
 		reset_path_vector(msg);
 	    }
-	    setbflagsval(0, t->uac[branch].flags);
+	    setbflagsval(0, t->uac[branch].branch_flags);
 	    set_instance(msg, &(t->uac[branch].instance));
 	    return 1;
 	default:
