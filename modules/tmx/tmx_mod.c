@@ -30,6 +30,7 @@
 #include "../../route.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/kcore/kstats_wrapper.h"
+#include "../../dset.h"
 
 #include "t_var.h"
 #include "t_mi.h"
@@ -63,6 +64,7 @@ static int t_is_reply_route(struct sip_msg* msg, char*, char*);
 
 static int w_t_suspend(struct sip_msg* msg, char*, char*);
 static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn);
+static int w_t_reuse_branch(struct sip_msg* msg, char*, char*);
 static int fixup_t_continue(void** param, int param_no);
 
 static int bind_tmx(tmx_api_t* api);
@@ -171,6 +173,8 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE  },
 	{"t_continue", (cmd_function)w_t_continue,     3,
 		fixup_t_continue, 0, ANY_ROUTE },
+	{"t_reuse_branch", (cmd_function)w_t_reuse_branch, 0, 0, 0,
+	 EVENT_ROUTE },
 	{"bind_tmx", (cmd_function)bind_tmx, 1,
 		0, 0, ANY_ROUTE },
 	{0,0,0,0,0,0}
@@ -573,6 +577,49 @@ static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn)
 	}
 	return 1;
 }
+
+/**
+ * Creates new "main" branch by making copy of branch-failure branch.
+ * Currently the following branch attributes are included:
+ * request-uri, ruid, path, instance, and branch flags.
+ */
+static int w_t_reuse_branch(struct sip_msg* msg, char *p1, char *p2)
+{
+	struct cell *t;
+	int branch;
+
+	if (msg == NULL) return -1;
+
+	/* first get the transaction */
+	if (_tmx_tmb.t_check(msg, 0) == -1) return -1;
+	if ((t = _tmx_tmb.t_gett()) == 0) {
+	    LM_ERR("no transaction\n");
+	    return -1;
+	}
+	switch (get_route_type()) {
+	case BRANCH_FAILURE_ROUTE:
+	    /* use the reason of the winning reply */
+	    if ((branch = _tmx_tmb.t_get_picked_branch()) < 0) {
+		LM_CRIT("no picked branch (%d) for a final response"
+			" in MODE_ONFAILURE\n", branch);
+		return -1;
+	    }
+	    rewrite_uri(msg, &(t->uac[branch].uri));
+	    set_ruid(msg, &(t->uac[branch].ruid));
+	    if (t->uac[branch].path.len) {
+		set_path_vector(msg, &(t->uac[branch].path));
+	    } else {
+		reset_path_vector(msg);
+	    }
+	    setbflagsval(0, t->uac[branch].flags);
+	    set_instance(msg, &(t->uac[branch].instance));
+	    return 1;
+	default:
+	    LM_ERR("unsupported route_type %d\n", get_route_type());
+	    return -1;
+	}
+}
+
 
 /**
  *

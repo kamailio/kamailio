@@ -332,6 +332,36 @@ tcontinue('123', '456', 'MYROUTE');
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_reuse_branch()
+		</function>
+		</title>
+		<para>
+		Creates new "main" branch by making copy of branch-failure
+                branch. Currently the following branch attributes are copied
+		from branch-failure branch: request-uri, ruid, path, instance,
+		and branch flags.
+		</para>
+		<para>
+		This function can be used from tm:branch-failure event_route.
+		</para>
+		<example>
+		<title><function>t_reuse_branch</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route [tm:branch-failure:contact] {
+    t_reuse_branch();
+    setbflag(10);
+    t_relay();
+    exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

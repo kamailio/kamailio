@@ -1,4 +1,3 @@
-
 TMX Module
 
 Daniel-Constantin Mierla
@@ -6,14 +5,25 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
+Juha Heinanen
+
+   TutPro Inc.
+   <jh@tutpro.com>
+
 Edited by
 
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2009 Daniel-Constantin Mierla
-     _________________________________________________________________
+Edited by
+
+Juha Heinanen
+
+   <jh@tutpro.com>
+
+   Copyright (c) 2009 Daniel-Constantin Mierla
+     __________________________________________________________________
 
    Table of Contents
 
@@ -27,24 +37,25 @@ Daniel-Constantin Mierla
 
         3. Functions
 
-              3.1. t_cancel_branches(which) 
-              3.2. t_cancel_callid(callid, cseq, flag) 
-              3.3. t_reply_callid(callid, cseq, code, reason) 
-              3.4. t_flush_flags() 
-              3.5. t_is_failure_route() 
-              3.6. t_is_branch_route() 
-              3.7. t_is_reply_route() 
-              3.8. t_suspend() 
-              3.9. t_continue(tindex, tlabel, rtname) 
+              3.1. t_cancel_branches(which)
+              3.2. t_cancel_callid(callid, cseq, flag)
+              3.3. t_reply_callid(callid, cseq, code, reason)
+              3.4. t_flush_flags()
+              3.5. t_is_failure_route()
+              3.6. t_is_branch_route()
+              3.7. t_is_reply_route()
+              3.8. t_suspend()
+              3.9. t_continue(tindex, tlabel, rtname)
+              3.10. t_reuse_branch()
 
         4. Exported pseudo-variables
         5. MI Commands
 
-              5.1. t_uac_dlg 
-              5.2. t_uac_cancel 
-              5.3. t_hash 
-              5.4. t_reply 
-              5.5. t_reply_callid 
+              5.1. t_uac_dlg
+              5.2. t_uac_cancel
+              5.3. t_hash
+              5.4. t_reply
+              5.5. t_reply_callid
 
         6. Statistics
 
@@ -71,6 +82,7 @@ Daniel-Constantin Mierla
    1.7. t_is_reply_route usage
    1.8. t_suspend usage
    1.9. t_continue usage
+   1.10. t_reuse_branch usage
 
 Chapter 1. Admin Guide
 
@@ -84,24 +96,25 @@ Chapter 1. Admin Guide
 
    3. Functions
 
-        3.1. t_cancel_branches(which) 
-        3.2. t_cancel_callid(callid, cseq, flag) 
-        3.3. t_reply_callid(callid, cseq, code, reason) 
-        3.4. t_flush_flags() 
-        3.5. t_is_failure_route() 
-        3.6. t_is_branch_route() 
-        3.7. t_is_reply_route() 
-        3.8. t_suspend() 
-        3.9. t_continue(tindex, tlabel, rtname) 
+        3.1. t_cancel_branches(which)
+        3.2. t_cancel_callid(callid, cseq, flag)
+        3.3. t_reply_callid(callid, cseq, code, reason)
+        3.4. t_flush_flags()
+        3.5. t_is_failure_route()
+        3.6. t_is_branch_route()
+        3.7. t_is_reply_route()
+        3.8. t_suspend()
+        3.9. t_continue(tindex, tlabel, rtname)
+        3.10. t_reuse_branch()
 
    4. Exported pseudo-variables
    5. MI Commands
 
-        5.1. t_uac_dlg 
-        5.2. t_uac_cancel 
-        5.3. t_hash 
-        5.4. t_reply 
-        5.5. t_reply_callid 
+        5.1. t_uac_dlg
+        5.2. t_uac_cancel
+        5.3. t_hash
+        5.4. t_reply
+        5.5. t_reply_callid
 
    6. Statistics
 
@@ -136,25 +149,26 @@ Chapter 1. Admin Guide
 
 2.2. External Libraries or Applications
 
-   The  following  libraries  or  applications  must  be installed before
+   The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
 3. Functions
 
-   3.1. t_cancel_branches(which) 
-   3.2. t_cancel_callid(callid, cseq, flag) 
-   3.3. t_reply_callid(callid, cseq, code, reason) 
-   3.4. t_flush_flags() 
-   3.5. t_is_failure_route() 
-   3.6. t_is_branch_route() 
-   3.7. t_is_reply_route() 
-   3.8. t_suspend() 
-   3.9. t_continue(tindex, tlabel, rtname) 
+   3.1. t_cancel_branches(which)
+   3.2. t_cancel_callid(callid, cseq, flag)
+   3.3. t_reply_callid(callid, cseq, code, reason)
+   3.4. t_flush_flags()
+   3.5. t_is_failure_route()
+   3.6. t_is_branch_route()
+   3.7. t_is_reply_route()
+   3.8. t_suspend()
+   3.9. t_continue(tindex, tlabel, rtname)
+   3.10. t_reuse_branch()
 
 3.1.  t_cancel_branches(which)
 
-   Cancel  branches  of  an  active  SIP transaction. The function can be
+   Cancel branches of an active SIP transaction. The function can be
    called for a SIP reply that will identify the current branch.
 
    Parameter can be:.
@@ -211,9 +225,9 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 
 3.4.  t_flush_flags()
 
-   Flush  the  flags  from  current  SIP message into the already created
-   transaction.  It  make  sense only in routing block if the transaction
-   was created via t_newtran() and the flags have been altered since.
+   Flush the flags from current SIP message into the already created
+   transaction. It make sense only in routing block if the transaction was
+   created via t_newtran() and the flags have been altered since.
 
    This function can be used from ANY_ROUTE .
 
@@ -275,8 +289,8 @@ route[abc] {
 
 3.8.  t_suspend()
 
-   Suspend  the execution of SIP request in a transaction. If transaction
-   was  not  created yet, it is created by this function. Returns true in
+   Suspend the execution of SIP request in a transaction. If transaction
+   was not created yet, it is created by this function. Returns true in
    case of success and internal transaction index and label are available
    via $T(id_index) and $T(id_label).
 
@@ -293,15 +307,15 @@ if(t_suspend())
 
 3.9.  t_continue(tindex, tlabel, rtname)
 
-   Continue  the  execution  of  the transaction identified by tindex and
+   Continue the execution of the transaction identified by tindex and
    tlabel with the actions defined in route[rtname].
 
    Parameters:.
-     * tindex  -  internal  index  of transaction. Can be an integer or a
+     * tindex - internal index of transaction. Can be an integer or a
        pseudo-variable.
-     * tlabel  -  internal  label  of transaction. Can be an integer or a
+     * tlabel - internal label of transaction. Can be an integer or a
        pseudo-variable.
-     * rtname  -  the name of the route block to execute. Can be a static
+     * rtname - the name of the route block to execute. Can be a static
        string value or a dynamic string with pseudo-variables.
 
    This function can be used in ANY_ROUTE.
@@ -309,6 +323,25 @@ if(t_suspend())
    Example 1.9. t_continue usage
 ...
 tcontinue('123', '456', 'MYROUTE');
+...
+
+3.10.  t_reuse_branch()
+
+   Creates new "main" branch by making copy of branch-failure branch.
+   Currently the following branch attributes are copied from
+   branch-failure branch: request-uri, ruid, path, instance, and branch
+   flags.
+
+   This function can be used from tm:branch-failure event_route.
+
+   Example 1.10. t_reuse_branch usage
+...
+event_route [tm:branch-failure:contact] {
+    t_reuse_branch();
+    setbflag(10);
+    t_relay();
+    exit;
+}
 ...
 
 4. Exported pseudo-variables
@@ -322,15 +355,15 @@ tcontinue('123', '456', 'MYROUTE');
      * $T_reply_ruid
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/dokuwiki/.
+   http://www.kamailio.org/wiki/.
 
 5. MI Commands
 
-   5.1. t_uac_dlg 
-   5.2. t_uac_cancel 
-   5.3. t_hash 
-   5.4. t_reply 
-   5.5. t_reply_callid 
+   5.1. t_uac_dlg
+   5.2. t_uac_cancel
+   5.3. t_hash
+   5.4. t_reply
+   5.5. t_reply_callid
 
 5.1.  t_uac_dlg
 
@@ -340,11 +373,11 @@ tcontinue('123', '456', 'MYROUTE');
      * method - request method
      * RURI - request SIP URI
      * NEXT HOP - next hop SIP URI (OBP); use "." if no value.
-     * socket  - local socket to be used for sending the request; use "."
+     * socket - local socket to be used for sending the request; use "."
        if no value.
      * headers - set of additional headers to be added to the request; at
        least "From" and "To" headers must be specify)
-     * body  -  (optional,  may not be present) request body (if present,
+     * body - (optional, may not be present) request body (if present,
        requires the "Content-Type" and "Content-length" headers)
 
 5.2.  t_uac_cancel
@@ -369,12 +402,11 @@ tcontinue('123', '456', 'MYROUTE');
    Parameters:
      * code - reply code
      * reason - reason phrase.
-     * trans_id   -  transaction  identifier  (has  the  hash_entry:label
-       format)
+     * trans_id - transaction identifier (has the hash_entry:label format)
      * to_tag - To tag to be added to TO header
      * new_headers - extra headers to be appended to the reply; use a dot
        (".") char only if there are no headers;
-     * body  -  (optional,  may  not  be present) reply body (if present,
+     * body - (optional, may not be present) reply body (if present,
        requires the "Content-Type" and "Content-length" headers)
 
 5.5.  t_reply_callid
@@ -389,7 +421,7 @@ tcontinue('123', '456', 'MYROUTE');
      * to_tag - To tag to be added to TO header
      * new_headers - extra headers to be appended to the reply; use a dot
        (".") char only if there are no headers;
-     * body  -  (optional,  may  not  be present) reply body (if present,
+     * body - (optional, may not be present) reply body (if present,
        requires the "Content-Type" and "Content-length" headers)
 
 6. Statistics
@@ -406,7 +438,7 @@ tcontinue('123', '456', 'MYROUTE');
    6.10. 6xx_transactions
    6.11. inuse_transactions
 
-   Exported  statistics  are  listed in the next sections. All statistics
+   Exported statistics are listed in the next sections. All statistics
    except "inuse_transactions" can be reset.
 
 6.1. received_replies
