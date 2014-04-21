@@ -1054,15 +1054,17 @@ static void destroy(void)
 
 	/*free content from the linked list*/
 	_capture_mode_data_t * c;
+	_capture_mode_data_t * c0;
 
 	c = capture_modes_root;
 
 	while (c){
+		c0 = c;
 		if (c->name.s){
 			pkg_free(c->name.s);
 		}
 		if (c->db_url.s){
-			pkg_free(c->name.s);
+			pkg_free(c->db_url.s);
 		}
 		if (c->db_con){
 			c->db_funcs.close(c->db_con);
@@ -1072,7 +1074,7 @@ static void destroy(void)
 		}
 
 		pkg_free(c);
-		c = c->next;
+		c = c0->next;
 	}
 
 	if (capture_on_flag)
