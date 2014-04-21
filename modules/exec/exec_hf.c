@@ -375,6 +375,7 @@ environment_t *replace_env(struct hf_wrapper *list)
 	new_env=pkg_malloc((var_cnt+1)*sizeof(char *));
 	if (!new_env) {
 		LM_ERR("no pkg mem\n");
+		pkg_free(backup_env);
 		return 0;
 	}
 	/* put all var pointers into new environment */
