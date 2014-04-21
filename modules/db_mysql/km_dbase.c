@@ -202,7 +202,6 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 			mysql_free_result(res);
 		}
 #endif
-		RES_RESULT(*_r) = 0;
 		return -4;
 	}
 
