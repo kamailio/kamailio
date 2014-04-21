@@ -310,6 +310,7 @@ found_re:
 		goto error;
 	}
 	memset((void*)se, 0, sizeof(struct subst_expr));
+	se->re=regex;
 	se->replacement.len=repl_end-repl;
 	if (se->replacement.len > 0) {
 		if ((se->replacement.s=pkg_malloc(se->replacement.len))==0){
@@ -321,7 +322,6 @@ found_re:
 	} else {
 		se->replacement.s = NULL;
 	}
-	se->re=regex;
 	se->replace_all=replace_all;
 	se->n_escapes=rw_no;
 	se->max_pmatch=max_pmatch;
