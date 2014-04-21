@@ -323,8 +323,8 @@ static void mi_rpc_async_close(struct mi_root* mi_rpl,
 		if (dctx==0){
 			BUG("null dctx\n");
 			shm_free(mi_h->param);
-			shm_free(mi_h);
 			mi_h->param=0;
+			shm_free(mi_h);
 			goto error;
 		}
 		mode=((struct mi_rpc_handler_param*)mi_h->param)->mode;
