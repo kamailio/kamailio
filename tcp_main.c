@@ -150,7 +150,7 @@
 #ifdef HAVE_SELECT
 #include <sys/select.h>
 #endif
-#include <sys/poll.h>
+#include <poll.h>
 
 
 #include "ip_addr.h"
