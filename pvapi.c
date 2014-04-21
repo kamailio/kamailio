@@ -1444,8 +1444,10 @@ int pv_elem_free_all(pv_elem_p log)
 void pv_value_destroy(pv_value_t *val)
 {
 	if(val==0) return;
+
 	if(val->flags&PV_VAL_PKG) pkg_free(val->rs.s);
-	if(val->flags&PV_VAL_SHM) shm_free(val->rs.s);
+	else if(val->flags&PV_VAL_SHM) shm_free(val->rs.s);
+
 	memset(val, 0, sizeof(pv_value_t));
 }
 
