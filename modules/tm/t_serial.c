@@ -276,6 +276,7 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 			len = MAX_SOCKET_STR - 1;
 			if (socket2str(sock_buf, &len, curr->sock) < 0) {
 				LM_ERR("failed to convert socket to str\n");
+				free_contact_list(contacts);
 				return -1;
 			}
 			sock_buf[len] = 0;
