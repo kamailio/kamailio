@@ -143,7 +143,7 @@
 	(  { void *____v123; ____v123=realloc(p, s); \
 	   MDBG("realloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
 	    ____v123; } )
-#	define pkg_free(p)  do{ MDBG("free %p (%s:%d)\n", (p), __FILE__, __LINE__); free((p)); }while(0);
+#	define pkg_free(p)  do{ MDBG("free %p (%s:%d)\n", (p), __FILE__, __LINE__); free((p)); }while(0)
 #	else
 #	define pkg_malloc(s)		malloc((s))
 #	define pkg_realloc(p, s)	realloc((p), (s))
