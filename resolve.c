@@ -1601,7 +1601,7 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 			he=srv_sip_resolvehost(&srv_name, 0, port, proto, 1, 0);
 			#endif
 			if (he!=0) {
-				*proto = srv_proto_list[i].proto;
+				if(proto) *proto = srv_proto_list[i].proto;
 				return he;
 			}
 		}
