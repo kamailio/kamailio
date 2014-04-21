@@ -478,9 +478,9 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	{
 		port_flag = 1;	
 		memcpy(user_name.s+ruri.user.len+ruri.host.len+1, ":", 1);
-	}	
-	memcpy(user_name.s+ruri.user.len+ruri.host.len+name_flag+port_flag, 
+		memcpy(user_name.s+ruri.user.len+ruri.host.len+name_flag+port_flag, 
 					ruri.port.s, ruri.port.len);
+	}
 #ifdef DEBUG
 	LM_DBG(": AVP_Resource=%.*s\n", user_name.len, user_name.s);
 #endif
