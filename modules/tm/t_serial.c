@@ -197,7 +197,7 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 		LM_ERR("no memory for contact info\n");
 		return -1;
 	}
-	memset(contact, 0, sizeof(struct contact));
+	memset(contacts, 0, sizeof(struct contact));
 
 	if (ruri_is_new) {
 		ruri = GET_RURI(msg);
