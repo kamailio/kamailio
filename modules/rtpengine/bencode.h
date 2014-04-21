@@ -4,7 +4,7 @@
 #include <sys/uio.h>
 #include <string.h>
 
-#if defined(PKG_MALLOC) || defined(pkg_malloc)
+#if defined(SHM_MEM) || defined(PKG_MALLOC) || defined(pkg_malloc)
 /* kamailio */
 # include "../../mem/mem.h"
 # include "../../str.h"
