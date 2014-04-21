@@ -1740,6 +1740,7 @@ static int fixup_method(void** param, int param_no)
 		{
 			LM_ERR("unknown method in list [%.*s/%d] - must be only defined methods\n",
 				s->len, s->s, method);
+			pkg_free(s);
 			return E_UNSPEC;
 		}
 		LM_DBG("using id for methods [%.*s/%d]\n",
