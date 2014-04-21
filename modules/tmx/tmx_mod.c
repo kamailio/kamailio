@@ -124,9 +124,6 @@ static pv_export_t mod_pvs[] = {
 	{ {"T_reply_ruid", sizeof("T_reply_ruid")-1}, PVT_OTHER,
 		pv_get_tm_reply_ruid, 0,
 		 0, 0, 0, 0 },
-	{ {"T_reply_flags", sizeof("T_reply_flags")-1}, PVT_OTHER,
-		pv_get_tm_reply_flags, 0,
-		 0, 0, 0, 0 },
 	{ {"T_reply_code", sizeof("T_reply_code")-1}, PVT_OTHER,
 		pv_get_tm_reply_code, 0,
 		 0, 0, 0, 0 },
@@ -143,6 +140,8 @@ static pv_export_t mod_pvs[] = {
 	{ {"T_rpl", sizeof("T_rpl")-1}, PVT_OTHER, pv_get_t_var_rpl, 0,
 		pv_parse_t_var_name, 0, 0, 0 },
 	{ {"T", sizeof("T")-1}, PVT_OTHER, pv_get_t, 0,
+		pv_parse_t_name, 0, 0, 0 },
+	{ {"T_branch", sizeof("T_branch")-1}, PVT_OTHER, pv_get_t_branch, 0,
 		pv_parse_t_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
