@@ -2593,6 +2593,9 @@ int pv_set_xto_attr(struct sip_msg* msg, pv_param_t *param,
 			LM_ERR("failed to set xto attribute %d\n", type);
 			goto error;
 		}
+	} else {
+		if(buf.s!=0)
+			pkg_free(buf.s);
 	}
 	return 0;
 
@@ -2780,7 +2783,6 @@ int pv_parse_cnt_name(pv_spec_p sp, str *in)
 		return -1;
 
 	pv = pv_cache_get(in);
-	pv = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if(pv==NULL) {
 		LM_ERR("cannot find pv name [%.*s]\n", in->len, in->s);
 		return -1;
