@@ -32,7 +32,7 @@
 
 #include <ctype.h>
 #include <sys/mman.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/time.h>
 #include <time.h>
 #include <sys/utsname.h>
