@@ -322,20 +322,6 @@ int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,
 	return pv_get_spec_value(&_pv_trpl.msg, pv, res);
 }
 
-int pv_get_t_var_branch(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
-{
-	pv_spec_t *pv=NULL;
-
-	if(pv_t_update_rpl(msg))
-		return pv_get_null(msg, param, res);
-
-	pv = (pv_spec_t*)param->pvn.u.dname;
-	if(pv==NULL || pv_alter_context(pv))
-		return pv_get_null(msg, param, res);
-
-	return pv_get_spec_value(&_pv_trpl.msg, pv, res);
-}
 
 int pv_get_t_var_inv(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
