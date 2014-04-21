@@ -847,7 +847,10 @@ static int acc_register_engine(acc_engine_t *eng)
 	memcpy(e, eng, sizeof(acc_engine_t));
 
 	if(acc_init_engine(e)<0)
+	{
+		pkg_free(e);
 		return -1;
+	}
 
 	e->next = _acc_engines;
 	_acc_engines = e;
