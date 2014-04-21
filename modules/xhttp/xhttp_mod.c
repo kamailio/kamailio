@@ -385,7 +385,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 		tbuf.len=sizeof("Content-Type: ") - 1 + ctype->len + CRLF_LEN;
 		tbuf.s=pkg_malloc(sizeof(char)*(tbuf.len));
 
-		if (tbuf.len==0)
+		if (tbuf.s==0)
 		{
 			LM_ERR("out of pkg memory\n");
 			return -1;
