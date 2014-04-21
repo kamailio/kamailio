@@ -906,8 +906,10 @@ set_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 
 	offset = c->uri.s - msg->buf;
 	anchor = del_lump(msg, offset, c->uri.len, HDR_CONTACT_T);
-	if (anchor == 0)
+	if (anchor == 0) {
+		pkg_free(buf);
 		return -1;
+	}
 
 	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_T) == 0) {
 		pkg_free(buf);
@@ -2350,6 +2352,7 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 		}
 		if (anchor == NULL) {
 			LM_ERR("anchor_lump failed\n");
+			pkg_free(param);
 			return -1;
 		}		
 
