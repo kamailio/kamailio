@@ -362,8 +362,10 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 		return 0;
 	}
 	memcpy(buf, RECEIVED, RECEIVED_LEN);
-	if ( (tmp=ip_addr2a(source_ip))==0)
+	if ( (tmp=ip_addr2a(source_ip))==0) {
+		pkg_free(buf);
 		return 0; /* error*/
+	}
 	tmp_len=strlen(tmp);
 	len=RECEIVED_LEN+tmp_len;
 
@@ -2495,12 +2497,14 @@ char* via_builder( unsigned int *len,
                         con = tcpconn_get(send_info->id, 0, 0, 0, 0);
                 else {
                         LM_CRIT("BUG: via_builder called with null_id & to\n");
+						pkg_free(line_buf);
                         return 0;
                 }
 
                 if (con == NULL) {
                         LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not be found\n",
-				send_info->id);
+								send_info->id);
+						pkg_free(line_buf);
                         return 0;
                 }
 
@@ -2511,6 +2515,7 @@ char* via_builder( unsigned int *len,
 		} else {
 			tcpconn_put(con);
 			LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", con->rcv.proto);
+			pkg_free(line_buf);
 			return 0;
 		}
 		tcpconn_put(con);
@@ -2518,6 +2523,7 @@ char* via_builder( unsigned int *len,
 		memcpy(line_buf+MY_VIA_LEN-4, "WSS ", 4);
 	}else{
 		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", send_info->proto);
+		pkg_free(line_buf);
 		return 0;
 	}
 	/* add [] only if ipv6 and outbound socket address is used;
@@ -2620,7 +2626,7 @@ char* create_via_hf( unsigned int *len,
 #endif /* USE_TCP || USE_SCTP */
 
 	/* test and add rport parameter to local via - rfc3581 */
-	if(msg->msg_flags&FL_ADD_LOCAL_RPORT) {
+	if(msg && msg->msg_flags&FL_ADD_LOCAL_RPORT) {
 		/* params so far + ';rport' + '\0' */
 		via = (char*)pkg_malloc(extra_params.len+RPORT_LEN);
 		if(via==0) {
