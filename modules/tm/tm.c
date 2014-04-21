@@ -984,6 +984,8 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		
 		if (regcomp(re, s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
 			ERR("Bad regular expression '%s'\n", s);
+			pkg_free(re);
+			re = NULL;
 			goto error;
 		}
 		break;
