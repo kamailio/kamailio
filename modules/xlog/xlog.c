@@ -448,6 +448,7 @@ static int xlog3_fixup_helper(void** param, int param_no)
 	*facility = str2facility(s.s);
 	if (*facility == -1) {
 		LM_ERR("invalid syslog facility %s\n", s.s);
+		pkg_free(facility);
 		return E_UNSPEC;
 	}
 
