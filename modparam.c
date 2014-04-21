@@ -124,6 +124,8 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 							*((char**)ptr) = pkg_malloc(strlen((char*)val2)+1);
 							if (!*((char**)ptr)) {
 								LOG(L_ERR, "set_mod_param_regex(): No memory left\n");
+								regfree(&preg);
+								pkg_free(reg);
 								return -1;
 							}
 							strcpy(*((char**)ptr), (char*)val2);
@@ -133,6 +135,8 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 							((str*)ptr)->s = pkg_malloc(((str*)val2)->len+1);
 							if (!((str*)ptr)->s) {
 								LOG(L_ERR, "set_mod_param_regex(): No memory left\n");
+								regfree(&preg);
+								pkg_free(reg);
 								return -1;
 							}
 							memcpy(((str*)ptr)->s, ((str*)val2)->s, ((str*)val2)->len);
