@@ -314,7 +314,7 @@ int dbg_cfg_trace(void *data)
 
 	if(_dbg_cfgpkgcheck!=0)
 	{
-#ifdef q_malloc_h
+#if defined (PKG_MEMORY) && defined (q_malloc_h)
 		LM_DBG("checking pkg memory before action %.*s (line %d)\n",
 				an->len, an->s, a->cline);
 		qm_check(mem_block);
