@@ -238,7 +238,7 @@ int
 parse_param(void *val, AVP_List** avps) {
 
     char *p;
-    str *s, content;
+    str s, content;
     AVP_List *mp = NULL;
 
     //LM_DBG("%.*s\n", content.len, content.s);
@@ -253,8 +253,6 @@ parse_param(void *val, AVP_List** avps) {
     p[content.len] = '\0';
     memcpy(p, content.s, content.len);
 
-    s = (str*) pkg_malloc(sizeof(str));
-    CHECK_ALLOC(s);
 
     for (;*p != '\0';) {
 
@@ -283,10 +281,10 @@ parse_param(void *val, AVP_List** avps) {
         for (; isspace(*p); p++);
         CHECK_COND(*p != '\0' && *p == '$');
 
-        s->s = p;
-        s->len = strlen(p);
+        s.s = p;
+        s.len = strlen(p);
 
-        p = pv_parse_spec(s, mp->pv);
+        p = pv_parse_spec(&s, mp->pv);
 
         for (; isspace(*p); p++);
         *avps = mp;
