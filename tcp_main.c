@@ -4517,9 +4517,12 @@ static inline void tcpconn_destroy_all(void)
 #ifdef USE_TLS
 				if (fd>0 && (c->type==PROTO_TLS || c->type==PROTO_WSS))
 					tls_close(c, fd);
+				if (unlikely(c->type==PROTO_TLS || c->type==PROTO_WSS))
+					(*tls_connections_no)--;
 #endif
-				_tcpconn_rm(c);
+				(*tcp_connections_no)--;
 				c->flags &= ~F_CONN_HASHED;
+				_tcpconn_rm(c);
 				if (fd>0) {
 #ifdef TCP_FD_CACHE
 					if (likely(cfg_get(tcp, tcp_cfg, fd_cache)))
@@ -4527,9 +4530,6 @@ static inline void tcpconn_destroy_all(void)
 #endif /* TCP_FD_CACHE */
 					tcp_safe_close(fd);
 				}
-				(*tcp_connections_no)--;
-				if (unlikely(c->type==PROTO_TLS || c->type==PROTO_WSS))
-					(*tls_connections_no)--;
 			c=next;
 		}
 	}
