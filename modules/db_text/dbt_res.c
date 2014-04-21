@@ -113,6 +113,7 @@ int dbt_result_free(dbt_result_p _dres)
 	while(_rp)
 	{
 		_rp0=_rp;
+		_rp=_rp->next;
 		if(_rp0->fields)
 		{
 			for(i=0; i<_dres->nrcols; i++)
@@ -125,7 +126,6 @@ int dbt_result_free(dbt_result_p _dres)
 			pkg_free(_rp0->fields);
 		}
 		pkg_free(_rp0);
-		_rp=_rp->next;
 	}
 	if(_dres->colv)
 	{
@@ -557,7 +557,7 @@ int dbt_parse_orderbyclause(db_key_t **_o_k, char **_o_op, int *_o_n, db_key_t _
 	memcpy(_po, _o->s, _o->len);
 	*(_po+_o->len) = '\0';
 
-	*_o_op = pkg_malloc(sizeof(db_op_t) * _n);
+	*_o_op = pkg_malloc(sizeof(char) * _n);
 	if (!*_o_op)
 	{
 		pkg_free(*_o_k);
@@ -747,7 +747,7 @@ int dbt_sort_result(dbt_result_p _dres, int *_o_l, char *_o_op, int _o_n, int *_
 	}
 
 	/* rewrite linked list to array */
-	_a = pkg_malloc(sizeof(dbt_row_t) * _dres->nrrows);
+	_a = pkg_malloc(sizeof(dbt_row_p) * _dres->nrrows);
 	if (!_a)
 		return -1;
 	for (_el=_dres->rows, _i=0; _el != NULL; _el=_el->next, _i++)
