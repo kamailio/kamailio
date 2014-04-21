@@ -423,6 +423,7 @@ tls_domains_cfg_t* tls_load_config(str* filename)
 	cfg_section_parser(parser, parse_domain, NULL);
 	if (sr_cfg_parse(parser)) goto error;
 	cfg_parser_close(parser);
+	if (file_path) pkg_free(file_path);
 	return cfg;
 
 error:
