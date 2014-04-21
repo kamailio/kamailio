@@ -50,6 +50,7 @@ static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_with_transport(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_with_transport_like(sip_msg_t* msg, char* transport, char *bar);
+static int w_sdp_transport(sip_msg_t* msg, char *bar);
 static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar);
@@ -87,6 +88,8 @@ static cmd_export_t cmds[] = {
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_remove_transport",       (cmd_function)w_sdp_remove_transport,
 		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_transport",              (cmd_function)w_sdp_transport,
+		1, 0,  0, ANY_ROUTE},
 	{"sdp_with_codecs_by_id",      (cmd_function)w_sdp_with_codecs_by_id,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_with_codecs_by_name",    (cmd_function)w_sdp_with_codecs_by_name,
@@ -954,6 +957,86 @@ static int sdp_with_transport(sip_msg_t *msg, str *transport, int like)
 
 	return 0;
 }
+
+/** 
+ * @brief assigns common media transport (if any) of 'm' lines to pv argument
+ * @return -1 - error; 0 - not found; 1 - found
+ */
+static int w_sdp_transport(sip_msg_t* msg, char *avp)
+{
+    int_str avp_val;
+    int_str avp_name;
+    static unsigned short avp_type = 0;
+    str s;
+    pv_spec_t *avp_spec = NULL;
+    int sdp_session_num;
+    int sdp_stream_num;
+    sdp_session_cell_t* sdp_session;
+    sdp_stream_cell_t* sdp_stream;
+    str *transport;
+
+    s.s = avp; s.len = strlen(s.s);
+    if (pv_locate_name(&s) != s.len) {
+	LM_ERR("invalid avp parameter %s\n", avp);
+	return -1;
+    }
+    if (((avp_spec = pv_cache_get(&s)) == NULL)
+	|| avp_spec->type!=PVT_AVP) {
+	LM_ERR("malformed or non AVP %s\n", avp);
+	return -1;
+    }
+    if (pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type) != 0) {
+	LM_ERR("invalid AVP definition %s\n", avp);
+	return -1;
+    }
+
+    if(parse_sdp(msg) < 0) {
+	LM_ERR("unable to parse sdp\n");
+	return -1;
+    }
+
+    sdp_session_num = 0;
+    transport = (str *)NULL;
+
+    for (;;) {
+	sdp_session = get_sdp_session(msg, sdp_session_num);
+	if (!sdp_session) break;
+	sdp_stream_num = 0;
+	for (;;) {
+	    sdp_stream = get_sdp_stream(msg, sdp_session_num,
+					sdp_stream_num);
+	    if (!sdp_stream) break;
+	    LM_DBG("stream %d of %d - transport [%.*s]\n",
+		   sdp_stream_num, sdp_session_num,
+		   sdp_stream->transport.len, sdp_stream->transport.s);
+	    if (transport) {
+		if (transport->len != sdp_stream->transport.len
+		    || strncasecmp(sdp_stream->transport.s, transport->s,
+				   transport->len) != 0) {
+		    LM_DBG("no common transport\n");
+		    return -2;
+		}
+	    } else {
+		transport = &sdp_stream->transport;
+	    }
+	    sdp_stream_num++;
+	}
+	sdp_session_num++;
+    }
+    if (transport) {
+	avp_val.s.s = transport->s;
+	avp_val.s.len = transport->len;
+	LM_DBG("found common transport '%.*s'\n",
+	       transport->len, transport->s);
+	if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0) {
+	    LM_ERR("failed to add transport avp");
+	    return -1;
+	}
+    }
+
+    return 1;
+}
+
 
 /**
  *

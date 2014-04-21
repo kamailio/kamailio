@@ -303,6 +303,28 @@ if(sdp_with_transport_like("SAVPF"))
 	</section>
 	<section>
 	    <title>
+		<function moreinfo="none">sdp_transport(pv)</function>
+	    </title>
+	    <para>
+		Assigns common media transport (if any) of 'm' lines to pv
+		argument.  Returns 1 if common media transport was found, -2
+		if there was no common media transport, and -1 in case of
+		error.
+	    </para>
+	    <para>
+		  This function can be used from ANY_ROUTE.
+	    </para>
+	    <example>
+	      <title><function>sdp_transport</function> usage</title>
+	      <programlisting format="linespecific">
+...
+sdp_transport("$avp(caller_rtp_transport)");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
 		<function moreinfo="none">sdp_remove_transport(type)</function>
 	    </title>
 	    <para>
