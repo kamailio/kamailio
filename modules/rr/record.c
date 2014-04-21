@@ -714,6 +714,7 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 	return 1;
 lump_err:
 	if (hdr) pkg_free(hdr);
+	if (trans) pkg_free(trans);
 	if (suffix) pkg_free(suffix);
 	if (term) pkg_free(term);
 	if (r2) pkg_free(r2);
