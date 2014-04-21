@@ -389,7 +389,7 @@ event_route [tm:branch-failure:contact] {
 				<emphasis>$T_reply_ruid</emphasis>
 			</para></listitem>
 			<listitem><para>
-				<emphasis>$T_branch(pv)</emphasis>
+				<emphasis>$T_branch(name)</emphasis>
 			</para></listitem>
 		</itemizedlist>
 		<para>
