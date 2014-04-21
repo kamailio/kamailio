@@ -266,12 +266,12 @@ static int fixup_ht_key(void** param, int param_no)
 	pv_spec_t *sp;
 	str s;
 
-	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if(param_no != 1)
 	{
 		LM_ERR("invalid parameter number %d\n", param_no);
 		return -1;
 	}
+	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if (sp == 0)
 	{
 		LM_ERR("no pkg memory left\n");
