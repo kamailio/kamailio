@@ -197,10 +197,12 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 		LM_ERR("no memory for contact info\n");
 		return -1;
 	}
+	memset(contact, 0, sizeof(struct contact));
 
 	if (ruri_is_new) {
 		ruri = GET_RURI(msg);
 		if (!ruri) {
+			free_contact_list(contacts);
 			LM_ERR("no Request-URI found\n");
 			return -1;
 		}
