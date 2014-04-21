@@ -126,22 +126,29 @@
 #	endif
 #elif defined(SHM_MEM) && defined(USE_SHM_MEM)
 #	include "shm_mem.h"
-#	define pkg_malloc(s) shm_malloc((s))
-#	define pkg_free(p)   shm_free((p))
-#	define pkg_status()  shm_status()
-#	define pkg_sums()    shm_sums()
+#	define pkg_malloc(s)	shm_malloc((s))
+#	define pkg_relloc(p, s)	shm_malloc((p), (s))
+#	define pkg_free(p)		shm_free((p))
+#	define pkg_status()		shm_status()
+#	define pkg_sums()		shm_sums()
 #else
 #	include <stdlib.h>
 #	include "memdbg.h"
+#	ifdef DBG_SYS_MALLOC
 #	define pkg_malloc(s) \
 	(  { void *____v123; ____v123=malloc((s)); \
-	   MDBG("malloc %p size %lu end %p\n", ____v123, (unsigned long)(s), (char*)____v123+(s));\
+	   MDBG("malloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
 	   ____v123; } )
 #	define pkg_realloc(p, s) \
 	(  { void *____v123; ____v123=realloc(p, s); \
-	   MDBG("realloc %p size %lu end %p\n", ____v123, (unsigned long)(s), (char*)____v123+(s));\
+	   MDBG("realloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
 	    ____v123; } )
-#	define pkg_free(p)  do{ MDBG("free %p\n", (p)); free((p)); }while(0);
+#	define pkg_free(p)  do{ MDBG("free %p (%s:%d)\n", (p), __FILE__, __LINE__); free((p)); }while(0);
+#	else
+#	define pkg_malloc(s)		malloc((s))
+#	define pkg_realloc(p, s)	realloc((p), (s))
+#	define pkg_free(p)			free((p))
+#	endif
 #	define pkg_status()
 #	define pkg_sums()
 #endif
