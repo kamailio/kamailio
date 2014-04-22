@@ -1517,6 +1517,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 			read++;
 			fmt++;
 			nofault=1;
+			f|=GET_X_NOREPLY;
 			continue; /* do not advance ctx->act-param */
 		case '.': /* autoconvert */
 			modifiers++;
