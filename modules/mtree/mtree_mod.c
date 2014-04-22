@@ -1030,19 +1030,24 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 
 	if(!mt_defined_trees())
 	{
-		rpc->fault(c, 500, "Empty tree list.");
+		rpc->fault(c, 500, "Empty tree list");
 		return;
 	}
 
-	if (rpc->add(c, "{", &th) < 0)
+	pt = mt_get_first_tree();
+	if(pt==NULL)
 	{
-		rpc->fault(c, 500, "Internal error creating rpc");
+		rpc->fault(c, 404, "No tree");
 		return;
 	}
-	pt = mt_get_first_tree();
 
 	while(pt!=NULL)
 	{
+		if (rpc->add(c, "{", &th) < 0)
+		{
+			rpc->fault(c, 500, "Internal error creating rpc");
+			return;
+		}
 		if(rpc->struct_add(th, "s{",
 					"table", pt->tname.s,
 					"item", &ih) < 0)
@@ -1201,7 +1206,7 @@ static const char* rpc_mtree_match_doc[6] = {
 
 
 rpc_export_t mtree_rpc[] = {
-	{"mtree.summary", rpc_mtree_summary, rpc_mtree_summary_doc, 0},
+	{"mtree.summary", rpc_mtree_summary, rpc_mtree_summary_doc, RET_ARRAY},
 	{"mtree.reload", rpc_mtree_reload, rpc_mtree_reload_doc, 0},
 	{"mtree.match", rpc_mtree_match, rpc_mtree_match_doc, 0},
 	{0, 0, 0, 0}
