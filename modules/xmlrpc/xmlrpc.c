@@ -1495,6 +1495,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	int modifiers;
 	int f;
 	va_list ap;
+	int nofault;
 
 	reply = &ctx->reply;
 	/* clear the previously saved error code */
@@ -1503,6 +1504,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	va_start(ap, fmt);
 	modifiers=0;
 	read = 0;
+	nofault = 0;
 	f=(autoconvert?GET_X_AUTOCONV:0) |
 		(lflf2crlf?GET_X_LFLF2CRLF:0);
 	while(*fmt) {
@@ -1514,6 +1516,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 			modifiers++;
 			read++;
 			fmt++;
+			nofault=1;
 			continue; /* do not advance ctx->act-param */
 		case '.': /* autoconvert */
 			modifiers++;
@@ -1574,7 +1577,10 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 
  error:
 	va_end(ap);
-	return -(read-modifiers);
+	if(nofault==0)
+		return -(read-modifiers);
+	else
+		return read-modifiers;
 }
 
 #define RPC_BUF_SIZE 1024
