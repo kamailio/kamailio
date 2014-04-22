@@ -1028,6 +1028,7 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 	m_tree_t *pt;
 	void* th;
 	void* ih;
+	int found;
 
 	if(!mt_defined_trees())
 	{
@@ -1036,7 +1037,11 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 	}
 
 	/* read optional tree name */
-	rpc->scan(c, "*S", &tname);
+	if(rpc->scan(c, "*S", &tname)==0)
+	{
+		tname.s = NULL;
+		tname.len = 0;
+	}
 
 	pt = mt_get_first_tree();
 	if(pt==NULL)
@@ -1045,12 +1050,14 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 		return;
 	}
 
+	found = 0;
 	while(pt!=NULL)
 	{
 		if(tname.s==NULL
 				|| (tname.s!=NULL && pt->tname.len>=tname.len
 					&& strncmp(pt->tname.s, tname.s, tname.len)==0))
 		{
+			found = 1;
 			if (rpc->add(c, "{", &th) < 0)
 			{
 				rpc->fault(c, 500, "Internal error creating rpc");
@@ -1082,6 +1089,13 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 		}
 		pt = pt->next;
 	}
+
+	if(found==0)
+	{
+		rpc->fault(c, 404, "Tree not found");
+		return;
+	}
+
 	return;
 }
 
