@@ -1024,6 +1024,7 @@ error:
 
 void rpc_mtree_summary(rpc_t* rpc, void* c) 
 {
+	str tname = {0, 0};
 	m_tree_t *pt;
 	void* th;
 	void* ih;
@@ -1034,6 +1035,9 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 		return;
 	}
 
+	/* read optional tree name */
+	rpc->scan(c, "*S", &tname);
+
 	pt = mt_get_first_tree();
 	if(pt==NULL)
 	{
@@ -1043,34 +1047,38 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 
 	while(pt!=NULL)
 	{
-		if (rpc->add(c, "{", &th) < 0)
+		if(tname.s==NULL
+				|| (tname.s!=NULL && pt->tname.len>=tname.len
+					&& strncmp(pt->tname.s, tname.s, tname.len)==0))
 		{
-			rpc->fault(c, 500, "Internal error creating rpc");
-			return;
-		}
-		if(rpc->struct_add(th, "s{",
-					"table", pt->tname.s,
-					"item", &ih) < 0)
-		{
-			rpc->fault(c, 500, "Internal error creating rpc ih");
-			return;
-		}
-
-		if(rpc->struct_add(ih, "d", "ttype", pt->type) < 0 ) {
-			rpc->fault(c, 500, "Internal error adding type");
-			return;
-		}
-		if(rpc->struct_add(ih, "d", "memsize", pt->memsize) < 0 ) {
-			rpc->fault(c, 500, "Internal error adding memsize");
-			return;
-		}
-		if(rpc->struct_add(ih, "d", "nrnodes", pt->nrnodes) < 0 ) {
-			rpc->fault(c, 500, "Internal error adding nodes");
-			return;
-		}
-		if(rpc->struct_add(ih, "d", "nritems", pt->nritems) < 0 ) {
-			rpc->fault(c, 500, "Internal error adding items");
-			return;
+			if (rpc->add(c, "{", &th) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc");
+				return;
+			}
+			if(rpc->struct_add(th, "s{",
+						"table", pt->tname.s,
+						"item", &ih) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc ih");
+				return;
+			}
+			if(rpc->struct_add(ih, "d", "ttype", pt->type) < 0 ) {
+				rpc->fault(c, 500, "Internal error adding type");
+				return;
+			}
+			if(rpc->struct_add(ih, "d", "memsize", pt->memsize) < 0 ) {
+				rpc->fault(c, 500, "Internal error adding memsize");
+				return;
+			}
+			if(rpc->struct_add(ih, "d", "nrnodes", pt->nrnodes) < 0 ) {
+				rpc->fault(c, 500, "Internal error adding nodes");
+				return;
+			}
+			if(rpc->struct_add(ih, "d", "nritems", pt->nritems) < 0 ) {
+				rpc->fault(c, 500, "Internal error adding items");
+				return;
+			}
 		}
 		pt = pt->next;
 	}
