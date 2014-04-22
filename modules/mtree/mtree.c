@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
@@ -112,6 +113,7 @@ m_tree_t* mt_init_tree(str* tname, str *dbtable, int type, int multi)
 
 	pt->type = type;
 	pt->multi = multi;
+	pt->reload_time = (unsigned int)time(NULL);
 	pt->tname.s = (char*)shm_malloc((1+tname->len)*sizeof(char));
 	if(pt->tname.s==NULL)
 	{

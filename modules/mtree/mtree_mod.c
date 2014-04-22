@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "../../lib/srdb1/db_op.h"
 #include "../../lib/kmi/mi.h"
@@ -530,6 +531,8 @@ static int mt_load_db(m_tree_t *pt)
 	new_tree.nrnodes = 0;
 	new_tree.nritems = 0;
 	new_tree.memsize = 0;
+	new_tree.reload_count++;
+	new_tree.reload_time = (unsigned int)time(NULL);
 
 
 	if (mt_dbf.use_table(db_con, &old_tree->dbtable) < 0)
@@ -1012,6 +1015,16 @@ struct mi_root* mt_mi_summary(struct mi_root* cmd_tree, void* param)
 				val.s, val.len);
 		if(attr == NULL)
 			goto error;
+		val.s = int2str((int)pt->reload_count, &val.len);
+		attr = add_mi_attr(node, MI_DUP_VALUE, "RELOADCOUNT", 11,
+				val.s, val.len);
+		if(attr == NULL)
+			goto error;
+		val.s = int2str((int)pt->reload_time, &val.len);
+		attr = add_mi_attr(node, MI_DUP_VALUE, "RELOADTIME", 10,
+				val.s, val.len);
+		if(attr == NULL)
+			goto error;
 
 		pt = pt->next;
 	}
@@ -1083,6 +1096,16 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 				return;
 			}
 			if(rpc->struct_add(ih, "d", "nritems", pt->nritems) < 0 ) {
+				rpc->fault(c, 500, "Internal error adding items");
+				return;
+			}
+			if(rpc->struct_add(ih, "d", "reload_count",
+						(int)pt->reload_count) < 0 ) {
+				rpc->fault(c, 500, "Internal error adding items");
+				return;
+			}
+			if(rpc->struct_add(ih, "d", "reload_time",
+						(int)pt->reload_time) < 0 ) {
 				rpc->fault(c, 500, "Internal error adding items");
 				return;
 			}

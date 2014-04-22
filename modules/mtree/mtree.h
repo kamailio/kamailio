@@ -72,6 +72,8 @@ typedef struct _m_tree
 	unsigned int nrnodes;
 	unsigned int nritems;
 	unsigned int memsize;
+	unsigned int reload_count;
+	unsigned int reload_time;
 	mt_node_t *head;
 	struct _m_tree *next;
 } m_tree_t;
