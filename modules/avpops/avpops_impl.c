@@ -290,13 +290,15 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	str *s0, *s1, *s2;
 	int_str avp_name;
 	int avp_type = 0;
-	pv_value_t xvalue = {0};
+	pv_value_t xvalue;
 
 	s0 = s1 = s2 = NULL;
 	if (!((sp->opd&AVPOPS_VAL_PVAR)||(sp->opd&AVPOPS_VAL_STR))) {
 		LM_CRIT("invalid flag combination (%d/%d)\n", sp->opd, sp->ops);
 		goto error;
 	}
+
+	memset(&xvalue, 0, sizeof(pv_value_t));
 
 	/* get uuid from avp */
 	if (sp->opd&AVPOPS_VAL_PVAR)
