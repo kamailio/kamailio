@@ -25,9 +25,27 @@
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#ifndef _XMLRPC_HTTP_H_
+#define _XMLRPC_HTTP_H_
+
 #include "../../parser/msg_parser.h"
+
+#ifdef XMLRPC_SYSTEM_MALLOC
+#include <stdlib.h>
+#define mxr_malloc malloc
+#define mxr_realloc realloc
+#define mxr_free free
+#else
+#include "../../mem/mem.h"
+#define mxr_malloc pkg_malloc
+#define mxr_realloc pkg_realloc
+#define mxr_free pkg_free
+#endif
 
 /*
  * Create a faked Via header field in HTTP requests
  */
 int create_via(sip_msg_t* msg, char* s1, char* s2);
+
+
+#endif

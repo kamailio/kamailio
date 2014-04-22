@@ -282,10 +282,10 @@ static struct garbage {
 						   * type needs to be freed differently as it may
 						   * contain more allocated memory blocks
 						   */
-		JUNK_PKGCHAR 	  /** This type indicates a pkg_malloc'ed string */
+		JUNK_PKGCHAR 	  /** This type indicates a mxr_malloc'ed string */
 	} type;               /**< Type of the memory block */
 	void* ptr;            /**< Pointer to the memory block obtained from
-							 pkg_malloc */
+							 mxr_malloc */
 	struct garbage* next; /**< The linked list of all allocated memory
 							 blocks */
 } *waste_bin = 0;
@@ -479,7 +479,7 @@ static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
     for(i = 0; i < text->len; i++) {
 		/* 10 must be bigger than size of longest escape sequence */
 		if (reply->body.len >= reply->buf.len - 10) { 
-			p = pkg_malloc(reply->buf.len + 1024);
+			p = mxr_malloc(reply->buf.len + 1024);
 			if (!p) {
 				set_fault(reply, 500, 
 						  "Internal Server Error (No memory left)");
@@ -487,7 +487,7 @@ static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
 				return -1;
 			}
 			memcpy(p, reply->body.s, reply->body.len);
-			pkg_free(reply->buf.s);
+			mxr_free(reply->buf.s);
 			reply->buf.s = p;
 			reply->buf.len += 1024;
 			reply->body.s = p;
@@ -541,14 +541,14 @@ static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
 {
 	char* p;
 	if (text->len > (reply->buf.len - reply->body.len)) {
-		p = pkg_malloc(reply->buf.len + text->len + 1024);
+		p = mxr_malloc(reply->buf.len + text->len + 1024);
 		if (!p) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left: %d\n", reply->buf.len + text->len + 1024);
 			return -1;
 		}
 		memcpy(p, reply->body.s, reply->body.len);
-		pkg_free(reply->buf.s);
+		mxr_free(reply->buf.s);
 		reply->buf.s = p;
 		reply->buf.len += text->len + 1024;
 		reply->body.s = p;
@@ -579,14 +579,14 @@ static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply, unsigned int offs
 {
 	char* p;
 	if (text->len > (reply->buf.len - reply->body.len)) {
-		p = pkg_malloc(reply->buf.len + text->len + 1024);
+		p = mxr_malloc(reply->buf.len + text->len + 1024);
 		if (!p) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left: %d\n", reply->buf.len + text->len + 1024);
 			return -1;
 		}
 		memcpy(p, reply->body.s, reply->body.len);
-		pkg_free(reply->buf.s);
+		mxr_free(reply->buf.s);
 		reply->buf.s = p;
 		reply->buf.len += text->len + 1024;
 		reply->body.s = p;
@@ -634,7 +634,7 @@ static int init_xmlrpc_reply(struct xmlrpc_reply* reply)
 {
 	reply->code = 200;
 	reply->reason = "OK";
-	reply->buf.s = pkg_malloc(1024);
+	reply->buf.s = mxr_malloc(1024);
 	if (!reply->buf.s) {
 		set_fault(reply, 500, "Internal Server Error (No memory left)");
 		ERR("No memory left\n");
@@ -674,7 +674,7 @@ static int fix_delayed_reply_ctx(rpc_ctx_t* ctx)
 /** Free all memory used by the XML-RPC reply structure. */
 static void clean_xmlrpc_reply(struct xmlrpc_reply* reply)
 {
-	if (reply->buf.s) pkg_free(reply->buf.s);
+	if (reply->buf.s) mxr_free(reply->buf.s);
 }
 
 /** Create XML-RPC reply that indicates an error to the caller.
@@ -714,7 +714,7 @@ static int add_garbage(int type, void* ptr, struct xmlrpc_reply* reply)
 {
 	struct garbage* p;
 
-	p = (struct garbage*)pkg_malloc(sizeof(struct garbage));
+	p = (struct garbage*)mxr_malloc(sizeof(struct garbage));
 	if (!p) {
 		set_fault(reply, 500, "Internal Server Error (No memory left)");
 		ERR("Not enough memory\n");
@@ -746,13 +746,13 @@ static void collect_garbage(void)
 
 		case JUNK_RPCSTRUCT:
 			s = (struct rpc_struct*)p->ptr;
-			if (s && s->struct_out.buf.s) pkg_free(s->struct_out.buf.s);
-			if (s) pkg_free(s);
+			if (s && s->struct_out.buf.s) mxr_free(s->struct_out.buf.s);
+			if (s) mxr_free(s);
 			break;
 
 		case JUNK_PKGCHAR:
 			if (p->ptr){
-				pkg_free(p->ptr);
+				mxr_free(p->ptr);
 				p->ptr=0;
 			}
 			break;
@@ -760,7 +760,7 @@ static void collect_garbage(void)
 		default:
 			ERR("BUG: Unsupported junk type\n");
 		}
-		pkg_free(p);
+		mxr_free(p);
 	}
 }
 
@@ -933,7 +933,7 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
 {
 	struct rpc_struct* p;
 
-	p = (struct rpc_struct*)pkg_malloc(sizeof(struct rpc_struct));
+	p = (struct rpc_struct*)mxr_malloc(sizeof(struct rpc_struct));
 	if (!p) {
 		set_fault(reply, 500, "Internal Server Error (No Memory Left");
 		return 0;
@@ -957,8 +957,8 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
 	return p;
 
  err:
-	if (p->struct_out.buf.s) pkg_free(p->struct_out.buf.s);
-	pkg_free(p);
+	if (p->struct_out.buf.s) mxr_free(p->struct_out.buf.s);
+	mxr_free(p);
 	return 0;
 }
 
@@ -1450,14 +1450,14 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 				ret=-1;
 			}else{
 				s=sint2str(i, &len);
-				p=pkg_malloc(len+1);
+				p=mxr_malloc(len+1);
 				if (p && add_garbage(JUNK_PKGCHAR, p, reply) == 0){
 					memcpy(p, s, len);
 					p[len]=0;
 					*val=p;
 				}else{
 					ret=-1;
-					if (p) pkg_free(p);
+					if (p) mxr_free(p);
 				}
 			}
 			xmlFree(val_str);
@@ -1596,7 +1596,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 
 	fix_delayed_reply_ctx(ctx);
 	reply = &ctx->reply;
-	buf = (char*)pkg_malloc(RPC_BUF_SIZE);
+	buf = (char*)mxr_malloc(RPC_BUF_SIZE);
 	if (!buf) {
 		set_fault(reply, 500, "Internal Server Error (No memory left)");
 		ERR("No memory left\n");
@@ -1621,7 +1621,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 			if (ctx->flags & RET_ARRAY && 
 				add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
-			pkg_free(buf);
+			mxr_free(buf);
 			return 0;
 		}
 		     /* Else try again with more space. */
@@ -1630,7 +1630,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf = pkg_realloc(buf, buf_size)) == 0) {
+		if ((buf = mxr_realloc(buf, buf_size)) == 0) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
@@ -1638,7 +1638,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 	}
 	return 0;
  err:
-	if (buf) pkg_free(buf);
+	if (buf) mxr_free(buf);
 	return -1;
 }
 
@@ -1762,7 +1762,7 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 	struct xmlrpc_reply* out;
 
 	out = &s->struct_out;
-	buf = (char*)pkg_malloc(RPC_BUF_SIZE);
+	buf = (char*)mxr_malloc(RPC_BUF_SIZE);
 	reply = s->reply;
 	if (!buf) {
 		set_fault(reply, 500, "Internal Server Error (No memory left)");
@@ -1805,7 +1805,7 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf = pkg_realloc(buf, buf_size)) == 0) {
+		if ((buf = mxr_realloc(buf, buf_size)) == 0) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
@@ -1813,7 +1813,7 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 	}
 	return 0;
  err:
-	if (buf) pkg_free(buf);
+	if (buf) mxr_free(buf);
 	return -1;
 
 }
@@ -2100,8 +2100,8 @@ static void clean_context(rpc_ctx_t* ctx)
 
 /** Creates a SIP message (in "buffer" form) from a HTTP XML-RPC request).
  * 
- * NOTE: the result must be pkg_free()'ed when not needed anymore.  
- * @return 0 on error, buffer allocated using pkg_malloc on success.
+ * NOTE: the result must be mxr_free()'ed when not needed anymore.  
+ * @return 0 on error, buffer allocated using mxr_malloc on success.
  */
 static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 {
@@ -2127,10 +2127,10 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 		XMLRPC_URI_LEN + 1 /* space */ + 
 		msg->first_line.u.request.version.len + CRLF_LEN + via_len + 
 		(msg->len-msg->first_line.len);
-	p = new_msg = pkg_malloc(len + 1);
+	p = new_msg = mxr_malloc(len + 1);
 	if (new_msg == 0) {
 		DEBUG("memory allocation failure (%d bytes)\n", len);
-		pkg_free(via);
+		mxr_free(via);
 		return 0;
 	}
 
@@ -2158,7 +2158,7 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 	memcpy(p,  SIP_MSG_START(msg) + msg->first_line.len, 
 		   msg->len - msg->first_line.len);
 	new_msg[len] = 0; /* null terminate, required by receive_msg() */
-	pkg_free(via);
+	mxr_free(via);
 	*new_msg_len = len;
 	return new_msg;
 }
@@ -2290,7 +2290,7 @@ static int process_xmlrpc(sip_msg_t* msg)
 					fake_msg_len, fake_msg_len, fake_msg);
 				if (em_receive_request(msg, fake_msg, fake_msg_len)<0)
 					ret=NONSIP_MSG_ERROR;
-				pkg_free(fake_msg);
+				mxr_free(fake_msg);
 			}
 			return ret; /* we "ate" the message, stop processing */
 		} else { /* the message has a via */
@@ -2380,11 +2380,11 @@ static int xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
 		if (add_xmlrpc_reply(&reply, &success_suffix) < 0) return -1;
 	}
 	if (send_reply(msg, &reply.body) < 0) goto error;
-	if (reply.reason) pkg_free(reply.reason);
+	if (reply.reason) mxr_free(reply.reason);
 	clean_xmlrpc_reply(&reply);
 	return 1;
  error:
-	if (reply.reason) pkg_free(reply.reason);
+	if (reply.reason) mxr_free(reply.reason);
 	clean_xmlrpc_reply(&reply);
 	return -1;
 }
