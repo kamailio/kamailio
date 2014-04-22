@@ -468,9 +468,13 @@ mt_match("mytree", "$rU", "0");
 		<function moreinfo="none">mtree.summary</function>
 		</title>
 		<para>
-		List usage summary for all trees.
+			List usage summary for all trees or for the tree whose name is
+			given as parameter.
 		</para>
-		<para>Parameters: none.</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_ - (optional) the name of the tree.</para></listitem>
+		</itemizedlist>
         </section>
 	<section>
 		<title>
@@ -481,7 +485,7 @@ mt_match("mytree", "$rU", "0");
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>_mtree_</para> - name of mtree or empty string meaning all mtrees</listitem>	  
+			<listitem><para>_mtree_</para> - name of mtree or empty string meaning all mtrees</listitem>
 		</itemizedlist>
         </section>
     <section>

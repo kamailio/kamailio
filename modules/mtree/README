@@ -412,9 +412,11 @@ mt_match("mytree", "$rU", "0");
 
 6.1. mtree.summary
 
-   List usage summary for all trees.
+   List usage summary for all trees or for the tree whose name is given as
+   parameter.
 
-   Parameters: none.
+   Parameters:
+     * _mtree_ - (optional) the name of the tree.
 
 6.2. mtree.reload
 
