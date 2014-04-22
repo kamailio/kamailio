@@ -639,6 +639,8 @@ static int mt_load_db(m_tree_t *pt)
 	old_tree->nrnodes = new_tree.nrnodes;
 	old_tree->nritems = new_tree.nritems;
 	old_tree->memsize = new_tree.memsize;
+	old_tree->reload_count = new_tree.reload_count;
+	old_tree->reload_time  = new_tree.reload_time;
 
 	mt_reload_flag = 0;
 
