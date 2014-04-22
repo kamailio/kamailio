@@ -68,13 +68,13 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 	struct via_body* vb = 0;
 
 	via_cnt++;
-	vb = mxr_malloc(sizeof(struct via_body));
+	vb = pkg_malloc(sizeof(struct via_body));
 	if (vb == 0){
 	        ERR("insert_fake_via: Out of memory\n");
 		goto error;
 	}
 
-	msg->h_via1 = mxr_malloc(sizeof(hdr_field_t));
+	msg->h_via1 = pkg_malloc(sizeof(hdr_field_t));
 	if (!msg->h_via1) {
 		ERR("No memory left\n");
 		goto error;
@@ -127,10 +127,10 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
  error:
 	if (vb) {
 		free_via_list(vb);
-		mxr_free(vb);
+		pkg_free(vb);
 	}
 
-	if (msg->h_via1) mxr_free(msg->h_via1);
+	if (msg->h_via1) pkg_free(msg->h_via1);
 	return -1;
 }
 
@@ -185,12 +185,12 @@ int create_via(sip_msg_t* msg, char* s1, char* s2)
 	}
 
 	if (insert_fake_via(msg, via, via_len) < 0) {
-		mxr_free(via);
+		pkg_free(via);
 		return -1;
 	}
 
 	if (insert_via_lump(msg, via, via_len - CRLF_LEN) < 0) {
-		mxr_free(via);
+		pkg_free(via);
 		return -1;
 	}
 

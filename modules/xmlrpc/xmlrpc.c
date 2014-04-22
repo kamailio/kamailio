@@ -2130,7 +2130,7 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 	p = new_msg = mxr_malloc(len + 1);
 	if (new_msg == 0) {
 		DEBUG("memory allocation failure (%d bytes)\n", len);
-		mxr_free(via);
+		pkg_free(via);
 		return 0;
 	}
 
@@ -2158,7 +2158,7 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 	memcpy(p,  SIP_MSG_START(msg) + msg->first_line.len, 
 		   msg->len - msg->first_line.len);
 	new_msg[len] = 0; /* null terminate, required by receive_msg() */
-	mxr_free(via);
+	pkg_free(via);
 	*new_msg_len = len;
 	return new_msg;
 }
@@ -2380,11 +2380,11 @@ static int xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
 		if (add_xmlrpc_reply(&reply, &success_suffix) < 0) return -1;
 	}
 	if (send_reply(msg, &reply.body) < 0) goto error;
-	if (reply.reason) mxr_free(reply.reason);
+	if (reply.reason) pkg_free(reply.reason);
 	clean_xmlrpc_reply(&reply);
 	return 1;
  error:
-	if (reply.reason) mxr_free(reply.reason);
+	if (reply.reason) pkg_free(reply.reason);
 	clean_xmlrpc_reply(&reply);
 	return -1;
 }
