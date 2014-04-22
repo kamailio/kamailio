@@ -720,11 +720,21 @@ static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
 			}
 			msg_end=hdr_end+in_pkt->tlen;
 			if ((int)(msg_end-reply_buf)>max_reply_size) {
-				int flags = fcntl(s, F_GETFL, 0);
-				fcntl(s, F_SETFL, flags | O_NONBLOCK);
 				/* reading the rest from the socket */
-				while(read(s, reply_buf, max_reply_size)>0);
-				fcntl(s, F_SETFL, flags & (~O_NONBLOCK));
+				struct timeval timeout_save;
+				unsigned sizeoft = sizeof(timeout_save);
+				if (getsockopt(s, SOL_SOCKET, SO_RCVTIMEO,
+							&timeout_save, &sizeoft)==0) {
+					struct timeval timeout;
+					timeout.tv_sec = 1;
+					timeout.tv_usec = 0;
+					if (setsockopt (s, SOL_SOCKET, SO_RCVTIMEO,
+								(char*)&timeout,sizeof(timeout))==0) {
+						while(read(s, reply_buf, max_reply_size)>0);
+						setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,
+								(char*)&timeout_save,sizeof(timeout_save));
+					}
+				}
 				goto error_toolong;
 			}
 		}
