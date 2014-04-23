@@ -51,7 +51,8 @@ typedef void (*rpc_fault_f)(void* ctx, int code, char* fmt, ...);          /* Si
 typedef int (*rpc_add_f)(void* ctx, char* fmt, ...);                       /* Add a new piece of data to the result */
 typedef int (*rpc_scan_f)(void* ctx, char* fmt, ...);                      /* Retrieve request parameters */
 typedef int (*rpc_printf_f)(void* ctx, char* fmt, ...);                    /* Add printf-like formated data to the result set */
-typedef int (*rpc_struct_add_f)(void* ctx, char* fmt, ...);                /* Create a new structure */
+typedef int (*rpc_struct_add_f)(void* ctx, char* fmt, ...);                /* Add fields in a structure */
+typedef int (*rpc_array_add_f)(void* ctx, char* fmt, ...);                 /* Add values in an array */
 typedef int (*rpc_struct_scan_f)(void* ctx, char* fmt, ...);               /* Scan attributes of a structure */
 typedef int (*rpc_struct_printf_f)(void* ctx, char* name, char* fmt, ...); /* Struct version of rpc_printf */
 
@@ -74,6 +75,7 @@ typedef struct rpc {
 	rpc_scan_f scan;
 	rpc_printf_f printf;
 	rpc_struct_add_f struct_add;
+	rpc_array_add_f array_add;
 	rpc_struct_scan_f struct_scan;
 	rpc_struct_printf_f struct_printf;
 	rpc_capabilities_f capabilities;
