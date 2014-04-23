@@ -2480,6 +2480,7 @@ int reply_received( struct sip_msg  *p_msg )
 	}
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_data );
+		replies_locked=0;
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 			      * be still pending branches ...
@@ -2497,6 +2498,7 @@ int reply_received( struct sip_msg  *p_msg )
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
 									&cancel_data, 1 );
+		replies_locked=0;
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 				be still pending branches ...
@@ -2534,7 +2536,8 @@ int reply_received( struct sip_msg  *p_msg )
 skip_send_reply:
 
 	if (likely(replies_locked)){
-		UNLOCK_REPLIES(t); /* unlock replies  - this would be unlocked by send function*/
+		/* unlock replies if still locked coming via goto skip_send_reply */
+		UNLOCK_REPLIES(t);
 		replies_locked=0;
 	}
 
