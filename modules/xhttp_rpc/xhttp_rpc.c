@@ -354,7 +354,7 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 	}
 	va_start(ap, fmt);
 	while(*fmt) {
-		if (*fmt == '{') {
+		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
 			ds = new_data_struct(ctx);
 			if (!ds) goto err;
@@ -544,7 +544,7 @@ static int rpc_struct_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
 	while(*fmt) {
 		member_name.s = va_arg(ap, char*);
 		member_name.len = (member_name.s?strlen(member_name.s):0);
-		if (*fmt == '{') {
+		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
 			ds = new_data_struct(ctx);
 			if (!ds) goto err;
@@ -641,12 +641,15 @@ static int mod_init(void)
 		}
 	}
 
+	memset(&func_param, 0, sizeof(func_param));
 	func_param.send = (rpc_send_f)rpc_send;
 	func_param.fault = (rpc_fault_f)rpc_fault;
 	func_param.add = (rpc_add_f)rpc_add;
 	func_param.scan = (rpc_scan_f)rpc_scan;
 	func_param.printf = (rpc_printf_f)rpc_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
+	/* use rpc_struct_add for array_add */
+	func_param.array_add = (rpc_struct_add_f)rpc_struct_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
 	func_param.capabilities = (rpc_capabilities_f)rpc_capabilities;
