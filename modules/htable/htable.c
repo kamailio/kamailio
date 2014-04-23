@@ -1124,14 +1124,14 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 }
 
 rpc_export_t htable_rpc[] = {
-	{"htable.dump", htable_rpc_dump, htable_dump_doc, 0},
+	{"htable.dump", htable_rpc_dump, htable_dump_doc, RET_ARRAY},
 	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
 	{"htable.get", htable_rpc_get, htable_get_doc, 0},
 	{"htable.sets", htable_rpc_sets, htable_sets_doc, 0},
 	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
-	{"htable.listTables", htable_rpc_list, htable_list_doc, 0},
+	{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
-	{"htable.stats", htable_rpc_stats, htable_stats_doc, 0},
+	{"htable.stats", htable_rpc_stats, htable_stats_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
