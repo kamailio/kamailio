@@ -2358,6 +2358,7 @@ int reply_received( struct sip_msg  *p_msg )
 	}
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_data );
+		replies_locked=0;
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 			      * be still pending branches ...
@@ -2375,6 +2376,7 @@ int reply_received( struct sip_msg  *p_msg )
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
 									&cancel_data, 1 );
+		replies_locked=0;
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 				be still pending branches ...
@@ -2408,7 +2410,7 @@ int reply_received( struct sip_msg  *p_msg )
 		restart_rb_fr(& uac->request, t->fr_inv_timeout);
 		uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
 	} /* provisional replies */
-
+        
 done:
 	tm_ctx_set_branch_index(T_BR_UNDEFINED);
 	/* we are done with the transaction, so unref it - the reference
