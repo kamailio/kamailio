@@ -408,12 +408,16 @@ rtpengine_offer();
 				discard any ICE attributes already present in the &sdp; body
 				and then generate and insert new ICE data, leaving itself
 				as the <emphasis>only</emphasis> ICE candidates;
+				<quote>force_relay</quote> -
+				discard any <quote>relay</quote> type ICE attributes already present
+				in the &sdp; body and then generate and insert itself
+				as the <emphasis>only</emphasis> ICE <quote>relay</quote> candidates;
 				<quote>remove</quote> instructs the &rtp; proxy to discard
 				any ICE attributes and not insert any new ones into the &sdp;.
 				The default (if no <quote>ICE=...</quote> is given at all),
 				new ICE data will only be generated
 				if no ICE was present in the &sdp; originally; otherwise
-				the &rtp; proxy will only insert itself as an
+				the &rtp; proxy will only insert itself as
 				<emphasis>additional</emphasis> ICE candidate. Other
 				&sdp; substitutions (c=, m=, etc) are unaffected by this flag.
 				</para></listitem>
