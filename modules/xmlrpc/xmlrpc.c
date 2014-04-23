@@ -349,6 +349,7 @@ typedef struct rpc_ctx {
  * @sa http://www.xml-rpc.com
  */
 struct rpc_struct {
+	int vtype;
 	xmlNodePtr struct_in;           /**< Pointer to the structure parameter */
 	struct xmlrpc_reply struct_out; /**< Structure to be sent in reply */
 	struct xmlrpc_reply* reply;     /**< Print errors here */
@@ -813,11 +814,19 @@ static int flatten_nests(struct rpc_struct* st, struct xmlrpc_reply* reply) {
 		return 1;
 
 	if (!st->nnext) {
-		if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+		if(st->vtype == RET_ARRAY) {
+			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
+		} else {
+			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+		}
 		if (add_xmlrpc_reply_offset(&st->parent->struct_out, st->offset, &st->struct_out.body) < 0) return -1;
 	} else {
 		flatten_nests(st->nnext, reply);
-		if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+		if(st->vtype == RET_ARRAY) {
+			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
+		} else {
+			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+		}
 		if (add_xmlrpc_reply_offset(&st->parent->struct_out, st->offset, &st->struct_out.body) < 0) return -1;
 	}
 	return 1;
@@ -828,7 +837,11 @@ static int print_structures(struct xmlrpc_reply* reply,
 {
 	while(st) {
 		     /* Close the structure first */
-		if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+		if(st->vtype == RET_ARRAY) {
+			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
+		} else {
+			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+		}
 		if (flatten_nests(st->nnext, &st->struct_out) < 0) return -1;
 		if (add_xmlrpc_reply_offset(reply, st->offset, &st->struct_out.body) < 0) return -1;
 		st = st->next;
@@ -929,7 +942,7 @@ static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
  *              coming from a XML-RPC request.
  */
 static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure, 
-										struct xmlrpc_reply* reply)
+										struct xmlrpc_reply* reply, int vtype)
 {
 	struct rpc_struct* p;
 
@@ -943,6 +956,7 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
 
 	p->reply = reply;
 	p->n = 0;
+	p->vtype = vtype;
 	if (doc && structure) {
 		     /* We will be parsing structure from request */
 		p->doc = doc;
@@ -950,8 +964,11 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
 	} else {
 		     /* We will build a reply structure */
 		if (init_xmlrpc_reply(&p->struct_out) < 0) goto err;
-		if (add_xmlrpc_reply(&p->struct_out, &struct_prefix) < 0) goto err;
-
+		if(vtype==RET_ARRAY) {
+			if (add_xmlrpc_reply(&p->struct_out, &array_prefix) < 0) goto err;
+		} else {
+			if (add_xmlrpc_reply(&p->struct_out, &struct_prefix) < 0) goto err;
+		}
 	}
 	if (add_garbage(JUNK_RPCSTRUCT, p, reply) < 0) goto err;
 	return p;
@@ -1076,9 +1093,9 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 	while(*fmt) {
 		if (ctx->flags & RET_ARRAY && 
 			add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
-		if (*fmt == '{') {
+		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
-			p = new_rpcstruct(0, 0, reply);
+			p = new_rpcstruct(0, 0, reply, (*fmt=='[')?RET_ARRAY:0);
 			if (!p) goto err;
 			*(struct rpc_struct**)void_ptr = p;
 			p->offset = get_reply_len(reply);
@@ -1556,7 +1573,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		case '{':
 			void_ptr = va_arg(ap, void**);
 			if (!value->xmlChildrenNode) goto error;
-			p = new_rpcstruct(ctx->doc, value->xmlChildrenNode, reply);
+			p = new_rpcstruct(ctx->doc, value->xmlChildrenNode, reply, 0);
 			if (!p) goto error;
 			*void_ptr = p;
 			break;
@@ -1722,14 +1739,18 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 		member_name.s = va_arg(ap, char*);
 		member_name.len = (member_name.s ? strlen(member_name.s) : 0);
 
+		if(s->vtype==RET_ARRAY && *fmt == '{') {
+			if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
+			if (add_xmlrpc_reply(reply, &struct_prefix) < 0) goto err;
+		}
 		if (add_xmlrpc_reply(reply, &member_prefix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &name_prefix) < 0) goto err;
 		if (add_xmlrpc_reply_esc(reply, &member_name) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &name_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
-		if (*fmt == '{') {
+		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
-			p = new_rpcstruct(0, 0, s->reply);
+			p = new_rpcstruct(0, 0, s->reply, (*fmt=='[')?RET_ARRAY:0);
 			if (!p)
 				goto err;
 			*(struct rpc_struct**) void_ptr = p;
@@ -1746,6 +1767,55 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 		}
 		if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &member_suffix) < 0) goto err;
+		if(s->vtype==RET_ARRAY && *fmt == '{') {
+			if (add_xmlrpc_reply(reply, &struct_suffix) < 0) goto err;
+			if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
+		}
+		fmt++;
+	}
+
+	va_end(ap);
+	return 0;
+ err:
+	va_end(ap);
+	return -1;
+}
+
+/** Adds a new value to an array.
+ */
+static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
+{
+	va_list ap;
+	str member_name;
+	struct xmlrpc_reply* reply;
+	void* void_ptr;
+	struct rpc_struct* p, *tmp;
+
+	reply = &s->struct_out;
+	if(s->vtype!=RET_ARRAY) {
+		LM_ERR("parent structure is not an array\n");
+		goto err;
+	}
+
+	va_start(ap, fmt);
+	while(*fmt) {
+		if (*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void**);
+			p = new_rpcstruct(0, 0, s->reply, (*fmt=='[')?RET_ARRAY:0);
+			if (!p)
+				goto err;
+			*(struct rpc_struct**) void_ptr = p;
+			p->offset = get_reply_len(reply);
+			p->parent = s;
+			if (!s->nnext) {
+				s->nnext = p;
+			} else {
+				for (tmp = s; tmp->nnext; tmp=tmp->nnext);
+				tmp->nnext = p;
+			}
+		} else {
+			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
+		}
 		fmt++;
 	}
 
@@ -2478,12 +2548,14 @@ static int mod_init(void)
 		return -1;
 	}
 
+	memset(&func_param, 0, sizeof(func_param));
 	func_param.send = (rpc_send_f)rpc_send;
 	func_param.fault = (rpc_fault_f)rpc_fault;
 	func_param.add = (rpc_add_f)rpc_add;
 	func_param.scan = (rpc_scan_f)rpc_scan;
 	func_param.printf = (rpc_printf_f)rpc_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
+	func_param.array_add = (rpc_array_add_f)rpc_array_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
 	func_param.capabilities = (rpc_capabilities_f)rpc_capabilities;
