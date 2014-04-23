@@ -118,24 +118,28 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_printf(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...);
+static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...);
 static int rpc_struct_scan(struct rpc_struct_l* s, char* fmt, ...);
 /* struct scan */
 static int rpc_struct_printf(struct rpc_struct_l *s, char* name,
 								char* fmt, ...);
 
 
-static rpc_t binrpc_callbacks={
-	(rpc_fault_f)			rpc_fault,
-	(rpc_send_f)			rpc_send,
-	(rpc_add_f)				rpc_add,
-	(rpc_scan_f)			rpc_scan,
-	(rpc_printf_f)			rpc_printf,
-	(rpc_struct_add_f)		rpc_struct_add,
-	(rpc_struct_scan_f)		rpc_struct_scan,
-	(rpc_struct_printf_f)	rpc_struct_printf
-};
+static rpc_t binrpc_callbacks;
 
-
+void binrpc_callbacks_init(void)
+{
+	memset(&binrpc_callbacks, 0, sizeof(binrpc_callbacks));
+	binrpc_callbacks.fault         = (rpc_fault_f)rpc_fault;
+	binrpc_callbacks.send          = (rpc_send_f)rpc_send;
+	binrpc_callbacks.add           = (rpc_add_f)rpc_add;
+	binrpc_callbacks.scan          = (rpc_scan_f)rpc_scan;
+	binrpc_callbacks.printf        = (rpc_printf_f)rpc_printf;
+	binrpc_callbacks.struct_add    = (rpc_struct_add_f)rpc_struct_add;
+	binrpc_callbacks.array_add     = (rpc_struct_add_f)rpc_array_add;
+	binrpc_callbacks.struct_scan   = (rpc_struct_scan_f)rpc_struct_scan;
+	binrpc_callbacks.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
+}
 
 /** mark a pointer for freeing when the ctx is destroyed.
  * @return 0 on success, -1 on error
@@ -977,6 +981,7 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 				if (err<0) goto error_add;
 				break;
 			case '{':
+			case '[':
 				err=binrpc_start_struct(&ctx->out.pkt);
 				if (err<0) goto error_add;
 				rs=new_rpc_struct();
@@ -1080,6 +1085,7 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 				avp.u.strval=*(va_arg(ap, str*));
 				break;
 			case '{':
+			case '[':
 				avp.type=BINRPC_T_STRUCT;
 				err=binrpc_addavp(&s->pkt, &avp);
 				if (err<0) goto error_add;
@@ -1113,7 +1119,66 @@ error:
 	return -1;
 }
 
-
+/* returns  0 on success, -1 on error */
+static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
+{
+	va_list ap;
+	int err;
+	char* sv;
+	str* st;
+	struct rpc_struct_l* rs;
+	
+	va_start(ap, fmt);
+	for (;*fmt; fmt++){
+		switch(*fmt){
+			case 'd':
+			case 't':
+			case 'b':
+				err=binrpc_addint(&s->pkt, va_arg(ap, int));
+				if (err<0) goto error_add;
+				break;
+			case 's': /* asciiz */
+				sv=va_arg(ap, char*);
+				if (sv==0) /* fix null strings */
+					sv="<null string>"; 
+				err=binrpc_addstr(&s->pkt, sv, strlen(sv));
+				if (err<0) goto error_add;
+				break;
+			case 'S': /* str */
+				st=va_arg(ap, str*);
+				err=binrpc_addstr(&s->pkt, st->s, st->len);
+				if (err<0) goto error_add;
+				break;
+			case '{':
+			case '[':
+				err=binrpc_start_struct(&s->pkt);
+				if (err<0) goto error_add;
+				rs=new_rpc_struct();
+				if (rs==0) goto error_mem;
+				rs->offset=binrpc_pkt_len(&s->pkt);
+				err=binrpc_end_struct(&s->pkt);
+				if (err<0) goto error_add;
+				clist_append(&s->substructs, rs, next, prev);
+				*(va_arg(ap, void**))=rs;
+				break;
+			case 'f': 
+				err=binrpc_adddouble(&s->pkt, va_arg(ap, double));
+				if (err<0) goto error_add;
+				break;
+			default: 
+				LOG(L_CRIT, "BUG: binrpc: rpc_add: formatting char \'%c\'"
+							" not supported\n", *fmt);
+				goto error;
+		}
+	}
+	va_end(ap);
+	return 0;
+error_mem:
+error_add:
+error:
+	va_end(ap);
+	return -1;
+}
 
 /* returns  0 on success, -1 on error */
 static int rpc_struct_printf(struct rpc_struct_l *s, char* name,

@@ -50,6 +50,7 @@
 MODULE_VERSION
 
 #include "ctl_defaults.h"
+#include "binrpc_run.h"
 #ifdef USE_FIFO
 #include "fifo_server.h"
 #endif
@@ -228,6 +229,8 @@ error:
 static int mod_init(void)
 {
 	struct id_list* l;
+
+	binrpc_callbacks_init();
 
 	if(binrpc_max_body_size<=0)
 		binrpc_max_body_size = 4;
