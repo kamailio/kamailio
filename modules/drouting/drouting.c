@@ -740,7 +740,7 @@ again:
 		}
 	}
 
-	if (rt_info->route_idx>0 && rt_info->route_idx<RT_NO) {
+	if (rt_info->route_idx>0 && main_rt.rlist[rt_info->route_idx]!=NULL) {
 		ret = run_top_route(main_rt.rlist[rt_info->route_idx], msg, 0);
 		if (ret<1) {
 			/* drop the action */
