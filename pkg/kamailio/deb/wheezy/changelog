@@ -1,3 +1,9 @@
+kamailio (4.1.3) unstable; urgency=low
+
+  * update to 4.1.3 from upstream
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Thu, 24 Apr 2014 10:45:20 +0100
+
 kamailio (4.1.2) unstable; urgency=low
 
   * update to 4.1.2 from upstream
