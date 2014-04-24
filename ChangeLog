@@ -2,6 +2,14 @@
 
 ===================== Changes Since Version 4.1.2 ===========================
 
+commit f6d59f24879de7f38e836e5d1fc58e3197ab7b07
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Thu Mar 13 14:59:58 2014 +0100
+
+    carrierroute: Minor typo in previous fix
+    
+    (cherry picked from commit b17de9bdc53ae3474341e632f7faa89d69b667c8)
+
 commit 41c6b1d3f9bb874fd830c45976943439feaafda8
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Thu Apr 24 10:57:16 2014 +0200
