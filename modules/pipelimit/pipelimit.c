@@ -308,7 +308,7 @@ static int mod_init(void)
 		return -1;
 	}
 	timer_init(pl_timer, pl_timer_handle, 0, F_TIMER_FAST);
-	timer_add(pl_timer, MS_TO_TICKS(1500)); /* Start it after 1500ms */
+	timer_add(pl_timer, MS_TO_TICKS(1000)); /* Start it after 1000ms */
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
