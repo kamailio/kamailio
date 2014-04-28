@@ -73,6 +73,9 @@ int _pv_pid = 0;
 #define PV_FIELD_DELIM ", "
 #define PV_FIELD_DELIM_LEN (sizeof(PV_FIELD_DELIM) - 1)
 
+#define PV_HDR_DELIM ","
+#define PV_HDR_DELIM_LEN (sizeof(PV_HDR_DELIM) - 1)
+
 int pv_get_msgid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -1649,8 +1652,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 					LM_ERR("local buffer length exceeded\n");
 					return pv_get_null(msg, param, res);
 				}
-				memcpy(p, PV_FIELD_DELIM, PV_FIELD_DELIM_LEN);
-				p += PV_FIELD_DELIM_LEN;
+				memcpy(p, PV_HDR_DELIM, PV_HDR_DELIM_LEN);
+				p += PV_HDR_DELIM_LEN;
 			}
 			if(p-p_ini+hf->body.len+1>p_size)
 			{
