@@ -569,7 +569,7 @@ static void cdr_on_end( struct dlg_cell* dialog,
                         int type,
                         struct dlg_cb_params* params)
 {
-    if( !dialog || !params || !params->req)
+    if( !dialog || !params)
     {
         LM_ERR("invalid values\n!");
         return;
