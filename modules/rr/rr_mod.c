@@ -61,7 +61,6 @@ int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
 static str custom_user_spec = {NULL, 0};
 pv_spec_t custom_user_avp;
 
-static unsigned int last_rr_msg;
 ob_api_t rr_obb;
 
 MODULE_VERSION
@@ -268,7 +267,7 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 {
 	str s;
 
-	if (msg->id == last_rr_msg) {
+	if (msg->msg_flags & FL_RR_ADDED) {
 		LM_ERR("Double attempt to record-route\n");
 		return -1;
 	}
@@ -280,7 +279,7 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 	if ( record_route( msg, key?&s:0 )<0 )
 		return -1;
 
-	last_rr_msg = msg->id;
+	msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -289,7 +288,7 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *key2)
 {
 	str s;
 
-	if (msg->id == last_rr_msg) {
+	if (msg->msg_flags & FL_RR_ADDED) {
 		LM_ERR("Duble attempt to record-route\n");
 		return -1;
 	}
@@ -316,7 +315,7 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *key2)
 		return -1;
 
 done:
-	last_rr_msg = msg->id;
+	msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -328,7 +327,7 @@ static int w_record_route_advertised_address(struct sip_msg *msg, char *addr, ch
 {
 	str s;
 
-	if (msg->id == last_rr_msg) {
+	if (msg->msg_flags & FL_RR_ADDED) {
 		LM_ERR("Double attempt to record-route\n");
 		return -1;
 	}
@@ -340,7 +339,7 @@ static int w_record_route_advertised_address(struct sip_msg *msg, char *addr, ch
 	if ( record_route_advertised_address( msg, &s ) < 0)
 		return -1;
 
-	last_rr_msg = msg->id;
+	msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
