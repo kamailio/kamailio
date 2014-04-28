@@ -164,6 +164,11 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 		obuf.s = generate_res_buf_from_sip_res(msg,
 				(unsigned int*)&obuf.len, BUILD_NO_VIA1_UPDATE);
 	} else {
+		if(msg->msg_flags & FL_RR_ADDED) {
+			LM_ERR("cannot apply msg changes after adding record-route"
+					" header - it breaks conditional 2nd header\n");
+			return -1;
+		}
 		obuf.s = build_req_buf_from_sip_req(msg,
 				(unsigned int*)&obuf.len, &dst,
 				BUILD_NO_PATH|BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
