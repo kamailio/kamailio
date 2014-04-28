@@ -58,6 +58,7 @@ static int w_sdp_remove_transport(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 static int w_sdp_get(sip_msg_t* msg, char *bar);
 static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar);
+static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_get_line_startswith(sip_msg_t* msg, char *foo, char *bar);
 
 
@@ -99,6 +100,8 @@ static cmd_export_t cmds[] = {
 	{"sdp_get",                  (cmd_function)w_sdp_get,
 		1, 0,  0, ANY_ROUTE},
 	{"sdp_content",                (cmd_function)w_sdp_content,
+		0, 0,  0, ANY_ROUTE},
+	{"sdp_with_ice",                (cmd_function)w_sdp_with_ice,
 		0, 0,  0, ANY_ROUTE},
 	{"sdp_get_line_startswith", (cmd_function)w_sdp_get_line_startswith,
 		2, 0,  0, ANY_ROUTE},
@@ -1419,6 +1422,37 @@ static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
 	if(parse_sdp(msg)==0 && msg->body!=NULL)
 		return 1;
 	return -1;
+}
+
+/**
+ *
+ */
+static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar)
+{
+    str ice, body;
+
+    ice.s = "a=candidate";
+    ice.len = 11;
+
+    body.s = get_body(msg);
+    if (body.s == NULL) {
+	LM_DBG("failed to get the message body\n");
+	return -1;
+    }
+
+    body.len = msg->len -(int)(body.s - msg->buf);
+    if (body.len == 0) {
+	LM_DBG("message body has length zero\n");
+	return -1;
+    }
+
+    if (ser_memmem(body.s, ice.s, body.len, ice.len) != NULL) {
+	LM_INFO("found ice attribute\n");
+	return 1;
+    } else {
+	LM_INFO("did't find ice attribute\n");
+	return -1;
+    }
 }
 
 /**

@@ -460,6 +460,27 @@ if(sdp_content()) {
 	    </example>
 	</section>
 	<section>
+	    <title>
+		<function moreinfo="none">sdp_with_ice()</function>
+	    </title>
+	    <para>
+		Return true if the SIP message has SDP body that contains ICE candidate attribute(s).
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_with_ice</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(sdp_with_ice()) {
+    ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
 		<title>
 			<function moreinfo="none">sdp_get_line_startswith(avpvar, string)</function>
 		</title>

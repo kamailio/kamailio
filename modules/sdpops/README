@@ -42,7 +42,8 @@ Daniel-Constantin Mierla
               4.14. sdp_print(level)
               4.15. sdp_get(avpvar)
               4.16. sdp_content()
-              4.17. sdp_get_line_startswith(avpvar, string)
+              4.17. sdp_with_ice()
+              4.18. sdp_get_line_startswith(avpvar, string)
 
    List of Examples
 
@@ -62,7 +63,8 @@ Daniel-Constantin Mierla
    1.14. sdp_print usage
    1.15. sdp_get usage
    1.16. sdp_content usage
-   1.17. sdp_get_line_startswith usage
+   1.17. sdp_with_ice usage
+   1.18. sdp_get_line_startswith usage
 
 Chapter 1. Admin Guide
 
@@ -93,7 +95,8 @@ Chapter 1. Admin Guide
         4.14. sdp_print(level)
         4.15. sdp_get(avpvar)
         4.16. sdp_content()
-        4.17. sdp_get_line_startswith(avpvar, string)
+        4.17. sdp_with_ice()
+        4.18. sdp_get_line_startswith(avpvar, string)
 
 1. Overview
 
@@ -143,7 +146,8 @@ Chapter 1. Admin Guide
    4.14. sdp_print(level)
    4.15. sdp_get(avpvar)
    4.16. sdp_content()
-   4.17. sdp_get_line_startswith(avpvar, string)
+   4.17. sdp_with_ice()
+   4.18. sdp_get_line_startswith(avpvar, string)
 
 4.1.  sdp_remove_codecs_by_id(list)
 
@@ -401,7 +405,21 @@ if(sdp_content()) {
 }
 ...
 
-4.17.  sdp_get_line_startswith(avpvar, string)
+4.17.  sdp_with_ice()
+
+   Return true if the SIP message has SDP body that contains ICE candidate
+   attribute(s).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. sdp_with_ice usage
+...
+if(sdp_with_ice()) {
+    ...
+}
+...
+
+4.18.  sdp_get_line_startswith(avpvar, string)
 
    Store the search part of SDP body message with line beginning with
    'string' in an AVP. Return 1 if 'string' is found in SDP, -1 on error
@@ -409,7 +427,7 @@ if(sdp_content()) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.17. sdp_get_line_startswith usage
+   Example 1.18. sdp_get_line_startswith usage
 ...
 if(sdp_get_line_startswith("$avp(mline)", "m=")) {
         xlog("m-line: $avp(mline)\n");
