@@ -36,18 +36,17 @@ extern data_t _data;
 void check_calls_by_money(unsigned int ticks, void *param)
 {
 	struct str_hash_entry *h_entry 	= NULL,
-						  *tmp		= NULL;
-	call_t *tmp_call				= NULL;
+			  *tmp		= NULL;
+	call_t *tmp_call		= NULL;
 	int i;
 
 	lock_get(&_data.money.lock);
-
 	if (_data.money.credit_data_by_client->table)
 		for(i = 0; i < _data.money.credit_data_by_client->size; i++)
 			clist_foreach_safe(&_data.money.credit_data_by_client->table[i], h_entry, tmp, next)
 			{
 				credit_data_t *credit_data	= (credit_data_t *) h_entry->u.p;
-				call_t *call				= NULL;
+				call_t *call			= NULL;
 				double total_consumed_money	= 0;
 
 				if (i > SAFE_ITERATION_THRESHOLD)
@@ -55,7 +54,6 @@ void check_calls_by_money(unsigned int ticks, void *param)
 					LM_ERR("Too many iterations for this loop: %d", i);
 					break;
 				}
-
 				lock_get(&credit_data->lock);
 
 				clist_foreach_safe(credit_data->call_list, call, tmp_call, next)
@@ -65,7 +63,7 @@ void check_calls_by_money(unsigned int ticks, void *param)
 					if (!call->confirmed)
 						continue;
 
-					consumed_time 				= get_current_timestamp() - call->start_timestamp;
+					consumed_time 		= get_current_timestamp() - call->start_timestamp;
 
 					if (consumed_time > call->money_based.initial_pulse)
 					{
@@ -91,7 +89,7 @@ void check_calls_by_money(unsigned int ticks, void *param)
 																			call->consumed_amount
 																			);
 				}
-
+				
 				if (credit_data->concurrent_calls == 0)
 				{
 					lock_release(&credit_data->lock);
@@ -107,9 +105,10 @@ void check_calls_by_money(unsigned int ticks, void *param)
 
 				if (credit_data->consumed_amount >= credit_data->max_amount)
 				{
+					lock_release(&_data.money.lock);
 					terminate_all_calls(credit_data);
 					lock_release(&credit_data->lock);
-					break;
+					return;
 				}
 
 				lock_release(&credit_data->lock);
@@ -121,8 +120,8 @@ void check_calls_by_money(unsigned int ticks, void *param)
 void check_calls_by_time(unsigned int ticks, void *param)
 {
 	struct str_hash_entry *h_entry 	= NULL,
-						  *tmp		= NULL;
-	call_t *tmp_call				= NULL;
+			*tmp		= NULL;
+	call_t *tmp_call		= NULL;
 	int i;
 
 	lock_get(&_data.time.lock);
@@ -132,7 +131,7 @@ void check_calls_by_time(unsigned int ticks, void *param)
 			clist_foreach_safe(&_data.time.credit_data_by_client->table[i], h_entry, tmp, next)
 			{
 				credit_data_t *credit_data	= (credit_data_t *) h_entry->u.p;
-				call_t *call				= NULL;
+				call_t *call			= NULL;
 				int total_consumed_secs		= 0;
 
 				lock_get(&credit_data->lock);
@@ -150,8 +149,8 @@ void check_calls_by_time(unsigned int ticks, void *param)
 					if (!call->confirmed)
 						continue;
 
-					call->consumed_amount		= get_current_timestamp() - call->start_timestamp;
-					total_consumed_secs			+= call->consumed_amount;
+					call->consumed_amount	= get_current_timestamp() - call->start_timestamp;
+					total_consumed_secs	+= call->consumed_amount;
 
 					if (call->consumed_amount > call->max_amount)
 					{
@@ -180,10 +179,11 @@ void check_calls_by_time(unsigned int ticks, void *param)
 																									(int) credit_data->max_amount);
 
 				if (credit_data->consumed_amount >= credit_data->max_amount)
-				{
+				{				
+					lock_release(&_data.time.lock);
 					terminate_all_calls(credit_data);
 					lock_release(&credit_data->lock);
-					break;
+					return;
 				}
 
 				lock_release(&credit_data->lock);

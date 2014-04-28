@@ -46,7 +46,7 @@ int sel_channels_count(str* res, select_t* s, struct sip_msg* msg)
 	LM_DBG("sel_channels_count for [%.*s]",  s->params[2].v.s.len, s->params[2].v.s.s);
 
 	credit_data_t *credit_data	= NULL;
-	int value					= 0;
+	int value			= 0;
 
 	if (s->params[2].v.s.len <= 0)
 	{
@@ -54,7 +54,7 @@ int sel_channels_count(str* res, select_t* s, struct sip_msg* msg)
 		return -1;
 	}
 
-	if (try_get_credit_data_entry(&s->params[2].v.s, &credit_data) >= 0)
+	if (try_get_credit_data_entry(&s->params[2].v.s, &credit_data) == 0)
 		value = credit_data->number_of_calls;
 	else
 		LM_DBG("Client [%.*s] not found", s->params[2].v.s.len, s->params[2].v.s.s);
