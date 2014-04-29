@@ -175,8 +175,8 @@ int pl_pipe_add(str *pipeid, str *algorithm, int limit)
 		(pl_pipe_t*)shm_malloc(sizeof(pl_pipe_t)+(1+pipeid->len)*sizeof(char));
 	if(cell == NULL)
 	{
-		LM_ERR("cannot create new cell.\n");
 		lock_release(&_pl_pipes_ht->slots[idx].lock);
+		LM_ERR("cannot create new cell.\n");
 		return -1;
 	}
 	memset(cell, 0, sizeof(pl_pipe_t)+(1+pipeid->len)*sizeof(char));
@@ -189,9 +189,10 @@ int pl_pipe_add(str *pipeid, str *algorithm, int limit)
 	cell->limit = limit;
 	if (str_map_str(algo_names, algorithm, &cell->algo))
 	{
+		lock_release(&_pl_pipes_ht->slots[idx].lock);
+		shm_free(cell);
 		LM_ERR("cannot find algorithm [%.*s].\n", algorithm->len,
 				algorithm->s);
-		lock_release(&_pl_pipes_ht->slots[idx].lock);
 		return -1;
 	}
 
