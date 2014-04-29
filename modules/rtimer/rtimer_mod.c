@@ -37,6 +37,8 @@
 #include "../../socket_info.h"
 #include "../../dset.h"
 #include "../../pt.h"
+#include "../../usr_avp.h"
+#include "../../xavp.h"
 #include "../../timer_proc.h"
 #include "../../script_cb.h"
 #include "../../parser/parse_param.h"
@@ -190,6 +192,10 @@ void stm_timer_exec(unsigned int ticks, void *param)
 		set_route_type(REQUEST_ROUTE);
 		run_top_route(main_rt.rlist[rt->route], fmsg, 0);
 		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
+		reset_avps();
+#ifdef WITH_XAVP
+		xavp_reset_list();
+#endif
 	}
 }
 
