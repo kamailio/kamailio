@@ -31,18 +31,19 @@ Daniel-Constantin Mierla
 
         3. Parameters
 
-              3.1. db_url (string)
-              3.2. plp_table_name (string)
-              3.3. plp_pipeid_column (string)
-              3.4. plp_limit_column (string)
-              3.5. plp_algorithm_column (string)
-              3.6. timer_interval (integer)
-              3.7. reply_code (integer)
-              3.8. reply_reason (string)
+              3.1. hash_size (int)
+              3.2. db_url (string)
+              3.3. plp_table_name (string)
+              3.4. plp_pipeid_column (string)
+              3.5. plp_limit_column (string)
+              3.6. plp_algorithm_column (string)
+              3.7. timer_interval (integer)
+              3.8. reply_code (integer)
+              3.9. reply_reason (string)
 
         4. Functions
 
-              4.1. pl_check(name)
+              4.1. pl_check(name [, algorithm, limit])
               4.2. pl_drop([ [min ], max ])
 
         5. MI Commands
@@ -65,18 +66,19 @@ Daniel-Constantin Mierla
 
    List of Examples
 
-   1.1. Set db_url parameter
-   1.2. Set plp_table_name parameter
-   1.3. Set plp_pipeid_column parameter
-   1.4. Set plp_limit_column parameter
-   1.5. Set plp_algorithm_column parameter
-   1.6. Set timer_interval parameter
-   1.7. Set reply_code parameter
-   1.8. Set reply_code parameter at runtime
-   1.9. Set reply_reason parameter
-   1.10. Set reply_reason parameter at runtime
-   1.11. rl_check usage
-   1.12. pl_drop usage
+   1.1. Set hash_size parameter
+   1.2. Set db_url parameter
+   1.3. Set plp_table_name parameter
+   1.4. Set plp_pipeid_column parameter
+   1.5. Set plp_limit_column parameter
+   1.6. Set plp_algorithm_column parameter
+   1.7. Set timer_interval parameter
+   1.8. Set reply_code parameter
+   1.9. Set reply_code parameter at runtime
+   1.10. Set reply_reason parameter
+   1.11. Set reply_reason parameter at runtime
+   1.12. rl_check usage
+   1.13. pl_drop usage
 
 Chapter 1. Admin Guide
 
@@ -90,18 +92,19 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. db_url (string)
-        3.2. plp_table_name (string)
-        3.3. plp_pipeid_column (string)
-        3.4. plp_limit_column (string)
-        3.5. plp_algorithm_column (string)
-        3.6. timer_interval (integer)
-        3.7. reply_code (integer)
-        3.8. reply_reason (string)
+        3.1. hash_size (int)
+        3.2. db_url (string)
+        3.3. plp_table_name (string)
+        3.4. plp_pipeid_column (string)
+        3.5. plp_limit_column (string)
+        3.6. plp_algorithm_column (string)
+        3.7. timer_interval (integer)
+        3.8. reply_code (integer)
+        3.9. reply_reason (string)
 
    4. Functions
 
-        4.1. pl_check(name)
+        4.1. pl_check(name [, algorithm, limit])
         4.2. pl_drop([ [min ], max ])
 
    5. MI Commands
@@ -156,71 +159,86 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   3.1. db_url (string)
-   3.2. plp_table_name (string)
-   3.3. plp_pipeid_column (string)
-   3.4. plp_limit_column (string)
-   3.5. plp_algorithm_column (string)
-   3.6. timer_interval (integer)
-   3.7. reply_code (integer)
-   3.8. reply_reason (string)
+   3.1. hash_size (int)
+   3.2. db_url (string)
+   3.3. plp_table_name (string)
+   3.4. plp_pipeid_column (string)
+   3.5. plp_limit_column (string)
+   3.6. plp_algorithm_column (string)
+   3.7. timer_interval (integer)
+   3.8. reply_code (integer)
+   3.9. reply_reason (string)
 
-3.1. db_url (string)
+3.1. hash_size (int)
+
+   Used to compute the number of slots for the internal hash table, as
+   power of 2 (number of slots = 2^hash_size, aka 1<<hash_size). If you
+   have many pipes, increase this value for proper performances, but don't
+   go too high (hash_size=10 means 1024 slots).
+
+   Default value is "6" (64 slots).
+
+   Example 1.1. Set hash_size parameter
+...
+modparam("pipelimit", "hash_size", 10)
+...
+
+3.2. db_url (string)
 
    URL of the database server to be used.
 
    Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
-   Example 1.1. Set db_url parameter
+   Example 1.2. Set db_url parameter
 ...
 modparam("pipelimit", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-3.2. plp_table_name (string)
+3.3. plp_table_name (string)
 
    Name of DB table where data definition for pipes is stores.
 
    Default value is "pl_pipes".
 
-   Example 1.2. Set plp_table_name parameter
+   Example 1.3. Set plp_table_name parameter
 ...
 modparam("pipelimit", "plp_table_name", "mypipes")
 ...
 
-3.3. plp_pipeid_column (string)
+3.4. plp_pipeid_column (string)
 
    Name of 'pipeid' column.
 
    Default value is "pipeid".
 
-   Example 1.3. Set plp_pipeid_column parameter
+   Example 1.4. Set plp_pipeid_column parameter
 ...
 modparam("pipelimit", "plp_pipeid_column", "name")
 ...
 
-3.4. plp_limit_column (string)
+3.5. plp_limit_column (string)
 
    Name of 'limit' column.
 
    Default value is "limit".
 
-   Example 1.4. Set plp_limit_column parameter
+   Example 1.5. Set plp_limit_column parameter
 ...
 modparam("pipelimit", "plp_limit_column", "name")
 ...
 
-3.5. plp_algorithm_column (string)
+3.6. plp_algorithm_column (string)
 
    Name of 'algorithm' column.
 
    Default value is "algorithm".
 
-   Example 1.5. Set plp_algorithm_column parameter
+   Example 1.6. Set plp_algorithm_column parameter
 ...
 modparam("pipelimit", "plp_algorithm_column", "name")
 ...
 
-3.6. timer_interval (integer)
+3.7. timer_interval (integer)
 
    The initial length of a timer interval in seconds. All amounts of
    messages have to be divided by this timer to get a messages per second
@@ -231,52 +249,57 @@ modparam("pipelimit", "plp_algorithm_column", "name")
 
    Default value is 10.
 
-   Example 1.6. Set timer_interval parameter
+   Example 1.7. Set timer_interval parameter
 ...
 modparam("pipelimit", "timer_interval", 5)
 ...
 
-3.7. reply_code (integer)
+3.8. reply_code (integer)
 
    The code of the reply sent by Kamailio while limiting.
 
    Default value is 503.
 
-   Example 1.7. Set reply_code parameter
+   Example 1.8. Set reply_code parameter
 ...
 modparam("pipelimit", "reply_code", 505)
 ...
 
    This value can be modified at runtime using kamcmd
 
-   Example 1.8.  Set reply_code parameter at runtime
+   Example 1.9.  Set reply_code parameter at runtime
 kamcmd cfg.set_now_int pipelimit reply_code 505
 
-3.8. reply_reason (string)
+3.9. reply_reason (string)
 
    The reason of the reply sent by Kamailio while limiting.
 
    Default value is "Server Unavailable".
 
-   Example 1.9. Set reply_reason parameter
+   Example 1.10. Set reply_reason parameter
 ...
 modparam("pipelimit", "reply_reason", "Limiting")
 ...
 
    This value can be modified at runtime using kamcmd
 
-   Example 1.10.  Set reply_reason parameter at runtime
+   Example 1.11.  Set reply_reason parameter at runtime
 kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
 
 4. Functions
 
-   4.1. pl_check(name)
+   4.1. pl_check(name [, algorithm, limit])
    4.2. pl_drop([ [min ], max ])
 
-4.1. pl_check(name)
+4.1. pl_check(name [, algorithm, limit])
 
-   Check the current request against the 'name' pipe. The pipe name can be
-   provided via a pseudo variabile.
+   Check the current request against the 'name' pipe.
+
+   If algorithm and limit are provided, the function attempts to create a
+   new pipe of one with that name doesn't exit. If it exists, no changes
+   to algorithm and limit are done.
+
+   The pipe name can be provided via a pseudo variabile.
 
    The method will return:
      * -2 if no pipe was found
@@ -289,7 +312,7 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.11. rl_check usage
+   Example 1.12. rl_check usage
 ...
         # perform pipe match for current method
         if (!pl_check("one")) {
@@ -341,7 +364,7 @@ with unexpected retcode=$var(check_result)\n");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.12. pl_drop usage
+   Example 1.13. pl_drop usage
 ...
         if (!pl_check("one")) {
                 # send back a "503 - Server Unavailable"
