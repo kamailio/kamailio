@@ -78,6 +78,7 @@ str_map_t source_names[] = {
 
 static int pl_drop_code = 503;
 static str pl_drop_reason = str_init("Server Unavailable");
+static int pl_hash_size = 6;
 
 typedef struct pl_queue {
 	int     *       pipe;
@@ -132,14 +133,15 @@ static cmd_export_t cmds[]={
 	{0,0,0,0,0,0}
 };
 static param_export_t params[]={
-	{"timer_interval", INT_PARAM,                &timer_interval},
-	{"reply_code",     INT_PARAM,                &pl_drop_code},
-	{"reply_reason",   STR_PARAM,                &pl_drop_reason.s},
-	{"db_url",            STR_PARAM,             &pl_db_url},
-	{"plp_table_name",    STR_PARAM,             &rlp_table_name},
-	{"plp_pipeid_column",    STR_PARAM,             &rlp_pipeid_col},
-	{"plp_limit_column",     STR_PARAM,             &rlp_limit_col},
-	{"plp_algorithm_column", STR_PARAM,             &rlp_algorithm_col},
+	{"timer_interval",       INT_PARAM,          &timer_interval},
+	{"reply_code",           INT_PARAM,          &pl_drop_code},
+	{"reply_reason",         STR_PARAM,          &pl_drop_reason.s},
+	{"db_url",               STR_PARAM,          &pl_db_url},
+	{"plp_table_name",       STR_PARAM,          &rlp_table_name},
+	{"plp_pipeid_column",    STR_PARAM,          &rlp_pipeid_col},
+	{"plp_limit_column",     STR_PARAM,          &rlp_limit_col},
+	{"plp_algorithm_column", STR_PARAM,          &rlp_algorithm_col},
+	{"hash_size",            INT_PARAM,          &pl_hash_size},
 
 	{0,0,0}
 };
@@ -296,7 +298,12 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
-	if(pl_init_htable(16)<0)
+	if(pl_hash_size<=0)
+	{
+		LM_ERR("invalid hash size parameter: %d\n", pl_hash_size);
+		return -1;
+	}
+	if(pl_init_htable(1<<pl_hash_size)<0)
 	{
 		LM_ERR("could not allocate pipes htable\n");
 		return -1;
