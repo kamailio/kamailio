@@ -111,20 +111,24 @@ int _pl_cfg_setpoint;        /* desired load, used when reading modparams */
 static int mod_init(void);
 static ticks_t pl_timer_handle(ticks_t, struct timer_ln*, void*);
 static int w_pl_check(struct sip_msg*, char *, char *);
+static int w_pl_check3(struct sip_msg*, char *, char *, char *);
 static int w_pl_drop_default(struct sip_msg*, char *, char *);
 static int w_pl_drop_forced(struct sip_msg*, char *, char *);
 static int w_pl_drop(struct sip_msg*, char *, char *);
 static void destroy(void);
+static int fixup_pl_check3(void** param, int param_no);
 
 static cmd_export_t cmds[]={
 	{"pl_check",      (cmd_function)w_pl_check,        1, fixup_spve_null,
-		0,               REQUEST_ROUTE|LOCAL_ROUTE},
+		0,               REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
+	{"pl_check",      (cmd_function)w_pl_check3,       3, fixup_pl_check3,
+		0,               REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
 	{"pl_drop",       (cmd_function)w_pl_drop_default, 0, 0,
-		0,               REQUEST_ROUTE|LOCAL_ROUTE},
+		0,               REQUEST_ROUTE},
 	{"pl_drop",       (cmd_function)w_pl_drop_forced,  1, fixup_uint_null,
-		0,               REQUEST_ROUTE|LOCAL_ROUTE},
+		0,               REQUEST_ROUTE},
 	{"pl_drop",       (cmd_function)w_pl_drop,         2, fixup_uint_uint,
-		0,               REQUEST_ROUTE|LOCAL_ROUTE},
+		0,               REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 static param_export_t params[]={
@@ -513,24 +517,16 @@ int hash[100] = {18, 50, 51, 39, 49, 68, 8, 78, 61, 75, 53, 32, 45, 77, 31,
  * (expects pl_lock to be taken), TODO revert to "return" instead of "ret ="
  * \return	-1 if drop needed, 1 if allowed
  */
-static int pipe_push(struct sip_msg * msg, str *pipeid)
+static int pipe_push_direct(pl_pipe_t *pipe)
 {
 	int ret;
-	pl_pipe_t *pipe = NULL;
-
-	pipe = pl_pipe_get(pipeid, 1);
-	if(pipe==NULL)
-	{
-		LM_ERR("pipe not found [%.*s]\n", pipeid->len, pipeid->s);
-		return -2;
-	}
 
 	pipe->counter++;
 
 	switch (pipe->algo) {
 		case PIPE_ALGO_NOP:
 			LM_ERR("no algorithm defined for pipe %.*s\n",
-					pipeid->len, pipeid->s);
+					pipe->name.len, pipe->name.s);
 			ret = 2;
 			break;
 		case PIPE_ALGO_TAILDROP:
@@ -554,14 +550,27 @@ static int pipe_push(struct sip_msg * msg, str *pipeid)
 	}
 	LM_DBG("pipe=%.*s algo=%d limit=%d pkg_load=%d counter=%d "
 		"load=%2.1lf network_load=%d => %s\n",
-		pipeid->len, pipeid->s,
+		pipe->name.len, pipe->name.s,
 		pipe->algo, pipe->limit,
 		pipe->load, pipe->counter,
 		*load_value, *network_load_value, (ret == 1) ? "ACCEPT" : "DROP");
 
-	pl_pipe_release(pipeid);
+	pl_pipe_release(&pipe->name);
 
 	return ret;     
+}
+
+static int pipe_push(struct sip_msg * msg, str *pipeid)
+{
+	pl_pipe_t *pipe = NULL;
+
+	pipe = pl_pipe_get(pipeid, 1);
+	if(pipe==NULL)
+	{
+		LM_ERR("pipe not found [%.*s]\n", pipeid->len, pipeid->s);
+		return -2;
+	}
+	return pipe_push_direct(pipe);
 }
 
 /**     
@@ -579,6 +588,9 @@ static int pl_check(struct sip_msg * msg, str *pipeid)
 	return ret;
 }
 
+/**
+ * limit checking with exiting pipes
+ */
 static int w_pl_check(struct sip_msg* msg, char *p1, char *p2)
 {
 	str pipeid = {0, 0};
@@ -593,6 +605,71 @@ static int w_pl_check(struct sip_msg* msg, char *p1, char *p2)
 	return pl_check(msg, &pipeid);
 }
 
+
+/**
+ * limit checking with creation of pipe if it doesn't exist
+ */
+static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
+		char *p3limit)
+{
+	int limit;
+	str pipeid = {0, 0};
+	str alg = {0, 0};
+	pl_pipe_t *pipe = NULL;
+
+	if(msg==NULL)
+		return -1;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)p3limit, &limit)!=0 || limit<=0)
+	{
+		LM_ERR("invalid limit value\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)p1pipe, &pipeid)!=0
+			|| pipeid.s == 0)
+	{
+		LM_ERR("invalid pipeid parameter");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)p2alg, &alg)!=0
+			|| alg.s == 0)
+	{
+		LM_ERR("invalid algoritm parameter");
+		return -1;
+	}
+
+	pipe = pl_pipe_get(&pipeid, 1);
+	if(pipe==NULL)
+	{
+		LM_DBG("pipe not found [%.*s] - trying to add it\n",
+				pipeid.len, pipeid.s);
+		if(pl_pipe_add(&pipeid, &alg, limit)<0)
+		{
+			LM_ERR("failed to add pipe [%.*s]\n",
+				pipeid.len, pipeid.s);
+			return -2;
+		}
+		pipe = pl_pipe_get(&pipeid, 1);
+		if(pipe==NULL)
+		{
+			LM_ERR("failed to retrieve pipe [%.*s]\n",
+				pipeid.len, pipeid.s);
+			return -2;
+		}
+	}
+
+	return 1;
+}
+
+static int fixup_pl_check3(void** param, int param_no)
+{
+	if(param_no==1) return fixup_spve_null(param, 1);
+	if(param_no==2) return fixup_spve_null(param, 1);
+	if(param_no==3) return fixup_igp_null(param, 1);
+	return 0;
+}
 
 /* timer housekeeping, invoked each timer interval to reset counters */
 static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
