@@ -2656,7 +2656,6 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 	struct hostent* he;
 	struct ip_addr* ip;
 	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
-	int len;
 	str srv_name;
 	char srv_proto;
 
@@ -2664,7 +2663,6 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 		/* not init or off => use normal, non-cached version */
 		return _sip_resolvehost(name, port, proto);
 	}
-	len=0;
 	if (proto){ /* makes sure we have a protocol set*/
 		if (*proto==0)
 			*proto=srv_proto=PROTO_UDP; /* default */
@@ -2708,7 +2706,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 			}
 
 			srv_name.s=tmp;
-			srv_name.len=len;
+			srv_name.len=strlen(tmp);
 			if ((he=dns_srv_get_he(&srv_name, port, dns_flags))!=0)
 				return he;
 		}
