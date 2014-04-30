@@ -548,7 +548,7 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
     int intportB = atoi(portB->s);
 
     len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-            proto_len + portA->len + portB->len) * sizeof (char);
+            proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof (char);
 
     if (!flowdata_buf.s || flowdata_buflen < len) {
         if (flowdata_buf.s)
