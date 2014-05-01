@@ -573,8 +573,8 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
     /*IMS Flow descriptions*/
     /*first flow is the receive flow*/
     flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_int,
-            ipB->len, ipB->s, intportB,
-            ipA->len, ipA->s, intportA);
+            ipA->len, ipA->s, intportA,
+            ipB->len, ipB->s, intportB);
 
     flowdata_buf.len = strlen(flowdata_buf.s);
     flow_description1 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
@@ -598,8 +598,8 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
         }
 
     flowdata_buf.len = snprintf(flowdata_buf.s, len2, permit_in_with_ports, proto_int,
-            ipA->len, ipA->s, intportA,
-            ipB->len, ipB->s, intportB);
+            ipB->len, ipB->s, intportB,
+            ipA->len, ipA->s, intportA);
 
     flowdata_buf.len = strlen(flowdata_buf.s);
     flow_description2 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
