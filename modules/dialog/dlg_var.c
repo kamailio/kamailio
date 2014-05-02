@@ -284,6 +284,7 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	dlg_cell_t *dlg;
 	str * value;
+	str spv;
 
 	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR
 			|| param->pvn.u.isname.type!=AVP_NAME_STR
@@ -306,6 +307,19 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	/* dcm: todo - the value should be cloned for safe usage */
 	value = get_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s);
 
+	spv.s = NULL;
+	if(value) {
+		spv.len = pv_get_buffer_size();
+		if(spv.len<value->len+1) {
+			LM_ERR("pv buffer too small (%d) - needed %d\n", spv.len, value->len);
+		} else {
+			spv.s = pv_get_buffer();
+			strncpy(spv.s, value->s, value->len);
+			spv.len = value->len;
+			spv.s[spv.len] = '\0';
+		}
+	}
+
 	print_lists(dlg);
 
 	/* unlock dialog */
@@ -314,8 +328,8 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		dlg_release(dlg);
 	}
 
-	if (value)
-		return pv_get_strval(msg, param, res, value);
+	if (spv.s)
+		return pv_get_strval(msg, param, res, &spv);
 
 
 	return pv_get_null(msg, param, res);
