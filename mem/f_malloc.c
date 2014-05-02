@@ -375,9 +375,17 @@ void* fm_malloc(struct fm_block* qm, unsigned long size)
 	if (likely(hash>=0)){
 		if (likely(hash<=F_MALLOC_OPTIMIZE/ROUNDTO)) { /* return first match */
 			f=&(qm->free_hash[hash].first);
-			goto found;
+			if(likely(*f)) goto found;
+#ifdef DBG_F_MALLOC
+			MDBG(" block %p hash %d empty but no. is %lu\n", qm,
+					hash, qm->free_hash[hash].no);
+#endif
+			/* reset slot and try next hash */
+			qm->free_hash[hash].no=0;
+			fm_bmp_reset(qm, hash);
+			hash++;
 		}
-		/* if we are here we are searching for a "big" fragment
+		/* if we are here we are searching next hash slot or a "big" fragment
 		   between F_MALLOC_OPTIMIZE/ROUNDTO+1
 		   and F_MALLOC_OPTIMIZE/ROUNDTO + (32|64) - F_MALLOC_OPTIMIZE_FACTOR
 		   => 18 hash buckets on 32 bits and 50 buckets on 64 bits
