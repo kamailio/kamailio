@@ -90,6 +90,8 @@ static str subss_hdr2 = {"\r\n", 2};
 static str ctype_hdr1 = {"Content-Type: ", 14};
 static str ctype_hdr2 = {"\r\n", 2};
 
+extern int ue_unsubscribe_on_dereg;
+
 int notify_init() {
     notification_list = shm_malloc(sizeof (reg_notification_list));
     if (!notification_list) return 0;
@@ -468,7 +470,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int e
                 return 0;
             }
 
-            content = get_reginfo_partial(r_passed, c_passed, event_type);
+	    content = get_reginfo_partial(r_passed, c_passed, event_type);
             create_notifications(_d, r_passed, c_passed, presentity_uri, watcher_contact, content, event_type);
             if (content.s) pkg_free(content.s);
             //                        if (send_now) notification_timer(0, 0);
@@ -1202,6 +1204,52 @@ int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str
 
 }
 
+/* function to convert contact aor to only have data after @ - ie strip user part */
+int aor_to_contact(str* aor, str* contact) {
+	char* p;
+	int ret = 0;	//success
+
+	contact->s = aor->s;
+	contact->len = aor->len;
+	if (memcmp(aor->s, "sip:", 4) == 0) {
+		contact->s = aor->s + 4;
+		contact->len-=4;
+	}
+
+	if ((p=memchr(contact->s, '@', contact->len))) {
+		contact->len -= (p - contact->s + 1);
+		contact->s = p+1;
+	}
+
+	if ((p=memchr(contact->s, ';', contact->len))) {
+		contact->len = p - contact->s;
+	}
+
+	if ((p=memchr(contact->s, '>', contact->len))) {
+		contact->len = p - contact->s;
+	}
+
+	return ret;
+}
+
+/*!
+ * \brief Match a contact record to a contact string but only compare the ip port portion
+ * \param ptr contact record
+ * \param _c contact string
+ * \return ptr on successfull match, 0 when they not match
+ */
+int contact_port_ip_match(str *c1, str *c2) {
+    
+    str ip_port1, ip_port2;
+    aor_to_contact(c1, &ip_port1);//strip userpart from test contact
+    aor_to_contact(c2, &ip_port2);//strip userpart from test contact
+    LM_DBG("Matching contact using only port and ip - comparing [%.*s] and [%.*s]\n", ip_port1.len, ip_port1.s, ip_port2.len, ip_port2.s);
+    if ((ip_port1.len == ip_port2.len) && !memcmp(ip_port1.s, ip_port2.s, ip_port1.len)) {
+	return 1;
+    }
+    return 0;
+}
+
 static str subs_terminated = {"terminated", 10};
 static str subs_active = {"active;expires=", 15};
 
@@ -1268,10 +1316,10 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, ucontact_t* c_p
             LM_DBG("Subscription state: [%.*s]", subscription_state.len, subscription_state.s);
         }
 
-        //This is a fix to ensure that when a user subscribes a full reg info is only sent to that UE
+	//This is a fix to ensure that when a user subscribes a full reg info is only sent to that UE
         if (event_type == IMS_REGISTRAR_SUBSCRIBE) {
-            if ((watcher_contact->len == s->watcher_contact.len) && (strncasecmp(s->watcher_contact.s, watcher_contact->s, watcher_contact->len) == 0) &&
-                    (presentity_uri->len == s->presentity_uri.len) && (strncasecmp(s->presentity_uri.s, presentity_uri->s, presentity_uri->len) == 0)) {
+	    if (contact_port_ip_match(watcher_contact, &s->watcher_contact) &&
+                    (presentity_uri->len == s->presentity_uri.len) && (memcmp(s->presentity_uri.s, presentity_uri->s, presentity_uri->len) == 0)) {
                 LM_DBG("This is a fix to ensure that we only send full reg info XML to the UE that just subscribed");
                 LM_DBG("about to make new notification!");
                 n = new_notification(subscription_state, content_type, content,
@@ -1291,23 +1339,33 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, ucontact_t* c_p
                 }
             }
         } else {
-            LM_DBG("about to make new notification!");
-            n = new_notification(subscription_state, content_type, content,
-                    s->version++, s);
-            if (n) {
-                //LM_DBG("Notification exists - about to add it");
-                //add_notification(n);
+	    
+	    if(event_type == IMS_REGISTRAR_CONTACT_UNREGISTERED && !ue_unsubscribe_on_dereg && 
+		    (contact_port_ip_match(&c_passed->c, &s->watcher_contact) &&
+	                (r_passed->public_identity.len == s->presentity_uri.len) && (memcmp(s->presentity_uri.s, r_passed->public_identity.s, r_passed->public_identity.len) == 0))){
+		//if this is UNREGISTER and the UEs do not unsubscribe to dereg and this is a UE subscribing to its own reg event
+		//then we do not send notifications
+		LM_DBG("This is a UNREGISTER event for a UE that subscribed to its own state that does not unsubscribe to dereg - therefore no notification");
+	    }
+	    else{
+		LM_DBG("about to make new notification!");
+		n = new_notification(subscription_state, content_type, content,
+			s->version++, s);
+		if (n) {
+		    //LM_DBG("Notification exists - about to add it");
+		    //add_notification(n);
 
-                //Richard just gonna send it - not bother queueing etc.
-                //TODO look at impact of this - sending straight away vs queueing and getting another process to send
-                LM_DBG("About to send notification");
-                send_notification(n);
-                LM_DBG("About to free notification");
-                free_notification(n);
-            } else {
-                LM_DBG("Notification does not exist");
-            }
-        }
+		    //Richard just gonna send it - not bother queueing etc.
+		    //TODO look at impact of this - sending straight away vs queueing and getting another process to send
+		    LM_DBG("About to send notification");
+		    send_notification(n);
+		    LM_DBG("About to free notification");
+		    free_notification(n);
+		} else {
+		    LM_DBG("Notification does not exist");
+		}
+	    }
+	}
         //}
         s = s->next;
 

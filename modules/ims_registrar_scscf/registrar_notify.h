@@ -144,4 +144,7 @@ dlg_t* build_dlg_t_from_notification(reg_notification* n);
 int notify_init();
 void notify_destroy();
 
+int aor_to_contact(str* aor, str* contact);
+int contact_port_ip_match(str *c1, str *c2);
+
 #endif //S_CSCF_REGISTRAR_NOTIFY_H_
