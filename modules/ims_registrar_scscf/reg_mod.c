@@ -91,6 +91,9 @@ int scscf_support_wildcardPSI = 0;
 char *scscf_name = "sip:scscf2.ims.smilecoms.com:6060"; /* default scscf_name - actual should be set via parameter*/
 int store_data_on_dereg = 0; /**< should we store SAR data on de-registration  */
 
+int ue_unsubscribe_on_dereg = 0;  /*many UEs do not unsubscribe on de reg - therefore we should remove their subscription and not send a notify
+				   Some UEs do unsubscribe then everything is fine*/
+
 /* parameters storage */
 char* cxdx_dest_realm_s = "ims.smilecoms.com";
 str cxdx_dest_realm;
@@ -242,6 +245,7 @@ static param_export_t params[] = {
     {"subscription_default_expires", INT_PARAM, &subscription_default_expires},
     {"subscription_min_expires", INT_PARAM, &subscription_min_expires},
     {"subscription_max_expires", INT_PARAM, &subscription_max_expires},
+    {"ue_unsubscribe_on_dereg", INT_PARAM, &ue_unsubscribe_on_dereg},
 
     {0, 0, 0}
 };
