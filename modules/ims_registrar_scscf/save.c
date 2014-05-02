@@ -76,11 +76,14 @@
 #include "server_assignment.h"
 #include "userdata_parser.h"
 #include "../../lib/ims/ims_getters.h"
+#include "registrar_notify.h"
 
 #include "cxdx_sar.h"
 
 extern struct tm_binds tmb;
 extern int store_data_on_dereg; /**< should we store SAR user data on de-registration  */
+
+extern int ue_unsubscribe_on_dereg;
 
 /*! \brief
  * Calculate absolute expires value per contact as follows:
@@ -607,18 +610,22 @@ static inline int unregister_contact(udomain_t* _d, str* public_identity, contac
     
     //Richard added this  - fix to remove subscribes that have presentity and watcher uri same as a contact aor that is being removed
     //When UEs explicitly dereg - they don't unsubscribe, so we remove subscriptions for them
-    s = impu_rec->shead;
-    LM_DBG("Checking if there is a subscription to this IMPU that has same watcher contact as this contact");
-    while (s) {
-        
-        LM_DBG("Subscription for this impurecord: watcher uri [%.*s] presentity uri [%.*s] watcher contact [%.*s] ", s->watcher_uri.len, s->watcher_uri.s, 
-                s->presentity_uri.len, s->presentity_uri.s, s->watcher_contact.len, s->watcher_contact.s);
-        LM_DBG("Contact to be removed [%.*s] ", ucontact->c.len, ucontact->c.s);
-        if ((s->watcher_contact.len == ucontact->c.len) && (strncasecmp(s->watcher_contact.s, ucontact->c.s, ucontact->c.len) == 0)) {
-            LM_DBG("This contact has a subscription to its own status - so going to delete the subscription");
-            ul.external_delete_subscriber(s, _d, 0 /*domain is locked*/);
-        }
-        s = s->next;
+    //only do this if ue_unsubscribe_on_dereg is set to 0
+    if(!ue_unsubscribe_on_dereg){
+	s = impu_rec->shead;
+	LM_DBG("Checking if there is a subscription to this IMPU that has same watcher contact as this contact");
+	while (s) {
+
+	    LM_DBG("Subscription for this impurecord: watcher uri [%.*s] presentity uri [%.*s] watcher contact [%.*s] ", s->watcher_uri.len, s->watcher_uri.s, 
+		    s->presentity_uri.len, s->presentity_uri.s, s->watcher_contact.len, s->watcher_contact.s);
+	    LM_DBG("Contact to be removed [%.*s] ", ucontact->c.len, ucontact->c.s);
+	    if(contact_port_ip_match(&s->watcher_contact, &ucontact->c)) {
+	    //if ((s->watcher_contact.len == ucontact->c.len) && (strncasecmp(s->watcher_contact.s, ucontact->c.s, ucontact->c.len) == 0)) {
+		LM_DBG("This contact has a subscription to its own status - so going to delete the subscription");
+		ul.external_delete_subscriber(s, _d, 0 /*domain is locked*/);
+	    }
+	    s = s->next;
+	}
     }
     
     if (ul.delete_ucontact(impu_rec, ucontact) != 0) {
