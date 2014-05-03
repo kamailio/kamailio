@@ -96,6 +96,7 @@ struct fm_frag{
 		struct fm_frag* nxt_free;
 		long reserved;
 	}u;
+	struct fm_frag** prv_free;
 #ifdef DBG_F_MALLOC
 	const char* file;
 	const char* func;

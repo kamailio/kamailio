@@ -211,7 +211,9 @@ static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
 	}
 	
 	/*insert it here*/
+	frag->prv_free = f;
 	frag->u.nxt_free=*f;
+	if (*f) (*f)->prv_free = &(frag->u.nxt_free);
 	*f=frag;
 	qm->free_hash[hash].no++;
 #ifdef F_MALLOC_HASH_BITMAP
@@ -320,9 +322,12 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size)
 	
 	qm->first_frag=(struct fm_frag*)(start+ROUNDUP(sizeof(struct fm_block)));
 	qm->last_frag=(struct fm_frag*)(end-sizeof(struct fm_frag));
-	/* init initial fragment*/
+	/* init first fragment*/
 	qm->first_frag->size=size;
+	qm->first_frag->prv_free=0;
+	/* init last fragment*/
 	qm->last_frag->size=0;
+	qm->last_frag->prv_free=0;
 	
 #ifdef DBG_F_MALLOC
 	qm->first_frag->check=ST_CHECK_PATTERN;
@@ -418,8 +423,10 @@ found:
 	/* we found it!*/
 	/* detach it from the free list*/
 	frag=*f;
+	if(frag->u.nxt_free) frag->u.nxt_free->prv_free = frag->prv_free;
 	*f=frag->u.nxt_free;
 	frag->u.nxt_free=0; /* mark it as 'taken' */
+	frag->prv_free=0;
 	qm->free_hash[hash].no--;
 #ifdef F_MALLOC_HASH_BITMAP
 	if (qm->free_hash[hash].no==0)
@@ -472,9 +479,7 @@ static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
 
 	/* detach n from the free list */
 	hash=GET_HASH(n->size);
-	pf=&(qm->free_hash[hash].first);
-	/* find it */
-	for(;(*pf)&&(*pf!=n); pf=&((*pf)->u.nxt_free)); /*FIXME slow */
+	pf=n->prv_free;
 	if (*pf==0){
 		/* not found, bad! */
 		LM_WARN("could not find %p in free list (hash=%ld)\n", n, GET_HASH(n->size));
@@ -482,6 +487,7 @@ static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
 	}
 	/* detach */
 	*pf=n->u.nxt_free;
+	if(n->u.nxt_free) n->u.nxt_free->prv_free = pf;
 	qm->free_hash[hash].no--;
 #ifdef F_MALLOC_HASH_BITMAP
 	if (qm->free_hash[hash].no==0)
@@ -649,9 +655,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 			/* join  */
 			/* detach n from the free list */
 			hash=GET_HASH(n->size);
-			pf=&(qm->free_hash[hash].first);
-			/* find it */
-			for(;(*pf)&&(*pf!=n); pf=&((*pf)->u.nxt_free)); /*FIXME slow */
+			pf=n->prv_free;
 			if (*pf==0){
 				/* not found, bad! */
 				LOG(L_CRIT, "BUG: fm_realloc: could not find %p in free "
@@ -660,6 +664,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 			}
 			/* detach */
 			*pf=n->u.nxt_free;
+			if(n->u.nxt_free) n->u.nxt_free->prv_free = pf;
 			qm->free_hash[hash].no--;
 #ifdef F_MALLOC_HASH_BITMAP
 			if (qm->free_hash[hash].no==0)
