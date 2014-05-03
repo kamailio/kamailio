@@ -76,12 +76,12 @@ int init_pkg_mallocs(void)
 	#endif
 	#ifdef F_MALLOC
 		if (mem_pool)
-			mem_block=fm_malloc_init(mem_pool, pkg_mem_size);
+			mem_block=fm_malloc_init(mem_pool, pkg_mem_size, MEM_TYPE_PKG);
 	#elif DL_MALLOC
 		/* don't need this */
 	#else
 		if (mem_pool)
-			mem_block=qm_malloc_init(mem_pool, pkg_mem_size);
+			mem_block=qm_malloc_init(mem_pool, pkg_mem_size, MEM_TYPE_PKG);
 	#endif
 	#ifndef DL_MALLOC
 	if (mem_block==0){
