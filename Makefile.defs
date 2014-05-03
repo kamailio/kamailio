@@ -170,7 +170,7 @@ EXTRAVERSION = -dev5
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
 # 1 - q_malloc (quick malloc)
-MEMMNG ?= 1
+MEMMNG ?= 0
 # memory debugger switcher
 # 0 - off (no-debug mode)
 # 1 - on (debug mode)
