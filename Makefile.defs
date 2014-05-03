@@ -946,7 +946,7 @@ else		# CC_NAME, gcc
 ifeq		($(CC_NAME), clang)
 $(call                          set_if_empty,CPU,athlon64)
 					C_DEFS+=-DCC_GCC_LIKE_ASM
-                                        CFLAGS+=-m32
+                                        CFLAGS+=-g -m32
                                                 $(CC_OPT) \
                                                           \
                                                 -mtune=$(CPU)
@@ -1042,7 +1042,7 @@ else		# CC_NAME, gcc
 ifeq            ($(CC_NAME), clang)
 $(call                          set_if_empty,CPU,opteron)
 					C_DEFS+=-DCC_GCC_LIKE_ASM
-                                        CFLAGS+=-m64 \
+                                        CFLAGS+=-g -m64 \
                                                 $(CC_OPT)        
                                         LDFLAGS+=-m64
 else      	# CC_NAME, clang
