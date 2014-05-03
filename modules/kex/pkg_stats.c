@@ -89,7 +89,6 @@ int pkg_proc_stats_init(void)
 int pkg_proc_stats_myinit(int rank)
 {
 	struct mem_info info;
-	LM_INFO("+++++++++++++ %d (%d) [%d]\n", rank, (int)my_pid(), process_no);
 	if(_pkg_proc_stats_list==NULL)
 		return -1;
 	if(process_no>=_pkg_proc_stats_no)
