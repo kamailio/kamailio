@@ -72,7 +72,7 @@
 
 #define FRAG_OVERHEAD	(sizeof(struct fm_frag))
 #define INIT_OVERHEAD	\
-	(ROUNDUP(sizeof(struct fm_block))+sizeof(struct fm_frag))
+	(ROUNDUP(sizeof(struct fm_block))+2*sizeof(struct fm_frag))
 
 
 
@@ -287,9 +287,6 @@ void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 		n=FRAG_NEXT(frag);
 		n->size=rest-FRAG_OVERHEAD;
 		FRAG_CLEAR_USED(n); /* never used */
-		/* new frag overhead */
-		qm->real_used+=FRAG_OVERHEAD;
-		qm->used-=FRAG_OVERHEAD;
 #ifdef DBG_F_MALLOC
 		/* frag created by malloc, mark it*/
 		n->file=file;
@@ -298,6 +295,7 @@ void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 		n->check=ST_CHECK_PATTERN;
 #endif
 		/* reinsert n in free list*/
+		qm->used-=FRAG_OVERHEAD;
 		fm_insert_free(qm, n);
 	}else{
 		/* we cannot split this fragment any more => alloc all of it*/
@@ -393,8 +391,8 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, unsigned long size)
 				fm_extract_free(qm, nxt);
 				frag->size += nxt->size + FRAG_OVERHEAD;
 
-				/* join - one frag less, remove overhead */
-				qm->real_used -= FRAG_OVERHEAD;
+				/* join - one frag less, add overhead to used */
+				qm->used += FRAG_OVERHEAD;
 
 				if( frag->size >size )
 					return frag;
@@ -553,7 +551,8 @@ static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
 #endif /* F_MALLOC_HASH_BITMAP */
 	/* join */
 	f->size+=n->size+FRAG_OVERHEAD;
-	qm->real_used-=FRAG_OVERHEAD;
+	qm->real_used+=n->size;
+	qm->used+=n->size + FRAG_OVERHEAD;
 }
 #endif /*MEM_JOIN_FREE*/
 
@@ -633,12 +632,10 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #endif
 {
 	struct fm_frag *f;
-	struct fm_frag **pf;
 	unsigned long diff;
 	unsigned long orig_size;
 	struct fm_frag *n;
 	void *ptr;
-	int hash;
 	
 #ifdef DBG_F_MALLOC
 	MDBG("fm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p, size,
@@ -688,28 +685,11 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 		n=FRAG_NEXT(f);
 		if (((char*)n < (char*)qm->last_frag) && 
 				(n->prv_free) && ((n->size+FRAG_OVERHEAD)>=diff)){
-			/* join  */
 			/* detach n from the free list */
-			hash=GET_HASH(n->size);
-			pf=n->prv_free;
-			if (*pf==0){
-				/* not found, bad! */
-				LOG(L_CRIT, "BUG: fm_realloc: could not find %p in free "
-						"list (hash=%ld)\n", n, GET_HASH(n->size));
-				abort();
-			}
-			/* detach */
-			*pf=n->u.nxt_free;
-			if(n->u.nxt_free) n->u.nxt_free->prv_free = pf;
-			qm->ffrags--;
-			qm->free_hash[hash].no--;
-#ifdef F_MALLOC_HASH_BITMAP
-			if (qm->free_hash[hash].no==0)
-				fm_bmp_reset(qm, hash);
-#endif /* F_MALLOC_HASH_BITMAP */
-			/* join */
+			fm_extract_free(qm, n);
+			/* join  */
 			f->size+=n->size+FRAG_OVERHEAD;
-			qm->real_used-=FRAG_OVERHEAD;
+			qm->used+=FRAG_OVERHEAD;
 
 			/* split it if necessary */
 			if (f->size > size){
