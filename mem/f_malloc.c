@@ -735,12 +735,12 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 			if (ptr){
 				/* copy, need by libssl */
 				memcpy(ptr, p, orig_size);
-	#ifdef DBG_F_MALLOC
-				fm_free(qm, p, file, func, line);
-	#else
-				fm_free(qm, p);
-	#endif
 			}
+	#ifdef DBG_F_MALLOC
+			fm_free(qm, p, file, func, line);
+	#else
+			fm_free(qm, p);
+	#endif
 			p=ptr;
 		}
 	}else{
