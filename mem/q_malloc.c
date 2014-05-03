@@ -653,12 +653,12 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 				if (ptr){
 					/* copy, need by libssl */
 					memcpy(ptr, p, orig_size);
-	#ifdef DBG_QM_MALLOC
-					qm_free(qm, p, file, func, line);
-	#else
-					qm_free(qm, p);
-	#endif
 				}
+	#ifdef DBG_QM_MALLOC
+				qm_free(qm, p, file, func, line);
+	#else
+				qm_free(qm, p);
+	#endif
 				p=ptr;
 			}
 	}else{
