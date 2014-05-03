@@ -289,6 +289,7 @@ void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 		FRAG_CLEAR_USED(n); /* never used */
 		/* new frag overhead */
 		qm->real_used+=FRAG_OVERHEAD;
+		qm->used-=FRAG_OVERHEAD;
 #ifdef DBG_F_MALLOC
 		/* frag created by malloc, mark it*/
 		n->file=file;
@@ -342,8 +343,8 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	qm=(struct fm_block*)start;
 	memset(qm, 0, sizeof(struct fm_block));
 	qm->size=size;
-	qm->used = size;
-	qm->real_used=size + init_overhead;
+	qm->used = size - init_overhead;
+	qm->real_used=size;
 	qm->max_real_used=init_overhead;
 	qm->type = type;
 	size-=init_overhead;
@@ -678,10 +679,6 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #else
 		fm_split_frag(qm, f, size);
 #endif
-		/* fm_split frag already adds FRAG_OVERHEAD for the newly created
-		   free frag, so here we only need orig_size-f->size for real used */
-		qm->real_used-=(orig_size-f->size);
-		qm->used-=(orig_size-f->size);
 	}else if (f->size<size){
 		/* grow */
 #ifdef DBG_F_MALLOC
@@ -723,8 +720,6 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 				fm_split_frag(qm, f, size);
 		#endif
 			}
-			qm->real_used+=(f->size-orig_size);
-			qm->used+=(f->size-orig_size);
 		}else{
 			/* could not join => realloc */
 	#ifdef DBG_F_MALLOC
