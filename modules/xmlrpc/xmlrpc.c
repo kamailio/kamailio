@@ -1786,7 +1786,6 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
 {
 	va_list ap;
-	str member_name;
 	struct xmlrpc_reply* reply;
 	void* void_ptr;
 	struct rpc_struct* p, *tmp;
