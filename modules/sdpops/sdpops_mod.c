@@ -1447,10 +1447,10 @@ static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar)
     }
 
     if (ser_memmem(body.s, ice.s, body.len, ice.len) != NULL) {
-	LM_INFO("found ice attribute\n");
+	LM_DBG("found ice attribute\n");
 	return 1;
     } else {
-	LM_INFO("did't find ice attribute\n");
+	LM_DBG("did't find ice attribute\n");
 	return -1;
     }
 }
