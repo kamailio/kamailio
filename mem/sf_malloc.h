@@ -130,6 +130,7 @@ struct sfm_block{
 	gen_lock_t lock;
 #endif
 	atomic_t crt_id; /* current pool */
+	int type;
 	unsigned long size; /* total size */
 	/* stats are kept now per bucket */
 	struct sfm_frag* first_frag;
@@ -144,7 +145,7 @@ struct sfm_block{
 
 
 
-struct sfm_block* sfm_malloc_init(char* address, unsigned long size);
+struct sfm_block* sfm_malloc_init(char* address, unsigned long size, int type);
 void sfm_malloc_destroy(struct sfm_block* qm);
 int sfm_pool_reset();
 
