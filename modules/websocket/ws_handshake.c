@@ -427,8 +427,10 @@ int ws_handle_handshake(struct sip_msg *msg)
 				&headers) < 0)
 	{
 		if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) != NULL)
+		{
 			wsconn_rm(wsc, WSCONN_EVENTROUTE_NO);
-
+			wsconn_put(wsc);
+		}
 		goto end;
 	}
 	else

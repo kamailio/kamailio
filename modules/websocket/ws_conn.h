@@ -29,6 +29,8 @@
 #ifndef _WS_CONN_H
 #define _WS_CONN_H
 
+#include "../../atomic_ops.h"
+
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/tree.h"
 
@@ -57,6 +59,9 @@ typedef struct ws_connection
 	struct receive_info rcv;
 
 	unsigned int sub_protocol;
+
+	atomic_t refcnt;
+	int      run_event;
 } ws_connection_t;
 
 typedef struct
@@ -89,6 +94,9 @@ int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route);
 int wsconn_update(ws_connection_t *wsc);
 void wsconn_close_now(ws_connection_t *wsc);
 ws_connection_t *wsconn_get(int id);
+int wsconn_put(ws_connection_t *wsc);
+ws_connection_t **wsconn_get_list(void);
+int wsconn_put_list(ws_connection_t **list);
 struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param);
 
 #endif /* _WS_CONN_H */
