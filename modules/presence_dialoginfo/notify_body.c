@@ -102,6 +102,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	xmlNodePtr winner_dialog_node = NULL ;
 	str *body= NULL;
     char buf[MAX_URI_SIZE+1];
+    xmlNodePtr next_node = NULL;
 
 	LM_DBG("[pres_user]=%.*s [pres_domain]= %.*s, [n]=%d\n",
 			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s, n);
@@ -195,7 +196,8 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 				goto error;
 			}
 			if (p_root->children) {
-			for (node = p_root->children; node; node = node->next) {
+			for (node = p_root->children; node; node = next_node) {
+				next_node = node->next;
 				if (node->type == XML_ELEMENT_NODE) {
 					LM_DBG("node type: Element, name: %s\n", node->name);
 					/* we do not copy the node, but unlink it and then add it ot the new node
