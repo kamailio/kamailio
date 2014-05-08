@@ -171,7 +171,7 @@ modparam("utils", "xcap_table", "pres_xcap")
 			in that request as the second parameter.
 	    	        </para>
 		        <para>
-			If HTTP server returns a class 2xx or 3xx reply,
+			If HTTP server returns a class 2xx, 3xx or 4xx reply,
 			the first line of the reply's body (if any) is
 			stored in <quote>result</quote> parameter,
 			which must be a	writable pseudo	variable.
