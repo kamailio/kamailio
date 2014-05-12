@@ -1460,6 +1460,11 @@ static int set_max_credit(struct sip_msg* msg,
 			return -1;
 		}
 
+		if (credit < cost_per_second) {
+			LM_ERR("Not enough credit to start the call: credit=[%f] < cost_per_sec=[%f]", credit, cost_per_second);
+			return -1;
+		}
+
 		if (client_id_val.rs.len == 0 || client_id_val.rs.s == NULL)
 		{
 			LM_ERR("[%.*s]: client ID cannot be null\n", msg->callid->body.len, msg->callid->body.s);
