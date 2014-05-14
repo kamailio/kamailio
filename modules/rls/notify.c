@@ -1366,7 +1366,7 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 	{
 		/* No path specified - use all resource-lists. */
 		*rl_node = XMLDocGetNodeByName(*xmldoc,"resource-lists", NULL);
-		if(rl_node==NULL)
+		if(*rl_node==NULL)
 		{
 			LM_ERR("no resource-lists node in XML document\n");
 			goto error;
