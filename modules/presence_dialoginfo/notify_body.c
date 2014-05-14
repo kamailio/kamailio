@@ -101,7 +101,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	xmlDocPtr  doc = NULL;
 	xmlNodePtr root_node = NULL;
 	xmlNsPtr   namespace = NULL;
-	int winner_priority = -1, priority;
+	/*int winner_priority = -1, priority;*/
 
 	xmlNodePtr p_root= NULL;
 	xmlDocPtr* xml_array ;
