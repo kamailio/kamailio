@@ -42,6 +42,7 @@ static inline list_entry_t *list_insert(str *strng, list_entry_t *list, int *dup
 	{
 		if (duplicate != NULL)
 			*duplicate = 1;
+		pkg_free(p);
 		return list;
 	}
 	if (cmp > 0)
@@ -59,6 +60,7 @@ static inline list_entry_t *list_insert(str *strng, list_entry_t *list, int *dup
 		{
 			if (duplicate != NULL)
 				*duplicate = 1;
+			pkg_free(p);
 			return list;
 		}
 
