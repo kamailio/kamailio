@@ -2554,6 +2554,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 			s=(str*)val;
 			v.s.s=pkg_malloc(s->len+1 /*0*/);
 			if (v.s.s==0){
+				pkg_free(rve);
 				ERR("memory allocation failure\n");
 				return 0;
 			}
