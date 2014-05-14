@@ -261,6 +261,7 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 
 error:
 	LM_ERR("error at PV dns name: %.*s\n", in->len, in->s);
+	if(dpv) pkg_free(dpv);
 	return -1;
 }
 
