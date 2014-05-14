@@ -974,6 +974,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 	void* rh;
 	void* sh;
 	void* vh;
+	void* wh;
 	int j;
 	char c[3];
 	str data = {"", 0};
@@ -1004,7 +1005,6 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Internal error sets structure");
 		return;
 	}
-
 
 	for(list = ds_list; list!= NULL; list= list->next)
 	{
@@ -1045,15 +1045,36 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 			else
 				c[1] = 'X';
 
-			if(rpc->struct_add(vh, "SsdS",
+			if (list->dlist[j].attrs.body.s)
+			{
+				if(rpc->struct_add(vh, "Ssd{",
 						"URI", &list->dlist[j].uri,
 						"FLAGS", c,
 						"PRIORITY", list->dlist[j].priority,
-						"ATTRS", (list->dlist[j].attrs.body.s)?
-						&(list->dlist[j].attrs.body):&data)<0)
-			{
-				rpc->fault(ctx, 500, "Internal error creating dest struct");
-				return;
+						"ATTRS", &wh)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating dest struct");
+					return;
+				}
+				if(rpc->struct_add(wh, "SSdd",
+						"BODY", &(list->dlist[j].attrs.body),
+						"DUID", (list->dlist[j].attrs.duid.s)?
+						&(list->dlist[j].attrs.duid):&data,
+						"MAXLOAD", list->dlist[j].attrs.maxload,
+						"WEIGHT", list->dlist[j].attrs.weight)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating attrs struct");
+					return;
+				}
+			} else {
+				if(rpc->struct_add(vh, "Ssd",
+						"URI", &list->dlist[j].uri,
+						"FLAGS", c,
+						"PRIORITY", list->dlist[j].priority)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating dest struct");
+					return;
+				}
 			}
 		}
 	}
