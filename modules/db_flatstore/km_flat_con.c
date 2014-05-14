@@ -115,6 +115,7 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 	fn = get_name(id);
 	if (fn==0){
 		LM_ERR("get_name() failed\n");
+		pkg_free(res);
 		return 0;
 	}
 
