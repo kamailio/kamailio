@@ -227,7 +227,7 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 				&& strncasecmp(pit->name.s, "duid", 4)==0) {
 			dest->attrs.duid = pit->body;
 		} else if(pit->name.len==6
-				&& strncasecmp(pit->name.s, "weight", 4)==0) {
+				&& strncasecmp(pit->name.s, "weight", 6)==0) {
 			str2sint(&pit->body, &dest->attrs.weight);
 		} else if(pit->name.len==7
 				&& strncasecmp(pit->name.s, "maxload", 7)==0) {
