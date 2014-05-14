@@ -1499,7 +1499,7 @@ static int get_mi_list(int s)
 	/* alloc the mi_cmds array */
 	mi_cmds=malloc(mi_which_results*sizeof(*mi_cmds));
 	if (mi_cmds==0) goto error_mem;
-	memset(mi_cmds, 0, mi_which_results* sizeof(mi_cmds));
+	memset(mi_cmds, 0, mi_which_results* sizeof(*mi_cmds));
 	/* get the mi names list */
 	for (r=0; r<mi_which_no; r++){
 		if (mi_which_array[r].type!=BINRPC_T_STR)
