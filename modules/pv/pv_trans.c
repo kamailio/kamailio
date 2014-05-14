@@ -126,12 +126,12 @@ static int urlencode_param(str *sin, str *sout)
 {
 	char *at, *p;
 
-	at = sout->s;
-	p  = sin->s;
-
 	if (sin==NULL || sout==NULL || sin->s==NULL || sout->s==NULL ||
 			sin->len<0 || sout->len < 3*sin->len+1)
 		return -1;
+
+	at = sout->s;
+	p  = sin->s;
 
 	while (p < sin->s+sin->len) {
 		if (isalnum(*p) || *p == '-' || *p == '_' || *p == '.' || *p == '~')
@@ -1625,7 +1625,7 @@ int tr_eval_line(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					if(p==NULL)
 					{
 						/* last line */
-						mv.len = (val->rs.s + val->rs.len) - p;
+						mv.len = (val->rs.s + val->rs.len) - mv.s;
 					} else {
 						mv.len = p - mv.s;
 					}
@@ -1707,7 +1707,7 @@ int tr_eval_line(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					if(p==NULL)
 					{
 						/* last line */
-						mv.len = (val->rs.s + val->rs.len) - p;
+						mv.len = (val->rs.s + val->rs.len) - mv.s;
 					} else {
 						mv.len = p - mv.s;
 					}
