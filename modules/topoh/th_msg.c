@@ -136,7 +136,7 @@ int th_get_uri_type(str *uri, int *mode, str *value)
 			return -1;
 		return 2; /* decode */
 	} else {
-		if(check_self(&puri.host, (puri.port_no)?puri.port_no:SIP_PORT, 0)==1)
+		if(check_self(&puri.host, (puri.port_no)?puri.port_no:0, 0)==1)
 		{
 			/* myself -- matched on all protos */
 			ret = th_get_param_value(&puri.params, &r2, value);
