@@ -1886,8 +1886,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 			if (e->r_type==MYSELF_ST){
 				if (parse_sip_msg_uri(msg)<0) ret=-1;
 				else ret=check_self_op(e->op, &msg->parsed_uri.host,
-						       msg->parsed_uri.port_no?
-						       msg->parsed_uri.port_no:SIP_PORT);
+								GET_URI_PORT(&msg->parsed_uri));
 			}else{
 				ret=comp_str(e->op, &msg->new_uri,
 								e->r_type, &e->r, msg, h);
@@ -1896,8 +1895,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 			if (e->r_type==MYSELF_ST){
 				if (parse_sip_msg_uri(msg)<0) ret=-1;
 				else ret=check_self_op(e->op, &msg->parsed_uri.host,
-						       msg->parsed_uri.port_no?
-						       msg->parsed_uri.port_no:SIP_PORT);
+								GET_URI_PORT(&msg->parsed_uri));
 			}else{
 				ret=comp_str(e->op, &msg->first_line.u.request.uri,
 								e->r_type, &e->r, msg, h);
@@ -1917,8 +1915,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 				LOG(L_ERR, "ERROR: eval_elem: bad uri in From:\n");
 				goto error;
 			}
-			ret=check_self_op(e->op, &uri.host,
-					  uri.port_no?uri.port_no:SIP_PORT);
+			ret=check_self_op(e->op, &uri.host, GET_URI_PORT(&uri));
 		}else{
 			ret=comp_str(e->op, &get_from(msg)->uri,
 							e->r_type, &e->r, msg, h);
@@ -1939,8 +1936,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 				LOG(L_ERR, "ERROR: eval_elem: bad uri in To:\n");
 				goto error;
 			}
-			ret=check_self_op(e->op, &uri.host,
-					  uri.port_no?uri.port_no:SIP_PORT);
+			ret=check_self_op(e->op, &uri.host, GET_URI_PORT(&uri));
 		}else{
 			ret=comp_str(e->op, &get_to(msg)->uri,
 							e->r_type, &e->r, msg, h);

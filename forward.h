@@ -84,6 +84,8 @@ inline static struct socket_info* get_send_socket(struct sip_msg* msg,
 }
 
 
+#define GET_URI_PORT(uri) ((uri)->port_no?(uri)->port_no:(((uri)->proto==PROTO_TLS)?SIPS_PORT:SIP_PORT))
+
 struct socket_info* get_out_socket(union sockaddr_union* to, int proto);
 typedef int (*check_self_f)(str* host, unsigned short port,
 		unsigned short proto);
