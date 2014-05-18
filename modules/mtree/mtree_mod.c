@@ -550,8 +550,7 @@ static int mt_load_db(m_tree_t *pt)
 		} else {
 			if(RES_ROW_N(db_res)==0)
 			{
-				mt_dbf.free_result(db_con, db_res);
-				return 0;
+				goto dbreloaded;
 			}
 		}
 	} else {
@@ -561,8 +560,7 @@ static int mt_load_db(m_tree_t *pt)
 		{
 			if(ret==0)
 			{
-				mt_dbf.free_result(db_con, db_res);
-				return 0;
+				goto dbreloaded;
 			} else {
 				goto error;
 			}
@@ -617,6 +615,8 @@ static int mt_load_db(m_tree_t *pt)
 			break;
 		}
 	}  while(RES_ROW_N(db_res)>0);
+
+dbreloaded:
 	mt_dbf.free_result(db_con, db_res);
 
 
