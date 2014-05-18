@@ -533,8 +533,7 @@ static int mt_load_db(str *tname)
 		} else {
 			if(RES_ROW_N(db_res)==0)
 			{
-				mt_dbf.free_result(db_con, db_res);
-				return 0;
+				goto dbreloaded;
 			}
 		}
 	} else {
@@ -544,8 +543,7 @@ static int mt_load_db(str *tname)
 		{
 			if(ret==0)
 			{
-				mt_dbf.free_result(db_con, db_res);
-				return 0;
+				goto dbreloaded;
 			} else {
 				goto error;
 			}
@@ -600,6 +598,8 @@ static int mt_load_db(str *tname)
 			break;
 		}
 	}  while(RES_ROW_N(db_res)>0);
+
+dbreloaded:
 	mt_dbf.free_result(db_con, db_res);
 
 
