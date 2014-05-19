@@ -543,6 +543,8 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		LM_DBG("dialog %p failed (negative reply)\n", dlg);
 		/* dialog setup not completed (3456XX) */
 		run_dlg_callbacks( DLGCB_FAILED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
+		if(dlg_wait_ack==1)
+			dlg_set_tm_waitack(t, dlg);
 		/* do unref */
 		if (unref)
 			dlg_unref(dlg, unref);
@@ -551,8 +553,6 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 		if_update_stat(dlg_enable_stats, failed_dlgs, 1);
 
-		if(dlg_wait_ack==1)
-			dlg_set_tm_waitack(t, dlg);
 		goto done;
 	}
 
