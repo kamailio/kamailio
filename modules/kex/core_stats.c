@@ -462,7 +462,7 @@ static const char* rpc_stats_clear_statistics_doc[2] =
 rpc_export_t kex_stats_rpc[] =
 {
 	{"stats.get_statistics",   rpc_stats_get_statistics,
-							rpc_stats_get_statistics_doc,   0},
+							rpc_stats_get_statistics_doc,   RET_ARRAY},
 	{"stats.reset_statistics", rpc_stats_reset_statistics,
 							rpc_stats_reset_statistics_doc, 0},
 	{"stats.clear_statistics", rpc_stats_clear_statistics,
