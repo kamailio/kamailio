@@ -545,23 +545,39 @@ static void destroy(void)
 
 }
 
+#define GET_VALUE(param_name,param,i_value,s_value,value_flags) do{ \
+	if(get_is_fparam(&(i_value), &(s_value), msg, (fparam_t*)(param), &(value_flags))!=0) { \
+		LM_ERR("no %s value\n", (param_name)); \
+		return -1; \
+	} \
+}while(0)
+
 /**
  *
  */
 static int w_ds_select(struct sip_msg* msg, char* set, char* alg, int mode)
 {
+	unsigned int algo_flags, set_flags;
+	str s_algo = {NULL, 0};
+	str s_set = {NULL, 0};
 	int a, s;
 	if(msg==NULL)
 		return -1;
 
-	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
-	{
-		LM_ERR("no dst set value\n");
+	GET_VALUE("destination set", set, s, s_set, set_flags);
+	if (!(set_flags&PARAM_INT)) {
+		if (set_flags&PARAM_STR)
+			LM_ERR("unable to get destination set from [%.*s]\n", s_set.len, s_set.s);
+		else
+			LM_ERR("unable to get destination set\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_p)alg, &a)!=0)
-	{
-		LM_ERR("no alg value\n");
+	GET_VALUE("algorithm", alg, a, s_algo, algo_flags);
+	if (!(algo_flags&PARAM_INT)) {
+		if (algo_flags&PARAM_STR)
+			LM_ERR("unable to get algorithm from [%.*s]\n", s_algo.len, s_algo.s);
+		else
+			LM_ERR("unable to get algorithm\n");
 		return -1;
 	}
 
