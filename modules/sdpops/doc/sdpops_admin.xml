@@ -187,6 +187,10 @@ sdp_keep_codecs_by_id("0,8,3", "audio");
 			list of codec names.
 	    </para>
 		<para>
+			Note that you have to explicitely keep 'telephone-event' in the list
+			of names if you want to keep DTMF attributes.
+	    </para>
+		<para>
 			Optional parameter mtype can be provided to apply the operations
 			only to the streams matching m=mtype.
 	    </para>
