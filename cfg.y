@@ -3428,7 +3428,8 @@ cmd:
 					LOG(L_ERR, "misused command %s\n", $1);
 					yyerror("Command cannot be used in the block\n");
 			} else {
-				LOG(L_ERR, "cfg. parser: failed to find command %s\n", $1);
+				LOG(L_ERR, "cfg. parser: failed to find command %s (params %ld)\n",
+						$1, mod_func_action->val[1].u.number);
 				yyerror("unknown command, missing loadmodule?\n");
 			}
 			free_mod_func_action(mod_func_action);
