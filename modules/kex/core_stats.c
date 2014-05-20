@@ -122,6 +122,8 @@ static int km_cb_req_stats(struct sip_msg *msg,
 		unsigned int flags, void *param)
 {
 	update_stat(rcv_reqs, 1);
+	if(!IS_SIP(msg))
+		return 1;
 	if(msg->first_line.u.request.method_value==METHOD_OTHER)
 		update_stat(unsupported_methods, 1);
 	return 1;
