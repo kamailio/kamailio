@@ -630,6 +630,17 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param);
 int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param);
 
 /**
+ * @brief Get the function parameter value as integer/string
+ * @param i_dst int destination
+ * @param s_dst string destination
+ * @param msg SIP message
+ * @param param function parameters
+ * @param flags flags to indicate destiantions
+ * @return 0 on success, 1 on error, e.g. cannot get value
+ */
+int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, unsigned int *flags);
+
+/**
  * @brief Get the function parameter value as compiled regular expression
  * @param dst string destination
  * @param msg SIP message
