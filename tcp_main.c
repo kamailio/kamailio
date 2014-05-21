@@ -4944,6 +4944,17 @@ int tcp_init_children()
 			}
 		}
 	}
+#ifdef USE_TLS
+	for(si=tls_listen; si; si=si->next) {
+		if(si->workers>0) {
+			si->workers_tcpidx = i - si->workers + 1;
+			for(r=0; r<si->workers; r++) {
+				tcp_children[i].mysocket = si;
+				i--;
+			}
+		}
+	}
+#endif
 	tcp_sockets_gworkers = (i != tcp_children_no-1)?(1 + i + 1):0;
 
 	/* create the tcp sock_info structures */

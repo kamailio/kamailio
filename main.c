@@ -1806,6 +1806,18 @@ static int calc_proc_no(void)
 			 tcp_e_listeners = tcp_cfg_children_no;
 	}
 	tcp_listeners += tcp_e_listeners;
+#ifdef USE_TLS
+	tcp_e_listeners = 0;
+	for (si=tls_listen, tcp_listeners=0, tcp_e_listeners=0; si; si=si->next) {
+		if(si->workers>0)
+			tcp_listeners += si->workers;
+		else {
+			if(tcp_listeners==0)
+				tcp_e_listeners = tcp_cfg_children_no;
+		}
+	}
+	tcp_listeners += tcp_e_listeners;
+#endif
 	tcp_children_no = tcp_listeners;
 #endif
 #ifdef USE_SCTP
