@@ -1808,7 +1808,7 @@ static int calc_proc_no(void)
 	tcp_listeners += tcp_e_listeners;
 #ifdef USE_TLS
 	tcp_e_listeners = 0;
-	for (si=tls_listen, tcp_listeners=0, tcp_e_listeners=0; si; si=si->next) {
+	for (si=tls_listen, tcp_e_listeners=0; si; si=si->next) {
 		if(si->workers>0)
 			tcp_listeners += si->workers;
 		else {
