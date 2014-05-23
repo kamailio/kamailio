@@ -1444,6 +1444,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
         res = ul.get_impurecord(_t, &(impu_list[i]), &r);
         if (res != 0) {
             LM_WARN("impu disappeared, ignoring it\n");
+	    ul.unlock_udomain(_t, &impu_list[i]);
             continue;
         }
         LM_DBG("Retrieved IMPU record");
