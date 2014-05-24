@@ -120,19 +120,19 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
 
     if (signature == NULL || !strcmp(signature, ""))
     {
-	LM_ERR("java_method_exec(): signature is empty or invalid.\n");
+	LM_ERR("%s: java_method_exec(): signature is empty or invalid.\n", APP_NAME);
 	return -1;
     }
 
     if (param == NULL && strcmp(signature, "V"))
     {
-	LM_ERR("java_method_exec(): no parameter (parameter is NULL) but signature '%s' is not equals to 'V'.\n", signature);
+	LM_ERR("%s: java_method_exec(): no parameter (parameter is NULL) but signature '%s' is not equals to 'V'.\n", APP_NAME, signature);
 	return -1;
     }
 
     if (is_sig_allowed(signature) == 0)
     {
-	LM_ERR("java_method_exec(): error: signature '%s' isn't supported yet.\n", signature);
+	LM_ERR("%s: java_method_exec(): error: signature '%s' isn't supported yet.\n", APP_NAME, signature);
 	return -1;
     }
 
@@ -147,7 +147,7 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
     cs = (char *)pkg_malloc(cslen * sizeof(char));
     if (!cs)
     {
-	LM_ERR("pkg_malloc() has failed. Can't allocate %lu bytes. Not enough memory!\n", (unsigned long)cslen);
+	LM_ERR("%s: pkg_malloc() has failed. Can't allocate %lu bytes. Not enough memory!\n", APP_NAME, (unsigned long)cslen);
 	return -1;
     }
     snprintf(cs, cslen, "(%s)%s", signature, retval_sig);
@@ -208,7 +208,7 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
 	if ((*env)->MonitorEnter(env, invk_method_ref) != JNI_OK)
         {
 	    locked = 0;
-	    LM_ERR("MonitorEnter() has failed!\n");
+	    LM_ERR("%s: MonitorEnter() has failed! Can't synchronize!\n", APP_NAME);
 	}
 	else
 	{
@@ -240,7 +240,7 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
 
     if ((*env)->ExceptionCheck(env))
     {
-        LM_ERR("%s(): %s() has failed. See exception below.\n", 
+        LM_ERR("%s: %s(): %s() has failed. See exception below.\n", APP_NAME,
 		(is_static ? 
 			(is_synchronized ? "java_s_staticmethod_exec" : "java_staticmethod_exec") :
 			(is_synchronized ? "java_s_method_exec" : "java_method_exec")
@@ -261,7 +261,7 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
     {
 	if ((*env)->MonitorExit(env, invk_method_ref) != JNI_OK)
 	{
-	    LM_ERR("MonitorExit) has failed!\n");
+	    LM_ERR("%s: MonitorExit() has failed! Can't synchronize!\n", APP_NAME);
 	}
     }
 

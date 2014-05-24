@@ -46,7 +46,7 @@ int is_sig_allowed(char *s)
 
     if (!strcmp(s, " ") || !strcmp(s, "\n") || !strcmp(s, "\r") || !strcmp(s, "\t"))
     {
-	LM_ERR("signature error: '%s' contains whitespaces or any unparsable chars.\n", s);
+	LM_ERR("%s: signature error: '%s' contains whitespaces or any unparsable chars.\n", APP_NAME, s);
 	return 0;
     }
 
@@ -56,20 +56,20 @@ int is_sig_allowed(char *s)
     {
 	if (!strcmp(s, "["))		// invalid signature modifier definition
 	{
-	    LM_ERR("signature error: '%s': no type of array specified.\n", s);
+	    LM_ERR("%s: signature error: '%s': no type of array specified.\n", APP_NAME, s);
 	    return 0;
 	}
 
 	if (!strcmp(s, "L"))		// invalid signature modifier definition
 	{
-	    LM_ERR("signature error '%s': no object specified.\n", s);
+	    LM_ERR("%s: signature error '%s': no object specified.\n", APP_NAME, s);
 	    return 0;
 	}
 
 #ifndef JAVA_INV_SUPP_TYPE_VOID
 	if (!strcmp(s, "V"))
 	{
-	    LM_ERR("signature error '%s': no object specified.\n", s);
+	    LM_ERR("%s: signature error '%s': no object specified.\n", APP_NAME, s);
 	    return 0;
 	}
 #endif
@@ -80,7 +80,7 @@ int is_sig_allowed(char *s)
 #ifndef JAVA_INV_SUPP_TYPE_ARRAYS
 	if (strcmp(s, "[") > 0)
 	{
-	    LM_ERR("signature error: '%s' denotes array which isn't supported yet.\n", s);
+	    LM_ERR("%s: signature error: '%s' denotes array which isn't supported yet.\n", APP_NAME, s);
 	    return 0;
 	}
 #endif
@@ -89,7 +89,7 @@ int is_sig_allowed(char *s)
 	if (strrchr(&s[0], 'L') > 0)
 	{
 #ifndef JAVA_INV_SUPP_TYPE_OBJECTS
-	    LM_ERR("signature error: '%s' denotes object which isn't supported yet.\n", s);
+	    LM_ERR("%s: signature error: '%s' denotes object which isn't supported yet.\n", APP_NAME, s);
 	    return 0;
 #else
 	    int f = 0;
@@ -131,7 +131,7 @@ int is_sig_allowed(char *s)
 #endif
 	    if (f == 0)
 	    {
-		LM_ERR("signature '%s' isn't supported yet.\n", s);
+		LM_ERR("%s: signature '%s' isn't supported yet.\n", APP_NAME, s);
 		return 0;
 	    }
 #endif
@@ -184,19 +184,19 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
     ret = (jvalue *)pkg_malloc(sizeof(jvalue));
     if (!ret)
     {
-	LM_ERR("pkg_malloc() has failed. Not enouph memory!\n");
+	LM_ERR("%s: pkg_malloc() has failed. Not enouph memory!\n", APP_NAME);
 	return NULL;
     }
 
     if (sig == NULL || strlen(sig) <= 0)
     {
-	LM_ERR("app_java: Can't process empty or NULL signature.\n");
+	LM_ERR("%s: Can't process empty or NULL signature.\n", APP_NAME);
 	pkg_free(ret);
 	return NULL;
     }
     if (pval == NULL || strlen(pval) <= 0)
     {
-	LM_ERR("app_java: Can't process empty or NULL parameter value.\n");
+	LM_ERR("%s: Can't process empty or NULL parameter value.\n", APP_NAME);
 	pkg_free(ret);
 	return NULL;
     }
@@ -219,7 +219,7 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 		(*ret).z = (jboolean)JNI_FALSE;
 	    else
 	    {
-    		LM_ERR("app_java: Can't cast '%s' to type '%s'.\n", pval, sig);
+    		LM_ERR("%s: Can't cast '%s' to type '%s'.\n", APP_NAME, pval, sig);
 		pkg_free(ret);
 		return NULL;
 	    }
@@ -237,13 +237,13 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 	    sscanf(pval, "%x", &siptr);
 	    if (siptr == 0 && errno != 0)
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Error: %s.\n", pval, sig, get_conv_err_str(errno));
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Error: %s.\n", APP_NAME, pval, sig, get_conv_err_str(errno));
 		pkg_free(ret);
                 return NULL;
 	    }
             if (siptr < SCHAR_MAX || siptr > SCHAR_MAX)
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Reason: overflow.", pval, sig);
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Reason: overflow.", APP_NAME, pval, sig);
 		pkg_free(ret);
                 return NULL;
 	    }
@@ -261,13 +261,13 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 	    sscanf(pval, "%c", &scptr);
 	    if (scptr == 0 && errno != 0)
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Error: %s.\n", pval, sig, get_conv_err_str(errno));
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Error: %s.\n", APP_NAME, pval, sig, get_conv_err_str(errno));
 		pkg_free(ret);
                 return NULL;
 	    }
             if (scptr < CHAR_MIN || scptr > CHAR_MAX)	// overflow
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Reason: overflow.", pval, sig);
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Reason: overflow.", APP_NAME, pval, sig);
 		pkg_free(ret);
                 return NULL;
 	    }
@@ -285,13 +285,13 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 	    sdptr = (double)strtod(pval, &endptr);
 	    if ((sdptr == 0 && errno != 0) || (pval == endptr))
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Error: %s.\n", pval, sig, get_conv_err_str(errno));
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Error: %s.\n", APP_NAME, pval, sig, get_conv_err_str(errno));
 		pkg_free(ret);
                 return NULL;
 	    }
             if (sdptr < LLONG_MIN || sdptr > LLONG_MAX)	// overflow
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Reason: overflow.", pval, sig);
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Reason: overflow.", APP_NAME, pval, sig);
 		pkg_free(ret);
                 return NULL;
 	    }
@@ -309,13 +309,13 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 	    sfptr = (float)strtof(pval, &endptr);
 	    if ((sfptr == 0 && errno != 0) || (pval == endptr))
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Error: %s.\n", pval, sig, get_conv_err_str(errno));
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Error: %s.\n", APP_NAME, pval, sig, get_conv_err_str(errno));
 		pkg_free(ret);
                 return NULL;
 	    }
             if (sfptr < FLT_MIN || sfptr > FLT_MAX)	// overflow
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Reason: overflow.", pval, sig);
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Reason: overflow.", APP_NAME, pval, sig);
 		pkg_free(ret);
                 return NULL;
 	    }
@@ -333,13 +333,13 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 	    slptr = strtol(pval, &endptr, 10);
 	    if ((slptr == 0 && errno != 0) || (pval == endptr))
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Error: %s.\n", pval, sig, get_conv_err_str(errno));
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Error: %s.\n", APP_NAME, pval, sig, get_conv_err_str(errno));
 		pkg_free(ret);
                 return NULL;
 	    }
 	    if (slptr < INT_MIN || slptr > INT_MAX)	// overflow
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Reason: overflow.", pval, sig);
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Reason: overflow.", APP_NAME, pval, sig);
 		pkg_free(ret);
                 return NULL;
 	    }
@@ -357,13 +357,13 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 	    slptr = (long)strtol(pval, &endptr, 10);
 	    if ((slptr == 0 && errno != 0) || (pval == endptr))
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Error: %s.\n", pval, sig, get_conv_err_str(errno));
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Error: %s.\n", APP_NAME, pval, sig, get_conv_err_str(errno));
 		pkg_free(ret);
                 return NULL;
 	    }
 	    if (slptr < LONG_MIN || slptr > LONG_MAX)	// overflow
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Reason: overflow.", pval, sig);
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Reason: overflow.", APP_NAME, pval, sig);
 		pkg_free(ret);
                 return NULL;
 	    }
@@ -381,13 +381,13 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 	    ssptr = (short)strtod(pval, &endptr);
 	    if ((ssptr == 0 && errno != 0) || (pval == endptr))
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Error: %s.\n", pval, sig, get_conv_err_str(errno));
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Error: %s.\n", APP_NAME, pval, sig, get_conv_err_str(errno));
 		pkg_free(ret);
                 return NULL;
 	    }
 	    if (ssptr < SHRT_MIN || ssptr > SHRT_MAX)	// overflow
 	    {
-		LM_ERR("app_java: Can't cast '%s' to type '%s'. Reason: overflow.", pval, sig);
+		LM_ERR("%s: Can't cast '%s' to type '%s'. Reason: overflow.", APP_NAME, pval, sig);
 		pkg_free(ret);
                 return NULL;
 	    }
@@ -429,7 +429,7 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
     else
     {
 	// unknown sig
-	LM_ERR("app_java: Can't cast '%s' to signature '%s'\n", pval, sig);
+	LM_ERR("%s: Can't cast '%s' to signature '%s'\n", APP_NAME, pval, sig);
 	pkg_free(ret);
 	return NULL;
     }

@@ -35,6 +35,8 @@
 
 #include <jni.h>
 
+#define	APP_NAME	"app_java"
+
 JavaVM *jvm;
 JNIEnv *env;
 jclass KamailioClass;

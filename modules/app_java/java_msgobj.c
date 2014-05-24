@@ -50,7 +50,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     SipMsgInstance = (jobject *)pkg_malloc(sizeof(jobject));
     if (!SipMsgInstance)
     {
-	LM_ERR("pkg_malloc() has failed. Not enough memory!\n");
+	LM_ERR("%s: pkg_malloc() has failed. Not enough memory!\n", APP_NAME);
 	return NULL;
     }
     memset(SipMsgInstance, 0, sizeof(jobject));
@@ -83,7 +83,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-	LM_ERR("Can't find symbol org.siprouter.SipMsg.id\n");
+	LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.id\n", APP_NAME);
 
         return NULL;
     }
@@ -99,7 +99,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-	LM_ERR("Can't find symbol org.siprouter.SipMsg.pid\n");
+	LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.pid\n", APP_NAME);
         return NULL;
     }
     (*env)->SetIntField(env, SipMsgInstance, fid, msg->pid);
@@ -114,7 +114,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-	LM_ERR("Can't find symbol org.siprouter.SipMsg.eoh\n");
+	LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.eoh\n", APP_NAME);
         return NULL;
     }
     jStrParam = (*env)->NewStringUTF(env, msg->eoh);
@@ -131,7 +131,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-	LM_ERR("Can't find symbol org.siprouter.SipMsg.unparsed\n");
+	LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.unparsed\n", APP_NAME);
         return NULL;
     }
     jStrParam = (*env)->NewStringUTF(env, msg->unparsed);
@@ -148,7 +148,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.buf\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.buf\n", APP_NAME);
         return NULL;
     }
     jStrParam = (*env)->NewStringUTF(env, msg->buf);
@@ -165,7 +165,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.len\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.len\n", APP_NAME);
         return NULL;
     }
     (*env)->SetIntField(env, SipMsgInstance, fid, msg->len);
@@ -180,7 +180,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.new_uri\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.new_uri\n", APP_NAME);
         return NULL;
     }
     jStrParam = (*env)->NewStringUTF(env, msg->new_uri.len <= 0 ? "" : msg->new_uri.s);
@@ -197,7 +197,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.dst_uri\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.dst_uri\n", APP_NAME);
         return NULL;
     }
     jStrParam = (*env)->NewStringUTF(env, msg->dst_uri.len <= 0 ? "" : msg->dst_uri.s);
@@ -214,7 +214,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.parsed_orig_ruri_ok\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.parsed_orig_ruri_ok\n", APP_NAME);
         return NULL;
     }
     (*env)->SetIntField(env, SipMsgInstance, fid, msg->parsed_orig_ruri_ok);
@@ -229,7 +229,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.add_to_branch_s\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.add_to_branch_s\n", APP_NAME);
         return NULL;
     }
     jStrParam = (*env)->NewStringUTF(env, (msg->add_to_branch_len <= 0 || msg->add_to_branch_s == NULL) ? "" : strdup(msg->add_to_branch_s));
@@ -246,7 +246,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.add_to_branch_len\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.add_to_branch_len\n", APP_NAME);
         return NULL;
     }
     (*env)->SetIntField(env, SipMsgInstance, fid, msg->add_to_branch_len);
@@ -261,7 +261,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.hash_index\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.hash_index\n", APP_NAME);
         return NULL;
     }
     (*env)->SetIntField(env, SipMsgInstance, fid, msg->hash_index);
@@ -276,7 +276,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.msg_flags\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.msg_flags\n", APP_NAME);
         return NULL;
     }
     (*env)->SetIntField(env, SipMsgInstance, fid, msg->msg_flags);
@@ -291,7 +291,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.set_global_address\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.set_global_address\n", APP_NAME);
         return NULL;
     }
     jStrParam = (*env)->NewStringUTF(env, (msg->set_global_address.len <= 0 || msg->set_global_address.s == NULL) ? "" : msg->set_global_address.s);
@@ -308,7 +308,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
     if (!fid)
     {
 	(*env)->ExceptionClear(env);
-        LM_ERR("Can't find symbol org.siprouter.SipMsg.set_global_port\n");
+        LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.set_global_port\n", APP_NAME);
         return NULL;
     }
     jStrParam = (*env)->NewStringUTF(env, (msg->set_global_port.len <= 0 || msg->set_global_port.s == NULL) ? "" : msg->set_global_port.s);
