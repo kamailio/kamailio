@@ -6,7 +6,6 @@
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
-
 ]>
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -15,8 +14,8 @@
 	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 	    <author>
-			<firstname>Konstantin</firstname>
-			<surname>Mosesov</surname>
+		<firstname>Konstantin</firstname>
+		<surname>Mosesov</surname>
 	    </author>
 	    <editor>
 	    	<firstname>Konstantin</firstname>
@@ -25,11 +24,12 @@
 	</authorgroup>
 	<copyright>
 	    <year>2013</year>
-		<holder>Konstantin Mosesov</holder>
+	    <year>2014</year>
+	    <holder>Konstantin Mosesov</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
     
-	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="app_java_admin.xml"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="app_java_admin.xml"/>
     
 </book>
