@@ -55,6 +55,7 @@
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_server.h"
+#include "tls_select.h"
 #include "tls_bio.h"
 #include "tls_dump_vf.h"
 #include "tls_cfg.h"
