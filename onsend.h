@@ -43,10 +43,11 @@
 #include "sr_compat.h"
 
 struct onsend_info{
-	union sockaddr_union* to;
-	struct socket_info* send_sock;
-	char* buf;
-	int len;
+	union sockaddr_union* to;       /* dest info */
+	struct socket_info* send_sock;  /* local send socket */
+	char* buf;                      /* outgoing buffer */
+	int len;                        /* outgoing buffer len */
+	sip_msg_t *msg;                 /* original sip msg struct */
 };
 
 extern struct onsend_info* p_onsend;
@@ -61,7 +62,7 @@ extern struct onsend_info* p_onsend;
 static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 								char* buf, int len)
 {
-	struct onsend_info onsnd_info;
+	struct onsend_info onsnd_info = {0};
 	int ret;
 	struct run_act_ctx ra_ctx;
 	int backup_route_type;
@@ -74,6 +75,7 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 		onsnd_info.send_sock=dst->send_sock;
 		onsnd_info.buf=buf;
 		onsnd_info.len=len;
+		onsnd_info.msg=orig_msg;
 		p_onsend=&onsnd_info;
 		backup_route_type=get_route_type();
 		set_route_type(ONSEND_ROUTE);
