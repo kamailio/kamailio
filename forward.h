@@ -109,6 +109,8 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 int forward_reply( struct sip_msg* msg);
 int forward_reply_nocb( struct sip_msg* msg);
 
+void forward_set_send_info(int v);
+
 int is_check_self_func_list_set(void);
 
 
