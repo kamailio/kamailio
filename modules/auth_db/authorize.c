@@ -223,10 +223,10 @@ static int generate_avps(struct sip_msg* msg, db1_res_t* db_res)
 
 
 /*
- * Authorize digest credentials
+ * Authorize digest credentials and set the pointer to used hdr
  */
-static int digest_authenticate(struct sip_msg* msg, str *realm,
-				str *table, hdr_types_t hftype, str *method)
+static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
+				str *table, hdr_types_t hftype, str *method, hdr_field_t **ahdr)
 {
 	char ha1[256];
 	int res;
@@ -277,6 +277,7 @@ static int digest_authenticate(struct sip_msg* msg, str *realm,
 	}
 
 	cred = (auth_body_t*)h->parsed;
+	if(ahdr!=NULL) *ahdr = h;
 
 	res = get_ha1(&cred->digest.username, realm, table, ha1, &result);
 	if (res < 0) {
@@ -313,6 +314,15 @@ end:
 	if(result)
 		auth_dbf.free_result(auth_db_handle, result);
 	return ret;
+}
+
+/*
+ * Authorize digest credentials
+ */
+static int digest_authenticate(sip_msg_t* msg, str *realm,
+				str *table, hdr_types_t hftype, str *method)
+{
+	return digest_authenticate_hdr(msg, realm, table, hftype, method, NULL);
 }
 
 
@@ -475,15 +485,15 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 	LM_DBG("realm [%.*s] table [%.*s] flags [%d]\n", srealm.len, srealm.s,
 			stable.len,  stable.s, iflags);
 
+	hdr = NULL;
 	if(_m->REQ_METHOD==METHOD_REGISTER)
-		ret = digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
-						&_m->first_line.u.request.method);
+		ret = digest_authenticate_hdr(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
+						&_m->first_line.u.request.method, &hdr);
 	else
-		ret = digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T,
-						&_m->first_line.u.request.method);
+		ret = digest_authenticate_hdr(_m, &srealm, &stable, HDR_PROXYAUTH_T,
+						&_m->first_line.u.request.method, &hdr);
 
-	if(ret==AUTH_OK && (iflags&AUTH_CHECK_ID_F)) {
-		hdr = (_m->proxy_auth==0)?_m->authorization:_m->proxy_auth;
+	if(ret==AUTH_OK && hdr!=NULL && (iflags&AUTH_CHECK_ID_F)) {
 		srealm = ((auth_body_t*)(hdr->parsed))->digest.username.user;
 			
 		if((furi=parse_from_uri(_m))==NULL)
