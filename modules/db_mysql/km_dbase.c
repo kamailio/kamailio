@@ -258,7 +258,7 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 		db_mysql_free_result(_h, *_r);
 		*_r = 0;
 #if (MYSQL_VERSION_ID >= 40100)
-		while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) > 0 ) {
+		while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) == 0 ) {
 			MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
 			mysql_free_result(res);
 		}
@@ -268,7 +268,7 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 
 done:
 #if (MYSQL_VERSION_ID >= 40100)
-	while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) > 0 ) {
+	while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) == 0 ) {
 		MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
 		mysql_free_result(res);
 	}
