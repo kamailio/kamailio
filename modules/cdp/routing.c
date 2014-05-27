@@ -86,7 +86,7 @@ peer* get_first_connected_route(routing_entry *r,int app_id,int vendor_id)
 		else
 			LM_DBG("The peer %.*s state is %s\n",i->fqdn.len,i->fqdn.s,
 				(p->state==I_Open||p->state==R_Open)?"opened":"closed");
-		if (p && (p->state==I_Open || p->state==R_Open) && peer_handles_application(p,app_id,vendor_id)) {			
+		if (p && !p->disabled && (p->state==I_Open || p->state==R_Open) && peer_handles_application(p,app_id,vendor_id)) {
 			LM_DBG("The peer %.*s matches - will forward there\n",i->fqdn.len,i->fqdn.s);
 			return p;
 		}
@@ -112,6 +112,8 @@ peer* get_routing_peer(AAAMessage *m)
 	routing_realm *rr;
 	int app_id=0,vendor_id=0;
 	
+	LM_DBG("getting diameter routing peer for realm: [%.*s]\n", m->dest_realm->data.len, m->dest_realm->data.s);
+
 	app_id = m->applicationId;	
 	avp = AAAFindMatchingAVP(m,0,AVP_Vendor_Specific_Application_Id,0,AAA_FORWARD_SEARCH);
 	if (avp){
@@ -178,6 +180,7 @@ peer* get_routing_peer(AAAMessage *m)
 	}
 	/* if not found in the realms or no destination_realm, 
 	 * get the first connected host in default routes */
+	LM_DBG("no routing peer found, trying default route\n");
 	p = get_first_connected_route(config->r_table->routes,app_id,vendor_id);
 	if (!p){
 		LM_ERR("get_routing_peer(): No connected DefaultRoute peer found for app_id %d and vendor id %d.\n",

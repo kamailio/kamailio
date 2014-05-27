@@ -112,6 +112,7 @@ typedef struct _peer_t{
 	
 	time_t activity;		/**< timestamp of last activity */
 	int is_dynamic;			/**< whether this peer was accepted although it was not initially configured */
+	int disabled;			/**< administratively enable/disable a peer - ie remove/re-add from service dynamically */
 	int waitingDWA;			/**< if a Diameter Watch-dog Request was sent out and waiting for an answer */
 	
 	str send_pipe_name;		/**< pipe to signal messages to be sent out*/

@@ -138,6 +138,7 @@ AAAReturnCode AAASendMessage(
 		LM_ERR("AAASendMessage(): Can't find a suitable connected peer in the routing table.\n");
 		goto error;
 	}
+	LM_DBG("Found diameter peer [%.*s] from routing table\n", p->fqdn.len, p->fqdn.s);
 	if (p->state!=I_Open && p->state!=R_Open){
 		LM_ERR("AAASendMessage(): Peer not connected to %.*s\n",p->fqdn.len,p->fqdn.s);
 		goto error;
