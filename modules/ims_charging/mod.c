@@ -122,7 +122,7 @@ stat_export_t charging_stats[] = {
     {"ccr_responses_time", STAT_NO_RESET, &ccr_responses_time},
     {"billed_secs", STAT_NO_RESET, &billed_secs},
     {"killed_calls", STAT_NO_RESET, &killed_calls},
-    {"ccr_timeouts", STAT_NO_RESET, &ccr_timeouts},
+    {"ccr_timeouts", 0, &ccr_timeouts},
     {0, 0, 0}
 };
 
