@@ -1037,6 +1037,8 @@ int send_resource_subs(char* uri, void* param)
 		LM_WARN("%.*s has %.*s multiple times in the same resource list\n",
 			s->watcher_uri->len, s->watcher_uri->s,
 			s->pres_uri->len, s->pres_uri->s);
+		pkg_free(tmp_str->s);
+		pkg_free(tmp_str);
 		return 1;
 	}
 
