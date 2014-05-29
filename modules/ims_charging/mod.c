@@ -150,9 +150,6 @@ int fix_parameters() {
 	cfg.destination_realm.s = ro_destination_realm_s;
 	cfg.destination_realm.len = strlen(ro_destination_realm_s);
 
-	cfg.destination_host.s = ro_destination_host_s;
-	cfg.destination_host.len = strlen(ro_destination_host_s);
-
 	cfg.service_context_id = shm_malloc(sizeof(str));
 	if (!cfg.service_context_id) {
 		LM_ERR("fix_parameters:not enough shm memory\n");

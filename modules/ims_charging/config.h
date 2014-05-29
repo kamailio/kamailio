@@ -5,7 +5,6 @@ typedef struct {
     str origin_host;
     str origin_realm;
     str destination_realm;
-    str destination_host;
     str * service_context_id;
 } client_ro_cfg;
 
