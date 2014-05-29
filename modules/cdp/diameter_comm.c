@@ -195,7 +195,7 @@ AAAReturnCode AAASendMessageToPeer(
 			LM_ERR("AAASendMessageToPeer(): can't add transaction callback for answer.\n");
 	}
 
-//	if (!peer_send_msg(p,message))
+	p->last_selected = time(NULL);
 	if (!sm_process(p,Send_Message,message,0,0))
 		goto error;
 

@@ -66,7 +66,10 @@ static void cdp_rpc_list_peers(rpc_t* rpc, void* ctx)
     void *peers_header;
     void *peers_container;
     void *peerdetail_container;
-    peer *i;
+    void *peerapplication_container;
+    peer *i, *j;
+    int c;
+    char buf[100];
 
     if (rpc->add(ctx, "{", &peers_header) < 0) {
             rpc->fault(ctx, 500, "Internal error creating top rpc");
@@ -91,19 +94,40 @@ static void cdp_rpc_list_peers(rpc_t* rpc, void* ctx)
     lock_get(peer_list_lock);
     i = peer_list->head;
     while (i) {
-            if (rpc->struct_add(peers_container, "S{",
+    		lock_get(i->lock);
+    		if (rpc->struct_add(peers_container, "S{",
                             "FQDN", &i->fqdn,
                             "Details", &peerdetail_container) < 0) {
                     rpc->fault(ctx, 500, "Internal error creating peers container struct");
+                    lock_release(i->lock);
                     return;
             }
-            if (rpc->struct_add(peerdetail_container, "ss",
+            if (rpc->struct_add(peerdetail_container, "ssd",
                     "State", dp_states[(int)i->state],
-                    "Disabled", i->disabled?"True":"False") < 0) {
+                    "Disabled", i->disabled?"True":"False",
+            		"Last used", i->last_selected) < 0) {
                     rpc->fault(ctx, 500, "Internal error creating peer detail container struct");
+                    lock_release(i->lock);
                     return;
             }
+            if (rpc->struct_add(peerdetail_container, "{", "Applications", &peerapplication_container) < 0) {
+            	rpc->fault(ctx, 500, "Internal error creating peer application container struct");
+            	lock_release(i->lock);
+            	return;
+            }
+
+            for (c = 0; c < i->applications_cnt; c++) {
+            	snprintf(buf, 100, "%d:%d", i->applications[c].id, i->applications[c].vendor);
+            	if (rpc->struct_add(peerapplication_container, "s",
+						"appid:vendorid", buf) < 0) {
+					rpc->fault(ctx, 500, "Internal error creating appid/vendorid information");
+					lock_release(i->lock);
+					return;
+				}
+            }
+            j=i;
             i = i->next;
+            lock_release(j->lock);
     }
     lock_release(peer_list_lock);
 }
