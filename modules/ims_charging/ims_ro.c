@@ -680,8 +680,9 @@ error:
 	if (ro_cca_data)
 		Ro_free_CCA(ro_cca_data);
 
-//	if (ro_cca_data)
-	cdpb.AAAFreeMessage(&cca);
+	if (!is_timeout && cca) {
+		cdpb.AAAFreeMessage(&cca);
+	}
 
 	if (i_req) {
 		i_req->credit_valid_for = 0;
