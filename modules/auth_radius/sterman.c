@@ -409,7 +409,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
                         goto err;
                 }
 #endif 
-		LM_ERR("authorization failed\n");
+		LM_ERR("authorization failed. RC auth returned %d\n", i);
 	}
 
  err:
