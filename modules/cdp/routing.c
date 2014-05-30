@@ -123,6 +123,7 @@ peer* get_first_connected_route(routing_entry *r,int app_id,int vendor_id)
 		}
 	}
 
+	p->last_selected = time(NULL);
 	return p;
 }
 
