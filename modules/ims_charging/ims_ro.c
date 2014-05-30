@@ -29,12 +29,14 @@
 #include "config.h"
 #include "ro_session_hash.h"
 #include "stats.h"
+#include "ro_avp.h"
 
 extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
 extern client_ro_cfg cfg;
 extern struct dlg_binds dlgb;
 extern cdp_avp_bind_t *cdp_avp;
+extern str ro_forced_peer;
 
 struct session_setup_data {
 	struct ro_session *ro_session;
@@ -85,34 +87,6 @@ struct sip_msg * trans_get_request_from_current_reply() {
 }
 
 /**
- * Create and add an AVP to a Diameter message.
- * @param m - Diameter message to add to
- * @param d - the payload data
- * @param len - length of the payload data
- * @param avp_code - the code of the AVP
- * @param flags - flags for the AVP
- * @param vendorid - the value of the vendor id or 0 if none
- * @param data_do - what to do with the data when done
- * @param func - the name of the calling function, for debugging purposes
- * @returns 1 on success or 0 on failure
- */
-static inline int Ro_add_avp(AAAMessage *m, char *d, int len, int avp_code, int flags, int vendorid, int data_do, const char *func) {
-    AAA_AVP *avp;
-    if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
-    avp = cdpb.AAACreateAVP(avp_code, flags, vendorid, d, len, data_do);
-    if (!avp) {
-        LM_ERR("%s: Failed creating avp\n", func);
-        return 0;
-    }
-    if (cdpb.AAAAddAVPToMessage(m, avp, m->avpList.tail) != AAA_ERR_SUCCESS) {
-        LM_ERR("%s: Failed adding avp to message\n", func);
-       cdpb.AAAFreeAVP(&avp);
-        return 0;
-    }
-    return 1;
-}
-
-/**
  * Create and add an AVP to a list of AVPs.
  * @param list - the AVP list to add to
  * @param d - the payload data
@@ -146,22 +120,6 @@ static inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_
     }
 
     return 1;
-}
-
-/**
- * Creates and adds a Destination-Realm AVP.
- * @param msg - the Diameter message to add to.
- * @param data - the value for the AVP payload
- * @returns 1 on success or 0 on error
- */
-inline int ro_add_destination_realm_avp(AAAMessage *msg, str data) {
-    return
-    Ro_add_avp(msg, data.s, data.len,
-            AVP_Destination_Realm,
-            AAA_AVP_FLAG_MANDATORY,
-            0,
-            AVP_DUPLICATE_DATA,
-            __FUNCTION__);
 }
 
 inline int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsigned int cc_request_number) {
@@ -631,8 +589,11 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
 
     cdpb.AAASessionsUnlock(auth->hash);
 
-    //AAAMessage *cca = cdpb.AAASendRecvMessageToPeer(ccr, &cfg.destination_host);
-    cdpb.AAASendMessageToPeer(ccr, &cfg.destination_host, resume_on_interim_ccr, (void *) i_req);
+    if (ro_forced_peer.len > 0) {
+    	cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_interim_ccr, (void *) i_req);
+    } else {
+    	cdpb.AAASendMessage(ccr, resume_on_interim_ccr, (void *) i_req);
+    }
 
 //    cdpb.AAASessionsUnlock(auth->hash);
 
@@ -850,7 +811,12 @@ void send_ccr_stop(struct ro_session *ro_session) {
     }
 
     cdpb.AAASessionsUnlock(auth->hash);
-    cdpb.AAASendMessageToPeer(ccr, &cfg.destination_host, resume_on_termination_ccr, NULL);
+
+    if (ro_forced_peer.len > 0) {
+    	cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_termination_ccr, NULL);
+    } else {
+    	cdpb.AAASendMessage(ccr, resume_on_termination_ccr, NULL);
+    }
 
     Ro_free_CCR(ro_ccr_data);
 
@@ -1050,7 +1016,14 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
 
     LM_DBG("Sending CCR Diameter message.\n");
     cdpb.AAASessionsUnlock(cc_acc_session->hash);
-    cdpb.AAASendMessageToPeer(ccr, &cfg.destination_host, resume_on_initial_ccr, (void *) ssd);
+
+    if (ro_forced_peer.len > 0) {
+    	LM_DBG("Sending message with Peer\n");
+    	cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_initial_ccr, (void *) ssd);
+    } else {
+    	LM_DBG("Sending message without Peer and realm is [%.*s]\n", ccr->dest_realm->data.len, ccr->dest_realm->data.s);
+    	cdpb.AAASendMessage(ccr, resume_on_initial_ccr, (void *) ssd);
+    }
 
     Ro_free_CCR(ro_ccr_data);
 
@@ -1177,7 +1150,9 @@ error0:
     LM_DBG("Trying to reserve credit on initial INVITE failed on cdp callback\n");
     create_cca_return_code(error_code);
 
-    cdpb.AAAFreeMessage(&cca);
+    if (!is_timeout && cca) {
+    	cdpb.AAAFreeMessage(&cca);
+    }
 
     if (t)
     	tmb.unref_cell(t);

@@ -124,7 +124,7 @@ typedef struct {
 	acceptor_config *acceptors;	/**< list of acceptors */
 	int acceptors_cnt;			/**< size of the list of acceptors */
 	
-	app_config *applications;	/**< list of supporter applications */
+	app_config *applications;	/**< list of supported applications */
 	int applications_cnt;		/**< size of list of supported applications*/
 
 	int *supported_vendors;		/**< list of supported vendor ids */

@@ -49,7 +49,7 @@ char **split(char *str, char *sep)
     buf = (char **)pkg_malloc(sizeof(char *));
     if (!buf)
     {
-	LM_ERR("pkg_malloc() has failed. Not enough memory!\n");
+	LM_ERR("%s: pkg_malloc() has failed. Not enough memory!\n", APP_NAME);
 	return NULL;
     }
     memset(&buf, 0, sizeof(char *));
@@ -75,7 +75,7 @@ char **split(char *str, char *sep)
 	buf = (char **)pkg_realloc(buf, (i+1) * sizeof(char *));
 	if (!buf)
 	{
-	    LM_ERR("pkg_realloc() has failed. Not enough memory!\n");
+	    LM_ERR("%s: pkg_realloc() has failed. Not enough memory!\n", APP_NAME);
 	    return NULL;
 	}
         buf[i] = strdup(token);

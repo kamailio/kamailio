@@ -20,6 +20,15 @@ JAVA_HOME ?= $(shell readlink -f /usr/bin/javac | sed "s:bin/javac::")
 DEFS += $(shell pkg-config libgcj12 --cflags) -I$(JAVA_HOME)/include
 LIBS += $(shell pkg-config libgcj12 --libs) -L$(JAVA_HOME)/lib  -ljvm
 
+# On Debian 7.5 there is a bug with JAVA_HOME detection.
+# $(shell readlink -f /usr/bin/javac | sed "s:bin/javac::") points to perl wrapper script (/usr/bin/gcj-wrapper-4.7)
+# whereas the real compiler is at /usr/bin/gcj-4.7. As the result, JAVA_HOME will not be a directory, that is incorrect.
+# At this point I don't see any universal method as explicit setting this variable at the compile phase.
+# -- ez
+ifeq ($(shell [ -d "${JAVA_HOME}" -a -f "$(JAVA_HOME)/include/jni.h" -a -f "$(JAVA_HOME)/lib/libjvm.so" ] && echo 1 || echo 0),0)
+    $(error Can't locate Java Development Kit. You have to specify environment JAVA_HOME to build app_java)
+endif
+
 ifeq ($(OS), freebsd)
 LIBS+=-pthread
 endif

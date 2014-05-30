@@ -21,7 +21,7 @@
  *
  */
 
-#ifndef RLS_URILS_H
+#ifndef RLS_UTILS_H
 #define RLS_UTILS_H
 
 #include "../../ut.h"

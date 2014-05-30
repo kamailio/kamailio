@@ -101,11 +101,21 @@ enum {
 
 
 
+static struct tcp_connection* _tls_pv_con = 0;
 
+
+void tls_set_pv_con(struct tcp_connection *c)
+{
+	_tls_pv_con = c;
+}
 
 struct tcp_connection* get_cur_connection(struct sip_msg* msg)
 {
 	struct tcp_connection* c;
+
+	if(_tls_pv_con != 0)
+		return _tls_pv_con;
+
 	if (msg->rcv.proto != PROTO_TLS) {
 		ERR("Transport protocol is not TLS (bug in config)\n");
 		return 0;

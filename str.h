@@ -121,4 +121,13 @@ typedef struct _str str;
 
 /** @} */
 
+/** Appends a sufffix
+ * @param orig is the original string
+ * @param suffix is the suffix string
+ * @param dest is the result ::str of appending suffix to orig
+ * @return 0 if ok -1 if error
+ * remember to free the dest->s private memory
+ */
+int str_append(str *orig, str *suffix, str *dest);
+
 #endif

@@ -994,6 +994,11 @@ int pv_get_pai(struct sip_msg *msg, pv_param_t *param,
 	}
 
 	pai_body = get_pai(msg);
+	if(pai_body==NULL || pai_body->id==NULL)
+	{
+		LM_DBG("no P-Asserted-Identity header or empty body\n");
+		return pv_get_null(msg, param, res);
+	}
 	pai_uri = &pai_body->id[0];
 	cur_id = 0;
 	i = 0;

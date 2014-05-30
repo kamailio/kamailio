@@ -35,7 +35,7 @@ check_fork ()
 check_kamailio_config ()
 {
         # Check if kamailio configuration is valid before starting the server
-        out=$($KAM -c 2>&1 > /dev/null)
+        out=$($KAM -M $PKG_MEMORY -c 2>&1 > /dev/null)
         retcode=$?
         if [ "$retcode" != '0' ]; then
             echo "Not starting $DESC: invalid configuration file!"

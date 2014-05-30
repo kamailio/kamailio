@@ -122,6 +122,8 @@ static int km_cb_req_stats(struct sip_msg *msg,
 		unsigned int flags, void *param)
 {
 	update_stat(rcv_reqs, 1);
+	if(!IS_SIP(msg))
+		return 1;
 	if(msg->first_line.u.request.method_value==METHOD_OTHER)
 		update_stat(unsupported_methods, 1);
 	return 1;
@@ -462,7 +464,7 @@ static const char* rpc_stats_clear_statistics_doc[2] =
 rpc_export_t kex_stats_rpc[] =
 {
 	{"stats.get_statistics",   rpc_stats_get_statistics,
-							rpc_stats_get_statistics_doc,   0},
+							rpc_stats_get_statistics_doc,   RET_ARRAY},
 	{"stats.reset_statistics", rpc_stats_reset_statistics,
 							rpc_stats_reset_statistics_doc, 0},
 	{"stats.clear_statistics", rpc_stats_clear_statistics,

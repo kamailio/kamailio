@@ -545,23 +545,39 @@ static void destroy(void)
 
 }
 
+#define GET_VALUE(param_name,param,i_value,s_value,value_flags) do{ \
+	if(get_is_fparam(&(i_value), &(s_value), msg, (fparam_t*)(param), &(value_flags))!=0) { \
+		LM_ERR("no %s value\n", (param_name)); \
+		return -1; \
+	} \
+}while(0)
+
 /**
  *
  */
 static int w_ds_select(struct sip_msg* msg, char* set, char* alg, int mode)
 {
+	unsigned int algo_flags, set_flags;
+	str s_algo = {NULL, 0};
+	str s_set = {NULL, 0};
 	int a, s;
 	if(msg==NULL)
 		return -1;
 
-	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
-	{
-		LM_ERR("no dst set value\n");
+	GET_VALUE("destination set", set, s, s_set, set_flags);
+	if (!(set_flags&PARAM_INT)) {
+		if (set_flags&PARAM_STR)
+			LM_ERR("unable to get destination set from [%.*s]\n", s_set.len, s_set.s);
+		else
+			LM_ERR("unable to get destination set\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_p)alg, &a)!=0)
-	{
-		LM_ERR("no alg value\n");
+	GET_VALUE("algorithm", alg, a, s_algo, algo_flags);
+	if (!(algo_flags&PARAM_INT)) {
+		if (algo_flags&PARAM_STR)
+			LM_ERR("unable to get algorithm from [%.*s]\n", s_algo.len, s_algo.s);
+		else
+			LM_ERR("unable to get algorithm\n");
 		return -1;
 	}
 
@@ -974,6 +990,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 	void* rh;
 	void* sh;
 	void* vh;
+	void* wh;
 	int j;
 	char c[3];
 	str data = {"", 0};
@@ -1004,7 +1021,6 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Internal error sets structure");
 		return;
 	}
-
 
 	for(list = ds_list; list!= NULL; list= list->next)
 	{
@@ -1045,15 +1061,36 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 			else
 				c[1] = 'X';
 
-			if(rpc->struct_add(vh, "SsdS",
+			if (list->dlist[j].attrs.body.s)
+			{
+				if(rpc->struct_add(vh, "Ssd{",
 						"URI", &list->dlist[j].uri,
 						"FLAGS", c,
 						"PRIORITY", list->dlist[j].priority,
-						"ATTRS", (list->dlist[j].attrs.body.s)?
-						&(list->dlist[j].attrs.body):&data)<0)
-			{
-				rpc->fault(ctx, 500, "Internal error creating dest struct");
-				return;
+						"ATTRS", &wh)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating dest struct");
+					return;
+				}
+				if(rpc->struct_add(wh, "SSdd",
+						"BODY", &(list->dlist[j].attrs.body),
+						"DUID", (list->dlist[j].attrs.duid.s)?
+						&(list->dlist[j].attrs.duid):&data,
+						"MAXLOAD", list->dlist[j].attrs.maxload,
+						"WEIGHT", list->dlist[j].attrs.weight)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating attrs struct");
+					return;
+				}
+			} else {
+				if(rpc->struct_add(vh, "Ssd",
+						"URI", &list->dlist[j].uri,
+						"FLAGS", c,
+						"PRIORITY", list->dlist[j].priority)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating dest struct");
+					return;
+				}
 			}
 		}
 	}

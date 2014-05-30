@@ -43,9 +43,12 @@
 
 #include "../../select.h"
 #include "../../pvar.h"
+#include "../../tcp_conn.h"
 
 extern select_row_t tls_sel[];
 
 extern pv_export_t tls_pv[];
+
+void tls_set_pv_con(struct tcp_connection *c);
 
 #endif /* _TLS_SELECT_H */

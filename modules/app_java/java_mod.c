@@ -78,7 +78,7 @@ static cmd_export_t cmds[] = {
 
 /** module exports */
 struct module_exports exports = {
-    "app_java",                     /* module name */
+    APP_NAME,                       /* module name */
 //    RTLD_NOW | RTLD_GLOBAL,         /* dlopen flags */
     DEFAULT_DLFLAGS,		    /* dlopen flags */
     cmds,                           /* exported functions */
@@ -109,7 +109,7 @@ static int mod_init(void)
 
     if (force_cmd_exec)
     {
-	LM_NOTICE("app_java: Parameter force_cmd_exec may cause a memory leaks if used from embedded languages\n");
+	LM_NOTICE("%s: Parameter force_cmd_exec may cause a memory leaks if used from embedded languages\n", APP_NAME);
     }
 
     options = (JavaVMOption *)pkg_malloc(sizeof(JavaVMOption));
@@ -141,7 +141,7 @@ static int mod_init(void)
 	return -1;
     }
 
-    LM_INFO("app_java: Java VM initialization OK\n");
+    LM_INFO("%s: Java VM initialization OK\n", APP_NAME);
 
     // attach to current thread
     (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
@@ -193,7 +193,7 @@ static int mod_init(void)
 	return -1;
     }
 
-    LM_INFO("app_java: module initialization OK\n");
+    LM_INFO("%s: module initialization OK\n", APP_NAME);
 
     if (jvm != NULL)
         (*jvm)->DetachCurrentThread(jvm);

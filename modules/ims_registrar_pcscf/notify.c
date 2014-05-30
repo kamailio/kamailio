@@ -68,6 +68,7 @@
 #define EVENT_CREATED 3
 #define EVENT_REFRESHED 4
 #define EVENT_EXPIRED 5
+#define EVENT_DEACTIVATED 6
 
 #define RESULT_ERROR -1
 #define RESULT_CONTACTS_FOUND 1
@@ -181,6 +182,9 @@ int reginfo_parse_event(char * s) {
 		case 10:
 			if (strncmp(s, "registered", 10) ==  0) return EVENT_REGISTERED;
 			if (strncmp(s, "terminated", 10) ==  0) return EVENT_TERMINATED;
+			break;
+	    case 11:
+			if (strncmp(s, "deactivated", 11) ==  0) return EVENT_DEACTIVATED;
 			break;
 		case 12:
 			if (strncmp(s, "unregistered", 12) ==  0) return EVENT_UNREGISTERED;

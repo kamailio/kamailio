@@ -62,6 +62,10 @@ char *filename = NULL;
  * installed */
 char *modpath = NULL;
 
+/* Function to be called before perl interpreter instance is destroyed
+ * when attempting reinit */
+static char *perl_destroy_func = NULL;
+
 /* Allow unsafe module functions - functions with fixups. This will create
  * memory leaks, the variable thus is not documented! */
 int unsafemodfnc = 0;
@@ -128,6 +132,7 @@ static param_export_t params[] = {
 	{"modpath", STR_PARAM, &modpath},
 	{"unsafemodfnc", INT_PARAM, &unsafemodfnc},
 	{"reset_cycles", INT_PARAM, &_ap_reset_cycles_init},
+	{"perl_destroy_func",  STR_PARAM, &perl_destroy_func},
 	{ 0, 0, 0 }
 };
 
@@ -426,6 +431,7 @@ int app_perl_reset_interpreter(void)
 {
 	struct timeval t1;
 	struct timeval t2;
+	char *args[] = { NULL };
 
 	if(*_ap_reset_cycles==0)
 		return 0;
@@ -436,6 +442,9 @@ int app_perl_reset_interpreter(void)
 
 	if(_ap_exec_cycles<=*_ap_reset_cycles)
 		return 0;
+
+	if(perl_destroy_func)
+		call_argv(perl_destroy_func, G_DISCARD | G_NOARGS, args);
 
 	gettimeofday(&t1, NULL);
 	if (perl_reload()<0) {

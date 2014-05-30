@@ -348,6 +348,7 @@ static int mod_init(void)
 #ifndef OPENSSL_NO_DH
 	LM_INFO("With Diffie Hellman\n");
 #endif
+	tls_lookup_event_routes();
 	return 0;
 error:
 	destroy_tls_h();

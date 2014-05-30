@@ -354,7 +354,7 @@ int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
     if (strncasecmp(uri.s, "tel:", 4) != 0) return 1;
     
     /* reserve memory for clean tel uri */
-    tel_uri.s = pkg_malloc(uri.len);
+    tel_uri.s = pkg_malloc(uri.len+1);
     if (tel_uri.s == 0) {
 	LM_ERR("no more pkg memory\n");
 	return -1;

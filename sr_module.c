@@ -1776,6 +1776,100 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 	return 0;
 }
 
+/** Get the function parameter value as string or/and integer (if possible).
+ *  @return  0 - Success
+ *          -1 - Cannot get value
+ */
+int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, unsigned int *flags)
+{
+	int_str val;
+	int ret;
+	avp_t* avp;
+	str tmp;
+	pv_value_t pv_val;
+
+	*flags = 0;
+	switch(param->type) {
+		case FPARAM_INT:
+			*i_dst = param->v.i;
+			*flags |= PARAM_INT;
+			return 0;
+		case FPARAM_REGEX:
+		case FPARAM_UNSPEC:
+		case FPARAM_STRING:
+			s_dst->s = param->v.asciiz;
+			s_dst->len = strlen(param->v.asciiz);
+			*flags |= PARAM_STR;
+			break;
+		case FPARAM_STR:
+			*s_dst = param->v.str;
+			*flags |= PARAM_STR;
+			break;
+		case FPARAM_AVP:
+			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
+									&val, 0);
+			if (unlikely(!avp)) {
+				DBG("Could not find AVP from function parameter '%s'\n",
+						param->orig);
+				return -1;
+			}
+			if (avp->flags & AVP_VAL_STR) {
+				*s_dst = val.s;
+				*flags |= PARAM_STR;
+				if (str2int(&val.s, (unsigned int*)i_dst) < 0) {
+					ERR("Could not convert AVP string value to int\n");
+					return -1;
+				}
+			} else {
+				*i_dst = val.n;
+				*flags |= PARAM_INT;
+			}
+			break;
+		case FPARAM_SELECT:
+			ret = run_select(&tmp, param->v.select, msg);
+			if (unlikely(ret < 0 || ret > 0)) return -1;
+			if (unlikely(str2int(&tmp, (unsigned int*)i_dst) < 0)) {
+				ERR("Could not convert select result to int\n");
+				return -1;
+			}
+			*flags |= PARAM_INT;
+			break;
+		case FPARAM_PVS:
+			if (likely(pv_get_spec_value(msg, param->v.pvs, &pv_val)==0)) {
+				if ((pv_val.flags&(PV_VAL_NULL|PV_VAL_INT))==PV_VAL_INT){
+					*i_dst=pv_val.ri;
+					*flags |= PARAM_INT;
+				}
+				if ((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR){
+					*s_dst=pv_val.rs;
+					*flags |= PARAM_STR;
+				}
+			}else{
+				ERR("Could not get PV\n");
+				return -1;
+			}
+			break;
+		case FPARAM_PVE:
+			s_dst->s=pv_get_buffer();
+			s_dst->len=pv_get_buffer_size();
+			if (unlikely(pv_printf(msg, param->v.pve, s_dst->s, &s_dst->len)!=0)){
+				ERR("Could not convert the PV-formated string to str\n");
+				s_dst->len=0;
+				return -1;
+			}
+			*flags |= PARAM_STR;
+			break;
+	}
+
+	/* Let's convert to int, if possible */
+	if (!(*flags & PARAM_INT) && (*flags & PARAM_STR) && str2sint(s_dst, i_dst) == 0)
+		*flags |= PARAM_INT;
+
+	if (!*flags) return -1;
+
+	return 0;
+}
+
 /**
  * Retrieve the compiled RegExp.
  * @return: 0 for success, negative on error.

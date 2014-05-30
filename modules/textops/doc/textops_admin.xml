@@ -1358,6 +1358,146 @@ if (starts_with("$rU", "+358"))
 		</example>
 	</section>
 
+	<section id="textops.f.set_body_multipart">
+		<title>
+		<function moreinfo="none">set_body_multipart([txt,content_type][,boundary])</function>
+		</title>
+		<para>
+		Set multipart body to a SIP message. If called with no parameters, will convert
+		present body to multipart.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - text for the body, can include
+				pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header,
+				can include pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>boundary</emphasis> - string to use as boundary,
+				can include pseudo-variables. Default: unique-boundary-1
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<para>
+		The core will take care of the last boundary ending "--". Detecting wich one is
+		the last and fixing the others if needed.
+		</para>
+		<example>
+		<title><function>set_body_multipart</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_body_multipart("test", "text/plain", "delimiter");
+...
+Will produce:
+...
+Content-Type: multipart/mixed;boundary="delimiter"
+Mime-Version: 1.0
+
+--delimiter
+Content-Type: text/plain
+
+text
+
+--delimiter
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.append_body_part">
+		<title>
+		<function moreinfo="none">append_body_part(txt,content_type[, content_disposition])</function>
+		</title>
+		<para>
+		Append a part on multipart body SIP message. Will use "unique-boundary-1" as boundary.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - text for the multipart body, can include
+				pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header,
+				can include pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_disposition</emphasis> - value of Content-Disposition header,
+				can include pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<para>
+		The core will take care of the last boundary ending "--". Detecting wich one is
+		the last and fixing the others if needed.
+		</para>
+		<example>
+		<title><function>append_body_part</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c"
+append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handling=required");
+...
+Will append this the body:
+...
+Content-Type: application/vnd.cirpack.isdn-ext
+Content-Disposition: signal;handling=required
+
+7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c
+
+--unique-boundary-1
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.remove_body_part">
+		<title>
+		<function moreinfo="none">remove_body_part(content_type)</function>
+		</title>
+		<para>
+		Remove a part on a multipart body SIP message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header
+				of the part to be removed. If more than one exists the first
+				occurrence will be removed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<para>
+		The core will take care of the last boundary ending "--". Detecting wich one is
+		the last and fixing the others if needed.
+		</para>
+		<example>
+		<title><function>remove_body_part</function> usage</title>
+		<programlisting format="linespecific">
+...
+remove_body_part("application/vnd.cirpack.isdn-ext");
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 		<title>Known Limitations</title>

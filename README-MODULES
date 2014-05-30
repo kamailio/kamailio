@@ -37,6 +37,7 @@ app_lua			Lang :: Execute embedded LUA scripts
 app_mono		Lang :: Execute embedded MONO scripts (like C#, Java, javascript)
 app_perl		Lang :: Embedded perl script support
 app_python		Lang :: Execute embedded Python scripts
+app_java		Lang :: Execute embedded Java compiled code
 async			Asynchronus SIP request handling functions
 auth			MD5 digest authentication support
 auth_db			Authentication using a database module

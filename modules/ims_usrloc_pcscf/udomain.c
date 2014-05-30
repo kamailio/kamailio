@@ -715,18 +715,17 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	if (VAL_NULL(vals+5) || !rx_session_id.s || !rx_session_id.s[0]) {
 		rx_session_id.len = 0;
 		rx_session_id.s = 0;
-		LM_DBG("2\n");
 	} else {
 		rx_session_id.len = strlen(rx_session_id.s);
 	}
 	ci.rx_regsession_id = &rx_session_id;
 	if (VAL_NULL(vals + 6)) {
-		LM_CRIT("empty registration state in DB\n");
+		LM_ERR("empty registration state in DB\n");
 		return 0;
 	}
 	ci.reg_state = VAL_INT(vals + 6);
 	if (VAL_NULL(vals + 7)) {
-		LM_CRIT("empty expire\n");
+		LM_ERR("empty expire\n");
 		return 0;
 	}
 	ci.expires = VAL_TIME(vals + 7);
@@ -741,7 +740,7 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 
 	//public IDs - implicit set
 	implicit_impus.s = (char*) VAL_STRING(vals + 10);
-	if (!VAL_NULL(vals + 8) && implicit_impus.s && implicit_impus.s[0]) {
+	if (!VAL_NULL(vals + 10) && implicit_impus.s && implicit_impus.s[0]) {
 		//how many
 		n=0;
 		p = implicit_impus.s;

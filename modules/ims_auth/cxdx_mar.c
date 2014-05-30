@@ -387,8 +387,6 @@ success:
         //TODO need to confirm that removing this has done no problems
         //tmp->auth_data->code = -tmp->auth_data->code;
 
-	LM_DBG("Added new auth-vector.\n");
-
         tmp = tmp->next;
     }
 
@@ -396,29 +394,34 @@ success:
     //right now we take the first and put the rest in the AV queue
     //then we use the first one and then add it to the queue as sent!
 
-    for (i = 1; i < sip_number_auth_items; i++)
+    for (i = 1; i < sip_number_auth_items; i++) {
         if (!add_auth_vector(private_identity, public_identity, avlist[i]))
             free_auth_vector(avlist[i]);
-
-    if (!pack_challenge(t->uas.request, data->realm, avlist[0], data->is_proxy_auth)) {
-        stateful_request_reply_async(t, t->uas.request, 500, MSG_500_PACK_AV);
-        result = CSCF_RETURN_FALSE;
-        goto done;
     }
 
-    if (data->is_proxy_auth)
-        stateful_request_reply_async(t, t->uas.request, 407, MSG_407_CHALLENGE);
-    else
-        stateful_request_reply_async(t, t->uas.request, 401, MSG_401_CHALLENGE);
+    if (!data->is_resync) {
+		if (!pack_challenge(t->uas.request, data->realm, avlist[0], data->is_proxy_auth)) {
+			stateful_request_reply_async(t, t->uas.request, 500, MSG_500_PACK_AV);
+			result = CSCF_RETURN_FALSE;
+			goto done;
+		}
+
+		if (data->is_proxy_auth)
+			stateful_request_reply_async(t, t->uas.request, 407, MSG_407_CHALLENGE);
+		else
+			stateful_request_reply_async(t, t->uas.request, 401, MSG_401_CHALLENGE);
+    }
 
 done:
-    if (avlist) {
-        start_reg_await_timer(avlist[0]); //start the timer to remove stale or unused Auth Vectors
 
-        //now we add it to the queue as sent as we have already sent the challenge and used it and set the status to SENT
-        if (!add_auth_vector(private_identity, public_identity, avlist[0]))
-            free_auth_vector(avlist[0]);
-    }
+	if (avlist) {
+		if (!data->is_resync)	//only start the timer if we used the vector above - we dont use it resync mode
+		start_reg_await_timer(avlist[0]); //start the timer to remove stale or unused Auth Vectors
+
+		//now we add it to the queue as sent as we have already sent the challenge and used it and set the status to SENT
+		if (!add_auth_vector(private_identity, public_identity, avlist[0]))
+			free_auth_vector(avlist[0]);
+	}
 
     //free memory
     if (maa) cdpb.AAAFreeMessage(&maa);

@@ -119,6 +119,7 @@ int ignore_failed_auth = 0;
 static cmd_export_t cmds[] = {
     {"ims_www_authenticate", (cmd_function) www_authenticate, 1, auth_fixup, 0, REQUEST_ROUTE},
     {"ims_www_challenge", (cmd_function) www_challenge, 2, challenge_fixup_async, 0, REQUEST_ROUTE},
+    {"ims_www_resync_auth", (cmd_function) www_resync_auth, 2, challenge_fixup_async, 0, REQUEST_ROUTE},
     {"ims_proxy_authenticate", (cmd_function) proxy_authenticate, 1, auth_fixup, 0, REQUEST_ROUTE},
     {"ims_proxy_challenge", (cmd_function) proxy_challenge, 2, auth_fixup_async, 0, REQUEST_ROUTE},
     {"bind_ims_auth", (cmd_function) bind_ims_auth, 0, 0, 0, 0},

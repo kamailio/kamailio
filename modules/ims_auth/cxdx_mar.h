@@ -63,6 +63,7 @@ typedef struct saved_transaction {
 	unsigned int ticks;
 	cfg_action_t *act;
 	int is_proxy_auth;
+	int is_resync;
     str realm;
 } saved_transaction_t;
 

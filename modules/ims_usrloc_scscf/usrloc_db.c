@@ -637,6 +637,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 			if (impu_id < 0) {
 				LM_ERR("impu_id has not been set [%.*s] - we cannot read contacts from DB....aborting preload\n", impu.len, impu.s);
 				//TODO: check frees
+				unlock_udomain(_d, &impu);
 				continue;
 			}
 			impu_id_len = int_to_str_len(impu_id);
@@ -649,6 +650,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 				if (!query_buffer.s) {
 					LM_ERR("mo more pkg mem\n");
 					//TODO: check free
+					unlock_udomain(_d, &impu);
 					return -1;
 				}
 				query_buffer_len = len;
@@ -661,11 +663,13 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 				LM_ERR("Unable to query DB for contacts associated with impu [%.*s]\n",
 						impu.len, impu.s);
 				ul_dbf.free_result(_c, contact_rs);
+				unlock_udomain(_d, &impu);
 				continue;
 			}
 			if (RES_ROW_N(contact_rs) == 0) {
 				LM_DBG("no contacts associated with impu [%.*s]\n",impu.len, impu.s);
 				ul_dbf.free_result(_c, contact_rs);
+				unlock_udomain(_d, &impu);
 				continue;
 			}
 
@@ -682,6 +686,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 					}
 					if (dbrow2contact(contact_vals, &contact_data) != 0) {
 						LM_ERR("unable to convert contact row from DB into valid data... moving on\n");
+						unlock_udomain(_d, &impu);
 						continue;
 					}
 
@@ -695,6 +700,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 					if (ul_dbf.fetch_result(_c, &contact_rs, ul_fetch_rows) < 0) {
 						LM_ERR("fetching rows failed\n");
 						ul_dbf.free_result(_c, contact_rs);
+						unlock_udomain(_d, &impu);
 						return -1;
 					}
 				} else {

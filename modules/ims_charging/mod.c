@@ -122,7 +122,7 @@ stat_export_t charging_stats[] = {
     {"ccr_responses_time", STAT_NO_RESET, &ccr_responses_time},
     {"billed_secs", STAT_NO_RESET, &billed_secs},
     {"killed_calls", STAT_NO_RESET, &killed_calls},
-    {"ccr_timeouts", STAT_NO_RESET, &ccr_timeouts},
+    {"ccr_timeouts", 0, &ccr_timeouts},
     {0, 0, 0}
 };
 
@@ -149,9 +149,6 @@ int fix_parameters() {
 
 	cfg.destination_realm.s = ro_destination_realm_s;
 	cfg.destination_realm.len = strlen(ro_destination_realm_s);
-
-	cfg.destination_host.s = ro_destination_host_s;
-	cfg.destination_host.len = strlen(ro_destination_host_s);
 
 	cfg.service_context_id = shm_malloc(sizeof(str));
 	if (!cfg.service_context_id) {

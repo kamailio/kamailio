@@ -51,7 +51,9 @@
 #include "diameter_peer.h"
 #include "config.h"
 #include "cdp_load.h"
-
+#include "cdp_rpc.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 #include "../../cfg/cfg_struct.h"
 
 MODULE_VERSION
@@ -198,6 +200,10 @@ struct module_exports exports = {
  */
 static int cdp_init( void )
 {
+	if (rpc_register_array(cdp_rpc) != 0) {
+		LM_ERR("failed to register RPC commands for CDP module\n");
+		return -1;
+	}
 #ifdef STATISTICS
 	/* register statistics */
 	if ( register_stat("cdp", "replies_response_time", &replies_response_time,0 )!=0 ) {

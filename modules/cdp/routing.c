@@ -48,7 +48,10 @@
 #include "peermanager.h"
 #include "diameter_api.h"
 
+#define LB_MAX_PEERS 20			/**< maximum peers that can be loadbalanced accross i.e. same metric */
+
 extern dp_config *config;		/**< Configuration for this diameter peer 	*/
+int gcount = 0;
 
 /**
  * Returns if the peer advertised support for an Application ID
@@ -74,11 +77,19 @@ int peer_handles_application(peer *p,int app_id,int vendor_id)
  */
 peer* get_first_connected_route(routing_entry *r,int app_id,int vendor_id)
 {
+	peer *peers[LB_MAX_PEERS];
+	int peer_count=0;
+	int prev_metric=0;
 	routing_entry *i;
 	peer *p;
+	int j;
+	time_t least_recent_time;
+
 	LM_DBG("get_first_connected_route in list %p for app_id %d and vendor_id %d\n",
 		r,app_id,vendor_id);
 	for(i=r;i;i=i->next){
+		if (peer_count >= LB_MAX_PEERS)
+			break;
 		p = get_peer_by_fqdn(&(i->fqdn));
 		if (!p)
 			LM_DBG("The peer %.*s does not seem to be connected or configured\n",
@@ -86,12 +97,33 @@ peer* get_first_connected_route(routing_entry *r,int app_id,int vendor_id)
 		else
 			LM_DBG("The peer %.*s state is %s\n",i->fqdn.len,i->fqdn.s,
 				(p->state==I_Open||p->state==R_Open)?"opened":"closed");
-		if (p && (p->state==I_Open || p->state==R_Open) && peer_handles_application(p,app_id,vendor_id)) {			
+		if (p && !p->disabled && (p->state==I_Open || p->state==R_Open) && peer_handles_application(p,app_id,vendor_id)) {
 			LM_DBG("The peer %.*s matches - will forward there\n",i->fqdn.len,i->fqdn.s);
-			return p;
+			if (peer_count!=0) {//check the metric
+				if (i->metric != prev_metric)
+					break;
+				//metric must be the same
+				peers[peer_count++] = p;
+			} else {//we're first
+				prev_metric = i->metric;
+				peers[peer_count++] = p;
+			}
 		}
 	}
-	return 0;
+
+	if (peer_count==0)
+		return 0;
+
+	least_recent_time = peers[0]->last_selected;
+	p = peers[0];
+	for (j=1; j<peer_count; j++) {
+		if (peers[j]->last_selected < least_recent_time) {
+			least_recent_time = peers[j]->last_selected;
+			p = peers[j];
+		}
+	}
+
+	return p;
 }
 
 /**
@@ -112,6 +144,8 @@ peer* get_routing_peer(AAAMessage *m)
 	routing_realm *rr;
 	int app_id=0,vendor_id=0;
 	
+	LM_DBG("getting diameter routing peer for realm: [%.*s]\n", m->dest_realm->data.len, m->dest_realm->data.s);
+
 	app_id = m->applicationId;	
 	avp = AAAFindMatchingAVP(m,0,AVP_Vendor_Specific_Application_Id,0,AAA_FORWARD_SEARCH);
 	if (avp){
@@ -151,7 +185,10 @@ peer* get_routing_peer(AAAMessage *m)
 	if (destination_host.len){
 		/* There is a destination host present in the message try and route directly there */
 		p = get_peer_by_fqdn(&destination_host);
-		if (p && (p->state==I_Open || p->state==R_Open) && peer_handles_application(p,app_id,vendor_id)) return p;
+		if (p && (p->state==I_Open || p->state==R_Open) && peer_handles_application(p,app_id,vendor_id)) {
+			p->last_selected = time(NULL);
+			return p;
+		}
 		/* the destination host peer is not connected at the moment, try a normal route then */
 	}
 	
@@ -178,6 +215,7 @@ peer* get_routing_peer(AAAMessage *m)
 	}
 	/* if not found in the realms or no destination_realm, 
 	 * get the first connected host in default routes */
+	LM_DBG("no routing peer found, trying default route\n");
 	p = get_first_connected_route(config->r_table->routes,app_id,vendor_id);
 	if (!p){
 		LM_ERR("get_routing_peer(): No connected DefaultRoute peer found for app_id %d and vendor id %d.\n",

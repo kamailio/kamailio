@@ -101,7 +101,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	xmlDocPtr  doc = NULL;
 	xmlNodePtr root_node = NULL;
 	xmlNsPtr   namespace = NULL;
-	int winner_priority = -1, priority;
+	/*int winner_priority = -1, priority;*/
 
 	xmlNodePtr p_root= NULL;
 	xmlDocPtr* xml_array ;
@@ -111,6 +111,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	xmlNodePtr confirmed_node = NULL;
 	xmlNodePtr proceed_node = NULL;
 	xmlNodePtr trying_node = NULL;
+	xmlNodePtr next_node = NULL;
 
 
 	char *state = NULL;
@@ -214,7 +215,8 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 			goto error;
 		}
 		if (p_root->children) {
-			for (node = p_root->children; node; node = node->next) {
+			for (node = p_root->children; node; node = next_node) {
+				next_node = node->next;
 				if (node->type == XML_ELEMENT_NODE) {
 					LM_DBG("node type: Element, name: %s\n", node->name);
 					/* we do not copy the node, but unlink it and then add it ot the new node

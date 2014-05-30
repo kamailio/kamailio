@@ -162,4 +162,7 @@ void fix_global_req_flags(str* gname, str* name);
 
 int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
 		unsigned int id);
+
+/* returns a copy in private memory of the boundary in a multipart body */
+int get_boundary(struct sip_msg* msg, str* boundary);
 #endif

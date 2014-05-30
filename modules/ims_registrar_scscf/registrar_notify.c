@@ -1444,6 +1444,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
         res = ul.get_impurecord(_t, &(impu_list[i]), &r);
         if (res != 0) {
             LM_WARN("impu disappeared, ignoring it\n");
+	    ul.unlock_udomain(_t, &impu_list[i]);
             continue;
         }
         LM_DBG("Retrieved IMPU record");
@@ -1600,7 +1601,7 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
             }
             if (c->q != -1) {
                 float q = (float) c->q / 1000;
-                sprintf(pad.s, contact_s_q.s, c, r_active.len, r_active.s, r_registered.len, r_registered.s, c->expires - act_time, q);
+		sprintf(pad.s, contact_s_q.s, c, state.len, state.s, event.len, event.s, expires, q);
             } else
                 sprintf(pad.s, contact_s.s, c, state.len, state.s, event.len, event.s, expires);
             pad.len = strlen(pad.s);

@@ -220,6 +220,25 @@ modparam("app_perl", "reset_cycles", 100000)
 </programlisting>
 			</example>
 		</section>
+
+		<section id="app_perl.p.perl_destroy_func">
+			<title><varname>perl_destroy_func</varname> (string)</title>
+			<para>
+			The name of Perl function to be executed before the interpreter is
+			re-initialized (reset -- see reset_cycles parameter) at runtime.
+			This could be useful to clean global variables or file descriptors
+			from the Perl script.
+			</para>
+			<example>
+			<title>Set <varname>perl_destroy_func</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
+...
+</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section>

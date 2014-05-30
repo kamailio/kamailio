@@ -93,4 +93,6 @@ int tls_h_fix_read_conn(struct tcp_connection *c);
 
 int tls_connect(struct tcp_connection *c, int* error);
 int tls_accept(struct tcp_connection *c, int* error);
+
+void tls_lookup_event_routes(void);
 #endif /* _TLS_SERVER_H */

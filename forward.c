@@ -121,6 +121,12 @@
 static int mhomed_sock_cache_disabled = 0;
 static int sock_inet = -1;
 static int sock_inet6 = -1;
+static int _forward_set_send_info = 0;
+
+void forward_set_send_info(int v)
+{
+	_forward_set_send_info = v;
+}
 
 static void apply_force_send_socket(struct dest_info* dst, struct sip_msg* msg);
 
@@ -497,6 +503,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	int ret;
 	struct ip_addr ip; /* debugging only */
 	char proto;
+	struct onsend_info onsnd_info = {0};
 #ifdef USE_DNS_FAILOVER
 	struct socket_info* prev_send_sock;
 	int err;
@@ -623,7 +630,18 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			}
 		}
 #endif
+
+		if(unlikely(_forward_set_send_info==1)) {
+			onsnd_info.to=&send_info->to;
+			onsnd_info.send_sock=send_info->send_sock;
+			onsnd_info.buf=buf;
+			onsnd_info.len=len;
+			onsnd_info.msg=msg;
+			p_onsend=&onsnd_info;
+		}
+
 		if (msg_send(send_info, buf, len)<0){
+			p_onsend=0;
 			ret=ser_error=E_SEND;
 #ifdef USE_DST_BLACKLIST
 			(void)dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
@@ -634,6 +652,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			goto error;
 #endif
 		}else{
+			p_onsend=0;
 			ret=ser_error=E_OK;
 			/* sent requests stats */
 			STATS_TX_REQUEST(  msg->first_line.u.request.method_value );

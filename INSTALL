@@ -131,6 +131,8 @@ Requirements:
 - libsctp devel headers - if you want to compile the SCTP transport in the core
 - libssl devel headers (openssl project) - if you want to compule the TLS module
 - linunistring - for the Websockets module
+- python and devel headers for python module
+- jdk and gcj for java module
 
 
 OS Notes:

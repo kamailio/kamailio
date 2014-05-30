@@ -88,8 +88,8 @@
 	<section>
 		<title>Java runtime</title>
 		<section>
-			<title/>
-			<para>Java runtime library (JRE or JDK) is required to use this module.</para>
+			<title>JRE or JDK is required to use this module</title>
+			<para>Java runtime library (JRE and JDK for building app_java) is required to use this module.</para>
 		</section>
 	</section>
 	<!-- end of section Java Runtime -->
@@ -166,7 +166,9 @@ modparam("app_java", "java_options", "-Djava.compiler=NONE")
 				<programlisting format="linespecific">
 ...
 # Assumes "application java folder" is located at /opt/kamailio/java
-modparam("app_java", "java_options", "-Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+modparam("app_java", "java_options", "-Djava.compiler=NONE 
+    -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:
+    /opt/kamailio/java/kamailio.jar")
 ...
 </programlisting>
 			</example>
@@ -175,7 +177,9 @@ modparam("app_java", "java_options", "-Djava.compiler=NONE -Djava.class.path=/pa
 				<programlisting format="linespecific">
 ...
 # Assumes "application java folder" is located at /opt/kamailio/java
-modparam("app_java", "java_options", "-verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+modparam("app_java", "java_options", "-verbose:gc,class,jni 
+    -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:
+    /opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
 ...
 </programlisting>
 			</example>
@@ -184,7 +188,9 @@ modparam("app_java", "java_options", "-verbose:gc,class,jni -Djava.compiler=NONE
 				<programlisting format="linespecific">
 ...
 # Assumes "application java folder" is located at /opt/kamailio/java
-modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni 
+    -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:
+    /opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
 ...
 </programlisting>
 			</example>
@@ -240,7 +246,8 @@ modparam("app_java", "force_cmd_exec", 1)
 		object       L 
 		short        S 
 		void         V 
-		Note that to specify an object, the "L" is followed by the object's class name and ends with a semi-colon, ';' .
+		Note that to specify an object, the "L" is followed by the 
+		object's class name and ends with a semi-colon, ';' .
     			</programlisting>
 			</para>
     		<para> app_java supports the following signatures:
@@ -263,7 +270,8 @@ modparam("app_java", "force_cmd_exec", 1)
 	Parameters are optional, ommitting a parameter meant the passed value is NULL.
 	Parameters count should be exactly the same as signature count.
 	Note 1: Arrays representation (symbol '[') is not supported yet.
-	Note 2: You shall use a correct signature, e.g. the following examples of combinations are invalid:    
+	Note 2: You shall use a correct signature, e.g. the following examples of
+	combinations are invalid:
     	java_method_exec("ExampleMethod", "ZI", "False");
         java_method_exec("ExampleMethod", "LI", "something", "5");
 </programlisting>
@@ -293,8 +301,8 @@ java_method_exec("ExampleMethod", "V");
 # Java
 public int ExampleMethod()
 {
-		... do something;
-		return 1;
+    ... do something;
+    return 1;
 }
 </programlisting>
 			    	</example>
@@ -316,8 +324,8 @@ java_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Java
 public int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
 {
-		... do something with buffer;
-		return 1;
+    ... do something with buffer;
+    return 1;
 }
 </programlisting>
 	    			</example>
@@ -339,11 +347,12 @@ java_method_exec("ExampleMethod", "ZB", "true", "0x05");
 # Java
 public int ExampleMethod(boolean flagSet, byte bFlag);
 {
-		if (flagSet)
-		{
-			... do something with flags;
-		}
-		return 1;
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
 }
 </programlisting>
     				</example>
@@ -373,8 +382,8 @@ java_staticmethod_exec("ExampleMethod", "V");
 # Java
 public static int ExampleMethod()
 {
-		... do something;
-		return 1;
+    ... do something;
+    return 1;
 }
 </programlisting>
     				</example>
@@ -396,8 +405,8 @@ java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Java
 public static int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
 {
-		... do something with buffer;
-		return 1;
+    ... do something with buffer;
+    return 1;
 }
 </programlisting>
     				</example>
@@ -419,11 +428,12 @@ java_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");
 # Java
 public static int ExampleMethod(boolean flagSet, byte bFlag);
 {
-		if (flagSet)
-		{
-			... do something with flags;
-		}
-		return 1;
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
 }
 </programlisting>
     				</example>
@@ -454,8 +464,8 @@ java_s_method_exec("ExampleMethod", "V");
 # Java
 public synchronized int ExampleMethod()
 {
-		... do something;
-		return 1;
+    ... do something;
+    return 1;
 }
 </programlisting>
     				</example>
@@ -477,8 +487,8 @@ java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Java
 public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
 {
-		... do something with buffer;
-		return 1;
+    ... do something with buffer;
+    return 1;
 }
 </programlisting>
     				</example>
@@ -500,11 +510,12 @@ java_s_method_exec("ExampleMethod", "ZB", "true", "0x05");
 # Java
 public synchronized int ExampleMethod(boolean flagSet, byte bFlag);
 {
-		if (flagSet)
-		{
-			... do something with flags;
-		}
-		return 1;
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
 }
 </programlisting>
     				</example>
@@ -535,8 +546,8 @@ java_s_staticmethod_exec("ExampleMethod", "V");
 # Java
 public static synchronized int ExampleMethod()
 {
-		... do something;
-		return 1;
+    ... do something;
+    return 1;
 }
 </programlisting>
     				</example>
@@ -558,8 +569,8 @@ java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Java
 public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
 {
-		... do something with buffer;
-		return 1;
+    ... do something with buffer;
+    return 1;
 }
 </programlisting>
     				</example>
@@ -581,11 +592,12 @@ java_s_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");
 # Java
 public static synchronized int ExampleMethod(boolean flagSet, byte bFlag);
 {
-		if (flagSet)
-		{
-			... do something with flags;
-		}
-		return 1;
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
 }
 </programlisting>
     				</example>
@@ -616,25 +628,25 @@ import org.siprouter.NativeInterface.*;
 
 public class Kamailio extends NativeMethods
 {
-		/* Here you should specify a full path to app_java.so */
-		static
-		{
-				System.load("/opt/kamailio/lib/kamailio/modules/app_java.so");
-		}
+    /* Here you should specify a full path to app_java.so */
+    static
+    {
+        System.load("/opt/kamailio/lib/kamailio/modules/app_java.so");
+    }
 
-		/* Constructor. Do not remove !!! */
-		public Kamailio()
-		{
-		}
+    /* Constructor. Do not remove !!! */
+    public Kamailio()
+    {
+    }
 
-		/*
-		This method should be executed for each children process, immediately after forking.
-		Required. Do not remove !!!
-		*/
-		public int child_init(int rank)
-		{
-				return 1;
-		}
+    /*
+        This method should be executed for each children process, immediately after forking.
+	Required. Do not remove !!!
+    */
+    public int child_init(int rank)
+    {
+	return 1;
+    }
 }
 </programlisting>
     		</example>
