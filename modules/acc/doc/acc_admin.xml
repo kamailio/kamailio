@@ -1479,6 +1479,26 @@ modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 </programlisting>
 		</example>
 	</section>
+	<section id="acc.p.reason_from_reason_hf">
+		<title><varname>reason_from_reason_hf</varname> (int)</title>
+		<para>
+		Tells where to take sip_reason from.  If value is 0,
+		sip_reason is taken from status line.  Otherwise, sip_reason
+		is taken from Reason header field(s) if present.
+		Currently only the first Reason header is used.
+		</para>
+		<para>
+		Default value is 0.
+		</para>
+		<example>
+		<title>reason_from_reason_hf</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "reason_from_reason_hf", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

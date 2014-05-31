@@ -42,6 +42,7 @@
 #include "../../sr_module.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
+#include "../../lib/kcore/cmpapi.h"
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 #include "../../flags.h"
@@ -132,6 +133,8 @@ static inline void env_set_text(char *p, int len)
 static inline void env_set_code_status( int code, struct sip_msg *reply)
 {
 	static char code_buf[INT2STR_MAX_LEN];
+	str reason = {"Reason", 6};
+	struct hdr_field *hf;
 
 	acc_env.code = code;
 	if (reply==FAKED_REPLY || reply==NULL) {
@@ -143,7 +146,23 @@ static inline void env_set_code_status( int code, struct sip_msg *reply)
 		acc_env.reason.len = strlen(acc_env.reason.s);
 	} else {
 		acc_env.code_s = reply->first_line.u.reply.status;
-		acc_env.reason = reply->first_line.u.reply.reason;
+		hf = NULL;
+	        if (reason_from_reason_hf) {
+			/* TODO: take reason from all Reason headers */
+			if(parse_headers(reply, HDR_EOH_F, 0) < 0) {
+				LM_ERR("error parsing headers\n");
+			} else {
+				for (hf=reply->headers; hf; hf=hf->next) {
+					if (cmp_hdrname_str(&hf->name, &reason)==0)
+						break;
+				}
+			}
+		}
+		if (hf == NULL) {
+			acc_env.reason = reply->first_line.u.reply.reason;
+		} else {
+			acc_env.reason = hf->body;
+		}
 	}
 }
 

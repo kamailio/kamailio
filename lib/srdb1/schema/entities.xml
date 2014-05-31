@@ -13,7 +13,7 @@
 <!ENTITY avp_val_len "128">
 <!ENTITY ip_add_len "50">
 <!ENTITY sip_code_len "3">
-<!ENTITY sip_reason_len "32">
+<!ENTITY sip_reason_len "128">
 <!ENTITY cseq_len "11">
 <!ENTITY callid_len "255">
 <!ENTITY expires_len "11">

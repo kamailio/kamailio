@@ -110,6 +110,7 @@ static char* leg_info_str = 0;	/*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
 int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
 char *acc_time_format = "%Y-%m-%d %H:%M:%S";
+int reason_from_reason_hf = 0; /*!< assign reason from reason hf if present */
 
 /* ----- time mode variables ------- */
 /*! \name AccTimeModeVariables  Time Mode Variables */
@@ -258,6 +259,7 @@ static param_export_t params[] = {
 	{"multi_leg_info",          STR_PARAM, &leg_info_str            },
 	{"detect_direction",        INT_PARAM, &detect_direction        },
 	{"acc_prepare_flag",        INT_PARAM, &acc_prepare_flag        },
+	{"reason_from_reason_hf",   INT_PARAM, &reason_from_reason_hf   },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
