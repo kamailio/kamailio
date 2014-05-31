@@ -131,7 +131,7 @@ Sven Knoblich
               6.48. time_attr (str)
               6.49. time_exten (str)
               6.50. time_format (str)
-              6.51. reason_from_reason_hf (int)
+              6.51. reason_from_hf (int)
 
         7. Functions
 
@@ -194,7 +194,7 @@ Sven Knoblich
    1.48. time_attr example
    1.49. time_exten example
    1.50. time_format example
-   1.51. reason_from_reason_hf
+   1.51. reason_from_hf
    1.52. acc_log_request usage
    1.53. acc_db_request usage
    1.54. acc_rad_request usage
@@ -293,7 +293,7 @@ Chapter 1. Admin Guide
         6.48. time_attr (str)
         6.49. time_exten (str)
         6.50. time_format (str)
-        6.51. reason_from_reason_hf (int)
+        6.51. reason_from_hf (int)
 
    7. Functions
 
@@ -708,7 +708,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.48. time_attr (str)
    6.49. time_exten (str)
    6.50. time_format (str)
-   6.51. reason_from_reason_hf (int)
+   6.51. reason_from_hf (int)
 
 6.1. early_media (integer)
 
@@ -1354,7 +1354,7 @@ modparam("acc", "time_exten", "micorsecs")
 modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 ...
 
-6.51. reason_from_reason_hf (int)
+6.51. reason_from_hf (int)
 
    Tells where to take sip_reason from. If value is 0, sip_reason is taken
    from status line. Otherwise, sip_reason is taken from Reason header
@@ -1362,9 +1362,9 @@ modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 
    Default value is 0.
 
-   Example 1.51. reason_from_reason_hf
+   Example 1.51. reason_from_hf
 ...
-modparam("acc", "reason_from_reason_hf", 1)
+modparam("acc", "reason_from_hf", 1)
 ...
 
 7. Functions

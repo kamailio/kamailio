@@ -147,7 +147,7 @@ static inline void env_set_code_status( int code, struct sip_msg *reply)
 	} else {
 		acc_env.code_s = reply->first_line.u.reply.status;
 		hf = NULL;
-	        if (reason_from_reason_hf) {
+	        if (reason_from_hf) {
 			/* TODO: take reason from all Reason headers */
 			if(parse_headers(reply, HDR_EOH_F, 0) < 0) {
 				LM_ERR("error parsing headers\n");
