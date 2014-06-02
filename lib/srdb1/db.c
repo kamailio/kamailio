@@ -325,6 +325,8 @@ db1_con_t* db_do_init2(const str* url, void* (*new_connection)(), db_pooling_t p
 		pool_insert((struct pool_con*)con);
 	} else {
 		LM_DBG("connection %p found in pool\n", id);
+		free_db_id(id); // free the new id, as we use the pool instead
+		id = 0;
 	}
 
 	res->tail = (unsigned long)con;
