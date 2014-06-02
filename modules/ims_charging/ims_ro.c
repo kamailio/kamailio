@@ -477,7 +477,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     subscription_id_t subscr;
     time_stamps_t *time_stamps;
 	struct interim_ccr *i_req = shm_malloc(sizeof(struct interim_ccr));
-
+	int ret = 0;
     event_type_t *event_type;
     int node_role = 0;
 
@@ -590,11 +590,14 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     cdpb.AAASessionsUnlock(auth->hash);
 
     if (ro_forced_peer.len > 0) {
-    	cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_interim_ccr, (void *) i_req);
+    	ret = cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_interim_ccr, (void *) i_req);
     } else {
-    	cdpb.AAASendMessage(ccr, resume_on_interim_ccr, (void *) i_req);
+    	ret = cdpb.AAASendMessage(ccr, resume_on_interim_ccr, (void *) i_req);
     }
 
+    if (ret != 1) {
+    	goto error;
+    }
 //    cdpb.AAASessionsUnlock(auth->hash);
 
     Ro_free_CCR(ro_ccr_data);
@@ -703,6 +706,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
     time_stamps_t *time_stamps;
     unsigned int used = 0;
     str user_name = {0, 0};
+    int ret  = 0;
     
     if (ro_session->event_type != pending) {
         used = time(0) - ro_session->last_event_timestamp;
@@ -814,9 +818,13 @@ void send_ccr_stop(struct ro_session *ro_session) {
     cdpb.AAASessionsUnlock(auth->hash);
 
     if (ro_forced_peer.len > 0) {
-    	cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_termination_ccr, NULL);
+    	ret = cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_termination_ccr, NULL);
     } else {
-    	cdpb.AAASendMessage(ccr, resume_on_termination_ccr, NULL);
+    	ret = cdpb.AAASendMessage(ccr, resume_on_termination_ccr, NULL);
+    }
+
+    if (ret != 1) {
+    	goto error1;
     }
 
     Ro_free_CCR(ro_ccr_data);
@@ -869,14 +877,13 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
     	LM_DBG("Valid CCA response for STOP record\n");
     }
 
-//   Ro_free_CCA(ro_cca_data);
-//   cdpb.AAAFreeMessage(&cca);
-
     update_stat(successful_final_ccrs, 1);
 
 error:
 	Ro_free_CCA(ro_cca_data);
-    cdpb.AAAFreeMessage(&cca);
+	if (!is_timeout && cca) {
+		cdpb.AAAFreeMessage(&cca);
+	}
 }
 
 
@@ -905,13 +912,19 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
     Ro_CCR_t * ro_ccr_data = 0;
     AAAMessage * ccr = 0;
     struct ro_session *new_session = 0;
-    struct session_setup_data *ssd = shm_malloc(sizeof(struct session_setup_data)); // lookup structure used to load session info from cdp callback on CCA
-
+    struct session_setup_data *ssd;
+    int ret = 0;
     struct hdr_field *h=0;
     
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
     int free_called_asserted_identity = 0;
+
+    ssd = shm_malloc(sizeof(struct session_setup_data)); // lookup structure used to load session info from cdp callback on CCA
+    if (!ssd) {
+    	LM_ERR("no more shm mem\n");
+    	goto error;
+    }
 
     //getting asserted identity
     if ((asserted_identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
@@ -1020,10 +1033,15 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
 
     if (ro_forced_peer.len > 0) {
     	LM_DBG("Sending message with Peer\n");
-    	cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_initial_ccr, (void *) ssd);
+    	ret = cdpb.AAASendMessageToPeer(ccr, &ro_forced_peer, resume_on_initial_ccr, (void *) ssd);
     } else {
     	LM_DBG("Sending message without Peer and realm is [%.*s]\n", ccr->dest_realm->data.len, ccr->dest_realm->data.s);
-    	cdpb.AAASendMessage(ccr, resume_on_initial_ccr, (void *) ssd);
+    	ret = cdpb.AAASendMessage(ccr, resume_on_initial_ccr, (void *) ssd);
+    }
+
+    if (ret != 1) {
+    	LM_ERR("Failed to send Diameter CCR\n");
+    	goto error;
     }
 
     Ro_free_CCR(ro_ccr_data);
@@ -1054,7 +1072,7 @@ error:
     }
 
     if (ssd)
-    	pkg_free(ssd);
+    	shm_free(ssd);
 
     LM_DBG("Trying to reserve credit on initial INVITE failed.\n");
     return RO_RETURN_ERROR;
