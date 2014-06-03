@@ -249,7 +249,10 @@
     <section>
       <title>cxdx_forced_peer (string)</title>
 
-      <para>Forced HSS Peer to use for CxDx Diameter interface</para>
+      <para>FQDN of Diameter Peer (HSS) to use for communication (SAR). If you
+      use this, the routing defined in your diameter xml configuration file
+      (CDP) will be ignored and as a result you will lose the benefits of load
+      balancing and failover.</para>
 
       <para><emphasis> Default value NULL (none)</emphasis></para>
 
@@ -686,7 +689,7 @@ if (can_subscribe_to_reg("location")){
 </programlisting>
       </example>
     </section>
-        
+
     <section>
       <title><function
       moreinfo="none">can_publish_reg(domain)</function></title>
@@ -731,13 +734,12 @@ if (can_publish_reg("location")){
 </programlisting>
       </example>
     </section>
-    
-    <section>
-      <title><function
-      moreinfo="none">publish_reg(domain)</function></title>
 
-      <para>Save the publish to the REG event for the UAC or the
-      appropriate P-CSCF (in the path to the UAC).</para>
+    <section>
+      <title><function moreinfo="none">publish_reg(domain)</function></title>
+
+      <para>Save the publish to the REG event for the UAC or the appropriate
+      P-CSCF (in the path to the UAC).</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
@@ -761,8 +763,7 @@ if (can_publish_reg("location")){
 </programlisting>
       </example>
     </section>
-    
-    </section>
+  </section>
 
   <section>
     <title>RPC Commands</title>
