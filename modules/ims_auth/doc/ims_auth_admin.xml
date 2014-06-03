@@ -223,7 +223,10 @@ modparam("ims_auth", "registration_qop", "auth-int")
     <section>
       <title><varname>cxdx_forced_peer</varname> (string)</title>
 
-      <para>FQDN of Diameter Peer (HSS) to use for communication (MAR)</para>
+      <para>FQDN of Diameter Peer (HSS) to use for communication (MAR). If you
+      use this, the routing defined in your diameter xml configuration file
+      (CDP) will be ignored and as a result you will lose the benefits of load
+      balancing and failover. </para>
 
       <para>Default value is <quote/>.</para>
 
@@ -259,7 +262,8 @@ modparam("ims_auth", "cxdx_dest_realm", "ims.smilecoms.com")
     <section>
       <title><varname>max_nonce_reuse</varname> (integer)</title>
 
-      <para>Defines, how many times a nonce can be reused (provided nc is incremented)</para>
+      <para>Defines, how many times a nonce can be reused (provided nc is
+      incremented)</para>
 
       <para>Default value is <quote>0</quote> (don't allow reuse).</para>
 
@@ -277,9 +281,11 @@ modparam("ims_auth", "max_nonce_reuse", 1)
     <section>
       <title><varname>add_authinfo_hdr</varname> (integer)</title>
 
-      <para>Should an Authentication-Info header be added on 200 OK responses?</para>
+      <para>Should an Authentication-Info header be added on 200 OK
+      responses?</para>
 
-      <para>Default value is <quote>1</quote> (add Authentication-Info header).</para>
+      <para>Default value is <quote>1</quote> (add Authentication-Info
+      header).</para>
 
       <example>
         <title><varname>add_authinfo_hdr</varname> parameter usage</title>
@@ -296,9 +302,12 @@ modparam("ims_auth", "add_authinfo_hdr", 0)
       <title><varname>ignore_failed_auth</varname> (integer)</title>
 
       <para>Ignore invalid passwords (only IMPI/IMPU is checked).</para>
-      <para>It should be used only for testing, e.g. load balancing with SIPP where we don't want to worry about auth.</para>
 
-      <para>Default value is <quote>0</quote> (don't ingnore the failed authentication).</para>
+      <para>It should be used only for testing, e.g. load balancing with SIPP
+      where we don't want to worry about auth.</para>
+
+      <para>Default value is <quote>0</quote> (don't ingnore the failed
+      authentication).</para>
 
       <example>
         <title><varname>ignore_failed_auth</varname> parameter usage</title>
@@ -314,10 +323,16 @@ modparam("ims_auth", "ignore_failed_auth", 1)
     <section>
       <title><varname>av_check_only_impu</varname> (integer)</title>
 
-      <para>When storing the authentication vectors for an account, use either IMPI/IMPU (=0, default) or IMPU (=1).</para>
-      <para>In case the IMPI is different from the IMPU, this option needs to be enabled to allow registration from
-        classic "SIP-clients", such as Snom phones and others, as they do not send an authentication username in the first REGISTER.</para>
-      <para>Default value is <quote>0</quote> (store authentication vectors based on IMPI/IMPU).</para>
+      <para>When storing the authentication vectors for an account, use either
+      IMPI/IMPU (=0, default) or IMPU (=1).</para>
+
+      <para>In case the IMPI is different from the IMPU, this option needs to
+      be enabled to allow registration from classic "SIP-clients", such as
+      Snom phones and others, as they do not send an authentication username
+      in the first REGISTER.</para>
+
+      <para>Default value is <quote>0</quote> (store authentication vectors
+      based on IMPI/IMPU).</para>
 
       <example>
         <title><varname>av_check_only_impu</varname> parameter usage</title>
@@ -329,9 +344,6 @@ modparam("ims_auth", "av_check_only_impu", 1)
 </programlisting>
       </example>
     </section>
-
-
-
   </section>
 
   <section>
@@ -442,6 +454,7 @@ if (!www_authorize("kamailio.org", "subscriber")) {
         <listitem>
           <para>Route block to resume after async MAR Diameter reply.</para>
         </listitem>
+
         <listitem>
           <para><emphasis>realm</emphasis> - Realm is a opaque string that the
           user agent should present to the user so he can decide what username
@@ -528,6 +541,7 @@ route[REG_MAR_REPLY]
         <listitem>
           <para>Route block to resume after async MAR Diameter reply.</para>
         </listitem>
+
         <listitem>
           <para><emphasis>realm</emphasis> - Realm is a opaque string that the
           user agent should present to the user so he can decide what username
