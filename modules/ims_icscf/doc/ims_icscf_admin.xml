@@ -55,14 +55,14 @@
     <section>
       <title><varname>route_lir_user_unknown</varname> (string)</title>
 
-      <para>This is the route which is executed if HSS returns "user unknown" in LIR
-      </para>
+      <para>This is the route which is executed if HSS returns "user unknown"
+      in LIR</para>
 
-      <para><emphasis> Default value is ''.
-      </emphasis></para>
+      <para><emphasis> Default value is ''. </emphasis></para>
 
       <example>
-        <title><varname>route_lir_user_unknown</varname> parameter usage</title>
+        <title><varname>route_lir_user_unknown</varname> parameter
+        usage</title>
 
         <programlisting format="linespecific">
 ...
@@ -71,19 +71,18 @@ modparam("ims_icscf","route_lir_user_unknown", "lir_term_user_unknown")
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>route_uar_user_unknown</varname> (string)</title>
 
-      <para>This is the route which is executed if HSS returns "user unknown" 
-      in UAR.
-      </para>
+      <para>This is the route which is executed if HSS returns "user unknown"
+      in UAR.</para>
 
-      <para><emphasis> Default value is ''.
-      </emphasis></para>
+      <para><emphasis> Default value is ''. </emphasis></para>
 
       <example>
-        <title><varname>route_uar_user_unknown</varname> parameter usage</title>
+        <title><varname>route_uar_user_unknown</varname> parameter
+        usage</title>
 
         <programlisting format="linespecific">
 ...
@@ -92,16 +91,14 @@ modparam("ims_icscf","route_uar_user_unknown", "uar_term_user_unknown")
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>scscf_entry_expiry</varname> (integer)</title>
 
-      <para>This is the time in s after which S-CSCF entries in the I-CSCF's 
-      SCSCF list will expire.
-      </para>
+      <para>This is the time in s after which S-CSCF entries in the I-CSCF's
+      SCSCF list will expire.</para>
 
-      <para><emphasis> Default value is 300.
-      </emphasis></para>
+      <para><emphasis> Default value is 300. </emphasis></para>
 
       <example>
         <title><varname>scscf_entry_expiry</varname> parameter usage</title>
@@ -113,14 +110,16 @@ modparam("ims_icscf","scscf_entry_expiry", 300)
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>cxdx_forced_peer</varname> (string)</title>
 
-      <para>FQDN of Diameter Peer (HSS) to use for communication (MAR)</para>
+      <para>FQDN of Diameter Peer (HSS) to use for communication (UAR, LIR).
+      If you use this, the routing defined in your diameter xml configuration
+      file (CDP) will be ignored and as a result you will lose the benefits of
+      load balancing and failover. </para>
 
-      <para><emphasis> Default value is "".
-      </emphasis></para>
+      <para><emphasis> Default value is "". </emphasis></para>
 
       <example>
         <title><varname>cxdx_forced_peer</varname> parameter usage</title>
@@ -215,7 +214,8 @@ I_scscf_drop();
 
     <section>
       <title><function
-      moreinfo="none">I_perform_user_authorization_request(route_block, capabalities)</function></title>
+      moreinfo="none">I_perform_user_authorization_request(route_block,
+      capabalities)</function></title>
 
       <para>Perform a UAR on Diameter CXDX interface. This function will build
       a list of SCSCFs to be used and populate the SCSCF list for the request.
@@ -226,6 +226,7 @@ I_scscf_drop();
         <listitem>
           <para>Route block to resume after async UAR Diameter reply.</para>
         </listitem>
+
         <listitem>
           <para>capabilities - whether to request capabilities or not "1" -
           with capabilities, "0" - no capabilities.</para>
@@ -334,6 +335,7 @@ route[SESSION_LIR_REPLY]
       </example>
     </section>
   </section>
+
   <section>
     <title>Statistics</title>
 
