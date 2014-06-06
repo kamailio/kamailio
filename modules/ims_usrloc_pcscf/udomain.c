@@ -481,7 +481,7 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 		LM_DBG("Searching for [%.*s] and comparing to [%.*s]\n", _contact->len, _contact->s, c->aor.len, c->aor.s);
 
 		/* hosts HAVE to match */
-		if (lookup_check_received && (needle_uri.host.len != c->received_host.len) || (memcmp(needle_uri.host.s, c->contact_host.s, needle_uri.host.len)!=0)) {
+		if (lookup_check_received && ((needle_uri.host.len != c->received_host.len) || (memcmp(needle_uri.host.s, c->contact_host.s, needle_uri.host.len)!=0))) {
 			//can't possibly match
 			c = c->next;
 			continue;
