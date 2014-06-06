@@ -85,7 +85,7 @@ int db_mode         = 0;						/*!< Database sync scheme: 0-no db, 1-write throug
 int ul_fetch_rows 	= 2000;
 int hashing_type 	= 0;						/*!< has type for storing P-CSCF contacts - 0 - use full contact AOR, 1 - use IP:PORT only */
 
-int lookup_check_received = 1;						/*!< Should we check received on lookup?
+int lookup_check_received = 1;						/*!< Should we check received on lookup? */
 
 db1_con_t* ul_dbh = 0;
 db_func_t ul_dbf; 
