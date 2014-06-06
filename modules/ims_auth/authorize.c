@@ -808,7 +808,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
             32, hbody);
 
     if (!av) {
-        LM_ERR("no matching auth vector found - maybe timer expired\n");
+        LM_DBG("no matching auth vector found - maybe timer expired\n");
 
         if (ignore_failed_auth) {
             LM_WARN("NB: Ignoring all failed auth - check your config if you don't expect this\n");
