@@ -63,6 +63,7 @@
 
 extern int db_mode;
 extern unsigned int hashing_type;
+extern int lookup_check_received;
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -471,7 +472,7 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 				_contact->len,
 				_contact->s);
 
-		if ((c->aorhash == aorhash) && (c->aor.len == _contact->len)
+		if (lookup_check_received && (c->aorhash == aorhash) && (c->aor.len == _contact->len)
 				&& !memcmp(c->aor.s, _contact->s, _contact->len)) {
 			*_c = c;
 			return 0;

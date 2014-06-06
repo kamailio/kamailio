@@ -204,6 +204,33 @@ modparam("ims_usrloc_pcscf", "hashing_type", 1)
 </programlisting>
       </example>
     </section>
+ <section>
+      <title>lookup_check_received (int)</title>
+
+      <para>If set to 1 (default), the Host in the contact will be checked
+	against the Host, from which the request was received.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>0 - Upon lookup, do not check the host against received.</para>
+        </listitem>
+
+        <listitem>
+          <para>1 - Compare the host in the contact against the received info.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para><emphasis>Default value is 1.</emphasis></para>
+
+      <example>
+        <title>Set lookup_check_received parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "lookup_check_received", 0)
+...
+</programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
