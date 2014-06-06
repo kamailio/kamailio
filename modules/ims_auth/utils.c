@@ -283,20 +283,17 @@ int get_nonce_response(struct sip_msg *msg, str realm,str *nonce,str *response,
 str ims_get_body(struct sip_msg * msg)
 {		
 	str x={0,0};
-	x.s = get_body(msg);	
-	if (x.s==0) return x;
+	
 	if (parse_headers(msg,HDR_CONTENTLENGTH_F,0)!=0) {
 		LM_DBG("Error parsing until header Content-Length: \n");
 		return x;
 	}
-	if  (msg->content_length->parsed==NULL) {
-		LM_ERR(" body <%.*s>\n",msg->content_length->body.len,msg->content_length->body.s);
-		parse_content_length(msg->content_length->body.s,
-			msg->content_length->body.s+msg->content_length->body.len,&(x.len));
-		msg->content_length->parsed=(void*)(long)(x.len);
-	}else 
-		x.len = (long)msg->content_length->parsed;
-	return x;
+	x.len = (int)(long)msg->content_length->parsed;
+        
+        if (x.len>0) 
+            x.s = get_body(msg);	
+	
+        return x;
 }
 
 
