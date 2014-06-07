@@ -135,6 +135,9 @@
 	int startcolumn=1;
 	int startline=1;
 	char *finame = 0;
+	char *routename = 0;
+	char *default_routename = 0;
+
 	static int ign_lines=0;
 	static int ign_columns=0;
 	char* yy_number_str=0; /* str correspondent for the current NUMBER token */
@@ -155,6 +158,7 @@
 		int startcolumn;
 		int startline;
 		char *finame;
+		char *routename;
 	} include_stack[MAX_INCLUDE_DEPTH];
 	static int include_stack_ptr = 0;
 
@@ -596,16 +600,24 @@ IMPORTFILE      "import_file"
 <INITIAL>{ISAVPFLAGSET}	{ count(); yylval.strval=yytext; return ISAVPFLAGSET; }
 <INITIAL>{AVPFLAGS_DECL}	{ count(); yylval.strval=yytext; return AVPFLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
-<INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
-<INITIAL>{ROUTE_REQUEST}	{ count(); yylval.strval=yytext; return ROUTE_REQUEST; }
-<INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
+<INITIAL>{ROUTE}	{ count(); default_routename="DEFAULT_ROUTE";
+						yylval.strval=yytext; return ROUTE; }
+<INITIAL>{ROUTE_REQUEST}	{ count(); default_routename="DEFAULT_ROUTE";
+								yylval.strval=yytext; return ROUTE_REQUEST; }
+<INITIAL>{ROUTE_ONREPLY}	{ count(); default_routename="DEFAULT_ONREPLY";
+								yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
-<INITIAL>{ROUTE_REPLY}	{ count(); yylval.strval=yytext; return ROUTE_REPLY; }
-<INITIAL>{ROUTE_FAILURE}	{ count(); yylval.strval=yytext;
+<INITIAL>{ROUTE_REPLY}	{ count(); default_routename="DEFAULT_ONREPLY";
+							yylval.strval=yytext; return ROUTE_REPLY; }
+<INITIAL>{ROUTE_FAILURE}	{ count(); default_routename="DEFAULT_FAILURE";
+								yylval.strval=yytext;
 								return ROUTE_FAILURE; }
-<INITIAL>{ROUTE_BRANCH} { count(); yylval.strval=yytext; return ROUTE_BRANCH; }
-<INITIAL>{ROUTE_SEND} { count(); yylval.strval=yytext; return ROUTE_SEND; }
-<INITIAL>{ROUTE_EVENT} { count(); yylval.strval=yytext; return ROUTE_EVENT; }
+<INITIAL>{ROUTE_BRANCH} { count(); default_routename="DEFAULT_BRANCH";
+							yylval.strval=yytext; return ROUTE_BRANCH; }
+<INITIAL>{ROUTE_SEND} { count(); default_routename="DEFAULT_SEND";
+							yylval.strval=yytext; return ROUTE_SEND; }
+<INITIAL>{ROUTE_EVENT} { count(); default_routename="DEFAULT_EVENT";
+							yylval.strval=yytext; return ROUTE_EVENT; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }
@@ -1593,6 +1605,7 @@ static int sr_push_yy_state(char *fin, int mode)
 	include_stack[include_stack_ptr].startline = startline;
 	include_stack[include_stack_ptr].startcolumn = startcolumn;
 	include_stack[include_stack_ptr].finame = finame;
+	include_stack[include_stack_ptr].routename = routename;
 	include_stack_ptr++;
 
 	line=1;

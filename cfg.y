@@ -256,12 +256,15 @@ extern int column;
 extern int startcolumn;
 extern int startline;
 extern char *finame;
+extern char *routename;
+extern char *default_routename;
 
 #define set_cfg_pos(x) \
 	do{\
 		if(x) {\
 		(x)->cline = line;\
 		(x)->cfile = (finame!=0)?finame:((cfg_file!=0)?cfg_file:"default");\
+		(x)->rname = (routename!=0)?routename:((default_routename!=0)?default_routename:"DEFAULT");\
 		}\
 	}while(0)
 
@@ -1743,9 +1746,10 @@ route_name:		NUMBER	{
 						memcpy($$, tmp, i_tmp);
 						$$[i_tmp]=0;
 					}
+					routename = tmp;
 						}
-			|	ID		{ $$=$1; }
-			|	STRING	{ $$=$1; }
+			|	ID		{ routename = $1; $$=$1; }
+			|	STRING	{ routename = $1; $$=$1; }
 ;
 
 
@@ -3372,6 +3376,7 @@ static void get_cpos(struct cfg_pos* pos)
 	if(finame==0)
 		finame = (cfg_file!=0)?cfg_file:"default";
 	pos->fname=finame;
+	pos->rname=(routename!=0)?routename:default_routename;
 }
 
 

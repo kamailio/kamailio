@@ -156,6 +156,7 @@ struct cfg_pos{
 	unsigned short s_col;
 	unsigned short e_col;
 	char *fname;
+	char *rname;
 };
 
 
@@ -202,6 +203,7 @@ typedef struct {
 struct action{
 	int cline;
 	char *cfile;
+	char *rname;
 	enum action_type type;  /* forward, drop, log, send ...*/
 	int count;
 	struct action* next;
