@@ -156,6 +156,29 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 				ci.received_port = 0;
 				ci.received_proto = 0;
 
+				// Received Info: First try AVP, otherwise simply take the source of the request:
+				memset(&val, 0, sizeof(int_str));
+				if (rcv_avp_name.n!=0 && search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0) && val.s.len > 0) {
+					if (val.s.len>RECEIVED_MAX_SIZE) {
+						LM_ERR("received too long\n");
+						goto error;
+					}
+					if (parse_uri(val.s.s, val.s.len, &parsed_received) < 0) {
+						LM_DBG("Error parsing Received URI <%.*s>\n", val.s.len, val.s.s);
+						continue;
+					}
+					ci.received_host = parsed_received.host;
+					ci.received_port = parsed_received.port_no;
+					ci.received_proto = parsed_received.proto;
+				} else {
+					ci.received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, sizeof(srcip));
+					ci.received_host.s = srcip;
+					ci.received_port = req->rcv.src_port;
+					ci.received_proto = req->rcv.proto;
+				}
+				// Set to default, if not set:
+				if (ci.received_port == 0) ci.received_port = 5060;
+
 				ul.lock_udomain(_d, &c->uri);
 				if (ul.get_pcontact(_d, &c->uri, &pcontact) != 0) { //need to insert new contact
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
@@ -164,29 +187,6 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 					} 
 				    
 					LM_DBG("Adding pcontact: <%.*s>, expires: %d which is in %d seconds\n", c->uri.len, c->uri.s, expires, expires-local_time_now);
-
-					// Received Info: First try AVP, otherwise simply take the source of the request:
-					memset(&val, 0, sizeof(int_str));
-					if (rcv_avp_name.n!=0 && search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0) && val.s.len > 0) {
-						if (val.s.len>RECEIVED_MAX_SIZE) {
-							LM_ERR("received too long\n");
-							goto error;
-						}
-						if (parse_uri(val.s.s, val.s.len, &parsed_received) < 0) {
-							LM_DBG("Error parsing Received URI <%.*s>\n", val.s.len, val.s.s);
-							continue;
-						}
-						ci.received_host = parsed_received.host;
-						ci.received_port = parsed_received.port_no;
-						ci.received_proto = parsed_received.proto;
-					} else {
-						ci.received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, sizeof(srcip));
-						ci.received_host.s = srcip;
-						ci.received_port = req->rcv.src_port;
-						ci.received_proto = req->rcv.proto;
-					}
-					// Set to default, if not set:
-					if (ci.received_port == 0) ci.received_port = 5060;
 
 					if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
 						LM_ERR("Failed inserting new pcontact\n");
