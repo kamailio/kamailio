@@ -287,6 +287,32 @@ int dbg_msgid_filter(struct sip_msg *msg, unsigned int flags, void *bar)
 	}
 }
 
+char* get_current_route_type_name()
+{
+	switch(route_type){
+		case REQUEST_ROUTE:
+			return "request_route";
+		case FAILURE_ROUTE:
+			return "failure_route";
+		case TM_ONREPLY_ROUTE:
+		case CORE_ONREPLY_ROUTE:
+		case ONREPLY_ROUTE:
+			return "onreply_route";
+		case BRANCH_ROUTE:
+			return "branch_route";
+		case ONSEND_ROUTE:
+			return "onsend_route";
+		case ERROR_ROUTE:
+			return "error_route";
+		case LOCAL_ROUTE:
+			return "local_route";
+		case BRANCH_FAILURE_ROUTE:
+			return "branch_failure_route";
+		default:
+			return "unknown_route";
+	}
+}
+
 /**
  * callback executed for each cfg action
  */
@@ -329,8 +355,10 @@ int dbg_cfg_trace(void *data)
 		{
 			LOG__(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
 					_dbg_cfgtrace_lname, _dbg_cfgtrace_prefix,
-					" c=[%s] l=%d a=%d n=%.*s\n",
-					ZSW(a->cfile), a->cline, a->type, an->len, ZSW(an->s)
+					"%s=[%s] c=[%s] l=%d a=%d n=%.*s\n",
+					get_current_route_type_name(), ZSW(a->rname),
+					ZSW(a->cfile), a->cline,
+					a->type, an->len, ZSW(an->s)
 				);
 		}
 	}
