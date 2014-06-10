@@ -143,6 +143,7 @@ struct acc_extra *log_extra = 0; /*!< Log extra attributes */
 int cdr_enable  = 0;
 int cdr_log_enable  = 1;
 int cdr_start_on_confirmed = 0;
+int cdr_expired_dlg_enable = 0;
 static char* cdr_facility_str = 0;
 static char* cdr_log_extra_str = 0;
 
@@ -275,6 +276,7 @@ static param_export_t params[] = {
 	{"cdr_start_id",	 STR_PARAM, &cdr_start_str.s		},
 	{"cdr_end_id",		 STR_PARAM, &cdr_end_str.s		},
 	{"cdr_duration_id",	 STR_PARAM, &cdr_duration_str.s		},
+	{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable   },
 #ifdef RAD_ACC
 	{"radius_config",        STR_PARAM, &radius_config        },
 	{"radius_flag",          INT_PARAM, &radius_flag          },
@@ -570,6 +572,12 @@ static int mod_init( void )
 	if( cdr_enable < 0 || cdr_enable > 1)
 	{
 		LM_ERR("cdr_enable is out of range\n");
+		return -1;
+	}
+
+	if( cdr_expired_dlg_enable < 0 || cdr_expired_dlg_enable > 1)
+	{
+		LM_ERR("cdr_expired_dlg_enable is out of range\n");
 		return -1;
 	}
 

@@ -244,8 +244,6 @@ int extra2int( struct acc_extra *extra, int *attrs )
 	return i;
 }
 
-
-
 int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 		int *int_arr, char *type_arr)
 {
@@ -299,6 +297,52 @@ done:
 	return n;
 }
 
+int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val_arr,
+		int *int_arr, char *type_arr, const struct dlg_binds* p_dlgb)
+{
+   //string value;
+   str* value = 0;
+   int n=0;
+
+   if( !dlg || !val_arr || !int_arr || !type_arr || !p_dlgb)
+   {
+       LM_ERR( "invalid input parameter!\n");
+       return 0;
+   }
+
+   while (extra) {
+
+       /* check for overflow */
+       if (n==MAX_ACC_EXTRA) {
+           LM_WARN("array to short -> ommiting extras for accounting\n");
+           goto done;
+       }
+
+       val_arr[n].s = 0;
+       val_arr[n].len = 0;
+       type_arr[n] = TYPE_NULL;
+
+	   str key = extra->spec.pvp.pvn.u.isname.name.s;
+	   if ( key.len == 0 || !key.s)
+	   {
+		   n++; extra = extra->next; continue;
+	   }
+	   /* get the value */
+	   value = p_dlgb->get_dlg_var( dlg, &key);
+
+       if (value)
+       {
+           val_arr[n].s = value->s;
+           val_arr[n].len = value->len;
+           type_arr[n] = TYPE_STR;
+       }
+
+       n++;
+       extra = extra->next;
+   }
+done:
+    return n;
+}
 
 int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 		int *int_arr, char *type_arr, int start)

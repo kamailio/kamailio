@@ -90,7 +90,9 @@
 			find out about it. In general, a better practice is to account from an 
 			end-device (such as PSTN gateway), which best knows about call 
 			status (including media status and PSTN status in case of the 
-			gateway).
+			gateway). However, CDR-base logging has the option to log existing
+			information from expired dialogs (the dlg_vars in cdr_extra)
+			Please see cdr_expired_dlg_enable parameter - <xref linkend="acc.p.cdr_expired_dlg_enable"/>.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -353,6 +355,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
                 Note that CDR generation does not involve any kind of database storage (yet). In order
                 to persist the CDRs into a database you will have to set up an exterior process (i.e.,
                 a script living outside of &kamailio;) and implement the storage task yourself.
+                </para>
+
+                <para>
+				Sometimes, dialogs expire because the UA has a problem and a final message is never
+				transmitted. You can toggle on/off the generation of CDR-based logging in such cases
+				with only the dlg_vars showing by using the cdr_expired_dlg_enable parameter
+				- <xref linkend="acc.p.cdr_expired_dlg_enable"/>. Default behavior is not logging.
                 </para>
         </section>
 		<section id="cdr-extra-id">
@@ -1218,6 +1227,24 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
 		<programlisting format="linespecific">
 ...
 modparam("acc", "cdr_enable", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.cdr_expired_dlg_enable">
+		<title><varname>cdr_expired_dlg_enable</varname> (integer)</title>
+		<para>
+		Should CDR-based logging be enabled in case of expired dialogs?
+		</para>
+		<para>
+		0 - off (default).
+		1 - on.
+		</para>
+		<example>
+		<title>cdr_expired_dlg_enable example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_expired_dlg_enable", 1)
 ...
 </programlisting>
 		</example>

@@ -161,11 +161,23 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	}
 
     /* get extra values */
-	m += extra2strar( cdr_extra,
-						message,
-						cdr_value_array + m,
-						cdr_int_array + m,
-						cdr_type_array + m);
+    if (message)
+    {
+		m += extra2strar( cdr_extra,
+							message,
+							cdr_value_array + m,
+							cdr_int_array + m,
+							cdr_type_array + m);
+    } else if (cdr_expired_dlg_enable){
+        LM_WARN( "fallback to dlg_only search because of message doesn't exist.\n");
+        m += extra2strar_dlg_only( cdr_extra,
+                dialog,
+                cdr_value_array + m,
+                cdr_int_array + m,
+                cdr_type_array +m,
+                &dlgb);
+    }
+
 	for( ; i<m; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
 		VAL_TYPE(db_cdr_vals+i)=DB1_STR;
@@ -221,11 +233,23 @@ static int log_write_cdr( struct dlg_cell* dialog,
                                     cdr_type_array);
 
     /* get extra values */
-    message_index += extra2strar( cdr_extra,
-                                  message,
-                                  cdr_value_array + message_index,
-                                  cdr_int_array + message_index,
-                                  cdr_type_array + message_index);
+    if (message)
+    {
+        message_index += extra2strar( cdr_extra,
+                                      message,
+                                      cdr_value_array + message_index,
+                                      cdr_int_array + message_index,
+                                      cdr_type_array + message_index);
+    } else if (cdr_expired_dlg_enable){
+        LM_WARN( "fallback to dlg_only search because of message does not exist.\n");
+        message_index += extra2strar_dlg_only( cdr_extra,
+                                               dialog,
+                                               cdr_value_array + message_index,
+                                               cdr_int_array + message_index,
+                                               cdr_type_array + message_index,
+                                               &dlgb);
+    }
+
 
     for( counter = 0, message_position = cdr_message;
          counter < message_index ;
@@ -280,11 +304,18 @@ static int write_cdr( struct dlg_cell* dialog,
                       struct sip_msg* message)
 {
 	int ret = 0;
-    if( !dialog || !message)
-    {
-        LM_ERR( "dialog or message is empty!");
-        return -1;
-    }
+
+	if( !dialog)
+	{
+		LM_ERR( "dialog is empty!");
+		return -1;
+	}
+	/* message can be null when logging expired dialogs  */
+	if ( !cdr_expired_dlg_enable && !message ){
+		LM_ERR( "message is empty!");
+		return -1;
+	}
+
 	ret = log_write_cdr(dialog, message);
 #ifdef SQL_ACC
 	ret |= db_write_cdr(dialog, message);
@@ -605,6 +636,12 @@ static void cdr_on_expired( struct dlg_cell* dialog,
     }
 
     LM_DBG("dialog '%p' expired!\n", dialog);
+
+    if( cdr_expired_dlg_enable  && (write_cdr( dialog, 0) != 0))
+    {
+        LM_ERR( "failed to write cdr!\n");
+        return;
+    }
 }
 
 /* callback for the cleanup of a dialog. */

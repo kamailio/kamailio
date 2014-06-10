@@ -46,6 +46,7 @@
 #include "../../str.h"
 #include "../../pvar.h"
 #include "../../parser/msg_parser.h"
+#include "../dialog/dlg_load.h"
 
 void init_acc_extra(void);
 
@@ -57,6 +58,9 @@ void destroy_extras( struct acc_extra *extra);
 
 int extra2strar( struct acc_extra *extra, struct sip_msg *rq,
 		 str *val_arr, int *int_arr, char *type_arr);
+
+int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg,
+		str *val_arr, int *int_arr, char *type_arr, const struct dlg_binds* p_dlgb);
 
 int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 		int *int_arr, char *type_arr, int start);
