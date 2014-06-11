@@ -687,7 +687,7 @@ static int pv_www_authenticate2(struct sip_msg *msg, char* realm,
 	}
 
 	if (get_str_fparam(&smethod, msg, (fparam_t*)method) < 0) {
-		LM_ERR("failed to get method value\n");
+		LM_ERR("failed to get method value from msg %p var %p\n", msg, method);
 		goto error;
 	}
 
