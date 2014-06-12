@@ -1062,7 +1062,7 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 						"proto", get_proto_name(proto),
 						"address", si->name.s);
 				if (!si->flags & SI_IS_IP)
-					rpc->struct_add(ha, "ss",
+					rpc->struct_add(ha, "s",
 						"ipaddress", si->address_str.s);
 				rpc->struct_add(ha, "sss",
 						"proto", si->port_no_str.s,
