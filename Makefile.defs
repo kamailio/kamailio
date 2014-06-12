@@ -164,7 +164,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 # version number
 VERSION = 4
 PATCHLEVEL = 1
-SUBLEVEL = 3
+SUBLEVEL = 4
 EXTRAVERSION =
 
 # memory manager switcher
