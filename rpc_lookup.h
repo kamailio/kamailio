@@ -33,7 +33,7 @@ extern rpc_export_t** rpc_sarray;
 extern int rpc_sarray_crt_size;
 
 int init_rpcs(void);
-int destroy_rpcs(void);
+void destroy_rpcs(void);
 
 rpc_export_t* rpc_lookup(const char* name, int len);
 int rpc_register(rpc_export_t* rpc);
