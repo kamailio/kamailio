@@ -529,9 +529,9 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	if (is_db_acc_on(req)) {
 		if(acc_db_set_table_name(req, db_table_acc_data, &db_table_acc)<0) {
 			LM_ERR("cannot set acc db table name\n");
-			return;
+		} else {
+			acc_db_request(req);
 		}
-		acc_db_request(req);
 	}
 #endif
 #ifdef RAD_ACC
