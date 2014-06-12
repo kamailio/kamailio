@@ -1,3 +1,491 @@
+===================== 2014-06-12 Version 4.1.4 Released =====================
+
+===================== Changes Since Version 4.1.3 ===========================
+
+commit d521dff2563ddd1f64fb0c93e7cbd7a6ad254159
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 12 15:57:57 2014 +0200
+
+    Makefile.defs: version set to 4.1.4
+
+commit a4f11987cd7fcabb68c377a6c61ab4238ec2cecc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 12 15:56:58 2014 +0200
+
+    pkg/deb: version set to 4.1.4 in deb specs
+
+commit bd7e64b5c38db50f37bae250911e82808060a262
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 12 15:53:36 2014 +0200
+
+    pkg: updated version in fedora and centos specs
+
+commit a2bffd8aa6f97c2496c15c26fcb487f514b347de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 12 15:51:17 2014 +0200
+
+    pkg/rpm: version set to 4.1.4 in rpm specs
+
+commit b634dbace0d0f8ecf061252423374a24288f9fe2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 12 12:12:02 2014 +0200
+
+    acc: clear new parsed headers when evaluating acc attributes
+    
+    - the structures are in pkg, while request is taken from shm clone, can
+      cause reference to the space of another process
+    - reported by Igor Potjevlesch
+    
+    (cherry picked from commit e6c0c2f9871eab5a73371d48dfa24e4ece2512d8)
+
+commit 6c3c5b977941c605aa1be2ce582b3b843dbfcafe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 12 11:48:01 2014 +0200
+
+    acc: allow recording to the rest of backends even when setting db table fails
+    
+    - such error doesn't affect radius or custom backends
+    
+    (cherry picked from commit 655711330b2ffd82dc84330ef0e0fbbad82a9160)
+
+commit be8fb6fa8a1492259a26abe4825653f1f66ff0d8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 12 11:39:55 2014 +0200
+
+    auth: proper fixup for optional method parameter in pv_www_authenticate()
+    
+    - reported by Muhammad Shahzad
+    
+    (cherry picked from commit dd00819f7cca976e699a20960956abff760df957)
+
+commit b1ab677fe8977656c65112b558661673fdeb9f52
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 12 09:59:44 2014 +0200
+
+    core: sync definition of destroy_rpcs()
+    
+    - reported by Victor Seva
+    
+    (cherry picked from commit 28be6c3c79c02600f03a51b2393b289fbe8c9bd9)
+
+commit fbe73477eae716693a35615df1375dc16d7e65bb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 11 17:12:37 2014 +0200
+
+    dialog: execute internal event_route blocks under local_route type
+    
+    - request_route type triggers additional script callbacks that could
+      reset the transaction and can cause crashing
+    - reported by  Nuno Miguel Reis, FS#440
+    
+    (cherry picked from commit 88a9ffee284338d536b6f7e072e5c99b29d983ee)
+
+commit fc7f840a91394d5896d54ad534d8b6c9c61ec553
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 30 13:34:08 2014 +0200
+
+    core/parse/sdp: proper parsing of a=rtpmap line
+    
+    - error handling when malformed line, avoiding crash to due to invalid
+      offsetting when clockrate is missing
+    - reported by  Michael Ricordeau, FS#435
+    
+    (cherry picked from commit c842bda9dac46724c58b734d092391c79867f2fb)
+
+commit c81c360315105e47f5fdd762ffb6490691c3c675
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri May 30 09:20:49 2014 +0100
+
+    auth_radius: Improve error message to simplify debugging
+    
+    (cherry picked from commit 6e51019b0a2c60178b9ca03b9bb2a5fef49ca7ba)
+
+commit 2f8f293242b7982b1ad843f5bfbcea22bf35027d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 28 15:47:10 2014 +0200
+
+    pkg/rpm: use pkg memory size when checking config in init script
+    
+    - for large configs, check can fail due to low memory
+    
+    (cherry picked from commit 91a362e2f1bae90e2564491560aff8bad5b04564)
+
+commit 177723a58ee12b3cb239d993a28a063d694f3b02
+Author: Konstantin Mosesov <ez@voipgroup.org.ua>
+Date:   Sat May 24 05:58:19 2014 +0400
+
+    Fixed misstypes and indents in docs.
+    
+    (cherry picked from commit 5bede9a9a77ad01e06d849485d6ce4274eca3fd4)
+
+commit 8375c7f308a812b1e85768a663e039e9f2a70d1e
+Author: Konstantin Mosesov <ez@voipgroup.org.ua>
+Date:   Sat May 24 05:57:16 2014 +0400
+
+    Fixed bug with JAVA_HOME detection.
+    
+    (cherry picked from commit 5a05370f35bdeb7277b2f53f5c3e95fb672d4024)
+
+commit f2afd026ff9509151612c3b180b3d813e95484dc
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Thu May 22 21:07:17 2014 +0200
+
+    Core: Bugfix: Do not reset tcp_listeners: We may only listen on TCP.
+    
+    (cherry picked from commit 9b9d15875aa09a5574ff0754309f4f77161d3194)
+
+commit 4267ba4cb15da135d4cd5543fb7f8d5f2f02ef9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 21 09:55:46 2014 +0200
+
+    core: allow listening on tls without listening on tcp
+    
+    - reported in FS#425
+    
+    (cherry picked from commit eea7f9d04090a736c8a0f2b2a350c08635cc8e39)
+
+commit 7453f5e3b10b4a257eb2e1e1650bfabc5f381ec5
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue May 20 16:22:58 2014 +0300
+
+    modules/siputils:  generate error message if parsing of is_gruu() uri fails
+    
+    (cherry picked from commit 365a60772de9c1d2f19ecf52b12f6d75b348e996)
+
+commit 93fb970b87216ea5f63b077f02bbe1c085ddc45c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 20 09:16:01 2014 +0200
+
+    core: print number of parameters used for searching cfg function
+    
+    (cherry picked from commit a313a8d33afdee6c7eb70cd57161aef8e70c5bcf)
+
+commit a008e0f7d0920d061892819a121d1f07ba4b2a70
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 15 12:48:04 2014 +0200
+
+    core: use port 5061 for checking self when uri has transport tls
+    
+    - 5060 was used, failing to match myself condition
+    
+    (cherry picked from commit 2e55d7bd218c9f954da7d289ec1be090bb4d88b0)
+
+commit fdea08a522ed6d1e30b6b8eab0e74bc47078d57d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 15 12:46:14 2014 +0200
+
+    topoh: match on all ports if none is in the uri for checking self
+    
+    - forcing default 5060 can fail for multi-listen case and tls
+    
+    (cherry picked from commit 1d90f4de94dfc887cc6129624fd5e6ad989abd37)
+
+commit a768ffa5a083bbddc35db59b2686046c000c0482
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 14 23:37:54 2014 +0200
+
+    kamcmd: proper size for memset, based on malloc
+    
+    (cherry picked from commit 7134959725011baa504a027c4561e0054dd907ae)
+
+commit 3c7e14f849884d5d145a7ab9c942acbbc9c5d282
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 14 23:12:33 2014 +0200
+
+    rls: proper header define guard and check of null returned value
+    
+    (cherry picked from commit 4f2da3e025fa281f88e80bb841a51d6546219ae8)
+
+commit 164b17f8677c3c877ffd697ec5fb40d0d81e12f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 14 23:08:06 2014 +0200
+
+    ipops: free dns pv structure on invalid pv name
+    
+    (cherry picked from commit e53c715c74fb5b58f4f68b81acb60de66b19b8cc)
+
+commit 386ef2f61d18966ceb70916869389f2690e0a6ef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 14 23:03:19 2014 +0200
+
+    db_flatstore: free result before returning null on no more pkg
+    
+    - partial allocation when doing an incomplete new connection
+    
+    (cherry picked from commit 74743d6ef3bf74c1226ba5a1b6bebfbe19b06b93)
+
+commit c5c1002be8c4f3e24d1b79b77856db2879b97c72
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 14 22:56:37 2014 +0200
+
+    core: free previous allocated variable if no more pkg to build rve struct
+    
+    - cleaner shut down if not enough memory at startup
+    
+    (cherry picked from commit ace56c6bd2221920b965185c1c9a5997cd3f2768)
+
+commit 8c47852eff1b42727d56f9791a28525a23b25599
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 14 22:53:35 2014 +0200
+
+    pv: proper length for line transformation when handling last line of value
+    
+    (cherry picked from commit f1a09e44268c77641216a78878f2c73c6e5a4d66)
+
+commit 12a0a927aa3ad6dfbb18ab3fcf1927bf51098925
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 12 22:54:54 2014 +0200
+
+    dialog: if sending BYE fails at timeout, unref dialog
+    
+    - destroy dialog structures
+    
+    (cherry picked from commit e39a90e11bfed2b4445c37db1532488aa9e3e725)
+
+commit 3457dc459acd7eba96a0cb77e7d50cfc349c303e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 3 21:06:34 2014 +0200
+
+    mem/q_malloc: free old pointer if allocation in realloc fails
+    
+    (cherry picked from commit 8c2888fcd33bee45cb4654222da619e70ed44ecc)
+
+commit ce46f5482f56378beba16c68d1e5af5e5d593008
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 3 21:03:34 2014 +0200
+
+    mem/f_malloc: free old pointer if allocation in realloc fails
+    
+    (cherry picked from commit 41a37b570758445d723d4d78b9786f8e6cb5722c)
+
+commit 2cfb00b4a24f24cd9462305f4518797706b8f6f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 2 23:58:12 2014 +0200
+
+    mem/f_malloc: check returned pointer for bitmask index
+    
+    - if null, reset slot and search on bigger chunks slots
+    
+    (cherry picked from commit 892a24f7256e60e2a0116655e0052c284479b7d2)
+
+commit 6e17d6e92c1e4b76fbea4b4b5d925ed67e4fdac7
+Author: Carlos Ruiz Diaz <carlos.ruizdiaz@gmail.com>
+Date:   Sun Apr 27 21:22:49 2014 -0500
+
+    cnxcc: fixed deadlock when call gets terminated under certain conditions
+    
+    - fixed some indentation problems introduced by Eclipse IDE
+    
+    (cherry picked from commit d0f0ba702bd44524bc9f52e07341db03267b15f7)
+
+commit 3997dcccf36579442cb92222fe0868accd64b537
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 11 19:01:17 2014 +0200
+
+    auth: enhanced log message when method param fails to be retrieved
+    
+    (cherry picked from commit 35329870fe22115fd24a396b743e4814278ce46a)
+
+commit 94ebfb5d5973ed59de84ca0e0c87052b4c80f9de
+Author: Torrey Searle <tsearle@gmail.com>
+Date:   Mon Jun 2 19:51:19 2014 +0200
+
+    srdb1: fix memory leak in db-id
+    
+    - When getting an existing connection from the pool, free the newly
+      created db-id as the pool connection already has a reference to the
+      existing one.  Fixes FS#436
+    (cherry picked from commit 69de17d3bb1d032f9a41752362194d718336e20d)
+
+commit 642428cf8be1c7355f91b14276e888ec505cd69a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 19 08:56:38 2014 +0200
+
+    dialog: add wait-for-ack callback before response unref
+    
+    - in case of a sipral for ending in a negative response from initial
+      state, ack to second iteration can unref prematurely the dialog
+    - reported by Pawel Sternal, FS#427
+    
+    (cherry picked from commit d81fd1bf067b78b55ad348db2531c4ba9b10dddb)
+
+commit 7bdaca008e1bddbe9ab4db9d70e835ba45f6a5ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 29 17:06:13 2014 +0200
+
+    pv: safety check for PAI header parsed structure
+    
+    - reported by Igor Potjevlesch
+    
+    (cherry picked from commit e633ca6b7e748a77825d3208e86bf9bce18944a5)
+
+commit ad5235229f59ba5d1f4216e144291e110fee0211
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 14 23:28:24 2014 +0200
+
+    parser/sdp: assign stream var only if session is not null
+    
+    (cherry picked from commit 1cefc0c5f83eb4b7b6ffefc6ab383d7aae6de07f)
+
+commit 5cd3bd3a1bbcc9edffe31c0b1fdf11da43023b2c
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Tue May 27 15:42:08 2014 +0100
+
+    rls: Fix memory leak with duplicate entries in lists
+    
+    - When duplicate detection is requested, free the string and container
+    - When duplicate detection is not requested, insert the duplicate anyway
+
+commit af4f84b84ca7601bd8124fe2e82d0718c7975313
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 27 12:07:42 2014 +0200
+
+    db_mysql: proper handling of mysql_next_result(...) return code
+    
+    - it indicates the presence of another result if return is 0
+    - reported by  Maxim (simax), FS#434
+    
+    (cherry picked from commit 37f0964278e925d5530563b38c82a57de1f7fa59)
+
+commit 9a697d04e7bb041e1ec6748727a418866dc0ba54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 26 14:47:37 2014 +0200
+
+    auth_db: auth_check() to get the auth header from the used api
+    
+    - this avoids using a different auth header that might be in the request
+      before checking usernames in from/to headers against auth user
+    
+    (cherry picked from commit 4992519eed88d94847d742c52e882082b1b41264)
+
+commit 47a00936695c46176c3c047e0ab141b4127d08dc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 18 19:07:38 2014 +0200
+
+    mtree: replace tree structure even there are no records in db table
+    
+    - reload didn't replaced old tree if no records in db table
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit c36f326d3c7372b149592d438df75f3d7b0a0233)
+
+commit f44415eee52d5c17a9b6c5e16175bd84455e9867
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 15 13:59:03 2014 +0200
+
+    siputils: allocate enough space to hold ending zero for tel uri in tel2sip()
+    
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit 7992a2b8d42bb7e8bcf1738cf042013ed126a47a)
+
+commit 9c15e8444e99f33ca2f0c920d3cbb846d407f596
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 14 09:58:50 2014 +0200
+
+    presence_dialoginfo: get rid of unused variables warning
+    
+    - priority and winning_priority are used in an alternative winning node
+      selection which is disabled now
+    - reported by Jua Heinanen
+    
+    (cherry picked from commit 4f4641ea2a4018a72558c40d4878e9af7053be2d)
+
+commit 402e2122d1aa353ee8c10321aa1eb9315a81cd81
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 16 19:43:45 2014 +0200
+
+    db_mysql: properly free db result structure if db_mysql_convert_result() fails
+    
+    - reported by Torrey Searle, FS#420
+    
+    (cherry picked from commit 37983c9f57536c57c5d34ce2d8a1c8f411e61e39)
+
+commit 74c1bd884ec2a3418dee3cbf358ab8bb7e899d7a
+Author: Vitaliy Aleksandrov <vitalik.voip@gmail.com>
+Date:   Thu May 8 15:01:02 2014 +0100
+
+    websocket: Fix crash in websocket module
+    
+    - Avoid race condition by maintaining a connection reference count
+    - Fixes FS#406
+
+commit cc4a7c67f24d105a119ea492ce53f017369af296
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 8 08:40:28 2014 +0200
+
+    presence_dialoginfo: interetate through all 'dialog' nodes of xml document
+    
+    - PUBLISH request can carry info for many dialogs
+    - reported and patch by Klaus Feichtinger
+    
+    (cherry picked from commit 7a827a612f93b9dd938f9b78c0de3ac2d98a0c77)
+
+commit b76eb77a36a5e751d792cb7e0d60f4750976e322
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 2 21:50:14 2014 +0200
+
+    dialog: copy dlg var value locally on get operation
+    
+    - reference to shared memory exposes risk on accessing an invalid
+      pointer if anothe process updates it
+    - reported by Dragos Oancea
+    
+    (cherry picked from commit bb3eed8aabea9f63c9922f71714aea242771db02)
+
+commit c5781b28cd92360cf163a84312fa72c08c4737b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 29 20:02:19 2014 +0200
+
+    rtmier: reset avps and xavp lists after route blocks execution
+    
+    - avoid leaks if someone is using avp/xavp with rtimer - there is a fake
+      message used there, thus not the normal sip message routing that
+      resets avps/xavps
+    
+    (cherry picked from commit 159978cf2a98748f3225155d8946bcbd768b51e3)
+
+commit 4455a13e8d31416dc44af455710fd7a7ff37ec11
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 28 13:51:56 2014 +0200
+
+    acc: no request is needed for setting end time on dialog termination
+    
+    - callback function cdr_on_end() doesn't use it at all
+    - reported by Eduardo Lejarreta, FS#256
+    
+    (cherry picked from commit 8fcdd23aaa49cb6c1ecb34c4c6b4a88078a860f7)
+
+commit 70f1b7479f80ca4f5e3a45fcf772785c110d0b57
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 30 21:46:55 2014 +0200
+
+    core: compute the len for dns srv name
+    
+    - fixes dns srv for cache, reported by Rob Eijgenraam, FS#426
+    
+    (cherry picked from commit b834cde74f8a4b41ec24ceb8332adff8bb3922bb)
+
+commit a9a3cebc7688dcaea7539c067c4b1bf3463040ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 24 18:02:34 2014 +0200
+
+    drouting: removed old contraint on route index
+    
+    (cherry picked from commit c3386295d7607a58d37a65b6822bf5f98b3fefa0)
+
+commit ee692ab89f1321ccfb24316c30fce5a90e6a9764
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 28 09:51:42 2014 +0200
+
+    pipelimit: run timer at 1000ms
+    
+    - proper execution on timer_interval
+    - reported by Julia <juliabo@gmail.com>
+    
+    (cherry picked from commit f9d95734ba7c04a0188077914161395c2e94f3eb)
+
+
 ===================== 2014-04-24 Version 4.1.3 Released =====================
 
 ===================== Changes Since Version 4.1.2 ===========================
