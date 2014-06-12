@@ -449,6 +449,19 @@ static inline int str_eq(const str *p, const char *q) {
 		return 0;
 	return 1;
 }
+static inline str str_prefix(const str *p, const char *q) {
+	str ret;
+	ret.s = NULL;
+	int l = strlen(q);
+	if (p->len < l)
+		return ret;
+	if (memcmp(p->s, q, l))
+		return ret;
+	ret = *p;
+	ret.s += l;
+	ret.len -= l;
+	return ret;
+}
 
 
 static int rtpengine_set_store(modparam_t type, void * val){
@@ -1121,7 +1134,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 {
 	char *e;
 	const char *err;
-	str key, val;
+	str key, val, s;
 
 	if (!flags_str)
 		return 0;
@@ -1151,21 +1164,23 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		if (!key.len)
 			break;
 
-		/* XXX make this prettier */
-		err = "unknown flag";
+		/* check for items which have their own sub-list */
+		s = str_prefix(&key, "replace-");
+		if (s.s) {
+			bencode_list_add_str(ng_flags->replace, &s);
+			goto next;
+		}
+
+		s = str_prefix(&key, "rtcp-mux-");
+		if (s.s) {
+			bencode_list_add_str(ng_flags->rtcp_mux, &s);
+			goto next;
+		}
+
+		/* check for specially handled items */
 		switch (key.len) {
 			case 3:
-				if (str_eq(&key, "ICE")) {
-					err = "missing value";
-					if (!val.s)
-						goto error;
-					err = "invalid value";
-					if (str_eq(&val, "force") || str_eq(&val, "force_relay")|| str_eq(&val, "remove"))
-						bencode_dictionary_add_str(ng_flags->dict, "ICE", &val);
-					else
-						goto error;
-				}
-				else if (str_eq(&key, "RTP")) {
+				if (str_eq(&key, "RTP")) {
 					ng_flags->transport |= 0x100;
 					ng_flags->transport &= ~0x001;
 				}
@@ -1174,7 +1189,8 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					ng_flags->transport &= ~0x002;
 				}
 				else
-					goto error;
+					goto generic;
+				goto next;
 				break;
 
 			case 4:
@@ -1183,50 +1199,41 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				else if (str_eq(&key, "AVPF"))
 					ng_flags->transport |= 0x102;
 				else
-					goto error;
-				break;
-
-			case 5:
-				if (str_eq(&key, "force"))
-					bencode_list_add_string(ng_flags->flags, "force");
-				else
-					goto error;
+					goto generic;
+				goto next;
 				break;
 
 			case 6:
-				if (str_eq(&key, "to-tag"))
+				if (str_eq(&key, "to-tag")) {
 					ng_flags->to = 1;
-				else
-					goto error;
+					goto next;
+				}
 				break;
 
 			case 7:
-				if (str_eq(&key, "RTP/AVP"))
+				if (str_eq(&key, "RTP/AVP")) {
 					ng_flags->transport = 0x100;
-				else
-					goto error;
+					goto next;
+				}
 				break;
 
 			case 8:
-				if (str_eq(&key, "internal"))
-					bencode_list_add_string(ng_flags->direction, "internal");
-				else if (str_eq(&key, "external"))
-					bencode_list_add_string(ng_flags->direction, "external");
+				if (str_eq(&key, "internal") || str_eq(&key, "external"))
+					bencode_list_add_str(ng_flags->direction, &key);
 				else if (str_eq(&key, "RTP/AVPF"))
 					ng_flags->transport = 0x102;
 				else if (str_eq(&key, "RTP/SAVP"))
 					ng_flags->transport = 0x101;
 				else
-					goto error;
+					goto generic;
+				goto next;
 				break;
 
 			case 9:
-				if (str_eq(&key, "symmetric"))
-					bencode_list_add_string(ng_flags->flags, "symmetric");
-				else if (str_eq(&key, "RTP/SAVPF"))
+				if (str_eq(&key, "RTP/SAVPF")) {
 					ng_flags->transport = 0x103;
-				else
-					goto error;
+					goto next;
+				}
 				break;
 
 			case 10:
@@ -1243,17 +1250,12 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 						ng_flags->via = -1;
 					else
 						goto error;
+					goto next;
 				}
-				else if (str_eq(&key, "asymmetric"))
-					bencode_list_add_string(ng_flags->flags, "asymmetric");
-				else
-					goto error;
 				break;
 
 			case 11:
-				if (str_eq(&key, "auto-bridge"))
-					bencode_list_add_string(ng_flags->flags, "auto-bridge");
-				else if (str_eq(&key, "repacketize")) {
+				if (str_eq(&key, "repacketize")) {
 					err = "missing value";
 					if (!val.s)
 						goto error;
@@ -1267,9 +1269,8 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					if (!ng_flags->packetize)
 						goto error;
 					bencode_dictionary_add_integer(ng_flags->dict, "repacketize", ng_flags->packetize);
+					goto next;
 				}
-				else
-					goto error;
 				break;
 
 			case 12:
@@ -1278,63 +1279,19 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					if (*op != OP_OFFER)
 						goto error;
 					*op = OP_ANSWER;
+					goto next;
 				}
-				else
-					goto error;
 				break;
-			case 13:
-				if (str_eq(&key, "trust-address"))
-					bencode_list_add_string(ng_flags->flags, "trust-address");
-				else if (str_eq(&key, "media-address")) {
-					err = "missing value";
-					if (!val.s)
-						goto error;
-				}
-				else
-					goto error;
-				break;
-
-			case 14:
-				if (str_eq(&key, "replace-origin"))
-					bencode_list_add_string(ng_flags->replace, "origin");
-				else if (str_eq(&key, "address-family")) {
-					err = "missing value";
-					if (!val.s)
-						goto error;
-					err = "invalid value";
-					if (str_eq(&val, "IP4") || str_eq(&val, "IP6"))
-						bencode_dictionary_add_str(ng_flags->dict, "address family", &val);
-					else
-						goto error;
-				}
-				else if (str_eq(&key, "rtcp-mux-demux"))
-					bencode_list_add_string(ng_flags->rtcp_mux, "demux");
-				else if (str_eq(&key, "rtcp-mux-offer"))
-					bencode_list_add_string(ng_flags->rtcp_mux, "offer");
-				else
-					goto error;
-				break;
-
-			case 15:
-				if (str_eq(&key, "rtcp-mux-reject"))
-					bencode_list_add_string(ng_flags->rtcp_mux, "reject");
-				else if (str_eq(&key, "rtcp-mux-accept"))
-					bencode_list_add_string(ng_flags->rtcp_mux, "accept");
-				else
-					goto error;
-				break;
-
-			case 26:
-				if (str_eq(&key, "replace-session-connection"))
-					bencode_list_add_string(ng_flags->replace, "session-connection");
-				else
-					goto error;
-				break;
-
-			default:
-				goto error;
 		}
 
+generic:
+		if (!val.s)
+			bencode_list_add_str(ng_flags->flags, &key);
+		else
+			bencode_dictionary_str_add_str(ng_flags->dict, &key, &val);
+		goto next;
+
+next:
 		flags_str = e;
 	}
 
