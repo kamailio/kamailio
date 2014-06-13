@@ -1457,6 +1457,7 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 {
 	sip_msg_t *fmsg;
 	int rt;
+	int bkroute;
 
 	if(dlg==NULL)
 		return;
@@ -1486,11 +1487,13 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 		dlg_ref(dlg, 1);
 		dlg_set_ctx_iuid(dlg);
 		LM_DBG("executing event_route %d on state %d\n", rt, nstate);
+		bkroute = get_route_type();
 		set_route_type(LOCAL_ROUTE);
 		run_top_route(event_rt.rlist[rt], fmsg, 0);
 		dlg_reset_ctx_iuid();
 		exec_post_script_cb(fmsg, LOCAL_CB_TYPE);
 		dlg_unref(dlg, 1);
+		set_route_type(bkroute);
 	}
 }
 
