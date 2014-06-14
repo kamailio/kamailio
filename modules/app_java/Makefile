@@ -17,8 +17,8 @@ LIBS += $(shell pkg-config libgcj-4.4 --cflags) -L$(JVM_PATH) -ljvm
 else
 # try to detect JAVA_HOME
 JAVA_HOME ?= $(shell readlink -f /usr/bin/javac | sed "s:bin/javac::")
-DEFS += $(shell pkg-config libgcj12 --cflags) -I$(JAVA_HOME)/include
-LIBS += $(shell pkg-config libgcj12 --libs) -L$(JAVA_HOME)/lib  -ljvm
+DEFS += $(shell pkg-config libgcj --cflags) -I$(JAVA_HOME)/include
+LIBS += $(shell pkg-config libgcj --libs) -L$(JAVA_HOME)/lib  -ljvm
 
 # On Debian 7.5 there is a bug with JAVA_HOME detection.
 # $(shell readlink -f /usr/bin/javac | sed "s:bin/javac::") points to perl wrapper script (/usr/bin/gcj-wrapper-4.7)
