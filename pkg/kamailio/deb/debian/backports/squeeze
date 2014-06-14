@@ -27,10 +27,11 @@ if [ -e ${DIST}/patches/series ]; then
 fi
 
 # No java module:
-sed -i -e '/libgcj12-dev/d' -e '/^Package: kamailio-java-modules/,/^$/d' \
+sed -i -e '/gcj-jdk/d' -e '/^Package: kamailio-java-modules/,/^$/d' \
 	${DIST}/control
 sed -i -e 's/ java[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ java/' ${DIST}/rules
+sed -i -e '/^export JAVA_HOME=.*/d' ${DIST}/rules
 
 # No dnssec module:
 sed -i -e '/libval-dev/d' -e '/^Package: kamailio-dnssec-modules/,/^$/d' \
