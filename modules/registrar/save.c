@@ -910,6 +910,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	}
 
 	if (reg_outbound_mode != REG_OUTBOUND_NONE
+			&& _m->contact && _m->contact->parsed
 			&& !(parse_headers(_m, HDR_VIA2_F, 0) == -1 || _m->via2 == 0
 				|| _m->via2->error != PARSE_OK)) {
 		/* Outbound supported on server, and more than one Via: - not the first hop */
