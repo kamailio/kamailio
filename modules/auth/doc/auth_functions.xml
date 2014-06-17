@@ -198,25 +198,29 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		<itemizedlist>
 			<listitem><para>
 			<emphasis>-1 (generic error)</emphasis> - some generic error
-			occurred and no reply was sent out;
+			occurred and no reply was sent out
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-2 (invalid password)</emphasis> - wrong password;
+			<emphasis>-2 (invalid password)</emphasis> - wrong password
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-3 (invalid user)</emphasis> - authentication user does
-			not exist.
+			not exist
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-4 (nonce expired)</emphasis> - the nonce has expired
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-5 (no credentials)</emphasis> - request does not contain
-			an Authorization header with the correct realm.
+			an Authorization header with the correct realm
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-6 (nonce reused)</emphasis> - the nonce has already been
 			used to authenticate a previous request
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-8 (auth user mismatch)</emphasis> - the auth user is different
+			then the From/To user
 			</para></listitem>
 		</itemizedlist>
 		<para>Meaning of the parameters is as follows:</para>
