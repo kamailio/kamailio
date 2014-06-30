@@ -2447,7 +2447,7 @@ usrloc() {
 			fi
 
 			$CTLCMD ul_add "$USRLOC_TABLE" "$OSERUSER@$OSERDOMAIN" "$2" \
-"$UL_EXPIRES" "1.00" "$UL_PATH" "$UL_FLAGS" "$BR_FLAGS" "$ALL_METHODS"
+"$UL_EXPIRES" "$DEFAULT_Q" "$UL_PATH" "$UL_FLAGS" "$BR_FLAGS" "$ALL_METHODS"
 			exit $?
 			;;
 		rm)
