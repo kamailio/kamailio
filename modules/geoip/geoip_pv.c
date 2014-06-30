@@ -107,6 +107,7 @@ sr_geoip_item_t *sr_geoip_add_item(str *name)
 	if(it->pvclass.s==NULL)
 	{
 		LM_ERR("no more pkg.\n");
+		pkg_free(it);
 		return NULL;
 	}
 	memcpy(it->pvclass.s, name->s, name->len);
@@ -220,6 +221,9 @@ int pv_parse_geoip_name(pv_spec_p sp, str *in)
 	return 0;
 
 error:
+	if(gpv!=NULL)
+		pkg_free(gpv);
+
 	LM_ERR("error at PV geoip name: %.*s\n", in->len, in->s);
 	return -1;
 }
