@@ -732,7 +732,8 @@ int sr_cfg_parse(cfg_parser_t* st)
 			}
 
 			st->cur_opt = &t;
-			if (process_option(st, opt) < 0) return -1;
+			if (process_option(st, opt) < 0) { st->cur_opt = 0; return -1; }
+			st->cur_opt = 0;
 			break;
 
 		case '[': 
