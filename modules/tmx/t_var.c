@@ -435,6 +435,7 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 	} else {
 		switch (get_route_type()) {
 			case REQUEST_ROUTE:
+			case BRANCH_ROUTE:
 				/* use the status of the last sent reply */
 				code = t->uas.status;
 				break;
