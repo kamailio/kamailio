@@ -1998,8 +1998,10 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		if (likely(uas_rb->dst.send_sock &&
 					SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0)){
 			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
+				LOCK_REPLIES( t );
 				run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb, t->uas.request,
 				                              relayed_msg, relayed_code);
+				UNLOCK_REPLIES( t );
 			}
 			if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
@@ -2007,7 +2009,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 									res_len,
 									(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0,
 									uas_rb->branch, relayed_code);
+				LOCK_REPLIES( t );
 				run_trans_callbacks_off_params(TMCB_RESPONSE_SENT, t, &onsend_params);
+				UNLOCK_REPLIES( t );
 			}
 		} else if (unlikely(uas_rb->dst.send_sock == 0))
 			ERR("no resolved dst to send reply to\n");
