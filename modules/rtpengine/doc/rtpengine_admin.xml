@@ -469,6 +469,14 @@ rtpengine_offer();
 				<emphasis>media-address=...</emphasis> - force a particular media address to
 				be used in the &sdp; body. Address family is detected automatically.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>TOS=...</emphasis> - change the IP TOS value for all outgoing RTP
+				packets within the entire call in both directions. Only honoured in an
+				<quote>offer</quote>, ignored for an <quote>answer</quote>. Valid values are
+				0 through 255, given in decimal. If this option is not specified, the TOS
+				value will revert to the default TOS (normally 184). A value of -1 may be used
+				to leave the currently used TOS unchanged.
+				</para></listitem>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
