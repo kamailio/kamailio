@@ -452,6 +452,13 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 
 	unref = 0;
+	if (type==TMCB_RESPONSE_IN) {
+		/* Set the dialog context so it is available in onreply_route */
+		set_current_dialog( req, dlg);
+		dlg_set_ctx_iuid(dlg);
+		goto done;
+	}
+
 	if (type==TMCB_RESPONSE_FWDED) {
 		/* The state does not change, but the msg is mutable in this callback*/
 		run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
@@ -919,7 +926,7 @@ int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
 			goto error;
 		}
 		if ( d_tmb.register_tmcb( req, t,
-				TMCB_RESPONSE_READY|TMCB_RESPONSE_FWDED,
+				TMCB_RESPONSE_IN|TMCB_RESPONSE_READY|TMCB_RESPONSE_FWDED,
 				dlg_onreply, (void*)iuid, dlg_iuid_sfree)<0 ) {
 			LM_ERR("failed to register TMCB\n");
 			goto error;
@@ -1185,6 +1192,20 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
     _dlg_ctx.iuid.h_entry = dlg->h_entry;
     _dlg_ctx.iuid.h_id = dlg->h_id;
 
+	if (req->first_line.u.request.method_value != METHOD_ACK) {
+		iuid = dlg_get_iuid_shm_clone(dlg);
+		if(iuid!=NULL)
+		{
+			/* register callback for the replies of this request */
+			if ( d_tmb.register_tmcb( req, 0, TMCB_RESPONSE_IN,
+					dlg_onreply, (void*)iuid, dlg_iuid_sfree)<0 ) {
+				LM_ERR("failed to register TMCB (3)\n");
+				shm_free(iuid);
+			}
+			iuid = NULL;
+		}
+	}
+	
 	/* run state machine */
 	switch ( req->first_line.u.request.method_value ) {
 		case METHOD_PRACK:
