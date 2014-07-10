@@ -55,7 +55,7 @@
  */
 void init_dlg_handlers(char *rr_param, int dlg_flag,
 		pv_spec_t *timeout_avp, int default_timeout,
-		int seq_match_mode);
+		int seq_match_mode, int keep_proxy_rr);
 
 
 /*!

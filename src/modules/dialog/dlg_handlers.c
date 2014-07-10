@@ -62,6 +62,7 @@ static int       dlg_flag_mask=0;	/*!< flag for dialog tracking */
 static pv_spec_t *timeout_avp;		/*!< AVP for timeout setting */
 static int       default_timeout;	/*!< default dialog timeout */
 static int       seq_match_mode;	/*!< dlg_match mode */
+static int       keep_proxy_rr;		/*!< keep the proxy's record-route in both route-sets */
 static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
 extern int       detect_spirals;
 extern int       dlg_timeout_noreset;
@@ -103,7 +104,7 @@ int dlg_set_tm_waitack(tm_cell_t *t, dlg_cell_t *dlg);
  */
 void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 		pv_spec_t *timeout_avp_p ,int default_timeout_p,
-		int seq_match_mode_p)
+		int seq_match_mode_p, int keep_proxy_rr_p)
 {
 	rr_param.s = rr_param_p;
 	rr_param.len = strlen(rr_param.s);
@@ -113,6 +114,7 @@ void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 	timeout_avp = timeout_avp_p;
 	default_timeout = default_timeout_p;
 	seq_match_mode = seq_match_mode_p;
+	keep_proxy_rr = keep_proxy_rr_p;
 }
 
 
@@ -184,7 +186,7 @@ static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
 int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	struct cell* t, unsigned int leg, str *tag)
 {
-	unsigned int skip_recs;
+	unsigned int skip_recs, own_rr = 0;
 	str cseq;
 	str contact;
 	str rr_set;
@@ -233,11 +235,11 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		skip_recs = 0;
 	} else {
 		/* was the 200 OK received or local generated */
-		skip_recs = dlg->from_rr_nb +
-			((t->relayed_reply_branch>=0)?
+		own_rr = ((t->relayed_reply_branch>=0)?
 				((t->uac[t->relayed_reply_branch].flags&TM_UAC_FLAG_R2)?2:
 				 ((t->uac[t->relayed_reply_branch].flags&TM_UAC_FLAG_RR)?1:0))
 				:0);
+		skip_recs = dlg->from_rr_nb + ((keep_proxy_rr & 1) > 0 ? 0 : own_rr);
 	}
 
 	if(msg->record_route){
@@ -268,6 +270,25 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	}
 
 	if (rr_set.s) pkg_free(rr_set.s);
+
+	if ((keep_proxy_rr & 2) > 0 && leg==DLG_CALLEE_LEG && msg->record_route && own_rr > 0) {
+		/* skip_recs contains the number of RR's for the callee */
+		skip_recs -= own_rr;
+		/* Add local RR's to caller's routeset */
+		if( print_rr_body(msg->record_route, &rr_set, DLG_CALLER_LEG,
+		                 &skip_recs) != 0) {
+			LM_ERR("failed to print route records \n");
+			goto error0;
+		}
+		LM_DBG("updating caller route_set %.*s\n",
+			rr_set.len, rr_set.s);
+		if (dlg_update_rr_set( dlg, DLG_CALLER_LEG, &rr_set)!=0) {
+			LM_ERR("dlg_update_rr_set failed\n");
+			if (rr_set.s) pkg_free(rr_set.s);
+			goto error0;
+		}
+		if (rr_set.s) pkg_free(rr_set.s);
+	}
 
 	return 0;
 error0:
