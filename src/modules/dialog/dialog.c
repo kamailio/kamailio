@@ -103,6 +103,7 @@ static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 static int db_skip_load = 0;
+static int dlg_keep_proxy_rr = 0;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
@@ -322,6 +323,7 @@ static param_export_t mod_params[]={
 	{ "end_timeout",           PARAM_INT, &dlg_end_timeout          },
 	{ "h_id_start",            PARAM_INT, &dlg_h_id_start           },
 	{ "h_id_step",             PARAM_INT, &dlg_h_id_step            },
+	{ "keep_proxy_rr",         INT_PARAM, &dlg_keep_proxy_rr        },
 	{ 0,0,0 }
 };
 
@@ -528,6 +530,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (dlg_keep_proxy_rr < 0 || dlg_keep_proxy_rr > 3) {
+		LM_ERR("invalid value for keep_proxy_rr\n");
+		return -1;
+	}
+
 	if (timeout_spec.s) {
 		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0
 				&& (timeout_avp.type!=PVT_AVP)){
@@ -655,7 +662,7 @@ static int mod_init(void)
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
-		timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode);
+		timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode, dlg_keep_proxy_rr);
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {

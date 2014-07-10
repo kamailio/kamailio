@@ -1604,6 +1604,42 @@ modparam("dialog", "h_id_step", 10)
 
 	</section>
 
+	<section id="dialog.p.keep_proxy_rr">
+		<title><varname>keep_proxy_rr</varname> (string)</title>
+		<para>
+			Whether to keep the record-route header added by the proxy.
+			When enabled, it will keep this proxy&apos;s record-route
+			header from the reply. The result is that generated requests
+			like the BYE from the dlg_end_dlg mi function will pass
+			through the proxy (looped).
+		</para>
+		<para>
+			Valid values are:
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>0</emphasis> - Don&apos;t keep any proxy Record-Route headers
+			</para></listitem>
+			<listitem><para>
+				<emphasis>1</emphasis> - Keep Record-route headers for the callee leg
+			</para></listitem>
+			<listitem><para>
+				<emphasis>2</emphasis> - Keep Record-route headers for the caller leg
+			</para></listitem>
+			<listitem><para>
+				<emphasis>3</emphasis> - Keep Record-route headers for both legs
+			</para></listitem>
+		</itemizedlist>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		<title>Set <varname>dlg_keep_proxy_rr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "keep_proxy_rr", 1)
+</programlisting>
+		</example>
+	</section>
 
 	<section>
 	<title>Functions</title>
