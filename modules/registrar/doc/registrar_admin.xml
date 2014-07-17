@@ -498,7 +498,7 @@ modparam("registrar", "sock_flag", 18)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>sock_hdr_namer</varname> parameter</title>
+		<title>Set <varname>sock_hdr_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
@@ -660,6 +660,13 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				<emphasis>max_contacts</emphasis> - the number of maximum
 				contacts to be stored for current registration AoR. It
 				overwrites the 'max_contacts' module parameter value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>socket</emphasis> - the string representing the
+				socket on which the register rquest was received, as alternative
+				to using the sock_hdr.
 			</para>
 		</listitem>
 		</itemizedlist>
