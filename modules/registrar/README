@@ -108,7 +108,7 @@ Bogdan-Andre Iancu
    1.12. Set max_contacts parameter
    1.13. Set retry_after parameter
    1.14. Set sock_flag parameter
-   1.15. Set sock_hdr_namer parameter
+   1.15. Set sock_hdr_name parameter
    1.16. Set method_filtering parameter
    1.17. Set use_path parameter
    1.18. Set path_mode parameter
@@ -533,7 +533,7 @@ modparam("registrar", "sock_flag", 18)
 
    Default value is NULL.
 
-   Example 1.15. Set sock_hdr_namer parameter
+   Example 1.15. Set sock_hdr_name parameter
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
 ...
@@ -621,6 +621,8 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
      * max_contacts - the number of maximum contacts to be stored for
        current registration AoR. It overwrites the 'max_contacts' module
        parameter value.
+     * socket - the string representing the socket on which the register
+       rquest was received, as alternative to using the sock_hdr.
 
    For example. if this parameter is set to 'reg', then the number of
    maximum contacts can be set in $xavp(reg=>max_contacts).
