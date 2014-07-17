@@ -27,7 +27,13 @@
  */
 
 #include <limits.h>
+
+#ifdef EMBEDDED_UTF8_DECODE
+#include "utf8_decode.h"
+#else
 #include <unistr.h>
+#endif
+
 #include "../../events.h"
 #include "../../receive.h"
 #include "../../stats.h"
@@ -726,8 +732,13 @@ int ws_frame_transmit(void *data)
 	frame.fin = 1;
 	/* Can't be sure whether this message is UTF-8 or not so check to see
 	   if it "might" be UTF-8 and send as binary if it definitely isn't */
+#ifdef EMBEDDED_UTF8_DECODE
+	frame.opcode = IsUTF8((uint8_t *) wsev->buf, wsev->len) ?
+				OPCODE_TEXT_FRAME : OPCODE_BINARY_FRAME;
+#else
 	frame.opcode = (u8_check((uint8_t *) wsev->buf, wsev->len) == NULL) ?
 				OPCODE_TEXT_FRAME : OPCODE_BINARY_FRAME;
+#endif
 	frame.payload_len = wsev->len;
 	frame.payload_data = wsev->buf;
 	frame.wsc = wsconn_get(wsev->id);
