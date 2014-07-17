@@ -44,6 +44,7 @@ extern dmq_peer_t* dmq_notification_peer;
 extern str dmq_server_address;
 extern dmq_peer_list_t* peer_list;
 extern str dmq_request_method;
+extern str dmq_server_socket;
 extern struct sip_uri dmq_server_uri;
 extern str dmq_notification_address;
 extern struct sip_uri dmq_notification_uri;

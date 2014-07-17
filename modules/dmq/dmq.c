@@ -60,6 +60,7 @@ int pid = 0;
 /* module parameters */
 int num_workers = DEFAULT_NUM_WORKERS;
 str dmq_server_address = {0, 0};
+str dmq_server_socket = {0, 0};
 struct sip_uri dmq_server_uri;
 
 str dmq_notification_address = {0, 0};
@@ -127,6 +128,36 @@ struct module_exports exports = {
 	child_init                  	/* per-child init function */
 };
 
+
+static int make_socket_str_from_uri(struct sip_uri *uri, str *socket) {
+	if(!uri->host.s || !uri->host.len) {
+		LM_ERR("no host in uri\n");
+		return -1;
+	}
+
+	socket->len = uri->host.len + uri->port.len + 6;
+	socket->s = pkg_malloc(socket->len);
+	if(socket->s==NULL) {
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	memcpy(socket->s, "udp:", 4);
+	socket->len = 4;
+
+	memcpy(socket->s + socket->len, uri->host.s, uri->host.len);
+	socket->len += uri->host.len;
+
+	if(uri->port.s && uri->port.len) {
+		socket->s[socket->len++] = ':';
+		memcpy(socket->s + socket->len, uri->port.s, uri->port.len);
+		socket->len += uri->port.len;
+	}
+	socket->s[socket->len] = '\0';
+
+	return 0;
+}
+
+
 /**
  * init module function
  */
@@ -175,6 +206,12 @@ static int mod_init(void)
 
 	if(parse_uri(dmq_notification_address.s, dmq_notification_address.len, &dmq_notification_uri) < 0) {
 		LM_ERR("notification address invalid\n");
+		return -1;
+	}
+
+	/* create socket string out of the server_uri */
+	if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
+		LM_ERR("failed to create socket out of server_uri\n");
 		return -1;
 	}
 
@@ -267,6 +304,9 @@ static void destroy(void) {
 		LM_DBG("unregistering node %.*s\n", STR_FMT(&self_node->orig_uri));
 		self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(notification_node, 1);
+	}
+	if (dmq_server_socket.s) {
+		pkg_free(dmq_server_socket.s);
 	}
 }
 

@@ -202,6 +202,8 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
 	
 	set_uac_req(&uac_r, &dmq_request_method, &str_hdr, body, NULL,
 			TMCB_LOCAL_COMPLETED, dmq_tm_callback, (void*)cb_param);
+	uac_r.ssock = &dmq_server_socket;
+
 	result = tmb.t_request(&uac_r, &to,
 			       &to, &from,
 			       NULL);
