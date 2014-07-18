@@ -251,27 +251,7 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 		LM_ERR("Failed to insert/update contact record for [%.*s]\n", _c->c.len, _c->c.s);
 		return -1;
 	}
-	/* search for the ID if the contact just entered */
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-		LM_ERR("Unable to find contact [%.*s] in DB to complete IMPU-contact mapping\n", _c->c.len, _c->c.s);
-		ul_dbf.free_result(ul_dbh, _rs);
-		return -1;
-	}
-
-	if (RES_ROW_N(_rs) == 0) {
-		LM_DBG("Contact %.*s not found in DB\n",_c->c.len, _c->c.s);
-		ul_dbf.free_result(ul_dbh, _rs);
-		return -1;
-	}
-
-	if (RES_ROW_N(_rs) > 1) {
-		LM_WARN("more than one contact found in DB for contact [%.*s] - this should not happen... proceeding with first entry\n",
-				_c->c.len, _c->c.s);
-	}
-
-	ret_val = ROW_VALUES(RES_ROWS(_rs));
-	contact_id = ret_val[0].val.int_val;
-	ul_dbf.free_result(ul_dbh, _rs);
+	contact_id = ul_dbf.last_inserted_id(ul_dbh);
 	LM_DBG("contact ID is %d\n", contact_id);
 
 	/* search for ID of the associated IMPU */
