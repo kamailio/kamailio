@@ -115,14 +115,14 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"htable",             STR_PARAM|USE_FUNC_PARAM, (void*)ht_param},
-	{"db_url",             STR_PARAM, &ht_db_url.s},
-	{"key_name_column",    STR_PARAM, &ht_db_name_column.s},
-	{"key_type_column",    STR_PARAM, &ht_db_ktype_column.s},
-	{"value_type_column",  STR_PARAM, &ht_db_vtype_column.s},
-	{"key_value_column",   STR_PARAM, &ht_db_value_column.s},
-	{"expires_column",     STR_PARAM, &ht_db_expires_column.s},
-	{"array_size_suffix",  STR_PARAM, &ht_array_size_suffix.s},
+	{"htable",             PARAM_STRING|USE_FUNC_PARAM, (void*)ht_param},
+	{"db_url",             PARAM_STR, &ht_db_url},
+	{"key_name_column",    PARAM_STR, &ht_db_name_column},
+	{"key_type_column",    PARAM_STR, &ht_db_ktype_column},
+	{"value_type_column",  PARAM_STR, &ht_db_vtype_column},
+	{"key_value_column",   PARAM_STR, &ht_db_value_column},
+	{"expires_column",     PARAM_STR, &ht_db_expires_column},
+	{"array_size_suffix",  PARAM_STR, &ht_array_size_suffix},
 	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
 	{"timer_interval",     INT_PARAM, &ht_timer_interval},
 	{"db_expires",         INT_PARAM, &ht_db_expires_flag},
