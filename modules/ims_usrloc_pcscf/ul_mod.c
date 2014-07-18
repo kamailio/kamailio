@@ -104,10 +104,10 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"hash_size",         INT_PARAM, &ul_hash_size    },
 	{"timer_interval",    INT_PARAM, &timer_interval  },
-	{"usrloc_debug_file", STR_PARAM, &usrloc_debug_file.s},
+	{"usrloc_debug_file", PARAM_STR, &usrloc_debug_file },
 	{"enable_debug_file", INT_PARAM, &usrloc_debug},
 
-	{"db_url",              STR_PARAM, &db_url.s        },
+	{"db_url",              PARAM_STR, &db_url        },
 	{"timer_interval",      INT_PARAM, &timer_interval  },
 	{"db_mode",             INT_PARAM, &db_mode         },
 	{"hashing_type",		INT_PARAM, &hashing_type	},
@@ -163,9 +163,6 @@ static int mod_init(void) {
 	}
 #endif
 
-	/* Compute the lengths of string parameters */
-	usrloc_debug_file.len = strlen(usrloc_debug_file.s);
-
 	if (ul_hash_size <= 1)
 		ul_hash_size = 512;
 	else
@@ -176,8 +173,6 @@ static int mod_init(void) {
 		LM_ERR("locks array initialization failed\n");
 		return -1;
 	}
-
-	db_url.len = strlen(db_url.s);
 
 	/* Regsiter RPC */
 	if (rpc_register_array(ul_rpc) != 0) {
