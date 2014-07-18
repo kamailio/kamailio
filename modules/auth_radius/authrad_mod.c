@@ -89,10 +89,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"radius_config",    STR_PARAM, &radius_config   },
+	{"radius_config",    PARAM_STRING, &radius_config   },
 	{"service_type",     INT_PARAM, &service_type    },
 	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag   },
-	{"auth_extra",       STR_PARAM, &auth_extra_str  },
+	{"auth_extra",       PARAM_STRING, &auth_extra_str  },
 	{0, 0, 0}
 };
 
