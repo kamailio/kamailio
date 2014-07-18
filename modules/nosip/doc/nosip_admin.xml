@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a way to get access to non-SIP packages received
+		by &kamailio; via its SIP worker processes. The content of such packages
+		is available in the $mb variable inside the event_route[nosip:msg].
+	</para>
+	<para>
+		Note that packets with size less than 32 bytes are discarded, this
+		threshold being set to avoid handling the NAT keepalive packets coming
+		from devices. The limit is planned to be made configurable. Also, by
+		default &kamailio; writes a log messages in case of SIP parsing error,
+		that can be controlled via 'corelog' global parameter.
+	</para>
+	<para>
+		Besides the content of the packet, $si and $sp provide the source IP and
+		port, allowing to do filtering and authorization.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>msg_match</varname> (str)</title>
+		<para>
+			Regular expression to match against content of the packet in order
+			to execute the event_route[nosip:msg].
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>msg_match</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nosip", "msg_match", "^KREQUEST-")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>msg_skip</varname> (str)</title>
+		<para>
+			Regular expression to match against content of the packet in order
+			to skip execution the event_route[nosip:msg].
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>msg_match</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nosip", "msg_skip", "^GET ")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Event Routes</title>
+	<section id="async.evr.nosip_msg">
+	    <title>
+		<function moreinfo="none">event_route[nosip:msg]</function>
+	    </title>
+	    <para>
+			Event route block to be executed when a non-sip message is received
+			by a SIP worker process.
+		</para>
+		<para>
+		The routename parameter can be a static string or a dynamic string
+		value with config variables.
+		</para>
+		<para>
+		The sleep parameter represent the number of seconds to suspend the
+		processing of a SIP request. Maximum value is 100. The parameter can be
+		a static integer or a variable holding an integer.
+		</para>
+		<para>
+		Since the SIP request handling is resumed in another process,
+		the config file execution state is practically lost. Therefore beware
+		that the execution of config after resume will end once the
+		route[routename] is finished.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>event_route[nosip:msg]</function> usage</title>
+		<programlisting format="linespecific">
+...
+loadmodule "nosip.so"
+...
+event_route[nosip:msg] {
+   xlog("non-sip packet received - content [[$mb]] from [$si:$sp]\n");
+   exit;
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+	<section>
+	<title>Examples of Usage</title>
+		<para>
+			There can be many useful cases when one wants to get a SIP worker
+			back to handle a suspended SIP transaction. While this could be
+			achieved via XMLRPC or HTTP for TCP workers, UDP workers are the
+			least loaded in terms of network interaction layer (ie., there is
+			no overhad for connections management like for TCP).
+		</para>
+		<para>
+			Parsing of the non-sip message can be done using config file
+			actions: functions, expressions with variables and transformations.
+		</para>
+		<para>
+			Next is a basic example of parsing a message from the network and
+			resuming the transaction.
+		</para>
+		<example>
+		<title><function>event_route[nosip:msg]</function> use case</title>
+		<programlisting format="linespecific">
+...
+# expect: :KREQUEST-RESUME-TRANSACTION:tindex:tlabel:routename:
+# example: :KREQUEST-RESUME-TRANSACTION:4242:8686:RESUME:
+loadmodule "nosip.so"
+...
+event_route[nosip:msg] {
+    xlog("non-sip packet received - content [[$mb]] from [$si:$sp]\n");
+
+    # must be a trusted IP
+    if($si!="127.0.0.1") {
+        exit;
+    }
+
+    # validation of the format and resume transaction
+    if($mb=~":KREQUEST-RESUME-TRANSACTION:[0-9]+:[0-9]+:[a-zA-Z0-9]+:$") {
+        $var(tindex) = $(mb{s.select,1,:});
+        $var(tlabel) = $(mb{s.select,2,:});
+        $var(rname) = $(mb{s.select,3,:});
+        t_continue("$var(tindex)", "$var(tlabel)", "$var(rname)");
+    }
+    exit;
+}
+
+route[RESUME] {
+    ...
+}
+...
+</programlisting>
+	    </example>
+
+	</section>
+</chapter>
+
