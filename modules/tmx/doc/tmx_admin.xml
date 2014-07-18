@@ -327,7 +327,7 @@ if(t_suspend())
 		<title><function>t_continue</function> usage</title>
 		<programlisting format="linespecific">
 ...
-tcontinue('123', '456', 'MYROUTE');
+t_continue('123', '456', 'MYROUTE');
 ...
 </programlisting>
 		</example>

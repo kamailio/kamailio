@@ -22,7 +22,7 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright (c) 2009 Daniel-Constantin Mierla
+   Copyright © 2009 Daniel-Constantin Mierla
      __________________________________________________________________
 
    Table of Contents
@@ -166,7 +166,7 @@ Chapter 1. Admin Guide
    3.9. t_continue(tindex, tlabel, rtname)
    3.10. t_reuse_branch()
 
-3.1.  t_cancel_branches(which)
+3.1. t_cancel_branches(which)
 
    Cancel branches of an active SIP transaction. The function can be
    called for a SIP reply that will identify the current branch.
@@ -185,7 +185,7 @@ if (t_cancel_branches("all")) {
 }
 ...
 
-3.2.  t_cancel_callid(callid, cseq, flag)
+3.2. t_cancel_callid(callid, cseq, flag)
 
    Cancel first INVITE transaction identified by callid and cseq. It sets
    the flag if the value is greater than zero
@@ -204,7 +204,7 @@ if (t_cancel_callid("123qaz", "5", "22")) {
 }
 ...
 
-3.3.  t_reply_callid(callid, cseq, code, reason)
+3.3. t_reply_callid(callid, cseq, code, reason)
 
    Send reply to first INVITE transaction identified by callid and cseq.
 
@@ -223,7 +223,7 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 }
 ...
 
-3.4.  t_flush_flags()
+3.4. t_flush_flags()
 
    Flush the flags from current SIP message into the already created
    transaction. It make sense only in routing block if the transaction was
@@ -236,7 +236,7 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 t_flush_flags();
 ...
 
-3.5.  t_is_failure_route()
+3.5. t_is_failure_route()
 
    Returns true if the top-executed route block is failure_route.
 
@@ -253,7 +253,7 @@ route[abc] {
 }
 ...
 
-3.6.  t_is_branch_route()
+3.6. t_is_branch_route()
 
    Returns true if the top-executed route block is branch_route.
 
@@ -270,7 +270,7 @@ route[abc] {
 }
 ...
 
-3.7.  t_is_reply_route()
+3.7. t_is_reply_route()
 
    Returns true if the top-executed route block is reply_route.
 
@@ -287,7 +287,7 @@ route[abc] {
 }
 ...
 
-3.8.  t_suspend()
+3.8. t_suspend()
 
    Suspend the execution of SIP request in a transaction. If transaction
    was not created yet, it is created by this function. Returns true in
@@ -305,7 +305,7 @@ if(t_suspend())
 }
 ...
 
-3.9.  t_continue(tindex, tlabel, rtname)
+3.9. t_continue(tindex, tlabel, rtname)
 
    Continue the execution of the transaction identified by tindex and
    tlabel with the actions defined in route[rtname].
@@ -322,10 +322,10 @@ if(t_suspend())
 
    Example 1.9. t_continue usage
 ...
-tcontinue('123', '456', 'MYROUTE');
+t_continue('123', '456', 'MYROUTE');
 ...
 
-3.10.  t_reuse_branch()
+3.10. t_reuse_branch()
 
    Creates new "main" branch by making copy of branch-failure branch.
    Currently the following branch attributes are copied from
@@ -366,7 +366,7 @@ event_route [tm:branch-failure:contact] {
    5.4. t_reply
    5.5. t_reply_callid
 
-5.1.  t_uac_dlg
+5.1. t_uac_dlg
 
    Generates and sends a local SIP request.
 
@@ -381,7 +381,7 @@ event_route [tm:branch-failure:contact] {
      * body - (optional, may not be present) request body (if present,
        requires the "Content-Type" and "Content-length" headers)
 
-5.2.  t_uac_cancel
+5.2. t_uac_cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -389,14 +389,14 @@ event_route [tm:branch-failure:contact] {
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-5.3.  t_hash
+5.3. t_hash
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-5.4.  t_reply
+5.4. t_reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -410,7 +410,7 @@ event_route [tm:branch-failure:contact] {
      * body - (optional, may not be present) reply body (if present,
        requires the "Content-Type" and "Content-length" headers)
 
-5.5.  t_reply_callid
+5.5. t_reply_callid
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
