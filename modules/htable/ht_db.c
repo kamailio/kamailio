@@ -54,15 +54,9 @@ int ht_db_init_params(void)
 
 	if(ht_fetch_rows<=0)
 		ht_fetch_rows = 100;
-	if(ht_array_size_suffix.s==NULL || ht_array_size_suffix.s[0]=='\0')
+	if(ht_array_size_suffix.s==NULL || ht_array_size_suffix.len<=0)
 		ht_array_size_suffix.s = "::size";
-	ht_array_size_suffix.len = strlen(ht_array_size_suffix.s);
 
-	ht_db_url.len   = strlen(ht_db_url.s);
-	ht_db_name_column.len   = strlen(ht_db_name_column.s);
-	ht_db_ktype_column.len  = strlen(ht_db_ktype_column.s);
-	ht_db_vtype_column.len  = strlen(ht_db_vtype_column.s);
-	ht_db_value_column.len  = strlen(ht_db_value_column.s);
 	return 0;
 }
 

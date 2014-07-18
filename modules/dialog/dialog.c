@@ -234,54 +234,54 @@ static cmd_export_t cmds[]={
 static param_export_t mod_params[]={
 	{ "enable_stats",          INT_PARAM, &dlg_enable_stats         },
 	{ "hash_size",             INT_PARAM, &dlg_hash_size            },
-	{ "rr_param",              STR_PARAM, &rr_param                 },
+	{ "rr_param",              PARAM_STRING, &rr_param                 },
 	{ "dlg_flag",              INT_PARAM, &dlg_flag                 },
-	{ "timeout_avp",           STR_PARAM, &timeout_spec.s           },
+	{ "timeout_avp",           PARAM_STR, &timeout_spec           },
 	{ "default_timeout",       INT_PARAM, &default_timeout          },
-	{ "dlg_extra_hdrs",        STR_PARAM, &dlg_extra_hdrs.s         },
+	{ "dlg_extra_hdrs",        PARAM_STR, &dlg_extra_hdrs         },
 	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode           },
 	{ "detect_spirals",        INT_PARAM, &detect_spirals,          },
-	{ "db_url",                STR_PARAM, &db_url.s                 },
+	{ "db_url",                PARAM_STR, &db_url                 },
 	{ "db_mode",               INT_PARAM, &dlg_db_mode_param        },
-	{ "table_name",            STR_PARAM, &dialog_table_name        },
-	{ "call_id_column",        STR_PARAM, &call_id_column.s         },
-	{ "from_uri_column",       STR_PARAM, &from_uri_column.s        },
-	{ "from_tag_column",       STR_PARAM, &from_tag_column.s        },
-	{ "to_uri_column",         STR_PARAM, &to_uri_column.s          },
-	{ "to_tag_column",         STR_PARAM, &to_tag_column.s          },
-	{ "h_id_column",           STR_PARAM, &h_id_column.s            },
-	{ "h_entry_column",        STR_PARAM, &h_entry_column.s         },
-	{ "state_column",          STR_PARAM, &state_column.s           },
-	{ "start_time_column",     STR_PARAM, &start_time_column.s      },
-	{ "timeout_column",        STR_PARAM, &timeout_column.s         },
-	{ "to_cseq_column",        STR_PARAM, &to_cseq_column.s         },
-	{ "from_cseq_column",      STR_PARAM, &from_cseq_column.s       },
-	{ "to_route_column",       STR_PARAM, &to_route_column.s        },
-	{ "from_route_column",     STR_PARAM, &from_route_column.s      },
-	{ "to_contact_column",     STR_PARAM, &to_contact_column.s      },
-	{ "from_contact_column",   STR_PARAM, &from_contact_column.s    },
-	{ "to_sock_column",        STR_PARAM, &to_sock_column.s         },
-	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
-	{ "sflags_column",         STR_PARAM, &sflags_column.s          },
-	{ "toroute_name_column",   STR_PARAM, &toroute_name_column.s    },
+	{ "table_name",            PARAM_STR, &dialog_table_name        },
+	{ "call_id_column",        PARAM_STR, &call_id_column         },
+	{ "from_uri_column",       PARAM_STR, &from_uri_column        },
+	{ "from_tag_column",       PARAM_STR, &from_tag_column        },
+	{ "to_uri_column",         PARAM_STR, &to_uri_column          },
+	{ "to_tag_column",         PARAM_STR, &to_tag_column          },
+	{ "h_id_column",           PARAM_STR, &h_id_column            },
+	{ "h_entry_column",        PARAM_STR, &h_entry_column         },
+	{ "state_column",          PARAM_STR, &state_column           },
+	{ "start_time_column",     PARAM_STR, &start_time_column      },
+	{ "timeout_column",        PARAM_STR, &timeout_column         },
+	{ "to_cseq_column",        PARAM_STR, &to_cseq_column         },
+	{ "from_cseq_column",      PARAM_STR, &from_cseq_column       },
+	{ "to_route_column",       PARAM_STR, &to_route_column        },
+	{ "from_route_column",     PARAM_STR, &from_route_column      },
+	{ "to_contact_column",     PARAM_STR, &to_contact_column      },
+	{ "from_contact_column",   PARAM_STR, &from_contact_column    },
+	{ "to_sock_column",        PARAM_STR, &to_sock_column         },
+	{ "from_sock_column",      PARAM_STR, &from_sock_column       },
+	{ "sflags_column",         PARAM_STR, &sflags_column          },
+	{ "toroute_name_column",   PARAM_STR, &toroute_name_column    },
 
-	{ "vars_table_name",       STR_PARAM, &dialog_vars_table_name   },
-	{ "vars_h_id_column",      STR_PARAM, &vars_h_id_column.s       },
-	{ "vars_h_entry_column",   STR_PARAM, &vars_h_entry_column.s    },
-	{ "vars_key_column",       STR_PARAM, &vars_key_column.s        },
-	{ "vars_value_column",     STR_PARAM, &vars_value_column.s      },
+	{ "vars_table_name",       PARAM_STR, &dialog_vars_table_name   },
+	{ "vars_h_id_column",      PARAM_STR, &vars_h_id_column       },
+	{ "vars_h_entry_column",   PARAM_STR, &vars_h_entry_column    },
+	{ "vars_key_column",       PARAM_STR, &vars_key_column        },
+	{ "vars_value_column",     PARAM_STR, &vars_value_column      },
 
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ "db_fetch_rows",         INT_PARAM, &db_fetch_rows            },
-	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
-	{ "profiles_no_value",     STR_PARAM, &profiles_nv_s            },
-	{ "bridge_controller",     STR_PARAM, &dlg_bridge_controller.s  },
+	{ "profiles_with_value",   PARAM_STRING, &profiles_wv_s            },
+	{ "profiles_no_value",     PARAM_STRING, &profiles_nv_s            },
+	{ "bridge_controller",     PARAM_STR, &dlg_bridge_controller  },
 	{ "bridge_contact",        PARAM_STR, &dlg_bridge_contact       },
-	{ "ruri_pvar",             STR_PARAM, &ruri_pvar_param.s        },
+	{ "ruri_pvar",             PARAM_STR, &ruri_pvar_param        },
 	{ "initial_cbs_inscript",  INT_PARAM, &initial_cbs_inscript     },
 	{ "send_bye",              INT_PARAM, &dlg_send_bye             },
 	{ "wait_ack",              INT_PARAM, &dlg_wait_ack             },
-	{ "xavp_cfg",              STR_PARAM, &dlg_xavp_cfg.s           },
+	{ "xavp_cfg",              PARAM_STR, &dlg_xavp_cfg           },
 	{ "ka_timer",              INT_PARAM, &dlg_ka_timer             },
 	{ "ka_interval",           INT_PARAM, &dlg_ka_interval          },
 	{ "timeout_noreset",       INT_PARAM, &dlg_timeout_noreset      },
@@ -487,42 +487,6 @@ static int mod_init(void)
 	if(dlg_bridge_init_hdrs()<0)
 		return -1;
 
-	if (timeout_spec.s)
-		timeout_spec.len = strlen(timeout_spec.s);
-
-	dlg_bridge_controller.len = strlen(dlg_bridge_controller.s);
-	db_url.len = strlen(db_url.s);
-	call_id_column.len = strlen(call_id_column.s);
-	from_uri_column.len = strlen(from_uri_column.s);
-	from_tag_column.len = strlen(from_tag_column.s);
-	to_uri_column.len = strlen(to_uri_column.s);
-	to_tag_column.len = strlen(to_tag_column.s);
-	h_id_column.len = strlen(h_id_column.s);
-	h_entry_column.len = strlen(h_entry_column.s);
-	state_column.len = strlen(state_column.s);
-	start_time_column.len = strlen(start_time_column.s);
-	timeout_column.len = strlen(timeout_column.s);
-	to_cseq_column.len = strlen(to_cseq_column.s);
-	from_cseq_column.len = strlen(from_cseq_column.s);
-	to_route_column.len = strlen(to_route_column.s);
-	from_route_column.len = strlen(from_route_column.s);
-	to_contact_column.len = strlen(to_contact_column.s);
-	from_contact_column.len = strlen(from_contact_column.s);
-	to_sock_column.len = strlen(to_sock_column.s);
-	from_sock_column.len = strlen(from_sock_column.s);
-	sflags_column.len = strlen(sflags_column.s);
-	toroute_name_column.len = strlen(toroute_name_column.s);
-	dialog_table_name.len = strlen(dialog_table_name.s);
-
-	dialog_vars_table_name.len = strlen(dialog_vars_table_name.s);
-	vars_h_id_column.len = strlen(vars_h_id_column.s);
-	vars_h_entry_column.len = strlen(vars_h_entry_column.s);
-	vars_key_column.len = strlen(vars_key_column.s);
-	vars_value_column.len = strlen(vars_value_column.s);
-
-	if(dlg_xavp_cfg.s!=NULL)
-		dlg_xavp_cfg.len = strlen(dlg_xavp_cfg.s);
-
 	/* param checkings */
 	if (dlg_flag==-1) {
 		LM_ERR("no dlg flag set!!\n");
@@ -554,11 +518,11 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (ruri_pvar_param.s==NULL || *ruri_pvar_param.s=='\0') {
+	if (ruri_pvar_param.s==NULL || ruri_pvar_param.len<=0) {
 		LM_ERR("invalid r-uri PV string\n");
 		return -1;
 	}
-	ruri_pvar_param.len = strlen(ruri_pvar_param.s);
+
 	if(pv_parse_format(&ruri_pvar_param, &ruri_param_model) < 0
 				|| ruri_param_model==NULL) {
 		LM_ERR("malformed r-uri PV string: %s\n", ruri_pvar_param.s);
@@ -570,10 +534,6 @@ static int mod_init(void)
 				" (must be either 0 or 1)\n");
 		return -1;
 	}
-
-	/* update the len of the extra headers */
-	if (dlg_extra_hdrs.s)
-		dlg_extra_hdrs.len = strlen(dlg_extra_hdrs.s);
 
 	if (seq_match_mode!=SEQ_MATCH_NO_ID &&
 	seq_match_mode!=SEQ_MATCH_FALLBACK &&
