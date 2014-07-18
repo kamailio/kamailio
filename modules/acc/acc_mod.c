@@ -254,10 +254,10 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"early_media",             INT_PARAM, &early_media             },
 	{"failed_transaction_flag", INT_PARAM, &failed_transaction_flag },
-	{"failed_filter",           STR_PARAM, &failed_filter_str       },
+	{"failed_filter",           PARAM_STRING, &failed_filter_str       },
 	{"report_ack",              INT_PARAM, &report_ack              },
 	{"report_cancels",          INT_PARAM, &report_cancels          },
-	{"multi_leg_info",          STR_PARAM, &leg_info_str            },
+	{"multi_leg_info",          PARAM_STRING, &leg_info_str            },
 	{"detect_direction",        INT_PARAM, &detect_direction        },
 	{"acc_prepare_flag",        INT_PARAM, &acc_prepare_flag        },
 	{"reason_from_hf",          INT_PARAM, &reason_from_hf          },
@@ -265,48 +265,48 @@ static param_export_t params[] = {
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
 	{"log_level",            INT_PARAM, &log_level            },
-	{"log_facility",         STR_PARAM, &log_facility_str     },
-	{"log_extra",            STR_PARAM, &log_extra_str        },
+	{"log_facility",         PARAM_STRING, &log_facility_str     },
+	{"log_extra",            PARAM_STRING, &log_extra_str        },
 	/* cdr specific */
 	{"cdr_enable",           INT_PARAM, &cdr_enable                 },
 	{"cdr_log_enable",         INT_PARAM, &cdr_log_enable           },
 	{"cdr_start_on_confirmed", INT_PARAM, &cdr_start_on_confirmed   },
-	{"cdr_facility",         STR_PARAM, &cdr_facility_str           },
-	{"cdr_extra",            STR_PARAM, &cdr_log_extra_str          },
-	{"cdr_start_id",	 STR_PARAM, &cdr_start_str.s		},
-	{"cdr_end_id",		 STR_PARAM, &cdr_end_str.s		},
-	{"cdr_duration_id",	 STR_PARAM, &cdr_duration_str.s		},
+	{"cdr_facility",         PARAM_STRING, &cdr_facility_str           },
+	{"cdr_extra",            PARAM_STRING, &cdr_log_extra_str          },
+	{"cdr_start_id",	 PARAM_STR, &cdr_start_str		},
+	{"cdr_end_id",		 PARAM_STR, &cdr_end_str		},
+	{"cdr_duration_id",	 PARAM_STR, &cdr_duration_str		},
 	{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable   },
 #ifdef RAD_ACC
-	{"radius_config",        STR_PARAM, &radius_config        },
+	{"radius_config",        PARAM_STRING, &radius_config        },
 	{"radius_flag",          INT_PARAM, &radius_flag          },
 	{"radius_missed_flag",   INT_PARAM, &radius_missed_flag   },
 	{"service_type",         INT_PARAM, &service_type         },
-	{"radius_extra",         STR_PARAM, &rad_extra_str        },
+	{"radius_extra",         PARAM_STRING, &rad_extra_str        },
 #endif
 	/* DIAMETER specific */
 #ifdef DIAM_ACC
 	{"diameter_flag",        INT_PARAM, &diameter_flag        },
 	{"diameter_missed_flag", INT_PARAM, &diameter_missed_flag },
-	{"diameter_client_host", STR_PARAM, &diameter_client_host },
+	{"diameter_client_host", PARAM_STRING, &diameter_client_host },
 	{"diameter_client_port", INT_PARAM, &diameter_client_port },
-	{"diameter_extra",       STR_PARAM, &dia_extra_str        },
+	{"diameter_extra",       PARAM_STRING, &dia_extra_str        },
 #endif
 	/* db-specific */
 #ifdef SQL_ACC
 	{"db_flag",              INT_PARAM, &db_flag              },
 	{"db_missed_flag",       INT_PARAM, &db_missed_flag       },
-	{"db_extra",             STR_PARAM, &db_extra_str         },
-	{"db_url",               STR_PARAM, &db_url.s             },
-	{"db_table_acc",         STR_PARAM, &db_table_acc.s       },
-	{"db_table_missed_calls",STR_PARAM, &db_table_mc.s        },
-	{"acc_method_column",    STR_PARAM, &acc_method_col.s     },
-	{"acc_from_tag_column",  STR_PARAM, &acc_fromtag_col.s    },
-	{"acc_to_tag_column",    STR_PARAM, &acc_totag_col.s      },
-	{"acc_callid_column",    STR_PARAM, &acc_callid_col.s     },
-	{"acc_sip_code_column",  STR_PARAM, &acc_sipcode_col.s    },
-	{"acc_sip_reason_column",STR_PARAM, &acc_sipreason_col.s  },
-	{"acc_time_column",      STR_PARAM, &acc_time_col.s       },
+	{"db_extra",             PARAM_STRING, &db_extra_str         },
+	{"db_url",               PARAM_STR, &db_url             },
+	{"db_table_acc",         PARAM_STR, &db_table_acc       },
+	{"db_table_missed_calls",PARAM_STR, &db_table_mc        },
+	{"acc_method_column",    PARAM_STR, &acc_method_col     },
+	{"acc_from_tag_column",  PARAM_STR, &acc_fromtag_col    },
+	{"acc_to_tag_column",    PARAM_STR, &acc_totag_col      },
+	{"acc_callid_column",    PARAM_STR, &acc_callid_col     },
+	{"acc_sip_code_column",  PARAM_STR, &acc_sipcode_col    },
+	{"acc_sip_reason_column",PARAM_STR, &acc_sipreason_col  },
+	{"acc_time_column",      PARAM_STR, &acc_time_col       },
 	{"db_insert_mode",       INT_PARAM, &acc_db_insert_mode   },
 #endif
 	/* time-mode-specific */
@@ -314,7 +314,7 @@ static param_export_t params[] = {
 	{"time_attr",            PARAM_STR, &acc_time_attr        },
 	{"time_exten",           PARAM_STR, &acc_time_exten       },
 	{"cdrs_table",           PARAM_STR, &acc_cdrs_table       },
-	{"time_format",          STR_PARAM, &acc_time_format      },
+	{"time_format",          PARAM_STRING, &acc_time_format      },
 	{0,0,0}
 };
 
@@ -448,13 +448,11 @@ static int mod_init( void )
 {
 #ifdef SQL_ACC
 	if (db_url.s) {
-		db_url.len = strlen(db_url.s);
 		if(db_url.len<=0) {
 			db_url.s = NULL;
 			db_url.len = 0;
 		}
 	}
-	db_table_acc.len = strlen(db_table_acc.s);
 	if(db_table_acc.len!=3 || strncmp(db_table_acc.s, "acc", 3)!=0)
 	{
 		db_table_acc_data = db_table_acc.s;
@@ -465,7 +463,6 @@ static int mod_init( void )
 			return -1;
 		}
 	}
-	db_table_mc.len = strlen(db_table_mc.s);
 	if(db_table_mc.len!=12 || strncmp(db_table_mc.s, "missed_calls", 12)!=0)
 	{
 		db_table_mc_data = db_table_mc.s;
@@ -476,13 +473,6 @@ static int mod_init( void )
 			return -1;
 		}
 	}
-	acc_method_col.len = strlen(acc_method_col.s);
-	acc_fromtag_col.len = strlen(acc_fromtag_col.s);
-	acc_totag_col.len = strlen(acc_totag_col.s);
-	acc_callid_col.len = strlen(acc_callid_col.s);
-	acc_sipcode_col.len = strlen(acc_sipcode_col.s);
-	acc_sipreason_col.len = strlen(acc_sipreason_col.s);
-	acc_time_col.len = strlen(acc_time_col.s);
 #endif
 
 	if (log_facility_str) {
@@ -588,10 +578,6 @@ static int mod_init( void )
 		      LM_ERR( "necessary cdr_parameters are not set\n");
 		      return -1;
 		}			
-		
-		cdr_start_str.len = strlen(cdr_start_str.s);
-		cdr_end_str.len = strlen(cdr_end_str.s);
-		cdr_duration_str.len = strlen(cdr_duration_str.s);
 		
 		if( !cdr_start_str.len || !cdr_end_str.len || !cdr_duration_str.len) 
 		{
