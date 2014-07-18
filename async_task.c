@@ -110,10 +110,10 @@ int async_task_child_init(int rank)
 	int pid;
 	int i;
 
-	LM_DBG("child initializing asynk task framework\n");
-
 	if(_async_task_workers<=0)
 		return 0;
+
+	LM_DBG("child initializing asynk task framework\n");
 
 	if (rank==PROC_INIT) {
 		if(async_task_init_sockets()<0) {
