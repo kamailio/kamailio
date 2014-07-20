@@ -51,7 +51,7 @@ void check_calls_by_money(unsigned int ticks, void *param)
 
 				if (i > SAFE_ITERATION_THRESHOLD)
 				{
-					LM_ERR("Too many iterations for this loop: %d", i);
+					LM_ERR("Too many iterations for this loop: %d\n", i);
 					break;
 				}
 				lock_get(&credit_data->lock);
@@ -138,7 +138,7 @@ void check_calls_by_time(unsigned int ticks, void *param)
 
 				if (i > SAFE_ITERATION_THRESHOLD)
 				{
-					LM_ERR("Too many iterations for this loop: %d", i);
+					LM_ERR("Too many iterations for this loop: %d\n", i);
 					break;
 				}
 

@@ -171,7 +171,7 @@ void rpc_check_client_stats(rpc_t* rpc, void* ctx)
 	return;
 
 nomem:
-	LM_ERR("No more pkg memory");
+	LM_ERR("No more pkg memory\n");
 	rpc->fault(ctx, 500, "No more memory\n");
 }
 
@@ -251,7 +251,7 @@ static int iterate_over_table(hash_tables_t *hts, str *result, credit_type_t typ
 	return 0;
 
 nomem:
-	LM_ERR("No more pkg memory");
+	LM_ERR("No more pkg memory\n");
 	return -1;
 }
 

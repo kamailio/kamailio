@@ -240,17 +240,17 @@ static int mod_init(void)
 	_data.cs_route_number = route_get(&event_rt, "cnxcc:call-shutdown");
 
 	if (_data.cs_route_number < 0)
-		LM_INFO("No cnxcc:call-shutdown event route found");
+		LM_INFO("No cnxcc:call-shutdown event route found\n");
 
 	if (_data.cs_route_number > 0 && event_rt.rlist[_data.cs_route_number] == NULL)
 	{
-		LM_INFO("cnxcc:call-shutdown route is empty");
+		LM_INFO("cnxcc:call-shutdown route is empty\n");
 		_data.cs_route_number	= -1;
 	}
 
 	if (_data.check_period <= 0)
 	{
-		LM_INFO("credit_check_period cannot be less than 1 second");
+		LM_INFO("credit_check_period cannot be less than 1 second\n");
 		return -1;
 	}
 
@@ -376,7 +376,7 @@ static void dialog_created_callback(struct dlg_cell *cell, int type, struct dlg_
 		return;
 	}
 
-	LM_DBG("Dialog created for CID [%.*s]", cell->callid.len, cell->callid.s);
+	LM_DBG("Dialog created for CID [%.*s]\n", cell->callid.len, cell->callid.s);
 
 	_dlgbinds.register_dlgcb(cell, DLGCB_CONFIRMED, dialog_confirmed_callback, NULL, NULL);
 	_dlgbinds.register_dlgcb(cell, DLGCB_TERMINATED|DLGCB_FAILED|DLGCB_EXPIRED, dialog_terminated_callback, NULL, NULL);
@@ -386,14 +386,14 @@ static void dialog_created_callback(struct dlg_cell *cell, int type, struct dlg_
 
 static void dialog_confirmed_callback(struct dlg_cell *cell, int type, struct dlg_cb_params *params)
 {
-	LM_DBG("Dialog confirmed for CID [%.*s]", cell->callid.len, cell->callid.s);
+	LM_DBG("Dialog confirmed for CID [%.*s]\n", cell->callid.len, cell->callid.s);
 
 	start_billing(&cell->callid, cell->tag);
 }
 
 static void dialog_terminated_callback(struct dlg_cell *cell, int type, struct dlg_cb_params *params)
 {
-	LM_DBG("Dialog terminated for CID [%.*s]", cell->callid.len, cell->callid.s);
+	LM_DBG("Dialog terminated for CID [%.*s]\n", cell->callid.len, cell->callid.s);
 
 	stop_billing(&cell->callid);
 }
@@ -416,7 +416,7 @@ static void notify_call_termination(str *callid, str *from_tag, str *to_tag)
 	//run_top_route(event_rt.rlist[_data.cs_route_number], msg, &ra_ctx);
 
 	if (run_actions(&ra_ctx, event_rt.rlist[_data.cs_route_number], msg) < 0)
-		LM_ERR("Error executing cnxcc:call-shutdown route");
+		LM_ERR("Error executing cnxcc:call-shutdown route\n");
 }
 
 int try_get_credit_data_entry(str *client_id, credit_data_t **credit_data)
@@ -538,19 +538,19 @@ static void stop_billing(str *callid)
 	 */
 	if (try_get_call_entry(callid, &call, &hts) != 0)
 	{
-		LM_ERR("Call [%.*s] not found", callid->len, callid->s);
+		LM_ERR("Call [%.*s] not found\n", callid->len, callid->s);
 		return;
 	}
 
 	if (call == NULL)
 	{
-		LM_ERR("[%.*s] call pointer is null", callid->len, callid->s);
+		LM_ERR("[%.*s] call pointer is null\n", callid->len, callid->s);
 		return;
 	}
 
 	if (hts == NULL)
 	{
-		LM_ERR("[%.*s] result hashtable pointer is null", callid->len, callid->s);
+		LM_ERR("[%.*s] result hashtable pointer is null\n", callid->len, callid->s);
 		return;
 	}
 
@@ -571,7 +571,7 @@ static void stop_billing(str *callid)
 
 	if (credit_data == NULL)
 	{
-		LM_ERR("[%.*s]: credit_data pointer is null", callid->len, callid->s);
+		LM_ERR("[%.*s]: credit_data pointer is null\n", callid->len, callid->s);
 		lock_release(&hts->lock);
 		return;
 	}
@@ -605,12 +605,12 @@ static void stop_billing(str *callid)
 
 	if (credit_data->concurrent_calls < 0)
 	{
-		LM_ERR("[BUG]: number of concurrent calls dropped to negative value: %d", credit_data->concurrent_calls);
+		LM_ERR("[BUG]: number of concurrent calls dropped to negative value: %d\n", credit_data->concurrent_calls);
 	}
 
 	if (credit_data->number_of_calls < 0)
 	{
-		LM_ERR("[BUG]: number of calls dropped to negative value: %d", credit_data->number_of_calls);
+		LM_ERR("[BUG]: number of calls dropped to negative value: %d\n", credit_data->number_of_calls);
 	}
 
 	/*
@@ -665,7 +665,7 @@ static void setup_billing(str *callid, unsigned int h_entry, unsigned int h_id)
 	call_t *call						= NULL;
 	hash_tables_t *hts					= NULL;
 
-	LM_DBG("Creating dialog for [%.*s], h_id [%u], h_entry [%u]", callid->len, callid->s, h_id, h_entry);
+	LM_DBG("Creating dialog for [%.*s], h_id [%u], h_entry [%u]\n", callid->len, callid->s, h_id, h_entry);
 
 //	lock_get(&_data.lock);
 
@@ -674,19 +674,19 @@ static void setup_billing(str *callid, unsigned int h_entry, unsigned int h_id)
 	 */
 	if (try_get_call_entry(callid, &call, &hts) != 0)
 	{
-		LM_ERR("Call [%.*s] not found", callid->len, callid->s);
+		LM_ERR("Call [%.*s] not found\n", callid->len, callid->s);
 		return;
 	}
 
 	if (call == NULL)
 	{
-		LM_ERR("[%.*s] call pointer is null", callid->len, callid->s);
+		LM_ERR("[%.*s] call pointer is null\n", callid->len, callid->s);
 		return;
 	}
 
 	if (hts == NULL)
 	{
-		LM_ERR("[%.*s] result hashtable pointer is null", callid->len, callid->s);
+		LM_ERR("[%.*s] result hashtable pointer is null\n", callid->len, callid->s);
 		return;
 	}
 
@@ -717,7 +717,7 @@ static void start_billing(str *callid, str tags[2])
 	hash_tables_t *hts					= NULL;
 	credit_data_t *credit_data			= NULL;
 
-	LM_DBG("Billing started for call [%.*s]", callid->len, callid->s);
+	LM_DBG("Billing started for call [%.*s]\n", callid->len, callid->s);
 
 //	lock_get(&_data.lock);
 
@@ -726,19 +726,19 @@ static void start_billing(str *callid, str tags[2])
 	 */
 	if (try_get_call_entry(callid, &call, &hts) != 0)
 	{
-		LM_ERR("Call [%.*s] not found", callid->len, callid->s);
+		LM_ERR("Call [%.*s] not found\n", callid->len, callid->s);
 		return;
 	}
 
 	if (call == NULL)
 	{
-		LM_ERR("[%.*s] call pointer is null", callid->len, callid->s);
+		LM_ERR("[%.*s] call pointer is null\n", callid->len, callid->s);
 		return;
 	}
 
 	if (hts == NULL)
 	{
-		LM_ERR("[%.*s] result hashtable pointer is null", callid->len, callid->s);
+		LM_ERR("[%.*s] result hashtable pointer is null\n", callid->len, callid->s);
 		return;
 	}
 
@@ -760,7 +760,7 @@ static void start_billing(str *callid, str tags[2])
 
 	if (credit_data == NULL)
 	{
-		LM_ERR("[%.*s]: credit_data pointer is null", callid->len, callid->s);
+		LM_ERR("[%.*s]: credit_data pointer is null\n", callid->len, callid->s);
 		lock_release(&hts->lock);
 		return;
 	}
@@ -781,7 +781,7 @@ static void start_billing(str *callid, str tags[2])
 
 	if (call->max_amount > credit_data->max_amount)
 	{
-		LM_ALERT("Maximum-speak-time/credit changed, maybe a credit reload? %f > %f. Client [%.*s]", call->max_amount, credit_data->max_amount,
+		LM_ALERT("Maximum-speak-time/credit changed, maybe a credit reload? %f > %f. Client [%.*s]\n", call->max_amount, credit_data->max_amount,
 																							call->client_id.len, call->client_id.s);
 
 		credit_data->max_amount += call->max_amount - credit_data->max_amount;
@@ -864,7 +864,7 @@ static void free_call(call_t *call)
 
 			if (e == NULL)
 			{
-				LM_ERR("Call [%.*s] not found. Couldn't be able to free it from hashtable", call->sip_data.callid.len, call->sip_data.callid.s);
+				LM_ERR("Call [%.*s] not found. Couldn't be able to free it from hashtable\n", call->sip_data.callid.len, call->sip_data.callid.s);
 				return;
 			}
 		}
@@ -925,7 +925,7 @@ static credit_data_t *get_or_create_credit_data_entry(str *client_id, credit_typ
 		lock	=  &_data.channel.lock;
 		break;
 	default:
-		LM_ERR("Something went terribly wrong");
+		LM_ERR("Something went terribly wrong\n");
 		return NULL;
 	}
 
@@ -1309,8 +1309,8 @@ static int add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 			return -1;
 		}
 
-		LM_WARN("value cid: len=%d | value [%.*s]", value->sip_data.callid.len, value->sip_data.callid.len, value->sip_data.callid.s);
-		LM_WARN("added cid: len=%d | value [%.*s]", cid->len, cid->len, cid->s);
+		LM_WARN("value cid: len=%d | value [%.*s]\n", value->sip_data.callid.len, value->sip_data.callid.len, value->sip_data.callid.s);
+		LM_WARN("added cid: len=%d | value [%.*s]\n", cid->len, cid->len, cid->s);
 
 		if (value->sip_data.callid.len != cid->len ||
 			strncasecmp(value->sip_data.callid.s, cid->s, cid->len) != 0)
@@ -1432,7 +1432,7 @@ static int set_max_credit(struct sip_msg* msg,
 
 		if (cost_per_second <= 0)
 		{
-			LM_ERR("cost_per_second value must be > 0: %f", cost_per_second);
+			LM_ERR("cost_per_second value must be > 0: %f\n", cost_per_second);
 			return -1;
 		}
 
@@ -1444,7 +1444,7 @@ static int set_max_credit(struct sip_msg* msg,
 
 		if (str2int(&initial_pulse_val.rs, &initial_pulse) != 0)
 		{
-			LM_ERR("initial_pulse value is invalid: %.*s", initial_pulse_val.rs.len, initial_pulse_val.rs.s);
+			LM_ERR("initial_pulse value is invalid: %.*s\n", initial_pulse_val.rs.len, initial_pulse_val.rs.s);
 			return -1;
 		}
 
@@ -1456,12 +1456,12 @@ static int set_max_credit(struct sip_msg* msg,
 
 		if (str2int(&final_pulse_val.rs, &final_pulse) != 0)
 		{
-			LM_ERR("final_pulse value is invalid: %.*s", final_pulse_val.rs.len, final_pulse_val.rs.s);
+			LM_ERR("final_pulse value is invalid: %.*s\n", final_pulse_val.rs.len, final_pulse_val.rs.s);
 			return -1;
 		}
 
 		if (credit < cost_per_second) {
-			LM_ERR("Not enough credit to start the call: credit=[%f] < cost_per_sec=[%f]", credit, cost_per_second);
+			LM_ERR("Not enough credit to start the call: credit=[%f] < cost_per_sec=[%f]\n", credit, cost_per_second);
 			return -1;
 		}
 
@@ -1690,7 +1690,7 @@ static int set_max_time(struct sip_msg* msg, char* str_pv_client, char* str_pv_m
 
 	if (parse_headers(msg, HDR_CALLID_F, 0) != 0)
 	{
-		LM_ERR("Error parsing Call-ID");
+		LM_ERR("Error parsing Call-ID\n");
 		return -1;
 	}
 
