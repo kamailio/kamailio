@@ -27,21 +27,23 @@
 
 #include <sys/socket.h>
 
-#define FAKED_SIP_MSG_FORMAT "OPTIONS sip:you@kamailio.org SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1\r\nFrom: <you@kamailio.org>;tag=%.*s\r\nTo: <you@kamailio.org>;tag=%.*s\r\nCall-ID: %.*s\r\nCSeq: 1 OPTIONS\r\nContent-Length: 0\r\n\r\n"
+#define FAKED_SIP_MSG_FORMAT "OPTIONS sip:you@kamailio.org SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1\r\nFrom: <%.*s>;tag=%.*s\r\nTo: <%.*s>;tag=%.*s\r\nCall-ID: %.*s\r\nCSeq: 1 OPTIONS\r\nContent-Length: 0\r\n\r\n"
 
 #define FAKED_SIP_MSG_BUF_LEN	1024
 char _faked_sip_msg_buf[FAKED_SIP_MSG_BUF_LEN];
 
 static struct sip_msg _faked_msg;
 
-int faked_msg_init_with_dlg_info(str *callid, str *from_tag, str *to_tag,  struct sip_msg **msg)
+int faked_msg_init_with_dlg_info(str *callid, str *from_uri, str *from_tag, str *to_uri, str *to_tag, struct sip_msg **msg)
 {
 	memset(_faked_sip_msg_buf, 0, FAKED_SIP_MSG_BUF_LEN);
 
-	sprintf(_faked_sip_msg_buf, FAKED_SIP_MSG_FORMAT, from_tag->len, from_tag->s,
-													  to_tag->len, to_tag->s,
-													  callid->len, callid->s);
+	sprintf(_faked_sip_msg_buf, FAKED_SIP_MSG_FORMAT,
+				from_uri->len, from_uri->s, from_tag->len, from_tag->s,
+				to_uri->len, to_uri->s, to_tag->len, to_tag->s,
+				callid->len, callid->s);
 
+	LM_DBG("fake msg:\n%s\n", _faked_sip_msg_buf);
 	memset(&_faked_msg, 0, sizeof(struct sip_msg));
 
 	_faked_msg.buf = _faked_sip_msg_buf;
@@ -52,8 +54,8 @@ int faked_msg_init_with_dlg_info(str *callid, str *from_tag, str *to_tag,  struc
 
 	if (parse_msg(_faked_msg.buf, _faked_msg.len, &_faked_msg) != 0)
 	{
-			LM_ERR("parse_msg failed\n");
-			return -1;
+		LM_ERR("parse_msg failed\n");
+		return -1;
 	}
 
 	_faked_msg.rcv.proto = PROTO_UDP;

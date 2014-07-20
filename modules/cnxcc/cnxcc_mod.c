@@ -110,14 +110,14 @@ static int set_max_channels(struct sip_msg* msg, char* str_pv_client, char* str_
 static int get_channel_count(struct sip_msg* msg, char* str_pv_client, char* str_pv_max_chan);
 static int terminate_all(struct sip_msg* msg, char* str_pv_client);
 
-static void start_billing(str *callid, str tags[2]);
+static void start_billing(str *callid, str *from_uri, str *to_uri, str tags[2]);
 static void setup_billing(str *callid, unsigned int h_entry, unsigned int h_id);
 static void stop_billing(str *callid);
 static int add_call_by_cid(str *cid, call_t *call, credit_type_t type);
 static credit_data_t *get_or_create_credit_data_entry(str *client_id, credit_type_t type);
 static call_t *alloc_new_call_by_time(credit_data_t *credit_data, struct sip_msg *msg, int max_secs);
 static call_t *alloc_new_call_by_money(credit_data_t *credit_data, struct sip_msg *msg, double credit, double cost_per_second, int initial_pulse, int final_pulse);
-static void notify_call_termination(str *callid, str *from_tag, str *to_tag);
+static void notify_call_termination(sip_data_t *data);
 static void free_call(call_t *call);
 static int has_to_tag(struct sip_msg *msg);
 
@@ -388,7 +388,7 @@ static void dialog_confirmed_callback(struct dlg_cell *cell, int type, struct dl
 {
 	LM_DBG("Dialog confirmed for CID [%.*s]\n", cell->callid.len, cell->callid.s);
 
-	start_billing(&cell->callid, cell->tag);
+	start_billing(&cell->callid, &cell->from_uri, &cell->to_uri, cell->tag);
 }
 
 static void dialog_terminated_callback(struct dlg_cell *cell, int type, struct dlg_cb_params *params)
@@ -398,7 +398,7 @@ static void dialog_terminated_callback(struct dlg_cell *cell, int type, struct d
 	stop_billing(&cell->callid);
 }
 
-static void notify_call_termination(str *callid, str *from_tag, str *to_tag)
+static void notify_call_termination(sip_data_t *data)
 {
 	struct run_act_ctx ra_ctx;
 	struct sip_msg *msg;
@@ -406,9 +406,10 @@ static void notify_call_termination(str *callid, str *from_tag, str *to_tag)
 	if (_data.cs_route_number < 0)
 		return;
 
-	if (faked_msg_init_with_dlg_info(callid, from_tag, to_tag,  &msg) != 0)
+	if (faked_msg_init_with_dlg_info(&data->callid, &data->from_uri, &data->from_tag,
+				&data->to_uri, &data->to_tag, &msg) != 0)
 	{
-		LM_ERR("[%.*s]: error generating faked sip message\n", callid->len, callid->s);
+		LM_ERR("[%.*s]: error generating faked sip message\n", data->callid.len, data->callid.s);
 		return;
 	}
 
@@ -662,8 +663,8 @@ static void stop_billing(str *callid)
 
 static void setup_billing(str *callid, unsigned int h_entry, unsigned int h_id)
 {
-	call_t *call						= NULL;
-	hash_tables_t *hts					= NULL;
+	call_t *call		= NULL;
+	hash_tables_t *hts	= NULL;
 
 	LM_DBG("Creating dialog for [%.*s], h_id [%u], h_entry [%u]\n", callid->len, callid->s, h_id, h_entry);
 
@@ -710,12 +711,12 @@ static void setup_billing(str *callid, unsigned int h_entry, unsigned int h_id)
 	lock_release(&call->lock);
 }
 
-static void start_billing(str *callid, str tags[2])
+static void start_billing(str *callid, str *from_uri, str *to_uri, str tags[2])
 {
 	struct str_hash_entry *cd_entry		= NULL;
-	call_t *call						= NULL;
-	hash_tables_t *hts					= NULL;
-	credit_data_t *credit_data			= NULL;
+	call_t *call				= NULL;
+	hash_tables_t *hts			= NULL;
+	credit_data_t *credit_data		= NULL;
 
 	LM_DBG("Billing started for call [%.*s]\n", callid->len, callid->s);
 
@@ -815,10 +816,22 @@ static void start_billing(str *callid, str tags[2])
 		goto exit;
 	}
 
+	if(shm_str_dup(&call->sip_data.from_uri, from_uri) != 0 ||
+	   shm_str_dup(&call->sip_data.to_uri  , to_uri)   != 0)
+	{
+		LM_ERR("No more pkg memory\n");
+		goto exit;
+	}
+
 	call->start_timestamp	= get_current_timestamp();
 	call->confirmed			= TRUE;
 
-	LM_DBG("Call [%.*s] from client [%.*s], confirmed\n", callid->len, callid->s, call->client_id.len, call->client_id.s);
+	LM_DBG("Call [%.*s] from client [%.*s], confirmed. from=<%.*s>;tag=%.*s, to=<%.*s>;tag=%.*s\n",
+			callid->len, callid->s, call->client_id.len, call->client_id.s,
+			call->sip_data.from_uri.len, call->sip_data.from_uri.s,
+			call->sip_data.from_tag.len, call->sip_data.from_tag.s,
+			call->sip_data.to_uri.len, call->sip_data.to_uri.s,
+			call->sip_data.to_tag.len, call->sip_data.to_tag.s);
 
 exit:
 	lock_release(&call->lock);
@@ -1060,8 +1073,7 @@ int terminate_call(call_t *call)
 		free_mi_tree(root);
 		free_mi_tree(result);
 		
-		notify_call_termination(&call->sip_data.callid, &call->sip_data.from_tag, &call->sip_data.to_tag);
-
+		notify_call_termination(&call->sip_data);
 		return 0;
 	}
 

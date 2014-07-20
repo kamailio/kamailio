@@ -89,8 +89,10 @@ typedef struct data
 typedef struct sip_data
 {
 	str callid;
-	str to_tag;
+	str from_uri;
 	str from_tag;
+	str to_uri;
+	str to_tag;
 } sip_data_t;
 
 typedef struct money_spec_data
