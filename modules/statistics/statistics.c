@@ -68,7 +68,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t mod_params[]={
-	{ "variable",  STR_PARAM|USE_FUNC_PARAM, (void*)reg_param_stat },
+	{ "variable",  PARAM_STRING|USE_FUNC_PARAM, (void*)reg_param_stat },
 	{ 0,0,0 }
 };
 
