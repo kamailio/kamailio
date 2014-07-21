@@ -188,39 +188,39 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"ruid_column",         STR_PARAM, &ruid_col.s      },
-	{"user_column",         STR_PARAM, &user_col.s      },
-	{"domain_column",       STR_PARAM, &domain_col.s    },
-	{"contact_column",      STR_PARAM, &contact_col.s   },
-	{"expires_column",      STR_PARAM, &expires_col.s   },
-	{"q_column",            STR_PARAM, &q_col.s         },
-	{"callid_column",       STR_PARAM, &callid_col.s    },
-	{"cseq_column",         STR_PARAM, &cseq_col.s      },
-	{"flags_column",        STR_PARAM, &flags_col.s     },
-	{"cflags_column",       STR_PARAM, &cflags_col.s    },
-	{"db_url",              STR_PARAM, &db_url.s        },
+	{"ruid_column",         PARAM_STR, &ruid_col      },
+	{"user_column",         PARAM_STR, &user_col      },
+	{"domain_column",       PARAM_STR, &domain_col    },
+	{"contact_column",      PARAM_STR, &contact_col   },
+	{"expires_column",      PARAM_STR, &expires_col   },
+	{"q_column",            PARAM_STR, &q_col         },
+	{"callid_column",       PARAM_STR, &callid_col    },
+	{"cseq_column",         PARAM_STR, &cseq_col      },
+	{"flags_column",        PARAM_STR, &flags_col     },
+	{"cflags_column",       PARAM_STR, &cflags_col    },
+	{"db_url",              PARAM_STR, &db_url        },
 	{"timer_interval",      INT_PARAM, &timer_interval  },
 	{"db_mode",             INT_PARAM, &db_mode         },
 	{"use_domain",          INT_PARAM, &use_domain      },
 	{"desc_time_order",     INT_PARAM, &desc_time_order },
-	{"user_agent_column",   STR_PARAM, &user_agent_col.s},
-	{"received_column",     STR_PARAM, &received_col.s  },
-	{"path_column",         STR_PARAM, &path_col.s      },
-	{"socket_column",       STR_PARAM, &sock_col.s      },
-	{"methods_column",      STR_PARAM, &methods_col.s   },
-	{"instance_column",     STR_PARAM, &instance_col.s  },
-	{"reg_id_column",       STR_PARAM, &reg_id_col.s    },
+	{"user_agent_column",   PARAM_STR, &user_agent_col},
+	{"received_column",     PARAM_STR, &received_col  },
+	{"path_column",         PARAM_STR, &path_col      },
+	{"socket_column",       PARAM_STR, &sock_col      },
+	{"methods_column",      PARAM_STR, &methods_col   },
+	{"instance_column",     PARAM_STR, &instance_col  },
+	{"reg_id_column",       PARAM_STR, &reg_id_col    },
 	{"matching_mode",       INT_PARAM, &matching_mode   },
 	{"cseq_delay",          INT_PARAM, &cseq_delay      },
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",           INT_PARAM, &ul_hash_size    },
 	{"nat_bflag",           INT_PARAM, &nat_bflag       },
 	{"handle_lost_tcp",     INT_PARAM, &handle_lost_tcp },
-	{"preload",             STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param},
+	{"preload",             PARAM_STRING|USE_FUNC_PARAM, (void*)ul_preload_param},
 	{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
 	{"timer_procs",         INT_PARAM, &ul_timer_procs},
 	{"db_check_update",     INT_PARAM, &ul_db_check_update},
-	{"xavp_contact",        STR_PARAM, &ul_xavp_contact_name.s},
+	{"xavp_contact",        PARAM_STR, &ul_xavp_contact_name},
 	{"db_ops_ruid",         INT_PARAM, &ul_db_ops_ruid},
 	{0, 0, 0}
 };
@@ -295,30 +295,6 @@ static int mod_init(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-
-	/* Compute the lengths of string parameters */
-	ruid_col.len = strlen(ruid_col.s);
-	user_col.len = strlen(user_col.s);
-	domain_col.len = strlen(domain_col.s);
-	contact_col.len = strlen(contact_col.s);
-	expires_col.len = strlen(expires_col.s);
-	q_col.len = strlen(q_col.s);
-	callid_col.len = strlen(callid_col.s);
-	cseq_col.len = strlen(cseq_col.s);
-	flags_col.len = strlen(flags_col.s);
-	cflags_col.len = strlen(cflags_col.s);
-	user_agent_col.len = strlen(user_agent_col.s);
-	received_col.len = strlen(received_col.s);
-	path_col.len = strlen(path_col.s);
-	sock_col.len = strlen(sock_col.s);
-	methods_col.len = strlen(methods_col.s);
-	instance_col.len = strlen(instance_col.s);
-	reg_id_col.len = strlen(reg_id_col.s);
-	last_mod_col.len = strlen(last_mod_col.s);
-	db_url.len = strlen(db_url.s);
-
-	if(ul_xavp_contact_name.s!=NULL)
-		ul_xavp_contact_name.len = strlen(ul_xavp_contact_name.s);
 
 	if(ul_hash_size<=1)
 		ul_hash_size = 512;
