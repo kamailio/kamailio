@@ -178,6 +178,29 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 			TCP protocol instead of UDP.
 		</para>
 	</section>
+
+	<section>
+		<title>
+			<function moreinfo="none">send_data(uri, data)</function>
+		</title>
+		<para>
+			Send the data to address specified by uri. Both parameters can
+			contain pseudo-variables. The uri parameter has to be a valid
+			SIP URI. The data parameter can by any arbitrary content.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>send_data</function> usage</title>
+		<programlisting format="linespecific">
+...
+	send("sip:example.com:5070;transport=sctp", "Message at $Ts");
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
