@@ -314,8 +314,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",       STR_PARAM, &db_url  },
-	{"db_table",     STR_PARAM, &db_table},
+	{"db_url",       PARAM_STRING, &db_url  },
+	{"db_table",     PARAM_STRING, &db_table},
 	{"exit",         INT_PARAM, &prefix_route_exit},
 	{0,              0,         0        }
 };
