@@ -443,9 +443,9 @@ static pv_export_t mod_pvs[] = {
 static int add_avp_aliases(modparam_t type, void* val);
 
 static param_export_t params[]={ 
-	{"shvset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_shvar },
-	{"varset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_var },
-	{"avp_aliases",         STR_PARAM|USE_FUNC_PARAM, (void*)add_avp_aliases },
+	{"shvset",              PARAM_STRING|USE_FUNC_PARAM, (void*)param_set_shvar },
+	{"varset",              PARAM_STRING|USE_FUNC_PARAM, (void*)param_set_var },
+	{"avp_aliases",         PARAM_STRING|USE_FUNC_PARAM, (void*)add_avp_aliases },
 	{0,0,0}
 };
 
