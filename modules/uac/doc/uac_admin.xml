@@ -786,7 +786,7 @@ failure_route[REMOTE_AUTH] {
 		</section>
 	</section>
 	<section>
-		<title>Exported pseudo-variables</title>
+		<title>Pseudo Variables</title>
 		<itemizedlist>
 			<listitem><para>
 				<emphasis>$uac_req(key)</emphasis>
@@ -796,6 +796,27 @@ failure_route[REMOTE_AUTH] {
 		Exported pseudo-variables are documented at &kamwikilink;.
 		</para>
 	</section>
+	<section>
+		<title>RPC Commands</title>
+		<section id="uac.r.uac.reg_dump">
+			<title>
+				<function moreinfo="none">uac.reg_dump</function>
+			</title>
+		<para>
+		Dump the content of remote registration table from memory.
+		</para>
+		<example>
+		<title><function>uac.reg_dump</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_dump
+...
+			</programlisting>
+		</example>
+
+		</section>
+	</section>
+
 	<section>
 		<title>Remote Registration</title>
 		<para>
