@@ -1534,6 +1534,7 @@ int check_message_support(struct sip_msg* msg)
 	str *methods_body;
 	unsigned int methods;
 	int expires;
+	int posexp = 0;
 
 	/* Parse all headers in order to see all Allow headers */
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1)
@@ -1587,6 +1588,7 @@ int check_message_support(struct sip_msg* msg)
 		/* skip contacts with zero expires */
 		if (expires > 0)
 		{
+			posexp = 1;
 			if (c->methods)
 			{
 				methods_body = &(c->methods->body);
@@ -1614,6 +1616,11 @@ int check_message_support(struct sip_msg* msg)
 			return -1;
 		}
 	}
+
+	/* no positivie expires header */
+	if(posexp==0)
+		return -1;
+
 	/* no Allow header and no methods in Contact => dump MESSAGEs */
 	if(allow_hdr==0)
 		return 0;
