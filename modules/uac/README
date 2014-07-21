@@ -65,6 +65,7 @@ Ramona-Elena Modroiu
         6. RPC Commands
 
               6.1. uac.reg_dump
+              6.2. uac.reg_info
 
         7. Remote Registration
 
@@ -97,7 +98,8 @@ Ramona-Elena Modroiu
    1.25. uac_reg_lookup usage
    1.26. uac_reg_request_to usage
    1.27. uac.reg_dump usage
-   1.28. lookup remote registrations usage
+   1.28. uac.reg_info usage
+   1.29. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -145,6 +147,7 @@ Chapter 1. Admin Guide
    6. RPC Commands
 
         6.1. uac.reg_dump
+        6.2. uac.reg_info
 
    7. Remote Registration
 
@@ -677,6 +680,7 @@ failure_route[REMOTE_AUTH] {
 6. RPC Commands
 
    6.1. uac.reg_dump
+   6.2. uac.reg_info
 
 6.1. uac.reg_dump
 
@@ -685,6 +689,19 @@ failure_route[REMOTE_AUTH] {
    Example 1.27. uac.reg_dump usage
 ...
    kamcmd uac.reg_dump
+...
+
+6.2. uac.reg_info
+
+   Return the details of a remote registration record based on a filter.
+   The command has two parameter: attribute and value. The attribute can
+   be: l_uuid, l_username, r_username or auth_username. The value is what
+   should be matcheg against the value of the attribute in the remote
+   registration record.
+
+   Example 1.28. uac.reg_info usage
+...
+   kamcmd uac.reg_info l_uuid account123
 ...
 
 7. Remote Registration
@@ -720,7 +737,7 @@ failure_route[REMOTE_AUTH] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.28. lookup remote registrations usage
+   Example 1.29. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");

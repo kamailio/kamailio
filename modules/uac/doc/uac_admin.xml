@@ -815,6 +815,28 @@ failure_route[REMOTE_AUTH] {
 		</example>
 
 		</section>
+		<section id="uac.r.uac.reg_info">
+			<title>
+				<function moreinfo="none">uac.reg_info</function>
+			</title>
+		<para>
+			Return the details of a remote registration record based on
+			a filter. The command has two parameter: attribute and value.
+			The attribute can be: l_uuid, l_username, r_username or auth_username.
+			The value is what should be matcheg against the value of the attribute
+			in the remote registration record.
+		</para>
+		<example>
+		<title><function>uac.reg_info</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_info l_uuid account123
+...
+			</programlisting>
+		</example>
+
+		</section>
+
 	</section>
 
 	<section>
