@@ -1129,8 +1129,99 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 	}
 }
 
+static const char* rpc_uac_reg_info_doc[2] = {
+	"Return the details of registration for a particular record.",
+	0
+};
+
+static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
+{
+	int i;
+	reg_item_t *reg = NULL;
+	void* th;
+	str none = {"none", 4};
+	time_t tn;
+	str attr = {0};
+	str val = {0};
+	str *rval;
+
+	if(_reg_htable==NULL)
+	{
+		rpc->fault(ctx, 500, "Not enabled");
+		return;
+	}
+
+	if(rpc->scan(ctx, "S.S", &attr, &group, &val)<2)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL)
+	{
+		LM_ERR("bad parameter values\n");
+		rpc->fault(ctx, 500, "Invalid Parameter Values");
+		return;
+	}
+
+	tn = time(NULL);
+
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		/* free entries */
+		reg = _reg_htable->entries[i].byuuid;
+		while(reg)
+		{
+			if(attr.len==10 && strncmp(attr.s, "l_username", 10)==0) {
+				rval = &reg->r->l_username;
+			} else if(attr.len==10 && strncmp(attr.s, "r_username", 10)==0) {
+				rval = &reg->r->r_username;
+			} else if(attr.len==6 && strncmp(attr.s, "l_uuid", 6)==0) {
+				rval = &reg->r->l_uuid;
+			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
+				rval = &reg->r->auth_username;
+			} else {
+				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
+				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
+				return;
+			}
+
+			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
+				/* add entry node */
+				if (rpc->add(ctx, "{", &th) < 0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating rpc");
+					return;
+				}
+				if(rpc->struct_add(th, "SSSSSSSSSdddd",
+						"l_uuid",        &reg->r->l_uuid,
+						"l_username",    &reg->r->l_username,
+						"l_domain",      &reg->r->l_domain,
+						"r_username",    &reg->r->r_username,
+						"r_domain",      &reg->r->r_domain,
+						"realm",         &reg->r->realm,
+						"auth_username", &reg->r->auth_username,
+						"auth_password", &reg->r->auth_password,
+						"auth_proxy",    (reg->r->auth_proxy.len)?
+											&reg->r->auth_proxy:&none,
+						"expires",       (int)reg->r->expires,
+						"flags",         (int)reg->r->flags,
+						"diff_expires",  (int)(reg->r->timer_expires - tn),
+						"timer_expires", (int)reg->r->timer_expires
+					)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error adding item");
+					return;
+				}
+				return;
+			}
+			reg = reg->next;
+		}
+	}
+}
+
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, 0},
+	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
 	{0, 0, 0, 0}
 };
 
