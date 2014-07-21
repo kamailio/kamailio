@@ -834,7 +834,48 @@ failure_route[REMOTE_AUTH] {
 ...
 			</programlisting>
 		</example>
+		</section>
 
+		<section id="uac.r.uac.reg_enable">
+			<title>
+				<function moreinfo="none">uac.reg_enable</function>
+			</title>
+		<para>
+			Enable a remote registration record based on
+			a filter. The command has two parameter: attribute and value.
+			The attribute can be: l_uuid, l_username, r_username or auth_username.
+			The value is what should be matcheg against the value of the attribute
+			in the remote registration record.
+		</para>
+		<example>
+		<title><function>uac.reg_enable</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_enable l_uuid account123
+...
+			</programlisting>
+		</example>
+		</section>
+
+		<section id="uac.r.uac.reg_disable">
+			<title>
+				<function moreinfo="none">uac.reg_disable</function>
+			</title>
+		<para>
+			Disable a remote registration record based on
+			a filter. The command has two parameter: attribute and value.
+			The attribute can be: l_uuid, l_username, r_username or auth_username.
+			The value is what should be matcheg against the value of the attribute
+			in the remote registration record.
+		</para>
+		<example>
+		<title><function>uac.reg_disable</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_disable l_uuid account123
+...
+			</programlisting>
+		</example>
 		</section>
 
 	</section>
