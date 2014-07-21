@@ -30,6 +30,7 @@
 #include "../../ut.h"
 #include "../../trim.h"
 #include "../../hashes.h"
+#include "../../locking.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
@@ -81,6 +82,7 @@ typedef struct _reg_entry
 	unsigned int usize;
 	reg_item_t *byuser;
 	reg_item_t *byuuid;
+	gen_lock_t lock;
 } reg_entry_t;
 
 typedef struct _reg_ht
@@ -164,6 +166,8 @@ int uac_reg_init_db(void)
  */
 int uac_reg_init_ht(unsigned int sz)
 {
+	int i;
+
 	_reg_htable = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
 	if(_reg_htable==NULL)
 	{
@@ -182,6 +186,22 @@ int uac_reg_init_ht(unsigned int sz)
 		return -1;
 	}
 	memset(_reg_htable->entries, 0, _reg_htable->htsize*sizeof(reg_entry_t));
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		if(lock_init(&_reg_htable->entries[i].lock)==0)
+		{
+			LM_ERR("cannot initalize lock[%d] n", i);
+			i--;
+			while(i>=0)
+			{
+				lock_destroy(&_reg_htable->entries[i].lock);
+				i--;
+			}
+			shm_free(_reg_htable->entries);
+			shm_free(_reg_htable);
+			return -1;
+		}
+	}
 
 	return 0;
 }
@@ -202,6 +222,7 @@ int uac_reg_free_ht(void)
 	}
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
+		lock_get(&_reg_htable->entries[i].lock);
 		/* free entries */
 		it = _reg_htable->entries[i].byuuid;
 		while(it)
@@ -218,10 +239,53 @@ int uac_reg_free_ht(void)
 			shm_free(it0->r);
 			shm_free(it0);
 		}
+		lock_destroy(&_reg_htable->entries[i].lock);
 	}
 	shm_free(_reg_htable->entries);
 	shm_free(_reg_htable);
 	_reg_htable = NULL;
+	return 0;
+}
+
+/**
+ *
+ */
+int uac_reg_reset_ht(void)
+{
+	int i;
+	reg_item_t *it = NULL;
+	reg_item_t *it0 = NULL;
+
+	if(_reg_htable==NULL)
+	{
+		LM_DBG("no hash table\n");
+		return -1;
+	}
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		lock_get(&_reg_htable->entries[i].lock);
+		/* free entries */
+		it = _reg_htable->entries[i].byuuid;
+		while(it)
+		{
+			it0 = it;
+			it = it->next;
+			shm_free(it0);
+		}
+		_reg_htable->entries[i].byuuid = NULL;
+		_reg_htable->entries[i].isize=0;
+		it = _reg_htable->entries[i].byuser;
+		while(it)
+		{
+			it0 = it;
+			it = it->next;
+			shm_free(it0->r);
+			shm_free(it0);
+		}
+		_reg_htable->entries[i].byuser = NULL;
+		_reg_htable->entries[i].usize = 0;
+		lock_release(&_reg_htable->entries[i].lock);
+	}
 	return 0;
 }
 
@@ -251,9 +315,11 @@ int reg_ht_add_byuuid(reg_uac_t *reg)
 	memset(ri, 0, sizeof(reg_item_t));
 	slot = reg_get_entry(reg->h_uuid, _reg_htable->htsize);
 	ri->r = reg;
+	lock_get(&_reg_htable->entries[slot].lock);
 	ri->next = _reg_htable->entries[slot].byuuid;
 	_reg_htable->entries[slot].byuuid = ri;
 	_reg_htable->entries[slot].isize++;
+	lock_release(&_reg_htable->entries[slot].lock);
 	return 0;
 }
 
@@ -280,9 +346,11 @@ int reg_ht_add_byuser(reg_uac_t *reg)
 	memset(ri, 0, sizeof(reg_item_t));
 	slot = reg_get_entry(reg->h_user, _reg_htable->htsize);
 	ri->r = reg;
+	lock_get(&_reg_htable->entries[slot].lock);
 	ri->next = _reg_htable->entries[slot].byuser;
 	_reg_htable->entries[slot].byuser = ri;
 	_reg_htable->entries[slot].usize++;
+	lock_release(&_reg_htable->entries[slot].lock);
 	return 0;
 }
 
@@ -770,7 +838,7 @@ void uac_reg_timer(unsigned int ticks)
 	tn = time(NULL);
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
-		/* free entries */
+		/* walk through entries */
 		it = _reg_htable->entries[i].byuuid;
 		while(it)
 		{
@@ -1094,7 +1162,8 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
-		/* free entries */
+		lock_get(&_reg_htable->entries[i].lock);
+		/* walk through entries */
 		reg = _reg_htable->entries[i].byuuid;
 		while(reg)
 		{
@@ -1121,11 +1190,13 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 					"timer_expires", (int)reg->r->timer_expires
 				)<0)
 			{
+				lock_release(&_reg_htable->entries[i].lock);
 				rpc->fault(ctx, 500, "Internal error adding item");
 				return;
 			}
 			reg = reg->next;
 		}
+		lock_release(&_reg_htable->entries[i].lock);
 	}
 }
 
@@ -1167,7 +1238,8 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
-		/* free entries */
+		/* walk through entries */
+		lock_get(&_reg_htable->entries[i].lock);
 		reg = _reg_htable->entries[i].byuuid;
 		while(reg)
 		{
@@ -1180,6 +1252,7 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
 				rval = &reg->r->auth_username;
 			} else {
+				lock_release(&_reg_htable->entries[i].lock);
 				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
 				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
 				return;
@@ -1209,6 +1282,7 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 						"timer_expires", (int)reg->r->timer_expires
 					)<0)
 				{
+					lock_release(&_reg_htable->entries[i].lock);
 					rpc->fault(ctx, 500, "Internal error adding item");
 					return;
 				}
@@ -1216,12 +1290,108 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 			}
 			reg = reg->next;
 		}
+		lock_release(&_reg_htable->entries[i].lock);
 	}
 }
+
+
+static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
+{
+	int i;
+	reg_item_t *reg = NULL;
+	void* th;
+	str none = {"none", 4};
+	time_t tn;
+	str attr = {0};
+	str val = {0};
+	str *rval;
+
+	if(_reg_htable==NULL)
+	{
+		rpc->fault(ctx, 500, "Not enabled");
+		return;
+	}
+
+	if(rpc->scan(ctx, "S.S", &attr, &group, &val)<2)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL)
+	{
+		LM_ERR("bad parameter values\n");
+		rpc->fault(ctx, 500, "Invalid Parameter Values");
+		return;
+	}
+
+	tn = time(NULL);
+
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		lock_get(&_reg_htable->entries[i].lock);
+		/* walk through entries */
+		reg = _reg_htable->entries[i].byuuid;
+		while(reg)
+		{
+			if(attr.len==10 && strncmp(attr.s, "l_username", 10)==0) {
+				rval = &reg->r->l_username;
+			} else if(attr.len==10 && strncmp(attr.s, "r_username", 10)==0) {
+				rval = &reg->r->r_username;
+			} else if(attr.len==6 && strncmp(attr.s, "l_uuid", 6)==0) {
+				rval = &reg->r->l_uuid;
+			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
+				rval = &reg->r->auth_username;
+			} else {
+				lock_release(&_reg_htable->entries[i].lock);
+				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
+				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
+				return;
+			}
+
+			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
+				/* found */
+				if(mode==1) {
+					reg->r->flags |= fval;
+				} else {
+					reg->r->flags &= ~fval;
+				}
+				reg->r->timer_expires = time(NULL) + 1;
+				lock_release(&_reg_htable->entries[i].lock);
+				return;
+			}
+			reg = reg->next;
+		}
+		lock_release(&_reg_htable->entries[i].lock);
+	}
+}
+
+static const char* rpc_uac_reg_enable_doc[2] = {
+	"Enable registration for a particular record.",
+	0
+};
+
+static void rpc_uac_reg_enable(rpc_t* rpc, void* ctx)
+{
+	rpc_uac_reg_update_flag(rpc, ctx, 1, UAC_REG_DISABLED);
+}
+
+static const char* rpc_uac_reg_disable_doc[2] = {
+	"Disable registration for a particular record.",
+	0
+};
+
+static void rpc_uac_reg_disable(rpc_t* rpc, void* ctx)
+{
+	rpc_uac_reg_update_flag(rpc, ctx, 0, UAC_REG_DISABLED);
+}
+
+
 
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, 0},
 	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
+	{"uac.reg_enable",  rpc_uac_reg_enable,  rpc_uac_reg_enable_doc,  0},
+	{"uac.reg_disable", rpc_uac_reg_disable, rpc_uac_reg_disable_doc, 0},
 	{0, 0, 0, 0}
 };
 
