@@ -79,7 +79,7 @@ static pv_export_t mod_pvs[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"servers",   STR_PARAM, &mcd_srv_str },
+	{"servers",   PARAM_STRING, &mcd_srv_str },
 	{"expire",    INT_PARAM, &mcd_expire },
 	{"timeout",   INT_PARAM, &mcd_timeout },
 	{"mode",      INT_PARAM, &mcd_mode },
