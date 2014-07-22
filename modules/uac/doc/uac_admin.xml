@@ -878,6 +878,23 @@ failure_route[REMOTE_AUTH] {
 		</example>
 		</section>
 
+		<section id="uac.r.uac.reg_reload">
+			<title>
+				<function moreinfo="none">uac.reg_reload</function>
+			</title>
+		<para>
+			Reload the records from database for remote registrations.
+		</para>
+		<example>
+		<title><function>uac.reg_reload</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_reload
+...
+			</programlisting>
+		</example>
+		</section>
+
 	</section>
 
 	<section>
