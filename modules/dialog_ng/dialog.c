@@ -55,9 +55,9 @@ int detect_spirals = 1;
 str dlg_extra_hdrs = {NULL, 0};
 int initial_cbs_inscript = 1;
 
-str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
+str dlg_bridge_controller = str_init("sip:controller@kamailio.org");
 
-str ruri_pvar_param = {"$ru", 3};
+str ruri_pvar_param = str_init("$ru");
 pv_elem_t * ruri_param_model = NULL;
 
 struct tm_binds d_tmb;
@@ -119,18 +119,18 @@ static cmd_export_t cmds[] = {
 
 static param_export_t mod_params[] = {
     { "hash_size", INT_PARAM, &dlg_hash_size},
-    { "rr_param", STR_PARAM, &rr_param},
+    { "rr_param", PARAM_STRING, &rr_param},
     { "dlg_flag", INT_PARAM, &dlg_flag},
-    { "timeout_avp", STR_PARAM, &timeout_spec.s},
+    { "timeout_avp", PARAM_STR, &timeout_spec},
     { "default_timeout", INT_PARAM, &default_timeout},
-    { "dlg_extra_hdrs", STR_PARAM, &dlg_extra_hdrs.s},
+    { "dlg_extra_hdrs", PARAM_STR, &dlg_extra_hdrs},
     //In this new dialog module we always match using DID
     //{ "dlg_match_mode", INT_PARAM, &seq_match_mode},
     { "detect_spirals", INT_PARAM, &detect_spirals,},
-    { "profiles_with_value", STR_PARAM, &profiles_wv_s},
-    { "profiles_no_value", STR_PARAM, &profiles_nv_s},
-    { "bridge_controller", STR_PARAM, &dlg_bridge_controller.s},
-    { "ruri_pvar", STR_PARAM, &ruri_pvar_param.s},
+    { "profiles_with_value", PARAM_STRING, &profiles_wv_s},
+    { "profiles_no_value", PARAM_STRING, &profiles_nv_s},
+    { "bridge_controller", PARAM_STR, &dlg_bridge_controller},
+    { "ruri_pvar", PARAM_STR, &ruri_pvar_param},
 
     { 0, 0, 0}
 };

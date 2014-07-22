@@ -112,11 +112,11 @@ int dlg_wait_ack = 1;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
-str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
+str dlg_bridge_controller = str_init("sip:controller@kamailio.org");
 
-str dlg_bridge_contact = {"sip:controller@kamailio.org:5060", 32};
+str dlg_bridge_contact = str_init("sip:controller@kamailio.org:5060");
 
-str ruri_pvar_param = {"$ru", 3};
+str ruri_pvar_param = str_init("$ru");
 pv_elem_t * ruri_param_model = NULL;
 
 /* statistic variables */
