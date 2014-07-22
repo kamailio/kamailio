@@ -135,12 +135,12 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"timer_interval",       INT_PARAM,          &timer_interval},
 	{"reply_code",           INT_PARAM,          &pl_drop_code},
-	{"reply_reason",         STR_PARAM,          &pl_drop_reason.s},
-	{"db_url",               STR_PARAM,          &pl_db_url},
-	{"plp_table_name",       STR_PARAM,          &rlp_table_name},
-	{"plp_pipeid_column",    STR_PARAM,          &rlp_pipeid_col},
-	{"plp_limit_column",     STR_PARAM,          &rlp_limit_col},
-	{"plp_algorithm_column", STR_PARAM,          &rlp_algorithm_col},
+	{"reply_reason",         PARAM_STR,          &pl_drop_reason},
+	{"db_url",               PARAM_STR,          &pl_db_url},
+	{"plp_table_name",       PARAM_STR,          &rlp_table_name},
+	{"plp_pipeid_column",    PARAM_STR,          &rlp_pipeid_col},
+	{"plp_limit_column",     PARAM_STR,          &rlp_limit_col},
+	{"plp_algorithm_column", PARAM_STR,          &rlp_algorithm_col},
 	{"hash_size",            INT_PARAM,          &pl_hash_size},
 
 	{0,0,0}
@@ -377,8 +377,6 @@ static int mod_init(void)
 	*pid_kd = 0.0;
 	*_pl_pid_setpoint = 0.01 * (double)_pl_cfg_setpoint;
 	*drop_rate      = 0;
-
-	pl_drop_reason.len = strlen(pl_drop_reason.s);
 
 	return 0;
 }

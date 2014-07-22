@@ -106,12 +106,6 @@ int pl_init_db(void)
 	if(pl_db_url.s==NULL)
 		return 1;
 
-	pl_db_url.len         = strlen(pl_db_url.s);
-	rlp_table_name.len    = strlen(rlp_table_name.s);
-	rlp_pipeid_col.len    = strlen(rlp_pipeid_col.s);
-	rlp_limit_col.len     = strlen(rlp_limit_col.s);
-	rlp_algorithm_col.len = strlen(rlp_algorithm_col.s);
-
 	if(rlp_table_name.len <= 0 || pl_db_url.len<=0)
 	{
 		LM_INFO("no table name or db url - skipping loading from db\n");
