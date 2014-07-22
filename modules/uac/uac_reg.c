@@ -966,6 +966,15 @@ void uac_reg_timer(unsigned int ticks)
 			it = it->next;
 		}
 	}
+
+	if(_reg_htable_gc!=NULL)
+	{
+		lock_get(_reg_htable_gc_lock);
+		if(_reg_htable_gc->stime!=0
+				&& _reg_htable_gc->stime < tn - UAC_REG_GC_INTERVAL)
+			uac_reg_reset_ht_gc();
+		lock_release(_reg_htable_gc_lock);
+	}
 }
 
 #define reg_db_set_attr(attr, pos) do { \
