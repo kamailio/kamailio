@@ -73,7 +73,6 @@ void th_mask_init(void)
 {
 	int i;
 
-	_th_key.len = strlen(_th_key.s);
 	memcpy(_th_EB64, TH_EB64I, sizeof(TH_EB64I));
 	th_shuffle(_th_EB64, 64);
 	LM_DBG("original table: %s\n", TH_EB64I);

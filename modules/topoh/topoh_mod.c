@@ -57,16 +57,16 @@ MODULE_VERSION
 
 
 /** module parameters */
-str _th_key = { "aL9.n8~Hm]Z", 0 };
-str th_cookie_name = {"TH", 0};
-str th_cookie_value = {0, 0};
-str th_ip = {"10.1.1.10", 0};
-str th_uparam_name = {"line", 0};
-str th_uparam_prefix = {"sr-", 0};
-str th_vparam_name = {"branch", 0};
-str th_vparam_prefix = {"z9hG4bKsr-", 0};
+str _th_key = str_init("aL9.n8~Hm]Z");
+str th_cookie_name = str_init("TH"); /* lost parameter? */
+str th_cookie_value = {0, 0};        /* lost parameter? */
+str th_ip = str_init("10.1.1.10");
+str th_uparam_name = str_init("line");
+str th_uparam_prefix = str_init("sr-");
+str th_vparam_name = str_init("branch");
+str th_vparam_prefix = str_init("z9hG4bKsr-");
 
-str th_callid_prefix = {"!!:", 3};
+str th_callid_prefix = str_init("!!:");
 str th_via_prefix = {0, 0};
 str th_uri_prefix = {0, 0};
 
@@ -82,14 +82,14 @@ int th_msg_sent(void *data);
 static int mod_init(void);
 
 static param_export_t params[]={
-	{"mask_key",		STR_PARAM, &_th_key.s},
-	{"mask_ip",			STR_PARAM, &th_ip.s},
+	{"mask_key",		PARAM_STR, &_th_key},
+	{"mask_ip",			PARAM_STR, &th_ip},
 	{"mask_callid",		INT_PARAM, &th_param_mask_callid},
-	{"uparam_name",		STR_PARAM, &th_uparam_name.s},
-	{"uparam_prefix",	STR_PARAM, &th_uparam_prefix.s},
-	{"vparam_name",		STR_PARAM, &th_vparam_name.s},
-	{"vparam_prefix",	STR_PARAM, &th_vparam_prefix.s},
-	{"callid_prefix",	STR_PARAM, &th_callid_prefix.s},
+	{"uparam_name",		PARAM_STR, &th_uparam_name},
+	{"uparam_prefix",	PARAM_STR, &th_uparam_prefix},
+	{"vparam_name",		PARAM_STR, &th_vparam_name},
+	{"vparam_prefix",	PARAM_STR, &th_vparam_prefix},
+	{"callid_prefix",	PARAM_STR, &th_callid_prefix},
 	{"sanity_checks",	INT_PARAM, &th_sanity_checks},
 	{0,0,0}
 };
@@ -124,8 +124,6 @@ static int mod_init(void)
 			goto error;
 		}
 	}
-	th_cookie_name.len = strlen(th_cookie_name.s);
-	th_ip.len = strlen(th_ip.s);
 	if(th_ip.len<=0)
 	{
 		LM_ERR("mask IP parameter is invalid\n");
@@ -136,11 +134,6 @@ static int mod_init(void)
 		LM_ERR("mask IP must be different than SIP server local IP\n");
 		goto error;
 	}
-	th_uparam_name.len = strlen(th_uparam_name.s);
-	th_uparam_prefix.len = strlen(th_uparam_prefix.s);
-	th_vparam_name.len = strlen(th_vparam_name.s);
-	th_vparam_prefix.len = strlen(th_vparam_prefix.s);
-	th_callid_prefix.len = strlen(th_callid_prefix.s);
 
 	/* 'SIP/2.0/UDP ' + ip + ';' + param + '=' + prefix (+ '\0') */
 	th_via_prefix.len = 12 + th_ip.len + 1 + th_vparam_name.len + 1
