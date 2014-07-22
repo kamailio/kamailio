@@ -50,6 +50,7 @@
 #define UAC_REG_AUTHSENT	(1<<3)
 
 #define MAX_UACH_SIZE 2048
+#define UAC_REG_GC_INTERVAL	150
 
 typedef struct _reg_uac
 {
@@ -88,10 +89,13 @@ typedef struct _reg_entry
 typedef struct _reg_ht
 {
 	unsigned int htsize;
+	time_t stime;
 	reg_entry_t *entries;
 } reg_ht_t;
 
 static reg_ht_t *_reg_htable = NULL;
+static reg_ht_t *_reg_htable_gc = NULL;
+static gen_lock_t *_reg_htable_gc_lock = NULL;
 
 int reg_use_domain = 0;
 int reg_timer_interval = 90;
@@ -168,10 +172,50 @@ int uac_reg_init_ht(unsigned int sz)
 {
 	int i;
 
+	_reg_htable_gc_lock = (gen_lock_t*)shm_malloc(sizeof(gen_lock_t));
+	if(_reg_htable_gc_lock == NULL)
+	{
+		LM_ERR("no more shm for lock\n");
+		return -1;
+	}
+	if(lock_init(_reg_htable_gc_lock)==0)
+	{
+		LM_ERR("cannot init global lock\n");
+		shm_free((void*)_reg_htable_gc_lock);
+		return -1;
+	}
+	_reg_htable_gc = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
+	if(_reg_htable_gc==NULL)
+	{
+		LM_ERR("no more shm\n");
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
+		return -1;
+	}
+	memset(_reg_htable_gc, 0, sizeof(reg_ht_t));
+	_reg_htable_gc->htsize = sz;
+
+	_reg_htable_gc->entries =
+			(reg_entry_t*)shm_malloc(_reg_htable_gc->htsize*sizeof(reg_entry_t));
+	if(_reg_htable_gc->entries==NULL)
+	{
+		LM_ERR("no more shm.\n");
+		shm_free(_reg_htable_gc);
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
+		return -1;
+	}
+	memset(_reg_htable_gc->entries, 0, _reg_htable_gc->htsize*sizeof(reg_entry_t));
+
+
 	_reg_htable = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
 	if(_reg_htable==NULL)
 	{
 		LM_ERR("no more shm\n");
+		shm_free(_reg_htable_gc->entries);
+		shm_free(_reg_htable_gc);
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
 		return -1;
 	}
 	memset(_reg_htable, 0, sizeof(reg_ht_t));
@@ -182,7 +226,11 @@ int uac_reg_init_ht(unsigned int sz)
 	if(_reg_htable->entries==NULL)
 	{
 		LM_ERR("no more shm.\n");
+		shm_free(_reg_htable_gc->entries);
+		shm_free(_reg_htable_gc);
 		shm_free(_reg_htable);
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
 		return -1;
 	}
 	memset(_reg_htable->entries, 0, _reg_htable->htsize*sizeof(reg_entry_t));
@@ -199,6 +247,10 @@ int uac_reg_init_ht(unsigned int sz)
 			}
 			shm_free(_reg_htable->entries);
 			shm_free(_reg_htable);
+			shm_free(_reg_htable_gc->entries);
+			shm_free(_reg_htable_gc);
+			lock_destroy(_reg_htable_gc_lock);
+			shm_free((void*)_reg_htable_gc_lock);
 			return -1;
 		}
 	}
@@ -214,6 +266,37 @@ int uac_reg_free_ht(void)
 	int i;
 	reg_item_t *it = NULL;
 	reg_item_t *it0 = NULL;
+
+	if(_reg_htable_gc_lock != NULL)
+	{
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
+		_reg_htable_gc_lock = NULL;
+	}
+	if(_reg_htable_gc!=NULL)
+	{
+		for(i=0; i<_reg_htable_gc->htsize; i++)
+		{
+			it = _reg_htable_gc->entries[i].byuuid;
+			while(it)
+			{
+				it0 = it;
+				it = it->next;
+				shm_free(it0);
+			}
+			it = _reg_htable_gc->entries[i].byuser;
+			while(it)
+			{
+				it0 = it;
+				it = it->next;
+				shm_free(it0->r);
+				shm_free(it0);
+			}
+		}
+		shm_free(_reg_htable_gc->entries);
+		shm_free(_reg_htable_gc);
+		_reg_htable_gc = NULL;
+	}
 
 	if(_reg_htable==NULL)
 	{
@@ -250,31 +333,30 @@ int uac_reg_free_ht(void)
 /**
  *
  */
-int uac_reg_reset_ht(void)
+int uac_reg_reset_ht_gc(void)
 {
 	int i;
 	reg_item_t *it = NULL;
 	reg_item_t *it0 = NULL;
 
-	if(_reg_htable==NULL)
+	if(_reg_htable_gc==NULL)
 	{
 		LM_DBG("no hash table\n");
 		return -1;
 	}
-	for(i=0; i<_reg_htable->htsize; i++)
+	for(i=0; i<_reg_htable_gc->htsize; i++)
 	{
-		lock_get(&_reg_htable->entries[i].lock);
 		/* free entries */
-		it = _reg_htable->entries[i].byuuid;
+		it = _reg_htable_gc->entries[i].byuuid;
 		while(it)
 		{
 			it0 = it;
 			it = it->next;
 			shm_free(it0);
 		}
-		_reg_htable->entries[i].byuuid = NULL;
-		_reg_htable->entries[i].isize=0;
-		it = _reg_htable->entries[i].byuser;
+		_reg_htable_gc->entries[i].byuuid = NULL;
+		_reg_htable_gc->entries[i].isize=0;
+		it = _reg_htable_gc->entries[i].byuser;
 		while(it)
 		{
 			it0 = it;
@@ -282,10 +364,48 @@ int uac_reg_reset_ht(void)
 			shm_free(it0->r);
 			shm_free(it0);
 		}
+		_reg_htable_gc->entries[i].byuser = NULL;
+		_reg_htable_gc->entries[i].usize = 0;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int uac_reg_ht_shift(void)
+{
+	time_t tn;
+	int i;
+
+	if(_reg_htable==NULL || _reg_htable_gc==NULL)
+	{
+		LM_ERR("data struct invalid\n");
+		return -1;
+	}
+	tn = time(NULL);
+
+	lock_get(_reg_htable_gc_lock);
+	if(_reg_htable_gc->stime > tn-UAC_REG_GC_INTERVAL) {
+		lock_release(_reg_htable_gc_lock);
+		LM_ERR("shifting the memory table is not possible in less than %d\n", UAC_REG_GC_INTERVAL);
+		return -1;
+	}
+	uac_reg_reset_ht_gc();
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		/* shift entries */
+		_reg_htable_gc->entries[i].byuuid = _reg_htable->entries[i].byuuid;
+		_reg_htable_gc->entries[i].byuser = _reg_htable->entries[i].byuser;
+		_reg_htable_gc->stime = time(NULL);
+
+		/* reset active table entries */
+		_reg_htable->entries[i].byuuid = NULL;
+		_reg_htable->entries[i].isize=0;
 		_reg_htable->entries[i].byuser = NULL;
 		_reg_htable->entries[i].usize = 0;
-		lock_release(&_reg_htable->entries[i].lock);
 	}
+	lock_release(_reg_htable_gc_lock);
 	return 0;
 }
 
@@ -989,12 +1109,16 @@ int uac_reg_load_db(void)
 		}
 	}  while(RES_ROW_N(db_res)>0);
 	reg_dbf.free_result(reg_db_con, db_res);
+	reg_dbf.close(reg_db_con);
 
 done:
 	return 0;
 
 error:
-	reg_dbf.free_result(reg_db_con, db_res);
+	if (reg_db_con) {
+		reg_dbf.free_result(reg_db_con, db_res);
+		reg_dbf.close(reg_db_con);
+	}
 	return -1;
 }
 
@@ -1385,13 +1509,33 @@ static void rpc_uac_reg_disable(rpc_t* rpc, void* ctx)
 	rpc_uac_reg_update_flag(rpc, ctx, 0, UAC_REG_DISABLED);
 }
 
+static const char* rpc_uac_reg_reload_doc[2] = {
+	"Reload records from database.",
+	0
+};
 
+static void rpc_uac_reg_reload(rpc_t* rpc, void* ctx)
+{
+	int ret;
+	if(uac_reg_ht_shift()<0) {
+		rpc->fault(ctx, 500, "Failed to shift records - check log messages");
+		return;
+	}
+	lock_get(_reg_htable_gc_lock);
+	ret =  uac_reg_load_db();
+	lock_release(_reg_htable_gc_lock);
+	if(ret<0) {
+		rpc->fault(ctx, 500, "Failed to reload records - check log messages");
+		return;
+	}
+}
 
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, 0},
 	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
 	{"uac.reg_enable",  rpc_uac_reg_enable,  rpc_uac_reg_enable_doc,  0},
 	{"uac.reg_disable", rpc_uac_reg_disable, rpc_uac_reg_disable_doc, 0},
+	{"uac.reg_reload",  rpc_uac_reg_reload,  rpc_uac_reg_reload_doc,  0},
 	{0, 0, 0, 0}
 };
 
