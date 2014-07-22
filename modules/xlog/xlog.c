@@ -121,9 +121,9 @@ static param_export_t params[]={
 	{"buf_size",     INT_PARAM, &buf_size},
 	{"force_color",  INT_PARAM, &force_color},
 	{"long_format",  INT_PARAM, &long_format},
-	{"prefix",       STR_PARAM, &_xlog_prefix},
-	{"log_facility", STR_PARAM, &xlog_facility_name},
-	{"log_colors",   STR_PARAM|USE_FUNC_PARAM, (void*)xlog_log_colors_param},
+	{"prefix",       PARAM_STRING, &_xlog_prefix},
+	{"log_facility", PARAM_STRING, &xlog_facility_name},
+	{"log_colors",   PARAM_STRING|USE_FUNC_PARAM, (void*)xlog_log_colors_param},
 	{0,0,0}
 };
 
