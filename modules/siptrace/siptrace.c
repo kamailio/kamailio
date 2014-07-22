@@ -178,25 +178,25 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",             STR_PARAM, &db_url.s             },
-	{"table",              STR_PARAM, &siptrace_table.s     },
-	{"date_column",        STR_PARAM, &date_column.s        },
-	{"callid_column",      STR_PARAM, &callid_column.s      },
-	{"traced_user_column", STR_PARAM, &traced_user_column.s },
-	{"msg_column",         STR_PARAM, &msg_column.s         },
-	{"method_column",      STR_PARAM, &method_column.s      },
-	{"status_column",      STR_PARAM, &status_column.s      },
-	{"fromip_column",      STR_PARAM, &fromip_column.s      },
-	{"toip_column",        STR_PARAM, &toip_column.s        },
-	{"fromtag_column",     STR_PARAM, &fromtag_column.s     },
-	{"direction_column",   STR_PARAM, &direction_column.s   },
+	{"db_url",             PARAM_STR, &db_url            },
+	{"table",              PARAM_STR, &siptrace_table     },
+	{"date_column",        PARAM_STR, &date_column        },
+	{"callid_column",      PARAM_STR, &callid_column      },
+	{"traced_user_column", PARAM_STR, &traced_user_column },
+	{"msg_column",         PARAM_STR, &msg_column         },
+	{"method_column",      PARAM_STR, &method_column      },
+	{"status_column",      PARAM_STR, &status_column      },
+	{"fromip_column",      PARAM_STR, &fromip_column      },
+	{"toip_column",        PARAM_STR, &toip_column        },
+	{"fromtag_column",     PARAM_STR, &fromtag_column     },
+	{"direction_column",   PARAM_STR, &direction_column   },
 	{"trace_flag",         INT_PARAM, &trace_flag           },
 	{"trace_on",           INT_PARAM, &trace_on             },
-	{"traced_user_avp",    STR_PARAM, &traced_user_avp_str.s},
-	{"trace_table_avp",    STR_PARAM, &trace_table_avp_str.s},
-	{"duplicate_uri",      STR_PARAM, &dup_uri_str.s        },
+	{"traced_user_avp",    PARAM_STR, &traced_user_avp_str},
+	{"trace_table_avp",    PARAM_STR, &trace_table_avp_str},
+	{"duplicate_uri",      PARAM_STR, &dup_uri_str        },
 	{"trace_to_database",  INT_PARAM, &trace_to_database    },
-	{"trace_local_ip",     STR_PARAM, &trace_local_ip.s     },
+	{"trace_local_ip",     PARAM_STR, &trace_local_ip     },
 	{"trace_sl_acks",      INT_PARAM, &trace_sl_acks        },
 	{"xheaders_write",     INT_PARAM, &xheaders_write       },
 	{"xheaders_read",      INT_PARAM, &xheaders_read        },
@@ -273,27 +273,6 @@ static int mod_init(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-
-	db_url.len = strlen(db_url.s);
-	siptrace_table.len = strlen(siptrace_table.s);
-	date_column.len = strlen(date_column.s);
-	callid_column.len = strlen(callid_column.s);
-	traced_user_column.len = strlen(traced_user_column.s);
-	msg_column.len = strlen(msg_column.s);
-	method_column.len = strlen(method_column.s);
-	status_column.len = strlen(status_column.s);
-	fromip_column.len = strlen(fromip_column.s);
-	toip_column.len = strlen(toip_column.s);
-	fromtag_column.len = strlen(fromtag_column.s);
-	direction_column.len = strlen(direction_column.s);
-	if (traced_user_avp_str.s)
-		traced_user_avp_str.len = strlen(traced_user_avp_str.s);
-	if (trace_table_avp_str.s)
-		trace_table_avp_str.len = strlen(trace_table_avp_str.s);
-	if (dup_uri_str.s)
-		dup_uri_str.len = strlen(dup_uri_str.s);
-	if (trace_local_ip.s)
-		trace_local_ip.len = strlen(trace_local_ip.s);
 
 	if (trace_flag<0 || trace_flag>(int)MAX_FLAG)
 	{
@@ -384,7 +363,6 @@ static int mod_init(void)
 
 	if(dup_uri_str.s!=0)
 	{
-		dup_uri_str.len = strlen(dup_uri_str.s);
 		dup_uri = (struct sip_uri *)pkg_malloc(sizeof(struct sip_uri));
 		if(dup_uri==0)
 		{
