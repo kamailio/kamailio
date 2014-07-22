@@ -109,8 +109,8 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"sqlcon",  STR_PARAM|USE_FUNC_PARAM, (void*)sql_con_param},
-	{"sqlres",  STR_PARAM|USE_FUNC_PARAM, (void*)sql_res_param},
+	{"sqlcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)sql_con_param},
+	{"sqlres",  PARAM_STRING|USE_FUNC_PARAM, (void*)sql_res_param},
 	{0,0,0}
 };
 
