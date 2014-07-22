@@ -252,60 +252,60 @@ int capture_mode_param(modparam_t type, void *val);
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",			STR_PARAM, &db_url.s            },
-	{"table_name",       		STR_PARAM, &table_name.s	},
-	{"hash_source",				STR_PARAM, &hash_source.s	},
-	{"mt_mode",					STR_PARAM, &mt_mode.s	},
-	{"date_column",        		STR_PARAM, &date_column.s       },	
-	{"micro_ts_column",     	STR_PARAM, &micro_ts_column.s	},
-	{"method_column",      		STR_PARAM, &method_column.s 	},
-	{"reply_reason_column",		STR_PARAM, &reply_reason_column.s	},
-	{"ruri_column",      		STR_PARAM, &ruri_column.s     	},
-	{"ruri_user_column",      	STR_PARAM, &ruri_user_column.s  },
-	{"from_user_column",      	STR_PARAM, &from_user_column.s  },
-	{"from_tag_column",        	STR_PARAM, &from_tag_column.s   },
-	{"to_user_column",     		STR_PARAM, &to_user_column.s	},
-	{"to_tag_column",        	STR_PARAM, &to_tag_column.s	},	
-	{"pid_user_column",   		STR_PARAM, &pid_user_column.s	},
-	{"contact_user_column",        	STR_PARAM, &contact_user_column.s	},
-	{"auth_user_column",     	STR_PARAM, &auth_user_column.s  },
-	{"callid_column",      		STR_PARAM, &callid_column.s},
-	{"callid_aleg_column",      	STR_PARAM, &callid_aleg_column.s},
-	{"via_1_column",		STR_PARAM, &via_1_column.s      },
-	{"via_1_branch_column",        	STR_PARAM, &via_1_branch_column.s },
-	{"cseq_column",     		STR_PARAM, &cseq_column.s     },
-	{"diversion_column",      	STR_PARAM, &diversion_column.s },
-	{"reason_column",		STR_PARAM, &reason_column.s        },
-	{"content_type_column",        	STR_PARAM, &content_type_column.s  },
-	{"authorization_column",     	STR_PARAM, &authorization_column.s },
-	{"user_agent_column",      	STR_PARAM, &user_agent_column.s	},
-	{"source_ip_column",		STR_PARAM, &source_ip_column.s  },
-	{"source_port_column",		STR_PARAM, &source_port_column.s},	
-	{"destination_ip_column",	STR_PARAM, &dest_ip_column.s	},
-	{"destination_port_column",	STR_PARAM, &dest_port_column.s	},		
-	{"contact_ip_column",		STR_PARAM, &contact_ip_column.s },
-	{"contact_port_column",		STR_PARAM, &contact_port_column.s},
-	{"originator_ip_column",	STR_PARAM, &orig_ip_column.s    },
-	{"originator_port_column",	STR_PARAM, &orig_port_column.s  },
-	{"proto_column",		STR_PARAM, &proto_column.s },
-	{"family_column",		STR_PARAM, &family_column.s },
-	{"rtp_stat_column",		STR_PARAM, &rtp_stat_column.s },
-	{"type_column",			STR_PARAM, &type_column.s  },
-	{"node_column",			STR_PARAM, &node_column.s  },
-	{"msg_column",			STR_PARAM, &msg_column.s   },
+	{"db_url",			PARAM_STR, &db_url            },
+	{"table_name",       		PARAM_STR, &table_name	},
+	{"hash_source",				PARAM_STR, &hash_source	},
+	{"mt_mode",					PARAM_STR, &mt_mode	},
+	{"date_column",        		PARAM_STR, &date_column       },
+	{"micro_ts_column",     	PARAM_STR, &micro_ts_column	},
+	{"method_column",      		PARAM_STR, &method_column 	},
+	{"reply_reason_column",		PARAM_STR, &reply_reason_column	},
+	{"ruri_column",      		PARAM_STR, &ruri_column     	},
+	{"ruri_user_column",      	PARAM_STR, &ruri_user_column  },
+	{"from_user_column",      	PARAM_STR, &from_user_column  },
+	{"from_tag_column",        	PARAM_STR, &from_tag_column   },
+	{"to_user_column",     		PARAM_STR, &to_user_column	},
+	{"to_tag_column",        	PARAM_STR, &to_tag_column	},
+	{"pid_user_column",   		PARAM_STR, &pid_user_column	},
+	{"contact_user_column",        	PARAM_STR, &contact_user_column	},
+	{"auth_user_column",     	PARAM_STR, &auth_user_column  },
+	{"callid_column",      		PARAM_STR, &callid_column},
+	{"callid_aleg_column",      	PARAM_STR, &callid_aleg_column},
+	{"via_1_column",		PARAM_STR, &via_1_column      },
+	{"via_1_branch_column",        	PARAM_STR, &via_1_branch_column },
+	{"cseq_column",     		PARAM_STR, &cseq_column     },
+	{"diversion_column",      	PARAM_STR, &diversion_column },
+	{"reason_column",		PARAM_STR, &reason_column        },
+	{"content_type_column",        	PARAM_STR, &content_type_column  },
+	{"authorization_column",     	PARAM_STR, &authorization_column },
+	{"user_agent_column",      	PARAM_STR, &user_agent_column	},
+	{"source_ip_column",		PARAM_STR, &source_ip_column  },
+	{"source_port_column",		PARAM_STR, &source_port_column},
+	{"destination_ip_column",	PARAM_STR, &dest_ip_column	},
+	{"destination_port_column",	PARAM_STR, &dest_port_column	},
+	{"contact_ip_column",		PARAM_STR, &contact_ip_column },
+	{"contact_port_column",		PARAM_STR, &contact_port_column},
+	{"originator_ip_column",	PARAM_STR, &orig_ip_column    },
+	{"originator_port_column",	PARAM_STR, &orig_port_column  },
+	{"proto_column",		PARAM_STR, &proto_column },
+	{"family_column",		PARAM_STR, &family_column },
+	{"rtp_stat_column",		PARAM_STR, &rtp_stat_column },
+	{"type_column",			PARAM_STR, &type_column  },
+	{"node_column",			PARAM_STR, &node_column  },
+	{"msg_column",			PARAM_STR, &msg_column   },
 	{"capture_on",           	INT_PARAM, &capture_on          },
-	{"capture_node",     		STR_PARAM, &capture_node.s     	},
+	{"capture_node",     		PARAM_STR, &capture_node     	},
         {"raw_sock_children",  		INT_PARAM, &raw_sock_children   },	
         {"hep_capture_on",  		INT_PARAM, &hep_capture_on   },	
-	{"raw_socket_listen",     	STR_PARAM, &raw_socket_listen.s   },        
+	{"raw_socket_listen",     	PARAM_STR, &raw_socket_listen   },
         {"raw_ipip_capture_on",  	INT_PARAM, &ipip_capture_on  },	
         {"raw_moni_capture_on",  	INT_PARAM, &moni_capture_on  },	
         {"db_insert_mode",  		INT_PARAM, &db_insert_mode  },	
-	{"raw_interface",     		STR_PARAM, &raw_interface.s   },
+	{"raw_interface",     		PARAM_STR, &raw_interface   },
         {"promiscious_on",  		INT_PARAM, &promisc_on   },		
         {"raw_moni_bpf_on",  		INT_PARAM, &bpf_on   },		
-        {"callid_aleg_header",          STR_PARAM, &callid_aleg_header.s},
-        {"capture_mode",		STR_PARAM|USE_FUNC_PARAM, (void *)capture_mode_param},
+        {"callid_aleg_header",          PARAM_STR, &callid_aleg_header},
+        {"capture_mode",		PARAM_STRING|USE_FUNC_PARAM, (void *)capture_mode_param},
 		{0, 0, 0}
 };
 
@@ -690,54 +690,6 @@ static int mod_init(void) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-
-	db_url.len = strlen(db_url.s);
-	table_name.len = strlen(table_name.s);
-	hash_source.len = strlen (hash_source.s);
-	mt_mode.len = strlen(mt_mode.s);
-	date_column.len = strlen(date_column.s);
-	micro_ts_column.len = strlen(micro_ts_column.s);
-	method_column.len = strlen(method_column.s); 	
-	reply_reason_column.len = strlen(reply_reason_column.s);        
-	ruri_column.len = strlen(ruri_column.s);     	
-	ruri_user_column.len = strlen(ruri_user_column.s);  
-	from_user_column.len = strlen(from_user_column.s);  
-	from_tag_column.len = strlen(from_tag_column.s);   
-	to_user_column.len = strlen(to_user_column.s);
-	pid_user_column.len = strlen(pid_user_column.s);
-	contact_user_column.len = strlen(contact_user_column.s);
-	auth_user_column.len = strlen(auth_user_column.s);  
-	callid_column.len = strlen(callid_column.s);
-	via_1_column.len = strlen(via_1_column.s);      
-	via_1_branch_column.len = strlen(via_1_branch_column.s); 
-	cseq_column.len = strlen(cseq_column.s);     
-	diversion_column.len = strlen(diversion_column.s); 
-	reason_column.len = strlen(reason_column.s);        
-	content_type_column.len = strlen(content_type_column.s);  
-	authorization_column.len = strlen(authorization_column.s); 
-	user_agent_column.len = strlen(user_agent_column.s);
-	source_ip_column.len = strlen(source_ip_column.s);  
-	source_port_column.len = strlen(source_port_column.s);	
-	dest_ip_column.len = strlen(dest_ip_column.s);
-	dest_port_column.len = strlen(dest_port_column.s);		
-	contact_ip_column.len = strlen(contact_ip_column.s); 
-	contact_port_column.len = strlen(contact_port_column.s);
-	orig_ip_column.len = strlen(orig_ip_column.s);      
-	orig_port_column.len = strlen(orig_port_column.s);    
-	proto_column.len = strlen(proto_column.s); 
-	family_column.len = strlen(family_column.s); 
-	type_column.len = strlen(type_column.s);  
-	rtp_stat_column.len = strlen(rtp_stat_column.s);  
-	node_column.len = strlen(node_column.s);  
-	msg_column.len = strlen(msg_column.s);   
-	capture_node.len = strlen(capture_node.s);     	
-	callid_aleg_header.len = strlen(callid_aleg_header.s);
-	
-	if(raw_socket_listen.s) 
-		raw_socket_listen.len = strlen(raw_socket_listen.s);     	
-	if(raw_interface.s)
-		raw_interface.len = strlen(raw_interface.s);     	
-
 
 	/*Check the table name - if table_name is empty and no capture modes are defined, then error*/
 	if(!table_name.len && capture_modes_root == NULL) {
