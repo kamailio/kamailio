@@ -162,17 +162,17 @@ int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
-str write_db_url         = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
-str read_db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
-str reg_table            = {REG_TABLE, sizeof(REG_TABLE) -1};
-str id_col               = {ID_COL, sizeof(ID_COL) - 1};
-str url_col              = {URL_COL, sizeof(URL_COL) - 1};
-str num_col              = {NUM_COL, sizeof(NUM_COL) - 1};
-str status_col           = {STATUS_COL, sizeof(STATUS_COL) - 1};
-str failover_time_col    = {FAILOVER_T_COL, sizeof(FAILOVER_T_COL) - 1};
-str spare_col            = {SPARE_COL, sizeof(SPARE_COL) - 1};
-str error_col            = {ERROR_COL, sizeof(ERROR_COL) - 1};
-str risk_group_col       = {RISK_GROUP_COL, sizeof(RISK_GROUP_COL) - 1};
+str write_db_url         = str_init(DEFAULT_DB_URL);
+str read_db_url          = str_init(DEFAULT_DB_URL);
+str reg_table            = str_init(REG_TABLE);
+str id_col               = str_init(ID_COL);
+str url_col              = str_init(URL_COL);
+str num_col              = str_init(NUM_COL);
+str status_col           = str_init(STATUS_COL);
+str failover_time_col    = str_init(FAILOVER_T_COL);
+str spare_col            = str_init(SPARE_COL);
+str error_col            = str_init(ERROR_COL);
+str risk_group_col       = str_init(RISK_GROUP_COL);
 int expire_time          = DEFAULT_EXPIRE;
 int db_error_threshold   = DEFAULT_ERR_THRESHOLD;
 int failover_level       = DEFAULT_FAILOVER_LEVEL;
@@ -183,7 +183,7 @@ int db_master_write      = 0;
 int alg_location         = 0;
 
 int db_use_transactions  = 0;
-str db_transaction_level = {DB_DEFAULT_TRANSACTION_LEVEL, sizeof(DB_DEFAULT_TRANSACTION_LEVEL) -1};
+str db_transaction_level = str_init(DB_DEFAULT_TRANSACTION_LEVEL);
 char * isolation_level;
 int connection_expires   = DB_DEFAULT_CONNECTION_EXPIRES;
 int max_loc_nr  = 0 ;
@@ -213,45 +213,45 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"ruid_column",         STR_PARAM, &ruid_col.s      },
-	{"user_column",       STR_PARAM, &user_col.s      },
-	{"domain_column",     STR_PARAM, &domain_col.s    },
-	{"contact_column",    STR_PARAM, &contact_col.s   },
-	{"expires_column",    STR_PARAM, &expires_col.s   },
-	{"q_column",          STR_PARAM, &q_col.s         },
-	{"callid_column",     STR_PARAM, &callid_col.s    },
-	{"cseq_column",       STR_PARAM, &cseq_col.s      },
-	{"flags_column",      STR_PARAM, &flags_col.s     },
-	{"cflags_column",     STR_PARAM, &cflags_col.s    },
+	{"ruid_column",       PARAM_STR, &ruid_col      },
+	{"user_column",       PARAM_STR, &user_col      },
+	{"domain_column",     PARAM_STR, &domain_col    },
+	{"contact_column",    PARAM_STR, &contact_col   },
+	{"expires_column",    PARAM_STR, &expires_col   },
+	{"q_column",          PARAM_STR, &q_col         },
+	{"callid_column",     PARAM_STR, &callid_col    },
+	{"cseq_column",       PARAM_STR, &cseq_col      },
+	{"flags_column",      PARAM_STR, &flags_col     },
+	{"cflags_column",     PARAM_STR, &cflags_col    },
 	{"db_mode",           INT_PARAM, &db_mode         },
 	{"use_domain",        INT_PARAM, &use_domain      },
 	{"desc_time_order",   INT_PARAM, &desc_time_order },
-	{"user_agent_column", STR_PARAM, &user_agent_col.s},
-	{"received_column",   STR_PARAM, &received_col.s  },
-	{"path_column",       STR_PARAM, &path_col.s      },
-	{"socket_column",     STR_PARAM, &sock_col.s      },
-	{"methods_column",    STR_PARAM, &methods_col.s   },
+	{"user_agent_column", PARAM_STR, &user_agent_col},
+	{"received_column",   PARAM_STR, &received_col  },
+	{"path_column",       PARAM_STR, &path_col      },
+	{"socket_column",     PARAM_STR, &sock_col      },
+	{"methods_column",    PARAM_STR, &methods_col   },
 	{"matching_mode",     INT_PARAM, &matching_mode   },
 	{"cseq_delay",        INT_PARAM, &cseq_delay      },
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",         INT_PARAM, &ul_hash_size    },
 	{"nat_bflag",         INT_PARAM, &nat_bflag       },
-	{"default_db_url",    STR_PARAM, &default_db_url.s    },
-	{"default_db_type",   STR_PARAM, &default_db_type.s   },
-	{"domain_db",         STR_PARAM, &domain_db.s         },
-	{"instance_column",      STR_PARAM, &instance_col.s  	 },
-	{"reg_id_column",      	 STR_PARAM, &reg_id_col.s        },
-	{"write_db_url",         STR_PARAM, &write_db_url.s      },
-	{"read_db_url",          STR_PARAM, &read_db_url.s       },
-	{"reg_db_table",         STR_PARAM, &reg_table.s         },
-	{"id_column",            STR_PARAM, &id_col.s            },
-	{"num_column",           STR_PARAM, &num_col.s           },
-	{"url_column",           STR_PARAM, &url_col.s           },
-	{"status_column",        STR_PARAM, &status_col.s        },
-	{"failover_time_column", STR_PARAM, &failover_time_col.s },
-	{"spare_flag_column",    STR_PARAM, &spare_col.s         },
-	{"error_column",         STR_PARAM, &error_col.s         },
-	{"risk_group_column",    STR_PARAM, &risk_group_col.s    },
+	{"default_db_url",    PARAM_STR, &default_db_url    },
+	{"default_db_type",   PARAM_STR, &default_db_type   },
+	{"domain_db",         PARAM_STR, &domain_db         },
+	{"instance_column",      PARAM_STR, &instance_col  	 },
+	{"reg_id_column",      	 PARAM_STR, &reg_id_col        },
+	{"write_db_url",         PARAM_STR, &write_db_url      },
+	{"read_db_url",          PARAM_STR, &read_db_url       },
+	{"reg_db_table",         PARAM_STR, &reg_table         },
+	{"id_column",            PARAM_STR, &id_col            },
+	{"num_column",           PARAM_STR, &num_col           },
+	{"url_column",           PARAM_STR, &url_col           },
+	{"status_column",        PARAM_STR, &status_col        },
+	{"failover_time_column", PARAM_STR, &failover_time_col },
+	{"spare_flag_column",    PARAM_STR, &spare_col         },
+	{"error_column",         PARAM_STR, &error_col         },
+	{"risk_group_column",    PARAM_STR, &risk_group_col    },
 	{"expire_time",          INT_PARAM, &expire_time         },
 	{"db_err_threshold",     INT_PARAM, &db_error_threshold  },
 	{"failover_level",       INT_PARAM, &failover_level      },
@@ -325,41 +325,6 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
-
-
-	/* Compute the lengths of string parameters */
-	ruid_col.len = strlen(ruid_col.s);
-	user_col.len = strlen(user_col.s);
-	domain_col.len = strlen(domain_col.s);
-	contact_col.len = strlen(contact_col.s);
-	expires_col.len = strlen(expires_col.s);
-	q_col.len = strlen(q_col.s);
-	callid_col.len = strlen(callid_col.s);
-	cseq_col.len = strlen(cseq_col.s);
-	flags_col.len = strlen(flags_col.s);
-	cflags_col.len = strlen(cflags_col.s);
-	user_agent_col.len = strlen(user_agent_col.s);
-	received_col.len = strlen(received_col.s);
-	path_col.len = strlen(path_col.s);
-	sock_col.len = strlen(sock_col.s);
-	methods_col.len = strlen(methods_col.s);
-	instance_col.len = strlen(instance_col.s);
-	reg_id_col.len = strlen(reg_id_col.s);
-	last_mod_col.len = strlen(last_mod_col.s);
-	
-	write_db_url.len = strlen (write_db_url.s);
-	read_db_url.len = strlen (read_db_url.s);
-	reg_table.len = strlen(reg_table.s);
-	id_col.len = strlen(id_col.s);
-	url_col.len = strlen(url_col.s);
-	num_col.len = strlen(num_col.s);
-	status_col.len = strlen(status_col.s);
-	failover_time_col.len = strlen(failover_time_col.s);
-	spare_col.len = strlen(spare_col.s);
-	error_col.len = strlen(error_col.s);
-	risk_group_col.len = strlen(risk_group_col.s);
-	db_transaction_level.len = strlen(db_transaction_level.s);
-
 	
 	if(ul_hash_size<=1)
 		ul_hash_size = 512;
@@ -396,14 +361,11 @@ static int mod_init(void)
 
 	/* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
-		if(!default_db_url.s || !strlen(default_db_url.s)){
+		if(!default_db_url.s || default_db_url.len<=0){
 			LM_ERR("must set default_db_url parameter\n");
 			return -1;
 		}
-		default_db_url.len = strlen (default_db_url.s);
 
-		domain_db.len = strlen(domain_db.s);
-		default_db_type.len = strlen(default_db_type.s);
 		if(strcmp(DB_TYPE_CLUSTER_STR, default_db_type.s) == 0){
 			default_dbt = DB_TYPE_CLUSTER;
 		} else {
