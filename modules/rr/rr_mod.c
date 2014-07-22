@@ -49,8 +49,7 @@
 #ifdef ENABLE_USER_CHECK
 #include <string.h>
 #include "../../str.h"
-str i_user;
-char *ignore_user = NULL;
+str i_user = {0,0};
 #endif
 
 int append_fromtag = 1;		/*!< append from tag by default */
@@ -114,11 +113,11 @@ static param_export_t params[] ={
 	{"enable_double_rr",	INT_PARAM, &enable_double_rr},
 	{"enable_full_lr",		INT_PARAM, &enable_full_lr},
 #ifdef ENABLE_USER_CHECK
-	{"ignore_user",		STR_PARAM, &ignore_user},
+	{"ignore_user",		PARAM_STR, &i_user},
 #endif
 	{"add_username",		INT_PARAM, &add_username},
 	{"enable_socket_mismatch_warning",INT_PARAM,&enable_socket_mismatch_warning},
-	{"custom_user_avp",           STR_PARAM, &custom_user_spec.s},
+	{"custom_user_avp",           PARAM_STR, &custom_user_spec},
 	{0, 0, 0 }
 };
 
@@ -160,20 +159,10 @@ static int mod_init(void)
 	}
 
 #ifdef ENABLE_USER_CHECK
-	if(ignore_user)
+	if(i_user.s && rr_obb.use_outbound)
 	{
-		if (rr_obb.use_outbound)
-		{
-			LM_ERR("cannot use \"ignore_user\" with outbound\n");
-			return -1;
-		}
-		i_user.s = ignore_user;
-		i_user.len = strlen(ignore_user);
-	}
-	else
-	{
-		i_user.s = 0;
-		i_user.len = 0;
+    LM_ERR("cannot use \"ignore_user\" with outbound\n");
+    return -1;
 	}
 #endif
 
@@ -184,7 +173,6 @@ static int mod_init(void)
 	}
 
 	if (custom_user_spec.s) {
-		custom_user_spec.len = strlen(custom_user_spec.s);
 		if (pv_parse_spec(&custom_user_spec, &custom_user_avp) == 0
 				&& (custom_user_avp.type != PVT_AVP)) {
 			LM_ERR("malformed or non AVP custom_user "
