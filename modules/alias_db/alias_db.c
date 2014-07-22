@@ -81,13 +81,13 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"db_url",              STR_PARAM, &db_url.s        },
-	{"user_column",         STR_PARAM, &user_column.s   },
-	{"domain_column",       STR_PARAM, &domain_column.s },
-	{"alias_user_column",   STR_PARAM, &alias_user_column.s   },
-	{"alias_domain_column", STR_PARAM, &alias_domain_column.s },
+	{"db_url",              PARAM_STR, &db_url        },
+	{"user_column",         PARAM_STR, &user_column   },
+	{"domain_column",       PARAM_STR, &domain_column },
+	{"alias_user_column",   PARAM_STR, &alias_user_column   },
+	{"alias_domain_column", PARAM_STR, &alias_domain_column },
 	{"use_domain",          INT_PARAM, &use_domain      },
-	{"domain_prefix",       STR_PARAM, &domain_prefix.s },
+	{"domain_prefix",       PARAM_STR, &domain_prefix },
 	{"append_branches",     INT_PARAM, &ald_append_branches   },
 	{0, 0, 0}
 };
@@ -134,15 +134,7 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-	db_url.len = strlen(db_url.s);
-	user_column.len = strlen(user_column.s);
-	domain_column.len = strlen(domain_column.s);
-	alias_domain_column.len = strlen(alias_domain_column.s);
-	alias_user_column.len = strlen(alias_user_column.s);
-	if (domain_prefix.s)
-		domain_prefix.len = strlen(domain_prefix.s);
-
-    /* Find a database module */
+  /* Find a database module */
 	if (db_bind_mod(&db_url, &adbf))
 	{
 		LM_ERR("unable to bind database module\n");
