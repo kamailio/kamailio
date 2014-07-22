@@ -195,36 +195,36 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"list_file",       STR_PARAM, &dslistfile},
-	{"db_url",		    STR_PARAM, &ds_db_url.s},
-	{"table_name", 	    STR_PARAM, &ds_table_name.s},
-	{"setid_col",       STR_PARAM, &ds_set_id_col.s},
-	{"destination_col", STR_PARAM, &ds_dest_uri_col.s},
-	{"flags_col",       STR_PARAM, &ds_dest_flags_col.s},
-	{"priority_col",    STR_PARAM, &ds_dest_priority_col.s},
-	{"attrs_col",       STR_PARAM, &ds_dest_attrs_col.s},
+	{"list_file",       PARAM_STRING, &dslistfile},
+	{"db_url",		    PARAM_STR, &ds_db_url},
+	{"table_name", 	    PARAM_STR, &ds_table_name},
+	{"setid_col",       PARAM_STR, &ds_set_id_col},
+	{"destination_col", PARAM_STR, &ds_dest_uri_col},
+	{"flags_col",       PARAM_STR, &ds_dest_flags_col},
+	{"priority_col",    PARAM_STR, &ds_dest_priority_col},
+	{"attrs_col",       PARAM_STR, &ds_dest_attrs_col},
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},
-	{"dst_avp",         STR_PARAM, &dst_avp_param.s},
-	{"grp_avp",         STR_PARAM, &grp_avp_param.s},
-	{"cnt_avp",         STR_PARAM, &cnt_avp_param.s},
-	{"dstid_avp",       STR_PARAM, &dstid_avp_param.s},
-	{"attrs_avp",       STR_PARAM, &attrs_avp_param.s},
-	{"hash_pvar",       STR_PARAM, &hash_pvar_param.s},
-	{"setid_pvname",    STR_PARAM, &ds_setid_pvname.s},
-	{"attrs_pvname",    STR_PARAM, &ds_attrs_pvname.s},
+	{"dst_avp",         PARAM_STR, &dst_avp_param},
+	{"grp_avp",         PARAM_STR, &grp_avp_param},
+	{"cnt_avp",         PARAM_STR, &cnt_avp_param},
+	{"dstid_avp",       PARAM_STR, &dstid_avp_param},
+	{"attrs_avp",       PARAM_STR, &attrs_avp_param},
+	{"hash_pvar",       PARAM_STR, &hash_pvar_param},
+	{"setid_pvname",    PARAM_STR, &ds_setid_pvname},
+	{"attrs_pvname",    PARAM_STR, &ds_attrs_pvname},
 	{"ds_probing_threshhold", INT_PARAM, &probing_threshhold},
-	{"ds_ping_method",     STR_PARAM, &ds_ping_method.s},
-	{"ds_ping_from",       STR_PARAM, &ds_ping_from.s},
+	{"ds_ping_method",     PARAM_STR, &ds_ping_method},
+	{"ds_ping_from",       PARAM_STR, &ds_ping_from},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
-	{"ds_ping_reply_codes", STR_PARAM, &ds_ping_reply_codes_str},
+	{"ds_ping_reply_codes", PARAM_STR, &ds_ping_reply_codes_str},
 	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
 	{"ds_hash_size",       INT_PARAM, &ds_hash_size},
 	{"ds_hash_expire",     INT_PARAM, &ds_hash_expire},
 	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
-	{"outbound_proxy",  STR_PARAM, &ds_outbound_proxy.s},
+	{"outbound_proxy",  PARAM_STR, &ds_outbound_proxy},
 	{0,0,0}
 };
 
@@ -271,26 +271,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (dst_avp_param.s)
-		dst_avp_param.len = strlen(dst_avp_param.s);
-	if (grp_avp_param.s)
-		grp_avp_param.len = strlen(grp_avp_param.s);
-	if (cnt_avp_param.s)
-		cnt_avp_param.len = strlen(cnt_avp_param.s);	
-	if (dstid_avp_param.s)
-		dstid_avp_param.len = strlen(dstid_avp_param.s);
-	if (attrs_avp_param.s)
-		attrs_avp_param.len = strlen(attrs_avp_param.s);
-	if (hash_pvar_param.s)
-		hash_pvar_param.len = strlen(hash_pvar_param.s);
-	if (ds_setid_pvname.s)
-		ds_setid_pvname.len = strlen(ds_setid_pvname.s);
-	if (ds_attrs_pvname.s)
-		ds_attrs_pvname.len = strlen(ds_attrs_pvname.s);
-	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
-	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
-	if (ds_outbound_proxy.s) ds_outbound_proxy.len = strlen(ds_outbound_proxy.s);
-
 	if(cfg_declare("dispatcher", dispatcher_cfg_def,
 				&default_dispatcher_cfg, cfg_sizeof(dispatcher),
 				&dispatcher_cfg)){
@@ -304,7 +284,6 @@ static int mod_init(void)
 	ds_ping_reply_codes_cnt = (int*)shm_malloc(sizeof(int));
 	*ds_ping_reply_codes_cnt = 0;
 	if(ds_ping_reply_codes_str.s) {
-		ds_ping_reply_codes_str.len = strlen(ds_ping_reply_codes_str.s);
 		cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str)
 			= ds_ping_reply_codes_str;
 		if(ds_parse_reply_codes()< 0)
@@ -322,14 +301,6 @@ static int mod_init(void)
 
 	if(ds_db_url.s)
 	{
-		ds_db_url.len     = strlen(ds_db_url.s);
-		ds_table_name.len = strlen(ds_table_name.s);
-		ds_set_id_col.len        = strlen(ds_set_id_col.s);
-		ds_dest_uri_col.len      = strlen(ds_dest_uri_col.s);
-		ds_dest_flags_col.len    = strlen(ds_dest_flags_col.s);
-		ds_dest_priority_col.len = strlen(ds_dest_priority_col.s);
-		ds_dest_attrs_col.len    = strlen(ds_dest_attrs_col.s);
-
 		if(init_ds_db()!= 0)
 		{
 			LM_ERR("could not initiate a connect to the database\n");
