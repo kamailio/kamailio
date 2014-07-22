@@ -50,11 +50,6 @@ str suffix = {"", 0};
 
 int add_diversion(struct sip_msg* msg, char* r, char* u);
 
-/*
- * Module initialization function prototype
- */
-static int mod_init(void);
-
 
 /*
  * Exported functions
@@ -72,7 +67,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"suffix", STR_PARAM, &suffix.s},
+	{"suffix", PARAM_STR, &suffix},
 	{0, 0, 0}
 };
 
@@ -89,18 +84,11 @@ struct module_exports exports = {
 	0,          /* exported MI functions */
 	0,          /* exported pseudo-variables */
 	0,          /* extra processes */
-	mod_init,   /* module initialization function */
+	0,   /* module initialization function */
 	0,          /* response function */
 	0,          /* destroy function */
 	0           /* child initialization function */
 };
-
-
-static int mod_init(void)
-{
-	suffix.len = strlen(suffix.s);
-	return 0;
-}
 
 
 static inline int add_diversion_helper(struct sip_msg* msg, str* s)
