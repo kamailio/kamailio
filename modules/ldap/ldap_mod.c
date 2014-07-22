@@ -128,7 +128,7 @@ static cmd_export_t cmds[] = {
 */
 static param_export_t params[] = {
 
-	{"config_file",          STR_PARAM, &ldap_config},
+	{"config_file",          PARAM_STR, &ldap_config},
 	{0, 0, 0}
 };
 
@@ -199,7 +199,7 @@ static int mod_init(void)
 	/*
 	* read config file
 	*/
-	if (strlen(ldap_config.s) == 0)
+	if (ldap_config.len <= 0)
 	{
 		LM_ERR("config_file is empty - this module param is mandatory\n");
 		return -2;
