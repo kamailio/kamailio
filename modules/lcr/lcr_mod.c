@@ -307,40 +307,40 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-    {"db_url",                   STR_PARAM, &db_url.s},
-    {"lcr_rule_table",           STR_PARAM, &lcr_rule_table.s},
-    {"lcr_rule_target_table",    STR_PARAM, &lcr_rule_target_table.s},
-    {"lcr_gw_table",             STR_PARAM, &lcr_gw_table.s},
-    {"lcr_id_column",            STR_PARAM, &lcr_id_col.s},
-    {"id_column",                STR_PARAM, &id_col.s},
-    {"prefix_column",            STR_PARAM, &prefix_col.s},
-    {"from_uri_column",          STR_PARAM, &from_uri_col.s},
-    {"request_uri_column",       STR_PARAM, &request_uri_col.s},
-    {"stopper_column",           STR_PARAM, &stopper_col.s},
-    {"enabled_column",           STR_PARAM, &enabled_col.s},
-    {"rule_id_column",           STR_PARAM, &rule_id_col.s},
-    {"priority_column",          STR_PARAM, &priority_col.s},
-    {"gw_id_column",             STR_PARAM, &gw_id_col.s},
-    {"weight_column",            STR_PARAM, &weight_col.s},
-    {"gw_name_column",           STR_PARAM, &gw_name_col.s},
-    {"ip_addr_column",           STR_PARAM, &ip_addr_col.s},
-    {"port_column",              STR_PARAM, &port_col.s},
-    {"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s},
-    {"transport_column",         STR_PARAM, &transport_col.s},
-    {"params_column",            STR_PARAM, &params_col.s},
-    {"hostname_column",          STR_PARAM, &hostname_col.s},
-    {"strip_column",             STR_PARAM, &strip_col.s},
-    {"prefix_column",            STR_PARAM, &prefix_col.s},
-    {"tag_column",               STR_PARAM, &tag_col.s},
-    {"flags_column",             STR_PARAM, &flags_col.s},
-    {"defunct_column",           STR_PARAM, &defunct_col.s},
-    {"gw_uri_avp",               STR_PARAM, &gw_uri_avp_param},
-    {"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param},
-    {"tag_avp",                  STR_PARAM, &tag_avp_param},
-    {"flags_avp",                STR_PARAM, &flags_avp_param},
+    {"db_url",                   PARAM_STR, &db_url},
+    {"lcr_rule_table",           PARAM_STR, &lcr_rule_table},
+    {"lcr_rule_target_table",    PARAM_STR, &lcr_rule_target_table},
+    {"lcr_gw_table",             PARAM_STR, &lcr_gw_table},
+    {"lcr_id_column",            PARAM_STR, &lcr_id_col},
+    {"id_column",                PARAM_STR, &id_col},
+    {"prefix_column",            PARAM_STR, &prefix_col},
+    {"from_uri_column",          PARAM_STR, &from_uri_col},
+    {"request_uri_column",       PARAM_STR, &request_uri_col},
+    {"stopper_column",           PARAM_STR, &stopper_col},
+    {"enabled_column",           PARAM_STR, &enabled_col},
+    {"rule_id_column",           PARAM_STR, &rule_id_col},
+    {"priority_column",          PARAM_STR, &priority_col},
+    {"gw_id_column",             PARAM_STR, &gw_id_col},
+    {"weight_column",            PARAM_STR, &weight_col},
+    {"gw_name_column",           PARAM_STR, &gw_name_col},
+    {"ip_addr_column",           PARAM_STR, &ip_addr_col},
+    {"port_column",              PARAM_STR, &port_col},
+    {"uri_scheme_column",        PARAM_STR, &uri_scheme_col},
+    {"transport_column",         PARAM_STR, &transport_col},
+    {"params_column",            PARAM_STR, &params_col},
+    {"hostname_column",          PARAM_STR, &hostname_col},
+    {"strip_column",             PARAM_STR, &strip_col},
+    {"prefix_column",            PARAM_STR, &prefix_col},
+    {"tag_column",               PARAM_STR, &tag_col},
+    {"flags_column",             PARAM_STR, &flags_col},
+    {"defunct_column",           PARAM_STR, &defunct_col},
+    {"gw_uri_avp",               PARAM_STRING, &gw_uri_avp_param},
+    {"ruri_user_avp",            PARAM_STRING, &ruri_user_avp_param},
+    {"tag_avp",                  PARAM_STRING, &tag_avp_param},
+    {"flags_avp",                PARAM_STRING, &flags_avp_param},
     {"defunct_capability",       INT_PARAM, &defunct_capability_param},
-    {"defunct_gw_avp",           STR_PARAM, &defunct_gw_avp_param},
-    {"lcr_id_avp",               STR_PARAM, &lcr_id_avp_param},
+    {"defunct_gw_avp",           PARAM_STRING, &defunct_gw_avp_param},
+    {"lcr_id_avp",               PARAM_STRING, &lcr_id_avp_param},
     {"lcr_count",                INT_PARAM, &lcr_count_param},
     {"lcr_rule_hash_size",       INT_PARAM, &lcr_rule_hash_size_param},
     {"lcr_gw_count",             INT_PARAM, &lcr_gw_count_param},
@@ -348,9 +348,9 @@ static param_export_t params[] = {
     {"fetch_rows",               INT_PARAM, &fetch_rows_param},
     {"ping_interval",            INT_PARAM, &ping_interval_param},
     {"ping_inactivate_threshold",  INT_PARAM, &ping_inactivate_threshold_param},
-    {"ping_valid_reply_codes",   STR_PARAM, &ping_valid_reply_codes_param.s},
-    {"ping_from",                STR_PARAM, &ping_from_param.s},
-    {"ping_socket",              STR_PARAM, &ping_socket_param.s},
+    {"ping_valid_reply_codes",   PARAM_STR, &ping_valid_reply_codes_param},
+    {"ping_from",                PARAM_STR, &ping_from_param},
+    {"ping_socket",              PARAM_STR, &ping_socket_param},
     {0, 0, 0}
 };
 
@@ -435,38 +435,6 @@ static int mod_init(void)
 	LM_ERR("failed to register RPC commands\n");
 	return -1;
     }
-
-    /* Update length of module variables */
-    db_url.len = strlen(db_url.s);
-    lcr_rule_table.len = strlen(lcr_rule_table.s);
-    lcr_rule_target_table.len = strlen(lcr_rule_target_table.s);
-    lcr_gw_table.len = strlen(lcr_gw_table.s);
-    id_col.len = strlen(id_col.s);
-    lcr_id_col.len = strlen(lcr_id_col.s);
-    prefix_col.len = strlen(prefix_col.s);
-    from_uri_col.len = strlen(from_uri_col.s);
-    request_uri_col.len = strlen(request_uri_col.s);
-    stopper_col.len = strlen(stopper_col.s);
-    enabled_col.len = strlen(enabled_col.s);
-    rule_id_col.len = strlen(rule_id_col.s);
-    priority_col.len = strlen(priority_col.s);
-    gw_id_col.len = strlen(gw_id_col.s);
-    weight_col.len = strlen(weight_col.s);
-    gw_name_col.len = strlen(gw_name_col.s);
-    ip_addr_col.len = strlen(ip_addr_col.s);
-    port_col.len = strlen(port_col.s);
-    uri_scheme_col.len = strlen(uri_scheme_col.s);
-    transport_col.len = strlen(transport_col.s);
-    params_col.len = strlen(params_col.s);
-    hostname_col.len = strlen(hostname_col.s);
-    strip_col.len = strlen(strip_col.s);
-    prefix_col.len = strlen(prefix_col.s);
-    tag_col.len = strlen(tag_col.s);
-    flags_col.len = strlen(flags_col.s);
-    defunct_col.len = strlen(defunct_col.s);
-    ping_valid_reply_codes_param.len = strlen(ping_valid_reply_codes_param.s);
-    ping_socket_param.len = strlen(ping_socket_param.s);
-    ping_from_param.len = strlen(ping_from_param.s);
 
     /* Bind database */
     if (lcr_db_bind(&db_url)) {
