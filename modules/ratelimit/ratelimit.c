@@ -220,10 +220,10 @@ static cmd_export_t cmds[]={
 };
 static param_export_t params[]={
 	{"timer_interval", INT_PARAM,                &timer_interval},
-	{"queue",          STR_PARAM|USE_FUNC_PARAM, (void *)add_queue_params},
-	{"pipe",           STR_PARAM|USE_FUNC_PARAM, (void *)add_pipe_params},
+	{"queue",          PARAM_STRING|USE_FUNC_PARAM, (void *)add_queue_params},
+	{"pipe",           PARAM_STRING|USE_FUNC_PARAM, (void *)add_pipe_params},
 	/* RESERVED for future use
-	{"load_source",    STR_PARAM|USE_FUNC_PARAM, (void *)set_load_source},
+	{"load_source",    PARAM_STRING|USE_FUNC_PARAM, (void *)set_load_source},
 	*/
 	{0,0,0}
 };
