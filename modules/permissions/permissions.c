@@ -155,25 +155,25 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"default_allow_file", STR_PARAM, &default_allow_file},
-	{"default_deny_file",  STR_PARAM, &default_deny_file },
+	{"default_allow_file", PARAM_STRING, &default_allow_file},
+	{"default_deny_file",  PARAM_STRING, &default_deny_file },
 	{"check_all_branches", INT_PARAM, &check_all_branches},
-	{"allow_suffix",       STR_PARAM, &allow_suffix      },
-	{"deny_suffix",        STR_PARAM, &deny_suffix       },
-	{"db_url",             STR_PARAM, &db_url.s          },
+	{"allow_suffix",       PARAM_STRING, &allow_suffix      },
+	{"deny_suffix",        PARAM_STRING, &deny_suffix       },
+	{"db_url",             PARAM_STR, &db_url          },
 	{"db_mode",            INT_PARAM, &db_mode           },
-	{"trusted_table",      STR_PARAM, &trusted_table.s   },
-	{"source_col",         STR_PARAM, &source_col.s      },
-	{"proto_col",          STR_PARAM, &proto_col.s       },
-	{"from_col",           STR_PARAM, &from_col.s        },
-	{"tag_col",            STR_PARAM, &tag_col.s         },
-	{"peer_tag_avp",       STR_PARAM, &tag_avp_param.s   },
+	{"trusted_table",      PARAM_STR, &trusted_table   },
+	{"source_col",         PARAM_STR, &source_col      },
+	{"proto_col",          PARAM_STR, &proto_col       },
+	{"from_col",           PARAM_STR, &from_col        },
+	{"tag_col",            PARAM_STR, &tag_col         },
+	{"peer_tag_avp",       PARAM_STR, &tag_avp_param   },
 	{"peer_tag_mode",      INT_PARAM, &peer_tag_mode     },
-	{"address_table",      STR_PARAM, &address_table.s   },
-	{"grp_col",            STR_PARAM, &grp_col.s         },
-	{"ip_addr_col",        STR_PARAM, &ip_addr_col.s     },
-	{"mask_col",           STR_PARAM, &mask_col.s        },
-	{"port_col",           STR_PARAM, &port_col.s        },
+	{"address_table",      PARAM_STR, &address_table   },
+	{"grp_col",            PARAM_STR, &grp_col         },
+	{"ip_addr_col",        PARAM_STR, &ip_addr_col     },
+	{"mask_col",           PARAM_STR, &mask_col        },
+	{"port_col",           PARAM_STR, &port_col        },
 	{0, 0, 0}
 };
 
@@ -598,21 +598,6 @@ static int mod_init(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-
-	if (db_url.s)
-		db_url.len = strlen(db_url.s);
-	trusted_table.len = strlen(trusted_table.s);
-	source_col.len = strlen(source_col.s);
-	proto_col.len = strlen(proto_col.s);
-	from_col.len = strlen(from_col.s);
-	tag_col.len = strlen(tag_col.s);
-	if (tag_avp_param.s)
-		tag_avp_param.len = strlen(tag_avp_param.s);
-	address_table.len = strlen(address_table.s);
-	grp_col.len = strlen(grp_col.s);
-	ip_addr_col.len = strlen(ip_addr_col.s);
-	mask_col.len = strlen(mask_col.s);
-	port_col.len = strlen(port_col.s);
 
 	allow[0].filename = get_pathname(default_allow_file);
 	allow[0].rules = parse_config_file(allow[0].filename);
