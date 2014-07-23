@@ -948,13 +948,6 @@ mod_init(void)
 			pkg_free(rtpp_strings[i]);
 	}
 
-	if (timeout_socket_str.s==NULL || timeout_socket_str.s[0]==0) {
-		timeout_socket_str.len = 0;
-		timeout_socket_str.s = NULL;
-	} else {
-		timeout_socket_str.len = strlen(timeout_socket_str.s);
-	}
-
 	if (ice_candidate_priority_avp_param) {
 	    s.s = ice_candidate_priority_avp_param; s.len = strlen(s.s);
 	    if (pv_parse_spec(&s, &avp_spec) == 0 || avp_spec.type != PVT_AVP) {
