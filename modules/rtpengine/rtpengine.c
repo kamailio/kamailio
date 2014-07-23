@@ -404,16 +404,16 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{"rtpengine_sock",        STR_PARAM|USE_FUNC_PARAM,
+	{"rtpengine_sock",        PARAM_STRING|USE_FUNC_PARAM,
 	                         (void*)rtpengine_set_store          },
 	{"rtpengine_disable_tout",INT_PARAM, &rtpengine_disable_tout },
 	{"rtpengine_retr",        INT_PARAM, &rtpengine_retr         },
 	{"rtpengine_tout",        INT_PARAM, &rtpengine_tout         },
-	{"db_url",                STR_PARAM, &rtpp_db_url.s },
-	{"table_name",            STR_PARAM, &rtpp_table_name.s },
-	{"url_col",               STR_PARAM, &rtpp_url_col.s },
-	{"extra_id_pv",           STR_PARAM, &extra_id_pv_param.s },
-	{"setid_avp",             STR_PARAM, &setid_avp_param },
+	{"db_url",                PARAM_STR, &rtpp_db_url },
+	{"table_name",            PARAM_STR, &rtpp_table_name },
+	{"url_col",               PARAM_STR, &rtpp_url_col },
+	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param },
+	{"setid_avp",             PARAM_STRING, &setid_avp_param },
 	{0, 0, 0}
 };
 
@@ -917,9 +917,6 @@ mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
-
-	rtpp_table_name.len = strlen(rtpp_table_name.s);
-	rtpp_url_col.len = strlen(rtpp_url_col.s);
 
 	/* any rtpproxy configured? */
 	if(rtpp_set_list)

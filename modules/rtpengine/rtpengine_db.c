@@ -130,9 +130,6 @@ int init_rtpproxy_db(void)
 		/* Database not configured */
 		return 0;
 
-	rtpp_db_url.len = strlen(rtpp_db_url.s);
-	rtpp_table_name.len = strlen(rtpp_table_name.s);
-
 	if (db_bind_mod(&rtpp_db_url, &rtpp_dbf) < 0)
 	{
 		LM_ERR("Unable to bind to db driver - %.*s\n", rtpp_db_url.len, rtpp_db_url.s);
