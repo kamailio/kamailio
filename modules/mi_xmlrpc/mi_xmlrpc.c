@@ -95,7 +95,7 @@ static proc_export_t mi_procs[] = {
 /* module parameters */
 static param_export_t mi_params[] = {
 	{"port",					INT_PARAM, &port},
-	{"log_file",				STR_PARAM, &log_file},
+	{"log_file",				PARAM_STRING, &log_file},
 	{"reply_option",			INT_PARAM, &rpl_opt},
 	{"buffer_size",				INT_PARAM, &read_buf_size},
 	{0,0,0}
