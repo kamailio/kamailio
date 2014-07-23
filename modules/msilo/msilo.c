@@ -199,33 +199,33 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{ "db_url",           STR_PARAM, &ms_db_url.s             },
-	{ "db_table",         STR_PARAM, &ms_db_table.s           },
-	{ "from_address",     STR_PARAM, &ms_from                 },
-	{ "contact_hdr",      STR_PARAM, &ms_contact              },
-	{ "extra_hdrs",       STR_PARAM, &ms_extra_hdrs           },
-	{ "content_type_hdr", STR_PARAM, &ms_content_type         },
-	{ "offline_message",  STR_PARAM, &ms_offline_message      },
-	{ "reminder",         STR_PARAM, &ms_reminder.s           },
-	{ "outbound_proxy",   STR_PARAM, &ms_outbound_proxy.s     },
+	{ "db_url",           PARAM_STR, &ms_db_url             },
+	{ "db_table",         PARAM_STR, &ms_db_table           },
+	{ "from_address",     PARAM_STRING, &ms_from                 },
+	{ "contact_hdr",      PARAM_STRING, &ms_contact              },
+	{ "extra_hdrs",       PARAM_STRING, &ms_extra_hdrs           },
+	{ "content_type_hdr", PARAM_STRING, &ms_content_type         },
+	{ "offline_message",  PARAM_STRING, &ms_offline_message      },
+	{ "reminder",         PARAM_STR, &ms_reminder           },
+	{ "outbound_proxy",   PARAM_STR, &ms_outbound_proxy     },
 	{ "expire_time",      INT_PARAM, &ms_expire_time          },
 	{ "check_time",       INT_PARAM, &ms_check_time           },
 	{ "send_time",        INT_PARAM, &ms_send_time            },
 	{ "clean_period",     INT_PARAM, &ms_clean_period         },
 	{ "use_contact",      INT_PARAM, &ms_use_contact          },
-	{ "sc_mid",           STR_PARAM, &sc_mid.s                },
-	{ "sc_from",          STR_PARAM, &sc_from.s               },
-	{ "sc_to",            STR_PARAM, &sc_to.s                 },
-	{ "sc_uri_user",      STR_PARAM, &sc_uri_user.s           },
-	{ "sc_uri_host",      STR_PARAM, &sc_uri_host.s           },
-	{ "sc_body",          STR_PARAM, &sc_body.s               },
-	{ "sc_ctype",         STR_PARAM, &sc_ctype.s              },
-	{ "sc_exp_time",      STR_PARAM, &sc_exp_time.s           },
-	{ "sc_inc_time",      STR_PARAM, &sc_inc_time.s           },
-	{ "sc_snd_time",      STR_PARAM, &sc_snd_time.s           },
-	{ "sc_stored_hdrs",   STR_PARAM, &sc_stored_hdrs.s        },
-	{ "snd_time_avp",     STR_PARAM, &ms_snd_time_avp_param.s },
-	{ "extra_hdrs_avp",   STR_PARAM, &ms_extra_hdrs_avp_param.s },
+	{ "sc_mid",           PARAM_STR, &sc_mid                },
+	{ "sc_from",          PARAM_STR, &sc_from               },
+	{ "sc_to",            PARAM_STR, &sc_to                 },
+	{ "sc_uri_user",      PARAM_STR, &sc_uri_user           },
+	{ "sc_uri_host",      PARAM_STR, &sc_uri_host           },
+	{ "sc_body",          PARAM_STR, &sc_body               },
+	{ "sc_ctype",         PARAM_STR, &sc_ctype              },
+	{ "sc_exp_time",      PARAM_STR, &sc_exp_time           },
+	{ "sc_inc_time",      PARAM_STR, &sc_inc_time           },
+	{ "sc_snd_time",      PARAM_STR, &sc_snd_time           },
+	{ "sc_stored_hdrs",   PARAM_STR, &sc_stored_hdrs        },
+	{ "snd_time_avp",     PARAM_STR, &ms_snd_time_avp_param },
+	{ "extra_hdrs_avp",   PARAM_STR, &ms_extra_hdrs_avp_param },
 	{ "add_date",         INT_PARAM, &ms_add_date             },
 	{ "max_messages",     INT_PARAM, &ms_max_messages         },
 	{ "add_contact",      INT_PARAM, &ms_add_contact          },
@@ -295,22 +295,6 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
-	ms_db_url.len = strlen (ms_db_url.s);
-	ms_db_table.len = strlen (ms_db_table.s);
-	sc_mid.len = strlen(sc_mid.s);
-	sc_from.len = strlen(sc_from.s);
-	sc_to.len = strlen(sc_to.s);
-	sc_uri_user.len = strlen(sc_uri_user.s);
-	sc_uri_host.len = strlen(sc_uri_host.s);
-	sc_body.len = strlen(sc_body.s);
-	sc_ctype.len = strlen(sc_ctype.s);
-	sc_exp_time.len = strlen(sc_exp_time.s);
-	sc_inc_time.len = strlen(sc_inc_time.s);
-	sc_snd_time.len = strlen(sc_snd_time.s);
-	if (ms_snd_time_avp_param.s)
-		ms_snd_time_avp_param.len = strlen(ms_snd_time_avp_param.s);
-	if (ms_extra_hdrs_avp_param.s)
-		ms_extra_hdrs_avp_param.len = strlen(ms_extra_hdrs_avp_param.s);
 
 	/* binding to mysql module  */
 	if (db_bind_mod(&ms_db_url, &msilo_dbf))
@@ -474,11 +458,6 @@ static int mod_init(void)
 	register_timer(m_clean_silo, 0, ms_check_time);
 	if(ms_send_time>0 && ms_reminder.s!=NULL)
 		register_timer(m_send_ontimer, 0, ms_send_time);
-
-	if(ms_reminder.s!=NULL)
-		ms_reminder.len = strlen(ms_reminder.s);
-	if(ms_outbound_proxy.s!=NULL)
-		ms_outbound_proxy.len = strlen(ms_outbound_proxy.s);
 
 	return 0;
 }
