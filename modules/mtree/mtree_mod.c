@@ -82,13 +82,13 @@ static str tprefix_column = str_init("tprefix");
 static str tvalue_column  = str_init("tvalue");
 
 /* List of allowed chars for a prefix*/
-str mt_char_list = {"0123456789", 10};
+str mt_char_list = str_init("0123456789");
 
-static str value_param = {"$avp(s:tvalue)", 0};
-static str values_param = {"$avp(s:tvalues)", 0};
-static str dstid_param = {"$avp(s:tdstid)", 0};
-static str weight_param = {"$avp(s:tweight)", 0};
-static str count_param = {"$avp(s:tcount)", 0};
+static str value_param = str_init("$avp(s:tvalue)");
+static str values_param = str_init("$avp(s:tvalues)");
+static str dstid_param = str_init("$avp(s:tdstid)");
+static str weight_param = str_init("$avp(s:tweight)");
+static str count_param = str_init("$avp(s:tcount)");
 pv_spec_t pv_value;
 pv_spec_t pv_values;
 pv_spec_t pv_dstid;
@@ -132,19 +132,19 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"mtree",          STR_PARAM|USE_FUNC_PARAM, (void*)mt_param},
-	{"db_url",         STR_PARAM, &db_url.s},
-	{"db_table",       STR_PARAM, &db_table.s},
-	{"tname_column",   STR_PARAM, &tname_column.s},
-	{"tprefix_column", STR_PARAM, &tprefix_column.s},
-	{"tvalue_column",  STR_PARAM, &tvalue_column.s},
-	{"char_list",      STR_PARAM, &mt_char_list.s},
+	{"mtree",          PARAM_STRING|USE_FUNC_PARAM, (void*)mt_param},
+	{"db_url",         PARAM_STR, &db_url},
+	{"db_table",       PARAM_STR, &db_table},
+	{"tname_column",   PARAM_STR, &tname_column},
+	{"tprefix_column", PARAM_STR, &tprefix_column},
+	{"tvalue_column",  PARAM_STR, &tvalue_column},
+	{"char_list",      PARAM_STR, &mt_char_list},
 	{"fetch_rows",     INT_PARAM, &mt_fetch_rows},
-	{"pv_value",       STR_PARAM, &value_param.s},
-	{"pv_values",      STR_PARAM, &values_param.s},
-	{"pv_dstid",       STR_PARAM, &dstid_param.s},
-	{"pv_weight",      STR_PARAM, &weight_param.s},
-	{"pv_count",       STR_PARAM, &count_param.s},
+	{"pv_value",       PARAM_STR, &value_param},
+	{"pv_values",      PARAM_STR, &values_param},
+	{"pv_dstid",       PARAM_STR, &dstid_param},
+	{"pv_weight",      PARAM_STR, &weight_param},
+	{"pv_count",       PARAM_STR, &count_param},
 	{"mt_tree_type",   INT_PARAM, &_mt_tree_type},
 	{"mt_ignore_duplicates", INT_PARAM, &_mt_ignore_duplicates},
 	{"mt_allow_duplicates", INT_PARAM, &_mt_allow_duplicates},
@@ -195,18 +195,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	db_url.len = strlen(db_url.s);
-	db_table.len = strlen(db_table.s);
-	tname_column.len = strlen(tname_column.s);
-	tprefix_column.len = strlen(tprefix_column.s);
-	tvalue_column.len = strlen(tvalue_column.s);
-
-	value_param.len = strlen(value_param.s);
-	values_param.len = strlen(values_param.s);
-	dstid_param.len = strlen(dstid_param.s);
-	weight_param.len = strlen(weight_param.s);
-	count_param.len = strlen(count_param.s);
-
 	if(pv_parse_spec(&value_param, &pv_value)<00
 			|| !(pv_is_w(&pv_value)))
 	{
@@ -244,7 +232,6 @@ static int mod_init(void)
 	if(mt_fetch_rows<=0)
 		mt_fetch_rows = 1000;
 
-	mt_char_list.len = strlen(mt_char_list.s);
 	if(mt_char_list.len<=0)
 	{
 		LM_ERR("invalid prefix char list\n");
