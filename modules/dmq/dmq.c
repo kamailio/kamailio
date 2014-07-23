@@ -72,7 +72,7 @@ struct tm_binds tmb;
 sl_api_t slb;
 
 /** module variables */
-str dmq_request_method = {"KDMQ", 4};
+str dmq_request_method = str_init("KDMQ");
 dmq_worker_t* workers;
 dmq_peer_list_t* peer_list;
 /* the list of dmq servers */
@@ -87,7 +87,6 @@ static void destroy(void);
 static int handle_dmq_fixup(void** param, int param_no);
 static int send_dmq_fixup(void** param, int param_no);
 static int bcast_dmq_fixup(void** param, int param_no);
-static int parse_server_address(str* uri, struct sip_uri* parsed_uri);
 
 static cmd_export_t cmds[] = {
 	{"dmq_handle_message",  (cmd_function)dmq_handle_message, 0, handle_dmq_fixup, 0, 
@@ -103,8 +102,8 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &num_workers},
 	{"ping_interval", INT_PARAM, &ping_interval},
-	{"server_address", STR_PARAM, &dmq_server_address.s},
-	{"notification_address", STR_PARAM, &dmq_notification_address.s},
+	{"server_address", PARAM_STR, &dmq_server_address},
+	{"notification_address", PARAM_STR, &dmq_notification_address},
 	{0, 0, 0}
 };
 
@@ -169,16 +168,15 @@ static int mod_init(void)
 	register_procs(num_workers);
 	
 	/* check server_address and notification_address are not empty and correct */
-	if(parse_server_address(&dmq_server_address, &dmq_server_uri) < 0) {
-		LM_ERR("server address invalid\n");
-		return -1;
-	}
+  if(parse_uri(dmq_server_address.s, dmq_server_address.len, &dmq_server_uri) < 0) {
+    LM_ERR("server address invalid\n");
+    return -1;
+  }
 	
-	if(parse_server_address(&dmq_notification_address,
-				&dmq_notification_uri) < 0) {
-		LM_ERR("notification address invalid\n");
-		return -1;
-	}
+  if(parse_uri(dmq_notification_address.s, dmq_notification_address.len, &dmq_notification_uri) < 0) {
+    LM_ERR("notification address invalid\n");
+    return -1;
+  }
 	
 	/* allocate workers array */
 	workers = shm_malloc(num_workers * sizeof(*workers));
@@ -285,24 +283,5 @@ static int send_dmq_fixup(void** param, int param_no)
 static int bcast_dmq_fixup(void** param, int param_no)
 {
         return fixup_spve_null(param, 1);
-}
-
-static int parse_server_address(str* uri, struct sip_uri* parsed_uri)
-{
-	if(!uri->s) {
-		goto empty;
-	}
-	uri->len = strlen(uri->s);
-	if(!uri->len) {
-		goto empty;
-	}
-	if(parse_uri(uri->s, uri->len, parsed_uri) < 0) {
-		LM_ERR("error parsing server address\n");
-		return -1;
-	}
-	return 0;
-empty:
-	uri->s = NULL;
-	return 0;
 }
 
