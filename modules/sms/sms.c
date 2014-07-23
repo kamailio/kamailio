@@ -75,12 +75,11 @@ char *networks_config = 0;
 char *modems_config   = 0;
 char *links_config    = 0;
 char *default_net_str = 0;
-char *domain_str      = 0;
 
 /*global variables*/
 int    default_net    = 0;
 int    max_sms_parts  = MAX_SMS_PARTS;
-str    domain;
+str    domain = {0,0};
 int    *queued_msgs    = 0;
 int    use_contact     = 0;
 int    sms_report_type = NO_REPORT;
@@ -96,12 +95,12 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"networks",        STR_PARAM, &networks_config },
-	{"modems",          STR_PARAM, &modems_config   },
-	{"links",           STR_PARAM, &links_config    },
-	{"default_net",     STR_PARAM, &default_net_str },
+	{"networks",        PARAM_STRING, &networks_config },
+	{"modems",          PARAM_STRING, &modems_config   },
+	{"links",           PARAM_STRING, &links_config    },
+	{"default_net",     PARAM_STRING, &default_net_str },
 	{"max_sms_parts",   INT_PARAM, &max_sms_parts   },
-	{"domain",          STR_PARAM, &domain_str      },
+	{"domain",          PARAM_STR, &domain      },
 	{"use_contact",     INT_PARAM, &use_contact     },
 	{"sms_report_type", INT_PARAM, &sms_report_type },
 	{0,0,0}
@@ -548,11 +547,8 @@ int global_init(void)
 	if (load_tm( &tmb )==-1)
 		goto error;
 
-	/*fix domain length*/
-	if (domain_str) {
-		domain.s = domain_str;
-		domain.len = strlen(domain_str);
-	} else {
+	/*fix domain*/
+	if (!domain.s){
 		si=get_first_socket();
 		if (si==0){
 			LM_CRIT("null listen socket list\n");
