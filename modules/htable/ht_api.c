@@ -276,6 +276,8 @@ int ht_init_tables(void)
 
 	while(ht)
 	{
+		LM_DBG("initializing htable [%.*s] with nr. of slots: %d\n",
+				ht->name.len, ht->name.s, ht->htsize);
 		ht->entries = (ht_entry_t*)shm_malloc(ht->htsize*sizeof(ht_entry_t));
 		if(ht->entries==NULL)
 		{
