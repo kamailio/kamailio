@@ -1490,7 +1490,7 @@ if(!t_relay()) {
 
 	<section id="tm.f.t_replicate">
 	<title>
-	    <function>t_replicate(params)</function>
+	    <function>t_replicate([params])</function>
 	</title>
 	<para>
 		Replicate the SIP request to a specific address.
@@ -1499,7 +1499,7 @@ if(!t_relay()) {
 		There are several function prototypes:
 		<itemizedlist>
 		<listitem><para>
-	    <function>t_replicate(uri)</function>,
+	    <function>t_replicate([uri])</function>,
 		</para></listitem>
 		<listitem><para>
 	    <function>t_replicate(host, port)</function>,
@@ -1525,7 +1525,8 @@ if(!t_relay()) {
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>uri</emphasis> - SIP URI where the message should be sent.
-		It can be given via a script variable.
+			It can be given via a script variable. It is optional - when missing, the
+			dst-uri or r-uri are used as next hop address.
 		</para>
 	    </listitem>
 	    <listitem>

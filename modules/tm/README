@@ -115,7 +115,7 @@ Juha Heinanen
               5.43. t_set_disable_6xx(0|1)
               5.44. t_set_disable_failover(0|1)
               5.45. t_set_disable_internal_reply(0|1)
-              5.46. t_replicate(params)
+              5.46. t_replicate([params])
               5.47. t_relay_to(proxy, flags)
               5.48. t_set_no_e2e_cancel_reason(0|1)
               5.49. t_is_set(target)
@@ -227,7 +227,7 @@ Juha Heinanen
    1.82. t_set_disable_failover usage
    1.83. t_set_disable_internal_reply usage
    1.84. t_replicate usage
-   1.85. t_replicate usage
+   1.85. t_relay_to usage
    1.86. t_set_no_e2e_cancel_reason usage
    1.87. t_replicate usage
    1.88. t_use_uac_headers usage
@@ -335,7 +335,7 @@ Chapter 1. Admin Guide
         5.43. t_set_disable_6xx(0|1)
         5.44. t_set_disable_failover(0|1)
         5.45. t_set_disable_internal_reply(0|1)
-        5.46. t_replicate(params)
+        5.46. t_replicate([params])
         5.47. t_relay_to(proxy, flags)
         5.48. t_set_no_e2e_cancel_reason(0|1)
         5.49. t_is_set(target)
@@ -1605,7 +1605,7 @@ modparam("tm", "dns_reuse_rcv_socket", 1)
    5.43. t_set_disable_6xx(0|1)
    5.44. t_set_disable_failover(0|1)
    5.45. t_set_disable_internal_reply(0|1)
-   5.46. t_replicate(params)
+   5.46. t_replicate([params])
    5.47. t_relay_to(proxy, flags)
    5.48. t_set_no_e2e_cancel_reason(0|1)
    5.49. t_is_set(target)
@@ -2547,12 +2547,12 @@ if(!t_relay()) {
 }
 ...
 
-5.46. t_replicate(params)
+5.46. t_replicate([params])
 
    Replicate the SIP request to a specific address.
 
    There are several function prototypes:
-     * t_replicate(uri),
+     * t_replicate([uri]),
      * t_replicate(host, port),
      * t_replicate_udp(host, port)
      * t_replicate_tcp(host, port)
@@ -2562,7 +2562,8 @@ if(!t_relay()) {
 
    Meaning of the parameters is as follows:
      * uri - SIP URI where the message should be sent. It can be given via
-       a script variable.
+       a script variable. It is optional - when missing, the dst-uri or
+       r-uri are used as next hop address.
      * host - host address where the message should be sent.
      * port - port number.
      * proto - transport protocol to be used.
@@ -2603,7 +2604,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
           + 0x02 - do not generate reply on internal error.
           + 0x04 - disable dns failover.
 
-   Example 1.85. t_replicate usage
+   Example 1.85. t_relay_to usage
 ...
 # sent to 1.2.3.4:5060 over tcp
 t_relay_to("tcp:1.2.3.4:5060");
