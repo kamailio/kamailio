@@ -51,6 +51,7 @@
 
 #define MAX_UACH_SIZE 2048
 #define UAC_REG_GC_INTERVAL	150
+#define UAC_REG_MAX_PASSWD_SIZE	63
 
 typedef struct _reg_uac
 {
@@ -62,9 +63,9 @@ typedef struct _reg_uac
 	str   r_username;
 	str   r_domain;
 	str   realm;
+	str   auth_proxy;
 	str   auth_username;
 	str   auth_password;
-	str   auth_proxy;
 	unsigned int flags;
 	unsigned int expires;
 	time_t timer_expires;
@@ -495,18 +496,25 @@ int reg_ht_add(reg_uac_t *reg)
 
 	if(reg==NULL || _reg_htable==NULL)
 	{
-		LM_ERR("bad paramaers: %p/%p\n", reg, _reg_htable);
+		LM_ERR("bad parameters: %p/%p\n", reg, _reg_htable);
 		return -1;
 	}
+	if(reg->auth_password.len>UAC_REG_MAX_PASSWD_SIZE)
+	{
+		LM_ERR("bad parameters: %p/%p -- password too long %d\n",
+				reg, _reg_htable, reg->auth_password.len);
+		return -1;
+	}
+
 	len = reg->l_uuid.len + 1
 			+ reg->l_username.len + 1
 			+ reg->l_domain.len + 1
 			+ reg->r_username.len + 1
 			+ reg->r_domain.len + 1
 			+ reg->realm.len + 1
+			+ reg->auth_proxy.len + 1
 			+ reg->auth_username.len + 1
-			+ reg->auth_password.len + 1
-			+ reg->auth_proxy.len + 1;
+			+ UAC_REG_MAX_PASSWD_SIZE /*reg->auth_password.len*/ + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
 	{
@@ -526,9 +534,10 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->r_username, &reg->r_username);
 	reg_copy_shm(&nr->r_domain, &reg->r_domain);
 	reg_copy_shm(&nr->realm, &reg->realm);
-	reg_copy_shm(&nr->auth_username, &reg->auth_username);
-	reg_copy_shm(&nr->auth_password, &reg->auth_password);
 	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy);
+	reg_copy_shm(&nr->auth_username, &reg->auth_username);
+	/* password at the end, to be able to update it easily */
+	reg_copy_shm(&nr->auth_password, &reg->auth_password);
 
 	reg_ht_add_byuser(nr);
 	reg_ht_add_byuuid(nr);
@@ -536,6 +545,46 @@ int reg_ht_add(reg_uac_t *reg)
 	return 0;
 }
 
+
+/**
+ *
+ */
+int reg_ht_update_password(reg_uac_t *reg)
+{
+	unsigned int slot;
+	reg_item_t *ri = NULL;
+
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return -1;
+	}
+
+	if(reg->auth_password.len>UAC_REG_MAX_PASSWD_SIZE)
+	{
+		LM_ERR("password is too big: %d\n", reg->auth_password.len);
+		return -1;
+	}
+
+	slot = reg_get_entry(reg->h_user, _reg_htable->htsize);
+	lock_get(&_reg_htable->entries[slot].lock);
+	ri = _reg_htable->entries[slot].byuser;
+	while(ri) {
+		if(ri->r->l_uuid.len == reg->l_uuid.len
+				&& strncmp(ri->r->l_uuid.s, reg->l_uuid.s, reg->l_uuid.len)==0)
+		{
+			/* record found */
+			strncpy(ri->r->auth_password.s, reg->auth_password.s, reg->auth_password.len);
+			ri->r->auth_password.len = reg->auth_password.len;
+			ri->r->auth_password.s[reg->auth_password.len] = '\0';
+			lock_release(&_reg_htable->entries[slot].lock);
+			return 0;
+		}
+		ri = ri->next;
+	}
+	lock_release(&_reg_htable->entries[slot].lock);
+	return -1;
+}
 
 /**
  *
@@ -1037,7 +1086,7 @@ int uac_reg_load_db(void)
 	reg_db_con = reg_dbf.init(&reg_db_url);
 	if(reg_db_con==NULL)
 	{
-		LM_ERR("failed to connect to the database\n");        
+		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
 	if (reg_dbf.use_table(reg_db_con, &reg_db_table) < 0)
@@ -1117,6 +1166,134 @@ int uac_reg_load_db(void)
 			break;
 		}
 	}  while(RES_ROW_N(db_res)>0);
+	reg_dbf.free_result(reg_db_con, db_res);
+	reg_dbf.close(reg_db_con);
+
+done:
+	return 0;
+
+error:
+	if (reg_db_con) {
+		reg_dbf.free_result(reg_db_con, db_res);
+		reg_dbf.close(reg_db_con);
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+int uac_reg_db_refresh(str *pl_uuid)
+{
+	db1_con_t *reg_db_con = NULL;
+	db_func_t reg_dbf;
+	reg_uac_t reg;
+	db_key_t db_cols[10] = {
+		&l_uuid_column,
+		&l_username_column,
+		&l_domain_column,
+		&r_username_column,
+		&r_domain_column,
+		&realm_column,
+		&auth_username_column,
+		&auth_password_column,
+		&auth_proxy_column,
+		&expires_column
+	};
+	db_key_t db_keys[1] = {&l_uuid_column};
+	db_val_t db_vals[1];
+
+	db1_res_t* db_res = NULL;
+	int i, ret;
+
+	/* binding to db module */
+	if(reg_db_url.s==NULL)
+	{
+		LM_ERR("no db url\n");
+		return -1;
+	}
+
+	if(db_bind_mod(&reg_db_url, &reg_dbf))
+	{
+		LM_ERR("database module not found\n");
+		return -1;
+	}
+
+	if (!DB_CAPABILITY(reg_dbf, DB_CAP_ALL))
+	{
+		LM_ERR("database module does not "
+		    "implement all functions needed by the module\n");
+		return -1;
+	}
+
+	/* open a connection with the database */
+	reg_db_con = reg_dbf.init(&reg_db_url);
+	if(reg_db_con==NULL)
+	{
+		LM_ERR("failed to connect to the database\n");
+		return -1;
+	}
+	if (reg_dbf.use_table(reg_db_con, &reg_db_table) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
+	db_vals[0].type = DB1_STR;
+	db_vals[0].nul = 0;
+	db_vals[0].val.str_val.s = pl_uuid->s;
+	db_vals[0].val.str_val.len = pl_uuid->len;
+
+	if((ret=reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
+			1 /*nr keys*/, 10 /*nr cols*/, 0, &db_res))!=0
+		|| RES_ROW_N(db_res)<=0 )
+	{
+		reg_dbf.free_result(reg_db_con, db_res);
+		if( ret==0)
+		{
+			return 0;
+		} else {
+			goto error;
+		}
+	}
+
+	memset(&reg, 0, sizeof(reg_uac_t));;
+	i = 0;
+	/* check for NULL values ?!?! */
+	reg_db_set_attr(l_uuid, 0);
+	reg_db_set_attr(l_username, 1);
+	reg_db_set_attr(l_domain, 2);
+	reg_db_set_attr(r_username, 3);
+	reg_db_set_attr(r_domain, 4);
+	/* realm may be empty */
+	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
+		reg.realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
+		reg.realm.len = strlen(reg.realm.s);
+	}
+	reg_db_set_attr(auth_username, 6);
+	reg_db_set_attr(auth_password, 7);
+	reg_db_set_attr(auth_proxy, 8);
+	reg.expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
+
+	lock_get(_reg_htable_gc_lock);
+	if(reg_ht_get_byuuid(pl_uuid)!=NULL)
+	{
+		if(reg_ht_update_password(&reg)<0)
+		{
+			lock_release(_reg_htable_gc_lock);
+			LM_ERR("Error updating reg to htable\n");
+			goto error;
+		}
+	} else {
+		if(reg_ht_add(&reg)<0)
+		{
+			lock_release(_reg_htable_gc_lock);
+			LM_ERR("Error adding reg to htable\n");
+			goto error;
+		}
+	}
+	lock_release(_reg_htable_gc_lock);
+
 	reg_dbf.free_result(reg_db_con, db_res);
 	reg_dbf.close(reg_db_con);
 
@@ -1355,7 +1532,7 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	if(rpc->scan(ctx, "S.S", &attr, &group, &val)<2)
+	if(rpc->scan(ctx, "S.S", &attr, &val)<2)
 	{
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
@@ -1445,7 +1622,7 @@ static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 		return;
 	}
 
-	if(rpc->scan(ctx, "S.S", &attr, &group, &val)<2)
+	if(rpc->scan(ctx, "S.S", &attr, &val)<2)
 	{
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
@@ -1539,12 +1716,36 @@ static void rpc_uac_reg_reload(rpc_t* rpc, void* ctx)
 	}
 }
 
+static const char* rpc_uac_reg_refresh_doc[2] = {
+	"Refresh a record from database.",
+	0
+};
+
+static void rpc_uac_reg_refresh(rpc_t* rpc, void* ctx)
+{
+	int ret;
+	str l_uuid;
+
+	if(rpc->scan(ctx, "S", &l_uuid)<1)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	ret =  uac_reg_db_refresh(&l_uuid);
+	if(ret<0) {
+		rpc->fault(ctx, 500, "Failed to refresh record - check log messages");
+		return;
+	}
+}
+
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, 0},
 	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
 	{"uac.reg_enable",  rpc_uac_reg_enable,  rpc_uac_reg_enable_doc,  0},
 	{"uac.reg_disable", rpc_uac_reg_disable, rpc_uac_reg_disable_doc, 0},
 	{"uac.reg_reload",  rpc_uac_reg_reload,  rpc_uac_reg_reload_doc,  0},
+	{"uac.reg_refresh", rpc_uac_reg_refresh, rpc_uac_reg_refresh_doc, 0},
 	{0, 0, 0, 0}
 };
 
