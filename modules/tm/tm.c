@@ -1610,7 +1610,7 @@ int t_replicate_uri(struct sip_msg *msg, str *suri)
 	struct sip_uri turi;
 	int r = -1;
 
-	if (suri != NULL && suri->s != NULL)
+	if (suri != NULL && suri->s != NULL && suri->len > 0)
 	{
 		memset(&turi, 0, sizeof(struct sip_uri));
 		if(parse_uri(suri->s, suri->len, &turi)!=0)
