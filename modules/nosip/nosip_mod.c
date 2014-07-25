@@ -40,7 +40,6 @@
 MODULE_VERSION
 
 static int nosip_rcv_msg(void* data);
-static int nosip_handler(sip_msg_t* msg);
 static int mod_init(void);
 
 static int pv_get_nosip(struct sip_msg *msg, pv_param_t *param,
