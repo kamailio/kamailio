@@ -149,8 +149,6 @@ static int pv_get_nosip(sip_msg_t *msg, pv_param_t *param,
 static int nosip_rcv_msg(void *data)
 {
 	sip_msg_t* msg;
-	char* fake_msg;
-	int fake_msg_len;
 	regmatch_t pmatch;
 	char c;
 	struct run_act_ctx ra_ctx;
