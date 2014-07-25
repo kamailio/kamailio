@@ -97,7 +97,7 @@ if (t_cancel_branches("all")) {
 	</section>
 	<section>
 		<title>
-			<function moreinfo="none">t_cancel_callid(callid, cseq, flag)
+			<function moreinfo="none">t_cancel_callid(callid, cseq, flag [, rcode])
 			</function>
 		</title>
 		<para>
@@ -117,6 +117,11 @@ if (t_cancel_branches("all")) {
 			<listitem><para>
 				<emphasis>flag</emphasis> - index of the flag to set.
 			</para></listitem>
+			<listitem><para>
+					<emphasis>rcode</emphasis> - code to be added as
+					cause attribute in Reason header for generated
+					CANCEL request. This parameter is optional.
+			</para></listitem>
 		</itemizedlist>
 		<para>
 		This function can be used in ANY_ROUTE.
@@ -127,6 +132,10 @@ if (t_cancel_branches("all")) {
 ...
 if (t_cancel_callid("123qaz", "5", "22")) {
 	xlog("transaction cancelled\n");
+}
+...
+if (t_cancel_callid("123qaz", "5", "22", "200")) {
+	xlog("transaction cancelled with [Reason: cause=200]\n");
 }
 ...
 </programlisting>
