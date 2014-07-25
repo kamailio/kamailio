@@ -197,6 +197,27 @@ if (!check_blacklist("globalblacklist")) {
 		</programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">check_whitelist (string table)</function>
+	    </title>
+	    <para>
+		Finds the longest prefix that matches the request URI for the
+		given table. If a match is found and it is set to whitelist,
+		true is returned. Otherwise, false is returned.
+	    </para>
+	<example>
+		<title><function>check_whitelist</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!check_whitelist("globalblacklist")) {
+	sl_send_reply("403", "Forbidden");
+	exit;
+}
+...
+		</programlisting>
+	    </example>
+	</section>
 </section>
 
 <section>

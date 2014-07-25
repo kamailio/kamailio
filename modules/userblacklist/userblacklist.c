@@ -90,6 +90,7 @@ static int check_user_whitelist2(struct sip_msg *msg, char* str1, char* str2);
 static int check_user_blacklist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
 static int check_user_whitelist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
 static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
+static int check_whitelist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
 static int check_globalblacklist(struct sip_msg *msg);
 
 
@@ -111,6 +112,7 @@ static cmd_export_t cmds[]={
 	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_blacklist", (cmd_function)check_blacklist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_whitelist", (cmd_function)check_whitelist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_blacklist", (cmd_function)check_globalblacklist, 0, check_globalblacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -537,6 +539,51 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 	return ret;
 }
 
+static int check_whitelist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1)
+{
+	void **nodeflags;
+	char *ptr;
+	char req_number[MAXNUMBERLEN+1];
+	int ret = -1;
+
+	if (msg->first_line.type != SIP_REQUEST) {
+		LM_ERR("SIP msg is not a request\n");
+		return -1;
+	}
+
+	if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s) || (msg->parsed_uri.user.len > MAXNUMBERLEN)) {
+		LM_ERR("cannot parse msg URI\n");
+		return -1;
+	}
+	strncpy(req_number, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
+	req_number[msg->parsed_uri.user.len] = '\0';
+
+	ptr = req_number;
+	/* Skip over non-digits.  */
+	while (strlen(ptr) > 0 && !isdigit(*ptr)) {
+		ptr = ptr + 1;
+	}
+
+	LM_DBG("check entry %s\n", req_number);
+
+	/* avoids dirty reads when updating d-tree */
+	lock_get(lock);
+	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL, 10);
+	if (nodeflags) {
+		if (*nodeflags == (void *)MARK_WHITELIST) {
+			/* LM_DBG("whitelisted"); */
+			ret = 1; /* found, but is whitelisted */
+		}
+	}
+	else {
+		/* LM_ERR("not found"); */
+		ret = -1; /* not found is ok */
+	}
+	lock_release(lock);
+
+	LM_DBG("entry %s is blacklisted\n", req_number);
+	return ret;
+}
 
 /**
  * Fills the d-tree for all configured and prepared sources.
