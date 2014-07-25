@@ -60,6 +60,7 @@ typedef enum auth_cfg_result {
  * flags for checks in auth functions
  */
 #define AUTH_CHECK_ID_F 1<<0
+#define AUTH_CHECK_SKIPFWD_F 1<<1
 
 /**
  * return codes to auth API functions
