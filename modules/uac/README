@@ -69,6 +69,7 @@ Ramona-Elena Modroiu
               6.3. uac.reg_enable
               6.4. uac.reg_disable
               6.5. uac.reg_reload
+              6.6. uac.reg_refresh
 
         7. Remote Registration
 
@@ -105,7 +106,8 @@ Ramona-Elena Modroiu
    1.29. uac.reg_enable usage
    1.30. uac.reg_disable usage
    1.31. uac.reg_reload usage
-   1.32. lookup remote registrations usage
+   1.32. uac.reg_refresh usage
+   1.33. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -157,6 +159,7 @@ Chapter 1. Admin Guide
         6.3. uac.reg_enable
         6.4. uac.reg_disable
         6.5. uac.reg_reload
+        6.6. uac.reg_refresh
 
    7. Remote Registration
 
@@ -693,6 +696,7 @@ failure_route[REMOTE_AUTH] {
    6.3. uac.reg_enable
    6.4. uac.reg_disable
    6.5. uac.reg_reload
+   6.6. uac.reg_refresh
 
 6.1. uac.reg_dump
 
@@ -751,6 +755,18 @@ failure_route[REMOTE_AUTH] {
    kamcmd uac.reg_reload
 ...
 
+6.6. uac.reg_refresh
+
+   Load one record by l_uuid from database for remote registrations. If
+   the record exists in memory, its authentication password is updated,
+   otherwise a new record is added. The command has a parameter, which is
+   the value of l_uuid field.
+
+   Example 1.32. uac.reg_refresh usage
+...
+   kamcmd uac.reg_refresh account123
+...
+
 7. Remote Registration
 
    The module can register contact addresses to remote REGISTRAR servers.
@@ -784,7 +800,7 @@ failure_route[REMOTE_AUTH] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.32. lookup remote registrations usage
+   Example 1.33. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");

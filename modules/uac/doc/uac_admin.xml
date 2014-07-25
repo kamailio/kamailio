@@ -895,6 +895,26 @@ failure_route[REMOTE_AUTH] {
 		</example>
 		</section>
 
+		<section id="uac.r.uac.reg_refresh">
+			<title>
+				<function moreinfo="none">uac.reg_refresh</function>
+			</title>
+		<para>
+			Load one record by l_uuid from database for remote registrations.
+			If the record exists in memory, its authentication password is
+			updated, otherwise a new record is added. The command has a
+			parameter, which is the value of l_uuid field.
+		</para>
+		<example>
+		<title><function>uac.reg_refresh</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_refresh account123
+...
+			</programlisting>
+		</example>
+		</section>
+
 	</section>
 
 	<section>
