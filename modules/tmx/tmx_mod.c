@@ -50,8 +50,10 @@ static void destroy(void);
 
 static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2);
 static int fixup_cancel_branches(void** param, int param_no);
-static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq,
+static int w_t_cancel_callid_3(struct sip_msg* msg, char *cid, char *cseq,
 				char *flag);
+static int w_t_cancel_callid_4(struct sip_msg* msg, char *cid, char *cseq,
+				char *flag, char *creason);
 static int fixup_cancel_callid(void** param, int param_no);
 static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
 				char *rc, char *rs);
@@ -159,7 +161,9 @@ static mi_export_t mi_cmds [] = {
 static cmd_export_t cmds[]={
 	{"t_cancel_branches", (cmd_function)t_cancel_branches,  1,
 		fixup_cancel_branches, 0, ONREPLY_ROUTE },
-	{"t_cancel_callid", (cmd_function)t_cancel_callid,  3,
+	{"t_cancel_callid", (cmd_function)w_t_cancel_callid_3,  3,
+		fixup_cancel_callid, 0, ANY_ROUTE },
+	{"t_cancel_callid", (cmd_function)w_t_cancel_callid_4,  4,
 		fixup_cancel_callid, 0, ANY_ROUTE },
 	{"t_reply_callid", (cmd_function)t_reply_callid,    4,
 		fixup_reply_callid, 0, ANY_ROUTE },
@@ -333,7 +337,7 @@ static int fixup_cancel_callid(void** param, int param_no)
 /**
  *
  */
-static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *flag)
+static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *flag, char *creason)
 {
 	struct cell *trans;
 	struct cell *bkt;
@@ -342,7 +346,9 @@ static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *fla
 	str cseq_s;
 	str callid_s;
 	int fl;
+	int rcode;
 
+	rcode = 0;
 	fl = -1;
 
 	if(fixup_get_svalue(msg, (gparam_p)cid, &callid_s)<0)
@@ -362,6 +368,14 @@ static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *fla
 		LM_ERR("cannot get flag\n");
 		return -1;
 	}
+	if(creason!=NULL && fixup_get_ivalue(msg, (gparam_p)creason, &rcode)<0)
+	{
+		LM_ERR("cannot get flag\n");
+		return -1;
+	}
+	if(rcode<100 || rcode>699)
+		rcode = 0;
+
 
 	bkt = _tmx_tmb.t_gett();
 	bkb = _tmx_tmb.t_gett_branch();
@@ -374,6 +388,7 @@ static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *fla
 	if(trans->uas.request && fl>0 && fl<32)
 		setflag(trans->uas.request, fl);
 	init_cancel_info(&cancel_data);
+	cancel_data.reason.cause = rcode;
 	cancel_data.cancel_bitmap = 0;
 	_tmx_tmb.prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	_tmx_tmb.cancel_uacs(trans, &cancel_data, 0);
@@ -387,12 +402,28 @@ static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *fla
 /**
  *
  */
+static int w_t_cancel_callid_3(struct sip_msg* msg, char *cid, char *cseq, char *flag)
+{
+	return t_cancel_callid(msg, cid, cseq, flag, NULL);
+}
+
+/**
+ *
+ */
+static int w_t_cancel_callid_4(struct sip_msg* msg, char *cid, char *cseq, char *flag, char *creason)
+{
+	return t_cancel_callid(msg, cid, cseq, flag, creason);
+}
+
+/**
+ *
+ */
 static int fixup_reply_callid(void** param, int param_no)
 {
 	if (param_no==1 || param_no==2 || param_no==4) {
 		return fixup_spve_null(param, 1);
 	}
-	if (param_no==3) {
+	if (param_no==3 || param_no==4) {
 		return fixup_igp_null(param, 1);
 	}
 	return 0;
