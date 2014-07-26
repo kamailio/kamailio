@@ -258,20 +258,18 @@ void free_cell( struct cell* dead_cell )
 
 
 
-static inline void init_synonym_id( struct cell *t )
+static inline void init_synonym_id( struct sip_msg *p_msg, char *hash )
 {
-	struct sip_msg *p_msg;
 	int size;
 	char *c;
 	unsigned int myrand;
 
-	p_msg=t->uas.request;
 	if (p_msg) {
 		/* char value of a proxied transaction is
 		   calculated out of header-fields forming
 		   transaction key
 		*/
-		char_msg_val( p_msg, t->md5 );
+		char_msg_val( p_msg, hash );
 	} else {
 		/* char value for a UAC transaction is created
 		   randomly -- UAC is an originating stateful element
@@ -280,7 +278,7 @@ static inline void init_synonym_id( struct cell *t )
 		*/
 		/* HACK : not long enough */
 		myrand=rand();
-		c=t->md5;
+		c = hash;
 		size=MD5_LEN;
 		memset(c, '0', size );
 		int2reverse_hex( &c, &size, myrand );
@@ -387,7 +385,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->relayed_reply_branch   = -1;
 	/* new_cell->T_canceled = T_UNDEFINED; */
 
-	init_synonym_id(new_cell);
+	init_synonym_id(p_msg, new_cell->md5);
 	init_cell_lock(  new_cell );
 	init_async_lock( new_cell );
 	t_stats_created();
