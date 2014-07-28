@@ -59,7 +59,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"path",     STR_PARAM, &geoip_path},
+	{"path",     PARAM_STRING, &geoip_path},
 	{0, 0, 0}
 };
 
