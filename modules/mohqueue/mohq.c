@@ -61,17 +61,17 @@ static cmd_export_t mod_cmds [] = {
 };
 
 /* PARAMETERS */
-char *db_url = DEFAULT_DB_URL;
-char *db_ctable = "mohqcalls";
-char *db_qtable = "mohqueues";
+str db_url = str_init(DEFAULT_DB_URL);
+str db_ctable = str_init("mohqcalls");
+str db_qtable = str_init("mohqueues");
 char *mohdir = "";
 int moh_maxcalls = 50;
 
 static param_export_t mod_parms [] = {
-  { "db_url", STR_PARAM, &db_url },
-  { "db_ctable", STR_PARAM, &db_ctable },
-  { "db_ctable", STR_PARAM, &db_qtable },
-  { "mohdir", STR_PARAM, &mohdir },
+  { "db_url", PARAM_STR, &db_url },
+  { "db_ctable", PARAM_STR, &db_ctable },
+  { "db_ctable", PARAM_STR, &db_qtable },
+  { "mohdir", PARAM_STRING, &mohdir },
   { "moh_maxcalls", INT_PARAM, &moh_maxcalls },
   { NULL, 0, NULL },
 };
@@ -138,27 +138,27 @@ static int init_cfg (void)
 * db_url, db_ctable, db_qtable exist?
 **********/
 
-if (!*db_url)
+  if (!db_url.s || db_url.len<=0)
   {
-  LM_ERR ("db_url parameter not set!");
-  return 0;
+    LM_ERR ("db_url parameter not set!");
+    return 0;
   }
-pmod_data->pcfg->db_url.s = db_url;
-pmod_data->pcfg->db_url.len = strlen (db_url);
-if (!*db_ctable)
+  pmod_data->pcfg->db_url = db_url;
+
+  if (!db_ctable.s || db_ctable.len<=0)
   {
-  LM_ERR ("db_ctable parameter not set!");
-  return 0;
+    LM_ERR ("db_ctable parameter not set!");
+    return 0;
   }
-pmod_data->pcfg->db_ctable.s = db_ctable;
-pmod_data->pcfg->db_ctable.len = strlen (db_ctable);
-if (!*db_qtable)
+  pmod_data->pcfg->db_ctable = db_ctable;
+
+  if (!db_qtable.s || db_qtable.len<=0)
   {
-  LM_ERR ("db_qtable parameter not set!");
-  return 0;
+    LM_ERR ("db_qtable parameter not set!");
+    return 0;
   }
-pmod_data->pcfg->db_qtable.s = db_qtable;
-pmod_data->pcfg->db_qtable.len = strlen (db_qtable);
+  pmod_data->pcfg->db_qtable = db_qtable;
+
 
 /**********
 * mohdir
@@ -166,28 +166,29 @@ pmod_data->pcfg->db_qtable.len = strlen (db_qtable);
 * o directory?
 **********/
 
-if (!*mohdir)
+  if (!*mohdir)
   {
-  LM_ERR ("mohdir parameter not set!");
-  return 0;
+    LM_ERR ("mohdir parameter not set!");
+    return 0;
   }
-if (strlen (mohdir) > MOHDIRLEN)
+  if (strlen(mohdir) > MOHDIRLEN)
   {
-  LM_ERR ("mohdir too long!");
-  return 0;
+    LM_ERR ("mohdir too long!");
+    return 0;
   }
-pmod_data->pcfg->mohdir = mohdir;
-int bfnd = 0;
-struct stat psb [1];
-if (!lstat (mohdir, psb))
+  pmod_data->pcfg->mohdir = mohdir;
+
+  int bfnd = 0;
+  struct stat psb [1];
+  if (!lstat (mohdir, psb))
   {
-  if ((psb->st_mode & S_IFMT) == S_IFDIR)
-    { bfnd = 1; }
+    if ((psb->st_mode & S_IFMT) == S_IFDIR)
+      { bfnd = 1; }
   }
-if (!bfnd)
+  if (!bfnd)
   {
-  LM_ERR ("mohdir is not a directory!");
-  return 0;
+    LM_ERR ("mohdir is not a directory!");
+    return 0;
   }
 
 /**********
