@@ -85,11 +85,11 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"deny_filter",     STR_PARAM,  &deny_filter_s    },
-	{"accept_filter",   STR_PARAM,  &accept_filter_s  },
-	{"default_filter",  STR_PARAM,  &def_filter_s     },
-	{"acc_function",    STR_PARAM,  &acc_fct_s        },
-	{"acc_db_table",    STR_PARAM,  &acc_db_table     },
+	{"deny_filter",     PARAM_STRING,  &deny_filter_s    },
+	{"accept_filter",   PARAM_STRING,  &accept_filter_s  },
+	{"default_filter",  PARAM_STRING,  &def_filter_s     },
+	{"acc_function",    PARAM_STRING,  &acc_fct_s        },
+	{"acc_db_table",    PARAM_STRING,  &acc_db_table     },
 	{"bflags",    		INT_PARAM,  &bflags			  },
 	{0, 0, 0}
 };
