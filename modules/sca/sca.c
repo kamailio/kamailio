@@ -103,10 +103,10 @@ int			line_seize_max_expires = 15;
 int			purge_expired_interval = 120;
 
 static param_export_t	params[] = {
-    { "outbound_proxy",		STR_PARAM,	&outbound_proxy.s },
-    { "db_url",			STR_PARAM,	&db_url.s },
-    { "subs_table",		STR_PARAM,	&db_subs_table.s },
-    { "state_table",		STR_PARAM,	&db_state_table.s },
+    { "outbound_proxy",		PARAM_STR,	&outbound_proxy },
+    { "db_url",			PARAM_STR,	&db_url },
+    { "subs_table",		PARAM_STR,	&db_subs_table },
+    { "state_table",		PARAM_STR,	&db_state_table },
     { "db_update_interval",	INT_PARAM,	&db_update_interval },
     { "hash_table_size",	INT_PARAM,	&hash_table_size },
     { "call_info_max_expires",	INT_PARAM,	&call_info_max_expires },
@@ -212,29 +212,25 @@ sca_set_config( sca_mod *scam )
     }
 
     if ( outbound_proxy.s ) {
-	outbound_proxy.len = strlen( outbound_proxy.s );
 	scam->cfg->outbound_proxy = &outbound_proxy;
     }
 
-    if ( db_url.s == NULL ) {
+    if ( !db_url.s || db_url.len<=0 ) {
 	LM_ERR( "sca_set_config: db_url must be set!" );
 	return( -1 );
     }
-    db_url.len = strlen( db_url.s );
     scam->cfg->db_url = &db_url;
 
-    if ( db_subs_table.s == NULL ) {
+    if ( !db_subs_table.s || db_subs_table.len<=0 ) {
 	LM_ERR( "sca_set_config: subs_table must be set!" );
 	return( -1 );
     }
-    db_subs_table.len = strlen( db_subs_table.s );
     scam->cfg->subs_table = &db_subs_table;
 
-    if ( db_state_table.s == NULL ) {
+    if ( !db_state_table.s || db_state_table.len<=0 ) {
 	LM_ERR( "sca_set_config: state_table must be set!" );
 	return( -1 );
     }
-    db_state_table.len = strlen( db_state_table.s );
     scam->cfg->state_table = &db_state_table;
 
     if ( hash_table_size > 0 ) {
