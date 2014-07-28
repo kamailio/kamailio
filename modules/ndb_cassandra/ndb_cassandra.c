@@ -82,7 +82,7 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-  {"host",        STR_PARAM, &host.s},
+  {"host",        PARAM_STR, &host},
   {"port",        INT_PARAM, &port},
   {0, 0, 0}
 };
