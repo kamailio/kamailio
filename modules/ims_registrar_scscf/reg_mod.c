@@ -312,12 +312,6 @@ static int mod_init(void) {
         scscf_serviceroute_uri_str.len += scscf_name_str.len;
     }
 
-    cxdx_forced_peer.s = cxdx_forced_peer_s;
-    cxdx_forced_peer.len = strlen(cxdx_forced_peer_s);
-
-    cxdx_dest_realm.s = cxdx_dest_realm_s;
-    cxdx_dest_realm.len = strlen(cxdx_dest_realm_s);
-
     /* </build required strings> */
 
 #ifdef STATISTICS
