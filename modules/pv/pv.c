@@ -436,6 +436,8 @@ static pv_export_t mod_pvs[] = {
 		0, pv_parse_sr_version_name, 0, 0, 0},
 	{ {"K", (sizeof("K")-1)}, PVT_OTHER, pv_get_K, 0,
 		pv_parse_K_name, 0, 0, 0 },
+	{ {"expires", (sizeof("expires")-1)}, PVT_OTHER, pv_get_expires, 0,
+		pv_parse_expires_name, 0, 0, 0 },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

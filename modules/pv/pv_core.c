@@ -44,6 +44,9 @@
 #include "../../parser/parse_diversion.h"
 #include "../../parser/parse_ppi_pai.h"
 #include "../../parser/digest/digest.h"
+#include "../../parser/contact/contact.h"
+#include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_expires.h"
 
 #include "pv_core.h"
 #include "pv_svar.h"
@@ -2940,4 +2943,116 @@ int pv_get__s(sip_msg_t *msg, pv_param_t *param,
 		return -1;
 	}
 	return pv_get_strval(msg, param, res, &sdata);
+}
+
+/**
+ *
+ */
+int pv_parse_expires_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "min", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "max", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV expires key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_expires(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	unsigned int exp_min = 0xffffffff;
+	unsigned int exp_max = 0;
+	hdr_field_t* hdr;
+	contact_t* c;
+	unsigned int eval = 0;
+	unsigned int ehdr = 0;
+	unsigned int efound = 0;
+
+	if(param==NULL)
+		return -1;
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if (msg->expires) {
+		if(!msg->expires->parsed && (parse_expires(msg->expires) < 0)) {
+			LM_ERR("failed to parse hdr expires body\n");
+			return pv_get_null(msg, param, res);
+		}
+		ehdr = ((exp_body_t*)msg->expires->parsed)->val;
+	}
+
+	if (msg->contact) {
+		hdr = msg->contact;
+		while(hdr) {
+			if (hdr->type == HDR_CONTACT_T) {
+				if (!hdr->parsed && (parse_contact(hdr) < 0)) {
+					LM_ERR("failed to parse Contact body\n");
+					return pv_get_null(msg, param, res);
+				}
+				c = ((contact_body_t*)hdr->parsed)->contacts;
+				while(c) {
+					c = c->next;
+					if(c->expires && c->expires->body.len) {
+						if (str2int(&c->expires->body, &eval) < 0) {
+							LM_ERR("failed to parse expires\n");
+							return pv_get_null(msg, param, res);
+						}
+						efound = 1;
+						if(eval>exp_max) exp_max = eval;
+						if(eval<exp_min) exp_min = eval;
+					} else if(msg->expires && msg->expires->parsed) {
+						eval = ehdr;
+						efound = 1;
+						if(eval>exp_max) exp_max = eval;
+						if(eval<exp_min) exp_min = eval;
+					}
+				}
+			}
+			hdr = hdr->next;
+		}
+	}
+
+	if(efound==0 && msg->expires && msg->expires->parsed) {
+		eval = ehdr;
+		efound = 1;
+		if(eval>exp_max) exp_max = eval;
+		if(eval<exp_min) exp_min = eval;
+	}
+
+	if(efound==0) {
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_uintval(msg, param, res, exp_min);
+		case 1:
+			return pv_get_uintval(msg, param, res, exp_max);
+		default:
+			return pv_get_null(msg, param, res);
+	}
 }
