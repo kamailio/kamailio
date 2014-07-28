@@ -108,13 +108,13 @@ static param_export_t params[]= {
 	carrierfailureroute_DB_COLS
 	carrier_name_DB_COLS
 	domain_name_DB_COLS
-	{"subscriber_table",       STR_PARAM, &subscriber_table.s },
-	{"subscriber_user_col",    STR_PARAM, &subscriber_username_col.s },
-	{"subscriber_domain_col",  STR_PARAM, &subscriber_domain_col.s },
-	{"subscriber_carrier_col", STR_PARAM, &cr_preferred_carrier_col.s },
-	{"config_source",          STR_PARAM, &config_source },
-	{"default_tree",           STR_PARAM, &default_tree.s },
-	{"config_file",            STR_PARAM, &config_file },
+	{"subscriber_table",       PARAM_STR, &subscriber_table },
+	{"subscriber_user_col",    PARAM_STR, &subscriber_username_col },
+	{"subscriber_domain_col",  PARAM_STR, &subscriber_domain_col },
+	{"subscriber_carrier_col", PARAM_STR, &cr_preferred_carrier_col },
+	{"config_source",          PARAM_STRING, &config_source },
+	{"default_tree",           PARAM_STR, &default_tree },
+	{"config_file",            PARAM_STRING, &config_file },
 	{"use_domain",             INT_PARAM, &default_carrierroute_cfg.use_domain },
 	{"fallback_default",       INT_PARAM, &default_carrierroute_cfg.fallback_default },
 	{"fetch_rows",             INT_PARAM, &default_carrierroute_cfg.fetch_rows },
@@ -174,14 +174,6 @@ static int mod_init(void) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-
-	subscriber_table.len = strlen(subscriber_table.s);
-	subscriber_username_col.len = strlen(subscriber_username_col.s);
-	subscriber_domain_col.len = strlen(subscriber_domain_col.s);
-	cr_preferred_carrier_col.len = strlen(cr_preferred_carrier_col.s);
-	default_tree.len = strlen(default_tree.s);
-
-	carrierroute_db_vars();
 
 	if (cr_match_mode != 10 && cr_match_mode != 128) {
 		LM_ERR("invalid matching mode %d specific, please use 10 or 128\n", cr_match_mode);
