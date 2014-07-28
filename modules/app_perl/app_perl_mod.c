@@ -128,11 +128,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"filename", STR_PARAM, &filename},
-	{"modpath", STR_PARAM, &modpath},
+	{"filename", PARAM_STRING, &filename},
+	{"modpath", PARAM_STRING, &modpath},
 	{"unsafemodfnc", INT_PARAM, &unsafemodfnc},
 	{"reset_cycles", INT_PARAM, &_ap_reset_cycles_init},
-	{"perl_destroy_func",  STR_PARAM, &perl_destroy_func},
+	{"perl_destroy_func",  PARAM_STRING, &perl_destroy_func},
 	{ 0, 0, 0 }
 };
 
