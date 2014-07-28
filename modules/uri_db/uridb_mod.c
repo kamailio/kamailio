@@ -59,29 +59,20 @@ static int mod_init(void);       /* Module initialization function */
 
 
 #define URI_TABLE "uri"
-#define URI_TABLE_LEN (sizeof(URI_TABLE) - 1)
-
 #define USER_COL "username"
-#define USER_COL_LEN (sizeof(USER_COL) - 1)
-
 #define DOMAIN_COL "domain"
-#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
-
 #define URI_USER_COL "uri_user"
-#define URI_USER_COL_LEN (sizeof(URI_USER_COL) - 1)
-
 #define SUBSCRIBER_TABLE "subscriber"
-#define SUBSCRIBER_TABLE_LEN (sizeof(SUBSCRIBER_TABLE) - 1)
 
 
 /*
  * Module parameter variables
  */
-static str db_url         = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str db_table              = {SUBSCRIBER_TABLE, SUBSCRIBER_TABLE_LEN};
-str uridb_user_col        = {USER_COL, USER_COL_LEN};
-str uridb_domain_col      = {DOMAIN_COL, DOMAIN_COL_LEN};
-str uridb_uriuser_col     = {URI_USER_COL, URI_USER_COL_LEN};
+static str db_url         = str_init(DEFAULT_RODB_URL);
+str db_table              = str_init(SUBSCRIBER_TABLE);
+str uridb_user_col        = str_init(USER_COL);
+str uridb_domain_col      = str_init(DOMAIN_COL);
+str uridb_uriuser_col     = str_init(URI_USER_COL);
 
 int use_uri_table = 0;     /* Should uri table be used */
 int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
@@ -106,11 +97,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",                   STR_PARAM, &db_url.s               },
-	{"db_table",                 STR_PARAM, &db_table.s             },
-	{"user_column",              STR_PARAM, &uridb_user_col.s       },
-	{"domain_column",            STR_PARAM, &uridb_domain_col.s     },
-	{"uriuser_column",           STR_PARAM, &uridb_uriuser_col.s    },
+	{"db_url",                   PARAM_STR, &db_url               },
+	{"db_table",                 PARAM_STR, &db_table             },
+	{"user_column",              PARAM_STR, &uridb_user_col       },
+	{"domain_column",            PARAM_STR, &uridb_domain_col     },
+	{"uriuser_column",           PARAM_STR, &uridb_uriuser_col    },
 	{"use_uri_table",            INT_PARAM, &use_uri_table          },
 	{"use_domain",               INT_PARAM, &use_domain             },
 	{0, 0, 0}
@@ -157,7 +148,6 @@ static int child_init(int rank)
 static int mod_init(void)
 {
 	int ver;
-	db_url.len = strlen(db_url.s);
 
 	if (db_url.len == 0) {
 		if (use_uri_table) {
@@ -167,11 +157,6 @@ static int mod_init(void)
 		}
 		return 0;
 	}
-
-	db_table.len = strlen(db_table.s);
-	uridb_user_col.len = strlen(uridb_user_col.s);
-	uridb_domain_col.len = strlen(uridb_domain_col.s);
-	uridb_uriuser_col.len = strlen(uridb_uriuser_col.s);
 
 	if (uridb_db_bind(&db_url)) {
 		LM_ERR("No database module found\n");
