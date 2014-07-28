@@ -86,8 +86,8 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{"url_match",       STR_PARAM, &xhttp_url_match},
-	{"url_skip",        STR_PARAM, &xhttp_url_skip},
+	{"url_match",       PARAM_STRING, &xhttp_url_match},
+	{"url_skip",        PARAM_STRING, &xhttp_url_skip},
 	{0, 0, 0}
 };
 
