@@ -130,16 +130,16 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url.s        },
-	{"avp_table",         STR_PARAM, &db_table.s      },
+	{"db_url",            PARAM_STR, &db_url        },
+	{"avp_table",         PARAM_STR, &db_table      },
 	{"use_domain",        INT_PARAM, &use_domain      },
-	{"uuid_column",       STR_PARAM, &uuid_col.s      },
-	{"attribute_column",  STR_PARAM, &attribute_col.s },
-	{"value_column",      STR_PARAM, &value_col.s     },
-	{"type_column",       STR_PARAM, &type_col.s      },
-	{"username_column",   STR_PARAM, &username_col.s  },
-	{"domain_column",     STR_PARAM, &domain_col.s    },
-	{"db_scheme",         STR_PARAM|USE_FUNC_PARAM, (void*)avp_add_db_scheme },
+	{"uuid_column",       PARAM_STR, &uuid_col      },
+	{"attribute_column",  PARAM_STR, &attribute_col },
+	{"value_column",      PARAM_STR, &value_col     },
+	{"type_column",       PARAM_STR, &type_col      },
+	{"username_column",   PARAM_STR, &username_col  },
+	{"domain_column",     PARAM_STR, &domain_col    },
+	{"db_scheme",         PARAM_STRING|USE_FUNC_PARAM, (void*)avp_add_db_scheme },
 	{0, 0, 0}
 };
 
@@ -162,22 +162,11 @@ struct module_exports exports = {
 
 static int avpops_init(void)
 {
-	if (db_url.s)
-		db_url.len = strlen(db_url.s);
-	if (db_table.s)
-		db_table.len = strlen(db_table.s);
-	uuid_col.len = strlen(uuid_col.s);
-	attribute_col.len = strlen(attribute_col.s);
-	value_col.len = strlen(value_col.s);
-	type_col.len = strlen(type_col.s);
-	username_col.len = strlen(username_col.s);
-	domain_col.len = strlen(domain_col.s);
-
 	/* if DB_URL defined -> bind to a DB module */
-	if (db_url.s!=0)
+	if (db_url.s && db_url.len>0)
 	{
 		/* check AVP_TABLE param */
-		if (db_table.s==0)
+		if (!db_table.s || db_table.len<=0)
 		{
 			LM_CRIT("\"AVP_DB\" present but \"AVP_TABLE\" found empty\n");
 			goto error;
