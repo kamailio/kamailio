@@ -34,7 +34,7 @@ MODULE_VERSION
 static int child_init(int rank);
 static int mod_init(void);
 
-static str mi_rpc_indent = { "\t", 1 };
+static str mi_rpc_indent = str_init("\t");
 static char *rpc_url = "";
 
 static const char* rpc_mi_exec_doc[2] = {
@@ -43,7 +43,7 @@ static const char* rpc_mi_exec_doc[2] = {
 };
 
 static param_export_t parameters[] = {
-    {"rpc_url",            STR_PARAM, &rpc_url},
+    {"rpc_url",            PARAM_STRING, &rpc_url},
     {0, 0, 0}
 };
 
