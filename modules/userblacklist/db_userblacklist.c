@@ -111,23 +111,3 @@ int userblacklist_db_open(void) {
 	return 0;
 }
 
-
-/*!
- * Update the variable length after eventual assignments from the config script.
- * This is necessary because we're using the 'str' type.
- */
-void userblacklist_db_vars(void) {
-	if (userblacklist_db_url.s) userblacklist_db_url.len = strlen(userblacklist_db_url.s);
-	userblacklist_table.len = strlen(userblacklist_table.s);
-	userblacklist_id_col.len = strlen(userblacklist_id_col.s);
-	userblacklist_username_col.len = strlen(userblacklist_username_col.s);
-	userblacklist_domain_col.len = strlen(userblacklist_domain_col.s);
-	userblacklist_prefix_col.len = strlen(userblacklist_prefix_col.s);
-	userblacklist_whitelist_col.len = strlen(userblacklist_whitelist_col.s);
-	globalblacklist_table.len = strlen(globalblacklist_table.s);
-	globalblacklist_id_col.len = strlen(globalblacklist_id_col.s);
-	globalblacklist_prefix_col.len = strlen(globalblacklist_prefix_col.s);
-	globalblacklist_whitelist_col.len = strlen(globalblacklist_whitelist_col.s);
-	globalblacklist_description_col.len = strlen(globalblacklist_description_col.s);
-}
-

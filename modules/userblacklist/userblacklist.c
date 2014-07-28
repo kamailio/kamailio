@@ -697,8 +697,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	userblacklist_db_vars();
-
 	if (userblacklist_db_init() != 0) return -1;
 	if (init_shmlock() != 0) return -1;
 	if (init_source_list() != 0) return -1;
