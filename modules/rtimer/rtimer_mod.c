@@ -76,8 +76,8 @@ void stm_timer_exec(unsigned int ticks, void *param);
 
 
 static param_export_t params[]={
-	{"timer",             STR_PARAM|USE_FUNC_PARAM, (void*)stm_t_param},
-	{"exec",              STR_PARAM|USE_FUNC_PARAM, (void*)stm_e_param},
+	{"timer",             PARAM_STRING|USE_FUNC_PARAM, (void*)stm_t_param},
+	{"exec",              PARAM_STRING|USE_FUNC_PARAM, (void*)stm_e_param},
 	{0,0,0}
 };
 
