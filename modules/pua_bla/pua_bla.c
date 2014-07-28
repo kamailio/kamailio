@@ -61,10 +61,10 @@ static cmd_export_t cmds[]=
 };
 static param_export_t params[]=
 {
-	{"server_address",	 STR_PARAM, &server_address.s	 },
-	{"default_domain",	 STR_PARAM, &default_domain.s	 },
-	{"header_name",      STR_PARAM, &header_name.s       },
-	{"outbound_proxy",   STR_PARAM, &bla_outbound_proxy.s    },
+	{"server_address",	 PARAM_STR, &server_address	 },
+	{"default_domain",	 PARAM_STR, &default_domain	 },
+	{"header_name",      PARAM_STR, &header_name       },
+	{"outbound_proxy",   PARAM_STR, &bla_outbound_proxy    },
 	{0,							 0,			0            }
 };
 
@@ -92,33 +92,28 @@ static int mod_init(void)
 	bind_pua_t bind_pua;
 	bind_usrloc_t bind_usrloc;
 
-	if(server_address.s== NULL)
+	if(!server_address.s || server_address.len<=0)
 	{
 		LM_ERR("compulsory 'server_address' parameter not set!");
 		return -1;
 	}
-	server_address.len= strlen(server_address.s);
 
-	if(default_domain.s == NULL )
+	if(!default_domain.s || default_domain.len<=0)
 	{	
 		LM_ERR("default domain not found\n");
 		return -1;
 	}
-	default_domain.len= strlen(default_domain.s);
 
-	if(header_name.s == NULL )
+	if(!header_name.s || header_name.len<=0)
 	{	
 		LM_ERR("header_name parameter not set\n");
 		return -1;
 	}
-	header_name.len= strlen(header_name.s);
 
-	if(bla_outbound_proxy.s == NULL )
+	if(!bla_outbound_proxy.s || bla_outbound_proxy.len<=0)
 	{	
 		LM_DBG("No outbound proxy set\n");
 	}
-	else
-		bla_outbound_proxy.len= strlen(bla_outbound_proxy.s);
 
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
