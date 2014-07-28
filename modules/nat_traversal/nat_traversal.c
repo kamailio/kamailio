@@ -248,10 +248,10 @@ static cmd_export_t commands[] = {
 
 static param_export_t parameters[] = {
     {"keepalive_interval",       INT_PARAM, &keepalive_interval},
-    {"keepalive_method",         STR_PARAM, &keepalive_params.method},
-    {"keepalive_from",           STR_PARAM, &keepalive_params.from},
-    {"keepalive_extra_headers",  STR_PARAM, &keepalive_params.extra_headers},
-    {"keepalive_state_file",     STR_PARAM, &keepalive_state_file},
+    {"keepalive_method",         PARAM_STRING, &keepalive_params.method},
+    {"keepalive_from",           PARAM_STRING, &keepalive_params.from},
+    {"keepalive_extra_headers",  PARAM_STRING, &keepalive_params.extra_headers},
+    {"keepalive_state_file",     PARAM_STRING, &keepalive_state_file},
     {0, 0, 0}
 };
 
