@@ -115,7 +115,7 @@ static cmd_export_t cmds[]={
 static param_export_t mod_params[]={
 	{ "enable_stats", INT_PARAM, &sst_enable_stats			},
 	{ "min_se", INT_PARAM, &sst_minSE				},
-	{ "timeout_avp", STR_PARAM, &timeout_spec			},
+	{ "timeout_avp", PARAM_STRING, &timeout_spec			},
 	{ "reject_to_small",		INT_PARAM, &sst_reject 		},
 	{ "sst_flag",				INT_PARAM, &sst_flag	},
 	{ 0,0,0 }
