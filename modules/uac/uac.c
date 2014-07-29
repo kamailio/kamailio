@@ -80,8 +80,8 @@ static int uac_restore_dlg = 0;
 str rr_from_param = str_init("vsf");
 str rr_to_param = str_init("vst");
 str uac_passwd = str_init("");
-str restore_from_avp = {0 ,0 };
-str restore_to_avp = {0 ,0 };
+str restore_from_avp = STR_NULL;
+str restore_to_avp = STR_NULL;
 int restore_mode = UAC_AUTO_RESTORE;
 struct tm_binds uac_tmb;
 struct rr_binds uac_rrb;
@@ -143,20 +143,20 @@ static cmd_export_t cmds[]={
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"rr_from_store_param", STR_PARAM,				&rr_from_param.s       },
-	{"rr_to_store_param",   STR_PARAM,				&rr_to_param.s       },
-	{"restore_mode",        STR_PARAM,				&restore_mode_str      },
+	{"rr_from_store_param", PARAM_STR,				&rr_from_param       },
+	{"rr_to_store_param",   PARAM_STR,				&rr_to_param       },
+	{"restore_mode",        PARAM_STRING,				&restore_mode_str      },
 	{"restore_dlg",         INT_PARAM,				&uac_restore_dlg       },
-	{"restore_passwd",      STR_PARAM,				&uac_passwd.s          },
-	{"restore_from_avp",	STR_PARAM,				&restore_from_avp.s },
-	{"restore_to_avp",		STR_PARAM,				&restore_to_avp.s },
-	{"credential",        STR_PARAM|USE_FUNC_PARAM, (void*)&add_credential },
-	{"auth_username_avp", STR_PARAM,                &auth_username_avp     },
-	{"auth_realm_avp",    STR_PARAM,                &auth_realm_avp        },
-	{"auth_password_avp", STR_PARAM,                &auth_password_avp     },
-	{"reg_db_url",        STR_PARAM,                &reg_db_url.s          },
-	{"reg_db_table",      STR_PARAM,                &reg_db_table.s        },
-	{"reg_contact_addr",  STR_PARAM,                &reg_contact_addr.s    },
+	{"restore_passwd",      PARAM_STR,				&uac_passwd          },
+	{"restore_from_avp",	PARAM_STR,				&restore_from_avp },
+	{"restore_to_avp",		PARAM_STR,				&restore_to_avp },
+	{"credential",        PARAM_STRING|USE_FUNC_PARAM, (void*)&add_credential },
+	{"auth_username_avp", PARAM_STRING,                &auth_username_avp     },
+	{"auth_realm_avp",    PARAM_STRING,                &auth_realm_avp        },
+	{"auth_password_avp", PARAM_STRING,                &auth_password_avp     },
+	{"reg_db_url",        PARAM_STR,                &reg_db_url          },
+	{"reg_db_table",      PARAM_STR,                &reg_db_table        },
+	{"reg_contact_addr",  PARAM_STR,                &reg_contact_addr    },
 	{"reg_timer_interval", INT_PARAM,		&reg_timer_interval	},
 	{"reg_retry_interval",INT_PARAM,                &reg_retry_interval    },
 	{0, 0, 0}
@@ -209,15 +209,11 @@ static int mod_init(void)
 		}
 	}
 
-	rr_from_param.len = strlen(rr_from_param.s);
-	rr_to_param.len = strlen(rr_to_param.s);
 	if ( (rr_from_param.len==0 || rr_to_param.len==0) && restore_mode!=UAC_NO_RESTORE)
 	{
 		LM_ERR("rr_store_param cannot be empty if FROM is restoreable\n");
 		goto error;
 	}
-
-	uac_passwd.len = strlen(uac_passwd.s);
 
 	/* parse the auth AVP spesc, if any */
 	if ( auth_username_avp || auth_password_avp || auth_realm_avp) {
@@ -254,8 +250,6 @@ static int mod_init(void)
 
 		if(restore_from_avp.s) {
 
-			restore_from_avp.len = strlen(restore_from_avp.s);
-
 			if (pv_parse_spec(&restore_from_avp, &avp_spec)==0	|| avp_spec.type!=PVT_AVP) {
 				LM_ERR("malformed or non AVP %.*s AVP definition\n", restore_from_avp.len, restore_from_avp.s);
 				return -1;
@@ -271,8 +265,6 @@ static int mod_init(void)
 		}
 
 		if(restore_to_avp.s) {
-
-			restore_to_avp.len = strlen(restore_to_avp.s);
 
 			if (pv_parse_spec(&restore_to_avp, &avp_spec)==0	|| avp_spec.type!=PVT_AVP) {
 				LM_ERR("malformed or non AVP %.*s AVP definition\n", restore_to_avp.len, restore_to_avp.s);
@@ -311,9 +303,9 @@ static int mod_init(void)
 		}
 	}
 
-	if(reg_db_url.s!=NULL)
+	if(reg_db_url.s && reg_db_url.len>=0)
 	{
-		if(reg_contact_addr.s==NULL)
+		if(!reg_contact_addr.s || reg_contact_addr.len<=0)
 		{
 			LM_ERR("contact address parameter not set\n");
 			goto error;
@@ -334,7 +326,7 @@ static int mod_init(void)
 			LM_ERR("failed to init reg htable\n");
 			goto error;
 		}
-		uac_reg_init_db();
+
 		register_procs(1);
 		/* add child to update local config framework structures */
 		cfg_register_child(1);
@@ -354,7 +346,7 @@ static int child_init(int rank)
 	if (rank!=PROC_MAIN)
 		return 0;
 
-	if(reg_db_url.s==NULL)
+	if(!reg_db_url.s || reg_db_url.len<=0)
 		return 0;
 
 	pid=fork_process(PROC_TIMER, "TIMER UAC REG", 1);

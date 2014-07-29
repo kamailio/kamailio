@@ -103,20 +103,20 @@ int reg_timer_interval = 90;
 int reg_retry_interval = 0;
 int reg_htable_size = 4;
 int reg_fetch_rows = 1000;
-str reg_contact_addr = {0, 0};
-str reg_db_url = {0, 0};
-str reg_db_table = {"uacreg", 0};
+str reg_contact_addr = STR_NULL;
+str reg_db_url = STR_NULL;
+str reg_db_table = str_init("uacreg");
 
-str l_uuid_column = {"l_uuid", 0};
-str l_username_column = {"l_username", 0};
-str l_domain_column = {"l_domain", 0};
-str r_username_column = {"r_username", 0};
-str r_domain_column = {"r_domain", 0};
-str realm_column = {"realm", 0};
-str auth_username_column = {"auth_username", 0};
-str auth_password_column = {"auth_password", 0};
-str auth_proxy_column = {"auth_proxy", 0};
-str expires_column = {"expires", 0};
+str l_uuid_column = str_init("l_uuid");
+str l_username_column = str_init("l_username");
+str l_domain_column = str_init("l_domain");
+str r_username_column = str_init("r_username");
+str r_domain_column = str_init("r_domain");
+str realm_column = str_init("realm");
+str auth_username_column = str_init("auth_username");
+str auth_password_column = str_init("auth_password");
+str auth_proxy_column = str_init("auth_proxy");
+str expires_column = str_init("expires");
 
 #if 0
 INSERT INTO version (table_name, table_version) values ('uacreg','1');
@@ -142,29 +142,6 @@ extern pv_spec_t auth_username_spec;
 extern pv_spec_t auth_realm_spec;
 extern pv_spec_t auth_password_spec;
 
-/**
- *
- */
-int uac_reg_init_db(void)
-{
-	reg_contact_addr.len = strlen(reg_contact_addr.s);
-	
-	reg_db_url.len = strlen(reg_db_url.s);
-	reg_db_table.len = strlen(reg_db_table.s);
-
-	l_uuid_column.len = strlen(l_uuid_column.s);
-	l_username_column.len = strlen(l_username_column.s);
-	l_domain_column.len = strlen(l_domain_column.s);
-	r_username_column.len = strlen(r_username_column.s);
-	r_domain_column.len = strlen(r_domain_column.s);
-	realm_column.len = strlen(realm_column.s);
-	auth_username_column.len = strlen(auth_username_column.s);
-	auth_password_column.len = strlen(auth_password_column.s);
-	auth_proxy_column.len = strlen(auth_proxy_column.s);
-	expires_column.len = strlen(expires_column.s);
-
-	return 0;
-}
 
 /**
  *

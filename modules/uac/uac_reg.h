@@ -44,7 +44,6 @@ extern str auth_password_column;
 extern str auth_proxy_column;
 extern str expires_column;
 
-int uac_reg_init_db(void);
 int uac_reg_load_db(void);
 int uac_reg_init_ht(unsigned int sz);
 int uac_reg_free_ht(void);
