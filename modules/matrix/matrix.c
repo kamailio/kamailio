@@ -582,8 +582,6 @@ static void destroy_matrix(void)
 
 static int mod_init(void)
 {
-	matrix_db_vars();
-
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");

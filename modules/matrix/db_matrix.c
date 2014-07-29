@@ -97,16 +97,3 @@ int matrix_db_open(void) {
 	return 0;
 }
 
-
-/*!
- * Update the variable length after eventual assignments from the config script.
- * This is necessary because we're using the 'str' type.
- */
-void matrix_db_vars(void) {
-	if (matrix_db_url.s) matrix_db_url.len = strlen(matrix_db_url.s);
-	matrix_table.len = strlen(matrix_table.s);
-	matrix_first_col.len = strlen(matrix_first_col.s);
-	matrix_second_col.len = strlen(matrix_second_col.s);
-	matrix_res_col.len = strlen(matrix_res_col.s);
-}
-
