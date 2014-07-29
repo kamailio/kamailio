@@ -90,7 +90,7 @@ static cmd_export_t cmds[]=
 
 static param_export_t params[]=
 {
-	{ "secret",		STR_PARAM|USE_FUNC_PARAM,
+	{ "secret",		PARAM_STRING|USE_FUNC_PARAM,
 	  (void *) secret_param },
 	{ "username_format",	INT_PARAM,
 	  &autheph_username_format },
