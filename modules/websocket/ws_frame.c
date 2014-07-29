@@ -106,7 +106,7 @@ typedef enum
 /* 0xb - 0xf are reserved for further control frames */
 
 int ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;
-str ws_ping_application_data = {0, 0};
+str ws_ping_application_data = STR_NULL;
 
 stat_var *ws_failed_connections;
 stat_var *ws_local_closed_connections;
