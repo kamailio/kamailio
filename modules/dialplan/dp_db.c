@@ -43,7 +43,7 @@
 #include "dp_db.h"
 #include "dialplan.h"
 
-str dp_db_url       =   {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+str dp_db_url       =   str_init(DEFAULT_RODB_URL);
 str dp_table_name   =   str_init(DP_TABLE_NAME);
 str dpid_column     =   str_init(DPID_COL);
 str pr_column       =   str_init(PR_COL);
@@ -87,7 +87,7 @@ int * crt_idx, *next_idx;
 
 int init_db_data(void)
 {
-	if(dp_table_name.s == 0){
+	if(!dp_table_name.s || dp_table_name.len<=0){
 		LM_ERR("invalid database table name\n");
 		return -1;
 	}
