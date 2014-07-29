@@ -50,8 +50,8 @@ static int  sipping_fromtag = 0;
 static char sipping_callid_buf[8];
 static int  sipping_callid_cnt = 0;
 static str  sipping_callid = {0,0};
-static str  sipping_from = {0,0};
-static str  sipping_method = {"OPTIONS",7};
+static str  sipping_from = STR_NULL;
+static str  sipping_method = str_init("OPTIONS");
 
 
 

@@ -338,7 +338,7 @@ static struct {
  */
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
-static char *force_socket_str = 0;
+static str force_socket_str = STR_NULL;
 static pid_t mypid;
 static int sipping_flag = -1;
 static int natping_disable_flag = -1;
@@ -413,15 +413,15 @@ static pv_export_t mod_pvs[] = {
 static param_export_t params[] = {
 	{"natping_interval",      INT_PARAM, &natping_interval      },
 	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
-	{"nortpproxy_str",        STR_PARAM, &nortpproxy_str.s      },
-	{"received_avp",          STR_PARAM, &rcv_avp_param         },
-	{"force_socket",          STR_PARAM, &force_socket_str      },
-	{"sipping_from",          STR_PARAM, &sipping_from.s        },
-	{"sipping_method",        STR_PARAM, &sipping_method.s      },
+	{"nortpproxy_str",        PARAM_STR, &nortpproxy_str      },
+	{"received_avp",          PARAM_STRING, &rcv_avp_param         },
+	{"force_socket",          PARAM_STR, &force_socket_str      },
+	{"sipping_from",          PARAM_STR, &sipping_from        },
+	{"sipping_method",        PARAM_STR, &sipping_method      },
 	{"sipping_bflag",         INT_PARAM, &sipping_flag          },
 	{"natping_disable_bflag", INT_PARAM, &natping_disable_flag  },
 	{"natping_processes",     INT_PARAM, &natping_processes     },
-	{"natping_socket",        STR_PARAM, &natping_socket        },
+	{"natping_socket",        PARAM_STRING, &natping_socket        },
 	{"keepalive_timeout",     INT_PARAM, &nh_keepalive_timeout  },
 	{"udpping_from_path",     INT_PARAM, &udpping_from_path     },
 
@@ -601,7 +601,6 @@ mod_init(void)
 	int i;
 	bind_usrloc_t bind_usrloc;
 	struct in_addr addr;
-	str socket_str;
 	pv_spec_t avp_spec;
 	str s;
 
@@ -629,10 +628,8 @@ mod_init(void)
 		rcv_avp_type = 0;
 	}
 
-	if (force_socket_str) {
-		socket_str.s=force_socket_str;
-		socket_str.len=strlen(socket_str.s);
-		force_socket=grep_sock_info(&socket_str,0,0);
+	if (force_socket_str.s && force_socket_str.len>0) {
+		force_socket=grep_sock_info(&force_socket_str,0,0);
 	}
 
 	/* create raw socket? */
@@ -643,16 +640,10 @@ mod_init(void)
 			return -1;
 	}
 
-	if (nortpproxy_str.s==NULL || nortpproxy_str.s[0]==0) {
-		nortpproxy_str.len = 0;
-		nortpproxy_str.s = NULL;
-	} else {
-		nortpproxy_str.len = strlen(nortpproxy_str.s);
+	if (nortpproxy_str.s && nortpproxy_str.len>0) {
 		while (nortpproxy_str.len > 0 && (nortpproxy_str.s[nortpproxy_str.len - 1] == '\r' ||
 			nortpproxy_str.s[nortpproxy_str.len - 1] == '\n'))
 				nortpproxy_str.len--;
-		if (nortpproxy_str.len == 0)
-			nortpproxy_str.s = NULL;
 	}
 
 	if (natping_interval > 0) {
@@ -688,11 +679,11 @@ mod_init(void)
 
 		/* set reply function if SIP natping is enabled */
 		if (sipping_flag) {
-			if (sipping_from.s==0 || sipping_from.s[0]==0) {
+			if (sipping_from.s==0 || sipping_from.len<=0) {
 				LM_ERR("SIP ping enabled, but SIP ping FROM is empty!\n");
 				return -1;
 			}
-			if (sipping_method.s==0 || sipping_method.s[0]==0) {
+			if (sipping_method.s==0 || sipping_method.len<=0) {
 				LM_ERR("SIP ping enabled, but SIP ping method is empty!\n");
 				return -1;
 			}
@@ -700,13 +691,11 @@ mod_init(void)
 				ul.set_keepalive_timeout(nh_keepalive_timeout);
 			}
 
-			sipping_method.len = strlen(sipping_method.s);
 			if(parse_method_name(&sipping_method, &sipping_method_id) < 0) {
 				LM_ERR("invalid SIP ping method [%.*s]!\n", sipping_method.len,
 						sipping_method.s);
 				return -1;
 			}
-			sipping_from.len = strlen(sipping_from.s);
 			exports.response_f = sipping_rpl_filter;
 			init_sip_ping();
 		}
