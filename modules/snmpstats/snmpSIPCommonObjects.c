@@ -456,7 +456,7 @@ int handle_kamailioSIPOtherwiseDiscardedMsgs(netsnmp_mib_handler *handler,
  * Parameter Setting Functions 
  */
 
-/* If type==STR_PARAM and stringParam is valid, this function will overwrite
+/* If type==PARAM_STRING and stringParam is valid, this function will overwrite
  * kamailioEntityType with a bit value corresponding to the IETF's RFC  for 
  * the SIP MIB.  (Textual Convention SipEntityRole).  Anything else is
  * considered an error.

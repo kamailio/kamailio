@@ -143,7 +143,7 @@ static proc_export_t mod_procs[] = {
  */
 static param_export_t mod_params[] =
 {
-	{ "sipEntityType",          STR_PARAM|USE_FUNC_PARAM,
+	{ "sipEntityType",          PARAM_STRING|USE_FUNC_PARAM,
 			(void *)handleSipEntityType       },
 	{ "MsgQueueMinorThreshold", INT_PARAM|USE_FUNC_PARAM,
 			(void *)set_queue_minor_threshold },
@@ -153,9 +153,9 @@ static param_export_t mod_params[] =
 			(void *)set_dlg_minor_threshold   },
 	{ "dlg_major_threshold",    INT_PARAM|USE_FUNC_PARAM,
 			(void *)set_dlg_major_threshold   },
-	{ "snmpgetPath",            STR_PARAM|USE_FUNC_PARAM,
+	{ "snmpgetPath",            PARAM_STRING|USE_FUNC_PARAM,
 			(void *)set_snmpget_path          },
-	{ "snmpCommunity",          STR_PARAM|USE_FUNC_PARAM,
+	{ "snmpCommunity",          PARAM_STRING|USE_FUNC_PARAM,
 			(void *)set_snmp_community        },
 	{ "export_registrar",       INT_PARAM,
 			&snmp_export_registrar            },
