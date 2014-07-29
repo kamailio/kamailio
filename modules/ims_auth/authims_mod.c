@@ -85,30 +85,24 @@ int auth_data_timeout = 60; /**< timeout for a hash entry to expire when empty i
 int add_authinfo_hdr = 1; /**< should an Authentication-Info header be added on 200 OK responses? 	*/
 int av_request_at_once = 1; /**< how many auth vectors to request in a MAR 				*/
 int av_request_at_sync = 1; /**< how many auth vectors to request in a sync MAR 		*/
-char *registration_qop = "auth,auth-int"; /**< the qop options to put in the authorization challenges */
-str registration_qop_str = {0, 0}; /**< the qop options to put in the authorization challenges */
+static str registration_qop = str_init("auth,auth-int"); /**< the qop options to put in the authorization challenges */
+str registration_qop_str = STR_NULL; /**< the qop options to put in the authorization challenges */
 int av_check_only_impu = 0; /**< Should we check IMPU (0) or IMPU and IMPI (1), when searching for authentication vectors? */
-static str s_qop_s = {", qop=\"", 7};
-static str s_qop_e = {"\"", 1};
+static str s_qop_s = str_init(", qop=\"");
+static str s_qop_e = str_init("\"");
 
-char* registration_default_algorithm = "AKAv1-MD5"; /**< default algorithm for registration (if none present)*/
+static str registration_default_algorithm = str_init("AKAv1-MD5"); /**< default algorithm for registration (if none present)*/
 unsigned char registration_default_algorithm_type = 1; /**< fixed default algorithm for registration (if none present)	 */
 
-/* parameters storage */
-char* scscf_name = "sip:scscf.ims.smilecoms.com:6060"; /**< name of the S-CSCF */
-
-/* parameters storage */
-char* cxdx_dest_realm_s = "ims.smilecoms.com";
-str cxdx_dest_realm;
+str cxdx_dest_realm = str_init("ims.smilecoms.com");
 
 //Only used if we want to force the Rx peer
 //Usually this is configured at a stack level and the first request uses realm routing
-char* cxdx_forced_peer_s = "";
-str cxdx_forced_peer;
+str cxdx_forced_peer = str_init("");
 
 
 /* fixed parameter storage */
-str scscf_name_str; /**< fixed name of the S-CSCF 							*/
+str scscf_name_str = str_init("sip:scscf.ims.smilecoms.com:6060"); /**< fixed name of the S-CSCF 							*/
 
 /* used mainly in testing - load balancing with SIPP where we don't want to worry about auth */
 int ignore_failed_auth = 0;
@@ -130,7 +124,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-    {"name", STR_PARAM, &scscf_name},
+    {"name", PARAM_STR, &scscf_name_str},
     {"auth_data_hash_size", INT_PARAM, &auth_data_hash_size},
     {"auth_vector_timeout", INT_PARAM, &auth_vector_timeout},
     {"auth_used_vector_timeout", INT_PARAM, &auth_used_vector_timeout},
@@ -139,12 +133,12 @@ static param_export_t params[] = {
     {"add_authinfo_hdr", INT_PARAM, &add_authinfo_hdr},
     {"av_request_at_once", INT_PARAM, &av_request_at_once},
     {"av_request_at_sync", INT_PARAM, &av_request_at_sync},
-    {"registration_default_algorithm", STR_PARAM, &registration_default_algorithm},
-    {"registration_qop", STR_PARAM, &registration_qop},
+    {"registration_default_algorithm", PARAM_STR, &registration_default_algorithm},
+    {"registration_qop", PARAM_STR, &registration_qop},
     {"ignore_failed_auth", INT_PARAM, &ignore_failed_auth},
     {"av_check_only_impu", INT_PARAM, &av_check_only_impu},
-    {"cxdx_forced_peer", STR_PARAM, &cxdx_forced_peer_s},
-    {"cxdx_dest_realm", STR_PARAM, &cxdx_dest_realm_s},
+    {"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
+    {"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
     {0, 0, 0}
 };
 
@@ -173,22 +167,7 @@ struct module_exports exports = {
 };
 
 static int mod_init(void) {
-    str algo;
-
-    /*get parameters */
-
-    cxdx_forced_peer.s = cxdx_forced_peer_s;
-    cxdx_forced_peer.len = strlen(cxdx_forced_peer_s);
-
-    cxdx_dest_realm.s = cxdx_dest_realm_s;
-    cxdx_dest_realm.len = strlen(cxdx_dest_realm_s);
-
-    scscf_name_str.s = scscf_name;
-    scscf_name_str.len = strlen(scscf_name);
-
-    algo.s = registration_default_algorithm;
-    algo.len = strlen(registration_default_algorithm);
-    registration_default_algorithm_type = get_algorithm_type(algo);
+    registration_default_algorithm_type = get_algorithm_type(registration_default_algorithm);
 
 #ifdef STATISTICS
 	/* register statistics */
@@ -234,8 +213,8 @@ static int mod_init(void) {
     }
 
     /* set default qop */
-    if (registration_qop && strlen(registration_qop) > 0) {
-        registration_qop_str.len = s_qop_s.len + strlen(registration_qop)
+    if (registration_qop.s && registration_qop.len > 0) {
+        registration_qop_str.len = s_qop_s.len + registration_qop.len
                 + s_qop_e.len;
         registration_qop_str.s = pkg_malloc(registration_qop_str.len);
         if (!registration_qop_str.s) {
@@ -246,8 +225,8 @@ static int mod_init(void) {
         registration_qop_str.len = 0;
         STR_APPEND(registration_qop_str, s_qop_s);
         memcpy(registration_qop_str.s + registration_qop_str.len,
-                registration_qop, strlen(registration_qop));
-        registration_qop_str.len += strlen(registration_qop);
+            registration_qop.s, registration_qop.len);
+        registration_qop_str.len += registration_qop.len;
         STR_APPEND(registration_qop_str, s_qop_e);
     } else {
         registration_qop_str.len = 0;
