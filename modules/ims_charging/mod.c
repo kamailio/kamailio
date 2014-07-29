@@ -24,9 +24,6 @@
 MODULE_VERSION
 
 /* parameters */
-char* ro_origin_host_s = "scscf.ims.smilecoms.com";
-char* ro_origin_realm_s = "ims.smilecoms.com";
-char* ro_destination_realm_s = "ims.smilecoms.com";
 char* ro_destination_host_s = "hss.ims.smilecoms.com";
 char* ro_service_context_id_root_s = "32260@3gpp.org";
 char* ro_service_context_id_ext_s = "ext";
@@ -36,7 +33,11 @@ char* ro_service_context_id_release_s = "8";
 static int ro_session_hash_size = 4096;
 int ro_timer_buffer = 5;
 int interim_request_credits = 30;
-client_ro_cfg cfg;
+client_ro_cfg cfg = { str_init("scscf.ims.smilecoms.com"),
+    str_init("ims.smilecoms.com"),
+    str_init("ims.smilecoms.com"),
+    0
+};
 
 struct cdp_binds cdpb;
 struct dlg_binds dlgb;
@@ -87,7 +88,7 @@ static param_export_t params[] = {
 		{ "hash_size", 				INT_PARAM,			&ro_session_hash_size 		},
 		{ "interim_update_credits",	INT_PARAM,			&interim_request_credits 	},
 		{ "timer_buffer", 			INT_PARAM,			&ro_timer_buffer 			},
-		{ "ro_forced_peer", 		STR_PARAM, 			&ro_forced_peer.s 			},
+		{ "ro_forced_peer", 		PARAM_STR, 			&ro_forced_peer 			},
 		{ "ro_auth_expiry",			INT_PARAM, 			&ro_auth_expiry 			},
 		{ "cdp_event_latency", 		INT_PARAM,			&cdp_event_latency 			}, /*flag: report slow processing of CDP
 																						callback events or not */
@@ -96,15 +97,15 @@ static param_export_t params[] = {
 		{ "cdp_event_latency_log", 	INT_PARAM, 			&cdp_event_latency_loglevel },/*log-level to use to report
 																						slow processing of CDP callback event*/
 		{ "single_ro_session_per_dialog", 	INT_PARAM, 			&single_ro_session_per_dialog },
-		{ "origin_host", 			STR_PARAM, 			&ro_origin_host_s 			},
-		{ "origin_realm", 			STR_PARAM,			&ro_origin_realm_s 			},
-		{ "destination_realm", 		STR_PARAM,			&ro_destination_realm_s 	},
-		{ "destination_host", 		STR_PARAM,			&ro_destination_host_s 		},
-		{ "service_context_id_root",STR_PARAM,			&ro_service_context_id_root_s 	},
-		{ "service_context_id_ext", STR_PARAM,			&ro_service_context_id_ext_s 	},
-		{ "service_context_id_mnc", STR_PARAM,			&ro_service_context_id_mnc_s 	},
-		{ "service_context_id_mcc", STR_PARAM,			&ro_service_context_id_mcc_s 	},
-		{ "service_context_id_release",	STR_PARAM, 		&ro_service_context_id_release_s},
+		{ "origin_host", 			PARAM_STR, 			&cfg.origin_host 			},
+		{ "origin_realm", 			PARAM_STR,			&cfg.origin_realm 			},
+		{ "destination_realm", 		PARAM_STR,			&cfg.destination_realm 	},
+		{ "destination_host", 		PARAM_STRING,			&ro_destination_host_s 		}, /* Unused parameter? */
+		{ "service_context_id_root",PARAM_STRING,			&ro_service_context_id_root_s 	},
+		{ "service_context_id_ext", PARAM_STRING,			&ro_service_context_id_ext_s 	},
+		{ "service_context_id_mnc", PARAM_STRING,			&ro_service_context_id_mnc_s 	},
+		{ "service_context_id_mcc", PARAM_STRING,			&ro_service_context_id_mcc_s 	},
+		{ "service_context_id_release",	PARAM_STRING, 		&ro_service_context_id_release_s},
 		{ 0, 0, 0 }
 };
 
@@ -141,15 +142,6 @@ struct module_exports exports = { MOD_NAME, DEFAULT_DLFLAGS, /* dlopen flags */
 };
 
 int fix_parameters() {
-	cfg.origin_host.s = ro_origin_host_s;
-	cfg.origin_host.len = strlen(ro_origin_host_s);
-
-	cfg.origin_realm.s = ro_origin_realm_s;
-	cfg.origin_realm.len = strlen(ro_origin_realm_s);
-
-	cfg.destination_realm.s = ro_destination_realm_s;
-	cfg.destination_realm.len = strlen(ro_destination_realm_s);
-
 	cfg.service_context_id = shm_malloc(sizeof(str));
 	if (!cfg.service_context_id) {
 		LM_ERR("fix_parameters:not enough shm memory\n");
