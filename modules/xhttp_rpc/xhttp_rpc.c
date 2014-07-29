@@ -93,7 +93,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"xhttp_rpc_root",	STR_PARAM,	&xhttp_rpc_root.s},
+	{"xhttp_rpc_root",	PARAM_STR,	&xhttp_rpc_root},
 	{"xhttp_rpc_buf_size",	INT_PARAM,	&buf_size},
 	{0, 0, 0}
 };
@@ -630,7 +630,6 @@ static int mod_init(void)
 		buf_size = pkg_mem_size/3;
 
 	/* Check xhttp_rpc_root param */
-	xhttp_rpc_root.len = strlen(xhttp_rpc_root.s);
 	for(i=0;i<xhttp_rpc_root.len;i++){
 		if ( !isalnum(xhttp_rpc_root.s[i]) && xhttp_rpc_root.s[i]!='_') {
 			LM_ERR("bad xhttp_rpc_root param [%.*s], char [%c] "
