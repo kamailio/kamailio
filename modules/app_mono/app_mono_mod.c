@@ -50,8 +50,8 @@ int app_mono_load_param(modparam_t type, void *val);
 int app_mono_register_param(modparam_t type, void *val);
 
 static param_export_t params[]={
-	{"load",     STR_PARAM|USE_FUNC_PARAM, (void*)app_mono_load_param},
-	{"register", STR_PARAM|USE_FUNC_PARAM, (void*)app_mono_register_param},
+	{"load",     PARAM_STRING|USE_FUNC_PARAM, (void*)app_mono_load_param},
+	{"register", PARAM_STRING|USE_FUNC_PARAM, (void*)app_mono_register_param},
 	{0, 0, 0}
 };
 
