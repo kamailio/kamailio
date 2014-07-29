@@ -98,7 +98,7 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[] = {
-	{"server",      STR_PARAM, &modp_server },
+	{"server",      PARAM_STRING, &modp_server },
 	{"timeout",     INT_PARAM, &timeout },
 	{0, 0, 0 }
 };
@@ -165,7 +165,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 	struct usr_avp *avp;
 	int i, ret, nflush;
 	long int td;
-	str number = { .len = 0, .s = NULL};
+	str number = STR_NULL;
 
 	if ((active == NULL) || (*active == 0)) return -1;
 
