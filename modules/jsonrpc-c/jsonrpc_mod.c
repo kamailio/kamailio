@@ -65,7 +65,7 @@ static cmd_export_t cmds[]={
  * Script Parameters
  */
 static param_export_t mod_params[]={
-	{"servers", STR_PARAM, &servers_param},
+	{"servers", PARAM_STRING, &servers_param},
 	{ 0,0,0 }
 };
 
