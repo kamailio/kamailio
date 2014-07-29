@@ -77,7 +77,7 @@ gen_lock_t* ph_lock;
 
 
 str xhttp_pi_root = str_init("pi");
-str filename = {NULL, 0};
+str filename = STR_NULL;
 
 int buf_size = 0;
 char error_buf[ERROR_REASON_BUF_LEN];
@@ -88,9 +88,9 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"xhttp_pi_root",	STR_PARAM,	&xhttp_pi_root.s},
+	{"xhttp_pi_root",	PARAM_STR,	&xhttp_pi_root},
 	{"xhttp_pi_buf_size",	INT_PARAM,	&buf_size},
-	{"framework",	STR_PARAM,	&filename.s},
+	{"framework",	PARAM_STR,	&filename},
 	{0, 0, 0}
 };
 
@@ -258,7 +258,6 @@ static int mod_init(void)
 		buf_size = pkg_mem_size/3;
 
 	/* Check xhttp_pi_root param */
-	xhttp_pi_root.len = strlen(xhttp_pi_root.s);
 	for(i=0;i<xhttp_pi_root.len;i++){
 		if ( !isalnum(xhttp_pi_root.s[i]) && xhttp_pi_root.s[i]!='_') {
 			LM_ERR("bad xhttp_pi_root param [%.*s], char [%c] "
@@ -270,11 +269,10 @@ static int mod_init(void)
 	}
 
 	/* Check framework param */
-	if (filename.s==NULL) {
+	if (!filename.s || filename.len<=0) {
 		LM_ERR("missing framework\n");
 		return -1;
 	}
-	filename.len = strlen(filename.s);
 
 		/* building a cache of pi module commands */
 		if (0!=ph_init_cmds(&ph_framework_data, filename.s))
