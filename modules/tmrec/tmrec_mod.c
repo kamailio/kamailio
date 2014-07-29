@@ -71,7 +71,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"wday",		INT_PARAM,   &tmrec_wday},
-	{"separator",   STR_PARAM,   &tmrec_separator_param},
+	{"separator",   PARAM_STRING,   &tmrec_separator_param},
 	{0, 0, 0}
 };
 
