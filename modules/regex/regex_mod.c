@@ -132,7 +132,7 @@ static cmd_export_t cmds[] =
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"file",                STR_PARAM,  &file                },
+	{"file",                PARAM_STRING,  &file                },
 	{"max_groups",          INT_PARAM,  &max_groups          },
 	{"group_max_size",      INT_PARAM,  &group_max_size      },
 	{"pcre_caseless",       INT_PARAM,  &pcre_caseless       },
