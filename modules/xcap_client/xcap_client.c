@@ -82,8 +82,8 @@ db_func_t xcap_dbf;
 void query_xcap_update(unsigned int ticks, void* param);
 
 static param_export_t params[]={
-	{ "db_url",					STR_PARAM,         &xcap_db_url.s    },
-	{ "xcap_table",				STR_PARAM,         &xcap_db_table.s  },
+	{ "db_url",					PARAM_STR,         &xcap_db_url    },
+	{ "xcap_table",				PARAM_STR,         &xcap_db_table  },
 	{ "periodical_query",		INT_PARAM,         &periodical_query },
 	{ "query_period",	       	INT_PARAM,         &query_period     },
 	{    0,                     0,                      0            }
@@ -127,9 +127,6 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
-
-	xcap_db_url.len = xcap_db_url.s ? strlen(xcap_db_url.s) : 0;
-	xcap_db_table.len = xcap_db_table.s ? strlen(xcap_db_table.s) : 0;
 	
 	/* binding to mysql module  */
 	if (db_bind_mod(&xcap_db_url, &xcap_dbf))
