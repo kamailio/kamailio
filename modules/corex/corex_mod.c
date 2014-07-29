@@ -75,7 +75,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"alias_subdomains",  STR_PARAM|USE_FUNC_PARAM,
+	{"alias_subdomains",  PARAM_STRING|USE_FUNC_PARAM,
 								(void*)corex_alias_subdomains_param},
 	{0, 0, 0}
 };
