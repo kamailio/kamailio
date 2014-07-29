@@ -73,7 +73,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"workers",           INT_PARAM,   &_evapi_workers},
-	{"bind_addr",         STR_PARAM,   &_evapi_bind_param},
+	{"bind_addr",         PARAM_STRING,   &_evapi_bind_param},
 	{"netstring_format",  INT_PARAM,   &_evapi_netstring_format_param},
 	{0, 0, 0}
 };
