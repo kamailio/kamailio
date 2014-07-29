@@ -76,7 +76,7 @@ static str db_url           = str_init(DEFAULT_DB_URL); /* database url */
 static str db_table        = str_init("cpl");  /* database table */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
-static str  timer_avp      = {NULL, 0};  /* name of variable timer AVP */
+static str  timer_avp      = STR_NULL;  /* name of variable timer AVP */
 
 
 struct cpl_enviroment    cpl_env = {
@@ -144,21 +144,21 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",         STR_PARAM, &db_url.s                          },
-	{"db_table",       STR_PARAM, &db_table.s                        },
-	{"cpl_dtd_file",   STR_PARAM, &dtd_file                          },
+	{"db_url",         PARAM_STR, &db_url                          },
+	{"db_table",       PARAM_STR, &db_table                        },
+	{"cpl_dtd_file",   PARAM_STRING, &dtd_file                          },
 	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse             },
 	{"proxy_route",    INT_PARAM, &cpl_env.proxy_route               },
-	{"log_dir",        STR_PARAM, &cpl_env.log_dir                   },
+	{"log_dir",        PARAM_STRING, &cpl_env.log_dir                   },
 	{"case_sensitive", INT_PARAM, &cpl_env.case_sensitive            },
-	{"realm_prefix",   STR_PARAM, &cpl_env.realm_prefix.s            },
-	{"lookup_domain",  STR_PARAM, &lookup_domain                     },
+	{"realm_prefix",   PARAM_STR, &cpl_env.realm_prefix            },
+	{"lookup_domain",  PARAM_STRING, &lookup_domain                     },
 	{"lookup_append_branches", INT_PARAM, &cpl_env.lu_append_branches},
-	{"timer_avp",      STR_PARAM, &timer_avp.s                       },
-	{"username_column",STR_PARAM, &cpl_username_col                  },
-	{"domain_column",  STR_PARAM, &cpl_domain_col                    },
-	{"cpl_xml_column", STR_PARAM, &cpl_xml_col                       },
-	{"cpl_bin_column", STR_PARAM, &cpl_bin_col                       },
+	{"timer_avp",      PARAM_STR, &timer_avp                       },
+	{"username_column",PARAM_STR, &cpl_username_col                  },
+	{"domain_column",  PARAM_STR, &cpl_domain_col                    },
+	{"cpl_xml_column", PARAM_STR, &cpl_xml_col                       },
+	{"cpl_bin_column", PARAM_STR, &cpl_bin_col                       },
 	{"use_domain",     INT_PARAM, &cpl_env.use_domain                },
 	{0, 0, 0}
 };
@@ -253,10 +253,6 @@ static int cpl_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
-
-	db_url.len = strlen(db_url.s);
-	db_table.len = strlen(db_table.s);
-	if (timer_avp.s) timer_avp.len = strlen(timer_avp.s);
 
 	if (cpl_env.proxy_recurse>MAX_PROXY_RECURSE) {
 		LM_CRIT("value of proxy_recurse param (%d) exceeds "
@@ -399,7 +395,6 @@ static int cpl_init(void)
 
 	/* convert realm_prefix from string null terminated to str */
 	if (cpl_env.realm_prefix.s) {
-		cpl_env.realm_prefix.len = strlen(cpl_env.realm_prefix.s);
 		/* convert the realm_prefix to lower cases */
 		strlower( &cpl_env.realm_prefix );
 	}
