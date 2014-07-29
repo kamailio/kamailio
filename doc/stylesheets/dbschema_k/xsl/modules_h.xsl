@@ -86,7 +86,7 @@
 <xsl:value-of select="concat('extern db_func_t ', $prefix, '_dbf;&#x0A;&#x0A;')"/>
 
 <!-- macro for module parameter -->
-<xsl:value-of select="concat('#define ', $prefix, '_DB_URL { &quot;db_url&quot;, STR_PARAM, &amp;', $prefix, '_db_url.s },&#x0A;&#x0A;')"/>
+<xsl:value-of select="concat('#define ', $prefix, '_DB_URL { &quot;db_url&quot;, PARAM_STR, &amp;', $prefix, '_db_url },&#x0A;&#x0A;')"/>
 
 <xsl:apply-templates select="/database[1]"/>
 
@@ -140,7 +140,7 @@
 	</xsl:variable>
 
 	<!-- macro for db table -->
-	<xsl:value-of select="concat('#define ', $table.name, '_DB_TABLE { &quot;', $table.name, '_table&quot;, STR_PARAM, &amp;', $prefix, '_table.s },&#x0A;&#x0A;')"/>
+	<xsl:value-of select="concat('#define ', $table.name, '_DB_TABLE { &quot;', $table.name, '_table&quot;, PARAM_STR, &amp;', $prefix, '_table },&#x0A;&#x0A;')"/>
 	<xsl:value-of select="concat('extern str ', $table.name, '_table;&#x0A;')"/>
 	<xsl:text>&#x0A;</xsl:text>
 
@@ -153,7 +153,7 @@
 		<xsl:variable name="column.name">
 			<xsl:call-template name="get-name"/>
 		</xsl:variable>
-		<xsl:value-of select="concat('{ &quot;', $table.name, '_', $column.name, '_col&quot;, STR_PARAM, &amp;', $table.name, '_', $column.name, '_col.s }, \&#x0A;')"/>
+		<xsl:value-of select="concat('{ &quot;', $table.name, '_', $column.name, '_col&quot;, PARAM_STR, &amp;', $table.name, '_', $column.name, '_col }, \&#x0A;')"/>
 	</xsl:for-each>
 
 	<xsl:text>&#x0A;</xsl:text>
