@@ -84,7 +84,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"mqueue",          STR_PARAM|USE_FUNC_PARAM, (void*)mq_param},
+	{"mqueue",          PARAM_STRING|USE_FUNC_PARAM, (void*)mq_param},
 	{0, 0, 0}
 };
 
