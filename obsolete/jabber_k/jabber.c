@@ -159,13 +159,13 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"db_url",     STR_PARAM, &db_url.s  },
-	{"jaddress",   STR_PARAM, &jaddress  },
-	{"aliases",    STR_PARAM, &jaliases  },
-	{"proxy",      STR_PARAM, &proxy     },
-	{"jdomain",    STR_PARAM, &jdomain   },
-	{"registrar",  STR_PARAM, &registrar },
-	{"priority",   STR_PARAM, &priority  },
+	{"db_url",     PARAM_STRING, &db_url.s  },
+	{"jaddress",   PARAM_STRING, &jaddress  },
+	{"aliases",    PARAM_STRING, &jaliases  },
+	{"proxy",      PARAM_STRING, &proxy     },
+	{"jdomain",    PARAM_STRING, &jdomain   },
+	{"registrar",  PARAM_STRING, &registrar },
+	{"priority",   PARAM_STRING, &priority  },
 	{"jport",      INT_PARAM, &jport     },
 	{"workers",    INT_PARAM, &nrw       },
 	{"max_jobs",   INT_PARAM, &max_jobs  },

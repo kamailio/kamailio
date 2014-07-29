@@ -55,7 +55,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"describe_table", STR_PARAM|USE_FUNC_PARAM, (void*)bdb_describe_table},
+	{"describe_table", PARAM_STRING|USE_FUNC_PARAM, (void*)bdb_describe_table},
 	{0, 0, 0}
 };
 
