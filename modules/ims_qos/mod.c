@@ -77,8 +77,8 @@ MODULE_VERSION
 
         extern gen_lock_t* process_lock; /* lock on the process table */
 
-str orig_session_key = {"originating", 11};
-str term_session_key = {"terminating", 11};
+str orig_session_key = str_init("originating");
+str term_session_key = str_init("terminating");
 
 int rx_auth_expiry = 7200;
 
@@ -106,11 +106,9 @@ static int fixup_aar(void** param, int param_no);
 int * callback_singleton; /*< Callback singleton */
 
 /* parameters storage */
-char* rx_dest_realm_s = "ims.smilecoms.com";
-str rx_dest_realm;
+str rx_dest_realm = str_init("ims.smilecoms.com");
 /* Only used if we want to force the Rx peer usually this is configured at a stack level and the first request uses realm routing */
-char* rx_forced_peer_s = "";
-str rx_forced_peer;
+str rx_forced_peer = str_init("");
 
 /* commands wrappers and fixups */
 static int w_rx_aar(struct sip_msg *msg, char *route, char* direction, char *bar);
@@ -123,8 +121,8 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-    { "rx_dest_realm", STR_PARAM, &rx_dest_realm_s},
-    { "rx_forced_peer", STR_PARAM, &rx_forced_peer_s},
+    { "rx_dest_realm", PARAM_STR, &rx_dest_realm},
+    { "rx_forced_peer", PARAM_STR, &rx_forced_peer},
     { "rx_auth_expiry", INT_PARAM, &rx_auth_expiry},
     { "cdp_event_latency", INT_PARAM, &cdp_event_latency}, /*flag: report slow processing of CDP callback events or not */
     { "cdp_event_threshold", INT_PARAM, &cdp_event_threshold}, /*time in ms above which we should report slow processing of CDP callback event*/
@@ -148,25 +146,10 @@ struct module_exports exports = {"ims_qos", DEFAULT_DLFLAGS, /* dlopen flags */
     mod_init, /* module initialization function */
     0, mod_destroy, mod_child_init /* per-child init function */};
 
-int fix_parameters() {
-    rx_dest_realm.s = rx_dest_realm_s;
-    rx_dest_realm.len = strlen(rx_dest_realm_s);
-
-    rx_forced_peer.s = rx_forced_peer_s;
-    rx_forced_peer.len = strlen(rx_forced_peer_s);
-
-    return CSCF_RETURN_TRUE;
-}
-
 /**
  * init module function
  */
 static int mod_init(void) {
-
-    /* fix the parameters */
-    if (!fix_parameters())
-        goto error;
-
 #ifdef STATISTICS
     /* register statistics */
     if (register_module_stats(exports.name, mod_stats) != 0) {
