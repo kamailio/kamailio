@@ -49,9 +49,9 @@ extern ldap_api_t ldap_api;
 #define H350_BASE_DN ""
 #define H350_SEARCH_SCOPE "one"
 
-extern str h350_ldap_session;
-extern str h350_base_dn;
-extern str h350_search_scope;
+extern char* h350_ldap_session;
+extern char* h350_base_dn;
+extern char* h350_search_scope;
 extern int h350_search_scope_int;
 
 #endif /* H350_MOD_H */

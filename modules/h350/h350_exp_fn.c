@@ -84,8 +84,8 @@ int h350_sipuri_lookup(struct sip_msg* _msg, pv_elem_t* _sip_uri)
 	 * do ldap search
 	 */
 	if (ldap_api.ldap_params_search(&ld_result_count,
-					h350_ldap_session.s,
-					h350_base_dn.s,
+					h350_ldap_session,
+					h350_base_dn,
 					h350_search_scope_int,
 					NULL,
 					H350_SIPURI_LOOKUP_LDAP_FILTER,
@@ -204,8 +204,8 @@ int h350_auth_lookup(
 
 	/* do ldap search */
 	if (ldap_api.ldap_params_search(&ld_result_count,
-                                        h350_ldap_session.s,
-                                        h350_base_dn.s,
+                                        h350_ldap_session,
+                                        h350_base_dn,
                                         h350_search_scope_int,
                                         NULL,
                                         H350_AUTH_FILTER_PATTERN,

@@ -61,9 +61,9 @@ static int w_h350_service_level(struct sip_msg* msg, char* avp_name_prefix, char
 /*
  * Module parameter variables
  */
-str h350_ldap_session = str_init(H350_LDAP_SESSION);
-str h350_base_dn = str_init(H350_BASE_DN);
-str h350_search_scope = str_init(H350_SEARCH_SCOPE);
+char* h350_ldap_session = H350_LDAP_SESSION;
+char* h350_base_dn = H350_BASE_DN;
+char* h350_search_scope = H350_SEARCH_SCOPE;
 int h350_search_scope_int = -1;
 
 
@@ -96,9 +96,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"ldap_session",     STR_PARAM, &h350_ldap_session.s},
-	{"base_dn",          STR_PARAM, &h350_base_dn.s},
-	{"search_scope",     STR_PARAM, &h350_search_scope.s},
+	{"ldap_session",     PARAM_STRING, &h350_ldap_session},
+	{"base_dn",          PARAM_STRING, &h350_base_dn},
+	{"search_scope",     PARAM_STRING, &h350_search_scope},
 	{0, 0, 0}
 };
 
@@ -129,7 +129,7 @@ static int child_init(int rank)
         	return 0;
 	}
 
-	h350_search_scope_int = ldap_api.ldap_str2scope(h350_search_scope.s);
+	h350_search_scope_int = ldap_api.ldap_str2scope(h350_search_scope);
 
         /*
          * initialize h350_exp_fn
@@ -161,9 +161,9 @@ static int mod_init(void)
 	/*
 	 * check module parameters
 	 */
-	if (ldap_api.ldap_str2scope(h350_search_scope.s) == -1)
+	if (ldap_api.ldap_str2scope(h350_search_scope) == -1)
 	{
-		LM_ERR("Invalid search_scope [%s]\n", h350_search_scope.s);
+		LM_ERR("Invalid search_scope [%s]\n", h350_search_scope);
 		return -1;
 	}
 	
