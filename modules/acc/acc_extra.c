@@ -63,16 +63,6 @@
 /* here we copy the strings returned by int2str (which uses a static buffer) */
 static char int_buf[INT2STR_MAX_LEN*MAX_ACC_INT_BUF];
 
-static char *static_detector = 0;
-
-void init_acc_extra(void)
-{
-	int i;
-	/* ugly trick to get the address of the static buffer */
-	static_detector = int2str( (unsigned long)3, &i) + i;
-}
-
-
 struct acc_extra *parse_acc_leg(char *extra_str)
 {
 	struct acc_extra *legs;
@@ -249,10 +239,10 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 {
 	pv_value_t value;
 	int n;
-	int r;
+	int i;
 
 	n = 0;
-	r = 0;
+	i = 0;
 	
 	while (extra) {
 		/* get the value */
@@ -272,15 +262,22 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 			val_arr[n].len = 0;
 			type_arr[n] = TYPE_NULL;
 		} else {
-			/* set the value into the acc buffer */
-			if (value.rs.s+value.rs.len==static_detector) {
-				val_arr[n].s = int_buf + r*INT2STR_MAX_LEN;
-				val_arr[n].len = value.rs.len;
-				memcpy(val_arr[n].s, value.rs.s, value.rs.len);
-				r++;
-			} else {
-				val_arr[n] = value.rs;
-			}
+		    val_arr[n].s = (char *)pkg_malloc(value.rs.len);
+		    if (val_arr[n].s == NULL ) {
+		        LM_ERR("extra2strar: out of memory.\n");
+		        /* Cleanup already allocated memory and
+                   return that we didn't do anything */
+                for (i = 0; i < n ; i++) {
+						if (NULL != val_arr[i].s){
+							pkg_free(val_arr[i].s);
+							val_arr[i].s = NULL;
+						}
+                }
+                n = 0;
+                goto done;
+            }
+            memcpy(val_arr[n].s, value.rs.s, value.rs.len);
+            val_arr[n].len = value.rs.len;
 			if (value.flags&PV_VAL_INT) {
 			    int_arr[n] = value.ri;
 			    type_arr[n] = TYPE_INT;

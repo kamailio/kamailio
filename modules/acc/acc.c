@@ -229,6 +229,7 @@ int acc_log_request( struct sip_msg *rq)
 	char *p;
 	int n;
 	int m;
+	int o = 0;
 	int i;
 	struct tm *t;
 
@@ -236,7 +237,9 @@ int acc_log_request( struct sip_msg *rq)
 	m = core2strar( rq, val_arr, int_arr, type_arr);
 
 	/* get extra values */
-	m += extra2strar( log_extra, rq, val_arr+m, int_arr+m, type_arr+m);
+	o += extra2strar( log_extra, rq, val_arr+m, int_arr+m, type_arr+m);
+
+	m += o;
 
 	for ( i=0,p=log_msg ; i<m ; i++ ) {
 		if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
@@ -314,6 +317,8 @@ int acc_log_request( struct sip_msg *rq)
 			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
 			log_msg);
 	}
+	/* free memory allocated by extra2strar */
+	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
 
 	return 1;
 }

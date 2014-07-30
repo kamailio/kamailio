@@ -528,9 +528,6 @@ static int mod_init( void )
 		return -1;
 	}
 
-	/* init the extra engine */
-	init_acc_extra();
-
 	/* configure multi-leg accounting */
 	if (leg_info_str && (leg_info=parse_acc_leg(leg_info_str))==0 ) {
 		LM_ERR("failed to parse multileg_info param\n");

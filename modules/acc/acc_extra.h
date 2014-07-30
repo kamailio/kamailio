@@ -43,6 +43,7 @@
 #ifndef _ACC_EXTRA_H_
 #define _ACC_EXTRA_H_
 
+#include "acc_api.h"
 #include "../../str.h"
 #include "../../pvar.h"
 #include "../../parser/msg_parser.h"
@@ -72,5 +73,16 @@ int extra2int( struct acc_extra *extra, int *attrs );
 int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset);
 #endif
 
+static inline void free_strar_mem( char* type_arr, str* alloc_arr, int dim_arr, int dim_ext){
+	int i = 0;
+	for ( i = 0; i < dim_arr; i ++ ) {
+		if (( TYPE_NULL !=  type_arr[i] ) && (  NULL != alloc_arr[i].s)) {
+			LM_DBG("Freeing memory, type is %d, message_index %d, index i %d\n",
+					type_arr[i], dim_ext - dim_arr, i);
+			pkg_free( alloc_arr[i].s) ;
+			alloc_arr[i].s = NULL;
+		}
+	}
+}
 #endif
 
