@@ -249,6 +249,13 @@ int dlg_clean_run(ticks_t ti)
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
 			}
+			if(tdlg->state==DLG_STATE_CONFIRMED_NA && tdlg->start_ts<tm-60) {
+				if(update_dlg_timer(&dlg->tl, 10)<0) {
+					LM_ERR("failed to update dialog lifetime in long non-ack state\n");
+				}
+				dlg->lifetime = 10;
+				dlg->dflags |= DLG_FLAG_CHANGED;
+			}
 		}
 		lock_set_release(d_table->locks, d_table->entries[i].lock_idx);
 	}
