@@ -1257,6 +1257,27 @@ modparam("dialog", "timeout_noreset", 1)
 		</example>
 	</section>
 
+	<section id="dialog.p.timer_procs">
+		<title><varname>timer_procs</varname> (int)</title>
+		<para>
+			If set to 1, the dialog will run own timer process to execute
+			dialog timeout tasks.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (use core time process).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_procs</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "timer_procs", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
