@@ -109,6 +109,7 @@ str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
+static int dlg_timer_procs = 0;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
@@ -285,6 +286,7 @@ static param_export_t mod_params[]={
 	{ "ka_timer",              INT_PARAM, &dlg_ka_timer             },
 	{ "ka_interval",           INT_PARAM, &dlg_ka_interval          },
 	{ "timeout_noreset",       INT_PARAM, &dlg_timeout_noreset      },
+	{ "timer_procs",           PARAM_INT, &dlg_timer_procs          },
 	{ 0,0,0 }
 };
 
@@ -614,9 +616,13 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if ( register_timer( dlg_timer_routine, 0, 1)<0 ) {
-		LM_ERR("failed to register timer \n");
-		return -1;
+	if(dlg_timer_procs<=0) {
+		if ( register_timer( dlg_timer_routine, 0, 1)<0 ) {
+			LM_ERR("failed to register timer \n");
+			return -1;
+		}
+	} else {
+		register_sync_timers(1);
 	}
 
 	/* init handlers */
@@ -692,6 +698,14 @@ static int child_init(int rank)
 	dlg_db_mode = dlg_db_mode_param;
 
 	if(rank==PROC_MAIN) {
+		if(dlg_timer_procs>0) {
+			if(fork_sync_timer(PROC_TIMER, "Dialog Main Timer", 1 /*socks flag*/,
+					dlg_timer_routine, NULL, 1 /*every sec*/)<0) {
+				LM_ERR("failed to start main timer routine as process\n");
+				return -1; /* error */
+			}
+		}
+
 		if(dlg_ka_timer>0 && dlg_ka_interval>0) {
 			if(fork_sync_timer(PROC_TIMER, "Dialog KA Timer", 1 /*socks flag*/,
 					dlg_ka_timer_exec, NULL, dlg_ka_timer /*sec*/)<0) {
