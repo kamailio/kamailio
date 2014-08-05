@@ -27,7 +27,7 @@
  */
 
 #ifndef SIP_XMPP_PRES_H
-#define SIP_XMPP__PRES_H
+#define SIP_XMPP_PRES_H
 
 #include "../pua/pua_bind.h"
 
