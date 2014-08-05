@@ -56,7 +56,6 @@ struct tm_binds isc_tmb;
 usrloc_api_t isc_ulb; /*!< Structure containing pointers to usrloc functions*/
 
 /* fixed parameter storage */
-char *isc_my_uri_c; /**< Uri of myself to loop the message*/
 str isc_my_uri = str_init("scscf.ims.smilecoms.com:6060"); /**< Uri of myself to loop the message in str	*/
 str isc_my_uri_sip = {0, 0}; /**< Uri of myself to loop the message in str with leading "sip:" */
 int isc_expires_grace = 120; /**< expires value to add to the expires in the 3rd party register*/
