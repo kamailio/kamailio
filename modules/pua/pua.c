@@ -993,7 +993,7 @@ static void db_update(unsigned int ticks,void *param)
 		p = HashT->p_records[i].entity->next;
 		while(p)
 		{
-			if(p->expires - (int)time(NULL)< 0)	
+			if((int)p->expires - (int)time(NULL)< 0)	
 			{
 				p= p->next;
 				continue;
