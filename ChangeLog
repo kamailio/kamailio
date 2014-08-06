@@ -1,3 +1,192 @@
+===================== 2014-08-06 Version 4.1.5 Released =====================
+
+===================== Changes Since Version 4.1.4 ===========================
+
+commit 97f5a9a1c6485816913b0c2c3d4af6be466c4b77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 6 17:19:07 2014 +0200
+
+    Makefile.defs: version set to 4.1.5
+
+commit 830c24891a293a8b48b49ce5ebb684f8f2734132
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 6 16:58:47 2014 +0200
+
+    pkg/rpm: set version to 4.1.5 for rpm specs
+
+commit e3113d7b820dd339f6533e816450a20d01b3f584
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 6 16:56:43 2014 +0200
+
+    pkg/deb: version set to 4.1.5 in debian specs
+
+commit 190eb31d662462b6d3a44d81389500f935d28a70
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 5 13:10:34 2014 +0200
+
+    pua_xmpp: fixed wrong define guardian id
+    
+    (cherry picked from commit 6b833a82cb8c0978fae54afa086eff6d5479fa17)
+
+commit f83b5bc97f991bf357545b2fe10fa84725d24f9e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 5 13:09:16 2014 +0200
+
+    pua: solved warning on comparing unsigned expression
+    
+    (cherry picked from commit 55b42c5ba9e78b1d6662d45f1b68898bc67548c9)
+
+commit 80ea39b93278e99b32e6d16f6bb76fefad3d691f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 21 10:10:45 2014 +0200
+
+    msilo: check if the register has contacts with positive expires value
+    
+    - otherwise is un-registration and no new contact to dump messages
+    - reported by Anthony Messina
+    
+    (cherry picked from commit 6559c4383858d472637807c6ec4dd1e0616507fa)
+
+commit 8671ba9b2c1626247d777c1d6fcbe25966d465da
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 17 19:13:42 2014 +0200
+
+    usrloc: refresh call-id value in case of update of location record
+    
+    - related to FS#448
+    
+    (cherry picked from commit c2b334bf41cbe6fa7b7e15d825dca1fa36c33770)
+
+commit 20a01c50c8a144c7edc838bea003b665469f4120
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 4 13:46:35 2014 +0200
+
+    usrloc: generate callid at startup and increase cseq for records added via mi
+    
+    - should fix FS#448, reported by Savolainen Dmitri
+    
+    (cherry picked from commit 66c497fdf4ac1c3b889a7c3b50c3e5fed770cf0b)
+
+commit 9a0d01daf296cbe78b29e8db00f0d4b3e9c6cdca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 30 14:37:40 2014 +0200
+
+    tmx: handle branch_route for $T_reply_code
+    
+    - use latest sent reply code
+    - related to the log message reported in FS#445
+    
+    (cherry picked from commit 2e28163f2f3e756c89f8cc43df0644be38c5e06f)
+
+commit 4b731cbb8426799377552c96f240a56ec528ef70
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 30 12:34:24 2014 +0200
+
+    kamctl: use DEFAULT_Q variable in ul_add command
+    
+    (cherry picked from commit 8fac19ba52345a4dd10480ef4efb62012bbbbff6)
+
+commit a427c0ac7973c0321b9b6e2d7f70dd3fee5b5414
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 30 12:11:45 2014 +0200
+
+    geoip: free allocated pointers at startup in case of error
+    
+    - cleaner shut down
+    
+    (cherry picked from commit 5db25855613f922059b53d7149e97b4985120de0)
+
+commit eb3f7cbc27fd678891910a14377ef0c5a3477bb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 30 12:05:19 2014 +0200
+
+    core: reset cur_opt shortcut after use, it points to local variable
+    
+    - safety to prevent invalid access on future extensions
+    
+    (cherry picked from commit 1faf19fa7d34528b6cc15ffcb1ec91a6c6074e90)
+
+commit 4eb7b5b0d4b2d914f488d15d637e4448102d6d63
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 13 12:00:21 2014 +0200
+
+    dialog: backup and restore exiting route type when executing dialog event_route blocks
+    
+    - reported by Nuno Miguel Reis
+    
+    (cherry picked from commit 4fab97fb54334a55b1fce4e0d2f417fda5727c3a)
+
+commit 19b5458e616e4dde1bb7b23cfbae0388849539ee
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Sat Jul 26 01:18:50 2014 +0100
+
+    tm: Generate synonym_id based on original request
+    
+    - Prevent allocating pkg memory in a shm-alloc'd copy
+    - Prevents a crash that can occur in requests with pre-3261 branch tags
+    (cherry picked from commit c5afbe15361bbf7e9493ad02dcabfd4c6d420109)
+
+commit 84c1ff056abf33c0ed8ed666d81d9e3e80cfaabb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 30 11:06:41 2014 +0200
+
+    uac: print new and old uri in log message in case of error
+    
+    (cherry picked from commit 6feeb886b58f4cd1cefeef132245c009bf8ca07f)
+
+commit 33d91eafaba5066ead247a61c76b18747a08da57
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Jun 17 13:08:02 2014 -0400
+
+    auth: README regenerated
+
+commit b8cfbb2e5bb36f117cb0756339b58f71a97b70c0
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Jun 17 11:47:50 2014 -0400
+
+    auth: document '-8' return code for pv_www_authenticate
+    (cherry picked from commit c9c8f8d71fdad33caebaea07922901618bcd7825)
+
+commit 77019552cf3e1d88b98620eedad2ce7fb4bbb469
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Mon Jun 16 11:53:11 2014 +0100
+
+    registrar: Add check for contact header before checking outbound support
+    
+    - Fixes crash when processing REGISTER without a contact
+    (cherry picked from commit c9301c99d3c9acb663023cf02393d0e7ed74c133)
+
+commit 0f9258881ceceadabe57782ab5eb8f535b026f44
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sun Jun 15 11:09:46 2014 +0200
+
+    pkg/kamailio/deb: Add Ubuntu trusty support
+
+commit 1710d4e1d80b712a00c93ae759efde22dea35f17
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Jun 14 18:50:56 2014 +0200
+
+    pkg/kamailio/deb: Use gcj-jdk
+    
+    (cherry picked from commit 8d7d72add168c2fa592214853470f4a31515c510)
+
+commit c24508f80449a01165e65d4592cf77303054c36a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Jun 14 18:20:06 2014 +0200
+
+    app_java: Use generic libgcj
+    
+    (cherry picked from commit 00d2c27cbd0c36fd8979d5b92a3f860a5e657c60)
+
+commit 2198cb5d508055f495af29866045d51c1098d5cc
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Jun 12 12:46:39 2014 -0400
+
+    core: fix crash related to core sockets_list  command
+     - reported by Nuno Reis <nreis@wavecom.pt>
+    (cherry picked from commit 1c715b1a2a66a4a15d1a8def33ef369212712bb1)
+
+
 ===================== 2014-06-12 Version 4.1.4 Released =====================
 
 ===================== Changes Since Version 4.1.3 ===========================
