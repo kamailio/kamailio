@@ -466,7 +466,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		goto done;
 	}
 
-	if (type==TMCB_DESTROY)
+	if (type & (TMCB_DESTROY|TMCB_ACK_NEG_IN))
 		event = DLG_EVENT_TDEL;
 	else if (param->code<200)
 		event = DLG_EVENT_RPL1xx;
@@ -963,7 +963,7 @@ int dlg_set_tm_waitack(tm_cell_t *t, dlg_cell_t *dlg)
 	}
 	dlg_ref(dlg, 1);
 	if ( d_tmb.register_tmcb( NULL, t,
-			TMCB_DESTROY,
+			TMCB_DESTROY|TMCB_ACK_NEG_IN,
 			dlg_ontdestroy, (void*)iuid, dlg_iuid_sfree)<0 ) {
 		LM_ERR("failed to register TMCB to wait for negative ACK\n");
 		dlg_unref(dlg, 1);
