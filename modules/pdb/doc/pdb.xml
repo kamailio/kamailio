@@ -12,16 +12,17 @@
 	<title>pdb Module</title>
 	<productname class="trade">&kamailioname;</productname>        
 	<authorgroup>
-		<author>
-		<firstname>Hardy</firstname>
-		<surname>Kahl</surname>
-		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
-		</author>
 		<editor>
 		<firstname>Henning</firstname>
 		<surname>Westerholt</surname>
 		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
 		<email>henning.westerholt@1und1.de</email>
+		</editor>
+		<editor>
+		<firstname>Pawel</firstname>
+		<surname>Kuzak</surname>
+		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
+		<email>pawel.kuzak@1und1.de</email>
 		</editor>
 	</authorgroup>
 	<copyright>
