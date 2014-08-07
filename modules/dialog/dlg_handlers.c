@@ -75,6 +75,7 @@
 #include "dlg_db_handler.h"
 #include "dlg_profile.h"
 #include "dlg_var.h"
+#include "dlg_dmq.h"
 
 static str       rr_param;		/*!< record-route parameter for matching */
 static int       dlg_flag;		/*!< flag for dialog tracking */
@@ -88,6 +89,7 @@ extern int       initial_cbs_inscript;
 extern int       dlg_send_bye;
 extern int       dlg_event_rt[DLG_EVENTRT_MAX];
 extern int       dlg_wait_ack;
+extern int       dlg_enable_dmq;
 int              spiral_detected = -1;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
@@ -457,13 +459,13 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		/* Set the dialog context so it is available in onreply_route and failure_route*/
 		set_current_dialog(req, dlg);
 		dlg_set_ctx_iuid(dlg);
-		goto done;
+		goto done_early;
 	}
 
 	if (type==TMCB_RESPONSE_FWDED) {
 		/* The state does not change, but the msg is mutable in this callback*/
 		run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
-		goto done;
+		goto done_early;
 	}
 
 	if (type & (TMCB_DESTROY|TMCB_ACK_NEG_IN))
@@ -568,6 +570,11 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	if (unref) dlg_unref(dlg, unref);
 
 done:
+	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) && new_state!=old_state) {
+		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0);
+	}
+
+done_early:
 	/* unref due to dlg_get_by_iuid() */
 	dlg_release(dlg);
 	return;
@@ -702,6 +709,36 @@ static inline int pre_match_parse( struct sip_msg *req, str *callid,
 
 
 /*!
+ * \brief Sync dialog from tm callback (another wrapper)
+ * \param t transaction, unused
+ * \param type type of the entered callback
+ * \param param saved dialog structure in the callback
+ */
+static void dlg_on_send(struct cell* t, int type, struct tmcb_params *param)
+{
+	dlg_cell_t *dlg = NULL;
+	dlg_iuid_t *iuid = NULL;
+
+	LM_DBG("dialog_on_send CB\n");
+	iuid = (dlg_iuid_t*)(*param->param);
+	if (iuid==NULL)
+		return;
+
+	dlg = dlg_get_by_iuid(iuid);
+	if(dlg==NULL)
+		return;
+
+	/* sync over dmq */
+	if (dlg_enable_dmq) {
+		dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 1);
+	}
+
+	/* unref by 2: 1 set when adding in tm cb, 1 set by dlg_get_by_iuid() */
+	dlg_unref(dlg, 1);
+}
+
+
+/*!
  * \brief Function that is registered as TM callback and called on requests
  * \see dlg_new_dialog
  * \param t transaction, used to created the dialog
@@ -712,6 +749,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 {
 	sip_msg_t *req = param->req;
 	dlg_cell_t *dlg = NULL;
+	dlg_iuid_t *iuid = NULL;
 
 	if(req->first_line.u.request.method_value != METHOD_INVITE)
 		return;
@@ -739,6 +777,20 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		dlg_set_tm_callbacks(t, req, dlg, spiral_detected);
 		_dlg_ctx.t = 1;
 		dlg_release(dlg);
+	}
+
+	iuid = dlg_get_iuid_shm_clone(dlg);
+	if(iuid==NULL)
+	{
+		LM_ERR("failed to create dialog unique id clone\n");
+	} else {
+		/* register callback for when the request is sent */
+		if ( d_tmb.register_tmcb(req, t, TMCB_REQUEST_FWDED,
+				dlg_on_send,
+				(void*)iuid, dlg_iuid_sfree)<0 ) {
+			LM_ERR("failed to register TMCB_REQUEST_FWDED\n");
+			shm_free(iuid);
+		}
 	}
 }
 
@@ -1341,6 +1393,10 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	}
 
 done:
+	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) && new_state!=old_state) {
+		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0);
+	}
+
 	dlg_release(dlg);
 	return;
 }
@@ -1410,6 +1466,10 @@ void dlg_ontimeout(struct dlg_tl *tl)
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 	} else {
 		dlg_unref(dlg, 1);
+	}
+
+	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) && new_state!=old_state) {
+		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0);
 	}
 
 	return;

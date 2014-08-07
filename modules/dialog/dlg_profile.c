@@ -497,6 +497,7 @@ static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *d
 		linker->hash_linker.dlg = dlg;
 	}
 
+	atomic_or_int((volatile int*)&dlg->dflags, DLG_FLAG_CHANGED_PROF);
 	link_profile(linker, &dlg->callid);
 }
 
@@ -709,6 +710,7 @@ int unset_dlg_profile(sip_msg_t *msg, str *value,
 			 */
 		}
 	}
+	atomic_or_int((volatile int*)&dlg->dflags, DLG_FLAG_CHANGED_PROF);
 	dlg_unlock( d_table, d_entry);
 	dlg_release(dlg);
 	return -1;

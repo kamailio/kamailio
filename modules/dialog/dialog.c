@@ -86,6 +86,7 @@
 #include "dlg_profile.h"
 #include "dlg_var.h"
 #include "dlg_transfer.h"
+#include "dlg_dmq.h"
 
 MODULE_VERSION
 
@@ -110,6 +111,7 @@ static int db_fetch_rows = 200;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
+int dlg_enable_dmq = 0;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
@@ -294,6 +296,7 @@ static param_export_t mod_params[]={
 	{ "ka_interval",           INT_PARAM, &dlg_ka_interval          },
 	{ "timeout_noreset",       INT_PARAM, &dlg_timeout_noreset      },
 	{ "timer_procs",           PARAM_INT, &dlg_timer_procs          },
+	{ "enable_dmq",            INT_PARAM, &dlg_enable_dmq           },
 	{ 0,0,0 }
 };
 
@@ -695,6 +698,12 @@ static int mod_init(void)
 
 	/* timer process to clean old unconfirmed dialogs */
 	register_sync_timers(1);
+
+	if (dlg_enable_dmq>0 && dlg_dmq_initialize()!=0) {
+		LM_ERR("failed to initialize dmq integration\n");
+		return -1;
+	}
+
 
 	return 0;
 }

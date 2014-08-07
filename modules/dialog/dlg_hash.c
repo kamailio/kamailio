@@ -62,11 +62,13 @@
 #include "dlg_profile.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
+#include "dlg_dmq.h"
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
 
 extern int dlg_ka_interval;
+extern int dlg_enable_dmq;
 
 /*! global dialog table */
 struct dlg_table *d_table = 0;
@@ -373,6 +375,8 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, NULL, NULL, DLG_DIR_NONE, 0);
 
+	if (dlg_enable_dmq)
+		dlg_dmq_replicate_action(DLG_DMQ_RM, dlg, 0);
 
 	/* delete the dialog from DB*/
 	if (dlg_db_mode)
@@ -1052,18 +1056,11 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 	}
 	*new_state = dlg->state;
 
-	/* remove the dialog from profiles when is not no longer active */
-	if(*new_state==DLG_STATE_DELETED && dlg->profile_links!=NULL
-				&& *old_state!=*new_state) {
-		destroy_linkers(dlg->profile_links);
-		dlg->profile_links = NULL;
-	}
-
-	dlg_unlock( d_table, d_entry);
-
 	LM_DBG("dialog %p changed from state %d to "
 		"state %d, due event %d (ref %d)\n", dlg, *old_state, *new_state, event,
 		dlg->ref);
+
+	dlg_unlock( d_table, d_entry);
 }
 
 /**

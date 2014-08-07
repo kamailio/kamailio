@@ -1278,6 +1278,29 @@ modparam("dialog", "timer_procs", 1)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>enable_dmq</varname> (int)</title>
+		<para>
+			If set to 1, the dialog will be synced via dmq.
+			For now, only very basic dialog info is shared, just enough to have synced
+			profiles. Notably, it is not possible to send in-dialog requests on any
+			but the original proxy instance.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_dmq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "enable_dmq", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
