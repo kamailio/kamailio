@@ -93,8 +93,8 @@ dmq_peer_t* add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer)
 		shm_free(new_peer);
 		return NULL;
 	}
-	memcpy(new_peer->peer_id.s, peer->peer_id.s, peer->peer_id.len);
-	new_peer->peer_id.len = peer->peer_id.len;
+	memcpy(new_peer->description.s, peer->description.s, peer->description.len);
+	new_peer->description.len = peer->description.len;
 	
 	new_peer->next = peer_list->peers;
 	peer_list->peers = new_peer;
