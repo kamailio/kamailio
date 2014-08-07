@@ -258,6 +258,7 @@ int db_insert_pcontact(struct pcontact* _c)
 
 	SET_PROPER_NULL_FLAG((*_c->domain), values, LP_DOMAIN_IDX);
 	SET_PROPER_NULL_FLAG(_c->aor, values, LP_AOR_IDX);
+	SET_PROPER_NULL_FLAG(_c->aor, values, LP_CONTACT_IDX);
 	SET_PROPER_NULL_FLAG(_c->received_host, values, LP_RECEIVED_IDX);
 
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = _c->received_port;
