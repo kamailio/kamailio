@@ -1,16 +1,15 @@
 carrierroute
 
-Jonas Appel
-
-   1&1 Internet AG
-
-Hardy Kahl
-
-   1&1 Internet AG
-
 Henning Westerholt
 
    1&1 Internet AG
+
+Edited by
+
+Lucian Balaceanu
+
+   1&1 Internet AG
+   <lucian.balaceanu@1and1.ro>
 
    Copyright © 2007 1&1 Internet AG
      __________________________________________________________________
@@ -23,7 +22,6 @@ Henning Westerholt
         2. Dependencies
 
               2.1. Kamailio Modules
-              2.2. External Libraries or Applications
 
         3. Parameters
 
@@ -169,7 +167,6 @@ Chapter 1. Admin Guide
    2. Dependencies
 
         2.1. Kamailio Modules
-        2.2. External Libraries or Applications
 
    3. Parameters
 
@@ -279,7 +276,6 @@ Chapter 1. Admin Guide
 2. Dependencies
 
    2.1. Kamailio Modules
-   2.2. External Libraries or Applications
 
 2.1. Kamailio Modules
 
@@ -290,13 +286,6 @@ Chapter 1. Admin Guide
        the dbtext or db_berkeley module at the moment.
      * The tm module, when you want to use the $T_reply_code
        pseudo-variable in the “cr_next_domain” function.
-
-2.2. External Libraries or Applications
-
-   The following libraries or applications must be installed before
-   running Kamailio with this module loaded:
-     * libconfuse, a configuration file parser library. (
-       http://www.nongnu.org/confuse/ )
 
 3. Parameters
 

@@ -11,17 +11,7 @@
 	<bookinfo>
 	<title>carrierroute</title>
 	<productname class="trade">&kamailioname;</productname>
-	<authorgroup>
-		<author>
-		<firstname>Jonas</firstname>
-		<surname>Appel</surname>
-		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
-		</author>
-		<author>
-		<firstname>Hardy</firstname>
-		<surname>Kahl</surname>
-		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
-		</author>
+	<authorgroup>		
 		<author>
 		<firstname>Henning</firstname>
 		<surname>Westerholt</surname>
@@ -30,6 +20,12 @@
 			<email>henning.westerholt@1und1.de</email>
 		</address>
 		</author>
+		<editor>
+		<firstname>Lucian</firstname>
+		<surname>Balaceanu</surname>
+		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
+		<email>lucian.balaceanu@1and1.ro</email>
+		</editor>
 		<!--
 		<editor>
 		<firstname>EditorFirstname</firstname>
