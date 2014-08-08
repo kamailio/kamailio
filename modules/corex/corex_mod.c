@@ -31,9 +31,11 @@
 #include "corex_lib.h"
 #include "corex_rpc.h"
 #include "corex_var.h"
+#include "corex_nio.h"
 
 MODULE_VERSION
 
+static int nio_intercept = 0;
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
 static int w_send(sip_msg_t *msg, char *su, char *sq);
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq);
@@ -69,14 +71,19 @@ static cmd_export_t cmds[]={
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"send_data", (cmd_function)w_send_data, 2, fixup_spve_spve,
 			0, ANY_ROUTE },
-
+	{"is_incoming",    (cmd_function)nio_check_incoming, 0, 0,
+    	    0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
-	{"alias_subdomains",  PARAM_STRING|USE_FUNC_PARAM,
+	{"alias_subdomains",		STR_PARAM|USE_FUNC_PARAM,
 								(void*)corex_alias_subdomains_param},
+    {"network_io_intercept",	INT_PARAM, &nio_intercept},
+    {"min_msg_len",				INT_PARAM, &nio_min_msg_len},
+    {"msg_avp",			  		PARAM_STR, &nio_msg_avp_param},
+
 	{0, 0, 0}
 };
 
@@ -111,6 +118,12 @@ static int mod_init(void)
 	if(corex_register_check_self()<0)
 	{
 		LM_ERR("failed to register check self callback\n");
+		return -1;
+	}
+
+	if((nio_intercept > 0) && (nio_intercept_init() < 0))
+	{
+		LM_ERR("failed to register network io intercept callback\n");
 		return -1;
 	}
 

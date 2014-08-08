@@ -29,6 +29,15 @@
 		Contributions to this module must be done under the BSD license, to
 		follow the requirements of the core contributions.
 	</para>
+	<para>
+		This module now also provides access to network input / output data through
+		event_route[network:msg]. The raw data received from a remote host or about to
+		be sent to a remote host is available in variable $mb. The script writer may
+		manipulate this data and save the final result in an AVP defined by msg_avp
+		module parameter. The content of this AVP will then be processed by SIP worker
+		as normal, i.e. a received message will be parsed and sent to appropriate
+		route block while a sent message is forwarded to remote host.
+	</para>
 	</section>
 
 	<section>
@@ -87,6 +96,69 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 </programlisting>
 	    </example>
 	</section>
+    <section>
+        <title><varname>network_io_intercept</varname> (int)</title>
+        <para>
+            If set to non-zero then raw data received from a remote host or about to
+			be sent to a remote host is made available in event_route[network:msg].
+			The script writer may modify this and save to msg_avp, which will then
+			be processed by SIP worker as normal.
+        </para>
+        <para>
+        <emphasis>
+            Default value is 0, i.e. do not allow access to network io data.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>network_io_intercept</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("corex", "network_io_intercept", 1)
+...
+</programlisting>
+        </example>
+    </section>
+    <section>
+        <title><varname>msg_min_len</varname> (int)</title>
+        <para>
+            Minimum content length of the packet to execute the event_route[network:msg].
+			This only works if network_io_intercept parameter is set to non-zero.
+        </para>
+        <para>
+        <emphasis>
+            Default value is 0.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>msg_min_len</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("corex", "msg_min_len", 32)
+...
+</programlisting>
+        </example>
+    </section>
+    <section>
+        <title><varname>msg_avp</varname> (string)</title>
+        <para>
+            AVP name to store modified content to be set in the packet. If not set in
+            event_route[network:msg], then all changes are lost and original contents
+            are used. This only works if network_io_intercept parameter is to set non-zero.
+        </para>
+        <para>
+        <emphasis>
+            Default value is empty.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>msg_avp</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("corex", "msg_avp", "$avp(msg)")
+...
+</programlisting>
+        </example>
+    </section>
 	</section>
 
 	<section>
@@ -200,6 +272,36 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 </programlisting>
 		</example>
 	</section>
+    <section>
+		<title>
+			<function moreinfo="none">is_incoming()</function>
+		</title>
+        <para>
+            Returns true if contents of message buffer $mb are the data received from
+            remote host, otherwise false indicating that the contents of $mb are data
+            that is about to be sent out to remote host. This only works if 
+			network_io_intercept parameter is set to non-zero.
+        </para>
+        <para>
+        This function can be used from event_route[network:msg].
+        </para>
+        <example>
+        <title><function>is_incoming</function> usage</title>
+        <programlisting format="linespecific">
+...
+event_route[network:msg] {
+    if (is_incoming()) {
+        xlog("L_INFO", "Received message '$mb' \n");
+        $avp(msg) = $mb;
+    } else {
+        xlog("L_INFO", "Sending message '$mb' \n");
+        $avp(msg) = $mb;
+    };
+}
+...
+</programlisting>
+        </example>
+    </section>
 
 	</section>
 
@@ -262,6 +364,161 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		&sercmd; corex.shm_summary
 		</programlisting>
     </section>
+    </section>
+
+    <section>
+    <title>Event Routes</title>
+    <section id="async.evr.network_io">
+        <title>
+        <function moreinfo="none">event_route[network:msg]</function>
+        </title>
+        <para>
+            Event route block to be executed when new data is received from network
+            or the data that is about to be sent to a remote host by a SIP worker
+            process.
+        </para>
+        <para>
+            The kamailio script writer can check which type of data triggered this
+            event route using is_incoming method.
+        </para>
+        <para>
+            After executing of this event route, if msg_avp was defined and set then
+            its value is used for further processing, otherwise, original value of
+            $mb is used. If message was received from remote host, then it is parsed
+            and proceeds to appropriate route. Oterhwise if message set to send out,
+            then is sent to remote host per configured SIP timers in config script.
+        </para>
+        <para>
+            Please note this event route is meant to <emphasis>prepare</emphasis>
+            the message for on-wire communication, e.g. to do custom encryption or
+            decryption, compression/decompression etc. of the message sent to or 
+			received from remote host. Therefore, except text operations,
+			no module fucntions or pseudo variables are available in this event route.
+        </para>
+    </section>
+    </section>
+
+    <section>
+    <title>Examples of Usage</title>
+        <para>
+			To use network event_route[network:msg] the remote SIP UA must also implement and 
+			understand the encoding / decoding done in this event route. It is up to  &kamailio;
+			config script writer to define and implement how encoding and decoding is done. 
+			Any language module such as app_perl or app_lua can be called in
+			in event_route[network:msg] to implement desired logic.
+        </para>
+        <para>
+			The most simple use case is to compress the SIP packet on-wire. As SIP is a
+			text based protocol, so it is highly compressable. Using this module, one can
+			compress entire SIP message, including headers and message body before sending
+			it to remote host using any compression algorithm of choice, thus saving
+			significant bandwidth on mobile data networks.
+        </para>
+        <para>
+			A useful case is to use this function between SIP edge proxy and SIP application
+			server. The SIP messages received from end-user at SIP edge proxy may be decrypted
+			and sent to SIP application server at remote location unencrypted, where they are
+			processed as normal. One the way back, the messages received from SIP application
+			server at edge proxy can be encrpyted before being sent to actual destination.
+			The edge proxy can check whether received message came from end-user or SIP 
+			application server by using simple regular expressions.
+        </para>
+        <para>
+			Another use case is to implement a virtual HTTP tunnel for SIP messages. The SIP
+			client app can convert SIP message to binary e.g. by doing XOR, Base64 etc., then
+			prepend some fake HTTP headers to make it look like an HTTP request before sending
+			it to kamailio over SIP TCP socket. At kamailio, the fake headers are removed and data
+			is decoded back to normal SIP and processed per config script logic. For the data that
+			is to be sent to SIP client app, one can prepend fake HTTP reply headers to encoded
+			data before sending it to client app.
+        </para>
+        <para>
+			More advance use cases may involve custom encryption algorithms such as
+			ITV encryption algorithm,
+			<ulink url="https://github.com/mshary/itv"></ulink>
+        </para>
+        <para>
+			For example, the client app running on Android or iPhone, may send device UUID along
+			with ITV key, encrypted using RSA or AES256 with pre-shared secret, as first packet,
+			which is set as cookie by server in e.g. memcache. This cookie is referred by client
+			app in each next packet, so server can retrive encyption key from cache and use that
+			for decryption. Same can be done for server at client app side, so messages encrypted
+			by server can be decrypted at client app.
+        </para>
+        <para>
+			Next is a basic usage example where encoding and decoding is done using PERL,
+        </para>
+        <example>
+        <title><function>event_route[network:msg]</function> use cases</title>
+        <programlisting format="linespecific">
+...
+loadmodule "app_perl.so"
+loadmodule "corex.so"
+...
+# ----- app_perl params -----
+modparam("app_perl", "filename", "/usr/local/etc/kamailio/custom_compress.pl")
+modparam("app_perl", "modpath", "/usr/local/lib64/kamailio/perl")
+
+# ----- corex params -----
+modparam("corex", "network_io_intercept", 32)
+modparam("corex", "min_msg_len", 32)
+modparam("corex", "msg_avp", "$avp(msg)")
+...
+event_route[network:msg] {
+	if (is_incoming()) {
+		if (perl_exec_simple("do_uncompress", "" + $mb + "")) {
+			xlog("L_INFO", "Received message '$avp(msg)' \n");
+		} else {
+			xlog("L_INFO", "Received message '$mb' \n");
+			$avp(msg) = $mb;
+		};
+	} else {
+		xlog("L_INFO", "Sending message '$mb' \n");
+		if (!perl_exec_simple("do_compress", "" + $mb + "")) {
+			$avp(msg) = $mb;
+		};
+	};
+}
+...
+</programlisting>
+        </example>
+        <example>
+        <title>Sample PERL code for do_compress and do_uncompress</title>
+        <programlisting format="linespecific">
+...
+use strict;
+use warnings;
+use IO::Compress::Gzip qw(gzip $GzipError) ;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
+
+sub do_compress() {
+	my $input = shift;
+	my $output;
+
+	gzip \$input => \$output
+		or eval {
+			Kamailio::log(L_WARN, "GZIP failed: $GzipError\n");
+			$output = $input;
+		};
+
+	Kamailio::AVP::add("msg", $output);
+}
+
+sub do_uncompress() {
+	my $input = shift;
+	my $output;
+
+	gunzip \$input => \$output
+		or eval {
+			Kamailio::log(L_WARN, "GUNZIP failed: $GzipError\n");
+			$output = $input;
+		};
+
+	Kamailio::AVP::add("msg", $output);
+}
+...
+</programlisting>
+        </example>
     </section>
 </chapter>
 
