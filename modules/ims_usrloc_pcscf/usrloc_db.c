@@ -121,18 +121,20 @@ int db_update_pcontact(pcontact_t* _c)
 
 	db_val_t match_values[1];
 	db_key_t match_keys[1] = { &aor_col };
+        db_op_t op[1];
 	db_key_t update_keys[8] = { &expires_col, &reg_state_col,
 								&service_routes_col, &received_col,
 								&received_port_col, &received_proto_col,
 								&rx_session_id_col, &public_ids_col };
 	db_val_t values[8];
-
-	LM_DBG("updating pcontact: %.*s\n", _c->aor.len, _c->aor.s);
+        
+        LM_DBG("updating pcontact: %.*s\n", _c->aor.len, _c->aor.s);
 
 	VAL_TYPE(match_values) = DB1_STR;
 
 	VAL_NULL(match_values) = 0;
 	VAL_STR(match_values) = _c->aor;
+        op[0]=OP_EQ;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
@@ -180,7 +182,7 @@ int db_update_pcontact(pcontact_t* _c)
 	SET_PROPER_NULL_FLAG(impus, values, 7);
 	SET_STR_VALUE(values + 7, impus);
 
-	if((ul_dbf.update(ul_dbh, match_keys, NULL, match_values, update_keys,values, 1, 8)) !=0){
+	if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,values, 1, 8)) !=0){
 		LM_ERR("could not update database info\n");
 	    return -1;
 	}
@@ -323,6 +325,7 @@ int db_insert_pcontact(struct pcontact* _c)
 int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, security_t* _s) {
 	db_val_t match_values[1];
 	db_key_t match_keys[1] = { &aor_col };
+        db_op_t op[1];
 	db_key_t update_keys[13] = { &t_security_type_col, &t_protocol_col,
 			&t_mode_col, &t_ck_col, &t_ik_col, &t_ealg_col, &t_ialg_col, &t_port_uc_col,
 			&t_port_us_col, &t_spi_pc_col, &t_spi_ps_col, &t_spi_uc_col, &t_spi_us_col };
@@ -333,6 +336,7 @@ int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, secu
 	VAL_TYPE(match_values) = DB1_STR;
 	VAL_NULL(match_values) = 0;
 	VAL_STR(match_values) = _c->aor;
+        op[0]=OP_EQ;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
@@ -387,7 +391,7 @@ int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, secu
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_BIGINT(values + i) = ipsec?ipsec->spi_us:0;
 
-		if ((ul_dbf.update(ul_dbh, match_keys, NULL, match_values, update_keys,
+		if ((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
 				values, 1, 13)) != 0) {
 			LM_ERR("could not update database info\n");
 			return -1;
@@ -412,6 +416,8 @@ int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, secu
 int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_t* _s) {
 	db_val_t match_values[1];
 	db_key_t match_keys[1] = { &aor_col };
+        db_op_t op[1];
+        
 	db_key_t update_keys[13] = { &security_type_col, &protocol_col,
 			&mode_col, &ck_col, &ik_col, &ealg_col, &ialg_col, &port_uc_col,
 			&port_us_col, &spi_pc_col, &spi_ps_col, &spi_uc_col, &spi_us_col };
@@ -422,6 +428,7 @@ int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_
 	VAL_TYPE(match_values) = DB1_STR;
 	VAL_NULL(match_values) = 0;
 	VAL_STR(match_values) = _c->aor;
+        op[0]=OP_EQ;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
@@ -431,6 +438,7 @@ int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_
 	VAL_TYPE(values) = DB1_INT;
 	VAL_TIME(values) = _s?_s->type:0;
 	VAL_NULL(values) = 0;
+        
 
 	switch (_t) {
 	case SECURITY_IPSEC: {
@@ -485,7 +493,7 @@ int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_BIGINT(values + i) = ipsec?ipsec->spi_us:0;
 
-		if ((ul_dbf.update(ul_dbh, match_keys, NULL, match_values, update_keys,
+		if ((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
 				values, 1, 13)) != 0) {
 			LM_ERR("could not update database info\n");
 			return -1;
