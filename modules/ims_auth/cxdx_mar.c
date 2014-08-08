@@ -138,7 +138,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     }
 
     /* get the private_identity */
-    private_identity = get_private_identity(t->uas.request, data->realm, data->is_proxy_auth);
+    private_identity = cscf_get_private_identity(t->uas.request, data->realm);
     if (!private_identity.len) {
         LM_ERR("No private identity specified (Authorization: username)\n");
         stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_PRIVATE);
@@ -146,7 +146,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
         goto error;
     }
     /* get the public_identity */
-    public_identity = get_public_identity(t->uas.request);
+    public_identity = cscf_get_public_identity(t->uas.request);
     if (!public_identity.len) {
         LM_ERR("No public identity specified (To:)\n");
         stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_PUBLIC);

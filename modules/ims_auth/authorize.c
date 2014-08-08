@@ -329,14 +329,14 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, ch
     }
 
     /* get the private_identity */
-    private_identity = get_private_identity(msg, realm, is_proxy_auth);
+    private_identity = cscf_get_private_identity(msg, realm);
     if (!private_identity.len) {
         LM_ERR("No private identity specified (Authorization: username)\n");
         stateful_request_reply(msg, 403, MSG_403_NO_PRIVATE);
         return CSCF_RETURN_BREAK;
     }
     /* get the public_identity */
-    public_identity = get_public_identity(msg);
+    public_identity = cscf_get_public_identity(msg);
     if (!public_identity.len) {
         LM_ERR("No public identity specified (To:)\n");
         stateful_request_reply(msg, 403, MSG_403_NO_PUBLIC);
@@ -517,14 +517,14 @@ int www_resync_auth(struct sip_msg* msg, char* _route, char* str1, char* str2) {
     }
 
     /* get the private_identity */
-    private_identity = get_private_identity(msg, realm, is_proxy_auth);
+    private_identity = cscf_get_private_identity(msg, realm);
     if (!private_identity.len) {
         LM_ERR("No private identity specified (Authorization: username)\n");
         stateful_request_reply(msg, 403, MSG_403_NO_PRIVATE);
         return CSCF_RETURN_BREAK;
     }
     /* get the public_identity */
-    public_identity = get_public_identity(msg);
+    public_identity = cscf_get_public_identity(msg);
     if (!public_identity.len) {
         LM_ERR("No public identity specified (To:)\n");
         stateful_request_reply(msg, 403, MSG_403_NO_PUBLIC);
@@ -743,13 +743,13 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
         return 0; //CSCF_RETURN_BREAK;
     }
 
-    private_identity = get_private_identity(msg, realm, is_proxy_auth);
+    private_identity = cscf_get_private_identity(msg, realm);
     if (!private_identity.len) {
         LM_ERR("private identity missing\n");
         return AUTH_NO_CREDENTIALS;
     }
 
-    public_identity = get_public_identity(msg);
+    public_identity = cscf_get_public_identity(msg);
     if (!public_identity.len) {
         LM_ERR("public identity missing\n");
         return AUTH_NO_CREDENTIALS;
