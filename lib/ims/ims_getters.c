@@ -122,6 +122,61 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm)
 {
 	str pi={0,0};
 	struct hdr_field* h=0;
+	int ret,i,res;
+
+	if (parse_headers(msg,HDR_AUTHORIZATION_F,0)!=0) {
+		return pi;
+	}
+        
+        h = msg->authorization;
+	if (!msg->authorization){
+		goto fallback;
+	}
+        
+        if (realm.len && realm.s) {
+            ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
+            if (ret < 0) {
+                    goto fallback;
+            } else 
+                    if (ret > 0) {
+                            goto fallback;
+                    }
+        }
+
+	res = parse_credentials(h);
+        if (res != 0) {
+                LOG(L_ERR, "Error while parsing credentials\n");
+                return pi;
+        }
+
+	if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
+
+	goto done;
+
+	fallback:
+	pi = cscf_get_public_identity(msg);
+	if (pi.len>4&&strncasecmp(pi.s,"sip:",4)==0) {pi.s+=4;pi.len-=4;}
+	for(i=0;i<pi.len;i++)
+		if (pi.s[i]==';') {
+			pi.len=i;
+			break;
+		}
+	done:
+	return pi;	
+}
+
+/**
+ * Returns the Private Identity extracted from the Authorization header.
+ * If none found there takes the SIP URI in To without the "sip:" prefix
+ * \todo - remove the fallback case to the To header
+ * @param msg - the SIP message
+ * @param realm - the realm to match in an Authorization header
+ * @returns the str containing the private id, no mem dup
+ */
+str cscf_get_private_identity_no_realm(struct sip_msg *msg, str realm)
+{
+	str pi={0,0};
+	struct hdr_field* h=0;
 	int ret,i;
 
 	if (parse_headers(msg,HDR_AUTHORIZATION_F,0)!=0) {
@@ -132,15 +187,8 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm)
 		goto fallback;
 	}
 
-	ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
-	if (ret < 0) {
-		goto fallback;
-	} else 
-		if (ret > 0) {
-			goto fallback;
-		}
-
-	if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
+        h = msg->authorization;
+        if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
 
 	goto done;
 
