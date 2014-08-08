@@ -1072,9 +1072,6 @@ sca_call_info_invite_reply_18x_handler( sip_msg_t *msg,
 
     switch ( msg->REPLY_STATUS ) {
     case 180:
-	state = SCA_APPEARANCE_STATE_ALERTING;
-	break;
-
     case 183:
 	state = SCA_APPEARANCE_STATE_PROGRESSING;
 	break;
