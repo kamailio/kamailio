@@ -450,7 +450,23 @@ modparam("siptrace", "trace_delayed", 1)
 </programlisting>
                 </example>
         </section>
-
+<section>
+                <title><varname>force_send_sock</varname> (str)</title>
+                <para>
+				The local interface in form of SIP uri from where to send
+				the duplicated traffic. In the absence of this parameter
+				kamailio automatically picks an interface.
+                </para>
+                <example>
+                <title>Set <varname>force_send_sock</varname>
+                parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
+...
+</programlisting>
+                </example>
+        </section>
 	</section>
 	
 	<section>
