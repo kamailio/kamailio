@@ -457,21 +457,35 @@ modparam("siptrace", "trace_delayed", 1)
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">sip_trace()</function>
+		<function moreinfo="none">sip_trace([address])</function>
 		</title>
 		<para>
 		Store current processed SIP message in database. It is stored in the
 		form prior applying chages made to it.
 		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>address</emphasis> - The address in form of SIP uri
+		where to send a duplicate of traced message. This parameter trumps
+		duplicate_uri and allows tracing to more than one server.
+		</para>
+		</listitem>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		ONREPLY_ROUTE, BRANCH_ROUTE.
 		</para>
+		<emphasis>
+			Default value is "NULL".
+		</emphasis>
 		<example>
 		<title><function>sip_trace()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 sip_trace();
+...
+sip_trace("sip:10.1.1.2:5085");
 ...
 </programlisting>
 		</example>

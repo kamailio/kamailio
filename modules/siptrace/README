@@ -16,9 +16,9 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010 asipto.com
+   Copyright © 2010 asipto.com
 
-   Copyright � 2006 voice-system.ro
+   Copyright © 2006 voice-system.ro
      __________________________________________________________________
 
    Table of Contents
@@ -52,7 +52,7 @@ Daniel-Constantin Mierla
 
         4. Functions
 
-              4.1. sip_trace()
+              4.1. sip_trace([address])
 
         5. MI Commands
 
@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. sip_trace()
+        4.1. sip_trace([address])
 
    5. MI Commands
 
@@ -406,19 +406,27 @@ modparam("siptrace", "trace_delayed", 1)
 
 4. Functions
 
-   4.1. sip_trace()
+   4.1. sip_trace([address])
 
-4.1.  sip_trace()
+4.1.  sip_trace([address])
 
    Store current processed SIP message in database. It is stored in the
    form prior applying chages made to it.
 
+   Meaning of the parameters is as follows:
+     * address - The address in form of SIP uri where to send a duplicate
+       of traced message. This parameter trumps duplicate_uri and allows
+       tracing to more than one server.
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
+   Default value is "NULL".
 
    Example 1.17. sip_trace() usage
 ...
 sip_trace();
+...
+sip_trace("sip:10.1.1.2:5085");
 ...
 
 5. MI Commands
@@ -434,7 +442,7 @@ sip_trace();
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message tracing (as string "on" or "off" )
+       status of the SIP message tracing (as string “on” or “off” )
        without changing anything.
 
    MI FIFO Command Format:
@@ -454,7 +462,7 @@ sip_trace();
      * on or off: turns on/off SIP message tracing.. Possible values are:
           + on
           + off
-     * "check" does not change siptrace status, just reports the current
+     * “check” does not change siptrace status, just reports the current
        status.
 
 7. Database setup

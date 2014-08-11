@@ -91,10 +91,11 @@ static int mod_init(void);
 static int siptrace_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
-static int sip_trace(struct sip_msg*, char*, char*);
+static int sip_trace(struct sip_msg*, struct dest_info*, char*);
+static int fixup_siptrace(void ** param, int param_no);
 
 static int sip_trace_store_db(struct _siptrace_data* sto);
-static int trace_send_duplicate(char *buf, int len);
+static int trace_send_duplicate(char *buf, int len, struct dest_info*);
 
 static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps);
@@ -103,7 +104,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_sl_onreply_out(sl_cbp_t *slcb);
 static void trace_sl_ack_in(sl_cbp_t *slcb);
 
-static int trace_send_hep_duplicate(str *body, str *from, str *to);
+static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_info*);
 static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int *proto);
 
 
@@ -169,7 +170,7 @@ db_func_t db_funcs;      		/*!< Database functions */
  */
 static cmd_export_t cmds[] = {
 	{"sip_trace", (cmd_function)sip_trace, 0, 0, 0, ANY_ROUTE},
-	{"sip_trace", (cmd_function)sip_trace, 1, 0, 0, ANY_ROUTE},
+    {"sip_trace", (cmd_function)sip_trace, 1, fixup_siptrace, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -687,7 +688,7 @@ static int sip_trace_xheaders_free(struct _siptrace_data *sto)
 	return 0;
 }
 
-static int sip_trace_store(struct _siptrace_data *sto)
+static int sip_trace_store(struct _siptrace_data *sto, struct dest_info *dst)
 {
 	if(sto==NULL)
 	{
@@ -704,8 +705,8 @@ static int sip_trace_store(struct _siptrace_data *sto)
 	if (sip_trace_xheaders_write(sto) != 0)
 		return -1;
 
-	if(hep_mode_on) trace_send_hep_duplicate(&sto->body, &sto->fromip, &sto->toip);
-	else trace_send_duplicate(sto->body.s, sto->body.len);
+	if(hep_mode_on) trace_send_hep_duplicate(&sto->body, &sto->fromip, &sto->toip, dst);
+    else trace_send_duplicate(sto->body.s, sto->body.len, dst);
 
 	if (sip_trace_xheaders_free(sto) != 0)
 		return -1;
@@ -844,10 +845,75 @@ error:
 	return -1;
 }
 
-static int sip_trace(struct sip_msg *msg, char *dir, char *s2)
+static int fixup_siptrace(void** param, int param_no) {
+	char *duri = (char*) *param;
+	struct sip_uri dup_uri;
+	struct dest_info *dst = NULL;
+	struct proxy_l * p = NULL;
+	str dup_uri_str = { 0, 0 };
+
+	if (param_no != 1) {
+		LM_DBG("params:%s\n", (char*)*param);
+		return 0;
+	}
+	if (!(*duri)) {
+		LM_ERR("invalid dup URI\n");
+		return -1;
+	}
+	LM_DBG("sip_trace URI:%s\n", (char*)*param);
+
+	dup_uri_str.s = duri;
+	dup_uri_str.len = strlen(dup_uri_str.s);
+	memset(&dup_uri, 0, sizeof(struct sip_uri));
+
+	if (parse_uri(dup_uri_str.s, dup_uri_str.len, &dup_uri) < 0) {
+		LM_ERR("bad dup uri\n");
+		return -1;
+	}
+
+	dst = (struct dest_info *) pkg_malloc(sizeof(struct dest_info));
+	if (dst == 0) {
+		LM_ERR("no more pkg memory left\n");
+		return -1;
+	}
+	init_dest_info(dst);
+	/* create a temporary proxy*/
+	dst->proto = PROTO_UDP;
+	p = mk_proxy(&dup_uri.host, (dup_uri.port_no) ? dup_uri.port_no : SIP_PORT,
+			dst->proto);
+	if (p == 0) {
+		LM_ERR("bad host name in uri\n");
+		pkg_free(dst);
+		return -1;
+	}
+	hostent2su(&dst->to, &p->host, p->addr_idx, (p->port) ? p->port : SIP_PORT);
+
+	pkg_free(*param);
+	/* free temporary proxy*/
+	if (p) {
+		free_proxy(p); /* frees only p content, not p itself */
+		pkg_free(p);
+	}
+
+	*param = (void*) dst;
+	return 0;
+}
+
+static int sip_trace(struct sip_msg *msg, struct dest_info * dst, char *dir)
 {
 	struct _siptrace_data sto;
 	struct onsend_info *snd_inf = NULL;
+
+	if (dst){
+	    if (dst->send_sock == 0){
+	        dst->send_sock=get_send_socket(0, &dst->to, dst->proto);
+	        if (dst->send_sock==0){
+	            LM_ERR("can't forward to af %d, proto %d no corresponding"
+	                    " listening socket\n", dst->to.s.sa_family, dst->proto);
+	            return -1;
+	        }
+	    }
+	}
 
 	if(msg==NULL) {
 		LM_DBG("nothing to trace\n");
@@ -934,7 +1000,7 @@ static int sip_trace(struct sip_msg *msg, char *dir, char *s2)
 		sto.stat = siptrace_req;
 	}
 #endif
-	return sip_trace_store(&sto);
+	return sip_trace_store(&sto, dst);
 }
 
 #define trace_is_off(_msg) \
@@ -1116,7 +1182,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	sto.stat = siptrace_req;
 #endif
 
-	sip_trace_store(&sto);
+	sip_trace_store(&sto, NULL);
 	return;
 }
 
@@ -1187,7 +1253,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	sto.stat = siptrace_rpl;
 #endif
 
-	sip_trace_store(&sto);
+	sip_trace_store(&sto, NULL);
 	return;
 }
 
@@ -1296,7 +1362,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	sto.stat = siptrace_rpl;
 #endif
 
-	sip_trace_store(&sto);
+	sip_trace_store(&sto, NULL);
 	return;
 }
 
@@ -1382,7 +1448,7 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	sto.stat = siptrace_rpl;
 #endif
 
-	sip_trace_store(&sto);
+	sip_trace_store(&sto, NULL);
 	return;
 }
 
@@ -1434,10 +1500,10 @@ static struct mi_root* sip_trace_mi(struct mi_root* cmd_tree, void* param )
 	}
 }
 
-static int trace_send_duplicate(char *buf, int len)
+static int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 {
 	struct dest_info dst;
-	struct proxy_l * p;
+	struct proxy_l * p = NULL;
 
 	if(buf==NULL || len <= 0)
 		return -1;
@@ -1456,34 +1522,49 @@ static int trace_send_duplicate(char *buf, int len)
 		return -1;
 	}
 
-	hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
+	if (!dst2){
+	    init_dest_info(&dst);
+	    /* create a temporary proxy*/
+	    dst.proto = PROTO_UDP;
+	    p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
+	             dst.proto);
+	    if (p==0){
+	        LM_ERR("bad host name in uri\n");
+	        return -1;
+	    }
+	    hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
 
-	dst.send_sock=get_send_socket(0, &dst.to, dst.proto);
-	if (dst.send_sock==0)
-	{
-		LM_ERR("can't forward to af %d, proto %d no corresponding"
-				" listening socket\n", dst.to.s.sa_family, dst.proto);
-		goto error;
+	    dst.send_sock=get_send_socket(0, &dst.to, dst.proto);
+	    if (dst.send_sock==0){
+	        LM_ERR("can't forward to af %d, proto %d no corresponding"
+	                " listening socket\n", dst.to.s.sa_family, dst.proto);
+	        goto error;
+	    }
 	}
 
-	if (msg_send(&dst, buf, len)<0)
+	if (msg_send((dst2)?dst2:&dst, buf, len)<0)
 	{
 		LM_ERR("cannot send duplicate message\n");
 		goto error;
 	}
 
-	free_proxy(p); /* frees only p content, not p itself */
-	pkg_free(p);
+	if (p){
+	    free_proxy(p); /* frees only p content, not p itself */
+	    pkg_free(p);
+	}
 	return 0;
 error:
+    if (p){
 	free_proxy(p); /* frees only p content, not p itself */
 	pkg_free(p);
+    }
 	return -1;
 }
 
-static int trace_send_hep_duplicate(str *body, str *from, str *to)
+static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_info * dst2)
 {
 	struct dest_info dst;
+	struct dest_info* dst_fin = NULL;
 	struct proxy_l * p=NULL /* make gcc happy */;
 	void* buffer = NULL;
 	union sockaddr_union from_su;
@@ -1528,6 +1609,7 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 		goto error;
 	}
 
+    if (!dst2){
 	init_dest_info(&dst);
 	/* create a temporary proxy*/
 	dst.proto = PROTO_UDP;
@@ -1540,14 +1622,20 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 	}
 
 	hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
+	LM_DBG("setting up the socket_info\n");
+	dst_fin = &dst;
+    } else {
+        dst_fin = dst2;
+    }
 
-	dst.send_sock=get_send_socket(0, &dst.to, dst.proto);
-	if (dst.send_sock==0)
-	{
-		LM_ERR("can't forward to af %d, proto %d no corresponding"
-				" listening socket\n", dst.to.s.sa_family, dst.proto);
-		goto error;
-	}
+    if (dst_fin->send_sock == 0) {
+        dst_fin->send_sock=get_send_socket(0, &dst_fin->to, dst_fin->proto);
+        if (dst_fin->send_sock == 0) {
+            LM_ERR("can't forward to af %d, proto %d no corresponding"
+                    " listening socket\n", dst_fin->to.s.sa_family, dst_fin->proto);
+            goto error;
+        }
+    }
 
 	/* Version && proto && length */
 	hdr.hp_l = sizeof(struct hep_hdr);
@@ -1627,14 +1715,16 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 	memcpy((void*)(buffer + buflen) , (void*)body->s, body->len);
 	buflen +=body->len;
 
-	if (msg_send(&dst, buffer, buflen)<0)
+	if (msg_send(dst_fin, buffer, buflen)<0)
 	{
 		LM_ERR("cannot send hep duplicate message\n");
 		goto error;
 	}
 
+    if (p) {
 	free_proxy(p); /* frees only p content, not p itself */
 	pkg_free(p);
+    }
 	pkg_free(buffer);
 	return 0;
 error:
