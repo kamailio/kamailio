@@ -259,6 +259,15 @@ dmq_node_t* find_dmq_node(dmq_node_list_t* list, dmq_node_t* node)
 dmq_node_t* shm_dup_node(dmq_node_t* node)
 {
 	dmq_node_t* newnode;
+	if (!node) {
+		LM_ERR("node is null\n");
+		return NULL;
+	}
+	if (!node->orig_uri.s) {
+		LM_ERR("nod->orig_uri.s is null\n");
+		return NULL;
+	}
+
 	newnode = shm_malloc(sizeof(dmq_node_t));
 	if(newnode==NULL) {
 		LM_ERR("no more shm\n");

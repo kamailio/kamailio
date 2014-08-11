@@ -76,7 +76,6 @@ int build_uri_str(str* username, struct sip_uri* uri, str* from)
 	/* sip:user@host:port */
 	int from_len;
 	
-	from_len = username->len + uri->host.len + uri->port.len + 10;
 	if(!uri->host.s || !uri->host.len) {
 		LM_ERR("no host in uri\n");
 		return -1;
@@ -85,6 +84,8 @@ int build_uri_str(str* username, struct sip_uri* uri, str* from)
 		LM_ERR("no username given\n");
 		return -1;
 	}
+
+	from_len = username->len + uri->host.len + uri->port.len + 10;
 	from->s = pkg_malloc(from_len);
 	if(from->s==NULL) {
 		LM_ERR("no more pkg\n");
@@ -166,7 +167,7 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
 {
 	uac_req_t uac_r;
 	str str_hdr = {0, 0};
-	str from, to;
+	str from = {0, 0}, to = {0, 0};
 	dmq_cback_param_t* cb_param = NULL;
 	int result = 0;
 	int len = 0;
@@ -354,6 +355,10 @@ void ping_servers(unsigned int ticks, void *param) {
 	int ret;
 	LM_DBG("ping_servers\n");
 	body = build_notification_body();
+	if (!body) {
+		LM_ERR("could not build notification body\n");
+		return;
+	}
 	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node,
 			&notification_callback, 1, &notification_content_type);
 	pkg_free(body->s);

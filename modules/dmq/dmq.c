@@ -300,7 +300,7 @@ static int child_init(int rank)
  */
 static void destroy(void) {
 	/* TODO unregister dmq node, free resources */
-	if(dmq_notification_address.s) {
+	if(dmq_notification_address.s && notification_node && self_node) {
 		LM_DBG("unregistering node %.*s\n", STR_FMT(&self_node->orig_uri));
 		self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(notification_node, 1);
