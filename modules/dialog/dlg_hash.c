@@ -69,6 +69,8 @@
 
 extern int dlg_ka_interval;
 extern int dlg_enable_dmq;
+extern int dlg_id_offset;
+extern int dlg_id_increment;
 
 /*! global dialog table */
 struct dlg_table *d_table = 0;
@@ -265,6 +267,27 @@ int dlg_clean_run(ticks_t ti)
 }
 
 /*!
+ * \brief Create next id based on offset and increment
+ * \param id current value
+ */
+unsigned int inline dlg_next_id(unsigned int id)
+{
+	unsigned int new;
+
+	if (dlg_id_increment == 1) {
+		new = id + 1;
+	} else {
+		new = (((id + dlg_id_increment - dlg_id_offset) / dlg_id_increment)
+			* dlg_id_increment) + dlg_id_offset;
+	}
+	if (unlikely(new == 0)) {
+		new = dlg_id_offset;
+	}
+	return new;
+}
+
+
+/*!
  * \brief Initialize the global dialog table
  * \param size size of the table
  * \return 0 on success, -1 on failure
@@ -326,7 +349,7 @@ int init_dlg_table(unsigned int size)
 
 	for( i=0 ; i<size; i++ ) {
 		memset( &(d_table->entries[i]), 0, sizeof(struct dlg_entry) );
-		d_table->entries[i].next_id = rand() % (3*size);
+		d_table->entries[i].next_id = dlg_next_id(rand() % (3*size));
 		d_table->entries[i].lock_idx = i % d_table->locks_no;
 	}
 
@@ -824,8 +847,9 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode)
 	if(unlikely(mode==0)) dlg_lock( d_table, d_entry);
 
 	/* keep id 0 for special cases */
-	dlg->h_id = 1 + d_entry->next_id++;
-	if(dlg->h_id == 0) dlg->h_id = 1;
+	dlg->h_id = d_entry->next_id;
+	d_entry->next_id += dlg_id_increment;
+	if (unlikely(d_entry->next_id == 0)) d_entry->next_id = dlg_id_offset;
 	LM_DBG("linking dialog [%u:%u]\n", dlg->h_entry, dlg->h_id);
 	if (d_entry->first==0) {
 		d_entry->first = d_entry->last = dlg;

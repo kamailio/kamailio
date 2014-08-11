@@ -112,6 +112,8 @@ int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
 int dlg_enable_dmq = 0;
+int dlg_id_offset = 1;
+int dlg_id_increment = 1;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
@@ -297,6 +299,8 @@ static param_export_t mod_params[]={
 	{ "timeout_noreset",       INT_PARAM, &dlg_timeout_noreset      },
 	{ "timer_procs",           PARAM_INT, &dlg_timer_procs          },
 	{ "enable_dmq",            INT_PARAM, &dlg_enable_dmq           },
+	{ "id_offset",             INT_PARAM, &dlg_id_offset            },
+	{ "id_increment",          INT_PARAM, &dlg_id_increment         },
 	{ 0,0,0 }
 };
 
@@ -513,6 +517,16 @@ static int mod_init(void)
 		return -1;
 	} else if (strlen(rr_param)>MAX_DLG_RR_PARAM_NAME) {
 		LM_ERR("rr_param too long (max=%d)!!\n", MAX_DLG_RR_PARAM_NAME);
+		return -1;
+	}
+
+	if (dlg_id_increment < 1) {
+		LM_ERR("invalid value for id_increment\n");
+		return -1;
+	}
+
+	if (dlg_id_offset < 1 || dlg_id_offset > dlg_id_increment) {
+		LM_ERR("invalid value for id_offset\n");
 		return -1;
 	}
 

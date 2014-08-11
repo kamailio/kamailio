@@ -232,6 +232,11 @@ int init_dlg_table(unsigned int size);
  */
 void destroy_dlg_table(void);
 
+/*!
+ * \brief Create next id based on offset and increment
+ * \param id current value
+ */
+unsigned int dlg_next_id(unsigned int id);
 
 /*!
  * \brief Create a new dialog structure for a SIP dialog

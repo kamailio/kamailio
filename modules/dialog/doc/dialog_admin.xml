@@ -1301,6 +1301,51 @@ modparam("dialog", "enable_dmq", 1)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>id_increment</varname> (int)</title>
+		<para>
+			If syncing via DMQ is enabled, this must be set to at least the number of
+			proxies in the pool. Together with the <varname>id_offset</varname> parameter,
+			this will guarantee unique id&apos;s in the hash tables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>id_increment</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "id_increment", 3)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>id_offset</varname> (int)</title>
+		<para>
+			If syncing via DMQ is enabled, this must be set to a unique number
+			between 1 and the value of <varname>id_increment</varname> (inclusive) for
+			every proxy in the pool. Together with the <varname>id_increment</varname>
+			parameter, this will guarantee unique id&apos;s in the hash tables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>id_offset</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "id_offset", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 

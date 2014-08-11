@@ -304,7 +304,6 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 	str cseq1, cseq2, contact1, contact2, rroute1, rroute2;
 	str toroute_name;
 	str xdata;
-	unsigned int next_id;
 	srjson_doc_t jdoc;
 	
 	res = 0;
@@ -363,10 +362,9 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			link_dlg(dlg, 0, 0);
 
 			dlg->h_id = VAL_INT(values+1);
-			next_id = d_table->entries[dlg->h_entry].next_id;
-
-			d_table->entries[dlg->h_entry].next_id =
-				(next_id < dlg->h_id) ? (dlg->h_id+1) : next_id;
+			if (dlg->h_id >= d_table->entries[dlg->h_entry].next_id) {
+				d_table->entries[dlg->h_entry].next_id = dlg_next_id(dlg->h_id);
+			}
 
 			GET_STR_VALUE(to_tag, values, 6, 1, 1);
 
