@@ -365,6 +365,8 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 			LM_ERR("parsing Route-URI parameters\n");
 			return 0;
 		}
+		/* Not interested in param body - just the hooks */
+		free_params(params);
 
 		if (hooks.uri.ob)
 		{
@@ -422,6 +424,9 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 			LM_ERR("parsing Contact-URI parameters\n");
 			return 0;
 		}
+		/* Not interested in param body - just the hooks */
+		free_params(params);
+
 		if (hooks.contact.ob)
 		{
 			LM_DBG("found ;ob parameter on Contact-URI - outbound"
