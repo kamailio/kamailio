@@ -2454,6 +2454,11 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 		if (to_tag.len == 0) {
 			FORCE_RTP_PROXY_RET (-1);
 		}
+		if (msg->first_line.type == SIP_REQUEST) {
+			tmp = from_tag;
+			from_tag = to_tag;
+			to_tag = tmp;
+		}
 		create = 0;
 	} else if ((msg->first_line.type == SIP_REPLY && offer != 0)
 			|| (msg->first_line.type == SIP_REQUEST && offer == 0)) {
