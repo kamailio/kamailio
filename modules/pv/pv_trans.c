@@ -47,6 +47,7 @@
 #include "../../parser/parse_nameaddr.h"
 
 #include "../../lib/kcore/strcommon.h"
+#include "../../lib/srutils/shautils.h"
 #include "pv_trans.h"
 
 
