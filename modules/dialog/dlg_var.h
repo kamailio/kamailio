@@ -39,6 +39,7 @@ typedef struct _dlg_ctx {
 	int timeout;
 	dlg_cell_t *dlg1;
 	dlg_iuid_t iuid;
+	int cpid;
 	int set;
 	unsigned int dir;
 	int t;
