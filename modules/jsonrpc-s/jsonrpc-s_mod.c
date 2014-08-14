@@ -165,8 +165,6 @@ static void jsonrpc_fault(jsonrpc_ctx_t* ctx, int code, char* fmt, ...)
  */
 static int jsonrpc_init_reply(jsonrpc_ctx_t *ctx)
 {
-	srjson_t *nj = NULL;
-
 	ctx->http_code = 200;
 	ctx->http_text = JSONRPC_REASON_OK;
 	ctx->jrpl = srjson_NewDoc(NULL);
@@ -401,9 +399,6 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 	char **char_ptr;
 	double *double_ptr;
 	str *str_ptr;
-
-	str arg;
-
 	int mandatory_param = 1;
 	int modifiers = 0;
 	int auto_convert = 0;
@@ -492,6 +487,23 @@ static int jsonrpc_printf(jsonrpc_ctx_t* ctx, char* fmt, ...)
 		/* if that worked, return the string. */
 		if (n > -1 && n < buf_size) {
 			nj = srjson_CreateString(ctx->jrpl, buf);
+			if(nj==NULL) {
+				LM_ERR("failed to create the value node\n");
+				return -1;
+			}
+			if(ctx->flags & RET_ARRAY) {
+				if (ctx->rpl_node==NULL) {
+					ctx->rpl_node = srjson_CreateArray(ctx->jrpl);
+					if(ctx->rpl_node == 0) {
+						LM_ERR("failed to create the root array node\n");
+						return -1;
+					}
+				}
+				srjson_AddItemToArray(ctx->jrpl, ctx->rpl_node, nj);
+			} else {
+				if (ctx->rpl_node) srjson_Delete(ctx->jrpl, ctx->rpl_node);
+				ctx->rpl_node = nj;
+			}
 			if(buf && buf!=tbuf) jsonrpc_free(buf);
 			return 0;
 		}
@@ -679,8 +691,6 @@ static void jsonrpc_clean_context(jsonrpc_ctx_t* ctx)
 
 static int mod_init(void)
 {
-	int i;
-
 	/* bind the XHTTP API */
 	if (xhttp_load_api(&xhttp_api) < 0) {
 		LM_ERR("cannot bind to XHTTP API\n");
@@ -722,7 +732,6 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	jsonrpc_ctx_t* ctx;
 	str arg = {NULL, 0};
 	int ret = 0;
-	int i;
 	srjson_t *nj = NULL;
 	str val;
 
