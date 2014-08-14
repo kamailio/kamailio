@@ -58,6 +58,7 @@
 #include "../../lib/kcore/statistics.h"
 #include "../../action.h"
 #include "../../script_cb.h"
+#include "../../pt.h"
 #include "../../lib/kcore/faked_msg.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_cseq.h"
@@ -873,6 +874,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 
     if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
+	_dlg_ctx.cpid = my_pid();
 finish:
     _dlg_ctx.iuid.h_entry = dlg->h_entry;
     _dlg_ctx.iuid.h_id = dlg->h_id;
