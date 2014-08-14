@@ -29,8 +29,6 @@
 #define _STRCOMMON_H_
 
 #include "../../str.h"
-#include "../../md5.h"
-#include "../srutils/sha256.h"
 
 /*
  * add backslashes to special characters
@@ -40,14 +38,6 @@ int escape_common(char *dst, char *src, int src_len);
  * remove backslashes to special characters
  */
 int unescape_common(char *dst, char *src, int src_len);
-
-void compute_md5(char *dst, char *src, int src_len);
-
-void compute_sha256(char *dst, u_int8_t *src, int src_len);
-
-void compute_sha384(char *dst, u_int8_t *src, int src_len);
-
-void compute_sha512(char *dst, u_int8_t *src, int src_len);
 
 int escape_user(str *sin, str *sout);
 
