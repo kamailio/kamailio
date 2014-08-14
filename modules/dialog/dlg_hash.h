@@ -318,11 +318,40 @@ dlg_cell_t* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 
 /*!
+ * \brief Search dialog that corresponds to CallId, From Tag and To Tag
+ *
+ * Get dialog that correspond to CallId, From Tag and To Tag.
+ * See RFC 3261, paragraph 4. Overview of Operation:
+ * "The combination of the To tag, From tag, and Call-ID completely
+ * defines a peer-to-peer SIP relationship between [two UAs] and is
+ * referred to as a dialog."
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * If the dialog is not found, the hash slot is left locked, to allow
+ * linking the structure of a new dialog.
+ * \param callid callid
+ * \param ftag from tag
+ * \param ttag to tag
+ * \param dir direction
+ * \return dialog structure on success, NULL on failure (and slot locked)
+ */
+dlg_cell_t* search_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
+
+
+/*!
+ * \brief Release hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_release(str *callid);
+
+
+/*!
  * \brief Link a dialog structure
  * \param dlg dialog
  * \param n extra increments for the reference counter
+ * \param mode link in safe mode (0 - lock slot; 1 - don't)
  */
-void link_dlg(dlg_cell_t *dlg, int n);
+void link_dlg(struct dlg_cell *dlg, int n, int mode);
 
 
 /*!
