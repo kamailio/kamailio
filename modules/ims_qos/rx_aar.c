@@ -380,12 +380,17 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
             //is this a stream to add to AAR.
             if (req_sdp_stream->is_rtp) {
 
-                rx_add_media_component_description_avp(aar, sdp_stream_num + 1,
-                        &req_sdp_stream->media, &req_sdp_session->ip_addr,
-                        &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
-                        &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
-                        &req_sdp_stream->raw_stream,
-                        &rpl_sdp_stream->raw_stream, direction);
+		//check if the src or dst port is 0 and if so then don't add to rx
+		int intportA = atoi(req_sdp_stream->port.s);
+		int intportB = atoi(rpl_sdp_stream->port.s);
+		if(intportA != 0 && intportB != 0){
+                	rx_add_media_component_description_avp(aar, sdp_stream_num + 1,
+                        	&req_sdp_stream->media, &req_sdp_session->ip_addr,
+	                        &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
+        	                &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
+                	        &req_sdp_stream->raw_stream,
+                        	&rpl_sdp_stream->raw_stream, direction);	
+		}
             }
             sdp_stream_num++;
         }
