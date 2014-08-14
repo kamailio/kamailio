@@ -360,7 +360,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			}
 
 			/*link the dialog*/
-			link_dlg(dlg, 0);
+			link_dlg(dlg, 0, 0);
 
 			dlg->h_id = VAL_INT(values+1);
 			next_id = d_table->entries[dlg->h_entry].next_id;
