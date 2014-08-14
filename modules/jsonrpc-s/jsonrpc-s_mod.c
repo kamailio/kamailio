@@ -730,7 +730,6 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 {
 	rpc_export_t* rpce;
 	jsonrpc_ctx_t* ctx;
-	str arg = {NULL, 0};
 	int ret = 0;
 	srjson_t *nj = NULL;
 	str val;
