@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides JSONRPC server over HTTP implementation,
+		tailored for the needs of &kamailio;.
+	<para>
+	</para>
+		The JSONRPC-S module uses the xHTTP module to handle HTTP requests.
+		Read the documentation of the xHTTP module for more details.
+	</para>
+
+	<section>
+	<title>Limitations</title>
+	<itemizedlist>
+	<listitem>
+	<para>
+		This module does not implement asynchronous RPC commands.
+		It is unlikely that asynchronous RPC commands will be executed
+		from an JSONRPC over HTTP client.
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		This module does not accept parameters embedded in a structure
+		(see RPC documentation for more info about how parameters can be
+		passed to RPC).
+	</para>
+	</listitem>
+	</itemizedlist>
+	</section>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>xhttp</emphasis> - xHTTP.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>pretty_format</varname> (int)</title>
+		<para>
+			Pretty format for JSONRPC response document. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is '0'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>pretty_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpc-s", "pretty_format", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">jsonrpc_dispatch()</function>
+	    </title>
+	    <para>
+		Handle the JSONRPC request and generate a response.
+	    </para>
+		<example>
+		<title><function>jsonrpc_dispatch</function> usage</title>
+		<programlisting format="linespecific">
+...
+#!KAMAILIO
+
+memdbg=5
+memlog=5
+
+debug=3
+log_stderror=yes
+
+fork=yes
+children=2
+
+tcp_accept_no_cl=yes
+
+mpath="modules/"
+
+loadmodule "sl.so"
+loadmodule "pv.so"
+loadmodule "xhttp.so"
+loadmodule "jsonrpc-s.so"
+
+request_route {
+	send_reply("404", "not found");
+	exit;
+}
+
+event_route[xhttp:request] {
+    if(src_ip!=127.0.0.1) {
+        xhttp_reply("403", "Forbidden", "text/html",
+            "&lt;html&gt;&lt;body&gt;Not allowed from $si&lt;/body&gt;&lt;/html&gt;");
+        exit;
+	}
+	if ($hu =~ "^/RPC") {
+		jsonrpc_dispatch();
+	} else {
+        xhttp_reply("200", "OK", "text/html",
+            "&lt;html&gt;&lt;body&gt;Wrong URL $hu&lt;/body&gt;&lt;/html&gt;");
+    }
+    return;
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+</chapter>
+
