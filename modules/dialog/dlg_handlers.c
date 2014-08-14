@@ -817,8 +817,8 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 				if (run_initial_cbs)
 					run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL,
 							DLG_DIR_DOWNSTREAM, 0);
-				/* get_dlg() has incremented the ref count by 1
-				 * - it's ok, dlg will be unref at the end of function */
+				/* get_dlg() has incremented the ref count by 1 */
+				dlg_release(dlg);
 				goto finish;
 			}
 			dlg_release(dlg);
@@ -871,16 +871,12 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 		goto error;
 	}
 
-	/* new dlg - reference it once more for current dialog iuid shortcut */
-    dlg_ref(dlg, 1);
-
     if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
 finish:
     _dlg_ctx.iuid.h_entry = dlg->h_entry;
     _dlg_ctx.iuid.h_id = dlg->h_id;
     set_current_dialog(req, dlg);
-	dlg_release(dlg);
 
 	return 0;
 
