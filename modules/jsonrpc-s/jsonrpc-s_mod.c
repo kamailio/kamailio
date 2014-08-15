@@ -530,19 +530,23 @@ static int jsonrpc_printf(jsonrpc_ctx_t* ctx, char* fmt, ...)
 static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 {
 	srjson_t *nj = NULL;
+	srjson_t *wj = NULL;
 	jsonrpc_ctx_t* ctx;
 	va_list ap;
 	void **void_ptr;
 	str mname;
+	int isobject;
 
 	if(jnode==NULL) {
 		LM_ERR("invalid json node parameter\n");
 		return -1;
 	}
-	if(jnode->type!=srjson_Object) {
-		LM_ERR("json node parameter is not object (%d)\n", jnode->type);
+	if(jnode->type!=srjson_Object && jnode->type!=srjson_Array) {
+		LM_ERR("json node parameter is not object or array (%d)\n",
+				jnode->type);
 		return -1;
 	}
+	isobject = (jnode->type==srjson_Object);
 
 	ctx = &_jsonrpc_ctx;
 	if(ctx->jrpl==NULL) {
@@ -568,8 +572,19 @@ static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 		}
 
 		if(nj==NULL) goto err;
-		srjson_AddItemToObject(ctx->jrpl, jnode,
-					mname.s, nj);
+		if(isobject) {
+			/* add as member to object */
+			srjson_AddItemToObject(ctx->jrpl, jnode, mname.s, nj);
+		} else {
+			/* wrap member in a new object and add to array */
+			wj = srjson_CreateObject(ctx->jrpl);
+			if(wj==NULL) {
+				srjson_Delete(ctx->jrpl, nj);
+				goto err;
+			}
+			srjson_AddItemToObject(ctx->jrpl, wj, mname.s, nj);
+			srjson_AddItemToArray(ctx->jrpl, jnode, wj);
+		}
 		fmt++;
 	}
 	va_end(ap);
