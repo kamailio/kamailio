@@ -489,6 +489,7 @@ static int jsonrpc_printf(jsonrpc_ctx_t* ctx, char* fmt, ...)
 			nj = srjson_CreateString(ctx->jrpl, buf);
 			if(nj==NULL) {
 				LM_ERR("failed to create the value node\n");
+				if(buf && buf!=tbuf) jsonrpc_free(buf);
 				return -1;
 			}
 			if(ctx->flags & RET_ARRAY) {
@@ -496,6 +497,7 @@ static int jsonrpc_printf(jsonrpc_ctx_t* ctx, char* fmt, ...)
 					ctx->rpl_node = srjson_CreateArray(ctx->jrpl);
 					if(ctx->rpl_node == 0) {
 						LM_ERR("failed to create the root array node\n");
+						if(buf && buf!=tbuf) jsonrpc_free(buf);
 						return -1;
 					}
 				}
@@ -637,9 +639,63 @@ static int jsonrpc_struct_scan(void* s, char* fmt, ...)
 
 /** Create a new member from formatting string and add it to a structure.
  */
-static int jsonrpc_struct_printf(void* s, char* member_name, char* fmt, ...)
+static int jsonrpc_struct_printf(srjson_t *jnode, char* mname, char* fmt, ...)
 {
-	LM_ERR("Not implemented\n");
+	jsonrpc_ctx_t* ctx;
+	int n, buf_size;
+	char *buf = 0;
+	char tbuf[JSONRPC_PRINT_VALUE_BUF_LEN];
+	va_list ap;
+	srjson_t *nj = NULL;
+
+	if(jnode==NULL || mname==NULL) {
+		LM_ERR("invalid json node or member name parameter (%p/%p)\n",
+				jnode, mname);
+		return -1;
+	}
+	if(jnode->type!=srjson_Object) {
+		LM_ERR("json node parameter is not object (%d)\n", jnode->type);
+		return -1;
+	}
+
+	ctx = &_jsonrpc_ctx;
+	if(ctx->jrpl==NULL) {
+		LM_ERR("reply object not initialized in rpl context\n");
+		return -1;
+	}
+
+	buf = tbuf;
+	buf_size = JSONRPC_PRINT_VALUE_BUF_LEN;
+	while (1) {
+		/* try to print in the allocated space. */
+		va_start(ap, fmt);
+		n = vsnprintf(buf, buf_size, fmt, ap);
+		va_end(ap);
+		/* if that worked, return the string. */
+		if (n > -1 && n < buf_size) {
+			nj = srjson_CreateString(ctx->jrpl, buf);
+			if(nj==NULL) {
+				LM_ERR("failed to create the value node\n");
+				if(buf && buf!=tbuf) jsonrpc_free(buf);
+				return -1;
+			}
+			srjson_AddItemToObject(ctx->jrpl, jnode, mname, nj);
+			if(buf && buf!=tbuf) jsonrpc_free(buf);
+			return 0;
+		}
+		/* else try again with more space. */
+		if (n > -1) {   /* glibc 2.1 */
+			buf_size = n + 1; /* precisely what is needed */
+		} else {          /* glibc 2.0 */
+			buf_size *= 2;  /* twice the old size */
+		}
+		if(buf && buf!=tbuf) jsonrpc_free(buf);
+		if ((buf = jsonrpc_malloc(buf_size)) == 0) {
+			jsonrpc_fault(ctx, 500, "Internal Server Error (No memory left)");
+			LM_ERR("no memory left for rpc printf\n");
+			return -1;
+		}
+	}
 	return -1;
 }
 
