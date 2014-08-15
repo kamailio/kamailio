@@ -1274,7 +1274,6 @@ int uac_reg_db_refresh(str *pl_uuid)
 	reg_dbf.free_result(reg_db_con, db_res);
 	reg_dbf.close(reg_db_con);
 
-done:
 	return 0;
 
 error:
@@ -1586,9 +1585,6 @@ static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 {
 	int i;
 	reg_item_t *reg = NULL;
-	void* th;
-	str none = {"none", 4};
-	time_t tn;
 	str attr = {0};
 	str val = {0};
 	str *rval;
@@ -1610,8 +1606,6 @@ static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 		rpc->fault(ctx, 500, "Invalid Parameter Values");
 		return;
 	}
-
-	tn = time(NULL);
 
 	for(i=0; i<_reg_htable->htsize; i++)
 	{

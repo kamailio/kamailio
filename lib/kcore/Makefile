@@ -7,6 +7,6 @@ BUGFIX_VER=0
 LIBS=
 
 SERLIBPATH=..
-SER_LIBS=$(SERLIBPATH)/srutils/srutils
+SER_LIBS=
 
 include ../../Makefile.libs

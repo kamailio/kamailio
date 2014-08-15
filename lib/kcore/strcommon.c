@@ -110,44 +110,6 @@ int unescape_common(char *dst, char *src, int src_len)
 	return j;
 }
 
-/*! \brief Compute MD5 checksum */
-void compute_md5(char *dst, char *src, int src_len)
-{
-	MD5_CTX context;
-	unsigned char digest[16];
-	MD5Init (&context);
-  	MD5Update (&context, src, src_len);
-	U_MD5Final (digest, &context);
-	string2hex(digest, 16, dst);
-}
-
-/*! \brief Compute SHA256 checksum */
-void compute_sha256(char *dst, u_int8_t *src, int src_len)
-{
-	SHA256_CTX ctx256;
-	SHA256_Init(&ctx256);
-	SHA256_Update(&ctx256, src, src_len);
-	SHA256_End(&ctx256, dst);
-}
-
-/*! \brief Compute SHA384 checksum */
-void compute_sha384(char *dst, u_int8_t *src, int src_len)
-{
-	SHA384_CTX ctx384;
-	SHA384_Init(&ctx384);
-	SHA384_Update(&ctx384, src, src_len);
-	SHA384_End(&ctx384, dst);
-}
-
-/*! \brief Compute SHA512 checksum */
-void compute_sha512(char *dst, u_int8_t *src, int src_len)
-{
-	SHA512_CTX ctx512;
-	SHA512_Init(&ctx512);
-	SHA512_Update(&ctx512, src, src_len);
-	SHA512_End(&ctx512, dst);
-}
-
 /*! \brief Unscape all printable ASCII characters */
 int unescape_user(str *sin, str *sout)
 {

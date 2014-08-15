@@ -58,6 +58,7 @@
 #include "../../lib/kcore/statistics.h"
 #include "../../action.h"
 #include "../../script_cb.h"
+#include "../../pt.h"
 #include "../../lib/kcore/faked_msg.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_cseq.h"
@@ -775,6 +776,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
     str ttag;
     str req_uri;
     unsigned int dir;
+    int mlock;
 
 	dlg = dlg_get_ctx_dialog();
     if(dlg != NULL) {
@@ -799,18 +801,20 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
     }
     trim(&req_uri);
 
-    if (detect_spirals)
-    {
-        if (spiral_detected == 1)
-            return 0;
+	dir = DLG_DIR_NONE;
+	mlock = 1;
+	/* search dialog by SIP attributes
+	 * - if not found, hash table slot is left locked, to avoid races
+	 *   to add 'same' dialog on parallel forking or not-handled-yet
+	 *   retransmissions. Release slot after linking new dialog */
+	dlg = search_dlg(&callid, &ftag, &ttag, &dir);
+	if(dlg) {
+		mlock = 0;
+		if (detect_spirals) {
+			if (spiral_detected == 1)
+				return 0;
 
-        dir = DLG_DIR_NONE;
-
-        dlg = get_dlg(&callid, &ftag, &ttag, &dir);
-        if (dlg)
-        {
-			if ( dlg->state != DLG_STATE_DELETED )
-			{
+			if ( dlg->state != DLG_STATE_DELETED ) {
 				LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
 					callid.len, callid.s);
 				spiral_detected = 1;
@@ -818,9 +822,12 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 				if (run_initial_cbs)
 					run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL,
 							DLG_DIR_DOWNSTREAM, 0);
-				/* get_dlg() has incremented the ref count by 1
-				 * - it's ok, dlg will be unref at the end of function */
-				goto finish;
+				/* set ctx dlg id shortcuts */
+				_dlg_ctx.iuid.h_entry = dlg->h_entry;
+				_dlg_ctx.iuid.h_id = dlg->h_id;
+				/* search_dlg() has incremented the ref count by 1 */
+				dlg_release(dlg);
+				return 0;
 			}
 			dlg_release(dlg);
         }
@@ -833,16 +840,16 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
                          &ftag/*from_tag*/,
                          &req_uri /*r-uri*/ );
 
-	if (dlg==0)
-	{
+	if (dlg==0) {
+		if(likely(mlock==1)) dlg_hash_release(&callid);
 		LM_ERR("failed to create new dialog\n");
 		return -1;
 	}
 
 	/* save caller's tag, cseq, contact and record route*/
 	if (populate_leg_info(dlg, req, t, DLG_CALLER_LEG,
-			&(get_from(req)->tag_value)) !=0)
-	{
+			&(get_from(req)->tag_value)) !=0) {
+		if(likely(mlock==1)) dlg_hash_release(&callid);
 		LM_ERR("could not add further info to the dialog\n");
 		shm_free(dlg);
 		return -1;
@@ -851,7 +858,9 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	/* Populate initial varlist: */
 	dlg->vars = get_local_varlist_pointer(req, 1);
 
-	link_dlg(dlg, 0);
+	/* if search_dlg() returned NULL, slot was kept locked */
+	link_dlg(dlg, 0, mlock);
+	if(likely(mlock==1)) dlg_hash_release(&callid);
 
 	dlg->lifetime = get_dlg_timeout(req);
 	s.s   = _dlg_ctx.to_route_name;
@@ -872,16 +881,12 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 		goto error;
 	}
 
-	/* new dlg - reference it once more for current dialog iuid shortcut */
-    dlg_ref(dlg, 1);
-
     if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
-finish:
+	_dlg_ctx.cpid = my_pid();
     _dlg_ctx.iuid.h_entry = dlg->h_entry;
     _dlg_ctx.iuid.h_id = dlg->h_id;
     set_current_dialog(req, dlg);
-	dlg_release(dlg);
 
 	return 0;
 

@@ -138,7 +138,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 	}
 
  error:
-	if (r) pkg_free(r);
+	if (r) free_rr(&r);
 	free_rr(head); /* Free any contacts created so far */
 	return -1;
 

@@ -18,7 +18,7 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 # - extra used modules, with no extra dependency
 mod_list_extra=avp auth_diameter call_control cnxcc dmq domainpolicy msrp pdb \
 			     qos sca seas sms sst timer tmrec uac_redirect xhttp \
-				 xhttp_rpc xprint
+				 xhttp_rpc xprint jsonrpc-s nosip
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \

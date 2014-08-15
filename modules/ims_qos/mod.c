@@ -552,10 +552,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
         LM_DBG("Attached CDP auth session [%.*s] for Rx to dialog in %s mode\n", auth_session->id.len, auth_session->id.s, direction);
     } else {
         LM_DBG("Update AAR session for this dialog in mode %s\n", direction);
-        if (saved_t_data)
-                free_saved_transaction_global_data(saved_t_data); //only free global data if no AARs were sent. if one was sent we have to rely on the callback (CDP) to free
-        create_return_code(CSCF_RETURN_TRUE);
-        return CSCF_RETURN_TRUE;
+	auth_session = cdpb.AAAGetAuthSession(*rx_session_id);
     }
 
     LM_DBG("Suspending SIP TM transaction\n");

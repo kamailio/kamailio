@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-	<title>COREX Module</title>
+	<title>JSONRPC-S Module</title>
 	<productname class="trade">kamailio.org</productname>
 	<authorgroup>
 	    <author>
@@ -23,20 +23,15 @@
 		<surname>Mierla</surname>
 		<email>miconda@gmail.com</email>
 	    </editor>
-	    <editor>
-		<firstname>Muhammad Shahzad</firstname>
-		<surname>Shafi</surname>
-		<email>shahzad@voip-demos.com</email>
-	    </editor>
 	</authorgroup>
 	<copyright>
-	    <year>2012</year>
+	    <year>2014</year>
 	    <holder>asipto.com</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
     
-    <xi:include href="corex_admin.xml"/>
+    <xi:include href="jsonrpc-s_admin.xml"/>
     
     
 </book>

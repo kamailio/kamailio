@@ -1,7 +1,7 @@
 /*
- * $Id$
+ * sha and other hashing utilities
  *
- * Copyright (C) 2007 voice-system.ro
+ * Copyright (C) 2014 1&1 Germany
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -18,34 +18,19 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- */
-/*!
- * \file
- * \brief Common string handling functions
  */
 
-#ifndef _STRCOMMON_H_
-#define _STRCOMMON_H_
+#ifndef _SHAUTILS_H_
+#define _SHAUTILS_H_
 
-#include "../../str.h"
+#include "sha256.h"
 
-/*
- * add backslashes to special characters
- */
-int escape_common(char *dst, char *src, int src_len);
-/*
- * remove backslashes to special characters
- */
-int unescape_common(char *dst, char *src, int src_len);
+void compute_md5(char *dst, char *src, int src_len);
 
-int escape_user(str *sin, str *sout);
+void compute_sha256(char *dst, u_int8_t *src, int src_len);
 
-int unescape_user(str *sin, str *sout);
+void compute_sha384(char *dst, u_int8_t *src, int src_len);
 
-int escape_param(str *sin, str *sout);
-
-int unescape_param(str *sin, str *sout);
+void compute_sha512(char *dst, u_int8_t *src, int src_len);
 
 #endif
-
