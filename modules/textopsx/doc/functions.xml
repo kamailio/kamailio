@@ -16,6 +16,14 @@
 		the behaviour of your config.  Do test your config properly!
 		</para>
    		<para>
+		The function returns true (1) on success. If it is failure before the
+		new content is build, the function returns false (-1), the old content
+		is still in place. If parsing of the new content is failing, the
+		function stops executions of the config file (the internal structure
+		is no longer valid for config processing, like it happens when a
+		broken message is received from network).
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 		</para>
 		<example>
