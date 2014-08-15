@@ -36,7 +36,7 @@ static unsigned int current_msg_id = 0;
 static pcontact_t * c = NULL;
 
 extern usrloc_api_t ul;
-
+extern int ignore_contact_rxport_check;
 static str * asserted_identity;
 
 /*!
@@ -148,7 +148,10 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 						}
 					}
 
-					if ((c->reg_state == PCONTACT_REGISTERED) && ((c->received_port == _m->rcv.src_port) || (security_server_port == _m->rcv.src_port)) && (c->received_proto == _m->rcv.proto)) {
+					if ((c->reg_state == PCONTACT_REGISTERED) 
+                                                && (ignore_contact_rxport_check || (c->received_port == _m->rcv.src_port) || (security_server_port == _m->rcv.src_port))
+                                                && (ignore_contact_rxport_check||(c->received_proto == _m->rcv.proto))) {
+                                            
 						received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 						received_host.s = srcip;
 						LM_DBG("Received host len %d (search %d)\n", c->received_host.len, received_host.len);

@@ -77,6 +77,8 @@ pua_api_t pua; 							/**!< PUA API structure */
 int publish_reginfo = 0;
 int subscribe_to_reginfo = 0;
 int subscription_expires = 3600;
+int ignore_contact_rxport_check = 0;                             /**!< ignore port checks between received port on message and registration received port. 
+                                                                 * this is useful for example if you register with UDP but possibly send invite over TCP (message too big)*/
 
 time_t time_now;
 char * pcscf_uri = "sip:pcscf.ims.smilecoms.com:4060";
@@ -147,18 +149,14 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"pcscf_uri",         	STR_PARAM, &pcscf_uri    						},
-	{"pending_reg_expires",	INT_PARAM, &pending_reg_expires					},
-
-	{"received_avp",       STR_PARAM, &rcv_avp_param       					},
-
-	{"is_registered_fallback2ip",	INT_PARAM, &is_registered_fallback2ip	},
-	
-	{"publish_reginfo", INT_PARAM, &publish_reginfo},
-        {"subscribe_to_reginfo", INT_PARAM, &subscribe_to_reginfo},
-        {"subscription_expires",INT_PARAM, &subscription_expires        },
-
-
+	{"pcscf_uri",                   STR_PARAM, &pcscf_uri                           },
+	{"pending_reg_expires",         INT_PARAM, &pending_reg_expires			},
+	{"received_avp",                STR_PARAM, &rcv_avp_param       		},
+	{"is_registered_fallback2ip",	INT_PARAM, &is_registered_fallback2ip           },
+	{"publish_reginfo",             INT_PARAM, &publish_reginfo                     },
+        {"subscribe_to_reginfo",        INT_PARAM, &subscribe_to_reginfo                },
+        {"subscription_expires",        INT_PARAM, &subscription_expires                },
+        {"ignore_contact_rxport_check", INT_PARAM, &ignore_contact_rxport_check         },
 //	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
 	{0, 0, 0}
 };
