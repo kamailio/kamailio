@@ -228,8 +228,11 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 	/* reparse the message */
 	LM_DBG("SIP message content updated - reparsing\n");
 	if (parse_msg(msg->buf, msg->len, msg)!=0){
-		LM_ERR("parsing new sip message failed\n");
-		return -1;
+		LM_ERR("parsing new sip message failed [[%.*s]]\n",
+				msg->len, msg->buf);
+		/* exit config execution - sip_msg_t structure is no longer
+		 * valid/safe for config */
+		return 0;
 	}
 
 	return 1;
