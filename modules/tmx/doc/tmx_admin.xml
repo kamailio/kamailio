@@ -57,6 +57,31 @@
 	</section>
 
 	<section>
+	<title>Parameters</title>
+	<section id="tmx.p.precheck_trans">
+		<title>
+		<function moreinfo="none">precheck_trans</function>
+		</title>
+		<para>
+		Enable/disable transaction pre-check via t_precheck_trans()
+		function. If set to 0, the internal structures are not created
+		at startup and the funcation will return false always.
+		</para>
+		<para>
+		Default value is <emphasis>1</emphasis> (enabled).
+		</para>
+		<example>
+		<title><function>precheck_trans</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("tmx", "precheck_trans", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
 	<title>Functions</title>
 	<section>
 		<title>
@@ -344,8 +369,7 @@ t_continue('123', '456', 'MYROUTE');
 
 	<section>
 		<title>
-		<function moreinfo="none">t_reuse_branch()
-		</function>
+		<function moreinfo="none">t_reuse_branch()</function>
 		</title>
 		<para>
 		Creates new "main" branch by making copy of branch-failure
@@ -370,7 +394,7 @@ event_route [tm:branch-failure:contact] {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="tmx.f.t_precheck_trans">
 		<title>
 		<function moreinfo="none">t_precheck_trans()</function>
 		</title>
