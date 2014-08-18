@@ -28,12 +28,14 @@
 #include "../../dprint.h"
 #include "../../mod_fix.h"
 #include "../../route.h"
+#include "../../script_cb.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../dset.h"
 
 #include "t_var.h"
 #include "t_mi.h"
+#include "tmx_pretran.h"
 #include "api.h"
 
 MODULE_VERSION
@@ -46,6 +48,7 @@ struct tm_binds _tmx_tmb;
 
 /** module functions */
 static int mod_init(void);
+static int child_init(int rank);
 static void destroy(void);
 
 static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2);
@@ -68,8 +71,13 @@ static int w_t_suspend(struct sip_msg* msg, char*, char*);
 static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn);
 static int w_t_reuse_branch(struct sip_msg* msg, char*, char*);
 static int fixup_t_continue(void** param, int param_no);
+static int w_t_precheck_trans(sip_msg_t*, char*, char*);
+
+static int tmx_cfg_callback(sip_msg_t *msg, unsigned int flags, void *cbp);
 
 static int bind_tmx(tmx_api_t* api);
+
+static int _tmx_pretran_check = 1;
 
 /* statistic variables */
 stat_var *tm_rcv_rpls;
@@ -180,13 +188,16 @@ static cmd_export_t cmds[]={
 	{"t_continue", (cmd_function)w_t_continue,     3,
 		fixup_t_continue, 0, ANY_ROUTE },
 	{"t_reuse_branch", (cmd_function)w_t_reuse_branch, 0, 0, 0,
-	 EVENT_ROUTE },
+		EVENT_ROUTE },
+	{"t_precheck_trans", (cmd_function)w_t_precheck_trans, 0, 0, 0,
+		REQUEST_ROUTE },
 	{"bind_tmx", (cmd_function)bind_tmx, 1,
 		0, 0, ANY_ROUTE },
 	{0,0,0,0,0,0}
 };
 
 static param_export_t params[]={
+	{"pretran_check", PARAM_INT, &_tmx_pretran_check },
 	{0,0,0}
 };
 
@@ -208,7 +219,7 @@ struct module_exports exports= {
 	mod_init,   /* module initialization function */
 	0,
 	(destroy_function) destroy,
-	0           /* per-child init function */
+	child_init  /* per-child init function */
 };
 
 /**
@@ -236,6 +247,25 @@ static int mod_init(void)
 #endif
 	pv_tmx_data_init();
 
+	if (register_script_cb(tmx_cfg_callback,
+				POST_SCRIPT_CB|REQUEST_CB,0)<0) {
+		LM_ERR("cannot register post-script callback\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * child init function
+ */
+static int child_init(int rank)
+{
+	LM_DBG("rank is (%d)\n", rank);
+	if (rank==PROC_INIT) {
+		if(_tmx_pretran_check!=0)
+			return tmx_init_pretran_table();
+	}
 	return 0;
 }
 
@@ -667,6 +697,31 @@ static int fixup_t_continue(void** param, int param_no)
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+static int w_t_precheck_trans(sip_msg_t *msg, char *p1, char *p2)
+{
+	int ret;
+
+	ret = tmx_check_pretran(msg);
+	if(ret>0)
+		return 1;
+	return (ret-1);
+}
+
+/**
+ *
+ */
+static int tmx_cfg_callback(sip_msg_t *msg, unsigned int flags, void *cbp)
+{
+	if(flags&POST_SCRIPT_CB) {
+		tmx_pretran_unlink();
+	}
+
+	return 1;
 }
 
 static int bind_tmx(tmx_api_t* api)
