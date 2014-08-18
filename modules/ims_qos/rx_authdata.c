@@ -103,9 +103,9 @@ int create_new_regsessiondata(str* domain, str* aor, rx_authsessiondata_t** sess
 	return 1;
 }
 
-int create_new_callsessiondata(str* callid, str* ftag, str* ttag, rx_authsessiondata_t** session_data) {
+int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, str* ip, rx_authsessiondata_t** session_data) {
 
-	int len = callid->len + ftag->len + ttag->len + sizeof(rx_authsessiondata_t);
+	int len = callid->len + ftag->len + ttag->len + identifier->len + ip->len + sizeof(rx_authsessiondata_t);
 	rx_authsessiondata_t* call_session_data = shm_malloc(len);
 	if (!call_session_data){
 		LM_ERR("no more shm mem trying to create call_session_data of size %d\n", len);
@@ -137,6 +137,20 @@ int create_new_callsessiondata(str* callid, str* ftag, str* ttag, rx_authsession
 		memcpy(call_session_data->ttag.s, ttag->s, ttag->len);
                 call_session_data->ttag.len = ttag->len;
 		p += ttag->len;
+	}
+	if (identifier && identifier->len > 0 && identifier->s) {
+		LM_DBG("Copying identifier [%.*s] into call session data\n", identifier->len, identifier->s);
+		call_session_data->identifier.s = p;
+		memcpy(call_session_data->identifier.s, identifier->s, identifier->len);
+                call_session_data->identifier.len = identifier->len;
+		p += identifier->len;
+	}
+	if (ip && ip->len > 0 && ip->s) {
+		LM_DBG("Copying ip [%.*s] into call session data\n", ip->len, ip->s);
+		call_session_data->ip.s = p;
+		memcpy(call_session_data->ip.s, ip->s, ip->len);
+                call_session_data->ip.len = ip->len;
+		p += ip->len;
 	}
 	if (p != ((char*)(call_session_data) + len)) {
 		LM_ERR("buffer under/overflow\n");

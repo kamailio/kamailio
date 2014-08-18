@@ -318,7 +318,7 @@ int rx_process_aaa(AAAMessage *aaa, unsigned int * rc) {
 
 /** Helper function for adding media component AVPs for each SDP stream*/
 int add_media_components(AAAMessage* aar, struct sip_msg *req,
-        struct sip_msg *rpl, enum dialog_direction direction, str *ip,
+        struct sip_msg *rpl, enum dialog_direction direction,
         uint16_t *ip_version) {
     int sdp_session_num;
     int sdp_stream_num;
@@ -359,12 +359,11 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
             break;
         }
 
+	//we only populate ip if its not already populated
         if (direction == DLG_MOBILE_ORIGINATING) {
             *ip_version = req_sdp_session->pf;
-            *ip = req_sdp_session->ip_addr;
         } else if (direction == DLG_MOBILE_TERMINATING) {
             *ip_version = rpl_sdp_session->pf;
-            *ip = rpl_sdp_session->ip_addr;
         }
 
         sdp_stream_num = 0;
@@ -429,6 +428,12 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
     str ip;
     uint16_t ip_version;
 
+    //we get ip and identifier for the auth session data 
+    rx_authsessiondata_t* p_session_data = 0;
+    p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
+    identifier = p_session_data->identifier;
+    ip = p_session_data->ip;
+    
     /* find direction for AAR (orig/term) */
     //need this to add the media component details
     enum dialog_direction dlg_direction = get_dialog_direction(direction);
@@ -494,30 +499,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
     }
 
     LM_DBG("Adding subscription id...\n");
-    //if its mo we use p_asserted_identity in request - if that not there we use from_uri
-    //if its mt we use p_asserted_identity in reply - if that not there we use to_uri
-    
-    if (dlg_direction == DLG_MOBILE_ORIGINATING) {
-	LM_DBG("originating direction\n");
-	if ((identifier = cscf_get_asserted_identity(req, 1)).len == 0) {
-	    LM_DBG("No P-Asserted-Identity hdr found in request. Using From hdr in req");
 
-	    if (!cscf_get_from_uri(req, &identifier)) {
-		    LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
-		    goto error;
-	    }
-	} else {
-	                must_free_asserted_identity = 1;
-	}
-    } else {
-	LM_DBG("terminating direction\n");
-
-	if ((identifier = cscf_get_asserted_identity(res, 0)).len == 0) {
-	    LM_DBG("No P-Asserted-Identity hdr found in response. Using To hdr in resp");
-	    identifier = cscf_get_public_identity(res); //get public identity from to header
-	}
-    }
-    
     if (strncasecmp(identifier.s,"tel:",4)==0) {
 	identifier_type = AVP_Subscription_Id_Type_E164; //
     }else{
@@ -561,7 +543,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
      * 									*[Codec-Data]
      */
 
-    add_media_components(aar, req, res, dlg_direction, &ip, &ip_version);
+    add_media_components(aar, req, res, dlg_direction, &ip_version);
 
     LM_DBG("Adding framed ip address [%.*s]\n", ip.len, ip.s);
     /* Add Framed IP address AVP*/

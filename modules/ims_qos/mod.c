@@ -69,6 +69,7 @@
 #include "rx_str.h"
 #include "rx_aar.h"
 #include "mod.h"
+#include "../../parser/sdp/sdp.h"
 
 #include "../../lib/ims/useful_defs.h"
 
@@ -387,6 +388,9 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     str ttag = {0, 0};
     
     str route_name;
+    str identifier, ip;
+    int must_free_asserted_identity = 0;
+    sdp_session_cell_t* sdp_session;
 
     cfg_action_t* cfg_action = 0;
     saved_transaction_t* saved_t_data = 0; //data specific to each contact's AAR async call
@@ -524,12 +528,79 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
 
     if (!rx_session_id || rx_session_id->len <= 0 || !rx_session_id->s) {
         LM_DBG("New AAR session for this dialog in mode %s\n", direction);
-        //create new diameter auth session
-        int ret = create_new_callsessiondata(&callid, &ftag, &ttag, &rx_authdata_p);
+        
+	
+	//get ip and subscription_id and store them in the call session data
+	
+	//SUBSCRIPTION-ID
+	//if its mo we use p_asserted_identity in request - if that not there we use from_uri
+	//if its mt we use p_asserted_identity in reply - if that not there we use to_uri
+	//IP 
+	//if its mo we use request SDP
+	//if its mt we use reply SDP
+	if (dlg_direction == DLG_MOBILE_ORIGINATING) {
+	    LM_DBG("originating direction\n");
+	    if ((identifier = cscf_get_asserted_identity(t->uas.request, 1)).len == 0) {
+		LM_DBG("No P-Asserted-Identity hdr found in request. Using From hdr in req");
+
+		if (!cscf_get_from_uri(t->uas.request, &identifier)) {
+			LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
+			goto error;
+		}
+	    } else {
+		must_free_asserted_identity = 1;
+	    }
+	    
+	    //get ip from request sdp (we use first SDP session)
+	    if (parse_sdp(t->uas.request) < 0) {
+		LM_ERR("Unable to parse req SDP\n");
+		goto error;
+	    }
+	    
+	    sdp_session = get_sdp_session(t->uas.request, 0);
+	    if (!sdp_session) {
+		    LM_ERR("Missing SDP session information from req\n");
+		    goto error;
+	    }
+	    ip = sdp_session->ip_addr;
+	    free_sdp((sdp_info_t**) (void*) &t->uas.request->body);
+	    
+	} else {
+	    LM_DBG("terminating direction\n");
+	    if ((identifier = cscf_get_asserted_identity(msg, 0)).len == 0) {
+		LM_DBG("No P-Asserted-Identity hdr found in response. Using To hdr in resp");
+		identifier = cscf_get_public_identity(msg); //get public identity from to header
+	    }
+	    
+	    //get ip from reply sdp (we use first SDP session)
+	    if (parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse req SDP\n");
+		goto error;
+	    }
+	    
+	    sdp_session = get_sdp_session(msg, 0);
+	    if (!sdp_session) {
+		    LM_ERR("Missing SDP session information from reply\n");
+		    goto error;
+	    }
+	    ip = sdp_session->ip_addr;
+	    free_sdp((sdp_info_t**) (void*) &msg->body);
+	    
+	}
+
+        int ret = create_new_callsessiondata(&callid, &ftag, &ttag, &identifier, &ip, &rx_authdata_p);
         if (!ret) {
             LM_DBG("Unable to create new media session data parcel\n");
             goto error;
         }
+	
+	//free this cscf_get_asserted_identity allocates it
+	if (must_free_asserted_identity) {
+		pkg_free(identifier.s);
+		must_free_asserted_identity = 1;
+	}
+	
+	//create new diameter auth session
         auth_session = cdpb.AAACreateClientAuthSession(1, callback_for_cdp_session, rx_authdata_p); //returns with a lock
         if (!auth_session) {
             LM_ERR("Rx: unable to create new Rx Media Session\n");
@@ -581,6 +652,12 @@ error:
     if (saved_t_data)
         free_saved_transaction_global_data(saved_t_data); //only free global data if no AARs were sent. if one was sent we have to rely on the callback (CDP) to free
     //otherwise the callback will segfault
+
+    //free this cscf_get_asserted_identity allocates it
+    if (must_free_asserted_identity) {
+	    pkg_free(identifier.s);
+	    must_free_asserted_identity = 1;
+    }
 
      return CSCF_RETURN_ERROR;
 }

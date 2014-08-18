@@ -65,6 +65,8 @@ typedef struct rx_authsessiondata {
     str callid;
     str ftag;
     str ttag;
+    str identifier;
+    str ip;
     //for registration session
     int subscribed_to_signaling_path_status; // 0 not subscribed 1 is subscribed
     str domain;				//the domain the registration aor belongs to (for registration)
@@ -73,7 +75,7 @@ typedef struct rx_authsessiondata {
 } rx_authsessiondata_t;
 
 int create_new_regsessiondata(str* domain, str* aor, rx_authsessiondata_t** session_data);
-int create_new_callsessiondata(str* callid, str* ftag, str* ttag, rx_authsessiondata_t** session_data);
+int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, str *ip, rx_authsessiondata_t** session_data);
 
 #endif
 
