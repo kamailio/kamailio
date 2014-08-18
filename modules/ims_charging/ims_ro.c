@@ -19,6 +19,7 @@
 #include "../../parser/parse_to.h"
 
 #include "../../lib/ims/ims_getters.h"
+#include "../../parser/sdp/sdp.h"
 
 #include "diameter_ro.h"
 #include "ims_ro.h"
@@ -50,6 +51,13 @@ struct dlg_binds* dlgb_p;
 extern struct tm_binds tmb;
 
 int interim_request_credits;
+
+extern int voice_service_identifier;
+extern int voice_rating_group;
+extern int video_service_identifier;
+extern int video_rating_group;
+extern int active_service_identifier;
+extern int active_rating_group;
 
 static int create_cca_return_code(int result);
 static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
@@ -179,7 +187,9 @@ inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used
     str used_group;
     char x[4];
 
-    unsigned int service_id = 1000; //VOICE TODO FIX as config item
+    //unsigned int service_id = 1000; //Removed these are now configurable config file params
+    
+    //unsigned int rating_group = 500; //Removed these are now configurable config file params
 
     used_list.head = 0;
     used_list.tail = 0;
@@ -195,8 +205,11 @@ inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used
         Ro_add_avp_list(&mscc_list, used_group.s, used_group.len, AVP_Used_Service_Unit, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
     }
 
-    set_4bytes(x, service_id);
+    set_4bytes(x, active_service_identifier);
     Ro_add_avp_list(&mscc_list, x, 4, AVP_Service_Identifier, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    
+    set_4bytes(x, active_rating_group);
+    Ro_add_avp_list(&mscc_list, x, 4, AVP_Rating_Group, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
     used_group = cdpb.AAAGroupAVPS(mscc_list);
     cdpb.AAAFreeAVPList(&mscc_list);
@@ -207,7 +220,10 @@ inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used
 inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int requested_unit, int used_unit) {
     AAA_AVP_LIST list, used_list, mscc_list;
     str group, used_group;
-    unsigned int service_id = 1000; //VOICE TODO FIX as config item - should be a MAP that can be identified based on SDP params
+    //unsigned int service_id = 1000; //VOICE TODO FIX as config item - should be a MAP that can be identified based on SDP params
+    
+    //unsigned int rating_group = 500; //VOICE TODO FIX as config item - should be a MAP that can be identified based on SDP params
+    
     char x[4];
 
     list.head = 0;
@@ -224,8 +240,11 @@ inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int 
 
     Ro_add_avp_list(&mscc_list, group.s, group.len, AVP_Requested_Service_Unit, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 
-    set_4bytes(x, service_id);
+    set_4bytes(x, active_service_identifier);
     Ro_add_avp_list(&mscc_list, x, 4, AVP_Service_Identifier, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    
+    set_4bytes(x, active_rating_group);
+    Ro_add_avp_list(&mscc_list, x, 4, AVP_Rating_Group, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
     /* if we must Used-Service-Unit */
     if (used_unit >= 0) {
@@ -919,6 +938,11 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
     int free_called_asserted_identity = 0;
+    
+    sdp_session_cell_t* msg_sdp_session;
+    sdp_stream_cell_t* msg_sdp_stream;
+    
+    int sdp_stream_num = 0;
 
     ssd = shm_malloc(sizeof(struct session_setup_data)); // lookup structure used to load session info from cdp callback on CCA
     if (!ssd) {
@@ -987,6 +1011,46 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
     if (!cc_acc_session)
     	goto error;
 
+	//by default we use voice service id and rate group
+	//then we check SDP - if we find video then we use video service id and rate group
+	LM_DBG("Setting default SID to %d and RG to %d for voice", 
+			    voice_service_identifier, voice_rating_group);
+	active_service_identifier = voice_service_identifier;
+	active_rating_group = voice_rating_group;
+	
+	//check SDP - if there is video then set default to video, if not set it to audio
+	if (parse_sdp(msg) < 0) {
+	    LM_ERR("Unable to parse req SDP\n");
+	    goto error;
+	}
+	
+	msg_sdp_session = get_sdp_session(msg, 0);
+	if (!msg_sdp_session ) {
+            LM_ERR("Missing SDP session information from rpl\n");
+        } else {
+	    for (;;) {
+		msg_sdp_stream = get_sdp_stream(msg, 0, sdp_stream_num);
+		if (!msg_sdp_stream) {
+		    //LM_ERR("Missing SDP stream information\n");
+		    break;
+		}
+
+		int intportA = atoi(msg_sdp_stream->port.s);
+		if(intportA != 0 && strncasecmp(msg_sdp_stream->media.s,"video",5)==0){
+		    LM_DBG("This SDP has a video component and src ports not equal to 0 - so we set default SID to %d and RG to %d for video", 
+			    video_service_identifier, video_rating_group);
+		    active_service_identifier = video_service_identifier;
+		    active_rating_group = video_rating_group;
+		    break;
+		}
+
+		sdp_stream_num++;
+	    }
+	}
+	
+	free_sdp((sdp_info_t**) (void*) &msg->body);
+	
+	
     if (!(ccr = Ro_new_ccr(cc_acc_session, ro_ccr_data)))
         goto error;
 

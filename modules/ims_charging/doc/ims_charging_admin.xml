@@ -611,6 +611,82 @@ modparam("ims_charging", "service_context_id_mnc", "42")
         </programlisting>
       </example>
     </section>
+    
+    <section>
+      <title><varname>voice_service_identifier</varname>(string)</title>
+
+      <para>This defines the service identifier to be used for charging voice.</para>
+
+      <para><emphasis>Default value is "1000".</emphasis></para>
+
+      <example>
+        <title><varname>voice_service_identifier</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "voice_service_identifier", "1000")
+...
+        </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><varname>voice_rating_group</varname>(string)</title>
+
+      <para>This defines the rating group to be used for charging voice.</para>
+
+      <para><emphasis>Default value is "100".</emphasis></para>
+
+      <example>
+        <title><varname>voice_rating_group</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "voice_rating_group", "100")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>video_service_identifier</varname>(string)</title>
+
+      <para>This defines the service identifier to be used for charging video.</para>
+
+      <para><emphasis>Default value is "1001".</emphasis></para>
+
+      <example>
+        <title><varname>video_service_identifier</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "video_service_identifier", "1000")
+...
+        </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><varname>video_rating_group</varname>(string)</title>
+
+      <para>This defines the rating group to be used for charging video.</para>
+
+      <para><emphasis>Default value is "200".</emphasis></para>
+
+      <example>
+        <title><varname>video_rating_group</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "video_rating_group", "100")
+...
+        </programlisting>
+      </example>
+    </section>
 
     <section>
       <title><varname>service_context_id_mcc</varname>(string)</title>

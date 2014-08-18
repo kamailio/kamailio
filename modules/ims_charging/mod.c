@@ -33,6 +33,16 @@ char* ro_service_context_id_release_s = "8";
 static int ro_session_hash_size = 4096;
 int ro_timer_buffer = 5;
 int interim_request_credits = 30;
+
+int voice_service_identifier = 1000;
+int voice_rating_group = 100;
+
+int video_service_identifier = 1001;
+int video_rating_group = 200;
+
+int active_service_identifier = 1000; //current SID to be used - will  be changed depending on SDP info
+int active_rating_group = 200; //current RG to be used - will  be changed depending on SDP info
+
 client_ro_cfg cfg = { str_init("scscf.ims.smilecoms.com"),
     str_init("ims.smilecoms.com"),
     str_init("ims.smilecoms.com"),
@@ -106,6 +116,10 @@ static param_export_t params[] = {
 		{ "service_context_id_mnc", PARAM_STRING,			&ro_service_context_id_mnc_s 	},
 		{ "service_context_id_mcc", PARAM_STRING,			&ro_service_context_id_mcc_s 	},
 		{ "service_context_id_release",	PARAM_STRING, 		&ro_service_context_id_release_s},
+		{ "voice_service_identifier", 	INT_PARAM, 			&voice_service_identifier },/*service id for voice*/
+		{ "voice_rating_group", 	INT_PARAM, 			&voice_rating_group },/*rating group for voice*/
+		{ "video_service_identifier", 	INT_PARAM, 			&video_service_identifier },/*service id for voice*/
+		{ "video_rating_group", 	INT_PARAM, 			&video_rating_group },/*rating group for voice*/
 		{ 0, 0, 0 }
 };
 
