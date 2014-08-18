@@ -47,6 +47,7 @@ Juha Heinanen
               3.8. t_suspend()
               3.9. t_continue(tindex, tlabel, rtname)
               3.10. t_reuse_branch()
+              3.11. t_precheck_trans()
 
         4. Exported pseudo-variables
         5. MI Commands
@@ -83,6 +84,7 @@ Juha Heinanen
    1.8. t_suspend usage
    1.9. t_continue usage
    1.10. t_reuse_branch usage
+   1.11. t_precheck_trans usage
 
 Chapter 1. Admin Guide
 
@@ -106,6 +108,7 @@ Chapter 1. Admin Guide
         3.8. t_suspend()
         3.9. t_continue(tindex, tlabel, rtname)
         3.10. t_reuse_branch()
+        3.11. t_precheck_trans()
 
    4. Exported pseudo-variables
    5. MI Commands
@@ -135,7 +138,7 @@ Chapter 1. Admin Guide
    This module collects extensions from Kamailio TM module.
 
    Kamailio TM (Transaction Management) module documentation is available
-   at: http://www.kamailio.org/docs/modules/1.5.x/tm.html
+   at: http://www.kamailio.org/docs/modules/stable/tm.html
 
 2. Dependencies
 
@@ -165,6 +168,7 @@ Chapter 1. Admin Guide
    3.8. t_suspend()
    3.9. t_continue(tindex, tlabel, rtname)
    3.10. t_reuse_branch()
+   3.11. t_precheck_trans()
 
 3.1. t_cancel_branches(which)
 
@@ -348,6 +352,28 @@ event_route [tm:branch-failure:contact] {
     t_relay();
     exit;
 }
+...
+
+3.11. t_precheck_trans()
+
+   Check if current processed message is handled by other process. This
+   function is useful to catch retransmissions before transaction is
+   created. The function returns true if the request is handled by another
+   process.
+
+   Note that ACK and CANCEL requests are not tracked by this function, the
+   return code being false for them.
+
+   This function can be used from REQUEST_ROUTE .
+
+   Example 1.11. t_precheck_trans usage
+...
+    # handle retransmissions
+    if(t_precheck_trans()) {
+        t_check_trans();
+        exit;
+    }
+    t_check_trans();
 ...
 
 4. Exported pseudo-variables

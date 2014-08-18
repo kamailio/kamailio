@@ -20,8 +20,8 @@
 	</para>
 	<para>
 	&kamailio; TM (Transaction Management) module documentation is available at:
-	<ulink url="http://www.kamailio.org/docs/modules/1.5.x/tm.html">
-	http://www.kamailio.org/docs/modules/1.5.x/tm.html</ulink>
+	<ulink url="http://www.kamailio.org/docs/modules/stable/tm.html">
+	http://www.kamailio.org/docs/modules/stable/tm.html</ulink>
 	</para>
 	</section>
 	
@@ -366,6 +366,37 @@ event_route [tm:branch-failure:contact] {
     t_relay();
     exit;
 }
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">t_precheck_trans()</function>
+		</title>
+		<para>
+		Check if current processed message is handled by other process.
+		This function is useful to catch retransmissions before transaction
+		is created. The function returns true if the request is handled by
+		another process.
+		</para>
+		<para>
+		Note that ACK and CANCEL requests are not tracked by this function,
+		the return code being false for them.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE .
+		</para>
+		<example>
+		<title><function>t_precheck_trans</function> usage</title>
+		<programlisting format="linespecific">
+...
+    # handle retransmissions
+    if(t_precheck_trans()) {
+        t_check_trans();
+        exit;
+    }
+    t_check_trans();
 ...
 </programlisting>
 		</example>
