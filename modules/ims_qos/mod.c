@@ -378,6 +378,7 @@ void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param) {
 static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
 
     int ret = CSCF_RETURN_ERROR;
+    int result = CSCF_RETURN_ERROR;
     struct cell *t;
 
     AAASession* auth_session;
@@ -397,19 +398,19 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     char* direction = str1;
     if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
         LM_ERR("no async route block for assign_server_unreg\n");
-        return -1;
+        return result;
     }
     
     LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
     int ri = route_get(&main_rt, route_name.s);
     if (ri < 0) {
         LM_ERR("unable to find route block [%.*s]\n", route_name.len, route_name.s);
-        return -1;
+        return result;
     }
     cfg_action = main_rt.rlist[ri];
     if (cfg_action == NULL) {
         LM_ERR("empty action lists in route block [%.*s]\n", route_name.len, route_name.s);
-        return -1;
+        return result;
     }
 
     LM_DBG("Rx AAR called\n");
@@ -419,7 +420,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     //We don't ever do AAR on request for calling scenario...
     if (msg->first_line.type != SIP_REPLY) {
         LM_DBG("Can't do AAR for call session in request\n");
-        return CSCF_RETURN_ERROR;
+        return result;
     }
 
     //is it appropriate to send AAR at this stage?
@@ -427,7 +428,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     if (t == NULL || t == T_UNDEFINED) {
         LM_WARN("Cannot get transaction for AAR based on SIP Request\n");
         //goto aarna;
-        return CSCF_RETURN_ERROR;
+        return result;
     }
 
     //we dont apply QoS if its not a reply to an INVITE! or UPDATE or PRACK!
@@ -438,39 +439,39 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
                 || cscf_get_content_length(t->uas.request) == 0) {
             LM_DBG("No SDP offer answer -> therefore we can not do Rx AAR");
             //goto aarna; //AAR na if we dont have offer/answer pair
-            return CSCF_RETURN_ERROR;
+            return result;
         }
     } else {
         LM_DBG("Message is not response to INVITE, PRACK or UPDATE -> therefore we do not Rx AAR");
-        return CSCF_RETURN_ERROR;
+        return result;
     }
 
     /* get callid, from and to tags to be able to identify dialog */
     callid = cscf_get_call_id(msg, 0);
     if (callid.len <= 0 || !callid.s) {
         LM_ERR("unable to get callid\n");
-        return CSCF_RETURN_ERROR;
+        return result;
     }
     if (!cscf_get_from_tag(msg, &ftag)) {
         LM_ERR("Unable to get ftag\n");
-        return CSCF_RETURN_ERROR;
+        return result;
     }
     if (!cscf_get_to_tag(msg, &ttag)) {
         LM_ERR("Unable to get ttag\n");
-        return CSCF_RETURN_ERROR;
+        return result;
     }
 
     //check to see that this is not a result of a retransmission in reply route only
     if (msg->cseq == NULL
             && ((parse_headers(msg, HDR_CSEQ_F, 0) == -1) || (msg->cseq == NULL))) {
         LM_ERR("No Cseq header found - aborting\n");
-        return CSCF_RETURN_ERROR;
+        return result;
     }
 
     saved_t_data = (saved_transaction_t*) shm_malloc(sizeof (saved_transaction_t));
     if (!saved_t_data) {
         LM_ERR("Unable to allocate memory for transaction data, trying to send AAR\n");
-        return CSCF_RETURN_ERROR;
+        return result;
     }
     memset(saved_t_data, 0, sizeof (saved_transaction_t));
     saved_t_data->act = cfg_action;
@@ -480,7 +481,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     if (!saved_t_data->callid.s) {
         LM_ERR("no more memory trying to save transaction state : callid\n");
         shm_free(saved_t_data);
-        return CSCF_RETURN_ERROR;
+        return result;
     }
     memset(saved_t_data->callid.s, 0, callid.len + 1);
     memcpy(saved_t_data->callid.s, callid.s, callid.len);
@@ -491,7 +492,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     if (!saved_t_data->ttag.s) {
         LM_ERR("no more memory trying to save transaction state : ttag\n");
         shm_free(saved_t_data);
-        return CSCF_RETURN_ERROR;
+        return result;
     }
     memset(saved_t_data->ttag.s, 0, ttag.len + 1);
     memcpy(saved_t_data->ttag.s, ttag.s, ttag.len);
@@ -502,7 +503,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     if (!saved_t_data->ftag.s) {
         LM_ERR("no more memory trying to save transaction state : ftag\n");
         shm_free(saved_t_data);
-        return CSCF_RETURN_ERROR;
+        return result;
     }
     memset(saved_t_data->ftag.s, 0, ftag.len + 1);
     memcpy(saved_t_data->ftag.s, ftag.s, ftag.len);
@@ -512,7 +513,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     int branch;
     if (tmb.t_check( msg  , &branch )==-1){
         LOG(L_ERR, "ERROR: t_suspend: failed find UAC branch\n");
-        return CSCF_RETURN_ERROR;
+        return result;
     }
     
     //Check that we dont already have an auth session for this specific dialog
@@ -624,13 +625,18 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     } else {
         LM_DBG("Update AAR session for this dialog in mode %s\n", direction);
 	auth_session = cdpb.AAAGetAuthSession(*rx_session_id);
+	if(auth_session->u.auth.state != AUTH_ST_OPEN)
+	{
+	    LM_DBG("This session is not state open, packet will be dropped");
+	    result = CSCF_RETURN_FALSE; //here we return FALSE this just drops the message in the config file
+	    goto error;
+	}
     }
 
     LM_DBG("Suspending SIP TM transaction\n");
     if (tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel) < 0) {
         LM_ERR("failed to suspend the TM processing\n");
-        free_saved_transaction_global_data(saved_t_data);
-        return CSCF_RETURN_ERROR;
+        goto error;
     }
 
     LM_DBG("Sending Rx AAR");
@@ -644,7 +650,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
 
     } else {
         LM_DBG("Successful async send of AAR\n");
-        return CSCF_RETURN_BREAK; //on success we break - because rest of cfg file will be executed by async process
+        result = CSCF_RETURN_BREAK;
+	return result; //on success we break - because rest of cfg file will be executed by async process
     }
 
 error:
@@ -659,7 +666,7 @@ error:
 	    must_free_asserted_identity = 1;
     }
 
-     return CSCF_RETURN_ERROR;
+     return result;
 }
 
 /* Wrapper to send AAR from config file - only used for registration */
