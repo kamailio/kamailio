@@ -77,7 +77,7 @@ static int tmx_cfg_callback(sip_msg_t *msg, unsigned int flags, void *cbp);
 
 static int bind_tmx(tmx_api_t* api);
 
-static int _tmx_pretran_check = 1;
+static int _tmx_precheck_trans = 1;
 
 /* statistic variables */
 stat_var *tm_rcv_rpls;
@@ -197,7 +197,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"pretran_check", PARAM_INT, &_tmx_pretran_check },
+	{"precheck_trans", PARAM_INT, &_tmx_precheck_trans},
 	{0,0,0}
 };
 
@@ -263,7 +263,7 @@ static int child_init(int rank)
 {
 	LM_DBG("rank is (%d)\n", rank);
 	if (rank==PROC_INIT) {
-		if(_tmx_pretran_check!=0)
+		if(_tmx_precheck_trans!=0)
 			return tmx_init_pretran_table();
 	}
 	return 0;
