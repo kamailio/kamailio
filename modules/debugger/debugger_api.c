@@ -273,18 +273,18 @@ int dbg_msgid_filter(struct sip_msg *msg, unsigned int flags, void *bar)
 	}
 	msgid_base = _dbg_pid_list[indx].msgid_base;
 	lock_release(_dbg_pid_list[indx].lock);
-	msgid_new = msg->id - msgid_base;
-	LM_DBG("msg->id:%d msgid_base:%d -> %d\n", msg->id, msgid_base, msgid_new);
-	if(msgid_new>0)
+	if(msg->id > msgid_base)
 	{
+		msgid_new = msg->id - msgid_base;
+		LM_DBG("msg->id:%d msgid_base:%d -> %d\n",
+			msg->id, msgid_base, msgid_new);
 		msg->id = msgid_new;
-		return 1;
 	}
 	else
 	{
-		LM_WARN("msgid_new<=0??\n");
-		return -1;
+		LM_DBG("msg->id:%d already processed\n", msg->id);
 	}
+	return 1;
 }
 
 char* get_current_route_type_name()
