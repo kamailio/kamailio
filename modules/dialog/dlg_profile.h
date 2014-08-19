@@ -28,8 +28,11 @@
 #ifndef _DIALOG_DLG_PROFILE_H_
 #define _DIALOG_DLG_PROFILE_H_
 
+#include <time.h>
+
 #include "../../parser/msg_parser.h"
 #include "../../lib/srutils/srjson.h"
+#include "../../lib/srutils/sruid.h"
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../modules/tm/h_table.h"
@@ -48,6 +51,9 @@
 typedef struct dlg_profile_hash {
 	str value; /*!< hash value */
 	struct dlg_cell *dlg; /*!< dialog cell */
+	char puid[SRUID_SIZE];
+	time_t expires;
+	int flags;
 	struct dlg_profile_hash *next;
 	struct dlg_profile_hash *prev;
 	unsigned int hash; /*!< position in the hash table */

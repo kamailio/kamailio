@@ -1009,8 +1009,8 @@ error:
 int dlg_profiles_to_json(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 {
 	dlg_profile_link_t *l;
-	srjson_t *sj = NULL;
-	srjson_t *dj = NULL;
+	srjson_t *aj = NULL;
+	srjson_t *pj = NULL;
 
 	LM_DBG("serializing profiles for dlg[%u:%u]\n",
 				dlg->h_entry, dlg->h_id);
@@ -1020,33 +1020,38 @@ int dlg_profiles_to_json(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 				dlg->h_entry, dlg->h_id);
 
 	for (l = dlg->profile_links ; l ; l=l->next) {
+		if(aj==NULL)
+		{
+			aj = srjson_CreateArray(jdoc);
+			if(aj==NULL)
+			{
+				LM_ERR("cannot create json profiles array object\n");
+				goto error;
+			}
+		}
+		pj = srjson_CreateObject(jdoc);
+		if(pj==NULL)
+		{
+			LM_ERR("cannot create json dynamic profiles obj\n");
+			goto error;
+		}
+
+		srjson_AddStrStrToObject(jdoc, pj,
+					"name", 4,
+					l->profile->name.s, l->profile->name.len);
 		if(l->profile->has_value)
 		{
-			if(dj==NULL)
-			{
-				dj = srjson_CreateObject(jdoc);
-				if(dj==NULL)
-				{
-					LM_ERR("cannot create json dynamic profiles obj\n");
-					goto error;
-				}
-			}
-			srjson_AddStrStrToObject(jdoc, dj,
-					l->profile->name.s, l->profile->name.len,
+			srjson_AddStrStrToObject(jdoc, pj,
+					"value", 5,
 					l->hash_linker.value.s, l->hash_linker.value.len);
-		} else {
-			if(sj==NULL)
-			{
-				sj = srjson_CreateArray(jdoc);
-				if(sj==NULL)
-				{
-					LM_ERR("cannot create json static profiles obj\n");
-					goto error;
-				}
-			}
-			srjson_AddItemToArray(jdoc, sj,
-					srjson_CreateStr(jdoc, l->profile->name.s, l->profile->name.len));
 		}
+		if(l->hash_linker.puid[0]!='\0')
+			srjson_AddStringToObject(jdoc, pj, "puid", l->hash_linker.puid);
+		if(l->hash_linker.expires!=0)
+			srjson_AddNumberToObject(jdoc, pj, "expires", l->hash_linker.expires);
+		if(l->hash_linker.flags!=0)
+			srjson_AddNumberToObject(jdoc, pj, "flags", l->hash_linker.flags);
+		srjson_AddItemToArray(jdoc, aj, pj);
 	}
 
 	if(jdoc->root==NULL)
@@ -1058,10 +1063,8 @@ int dlg_profiles_to_json(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 			goto error;
 		}
 	}
-	if(dj!=NULL)
-		srjson_AddItemToObject(jdoc, jdoc->root, "dprofiles", dj);
-	if(sj!=NULL)
-		srjson_AddItemToObject(jdoc, jdoc->root, "sprofiles", sj);
+	if(aj!=NULL)
+		srjson_AddItemToObject(jdoc, jdoc->root, "profiles", aj);
 	if(jdoc->buf.s != NULL)
 	{
 		jdoc->free_fn(jdoc->buf.s);
@@ -1079,8 +1082,7 @@ int dlg_profiles_to_json(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 	return -1;
 
 error:
-	srjson_Delete(jdoc, dj);
-	srjson_Delete(jdoc, sj);
+	srjson_Delete(jdoc, aj);
 	return -1;
 }
 
@@ -1090,12 +1092,15 @@ error:
  */
 int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 {
-	srjson_t *sj = NULL;
-	srjson_t *dj = NULL;
+	srjson_t *aj = NULL;
 	srjson_t *it = NULL;
+	srjson_t *jt = NULL;
 	dlg_profile_table_t *profile;
 	str name;
 	str val;
+	str puid;
+	time_t expires;
+	int flags;
 
 	if(dlg==NULL || jdoc==NULL || jdoc->buf.s==NULL)
 		return -1;
@@ -1109,49 +1114,53 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 			return -1;
 		}
 	}
-	dj = srjson_GetObjectItem(jdoc, jdoc->root, "dprofiles");
-	sj = srjson_GetObjectItem(jdoc, jdoc->root, "sprofiles");
-	if(dj!=NULL)
+	aj = srjson_GetObjectItem(jdoc, jdoc->root, "profiles");
+	if(aj!=NULL)
 	{
-		for(it=dj->child; it; it = it->next)
+		for(it=aj->child; it; it = it->next)
 		{
-			name.s = it->string;
-			name.len = strlen(name.s);
-			val.s = it->valuestring;
-			val.len = strlen(val.s);
+			name.s = val.s = puid.s = NULL;
+			expires = 0; flags = 0;
+			for(jt = it->child; jt; jt = jt->next) {
+				if(strcmp(jt->string, "name")==0) {
+					name.s = jt->valuestring;
+					name.len = strlen(name.s);
+				} else if(strcmp(jt->string, "value")==0) {
+					val.s = jt->valuestring;
+					val.len = strlen(val.s);
+				} else if(strcmp(jt->string, "puid")==0) {
+					puid.s = jt->valuestring;
+					puid.len = strlen(val.s);
+				} else if(strcmp(jt->string, "puid")==0) {
+					expires = (time_t)jt->valueint;
+				} else if(strcmp(jt->string, "flags")==0) {
+					flags = jt->valueint;
+				}
+			}
+			if(name.s==NULL)
+				continue;
 			profile = search_dlg_profile(&name);
 			if(profile==NULL)
 			{
 				LM_ERR("profile [%.*s] not found\n", name.len, name.s);
 				continue;
 			}
-			if(profile->has_value)
-			{
-				if(dlg_add_profile(dlg, &val, profile) < 0)
-					LM_ERR("dynamic profile cannot be added, ignore!\n");
-				else
-					LM_DBG("dynamic profile added [%s : %s]\n", name.s, val.s);
-			}
-		}
-	}
-	if(sj!=NULL)
-	{
-		for(it=sj->child; it; it = it->next)
-		{
-			name.s = it->valuestring;
-			name.len = strlen(name.s);
-			profile = search_dlg_profile(&name);
-			if(profile==NULL)
-			{
-				LM_ERR("profile [%.*s] not found\n", name.len, name.s);
-				continue;
-			}
-			if(!profile->has_value)
-			{
-				if(dlg_add_profile(dlg, NULL, profile) < 0)
-					LM_ERR("static profile cannot be added, ignore!\n");
-				else
-					LM_DBG("static profile added [%s]\n", name.s);
+			if(val.s!=NULL) {
+				if(profile->has_value)
+				{
+					if(dlg_add_profile(dlg, &val, profile) < 0)
+						LM_ERR("dynamic profile cannot be added, ignore!\n");
+					else
+						LM_DBG("dynamic profile added [%s : %s]\n", name.s, val.s);
+				}
+			} else {
+				if(!profile->has_value)
+				{
+					if(dlg_add_profile(dlg, NULL, profile) < 0)
+						LM_ERR("static profile cannot be added, ignore!\n");
+					else
+						LM_DBG("static profile added [%s]\n", name.s);
+				}
 			}
 		}
 	}
