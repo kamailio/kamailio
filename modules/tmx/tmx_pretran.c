@@ -121,6 +121,7 @@ void tmx_pretran_link_safe(int slotid)
 	_tmx_proc_ptran->next = _tmx_ptran_table[slotid].plist;
 	_tmx_ptran_table[slotid].plist->prev = _tmx_proc_ptran;
 	_tmx_ptran_table[slotid].plist = _tmx_proc_ptran;
+	_tmx_proc_ptran->linked = 1;
 	return;
 }
 
@@ -250,9 +251,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 	}
 	if(dsize<256) dsize = 256;
 
-	lock_get(&_tmx_ptran_table[slotid].lock);
-	tmx_pretran_unlink_safe(slotid);
-	lock_release(&_tmx_ptran_table[slotid].lock);
+	tmx_pretran_unlink();
 
 	if(dsize > _tmx_proc_ptran->dbuf.len) {
 		if(_tmx_proc_ptran->dbuf.s) shm_free(_tmx_proc_ptran->dbuf.s);
