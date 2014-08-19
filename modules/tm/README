@@ -2479,9 +2479,11 @@ Note
        not needed for a statefull proxy and it requires additional memory,
        tm will not keep this information unless needed by some other
        module or callbacks).
-     * For other requests (non ACKs and non CANCELs), it will terminate
-       the script for retransmissions and return false for new requests
-       (for which no transaction exists yet).
+     * For other requests (non ACKs and non CANCELs), in case of a
+       retransmission matching a transaction, it resends the last reply
+       for that transaction and terminates the config execution.
+       Otherwise, it returns false (in case of new requests for which no
+       transaction exists yet).
 
 Note
 

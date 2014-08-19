@@ -1381,9 +1381,11 @@ if (t_check_status("(487)|(408)")) {
 				</note>
 			</listitem>
 			<listitem>
-				<para>For other requests (non ACKs and non CANCELs), it will
-				terminate the script for retransmissions and return false for
-				new requests (for which no transaction exists yet).</para>
+				<para>For other requests (non ACKs and non CANCELs), in case of
+				a retransmission matching a transaction, it resends the last
+				reply for that transaction and terminates the config execution.
+				Otherwise, it returns false (in case of new requests for which
+				no transaction exists yet).</para>
 			</listitem>
 		</itemizedlist>
 	</para>
