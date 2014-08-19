@@ -736,6 +736,7 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 		case HDR_MAXFORWARDS_T:
 			if (!HOOK_SET(maxforwards)) {
 				new_msg->maxforwards = new_hdr;
+				new_msg->maxforwards->parsed = hdr->parsed;
 			}
 			break;
 		case HDR_ROUTE_T:
