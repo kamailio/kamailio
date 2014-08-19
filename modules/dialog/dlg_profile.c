@@ -509,7 +509,7 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 
 	/* build new linker */
 	linker = (struct dlg_profile_link*)shm_malloc(
-		sizeof(struct dlg_profile_link) + (profile->has_value?value->len:0) );
+		sizeof(struct dlg_profile_link) + (profile->has_value?(value->len+1):0) );
 	if (linker==NULL) {
 		LM_ERR("no more shm memory\n");
 		goto error;
@@ -524,6 +524,7 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 		linker->hash_linker.value.s = (char*)(linker+1);
 		memcpy( linker->hash_linker.value.s, value->s, value->len);
 		linker->hash_linker.value.len = value->len;
+		linker->hash_linker.value.s[value->len] = '\0';
 	}
 
 	/* add linker directly to the dialog and profile */
