@@ -213,6 +213,10 @@ int tmx_check_pretran(sip_msg_t *msg)
 		LM_ERR("failed to get Via header\n");
 		return -1;
 	}
+	if (parse_from_header(msg)<0 || get_from(msg)->tag_value.len==0) {
+		LM_ERR("failed to get From header\n");
+		return -1;
+	}
 
 	vbr = msg->via1->branch;
 
