@@ -408,6 +408,48 @@ modparam("sipcapture", "capture_node", "homer03")
 </programlisting>
 		</example>
 	</section>
+	<section id="sipcapture.p.insert_retries">
+		<title><varname>insert_retries</varname> (integer)</title>
+		<para>
+		The number of times Kamailio should retry to write to the Homer database in case
+		the first attempt failed. The retry is also limited timewise by the
+		insert_retry_timeout parameter. Values allowed range from 0 to 500.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no retries).
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>insert_retries</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "insert_retries", 5)
+...
+			</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.insert_retry_timeout">
+		<title><varname>insert_retry_timeout</varname> (integer)</title>
+		<para>
+		The time limit in seconds Kamailio retries to write to the Homer database in case
+		the first attempt failed. This parameter is only used together with the insert_retries
+		parameter. Values allowed range from 0 to 300.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 60 seconds.
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>insert_retry_timeout</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "insert_retry_timeout", 10)
+...
+			</programlisting>
+		</example>
+	</section>
 </section>	
     <section>
 	<title>MI Commands</title>

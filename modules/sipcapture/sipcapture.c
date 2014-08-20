@@ -198,6 +198,8 @@ int db_insert_mode = 0;
 int promisc_on = 0;
 int bpf_on = 0;
 int hep_capture_on   = 0;
+int insert_retries = 0;
+int insert_retry_timeout = 60;
 int hep_offset = 0;
 str raw_socket_listen = { 0, 0 };
 str raw_interface = { 0, 0 };
@@ -225,15 +227,12 @@ static struct sock_filter BPF_code[] = { { 0x28, 0, 0, 0x0000000c }, { 0x15, 0, 
 
 unsigned int no_tables = 0;
 
-
-
 enum e_mt_mode mtmode = mode_random ;
 enum hash_source source = hs_error;
 
 //unsigned int rr_idx = 0;
 
 struct hep_timehdr* heptime;
-
 
 /*! \brief
  * Exported functions
@@ -306,6 +305,8 @@ static param_export_t params[] = {
         {"raw_moni_bpf_on",  		INT_PARAM, &bpf_on   },		
         {"callid_aleg_header",          PARAM_STR, &callid_aleg_header},
         {"capture_mode",		PARAM_STRING|USE_FUNC_PARAM, (void *)capture_mode_param},
+    {"insert_retries",   	INT_PARAM, &insert_retries },
+    {"insert_retry_timeout",INT_PARAM, &insert_retry_timeout },
 		{0, 0, 0}
 };
 
@@ -353,7 +354,6 @@ struct module_exports exports = {
 	destroy,    /*!< destroy function */
 	child_init  /*!< child initialization function */
 };
-
 
 
 /* returns number of tables if successful
@@ -788,7 +788,19 @@ static int mod_init(void) {
 		return -1;		                		
 	}
 	
+	if ((insert_retries <0) || ( insert_retries > 500)) {
+		LM_ERR("insert_retries should be a value between 0 and 500");
+		return -1;
+	}
 
+	if  (( 0 == insert_retries) && (insert_retry_timeout != 0)){
+		LM_ERR("insert_retry_timeout has no meaning when insert_retries is not set");
+	}
+
+	if ((insert_retry_timeout <0) || ( insert_retry_timeout > 300)) {
+		LM_ERR("insert_retry_timeout should be a value between 0 and 300");
+		return -1;
+	}
 
 	/* raw processes for IPIP encapsulation */
 	if (ipip_capture_on || moni_capture_on) {
@@ -1072,6 +1084,11 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 
 	str tmp;
 	int ii = 0;
+	int ret = 0;
+	int counter = 0;
+	db_insert_f insert;
+	time_t retry_failed_time = 0;
+
 	str *table = NULL;
 	_capture_mode_data_t *c = NULL;
 
@@ -1319,25 +1336,38 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	c->db_funcs.use_table(c->db_con, table);
 
 	LM_DBG("storing info...\n");
-	
-	if(db_insert_mode==1 && c->db_funcs.insert_delayed!=NULL) {
-                if (c->db_funcs.insert_delayed(c->db_con, db_keys, db_vals, NR_KEYS) < 0) {
-                	LM_ERR("failed to insert delayed into database\n");
-                        goto error;
-                }
-        } else if (c->db_funcs.insert(c->db_con, db_keys, db_vals, NR_KEYS) < 0) {
-		LM_ERR("failed to insert into database\n");
-                goto error;               
+
+	if (db_insert_mode == 1 && c->db_funcs.insert_delayed != NULL)
+		insert = c->db_funcs.insert_delayed;
+	else
+		insert = c->db_funcs.insert;
+	ret = insert(c->db_con, db_keys, db_vals, NR_KEYS);
+
+	if (ret < 0) {
+		LM_DBG("failed to insert into database(first attempt)\n");
+		if (insert_retries != 0) {
+			counter = 0;
+			while ((ret = insert(c->db_con, db_keys, db_vals, NR_KEYS)) < 0) {
+				counter++;
+				if (1 == counter) //first failed retry
+					retry_failed_time = time(NULL);
+
+				if ((counter > insert_retries) || (time(NULL)
+						- retry_failed_time > insert_retry_timeout)) {
+					LM_ERR("failed to insert into database(second attempt)\n");
+					break;
+				}
+			}
+		}
 	}
-	
-	
+	if (ret < 0)
+		goto error;
 #ifdef STATISTICS
 	update_stat(sco->stat, 1);
 #endif	
 
 	return 1;
-error:
-	return -1;
+	error: return -1;
 }
 
 static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * cm_data)
