@@ -96,6 +96,7 @@ int sruid_init(sruid_t *sid, char sep, char *cid, int mode)
 	sid->out = sid->buf + i + 5;
 	sid->uid.s = sid->buf;
 	sid->mode = (sruid_mode_t)mode;
+	sid->pid = my_pid();
 	LM_DBG("root for sruid is [%.*s] (%u / %d)\n", i+5, sid->uid.s,
 			sid->counter, i+5);
 	return 0;
@@ -131,6 +132,7 @@ int sruid_reinit(sruid_t *sid, int mode)
 	sid->out = sid->buf + i + 5;
 	sid->uid.s = sid->buf;
 	sid->mode = (sruid_mode_t)mode;
+	sid->pid = my_pid();
 	LM_DBG("re-init root for sruid is [%.*s] (%u / %d)\n", i+5, sid->uid.s,
 			sid->counter, i+5);
 	return 0;
@@ -177,3 +179,11 @@ int sruid_next(sruid_t *sid)
 	return 0;
 }
 
+/**
+ *
+ */
+int sruid_next_safe(sruid_t *sid)
+{
+	if(unlikely(sid->pid!=my_pid())) sruid_reinit(sid, sid->mode);
+	return sruid_next(sid);
+}

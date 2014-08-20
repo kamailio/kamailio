@@ -36,10 +36,12 @@ typedef struct sruid {
 	char *out;
 	str uid;
 	unsigned int counter;
+	int pid;
 	sruid_mode_t mode;
 } sruid_t;
 
 int sruid_init(sruid_t *sid, char sep, char *cid, int mode);
 int sruid_next(sruid_t *sid);
+int sruid_next_safe(sruid_t *sid);
 
 #endif
