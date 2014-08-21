@@ -55,6 +55,7 @@ typedef struct dlg_profile_hash {
 	int puid_len;
 	time_t expires;
 	int flags;
+	struct dlg_profile_link *linker;
 	struct dlg_profile_hash *next;
 	struct dlg_profile_hash *prev;
 	unsigned int hash; /*!< position in the hash table */

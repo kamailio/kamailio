@@ -297,6 +297,73 @@ void destroy_linkers(struct dlg_profile_link *linker)
 
 
 /*!
+ * \brief Calculate the hash profile from a dialog
+ * \see core_hash
+ * \param value hash source
+ * \param dlg dialog cell
+ * \param profile dialog profile table (for hash size)
+ * \return value hash if the value has a value, hash over dialog otherwise
+ */
+inline static unsigned int calc_hash_profile(str *value1, str *value2,
+		dlg_profile_table_t *profile)
+{
+	if (profile->has_value) {
+		/* do hash over the value1 */
+		return core_hash( value1, NULL, profile->size);
+	} else {
+		/* do hash over the value2 */
+		if(value2)
+			return core_hash( value2, NULL, profile->size);
+		return 0;
+	}
+}
+
+
+/*!
+ * \brief Remove profile
+ * \param profile pointer to profile
+ * \param value profile value
+ * \param puid profile unique id
+ */
+int remove_profile(dlg_profile_table_t *profile, str *value, str *puid)
+{
+	unsigned int hash;
+	struct dlg_profile_entry *p_entry;
+	struct dlg_profile_hash *lh;
+	struct dlg_profile_hash *kh;
+
+	hash = calc_hash_profile(value, puid, profile);
+	lock_get(&profile->lock );
+	p_entry = &profile->entries[hash];
+	lh = p_entry->first;
+	while(lh) {
+		kh = lh->next;
+		if(lh->dlg==NULL && lh->puid_len==puid->len
+				&& lh->value.len==value->len
+				&& strncmp(lh->puid, puid->s, puid->len)==0
+				&& strncmp(lh->value.s, value->s, value->len)==0) {
+			/* last element on the list? */
+			if (lh==lh->next) {
+				p_entry->first = NULL;
+			} else {
+				if (p_entry->first==lh)
+					p_entry->first = lh->next;
+				lh->next->prev = lh->prev;
+				lh->prev->next = lh->next;
+			}
+			lh->next = lh->prev = NULL;
+			if(lh->linker) shm_free(lh->linker);
+			p_entry->content--;
+			return 1;
+		}
+		lh = kh;
+	}
+	lock_release(&profile->lock );
+	return 0;
+}
+
+
+/*!
  * \brief Cleanup a profile
  * \param msg SIP message
  * \param flags unused
@@ -328,29 +395,36 @@ int profile_cleanup( struct sip_msg *msg, unsigned int flags, void *param )
 }
 
 
-
 /*!
- * \brief Calculate the hash profile from a dialog
- * \see core_hash
- * \param value hash source
- * \param dlg dialog cell
- * \param profile dialog profile table (for hash size)
- * \return value hash if the value has a value, hash over dialog otherwise
+ * \brief Link a dialog profile
+ * \param linker dialog linker
+ * \param vkey key for profile hash table
  */
-inline static unsigned int calc_hash_profile(str *value1, str *value2,
-		dlg_profile_table_t *profile)
+static void link_profile(struct dlg_profile_link *linker, str *vkey)
 {
-	if (profile->has_value) {
-		/* do hash over the value1 */
-		return core_hash( value1, NULL, profile->size);
-	} else {
-		/* do hash over the value2 */
-		if(value2)
-			return core_hash( value2, NULL, profile->size);
-		return 0;
-	}
-}
+	unsigned int hash;
+	struct dlg_profile_entry *p_entry;
+	struct dlg_entry *d_entry;
 
+	/* calculate the hash position */
+	hash = calc_hash_profile(&linker->hash_linker.value, vkey, linker->profile);
+	linker->hash_linker.hash = hash;
+
+	/* insert into profile hash table */
+	p_entry = &linker->profile->entries[hash];
+	lock_get( &linker->profile->lock );
+	if (p_entry->first) {
+		linker->hash_linker.prev = p_entry->first->prev;
+		linker->hash_linker.next = p_entry->first;
+		p_entry->first->prev->next = &linker->hash_linker;
+		p_entry->first->prev = &linker->hash_linker;
+	} else {
+		p_entry->first = linker->hash_linker.next 
+			= linker->hash_linker.prev = &linker->hash_linker;
+	}
+	p_entry->content ++;
+	lock_release( &linker->profile->lock );
+}
 
 /*!
  * \brief Link a dialog profile
@@ -379,24 +453,7 @@ static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *d
 		linker->hash_linker.dlg = dlg;
 	}
 
-	/* calculate the hash position */
-	hash = calc_hash_profile(&linker->hash_linker.value, &dlg->callid, linker->profile);
-	linker->hash_linker.hash = hash;
-
-	/* insert into profile hash table */
-	p_entry = &linker->profile->entries[hash];
-	lock_get( &linker->profile->lock );
-	if (p_entry->first) {
-		linker->hash_linker.prev = p_entry->first->prev;
-		linker->hash_linker.next = p_entry->first;
-		p_entry->first->prev->next = &linker->hash_linker;
-		p_entry->first->prev = &linker->hash_linker;
-	} else {
-		p_entry->first = linker->hash_linker.next 
-			= linker->hash_linker.prev = &linker->hash_linker;
-	}
-	p_entry->content ++;
-	lock_release( &linker->profile->lock );
+	link_profile(linker, &dlg->callid);
 }
 
 
@@ -461,8 +518,9 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 	}
 	memset(linker, 0, sizeof(struct dlg_profile_link));
 
-	/* set backpointer to profile */
+	/* set backpointers to profile and linker (itself) */
 	linker->profile = profile;
+	linker->hash_linker.linker = linker;
 
 	/* set the value */
 	if (profile->has_value) {
@@ -514,9 +572,7 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 		str *puid, time_t expires, int flags)
 {
 	dlg_profile_link_t *linker;
-
-	if (dlg==NULL)
-		return -1;
+	str vkey;
 
 	/* build new linker */
 	linker = (struct dlg_profile_link*)shm_malloc(
@@ -527,8 +583,9 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 	}
 	memset(linker, 0, sizeof(struct dlg_profile_link));
 
-	/* set backpointer to profile */
+	/* set backpointers to profile and linker (itself) */
 	linker->profile = profile;
+	linker->hash_linker.linker = linker;
 
 	/* set the value */
 	if (profile->has_value) {
@@ -539,6 +596,7 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 	}
 	if(puid && puid->s && puid->len>0 && puid->len<SRUID_SIZE) {
 		strcpy(linker->hash_linker.puid, puid->s);
+		linker->hash_linker.puid_len = puid->len;
 	} else {
 		sruid_next_safe(&_dlg_profile_sruid);
 		strcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s);
@@ -548,7 +606,13 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 	linker->hash_linker.flags = flags;
 
 	/* add linker directly to the dialog and profile */
-	link_dlg_profile( linker, dlg);
+	if(dlg!=NULL) {
+		link_dlg_profile(linker, dlg);
+	} else {
+		vkey.s = linker->hash_linker.puid;
+		vkey.len = linker->hash_linker.puid_len;
+		link_profile(linker, &vkey);
+	}
 	return 0;
 error:
 	return -1;
@@ -1184,6 +1248,53 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 				}
 			}
 		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int dlg_cmd_remote_profile(str *cmd, str *pname, str *value, str *puid,
+		time_t expires, int flags)
+{
+	dlg_profile_table_t *dprofile;
+	int ret;
+
+	if(cmd==NULL || cmd->s==NULL || cmd->len<=0
+			|| pname==NULL || pname->s==NULL || pname->len<=0
+			|| puid==NULL || puid->s==NULL || puid->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	dprofile = search_dlg_profile(pname);
+	if(dprofile==NULL) {
+		LM_ERR("profile [%.*s] not found\n", pname->len, pname->s);
+		return -1;
+	}
+	if(dprofile->has_value) {
+		if(value==NULL || value->s==NULL || value->len<=0) {
+			LM_ERR("profile [%.*s] requires a value\n", pname->len, pname->s);
+			return -1;
+		}
+	}
+
+	if(cmd->len==3 && strncmp(cmd->s, "add", 3)==0) {
+		if(value && value->s && value->len>0) {
+			ret = dlg_add_profile(NULL, value, dprofile, puid, expires, flags);
+		} else {
+			ret = dlg_add_profile(NULL, NULL, dprofile, puid, expires, flags);
+		}
+		if(ret<0) {
+			LM_ERR("failed to add to profile [%.*s]\n", pname->len, pname->s);
+			return -1;
+		}
+	} else if(cmd->len==2 && strncmp(cmd->s, "rm", 2)==0) {
+		ret = remove_profile(dprofile, value, puid);
+		return ret;
+	} else {
+		LM_ERR("unknown command [%.*s]\n", cmd->len, cmd->s);
+		return -1;
 	}
 	return 0;
 }
