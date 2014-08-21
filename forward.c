@@ -856,6 +856,17 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 		STATS_RPL_FWD_DROP();
 		goto error;
 	}
+	/* call onsend_route */
+	if(dst.send_sock == NULL) {
+		dst.send_sock=get_send_socket(msg, &dst.to, dst.proto);
+		if (dst.send_sock==0){
+			LOG(L_ERR, "forward_reply: ERROR: cannot forward reply\n");
+			goto done;
+		}
+	}
+	run_onsend(msg, &dst, new_buf, new_len);
+
+	done:
 #ifdef STATS
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
