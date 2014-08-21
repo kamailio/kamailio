@@ -106,8 +106,8 @@ pv_elem_t * hash_param_model = NULL;
 
 int probing_threshhold = 1; /* number of failed requests, before a destination
 							   is taken into probing */
-str ds_ping_method = {"OPTIONS",7};
-str ds_ping_from   = {"sip:dispatcher@localhost", 24};
+str ds_ping_method = str_init("OPTIONS");
+str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
 int ds_probing_mode  = DS_PROBE_NONE;
 
@@ -147,7 +147,9 @@ static int ds_parse_reply_codes();
 static int ds_init_rpc(void);
 
 static int w_ds_select_dst(struct sip_msg*, char*, char*);
+static int w_ds_select_dst_limit(struct sip_msg*, char*, char*, char*);
 static int w_ds_select_domain(struct sip_msg*, char*, char*);
+static int w_ds_select_domain_limit(struct sip_msg*, char*, char*, char*);
 static int w_ds_next_dst(struct sip_msg*, char*, char*);
 static int w_ds_next_domain(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst0(struct sip_msg*, char*, char*);
@@ -170,8 +172,12 @@ static int mi_child_init(void);
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2,
 		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+  {"ds_select_dst",    (cmd_function)w_ds_select_dst_limit,    3,
+    fixup_igp_null, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2,
 		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+  {"ds_select_domain", (cmd_function)w_ds_select_domain_limit, 3,
+      fixup_igp_null, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0,
@@ -526,12 +532,13 @@ static void destroy(void)
 /**
  *
  */
-static int w_ds_select(struct sip_msg* msg, char* set, char* alg, int mode)
+static int w_ds_select(struct sip_msg* msg, char* set, char* alg, char* limit, int mode)
 {
-	unsigned int algo_flags, set_flags;
-	str s_algo = {NULL, 0};
-	str s_set = {NULL, 0};
-	int a, s;
+	unsigned int algo_flags, set_flags, limit_flags;
+	str s_algo = STR_NULL;
+	str s_set = STR_NULL;
+	str s_limit = STR_NULL;
+	int a, s, l;
 	if(msg==NULL)
 		return -1;
 
@@ -552,14 +559,35 @@ static int w_ds_select(struct sip_msg* msg, char* set, char* alg, int mode)
 		return -1;
 	}
 
-	return ds_select_dst(msg, s, a, mode);
+  if (limit) {
+    GET_VALUE("limit", limit, l, s_limit, limit_flags);
+    if (!(limit_flags&PARAM_INT)) {
+      if (limit_flags&PARAM_STR)
+        LM_ERR("unable to get dst number limit from [%.*s]\n", s_limit.len, s_limit.s);
+      else
+        LM_ERR("unable to get dst number limit\n");
+      return -1;
+    }
+  } else {
+    l = -1; /* will be casted to a rather big unsigned value */
+  }
+
+	return ds_select_dst_limit(msg, s, a, (unsigned int)l, mode);
 }
 /**
  *
  */
 static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
 {
-	return w_ds_select(msg, set, alg, 0 /*set dst uri*/);
+	return w_ds_select(msg, set, alg, 0 /* limit number of dst*/, 0 /*set dst uri*/);
+}
+
+/**
+ *
+ */
+static int w_ds_select_dst_limit(struct sip_msg* msg, char* set, char* alg, char* limit)
+{
+  return w_ds_select(msg, set, alg, limit /* limit number of dst*/, 0 /*set dst uri*/);
 }
 
 /**
@@ -567,7 +595,15 @@ static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
  */
 static int w_ds_select_domain(struct sip_msg* msg, char* set, char* alg)
 {
-	return w_ds_select(msg, set, alg, 1 /*set host port*/);
+	return w_ds_select(msg, set, alg, 0 /* limit number of dst*/, 1 /*set host port*/);
+}
+
+/**
+ *
+ */
+static int w_ds_select_domain_limit(struct sip_msg* msg, char* set, char* alg, char* limit)
+{
+  return w_ds_select(msg, set, alg, limit /* limit number of dst*/, 1 /*set host port*/);
 }
 
 /**

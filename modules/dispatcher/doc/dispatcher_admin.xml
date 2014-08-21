@@ -737,7 +737,7 @@ modparam("dispatcher", "force_dst", 1)
 	<title>Functions</title>
 	<section id="dispatcher.f.ds_select_dst">
 		<title>
-		<function moreinfo="none">ds_select_dst(set, alg)</function>
+		<function moreinfo="none">ds_select_dst(set, alg[, limit])</function>
 		</title>
 		<para>
 		The method selects a destination from addresses set. It returns true if
@@ -747,9 +747,9 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<para>
 		If the bit 2 in 'flags' parameter is set, the rest of the addresses from
-		the destination set is stored in AVP list. You can use 'ds_next_dst()'
-		to use next address in order to achieve serial forking to all possible
-		destinations.
+		the destination set is stored in AVP list (limited with an optional 'limit'
+		parameter). You can use 'ds_next_dst()' to use next address in order to
+		achieve serial forking to all possible destinations.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -856,6 +856,14 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			</itemizedlist>
 		</listitem>
+		<listitem>
+			<para>
+			<emphasis>limit</emphasis> - the maximum number of items to be
+			stored in AVP list for further failovers (the first selected
+			destination and default destination are the first to be put in
+			the list)
+                        </para>
+                </listitem>
 		</itemizedlist>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
@@ -875,12 +883,14 @@ ds_select_dst("1", "0");
 $var(a) = 4;
 ds_select_dst("1", "$var(a)");
 ...
+ds_select_dst("1", "4", "3");
+...
 </programlisting>
 		</example>
 	</section>
   	<section id="dispatcher.f.ds_select_domain">
  		<title>
- 		<function moreinfo="none">ds_select_domain(set, alg)</function>
+ 		<function moreinfo="none">ds_select_domain(set, alg[, limit])</function>
  		</title>
  		<para>
  		The method selects a destination from addresses set and rewrites the
@@ -889,9 +899,9 @@ ds_select_dst("1", "$var(a)");
  		</para>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
-		destination set is stored in AVP list. You can use 'ds_next_domain()'
-		to use next address to achieve serial forking to all possible
-		destinations.
+		destination set is stored in AVP list (limited with an optional 'limit'
+                parameter). You can use 'ds_next_domain()' to use next address to
+		achieve serial forking to all possible destinations.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.

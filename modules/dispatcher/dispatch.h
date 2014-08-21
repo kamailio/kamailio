@@ -107,6 +107,7 @@ void ds_disconnect_db(void);
 int ds_load_db(void);
 int ds_reload_db(void);
 int ds_destroy_list(void);
+int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limit, int mode);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state);

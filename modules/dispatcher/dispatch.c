@@ -1583,6 +1583,11 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
  */
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 {
+  return ds_select_dst_limit(msg, set, alg, 0, mode);
+}
+
+int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limit, int mode)
+{
 	int i, cnt;
 	unsigned int hash;
 	int_str avp_val;
@@ -1599,6 +1604,13 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 		LM_ERR("no destination sets\n");
 		return -1;
 	}
+
+	if (limit==0)
+	{
+	  LM_DBG("Limit set to 0 - forcing to unlimited\n");
+	  limit = 0xffffffff;
+	}
+  --limit; /* reserving 1 slot for selected dst */
 
 	if((mode==0) && (ds_force_dst==0)
 			&& (msg->dst_uri.s!=NULL || msg->dst_uri.len>0))
@@ -1767,7 +1779,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 	if(dst_avp_name.n!=0)
 	{
 		/* add default dst to last position in AVP list */
-		if(ds_use_default!=0 && hash!=idx->nr-1)
+		if(ds_use_default!=0 && hash!=idx->nr-1 && cnt<limit)
 		{
 			avp_val.s = idx->dlist[idx->nr-1].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
@@ -1799,7 +1811,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 
 		/* add to avp */
 
-		for(i=hash-1; i>=0; i--)
+		for(i=hash-1; i>=0 && cnt<limit; i--)
 		{	
 			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
@@ -1833,7 +1845,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 			cnt++;
 		}
 
-		for(i=idx->nr-1; i>hash; i--)
+		for(i=idx->nr-1; i>hash && cnt<limit; i--)
 		{	
 			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
