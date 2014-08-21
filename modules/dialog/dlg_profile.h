@@ -52,6 +52,7 @@ typedef struct dlg_profile_hash {
 	str value; /*!< hash value */
 	struct dlg_cell *dlg; /*!< dialog cell */
 	char puid[SRUID_SIZE];
+	int puid_len;
 	time_t expires;
 	int flags;
 	struct dlg_profile_hash *next;
@@ -213,7 +214,8 @@ int dlg_set_timeout_by_profile(struct dlg_profile_table *, str *, int);
  * \param profile dialog profile table
  * \return 0 on success, -1 on failure
  */
-int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile);
+int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile,
+		str *puid, time_t expires, int flags);
 
 /*!
  * \brief Serialize dialog profiles to json

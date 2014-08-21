@@ -39,6 +39,7 @@
 #include "../../ut.h"
 #include "../../route.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../lib/srutils/sruid.h"
 #include "dlg_hash.h"
 #include "dlg_var.h"
 #include "dlg_handlers.h"
@@ -66,6 +67,8 @@ static dlg_profile_table_t* new_dlg_profile( str *name,
 		unsigned int size, unsigned int has_value);
 
 extern int update_dlg_timeout(dlg_cell_t *, int);
+
+static sruid_t _dlg_profile_sruid;
 
 /*!
  * \brief Add profile definitions to the global list
@@ -214,10 +217,12 @@ static struct dlg_profile_table* new_dlg_profile( str *name, unsigned int size,
 
 	/* link profile */
 	for( ptmp=profiles ; ptmp && ptmp->next; ptmp=ptmp->next );
-	if (ptmp==NULL)
+	if (ptmp==NULL) {
 		profiles = profile;
-	else
+		sruid_init(&_dlg_profile_sruid, '-', "dlgp", SRUID_INC);
+	} else {
 		ptmp->next = profile;
+	}
 
 	return profile;
 }
@@ -332,15 +337,17 @@ int profile_cleanup( struct sip_msg *msg, unsigned int flags, void *param )
  * \param profile dialog profile table (for hash size)
  * \return value hash if the value has a value, hash over dialog otherwise
  */
-inline static unsigned int calc_hash_profile(str *value, dlg_cell_t *dlg,
+inline static unsigned int calc_hash_profile(str *value1, str *value2,
 		dlg_profile_table_t *profile)
 {
 	if (profile->has_value) {
-		/* do hash over the value */
-		return core_hash( value, NULL, profile->size);
+		/* do hash over the value1 */
+		return core_hash( value1, NULL, profile->size);
 	} else {
-		/* do hash over dialog pointer */
-		return ((unsigned long)dlg) % profile->size ;
+		/* do hash over the value2 */
+		if(value2)
+			return core_hash( value2, NULL, profile->size);
+		return 0;
 	}
 }
 
@@ -373,7 +380,7 @@ static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *d
 	}
 
 	/* calculate the hash position */
-	hash = calc_hash_profile(&linker->hash_linker.value, dlg, linker->profile);
+	hash = calc_hash_profile(&linker->hash_linker.value, &dlg->callid, linker->profile);
 	linker->hash_linker.hash = hash;
 
 	/* insert into profile hash table */
@@ -463,6 +470,9 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 		memcpy( linker->hash_linker.value.s, value->s, value->len);
 		linker->hash_linker.value.len = value->len;
 	}
+	sruid_next_safe(&_dlg_profile_sruid);
+	strcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s);
+	linker->hash_linker.puid_len = _dlg_profile_sruid.uid.len;
 
 	if (dlg!=NULL) {
 		/* add linker directly to the dialog and profile */
@@ -500,7 +510,8 @@ error:
  * \param profile dialog profile table
  * \return 0 on success, -1 on failure
  */
-int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile)
+int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile,
+		str *puid, time_t expires, int flags)
 {
 	dlg_profile_link_t *linker;
 
@@ -526,6 +537,15 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 		linker->hash_linker.value.len = value->len;
 		linker->hash_linker.value.s[value->len] = '\0';
 	}
+	if(puid && puid->s && puid->len>0 && puid->len<SRUID_SIZE) {
+		strcpy(linker->hash_linker.puid, puid->s);
+	} else {
+		sruid_next_safe(&_dlg_profile_sruid);
+		strcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s);
+		linker->hash_linker.puid_len = _dlg_profile_sruid.uid.len;
+	}
+	linker->hash_linker.expires = expires;
+	linker->hash_linker.flags = flags;
 
 	/* add linker directly to the dialog and profile */
 	link_dlg_profile( linker, dlg);
@@ -1149,7 +1169,7 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 			if(val.s!=NULL) {
 				if(profile->has_value)
 				{
-					if(dlg_add_profile(dlg, &val, profile) < 0)
+					if(dlg_add_profile(dlg, &val, profile, &puid, expires, flags) < 0)
 						LM_ERR("dynamic profile cannot be added, ignore!\n");
 					else
 						LM_DBG("dynamic profile added [%s : %s]\n", name.s, val.s);
@@ -1157,7 +1177,7 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 			} else {
 				if(!profile->has_value)
 				{
-					if(dlg_add_profile(dlg, NULL, profile) < 0)
+					if(dlg_add_profile(dlg, NULL, profile, &puid, expires, flags) < 0)
 						LM_ERR("static profile cannot be added, ignore!\n");
 					else
 						LM_DBG("static profile added [%s]\n", name.s);
