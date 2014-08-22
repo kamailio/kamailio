@@ -100,6 +100,7 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg)
 	str body;
 	str tmp_uri;
 	dmq_node_t *cur = NULL;
+	dmq_node_t *ret, *find;
 	char *tmp, *end, *match;
 	if(!msg->content_length) {
 		LM_ERR("no content length header found\n");
@@ -131,7 +132,11 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg)
 		tmp = match;
 		/* trim the \r, \n and \0's */
 		trim_r(tmp_uri);
-		if(!find_dmq_node_uri(update_list, &tmp_uri)) {
+		find = build_dmq_node(&tmp_uri, 0);
+		if(find==NULL)
+			return -1;
+		ret = find_dmq_node(update_list, find);
+		if (!ret) {
 			LM_DBG("found new node %.*s\n", STR_FMT(&tmp_uri));
 			cur = build_dmq_node(&tmp_uri, 1);
 			if(!cur) {
@@ -142,8 +147,15 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg)
 			update_list->nodes = cur;
 			update_list->count++;
 			total_nodes++;
+		} else if (find->params && ret->status != find->status) {
+			LM_DBG("updating status on %.*s from %d to %d\n",
+				STR_FMT(&tmp_uri), ret->status, find->status);
+			ret->status = find->status;
+			total_nodes++;
 		}
+		destroy_dmq_node(find, 0);
 	}
+
 	/* release big list lock */
 	lock_release(&update_list->lock);
 	return total_nodes;
@@ -171,7 +183,7 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 	maxforwards--;
 	
 	nodes_recv = extract_node_list(node_list, msg);
-	LM_DBG("received %d new nodes\n", nodes_recv);
+	LM_DBG("received %d new or changed nodes\n", nodes_recv);
 	response_body = build_notification_body();
 	if(response_body==NULL) {
 		LM_ERR("no response body\n");
@@ -188,7 +200,6 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 		bcast_dmq_message(dmq_notification_peer, response_body, 0,
 				&notification_callback, maxforwards, &notification_content_type);
 	}
-	LM_DBG("broadcasted message\n");
 	pkg_free(response_body);
 	return 0;
 error:
