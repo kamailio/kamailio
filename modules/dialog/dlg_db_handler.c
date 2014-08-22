@@ -383,11 +383,13 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			dlg->tl.timeout = (unsigned int)(VAL_INT(values+9));
 			LM_DBG("db dialog timeout is %u (%u/%u)\n", dlg->tl.timeout,
 					get_ticks(), (unsigned int)time(0));
-			if (dlg->tl.timeout<=(unsigned int)time(0))
+			if (dlg->tl.timeout<=(unsigned int)time(0)) {
 				dlg->tl.timeout = 0;
-			else
+				dlg->lifetime = 0;
+			} else {
+				dlg->lifetime = dlg->tl.timeout - dlg->start_ts;
 				dlg->tl.timeout -= (unsigned int)time(0);
-			dlg->lifetime = dlg->tl.timeout;
+			}
 
 			GET_STR_VALUE(cseq1, values, 10 , 1, 1);
 			GET_STR_VALUE(cseq2, values, 11 , 1, 1);
