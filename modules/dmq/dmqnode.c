@@ -114,12 +114,12 @@ int set_dmq_node_params(dmq_node_t* node, param_t* params)
 	}
 	status = get_param_value(params, &dmq_node_status_str);
 	if(status) {
-		if(str_strcmp(status, &dmq_node_active_str)) {
+		if(STR_EQ(*status, dmq_node_active_str)) {
 			node->status = DMQ_NODE_ACTIVE;
-		} else if(str_strcmp(status, &dmq_node_timeout_str)) {
-			node->status = DMQ_NODE_ACTIVE;
-		} else if(str_strcmp(status, &dmq_node_disabled_str)) {
-			node->status = DMQ_NODE_ACTIVE;
+		} else if(STR_EQ(*status, dmq_node_timeout_str)) {
+			node->status = DMQ_NODE_TIMEOUT;
+		} else if(STR_EQ(*status, dmq_node_disabled_str)) {
+			node->status = DMQ_NODE_DISABLED;
 		} else {
 			LM_ERR("invalid status parameter: %.*s\n", STR_FMT(status));
 			goto error;
