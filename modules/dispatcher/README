@@ -67,8 +67,8 @@ Carsten Bock
 
         4. Functions
 
-              4.1. ds_select_dst(set, alg)
-              4.2. ds_select_domain(set, alg)
+              4.1. ds_select_dst(set, alg[, limit])
+              4.2. ds_select_domain(set, alg[, limit])
               4.3. ds_next_dst()
               4.4. ds_next_domain()
               4.5. ds_mark_dst([state])
@@ -183,8 +183,8 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. ds_select_dst(set, alg)
-        4.2. ds_select_domain(set, alg)
+        4.1. ds_select_dst(set, alg[, limit])
+        4.2. ds_select_domain(set, alg[, limit])
         4.3. ds_next_dst()
         4.4. ds_next_domain()
         4.5. ds_mark_dst([state])
@@ -690,8 +690,8 @@ Note
 
 4. Functions
 
-   4.1. ds_select_dst(set, alg)
-   4.2. ds_select_domain(set, alg)
+   4.1. ds_select_dst(set, alg[, limit])
+   4.2. ds_select_domain(set, alg[, limit])
    4.3. ds_next_dst()
    4.4. ds_next_domain()
    4.5. ds_mark_dst([state])
@@ -699,7 +699,7 @@ Note
    4.7. ds_load_update()
    4.8. ds_load_unset()
 
-4.1. ds_select_dst(set, alg)
+4.1. ds_select_dst(set, alg[, limit])
 
    The method selects a destination from addresses set. It returns true if
    a new destination is set. The selected address is set to dst_uri field
@@ -707,9 +707,10 @@ Note
    in the SIP request.
 
    If the bit 2 in 'flags' parameter is set, the rest of the addresses
-   from the destination set is stored in AVP list. You can use
-   'ds_next_dst()' to use next address in order to achieve serial forking
-   to all possible destinations.
+   from the destination set is stored in AVP list (limited with an
+   optional 'limit' parameter). You can use 'ds_next_dst()' to use next
+   address in order to achieve serial forking to all possible
+   destinations.
 
    Meaning of the parameters is as follows:
      * set - the id of the set from where to pick up destination address.
@@ -748,6 +749,9 @@ Note
             requests as it is the only SIP method creating a SIP call.
           + "X" - if the algorithm is not implemented, the first entry in
             set is chosen.
+     * limit - the maximum number of items to be stored in AVP list for
+       further failovers (the first selected destination and default
+       destination are the first to be put in the list)
 
    If the bit 2 in 'flags' is set, the rest of the addresses from the
    destination set is stored in AVP list. You can use 'ds_next_dst()' to
@@ -763,17 +767,19 @@ ds_select_dst("1", "0");
 $var(a) = 4;
 ds_select_dst("1", "$var(a)");
 ...
+ds_select_dst("1", "4", "3");
+...
 
-4.2. ds_select_domain(set, alg)
+4.2. ds_select_domain(set, alg[, limit])
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
    ds_select_dst().
 
    If the bit 2 in 'flags' is set, the rest of the addresses from the
-   destination set is stored in AVP list. You can use 'ds_next_domain()'
-   to use next address to achieve serial forking to all possible
-   destinations.
+   destination set is stored in AVP list (limited with an optional 'limit'
+   parameter). You can use 'ds_next_domain()' to use next address to
+   achieve serial forking to all possible destinations.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
