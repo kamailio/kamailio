@@ -157,10 +157,9 @@ modparam("registrar", "default_expires", 1800)
 		<title><varname>default_expires_range</varname> (integer)</title>
 		<para>
 		This parameter specifies that the expiry used for newly created usrloc records
-		are not fixed(when <quote>default_expires</quote> applies), but a random value in the interval 
-		<quote>[default_expires-default_expires_range%, default_expires+default_expires_range%]</quote>.
-		The value is between 0 and 100 and represent the maximim percentage from default_expires that
-		will be substracted or added when computing the value. Default in 0, meaning default_expires
+		are not fixed, but a random value in the interval <quote>[default_expires-default_expires_range%, default_expires]</quote>.
+		The value is between 0 and 100 and represent the maximim percentage from expires that
+		will be substracted when computing the value. Default in 0, meaning default_expires
 		is left unmodified. This parameter can be modified via ser config framework.
 		</para>
 		<para>
@@ -181,8 +180,8 @@ modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 		<title><varname>expires_range</varname> (integer)</title>
 		<para>
 		Similar to default_expires_range, but it applies to the incoming expires
-		value and it only lowers the value. Default in 0, meaning the expires
-		is left unmodified. This parameter can be modified via config framework.
+		value. Default in 0, meaning the expires is left unmodified. 
+		This parameter can be modified via config framework.
 		</para>
 		<para>
 		<emphasis>
