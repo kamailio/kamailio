@@ -276,7 +276,7 @@ int request_nodelist(dmq_node_t* node, int forward)
 		LM_ERR("no notification body\n");
 		return -1;
 	}
-	ret = dmq_send_message(dmq_notification_peer, body, node,
+	ret = bcast_dmq_message(dmq_notification_peer, body, NULL,
 			&notification_callback, forward, &notification_content_type);
 	pkg_free(body->s);
 	pkg_free(body);
