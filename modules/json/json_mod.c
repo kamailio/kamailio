@@ -88,7 +88,7 @@ static int fixup_get_field_free(void** param, int param_no)
 	}
 
 	if (param_no == 3) {
-		return fixup_free_pvar_null(param, 3);
+		return fixup_free_pvar_null(param, 1);
 	}
 
 	LM_ERR("invalid parameter number <%d>\n", param_no);
