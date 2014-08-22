@@ -1886,6 +1886,57 @@ dlg_set_property("timeout-noreset");
 		</example>
 	</section>
 
+	<section id="dialog.f.dlg_remote_profile">
+		<title>
+		<function moreinfo="none">dlg_remote_profile(cmd, profile, value, uid, expires)</function>
+		</title>
+		<para>
+			Manage remote profile via config file. A remote profile item is considered when
+			the dialog is not managed by this server instance. The notification to add/remove
+			can be received via SIP or a RPC command, the operation can be then triggered
+			from configuration file. This should allow counting active dialogs in a profile
+			that are managed by multiple SIP server instances.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>cmd</emphasis> - the operations to do: add - add an item in
+				profile; rm - remove an item from profile
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>profile</emphasis> - name of profile
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>value</emphasis> - value for profile (if no value is needed
+				for that profile, use an empty string.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>expires</emphasis> - absolute time (unix timestamp) when this
+				profile item should be removed automatically (time based),
+				if still in the profile
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_remote_profile</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(exp) = 3600 + $Ts;
+dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 

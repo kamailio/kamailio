@@ -110,6 +110,7 @@ Alex Balashov
               6.14. dlg_set_timeout(timeout [, h_entry, h_id])
               6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
               6.16. dlg_set_property(attr)
+              6.17. dlg_remote_profile(cmd, profile, value, uid, expires)
 
         7. Statistics
 
@@ -233,6 +234,7 @@ Alex Balashov
    1.64. dlg_set_timeout usage
    1.65. dlg_set_timeout_by_profile usage
    1.66. dlg_set_property usage
+   1.67. dlg_remote_profile usage
 
 Chapter 1. Admin Guide
 
@@ -317,6 +319,7 @@ Chapter 1. Admin Guide
         6.14. dlg_set_timeout(timeout [, h_entry, h_id])
         6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
         6.16. dlg_set_property(attr)
+        6.17. dlg_remote_profile(cmd, profile, value, uid, expires)
 
    7. Statistics
 
@@ -1169,6 +1172,7 @@ modparam("dialog", "timer_procs", 1)
    6.14. dlg_set_timeout(timeout [, h_entry, h_id])
    6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
    6.16. dlg_set_property(attr)
+   6.17. dlg_remote_profile(cmd, profile, value, uid, expires)
 
 6.1. set_dlg_profile(profile,[value])
 
@@ -1509,6 +1513,33 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 dlg_set_property("ka-src");
 dlg_set_property("ka-dst");
 dlg_set_property("timeout-noreset");
+...
+
+6.17. dlg_remote_profile(cmd, profile, value, uid, expires)
+
+   Manage remote profile via config file. A remote profile item is
+   considered when the dialog is not managed by this server instance. The
+   notification to add/remove can be received via SIP or a RPC command,
+   the operation can be then triggered from configuration file. This
+   should allow counting active dialogs in a profile that are managed by
+   multiple SIP server instances.
+
+   Meaning of the parameters is as follows:
+     * cmd - the operations to do: add - add an item in profile; rm -
+       remove an item from profile
+     * profile - name of profile
+     * value - value for profile (if no value is needed for that profile,
+       use an empty string.
+     * expires - absolute time (unix timestamp) when this profile item
+       should be removed automatically (time based), if still in the
+       profile
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.67. dlg_remote_profile usage
+...
+$var(exp) = 3600 + $Ts;
+dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 ...
 
 7. Statistics
