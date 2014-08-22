@@ -171,17 +171,21 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 {
 	int nodes_recv;
 	str* response_body = NULL;
-	unsigned int maxforwards = 1;
+	int maxforwards = 0;
 	/* received dmqnode list */
 	LM_DBG("dmq triggered from dmq_notification_callback\n");
 	
 	/* extract the maxforwards value, if any */
 	if(msg->maxforwards) {
-		LM_DBG("max forwards: %.*s\n", STR_FMT(&msg->maxforwards->body));
-		str2int(&msg->maxforwards->body, &maxforwards);
+		if (msg->maxforwards->parsed > 0) {
+			/* maxfwd module has parsed and decreased the value in the msg buf */
+			/* maxforwards->parsed contains the original value */
+			maxforwards = (int)(long)(msg->maxforwards->parsed) - 1;
+		} else {
+			str2sint(&msg->maxforwards->body, &maxforwards);
+			maxforwards--;
+		}
 	}
-	maxforwards--;
-	
 	nodes_recv = extract_node_list(node_list, msg);
 	LM_DBG("received %d new or changed nodes\n", nodes_recv);
 	response_body = build_notification_body();
