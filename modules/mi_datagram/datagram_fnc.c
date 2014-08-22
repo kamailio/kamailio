@@ -533,7 +533,10 @@ void mi_datagram_server(int rx_sock, int tx_sock)
 
 		if (mi_rpl!=MI_ROOT_ASYNC_RPL) {
 			if(mi_datagram_write_tree(&dtgram , mi_rpl) != 0){
-				LM_ERR("failed to build the response \n");	
+				mi_send_dgram(tx_sock, MI_INTERNAL_ERROR, MI_INTERNAL_ERROR_LEN,
+						(struct sockaddr* )&reply_addr, reply_addr_len,
+						mi_socket_timeout);
+				LM_ERR("failed to build the response \n");
 				goto failure;
 			}
 
