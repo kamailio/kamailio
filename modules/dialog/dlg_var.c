@@ -76,13 +76,14 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	var->vflags = DLG_FLAG_NEW;
 	/* set key */
 	var->key.len = key->len;
-	var->key.s = (char*)shm_malloc(var->key.len);
+	var->key.s = (char*)shm_malloc(var->key.len+1);
 	if (var->key.s==NULL) {
 		shm_free(var);			
 		LM_ERR("no more shm mem\n");
 		return NULL;
 	}
 	memcpy(var->key.s, key->s, key->len);
+	var->key.s[var->key.len] = '\0';
 	/* set value */
 	var->value.len = val->len;
 	var->value.s = (char*)shm_malloc(var->value.len);

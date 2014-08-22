@@ -119,6 +119,7 @@ str dlg_bridge_contact = str_init("sip:controller@kamailio.org:5060");
 
 str ruri_pvar_param = str_init("$ru");
 pv_elem_t * ruri_param_model = NULL;
+str empty_str = STR_NULL;
 
 /* statistic variables */
 int dlg_enable_stats = 1;
@@ -1483,57 +1484,69 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 		int with_context)
 {
 	rpc_cb_ctx_t rpc_cb;
-	time_t _start_ts, _stop_ts;
-	struct tm *_start_t, *_stop_t;
-	char _start_date_buf[RPC_DATE_BUF_LEN]="UNSPECIFIED";
-	char _stop_date_buf[RPC_DATE_BUF_LEN]="UNSPECIFIED";
+	void *h, *sh, *ssh;
+	dlg_profile_link_t *pl;
+	dlg_var_t *var;
 
-	_start_ts = (time_t)dlg->start_ts;
-	if (_start_ts) {
-		_start_t = localtime(&_start_ts);
-		strftime(_start_date_buf, RPC_DATE_BUF_LEN - 1,
-			"%Y-%m-%d %H:%M:%S", _start_t);
-		if (dlg->tl.timeout) {
-			_stop_ts = time(0) + dlg->tl.timeout - get_ticks();
-			_stop_t = localtime(&_stop_ts);
-			strftime(_stop_date_buf, RPC_DATE_BUF_LEN - 1,
-				"%Y-%m-%d %H:%M:%S", _stop_t);
+	if (rpc->add(c, "{", &h) < 0) goto error;
+
+	rpc->struct_add(h, "ddSSSdddddddd",
+		"h_entry", dlg->h_entry,
+		"h_id", dlg->h_id,
+		"call-id", &dlg->callid,
+		"from_uri", &dlg->from_uri,
+		"to_uri", &dlg->to_uri,
+		"state", dlg->state,
+		"start_ts", dlg->start_ts,
+		"init_ts", dlg->init_ts,
+		"timeout", dlg->tl.timeout ? time(0) + dlg->tl.timeout - get_ticks() : 0,
+		"lifetime", dlg->lifetime,
+		"dflags", dlg->dflags,
+		"sflags", dlg->sflags,
+		"iflags", dlg->iflags);
+
+	if (rpc->struct_add(h, "{", "caller", &sh) < 0) goto error;
+	rpc->struct_add(sh, "SSSSS",
+		"tag", &dlg->tag[DLG_CALLER_LEG],
+		"contact", &dlg->contact[DLG_CALLER_LEG],
+		"cseq", &dlg->cseq[DLG_CALLER_LEG],
+		"route_set", &dlg->route_set[DLG_CALLER_LEG],
+		"socket", dlg->bind_addr[DLG_CALLER_LEG] ? &dlg->bind_addr[DLG_CALLER_LEG]->sock_str : &empty_str);
+
+	if (rpc->struct_add(h, "{", "callee", &sh) < 0) goto error;
+	rpc->struct_add(sh, "SSSSS",
+		"tag", &dlg->tag[DLG_CALLEE_LEG],
+		"contact", &dlg->contact[DLG_CALLEE_LEG],
+		"cseq", &dlg->cseq[DLG_CALLEE_LEG],
+		"route_set", &dlg->route_set[DLG_CALLEE_LEG],
+		"socket", dlg->bind_addr[DLG_CALLEE_LEG] ? &dlg->bind_addr[DLG_CALLEE_LEG]->sock_str : &empty_str);
+
+	if (rpc->struct_add(h, "[", "profiles", &sh) < 0) goto error;
+	for (pl = dlg->profile_links ; pl ; pl=pl->next) {
+		if (pl->profile->has_value) {
+			rpc->array_add(sh, "{", &ssh);
+			rpc->struct_add(ssh, "S", pl->profile->name.s, &pl->hash_linker.value);
+		} else {
+			rpc->array_add(sh, "S", &pl->profile->name);
 		}
 	}
 
-	rpc->rpl_printf(c, "hash:%u:%u state:%u ref_count:%u "
-		"timestart:%u timeout:%u lifetime:%u datestart:%s datestop:%s",
-		dlg->h_entry, dlg->h_id, dlg->state, dlg->ref, _start_ts, dlg->tl.timeout, dlg->lifetime,
-		_start_date_buf, _stop_date_buf);
-	rpc->rpl_printf(c, "\tcallid:%.*s from_tag:%.*s to_tag:%.*s",
-		dlg->callid.len, dlg->callid.s,
-		dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-		dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
-	rpc->rpl_printf(c, "\tfrom_uri:%.*s to_uri:%.*s",
-		dlg->from_uri.len, dlg->from_uri.s, dlg->to_uri.len, dlg->to_uri.s);
-	rpc->rpl_printf(c, "\tcaller_contact:%.*s caller_cseq:%.*s",
-		dlg->contact[DLG_CALLER_LEG].len, dlg->contact[DLG_CALLER_LEG].s,
-		dlg->cseq[DLG_CALLER_LEG].len, dlg->cseq[DLG_CALLER_LEG].s);
-	rpc->rpl_printf(c, "\tcaller_route_set: %.*s",
-		dlg->route_set[DLG_CALLER_LEG].len, dlg->route_set[DLG_CALLER_LEG].s);
-	rpc->rpl_printf(c, "\tcallee_contact:%.*s callee_cseq:%.*s",
-		dlg->contact[DLG_CALLEE_LEG].len, dlg->contact[DLG_CALLEE_LEG].s,
-		dlg->cseq[DLG_CALLEE_LEG].len, dlg->cseq[DLG_CALLEE_LEG].s);
-	rpc->rpl_printf(c, "\tcallee_route_set: %.*s",
-		dlg->route_set[DLG_CALLEE_LEG].len, dlg->route_set[DLG_CALLEE_LEG].s);
-	if (dlg->bind_addr[DLG_CALLEE_LEG]) {
-		rpc->rpl_printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:%.*s",
-			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s,
-			dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s);
-	} else {
-		rpc->rpl_printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:",
-			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s);
+	if (rpc->struct_add(h, "[", "variables", &sh) < 0) goto error;
+	for(var=dlg->vars ; var ; var=var->next) {
+		rpc->array_add(sh, "{", &ssh);
+		rpc->struct_add(ssh, "S", var->key.s, &var->value);
 	}
+
 	if (with_context) {
 		rpc_cb.rpc = rpc;
-		rpc_cb.c = c;
+		rpc_cb.c = h;
 		run_dlg_callbacks( DLGCB_RPC_CONTEXT, dlg, NULL, NULL, DLG_DIR_NONE, (void *)&rpc_cb);
 	}
+
+	return;
+error:
+	LM_ERR("Failed to add item to RPC response\n");
+	return;
 }
 
 /*!
@@ -1600,23 +1613,12 @@ static void internal_rpc_profile_get_size(rpc_t *rpc, void *c, str *profile_name
 
 	profile = search_dlg_profile( profile_name );
 	if (!profile) {
-		rpc->rpl_printf(c, "Non existing profile:%.*s",
+		rpc->fault(c, 404, "Profile not found: %.*s",
 			profile_name->len, profile_name->s);
 		return;
 	}
 	size = get_profile_size(profile, value);
-	if (value) {
-		rpc->rpl_printf(c, "Profile:%.*s => profile:%.*s value:%.*s count:%u",
-			profile_name->len, profile_name->s,
-			profile->name.len, profile->name.s,
-			value->len, value->s, size);
-		return;
-	} else {
-		rpc->rpl_printf(c, "Profile:%.*s => profile:%.*s value: count:%u",
-			profile_name->len, profile_name->s,
-			profile->name.len, profile->name.s, size);
-		return;
-	}
+	rpc->add(c, "d", size);
 	return;
 }
 
@@ -1638,45 +1640,29 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 
 	profile = search_dlg_profile( profile_name );
 	if (!profile) {
-		rpc->rpl_printf(c, "Non existing profile:%.*s",
+		rpc->fault(c, 404, "Profile not found: %.*s",
 			profile_name->len, profile_name->s);
 		return;
 	}
 
 	/* go through the hash and print the dialogs */
-	if (profile->has_value==0 || value==NULL) {
-		/* no value */
-		lock_get( &profile->lock );
-		for ( i=0 ; i< profile->size ; i++ ) {
-			ph = profile->entries[i].first;
-			if(ph) {
-				do {
+	if (profile->has_value==0)
+		value=NULL;
+
+	lock_get( &profile->lock );
+	for ( i=0 ; i< profile->size ; i++ ) {
+		ph = profile->entries[i].first;
+		if(ph) {
+			do {
+				if (!value || (STR_EQ(*value, ph->value))) {
 					/* print dialog */
 					internal_rpc_print_dlg(rpc, c, ph->dlg, 0);
-					/* next */
-					ph=ph->next;
-				}while(ph!=profile->entries[i].first);
-			}
-			lock_release(&profile->lock);
+				}
+				/* next */
+				ph=ph->next;
+			}while(ph!=profile->entries[i].first);
 		}
-	} else {
-		/* check for value also */
-		lock_get( &profile->lock );
-		for ( i=0 ; i< profile->size ; i++ ) {
-			ph = profile->entries[i].first;
-			if(ph) {
-				do {
-					if ( value->len==ph->value.len &&
-						memcmp(value->s,ph->value.s,value->len)==0 ) {
-						/* print dialog */
-						internal_rpc_print_dlg(rpc, c, ph->dlg, 0);
-					}
-					/* next */
-					ph=ph->next;
-				}while(ph!=profile->entries[i].first);
-			}
-			lock_release(&profile->lock);
-		}
+		lock_release(&profile->lock);
 	}
 }
 
@@ -1809,13 +1795,13 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 }
 
 static rpc_export_t rpc_methods[] = {
-	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, 0},
-	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, 0},
+	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, RET_ARRAY},
+	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, RET_ARRAY},
 	{"dlg.dlg_list", rpc_print_dlg, rpc_print_dlg_doc, 0},
 	{"dlg.dlg_list_ctx", rpc_print_dlg_ctx, rpc_print_dlg_ctx_doc, 0},
 	{"dlg.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
 	{"dlg.profile_get_size", rpc_profile_get_size, rpc_profile_get_size_doc, 0},
-	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, 0},
+	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, RET_ARRAY},
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{0, 0, 0, 0}
 };
