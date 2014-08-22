@@ -364,7 +364,7 @@ add("sd", string_param, int_param);
 			<row>
 			    <entry>String</entry>
 			    <entry>S</entry>
-			    <entry>str</entry>
+			    <entry>str*</entry>
 			</row>
 			<row>
 				<entry>Optional modifier</entry>
