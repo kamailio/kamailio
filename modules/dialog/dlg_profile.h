@@ -76,12 +76,14 @@ typedef struct dlg_profile_entry {
 	unsigned int content; /*!< content of the entry */
 } dlg_profile_entry_t;
 
+#define FLAG_PROFILE_REMOTE	1
 
 /*! dialog profile table */
 typedef struct dlg_profile_table {
 	str name; /*!< name of the dialog profile */
 	unsigned int size; /*!< size of the dialog profile */
 	unsigned int has_value; /*!< 0 for profiles without value, otherwise it has a value */
+	int flags; /*!< flags related to the profile */
 	gen_lock_t lock; /*! lock for concurrent access */
 	struct dlg_profile_entry *entries;
 	struct dlg_profile_table *next;
@@ -227,5 +229,10 @@ int dlg_profiles_to_json(dlg_cell_t *dlg, srjson_doc_t *jdoc);
  * \brief Deserialize dialog profiles to json
  */
 int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc);
+
+/*!
+ * \brief Remove expired remove profiles
+ */
+void remove_expired_remote_profiles(time_t te);
 
 #endif

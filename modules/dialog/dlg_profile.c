@@ -320,6 +320,50 @@ inline static unsigned int calc_hash_profile(str *value1, str *value2,
 
 
 /*!
+ * \brief Remove remote profile items that are expired
+ * \param te expiration time
+ */
+void remove_expired_remote_profiles(time_t te)
+{
+	struct dlg_profile_table *profile;
+	struct dlg_profile_entry *p_entry;
+	struct dlg_profile_hash *lh;
+	struct dlg_profile_hash *kh;
+	int i;
+
+	for( profile=profiles ; profile ; profile=profile->next ) {
+		if(profile->flags&FLAG_PROFILE_REMOTE) {
+			for(i=0; i<profile->size; i++) {
+				/* space for optimization */
+				lock_get(&profile->lock);
+				p_entry = &profile->entries[i];
+				lh = p_entry->first;
+				while(lh) {
+					kh = lh->next;
+					if(lh->dlg==NULL && lh->expires>0 && lh->expires<te) {
+						/* last element on the list? */
+						if (lh==lh->next) {
+							p_entry->first = NULL;
+						} else {
+							if (p_entry->first==lh)
+								p_entry->first = lh->next;
+							lh->next->prev = lh->prev;
+							lh->prev->next = lh->next;
+						}
+						lh->next = lh->prev = NULL;
+						if(lh->linker) shm_free(lh->linker);
+						p_entry->content--;
+						return;
+					}
+					lh = kh;
+				}
+				lock_release(&profile->lock);
+			}
+		}
+	}
+}
+
+/*!
  * \brief Remove profile
  * \param profile pointer to profile
  * \param value profile value
@@ -611,6 +655,7 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 	} else {
 		vkey.s = linker->hash_linker.puid;
 		vkey.len = linker->hash_linker.puid_len;
+		profile->flags |= FLAG_PROFILE_REMOTE;
 		link_profile(linker, &vkey);
 	}
 	return 0;

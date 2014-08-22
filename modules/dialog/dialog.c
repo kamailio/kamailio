@@ -1235,6 +1235,7 @@ void dlg_ka_timer_exec(unsigned int ticks, void* param)
 void dlg_clean_timer_exec(unsigned int ticks, void* param)
 {
 	dlg_clean_run(ticks);
+	remove_expired_remote_profiles(time(NULL));
 }
 
 static int fixup_dlg_bye(void** param, int param_no)
