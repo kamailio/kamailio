@@ -235,4 +235,10 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc);
  */
 void remove_expired_remote_profiles(time_t te);
 
+/*!
+ *
+ */
+int dlg_cmd_remote_profile(str *cmd, str *pname, str *value, str *puid,
+		time_t expires, int flags);
+
 #endif

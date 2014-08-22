@@ -181,6 +181,10 @@ static int fixup_dlg_bridge(void** param, int param_no);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
 
+static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
+		char *pval, char *puid, char *expires);
+static int fixup_dlg_remote_profile(void** param, int param_no);
+
 static cmd_export_t cmds[]={
 	{"dlg_manage", (cmd_function)w_dlg_manage,            0,0,
 			0, REQUEST_ROUTE },
@@ -227,6 +231,8 @@ static cmd_export_t cmds[]={
 		(cmd_function) w_dlg_set_timeout_by_profile3, 3, fixup_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
+			0, ANY_ROUTE },
+	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
 			0, ANY_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -1355,6 +1361,55 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 	_dlg_ctx.dir = dir;
 	dlg_release(dlg);
 	return 1;
+}
+
+/**
+ *
+ */
+static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
+		char *pval, char *puid, char *expires)
+{
+	str scmd;
+	str sname;
+	str sval;
+	str suid;
+	int ival;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_t*)cmd, &scmd)!=0) {
+		LM_ERR("unable to get command\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pname, &sname)!=0) {
+		LM_ERR("unable to get profile name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pval, &sval)!=0) {
+		LM_ERR("unable to get profile value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)puid, &suid)!=0) {
+		LM_ERR("unable to get profile uid\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)expires, &ival)!=0) {
+		LM_ERR("no hash entry value value\n");
+		return -1;
+	}
+
+	ret = dlg_cmd_remote_profile(&scmd, &sname, &sval, &suid, (time_t)ival, 0);
+	if(ret==0)
+		return 1;
+	return ret;
+}
+
+static int fixup_dlg_remote_profile(void** param, int param_no)
+{
+	if(param_no>=1 && param_no<=4)
+		return fixup_spve_null(param, 1);
+	if(param_no==5)
+		return fixup_igp_null(param, 1);
+	return 0;
 }
 
 struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)

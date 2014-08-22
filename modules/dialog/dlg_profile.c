@@ -1297,7 +1297,7 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 	return 0;
 }
 
-/**
+/*!
  *
  */
 int dlg_cmd_remote_profile(str *cmd, str *pname, str *value, str *puid,
