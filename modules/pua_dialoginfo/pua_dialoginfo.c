@@ -347,7 +347,7 @@ struct str_list* get_str_list(unsigned short avp_flags, int_str avp_name) {
 
 		memset( list_current, 0, len);
 
-		list_current->s.s = (char*)( (void*) list_current + sizeof(struct str_list));
+		list_current->s.s = (char*)list_current + sizeof(struct str_list);
 		list_current->s.len = avp_value.s.len;
 		memcpy(list_current->s.s,avp_value.s.s,avp_value.s.len);
 
