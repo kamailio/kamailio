@@ -227,8 +227,10 @@ Options:\n\
                   (to use both use `-rR`)\n\
     -K           Turn on \"via:\" host checking when forwarding replies\n\
     -d           Debugging mode (multiple -d increase the level)\n\
-    -D no        1..do not fork (almost) anyway, 2..do not daemonize creator\n\
-                  3..daemonize (default)\n\
+    -D           Control how daemonize is done:\n\
+                  -D..do not fork (almost) anyway;\n\
+                  -DD..do not daemonize creator;\n\
+                  -DDD..daemonize (default)\n\
     -E           Log to stderr\n\
     -e           Log messages printed in terminal colors (requires -E)\n"
 #ifdef USE_TCP
