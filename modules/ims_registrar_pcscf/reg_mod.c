@@ -82,7 +82,8 @@ int ignore_contact_rxport_check = 0;                             /**!< ignore po
 
 time_t time_now;
 char * pcscf_uri = "sip:pcscf.ims.smilecoms.com:4060";
-str pcscf_uri_str;
+char * force_icscf_uri = "";
+
 unsigned int pending_reg_expires = 30;			/**!< parameter for expiry time of a pending registration before receiving confirmation from SCSCF */
 
 int is_registered_fallback2ip = 0;
@@ -157,6 +158,7 @@ static param_export_t params[] = {
         {"subscribe_to_reginfo",        INT_PARAM, &subscribe_to_reginfo                },
         {"subscription_expires",        INT_PARAM, &subscription_expires                },
         {"ignore_contact_rxport_check", INT_PARAM, &ignore_contact_rxport_check         },
+	{"force_icscf_uri",		STR_PARAM, &force_icscf_uri			},
 //	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
 	{0, 0, 0}
 };
@@ -195,9 +197,6 @@ struct module_exports exports = {
 int fix_parameters() {
 	str s;
 	pv_spec_t avp_spec;
-
-	pcscf_uri_str.s = pcscf_uri;
-	pcscf_uri_str.len = strlen(pcscf_uri);
 
 	if (rcv_avp_param && *rcv_avp_param) {
 		s.s = rcv_avp_param; s.len = strlen(s.s);

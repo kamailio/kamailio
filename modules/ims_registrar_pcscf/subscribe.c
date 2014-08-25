@@ -36,6 +36,7 @@
 
 extern pua_api_t pua;
 extern char* pcscf_uri;
+extern char * force_icscf_uri;
 
 #define P_ASSERTED_IDENTITY_HDR_PREFIX	"P-Asserted-Identity: <"
 
@@ -45,6 +46,7 @@ int reginfo_subscribe_real(struct sip_msg* msg, pv_elem_t* uri, str* service_rou
 	int uri_buf_len = 512;
 	subs_info_t subs;
 	str server_address = {pcscf_uri, strlen(pcscf_uri)};
+	str outbound_proxy = {force_icscf_uri, strlen (force_icscf_uri)};
 	str p_asserted_identity_header;
 	
 	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + server_address.len + 1 + CRLF_LEN;
@@ -88,6 +90,10 @@ int reginfo_subscribe_real(struct sip_msg* msg, pv_elem_t* uri, str* service_rou
 	subs.event= REGINFO_EVENT;
 	subs.contact= &server_address;
 	subs.extra_headers = &p_asserted_identity_header;
+	
+	if(outbound_proxy.s && outbound_proxy.len) {
+	    subs.outbound_proxy= &outbound_proxy;
+	}
 	
 	subs.flag|= UPDATE_TYPE;
 	
