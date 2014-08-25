@@ -529,6 +529,36 @@ static void destroy(void)
 	} \
 }while(0)
 
+/*! \brief
+ * parses string to dispatcher dst flags set
+ * returns <0 on failure or int with flag on success.
+ */
+int ds_parse_flags( char* flag_str, int flag_len )
+{
+  int flag = 0;
+  int i;
+
+  for ( i=0; i<flag_len; i++)
+  {
+    if(flag_str[i]=='a' || flag_str[i]=='A') {
+      flag &= ~(DS_STATES_ALL);
+    } else if(flag_str[i]=='i' || flag_str[i]=='I') {
+      flag |= DS_INACTIVE_DST;
+    } else if(flag_str[i]=='d' || flag_str[i]=='D') {
+      flag |= DS_DISABLED_DST;
+    } else if(flag_str[i]=='t' || flag_str[i]=='T') {
+      flag |= DS_TRYING_DST;
+    } else if(flag_str[i]=='p' || flag_str[i]=='P') {
+      flag |= DS_PROBING_DST;
+    } else {
+      flag = -1;
+      break;
+    }
+  }
+
+  return flag;
+}
+
 /**
  *
  */
@@ -642,24 +672,18 @@ static int w_ds_mark_dst0(struct sip_msg *msg, char *str1, char *str2)
 static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 {
 	int state;
-	int len;
 
 	if(str1==NULL)
 		return w_ds_mark_dst0(msg, NULL, NULL);
 
-	len = strlen(str1);
-	state = 0;
-	if (len>1 && (str1[1]=='p' || str1[1]=='P'))
-		state |= DS_PROBING_DST;
+	state = ds_parse_flags( str1, strlen(str1) );
 
-	if(str1[0]=='i' || str1[0]=='I')
-		state |= DS_INACTIVE_DST;
-	else if(str1[0]=='t' || str1[0]=='T')
-		state |= DS_TRYING_DST;
-	else if(str1[0]=='d' || str1[0]=='D')
-		state = DS_DISABLED_DST;
-	else if(str1[0]=='p' || str1[0]=='P')
-		state =  DS_INACTIVE_DST|DS_PROBING_DST;
+	if ( state < 0 )
+	{
+	  LM_WARN("Failed to parse flag: %s", str1 );
+	  return -1;
+	}
+
 	return ds_mark_dst(msg, state);
 }
 
@@ -716,25 +740,9 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree(500, "bad state value", 15);
 	}
 
-	state = 0;
-	if(sp.s[0]=='0' || sp.s[0]=='I' || sp.s[0]=='i') {
-		/* set inactive */
-		state |= DS_INACTIVE_DST;
-		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
-			state |= DS_PROBING_DST;
-	} else if(sp.s[0]=='1' || sp.s[0]=='A' || sp.s[0]=='a') {
-		/* set active */
-		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
-			state |= DS_PROBING_DST;
-	} else if(sp.s[0]=='2' || sp.s[0]=='D' || sp.s[0]=='d') {
-		/* set disabled */
-		state |= DS_DISABLED_DST;
-	} else if(sp.s[0]=='3' || sp.s[0]=='T' || sp.s[0]=='t') {
-		/* set trying */
-		state |= DS_TRYING_DST;
-		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
-			state |= DS_PROBING_DST;
-	} else {
+	state = ds_parse_flags(sp.s, sp.len);
+	if( state < 0 )
+	{
 		LM_ERR("unknow state value\n");
 		return init_mi_tree(500, "unknown state value", 19);
 	}
