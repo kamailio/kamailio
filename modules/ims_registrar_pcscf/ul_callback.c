@@ -74,7 +74,7 @@ Call-ID: 9ad9f89f-164d-bb86-1072-52e7e9eb5025.
 </reginfo> */
 
 extern pua_api_t pua;
-extern char* pcscf_uri;
+extern str pcscf_uri;
 extern int publish_reginfo;
 
 /* methods for building reg publish */
@@ -189,13 +189,12 @@ int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 	str content_type;
 	int id_buf_len;
 	char id_buf[512];
-	str server_address = {pcscf_uri, strlen(pcscf_uri)};
 	str p_asserted_identity_header;
 
 	content_type.s = "application/reginfo+xml";
 	content_type.len = 23;
 	
-	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + server_address.len + 1 + CRLF_LEN;
+	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + pcscf_uri.len + 1 + CRLF_LEN;
 	p_asserted_identity_header.s = (char *)pkg_malloc( len );
 	if ( p_asserted_identity_header.s == NULL ) {
 	    LM_ERR( "insert_asserted_identity: pkg_malloc %d bytes failed", len );
@@ -204,8 +203,8 @@ int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 	
 	memcpy(p_asserted_identity_header.s, P_ASSERTED_IDENTITY_HDR_PREFIX, strlen(P_ASSERTED_IDENTITY_HDR_PREFIX));
 	p_asserted_identity_header.len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX);
-	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len, server_address.s, server_address.len);
-	p_asserted_identity_header.len += server_address.len;
+	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len, pcscf_uri.s, pcscf_uri.len);
+	p_asserted_identity_header.len += pcscf_uri.len;
 	*(p_asserted_identity_header.s + p_asserted_identity_header.len) = '>';
 	p_asserted_identity_header.len ++;
 	memcpy( p_asserted_identity_header.s + p_asserted_identity_header.len, CRLF, CRLF_LEN );

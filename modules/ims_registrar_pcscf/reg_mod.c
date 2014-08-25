@@ -81,8 +81,9 @@ int ignore_contact_rxport_check = 0;                             /**!< ignore po
                                                                  * this is useful for example if you register with UDP but possibly send invite over TCP (message too big)*/
 
 time_t time_now;
-char * pcscf_uri = "sip:pcscf.ims.smilecoms.com:4060";
-char * force_icscf_uri = "";
+
+str pcscf_uri = str_init("sip:pcscf.ims.smilecoms.com:4060");
+str force_icscf_uri = str_init("");
 
 unsigned int pending_reg_expires = 30;			/**!< parameter for expiry time of a pending registration before receiving confirmation from SCSCF */
 
@@ -150,7 +151,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"pcscf_uri",                   STR_PARAM, &pcscf_uri                           },
+	{"pcscf_uri",                   PARAM_STR, &pcscf_uri                           },
 	{"pending_reg_expires",         INT_PARAM, &pending_reg_expires			},
 	{"received_avp",                STR_PARAM, &rcv_avp_param       		},
 	{"is_registered_fallback2ip",	INT_PARAM, &is_registered_fallback2ip           },
@@ -158,7 +159,7 @@ static param_export_t params[] = {
         {"subscribe_to_reginfo",        INT_PARAM, &subscribe_to_reginfo                },
         {"subscription_expires",        INT_PARAM, &subscription_expires                },
         {"ignore_contact_rxport_check", INT_PARAM, &ignore_contact_rxport_check         },
-	{"force_icscf_uri",		STR_PARAM, &force_icscf_uri			},
+	{"force_icscf_uri",		PARAM_STR, &force_icscf_uri			},
 //	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
 	{0, 0, 0}
 };

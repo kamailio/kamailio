@@ -35,8 +35,8 @@
 
 
 extern pua_api_t pua;
-extern char* pcscf_uri;
-extern char * force_icscf_uri;
+extern str pcscf_uri;
+extern str force_icscf_uri;
 
 #define P_ASSERTED_IDENTITY_HDR_PREFIX	"P-Asserted-Identity: <"
 
@@ -45,11 +45,9 @@ int reginfo_subscribe_real(struct sip_msg* msg, pv_elem_t* uri, str* service_rou
 	char uri_buf[512];
 	int uri_buf_len = 512;
 	subs_info_t subs;
-	str server_address = {pcscf_uri, strlen(pcscf_uri)};
-	str outbound_proxy = {force_icscf_uri, strlen (force_icscf_uri)};
 	str p_asserted_identity_header;
 	
-	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + server_address.len + 1 + CRLF_LEN;
+	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + pcscf_uri.len + 1 + CRLF_LEN;
 	p_asserted_identity_header.s = (char *)pkg_malloc( len );
 	if ( p_asserted_identity_header.s == NULL ) {
 	    LM_ERR( "insert_asserted_identity: pkg_malloc %d bytes failed", len );
@@ -58,8 +56,8 @@ int reginfo_subscribe_real(struct sip_msg* msg, pv_elem_t* uri, str* service_rou
 
 	memcpy(p_asserted_identity_header.s, P_ASSERTED_IDENTITY_HDR_PREFIX, strlen(P_ASSERTED_IDENTITY_HDR_PREFIX));
 	p_asserted_identity_header.len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX);
-	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len, server_address.s, server_address.len);
-	p_asserted_identity_header.len += server_address.len;
+	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len, pcscf_uri.s, pcscf_uri.len);
+	p_asserted_identity_header.len += pcscf_uri.len;
 	*(p_asserted_identity_header.s + p_asserted_identity_header.len) = '>';
 	p_asserted_identity_header.len ++;
 	memcpy( p_asserted_identity_header.s + p_asserted_identity_header.len, CRLF, CRLF_LEN );
@@ -83,16 +81,16 @@ int reginfo_subscribe_real(struct sip_msg* msg, pv_elem_t* uri, str* service_rou
 
 	subs.remote_target = &uri_str;
 	subs.pres_uri= &uri_str;
-	subs.watcher_uri= &server_address;
+	subs.watcher_uri= &pcscf_uri;
 	subs.expires = expires;
 
 	subs.source_flag= REGINFO_SUBSCRIBE;
 	subs.event= REGINFO_EVENT;
-	subs.contact= &server_address;
+	subs.contact= &pcscf_uri;
 	subs.extra_headers = &p_asserted_identity_header;
 	
-	if(outbound_proxy.s && outbound_proxy.len) {
-	    subs.outbound_proxy= &outbound_proxy;
+	if(force_icscf_uri.s && force_icscf_uri.len) {
+	    subs.outbound_proxy= &force_icscf_uri;
 	}
 	
 	subs.flag|= UPDATE_TYPE;
