@@ -75,7 +75,16 @@ Turns on debugging, multiple
 increase the debug level.
 .TP
 .BI \-D
-Runs sip-router in the foreground (it doesn't fork into daemon mode).
+Control how daemonize is done:
+.br
+.B -D
+- do not fork (almost) anyway (run in foreground, doesn't fork into daemon mode);
+.br
+.B -DD
+- do not daemonize creator (main process is not daemonized);
+.br
+.B -DDD
+- daemonize (default)
 .TP
 .BI \-E
 Sends all the log messages to stderr.
