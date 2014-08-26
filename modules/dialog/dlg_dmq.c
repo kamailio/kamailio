@@ -97,7 +97,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 	str profiles = {0, 0}, callid = {0, 0};
 	str dummy = {0, 0};
 	unsigned int init_ts = 0, start_ts = 0, lifetime = 0;
-	unsigned int state = 0;
+	unsigned int state = 1;
 
 	/* received dmq message */
 	LM_DBG("dmq message received\n");
@@ -194,8 +194,6 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 				dlg->h_id = iuid.h_id;
 				/* prevent DB sync */
 				dlg->dflags &= ~(DLG_FLAG_NEW|DLG_FLAG_CHANGED);
-				dlg->init_ts = init_ts;
-				dlg->start_ts = start_ts;
 			} else {
 				/* remove existing profiles */
 				if (dlg->profile_links!=NULL) {
@@ -203,6 +201,9 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 					dlg->profile_links = NULL;
 				}
 			}
+
+			dlg->init_ts = init_ts;
+			dlg->start_ts = start_ts;
 
 			/* add profiles */
 			if(profiles.s!=NULL) {
