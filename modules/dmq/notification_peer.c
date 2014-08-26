@@ -296,9 +296,12 @@ int notification_resp_callback_f(struct sip_msg* msg, int code,
 	if(code == 408) {
 		/* deleting node - the server did not respond */
 		LM_ERR("deleting server %.*s because of failed request\n", STR_FMT(&node->orig_uri));
+		if (STR_EQ(node->orig_uri, dmq_notification_address)) {
+			LM_ERR("not deleting notification_peer\n");
+			return 0;
+		}
 		ret = del_dmq_node(node_list, node);
 		LM_DBG("del_dmq_node returned %d\n", ret);
 	}
 	return 0;
 }
-
