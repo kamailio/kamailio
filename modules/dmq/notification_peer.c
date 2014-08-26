@@ -36,6 +36,7 @@ int add_notification_peer()
 {
 	dmq_peer_t not_peer;
 	not_peer.callback = dmq_notification_callback;
+	not_peer.init_callback = NULL;
 	not_peer.description.s = "notification_peer";
 	not_peer.description.len = 17;
 	not_peer.peer_id.s = "notification_peer";
@@ -165,11 +166,27 @@ error:
 	return -1;
 }
 
+
+int run_init_callbacks() {
+	dmq_peer_t* crt;
+
+	crt = peer_list->peers;
+	while(crt) {
+		if (crt->init_callback) {
+			crt->init_callback();
+		}
+		crt = crt->next;
+	}
+	return 0;
+}
+
+
 /**
  * @brief dmq notification callback
  */
 int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 {
+	static int firstrun = 1;
 	int nodes_recv;
 	str* response_body = NULL;
 	int maxforwards = 0;
@@ -206,6 +223,10 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 				&notification_callback, maxforwards, &notification_content_type);
 	}
 	pkg_free(response_body);
+	if (firstrun) {
+		run_init_callbacks();
+		firstrun = 0;
+	}
 	return 0;
 error:
 	return -1;

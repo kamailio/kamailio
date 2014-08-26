@@ -51,6 +51,7 @@ int dlg_dmq_initialize()
 	}
 
 	not_peer.callback = dlg_dmq_handle_msg;
+	not_peer.init_callback = NULL;
 	not_peer.description.s = "dialog";
 	not_peer.description.len = 6;
 	not_peer.peer_id.s = "dialog";

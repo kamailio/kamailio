@@ -59,6 +59,7 @@ int ht_dmq_initialize()
         }
 
 	not_peer.callback = ht_dmq_handle_msg;
+	not_peer.init_callback = NULL;
 	not_peer.description.s = "htable";
 	not_peer.description.len = 6;
 	not_peer.peer_id.s = "htable";
