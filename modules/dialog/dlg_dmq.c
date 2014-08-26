@@ -212,7 +212,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 				dlg_json_to_profiles(dlg, &prof_jdoc);
 				srjson_DestroyDoc(&prof_jdoc);
 			}
-			if (dlg->state == state) {
+			if (state == dlg->state) {
 				break;
 			}
 			/* intentional fallthrough */
@@ -221,6 +221,12 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 			if (!dlg) {
 				LM_ERR("dialog [%u:%u] not found\n", iuid.h_entry, iuid.h_id);
 				goto error;
+			}
+			if (state < dlg->state) {
+				LM_NOTICE("Ignoring backwards state change on dlg [%u:%u] with callid [%.*s] from state [%u] to state [%u]\n",
+					iuid.h_entry, iuid.h_id,
+					dlg->callid.len, dlg->callid.s, dlg->state, state);
+				break;
 			}
 			LM_DBG("State update dlg [%u:%u] with callid [%.*s] from state [%u] to state [%u]\n", iuid.h_entry, iuid.h_id,
 					dlg->callid.len, dlg->callid.s, dlg->state, state);

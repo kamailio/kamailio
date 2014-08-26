@@ -50,7 +50,8 @@
 #include "dlg_cb.h"
 
 
-/* states of a dialog */
+/* states of a dialog
+ * order is important, numbering must represent normal state stange flow */
 #define DLG_STATE_UNCONFIRMED  1 /*!< unconfirmed dialog */
 #define DLG_STATE_EARLY        2 /*!< early dialog */
 #define DLG_STATE_CONFIRMED_NA 3 /*!< confirmed dialog without a ACK yet */
