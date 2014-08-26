@@ -398,7 +398,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, NULL, NULL, DLG_DIR_NONE, 0);
 
-	if (dlg_enable_dmq)
+	if (dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC))
 		dlg_dmq_replicate_action(DLG_DMQ_RM, dlg, 0);
 
 	/* delete the dialog from DB*/
@@ -462,9 +462,9 @@ void destroy_dlg_table(void)
 		while (dlg) {
 			l_dlg = dlg;
 			dlg = dlg->next;
+			l_dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
 			destroy_dlg(l_dlg);
 		}
-
 	}
 
 	shm_free(d_table);
