@@ -50,12 +50,12 @@ static struct hdr_field* act_contact;
  */
 static inline int randomize_expires( int expires, int range )
 {
-  /* if no range is given just return expires */
-  if(range == 0) return expires;
+	/* if no range is given just return expires */
+	if(range == 0) return expires;
 
-  int range_min = expires - (float)range/100 * expires;
+	int range_min = expires - (float)range/100 * expires;
 
-  return range_min + (float)(rand()%100)/100 * ( expires - range_min );
+	return range_min + (float)(rand()%100)/100 * ( expires - range_min );
 }
 
 
@@ -71,10 +71,10 @@ static inline int get_expires_hf(struct sip_msg* _m)
 	if (_m->expires) {
 		p = (exp_body_t*)_m->expires->parsed;
 		if (p->valid) {
-      return p->val;
+			return p->val;
 		}
 	}
-  return -1;
+	return -1;
 }
 
 
@@ -85,13 +85,13 @@ static inline int get_expires_hf(struct sip_msg* _m)
 int parse_message(struct sip_msg* _m)
 {
 	struct hdr_field* ptr;
-	
+
 	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		rerrno = R_PARSE;
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
-	
+
 	if (!_m->to) {
 		rerrno = R_TO_MISS;
 		LM_ERR("To not found\n");
@@ -115,7 +115,7 @@ int parse_message(struct sip_msg* _m)
 		LM_ERR("failed to parse expires body\n");
 		return -5;
 	}
-	
+
 	if (_m->contact) {
 		ptr = _m->contact;
 		while(ptr) {
@@ -129,7 +129,7 @@ int parse_message(struct sip_msg* _m)
 			ptr = ptr->next;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -143,11 +143,11 @@ int check_contacts(struct sip_msg* _m, int* _s)
 {
 	struct hdr_field* p;
 	contact_t*  c;
-	
+
 	*_s = 0;
 	/* Message without contacts is OK */
 	if (_m->contact == 0) return 0;
-	
+
 	if (((contact_body_t*)_m->contact->parsed)->star == 1) {
 		/* The first Contact HF is star */
 		/* Expires must be zero */
@@ -155,13 +155,13 @@ int check_contacts(struct sip_msg* _m, int* _s)
 			rerrno = R_STAR_EXP;
 			return 1;
 		}
-		
+
 		/* Message must contain no contacts */
 		if (((contact_body_t*)_m->contact->parsed)->contacts) {
 			rerrno = R_STAR_CONT;
 			return 1;
 		}
-		
+
 		/* Message must contain no other Contact HFs */
 		p = _m->contact->next;
 		while(p) {
@@ -171,7 +171,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 			}
 			p = p->next;
 		}
-		
+
 		*_s = 1;
 	} else { /* The first Contact HF is not star */
 		/* Message must contain no star Contact HF */
@@ -185,7 +185,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 				/* check also the lenght of all contacts */
 				for(c=((contact_body_t*)p->parsed)->contacts ; c ; c=c->next) {
 					if (c->uri.len > CONTACT_MAX_SIZE
-					|| (c->received && c->received->len>RECEIVED_MAX_SIZE) ) {
+							|| (c->received && c->received->len>RECEIVED_MAX_SIZE) ) {
 						rerrno = R_CONTACT_LEN;
 						return 1;
 					}
@@ -194,7 +194,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 			p = p->next;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -205,7 +205,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 contact_t* get_first_contact(struct sip_msg* _m)
 {
 	if (_m->contact == 0) return 0;
-	
+
 	act_contact = _m->contact;
 	return (((contact_body_t*)_m->contact->parsed)->contacts);
 }
@@ -244,39 +244,39 @@ contact_t* get_next_contact(contact_t* _c)
  */
 void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 {
-  int range = 0;
+	int range = 0;
 	if (!_ep || !_ep->body.len) {
-	  *_e = get_expires_hf(_m);
+		*_e = get_expires_hf(_m);
 
-	  if ( *_e < 0 ) {
-      *_e = cfg_get(registrar, registrar_cfg, default_expires);
-      range = cfg_get(registrar, registrar_cfg, default_expires_range);
-	  } else {
-      range = cfg_get(registrar, registrar_cfg, expires_range);
-	  }
+		if ( *_e < 0 ) {
+			*_e = cfg_get(registrar, registrar_cfg, default_expires);
+			range = cfg_get(registrar, registrar_cfg, default_expires_range);
+		} else {
+			range = cfg_get(registrar, registrar_cfg, expires_range);
+		}
 	} else {
 		if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
 			*_e = cfg_get(registrar, registrar_cfg, default_expires);
 			range = cfg_get(registrar, registrar_cfg, default_expires_range);
 		} else {
-		  range = cfg_get(registrar, registrar_cfg, expires_range);
+			range = cfg_get(registrar, registrar_cfg, expires_range);
 		}
 	}
 
 	if ( *_e != 0 )
 	{
-    *_e = randomize_expires( *_e, range );
+		*_e = randomize_expires( *_e, range );
 
-    if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
-      *_e = cfg_get(registrar, registrar_cfg, min_expires);
-    }
+		if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
+			*_e = cfg_get(registrar, registrar_cfg, min_expires);
+		}
 
-    if (cfg_get(registrar, registrar_cfg, max_expires) && (*_e > cfg_get(registrar, registrar_cfg, max_expires))) {
-      *_e = cfg_get(registrar, registrar_cfg, max_expires);
-    }
+		if (cfg_get(registrar, registrar_cfg, max_expires) && (*_e > cfg_get(registrar, registrar_cfg, max_expires))) {
+			*_e = cfg_get(registrar, registrar_cfg, max_expires);
+		}
 
-    /* Convert to absolute value */
-    *_e += act_time;
+		/* Convert to absolute value */
+		*_e += act_time;
 	}
 }
 
