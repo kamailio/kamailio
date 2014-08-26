@@ -102,7 +102,8 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg)
 	dmq_node_t *cur = NULL;
 	dmq_node_t *ret, *find;
 	char *tmp, *end, *match;
-	if(!msg->content_length) {
+
+	if(!msg->content_length && (parse_headers(msg,HDR_CONTENTLENGTH_F,0)<0 || !msg->content_length)) {
 		LM_ERR("no content length header found\n");
 		return -1;
 	}
