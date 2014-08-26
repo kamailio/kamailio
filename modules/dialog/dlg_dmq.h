@@ -38,6 +38,7 @@ typedef enum {
 	DLG_DMQ_UPDATE,
 	DLG_DMQ_STATE,
 	DLG_DMQ_RM,
+	DLG_DMQ_SYNC,
 } dlg_dmq_action_t;
 
 int dlg_dmq_initialize();

@@ -29,6 +29,9 @@
 str notification_content_type = str_init("text/plain");
 dmq_resp_cback_t notification_callback = {&notification_resp_callback_f, 0};
 
+int *dmq_init_callback_done;
+
+
 /**
  * @brief add notification peer
  */
@@ -186,7 +189,6 @@ int run_init_callbacks() {
  */
 int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 {
-	static int firstrun = 1;
 	int nodes_recv;
 	str* response_body = NULL;
 	int maxforwards = 0;
@@ -223,9 +225,9 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 				&notification_callback, maxforwards, &notification_content_type);
 	}
 	pkg_free(response_body);
-	if (firstrun) {
+	if (!*dmq_init_callback_done) {
+		*dmq_init_callback_done = 1;
 		run_init_callbacks();
-		firstrun = 0;
 	}
 	return 0;
 error:
@@ -312,8 +314,17 @@ int notification_resp_callback_f(struct sip_msg* msg, int code,
 		dmq_node_t* node, void* param)
 {
 	int ret;
+	int nodes_recv;
+
 	LM_DBG("notification_callback_f triggered [%p %d %p]\n", msg, code, param);
-	if(code == 408) {
+	if(code == 200) {
+		nodes_recv = extract_node_list(node_list, msg);
+		LM_DBG("received %d new or changed nodes\n", nodes_recv);
+		if (!*dmq_init_callback_done) {
+			*dmq_init_callback_done = 1;
+			run_init_callbacks();
+		}
+	} else if(code == 408) {
 		/* deleting node - the server did not respond */
 		LM_ERR("deleting server %.*s because of failed request\n", STR_FMT(&node->orig_uri));
 		if (STR_EQ(node->orig_uri, dmq_notification_address)) {

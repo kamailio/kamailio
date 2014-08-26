@@ -34,6 +34,7 @@
 #include "dmq_funcs.h"
 
 extern str notification_content_type;
+extern int *dmq_init_callback_done;
 
 int add_notification_peer();
 int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp);

@@ -35,6 +35,10 @@ dmq_api_t dlg_dmqb;
 dmq_peer_t* dlg_dmq_peer = NULL;
 dmq_resp_cback_t dlg_dmq_resp_callback = {&dlg_dmq_resp_callback_f, 0};
 
+int dmq_send_all_dlgs();
+int dlg_dmq_request_sync();
+
+
 /**
 * @brief add notification peer
 */
@@ -51,7 +55,7 @@ int dlg_dmq_initialize()
 	}
 
 	not_peer.callback = dlg_dmq_handle_msg;
-	not_peer.init_callback = NULL;
+	not_peer.init_callback = dlg_dmq_request_sync;
 	not_peer.description.s = "dialog";
 	not_peer.description.len = 6;
 	not_peer.peer_id.s = "dialog";
@@ -288,6 +292,10 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 			unref++;
 			break;
 
+		case DLG_DMQ_SYNC:
+			dmq_send_all_dlgs();
+			break;
+
 		case DLG_DMQ_NONE:
 			break;
 	}
@@ -311,6 +319,46 @@ error:
 	resp->reason = dmq_500_rpl;
 	resp->resp_code = 500;
 	return 0;
+}
+
+
+int dlg_dmq_request_sync() {
+	srjson_doc_t jdoc;
+
+	LM_DBG("requesting sync from dmq peers\n");
+
+	srjson_InitDoc(&jdoc, NULL);
+
+	jdoc.root = srjson_CreateObject(&jdoc);
+	if(jdoc.root==NULL) {
+		LM_ERR("cannot create json root\n");
+		goto error;
+	}
+
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", DLG_DMQ_SYNC);
+	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
+	if(jdoc.buf.s==NULL) {
+		LM_ERR("unable to serialize data\n");
+		goto error;
+	}
+	jdoc.buf.len = strlen(jdoc.buf.s);
+	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
+	if (dlg_dmq_broadcast(&jdoc.buf)!=0) {
+		goto error;
+	}
+
+	jdoc.free_fn(jdoc.buf.s);
+	jdoc.buf.s = NULL;
+	srjson_DestroyDoc(&jdoc);
+	return 0;
+
+error:
+	if(jdoc.buf.s!=NULL) {
+		jdoc.free_fn(jdoc.buf.s);
+		jdoc.buf.s = NULL;
+	}
+	srjson_DestroyDoc(&jdoc);
+	return -1;
 }
 
 
@@ -391,6 +439,7 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needl
 			break;
 
 		case DLG_DMQ_NONE:
+		case DLG_DMQ_SYNC:
 			break;
 	}
 	if (needlock)
@@ -419,6 +468,30 @@ error:
 	}
 	srjson_DestroyDoc(&jdoc);
 	return -1;
+}
+
+
+int dmq_send_all_dlgs() {
+	int index;
+	dlg_entry_t entry;
+	dlg_cell_t *dlg;
+
+	LM_DBG("sending all dialogs \n");
+
+	for(index = 0; index< d_table->size; index++){
+		/* lock the whole entry */
+		entry = (d_table->entries)[index];
+		dlg_lock( d_table, &entry);
+
+		for(dlg = entry.first; dlg != NULL; dlg = dlg->next){
+			dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
+			dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0);
+		}
+
+		dlg_unlock( d_table, &entry);
+	}
+
+	return 0;
 }
 
 
