@@ -172,12 +172,12 @@ static int mi_child_init(void);
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2,
 		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-  {"ds_select_dst",    (cmd_function)w_ds_select_dst_limit,    3,
-    fixup_igp_null, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_dst",    (cmd_function)w_ds_select_dst_limit,    3,
+		fixup_igp_null, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2,
 		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-  {"ds_select_domain", (cmd_function)w_ds_select_domain_limit, 3,
-      fixup_igp_null, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_domain", (cmd_function)w_ds_select_domain_limit, 3,
+		fixup_igp_null, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0,
@@ -535,28 +535,28 @@ static void destroy(void)
  */
 int ds_parse_flags( char* flag_str, int flag_len )
 {
-  int flag = 0;
-  int i;
+	int flag = 0;
+	int i;
 
-  for ( i=0; i<flag_len; i++)
-  {
-    if(flag_str[i]=='a' || flag_str[i]=='A') {
-      flag &= ~(DS_STATES_ALL);
-    } else if(flag_str[i]=='i' || flag_str[i]=='I') {
-      flag |= DS_INACTIVE_DST;
-    } else if(flag_str[i]=='d' || flag_str[i]=='D') {
-      flag |= DS_DISABLED_DST;
-    } else if(flag_str[i]=='t' || flag_str[i]=='T') {
-      flag |= DS_TRYING_DST;
-    } else if(flag_str[i]=='p' || flag_str[i]=='P') {
-      flag |= DS_PROBING_DST;
-    } else {
-      flag = -1;
-      break;
-    }
-  }
+	for ( i=0; i<flag_len; i++)
+	{
+		if(flag_str[i]=='a' || flag_str[i]=='A') {
+			flag &= ~(DS_STATES_ALL);
+		} else if(flag_str[i]=='i' || flag_str[i]=='I') {
+			flag |= DS_INACTIVE_DST;
+		} else if(flag_str[i]=='d' || flag_str[i]=='D') {
+			flag |= DS_DISABLED_DST;
+		} else if(flag_str[i]=='t' || flag_str[i]=='T') {
+			flag |= DS_TRYING_DST;
+		} else if(flag_str[i]=='p' || flag_str[i]=='P') {
+			flag |= DS_PROBING_DST;
+		} else {
+			flag = -1;
+			break;
+		}
+	}
 
-  return flag;
+	return flag;
 }
 
 /**
@@ -589,18 +589,18 @@ static int w_ds_select(struct sip_msg* msg, char* set, char* alg, char* limit, i
 		return -1;
 	}
 
-  if (limit) {
-    GET_VALUE("limit", limit, l, s_limit, limit_flags);
-    if (!(limit_flags&PARAM_INT)) {
-      if (limit_flags&PARAM_STR)
-        LM_ERR("unable to get dst number limit from [%.*s]\n", s_limit.len, s_limit.s);
-      else
-        LM_ERR("unable to get dst number limit\n");
-      return -1;
-    }
-  } else {
-    l = -1; /* will be casted to a rather big unsigned value */
-  }
+	if (limit) {
+		GET_VALUE("limit", limit, l, s_limit, limit_flags);
+		if (!(limit_flags&PARAM_INT)) {
+			if (limit_flags&PARAM_STR)
+				LM_ERR("unable to get dst number limit from [%.*s]\n", s_limit.len, s_limit.s);
+			else
+				LM_ERR("unable to get dst number limit\n");
+			return -1;
+		}
+	} else {
+		l = -1; /* will be casted to a rather big unsigned value */
+	}
 
 	return ds_select_dst_limit(msg, s, a, (unsigned int)l, mode);
 }
@@ -617,7 +617,7 @@ static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
  */
 static int w_ds_select_dst_limit(struct sip_msg* msg, char* set, char* alg, char* limit)
 {
-  return w_ds_select(msg, set, alg, limit /* limit number of dst*/, 0 /*set dst uri*/);
+	return w_ds_select(msg, set, alg, limit /* limit number of dst*/, 0 /*set dst uri*/);
 }
 
 /**
@@ -633,7 +633,7 @@ static int w_ds_select_domain(struct sip_msg* msg, char* set, char* alg)
  */
 static int w_ds_select_domain_limit(struct sip_msg* msg, char* set, char* alg, char* limit)
 {
-  return w_ds_select(msg, set, alg, limit /* limit number of dst*/, 1 /*set host port*/);
+	return w_ds_select(msg, set, alg, limit /* limit number of dst*/, 1 /*set host port*/);
 }
 
 /**
@@ -680,8 +680,8 @@ static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 
 	if ( state < 0 )
 	{
-	  LM_WARN("Failed to parse flag: %s", str1 );
-	  return -1;
+		LM_WARN("Failed to parse flag: %s", str1 );
+		return -1;
 	}
 
 	return ds_mark_dst(msg, state);
@@ -727,7 +727,8 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 {
 	str sp;
 	int ret;
-	unsigned int group, state;
+	unsigned int group;
+	int state;
 	struct mi_node* node;
 
 	node = cmd_tree->node.kids;
@@ -1079,29 +1080,29 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 			if (list->dlist[j].attrs.body.s)
 			{
 				if(rpc->struct_add(vh, "Ssd{",
-						"URI", &list->dlist[j].uri,
-						"FLAGS", c,
-						"PRIORITY", list->dlist[j].priority,
-						"ATTRS", &wh)<0)
+							"URI", &list->dlist[j].uri,
+							"FLAGS", c,
+							"PRIORITY", list->dlist[j].priority,
+							"ATTRS", &wh)<0)
 				{
 					rpc->fault(ctx, 500, "Internal error creating dest struct");
 					return;
 				}
 				if(rpc->struct_add(wh, "SSdd",
-						"BODY", &(list->dlist[j].attrs.body),
-						"DUID", (list->dlist[j].attrs.duid.s)?
-						&(list->dlist[j].attrs.duid):&data,
-						"MAXLOAD", list->dlist[j].attrs.maxload,
-						"WEIGHT", list->dlist[j].attrs.weight)<0)
+							"BODY", &(list->dlist[j].attrs.body),
+							"DUID", (list->dlist[j].attrs.duid.s)?
+							&(list->dlist[j].attrs.duid):&data,
+							"MAXLOAD", list->dlist[j].attrs.maxload,
+							"WEIGHT", list->dlist[j].attrs.weight)<0)
 				{
 					rpc->fault(ctx, 500, "Internal error creating attrs struct");
 					return;
 				}
 			} else {
 				if(rpc->struct_add(vh, "Ssd",
-						"URI", &list->dlist[j].uri,
-						"FLAGS", c,
-						"PRIORITY", list->dlist[j].priority)<0)
+							"URI", &list->dlist[j].uri,
+							"FLAGS", c,
+							"PRIORITY", list->dlist[j].priority)<0)
 				{
 					rpc->fault(ctx, 500, "Internal error creating dest struct");
 					return;
