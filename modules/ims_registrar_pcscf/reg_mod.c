@@ -66,6 +66,7 @@
 #include "reg_mod.h"
 #include "save.h"
 #include "service_routes.h"
+#include "lookup.h"
 
 MODULE_VERSION
 
@@ -110,6 +111,8 @@ static int w_reginfo_handle_notify(struct sip_msg* _m, char* _d, char* _foo);
 static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri);
 static int w_assert_called_identity(struct sip_msg* _m, char* _d, char* _foo);
 
+static int w_lookup_transport(struct sip_msg* _m, char* _d, char* _uri);
+
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int save_fixup2(void** param, int param_no);
@@ -130,18 +133,15 @@ inline void pcscf_act_time()
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"pcscf_save",     		(cmd_function)w_save,       	1,  	save_fixup2, 	0,		ONREPLY_ROUTE },
-	{"pcscf_save_pending",	(cmd_function)w_save_pending,       	1,  	save_fixup2, 	0,		REQUEST_ROUTE },
-
-	{"pcscf_follows_service_routes", (cmd_function)w_follows_service_routes,       	1,  	save_fixup2, 	0,		REQUEST_ROUTE },
-	{"pcscf_force_service_routes", (cmd_function)w_force_service_routes,       	1,  	save_fixup2, 	0,		REQUEST_ROUTE },
-
-	{"pcscf_is_registered", (cmd_function)w_is_registered,       	1,  	save_fixup2, 	0,		REQUEST_ROUTE|ONREPLY_ROUTE },
-
-	{"pcscf_assert_identity", (cmd_function)w_assert_identity,      2,  	assert_identity_fixup, 	0,		REQUEST_ROUTE },
-	{"pcscf_assert_called_identity", (cmd_function)w_assert_called_identity,      1,  	assert_identity_fixup, 	0,		ONREPLY_ROUTE },
-
-	{"reginfo_handle_notify", (cmd_function)w_reginfo_handle_notify, 1, domain_fixup, 0, REQUEST_ROUTE},
+	{"pcscf_save",     		(cmd_function)w_save,                   1,  	save_fixup2,            0,		ONREPLY_ROUTE },
+	{"pcscf_save_pending",          (cmd_function)w_save_pending,       	1,  	save_fixup2,            0,		REQUEST_ROUTE },
+	{"pcscf_follows_service_routes",(cmd_function)w_follows_service_routes, 1,  	save_fixup2,            0,		REQUEST_ROUTE },
+	{"pcscf_force_service_routes",  (cmd_function)w_force_service_routes,   1,  	save_fixup2,            0,		REQUEST_ROUTE },
+	{"pcscf_is_registered",         (cmd_function)w_is_registered,          1,  	save_fixup2,            0,		REQUEST_ROUTE|ONREPLY_ROUTE },
+	{"pcscf_assert_identity",       (cmd_function)w_assert_identity,        2,  	assert_identity_fixup,  0,		REQUEST_ROUTE },
+	{"pcscf_assert_called_identity",(cmd_function)w_assert_called_identity, 1,  assert_identity_fixup,  0,		ONREPLY_ROUTE },
+	{"reginfo_handle_notify",       (cmd_function)w_reginfo_handle_notify,  1,      domain_fixup,           0,              REQUEST_ROUTE},
+        {"lookup_transport",		(cmd_function)w_lookup_transport,                 1,      domain_fixup,           0,              REQUEST_ROUTE|FAILURE_ROUTE},
 	
 	{0, 0, 0, 0, 0, 0}
 };
@@ -153,7 +153,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"pcscf_uri",                   PARAM_STR, &pcscf_uri                           },
 	{"pending_reg_expires",         INT_PARAM, &pending_reg_expires			},
-	{"received_avp",                STR_PARAM, &rcv_avp_param       		},
+	{"received_avp",                PARAM_STR, &rcv_avp_param       		},
 	{"is_registered_fallback2ip",	INT_PARAM, &is_registered_fallback2ip           },
 	{"publish_reginfo",             INT_PARAM, &publish_reginfo                     },
         {"subscribe_to_reginfo",        INT_PARAM, &subscribe_to_reginfo                },
@@ -371,6 +371,21 @@ static int assert_identity_fixup(void ** param, int param_no) {
 static int w_save(struct sip_msg* _m, char* _d, char* _cflags)
 {
 	return save(_m, (udomain_t*)_d, ((int)(unsigned long)_cflags));
+}
+
+/*! \brief
+ * Wrapper to lookup_transport(location)
+ */
+static int w_lookup_transport(struct sip_msg* _m, char* _d, char* _uri)
+{
+	str uri = {0};
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	return lookup_transport(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
 }
 
 static int w_save_pending(struct sip_msg* _m, char* _d, char* _cflags)

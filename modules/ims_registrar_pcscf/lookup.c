@@ -43,24 +43,64 @@
  * 
  */
 
-#ifndef REG_MOD_H
-#define REG_MOD_H
+#include <string.h>
+#include "reg_mod.h"
+#include "lookup.h"
 
-#include "../../parser/msg_parser.h"
-#include "../../qvalue.h"
-#include "../../usr_avp.h"
-#include "../ims_usrloc_pcscf/usrloc.h"
-#include "../../modules/sl/sl.h"
-#include "../../modules/tm/tm_load.h"
+extern usrloc_api_t ul;
 
-#define RECEIVED_MAX_SIZE      255
-#define USERNAME_MAX_SIZE      64
-#define DOMAIN_MAX_SIZE        128
+/*! \brief
+ * Lookup contact in the database and rewrite Request-URI
+ * \return:  1 : contacts found and returned
+ *          -1 : not found
+ *          -2 : error
+ */
+int lookup_transport(struct sip_msg* _m, udomain_t* _d, str* _uri) {
+    str uri;
+    pcontact_t* pcontact;
+    char tmp[MAX_URI_SIZE];
+    str tmp_s;
+    int ret = 1;
 
-extern unsigned short rcv_avp_type;
-extern int_str rcv_avp_name;
-extern int is_registered_fallback2ip;
+    if (_m->new_uri.s) uri = _m->new_uri;
+    else uri = _m->first_line.u.request.uri;
 
-#endif /* REG_MOD_H */
+    //now lookup in usrloc
+    ul.lock_udomain(_d, &uri);
+    if (ul.get_pcontact(_d, &uri, &pcontact) != 0) { //need to insert new contact
+	LM_WARN("received request for contact that we don't know about\n");
+	ret = -1;
+	goto done;
+    }
+    
+    if (pcontact->received_proto != _m->rcv.proto) {
+	reset_dst_uri(_m);
+	memset(tmp, 0, MAX_URI_SIZE);	
+	switch (pcontact->received_proto) {
+	    case PROTO_TCP:
+		snprintf(tmp, MAX_URI_SIZE, "%.*s;transport=tcp", pcontact->aor.len, pcontact->aor.s);
+		break;
+	    case PROTO_UDP:
+		snprintf(tmp, MAX_URI_SIZE, "%.*s;transport=udp", pcontact->aor.len, pcontact->aor.s);
+		break;
+	    default:
+		LM_WARN("unsupported transport [%d]\n", pcontact->received_proto);
+		ret = -2;
+		goto done;
+	}
+    }
+	
+    tmp_s.s = tmp;
+    tmp_s.len = strlen(tmp);
+    if (set_dst_uri(_m, &tmp_s) < 0) {
+	LM_ERR("failed to set dst_uri for terminating UE\n");
+	ret = -2;
+	goto done;
+    }
+    LM_DBG("Changed dst URI transport for UE to [%.*s]\n", tmp_s.len, tmp_s.s);
+    
+done:
+    ul.unlock_udomain(_d, &uri);
+    return ret;
+}
 
-void pcscf_act_time();

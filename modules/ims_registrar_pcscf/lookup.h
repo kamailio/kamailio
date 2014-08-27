@@ -43,24 +43,17 @@
  * 
  */
 
-#ifndef REG_MOD_H
-#define REG_MOD_H
+#ifndef LOOKUP_H
+#define	LOOKUP_H
 
 #include "../../parser/msg_parser.h"
-#include "../../qvalue.h"
-#include "../../usr_avp.h"
-#include "../ims_usrloc_pcscf/usrloc.h"
-#include "../../modules/sl/sl.h"
-#include "../../modules/tm/tm_load.h"
+#include "../../modules/ims_usrloc_pcscf/usrloc.h"
 
-#define RECEIVED_MAX_SIZE      255
-#define USERNAME_MAX_SIZE      64
-#define DOMAIN_MAX_SIZE        128
 
-extern unsigned short rcv_avp_type;
-extern int_str rcv_avp_name;
-extern int is_registered_fallback2ip;
+/*! \brief
+ * Lookup a contact in ims_usrloc_pcscf and rewrite R-URI if found and received request transport is different to contact transport
+ */
+int lookup_transport(struct sip_msg* _m, udomain_t* _d, str* _uri);
 
-#endif /* REG_MOD_H */
+#endif	/* LOOKUP_H */
 
-void pcscf_act_time();
