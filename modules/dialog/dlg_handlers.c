@@ -571,7 +571,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 done:
 	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) && new_state>old_state) {
-		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0);
+		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0, 0);
 	}
 
 done_early:
@@ -730,7 +730,7 @@ static void dlg_on_send(struct cell* t, int type, struct tmcb_params *param)
 
 	/* sync over dmq */
 	if (dlg_enable_dmq) {
-		dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 1);
+		dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 1, 0);
 	}
 
 	/* unref by 2: 1 set when adding in tm cb, 1 set by dlg_get_by_iuid() */
@@ -1394,7 +1394,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 done:
 	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) && new_state>old_state) {
-		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0);
+		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0, 0);
 	}
 
 	dlg_release(dlg);
@@ -1469,7 +1469,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	}
 
 	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) && new_state>old_state) {
-		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0);
+		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0, 0);
 	}
 
 	return;

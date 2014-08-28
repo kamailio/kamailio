@@ -73,13 +73,18 @@ error:
 }
 
 
-int dlg_dmq_broadcast(str* body) {
+int dlg_dmq_send(str* body, dmq_node_t* node) {
 	if (!dlg_dmq_peer) {
 		LM_ERR("dlg_dmq_peer is null!\n");
 		return -1;
 	}
-	LM_DBG("sending broadcast...\n");
-	dlg_dmqb.bcast_message(dlg_dmq_peer, body, 0, &dlg_dmq_resp_callback, 1, &dlg_dmq_content_type);
+	if (node) {
+		LM_DBG("sending dmq message ...\n");
+		dlg_dmqb.send_message(dlg_dmq_peer, body, node, &dlg_dmq_resp_callback, 1, &dlg_dmq_content_type);
+	} else {
+		LM_DBG("sending dmq broadcast...\n");
+		dlg_dmqb.bcast_message(dlg_dmq_peer, body, 0, &dlg_dmq_resp_callback, 1, &dlg_dmq_content_type);
+	}
 	return 0;
 }
 
@@ -293,7 +298,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dm
 			break;
 
 		case DLG_DMQ_SYNC:
-			dmq_send_all_dlgs();
+			dmq_send_all_dlgs(dmq_node);
 			break;
 
 		case DLG_DMQ_NONE:
@@ -343,7 +348,7 @@ int dlg_dmq_request_sync() {
 	}
 	jdoc.buf.len = strlen(jdoc.buf.s);
 	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
-	if (dlg_dmq_broadcast(&jdoc.buf)!=0) {
+	if (dlg_dmq_send(&jdoc.buf, 0)!=0) {
 		goto error;
 	}
 
@@ -362,7 +367,7 @@ error:
 }
 
 
-int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needlock) {
+int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needlock, dmq_node_t *node ) {
 
 	srjson_doc_t jdoc, prof_jdoc;
 
@@ -452,7 +457,7 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needl
 	}
 	jdoc.buf.len = strlen(jdoc.buf.s);
 	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
-	if (dlg_dmq_broadcast(&jdoc.buf)!=0) {
+	if (dlg_dmq_send(&jdoc.buf, node)!=0) {
 		goto error;
 	}
 
@@ -471,7 +476,7 @@ error:
 }
 
 
-int dmq_send_all_dlgs() {
+int dmq_send_all_dlgs(dmq_node_t* dmq_node) {
 	int index;
 	dlg_entry_t entry;
 	dlg_cell_t *dlg;
@@ -485,7 +490,7 @@ int dmq_send_all_dlgs() {
 
 		for(dlg = entry.first; dlg != NULL; dlg = dlg->next){
 			dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
-			dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0);
+			dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0, dmq_node);
 		}
 
 		dlg_unlock( d_table, &entry);
