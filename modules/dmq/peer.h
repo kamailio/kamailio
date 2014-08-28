@@ -28,6 +28,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "dmqnode.h"
 #include "../../lock_ops.h"
 #include "../../str.h"
 #include "../../mem/mem.h"
@@ -41,7 +42,7 @@ typedef struct peer_response {
 	str body;
 } peer_reponse_t;
 
-typedef int(*peer_callback_t)(struct sip_msg*, peer_reponse_t* resp);
+typedef int(*peer_callback_t)(struct sip_msg*, peer_reponse_t* resp, dmq_node_t* node);
 typedef int(*init_callback_t)();
 
 typedef struct dmq_peer {
@@ -66,7 +67,7 @@ typedef dmq_peer_t* (*register_dmq_peer_t)(dmq_peer_t*);
 
 dmq_peer_t* add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer);
 dmq_peer_t* find_peer(str peer_id);
-int empty_peer_callback(struct sip_msg* msg, peer_reponse_t* resp);
+int empty_peer_callback(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq_node);
 
 #endif
 
