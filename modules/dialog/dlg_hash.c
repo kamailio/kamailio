@@ -252,6 +252,12 @@ int dlg_clean_run(ticks_t ti)
 						tdlg, tdlg->ref);
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
+			} else if(tdlg->state==DLG_STATE_DELETED && tdlg->init_ts<tm-32) {
+				/* dialog in deleted state older than 32 sec */
+				LM_DBG("deleting dialog in deleted state (%p ref %d)\n",
+						tdlg, tdlg->ref);
+				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
+				destroy_dlg(tdlg);
 			}
 			if(tdlg->state==DLG_STATE_CONFIRMED_NA && tdlg->start_ts<tm-60) {
 				if(update_dlg_timer(&dlg->tl, 10)<0) {

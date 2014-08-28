@@ -147,7 +147,7 @@ int dlg_db_mode_param = DB_MODE_NONE;
 str dlg_xavp_cfg = {0};
 int dlg_ka_timer = 0;
 int dlg_ka_interval = 0;
-int dlg_clean_timer = 90;
+int dlg_clean_timer = 10;
 
 /* db stuff */
 static str db_url = str_init(DEFAULT_DB_URL);

@@ -265,7 +265,8 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dm
 					}
 					/* prevent DB sync */
 					dlg->dflags |= DLG_FLAG_NEW;
-					unref++;
+					/* keep dialog around for a bit, to prevent out-of-order syncs to reestablish the dlg */
+					dlg->init_ts = time(NULL);
 					break;
 				default:
 					LM_ERR("unhandled state update to state %u\n", state);
