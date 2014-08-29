@@ -110,13 +110,14 @@ modparam("ims_usrloc_pcscf", "timer_interval", 30)
       <para>Database URL</para>
 
       <para><emphasis>Default value is
-      &ldquo;mysql://kamailio:kamailiorw@localhost/kamailio&rdquor;.</emphasis></para>
+			  "mysql://kamailio:kamailiorw@localhost/kamailio".</emphasis></para>
 
       <example>
         <title>Set db_url parameter</title>
 
         <programlisting format="linespecific">...
-modparam("ims_usrloc_pcscf", "db_url", "dbdriver://username:password@dbhost/dbname")
+modparam("ims_usrloc_pcscf", "db_url",
+       "dbdriver://username:password@dbhost/dbname")
 ...
 </programlisting>
       </example>
@@ -230,15 +231,6 @@ modparam("ims_usrloc_pcscf", "lookup_check_received", 0)
 ...
 </programlisting>
       </example>
-    </section>
-  </section>
-
-  <section>
-    <title>Functions</title>
-
-    <section>
-      <para>There are no exported functions that could be used in
-      scripts.</para>
     </section>
   </section>
 
