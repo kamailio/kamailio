@@ -80,6 +80,7 @@
 
 /* dialog-variable flags (in addition to dialog-flags) */
 #define DLG_FLAG_DEL           (1<<8) /*!< delete this var */
+#define DLG_FLAG_INSERTED      (1<<9) /*!< DLG already written to DB - could have been put in by early media or confirmed */
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
@@ -473,15 +474,21 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
             }
         } else {
             if (dlg->callid.len != callid->len) {
+            	LM_DBG("no match cid: %d %d", dlg->callid.len, callid->len);
                 return 0;
             }
 
+            LM_DBG("p: %p ft[%.*s] tt [%.*s]", d_entry_out->first,
+            			dlg->from_tag.len, dlg->from_tag.s,
+            			ttag->len, ttag->s);
             if (dlg->from_tag.len == ttag->len &&
                     strncmp(dlg->from_tag.s, ttag->s, ttag->len) == 0 &&
                     strncmp(dlg->callid.s, callid->s, callid->len) == 0) {
                 //now need to scroll thought d_out_entries to see if to_tag matches!
                 dlg_out = d_entry_out->first;
                 while (dlg_out) {
+                	LM_DBG("dout: tt[%.*s]",
+                			dlg_out->to_tag.len, dlg_out->to_tag.s);
                     if (dlg_out->to_tag.len == ftag->len &&
                             memcmp(dlg_out->to_tag.s, ftag->s, dlg_out->to_tag.len) == 0) {
                         *dir = DLG_DIR_UPSTREAM;
@@ -495,6 +502,8 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
                 //now need to scroll thought d_out_entries to see if to_tag matches!
                 dlg_out = d_entry_out->first;
                 while (dlg_out) {
+                	LM_DBG("dout: tt[%.*s]",
+                	                			dlg_out->to_tag.len, dlg_out->to_tag.s);
                     if (dlg_out->to_tag.len == ttag->len &&
                             memcmp(dlg_out->to_tag.s, ttag->s, dlg_out->to_tag.len) == 0) {
                         *dir = DLG_DIR_DOWNSTREAM;
@@ -503,6 +512,8 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
                     dlg_out = dlg_out->next;
                 }
             }
+            else
+            	LM_DBG("no match tags: ");
         }
     }
     return 0;

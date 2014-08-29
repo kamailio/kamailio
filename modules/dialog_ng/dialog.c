@@ -31,6 +31,7 @@
 #include "dlg_profile.h"
 #include "dlg_var.h"
 #include "dlg_req_within.h"
+#include "dlg_db_handler.h"
 
 MODULE_VERSION
 
@@ -64,6 +65,14 @@ struct tm_binds d_tmb;
 struct rr_binds d_rrb;
 pv_spec_t timeout_avp;
 
+int active_dlgs_cnt = 0;
+int early_dlgs_cnt	= 0;
+
+/* db stuff */
+int dlg_db_mode_param = DB_MODE_NONE;
+static int db_fetch_rows = 200;
+static str db_url = str_init(DEFAULT_DB_URL);
+static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 
 /* commands wrappers and fixups */
 static int fixup_profile(void** param, int param_no);
@@ -126,11 +135,17 @@ static param_export_t mod_params[] = {
     { "dlg_extra_hdrs", PARAM_STR, &dlg_extra_hdrs},
     //In this new dialog module we always match using DID
     //{ "dlg_match_mode", INT_PARAM, &seq_match_mode},
-    { "detect_spirals", INT_PARAM, &detect_spirals,},
-    { "profiles_with_value", PARAM_STRING, &profiles_wv_s},
-    { "profiles_no_value", PARAM_STRING, &profiles_nv_s},
-    { "bridge_controller", PARAM_STR, &dlg_bridge_controller},
-    { "ruri_pvar", PARAM_STR, &ruri_pvar_param},
+
+    { "db_url",				PARAM_STRING, &db_url 				},
+    { "db_mode",			INT_PARAM, &dlg_db_mode_param		},
+    { "db_update_period",	INT_PARAM, &db_update_period		},
+    { "db_fetch_rows",		INT_PARAM, &db_fetch_rows			}
+    ,
+    { "detect_spirals",		INT_PARAM, &detect_spirals			},
+    { "profiles_with_value",PARAM_STRING, &profiles_wv_s			},
+    { "profiles_no_value",	PARAM_STRING, &profiles_nv_s			},
+    { "bridge_controller",	PARAM_STR, &dlg_bridge_controller	},
+    { "ruri_pvar",			PARAM_STR, &ruri_pvar_param		},
 
     { 0, 0, 0}
 };
@@ -516,16 +531,62 @@ static int mod_init(void) {
         return -1;
     }
 
+    /* if a database should be used to store the dialogs' information */
+	dlg_db_mode = dlg_db_mode_param;
+	if (dlg_db_mode==DB_MODE_NONE) {
+		db_url.s = 0; db_url.len = 0;
+	} else {
+		if (dlg_db_mode!=DB_MODE_REALTIME &&
+		dlg_db_mode!=DB_MODE_DELAYED && dlg_db_mode!=DB_MODE_SHUTDOWN ) {
+			LM_ERR("unsupported db_mode %d\n", dlg_db_mode);
+			return -1;
+		}
+		if ( !db_url.s || db_url.len==0 ) {
+			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
+			return -1;
+		}
+		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period, db_fetch_rows)!=0) {
+			LM_ERR("failed to initialize the DB support\n");
+			return -1;
+		}
+		run_load_callbacks();
+	}
+
     destroy_dlg_callbacks(DLGCB_LOADED);
 
     return 0;
 }
 
 static int child_init(int rank) {
+	dlg_db_mode = dlg_db_mode_param;
+
+	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
+		(rank>0 || rank==PROC_TIMER)) ||
+		(dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) ) {
+			if ( dlg_connect_db(&db_url) ) {
+				LM_ERR("failed to connect to database (rank=%d)\n",rank);
+				return -1;
+			}
+	}
+
+	/* in DB_MODE_SHUTDOWN only PROC_MAIN will do a DB dump at the end, so
+	 * for the rest of the processes will be the same as DB_MODE_NONE */
+	if (dlg_db_mode==DB_MODE_SHUTDOWN && rank!=PROC_MAIN)
+		dlg_db_mode = DB_MODE_NONE;
+	/* in DB_MODE_REALTIME and DB_MODE_DELAYED the PROC_MAIN have no DB handle */
+	if ( (dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
+			rank==PROC_MAIN)
+		dlg_db_mode = DB_MODE_NONE;
+
     return 0;
 }
 
 static void mod_destroy(void) {
+	if(dlg_db_mode == DB_MODE_DELAYED || dlg_db_mode == DB_MODE_SHUTDOWN) {
+		dialog_update_db(0, 0);
+		destroy_dlg_db();
+	}
+
     destroy_dlg_table();
     destroy_dlg_timer();
     destroy_dlg_callbacks(DLGCB_CREATED | DLGCB_LOADED);

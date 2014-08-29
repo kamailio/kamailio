@@ -29,6 +29,7 @@
 #include "dlg_req_within.h"
 #include "dlg_profile.h"
 #include "dlg_var.h"
+#include "dlg_db_handler.h"
 
 static str rr_param; /*!< record-route parameter for matching */
 static int dlg_flag; /*!< flag for dialog tracking */
@@ -495,8 +496,16 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
     }
 
     if (new_state == DLG_STATE_EARLY) {
-        run_dlg_callbacks(DLGCB_EARLY, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
-        return;
+	if ((dlg->dflags & DLG_FLAG_INSERTED) == 0) {
+	    dlg->dflags |= DLG_FLAG_NEW;
+	} else {
+	    dlg->dflags |= DLG_FLAG_CHANGED;
+	}
+	if (dlg_db_mode == DB_MODE_REALTIME)
+	    update_dialog_dbinfo(dlg);
+
+	run_dlg_callbacks(DLGCB_EARLY, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
+	return;
     }
 
     LM_DBG("new state is %i and old state is %i\n", new_state, old_state);
@@ -528,7 +537,14 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
         /* save the settings to the database,
          * if realtime saving mode configured- save dialog now
          * else: the next time the timer will fire the update*/
-        dlg->dflags |= DLG_FLAG_NEW;
+        if ((dlg->dflags & DLG_FLAG_INSERTED) == 0) {
+	    dlg->dflags |= DLG_FLAG_NEW;
+	} else {
+	    dlg->dflags |= DLG_FLAG_CHANGED;
+	}
+	if (dlg_db_mode == DB_MODE_REALTIME)
+		update_dialog_dbinfo(dlg);
+	
 
         if (0 != insert_dlg_timer(&dlg->tl, dlg->lifetime)) {
             LM_CRIT("Unable to insert dlg %p [%u:%u] on event %d [%d->%d] "
@@ -1205,6 +1221,10 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
             dlg->dflags |= DLG_FLAG_CHANGED;
         }
 
+		if(dlg_db_mode==DB_MODE_REALTIME && (dlg->dflags&DLG_FLAG_CHANGED)) {
+			update_dialog_dbinfo(dlg);
+		}
+
         if (old_state != DLG_STATE_CONFIRMED) {
             LM_DBG("confirming ACK successfully processed\n");
 
@@ -1234,7 +1254,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
 
     if (new_state == DLG_STATE_CONFIRMED && old_state != DLG_STATE_CONFIRMED) {
         dlg->dflags |= DLG_FLAG_CHANGED;
+
+        if(dlg_db_mode == DB_MODE_REALTIME)
+        	update_dialog_dbinfo(dlg);
     }
+
     return;
 }
 
@@ -1361,6 +1385,7 @@ void internal_print_all_dlg(struct dlg_cell *dlg) {
     struct dlg_entry_out *d_entry_out = &(dlg->dlg_entry_out);
 
     LM_DBG("----------------------------");
+    LM_DBG("Dialog h_entry:h_id = [%u : %u]\n", dlg->h_entry, dlg->h_id);
     LM_DBG("Dialog call-id: %.*s\n", dlg->callid.len, dlg->callid.s);
     LM_DBG("Dialog state: %d\n", dlg->state);
     LM_DBG("Dialog ref counter: %d\n", dlg->ref);
@@ -1378,6 +1403,7 @@ void internal_print_all_dlg(struct dlg_cell *dlg) {
     while (dlg_out) {
 
         LM_DBG("----------");
+	LM_DBG("Dialog out h_entry:h_id = [%u : %u]\n", dlg_out->h_entry, dlg_out->h_id);
         LM_DBG("Dialog out did: %.*s\n", dlg_out->did.len, dlg_out->did.s);
         LM_DBG("Dialog out to_tag: %.*s\n", dlg_out->to_tag.len, dlg_out->to_tag.s);
         LM_DBG("Dialog out caller cseq: %.*s\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s);

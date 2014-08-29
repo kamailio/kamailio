@@ -47,7 +47,7 @@ struct dlg_binds {
 	register_dlgcb_f  		register_dlgcb;
 	register_dlgcb_nodlg_f 	register_dlgcb_nodlg;
 	terminate_dlg_f 		terminate_dlg;
-	lookup_terminate_dlg_f 		lookup_terminate_dlg;
+	lookup_terminate_dlg_f 	lookup_terminate_dlg;
 	set_dlg_variable_f 		set_dlg_var;
 	get_dlg_variable_f 		get_dlg_var;
 	get_dlg_expires_f 		get_dlg_expires;

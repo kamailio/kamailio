@@ -26,6 +26,7 @@
 #include "dlg_var.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
+#include "dlg_db_handler.h"
 
 dlg_ctx_t _dlg_ctx;
 extern int spiral_detected;
@@ -296,6 +297,9 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
     dlg->dflags &= DLG_FLAG_CHANGED_VARS;
     dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 
+    if ( dlg_db_mode==DB_MODE_REALTIME )
+        update_dialog_dbinfo(dlg);
+
     print_lists(dlg);
 
     return 0;
@@ -388,6 +392,8 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 	if (dlg) {
 		dlg->dflags &= DLG_FLAG_CHANGED_VARS;		
 		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+		if ( dlg_db_mode==DB_MODE_REALTIME )
+			update_dialog_dbinfo(dlg);
 
 	}
 	print_lists(dlg);

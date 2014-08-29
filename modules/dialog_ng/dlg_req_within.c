@@ -43,11 +43,13 @@
 #include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_req_within.h"
+#include "dlg_db_handler.h"
 
 #define MAX_FWD_HDR        "Max-Forwards: " MAX_FWD CRLF
 #define MAX_FWD_HDR_LEN    (sizeof(MAX_FWD_HDR) - 1)
 
 extern str dlg_extra_hdrs;
+extern int dlg_db_mode;
 
 int free_tm_dlg(dlg_t *td) {
     if (td) {
@@ -210,6 +212,8 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps) {
 
     if (new_state == DLG_STATE_DELETED && old_state == DLG_STATE_DELETED) {
         /* trash the dialog from DB and memory */
+        if (dlg_db_mode)
+        	remove_dialog_in_from_db(dlg);
 
         /* force delete from mem */
         unref_dlg(dlg, 1);
