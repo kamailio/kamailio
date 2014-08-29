@@ -35,10 +35,6 @@ Daniel-Constantin Mierla
               3.8. callid_prefix (str)
               3.9. sanity_checks (integer)
 
-        4. Functions
-
-              4.1.
-
    List of Examples
 
    1.1. Set mask_key parameter
@@ -72,10 +68,6 @@ Chapter 1. Admin Guide
         3.7. vparam_prefix (str)
         3.8. callid_prefix (str)
         3.9. sanity_checks (integer)
-
-   4. Functions
-
-        4.1.
 
 1. Overview
 
@@ -229,9 +221,3 @@ modparam("topoh", "callid_prefix", "***")
 ...
 modparam("topoh", "sanity_checks", 1)
 ...
-
-4. Functions
-
-   4.1.
-
-   None.

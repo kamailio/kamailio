@@ -249,13 +249,5 @@ modparam("topoh", "sanity_checks", 1)
 	</section>
 
 	</section>
-	<section>
-	<title>Functions</title>
-	<section>
-		<para>
-			None.
-		</para>
-	</section>
-	</section>
 </chapter>
 
