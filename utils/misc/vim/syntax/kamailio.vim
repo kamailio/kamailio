@@ -25,7 +25,7 @@ if exists("b:current_syntax")
 	finish
 endif
 
-syn match	kamailioConfigParamLine	'^[^=]\+=.*$' contains=kamailioCoreParameter,kamailioString,kamailioConfigConstant,kamailioSpecial,kamailioNumber,kamailioCppComment,kamailioHashComment
+syn match	kamailioConfigParamLine	'^[^=]\+=.*$' contains=kamailioCoreParameter,kamailioString,kamailioConfigConstant,kamailioSpecial,kamailioNumber,kamailioCppComment,kamailioHashComment,kamailioSlashSlashComment
 syn region	kamailioConfigModparam	start='^\s*modparam\s*(' end=')' contains=kamailioString,kamailioNumber
 syn match	kamailioConfigModule		'^\s*loadmodule\s*"[^"]\+"' contains=kamailioString
 
@@ -37,6 +37,7 @@ syn region	kamailioCppComment		start='/\*' end='\*/' contains=kamailioTodo
 syn match	kamailioHashDefine	'#!define\s\|#!ifdef\s\|#!ifndef\s\|#!endif\|#!else\|#!substdef\|#!substdefs\|#!subst\|#!trydef\|#!trydefine\|#!redef\|#!redefine\|!!define\s\|!!ifdef\s\|!!ifndef\s\|!!endif\|!!else\|!!substdef\|!!substdefs\|!!subst\|!!trydef\|!!trydefine\|!!redef\|!!redefine\|#!KAMAILIO\|#!OPENSER\|#!SER\|#!MAXCOMPAT\|#!ALL\|#!include_file\|#!import_file\|!!include_file\|!!import_file'
 " syn match	kamailioHashDefine	'^\s*#!.+$'
 syn match	kamailioHashComment	'#[^!].*$\|#$' contains=kamailioTodo
+syn match	kamailioSlashSlashComment	'//.*$\|//#$' contains=kamailioTodo
 
 syn match	kamailioStringEscape	'\\.' contained
 syn match	kamailioNumber			'[0-9]\+' contained
@@ -59,10 +60,11 @@ syn region	kamailioBlock	start='{' end='}' contained contains=kamailioBlock,@kam
 syn match	kamailioRouteBlock	'\(failure_\|onreply_\|branch_\|event_\|onsend_\|request_\|reply_\)\?route\(\s*\[[^\]]\+\]\)\?' contained contains=kamailioNumber,kamailioString,kamailioIdentifier
 syn region	kamailioRrouteBlockFold	matchgroup=kamailioRouteBlock start="\(failure_\|onreply_\|branch_\|event_\|onsend_\|request_\|reply_\)\?route\(\s*\[[^\]]\+\]\)\?\s*\n\?{" matchgroup=NONE end="}" contains=kamailioBlock,@kamailioCodeElements
 
-syn cluster	kamailioCodeElements contains=kamailioHashDefine,kamailioCppComment,kamailioHashComment,kamailioNumber,kamailioString,kamailioVariable,kamailioOperator,kamailioStatement,kamailioKeyword,kamailioCoreKeyword,kamailioCoreValue,kamailioCoreFunction,kamailioIdentifier
+syn cluster	kamailioCodeElements contains=kamailioHashDefine,kamailioCppComment,kamailioHashComment,kamailioSlashSlashComment,kamailioNumber,kamailioString,kamailioVariable,kamailioOperator,kamailioStatement,kamailioKeyword,kamailioCoreKeyword,kamailioCoreValue,kamailioCoreFunction,kamailioIdentifier
 
 hi def link kamailioCppComment Comment
 hi def link kamailioHashComment Comment
+hi def link kamailioSlashSlashComment Comment
 hi def link kamailioHashDefine Special
 hi def link kamailioTodo Todo
 
