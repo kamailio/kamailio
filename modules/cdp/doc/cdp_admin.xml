@@ -129,15 +129,6 @@ modparam("cdp", "latency_threshold", 1000)
   </section>
 
   <section>
-    <title>Functions</title>
-
-    <section>
-      <para>No functions available from configuration. See API for internal
-      functions.</para>
-    </section>
-  </section>
-
-  <section>
     <title>RPC Commands</title>
 
     <para>exported RPC commands.</para>
