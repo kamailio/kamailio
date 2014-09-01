@@ -83,6 +83,7 @@
 #include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 #ifdef WITH_EVENT_LOCAL_REQUEST
+#include "../../data_lump.h"
 #include "../../receive.h"
 #include "../../route.h"
 #include "../../action.h"
@@ -406,17 +407,54 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 					lreq.dst_uri.len=0;
 				}
 
-				if (unlikely(lreq.add_rm || lreq.body_lumps)) {
-					LM_DBG("apply new updates to sip msg\n");
+				if(lreq.force_send_socket != uac_r->dialog->send_sock) {
+					LM_DBG("Send socket updated to: %.*s",
+							lreq.force_send_socket->address_str.len,
+							lreq.force_send_socket->address_str.s);
+
+					/* rebuild local Via - remove previous value
+					 * and add the one for the new send socket */
+					if (!del_lump(&lreq, lreq.h_via1->name.s - lreq.buf,
+								lreq.h_via1->len, 0)) {
+						LM_ERR("Failed to remove previous local Via\n");
+						/* attempt a normal update to give it a chance */
+						goto normal_update;
+					}
+
+					/* reuse same branch value from previous local Via */
+					memcpy(lreq.add_to_branch_s, lreq.via1->branch->value.s,
+							lreq.via1->branch->value.len);
+					lreq.add_to_branch_len = lreq.via1->branch->value.len;
+
+					/* update also info about new destination and send sock */
+					uac_r->dialog->send_sock=lreq.force_send_socket;
+					request->dst.send_sock = lreq.force_send_socket;
+					request->dst.proto = lreq.force_send_socket->proto;
+
+					LM_DBG("apply new updates with Via to sip msg\n");
 					buf1 = build_req_buf_from_sip_req(&lreq,
-							(unsigned int*)&buf_len1,
-							&dst, BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE|
-							BUILD_IN_SHM);
+							(unsigned int*)&buf_len1, &dst, BUILD_IN_SHM);
 					if (likely(buf1)){
 						shm_free(buf);
 						buf = buf1;
 						buf_len = buf_len1;
 						/* a possible change of the method is not handled! */
+					}
+
+				} else {
+normal_update:
+					if (unlikely(lreq.add_rm || lreq.body_lumps)) {
+						LM_DBG("apply new updates without Via to sip msg\n");
+						buf1 = build_req_buf_from_sip_req(&lreq,
+								(unsigned int*)&buf_len1,
+								&dst, BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE|
+								BUILD_IN_SHM);
+						if (likely(buf1)){
+							shm_free(buf);
+							buf = buf1;
+							buf_len = buf_len1;
+							/* a possible change of the method is not handled! */
+						}
 					}
 				}
 				lreq.buf=0; /* covers the obsolete DYN_BUF */
