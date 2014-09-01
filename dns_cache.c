@@ -3814,21 +3814,21 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 	now=get_ticks_raw();
 	expires = (s_ticks_t)(e->expire-now)<0?-1: TICKS_TO_S(e->expire-now);
 	
-	rpc->printf(ctx, "%sname: %s", SPACE_FORMAT, e->name);
-	rpc->printf(ctx, "%stype: %s", SPACE_FORMAT, print_type(e->type));
-	rpc->printf(ctx, "%ssize (bytes): %d", SPACE_FORMAT,
+	rpc->rpl_printf(ctx, "%sname: %s", SPACE_FORMAT, e->name);
+	rpc->rpl_printf(ctx, "%stype: %s", SPACE_FORMAT, print_type(e->type));
+	rpc->rpl_printf(ctx, "%ssize (bytes): %d", SPACE_FORMAT,
 						e->total_size);
-	rpc->printf(ctx, "%sreference counter: %d", SPACE_FORMAT,
+	rpc->rpl_printf(ctx, "%sreference counter: %d", SPACE_FORMAT,
 						e->refcnt.val);
 	if (e->ent_flags & DNS_FLAG_PERMANENT) {
-		rpc->printf(ctx, "%spermanent: yes", SPACE_FORMAT);
+		rpc->rpl_printf(ctx, "%spermanent: yes", SPACE_FORMAT);
 	} else {
-		rpc->printf(ctx, "%spermanent: no", SPACE_FORMAT);
-		rpc->printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
+		rpc->rpl_printf(ctx, "%spermanent: no", SPACE_FORMAT);
+		rpc->rpl_printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
 	}
-	rpc->printf(ctx, "%slast used (s): %d", SPACE_FORMAT,
+	rpc->rpl_printf(ctx, "%slast used (s): %d", SPACE_FORMAT,
 						TICKS_TO_S(now-e->last_used));
-	rpc->printf(ctx, "%snegative entry: %s", SPACE_FORMAT,
+	rpc->rpl_printf(ctx, "%snegative entry: %s", SPACE_FORMAT,
 						(e->ent_flags & DNS_FLAG_BAD_NAME) ? "yes" : "no");
 	
 	for (rr=e->rr_lst; rr; rr=rr->next) {
@@ -3836,74 +3836,74 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 			case T_A:
 			case T_AAAA:
 				if (dns_rr2ip(e->type, rr, &ip)==0){
-				  rpc->printf(ctx, "%srr ip: %s", SPACE_FORMAT,
+				  rpc->rpl_printf(ctx, "%srr ip: %s", SPACE_FORMAT,
 									ip_addr2a(&ip) );
 				}else{
-				  rpc->printf(ctx, "%srr ip: <error: bad rr>", 
+				  rpc->rpl_printf(ctx, "%srr ip: <error: bad rr>", 
 									SPACE_FORMAT);
 				}
 				break;
 			case T_SRV:
-				rpc->printf(ctx, "%srr name: %s", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
 							((struct srv_rdata*)(rr->rdata))->name);
-				rpc->printf(ctx, "%srr port: %d", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr port: %d", SPACE_FORMAT,
 							((struct srv_rdata*)(rr->rdata))->port);
-				rpc->printf(ctx, "%srr priority: %d", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr priority: %d", SPACE_FORMAT,
 						((struct srv_rdata*)(rr->rdata))->priority);
-				rpc->printf(ctx, "%srr weight: %d", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr weight: %d", SPACE_FORMAT,
 							((struct srv_rdata*)(rr->rdata))->weight);
 				break;
 			case T_NAPTR:
-				rpc->printf(ctx, "%srr order: %d", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr order: %d", SPACE_FORMAT,
 							((struct naptr_rdata*)(rr->rdata))->order);
-				rpc->printf(ctx, "%srr preference: %d", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr preference: %d", SPACE_FORMAT,
 							((struct naptr_rdata*)(rr->rdata))->pref);
 				s.s = ((struct naptr_rdata*)(rr->rdata))->flags;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->flags_len;
-				rpc->printf(ctx, "%srr flags: %.*s", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr flags: %.*s", SPACE_FORMAT,
 									s.len, s.s);
 				s.s=((struct naptr_rdata*)(rr->rdata))->services;
 				s.len=((struct naptr_rdata*)(rr->rdata))->services_len;
-				rpc->printf(ctx, "%srr service: %.*s", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr service: %.*s", SPACE_FORMAT,
 									s.len, s.s);
 				s.s = ((struct naptr_rdata*)(rr->rdata))->regexp;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->regexp_len;
-				rpc->printf(ctx, "%srr regexp: %.*s", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr regexp: %.*s", SPACE_FORMAT,
 									s.len, s.s);
 				s.s = ((struct naptr_rdata*)(rr->rdata))->repl;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->repl_len;
-				rpc->printf(ctx, "%srr replacement: %.*s", 
+				rpc->rpl_printf(ctx, "%srr replacement: %.*s", 
 									SPACE_FORMAT, s.len, s.s);
 				break;
 			case T_CNAME:
-				rpc->printf(ctx, "%srr name: %s", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
 							((struct cname_rdata*)(rr->rdata))->name);
 				break;
 			case T_TXT:
 				for (i=0; i<((struct txt_rdata*)(rr->rdata))->cstr_no;
 						i++){
-					rpc->printf(ctx, "%stxt[%d]: %s", SPACE_FORMAT, i,
+					rpc->rpl_printf(ctx, "%stxt[%d]: %s", SPACE_FORMAT, i,
 						((struct txt_rdata*)(rr->rdata))->txt[i].cstr);
 				}
 				break;
 			case T_EBL:
-				rpc->printf(ctx, "%srr position: %d", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr position: %d", SPACE_FORMAT,
 							((struct ebl_rdata*)(rr->rdata))->position);
-				rpc->printf(ctx, "%srr separator: %s", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr separator: %s", SPACE_FORMAT,
 							((struct ebl_rdata*)(rr->rdata))->separator);
-				rpc->printf(ctx, "%srr apex: %s", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr apex: %s", SPACE_FORMAT,
 							((struct ebl_rdata*)(rr->rdata))->apex);
 				break;
 			case T_PTR:
-				rpc->printf(ctx, "%srr name: %s", SPACE_FORMAT,
+				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
 							((struct ptr_rdata*)(rr->rdata))->ptrdname);
 				break;
 			default:
-				rpc->printf(ctx, "%sresource record: unknown",
+				rpc->rpl_printf(ctx, "%sresource record: unknown",
 									SPACE_FORMAT);
 		}
 		if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-			rpc->printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
+			rpc->rpl_printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
 						(s_ticks_t)(rr->expire-now)<0?-1 : 
 						TICKS_TO_S(rr->expire-now));
 	}
@@ -3931,9 +3931,9 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 			) {
 				continue;
 			}
-			rpc->printf(ctx, "{\n");
+			rpc->rpl_printf(ctx, "{\n");
 			dns_cache_print_entry(rpc, ctx, e);
-			rpc->printf(ctx, "}");
+			rpc->rpl_printf(ctx, "}");
 		}
 	}
 	UNLOCK_DNS_HASH();
