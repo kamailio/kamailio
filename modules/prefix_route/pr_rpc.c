@@ -65,7 +65,7 @@ static void rpc_dump(rpc_t *rpc, void *c)
 
 		buf[strlen(buf)-1] = '\0';
 
-		rpc->printf(c, "%s", buf);
+		rpc->rpl_printf(c, "%s", buf);
 	}
 
 	fclose(f);
@@ -84,7 +84,7 @@ static void rpc_reload(rpc_t *rpc, void *c)
 		rpc->fault(c, 400, "failed to reload prefix routes");
 	}
 	else {
-		rpc->printf(c, "Prefix routes reloaded successfully");
+		rpc->rpl_printf(c, "Prefix routes reloaded successfully");
 	}
 }
 
