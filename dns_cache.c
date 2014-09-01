@@ -3969,6 +3969,7 @@ void dns_cache_delete_all(rpc_t* rpc, void* ctx)
 		return;
 	}
 	dns_cache_flush(0);
+	rpc->rpl_printf(ctx, "OK");
 }
 
 /* deletes all the entries from the cache,
@@ -3980,6 +3981,7 @@ void dns_cache_delete_all_force(rpc_t* rpc, void* ctx)
 		return;
 	}
 	dns_cache_flush(1);
+	rpc->rpl_printf(ctx, "OK");
 }
 
 /* clones an entry and extends its memory area to hold a new rr.
