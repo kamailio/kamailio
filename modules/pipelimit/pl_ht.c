@@ -605,7 +605,7 @@ void rpc_pl_stats(rpc_t *rpc, void *c)
 		while(it)
 		{
 			if (it->algo != PIPE_ALGO_NOP) {
-				if (rpc->printf(c, "PIPE: id=%.*s load=%d counter=%d",
+				if (rpc->rpl_printf(c, "PIPE: id=%.*s load=%d counter=%d",
 					it->name.len, it->name.s,
 					it->load, it->last_counter) < 0)
 				{
@@ -637,7 +637,7 @@ void rpc_pl_get_pipes(rpc_t *rpc, void *c)
 					lock_release(&_pl_pipes_ht->slots[i].lock);
 					return;
 				}
-				if (rpc->printf(c, "PIPE: id=%.*s algorithm=%.*s limit=%d counter=%d",
+				if (rpc->rpl_printf(c, "PIPE: id=%.*s algorithm=%.*s limit=%d counter=%d",
 					it->name.len, it->name.s, algo.len, algo.s,
 					it->limit, it->counter) < 0)
 				{

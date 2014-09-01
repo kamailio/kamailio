@@ -827,7 +827,7 @@ void rpc_pl_set_pipe(rpc_t *rpc, void *c);
 
 void rpc_pl_get_pid(rpc_t *rpc, void *c) {
 	rpl_pipe_lock(0);
-	rpc->printf(c, "ki[%f] kp[%f] kd[%f] ", *pid_ki, *pid_kp, *pid_kd);
+	rpc->rpl_printf(c, "ki[%f] kp[%f] kd[%f] ", *pid_ki, *pid_kp, *pid_kd);
 	rpl_pipe_release(0);
 }
 
