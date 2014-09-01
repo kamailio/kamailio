@@ -23,27 +23,27 @@
 Table of Contents
 =================
 
-1. SIP server flavours
-2. Supported architectures and requirements
-3. Howto Build SIP server from the source distribution
-   3.1 Kamailio fast track installation
-   3.2 Details installing from source code
-     A) Set SIP server flavour
-     B) Build commands
-4. Quick-Start installation guide
-   A) Getting help
+1. SIP Server Flavours
+2. Supported Architectures And Requirements
+3. How-To Build SIP Server From The Source Code Distribution
+   3.1 Kamailio Fast Track Installation
+   3.2 Details Installing From Source Code
+     A) Set SIP Server Flavour
+     B) Build Commands
+4. Quick-Start Installation Guide
+   A) Getting Help
    B) Disclaimers
-   C) Quick start
-   D) SIP server with persistent data storage
+   C) Quick Atart
+   D) SIP Server With Persistent Data Storage
 5. Troubleshooting
 
 
 
-1. SIP server flavours
+1. SIP Server Flavours
 ----------------------
 
 The two major SIP server flavours are:
-  - SIP Express Router (aka SER)
+  - SIP Express Router (aka SER, the initial project name, started in 2001)
   - Kamailio (former OpenSER)
 
 Starting with version 3.0.0, the two SIP server flavours are built from
@@ -69,7 +69,7 @@ Several installation tutorials for Kamailio are available on the web wiki:
   - http://www.kamailio.org/wiki/
 
 
-2. Supported architectures and requirements
+2. Supported Architectures And Requirements
 -------------------------------------------
 
 Supported operating systems:
@@ -225,8 +225,8 @@ OS Notes:
      make bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
 
 
-3. Howto Build SIP Server From Source Distribution
---------------------------------------------------
+3. Howto Build SIP Server From Source Code Distribution
+-------------------------------------------------------
 
 (NOTE: if make doesn't work try gmake instead)
 
@@ -251,11 +251,11 @@ tls, run:
   make all
   make install
 
-3.2 Details Installing from Source Code
+3.2 Details Installing From Source Code
 .......................................
 
 
-A) Set SIP server Flavour
+A) Set SIP Server Flavour
 
 If you don't have a clean source tree, first do:
    make proper
@@ -269,7 +269,7 @@ To build SER flavour, you have to run first:
 The parameter 'FLAVOUR=ser' must be given all the time when make target
 is 'cfg'.
 
-B) Build commands
+B) Build Commands
 
   The SIP server is split in four main parts: The core, the modules, the
   utilties, and scripts/examples.  When you build, you can decide to build
@@ -408,8 +408,8 @@ are grouped based on Debian packaging rules. For example:
 Make targets:
 =============
 
-Configure:
-----------
+Make Local Build Config:
+------------------------
 
   * make cfg or make config - force config and module list regeneration
   
@@ -473,7 +473,7 @@ Compile:
   * make modules 
   or make modules exclude_modules="CVS print" etc.
 
-Other make targets:
+Other Make Targets:
 -------------------
   Make tags:
 	make TAGS
@@ -541,10 +541,10 @@ Install:
   "modules" or "excluded_modules").
 
 
-4. Quick-Start installation guide
+4. Quick-Start Installation Guide
 ---------------------------------
 
-A) Getting help
+A) Getting Help
 
   This guide gives you instructions on how to set up the SIP server
   (SER or Kamailio) on your box quickly. In case the default configuration
@@ -566,7 +566,7 @@ B) Disclaimers
   any name with the server. (This is on purpose to avoid installation 
   dependencies on a database, which is needed for storing user credentials.)
 
-C) Quick start
+C) Quick Start
 
   The following step-by step guide gives you instructions how to install the 
   SQL-free distribution of SIP server. If you need persistence and
@@ -623,7 +623,7 @@ C) Quick start
     		You can start SIP server directly with /usr/local/sbin/ser or
 			/usr/local/sbin/kamailio.
     
-  4) optionally, watch server's health using the
+  4) Optionally, watch server's health using the
    	serctl or kamctl utility
 
     - to do so, first set the environment variable SIP_DOMAIN to your domain 
@@ -655,7 +655,7 @@ C) Quick start
 	Auth user:	the ID used for authentication
 	Secret/Password:	The configured authentication password
 
-D) SIP Server with persistent data storage
+D) SIP Server With Persistent Data Storage
 ------------------------------------------
 
   The default configuration is very simple and features many simplifications. 
@@ -753,15 +753,6 @@ D) SIP Server with persistent data storage
 4. Troubleshooting
 ------------------
 
-Q: Windows Messenger authentication fails. 
-
-A: The most likely reason for this problem is a bug in Windows Messenger. 
-WM only authenticates if server name in request URI equals authentication 
-realm. After a challenge is sent by SIP server, WM does not resubmit the 
-challenged request at all and pops up authentication window again. If you 
-want to authenticate WM, you need to set up your realm value to equal server 
-name. If your server has no name, IP address can be used as realm too.
-
 Q: SIP requests are replied by SIP server with "483 Too Many Hops" or 
    "513 Message Too Large"
 
@@ -778,3 +769,11 @@ A: In both cases, the reason is probably an error in request routing script
    introduce a config option to ser.cfg or kamailio.cfg: alias=domainname,
    where domainname shall be replaced with name of domain, which you wish to
    server and which appears in request-URIs.
+
+Q: Where to report issues?
+
+A: Use bug tracker at: http://sip-router.org/tracker
+
+Q: Any F.A.Q. that could be helpful to check before reporting an issue?
+
+A: See: http://www.kamailio.org/wiki/tutorials/faq/main
