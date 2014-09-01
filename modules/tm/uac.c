@@ -443,7 +443,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 
 				} else {
 normal_update:
-					if (unlikely(lreq.add_rm || lreq.body_lumps)) {
+					if (unlikely(lreq.add_rm || lreq.body_lumps
+								|| lreq.new_uri.s)) {
 						LM_DBG("apply new updates without Via to sip msg\n");
 						buf1 = build_req_buf_from_sip_req(&lreq,
 								(unsigned int*)&buf_len1,
