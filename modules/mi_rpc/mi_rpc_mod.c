@@ -268,7 +268,7 @@ static int mi_rpc_print_tree(rpc_t* rpc, void* ctx, struct mi_root *tree,
 		case MI_FIFO_PRINT:
 		case MI_DATAGRAM_PRINT:
 			/* always success, code & reason are the part of the reply */
-			rpc->printf(ctx, "%d %.*s\n", tree->code,
+			rpc->rpl_printf(ctx, "%d %.*s\n", tree->code,
 						tree->reason.len, tree->reason.s);
 			break;
 		case MI_PRETTY_PRINT:
@@ -288,7 +288,7 @@ static int mi_rpc_print_tree(rpc_t* rpc, void* ctx, struct mi_root *tree,
 	}
 	if (mode==MI_FIFO_PRINT){
 		/* mi fifo adds an extra "\n" at the end */
-		rpc->printf(ctx, "\n");
+		rpc->rpl_printf(ctx, "\n");
 	}
 	
 	return 0;
