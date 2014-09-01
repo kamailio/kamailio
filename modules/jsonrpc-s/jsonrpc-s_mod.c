@@ -229,14 +229,19 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 	} else {
 		nj = srjson_GetObjectItem(ctx->jrpl, ctx->jrpl->root, "result");
 		if(nj==NULL) {
-			if(ctx->rpl_node!=NULL) {
-				srjson_AddItemToObject(ctx->jrpl, ctx->jrpl->root,
-					"result", ctx->rpl_node);
-				ctx->rpl_node = 0;
-			} else {
-				srjson_AddStrStrToObject(ctx->jrpl, ctx->jrpl->root,
-					"result", 6, "ok", 2);
+			if (!ctx->rpl_node) {
+				if(ctx->flags & RET_ARRAY) {
+					ctx->rpl_node = srjson_CreateArray(ctx->jrpl);
+				} else {
+					ctx->rpl_node = srjson_CreateObject(ctx->jrpl);
+				}
+				if(ctx->rpl_node == 0) {
+					LM_ERR("failed to create the root array node\n");
+				}
 			}
+			srjson_AddItemToObject(ctx->jrpl, ctx->jrpl->root,
+				"result", ctx->rpl_node);
+			ctx->rpl_node = 0;
 		}
 	}
 	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "id");
