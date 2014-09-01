@@ -1105,7 +1105,7 @@ static void rpc_stats(rpc_t *rpc, void *c) {
 
 	LOCK_GET(rl_lock);
 	for (i=0; i<MAX_PIPES; i++) {
-		if (rpc->printf(c, "PIPE[%d]: %d/%d (drop rate: %d)",
+		if (rpc->rpl_printf(c, "PIPE[%d]: %d/%d (drop rate: %d)",
 			i, *pipes[i].last_counter, *pipes[i].limit,
 			*pipes[i].load) < 0) goto error;
 	}
@@ -1122,7 +1122,7 @@ static void rpc_get_pipes(rpc_t *rpc, void *c) {
 		if (*pipes[i].algo != PIPE_ALGO_NOP) {
 			if (str_map_int(algo_names, *pipes[i].algo, &algo))
 				goto error;
-			if (rpc->printf(c, "PIPE[%d]: %d:%.*s %d/%d (drop rate: %d) [%d]",
+			if (rpc->rpl_printf(c, "PIPE[%d]: %d:%.*s %d/%d (drop rate: %d) [%d]",
 				i, *pipes[i].algo, algo.len, algo.s,
 				*pipes[i].last_counter, *pipes[i].limit,
 				*pipes[i].load, *pipes[i].counter) < 0) goto error;
@@ -1172,7 +1172,7 @@ static void rpc_get_queues(rpc_t *rpc, void *c) {
 	LOCK_GET(rl_lock);
 	for (i=0; i<MAX_QUEUES; i++) {
 		if (queues[i].pipe) {
-			if (rpc->printf(c, "QUEUE[%d]: %d:%.*s",
+			if (rpc->rpl_printf(c, "QUEUE[%d]: %d:%.*s",
 				i, *queues[i].pipe,
 				(*queues[i].method).len,
 				(*queues[i].method).s) < 0) goto error;
@@ -1218,7 +1218,7 @@ static void rpc_set_queue(rpc_t *rpc, void *c) {
 }
 
 static void rpc_get_pid(rpc_t *rpc, void *c) {
-	rpc->printf(c, "ki[%f] kp[%f] kd[%f] ", *pid_ki, *pid_kp, *pid_kd);
+	rpc->rpl_printf(c, "ki[%f] kp[%f] kd[%f] ", *pid_ki, *pid_kp, *pid_kd);
 }
 
 static void rpc_set_pid(rpc_t *rpc, void *c) {
