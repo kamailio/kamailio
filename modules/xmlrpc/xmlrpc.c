@@ -107,7 +107,7 @@
  * 
  * <h2>Memory Management</h2> 
  * The module provides implementation for all the functions required by the
- * management interface in SER, such as rpc->printf, rpc->add, rpc->struct_add
+ * management interface in SER, such as rpc->rpl_printf, rpc->add, rpc->struct_add
  * and so on. Whenever the management function calls one of the functions then
  * corresponding function in this module will be called to handle the request.
  *
@@ -1604,13 +1604,13 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 #define RPC_BUF_SIZE 1024
 
 
-/** Implementation of rpc_printf function required by the management API in
+/** Implementation of rpc_rpl_printf function required by the management API in
  *	SER.
  *
  * This function will be called whenever a management function in SER calls
  * rpc-printf to add a parameter to the XML-RPC reply being constructed.
  */
-static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int n, buf_size;
 	char* buf;
@@ -2552,7 +2552,7 @@ static int mod_init(void)
 	func_param.fault = (rpc_fault_f)rpc_fault;
 	func_param.add = (rpc_add_f)rpc_add;
 	func_param.scan = (rpc_scan_f)rpc_scan;
-	func_param.printf = (rpc_printf_f)rpc_printf;
+	func_param.rpl_printf = (rpc_rpl_printf_f)rpc_rpl_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
 	func_param.array_add = (rpc_array_add_f)rpc_array_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
