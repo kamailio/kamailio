@@ -40,6 +40,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../hashes.h"
 #include "../../mod_fix.h"
+#include "../../rpc_lookup.h"
 
 #include "dmq.h"
 #include "dmq_funcs.h"
@@ -111,6 +112,8 @@ static param_export_t params[] = {
 static mi_export_t mi_cmds[] = {
 	{0, 0, 0, 0, 0}
 };
+
+static rpc_export_t rpc_methods[];
 
 /** module exports */
 struct module_exports exports = {
@@ -192,6 +195,11 @@ static int mod_init(void)
 	node_list = init_dmq_node_list();
 	if(node_list==NULL) {
 		LM_ERR("cannot initialize node list\n");
+		return -1;
+	}
+
+	if (rpc_register_array(rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -325,3 +333,33 @@ static int bcast_dmq_fixup(void** param, int param_no)
         return fixup_spve_null(param, 1);
 }
 
+static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
+{
+	void *h;
+	dmq_node_t* cur = node_list->nodes;
+
+	while(cur) {
+		if (rpc->add(c, "{", &h) < 0) goto error;
+		if (rpc->struct_add(h, "SSddd",
+			"host", &cur->uri.host,
+			"port", &cur->uri.port,
+			"status", cur->status,
+			"last_notification", cur->last_notification,
+			"local", cur->local) < 0) goto error;
+		cur = cur->next;
+	}
+	return;
+error:
+	LM_ERR("Failed to add item to RPC response\n");
+	return;
+
+}
+
+static const char *dmq_rpc_list_nodes_doc[2] = {
+	"Print all nodes", 0
+};
+
+static rpc_export_t rpc_methods[] = {
+	{"dmq.list_nodes", dmq_rpc_list_nodes, dmq_rpc_list_nodes_doc, RET_ARRAY},
+	{0, 0, 0, 0}
+};
