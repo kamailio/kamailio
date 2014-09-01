@@ -1797,7 +1797,7 @@ void rpc_presence_cleanup(rpc_t* rpc, void* c)
 	(void) msg_presentity_clean(0,0);
 	(void) timer_db_update(0,0);
 		
-	rpc->printf(c, "Reload OK");
+	rpc->rpl_printf(c, "Reload OK");
 	return;
 }
 
