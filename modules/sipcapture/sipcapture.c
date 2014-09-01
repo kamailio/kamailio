@@ -2005,16 +2005,16 @@ static void sipcapture_rpc_status (rpc_t* rpc, void* c) {
 
 	if (strncasecmp(status.s, "on", strlen("on")) == 0) {
 		*capture_on_flag = 1;
-		rpc->printf(c, "Enabled");
+		rpc->rpl_printf(c, "Enabled");
 		return;
 	}
 	if (strncasecmp(status.s, "off", strlen("off")) == 0) {
 		*capture_on_flag = 0;
-		rpc->printf(c, "Disabled");
+		rpc->rpl_printf(c, "Disabled");
 		return;
 	}
 	if (strncasecmp(status.s, "check", strlen("check")) == 0) {
-		rpc->printf(c, *capture_on_flag ? "Enabled" : "Disabled");
+		rpc->rpl_printf(c, *capture_on_flag ? "Enabled" : "Disabled");
 		return;
 	} 
 	rpc->fault(c, 500, "Bad parameter (on, off or check)");
