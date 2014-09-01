@@ -755,7 +755,7 @@ void rpc_shv_set(rpc_t* rpc, void* c)
 		rpc->fault(c, 500, "Cannot set shared variable value");
 		LM_ERR("cannot set shv value\n");
 	} else {
-		rpc->printf(c, "Ok. Variable set to new value.");
+		rpc->rpl_printf(c, "Ok. Variable set to new value.");
 	}
 
 	unlock_shvar(shv);
