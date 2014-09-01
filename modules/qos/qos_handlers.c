@@ -293,7 +293,7 @@ static inline void internal_rpc_print_qos_stream_payloads(rpc_t *rpc, void *c, s
 			LM_ERR("got NULL sdp_payload\n");
 			return;
 		}
-		rpc->printf(c, "\t\t\t\tpayload[%d]=%.*s codec=%.*s",
+		rpc->rpl_printf(c, "\t\t\t\tpayload[%d]=%.*s codec=%.*s",
 			i, sdp_payload->rtp_payload.len, sdp_payload->rtp_payload.s,
 			sdp_payload->rtp_enc.len, sdp_payload->rtp_enc.s);
 		sdp_payload = sdp_payload->next;
@@ -309,7 +309,7 @@ static inline void internal_rpc_print_qos_stream(rpc_t *rpc, void *c, sdp_sessio
 			LM_ERR("got NULL stream\n");
 			return;
 		}
-		rpc->printf(c, "\t\t\tmedia=%.*s IP:port=%.*s:%.*s trans=%.*s sendrecv=%.*s ptime=%.*s payload:%d",
+		rpc->rpl_printf(c, "\t\t\tmedia=%.*s IP:port=%.*s:%.*s trans=%.*s sendrecv=%.*s ptime=%.*s payload:%d",
 			stream->media.len, stream->media.s,
 			stream->ip_addr.len, stream->ip_addr.s,
 			stream->port.len, stream->port.s,
@@ -326,7 +326,7 @@ static inline void internal_rpc_print_qos(rpc_t *rpc, void *c, qos_sdp_t *qos_sd
 	int i;
 	sdp_session_cell_t *session;
 
-	rpc->printf(c, "\t\tm_dir=%u m_id=%u method=%.*s cseq=%.*s negotiation=%u",
+	rpc->rpl_printf(c, "\t\tm_dir=%u m_id=%u method=%.*s cseq=%.*s negotiation=%u",
 		qos_sdp->method_dir, qos_sdp->method_id,
 		qos_sdp->method.len, qos_sdp->method.s,
 		qos_sdp->cseq.len, qos_sdp->cseq.s, qos_sdp->negotiation);
@@ -334,7 +334,7 @@ static inline void internal_rpc_print_qos(rpc_t *rpc, void *c, qos_sdp_t *qos_sd
 	for (i=1;i>=0;i--){
 		session = qos_sdp->sdp_session[i];
 		if (session) {
-			rpc->printf(c, "\t\tcalle%s: cnt_disp=%.*s bw_type=%.*s bw_width=%.*s",
+			rpc->rpl_printf(c, "\t\tcalle%s: cnt_disp=%.*s bw_type=%.*s bw_width=%.*s",
 				i?"e":"r",
 				session->cnt_disp.len, session->cnt_disp.s,
 				session->bw_type.len, session->bw_type.s,
@@ -355,13 +355,13 @@ void qos_dialog_rpc_context_CB(struct dlg_cell* did, int type, struct dlg_cb_par
 
 	qos_sdp = qos_ctx->pending_sdp;
 	if (qos_sdp) {
-		rpc->printf(c, "\tqos:pending_sdp");
+		rpc->rpl_printf(c, "\tqos:pending_sdp");
 		internal_rpc_print_qos(rpc, c, qos_sdp);
 	}
 
 	qos_sdp = qos_ctx->negotiated_sdp;
 	if (qos_sdp) {
-		rpc->printf(c, "\tqos:negotiated_sdp");
+		rpc->rpl_printf(c, "\tqos:negotiated_sdp");
 		internal_rpc_print_qos(rpc, c, qos_sdp);
 	}
 
