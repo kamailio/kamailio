@@ -231,7 +231,7 @@ static void rpc_get_grp_vars_cbk(void* p, str* g, str* n, counter_handle_t h)
 	rpc = packed_params->rpc;
 	ctx = packed_params->ctx;
 
-	rpc->printf(ctx, "%.*s:%.*s = %lu",
+	rpc->rpl_printf(ctx, "%.*s:%.*s = %lu",
 		g->len, g->s, n->len, n->s, counter_get_val(h));
 }
 
@@ -270,7 +270,7 @@ static void stats_get_all(rpc_t* rpc, void* ctx, char* stat)
 		s_statistic.len = strlen(stat);
 		s_stat = get_stat(&s_statistic);
 		if (s_stat) {
-			rpc->printf(ctx, "%s:%s = %lu",
+			rpc->rpl_printf(ctx, "%s:%s = %lu",
 				ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
 				get_stat_val(s_stat));
 		}
@@ -323,12 +323,12 @@ static void rpc_reset_or_clear_grp_vars_cbk(void* p, str* g, str* n, counter_han
 			reset_stat(s_stat);
 			new_val=get_stat_val(s_stat);
 			if (old_val==new_val) {
-				rpc->printf(ctx, "%s:%s = %lu",
+				rpc->rpl_printf(ctx, "%s:%s = %lu",
 					ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
 					new_val);
 			}
 			else {
-				rpc->printf(ctx, "%s:%s = %lu (%lu)",
+				rpc->rpl_printf(ctx, "%s:%s = %lu (%lu)",
 					ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
 					new_val, old_val);
 			}
@@ -382,12 +382,12 @@ static void stats_reset_or_clear_all(rpc_t* rpc, void* ctx, char* stat, int clea
 				reset_stat(s_stat);
 				new_val=get_stat_val(s_stat);
 				if (old_val==new_val) {
-					rpc->printf(ctx, "%s:%s = %lu",
+					rpc->rpl_printf(ctx, "%s:%s = %lu",
 						ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
 						new_val);
 				}
 				else {
-					rpc->printf(ctx, "%s:%s = %lu (%lu)",
+					rpc->rpl_printf(ctx, "%s:%s = %lu (%lu)",
 						ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
 						new_val, old_val);
 				}
