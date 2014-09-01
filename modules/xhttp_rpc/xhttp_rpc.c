@@ -467,12 +467,12 @@ error:
 }
 
 
-/** Implementation of rpc_printf function required by the management API.
+/** Implementation of rpc_rpl_printf function required by the management API.
  *
  * This function will be called whenever an RPC management function calls
  * rpc-printf to add a parameter to the xhttp_rpc reply being constructed.
  */
-static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int n, size;
 	char *p;
@@ -645,7 +645,7 @@ static int mod_init(void)
 	func_param.fault = (rpc_fault_f)rpc_fault;
 	func_param.add = (rpc_add_f)rpc_add;
 	func_param.scan = (rpc_scan_f)rpc_scan;
-	func_param.printf = (rpc_printf_f)rpc_printf;
+	func_param.rpl_printf = (rpc_rpl_printf_f)rpc_rpl_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
 	/* use rpc_struct_add for array_add */
 	func_param.array_add = (rpc_struct_add_f)rpc_struct_add;
