@@ -8,12 +8,12 @@ auto_gen=
 NAME=app_lua.so
 
 ifeq ($(CROSS_COMPILE),)
-BUILDER = $(shell which lua-config)
+	BUILDER = $(shell which lua-config)
 endif
 
 ifeq ($(BUILDER),)
 	ifeq ($(CROSS_COMPILE),)
-	BUILDER = $(shell which pkg-config)
+		BUILDER = $(shell which pkg-config)
 	endif
 	ifeq ($(BUILDER),)
 		LUA51 = $(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1)
@@ -28,14 +28,19 @@ ifeq ($(BUILDER),)
 		endif
 	else
 		LUAVER=XX
-		LUALIBS = $(shell pkg-config --silence-errors --libs lua)
+		LUALIBS = $(shell pkg-config --silence-errors --libs lua-5.1)
 		ifeq ($(LUALIBS),)
 			LUALIBS = $(shell pkg-config --silence-errors --libs lua5.1)
-			ifneq ($(LUALIBS),)
+			ifeq ($(LUALIBS),)
+				LUALIBS = $(shell pkg-config --silence-errors --libs lua)
+				ifneq ($(LUALIBS),)
+					LUAVER=5X
+				endif
+			else
 				LUAVER=51
 			endif
 		else
-			LUAVER=5X
+			LUAVER=51X
 		endif
 		ifeq ($(LUAVER),XX)
 			LUA51 = $(shell ls /usr/lib/liblua* | grep liblua5.1)
@@ -51,8 +56,13 @@ ifeq ($(BUILDER),)
 				DEFS+= $(shell pkg-config --cflags lua5.1 | sed -e "s/\\\\/'/" -e "s/\\\\\"/\"'/")
 				LIBS = $(shell pkg-config --libs lua5.1)
 			else
-				DEFS+= $(shell pkg-config --cflags lua)
-				LIBS = $(shell pkg-config --libs lua)
+				ifeq ($(LUAVER),51X)
+					DEFS+= $(shell pkg-config --cflags lua-5.1)
+					LIBS = $(shell pkg-config --libs lua-5.1)
+				else
+					DEFS+= $(shell pkg-config --cflags lua)
+					LIBS = $(shell pkg-config --libs lua)
+				endif
 			endif
 		endif
 	endif
