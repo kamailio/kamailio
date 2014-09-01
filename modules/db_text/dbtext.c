@@ -142,9 +142,9 @@ static const char *rpc_dump_doc[2] = {
 /* rpc function implementations */
 static void rpc_dump(rpc_t *rpc, void *c) {
 	if (0!=dbt_cache_print(0))
-		rpc->printf(c, "Dump failed");
+		rpc->rpl_printf(c, "Dump failed");
 	else
-		rpc->printf(c, "Dump OK");
+		rpc->rpl_printf(c, "Dump OK");
 
 	return;
 }
