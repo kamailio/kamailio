@@ -456,17 +456,17 @@ static void rpc_reload(rpc_t *rpc, void *c)
 	if (db_hdl==NULL) {
 		db_hdl=dr_dbf.init(&db_url);
 		if(db_hdl==0 ) {
-			rpc->printf(c, "cannot initialize database connection");
+			rpc->rpl_printf(c, "cannot initialize database connection");
 			return;
 		}
 	}
 
 	if ( (n=dr_reload_data())!=0 ) {
-		rpc->printf(c, "failed to load routing data");
+		rpc->rpl_printf(c, "failed to load routing data");
 		return;
 	}
 
-	rpc->printf(c, "relaad OK");
+	rpc->rpl_printf(c, "relaad OK");
 	return;
 }
 
