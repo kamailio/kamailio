@@ -191,7 +191,7 @@ static int  rpc_send         (rpc_ctx_t* ctx);                                 /
 static void rpc_fault        (rpc_ctx_t* ctx,       int code, char* fmt, ...); /* Signal a failure to the client */
 static int  rpc_add          (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add a new piece of data to the result */
 static int  rpc_scan         (rpc_ctx_t* ctx,       char* fmt, ...);           /* Retrieve request parameters */
-static int  rpc_printf       (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add printf-like formated data to the result set */
+static int  rpc_rpl_printf   (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add printf-like formated data to the result set */
 static int  rpc_struct_add   (struct text_chunk* s, char* fmt, ...);           /* Create a new structure */
 static int  rpc_struct_scan  (struct rpc_struct* s, char* fmt, ...);           /* Scan attributes of a structure */
 static int  rpc_struct_printf(struct text_chunk* s, char* name, char* fmt, ...);
@@ -910,7 +910,7 @@ int fifo_rpc_init()
 	func_param.fault = (rpc_fault_f)rpc_fault;
 	func_param.add = (rpc_add_f)rpc_add;
 	func_param.scan = (rpc_scan_f)rpc_scan;
-	func_param.printf = (rpc_printf_f)rpc_printf;
+	func_param.rpl_printf = (rpc_rpl_printf_f)rpc_rpl_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
 	/* use rpc_struct_add for array_add */
 	func_param.array_add = (rpc_array_add_f)rpc_struct_add;
@@ -1285,7 +1285,7 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 }
 
 
-static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int n, buf_size;
 	char* buf;

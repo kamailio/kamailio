@@ -116,7 +116,7 @@ static int rpc_send(struct binrpc_ctx* ctx);
 static int rpc_send_v(struct iovec_array *a);
 static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...);
-static int rpc_printf(struct binrpc_ctx* ctx, char* fmt, ...);
+static int rpc_rpl_printf(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...);
 static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...);
 static int rpc_struct_scan(struct rpc_struct_l* s, char* fmt, ...);
@@ -134,7 +134,7 @@ void binrpc_callbacks_init(void)
 	binrpc_callbacks.send          = (rpc_send_f)rpc_send;
 	binrpc_callbacks.add           = (rpc_add_f)rpc_add;
 	binrpc_callbacks.scan          = (rpc_scan_f)rpc_scan;
-	binrpc_callbacks.printf        = (rpc_printf_f)rpc_printf;
+	binrpc_callbacks.rpl_printf    = (rpc_rpl_printf_f)rpc_rpl_printf;
 	binrpc_callbacks.struct_add    = (rpc_struct_add_f)rpc_struct_add;
 	binrpc_callbacks.array_add     = (rpc_struct_add_f)rpc_array_add;
 	binrpc_callbacks.struct_scan   = (rpc_struct_scan_f)rpc_struct_scan;
@@ -1022,7 +1022,7 @@ error:
 
 #define RPC_PRINTF_BUF_SIZE	1024
 /* returns  0 on success, -1 on error */
-static int rpc_printf(struct binrpc_ctx* ctx, char* fmt, ...)
+static int rpc_rpl_printf(struct binrpc_ctx* ctx, char* fmt, ...)
 {
 	va_list ap;
 	char* buf;
@@ -1035,12 +1035,12 @@ static int rpc_printf(struct binrpc_ctx* ctx, char* fmt, ...)
 	len=vsnprintf(buf, RPC_PRINTF_BUF_SIZE, fmt, ap);
 	va_end(ap);
 	if ((len<0) || (len> RPC_PRINTF_BUF_SIZE)){
-		LOG(L_ERR, "ERROR: binrpc: rpc_printf: buffer size exceeded(%d)\n",
+		LOG(L_ERR, "ERROR: binrpc: rpc_rpl_printf: buffer size exceeded(%d)\n",
 				RPC_PRINTF_BUF_SIZE);
 		goto error;
 	}
 	if ((err=binrpc_addstr(&ctx->out.pkt, buf, len))<0){
-		LOG(L_ERR, "ERROR: binrpc: rpc_printf: binrpc_addstr failed:"
+		LOG(L_ERR, "ERROR: binrpc: rpc_rpl_printf: binrpc_addstr failed:"
 					" %s (%d)\n", binrpc_error(err), err);
 		goto error;
 	}
