@@ -388,13 +388,13 @@ static void app_lua_rpc_list(rpc_t* rpc, void* ctx)
 		i = 0;
 		while(li)
 		{
-			rpc->printf(ctx, "%d: [%s]", i, li->script);
+			rpc->rpl_printf(ctx, "%d: [%s]", i, li->script);
 			li = li->next;
 			i += 1;
 		}
 	}
 	else {
-		rpc->printf(ctx,"No scripts loaded");
+		rpc->rpl_printf(ctx,"No scripts loaded");
 	}
 	return;
 }
