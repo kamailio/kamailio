@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$
  *
  * UNIXODBC module result related functions
@@ -178,38 +178,34 @@ static inline int db_unixodbc_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 	}
 
 	SQLNumResultCols(CON_RESULT(_h), (SQLSMALLINT *)&columns);
-	temp_row = (strn*)pkg_malloc( columns*sizeof(strn) );
-	if(!temp_row) {
-		LM_ERR("no private memory left\n");
-		return -1;
-	}
 
 	while(SQL_SUCCEEDED(ret = SQLFetch(CON_RESULT(_h))))
 	{
+		temp_row = db_unixodbc_new_cellrow(columns);
+		if (!temp_row) {
+			LM_ERR("no private memory left\n");
+			return -1;
+		}
+
 		for(i=0; i < columns; i++)
 		{
-			SQLLEN indicator;
-			ret = SQLGetData(CON_RESULT(_h), i+1, SQL_C_CHAR,
-				temp_row[i].s, STRN_LEN, &indicator);
-			if (SQL_SUCCEEDED(ret)) {
-				if (indicator == SQL_NULL_DATA)
-					strcpy(temp_row[i].s, "NULL");
-			}
-			else {
-				LM_ERR("SQLGetData failed\n");
+			if (!db_unixodbc_load_cell(_h, i+1, temp_row + i, RES_TYPES(_r)[i])) {
+			    db_unixodbc_free_cellrow(columns, temp_row);
+			    return -5;
 			}
 		}
 
 		if (db_unixodbc_list_insert(&rowstart, &rows, columns, temp_row) < 0) {
 			LM_ERR("insert failed\n");
-			pkg_free(temp_row);
-			temp_row= NULL;
+			db_unixodbc_free_cellrow(columns, temp_row);
 			return -5;
 		}
 		RES_ROW_N(_r)++;
+
+		/* free temporary row data */
+		db_unixodbc_free_cellrow(columns, temp_row);
+		temp_row = NULL;
 	}
-	/* free temporary row data */
-	pkg_free(temp_row);
 	CON_ROW(_h) = NULL;
 
 	if (!RES_ROW_N(_r)) {
