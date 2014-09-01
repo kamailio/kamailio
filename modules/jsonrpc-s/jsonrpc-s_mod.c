@@ -464,12 +464,12 @@ error:
 }
 
 
-/** Implementation of rpc_printf function required by the management API.
+/** Implementation of rpc_rpl_printf function required by the management API.
  *
  * This function will be called whenever an RPC management function calls
  * rpc-printf to add a parameter to the jsonrpc reply being constructed.
  */
-static int jsonrpc_printf(jsonrpc_ctx_t* ctx, char* fmt, ...)
+static int jsonrpc_rpl_printf(jsonrpc_ctx_t* ctx, char* fmt, ...)
 {
 	int n, buf_size;
 	char *buf = 0;
@@ -773,7 +773,7 @@ static int mod_init(void)
 	func_param.fault             = (rpc_fault_f)jsonrpc_fault;
 	func_param.add               = (rpc_add_f)jsonrpc_add;
 	func_param.scan              = (rpc_scan_f)jsonrpc_scan;
-	func_param.printf            = (rpc_printf_f)jsonrpc_printf;
+	func_param.rpl_printf        = (rpc_rpl_printf_f)jsonrpc_rpl_printf;
 	func_param.struct_add        = (rpc_struct_add_f)jsonrpc_struct_add;
 	func_param.array_add         = (rpc_struct_add_f)jsonrpc_array_add;
 	func_param.struct_scan       = (rpc_struct_scan_f)jsonrpc_struct_scan;
