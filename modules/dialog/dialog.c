@@ -1501,32 +1501,32 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 		}
 	}
 
-	rpc->printf(c, "hash:%u:%u state:%u ref_count:%u "
+	rpc->rpl_printf(c, "hash:%u:%u state:%u ref_count:%u "
 		"timestart:%u timeout:%u lifetime:%u datestart:%s datestop:%s",
 		dlg->h_entry, dlg->h_id, dlg->state, dlg->ref, _start_ts, dlg->tl.timeout, dlg->lifetime,
 		_start_date_buf, _stop_date_buf);
-	rpc->printf(c, "\tcallid:%.*s from_tag:%.*s to_tag:%.*s",
+	rpc->rpl_printf(c, "\tcallid:%.*s from_tag:%.*s to_tag:%.*s",
 		dlg->callid.len, dlg->callid.s,
 		dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
 		dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
-	rpc->printf(c, "\tfrom_uri:%.*s to_uri:%.*s",
+	rpc->rpl_printf(c, "\tfrom_uri:%.*s to_uri:%.*s",
 		dlg->from_uri.len, dlg->from_uri.s, dlg->to_uri.len, dlg->to_uri.s);
-	rpc->printf(c, "\tcaller_contact:%.*s caller_cseq:%.*s",
+	rpc->rpl_printf(c, "\tcaller_contact:%.*s caller_cseq:%.*s",
 		dlg->contact[DLG_CALLER_LEG].len, dlg->contact[DLG_CALLER_LEG].s,
 		dlg->cseq[DLG_CALLER_LEG].len, dlg->cseq[DLG_CALLER_LEG].s);
-	rpc->printf(c, "\tcaller_route_set: %.*s",
+	rpc->rpl_printf(c, "\tcaller_route_set: %.*s",
 		dlg->route_set[DLG_CALLER_LEG].len, dlg->route_set[DLG_CALLER_LEG].s);
-	rpc->printf(c, "\tcallee_contact:%.*s callee_cseq:%.*s",
+	rpc->rpl_printf(c, "\tcallee_contact:%.*s callee_cseq:%.*s",
 		dlg->contact[DLG_CALLEE_LEG].len, dlg->contact[DLG_CALLEE_LEG].s,
 		dlg->cseq[DLG_CALLEE_LEG].len, dlg->cseq[DLG_CALLEE_LEG].s);
-	rpc->printf(c, "\tcallee_route_set: %.*s",
+	rpc->rpl_printf(c, "\tcallee_route_set: %.*s",
 		dlg->route_set[DLG_CALLEE_LEG].len, dlg->route_set[DLG_CALLEE_LEG].s);
 	if (dlg->bind_addr[DLG_CALLEE_LEG]) {
-		rpc->printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:%.*s",
+		rpc->rpl_printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:%.*s",
 			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s,
 			dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s);
 	} else {
-		rpc->printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:",
+		rpc->rpl_printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:",
 			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s);
 	}
 	if (with_context) {
@@ -1600,19 +1600,19 @@ static void internal_rpc_profile_get_size(rpc_t *rpc, void *c, str *profile_name
 
 	profile = search_dlg_profile( profile_name );
 	if (!profile) {
-		rpc->printf(c, "Non existing profile:%.*s",
+		rpc->rpl_printf(c, "Non existing profile:%.*s",
 			profile_name->len, profile_name->s);
 		return;
 	}
 	size = get_profile_size(profile, value);
 	if (value) {
-		rpc->printf(c, "Profile:%.*s => profile:%.*s value:%.*s count:%u",
+		rpc->rpl_printf(c, "Profile:%.*s => profile:%.*s value:%.*s count:%u",
 			profile_name->len, profile_name->s,
 			profile->name.len, profile->name.s,
 			value->len, value->s, size);
 		return;
 	} else {
-		rpc->printf(c, "Profile:%.*s => profile:%.*s value: count:%u",
+		rpc->rpl_printf(c, "Profile:%.*s => profile:%.*s value: count:%u",
 			profile_name->len, profile_name->s,
 			profile->name.len, profile->name.s, size);
 		return;
@@ -1638,7 +1638,7 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 
 	profile = search_dlg_profile( profile_name );
 	if (!profile) {
-		rpc->printf(c, "Non existing profile:%.*s",
+		rpc->rpl_printf(c, "Non existing profile:%.*s",
 			profile_name->len, profile_name->s);
 		return;
 	}
