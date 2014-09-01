@@ -50,7 +50,7 @@ typedef int (*rpc_send_f)(void* ctx);                                      /* Se
 typedef void (*rpc_fault_f)(void* ctx, int code, char* fmt, ...);          /* Signal a failure to the client */
 typedef int (*rpc_add_f)(void* ctx, char* fmt, ...);                       /* Add a new piece of data to the result */
 typedef int (*rpc_scan_f)(void* ctx, char* fmt, ...);                      /* Retrieve request parameters */
-typedef int (*rpc_printf_f)(void* ctx, char* fmt, ...);                    /* Add printf-like formated data to the result set */
+typedef int (*rpc_rpl_printf_f)(void* ctx, char* fmt, ...);                /* Add printf-like formated data to the result set */
 typedef int (*rpc_struct_add_f)(void* ctx, char* fmt, ...);                /* Add fields in a structure */
 typedef int (*rpc_array_add_f)(void* ctx, char* fmt, ...);                 /* Add values in an array */
 typedef int (*rpc_struct_scan_f)(void* ctx, char* fmt, ...);               /* Scan attributes of a structure */
@@ -73,7 +73,7 @@ typedef struct rpc {
 	rpc_send_f send;
 	rpc_add_f add;
 	rpc_scan_f scan;
-	rpc_printf_f printf;
+	rpc_rpl_printf_f rpl_printf;
 	rpc_struct_add_f struct_add;
 	rpc_array_add_f array_add;
 	rpc_struct_scan_f struct_scan;
