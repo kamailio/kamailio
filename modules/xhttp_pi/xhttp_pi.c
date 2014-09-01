@@ -375,9 +375,9 @@ static const char *rpc_reload_doc[2] = {
 static void rpc_reload(rpc_t *rpc, void *c) {
 	lock_get(ph_lock);
 	if (0!=ph_init_cmds(&ph_framework_data, filename.s)) {
-		rpc->printf(c, "Reload failed");
+		rpc->rpl_printf(c, "Reload failed");
 	} else {
-		rpc->printf(c, "Reload OK");
+		rpc->rpl_printf(c, "Reload OK");
 	}
 	lock_release(ph_lock);
 	return;
