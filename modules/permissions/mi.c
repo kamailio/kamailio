@@ -63,7 +63,7 @@ void rpc_trusted_reload(rpc_t* rpc, void* c) {
 		return;
 	}
 
-	rpc->printf(c, "Reload OK");
+	rpc->rpl_printf(c, "Reload OK");
 	return;
 }
 
@@ -130,7 +130,7 @@ void rpc_address_reload(rpc_t* rpc, void* c) {
 		return;
 	}
 
-	rpc->printf(c, "Reload OK");
+	rpc->rpl_printf(c, "Reload OK");
 	return;
 }
 
@@ -325,9 +325,9 @@ void rpc_test_uri(rpc_t* rpc, void* c)
     	uri[urip.len] = 0;
 
 	if (allow_test(basename, uri, contact) == 1) {
-		rpc->printf(c, "Allowed");
+		rpc->rpl_printf(c, "Allowed");
 		return;
 	}
-	rpc->printf(c, "Denied");
+	rpc->rpl_printf(c, "Denied");
 	return;
 }
