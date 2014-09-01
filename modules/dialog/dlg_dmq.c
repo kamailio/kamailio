@@ -375,7 +375,7 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needl
 	LM_DBG("replicating action [%d] on [%u:%u] to dmq peers\n", action, dlg->h_entry, dlg->h_id);
 
 	if (action == DLG_DMQ_UPDATE) {
-		if ((dlg->iflags & DLG_IFLAG_DMQ_SYNC) && ((dlg->dflags & DLG_FLAG_CHANGED_PROF) == 0)) {
+		if (!node && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) && ((dlg->dflags & DLG_FLAG_CHANGED_PROF) == 0)) {
 			LM_DBG("dlg not changed, no sync\n");
 			return 1;
 		}
@@ -490,8 +490,10 @@ int dmq_send_all_dlgs(dmq_node_t* dmq_node) {
 		dlg_lock( d_table, &entry);
 
 		for(dlg = entry.first; dlg != NULL; dlg = dlg->next){
-			dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
-			dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0, dmq_node);
+			if (dlg->iflags & DLG_IFLAG_DMQ_SYNC) {
+				dlg->dflags |= DLG_FLAG_CHANGED_PROF;
+				dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0, dmq_node);
+			}
 		}
 
 		dlg_unlock( d_table, &entry);
