@@ -622,7 +622,7 @@ modparam("htable", "db_expires", 1)
 		<para>
 			If set to 1, will enable DMQ replication of actions performed upon 
 			entries in all tables having "dmqreplicate" parameter set. Any update 
-			action performed via psuedo-variables, MI and RPC commands will be 
+			action performed via pseudo-variables, MI and RPC commands will be 
 			repeated on all other nodes. Therefore, it is important to ensure the
 			table definition (size, autoexpire etc.) is identical across all instances.
 		</para>
@@ -771,6 +771,9 @@ sht_unlock("ha=>test");
 			</para></listitem>
 			<listitem><para>
 				<emphasis>$shtval(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtrecord(attribute)</emphasis>
 			</para></listitem>
 		</itemizedlist>
 		<para>
@@ -1103,15 +1106,34 @@ kamcmd htable.stats
 			once, after core and module initialization, but before &kamailio; forks any
 			child processes.
 		</para>
-        <programlisting  format="linespecific">
-...			
+<programlisting  format="linespecific">
+...
 event_route[htable:mod-init] {
     $sht(a=>x) = 1;
 }
 ...
-		</programlisting>
-    </section>
-    </section>
+</programlisting>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">htable:expired:&lt;table&gt;</function>
+		</title>
+		<para>
+			When defined, the module calls event_route[htable:expired:&lt;table&gt;]
+			when an entry in the given table expires. In this event route, the key and value
+			of the expired record are available with the $shtrecord(key) and $shtrecord(value)
+			pseudo-variables.
+		</para>
+<programlisting  format="linespecific">
+...
+
+event_route[htable:expired:mytable] {
+    xlog("mytable record expired $shtrecord(key) => $shtrecord(value)\n");
+}
+...
+</programlisting>
+	</section>
+	</section>
 
 </chapter>
 

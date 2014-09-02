@@ -30,58 +30,59 @@ Ovidiu Sas
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
-              1.2.3. Loading from database
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+              2.3. Loading from database
 
-        1.3. Parameters
+        3. Parameters
 
-              1.3.1. htable (str)
-              1.3.2. db_url (str)
-              1.3.3. key_name_column (str)
-              1.3.4. key_type_column (str)
-              1.3.5. value_type_column (str)
-              1.3.6. key_value_column (str)
-              1.3.7. expires_column (str)
-              1.3.8. array_size_suffix (str)
-              1.3.9. fetch_rows (integer)
-              1.3.10. timer_interval (integer)
-              1.3.11. timer_mode (integer)
-              1.3.12. db_expires (integer)
-              1.3.13. enable_dmq (integer)
+              3.1. htable (str)
+              3.2. db_url (str)
+              3.3. key_name_column (str)
+              3.4. key_type_column (str)
+              3.5. value_type_column (str)
+              3.6. key_value_column (str)
+              3.7. expires_column (str)
+              3.8. array_size_suffix (str)
+              3.9. fetch_rows (integer)
+              3.10. timer_interval (integer)
+              3.11. timer_mode (integer)
+              3.12. db_expires (integer)
+              3.13. enable_dmq (integer)
 
-        1.4. Functions
+        4. Functions
 
-              1.4.1. sht_print()
-              1.4.2. sht_rm_name_re(htable=>regexp)
-              1.4.3. sht_rm_value_re(htable=>regexp)
-              1.4.4. sht_lock(htable=>key)
-              1.4.5. sht_unlock(htable=>key)
+              4.1. sht_print()
+              4.2. sht_rm_name_re(htable=>regexp)
+              4.3. sht_rm_value_re(htable=>regexp)
+              4.4. sht_lock(htable=>key)
+              4.5. sht_unlock(htable=>key)
 
-        1.5. Exported pseudo-variables
-        1.6. MI Commands
+        5. Exported pseudo-variables
+        6. MI Commands
 
-              1.6.1. sht_reload
-              1.6.2. sht_dump
-              1.6.3. sht_delete
+              6.1. sht_reload
+              6.2. sht_dump
+              6.3. sht_delete
 
-        1.7. Exported RPC Commands
+        7. Exported RPC Commands
 
-              1.7.1. htable.get htable key
-              1.7.2. htable.delete htable key
-              1.7.3. htable.sets htable key value
-              1.7.4. htable.seti htable key value
-              1.7.5. htable.dump htable
-              1.7.6. htable.reload htable
-              1.7.7. htable.listTables
-              1.7.8. htable.stats
+              7.1. htable.get htable key
+              7.2. htable.delete htable key
+              7.3. htable.sets htable key value
+              7.4. htable.seti htable key value
+              7.5. htable.dump htable
+              7.6. htable.reload htable
+              7.7. htable.listTables
+              7.8. htable.stats
 
-        1.8. Event routes
+        8. Event routes
 
-              1.8.1. htable:mod-init
+              8.1. htable:mod-init
+              8.2. htable:expired:<table>
 
    List of Examples
 
@@ -109,7 +110,63 @@ Ovidiu Sas
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+        2.3. Loading from database
+
+   3. Parameters
+
+        3.1. htable (str)
+        3.2. db_url (str)
+        3.3. key_name_column (str)
+        3.4. key_type_column (str)
+        3.5. value_type_column (str)
+        3.6. key_value_column (str)
+        3.7. expires_column (str)
+        3.8. array_size_suffix (str)
+        3.9. fetch_rows (integer)
+        3.10. timer_interval (integer)
+        3.11. timer_mode (integer)
+        3.12. db_expires (integer)
+        3.13. enable_dmq (integer)
+
+   4. Functions
+
+        4.1. sht_print()
+        4.2. sht_rm_name_re(htable=>regexp)
+        4.3. sht_rm_value_re(htable=>regexp)
+        4.4. sht_lock(htable=>key)
+        4.5. sht_unlock(htable=>key)
+
+   5. Exported pseudo-variables
+   6. MI Commands
+
+        6.1. sht_reload
+        6.2. sht_dump
+        6.3. sht_delete
+
+   7. Exported RPC Commands
+
+        7.1. htable.get htable key
+        7.2. htable.delete htable key
+        7.3. htable.sets htable key value
+        7.4. htable.seti htable key value
+        7.5. htable.dump htable
+        7.6. htable.reload htable
+        7.7. htable.listTables
+        7.8. htable.stats
+
+   8. Event routes
+
+        8.1. htable:mod-init
+        8.2. htable:expired:<table>
+
+1. Overview
 
    The module adds a hash table container to configuration language. The
    hash table is stored in shared memory and the access to it can be done
@@ -293,21 +350,25 @@ $ kamcmd htable.dump htable
         }
 }
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+   2.3. Loading from database
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * If DMQ replication is enabled, the DMQ module must be loaded
        first..
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-1.2.3. Loading from database
+2.3. Loading from database
 
    The module is able to load values in hash table at startup upon
    providing a DB URL and table name.
@@ -326,9 +387,23 @@ $ kamcmd htable.dump htable
           + 1 - value is integer.
      * key value - string containing the value of the key.
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. htable (str)
+   3.1. htable (str)
+   3.2. db_url (str)
+   3.3. key_name_column (str)
+   3.4. key_type_column (str)
+   3.5. value_type_column (str)
+   3.6. key_value_column (str)
+   3.7. expires_column (str)
+   3.8. array_size_suffix (str)
+   3.9. fetch_rows (integer)
+   3.10. timer_interval (integer)
+   3.11. timer_mode (integer)
+   3.12. db_expires (integer)
+   3.13. enable_dmq (integer)
+
+3.1. htable (str)
 
    The definition of a hash table. The value of the parameter must have
    the following format:
@@ -374,7 +449,7 @@ modparam("htable", "htable", "c=>size=4;autoexpire=7200;initval=1;dmqreplicate=
 1;")
 ...
 
-1.3.2. db_url (str)
+3.2. db_url (str)
 
    The URL to connect to database for loading values in hash table at
    start up.
@@ -386,7 +461,7 @@ modparam("htable", "htable", "c=>size=4;autoexpire=7200;initval=1;dmqreplicate=
 modparam("htable", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 ...
 
-1.3.3. key_name_column (str)
+3.3. key_name_column (str)
 
    The name of the column containing hash table key name.
 
@@ -397,7 +472,7 @@ modparam("htable", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 modparam("htable", "key_name_column", "kname")
 ...
 
-1.3.4. key_type_column (str)
+3.4. key_type_column (str)
 
    The name of the column containing hash table key type.
 
@@ -408,7 +483,7 @@ modparam("htable", "key_name_column", "kname")
 modparam("htable", "key_type_column", "ktype")
 ...
 
-1.3.5. value_type_column (str)
+3.5. value_type_column (str)
 
    The name of the column containing hash table value type.
 
@@ -419,7 +494,7 @@ modparam("htable", "key_type_column", "ktype")
 modparam("htable", "value_type_column", "vtype")
 ...
 
-1.3.6. key_value_column (str)
+3.6. key_value_column (str)
 
    The name of the column containing hash table key value.
 
@@ -430,7 +505,7 @@ modparam("htable", "value_type_column", "vtype")
 modparam("htable", "key_value_column", "kvalue")
 ...
 
-1.3.7. expires_column (str)
+3.7. expires_column (str)
 
    The name of the column containing expires type.
 
@@ -441,7 +516,7 @@ modparam("htable", "key_value_column", "kvalue")
 modparam("htable", "expires", "expiry")
 ...
 
-1.3.8. array_size_suffix (str)
+3.8. array_size_suffix (str)
 
    The suffix to be added to store the number of items in an array (see
    key type).
@@ -453,7 +528,7 @@ modparam("htable", "expires", "expiry")
 modparam("htable", "array_size_suffix", "-count")
 ...
 
-1.3.9. fetch_rows (integer)
+3.9. fetch_rows (integer)
 
    How many rows to fetch at once from database.
 
@@ -464,7 +539,7 @@ modparam("htable", "array_size_suffix", "-count")
 modparam("htable", "fetch_rows", 1000)
 ...
 
-1.3.10. timer_interval (integer)
+3.10. timer_interval (integer)
 
    Interval in seconds to check for expired htable values.
 
@@ -475,7 +550,7 @@ modparam("htable", "fetch_rows", 1000)
 modparam("htable", "timer_interval", 10)
 ...
 
-1.3.11. timer_mode (integer)
+3.11. timer_mode (integer)
 
    If set to 1, will start a new timer process. If set to 0 will use
    default timer process to check for expired htable values.
@@ -487,7 +562,7 @@ modparam("htable", "timer_interval", 10)
 modparam("htable", "timer_mode", 1)
 ...
 
-1.3.12. db_expires (integer)
+3.12. db_expires (integer)
 
    If set to 1, will load/save the expires values of the items in hash
    table fromm/to database. It applies only to hash tables that have
@@ -500,11 +575,11 @@ modparam("htable", "timer_mode", 1)
 modparam("htable", "db_expires", 1)
 ...
 
-1.3.13. enable_dmq (integer)
+3.13. enable_dmq (integer)
 
    If set to 1, will enable DMQ replication of actions performed upon
    entries in all tables having "dmqreplicate" parameter set. Any update
-   action performed via psuedo-variables, MI and RPC commands will be
+   action performed via pseudo-variables, MI and RPC commands will be
    repeated on all other nodes. Therefore, it is important to ensure the
    table definition (size, autoexpire etc.) is identical across all
    instances.
@@ -520,9 +595,15 @@ modparam("htable", "db_expires", 1)
 modparam("htable", "enable_dmq", 1)
 ...
 
-1.4. Functions
+4. Functions
 
-1.4.1.  sht_print()
+   4.1. sht_print()
+   4.2. sht_rm_name_re(htable=>regexp)
+   4.3. sht_rm_value_re(htable=>regexp)
+   4.4. sht_lock(htable=>key)
+   4.5. sht_unlock(htable=>key)
+
+4.1.  sht_print()
 
    Dump content of hash table to L_ERR log level. Intended for debug
    purposes.
@@ -535,7 +616,7 @@ modparam("htable", "enable_dmq", 1)
 sht_print();
 ...
 
-1.4.2.  sht_rm_name_re(htable=>regexp)
+4.2.  sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -548,7 +629,7 @@ sht_print();
 sht_rm_name_re("ha=>.*");
 ...
 
-1.4.3.  sht_rm_value_re(htable=>regexp)
+4.3.  sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -561,7 +642,7 @@ sht_rm_name_re("ha=>.*");
 sht_rm_value_re("ha=>.*");
 ...
 
-1.4.4.  sht_lock(htable=>key)
+4.4.  sht_lock(htable=>key)
 
    Lock the slot in htable corespoding to the key item.
 
@@ -572,7 +653,7 @@ sht_rm_value_re("ha=>.*");
 sht_lock("ha=>test");
 ...
 
-1.4.5.  sht_unlock(htable=>key)
+4.5.  sht_unlock(htable=>key)
 
    Unlock the slot in htable corespoding to the key item.
 
@@ -585,7 +666,7 @@ $sht(ha=>test) = $sht(ha=>test) + 10;
 sht_unlock("ha=>test");
 ...
 
-1.5. Exported pseudo-variables
+5. Exported pseudo-variables
 
      * $sht(htable=>key)
      * $shtex(htable=>key)
@@ -593,13 +674,18 @@ sht_unlock("ha=>test");
      * $shtcv(htable=>key)
      * $shtinc(htable=>key)
      * $shtval(htable=>key)
+     * $shtrecord(attribute)
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
 
-1.6. MI Commands
+6. MI Commands
 
-1.6.1.  sht_reload
+   6.1. sht_reload
+   6.2. sht_dump
+   6.3. sht_delete
+
+6.1.  sht_reload
 
    Reload a hash table from database.
 
@@ -612,7 +698,7 @@ sht_unlock("ha=>test");
                 _hash_table_name_
                 _empty_line_
 
-1.6.2.  sht_dump
+6.2.  sht_dump
 
    Dump content of a hash table via MI.
 
@@ -625,7 +711,7 @@ sht_unlock("ha=>test");
                 _hash_table_name_
                 _empty_line_
 
-1.6.3.  sht_delete
+6.3.  sht_delete
 
    Delete a key from a hash table via MI.
 
@@ -644,9 +730,18 @@ sht_unlock("ha=>test");
    Example (note the quoting when executing it via FIFO):
                 kamctl fifo sht_delete auth '"user@example.org::last_auth"'
 
-1.7. Exported RPC Commands
+7. Exported RPC Commands
 
-1.7.1.  htable.get htable key
+   7.1. htable.get htable key
+   7.2. htable.delete htable key
+   7.3. htable.sets htable key value
+   7.4. htable.seti htable key value
+   7.5. htable.dump htable
+   7.6. htable.reload htable
+   7.7. htable.listTables
+   7.8. htable.stats
+
+7.1.  htable.get htable key
 
    Lists one value in a hash table
 
@@ -665,7 +760,7 @@ kamcmd htable.get students daniel
 kamcmd htable.get students course[0]
 ...
 
-1.7.2.  htable.delete htable key
+7.2.  htable.delete htable key
 
    Delete one value in a hash table
 
@@ -684,7 +779,7 @@ kamcmd htable.delete students anna
 kamcmd htable.delete students course[0]
 ...
 
-1.7.3.  htable.sets htable key value
+7.3.  htable.sets htable key value
 
    Set an item in hash table to string value.
 
@@ -704,7 +799,7 @@ kamcmd htable.sets test x abc
 kamcmd htable.sets test x[0] abc
 ...
 
-1.7.4.  htable.seti htable key value
+7.4.  htable.seti htable key value
 
    Set an item in hash table to integer value.
 
@@ -724,7 +819,7 @@ kamcmd htable.seti test x 123
 kamcmd htable.sets test x[0] 123
 ...
 
-1.7.5.  htable.dump htable
+7.5.  htable.dump htable
 
    Lists all the values in a hash table
 
@@ -738,7 +833,7 @@ kamcmd htable.sets test x[0] 123
 kamcmd htable.dump ipban
 ...
 
-1.7.6.  htable.reload htable
+7.6.  htable.reload htable
 
    Reload hash table from database.
 
@@ -752,7 +847,7 @@ kamcmd htable.dump ipban
 kamcmd htable.reload ipban
 ...
 
-1.7.7.  htable.listTables
+7.7.  htable.listTables
 
    Lists all defined tables
 
@@ -766,7 +861,7 @@ kamcmd htable.reload ipban
 kamcmd htable.listTables
 ...
 
-1.7.8.  htable.stats
+7.8.  htable.stats
 
    Get statistics for hash tables - name, number of slots, number of
    items, max number of items per slot, min number of items per slot.
@@ -781,9 +876,12 @@ kamcmd htable.listTables
 kamcmd htable.stats
 ...
 
-1.8. Event routes
+8. Event routes
 
-1.8.1.  htable:mod-init
+   8.1. htable:mod-init
+   8.2. htable:expired:<table>
+
+8.1.  htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
    modules have been initialized. A typical use case is to initialise
@@ -793,5 +891,18 @@ kamcmd htable.stats
 ...
 event_route[htable:mod-init] {
     $sht(a=>x) = 1;
+}
+...
+
+8.2.  htable:expired:<table>
+
+   When defined, the module calls event_route[htable:expired:<table>] when
+   an entry in the given table expires. In this event route, the key and
+   value of the expired record are available with the $shtrecord(key) and
+   $shtrecord(value) pseudo-variables.
+...
+
+event_route[htable:expired:mytable] {
+    xlog("mytable record expired $shtrecord(key) => $shtrecord(value)\n");
 }
 ...

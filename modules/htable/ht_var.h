@@ -43,4 +43,7 @@ int pv_get_ht_inc(struct sip_msg *msg,  pv_param_t *param,
 int pv_get_ht_dec(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
 
+int pv_parse_ht_expired_cell(pv_spec_t *sp, str *in);
+int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 #endif

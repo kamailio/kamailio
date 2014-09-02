@@ -31,12 +31,16 @@
 #include "../../hashes.h"
 #include "../../ut.h"
 #include "../../re.h"
+#include "../../lib/kcore/faked_msg.h"
+#include "../../action.h"
+#include "../../route.h"
 
 #include "ht_api.h"
 #include "ht_db.h"
 
 
 ht_t *_ht_root = NULL;
+ht_cell_t *ht_expired_cell;
 
 typedef struct _keyvalue {
 	str key;
@@ -565,6 +569,8 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 			/* found */
 			if(now>0 && it->expire!=0 && it->expire<now) {
 				/* entry has expired */
+				ht_handle_expired_record(ht, it);
+
 				if(ht->flags==PV_VAL_INT) {
 					/* initval is integer, use it to create a fresh entry */
 					it->flags &= ~AVP_VAL_STR;
@@ -688,6 +694,8 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 			/* found */
 			if(ht->htexpire>0 && it->expire!=0 && it->expire<time(NULL)) {
 				/* entry has expired, delete it and return NULL */
+				ht_handle_expired_record(ht, it);
+
 				if(it->prev==NULL)
 					ht->entries[idx].first = it->next;
 				else
@@ -924,6 +932,7 @@ void ht_timer(unsigned int ticks, void *param)
 					if(it->expire!=0 && it->expire<now)
 					{
 						/* expired */
+						ht_handle_expired_record(ht, it);
 						if(it->prev==NULL)
 							ht->entries[i].first = it->next;
 						else
@@ -941,6 +950,60 @@ void ht_timer(unsigned int ticks, void *param)
 		ht = ht->next;
 	}
 	return;
+}
+
+void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell)
+{
+	ht_expired_cell = cell;
+
+	char route_name[64] = "htable:expired:";
+
+	if (ht->name.len + strlen(route_name) > 64)
+	{
+		LM_ERR("ht_expired_record route name too long");
+		return;
+	}
+
+	strncat(route_name, ht->name.s, ht->name.len);
+	ht_expired_run_event_route(route_name);
+
+	ht_expired_cell = NULL;
+}
+
+void ht_expired_run_event_route(char *route)
+{
+	int rt, backup_rt;
+	sip_msg_t *fmsg;
+
+	if (route == NULL)
+	{
+		LM_ERR("bad route\n");
+	}
+
+	LM_DBG("ht_expired_run_event_route event_route[%s]\n", route);
+
+	rt = route_get(&event_rt, route);
+
+	if (rt < 0 || event_rt.rlist[rt] == NULL)
+	{
+		LM_DBG("route does not exist");
+		return;
+	}
+
+	if (faked_msg_init() < 0)
+	{
+		LM_ERR("faked_msg_init() failed\n");
+		return;
+	}
+	fmsg = faked_msg_next();
+	fmsg->parsed_orig_ruri_ok = 0;
+
+	backup_rt = get_route_type();
+
+	set_route_type(EVENT_ROUTE);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
+
+	set_route_type(backup_rt);
 }
 
 int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)

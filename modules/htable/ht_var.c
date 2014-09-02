@@ -26,6 +26,7 @@
 
 /* pkg copy */
 ht_cell_t *_htc_local=NULL;
+ht_cell_t *ht_expired_cell;
 
 int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
@@ -358,4 +359,54 @@ int pv_get_ht_dec(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	return pv_get_ht_add(msg, param, res, -1);
+}
+
+int pv_parse_ht_expired_cell(pv_spec_t *sp, str *in)
+{
+	if ((in->len != 3 || strncmp(in->s, "key", in->len) != 0) &&
+	    (in->len != 5 || strncmp(in->s, "value", in->len) != 0))
+	{
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.s.s = in->s;
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+	sp->pvp.pvn.u.isname.type = 0;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+
+	return 0;
+}
+
+int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if (res == NULL || ht_expired_cell == NULL)
+	{
+		return -1;
+	}
+
+	if (param->pvn.u.isname.name.s.len == 3 &&
+		strncmp(param->pvn.u.isname.name.s.s, "key", 3) == 0)
+	{
+		res->rs = ht_expired_cell->name;
+	}
+	else if (param->pvn.u.isname.name.s.len == 5 &&
+		strncmp(param->pvn.u.isname.name.s.s, "value", 5) == 0)
+	{
+		if(ht_expired_cell->flags&AVP_VAL_STR) {
+			res->rs = ht_expired_cell->value.s;
+			res->flags = PV_VAL_STR;
+		} else {
+			res->ri = ht_expired_cell->value.n;
+			res->flags = PV_VAL_INT|PV_TYPE_INT;
+		}
+		return 0;
+	}
+
+	if (res->rs.s == NULL)
+		res->flags = PV_VAL_NULL;
+	else
+		res->flags = PV_VAL_STR;
+
+	return 0;
 }
