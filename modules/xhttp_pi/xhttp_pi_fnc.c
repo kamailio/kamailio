@@ -885,7 +885,7 @@ int ph_getColVals(ph_mod_t *module, ph_cmd_t *cmd,
 			if(vals==NULL||ids==NULL) {LM_ERR("oom\n"); return -1;}
 			col_vals = vals; col_ids = ids;
 			vals = &col_vals[size]; ids = &col_ids[size];
-			memset(vals, 0, sizeof(str*)); memset(ids, 0, sizeof(str*));
+			memset(vals, 0, sizeof(str)); memset(ids, 0, sizeof(str));
 			/* Retrieve the node attribute */
 			attr.s = ph_xmlNodeGetAttrContentByName(node,
 							XHTTP_PI_XML_ID_ATTR);
