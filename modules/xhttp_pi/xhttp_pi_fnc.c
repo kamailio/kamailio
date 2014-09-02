@@ -570,7 +570,7 @@ int ph_getDbTableCols(ph_db_url_t *ph_db_urls, ph_db_table_t *db_tables,
 			db_tables->cols = cols;
 			cols = &db_tables->cols[db_tables->cols_size];
 			memset(cols, 0, sizeof(ph_table_col_t));
-			cols->type=-1;
+			cols->type=DB1_UNKNOWN;
 			/* Populate the field */
 			field.s =
 				ph_xmlNodeGetNodeContentByName(node->children,
@@ -683,7 +683,7 @@ int ph_getDbTableCols(ph_db_url_t *ph_db_urls, ph_db_table_t *db_tables,
 				if(strncmp("DB1_DATETIME",val,12)==0)
 					cols->type=DB1_DATETIME;
 			}
-			if(cols->type==-1){
+			if(cols->type==DB1_UNKNOWN){
 				LM_ERR("unexpected type [%s] for %s %s %s\n",
 					val, table_node->name, node->name,
 					XHTTP_PI_XML_TYPE_NODE);
