@@ -56,7 +56,8 @@ typedef enum {
 	DB1_STR,        /**< represents a string of 'str' type        */
 	DB1_DATETIME,   /**< represents date and time                 */
 	DB1_BLOB,       /**< represents a large binary object         */
-	DB1_BITMAP      /**< an one-dimensional array of 32 flags     */
+	DB1_BITMAP,     /**< an one-dimensional array of 32 flags     */
+	DB1_UNKNOWN     /**< represents an unknown type               */
 } db_type_t;
 
 
