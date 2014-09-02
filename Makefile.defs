@@ -1502,19 +1502,27 @@ ifeq	($(ARCH), ppc)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
+				CFLAGS=
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPU,powerpc)
-					CFLAGS+=-ftree-vectorize \
-							-fno-strict-overflow \
-							-mtune=$(CPU) -maltivec
+ifeq 				($(NOALTIVEC),)
+						CFLAGS += $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
+						CFLAGS += -ftree-vectorize
+						CFLAGS += -maltivec
+						CFLAGS += -fno-strict-overflow
+						CFLAGS += -mtune=$(CPU)
+endif
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 $(call				set_if_empty,CPU,powerpc)
-					CFLAGS+=-ftree-vectorize \
-							-mtune=$(CPU) -maltivec
+ifeq 				($(NOALTIVEC),)
+						CFLAGS += $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
+						CFLAGS += -ftree-vectorize
+						CFLAGS += -maltivec
+						CFLAGS += -mtune=$(CPU)
+endif
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
