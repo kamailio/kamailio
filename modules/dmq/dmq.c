@@ -143,7 +143,7 @@ static int mod_init(void)
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-	
+
 	/* load all TM stuff */
 	if(load_tm_api(&tmb)==-1) {
 		LM_ERR("can't load tm functions. TM module probably not loaded\n");
@@ -156,28 +156,28 @@ static int mod_init(void)
 		LM_ERR("cannot initialize peer list\n");
 		return -1;
 	}
-	
+
 	/* load the dmq node list - the list containing the dmq servers */
 	node_list = init_dmq_node_list();
 	if(node_list==NULL) {
 		LM_ERR("cannot initialize node list\n");
 		return -1;
 	}
-	
+
 	/* register worker processes - add one because of the ping process */
 	register_procs(num_workers);
 	
 	/* check server_address and notification_address are not empty and correct */
-  if(parse_uri(dmq_server_address.s, dmq_server_address.len, &dmq_server_uri) < 0) {
-    LM_ERR("server address invalid\n");
-    return -1;
-  }
-	
-  if(parse_uri(dmq_notification_address.s, dmq_notification_address.len, &dmq_notification_uri) < 0) {
-    LM_ERR("notification address invalid\n");
-    return -1;
-  }
-	
+	if(parse_uri(dmq_server_address.s, dmq_server_address.len, &dmq_server_uri) < 0) {
+		LM_ERR("server address invalid\n");
+		return -1;
+	}
+
+	if(parse_uri(dmq_notification_address.s, dmq_notification_address.len, &dmq_notification_uri) < 0) {
+		LM_ERR("notification address invalid\n");
+		return -1;
+	}
+
 	/* allocate workers array */
 	workers = shm_malloc(num_workers * sizeof(*workers));
 	if(workers == NULL) {
@@ -193,9 +193,9 @@ static int mod_init(void)
 		LM_ERR("cannot add notification peer\n");
 		return -1;
 	}
-	
+
 	startup_time = (int) time(NULL);
-	
+
 	/**
 	 * add the ping timer
 	 * it pings the servers once in a while so that we know which failed
@@ -207,7 +207,7 @@ static int mod_init(void)
 		LM_ERR("cannot register timer callback\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
