@@ -303,6 +303,9 @@ static srjson_t* jsonrpc_print_value(jsonrpc_ctx_t* ctx, char fmt, va_list* ap)
 	case 'd':
 		nj = srjson_CreateNumber(ctx->jrpl, va_arg(*ap, int));
 		break;
+	case 'u':
+		nj = srjson_CreateNumber(ctx->jrpl, va_arg(*ap, unsigned int));
+		break;
 	case 'f':
 		nj = srjson_CreateNumber(ctx->jrpl, va_arg(*ap, double));
 		break;
@@ -396,6 +399,7 @@ err:
 static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 {
 	int *int_ptr;
+	unsigned int *uint_ptr;
 	char **char_ptr;
 	double *double_ptr;
 	str *str_ptr;
@@ -428,6 +432,10 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 		case 'd': /* Integer */
 			int_ptr = va_arg(ap, int*);
 			*int_ptr = ctx->req_node->valueint;
+			break;
+		case 'u': /* Integer */
+			uint_ptr = va_arg(ap, unsigned int*);
+			*uint_ptr = (unsigned int)ctx->req_node->valueint;
 			break;
 		case 'f': /* double */
 			double_ptr = va_arg(ap, double*);
