@@ -1013,6 +1013,12 @@ static int print_value(struct xmlrpc_reply* res,
 		body.s = sint2str(va_arg(*ap, int), &body.len);
 		break;
 
+	case 'u':
+		prefix = int_prefix;
+		suffix = int_suffix;
+		body.s = int2str(va_arg(*ap, unsigned int), &body.len);
+		break;
+
 	case 'f':
 		prefix = double_prefix;
 		suffix = double_suffix;
@@ -1501,7 +1507,9 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int read;
+	int ival;
 	int* int_ptr;
+	unsigned int* uint_ptr;
 	char** char_ptr;
 	str* str_ptr;
 	double* double_ptr;
@@ -1547,6 +1555,12 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		case 'd': /* Integer */
 			int_ptr = va_arg(ap, int*);
 			if (get_int(int_ptr, reply, ctx->doc, value, f) < 0) goto error;
+			break;
+
+		case 'u': /* Integer */
+			uint_ptr = va_arg(ap, unsigned int*);
+			if (get_int(&ival, reply, ctx->doc, value, f) < 0) goto error;
+			*uint_ptr = (unsigned int)ival;
 			break;
 			
 		case 'f': /* double */
@@ -1898,8 +1912,10 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 {
 	int read;
+	int ival;
 	va_list ap;
 	int* int_ptr;
+	unsigned int* uint_ptr;
 	double* double_ptr;
 	char** char_ptr;
 	str* str_ptr;
@@ -1929,6 +1945,12 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 			if (get_int(int_ptr, reply, s->doc, value, f) < 0) goto error;
 			break;
 
+		case 'u': /* Integer */
+			uint_ptr = va_arg(ap, unsigned int*);
+			if (get_int(&ival, reply, s->doc, value, f) < 0) goto error;
+			*uint_ptr = (unsigned int)ival;
+			break;
+			
 		case 'f': /* double */
 			double_ptr = va_arg(ap, double*);
 			if (get_double(double_ptr, reply, s->doc, value, f) < 0)
