@@ -34,17 +34,30 @@
 	<para>
 		The RPC transports are implemented by writting a RPC
 		transport module. The most used transport modules are
-		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules/ctl/ctl.html'>
+		<ulink url='http://www.kamailio.org/docs/modules/devel/modules/ctl/ctl.html'>
 		<emphasis>ctl</emphasis>
+		</ulink>,
+		<ulink url='http://www.kamailio.org/docs/modules/devel/modules/xmlrpc/xmlrpc.html'>
+		<emphasis>xmlrpc</emphasis>
 		</ulink>
 		and
-		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules/xmlrpc/xmlrpc.html'>
-		<emphasis>xmlrpc</emphasis>
+		<ulink url='http://www.kamailio.org/docs/modules/devel/modules/jsonrpc-s/jsonrpc-s.html'>
+		<emphasis>jsonrpc-s</emphasis>
 		</ulink>.
-		The first one implements a ser-proprietary fast and space efficient
+	</para>
+	<para>
+		ctl implements a proprietary fast and space efficient
 		 RPC encoding over different protocols (unix sockets, UDP, TCP, fifo).
-		The second one uses the de-facto XML-RPC standard encoding
+	</para>
+	<para>
+		xmlrpc uses the de-facto XML-RPC standard encoding
 		 (over HTTP TCP or TLS).
+	</para>
+	<para>
+		jsonrpc-s uses the de-facto JSON-RPC standard encoding
+		 (over HTTP TCP or TLS).
+	</para>
+	<para>
 		 For more information about the existing transport modules, please 
 		 refer to their documentation.
 	</para>
@@ -738,15 +751,16 @@ static void rpc_func(rpc_t* rpc, void *ctx)
 		</para>
 	    </section>
 	    <section>
-		<title>printf</title>
+		<title>rpl_printf</title>
 		<para>
-		    <varname>printf</varname> is a convenience function. The
+		    <varname>rpl_printf</varname> is a convenience function. The
 		    function adds data of type string to the result set. The
 		    first parameter of the function is again a formatting
-		    string, but this time it is <function>printf</function>-like formatting string:
+			string, but this time it is standard
+			<function>printf</function>-like formatting string:
 		    <programlisting>
 <![CDATA[
-if (rpc->printf(ctx, "Unable to delete %d entries from table %s", num_entries, table_name) < 0) return;
+if (rpc->rpl_printf(ctx, "Unable to delete %d entries from table %s", num_entries, table_name) < 0) return;
 ]]>
 		    </programlisting>
 		    The return value of the function is the same as of
