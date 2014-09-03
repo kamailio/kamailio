@@ -183,6 +183,9 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 		VAL_BLOB(_v).len = _l;
 		VAL_TYPE(_v) = DB1_BLOB;
 		return 0;
+
+	default:
+		return -10;
 	}
 	return -10;
 }
