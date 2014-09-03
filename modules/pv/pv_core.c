@@ -1242,6 +1242,9 @@ int pv_get_authattr(struct sip_msg *msg, pv_param_t *param,
 	}
 	switch(param->pvn.u.isname.name.n)
 	{
+		case 6:
+			return pv_get_strval(msg, param, res,
+					&((auth_body_t*)(hdr->parsed))->digest.alg.alg_str);
 		case 4:
 			return pv_get_strval(msg, param, res,
 					&((auth_body_t*)(hdr->parsed))->digest.username.domain);

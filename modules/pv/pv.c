@@ -115,6 +115,9 @@ static pv_export_t mod_pvs[] = {
 	{{"aU", (sizeof("aU")-1)}, /* */
 		PVT_OTHER, pv_get_authattr, 0,
 		0, 0, pv_init_iname, 5},
+	{{"aa", (sizeof("aa")-1)}, /* auth algorithm */
+		PVT_OTHER, pv_get_authattr, 0,
+		0, 0, pv_init_iname, 6},	
 	{{"Au", (sizeof("Au")-1)}, /* */
 		PVT_OTHER, pv_get_acc_username, 0,
 		0, 0, pv_init_iname, 1},
