@@ -404,6 +404,7 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 	int auto_convert = 0;
 	char* orig_fmt;
 	va_list ap;
+	str stmp;
 
 	if(ctx->req_node==NULL)
 		return 0;
@@ -434,12 +435,39 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 			break;
 		case 's': /* zero terminated string */
 			char_ptr = va_arg(ap, char**);
-			*char_ptr = ctx->req_node->valuestring;
+			if(ctx->req_node->type==srjson_String) {
+				*char_ptr = ctx->req_node->valuestring;
+			} else if(auto_convert == 1) {
+				if(ctx->req_node->type==srjson_Number) {
+					*char_ptr = int2str(ctx->req_node->valueint, &stmp.len);
+				} else {
+					*char_ptr = NULL;
+					goto error;
+				}
+			} else {
+				*char_ptr = NULL;
+				goto error;
+			}
 			break;
 		case 'S': /* str structure */
 			str_ptr = va_arg(ap, str*);
-			str_ptr->s = ctx->req_node->valuestring;
-			str_ptr->len = strlen(ctx->req_node->valuestring);
+			if(ctx->req_node->type==srjson_String) {
+				str_ptr->s = ctx->req_node->valuestring;
+				str_ptr->len = strlen(ctx->req_node->valuestring);
+			} else if(auto_convert == 1) {
+				if(ctx->req_node->type==srjson_Number) {
+					str_ptr->s = int2str(ctx->req_node->valueint,
+							&str_ptr->len);
+				} else {
+					str_ptr->s = NULL;
+					str_ptr->len = 0;
+					goto error;
+				}
+			} else {
+				str_ptr->s = NULL;
+				str_ptr->len = 0;
+				goto error;
+			}
 			break;
 		case '{':
 		case '[':
@@ -456,6 +484,10 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 		auto_convert = 0;
 		ctx->req_node = ctx->req_node->next;
 	}
+	/* error if there is still a scan char type and it is not optional */
+	if(*fmt && mandatory_param==1)
+		goto error;
+
 	va_end(ap);
 	return (int)(fmt-orig_fmt)-modifiers;
 error:
