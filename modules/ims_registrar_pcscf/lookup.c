@@ -88,17 +88,17 @@ int lookup_transport(struct sip_msg* _m, udomain_t* _d, str* _uri) {
 		ret = -2;
 		goto done;
 	}
+
+	tmp_s.s = tmp;
+	tmp_s.len = strlen(tmp);
+	if (set_dst_uri(_m, &tmp_s) < 0) {
+	    LM_ERR("failed to set dst_uri for terminating UE\n");
+	    ret = -2;
+	    goto done;
+	}	
+	LM_DBG("Changed dst URI transport for UE to [%.*s]\n", tmp_s.len, tmp_s.s);
     }
 	
-    tmp_s.s = tmp;
-    tmp_s.len = strlen(tmp);
-    if (set_dst_uri(_m, &tmp_s) < 0) {
-	LM_ERR("failed to set dst_uri for terminating UE\n");
-	ret = -2;
-	goto done;
-    }
-    LM_DBG("Changed dst URI transport for UE to [%.*s]\n", tmp_s.len, tmp_s.s);
-    
 done:
     ul.unlock_udomain(_d, &uri);
     return ret;
