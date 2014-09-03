@@ -176,6 +176,10 @@ static int dbt_convert_row(db1_con_t* _h, db1_res_t* _res, db_row_t* _r)
 					DBT_CON_ROW(_h)->fields[i].val.bitmap_val;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_INT;
 			break;
+
+			default:
+				LM_ERR("val type [%d] not supported", RES_TYPES(_res)[i]);
+				return -1;
 		}
 	}
 	return 0;
