@@ -52,7 +52,6 @@ MODULE_VERSION
 int  ht_timer_interval = 20;
 int  ht_db_expires_flag = 0;
 int  ht_enable_dmq = 0;
-extern ht_cell_t *ht_expired_cell;
 
 static int htable_init_rpc(void);
 
