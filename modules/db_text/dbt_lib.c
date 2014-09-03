@@ -460,6 +460,9 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 		case DB1_BITMAP:
 			if (_t0==DB1_INT)
 				return 0;
+		default:
+			LM_ERR("invalid datatype %d\n", _t1);
+			return 1;
 	}
 	return 1;
 }
