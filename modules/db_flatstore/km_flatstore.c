@@ -212,6 +212,10 @@ int flat_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
 		case DB1_BITMAP:
 			fprintf(f, "%u", VAL_BITMAP(v + i));
 			break;
+
+		default:
+			LM_ERR("val type [%d] not supported", VAL_TYPE(v + i));
+			return -1;
 		}
 
 		if (i < (n - 1)) {
