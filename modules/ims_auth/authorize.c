@@ -269,13 +269,13 @@ int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table) {
     return digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T);
 }
  */
-int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, char *route) {
+int challenge(struct sip_msg* msg, char* str1, char* alg, int is_proxy_auth, char *route) {
 
-    str realm = {0, 0};
+    str realm = {0, 0}, algo = {0,0};
     unsigned int aud_hash;
     str private_identity, public_identity, auts = {0, 0}, nonce = {0, 0};
     auth_vector *av = 0;
-    int algo_type;
+    int algo_type = 0;
     str route_name;
 
     saved_transaction_t* saved_t;
@@ -285,6 +285,15 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, ch
     if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
         LM_ERR("no async route block for assign_server_unreg\n");
         return -1;
+    }
+    
+    if (!alg) {
+	LM_DBG("no algorithm specified in cfg... using default\n");
+    } else {
+	if (get_str_fparam(&algo, msg, (fparam_t*) alg) < 0) {
+	    LM_ERR("failed to get auth algorithm\n");
+	    return -1;
+	}
     }
     
     LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
@@ -343,8 +352,12 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, ch
         return CSCF_RETURN_BREAK;
     }
 
-    algo_type = registration_default_algorithm_type;
-
+    if (algo.len > 0) {
+	algo_type = get_algorithm_type(algo);
+    } else {
+	algo_type = registration_default_algorithm_type;
+    }
+    
 //    /* check if it is a synchronization request */
 //    //TODO this is MAR syncing - have removed it currently - TOD maybe put back in
 //    auts = ims_get_auts(msg, realm, is_proxy_auth);
