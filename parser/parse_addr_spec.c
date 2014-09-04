@@ -546,7 +546,12 @@ endofheader:
 			break;
 		case S_PARA_VALUE:
 			/* parameter with null value, e.g. foo= */
-			param->value.s=tmp;
+			if ( status==F_CRLF )
+				param->value.s=tmp-2;
+			else if ( status==F_CR || status==F_LF )
+				param->value.s=tmp-1;
+			else
+				param->value.s=tmp;
 			param->value.len=0;
 			add_param(param, to_b, newparam);
 			saved_status=E_PARA_VALUE;
