@@ -360,6 +360,31 @@ record_route();
       </example>
     </section>
 
+    <section id="remove-record-route-id">
+		<title><function moreinfo="none">remove_record_route()</function></title>
+
+		<para>The function removes the internal lumps added by
+			record_route() functions.
+		</para>
+
+		<para>
+			Can be used to revert adding Record-Route header(s).
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+
+      <example>
+        <title><function>remove_record_route</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+remove_record_route();
+...
+</programlisting>
+      </example>
+    </section>
+
     <section>
       <title><function moreinfo="none">record_route_preset(string
       [,string2])</function></title>
