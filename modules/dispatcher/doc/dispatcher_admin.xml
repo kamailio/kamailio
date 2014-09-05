@@ -994,19 +994,53 @@ failure_route[tryagain] {
  	</section>
   	<section  id="dispatcher.f.ds_is_from_list">
  		<title>
- 		<function moreinfo="none">ds_is_from_list([groupid])</function>
+		<function moreinfo="none">ds_is_from_list([groupid [, uri, mode] ])</function>
  		</title>
  		<para>
-		This function returns true, if the current request comes from a host
-		in the given group of the dispatcher-list; otherwise false.
+		This function returns true, if there is a match of source address or uri
+		with an address in the given group of the dispatcher-list; otherwise false.
+		</para>
+		<para>Description of parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>groupid</emphasis> (optional) - if not given or its
+				value is -1, the matching will be done over all addresses in
+				all dispacher groups. Otherwise the matching will be done only
+				against the addresses in the specific group id. The parameter
+				can be an integer or a variable holding an integer value.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>uri</emphasis> (optional) - if is empty or missing,
+				the matching is done against source IP, port and protocol.
+				Otherwise the value has to be a valid SIP URI, used to match
+				against addresses in the dispatcher list. Only IP, port and
+				protocol are matches, any additional parameters are ignored.
+				The parameter can be a static or dynamic (with variables)
+				string. The domain part of the URI can be an IP address or
+				a hostname.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mode</emphasis> - (optional) - a bitmask to specify
+				how the matching should be done. If is 0, all ip, port and
+				proto are matched. If bit one is set, then port is ignored.
+				If bit two is set, then protocol is ignored. The parameter
+				can be an integer or a variable holding an integer value.
+				It must be provided if the uri parameter is provided.
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<para>
+		Upon a match, the variable specified by 'setid_pvname' parameter will
+		be set to groupid of matching address and the attributes will be set in
+		variable specified by 'attrs_pvname'.
  		</para>
 		<para>
-		Parameter groupid is optional, when it is missing, then the matching
-		will be done against all addresses in all groups. Upon a match, the
-		variable specified by 'setid_pvname' parameter will be set to groupid
-		of matching address and the attributes will be set in variable
-		specified by 'attrs_pvname'. The parameter can be an integer or a
-		variable holding an integer value.
+		Note that for backward compatibility mode, when no parameter is given
+		or only groupid is given, the matching is done only for IP address
+		and port (protocol is ignored).
  		</para>
 		<para>
 			This function can be used from ANY_ROUTE.
@@ -1015,7 +1049,13 @@ failure_route[tryagain] {
 		<title><function>ds_mark_dst</function> usage</title>
 		<programlisting format="linespecific">
 ...
+if(ds_is_from_list()) {
+    ...
+}
 if(ds_is_from_list("10")) {
+    ...
+}
+if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
     ...
 }
 ...
