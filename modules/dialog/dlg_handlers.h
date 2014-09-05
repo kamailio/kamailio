@@ -39,6 +39,7 @@
 #include "../../str.h"
 #include "../../pvar.h"
 #include "../../modules/tm/t_hooks.h"
+#include "dlg_hash.h"
 #include "dlg_timer.h"
 
 #define MAX_DLG_RR_PARAM_NAME 32
@@ -166,6 +167,11 @@ void dlg_tmcb_dummy(tm_cell_t *t, int type, struct tmcb_params *param);
  * \brief Get the dialog structure for the SIP message
  */
 dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg);
+
+/*!
+ * \brief Get the dialog structure and direction for the SIP message
+ */
+dlg_cell_t *dlg_lookup_msg_dialog(sip_msg_t *msg, unsigned int *dir);
 
 /*!
  * \brief Clone dialog internal unique id to shared memory

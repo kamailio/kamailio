@@ -86,6 +86,7 @@
 #define DLG_IFLAG_KA_SRC            (1<<1) /*!< send keep alive to src */
 #define DLG_IFLAG_KA_DST            (1<<2) /*!< send keep alive to dst */
 #define DLG_IFLAG_TIMER_NORESET     (1<<3) /*!< don't reset dialog timers on in-dialog messages reception */
+#define DLG_IFLAG_CSEQ_DIFF         (1<<4) /*!< CSeq changed in dialog */
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
@@ -214,7 +215,7 @@ static inline void unlink_unsafe_dlg(dlg_entry_t *d_entry, dlg_cell_t *dlg)
  * \brief Destroy a dialog, run callbacks and free memory
  * \param dlg destroyed dialog
  */
-inline void destroy_dlg(dlg_cell_t *dlg);
+void destroy_dlg(dlg_cell_t *dlg);
 
 
 /*!

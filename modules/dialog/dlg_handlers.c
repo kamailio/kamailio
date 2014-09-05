@@ -1056,30 +1056,59 @@ static void unref_dlg_from_cb(struct cell* t, int type, struct tmcb_params *para
 	dlg_unref(dlg, 2);
 }
 
-
-dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
+/*!
+ *
+ */
+dlg_cell_t *dlg_lookup_msg_dialog(sip_msg_t *msg, unsigned int *dir)
 {
 	dlg_cell_t *dlg = NULL;
 	str callid;
 	str ftag;
 	str ttag;
-	unsigned int dir;
+	unsigned int vdir;
 
 	/* Retrieve the current dialog */
 	dlg = dlg_get_ctx_dialog();
-	if(dlg!=NULL)
+	if(dlg!=NULL) {
+		if(dir) {
+			if (pre_match_parse(msg, &callid, &ftag, &ttag, 0)<0) {
+				dlg_release(dlg);
+				return NULL;
+			}
+			if (dlg->tag[DLG_CALLER_LEG].len == ftag.len &&
+					   strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag.s, ftag.len)==0 &&
+					   strncmp(dlg->callid.s, callid.s, callid.len)==0) {
+				*dir = DLG_DIR_DOWNSTREAM;
+			} else {
+				if (ttag.len>0 && dlg->tag[DLG_CALLER_LEG].len == ttag.len &&
+						   strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag.s, ttag.len)==0 &&
+						   strncmp(dlg->callid.s, callid.s, callid.len)==0) {
+					*dir = DLG_DIR_UPSTREAM;
+				}
+			}
+		}
 		return dlg;
+	}
 	
 	if (pre_match_parse(msg, &callid, &ftag, &ttag, 0)<0)
 		return NULL;
-	dir = DLG_DIR_NONE;
-	dlg = get_dlg(&callid, &ftag, &ttag, &dir);
+	vdir = DLG_DIR_NONE;
+	dlg = get_dlg(&callid, &ftag, &ttag, &vdir);
 	if (dlg==NULL){
 		LM_DBG("dlg with callid '%.*s' not found\n",
 				msg->callid->body.len, msg->callid->body.s);
 		return NULL;
 	}
+	if(dir) *dir = vdir;
 	return dlg;
+}
+
+/*!
+ *
+ */
+dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
+{
+	return dlg_lookup_msg_dialog(msg, NULL);
 }
 
 /*!

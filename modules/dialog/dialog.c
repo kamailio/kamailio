@@ -86,6 +86,7 @@
 #include "dlg_profile.h"
 #include "dlg_var.h"
 #include "dlg_transfer.h"
+#include "dlg_cseq.h"
 
 MODULE_VERSION
 
@@ -110,6 +111,7 @@ static int db_fetch_rows = 200;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
+static int _dlg_track_cseq_updates = 0;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
@@ -294,6 +296,7 @@ static param_export_t mod_params[]={
 	{ "ka_interval",           INT_PARAM, &dlg_ka_interval          },
 	{ "timeout_noreset",       INT_PARAM, &dlg_timeout_noreset      },
 	{ "timer_procs",           PARAM_INT, &dlg_timer_procs          },
+	{ "track_cseq_updates",    PARAM_INT, &_dlg_track_cseq_updates  },
 	{ 0,0,0 }
 };
 
@@ -695,6 +698,9 @@ static int mod_init(void)
 
 	/* timer process to clean old unconfirmed dialogs */
 	register_sync_timers(1);
+
+	if(_dlg_track_cseq_updates!=0)
+		dlg_register_cseq_callbacks();
 
 	return 0;
 }
