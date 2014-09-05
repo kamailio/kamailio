@@ -469,8 +469,8 @@ int uac_auth( struct sip_msg *msg)
 		goto error;
 	}
 
-	/* increas the Cseq nr */
-
+	/* mark msg wit uac auth for increase of cseq via dialog */
+	msg->msg_flags |= FL_UAC_AUTH;
 
 	return 0;
 error:
