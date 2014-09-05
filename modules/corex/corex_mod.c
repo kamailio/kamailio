@@ -232,8 +232,7 @@ static msg_iflag_name_t _msg_iflag_list[] = {
 static int msg_lookup_flag(str *fname)
 {
 	int i;
-	for(i=0; i++; ) {
-		if(_msg_iflag_list[i].name.len <= 0) break;
+	for(i=0; _msg_iflag_list[i].name.len>0; i++) {
 		if(fname->len==_msg_iflag_list[i].name.len
 				&& strncasecmp(_msg_iflag_list[i].name.s, fname->s,
 					fname->len)==0) {
