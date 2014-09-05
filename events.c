@@ -213,9 +213,10 @@ int sr_event_exec(int type, void *data)
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
 					ret = 0;
-					for(i=SREV_CB_LIST_SIZE-1;
-							i>=0 && _sr_events_list.net_data_out[i]; i--) {
-						ret |= _sr_events_list.net_data_out[i](data);
+					for(i=0; i<SREV_CB_LIST_SIZE; i++) {
+						if(_sr_events_list.net_data_out[i]) {
+							ret |= _sr_events_list.net_data_out[i](data);
+						}
 					}
 #ifdef EXTRA_DEBUG
 					LM_DBG("POST-OUT ++++++++++++++++++++\n"
