@@ -16,7 +16,7 @@ Muhammad Shahzad Shafi
 
    <shahzad@voip-demos.com>
 
-   Copyright © 2012 asipto.com
+   Copyright � 2012 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -43,6 +43,9 @@ Muhammad Shahzad Shafi
               4.3. send_tcp([ host [ :port ] ])
               4.4. send_data(uri, data)
               4.5. is_incoming()
+              4.6. msg_iflag_set(flagname)
+              4.7. msg_iflag_reset(flagname)
+              4.8. msg_iflag_is_set(flagname)
 
         5. RPC Commands
 
@@ -67,8 +70,11 @@ Muhammad Shahzad Shafi
    1.6. send usage
    1.7. send_data usage
    1.8. is_incoming usage
-   1.9. event_route[network:msg] use cases
-   1.10. Sample PERL code for do_compress and do_uncompress
+   1.9. msg_iflag_set usage
+   1.10. msg_iflag_reset usage
+   1.11. msg_iflag_is_set usage
+   1.12. event_route[network:msg] use cases
+   1.13. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -94,6 +100,9 @@ Chapter 1. Admin Guide
         4.3. send_tcp([ host [ :port ] ])
         4.4. send_data(uri, data)
         4.5. is_incoming()
+        4.6. msg_iflag_set(flagname)
+        4.7. msg_iflag_reset(flagname)
+        4.8. msg_iflag_is_set(flagname)
 
    5. RPC Commands
 
@@ -155,12 +164,12 @@ Chapter 1. Admin Guide
 
 3.1. alias_subdomains (string)
 
-   Register a domain and all its sub-domains to match the “myself”
+   Register a domain and all its sub-domains to match the "myself"
    condition. It can be set many times. Its full format is:
    'proto:domain:port', allowing to set restrictions on protocol and port
    as well. Protocol and port are optional.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.1. Set alias_subdomains parameter
 ...
@@ -216,8 +225,11 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.3. send_tcp([ host [ :port ] ])
    4.4. send_data(uri, data)
    4.5. is_incoming()
+   4.6. msg_iflag_set(flagname)
+   4.7. msg_iflag_reset(flagname)
+   4.8. msg_iflag_is_set(flagname)
 
-4.1.  append_branch([ uri, [ q ] ])
+4.1. append_branch([ uri, [ q ] ])
 
    Append a new branch to the destination set, useful to build the set of
    destination addresses for parallel forking or redirect replies.
@@ -239,7 +251,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
     append_branch("$avp(uri)", "0.5");
 ...
 
-4.2.  send([ host [ :port ] ])
+4.2. send([ host [ :port ] ])
 
    Send the original SIP message to a specific destination in stateless
    mode. No changes are applied to received message, no Via header is
@@ -261,12 +273,12 @@ modparam("corex", "msg_avp", "$avp(msg)")
         send("$var(res)");
 ...
 
-4.3.  send_tcp([ host [ :port ] ])
+4.3. send_tcp([ host [ :port ] ])
 
    This function is identical to send() described above, except that it
    sends the SIP message using the TCP protocol instead of UDP.
 
-4.4.  send_data(uri, data)
+4.4. send_data(uri, data)
 
    Send the data to address specified by uri. Both parameters can contain
    pseudo-variables. The uri parameter has to be a valid SIP URI. The data
@@ -279,7 +291,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
         send("sip:example.com:5070;transport=sctp", "Message at $Ts");
 ...
 
-4.5.  is_incoming()
+4.5. is_incoming()
 
    Returns true if contents of message buffer $mb are the data received
    from remote host, otherwise false indicating that the contents of $mb
@@ -301,6 +313,47 @@ event_route[network:msg] {
 }
 ...
 
+4.6. msg_iflag_set(flagname)
+
+   Set internal SIP message flag. The parameter flagname can be:
+   USE_UAC_FROM, USE_UAC_TO or UAC_AUTH.
+
+   This functions should not be used in configuration file for (re)setting
+   the internal flags, those are done by various functions internally,
+   however, in very particular cases they might be useful (e.g., changing
+   From/To via textops functions).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. msg_iflag_set usage
+...
+    msg_iflag_set("UAC_AUTH");
+...
+
+4.7. msg_iflag_reset(flagname)
+
+   Reset the internal flag given as parameter.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. msg_iflag_reset usage
+...
+    msg_iflag_reset("UAC_AUTH");
+...
+
+4.8. msg_iflag_is_set(flagname)
+
+   Test if the internal flag given as parameter is set.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. msg_iflag_is_set usage
+...
+    if(msg_iflag_is_set("UAC_AUTH")) { ... }
+...
+
+   - ("flagname") - ("flagname")
+
 5. RPC Commands
 
    5.1. corex.list_sockets
@@ -308,28 +361,28 @@ event_route[network:msg] {
    5.3. corex.shm_status
    5.4. corex.shm_summary
 
-5.1.  corex.list_sockets
+5.1. corex.list_sockets
 
    Print the list of sockets the application is listening on.
 
    Example:
                 kamcmd corex.list_sockets
 
-5.2.  corex.list_aliases
+5.2. corex.list_aliases
 
    Print the list of hostname aliases used to match the myself condition.
 
    Example:
                 kamcmd corex.list_aliases
 
-5.3.  corex.shm_status
+5.3. corex.shm_status
 
    Trigger shm status dump to syslog.
 
    Example:
                 kamcmd corex.shm_status
 
-5.4.  corex.shm_summary
+5.4. corex.shm_summary
 
    Trigger shm summary dump to syslog.
 
@@ -340,7 +393,7 @@ event_route[network:msg] {
 
    6.1. event_route[network:msg]
 
-6.1.  event_route[network:msg]
+6.1. event_route[network:msg]
 
    Event route block to be executed when new data is received from network
    or the data that is about to be sent to a remote host by a SIP worker
@@ -410,7 +463,7 @@ event_route[network:msg] {
    Next is a basic usage example where encoding and decoding is done using
    PERL,
 
-   Example 1.9. event_route[network:msg] use cases
+   Example 1.12. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -441,7 +494,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.10. Sample PERL code for do_compress and do_uncompress
+   Example 1.13. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;

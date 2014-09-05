@@ -303,6 +303,77 @@ event_route[network:msg] {
         </example>
     </section>
 
+	<section id="corex.f.msg_iflag_set">
+		<title>
+			<function moreinfo="none">msg_iflag_set(flagname)</function>
+		</title>
+		<para>
+			Set internal SIP message flag. The parameter flagname can be:
+			USE_UAC_FROM, USE_UAC_TO or UAC_AUTH.
+		</para>
+		<para>
+			This functions should not be used in configuration file for
+			(re)setting the internal flags, those are done by various
+			functions internally, however, in very particular cases they
+			might be useful (e.g., changing From/To via textops functions).
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_iflag_set</function> usage</title>
+		<programlisting format="linespecific">
+...
+    msg_iflag_set("UAC_AUTH");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.msg_iflag_reset">
+		<title>
+			<function moreinfo="none">msg_iflag_reset(flagname)</function>
+		</title>
+		<para>
+			Reset the internal flag given as parameter.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_iflag_reset</function> usage</title>
+		<programlisting format="linespecific">
+...
+    msg_iflag_reset("UAC_AUTH");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.msg_iflag_is_set">
+		<title>
+			<function moreinfo="none">msg_iflag_is_set(flagname)</function>
+		</title>
+		<para>
+			Test if the internal flag given as parameter is set.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_iflag_is_set</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if(msg_iflag_is_set("UAC_AUTH")) { ... }
+...
+</programlisting>
+		</example>
+	</section>
+
+
+    - ("flagname")
+	- ("flagname")
+
 	</section>
 
 	<section>
