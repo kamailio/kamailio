@@ -40,6 +40,9 @@ static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
 static int w_send(sip_msg_t *msg, char *su, char *sq);
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq);
 static int w_send_data(sip_msg_t *msg, char *suri, char *sdata);
+static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2);
+static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2);
+static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
 
 int corex_alias_subdomains_param(modparam_t type, void *val);
 
@@ -73,6 +76,12 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"is_incoming",    (cmd_function)nio_check_incoming, 0, 0,
     	    0, ANY_ROUTE },
+	{"msg_iflag_set", (cmd_function)w_msg_iflag_set,       1, fixup_spve_null,
+			0, ANY_ROUTE },
+	{"msg_iflag_reset", (cmd_function)w_msg_iflag_reset,   1, fixup_spve_null,
+			0, ANY_ROUTE },
+	{"msg_iflag_is_set", (cmd_function)w_msg_iflag_is_set, 1, fixup_spve_null,
+			0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -204,3 +213,95 @@ error:
 
 }
 
+typedef struct _msg_iflag_name {
+	str name;
+	int value;
+} msg_iflag_name_t;
+
+static msg_iflag_name_t _msg_iflag_list[] = {
+	{ str_init("USE_UAC_FROM"), FL_USE_UAC_FROM },
+	{ str_init("USE_UAC_TO"),   FL_USE_UAC_TO   },
+	{ str_init("UAC_AUTH"),     FL_UAC_AUTH     },
+	{ {0, 0}, 0 }
+};
+
+
+/**
+ *
+ */
+static int msg_lookup_flag(str *fname)
+{
+	int i;
+	for(i=0; i++; ) {
+		if(_msg_iflag_list[i].name.len <= 0) break;
+		if(fname->len==_msg_iflag_list[i].name.len
+				&& strncasecmp(_msg_iflag_list[i].name.s, fname->s,
+					fname->len)==0) {
+			return _msg_iflag_list[i].value;
+		}
+	}
+	return -1;
+}
+/**
+ *
+ */
+static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2)
+{
+	int fv;
+	str fname;
+	if (fixup_get_svalue(msg, (gparam_t*)pflag, &fname))
+	{
+		LM_ERR("cannot get the msg flag name parameter\n");
+		return -1;
+	}
+	fv =  msg_lookup_flag(&fname);
+	if(fv==1) {
+		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
+		return -1;
+	}
+	msg->msg_flags |= fv;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2)
+{
+	int fv;
+	str fname;
+	if (fixup_get_svalue(msg, (gparam_t*)pflag, &fname))
+	{
+		LM_ERR("cannot get the msg flag name parameter\n");
+		return -1;
+	}
+	fv =  msg_lookup_flag(&fname);
+	if(fv<0) {
+		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
+		return -1;
+	}
+	msg->msg_flags &= ~fv;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2)
+{
+	int fv;
+	str fname;
+	if (fixup_get_svalue(msg, (gparam_t*)pflag, &fname))
+	{
+		LM_ERR("cannot get the msg flag name parameter\n");
+		return -1;
+	}
+	fv =  msg_lookup_flag(&fname);
+	if(fv<0) {
+		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
+		return -1;
+	}
+	if(msg->msg_flags & fv)
+		return 1;
+	return -2;
+}
