@@ -95,17 +95,27 @@ void sr_event_cb_init(void)
  */
 int sr_event_register_cb(int type, sr_event_cb_f f)
 {
+	int i;
+
 	sr_event_cb_init();
 	switch(type) {
 		case SREV_NET_DATA_IN:
-				if(_sr_events_list.net_data_in==0)
-					_sr_events_list.net_data_in = f;
-				else return -1;
+				for(i=0; i<SREV_CB_LIST_SIZE; i++) {
+					if(_sr_events_list.net_data_in[i]==0) {
+						_sr_events_list.net_data_in[i] = f;
+						break;
+					}
+				}
+				if(i==SREV_CB_LIST_SIZE) return -1;
 			break;
 		case SREV_NET_DATA_OUT:
-				if(_sr_events_list.net_data_out==0)
-					_sr_events_list.net_data_out = f;
-				else return -1;
+				for(i=SREV_CB_LIST_SIZE-1; i>=0; i--) {
+					if(_sr_events_list.net_data_out[i]==0) {
+						_sr_events_list.net_data_out[i] = f;
+						break;
+					}
+				}
+				if(i<0) return -1;
 			break;
 		case SREV_CORE_STATS:
 				if(_sr_events_list.core_stats==0)
@@ -169,19 +179,24 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 int sr_event_exec(int type, void *data)
 {
 	int ret;
+	int i;
 #ifdef EXTRA_DEBUG
 	str *p;
 #endif /* EXTRA_DEBUG */
 	switch(type) {
 		case SREV_NET_DATA_IN:
-				if(unlikely(_sr_events_list.net_data_in!=0))
+				if(unlikely(_sr_events_list.net_data_in[0]!=0))
 				{
 #ifdef EXTRA_DEBUG
 					p = (str*)data;
 					LM_DBG("PRE-IN ++++++++++++++++++++++++++++++++\n"
 							"%.*s\n+++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
-					ret = _sr_events_list.net_data_in(data);
+					ret = 0;
+					for(i=0; i<SREV_CB_LIST_SIZE
+							&& _sr_events_list.net_data_out[i]; i++) {
+						ret |= _sr_events_list.net_data_in[i](data);
+					}
 #ifdef EXTRA_DEBUG
 					LM_DBG("POST-IN ++++++++++++++++++++++++++++++++\n"
 							"%.*s\n+++++\n", p->len, p->s);
@@ -190,14 +205,18 @@ int sr_event_exec(int type, void *data)
 				} else return 1;
 			break;
 		case SREV_NET_DATA_OUT:
-				if(unlikely(_sr_events_list.net_data_out!=0))
+				if(unlikely(_sr_events_list.net_data_out[SREV_CB_LIST_SIZE-1]!=0))
 				{
 #ifdef EXTRA_DEBUG
 					p = (str*)data;
 					LM_DBG("PRE-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
-					ret = _sr_events_list.net_data_out(data);
+					ret = 0;
+					for(i=SREV_CB_LIST_SIZE-1;
+							i>=0 && _sr_events_list.net_data_out[i]; i--) {
+						ret |= _sr_events_list.net_data_out[i](data);
+					}
 #ifdef EXTRA_DEBUG
 					LM_DBG("POST-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
@@ -278,9 +297,9 @@ int sr_event_enabled(int type)
 {
 	switch(type) {
 		case SREV_NET_DATA_IN:
-				return (_sr_events_list.net_data_in!=0)?1:0;
+				return (_sr_events_list.net_data_in[0]!=0)?1:0;
 		case SREV_NET_DATA_OUT:
-				return (_sr_events_list.net_data_out!=0)?1:0;
+				return (_sr_events_list.net_data_out[SREV_CB_LIST_SIZE-1]!=0)?1:0;
 		case SREV_CORE_STATS:
 				return (_sr_events_list.core_stats!=0)?1:0;
 		case SREV_CFG_RUN_ACTION:

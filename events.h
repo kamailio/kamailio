@@ -36,12 +36,13 @@
 #define SREV_TCP_WS_FRAME_OUT		11
 #define SREV_STUN_IN			12
 
+#define SREV_CB_LIST_SIZE	3
 
 typedef int (*sr_event_cb_f)(void *data);
 
 typedef struct sr_event_cb {
-	sr_event_cb_f net_data_in;
-	sr_event_cb_f net_data_out;
+	sr_event_cb_f net_data_in[SREV_CB_LIST_SIZE];
+	sr_event_cb_f net_data_out[SREV_CB_LIST_SIZE];
 	sr_event_cb_f core_stats;
 	sr_event_cb_f run_action;
 	sr_event_cb_f pkg_update_stats;
