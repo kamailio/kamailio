@@ -61,6 +61,10 @@
 #define DS_PROBE_ALL		1
 #define DS_PROBE_INACTIVE	2
 
+#define DS_MATCH_ALL		0
+#define DS_MATCH_NOPORT		1
+#define DS_MATCH_NOPROTO	2
+
 extern str ds_db_url;
 extern str ds_table_name;
 extern str ds_set_id_col;
@@ -124,6 +128,8 @@ int ds_hash_load_init(unsigned int htsize, int expire, int initexpire);
 int ds_hash_load_destroy(void);
 
 int ds_is_from_list(struct sip_msg *_m, int group);
+int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode);
+
 /*! \brief
  * Timer for checking inactive destinations
  */
@@ -156,7 +162,8 @@ typedef struct _ds_dest
 	int dload;
 	ds_attrs_t attrs;
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
-	unsigned short int port; 	/*!< Port of the request URI */
+	unsigned short int port; 	/*!< Port of the URI */
+	unsigned short int proto; 	/*!< Protocol of the URI */
 	int failure_count;
 	struct _ds_dest *next;
 } ds_dest_t;

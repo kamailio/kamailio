@@ -159,6 +159,8 @@ static int w_ds_load_update(struct sip_msg*, char*, char*);
 
 static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
+static int w_ds_is_from_list3(struct sip_msg*, char*, char*, char*);
+static int fixup_ds_is_from_list3(void** param, int param_no);
 
 static void destroy(void);
 
@@ -190,6 +192,8 @@ static cmd_export_t cmds[]={
 		0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list1, 1,
 		fixup_igp_null, 0, ANY_ROUTE},
+	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list3, 3,
+		fixup_ds_is_from_list3, 0, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
@@ -838,6 +842,40 @@ static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
 		return -1;
 	}
 	return ds_is_from_list(msg, s);
+}
+
+static int w_ds_is_from_list3(struct sip_msg *msg, char *set, char *uri, char *mode)
+{
+	int vset;
+	int vmode;
+	str suri;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)set, &vset)!=0)
+	{
+		LM_ERR("cannot get set id value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)uri, &suri)!=0)
+	{
+		LM_ERR("cannot get uri value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)mode, &vmode)!=0)
+	{
+		LM_ERR("cannot get mode value\n");
+		return -1;
+	}
+
+	return ds_is_addr_from_list(msg, vset, &suri, vmode);
+}
+
+static int fixup_ds_is_from_list3(void** param, int param_no)
+{
+	if(param_no==1 || param_no==3)
+		return fixup_igp_null(param, 1);
+	if(param_no==2)
+		return fixup_spve_null(param, 1);
+	return 0;
 }
 
 static int ds_parse_reply_codes() {

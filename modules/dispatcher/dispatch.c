@@ -332,8 +332,10 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	/* Free the hostname */
 	hostent2ip_addr(&dp->ip_address, he, 0);
 
-	/* Copy the Port out of the URI: */
+	/* Copy the port out of the URI */
 	dp->port = puri.port_no;		
+	/* Copy the proto out of the URI */
+	dp->proto = puri.proto;
 
 	if(sp->dlist==NULL)
 	{
@@ -2245,14 +2247,44 @@ int ds_print_list(FILE *fout)
 /* Checks, if the request (sip_msg *_m) comes from a host in a group
  * (group-id or -1 for all groups)
  */
-int ds_is_from_list(struct sip_msg *_m, int group)
+int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 {
 	pv_value_t val;
 	ds_set_t *list;
 	int j;
+	struct ip_addr* pipaddr;
+	struct ip_addr  aipaddr;
+	unsigned short tport;
+	unsigned short tproto;
+	sip_uri_t puri;
+	static char hn[256];
+	struct hostent* he;
 
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags = PV_VAL_INT|PV_TYPE_INT;
+
+	if(uri==NULL || uri->len<=0) {
+		pipaddr = &_m->rcv.src_ip;
+		tport = _m->rcv.src_port;
+		tproto = _m->rcv.proto;
+	} else {
+		if(parse_uri(uri->s, uri->len, &puri)!=0 || puri.host.len>255) {
+			LM_ERR("bad uri [%.*s]\n", uri->len, uri->s);
+			return -1;
+		}
+		strncpy(hn, puri.host.s, puri.host.len);
+		hn[puri.host.len]='\0';
+
+		he=resolvehost(hn);
+		if (he==0) {
+			LM_ERR("could not resolve %.*s\n", puri.host.len, puri.host.s);
+			return -1;
+		}
+		hostent2ip_addr(&aipaddr, he, 0);
+		pipaddr = &aipaddr;
+		tport = puri.port_no;
+		tproto = puri.proto;
+	}
 
 	for(list = _ds_list; list!= NULL; list= list->next)
 	{
@@ -2262,9 +2294,11 @@ int ds_is_from_list(struct sip_msg *_m, int group)
 			for(j=0; j<list->nr; j++)
 			{
 				// LM_ERR("port no: %d (%d)\n", list->dlist[j].port, j);
-				if (ip_addr_cmp(&_m->rcv.src_ip, &list->dlist[j].ip_address)
-						&& (list->dlist[j].port==0
-							|| _m->rcv.src_port == list->dlist[j].port))
+				if (ip_addr_cmp(pipaddr, &list->dlist[j].ip_address)
+						&& ((mode&DS_MATCH_NOPORT) || list->dlist[j].port==0
+							|| tport == list->dlist[j].port)
+						&& ((mode&DS_MATCH_NOPROTO)
+							|| tproto == list->dlist[j].proto))
 				{
 					if(group==-1 && ds_setid_pvname.s!=0)
 					{
@@ -2296,6 +2330,10 @@ int ds_is_from_list(struct sip_msg *_m, int group)
 	return -1;
 }
 
+int ds_is_from_list(struct sip_msg *_m, int group)
+{
+	return ds_is_addr_from_list(_m, group, NULL, DS_MATCH_NOPROTO);
+}
 
 int ds_print_mi_list(struct mi_node* rpl)
 {
