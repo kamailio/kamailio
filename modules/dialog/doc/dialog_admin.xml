@@ -1269,10 +1269,38 @@ modparam("dialog", "timeout_noreset", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>timeout_procs</varname> parameter</title>
+		<title>Set <varname>timer_procs</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("dialog", "timer_procs", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dialog.p.track_cseq_updates">
+		<title><varname>track_cseq_updates</varname> (int)</title>
+		<para>
+			Enable the callbacks for tracking if CSeq number needs to
+			be updated. It is the case when the INVITE has to be
+			authenticated to downstream provider using uac_auth() from
+			uac module.
+		</para>
+		<para>
+			This is done only for requests in downstream direction. The
+			CSeq difference is stored in $dlg_var(cseq_diff), be sure
+			this variable is not overwritten via config operation.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>track_cseq_updates</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "track_cseq_updates", 1)
 ...
 </programlisting>
 		</example>
