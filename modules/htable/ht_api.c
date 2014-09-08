@@ -1148,6 +1148,38 @@ int ht_rm_cell_re(str *sre, ht_t *ht, int mode)
 	return 0;
 }
 
+int ht_reset_content(ht_t *ht)
+{
+	ht_cell_t *it;
+	ht_cell_t *it0;
+	int i;
+
+	if(ht==NULL)
+		return -1;
+
+	for(i=0; i<ht->htsize; i++)
+	{
+		/* free entries */
+		lock_get(&ht->entries[i].lock);
+		it = ht->entries[i].first;
+		while(it)
+		{
+			it0 = it->next;
+			if(it->prev==NULL)
+				ht->entries[i].first = it->next;
+			else
+				it->prev->next = it->next;
+			if(it->next)
+				it->next->prev = it->prev;
+			ht->entries[i].esize--;
+			ht_cell_free(it);
+			it = it0;
+		}
+		lock_release(&ht->entries[i].lock);
+	}
+	return 0;
+}
+
 int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 {
 	ht_cell_t *it;

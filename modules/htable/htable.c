@@ -1,7 +1,5 @@
 /**
- * $Id$
- *
- * Copyright (C) 2008 Elena-Ramona Modroiu (asipto.com)
+ * Copyright (C) 2008-2014 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -33,6 +31,7 @@
 #include "../../route.h"
 #include "../../dprint.h"
 #include "../../hashes.h"
+#include "../../mod_fix.h"
 #include "../../ut.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
@@ -66,6 +65,7 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
 static int ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
+static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
 
 int ht_param(modparam_t type, void* val);
 
@@ -110,6 +110,8 @@ static cmd_export_t cmds[]={
 	{"sht_lock",        (cmd_function)ht_slot_lock,    1, fixup_ht_key, 0,
 		ANY_ROUTE},
 	{"sht_unlock",      (cmd_function)ht_slot_unlock,  1, fixup_ht_key, 0,
+		ANY_ROUTE},
+	{"sht_reset",		(cmd_function)ht_reset,		   1, fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
 		ANY_ROUTE},
@@ -355,6 +357,28 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
 		return -1;
 	return 1;
 }
+
+static int ht_reset(struct sip_msg* msg, char* htname, char* foo)
+{
+	ht_t *ht;
+	str sname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)htname, &sname)<0 || sname.len<=0)
+	{
+		LM_ERR("cannot get hash table name\n");
+		return -1;
+	}
+	ht = ht_get_table(&sname);
+	if(ht==NULL)
+	{
+		LM_ERR("cannot get hash table [%.*s]\n", sname.len, sname.s);
+		return -1;
+	}
+	if(ht_reset_content(ht)<0)
+		return -1;
+	return 1;
+}
+
 
 /**
  * lock the slot for a given key in a hash table
