@@ -67,7 +67,7 @@
 		</itemizedlist>
 		<para>
 		To find out how to control/select the contact maching algorithm, please see the
-		module parameter matching_mode - <xref linkend="matching-mode"/>.
+		module parameter matching_mode - <xref linkend="usrloc.p.matching_mode"/>.
 		</para>
 		</section>
 	</section>
@@ -891,6 +891,31 @@ modparam("usrloc", "db_ops_ruid", 1)
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "handle_lost_tcp", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.expires_type">
+		<title><varname>expires_type</varname> (int)</title>
+		<para>
+			If set to 1, &kamailio; expects to deal with BIGINT type on
+			database columns for expires and last modified values. It
+			allows to handle better the daylight time adjustmens. If set
+			to 0, those columns are expected to be on default type
+			'DATETIME'. When it is 1, the database columns types have
+			to be changed manually to 'BIGINT'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expires_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "expires_type", 1)
 ...
 </programlisting>
 		</example>
