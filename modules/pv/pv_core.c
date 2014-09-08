@@ -112,6 +112,37 @@ int pv_get_return_code(struct sip_msg *msg, pv_param_t *param,
 }
 */
 
+int pv_get_known_proto_string(int proto, str *sproto)
+{
+	switch(proto) {
+		case PROTO_UDP:
+			sproto->s = "udp";
+			sproto->len = 3;
+		return 0;
+		case PROTO_TCP:
+			sproto->s = "tcp";
+			sproto->len = 3;
+		return 0;
+		case PROTO_TLS:
+			sproto->s = "tls";
+			sproto->len = 3;
+		return 0;
+		case PROTO_SCTP:
+			sproto->s = "sctp";
+			sproto->len = 4;
+		return 0;
+		case PROTO_WS:
+			sproto->s = "ws";
+			sproto->len = 2;
+		return 0;
+		case PROTO_WSS:
+			sproto->s = "wss";
+			sproto->len = 3;
+		return 0;
+	}
+	return -1;
+}
+
 int pv_get_pid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -660,6 +691,35 @@ int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_uintval(msg, param, res, msg->rcv.src_port);
 }
 
+int pv_get_srcaddr_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str sip;
+	str sproto;
+	str sr;
+
+	if(msg==NULL)
+		return -1;
+
+	if(pv_get_known_proto_string(msg->rcv.proto, &sproto)<0)
+		return pv_get_null(msg, param, res);
+
+	sip.s = ip_addr2a(&msg->rcv.src_ip);
+	sip.len = strlen(sip.s);
+	if (sip.len + sproto.len + 32 >= pv_get_buffer_size())
+	{
+		LM_ERR("local buffer size exceeded\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	sr.s = pv_get_buffer();
+	sr.len = snprintf(sr.s, pv_get_buffer_size(),
+			"sip:%.*s:%d;transport=%.*s", sip.len, sip.s,
+			msg->rcv.src_port, sproto.len, sproto.s);
+
+	return pv_get_strval(msg, param, res, &sr);
+}
+
 int pv_get_rcvip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -1040,35 +1100,10 @@ int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL)
 		return -1;
 
-	switch(msg->rcv.proto)
+	if(pv_get_known_proto_string(msg->rcv.proto, &s)<0)
 	{
-		case PROTO_UDP:
-			s.s = "udp";
-			s.len = 3;
-		break;
-		case PROTO_TCP:
-			s.s = "tcp";
-			s.len = 3;
-		break;
-		case PROTO_TLS:
-			s.s = "tls";
-			s.len = 3;
-		break;
-		case PROTO_SCTP:
-			s.s = "sctp";
-			s.len = 4;
-		break;
-		case PROTO_WS:
-			s.s = "ws";
-			s.len = 2;
-		break;
-		case PROTO_WSS:
-			s.s = "wss";
-			s.len = 3;
-		break;
-		default:
-			s.s = "NONE";
-			s.len = 4;
+		s.s = "NONE";
+		s.len = 4;
 	}
 
 	return pv_get_strintval(msg, param, res, &s, (int)msg->rcv.proto);

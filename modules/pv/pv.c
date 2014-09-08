@@ -373,6 +373,9 @@ static pv_export_t mod_pvs[] = {
 	{{"sp", (sizeof("sp")-1)}, /* */
 		PVT_OTHER, pv_get_srcport, 0,
 		0, 0, 0, 0},
+	{{"su", (sizeof("su")-1)}, /* */
+		PVT_OTHER, pv_get_srcaddr_uri, 0,
+		0, 0, 0, 0},
 	{{"td", (sizeof("td")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, pv_set_to_domain,
 		0, 0, pv_init_iname, 3},

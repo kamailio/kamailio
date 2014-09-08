@@ -132,6 +132,9 @@ int pv_get_srcip(struct sip_msg *msg, pv_param_t *param,
 int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_srcaddr_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_rcvip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
