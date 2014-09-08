@@ -1585,7 +1585,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
  */
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 {
-  return ds_select_dst_limit(msg, set, alg, 0, mode);
+	return ds_select_dst_limit(msg, set, alg, 0, mode);
 }
 
 int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limit, int mode)
@@ -1609,10 +1609,10 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 
 	if (limit==0)
 	{
-	  LM_DBG("Limit set to 0 - forcing to unlimited\n");
-	  limit = 0xffffffff;
+		LM_DBG("Limit set to 0 - forcing to unlimited\n");
+		limit = 0xffffffff;
 	}
-  --limit; /* reserving 1 slot for selected dst */
+	--limit; /* reserving 1 slot for selected dst */
 
 	if((mode==0) && (ds_force_dst==0)
 			&& (msg->dst_uri.s!=NULL || msg->dst_uri.len>0))
