@@ -1594,7 +1594,7 @@ jump_over_body:
 		goto error;
 	}
 
-	LM_INFO("NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s\n",
+	LM_DBG("NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s\n",
 		td->rem_uri.len, td->rem_uri.s, td->hooks.next_hop->len,
 		td->hooks.next_hop->s,
 		td->loc_uri.len, td->loc_uri.s, subs->event->name.len,
