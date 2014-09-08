@@ -682,7 +682,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		}
 		else
 		{
-			if(notify(subs, NULL, NULL, 0)< 0)
+			if(send_fast_notify && (notify(subs, NULL, NULL, 0)< 0))
 			{
 				LM_ERR("Could not send notify\n");
 				goto error;
