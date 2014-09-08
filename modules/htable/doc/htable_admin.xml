@@ -710,6 +710,26 @@ sht_rm_value_re("ha=>.*");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_reset">
+		<title>
+		<function moreinfo="none">sht_reset(htable)</function>
+		</title>
+		<para>
+			Delete all entries in the htable. The name of the hash table
+			can be a dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_reset</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_reset("ha$var(x)");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.f.sht_lock">
 		<title>
 		<function moreinfo="none">sht_lock(htable=>key)</function>
