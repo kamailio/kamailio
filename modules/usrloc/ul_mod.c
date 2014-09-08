@@ -119,6 +119,7 @@ int ul_db_check_update = 0;
 int ul_keepalive_timeout = 0;
 
 int ul_db_ops_ruid = 0;
+int ul_expires_type = 0;
 
 str ul_xavp_contact_name = {0};
 
@@ -222,6 +223,7 @@ static param_export_t params[] = {
 	{"db_check_update",     INT_PARAM, &ul_db_check_update},
 	{"xavp_contact",        PARAM_STR, &ul_xavp_contact_name},
 	{"db_ops_ruid",         INT_PARAM, &ul_db_ops_ruid},
+	{"expires_type",        PARAM_INT, &ul_expires_type},
 	{0, 0, 0}
 };
 

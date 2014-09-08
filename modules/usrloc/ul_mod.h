@@ -108,4 +108,18 @@ extern int matching_mode;
 
 extern int ul_db_ops_ruid;
 
+extern int ul_expires_type;
+
+#define UL_DB_EXPIRES_SET(r, v)   do { \
+			if(ul_expires_type==1) { \
+				(r)->type = DB1_BIGINT; \
+				(r)->val.ll_val = (long long)(v); \
+			} else { \
+				(r)->type = DB1_DATETIME; \
+				(r)->val.time_val = (time_t)(v); \
+			} \
+		} while(0)
+
+#define UL_DB_EXPIRES_GET(r)  ((ul_expires_type==1)?(time_t)VAL_BIGINT(r):VAL_TIME(r))
+
 #endif /* UL_MOD_H */
