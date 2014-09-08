@@ -72,7 +72,7 @@ Carsten Bock
               4.3. ds_next_dst()
               4.4. ds_next_domain()
               4.5. ds_mark_dst([state])
-              4.6. ds_is_from_list([groupid [, uri, mode] ])
+              4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
               4.7. ds_load_update()
               4.8. ds_load_unset()
 
@@ -188,7 +188,7 @@ Chapter 1. Admin Guide
         4.3. ds_next_dst()
         4.4. ds_next_domain()
         4.5. ds_mark_dst([state])
-        4.6. ds_is_from_list([groupid [, uri, mode] ])
+        4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
         4.7. ds_load_update()
         4.8. ds_load_unset()
 
@@ -695,7 +695,7 @@ Note
    4.3. ds_next_dst()
    4.4. ds_next_domain()
    4.5. ds_mark_dst([state])
-   4.6. ds_is_from_list([groupid [, uri, mode] ])
+   4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
    4.7. ds_load_update()
    4.8. ds_load_unset()
 
@@ -834,7 +834,7 @@ failure_route[tryagain] {
 }
 ...
 
-4.6. ds_is_from_list([groupid [, uri, mode] ])
+4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
 
    This function returns true, if there is a match of source address or
    uri with an address in the given group of the dispatcher-list;
@@ -846,6 +846,12 @@ failure_route[tryagain] {
        the matching will be done only against the addresses in the
        specific group id. The parameter can be an integer or a variable
        holding an integer value.
+     * mode - (optional) - a bitmask to specify how the matching should be
+       done. If is 0, all ip, port and proto are matched. If bit one is
+       set, then port is ignored. If bit two is set, then protocol is
+       ignored. The parameter can be an integer or a variable holding an
+       integer value. It must be provided if the uri parameter is
+       provided.
      * uri (optional) - if is empty or missing, the matching is done
        against source IP, port and protocol. Otherwise the value has to be
        a valid SIP URI, used to match against addresses in the dispatcher
@@ -853,12 +859,6 @@ failure_route[tryagain] {
        parameters are ignored. The parameter can be a static or dynamic
        (with variables) string. The domain part of the URI can be an IP
        address or a hostname.
-     * mode - (optional) - a bitmask to specify how the matching should be
-       done. If is 0, all ip, port and proto are matched. If bit one is
-       set, then port is ignored. If bit two is set, then protocol is
-       ignored. The parameter can be an integer or a variable holding an
-       integer value. It must be provided if the uri parameter is
-       provided.
 
    Upon a match, the variable specified by 'setid_pvname' parameter will
    be set to groupid of matching address and the attributes will be set in
