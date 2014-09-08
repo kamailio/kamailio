@@ -480,131 +480,125 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	keys[0] = &user_col;
-	keys[1] = &contact_col;
-	keys[2] = &expires_col;
-	keys[3] = &q_col;
-	keys[4] = &callid_col;
-	keys[5] = &cseq_col;
-	keys[6] = &flags_col;
-	keys[7] = &cflags_col;
-	keys[8] = &user_agent_col;
-	keys[9] = &received_col;
-	keys[10] = &path_col;
-	keys[11] = &sock_col;
-	keys[12] = &methods_col;
-	keys[13] = &last_mod_col;
-	keys[14] = &ruid_col;
-	keys[15] = &instance_col;
-	keys[16] = &reg_id_col;
-	keys[17] = &domain_col;
 
+	keys[0] = &user_col;
 	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val.s = _c->aor->s;
 	vals[0].val.str_val.len = _c->aor->len;
 
+	keys[1] = &contact_col;
 	vals[1].type = DB1_STR;
 	vals[1].nul = 0;
 	vals[1].val.str_val.s = _c->c.s; 
 	vals[1].val.str_val.len = _c->c.len;
 
+	keys[2] = &expires_col;
 	vals[2].type = DB1_DATETIME;
 	vals[2].nul = 0;
 	vals[2].val.time_val = _c->expires;
 
+	keys[3] = &q_col;
 	vals[3].type = DB1_DOUBLE;
 	vals[3].nul = 0;
 	vals[3].val.double_val = q2double(_c->q);
 
+	keys[4] = &callid_col;
 	vals[4].type = DB1_STR;
 	vals[4].nul = 0;
 	vals[4].val.str_val.s = _c->callid.s;
 	vals[4].val.str_val.len = _c->callid.len;
 
+	keys[5] = &cseq_col;
 	vals[5].type = DB1_INT;
 	vals[5].nul = 0;
 	vals[5].val.int_val = _c->cseq;
 
+	keys[6] = &flags_col;
 	vals[6].type = DB1_INT;
 	vals[6].nul = 0;
 	vals[6].val.bitmap_val = _c->flags;
 
+	keys[7] = &cflags_col;
 	vals[7].type = DB1_INT;
 	vals[7].nul = 0;
 	vals[7].val.bitmap_val = _c->cflags;
 
+	keys[8] = &user_agent_col;
 	vals[8].type = DB1_STR;
 	vals[8].nul = 0;
 	vals[8].val.str_val.s = _c->user_agent.s;
 	vals[8].val.str_val.len = _c->user_agent.len;
 
-	vals[9].type = DB1_STR;
-	if (_c->received.s == 0) {
-		vals[9].nul = 1;
-	} else {
-		vals[9].nul = 0;
-		vals[9].val.str_val.s = _c->received.s;
-		vals[9].val.str_val.len = _c->received.len;
+	nr_cols = 9;
+
+	if (_c->received.s ) {
+		keys[nr_cols] = &received_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 0;
+		vals[nr_cols].val.str_val.s = _c->received.s;
+		vals[nr_cols].val.str_val.len = _c->received.len;
+		nr_cols++;
 	}
 	
-	vals[10].type = DB1_STR;
-	if (_c->path.s == 0) {
-		vals[10].nul = 1;
-	} else {
-		vals[10].nul = 0;
-		vals[10].val.str_val.s = _c->path.s;
-		vals[10].val.str_val.len = _c->path.len;
+	if (_c->path.s) {
+		keys[nr_cols] = &path_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 0;
+		vals[nr_cols].val.str_val.s = _c->path.s;
+		vals[nr_cols].val.str_val.len = _c->path.len;
+		nr_cols++;
 	}
 
-	vals[11].type = DB1_STR;
 	if (_c->sock) {
-		vals[11].val.str_val = _c->sock->sock_str;
-		vals[11].nul = 0;
-	} else {
-		vals[11].nul = 1;
+		keys[nr_cols] = &sock_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].val.str_val = _c->sock->sock_str;
+		vals[nr_cols].nul = 0;
+		nr_cols++;
 	}
 
-	vals[12].type = DB1_BITMAP;
-	if (_c->methods == 0xFFFFFFFF) {
-		vals[12].nul = 1;
-	} else {
-		vals[12].val.bitmap_val = _c->methods;
-		vals[12].nul = 0;
+	if (_c->methods != 0xFFFFFFFF) {
+		keys[nr_cols] = &methods_col;
+		vals[nr_cols].type = DB1_BITMAP;
+		vals[nr_cols].val.bitmap_val = _c->methods;
+		vals[nr_cols].nul = 0;
+		nr_cols++;
 	}
 
-	vals[13].type = DB1_DATETIME;
-	vals[13].nul = 0;
-	vals[13].val.time_val = _c->last_modified;
+	keys[nr_cols] = &last_mod_col;
+	vals[nr_cols].type = DB1_DATETIME;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.time_val = _c->last_modified;
+	nr_cols++;
 
-	nr_cols = 14;
 
 	if(_c->ruid.len>0)
 	{
+		keys[nr_cols] = &ruid_col;
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val = _c->ruid;
-	} else {
-		vals[nr_cols].nul = 1;
+		nr_cols++;
 	}
-	nr_cols++;
 
 	if(_c->instance.len>0)
 	{
+		keys[nr_cols] = &instance_col;
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val = _c->instance;
-	} else {
-		vals[nr_cols].nul = 1;
+		nr_cols++;
 	}
-	nr_cols++;
 
+	keys[nr_cols] = &reg_id_col;
 	vals[nr_cols].type = DB1_INT;
 	vals[nr_cols].nul = 0;
 	vals[nr_cols].val.int_val = (int)_c->reg_id;
 	nr_cols++;
 
 	if (use_domain) {
+		keys[nr_cols] = &domain_col;
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 
