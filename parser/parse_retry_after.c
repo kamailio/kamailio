@@ -59,6 +59,7 @@ char* parse_retry_after(char* const buf, const char* const end, unsigned* const 
 				case ';':
 				case '\r':
 				case '\n':
+				case '(':
 					goto found;
 				default:
 					/* invalid char */
