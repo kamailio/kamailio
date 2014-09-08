@@ -994,7 +994,7 @@ failure_route[tryagain] {
  	</section>
   	<section  id="dispatcher.f.ds_is_from_list">
  		<title>
-		<function moreinfo="none">ds_is_from_list([groupid [, uri, mode] ])</function>
+		<function moreinfo="none">ds_is_from_list([groupid [, mode [, uri] ] ])</function>
  		</title>
  		<para>
 		This function returns true, if there is a match of source address or uri
@@ -1011,17 +1011,6 @@ failure_route[tryagain] {
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>uri</emphasis> (optional) - if is empty or missing,
-				the matching is done against source IP, port and protocol.
-				Otherwise the value has to be a valid SIP URI, used to match
-				against addresses in the dispatcher list. Only IP, port and
-				protocol are matches, any additional parameters are ignored.
-				The parameter can be a static or dynamic (with variables)
-				string. The domain part of the URI can be an IP address or
-				a hostname.
-			</para>
-		</listitem>
-		<listitem>
 			<para><emphasis>mode</emphasis> - (optional) - a bitmask to specify
 				how the matching should be done. If is 0, all ip, port and
 				proto are matched. If bit one is set, then port is ignored.
@@ -1030,6 +1019,17 @@ failure_route[tryagain] {
 				It must be provided if the uri parameter is provided.
 			</para>
 		</listitem>
+        <listitem>
+            <para><emphasis>uri</emphasis> (optional) - if is empty or missing,
+                the matching is done against source IP, port and protocol.
+                Otherwise the value has to be a valid SIP URI, used to match
+                against addresses in the dispatcher list. Only IP, port and
+                protocol are matches, any additional parameters are ignored.
+                The parameter can be a static or dynamic (with variables)
+                string. The domain part of the URI can be an IP address or
+                a hostname.
+            </para>
+        </listitem>
 		</itemizedlist>
 
 		<para>
