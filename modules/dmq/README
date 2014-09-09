@@ -41,6 +41,8 @@ Charles Chance
               4.1. dmq_handle_message()
               4.2. dmq_send_message(peer, node, body, content_type)
               4.3. dmq_bcast_message(peer, body, content_type)
+              4.4. dmq_t_replicate([skip_loop_test])
+              4.5. dmq_is_from_node()
 
    2. Developer Guide
 
@@ -63,6 +65,8 @@ Charles Chance
    1.5. dmq_handle_message usage
    1.6. dmq_send_message usage
    1.7. dmq_bcast_message usage
+   1.8. dmq_t_replicate usage
+   1.9. dmq_is_from_node usage
    2.1. dmq_api_t structure
    2.2. register_dmq_peer usage
    2.3. bcast_message usage
@@ -90,6 +94,8 @@ Chapter 1. Admin Guide
         4.1. dmq_handle_message()
         4.2. dmq_send_message(peer, node, body, content_type)
         4.3. dmq_bcast_message(peer, body, content_type)
+        4.4. dmq_t_replicate([skip_loop_test])
+        4.5. dmq_is_from_node()
 
 1. Overview
 
@@ -183,6 +189,8 @@ modparam("dmq", "ping_interval", 90)
    4.1. dmq_handle_message()
    4.2. dmq_send_message(peer, node, body, content_type)
    4.3. dmq_bcast_message(peer, body, content_type)
+   4.4. dmq_t_replicate([skip_loop_test])
+   4.5. dmq_is_from_node()
 
 4.1.  dmq_handle_message()
 
@@ -232,6 +240,48 @@ text/plain");
    Example 1.7. dmq_bcast_message usage
 ...
         dmq_bcast_message("peer_name", "Message body...", "text/plain");
+...
+
+4.4.  dmq_t_replicate([skip_loop_test])
+
+   Replicates the current SIP message to all active nodes (except self).
+   Useful for replicating REGISTER, PUBLISH etc. in a clustered
+   environment.
+
+   Meaning of parameters:
+     * skip_loop_test - by default, DMQ checks the source IP of the
+       message prior to replication, to ensure it has not been sent by
+       another DMQ node (to avoid infinite loops). If this optional
+       parameter is set to "1", the loop test is not performed. This makes
+       sense, from a performance perspective, if you have already
+       performed the necessary checks in the config script (see
+       dmq_is_from_node()).
+
+   This function can be used from REQUEST_ROUTE only.
+
+   Example 1.8. dmq_t_replicate usage
+...
+        dmq_t_replicate();
+...
+
+4.5.  dmq_is_from_node()
+
+   Checks whether the current message has been sent by another DMQ node in
+   the cluster.
+
+   This function can be used from REQUEST_ROUTE only.
+
+   Example 1.9. dmq_is_from_node usage
+...
+        # Example REGISTER block
+        if (dmq_is_from_node()) {
+                # Already authenticated, just save contact...
+        } else {
+                # Authenticate, save contact etc.
+                # Assuming all successful...
+                dmq_t_replicate("1"); # Already checked source, don't perform lo
+op test again
+        }
 ...
 
 Chapter 2. Developer Guide

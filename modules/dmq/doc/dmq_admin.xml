@@ -244,6 +244,67 @@ modparam("dmq", "ping_interval", 90)
 </programlisting>
                 </example>
         </section>
+        <section id="dmq.f.dmq_t_replicate">
+                <title>
+                <function moreinfo="none">dmq_t_replicate([skip_loop_test])</function>
+                </title>
+                <para>
+		Replicates the current SIP message to all active nodes (except self). Useful for replicating 
+		REGISTER, PUBLISH etc. in a clustered environment.
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+				<emphasis>skip_loop_test</emphasis> - by default, DMQ checks the source IP of the
+				message prior to replication, to ensure it has not been sent by another DMQ node
+				(to avoid infinite loops). If this optional parameter is set to "1", the loop test
+				is not performed. This makes sense, from a performance perspective, if you have
+				already performed the necessary checks in the config script (see dmq_is_from_node()).
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from REQUEST_ROUTE only.
+                </para>
+
+                <example>
+                <title><function>dmq_t_replicate</function> usage</title>
+                <programlisting format="linespecific">
+...
+        dmq_t_replicate();
+...
+		</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_is_from_node">
+                <title>
+                <function moreinfo="none">dmq_is_from_node()</function>
+                </title>
+                <para>
+                Checks whether the current message has been sent by another DMQ node in the cluster.
+                </para>
+                <para>
+                This function can be used from REQUEST_ROUTE only.
+                </para>
+
+                <example>
+                <title><function>dmq_is_from_node</function> usage</title>
+                <programlisting format="linespecific">
+...
+	# Example REGISTER block
+        if (dmq_is_from_node()) {
+		# Already authenticated, just save contact...
+	} else {
+		# Authenticate, save contact etc.
+		# Assuming all successful...
+		dmq_t_replicate("1"); # Already checked source, don't perform loop test again
+	}
+...
+                </programlisting>
+                </example>
+        </section>
+
 	</section>
 
 </chapter>
