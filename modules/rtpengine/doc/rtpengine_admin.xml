@@ -245,13 +245,27 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 	<title>Functions</title>
 	<section id="rtpengine.f.set_rtpengine_set">
 		<title>
-		<function moreinfo="none">set_rtpengine_set(setid)</function>
+		<function moreinfo="none">set_rtpengine_set(setid[, setid])</function>
 		</title>
 		<para>
 		Sets the ID of the &rtp; proxy set to be used for the next
 		rtpengine_delete(), rtpengine_offer(), rtpengine_answer()
 		or rtpengine_manage() command. The parameter can be an integer or
 		a config variable holding an integer.
+		</para>
+		<para>
+		A second set ID can be specified to daisy-chain two &rtp; proxies.
+		The two set IDs must be distinct from each other and there must not
+		be any overlap in the proxies present in both sets. In this use case,
+		the request (offer, answer, etc) is first sent to an &rtp; proxy from
+		the first set, which rewrites the &sdp; body and sends it back to the
+		module. The rewritten &sdp; body is then used to make another request
+		to an &rtp; proxy from the second set, which rewrites the &sdp; body
+		another time and sends it back to the module to be placed back into the
+		&sip; message. This is useful if you have a set of &rtp; proxies that
+		the caller must use, and another distinct set of &rtp; proxies that the
+		callee must use. This is supported by all rtpengine commands except
+		rtpengine_manage().
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -321,17 +335,17 @@ rtpengine_offer();
 				</para></listitem>
 				<listitem><para>
 				<emphasis>internal, external</emphasis> - these flags specify the direction of
-				the SIP message. These flags only make sense when the &rtp; proxy is running
+				the &sip; message. These flags only make sense when the &rtp; proxy is running
 				in bridge mode. <quote>internal</quote> corresponds to the proxy's first
 				interface, <quote>external</quote> corresponds to the &rtp; proxy's
 				second interface. You always have to specify two flags to define
 				the incoming network and the outgoing network. For example, <quote>internal
 				external</quote> should be
-				used for SIP message received from the local interface and sent out on the
+				used for &sip; message received from the local interface and sent out on the
 				external interface, and <quote>external internal</quote> vice versa. Other
 				options are <quote>internal internal</quote> and <quote>external
 				external</quote>.
-				So, for example if a SIP requests is processed with <quote>internal
+				So, for example if a &sip; requests is processed with <quote>internal
 				external</quote> flags, the corresponding
 				response must be processed with <quote>internal external</quote> flags.
 				</para></listitem>
@@ -371,7 +385,7 @@ rtpengine_offer();
 				<listitem><para>
 				<emphasis>trust-address</emphasis> - flags that IP address in SDP should
 				be trusted. Without this flag, the &rtp; proxy ignores address in
-				the SDP and uses source address of the SIP message as media
+				the SDP and uses source address of the &sip; message as media
 				address which is passed to the RTP proxy.
 				</para></listitem>
 				<listitem><para>
