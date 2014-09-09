@@ -99,16 +99,25 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
+static int jsonrpc_pv_get_jrpl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int jsonrpc_pv_parse_jrpl_name(pv_spec_t *sp, str *in);
+
+static pv_export_t mod_pvs[] = {
+	{ {"jsonrpl",  sizeof("jsonrpl")-1}, PVT_OTHER,  jsonrpc_pv_get_jrpl,    0,
+			jsonrpc_pv_parse_jrpl_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 /** module exports */
 struct module_exports exports= {
 	"jsonrpc-s",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
-	0,		/* exported statistics */
-	0,		/* exported MI functions */
-	0,		/* exported pseudo-variables */
-	0,		/* extra processes */
+	0,			/* exported statistics */
+	0,			/* exported MI functions */
+	mod_pvs,	/* exported pseudo-variables */
+	0,			/* extra processes */
 	mod_init,	/* module initialization function */
 	0,
 	0,
@@ -135,24 +144,32 @@ typedef struct jsonrpc_plain_reply {
 	int rcode;         /**< reply code */
 	str rtext;         /**< reply reason text */
 	str rbody;             /**< reply body */
-} jsonrpc_play_reply_t;
+} jsonrpc_plain_reply_t;
 
-static jsonrpc_play_reply_t _jsonrpc_play_reply;
+static jsonrpc_plain_reply_t _jsonrpc_plain_reply;
 
 static void jsonrpc_set_plain_reply(int rcode, str *rtext, str *rbody,
 					void (*free_fn)(void*))
 {
-	if(_jsonrpc_play_reply.rbody.s) {
-		free_fn(_jsonrpc_play_reply.rbody.s);
+	if(_jsonrpc_plain_reply.rbody.s) {
+		free_fn(_jsonrpc_plain_reply.rbody.s);
 	}
-	_jsonrpc_play_reply.rcode = rcode;
-	_jsonrpc_play_reply.rtext = *rtext;
+	_jsonrpc_plain_reply.rcode = rcode;
+	_jsonrpc_plain_reply.rtext = *rtext;
 	if(rbody) {
-		_jsonrpc_play_reply.rbody = *rbody;
+		_jsonrpc_plain_reply.rbody = *rbody;
 	} else {
-		_jsonrpc_play_reply.rbody.s = NULL;
-		_jsonrpc_play_reply.rbody.len = 0;
+		_jsonrpc_plain_reply.rbody.s = NULL;
+		_jsonrpc_plain_reply.rbody.len = 0;
 	}
+}
+
+static void jsonrpc_reset_plain_reply(void (*free_fn)(void*))
+{
+	if(_jsonrpc_plain_reply.rbody.s) {
+		free_fn(_jsonrpc_plain_reply.rbody.s);
+	}
+	memset(&_jsonrpc_plain_reply, 0, sizeof(jsonrpc_plain_reply_t));
 }
 
 /** Implementation of rpc_fault function required by the management API.
@@ -869,7 +886,7 @@ static int mod_init(void)
 
 	jsonrpc_register_rpc();
 
-	memset(&_jsonrpc_play_reply, 0, sizeof(jsonrpc_play_reply_t));
+	memset(&_jsonrpc_plain_reply, 0, sizeof(jsonrpc_plain_reply_t));
 	return 0;
 }
 
@@ -1086,6 +1103,51 @@ static int jsonrpc_register_rpc(void)
 	if (rpc_register_array(jsonrpc_rpc)!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int jsonrpc_pv_get_jrpl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_uintval(msg, param, res,
+					(unsigned int)_jsonrpc_plain_reply.rcode);
+		case 1:
+			if(_jsonrpc_plain_reply.rtext.s==NULL)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_jsonrpc_plain_reply.rtext);
+		case 2:
+			if(_jsonrpc_plain_reply.rbody.s==NULL)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_jsonrpc_plain_reply.rbody);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+static int jsonrpc_pv_parse_jrpl_name(pv_spec_t *sp, str *in)
+{
+	if(in->len!=4) {
+		LM_ERR("unknown inner name [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+	if(strncmp(in->s, "code", 4)==0) {
+		sp->pvp.pvn.u.isname.name.n = 0;
+	} else if(strncmp(in->s, "text", 4)==0) {
+		sp->pvp.pvn.u.isname.name.n = 1;
+	} else if(strncmp(in->s, "body", 4)==0) {
+		sp->pvp.pvn.u.isname.name.n = 2;
+	} else {
+		LM_ERR("unknown inner name [%.*s]\n", in->len, in->s);
 		return -1;
 	}
 	return 0;
