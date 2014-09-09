@@ -288,8 +288,8 @@ rtpengine_offer();
                 <para>
                 Rewrites &sdp; body to ensure that media is passed through
                 an &rtp; proxy. To be invoked
-		on INVITE for the cases the SDPs are in INVITE and 200 OK and on 200 OK
-		when SDPs are in 200 OK and ACK.
+		on INVITE for the cases the &sdp; bodies are in INVITE and 200 OK and on 200 OK
+		when &sdp; bodies are in 200 OK and ACK.
                 </para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -325,7 +325,8 @@ rtpengine_offer();
 				</para></listitem>
 				<listitem><para>
 				<emphasis>asymmetric</emphasis> - flags that UA from which message is
-				received doesn't support symmetric RTP. (automatically sets the 'r' flag)
+				received doesn't support symmetric &rtp;. Disables learning of endpoint addresses
+				in the Sipwise rtpengine proxy.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>force-answer</emphasis> - force <quote>answer</quote>, that is,
@@ -359,8 +360,8 @@ rtpengine_offer();
 				in order to do automatic bridging between IPv4 on the
 				"internal network" and IPv6 on the "external network". Instead of
 				explicitly instructing the &rtp; proxy to select a particular address
-				family, the distinction is done by the given IP in the SDP body by
-				the RTP proxy itself. Not supported by Sipwise rtpengine.
+				family, the distinction is done by the given IP in the &sdp; body by
+				the &rtp; proxy itself. Not supported by Sipwise rtpengine.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>address-family=...</emphasis> - instructs the &rtp; proxy that the
@@ -387,10 +388,10 @@ rtpengine_offer();
 				a chain of proxies. Not supported and ignored by Sipwise rtpengine.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>trust-address</emphasis> - flags that IP address in SDP should
+				<emphasis>trust-address</emphasis> - flags that IP address in &sdp; should
 				be trusted. Without this flag, the &rtp; proxy ignores address in
-				the SDP and uses source address of the &sip; message as media
-				address which is passed to the RTP proxy.
+				the &sdp; and uses source address of the &sip; message as media
+				address which is passed to the &rtp; proxy.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>replace-origin</emphasis> - flags that IP from the origin
@@ -398,18 +399,19 @@ rtpengine_offer();
 				</para></listitem>
 				<listitem><para>
 				<emphasis>replace-session-connection</emphasis> - flags to change the session-level
-				SDP connection (c=) IP if media description also includes
+				&sdp; connection (c=) IP if media description also includes
 				connection information.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>symmetric</emphasis> - flags that for the UA from which
-				message is received, support symmetric RTP must be forced.
+				message is received, support symmetric &rtp; must be forced. Does nothing with
+				the Sipwise rtpengine proxy as it is the default.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>repacketize=NN</emphasis> - requests the &rtp; proxy to perform
-				re-packetization of RTP traffic coming from the UA which
+				re-packetization of &rtp; traffic coming from the UA which
 				has sent the current message to increase or decrease payload
-				size per each RTP packet forwarded if possible.  The NN is the
+				size per each &rtp; packet forwarded if possible.  The NN is the
 				target payload size in ms, for the most codecs its value should
 				be in 10ms increments, however for some codecs the increment
 				could differ (e.g. 30ms for GSM or 20ms for G.723).  The
@@ -426,7 +428,7 @@ rtpengine_offer();
 				discard any ICE attributes already present in the &sdp; body
 				and then generate and insert new ICE data, leaving itself
 				as the <emphasis>only</emphasis> ICE candidates;
-				<quote>force_relay</quote> -
+				<quote>force-relay</quote> -
 				discard any <quote>relay</quote> type ICE attributes already present
 				in the &sdp; body and then generate and insert itself
 				as the <emphasis>only</emphasis> ICE <quote>relay</quote> candidates;
@@ -488,7 +490,7 @@ rtpengine_offer();
 				be used in the &sdp; body. Address family is detected automatically.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>TOS=...</emphasis> - change the IP TOS value for all outgoing RTP
+				<emphasis>TOS=...</emphasis> - change the IP TOS value for all outgoing &rtp;
 				packets within the entire call in both directions. Only honoured in an
 				<quote>offer</quote>, ignored for an <quote>answer</quote>. Valid values are
 				0 through 255, given in decimal. If this option is not specified, the TOS
@@ -544,8 +546,8 @@ onreply_route[2]
 		<para>
 		Rewrites &sdp; body to ensure that media is passed through
 		an &rtp; proxy. To be invoked
-		on 200 OK for the cases the SDPs are in INVITE and 200 OK and on ACK
-		when SDPs are in 200 OK and ACK.
+		on 200 OK for the cases the &sdp; bodies are in INVITE and 200 OK and on ACK
+		when &sdp; bodies are in 200 OK and ACK.
 		</para>
 		<para>
 		See rtpengine_offer() function description above for the meaning of the
@@ -606,19 +608,19 @@ rtpengine_delete();
 		<itemizedlist>
 		<listitem>
 			<para>
-			If INVITE with SDP, then do <function>rtpengine_offer()</function>
+			If INVITE with &sdp;, then do <function>rtpengine_offer()</function>
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			If INVITE with SDP, when the tm module is loaded, mark transaction with
+			If INVITE with &sdp;, when the tm module is loaded, mark transaction with
 			internal flag FL_SDP_BODY to know that the 1xx and 2xx are for
 			<function>rtpengine_answer()</function>
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			If ACK with SDP, then do <function>rtpengine_answer()</function>
+			If ACK with &sdp;, then do <function>rtpengine_answer()</function>
 			</para>
 		</listitem>
 		<listitem>
@@ -633,8 +635,8 @@ rtpengine_delete();
 		</listitem>
 		<listitem>
 			<para>
-			If reply with SDP to INVITE having code 1xx and 2xx, then
-			do <function>rtpengine_answer()</function> if the request had SDP or tm is not loaded,
+			If reply with &sdp; to INVITE having code 1xx and 2xx, then
+			do <function>rtpengine_answer()</function> if the request had &sdp; or tm is not loaded,
 			otherwise do <function>rtpengine_offer()</function>
 			</para>
 		</listitem>
@@ -659,7 +661,7 @@ rtpengine_manage();
 		</title>
 		<para>
 		This function will send a signal to the &rtp; proxy to record
-		the RTP stream on the &rtp; proxy.
+		the &rtp; stream on the &rtp; proxy.
 		<emphasis>This function is not supported by Sipwise rtpengine at the moment!</emphasis>
 		</para>
 		<para>
