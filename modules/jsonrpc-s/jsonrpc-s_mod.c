@@ -27,6 +27,7 @@
 #include "../../ver.h"
 #include "../../trim.h"
 #include "../../sr_module.h"
+#include "../../mod_fix.h"
 #include "../../nonsip_hooks.h"
 #include "../../modules/xhttp/api.h"
 
@@ -62,6 +63,7 @@ static int jsonrpc_register_rpc(void);
 static int mod_init(void);
 static int child_init(int rank);
 static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2);
+static int jsonrpc_exec(sip_msg_t* msg, char* cmd, char* s2);
 
 
 /** The context of the jsonrpc request being processed.
@@ -85,7 +87,10 @@ static rpc_t func_param;
 char jsonrpc_error_buf[JSONRPC_ERROR_REASON_BUF_LEN];
 
 static cmd_export_t cmds[] = {
-	{"jsonrpc_dispatch", (cmd_function)jsonrpc_dispatch, 0, 0, 0, REQUEST_ROUTE},
+	{"jsonrpc_dispatch", (cmd_function)jsonrpc_dispatch, 0, 0, 0,
+		REQUEST_ROUTE},
+	{"jsonrpc_exec",     (cmd_function)jsonrpc_exec, 1, fixup_spve_null, 0,
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -125,6 +130,30 @@ static jsonrpc_error_t _jsonrpc_error_table[] = {
 	{ -32000, { "Execution Error", 15 } },
 	{0, { 0, 0 } } 
 };
+
+typedef struct jsonrpc_plain_reply {
+	int rcode;         /**< reply code */
+	str rtext;         /**< reply reason text */
+	str rbody;             /**< reply body */
+} jsonrpc_play_reply_t;
+
+static jsonrpc_play_reply_t _jsonrpc_play_reply;
+
+static void jsonrpc_set_plain_reply(int rcode, str *rtext, str *rbody,
+					void (*free_fn)(void*))
+{
+	if(_jsonrpc_play_reply.rbody.s) {
+		free_fn(_jsonrpc_play_reply.rbody.s);
+	}
+	_jsonrpc_play_reply.rcode = rcode;
+	_jsonrpc_play_reply.rtext = *rtext;
+	if(rbody) {
+		_jsonrpc_play_reply.rbody = *rbody;
+	} else {
+		_jsonrpc_play_reply.rbody.s = NULL;
+		_jsonrpc_play_reply.rbody.len = 0;
+	}
+}
 
 /** Implementation of rpc_fault function required by the management API.
  *
@@ -265,11 +294,21 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 		rbuf.len = strlen(rbuf.s);
 	}
 	if (rbuf.s!=NULL) {
-		xhttp_api.reply(ctx->msg, ctx->http_code, &ctx->http_text,
-			&JSONRPC_CONTENT_TYPE_HTML, &rbuf);
+		if(ctx->msg) {
+			xhttp_api.reply(ctx->msg, ctx->http_code, &ctx->http_text,
+				&JSONRPC_CONTENT_TYPE_HTML, &rbuf);
+		} else {
+			jsonrpc_set_plain_reply(ctx->http_code, &ctx->http_text, &rbuf,
+					ctx->jrpl->free_fn);
+		}
 	} else {
-		xhttp_api.reply(ctx->msg, ctx->http_code, &ctx->http_text,
-				NULL, NULL);
+		if(ctx->msg) {
+			xhttp_api.reply(ctx->msg, ctx->http_code, &ctx->http_text,
+					NULL, NULL);
+		} else {
+			jsonrpc_set_plain_reply(ctx->http_code, &ctx->http_text, NULL,
+					ctx->jrpl->free_fn);
+		}
 	}
 	if (rbuf.s!=NULL) {
 		ctx->jrpl->free_fn(rbuf.s);
@@ -830,6 +869,7 @@ static int mod_init(void)
 
 	jsonrpc_register_rpc();
 
+	memset(&_jsonrpc_play_reply, 0, sizeof(jsonrpc_play_reply_t));
 	return 0;
 }
 
@@ -921,6 +961,88 @@ send_reply:
 	return 1;
 }
 
+
+static int jsonrpc_exec(sip_msg_t* msg, char* cmd, char* s2)
+{
+	rpc_export_t* rpce;
+	jsonrpc_ctx_t* ctx;
+	int ret;
+	srjson_t *nj = NULL;
+	str val;
+	str scmd;
+
+	if(fixup_get_svalue(msg, (gparam_t*)cmd, &scmd)<0 || scmd.len<=0) {
+		LM_ERR("cannot get the rpc command parameter\n");
+		return -1;
+	}
+
+	/* initialize jsonrpc context */
+	ctx = &_jsonrpc_ctx;
+	memset(ctx, 0, sizeof(jsonrpc_ctx_t));
+	ctx->msg = NULL; /* mark it not send a reply out */
+	/* parse the jsonrpc request */
+	ctx->jreq = srjson_NewDoc(NULL);
+	if(ctx->jreq==NULL) {
+		LM_ERR("Failed to init the json document\n");
+		return -1;
+	}
+
+	ctx->jreq->buf = scmd;
+	ctx->jreq->root = srjson_Parse(ctx->jreq, ctx->jreq->buf.s);
+	if(ctx->jreq->root == NULL)
+	{
+		LM_ERR("invalid json doc [[%.*s]]\n",
+				ctx->jreq->buf.len, ctx->jreq->buf.s);
+		return -1;
+	}
+	ret = -1;
+	if (jsonrpc_init_reply(ctx) < 0) goto send_reply;
+
+	/* sanity checks on jsonrpc request */
+	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "jsonrpc");
+	if(nj==NULL) {
+		LM_ERR("missing jsonrpc field in request\n");
+		goto send_reply;
+	}
+	val.s = nj->valuestring;
+	val.len = strlen(val.s);
+	if(val.len!=3 || strncmp(val.s, "2.0", 3)!=0) {
+		LM_ERR("unsupported jsonrpc version [%.*s]\n", val.len, val.s);
+		goto send_reply;
+	}
+	/* run jsonrpc command */
+	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "method");
+	if(nj==NULL) {
+		LM_ERR("missing jsonrpc method field in request\n");
+		goto send_reply;
+	}
+	val.s = nj->valuestring;
+	val.len = strlen(val.s);
+	ctx->method = val.s;
+	rpce = find_rpc_export(ctx->method, 0);
+	if (!rpce || !rpce->function) {
+		LM_ERR("method callback not found [%.*s]\n", val.len, val.s);
+		jsonrpc_fault(ctx, 500, "Method Not Found");
+		goto send_reply;
+	}
+	ctx->flags = rpce->flags;
+	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "params");
+	if(nj!=NULL && nj->type!=srjson_Array && nj->type!=srjson_Object) {
+		LM_ERR("params field is not an array or object\n");
+		goto send_reply;
+	}
+	if(nj!=NULL) ctx->req_node = nj->child;
+	rpce->function(&func_param, ctx);
+	ret = 1;
+
+send_reply:
+	if (!ctx->reply_sent) {
+		ret = jsonrpc_send(ctx);
+	}
+	jsonrpc_clean_context(ctx);
+	if (ret < 0) return -1;
+	return 1;
+}
 
 /**
  *
