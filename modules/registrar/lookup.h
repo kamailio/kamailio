@@ -37,9 +37,25 @@
 
 
 /*! \brief
+ * Lookup contact in the database and rewrite Request-URI
+ * or not according to _mode value:
+ *  0: rewrite
+ *  1: don't rewrite
+ * \return: -1 : not found
+ *          -2 : found but method not allowed
+ *          -3 : error
+ */
+int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode);
+
+/*! \brief
  * Lookup a contact in usrloc and rewrite R-URI if found
  */
 int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri);
+
+/*! \brief
+ * Lookup a contact in usrloc and add the records to the dset structure
+ */
+int lookup_to_dset(struct sip_msg* _m, udomain_t* _d, str* _uri);
 
 /*! \brief
  * Lookup r-uri and additional branches in usrloc

@@ -91,6 +91,7 @@ static void mod_destroy(void);
 static int w_save2(struct sip_msg* _m, char* _d, char* _cflags);
 static int w_save3(struct sip_msg* _m, char* _d, char* _cflags, char* _uri);
 static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
+static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_branches(struct sip_msg* _m, char* _d, char* _p2);
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
@@ -180,6 +181,8 @@ static cmd_export_t cmds[] = {
 	{"lookup",       (cmd_function)w_lookup,      1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"lookup",       (cmd_function)w_lookup,      2,  domain_uri_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"lookup_to_dset",  (cmd_function)w_lookup_to_dset,  1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)w_registered,  1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -474,6 +477,20 @@ static int w_lookup(struct sip_msg* _m, char* _d, char* _uri)
 	return lookup(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
 }
 
+/*! \brief
+ * Wrapper to lookup_to_dset(location)
+ */
+static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _uri)
+{
+	str uri = {0};
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	return lookup_to_dset(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
+}
 /*! \brief
  * Wrapper to lookup_branches(location)
  */
