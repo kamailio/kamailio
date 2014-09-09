@@ -334,20 +334,24 @@ rtpengine_offer();
 				completed.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>internal, external</emphasis> - these flags specify the direction of
-				the &sip; message. These flags only make sense when the &rtp; proxy is running
-				in bridge mode. <quote>internal</quote> corresponds to the proxy's first
-				interface, <quote>external</quote> corresponds to the &rtp; proxy's
-				second interface. You always have to specify two flags to define
-				the incoming network and the outgoing network. For example, <quote>internal
-				external</quote> should be
-				used for &sip; message received from the local interface and sent out on the
-				external interface, and <quote>external internal</quote> vice versa. Other
-				options are <quote>internal internal</quote> and <quote>external
-				external</quote>.
-				So, for example if a &sip; requests is processed with <quote>internal
-				external</quote> flags, the corresponding
-				response must be processed with <quote>internal external</quote> flags.
+				<emphasis>direction=...</emphasis> - this option specifies a logical network
+				interface and should be given exactly twice. It enables &rtp; bridging between
+				different addresses or networks of the same family (e.g. IPv4 to IPv4). The
+				first instance of the option
+				specifies the interface that the originator of this message should be using,
+				while the second instance specifies the interface that the target should be
+				using. For example, if the &sip; message was sent by an endpoint on a private
+				network and will be sent to an endpoint on the public internet, you would use
+				<quote>direction=priv direction=pub</quote> if those two logical network
+				interfaces were called <quote>priv</quote> and <quote>pub</quote> in your
+				&rtp; proxy's configuration respectively. The direction must only be specified
+				in for initial &sdp; offer; answers or subsequent offers can omit this option.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>internal, external</emphasis> - shorthand for
+				<quote>direction=internal</quote> and <quote>direction=external</quote>
+				respectively. Useful for brevity or as legacy option if the &rtp; proxy only
+				supports two network interfaces instead of multiple, arbitrarily named ones.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>auto-bridge</emphasis> - this flag an alternative to the

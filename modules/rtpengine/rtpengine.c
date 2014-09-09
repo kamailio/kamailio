@@ -1240,6 +1240,8 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					ng_flags->transport = 0x103;
 					goto next;
 				}
+				else if (str_eq(&key, "direction"))
+					bencode_list_add_str(ng_flags->direction, &val);
 				break;
 
 			case 10:
