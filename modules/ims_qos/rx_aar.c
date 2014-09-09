@@ -71,6 +71,8 @@
 //extern struct tm_binds tmb;
 usrloc_api_t ul;
 
+extern int authorize_video_flow;
+
 str IMS_Serv_AVP_val = {"IMS Services", 12};
 str IMS_Em_Serv_AVP_val = {"Emergency IMS Call", 18};
 str IMS_Reg_AVP_val = {"IMS Registration", 16};
@@ -323,20 +325,31 @@ int rx_process_aaa(AAAMessage *aaa, unsigned int * rc) {
 int add_media_components_using_current_flow_description(AAAMessage* aar, rx_authsessiondata_t *p_session_data) {
     
     flow_description_t *flow_description;
+    int add_flow = 1;
     
     flow_description = p_session_data->first_current_flow_description;
     if(!flow_description) {
 	return -1;
     }
     while (flow_description) {
-        rx_add_media_component_description_avp(aar, flow_description->stream_num,
-	    &flow_description->media, &flow_description->req_sdp_ip_addr,
-	    &flow_description->req_sdp_port, &flow_description->rpl_sdp_ip_addr,
-	    &flow_description->rpl_sdp_port, &flow_description->rpl_sdp_transport,
-	    &flow_description->req_sdp_raw_stream,
-	    &flow_description->rpl_sdp_raw_stream, flow_description->direction);
+	
+	if(!authorize_video_flow) {
+	    if (strncmp(flow_description->media.s, "video", 5) == 0) {
+		add_flow = 0;
+	    }
+	}
+	
+	if(add_flow) {
+	    rx_add_media_component_description_avp(aar, flow_description->stream_num,
+		&flow_description->media, &flow_description->req_sdp_ip_addr,
+		&flow_description->req_sdp_port, &flow_description->rpl_sdp_ip_addr,
+		&flow_description->rpl_sdp_port, &flow_description->rpl_sdp_transport,
+		&flow_description->req_sdp_raw_stream,
+		&flow_description->rpl_sdp_raw_stream, flow_description->direction);
+	}
 	
 	flow_description = flow_description->next;
+	add_flow = 1;
     }
     return 0;
 }
@@ -350,6 +363,7 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
     int sdp_stream_num;
     sdp_session_cell_t* req_sdp_session, *rpl_sdp_session;
     sdp_stream_cell_t* req_sdp_stream, *rpl_sdp_stream;
+    int add_flow = 1;
 
     if (!req || !rpl) {
         return CSCF_RETURN_FALSE;
@@ -402,22 +416,29 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 		int intportA = atoi(req_sdp_stream->port.s);
 		int intportB = atoi(rpl_sdp_stream->port.s);
 		if(intportA != 0 && intportB != 0){
+			if(!authorize_video_flow) {
+			    if (strncmp(req_sdp_stream->media.s, "video", 5) == 0) {
+				add_flow = 0;
+			    }
+			}
 		    
+			if(add_flow) {
 			//add this to auth session data
-			
-			add_flow_description((rx_authsessiondata_t*) auth->u.auth.generic_data, sdp_stream_num + 1,
-                        	&req_sdp_stream->media, &req_sdp_session->ip_addr,
-	                        &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
-        	                &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
-                	        &req_sdp_stream->raw_stream,
-                        	&rpl_sdp_stream->raw_stream, direction, 0 /*This is a new mcd, we are not setting it as active*/);
-		    
-			rx_add_media_component_description_avp(aar, sdp_stream_num + 1,
-                        	&req_sdp_stream->media, &req_sdp_session->ip_addr,
-	                        &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
-        	                &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
-                	        &req_sdp_stream->raw_stream,
-                        	&rpl_sdp_stream->raw_stream, direction);	
+			    add_flow_description((rx_authsessiondata_t*) auth->u.auth.generic_data, sdp_stream_num + 1,
+				    &req_sdp_stream->media, &req_sdp_session->ip_addr,
+				    &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
+				    &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
+				    &req_sdp_stream->raw_stream,
+				    &rpl_sdp_stream->raw_stream, direction, 0 /*This is a new mcd, we are not setting it as active*/);
+
+			    rx_add_media_component_description_avp(aar, sdp_stream_num + 1,
+				    &req_sdp_stream->media, &req_sdp_session->ip_addr,
+				    &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
+				    &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
+				    &req_sdp_stream->raw_stream,
+				    &rpl_sdp_stream->raw_stream, direction);	
+			}
+			add_flow = 1;
 		}
             }
             sdp_stream_num++;

@@ -181,6 +181,26 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
         </programlisting>
       </example>
     </section>
+    <section>
+      <title><varname>authorize_video_flow</varname> (integer)</title>
+
+      <para>This is a flag that specifies whether or not to authorize video flows.
+      1 means video flows will be authorized over Rx and
+      0 means video flows will not be authorized over Rx</para>
+
+      <para><emphasis> Default value is 1. </emphasis></para>
+
+      <example>
+        <title><varname>authorize_video_flow</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "authorize_video_flow", 0)
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>

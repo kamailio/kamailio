@@ -85,6 +85,8 @@ int rx_auth_expiry = 7200;
 
 int must_send_str = 1;
 
+int authorize_video_flow = 1;  //by default we authorize resources for video flow descriptions
+
 struct tm_binds tmb;
 struct cdp_binds cdpb;
 struct dlg_binds dlgb;
@@ -128,6 +130,7 @@ static param_export_t params[] = {
     { "cdp_event_latency", INT_PARAM, &cdp_event_latency}, /*flag: report slow processing of CDP callback events or not */
     { "cdp_event_threshold", INT_PARAM, &cdp_event_threshold}, /*time in ms above which we should report slow processing of CDP callback event*/
     { "cdp_event_latency_log", INT_PARAM, &cdp_event_latency_loglevel}, /*log-level to use to report slow processing of CDP callback event*/
+    { "authorize_video_flow", INT_PARAM, &authorize_video_flow}, /*whether or not we authorize resources for video flows*/
     { 0, 0, 0}
 };
 
