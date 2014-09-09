@@ -71,6 +71,7 @@ typedef struct saved_transaction {
         str callid;
         str ftag;
         str ttag;
+	unsigned int aar_update;
 } saved_transaction_t;
 
 typedef struct saved_transaction_local {
@@ -96,6 +97,10 @@ void free_saved_transaction_global_data(saved_transaction_t* data);
 
 //AAAMessage *rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession* auth, str *callid, str *ftag, str *ttag, char *direction, rx_authsessiondata_t **rx_authdata);
 int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession* auth, char *direction, saved_transaction_t* saved_t_data);
+
+//send AAR to remove video after failed AAR update that added video
+int rx_send_aar_update_no_video(AAASession* auth);
+
 
 //TODOD remove - no longer user AOR parm
 //int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip_address, uint16_t *ip_version, str *aor, saved_transaction_local_t* saved_t_data);

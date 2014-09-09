@@ -265,8 +265,7 @@ void cdp_cb_event_process() {
 
                 //free callback data
                 if (p_session_data) {
-                    shm_free(p_session_data);
-                    p_session_data = 0;
+		    free_callsessiondata(p_session_data);
                 }
                 break;
             default:
