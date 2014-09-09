@@ -1003,7 +1003,6 @@ static int jsonrpc_exec(sip_msg_t* msg, char* cmd, char* s2)
 		LM_ERR("Failed to init the json document\n");
 		return -1;
 	}
-
 	ctx->jreq->buf = scmd;
 	ctx->jreq->root = srjson_Parse(ctx->jreq, ctx->jreq->buf.s);
 	if(ctx->jreq->root == NULL)
@@ -1014,6 +1013,8 @@ static int jsonrpc_exec(sip_msg_t* msg, char* cmd, char* s2)
 	}
 	ret = -1;
 	if (jsonrpc_init_reply(ctx) < 0) goto send_reply;
+	jsonrpc_reset_plain_reply(ctx->jrpl->free_fn);
+
 
 	/* sanity checks on jsonrpc request */
 	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "jsonrpc");
