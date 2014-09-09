@@ -55,6 +55,8 @@
 #define ALLOC_SIZE 3000
 #define MAX_FORWARD 70
 
+extern int pres_local_log_level;
+
 c_back_param* shm_dup_cbparam(subs_t*);
 void free_cbparam(c_back_param* cb_param);
 
@@ -1594,7 +1596,8 @@ jump_over_body:
 		goto error;
 	}
 
-	LM_DBG("NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s\n",
+	LM_GEN1(pres_local_log_level,
+		"NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s\n",
 		td->rem_uri.len, td->rem_uri.s, td->hooks.next_hop->len,
 		td->hooks.next_hop->s,
 		td->loc_uri.len, td->loc_uri.s, subs->event->name.len,

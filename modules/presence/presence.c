@@ -85,6 +85,7 @@ MODULE_VERSION
 char *log_buf = NULL;
 static int clean_period=100;
 static int db_update_period=100;
+int pres_local_log_level = L_INFO;
 
 /* database connection */
 db1_con_t *pa_db = NULL;
@@ -203,6 +204,7 @@ static param_export_t params[]={
 	{ "send_fast_notify",       INT_PARAM, &send_fast_notify},
 	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
 	{ "db_table_lock_type",     INT_PARAM, &db_table_lock_type},
+	{ "local_log_level",        PARAM_INT, &pres_local_log_level},
     {0,0,0}
 };
 
