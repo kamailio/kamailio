@@ -1332,3 +1332,181 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 	return cnt;
 }
 
+#define HT_ITERATOR_SIZE	4
+#define HT_ITERATOR_NAME_SIZE	32
+
+typedef struct ht_iterator {
+	str name;
+	char bname[HT_ITERATOR_NAME_SIZE];
+	ht_t *ht;
+	int slot;
+	ht_cell_t *it;
+} ht_iterator_t;
+
+static ht_iterator_t _ht_iterators[HT_ITERATOR_SIZE];
+
+void ht_iterator_init(void)
+{
+	memset(_ht_iterators, 0, HT_ITERATOR_SIZE*sizeof(ht_iterator_t));
+}
+
+int ht_iterator_start(str *iname, str *hname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<HT_ITERATOR_SIZE; i++)
+	{
+		if(_ht_iterators[i].name.len>0)
+		{
+			if(_ht_iterators[i].name.len==iname->len
+					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
+			{
+				k = i;
+				break;
+			}
+		} else {
+			if(k==-1) k = i;
+		}
+	}
+	if(k==-1)
+	{
+		LM_ERR("no iterator available - max number is %d\n", HT_ITERATOR_SIZE);
+		return -1;
+	}
+	if(_ht_iterators[k].name.len>0)
+	{
+		if(_ht_iterators[k].ht!=NULL && _ht_iterators[k].it!=NULL)
+		{
+			if(_ht_iterators[k].slot>=0 && _ht_iterators[k].slot<_ht_iterators[k].ht->htsize)
+			{
+				lock_release(&_ht_iterators[k].ht->entries[_ht_iterators[k].slot].lock);
+			}
+		}
+	} else {
+		if(iname->len>=HT_ITERATOR_NAME_SIZE)
+		{
+			LM_ERR("iterator name is too big [%.*s] (max %d)\n",
+					iname->len, iname->s, HT_ITERATOR_NAME_SIZE);
+			return -1;
+		}
+		strncpy(_ht_iterators[k].bname, iname->s, iname->len);
+		_ht_iterators[k].bname[iname->len] = '\0';
+	}
+	_ht_iterators[k].it = NULL;
+	_ht_iterators[k].slot = 0;
+	_ht_iterators[k].ht = ht_get_table(hname);
+	if(_ht_iterators[k].ht==NULL)
+	{
+		LM_ERR("cannot get hash table [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+	return 0;
+}
+
+int ht_iterator_next(str *iname)
+{
+	int i;
+	int k;
+
+	for(i=0; i<HT_ITERATOR_SIZE; i++)
+	{
+		if(_ht_iterators[i].name.len>0)
+		{
+			if(_ht_iterators[i].name.len==iname->len
+					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
+			{
+				k = i;
+				break;
+			}
+		} else {
+			if(k==-1) k = i;
+		}
+	}
+	if(k==-1)
+	{
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL)
+	{
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL)
+	{
+		/* first execution - start from first slot */
+		_ht_iterators[k].slot=0;
+	} else {
+		_ht_iterators[k].it = _ht_iterators[k].it->next;
+		if(_ht_iterators[k].it!=NULL)
+		{
+			/* next item is in the same slot */
+			return 0;
+		}
+		/* next is not in the same slot - release and try next one */
+		_ht_iterators[k].it = NULL;
+		lock_release(&_ht_iterators[k].ht->entries[_ht_iterators[k].slot].lock);
+		_ht_iterators[k].slot++;
+	}
+
+	for( ; _ht_iterators[k].slot<_ht_iterators[k].ht->htsize; _ht_iterators[k].slot++)
+	{
+		lock_get(&_ht_iterators[k].ht->entries[_ht_iterators[k].slot].lock);
+		if(_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first!=NULL)
+		{
+			_ht_iterators[k].it = _ht_iterators[k].ht->entries[_ht_iterators[k].slot].first;
+			return 0;
+		}
+		lock_release(&_ht_iterators[k].ht->entries[_ht_iterators[k].slot].lock);
+	}
+	return -1;
+}
+
+int ht_iterator_end(str *iname)
+{
+	int i;
+
+	for(i=0; i<HT_ITERATOR_SIZE; i++)
+	{
+		if(_ht_iterators[i].name.len>0)
+		{
+			if(_ht_iterators[i].name.len==iname->len
+					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
+			{
+				if(_ht_iterators[i].ht!=NULL && _ht_iterators[i].it!=NULL)
+				{
+					if(_ht_iterators[i].slot>=0 && _ht_iterators[i].slot<_ht_iterators[i].ht->htsize)
+					{
+						lock_release(&_ht_iterators[i].ht->entries[_ht_iterators[i].slot].lock);
+					}
+				}
+				memset(&_ht_iterators[i], 0, sizeof(ht_iterator_t));
+				return 0;
+			}
+		}
+	}
+
+	return -1;
+}
+
+ht_cell_t* ht_iterator_get_current(str *iname)
+{
+	int i;
+	if(iname==NULL || iname->len<=0)
+		return NULL;
+
+	for(i=0; i<HT_ITERATOR_SIZE; i++)
+	{
+		if(_ht_iterators[i].name.len>0)
+		{
+			if(_ht_iterators[i].name.len==iname->len
+					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
+			{
+				return _ht_iterators[i].it;
+			}
+		}
+	}
+	return NULL;
+}

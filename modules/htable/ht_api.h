@@ -104,4 +104,10 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode);
 ht_t *ht_get_root(void);
 int ht_reset_content(ht_t *ht);
 
+void ht_iterator_init(void);
+int ht_iterator_start(str *iname, str *hname);
+int ht_iterator_next(str *iname);
+int ht_iterator_end(str *iname);
+ht_cell_t* ht_iterator_get_current(str *iname);
+
 #endif

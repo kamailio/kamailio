@@ -410,3 +410,52 @@ int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
 
 	return 0;
 }
+
+int pv_parse_iterator_name(pv_spec_t *sp, str *in)
+{
+	if(in->len<=0)
+	{
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.s.s = in->s;
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+	sp->pvp.pvn.u.isname.type = 0;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+
+	return 0;
+}
+
+int pv_get_iterator_key(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	ht_cell_t *it=NULL;
+	if (res == NULL)
+	{
+		return -1;
+	}
+
+	it = ht_iterator_get_current(&param->pvn.u.isname.name.s);
+	if(it==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &it->name);
+}
+
+int pv_get_iterator_val(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	ht_cell_t *it=NULL;
+	if (res == NULL)
+	{
+		return -1;
+	}
+
+	it = ht_iterator_get_current(&param->pvn.u.isname.name.s);
+	if(it==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	if(it->flags&AVP_VAL_STR)
+		return pv_get_strval(msg, param, res, &it->value.s);
+
+	/* integer */
+	return pv_get_sintval(msg, param, res, it->value.n);
+}

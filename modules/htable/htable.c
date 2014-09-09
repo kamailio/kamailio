@@ -66,6 +66,9 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
 static int ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
 static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
+static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname);
+static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo);
+static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo);
 
 int ht_param(modparam_t type, void* val);
 
@@ -89,6 +92,10 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_ht_name, 0, 0, 0 },
 	{ {"shtrecord", sizeof("shtrecord")-1}, PVT_OTHER, pv_get_ht_expired_cell, 0,
 		pv_parse_ht_expired_cell, 0, 0, 0 },
+	{ {"shtitkey", sizeof("shtitkey")-1}, PVT_OTHER, pv_get_iterator_key, 0,
+		pv_parse_iterator_name, 0, 0, 0 },
+	{ {"shtitval", sizeof("shtitval")-1}, PVT_OTHER, pv_get_iterator_val, 0,
+		pv_parse_iterator_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -112,6 +119,12 @@ static cmd_export_t cmds[]={
 	{"sht_unlock",      (cmd_function)ht_slot_unlock,  1, fixup_ht_key, 0,
 		ANY_ROUTE},
 	{"sht_reset",		(cmd_function)ht_reset,		   1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"sht_iterator_start",	(cmd_function)w_ht_iterator_start,	2, fixup_spve_spve, 0,
+		ANY_ROUTE},
+	{"sht_iterator_next",	(cmd_function)w_ht_iterator_next,	1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"sht_iterator_end",	(cmd_function)w_ht_iterator_end,	1, fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
 		ANY_ROUTE},
@@ -200,6 +213,8 @@ static int mod_init(void)
 		LM_ERR("failed to initialize dmq integration\n");
 		return -1;
 	}
+
+	ht_iterator_init();
 
 	return 0;
 }
@@ -379,6 +394,54 @@ static int ht_reset(struct sip_msg* msg, char* htname, char* foo)
 	return 1;
 }
 
+static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname)
+{
+	str siname;
+	str shname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)hname, &shname)<0 || shname.len<=0)
+	{
+		LM_ERR("cannot get hash table name\n");
+		return -1;
+	}
+
+	if(ht_iterator_start(&siname, &shname)<0)
+		return -1;
+	return 1;
+}
+
+static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo)
+{
+	str siname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(ht_iterator_next(&siname)<0)
+		return -1;
+	return 1;
+}
+
+static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo)
+{
+	str siname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(ht_iterator_end(&siname)<0)
+		return -1;
+	return 1;
+}
 
 /**
  * lock the slot for a given key in a hash table
