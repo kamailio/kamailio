@@ -114,6 +114,30 @@ int build_uri_str(str* username, struct sip_uri* uri, str* from)
 	return 0;
 }
 
+/* Checks if the request (sip_msg_t* msg) comes from another DMQ node based on source IP. */
+int is_from_remote_node(sip_msg_t* msg)
+{
+	ip_addr_t* ip;
+        dmq_node_t* node;
+        int result = -1;
+
+	ip = &msg->rcv.src_ip;
+
+	lock_get(&node_list->lock);
+	node = node_list->nodes;
+
+	while(node) {
+		if (!node->local && ip_addr_cmp(ip, &node->ip_address)) {
+			result = 1;
+			goto done;
+		}
+		node = node->next;
+        }
+done:
+        lock_release(&node_list->lock);
+	return result;
+}
+
 /**
  * @brief broadcast a dmq message
  *
@@ -340,6 +364,55 @@ error:
 	return -1;
 }
 
+/**
+ * @brief config file function for replicating SIP message to all nodes (wraps t_replicate)
+ */
+int cfg_dmq_t_replicate(struct sip_msg* msg, char* s)
+{
+	dmq_node_t* node;
+	int i = 0;
+
+	/* avoid loops - do not replicate if message has come from another node
+	 * (override if optional parameter is set)
+	 */
+	if ((!s || (get_int_fparam(&i, msg, (fparam_t*)s)==0 && !i))
+			&& (is_from_remote_node(msg) > 0)) {
+		LM_DBG("message is from another node - skipping replication\n");
+		return -1;
+	}
+
+	lock_get(&node_list->lock);
+	node = node_list->nodes;
+	while(node) {
+		/* we do not send the message to the following:
+		 *   - ourself
+		 *   - any inactive nodes
+		 */
+                if(node->local || node->status != DMQ_NODE_ACTIVE) {
+                        LM_DBG("skipping node %.*s\n", STR_FMT(&node->orig_uri));
+                        node = node->next;
+			continue;
+		}
+		if(tmb.t_replicate(msg, &node->orig_uri) < 0) {
+			LM_ERR("error calling t_replicate\n");
+			goto error;
+		}
+		node = node->next;
+	}
+	lock_release(&node_list->lock);
+	return 0;
+error:
+	lock_release(&node_list->lock);
+	return -1;
+}
+
+/*
+ * @brief config file function to check if received message is from another DMQ node based on source IP
+ */
+int cfg_dmq_is_from_node(struct sip_msg* msg)
+{
+	return is_from_remote_node(msg);
+}
 
 /**
  * @brief pings the servers in the nodelist

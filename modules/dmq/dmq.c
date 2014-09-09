@@ -97,6 +97,12 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
         {"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3, bcast_dmq_fixup, 0,
                 ANY_ROUTE},
+	{"dmq_t_replicate",  (cmd_function)cfg_dmq_t_replicate, 0, 0, 0,
+		REQUEST_ROUTE},
+        {"dmq_t_replicate",  (cmd_function)cfg_dmq_t_replicate, 1, fixup_spve_null, 0,
+                REQUEST_ROUTE},
+        {"dmq_is_from_node",  (cmd_function)cfg_dmq_is_from_node, 0, 0, 0,
+                REQUEST_ROUTE},
         {"bind_dmq",        (cmd_function)bind_dmq,       0, 0,              0},
 	{0, 0, 0, 0, 0, 0}
 };
