@@ -49,6 +49,7 @@
 #include "callid.h"
 #include "t_cancel.h"
 #include "t_suspend.h"
+#include "t_append_branches.h"
 #include "t_stats.h"
 
 /* export not usable from scripts */
@@ -133,6 +134,7 @@ struct tm_binds {
 #else
 	void* reserved5;
 #endif
+	t_append_branches_f	t_append_branches;
 };
 
 typedef struct tm_binds tm_api_t;

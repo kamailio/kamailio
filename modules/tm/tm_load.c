@@ -147,6 +147,7 @@ int load_tm( struct tm_binds *tmb)
 #ifdef WITH_TM_CTX
 	tmb->tm_ctx_get = tm_ctx_get;
 #endif
+	tmb->t_append_branches = t_append_branches;
 	return 1;
 }
 
