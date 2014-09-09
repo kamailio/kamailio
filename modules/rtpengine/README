@@ -69,7 +69,7 @@ Richard Fuchs
 
         5. Functions
 
-              5.1. set_rtpengine_set(setid)
+              5.1. set_rtpengine_set(setid[, setid])
               5.2. rtpengine_offer([flags])
               5.3. rtpengine_answer([flags])
               5.4. rtpengine_delete([flags])
@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. set_rtpengine_set(setid)
+        5.1. set_rtpengine_set(setid[, setid])
         5.2. rtpengine_offer([flags])
         5.3. rtpengine_answer([flags])
         5.4. rtpengine_delete([flags])
@@ -298,19 +298,31 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 
 5. Functions
 
-   5.1. set_rtpengine_set(setid)
+   5.1. set_rtpengine_set(setid[, setid])
    5.2. rtpengine_offer([flags])
    5.3. rtpengine_answer([flags])
    5.4. rtpengine_delete([flags])
    5.5. rtpengine_manage([flags])
    5.6. start_recording()
 
-5.1.  set_rtpengine_set(setid)
+5.1.  set_rtpengine_set(setid[, setid])
 
    Sets the ID of the RTP proxy set to be used for the next
    rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
    rtpengine_manage() command. The parameter can be an integer or a config
    variable holding an integer.
+
+   A second set ID can be specified to daisy-chain two RTP proxies. The
+   two set IDs must be distinct from each other and there must not be any
+   overlap in the proxies present in both sets. In this use case, the
+   request (offer, answer, etc) is first sent to an RTP proxy from the
+   first set, which rewrites the SDP body and sends it back to the module.
+   The rewritten SDP body is then used to make another request to an RTP
+   proxy from the second set, which rewrites the SDP body another time and
+   sends it back to the module to be placed back into the SIP message.
+   This is useful if you have a set of RTP proxies that the caller must
+   use, and another distinct set of RTP proxies that the callee must use.
+   This is supported by all rtpengine commands except rtpengine_manage().
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
@@ -324,8 +336,8 @@ rtpengine_offer();
 5.2.  rtpengine_offer([flags])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
-   To be invoked on INVITE for the cases the SDPs are in INVITE and 200 OK
-   and on 200 OK when SDPs are in 200 OK and ACK.
+   To be invoked on INVITE for the cases the SDP bodies are in INVITE and
+   200 OK and on 200 OK when SDP bodies are in 200 OK and ACK.
 
    Meaning of the parameters is as follows:
      * flags - flags to turn on some features.
@@ -351,24 +363,29 @@ rtpengine_offer();
             "answer" for the new branch. This flag is only supported by
             the Sipwise rtpengine RTP proxy at the moment!
           + asymmetric - flags that UA from which message is received
-            doesn't support symmetric RTP. (automatically sets the 'r'
-            flag)
+            doesn't support symmetric RTP. Disables learning of endpoint
+            addresses in the Sipwise rtpengine proxy.
           + force-answer - force "answer", that is, only rewrite SDP when
             corresponding session already exists in the RTP proxy. By
             default is on when the session is to be completed.
-          + internal, external - these flags specify the direction of the
-            SIP message. These flags only make sense when the RTP proxy is
-            running in bridge mode. "internal" corresponds to the proxy's
-            first interface, "external" corresponds to the RTP proxy's
-            second interface. You always have to specify two flags to
-            define the incoming network and the outgoing network. For
-            example, "internal external" should be used for SIP message
-            received from the local interface and sent out on the external
-            interface, and "external internal" vice versa. Other options
-            are "internal internal" and "external external". So, for
-            example if a SIP requests is processed with "internal
-            external" flags, the corresponding response must be processed
-            with "internal external" flags.
+          + direction=... - this option specifies a logical network
+            interface and should be given exactly twice. It enables RTP
+            bridging between different addresses or networks of the same
+            family (e.g. IPv4 to IPv4). The first instance of the option
+            specifies the interface that the originator of this message
+            should be using, while the second instance specifies the
+            interface that the target should be using. For example, if the
+            SIP message was sent by an endpoint on a private network and
+            will be sent to an endpoint on the public internet, you would
+            use "direction=priv direction=pub" if those two logical
+            network interfaces were called "priv" and "pub" in your RTP
+            proxy's configuration respectively. The direction must only be
+            specified in for initial SDP offer; answers or subsequent
+            offers can omit this option.
+          + internal, external - shorthand for "direction=internal" and
+            "direction=external" respectively. Useful for brevity or as
+            legacy option if the RTP proxy only supports two network
+            interfaces instead of multiple, arbitrarily named ones.
           + auto-bridge - this flag an alternative to the "internal" and
             "external" flags in order to do automatic bridging between
             IPv4 on the "internal network" and IPv6 on the "external
@@ -407,7 +424,8 @@ rtpengine_offer();
             SDP connection (c=) IP if media description also includes
             connection information.
           + symmetric - flags that for the UA from which message is
-            received, support symmetric RTP must be forced.
+            received, support symmetric RTP must be forced. Does nothing
+            with the Sipwise rtpengine proxy as it is the default.
           + repacketize=NN - requests the RTP proxy to perform
             re-packetization of RTP traffic coming from the UA which has
             sent the current message to increase or decrease payload size
@@ -424,7 +442,7 @@ rtpengine_offer();
             attributes within the SDP body. Possible values are: "force" -
             discard any ICE attributes already present in the SDP body and
             then generate and insert new ICE data, leaving itself as the
-            only ICE candidates; "force_relay" - discard any "relay" type
+            only ICE candidates; "force-relay" - discard any "relay" type
             ICE attributes already present in the SDP body and then
             generate and insert itself as the only ICE "relay" candidates;
             "remove" instructs the RTP proxy to discard any ICE attributes
@@ -469,6 +487,13 @@ rtpengine_offer();
           + media-address=... - force a particular media address to be
             used in the SDP body. Address family is detected
             automatically.
+          + TOS=... - change the IP TOS value for all outgoing RTP packets
+            within the entire call in both directions. Only honoured in an
+            "offer", ignored for an "answer". Valid values are 0 through
+            255, given in decimal. If this option is not specified, the
+            TOS value will revert to the default TOS (normally 184). A
+            value of -1 may be used to leave the currently used TOS
+            unchanged.
 
    This function can be used from ANY_ROUTE.
 
@@ -507,8 +532,8 @@ onreply_route[2]
 5.3.  rtpengine_answer([flags])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
-   To be invoked on 200 OK for the cases the SDPs are in INVITE and 200 OK
-   and on ACK when SDPs are in 200 OK and ACK.
+   To be invoked on 200 OK for the cases the SDP bodies are in INVITE and
+   200 OK and on ACK when SDP bodies are in 200 OK and ACK.
 
    See rtpengine_offer() function description above for the meaning of the
    parameters.
