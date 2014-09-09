@@ -24,6 +24,7 @@
  */
 
 #include "../../ut.h"
+#include "../../resolve.h"
 #include "dmqnode.h"
 #include "dmq.h"
 
@@ -146,7 +147,11 @@ dmq_node_t* build_dmq_node(str* uri, int shm) {
 	dmq_node_t* ret = NULL;
 	param_hooks_t hooks;
 	param_t* params;
-	
+
+        /* For DNS-Lookups */
+        static char hn[256];
+        struct hostent* he;
+
 	LM_DBG("build_dmq_node %.*s with %s memory\n", STR_FMT(uri), shm?"shm":"private");
 	
 	if(shm) {
@@ -171,7 +176,7 @@ dmq_node_t* build_dmq_node(str* uri, int shm) {
 		}
 	}
 	set_default_dmq_node_params(ret);
-	if(parse_uri(ret->orig_uri.s, ret->orig_uri.len, &ret->uri) < 0) {
+	if(parse_uri(ret->orig_uri.s, ret->orig_uri.len, &ret->uri) < 0 || ret->uri.host.len > 254) {
 		LM_ERR("error parsing uri\n");
 		goto error;
 	}
@@ -199,6 +204,16 @@ dmq_node_t* build_dmq_node(str* uri, int shm) {
 	} else {
 		LM_DBG("no dmqnode params found\n");		
 	}
+	/* resolve hostname */
+	strncpy(hn, ret->uri.host.s, ret->uri.host.len);
+	hn[ret->uri.host.len]='\0';
+	he=resolvehost(hn);
+	if (he==0) {
+		LM_ERR("could not resolve %.*s\n", ret->uri.host.len, ret->uri.host.s);
+		goto error;
+	}
+	hostent2ip_addr(&ret->ip_address, he, 0);
+
 	return ret;
 
 error:
