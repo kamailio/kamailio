@@ -3,7 +3,7 @@
  *
  * sipcapture module - helper module to capture sip messages
  *
- * Copyright (C) 2011 Alexandr Dubovikov (QSC AG) (alexandr.dubovikov@gmail.com)
+ * Copyright (C) 2011-2014 Alexandr Dubovikov (QSC AG) (alexandr.dubovikov@gmail.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -39,6 +39,7 @@
 #include <netinet/in.h>
 #include <net/if.h> 
 #include <netdb.h>
+#include <arpa/inet.h>
 
 /* BPF structure */
 #ifdef __OS_linux
@@ -93,7 +94,8 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 36
+#define NR_KEYS 37
+#define RTCP_NR_KEYS 12
 
 /*multiple table mode*/
 enum e_mt_mode{
@@ -149,6 +151,7 @@ static str date_column		= str_init("date");
 static str micro_ts_column 	= str_init("micro_ts");
 static str method_column 	= str_init("method"); 	
 static str reply_reason_column 	= str_init("reply_reason");        
+static str correlation_column 	= str_init("correlation_id");
 static str ruri_column 		= str_init("ruri");     	
 static str ruri_user_column 	= str_init("ruri_user");  
 static str from_user_column 	= str_init("from_user");  
@@ -203,6 +206,7 @@ int insert_retry_timeout = 60;
 int hep_offset = 0;
 str raw_socket_listen = { 0, 0 };
 str raw_interface = { 0, 0 };
+char *authkey = NULL, *correlation_id = NULL;
 
 struct ifreq ifr; 	/* interface structure */
 
@@ -258,6 +262,7 @@ static param_export_t params[] = {
 	{"date_column",        		PARAM_STR, &date_column       },
 	{"micro_ts_column",     	PARAM_STR, &micro_ts_column	},
 	{"method_column",      		PARAM_STR, &method_column 	},
+        {"correlation_column",     	PARAM_STR, &correlation_column.s },
 	{"reply_reason_column",		PARAM_STR, &reply_reason_column	},
 	{"ruri_column",      		PARAM_STR, &ruri_column     	},
 	{"ruri_user_column",      	PARAM_STR, &ruri_user_column  },
@@ -1082,7 +1087,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 
-	str tmp;
+	str tmp, corrtmp;
 	int ii = 0;
 	int ret = 0;
 	int counter = 0;
@@ -1103,6 +1108,11 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 		LM_DBG("invalid parameter\n");
 		return -1;
 	}
+	
+	if(correlation_id) {
+	         corrtmp.s = correlation_id;
+	         corrtmp.len = strlen(correlation_id);        
+        }
 	
 	db_keys[0] = &date_column;
 	db_vals[0].type = DB1_DATETIME;
@@ -1278,29 +1288,21 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[34].type = DB1_STR;
 	db_vals[34].nul = 0;
 	db_vals[34].val.str_val = sco->node;
-	
-	db_keys[35] = &msg_column;
-	db_vals[35].type = DB1_BLOB;
-	db_vals[35].nul = 0;
-		
-	/* need to be removed in the future */
-        /* if message was captured via hep skip trailing empty spaces(newlines) from the start of the buffer */
-	/* if(hep_offset>0){
-		tmp.s = sco->msg.s + hep_offset;
-		tmp.len = sco->msg.len - hep_offset;
-		hep_offset = 0;
-	} else {
 
-		tmp.s = sco->msg.s;
-		tmp.len = sco->msg.len;
-	}
-	*/
+	db_keys[35] = &correlation_column;
+	db_vals[35].type = DB1_STR;
+	db_vals[35].nul = 0;
+	db_vals[35].val.str_val = (correlation_id) ? corrtmp : sco->callid;	
 	
+	db_keys[36] = &msg_column;
+	db_vals[36].type = DB1_BLOB;
+	db_vals[36].nul = 0;
+
 	/*we don't have empty spaces now */
 	tmp.s = sco->msg.s;
 	tmp.len = sco->msg.len;
 
-	db_vals[35].val.blob_val = tmp;
+	db_vals[36].val.blob_val = tmp;
 
 	if (dtable){
 		table = dtable;
@@ -2040,4 +2042,163 @@ static int sipcapture_init_rpc(void)
 	}
 	return 0;
 }
+
+
+
+/* for rtcp and logging */
+int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_recv *hg, char *log_table) {
+
+
+	db_key_t db_keys[RTCP_NR_KEYS];
+	db_val_t db_vals[RTCP_NR_KEYS];
+        struct _sipcapture_object sco;
+	char ipstr_dst[INET6_ADDRSTRLEN], ipstr_src[INET6_ADDRSTRLEN];
+	char tmp_node[100];
+        struct timeval tvb;
+        struct timezone tz;    
+        time_t epoch_time_as_time_t;
+        
+	str tmp, corrtmp, table;
+	_capture_mode_data_t *c = NULL;
+
+	c = capture_def;
+	if (!c){
+		LM_ERR("no connection mode available to store data\n");
+		return -1;
+	}
+
+	memset(&sco, 0, sizeof(struct _sipcapture_object));
+	gettimeofday( &tvb, &tz );
+
+        /* PROTO TYPE */
+        if(hg->ip_proto->data == IPPROTO_TCP) sco.proto=PROTO_TCP;
+        else if(hg->ip_proto->data == IPPROTO_UDP) sco.proto=PROTO_UDP;
+        /* FAMILY TYPE */
+        sco.family = hg->ip_family->data;
+
+        /* IP source and destination */
+
+	if ( hg->ip_family->data == AF_INET6 ) {
+        	inet_ntop(AF_INET6, &(hg->hep_dst_ip6->data), ipstr_dst, INET6_ADDRSTRLEN);	       
+        	inet_ntop(AF_INET6, &(hg->hep_src_ip6->data), ipstr_src, INET6_ADDRSTRLEN);	       
+        }
+	else if ( hg->ip_family->data == AF_INET ) {
+        	inet_ntop(AF_INET, &(hg->hep_src_ip4->data), ipstr_src, INET_ADDRSTRLEN);
+        	inet_ntop(AF_INET, &(hg->hep_dst_ip4->data), ipstr_dst, INET_ADDRSTRLEN);
+	}
+
+
+        /*source ip*/
+        sco.source_ip.s = ipstr_src;
+        sco.source_ip.len = strlen(ipstr_src);
+        sco.source_port = hg->src_port->data;        
+        
+        sco.destination_ip.s = ipstr_dst;
+        sco.destination_ip.len = strlen(ipstr_dst);
+        sco.destination_port = hg->dst_port->data;
+
+	if(heptime && heptime->tv_sec != 0) {
+               sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
+               snprintf(tmp_node, 100, "%.*s:%i", capture_node.len, capture_node.s, heptime->captid);
+               sco.node.s = tmp_node;
+               sco.node.len = strlen(tmp_node);
+               epoch_time_as_time_t = heptime->tv_sec;;
+        }
+        else {
+               sco.tmstamp = (unsigned long long)tvb.tv_sec*1000000+tvb.tv_usec; /* micro ts */
+               sco.node = capture_node;
+               epoch_time_as_time_t = tvb.tv_sec;
+        }
+
+        if(correlation_id) {
+                corrtmp.s = correlation_id;
+                corrtmp.len = strlen(correlation_id);
+                if(!strncmp(log_table, "rtcp_capture",12)) corrtmp.len--;
+        }
+
+	db_keys[0] = &date_column;
+	db_vals[0].type = DB1_DATETIME;
+	db_vals[0].nul = 0;
+	db_vals[0].val.time_val = epoch_time_as_time_t;
+	
+	db_keys[1] = &micro_ts_column;
+        db_vals[1].type = DB1_BIGINT;
+        db_vals[1].nul = 0;
+        db_vals[1].val.ll_val = sco.tmstamp;
+	
+	db_keys[2] = &correlation_column;
+	db_vals[2].type = DB1_STR;
+	db_vals[2].nul = 0;
+	db_vals[2].val.str_val = corrtmp;
+	
+	db_keys[3] = &source_ip_column;
+	db_vals[3].type = DB1_STR;
+	db_vals[3].nul = 0;
+	db_vals[3].val.str_val = sco.source_ip;
+	
+	db_keys[4] = &source_port_column;
+        db_vals[4].type = DB1_INT;
+        db_vals[4].nul = 0;
+        db_vals[4].val.int_val = sco.source_port;
+        
+	db_keys[5] = &dest_ip_column;
+	db_vals[5].type = DB1_STR;
+	db_vals[5].nul = 0;
+	db_vals[5].val.str_val = sco.destination_ip;
+	
+	db_keys[6] = &dest_port_column;
+        db_vals[6].type = DB1_INT;
+        db_vals[6].nul = 0;
+        db_vals[6].val.int_val = sco.destination_port;        
+        
+        db_keys[7] = &proto_column;			
+        db_vals[7].type = DB1_INT;
+        db_vals[7].nul = 0;
+        db_vals[7].val.int_val = sco.proto;        
+
+        db_keys[8] = &family_column;			
+        db_vals[8].type = DB1_INT;
+        db_vals[8].nul = 0;
+        db_vals[8].val.int_val = sco.family;        
+        
+        db_keys[9] = &type_column;			
+        db_vals[9].type = DB1_INT;
+        db_vals[9].nul = 0;
+        db_vals[9].val.int_val = sco.type;                
+
+	db_keys[10] = &node_column;
+	db_vals[10].type = DB1_STR;
+	db_vals[10].nul = 0;
+	db_vals[10].val.str_val = sco.node;
+	
+	db_keys[11] = &msg_column;
+	db_vals[11].type = DB1_BLOB;
+	db_vals[11].nul = 0;
+		
+	tmp.s = buf;
+	tmp.len = len;
+	
+	db_vals[11].val.blob_val = tmp;
+
+	table.s = log_table;
+	table.len = strlen(log_table);
+
+	c->db_funcs.use_table(c->db_con, &table);
+
+	if(db_insert_mode==1 && c->db_funcs.insert_delayed!=NULL) {
+                if (c->db_funcs.insert_delayed(c->db_con, db_keys, db_vals, RTCP_NR_KEYS) < 0) {
+                	LM_ERR("failed to insert delayed into database\n");
+                        goto error;
+                }
+        } else if (c->db_funcs.insert(c->db_con, db_keys, db_vals, RTCP_NR_KEYS) < 0) {
+		LM_ERR("failed to insert into database\n");
+                goto error;               
+	}
+                
+	
+	return 1;
+error:
+	return -1;
+}
+
 

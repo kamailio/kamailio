@@ -3,7 +3,7 @@
  *
  * hep related structure
  *
- * Copyright (C) 2011-12 Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+ * Copyright (C) 2011-14 Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -36,8 +36,8 @@ typedef uint32_t u_int32_t;
 
 extern int hep_capture_on;
 extern int hep_offset;
-
-#include "../../receive.h"
+extern char *authkey;
+extern char *correlation_id;
 
 /* int hep_msg_received(char * buf, unsigned int len, struct receive_info * ri);*/
 int hep_msg_received(void *data);
@@ -154,6 +154,7 @@ struct hep_generic_recv {
         hep_chunk_uint32_t *capt_id;
         hep_chunk_uint16_t *keep_tm;
         hep_chunk_str_t    *auth_key;
+        hep_chunk_str_t    *correlation_id;        
         hep_chunk_t   *payload_chunk;
 } __attribute__((packed));
 

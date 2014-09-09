@@ -2,7 +2,7 @@
  * only for MYSQL >= 5.1.43
 */
 
-/* schema version 2 */
+/* this SQL schema version # 3 */
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -14,9 +14,12 @@ CREATE TABLE `sip_capture` (
   `reply_reason` varchar(100) NOT NULL,
   `ruri` varchar(200) NOT NULL DEFAULT '',
   `ruri_user` varchar(100) NOT NULL DEFAULT '',
+  `ruri_domain` varchar(150) NOT NULL DEFAULT '',
   `from_user` varchar(100) NOT NULL DEFAULT '',
+  `from_domain` varchar(150) NOT NULL DEFAULT '',
   `from_tag` varchar(64) NOT NULL DEFAULT '',
   `to_user` varchar(100) NOT NULL DEFAULT '',
+  `to_domain` varchar(150) NOT NULL DEFAULT '',
   `to_tag` varchar(64) NOT NULL,
   `pid_user` varchar(100) NOT NULL DEFAULT '',
   `contact_user` varchar(120) NOT NULL,
@@ -26,14 +29,14 @@ CREATE TABLE `sip_capture` (
   `via_1` varchar(256) NOT NULL,
   `via_1_branch` varchar(80) NOT NULL,
   `cseq` varchar(25) NOT NULL,
-  `diversion` varchar(256) NOT NULL,
+  `diversion` varchar(256) NOT NULL DEFAULT '',
   `reason` varchar(200) NOT NULL,
   `content_type` varchar(256) NOT NULL,
   `auth` varchar(256) NOT NULL,
   `user_agent` varchar(256) NOT NULL,
-  `source_ip` varchar(50) NOT NULL DEFAULT '',
+  `source_ip` varchar(60) NOT NULL DEFAULT '',
   `source_port` int(10) NOT NULL,
-  `destination_ip` varchar(50) NOT NULL DEFAULT '',
+  `destination_ip` varchar(60) NOT NULL DEFAULT '',
   `destination_port` int(10) NOT NULL,
   `contact_ip` varchar(60) NOT NULL,
   `contact_port` int(10) NOT NULL,
@@ -54,7 +57,7 @@ CREATE TABLE `sip_capture` (
   KEY `callid_aleg` (`callid_aleg`),
   KEY `date` (`date`),
   KEY `callid` (`callid`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=8
 PARTITION BY RANGE ( UNIX_TIMESTAMP(`date`) ) (
 PARTITION pmax VALUES LESS THAN (MAXVALUE)
 );

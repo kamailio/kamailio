@@ -2,7 +2,7 @@
 #
 # partrotate_unixtimestamp - perl script for mySQL partition rotation
 #
-# Copyright (C) 2011 Alexandr Dubovikov (QSC AG) (alexandr.dubovikov@gmail.com)
+# Copyright (C) 2011-2014 Alexandr Dubovikov (alexandr.dubovikov@gmail.com)
 #
 # This file is part of webhomer, a free capture server.
 #
@@ -18,11 +18,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 use DBI;
 
-$version = "0.2.5";
+$version = "0.3.0";
 $mysql_table = "sip_capture";
 $mysql_dbname = "homer_db";
 $mysql_user = "mysql_login";
@@ -32,7 +32,8 @@ $maxparts = 6; #6 days How long keep the data in the DB
 $newparts = 2; #new partitions for 2 days. Anyway, start this script daily!
 @stepsvalues = (86400, 3600, 1800, 900); 
 $partstep = 0; # 0 - Day, 1 - Hour, 2 - 30 Minutes, 3 - 15 Minutes 
-$engine = "MyISAM";
+$engine = "InnoDB"; #MyISAM or InnoDB
+$compress = "ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=8"; #Enable this if you want use barracuda format or set var to empty.
 $sql_schema_version = 2;
 $auth_column = "auth";
 $check_table = 1; #Check if table exists. For PostgreSQL change creation schema!
@@ -54,6 +55,7 @@ $coof=int(86400/$mystep);
 #How much partitions
 $maxparts*=$coof;
 $newparts*=$coof;
+$totalparts = ($maxparts+$newparts);
 
 my $db = DBI->connect("DBI:mysql:$mysql_dbname:$mysql_host:3306", $mysql_user, $mysql_password);
 
@@ -75,7 +77,7 @@ $sql = "CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   `to_tag` varchar(64) NOT NULL,
   `pid_user` varchar(100) NOT NULL DEFAULT '',
   `contact_user` varchar(120) NOT NULL,
-  `".$auth_column."` varchar(120) NOT NULL,
+  `auth_user` varchar(120) NOT NULL,  
   `callid` varchar(100) NOT NULL DEFAULT '',
   `callid_aleg` varchar(100) NOT NULL DEFAULT '',
   `via_1` varchar(256) NOT NULL,
@@ -84,7 +86,7 @@ $sql = "CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   `diversion` varchar(256) NOT NULL,
   `reason` varchar(200) NOT NULL,
   `content_type` varchar(256) NOT NULL,
-  `authorization` varchar(256) NOT NULL,
+  `".$auth_column."` varchar(120) NOT NULL,
   `user_agent` varchar(256) NOT NULL,
   `source_ip` varchar(60) NOT NULL DEFAULT '',
   `source_port` int(10) NOT NULL,
@@ -112,7 +114,7 @@ $sql = "CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   KEY `method` (`method`),
   KEY `source_ip` (`source_ip`),
   KEY `destination_ip` (`destination_ip`)
-) ENGINE=".$engine." DEFAULT CHARSET=latin1
+) ENGINE=".$engine." DEFAULT CHARSET=utf8 $compress
 PARTITION BY RANGE ( UNIX_TIMESTAMP(`date`)) (PARTITION pmax VALUES LESS THAN MAXVALUE ENGINE = ".$engine.")";
 
 my $sth = $db->do($sql) if($check_table == 1);
@@ -133,76 +135,60 @@ $sth = $db->prepare($query);
 $sth->execute();
 my ($curtstamp) = $sth->fetchrow_array();
 $curtstamp+=0; 
+$todaytstamp+=0;
 
-my $query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.PARTITIONS"
-            ."\n WHERE TABLE_NAME='".$mysql_table."' AND TABLE_SCHEMA='".$mysql_dbname."'";
+
+my %PARTS;
+#Geting all partitions
+$query = "SELECT PARTITION_NAME, PARTITION_DESCRIPTION"
+             ."\n FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME='".$mysql_table."'"
+             ."\n AND TABLE_SCHEMA='".$mysql_dbname."' ORDER BY PARTITION_DESCRIPTION ASC;";
 $sth = $db->prepare($query);
 $sth->execute();
-my ($partcount) = $sth->fetchrow_array();
+my ($partcount) = $sth->rows;
+while(my ($minpart,$todaytstamp) = $sth->fetchrow_array()) {
 
-while($partcount > $maxparts ) {
-
-    $query = "SELECT PARTITION_NAME, MIN(PARTITION_DESCRIPTION)"
-             ."\n FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME='".$mysql_table."'"
-             ."\n AND TABLE_SCHEMA='".$mysql_dbname."';";
-
-    $sth = $db->prepare($query);
-    $sth->execute();
-    my ($minpart,$todaytstamp) = $sth->fetchrow_array();
-    $todaytstamp+=0;
-    
-    #Dont' delete the partition for the current day or for future. Bad idea!
-    if($curtstamp <= $todaytstamp) {    
-          $partcount = 0;
+    if($partcount <= $totalparts || $curtstamp <= $todaytstamp) {
+          #Creating HASH of existing partitions  
+          $PARTS{$minpart."_".$todaytstamp} = 1;
           next;
     }
-           
-    #Delete
+    
+    next if($minpart eq "pmax");
+    
     $query = "ALTER TABLE ".$mysql_table." DROP PARTITION ".$minpart;
     $db->do($query);
     if (!$db->{Executed}) {
            print "Couldn't drop partition: $minpart\n";
            break;
     }
-    
-    #decrease partcount
-    $partcount--;
+
+    $partcount--;      
 }
 
 # < condition
 $curtstamp+=(86400);
 
-#Create new partitions 
+#Create new partitions
 for(my $i=0; $i<$newparts; $i++) {
 
     $oldstamp = $curtstamp;
-    $curtstamp+=$mystep;
-    
+    $curtstamp+=$mystep;   
+
     ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($oldstamp);
 
-    my $newpartname = sprintf("p%04d%02d%02d%02d",($year+=1900),(++$mon),$mday,$hour);    
+    my $newpartname = sprintf("p%04d%02d%02d%02d",($year+=1900),(++$mon),$mday,$hour);
     $newpartname.= sprintf("%02d", $min) if($partstep > 1);
-    
-    $query = "SELECT COUNT(*) "
-             ."\n FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME='".$mysql_table."'"
-             ."\n AND TABLE_SCHEMA='".$mysql_dbname."' AND PARTITION_NAME='".$newpartname."'"
-             ."\n AND PARTITION_DESCRIPTION = '".$curtstamp."'";
-             
-    $sth = $db->prepare($query);
-    $sth->execute();
-    my ($exist) = $sth->fetchrow_array();
-    $exist+=0;
-    
-    if(!$exist) {
 
-	# Fix MAXVALUE. Thanks Dorn B. <djbinter@gmail.com> for report and fix.
+    if(!defined $PARTS{$newpartname."_".$curtstamp}) {
+
+        # Fix MAXVALUE. Thanks Dorn B. <djbinter@gmail.com> for report and fix.
         $query = "ALTER TABLE ".$mysql_table." REORGANIZE PARTITION pmax INTO (PARTITION ".$newpartname
-                                ."\n VALUES LESS THAN (".$curtstamp.") ENGINE = ".$engine.", PARTITION pmax VALUES LESS THAN MAXVALUE ENGINE = ".$engine.")";  
-
+                                ."\n VALUES LESS THAN (".$curtstamp.") ENGINE = ".$engine.", PARTITION pmax VALUES LESS THAN MAXVALUE ENGINE = ".$engine.")";
         $db->do($query);
-                    
         if (!$db->{Executed}) {
              print "Couldn't add partition: $newpartname\n";
         }
     }    
 }
+
