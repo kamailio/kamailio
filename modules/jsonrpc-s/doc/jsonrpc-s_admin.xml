@@ -100,7 +100,7 @@ modparam("jsonrpc-s", "pretty_format", 1)
 
 	<section>
 	<title>Functions</title>
- 	<section>
+ 	<section id="jsonrpc-s.f.jsonrpc_dispatch">
 	    <title>
 		<function moreinfo="none">jsonrpc_dispatch()</function>
 	    </title>
@@ -154,6 +154,28 @@ event_route[xhttp:request] {
 </programlisting>
 	    </example>
 	</section>
+ 	<section id="jsonrpc-s.f.jsonrpc_exec">
+	    <title>
+		<function moreinfo="none">jsonrpc_exec(cmd)</function>
+	    </title>
+	    <para>
+			Execute JSONRPC command given as parameter.
+		</para>
+		<para>
+			The parameter has to be a full valid JSONRPC document. It can
+			be a dynamic string with variables. The result of the command
+			can be accessed via $jsonrpl(key) variables.
+	    </para>
+		<example>
+		<title><function>jsonrpc_exec</function> usage</title>
+		<programlisting format="linespecific">
+...
+jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 </chapter>
 
