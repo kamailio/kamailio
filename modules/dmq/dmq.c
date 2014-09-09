@@ -343,12 +343,16 @@ static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 {
 	void *h;
 	dmq_node_t* cur = node_list->nodes;
+	char ip[IP6_MAX_STR_SIZE + 1];
 
 	while(cur) {
+		memset(ip, 0, IP6_MAX_STR_SIZE + 1);
+		ip_addr2sbuf(&cur->ip_address, ip, IP6_MAX_STR_SIZE);
 		if (rpc->add(c, "{", &h) < 0) goto error;
-		if (rpc->struct_add(h, "SSddd",
+		if (rpc->struct_add(h, "SSsddd",
 			"host", &cur->uri.host,
 			"port", &cur->uri.port,
+			"resolved_ip", ip,
 			"status", cur->status,
 			"last_notification", cur->last_notification,
 			"local", cur->local) < 0) goto error;
