@@ -770,6 +770,97 @@ sht_unlock("ha=>test");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_iterator_start">
+		<title>
+		<function moreinfo="none">sht_iterator_start(iname, hname)</function>
+		</title>
+		<para>
+			Start an iterator for hash table named by the value of parameter
+			hname. The parameter iname is used to identify the iterator. There
+			can be up to 4 iterators at the same time, with different name.
+		</para>
+		<para>
+			Both parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			IMPORTANT: the slot of the hash table is left locked when
+			retrieving in item. Therefore be sure you do not update the
+			content of the hash table in between sht_iterator_start()
+			and sht_iterator_end(), because it may end up in dead lock.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_start</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_iterator_start("i1", "h1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_iterator_end">
+		<title>
+		<function moreinfo="none">sht_iterator_end(iname)</function>
+		</title>
+		<para>
+			Close the iterator identified by iname parameter and release
+			the hash table slot aquired by the iterator. The iname value
+			must be the same used for sht_iterator_start().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_end</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_iterator_next">
+		<title>
+		<function moreinfo="none">sht_iterator_next(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the next item in hash table. It must
+			be called also after sht_iterator_start() to get the first
+			item in the hash table. Items are returned as they are found
+			in the hash table slot, starting with the first slot.
+		</para>
+		<para>
+			The return code is false when there is no (more) item in the
+			hash table.
+		</para>
+		<para>
+			The item name and value are accessible via variables:
+			$shtitkey(iname) and $shtitval(iname).
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_next</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sht_iterator_start("i1", "h1");
+    while(sht_iterator_next("i1")) {
+        xlog("h1[$shtitkey(i1)] is: $shtitval(i1)\n");
+    }
+    sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 		<section>
 		<title>Exported pseudo-variables</title>

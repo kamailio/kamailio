@@ -61,6 +61,9 @@ Ovidiu Sas
               4.4. sht_reset(htable)
               4.5. sht_lock(htable=>key)
               4.6. sht_unlock(htable=>key)
+              4.7. sht_iterator_start(iname, hname)
+              4.8. sht_iterator_end(iname)
+              4.9. sht_iterator_next(iname)
 
         5. Exported pseudo-variables
         6. MI Commands
@@ -109,6 +112,9 @@ Ovidiu Sas
    1.20. sht_reset usage
    1.21. sht_lock usage
    1.22. sht_unlock usage
+   1.23. sht_iterator_start usage
+   1.24. sht_iterator_end usage
+   1.25. sht_iterator_next usage
 
 Chapter 1. Admin Guide
 
@@ -145,6 +151,9 @@ Chapter 1. Admin Guide
         4.4. sht_reset(htable)
         4.5. sht_lock(htable=>key)
         4.6. sht_unlock(htable=>key)
+        4.7. sht_iterator_start(iname, hname)
+        4.8. sht_iterator_end(iname)
+        4.9. sht_iterator_next(iname)
 
    5. Exported pseudo-variables
    6. MI Commands
@@ -606,6 +615,9 @@ modparam("htable", "enable_dmq", 1)
    4.4. sht_reset(htable)
    4.5. sht_lock(htable=>key)
    4.6. sht_unlock(htable=>key)
+   4.7. sht_iterator_start(iname, hname)
+   4.8. sht_iterator_end(iname)
+   4.9. sht_iterator_next(iname)
 
 4.1.  sht_print()
 
@@ -680,6 +692,67 @@ sht_lock("ha=>test");
 sht_lock("ha=>test");
 $sht(ha=>test) = $sht(ha=>test) + 10;
 sht_unlock("ha=>test");
+...
+
+4.7.  sht_iterator_start(iname, hname)
+
+   Start an iterator for hash table named by the value of parameter hname.
+   The parameter iname is used to identify the iterator. There can be up
+   to 4 iterators at the same time, with different name.
+
+   Both parameters can be dynamic strings with variables.
+
+   IMPORTANT: the slot of the hash table is left locked when retrieving in
+   item. Therefore be sure you do not update the content of the hash table
+   in between sht_iterator_start() and sht_iterator_end(), because it may
+   end up in dead lock.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.23. sht_iterator_start usage
+...
+sht_iterator_start("i1", "h1");
+...
+
+4.8.  sht_iterator_end(iname)
+
+   Close the iterator identified by iname parameter and release the hash
+   table slot aquired by the iterator. The iname value must be the same
+   used for sht_iterator_start().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. sht_iterator_end usage
+...
+sht_iterator_end("i1");
+...
+
+4.9.  sht_iterator_next(iname)
+
+   Move the iterator to the next item in hash table. It must be called
+   also after sht_iterator_start() to get the first item in the hash
+   table. Items are returned as they are found in the hash table slot,
+   starting with the first slot.
+
+   The return code is false when there is no (more) item in the hash
+   table.
+
+   The item name and value are accessible via variables: $shtitkey(iname)
+   and $shtitval(iname).
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.25. sht_iterator_next usage
+...
+    sht_iterator_start("i1", "h1");
+    while(sht_iterator_next("i1")) {
+        xlog("h1[$shtitkey(i1)] is: $shtitval(i1)\n");
+    }
+    sht_iterator_end("i1");
 ...
 
 5. Exported pseudo-variables
