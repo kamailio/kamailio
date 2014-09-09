@@ -602,7 +602,25 @@ modparam("presence", "db_table_lock_type", 0)
 </programlisting>
 	    </example>
 	</section>
-
+	<section id="presence.p.local_log_level">
+	    <title><varname>local_log_level</varname> (int)</title>
+	    <para>
+		Control log level for some debug messages inside the module.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 2 (L_INFO).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>local_log_level</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "local_log_level", 3)
+...
+</programlisting>
+	    </example>
+	</section>
 
 </section>
 
