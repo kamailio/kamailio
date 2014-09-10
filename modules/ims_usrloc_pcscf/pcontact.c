@@ -155,11 +155,6 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 	(*_c)->contact_user.s = sip_uri.user.s;
 	(*_c)->contact_user.len = sip_uri.user.len;
 
-	if (hashing_type==0) {
-		(*_c)->aorhash = core_hash(_contact, 0, 0);
-	} else {
-		(*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
-	}
 	(*_c)->expires = _ci->expires;
 	(*_c)->reg_state = _ci->reg_state;
 
@@ -177,6 +172,18 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 		(*_c)->received_host.len = _ci->received_host.len;
 		(*_c)->received_port = _ci->received_port;
 		(*_c)->received_proto = _ci->received_proto;
+	}
+
+	if (hashing_type==0) {
+		(*_c)->aorhash = core_hash(_contact, 0, 0);
+	} else if (hashing_type==1) {
+		(*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
+	} else {
+		if ((*_c)->received_host.len > 0) {
+			(*_c)->aorhash = core_hash(&(*_c)->received_host, 0, 0);	
+		} else {
+			(*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
+		}
 	}
 
 	//setup public ids

@@ -188,9 +188,12 @@ modparam("ims_usrloc_pcscf", "db_mode", 1)
           <para>0 - This uses the original hash over AOR method. By default we
           are backwards compatible...</para>
         </listitem>
-
         <listitem>
-          <para>1 - Use the newer hash over IP:PORT.</para>
+          <para>1 - Use the newer hash over the Host from Contact-Header.</para>
+        </listitem>
+        <listitem>
+          <para>2 - Use the newer hash over the source-IP from where the 
+		request was received (useful for NAT-Scenarios)</para>
         </listitem>
       </itemizedlist>
 
