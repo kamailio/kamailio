@@ -107,6 +107,52 @@ static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr)
 	return 0;
 }
 
+int checkcontact(struct sip_msg* _m, pcontact_t * c) {
+	int security_server_port = -1;
+	str received_host = {0, 0};
+	char srcip[50];	
+
+	if (c->security) {
+		switch (c->security->type) {
+		case SECURITY_IPSEC:
+			security_server_port = c->security->data.ipsec->port_uc;
+			break;
+		case SECURITY_TLS:
+		case SECURITY_NONE:
+			break;
+		}
+	} else if (c->security_temp) {
+		switch (c->security->type) {
+		case SECURITY_IPSEC:
+			security_server_port = c->security->data.ipsec->port_uc;
+			break;
+		case SECURITY_TLS:
+		case SECURITY_NONE:
+			break;
+		}
+	}
+
+	if ((c->reg_state == PCONTACT_REGISTERED) 
+                && (ignore_contact_rxport_check || (c->received_port == _m->rcv.src_port) || (security_server_port == _m->rcv.src_port))
+                && (ignore_contact_rxport_check||(c->received_proto == _m->rcv.proto))) {
+            
+		received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+		received_host.s = srcip;
+		LM_DBG("Received host len %d (search %d)\n", c->received_host.len, received_host.len);
+		// Then check the length:
+		if (c->received_host.len == received_host.len) {
+			LM_DBG("Received host %.*s (search %.*s)\n",
+				c->received_host.len, c->received_host.s,
+				received_host.len, received_host.s);
+
+			// Finally really compare the "received_host"
+			if (!memcmp(c->received_host.s, received_host.s, received_host.len))
+				return 0;
+		}
+	}
+	return 1;
+}
+
 /**
  * get PContact-Structure for message
  * (search only once per Request)
@@ -114,73 +160,49 @@ static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr)
 pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 	ppublic_t * p;
 	contact_body_t *b = 0;
-	str received_host = {0, 0};
 	contact_t *ct;
-	char srcip[50];	
-	int security_server_port = -1;
 
 	if (_m->id != current_msg_id) {
 		current_msg_id = _m->id;
 		c = NULL;
 
-		b = cscf_parse_contacts(_m);
-
-		if (b && b->contacts) {
-			for (ct = b->contacts; ct; ct = ct->next) {
-				if (ul.get_pcontact(_d, &ct->uri, &c) == 0) {
-					if (c->security) {
-						switch (c->security->type) {
-						case SECURITY_IPSEC:
-							security_server_port = c->security->data.ipsec->port_uc;
-							break;
-						case SECURITY_TLS:
-						case SECURITY_NONE:
-							break;
-						}
-					} else if (c->security_temp) {
-						switch (c->security->type) {
-						case SECURITY_IPSEC:
-							security_server_port = c->security->data.ipsec->port_uc;
-							break;
-						case SECURITY_TLS:
-						case SECURITY_NONE:
-							break;
-						}
-					}
-
-					if ((c->reg_state == PCONTACT_REGISTERED) 
-                                                && (ignore_contact_rxport_check || (c->received_port == _m->rcv.src_port) || (security_server_port == _m->rcv.src_port))
-                                                && (ignore_contact_rxport_check||(c->received_proto == _m->rcv.proto))) {
-                                            
-						received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-						received_host.s = srcip;
-						LM_DBG("Received host len %d (search %d)\n", c->received_host.len, received_host.len);
-						// Then check the length:
-						if (c->received_host.len == received_host.len) {
-							LM_DBG("Received host %.*s (search %.*s)\n",
-								c->received_host.len, c->received_host.s,
-								received_host.len, received_host.s);
-
-							// Finally really compare the "received_host"
-							if (!memcmp(c->received_host.s, received_host.s, received_host.len))
-								break;
-							c = NULL;
-						}
-					} else {
-						c = NULL;
-					}
-				}
-			}
-		} else {
-			LM_WARN("No contact-header found\n");
-		}
-
-		if ((c == NULL) && (is_registered_fallback2ip > 0)) {
-			LM_WARN("Contact not found based on Contact-header, trying IP/Port/Proto\n");
+		if (is_registered_fallback2ip == 2) {
 			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 			received_host.s = srcip;
 			if (ul.get_pcontact_by_src(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, &c) == 1)
 				LM_DBG("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
+			if (checkcontact(_m, c) != 0) {
+				c = NULL;
+			}
+		}
+
+		if (c == NULL) {
+			b = cscf_parse_contacts(_m);
+
+			if (b && b->contacts) {
+				for (ct = b->contacts; ct; ct = ct->next) {
+					if (ul.get_pcontact(_d, &ct->uri, &c) == 0) {
+						if (checkcontact(_m, c) == 0) {
+							break;
+						} else {
+							c = NULL;
+						}
+					}
+				}
+			} else {
+				LM_WARN("No contact-header found?!?\n");
+			}
+		}
+
+		if ((c == NULL) && (is_registered_fallback2ip == 1)) {
+			LM_INFO("Contact not found based on Contact-header, trying IP/Port/Proto\n");
+			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+			received_host.s = srcip;
+			if (ul.get_pcontact_by_src(_d, &received_host, _m->rcv.src_port, _m->rcv.proto, &c) == 1)
+				LM_DBG("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
+			if (checkcontact(_m, c) != 0) {
+				c = NULL;
+			}
 		}
 	}
 	asserted_identity = NULL;
@@ -327,9 +349,11 @@ error:
 	return -1;
 }
 
-static str route_start={"Route: <",8};
+static str route_start={": <",8};
 static str route_sep={">, <",4};
 static str route_end={">\r\n",3};
+
+extern str route_header;
 
 /**
  * Force Service routes (upon request)
@@ -348,7 +372,7 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 	/* we need to be sure we have seen all HFs */
 	parse_headers(_m, HDR_EOH_F, 0);
 
-	/* Savbe current buffer */
+	/* Save current buffer */
 	buf = _m->buf;
 
 	// Delete old Route headers:
@@ -381,7 +405,9 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 			goto error;
 		}	
 		/* Calculate the length: */
-		new_route_header.len = route_start.len + route_end.len + (c->num_service_routes-1) * route_sep.len;
+		new_route_header.len = route_header.len + route_start.len +
+			route_end.len + (c->num_service_routes-1) * route_sep.len;
+
 		for(i=0; i< c->num_service_routes; i++)
 			new_route_header.len+=c->service_routes[i].len;		
 		/* Allocate the memory for this new header: */
@@ -393,6 +419,7 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 		
 		/* Construct new header */
 		new_route_header.len = 0;
+		STR_APPEND(new_route_header, route_header);
 		STR_APPEND(new_route_header, route_start);
 		for(i=0; i < c->num_service_routes; i++) {
 			if (i) STR_APPEND(new_route_header, route_sep);
