@@ -194,7 +194,7 @@ int sr_event_exec(int type, void *data)
 #endif /* EXTRA_DEBUG */
 					ret = 0;
 					for(i=0; i<SREV_CB_LIST_SIZE
-							&& _sr_events_list.net_data_out[i]; i++) {
+							&& _sr_events_list.net_data_in[i]; i++) {
 						ret |= _sr_events_list.net_data_in[i](data);
 					}
 #ifdef EXTRA_DEBUG
