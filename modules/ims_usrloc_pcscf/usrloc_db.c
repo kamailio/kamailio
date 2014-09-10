@@ -306,8 +306,8 @@ int db_insert_pcontact(struct pcontact* _c)
 	/* add service routes */
 	service_routes.len = service_routes_as_string(_c, &service_route_buffer);
 	service_routes.s = service_route_buffer.buf;
-	SET_PROPER_NULL_FLAG(service_routes, values, LP_PUBLIC_IPS_IDX);
-	SET_STR_VALUE(GET_FIELD_IDX(values, LP_PUBLIC_IPS_IDX), service_routes);
+	SET_PROPER_NULL_FLAG(service_routes, values, LP_SERVICE_ROUTES_IDX);
+	SET_STR_VALUE(GET_FIELD_IDX(values, LP_SERVICE_ROUTES_IDX), service_routes);
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
