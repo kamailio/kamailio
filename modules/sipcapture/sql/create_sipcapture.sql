@@ -1,12 +1,7 @@
-/* 
- * only for MYSQL >= 5.1.43
-*/
 
-/* this SQL schema version # 3 */
+/* this is SQL schema version # 4 */
 
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `sip_capture` (
+CREATE TABLE IF NOT EXISTS `sip_capture` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   `micro_ts` bigint(18) NOT NULL DEFAULT '0',
@@ -29,7 +24,7 @@ CREATE TABLE `sip_capture` (
   `via_1` varchar(256) NOT NULL,
   `via_1_branch` varchar(80) NOT NULL,
   `cseq` varchar(25) NOT NULL,
-  `diversion` varchar(256) NOT NULL DEFAULT '',
+  `diversion` varchar(256) NOT NULL,
   `reason` varchar(200) NOT NULL,
   `content_type` varchar(256) NOT NULL,
   `auth` varchar(256) NOT NULL,
@@ -42,6 +37,7 @@ CREATE TABLE `sip_capture` (
   `contact_port` int(10) NOT NULL,
   `originator_ip` varchar(60) NOT NULL DEFAULT '',
   `originator_port` int(10) NOT NULL,
+  `correlation_id` varchar(256) NOT NULL,
   `proto` int(5) NOT NULL,
   `family` int(1) DEFAULT NULL,
   `rtp_stat` varchar(256) NOT NULL,
@@ -61,4 +57,3 @@ CREATE TABLE `sip_capture` (
 PARTITION BY RANGE ( UNIX_TIMESTAMP(`date`) ) (
 PARTITION pmax VALUES LESS THAN (MAXVALUE)
 );
-
