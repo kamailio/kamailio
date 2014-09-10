@@ -921,6 +921,30 @@ modparam("usrloc", "expires_type", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.db_raw_fetch_type">
+		<title><varname>db_raw_fetch_type</varname> (int)</title>
+		<para>
+			This affect DB-only mode and controls what kind of
+			raw query is used to fetch the contacts from database for
+			specific needs (e.g., sending NAT keepalives). If it is set to 0,
+			then the common SQL query is used (working for MySQL, PostgreSQL,
+			...). If it is set to 1, the query required by Oracle is used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_raw_fetch_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_raw_fetch_type", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

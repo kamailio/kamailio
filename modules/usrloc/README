@@ -70,6 +70,7 @@ Bogdan-Andrei Iancu
               3.32. db_ops_ruid (int)
               3.33. handle_lost_tcp (int)
               3.34. expires_type (int)
+              3.35. db_raw_fetch_type (int)
 
         4. Functions
         5. MI Commands
@@ -161,6 +162,7 @@ Bogdan-Andrei Iancu
    1.32. Set db_ops_ruid parameter
    1.33. Set handle_lost_tcp parameter
    1.34. Set expires_type parameter
+   1.35. Set db_raw_fetch_type parameter
 
 Chapter 1. Admin Guide
 
@@ -211,6 +213,7 @@ Chapter 1. Admin Guide
         3.32. db_ops_ruid (int)
         3.33. handle_lost_tcp (int)
         3.34. expires_type (int)
+        3.35. db_raw_fetch_type (int)
 
    4. Functions
    5. MI Commands
@@ -333,6 +336,7 @@ Chapter 1. Admin Guide
    3.32. db_ops_ruid (int)
    3.33. handle_lost_tcp (int)
    3.34. expires_type (int)
+   3.35. db_raw_fetch_type (int)
 
 3.1. nat_bflag (integer)
 
@@ -797,6 +801,21 @@ modparam("usrloc", "handle_lost_tcp", 1)
    Example 1.34. Set expires_type parameter
 ...
 modparam("usrloc", "expires_type", 1)
+...
+
+3.35. db_raw_fetch_type (int)
+
+   This affect DB-only mode and controls what kind of raw query is used to
+   fetch the contacts from database for specific needs (e.g., sending NAT
+   keepalives). If it is set to 0, then the common SQL query is used
+   (working for MySQL, PostgreSQL, ...). If it is set to 1, the query
+   required by Oracle is used.
+
+   Default value is "0".
+
+   Example 1.35. Set db_raw_fetch_type parameter
+...
+modparam("usrloc", "db_raw_fetch_type", 1)
 ...
 
 4. Functions
