@@ -118,6 +118,8 @@ extern int my_pid(void);
 extern int log_stderr;
 
 extern int log_color;
+extern char *log_prefix_fmt;
+extern str *log_prefix_val;
 
 /** @brief maps log levels to their string name and corresponding syslog level */
 
@@ -150,6 +152,8 @@ void dprint_color_reset(void);
 void dprint_color_update(int level, char f, char b);
 void dprint_init_colors(void);
 void dprint_term_color(char f, char b, str *obuf);
+
+void log_prefix_init(void);
 
 /** @brief
  * General logging macros
@@ -271,44 +275,42 @@ void dprint_term_color(char f, char b, str *obuf);
 			do { \
 				if (get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
 						DPRINT_NON_CRIT) { \
+					int __llevel; \
+					__llevel = ((level)<L_ALERT)?L_ALERT:(((level)>L_DBG)?L_DBG:level); \
 					DPRINT_CRIT_ENTER; \
-					if (likely(((level) >= L_ALERT) && ((level) <= L_DBG))){ \
-						if (unlikely(log_stderr)) { \
-							if (unlikely(log_color)) dprint_color(level); \
+					if (unlikely(log_stderr)) { \
+						if (unlikely(log_color)) dprint_color(__llevel); \
+						if(unlikely(log_prefix_val)) { \
+							fprintf(stderr, "%.*s%2d(%d) %s: %s" fmt, \
+								log_prefix_val->len, log_prefix_val->s, \
+								process_no, my_pid(), \
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel), \
+								(prefix) , ## args);\
+						} else { \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
-									process_no, my_pid(), \
-									(lname)?(lname):LOG_LEVEL2NAME(level), \
-									(prefix) , ## args);\
-							if (unlikely(log_color)) dprint_color_reset(); \
-						} else { \
-							syslog(LOG2SYSLOG_LEVEL(level) |\
-								   (((facility) != DEFAULT_FACILITY) ? \
-									(facility) : \
-									cfg_get(core, core_cfg, log_facility)), \
-									"%s: %s" fmt,\
-									(lname)?(lname):LOG_LEVEL2NAME(level),\
-									(prefix) , ## args); \
+								process_no, my_pid(), \
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel), \
+								(prefix) , ## args);\
 						} \
+						if (unlikely(log_color)) dprint_color_reset(); \
 					} else { \
-						if (log_stderr) { \
-							if (unlikely(log_color)) dprint_color(level); \
-							fprintf(stderr, "%2d(%d) %s" fmt, \
-										process_no, my_pid(), \
-										(prefix) , ## args); \
-							if (unlikely(log_color)) dprint_color_reset(); \
+						if(unlikely(log_prefix_val)) { \
+							syslog(LOG2SYSLOG_LEVEL(__llevel) |\
+							   (((facility) != DEFAULT_FACILITY) ? \
+								(facility) : \
+								cfg_get(core, core_cfg, log_facility)), \
+								"%.*s%s: %s" fmt,\
+								log_prefix_val->len, log_prefix_val->s, \
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
+								(prefix) , ## args); \
 						} else { \
-							if ((level)<L_ALERT) \
-								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
-									   (((facility) != DEFAULT_FACILITY) ? \
-										(facility) : \
-										cfg_get(core, core_cfg, log_facility)),\
-										"%s" fmt, (prefix) , ## args); \
-							else \
-								syslog(LOG2SYSLOG_LEVEL(L_DBG) | \
-									   (((facility) != DEFAULT_FACILITY) ? \
-										(facility) : \
-										cfg_get(core, core_cfg, log_facility)),\
-										"%s" fmt, (prefix) , ## args); \
+							syslog(LOG2SYSLOG_LEVEL(__llevel) |\
+							   (((facility) != DEFAULT_FACILITY) ? \
+								(facility) : \
+								cfg_get(core, core_cfg, log_facility)), \
+								"%s: %s" fmt,\
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
+								(prefix) , ## args); \
 						} \
 					} \
 					DPRINT_CRIT_EXIT; \

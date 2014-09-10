@@ -81,4 +81,6 @@ int run_actions_safe(struct run_act_ctx* c, struct action* a,
 #define run_actions_safe(c, a, m) run_actions(c, a, m)
 #endif /* USE_LONGJMP */
 
+void log_prefix_set(sip_msg_t *msg);
+
 #endif

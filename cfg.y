@@ -395,6 +395,7 @@ extern char *default_routename;
 %token LOGFACILITY
 %token LOGNAME
 %token LOGCOLOR
+%token LOGPREFIX
 %token LISTEN
 %token ADVERTISE
 %token ALIAS
@@ -843,6 +844,8 @@ assign_stm:
 	| LOGNAME EQUAL error { yyerror("string value expected"); }
 	| LOGCOLOR EQUAL NUMBER { log_color=$3; }
 	| LOGCOLOR EQUAL error { yyerror("boolean value expected"); }
+	| LOGPREFIX EQUAL STRING { log_prefix_fmt=$3; }
+	| LOGPREFIX EQUAL error { yyerror("string value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }

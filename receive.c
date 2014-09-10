@@ -153,6 +153,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	}
 	DBG("After parse_msg...\n");
 
+	/* set log prefix */
+	log_prefix_set(msg);
 
 	/* ... clear branches from previous message */
 	clear_branches();
@@ -301,7 +303,10 @@ end:
 #ifdef STATS
 	if (skipped) STATS_RX_DROPS;
 #endif
+	/* reset log prefix */
+	log_prefix_set(NULL);
 	return 0;
+
 #ifndef NO_ONREPLY_ROUTE_ERROR
 error_rpl:
 	/* execute post reply-script callbacks */
@@ -327,6 +332,8 @@ error02:
 	pkg_free(msg);
 error00:
 	STATS_RX_DROPS;
+	/* reset log prefix */
+	log_prefix_set(NULL);
 	return -1;
 }
 

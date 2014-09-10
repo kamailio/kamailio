@@ -38,6 +38,7 @@
  
 #include "globals.h"
 #include "dprint.h"
+#include "pvar.h"
  
 #include <stdarg.h>
 #include <stdio.h>
@@ -367,4 +368,44 @@ void dprint_color_update(int level, char f, char b)
 		return;
 	if(f && f!='0') _log_level_colors[level - L_MIN].f = f;
 	if(b && b!='0') _log_level_colors[level - L_MIN].b = b;
+}
+
+
+/* log_prefix functionality */
+str *log_prefix_val = NULL;
+static pv_elem_t *log_prefix_pvs = NULL;
+
+#define LOG_PREFIX_SIZE	128
+static char log_prefix_buf[LOG_PREFIX_SIZE];
+static str log_prefix_str;
+
+void log_prefix_init(void)
+{
+	str s;
+	if(log_prefix_fmt==NULL)
+		return;
+	s.s = log_prefix_fmt; s.len = strlen(s.s);
+
+	if(pv_parse_format(&s, &log_prefix_pvs)<0)
+	{
+		LM_ERR("wrong format[%s]\n", s.s);
+		return;
+	}
+}
+
+void log_prefix_set(sip_msg_t *msg)
+{
+	if(log_prefix_pvs == NULL)
+		return;
+	if(msg==NULL) {
+		log_prefix_val = NULL;
+		return;
+	}
+	log_prefix_str.s = log_prefix_buf;
+	log_prefix_str.len = LOG_PREFIX_SIZE;
+	if(pv_printf(msg, log_prefix_pvs, log_prefix_str.s, &log_prefix_str.len)<0)
+		return;
+	if(log_prefix_str.len<=0)
+		return;
+	log_prefix_val = &log_prefix_str;
 }

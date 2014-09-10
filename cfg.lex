@@ -346,6 +346,7 @@ LOGSTDERROR	log_stderror
 LOGFACILITY	log_facility
 LOGNAME		log_name
 LOGCOLOR	log_color
+LOGPREFIX	log_prefix
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 ALIAS		alias
@@ -709,6 +710,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGFACILITY}	{ yylval.strval=yytext; return LOGFACILITY; }
 <INITIAL>{LOGNAME}	{ yylval.strval=yytext; return LOGNAME; }
 <INITIAL>{LOGCOLOR}	{ yylval.strval=yytext; return LOGCOLOR; }
+<INITIAL>{LOGPREFIX}	{ yylval.strval=yytext; return LOGPREFIX; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }

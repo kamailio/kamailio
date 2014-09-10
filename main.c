@@ -380,6 +380,7 @@ int log_stderr = 0;
 int log_color = 0;
 /* set custom app name for syslog printing */
 char *log_name = 0;
+char *log_prefix_fmt = 0;
 pid_t creator_pid = (pid_t) -1;
 int config_check = 0;
 /* check if reply first via host==us */
@@ -1352,6 +1353,9 @@ int main_loop(void)
 		 */
 		cfg_main_set_local();
 
+		/* init log prefix format */
+		log_prefix_init();
+
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
 		 * (e.g. shared vars that depend on the total number of processes
@@ -1564,6 +1568,9 @@ int main_loop(void)
 		 * to make the group instances available in PROC_INIT.
 		 */
 		cfg_main_set_local();
+
+		/* init log prefix format */
+		log_prefix_init();
 
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
