@@ -161,6 +161,9 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 	ppublic_t * p;
 	contact_body_t *b = 0;
 	contact_t *ct;
+	str received_host = {0, 0};
+	char srcip[50];	
+
 
 	if (_m->id != current_msg_id) {
 		current_msg_id = _m->id;
