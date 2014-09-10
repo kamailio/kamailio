@@ -91,7 +91,6 @@ $query = "SELECT PARTITION_NAME, PARTITION_DESCRIPTION"
 $sth = $db->prepare($query);
 $sth->execute();
 my @oldparts;
-my $newparts = 0;
 my @partsremove;
 while(my @ref = $sth->fetchrow_array())
 {
@@ -103,7 +102,6 @@ while(my @ref = $sth->fetchrow_array())
       
    if($curtstamp <= $todaytstamp) { 
           $PARTS{$minpart."_".$todaytstamp} = 1;
-          $newparts++;
    }
    else { push(@oldparts, \@ref); }
    
