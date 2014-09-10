@@ -119,9 +119,6 @@ void dbt_close(db1_con_t* _h)
 		return;
 	}
 	
-	if (DBT_CON_RESULT(_h)) 
-		dbt_result_free(DBT_CON_RESULT(_h));
-	
 	pkg_free(_h);
     return;
 }
@@ -138,19 +135,18 @@ int dbt_free_result(db1_con_t* _h, db1_res_t* _r)
 		return -1;
 	}
 
+
+	if(dbt_result_free((dbt_result_p)_r->ptr) < 0)
+	{
+		LM_ERR("unable to free internal structure\n");
+	}
+
 	if(db_free_result(_r) < 0) 
 	{
 		LM_ERR("unable to free result structure\n");
 		return -1;
 	}
 
-	
-	if(dbt_result_free(DBT_CON_RESULT(_h)) < 0) 
-	{
-		LM_ERR("unable to free internal structure\n");
-		return -1;
-	}
-	DBT_CON_RESULT(_h) = NULL;
 	return 0;
 }
 
@@ -173,6 +169,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
 	dbt_result_p _dres = NULL;
+	int result = 0;
 	
 	int *lkey=NULL, *lres=NULL;
 	
@@ -273,8 +270,6 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 	/* dbt_result_print(_dres); */
 	
-	DBT_CON_RESULT(_h) = _dres;
-	
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
@@ -286,7 +281,11 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
  	if(_o_l)
  		pkg_free(_o_l);
 
-	return dbt_get_result(_h, _r);
+	result = dbt_get_result(_r, _dres);
+	if(result != 0)
+		dbt_result_free(_dres);
+
+	return result;
 
 error:
 	/* unlock database */
@@ -302,6 +301,8 @@ error_nounlock:
 		pkg_free(_o_op);
 	if(_o_l)
 		pkg_free(_o_l);
+	if(_dres)
+		dbt_result_free(_dres);
 	LM_ERR("failed to query the table!\n");
 
 	return -1;
