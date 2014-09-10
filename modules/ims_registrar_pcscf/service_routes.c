@@ -137,7 +137,7 @@ int checkcontact(struct sip_msg* _m, pcontact_t * c) {
 		}
 	}
 
-	if ((c->reg_state == PCONTACT_REGISTERED) 
+	if ((ignore_reg_state || (c->reg_state == PCONTACT_REGISTERED)) 
                 && (ignore_contact_rxport_check || (c->received_port == _m->rcv.src_port) || (security_server_port == _m->rcv.src_port))
                 && (ignore_contact_rxport_check||(c->received_proto == _m->rcv.proto))) {
             

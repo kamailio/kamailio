@@ -78,7 +78,9 @@ pua_api_t pua; 							/**!< PUA API structure */
 int publish_reginfo = 0;
 int subscribe_to_reginfo = 0;
 int subscription_expires = 3600;
-int ignore_contact_rxport_check = 0;                             /**!< ignore port checks between received port on message and registration received port. 
+int ignore_reg_state = 0;
+int ignore_contact_rxport_check = 0;                             /**!< ignore port checks between received port on message and 
+registration received port. 
                                                                  * this is useful for example if you register with UDP but possibly send invite over TCP (message too big)*/
 
 time_t time_now;
@@ -89,6 +91,8 @@ str force_icscf_uri = str_init("");
 unsigned int pending_reg_expires = 30;			/**!< parameter for expiry time of a pending registration before receiving confirmation from SCSCF */
 
 int is_registered_fallback2ip = 0;
+
+
 
 char* rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
@@ -159,6 +163,7 @@ static param_export_t params[] = {
         {"subscribe_to_reginfo",        INT_PARAM, &subscribe_to_reginfo                },
         {"subscription_expires",        INT_PARAM, &subscription_expires                },
         {"ignore_contact_rxport_check", INT_PARAM, &ignore_contact_rxport_check         },
+        {"ignore_reg_state",		INT_PARAM, &ignore_reg_state			},
 	{"force_icscf_uri",		PARAM_STR, &force_icscf_uri			},
 //	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
 	{0, 0, 0}
