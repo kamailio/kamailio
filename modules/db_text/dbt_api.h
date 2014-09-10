@@ -36,10 +36,11 @@
 #include "../../lib/srdb1/db_con.h"
 #include "../../lib/srdb1/db_row.h"
 
+#include "dbt_res.h"
 /*
  * Retrieve result set
  */
-int dbt_get_result(db1_con_t* _h, db1_res_t** _r);
+int dbt_get_result(db1_res_t** _r, dbt_result_p _dres);
 
 int dbt_use_table(db1_con_t* _h, const str* _t);
 

@@ -119,7 +119,9 @@ int dbt_result_free(dbt_result_p _dres)
 			for(i=0; i<_dres->nrcols; i++)
 			{
 				if((_dres->colv[i].type==DB1_STR 
-							|| _dres->colv[i].type==DB1_STRING)
+							|| _dres->colv[i].type==DB1_STRING
+							|| _dres->colv[i].type==DB1_BLOB
+							)
 						&& _rp0->fields[i].val.str_val.s)
 					pkg_free(_rp0->fields[i].val.str_val.s);
 			}
