@@ -481,15 +481,15 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 		LM_DBG("Searching for [%.*s] and comparing to [%.*s]\n", _contact->len, _contact->s, c->aor.len, c->aor.s);
 
 		/* hosts HAVE to match */
-		if (lookup_check_received && ((needle_uri.host.len != c->received_host.len) || (memcmp(needle_uri.host.s, c->contact_host.s, needle_uri.host.len)!=0))) {
+		if (lookup_check_received && ((needle_uri.host.len != c->received_host.len) || (memcmp(needle_uri.host.s, c->received_host.s, needle_uri.host.len)!=0))) {
 			//can't possibly match
+			LM_DBG("Lookup failed for [%.*s <=> %.*s]\n", needle_uri.host.len, needle_uri.host.s, c->received_host.len, c->received_host.s);
 			c = c->next;
 			continue;
 		}
 
 		/* one of the ports must match, either the initial registered port, the received port, or one if the security ports (server) */
-		if ((needle_uri.port_no != c->contact_port)
-				&& (needle_uri.port_no != c->received_proto)) {
+		if ((needle_uri.port_no != c->contact_port) && (needle_uri.port_no != c->received_port)) {
 			//check security ports
 			if (c->security) {
 				switch (c->security->type) {
@@ -536,6 +536,8 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 		}
 
 		if (!port_match){
+			LM_DBG("Port don't match: %d (contact) %d (received) != %d!\n",
+		c->contact_port, c->received_port, needle_uri.port_no);
 			c = c->next;
 			continue;
 		}
