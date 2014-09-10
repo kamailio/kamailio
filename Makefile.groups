@@ -163,6 +163,9 @@ mod_list_uuid=uuid
 # - modules depending on ev library
 mod_list_ev=evapi
 
+# - modules depending on kazoo/rabitmq
+mod_list_kazoo=kazoo
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -186,7 +189,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_java) $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
-			   $(mod_list_ev))
+			   $(mod_list_ev) $(mod_list_kazoo))
 
 
 
@@ -352,6 +355,9 @@ module_group_kuuid=$(mod_list_uuid)
 
 # pkg libev modules
 module_group_kev=$(mod_list_ev)
+
+# pkg kazoo module
+module_group_kkazoo=$(mod_list_kazoo)
 
 # list of static modules
 #
