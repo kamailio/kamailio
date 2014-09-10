@@ -167,7 +167,7 @@ mod_list_ev=evapi
 mod_list_kazoo=kazoo
 
 # - modules depending on mongodb
-mod_list_mongodb=db_mongodb
+mod_list_mongodb=db_mongodb ndb_mongodb
 
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
