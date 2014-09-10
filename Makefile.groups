@@ -166,6 +166,9 @@ mod_list_ev=evapi
 # - modules depending on kazoo/rabitmq
 mod_list_kazoo=kazoo
 
+# - modules depending on mongodb
+mod_list_mongodb=db_mongodb
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -189,7 +192,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_java) $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
-			   $(mod_list_ev) $(mod_list_kazoo))
+			   $(mod_list_ev) $(mod_list_kazoo) \
+			   $(mod_list_mongodb))
 
 
 
@@ -358,6 +362,9 @@ module_group_kev=$(mod_list_ev)
 
 # pkg kazoo module
 module_group_kkazoo=$(mod_list_kazoo)
+
+# pkg mongodb modules
+module_group_kmongodb=$(mod_list_mongodb)
 
 # list of static modules
 #
