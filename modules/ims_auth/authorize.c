@@ -476,8 +476,11 @@ int challenge(struct sip_msg* msg, char* str1, char* alg, int is_proxy_auth, cha
     }
     return CSCF_RETURN_BREAK;
 }
+int www_challenge2(struct sip_msg* msg, char* _route, char* str1, char* str2) {
+    return challenge(msg, str1, 0, 0, _route);
+}
 
-int www_challenge(struct sip_msg* msg, char* _route, char* str1, char* str2) {
+int www_challenge3(struct sip_msg* msg, char* _route, char* str1, char* str2) {
     return challenge(msg, str1, str2, 0, _route);
 }
 
