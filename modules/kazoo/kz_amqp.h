@@ -30,11 +30,11 @@ extern int dbk_consumer_processes;
 
 typedef struct kz_amqp_conn_t {
 	kz_amqp_connection_info info;
+	char* url;
 	amqp_connection_state_t conn;
 	amqp_socket_t *socket;
 	amqp_channel_t channel_count;
 	amqp_channel_t channel_counter;
-//    gen_lock_t lock;
     struct kz_amqp_conn_t* next;
 } kz_amqp_conn, *kz_amqp_conn_ptr;
 
@@ -42,7 +42,6 @@ typedef struct {
 	kz_amqp_conn_ptr current;
 	kz_amqp_conn_ptr head;
 	kz_amqp_conn_ptr tail;
-//    gen_lock_t lock;
 } kz_amqp_conn_pool, *kz_amqp_conn_pool_ptr;
 
 
