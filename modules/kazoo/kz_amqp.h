@@ -22,7 +22,6 @@ typedef kz_amqp_connection_info *kz_amqp_connection_info_ptr;
 
 extern int dbk_channels;
 extern str dbk_node_hostname;
-extern struct tm_binds tmb;
 extern str dbk_consumer_event_key;
 extern str dbk_consumer_event_subkey;
 extern int dbk_consumer_processes;

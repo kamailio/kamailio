@@ -5,6 +5,7 @@
 #include <amqp_framing.h>
 #include <amqp_tcp_socket.h>
 #include <json/json.h>
+#include <uuid/uuid.h>
 #include "../../mem/mem.h"
 #include "../../timer_proc.h"
 #include "../../sr_module.h"
@@ -575,7 +576,14 @@ int kz_amqp_pipe_send(str *str_exchange, str *str_routing_key, str *str_payload)
     str unique_string = { 0, 0 };
     char serverid[512];
 
-    tmb.generate_callid(&unique_string);
+    uuid_t id;
+    char uuid_buffer[40];
+
+    uuid_generate_random(id);
+    uuid_unparse_lower(id, uuid_buffer);
+    unique_string.s = uuid_buffer;
+    unique_string.len = strlen(unique_string.s);
+
     sprintf(serverid, "kamailio@%.*s-<%d>-script-%lu", dbk_node_hostname.len, dbk_node_hostname.s, my_pid(), rpl_query_routing_key_count++);
 
 
@@ -642,7 +650,14 @@ int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key, str *str_
     str unique_string = { 0, 0 };
     char serverid[512];
 
-    tmb.generate_callid(&unique_string);
+    uuid_t id;
+    char uuid_buffer[40];
+
+    uuid_generate_random(id);
+    uuid_unparse_lower(id, uuid_buffer);
+    unique_string.s = uuid_buffer;
+    unique_string.len = strlen(unique_string.s);
+
     sprintf(serverid, "kamailio@%.*s-<%d>-script-%lu", dbk_node_hostname.len, dbk_node_hostname.s, my_pid(), rpl_query_routing_key_count++);
 
 

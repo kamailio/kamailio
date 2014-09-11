@@ -90,11 +90,6 @@ int dbk_pua_mode = 1;
 int dbk_single_consumer_on_reconnect = 1;
 int dbk_consume_messages_on_reconnect = 1;
 
-
-struct tm_binds tmb;
-pua_api_t kz_pua_api;
-presence_api_t kz_presence_api;
-
 int startup_time = 0;
 
 int *kz_pipe_fds = NULL;
@@ -195,20 +190,6 @@ struct module_exports exports = {
     mod_child_init				/* per-child init function */
 };
 
-
-
-static int kz_initialize_bindings() {
-    LM_DBG("kz_initialize_bindings\n");
-
-    /* load all TM stuff */
-    if (load_tm_api(&tmb) == -1) {
-    	LM_ERR("Can't load tm functions. Module TM not loaded?\n");
-    	return -1;
-    }
-
-    return 0;
-}
-
 static int mod_init(void) {
 	int i;
     startup_time = (int) time(NULL);
@@ -224,11 +205,6 @@ static int mod_init(void) {
    	dbk_consumer_event_subkey.len = strlen(dbk_consumer_event_subkey.s);
 
     kz_amqp_init();
-
-    if(kz_initialize_bindings() == -1) {
-   		LM_ERR("Error initializing bindings\n");
-   		return -1;
-   	}
 
     if(dbk_pua_mode == 1) {
 		kz_db_url.len = kz_db_url.s ? strlen(kz_db_url.s) : 0;
