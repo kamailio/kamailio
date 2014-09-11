@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -63,7 +63,7 @@ void rpc_trusted_reload(rpc_t* rpc, void* c) {
 		return;
 	}
 
-	rpc->printf(c, "Reload OK");
+	rpc->rpl_printf(c, "Reload OK");
 	return;
 }
 
@@ -114,7 +114,7 @@ void rpc_trusted_dump(rpc_t* rpc, void* c) {
  */
 struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
 {
-    if (reload_address_table () == 1) {
+    if (reload_address_table_cmd () == 1) {
 	return init_mi_tree( 200, MI_SSTR(MI_OK));
     } else {
 	return init_mi_tree( 400, MI_SSTR("Address table reload failed"));
@@ -125,12 +125,12 @@ struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
  * RPC function to reload address table
  */
 void rpc_address_reload(rpc_t* rpc, void* c) {
-	if (reload_address_table () != 1) {
+	if (reload_address_table_cmd () != 1) {
 		rpc->fault(c, 500, "Reload failed.");
 		return;
 	}
 
-	rpc->printf(c, "Reload OK");
+	rpc->rpl_printf(c, "Reload OK");
 	return;
 }
 
@@ -325,9 +325,9 @@ void rpc_test_uri(rpc_t* rpc, void* c)
     	uri[urip.len] = 0;
 
 	if (allow_test(basename, uri, contact) == 1) {
-		rpc->printf(c, "Allowed");
+		rpc->rpl_printf(c, "Allowed");
 		return;
 	}
-	rpc->printf(c, "Denied");
+	rpc->rpl_printf(c, "Denied");
 	return;
 }

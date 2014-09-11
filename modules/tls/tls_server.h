@@ -1,9 +1,6 @@
 /*
- * $Id$
- *
  * TLS module - main server part
  * 
- * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2005-2010 iptelorg GmbH
  *
  * This file is part of SIP-router, a free SIP server.
@@ -96,4 +93,6 @@ int tls_h_fix_read_conn(struct tcp_connection *c);
 
 int tls_connect(struct tcp_connection *c, int* error);
 int tls_accept(struct tcp_connection *c, int* error);
+
+void tls_lookup_event_routes(void);
 #endif /* _TLS_SERVER_H */

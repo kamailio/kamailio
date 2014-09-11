@@ -17,7 +17,7 @@
               1.2.4.1. fault
               1.2.4.2. send
               1.2.4.3. add
-              1.2.4.4. printf
+              1.2.4.4. rpl_printf
               1.2.4.5. struct_add
 
         1.2.5. Real World Example
@@ -39,12 +39,19 @@
    implementing RPC transports.
 
    The RPC transports are implemented by writting a RPC transport module.
-   The most used transport modules are ctl and xmlrpc . The first one
-   implements a ser-proprietary fast and space efficient RPC encoding over
-   different protocols (unix sockets, UDP, TCP, fifo). The second one uses
-   the de-facto XML-RPC standard encoding (over HTTP TCP or TLS). For more
-   information about the existing transport modules, please refer to their
-   documentation.
+   The most used transport modules are ctl , xmlrpc and jsonrpc-s .
+
+   ctl implements a proprietary fast and space efficient RPC encoding over
+   different protocols (unix sockets, UDP, TCP, fifo).
+
+   xmlrpc uses the de-facto XML-RPC standard encoding (over HTTP TCP or
+   TLS).
+
+   jsonrpc-s uses the de-facto JSON-RPC standard encoding (over HTTP TCP
+   or TLS).
+
+   For more information about the existing transport modules, please refer
+   to their documentation.
 
    When writing a RPC procedure or function, one needs only use the RPC
    API and it will work automatically with all the transports and
@@ -523,13 +530,14 @@ static void rpc_func(rpc_t* rpc, void *ctx)
    You can set the attributes of the newly created structure using
    struct_add function described in Section 1.2.4.5, "struct_add".
 
-1.2.4.4. printf
+1.2.4.4. rpl_printf
 
-   printf is a convenience function. The function adds data of type string
-   to the result set. The first parameter of the function is again a
-   formatting string, but this time it is printf-like formatting string:
-if (rpc->printf(ctx, "Unable to delete %d entries from table %s", num_entries, t
-able_name) < 0) return;
+   rpl_printf is a convenience function. The function adds data of type
+   string to the result set. The first parameter of the function is again
+   a formatting string, but this time it is standard printf-like
+   formatting string:
+if (rpc->rpl_printf(ctx, "Unable to delete %d entries from table %s", num_entrie
+s, table_name) < 0) return;
 
    The return value of the function is the same as of add function.
 

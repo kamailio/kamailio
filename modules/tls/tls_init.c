@@ -1,33 +1,19 @@
-/*
- * $Id$
+/* 
+ * TLS module
  *
- * TLS module - OpenSSL initialization funtions
- *
- * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
  * Copyright (C) 2005,2006 iptelorg GmbH
  *
- * This file is part of SIP-router, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * SIP-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * SIP-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-/*
- * History:
- * --------
- *  2007-01-26  openssl kerberos malloc bug detection/workaround (andrei)
- *  2007-02-23  openssl low memory bugs workaround (andrei)
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*! \defgroup tls SIP-router TLS support
@@ -132,7 +118,7 @@ to compile on the  _target_ system)"
 int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
 #endif
 
-const SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
+const SSL_METHOD* ssl_methods[TLS_METHOD_MAX];
 
 #ifdef NO_TLS_MALLOC_DBG
 #undef TLS_MALLOC_DBG /* extra malloc debug info from openssl */
@@ -341,6 +327,8 @@ int tls_h_init_si(struct socket_info *si)
  */
 static void init_ssl_methods(void)
 {
+	memset(ssl_methods, 0, sizeof(ssl_methods));
+
 #ifndef OPENSSL_NO_SSL2
 	ssl_methods[TLS_USE_SSLv2_cli - 1] = SSLv2_client_method();
 	ssl_methods[TLS_USE_SSLv2_srv - 1] = SSLv2_server_method();
@@ -350,14 +338,26 @@ static void init_ssl_methods(void)
 	ssl_methods[TLS_USE_SSLv3_cli - 1] = SSLv3_client_method();
 	ssl_methods[TLS_USE_SSLv3_srv - 1] = SSLv3_server_method();
 	ssl_methods[TLS_USE_SSLv3 - 1] = SSLv3_method();
-	
+
 	ssl_methods[TLS_USE_TLSv1_cli - 1] = TLSv1_client_method();
 	ssl_methods[TLS_USE_TLSv1_srv - 1] = TLSv1_server_method();
 	ssl_methods[TLS_USE_TLSv1 - 1] = TLSv1_method();
-	
+
 	ssl_methods[TLS_USE_SSLv23_cli - 1] = SSLv23_client_method();
 	ssl_methods[TLS_USE_SSLv23_srv - 1] = SSLv23_server_method();
 	ssl_methods[TLS_USE_SSLv23 - 1] = SSLv23_method();
+
+#if OPENSSL_VERSION_NUMBER >= 0x1000100fL
+	ssl_methods[TLS_USE_TLSv1_1_cli - 1] = TLSv1_1_client_method();
+	ssl_methods[TLS_USE_TLSv1_1_srv - 1] = TLSv1_1_server_method();
+	ssl_methods[TLS_USE_TLSv1_1 - 1] = TLSv1_1_method();
+#endif
+
+#if OPENSSL_VERSION_NUMBER >= 0x1000105fL
+	ssl_methods[TLS_USE_TLSv1_2_cli - 1] = TLSv1_2_client_method();
+	ssl_methods[TLS_USE_TLSv1_2_srv - 1] = TLSv1_2_server_method();
+	ssl_methods[TLS_USE_TLSv1_2 - 1] = TLSv1_2_method();
+#endif
 }
 
 

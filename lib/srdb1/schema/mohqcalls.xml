@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="mohqcalls" xmlns:db="http://docbook.org/ns/docbook">
+  <name>mohqcalls</name>
+  <version>1</version>
+  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+  <description>
+    <db:para>This table is used by the mohqueue module to store call information. This is a read-only table from the viewpoint of outside processes. More information about the mohqueue module can be found at: &KAMAILIO_MOD_DOC;mohqueue.html
+    </db:para>
+  </description>
+
+  <column id="id">
+    <name>id</name>
+    <type>unsigned int</type>
+    <size>&table_id_len;</size>
+    <autoincrement/>
+    <primary/>
+    <type db="dbtext">int,auto</type>
+    <description>Unique ID</description>
+  </column>
+
+  <column id="mohq_id">
+    <name>mohq_id</name>
+    <type>unsigned int</type>
+    <size>&table_id_len;</size>
+    <description>queue id</description>
+  </column>
+
+  <column id="call_id">
+    <name>call_id</name>
+    <type>string</type>
+    <size>100</size>
+    <description>Call-ID header</description>
+  </column>
+
+  <column id="call_status">
+    <name>call_status</name>
+    <type>unsigned int</type>
+    <description>status of call</description>
+  </column>
+
+  <column id="call_from">
+    <name>call_from</name>
+    <type>string</type>
+    <size>100</size>
+    <description>From header</description>
+  </column>
+
+  <column id="call_contact">
+    <name>call_contact</name>
+    <type>string</type>
+    <size>100</size>
+    <null/>
+    <description>Contact header</description>
+  </column>
+
+  <column id="call_time">
+    <name>call_time</name>
+    <type>datetime</type>
+    <description>time when call first entered queue</description>
+  </column>
+
+  <index>
+    <name>mohqcalls_idx</name>
+    <colref linkend="call_id" />
+    <unique/>
+  </index>
+</table>

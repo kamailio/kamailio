@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  *
  * History:
@@ -61,18 +61,45 @@ enum dialog_direction {
     DLG_MOBILE_UNKNOWN = 4
 };
 
+typedef struct flow_description {
+    int stream_num;
+    str media;
+    str req_sdp_ip_addr;
+    str req_sdp_port;
+    str rpl_sdp_ip_addr;
+    str rpl_sdp_port;
+    str rpl_sdp_transport;
+    str req_sdp_raw_stream;
+    str rpl_sdp_raw_stream;
+    int direction;
+    struct flow_description *next;
+}flow_description_t;
+
 typedef struct rx_authsessiondata {
     str callid;
     str ftag;
     str ttag;
+    str identifier;
+    str ip;
+    int ip_version;
     //for registration session
     int subscribed_to_signaling_path_status; // 0 not subscribed 1 is subscribed
     str domain;				//the domain the registration aor belongs to (for registration)
     str registration_aor; //the aor if this rx session is a subscription to signalling status
+    int must_terminate_dialog; //0 means when this session terminates it must not terminate the relevant dialog, 1 means it must terminate the dialog
+    flow_description_t *first_current_flow_description;
+    flow_description_t *first_new_flow_description;
 } rx_authsessiondata_t;
 
 int create_new_regsessiondata(str* domain, str* aor, rx_authsessiondata_t** session_data);
-int create_new_callsessiondata(str* callid, str* ftag, str* ttag, rx_authsessiondata_t** session_data);
+int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, str *ip, int ip_version, rx_authsessiondata_t** session_data);
+void free_callsessiondata(rx_authsessiondata_t* session_data);
+
+int add_flow_description(rx_authsessiondata_t* session_data, int stream_num, str *media, str *req_sdp_ip_addr, str *req_sdp_port,
+			str *rpl_sdp_ip_addr, str *rpl_sdp_port, str *rpl_sdp_transport, str *req_sdp_raw_stream, str *rpl_sdp_raw_stream, int direction, int current);
+void free_flow_description(rx_authsessiondata_t* session_data, int current);
+
+void show_callsessiondata(rx_authsessiondata_t* session_data);
 
 #endif
 

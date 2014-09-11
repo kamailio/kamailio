@@ -755,7 +755,7 @@ $(man_prefix)/$(man_dir)/man5:
 
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
-		@if [ -f etc/$(CFG_NAME).cfg ]; then \
+	@if [ -f etc/$(CFG_NAME).cfg ]; then \
 			sed $(foreach m,$(modules_dirs),\
 					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
 					-e "s#/usr/local/etc/$(CFG_NAME)/#$(cfg_target)#g" \
@@ -768,7 +768,7 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg; \
 			fi; \
 		fi
-		@if [ -f etc/$(CFG_NAME)-basic.cfg ]; then \
+	@if [ -f etc/$(CFG_NAME)-basic.cfg ]; then \
 			sed $(foreach m,$(modules_dirs),\
 					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
 					-e "s#/usr/local/etc/$(CFG_NAME)/#$(cfg_target)#g" \
@@ -781,7 +781,7 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg; \
 			fi; \
 		fi
-		@if [ -f etc/$(CFG_NAME)-oob.cfg ]; then \
+	@if [ -f etc/$(CFG_NAME)-oob.cfg ]; then \
 			sed $(foreach m,$(modules_dirs),\
 					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
 					-e "s#/usr/local/etc/$(CFG_NAME)/#$(cfg_target)#g" \
@@ -795,8 +795,8 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg; \
 			fi; \
 		fi
-		@# other configs
-		@for r in $(C_INSTALL_CFGS) ""; do \
+	@# other configs
+	@for r in $(C_INSTALL_CFGS) ""; do \
 			if [ -n "$$r" ]; then \
 				if [ -f "$$r" ]; then \
 					n=`basename "$$r"` ; \
@@ -818,14 +818,15 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 					fi ; \
 				fi ; \
 			fi ; \
-		done; true
-		# radius dictionary
-		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(CFG_NAME)
-		$(INSTALL_CFG) etc/dictionary.$(CFG_NAME) $(cfg_prefix)/$(cfg_dir)
+			: ; done; true
+	@# radius dictionary
+	@$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(CFG_NAME)
+	@$(INSTALL_CFG) etc/dictionary.$(CFG_NAME) $(cfg_prefix)/$(cfg_dir)
+	@echo "config files installed"
 
 install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
-		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
-		$(INSTALL_BIN) $(NAME) $(bin_prefix)/$(bin_dir)
+	$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
+	$(INSTALL_BIN) $(NAME) $(bin_prefix)/$(bin_dir)
 
 
 install-share: $(share_prefix)/$(share_dir)

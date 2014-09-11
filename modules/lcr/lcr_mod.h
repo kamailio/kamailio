@@ -3,7 +3,7 @@
  *
  * Various lcr related constant, types, and external variables
  *
- * Copyright (C) 2005-2012 Juha Heinanen
+ * Copyright (C) 2005-2014 Juha Heinanen
  *
  * This file is part of SIP Router, a free SIP server.
  *
@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -52,6 +52,7 @@
 #define MAX_TAG_LEN 64
 #define MAX_USER_LEN 64
 #define MAX_PARAMS_LEN 64
+#define MAX_NO_OF_REPLY_CODES 15
 
 typedef enum sip_protos uri_transport;
 
@@ -89,16 +90,25 @@ struct instance {
     struct instance *next;
 };
 
+/* gw states */
+/* if state > GW_INACTIVE has not yet reached failure threshold */
+#define GW_ACTIVE 0
+#define GW_PINGING 1
+#define GW_INACTIVE 2
+
 struct gw_info {
     unsigned int gw_id;
     char gw_name[MAX_NAME_LEN];
     unsigned short gw_name_len;
-    uri_type scheme;
+    char scheme[5];
+    unsigned short scheme_len;
     struct ip_addr ip_addr;
     char hostname[MAX_HOST_LEN];
     unsigned short hostname_len;
     unsigned int port;
-    uri_transport transport;
+    uri_transport transport_code;
+    char transport[15];
+    unsigned int transport_len;
     char params[MAX_PARAMS_LEN];
     unsigned short params_len;
     unsigned int strip;
@@ -107,6 +117,9 @@ struct gw_info {
     char tag[MAX_TAG_LEN];
     unsigned short tag_len;
     unsigned int flags;
+    unsigned short state;
+    char uri[MAX_URI_LEN];
+    unsigned short uri_len;
     unsigned int defunct_until;
 };
 

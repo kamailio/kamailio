@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * 2012-10-18  initial version (osas)
  */
@@ -90,8 +90,11 @@ int init_http_db(ph_framework_t *framework_data, int index)
 void destroy_http_db(ph_framework_t *framework_data)
 {
 	int i;
-	ph_db_url_t *ph_db_urls = framework_data->ph_db_urls;
+	ph_db_url_t *ph_db_urls;
 
+	if (framework_data == NULL) return;
+
+	ph_db_urls = framework_data->ph_db_urls;
 	/* close the DB connections */
 	for(i=0;i<framework_data->ph_db_urls_size;i++){
 		if (ph_db_urls[i].http_db_handle) {

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -115,18 +115,18 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",                    STR_PARAM, &db_url.s                   },
-	{"dp_table",                  STR_PARAM, &domainpolicy_table.s       },
-	{"dp_col_rule",               STR_PARAM, &domainpolicy_col_rule.s    },
-	{"dp_col_type",               STR_PARAM, &domainpolicy_col_type.s    },
-	{"dp_col_att",                STR_PARAM, &domainpolicy_col_att.s     },
-	{"dp_col_val",                STR_PARAM, &domainpolicy_col_val.s     },
-	{"port_override_avp",         STR_PARAM, &port_override_avp.s        },
-	{"transport_override_avp",    STR_PARAM, &transport_override_avp.s   },
-	{"domain_prefix_avp",         STR_PARAM, &domain_prefix_avp.s        },
-	{"domain_suffix_avp",         STR_PARAM, &domain_suffix_avp.s        },
-	{"domain_replacement_avp",    STR_PARAM, &domain_replacement_avp.s   },
-	{"send_socket_avp",           STR_PARAM, &send_socket_avp.s          },
+	{"db_url",                    PARAM_STR, &db_url                   },
+	{"dp_table",                  PARAM_STR, &domainpolicy_table       },
+	{"dp_col_rule",               PARAM_STR, &domainpolicy_col_rule    },
+	{"dp_col_type",               PARAM_STR, &domainpolicy_col_type    },
+	{"dp_col_att",                PARAM_STR, &domainpolicy_col_att     },
+	{"dp_col_val",                PARAM_STR, &domainpolicy_col_val     },
+	{"port_override_avp",         PARAM_STR, &port_override_avp        },
+	{"transport_override_avp",    PARAM_STR, &transport_override_avp   },
+	{"domain_prefix_avp",         PARAM_STR, &domain_prefix_avp        },
+	{"domain_suffix_avp",         PARAM_STR, &domain_suffix_avp        },
+	{"domain_replacement_avp",    PARAM_STR, &domain_replacement_avp   },
+	{"send_socket_avp",           PARAM_STR, &send_socket_avp          },
 	{0, 0, 0}
 };
 
@@ -155,13 +155,6 @@ static int mod_init(void)
 	unsigned int par;
 	int ver;
 
-	db_url.len = strlen(db_url.s);
-	domainpolicy_table.len = strlen(domainpolicy_table.s);
-	domainpolicy_col_rule.len = strlen(domainpolicy_col_rule.s);
-	domainpolicy_col_type.len = strlen(domainpolicy_col_type.s);
-	domainpolicy_col_att.len = strlen(domainpolicy_col_att.s);
-	domainpolicy_col_val.len = strlen(domainpolicy_col_val.s);
-
 	LM_DBG("check for DB module\n");
 
 	/* Check if database module has been loaded */
@@ -170,15 +163,6 @@ static int mod_init(void)
 			" Please make sure that a DB module is loaded first\n");
 		return -1;
 	}
-
-	LM_DBG("update length of module variables\n");
-	/* Update length of module variables */
-	port_override_avp.len         = strlen(port_override_avp.s);
-	transport_override_avp.len    = strlen(transport_override_avp.s);
-	domain_prefix_avp.len         = strlen(domain_prefix_avp.s);
-	domain_suffix_avp.len         = strlen(domain_suffix_avp.s);
-	domain_replacement_avp.len    = strlen(domain_replacement_avp.s);
-	send_socket_avp.len           = strlen(send_socket_avp.s);
 
 	/* Check table version */
 	ver = domainpolicy_db_ver(&db_url, &domainpolicy_table);

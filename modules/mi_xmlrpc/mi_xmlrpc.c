@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * History:
  * ---------
@@ -95,7 +95,7 @@ static proc_export_t mi_procs[] = {
 /* module parameters */
 static param_export_t mi_params[] = {
 	{"port",					INT_PARAM, &port},
-	{"log_file",				STR_PARAM, &log_file},
+	{"log_file",				PARAM_STRING, &log_file},
 	{"reply_option",			INT_PARAM, &rpl_opt},
 	{"buffer_size",				INT_PARAM, &read_buf_size},
 	{0,0,0}

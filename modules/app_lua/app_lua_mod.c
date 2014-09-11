@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -66,8 +66,8 @@ int app_lua_register_param(modparam_t type, void *val);
 int app_lua_reload_param(modparam_t type, void *val);
 
 static param_export_t params[]={
-	{"load",     STR_PARAM|USE_FUNC_PARAM, (void*)app_lua_load_param},
-	{"register", STR_PARAM|USE_FUNC_PARAM, (void*)app_lua_register_param},
+	{"load",     PARAM_STRING|USE_FUNC_PARAM, (void*)app_lua_load_param},
+	{"register", PARAM_STRING|USE_FUNC_PARAM, (void*)app_lua_register_param},
 	{"reload",   INT_PARAM|USE_FUNC_PARAM, (void*)app_lua_reload_param},
 	{0, 0, 0}
 };
@@ -388,13 +388,13 @@ static void app_lua_rpc_list(rpc_t* rpc, void* ctx)
 		i = 0;
 		while(li)
 		{
-			rpc->printf(ctx, "%d: [%s]", i, li->script);
+			rpc->rpl_printf(ctx, "%d: [%s]", i, li->script);
 			li = li->next;
 			i += 1;
 		}
 	}
 	else {
-		rpc->printf(ctx,"No scripts loaded");
+		rpc->rpl_printf(ctx,"No scripts loaded");
 	}
 	return;
 }

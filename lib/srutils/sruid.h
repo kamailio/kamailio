@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef _SRUID_H_
@@ -36,10 +36,12 @@ typedef struct sruid {
 	char *out;
 	str uid;
 	unsigned int counter;
+	int pid;
 	sruid_mode_t mode;
 } sruid_t;
 
 int sruid_init(sruid_t *sid, char sep, char *cid, int mode);
 int sruid_next(sruid_t *sid);
+int sruid_next_safe(sruid_t *sid);
 
 #endif

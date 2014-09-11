@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -105,6 +105,8 @@ int load_tm( struct tm_binds *tmb)
 	tmb->free_dlg = free_dlg;
 	tmb->print_dlg = print_dlg;
 	tmb->t_gett = get_t;
+	tmb->t_gett_branch = get_t_branch;
+	tmb->t_sett = set_t;
 	tmb->calculate_hooks = w_calculate_hooks;
 	tmb->t_uac = t_uac;
 	tmb->t_uac_with_ids = t_uac_with_ids;
@@ -145,6 +147,7 @@ int load_tm( struct tm_binds *tmb)
 #ifdef WITH_TM_CTX
 	tmb->tm_ctx_get = tm_ctx_get;
 #endif
+	tmb->t_append_branches = t_append_branches;
 	return 1;
 }
 

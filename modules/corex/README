@@ -10,6 +10,12 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Edited by
+
+Muhammad Shahzad Shafi
+
+   <shahzad@voip-demos.com>
+
    Copyright © 2012 asipto.com
      __________________________________________________________________
 
@@ -26,23 +32,49 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. alias_subdomains (string)
+              3.2. network_io_intercept (int)
+              3.3. msg_min_len (int)
+              3.4. msg_avp (string)
 
         4. Functions
 
               4.1. append_branch([ uri, [ q ] ])
               4.2. send([ host [ :port ] ])
               4.3. send_tcp([ host [ :port ] ])
+              4.4. send_data(uri, data)
+              4.5. is_incoming()
+              4.6. msg_iflag_set(flagname)
+              4.7. msg_iflag_reset(flagname)
+              4.8. msg_iflag_is_set(flagname)
 
         5. RPC Commands
 
               5.1. corex.list_sockets
               5.2. corex.list_aliases
+              5.3. corex.shm_status
+              5.4. corex.shm_summary
+
+        6. Event Routes
+
+              6.1. event_route[network:msg]
+
+        7. Examples of Usage
 
    List of Examples
 
    1.1. Set alias_subdomains parameter
-   1.2. append_branch usage
-   1.3. send usage
+   1.2. Set network_io_intercept parameter
+   1.3. Set msg_min_len parameter
+   1.4. Set msg_avp parameter
+   1.5. append_branch usage
+   1.6. send usage
+   1.7. send_data usage
+   1.8. is_incoming usage
+   1.9. msg_iflag_set usage
+   1.10. msg_iflag_reset usage
+   1.11. msg_iflag_is_set usage
+   1.12. event_route[network:msg] use cases
+   1.13. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -57,17 +89,33 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. alias_subdomains (string)
+        3.2. network_io_intercept (int)
+        3.3. msg_min_len (int)
+        3.4. msg_avp (string)
 
    4. Functions
 
         4.1. append_branch([ uri, [ q ] ])
         4.2. send([ host [ :port ] ])
         4.3. send_tcp([ host [ :port ] ])
+        4.4. send_data(uri, data)
+        4.5. is_incoming()
+        4.6. msg_iflag_set(flagname)
+        4.7. msg_iflag_reset(flagname)
+        4.8. msg_iflag_is_set(flagname)
 
    5. RPC Commands
 
         5.1. corex.list_sockets
         5.2. corex.list_aliases
+        5.3. corex.shm_status
+        5.4. corex.shm_summary
+
+   6. Event Routes
+
+        6.1. event_route[network:msg]
+
+   7. Examples of Usage
 
 1. Overview
 
@@ -81,6 +129,15 @@ Chapter 1. Admin Guide
 
    Contributions to this module must be done under the BSD license, to
    follow the requirements of the core contributions.
+
+   This module now also provides access to network input / output data
+   through event_route[network:msg]. The raw data received from a remote
+   host or about to be sent to a remote host is available in variable $mb.
+   The script writer may manipulate this data and save the final result in
+   an AVP defined by msg_avp module parameter. The content of this AVP
+   will then be processed by SIP worker as normal, i.e. a received message
+   will be parsed and sent to appropriate route block while a sent message
+   is forwarded to remote host.
 
 2. Dependencies
 
@@ -101,6 +158,9 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. alias_subdomains (string)
+   3.2. network_io_intercept (int)
+   3.3. msg_min_len (int)
+   3.4. msg_avp (string)
 
 3.1. alias_subdomains (string)
 
@@ -117,13 +177,59 @@ modparam("corex", "alias_subdomains", "kamailio.org")
 modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 ...
 
+3.2. network_io_intercept (int)
+
+   If set to non-zero then raw data received from a remote host or about
+   to be sent to a remote host is made available in
+   event_route[network:msg]. The script writer may modify this and save to
+   msg_avp, which will then be processed by SIP worker as normal.
+
+   Default value is 0, i.e. do not allow access to network io data.
+
+   Example 1.2. Set network_io_intercept parameter
+...
+modparam("corex", "network_io_intercept", 1)
+...
+
+3.3. msg_min_len (int)
+
+   Minimum content length of the packet to execute the
+   event_route[network:msg]. This only works if network_io_intercept
+   parameter is set to non-zero.
+
+   Default value is 0.
+
+   Example 1.3. Set msg_min_len parameter
+...
+modparam("corex", "msg_min_len", 32)
+...
+
+3.4. msg_avp (string)
+
+   AVP name to store modified content to be set in the packet. If not set
+   in event_route[network:msg], then all changes are lost and original
+   contents are used. This only works if network_io_intercept parameter is
+   to set non-zero.
+
+   Default value is empty.
+
+   Example 1.4. Set msg_avp parameter
+...
+modparam("corex", "msg_avp", "$avp(msg)")
+...
+
 4. Functions
 
    4.1. append_branch([ uri, [ q ] ])
    4.2. send([ host [ :port ] ])
    4.3. send_tcp([ host [ :port ] ])
+   4.4. send_data(uri, data)
+   4.5. is_incoming()
+   4.6. msg_iflag_set(flagname)
+   4.7. msg_iflag_reset(flagname)
+   4.8. msg_iflag_is_set(flagname)
 
-4.1.  append_branch([ uri, [ q ] ])
+4.1. append_branch([ uri, [ q ] ])
 
    Append a new branch to the destination set, useful to build the set of
    destination addresses for parallel forking or redirect replies.
@@ -139,13 +245,13 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 
    This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
 
-   Example 1.2. append_branch usage
+   Example 1.5. append_branch usage
 ...
     append_branch();
     append_branch("$avp(uri)", "0.5");
 ...
 
-4.2.  send([ host [ :port ] ])
+4.2. send([ host [ :port ] ])
 
    Send the original SIP message to a specific destination in stateless
    mode. No changes are applied to received message, no Via header is
@@ -159,7 +265,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 
    This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
 
-   Example 1.3. send usage
+   Example 1.6. send usage
 ...
         send();
         send("10.20.15.10");
@@ -167,26 +273,257 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
         send("$var(res)");
 ...
 
-4.3.  send_tcp([ host [ :port ] ])
+4.3. send_tcp([ host [ :port ] ])
 
    This function is identical to send() described above, except that it
    sends the SIP message using the TCP protocol instead of UDP.
+
+4.4. send_data(uri, data)
+
+   Send the data to address specified by uri. Both parameters can contain
+   pseudo-variables. The uri parameter has to be a valid SIP URI. The data
+   parameter can by any arbitrary content.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. send_data usage
+...
+        send("sip:example.com:5070;transport=sctp", "Message at $Ts");
+...
+
+4.5. is_incoming()
+
+   Returns true if contents of message buffer $mb are the data received
+   from remote host, otherwise false indicating that the contents of $mb
+   are data that is about to be sent out to remote host. This only works
+   if network_io_intercept parameter is set to non-zero.
+
+   This function can be used from event_route[network:msg].
+
+   Example 1.8. is_incoming usage
+...
+event_route[network:msg] {
+    if (is_incoming()) {
+        xlog("L_INFO", "Received message '$mb' \n");
+        $avp(msg) = $mb;
+    } else {
+        xlog("L_INFO", "Sending message '$mb' \n");
+        $avp(msg) = $mb;
+    };
+}
+...
+
+4.6. msg_iflag_set(flagname)
+
+   Set internal SIP message flag. The parameter flagname can be:
+   USE_UAC_FROM, USE_UAC_TO or UAC_AUTH.
+
+   This functions should not be used in configuration file for (re)setting
+   the internal flags, those are done by various functions internally,
+   however, in very particular cases they might be useful (e.g., changing
+   From/To via textops functions).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. msg_iflag_set usage
+...
+    msg_iflag_set("UAC_AUTH");
+...
+
+4.7. msg_iflag_reset(flagname)
+
+   Reset the internal flag given as parameter.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. msg_iflag_reset usage
+...
+    msg_iflag_reset("UAC_AUTH");
+...
+
+4.8. msg_iflag_is_set(flagname)
+
+   Test if the internal flag given as parameter is set.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. msg_iflag_is_set usage
+...
+    if(msg_iflag_is_set("UAC_AUTH")) { ... }
+...
+
+   - ("flagname") - ("flagname")
 
 5. RPC Commands
 
    5.1. corex.list_sockets
    5.2. corex.list_aliases
+   5.3. corex.shm_status
+   5.4. corex.shm_summary
 
-5.1.  corex.list_sockets
+5.1. corex.list_sockets
 
    Print the list of sockets the application is listening on.
 
    Example:
                 kamcmd corex.list_sockets
 
-5.2.  corex.list_aliases
+5.2. corex.list_aliases
 
    Print the list of hostname aliases used to match the myself condition.
 
    Example:
                 kamcmd corex.list_aliases
+
+5.3. corex.shm_status
+
+   Trigger shm status dump to syslog.
+
+   Example:
+                kamcmd corex.shm_status
+
+5.4. corex.shm_summary
+
+   Trigger shm summary dump to syslog.
+
+   Example:
+                kamcmd corex.shm_summary
+
+6. Event Routes
+
+   6.1. event_route[network:msg]
+
+6.1. event_route[network:msg]
+
+   Event route block to be executed when new data is received from network
+   or the data that is about to be sent to a remote host by a SIP worker
+   process.
+
+   The kamailio script writer can check which type of data triggered this
+   event route using is_incoming method.
+
+   After executing of this event route, if msg_avp was defined and set
+   then its value is used for further processing, otherwise, original
+   value of $mb is used. If message was received from remote host, then it
+   is parsed and proceeds to appropriate route. Oterhwise if message set
+   to send out, then is sent to remote host per configured SIP timers in
+   config script.
+
+   Please note this event route is meant to prepare the message for
+   on-wire communication, e.g. to do custom encryption or decryption,
+   compression/decompression etc. of the message sent to or received from
+   remote host. Therefore, except text operations, no module fucntions or
+   pseudo variables are available in this event route.
+
+7. Examples of Usage
+
+   To use network event_route[network:msg] the remote SIP UA must also
+   implement and understand the encoding / decoding done in this event
+   route. It is up to Kamailio config script writer to define and
+   implement how encoding and decoding is done. Any language module such
+   as app_perl or app_lua can be called in in event_route[network:msg] to
+   implement desired logic.
+
+   The most simple use case is to compress the SIP packet on-wire. As SIP
+   is a text based protocol, so it is highly compressable. Using this
+   module, one can compress entire SIP message, including headers and
+   message body before sending it to remote host using any compression
+   algorithm of choice, thus saving significant bandwidth on mobile data
+   networks.
+
+   A useful case is to use this function between SIP edge proxy and SIP
+   application server. The SIP messages received from end-user at SIP edge
+   proxy may be decrypted and sent to SIP application server at remote
+   location unencrypted, where they are processed as normal. One the way
+   back, the messages received from SIP application server at edge proxy
+   can be encrpyted before being sent to actual destination. The edge
+   proxy can check whether received message came from end-user or SIP
+   application server by using simple regular expressions.
+
+   Another use case is to implement a virtual HTTP tunnel for SIP
+   messages. The SIP client app can convert SIP message to binary e.g. by
+   doing XOR, Base64 etc., then prepend some fake HTTP headers to make it
+   look like an HTTP request before sending it to kamailio over SIP TCP
+   socket. At kamailio, the fake headers are removed and data is decoded
+   back to normal SIP and processed per config script logic. For the data
+   that is to be sent to SIP client app, one can prepend fake HTTP reply
+   headers to encoded data before sending it to client app.
+
+   More advance use cases may involve custom encryption algorithms such as
+   ITV encryption algorithm, https://github.com/mshary/itv
+
+   For example, the client app running on Android or iPhone, may send
+   device UUID along with ITV key, encrypted using RSA or AES256 with
+   pre-shared secret, as first packet, which is set as cookie by server in
+   e.g. memcache. This cookie is referred by client app in each next
+   packet, so server can retrive encyption key from cache and use that for
+   decryption. Same can be done for server at client app side, so messages
+   encrypted by server can be decrypted at client app.
+
+   Next is a basic usage example where encoding and decoding is done using
+   PERL,
+
+   Example 1.12. event_route[network:msg] use cases
+...
+loadmodule "app_perl.so"
+loadmodule "corex.so"
+...
+# ----- app_perl params -----
+modparam("app_perl", "filename", "/usr/local/etc/kamailio/custom_compress.pl")
+modparam("app_perl", "modpath", "/usr/local/lib64/kamailio/perl")
+
+# ----- corex params -----
+modparam("corex", "network_io_intercept", 32)
+modparam("corex", "min_msg_len", 32)
+modparam("corex", "msg_avp", "$avp(msg)")
+...
+event_route[network:msg] {
+        if (is_incoming()) {
+                if (perl_exec_simple("do_uncompress", "" + $mb + "")) {
+                        xlog("L_INFO", "Received message '$avp(msg)' \n");
+                } else {
+                        xlog("L_INFO", "Received message '$mb' \n");
+                        $avp(msg) = $mb;
+                };
+        } else {
+                xlog("L_INFO", "Sending message '$mb' \n");
+                if (!perl_exec_simple("do_compress", "" + $mb + "")) {
+                        $avp(msg) = $mb;
+                };
+        };
+}
+...
+
+   Example 1.13. Sample PERL code for do_compress and do_uncompress
+...
+use strict;
+use warnings;
+use IO::Compress::Gzip qw(gzip $GzipError) ;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
+
+sub do_compress() {
+        my $input = shift;
+        my $output;
+
+        gzip \$input => \$output
+                or eval {
+                        Kamailio::log(L_WARN, "GZIP failed: $GzipError\n");
+                        $output = $input;
+                };
+
+        Kamailio::AVP::add("msg", $output);
+}
+
+sub do_uncompress() {
+        my $input = shift;
+        my $output;
+
+        gunzip \$input => \$output
+                or eval {
+                        Kamailio::log(L_WARN, "GUNZIP failed: $GzipError\n");
+                        $output = $input;
+                };
+
+        Kamailio::AVP::add("msg", $output);
+}
+...

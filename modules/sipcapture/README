@@ -10,9 +10,9 @@ Alexandr Dubovikov
 
    <alexandr.dubovikov@gmail.com>
 
-   Copyright � 2011 QSC AG
+   Copyright © 2011 QSC AG
 
-   Copyright � 2011 http://www.qsc.de
+   Copyright © 2011 http://www.qsc.de
      __________________________________________________________________
 
    Table of Contents
@@ -33,15 +33,18 @@ Alexandr Dubovikov
               3.4. hash_source (str)
               3.5. db_insert_mode (integer)
               3.6. capture_on (integer)
-              3.7. hep_capture_on (integer)
-              3.8. raw_ipip_capture_on (integer)
-              3.9. raw_moni_capture_on (integer)
-              3.10. raw_socket_listen (string)
-              3.11. raw_interface (string)
-              3.12. raw_sock_children (integer)
-              3.13. promiscuous_on (integer)
-              3.14. raw_moni_bpf_on (integer)
-              3.15. capture_node (str)
+              3.7. capture_mode (integer)
+              3.8. hep_capture_on (integer)
+              3.9. raw_ipip_capture_on (integer)
+              3.10. raw_moni_capture_on (integer)
+              3.11. raw_socket_listen (string)
+              3.12. raw_interface (string)
+              3.13. raw_sock_children (integer)
+              3.14. promiscuous_on (integer)
+              3.15. raw_moni_bpf_on (integer)
+              3.16. capture_node (str)
+              3.17. insert_retries (integer)
+              3.18. insert_retry_timeout (integer)
 
         4. MI Commands
 
@@ -62,15 +65,18 @@ Alexandr Dubovikov
    1.4. Set mt_mode parameter
    1.5. db_insert_mode example
    1.6. Set capture_on parameter
-   1.7. Set hep_capture_on parameter
-   1.8. Set raw_ipip_capture_on parameter
-   1.9. Set raw_moni_capture_on parameter
-   1.10. Set raw_socket_listen parameter
-   1.11. Set raw_interface parameter
-   1.12. Set raw_sock_children parameter
-   1.13. Set promiscous_on parameter
-   1.14. Set raw_moni_bpf_on parameter
-   1.15. Set capture_node parameter
+   1.7. capture_mode example
+   1.8. Set hep_capture_on parameter
+   1.9. Set raw_ipip_capture_on parameter
+   1.10. Set raw_moni_capture_on parameter
+   1.11. Set raw_socket_listen parameter
+   1.12. Set raw_interface parameter
+   1.13. Set raw_sock_children parameter
+   1.14. Set promiscous_on parameter
+   1.15. Set raw_moni_bpf_on parameter
+   1.16. Set capture_node parameter
+   1.17. Set insert_retries parameter
+   1.18. Set insert_retry_timeout parameter
 
 Chapter 1. Admin Guide
 
@@ -90,15 +96,18 @@ Chapter 1. Admin Guide
         3.4. hash_source (str)
         3.5. db_insert_mode (integer)
         3.6. capture_on (integer)
-        3.7. hep_capture_on (integer)
-        3.8. raw_ipip_capture_on (integer)
-        3.9. raw_moni_capture_on (integer)
-        3.10. raw_socket_listen (string)
-        3.11. raw_interface (string)
-        3.12. raw_sock_children (integer)
-        3.13. promiscuous_on (integer)
-        3.14. raw_moni_bpf_on (integer)
-        3.15. capture_node (str)
+        3.7. capture_mode (integer)
+        3.8. hep_capture_on (integer)
+        3.9. raw_ipip_capture_on (integer)
+        3.10. raw_moni_capture_on (integer)
+        3.11. raw_socket_listen (string)
+        3.12. raw_interface (string)
+        3.13. raw_sock_children (integer)
+        3.14. promiscuous_on (integer)
+        3.15. raw_moni_bpf_on (integer)
+        3.16. capture_node (str)
+        3.17. insert_retries (integer)
+        3.18. insert_retry_timeout (integer)
 
    4. MI Commands
 
@@ -151,15 +160,18 @@ Chapter 1. Admin Guide
    3.4. hash_source (str)
    3.5. db_insert_mode (integer)
    3.6. capture_on (integer)
-   3.7. hep_capture_on (integer)
-   3.8. raw_ipip_capture_on (integer)
-   3.9. raw_moni_capture_on (integer)
-   3.10. raw_socket_listen (string)
-   3.11. raw_interface (string)
-   3.12. raw_sock_children (integer)
-   3.13. promiscuous_on (integer)
-   3.14. raw_moni_bpf_on (integer)
-   3.15. capture_node (str)
+   3.7. capture_mode (integer)
+   3.8. hep_capture_on (integer)
+   3.9. raw_ipip_capture_on (integer)
+   3.10. raw_moni_capture_on (integer)
+   3.11. raw_socket_listen (string)
+   3.12. raw_interface (string)
+   3.13. raw_sock_children (integer)
+   3.14. promiscuous_on (integer)
+   3.15. raw_moni_bpf_on (integer)
+   3.16. capture_node (str)
+   3.17. insert_retries (integer)
+   3.18. insert_retry_timeout (integer)
 
 3.1. db_url (str)
 
@@ -235,29 +247,46 @@ modparam("sipcapture", "db_insert_mode", 1)
 modparam("sipcapture", "capture_on", 1)
 ...
 
-3.7. hep_capture_on (integer)
+3.7. capture_mode (integer)
+
+   This parameter can be used for defining a capture mode which can be
+   used in the sip_capture calls as a parameter. A capture mode has a name
+   and some parameters. It must be defined in the format:
+   name=>param1=val1;param2=val2;... The parameters are db_url,
+   table_name, mt_mode and hash_source (optional). Multiple capture modes
+   can be defined by using this parameter multiple times. After this, the
+   capture modes can be used like: sip_capture ("", "CAPTURE_MODE");
+
+   Example 1.7. capture_mode example
+modparam("sipcapture", "capture_mode", "mode1=>db_url=mysql://user:passwd@host/d
+bname1;table_name=homer_capture1|homer_capture2;mt_mode=hash;hash_source=call_id
+;")
+modparam("sipcapture", "capture_mode", "mode2=>db_url=mysql://user:passwd@host/d
+bname2;table_name=homer_capture3|homer_capture4;mt_mode=rand;")
+
+3.8. hep_capture_on (integer)
 
    Parameter to enable/disable capture of HEP (on(1)/off(0))
 
    Default value is "0".
 
-   Example 1.7. Set hep_capture_on parameter
+   Example 1.8. Set hep_capture_on parameter
 ...
 modparam("sipcapture", "hep_capture_on", 1)
 ...
 
-3.8. raw_ipip_capture_on (integer)
+3.9. raw_ipip_capture_on (integer)
 
    Parameter to enable/disable IPIP capturing (on(1)/off(0))
 
    Default value is "0".
 
-   Example 1.8. Set raw_ipip_capture_on parameter
+   Example 1.9. Set raw_ipip_capture_on parameter
 ...
 modparam("sipcapture", "raw_ipip_capture_on", 1)
 ...
 
-3.9. raw_moni_capture_on (integer)
+3.10. raw_moni_capture_on (integer)
 
    Parameter to enable/disable monitoring/mirroring port capturing
    (on(1)/off(0)) Only one mode on raw socket can be enabled! Monitoring
@@ -265,12 +294,12 @@ modparam("sipcapture", "raw_ipip_capture_on", 1)
 
    Default value is "0".
 
-   Example 1.9. Set raw_moni_capture_on parameter
+   Example 1.10. Set raw_moni_capture_on parameter
 ...
 modparam("sipcapture", "raw_moni_capture_on", 1)
 ...
 
-3.10. raw_socket_listen (string)
+3.11. raw_socket_listen (string)
 
    Parameter indicate an listen IP address of RAW socket for IPIP
    capturing. You can also define a port/portrange for IPIP/Mirroring
@@ -288,49 +317,49 @@ modparam("sipcapture", "raw_moni_capture_on", 1)
 
    Default value is "".
 
-   Example 1.10. Set raw_socket_listen parameter
+   Example 1.11. Set raw_socket_listen parameter
 ...
 modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060-5090")
 ...
 modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060")
 ...
 
-3.11. raw_interface (string)
+3.12. raw_interface (string)
 
    Name of the interface to bind on the raw socket.
 
    Default value is "".
 
-   Example 1.11. Set raw_interface parameter
+   Example 1.12. Set raw_interface parameter
 ...
 modparam("sipcapture", "raw_interface", "eth0")
 ...
 
-3.12. raw_sock_children (integer)
+3.13. raw_sock_children (integer)
 
    Parameter define how many children that must be created to listen the
    raw socket.
 
    Default value is "1".
 
-   Example 1.12. Set raw_sock_children parameter
+   Example 1.13. Set raw_sock_children parameter
 ...
 modparam("sipcapture", "raw_sock_children", 6)
 ...
 
-3.13. promiscuous_on (integer)
+3.14. promiscuous_on (integer)
 
    Parameter to enable/disable promiscuous mode on the raw socket. Linux
    only.
 
    Default value is "0".
 
-   Example 1.13. Set promiscous_on parameter
+   Example 1.14. Set promiscous_on parameter
 ...
 modparam("sipcapture", "promiscuous_on", 1)
 ...
 
-3.14. raw_moni_bpf_on (integer)
+3.15. raw_moni_bpf_on (integer)
 
    Activate Linux Socket Filter (LSF based on BPF) on the mirroring
    interface. The structure is defined in linux/filter.h. The default LSF
@@ -339,20 +368,48 @@ modparam("sipcapture", "promiscuous_on", 1)
 
    Default value is "0".
 
-   Example 1.14. Set raw_moni_bpf_on parameter
+   Example 1.15. Set raw_moni_bpf_on parameter
 ...
 modparam("sipcapture", "raw_moni_bpf_on", 1)
 ...
 
-3.15. capture_node (str)
+3.16. capture_node (str)
 
    Name of the capture node.
 
    Default value is "homer01".
 
-   Example 1.15. Set capture_node parameter
+   Example 1.16. Set capture_node parameter
 ...
 modparam("sipcapture", "capture_node", "homer03")
+...
+
+3.17. insert_retries (integer)
+
+   The number of times Kamailio should retry to write to the Homer
+   database in case the first attempt failed. The retry is also limited
+   timewise by the insert_retry_timeout parameter. Values allowed range
+   from 0 to 500.
+
+   Default value is 0 (no retries).
+
+   Example 1.17. Set insert_retries parameter
+...
+modparam("sipcapture", "insert_retries", 5)
+...
+
+3.18. insert_retry_timeout (integer)
+
+   The time limit in seconds Kamailio retries to write to the Homer
+   database in case the first attempt failed. This parameter is only used
+   together with the insert_retries parameter. Values allowed range from 0
+   to 300.
+
+   Default value is 60 seconds.
+
+   Example 1.18. Set insert_retry_timeout parameter
+...
+modparam("sipcapture", "insert_retry_timeout", 10)
 ...
 
 4. MI Commands
@@ -369,7 +426,7 @@ modparam("sipcapture", "capture_node", "homer03")
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message capturing (as string "on" or "off" )
+       status of the SIP message capturing (as string “on” or “off” )
        without changing anything.
 
    MI FIFO Command Format:
@@ -389,7 +446,7 @@ modparam("sipcapture", "capture_node", "homer03")
      * on or off: turns on/off SIP message capturing. Possible values are:
           + on
           + off
-     * "check" does not change sipcapture status, just reports the current
+     * “check” does not change sipcapture status, just reports the current
        status.
 
 6. Database setup

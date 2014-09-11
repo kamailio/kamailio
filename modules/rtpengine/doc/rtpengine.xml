@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>rtpengine Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Maxim</firstname>
+		<surname>Sobolev</surname>
+		<affiliation><orgname>Sippy Software, Inc.</orgname></affiliation>
+		<address>
+			<email>sobomax@sippysoft.com</email>
+		</address>
+		</author>
+		<author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>TuTPro, Inc.</orgname></affiliation>
+		<address>
+			<email>jh@tutpro.com</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Maxim</firstname>
+		<surname>Sobolev</surname>
+		<address>
+			<email>sobomax@sippysoft.com</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<address>
+			<email>bogdan@voice-system.ro</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<address>
+			<email>jh@tutpro.com</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Sas</firstname>
+		<surname>Ovidiu</surname>
+		<address>
+			<email>osas@voipembedded.com</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<address>
+			<email>carsten@ng-voice.com</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Richard</firstname>
+		<surname>Fuchs</surname>
+		<affiliation><orgname>Sipwise GmbH</orgname></affiliation>
+		<address>
+			<email>rfuchs@sipwise.com</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2003-2008</year>
+		<holder>Sippy Software, Inc.</holder>
+	</copyright>
+	<copyright>
+		<year>2005</year>
+		<holder>Voice Sistem SRL</holder>
+	</copyright>
+	<copyright>
+		<year>2009-2014</year>
+		<holder>TuTPro Inc.</holder>
+	</copyright>
+	<copyright>
+		<year>2010</year>
+		<holder><ulink url='http://www.voipembedded.com'>VoIPEmbedded Inc.</ulink></holder>
+	</copyright>
+	<copyright>
+		<year>2013-2014</year>
+		<holder>Sipwise GmbH</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="rtpengine_admin.xml"/>
+	<xi:include href="rtpengine_faq.xml"/>
+
+</book>

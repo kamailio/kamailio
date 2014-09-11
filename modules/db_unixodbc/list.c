@@ -1,6 +1,4 @@
-/* 
- * $Id$ 
- *
+/*
  * UNIXODBC module
  *
  * Copyright (C) 2005-2006 Marco Lorrai
@@ -18,9 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  * History:
@@ -46,101 +44,57 @@
 int db_unixodbc_list_insert(list** start, list** link, int n, strn* value)
 {
 	int i = 0;
+	list* nlink;
 
-	if(!(*start)) {
-		*link = (list*)pkg_malloc(sizeof(list));
-		if(!(*link)) {
-			LM_ERR("no more pkg memory (1)\n");
-			return -1;
-		}
-		(*link)->rownum = n;
-		(*link)->next = NULL;
+	if (!(*start)) *link = NULL;
 
-		(*link)->lengths = (unsigned long*)pkg_malloc(sizeof(unsigned long)*n);
-		if(!(*link)->lengths) {
-			LM_ERR("no more pkg memory (2)\n");
-			pkg_free(*link);
-			*link = NULL;
-			return -1;
-		}
-		for(i=0; i<n; i++)
-			(*link)->lengths[i] = strlen(value[i].s) + 1;
-
-		(*link)->data = (char**)pkg_malloc(sizeof(char*)*n);
-		if(!(*link)->data) {
-			LM_ERR("no more pkg memory (3)\n");
-			pkg_free( (*link)->lengths );
-			pkg_free(*link);
-			*link = NULL;
-			return -1;
-		}
-
-		for(i=0; i<n; i++) {
-			(*link)->data[i] = pkg_malloc(sizeof(char) * (*link)->lengths[i]);
-			if(!(*link)->data[i]) {
-				LM_ERR("no more pkg memory (4)\n");
-				pkg_free( (*link)->lengths );
-				pkg_free( (*link)->data );
-				pkg_free(*link);
-				*link = NULL;
-				return -1;
-			}
-			strncpy((*link)->data[i], value[i].s, (*link)->lengths[i]);
-		}
-	
-		*start = *link;
-		return 0;
+	nlink=(list*)pkg_malloc(sizeof(list));
+	if(!nlink) {
+		LM_ERR("no more pkg memory (1)\n");
+		return -1;
 	}
-	else
-	{
-		list* nlink;
-		nlink=(list*)pkg_malloc(sizeof(list));
-		if(!nlink) {
-			LM_ERR("no more pkg memory (5)\n");
-			return -1;
-		}
-		nlink->rownum = n;
+	nlink->rownum = n;
+	nlink->next = NULL;
 
-		nlink->lengths = (unsigned long*)pkg_malloc(sizeof(unsigned long)*n);
-		if(!nlink->lengths) {
-			LM_ERR("no more pkg memory (6)\n");
-			pkg_free(nlink);
-			nlink = NULL;
-			return -1;
-		}
-		for(i=0; i<n; i++)
-			nlink->lengths[i] = strlen(value[i].s) + 1;
+	nlink->lengths = (unsigned long*)pkg_malloc(sizeof(unsigned long)*n);
+	if(!nlink->lengths) {
+		LM_ERR("no more pkg memory (2)\n");
+		pkg_free(nlink);
+		return -1;
+	}
+	for(i=0; i<n; i++)
+		nlink->lengths[i] = value[i].buflen;
 
-		nlink->data = (char**)pkg_malloc(sizeof(char*)*n);
-		if(!nlink->data) {
-			LM_ERR("no more pkg memory (7)\n");
+	nlink->data = (char**)pkg_malloc(sizeof(char*)*n);
+	if(!nlink->data) {
+		LM_ERR("no more pkg memory (3)\n");
+		pkg_free( nlink->lengths );
+		pkg_free(nlink);
+		return -1;
+	}
+
+	for(i=0; i<n; i++) {
+		nlink->data[i] = pkg_malloc(sizeof(char) * nlink->lengths[i]);
+		if(!nlink->data[i]) {
+			LM_ERR("no more pkg memory (4)\n");
 			pkg_free( nlink->lengths );
+			pkg_free( nlink->data );
 			pkg_free(nlink);
-			nlink = NULL;
 			return -1;
 		}
+		memcpy(nlink->data[i], value[i].s, nlink->lengths[i]);
+	}
 
-		for(i=0; i<n; i++) {
-			nlink->data[i] = pkg_malloc(sizeof(char) * nlink->lengths[i]);
-			if(!nlink->data[i]) {
-				LM_ERR("no more pkg memory (8)\n");
-				pkg_free( nlink->lengths );
-				pkg_free( nlink->data );
-				pkg_free(nlink);
-				nlink = NULL;
-				return -1;
-			}
-			strncpy(nlink->data[i], value[i].s, nlink->lengths[i]);
-		}
-
-		nlink->next = NULL;
+	if (!(*start)) {
+		*link = nlink;
+		*start = *link;
+	} else {
 		(*link)->next = nlink;
 		*link = (*link)->next;
-
-		return 0;
 	}
-}
 
+	return 0;
+}
 
 /*!
  * \brief Destroy a list

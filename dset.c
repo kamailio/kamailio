@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /** destination set / branches support.
@@ -37,6 +37,7 @@
 #include "dprint.h"
 #include "config.h"
 #include "parser/parser_f.h"
+#include "parser/parse_uri.h"
 #include "parser/msg_parser.h"
 #include "ut.h"
 #include "hash_func.h"
@@ -89,7 +90,7 @@ branch_t *get_sip_branch(int idx)
 		return NULL;
 	if(idx<0)
 	{
-		if(nr_branches + idx >= 0)
+		if((int)nr_branches + idx >= 0)
 			return &branches[nr_branches+idx];
 		return NULL;
 	}
@@ -108,7 +109,7 @@ int drop_sip_branch(int idx)
 {
 	if(nr_branches==0 || idx>=nr_branches)
 		return 0;
-	if(idx<0 && nr_branches+idx<0)
+	if(idx<0 && (int)nr_branches+idx<0)
 		return 0;
 	/* last branch */
 	if(idx==nr_branches-1)
@@ -605,3 +606,274 @@ int rewrite_uri(struct sip_msg* _m, str* _s)
 	return 1;
 }
 
+/**
+ * return src ip, port and proto as a SIP uri or proxy address
+ * - value stored in a static buffer
+ * - mode=0 return uri, mode=1 return proxy address
+ */
+int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
+{
+	static char buf[80];
+	char* p;
+	str ip, port;
+	int len;
+	str proto;
+
+	if (msg==NULL || uri==NULL) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	ip.s = ip_addr2a(&msg->rcv.src_ip);
+	ip.len = strlen(ip.s);
+
+	port.s = int2str(msg->rcv.src_port, &port.len);
+
+	switch(msg->rcv.proto) {
+		case PROTO_NONE:
+		case PROTO_UDP:
+			if(mode==0) {
+				proto.s = 0; /* Do not add transport parameter, UDP is default */
+				proto.len = 0;
+			} else {
+				proto.s = "udp";
+				proto.len = 3;
+			}
+		break;
+
+		case PROTO_TCP:
+			proto.s = "tcp";
+			proto.len = 3;
+		break;
+
+		case PROTO_TLS:
+			proto.s = "tls";
+			proto.len = 3;
+		break;
+
+		case PROTO_SCTP:
+			proto.s = "sctp";
+			proto.len = 4;
+		break;
+
+		case PROTO_WS:
+		case PROTO_WSS:
+			proto.s = "ws";
+			proto.len = 2;
+		break;
+
+		default:
+			LM_ERR("unknown transport protocol\n");
+		return -1;
+	}
+
+	len = ip.len + 2*(msg->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
+	if (mode==0) {
+		len += 4;
+		if(proto.s) {
+			len += TRANSPORT_PARAM_LEN;
+			len += proto.len;
+		}
+	} else {
+		len += proto.len + 1;
+	}
+
+	if (len > 79) {
+		LM_ERR("buffer too small\n");
+		return -1;
+	}
+
+	p = buf;
+	if(mode==0) {
+		memcpy(p, "sip:", 4);
+		p += 4;
+	} else {
+		memcpy(p, proto.s, proto.len);
+		p += proto.len;
+		*p++ = ':';
+	}
+
+	if (msg->rcv.src_ip.af==AF_INET6)
+		*p++ = '[';
+	memcpy(p, ip.s, ip.len);
+	p += ip.len;
+	if (msg->rcv.src_ip.af==AF_INET6)
+		*p++ = ']';
+
+	*p++ = ':';
+
+	memcpy(p, port.s, port.len);
+	p += port.len;
+
+	if (mode==0 && proto.s) {
+		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		p += TRANSPORT_PARAM_LEN;
+
+		memcpy(p, proto.s, proto.len);
+		p += proto.len;
+	}
+
+	uri->s = buf;
+	uri->len = len;
+	uri->s[uri->len] = '\0';
+
+	return 0;
+}
+
+/**
+ * add alias parameter with encoding of source address
+ * - nuri->s must point to a buffer of nuri->len size
+ */
+int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
+{
+	char* p;
+	str ip, port;
+	int len;
+
+	if (msg==NULL || uri==NULL || nuri==NULL) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	ip.s = ip_addr2a(&msg->rcv.src_ip);
+	ip.len = strlen(ip.s);
+
+	port.s = int2str(msg->rcv.src_port, &port.len);
+
+	/*uri;alias=[ip]~port~proto*/
+	len = uri->len+ip.len+port.len+12;
+	if(len>=nuri->len) {
+		LM_ERR("not enough space for new uri: %d\n", len);
+		return -1;
+	}
+	p = nuri->s;
+	memcpy(p, uri->s, uri->len);
+	p += uri->len;
+	memcpy(p, ";alias=", 7);
+	p += 7;
+	if (msg->rcv.src_ip.af == AF_INET6)
+		*p++ = '[';
+	memcpy(p, ip.s, ip.len);
+	p += ip.len;
+	if (msg->rcv.src_ip.af == AF_INET6)
+		*p++ = ']';
+	*p++ = '~';
+	memcpy(p, port.s, port.len);
+	p += port.len;
+	*p++ = '~';
+	*p++ = msg->rcv.proto + '0';
+	nuri->len = p - nuri->s;
+	nuri->s[nuri->len] = '\0';
+
+	LM_DBG("encoded <%.*s> => [%.*s]\n",
+			uri->len, uri->s, nuri->len, nuri->s);
+	return 0;
+}
+
+/**
+ * restore from alias parameter with encoding of source address
+ * - nuri->s must point to a buffer of nuri->len size
+ * - suri->s must point to a buffer of suri->len size
+ */
+int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
+{
+	char* p;
+	str skip;
+	str ip, port, sproto;
+	int proto;
+
+	if (uri==NULL || nuri==NULL || suri==NULL) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	/* sip:x;alias=1.1.1.1~0~0 */
+	if(uri->len < 23) {
+		/* no alias possible */
+		return -2;
+	}
+	p = uri->s + uri->len-18;
+	skip.s = 0;
+	while(p>uri->s+5) {
+		if(strncmp(p, ";alias=", 7)==0) {
+			skip.s = p;
+			break;
+		}
+		p--;
+	}
+	if(skip.s==0) {
+		/* alias parameter not found */
+		return -2;
+	}
+	p += 7;
+	ip.s = p;
+	p = (char*)memchr(ip.s, '~', (size_t)(uri->s+uri->len-ip.s));
+	if(p==NULL) {
+		/* proper alias parameter not found */
+		return -2;
+	}
+	ip.len = p - ip.s;
+	p++;
+	if(p>=uri->s+uri->len) {
+		/* proper alias parameter not found */
+		return -2;
+	}
+	port.s = p;
+	p = (char*)memchr(port.s, '~', (size_t)(uri->s+uri->len-port.s));
+	if(p==NULL) {
+		/* proper alias parameter not found */
+		return -2;
+	}
+	port.len = p - port.s;
+	p++;
+	if(p>=uri->s+uri->len) {
+		/* proper alias parameter not found */
+		return -2;
+	}
+	proto = (int)(*p - '0');
+	p++;
+
+	if(p!=uri->s+uri->len && *p!=';') {
+		/* proper alias parameter not found */
+		return -2;
+	}
+	skip.len = (int)(p - skip.s);
+
+	if(suri->len<=4+ip.len+1+port.len+11/*;transport=*/+4) {
+		LM_ERR("address buffer too small\n");
+		return -1;
+	}
+	if(nuri->len<=uri->len - skip.len) {
+		LM_ERR("uri buffer too small\n");
+		return -1;
+	}
+
+	p = nuri->s;
+	memcpy(p, uri->s, (size_t)(skip.s-uri->s));
+	p += skip.s-uri->s;
+	memcpy(p, skip.s+skip.len, (size_t)(uri->s+uri->len - skip.s - skip.len));
+	p += uri->s+uri->len - skip.s - skip.len;
+	nuri->len = p - nuri->s;
+
+	p = suri->s;
+	strncpy(p, "sip:", 4);
+	p += 4;
+	strncpy(p, ip.s, ip.len);
+	p += ip.len;
+	*p++ = ':';
+	strncpy(p, port.s, port.len);
+	p += port.len;
+	proto_type_to_str((unsigned short)proto, &sproto);
+	if(sproto.len>0 && proto!=PROTO_UDP) {
+		strncpy(p, ";transport=", 11);
+		p += 11;
+		strncpy(p, sproto.s, sproto.len);
+		p += sproto.len;
+	}
+	suri->len = p - suri->s;
+
+	LM_DBG("decoded <%.*s> => [%.*s] [%.*s]\n",
+			uri->len, uri->s, nuri->len, nuri->s, suri->len, suri->s);
+
+	return 0;
+}

@@ -1,10 +1,6 @@
 /*
- * $Id$
- *
  * TLS module - select interface
  *
- * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
  * Copyright (C) 2005 iptelorg GmbH
  * Copyright (C) 2006 enum.at
  *
@@ -22,7 +18,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
  */
 /** SIP-router TLS support :: Select interface.
  * @file
@@ -38,6 +39,7 @@
 #include "../../tcp_conn.h"
 #include "../../ut.h"
 #include "../../cfg/cfg.h"
+#include "../../dprint.h"
 #include "tls_server.h"
 #include "tls_select.h"
 #include "tls_mod.h"
@@ -99,11 +101,21 @@ enum {
 
 
 
+static struct tcp_connection* _tls_pv_con = 0;
 
+
+void tls_set_pv_con(struct tcp_connection *c)
+{
+	_tls_pv_con = c;
+}
 
 struct tcp_connection* get_cur_connection(struct sip_msg* msg)
 {
 	struct tcp_connection* c;
+
+	if(_tls_pv_con != 0)
+		return _tls_pv_con;
+
 	if (msg->rcv.proto != PROTO_TLS) {
 		ERR("Transport protocol is not TLS (bug in config)\n");
 		return 0;

@@ -36,7 +36,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -70,10 +70,11 @@ void ul_impu_removed(impurecord_t* r, ucontact_t* c, int type, void* param) {
     int assignment_type = AVP_IMS_SAR_USER_DEREGISTRATION;
     int data_available = AVP_IMS_SAR_USER_DATA_NOT_AVAILABLE;
 
-    //we only send SAR if the REGISTRATION state is (NOT) IMPU_NOT_REGISTERED
+    //we only send SAR if the REGISTRATION state is (NOT) IMPU_NOT_REGISTERED and if send_sar_on_delete is set
+    //send_sar_on_delete is set by default - only unset if impu is deleted due to explicit dereg
     LM_DBG("Received notification of UL IMPU removed for IMPU <%.*s>", r->public_identity.len, r->public_identity.s);
 
-    if (r->reg_state != IMPU_NOT_REGISTERED) {
+    if (r->reg_state != IMPU_NOT_REGISTERED && r->send_sar_on_delete) {
         LM_DBG("Sending SAR to DeRegister [%.*s] (pvt: <%.*s>)\n",
                 r->public_identity.len, r->public_identity.s,
                 r->s->private_identity.len, r->s->private_identity.s);

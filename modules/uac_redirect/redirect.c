@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
  * History:
@@ -85,11 +85,11 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"deny_filter",     STR_PARAM,  &deny_filter_s    },
-	{"accept_filter",   STR_PARAM,  &accept_filter_s  },
-	{"default_filter",  STR_PARAM,  &def_filter_s     },
-	{"acc_function",    STR_PARAM,  &acc_fct_s        },
-	{"acc_db_table",    STR_PARAM,  &acc_db_table     },
+	{"deny_filter",     PARAM_STRING,  &deny_filter_s    },
+	{"accept_filter",   PARAM_STRING,  &accept_filter_s  },
+	{"default_filter",  PARAM_STRING,  &def_filter_s     },
+	{"acc_function",    PARAM_STRING,  &acc_fct_s        },
+	{"acc_db_table",    PARAM_STRING,  &acc_db_table     },
 	{"bflags",    		INT_PARAM,  &bflags			  },
 	{0, 0, 0}
 };

@@ -577,7 +577,7 @@ modparam("drouting", "drl_table", "my_gw_lists")
        It is ok to have repeating gateways in different groups. The module
        will take care internally in case of failure not to choose a
        gateway that was tried already.
-       Ex: 1,2,3; 1,2,3; 1,2,3 -> no gateway will be choosen twice. So in
+       Ex: 1,2,3; 1,2,3; 1,2,3 -> no gateway will be chosen twice. So in
        case there are 2 failures, all the three gateways (1,2,3) will be
        tried in a random order.
 

@@ -10,7 +10,7 @@ Dan Pascu
 
    <dan@ag-projects.com>
 
-   Copyright � 2008 Dan Pascu
+   Copyright © 2008 Dan Pascu
      __________________________________________________________________
 
    Table of Contents
@@ -405,7 +405,7 @@ Chapter 1. Admin Guide
    each endpoint will receive exactly one keepalive message. A negative
    value or zero will disable the keepalive functionality.
 
-   Default value is "60".
+   Default value is “60”.
 
    Example 1.1. Setting the keepalive_interval parameter
 ...
@@ -418,7 +418,7 @@ modparam("nat_traversal", "keepalive_interval", 90)
    for this purpose are NOTIFY and OPTIONS. NOTIFY generates smaller
    replies from user agents, but they are almost entirely negative
    replies. Apparently almost none of the user agents understand that the
-   purpose of the NOTIFY with a "keep-alive" event is to keep NAT open,
+   purpose of the NOTIFY with a “keep-alive” event is to keep NAT open,
    even though many user agents send such NOTIFY requests themselves.
    However this does not affect the result at all, since the purpose is to
    trigger a response from the user agent behind NAT, positive or negative
@@ -433,7 +433,7 @@ modparam("nat_traversal", "keepalive_interval", 90)
    times bigger than negative replies or replies to NOTIFY requests. For
    this reason the default value for the used method is NOTIFY.
 
-   Default value is "NOTIFY".
+   Default value is “NOTIFY”.
 
    Example 1.2. Setting the keepalive_method parameter
 ...
@@ -448,7 +448,7 @@ modparam("nat_traversal", "keepalive_method", "OPTIONS")
    keepalive message, which is the same interface on which the request
    that triggered keepalive functionality arrived.
 
-   Default value is "sip:keepalive@proxy_ip" with proxy_ip being the
+   Default value is “sip:keepalive@proxy_ip” with proxy_ip being the
    actual IP of the outgoing interface.
 
    Example 1.3. Setting the keepalive_from parameter
@@ -487,7 +487,7 @@ MyHeader: some_value\r\n")
    case it will store it in the Kamailio working directory, or an absolute
    path.
 
-   Default value is undefined "keepalive_state".
+   Default value is undefined “keepalive_state”.
 
    Example 1.5. Setting the keepalive_state_file parameter
 ...
@@ -501,7 +501,7 @@ tate")
    5.2. fix_contact()
    5.3. nat_keepalive()
 
-5.1. client_nat_test(type)
+5.1.  client_nat_test(type)
 
    Check if the client is behind NAT. What tests are performed is
    specified by the type parameter which is an integer given by the sum of
@@ -509,12 +509,14 @@ tate")
    numbers corresponding to individual tests are shown below:
 
      * 1 - tests if client has a private IP address (as defined by
-       RFC1918) in the Contact field of the SIP message.
+       RFC1918) or one from shared address space (RFC6598) in the Contact
+       field of the SIP message.
      * 2 - tests if client has contacted Kamailio from an address that is
        different from the one in the Via field. Both the IP and port are
        compared by this test.
      * 4 - tests if client has a private IP address (as defined by
-       RFC1918) in the top Via field of the SIP message.
+       RFC1918) or one from shared address space (RFC6598) in the top Via
+       field of the SIP message.
 
    For example calling client_nat_test("3") will perform test 1 and test 2
    and return true if at least one succeeds, otherwise false.
@@ -529,7 +531,7 @@ if (client_nat_test("3")) {
 }
 ...
 
-5.2. fix_contact()
+5.2.  fix_contact()
 
    Will replace the IP and port in the Contact header with the IP and port
    the SIP message was received from. Usually called after a succesful
@@ -545,7 +547,7 @@ if (client_nat_test("3")) {
 }
 ...
 
-5.3. nat_keepalive()
+5.3.  nat_keepalive()
 
    Trigger keepalive functionality for the source address of the request.
    When called it only sets some internal flags, which will trigger later

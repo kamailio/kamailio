@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -275,12 +275,20 @@ static inline void parse_username(struct username* _u)
 	_u->user = _u->whole;
 	if (_u->whole.len <= 2) return;
 
+	/* get domain - it can be: username@domain */
 	d = q_memchr(_u->whole.s, '@', _u->whole.len);
 
 	if (d) {
 		_u->domain.s = d + 1;
 		_u->domain.len = _u->whole.len - (d - _u->whole.s) - 1;
 		_u->user.len = d - _u->user.s;
+	}
+
+	/* get user - it can be: sip:username@domain */
+	d = q_memchr(_u->user.s, ':', _u->user.len);
+	if (d) {
+		_u->user.len = _u->user.s + _u->user.len - d - 1;
+		_u->user.s = d + 1;
 	}
 }
 

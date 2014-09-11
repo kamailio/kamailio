@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /** core rpcs.
@@ -936,7 +936,7 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 						"proto", get_proto_name(proto),
 						"address", si->name.s);
 				if (!si->flags & SI_IS_IP)
-					rpc->struct_add(ha, "ss",
+					rpc->struct_add(ha, "s",
 						"ipaddress", si->address_str.s);
 				rpc->struct_add(ha, "sss",
 						"proto", si->port_no_str.s,
@@ -969,7 +969,7 @@ static rpc_export_t core_rpc_methods[] = {
 		0        },
 	{"core.uptime",            core_uptime,            core_uptime_doc,            0        },
 	{"core.ps",                core_ps,                core_ps_doc,                RET_ARRAY},
-	{"core.psx",               core_psx,               core_psx_doc,                0},
+	{"core.psx",               core_psx,               core_psx_doc,               RET_ARRAY},
 	{"core.pwd",               core_pwd,               core_pwd_doc,               RET_ARRAY},
 	{"core.arg",               core_arg,               core_arg_doc,               RET_ARRAY},
 	{"core.kill",              core_kill,              core_kill_doc,              0        },

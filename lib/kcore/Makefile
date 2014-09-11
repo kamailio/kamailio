@@ -6,4 +6,7 @@ MINOR_VER=0
 BUGFIX_VER=0
 LIBS=
 
+SERLIBPATH=..
+SER_LIBS=
+
 include ../../Makefile.libs

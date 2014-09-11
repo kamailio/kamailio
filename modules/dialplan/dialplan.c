@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -78,7 +78,7 @@ static struct mi_root * mi_translate(struct mi_root *cmd_tree, void *param);
 static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2);
 static int dp_trans_fixup(void ** param, int param_no);
 
-str attr_pvar_s = {NULL,0};
+str attr_pvar_s = STR_NULL;
 pv_spec_t * attr_pvar = NULL;
 
 str default_param_s = str_init(DEFAULT_PARAM);
@@ -87,18 +87,17 @@ dp_param_p default_par2 = NULL;
 int dp_fetch_rows = 1000;
 
 static param_export_t mod_params[]={
-	{ "db_url",			STR_PARAM,	&dp_db_url.s },
-	{ "table_name",		STR_PARAM,	&dp_table_name.s },
-	{ "dpid_col",		STR_PARAM,	&dpid_column.s },
-	{ "pr_col",			STR_PARAM,	&pr_column.s },
-	{ "match_op_col",	STR_PARAM,	&match_op_column.s },
-	{ "match_exp_col",	STR_PARAM,	&match_exp_column.s },
-	{ "match_len_col",	STR_PARAM,	&match_len_column.s },
-	{ "subst_exp_col",	STR_PARAM,	&subst_exp_column.s },
-	{ "repl_exp_col",	STR_PARAM,	&repl_exp_column.s },
-	{ "attrs_col",		STR_PARAM,	&attrs_column.s },
-	{ "attrs_pvar",	    STR_PARAM,	&attr_pvar_s.s},
-	{ "attribute_pvar",	STR_PARAM,	&attr_pvar_s.s},
+	{ "db_url",			PARAM_STR,	&dp_db_url },
+	{ "table_name",		PARAM_STR,	&dp_table_name },
+	{ "dpid_col",		PARAM_STR,	&dpid_column },
+	{ "pr_col",			PARAM_STR,	&pr_column },
+	{ "match_op_col",	PARAM_STR,	&match_op_column },
+	{ "match_exp_col",	PARAM_STR,	&match_exp_column },
+	{ "match_len_col",	PARAM_STR,	&match_len_column },
+	{ "subst_exp_col",	PARAM_STR,	&subst_exp_column },
+	{ "repl_exp_col",	PARAM_STR,	&repl_exp_column },
+	{ "attrs_col",		PARAM_STR,	&attrs_column },
+	{ "attrs_pvar",	    PARAM_STR,	&attr_pvar_s},
 	{ "fetch_rows",		INT_PARAM,	&dp_fetch_rows},
 	{0,0,0}
 };
@@ -146,22 +145,9 @@ static int mod_init(void)
 		return -1;
 	}
 
-
-	dp_db_url.len = dp_db_url.s ? strlen(dp_db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(dp_db_url.s), dp_db_url.len,dp_db_url.s);
-	dp_table_name.len   = strlen(dp_table_name.s);
-	dpid_column.len     = strlen( dpid_column.s);
-	pr_column.len       = strlen(pr_column.s);
-	match_op_column.len = strlen(match_op_column.s);
-	match_exp_column.len= strlen(match_exp_column.s);
-	match_len_column.len= strlen(match_len_column.s);
-	subst_exp_column.len= strlen(subst_exp_column.s);
-	repl_exp_column.len = strlen(repl_exp_column.s);
-	attrs_column.len    = strlen(attrs_column.s);
 
-	if(attr_pvar_s.s) {
-
-		attr_pvar_s.len = strlen(attr_pvar_s.s);
+	if(attr_pvar_s.s && attr_pvar_s.len>0) {
 		attr_pvar = pv_cache_get(&attr_pvar_s);
 		if( (attr_pvar==NULL) ||
 				((attr_pvar->type != PVT_AVP) &&
@@ -179,6 +165,7 @@ static int mod_init(void)
 	}
 	memset(default_par2, 0, sizeof(dp_param_t));
 
+	/* A.Spiridonov: Some weird sections with default_param processing */
 	default_param_s.len = strlen(default_param_s.s);
 	default_par2->v.sp[0] = pv_cache_get(&default_param_s);
 	if (default_par2->v.sp[0]==NULL) {
@@ -192,6 +179,7 @@ static int mod_init(void)
 		LM_ERR("output pv is invalid\n");
 		return -1;
 	}
+	/* End of weird sections */
 
 	if(dp_fetch_rows<=0)
 		dp_fetch_rows = 1000;
@@ -233,8 +221,8 @@ static int dp_get_ivalue(struct sip_msg* msg, dp_param_p dp, int *val)
 	pv_value_t value;
 
 	if(dp->type==DP_VAL_INT) {
-		LM_DBG("integer value\n");
 		*val = dp->v.id;
+		LM_DBG("dpid is %d from constant argument\n", *val);
 		return 0;
 	}
 
@@ -246,6 +234,7 @@ static int dp_get_ivalue(struct sip_msg* msg, dp_param_p dp, int *val)
 		return -1;
 	}
 	*val = value.ri;
+	LM_DBG("dpid is %d from pv argument\n", *val);
 	return 0;
 }
 

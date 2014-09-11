@@ -39,9 +39,12 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
+
+#ifndef SUBSCRIBE_USRLOC_H
+#define SUBSCRIBE_USRLOC_H
 
 #include "usrloc.h"
 
@@ -66,8 +69,12 @@ int update_subscriber(impurecord_t* urec,
 
 void delete_subscriber(impurecord_t* urec, reg_subscriber *s);
 
-void external_delete_subscriber(reg_subscriber *s, udomain_t* _t);
+void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domain);
 
 void free_subscriber(reg_subscriber *s);
 
 int valid_subscriber(reg_subscriber *s);
+
+str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_tag);
+
+#endif /* SUBSCRIBE_USRLOC_H */

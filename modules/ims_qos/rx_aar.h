@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  *
  *
@@ -57,16 +57,6 @@
 struct cdp_binds cdpb;
 cdp_avp_bind_t *cdp_avp;
 
-/*storage for data coming into AAR_register from config file
- * holds next action (async CDP) and domain
- */
-typedef struct aar_param {
-	int type;
-	udomain_t* domain;
-	cfg_action_t *paction;
-} aar_param_t;
-
-
 /*this is the parcel to pass for CDP async for AAR*/
 typedef struct saved_transaction {
 	gen_lock_t *lock;
@@ -78,6 +68,10 @@ typedef struct saved_transaction {
 	unsigned int ticks;
 	cfg_action_t *act;
 	udomain_t* domain;
+        str callid;
+        str ftag;
+        str ttag;
+	unsigned int aar_update;
 } saved_transaction_t;
 
 typedef struct saved_transaction_local {
@@ -101,12 +95,23 @@ struct rx_authdata;
 void free_saved_transaction_data(saved_transaction_local_t* data);
 void free_saved_transaction_global_data(saved_transaction_t* data);
 
-AAAMessage *rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession* auth, str *callid, str *ftag, str *ttag, char *direction, rx_authsessiondata_t **rx_authdata);
-int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip_address, uint16_t *ip_version, str *aor, saved_transaction_local_t* saved_t_data);
+//AAAMessage *rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession* auth, str *callid, str *ftag, str *ttag, char *direction, rx_authsessiondata_t **rx_authdata);
+int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession* auth, char *direction, saved_transaction_t* saved_t_data);
+
+//send AAR to remove video after failed AAR update that added video
+int rx_send_aar_update_no_video(AAASession* auth);
+
+
+//TODOD remove - no longer user AOR parm
+//int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip_address, uint16_t *ip_version, str *aor, saved_transaction_local_t* saved_t_data);
+int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip_address, uint16_t *ip_version, saved_transaction_local_t* saved_t_data);
+
 int rx_process_aaa(AAAMessage *aaa, unsigned int * rc);
 enum dialog_direction get_dialog_direction(char *direction);
 
-void async_cdp_callback(int is_timeout, void *param, AAAMessage *aaa, long elapsed_msecs);
+void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long elapsed_msecs);
+
+void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elapsed_msecs);
 
 #endif
 

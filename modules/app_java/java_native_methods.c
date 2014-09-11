@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 #include "../../str.h"
@@ -304,7 +304,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_NativeMethods_KamExec(JNIEnv *jenv, jo
 
     if (jfname == NULL)
     {
-	LM_ERR("app_java: KamExec() required at least 1 argument (function name)\n");
+	LM_ERR("%s: KamExec() required at least 1 argument (function name)\n", APP_NAME);
 	return -1;
     }
 
@@ -369,14 +369,14 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
     fexport = find_export_record(fname, argc, 0, &mod_ver);
     if (!fexport)
     {
-	LM_ERR("app_java: KamExec(): '%s' - no such function\n", fname);
+	LM_ERR("%s: KamExec(): '%s' - no such function\n", APP_NAME, fname);
         return -1;
     }
 
     /* check fixups */
     if (force_cmd_exec == 0 && fexport->fixup != NULL && fexport->free_fixup == NULL)
     {
-        LM_ERR("app_java: KamExec(): function '%s' has fixup - cannot be used\n", fname);
+        LM_ERR("%s: KamExec(): function '%s' has fixup - cannot be used\n", APP_NAME, fname);
 	return -1;
     }
 
@@ -391,7 +391,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
 	case 6:			mod_type = MODULE6_T;	break;
 	case VAR_PARAM_NO:	mod_type = MODULEX_T;	break;
 	default:
-		LM_ERR("app_java: KamExec(): unknown/bad definition for function '%s' (%d params)\n", fname, fexport->param_no);
+		LM_ERR("%s: KamExec(): unknown/bad definition for function '%s' (%d params)\n", APP_NAME, fname, fexport->param_no);
 		return -1;
     }
 
@@ -409,7 +409,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
 
     if (!act)
     {
-	LM_ERR("app_java: KamExec(): action structure couldn't be created\n");
+	LM_ERR("%s: KamExec(): action structure couldn't be created\n", APP_NAME);
 	return -1;
     }
 
@@ -422,7 +422,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
             rval = fexport->fixup(0, 0);
             if (rval < 0)
 	    {
-		LM_ERR("app_java: KamExec(): (no params) Error in fixup (0) for '%s'\n", fname);
+		LM_ERR("%s: KamExec(): (no params) Error in fixup (0) for '%s'\n", APP_NAME, fname);
                 return -1;
             }
         }
@@ -435,7 +435,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
         	    rval = fexport->fixup(&(act->val[i+2].u.data), i+1);
         	    if (rval < 0)
 		    {
-			LM_ERR("app_java: KamExec(): (params: %d) Error in fixup (%d) for '%s'\n", argc, i+1, fname);
+			LM_ERR("%s: KamExec(): (params: %d) Error in fixup (%d) for '%s'\n", APP_NAME, argc, i+1, fname);
             		return -1;
         	    }
         	    act->val[i+2].type = MODFIXUP_ST;
@@ -538,7 +538,7 @@ JNIEXPORT jstring JNICALL Java_org_siprouter_SipMsg_getStatus(JNIEnv *jenv, jobj
 
     if ((msg->first_line).type != SIP_REQUEST)
     {
-	LM_ERR("app_java: getStatus(): Unable to fetch status. Error: Not a request message - no method available.\n");
+	LM_ERR("%s: getStatus(): Unable to fetch status. Error: Not a request message - no method available.\n", APP_NAME);
         return NULL;
     }
 
@@ -571,7 +571,7 @@ JNIEXPORT jstring JNICALL Java_org_siprouter_SipMsg_getRURI(JNIEnv *jenv, jobjec
 
     if ((msg->first_line).type != SIP_REQUEST)
     {
-	LM_ERR("app_java: getRURI(): Unable to fetch ruri. Error: Not a request message - no method available.\n");
+	LM_ERR("%s: getRURI(): Unable to fetch ruri. Error: Not a request message - no method available.\n", APP_NAME);
         return NULL;
     }
 
@@ -624,7 +624,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getSrcAddress(JNIEnv *jenv, 
     ip = ip_addr2a(&msg->rcv.src_ip);
     if (!ip)
     {
-	LM_ERR("app_java: getSrcAddress(): Unable to fetch src ip address.\n");
+	LM_ERR("%s: getSrcAddress(): Unable to fetch src ip address.\n", APP_NAME);
 	return NULL;
     }
     jip = (*jenv)->NewStringUTF(jenv, ip);
@@ -637,7 +637,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getSrcAddress(JNIEnv *jenv, 
     port = msg->rcv.src_port;
     if (port == 0x0)
     {
-	LM_ERR("app_java: getSrcAddress(): Unable to fetch src port.\n");
+	LM_ERR("%s: getSrcAddress(): Unable to fetch src port.\n", APP_NAME);
 	return NULL;
     }
 
@@ -689,7 +689,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getDstAddress(JNIEnv *jenv, 
     ip = ip_addr2a(&msg->rcv.dst_ip);
     if (!ip)
     {
-	LM_ERR("app_java: getDstAddress(): Unable to fetch src ip address.\n");
+	LM_ERR("%s: getDstAddress(): Unable to fetch src ip address.\n", APP_NAME);
 	return NULL;
     }
     jip = (*jenv)->NewStringUTF(jenv, ip);
@@ -702,7 +702,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getDstAddress(JNIEnv *jenv, 
     port = msg->rcv.dst_port;
     if (port == 0x0)
     {
-	LM_ERR("app_java: getDstAddress(): Unable to fetch src port.\n");
+	LM_ERR("%s: getDstAddress(): Unable to fetch src port.\n", APP_NAME);
 	return NULL;
     }
 
@@ -733,7 +733,7 @@ JNIEXPORT jstring JNICALL Java_org_siprouter_SipMsg_getBuffer(JNIEnv *jenv, jobj
 
     if ((msg->first_line).type != SIP_REQUEST)
     {
-	LM_ERR("app_java: getRURI(): Unable to fetch ruri. Error: Not a request message - no method available.\n");
+	LM_ERR("%s: getRURI(): Unable to fetch ruri. Error: Not a request message - no method available.\n", APP_NAME);
         return NULL;
     }
 
@@ -792,7 +792,7 @@ jint cf_seturi(JNIEnv *jenv, jobject this, jstring juri, char *fname)
 
     if (!msg)
     {
-	LM_ERR("app_java: %s: Can't process, msg=NULL\n", fname);
+	LM_ERR("%s: %s: Can't process, msg=NULL\n", APP_NAME, fname);
 	return -1;
     }
 
@@ -833,7 +833,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_add_1local_1rport(JNIEnv *
 
     if (!msg)
     {
-	LM_ERR("app_java: add_local_rport: Can't process, msg=NULL\n");
+	LM_ERR("%s: add_local_rport: Can't process, msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -863,7 +863,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_append_1branch(JNIEnv *jen
 
     if (!msg)
     {
-	LM_ERR("app_java: append_branch: Can't process, msg=NULL\n");
+	LM_ERR("%s: append_branch: Can't process, msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -916,7 +916,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_drop(JNIEnv *jenv, jobject
 
     if (!msg)
     {
-	LM_ERR("app_java: drop: Can't process, msg=NULL\n");
+	LM_ERR("%s: drop: Can't process, msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -962,7 +962,7 @@ jint cf_force_rport(JNIEnv *jenv, jobject this, char *fname)
 
     if (!msg)
     {
-	LM_ERR("app_java: %s: Can't process, msg=NULL\n", fname);
+	LM_ERR("%s: %s: Can't process, msg=NULL\n", APP_NAME, fname);
 	return -1;
     }
 
@@ -992,21 +992,21 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_force_1send_1socket(JNIEnv
 
     if (!msg)
     {
-	LM_ERR("app_java: force_send_socket: Can't process, msg=NULL\n");
+	LM_ERR("%s: force_send_socket: Can't process, msg=NULL\n", APP_NAME);
 	return -1;
     }
 
     nl = (struct name_lst *)pkg_malloc(sizeof(struct name_lst));
     if (!nl)
     {
-	LM_ERR("app_java: force_send_socket: pkg_malloc() has failed. Not enough memory!\n");
+	LM_ERR("%s: force_send_socket: pkg_malloc() has failed. Not enough memory!\n", APP_NAME);
 	return -1;
     }
     
     si = (struct socket_id *)pkg_malloc(sizeof(struct socket_id));
     if (!si)
     {
-	LM_ERR("app_java: force_send_socket: pkg_malloc() has failed. Not enough memory!\n");
+	LM_ERR("%s: force_send_socket: pkg_malloc() has failed. Not enough memory!\n", APP_NAME);
 	return -1;
     }
     
@@ -1060,7 +1060,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_forward(JNIEnv *jenv, jobj
 
     if (!msg)
     {
-	LM_ERR("app_java: forward: Can't process, msg=NULL\n");
+	LM_ERR("%s: forward: Can't process, msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -1108,7 +1108,7 @@ JNIEXPORT jboolean JNICALL Java_org_siprouter_CoreMethods_isflagset(JNIEnv *jenv
 {
     if (!msg)
     {
-	LM_ERR("app_java: isflagset: Can't process, msg=NULL\n");
+	LM_ERR("%s: isflagset: Can't process, msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -1126,7 +1126,7 @@ JNIEXPORT void JNICALL Java_org_siprouter_CoreMethods_setflag(JNIEnv *jenv, jobj
 {
     if (!msg)
     {
-	LM_ERR("app_java: setflag: Can't process, msg=NULL\n");
+	LM_ERR("%s: setflag: Can't process, msg=NULL\n", APP_NAME);
 	return;
     }
 
@@ -1144,7 +1144,7 @@ JNIEXPORT void JNICALL Java_org_siprouter_CoreMethods_resetflag(JNIEnv *jenv, jo
 {
     if (!msg)
     {
-	LM_ERR("app_java: resetflag: Can't process, msg=NULL\n");
+	LM_ERR("%s: resetflag: Can't process, msg=NULL\n", APP_NAME);
 	return;
     }
 
@@ -1167,7 +1167,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_revert_1uri(JNIEnv *jenv, 
 
     if (!msg)
     {
-	LM_ERR("app_java: revert_uri: Can't process, msg=NULL\n");
+	LM_ERR("%s: revert_uri: Can't process, msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -1204,7 +1204,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_route(JNIEnv *jenv, jobjec
 
     if (retval == -1)	// route index lookup failed.
     {
-	LM_ERR("app_java: route: failed to find route name '%s'\n", ctarget);
+	LM_ERR("%s: route: failed to find route name '%s'\n", APP_NAME, ctarget);
 	(*jenv)->ReleaseStringUTFChars(jenv, jtarget, ctarget);
 	return -1;
     }

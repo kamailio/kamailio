@@ -35,9 +35,9 @@ extern str userblacklist_db_url;
 extern db1_con_t * userblacklist_dbh;
 extern db_func_t userblacklist_dbf;
 
-#define userblacklist_DB_URL { "db_url", STR_PARAM, &userblacklist_db_url.s },
+#define userblacklist_DB_URL { "db_url", PARAM_STR, &userblacklist_db_url },
 
-#define userblacklist_DB_TABLE { "userblacklist_table", STR_PARAM, &userblacklist_table.s },
+#define userblacklist_DB_TABLE { "userblacklist_table", PARAM_STR, &userblacklist_table },
 
 extern str userblacklist_table;
 
@@ -48,16 +48,16 @@ extern str userblacklist_domain_col;
 extern str userblacklist_prefix_col;
 extern str userblacklist_whitelist_col;
 #define userblacklist_DB_COLS \
-{ "userblacklist_id_col", STR_PARAM, &userblacklist_id_col.s }, \
-{ "userblacklist_username_col", STR_PARAM, &userblacklist_username_col.s }, \
-{ "userblacklist_domain_col", STR_PARAM, &userblacklist_domain_col.s }, \
-{ "userblacklist_prefix_col", STR_PARAM, &userblacklist_prefix_col.s }, \
-{ "userblacklist_whitelist_col", STR_PARAM, &userblacklist_whitelist_col.s }, \
+{ "userblacklist_id_col", PARAM_STR, &userblacklist_id_col }, \
+{ "userblacklist_username_col", PARAM_STR, &userblacklist_username_col }, \
+{ "userblacklist_domain_col", PARAM_STR, &userblacklist_domain_col }, \
+{ "userblacklist_prefix_col", PARAM_STR, &userblacklist_prefix_col }, \
+{ "userblacklist_whitelist_col", PARAM_STR, &userblacklist_whitelist_col }, \
 
 /* table version */
 extern const unsigned int userblacklist_version;
 
-#define globalblacklist_DB_TABLE { "globalblacklist_table", STR_PARAM, &globalblacklist_table.s },
+#define globalblacklist_DB_TABLE { "globalblacklist_table", PARAM_STR, &globalblacklist_table },
 
 extern str globalblacklist_table;
 
@@ -67,10 +67,10 @@ extern str globalblacklist_prefix_col;
 extern str globalblacklist_whitelist_col;
 extern str globalblacklist_description_col;
 #define globalblacklist_DB_COLS \
-{ "globalblacklist_id_col", STR_PARAM, &globalblacklist_id_col.s }, \
-{ "globalblacklist_prefix_col", STR_PARAM, &globalblacklist_prefix_col.s }, \
-{ "globalblacklist_whitelist_col", STR_PARAM, &globalblacklist_whitelist_col.s }, \
-{ "globalblacklist_description_col", STR_PARAM, &globalblacklist_description_col.s }, \
+{ "globalblacklist_id_col", PARAM_STR, &globalblacklist_id_col }, \
+{ "globalblacklist_prefix_col", PARAM_STR, &globalblacklist_prefix_col }, \
+{ "globalblacklist_whitelist_col", PARAM_STR, &globalblacklist_whitelist_col }, \
+{ "globalblacklist_description_col", PARAM_STR, &globalblacklist_description_col }, \
 
 /* table version */
 extern const unsigned int globalblacklist_version;
@@ -97,11 +97,5 @@ int userblacklist_db_init(void);
  * \return 0 means ok, -1 means an error occured.
  */
 int userblacklist_db_open(void);
-
-/*!
- * Update the variable length after eventual assignments from the config script.
- * This is necessary because we're using the 'str' type.
- */
-void userblacklist_db_vars(void);
 
 #endif

@@ -31,12 +31,14 @@ Daniel-Constantin Mierla
 
               4.1. async_route(routename, seconds)
               4.2. async_sleep(seconds)
+              4.3. async_task_route(routename)
 
    List of Examples
 
    1.1. Set workers parameter
-   1.2. async_sleep usage
+   1.2. async_route usage
    1.3. async_sleep usage
+   1.4. async_task_route usage
 
 Chapter 1. Admin Guide
 
@@ -56,6 +58,7 @@ Chapter 1. Admin Guide
 
         4.1. async_route(routename, seconds)
         4.2. async_sleep(seconds)
+        4.3. async_task_route(routename)
 
 1. Overview
 
@@ -107,6 +110,7 @@ modparam("async", "workers", 2)
 
    4.1. async_route(routename, seconds)
    4.2. async_sleep(seconds)
+   4.3. async_task_route(routename)
 
 4.1. async_route(routename, seconds)
 
@@ -129,7 +133,7 @@ modparam("async", "workers", 2)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.2. async_sleep usage
+   Example 1.2. async_route usage
 ...
 async_route("RESUME", "4");
 ...
@@ -156,4 +160,36 @@ route[RESUME] {
 async_sleep("4");
 send_reply("404", "Not found");
 exit;
+...
+
+4.3. async_task_route(routename)
+
+   Continue the processing of the SIP request with the route[routename] in
+   one of the processes from core asynchronous framework. The core
+   parameter async_workers has to be set to enable asynchronous framework.
+   The task is executed as soon as a process from asynchronous framework
+   is idle, there is no wait time for the task like for async_route(...).
+
+   In case of internal errors, the function returns false, otherwise the
+   function exits the execution of the script at that moment (return 0
+   behaviour).
+
+   The routename parameter can be a static string or a dynamic string
+   value with config variables.
+
+   Since the SIP request handling is resumed in another process, the
+   config file execution state is practically lost. Therefore beware that
+   the execution of config after resume will end once the route[routename]
+   is finished.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.4. async_task_route usage
+...
+async_task_rroute("RESUME");
+...
+route[RESUME] {
+   send_reply("404", "Not found");
+   exit;
+}
 ...

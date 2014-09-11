@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc., 
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /** \addtogroup flatstore
@@ -32,6 +32,7 @@
 
 #include "flat_rpc.h"
 #include "flatstore_mod.h"
+#include "km_flatstore_mod.h"
 
 #include <time.h>
 
@@ -43,6 +44,7 @@
  */
 static void rotate(rpc_t* rpc, void* c)
 {
+	*km_flat_rotate = time(0);
 	*flat_rotate = time(0);
 }
 

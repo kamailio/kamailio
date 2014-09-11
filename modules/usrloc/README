@@ -68,6 +68,9 @@ Bogdan-Andrei Iancu
               3.30. timer_procs (string)
               3.31. xavp_contact (string)
               3.32. db_ops_ruid (int)
+              3.33. handle_lost_tcp (int)
+              3.34. expires_type (int)
+              3.35. db_raw_fetch_type (int)
 
         4. Functions
         5. MI Commands
@@ -157,6 +160,9 @@ Bogdan-Andrei Iancu
    1.30. Set timer_procs parameter
    1.31. Set xavp_contact parameter
    1.32. Set db_ops_ruid parameter
+   1.33. Set handle_lost_tcp parameter
+   1.34. Set expires_type parameter
+   1.35. Set db_raw_fetch_type parameter
 
 Chapter 1. Admin Guide
 
@@ -205,6 +211,9 @@ Chapter 1. Admin Guide
         3.30. timer_procs (string)
         3.31. xavp_contact (string)
         3.32. db_ops_ruid (int)
+        3.33. handle_lost_tcp (int)
+        3.34. expires_type (int)
+        3.35. db_raw_fetch_type (int)
 
    4. Functions
    5. MI Commands
@@ -325,6 +334,9 @@ Chapter 1. Admin Guide
    3.30. timer_procs (string)
    3.31. xavp_contact (string)
    3.32. db_ops_ruid (int)
+   3.33. handle_lost_tcp (int)
+   3.34. expires_type (int)
+   3.35. db_raw_fetch_type (int)
 
 3.1. nat_bflag (integer)
 
@@ -762,6 +774,48 @@ modparam("usrloc", "xavp_contact", "ulattrs")
    Example 1.32. Set db_ops_ruid parameter
 ...
 modparam("usrloc", "db_ops_ruid", 1)
+...
+
+3.33. handle_lost_tcp (int)
+
+   If set to 1, Kamailio will remove location records made via
+   TCP/TLS/WS/WSS transports when it looses corresponding tcp connections.
+
+   Default value is "0".
+
+   Example 1.33. Set handle_lost_tcp parameter
+...
+modparam("usrloc", "handle_lost_tcp", 1)
+...
+
+3.34. expires_type (int)
+
+   If set to 1, Kamailio expects to deal with BIGINT type on database
+   columns for expires and last modified values. It allows to handle
+   better the daylight time adjustmens. If set to 0, those columns are
+   expected to be on default type 'DATETIME'. When it is 1, the database
+   columns types have to be changed manually to 'BIGINT'.
+
+   Default value is "0".
+
+   Example 1.34. Set expires_type parameter
+...
+modparam("usrloc", "expires_type", 1)
+...
+
+3.35. db_raw_fetch_type (int)
+
+   This affect DB-only mode and controls what kind of raw query is used to
+   fetch the contacts from database for specific needs (e.g., sending NAT
+   keepalives). If it is set to 0, then the common SQL query is used
+   (working for MySQL, PostgreSQL, ...). If it is set to 1, the query
+   required by Oracle is used.
+
+   Default value is "0".
+
+   Example 1.35. Set db_raw_fetch_type parameter
+...
+modparam("usrloc", "db_raw_fetch_type", 1)
 ...
 
 4. Functions

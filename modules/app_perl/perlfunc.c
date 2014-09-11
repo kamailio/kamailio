@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -58,6 +58,7 @@ int perl_checkfnc(char *fnc) {
 
 int perl_exec_simple(char* fnc, char* args[], int flags) {
 
+	app_perl_reset_interpreter();
 	if (perl_checkfnc(fnc)) {
 		LM_DBG("running perl function \"%s\"", fnc);
 
@@ -93,6 +94,8 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	int retval;
 	SV *m;
 	str reason;
+
+	app_perl_reset_interpreter();
 
 	dSP;
 

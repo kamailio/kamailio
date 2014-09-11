@@ -10,23 +10,20 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-    <title>&develguide;</title>
-    <para>
-		The module provides the following functions that can be used
-		in other &kamailio; modules.
-   </para>
- 		<section>
-				<title>
-				<function moreinfo="none">dmq_load_api(dmq_api_t* api)</function>
-				</title>
-			<para>
-				This function binds the dmq modules and fills the structure 
-				with the exported functions
-				-> register_dmq_peer - registers an entity as a DMQ peer which permits receiving/sending
-				messages between nodes which support the same peer,
-				-> bcast_message - broadcast a DMQ message to all peers available in the DMQ bus,
-				-> send_message - sends a DMQ message to a specific peer in the local DMQ bus.
-			</para>
+	<title>&develguide;</title>
+	<para>
+	The module provides the following functions that can be used
+	in other &kamailio; modules.
+	</para>
+ 	<section>
+		<title>
+		<function moreinfo="none">dmq_load_api(dmq_api_t* api)</function>
+		</title>
+		<para>
+		This function binds the DMQ module and fills the structure 
+		with the exported functions below.
+		</para>
+
 		<example>
 		<title><function>dmq_api_t</function> structure</title>
 	<programlisting format="linespecific">
@@ -39,7 +36,65 @@ typedef struct dmq_api {
 ...
 </programlisting>
 		</example>
+	</section>
 
-		</section>
+        <section>
+                <title>
+                <function moreinfo="none">register_dmq_peer(dmq_peer_t* peer)</function>
+                </title>
+                <para>
+                Registers an entity as a DMQ peer which permits receiving/sending 
+                messages between nodes which support the same peer.
+                </para>
+
+                <example>
+                <title><function>register_dmq_peer</function> usage</title>
+                <programlisting format="linespecific">
+...
+	Example to follow.
+...
+</programlisting>
+                </example>
+        </section>
+
+        <section>
+                <title>
+                <function moreinfo="none">bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
+                dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)</function>
+                </title>
+                <para>
+                Broadcast a DMQ message to all nodes in the DMQ bus excluding self, 
+		inactive nodes and "except" if specified.
+                </para>
+		
+                <example>
+                <title><function>bcast_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+        Example to follow.
+...
+</programlisting>
+                </example>
+        </section>
+
+        <section>
+                <title>
+                <function moreinfo="none">send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
+                dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)</function>
+                </title>
+                <para>
+                Send a DMQ message to a single node.
+                </para>
+
+                <example>
+                <title><function>send_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+        Example to follow.
+...
+</programlisting>
+                </example>
+        </section>
+
 </chapter>
 

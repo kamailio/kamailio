@@ -19,14 +19,14 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 
 #include "notification_peer.h"
 
-static str notification_content_type = str_init("text/plain");
+str notification_content_type = str_init("text/plain");
 dmq_resp_cback_t notification_callback = {&notification_resp_callback_f, 0};
 
 /**
@@ -100,8 +100,10 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg)
 	str body;
 	str tmp_uri;
 	dmq_node_t *cur = NULL;
+	dmq_node_t *ret, *find;
 	char *tmp, *end, *match;
-	if(!msg->content_length) {
+
+	if(!msg->content_length && (parse_headers(msg,HDR_CONTENTLENGTH_F,0)<0 || !msg->content_length)) {
 		LM_ERR("no content length header found\n");
 		return -1;
 	}
@@ -131,7 +133,11 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg)
 		tmp = match;
 		/* trim the \r, \n and \0's */
 		trim_r(tmp_uri);
-		if(!find_dmq_node_uri(update_list, &tmp_uri)) {
+		find = build_dmq_node(&tmp_uri, 0);
+		if(find==NULL)
+			return -1;
+		ret = find_dmq_node(update_list, find);
+		if (!ret) {
 			LM_DBG("found new node %.*s\n", STR_FMT(&tmp_uri));
 			cur = build_dmq_node(&tmp_uri, 1);
 			if(!cur) {
@@ -142,8 +148,15 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg)
 			update_list->nodes = cur;
 			update_list->count++;
 			total_nodes++;
+		} else if (find->params && ret->status != find->status) {
+			LM_DBG("updating status on %.*s from %d to %d\n",
+				STR_FMT(&tmp_uri), ret->status, find->status);
+			ret->status = find->status;
+			total_nodes++;
 		}
+		destroy_dmq_node(find, 0);
 	}
+
 	/* release big list lock */
 	lock_release(&update_list->lock);
 	return total_nodes;
@@ -159,24 +172,23 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 {
 	int nodes_recv;
 	str* response_body = NULL;
-	unsigned int maxforwards = 1;
+	int maxforwards = 0;
 	/* received dmqnode list */
 	LM_DBG("dmq triggered from dmq_notification_callback\n");
-	/* parse the message headers */
-	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
-		LM_ERR("error parsing message headers\n");
-		goto error;
-	}
 	
 	/* extract the maxforwards value, if any */
 	if(msg->maxforwards) {
-		LM_DBG("max forwards: %.*s\n", STR_FMT(&msg->maxforwards->body));
-		str2int(&msg->maxforwards->body, &maxforwards);
+		if (msg->maxforwards->parsed > 0) {
+			/* maxfwd module has parsed and decreased the value in the msg buf */
+			/* maxforwards->parsed contains the original value */
+			maxforwards = (int)(long)(msg->maxforwards->parsed) - 1;
+		} else {
+			str2sint(&msg->maxforwards->body, &maxforwards);
+			maxforwards--;
+		}
 	}
-	maxforwards--;
-	
 	nodes_recv = extract_node_list(node_list, msg);
-	LM_DBG("received %d new nodes\n", nodes_recv);
+	LM_DBG("received %d new or changed nodes\n", nodes_recv);
 	response_body = build_notification_body();
 	if(response_body==NULL) {
 		LM_ERR("no response body\n");
@@ -191,9 +203,8 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 	if(nodes_recv > 0 && maxforwards > 0) {
 		/* maxforwards is set to 0 so that the message is will not be in a spiral */
 		bcast_dmq_message(dmq_notification_peer, response_body, 0,
-				&notification_callback, maxforwards);
+				&notification_callback, maxforwards, &notification_content_type);
 	}
-	LM_DBG("broadcasted message\n");
 	pkg_free(response_body);
 	return 0;
 error:
@@ -266,8 +277,8 @@ int request_nodelist(dmq_node_t* node, int forward)
 		LM_ERR("no notification body\n");
 		return -1;
 	}
-	ret = dmq_send_message(dmq_notification_peer, body, node,
-			&notification_callback, forward);
+	ret = bcast_dmq_message(dmq_notification_peer, body, NULL,
+			&notification_callback, forward, &notification_content_type);
 	pkg_free(body->s);
 	pkg_free(body);
 	return ret;

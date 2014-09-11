@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "notify.h"
@@ -26,6 +26,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_uri.h"
 #include "../../modules/usrloc/usrloc.h"
+#include "../../lib/srutils/sruid.h"
 #include <libxml/parser.h>
 #include "pua_reginfo.h"
 
@@ -62,7 +63,10 @@
 #define RESULT_CONTACTS_FOUND 1
 #define RESULT_NO_CONTACTS 2
 
-int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str callid, int cseq, int expires, int event, str contact_uri) {
+extern sruid_t _reginfo_sruid;
+
+int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str callid,
+		int cseq, int expires, int event, str contact_uri) {
 	str no_str = {0, 0};
 	static str no_ua = str_init("n/a");
 	static ucontact_info_t ci;
@@ -101,6 +105,13 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 
 	/* set expire time */
 	ci.expires = time(0) + expires;
+
+	/* set ruid */
+	if(sruid_next(&_reginfo_sruid) < 0) {
+		LM_ERR("failed to generate ruid");
+	} else {
+		ci.ruid = _reginfo_sruid.uid;
+	}
 
 	/* Now we start looking for the contact: */
 	if (((*ul_record)->contacts == 0)
@@ -197,6 +208,8 @@ int reginfo_parse_event(char * s) {
 int process_body(str notify_body, udomain_t * domain) {
 	xmlDocPtr doc= NULL;
 	xmlNodePtr doc_root = NULL, registrations = NULL, contacts = NULL, uris = NULL;
+	char uri[MAX_URI_SIZE];
+	str aor_key = {0, 0};
 	str aor = {0, 0};
 	str callid = {0, 0};
 	str contact_uri = {0, 0};
@@ -249,14 +262,20 @@ int process_body(str notify_body, udomain_t * domain) {
 			goto next_registration;
 		}
 
+		if (reginfo_use_domain) {
+			aor_key.s = uri;
+		} else {
+			aor_key.s = parsed_aor.user.s;
+		}
+		aor_key.len = strlen(aor_key.s);
 		/* Now let's lock that domain for this AOR: */		
-		ul.lock_udomain(domain, &aor);
+		ul.lock_udomain(domain, &aor_key);
 		/* and retrieve the user-record for this user: */
-		result = ul.get_urecord(domain, &aor, &ul_record);
+		result = ul.get_urecord(domain, &aor_key, &ul_record);
 		if (result < 0) {
-			ul.unlock_udomain(domain, &aor);
+			ul.unlock_udomain(domain, &aor_key);
 			LM_ERR("failed to query usrloc (AOR %.*s)\n",
-				aor.len, aor.s);
+				aor_key.len, aor_key.s);
 			goto next_registration;
 		}
 		/* If no contacts found, then set the ul_record to NULL */
@@ -274,7 +293,7 @@ int process_body(str notify_body, udomain_t * domain) {
 					}
 					ul_contact = ul_contact->next;
 				}
-				if (ul.delete_urecord(domain, &aor, ul_record) < 0) {
+				if (ul.delete_urecord(domain, &aor_key, ul_record) < 0) {
 					LM_ERR("failed to remove record from usrloc\n");
 				}
 				/* If already a registration with contacts was found, then keep that result.
@@ -360,7 +379,7 @@ int process_body(str notify_body, udomain_t * domain) {
 						contact_uri.len, contact_uri.s);
 
 					/* Add to Usrloc: */
-					result = process_contact(domain, &ul_record, parsed_aor.user, callid, cseq, expires, event, contact_uri);
+					result = process_contact(domain, &ul_record, aor_key, callid, cseq, expires, event, contact_uri);
 				
 					/* Process the result */
 					if (final_result != RESULT_CONTACTS_FOUND) final_result = result;
@@ -374,7 +393,8 @@ next_contact:
 next_registration:
 		// if (ul_record) ul.release_urecord(ul_record);		
 		/* Unlock the domain for this AOR: */
-		ul.unlock_udomain(domain, &aor);
+		if (aor_key.len > 0)
+			ul.unlock_udomain(domain, &aor_key);
 
 		registrations = registrations->next;
 	}

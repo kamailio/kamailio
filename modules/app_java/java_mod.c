@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -40,9 +40,9 @@
 
 MODULE_VERSION
 
-static str class_name = {.s = "Kamailio", .len = 10};
-static str child_init_mname = { .s = "child_init", .len = 0};
-static str java_options_str = { .s = "-Djava.compiler=NONE", .len = 21};
+static char* class_name = "Kamailio";
+static char* child_init_mname = "child_init";
+static char* java_options_str = "-Djava.compiler=NONE";
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -51,9 +51,9 @@ static void mod_destroy(void);
 
 /** module parameters */
 static param_export_t params[] = {
-    {"class_name",         STR_PARAM, &class_name },
-    {"child_init_method",  STR_PARAM, &child_init_mname },
-    {"java_options",	   STR_PARAM, &java_options_str },
+    {"class_name",         PARAM_STRING, &class_name },
+    {"child_init_method",  PARAM_STRING, &child_init_mname }, /* Unused parameter? */
+    {"java_options",	   PARAM_STRING, &java_options_str },
     {"force_cmd_exec", INT_PARAM, &force_cmd_exec },
     {0,0,0}
 };
@@ -78,7 +78,7 @@ static cmd_export_t cmds[] = {
 
 /** module exports */
 struct module_exports exports = {
-    "app_java",                     /* module name */
+    APP_NAME,                       /* module name */
 //    RTLD_NOW | RTLD_GLOBAL,         /* dlopen flags */
     DEFAULT_DLFLAGS,		    /* dlopen flags */
     cmds,                           /* exported functions */
@@ -109,7 +109,7 @@ static int mod_init(void)
 
     if (force_cmd_exec)
     {
-	LM_NOTICE("app_java: Parameter force_cmd_exec may cause a memory leaks if used from embedded languages\n");
+	LM_NOTICE("%s: Parameter force_cmd_exec may cause a memory leaks if used from embedded languages\n", APP_NAME);
     }
 
     options = (JavaVMOption *)pkg_malloc(sizeof(JavaVMOption));
@@ -120,9 +120,9 @@ static int mod_init(void)
     }
     memset(options, 0, sizeof(JavaVMOption));
 
-    LM_INFO("Initializing Java VM with options: %s\n", java_options_str.s);
+    LM_INFO("Initializing Java VM with options: %s\n", java_options_str);
 
-    opts = split(java_options_str.s, " ");
+    opts = split(java_options_str, " ");
     for (nOptions=0; opts[nOptions] != NULL; nOptions++)
     {
 	options[nOptions].optionString = opts[nOptions];
@@ -141,7 +141,7 @@ static int mod_init(void)
 	return -1;
     }
 
-    LM_INFO("app_java: Java VM initialization OK\n");
+    LM_INFO("%s: Java VM initialization OK\n", APP_NAME);
 
     // attach to current thread
     (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
@@ -151,7 +151,7 @@ static int mod_init(void)
 	return -1;
     }
 
-    KamailioClass = (*env)->FindClass(env, class_name.s);
+    KamailioClass = (*env)->FindClass(env, class_name);
     if (!KamailioClass || (*env)->ExceptionCheck(env))
     {
 	handle_exception();
@@ -193,7 +193,7 @@ static int mod_init(void)
 	return -1;
     }
 
-    LM_INFO("app_java: module initialization OK\n");
+    LM_INFO("%s: module initialization OK\n", APP_NAME);
 
     if (jvm != NULL)
         (*jvm)->DetachCurrentThread(jvm);

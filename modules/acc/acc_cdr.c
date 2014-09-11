@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -44,6 +44,10 @@
 #include "acc_mod.h"
 #include "acc_extra.h"
 #include "acc.h"
+
+#ifdef SQL_ACC
+#include "../../lib/srdb1/db.h"
+#endif
 
 #include <sys/time.h>
 
@@ -75,13 +79,15 @@ static const str empty_string = { "", 0};
 // buffers which are used to collect the crd data for writing
 static str cdr_attrs[ MAX_CDR_CORE + MAX_CDR_EXTRA];
 static str cdr_value_array[ MAX_CDR_CORE + MAX_CDR_EXTRA];
-static int cdr_int_arr[ MAX_CDR_CORE + MAX_CDR_EXTRA];
+static int cdr_int_array[ MAX_CDR_CORE + MAX_CDR_EXTRA];
 static char cdr_type_array[ MAX_CDR_CORE + MAX_CDR_EXTRA];
 
 extern struct tm_binds tmb;
 extern str cdr_start_str;
 extern str cdr_end_str;
 extern str cdr_duration_str;
+extern str acc_cdrs_table;
+extern int cdr_log_enable;
 
 /* write all basic information to buffers(e.g. start-time ...) */
 static int cdr_core2strar( struct dlg_cell* dlg,
@@ -115,8 +121,107 @@ static int cdr_core2strar( struct dlg_cell* dlg,
     return MAX_CDR_CORE;
 }
 
+#ifdef SQL_ACC
+/* caution: keys need to be aligned to core format */
+static db_key_t db_cdr_keys[ MAX_CDR_CORE + MAX_CDR_EXTRA];
+static db_val_t db_cdr_vals[ MAX_CDR_CORE + MAX_CDR_EXTRA];
+
 /* collect all crd data and write it to a syslog */
-static int write_cdr( struct dlg_cell* dialog,
+static int db_write_cdr( struct dlg_cell* dialog,
+                      struct sip_msg* message)
+{
+	int m = 0;
+	int n = 0;
+	int i;
+	db_func_t *df=NULL;
+	db1_con_t *dh=NULL;
+	void *vf=NULL;
+	void *vh=NULL;
+
+	if(acc_cdrs_table.len<=0)
+		return 0;
+
+	if(acc_get_db_handlers(&vf, &vh)<0) {
+		LM_ERR("cannot get db handlers\n");
+		return -1;
+	}
+	df = (db_func_t*)vf;
+	dh = (db1_con_t*)vh;
+
+	/* get default values */
+	m = cdr_core2strar( dialog,
+						cdr_value_array,
+						cdr_int_array,
+						cdr_type_array);
+
+	for(i=0; i<m; i++) {
+		db_cdr_keys[i] = &cdr_attrs[i];
+		VAL_TYPE(db_cdr_vals+i)=DB1_STR;
+		VAL_NULL(db_cdr_vals+i)=0;
+		VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
+	}
+
+    /* get extra values */
+    if (message)
+    {
+		n += extra2strar( cdr_extra,
+							message,
+							cdr_value_array + m,
+							cdr_int_array + m,
+							cdr_type_array + m);
+		m += n;
+    } else if (cdr_expired_dlg_enable){
+        LM_WARN( "fallback to dlg_only search because of message doesn't exist.\n");
+        m += extra2strar_dlg_only( cdr_extra,
+                dialog,
+                cdr_value_array + m,
+                cdr_int_array + m,
+                cdr_type_array +m,
+                &dlgb);
+    }
+
+	for( ; i<m; i++) {
+		db_cdr_keys[i] = &cdr_attrs[i];
+		VAL_TYPE(db_cdr_vals+i)=DB1_STR;
+		VAL_NULL(db_cdr_vals+i)=0;
+		VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
+	}
+
+	if (df->use_table(dh, &acc_cdrs_table /*table*/) < 0) {
+		LM_ERR("error in use_table\n");
+		goto error;
+	}
+
+	if(acc_db_insert_mode==1 && df->insert_delayed!=NULL) {
+		if (df->insert_delayed(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+			LM_ERR("failed to insert delayed into database\n");
+			goto error;
+		}
+	} else if(acc_db_insert_mode==2 && df->insert_async!=NULL) {
+		if (df->insert_async(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+			LM_ERR("failed to insert async into database\n");
+			goto error;
+		}
+	} else {
+		if (df->insert(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+			LM_ERR("failed to insert into database\n");
+			goto error;
+		}
+	}
+
+	/* Free memory allocated by acc_extra.c/extra2strar */
+	free_strar_mem( &(cdr_type_array[m-n]), &(cdr_value_array[m-n]), n, m);
+	return 0;
+
+error:
+    /* Free memory allocated by acc_extra.c/extra2strar */
+	free_strar_mem( &(cdr_type_array[m-n]), &(cdr_value_array[m-n]), n, m);
+    return -1;
+}
+#endif
+
+/* collect all crd data and write it to a syslog */
+static int log_write_cdr( struct dlg_cell* dialog,
                       struct sip_msg* message)
 {
     static char cdr_message[ MAX_SYSLOG_SIZE];
@@ -125,26 +230,36 @@ static int write_cdr( struct dlg_cell* dialog,
                                          2;// -2 because of the string ending '\n\0'
     char* message_position = NULL;
     int message_index = 0;
+	int extra_index = 0;
     int counter = 0;
 
-    if( !dialog || !message)
-    {
-        LM_ERR( "dialog and/or message is/are empty!");
-        return -1;
-    }
+	if(cdr_log_enable==0)
+		return 0;
 
     /* get default values */
     message_index = cdr_core2strar( dialog,
                                     cdr_value_array,
-                                    cdr_int_arr,
+                                    cdr_int_array,
                                     cdr_type_array);
 
     /* get extra values */
-    message_index += extra2strar( cdr_extra,
-                                  message,
-                                  cdr_value_array + message_index,
-                                  cdr_int_arr + message_index,
-                                  cdr_type_array + message_index);
+    if (message)
+    {
+        extra_index += extra2strar( cdr_extra,
+                                      message,
+                                      cdr_value_array + message_index,
+                                      cdr_int_array + message_index,
+                                      cdr_type_array + message_index);
+    } else if (cdr_expired_dlg_enable){
+        LM_WARN( "fallback to dlg_only search because of message does not exist.\n");
+        message_index += extra2strar_dlg_only( cdr_extra,
+                                               dialog,
+                                               cdr_value_array + message_index,
+                                               cdr_int_array + message_index,
+                                               cdr_type_array + message_index,
+                                               &dlgb);
+    }
+	message_index += extra_index;
 
     for( counter = 0, message_position = cdr_message;
          counter < message_index ;
@@ -191,7 +306,34 @@ static int write_cdr( struct dlg_cell* dialog,
 
     LM_GEN2( cdr_facility, log_level, "%s", cdr_message);
 
+	/* free memory allocated by extra2strar, nothing is done in case no extra strings were found by extra2strar */
+    free_strar_mem( &(cdr_type_array[message_index-extra_index]), &(cdr_value_array[message_index-extra_index]),
+				   extra_index, message_index);
     return 0;
+}
+
+/* collect all crd data and write it to a syslog */
+static int write_cdr( struct dlg_cell* dialog,
+                      struct sip_msg* message)
+{
+	int ret = 0;
+
+	if( !dialog)
+	{
+		LM_ERR( "dialog is empty!");
+		return -1;
+	}
+	/* message can be null when logging expired dialogs  */
+	if ( !cdr_expired_dlg_enable && !message ){
+		LM_ERR( "message is empty!");
+		return -1;
+	}
+
+	ret = log_write_cdr(dialog, message);
+#ifdef SQL_ACC
+	ret |= db_write_cdr(dialog, message);
+#endif
+	return ret;
 }
 
 /* convert a string into a timeval struct */
@@ -476,7 +618,7 @@ static void cdr_on_end( struct dlg_cell* dialog,
                         int type,
                         struct dlg_cb_params* params)
 {
-    if( !dialog || !params || !params->req)
+    if( !dialog || !params)
     {
         LM_ERR("invalid values\n!");
         return;
@@ -495,7 +637,7 @@ static void cdr_on_end( struct dlg_cell* dialog,
     }
 }
 
-/* callback for a expired dialog. */
+/* callback for an expired dialog. */
 static void cdr_on_expired( struct dlg_cell* dialog,
                             int type,
                             struct dlg_cb_params* params)
@@ -507,6 +649,12 @@ static void cdr_on_expired( struct dlg_cell* dialog,
     }
 
     LM_DBG("dialog '%p' expired!\n", dialog);
+
+    if( cdr_expired_dlg_enable  && (write_cdr( dialog, 0) != 0))
+    {
+        LM_ERR( "failed to write cdr!\n");
+        return;
+    }
 }
 
 /* callback for the cleanup of a dialog. */

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
@@ -98,7 +99,7 @@ int mt_init_list_head(void)
 /**
  *
  */
-m_tree_t* mt_init_tree(str* tname, str *dbtable, int type)
+m_tree_t* mt_init_tree(str* tname, str *dbtable, int type, int multi)
 {
 	m_tree_t *pt = NULL;
 
@@ -111,6 +112,8 @@ m_tree_t* mt_init_tree(str* tname, str *dbtable, int type)
 	memset(pt, 0, sizeof(m_tree_t));
 
 	pt->type = type;
+	pt->multi = multi;
+	pt->reload_time = (unsigned int)time(NULL);
 	pt->tname.s = (char*)shm_malloc((1+tname->len)*sizeof(char));
 	if(pt->tname.s==NULL)
 	{
@@ -155,6 +158,9 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 		LM_ERR("max prefix len exceeded\n");
 		return -1;
 	}
+
+	LM_DBG("adding to tree <%.*s> of type <%d>\n", pt->tname.len,
+	       pt->tname.s, pt->type);
 
 	if ((pt->type == MT_TREE_IVAL) && (str2sint(svalue, &ivalue) != 0)) {
 		LM_ERR("bad integer string <%.*s>\n", svalue->len, svalue->s);
@@ -288,13 +294,13 @@ m_tree_t* mt_get_first_tree()
 }
 
 
-is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch)
+is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *len)
 {
 	int l;
 	mt_node_t *itn;
 	is_t *tvalue;
 
-	if(pt==NULL || tomatch==NULL || tomatch->s==NULL)
+	if(pt==NULL || tomatch==NULL || tomatch->s==NULL || len == NULL)
 	{
 		LM_ERR("bad parameters\n");
 		return NULL;
@@ -323,12 +329,14 @@ is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch)
 		l++;	
 	}
 
+	*len = l;
+
 	return tvalue;
 }
 
 int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 {
-	int l;
+        int l, n;
 	mt_node_t *itn;
 	int_str val, values_avp_name;
 	unsigned short values_name_type;
@@ -345,7 +353,9 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 		return -1;
 	}
 
-	l = 0;
+	destroy_avps(values_name_type, values_avp_name, 1);
+
+	l = n = 0;
 	itn = pt->head;
 
 	while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
@@ -369,6 +379,7 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 						val.s.s);
 				add_avp(values_name_type|AVP_VAL_STR, values_avp_name, val);
 			}
+			n++;
 			tvalues = tvalues->next;
 		}
 
@@ -376,14 +387,17 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 		l++;	
 	}
 
-	return 0;
+	if (n > 0)
+	        return 0;
+	else
+	        return -1;
 }
 
 int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 		str *tomatch, int mode)
 {
 	int l, len, n;
-	int i, j;
+	int i, j, k = 0;
 	mt_node_t *itn;
 	is_t *tvalue;
 	int_str dstid_avp_name;
@@ -409,7 +423,7 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 	if ((it->type==MT_TREE_SVAL) || (it->type==MT_TREE_IVAL)) {
 		if (mode == 2) 
 			return mt_add_tvalues(msg, it, tomatch);
-		tvalue = mt_get_tvalue(it, tomatch);
+		tvalue = mt_get_tvalue(it, tomatch, &k);
 		if (tvalue == NULL) {
 			LM_DBG("no match for: %.*s\n", tomatch->len, tomatch->s);
 			return -1;
@@ -720,6 +734,9 @@ int mt_table_spec(char* val)
 		} else if(pit->name.len==4
 				&& strncasecmp(pit->name.s, "type", 4)==0) {
 			str2sint(&pit->body, &tmp.type);
+		} else if(pit->name.len==5
+				&& strncasecmp(pit->name.s, "multi", 5)==0) {
+			str2sint(&pit->body, &tmp.multi);
 		}  else if(pit->name.len==7
 				&& strncasecmp(pit->name.s, "dbtable", 7)==0) {
 			tmp.dbtable = pit->body;
@@ -740,7 +757,11 @@ int mt_table_spec(char* val)
 		LM_ERR("unknown tree type <%d>\n", tmp.type);
 		goto error;
 	}
-
+	if ((tmp.multi != 0) && (tmp.multi != 1)) {
+		LM_ERR("unknown multi value <%d>\n", tmp.multi);
+		goto error;
+	}
+	
 	/* check for same tree */
 	if(_ptree == 0)
 	{
@@ -773,7 +794,8 @@ int mt_table_spec(char* val)
 	{
 		LM_DBG("adding new tname [%s]\n", tmp.tname.s);
 
-		ndl = mt_init_tree(&tmp.tname, &tmp.dbtable, tmp.type);
+		ndl = mt_init_tree(&tmp.tname, &tmp.dbtable, tmp.type,
+				   tmp.multi);
 		if(ndl==NULL)
 		{
 			LM_ERR("no more shm memory\n");
@@ -797,7 +819,8 @@ error:
 	return -1;
 }
 
-m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, int type)
+m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, int type,
+		      int multi)
 {
 	m_tree_t *it = NULL;
 	m_tree_t *prev = NULL;
@@ -824,7 +847,7 @@ m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, int type)
 	{
 		LM_DBG("adding new tname [%s]\n", tname->s);
 
-		ndl = mt_init_tree(tname, dbtable, type);
+		ndl = mt_init_tree(tname, dbtable, type, multi);
 		if(ndl==NULL)
 		{
 			LM_ERR("no more shm memory\n");
@@ -860,3 +883,417 @@ int mt_defined_trees(void)
 	return 0;
 }
 
+int mt_mi_add_tvalues(struct mi_node *rpl, m_tree_t *pt, str *tomatch)
+{
+	int l;
+	mt_node_t *itn;
+	mt_is_t *tvalues;
+	struct mi_attr* attr= NULL;
+	struct mi_node *node = NULL;
+
+	if (pt == NULL || tomatch == NULL || tomatch->s == NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	l = 0;
+	itn = pt->head;
+
+	while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
+		/* check validity */
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255) {
+			LM_ERR("invalid char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return -1;
+		}
+		tvalues = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues;
+		while (tvalues != NULL) {
+			node = add_mi_node_child(rpl, 0, "MT", 2, 0, 0);
+			if(node == NULL)
+				return -1;
+			if( add_mi_attr(node, MI_DUP_VALUE, "TNAME", 5,
+					pt->tname.s, pt->tname.len) == NULL)
+				return -1;
+			if (add_mi_attr(node, MI_DUP_VALUE, "TPREFIX", 7,
+						tomatch->s, l+1) == NULL)
+				return -1;
+			if (pt->type == MT_TREE_IVAL) {
+				attr = addf_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
+						"%d", tvalues->tvalue.n);
+			} else {  /* pt->type == MT_TREE_SVAL */
+				attr = add_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
+						tvalues->tvalue.s.s, tvalues->tvalue.s.len);
+			}
+			tvalues = tvalues->next;
+			if (attr == NULL)
+				return -1;
+		}
+
+		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		l++;
+	}
+
+	if (node == NULL) return -1;
+
+	return 0;
+}
+
+int mt_mi_match_prefix(struct mi_node *rpl, m_tree_t *it,
+		str *tomatch, int mode)
+{
+	int l, len, n;
+	int i, j;
+	mt_node_t *itn;
+	is_t *tvalue;
+	mt_dw_t *dw;
+	int tprefix_len = 0;
+
+	struct mi_node *node;
+	struct mi_attr* attr= NULL;
+
+#define MT_MAX_DST_LIST	64
+	unsigned int tmp_list[2*(MT_MAX_DST_LIST+1)];
+
+	if(it==NULL || tomatch == NULL
+			|| tomatch->s == NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	l = len = 0;
+	n = 0;
+	if ((it->type==MT_TREE_SVAL) || (it->type==MT_TREE_IVAL)) {
+		if (mode == 2)
+			return mt_mi_add_tvalues(rpl, it, tomatch);
+		tvalue = mt_get_tvalue(it, tomatch, &tprefix_len);
+		if (tvalue == NULL) {
+			LM_DBG("no match for: %.*s\n", tomatch->len, tomatch->s);
+			return -1;
+		}
+		if (tvalue) {
+			node = add_mi_node_child(rpl, 0, "MT", 2, 0, 0);
+			if(node == NULL)
+				return -1;
+			if( add_mi_attr(node, MI_DUP_VALUE, "TNAME", 5,
+					it->tname.s, it->tname.len) == NULL)
+				return -1;
+			if (add_mi_attr(node, MI_DUP_VALUE, "TPREFIX", 7,
+						tomatch->s, tprefix_len) == NULL)
+				return -1;
+			if (it->type==MT_TREE_SVAL) {
+				attr = add_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
+										tvalue->s.s, tvalue->s.len);
+			} else {
+				attr = addf_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
+										"%d", tvalue->n);
+			}
+			if (attr == NULL)
+				return -1;
+		}
+		return 0;
+	}
+
+	if(it->type!=MT_TREE_DW)
+		return -1; /* wrong tree type */
+
+	itn = it->head;
+	memset(tmp_list, 0, sizeof(unsigned int)*2*(MT_MAX_DST_LIST+1));
+
+	while(itn!=NULL && l < tomatch->len && l < MT_MAX_DEPTH)
+	{
+		/* check validity */
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255)
+		{
+			LM_ERR("invalid char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return -1;
+		}
+
+		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues!=NULL)
+		{
+			dw = (mt_dw_t*)itn[_mt_char_table[(unsigned int)tomatch->s[l]]].data;
+			while(dw) {
+				tmp_list[2*n]=dw->dstid;
+				tmp_list[2*n+1]=dw->weight;
+				n++;
+				if(n==MT_MAX_DST_LIST)
+					break;
+				dw = dw->next;
+			}
+			len = l+1;
+		}
+		if(n==MT_MAX_DST_LIST)
+			break;
+
+		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		l++;
+	}
+
+	if(n==0)
+		return -1; /* no match */
+	/* invalidate duplicated dstid, keeping longest match */
+	for(i=(n-1); i>0; i--)
+	{
+		if (tmp_list[2*i]!=0)
+		{
+			for(j=0; j<i; j++)
+				if(tmp_list[2*i]==tmp_list[2*j])
+					tmp_list[2*j] = 0;
+		}
+	}
+	/* sort the table -- bubble sort -- reverse order */
+	for (i = (n - 1); i >= 0; i--)
+	{
+		for (j = 1; j <= i; j++)
+		{
+			if (tmp_list[2*(j-1)+1] < tmp_list[2*j+1])
+			{
+				tmp_list[2*MT_MAX_DST_LIST]   = tmp_list[2*(j-1)];
+				tmp_list[2*MT_MAX_DST_LIST+1] = tmp_list[2*(j-1)+1];
+				tmp_list[2*(j-1)]   = tmp_list[2*j];
+				tmp_list[2*(j-1)+1] = tmp_list[2*j+1];
+				tmp_list[2*j]   = tmp_list[2*MT_MAX_DST_LIST];
+				tmp_list[2*j+1] = tmp_list[2*MT_MAX_DST_LIST+1];
+			}
+		}
+	}
+
+	/* add as attributes */
+	for(i=0; i<n; i++)
+	{
+		if(tmp_list[2*i]!=0)
+		{
+			node = add_mi_node_child(rpl, 0, "MT", 2, 0, 0);
+			if(node == NULL)
+				return -1;
+			if( add_mi_attr(node, MI_DUP_VALUE, "TNAME", 5,
+					it->tname.s, it->tname.len) == NULL)
+				return -1;
+			if (add_mi_attr(node, MI_DUP_VALUE, "TPREFIX", 7,
+						tomatch->s, len) == NULL)
+				return -1;
+			if(addf_mi_attr(node, MI_DUP_VALUE, "WEIGHT", 6,
+					"%d", (int)tmp_list[2*i+1]) == NULL)
+				return -1;
+
+			if (addf_mi_attr(node, MI_DUP_VALUE, "DSTID", 5,
+					"%d", (int)tmp_list[2*i]) == NULL)
+				return -1;
+
+		}
+	}
+
+	return 0;
+}
+
+int mt_rpc_add_tvalues(rpc_t* rpc, void* ctx, m_tree_t *pt, str *tomatch)
+{
+	int l;
+	mt_node_t *itn;
+	mt_is_t *tvalues;
+	void *vstruct = NULL;
+	str prefix = *tomatch;
+
+	if (pt == NULL || tomatch == NULL || tomatch->s == NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	l = 0;
+	itn = pt->head;
+
+	while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
+		/* check validity */
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255) {
+			LM_ERR("invalid char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return -1;
+		}
+		tvalues = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues;
+		while (tvalues != NULL) {
+			prefix.len = l+1;
+			if (rpc->add(ctx, "{", &vstruct) < 0) {
+				rpc->fault(ctx, 500, "Internal error adding struct");
+				return -1;
+			}
+			if(rpc->struct_add(vstruct, "S", "PREFIX", &prefix) < 0) {
+				rpc->fault(ctx, 500, "Internal error adding prefix");
+				return -1;
+			}
+			if (pt->type == MT_TREE_IVAL) {
+				if(rpc->struct_add(vstruct, "d", "TVALUE", tvalues->tvalue.n) < 0 ) {
+					rpc->fault(ctx, 500, "Internal error adding tvalue");
+					return -1;
+				}
+			} else {  /* pt->type == MT_TREE_SVAL */
+				if(rpc->struct_add(vstruct, "S", "TVALUE", &tvalues->tvalue.s) < 0 ) {
+					rpc->fault(ctx, 500, "Internal error adding tvalue");
+					return -1;
+				}
+			}
+			tvalues = tvalues->next;
+		}
+
+		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		l++;
+	}
+
+	if (vstruct == NULL) return -1;
+
+	return 0;
+}
+
+int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *it,
+		str *tomatch, int mode)
+{
+	int l, len, n;
+	int i, j;
+	mt_node_t *itn;
+	is_t *tvalue;
+	mt_dw_t *dw;
+	int tprefix_len = 0;
+	str prefix = *tomatch;
+	void *vstruct = NULL;
+
+#define MT_MAX_DST_LIST	64
+	unsigned int tmp_list[2*(MT_MAX_DST_LIST+1)];
+
+	if(it==NULL || tomatch == NULL
+			|| tomatch->s == NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if (rpc->add(ctx, "S", &it->tname) < 0) {
+		rpc->fault(ctx, 500, "Internal error adding tname");
+		return -1;
+	}
+
+	l = len = 0;
+	n = 0;
+	if ((it->type==MT_TREE_SVAL) || (it->type==MT_TREE_IVAL)) {
+		if (mode == 2)
+			return mt_rpc_add_tvalues(rpc, ctx, it, tomatch);
+		tvalue = mt_get_tvalue(it, tomatch, &tprefix_len);
+		if (tvalue == NULL) {
+			LM_DBG("no match for: %.*s\n", tomatch->len, tomatch->s);
+			return -1;
+		}
+		if (tvalue) {
+			prefix.len = tprefix_len;
+			if (rpc->add(ctx, "{", &vstruct) < 0) {
+				rpc->fault(ctx, 500, "Internal error adding struct");
+				return -1;
+			}
+			if (rpc->struct_add(vstruct, "S", "PREFIX", &prefix) < 0) {
+				rpc->fault(ctx, 500, "Internal error adding prefix");
+				return -1;
+			}
+			if (it->type==MT_TREE_SVAL) {
+				if(rpc->struct_add(vstruct, "S", "TVALUE", &tvalue->s) < 0 ) {
+					rpc->fault(ctx, 500, "Internal error adding tvalue");
+					return -1;
+				}
+			} else {
+				if(rpc->struct_add(vstruct, "d", "TVALUE", tvalue->n) < 0 ) {
+					rpc->fault(ctx, 500, "Internal error adding tvalue");
+					return -1;
+				}
+			}
+		}
+		return 0;
+	}
+
+	if(it->type!=MT_TREE_DW)
+		return -1; /* wrong tree type */
+
+	itn = it->head;
+	memset(tmp_list, 0, sizeof(unsigned int)*2*(MT_MAX_DST_LIST+1));
+
+	while(itn!=NULL && l < tomatch->len && l < MT_MAX_DEPTH)
+	{
+		/* check validity */
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255)
+		{
+			LM_ERR("invalid char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return -1;
+		}
+
+		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues!=NULL)
+		{
+			dw = (mt_dw_t*)itn[_mt_char_table[(unsigned int)tomatch->s[l]]].data;
+			while(dw) {
+				tmp_list[2*n]=dw->dstid;
+				tmp_list[2*n+1]=dw->weight;
+				n++;
+				if(n==MT_MAX_DST_LIST)
+					break;
+				dw = dw->next;
+			}
+			len = l+1;
+		}
+		if(n==MT_MAX_DST_LIST)
+			break;
+
+		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		l++;
+	}
+
+	if(n==0)
+		return -1; /* no match */
+	/* invalidate duplicated dstid, keeping longest match */
+	for(i=(n-1); i>0; i--)
+	{
+		if (tmp_list[2*i]!=0)
+		{
+			for(j=0; j<i; j++)
+				if(tmp_list[2*i]==tmp_list[2*j])
+					tmp_list[2*j] = 0;
+		}
+	}
+	/* sort the table -- bubble sort -- reverse order */
+	for (i = (n - 1); i >= 0; i--)
+	{
+		for (j = 1; j <= i; j++)
+		{
+			if (tmp_list[2*(j-1)+1] < tmp_list[2*j+1])
+			{
+				tmp_list[2*MT_MAX_DST_LIST]   = tmp_list[2*(j-1)];
+				tmp_list[2*MT_MAX_DST_LIST+1] = tmp_list[2*(j-1)+1];
+				tmp_list[2*(j-1)]   = tmp_list[2*j];
+				tmp_list[2*(j-1)+1] = tmp_list[2*j+1];
+				tmp_list[2*j]   = tmp_list[2*MT_MAX_DST_LIST];
+				tmp_list[2*j+1] = tmp_list[2*MT_MAX_DST_LIST+1];
+			}
+		}
+	}
+
+	prefix.len = len;
+
+	/* add as attributes */
+	for(i=0; i<n; i++)
+	{
+		if(tmp_list[2*i]!=0)
+		{
+			if (rpc->add(ctx, "{", &vstruct) < 0) {
+				rpc->fault(ctx, 500, "Internal error adding struct");
+				return -1;
+			}
+			if (rpc->struct_add(vstruct, "S", "PREFIX", &prefix) < 0) {
+				rpc->fault(ctx, 500, "Internal error adding prefix");
+				return -1;
+			}
+			if(rpc->add(vstruct, "dd",
+					"WEIGHT", tmp_list[2*i+1],
+					"DSTID", tmp_list[2*i]) < 0 ) {
+				rpc->fault(ctx, 500, "Internal error adding weight/dstid");
+				return -1;
+			}
+		}
+	}
+
+	return 0;
+}

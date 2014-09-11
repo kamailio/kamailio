@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -651,7 +651,7 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 	memcpy(p, rr_prefix, rr_prefix_len);
 	p += rr_prefix_len;
 
-	if (user->len) {
+	if (user && user->len) {
 		memcpy(p, user->s, user->len);
 		p += user->len;
 		*p = '@';
@@ -714,6 +714,7 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 	return 1;
 lump_err:
 	if (hdr) pkg_free(hdr);
+	if (trans) pkg_free(trans);
 	if (suffix) pkg_free(suffix);
 	if (term) pkg_free(term);
 	if (r2) pkg_free(r2);

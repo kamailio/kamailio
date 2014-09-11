@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -71,6 +71,8 @@ char *send_rtpp_command(struct rtpp_node *, struct iovec *, int);
 
 struct rtpp_set *get_rtpp_set(str *set_name);
 int insert_rtpp_node(struct rtpp_set *const rtpp_list, const str *const url, const int weight, const int disabled);
+
+int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
 
 int init_rtpproxy_db(void);
 

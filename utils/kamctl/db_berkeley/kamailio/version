@@ -10,6 +10,8 @@ METADATA_DEFAULTS
 NIL|0
 acc|
 acc|4
+acc_cdrs|
+acc_cdrs|1
 active_watchers|
 active_watchers|11
 address|
@@ -74,6 +76,10 @@ matrix|
 matrix|1
 missed_calls|
 missed_calls|3
+mohqcalls|
+mohqcalls|1
+mohqueues|
+mohqueues|1
 mtree|
 mtree|1
 mtrees|

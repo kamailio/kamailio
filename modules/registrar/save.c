@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ----------
@@ -95,7 +95,7 @@ static inline int star(sip_msg_t *_m, udomain_t* _d, str* _a, str *_h)
 {
 	urecord_t* r;
 	ucontact_t* c;
-	
+
 	ul.lock_udomain(_d, _a);
 
 	if (!ul.get_urecord(_d, _a, &r)) {
@@ -114,11 +114,11 @@ static inline int star(sip_msg_t *_m, udomain_t* _d, str* _a, str *_h)
 
 	if (ul.delete_urecord(_d, _a, r) < 0) {
 		LM_ERR("failed to remove record from usrloc\n");
-		
-		     /* Delete failed, try to get corresponding
-		      * record structure and send back all existing
-		      * contacts
-		      */
+
+		/* Delete failed, try to get corresponding
+		 * record structure and send back all existing
+		 * contacts
+		 */
 		rerrno = R_UL_DEL_R;
 		if (!ul.get_urecord(_d, _a, &r)) {
 			build_contact(_m, r->contacts, _h);
@@ -133,46 +133,59 @@ static inline int star(sip_msg_t *_m, udomain_t* _d, str* _a, str *_h)
 
 
 /*! \brief
- */
-static struct socket_info *get_sock_hdr(struct sip_msg *msg)
+*/
+static struct socket_info *get_sock_val(struct sip_msg *msg)
 {
 	struct socket_info *sock;
 	struct hdr_field *hf;
+	str xsockname = str_init("socket");
+	sr_xavp_t *vavp = NULL;
 	str socks;
 	str hosts;
 	int port;
 	int proto;
-	char c;
+	char c = 0;
 
-	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
-		LM_ERR("failed to parse message\n");
-		return 0;
+	if(sock_hdr_name.len>0) {
+		if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
+			LM_ERR("failed to parse message\n");
+			return 0;
+		}
+
+		for (hf=msg->headers; hf; hf=hf->next) {
+			if (cmp_hdrname_str(&hf->name, &sock_hdr_name)==0)
+				break;
+		}
+
+		/* hdr found? */
+		if (hf==0)
+			return 0;
+
+		trim_len( socks.len, socks.s, hf->body );
+		if (socks.len==0)
+			return 0;
+
+		/*FIXME: This is a hack */
+		c = socks.s[socks.len];
+		socks.s[socks.len] = '\0';
+	} else {
+		/* xavp */
+		if(reg_xavp_cfg.s!=NULL)
+			vavp = xavp_get_child_with_sval(&reg_xavp_cfg, &xsockname);
+		if(vavp==NULL || vavp->val.v.s.len<=0)
+			return 0;
+		socks = vavp->val.v.s;
 	}
-
-	for (hf=msg->headers; hf; hf=hf->next) {
-		if (cmp_hdrname_str(&hf->name, &sock_hdr_name)==0)
-			break;
-	}
-
-	/* hdr found? */
-	if (hf==0)
-		return 0;
-
-	trim_len( socks.len, socks.s, hf->body );
-	if (socks.len==0)
-		return 0;
-
-	/*FIXME: This is a hack */
-	c = socks.s[socks.len];
-	socks.s[socks.len] = '\0';
 	if (parse_phostport( socks.s, &hosts.s, &hosts.len,
-	&port, &proto)!=0) {
+				&port, &proto)!=0) {
 		socks.s[socks.len] = c;
 		LM_ERR("bad socket <%.*s> in \n",
-			socks.len, socks.s);
+				socks.len, socks.s);
 		return 0;
 	}
-	socks.s[socks.len] = c;
+	if(sock_hdr_name.len>0 && c!=0) {
+		socks.s[socks.len] = c;
+	}
 	sock = grep_sock_info(&hosts,(unsigned short)port,(unsigned short)proto);
 	if (sock==0) {
 		LM_ERR("non-local socket <%.*s>\n",	socks.len, socks.s);
@@ -196,7 +209,7 @@ static inline int no_contacts(sip_msg_t *_m, udomain_t* _d, str* _a, str* _h)
 {
 	urecord_t* r;
 	int res;
-	
+
 	ul.lock_udomain(_d, _a);
 	res = ul.get_urecord(_d, _a, &r);
 	if (res < 0) {
@@ -205,7 +218,7 @@ static inline int no_contacts(sip_msg_t *_m, udomain_t* _d, str* _a, str* _h)
 		ul.unlock_udomain(_d, _a);
 		return -1;
 	}
-	
+
 	if (res == 0) {  /* Contacts found */
 		build_contact(_m, r->contacts, _h);
 		ul.release_urecord(r);
@@ -256,16 +269,24 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsig
 
 		/* set received socket */
 		if (_m->flags&sock_flag) {
-			ci.sock = get_sock_hdr(_m);
+			ci.sock = get_sock_val(_m);
 			if (ci.sock==0)
 				ci.sock = _m->rcv.bind_address;
 		} else {
 			ci.sock = _m->rcv.bind_address;
 		}
 
+		/* set tcp connection id */
+		if (_m->rcv.proto==PROTO_TCP || _m->rcv.proto==PROTO_TLS
+				|| _m->rcv.proto==PROTO_WS  || _m->rcv.proto==PROTO_WSS) {
+			ci.tcpconn_id = _m->rcv.proto_reserved1;
+		} else {
+			ci.tcpconn_id = -1;
+		}
+
 		/* additional info from message */
 		if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
-		_m->user_agent->body.len>0 && _m->user_agent->body.len<MAX_UA_SIZE) {
+				_m->user_agent->body.len>0 && _m->user_agent->body.len<MAX_UA_SIZE) {
 			ci.user_agent = &_m->user_agent->body;
 		} else {
 			ci.user_agent = &no_ua;
@@ -304,6 +325,9 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsig
 		allow_parsed = 0; /* not parsed yet */
 		received_found = 0; /* not found yet */
 		m = _m; /* remember the message */
+	}
+	else {
+		memset( &ci.instance, 0, sizeof(str));
 	}
 
 	if(_c!=0) {
@@ -353,8 +377,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsig
 				if (received_found==0) {
 					memset(&val, 0, sizeof(int_str));
 					if (rcv_avp_name.n!=0
-								&& search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0)
-								&& val.s.len > 0) {
+							&& search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0)
+							&& val.s.len > 0) {
 						if (val.s.len>RECEIVED_MAX_SIZE) {
 							rerrno = R_CONTACT_LEN;
 							LM_ERR("received too long\n");
@@ -394,7 +418,6 @@ error:
 int reg_get_crt_max_contacts(void)
 {
 	int n;
-	sr_xavp_t *ravp=NULL;
 	sr_xavp_t *vavp=NULL;
 	str vname = {"max_contacts", 12};
 
@@ -402,23 +425,15 @@ int reg_get_crt_max_contacts(void)
 
 	if(reg_xavp_cfg.s!=NULL)
 	{
-		ravp = xavp_get(&reg_xavp_cfg, NULL);
-		if(ravp!=NULL && ravp->val.type==SR_XTYPE_XAVP)
+		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &vname);
+		if(vavp!=NULL)
 		{
-			vavp = xavp_get(&vname, ravp->val.v.xavp);
-			if(vavp!=NULL && vavp->val.type==SR_XTYPE_INT)
-			{
-				n = vavp->val.v.i;
-				LM_ERR("using max contacts value from xavp: %d\n", n);
-			} else {
-				ravp = NULL;
-			}
-		} else {
-			ravp = NULL;
+			n = vavp->val.v.i;
+			LM_DBG("using max contacts value from xavp: %d\n", n);
 		}
 	}
 
-	if(ravp==NULL)
+	if(vavp==NULL)
 	{
 		n = cfg_get(registrar, registrar_cfg, max_contacts);
 	}
@@ -496,7 +511,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 
 		/* hack to work with buggy clients having many contacts with same
 		 * address in one REGISTER - increase CSeq to detect if there was
-		 * one alredy added, then update */
+		 * one already added, then update */
 		ci->cseq++;
 		if ( r->contacts==0
 				|| ul.get_ucontact_by_instance(r, &_c->uri, ci, &c) != 0) {
@@ -557,13 +572,13 @@ error:
 
 
 static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
-										ucontact_info_t *ci, int mc)
+		ucontact_info_t *ci, int mc)
 {
 	int num;
 	int e;
 	ucontact_t* ptr, *cont;
 	int ret;
-	
+
 	num = 0;
 	ptr = _r->contacts;
 	while(ptr) {
@@ -573,7 +588,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		ptr = ptr->next;
 	}
 	LM_DBG("%d valid contacts\n", num);
-	
+
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &e);
@@ -593,7 +608,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 			if (e == 0) num--;
 		}
 	}
-	
+
 	LM_DBG("%d contacts after commit\n", num);
 	if (num > mc) {
 		LM_INFO("too many contacts for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
@@ -651,7 +666,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 
 #ifdef USE_TCP
 	if ( (_m->flags&tcp_persistent_flag) &&
-	(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS||_m->rcv.proto==PROTO_WS||_m->rcv.proto==PROTO_WSS)) {
+			(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS||_m->rcv.proto==PROTO_WS||_m->rcv.proto==PROTO_WSS)) {
 		e_max = -1;
 		tcp_check = 1;
 	} else {
@@ -699,10 +714,10 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 				ptr=_r->contacts;
 				while(ptr)
 				{
-					ptr0 = ptr;
+					ptr0 = ptr->next;
 					if(ptr!=c)
 						ul.delete_ucontact(_r, ptr);
-					ptr=ptr0->next;
+					ptr=ptr0;
 				}
 				updated=1;
 			}
@@ -729,12 +744,31 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 					ptr=_r->contacts;
 					while(ptr)
 					{
-						ptr0 = ptr;
+						ptr0 = ptr->next;
 						if(ptr!=c)
 							ul.delete_ucontact(_r, ptr);
-						ptr=ptr0->next;
+						ptr=ptr0;
 					}
 					updated=1;
+				}
+				/* If call-id has changed then delete all records with this sip.instance
+				   then insert new record */
+				if (ci->instance.s != NULL &&
+						(ci->callid->len != c->callid.len ||
+						 strncmp(ci->callid->s, c->callid.s, ci->callid->len) != 0))
+				{
+					ptr = _r->contacts;
+					while (ptr)
+					{
+						ptr0 = ptr->next;
+						if ((ptr != c) && ptr->instance.len == c->instance.len &&
+								strncmp(ptr->instance.s, c->instance.s, ptr->instance.len) == 0)
+						{
+							ul.delete_ucontact(_r, ptr);
+						}
+						ptr = ptr0;
+					}
+					updated = 1;
 				}
 				if (ul.update_ucontact(_r, c, ci) < 0) {
 					rerrno = R_UL_UPD_C;
@@ -876,12 +910,13 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	}
 
 	if (reg_outbound_mode != REG_OUTBOUND_NONE
-		&& !(parse_headers(_m, HDR_VIA2_F, 0) == -1 || _m->via2 == 0
-			|| _m->via2->error != PARSE_OK)) {
+			&& _m->contact && _m->contact->parsed
+			&& !(parse_headers(_m, HDR_VIA2_F, 0) == -1 || _m->via2 == 0
+				|| _m->via2->error != PARSE_OK)) {
 		/* Outbound supported on server, and more than one Via: - not the first hop */
 
 		if (!(parse_headers(_m, HDR_PATH_F, 0) == -1 || _m->path == 0)) {
-		        route = (rr_t *)0;
+			route = (rr_t *)0;
 			if (parse_rr_body(_m->path->body.s, _m->path->body.len, &route) < 0) {
 				LM_ERR("Failed to parse Path: header body\n");
 				goto error;
@@ -913,7 +948,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 
 		if ((use_ob == 0) && (reg_regid_mode == REG_REGID_OUTBOUND)) {
 			if ((get_supported(_m) & F_OPTION_TAG_OUTBOUND)
-			    && contact->reg_id) {
+					&& contact->reg_id) {
 				LM_WARN("Outbound used by UAC but not supported by edge proxy\n");
 				rerrno = R_OB_UNSUP_EDGE;
 				goto error;
@@ -923,7 +958,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 			}
 		}
 	}
-	
+
 	get_act_time();
 	c = get_first_contact(_m);
 
@@ -952,7 +987,8 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	update_stat(accepted_registrations, 1);
 
 	/* Only send reply upon request, not upon reply */
-	if ((is_route_type(REQUEST_ROUTE)) && !is_cflag_set(REG_SAVE_NORPL_FL) && (reg_send_reply(_m) < 0))
+	if ((is_route_type(REQUEST_ROUTE) || is_route_type(FAILURE_ROUTE))
+			&& !is_cflag_set(REG_SAVE_NORPL_FL) && (reg_send_reply(_m) < 0))
 		return -1;
 
 	return ret;
@@ -975,9 +1011,9 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 	if (_ruid == NULL) {
 		/* No ruid provided - remove all contacts for aor */
 
-	        if (extract_aor(_uri, &aor, NULL) < 0) {
-		        LM_ERR("failed to extract Address Of Record\n");
-		        return -1;
+		if (extract_aor(_uri, &aor, NULL) < 0) {
+			LM_ERR("failed to extract Address Of Record\n");
+			return -1;
 		}
 
 		u = parse_to_uri(_m);
@@ -992,36 +1028,37 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 	} else {
 		/* ruid provided - remove a specific contact */
 
-	        if (_uri->len > 0) {
+		if (_uri->len > 0) {
 
-		        if (extract_aor(_uri, &aor, NULL) < 0) {
-		                LM_ERR("failed to extract Address Of Record\n");
-		                return -1;
-		        }
+			if (extract_aor(_uri, &aor, NULL) < 0) {
+				LM_ERR("failed to extract Address Of Record\n");
+				return -1;
+			}
 
-		        if (ul.get_urecord_by_ruid(_d, ul.get_aorhash(&aor),
-						   _ruid, &r, &c) != 0) {
-			        LM_WARN("AOR/Contact not found\n");
-			        return -1;
+			if (ul.get_urecord_by_ruid(_d, ul.get_aorhash(&aor),
+						_ruid, &r, &c) != 0) {
+				LM_WARN("AOR/Contact not found\n");
+				return -1;
 			}
 			if (ul.delete_ucontact(r, c) != 0) {
-			        LM_WARN("could not delete contact\n");
-			        return -1;
+				ul.unlock_udomain(_d, &aor);
+				LM_WARN("could not delete contact\n");
+				return -1;
 			}
 			ul.unlock_udomain(_d, &aor);
 
 		} else {
 
-   		        res = ul.delete_urecord_by_ruid(_d, _ruid);
+			res = ul.delete_urecord_by_ruid(_d, _ruid);
 			switch (res) {
-			case -1:
-			        LM_ERR("could not delete contact\n");
-			        return -1;
-			case -2:
-			        LM_WARN("contact not found\n");
-			        return -1;
-			default:
-			        return 1;
+				case -1:
+					LM_ERR("could not delete contact\n");
+					return -1;
+				case -2:
+					LM_WARN("contact not found\n");
+					return -1;
+				default:
+					return 1;
 			}
 
 		}

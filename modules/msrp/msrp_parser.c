@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -81,7 +81,7 @@ int msrp_parse_frame(msrp_frame_t *mf)
 	}
 	if(msrp_parse_headers(mf)<0)
 	{
-		LM_ERR("unable to parse first line\n");
+		LM_ERR("unable to parse headers\n");
 		return -1;
 	}
 	return 0;
@@ -220,6 +220,9 @@ int msrp_parse_headers(msrp_frame_t *mf)
 	char *s; /* start for search */
 	msrp_hdr_t *hdr;
 	msrp_hdr_t *last;
+	int fpath = 0; /* From path set */
+	int tpath = 0; /* To path set */
+	int any = 0; /* Any header set */
 
 	/* already parsed?!? */
 	if(mf->headers != NULL)
@@ -290,11 +293,46 @@ int msrp_parse_headers(msrp_frame_t *mf)
 			last = hdr;
 		}
 		msrp_hdr_set_type(hdr);
-	
+
+		/* Checking for well-formed MSRP rfc4975 messages */
+		if (hdr->htype == MSRP_HDR_TO_PATH) {
+			if (tpath) {
+				LM_ERR("broken msrp frame message, Multiple To-Path not allowed.\n");
+				return -1;				
+			} else if (fpath || any) {
+				LM_ERR("broken msrp frame message, To-Path must be the first header.\n");
+				return -1;
+			} else {
+				tpath = 1;
+			}
+		} else if (hdr->htype == MSRP_HDR_FROM_PATH) {
+			if (fpath) {
+				LM_ERR("broken msrp frame message, Multiple From-Path not allowed.\n");
+				return -1;
+			} else if (!tpath || any) {
+				LM_ERR("broken msrp frame message, From-Path must be after To-Path.\n");
+				return -1;
+			} else {
+				fpath = 1;
+			}
+		} else {
+			if (!tpath || !fpath) {
+				LM_ERR("broken msrp frame message, To-Path and From-Path must be defined before any header.\n");
+				return -1;
+			} else {
+				any = 1;
+			}
+		}
+		
 		LM_DBG("MSRP Header: (%p) [%.*s] [%d] [%.*s]\n",
 				hdr, hdr->name.len, hdr->name.s, hdr->htype,
 				hdr->body.len, hdr->body.s);
 		s = l + 1;
+	}
+
+	if (!tpath || !fpath) {
+		LM_ERR("broken msrp frame message, To-Path and From-Path must be defined.\n");
+		return -1;
 	}
 
 ateoh:

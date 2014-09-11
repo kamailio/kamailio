@@ -1,1 +1,29 @@
-../../fedora/17/README
+The following modules are not included in CentOS 6 builds because they have
+dependencies that cannot be met by the base or EPEL CentOS YUM repos or are
+obsolete.
+
+Obsolete modules
+----------------
+* iptrtpproxy		use the rtpproxy-ng module with mediaproxy-ng instead
+* jabber		use the xmpp and pua_xmpp modules instead
+
+Modules with unmet dependencies
+-------------------------------
+Note: If you need any of these modules you will need to find (and possibly
+      build) and install the dependencies and then do a manual build of
+      Kamailio.
+
+Ordered by module name:
+* app_mono	requires mono-devel-??? or higher (EPEL contains
+		mono-devel 2.4.3.1)
+* db_cassandra	requires thrift 0.6.1 or 0.7.0
+* db_oracle	requires instantclient-sdk-10.2.0.3
+* ndb_cassandra	requires thrift 0.7.0
+* osp		requires the OSP Toolkit
+
+Ordered by unmet dependency:
+* instantclient-sdk-10.2.0.3	db_oracle
+* mono-devel-??? or higher	app_mono
+* OSP Toolkit			osp
+* thrift 0.6.1 or 0.7.0		db_cassandra
+* thrift 0.7.0			ndb_cassandra

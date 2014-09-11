@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */ 
 
@@ -66,5 +66,6 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
         str* public_identity, int assignment_type, ims_subscription** s,
         str* ccf1, str* ccf2, str* ecf1, str* ecf2, contact_for_header_t** contact_header);
 
+struct sip_msg* get_request_from_reply(struct sip_msg *reply);
 
 #endif /* SAVE_H */

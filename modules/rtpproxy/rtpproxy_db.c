@@ -17,13 +17,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_res.h"
 
+#include "../../parser/msg_parser.h"
 #include "rtpproxy.h"
 
 #define RTPP_TABLE_VERSION 1
@@ -129,9 +130,6 @@ int init_rtpproxy_db(void)
 	if (rtpp_db_url.s == NULL)
 		/* Database not configured */
 		return 0;
-
-	rtpp_db_url.len = strlen(rtpp_db_url.s);
-	rtpp_table_name.len = strlen(rtpp_table_name.s);
 
 	if (db_bind_mod(&rtpp_db_url, &rtpp_dbf) < 0)
 	{

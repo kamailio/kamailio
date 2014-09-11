@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
@@ -44,6 +44,7 @@ typedef struct dmq_node {
 	int local; /* local type set means the dmq dmqnode == self */
 	str orig_uri; /* original uri string - e.g. sip:127.0.0.1:5060;passive=true */
 	struct sip_uri uri; /* parsed uri string */
+	struct ip_addr ip_address; /* resolved IP address */
 	param_t* params; /* uri parameters */
 	int status; /* reserved - maybe something like active,timeout,disabled */
 	int last_notification; /* last notificatino receied from the node */

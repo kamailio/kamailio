@@ -56,7 +56,7 @@ Carsten Bock
               3.19. ds_ping_method (string)
               3.20. ds_ping_from (string)
               3.21. ds_ping_interval (int)
-              3.22. ds_probing_threshhold (int)
+              3.22. ds_probing_threshold (int)
               3.23. ds_ping_reply_codes (string)
               3.24. ds_probing_mode (int)
               3.25. ds_hash_size (int)
@@ -67,12 +67,12 @@ Carsten Bock
 
         4. Functions
 
-              4.1. ds_select_dst(set, alg)
-              4.2. ds_select_domain(set, alg)
+              4.1. ds_select_dst(set, alg[, limit])
+              4.2. ds_select_domain(set, alg[, limit])
               4.3. ds_next_dst()
               4.4. ds_next_domain()
               4.5. ds_mark_dst([state])
-              4.6. ds_is_from_list([groupid])
+              4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
               4.7. ds_load_update()
               4.8. ds_load_unset()
 
@@ -172,7 +172,7 @@ Chapter 1. Admin Guide
         3.19. ds_ping_method (string)
         3.20. ds_ping_from (string)
         3.21. ds_ping_interval (int)
-        3.22. ds_probing_threshhold (int)
+        3.22. ds_probing_threshold (int)
         3.23. ds_ping_reply_codes (string)
         3.24. ds_probing_mode (int)
         3.25. ds_hash_size (int)
@@ -183,12 +183,12 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. ds_select_dst(set, alg)
-        4.2. ds_select_domain(set, alg)
+        4.1. ds_select_dst(set, alg[, limit])
+        4.2. ds_select_domain(set, alg[, limit])
         4.3. ds_next_dst()
         4.4. ds_next_domain()
         4.5. ds_mark_dst([state])
-        4.6. ds_is_from_list([groupid])
+        4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
         4.7. ds_load_update()
         4.8. ds_load_unset()
 
@@ -223,7 +223,7 @@ Chapter 1. Admin Guide
    message attributes.
 
    The module can be used as a stateless load balancer, it does not depend
-   on any call state tracing module. It requires the TM module if you
+   on any call state tracking module. It requires the TM module if you
    enable auto-discovery of active/inactive gateways.
 
    It is very lightweight, therefore suitable for handling heavy SIP
@@ -271,7 +271,7 @@ Chapter 1. Admin Guide
    3.19. ds_ping_method (string)
    3.20. ds_ping_from (string)
    3.21. ds_ping_interval (int)
-   3.22. ds_probing_threshhold (int)
+   3.22. ds_probing_threshold (int)
    3.23. ds_ping_reply_codes (string)
    3.24. ds_probing_mode (int)
    3.25. ds_hash_size (int)
@@ -577,7 +577,7 @@ Note
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
-3.22. ds_probing_threshhold (int)
+3.22. ds_probing_threshold (int)
 
    If you want to set a gateway into inactive mode, there can be a
    specific number of failed requests until it will change from "active"
@@ -690,19 +690,27 @@ Note
 
 4. Functions
 
-   4.1. ds_select_dst(set, alg)
-   4.2. ds_select_domain(set, alg)
+   4.1. ds_select_dst(set, alg[, limit])
+   4.2. ds_select_domain(set, alg[, limit])
    4.3. ds_next_dst()
    4.4. ds_next_domain()
    4.5. ds_mark_dst([state])
-   4.6. ds_is_from_list([groupid])
+   4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
    4.7. ds_load_update()
    4.8. ds_load_unset()
 
-4.1. ds_select_dst(set, alg)
+4.1. ds_select_dst(set, alg[, limit])
 
    The method selects a destination from addresses set. It returns true if
-   a new destination is set.
+   a new destination is set. The selected address is set to dst_uri field
+   (aka the outbound proxy address or the $du variable), not being visible
+   in the SIP request.
+
+   If the bit 2 in 'flags' parameter is set, the rest of the addresses
+   from the destination set is stored in AVP list (limited with an
+   optional 'limit' parameter). You can use 'ds_next_dst()' to use next
+   address in order to achieve serial forking to all possible
+   destinations.
 
    Meaning of the parameters is as follows:
      * set - the id of the set from where to pick up destination address.
@@ -741,6 +749,9 @@ Note
             requests as it is the only SIP method creating a SIP call.
           + "X" - if the algorithm is not implemented, the first entry in
             set is chosen.
+     * limit - the maximum number of items to be stored in AVP list for
+       further failovers (the first selected destination and default
+       destination are the first to be put in the list)
 
    If the bit 2 in 'flags' is set, the rest of the addresses from the
    destination set is stored in AVP list. You can use 'ds_next_dst()' to
@@ -756,17 +767,19 @@ ds_select_dst("1", "0");
 $var(a) = 4;
 ds_select_dst("1", "$var(a)");
 ...
+ds_select_dst("1", "4", "3");
+...
 
-4.2. ds_select_domain(set, alg)
+4.2. ds_select_domain(set, alg[, limit])
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
    ds_select_dst().
 
    If the bit 2 in 'flags' is set, the rest of the addresses from the
-   destination set is stored in AVP list. You can use 'ds_next_domain()'
-   to use next address to achieve serial forking to all possible
-   destinations.
+   destination set is stored in AVP list (limited with an optional 'limit'
+   parameter). You can use 'ds_next_domain()' to use next address to
+   achieve serial forking to all possible destinations.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -821,23 +834,51 @@ failure_route[tryagain] {
 }
 ...
 
-4.6. ds_is_from_list([groupid])
+4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
 
-   This function returns true, if the current request comes from a host in
-   the given group of the dispatcher-list; otherwise false.
+   This function returns true, if there is a match of source address or
+   uri with an address in the given group of the dispatcher-list;
+   otherwise false.
 
-   Parameter groupid is optional, when it is missing, then the matching
-   will be done against all addresses in all groups. Upon a match, the
-   variable specified by 'setid_pvname' parameter will be set to groupid
-   of matching address and the attributes will be set in variable
-   specified by 'attrs_pvname'. The parameter can be an integer or a
-   variable holding an integer value.
+   Description of parameters:
+     * groupid (optional) - if not given or its value is -1, the matching
+       will be done over all addresses in all dispacher groups. Otherwise
+       the matching will be done only against the addresses in the
+       specific group id. The parameter can be an integer or a variable
+       holding an integer value.
+     * mode - (optional) - a bitmask to specify how the matching should be
+       done. If is 0, all ip, port and proto are matched. If bit one is
+       set, then port is ignored. If bit two is set, then protocol is
+       ignored. The parameter can be an integer or a variable holding an
+       integer value. It must be provided if the uri parameter is
+       provided.
+     * uri (optional) - if is empty or missing, the matching is done
+       against source IP, port and protocol. Otherwise the value has to be
+       a valid SIP URI, used to match against addresses in the dispatcher
+       list. Only IP, port and protocol are matches, any additional
+       parameters are ignored. The parameter can be a static or dynamic
+       (with variables) string. The domain part of the URI can be an IP
+       address or a hostname.
+
+   Upon a match, the variable specified by 'setid_pvname' parameter will
+   be set to groupid of matching address and the attributes will be set in
+   variable specified by 'attrs_pvname'.
+
+   Note that for backward compatibility mode, when no parameter is given
+   or only groupid is given, the matching is done only for IP address and
+   port (protocol is ignored).
 
    This function can be used from ANY_ROUTE.
 
    Example 1.33. ds_mark_dst usage
 ...
+if(ds_is_from_list()) {
+    ...
+}
 if(ds_is_from_list("10")) {
+    ...
+}
+if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
     ...
 }
 ...
@@ -1081,6 +1122,9 @@ r,opt)
 #     - define WITH_DEBUG
 #
 
+#!ifndef DBURL
+#!define DBURL "mysql://kamailio:kamailiorw@localhost/kamailio"
+#!endif
 
 ####### Global Parameters #########
 
@@ -1168,8 +1212,7 @@ modparam("tm", "fr_timer", 2000)
 modparam("tm", "fr_inv_timer", 40000)
 
 # ----- dispatcher params -----
-modparam("dispatcher", "db_url",
-        "mysql://openser:openserro@localhost/openser")
+modparam("dispatcher", "db_url", DBURL)
 modparam("dispatcher", "table_name", "dispatcher")
 modparam("dispatcher", "flags", 2)
 modparam("dispatcher", "dst_avp", "$avp(AVP_DST)")
@@ -1228,8 +1271,6 @@ route {
 
         # dispatch destinations
         route(DISPATCH);
-
-        route(RELAY);
 }
 
 
@@ -1317,7 +1358,8 @@ route[DISPATCH] {
         }
         xlog("L_DBG", "--- SCRIPT: going to <$ru> via <$du>\n");
         t_on_failure("RTF_DISPATCH");
-        return;
+        route(RELAY);
+        exit;
 }
 
 # Sample failure route

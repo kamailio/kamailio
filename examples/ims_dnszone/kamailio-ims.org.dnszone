@@ -1,0 +1,34 @@
+$ORIGIN kamailio-ims.org.
+$TTL 1W
+@                       1D IN SOA       localhost. root.localhost. (
+                                        2006101001      ; serial
+                                        3H              ; refresh
+                                        15M             ; retry
+                                        1W              ; expiry
+                                        1D )            ; minimum
+
+                        1D IN NS        ns
+ns                      1D IN A         127.0.0.1
+
+pcscf                   1D IN A         127.0.0.1
+_sip.pcscf              1D SRV 0 0 5060 pcscf
+_sip._udp.pcscf         1D SRV 0 0 5060 pcscf
+_sip._tcp.pcscf         1D SRV 0 0 5060 pcscf
+
+
+icscf                   1D IN A         127.0.0.1
+_sip                    1D SRV 0 0 5060 icscf
+_sip._udp               1D SRV 0 0 5060 icscf
+_sip._tcp               1D SRV 0 0 5060 icscf
+
+kamailio-ims.org.       1D IN A         127.0.0.1
+kamailio-ims.org.       1D IN NAPTR 10 50 "s" "SIP+D2U"	""	_sip._udp
+kamailio-ims.org.       1D IN NAPTR 20 50 "s" "SIP+D2T"	""	_sip._tcp
+
+scscf                   1D IN A         127.0.0.1
+_sip.scscf              1D SRV 0 0 5060 scscf
+_sip._udp.scscf         1D SRV 0 0 5060 scscf
+_sip._tcp.scscf         1D SRV 0 0 5060 scscf
+
+hss                     1D IN A         127.0.0.1
+

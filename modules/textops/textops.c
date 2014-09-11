@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  * History:
@@ -123,6 +123,14 @@ static int append_time_f(struct sip_msg* msg, char* , char *);
 static int append_time_request_f(struct sip_msg* msg, char* , char *);
 static int set_body_f(struct sip_msg* msg, char*, char *);
 static int set_rpl_body_f(struct sip_msg* msg, char*, char *);
+static int set_multibody_0(struct sip_msg* msg, char*, char *, char *);
+static int set_multibody_1(struct sip_msg* msg, char*, char *, char *);
+static int set_multibody_2(struct sip_msg* msg, char*, char *, char *);
+static int set_multibody_3(struct sip_msg* msg, char*, char *, char *);
+static int append_multibody_2(struct sip_msg* msg, char*, char *);
+static int append_multibody_3(struct sip_msg* msg, char*, char *, char *);
+static int fixup_multibody_f(void** param, int param_no);
+static int remove_multibody_f(struct sip_msg *msg, char *);
 static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int in_list_f(struct sip_msg* _msg, char* _subject, char* _list,
@@ -275,6 +283,27 @@ static cmd_export_t cmds[]={
 
 	{"bind_textops",      (cmd_function)bind_textops,       0, 0, 0,
 		0},
+	{"set_body_multipart",         (cmd_function)set_multibody_0,        0,
+		0, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"set_body_multipart",         (cmd_function)set_multibody_1,        1,
+		fixup_spve_null, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"set_body_multipart",         (cmd_function)set_multibody_2,        2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"set_body_multipart",         (cmd_function)set_multibody_3,        3,
+		fixup_multibody_f, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"append_body_part",     (cmd_function)append_multibody_2,    2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"append_body_part",     (cmd_function)append_multibody_3,    3,
+		fixup_multibody_f, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"remove_body_part",     (cmd_function)remove_multibody_f,    1,
+		fixup_spve_null, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 
 	{0,0,0,0,0,0}
 };
@@ -866,6 +895,23 @@ static inline int find_line_start(char *text, unsigned int text_len,
     return 0;
 }
 
+/**
+ * return:
+ *  1: multipart
+ */
+static int check_multipart(struct sip_msg *msg)
+{
+	int mime;
+
+	/* the function search for and parses the Content-Type hdr */
+	mime = parse_content_type_hdr (msg);
+	if(mime<0) {
+		LM_ERR("failed to extract content type hdr\n");
+		return -1;
+	}
+	if(mime!=MIMETYPE(MULTIPART,MIXED)) return 0;
+	return 1;
+}
 
 /* Filters multipart/mixed body by leaving out everything else except
  * first body part of given content type. */
@@ -874,10 +920,8 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 {
 	char *start;
 	unsigned int len;
-	str *content_type, body, params, boundary;
-	param_hooks_t hooks;
-	param_t *p, *list;
-	unsigned int mime;
+	str *content_type, body;
+	str boundary = {0,0};
 
 	body.s = get_body(msg);
 	if (body.s == 0) {
@@ -889,106 +933,73 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 		LM_DBG("message body has zero length\n");
 		return -1;
 	}
-	
+
+	if(check_multipart(msg)!=1) {
+		LM_WARN("body not multipart\n");
+		return -1;
+	}
+	if(get_boundary(msg, &boundary)!=0) {
+		return -1;
+	}
 	content_type = (str *)_content_type;
-
-	mime = parse_content_type_hdr(msg);
-	if (mime <= 0) {
-	    LM_ERR("failed to parse Content-Type hdr\n");
-	    return -1;
-	}
-	if (mime != ((TYPE_MULTIPART << 16) + SUBTYPE_MIXED)) {
-	    LM_ERR("content type is not multipart/mixed\n");
-	    return -1;
-	}
-
-	params.s = memchr(msg->content_type->body.s, ';', 
-			  msg->content_type->body.len);
-	if (params.s == NULL) {
-	    LM_ERR("Content-Type hdr has no params\n");
-	    return -1;
-	}
-	params.len = msg->content_type->body.len - 
-	    (params.s - msg->content_type->body.s);
-	if (parse_params(&params, CLASS_ANY, &hooks, &list) < 0) {
-	    LM_ERR("while parsing Content-Type params\n");
-	    return -1;
-	}
-	boundary.s = NULL;
-	boundary.len = 0;
-	for (p = list; p; p = p->next) {
-	    if ((p->name.len == 8)
-		&& (strncasecmp(p->name.s, "boundary", 8) == 0)) {
-		boundary.s = pkg_malloc(p->body.len + 2);
-		if (boundary.s == NULL) {
-		    free_params(list);
-		    LM_ERR("no memory for boundary string\n");
-		    return -1;
-		}
-		*(boundary.s) = '-';
-		*(boundary.s + 1) = '-';
-		memcpy(boundary.s + 2, p->body.s, p->body.len);
-		boundary.len = 2 + p->body.len;
-		LM_DBG("boundary is <%.*s>\n", boundary.len, boundary.s);
-		break;
-	    }
-	}
-	free_params(list);
-	if (boundary.s == NULL) {
-	    LM_ERR("no mandatory param \";boundary\"\n");
-	    return -1;
-	}
-	
 	start = body.s;
 	len = body.len;
-	
-	while (find_line_start("Content-Type: ", 14, &start, &len)) {
-	    start = start + 14;
-	    len = len - 14;
-	    if (len > content_type->len + 2) {
-		if (strncasecmp(start, content_type->s, content_type->len)
-		    == 0) {
-		    LM_DBG("found content type %.*s\n",
-			    content_type->len, content_type->s);
-		    start = start + content_type->len;
-		    if ((*start != 13) || (*(start + 1) != 10)) {
-			LM_ERR("no CRLF found after content type\n");
-			goto err;
-		    }
-		    start = start + 2;
-		    len = len - content_type->len - 2;
-		    while ((len > 0) && ((*start == 13) || (*start == 10))) {
-			len = len - 1;
-			start = start + 1;
-		    }
-		    if (del_lump(msg, body.s - msg->buf, start - body.s, 0)
-			== 0) {
-			LM_ERR("deleting lump <%.*s> failed\n",
-			       (int)(start - body.s), body.s);
-			goto err;
-		    }
-		    if (find_line_start(boundary.s, boundary.len, &start,
-					&len)) { 
-			if (del_lump(msg, start - msg->buf, len, 0) == 0) {
-			    LM_ERR("deleting lump <%.*s> failed\n",
-				   len, start);
-			    goto err;
-			} else {
-			    pkg_free(boundary.s);
-			    return 1;
+
+	while (find_line_start("Content-Type: ", 14, &start, &len))
+	{
+		start = start + 14;
+		len = len - 14;
+		LM_DBG("line: [%.*s]\n", len, start);
+		if (len > content_type->len + 2) {
+			if (strncasecmp(start, content_type->s, content_type->len)== 0)
+			{
+				LM_DBG("found content type %.*s\n",
+					content_type->len, content_type->s);
+				start = start + content_type->len;
+				if ((*start != 13) || (*(start + 1) != 10))
+				{
+					LM_ERR("no CRLF found after content type\n");
+					goto err;
+				}
+				start = start + 2;
+				len = len - content_type->len - 2;
+				while ((len > 0) && ((*start == 13) || (*start == 10)))
+				{
+					len = len - 1;
+					start = start + 1;
+				}
+				if (del_lump(msg, body.s - msg->buf, start - body.s, 0)== 0)
+				{
+					LM_ERR("deleting lump <%.*s> failed\n",
+					(int)(start - body.s), body.s);
+					goto err;
+				}
+				if (find_line_start(boundary.s, boundary.len, &start,
+					&len))
+				{
+					if (del_lump(msg, start - msg->buf, len, 0) == 0)
+					{
+						LM_ERR("deleting lump <%.*s> failed\n", len, start);
+						goto err;
+					}
+					else
+					{
+						pkg_free(boundary.s);
+						return 1;
+					}
+				}
+				else
+				{
+					LM_ERR("boundary not found after content\n");
+					goto err;
+				}
 			}
-		    } else {
-			LM_ERR("boundary not found after content\n");
+		} else {
 			goto err;
-		    }
 		}
-	    } else {
-		pkg_free(boundary.s);
-		return -1;
-	    }
 	}
  err:
-	pkg_free(boundary.s);
+	if(boundary.s) pkg_free(boundary.s);
 	return -1;
 }
 
@@ -1444,7 +1455,575 @@ static int set_rpl_body_f(struct sip_msg* msg, char* p1, char* p2)
 	return 1;
 }
 
+static str* generate_boundary(str txt, str content_type,
+	str content_disposition, str delimiter, unsigned int initial)
+{
+	unsigned int i = 0;
+	str cth = {"Content-Type: ", 14};
+	str cdh = {"Content-Disposition: ", 21};
+	str* n;
+	unsigned int flag = 0;
 
+	if(txt.len==0||content_type.len==0||delimiter.len==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+	n = pkg_malloc(sizeof(str));
+	if(n==NULL)
+	{
+		LM_ERR("out of pkg memory\n");
+		return NULL;
+	}
+	n->len = delimiter.len + 2 + CRLF_LEN;
+	if(initial) n->len = 2*n->len;
+	if(strncmp("\r\n\r\n", txt.s+txt.len-4,4)!=0)
+	{
+		n->len = n->len + CRLF_LEN;
+		flag = 1;
+		LM_DBG("adding final CRLF+CRLF\n");
+	}
+	n->len=n->len + cth.len + content_type.len + 2*CRLF_LEN;
+	if(content_disposition.len>0)
+	{
+		n->len = n->len + cdh.len + content_disposition.len + CRLF_LEN;
+	}
+	n->len = n->len + txt.len;
+
+	n->s = pkg_malloc(sizeof(char)*(n->len));
+	if(n->s==0)
+	{
+		LM_ERR("out of pkg memory\n");
+		pkg_free(n);
+		return NULL;
+	}
+	if(initial)
+	{
+		memcpy(n->s, "--", 2); i=2;
+		memcpy(n->s+i, delimiter.s, delimiter.len); i=i+delimiter.len;
+		memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
+	}
+
+	memcpy(n->s+i, cth.s, cth.len); i=i+cth.len;
+	memcpy(n->s+i, content_type.s, content_type.len); i=i+content_type.len;
+	memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
+
+	if(content_disposition.len>0)
+	{
+		memcpy(n->s+i, cdh.s, cdh.len); i=i+cdh.len;
+		memcpy(n->s+i, content_disposition.s, content_disposition.len);
+		i=i+content_disposition.len;
+		memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
+	}
+	memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
+
+	memcpy(n->s+i, txt.s, txt.len); i=i+txt.len;
+	if(flag) { memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN; }
+
+	memcpy(n->s+i, "--", 2); i=i+2;
+	memcpy(n->s+i, delimiter.s, delimiter.len); i=i+delimiter.len;
+	memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
+
+	if(i!=n->len)
+	{
+		LM_ERR("out of bounds\n");
+	}
+	return n;
+}
+
+int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
+{
+	struct lump *anchor;
+	char* buf = NULL;
+	int len;
+	char* value_s;
+	int value_len;
+	str body = {0,0};
+	str nb = {0,0};
+	str oc = {0,0};
+	str cd = {0,0};
+	str delimiter = {0,0};
+	str default_delimiter = {"unique-boundary-1", 17};
+	str nc = {0,0};
+	str cth = {"Content-Type: ", 14};
+	str* nbb;
+	unsigned int convert = 0;
+	fparam_t header;
+	header.orig = NULL;
+	header.type = FPARAM_STR;
+	header.v.str.s = "Mime-Version: 1.0\r\n";
+	header.v.str.len = 19;
+
+	if(p3==0)
+	{
+		delimiter.s = default_delimiter.s;
+		delimiter.len = default_delimiter.len;
+	}
+	else
+	{
+		if(fixup_get_svalue(msg, (gparam_p)p3, &delimiter)!=0)
+		{
+			LM_ERR("unable to get p3\n");
+			return -1;
+		}
+		if(delimiter.s==NULL || delimiter.len == 0)
+		{
+			LM_ERR("invalid boundary parameter\n");
+			return -1;
+		}
+	}
+	LM_DBG("delimiter<%d>:[%.*s]\n", delimiter.len, delimiter.len, delimiter.s);
+	if(p1==0 || p2==0)
+	{
+		if(check_multipart(msg)==1) {
+			LM_WARN("body is already multipart. Do nothing\n");
+			return -1;
+		}
+		convert = 1;
+	}
+	else
+	{
+		if(fixup_get_svalue(msg, (gparam_p)p1, &nb)!=0)
+		{
+			LM_ERR("unable to get p1\n");
+			return -1;
+		}
+		if(nb.s==NULL || nb.len == 0)
+		{
+			LM_ERR("invalid body parameter\n");
+			return -1;
+		}
+		if(fixup_get_svalue(msg, (gparam_p)p2, &oc)!=0)
+		{
+			LM_ERR("unable to get p2\n");
+			return -1;
+		}
+		if(oc.s==NULL || oc.len==0)
+		{
+			LM_ERR("invalid content-type parameter\n");
+			return -1;
+		}
+		if(check_multipart(msg)==1) {
+			convert = -1;
+		}
+	}
+
+	body.len = 0;
+	body.s = get_body(msg);
+	if(body.s==0)
+	{
+		LM_ERR("malformed sip message\n");
+		return -1;
+	}
+	body.len = msg->len -(int)(body.s-msg->buf);
+
+	del_nonshm_lump( &(msg->body_lumps) );
+	msg->body_lumps = NULL;
+
+	if(msg->content_length)
+	{
+		if(body.len > 0)
+		{
+			if(body.s+body.len>msg->buf+msg->len)
+			{
+				LM_ERR("invalid content length: %d\n", body.len);
+				return -1;
+			}
+			if(convert==1)
+			{
+				/* need to copy body */
+				nb.s=pkg_malloc(sizeof(char)*body.len);
+				if (nb.s==0)
+				{
+					LM_ERR("out of pkg memory\n");
+					return -1;
+				}
+				memcpy(nb.s, body.s, body.len);
+				nb.len = body.len;
+				if(msg->content_type!=NULL && msg->content_type->body.s!=NULL)
+				{
+					oc.len = msg->content_type->body.len;
+					oc.s=pkg_malloc(sizeof(char)*oc.len);
+					if (oc.s==0)
+					{
+						LM_ERR("out of pkg memory\n");
+						goto error;
+					}
+					memcpy(oc.s, msg->content_type->body.s, oc.len);
+				}
+			}
+			if(del_lump(msg, body.s-msg->buf, body.len, 0) == 0)
+			{
+				LM_ERR("cannot delete existing body");
+				goto error;
+			}
+		}
+	}
+
+	anchor = anchor_lump(msg, msg->unparsed-msg->buf, 0, 0);
+	if(anchor==0)
+	{
+		LM_ERR("failed to get anchor\n");
+		goto error;
+	}
+
+	/* get initial boundary */
+	nbb = generate_boundary(nb, oc, cd, delimiter, 1);
+	if(nbb==NULL)
+	{
+		LM_ERR("couldn't create initial boundary\n");
+		goto error;
+	}
+
+	if(msg->content_length==0)
+	{
+		/* need to add Content-Length */
+		len = nbb->len;
+		value_s=int2str(len, &value_len);
+
+		len=CONTENT_LENGTH_LEN+value_len+CRLF_LEN;
+		buf=pkg_malloc(sizeof(char)*len);
+
+		if (buf==0)
+		{
+			LM_ERR("out of pkg memory\n");
+			goto error;
+		}
+
+		memcpy(buf, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+		memcpy(buf+CONTENT_LENGTH_LEN, value_s, value_len);
+		memcpy(buf+CONTENT_LENGTH_LEN+value_len, CRLF, CRLF_LEN);
+		if (insert_new_lump_after(anchor, buf, len, 0) == 0)
+		{
+			LM_ERR("failed to insert content-length lump\n");
+			goto error;
+		}
+		buf = NULL;
+	}
+
+	if(convert!=-1)
+	{
+		/* set new content type with delimiter */
+		nc.len = delimiter.len + 27;
+		nc.s = pkg_malloc(sizeof(char)*nc.len);
+		memcpy(nc.s, "multipart/mixed;boundary=\"", 26);
+		memcpy(nc.s+26, delimiter.s, delimiter.len);
+		nc.s[26+delimiter.len] = '"';
+		LM_DBG("content-type<%d>:[%.*s]\n", nc.len, nc.len, nc.s);
+		/* add content-type */
+		if(msg->content_type==NULL || msg->content_type->body.len!=nc.len
+				|| strncmp(msg->content_type->body.s, nc.s, nc.len)!=0)
+		{
+			if(msg->content_type!=NULL)
+				if(del_lump(msg, msg->content_type->name.s-msg->buf,
+							msg->content_type->len, 0) == 0)
+				{
+					LM_ERR("failed to delete content type\n");
+					goto error;
+				}
+			value_len = nc.len;
+			len = cth.len + value_len + CRLF_LEN;
+			buf = pkg_malloc(sizeof(char)*len);
+
+			if(buf==0)
+			{
+				LM_ERR("out of pkg memory\n");
+				goto error;
+			}
+			memcpy(buf, cth.s, cth.len);
+			memcpy(buf + cth.len, nc.s, value_len);
+			memcpy(buf + cth.len + value_len, CRLF, CRLF_LEN);
+			if (insert_new_lump_after(anchor, buf, len, 0) == 0)
+			{
+				LM_ERR("failed to insert content-type lump\n");
+				goto error;
+			}
+			buf = NULL;
+		}
+		/* add Mime-Version header */
+		if(add_hf_helper(msg, 0, 0, &header, 0, 0)<0)
+		{
+			LM_ERR("failed to add Mime-Version header\n");
+			goto error;
+		}
+	}
+	anchor = anchor_lump(msg, body.s - msg->buf, 0, 0);
+	if(anchor==0)
+	{
+		LM_ERR("failed to get body anchor\n");
+		goto error;
+	}
+
+	if(insert_new_lump_after(anchor, nbb->s, nbb->len, 0)==0)
+	{
+		LM_ERR("failed to insert body lump\n");
+		goto error;
+	}
+	pkg_free(nbb);
+	if(nc.s!=NULL) pkg_free(nc.s);
+	LM_DBG("set flag FL_BODY_MULTIPART\n");
+	msg->msg_flags |= FL_BODY_MULTIPART;
+	return 1;
+
+error:
+	if(nbb!=NULL) { pkg_free(nbb->s); pkg_free(nbb); }
+	if(nc.s!=NULL) pkg_free(nc.s);
+	if(buf!=NULL) pkg_free(buf);
+	if(convert && nb.s!=NULL) pkg_free(nb.s);
+	if(convert && oc.s!=NULL) pkg_free(oc.s);
+	return -1;
+}
+
+static int set_multibody_0(struct sip_msg* msg, char* p1, char* p2, char* p3)
+{
+	return set_multibody_helper(msg, NULL, NULL, NULL);
+}
+
+static int set_multibody_1(struct sip_msg* msg, char* p1, char* p2, char* p3)
+{
+	return set_multibody_helper(msg, NULL, NULL, p1);
+}
+
+static int set_multibody_2(struct sip_msg* msg, char* p1, char* p2, char* p3)
+{
+	return set_multibody_helper(msg, p1, p2, NULL);
+}
+
+static int set_multibody_3(struct sip_msg* msg, char* p1, char* p2, char *p3)
+{
+	return set_multibody_helper(msg, p1, p2, p3);
+}
+
+int append_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
+{
+	struct lump *l;
+	int off;
+	str body = {0,0};
+	str nc = {0,0};
+	str cd = {0,0};
+	str txt = {0,0};
+	str* nbb = NULL;
+	str delimiter = {0,0};
+
+	if(p1==0 || p2==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &txt)!=0)
+	{
+		LM_ERR("unable to get p1\n");
+		return -1;
+	}
+	if(txt.s==NULL || txt.len==0)
+	{
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)p2, &nc)!=0)
+	{
+		LM_ERR("unable to get p2\n");
+		return -1;
+	}
+	if(nc.s==NULL || nc.len==0)
+	{
+		LM_ERR("invalid content-type parameter\n");
+		return -1;
+	}
+	if(p3!=NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)p3, &cd)!=0)
+		{
+			LM_ERR("unable to get p3\n");
+			return -1;
+		}
+	}
+
+	body.s = get_body(msg);
+	if(body.s==0) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+	body.len = msg->len -(int)(body.s-msg->buf);
+	if(body.len==0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	off=body.s-msg->buf;
+	if((l=anchor_lump(msg, off+body.len, 0, 0))==0)
+	{
+		LM_ERR("WTF\n");
+		return -1;
+	}
+	/* get boundary */
+	if(get_boundary(msg, &delimiter)!=0) {
+		LM_ERR("Cannot get boundary. Is body multipart?\n");
+		return -1;
+	}
+	nbb = generate_boundary(txt, nc, cd, delimiter, 0);
+	if(nbb==NULL)
+	{
+		LM_ERR("couldn't create initial boundary\n");
+		pkg_free(delimiter.s);
+		return -1;
+	}
+	pkg_free(delimiter.s);
+	if(insert_new_lump_after(l, nbb->s, nbb->len, 0)==0){
+		LM_ERR("could not insert new lump\n");
+		pkg_free(nbb->s); pkg_free(nbb);
+		return -1;
+	}
+	pkg_free(nbb);
+	if(!(msg->msg_flags&FL_BODY_MULTIPART))
+	{
+		LM_DBG("set flag FL_BODY_MULTIPART\n");
+		msg->msg_flags |= FL_BODY_MULTIPART;
+	}
+	return 1;
+}
+
+static int append_multibody_2(struct sip_msg* msg, char* p1, char* p2)
+{
+	return append_multibody_helper(msg, p1, p2, NULL);
+}
+
+static int append_multibody_3(struct sip_msg* msg, char* p1, char* p2, char *p3)
+{
+	return append_multibody_helper(msg, p1, p2, p3);
+}
+
+static int fixup_multibody_f(void** param, int param_no)
+{
+	int ret;
+	fparam_t* fp;
+
+	if(param_no<=3){
+		if((ret=fix_param_types(FPARAM_PVE, param))<0){
+			ERR("Cannot convert function parameter %d to spve \n",
+					param_no);
+			return E_UNSPEC;
+		} else {
+			fp=(fparam_t*)*param;
+			if((ret==0) && (fp->v.pve->spec==0
+						|| fp->v.pve->spec->getf==0)){
+				fparam_free_restore(param);
+				return fix_param_types(FPARAM_STR, param);
+			} else if(ret==1)
+				return fix_param_types(FPARAM_STR, param);
+			return ret;
+		}
+	} else {
+		LM_ERR("wrong number of parameters\n");
+		return E_UNSPEC;
+	}
+}
+
+static inline int get_line(char *s, int len)
+{
+	char *ch;
+
+	if ((ch = memchr(s, 13, len))) {
+		if (*(ch + 1) != 10) {
+			LM_ERR("No LF after CR\n");
+			return 0;
+		}
+		return ch - s + 2;
+	} else {
+		LM_ERR("No CRLF found\n");
+		return len;
+	}
+	return 0;
+}
+
+static int remove_multibody_f(struct sip_msg* msg, char* p1)
+{
+	char *start, *end;
+	unsigned int len, t;
+	str content_type, body;
+	str boundary = {0,0};
+
+	if(p1==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &content_type)!=0)
+	{
+		LM_ERR("unable to get p1\n");
+		return -1;
+	}
+
+	body.s = get_body(msg);
+	if (body.s == 0) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+	body.len = msg->len - (int)(body.s - msg->buf);
+	if (body.len == 0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	if(get_boundary(msg, &boundary)!=0) {
+		LM_ERR("Cannot get boundary. Is body multipart?\n");
+		return -1;
+	}
+
+	start = body.s;
+	len = body.len;
+
+	while (find_line_start("Content-Type: ", 14, &start, &len))
+	{
+		end = start + 14;
+		len = len - 14;
+		if (len > (content_type.len + 2)) {
+			if (strncasecmp(end, content_type.s, content_type.len)== 0)
+			{
+				LM_DBG("found content type %.*s\n",
+					content_type.len, content_type.s);
+				end = end + content_type.len;
+				if ((*end != 13) || (*(end + 1) != 10))
+				{
+					LM_ERR("no CRLF found after content type\n");
+					goto err;
+				}
+				end = end + 2;
+				len = len - content_type.len - 2;
+				if (find_line_start(boundary.s, boundary.len, &end,
+					&len))
+				{
+					LM_DBG("found boundary %.*s\n", boundary.len, boundary.s);
+					end = end + boundary.len;
+					len = len - boundary.len;
+					if (!(t = get_line(end, len))) goto err;
+					end += t; len = end-start;
+					if (del_lump(msg, start - msg->buf, len, 0) == 0)
+					{
+						LM_ERR("deleting lump <%.*s> failed\n", len, start);
+						goto err;
+					}
+					pkg_free(boundary.s);
+					if(!(msg->msg_flags&FL_BODY_MULTIPART))
+					{
+						LM_DBG("set flag FL_BODY_MULTIPART\n");
+						msg->msg_flags |= FL_BODY_MULTIPART;
+					}
+					return 1;
+				}
+				LM_ERR("boundary not found after content\n");
+				goto err;
+			}
+			start = end;
+		}
+		else goto err;
+	}
+ err:
+	pkg_free(boundary.s);
+	return -1;
+}
 
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 {
@@ -1553,8 +2132,8 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	}
 
 	if (str2) {
-		memcpy(s+str1->len, REQ_LINE(msg).uri.s, REQ_LINE(msg).uri.len);
-		memcpy(s+str1->len+REQ_LINE(msg).uri.len, str2->s, str2->len );
+		memcpy(s+s0.len, REQ_LINE(msg).uri.s, REQ_LINE(msg).uri.len);
+		memcpy(s+s0.len+REQ_LINE(msg).uri.len, str2->s, str2->len );
 	}
 
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
@@ -1740,6 +2319,7 @@ static int fixup_method(void** param, int param_no)
 		{
 			LM_ERR("unknown method in list [%.*s/%d] - must be only defined methods\n",
 				s->len, s->s, method);
+			pkg_free(s);
 			return E_UNSPEC;
 		}
 		LM_DBG("using id for methods [%.*s/%d]\n",
@@ -2235,7 +2815,7 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 	char* begin;
 	struct subst_expr* se;
 	int off;
-	int nmatches;
+	int nmatches=0;
 	str body;
 	hdr_field_t *hf;
 	hdr_field_t *hfl = NULL;

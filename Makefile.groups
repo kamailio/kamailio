@@ -13,17 +13,17 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   mediaproxy mi_datagram mi_fifo mi_rpc mqueue \
 				   nat_traversal nathelper path pike pv ratelimit rr rtimer \
 				   rtpproxy sanity sdpops siputils sl statistics textops \
-				   textopsx tm tmx topoh xlog
+				   textopsx tm tmx topoh xlog rtpengine stun sipt
 
 # - extra used modules, with no extra dependency
 mod_list_extra=avp auth_diameter call_control cnxcc dmq domainpolicy msrp pdb \
 			     qos sca seas sms sst timer tmrec uac_redirect xhttp \
-				 xhttp_rpc xprint
+				 xhttp_rpc xprint jsonrpc-s nosip
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
 			  db_cluster dialog dispatcher domain drouting group \
-			  htable imc matrix msilo mtree p_usrloc pdt permissions \
+			  htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 			  pipelimit prefix_route registrar sipcapture siptrace speeddial \
 			  sqlops uac uri_db userblacklist usrloc
 
@@ -54,7 +54,7 @@ mod_list_postgres=db_postgres
 mod_list_unixodbc=db_unixodbc
 
 # - modules depending on mysql cassandra library
-mod_list_cassandra=db_cassandra
+mod_list_cassandra=db_cassandra ndb_cassandra
 
 # - modules depending on xml2 library
 mod_list_cpl=cpl-c
@@ -94,9 +94,6 @@ mod_list_outbound=outbound
 
 # - modules depending on openssl and unistring library
 mod_list_websocket=websocket
-
-# - modules depending on openssl library
-mod_list_stun=stun
 
 # - modules depending on libval-threads libcrypto libsres libpthread
 mod_list_dnssec=dnssec
@@ -146,7 +143,7 @@ mod_list_mono=app_mono
 # - modules related to IMS extensions
 mod_list_ims=cdp cdp_avp dialog_ng ims_auth ims_isc ims_icscf ims_qos \
 			   ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
-			   ims_usrloc_scscf
+			   ims_usrloc_scscf ims_charging
 
 # - modules depending on osp toolkit library
 mod_list_osp=osp
@@ -156,6 +153,21 @@ mod_list_java=app_java
 
 # - modules depending on iptables library
 mod_list_iptrtpproxy=iptrtpproxy
+
+# - modules depending on gzip library
+mod_list_gzcompress=gzcompress
+
+# - modules depending on uuid library
+mod_list_uuid=uuid
+
+# - modules depending on ev library
+mod_list_ev=evapi
+
+# - modules depending on kazoo/rabitmq
+mod_list_kazoo=kazoo
+
+# - modules depending on mongodb
+mod_list_mongodb=db_mongodb ndb_mongodb
 
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
@@ -177,9 +189,11 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
 			   $(mod_list_iptrtpproxy) $(mod_list_mi_xmlrpc) \
 			   $(mod_list_outbound) $(mod_list_osp) \
-			   $(mod_list_java) $(mod_list_stun) \
-			   $(mod_list_dnssec) $(mod_list_sctp) \
-			   $(mod_list_autheph))
+			   $(mod_list_java) $(mod_list_dnssec) \
+			   $(mod_list_sctp) $(mod_list_autheph) \
+			   $(mod_list_gzcompress) $(mod_list_uuid) \
+			   $(mod_list_ev) $(mod_list_kazoo) \
+			   $(mod_list_mongodb))
 
 
 
@@ -328,9 +342,6 @@ module_group_koutbound=$(mod_list_outbound)
 # pkg java module
 module_group_kjava=$(mod_list_java)
 
-# pkg stun module
-module_group_kstun=$(mod_list_stun)
-
 # pkg dnssec module
 module_group_kdnssec=$(mod_list_dnssec)
 
@@ -342,6 +353,21 @@ module_group_kautheph=$(mod_list_autheph)
 
 # pkg db_cassandra module
 module_group_kcassandra=$(mod_list_cassandra)
+
+# pkg gzcompress module
+module_group_kgzcompress=$(mod_list_gzcompress)
+
+# pkg uuid module
+module_group_kuuid=$(mod_list_uuid)
+
+# pkg libev modules
+module_group_kev=$(mod_list_ev)
+
+# pkg kazoo module
+module_group_kkazoo=$(mod_list_kazoo)
+
+# pkg mongodb modules
+module_group_kmongodb=$(mod_list_mongodb)
 
 # list of static modules
 #

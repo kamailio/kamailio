@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -46,34 +46,17 @@
 
 MODULE_VERSION
 
-/*
- * Module initialization function prototype
- */
-static int mod_init(void);
-
 
 /*
  * Module parameter variables
  */
-char* domain_suffix = "e164.arpa.";
-char* tel_uri_params = "";
+str suffix = str_init("e164.arpa.");
+str param = str_init("");
+str i_branchlabel = str_init("i");
+str i_suffix = str_init("e164.arpa.");
+str i_bl_alg = str_init("cc");
 
-char* branchlabel = "i";
-char* i_enum_suffix = "e164.arpa.";
-char* bl_algorithm = "cc";
-
-
-/*
- * Internal module variables
- */
-str suffix;
-str param;
-str service;
-
-str i_suffix;
-str i_branchlabel;
-str i_bl_alg;
-
+str service = {0,0};
 
 /*
  * Exported functions
@@ -109,11 +92,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"domain_suffix", STR_PARAM, &domain_suffix},
-	{"tel_uri_params", STR_PARAM, &tel_uri_params},
-	{"branchlabel", STR_PARAM, &branchlabel},
-	{"i_enum_suffix", STR_PARAM, &i_enum_suffix},
-	{"bl_algorithm", STR_PARAM, &bl_algorithm},
+	{"domain_suffix", PARAM_STR, &suffix},
+	{"tel_uri_params", PARAM_STR, &param},
+	{"branchlabel", PARAM_STR, &i_branchlabel},
+	{"i_enum_suffix", PARAM_STR, &i_suffix},
+	{"bl_algorithm", PARAM_STR, &i_bl_alg},
 	{0, 0, 0}
 };
 
@@ -130,32 +113,9 @@ struct module_exports exports = {
 	0,        /* exported MI functions */
 	0,        /* exported pseudo-variables */
 	0,        /* extra processes */
-	mod_init, /* module initialization function */
+	0,        /* module initialization function */
 	0,        /* response function*/
 	0,        /* destroy function */
 	0         /* per-child init function */
 };
-
-
-static int mod_init(void)
-{
-	suffix.s = domain_suffix;
-	suffix.len = strlen(suffix.s);
-
-	param.s = tel_uri_params;
-	param.len = strlen(param.s);
-
-	service.len = 0;
-
-	i_suffix.s = i_enum_suffix;
-	i_suffix.len = strlen(i_enum_suffix);
-
-	i_branchlabel.s = branchlabel;
-	i_branchlabel.len = strlen(branchlabel);
-
-	i_bl_alg.s = bl_algorithm;
-	i_bl_alg.len = strlen(bl_algorithm);
-
-	return 0;
-}
 

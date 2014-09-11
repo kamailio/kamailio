@@ -527,6 +527,7 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 			return RV_INT;
 		case RVE_PLUS_OP:
@@ -572,6 +573,7 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 		case RVE_STR_OP:
 			return rve_is_constant(rve->left.rve);
@@ -636,6 +638,7 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 		case RVE_STR_OP:
 			return 1;
@@ -839,6 +842,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 			*type=RV_INT;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
 				if (type1==RV_INT){
@@ -2112,6 +2116,10 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_DEFINED_OP:
 			ret=int_rve_defined(h, msg, res, rve->left.rve);
 			break;
+		case RVE_NOTDEFINED_OP:
+			ret=int_rve_defined(h, msg, res, rve->left.rve);
+			*res = !(*res);
+			break;
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
 		case RVE_MATCH_OP:
@@ -2233,6 +2241,7 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 			/* operator forces integer type */
 			ret=rval_expr_eval_int(h, msg, res_i, rve);
@@ -2360,6 +2369,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 			/* operator forces integer type */
 			r=rval_expr_eval_int(h, msg, &i, rve);
@@ -2544,6 +2554,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 			s=(str*)val;
 			v.s.s=pkg_malloc(s->len+1 /*0*/);
 			if (v.s.s==0){
+				pkg_free(rve);
 				ERR("memory allocation failure\n");
 				return 0;
 			}
@@ -2601,6 +2612,7 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 		case RVE_STR_OP:
 			break;
@@ -2692,6 +2704,7 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 		case RVE_STR_OP:
 			/* one operand expression => cannot be assoc. */
@@ -2747,6 +2760,7 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 		case RVE_STR_OP:
 			/* one operand expression => cannot be commut. */
@@ -3796,6 +3810,7 @@ int fix_rval_expr(void* p)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_NOTDEFINED_OP:
 		case RVE_INT_OP:
 		case RVE_STR_OP:
 			ret=fix_rval_expr((void*)rve->left.rve);

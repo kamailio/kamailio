@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -79,7 +79,7 @@ xmlDocGetNodeByName_t XMLDocGetNodeByName;
 xmlNodeGetNodeByName_t XMLNodeGetNodeByName;
 xmlNodeGetNodeContentByName_t XMLNodeGetNodeContentByName;
 
-str server_address= {0, 0};
+str server_address= STR_NULL;
 
 /** module functions */
 
@@ -96,7 +96,7 @@ static cmd_export_t cmds[]=
 };
 
 static param_export_t params[]={
-	{"server_address",     STR_PARAM,	&server_address	},
+	{"server_address",     PARAM_STR,	&server_address	},
 	{0,			0,		0	}
 };
 
@@ -128,12 +128,11 @@ static int mod_init(void)
 	libxml_api_t libxml_api;
 
 	/* check if compulsory parameter server_address is set */
-	if(server_address.s== NULL)
+	if(!server_address.s || server_address.len<=0)
 	{
 		LM_ERR("compulsory 'server_address' parameter not set!");
 		return -1;
 	}
-	server_address.len= strlen(server_address.s);
 
 	/* import the TM auto-loading function */
 	if((load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))==NULL)

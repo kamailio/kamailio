@@ -1,9 +1,5 @@
 pdb Module
 
-Hardy Kahl
-
-   1&1 Internet AG
-
 Edited by
 
 Henning Westerholt
@@ -11,7 +7,14 @@ Henning Westerholt
    1&1 Internet AG
    <henning.westerholt@1und1.de>
 
-   Copyright � 2009 1&1 Internet AG
+Edited by
+
+Pawel Kuzak
+
+   1&1 Internet AG
+   <pawel.kuzak@1und1.de>
+
+   Copyright © 2009 1&1 Internet AG
      __________________________________________________________________
 
    Table of Contents
@@ -113,7 +116,7 @@ Chapter 1. Admin Guide
 
    This is the timeout in milliseconds for the pdb_query function.
 
-   Default value is "50".
+   Default value is “50”.
 
    Example 1.1. Set timeout parameter
 ...
@@ -135,7 +138,7 @@ modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
 
    4.1. pdb_query (string query, string dstavp)
 
-4.1. pdb_query (string query, string dstavp)
+4.1.  pdb_query (string query, string dstavp)
 
    Sends the query string to all configured servers and stores the answer
    in dstavp. If it takes more than the configured timeout, false is
@@ -159,7 +162,7 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
    5.2. pdb_activate
    5.3. pdb_deactivate
 
-5.1. pdb_status
+5.1.  pdb_status
 
    Prints the status of the module. This can either be "active" or
    "deactivated".
@@ -169,7 +172,7 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 kamctl fifo pdb_status
 ...
 
-5.2. pdb_activate
+5.2.  pdb_activate
 
    Activates the module. This is the default after loading the module.
 
@@ -178,7 +181,7 @@ kamctl fifo pdb_status
 kamctl fifo pdb_activate
 ...
 
-5.3. pdb_deactivate
+5.3.  pdb_deactivate
 
    Deactivates the module. No more queries are performed until it is
    activated again. As long as the module is deactivated, the pdb_query

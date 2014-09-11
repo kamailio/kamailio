@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /* History:
  * --------
@@ -116,26 +116,30 @@ static int rpc_send(struct binrpc_ctx* ctx);
 static int rpc_send_v(struct iovec_array *a);
 static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...);
-static int rpc_printf(struct binrpc_ctx* ctx, char* fmt, ...);
+static int rpc_rpl_printf(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...);
+static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...);
 static int rpc_struct_scan(struct rpc_struct_l* s, char* fmt, ...);
 /* struct scan */
 static int rpc_struct_printf(struct rpc_struct_l *s, char* name,
 								char* fmt, ...);
 
 
-static rpc_t binrpc_callbacks={
-	(rpc_fault_f)			rpc_fault,
-	(rpc_send_f)			rpc_send,
-	(rpc_add_f)				rpc_add,
-	(rpc_scan_f)			rpc_scan,
-	(rpc_printf_f)			rpc_printf,
-	(rpc_struct_add_f)		rpc_struct_add,
-	(rpc_struct_scan_f)		rpc_struct_scan,
-	(rpc_struct_printf_f)	rpc_struct_printf
-};
+static rpc_t binrpc_callbacks;
 
-
+void binrpc_callbacks_init(void)
+{
+	memset(&binrpc_callbacks, 0, sizeof(binrpc_callbacks));
+	binrpc_callbacks.fault         = (rpc_fault_f)rpc_fault;
+	binrpc_callbacks.send          = (rpc_send_f)rpc_send;
+	binrpc_callbacks.add           = (rpc_add_f)rpc_add;
+	binrpc_callbacks.scan          = (rpc_scan_f)rpc_scan;
+	binrpc_callbacks.rpl_printf    = (rpc_rpl_printf_f)rpc_rpl_printf;
+	binrpc_callbacks.struct_add    = (rpc_struct_add_f)rpc_struct_add;
+	binrpc_callbacks.array_add     = (rpc_struct_add_f)rpc_array_add;
+	binrpc_callbacks.struct_scan   = (rpc_struct_scan_f)rpc_struct_scan;
+	binrpc_callbacks.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
+}
 
 /** mark a pointer for freeing when the ctx is destroyed.
  * @return 0 on success, -1 on error
@@ -804,6 +808,7 @@ inline static str* binrpc_val_conv_str(struct binrpc_ctx* ctx,
 			s=int2str(v->u.intval, &len);
 			ret=ctl_malloc(sizeof(*ret)+len+1);
 			if (ret==0 || binrpc_gc_track(ctx, ret)!=0){
+				if(ret!=0) ctl_free(ret);
 				*err=E_BINRPC_OVERFLOW;
 				return 0;
 			}
@@ -976,6 +981,7 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 				if (err<0) goto error_add;
 				break;
 			case '{':
+			case '[':
 				err=binrpc_start_struct(&ctx->out.pkt);
 				if (err<0) goto error_add;
 				rs=new_rpc_struct();
@@ -1016,7 +1022,7 @@ error:
 
 #define RPC_PRINTF_BUF_SIZE	1024
 /* returns  0 on success, -1 on error */
-static int rpc_printf(struct binrpc_ctx* ctx, char* fmt, ...)
+static int rpc_rpl_printf(struct binrpc_ctx* ctx, char* fmt, ...)
 {
 	va_list ap;
 	char* buf;
@@ -1029,12 +1035,12 @@ static int rpc_printf(struct binrpc_ctx* ctx, char* fmt, ...)
 	len=vsnprintf(buf, RPC_PRINTF_BUF_SIZE, fmt, ap);
 	va_end(ap);
 	if ((len<0) || (len> RPC_PRINTF_BUF_SIZE)){
-		LOG(L_ERR, "ERROR: binrpc: rpc_printf: buffer size exceeded(%d)\n",
+		LOG(L_ERR, "ERROR: binrpc: rpc_rpl_printf: buffer size exceeded(%d)\n",
 				RPC_PRINTF_BUF_SIZE);
 		goto error;
 	}
 	if ((err=binrpc_addstr(&ctx->out.pkt, buf, len))<0){
-		LOG(L_ERR, "ERROR: binrpc: rpc_printf: binrpc_addstr failed:"
+		LOG(L_ERR, "ERROR: binrpc: rpc_rpl_printf: binrpc_addstr failed:"
 					" %s (%d)\n", binrpc_error(err), err);
 		goto error;
 	}
@@ -1055,11 +1061,12 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 	struct binrpc_val avp;
 	struct rpc_struct_l* rs;
 	
-	memset(&avp, 0, sizeof(struct binrpc_val));
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
+		memset(&avp, 0, sizeof(struct binrpc_val));
 		avp.name.s=va_arg(ap, char*);
-		avp.name.len=strlen(avp.name.s);
+		if (avp.name.s)
+			avp.name.len=strlen(avp.name.s);
 		switch(*fmt){
 			case 'd':
 			case 't':
@@ -1070,13 +1077,15 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 			case 's': /* asciiz */
 				avp.type=BINRPC_T_STR;
 				avp.u.strval.s=va_arg(ap, char*);
-				avp.u.strval.len=strlen(avp.u.strval.s);
+				if (avp.u.strval.s)
+					avp.u.strval.len=strlen(avp.u.strval.s);
 				break;
 			case 'S': /* str */
 				avp.type=BINRPC_T_STR;
 				avp.u.strval=*(va_arg(ap, str*));
 				break;
 			case '{':
+			case '[':
 				avp.type=BINRPC_T_STRUCT;
 				err=binrpc_addavp(&s->pkt, &avp);
 				if (err<0) goto error_add;
@@ -1110,7 +1119,66 @@ error:
 	return -1;
 }
 
-
+/* returns  0 on success, -1 on error */
+static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
+{
+	va_list ap;
+	int err;
+	char* sv;
+	str* st;
+	struct rpc_struct_l* rs;
+	
+	va_start(ap, fmt);
+	for (;*fmt; fmt++){
+		switch(*fmt){
+			case 'd':
+			case 't':
+			case 'b':
+				err=binrpc_addint(&s->pkt, va_arg(ap, int));
+				if (err<0) goto error_add;
+				break;
+			case 's': /* asciiz */
+				sv=va_arg(ap, char*);
+				if (sv==0) /* fix null strings */
+					sv="<null string>"; 
+				err=binrpc_addstr(&s->pkt, sv, strlen(sv));
+				if (err<0) goto error_add;
+				break;
+			case 'S': /* str */
+				st=va_arg(ap, str*);
+				err=binrpc_addstr(&s->pkt, st->s, st->len);
+				if (err<0) goto error_add;
+				break;
+			case '{':
+			case '[':
+				err=binrpc_start_struct(&s->pkt);
+				if (err<0) goto error_add;
+				rs=new_rpc_struct();
+				if (rs==0) goto error_mem;
+				rs->offset=binrpc_pkt_len(&s->pkt);
+				err=binrpc_end_struct(&s->pkt);
+				if (err<0) goto error_add;
+				clist_append(&s->substructs, rs, next, prev);
+				*(va_arg(ap, void**))=rs;
+				break;
+			case 'f': 
+				err=binrpc_adddouble(&s->pkt, va_arg(ap, double));
+				if (err<0) goto error_add;
+				break;
+			default: 
+				LOG(L_CRIT, "BUG: binrpc: rpc_add: formatting char \'%c\'"
+							" not supported\n", *fmt);
+				goto error;
+		}
+	}
+	va_end(ap);
+	return 0;
+error_mem:
+error_add:
+error:
+	va_end(ap);
+	return -1;
+}
 
 /* returns  0 on success, -1 on error */
 static int rpc_struct_printf(struct rpc_struct_l *s, char* name,

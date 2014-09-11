@@ -404,6 +404,26 @@ modparam("nathelper", "keepalive_timeout", 120)
 </programlisting>
 		</example>
 	</section>
+	<section id="nathelper.p.udpping_from_path">
+		<title><varname>udpping_from_path</varname> (int)</title>
+		<para>
+		Enable sending UDP pings (keepalives) using raw socket from Path
+		address.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (feature disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>udpping_from_path</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "udpping_from_path", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 
@@ -567,7 +587,7 @@ fix_nated_register();
 		<itemizedlist>
 			<listitem><para>
 			<emphasis>1</emphasis> -  Contact header field is searched 
-			for occurrence of RFC1918 addresses.
+			for occurrence of RFC1918 or rfc6598 addresses.
 			</para></listitem>
 			<listitem><para>
 			<emphasis>2</emphasis> -  the "received" test is used: address
@@ -575,11 +595,11 @@ fix_nated_register();
 			</para></listitem>
 			<listitem><para>
 			<emphasis>4</emphasis> -  Top Most VIA is searched 
-			for occurrence of RFC1918 addresses
+			for occurrence of RFC1918 or rfc6598 addresses
 			</para></listitem>
 			<listitem><para>
 			<emphasis>8</emphasis> -  SDP is searched for occurrence of 
-			RFC1918 addresses
+			RFC1918 or rfc6598 addresses
 			</para></listitem>
 			<listitem><para>
 			<emphasis>16</emphasis> -  test if the source port is different
@@ -587,7 +607,7 @@ fix_nated_register();
 			</para></listitem>
 			<listitem><para>
 			<emphasis>32</emphasis> -  test if the source IP address of
-			signaling is a RFC1918 address
+			signaling is a RFC1918 or rfc6598 address
 			</para></listitem>
 			<listitem><para>
 			<emphasis>64</emphasis> -  test if the source connection of
@@ -613,7 +633,7 @@ fix_nated_register();
 		<function>is_rfc1918(ip_address)</function>
 		</title>
 		<para>
-			Determines if the address in the parameter is an rfc1918 address.
+			Determines if the address in the parameter is an rfc1918 or rfc6598 address.
 			The parameter allows pseudo-variables usage.
 		</para>
 		<para>
@@ -691,6 +711,36 @@ fix_nated_register();
             xlog("L_INFO", "Routing in-dialog $rm from $fu to $ru\n");
             break;
          };
+    };
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="nathelper.set_contact_alias">
+		<title>
+		<function moreinfo="none">set_contact_alias()</function>
+		</title>
+		<para>
+		Adds ;alias=ip~port~transport parameter to contact URI
+		containing received ip, port, and transport protocol. The new
+		contact URI is immediately visible to other modules in the
+		way fix_nated_contact() does it.
+		</para>
+		<para>
+		This function can be used from
+		REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE, and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>set_contact_alias</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if (!is_present_hf("Record-Route")) {
+        if (!set_contact_alias()) {
+            xlog("L_ERR", "Error in aliasing contact $ct\n");
+            send_reply("400", "Bad request");
+            exit;
+        };
     };
 ...
 		</programlisting>

@@ -99,7 +99,7 @@
 		<title>Set <varname>default_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pua_bla", "default_domain", "kamailio.org")
+modparam("pua_reginfo", "default_domain", "kamailio.org")
 ...
 </programlisting>
 		</example>
@@ -157,9 +157,9 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 	</section>	
 	<section>
 		<title>Functions</title>
-		<section>
+		<section id="pua_reginfo.f.reginfo_handle_notify">
 			<title>
-				<function moreinfo="none">reginfo_handle_notify</function>
+				<function moreinfo="none">reginfo_handle_notify(uldomain)</function>
 			</title>
 			<para>
 				This function processes received "NOTIFY"-requests and updates
@@ -168,6 +168,10 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 			<para>
 				This method does not create any SIP-Reponse, this has to be done
 				the script-writer.
+			</para>
+			<para>
+				The parameter has to correspond to user location table (domain)
+				where to store the record.
 			</para>
 			<para>Return codes:</para>
 			<itemizedlist>
@@ -191,7 +195,7 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 				<programlisting format="linespecific">
 ...
 if(is_method("NOTIFY")) 
-	if (reginfo_handle_notify())
+	if (reginfo_handle_notify("location"))
 		send_reply("202", "Accepted");
 ...
 				</programlisting>

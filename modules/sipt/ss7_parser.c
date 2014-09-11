@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * 
  */
@@ -143,33 +143,51 @@ static int encode_calling_party(char * number, int nai, int presentation, int sc
         return datalen + 2;
 }
 
-// returns start of specified optional header of IAM, otherwise return -1
+// returns start of specified optional header of IAM or CPG, otherwise return -1
 static int get_optional_header(unsigned char header, unsigned char *buf, int len)
 {
-	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
 	int offset = 0;
 	int res;
+	union isup_msg * message = (union isup_msg*)buf;
+	unsigned char optional_pointer = 0;
 
-	// not an iam? do nothing
-	if(message->type != ISUP_IAM)
+
+	if(message->type == ISUP_IAM)
 	{
+		len -= offsetof(struct isup_iam_fixed, optional_pointer);
+		offset += offsetof(struct isup_iam_fixed, optional_pointer);
+		optional_pointer = message->iam.optional_pointer;
+	}
+	else if(message->type == ISUP_ACM)
+	{
+		len -= offsetof(struct isup_acm_fixed, optional_pointer);
+		offset += offsetof(struct isup_acm_fixed, optional_pointer);
+		optional_pointer = message->acm.optional_pointer;
+	}
+	else if(message->type == ISUP_CPG)
+	{
+		len -= offsetof(struct isup_cpg_fixed, optional_pointer);
+		offset += offsetof(struct isup_cpg_fixed, optional_pointer);
+		optional_pointer = message->cpg.optional_pointer;
+	}
+	else
+	{
+		// don't recognize the type? do nothing
 		return -1;
 	}
 
-	len -= offsetof(struct isup_iam_fixed, optional_pointer);
-	offset += offsetof(struct isup_iam_fixed, optional_pointer);
 
 	if (len < 1)
 		return -1;
 
-	offset += message->optional_pointer;
-	len -= message->optional_pointer;
+	offset += optional_pointer;
+	len -= optional_pointer;
 
 	if (len < 1 )
 		return -1;
 
 	/* Optional paramter parsing code */
-	if (message->optional_pointer) {
+	if (optional_pointer) {
 		while ((len > 0) && (buf[offset] != 0)) {
 			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
 
@@ -195,6 +213,25 @@ int isup_get_hop_counter(unsigned char *buf, int len)
 		return buf[offset+2] & 0x1F;
 	}
 	return -1;
+}
+
+int isup_get_event_info(unsigned char *buf, int len)
+{
+	struct isup_cpg_fixed * message = (struct isup_cpg_fixed*)buf;
+
+	// not a CPG? do nothing
+	if(message->type != ISUP_CPG)
+	{
+		return -1;
+	}
+
+	/* Message Type = 1 */
+	len -= offsetof(struct isup_cpg_fixed, event_info);
+
+	if (len < 1)
+		return -1;
+
+	return (int)message->event_info;
 }
 
 int isup_get_cpc(unsigned char *buf, int len)
@@ -308,11 +345,15 @@ int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, 
 
 
 	// modify the mandatory fixed header
-	res2 = encode_called_party(dest, buf+offset+1, nai, tmp_buf+1, 255-1);
-	tmp_buf[0] = (char)res2;
+	res2 = encode_called_party(dest, buf+offset+1, nai, tmp_buf+2, 255-1);
+	tmp_buf[1] = (char)res2;
 	res = buf[offset]+1;
+
+	// set the new optional part pointer
+	tmp_buf[0] = (char)res2+2;
 	
-	replace_body_segment(mangle, offset,res,tmp_buf, res2+1);
+	// replace the mandatory fixed header + optional pointer
+	replace_body_segment(mangle, offset - 1,res+1,tmp_buf, res2+2);
 
 	offset += res;
 	len -= res;
@@ -411,7 +452,7 @@ int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int
 				case ISUP_PARM_CALLING_PARTY_NUM:
 					res2 = encode_calling_party(origin, nai, presentation, screening, &new_party[1], 255-1);
 					new_party[0] = (char)res2;
-					replace_body_segment(mangle, offset+1,(int)buf[offset+1],new_party, res2+1);
+					replace_body_segment(mangle, offset+1,(int)buf[offset+1]+1,new_party, res2+1);
 
 					has_calling = 1;
 					break;

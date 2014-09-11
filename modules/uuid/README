@@ -1,0 +1,81 @@
+UUID Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Usage
+
+   List of Examples
+
+   1.1. $uuid(type) usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Usage
+
+1. Overview
+
+   This module exports the $uuid(type) class of variables that return
+   unique values using libuuid functions.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libuuid - OSSP uuid - Universally Unique Identifier (UUID) Library
+
+3. Usage
+
+   Following variables can be used:
+     * $uuid(g) - return the UUID value using uuid_generate().
+     * $uuid(r) - return the UUID value using uuid_generate_random().
+     * $uuid(t) - return the UUID value using uuid_generate_time().
+     * $uuid(s) - return the UUID value using uuid_generate_time_safe().
+       If the generation was not safe, the variable returns $null. The
+       function is not available on Mac OS X - the value is the one
+       returned by uuid_generate_time().
+
+   Example 1.1. $uuid(type) usage
+...
+$var(uuid) = $uuid(g);
+xdbg("generated uuid is [$var(uuid)]\n");
+add_rr_param(";uuid=$var(uuid)");
+...

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -59,6 +59,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_mq_name, 0, 0, 0 },
 	{ {"mqv", sizeof("mqv")-1}, PVT_OTHER, pv_get_mqv, 0,
 		pv_parse_mq_name, 0, 0, 0 },
+	{ {"mq_size", sizeof("mq_size")-1}, PVT_OTHER, pv_get_mq_size, 0,
+		pv_parse_mq_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -82,7 +84,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"mqueue",          STR_PARAM|USE_FUNC_PARAM, (void*)mq_param},
+	{"mqueue",          PARAM_STRING|USE_FUNC_PARAM, (void*)mq_param},
 	{0, 0, 0}
 };
 

@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * 2012-10-18  initial version (osas)
  */
@@ -63,8 +63,8 @@ typedef struct ph_db_table_ {
 }ph_db_table_t;
 
 typedef struct ph_vals_ {
-    str *ids;
-    str *vals;
+    str *ids;  /* String to display for the given value */
+    str *vals; /* prepopulated value for a specific field */
     int vals_size;
 }ph_vals_t;
 
@@ -75,11 +75,12 @@ typedef struct ph_cmd_ {
     db_op_t *c_ops;
     db_key_t *c_keys;
     db_type_t *c_types;
-    ph_vals_t *c_vals;
+    ph_vals_t *c_vals; /* array of prepopulated values */
     int c_keys_size;
     db_key_t *q_keys;
     db_type_t *q_types;
-    ph_vals_t *q_vals;
+    ph_vals_t *q_vals; /* array of prepopulated values */
+	str *link_cmd;     /* cmd to be executed for query links */
     int q_keys_size;
     db_key_t *o_keys;
     int o_keys_size;

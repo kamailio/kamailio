@@ -2,11 +2,21 @@ Distributed Message Queue Module
 
 Marius Ovidiu Bucur
 
+Charles Chance
+
+   Sipcentric Ltd.
+
 Edited by
 
 Marius Ovidiu Bucur
 
-   Copyright � 2011 Marius Bucur
+Edited by
+
+Charles Chance
+
+   Copyright © 2011 Marius Bucur
+
+   Copyright © 2013 Charles Chance, Sipcentric Ltd.
      __________________________________________________________________
 
    Table of Contents
@@ -21,18 +31,46 @@ Marius Ovidiu Bucur
 
         3. Parameters
 
-              3.1. dmq_server_address(str)
-              3.2. dmq_notification_address(str)
+              3.1. server_address(str)
+              3.2. notification_address(str)
+              3.3. num_workers(int)
+              3.4. ping_interval(int)
+
+        4. Functions
+
+              4.1. dmq_handle_message()
+              4.2. dmq_send_message(peer, node, body, content_type)
+              4.3. dmq_bcast_message(peer, body, content_type)
+              4.4. dmq_t_replicate([skip_loop_test])
+              4.5. dmq_is_from_node()
 
    2. Developer Guide
 
         1. dmq_load_api(dmq_api_t* api)
+        2. register_dmq_peer(dmq_peer_t* peer)
+        3. bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
+                dmq_resp_cback_t* resp_cback, int max_forwards, str*
+                content_type)
+
+        4. send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
+                dmq_resp_cback_t* resp_cback, int max_forwards, str*
+                content_type)
 
    List of Examples
 
-   1.1. Set dmq_server_address parameter
-   1.2. Set dmq_notification_address parameter
+   1.1. Set server_address parameter
+   1.2. Set notification_address parameter
+   1.3. Set num_workers parameter
+   1.4. Set ping_interval parameter
+   1.5. dmq_handle_message usage
+   1.6. dmq_send_message usage
+   1.7. dmq_bcast_message usage
+   1.8. dmq_t_replicate usage
+   1.9. dmq_is_from_node usage
    2.1. dmq_api_t structure
+   2.2. register_dmq_peer usage
+   2.3. bcast_message usage
+   2.4. send_message usage
 
 Chapter 1. Admin Guide
 
@@ -46,17 +84,34 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. dmq_server_address(str)
-        3.2. dmq_notification_address(str)
+        3.1. server_address(str)
+        3.2. notification_address(str)
+        3.3. num_workers(int)
+        3.4. ping_interval(int)
+
+   4. Functions
+
+        4.1. dmq_handle_message()
+        4.2. dmq_send_message(peer, node, body, content_type)
+        4.3. dmq_bcast_message(peer, body, content_type)
+        4.4. dmq_t_replicate([skip_loop_test])
+        4.5. dmq_is_from_node()
 
 1. Overview
 
-   The DMQ module implements a distributed message passing system on top
-   of Kamailio. The DMQ nodes within the system are grouped in a logical
-   entity called DMQ bus and are able to communicate with each others by
-   sending/receiving messages (either by broadcast or sending a DMQ
-   message to a specific node). The system transparently deals with node
-   discovery, node consistency within the DMQ bus, retransmissions, etc.
+   The DMQ module implements a distributed message queue on top of
+   Kamailio in order to enable the passing/replication of data between
+   multiple instances. The DMQ "nodes" within the system are grouped in a
+   logical entity called the DMQ "bus" and are able to communicate with
+   each other by sending/receiving messages (either by broadcast or
+   directly to a specific node). The system transparently deals with node
+   discovery, consistency, retransmissions, etc.
+
+   Other entities ("peers") are then able to utlize the DMQ bus to pass
+   messages between themselves. Peers are grouped by name in order to
+   ensure the correct messages are passed to the relevant peers. This
+   grouping of peers can be compared to a topic in a typical pub/sub
+   system.
 
 2. Dependencies
 
@@ -71,40 +126,162 @@ Chapter 1. Admin Guide
 
 2.2. External Libraries or Applications
 
-     * Each peer needs to use its own serialization mechanism. Some
+     * The DMQ module itself has no external dependencies. However, each
+       peer will need to use its own (de)serialization mechanism. Some
        examples are libtpl, protobuf. .
 
 3. Parameters
 
-   3.1. dmq_server_address(str)
-   3.2. dmq_notification_address(str)
+   3.1. server_address(str)
+   3.2. notification_address(str)
+   3.3. num_workers(int)
+   3.4. ping_interval(int)
 
-3.1. dmq_server_address(str)
+3.1. server_address(str)
 
-   The local server address.
+   The local server address. This is the interface over which the DMQ
+   engine will send/receive messages.
 
-   The modules needs it to know on which interface the DMQ engine should
-   send and receive messages.
+   Default value is “NULL”.
 
-   Default value is "NULL".
-
-   Example 1.1. Set dmq_server_address parameter
+   Example 1.1. Set server_address parameter
 ...
-modparam("dmq", "dmq_server_address", "mysql://openser:openserrw@localhost/opens
-er")
+modparam("dmq", "server_address", "sip:10.0.0.20:5060")
 ...
 
-3.2. dmq_notification_address(str)
+3.2. notification_address(str)
 
-   The address of the DMQ node from which the local node should retrieve
-   initial information.
+   The address of another DMQ node from which the local node should
+   retrieve initial information about all other nodes.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
-   Example 1.2. Set dmq_notification_address parameter
+   Example 1.2. Set notification_address parameter
 ...
-modparam("dmq", "dmq_notification_address", "mysql://openser:openserrw@localhost
-/openser")
+modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
+...
+
+3.3. num_workers(int)
+
+   The number of worker threads for sending/receiving messages.
+
+   Default value is “2”.
+
+   Example 1.3. Set num_workers parameter
+...
+modparam("dmq", "num_threads", 4)
+...
+
+3.4. ping_interval(int)
+
+   The number of seconds between node pings (for checking status of other
+   nodes).
+
+   Minimum value is “60” (default).
+
+   Example 1.4. Set ping_interval parameter
+...
+modparam("dmq", "ping_interval", 90)
+...
+
+4. Functions
+
+   4.1. dmq_handle_message()
+   4.2. dmq_send_message(peer, node, body, content_type)
+   4.3. dmq_bcast_message(peer, body, content_type)
+   4.4. dmq_t_replicate([skip_loop_test])
+   4.5. dmq_is_from_node()
+
+4.1.  dmq_handle_message()
+
+   Handles a DMQ message by passing it to the appropriate local peer
+   (module). The peer is identified by the user part of the To header.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.5. dmq_handle_message usage
+...
+        if(is_method("KDMQ"))
+        {
+                dmq_handle_message();
+        }
+...
+
+4.2.  dmq_send_message(peer, node, body, content_type)
+
+   Sends a DMQ message directly from config file to a single node.
+
+   Meaning of parameters:
+     * peer - name of peer that should handle the message.
+     * node - the node to which the message should be sent.
+     * body - the message body.
+     * content_type - the MIME type of the message body.
+
+   This function can be used from any route.
+
+   Example 1.6. dmq_send_message usage
+...
+        dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...", "
+text/plain");
+...
+
+4.3.  dmq_bcast_message(peer, body, content_type)
+
+   Broadcasts a DMQ message from config file to all active nodes (except
+   self).
+
+   Meaning of parameters:
+     * peer - name of peer that should handle the message.
+     * body - the message body.
+     * content_type - the MIME type of the message body.
+
+   This function can be used from any route.
+
+   Example 1.7. dmq_bcast_message usage
+...
+        dmq_bcast_message("peer_name", "Message body...", "text/plain");
+...
+
+4.4.  dmq_t_replicate([skip_loop_test])
+
+   Replicates the current SIP message to all active nodes (except self).
+   Useful for replicating REGISTER, PUBLISH etc. in a clustered
+   environment.
+
+   Meaning of parameters:
+     * skip_loop_test - by default, DMQ checks the source IP of the
+       message prior to replication, to ensure it has not been sent by
+       another DMQ node (to avoid infinite loops). If this optional
+       parameter is set to "1", the loop test is not performed. This makes
+       sense, from a performance perspective, if you have already
+       performed the necessary checks in the config script (see
+       dmq_is_from_node()).
+
+   This function can be used from REQUEST_ROUTE only.
+
+   Example 1.8. dmq_t_replicate usage
+...
+        dmq_t_replicate();
+...
+
+4.5.  dmq_is_from_node()
+
+   Checks whether the current message has been sent by another DMQ node in
+   the cluster.
+
+   This function can be used from REQUEST_ROUTE only.
+
+   Example 1.9. dmq_is_from_node usage
+...
+        # Example REGISTER block
+        if (dmq_is_from_node()) {
+                # Already authenticated, just save contact...
+        } else {
+                # Authenticate, save contact etc.
+                # Assuming all successful...
+                dmq_t_replicate("1"); # Already checked source, don't perform lo
+op test again
+        }
 ...
 
 Chapter 2. Developer Guide
@@ -112,18 +289,22 @@ Chapter 2. Developer Guide
    Table of Contents
 
    1. dmq_load_api(dmq_api_t* api)
+   2. register_dmq_peer(dmq_peer_t* peer)
+   3. bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
+          dmq_resp_cback_t* resp_cback, int max_forwards, str*
+          content_type)
+
+   4. send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
+          dmq_resp_cback_t* resp_cback, int max_forwards, str*
+          content_type)
 
    The module provides the following functions that can be used in other
    Kamailio modules.
 
-1. dmq_load_api(dmq_api_t* api)
+1.  dmq_load_api(dmq_api_t* api)
 
-   This function binds the dmq modules and fills the structure with the
-   exported functions -> register_dmq_peer - registers an entity as a DMQ
-   peer which permits receiving/sending messages between nodes which
-   support the same peer, -> bcast_message - broadcast a DMQ message to
-   all peers available in the DMQ bus, -> send_message - sends a DMQ
-   message to a specific peer in the local DMQ bus.
+   This function binds the DMQ module and fills the structure with the
+   exported functions below.
 
    Example 2.1. dmq_api_t structure
 ...
@@ -132,4 +313,35 @@ typedef struct dmq_api {
         bcast_message_t bcast_message;
         send_message_t send_message;
 } dmq_api_t;
+...
+
+2.  register_dmq_peer(dmq_peer_t* peer)
+
+   Registers an entity as a DMQ peer which permits receiving/sending
+   messages between nodes which support the same peer.
+
+   Example 2.2. register_dmq_peer usage
+...
+        Example to follow.
+...
+
+3.  bcast_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
+dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)
+
+   Broadcast a DMQ message to all nodes in the DMQ bus excluding self,
+   inactive nodes and "except" if specified.
+
+   Example 2.3. bcast_message usage
+...
+        Example to follow.
+...
+
+4.  send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
+dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)
+
+   Send a DMQ message to a single node.
+
+   Example 2.4. send_message usage
+...
+        Example to follow.
 ...

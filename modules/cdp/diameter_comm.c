@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -138,6 +138,7 @@ AAAReturnCode AAASendMessage(
 		LM_ERR("AAASendMessage(): Can't find a suitable connected peer in the routing table.\n");
 		goto error;
 	}
+	LM_DBG("Found diameter peer [%.*s] from routing table\n", p->fqdn.len, p->fqdn.s);
 	if (p->state!=I_Open && p->state!=R_Open){
 		LM_ERR("AAASendMessage(): Peer not connected to %.*s\n",p->fqdn.len,p->fqdn.s);
 		goto error;
@@ -194,7 +195,7 @@ AAAReturnCode AAASendMessageToPeer(
 			LM_ERR("AAASendMessageToPeer(): can't add transaction callback for answer.\n");
 	}
 
-//	if (!peer_send_msg(p,message))
+	p->last_selected = time(NULL);
 	if (!sm_process(p,Send_Message,message,0,0))
 		goto error;
 

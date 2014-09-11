@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -55,7 +55,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"describe_table", STR_PARAM|USE_FUNC_PARAM, (void*)bdb_describe_table},
+	{"describe_table", PARAM_STRING|USE_FUNC_PARAM, (void*)bdb_describe_table},
 	{0, 0, 0}
 };
 

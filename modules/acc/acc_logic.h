@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -41,7 +41,7 @@
 #include "../../modules/tm/t_hooks.h"
 #include "acc_api.h"
 
-
+int acc_parse_code(char *p, struct acc_param *param);
 void acc_onreq( struct cell* t, int type, struct tmcb_params *ps );
 
 int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo);

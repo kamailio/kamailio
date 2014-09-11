@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
  *
  * History:
@@ -115,7 +115,7 @@ static cmd_export_t cmds[]={
 static param_export_t mod_params[]={
 	{ "enable_stats", INT_PARAM, &sst_enable_stats			},
 	{ "min_se", INT_PARAM, &sst_minSE				},
-	{ "timeout_avp", STR_PARAM, &timeout_spec			},
+	{ "timeout_avp", PARAM_STRING, &timeout_spec			},
 	{ "reject_to_small",		INT_PARAM, &sst_reject 		},
 	{ "sst_flag",				INT_PARAM, &sst_flag	},
 	{ 0,0,0 }

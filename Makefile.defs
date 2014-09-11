@@ -163,18 +163,18 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 
 # version number
 VERSION = 4
-PATCHLEVEL = 1
+PATCHLEVEL = 2
 SUBLEVEL =  0
-EXTRAVERSION = -dev7
+EXTRAVERSION = -pre0
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
 # 1 - q_malloc (quick malloc)
-MEMMNG ?= 1
+MEMMNG ?= 0
 # memory debugger switcher
 # 0 - off (no-debug mode)
 # 1 - on (debug mode)
-MEMDBG ?= 0
+MEMDBG ?= 1
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -273,6 +273,7 @@ CC_LONGVER:=$(shell if  $(CC) -v 2>/dev/null; then \
 					else \
 						$(CC) -V 2>&1 ; \
 					fi )
+CC_OPT ?= -O9
 MKTAGS=ctags
 
 #find-out the compiler's name
@@ -334,6 +335,7 @@ ifneq (, $(findstring clang, $(CC_LONGVER)))
 	CC_FULLVER:=$(shell echo "$(CC_LONGVER)" | head -n 1 |  sed -e 's/.*version \([0-9]\.[0-9]\).*/\1/g' )
 	CC_SHORTVER:=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
+	CC_OPT=-O3
 	MKDEP=$(CC) -MM 
 endif
 
@@ -838,6 +840,7 @@ endif
 
 ifeq ($(ARCH), arm6)
 	use_fast_lock=yes
+	C_DEFS+=-DNOSMP # very unlikely to have an smp arm
 endif
 
 ifeq ($(ARCH), ppc)
@@ -886,7 +889,7 @@ ifeq	($(ARCH), i386)
 ifeq		($(CC_NAME), gcc) 
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
+				CFLAGS=-g $(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPU,athlon64)
@@ -943,9 +946,9 @@ else		# CC_NAME, gcc
 ifeq		($(CC_NAME), clang)
 $(call                          set_if_empty,CPU,athlon64)
 					C_DEFS+=-DCC_GCC_LIKE_ASM
-                                        CFLAGS+=-m32
-                                                -O9      \
-                                                         \
+                                        CFLAGS+=-g -m32
+                                                $(CC_OPT) \
+                                                          \
                                                 -mtune=$(CPU)
                                         LDFLAGS+=-m32
 else			# CC_NAME, clang
@@ -971,7 +974,7 @@ ifeq	($(ARCH), x86_64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
+				CFLAGS=-g $(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.5+
 			# don't add '-mtune=$(CPU)' - gcc failure
 ifeq			($(CC_SHORTVER), 4.5+)
@@ -1039,8 +1042,8 @@ else		# CC_NAME, gcc
 ifeq            ($(CC_NAME), clang)
 $(call                          set_if_empty,CPU,opteron)
 					C_DEFS+=-DCC_GCC_LIKE_ASM
-                                        CFLAGS+=-m64 \
-                                                -O9        
+                                        CFLAGS+=-g -m64 \
+                                                $(CC_OPT)        
                                         LDFLAGS+=-m64
 else      	# CC_NAME, clang
 ifeq		($(CC_NAME), icc)
@@ -1065,7 +1068,7 @@ ifeq	($(ARCH), sparc64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM -DSPARC64_MODE
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
+				CFLAGS=-g $(CC_OPT) -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
 					#-Wmissing-prototypes 
 				#if gcc 4.5+ or 4.2+
@@ -1156,7 +1159,7 @@ ifeq	($(ARCH), sparc)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
+				CFLAGS=-g $(CC_OPT) -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
 					#-Wmissing-prototypes 
 				#if gcc 4.5+ or 4.2+
@@ -1221,7 +1224,7 @@ ifeq	($(ARCH), arm)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-marm -march=armv5t -O9 -funroll-loops -fsigned-char $(PROFILE)
+				CFLAGS=-marm -march=armv5t $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 					CFLAGS+= -ftree-vectorize -fno-strict-overflow
@@ -1269,7 +1272,7 @@ ifeq	($(ARCH), arm6)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-march=armv6 -O9 -funroll-loops -fsigned-char \
+				CFLAGS=-march=armv6 $(CC_OPT) -funroll-loops -fsigned-char \
 						$(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
@@ -1316,7 +1319,7 @@ ifeq	($(ARCH), mips)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  $(PROFILE)
+				CFLAGS=$(CC_OPT) -funroll-loops  $(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 					CFLAGS+=-march=r3000 -minline-all-stringops \
@@ -1363,7 +1366,7 @@ ifeq	($(ARCH), mips2)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -mips2 -O9 -funroll-loops $(PROFILE)
+				CFLAGS= -mips2 $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 					CFLAGS+=-minline-all-stringops -ftree-vectorize \
@@ -1408,7 +1411,7 @@ ifeq	($(ARCH), mips64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -mips64 -O9 -funroll-loops $(PROFILE)
+				CFLAGS= -mips64 $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 					CFLAGS+=-minline-all-stringops -ftree-vectorize \
@@ -1453,7 +1456,7 @@ ifeq	($(ARCH), alpha)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -O9 -funroll-loops $(PROFILE)
+				CFLAGS= $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 4.5 or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 					CFLAGS+= -fno-strict-overflow
@@ -1499,19 +1502,27 @@ ifeq	($(ARCH), ppc)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -O9 -funroll-loops -fsigned-char $(PROFILE)
+				CFLAGS=
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPU,powerpc)
-					CFLAGS+=-ftree-vectorize \
-							-fno-strict-overflow \
-							-mtune=$(CPU) -maltivec
+ifeq 				($(NOALTIVEC),)
+						CFLAGS += $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
+						CFLAGS += -ftree-vectorize
+						CFLAGS += -maltivec
+						CFLAGS += -fno-strict-overflow
+						CFLAGS += -mtune=$(CPU)
+endif
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 $(call				set_if_empty,CPU,powerpc)
-					CFLAGS+=-ftree-vectorize \
-							-mtune=$(CPU) -maltivec
+ifeq 				($(NOALTIVEC),)
+						CFLAGS += $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
+						CFLAGS += -ftree-vectorize
+						CFLAGS += -maltivec
+						CFLAGS += -mtune=$(CPU)
+endif
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
@@ -1548,7 +1559,7 @@ ifeq	($(ARCH), ppc64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -O9 -funroll-loops -fsigned-char $(PROFILE)
+				CFLAGS= $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPU,powerpc64)

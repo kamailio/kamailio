@@ -222,16 +222,17 @@ int fork_sync_timer(int child_id, char* desc, int make_sock,
 	if (pid<0) return -1;
 	if (pid==0){
 		/* child */
-		ts2 = interval;
+		ts2 = interval*1000; /* miliseconds */
 		if (cfg_child_init()) return -1;
 		for(;;){
-			if(ts2>0) sleep(ts2);
-			else sleep(1);
-			ts1 = get_ticks();
+			if(ts2>0) sleep_us(ts2*1000); /* microseconds sleep */
+			else sleep_us(1000); /* 1 milisecond sleep to catch up */
+			ts1 = get_ticks_raw();
 			cfg_update();
-			f(get_ticks(), param); /* ticks in s for compatibility with old
+			f(TICKS_TO_S(ts1), param); /* ticks in sec for compatibility with old
 									  timers */
-			ts2 = interval - get_ticks() + ts1;
+			/* convert to mili-seconds and adjust the next sleep duration */
+			ts2 = interval*1000 - TICKS_TO_MS(get_ticks_raw()) + TICKS_TO_MS(ts1);
 		}
 	}
 	/* parent */

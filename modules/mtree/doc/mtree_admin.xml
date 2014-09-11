@@ -97,7 +97,16 @@ modparam("mtree", "db_table", "mymtrees")
 	<section>
 	    <title><varname>mtree</varname> (string)</title>
 	    <para>
-		Definition of memory tree
+		Definition of memory tree with parameters name, dbtable,
+		type, and multi.  Name is name of the tree, dbtable is name
+		of dbtable where tree is stored, type is type of tree elements
+		(0 = string, 2 = integer), and multi tells if dbtable can
+		contain more than one tree (0 = one tree, 1 = more than
+		one tree identified by tname column). 
+	    </para>
+	    <para>
+	    This parameter can be set many times to add more trees in
+	    memory.
 	    </para>
 	    <para>
 		<emphasis>
@@ -108,7 +117,8 @@ modparam("mtree", "db_table", "mymtrees")
 		<title>Set <varname>mtree</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mtree", "mtree", "name=mytable;dbtable=routes;type=0;")
+modparam("mtree", "mtree", "name=mytree1;dbtable=routes1;type=0")
+modparam("mtree", "mtree", "name=mytree2;dbtable=routes2;type=0;multi=1")
 ...
 </programlisting>
 	    </example>
@@ -238,8 +248,8 @@ modparam("mtree", "pv_value", "$var(mtval)")
 	<section>
 	    <title><varname>pv_values</varname> (string)</title>
 	    <para>
-		The PV spec where to store the matched values when mtree is of type
-		0 or 2 and mode of mt_match() call has value 2. It can be any AVP.
+		The AVP where to store the matched values when mtree is of type
+		0 or 2 and mode of mt_match() call has value 2.
 		</para>
 	    <para>
 		<emphasis>
@@ -334,6 +344,9 @@ modparam("mtree", "mt_allow_duplicates", 1)
 		matching prefix is in avp index 0.  Parameter 'mode' can be an integer
 		constant or a pseudo variable with integer value.
 	    </para>
+	    <para>
+	      Returns 1 if match succeeded and -1 otherwise.
+	    </para>
 		<example>
 		<title><function>mt_match</function> usage</title>
 		<programlisting format="linespecific">
@@ -416,6 +429,40 @@ mt_match("mytree", "$rU", "0");
 		_empty_line_
 		</programlisting>
     </section>
+
+    <section>
+		<title>
+		<function moreinfo="none">mt_match</function>
+		</title>
+		<para>
+		Match prefix value against mtree.
+		</para>
+		<para>
+		Name: <emphasis>mt_match</emphasis>
+		</para>
+		<para>Parameters: <emphasis>3</emphasis></para>
+		<itemizedlist>
+            <listitem>
+            <para><emphasis>Name of mtree</emphasis></para>
+            </listitem>
+            <listitem>
+            <para><emphasis>Prefix to match</emphasis></para>
+            </listitem>
+            <listitem>
+            <para><emphasis>Mode of matching</emphasis></para>
+            </listitem>
+        </itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:mt_match:_reply_fifo_file_
+		_mtree_
+		_prefix_
+		_mode_
+		_empty_line_
+		</programlisting>
+    </section>
     </section><!-- MI commands -->
 	<section>
 	<title>RPC Commands</title>
@@ -424,9 +471,13 @@ mt_match("mytree", "$rU", "0");
 		<function moreinfo="none">mtree.summary</function>
 		</title>
 		<para>
-		List usage summary for all trees.
+			List usage summary for all trees or for the tree whose name is
+			given as parameter.
 		</para>
-		<para>Parameters: none.</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_ - (optional) the name of the tree.</para></listitem>
+		</itemizedlist>
         </section>
 	<section>
 		<title>
@@ -437,7 +488,21 @@ mt_match("mytree", "$rU", "0");
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>_mtree_</para> - name of mtree or empty string meaning all mtrees</listitem>	  
+			<listitem><para>_mtree_</para> - name of mtree or empty string meaning all mtrees</listitem>
+		</itemizedlist>
+        </section>
+    <section>
+		<title>
+		<function moreinfo="none">mtree.match</function>
+		</title>
+		<para>
+		Match prefix value against mtree
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_</para> - name of mtree</listitem>
+			<listitem><para>_prefix_</para> - match prefix</listitem>
+			<listitem><para>_mode_</para> - matching mode</listitem>
 		</itemizedlist>
         </section>
     	</section><!-- RPC commands -->

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module is able to detect compressed body in received SIP message
+		and decompress it as well as compress the body for outgoing SIP
+		message. It works also for received HTTP request and replied HTTP
+		response (&kamailio; cannot work in HTTP proxy mode).
+	</para>
+	<para>
+		The decision of whether to do compression or decompression is made
+		by detecting a special SIP header (default 'Content-Encoding') that
+		matches a given value - both header name and value can be set via
+		module parameters. If a SIP message is received with clear body and
+		you want to compress the body for outgoing, add the header in config
+		file. The header can be added to the local generated replies as well.
+	</para>
+	<para>
+		In other words, if the header is present in incoming SIP message, its
+		body is decompressed. If the header is present in outgoing SIP message,
+		its body is compressed. Therefore inside configuration file, the body
+		is in original format(e.g., plain text). In this way, the existing
+		functions to handle content of the body work as usual (e.g., to strip
+		codecs in sdp via sdpops or do substitutions via textops).
+	</para>
+	<para>
+		The functions used to compress and decompress are from zlib
+		library (http://zlib.net).
+	</para>
+	<para>
+		NOTE: for the moment the module cannot be used with topoh module,
+		overlapping in core event callbacks (will be fixed soon).
+	</para>
+	<para>
+		The immediate benefit of compressing the body is to reduce the size
+		of the SIP message, increasing the chances to stay under MTU for UDP
+		packts. From observation, the compressed body is in between 50% to 67%
+		smaller than the original size (e.g., a body of 431 bytes was
+		compressed to 230).
+	</para>
+	<para>
+		An use case can be when having peering traffic between two Kamailio
+		servers. Before relaying to the other Kamailio,  use
+		in config file: append_hf("Content-Encoding: deflate\r\n").
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>zlib</emphasis> compression library (http://zlib.net).
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="gzcompress.p.header_name">
+		<title><varname>header_name</varname> (str)</title>
+		<para>
+			Name of the header that indicates compression or decompression has
+			to be done.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "Content-Encoding".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>header_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("gzcompress", "header_name", "Encoded")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="gzcompress.p.header_value">
+		<title><varname>header_value</varname> (str)</title>
+		<para>
+			Value of the header that indicates compression or decompression has
+			to be done.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "deflate".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>header_value</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("gzcompress", "header_value", "gzip")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="gzcompress.p.sanity_checks">
+		<title><varname>sanity_checks</varname> (integer)</title>
+		<para>
+			If set to 1, gzcompress module will bind to sanity module in order
+			to perform sanity checks over received SIP request. Default
+			sanity checks are done. It is useful to check if received request
+			is well formated before proceeding to encoding/decoding.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (do not bind to sanity module).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sanity_checks</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("gzcompress", "sanity_checks", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+	<title>Functions</title>
+		<para>
+			None.
+		</para>
+	</section>
+	<section>
+	<title>Config File</title>
+	<para>
+		Next example shows how to enable compression for forwarded requests,
+		as well as replying with compressed body for HTTP requests. For SIP,
+		the request is recevied and forwarded to itself once, just for the
+		sake of showing a simple example.
+	</para>
+		<example>
+		<title>Enable body compression</title>
+		<programlisting format="linespecific">
+...
+<![CDATA[
+#!KAMAILIO
+
+debug=3
+memdbg=5
+memlog=5
+
+children=2
+
+log_stderror=yes
+listen=udp:127.0.0.1:5060
+listen=tcp:127.0.0.1:5060
+
+tcp_accept_no_cl=yes
+http_reply_parse=yes
+
+mpath="modules/"
+
+loadmodule "sl.so"
+loadmodule "pv.so"
+loadmodule "xlog.so"
+loadmodule "corex.so"
+loadmodule "textops.so"
+loadmodule "xhttp.so"
+loadmodule "gzcompress.so"
+
+modparam("gzcompress", "header_value", "deflate")
+
+request_route {
+	xlog("received sip request from $si:$sp\r\n");
+
+	if(src_port==5060) {
+		remove_hf("Content-Encoding");
+		$du = "sip:127.0.0.1:9";
+	} else {
+		append_hf("Content-Encoding: deflate\r\n");
+		$du = "sip:127.0.0.1:5060";
+	}
+	forward();
+	exit;
+}
+
+event_route[xhttp:request] {
+	xlog("received http request from $si:$sp\r\n");
+	append_to_reply("Content-Encoding: deflate\r\n");
+    xhttp_reply("200", "OK", "text/html",
+        "<html><body>OK - [$si:$sp]</body></html>");
+}
+]]>
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+

@@ -59,8 +59,9 @@ sl_send_reply("404", "Not found");
 		</listitem>
 		</itemizedlist>
 		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+			It can be used on ONREPLY_ROUTE executed by tm module (upon a
+			t_on_reply() callback).
 		</para>
 		<example>
 		<title><function>send_reply</function> usage</title>

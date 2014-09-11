@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History
  * -------
@@ -120,6 +120,10 @@ typedef enum request_method {
 #define FL_USE_UAC_FROM      (1<<13)  /* take FROM hdr from UAC instead of UAS*/
 #define FL_USE_UAC_TO        (1<<14)  /* take TO hdr from UAC instead of UAS */
 #define FL_TM_RPL_MATCHED    (1<<15)  /* tm matched reply already */
+#define FL_RPL_SUSPENDED     (1<<16)  /* for async reply processing */
+#define FL_BODY_MULTIPART    (1<<17)  /* body modified is multipart */
+#define FL_RR_ADDED          (1<<18)  /* Record-Route header was added */
+#define FL_UAC_AUTH          (1<<19)  /* Proxy UAC-like authentication */
 
 /* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
@@ -154,6 +158,16 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 #define IS_SIP(req)                                                \
     ((req)->first_line.u.request.version.len >= SIP_VERSION_LEN && \
     !strncasecmp((req)->first_line.u.request.version.s,             \
+		SIP_VERSION, SIP_VERSION_LEN))
+
+#define IS_HTTP_REPLY(rpl)                                                \
+    ((rpl)->first_line.u.reply.version.len >= HTTP_VERSION_LEN && \
+    !strncasecmp((rpl)->first_line.u.reply.version.s,             \
+		HTTP_VERSION, HTTP_VERSION_LEN))
+
+#define IS_SIP_REPLY(rpl)                                                \
+    ((rpl)->first_line.u.reply.version.len >= SIP_VERSION_LEN && \
+    !strncasecmp((rpl)->first_line.u.reply.version.s,             \
 		SIP_VERSION, SIP_VERSION_LEN))
 
 /*! \brief
@@ -253,6 +267,19 @@ typedef struct msg_body {
 /* pre-declaration, to include sys/time.h in .c */
 struct timeval;
 
+/* structure for cached decoded flow for outbound */
+typedef struct ocd_flow {
+		int decoded;
+		struct receive_info rcv;
+} ocd_flow_t;
+
+/* structure holding fields that don't have to be cloned in shm
+ * - its content is memset'ed to in shm clone
+ * - add to msg_ldata_reset() if a field uses dynamic memory */
+typedef struct msg_ldata {
+	ocd_flow_t flow;
+} msg_ldata_t;
+
 /*! \brief The SIP message */
 typedef struct sip_msg {
 	unsigned int id;               /*!< message id, unique/process*/
@@ -347,32 +374,31 @@ typedef struct sip_msg {
 	struct lump_rpl *reply_lump; /*!< only for localy generated replies !!!*/
 
 	/*! \brief str add_to_branch;
-	   whatever whoever want to append to branch comes here
-	*/
+	   whatever whoever want to append to Via branch comes here */
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
 	int add_to_branch_len;
 
 	unsigned int  hash_index; /*!< index to TM hash table; stored in core to avoid unnecessary calculations */
-	unsigned int msg_flags; /*!< flags used by core */
-	     /* allows to set various flags on the message; may be used for
-	      *	simple inter-module communication or remembering processing state
-	      * reached
-	      */
-	flag_t flags;
+	unsigned int msg_flags; /*!< internal flags used by core */
+	flag_t flags; /*!< config flags */
 	str set_global_address;
 	str set_global_port;
-	struct socket_info* force_send_socket; /* force sending on this socket,
-											  if ser */
+	struct socket_info* force_send_socket; /*!< force sending on this socket */
 	str path_vec;
-        str instance;
-        unsigned int reg_id;
+	str instance;
+	unsigned int reg_id;
 	str ruid;
 	str location_ua;
 
-	struct {
-		int decoded;
-		struct receive_info rcv;
-	} flow;
+	/* structure with fields that are needed for local processing
+	 * - not cloned to shm, reset to 0 in the clone */
+	msg_ldata_t ldv;
+
+	/* IMPORTANT: when adding new fields in this structure (sip_msg_t),
+	 * be sure it is freed in free_sip_msg() and it is cloned or reset
+	 * to shm structure for transaction - see sip_msg_clone.c. In tm
+	 * module, take care of these fields for faked environemt used for
+	 * runing failure handlers - see modules/tm/t_reply.c */
 } sip_msg_t;
 
 /*! \brief pointer to a fakes message which was never received ;
@@ -438,6 +464,8 @@ inline static char* get_body(struct sip_msg* const msg)
 	return msg->unparsed + offset;
 }
 
+/*! \brief If the new_uri is set, then reset it */
+void reset_new_uri(struct sip_msg* const msg);
 
 /*! \brief
  * Make a private copy of the string and assign it to dst_uri
@@ -511,5 +539,10 @@ int msg_ctx_id_match(const sip_msg_t* const msg, const msg_ctx_id_t* const mid);
  * set msg time value
  */
 int msg_set_time(sip_msg_t* const msg);
+
+/**
+ * reset content of msg->ldv (msg_ldata_t structure)
+ */
+void msg_ldata_reset(sip_msg_t*);
 
 #endif

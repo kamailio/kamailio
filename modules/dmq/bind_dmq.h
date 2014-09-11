@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
@@ -31,9 +31,9 @@
 #include "dmq_funcs.h"
 
 typedef int (*bcast_message_t)(dmq_peer_t* peer, str* body, dmq_node_t* except,
-		dmq_resp_cback_t* resp_cback, int max_forwards);
+		dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type);
 typedef int (*send_message_t)(dmq_peer_t* peer, str* body, dmq_node_t* node,
-		dmq_resp_cback_t* resp_cback, int max_forwards);
+		dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type);
 
 typedef struct dmq_api {
 	register_dmq_peer_t register_dmq_peer;
@@ -44,6 +44,21 @@ typedef struct dmq_api {
 typedef int (*bind_dmq_f)(dmq_api_t* api);
 
 int bind_dmq(dmq_api_t* api);
+
+static inline int dmq_load_api(dmq_api_t* api) {
+	bind_dmq_f binddmq;
+	binddmq = (bind_dmq_f)find_export("bind_dmq", 0, 0);
+	if ( binddmq == 0) {
+		LM_ERR("cannot find bind_dmq\n");
+		return -1;
+	}
+	if (binddmq(api) < 0)
+	{
+		LM_ERR("cannot bind dmq api\n");
+		return -1;
+	}
+	return 0;
+}
 
 #endif
 

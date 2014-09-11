@@ -25,7 +25,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "my_uri.h"
@@ -113,7 +113,7 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 
 	prev_token = 0;
 
-	if (!res || !res) {
+	if (!res || !uri) {
 		goto err;
 	}
 	
@@ -175,12 +175,14 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 			case '@':
 				st = ST_HOST;
 				res->username = prev_token;
+				prev_token = 0;
 				if (dupl_string(&res->password, begin, uri->s + i) < 0) goto err;
 				begin = uri->s + i + 1;
 				break;
 
 			case '/':
 				res->host = prev_token;
+				prev_token = 0;
 				res->port = str2s(begin, uri->s + i - begin, 0);
 				if (dupl_string(&res->database, uri->s + i + 1, uri->s + uri->len) < 0) goto err;
 				return 0;

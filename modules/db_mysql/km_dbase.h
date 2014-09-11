@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*! \file
@@ -79,6 +79,12 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows);
  * Raw SQL query
  */
 int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r);
+
+
+/*! \brief
+ * Raw SQL query via async framework
+ */
+int db_mysql_raw_query_async(const db1_con_t* _h, const str* _s);
 
 
 /*! \brief
@@ -146,6 +152,13 @@ int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val
  * Insert a row into table
  */
 int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n);
+
+
+/*! \brief
+ * Insert a row into table via async framework
+ */
+int db_mysql_insert_async(const db1_con_t* _h, const db_key_t* _k,
 		const db_val_t* _v, const int _n);
 
 

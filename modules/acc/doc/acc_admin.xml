@@ -90,7 +90,9 @@
 			find out about it. In general, a better practice is to account from an 
 			end-device (such as PSTN gateway), which best knows about call 
 			status (including media status and PSTN status in case of the 
-			gateway).
+			gateway). However, CDR-base logging has the option to log existing
+			information from expired dialogs (the dlg_vars in cdr_extra)
+			Please see cdr_expired_dlg_enable parameter - <xref linkend="acc.p.cdr_expired_dlg_enable"/>.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -354,6 +356,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
                 to persist the CDRs into a database you will have to set up an exterior process (i.e.,
                 a script living outside of &kamailio;) and implement the storage task yourself.
                 </para>
+
+                <para>
+				Sometimes, dialogs expire because the UA has a problem and a final message is never
+				transmitted. You can toggle on/off the generation of CDR-based logging in such cases
+				with only the dlg_vars showing by using the cdr_expired_dlg_enable parameter
+				- <xref linkend="acc.p.cdr_expired_dlg_enable"/>. Default behavior is not logging.
+                </para>
         </section>
 		<section id="cdr-extra-id">
 			<title>CDR Extra</title>
@@ -415,6 +424,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				<section>
 					<title>Example for a spiraled Proxy</title>
 					<programlisting format="linespecific">
+...
 # A calls B (transaction 1)
 $avp(caller)='A'
 $avp(callee)='B';
@@ -433,6 +443,7 @@ $dlg_var(chain)=$dlg_var(chain) + "|" + "C;cfnr;D";
 # C confirms call (200 reply of transaction 2)
 $dlg_var(caller) = $avp(caller); #caller='B'
 $dlg_var(callee) = $avp(callee); #callee='C'
+...
 					</programlisting>
 				</section>
 			</section>
@@ -504,7 +515,9 @@ $dlg_var(callee) = $avp(callee); #callee='C'
 		<example>
 		<title>early_media example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "early_media", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -520,7 +533,9 @@ modparam("acc", "early_media", 1)
 		<example>
 		<title>failed_transaction_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "failed_transaction_flag", 4)
+...
 </programlisting>
 		</example>
 	</section>
@@ -538,7 +553,9 @@ modparam("acc", "failed_transaction_flag", 4)
 		<example>
 		<title>failed_filter example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "failed_filter", "404,407")
+...
 </programlisting>
 		</example>
 	</section>
@@ -556,7 +573,9 @@ modparam("acc", "failed_filter", "404,407")
 		<example>
 		<title>report_ack example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "report_ack", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -573,7 +592,9 @@ modparam("acc", "report_ack", 1)
 		<example>
 		<title>report_cancels example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "report_cancels", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -595,7 +616,9 @@ modparam("acc", "report_cancels", 1)
 		<example>
 		<title>detect_direction example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "detect_direction", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -615,7 +638,9 @@ modparam("acc", "detect_direction", 1)
 		<example>
 		<title>acc_prepare_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "acc_prepare_flag", 5)
+...
 </programlisting>
 		</example>
 	</section>
@@ -635,6 +660,7 @@ modparam("acc", "acc_prepare_flag", 5)
 		<example>
 		<title>multi_leg_info example</title>
 		<programlisting format="linespecific">
+...
 # for syslog-based accounting, use any text you want to be printed
 modparam("acc", "multi_leg_info",
     "text1=$avp(src);text2=$avp(dst)")
@@ -647,6 +673,7 @@ modparam("acc", "multi_leg_info",
 # for DIAMETER-based accounting, use the DIAMETER AVP ID (as integer)
 modparam("acc", "multi_leg_info",
     "2345=$avp(src);2346=$avp(dst)")
+...
 </programlisting>
 		</example>
 	</section>
@@ -662,7 +689,9 @@ modparam("acc", "multi_leg_info",
 		<example>
 		<title>log_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "log_flag", 2)
+...
 </programlisting>
 		</example>
 	</section>
@@ -677,7 +706,9 @@ modparam("acc", "log_flag", 2)
 		<example>
 		<title>log_missed_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "log_missed_flag", 3)
+...
 </programlisting>
 		</example>
 	</section>
@@ -692,7 +723,9 @@ modparam("acc", "log_missed_flag", 3)
 		<example>
 		<title>log_level example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "log_level", 2)   # Set log_level to 2
+...
 </programlisting>
 		</example>
 	</section>
@@ -709,7 +742,9 @@ modparam("acc", "log_level", 2)   # Set log_level to 2
 		<example>
 		<title>log_facility example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "log_facility", "LOG_DAEMON")
+...
 </programlisting>
 		</example>
 	</section>
@@ -725,7 +760,9 @@ modparam("acc", "log_facility", "LOG_DAEMON")
 		<example>
 		<title>log_extra example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
+...
 </programlisting>
 		</example>
 	</section>
@@ -750,7 +787,9 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
 		<example>
 		<title>radius_config example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
+...
 </programlisting>
 		</example>
 	</section>
@@ -766,7 +805,9 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
 		<example>
 		<title>radius_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "radius_flag", 2)
+...
 </programlisting>
 		</example>
 	</section>
@@ -782,7 +823,9 @@ modparam("acc", "radius_flag", 2)
 		<example>
 		<title>radius_missed_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "radius_missed_flag", 3)
+...
 </programlisting>
 		</example>
 	</section>
@@ -797,7 +840,9 @@ modparam("acc", "radius_missed_flag", 3)
 		<example>
 		<title>service_type example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "service_type", 16)
+...
 </programlisting>
 		</example>
 	</section>
@@ -813,7 +858,9 @@ modparam("acc", "service_type", 16)
 		<example>
 		<title>radius_extra example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
+...
 </programlisting>
 		</example>
 	</section>
@@ -830,7 +877,9 @@ modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 		<example>
 		<title>db_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "db_flag", 2)
+...
 </programlisting>
 		</example>
 	</section>
@@ -846,7 +895,9 @@ modparam("acc", "db_flag", 2)
 		<example>
 		<title>db_missed_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "db_missed_flag", 3)
+...
 </programlisting>
 		</example>
 	</section>
@@ -862,8 +913,10 @@ modparam("acc", "db_missed_flag", 3)
 		<example>
 		<title>db_table_acc example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "db_table_acc", "myacc_table")
 modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
+...
 </programlisting>
 		</example>
 	</section>
@@ -879,7 +932,9 @@ modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
 		<example>
 		<title>db_table_missed_calls example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "db_table_missed_calls", "myMC_table")
+...
 </programlisting>
 		</example>
 	</section>
@@ -895,7 +950,9 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 		<example>
 		<title>db_url example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "db_url", "mysql://user:password@localhost/kamailio")
+...
 </programlisting>
 		</example>
 	</section>
@@ -911,7 +968,9 @@ modparam("acc", "db_url", "mysql://user:password@localhost/kamailio")
 		<example>
 		<title>acc_method_column example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "acc_method_column", "method")
+...
 </programlisting>
 		</example>
 	</section>
@@ -926,7 +985,9 @@ modparam("acc", "acc_method_column", "method")
 		<example>
 		<title>acc_from_tag_column example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "acc_from_tag_column", "from_tag")
+...
 </programlisting>
 		</example>
 	</section>
@@ -941,7 +1002,9 @@ modparam("acc", "acc_from_tag_column", "from_tag")
 		<example>
 		<title>acc_to_tag_column example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "acc_to_tag_column", "to_tag")
+...
 </programlisting>
 		</example>
 	</section>
@@ -956,7 +1019,9 @@ modparam("acc", "acc_to_tag_column", "to_tag")
 		<example>
 		<title>acc_callid_column example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "acc_callid_column", "callid")
+...
 </programlisting>
 		</example>
 	</section>
@@ -972,7 +1037,9 @@ modparam("acc", "acc_callid_column", "callid")
 		<example>
 		<title>acc_sip_code_column example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "acc_sip_code_column", "sip_code")
+...
 </programlisting>
 		</example>
 	</section>
@@ -988,7 +1055,9 @@ modparam("acc", "acc_sip_code_column", "sip_code")
 		<example>
 		<title>acc_sip_reason_column example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "acc_sip_reason_column", "sip_reason")
+...
 </programlisting>
 		</example>
 	</section>
@@ -1004,7 +1073,9 @@ modparam("acc", "acc_sip_reason_column", "sip_reason")
 		<example>
 		<title>acc_time_column example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "acc_time_column", "time")
+...
 </programlisting>
 		</example>
 	</section>
@@ -1020,7 +1091,9 @@ modparam("acc", "acc_time_column", "time")
 		<example>
 		<title>db_extra example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
+...
 </programlisting>
 		</example>
 	</section>
@@ -1029,15 +1102,23 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
 		<para>
 		If set to 1, use INSERT DELAYED to add records to accounting tables
 		when the DB driver has support for it. If no INSERT DELAYED support
-		is offered by DB driver, then standard INSERT is used.
+		is offered by DB driver, then standard INSERT is used. Beware that
+		MySQL InnoDB engine doesn't support INSERT DELAYED, thus be sure
+		the acc tables are defined with different type (e.g., MyISAM).
 		</para>
 		<para>
-		Default value is 0 (no INSERT DELAYED).
+		If set to 2, async insert is used if the db driver module has
+		support for it and if async_workers core parameter value is greater than 0. If not, then standard INSERT is used.
+		</para>
+		<para>
+		Default value is 0 (no INSERT DELAYED nor async insert).
 		</para>
 		<example>
 		<title>db_insert_mode example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "db_insert_mode", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -1054,7 +1135,9 @@ modparam("acc", "db_insert_mode", 1)
 		<example>
 		<title>diameter_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "diameter_flag", 2)
+...
 </programlisting>
 		</example>
 	</section>
@@ -1070,7 +1153,9 @@ modparam("acc", "diameter_flag", 2)
 		<example>
 		<title>diameter_missed_flag example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "diameter_missed_flag", 3)
+...
 </programlisting>
 		</example>
 	</section>
@@ -1086,7 +1171,9 @@ modparam("acc", "diameter_missed_flag", 3)
 		<example>
 		<title>diameter_client_host example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "diameter_client_host", "3a_server.net")
+...
 </programlisting>
 		</example>
 	</section>
@@ -1102,7 +1189,9 @@ modparam("acc", "diameter_client_host", "3a_server.net")
 		<example>
 		<title>diameter_client_host example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "diameter_client_port", 3000)
+...
 </programlisting>
 		</example>
 	</section>
@@ -1118,7 +1207,9 @@ modparam("acc", "diameter_client_port", 3000)
 		<example>
 		<title>diameter_extra example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
+...
 </programlisting>
 		</example>
 	</section>
@@ -1128,13 +1219,33 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
 		Should CDR-based logging be enabled?
 		</para>
 		<para>
-		0 - off (default)
-		1 - on
+		0 - off (default).
+		1 - on.
 		</para>
 		<example>
 		<title>cdr_enable example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "cdr_enable", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.cdr_expired_dlg_enable">
+		<title><varname>cdr_expired_dlg_enable</varname> (integer)</title>
+		<para>
+		Should CDR-based logging be enabled in case of expired dialogs?
+		</para>
+		<para>
+		0 - off (default).
+		1 - on.
+		</para>
+		<example>
+		<title>cdr_expired_dlg_enable example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_expired_dlg_enable", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -1151,7 +1262,9 @@ modparam("acc", "cdr_enable", 1)
 		<example>
 		<title>cdr_start_on_confirmed example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "cdr_start_on_confirmed", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -1168,7 +1281,9 @@ modparam("acc", "cdr_start_on_confirmed", 1)
 		<example>
 		<title>cdr_facility example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "cdr_facility", "LOG_DAEMON")
+...
 </programlisting>
 		</example>
 	</section>
@@ -1184,52 +1299,230 @@ modparam("acc", "cdr_facility", "LOG_DAEMON")
 		<example>
 		<title>cdr_extra example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
+...
 </programlisting>
 		</example>
 	</section>
 	<section id="acc.p.cdr_start_id">
 		<title><varname>cdr_start_id</varname> (string)</title>
 		<para>
-		Modifying the start id which is used to store the start time.
+		Modifying the id which is used to store the start time.
 		</para>
 		<para>
-		Default value is 'st'
+		Default value is 'start_time'
 		</para>
 		<example>
 		<title>cdr_start_id example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "cdr_start_id", "start")
+...
 </programlisting>
 		</example>
 	</section>
 	<section id="acc.p.cdr_end_id">
 		<title><varname>cdr_end_id</varname> (string)</title>
 		<para>
-		Modifying the end id which is used to store the end time.
+		Modifying the id which is used to store the end time.
 		</para>
 		<para>
-		Default value is 'et'
+		Default value is 'end_time'
 		</para>
 		<example>
 		<title>cdr_end_id example</title>
 		<programlisting format="linespecific">
+...
 modparam("acc", "cdr_end_id", "end")
+...
 </programlisting>
 		</example>
 	</section>
 	<section id="acc.p.cdr_duration_id">
 		<title><varname>cdr_duration_id</varname> (string)</title>
 		<para>
-		Modify the duration id which is used to store the duration.
+		Modify the id which is used to store the duration.
 		</para>
 		<para>
-		Default value is 'd'
+		Default value is 'duration'
 		</para>
 		<example>
 		<title>cdr_duration_id example</title>
 		<programlisting format="linespecific">
-modparam("acc", "cdr_duration_id", "start")
+...
+modparam("acc", "cdr_duration_id", "d")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.cdr_log_enable">
+		<title><varname>cdr_log_enable</varname> (int)</title>
+		<para>
+		Control if CDR-based accounting should be written to syslog.
+		</para>
+		<para>
+		0 - off.
+		1 - on (default).
+		</para>
+		<example>
+		<title>cdr_log_enable example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_log_enable", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.cdrs_table">
+		<title><varname>cdrs_table</varname> (str)</title>
+		<para>
+		Name of db table to store dialog-based CDRs.
+		</para>
+		<para>
+		Default value is "" (no db storage for dialog-based CDRs).
+		</para>
+		<example>
+		<title>cdrs_table example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdrs_table", "acc_cdrs")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.time_mode">
+		<title><varname>time_mode</varname> (int)</title>
+		<para>
+		Store additional value related to the time of event.
+		</para>
+		<para>
+		Values can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>0</emphasis> -  (default), save only unix
+				timestamp for syslog and datetime for database.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>1</emphasis> - save seconds in time_attr and
+				microseconds in time_exten.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>2</emphasis> - save seconds.miliseconds
+				in time_attr.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>3</emphasis> - save formatted time according
+				to time_format parameter, using the output of localtime().
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>4</emphasis> - save formatted time according
+				to time_format parameter, using the output of gmtime().
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<example>
+		<title>time_mode example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "time_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.time_attr">
+		<title><varname>time_attr</varname> (str)</title>
+		<para>
+		Name of the syslog attribute or database column where to store additional
+		value related to the time of event.
+		</para>
+		<para>
+		For db accounting, the column has to be of different types, depending on
+		time_mode value. When time_mode is:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>1</emphasis> - time_attr column has to be int.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>2</emphasis> - time_attr column has to be double.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>3</emphasis> - time_attr column has to be varchar(128).</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>4</emphasis> - time_attr column has to be varchar(128).</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		For time_mode=1, this attribute is not written in syslog, because time
+		value is already unix timestamp, but in db accounting time value is
+		datetime and requires a function to get the timestamp.
+		</para>
+		<example>
+		<title>time_attr example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "time_attr", "seconds")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.time_exten">
+		<title><varname>time_exten</varname> (str)</title>
+		<para>
+		Name of the syslog attribute or database column where to store extended
+		value related to the time of event.
+		</para>
+		<para>
+		It is used now only for time_mode=1 and database column has to be int:
+		</para>
+		<example>
+		<title>time_exten example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "time_exten", "micorsecs")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.time_format">
+		<title><varname>time_format</varname> (str)</title>
+		<para>
+		Specify the format to print the time for time_mode 3 or 4.
+		</para>
+		<para>
+		Default value is %Y-%m-%d %H:%M:%S".
+		</para>
+		<example>
+		<title>time_format example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.reason_from_hf">
+		<title><varname>reason_from_hf</varname> (int)</title>
+		<para>
+		Tells where to take sip_reason from.  If value is 0,
+		sip_reason is taken from status line.  Otherwise, sip_reason
+		is taken from Reason header field(s) if present.
+		Currently only the first Reason header is used.
+		</para>
+		<para>
+		Default value is 0.
+		</para>
+		<example>
+		<title>reason_from_hf</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "reason_from_hf", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -1237,7 +1530,7 @@ modparam("acc", "cdr_duration_id", "start")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="acc.f.acc_log_request">
 		<title>
 			<function moreinfo="none">acc_log_request(comment)</function>
 		</title>
@@ -1253,6 +1546,7 @@ modparam("acc", "cdr_duration_id", "start")
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1264,11 +1558,14 @@ modparam("acc", "cdr_duration_id", "start")
 		<programlisting format="linespecific">
 ...
 acc_log_request("Some comment");
+$var(code) = 404;
+$avp(reason) = "Not found";
+acc_log_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.f.acc_db_request">
 		<title>
 			<function moreinfo="none">acc_db_request(comment, table)</function>
 		</title>
@@ -1283,7 +1580,9 @@ acc_log_request("Some comment");
 		</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>comment</emphasis> - Comment to be appended.</para>
+			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
+			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>table</emphasis> - Database table to be used. It
@@ -1299,11 +1598,12 @@ acc_log_request("Some comment");
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
+acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 ...
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.f.acc_rad_request">
 		<title>
 			<function moreinfo="none">acc_rad_request(comment)</function>
 		</title>
@@ -1318,6 +1618,7 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1329,11 +1630,12 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 		<programlisting format="linespecific">
 ...
 acc_rad_request("Some comment");
+acc_rad_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.f.acc_diam_request">
 		<title>
 			<function moreinfo="none">acc_diam_request(comment)</function>
 		</title>
@@ -1347,6 +1649,7 @@ acc_rad_request("Some comment");
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1358,6 +1661,7 @@ acc_rad_request("Some comment");
 		<programlisting format="linespecific">
 ...
 acc_diam_request("Some comment");
+acc_diam_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>

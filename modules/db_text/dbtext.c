@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  * History:
  * --------
@@ -142,9 +142,9 @@ static const char *rpc_dump_doc[2] = {
 /* rpc function implementations */
 static void rpc_dump(rpc_t *rpc, void *c) {
 	if (0!=dbt_cache_print(0))
-		rpc->printf(c, "Dump failed");
+		rpc->rpl_printf(c, "Dump failed");
 	else
-		rpc->printf(c, "Dump OK");
+		rpc->rpl_printf(c, "Dump OK");
 
 	return;
 }

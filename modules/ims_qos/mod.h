@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -49,17 +49,6 @@
 
 #define MOD_NAME "ims_qos"
 
-/** Return and break the execution of routing script */
-#define RX_RETURN_BREAK	0 
-/** Return true in the routing script */
-#define RX_RETURN_TRUE	1
-/** Return positive but indicate AAR not viable and wasnt sent */
-#define RX_RETURN_AAR_NA	2
-/** Return false in the routing script */
-#define RX_RETURN_FALSE -1
-/** Return error in the routing script */
-#define RX_RETURN_ERROR -2
-
 /** callback functions */
 
 struct AAAMessage;
@@ -68,7 +57,7 @@ struct pcontact;
 AAAMessage* callback_cdp_request(AAAMessage *request, void *param);
 void callback_for_cdp_session(int event,void *session);
 
-void callback_dialog_terminated(struct dlg_cell* dlg, int type, struct dlg_cb_params * params);
+void callback_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params * params);
 
 void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param);
 

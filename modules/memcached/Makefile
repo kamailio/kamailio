@@ -6,9 +6,19 @@ include ../../Makefile.defs
 auto_gen=
 NAME=memcached.so
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
+ifeq ($(CROSS_COMPILE),)
+	BUILDER = $(shell which pkg-config)
+endif
 
-DEFS +=-I$(LOCALBASE)/include -I$(SYSBASE)/include
-LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmemcached
+ifneq ($(BUILDER),)
+	DEFS += $(shell $(BUILDER) --cflags libmemcached)
+	LIBS += $(shell $(BUILDER) --libs libmemcached)
+else
+	DEFS +=-I$(LOCALBASE)/include -I$(SYSBASE)/include
+	LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmemcached
+endif
+
+
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules

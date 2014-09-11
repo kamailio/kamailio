@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
  * History:
@@ -469,8 +469,8 @@ int uac_auth( struct sip_msg *msg)
 		goto error;
 	}
 
-	/* increas the Cseq nr */
-
+	/* mark msg wit uac auth for increase of cseq via dialog */
+	msg->msg_flags |= FL_UAC_AUTH;
 
 	return 0;
 error:

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef ADDRESS_H
@@ -55,6 +55,11 @@ int mi_init_addresses(void);
  */
 int reload_address_table(void);
 
+/*
+ * Wrapper to reload addr table from mi or rpc
+ * we need to open the db_handle
+ */
+int reload_address_table_cmd(void);
 
 /*
  * Close connections and release memory

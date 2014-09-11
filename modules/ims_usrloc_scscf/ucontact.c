@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
 
@@ -133,6 +133,7 @@ error:
  */
 void free_ucontact(ucontact_t* _c) {
     struct ul_callback *cbp, *cbp_tmp;
+    struct contact_dialog_data *dialog_data, *tmp_dialog_data; 
 
     if (!_c) return;
     if (_c->path.s) shm_free(_c->path.s);
@@ -141,6 +142,13 @@ void free_ucontact(ucontact_t* _c) {
     if (_c->callid.s) shm_free(_c->callid.s);
     if (_c->c.s) shm_free(_c->c.s);
 
+    //free dialog data
+    for (dialog_data = _c->first_dialog_data; dialog_data;) {
+        tmp_dialog_data = dialog_data;
+        dialog_data = dialog_data->next;
+	shm_free(tmp_dialog_data);
+    }
+    
     //free callback list
     for (cbp = _c->cbs->first; cbp;) {
         cbp_tmp = cbp;
@@ -353,5 +361,70 @@ int update_ucontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 
     update_contact_pos(_r, _c);
 
+    return 0;
+}
+
+
+/*!
+ * \brief Add dialog data to contact
+ * used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed
+ */
+int add_dialog_data_to_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id) {
+    
+    struct contact_dialog_data *dialog_data = (struct contact_dialog_data*)shm_malloc(sizeof( struct contact_dialog_data));
+    
+    LM_DBG("Adding dialog data to contact <%.*s> with h_entry <%d> and h_id <%d>", _c->c.len, _c->c.s, h_entry, h_id);
+
+    memset(dialog_data, 0, sizeof( struct contact_dialog_data));
+    
+    dialog_data->h_entry = h_entry;
+    dialog_data->h_id = h_id;
+    dialog_data->next = 0;
+    dialog_data->prev = 0;
+    
+    if(_c->first_dialog_data==0){
+	//first entry in the list
+	_c->first_dialog_data = dialog_data;
+	_c->last_dialog_data = dialog_data;
+    }else {
+	//not first entry in list
+	_c->last_dialog_data->next = dialog_data;
+	dialog_data->prev = _c->last_dialog_data;
+	_c->last_dialog_data = dialog_data;
+    }
+    
+    return 0;
+    
+}
+
+/*!
+ * \brief Add dialog data to contact
+ * used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed
+ */
+int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id) {
+    struct contact_dialog_data *dialog_data, *tmp_dialog_data; 
+    LM_DBG("Removing dialog data from contact <%.*s> with h_entry <%d> and h_id <%d>", _c->c.len, _c->c.s, h_entry, h_id);
+    
+    for (dialog_data = _c->first_dialog_data; dialog_data;) {
+        tmp_dialog_data = dialog_data;
+        dialog_data = dialog_data->next;
+	if(tmp_dialog_data->h_entry == h_entry && tmp_dialog_data->h_id == h_id){
+	    LM_DBG("Found matching dialog data so will remove it");
+	    if(tmp_dialog_data->prev) {
+		tmp_dialog_data->prev->next = tmp_dialog_data->next;
+	    } else {
+		_c->first_dialog_data =  tmp_dialog_data->next;
+	    }
+	    if(tmp_dialog_data->next){
+		tmp_dialog_data->next->prev = tmp_dialog_data->prev;
+	    }else{
+	       _c->last_dialog_data =  tmp_dialog_data->prev;
+	    }
+	    shm_free(tmp_dialog_data);
+	    return 0;
+	}
+        
+    }
+    LM_DBG("Did not find dialog data to remove from contact");
     return 0;
 }

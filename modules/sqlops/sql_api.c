@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*! \file
@@ -228,13 +228,16 @@ void sql_reset_result(sql_result_t *res)
 	{
 		for(i=0; i<res->nrows; i++)
 		{
-			for(j=0; j<res->ncols; j++)
+			if(res->vals[i])
 			{
-				if(res->vals[i][j].flags&PV_VAL_STR
-						&& res->vals[i][j].value.s.len>0)
-					pkg_free(res->vals[i][j].value.s.s);
+				for(j=0; j<res->ncols; j++)
+				{
+					if(res->vals[i][j].flags&PV_VAL_STR
+							&& res->vals[i][j].value.s.len>0)
+						pkg_free(res->vals[i][j].value.s.s);
+				}
+				pkg_free(res->vals[i]);
 			}
-			pkg_free(res->vals[i]);
 		}
 		pkg_free(res->vals);
 		res->vals = NULL;
@@ -248,6 +251,8 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 	db1_res_t* db_res = NULL;
 	int i, j;
 	str sv;
+
+	if(res) sql_reset_result(res);
 
 	if(query==NULL)
 	{
@@ -273,7 +278,6 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 		return 3;
 	}
 
-	sql_reset_result(res);
 	res->ncols = RES_COL_N(db_res);
 	res->nrows = RES_ROW_N(db_res);
 	LM_DBG("rows [%d] cols [%d]\n", res->nrows, res->ncols);
@@ -409,6 +413,25 @@ error:
 	con->dbf.free_result(con->dbh, db_res);
 	sql_reset_result(res);
 	return -1;
+}
+
+int sql_do_query_async(sql_con_t *con, str *query)
+{
+	if(query==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	if(con->dbf.raw_query_async==NULL) {
+		LM_ERR("the db driver module doesn't support async query\n");
+		return -1;
+	}
+	if(con->dbf.raw_query_async(con->dbh, query)!=0)
+	{
+		LM_ERR("cannot do the query\n");
+		return -1;
+	}
+	return 1;
 }
 
 #ifdef WITH_XAVP

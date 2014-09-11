@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History
  * -------
@@ -106,8 +106,8 @@ pv_elem_t * hash_param_model = NULL;
 
 int probing_threshhold = 1; /* number of failed requests, before a destination
 							   is taken into probing */
-str ds_ping_method = {"OPTIONS",7};
-str ds_ping_from   = {"sip:dispatcher@localhost", 24};
+str ds_ping_method = str_init("OPTIONS");
+str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
 int ds_probing_mode  = DS_PROBE_NONE;
 
@@ -147,7 +147,9 @@ static int ds_parse_reply_codes();
 static int ds_init_rpc(void);
 
 static int w_ds_select_dst(struct sip_msg*, char*, char*);
+static int w_ds_select_dst_limit(struct sip_msg*, char*, char*, char*);
 static int w_ds_select_domain(struct sip_msg*, char*, char*);
+static int w_ds_select_domain_limit(struct sip_msg*, char*, char*, char*);
 static int w_ds_next_dst(struct sip_msg*, char*, char*);
 static int w_ds_next_domain(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst0(struct sip_msg*, char*, char*);
@@ -157,6 +159,9 @@ static int w_ds_load_update(struct sip_msg*, char*, char*);
 
 static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
+static int w_ds_is_from_list2(struct sip_msg*, char*, char*);
+static int w_ds_is_from_list3(struct sip_msg*, char*, char*, char*);
+static int fixup_ds_is_from_list(void** param, int param_no);
 
 static void destroy(void);
 
@@ -170,8 +175,12 @@ static int mi_child_init(void);
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2,
 		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_dst",    (cmd_function)w_ds_select_dst_limit,    3,
+		fixup_igp_null, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2,
 		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_domain", (cmd_function)w_ds_select_domain_limit, 3,
+		fixup_igp_null, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0,
@@ -184,6 +193,10 @@ static cmd_export_t cmds[]={
 		0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list1, 1,
 		fixup_igp_null, 0, ANY_ROUTE},
+	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list2, 2,
+		fixup_ds_is_from_list, 0, ANY_ROUTE},
+	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list3, 3,
+		fixup_ds_is_from_list, 0, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
@@ -195,36 +208,36 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"list_file",       STR_PARAM, &dslistfile},
-	{"db_url",		    STR_PARAM, &ds_db_url.s},
-	{"table_name", 	    STR_PARAM, &ds_table_name.s},
-	{"setid_col",       STR_PARAM, &ds_set_id_col.s},
-	{"destination_col", STR_PARAM, &ds_dest_uri_col.s},
-	{"flags_col",       STR_PARAM, &ds_dest_flags_col.s},
-	{"priority_col",    STR_PARAM, &ds_dest_priority_col.s},
-	{"attrs_col",       STR_PARAM, &ds_dest_attrs_col.s},
+	{"list_file",       PARAM_STRING, &dslistfile},
+	{"db_url",		    PARAM_STR, &ds_db_url},
+	{"table_name", 	    PARAM_STR, &ds_table_name},
+	{"setid_col",       PARAM_STR, &ds_set_id_col},
+	{"destination_col", PARAM_STR, &ds_dest_uri_col},
+	{"flags_col",       PARAM_STR, &ds_dest_flags_col},
+	{"priority_col",    PARAM_STR, &ds_dest_priority_col},
+	{"attrs_col",       PARAM_STR, &ds_dest_attrs_col},
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},
-	{"dst_avp",         STR_PARAM, &dst_avp_param.s},
-	{"grp_avp",         STR_PARAM, &grp_avp_param.s},
-	{"cnt_avp",         STR_PARAM, &cnt_avp_param.s},
-	{"dstid_avp",       STR_PARAM, &dstid_avp_param.s},
-	{"attrs_avp",       STR_PARAM, &attrs_avp_param.s},
-	{"hash_pvar",       STR_PARAM, &hash_pvar_param.s},
-	{"setid_pvname",    STR_PARAM, &ds_setid_pvname.s},
-	{"attrs_pvname",    STR_PARAM, &ds_attrs_pvname.s},
+	{"dst_avp",         PARAM_STR, &dst_avp_param},
+	{"grp_avp",         PARAM_STR, &grp_avp_param},
+	{"cnt_avp",         PARAM_STR, &cnt_avp_param},
+	{"dstid_avp",       PARAM_STR, &dstid_avp_param},
+	{"attrs_avp",       PARAM_STR, &attrs_avp_param},
+	{"hash_pvar",       PARAM_STR, &hash_pvar_param},
+	{"setid_pvname",    PARAM_STR, &ds_setid_pvname},
+	{"attrs_pvname",    PARAM_STR, &ds_attrs_pvname},
 	{"ds_probing_threshhold", INT_PARAM, &probing_threshhold},
-	{"ds_ping_method",     STR_PARAM, &ds_ping_method.s},
-	{"ds_ping_from",       STR_PARAM, &ds_ping_from.s},
+	{"ds_ping_method",     PARAM_STR, &ds_ping_method},
+	{"ds_ping_from",       PARAM_STR, &ds_ping_from},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
-	{"ds_ping_reply_codes", STR_PARAM, &ds_ping_reply_codes_str},
+	{"ds_ping_reply_codes", PARAM_STR, &ds_ping_reply_codes_str},
 	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
 	{"ds_hash_size",       INT_PARAM, &ds_hash_size},
 	{"ds_hash_expire",     INT_PARAM, &ds_hash_expire},
 	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
-	{"outbound_proxy",  STR_PARAM, &ds_outbound_proxy.s},
+	{"outbound_proxy",  PARAM_STR, &ds_outbound_proxy},
 	{0,0,0}
 };
 
@@ -271,26 +284,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (dst_avp_param.s)
-		dst_avp_param.len = strlen(dst_avp_param.s);
-	if (grp_avp_param.s)
-		grp_avp_param.len = strlen(grp_avp_param.s);
-	if (cnt_avp_param.s)
-		cnt_avp_param.len = strlen(cnt_avp_param.s);	
-	if (dstid_avp_param.s)
-		dstid_avp_param.len = strlen(dstid_avp_param.s);
-	if (attrs_avp_param.s)
-		attrs_avp_param.len = strlen(attrs_avp_param.s);
-	if (hash_pvar_param.s)
-		hash_pvar_param.len = strlen(hash_pvar_param.s);
-	if (ds_setid_pvname.s)
-		ds_setid_pvname.len = strlen(ds_setid_pvname.s);
-	if (ds_attrs_pvname.s)
-		ds_attrs_pvname.len = strlen(ds_attrs_pvname.s);
-	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
-	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
-	if (ds_outbound_proxy.s) ds_outbound_proxy.len = strlen(ds_outbound_proxy.s);
-
 	if(cfg_declare("dispatcher", dispatcher_cfg_def,
 				&default_dispatcher_cfg, cfg_sizeof(dispatcher),
 				&dispatcher_cfg)){
@@ -304,7 +297,6 @@ static int mod_init(void)
 	ds_ping_reply_codes_cnt = (int*)shm_malloc(sizeof(int));
 	*ds_ping_reply_codes_cnt = 0;
 	if(ds_ping_reply_codes_str.s) {
-		ds_ping_reply_codes_str.len = strlen(ds_ping_reply_codes_str.s);
 		cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str)
 			= ds_ping_reply_codes_str;
 		if(ds_parse_reply_codes()< 0)
@@ -322,14 +314,6 @@ static int mod_init(void)
 
 	if(ds_db_url.s)
 	{
-		ds_db_url.len     = strlen(ds_db_url.s);
-		ds_table_name.len = strlen(ds_table_name.s);
-		ds_set_id_col.len        = strlen(ds_set_id_col.s);
-		ds_dest_uri_col.len      = strlen(ds_dest_uri_col.s);
-		ds_dest_flags_col.len    = strlen(ds_dest_flags_col.s);
-		ds_dest_priority_col.len = strlen(ds_dest_priority_col.s);
-		ds_dest_attrs_col.len    = strlen(ds_dest_attrs_col.s);
-
 		if(init_ds_db()!= 0)
 		{
 			LM_ERR("could not initiate a connect to the database\n");
@@ -545,27 +529,102 @@ static void destroy(void)
 
 }
 
+#define GET_VALUE(param_name,param,i_value,s_value,value_flags) do{ \
+	if(get_is_fparam(&(i_value), &(s_value), msg, (fparam_t*)(param), &(value_flags))!=0) { \
+		LM_ERR("no %s value\n", (param_name)); \
+		return -1; \
+	} \
+}while(0)
+
+/*! \brief
+ * parses string to dispatcher dst flags set
+ * returns <0 on failure or int with flag on success.
+ */
+int ds_parse_flags( char* flag_str, int flag_len )
+{
+	int flag = 0;
+	int i;
+
+	for ( i=0; i<flag_len; i++)
+	{
+		if(flag_str[i]=='a' || flag_str[i]=='A') {
+			flag &= ~(DS_STATES_ALL);
+		} else if(flag_str[i]=='i' || flag_str[i]=='I') {
+			flag |= DS_INACTIVE_DST;
+		} else if(flag_str[i]=='d' || flag_str[i]=='D') {
+			flag |= DS_DISABLED_DST;
+		} else if(flag_str[i]=='t' || flag_str[i]=='T') {
+			flag |= DS_TRYING_DST;
+		} else if(flag_str[i]=='p' || flag_str[i]=='P') {
+			flag |= DS_PROBING_DST;
+		} else {
+			flag = -1;
+			break;
+		}
+	}
+
+	return flag;
+}
+
+/**
+ *
+ */
+static int w_ds_select(struct sip_msg* msg, char* set, char* alg, char* limit, int mode)
+{
+	unsigned int algo_flags, set_flags, limit_flags;
+	str s_algo = STR_NULL;
+	str s_set = STR_NULL;
+	str s_limit = STR_NULL;
+	int a, s, l;
+	if(msg==NULL)
+		return -1;
+
+	GET_VALUE("destination set", set, s, s_set, set_flags);
+	if (!(set_flags&PARAM_INT)) {
+		if (set_flags&PARAM_STR)
+			LM_ERR("unable to get destination set from [%.*s]\n", s_set.len, s_set.s);
+		else
+			LM_ERR("unable to get destination set\n");
+		return -1;
+	}
+	GET_VALUE("algorithm", alg, a, s_algo, algo_flags);
+	if (!(algo_flags&PARAM_INT)) {
+		if (algo_flags&PARAM_STR)
+			LM_ERR("unable to get algorithm from [%.*s]\n", s_algo.len, s_algo.s);
+		else
+			LM_ERR("unable to get algorithm\n");
+		return -1;
+	}
+
+	if (limit) {
+		GET_VALUE("limit", limit, l, s_limit, limit_flags);
+		if (!(limit_flags&PARAM_INT)) {
+			if (limit_flags&PARAM_STR)
+				LM_ERR("unable to get dst number limit from [%.*s]\n", s_limit.len, s_limit.s);
+			else
+				LM_ERR("unable to get dst number limit\n");
+			return -1;
+		}
+	} else {
+		l = -1; /* will be casted to a rather big unsigned value */
+	}
+
+	return ds_select_dst_limit(msg, s, a, (unsigned int)l, mode);
+}
 /**
  *
  */
 static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
 {
-	int a, s;
+	return w_ds_select(msg, set, alg, 0 /* limit number of dst*/, 0 /*set dst uri*/);
+}
 
-	if(msg==NULL)
-		return -1;
-	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
-	{
-		LM_ERR("no dst set value\n");
-		return -1;
-	}
-	if(fixup_get_ivalue(msg, (gparam_p)alg, &a)!=0)
-	{
-		LM_ERR("no alg value\n");
-		return -1;
-	}
-
-	return ds_select_dst(msg, s, a, 0 /*set dst uri*/);
+/**
+ *
+ */
+static int w_ds_select_dst_limit(struct sip_msg* msg, char* set, char* alg, char* limit)
+{
+	return w_ds_select(msg, set, alg, limit /* limit number of dst*/, 0 /*set dst uri*/);
 }
 
 /**
@@ -573,22 +632,15 @@ static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
  */
 static int w_ds_select_domain(struct sip_msg* msg, char* set, char* alg)
 {
-	int a, s;
-	if(msg==NULL)
-		return -1;
+	return w_ds_select(msg, set, alg, 0 /* limit number of dst*/, 1 /*set host port*/);
+}
 
-	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
-	{
-		LM_ERR("no dst set value\n");
-		return -1;
-	}
-	if(fixup_get_ivalue(msg, (gparam_p)alg, &a)!=0)
-	{
-		LM_ERR("no alg value\n");
-		return -1;
-	}
-
-	return ds_select_dst(msg, s, a, 1/*set host port*/);
+/**
+ *
+ */
+static int w_ds_select_domain_limit(struct sip_msg* msg, char* set, char* alg, char* limit)
+{
+	return w_ds_select(msg, set, alg, limit /* limit number of dst*/, 1 /*set host port*/);
 }
 
 /**
@@ -627,24 +679,18 @@ static int w_ds_mark_dst0(struct sip_msg *msg, char *str1, char *str2)
 static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 {
 	int state;
-	int len;
 
 	if(str1==NULL)
 		return w_ds_mark_dst0(msg, NULL, NULL);
 
-	len = strlen(str1);
-	state = 0;
-	if (len>1 && (str1[1]=='p' || str1[1]=='P'))
-		state |= DS_PROBING_DST;
+	state = ds_parse_flags( str1, strlen(str1) );
 
-	if(str1[0]=='i' || str1[0]=='I')
-		state |= DS_INACTIVE_DST;
-	else if(str1[0]=='t' || str1[0]=='T')
-		state |= DS_TRYING_DST;
-	else if(str1[0]=='d' || str1[0]=='D')
-		state = DS_DISABLED_DST;
-	else if(str1[0]=='p' || str1[0]=='P')
-		state =  DS_INACTIVE_DST|DS_PROBING_DST;
+	if ( state < 0 )
+	{
+		LM_WARN("Failed to parse flag: %s", str1 );
+		return -1;
+	}
+
 	return ds_mark_dst(msg, state);
 }
 
@@ -688,7 +734,8 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 {
 	str sp;
 	int ret;
-	unsigned int group, state;
+	unsigned int group;
+	int state;
 	struct mi_node* node;
 
 	node = cmd_tree->node.kids;
@@ -701,25 +748,9 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree(500, "bad state value", 15);
 	}
 
-	state = 0;
-	if(sp.s[0]=='0' || sp.s[0]=='I' || sp.s[0]=='i') {
-		/* set inactive */
-		state |= DS_INACTIVE_DST;
-		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
-			state |= DS_PROBING_DST;
-	} else if(sp.s[0]=='1' || sp.s[0]=='A' || sp.s[0]=='a') {
-		/* set active */
-		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
-			state |= DS_PROBING_DST;
-	} else if(sp.s[0]=='2' || sp.s[0]=='D' || sp.s[0]=='d') {
-		/* set disabled */
-		state |= DS_DISABLED_DST;
-	} else if(sp.s[0]=='3' || sp.s[0]=='T' || sp.s[0]=='t') {
-		/* set trying */
-		state |= DS_TRYING_DST;
-		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
-			state |= DS_PROBING_DST;
-	} else {
+	state = ds_parse_flags(sp.s, sp.len);
+	if( state < 0 )
+	{
 		LM_ERR("unknow state value\n");
 		return init_mi_tree(500, "unknown state value", 19);
 	}
@@ -792,7 +823,7 @@ static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
 		if (ds_load_list(dslistfile)!=0)
 			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
 	} else {
-		if(ds_load_db()<0)
+		if(ds_reload_db()<0)
 			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
 	}
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
@@ -814,6 +845,60 @@ static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
 		return -1;
 	}
 	return ds_is_from_list(msg, s);
+}
+
+static int w_ds_is_from_list2(struct sip_msg *msg, char *set, char *mode)
+{
+	int vset;
+	int vmode;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)set, &vset)!=0)
+	{
+		LM_ERR("cannot get set id value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)mode, &vmode)!=0)
+	{
+		LM_ERR("cannot get mode value\n");
+		return -1;
+	}
+
+	return ds_is_addr_from_list(msg, vset, NULL, vmode);
+}
+
+static int w_ds_is_from_list3(struct sip_msg *msg, char *set, char *mode, char *uri)
+{
+	int vset;
+	int vmode;
+	str suri;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)set, &vset)!=0)
+	{
+		LM_ERR("cannot get set id value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)mode, &vmode)!=0)
+	{
+		LM_ERR("cannot get mode value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)uri, &suri)!=0)
+	{
+		LM_ERR("cannot get uri value\n");
+		return -1;
+	}
+
+	return ds_is_addr_from_list(msg, vset, &suri, vmode);
+}
+
+
+static int fixup_ds_is_from_list(void** param, int param_no)
+{
+	if(param_no==1 || param_no==2)
+		return fixup_igp_null(param, 1);
+	if(param_no==3)
+		return fixup_spve_null(param, 1);
+	return 0;
 }
 
 static int ds_parse_reply_codes() {
@@ -956,7 +1041,7 @@ static void dispatcher_rpc_reload(rpc_t* rpc, void* ctx)
 			return;
 		}
 	} else {
-		if(ds_load_db()<0) {
+		if(ds_reload_db()<0) {
 			rpc->fault(ctx, 500, "Reload Failed");
 			return;
 		}
@@ -979,7 +1064,10 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 {
 	void* th;
 	void* ih;
+	void* rh;
+	void* sh;
 	void* vh;
+	void* wh;
 	int j;
 	char c[3];
 	str data = {"", 0};
@@ -1003,19 +1091,24 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
-	if(rpc->struct_add(th, "d{",
-				"SET_NO", ds_list_nr,
-				"SET",  &ih)<0)
+	if(rpc->struct_add(th, "d[",
+				"NRSETS", ds_list_nr,
+				"RECORDS",  &ih)<0)
 	{
-		rpc->fault(ctx, 500, "Internal error set structure");
+		rpc->fault(ctx, 500, "Internal error sets structure");
 		return;
 	}
 
-
 	for(list = ds_list; list!= NULL; list= list->next)
 	{
-		if(rpc->struct_add(ih, "d",
-					"SET_ID", list->id)<0)
+		if (rpc->struct_add(ih, "{", "SET", &sh) < 0)
+		{
+			rpc->fault(ctx, 500, "Internal error set structure");
+			return;
+		}
+		if(rpc->struct_add(sh, "d[",
+					"ID", list->id,
+					"TARGETS", &rh)<0)
 		{
 			rpc->fault(ctx, 500, "Internal error creating set id");
 			return;
@@ -1023,7 +1116,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 
 		for(j=0; j<list->nr; j++)
 		{
-			if(rpc->struct_add(ih, "{",
+			if(rpc->struct_add(rh, "{",
 						"DEST", &vh)<0)
 			{
 				rpc->fault(ctx, 500, "Internal error creating dest");
@@ -1045,15 +1138,36 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 			else
 				c[1] = 'X';
 
-			if(rpc->struct_add(vh, "SsdS",
-						"URI", &list->dlist[j].uri,
-						"FLAGS", c,
-						"PRIORITY", list->dlist[j].priority,
-						"ATTRS", (list->dlist[j].attrs.body.s)?
-						&(list->dlist[j].attrs.body):&data)<0)
+			if (list->dlist[j].attrs.body.s)
 			{
-				rpc->fault(ctx, 500, "Internal error creating dest struct");
-				return;
+				if(rpc->struct_add(vh, "Ssd{",
+							"URI", &list->dlist[j].uri,
+							"FLAGS", c,
+							"PRIORITY", list->dlist[j].priority,
+							"ATTRS", &wh)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating dest struct");
+					return;
+				}
+				if(rpc->struct_add(wh, "SSdd",
+							"BODY", &(list->dlist[j].attrs.body),
+							"DUID", (list->dlist[j].attrs.duid.s)?
+							&(list->dlist[j].attrs.duid):&data,
+							"MAXLOAD", list->dlist[j].attrs.maxload,
+							"WEIGHT", list->dlist[j].attrs.weight)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating attrs struct");
+					return;
+				}
+			} else {
+				if(rpc->struct_add(vh, "Ssd",
+							"URI", &list->dlist[j].uri,
+							"FLAGS", c,
+							"PRIORITY", list->dlist[j].priority)<0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating dest struct");
+					return;
+				}
 			}
 		}
 	}

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*! \file
@@ -91,6 +91,7 @@ typedef struct ucontact {
 	unsigned int methods;   /*!< Supported methods */
 	str instance;           /*!< SIP instance value - gruu */
 	unsigned int reg_id;    /*!< reg-id parameters */
+	int tcpconn_id;          /* unique tcp connection id */
 #ifdef WITH_XAVP
 	sr_xavp_t * xavp;       /*!< per contact xavps */
 #endif
@@ -116,6 +117,7 @@ typedef struct ucontact_info {
 	unsigned int methods;     /*!< supported methods */
 	str instance;             /*!< SIP instance value - gruu */
 	unsigned int reg_id;      /*!< reg-id parameters */
+	int tcpconn_id;
 #ifdef WITH_XAVP
 	sr_xavp_t * xavp;         /*!< per contact xavps */
 #endif

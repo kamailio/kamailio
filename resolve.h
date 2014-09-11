@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /* History:
  * --------
@@ -455,7 +455,14 @@ int resolv_init(void);
 void resolv_reinit(str *gname, str *name);
 int dns_reinit_fixup(void *handle, str *gname, str *name, void **val);
 int dns_try_ipv6_fixup(void *handle, str *gname, str *name, void **val);
-void reinit_naptr_proto_prefs(str *gname, str *name);
+void reinit_proto_prefs(str *gname, str *name);
+
+struct dns_srv_proto {
+	char proto;
+	int proto_pref;
+};
+void create_srv_name(char proto, str *name, char *srv);
+size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list);
 
 #ifdef DNS_WATCHDOG_SUPPORT
 /* callback function that is called by the child processes

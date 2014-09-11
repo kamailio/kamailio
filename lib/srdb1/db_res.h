@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /**
@@ -88,7 +88,7 @@ typedef struct db1_res {
  * \param _r the result that should be released
  * \return zero on success, negative on errors
  */
-extern inline int db_free_rows(db1_res_t* _r);
+int db_free_rows(db1_res_t* _r);
 
 
 /**
@@ -98,20 +98,20 @@ extern inline int db_free_rows(db1_res_t* _r);
  * \param _r the result that should be released
  * \return zero on success, negative on errors
  */
-extern inline int db_free_columns(db1_res_t* _r);
+int db_free_columns(db1_res_t* _r);
 
 
 /**
  * Create a new result structure and initialize it.
  * \return a pointer to the new result on success, NULL on errors
  */
-extern inline db1_res_t* db_new_result(void);
+db1_res_t* db_new_result(void);
 
 /**
  * Release memory used by a result structure.
  * \return zero on success, negative on errors
  */
-extern inline int db_free_result(db1_res_t* _r);
+int db_free_result(db1_res_t* _r);
 
 /**
  * Allocate storage for column names and type in existing result structure.
@@ -121,7 +121,7 @@ extern inline int db_free_result(db1_res_t* _r);
  * \param cols number of columns
  * \return zero on success, negative on errors
  */
-extern inline int db_allocate_columns(db1_res_t* _r, const unsigned int cols);
+int db_allocate_columns(db1_res_t* _r, const unsigned int cols);
 
 
 /**
@@ -129,6 +129,6 @@ extern inline int db_allocate_columns(db1_res_t* _r, const unsigned int cols);
  * \param _res result set
  * \return zero on success, negative on errors
  */
-extern inline int db_allocate_rows(db1_res_t* _res);
+int db_allocate_rows(db1_res_t* _res);
 
 #endif /* DB1_RES_H */

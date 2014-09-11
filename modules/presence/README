@@ -54,6 +54,8 @@ Juha Heinanen
               3.19. enable_sphere_check (int)
               3.20. timeout_rm_subs (int)
               3.21. fetch_rows (integer)
+              3.22. db_table_lock_type (integer)
+              3.23. local_log_level (int)
 
         4. Functions
 
@@ -119,11 +121,13 @@ Juha Heinanen
    1.19. Set enable_sphere_check parameter
    1.20. Set timeout_rm_subs parameter
    1.21. Set fetch_rows parameter
-   1.22. handle_publish usage
-   1.23. handle_subscribe usage
-   1.24. pres_auth_status usage
-   1.25. pres_refresh_watchers usage
-   1.26. pres_update_watchers usage
+   1.22. Set db_table_lock_type parameter
+   1.23. Set local_log_level parameter
+   1.24. handle_publish usage
+   1.25. handle_subscribe usage
+   1.26. pres_auth_status usage
+   1.27. pres_refresh_watchers usage
+   1.28. pres_update_watchers usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -159,6 +163,8 @@ Chapter 1. Admin Guide
         3.19. enable_sphere_check (int)
         3.20. timeout_rm_subs (int)
         3.21. fetch_rows (integer)
+        3.22. db_table_lock_type (integer)
+        3.23. local_log_level (int)
 
    4. Functions
 
@@ -245,6 +251,8 @@ Chapter 1. Admin Guide
    3.19. enable_sphere_check (int)
    3.20. timeout_rm_subs (int)
    3.21. fetch_rows (integer)
+   3.22. db_table_lock_type (integer)
+   3.23. local_log_level (int)
 
 3.1. db_url(str)
 
@@ -564,6 +572,35 @@ modparam("presence", "timeout_rm_subs", 0)
 modparam("presence", "fetch_rows", 1000)
 ...
 
+3.22. db_table_lock_type (integer)
+
+   Enable (=1) or disable (=0) the Locks for table during an transaction.
+   Locking only the "current" table causes problems with a MySQL-Databases
+   in "DB-Only" mode.
+
+   In order to use the Presence-Module in "DB_ONLY"-mode with a
+   MySQL-Backend, set this parameter to "0", otherwise the
+   MySQL-Operations will fail. The Presence-Module will generate a "500
+   Server error" due to the failed MySQL-queries.
+
+   Default value is 1 (Write Lock for the Tables).
+
+   Example 1.22. Set db_table_lock_type parameter
+...
+modparam("presence", "db_table_lock_type", 0)
+...
+
+3.23. local_log_level (int)
+
+   Control log level for some debug messages inside the module.
+
+   Default value is 2 (L_INFO).
+
+   Example 1.23. Set local_log_level parameter
+...
+modparam("presence", "local_log_level", 3)
+...
+
 4. Functions
 
    4.1. handle_publish(char* sender_uri)
@@ -572,7 +609,7 @@ modparam("presence", "fetch_rows", 1000)
    4.4. pres_refresh_watchers(uri, event, type[, file_uri, filename])
    4.5. pres_update_watchers(uri, event)
 
-4.1.  handle_publish(char* sender_uri)
+4.1. handle_publish(char* sender_uri)
 
    Handles PUBLISH requests by storing and updating published information
    in memory cache and database, then calls functions to send NOTIFY
@@ -592,7 +629,7 @@ modparam("presence", "fetch_rows", 1000)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.22. handle_publish usage
+   Example 1.24. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -604,7 +641,7 @@ modparam("presence", "fetch_rows", 1000)
         }
 ...
 
-4.2.  handle_subscribe([watcher_uri])
+4.2. handle_subscribe([watcher_uri])
 
    The function which handles SUBSCRIBE requests. It stores or updates
    information in memory and database and calls functions to send NOTIFY
@@ -623,13 +660,13 @@ modparam("presence", "fetch_rows", 1000)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.23. handle_subscribe usage
+   Example 1.25. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
 ...
 
-4.3.  pres_auth_status(watcher_uri, presentity_uri)
+4.3. pres_auth_status(watcher_uri, presentity_uri)
 
    The function checks if watcher is authorized to subscribe event
    'presence' of presentity. Both watcher_uri and presentity_uri are
@@ -640,7 +677,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.24. pres_auth_status usage
+   Example 1.26. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -652,7 +689,7 @@ if (method=="MESSAGE") {
 }
 ...
 
-4.4.  pres_refresh_watchers(uri, event, type[, file_uri, filename])
+4.4. pres_refresh_watchers(uri, event, type[, file_uri, filename])
 
    The function can be used in configuration to triger notifies to
    watchers if a change in watchers authorization or in published state
@@ -676,12 +713,12 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. pres_refresh_watchers usage
+   Example 1.27. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
 
-4.5.  pres_update_watchers(uri, event)
+4.5. pres_update_watchers(uri, event)
 
    The function can be used in configuration to triger updates to watchers
    status if a change in watchers authorization state occurred (i.e.,
@@ -694,7 +731,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. pres_update_watchers usage
+   Example 1.28. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
@@ -704,7 +741,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
    5.1. refreshWatchers
    5.2. cleanup
 
-5.1.  refreshWatchers
+5.1. refreshWatchers
 
    Triggers sending Notify messages to watchers if a change in watchers
    authorization or in published state occurred.
@@ -734,7 +771,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
                 1
                 _empty_line_
 
-5.2.  cleanup
+5.2. cleanup
 
    Manually triggers the cleanup functions for the active_watchers,
    presentity, and watchers tables. Useful if you have set clean_period
@@ -752,7 +789,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 
    6.1. presence.cleanup
 
-6.1.  presence.cleanup
+6.1. presence.cleanup
 
    Manually triggers the cleanup functions for the active_watchers,
    presentity, and watchers tables. Useful if you have set clean_period
@@ -796,7 +833,7 @@ Chapter 2. Developer Guide
    The module provides the following functions that can be used in other
    Kamailio modules.
 
-1.  bind_presence(presence_api_t* api)
+1. bind_presence(presence_api_t* api)
 
    This function binds the presence modules and fills the structure with
    one exported function -> add_event, which when called adds a new event
@@ -832,7 +869,7 @@ typedef struct presence_api {
 }presence_api_t;
 ...
 
-2.  add_event
+2. add_event
 
    Field type:
 ...
@@ -895,7 +932,7 @@ makes a
 }pres_ev_t;
 ...
 
-3.  get_rules_doc
+3. get_rules_doc
 
    Filed type:
 ...
@@ -908,7 +945,7 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
    auth_rules_doc of the subs_t structure given as a parameter to the
    functions described bellow.
 
-4.  get_auth_status
+4. get_auth_status
 
    This filed is a function to be called for a subscription request to
    return the state for that subscription according to authorization
@@ -923,7 +960,7 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
 typedef int (is_allowed_t)(struct subscription* subs);
 ...
 
-5.  apply_auth_nbody
+5. apply_auth_nbody
 
    This parameter should be a function to be called for an event that
    requires authorization, when constructing final body. The authorization
@@ -935,7 +972,7 @@ typedef int (is_allowed_t)(struct subscription* subs);
 typedef int (apply_auth_t)(str* , struct subscription*, str** );
 ...
 
-6.  agg_nbody
+6. agg_nbody
 
    If present, this field marks that the events requires aggregation of
    states. This function receives a body array and should return the final
@@ -949,7 +986,7 @@ typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain,
 str** body_array, int n, int off_index);
 ..
 
-7.  free_body
+7. free_body
 
    This field must be field in if subsequent processing is performed on
    the info from database before being inserted in Notify message body(if
@@ -961,7 +998,7 @@ str** body_array, int n, int off_index);
 typedef void(free_body_t)(char* body);
 ..
 
-8.  aux_body_processing
+8. aux_body_processing
 
    This field must be set if the module needs to manipulate the NOTIFY
    body for each watcher. E.g. if the XML body includes a 'version'
@@ -975,7 +1012,7 @@ typedef void(free_body_t)(char* body);
 typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
 ..
 
-9.  aux_free_body
+9. aux_free_body
 
    This field must be set if the module registers the aux_body_processing
    function and allocates memory for the new modified body. Then, this
@@ -990,7 +1027,7 @@ typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
 typedef void(free_body_t)(char* body);
 ..
 
-10.  evs_publ_handl
+10. evs_publ_handl
 
    This function is called when handling Publish requests. Most contain
    body correctness check.
@@ -999,7 +1036,7 @@ typedef void(free_body_t)(char* body);
 typedef int (publ_handling_t)(struct sip_msg*);
 ..
 
-11.  evs_subs_handl
+11. evs_subs_handl
 
    It is not compulsory. Should contain event specific handling for
    Subscription requests.
@@ -1009,7 +1046,7 @@ typedef int (publ_handling_t)(struct sip_msg*);
 typedef int (subs_handling_t)(struct sip_msg*);
 ..
 
-12.  contains_event
+12. contains_event
 
    Field type:
 ..
@@ -1022,7 +1059,7 @@ event_t* parsed_event);
    found. If the second argument is an allocated event_t* structure it
    fills it with the result of the parsing.
 
-13.  get_event_list
+13. get_event_list
 
    Field type:
 ...
@@ -1032,7 +1069,7 @@ typedef int (*get_event_list_t) (str** ev_list);
    This function returns a string representation of the events registered
    in presence module.( used for Allowed-Events header).
 
-14.  update_watchers_status
+14. update_watchers_status
 
    Field type:
 ...
@@ -1046,7 +1083,7 @@ str* rules_doc);
    (used by presence_xml module when notified through an MI command of a
    change in an xcap document).
 
-15.  get_sphere
+15. get_sphere
 
    Field type:
 ...
@@ -1057,7 +1094,7 @@ typedef char* (*pres_get_sphere_t)(str* pres_uri);
    information if this has type RPID. If not found returns NULL. (the
    return value is allocated in private memory and should be freed)
 
-16.  get_presentity
+16. get_presentity
 
    Field type:
 ...
@@ -1073,7 +1110,7 @@ r *contact);
    Once you are finished with the presentity document you must call
    free_presentity to free the allocated memory.
 
-17.  free_presentity
+17. free_presentity
 
    Field type:
 ...

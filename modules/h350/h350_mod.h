@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -49,9 +49,9 @@ extern ldap_api_t ldap_api;
 #define H350_BASE_DN ""
 #define H350_SEARCH_SCOPE "one"
 
-extern str h350_ldap_session;
-extern str h350_base_dn;
-extern str h350_search_scope;
+extern char* h350_ldap_session;
+extern char* h350_base_dn;
+extern char* h350_search_scope;
 extern int h350_search_scope_int;
 
 #endif /* H350_MOD_H */

@@ -1,0 +1,168 @@
+NDB_CASSANDRA Module
+
+Luis Martin Gil
+
+   <martingil.luis@gmail.com>
+
+Edited by
+
+Luis Martin Gil
+
+   <martingil.luis@gmail.com>
+
+   Copyright © 2013 www.indigital.net
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. host (str)
+
+        4. Functions
+
+              4.1. cass_insert(keyspace, column_family, key, column,
+                      value)
+
+              4.2. cass_retrieve(keyspace, column_family, key, column,
+                      value)
+
+   List of Examples
+
+   1.1. Set host and port parameters
+   1.2. Example usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. host (str)
+
+   4. Functions
+
+        4.1. cass_insert(keyspace, column_family, key, column, value)
+        4.2. cass_retrieve(keyspace, column_family, key, column, value)
+
+1. Overview
+
+   Apache Cassandra is an open source distributed database management
+   system. It is designed to handle very large amounts of data spread out
+   across many servers. It is a NoSQL solution.
+
+   The module allows the insertion and retrieval of information from
+   Cassandra clusters. This is not a DB driver module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   This module depends on the thrift library version 0.7.0. Please install
+   this library in order to be able to successful compile this module. You
+   can find this library at http://thrift.apache.org/
+     * thrift 0.7.0 - available at http://thrift.apache.org/
+
+3. Parameters
+
+   3.1. host (str)
+
+3.1. host (str)
+
+3.1. host (str)
+
+   Host of Cassandra node.
+
+   Port of Cassandra node.
+
+   Example 1.1. Set host and port parameters
+...
+modparam("ndb_cassandra", "host", "10.22.22.190")
+modparam("ndb_cassandra", "port", 9160)
+...
+
+4. Functions
+
+   4.1. cass_insert(keyspace, column_family, key, column, value)
+   4.2. cass_retrieve(keyspace, column_family, key, column, value)
+
+4.1. cass_insert(keyspace, column_family, key, column, value)
+
+   Inserts the value for the given key, column, column_family and
+   keyspace. There must be an existing keyspace called 'keyspace' with a
+   column_family called 'column_family' in the targeted Cassandra node.
+
+   Return integer needs to be checked:
+     * ret < 0, error
+     * ret > 0, success
+
+4.2. cass_retrieve(keyspace, column_family, key, column, value)
+
+   Retrieves the value for the given key, column, column_family and
+   keyspace. There must be an existing keyspace called 'keyspace' with a
+   column_family called 'column_family' in the targeted Cassandra node.
+
+   value will be returned as well as a integer return code.
+
+   Return integer needs to be checked:
+     * ret < 0, error
+     * ret > 0, success
+
+   Example 1.2. Example usage
+              ...
+    loadmodule "ndb_cassandra.so"
+    # (...)
+    modparam("ndb_cassandra", "host", "10.22.22.190")
+    modparam("ndb_cassandra", "port", 9160)
+    # (...)
+    xlog("L_DBG", "Testing ndb_cassandra module.");
+    # Inserting to cassandra
+    $var(keyspace) = "indigital";
+    $var(column_family) = "employees";
+    $var(column) = "name";
+    $var(val_write) = "TestMyName"; # To be written
+    if (cass_insert("$var(keyspace)", "$var(column_family)", "$ru", "$var(column
+)", "$var(val_write)") > 0) {
+       xlog("L_DBG", "ndb_cassandra. Sucess while inserting to Cassandra. val_wr
+ite: \"$var(val_write)\"");
+    } else {
+       xlog("L_DBG", "ndb_cassandra. Error while inserting to Cassandra");
+    }
+
+    # Retrieving from cassandra
+    $var(keyspace) = "indigital";
+    $var(column_family) = "employees";
+    $var(key) = "sip:10.22.22.110"; # Before we saved our $ru, which was 'sip:10
+.22.22.110'
+    $var(column) = "name";
+    $var(val_read) = ""; # To be read
+    if (cass_retrieve("$var(keyspace)", "$var(column_family)", "$var(key)", "$va
+r(column)", "$var(val_read)") > 0) {
+       xlog("L_DBG", "ndb_cassandra. Sucess while reading from Cassandra. val_re
+ad: \"$var(val_read)\"");
+    } else {
+       xlog("L_DBG", "ndb_cassandra. Error while reading from Cassandra");
+    }
+              ...

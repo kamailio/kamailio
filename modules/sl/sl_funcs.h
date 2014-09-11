@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
@@ -47,5 +47,7 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar);
 int sl_reply_error(struct sip_msg *msg);
 
 int sl_get_reply_totag(struct sip_msg *msg, str *totag);
+
+void sl_lookup_event_routes(void);
 
 #endif

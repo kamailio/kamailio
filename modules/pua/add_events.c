@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *	initial version 2007-05-03 (anca)
  */
@@ -98,6 +98,14 @@ int pua_add_events(void)
 		}
 	}
 	
+	/* add xcap-diff */
+	if(add_pua_event(XCAPDIFF_EVENT, "xcap-diff",
+				"application/xcap-diff+xml", 0)< 0)
+	{
+		LM_ERR("while adding event xcap-diff\n");
+		return -1;
+	}
+
 	return 0;
 
 }	

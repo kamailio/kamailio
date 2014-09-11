@@ -1,0 +1,406 @@
+mohqueue Module
+
+Robert Boisvert
+
+   Copyright © 2013 Robert Boisvert, rdbprog@gmail.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. db_url (str)
+              3.2. db_qtable and db_ctable (str)
+              3.3. mohdir (str)
+              3.4. moh_maxcalls (integer)
+
+        4. Functions
+
+              4.1. mohq_process ()
+              4.2. mohq_send (queue_name)
+              4.3. mohq_retrieve (queue_name, URI)
+              4.4. mohq_count (queue_name, pvar)
+
+        5. Database Schema
+
+              5.1. MOHQUEUES Table
+              5.2. MOHQCALLS Table
+
+        6. Audio Files
+
+   List of Examples
+
+   1.1. Set db_url:
+   1.2. Set table names:
+   1.3. Set default directory for audio files:
+   1.4. Set default directory for audio files:
+   1.5. mohq_process usage:
+   1.6. mohq_send usage:
+   1.7. mohq_retrieve usage:
+   1.8. mohq_count usage:
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. db_url (str)
+        3.2. db_qtable and db_ctable (str)
+        3.3. mohdir (str)
+        3.4. moh_maxcalls (integer)
+
+   4. Functions
+
+        4.1. mohq_process ()
+        4.2. mohq_send (queue_name)
+        4.3. mohq_retrieve (queue_name, URI)
+        4.4. mohq_count (queue_name, pvar)
+
+   5. Database Schema
+
+        5.1. MOHQUEUES Table
+        5.2. MOHQCALLS Table
+
+   6. Audio Files
+
+1. Overview
+
+   The mohqueue module diverts INVITE requests into a Music On Hold (MOH)
+   queue where the caller can listen to recorded audio until an operator
+   is available to take the call. When an operator is available, a
+   function can be used to transfer the oldest call in a queue to an
+   operator using an unattended transfer (REFER) to a specified URI. If
+   successful, the call is removed from the queue.
+
+   While in queue, recorded audio is streamed to the caller in an endless
+   loop using the rtpproxy module and application. Each queue can be
+   configured to use different audio files.
+
+   The queues are defined in the database which allows for dynamic
+   configuration of the queues. Each queue is assigned a specific URI to
+   respond to and a location for the audio files.
+
+   As each call arrives the database is updated to show the call status
+   which allows outside processes to inspect the queue. It can also be
+   inspected using a function to see how many calls are currently in
+   queue.
+
+   While in queue, all SIP messages for a call must pass through the
+   mohqueue module so that it can accurately detect the call status.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * a database module
+     * sl module
+     * tm module
+     * rtpproxy module
+
+2.2. External Libraries or Applications
+
+   The rtpproxy applications supported by the rtpproxy module (e.g.
+   http://www.b2bua.org/wiki/RTPproxy).
+
+3. Parameters
+
+   3.1. db_url (str)
+   3.2. db_qtable and db_ctable (str)
+   3.3. mohdir (str)
+   3.4. moh_maxcalls (integer)
+
+3.1. db_url (str)
+
+   The URL to connect to the database for the mohqueue tables.
+
+   Default value for Kamailio.
+
+   Example 1.1. Set db_url:
+...
+modparam ("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio
+")
+...
+
+3.2. db_qtable and db_ctable (str)
+
+   db_qtable is the name of the table that defines the queues and
+   db_ctable is the table that maintains the call status.
+
+   "MOHQUEUES" for db_qtable and "MOHQCALLS" for db_ctable.
+
+   Example 1.2. Set table names:
+...
+modparam ("mohqueue", "db_qtable", "mqueues")
+modparam ("mohqueue", "db_ctable", "mcalls")
+...
+
+3.3. mohdir (str)
+
+   Path to the directory where the audio files are stored. Audio files are
+   usually relative to this directory although the value can be overridden
+   by a directory specified in the queues table.
+
+   None. If not set by the module it must be defined in the queues table.
+
+   Example 1.3. Set default directory for audio files:
+...
+modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
+...
+
+3.4. moh_maxcalls (integer)
+
+   Defines the maximum number of calls that can be placed in queue. It is
+   the sum of all calls in all queues. It must be in the range of 1 to
+   5000. NOTE: it may be limited by the processing power of the server or
+   the number of available rtpproxy ports.
+
+   None. If not set by the module it must be defined in the queues table.
+
+   Example 1.4. Set default directory for audio files:
+...
+modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
+...
+
+4. Functions
+
+   4.1. mohq_process ()
+   4.2. mohq_send (queue_name)
+   4.3. mohq_retrieve (queue_name, URI)
+   4.4. mohq_count (queue_name, pvar)
+
+4.1.  mohq_process ()
+
+   Checks to see if the current SIP message involves a queue. If it does
+   it will process the message and return a TRUE value.
+
+   In order for mohqueue to detect changes in the call it is necessary
+   that all messages involving the call be processed through this
+   function. The easiest way is to accomplish this is to place it at the
+   beginning of the main route of the script.
+
+   mohqueue calls are identified by an RURI that matches a queue URI. Once
+   a call is placed in queue it checks the To header field along with the
+   RURI to find a match, except in the case of a CANCEL which matches only
+   on the RURI.
+
+   This function has no parameters and must be called from a request
+   route.
+
+   Return code:
+     * TRUE=successful and call in queue
+     * FALSE=failed, unrecognized URI or unable to place in queue
+
+   Example 1.5. mohq_process usage:
+...
+request_route {
+  # main route with limited processing
+...
+  # MOH queue?
+  if (mohq_process ()) {
+    xlog ("L_DBG", "Handled by mohqueue");
+    exit;
+  }
+  # An error or not a MOH queue message; continue processing
+...
+}
+...
+
+4.2.  mohq_send (queue_name)
+
+   Normally calls enter the queue with an initial INVITE message that 1)
+   has a RURI that matches a queue URI and 2) is passed through mohq_proc
+   (), which is the preferred method.
+
+   This function is used when you wish to send a call into a queue that
+   does not match the queue URI.
+
+   It has only one parameter, the name of the queue, and must be called
+   from the request route with an initial INVITE message. The queue name
+   can be passed as a literal or pseudo-variable.
+
+   Return code:
+     * TRUE=successful and call in queue
+     * FALSE=failed, unable to place in queue
+
+   Example 1.6. mohq_send usage:
+...
+  # call is initial INVITE and ready for queue?
+  if (some test) {
+    if (mohq_send ("main")) {
+      xlog ("L_DBG", "Sent call to main mohqueue");
+      exit;
+    }
+    # failed to enter queue!
+    ...
+  }
+...
+
+4.3.  mohq_retrieve (queue_name, URI)
+
+   Retrieves the oldest call in a queue and redirects it to a URI.
+   Although the function returns, the transfer of the call may not have
+   completed since the new URI (operator) must answer the call.
+
+   It has two parameters, the queue name and the URI to REFER the call to,
+   both which can be passed as literals or pseudo-variables. It can be
+   called from any route.
+
+   Return code:
+     * TRUE=successful, transfer started
+     * FALSE=failed, parameters are incorrect or there are no calls in
+       queue
+
+   Example 1.7. mohq_retrieve usage:
+...
+#!define MOHQNAME "operators"
+#!define CGROUP   "sip:operators@10.211.64.5"
+...
+  # redirect oldest call to operator call group
+  if (mohq_retrieve (MOHQNAME, CGROUP)) {
+      xlog ("L_DBG", "Retrieved call from mohqueue");
+      exit;
+    }
+  # queue is empty or something went wrong
+  }
+...
+
+4.4.  mohq_count (queue_name, pvar)
+
+   Finds the number of calls that are in a queue. It will not count calls
+   that are in the process of entering or exiting the queue.
+
+   The function has two parameters, the name of the queue and the
+   pseudo-variable which receives the count. The queue name can be passed
+   as a literal or a pseudo-variable. It can be called from any route.
+
+   Return code:
+     * TRUE=successful, pseudo-variable contains count
+     * FALSE=failed, parameters are incorrect
+
+   Example 1.8. mohq_count usage:
+...
+$var(mohq) = "operators";
+...
+  # more than 10 calls?
+  mohq_count ("$var(mohq)", "$var(mohqcnt)");
+  if ($var(mohqcnt) > 10) {
+    xlog ("L_WARN", "$var(mohq) queue has $var(mohqcnt) calls!");
+  }
+...
+
+5. Database Schema
+
+   5.1. MOHQUEUES Table
+   5.2. MOHQCALLS Table
+
+   mohqueue uses two external database tables to manage the queues and
+   provide status information to outside processes. Internally, it keeps a
+   volatile database in memory of call status. If the module is restarted
+   it loses the internal database and clears the external one.
+
+   On a reqular basis it checks the external table that defines the queues
+   to see if the definition has changed. It makes this check under the
+   following conditions: the queue has not been checked in the last 60
+   seconds AND no call is currently in queue or transitioning in or out.
+   The last condition prevents existing calls from being adversely
+   affected by queue redefinitions.
+
+5.1. MOHQUEUES Table
+
+   This table controls the definition of the queue. The name is set by the
+   db_qtable parameter. There is no internal function to modify the table
+   so it must be configured externally. It contains the following fields:
+     * id (integer): unique identifier that is created automatically. Do
+       not attempt to change this value.
+     * name (25-character string, required): the queue name. Duplicate
+       names are not allowed.
+     * uri (100-character string, required): the URI of the queue. It
+       should not include any parameters or headers (e.g.
+       "sip:user@host;maddr=239.255.255.1" or
+       "sip:user@host?subject=project") although it will match any RURI
+       that contains this URI even if the RURI has parameters or headers.
+       Duplicates are not allowed.
+     * mohdir (100-character string, optional): path to the directory
+       where the audio files for the queue are stored. This path overrides
+       the one provided by the mohdir parameter. If the directory is not
+       accessible by the module the queue is not activated.
+     * mohfile (100-character string, required): the base name of the
+       audio file. See the section about audio files for more information
+       about file names. If no files matching this name are found in the
+       directory the queue is not activated.
+     * debug (integer, required): enables debugging messages for the
+       queue. If non-zero, it will send debugging messages to the log for
+       conditions that involve the queue, whether or not Kamailio has
+       logging enabled for debugging. If zero, it depends on Kamailio's
+       log level.
+
+5.2. MOHQCALLS Table
+
+   This table contains the status of calls that are in queue, or
+   transitioning in or out of a queue. The name is set by the db_ctable
+   parameter. This table is read-only for external processes and its
+   contents should not be modified. It contains the following fields:
+     * id (integer): unique identifier that is created automatically.
+     * mohq_id (integer, required): the id value of the queue.
+     * call_status (integer, required): the status of the call.
+       1=entering; 2=in queue (listening to MOH); 3=leaving
+     * call_from (100-character string, required): the contents of the
+       From header field.
+     * call_id (100-character string, required): the contents of the
+       Call-ID header field.
+     * call_contact (100-character string, optional): the contents of the
+       Contact header field, if it exists.
+     * call_time (datetime, required): time the call entered the queue. If
+       a retrieve fails this time is not changed.
+
+6. Audio Files
+
+   When rtpproxy negotiates to determine which media to use in the audio
+   stream it uses the files in the MOH directory as defined by the
+   MOHQUEUES table. The table defines the location of the files and the
+   base name used to identify each. The actual stream type depends on the
+   RTP payload number that is part of the name. The complete file name for
+   each stream is composed of mohdir/mohfile.type. For example,
+   /var/kamailio/MOH/HeWillCall.8 would be the file for payload type 8
+   (PCMA/8000).
+
+   The supported types and their order of preference are:
+     * 9: G722/8000
+     * 0: PCMU/8000
+     * 8: PCMA/8000
+     * 18: G729/8000
+     * 3: GSM/8000
+     * 4: G723/8000
+     * 15: G728/8000
+     * 5: DVI4/8000
+     * 7: LPC/8000
+     * 12: QCELP/8000
+     * 13: CN/8000
+     * 16: DVI4/11025
+     * 6: DVI4/16000
+     * 17: DVI4/22050
+     * 10: L16/44100
+     * 11: L16/44100
+     * 14: MPA/90000
+
+   See RTP Audio Video Profile for more information about RTP payload
+   types.

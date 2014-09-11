@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -32,27 +32,22 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../usr_avp.h"
-#include "../../modules/tm/tm_load.h"
-#include "../../parser/parse_uri.h"
-#include "../../modules/sl/sl.h"
 #include "../../pt.h"
 #include "../../lib/kmi/mi.h"
 #include "../../hashes.h"
+#include "../../mod_fix.h"
+#include "../../rpc_lookup.h"
+
 #include "dmq.h"
 #include "dmq_funcs.h"
-#include "peer.h"
 #include "bind_dmq.h"
-#include "worker.h"
+#include "message.h"
 #include "notification_peer.h"
 #include "dmqnode.h"
-#include "../../mod_fix.h"
 
 static int mod_init(void);
 static int child_init(int);
@@ -66,11 +61,12 @@ int pid = 0;
 /* module parameters */
 int num_workers = DEFAULT_NUM_WORKERS;
 str dmq_server_address = {0, 0};
+str dmq_server_socket = {0, 0};
 struct sip_uri dmq_server_uri;
 
 str dmq_notification_address = {0, 0};
 struct sip_uri dmq_notification_uri;
-int ping_interval = 4;
+int ping_interval = MIN_PING_INTERVAL;
 
 /* TM bind */
 struct tm_binds tmb;
@@ -78,7 +74,7 @@ struct tm_binds tmb;
 sl_api_t slb;
 
 /** module variables */
-str dmq_request_method = {"KDMQ", 4};
+str dmq_request_method = str_init("KDMQ");
 dmq_worker_t* workers;
 dmq_peer_list_t* peer_list;
 /* the list of dmq servers */
@@ -92,27 +88,38 @@ static int child_init(int);
 static void destroy(void);
 static int handle_dmq_fixup(void** param, int param_no);
 static int send_dmq_fixup(void** param, int param_no);
-static int parse_server_address(str* uri, struct sip_uri* parsed_uri);
+static int bcast_dmq_fixup(void** param, int param_no);
 
 static cmd_export_t cmds[] = {
 	{"dmq_handle_message",  (cmd_function)dmq_handle_message, 0, handle_dmq_fixup, 0, 
 		REQUEST_ROUTE},
-	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 3, send_dmq_fixup, 0,
+	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4, send_dmq_fixup, 0,
 		ANY_ROUTE},
+        {"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3, bcast_dmq_fixup, 0,
+                ANY_ROUTE},
+	{"dmq_t_replicate",  (cmd_function)cfg_dmq_t_replicate, 0, 0, 0,
+		REQUEST_ROUTE},
+        {"dmq_t_replicate",  (cmd_function)cfg_dmq_t_replicate, 1, fixup_spve_null, 0,
+                REQUEST_ROUTE},
+        {"dmq_is_from_node",  (cmd_function)cfg_dmq_is_from_node, 0, 0, 0,
+                REQUEST_ROUTE},
+        {"bind_dmq",        (cmd_function)bind_dmq,       0, 0,              0},
 	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &num_workers},
 	{"ping_interval", INT_PARAM, &ping_interval},
-	{"server_address", STR_PARAM, &dmq_server_address.s},
-	{"notification_address", STR_PARAM, &dmq_notification_address.s},
+	{"server_address", PARAM_STR, &dmq_server_address},
+	{"notification_address", PARAM_STR, &dmq_notification_address},
 	{0, 0, 0}
 };
 
 static mi_export_t mi_cmds[] = {
 	{0, 0, 0, 0, 0}
 };
+
+static rpc_export_t rpc_methods[];
 
 /** module exports */
 struct module_exports exports = {
@@ -130,6 +137,36 @@ struct module_exports exports = {
 	child_init                  	/* per-child init function */
 };
 
+
+static int make_socket_str_from_uri(struct sip_uri *uri, str *socket) {
+	if(!uri->host.s || !uri->host.len) {
+		LM_ERR("no host in uri\n");
+		return -1;
+	}
+
+	socket->len = uri->host.len + uri->port.len + 6;
+	socket->s = pkg_malloc(socket->len);
+	if(socket->s==NULL) {
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	memcpy(socket->s, "udp:", 4);
+	socket->len = 4;
+
+	memcpy(socket->s + socket->len, uri->host.s, uri->host.len);
+	socket->len += uri->host.len;
+
+	if(uri->port.s && uri->port.len) {
+		socket->s[socket->len++] = ':';
+		memcpy(socket->s + socket->len, uri->port.s, uri->port.len);
+		socket->len += uri->port.len;
+	}
+	socket->s[socket->len] = '\0';
+
+	return 0;
+}
+
+
 /**
  * init module function
  */
@@ -146,7 +183,7 @@ static int mod_init(void)
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-	
+
 	/* load all TM stuff */
 	if(load_tm_api(&tmb)==-1) {
 		LM_ERR("can't load tm functions. TM module probably not loaded\n");
@@ -159,29 +196,39 @@ static int mod_init(void)
 		LM_ERR("cannot initialize peer list\n");
 		return -1;
 	}
-	
+
 	/* load the dmq node list - the list containing the dmq servers */
 	node_list = init_dmq_node_list();
 	if(node_list==NULL) {
 		LM_ERR("cannot initialize node list\n");
 		return -1;
 	}
-	
+
+	if (rpc_register_array(rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
 	/* register worker processes - add one because of the ping process */
 	register_procs(num_workers);
 	
 	/* check server_address and notification_address are not empty and correct */
-	if(parse_server_address(&dmq_server_address, &dmq_server_uri) < 0) {
+	if(parse_uri(dmq_server_address.s, dmq_server_address.len, &dmq_server_uri) < 0) {
 		LM_ERR("server address invalid\n");
 		return -1;
 	}
-	
-	if(parse_server_address(&dmq_notification_address,
-				&dmq_notification_uri) < 0) {
+
+	if(parse_uri(dmq_notification_address.s, dmq_notification_address.len, &dmq_notification_uri) < 0) {
 		LM_ERR("notification address invalid\n");
 		return -1;
 	}
-	
+
+	/* create socket string out of the server_uri */
+	if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
+		LM_ERR("failed to create socket out of server_uri\n");
+		return -1;
+	}
+
 	/* allocate workers array */
 	workers = shm_malloc(num_workers * sizeof(*workers));
 	if(workers == NULL) {
@@ -197,9 +244,9 @@ static int mod_init(void)
 		LM_ERR("cannot add notification peer\n");
 		return -1;
 	}
-	
+
 	startup_time = (int) time(NULL);
-	
+
 	/**
 	 * add the ping timer
 	 * it pings the servers once in a while so that we know which failed
@@ -211,7 +258,7 @@ static int mod_init(void)
 		LM_ERR("cannot register timer callback\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -267,10 +314,13 @@ static int child_init(int rank)
  */
 static void destroy(void) {
 	/* TODO unregister dmq node, free resources */
-	if(dmq_notification_address.s) {
+	if(dmq_notification_address.s && notification_node && self_node) {
 		LM_DBG("unregistering node %.*s\n", STR_FMT(&self_node->orig_uri));
 		self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(notification_node, 1);
+	}
+	if (dmq_server_socket.s) {
+		pkg_free(dmq_server_socket.s);
 	}
 }
 
@@ -284,22 +334,42 @@ static int send_dmq_fixup(void** param, int param_no)
 	return fixup_spve_null(param, 1);
 }
 
-static int parse_server_address(str* uri, struct sip_uri* parsed_uri)
+static int bcast_dmq_fixup(void** param, int param_no)
 {
-	if(!uri->s) {
-		goto empty;
-	}
-	uri->len = strlen(uri->s);
-	if(!uri->len) {
-		goto empty;
-	}
-	if(parse_uri(uri->s, uri->len, parsed_uri) < 0) {
-		LM_ERR("error parsing server address\n");
-		return -1;
-	}
-	return 0;
-empty:
-	uri->s = NULL;
-	return 0;
+        return fixup_spve_null(param, 1);
 }
 
+static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
+{
+	void *h;
+	dmq_node_t* cur = node_list->nodes;
+	char ip[IP6_MAX_STR_SIZE + 1];
+
+	while(cur) {
+		memset(ip, 0, IP6_MAX_STR_SIZE + 1);
+		ip_addr2sbuf(&cur->ip_address, ip, IP6_MAX_STR_SIZE);
+		if (rpc->add(c, "{", &h) < 0) goto error;
+		if (rpc->struct_add(h, "SSsddd",
+			"host", &cur->uri.host,
+			"port", &cur->uri.port,
+			"resolved_ip", ip,
+			"status", cur->status,
+			"last_notification", cur->last_notification,
+			"local", cur->local) < 0) goto error;
+		cur = cur->next;
+	}
+	return;
+error:
+	LM_ERR("Failed to add item to RPC response\n");
+	return;
+
+}
+
+static const char *dmq_rpc_list_nodes_doc[2] = {
+	"Print all nodes", 0
+};
+
+static rpc_export_t rpc_methods[] = {
+	{"dmq.list_nodes", dmq_rpc_list_nodes, dmq_rpc_list_nodes_doc, RET_ARRAY},
+	{0, 0, 0, 0}
+};

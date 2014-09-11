@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -426,7 +426,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 			if (pa_dbf.start_transaction)
 			{
-				if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+				if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 				{
 					LM_ERR("in start_transaction\n");
 					goto error;
@@ -1195,7 +1195,7 @@ int mark_presentity_for_delete(presentity_t *pres)
 
 	if (pa_dbf.start_transaction)
 	{
-		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;

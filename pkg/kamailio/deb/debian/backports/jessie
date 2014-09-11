@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# Hook for automatic backports at buildserver.net
+#
+# Target dist: Debian Jessie
+DIST=jessie
+
+rm -rf ${DIST}
+cp -r debian ${DIST}
+
+# No mi_xmlrpc module
+sed -i -e '/libxmlrpc-c3-dev/d' -e '/^Package: kamailio-xmlrpc-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ mi_xmlrpc[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mi_xmlrpc/' ${DIST}/rules
+
+# clean backports scripts
+rm -rf ${DIST}/backports
+exit 0

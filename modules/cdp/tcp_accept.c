@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -62,6 +62,8 @@
 #include "globals.h"
 #include "tcp_accept.h"
 #include "receiver.h"
+
+#include "../../cfg/cfg_struct.h"
 
 /* defined in ../diameter_peer.c */
 int dp_add_pid(pid_t pid);
@@ -204,6 +206,8 @@ void accept_loop()
 
 	while(1){
 		if (shutdownx && *shutdownx) break;
+		
+		cfg_update();
 		
 		timeout.tv_sec=2;
 		timeout.tv_usec=0;	

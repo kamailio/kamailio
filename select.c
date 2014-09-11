@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -385,6 +385,10 @@ int resolve_select(select_t* s)
 		}
 	}
 
+	if (t==NULL) {
+		BUG ("final node not found\n");
+		goto not_found;
+	}
 	if (t->table[table_idx].flags & SEL_PARAM_EXPECTED) {
 		BUG ("final node has SEL_PARAM_EXPECTED set (no more parameters available)\n");
 		goto not_found;
@@ -432,7 +436,7 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 	orig_level = select_level;
 	ret = 0;
 	for (	select_level=0;
-		(ret == 0) && (s->f[select_level] !=0 ) && (select_level<MAX_NESTED_CALLS);
+		(ret == 0) && (select_level<MAX_NESTED_CALLS) && (s->f[select_level] !=0 );
 		select_level++
 	) {
 		ret = s->f[select_level](res, s, msg);

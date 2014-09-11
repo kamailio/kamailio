@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This modules provides transaction storage for the &kamailioname;. It
+		stores in an internal table transactions for an user and add branches
+		to them if new contacts are added.
+	</para>
+	<para>
+		For each message, the modules stores <quote>Request-URI</quote>
+		(<quote>R-URI</quote>), &uri; and the internal transaction index
+		and label.
+	</para>
+	<para>
+		When the transaction is destroyed (by the <emphasis>TM</emphasis> module,
+		the transaction is removed from the module table.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>REGISTRAR</emphasis>--registrar module-- used to lookup
+				for new contacts and update the dset for the r-uri.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>TM</emphasis>--transaction module-- used to
+				send &sip; requests.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External libraries or applications</title>
+		<para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>hash_size</varname> (integer)</title>
+		<para>
+		The size of the hash table internally used to keep the transaction. A
+		larger table is much faster but consumes more memory. The hash size
+		must be a power of two, otherwise it will be rounded down to the nearest
+		power of two.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>2048</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tsilo", "hash_size", 1024)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section>
+		<title><function moreinfo="none">tstore()</function></title>
+		<para>
+		The method stores r-uri, tindex and tlabel of the current transaction.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>tstore</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("INVITE")) {
+	if (t_newtran()) {
+		tstore();
+	}
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">t_append(domain, ruri)</function></title>
+		<para>
+		The method add branches to all the stored transactions for the &sip;
+		ruri passed as parameter, performing a contact lookup on the table specified by
+		the domain parameter. The method should be called when a REGISTER
+		request is received.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Name of table that should be used for looking
+			up new contacts for r-uri.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>ruri</emphasis> - The r-uri for which we want to check existing
+			transactions and add them new branches. Can be a static string value or a
+			dynamic string with pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>t_append</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("REGISTER")) {
+	t_append("location", "$tu");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">t_append_to(tindex, tlabel, domain)</function></title>
+		<para>
+		The method add branches to the transaction identified by tindex and tlabel,
+		performing a contacts lookup on the table specified by the domain parameter.
+		The method should be called when a REGISTER request is received.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+                        <emphasis>tindex</emphasis> - internal index of transaction.
+                        Can be an integer or a pseudo-variable.
+                        </para>
+		</listitem>
+                <listitem>
+			<para>
+                        <emphasis>tlabel</emphasis> - internal label of transaction.
+                        Can be an integer or a pseudo-variable.
+                        </para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Name of table that should be used for looking
+			up new contacts for r-uri.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>t_append_to</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("REGISTER")) {
+	$var(tindex) = ...
+	$var(tlabel) = ...
+	t_append_to("$var(tindex)", "$var(tlabel", "location");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Statistics</title>
+	</section>
+</chapter>

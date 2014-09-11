@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -89,8 +89,7 @@ extern int ignore_failed_auth;
 extern int av_check_only_impu;
 
 auth_hash_slot_t *auth_data; /**< Authentication vector hash table */
-extern int auth_data_hash_size; /**< authentication vector hash table size */
-
+static int act_auth_data_hash_size = 0; /**< authentication vector hash table size */
 
 static str empty_s = {0, 0};
 
@@ -192,7 +191,7 @@ void reg_await_timer(unsigned int ticks, void* param) {
     int i;
 
     LM_DBG("Looking for expired/useless at %d\n", ticks);
-    for (i = 0; i < auth_data_hash_size; i++) {
+    for (i = 0; i < act_auth_data_hash_size; i++) {
         auth_data_lock(i);
         aud = auth_data[i].head;
         while (aud) {
@@ -270,14 +269,13 @@ int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table) {
     return digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T);
 }
  */
-int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, char *route) {
+int challenge(struct sip_msg* msg, char* str1, char* alg, int is_proxy_auth, char *route) {
 
-    str realm = {0, 0};
+    str realm = {0, 0}, algo = {0,0};
     unsigned int aud_hash;
     str private_identity, public_identity, auts = {0, 0}, nonce = {0, 0};
     auth_vector *av = 0;
-    int algo_type;
-    
+    int algo_type = 0;
     str route_name;
 
     saved_transaction_t* saved_t;
@@ -287,6 +285,15 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, ch
     if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
         LM_ERR("no async route block for assign_server_unreg\n");
         return -1;
+    }
+    
+    if (!alg) {
+	LM_DBG("no algorithm specified in cfg... using default\n");
+    } else {
+	if (get_str_fparam(&algo, msg, (fparam_t*) alg) < 0) {
+	    LM_ERR("failed to get auth algorithm\n");
+	    return -1;
+	}
     }
     
     LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
@@ -331,24 +338,28 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, ch
     }
 
     /* get the private_identity */
-    private_identity = get_private_identity(msg, realm, is_proxy_auth);
+    private_identity = cscf_get_private_identity(msg, realm);
     if (!private_identity.len) {
         LM_ERR("No private identity specified (Authorization: username)\n");
         stateful_request_reply(msg, 403, MSG_403_NO_PRIVATE);
         return CSCF_RETURN_BREAK;
     }
     /* get the public_identity */
-    public_identity = get_public_identity(msg);
+    public_identity = cscf_get_public_identity(msg);
     if (!public_identity.len) {
         LM_ERR("No public identity specified (To:)\n");
         stateful_request_reply(msg, 403, MSG_403_NO_PUBLIC);
         return CSCF_RETURN_BREAK;
     }
 
-    algo_type = registration_default_algorithm_type;
-
-    /* check if it is a synchronization request */
-    //TODO this is MAR syncing - have removed it currently - TOD maybe put back in
+    if (algo.len > 0) {
+	algo_type = get_algorithm_type(algo);
+    } else {
+	algo_type = registration_default_algorithm_type;
+    }
+    
+//    /* check if it is a synchronization request */
+//    //TODO this is MAR syncing - have removed it currently - TOD maybe put back in
 //    auts = ims_get_auts(msg, realm, is_proxy_auth);
 //    if (auts.len) {
 //        LM_DBG("IMS Auth Synchronization requested <%.*s>\n", auts.len, auts.s);
@@ -364,19 +375,15 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, ch
 //            av = get_auth_vector(private_identity, public_identity, AUTH_VECTOR_SENT, &nonce, &aud_hash);
 //
 //        if (!av) {
-//            LM_ERR("Nonce not regonized as sent, no sync!\n");
+//            LM_ERR("nonce not recognized as sent, no sync!\n");
 //            auts.len = 0;
 //            auts.s = 0;
 //        } else {
 //            av->status = AUTH_VECTOR_USELESS;
 //            auth_data_unlock(aud_hash);
 //            av = 0;
+//            resync = 1;
 //        }
-//
-//        //RICHARD REMOVED REALM - this is diameter realm set in cxdx not SIP domain
-//        // if synchronization - force MAR - if MAR ok, old avs will be droped
-//        multimedia_auth_request(msg, public_identity, private_identity, av_request_at_sync,
-//                auth_scheme_types[algo_type], nonce, auts, scscf_name_str);
 //    }
 
     //RICHARD changed this
@@ -447,7 +454,6 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, ch
         memcpy(saved_t->realm.s, realm.s, realm.len);
         saved_t->realm.len = realm.len;
 
-
         saved_t->is_proxy_auth = is_proxy_auth;
 
         LM_DBG("Suspending SIP TM transaction\n");
@@ -470,9 +476,164 @@ int challenge(struct sip_msg* msg, char* str1, char* str2, int is_proxy_auth, ch
     }
     return CSCF_RETURN_BREAK;
 }
+int www_challenge2(struct sip_msg* msg, char* _route, char* str1, char* str2) {
+    return challenge(msg, str1, 0, 0, _route);
+}
 
-int www_challenge(struct sip_msg* msg, char* _route, char* str1, char* str2) {
+int www_challenge3(struct sip_msg* msg, char* _route, char* str1, char* str2) {
     return challenge(msg, str1, str2, 0, _route);
+}
+
+int www_resync_auth(struct sip_msg* msg, char* _route, char* str1, char* str2) {
+
+    str realm = {0, 0};
+    unsigned int aud_hash;
+    str private_identity, public_identity, auts = {0, 0}, nonce = {0, 0};
+    auth_vector *av = 0;
+    int algo_type;
+    int is_proxy_auth=0;
+    str route_name;
+
+    saved_transaction_t* saved_t;
+    tm_cell_t *t = 0;
+    cfg_action_t* cfg_action;
+
+    if (fixup_get_svalue(msg, (gparam_t*) _route, &route_name) != 0) {
+        LM_ERR("no async route block for assign_server_unreg\n");
+        return -1;
+    }
+
+    LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
+    int ri = route_get(&main_rt, route_name.s);
+    if (ri < 0) {
+        LM_ERR("unable to find route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+    cfg_action = main_rt.rlist[ri];
+    if (cfg_action == NULL) {
+        LM_ERR("empty action lists in route block [%.*s]\n", route_name.len, route_name.s);
+        return -1;
+    }
+
+    if (get_str_fparam(&realm, msg, (fparam_t*) str1) < 0) {
+        LM_ERR("failed to get realm value\n");
+        return CSCF_RETURN_ERROR;
+    }
+
+    if (realm.len == 0) {
+        LM_ERR("invalid realm value - empty content\n");
+        return CSCF_RETURN_ERROR;
+    }
+
+    create_return_code(CSCF_RETURN_ERROR);
+
+    if (msg->first_line.type != SIP_REQUEST) {
+        LM_ERR("This message is not a request\n");
+        return CSCF_RETURN_ERROR;
+    }
+
+    /* get the private_identity */
+    private_identity = cscf_get_private_identity(msg, realm);
+    if (!private_identity.len) {
+        LM_ERR("No private identity specified (Authorization: username)\n");
+        stateful_request_reply(msg, 403, MSG_403_NO_PRIVATE);
+        return CSCF_RETURN_BREAK;
+    }
+    /* get the public_identity */
+    public_identity = cscf_get_public_identity(msg);
+    if (!public_identity.len) {
+        LM_ERR("No public identity specified (To:)\n");
+        stateful_request_reply(msg, 403, MSG_403_NO_PUBLIC);
+        return CSCF_RETURN_BREAK;
+    }
+
+    algo_type = registration_default_algorithm_type;
+
+    /* check if it is a synchronization request */
+    //TODO this is MAR syncing - have removed it currently - TOD maybe put back in
+    auts = ims_get_auts(msg, realm, is_proxy_auth);
+    if (auts.len) {
+        LM_DBG("IMS Auth Synchronization requested <%.*s>\n", auts.len, auts.s);
+
+        nonce = ims_get_nonce(msg, realm);
+        if (nonce.len == 0) {
+            LM_DBG("Nonce not found (Authorization: nonce)\n");
+            stateful_request_reply(msg, 403, MSG_403_NO_NONCE);
+            return CSCF_RETURN_BREAK;
+        }
+        av = get_auth_vector(private_identity, public_identity, AUTH_VECTOR_USED, &nonce, &aud_hash);
+        if (!av)
+            av = get_auth_vector(private_identity, public_identity, AUTH_VECTOR_SENT, &nonce, &aud_hash);
+
+        if (!av) {
+            LM_ERR("nonce not recognized as sent, no sync!\n");
+            auts.len = 0;
+            auts.s = 0;
+        } else {
+            av->status = AUTH_VECTOR_USELESS;
+            auth_data_unlock(aud_hash);
+            av = 0;
+        }
+    }
+
+	//before we send lets suspend the transaction
+	t = tmb.t_gett();
+	if (t == NULL || t == T_UNDEFINED) {
+		if (tmb.t_newtran(msg) < 0) {
+			LM_ERR("cannot create the transaction for MAR async\n");
+			stateful_request_reply(msg, 480, MSG_480_DIAMETER_ERROR);
+			return CSCF_RETURN_BREAK;
+		}
+		t = tmb.t_gett();
+		if (t == NULL || t == T_UNDEFINED) {
+			LM_ERR("cannot lookup the transaction\n");
+			stateful_request_reply(msg, 480, MSG_480_DIAMETER_ERROR);
+			return CSCF_RETURN_BREAK;
+		}
+	}
+
+	saved_t = shm_malloc(sizeof(saved_transaction_t));
+	if (!saved_t) {
+		LM_ERR("no more memory trying to save transaction state\n");
+		return CSCF_RETURN_ERROR;
+
+	}
+	memset(saved_t, 0, sizeof(saved_transaction_t));
+	saved_t->act = cfg_action;
+
+	saved_t->realm.s = (char*) shm_malloc(realm.len + 1);
+	if (!saved_t->realm.s) {
+		LM_ERR("no more memory trying to save transaction state : callid\n");
+		shm_free(saved_t);
+		return CSCF_RETURN_ERROR;
+	}
+	memset(saved_t->realm.s, 0, realm.len + 1);
+	memcpy(saved_t->realm.s, realm.s, realm.len);
+	saved_t->realm.len = realm.len;
+
+	saved_t->is_proxy_auth = is_proxy_auth;
+	saved_t->is_resync = 1;
+
+	LM_DBG("Suspending SIP TM transaction\n");
+	if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) < 0) {
+		LM_ERR("failed to suspend the TM processing\n");
+		free_saved_transaction_data(saved_t);
+
+		stateful_request_reply(msg, 480, MSG_480_DIAMETER_ERROR);
+		return CSCF_RETURN_BREAK;
+	}
+
+	if (multimedia_auth_request(msg, public_identity, private_identity,
+			av_request_at_sync, auth_scheme_types[algo_type], nonce, auts,
+			scscf_name_str, saved_t) != 0) {
+		LM_ERR("ERR:I_MAR: Error sending MAR or MAR time-out\n");
+		tmb.t_cancel_suspend(saved_t->tindex, saved_t->tlabel);
+		free_saved_transaction_data(saved_t);
+		stateful_request_reply(msg, 480, MSG_480_DIAMETER_ERROR);
+		return CSCF_RETURN_BREAK;
+	}
+
+	return CSCF_RETURN_BREAK;
 }
 
 int proxy_challenge(struct sip_msg* msg, char* _route, char* str1, char* str2) {
@@ -555,7 +716,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
     unsigned int aud_hash = 0;
     str realm;
     str private_identity, public_identity;
-    str nonce, response16, nc, cnonce, qop_str = {0, 0}, body, *next_nonce = &empty_s;
+    str nonce, response16, nc, cnonce, qop_str = {0, 0}, auts = {0, 0}, body, *next_nonce = &empty_s;
     enum qop_type qop = QOP_UNSPEC;
     str uri = {0, 0};
     HASHHEX expected, ha1, hbody, rspauth;
@@ -598,13 +759,13 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
         return 0; //CSCF_RETURN_BREAK;
     }
 
-    private_identity = get_private_identity(msg, realm, is_proxy_auth);
+    private_identity = cscf_get_private_identity(msg, realm);
     if (!private_identity.len) {
         LM_ERR("private identity missing\n");
         return AUTH_NO_CREDENTIALS;
     }
 
-    public_identity = get_public_identity(msg);
+    public_identity = cscf_get_public_identity(msg);
     if (!public_identity.len) {
         LM_ERR("public identity missing\n");
         return AUTH_NO_CREDENTIALS;
@@ -632,7 +793,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
         /* if none found, or nonce reuse is disabled, look for a fresh vector
          * We should also drop every other used vector at this point
          * (there souldn't be more than one) */
-
+    	LM_DBG("Looking for auth vector based on IMPI: [%.*s] and IMPU: [%.*s]\n", private_identity.len, private_identity.s, public_identity.len, public_identity.s);
         auth_userdata *aud;
         auth_vector *av_it;
         aud = get_auth_userdata(private_identity, public_identity);
@@ -663,7 +824,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
             32, hbody);
 
     if (!av) {
-        LM_ERR("no matching auth vector found - maybe timer expired\n");
+        LM_DBG("no matching auth vector found - maybe timer expired\n");
 
         if (ignore_failed_auth) {
             LM_WARN("NB: Ignoring all failed auth - check your config if you don't expect this\n");
@@ -704,8 +865,27 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
                     &qop_str,
                     qop == QOP_AUTHINT,
                     &msg->first_line.u.request.method, &uri, hbody, expected);
-            LM_INFO("UE said: %.*s and we  expect %.*s ha1 %.*s (%.*s)\n",
-                    response16.len, response16.s, /*av->authorization.len,av->authorization.s,*/32, expected, 32, ha1, msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
+            LM_INFO("UE said: %.*s and we expect %.*s ha1 %.*s (%.*s)\n",
+                    response16.len, response16.s, 
+                    /*av->authorization.len,av->authorization.s,*/32, expected,
+                    32, ha1,
+                    msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
+            break;
+        case AUTH_SIP_DIGEST:
+        case AUTH_DIGEST:
+            // memcpy of received HA1
+            memcpy(ha1, av->authorization.s, HASHHEXLEN); 
+            calc_response(ha1, &(av->authenticate),
+                    &nc,
+                    &cnonce,
+                    &qop_str,
+                    qop == QOP_AUTHINT,
+                    &msg->first_line.u.request.method, &uri, hbody, expected);
+            LM_INFO("UE said: %.*s and we expect %.*s ha1 %.*s (%.*s)\n",
+                    response16.len, response16.s, 
+                    32,expected, 
+                    32,ha1, 
+                    msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
             break;
         default:
             LM_ERR("algorithm %.*s is not handled.\n",
@@ -797,7 +977,15 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
                 authenticate_hex_len,authenticate_hex,
                 authorise_len,
                 authorise_len, authorise);
-        ret = AUTH_INVALID_PASSWORD;
+//        /* check for auts in authorization header - if it is then we need to resync */
+		auts = ims_get_auts(msg, realm, is_proxy_auth);
+		if (auts.len) {
+			LM_DBG("IMS Auth Synchronization requested <%.*s>\n", auts.len, auts.s);
+			ret = AUTH_RESYNC_REQUESTED;
+			av->status = AUTH_VECTOR_SENT;
+		} else {
+			ret = AUTH_INVALID_PASSWORD;
+		}
     }
 
     if (ignore_failed_auth) {
@@ -902,11 +1090,11 @@ int auth_data_init(int size) {
         return 0;
     }
     memset(auth_data, 0, sizeof (auth_hash_slot_t) * size);
-    auth_data_hash_size = size;
     for (i = 0; i < size; i++) {
         auth_data[i].lock = lock_alloc();
         lock_init(auth_data[i].lock);
     }
+    act_auth_data_hash_size = size;
     return 1;
 }
 
@@ -915,7 +1103,7 @@ int auth_data_init(int size) {
 void auth_data_destroy() {
     int i;
     auth_userdata *aud, *next;
-    for (i = 0; i < auth_data_hash_size; i++) {
+    for (i = 0; i < act_auth_data_hash_size; i++) {
         auth_data_lock(i);
         lock_destroy(auth_data[i].lock);
         lock_dealloc(auth_data[i].lock);
@@ -1095,6 +1283,8 @@ auth_vector * new_auth_vector(int item_number, str auth_scheme, str authenticate
     x->status = AUTH_VECTOR_UNUSED;
     x->expires = 0;
 
+    LM_DBG("new auth-vector with ck [%.*s] with status %d\n", x->ck.len, x->ck.s, x->status);
+
 done:
     return x;
 }
@@ -1181,9 +1371,9 @@ void free_auth_userdata(auth_userdata * aud) {
  */
 inline unsigned int get_hash_auth(str private_identity, str public_identity) {
 if (av_check_only_impu)
-	return core_hash(&public_identity, 0, auth_data_hash_size);
+	return core_hash(&public_identity, 0, act_auth_data_hash_size);
 else
-	return core_hash(&public_identity, 0, auth_data_hash_size);
+	return core_hash(&public_identity, 0, act_auth_data_hash_size);
 /*
 
 
@@ -1297,25 +1487,27 @@ int multimedia_auth_request(struct sip_msg *msg, str public_identity, str privat
     str authorization = {0, 0};
     int result = -1;
 
-    //TODO this is MAR syncing - have removed it currently - TOD maybe put back in
-    //int is_sync = 0;
-//    if (auts.len) {
-//        authorization.s = pkg_malloc(nonce.len * 3 / 4 + auts.len * 3 / 4 + 8);
-//        if (!authorization.s) goto done;
-//        authorization.len = base64_to_bin(nonce.s, nonce.len, authorization.s);
-//        authorization.len = RAND_LEN;
-//        authorization.len += base64_to_bin(auts.s, auts.len, authorization.s + authorization.len);
-//        is_sync = 1;
-//    }
+    int is_sync = 0;
+    if (auts.len) {
+        authorization.s = pkg_malloc(nonce.len * 3 / 4 + auts.len * 3 / 4 + 8);
+        if (!authorization.s)  {
+        	LM_ERR("no more pkg mem\n");
+        	return result;
+        }
+        authorization.len = base64_to_bin(nonce.s, nonce.len, authorization.s);
+        authorization.len = RAND_LEN;
+        authorization.len += base64_to_bin(auts.s, auts.len, authorization.s + authorization.len);
+        is_sync = 1;
+    }
+
+    if (is_sync) {
+    	drop_auth_userdata(private_identity, public_identity);
+    }
 
 
     LM_DBG("Sending MAR\n");
     result = cxdx_send_mar(msg, public_identity, private_identity, count, auth_scheme, authorization, servername, transaction_data);
     if (authorization.s) pkg_free(authorization.s);
-
-    //TODO this is MAR syncing - have removed it currently - TOD maybe put back in
-    //if (is_sync)
-    //    drop_auth_userdata(private_identity, public_identity);
 
     return result;
 }
@@ -1482,12 +1674,14 @@ int drop_auth_userdata(str private_identity, str public_identity) {
 
     av = aud->head;
     while (av) {
+    	LM_DBG("dropping auth vector that was in status %d\n", av->status);
         av->status = AUTH_VECTOR_USELESS;
         av = av->next;
     }
     auth_data_unlock(aud->hash);
     return 1;
 error:
+	LM_DBG("no authdata to drop any auth vectors\n");
     if (aud) auth_data_unlock(aud->hash);
     return 0;
 }

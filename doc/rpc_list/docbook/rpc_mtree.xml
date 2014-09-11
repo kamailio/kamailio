@@ -16,4 +16,12 @@ RPC Exports for mtree
 </para>
 </section>
 
+<section id="mtree.reload"><title>mtree.reload</title>
+<para>
+        Reload mtrees from database to memory
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

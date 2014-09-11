@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -135,6 +135,9 @@
 	int startcolumn=1;
 	int startline=1;
 	char *finame = 0;
+	char *routename = 0;
+	char *default_routename = 0;
+
 	static int ign_lines=0;
 	static int ign_columns=0;
 	char* yy_number_str=0; /* str correspondent for the current NUMBER token */
@@ -155,6 +158,7 @@
 		int startcolumn;
 		int startline;
 		char *finame;
+		char *routename;
 	} include_stack[MAX_INCLUDE_DEPTH];
 	static int include_stack_ptr = 0;
 
@@ -342,6 +346,7 @@ LOGSTDERROR	log_stderror
 LOGFACILITY	log_facility
 LOGNAME		log_name
 LOGCOLOR	log_color
+LOGPREFIX	log_prefix
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 ALIAS		alias
@@ -360,6 +365,7 @@ DNS_RETR_NO		dns_retr_no
 DNS_SERVERS_NO	dns_servers_no
 DNS_USE_SEARCH	dns_use_search_list
 DNS_SEARCH_FMATCH	dns_search_full_match
+DNS_NAPTR_IGNORE_RFC	dns_naptr_ignore_rfc
 /* dns cache */
 DNS_CACHE_INIT	dns_cache_init
 DNS_USE_CACHE	use_dns_cache
@@ -391,6 +397,7 @@ MAXBUFFER maxbuffer
 SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
 SOCKET_WORKERS socket_workers
+ASYNC_WORKERS async_workers
 CHECK_VIA	check_via
 PHONE2TEL	phone2tel
 MEMLOG		"memlog"|"mem_log"
@@ -476,10 +483,12 @@ KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
 MAX_WLOOPS		"max_while_loops"
 PVBUFSIZE		"pv_buffer_size"
 PVBUFSLOTS		"pv_buffer_slots"
-HTTP_REPLY_HACK		"http_reply_hack"
+HTTP_REPLY_PARSE		"http_reply_hack"|"http_reply_parse"
 VERSION_TABLE_CFG		"version_table"
 
 SERVER_ID     "server_id"
+
+MAX_RECURSIVE_LEVEL		"max_recursive_level"
 
 LATENCY_LOG				latency_log
 LATENCY_LIMIT_DB		latency_limit_db
@@ -592,16 +601,24 @@ IMPORTFILE      "import_file"
 <INITIAL>{ISAVPFLAGSET}	{ count(); yylval.strval=yytext; return ISAVPFLAGSET; }
 <INITIAL>{AVPFLAGS_DECL}	{ count(); yylval.strval=yytext; return AVPFLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
-<INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
-<INITIAL>{ROUTE_REQUEST}	{ count(); yylval.strval=yytext; return ROUTE_REQUEST; }
-<INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
+<INITIAL>{ROUTE}	{ count(); default_routename="DEFAULT_ROUTE";
+						yylval.strval=yytext; return ROUTE; }
+<INITIAL>{ROUTE_REQUEST}	{ count(); default_routename="DEFAULT_ROUTE";
+								yylval.strval=yytext; return ROUTE_REQUEST; }
+<INITIAL>{ROUTE_ONREPLY}	{ count(); default_routename="DEFAULT_ONREPLY";
+								yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
-<INITIAL>{ROUTE_REPLY}	{ count(); yylval.strval=yytext; return ROUTE_REPLY; }
-<INITIAL>{ROUTE_FAILURE}	{ count(); yylval.strval=yytext;
+<INITIAL>{ROUTE_REPLY}	{ count(); default_routename="DEFAULT_ONREPLY";
+							yylval.strval=yytext; return ROUTE_REPLY; }
+<INITIAL>{ROUTE_FAILURE}	{ count(); default_routename="DEFAULT_FAILURE";
+								yylval.strval=yytext;
 								return ROUTE_FAILURE; }
-<INITIAL>{ROUTE_BRANCH} { count(); yylval.strval=yytext; return ROUTE_BRANCH; }
-<INITIAL>{ROUTE_SEND} { count(); yylval.strval=yytext; return ROUTE_SEND; }
-<INITIAL>{ROUTE_EVENT} { count(); yylval.strval=yytext; return ROUTE_EVENT; }
+<INITIAL>{ROUTE_BRANCH} { count(); default_routename="DEFAULT_BRANCH";
+							yylval.strval=yytext; return ROUTE_BRANCH; }
+<INITIAL>{ROUTE_SEND} { count(); default_routename="DEFAULT_SEND";
+							yylval.strval=yytext; return ROUTE_SEND; }
+<INITIAL>{ROUTE_EVENT} { count(); default_routename="DEFAULT_EVENT";
+							yylval.strval=yytext; return ROUTE_EVENT; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }
@@ -693,6 +710,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGFACILITY}	{ yylval.strval=yytext; return LOGFACILITY; }
 <INITIAL>{LOGNAME}	{ yylval.strval=yytext; return LOGNAME; }
 <INITIAL>{LOGCOLOR}	{ yylval.strval=yytext; return LOGCOLOR; }
+<INITIAL>{LOGPREFIX}	{ yylval.strval=yytext; return LOGPREFIX; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
@@ -724,6 +742,8 @@ IMPORTFILE      "import_file"
 								return DNS_USE_SEARCH; }
 <INITIAL>{DNS_SEARCH_FMATCH}	{ count(); yylval.strval=yytext;
 								return DNS_SEARCH_FMATCH; }
+<INITIAL>{DNS_NAPTR_IGNORE_RFC}	{ count(); yylval.strval=yytext;
+								return DNS_NAPTR_IGNORE_RFC; }
 <INITIAL>{DNS_CACHE_INIT}	{ count(); yylval.strval=yytext;
 								return DNS_CACHE_INIT; }
 <INITIAL>{DNS_USE_CACHE}	{ count(); yylval.strval=yytext;
@@ -770,6 +790,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET_WORKERS}	{ count(); yylval.strval=yytext; return SOCKET_WORKERS; }
+<INITIAL>{ASYNC_WORKERS}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }
@@ -910,10 +931,11 @@ IMPORTFILE      "import_file"
 									return PVBUFSIZE; }
 <INITIAL>{PVBUFSLOTS}			{	count(); yylval.strval=yytext;
 									return PVBUFSLOTS; }
-<INITIAL>{HTTP_REPLY_HACK}		{	count(); yylval.strval=yytext;
-									return HTTP_REPLY_HACK; }
+<INITIAL>{HTTP_REPLY_PARSE}		{	count(); yylval.strval=yytext;
+									return HTTP_REPLY_PARSE; }
 <INITIAL>{VERSION_TABLE_CFG}  { count(); yylval.strval=yytext; return VERSION_TABLE_CFG;}
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
+<INITIAL>{MAX_RECURSIVE_LEVEL}  { count(); yylval.strval=yytext; return MAX_RECURSIVE_LEVEL;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}
 <INITIAL>{MSG_TIME}  { count(); yylval.strval=yytext; return MSG_TIME;}
 <INITIAL>{LATENCY_LIMIT_DB}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_DB;}
@@ -1585,6 +1607,7 @@ static int sr_push_yy_state(char *fin, int mode)
 	include_stack[include_stack_ptr].startline = startline;
 	include_stack[include_stack_ptr].startcolumn = startcolumn;
 	include_stack[include_stack_ptr].finame = finame;
+	include_stack[include_stack_ptr].routename = routename;
 	include_stack_ptr++;
 
 	line=1;
@@ -1822,6 +1845,7 @@ static int pp_ifdef_type(int type)
 	}
 
 	pp_ifdef_stack[pp_sptr] = type;
+	pp_ifdef_level_update(1);
 	return 0;
 }
 
@@ -1864,6 +1888,7 @@ static void pp_else()
 static void pp_endif()
 {
 	pp_sptr--;
+	pp_ifdef_level_update(-1);
 	pp_update_state();
 }
 

@@ -538,8 +538,8 @@ static int fix_match(struct action* t)
 			if (default_found){
 				LOG(L_ERR, "ERROR: fix_match: more then one \"default\""
 						" label found (%d, %d)\n",
-						c->ct_rve->fpos.s_line,
-						c->ct_rve->fpos.s_col);
+						(c->ct_rve)?c->ct_rve->fpos.s_line:0,
+						(c->ct_rve)?c->ct_rve->fpos.s_col:0);
 				ret=E_UNSPEC;
 				goto error;
 			}

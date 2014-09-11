@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -103,6 +103,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	AAA_AVP *avp; 
 	int ret;
 	unsigned int tmp;
+	char *p = NULL;
 
 	grp = (str*)_group; /* via fixup */
 
@@ -174,12 +175,13 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		if(user_name.len>0)
 		{
 			user_name.len++;
-			user_name.s = (char*)pkg_malloc(user_name.len);
-			if (!user_name.s) 
+			p = (char*)pkg_malloc(user_name.len);
+			if (!p)
 			{
 				LM_ERR("no pkg memory left\n");
 				return -6;
 			}
+			user_name.s = p;
 		
 			memcpy(user_name.s, user.s, user.len);
 			if(user.len>0)
@@ -198,6 +200,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	if ( (req=AAAInMessage(AA_REQUEST, AAA_APP_NASREQ))==NULL)
 	{
 		LM_ERR("can't create new AAA message!\n");
+		if(p) pkg_free(p);
 		return -1;
 	}
 	

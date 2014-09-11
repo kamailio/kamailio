@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History
  * -------
@@ -60,6 +60,10 @@
 #define DS_PROBE_NONE		0
 #define DS_PROBE_ALL		1
 #define DS_PROBE_INACTIVE	2
+
+#define DS_MATCH_ALL		0
+#define DS_MATCH_NOPORT		1
+#define DS_MATCH_NOPROTO	2
 
 extern str ds_db_url;
 extern str ds_table_name;
@@ -105,7 +109,9 @@ int ds_load_list(char *lfile);
 int ds_connect_db(void);
 void ds_disconnect_db(void);
 int ds_load_db(void);
+int ds_reload_db(void);
 int ds_destroy_list(void);
+int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limit, int mode);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state);
@@ -122,6 +128,8 @@ int ds_hash_load_init(unsigned int htsize, int expire, int initexpire);
 int ds_hash_load_destroy(void);
 
 int ds_is_from_list(struct sip_msg *_m, int group);
+int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode);
+
 /*! \brief
  * Timer for checking inactive destinations
  */
@@ -154,7 +162,8 @@ typedef struct _ds_dest
 	int dload;
 	ds_attrs_t attrs;
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
-	unsigned short int port; 	/*!< Port of the request URI */
+	unsigned short int port; 	/*!< Port of the URI */
+	unsigned short int proto; 	/*!< Protocol of the URI */
 	int failure_count;
 	struct _ds_dest *next;
 } ds_dest_t;

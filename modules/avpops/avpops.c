@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * History:
  * ---------
@@ -130,16 +130,16 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url.s        },
-	{"avp_table",         STR_PARAM, &db_table.s      },
+	{"db_url",            PARAM_STR, &db_url        },
+	{"avp_table",         PARAM_STR, &db_table      },
 	{"use_domain",        INT_PARAM, &use_domain      },
-	{"uuid_column",       STR_PARAM, &uuid_col.s      },
-	{"attribute_column",  STR_PARAM, &attribute_col.s },
-	{"value_column",      STR_PARAM, &value_col.s     },
-	{"type_column",       STR_PARAM, &type_col.s      },
-	{"username_column",   STR_PARAM, &username_col.s  },
-	{"domain_column",     STR_PARAM, &domain_col.s    },
-	{"db_scheme",         STR_PARAM|USE_FUNC_PARAM, (void*)avp_add_db_scheme },
+	{"uuid_column",       PARAM_STR, &uuid_col      },
+	{"attribute_column",  PARAM_STR, &attribute_col },
+	{"value_column",      PARAM_STR, &value_col     },
+	{"type_column",       PARAM_STR, &type_col      },
+	{"username_column",   PARAM_STR, &username_col  },
+	{"domain_column",     PARAM_STR, &domain_col    },
+	{"db_scheme",         PARAM_STRING|USE_FUNC_PARAM, (void*)avp_add_db_scheme },
 	{0, 0, 0}
 };
 
@@ -162,22 +162,11 @@ struct module_exports exports = {
 
 static int avpops_init(void)
 {
-	if (db_url.s)
-		db_url.len = strlen(db_url.s);
-	if (db_table.s)
-		db_table.len = strlen(db_table.s);
-	uuid_col.len = strlen(uuid_col.s);
-	attribute_col.len = strlen(attribute_col.s);
-	value_col.len = strlen(value_col.s);
-	type_col.len = strlen(type_col.s);
-	username_col.len = strlen(username_col.s);
-	domain_col.len = strlen(domain_col.s);
-
 	/* if DB_URL defined -> bind to a DB module */
-	if (db_url.s!=0)
+	if (db_url.s && db_url.len>0)
 	{
 		/* check AVP_TABLE param */
-		if (db_table.s==0)
+		if (!db_table.s || db_table.len<=0)
 		{
 			LM_CRIT("\"AVP_DB\" present but \"AVP_TABLE\" found empty\n");
 			goto error;
@@ -266,16 +255,16 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		} else {
 			/* is a variable $xxxxx */
 			s.len = strlen(s.s);
-			p = pv_parse_spec(&s, &sp->u.sval);
-			if (p==0 || sp->u.sval.type==PVT_NULL || sp->u.sval.type==PVT_EMPTY)
+			sp->u.sval = pv_cache_get(&s);
+			if (sp->u.sval==0 || sp->u.sval->type==PVT_NULL || sp->u.sval->type==PVT_EMPTY)
 			{
 				LM_ERR("bad param 1; "
 					"expected : $pseudo-variable or int/str value\n");
 				return E_UNSPEC;
 			}
 			
-			if(sp->u.sval.type==PVT_RURI || sp->u.sval.type==PVT_FROM
-					|| sp->u.sval.type==PVT_TO || sp->u.sval.type==PVT_OURI)
+			if(sp->u.sval->type==PVT_RURI || sp->u.sval->type==PVT_FROM
+					|| sp->u.sval->type==PVT_TO || sp->u.sval->type==PVT_OURI)
 			{
 				sp->opd = ((flags==0)?AVPOPS_FLAG_URI0:flags)|AVPOPS_VAL_PVAR;
 			} else {
@@ -396,7 +385,7 @@ static int fixup_delete_avp(void** param, int param_no)
 					" pseudo-variable in param \n");
 				return E_UNSPEC;
 			}
-			if (ap->u.sval.type!=PVT_AVP)
+			if (ap->u.sval->type!=PVT_AVP)
 			{
 				LM_ERR("bad param; expected : $avp(name)\n");
 				return E_UNSPEC;
@@ -500,7 +489,7 @@ static int fixup_copy_avp(void** param, int param_no)
 	}
 
 	/* attr name is mandatory */
-	if (ap->u.sval.type!=PVT_AVP)
+	if (ap->u.sval->type!=PVT_AVP)
 	{
 		LM_ERR("you must specify only AVP as parameter\n");
 		return E_UNSPEC;
@@ -566,7 +555,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 
-		switch(ap->u.sval.type) {
+		switch(ap->u.sval->type) {
 			case PVT_RURI:
 				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_RURI;
 				if ( p && !(
@@ -623,7 +612,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 			LM_ERR("unable to get pseudo-variable in param 2\n");
 			return E_OUT_OF_MEM;
 		}
-		if (ap->u.sval.type==PVT_NULL)
+		if (ap->u.sval->type==PVT_NULL)
 		{
 			LM_ERR("bad param 2; expected : $pseudo-variable ...\n");
 			pkg_free(ap);
@@ -669,7 +658,7 @@ static int fixup_check_avp(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 		/* attr name is mandatory */
-		if (ap->u.sval.type==PVT_NULL)
+		if (ap->u.sval->type==PVT_NULL)
 		{
 			LM_ERR("null pseudo-variable in param 1\n");
 			return E_UNSPEC;
@@ -745,7 +734,7 @@ static int fixup_subst(void** param, int param_no)
 			LM_ERR("unable to get pseudo-variable in param 2 [%s]\n", s);
 			return E_OUT_OF_MEM;
 		}
-		if (ap->u.sval.type!=PVT_AVP)
+		if (ap->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			pkg_free(av);
@@ -779,7 +768,7 @@ static int fixup_subst(void** param, int param_no)
 					return E_OUT_OF_MEM;
 				}
 			
-				if (ap->u.sval.type!=PVT_AVP)
+				if (ap->u.sval->type!=PVT_AVP)
 				{
 					LM_ERR("bad attribute name <%s>!\n", s);
 					pkg_free(av);
@@ -865,7 +854,7 @@ static int fixup_op_avp(void** param, int param_no)
 			LM_ERR("unable to get pseudo-variable in param 1\n");
 			return E_OUT_OF_MEM;
 		}
-		if (av[0]->u.sval.type!=PVT_AVP)
+		if (av[0]->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			pkg_free(av);
@@ -884,7 +873,7 @@ static int fixup_op_avp(void** param, int param_no)
 			LM_ERR("unable to get pseudo-variable in param 1 (2)\n");
 			return E_OUT_OF_MEM;
 		}
-		if (ap->u.sval.type!=PVT_AVP)
+		if (ap->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name/alias <%s>!\n", s);
 			pkg_free(av);
@@ -930,7 +919,7 @@ static int fixup_is_avp_set(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 		
-		if (ap->u.sval.type!=PVT_AVP)
+		if (ap->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			return E_UNSPEC;

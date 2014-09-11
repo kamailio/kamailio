@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -86,9 +86,12 @@
 #include "dlg_profile.h"
 #include "dlg_var.h"
 #include "dlg_transfer.h"
+#include "dlg_cseq.h"
 
 MODULE_VERSION
 
+
+#define RPC_DATE_BUF_LEN 21
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -107,15 +110,18 @@ str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
+static int dlg_timer_procs = 0;
+static int _dlg_track_cseq_updates = 0;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
-str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
+str dlg_bridge_controller = str_init("sip:controller@kamailio.org");
 
-str dlg_bridge_contact = {"sip:controller@kamailio.org:5060", 32};
+str dlg_bridge_contact = str_init("sip:controller@kamailio.org:5060");
 
-str ruri_pvar_param = {"$ru", 3};
+str ruri_pvar_param = str_init("$ru");
 pv_elem_t * ruri_param_model = NULL;
+str empty_str = STR_NULL;
 
 /* statistic variables */
 int dlg_enable_stats = 1;
@@ -123,6 +129,7 @@ int active_dlgs_cnt = 0;
 int early_dlgs_cnt = 0;
 int detect_spirals = 1;
 int dlg_send_bye = 0;
+int dlg_timeout_noreset = 0;
 stat_var *active_dlgs = 0;
 stat_var *processed_dlgs = 0;
 stat_var *expired_dlgs = 0;
@@ -177,6 +184,10 @@ static int fixup_dlg_bridge(void** param, int param_no);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
 
+static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
+		char *pval, char *puid, char *expires);
+static int fixup_dlg_remote_profile(void** param, int param_no);
+
 static cmd_export_t cmds[]={
 	{"dlg_manage", (cmd_function)w_dlg_manage,            0,0,
 			0, REQUEST_ROUTE },
@@ -224,6 +235,8 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
+	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
+			0, ANY_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -231,56 +244,59 @@ static cmd_export_t cmds[]={
 static param_export_t mod_params[]={
 	{ "enable_stats",          INT_PARAM, &dlg_enable_stats         },
 	{ "hash_size",             INT_PARAM, &dlg_hash_size            },
-	{ "rr_param",              STR_PARAM, &rr_param                 },
+	{ "rr_param",              PARAM_STRING, &rr_param                 },
 	{ "dlg_flag",              INT_PARAM, &dlg_flag                 },
-	{ "timeout_avp",           STR_PARAM, &timeout_spec.s           },
+	{ "timeout_avp",           PARAM_STR, &timeout_spec           },
 	{ "default_timeout",       INT_PARAM, &default_timeout          },
-	{ "dlg_extra_hdrs",        STR_PARAM, &dlg_extra_hdrs.s         },
+	{ "dlg_extra_hdrs",        PARAM_STR, &dlg_extra_hdrs         },
 	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode           },
 	{ "detect_spirals",        INT_PARAM, &detect_spirals,          },
-	{ "db_url",                STR_PARAM, &db_url.s                 },
+	{ "db_url",                PARAM_STR, &db_url                 },
 	{ "db_mode",               INT_PARAM, &dlg_db_mode_param        },
-	{ "table_name",            STR_PARAM, &dialog_table_name        },
-	{ "call_id_column",        STR_PARAM, &call_id_column.s         },
-	{ "from_uri_column",       STR_PARAM, &from_uri_column.s        },
-	{ "from_tag_column",       STR_PARAM, &from_tag_column.s        },
-	{ "to_uri_column",         STR_PARAM, &to_uri_column.s          },
-	{ "to_tag_column",         STR_PARAM, &to_tag_column.s          },
-	{ "h_id_column",           STR_PARAM, &h_id_column.s            },
-	{ "h_entry_column",        STR_PARAM, &h_entry_column.s         },
-	{ "state_column",          STR_PARAM, &state_column.s           },
-	{ "start_time_column",     STR_PARAM, &start_time_column.s      },
-	{ "timeout_column",        STR_PARAM, &timeout_column.s         },
-	{ "to_cseq_column",        STR_PARAM, &to_cseq_column.s         },
-	{ "from_cseq_column",      STR_PARAM, &from_cseq_column.s       },
-	{ "to_route_column",       STR_PARAM, &to_route_column.s        },
-	{ "from_route_column",     STR_PARAM, &from_route_column.s      },
-	{ "to_contact_column",     STR_PARAM, &to_contact_column.s      },
-	{ "from_contact_column",   STR_PARAM, &from_contact_column.s    },
-	{ "to_sock_column",        STR_PARAM, &to_sock_column.s         },
-	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
-	{ "sflags_column",         STR_PARAM, &sflags_column.s          },
-	{ "toroute_name_column",   STR_PARAM, &toroute_name_column.s    },
+	{ "table_name",            PARAM_STR, &dialog_table_name        },
+	{ "call_id_column",        PARAM_STR, &call_id_column         },
+	{ "from_uri_column",       PARAM_STR, &from_uri_column        },
+	{ "from_tag_column",       PARAM_STR, &from_tag_column        },
+	{ "to_uri_column",         PARAM_STR, &to_uri_column          },
+	{ "to_tag_column",         PARAM_STR, &to_tag_column          },
+	{ "h_id_column",           PARAM_STR, &h_id_column            },
+	{ "h_entry_column",        PARAM_STR, &h_entry_column         },
+	{ "state_column",          PARAM_STR, &state_column           },
+	{ "start_time_column",     PARAM_STR, &start_time_column      },
+	{ "timeout_column",        PARAM_STR, &timeout_column         },
+	{ "to_cseq_column",        PARAM_STR, &to_cseq_column         },
+	{ "from_cseq_column",      PARAM_STR, &from_cseq_column       },
+	{ "to_route_column",       PARAM_STR, &to_route_column        },
+	{ "from_route_column",     PARAM_STR, &from_route_column      },
+	{ "to_contact_column",     PARAM_STR, &to_contact_column      },
+	{ "from_contact_column",   PARAM_STR, &from_contact_column    },
+	{ "to_sock_column",        PARAM_STR, &to_sock_column         },
+	{ "from_sock_column",      PARAM_STR, &from_sock_column       },
+	{ "sflags_column",         PARAM_STR, &sflags_column          },
+	{ "toroute_name_column",   PARAM_STR, &toroute_name_column    },
 
-	{ "vars_table_name",       STR_PARAM, &dialog_vars_table_name   },
-	{ "vars_h_id_column",      STR_PARAM, &vars_h_id_column.s       },
-	{ "vars_h_entry_column",   STR_PARAM, &vars_h_entry_column.s    },
-	{ "vars_key_column",       STR_PARAM, &vars_key_column.s        },
-	{ "vars_value_column",     STR_PARAM, &vars_value_column.s      },
+	{ "vars_table_name",       PARAM_STR, &dialog_vars_table_name   },
+	{ "vars_h_id_column",      PARAM_STR, &vars_h_id_column       },
+	{ "vars_h_entry_column",   PARAM_STR, &vars_h_entry_column    },
+	{ "vars_key_column",       PARAM_STR, &vars_key_column        },
+	{ "vars_value_column",     PARAM_STR, &vars_value_column      },
 
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ "db_fetch_rows",         INT_PARAM, &db_fetch_rows            },
-	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
-	{ "profiles_no_value",     STR_PARAM, &profiles_nv_s            },
-	{ "bridge_controller",     STR_PARAM, &dlg_bridge_controller.s  },
+	{ "profiles_with_value",   PARAM_STRING, &profiles_wv_s            },
+	{ "profiles_no_value",     PARAM_STRING, &profiles_nv_s            },
+	{ "bridge_controller",     PARAM_STR, &dlg_bridge_controller  },
 	{ "bridge_contact",        PARAM_STR, &dlg_bridge_contact       },
-	{ "ruri_pvar",             STR_PARAM, &ruri_pvar_param.s        },
+	{ "ruri_pvar",             PARAM_STR, &ruri_pvar_param        },
 	{ "initial_cbs_inscript",  INT_PARAM, &initial_cbs_inscript     },
 	{ "send_bye",              INT_PARAM, &dlg_send_bye             },
 	{ "wait_ack",              INT_PARAM, &dlg_wait_ack             },
-	{ "xavp_cfg",              STR_PARAM, &dlg_xavp_cfg.s           },
+	{ "xavp_cfg",              PARAM_STR, &dlg_xavp_cfg           },
 	{ "ka_timer",              INT_PARAM, &dlg_ka_timer             },
 	{ "ka_interval",           INT_PARAM, &dlg_ka_interval          },
+	{ "timeout_noreset",       INT_PARAM, &dlg_timeout_noreset      },
+	{ "timer_procs",           PARAM_INT, &dlg_timer_procs          },
+	{ "track_cseq_updates",    PARAM_INT, &_dlg_track_cseq_updates  },
 	{ 0,0,0 }
 };
 
@@ -448,6 +464,12 @@ static int mod_init(void)
 {
 	unsigned int n;
 
+	if(dlg_ka_interval!=0 && dlg_ka_interval<30) {
+		LM_ERR("ka interval too low (%d), has to be at least 30\n",
+				dlg_ka_interval);
+		return -1;
+	}
+
 	dlg_event_rt[DLG_EVENTRT_START] = route_lookup(&event_rt, "dialog:start");
 	dlg_event_rt[DLG_EVENTRT_END] = route_lookup(&event_rt, "dialog:end");
 	dlg_event_rt[DLG_EVENTRT_FAILED] = route_lookup(&event_rt, "dialog:failed");
@@ -455,7 +477,7 @@ static int mod_init(void)
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
-		LM_ERR("failed to register core statistics\n");
+		LM_ERR("failed to register %s statistics\n", exports.name);
 		return -1;
 	}
 #endif
@@ -476,42 +498,6 @@ static int mod_init(void)
 
 	if(dlg_bridge_init_hdrs()<0)
 		return -1;
-
-	if (timeout_spec.s)
-		timeout_spec.len = strlen(timeout_spec.s);
-
-	dlg_bridge_controller.len = strlen(dlg_bridge_controller.s);
-	db_url.len = strlen(db_url.s);
-	call_id_column.len = strlen(call_id_column.s);
-	from_uri_column.len = strlen(from_uri_column.s);
-	from_tag_column.len = strlen(from_tag_column.s);
-	to_uri_column.len = strlen(to_uri_column.s);
-	to_tag_column.len = strlen(to_tag_column.s);
-	h_id_column.len = strlen(h_id_column.s);
-	h_entry_column.len = strlen(h_entry_column.s);
-	state_column.len = strlen(state_column.s);
-	start_time_column.len = strlen(start_time_column.s);
-	timeout_column.len = strlen(timeout_column.s);
-	to_cseq_column.len = strlen(to_cseq_column.s);
-	from_cseq_column.len = strlen(from_cseq_column.s);
-	to_route_column.len = strlen(to_route_column.s);
-	from_route_column.len = strlen(from_route_column.s);
-	to_contact_column.len = strlen(to_contact_column.s);
-	from_contact_column.len = strlen(from_contact_column.s);
-	to_sock_column.len = strlen(to_sock_column.s);
-	from_sock_column.len = strlen(from_sock_column.s);
-	sflags_column.len = strlen(sflags_column.s);
-	toroute_name_column.len = strlen(toroute_name_column.s);
-	dialog_table_name.len = strlen(dialog_table_name.s);
-
-	dialog_vars_table_name.len = strlen(dialog_vars_table_name.s);
-	vars_h_id_column.len = strlen(vars_h_id_column.s);
-	vars_h_entry_column.len = strlen(vars_h_entry_column.s);
-	vars_key_column.len = strlen(vars_key_column.s);
-	vars_value_column.len = strlen(vars_value_column.s);
-
-	if(dlg_xavp_cfg.s!=NULL)
-		dlg_xavp_cfg.len = strlen(dlg_xavp_cfg.s);
 
 	/* param checkings */
 	if (dlg_flag==-1) {
@@ -544,11 +530,11 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (ruri_pvar_param.s==NULL || *ruri_pvar_param.s=='\0') {
+	if (ruri_pvar_param.s==NULL || ruri_pvar_param.len<=0) {
 		LM_ERR("invalid r-uri PV string\n");
 		return -1;
 	}
-	ruri_pvar_param.len = strlen(ruri_pvar_param.s);
+
 	if(pv_parse_format(&ruri_pvar_param, &ruri_param_model) < 0
 				|| ruri_param_model==NULL) {
 		LM_ERR("malformed r-uri PV string: %s\n", ruri_pvar_param.s);
@@ -561,10 +547,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* update the len of the extra headers */
-	if (dlg_extra_hdrs.s)
-		dlg_extra_hdrs.len = strlen(dlg_extra_hdrs.s);
-
 	if (seq_match_mode!=SEQ_MATCH_NO_ID &&
 	seq_match_mode!=SEQ_MATCH_FALLBACK &&
 	seq_match_mode!=SEQ_MATCH_STRICT_ID ) {
@@ -574,6 +556,12 @@ static int mod_init(void)
 
 	if (detect_spirals != 0 && detect_spirals != 1) {
 		LM_ERR("invalid value %d for detect_spirals param!!\n",detect_spirals);
+		return -1;
+	}
+
+	if (dlg_timeout_noreset != 0 && dlg_timeout_noreset != 1) {
+		LM_ERR("invalid value %d for timeout_noreset param!!\n",
+				dlg_timeout_noreset);
 		return -1;
 	}
 
@@ -638,9 +626,13 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if ( register_timer( dlg_timer_routine, 0, 1)<0 ) {
-		LM_ERR("failed to register timer \n");
-		return -1;
+	if(dlg_timer_procs<=0) {
+		if ( register_timer( dlg_timer_routine, 0, 1)<0 ) {
+			LM_ERR("failed to register timer \n");
+			return -1;
+		}
+	} else {
+		register_sync_timers(1);
 	}
 
 	/* init handlers */
@@ -707,6 +699,9 @@ static int mod_init(void)
 	/* timer process to clean old unconfirmed dialogs */
 	register_sync_timers(1);
 
+	if(_dlg_track_cseq_updates!=0)
+		dlg_register_cseq_callbacks();
+
 	return 0;
 }
 
@@ -716,6 +711,14 @@ static int child_init(int rank)
 	dlg_db_mode = dlg_db_mode_param;
 
 	if(rank==PROC_MAIN) {
+		if(dlg_timer_procs>0) {
+			if(fork_sync_timer(PROC_TIMER, "Dialog Main Timer", 1 /*socks flag*/,
+					dlg_timer_routine, NULL, 1 /*every sec*/)<0) {
+				LM_ERR("failed to start main timer routine as process\n");
+				return -1; /* error */
+			}
+		}
+
 		if(dlg_ka_timer>0 && dlg_ka_interval>0) {
 			if(fork_sync_timer(PROC_TIMER, "Dialog KA Timer", 1 /*socks flag*/,
 					dlg_ka_timer_exec, NULL, dlg_ka_timer /*sec*/)<0) {
@@ -1193,6 +1196,13 @@ static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
 			d->iflags |= DLG_IFLAG_KA_DST;
 			dlg_release(d);
 		}
+	} else if(val.len==15 && strncmp(val.s, "timeout-noreset", 15)==0) {
+		dctx->iflags |= DLG_IFLAG_TIMER_NORESET;
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags |= DLG_IFLAG_TIMER_NORESET;
+			dlg_release(d);
+		}
 	} else {
 		LM_ERR("unknown property value [%.*s]\n", val.len, val.s);
 		return -1;
@@ -1238,6 +1248,7 @@ void dlg_ka_timer_exec(unsigned int ticks, void* param)
 void dlg_clean_timer_exec(unsigned int ticks, void* param)
 {
 	dlg_clean_run(ticks);
+	remove_expired_remote_profiles(time(NULL));
 }
 
 static int fixup_dlg_bye(void** param, int param_no)
@@ -1359,6 +1370,55 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 	return 1;
 }
 
+/**
+ *
+ */
+static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
+		char *pval, char *puid, char *expires)
+{
+	str scmd;
+	str sname;
+	str sval;
+	str suid;
+	int ival;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_t*)cmd, &scmd)!=0) {
+		LM_ERR("unable to get command\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pname, &sname)!=0) {
+		LM_ERR("unable to get profile name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pval, &sval)!=0) {
+		LM_ERR("unable to get profile value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)puid, &suid)!=0) {
+		LM_ERR("unable to get profile uid\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)expires, &ival)!=0) {
+		LM_ERR("no hash entry value value\n");
+		return -1;
+	}
+
+	ret = dlg_cmd_remote_profile(&scmd, &sname, &sval, &suid, (time_t)ival, 0);
+	if(ret==0)
+		return 1;
+	return ret;
+}
+
+static int fixup_dlg_remote_profile(void** param, int param_no)
+{
+	if(param_no>=1 && param_no<=4)
+		return fixup_spve_null(param, 1);
+	if(param_no==5)
+		return fixup_igp_null(param, 1);
+	return 0;
+}
+
 struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
 {
 	str from = {0,0};
@@ -1430,38 +1490,69 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 		int with_context)
 {
 	rpc_cb_ctx_t rpc_cb;
+	void *h, *sh, *ssh;
+	dlg_profile_link_t *pl;
+	dlg_var_t *var;
 
-	rpc->printf(c, "hash:%u:%u state:%u ref_count:%u timestart:%u timeout:%u",
-		dlg->h_entry, dlg->h_id, dlg->state, dlg->ref, dlg->start_ts, dlg->tl.timeout);
-	rpc->printf(c, "\tcallid:%.*s from_tag:%.*s to_tag:%.*s",
-		dlg->callid.len, dlg->callid.s,
-		dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-		dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
-	rpc->printf(c, "\tfrom_uri:%.*s to_uri:%.*s",
-		dlg->from_uri.len, dlg->from_uri.s, dlg->to_uri.len, dlg->to_uri.s);
-	rpc->printf(c, "\tcaller_contact:%.*s caller_cseq:%.*s",
-		dlg->contact[DLG_CALLER_LEG].len, dlg->contact[DLG_CALLER_LEG].s,
-		dlg->cseq[DLG_CALLER_LEG].len, dlg->cseq[DLG_CALLER_LEG].s);
-	rpc->printf(c, "\tcaller_route_set: %.*s",
-		dlg->route_set[DLG_CALLER_LEG].len, dlg->route_set[DLG_CALLER_LEG].s);
-	rpc->printf(c, "\tcallee_contact:%.*s callee_cseq:%.*s",
-		dlg->contact[DLG_CALLEE_LEG].len, dlg->contact[DLG_CALLEE_LEG].s,
-		dlg->cseq[DLG_CALLEE_LEG].len, dlg->cseq[DLG_CALLEE_LEG].s);
-	rpc->printf(c, "\tcallee_route_set: %.*s",
-		dlg->route_set[DLG_CALLEE_LEG].len, dlg->route_set[DLG_CALLEE_LEG].s);
-	if (dlg->bind_addr[DLG_CALLEE_LEG]) {
-		rpc->printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:%.*s",
-			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s,
-			dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s);
-	} else {
-		rpc->printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:",
-			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s);
+	if (rpc->add(c, "{", &h) < 0) goto error;
+
+	rpc->struct_add(h, "ddSSSdddddddd",
+		"h_entry", dlg->h_entry,
+		"h_id", dlg->h_id,
+		"call-id", &dlg->callid,
+		"from_uri", &dlg->from_uri,
+		"to_uri", &dlg->to_uri,
+		"state", dlg->state,
+		"start_ts", dlg->start_ts,
+		"init_ts", dlg->init_ts,
+		"timeout", dlg->tl.timeout ? time(0) + dlg->tl.timeout - get_ticks() : 0,
+		"lifetime", dlg->lifetime,
+		"dflags", dlg->dflags,
+		"sflags", dlg->sflags,
+		"iflags", dlg->iflags);
+
+	if (rpc->struct_add(h, "{", "caller", &sh) < 0) goto error;
+	rpc->struct_add(sh, "SSSSS",
+		"tag", &dlg->tag[DLG_CALLER_LEG],
+		"contact", &dlg->contact[DLG_CALLER_LEG],
+		"cseq", &dlg->cseq[DLG_CALLER_LEG],
+		"route_set", &dlg->route_set[DLG_CALLER_LEG],
+		"socket", dlg->bind_addr[DLG_CALLER_LEG] ? &dlg->bind_addr[DLG_CALLER_LEG]->sock_str : &empty_str);
+
+	if (rpc->struct_add(h, "{", "callee", &sh) < 0) goto error;
+	rpc->struct_add(sh, "SSSSS",
+		"tag", &dlg->tag[DLG_CALLEE_LEG],
+		"contact", &dlg->contact[DLG_CALLEE_LEG],
+		"cseq", &dlg->cseq[DLG_CALLEE_LEG],
+		"route_set", &dlg->route_set[DLG_CALLEE_LEG],
+		"socket", dlg->bind_addr[DLG_CALLEE_LEG] ? &dlg->bind_addr[DLG_CALLEE_LEG]->sock_str : &empty_str);
+
+	if (rpc->struct_add(h, "[", "profiles", &sh) < 0) goto error;
+	for (pl = dlg->profile_links ; pl ; pl=pl->next) {
+		if (pl->profile->has_value) {
+			rpc->array_add(sh, "{", &ssh);
+			rpc->struct_add(ssh, "S", pl->profile->name.s, &pl->hash_linker.value);
+		} else {
+			rpc->array_add(sh, "S", &pl->profile->name);
+		}
 	}
+
+	if (rpc->struct_add(h, "[", "variables", &sh) < 0) goto error;
+	for(var=dlg->vars ; var ; var=var->next) {
+		rpc->array_add(sh, "{", &ssh);
+		rpc->struct_add(ssh, "S", var->key.s, &var->value);
+	}
+
 	if (with_context) {
 		rpc_cb.rpc = rpc;
-		rpc_cb.c = c;
+		rpc_cb.c = h;
 		run_dlg_callbacks( DLGCB_RPC_CONTEXT, dlg, NULL, NULL, DLG_DIR_NONE, (void *)&rpc_cb);
 	}
+
+	return;
+error:
+	LM_ERR("Failed to add item to RPC response\n");
+	return;
 }
 
 /*!
@@ -1528,23 +1619,12 @@ static void internal_rpc_profile_get_size(rpc_t *rpc, void *c, str *profile_name
 
 	profile = search_dlg_profile( profile_name );
 	if (!profile) {
-		rpc->printf(c, "Non existing profile:%.*s",
+		rpc->fault(c, 404, "Profile not found: %.*s",
 			profile_name->len, profile_name->s);
 		return;
 	}
 	size = get_profile_size(profile, value);
-	if (value) {
-		rpc->printf(c, "Profile:%.*s => profile:%.*s value:%.*s count:%u",
-			profile_name->len, profile_name->s,
-			profile->name.len, profile->name.s,
-			value->len, value->s, size);
-		return;
-	} else {
-		rpc->printf(c, "Profile:%.*s => profile:%.*s value: count:%u",
-			profile_name->len, profile_name->s,
-			profile->name.len, profile->name.s, size);
-		return;
-	}
+	rpc->add(c, "d", size);
 	return;
 }
 
@@ -1566,45 +1646,29 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 
 	profile = search_dlg_profile( profile_name );
 	if (!profile) {
-		rpc->printf(c, "Non existing profile:%.*s",
+		rpc->fault(c, 404, "Profile not found: %.*s",
 			profile_name->len, profile_name->s);
 		return;
 	}
 
 	/* go through the hash and print the dialogs */
-	if (profile->has_value==0 || value==NULL) {
-		/* no value */
-		lock_get( &profile->lock );
-		for ( i=0 ; i< profile->size ; i++ ) {
-			ph = profile->entries[i].first;
-			if(ph) {
-				do {
+	if (profile->has_value==0)
+		value=NULL;
+
+	lock_get( &profile->lock );
+	for ( i=0 ; i< profile->size ; i++ ) {
+		ph = profile->entries[i].first;
+		if(ph) {
+			do {
+				if (!value || (STR_EQ(*value, ph->value))) {
 					/* print dialog */
 					internal_rpc_print_dlg(rpc, c, ph->dlg, 0);
-					/* next */
-					ph=ph->next;
-				}while(ph!=profile->entries[i].first);
-			}
-			lock_release(&profile->lock);
+				}
+				/* next */
+				ph=ph->next;
+			}while(ph!=profile->entries[i].first);
 		}
-	} else {
-		/* check for value also */
-		lock_get( &profile->lock );
-		for ( i=0 ; i< profile->size ; i++ ) {
-			ph = profile->entries[i].first;
-			if(ph) {
-				do {
-					if ( value->len==ph->value.len &&
-						memcmp(value->s,ph->value.s,value->len)==0 ) {
-						/* print dialog */
-						internal_rpc_print_dlg(rpc, c, ph->dlg, 0);
-					}
-					/* next */
-					ph=ph->next;
-				}while(ph!=profile->entries[i].first);
-			}
-			lock_release(&profile->lock);
-		}
+		lock_release(&profile->lock);
 	}
 }
 
@@ -1737,13 +1801,13 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 }
 
 static rpc_export_t rpc_methods[] = {
-	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, 0},
-	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, 0},
+	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, RET_ARRAY},
+	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, RET_ARRAY},
 	{"dlg.dlg_list", rpc_print_dlg, rpc_print_dlg_doc, 0},
 	{"dlg.dlg_list_ctx", rpc_print_dlg_ctx, rpc_print_dlg_ctx_doc, 0},
 	{"dlg.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
 	{"dlg.profile_get_size", rpc_profile_get_size, rpc_profile_get_size_doc, 0},
-	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, 0},
+	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, RET_ARRAY},
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{0, 0, 0, 0}
 };

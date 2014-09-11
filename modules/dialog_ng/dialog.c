@@ -31,6 +31,7 @@
 #include "dlg_profile.h"
 #include "dlg_var.h"
 #include "dlg_req_within.h"
+#include "dlg_db_handler.h"
 
 MODULE_VERSION
 
@@ -55,15 +56,23 @@ int detect_spirals = 1;
 str dlg_extra_hdrs = {NULL, 0};
 int initial_cbs_inscript = 1;
 
-str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
+str dlg_bridge_controller = str_init("sip:controller@kamailio.org");
 
-str ruri_pvar_param = {"$ru", 3};
+str ruri_pvar_param = str_init("$ru");
 pv_elem_t * ruri_param_model = NULL;
 
 struct tm_binds d_tmb;
 struct rr_binds d_rrb;
 pv_spec_t timeout_avp;
 
+int active_dlgs_cnt = 0;
+int early_dlgs_cnt	= 0;
+
+/* db stuff */
+int dlg_db_mode_param = DB_MODE_NONE;
+static int db_fetch_rows = 200;
+static str db_url = str_init(DEFAULT_DB_URL);
+static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 
 /* commands wrappers and fixups */
 static int fixup_profile(void** param, int param_no);
@@ -119,18 +128,24 @@ static cmd_export_t cmds[] = {
 
 static param_export_t mod_params[] = {
     { "hash_size", INT_PARAM, &dlg_hash_size},
-    { "rr_param", STR_PARAM, &rr_param},
+    { "rr_param", PARAM_STRING, &rr_param},
     { "dlg_flag", INT_PARAM, &dlg_flag},
-    { "timeout_avp", STR_PARAM, &timeout_spec.s},
+    { "timeout_avp", PARAM_STR, &timeout_spec},
     { "default_timeout", INT_PARAM, &default_timeout},
-    { "dlg_extra_hdrs", STR_PARAM, &dlg_extra_hdrs.s},
+    { "dlg_extra_hdrs", PARAM_STR, &dlg_extra_hdrs},
     //In this new dialog module we always match using DID
     //{ "dlg_match_mode", INT_PARAM, &seq_match_mode},
-    { "detect_spirals", INT_PARAM, &detect_spirals,},
-    { "profiles_with_value", STR_PARAM, &profiles_wv_s},
-    { "profiles_no_value", STR_PARAM, &profiles_nv_s},
-    { "bridge_controller", STR_PARAM, &dlg_bridge_controller.s},
-    { "ruri_pvar", STR_PARAM, &ruri_pvar_param.s},
+
+    { "db_url",				PARAM_STRING, &db_url 				},
+    { "db_mode",			INT_PARAM, &dlg_db_mode_param		},
+    { "db_update_period",	INT_PARAM, &db_update_period		},
+    { "db_fetch_rows",		INT_PARAM, &db_fetch_rows			}
+    ,
+    { "detect_spirals",		INT_PARAM, &detect_spirals			},
+    { "profiles_with_value",PARAM_STRING, &profiles_wv_s			},
+    { "profiles_no_value",	PARAM_STRING, &profiles_nv_s			},
+    { "bridge_controller",	PARAM_STR, &dlg_bridge_controller	},
+    { "ruri_pvar",			PARAM_STR, &ruri_pvar_param		},
 
     { 0, 0, 0}
 };
@@ -306,11 +321,17 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 	dlg = get_dlg(&sc, &sf, &st, &dir);
 	if(dlg==NULL)
 		return -1;
+	
+	/* 
+		note: we should unref the dlg here (from get_dlg). BUT, because we are setting the current dialog
+		we can ignore the unref... instead of unreffing and reffing again for the set_current_dialog. NB.
+		this function is generally called from the cfg file. If used via API, remember to unref the dlg
+		afterwards
+	*/	
 
-        unref_dlg(dlg, 1);
-        set_current_dialog(msg, dlg);
-        _dlg_ctx.dlg = dlg;
-        _dlg_ctx.dir = dir;
+	set_current_dialog(msg, dlg);
+    _dlg_ctx.dlg = dlg;
+    _dlg_ctx.dir = dir;
 	return 1;
 }
 
@@ -510,16 +531,62 @@ static int mod_init(void) {
         return -1;
     }
 
+    /* if a database should be used to store the dialogs' information */
+	dlg_db_mode = dlg_db_mode_param;
+	if (dlg_db_mode==DB_MODE_NONE) {
+		db_url.s = 0; db_url.len = 0;
+	} else {
+		if (dlg_db_mode!=DB_MODE_REALTIME &&
+		dlg_db_mode!=DB_MODE_DELAYED && dlg_db_mode!=DB_MODE_SHUTDOWN ) {
+			LM_ERR("unsupported db_mode %d\n", dlg_db_mode);
+			return -1;
+		}
+		if ( !db_url.s || db_url.len==0 ) {
+			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
+			return -1;
+		}
+		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period, db_fetch_rows)!=0) {
+			LM_ERR("failed to initialize the DB support\n");
+			return -1;
+		}
+		run_load_callbacks();
+	}
+
     destroy_dlg_callbacks(DLGCB_LOADED);
 
     return 0;
 }
 
 static int child_init(int rank) {
+	dlg_db_mode = dlg_db_mode_param;
+
+	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
+		(rank>0 || rank==PROC_TIMER)) ||
+		(dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) ) {
+			if ( dlg_connect_db(&db_url) ) {
+				LM_ERR("failed to connect to database (rank=%d)\n",rank);
+				return -1;
+			}
+	}
+
+	/* in DB_MODE_SHUTDOWN only PROC_MAIN will do a DB dump at the end, so
+	 * for the rest of the processes will be the same as DB_MODE_NONE */
+	if (dlg_db_mode==DB_MODE_SHUTDOWN && rank!=PROC_MAIN)
+		dlg_db_mode = DB_MODE_NONE;
+	/* in DB_MODE_REALTIME and DB_MODE_DELAYED the PROC_MAIN have no DB handle */
+	if ( (dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
+			rank==PROC_MAIN)
+		dlg_db_mode = DB_MODE_NONE;
+
     return 0;
 }
 
 static void mod_destroy(void) {
+	if(dlg_db_mode == DB_MODE_DELAYED || dlg_db_mode == DB_MODE_SHUTDOWN) {
+		dialog_update_db(0, 0);
+		destroy_dlg_db();
+	}
+
     destroy_dlg_table();
     destroy_dlg_timer();
     destroy_dlg_callbacks(DLGCB_CREATED | DLGCB_LOADED);

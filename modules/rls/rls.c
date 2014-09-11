@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -89,7 +89,7 @@ int *rls_notifier_id = NULL;
 str db_url = str_init(DEFAULT_DB_URL);
 str xcap_db_url = str_init("");
 str rlpres_db_url = str_init("");
-int hash_size = 512;
+int hash_size = 9;
 shtable_t rls_table;
 contains_event_t pres_contains_event;
 search_event_t pres_search_event;
@@ -119,7 +119,7 @@ extern void rls_destroy_shtable(shtable_t htable, int hash_size);
 extern int rls_insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs);
 extern subs_t* rls_search_shtable(shtable_t htable,str callid,str to_tag,
 		str from_tag,unsigned int hash_code);
-extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag);
+extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs);
 extern int rls_update_shtable(shtable_t htable,unsigned int hash_code, 
 		subs_t* subs, int type);
 extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
@@ -226,13 +226,13 @@ static cmd_export_t cmds[]=
 };
 
 static param_export_t params[]={
-	{ "server_address",         STR_PARAM,   &rls_server_address.s           },
-	{ "db_url",                 STR_PARAM,   &db_url.s                       },
-	{ "rlpres_db_url",          STR_PARAM,   &rlpres_db_url.s	         },
-	{ "xcap_db_url",            STR_PARAM,   &xcap_db_url.s                  },
-	{ "rlsubs_table",           STR_PARAM,   &rlsubs_table.s                 },
-	{ "rlpres_table",           STR_PARAM,   &rlpres_table.s                 },
-	{ "xcap_table",             STR_PARAM,   &rls_xcap_table.s               },
+	{ "server_address",         PARAM_STR,   &rls_server_address           },
+	{ "db_url",                 PARAM_STR,   &db_url                       },
+	{ "rlpres_db_url",          PARAM_STR,   &rlpres_db_url	         },
+	{ "xcap_db_url",            PARAM_STR,   &xcap_db_url                  },
+	{ "rlsubs_table",           PARAM_STR,   &rlsubs_table                 },
+	{ "rlpres_table",           PARAM_STR,   &rlpres_table                 },
+	{ "xcap_table",             PARAM_STR,   &rls_xcap_table               },
 	{ "waitn_time",             INT_PARAM,   &waitn_time                     },
 	{ "notifier_poll_rate",     INT_PARAM,   &rls_notifier_poll_rate         },
 	{ "notifier_processes",     INT_PARAM,   &rls_notifier_processes         },
@@ -242,9 +242,9 @@ static param_export_t params[]={
 	{ "hash_size",              INT_PARAM,   &hash_size                      },
 	{ "integrated_xcap_server", INT_PARAM,   &rls_integrated_xcap_server     },
 	{ "to_presence_code",       INT_PARAM,   &to_presence_code               },
-	{ "xcap_root",              STR_PARAM,   &xcap_root                      },
-	{ "rls_event",              STR_PARAM|USE_FUNC_PARAM,(void*)add_rls_event},
-	{ "outbound_proxy",         STR_PARAM,   &rls_outbound_proxy.s           },
+	{ "xcap_root",              PARAM_STRING,   &xcap_root                      },
+	{ "rls_event",              PARAM_STRING|USE_FUNC_PARAM,(void*)add_rls_event},
+	{ "outbound_proxy",         PARAM_STR,   &rls_outbound_proxy           },
 	{ "reload_db_subs",         INT_PARAM,   &rls_reload_db_subs             },
 	{ "max_notify_body_length", INT_PARAM,	 &rls_max_notify_body_len	 },
 	{ "db_mode",                INT_PARAM,	 &dbmode                         },
@@ -305,21 +305,17 @@ static int mod_init(void)
 		dbmode = 0;
 	}
 
-	if(rls_server_address.s==NULL)
+	if(!rls_server_address.s || rls_server_address.len<=0)
 	{
 		LM_ERR("server_address parameter not set in configuration file\n");
 		return -1;
 	}	
-
-	rls_server_address.len= strlen(rls_server_address.s);
 	
 	if(!rls_integrated_xcap_server && xcap_root== NULL)
 	{
 		LM_ERR("xcap_root parameter not set\n");
 		return -1;
 	}
-	if(rls_outbound_proxy.s!=NULL)
-		rls_outbound_proxy.len = strlen(rls_outbound_proxy.s);
 	/* extract port if any */
 	if(xcap_root)
 	{
@@ -417,13 +413,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	rlsubs_table.len= strlen(rlsubs_table.s);
-	rlpres_table.len= strlen(rlpres_table.s);
-	rls_xcap_table.len= strlen(rls_xcap_table.s);
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
-
-	xcap_db_url.len = xcap_db_url.s ? strlen(xcap_db_url.s) : 0;
 
 	if(xcap_db_url.len==0)
 	{
@@ -432,8 +422,6 @@ static int mod_init(void)
 	}
 
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(xcap_db_url.s), xcap_db_url.len, xcap_db_url.s);
-
-	rlpres_db_url.len = rlpres_db_url.s ? strlen(rlpres_db_url.s) : 0;
 
 	if(rlpres_db_url.len==0)
 	{

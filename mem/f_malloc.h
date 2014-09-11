@@ -96,6 +96,7 @@ struct fm_frag{
 		struct fm_frag* nxt_free;
 		long reserved;
 	}u;
+	struct fm_frag** prv_free;
 #ifdef DBG_F_MALLOC
 	const char* file;
 	const char* func;
@@ -114,12 +115,12 @@ struct fm_frag_lnk{
  * \see mem_info
  */
 struct fm_block{
+	int type;
 	unsigned long size; /** total size */
-#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 	unsigned long used; /** allocated size*/
 	unsigned long real_used; /** used + malloc overhead */
 	unsigned long max_real_used;
-#endif
+	unsigned long ffrags;
 	
 	struct fm_frag* first_frag;
 	struct fm_frag* last_frag;
@@ -136,7 +137,7 @@ struct fm_block{
  * \param size Size of allocation
  * \return return the fm_block
  */
-struct fm_block* fm_malloc_init(char* address, unsigned long size);
+struct fm_block* fm_malloc_init(char* address, unsigned long size, int type);
 
 
 /**

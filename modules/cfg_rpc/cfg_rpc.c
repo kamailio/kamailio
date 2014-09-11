@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History
  * -------
@@ -349,7 +349,7 @@ static void rpc_get(rpc_t* rpc, void* c)
 		break;
 
 	case CFG_VAR_POINTER:
-		rpc->printf(c, "%p", val);
+		rpc->rpl_printf(c, "%p", val);
 		break;
 
 	}
@@ -380,12 +380,12 @@ static void rpc_help(rpc_t* rpc, void* c)
 
 	switch (input_type) {
 	case CFG_INPUT_INT:
-		rpc->printf(c, "(parameter type is integer)");
+		rpc->rpl_printf(c, "(parameter type is integer)");
 		break;
 
 	case CFG_INPUT_STRING:
 	case CFG_INPUT_STR:
-		rpc->printf(c, "(parameter type is string)");
+		rpc->rpl_printf(c, "(parameter type is string)");
 		break;
 	}	
 }
@@ -415,7 +415,7 @@ static void rpc_list(rpc_t* rpc, void* c)
 				&& (memcmp(gname.s, group.s, group.len) == 0))
 		)
 			for (i=0; def[i].name; i++)
-				rpc->printf(c, "%.*s: %s", gname.len, gname.s, def[i].name);
+				rpc->rpl_printf(c, "%.*s: %s", gname.len, gname.s, def[i].name);
 }
 
 static const char* rpc_diff_doc[2] = {

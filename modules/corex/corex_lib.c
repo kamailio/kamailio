@@ -83,10 +83,14 @@ int corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq)
 			pkg_free(msg->dst_uri.s);
 		msg->dst_uri.s = 0;
 		msg->dst_uri.len = 0;
-		if(msg->path_vec.s!=0)
-			pkg_free(msg->path_vec.s);
-		msg->path_vec.s = 0;
-		msg->path_vec.len = 0;
+
+		/* if this is a cloned message, don't free the path vector as it was copied into shm memory and will be freed as contiguous block*/
+		if (!(msg->msg_flags&FL_SHM_CLONE)) {
+			if(msg->path_vec.s!=0)
+				pkg_free(msg->path_vec.s);
+			msg->path_vec.s = 0;
+			msg->path_vec.len = 0;
+		}
 	}
 
 	return ret;
@@ -296,5 +300,80 @@ int corex_send(sip_msg_t *msg, gparam_t *pu, enum sip_protos proto)
 
 
 error:
+	return ret;
+}
+
+/**
+ *
+ */
+int corex_send_data(str *puri, str *pdata)
+{
+	struct dest_info dst;
+	sip_uri_t next_hop;
+	int ret = 0;
+	char proto;
+
+	if(parse_uri(puri->s, puri->len, &next_hop)<0)
+	{
+		LM_ERR("bad dst sip uri <%.*s>\n", puri->len, puri->s);
+		return -1;
+	}
+
+	init_dest_info(&dst);
+	LM_DBG("sending data to sip uri <%.*s>\n", puri->len, puri->s);
+	proto = next_hop.proto;
+	if(sip_hostport2su(&dst.to, &next_hop.host, next_hop.port_no,
+				&proto)!=0) {
+		LM_ERR("failed to resolve [%.*s]\n", next_hop.host.len,
+			ZSW(next_hop.host.s));
+		return -1;
+	}
+	dst.proto = proto;
+	if(dst.proto==PROTO_NONE) dst.proto = PROTO_UDP;
+
+	if (dst.proto == PROTO_UDP)
+	{
+		dst.send_sock=get_send_socket(0, &dst.to, PROTO_UDP);
+		if (dst.send_sock!=0) {
+			ret=udp_send(&dst, pdata->s, pdata->len);
+		} else {
+			LM_ERR("no socket for dst sip uri <%.*s>\n", puri->len, puri->s);
+			ret=-1;
+		}
+	}
+#ifdef USE_TCP
+	else if(dst.proto == PROTO_TCP) {
+		/*tcp*/
+		dst.id=0;
+		ret=tcp_send(&dst, 0, pdata->s, pdata->len);
+	}
+#endif
+#ifdef USE_TLS
+	else if(dst.proto == PROTO_TLS) {
+		/*tls*/
+		dst.id=0;
+		ret=tcp_send(&dst, 0, pdata->s, pdata->len);
+	}
+#endif
+#ifdef USE_SCTP
+	else if(dst.proto == PROTO_SCTP) {
+		/*sctp*/
+		dst.send_sock=get_send_socket(0, &dst.to, PROTO_SCTP);
+		if (dst.send_sock!=0) {
+			ret=sctp_core_msg_send(&dst, pdata->s, pdata->len);
+		} else {
+			LM_ERR("no socket for dst sip uri <%.*s>\n", puri->len, puri->s);
+			ret=-1;
+		}
+	}
+#endif
+	else {
+		LM_ERR("unknown proto [%d] for dst sip uri <%.*s>\n",
+				dst.proto, puri->len, puri->s);
+		ret=-1;
+	}
+
+	if (ret>=0) ret=1;
+
 	return ret;
 }

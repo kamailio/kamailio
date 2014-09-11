@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2008 Juha Heinanen
  * Copyright (C) 2009 1&1 Internet AG
+ * Copyright (C) 2013 Carsten Bock, ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -18,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -88,16 +89,25 @@ static int child_init(int);
 static void destroy(void);
 
 /* Fixup functions to be defined later */
-static int fixup_http_query(void** param, int param_no);
-static int fixup_free_http_query(void** param, int param_no);
+static int fixup_http_query_get(void** param, int param_no);
+static int fixup_free_http_query_get(void** param, int param_no);
+static int fixup_http_query_post(void** param, int param_no);
+static int fixup_free_http_query_post(void** param, int param_no);
+
+/* Wrappers for http_query to be defined later */
+static int w_http_query(struct sip_msg* _m, char* _url, char* _result);
+static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result);
 
 /* forward function */
 int utils_forward(struct sip_msg *msg, int id, int proto);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-    {"http_query", (cmd_function)http_query, 2, fixup_http_query,
-     fixup_free_http_query,
+    {"http_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
+     fixup_free_http_query_get,
+     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+    {"http_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
+     fixup_free_http_query_post,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
      fixup_free_pvar_pvar, REQUEST_ROUTE},
@@ -107,8 +117,8 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-    {"pres_db_url", STR_PARAM, &pres_db_url.s},
-    {"xcap_table", STR_PARAM, &xcap_table.s},
+    {"pres_db_url", PARAM_STR, &pres_db_url},
+    {"xcap_table", PARAM_STR, &xcap_table},
     {"http_query_timeout", INT_PARAM, &http_query_timeout},
     {"forward_active", INT_PARAM, &forward_active},
     {0, 0, 0}
@@ -279,10 +289,8 @@ static int mod_init(void)
 	}
 
 	/* presence database */
-	pres_db_url.len = pres_db_url.s ? strlen(pres_db_url.s) : 0;
 	LM_DBG("pres_db_url=%s/%d/%p\n", ZSW(pres_db_url.s), pres_db_url.len,
 	       pres_db_url.s);
-	xcap_table.len = xcap_table.s ? strlen(xcap_table.s) : 0;
 
 	if(pres_db_init() < 0) {
 	    return -1;
@@ -319,7 +327,7 @@ static void destroy(void)
  * Fix http_query params: url (string that may contain pvars) and
  * result (writable pvar).
  */
-static int fixup_http_query(void** param, int param_no)
+static int fixup_http_query_get(void** param, int param_no)
 {
     if (param_no == 1) {
 	return fixup_spve_null(param, 1);
@@ -344,7 +352,7 @@ static int fixup_http_query(void** param, int param_no)
 /*
  * Free http_query params.
  */
-static int fixup_free_http_query(void** param, int param_no)
+static int fixup_free_http_query_get(void** param, int param_no)
 {
     if (param_no == 1) {
 	LM_WARN("free function has not been defined for spve\n");
@@ -359,6 +367,65 @@ static int fixup_free_http_query(void** param, int param_no)
     return -1;
 }
 
+
+/*
+ * Fix http_query params: url (string that may contain pvars) and
+ * result (writable pvar).
+ */
+static int fixup_http_query_post(void** param, int param_no)
+{
+    if ((param_no == 1) || (param_no == 2)) {
+	return fixup_spve_null(param, 1);
+    }
+
+    if (param_no == 3) {
+	if (fixup_pvar_null(param, 1) != 0) {
+	    LM_ERR("failed to fixup result pvar\n");
+	    return -1;
+	}
+	if (((pv_spec_t *)(*param))->setf == NULL) {
+	    LM_ERR("result pvar is not writeble\n");
+	    return -1;
+	}
+	return 0;
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
+
+/*
+ * Free http_query params.
+ */
+static int fixup_free_http_query_post(void** param, int param_no)
+{
+    if ((param_no == 1) || (param_no == 2)) {
+	LM_WARN("free function has not been defined for spve\n");
+	return 0;
+    }
+
+    if (param_no == 3) {
+	return fixup_free_pvar_null(param, 1);
+    }
+    
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
+
+/*
+ * Wrapper for HTTP-Query (GET)
+ */
+static int w_http_query(struct sip_msg* _m, char* _url, char* _result) {
+	return http_query(_m, _url, _result, NULL);
+}
+
+
+/*
+ * Wrapper for HTTP-Query (POST-Variant)
+ */
+static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result) {
+	return http_query(_m, _url, _result, _post);
+}
 
 /*!
  * \brief checks precondition, switch, filter and forwards msg if necessary

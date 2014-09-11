@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -54,9 +54,13 @@
 #include "../../modules/tm/tm_load.h"
 
 #define RECEIVED_MAX_SIZE      255
+#define USERNAME_MAX_SIZE      64
+#define DOMAIN_MAX_SIZE        128
 
 extern unsigned short rcv_avp_type;
 extern int_str rcv_avp_name;
+extern int is_registered_fallback2ip;
+extern int ignore_reg_state;
 
 #endif /* REG_MOD_H */
 

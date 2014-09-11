@@ -395,6 +395,8 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 	/*the dst uri (if any)*/
 	if (org_msg->dst_uri.s && org_msg->dst_uri.len)
 		len+= ROUND4(org_msg->dst_uri.len);
+	if (org_msg->path_vec.s && org_msg->path_vec.len)
+			len+= ROUND4(org_msg->path_vec.len);
 	/*all the headers*/
 	for( hdr=org_msg->headers ; hdr ; hdr=hdr->next )
 	{
@@ -522,6 +524,7 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 	/* zero *uri.s, in case len is 0 but org_msg->*uris!=0 (just to be safe)*/
 	new_msg->new_uri.s = 0;
 	new_msg->dst_uri.s = 0;
+	new_msg->path_vec.s = 0;
 	/* new_uri */
 	if (org_msg->new_uri.s && org_msg->new_uri.len)
 	{
@@ -536,9 +539,26 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 		memcpy( p , org_msg->dst_uri.s , org_msg->dst_uri.len);
 		p += ROUND4(org_msg->dst_uri.len);
 	}
-	/* path_vec is not cloned (it's reset instead) */
-	new_msg->path_vec.s=0;
-	new_msg->path_vec.len=0;
+	/* path vector */
+	if (org_msg->path_vec.s && org_msg->path_vec.len) {
+		new_msg->path_vec.s = p;
+		memcpy(p, org_msg->path_vec.s, org_msg->path_vec.len);
+		p += ROUND4(org_msg->path_vec.len);
+	}
+
+	/* instance is not cloned (it's reset instead) */
+	new_msg->instance.s=0;
+	new_msg->instance.len=0;
+	/* ruid is not cloned (it's reset instead) */
+	new_msg->ruid.s=0;
+	new_msg->ruid.len=0;
+	/* location ua is not cloned (it's reset instead) */
+	new_msg->location_ua.s=0;
+	new_msg->location_ua.len=0;
+	/* reg_id is not cloned (it's reset instead) */
+	new_msg->reg_id=0;
+	/* local data struct is not cloned (it's reset instead) */
+	memset(&new_msg->ldv, 0, sizeof(msg_ldata_t));
 	/* message buffers(org and scratch pad) */
 	memcpy( p , org_msg->buf, org_msg->len);
 	/* ZT to be safer */

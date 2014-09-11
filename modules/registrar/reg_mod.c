@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -91,6 +91,7 @@ static void mod_destroy(void);
 static int w_save2(struct sip_msg* _m, char* _d, char* _cflags);
 static int w_save3(struct sip_msg* _m, char* _d, char* _cflags, char* _uri);
 static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
+static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_branches(struct sip_msg* _m, char* _d, char* _p2);
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
@@ -153,6 +154,7 @@ stat_var *max_expires_stat;
 stat_var *max_contacts_stat;
 stat_var *default_expire_stat;
 stat_var *default_expire_range_stat;
+stat_var *expire_range_stat;
 /** SL API structure */
 sl_api_t slb;
 
@@ -171,14 +173,16 @@ static pv_export_t mod_pvs[] = {
  */
 static cmd_export_t cmds[] = {
 	{"save",         (cmd_function)w_save2,       1,  save_fixup, 0,
-			REQUEST_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"save",         (cmd_function)w_save2,       2,  save_fixup, 0,
-			REQUEST_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"save",         (cmd_function)w_save3,       3,  save_fixup, 0,
-			REQUEST_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"lookup",       (cmd_function)w_lookup,      1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"lookup",       (cmd_function)w_lookup,      2,  domain_uri_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"lookup_to_dset",  (cmd_function)w_lookup_to_dset,  1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)w_registered,  1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -210,6 +214,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"default_expires",    INT_PARAM, &default_registrar_cfg.default_expires     		},
 	{"default_expires_range", INT_PARAM, &default_registrar_cfg.default_expires_range	},
+	{"expires_range",      INT_PARAM, &default_registrar_cfg.expires_range	},
 	{"default_q",          INT_PARAM, &default_registrar_cfg.default_q			},
 	{"append_branches",    INT_PARAM, &default_registrar_cfg.append_branches		},
 	{"case_sensitive",     INT_PARAM, &default_registrar_cfg.case_sensitive			},
@@ -217,19 +222,19 @@ static param_export_t params[] = {
 	{"realm_prefix",       PARAM_STR, &default_registrar_cfg.realm_pref          		},
 	{"min_expires",        INT_PARAM, &default_registrar_cfg.min_expires			},
 	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires			},
-	{"received_param",     STR_PARAM, &rcv_param           					},
-	{"received_avp",       STR_PARAM, &rcv_avp_param       					},
-	{"reg_callid_avp",     STR_PARAM, &reg_callid_avp_param					},
+	{"received_param",     PARAM_STR, &rcv_param           					},
+	{"received_avp",       PARAM_STRING, &rcv_avp_param       					},
+	{"reg_callid_avp",     PARAM_STRING, &reg_callid_avp_param					},
 	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts			},
 	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after			},
 	{"sock_flag",          INT_PARAM, &sock_flag           					},
-	{"sock_hdr_name",      STR_PARAM, &sock_hdr_name.s     					},
+	{"sock_hdr_name",      PARAM_STR, &sock_hdr_name     					},
 	{"method_filtering",   INT_PARAM, &method_filtering    					},
 	{"use_path",           INT_PARAM, &path_enabled        					},
 	{"path_mode",          INT_PARAM, &path_mode           					},
 	{"path_use_received",  INT_PARAM, &path_use_params     					},
-	{"xavp_cfg",           STR_PARAM, &reg_xavp_cfg.s     					},
-	{"xavp_rcd",           STR_PARAM, &reg_xavp_rcd.s     					},
+	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     					},
+	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
 	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
@@ -244,6 +249,7 @@ stat_export_t mod_stats[] = {
 	{"max_contacts",      STAT_NO_RESET, &max_contacts_stat       },
 	{"default_expire",    STAT_NO_RESET, &default_expire_stat     },
 	{"default_expires_range", STAT_NO_RESET, &default_expire_range_stat },
+	{"expires_range",     STAT_NO_RESET, &expire_range_stat },
 	{"accepted_regs",                 0, &accepted_registrations  },
 	{"rejected_regs",                 0, &rejected_registrations  },
 	{0, 0, 0}
@@ -297,8 +303,6 @@ static int mod_init(void)
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-
-	rcv_param.len = strlen(rcv_param.s);
 	
 	if(cfg_declare("registrar", registrar_cfg_def, &default_registrar_cfg, cfg_sizeof(registrar), &registrar_cfg)){
 		LM_ERR("Fail to declare the configuration\n");
@@ -386,11 +390,8 @@ static int mod_init(void)
 	reg_use_domain = ul.use_domain;
 
 	if (sock_hdr_name.s) {
-		sock_hdr_name.len = strlen(sock_hdr_name.s);
 		if (sock_hdr_name.len==0 || sock_flag==-1) {
 			LM_WARN("empty sock_hdr_name or sock_flag no set -> reseting\n");
-			pkg_free(sock_hdr_name.s);
-			sock_hdr_name.s = 0;
 			sock_hdr_name.len = 0;
 			sock_flag = -1;
 		}
@@ -419,12 +420,6 @@ static int mod_init(void)
 	sock_flag = (sock_flag!=-1)?(1<<sock_flag):0;
 	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
 
-	if (reg_xavp_cfg.s) {
-		reg_xavp_cfg.len = strlen(reg_xavp_cfg.s);
-	}
-	if (reg_xavp_rcd.s) {
-		reg_xavp_rcd.len = strlen(reg_xavp_rcd.s);
-	}
 	return 0;
 }
 
@@ -482,6 +477,20 @@ static int w_lookup(struct sip_msg* _m, char* _d, char* _uri)
 	return lookup(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
 }
 
+/*! \brief
+ * Wrapper to lookup_to_dset(location)
+ */
+static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _uri)
+{
+	str uri = {0};
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	return lookup_to_dset(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
+}
 /*! \brief
  * Wrapper to lookup_branches(location)
  */
@@ -708,4 +717,8 @@ void max_expires_stats_update(str* gname, str* name){
 
 void default_expires_range_update(str* gname, str* name){
 	update_stat(default_expire_range_stat, cfg_get(registrar, registrar_cfg, default_expires_range));
+}
+
+void expires_range_update(str* gname, str* name){
+	update_stat(expire_range_stat, cfg_get(registrar, registrar_cfg, expires_range));
 }

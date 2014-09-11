@@ -44,7 +44,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * History:
@@ -291,6 +291,7 @@ static int t_set_disable_failover(struct sip_msg* msg, char* on_off, char* f);
 static int t_set_no_e2e_cancel_reason(struct sip_msg* msg, char* on_off,
 										char* f);
 #endif /* CANCEL_REASON_SUPPORT */
+static int t_set_disable_internal_reply(struct sip_msg* msg, char* on_off, char* f);
 static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
@@ -302,6 +303,7 @@ static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_check_trans(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_is_set(struct sip_msg* msg, char* target, char* bar);
+static int w_t_use_uac_headers(sip_msg_t* msg, char* foo, char* bar);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -359,6 +361,8 @@ static cmd_export_t cmds[]={
 	{"t_relay_to_sctp",       w_t_relay_to_sctp_uri,    0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
+	{"t_replicate",        w_t_replicate_uri,       0, 0,
+			REQUEST_ROUTE},
 	{"t_replicate",        w_t_replicate_uri,       1, fixup_var_str_1,
 			REQUEST_ROUTE},
 	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy,
@@ -456,6 +460,8 @@ static cmd_export_t cmds[]={
 		fixup_var_int_1,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 #endif /* CANCEL_REASON_SUPPORT */
+	{"t_set_disable_internal_reply", t_set_disable_internal_reply, 1, fixup_var_int_1,
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_branch_timeout",  t_branch_timeout,         0, 0,
 	                FAILURE_ROUTE|EVENT_ROUTE},
 	{"t_branch_replied",  t_branch_replied,         0, 0,
@@ -479,6 +485,8 @@ static cmd_export_t cmds[]={
 	{"t_check_trans",	  w_t_check_trans,			0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE },
 	{"t_is_set",	      w_t_is_set,				1, fixup_t_is_set,
+			ANY_ROUTE },
+	{"t_use_uac_headers",  w_t_use_uac_headers,		0, 0,
 			ANY_ROUTE },
 
 	{"t_load_contacts", t_load_contacts,            0, 0,
@@ -978,6 +986,8 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		
 		if (regcomp(re, s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
 			ERR("Bad regular expression '%s'\n", s);
+			pkg_free(re);
+			re = NULL;
 			goto error;
 		}
 		break;
@@ -1313,6 +1323,7 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 	 * the safe version would lead to a deadlock
 	 */
 	 
+	t->flags |= T_ADMIN_REPLY;
 	if (is_route_type(FAILURE_ROUTE)) {
 		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
 		ret = t_reply_unsafe(t, msg, code, r);
@@ -1599,7 +1610,7 @@ int t_replicate_uri(struct sip_msg *msg, str *suri)
 	struct sip_uri turi;
 	int r = -1;
 
-	if (suri != NULL && suri->s != NULL)
+	if (suri != NULL && suri->s != NULL && suri->len > 0)
 	{
 		memset(&turi, 0, sizeof(struct sip_uri));
 		if(parse_uri(suri->s, suri->len, &turi)!=0)
@@ -1629,6 +1640,9 @@ inline static int w_t_replicate_uri(struct sip_msg  *msg ,
 				char *_foo       /* nothing expected */ )
 {
 	str suri;
+
+	if(uri==NULL)
+		return t_replicate_uri(msg, NULL);
 
 	if(fixup_get_svalue(msg, (gparam_p)uri, &suri)!=0)
 	{
@@ -1871,6 +1885,10 @@ T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
 /* disable/enable e2e cancel reason copy for the current transaction */
 T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
 #endif /* CANCEL_REASON_SUPPORT */
+
+
+/* disable internal negative reply for the current transaction */
+T_SET_FLAG_GEN_FUNC(t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
 
 
 /* script function, FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
@@ -2282,13 +2300,11 @@ inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
 			param.v.i = 0;
 			t_set_auto_inv_100(msg, (char*)(&param), 0);
 		}
-		/* no auto negative reply - not implemented */
-		/*
+		/* no auto negative reply */
 		if(fl&2) {
 			param.v.i = 1;
-			t_set_disable_internal_reply(msg, (char*)param, 0);
+			t_set_disable_internal_reply(msg, (char*)(&param), 0);
 		}
-		*/
 		/* no dns failover */
 		if(fl&4) {
 			param.v.i = 1;
@@ -2299,6 +2315,18 @@ inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
 }
 
 
+static int w_t_use_uac_headers(sip_msg_t* msg, char* foo, char* bar)
+{
+	tm_cell_t *t;
+
+	t=get_t();
+	if (t!=NULL && t!=T_UNDEFINED) {
+		t->uas.request->msg_flags |= FL_USE_UAC_FROM|FL_USE_UAC_TO;
+	}
+	msg->msg_flags |= FL_USE_UAC_FROM|FL_USE_UAC_TO;
+
+	return 1;
+}
 
 /* rpc docs */
 

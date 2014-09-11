@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -109,15 +109,15 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-    {"radius_config",       STR_PARAM, &radius_config      },
+    {"radius_config",       PARAM_STRING, &radius_config      },
     {"caller_service_type", INT_PARAM, &caller_service_type},
     {"callee_service_type", INT_PARAM, &callee_service_type},
     {"group_service_type",  INT_PARAM, &group_service_type },
     {"uri_service_type",    INT_PARAM, &uri_service_type   },
-    {"caller_extra",        STR_PARAM, &caller_extra_str   },
-    {"callee_extra",        STR_PARAM, &callee_extra_str   },
-    {"group_extra",         STR_PARAM, &group_extra_str    },
-    {"uri_extra",           STR_PARAM, &uri_extra_str      },
+    {"caller_extra",        PARAM_STRING, &caller_extra_str   },
+    {"callee_extra",        PARAM_STRING, &callee_extra_str   },
+    {"group_extra",         PARAM_STRING, &group_extra_str    },
+    {"uri_extra",           PARAM_STRING, &uri_extra_str      },
     {"use_sip_uri_host",    INT_PARAM, &use_sip_uri_host   },
     {"common_response",     INT_PARAM, &common_response    },
     {0, 0, 0}

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -91,6 +91,7 @@ struct cell;
 struct timer;
 struct retr_buf;
 struct ua_client;
+struct async_state;
 
 #include "../../mem/shm_mem.h"
 #include "lock.h"
@@ -154,6 +155,7 @@ enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8,
 #define F_RB_NH_STRICT	0x200 /* next hop is a strict router */
 /* must detect when neither loose nor strict flag is set -> two flags.
  * alternatively, 1x flag for strict/loose and 1x for loose|strict set/not */
+#define F_RB_RELAYREPLY	0x400 /* branch under relay reply condition */
 
 
 /* if canceled or intended to be canceled, return true */
@@ -214,6 +216,7 @@ typedef struct ua_client
 {
 	/* if we store a reply (branch picking), this is where it is */
 	struct sip_msg  *reply;
+	char *end_reply;	/* pointer to end of sip_msg so we know the shm blocked used in clone...(used in async replies) */
 	struct retr_buf  request;
 	/* we maintain a separate copy of cancel rather than
 	   reuse the structure for original request; the 
@@ -271,7 +274,13 @@ struct totag_elem {
 	volatile int acked;
 };
 
-
+/* structure for storing transaction state prior to suspending of async transactions */
+typedef struct async_state {
+	unsigned int backup_route;
+	unsigned int backup_branch;
+	unsigned int blind_uac;
+	unsigned int ruri_new;
+} async_state_type;
 
 /* transaction's flags */
 /* is the transaction's request an INVITE? */
@@ -309,6 +318,10 @@ struct totag_elem {
 #	define T_PASS_PROVISIONAL_FLAG (1<<11)
 #	define pass_provisional(_t_)	((_t_)->flags&T_PASS_PROVISIONAL_FLAG)
 #endif
+#define T_ASYNC_CONTINUE (1<<12) /* Is this transaction in a continuation after being suspended */
+
+#define T_DISABLE_INTERNAL_REPLY (1<<13) /* don't send internal negative reply */
+#define T_ADMIN_REPLY (1<<14) /* t reply sent by admin (e.g., from cfg script) */
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ms =>
  * max retr. = 65 s which should be enough and saves us 2*2 bytes */
@@ -415,6 +428,9 @@ typedef struct cell
 	/* UA Clients */
 	struct ua_client  uac[ MAX_BRANCHES ];
 	
+	/* store transaction state to be used for async transactions */
+	struct async_state async_backup;
+	
 	/* to-tags of 200/INVITEs which were received from downstream and 
 	 * forwarded or passed to UAC; note that there can be arbitrarily 
 	 * many due to downstream forking; */
@@ -433,7 +449,9 @@ typedef struct cell
 
 	/* protection against concurrent reply processing */
 	ser_lock_t   reply_mutex;
-	
+	/* protect against concurrent async continues */
+	ser_lock_t   async_mutex;
+		
 	ticks_t fr_timeout;     /* final response interval for retr_bufs */
 	ticks_t fr_inv_timeout; /* final inv. response interval for retr_bufs */
 #ifdef TM_DIFF_RT_TIMEOUT
@@ -454,6 +472,8 @@ typedef struct cell
 	unsigned short on_reply;
 	 /* The route to take for each downstream branch separately */
 	unsigned short on_branch;
+	 /* branch route backup for late branch add (t_append_branch) */
+	unsigned short on_branch_delayed;
 
 	/* place holder for MD5checksum, MD5_LEN bytes are extra alloc'ed */
 	char md5[0];

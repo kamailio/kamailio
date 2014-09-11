@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -251,7 +251,8 @@ errorx:
  */
 int msg_list_check(msg_list ml)
 {
-	msg_list_el p0;	
+	msg_list_el p0;
+	msg_list_el p1;
 	
 	if(!ml)
 		goto errorx;
@@ -265,6 +266,7 @@ int msg_list_check(msg_list ml)
 	p0 = ml->lsent;
 	while(p0)
 	{
+		p1 = p0->next;
 		if(p0->flag & MS_MSG_DONE || p0->flag & MS_MSG_ERRO)
 		{
 			LM_DBG("mid:%d got reply\n", p0->msgid);
@@ -287,7 +289,7 @@ int msg_list_check(msg_list ml)
 			ml->ldone = p0;
 			ml->nrdone++;
 		}
-		p0 = p0->next;
+		p0 = p1;
 	}
 
 	lock_release(&ml->sem_done);

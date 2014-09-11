@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -132,7 +132,7 @@ static cmd_export_t cmds[] =
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"file",                STR_PARAM,  &file                },
+	{"file",                PARAM_STRING,  &file                },
 	{"max_groups",          INT_PARAM,  &max_groups          },
 	{"group_max_size",      INT_PARAM,  &group_max_size      },
 	{"pcre_caseless",       INT_PARAM,  &pcre_caseless       },

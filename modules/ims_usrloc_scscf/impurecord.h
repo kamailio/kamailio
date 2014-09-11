@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -126,14 +126,6 @@ void mem_delete_ucontact(impurecord_t* _r, ucontact_t* _c);
 void timer_impurecord(impurecord_t* _r);
 
 
-/*!
- * \brief Delete a record from the database
- * \param _r deleted record
- * \return 0 on success, -1 on failure
- */
-int db_delete_impurecord(impurecord_t* _r);
-
-
 /* ===== Module interface ======== */
 
 
@@ -180,6 +172,6 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path,
 		int _cseq,
 		struct ucontact** _co);
 
-int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
+int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
 #endif

@@ -60,11 +60,13 @@ Juha Heinanen
               5.1. mt_list
               5.2. mt_reload
               5.3. mt_summary
+              5.4. mt_match
 
         6. RPC Commands
 
               6.1. mtree.summary
               6.2. mtree.reload
+              6.3. mtree.match
 
    List of Examples
 
@@ -118,11 +120,13 @@ Chapter 1. Admin Guide
         5.1. mt_list
         5.2. mt_reload
         5.3. mt_summary
+        5.4. mt_match
 
    6. RPC Commands
 
         6.1. mtree.summary
         6.2. mtree.reload
+        6.3. mtree.match
 
 1. Overview
 
@@ -186,13 +190,20 @@ modparam("mtree", "db_table", "mymtrees")
 
 3.3. mtree (string)
 
-   Definition of memory tree
+   Definition of memory tree with parameters name, dbtable, type, and
+   multi. Name is name of the tree, dbtable is name of dbtable where tree
+   is stored, type is type of tree elements (0 = string, 2 = integer), and
+   multi tells if dbtable can contain more than one tree (0 = one tree, 1
+   = more than one tree identified by tname column).
+
+   This parameter can be set many times to add more trees in memory.
 
    Default value is "none".
 
    Example 1.3. Set mtree parameter
 ...
-modparam("mtree", "mtree", "name=mytable;dbtable=routes;type=0;")
+modparam("mtree", "mtree", "name=mytree1;dbtable=routes1;type=0")
+modparam("mtree", "mtree", "name=mytree2;dbtable=routes2;type=0;multi=1")
 ...
 
 3.4. tname_column (string)
@@ -264,8 +275,8 @@ modparam("mtree", "pv_value", "$var(mtval)")
 
 3.10. pv_values (string)
 
-   The PV spec where to store the matched values when mtree is of type 0
-   or 2 and mode of mt_match() call has value 2. It can be any AVP.
+   The AVP where to store the matched values when mtree is of type 0 or 2
+   and mode of mt_match() call has value 2.
 
    Default value is "$avp(s:tvalues)".
 
@@ -322,6 +333,8 @@ modparam("mtree", "mt_allow_duplicates", 1)
    matching prefix is in avp index 0. Parameter 'mode' can be an integer
    constant or a pseudo variable with integer value.
 
+   Returns 1 if match succeeded and -1 otherwise.
+
    Example 1.14. mt_match usage
 ...
 mt_match("mytree", "$rU", "0");
@@ -332,6 +345,7 @@ mt_match("mytree", "$rU", "0");
    5.1. mt_list
    5.2. mt_reload
    5.3. mt_summary
+   5.4. mt_match
 
 5.1.  mt_list
 
@@ -374,16 +388,37 @@ mt_match("mytree", "$rU", "0");
                 :mt_summary:_reply_fifo_file_
                 _empty_line_
 
+5.4.  mt_match
+
+   Match prefix value against mtree.
+
+   Name: mt_match
+
+   Parameters: 3
+     * Name of mtree
+     * Prefix to match
+     * Mode of matching
+
+   MI FIFO Command Format:
+                :mt_match:_reply_fifo_file_
+                _mtree_
+                _prefix_
+                _mode_
+                _empty_line_
+
 6. RPC Commands
 
    6.1. mtree.summary
    6.2. mtree.reload
+   6.3. mtree.match
 
 6.1.  mtree.summary
 
-   List usage summary for all trees.
+   List usage summary for all trees or for the tree whose name is given as
+   parameter.
 
-   Parameters: none.
+   Parameters:
+     * _mtree_ - (optional) the name of the tree.
 
 6.2.  mtree.reload
 
@@ -392,3 +427,15 @@ mt_match("mytree", "$rU", "0");
    Parameters:
      * _mtree_
        - name of mtree or empty string meaning all mtrees
+
+6.3.  mtree.match
+
+   Match prefix value against mtree
+
+   Parameters:
+     * _mtree_
+       - name of mtree
+     * _prefix_
+       - match prefix
+     * _mode_
+       - matching mode

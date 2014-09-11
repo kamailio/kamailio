@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -84,6 +84,7 @@ extern int ul_hash_size;
 extern int ul_db_update_as_insert;
 extern int ul_db_check_update;
 extern int ul_keepalive_timeout;
+extern int handle_lost_tcp;
 
 /*! nat branch flag */
 extern unsigned int nat_bflag;
@@ -106,5 +107,19 @@ extern db_func_t ul_dbf;
 extern int matching_mode;
 
 extern int ul_db_ops_ruid;
+
+extern int ul_expires_type;
+
+#define UL_DB_EXPIRES_SET(r, v)   do { \
+			if(ul_expires_type==1) { \
+				(r)->type = DB1_BIGINT; \
+				(r)->val.ll_val = (long long)(v); \
+			} else { \
+				(r)->type = DB1_DATETIME; \
+				(r)->val.time_val = (time_t)(v); \
+			} \
+		} while(0)
+
+#define UL_DB_EXPIRES_GET(r)  ((ul_expires_type==1)?(time_t)VAL_BIGINT(r):VAL_TIME(r))
 
 #endif /* UL_MOD_H */

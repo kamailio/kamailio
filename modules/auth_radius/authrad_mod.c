@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -89,10 +89,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"radius_config",    STR_PARAM, &radius_config   },
+	{"radius_config",    PARAM_STRING, &radius_config   },
 	{"service_type",     INT_PARAM, &service_type    },
 	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag   },
-	{"auth_extra",       STR_PARAM, &auth_extra_str  },
+	{"auth_extra",       PARAM_STRING, &auth_extra_str  },
 	{0, 0, 0}
 };
 

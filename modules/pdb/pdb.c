@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -98,7 +98,7 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[] = {
-	{"server",      STR_PARAM, &modp_server },
+	{"server",      PARAM_STRING, &modp_server },
 	{"timeout",     INT_PARAM, &timeout },
 	{0, 0, 0 }
 };
@@ -158,14 +158,14 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 {
 	struct timeval tstart, tnow;
 	struct server_item_t *server;
-	short int carrierid;
+	short int carrierid, *_id;
 	char buf[NETBUFSIZE+1+sizeof(carrierid)];
 	size_t reqlen;
 	int_str avp_val;
 	struct usr_avp *avp;
 	int i, ret, nflush;
 	long int td;
-	str number = { .len = 0, .s = NULL};
+	str number = STR_NULL;
 
 	if ((active == NULL) || (*active == 0)) return -1;
 
@@ -270,7 +270,8 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 				if (recv(server_list->fds[i].fd, buf, NETBUFSIZE, MSG_DONTWAIT) > 0) { /* do not block - just in case select/poll was wrong */
 					buf[NETBUFSIZE] = '\0';
 					if (strncmp(buf, number.s, number.len) == 0) {
-						carrierid=ntohs(*((short int *)&(buf[reqlen]))); /* convert to host byte order */
+						_id = (short int *)&(buf[reqlen]);
+						carrierid=ntohs(*_id); /* convert to host byte order */
 						goto found;
 					}
 				}

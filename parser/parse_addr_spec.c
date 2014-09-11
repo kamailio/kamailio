@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -438,6 +438,10 @@ semicolon_add_param:
 				}
 				break;
 			case ',':
+				if(status==PARA_VALUE_QUOTED) {
+					/* comma is allowed inside quoted values */
+					break;
+				}
 				if (allow_comma_sep)
 				{
 					switch (status)
@@ -476,9 +480,13 @@ semicolon_add_param:
 							goto error;
 					}
 					break;
-				}
-				else
-				{
+				} else {
+					if((status==S_PARA_VALUE || status==PARA_VALUE_TOKEN)
+							&& param->type==TAG_PARAM) {
+						/* if comma is not separator, allow it as part of value
+						 * - some user agents use it */
+						break;
+					}
 					LOG( L_ERR, "ERROR parse_to_param : "
 							"invalid character ',' in status %d: <<%.*s>>\n",
 							status, (int)(tmp-buffer), ZSW(buffer));
@@ -538,7 +546,12 @@ endofheader:
 			break;
 		case S_PARA_VALUE:
 			/* parameter with null value, e.g. foo= */
-			param->value.s=tmp;
+			if ( status==F_CRLF )
+				param->value.s=tmp-2;
+			else if ( status==F_CR || status==F_LF )
+				param->value.s=tmp-1;
+			else
+				param->value.s=tmp;
 			param->value.len=0;
 			add_param(param, to_b, newparam);
 			saved_status=E_PARA_VALUE;
@@ -915,6 +928,7 @@ void free_to_params(struct to_body* const tb)
 		pkg_free(tp);
 		tp=foo;
 	}
+	tb->param_lst = NULL;
 }
 
 

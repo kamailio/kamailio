@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -58,13 +58,13 @@ static const char* ul_rpc_dump_doc[2] = {
 static void ul_rpc_dump(rpc_t* rpc, void* ctx) {
 	dlist_t* dl;
 	udomain_t* dom;
-	time_t t;
+//	time_t t;
 	void* th;
 	void* ah;
 	void* sh;
 	int max, n, i;
 
-	t = time(0);
+//	t = time(0);
 	for (dl = root; dl; dl = dl->next) {
 		dom = dl->d;
 		if (rpc->add(ctx, "{", &th) < 0) {

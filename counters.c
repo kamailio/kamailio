@@ -89,12 +89,20 @@ static int grp_no; /* number of groups */
 
 /** counters array. a[proc_no][counter_id] =>
   _cnst_vals[proc_no*cnts_no+counter_id] */
-counter_array_t* _cnts_vals;
+counter_array_t* _cnts_vals = 0;
 int _cnts_row_len; /* number of elements per row */
 static int cnts_no; /* number of registered counters */
 static int cnts_max_rows; /* set to 0 if not yet fully init */
 
 
+int counters_initialized(void)
+{
+	if (unlikely(_cnts_vals == 0)) {
+		/* not init yet */
+		return 0;
+	}
+	return 1;
+}
 
 /** init the coutner hash table(s).
  * @return 0 on success, -1 on error.

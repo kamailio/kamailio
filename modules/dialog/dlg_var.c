@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 		       
 #include "../../route.h"
@@ -46,9 +46,14 @@ int dlg_cfg_cb(sip_msg_t *msg, unsigned int flags, void *cbp)
 		dlg = dlg_get_ctx_dialog();
 		if(dlg!=NULL) {
 			if(_dlg_ctx.t==0 && dlg->state==DLG_STATE_UNCONFIRMED) {
-				LM_DBG("new dialog with no trasaction after config execution\n");
-				dlg_release(dlg);
+				if(_dlg_ctx.cpid!=0 && _dlg_ctx.cpid==my_pid()) {
+					/* release to destroy dialog if created by this process
+					 * and request was not forwarded */
+					LM_DBG("new dialog with no trasaction after config execution\n");
+					dlg_release(dlg);
+				}
 			}
+			/* get ctx dlg increased ref count - release now */
 			dlg_release(dlg);
 		}
 	}
@@ -71,13 +76,14 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	var->vflags = DLG_FLAG_NEW;
 	/* set key */
 	var->key.len = key->len;
-	var->key.s = (char*)shm_malloc(var->key.len);
+	var->key.s = (char*)shm_malloc(var->key.len+1);
 	if (var->key.s==NULL) {
 		shm_free(var);			
 		LM_ERR("no more shm mem\n");
 		return NULL;
 	}
 	memcpy(var->key.s, key->s, key->len);
+	var->key.s[var->key.len] = '\0';
 	/* set value */
 	var->value.len = val->len;
 	var->value.s = (char*)shm_malloc(var->value.len);
@@ -284,6 +290,7 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	dlg_cell_t *dlg;
 	str * value;
+	str spv;
 
 	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR
 			|| param->pvn.u.isname.type!=AVP_NAME_STR
@@ -306,6 +313,19 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	/* dcm: todo - the value should be cloned for safe usage */
 	value = get_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s);
 
+	spv.s = NULL;
+	if(value) {
+		spv.len = pv_get_buffer_size();
+		if(spv.len<value->len+1) {
+			LM_ERR("pv buffer too small (%d) - needed %d\n", spv.len, value->len);
+		} else {
+			spv.s = pv_get_buffer();
+			strncpy(spv.s, value->s, value->len);
+			spv.len = value->len;
+			spv.s[spv.len] = '\0';
+		}
+	}
+
 	print_lists(dlg);
 
 	/* unlock dialog */
@@ -314,8 +334,8 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		dlg_release(dlg);
 	}
 
-	if (value)
-		return pv_get_strval(msg, param, res, value);
+	if (spv.s)
+		return pv_get_strval(msg, param, res, &spv);
 
 
 	return pv_get_null(msg, param, res);
@@ -430,9 +450,8 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 	if(param==NULL)
 		return -1;
 
-	if(val==NULL)
-		n = 0;
-	else
+	n = 0;
+	if(val!=NULL && val->flags&PV_VAL_INT)
 		n = val->ri;
 
 	switch(param->pvn.u.isname.name.n)
@@ -447,7 +466,7 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 			_dlg_ctx.to_bye = n;
 		break;
 		case 4:
-			if(val->flags&PV_VAL_STR) {
+			if(val && val->flags&PV_VAL_STR) {
 				if(val->rs.s[val->rs.len]=='\0'
 						&& val->rs.len<DLG_TOROUTE_SIZE) {
 					_dlg_ctx.to_route = route_lookup(&main_rt, val->rs.s);

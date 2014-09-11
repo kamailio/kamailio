@@ -1,0 +1,804 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+]>
+<!-- Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>This module contains REGISTER processing logic for the S-CSCF. The
+    'storage engine' of this module is provided by the ims_usrloc_scscf
+    module:</para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The following modules must be loaded before this module:
+      <itemizedlist>
+          <listitem>
+            <para><emphasis>CDP</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis>CDP_AVP</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis>TM</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis>ims_usrloc_scscf</emphasis></para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>The following libraries or applications must be installed before
+      running &kamailio; with this module loaded: <itemizedlist>
+          <listitem>
+            <para><emphasis>LibXML2 - used for parsing the XML Subscription
+            information obtained from the HSS (Home Subscriber
+            Server)</emphasis></para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title>default_expires (int)</title>
+
+      <para>If the processed message contains neither Expires HFs nor expires
+      contact parameters, this value will be used for newly created S-CSCF
+      usrloc records. The parameter contains number of second to expire (for
+      example use 3600 for one hour). If it is set to a lower value than the
+      &ldquo;min_expires&rdquor; parameter then it will be ignored. This
+      parameter can be modified via ser config framework. A random value in a
+      specific interval can be selected by using the default_expires_range
+      parameter</para>
+
+      <para><emphasis> Default value is 3600. </emphasis></para>
+
+      <example>
+        <title>Set <varname>default_expires</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "default_expires", 3600)
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>default_expires_range (int)</title>
+
+      <para>This parameter specifies that the expiry used for newly created
+      S-CSCF usrloc records are not fixed(when &ldquo;default_expires&rdquor;
+      applies), but a random value in the interval
+      &ldquo;[default_expires-default_expires_range%,
+      default_expires+default_expires_range%]&rdquor;. The value is between 0
+      and 100 and represent the maximim percentage from default_expires that
+      will be substracted or added when computing the value. Default in 0,
+      meaning default_expires is left unmodified. This parameter can be
+      modified via ser config framework.</para>
+
+      <para><emphasis> Default value is 0. </emphasis></para>
+
+      <example>
+        <title>Set <varname>default_expires_range </varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "default_expires_range", 30) # +- 30% from default_expires
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>min_expires (int)</title>
+
+      <para>The minimum expires value of a Contact, values lower than this
+      minimum will be automatically set to the minimum. Value 0 disables the
+      checking. This parameter can be modified via ser config
+      framework.</para>
+
+      <para><emphasis> Default value is 60. </emphasis></para>
+
+      <example>
+        <title>Set <varname>min_expires</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "min_expires", 1800)
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>max_expires (int)</title>
+
+      <para>The maximum expires value of a Contact, values higher than this
+      maximum will be automatically set to the maximum. Value 0 disables the
+      checking. This parameter can be modified via ser config
+      framework.</para>
+
+      <para><emphasis> Default value is 0. </emphasis></para>
+
+      <example>
+        <title>Set <varname>max_expires</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "max_expires", 3600)
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>user_data_dtd (string)</title>
+
+      <para>DTD to check the user data received in SAA (Server Assignment
+      Answer).</para>
+
+      <para><emphasis> Default value is NULL (none). </emphasis></para>
+
+      <example>
+        <title>Set <varname>user_data_dtd</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "user_data_dtd", "/usr/local/etc/kamailio/CxDataType_Rel7.dtd")
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>user_data_xsd (string)</title>
+
+      <para>XSD to check the user data received in SAA (Server Assignment
+      Answer).</para>
+
+      <para><emphasis> Default value is NULL (none). </emphasis></para>
+
+      <example>
+        <title>Set <varname>user_data_xsd</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "user_data_xsd", "/usr/local/etc/kamailio/CxDataType_Rel7.xsd")
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>support_wildcardPSI (int)</title>
+
+      <para>indicate support for wildcard PSI is subscription profile
+      (SAA)</para>
+
+      <para><emphasis> Default value is 0. </emphasis></para>
+
+      <example>
+        <title>Set <varname>support_wildcardPSI</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "support_wildcardPSI", 1)
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>scscf_name (string)</title>
+
+      <para>The name of the S-CSCF</para>
+
+      <para><emphasis> Default value is sip:scscf.ims.smilecoms.com:6060.
+      </emphasis></para>
+
+      <example>
+        <title>Set <varname>scscf_name</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "scscf_name", "sip:scscf2.ims.smilecoms.com:6060")
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>store_profile_dereg (int)</title>
+
+      <para>Should the subscription profile be stored on
+      de-registration</para>
+
+      <para><emphasis> Default value 0.</emphasis></para>
+
+      <example>
+        <title>Set <varname>store_profile_dereg</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "store_profile_dereg", 1)
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>cxdx_dest_realm (string)</title>
+
+      <para>Destination realm to be used in Diameter messages</para>
+
+      <para><emphasis> Default value "ims.smilecoms.com"</emphasis></para>
+
+      <example>
+        <title>Set <varname>cxdx_dest_realm</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "cxdx_dest_realm", "my.domain,org")
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>cxdx_forced_peer (string)</title>
+
+      <para>FQDN of Diameter Peer (HSS) to use for communication (SAR). If you
+      use this, the routing defined in your diameter xml configuration file
+      (CDP) will be ignored and as a result you will lose the benefits of load
+      balancing and failover.</para>
+
+      <para><emphasis> Default value NULL (none)</emphasis></para>
+
+      <example>
+        <title>Set <varname>cxdx_forced_peer</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "cxdx_forced_peer", "hss.ims.smilecoms.com")
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>append_branches (integer)</title>
+
+      <para>The parameter controls how lookup function processes multiple
+      contacts. If there are multiple contacts for the given username in
+      usrloc and this parameter is set to 1, Request-URI will be overwritten
+      with the highest-q rated contact and the rest will be appended to
+      sip_msg structure and can be later used by tm for forking. If the
+      parameter is set to 0, only Request-URI will be overwritten with the
+      highest-q rated contact and the rest will be left unprocessed. This
+      parameter can be modified via Kamailio config framework.</para>
+
+      <para><emphasis> Default value is 0 (disabled)</emphasis></para>
+
+      <example>
+        <title>Set <varname>cxdx_forced_peer</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "append_branches", 1)
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>method_filtering (integer)</title>
+
+      <para>Tells if the contact filtering based on supported methods should
+      be performed during lookup. It's enabled only if it has a non zero
+      value.</para>
+
+      <para><emphasis> Default value is 0 (disabled)</emphasis></para>
+
+      <example>
+        <title>Set <varname>cxdx_forced_peer</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "method_filtering", 1)
+...</programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section>
+    <title>Functions</title>
+
+    <section>
+      <title><function moreinfo="none">save(async_reply_route,
+      domain)</function></title>
+
+      <para>The function processes a REGISTER message. It can add, remove or
+      modify usrloc records depending on Contact and Expires HFs in the
+      REGISTER message. On success and when called from the REQUEST_ROUTE, 200
+      OK will be returned listing all contacts that are currently in usrloc.
+      On an error, error message will be sent with a short description in
+      reason phrase. In case of internal errors the function will return
+      FALSE, otherwise a force to exit the cfg is file is actioned by
+      returning 0 (asynchronous processing)</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>async_reply_route</emphasis>- the route to execute
+          after the save has completed. This is required because the save
+          function is executed asynchronously (Diameter).</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>domain</emphasis>- Logical domain within
+          registrar.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE</para>
+
+      <example>
+        <title><function>save</function> usage</title>
+
+        <programlisting format="linespecific">...
+if (!impu_registered("location")) {
+   save("PRE_REG_SAR_REPLY","location");
+}
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">lookup(domain)</function></title>
+
+      <para>This function extract the IMPU from the Request-URI and tries to
+      find all registered contacts in usrloc. If there are no such contacts,
+      -1 is returned. If there are, Request-URI will be rewritten with the
+      contact that has the highest q value. The rest of the contacts will be
+      appended to the sip msg structure (if append_branches is set) and can be
+      later used by TM module for forking for example...</para>
+
+      <para>If the method filtering option is enabled, the lookup function
+      will only return contacts that support the method of the request being
+      processed (see allows header)</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <para><itemizedlist>
+          <listitem>
+            <para><emphasis>domain</emphasis> - Logical domain within
+            registrar.</para>
+          </listitem>
+        </itemizedlist></para>
+
+      <para>Return codes:</para>
+
+      <para><itemizedlist>
+          <listitem>
+            <para><emphasis>-1</emphasis> - Not found</para>
+          </listitem>
+
+          <listitem>
+            <para>-2 - Found, but method not allowed (check Allows header for
+            INVITE, MESSAGE, etc).</para>
+          </listitem>
+
+          <listitem>
+            <para>-3 - Error ocurred internally during processing</para>
+          </listitem>
+        </itemizedlist></para>
+
+      <para>This function can be used from REQUEST_ROUTE, FAILURE_ROUTE</para>
+
+      <example>
+        <title><function>lookup</function> usage</title>
+
+        <programlisting format="linespecific">...
+lookup("location");
+switch ($retcode) {
+    case -1:
+    case -3:
+        sl_send_reply("404", "Not Found");
+        exit;
+    case -2:
+        sl_send_reply("405", "Not Found");
+        exit;
+};
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">unregister(domain)</function></title>
+
+      <para>This function will remove all bindings for the IMPU found in the
+      Request-URI.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>Domain</emphasis>- Logical domain within
+          registrar.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE, FAILURE_ROUTE</para>
+
+      <example>
+        <title><function>unregister</function> usage</title>
+
+        <programlisting format="linespecific">...
+unregister("location");
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">assign_server_unreg(aysnc_reply_route,
+      domain, direction)</function></title>
+
+      <para>TBD</para>
+
+      <para>used in REQUEST_ROUTE</para>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">impu_registered(domain)</function></title>
+
+      <para>This function checks if the IMPU in the To header is registered in
+      usrloc.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain</emphasis>- Logical domain within
+          registrar.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Return codes:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>1 - True, IMPU exists in registered state in usrloc</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>-1 - False, IMPU not registered</emphasis></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE, FAILURE_ROUTE</para>
+
+      <example>
+        <title><function>impu_registered</function> usage</title>
+
+        <programlisting format="linespecific">...
+impu_registered("location");
+switch ($retcode) {
+    case -1:
+        sl_send_reply("404", "Not Found");
+        exit;
+    case 1:
+        #true, continue with normal processing
+};
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">term_impu_registered(domain)</function></title>
+
+      <para>This function checks if the IMPU in the Request-URI is registered
+      in usrloc.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain</emphasis>- Logical domain within
+          registrar.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Return codes:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>1 - True, IMPU exists in registered state in usrloc</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>-1 - False, IMPU not registered</emphasis></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE, FAILURE_ROUTE</para>
+
+      <example>
+        <title><function>term_impu_registered</function> usage</title>
+
+        <programlisting format="linespecific">...
+term_impu_registered("location");
+switch ($retcode) {
+     case -1:
+          sl_send_reply("404", "Not Found");
+          exit;
+     case 1:
+          #true, continue with normal processing
+};
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">reg_fetch_contacts(domain, uri,
+      profile)</function></title>
+
+      <para>The function fetches the contacts for 'uri' from table 'domain' to
+      pseudo-variable $imssulc(profile) [imssulc = ims scscf ulc].</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain </emphasis>- Name of table that should be
+          used for the lookup of contact addresses.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>uri</emphasis> - The SIP URI address of the user
+          which to fetch the contact addresses for. It can contain
+          pseudo-variables that are evaluated at runtime.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>profile</emphasis> - Name of $imssulc
+          pseudo-variable profile that will store the fetched contacts. It is
+          a static string.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE, FAILURE_ROUTE</para>
+
+      <example>
+        <title><function>reg_fetch_contacts</function> usage</title>
+
+        <programlisting format="linespecific">...
+reg_fetch_contacts("location", "$ru", "callee");
+reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">reg_free_contacts(profile)</function></title>
+
+      <para>The function frees the contacts from pseudo-variable
+      $ulc(profile). Should be called to release the content of a profile.
+      Anyhow, fetching a new contact addresses set over a profile will release
+      any existing data in that profile.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>profile</emphasis> - Name of $imssulc
+          pseudo-variable profile that stores the contacts. It is a static
+          string.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE, FAILURE_ROUTE</para>
+
+      <example>
+        <title><function>reg_free_contacts</function> usage</title>
+
+        <programlisting format="linespecific">...
+reg_free_contacts("callee");
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">can_subscribe_to_reg(domain)</function></title>
+
+      <para>This function checks to see that a SUBSCRIBE request is authorised
+      to subscribe to the particular identity. Only 3 entities can
+      subscribe:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>The user agent to it's own state</emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para>The P-CSCF specified in the path header for that user</para>
+        </listitem>
+
+        <listitem>
+          <para>Application Server (AS) not yet implemented</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain - Logical domain within
+          registrar.</emphasis></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE</para>
+
+      <example>
+        <title><function>can_subscribe_to_reg</function> usage</title>
+
+        <programlisting format="linespecific">...
+if (can_subscribe_to_reg("location")){
+     $var(ret)= subscribe_to_reg("location");
+}
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">subscribe_to_reg(domain)</function></title>
+
+      <para>Save the subscription to the REG event for the UAC or the
+      appropriate P-CSCF (in the path to the UAC).</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain - Logical domain within
+          registrar.</emphasis></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE</para>
+
+      <example>
+        <title><function>subscribe_to_reg</function> usage</title>
+
+        <programlisting format="linespecific">...
+if (can_subscribe_to_reg("location")){
+     $var(ret)= subscribe_to_reg("location");
+}
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">can_publish_reg(domain)</function></title>
+
+      <para>This function checks to see that a PUBLISH request is authorised
+      to publish for a particular identity. Only 3 entities can
+      publish:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>The user agent to it's own state</emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para>The P-CSCF specified in the path header for that user</para>
+        </listitem>
+
+        <listitem>
+          <para>Application Server (AS) not yet implemented</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain - Logical domain within
+          registrar.</emphasis></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE</para>
+
+      <example>
+        <title><function>can_publish_reg</function> usage</title>
+
+        <programlisting format="linespecific">...
+if (can_publish_reg("location")){
+    $var(ret)= publish_reg("location"); 
+}
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">publish_reg(domain)</function></title>
+
+      <para>Save the publish to the REG event for the UAC or the appropriate
+      P-CSCF (in the path to the UAC).</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>domain - Logical domain within
+          registrar.</emphasis></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE</para>
+
+      <example>
+        <title><function>publish_reg</function> usage</title>
+
+        <programlisting format="linespecific">...
+if (can_publish_reg("location")){
+    $var(ret)= publish_reg("location"); 
+}
+...
+</programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section>
+    <title>RPC Commands</title>
+
+    <para>exported RPC commands.</para>
+
+    <section>
+      <title>ulpcscf.status</title>
+
+      <para>Status of pcscf_usrloc, AORs, max slots, etc.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Statistics</title>
+
+    <para>Exported statistics are listed in the next sections.</para>
+
+    <section>
+      <title>registered contacts</title>
+
+      <para>Number of AOR contacts in registered state - cannot be
+      reset.</para>
+    </section>
+
+    <section>
+      <title>impus</title>
+
+      <para>Number of IMPUs - cannot be reset.</para>
+    </section>
+
+    <section>
+      <title>expired contacts</title>
+
+      <para>Number of expired contacts - can be reset.</para>
+    </section>
+  </section>
+</chapter>

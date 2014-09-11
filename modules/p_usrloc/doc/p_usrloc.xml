@@ -14,11 +14,6 @@
 		<productname class="trade">&kamailioname;</productname>
 		<authorgroup>
 			<author>
-				<firstname>Jonas</firstname>
-				<surname>Appel</surname>
-				<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
-			</author>
-			<author>
 				<firstname>Henning</firstname>
 				<surname>Westerholt</surname>
 				<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
@@ -26,14 +21,14 @@
 					<email>henning.westerholt@1und1.de</email>
 				</address>
 			</author>
-			<author>
-				<firstname>Marius</firstname>
-				<surname>Zbihlei</surname>
+			<editor>
+				<firstname>Patric</firstname>
+				<surname>Marschall</surname>
 				<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
 				<address>
-					<email>marius.zbihlei@1and1.ro</email>
+					<email>patric.marschall.@1und1.de</email>
 				</address>
-			</author>
+			</editor>
 			
 
 			<!--

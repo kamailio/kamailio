@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -34,6 +34,7 @@ struct cfg_group_registrar	default_registrar_cfg = {
 		STR_NULL,	/* realm_pref */
 		3600, 	/* default_expires */
 		0,	/* default_expires_range */
+		0,	/* expires_range */
 		60,	/* min_expires */
 		0,	/* max_expires */
 		0,	/* max_contacts */
@@ -52,6 +53,8 @@ cfg_def_t	registrar_cfg_def[] = {
 		"Contains number of second to expire if no expire hf or contact expire present" },
 	{"default_expires_range",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 100, 0, default_expires_range_update,
 		"Percent from default_expires that will be used in generating the range for the expire interval"},
+	{"expires_range",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 100, 0, expires_range_update,
+		"Percent from incoming expires that will be used in generating the range for the expire interval"},
 	{"min_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, 0,
 		"The minimum expires value of a Contact. Value 0 disables the checking. "},
 	{"max_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, max_expires_stats_update,

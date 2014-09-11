@@ -19,14 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 #ifndef _kam_stun_h
 #define _kam_stun_h
-
-#include <openssl/sha.h>
 
 #include "../../str.h"
 #include "../../tcp_conn.h"
@@ -105,6 +103,10 @@
 #define	FATAL_ERROR		-1
 #define IP_ADDR			4
 #define XOR			1
+
+#ifndef SHA_DIGEST_LENGTH
+#define SHA_DIGEST_LENGTH	20
+#endif
 
 /** padd len to a multiple of sz.
  *  sz must be a power of the form 2^k (e.g. 2, 4, 8, 16 ...)

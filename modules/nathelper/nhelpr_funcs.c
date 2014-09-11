@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -282,37 +282,6 @@ done:
 	return 1;
 }
 
-/*
- * ser_memmem() returns the location of the first occurrence of data
- * pattern b2 of size len2 in memory block b1 of size len1 or
- * NULL if none is found. Obtained from NetBSD.
- */
-void *
-ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
-{
-        /* Initialize search pointer */
-        char *sp = (char *) b1;
-
-        /* Initialize pattern pointer */
-        char *pp = (char *) b2;
-
-        /* Initialize end of search address space pointer */
-        char *eos = sp + len1 - len2;
-
-        /* Sanity check */
-        if(!(b1 && b2 && len1 && len2))
-                return NULL;
-
-        while (sp <= eos) {
-                if (*sp == *pp)
-                        if (memcmp(sp, pp, len2) == 0)
-                                return sp;
-
-                        sp++;
-        }
-
-        return NULL;
-}
 
 /*
  * Some helper functions taken verbatim from tm module.

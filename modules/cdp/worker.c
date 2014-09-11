@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -56,6 +56,8 @@
 
 #include "worker.h"
 #include "diameter_api.h"
+
+#include "../../cfg/cfg_struct.h"
 
 /* defined in ../diameter_peer.c */
 int dp_add_pid(pid_t pid);
@@ -315,6 +317,7 @@ void worker_process(int id) {
     /* init the application level for this child */
     while (1) {
         if (shutdownx && (*shutdownx)) break;
+	cfg_update();
         t = take_task();
         if (!t.msg) {
             if (shutdownx && (*shutdownx)) break;

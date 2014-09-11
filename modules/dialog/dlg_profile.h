@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -28,8 +28,11 @@
 #ifndef _DIALOG_DLG_PROFILE_H_
 #define _DIALOG_DLG_PROFILE_H_
 
+#include <time.h>
+
 #include "../../parser/msg_parser.h"
 #include "../../lib/srutils/srjson.h"
+#include "../../lib/srutils/sruid.h"
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../modules/tm/h_table.h"
@@ -48,6 +51,11 @@
 typedef struct dlg_profile_hash {
 	str value; /*!< hash value */
 	struct dlg_cell *dlg; /*!< dialog cell */
+	char puid[SRUID_SIZE];
+	int puid_len;
+	time_t expires;
+	int flags;
+	struct dlg_profile_link *linker;
 	struct dlg_profile_hash *next;
 	struct dlg_profile_hash *prev;
 	unsigned int hash; /*!< position in the hash table */
@@ -68,12 +76,14 @@ typedef struct dlg_profile_entry {
 	unsigned int content; /*!< content of the entry */
 } dlg_profile_entry_t;
 
+#define FLAG_PROFILE_REMOTE	1
 
 /*! dialog profile table */
 typedef struct dlg_profile_table {
 	str name; /*!< name of the dialog profile */
 	unsigned int size; /*!< size of the dialog profile */
 	unsigned int has_value; /*!< 0 for profiles without value, otherwise it has a value */
+	int flags; /*!< flags related to the profile */
 	gen_lock_t lock; /*! lock for concurrent access */
 	struct dlg_profile_entry *entries;
 	struct dlg_profile_table *next;
@@ -207,7 +217,8 @@ int dlg_set_timeout_by_profile(struct dlg_profile_table *, str *, int);
  * \param profile dialog profile table
  * \return 0 on success, -1 on failure
  */
-int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile);
+int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile,
+		str *puid, time_t expires, int flags);
 
 /*!
  * \brief Serialize dialog profiles to json
@@ -218,5 +229,16 @@ int dlg_profiles_to_json(dlg_cell_t *dlg, srjson_doc_t *jdoc);
  * \brief Deserialize dialog profiles to json
  */
 int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc);
+
+/*!
+ * \brief Remove expired remove profiles
+ */
+void remove_expired_remote_profiles(time_t te);
+
+/*!
+ *
+ */
+int dlg_cmd_remote_profile(str *cmd, str *pname, str *value, str *puid,
+		time_t expires, int flags);
 
 #endif

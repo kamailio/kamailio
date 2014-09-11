@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -101,6 +101,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
 
     str xml_data = {0, 0}, ccf1 = {0, 0}, ccf2 = {0, 0}, ecf1 = {0, 0}, ecf2 = {0, 0};
     ims_subscription* s = 0;
+    rerrno = R_FINE;
 
     if (!param) {
         LM_DBG("No transaction data this must have been called from usrloc cb impu deleted - just log result code and then exit");
@@ -139,6 +140,13 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
             rerrno = R_SAR_FAILED;
             goto error_no_send;
         }
+
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
         get_act_time();
 
@@ -252,12 +260,6 @@ done:
     if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
         reg_send_reply_transactional(t->uas.request, data->contact_header, t);
     LM_DBG("DBG:SAR Async CDP callback: ... Done resuming transaction\n");
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
     create_return_code(result);
 
@@ -277,6 +279,8 @@ done:
 error:
     if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
         reg_send_reply_transactional(t->uas.request, data->contact_header, t);
+		
+    create_return_code(-2);
 
 error_no_send: //if we don't have the transaction then we can't send a transaction response
     update_stat(rejected_registrations, 1);

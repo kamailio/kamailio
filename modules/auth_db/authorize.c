@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * history:
  * ---------
@@ -223,10 +223,10 @@ static int generate_avps(struct sip_msg* msg, db1_res_t* db_res)
 
 
 /*
- * Authorize digest credentials
+ * Authorize digest credentials and set the pointer to used hdr
  */
-static int digest_authenticate(struct sip_msg* msg, str *realm,
-				str *table, hdr_types_t hftype, str *method)
+static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
+				str *table, hdr_types_t hftype, str *method, hdr_field_t **ahdr)
 {
 	char ha1[256];
 	int res;
@@ -277,6 +277,7 @@ static int digest_authenticate(struct sip_msg* msg, str *realm,
 	}
 
 	cred = (auth_body_t*)h->parsed;
+	if(ahdr!=NULL) *ahdr = h;
 
 	res = get_ha1(&cred->digest.username, realm, table, ha1, &result);
 	if (res < 0) {
@@ -313,6 +314,15 @@ end:
 	if(result)
 		auth_dbf.free_result(auth_db_handle, result);
 	return ret;
+}
+
+/*
+ * Authorize digest credentials
+ */
+static int digest_authenticate(sip_msg_t* msg, str *realm,
+				str *table, hdr_types_t hftype, str *method)
+{
+	return digest_authenticate_hdr(msg, realm, table, hftype, method, NULL);
 }
 
 
@@ -475,15 +485,15 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 	LM_DBG("realm [%.*s] table [%.*s] flags [%d]\n", srealm.len, srealm.s,
 			stable.len,  stable.s, iflags);
 
+	hdr = NULL;
 	if(_m->REQ_METHOD==METHOD_REGISTER)
-		ret = digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
-						&_m->first_line.u.request.method);
+		ret = digest_authenticate_hdr(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
+						&_m->first_line.u.request.method, &hdr);
 	else
-		ret = digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T,
-						&_m->first_line.u.request.method);
+		ret = digest_authenticate_hdr(_m, &srealm, &stable, HDR_PROXYAUTH_T,
+						&_m->first_line.u.request.method, &hdr);
 
-	if(ret==AUTH_OK && (iflags&AUTH_CHECK_ID_F)) {
-		hdr = (_m->proxy_auth==0)?_m->authorization:_m->proxy_auth;
+	if(ret==AUTH_OK && hdr!=NULL && (iflags&AUTH_CHECK_ID_F)) {
 		srealm = ((auth_body_t*)(hdr->parsed))->digest.username.user;
 			
 		if((furi=parse_from_uri(_m))==NULL)
@@ -496,9 +506,14 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 		} else {
 			uri = furi;
 		}
-		if(srealm.len!=uri->user.len
-					|| strncmp(srealm.s, uri->user.s, srealm.len)!=0)
-			return AUTH_USER_MISMATCH;
+		if(!((iflags&AUTH_CHECK_SKIPFWD_F)
+				&& (_m->REQ_METHOD==METHOD_INVITE || _m->REQ_METHOD==METHOD_BYE
+					|| _m->REQ_METHOD==METHOD_PRACK || _m->REQ_METHOD==METHOD_UPDATE
+					|| _m->REQ_METHOD==METHOD_MESSAGE))) {
+			if(srealm.len!=uri->user.len
+						|| strncmp(srealm.s, uri->user.s, srealm.len)!=0)
+				return AUTH_USER_MISMATCH;
+		}
 
 		if(_m->REQ_METHOD==METHOD_REGISTER || _m->REQ_METHOD==METHOD_PUBLISH) {
 			/* check from==to */

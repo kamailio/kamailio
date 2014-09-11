@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*! \file
@@ -46,7 +46,8 @@ struct my_con {
 
 	MYSQL* con;              /*!< Connection representation */
 	time_t timestamp;        /*!< Timestamp of last query */
-	int transaction;	 /*!< indicates whether a multi-query transaction is currently open */
+	int transaction;         /*!< Multi-query transaction is currently open */
+	int lockedtables;        /*!< Table locks were aquired */
 };
 
 
@@ -56,6 +57,7 @@ struct my_con {
 #define CON_CONNECTION(db_con)  (((struct my_con*)((db_con)->tail))->con)
 #define CON_TIMESTAMP(db_con)   (((struct my_con*)((db_con)->tail))->timestamp)
 #define CON_TRANSACTION(db_con) (((struct my_con*)((db_con)->tail))->transaction)
+#define CON_LOCKEDTABLES(db_con) (((struct my_con*)((db_con)->tail))->lockedtables)
 
 
 /*! \brief

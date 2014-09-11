@@ -4,7 +4,13 @@ Juha Heinanen
 
    TutPro Inc.
 
-   Copyright © 2008-2009 Juha Heinanen
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright (c) 2008-2009 Juha Heinanen
+
+   Copyright (c) 2013 Carsten Bock, ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -26,7 +32,7 @@ Juha Heinanen
 
         4. Functions
 
-              4.1. http_query(url, result)
+              4.1. http_query(url, [post-data], result)
               4.2. xcap_auth_status(watcher_uri, presentity_uri)
 
         5. MI Commands
@@ -70,7 +76,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. http_query(url, result)
+        4.1. http_query(url, [post-data], result)
         4.2. xcap_auth_status(watcher_uri, presentity_uri)
 
    5. MI Commands
@@ -174,17 +180,20 @@ modparam("utils", "xcap_table", "pres_xcap")
 
 4. Functions
 
-   4.1. http_query(url, result)
+   4.1. http_query(url, [post-data], result)
    4.2. xcap_auth_status(watcher_uri, presentity_uri)
 
-4.1. http_query(url, result)
+4.1.  http_query(url, [post-data], result)
 
-   Sends HTTP GET request according to URL given in "url" parameter, which
-   is a string that may contain pseudo variables.
+   Sends HTTP GET or POST request according to URL given in "url"
+   parameter, which is a string that may contain pseudo variables.
 
-   If HTTP server returns a class 2xx or 3xx reply, the first line of the
-   reply's body (if any) is stored in "result" parameter, which must be a
-   writable pseudo variable.
+   If you want to make a POST-Request, you have to define the "post"-data,
+   that should be submitted in that request as the second parameter.
+
+   If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line of
+   the reply's body (if any) is stored in "result" parameter, which must
+   be a writable pseudo variable.
 
    Function returns reply code of HTTP reply or -1 if something went
    wrong.
@@ -194,6 +203,7 @@ modparam("utils", "xcap_table", "pres_xcap")
 
    Example 1.5. http_query() usage
 ...
+# GET-Request
 http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{s
 .escape.param})",
            "$var(result)")
@@ -201,8 +211,17 @@ switch ($retcode) {
        ...
 }
 ...
+...
+# POST-Request
+http_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&f_uri=$(f
+u{s.escape.param})",
+           "$var(result)")
+switch ($retcode) {
+       ...
+}
+...
 
-4.2. xcap_auth_status(watcher_uri, presentity_uri)
+4.2.  xcap_auth_status(watcher_uri, presentity_uri)
 
    Function checks in the presence server database if a watcher is
    authorized to subscribe to event "presence" of presentity. Sphere

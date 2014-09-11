@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -48,9 +48,9 @@
 #include "usrloc.h"
 
 /*! CSEQ nr used */
-#define MI_UL_CSEQ 1
+static int MI_UL_CSEQ = 0;
 /*! call-id used for ul_add and ul_rm_contact */
-static str mi_ul_cid = str_init("dfjrewr12386fd6-343@kamailio.mi");
+static str mi_ul_cid = {0,0}; /* str_init("dfjrewr12386fd6-343@kamailio.mi");*/
 /*! user agent used for ul_add */
 static str mi_ul_ua  = str_init("SIP Router MI Server");
 /*! path used for ul_add and ul_rm_contact */
@@ -58,7 +58,26 @@ static str mi_ul_path = str_init("dummypath");
 
 extern sruid_t _ul_sruid;
 
+static char mi_ul_cid_buf[32];
+
 /************************ helper functions ****************************/
+
+static void set_mi_ul_cid(void)
+{
+	int i;
+    char charset[] = "0123456789"
+                     "abcdefghijklmnopqrstuvwxyz"
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+	if(mi_ul_cid.s!=NULL) return;
+
+	for(i=0; i<19; i++) {
+        mi_ul_cid_buf[i] = charset[rand()%(sizeof(charset) - 1)];
+    }
+    memcpy(mi_ul_cid_buf+i, "@kamailio.mi", sizeof("@kamailio.mi"));
+    mi_ul_cid.s = mi_ul_cid_buf;
+	mi_ul_cid.len = strlen(mi_ul_cid.s);
+}
 
 /*!
  * \brief Search a domain in the global domain list
@@ -360,6 +379,7 @@ struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param)
 	}
 
 	contact = &node->next->next->value;
+	set_mi_ul_cid();
 	ret = get_ucontact( rec, contact, &mi_ul_cid, &mi_ul_path, MI_UL_CSEQ+1, &con);
 	if (ret < 0) {
 		unlock_udomain( dom, aor);
@@ -566,6 +586,7 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 
 	lock_udomain( dom, aor);
 
+	set_mi_ul_cid();
 	n = get_urecord( dom, aor, &r);
 	if ( n==1) {
 		if (insert_urecord( dom, aor, &r) < 0)
@@ -580,7 +601,7 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 
 	ci.callid = &mi_ul_cid;
 	ci.user_agent = &mi_ul_ua;
-	ci.cseq = MI_UL_CSEQ;
+	ci.cseq = ++MI_UL_CSEQ;
 	/* 0 expires means permanent contact */
 	if (ci.expires!=0)
 		ci.expires += act_time;

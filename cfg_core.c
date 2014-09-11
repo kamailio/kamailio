@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History
  * -------
@@ -88,6 +88,7 @@ struct cfg_group_core default_core_cfg = {
 	1,  /*!< dns_search_list */
 	1,  /*!< dns_search_fmatch */
 	0,  /*!< dns_reinit */
+	1,  /*!< dns_naptr_ignore_rfc */
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
 	1,  /*!< use_dns_cache -- on by default */
@@ -216,13 +217,13 @@ cfg_def_t core_cfg_def[] = {
 	{"dns_try_naptr",	CFG_VAR_INT,	0, 1, 0, 0,
 #endif
 		"enable/disable NAPTR DNS lookups"},
-	{"dns_udp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
+	{"dns_udp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_proto_prefs,
 		"udp protocol preference when doing NAPTR lookups"},
-	{"dns_tcp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
+	{"dns_tcp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_proto_prefs,
 		"tcp protocol preference when doing NAPTR lookups"},
-	{"dns_tls_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
+	{"dns_tls_pref",	CFG_VAR_INT,	0, 0, 0, reinit_proto_prefs,
 		"tls protocol preference when doing NAPTR lookups"},
-	{"dns_sctp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
+	{"dns_sctp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_proto_prefs,
 		"sctp protocol preference when doing NAPTR lookups"},
 	{"dns_retr_time",	CFG_VAR_INT,	0, 0, 0, resolv_reinit,
 		"time in s before retrying a dns request"},
@@ -239,6 +240,8 @@ cfg_def_t core_cfg_def[] = {
 	{"dns_reinit",		CFG_VAR_INT|CFG_INPUT_INT,	1, 1, dns_reinit_fixup,
 		resolv_reinit,
 		"set to 1 in order to reinitialize the DNS resolver"},
+	{"dns_naptr_ignore_rfc",	CFG_VAR_INT,	0, 0, 0, reinit_proto_prefs,
+		"ignore the Order field required by RFC 2915"},
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
 	{"use_dns_cache",	CFG_VAR_INT,	0, 1, use_dns_cache_fixup, 0,

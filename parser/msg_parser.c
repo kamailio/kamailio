@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -723,18 +723,35 @@ void free_reply_lump( struct lump_rpl *lump)
 /*only the content*/
 void free_sip_msg(struct sip_msg* const msg)
 {
-	if (msg->new_uri.s) { pkg_free(msg->new_uri.s); msg->new_uri.len=0; }
-	if (msg->dst_uri.s) { pkg_free(msg->dst_uri.s); msg->dst_uri.len=0; }
-	if (msg->path_vec.s) { pkg_free(msg->path_vec.s); msg->path_vec.len=0; }
+	reset_new_uri(msg);
+	reset_dst_uri(msg);
+	reset_path_vector(msg);
+	reset_instance(msg);
+	reset_ruid(msg);
+	reset_ua(msg);
 	if (msg->headers)     free_hdr_field_lst(msg->headers);
 	if (msg->body && msg->body->free) msg->body->free(&msg->body);
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
 	if (msg->body_lumps)  free_lump_list(msg->body_lumps);
 	if (msg->reply_lump)   free_reply_lump(msg->reply_lump);
+	msg_ldata_reset(msg);
 	/* don't free anymore -- now a pointer to a static buffer */
 #	ifdef DYN_BUF
 	pkg_free(msg->buf);
 #	endif
+}
+
+/**
+ * reset new uri value
+ */
+void reset_new_uri(struct sip_msg* const msg)
+{
+	if(msg->new_uri.s != 0) {
+		pkg_free(msg->new_uri.s);
+	}
+	msg->new_uri.s = 0;
+	msg->new_uri.len = 0;
+	msg->parsed_uri_ok = 0;
 }
 
 
@@ -812,11 +829,13 @@ int set_path_vector(struct sip_msg* msg, str* path)
 
 void reset_path_vector(struct sip_msg* const msg)
 {
-	if(msg->path_vec.s != 0) {
-		pkg_free(msg->path_vec.s);
+	/* only free path vector from pkg IFF it is still in pkg... - ie. if msg is shm we don't free... */
+	if (!(msg->msg_flags&FL_SHM_CLONE)) {
+		if (msg->path_vec.s)
+			pkg_free(msg->path_vec.s);
+		msg->path_vec.s = 0;
+		msg->path_vec.len = 0;
 	}
-	msg->path_vec.s = 0;
-	msg->path_vec.len = 0;
 }
 
 
@@ -934,6 +953,16 @@ void reset_ua(struct sip_msg* const msg)
 	}
 	msg->location_ua.s = 0;
 	msg->location_ua.len = 0;
+}
+
+/**
+ * reset content of msg->ldv (msg_ldata_t structure)
+ */
+void msg_ldata_reset(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return;
+	memset(&msg->ldv, 0, sizeof(msg_ldata_t));
 }
 
 

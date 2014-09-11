@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -362,15 +362,11 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
  */
 char *pv_sprintf(struct sip_msg *m, char *fmt) {
 	int buf_size = 4096;
+	char out[4096];
 	pv_elem_t *model;
 	str s;
-	char *out = (char *)pkg_malloc(buf_size);
 	char *ret = NULL;
 
-	if (!out) {
-		LM_ERR("pv_sprintf: Memory exhausted!\n");
-		return NULL;
-	}
 
 	s.s = fmt; s.len = strlen(s.s);
 	if(pv_parse_format(&s, &model) < 0) {
@@ -386,7 +382,6 @@ char *pv_sprintf(struct sip_msg *m, char *fmt) {
 	}
 
 	pv_elem_free_all(model);
-	pkg_free(out);
 
 	return ret;
 }

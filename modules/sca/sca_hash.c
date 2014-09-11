@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  */
@@ -264,7 +264,7 @@ sca_hash_table_slot_kv_delete_unsafe( sca_hash_slot *slot, str *key )
 {
     sca_hash_entry	*e;
 
-    e = sca_hash_table_slot_kv_find_unsafe( slot, key );
+    e = sca_hash_table_slot_kv_find_entry_unsafe( slot, key );
     if ( e == NULL ) {
 	return( -1 );
     }

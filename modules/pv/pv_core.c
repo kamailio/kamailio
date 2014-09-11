@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
@@ -33,6 +33,7 @@
 #include "../../data_lump.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../tcp_conn.h"
+#include "../../pvapi.h"
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -43,6 +44,9 @@
 #include "../../parser/parse_diversion.h"
 #include "../../parser/parse_ppi_pai.h"
 #include "../../parser/digest/digest.h"
+#include "../../parser/contact/contact.h"
+#include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_expires.h"
 
 #include "pv_core.h"
 #include "pv_svar.h"
@@ -71,10 +75,9 @@ int _pv_pid = 0;
 
 #define PV_FIELD_DELIM ", "
 #define PV_FIELD_DELIM_LEN (sizeof(PV_FIELD_DELIM) - 1)
-#define PV_LOCAL_BUF_SIZE	511
 
-static char pv_local_buf[PV_LOCAL_BUF_SIZE+1];
-
+#define PV_HDR_DELIM ","
+#define PV_HDR_DELIM_LEN (sizeof(PV_HDR_DELIM) - 1)
 
 int pv_get_msgid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
@@ -108,6 +111,37 @@ int pv_get_return_code(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_sintval(msg, param, res, _last_returned_code);
 }
 */
+
+int pv_get_known_proto_string(int proto, str *sproto)
+{
+	switch(proto) {
+		case PROTO_UDP:
+			sproto->s = "udp";
+			sproto->len = 3;
+		return 0;
+		case PROTO_TCP:
+			sproto->s = "tcp";
+			sproto->len = 3;
+		return 0;
+		case PROTO_TLS:
+			sproto->s = "tls";
+			sproto->len = 3;
+		return 0;
+		case PROTO_SCTP:
+			sproto->s = "sctp";
+			sproto->len = 4;
+		return 0;
+		case PROTO_WS:
+			sproto->s = "ws";
+			sproto->len = 2;
+		return 0;
+		case PROTO_WSS:
+			sproto->s = "wss";
+			sproto->len = 3;
+		return 0;
+	}
+	return -1;
+}
 
 int pv_get_pid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
@@ -657,6 +691,35 @@ int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_uintval(msg, param, res, msg->rcv.src_port);
 }
 
+int pv_get_srcaddr_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str sip;
+	str sproto;
+	str sr;
+
+	if(msg==NULL)
+		return -1;
+
+	if(pv_get_known_proto_string(msg->rcv.proto, &sproto)<0)
+		return pv_get_null(msg, param, res);
+
+	sip.s = ip_addr2a(&msg->rcv.src_ip);
+	sip.len = strlen(sip.s);
+	if (sip.len + sproto.len + 32 >= pv_get_buffer_size())
+	{
+		LM_ERR("local buffer size exceeded\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	sr.s = pv_get_buffer();
+	sr.len = snprintf(sr.s, pv_get_buffer_size(),
+			"sip:%.*s:%d;transport=%.*s", sip.len, sip.s,
+			msg->rcv.src_port, sproto.len, sproto.s);
+
+	return pv_get_strval(msg, param, res, &sr);
+}
+
 int pv_get_rcvip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -994,6 +1057,11 @@ int pv_get_pai(struct sip_msg *msg, pv_param_t *param,
 	}
 
 	pai_body = get_pai(msg);
+	if(pai_body==NULL || pai_body->id==NULL)
+	{
+		LM_DBG("no P-Asserted-Identity header or empty body\n");
+		return pv_get_null(msg, param, res);
+	}
 	pai_uri = &pai_body->id[0];
 	cur_id = 0;
 	i = 0;
@@ -1032,35 +1100,10 @@ int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL)
 		return -1;
 
-	switch(msg->rcv.proto)
+	if(pv_get_known_proto_string(msg->rcv.proto, &s)<0)
 	{
-		case PROTO_UDP:
-			s.s = "udp";
-			s.len = 3;
-		break;
-		case PROTO_TCP:
-			s.s = "tcp";
-			s.len = 3;
-		break;
-		case PROTO_TLS:
-			s.s = "tls";
-			s.len = 3;
-		break;
-		case PROTO_SCTP:
-			s.s = "sctp";
-			s.len = 4;
-		break;
-		case PROTO_WS:
-			s.s = "ws";
-			s.len = 2;
-		break;
-		case PROTO_WSS:
-			s.s = "wss";
-			s.len = 3;
-		break;
-		default:
-			s.s = "NONE";
-			s.len = 4;
+		s.s = "NONE";
+		s.len = 4;
 	}
 
 	return pv_get_strintval(msg, param, res, &s, (int)msg->rcv.proto);
@@ -1234,6 +1277,9 @@ int pv_get_authattr(struct sip_msg *msg, pv_param_t *param,
 	}
 	switch(param->pvn.u.isname.name.n)
 	{
+		case 6:
+			return pv_get_strval(msg, param, res,
+					&((auth_body_t*)(hdr->parsed))->digest.alg.alg_str);
 		case 4:
 			return pv_get_strval(msg, param, res,
 					&((auth_body_t*)(hdr->parsed))->digest.username.domain);
@@ -1378,7 +1424,7 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 	qvalue_t q;
 	int cnt, i;
 	unsigned int qlen;
-	char *p, *qbuf;
+	char *p, *qbuf, *p_ini;
 
 	if(msg==NULL || res==NULL)
 		return -1;
@@ -1402,15 +1448,15 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);   
 
 	s.len += (cnt - 1) * PV_FIELD_DELIM_LEN;
-
-	if (s.len + 1 > PV_LOCAL_BUF_SIZE)
+	if (s.len + 1 > pv_get_buffer_size())
 	{
 		LM_ERR("local buffer length exceeded\n");
 		return pv_get_null(msg, param, res);
 	}
 
 	i = 0;
-	p = pv_local_buf;
+	p_ini = pv_get_buffer();
+	p = p_ini;
 
 	while ((uri.s = get_branch(i, &uri.len, &q, 0, 0, 0, 0, 0, 0, 0)))
 	{
@@ -1439,7 +1485,7 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 		i++;
 	}
 
-	s.s = &(pv_local_buf[0]);
+	s.s = &(p_ini[0]);
 	return pv_get_strval(msg, param, res, &s);
 }
 
@@ -1453,7 +1499,8 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	struct usr_avp *avp0;
 	int idx;
 	int idxf;
-	char *p;
+	char *p, *p_ini;
+	int p_size;
 	int n=0;
 	struct search_state state;
 
@@ -1491,11 +1538,13 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	}
 	if(idxf==PV_IDX_ALL)
 	{
-		p = pv_local_buf;
+		p_ini = pv_get_buffer();
+		p = p_ini;
+		p_size = pv_get_buffer_size();
 		do {
-			if(p!=pv_local_buf)
+			if(p!=p_ini)
 			{
-				if(p-pv_local_buf+PV_FIELD_DELIM_LEN+1>PV_LOCAL_BUF_SIZE)
+				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size)
 				{
 					LM_ERR("local buffer length exceeded\n");
 					return pv_get_null(msg, param, res);
@@ -1510,7 +1559,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				res->rs.s = int2str(avp_value.n, &res->rs.len);
 			}
 			
-			if(p-pv_local_buf+res->rs.len+1>PV_LOCAL_BUF_SIZE)
+			if(p-p_ini+res->rs.len+1>p_size)
 			{
 				LM_ERR("local buffer length exceeded!\n");
 				return pv_get_null(msg, param, res);
@@ -1518,9 +1567,8 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			memcpy(p, res->rs.s, res->rs.len);
 			p += res->rs.len;
 		} while ((avp=search_next_avp(&state, &avp_value))!=0);
-		*p = 0;
-		res->rs.s = pv_local_buf;
-		res->rs.len = p - pv_local_buf;
+		res->rs.s = p_ini;
+		res->rs.len = p - p_ini;
 		return 0;
 	}
 
@@ -1579,8 +1627,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	pv_value_t tv;
 	struct hdr_field *hf;
 	struct hdr_field *hf0;
-	char *p;
-	int n;
+	char *p, *p_ini;
+	int n, p_size;
 
 	if(msg==NULL || res==NULL || param==NULL)
 		return -1;
@@ -1639,22 +1687,24 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	}
 	if(idxf==PV_IDX_ALL)
 	{
-		p = pv_local_buf;
+		p_ini = pv_get_buffer();
+		p = p_ini;
+		p_size = pv_get_buffer_size();
 		do {
-			if(p!=pv_local_buf)
+			if(p!=p_ini)
 			{
-				if(p-pv_local_buf+PV_FIELD_DELIM_LEN+1>PV_LOCAL_BUF_SIZE)
+				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size)
 				{
 					LM_ERR("local buffer length exceeded\n");
 					return pv_get_null(msg, param, res);
 				}
-				memcpy(p, PV_FIELD_DELIM, PV_FIELD_DELIM_LEN);
-				p += PV_FIELD_DELIM_LEN;
+				memcpy(p, PV_HDR_DELIM, PV_HDR_DELIM_LEN);
+				p += PV_HDR_DELIM_LEN;
 			}
-			if(p-pv_local_buf+hf->body.len+1>PV_LOCAL_BUF_SIZE)
+			if(p-p_ini+hf->body.len+1>p_size)
 			{
 				LM_ERR("local buffer length exceeded [%d/%d]!\n",
-						(int)(p-pv_local_buf+hf->body.len+1),
+						(int)(p-p_ini+hf->body.len+1),
 						hf->body.len);
 				return pv_get_null(msg, param, res);
 			}
@@ -1673,9 +1723,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				}
 			}
 		} while (hf);
-		*p = 0;
-		res->rs.s = pv_local_buf;
-		res->rs.len = p - pv_local_buf;
+		res->rs.s = p_ini;
+		res->rs.len = p - p_ini;
 		return 0;
 	}
 
@@ -2593,6 +2642,9 @@ int pv_set_xto_attr(struct sip_msg* msg, pv_param_t *param,
 			LM_ERR("failed to set xto attribute %d\n", type);
 			goto error;
 		}
+	} else {
+		if(buf.s!=0)
+			pkg_free(buf.s);
 	}
 	return 0;
 
@@ -2740,14 +2792,15 @@ int pv_parse_hdr_name(pv_spec_p sp, str *in)
 		return 0;
 	}
 
-	if(in->len>=PV_LOCAL_BUF_SIZE-1)
+	if(in->len>=pv_get_buffer_size()-1)
 	{
 		LM_ERR("name too long\n");
 		return -1;
 	}
-	memcpy(pv_local_buf, in->s, in->len);
-	pv_local_buf[in->len] = ':';
-	s.s = pv_local_buf;
+	p = pv_get_buffer();
+	memcpy(p, in->s, in->len);
+	p[in->len] = ':';
+	s.s = p;
 	s.len = in->len+1;
 
 	if (parse_hname2(s.s, s.s + ((s.len<4)?4:s.len), &hdr)==0)
@@ -2778,30 +2831,20 @@ int pv_parse_cnt_name(pv_spec_p sp, str *in)
 	if(in->s==NULL || in->len<=0)
 		return -1;
 
-	pv = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	if(pv==NULL)
+	pv = pv_cache_get(in);
+	if(pv==NULL) {
+		LM_ERR("cannot find pv name [%.*s]\n", in->len, in->s);
 		return -1;
+	}
 
-	memset(pv, 0, sizeof(pv_spec_t));
-
-	if(pv_parse_spec(in, pv)==NULL)
-		goto error;
-
-	if(pv->type!=PVT_AVP)
-	{
+	if(pv->type!=PVT_AVP) {
 		LM_ERR("expected avp name instead of [%.*s]\n", in->len, in->s);
-		goto error;
+		return -1;
 	}
 
 	sp->pvp.pvn.u.dname = (void*)pv;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
 	return 0;
-
-error:
-	LM_ERR("invalid pv name [%.*s]\n", in->len, in->s);
-	if(pv!=NULL)
-		pkg_free(pv);
-	return -1;
 }
 
 
@@ -2848,12 +2891,12 @@ error:
 
 int pv_parse_flag_param(pv_spec_p sp, str *in)
 {
-	unsigned int n;
+	int n;
 
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
 
-	if (str2int(in, &n) != 0)
+	if (str2sint(in, &n) != 0)
 	{
 		if ((n = get_flag_no(in->s, in->len)) < 0)
 		{
@@ -2938,4 +2981,116 @@ int pv_get__s(sip_msg_t *msg, pv_param_t *param,
 		return -1;
 	}
 	return pv_get_strval(msg, param, res, &sdata);
+}
+
+/**
+ *
+ */
+int pv_parse_expires_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "min", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "max", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV expires key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_expires(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	unsigned int exp_min = 0xffffffff;
+	unsigned int exp_max = 0;
+	hdr_field_t* hdr;
+	contact_t* c;
+	unsigned int eval = 0;
+	unsigned int ehdr = 0;
+	unsigned int efound = 0;
+
+	if(param==NULL)
+		return -1;
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if (msg->expires) {
+		if(!msg->expires->parsed && (parse_expires(msg->expires) < 0)) {
+			LM_ERR("failed to parse hdr expires body\n");
+			return pv_get_null(msg, param, res);
+		}
+		ehdr = ((exp_body_t*)msg->expires->parsed)->val;
+	}
+
+	if (msg->contact) {
+		hdr = msg->contact;
+		while(hdr) {
+			if (hdr->type == HDR_CONTACT_T) {
+				if (!hdr->parsed && (parse_contact(hdr) < 0)) {
+					LM_ERR("failed to parse Contact body\n");
+					return pv_get_null(msg, param, res);
+				}
+				c = ((contact_body_t*)hdr->parsed)->contacts;
+				while(c) {
+					c = c->next;
+					if(c->expires && c->expires->body.len) {
+						if (str2int(&c->expires->body, &eval) < 0) {
+							LM_ERR("failed to parse expires\n");
+							return pv_get_null(msg, param, res);
+						}
+						efound = 1;
+						if(eval>exp_max) exp_max = eval;
+						if(eval<exp_min) exp_min = eval;
+					} else if(msg->expires && msg->expires->parsed) {
+						eval = ehdr;
+						efound = 1;
+						if(eval>exp_max) exp_max = eval;
+						if(eval<exp_min) exp_min = eval;
+					}
+				}
+			}
+			hdr = hdr->next;
+		}
+	}
+
+	if(efound==0 && msg->expires && msg->expires->parsed) {
+		eval = ehdr;
+		efound = 1;
+		if(eval>exp_max) exp_max = eval;
+		if(eval<exp_min) exp_min = eval;
+	}
+
+	if(efound==0) {
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_uintval(msg, param, res, exp_min);
+		case 1:
+			return pv_get_uintval(msg, param, res, exp_max);
+		default:
+			return pv_get_null(msg, param, res);
+	}
 }

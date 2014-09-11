@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "../../str.h"
 #include "../../dprint.h"
@@ -47,6 +48,7 @@ typedef struct acc_param {
 	int code;
 	str code_s;
 	str reason;
+	pv_elem_p  elem;
 } acc_param_t;
 
 /* various acc variables */
@@ -57,6 +59,7 @@ typedef struct acc_enviroment {
 	struct hdr_field *to;
 	str text;
 	time_t ts;
+	struct timeval tv;
 } acc_enviroment_t;
 
 /* acc extra parameter */
@@ -104,7 +107,7 @@ typedef struct acc_engine {
 
 #define MAX_ACC_EXTRA 64
 #define MAX_ACC_LEG   16
-#define ACC_CORE_LEN 6
+#define ACC_CORE_LEN  6
 
 
 enum {TYPE_NULL = 0, TYPE_INT, TYPE_STR};

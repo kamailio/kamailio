@@ -871,12 +871,13 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 
 void print_sdp_session(sdp_session_cell_t *session, int log_level)
 {
-	sdp_stream_cell_t *stream = session->streams;
+	sdp_stream_cell_t *stream;
 
 	if (session==NULL) {
 		LM_ERR("NULL session\n");
 		return;
 	}
+	stream = session->streams;
 
 	LOG(log_level, "..session[%d]:%p=>%p '%.*s' '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p\n",
 		session->session_num, session, session->next,

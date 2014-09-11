@@ -1295,6 +1295,46 @@ event_route[tm:branch-failure:outbound]
 		</example>
 	</section>
 
+	<section id="tm.f.t_check_status">
+		<title>
+		<function moreinfo="none">t_check_status(re)</function>
+		</title>
+		<para>
+		Returns true if the regular expresion <quote>re</quote> match the
+		reply code of the response message as follows:
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>in routing block</emphasis> - the code of the
+			last sent reply.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>in on_reply block</emphasis> - the code of the
+			current received reply.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>in on_failure block</emphasis> - the code of the
+			selected negative final reply.
+			</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE .
+		</para>
+		<example>
+		<title><function>t_check_status</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_check_status("(487)|(408)")) {
+    log("487 or 408 negative reply\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="tm.f.t_check_trans">
 	<title>
 		<function>t_check_trans()</function>
@@ -1341,9 +1381,11 @@ event_route[tm:branch-failure:outbound]
 				</note>
 			</listitem>
 			<listitem>
-				<para>For other requests (non ACKs and non CANCELs), it will
-				terminate the script for retransmissions and return false for
-				new requests (for which no transaction exists yet).</para>
+				<para>For other requests (non ACKs and non CANCELs), in case of
+				a retransmission matching a transaction, it resends the last
+				reply for that transaction and terminates the config execution.
+				Otherwise, it returns false (in case of new requests for which
+				no transaction exists yet).</para>
 			</listitem>
 		</itemizedlist>
 	</para>
@@ -1428,9 +1470,29 @@ route {
 	</example>
 	</section>
 
+	<section id="tm.f.t_set_disable_internal_reply">
+	<title>
+		<function>t_set_disable_internal_reply(0|1)</function>
+	</title>
+	<para>
+		Turn off/on sending internally a SIP reply in case of relay errors.
+	</para>
+	<example>
+		<title><function>t_set_disable_internal_reply</function> usage</title>
+		<programlisting>
+...
+t_set_disable_internal_reply(1); # turn off sending internal reply on error
+if(!t_relay()) {
+   send_reply("500", "Server error");
+}
+...
+		</programlisting>
+	</example>
+	</section>
+
 	<section id="tm.f.t_replicate">
 	<title>
-	    <function>t_replicate(params)</function>
+	    <function>t_replicate([params])</function>
 	</title>
 	<para>
 		Replicate the SIP request to a specific address.
@@ -1439,7 +1501,7 @@ route {
 		There are several function prototypes:
 		<itemizedlist>
 		<listitem><para>
-	    <function>t_replicate(uri)</function>,
+	    <function>t_replicate([uri])</function>,
 		</para></listitem>
 		<listitem><para>
 	    <function>t_replicate(host, port)</function>,
@@ -1465,7 +1527,8 @@ route {
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>uri</emphasis> - SIP URI where the message should be sent.
-		It can be given via a script variable.
+			It can be given via a script variable. It is optional - when missing, the
+			dst-uri or r-uri are used as next hop address.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -1547,7 +1610,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
 	    </listitem>
 	    <listitem>
 		<para><emphasis>0x02</emphasis> - do not generate reply on internal
-		error (NOTE: has no effect anymore).
+		error.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -1558,7 +1621,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
 	    </listitem>
 	</itemizedlist>
 	<example>
-	    <title><function>t_replicate</function> usage</title>
+	    <title><function>t_relay_to</function> usage</title>
 	    <programlisting>
 ...
 # sent to 1.2.3.4:5060 over tcp
@@ -1636,6 +1699,26 @@ route {
 ...
 if(!t_is_set("failure_route"))
     LM_DBG("no failure route will be executed for current transaction\n");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="tm.f.t_use_uac_headers">
+	<title>
+	    <function>t_use_uac_headers()</function>
+	</title>
+	<para>
+	Set internal flags to tell tm to use UAC side for building headers for
+	local generated requests (ACK, CANCEL) - useful when changing From/To
+	headers using other functions than uac_replace_[from|to]().
+	</para>
+	<para>It returns true.</para>
+	<example>
+	    <title><function>t_use_uac_headers</function> usage</title>
+	    <programlisting>
+...
+t_use_uac_headers();
 ...
 	    </programlisting>
 	</example>

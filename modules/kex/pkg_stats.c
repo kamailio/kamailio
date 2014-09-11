@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  */
 
@@ -46,9 +46,11 @@
 typedef struct pkg_proc_stats {
 	int rank;
 	unsigned int pid;
-	unsigned int used;
-	unsigned int available;
-	unsigned int real_used;
+	unsigned long used;
+	unsigned long available;
+	unsigned long real_used;
+	unsigned long total_frags;
+	unsigned long total_size;
 } pkg_proc_stats_t;
 
 /**
@@ -96,8 +98,11 @@ int pkg_proc_stats_myinit(int rank)
 
 	/* init pkg usage values */
 	pkg_info(&info);
+	_pkg_proc_stats_list[process_no].available = info.free;
 	_pkg_proc_stats_list[process_no].used = info.used;
 	_pkg_proc_stats_list[process_no].real_used = info.real_used;
+	_pkg_proc_stats_list[process_no].total_size = info.total_size;
+	_pkg_proc_stats_list[process_no].total_frags = info.total_frags;
 	return 0;
 }
 
@@ -118,37 +123,28 @@ int pkg_proc_stats_destroy(void)
 /**
  *
  */
-static int pkg_proc_update_used(void *data)
+static int pkg_proc_update_stats(void *data)
 {
-	if(_pkg_proc_stats_list==NULL)
+	struct mem_info info;
+	if(unlikely(_pkg_proc_stats_list==NULL))
 		return -1;
-	if(process_no>=_pkg_proc_stats_no)
+	if(unlikely(process_no>=_pkg_proc_stats_no))
 		return -1;
-	_pkg_proc_stats_list[process_no].used = (unsigned int)(long)data;
+	pkg_info(&info);
+	_pkg_proc_stats_list[process_no].available = info.free;
+	_pkg_proc_stats_list[process_no].used = info.used;
+	_pkg_proc_stats_list[process_no].real_used = info.real_used;
+	_pkg_proc_stats_list[process_no].total_frags = info.total_frags;
 	return 0;
 }
 
-/**
- *
- */
-static int pkg_proc_update_real_used(void *data)
-{
-	if(_pkg_proc_stats_list==NULL)
-		return -1;
-	if(process_no>=_pkg_proc_stats_no)
-		return -1;
-	_pkg_proc_stats_list[process_no].real_used = (unsigned int)(long)data;
-	_pkg_proc_stats_list[process_no].available = pkg_available();
-	return 0;
-}
 
 /**
  *
  */
 int register_pkg_proc_stats(void)
 {
-	sr_event_register_cb(SREV_PKG_SET_USED, pkg_proc_update_used);
-	sr_event_register_cb(SREV_PKG_SET_REAL_USED, pkg_proc_update_real_used);
+	sr_event_register_cb(SREV_PKG_UPDATE_STATS, pkg_proc_update_stats);
 	return 0;
 }
 
@@ -238,13 +234,15 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "dddddd",
+			if(rpc->struct_add(th, "dddddddd",
 							"entry",     i,
 							"pid",       _pkg_proc_stats_list[i].pid,
 							"rank",      _pkg_proc_stats_list[i].rank,
 							"used",      _pkg_proc_stats_list[i].used,
 							"free",      _pkg_proc_stats_list[i].available,
-							"real_used", _pkg_proc_stats_list[i].real_used
+							"real_used", _pkg_proc_stats_list[i].real_used,
+							"total_size",  _pkg_proc_stats_list[i].total_size,
+							"total_frags", _pkg_proc_stats_list[i].total_frags
 						)<0)
 			{
 				rpc->fault(ctx, 500, "Internal error creating rpc");
@@ -258,7 +256,7 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
  *
  */
 rpc_export_t kex_pkg_rpc[] = {
-	{"pkg.stats", rpc_pkg_stats,  rpc_pkg_stats_doc,       0},
+	{"pkg.stats", rpc_pkg_stats,  rpc_pkg_stats_doc,       RET_ARRAY},
 	{0, 0, 0, 0}
 };
 

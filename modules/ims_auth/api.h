@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -53,6 +53,7 @@
  * return codes to config by auth functions
  */
 typedef enum auth_cfg_result {
+	AUTH_RESYNC_REQUESTED = -9,	/*!< resync requested from UE via auts param */
 	AUTH_USER_MISMATCH = -8,    /*!< Auth user != From/To user */
 	AUTH_NONCE_REUSED = -6,     /*!< Returned if nonce is used more than once */
 	AUTH_NO_CREDENTIALS = -5,   /*!< Credentials missing */

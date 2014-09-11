@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * History:
  * ---------
@@ -79,14 +79,14 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"db_url",           STR_PARAM, &db_url.s             },
-	{"user_column",      STR_PARAM, &user_column.s        },
-	{"domain_column",    STR_PARAM, &domain_column.s      },
-	{"sd_user_column",   STR_PARAM, &sd_user_column.s     },
-	{"sd_domain_column", STR_PARAM, &sd_domain_column.s   },
-	{"new_uri_column",   STR_PARAM, &new_uri_column.s     },
+	{"db_url",           PARAM_STR, &db_url             },
+	{"user_column",      PARAM_STR, &user_column        },
+	{"domain_column",    PARAM_STR, &domain_column      },
+	{"sd_user_column",   PARAM_STR, &sd_user_column     },
+	{"sd_domain_column", PARAM_STR, &sd_domain_column   },
+	{"new_uri_column",   PARAM_STR, &new_uri_column     },
 	{"use_domain",       INT_PARAM, &use_domain           },
-	{"domain_prefix",    STR_PARAM, &domain_prefix.s      },
+	{"domain_prefix",    PARAM_STR, &domain_prefix      },
 	{0, 0, 0}
 };
 
@@ -132,15 +132,6 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-	db_url.len = strlen(db_url.s);
-	user_column.len = strlen(user_column.s);
-	domain_column.len = strlen(domain_column.s);
-	sd_user_column.len = strlen(sd_user_column.s);
-	sd_domain_column.len  = strlen(sd_domain_column.s);
-	new_uri_column.len = strlen(new_uri_column.s);
-	if (domain_prefix.s)
-		domain_prefix.len = strlen(domain_prefix.s);
-
     /* Find a database module */
 	if (db_bind_mod(&db_url, &db_funcs))
 	{

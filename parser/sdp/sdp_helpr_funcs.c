@@ -67,68 +67,6 @@ static struct {
 	(_x==_t[0]||_x==_t[7]||_x==_t[1]||_x==_t[2]||_x==_t[3]||_x==_t[4]\
 	||_x==_t[5]||_x==_t[6])
 
-/*
- * ser_memmem() returns the location of the first occurrence of data
- * pattern b2 of size len2 in memory block b1 of size len1 or
- * NULL if none is found. Obtained from NetBSD.
- */
-static void * ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
-{
-	/* Initialize search pointer */
-	char *sp = (char *) b1;
-
-	/* Initialize pattern pointer */
-	char *pp = (char *) b2;
-
-	/* Initialize end of search address space pointer */
-	char *eos = sp + len1 - len2;
-
-	/* Sanity check */
-	if(!(b1 && b2 && len1 && len2))
-		return NULL;
-
-	while (sp <= eos) {
-		if (*sp == *pp)
-			if (memcmp(sp, pp, len2) == 0)
-				return sp;
-
-			sp++;
-	}
-
-	return NULL;
-}
-
-/*
- * ser_memrmem() returns the location of the last occurrence of data
- * pattern b2 of size len2 in memory block b1 of size len1 or
- * NULL if none is found.
- */
-static void * ser_memrmem(const void *b1, const void *b2, size_t len1, size_t len2)
-{
-	/* Initialize search pointer */
-	char *sp = (char *) b1 + len1 - len2;
-
-	/* Initialize pattern pointer */
-	char *pp = (char *) b2;
-
-	/* Initialize end of search address space pointer */
-	char *eos = (char *) b1;
-
-	/* Sanity check */
-	if(!(b1 && b2 && len1 && len2))
-		return NULL;
-
-	while (sp >= eos) {
-		if (*sp == *pp)
-			if (memcmp(sp, pp, len2) == 0)
-				return sp;
-
-			sp--;
-	}
-
-	return NULL;
-}
-
 int get_mixed_part_delimiter(str* body, str *mp_delimiter)
 {
 	static unsigned int boun[16] = {
@@ -204,6 +142,10 @@ other:
 
 
 
+/**
+ * rfc4566:
+ * a=rtpmap:<payload type> <encoding name>/<clock rate> [/<encoding parameters>]
+ */
 int extract_rtpmap(str *body,
 	str *rtpmap_payload, str *rtpmap_encoding, str *rtpmap_clockrate, str *rtpmap_parmas)
 {
@@ -241,30 +183,28 @@ int extract_rtpmap(str *body,
 
 	rtpmap_encoding->s = cp;
 	cp1 = (char*)ser_memmem(cp, "/", len, 1);
-	len -= cp1 - cp;
-	if (len <= 0 || cp == cp1) {
-		LM_ERR("invalid encoding in `a=rtpmap'\n");
+	if(cp1==NULL) {
+		LM_ERR("invalid encoding in `a=rtpmap' at [%.*s]\n", len, cp);
 		return -1;
 	}
+	len -= cp1 - cp;
 	rtpmap_encoding->len = cp1 - cp;
 
-	cp = cp1;
+	cp = cp1+1;  /* skip '/' */
+	len--;
+	rtpmap_clockrate->s = cp;
 	cp1 = (char*)ser_memmem(cp, "/", len, 1);
-	len -= cp1 - cp;
-	if (len <= 0) {
-		LM_ERR("invalid encoding in `a=rtpmap:'\n");
-		return -1;
-	}
-
-	rtpmap_clockrate->s = cp + 1; /* skip '/' */
-	rtpmap_clockrate->len = len -1; /* skip '/' */
-	if ( cp == cp1) {
+	if(cp1==NULL) {
+		/* no encoding parameters */
+		rtpmap_clockrate->len = len;
 		rtpmap_parmas->s = NULL;
 		rtpmap_parmas->len = 0;
-	} else {
-		rtpmap_parmas->s = cp1 + 1;
-		rtpmap_parmas->len = cp1 - cp;
+		return 0;
 	}
+	rtpmap_clockrate->len = cp1 - cp;
+	len -= cp1 - cp;
+	rtpmap_parmas->s = cp1 + 1;  /* skip '/' */
+	rtpmap_parmas->len = len - 1;
 	return 0;
 }
 

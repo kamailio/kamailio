@@ -54,9 +54,9 @@ int pipefds[2] = {-1, -1};
 
 db1_con_t *pa_db = NULL;
 db_func_t pa_dbf;
-str db_table = {"purplemap", 0};
-str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str httpProxy_host = {NULL, 0};
+str db_table = str_init("purplemap");
+str db_url = str_init(DEFAULT_RODB_URL);
+str httpProxy_host = STR_NULL;
 int httpProxy_port = 3128;
 
 /* TM functions */
@@ -87,9 +87,9 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"db_url",	STR_PARAM, &db_url.s},
-	{"db_table",	STR_PARAM, &db_table.s},
-	{"httpProxy_host", STR_PARAM, &httpProxy_host.s},
+	{"db_url",	PARAM_STR, &db_url},
+	{"db_table",	PARAM_STR, &db_table},
+	{"httpProxy_host", PARAM_STR, &httpProxy_host},
 	{"httpProxy_port", INT_PARAM, &httpProxy_port},
 	{0, 0, 0}
 };
@@ -111,10 +111,6 @@ struct module_exports exports= {
 
  
 static int init(void) {
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-        db_table.len = db_table.s ? strlen(db_table.s) : 0;
-	httpProxy_host.len = httpProxy_host.s ? strlen(httpProxy_host.s) : 0;
-
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,db_url.s);
 	load_tm_f  load_tm;
 	bind_pua_t bind_pua;

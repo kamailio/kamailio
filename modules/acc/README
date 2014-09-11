@@ -29,11 +29,11 @@ Sven Knoblich
    1&1 Internet AG
    <sven.knoblich@1und1.de>
 
-   Copyright © 2002, 2003 FhG FOKUS
+   Copyright (c) 2002, 2003 FhG FOKUS
 
-   Copyright © 2004, 2006 Voice Sistem SRL
+   Copyright (c) 2004, 2006 Voice Sistem SRL
 
-   Copyright © 2011 1&1 Internet AG
+   Copyright (c) 2011 1&1 Internet AG
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -125,6 +125,13 @@ Sven Knoblich
               6.42. cdr_start_id (string)
               6.43. cdr_end_id (string)
               6.44. cdr_duration_id (string)
+              6.45. cdr_log_enable (int)
+              6.46. cdrs_table (str)
+              6.47. time_mode (int)
+              6.48. time_attr (str)
+              6.49. time_exten (str)
+              6.50. time_format (str)
+              6.51. reason_from_hf (int)
 
         7. Functions
 
@@ -181,10 +188,17 @@ Sven Knoblich
    1.42. cdr_start_id example
    1.43. cdr_end_id example
    1.44. cdr_duration_id example
-   1.45. acc_log_request usage
-   1.46. acc_db_request usage
-   1.47. acc_rad_request usage
-   1.48. acc_diam_request usage
+   1.45. cdr_log_enable example
+   1.46. cdrs_table example
+   1.47. time_mode example
+   1.48. time_attr example
+   1.49. time_exten example
+   1.50. time_format example
+   1.51. reason_from_hf
+   1.52. acc_log_request usage
+   1.53. acc_db_request usage
+   1.54. acc_rad_request usage
+   1.55. acc_diam_request usage
 
 Chapter 1. Admin Guide
 
@@ -273,6 +287,13 @@ Chapter 1. Admin Guide
         6.42. cdr_start_id (string)
         6.43. cdr_end_id (string)
         6.44. cdr_duration_id (string)
+        6.45. cdr_log_enable (int)
+        6.46. cdrs_table (str)
+        6.47. time_mode (int)
+        6.48. time_attr (str)
+        6.49. time_exten (str)
+        6.50. time_format (str)
+        6.51. reason_from_hf (int)
 
    7. Functions
 
@@ -586,6 +607,7 @@ Note
 
 4.3.2.1. Example for a spiraled Proxy
 
+...
 # A calls B (transaction 1)
 $avp(caller)='A'
 $avp(callee)='B';
@@ -604,6 +626,7 @@ $dlg_var(chain)=$dlg_var(chain) + "|" + "C;cfnr;D";
 # C confirms call (200 reply of transaction 2)
 $dlg_var(caller) = $avp(caller); #caller='B'
 $dlg_var(callee) = $avp(callee); #callee='C'
+...
 
 4.3.3. Logged data
 
@@ -679,6 +702,13 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.42. cdr_start_id (string)
    6.43. cdr_end_id (string)
    6.44. cdr_duration_id (string)
+   6.45. cdr_log_enable (int)
+   6.46. cdrs_table (str)
+   6.47. time_mode (int)
+   6.48. time_attr (str)
+   6.49. time_exten (str)
+   6.50. time_format (str)
+   6.51. reason_from_hf (int)
 
 6.1. early_media (integer)
 
@@ -687,7 +717,9 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    Default value is 0 (no).
 
    Example 1.1. early_media example
+...
 modparam("acc", "early_media", 1)
+...
 
 6.2. failed_transaction_flag (integer)
 
@@ -697,7 +729,9 @@ modparam("acc", "early_media", 1)
    Default value is not-set (no flag).
 
    Example 1.2. failed_transaction_flag example
+...
 modparam("acc", "failed_transaction_flag", 4)
+...
 
 6.3. failed_filter (string)
 
@@ -708,7 +742,9 @@ modparam("acc", "failed_transaction_flag", 4)
    Default value is not-set (failure filtering is off).
 
    Example 1.3. failed_filter example
+...
 modparam("acc", "failed_filter", "404,407")
+...
 
 6.4. report_ack (integer)
 
@@ -720,7 +756,9 @@ modparam("acc", "failed_filter", "404,407")
    Default value is 0 (no).
 
    Example 1.4. report_ack example
+...
 modparam("acc", "report_ack", 1)
+...
 
 6.5. report_cancels (integer)
 
@@ -731,7 +769,9 @@ modparam("acc", "report_ack", 1)
    Default value is 0 (no).
 
    Example 1.5. report_cancels example
+...
 modparam("acc", "report_cancels", 1)
+...
 
 6.6. detect_direction (integer)
 
@@ -746,7 +786,9 @@ modparam("acc", "report_cancels", 1)
    Default value is 0 (disabled).
 
    Example 1.6. detect_direction example
+...
 modparam("acc", "detect_direction", 1)
+...
 
 6.7. acc_prepare_flag (integer)
 
@@ -760,7 +802,9 @@ modparam("acc", "detect_direction", 1)
    Default value is not-set (no flag).
 
    Example 1.7. acc_prepare_flag example
+...
 modparam("acc", "acc_prepare_flag", 5)
+...
 
 6.8. multi_leg_info (string)
 
@@ -773,6 +817,7 @@ modparam("acc", "acc_prepare_flag", 5)
    Default value is 0 (disabled).
 
    Example 1.8. multi_leg_info example
+...
 # for syslog-based accounting, use any text you want to be printed
 modparam("acc", "multi_leg_info",
     "text1=$avp(src);text2=$avp(dst)")
@@ -785,6 +830,7 @@ modparam("acc", "multi_leg_info",
 # for DIAMETER-based accounting, use the DIAMETER AVP ID (as integer)
 modparam("acc", "multi_leg_info",
     "2345=$avp(src);2346=$avp(dst)")
+...
 
 6.9. log_flag (integer)
 
@@ -793,7 +839,9 @@ modparam("acc", "multi_leg_info",
    Default value is not-set (no flag).
 
    Example 1.9. log_flag example
+...
 modparam("acc", "log_flag", 2)
+...
 
 6.10. log_missed_flag (integer)
 
@@ -802,7 +850,9 @@ modparam("acc", "log_flag", 2)
    Default value is not-set (no flag).
 
    Example 1.10. log_missed_flag example
+...
 modparam("acc", "log_missed_flag", 3)
+...
 
 6.11. log_level (integer)
 
@@ -811,7 +861,9 @@ modparam("acc", "log_missed_flag", 3)
    Default value is L_NOTICE.
 
    Example 1.11. log_level example
+...
 modparam("acc", "log_level", 2)   # Set log_level to 2
+...
 
 6.12. log_facility (string)
 
@@ -822,7 +874,9 @@ modparam("acc", "log_level", 2)   # Set log_level to 2
    Default value is LOG_DAEMON.
 
    Example 1.12. log_facility example
+...
 modparam("acc", "log_facility", "LOG_DAEMON")
+...
 
 6.13. log_extra (string)
 
@@ -832,7 +886,9 @@ modparam("acc", "log_facility", "LOG_DAEMON")
    Default value is NULL.
 
    Example 1.13. log_extra example
+...
 modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
+...
 
 6.14. radius_config (string)
 
@@ -848,7 +904,9 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
    Default value is "NULL".
 
    Example 1.14. radius_config example
+...
 modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
+...
 
 6.15. radius_flag (integer)
 
@@ -858,7 +916,9 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
    Default value is not-set (no flag).
 
    Example 1.15. radius_flag example
+...
 modparam("acc", "radius_flag", 2)
+...
 
 6.16. radius_missed_flag (integer)
 
@@ -868,7 +928,9 @@ modparam("acc", "radius_flag", 2)
    Default value is not-set (no flag).
 
    Example 1.16. radius_missed_flag example
+...
 modparam("acc", "radius_missed_flag", 3)
+...
 
 6.17. service_type (integer)
 
@@ -877,7 +939,9 @@ modparam("acc", "radius_missed_flag", 3)
    Default value is 15 (SIP).
 
    Example 1.17. service_type example
+...
 modparam("acc", "service_type", 16)
+...
 
 6.18. radius_extra (string)
 
@@ -887,7 +951,9 @@ modparam("acc", "service_type", 16)
    Default value is NULL.
 
    Example 1.18. radius_extra example
+...
 modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
+...
 
 6.19. db_flag (integer)
 
@@ -897,7 +963,9 @@ modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
    Default value is not-set (no flag).
 
    Example 1.19. db_flag example
+...
 modparam("acc", "db_flag", 2)
+...
 
 6.20. db_missed_flag (integer)
 
@@ -907,7 +975,9 @@ modparam("acc", "db_flag", 2)
    Default value is not-set (no flag).
 
    Example 1.20. db_missed_flag example
+...
 modparam("acc", "db_missed_flag", 3)
+...
 
 6.21. db_table_acc (string)
 
@@ -917,8 +987,10 @@ modparam("acc", "db_missed_flag", 3)
    Default value is "acc"
 
    Example 1.21. db_table_acc example
+...
 modparam("acc", "db_table_acc", "myacc_table")
 modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
+...
 
 6.22. db_table_missed_calls (string)
 
@@ -928,7 +1000,9 @@ modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
    Default value is "missed_calls"
 
    Example 1.22. db_table_missed_calls example
+...
 modparam("acc", "db_table_missed_calls", "myMC_table")
+...
 
 6.23. db_url (string)
 
@@ -938,7 +1012,9 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
    Default value is "NULL" (SQL disabled).
 
    Example 1.23. db_url example
+...
 modparam("acc", "db_url", "mysql://user:password@localhost/kamailio")
+...
 
 6.24. acc_method_column (string)
 
@@ -948,7 +1024,9 @@ modparam("acc", "db_url", "mysql://user:password@localhost/kamailio")
    Default value is "method".
 
    Example 1.24. acc_method_column example
+...
 modparam("acc", "acc_method_column", "method")
+...
 
 6.25. acc_from_tag_column (string)
 
@@ -957,7 +1035,9 @@ modparam("acc", "acc_method_column", "method")
    Default value is "from_tag".
 
    Example 1.25. acc_from_tag_column example
+...
 modparam("acc", "acc_from_tag_column", "from_tag")
+...
 
 6.26. acc_to_tag_column (string)
 
@@ -966,7 +1046,9 @@ modparam("acc", "acc_from_tag_column", "from_tag")
    Default value is "to_tag".
 
    Example 1.26. acc_to_tag_column example
+...
 modparam("acc", "acc_to_tag_column", "to_tag")
+...
 
 6.27. acc_callid_column (string)
 
@@ -975,7 +1057,9 @@ modparam("acc", "acc_to_tag_column", "to_tag")
    Default value is "callid".
 
    Example 1.27. acc_callid_column example
+...
 modparam("acc", "acc_callid_column", "callid")
+...
 
 6.28. acc_sip_code_column (string)
 
@@ -985,7 +1069,9 @@ modparam("acc", "acc_callid_column", "callid")
    Default value is "sip_code".
 
    Example 1.28. acc_sip_code_column example
+...
 modparam("acc", "acc_sip_code_column", "sip_code")
+...
 
 6.29. acc_sip_reason_column (string)
 
@@ -995,7 +1081,9 @@ modparam("acc", "acc_sip_code_column", "sip_code")
    Default value is "sip_reason".
 
    Example 1.29. acc_sip_reason_column example
+...
 modparam("acc", "acc_sip_reason_column", "sip_reason")
+...
 
 6.30. acc_time_column (string)
 
@@ -1005,7 +1093,9 @@ modparam("acc", "acc_sip_reason_column", "sip_reason")
    Default value is "time".
 
    Example 1.30. acc_time_column example
+...
 modparam("acc", "acc_time_column", "time")
+...
 
 6.31. db_extra (string)
 
@@ -1015,18 +1105,28 @@ modparam("acc", "acc_time_column", "time")
    Default value is NULL.
 
    Example 1.31. db_extra example
+...
 modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
+...
 
 6.32. db_insert_mode (integer)
 
    If set to 1, use INSERT DELAYED to add records to accounting tables
    when the DB driver has support for it. If no INSERT DELAYED support is
-   offered by DB driver, then standard INSERT is used.
+   offered by DB driver, then standard INSERT is used. Beware that MySQL
+   InnoDB engine doesn't support INSERT DELAYED, thus be sure the acc
+   tables are defined with different type (e.g., MyISAM).
 
-   Default value is 0 (no INSERT DELAYED).
+   If set to 2, async insert is used if the db driver module has support
+   for it and if async_workers core parameter value is greater than 0. If
+   not, then standard INSERT is used.
+
+   Default value is 0 (no INSERT DELAYED nor async insert).
 
    Example 1.32. db_insert_mode example
+...
 modparam("acc", "db_insert_mode", 1)
+...
 
 6.33. diameter_flag (integer)
 
@@ -1036,7 +1136,9 @@ modparam("acc", "db_insert_mode", 1)
    Default value is not-set (no flag).
 
    Example 1.33. diameter_flag example
+...
 modparam("acc", "diameter_flag", 2)
+...
 
 6.34. diameter_missed_flag (integer)
 
@@ -1046,7 +1148,9 @@ modparam("acc", "diameter_flag", 2)
    Default value is not-set (no flag).
 
    Example 1.34. diameter_missed_flag example
+...
 modparam("acc", "diameter_missed_flag", 3)
+...
 
 6.35. diameter_client_host (string)
 
@@ -1056,7 +1160,9 @@ modparam("acc", "diameter_missed_flag", 3)
    Default value is "localhost".
 
    Example 1.35. diameter_client_host example
+...
 modparam("acc", "diameter_client_host", "3a_server.net")
+...
 
 6.36. diameter_client_port (int)
 
@@ -1066,7 +1172,9 @@ modparam("acc", "diameter_client_host", "3a_server.net")
    Default value is 3000.
 
    Example 1.36. diameter_client_host example
+...
 modparam("acc", "diameter_client_port", 3000)
+...
 
 6.37. diameter_extra (string)
 
@@ -1076,16 +1184,20 @@ modparam("acc", "diameter_client_port", 3000)
    Default value is NULL.
 
    Example 1.37. diameter_extra example
+...
 modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
+...
 
 6.38. cdr_enable (integer)
 
    Should CDR-based logging be enabled?
 
-   0 - off (default) 1 - on
+   0 - off (default). 1 - on.
 
    Example 1.38. cdr_enable example
+...
 modparam("acc", "cdr_enable", 1)
+...
 
 6.39. cdr_start_on_confirmed (integer)
 
@@ -1096,7 +1208,9 @@ modparam("acc", "cdr_enable", 1)
    confirmation.
 
    Example 1.39. cdr_start_on_confirmed example
+...
 modparam("acc", "cdr_start_on_confirmed", 1)
+...
 
 6.40. cdr_facility (integer)
 
@@ -1106,7 +1220,9 @@ modparam("acc", "cdr_start_on_confirmed", 1)
    Default value is LOG_DAEMON.
 
    Example 1.40. cdr_facility example
+...
 modparam("acc", "cdr_facility", "LOG_DAEMON")
+...
 
 6.41. cdr_extra (string)
 
@@ -1116,34 +1232,140 @@ modparam("acc", "cdr_facility", "LOG_DAEMON")
    Default value is NULL.
 
    Example 1.41. cdr_extra example
+...
 modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
+...
 
 6.42. cdr_start_id (string)
 
-   Modifying the start id which is used to store the start time.
+   Modifying the id which is used to store the start time.
 
-   Default value is 'st'
+   Default value is 'start_time'
 
    Example 1.42. cdr_start_id example
+...
 modparam("acc", "cdr_start_id", "start")
+...
 
 6.43. cdr_end_id (string)
 
-   Modifying the end id which is used to store the end time.
+   Modifying the id which is used to store the end time.
 
-   Default value is 'et'
+   Default value is 'end_time'
 
    Example 1.43. cdr_end_id example
+...
 modparam("acc", "cdr_end_id", "end")
+...
 
 6.44. cdr_duration_id (string)
 
-   Modify the duration id which is used to store the duration.
+   Modify the id which is used to store the duration.
 
-   Default value is 'd'
+   Default value is 'duration'
 
    Example 1.44. cdr_duration_id example
-modparam("acc", "cdr_duration_id", "start")
+...
+modparam("acc", "cdr_duration_id", "d")
+...
+
+6.45. cdr_log_enable (int)
+
+   Control if CDR-based accounting should be written to syslog.
+
+   0 - off. 1 - on (default).
+
+   Example 1.45. cdr_log_enable example
+...
+modparam("acc", "cdr_log_enable", 0)
+...
+
+6.46. cdrs_table (str)
+
+   Name of db table to store dialog-based CDRs.
+
+   Default value is "" (no db storage for dialog-based CDRs).
+
+   Example 1.46. cdrs_table example
+...
+modparam("acc", "cdrs_table", "acc_cdrs")
+...
+
+6.47. time_mode (int)
+
+   Store additional value related to the time of event.
+
+   Values can be:
+     * 0 - (default), save only unix timestamp for syslog and datetime for
+       database.
+     * 1 - save seconds in time_attr and microseconds in time_exten.
+     * 2 - save seconds.miliseconds in time_attr.
+     * 3 - save formatted time according to time_format parameter, using
+       the output of localtime().
+     * 4 - save formatted time according to time_format parameter, using
+       the output of gmtime().
+
+   Example 1.47. time_mode example
+...
+modparam("acc", "time_mode", 1)
+...
+
+6.48. time_attr (str)
+
+   Name of the syslog attribute or database column where to store
+   additional value related to the time of event.
+
+   For db accounting, the column has to be of different types, depending
+   on time_mode value. When time_mode is:
+     * 1 - time_attr column has to be int.
+     * 2 - time_attr column has to be double.
+     * 3 - time_attr column has to be varchar(128).
+     * 4 - time_attr column has to be varchar(128).
+
+   For time_mode=1, this attribute is not written in syslog, because time
+   value is already unix timestamp, but in db accounting time value is
+   datetime and requires a function to get the timestamp.
+
+   Example 1.48. time_attr example
+...
+modparam("acc", "time_attr", "seconds")
+...
+
+6.49. time_exten (str)
+
+   Name of the syslog attribute or database column where to store extended
+   value related to the time of event.
+
+   It is used now only for time_mode=1 and database column has to be int:
+
+   Example 1.49. time_exten example
+...
+modparam("acc", "time_exten", "micorsecs")
+...
+
+6.50. time_format (str)
+
+   Specify the format to print the time for time_mode 3 or 4.
+
+   Default value is %Y-%m-%d %H:%M:%S".
+
+   Example 1.50. time_format example
+...
+modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
+...
+
+6.51. reason_from_hf (int)
+
+   Tells where to take sip_reason from. If value is 0, sip_reason is taken
+   from status line. Otherwise, sip_reason is taken from Reason header
+   field(s) if present. Currently only the first Reason header is used.
+
+   Default value is 0.
+
+   Example 1.51. reason_from_hf
+...
+modparam("acc", "reason_from_hf", 1)
+...
 
 7. Functions
 
@@ -1152,7 +1374,7 @@ modparam("acc", "cdr_duration_id", "start")
    7.3. acc_rad_request(comment)
    7.4. acc_diam_request(comment)
 
-7.1. acc_log_request(comment)
+7.1.  acc_log_request(comment)
 
    acc_request reports on a request, for example, it can be used to report
    on missed calls to off-line users who are replied 404 - Not Found. To
@@ -1160,62 +1382,72 @@ modparam("acc", "cdr_duration_id", "start")
    embed the action in stateful processing.
 
    Meaning of the parameters is as follows:
-     * comment - Comment to be appended.
+     * comment - Comment to be appended. The string can contain any number
+       of pseudo-variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.45. acc_log_request usage
+   Example 1.52. acc_log_request usage
 ...
 acc_log_request("Some comment");
+$var(code) = 404;
+$avp(reason) = "Not found";
+acc_log_request("$var(code) Error: $avp(reason)");
 ...
 
-7.2. acc_db_request(comment, table)
+7.2.  acc_db_request(comment, table)
 
    Like acc_log_request, acc_db_request reports on a request. The report
    is sent to database at "db_url", in the table referred to in the second
    action parameter.
 
    Meaning of the parameters is as follows:
-     * comment - Comment to be appended.
+     * comment - Comment to be appended. The string can contain any number
+       of pseudo-variables.
      * table - Database table to be used. It can contain config variables
        that are evaluated at runtime.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.46. acc_db_request usage
+   Example 1.53. acc_db_request usage
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
+acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 ...
 
-7.3. acc_rad_request(comment)
+7.3.  acc_rad_request(comment)
 
    Like acc_log_request, acc_rad_request reports on a request. It reports
    to radius server as configured in "radius_config".
 
    Meaning of the parameters is as follows:
-     * comment - Comment to be appended.
+     * comment - Comment to be appended. The string can contain any number
+       of pseudo-variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.47. acc_rad_request usage
+   Example 1.54. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
+acc_rad_request("$var(code) Error: $avp(reason)");
 ...
 
-7.4. acc_diam_request(comment)
+7.4.  acc_diam_request(comment)
 
    Like acc_log_request, acc_diam_request reports on a request. It reports
    to the configured Diameter server.
 
    Meaning of the parameters is as follows:
-     * comment - Comment to be appended.
+     * comment - Comment to be appended. The string can contain any number
+       of pseudo-variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.48. acc_diam_request usage
+   Example 1.55. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
+acc_diam_request("$var(code) Error: $avp(reason)");
 ...
 
 Chapter 2. Frequently Asked Questions
@@ -1229,55 +1461,55 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with old log_fmt parameter
+       What happend with old log_fmt parameter
 
-   The parameter became obsolete with the restructure of the data logged
-   by ACC module (refer to the Overview chapter). For similar behaviour
-   you can use the extra accouting (see the coresponding chapter).
+       The parameter became obsolete with the restructure of the data logged
+       by ACC module (refer to the Overview chapter). For similar behaviour
+       you can use the extra accouting (see the coresponding chapter).
 
    2.2.
 
-   What happend with old multi_leg_enabled parameter
+       What happend with old multi_leg_enabled parameter
 
-   The parameter becaome obsolete by the addition of the new
-   multi_leg_info parameter. The multi-leg accouting is automatically
-   enabled when multi_leg_info is defined.
+       The parameter becaome obsolete by the addition of the new
+       multi_leg_info parameter. The multi-leg accouting is automatically
+       enabled when multi_leg_info is defined.
 
    2.3.
 
-   What happend with old src_leg_avp_id and dst_leg_avp_id parameters
+       What happend with old src_leg_avp_id and dst_leg_avp_id parameters
 
-   The parameter was replaced by the more generic new parameter
-   multi_leg_info. This allows logging (per-leg) of more information than
-   just dst and src.
+       The parameter was replaced by the more generic new parameter
+       multi_leg_info. This allows logging (per-leg) of more information than
+       just dst and src.
 
    2.4.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.5.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    2.6.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+       Please follow the guidelines provided at:
+       http://sip-router.org/tracker.

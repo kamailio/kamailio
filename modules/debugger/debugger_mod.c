@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -53,10 +53,12 @@ static int w_dbg_dump(struct sip_msg* msg, char* mask, char* level);
 
 /* parameters */
 extern int _dbg_cfgtrace;
+extern int _dbg_cfgpkgcheck;
 extern int _dbg_breakpoint;
 extern int _dbg_cfgtrace_level;
 extern int _dbg_cfgtrace_facility;
 extern char *_dbg_cfgtrace_prefix;
+extern char *_dbg_cfgtrace_lname;
 extern int _dbg_step_usleep;
 extern int _dbg_step_loops;
 extern int _dbg_reset_msgid;
@@ -80,15 +82,17 @@ static param_export_t params[]={
 	{"cfgtrace",          INT_PARAM, &_dbg_cfgtrace},
 	{"breakpoint",        INT_PARAM, &_dbg_breakpoint},
 	{"log_level",         INT_PARAM, &_dbg_cfgtrace_level},
-	{"log_facility",      STR_PARAM, &_dbg_cfgtrace_facility_str},
-	{"log_prefix",        STR_PARAM, &_dbg_cfgtrace_prefix},
+	{"log_facility",      PARAM_STRING, &_dbg_cfgtrace_facility_str},
+	{"log_prefix",        PARAM_STRING, &_dbg_cfgtrace_prefix},
+	{"log_level_name",    PARAM_STRING, &_dbg_cfgtrace_lname},
 	{"log_assign",        INT_PARAM, &_dbg_log_assign},
 	{"step_usleep",       INT_PARAM, &_dbg_step_usleep},
 	{"step_loops",        INT_PARAM, &_dbg_step_loops},
 	{"mod_hash_size",     INT_PARAM, &default_dbg_cfg.mod_hash_size},
 	{"mod_level_mode",    INT_PARAM, &default_dbg_cfg.mod_level_mode},
-	{"mod_level",         STR_PARAM|USE_FUNC_PARAM, (void*)dbg_mod_level_param},
+	{"mod_level",         PARAM_STRING|USE_FUNC_PARAM, (void*)dbg_mod_level_param},
 	{"reset_msgid",       INT_PARAM, &_dbg_reset_msgid},
+	{"cfgpkgcheck",       INT_PARAM, &_dbg_cfgpkgcheck},
 	{0, 0, 0}
 };
 

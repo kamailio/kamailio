@@ -24,7 +24,7 @@
 	</para>
 	<para>
 		The module can be used as a stateless load balancer, it does not
-		depend on any call state tracing module. It requires the TM module if
+		depend on any call state tracking module. It requires the TM module if
 		you enable auto-discovery of active/inactive gateways.
 	</para>
 	<para>
@@ -74,7 +74,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="dispatcher.p.list_file">
 		<title><varname>list_file</varname> (string)</title>
 		<para>
 		Path to the file with destination sets.
@@ -95,7 +95,7 @@ modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
 		</example>
 	</section>
 
-	<section>
+	<section id="dispatcher.p.db_url">
  		<title><varname>db_url</varname> (string)</title>
  		<para>
 		If you want to load the sets of gateways from the database you must set
@@ -116,7 +116,7 @@ modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database")
 		</example>
 	</section>
 
-	<section>
+	<section id="dispatcher.p.table_name">
 		<title><varname>table_name</varname> (string)</title>
 		<para>
 		If you want to load the sets of gateways from the database you must set
@@ -137,7 +137,7 @@ modparam("dispatcher", "table_name", "my_dispatcher")
 		</example>
 	</section>
 
-	<section>
+	<section id="dispatcher.p.setid_col">
 		<title><varname>setid_col</varname> (string)</title>
 		<para>
 			The column's name in the database storing the gateway's group id.
@@ -157,7 +157,7 @@ modparam("dispatcher", "setid_col", "groupid")
 		</example>
 	</section>
 
-	<section>
+	<section id="dispatcher.p.destination_col">
 		<title><varname>destination_col</varname> (string)</title>
 		<para>
 			The column's name in the database storing the destination
@@ -178,7 +178,7 @@ modparam("dispatcher", "destination_col", "uri")
 		</example>
 	</section>
 
-	<section>
+	<section id="dispatcher.p.flags_col">
 		<title><varname>flags_col</varname> (string)</title>
 		<para>
 			The column's name in the database storing the flags for
@@ -199,7 +199,7 @@ modparam("dispatcher", "flags_col", "dstflags")
 		</example>
 	</section>
 
-	<section>
+	<section id="dispatcher.p.priority_col">
 		<title><varname>priority_col</varname> (string)</title>
 		<para>
 			The column's name in the database storing the priority for
@@ -220,7 +220,7 @@ modparam("dispatcher", "priority_col", "dstpriority")
 		</example>
 	</section>
 
-	<section>
+	<section id="dispatcher.p.force_dst">
 		<title><varname>force_dst</varname> (int)</title>
 		<para>
 		If set to 1, force overwriting of destination address (outbound proxy)
@@ -241,7 +241,7 @@ modparam("dispatcher", "force_dst", 1)
 </programlisting>
 		</example>
 	</section>
- 	<section>
+ 	<section id="dispatcher.p.flags">
  		<title><varname>flags</varname> (int)</title>
  		<para>
  		Various flags that affect dispatcher's behaviour. The flags are defined
@@ -272,7 +272,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
- 	<section>
+ 	<section id="dispatcher.p.use_default">
  		<title><varname>use_default</varname> (int)</title>
  		<para>
  		If the parameter is set to 1, the last address in destination set
@@ -294,7 +294,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section>
+ 	<section id="dispatcher.p.dst_avp">
  		<title><varname>dst_avp</varname> (str)</title>
  		<para>
  		The name of the avp which will hold the list with addresses, in the
@@ -324,7 +324,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
- 	<section>
+ 	<section id="dispatcher.p.grp_avp">
  		<title><varname>grp_avp</varname> (str)</title>
  		<para>
  		The name of the avp storing the group id of the destination set. Good
@@ -349,7 +349,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
- 	<section>
+ 	<section id="dispatcher.p.cnt_avp">
  		<title><varname>cnt_avp</varname> (str)</title>
  		<para>
  		The name of the avp storing the number of destination addresses kept in
@@ -374,7 +374,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
- 	<section>
+ 	<section id="dispatcher.p.dstid_avp">
  		<title><varname>dstid_avp</varname> (str)</title>
  		<para>
 		The name of the avp storing the destination unique ID used for
@@ -400,7 +400,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
- 	<section>
+ 	<section id="dispatcher.p.attrs_avp">
  		<title><varname>attrs_avp</varname> (str)</title>
  		<para>
 		The name of the avp storing destination's attributes value.
@@ -421,7 +421,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
- 	<section>
+ 	<section id="dispatcher.p.hash_pvar">
  		<title><varname>hash_pvar</varname> (str)</title>
  		<para>
  		String with PVs used for the hashing algorithm 7.
@@ -454,7 +454,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
- 	<section>
+ 	<section id="dispatcher.p.setid_pvname">
  		<title><varname>setid_pvname</varname> (str)</title>
  		<para>
 		The name of the PV where to store the set ID (group ID) when calling
@@ -494,7 +494,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
 		</example>
 	</section>
- 	<section>
+ 	<section id="dispatcher.p.ds_ping_method">
  		<title><varname>ds_ping_method</varname> (string)</title>
  		<para>
 		With this method you can define, with which method you want to probe the gateways.
@@ -514,7 +514,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section> 	
- 	<section>
+ 	<section id="dispatcher.p.ds_ping_from">
  		<title><varname>ds_ping_from</varname> (string)</title>
  		<para>
  		With this Method you can define the "From:"-Line for the request, sent to the failed gateways. 		
@@ -535,7 +535,7 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
 	</section> 	
 
- 	<section>
+ 	<section id="dispatcher.p.ds_ping_interval">
  		<title><varname>ds_ping_interval</varname> (int)</title>
  		<para>
 		With this parameter you can define the interval for sending a request
@@ -558,8 +558,8 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
 	</section> 	
 	
- 	<section>
- 		<title><varname>ds_probing_threshhold</varname> (int)</title>
+ 	<section id="dispatcher.p.ds_probing_threshold">
+ 		<title><varname>ds_probing_threshold</varname> (int)</title>
  		<para>
 		If you want to set a gateway into inactive mode, there can be
 		a specific number of failed requests until it will change from "active"
@@ -582,7 +582,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section>
+ 	<section id="dispatcher.p.ds_ping_reply_codes">
  		<title><varname>ds_ping_reply_codes</varname> (string)</title>
  		<para>
 		This parameter defines the valid response codes, which are accepted as a valid reply to the PING-Method.
@@ -603,7 +603,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section> 	
- 	<section>
+ 	<section id="dispatcher.p.ds_probing_mode">
  		<title><varname>ds_probing_mode</varname> (int)</title>
  		<para>
 		Controls what gateways are tested to see if they are reachable. If set
@@ -627,7 +627,7 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
 	</section>
 
- 	<section>
+ 	<section id="dispatcher.p.ds_hash_size">
  		<title><varname>ds_hash_size</varname> (int)</title>
  		<para>
 		The value to be used as power of two to set the number of slots
@@ -650,7 +650,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section>
+ 	<section id="dispatcher.p.ds_hash_expire">
  		<title><varname>ds_hash_expire</varname> (int)</title>
  		<para>
 		Expiration time in seconds to remove the load on a destination if no
@@ -670,7 +670,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section>
+ 	<section id="dispatcher.p.ds_hash_initexpires">
  		<title><varname>ds_hash_initexpire</varname> (int)</title>
  		<para>
 		Expiration time in seconds to remove the load on a destination if no
@@ -691,7 +691,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section>
+ 	<section id="dispatcher.p.ds_hash_check_interval">
  		<title><varname>ds_hash_check_interval</varname> (int)</title>
  		<para>
 		Time interval in seconds to scan internal hash table with call load
@@ -711,7 +711,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section>
+ 	<section id="dispatcher.p.outbound_proxy">
  		<title><varname>outbound_proxy</varname> (str)</title>
  		<para>
 		SIP URI of outbound proxy to be used when sending pings.
@@ -735,13 +735,21 @@ modparam("dispatcher", "force_dst", 1)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="dispatcher.f.ds_select_dst">
 		<title>
-		<function moreinfo="none">ds_select_dst(set, alg)</function>
+		<function moreinfo="none">ds_select_dst(set, alg[, limit])</function>
 		</title>
 		<para>
 		The method selects a destination from addresses set. It returns true if
-		a new destination is set.
+		a new destination is set. The selected address is set to dst_uri field
+		(aka the outbound proxy address or the $du variable), not being visible
+		in the SIP request.
+		</para>
+		<para>
+		If the bit 2 in 'flags' parameter is set, the rest of the addresses from
+		the destination set is stored in AVP list (limited with an optional 'limit'
+		parameter). You can use 'ds_next_dst()' to use next address in order to
+		achieve serial forking to all possible destinations.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -848,6 +856,14 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			</itemizedlist>
 		</listitem>
+		<listitem>
+			<para>
+			<emphasis>limit</emphasis> - the maximum number of items to be
+			stored in AVP list for further failovers (the first selected
+			destination and default destination are the first to be put in
+			the list)
+                        </para>
+                </listitem>
 		</itemizedlist>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
@@ -867,23 +883,25 @@ ds_select_dst("1", "0");
 $var(a) = 4;
 ds_select_dst("1", "$var(a)");
 ...
+ds_select_dst("1", "4", "3");
+...
 </programlisting>
 		</example>
 	</section>
-  	<section>
+  	<section id="dispatcher.f.ds_select_domain">
  		<title>
- 		<function moreinfo="none">ds_select_domain(set, alg)</function>
+ 		<function moreinfo="none">ds_select_domain(set, alg[, limit])</function>
  		</title>
  		<para>
- 		The method selects a destination from addresses set  and rewrites the
+ 		The method selects a destination from addresses set and rewrites the
  		host and port from R-URI. The parameters have same meaning as for
  		ds_select_dst().
  		</para>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
-		destination set is stored in AVP list. You can use 'ds_next_domain()'
-		to use next address to achieve serial forking to all possible
-		destinations.
+		destination set is stored in AVP list (limited with an optional 'limit'
+                parameter). You can use 'ds_next_domain()' to use next address to
+		achieve serial forking to all possible destinations.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -913,7 +931,7 @@ ds_select_dst("1", "$var(a)");
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
  	</section>
-  	<section>
+  	<section id="dispatcher.f.ds_mark_dst">
  		<title>
  		<function moreinfo="none">ds_mark_dst([state])</function>
  		</title>
@@ -974,21 +992,55 @@ failure_route[tryagain] {
 </programlisting>
 		</example>
  	</section>
-  	<section>
+  	<section  id="dispatcher.f.ds_is_from_list">
  		<title>
- 		<function moreinfo="none">ds_is_from_list([groupid])</function>
+		<function moreinfo="none">ds_is_from_list([groupid [, mode [, uri] ] ])</function>
  		</title>
  		<para>
-		This function returns true, if the current request comes from a host
-		in the given group of the dispatcher-list; otherwise false.
+		This function returns true, if there is a match of source address or uri
+		with an address in the given group of the dispatcher-list; otherwise false.
+		</para>
+		<para>Description of parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>groupid</emphasis> (optional) - if not given or its
+				value is -1, the matching will be done over all addresses in
+				all dispacher groups. Otherwise the matching will be done only
+				against the addresses in the specific group id. The parameter
+				can be an integer or a variable holding an integer value.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mode</emphasis> - (optional) - a bitmask to specify
+				how the matching should be done. If is 0, all ip, port and
+				proto are matched. If bit one is set, then port is ignored.
+				If bit two is set, then protocol is ignored. The parameter
+				can be an integer or a variable holding an integer value.
+				It must be provided if the uri parameter is provided.
+			</para>
+		</listitem>
+        <listitem>
+            <para><emphasis>uri</emphasis> (optional) - if is empty or missing,
+                the matching is done against source IP, port and protocol.
+                Otherwise the value has to be a valid SIP URI, used to match
+                against addresses in the dispatcher list. Only IP, port and
+                protocol are matches, any additional parameters are ignored.
+                The parameter can be a static or dynamic (with variables)
+                string. The domain part of the URI can be an IP address or
+                a hostname.
+            </para>
+        </listitem>
+		</itemizedlist>
+
+		<para>
+		Upon a match, the variable specified by 'setid_pvname' parameter will
+		be set to groupid of matching address and the attributes will be set in
+		variable specified by 'attrs_pvname'.
  		</para>
 		<para>
-		Parameter groupid is optional, when it is missing, then the matching
-		will be done against all addresses in all groups. Upon a match, the
-		variable specified by 'setid_pvname' parameter will be set to groupid
-		of matching address and the attributes will be set in variable
-		specified by 'attrs_pvname'. The parameter can be an integer or a
-		variable holding an integer value.
+		Note that for backward compatibility mode, when no parameter is given
+		or only groupid is given, the matching is done only for IP address
+		and port (protocol is ignored).
  		</para>
 		<para>
 			This function can be used from ANY_ROUTE.
@@ -997,14 +1049,20 @@ failure_route[tryagain] {
 		<title><function>ds_mark_dst</function> usage</title>
 		<programlisting format="linespecific">
 ...
+if(ds_is_from_list()) {
+    ...
+}
 if(ds_is_from_list("10")) {
+    ...
+}
+if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
     ...
 }
 ...
 </programlisting>
 		</example>
  	</section>
-  	<section>
+  	<section id="dispatcher.f.ds_load_update">
  		<title>
  		<function moreinfo="none">ds_load_update()</function>
  		</title>
@@ -1070,7 +1128,7 @@ onreply_route {
 
 	<section>
 	<title>MI Commands</title>
-	<section>
+	<section id="dispatcher.mi.ds_set_state">
 		<title>
 		<function moreinfo="none">ds_set_state</function>
 		</title>
@@ -1110,7 +1168,7 @@ onreply_route {
 		_empty_line_
 		</programlisting>
     </section>
-	<section>
+	<section id="dispatcher.mi.ds_list">
 		<title>
 		<function moreinfo="none">ds_list</function>
 		</title>
@@ -1129,7 +1187,7 @@ onreply_route {
 		_empty_line_
 		</programlisting>
     </section>
-	<section>
+	<section id="dispatcher.mi.ds_reload">
 		<title>
 		<function moreinfo="none">ds_reload</function>
 		</title>
@@ -1156,7 +1214,7 @@ onreply_route {
 
 	<section>
 	<title>Exported RPC Commands</title>
-	<section>
+	<section id="dispatcher.rpc.set_state">
 		<title>
 		<function moreinfo="none">dispatcher.set_state</function>
 		</title>
@@ -1195,7 +1253,7 @@ onreply_route {
 ...
 </programlisting>
     </section>
-	<section>
+	<section id="dispatcher.rpc.list">
 		<title>
 		<function moreinfo="none">dispatcher.list</function>
 		</title>
@@ -1213,7 +1271,7 @@ onreply_route {
 		&sercmd; dispatcher.list
 		</programlisting>
     </section>
-	<section>
+	<section id="dispatcher.f.reload">
 		<title>
 		<function moreinfo="none">dispatcher.reload</function>
 		</title>

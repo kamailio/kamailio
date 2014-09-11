@@ -138,7 +138,7 @@ modparam("tmrec", "separator", ";")
        subsequent intervals do not overlap. For non-recurring intervals,
        durations of any positive length are permitted. Zero-length
        duration means "forever". Negative-length durations are not
-       allowed.
+       allowed. See RFC 2445 for the format of duration.
      * frequency - can be one of the following values: "daily" - specify
        repeating periods based on an interval of a day or more; "weekly" -
        specify repeating periods based on an interval of a week or more;
@@ -222,9 +222,9 @@ modparam("tmrec", "separator", ";")
 
    Example 1.2. tmrec_match usage
 ...
-        if(tmrec_match("20120101T000000|24H|weekly|||SA,SU")
+        if(tmrec_match("20120101T000000|PT24H|weekly|||SA,SU")
         xdbg("it is weekend!\n");
-    if(tmrec_match("20120101T083000|10H|weekly|||MO,TU,WE,TH,FR")
+    if(tmrec_match("20120101T083000|PT10H|weekly|||MO,TU,WE,TH,FR")
         xdbg("it is with working hours\n");
 ...
 
@@ -298,7 +298,7 @@ if(is_leap_year("2010"))
 
    Example 1.4. time_period_match usage
 ...
-if(time_period_match("wd{1-5} hr{8-16}, wd{1-5} hr{17} min{0-29}"))
+if(time_period_match("wd{2-6} hr{8-16}, wd{1-5} hr{17} min{0-29}"))
         xdbg("Monday to Friday, 8:00 to 17:30\n");
 
 if(time_period_match("weekday { sat sun }, weekday {mo-fr} hr {17-8},wd{mo-wed}h

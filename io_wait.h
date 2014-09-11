@@ -63,7 +63,7 @@
 #endif
 
 #define _GNU_SOURCE  /* for POLLRDHUP on linux */
-#include <sys/poll.h>
+#include <poll.h>
 #include <fcntl.h>
 
 #ifdef HAVE_EPOLL

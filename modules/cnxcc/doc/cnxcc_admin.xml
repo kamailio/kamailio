@@ -144,7 +144,8 @@ $var(cps)   = "2.00";         # cost per second
 $var(initial_p)   = "030";    # intial pulse
 $var(final_p)   = "006";      # final pulse
 
-cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)", "$var(initial_p)", "$var(final_p)");
+cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)",
+                     "$var(initial_p)", "$var(final_p)");
 ...		
 		</programlisting>
 	    </example>
@@ -186,6 +187,49 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
             </example>
         </section>
 
+        <section>
+            <title>
+                <function moreinfo="none">cnxcc_update_max_time()</function>
+            </title>
+            <para>
+		Updates max-time of an established and monitored call. This can be used to grant minimum values and to update them every short periods on time as a mean to prevent frauds and/or to mimic requested/granted units of time of Credit Control Application behavior.
+            </para>
+            <para>
+                <emphasis>Return code:</emphasis>
+                <itemizedlist>
+                    <listitem>
+                    <para>
+                        <emphasis>1 - successful</emphasis>
+                    </para>
+                    </listitem>
+                     
+                    <listitem>
+                    <para>
+                        <emphasis>-1 - failed, error logged</emphasis>
+                    </para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <example>
+		<title>cnxcc_update_max_time()</title>
+                <programlisting format="linespecific">
+...
+        $var(update_time)  = 5;
+        $var(client)       = "john-doe-123-basic";
+
+        if (!cnxcc_update_max_time("$var(client)",
+                                  "$var(update_time)")) {
+                xlog("Error updating max-time");
+                return;
+        }
+
+...
+		</programlisting>
+            </example>
+        </section>
+
+
+
     	<section>
             <title>
                 <function moreinfo="none">cnxcc_set_max_channel()</function>
@@ -223,7 +267,7 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
                 </itemizedlist>
             </para>
             <example>
-		<title>cnxcc_set_max_time()</title>
+		<title>cnxcc_set_max_channels()</title>
                 <programlisting format="linespecific">
 ...
 $var(customer)  = "john-doe-123-basic";
@@ -231,17 +275,17 @@ $var(max_chan)  = 2;
 $var(retcode)   = cnxcc_set_max_channels("$var(customer)", "$var(max_chan)");
 
 if ($var(retcode) == -1) {
-	xlog("Error setting up credit control");
-	return;
+    xlog("Error setting up credit control");
+    return;
 }
 
 if ($var(retcode) &lt; -1) {
-        xlog("Too many channels for customer");
-        sl_send_reply(403, "Forbidden");
+    xlog("Too many channels for customer");
+    sl_send_reply(403, "Forbidden");
 
-        if (!cnxcc_terminate_all("$var(customer)")) {
-		xlog("Error terminating customer's calls");
-	}
+    if (!cnxcc_terminate_all("$var(customer)")) {
+        xlog("Error terminating customer's calls");
+    }
 
 	exit;
 }
@@ -281,7 +325,7 @@ if ($var(retcode) &lt; -1) {
 $var(customer)  = "john-doe-123-basic";
 
 if (!cnxcc_terminate_all("$var(customer)")) {
-	xlog("Error terminating customer's calls");
+    xlog("Error terminating customer's calls");
 }
 ...
 		</programlisting>
@@ -356,9 +400,9 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 ...
 event_route[cnxcc:call-shutdown]
 {
-	xlog("L_INFO", "[$ci]: call killed");
+    xlog("L_INFO", "[$ci]: call killed");
 
-        # perform some kind of notification, database update, email sending, etc.
+    # perform some kind of notification, database update, email sending, etc.
 }
 ...
 		</programlisting>
@@ -395,14 +439,13 @@ route[CNXCC]
                           "$var(cost_per_sec)",
                           "$var(i_pulse)",
                           "$var(f_pulse)")) {
-		 xlog("Error setting up credit control");
+             xlog("Error setting up credit control");
       	}
 }
 
 event_route[cnxcc:call-shutdown]
 {
 	xlog("L_INFO", "[$ci]: call killed");
-
 
 }	    
 ...

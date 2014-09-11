@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  * History:
  * --------
@@ -332,6 +332,7 @@ int recover(char* jfn)
 	{
 		fprintf(stderr, "[recover]: Table %s is not supported.\n",tn);
 		fprintf(stderr, "[recover]: FAILED to load journal file: %s.\n", jfn);
+		fclose(fp);
 		return 2;
 	}
 	
@@ -340,6 +341,7 @@ int recover(char* jfn)
 	if(!tbc || !tp)
 	{
 		fprintf(stderr, "[recover]: FAILED to get find metadata for : %s.\n", tn);
+		fclose(fp);
 		return 3;
 	}
 	

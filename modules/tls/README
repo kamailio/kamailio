@@ -4,7 +4,13 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright (c) 2007 iptelorg GmbH
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright © 2007 iptelorg GmbH
+
+   Copyright © 2014 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -63,7 +69,10 @@ Andrei Pelinescu-Onciul
               11.3. tls.options
               11.4. tls.reload
 
-        12. History
+        12. Status
+
+              12.1. License
+              12.2. History
 
    List of Examples
 
@@ -166,7 +175,10 @@ Chapter 1. Admin Guide
         11.3. tls.options
         11.4. tls.reload
 
-   12. History
+   12. Status
+
+        12.1. License
+        12.2. History
 
 1. Overview
 
@@ -267,6 +279,9 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
    In general, if Kamailio fails to start with a symbol not found error
    when trying to load the tls module (check the log), it means some
    needed library was not linked and it must be added to TLS_EXTRA_LIBS
+
+   Elliptic Curve Diffie-Hellman (EDCH)-Ciphers are only supported in
+   OpenSSL 1.0.0e and later.
 
 5. TLS and Low Memory
 
@@ -486,17 +501,22 @@ Revoking a certificate and using a CRL
 9.1. tls_method (string)
 
    Sets the SSL/TLS protocol method. Possible values are:
+     * TLSv1.2 - only TLSv1.2 connections are accepted (available starting
+       with openssl/libssl v1.0.1e)
+     * TLSv1.1 - only TLSv1.1 connections are accepted (available starting
+       with openssl/libssl v1.0.1)
      * TLSv1 - only TLSv1 connections are accepted. This is the default
-       and recommended method (if you want to be rfc3261 conformant don't
-       change it).
+       value.
      * SSLv3 - only SSLv3 connections are accepted
      * SSLv2 - only SSLv2 connections, for old clients. Note: you
        shouldn't use SSLv2 for anything which should be highly secure.
-     * SSLv23 - any of the above methods will be accepted, with the
-       following limitation: the initial SSL hello message must be V2 (in
-       the initial hello all the supported protocols are advertised
-       enabling switching to a higher and more secure version). This means
-       connections from SSLv3 or TLSv1 clients will not be accepted.
+       Newer versions of libssl don't include support for it anymore.
+     * SSLv23 - any of the SSLv2, SSLv3 and TLSv1 methods will be
+       accepted, with the following limitation: the initial SSL hello
+       message must be V2 (in the initial hello all the supported
+       protocols are advertised enabling switching to a higher and more
+       secure version). This means connections from SSLv3 or TLSv1 clients
+       will be accepted.
 
    If rfc3261 conformance is desired, TLSv1 must be used. For
    compatibility with older clients SSLv23 is a good option.
@@ -1199,20 +1219,21 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
    Parameters:
      * None.
 
-12. History
+12. Status
 
-   This module was put together by Jan Janak <jan@iptel.org> from code
-   based on the experimental tls core addon
-   (http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/), code
-   originally written by Peter Griffiths and later maintained by Cesc
-   Santasusana and from an iptelorg tls code addon, written by Andrei
-   Pelinescu-Onciul <andrei@iptel.org>. Jan also added support for
-   multiple domains, a tls specific config, config reloading and a tls
-   specific select framework.
+   12.1. License
+   12.2. History
 
-   For Kamailio 3.1 most of the TLS specific code was completely
-   re-written to add support for asynchronous TLS and fix several long
-   standing bugs.
+12.1. License
+
+   Most of the code for this module has been released under BSD by
+   iptelorg. The GPL parts are released with an exception to link with
+   OpenSSL toolkit software components.
+
+12.2. History
+
+   For version 3.1 most of the TLS specific code was completely re-written
+   to add support for asynchronous TLS and fix several long standing bugs.
 
    The code is currently maintained by Andrei Pelinescu-Onciul
    <andrei@iptel.org>.

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -171,7 +171,7 @@ void handle_exception(void)
 	(*env)->DeleteLocalRef(env, exception);
     }
 
-    LM_ERR("Exception:\n%s\n", error_msg == NULL ? "(no info)" : error_msg);
+    LM_ERR("%s: Exception:\n%s\n", APP_NAME, error_msg == NULL ? "(no info)" : error_msg);
 
 }
 
@@ -194,25 +194,25 @@ void handle_VM_init_failure(int res)
     switch(res)
     {
 	    case -1:
-		LM_ERR("Couldn't initialize Java VM: unknown error\n");
+		LM_ERR("%s: Couldn't initialize Java VM: unknown error\n", APP_NAME);
 		break;
 	    case -2:
-		LM_ERR("Couldn't initialize Java VM: thread detached from the VM\n");
+		LM_ERR("%s: Couldn't initialize Java VM: thread detached from the VM\n", APP_NAME);
 	        break;
 	    case -3:
-		LM_ERR("Couldn't initialize Java VM: JNI version error\n");
+		LM_ERR("%s: Couldn't initialize Java VM: JNI version error\n", APP_NAME);
 		break;
 	    case -4:
-		LM_ERR("Couldn't initialize Java VM: not enough memory\n");
+		LM_ERR("%s: Couldn't initialize Java VM: not enough memory\n", APP_NAME);
 		break;
 	    case -5:
-		LM_ERR("Couldn't initialize Java VM: VM already created\n");
+		LM_ERR("%s: Couldn't initialize Java VM: VM already created\n", APP_NAME);
 		break;
 	    case -6:
-		LM_ERR("Couldn't initialize Java VM: invalid arguments\n");
+		LM_ERR("%s: Couldn't initialize Java VM: invalid arguments\n", APP_NAME);
 		break;
 	    default:
-		LM_ERR("Couldn't initialize Java VM. Error code: %d\n", res);
+		LM_ERR("%s: Couldn't initialize Java VM. Error code: %d\n", APP_NAME, res);
 		break;
     }
 }

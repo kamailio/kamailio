@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*
@@ -345,6 +345,7 @@ static void fake_reply(struct cell *t, int branch, int code )
 	do_cancel_branch = is_invite(t) && prepare_cancel_branch(t, branch, 0);
 	/* mark branch as canceled */
 	t->uac[branch].request.flags|=F_RB_CANCELED;
+	t->uac[branch].request.flags|=F_RB_RELAYREPLY;
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, FAKED_REPLY, branch, 
 					  code, &cancel_data );

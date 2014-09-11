@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -94,6 +94,7 @@ int disable_presence = 0;
 int disable_winfo    = 0;
 int disable_bla      = 1;
 int passive_mode     = 0;
+int disable_xcapdiff = 0;
 str xcapauth_userdel_reason = str_init("probation");
 
 /** SL API structure */
@@ -118,16 +119,17 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{ "db_url",		STR_PARAM, &db_url.s},
-	{ "xcap_table",		STR_PARAM, &xcap_table.s},
+	{ "db_url",		PARAM_STR, &db_url},
+	{ "xcap_table",		PARAM_STR, &xcap_table},
 	{ "force_active",	INT_PARAM, &force_active },
 	{ "integrated_xcap_server", INT_PARAM, &integrated_xcap_server},
-	{ "xcap_server",     	STR_PARAM|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
+	{ "xcap_server",     	PARAM_STRING|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
 	{ "disable_presence",	INT_PARAM, &disable_presence },
 	{ "disable_winfo",		INT_PARAM, &disable_winfo },
 	{ "disable_bla",		INT_PARAM, &disable_bla },
+	{ "disable_xcapdiff",	INT_PARAM, &disable_xcapdiff },
 	{ "passive_mode",		INT_PARAM, &passive_mode },
-	{ "xcapauth_userdel_reason", STR_PARAM, &xcapauth_userdel_reason.s},
+	{ "xcapauth_userdel_reason", PARAM_STR, &xcapauth_userdel_reason},
 	{ 0, 0, 0}
 };
 
@@ -170,12 +172,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	xcapauth_userdel_reason.len = strlen(xcapauth_userdel_reason.s);
-
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len, db_url.s);
-	xcap_table.len = xcap_table.s ? strlen(xcap_table.s) : 0;
-	
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {

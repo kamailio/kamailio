@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <stdio.h>
@@ -121,9 +121,9 @@ static param_export_t params[]={
 	{"buf_size",     INT_PARAM, &buf_size},
 	{"force_color",  INT_PARAM, &force_color},
 	{"long_format",  INT_PARAM, &long_format},
-	{"prefix",       STR_PARAM, &_xlog_prefix},
-	{"log_facility", STR_PARAM, &xlog_facility_name},
-	{"log_colors",   STR_PARAM|USE_FUNC_PARAM, (void*)xlog_log_colors_param},
+	{"prefix",       PARAM_STRING, &_xlog_prefix},
+	{"log_facility", PARAM_STRING, &xlog_facility_name},
+	{"log_colors",   PARAM_STRING|USE_FUNC_PARAM, (void*)xlog_log_colors_param},
 	{0,0,0}
 };
 
@@ -448,6 +448,7 @@ static int xlog3_fixup_helper(void** param, int param_no)
 	*facility = str2facility(s.s);
 	if (*facility == -1) {
 		LM_ERR("invalid syslog facility %s\n", s.s);
+		pkg_free(facility);
 		return E_UNSPEC;
 	}
 

@@ -14,7 +14,7 @@
 
     <title>Functions</title>
 
-    <section id="set_iattr">
+    <section id="avp.f.set_iattr">
 	<title><function>set_iattr(attribute,value)</function></title>
 	<para>
 	    Create an AVP of type integer.
@@ -44,7 +44,7 @@ set_iattr("fr_inv_timer", "60")
 	</example>
     </section>
     
-    <section id="flags2attr">
+    <section id="avp.f.flags2attr">
 	<title><function>flags2attr("$avp")</function></title>
 	<para>
 	    Store the current state of &kamailio; flags into the specified AVP.
@@ -59,7 +59,7 @@ flags2attr("$msg_flags")
 	</example>
     </section>
     
-    <section id="set_sattr">
+    <section id="avp.f.set_sattr">
 	<title><function>set_sattr(attribute,value)</function></title>
 	<para>
 	    Create an AVP of type string.
@@ -87,7 +87,7 @@ set_sattr("called_number", "1234")
 	</example>
     </section>
 
-    <section id="print_aattr">
+    <section id="avp.f.print_aattr">
 	<title><function>print_attr($attribute)</function></title>
 	<para>
 	    Print the value of an AVP to syslog.
@@ -101,7 +101,7 @@ set_sattr("called_number", "1234")
 	</itemizedlist>
     </section>
     
-    <section id="attr2uri">
+    <section id="avp.f.attr2uri">
 	<title><function>attr2uri($attribute[,uri-part])</function></title>
 	<para>
 		Rewrite the whole Request-URI of the message being processed with
@@ -130,7 +130,7 @@ set_sattr("called_number", "1234")
 	</itemizedlist>
     </section>
 
-	<section id="attr_exists">
+	<section id="avp.f.attr_exists">
 	<title><function>attr_exists(attribute)</function></title>
 	<para>
 	    Test for the existence of AVP with given name. The function returns
@@ -159,7 +159,7 @@ if (attr_exists("saved_ruri")) {
     </section>
 
     
-    <section id="attr_equals">
+    <section id="avp.f.attr_equals">
 	<title><function>attr_equals(attribute, value)</function></title>
 	<para>
 	    Test whether an AVP with given name and value exists. The function
@@ -181,7 +181,7 @@ if (attr_exists("saved_ruri")) {
 	</itemizedlist>
     </section>
     
-    <section id="attr_equals_xl">
+    <section id="avp.f.attr_equals_xl">
 	<title><function>attr_equals_xl(attribute, xl_format)</function></title>
 	<para>
 	    Test whether an AVP with given name and value exists. The function
@@ -217,7 +217,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	</example>
     </section>
     
-	<section id="dump_attrs">
+	<section id="avp.f.dump_attrs">
 	<title><function>dump_attrs()</function></title>
 	<para>
 		Dumps all AVPs in user lists to the debug output (with level INFO).
@@ -225,7 +225,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	<para>The function does not require any parameters.</para>
     </section>
     
-	<section id="xlset_attr">
+	<section id="avp.f.xlset_attr">
 	<title><function>xlset_attr($attribute, xl_format)</function></title>
 	<para>
 		Creates new AVP identified by <emphasis>attribute</emphasis> and assigns the result string of xprint formatting rules as its value.
@@ -263,7 +263,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
     </section>
     
     
-	<section id="insert_attr_hf_1">
+	<section id="avp.f.insert_attr_hf_1">
 	<title><function>insert_attr_hf(name)</function></title>
 	<para>
 		Inserts new header into the request, which is beeing forwarded. The AVP name is the name of the header field.
@@ -284,7 +284,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
     </itemizedlist>
 	</section>
 	
-	<section id="insert_attr_hf_2">
+	<section id="avp.f.insert_attr_hf_2">
 	<title><function>insert_attr_hf(header_name, $avp_name)</function></title>
 	<para>
 		Inserts new header into the request, which is beeing forwarded. 
@@ -318,7 +318,7 @@ insert_attr_hf("Route", "$my_route");
 	</example>
 	</section>
 	
-	<section id="append_attr_hf_1">
+	<section id="avp.f.append_attr_hf_1">
 	<title><function>append_attr_hf(name)</function></title>
 	<para>
 		Appends new header into the request, which is beeing forwarded. The AVP name is the name of the header field.
@@ -339,7 +339,7 @@ insert_attr_hf("Route", "$my_route");
     </itemizedlist>
 	</section>
 	
-	<section id="append_attr_hf_2">
+	<section id="avp.f.append_attr_hf_2">
 	<title><function>append_attr_hf(header_name, $avp_name)</function></title>
 	<para>
 		Appends new header into the request, which is beeing forwarded. 
@@ -364,7 +364,7 @@ insert_attr_hf("Route", "$my_route");
     </itemizedlist>
 	</section>
 	
-	<section id="replace_attr_hf_1">
+	<section id="avp.f.replace_attr_hf_1">
 	<title><function>replace_attr_hf(name)</function></title>
 	<para>
 		Replaces header in the request, which is beeing forwarded. The AVP name is the same as the name of the header field.
@@ -385,7 +385,7 @@ insert_attr_hf("Route", "$my_route");
     </itemizedlist>
 	</section>
 	
-	<section id="replace_attr_hf_2">
+	<section id="avp.f.replace_attr_hf_2">
 	<title><function>replace_attr_hf(header_name, $avp_name)</function></title>
 	<para>
 		Replaces header in the request, which is beeing forwarded. 
@@ -410,7 +410,7 @@ insert_attr_hf("Route", "$my_route");
     </itemizedlist>
 	</section>
 	
-	<section id="attr_to_reply_1">
+	<section id="avp.f.attr_to_reply_1">
 	<title><function>attr_to_reply(name)</function></title>
 	<para>
 		Appends new header into the reply at the request time processing. The AVP name is the name of the header field.
@@ -431,7 +431,7 @@ insert_attr_hf("Route", "$my_route");
     </itemizedlist>
 	</section>
 	
-	<section id="attr_to_reply_2">
+	<section id="avp.f.attr_to_reply_2">
 	<title><function>attr_to_reply(header_name, $avp_name)</function></title>
 	<para>
 		Appends new header into the reply at the request time processing. 
@@ -462,7 +462,7 @@ attr_to_reply("P-Hint-Route", "my_route");
 	</example>
 	</section>
 	
-	<section id="attr_destination">
+	<section id="avp.f.attr_destination">
 	<title><function>attr_destination($avp_name)</function></title>
 	<para>
 		Sets the destination of the forwarded request to the value of AVP, 
@@ -490,7 +490,7 @@ t_relay();
 	</example>
 	</section>
 	
-	<section id="xlset_destination">
+	<section id="avp.f.xlset_destination">
 	<title><function>xlset_destination(xl_format)</function></title>
 	<para>
 		Sets the destination of the forwarded request to the value of result of xprint formatted string. Either SIP URI or nameaddr format is allowed.
@@ -515,7 +515,7 @@ t_relay();
 	</example>
 	</section>
 	
-	<section id="subst_attr">
+	<section id="avp.f.subst_attr">
 	<title><function>subst_attr($avp_name, subst_re)</function></title>
 	<para>
 		The value of the AVP identified by <emphasis>$avp_name</emphasis>
@@ -546,7 +546,7 @@ subst_attr("$uri","/tel:[0-9]*/sip:\1@foo.bar;user=phone/");
 	</example>
 	</section>
 	
-	<section id="del_attr">
+	<section id="avp.f.del_attr">
 	<title><function>del_attr($avp_name)</function></title>
 	<para>
 		The AVP identified by <emphasis>$avp_name</emphasis> name is deleted.
@@ -577,7 +577,7 @@ failure_route[1] {
 	</example>
 	</section>
 	
-	<section id="hdr_body2attrs">
+	<section id="avp.f.hdr_body2attrs">
 	<title><function>hdr_body2attrs(headername, prefix)</function></title>
 	<para>
 		Function parses a header body content scans for fld1=val1,fld2=val2,... and creates bunch of avps prefixfld1:= val1, prefixfld2:= val2, .... 
@@ -600,7 +600,7 @@ failure_route[1] {
     </itemizedlist>
 	</section>
 
-	<section id="hdr_body2attrs2">
+	<section id="avp.f.hdr_body2attrs2">
 	<title><function>hdr_body2attrs2(headername, prefix)</function></title>
 	<para>
 		Function parses a header body content scans for fld1=val1,val2;fld2=val3,... and creates bunch of avps prefixfld1#1:= val1, prefixfld1#2:= val2, prefixfld2:=val3 .... 

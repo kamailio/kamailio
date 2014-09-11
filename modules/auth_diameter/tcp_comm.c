@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -310,7 +310,7 @@ next:
 				break;
 			}
 			rb->chall_len=avp->data.len;
-			rb->chall = (unsigned char*)pkg_malloc(avp->data.len*sizeof(char));
+			rb->chall = (unsigned char*)pkg_malloc(avp->data.len*sizeof(unsigned char));
 			if(rb->chall == NULL)
 			{
 				LM_ERR("no more pkg memory\n");

@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -1037,6 +1037,8 @@ int send_resource_subs(char* uri, void* param)
 		LM_WARN("%.*s has %.*s multiple times in the same resource list\n",
 			s->watcher_uri->len, s->watcher_uri->s,
 			s->pres_uri->len, s->pres_uri->s);
+		pkg_free(tmp_str->s);
+		pkg_free(tmp_str);
 		return 1;
 	}
 

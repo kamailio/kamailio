@@ -22,8 +22,12 @@
 
 #include "../../dprint.h"
 #include "../../xavp.h"
+#include "../../pvapi.h"
 
 #include "pv_xavp.h"
+
+#define PV_FIELD_DELIM ", "
+#define PV_FIELD_DELIM_LEN (sizeof(PV_FIELD_DELIM) - 1)
 
 int pv_xavp_get_value(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, sr_xavp_t *avp)
@@ -78,6 +82,8 @@ int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,
 	int idxf = 0;
 	int idx = 0;
 	int count;
+	char *p, *p_ini;
+	int p_size;
 
 	if(param==NULL)
 	{
@@ -127,6 +133,40 @@ int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,
 	avp = xavp_get_by_index(&xname->next->name, idx, &avp->val.v.xavp);
 	if(avp==NULL)
 		return pv_get_null(msg, param, res);
+	/* get all values of second key */
+	if(idxf==PV_IDX_ALL)
+	{
+		p_ini = pv_get_buffer();
+		p = p_ini;
+		p_size = pv_get_buffer_size();
+		do {
+			if(p!=p_ini)
+			{
+				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size)
+				{
+					LM_ERR("local buffer length exceeded\n");
+					return pv_get_null(msg, param, res);
+				}
+				memcpy(p, PV_FIELD_DELIM, PV_FIELD_DELIM_LEN);
+				p += PV_FIELD_DELIM_LEN;
+			}
+			if(pv_xavp_get_value(msg, param, res, avp)<0)
+			{
+				LM_ERR("can get value\n");
+				return pv_get_null(msg, param, res);
+			}
+			if(p-p_ini+res->rs.len+1>p_size)
+			{
+				LM_ERR("local buffer length exceeded!\n");
+				return pv_get_null(msg, param, res);
+			}
+			memcpy(p, res->rs.s, res->rs.len);
+			p += res->rs.len;
+		} while ((avp=xavp_get_next(avp))!=0);
+		res->rs.s = p_ini;
+		res->rs.len = p - p_ini;
+		return 0;
+	}
 	return pv_xavp_get_value(msg, param, res, avp);
 }
 

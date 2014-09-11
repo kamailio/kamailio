@@ -40,7 +40,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ----------
@@ -984,6 +984,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 			continue;
 
 		if (cfg_get(tm, tm_cfg, callid_matching) && 
+				p_cell->uas.request && p_cell->uas.request->callid &&
 		        (p_msg->callid->body.len != p_cell->uas.request->callid->body.len ||
 		         memcmp(p_msg->callid->body.s, p_cell->uas.request->callid->body.s, p_msg->callid->body.len) != 0)
 		) {

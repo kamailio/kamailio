@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -47,6 +47,7 @@
 #include "../../parser/parse_nameaddr.h"
 
 #include "../../lib/kcore/strcommon.h"
+#include "../../lib/srutils/shautils.h"
 #include "pv_trans.h"
 
 
@@ -126,12 +127,12 @@ static int urlencode_param(str *sin, str *sout)
 {
 	char *at, *p;
 
-	at = sout->s;
-	p  = sin->s;
-
 	if (sin==NULL || sout==NULL || sin->s==NULL || sout->s==NULL ||
 			sin->len<0 || sout->len < 3*sin->len+1)
 		return -1;
+
+	at = sout->s;
+	p  = sin->s;
 
 	while (p < sin->s+sin->len) {
 		if (isalnum(*p) || *p == '-' || *p == '_' || *p == '.' || *p == '~')
@@ -234,6 +235,36 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->ri = 0;
 			val->rs.s = _tr_buffer;
 			val->rs.len = MD5_LEN;
+			break;
+		case TR_S_SHA256:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			compute_sha256(_tr_buffer, (u_int8_t*)val->rs.s, val->rs.len);
+			_tr_buffer[SHA256_DIGEST_STRING_LENGTH -1] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = SHA256_DIGEST_STRING_LENGTH -1 ;
+			break;
+		case TR_S_SHA384:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			compute_sha384(_tr_buffer, (u_int8_t*)val->rs.s, val->rs.len);
+			_tr_buffer[SHA384_DIGEST_STRING_LENGTH -1] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = SHA384_DIGEST_STRING_LENGTH -1;
+			break;
+		case TR_S_SHA512:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			compute_sha512(_tr_buffer, (u_int8_t*)val->rs.s, val->rs.len);
+			_tr_buffer[SHA512_DIGEST_STRING_LENGTH -1] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = SHA512_DIGEST_STRING_LENGTH -1;
 			break;
 		case TR_S_ENCODEHEXA:
 			if(!(val->flags&PV_VAL_STR))
@@ -1025,7 +1056,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->ri = _tr_parsed_uri.port_no;
 			break;
 		case TR_URI_PARAMS:
-			val->rs = (_tr_parsed_uri.params.s)?_tr_parsed_uri.params:_tr_empty;
+			val->rs = (_tr_parsed_uri.sip_params.s)?_tr_parsed_uri.sip_params:_tr_empty;
 			break;
 		case TR_URI_PARAM:
 			if(tp==NULL)
@@ -1033,7 +1064,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				LM_ERR("param invalid parameters\n");
 				return -1;
 			}
-			if(_tr_parsed_uri.params.len<=0)
+			if(_tr_parsed_uri.sip_params.len<=0)
 			{
 				val->rs = _tr_empty;
 				val->flags = PV_VAL_STR;
@@ -1043,7 +1074,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 
 			if(_tr_uri_params == NULL)
 			{
-				sv = _tr_parsed_uri.params;
+				sv = _tr_parsed_uri.sip_params;
 				if (parse_params(&sv, CLASS_ANY, &phooks, &_tr_uri_params)<0)
 					return -1;
 			}
@@ -1113,6 +1144,7 @@ done:
 
 static str _tr_params_str = {0, 0};
 static param_t* _tr_params_list = NULL;
+static char _tr_params_separator = ';';
 
 
 /*!
@@ -1129,15 +1161,38 @@ int tr_eval_paramlist(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	pv_value_t v;
 	str sv;
 	int n, i;
+	char separator = ';';
 	param_hooks_t phooks;
 	param_t *pit=NULL;
 
 	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
 		return -1;
 
-	if(_tr_params_str.len==0 || _tr_params_str.len!=val->rs.len ||
-			strncmp(_tr_params_str.s, val->rs.s, val->rs.len)!=0)
+	if (tp != NULL)
 	{
+		if (subtype == TR_PL_COUNT)
+		{
+			if(tp->type != TR_PARAM_STRING || tp->v.s.len != 1)
+				return -1;
+
+				separator = tp->v.s.s[0];
+		}
+		else if (tp->next != NULL)
+		{
+			if(tp->next->type != TR_PARAM_STRING
+					|| tp->next->v.s.len != 1)
+				return -1;
+
+			separator = tp->next->v.s.s[0];
+		}
+	}
+
+	if(_tr_params_str.len==0 || _tr_params_str.len!=val->rs.len ||
+			strncmp(_tr_params_str.s, val->rs.s, val->rs.len)!=0 ||
+			_tr_params_separator != separator)
+	{
+		_tr_params_separator = separator;
+
 		if(val->rs.len>_tr_params_str.len)
 		{
 			if(_tr_params_str.s) pkg_free(_tr_params_str.s);
@@ -1167,7 +1222,8 @@ int tr_eval_paramlist(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		
 		/* parse params */
 		sv = _tr_params_str;
-		if (parse_params(&sv, CLASS_ANY, &phooks, &_tr_params_list)<0)
+		if (parse_params2(&sv, CLASS_ANY, &phooks, &_tr_params_list,
+					_tr_params_separator)<0)
 			return -1;
 	}
 	
@@ -1600,7 +1656,7 @@ int tr_eval_line(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					if(p==NULL)
 					{
 						/* last line */
-						mv.len = (val->rs.s + val->rs.len) - p;
+						mv.len = (val->rs.s + val->rs.len) - mv.s;
 					} else {
 						mv.len = p - mv.s;
 					}
@@ -1682,7 +1738,7 @@ int tr_eval_line(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					if(p==NULL)
 					{
 						/* last line */
-						mv.len = (val->rs.s + val->rs.len) - p;
+						mv.len = (val->rs.s + val->rs.len) - mv.s;
 					} else {
 						mv.len = p - mv.s;
 					}
@@ -1882,6 +1938,15 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==3 && strncasecmp(name.s, "md5", 3)==0) {
 		t->subtype = TR_S_MD5;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "sha256", 6)==0) {
+		t->subtype = TR_S_SHA256;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "sha384", 6)==0) {
+		t->subtype = TR_S_SHA384;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "sha512", 6)==0) {
+		t->subtype = TR_S_SHA512;
 		goto done;
 	} else if(name.len==7 && strncasecmp(name.s, "tolower", 7)==0) {
 		t->subtype = TR_S_TOLOWER;
@@ -2307,6 +2372,7 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 	char *p;
 	char *p0;
 	char *ps;
+	char *start_pos;
 	str s;
 	str name;
 	int n;
@@ -2347,6 +2413,22 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 		t->params = tp;
 		tp = 0;
 		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+
+		if(*p==TR_PARAM_MARKER)
+		{
+			start_pos = ++p;
+			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+			t->params->next = tp;
+			tp = 0;
+			if (p - start_pos != 1)
+			{
+				LM_ERR("invalid separator in transformation: "
+					"%.*s\n", in->len, in->s);
+				goto error;
+			}
+			while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		}
+
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid value transformation: %.*s!\n",
@@ -2367,6 +2449,22 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 		t->params = tp;
 		tp = 0;
 		while(is_in_str(p, in) && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+
+		if(*p==TR_PARAM_MARKER)
+		{
+			start_pos = ++p;
+			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+			t->params->next = tp;
+			tp = 0;
+			if (p - start_pos != 1)
+			{
+				LM_ERR("invalid separator in transformation: "
+					"%.*s\n", in->len, in->s);
+				goto error;
+			}
+			while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		}
+
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid name transformation: %.*s!\n",
@@ -2387,6 +2485,22 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 		t->params = tp;
 		tp = 0;
 		while(is_in_str(p, in) && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+
+		if(*p==TR_PARAM_MARKER)
+		{
+			start_pos = ++p;
+			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+			t->params->next = tp;
+			tp = 0;
+			if (p - start_pos != 1)
+			{
+				LM_ERR("invalid separator in transformation: "
+					"%.*s\n", in->len, in->s);
+				goto error;
+			}
+			while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		}
+
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid name transformation: %.*s!\n",
@@ -2396,6 +2510,28 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==5 && strncasecmp(name.s, "count", 5)==0) {
 		t->subtype = TR_PL_COUNT;
+		if(*p==TR_PARAM_MARKER)
+		{
+			start_pos = ++p;
+			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+			t->params = tp;
+			tp = 0;
+			if (p - start_pos != 1)
+			{
+				LM_ERR("invalid separator in transformation: "
+					"%.*s\n", in->len, in->s);
+				goto error;
+			}
+
+			while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+			if(*p!=TR_RBRACKET)
+			{
+				LM_ERR("invalid name transformation: %.*s!\n",
+					in->len, in->s);
+				goto error;
+			}
+		}
+
 		goto done;
 	}
 

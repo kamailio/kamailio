@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
  /*
   * History:
@@ -325,6 +325,8 @@ db1_con_t* db_do_init2(const str* url, void* (*new_connection)(), db_pooling_t p
 		pool_insert((struct pool_con*)con);
 	} else {
 		LM_DBG("connection %p found in pool\n", id);
+		free_db_id(id); // free the new id, as we use the pool instead
+		id = 0;
 	}
 
 	res->tail = (unsigned long)con;

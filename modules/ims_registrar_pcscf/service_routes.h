@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef SERVICE_ROUTES_H
@@ -50,5 +50,10 @@ str * get_asserted_identity(struct sip_msg* _m);
  * Assert a given identity of a user
  */
 int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity);
+
+/**
+ * Assert a given called identity of a user
+ */
+int assert_called_identity(struct sip_msg* _m, udomain_t* _d);
 
 #endif /* SERVICE_ROUTES_H */

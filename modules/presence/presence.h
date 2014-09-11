@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
  * History:
@@ -93,6 +93,8 @@ extern int pres_notifier_processes;
 
 extern int phtable_size;
 extern phtable_t* pres_htable;
+
+extern db_locking_t db_table_lock;
 
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri);

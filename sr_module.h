@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*
@@ -628,6 +628,17 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param);
  * @return 0 on success, 1 on error, e.g. cannot get value
  */
 int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param);
+
+/**
+ * @brief Get the function parameter value as integer/string
+ * @param i_dst int destination
+ * @param s_dst string destination
+ * @param msg SIP message
+ * @param param function parameters
+ * @param flags flags to indicate destiantions
+ * @return 0 on success, 1 on error, e.g. cannot get value
+ */
+int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, unsigned int *flags);
 
 /**
  * @brief Get the function parameter value as compiled regular expression

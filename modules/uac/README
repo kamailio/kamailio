@@ -14,9 +14,9 @@ Ramona-Elena Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright © 2009-2010 asipto.com
+   Copyright � 2009-2010 asipto.com
 
-   Copyright © 2005 Voice Sistem
+   Copyright � 2005 Voice Sistem
      __________________________________________________________________
 
    Table of Contents
@@ -61,8 +61,17 @@ Ramona-Elena Modroiu
               4.9. uac_reg_lookup(uuid, dst)
               4.10. uac_reg_request_to(user, mode)
 
-        5. Exported pseudo-variables
-        6. Remote Registration
+        5. Pseudo Variables
+        6. RPC Commands
+
+              6.1. uac.reg_dump
+              6.2. uac.reg_info
+              6.3. uac.reg_enable
+              6.4. uac.reg_disable
+              6.5. uac.reg_reload
+              6.6. uac.reg_refresh
+
+        7. Remote Registration
 
    List of Examples
 
@@ -92,7 +101,13 @@ Ramona-Elena Modroiu
    1.24. uac_req_send usage
    1.25. uac_reg_lookup usage
    1.26. uac_reg_request_to usage
-   1.27. lookup remote registrations usage
+   1.27. uac.reg_dump usage
+   1.28. uac.reg_info usage
+   1.29. uac.reg_enable usage
+   1.30. uac.reg_disable usage
+   1.31. uac.reg_reload usage
+   1.32. uac.reg_refresh usage
+   1.33. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -136,8 +151,17 @@ Chapter 1. Admin Guide
         4.9. uac_reg_lookup(uuid, dst)
         4.10. uac_reg_request_to(user, mode)
 
-   5. Exported pseudo-variables
-   6. Remote Registration
+   5. Pseudo Variables
+   6. RPC Commands
+
+        6.1. uac.reg_dump
+        6.2. uac.reg_info
+        6.3. uac.reg_enable
+        6.4. uac.reg_disable
+        6.5. uac.reg_reload
+        6.6. uac.reg_refresh
+
+   7. Remote Registration
 
 1. Overview
 
@@ -158,7 +182,7 @@ Chapter 1. Admin Guide
      * Authentication does not support qop auth-int, just qop auth;
      * CSeq is not increased during authentication - the response may be
        rejected.
-     * The “uac_replace_*” functions can only be run once on the same SIP
+     * The "uac_replace_*" functions can only be run once on the same SIP
        request. Try to save needed changes in a pseudovariable and apply
        them once.
 
@@ -172,9 +196,9 @@ Chapter 1. Admin Guide
    The following modules must be loaded before this module:
      * TM - Transaction Module
      * RR - Record-Route Module, but only if restore mode for From: URI is
-       set to “auto”.
+       set to "auto".
      * Dialog Module, but only if restore mode for From: URI is set to
-       “auto” and you want uac_replace_from or uac_replace_to to store the
+       "auto" and you want uac_replace_from or uac_replace_to to store the
        values of the URIs as dialog variables.
 
 2.2. External Libraries or Applications
@@ -207,7 +231,7 @@ Chapter 1. Admin Guide
    Name of Record-Route header parameter that will be used to store an
    encoded version of the original FROM URI.
 
-   This parameter is optional, it's default value being “vsf”.
+   This parameter is optional, it's default value being "vsf".
 
    Example 1.1. Set rr_from_store_param parameter
 ...
@@ -219,7 +243,7 @@ modparam("uac","rr_from_store_param","my_param")
    Name of Record-Route header parameter that will be used to store
    (encoded) the original TO URI.
 
-   This parameter is optional, it's default value being “vst”.
+   This parameter is optional, it's default value being "vst".
 
    Example 1.2. Set rr_to_store_param parameter
 ...
@@ -230,16 +254,16 @@ modparam("uac","rr_to_store_param","my_param")
 
    There are 3 modes of restoring the original FROM URI and the original
    TO URI:
-     * “none” - no information about original URI is stored; restoration
+     * "none" - no information about original URI is stored; restoration
        is not possible.
-     * “manual” - all following replies will be restored, but not also the
+     * "manual" - all following replies will be restored, but not also the
        sequential requests - this must be manually updated based on
        original URI.
-     * “auto” - all sequential requests and replies will be automatically
+     * "auto" - all sequential requests and replies will be automatically
        updated based on stored original URI. For this option you have to
-       set “modparam("rr", "append_fromtag", 1)”.
+       set "modparam("rr", "append_fromtag", 1)".
 
-   This parameter is optional, it's default value being “auto”.
+   This parameter is optional, it's default value being "auto".
 
    Example 1.3. Set restore_mode parameter
 ...
@@ -331,9 +355,9 @@ modparam("uac","credential","username:domain:password")
    This can be used if the realm upstream will be using is not known in
    advance.
 
-   If you define it, you also need to define “auth_username_avp”
-   (Section 3.10, “auth_username_avp (string)”) and “auth_username_avp”
-   (Section 3.11, “auth_password_avp (string)”).
+   If you define it, you also need to define "auth_username_avp"
+   (Section 3.10, "auth_username_avp (string)") and "auth_username_avp"
+   (Section 3.11, "auth_password_avp (string)").
 
    Example 1.9. Set auth_realm_avp parameter
 ...
@@ -345,9 +369,9 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
    The definition of an AVP that might contain the username to be used to
    perform authentication.
 
-   If you define it, you also need to define “auth_realm_avp”
-   (Section 3.9, “auth_realm_avp (string)”) and “auth_username_avp”
-   (Section 3.11, “auth_password_avp (string)”).
+   If you define it, you also need to define "auth_realm_avp"
+   (Section 3.9, "auth_realm_avp (string)") and "auth_username_avp"
+   (Section 3.11, "auth_password_avp (string)").
 
    Example 1.10. Set auth_username_avp parameter
 ...
@@ -359,9 +383,9 @@ modparam("uac","auth_username_avp","$avp(i:11)")
    The definition of an AVP that might contain the password to be used to
    perform authentication.
 
-   If you define it, you also need to define “auth_password_avp”
-   (Section 3.11, “auth_password_avp (string)”) and “auth_username_avp”
-   (Section 3.11, “auth_password_avp (string)”).
+   If you define it, you also need to define "auth_password_avp"
+   (Section 3.11, "auth_password_avp (string)") and "auth_username_avp"
+   (Section 3.11, "auth_password_avp (string)").
 
    Example 1.11. Set auth_password_avp parameter
 ...
@@ -408,7 +432,7 @@ modparam("uac", "reg_retry_interval", 300)
 
    DB table name to fetch user profiles for registration.
 
-   This parameter is optional, it's default value being “uacreg”.
+   This parameter is optional, it's default value being "uacreg".
 
    Example 1.15. Set reg_db_table parameter
 ...
@@ -440,7 +464,7 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
    4.9. uac_reg_lookup(uuid, dst)
    4.10. uac_reg_request_to(user, mode)
 
-4.1.  uac_replace_from(display,uri)
+4.1. uac_replace_from(display,uri)
 
    Replace in FROM header the display name and the URI part.
 
@@ -483,7 +507,7 @@ uac_replace_from("","sip:robin@gotham.org");
 uac_replace_from("","");
 ...
 
-4.2.  uac_replace_from(uri)
+4.2. uac_replace_from(uri)
 
    Replace in FROM header the URI part without altering the display name.
 
@@ -496,7 +520,7 @@ uac_replace_from("","");
 uac_replace_from("sip:batman@gotham.org");
 ...
 
-4.3.  uac_restore_from()
+4.3. uac_restore_from()
 
    This function will check if the FROM URI was modified and will use the
    information stored in header parameter to restore the original FROM URI
@@ -509,7 +533,7 @@ uac_replace_from("sip:batman@gotham.org");
 uac_restore_from();
 ...
 
-4.4.  uac_replace_to(display,uri)
+4.4. uac_replace_to(display,uri)
 
    Replace in TO header the display name and the URI part.
 
@@ -534,7 +558,7 @@ uac_replace_to("","sip:robin@gotham.org");
 uac_replace_to("","");
 ...
 
-4.5.  uac_replace_to(uri)
+4.5. uac_replace_to(uri)
 
    Replace in TO header the URI part without altering the display name.
 
@@ -565,7 +589,7 @@ uac_replace_to("","");
 uac_replace_to("sip:batman@gotham.org");
 ...
 
-4.6.  uac_restore_to()
+4.6. uac_restore_to()
 
    This function will check if the TO URI was modified and will use the
    information stored in header parameter to restore the original TO URI
@@ -578,7 +602,7 @@ uac_replace_to("sip:batman@gotham.org");
 uac_restore_to();
 ...
 
-4.7.  uac_auth()
+4.7. uac_auth()
 
    This function can be called only from failure route and will build the
    authentication response header and insert it into the request without
@@ -591,7 +615,7 @@ uac_restore_to();
 uac_auth();
 ...
 
-4.8.  uac_req_send()
+4.8. uac_req_send()
 
    This function sends a SIP message from the configuration file. The
    message is built out of $uac_req(...) pseudo-variable.
@@ -609,7 +633,7 @@ $uac_req(callid)=$(mb{s.md5});
 uac_req_send();
 ...
 
-4.9.  uac_reg_lookup(uuid, dst)
+4.9. uac_reg_lookup(uuid, dst)
 
    This function sets the PV dst to SIP URI that correspond to uuid in uac
    registations table. uuid and dst must be pseudo-variables.
@@ -625,7 +649,7 @@ if(uac_reg_lookup("$rU", "$ru"))
 }
 ...
 
-4.10.  uac_reg_request_to(user, mode)
+4.10. uac_reg_request_to(user, mode)
 
    This function can be used to send an authenticated request to a remote
    user in the uac registrations table. It sets the request-uri, dst-uri
@@ -658,14 +682,92 @@ failure_route[REMOTE_AUTH] {
 }
 ...
 
-5. Exported pseudo-variables
+5. Pseudo Variables
 
      * $uac_req(key)
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
 
-6. Remote Registration
+6. RPC Commands
+
+   6.1. uac.reg_dump
+   6.2. uac.reg_info
+   6.3. uac.reg_enable
+   6.4. uac.reg_disable
+   6.5. uac.reg_reload
+   6.6. uac.reg_refresh
+
+6.1. uac.reg_dump
+
+   Dump the content of remote registration table from memory.
+
+   Example 1.27. uac.reg_dump usage
+...
+   kamcmd uac.reg_dump
+...
+
+6.2. uac.reg_info
+
+   Return the details of a remote registration record based on a filter.
+   The command has two parameter: attribute and value. The attribute can
+   be: l_uuid, l_username, r_username or auth_username. The value is what
+   should be matcheg against the value of the attribute in the remote
+   registration record.
+
+   Example 1.28. uac.reg_info usage
+...
+   kamcmd uac.reg_info l_uuid account123
+...
+
+6.3. uac.reg_enable
+
+   Enable a remote registration record based on a filter. The command has
+   two parameter: attribute and value. The attribute can be: l_uuid,
+   l_username, r_username or auth_username. The value is what should be
+   matcheg against the value of the attribute in the remote registration
+   record.
+
+   Example 1.29. uac.reg_enable usage
+...
+   kamcmd uac.reg_enable l_uuid account123
+...
+
+6.4. uac.reg_disable
+
+   Disable a remote registration record based on a filter. The command has
+   two parameter: attribute and value. The attribute can be: l_uuid,
+   l_username, r_username or auth_username. The value is what should be
+   matcheg against the value of the attribute in the remote registration
+   record.
+
+   Example 1.30. uac.reg_disable usage
+...
+   kamcmd uac.reg_disable l_uuid account123
+...
+
+6.5. uac.reg_reload
+
+   Reload the records from database for remote registrations.
+
+   Example 1.31. uac.reg_reload usage
+...
+   kamcmd uac.reg_reload
+...
+
+6.6. uac.reg_refresh
+
+   Load one record by l_uuid from database for remote registrations. If
+   the record exists in memory, its authentication password is updated,
+   otherwise a new record is added. The command has a parameter, which is
+   the value of l_uuid field.
+
+   Example 1.32. uac.reg_refresh usage
+...
+   kamcmd uac.reg_refresh account123
+...
+
+7. Remote Registration
 
    The module can register contact addresses to remote REGISTRAR servers.
    You have to add records to uacreg table. The table stores following
@@ -698,7 +800,7 @@ failure_route[REMOTE_AUTH] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.27. lookup remote registrations usage
+   Example 1.33. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");

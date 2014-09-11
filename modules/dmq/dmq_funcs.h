@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
@@ -47,12 +47,16 @@ typedef struct dmq_cback_param {
 } dmq_cback_param_t;
 
 int cfg_dmq_send_message(struct sip_msg* msg, char* peer, char* to,
-		char* body);
+		char* body, char* content_type);
+int cfg_dmq_bcast_message(struct sip_msg* msg, char* peer, char* body, 
+		char* content_type);
+int cfg_dmq_t_replicate(struct sip_msg* msg, char* s);
+int cfg_dmq_is_from_node(struct sip_msg* msg);
 dmq_peer_t* register_dmq_peer(dmq_peer_t* peer);
 int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
-		dmq_resp_cback_t* resp_cback, int max_forwards);
+		dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type);
 int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except,
-		dmq_resp_cback_t* resp_cback, int max_forwards);
+		dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type);
 
 #endif
 

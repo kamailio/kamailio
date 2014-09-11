@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -114,6 +114,7 @@ int parse_pai_header(struct sip_msg* const msg)
 	p_id_body_t *pai_b;
 	p_id_body_t **prev_pid_b;
 	hdr_field_t *hf;
+	void **vp;
 
 	if ( !msg->pai )
 	{
@@ -130,7 +131,8 @@ int parse_pai_header(struct sip_msg* const msg)
 	if ( msg->pai->parsed )
 		return 0;
 
-	prev_pid_b = (p_id_body_t**)(&msg->pai->parsed);
+	vp = &msg->pai->parsed;
+	prev_pid_b = (p_id_body_t**)vp;
 
 	for (hf = msg->pai; hf != NULL; hf = next_sibling_hdr(hf))
 	{

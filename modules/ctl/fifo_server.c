@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Fifo server is a very powerful tool used to access easily
  * ser's internals via textual interface, similarly to
@@ -191,7 +191,7 @@ static int  rpc_send         (rpc_ctx_t* ctx);                                 /
 static void rpc_fault        (rpc_ctx_t* ctx,       int code, char* fmt, ...); /* Signal a failure to the client */
 static int  rpc_add          (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add a new piece of data to the result */
 static int  rpc_scan         (rpc_ctx_t* ctx,       char* fmt, ...);           /* Retrieve request parameters */
-static int  rpc_printf       (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add printf-like formated data to the result set */
+static int  rpc_rpl_printf   (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add printf-like formated data to the result set */
 static int  rpc_struct_add   (struct text_chunk* s, char* fmt, ...);           /* Create a new structure */
 static int  rpc_struct_scan  (struct rpc_struct* s, char* fmt, ...);           /* Scan attributes of a structure */
 static int  rpc_struct_printf(struct text_chunk* s, char* name, char* fmt, ...);
@@ -757,7 +757,7 @@ process:
 			ERR("File separator missing\n");
 			goto consume;
 		}
-		if ((file_sep == context.method)) {
+		if (file_sep == context.method) {
 			ERR("Empty command\n");
 			goto consume;
 		}
@@ -905,12 +905,15 @@ int init_fifo_fd(char* fifo, int fifo_mode, int fifo_uid, int fifo_gid,
 
 int fifo_rpc_init()
 {
+	memset(&func_param, 0, sizeof(func_param));
 	func_param.send = (rpc_send_f)rpc_send;
 	func_param.fault = (rpc_fault_f)rpc_fault;
 	func_param.add = (rpc_add_f)rpc_add;
 	func_param.scan = (rpc_scan_f)rpc_scan;
-	func_param.printf = (rpc_printf_f)rpc_printf;
+	func_param.rpl_printf = (rpc_rpl_printf_f)rpc_rpl_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
+	/* use rpc_struct_add for array_add */
+	func_param.array_add = (rpc_array_add_f)rpc_struct_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;	
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
 	return 0;
@@ -1185,7 +1188,7 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 
 	va_start(ap, fmt);
 	while(*fmt) {
-		if (*fmt == '{') {
+		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
 			l = new_chunk(&s);
 			if (!l) {
@@ -1282,7 +1285,7 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 }
 
 
-static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int n, buf_size;
 	char* buf;
@@ -1441,11 +1444,11 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 }
 
 
-
 static int rpc_struct_add(struct text_chunk* s, char* fmt, ...)
 {
 	static char buf[MAX_LINE_BUFFER];
 	str st, *sp;
+	void** void_ptr;
 	va_list ap;
 	struct text_chunk* m, *c;
 	rpc_ctx_t* ctx;
@@ -1463,61 +1466,67 @@ static int rpc_struct_add(struct text_chunk* s, char* fmt, ...)
 		}
 		m->flags |= CHUNK_MEMBER_NAME;
 		
-		switch(*fmt) {
-		case 'd':
-		case 't':
-			st.s = int2str(va_arg(ap, int), &st.len);
-			c = new_chunk(&st);
-			break;
-			
-		case 'f':
-			st.s = buf;
-			st.len = snprintf(buf, 256, "%f", va_arg(ap, double));
-			if (st.len < 0) {
-				rpc_fault(ctx, 400, "Error While Converting double");
-				ERR("Error while converting double\n");
+		if(*fmt=='{' || *fmt=='[') {
+			void_ptr = va_arg(ap, void**);
+			m->ctx=ctx;
+			append_chunk(ctx, m);
+			*void_ptr = m;
+		} else {
+			switch(*fmt) {
+			case 'd':
+			case 't':
+				st.s = int2str(va_arg(ap, int), &st.len);
+				c = new_chunk(&st);
+				break;
+
+			case 'f':
+				st.s = buf;
+				st.len = snprintf(buf, 256, "%f", va_arg(ap, double));
+				if (st.len < 0) {
+					rpc_fault(ctx, 400, "Error While Converting double");
+					ERR("Error while converting double\n");
+					goto err;
+				}
+				c = new_chunk(&st);
+				break;
+
+				case 'b':
+					st.len = 1;
+					st.s = ((va_arg(ap, int) == 0) ? "0" : "1");
+					c = new_chunk(&st);
+				break;
+
+			case 's':
+				st.s = va_arg(ap, char*);
+				st.len = strlen(st.s);
+				c = new_chunk_escape(&st, 1);
+				break;
+
+			case 'S':
+				sp = va_arg(ap, str*);
+				c = new_chunk_escape(sp, 1);
+				break;
+
+			default:
+				rpc_fault(ctx, 500, "Bug In SER (Invalid formatting character %c)",
+						*fmt);
+				ERR("Invalid formatting character\n");
 				goto err;
 			}
-			c = new_chunk(&st);
-			break;
-			
-		case 'b':
-			st.len = 1;
-			st.s = ((va_arg(ap, int) == 0) ? "0" : "1");
-			c = new_chunk(&st);
-			break;
-			
-		case 's':
-			st.s = va_arg(ap, char*);
-			st.len = strlen(st.s);
-			c = new_chunk_escape(&st, 1);
-			break;
-			
-		case 'S':
-			sp = va_arg(ap, str*);
-			c = new_chunk_escape(sp, 1);
-			break;
-			
-		default:
-			rpc_fault(ctx, 500, "Bug In SER (Invalid formatting character %c)",
-					*fmt);
-			ERR("Invalid formatting character\n");
-			goto err;
+
+			if (!c) {
+				rpc_fault(ctx, 500, "Internal Server Error");
+				goto err;
+			}
+			c->flags |= CHUNK_MEMBER_VALUE;
+			c->next = s->next;
+			s->next = c;
+			if (s == ctx->last) ctx->last = c;
+
+			m->next = s->next;
+			s->next = m;
+			if (s == ctx->last) ctx->last = m;
 		}
-
-		if (!c) {
-			rpc_fault(ctx, 500, "Internal Server Error");
-			goto err;
-		}
-		c->flags |= CHUNK_MEMBER_VALUE;
-		c->next = s->next;
-		s->next = c;
-		if (s == ctx->last) ctx->last = c;
-
-		m->next = s->next;
-		s->next = m;
-		if (s == ctx->last) ctx->last = m;
-
 		fmt++;
 	}
 	va_end(ap);

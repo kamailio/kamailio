@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
  * History:
@@ -470,7 +470,6 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 		p += rr_param->len;
 		*(p++) = '=';
 		memcpy( p, replace.s, replace.len);
-		p += replace.len;
 
 		if (uac_rrb.add_rr_param( msg, &param)!=0)
 		{
@@ -588,7 +587,8 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 
 	/* get new uri */
 	if ( new_uri.len<old_uri.len ) {
-		LM_ERR("new URI shorter than old URI\n");
+		LM_ERR("new URI [%.*s] shorter than old URI [%.*s]\n",
+				new_uri.len, new_uri.s, old_uri.len, old_uri.s);
 		goto failed;
 	}
 	for( i=0 ; i<old_uri.len ; i++ ) {

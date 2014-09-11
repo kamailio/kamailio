@@ -7,7 +7,7 @@
 #===================================================================
 
 ### version for this script
-VERSION='4.1.0'
+VERSION='4.2.0'
 
 PATH=$PATH:/usr/local/sbin/
 
@@ -343,7 +343,7 @@ acl() {
 
 				QUERY="insert into $ACL_TABLE ($ACL_USER_COLUMN,\
 $ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN,$ACL_DOMAIN_COLUMN ) values \
-('$OSERUSER','$1', now(), '$OSERDOMAIN' );"
+('$OSERUSER','$1', $DBFNOW, '$OSERDOMAIN' );"
 				$DBCMD "$QUERY"
 				if [ $? -ne 0 ] ; then
 					merr "acl - SQL Error"
@@ -795,7 +795,7 @@ FROM $AVP_TABLE $CLAUSE;"
 			QUERY="INSERT INTO $AVP_TABLE \
 ($AVP_UUID_COLUMN,$AVP_USER_COLUMN,$AVP_DOMAIN_COLUMN,$AVP_ATTRIBUTE_COLUMN,\
 $AVP_TYPE_COLUMN,$AVP_VALUE_COLUMN,$AVP_MODIFIED_COLUMN) \
-VALUES ('$AVP_UUID','$OSERUSER','$OSERDOMAIN','$2',$3,'$4',NOW());"
+VALUES ('$AVP_UUID','$OSERUSER','$OSERDOMAIN','$2',$3,'$4',$DBFNOW);"
 			# echo "Query: $QUERY"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
@@ -1010,6 +1010,14 @@ db_ops() {
 			QUERY="SELECT * FROM $1 WHERE $2=$3\\G;"
 			$DBROCMD "$QUERY"
 			;;
+		connect)
+			shift
+			if [ -z "$DBCMDCONNECT" ] ; then
+				merr "extension not implemented"
+				exit 1
+			fi
+			$DBCMDCONNECT
+			;;
 		*)
 			usage_db_ops
 			exit 1
@@ -1047,7 +1055,7 @@ domain() {
 				exit 0
 			fi
 			QUERY="insert into $DOMAIN_TABLE ($DO_DOMAIN_COLUMN, \
-			$DO_LAST_MODIFIED_COLUMN) VALUES ('$1',now());"
+			$DO_LAST_MODIFIED_COLUMN) VALUES ('$1',$DBFNOW);"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "domain - SQL Error"
@@ -1550,7 +1558,6 @@ cr() {
 	esac
 }
 
-
 #
 ##### ------------------------------------------------ #####
 ### DISPATCHER management
@@ -1564,27 +1571,44 @@ dispatcher() {
 			QUERY="select * FROM $DISPATCHER_TABLE ORDER BY $DISPATCHER_SETID_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
-		addgw)
+		addgw|add)
 			shift
-			if [ $# -lt 3 ] ; then
+			if [ $# -lt 2 ] ; then
 				merr "too few parameters"
 				usage_dispatcher
 				exit 1
 			fi
 
-			if [ $# -gt 3 ] ; then
-				DISPATCHER_DESCRIPTION=$4
-			else
-				DISPATCHER_DESCRIPTION=""
-			fi 
-
 			DISPATCHER_SETID=$1
 			DISPATCHER_DESTINATION=$2
-			DISPATCHER_FLAGS=$3
+
+			if [ $# -gt 2 ] ; then
+				DISPATCHER_FLAGS=$3
+			else
+				DISPATCHER_FLAGS=0
+			fi
+
+			if [ $# -gt 3 ] ; then
+				DISPATCHER_PRIORITY=$4
+			else
+				DISPATCHER_PRIORITY=0
+			fi
+
+			if [ $# -gt 4 ] ; then
+				DISPATCHER_ATTRS=$5
+			else
+				DISPATCHER_ATTRS=""
+			fi
+
+			if [ $# -gt 5 ] ; then
+				DISPATCHER_DESCRIPTION=$6
+			else
+				DISPATCHER_DESCRIPTION=""
+			fi
 
 			QUERY="insert into $DISPATCHER_TABLE \
-				( $DISPATCHER_SETID_COLUMN, $DISPATCHER_DESTINATION_COLUMN, $DISPATCHER_FLAGS_COLUMN, $DISPATCHER_DESCRIPTION_COLUMN ) \
-				VALUES ($DISPATCHER_SETID,'$DISPATCHER_DESTINATION',$DISPATCHER_FLAGS,'$DISPATCHER_DESCRIPTION');"
+				( $DISPATCHER_SETID_COLUMN, $DISPATCHER_DESTINATION_COLUMN, $DISPATCHER_FLAGS_COLUMN, $DISPATCHER_PRIORITY_COLUMN, $DISPATCHER_ATTRS_COLUMN, $DISPATCHER_DESCRIPTION_COLUMN ) \
+				VALUES ($DISPATCHER_SETID,'$DISPATCHER_DESTINATION',$DISPATCHER_FLAGS,$DISPATCHER_PRIORITY,'$DISPATCHER_ATTRS','$DISPATCHER_DESCRIPTION');"
 			$DBCMD "$QUERY"
 
 			if [ $? -ne 0 ] ; then
@@ -1592,9 +1616,8 @@ dispatcher() {
 				exit 1
 			fi
 
-			$CTLCMD ds_reload
 			;;
-		rmgw)
+		rmgw|rm)
 			shift
 			if [ $# -ne 1 ] ; then
 				merr "missing gateway id to be removed"
@@ -1609,7 +1632,6 @@ dispatcher() {
 				exit 1
 			fi
 
-			$CTLCMD ds_reload
 			;;
 		reload)
 			$CTLCMD ds_reload
@@ -1621,6 +1643,30 @@ dispatcher() {
 
 		*)
 			usage_dispatcher
+			exit 1
+
+	esac
+}
+
+#
+##### ------------------------------------------------ #####
+### DIALOG management
+#
+dialog() {
+	case $1 in
+		show|list)
+			require_ctlengine
+			mecho "dialog memory records"
+			$CTLCMD dlg_list
+			;;
+		showdb)
+			require_dbengine
+			mecho "dialog database records"
+			QUERY="select * FROM $DIALOG_TABLE ORDER BY id; "
+			$DBROCMD "$QUERY"
+			;;
+		*)
+			usage_dialog
 			exit 1
 
 	esac
@@ -2254,6 +2300,51 @@ and $REALM_COLUMN='$OSERDOMAIN';"
 			# and also all his contacts
 			$0 ul rm $1   > /dev/null 2>&1
 			;;
+		sets)
+			if [ $# -ne 4 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+			shift
+
+			is_user $1
+			if [ $? -ne 0 ] ; then
+				merr "non-existent user '$1'"
+				exit 1
+			fi
+
+			QUERY="update $SUB_TABLE set $2='$3' \
+WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "attribute change failed"
+			else
+				minfo "attribute change succeeded"
+			fi
+			;;
+		setn)
+			if [ $# -ne 4 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+			shift
+
+			is_user $1
+			if [ $? -ne 0 ] ; then
+				merr "non-existent user '$1'"
+				exit 1
+			fi
+
+			QUERY="update $SUB_TABLE set $2=$3 \
+WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "attribute change failed"
+			else
+				minfo "attribute change succeeded"
+			fi
+			;;
+
 	esac
 
 }
@@ -2364,7 +2455,7 @@ usrloc() {
 			fi
 
 			$CTLCMD ul_add "$USRLOC_TABLE" "$OSERUSER@$OSERDOMAIN" "$2" \
-"$UL_EXPIRES" "1.00" "$UL_PATH" "$UL_FLAGS" "$BR_FLAGS" "$ALL_METHODS"
+"$UL_EXPIRES" "$DEFAULT_Q" "$UL_PATH" "$UL_FLAGS" "$BR_FLAGS" "$ALL_METHODS"
 			exit $?
 			;;
 		rm)
@@ -2561,6 +2652,33 @@ extcmd() {
 	exit 1
 }
 
+##### ================================================ #####
+### trap with gdb kamailio processes
+#
+
+kamailio_trap() {
+	if [ -z "$GDB" ] ; then
+		merr "'gdb' tool not found: set GDB variable to correct tool path"
+		exit
+	fi
+	DATE=`/bin/date +%Y%m%d_%H%M%S`
+	LOG_FILE=/tmp/gdb_kamailio_$DATE
+	minfo "Trap file: $LOG_FILE"
+	$SERCTLCMD ps > $LOG_FILE
+	echo -n "Trapping Kamailio with gdb: "
+	PID_TIMESTAMP_VECTOR=`sed -e 's/\([0-9]*\).*/\1/' $LOG_FILE`
+	for pid in $PID_TIMESTAMP_VECTOR
+	do
+		echo -n "."
+		PID=`echo $pid | cut -d '-' -f 1`
+		echo "" >> $LOG_FILE
+		echo "---start $PID -----------------------------------------------------" >> $LOG_FILE
+		$GDB kamailio $PID -batch --eval-command="bt full" & >> $LOG_FILE
+		echo "---end $PID -------------------------------------------------------" >> $LOG_FILE
+	done
+	echo "."
+}
+
 #
 ##### ================================================ #####
 ### main command switch
@@ -2584,6 +2702,14 @@ case $1 in
 		;;
 
 	rm)
+		subscriber "$@"
+		;;
+
+	sets)
+		subscriber "$@"
+		;;
+
+	setn)
 		subscriber "$@"
 		;;
 
@@ -2664,6 +2790,11 @@ case $1 in
 		dispatcher "$@"
 		;;
 
+	dialog)
+		shift
+		dialog "$@"
+		;;
+
 	dialplan)
 		shift
 		dialplan "$@"
@@ -2727,6 +2858,11 @@ case $1 in
 	tls)
 		shift
 		tls_ca "$@"
+		;;
+
+	trap)
+		require_ctlengine
+		kamailio_trap
 		;;
 
 	start)

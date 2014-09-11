@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -113,6 +113,7 @@ int dbt_result_free(dbt_result_p _dres)
 	while(_rp)
 	{
 		_rp0=_rp;
+		_rp=_rp->next;
 		if(_rp0->fields)
 		{
 			for(i=0; i<_dres->nrcols; i++)
@@ -125,7 +126,6 @@ int dbt_result_free(dbt_result_p _dres)
 			pkg_free(_rp0->fields);
 		}
 		pkg_free(_rp0);
-		_rp=_rp->next;
 	}
 	if(_dres->colv)
 	{
@@ -499,8 +499,10 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 		case DB1_BITMAP:
 			return (_vp->val.int_val<_v->val.bitmap_val)?-1:
 				(_vp->val.int_val>_v->val.bitmap_val)?1:0;
+		default:
+			LM_ERR("invalid datatype %d\n", VAL_TYPE(_v));
+			return -2;
 	}
-	LM_ERR("invalid datatype %d\n", VAL_TYPE(_v));
 	return -2;
 }
 
@@ -557,7 +559,7 @@ int dbt_parse_orderbyclause(db_key_t **_o_k, char **_o_op, int *_o_n, db_key_t _
 	memcpy(_po, _o->s, _o->len);
 	*(_po+_o->len) = '\0';
 
-	*_o_op = pkg_malloc(sizeof(db_op_t) * _n);
+	*_o_op = pkg_malloc(sizeof(char) * _n);
 	if (!*_o_op)
 	{
 		pkg_free(*_o_k);
@@ -747,7 +749,7 @@ int dbt_sort_result(dbt_result_p _dres, int *_o_l, char *_o_op, int _o_n, int *_
 	}
 
 	/* rewrite linked list to array */
-	_a = pkg_malloc(sizeof(dbt_row_t) * _dres->nrrows);
+	_a = pkg_malloc(sizeof(dbt_row_p) * _dres->nrrows);
 	if (!_a)
 		return -1;
 	for (_el=_dres->rows, _i=0; _el != NULL; _el=_el->next, _i++)

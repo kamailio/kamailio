@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module pushes event details to remote applications, via TCP.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis> - (optional) needed only by
+				evapi_async_relay()
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libev</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="evapi.p.workers">
+		<title><varname>workers</varname> (int)</title>
+		<para>
+			Number of worker processes to be started to handle incoming messages
+			from remote applications.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>workers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "workers", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="evapi.p.bind_addr">
+		<title><varname>bind_addr</varname> (str)</title>
+		<para>
+		Local IP and port to listen on for incoming TCP connections.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "127.0.0.1:8448".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>bind_addr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "bind_addr", "1.2.3.4:8228")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="evapi.p.netstring_format">
+		<title><varname>netstring_format</varname> (int)</title>
+		<para>
+			Control if messages from clients are encapsulated in netstring
+			format.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (netstring format).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>netstring_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "netstring_format", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="evapi.f.evapi_relay">
+	    <title>
+		<function moreinfo="none">evapi_relay(evdata)</function>
+	    </title>
+	    <para>
+		Relay the event data give as parameter to connected applications.
+		The format on the network is netstring with evdata payload.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>evapi_relay</function> usage</title>
+		<programlisting format="linespecific">
+...
+evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
+...
+</programlisting>
+	    </example>
+		<para>
+		The above exaple will send the following message over tcp:
+		</para>
+		<example>
+		<title>TCP message</title>
+		<programlisting format="linespecific">
+...
+47:{
+ "event": "test",
+ "data": { "fU": "test" }
+},
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="evapi.f.evapi_async_relay">
+	    <title>
+		<function moreinfo="none">evapi_async_relay(evdata)</function>
+	    </title>
+	    <para>
+		Relay the event data give as parameter to connected applications.
+		The format on the network is netstring with evdata payload. Before
+		evaluating the parameter, the request processing is suspended using
+		tm module.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>evapi_async_relay</function> usage</title>
+		<programlisting format="linespecific">
+...
+evapi_relay("{ \"event\": \"suspend\",\n \"data\":"
+        " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="evapi.f.evapi_close">
+	    <title>
+		<function moreinfo="none">evapi_close()</function>
+	    </title>
+	    <para>
+		Close evapi current client connection.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>evapi_evapi</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[evapi:connection-new] {
+  if($evapi(srcaddr)!="127.0.0.1") {
+    evapi_close();
+    exit;
+  }
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+    <title>Event routes</title>
+    <section>
+        <title>
+        <function moreinfo="none">evapi:connection-new</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[evapi:connection-new]
+			when a new client is connected.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[evapi:connection-new] {
+    xlog("new connection from $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+        </programlisting>
+	</section>
+    <section>
+        <title>
+        <function moreinfo="none">evapi:connection-closed</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[evapi:connection-closed]
+			when a client connection is closed.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[evapi:connection-closed] {
+    xlog("connection closed by $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+        </programlisting>
+    </section>
+    <section>
+        <title>
+        <function moreinfo="none">evapi:message-received</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[evapi:message-received]
+			when a message is received from a client.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[evapi:message-received] {
+    xlog("received [$evapi(msg)] from $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+        </programlisting>
+    </section>
+    </section>
+
+    <section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$evapi(srcaddr)</emphasis> - source ip
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$evapi(srcport)</emphasis> - source port
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$evapi(msg)</emphasis> - received event message
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$evapi(conidx)</emphasis> - internal connexion index
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
+</chapter>
+

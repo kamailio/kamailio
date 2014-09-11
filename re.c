@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  * History:
@@ -310,6 +310,7 @@ found_re:
 		goto error;
 	}
 	memset((void*)se, 0, sizeof(struct subst_expr));
+	se->re=regex;
 	se->replacement.len=repl_end-repl;
 	if (se->replacement.len > 0) {
 		if ((se->replacement.s=pkg_malloc(se->replacement.len))==0){
@@ -321,7 +322,6 @@ found_re:
 	} else {
 		se->replacement.s = NULL;
 	}
-	se->re=regex;
 	se->replace_all=replace_all;
 	se->n_escapes=rw_no;
 	se->max_pmatch=max_pmatch;

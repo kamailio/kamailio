@@ -12,12 +12,11 @@
   <section>
     <title>Overview</title>
 
-    <para>This module contains all method related to the IMS policy and 
-    charging control functions performed by an Application Function (e.g. 
-    P-CSCF) over the Rx interface.  This module is dependent on the CDP (C 
-    Diameter Peer) modules for communicating with PCRF as specified in 3GPP 
-    specification TS 29.214.
-    </para>
+    <para>This module contains all method related to the IMS policy and
+    charging control functions performed by an Application Function (e.g.
+    P-CSCF) over the Rx interface. This module is dependent on the CDP (C
+    Diameter Peer) modules for communicating with PCRF as specified in 3GPP
+    specification TS 29.214.</para>
   </section>
 
   <section>
@@ -32,11 +31,11 @@
         <listitem>
           <para>Dialog2</para>
         </listitem>
-          
+
         <listitem>
           <para>Usrloc PCSCF</para>
         </listitem>
-          
+
         <listitem>
           <para>TM - Transaction Manager</para>
         </listitem>
@@ -64,7 +63,7 @@
     <section>
       <title><varname>rx_dest_realm</varname> (string)</title>
 
-      <para>This is the name of the Diameter realm of the Diameter server 
+      <para>This is the name of the Diameter realm of the Diameter server
       (typically a PCRF).</para>
 
       <para><emphasis> Default value is 'ims.smilecoms.com'.
@@ -80,15 +79,17 @@ modparam("ims_qos", "rx_dest_realm", "ims.smilecoms.com")
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>rx_forced_peer</varname> (string)</title>
 
-      <para>This is the optional name of the origin host of the Diameter server
-      (typically a PCRF).  If not set then realm routing is used.</para>
+      <para>FQDN of the Diameter server (typically a PCRF) to communicate
+      with. If not set then realm routing is used. If you use this, the
+      routing defined in your diameter xml configuration file (CDP) will be
+      ignored and as a result you will lose the benefits of load balancing and
+      failover. </para>
 
-      <para><emphasis> Default value is ''.
-      </emphasis></para>
+      <para><emphasis> Default value is ''. </emphasis></para>
 
       <example>
         <title><varname>rx_forced_peer</varname> parameter usage</title>
@@ -100,15 +101,14 @@ modparam("ims_qos", "rx_forced_peer", "pcrf.ims.smilecoms.com")
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>rx_auth_expiry</varname> (integer)</title>
 
-      <para>This is the expiry length in seconds of the initiated 
-      Diameter sessions.</para>
+      <para>This is the expiry length in seconds of the initiated Diameter
+      sessions.</para>
 
-      <para><emphasis> Default value is 7200.
-      </emphasis></para>
+      <para><emphasis> Default value is 7200. </emphasis></para>
 
       <example>
         <title><varname>rx_auth_expiry</varname> parameter usage</title>
@@ -120,15 +120,14 @@ modparam("ims_qos", "rx_auth_expiry", 14400)
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>cdp_event_latency</varname> (integer)</title>
 
-      <para>This is a flag to determine whether or slow CDP responses should be 
-      reported in the log file. 1 is enabled and 0 is disabled.</para>
+      <para>This is a flag to determine whether or slow CDP responses should
+      be reported in the log file. 1 is enabled and 0 is disabled.</para>
 
-      <para><emphasis> Default value is 1.
-      </emphasis></para>
+      <para><emphasis> Default value is 1. </emphasis></para>
 
       <example>
         <title><varname>cdp_event_latency</varname> parameter usage</title>
@@ -140,18 +139,16 @@ modparam("ims_qos", "cdp_event_latency", 1)
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>cdp_event_threshold</varname> (integer)</title>
 
-      <para>This time in milliseconds is the limit we should report a CDP 
-      response as slow. i.e. if a CDP response exceeds this limit it will be 
-      reported in the log file.  This is only relevant is cdp_event_latency is 
-      enabled (set to 0).
-      </para>
+      <para>This time in milliseconds is the limit we should report a CDP
+      response as slow. i.e. if a CDP response exceeds this limit it will be
+      reported in the log file. This is only relevant is cdp_event_latency is
+      enabled (set to 0).</para>
 
-      <para><emphasis> Default value is 500.
-      </emphasis></para>
+      <para><emphasis> Default value is 500. </emphasis></para>
 
       <example>
         <title><varname>cdp_event_threshold</varname> parameter usage</title>
@@ -163,20 +160,19 @@ modparam("ims_qos", "cdp_event_threshold", 500)
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>cdp_event_latency_log</varname> (integer)</title>
 
-      <para>This time log level at which we should report slow CDP responses. 
-          0 is ERROR, 1 is WARN, 2 is INFO and 3 is DEBUG. This is only 
-          relevant is cdp_event_latency is enabled (set to 0)
-      </para>
+      <para>This time log level at which we should report slow CDP responses.
+      0 is ERROR, 1 is WARN, 2 is INFO and 3 is DEBUG. This is only relevant
+      is cdp_event_latency is enabled (set to 0)</para>
 
-      <para><emphasis> Default value is 0.
-      </emphasis></para>
+      <para><emphasis> Default value is 0. </emphasis></para>
 
       <example>
-        <title><varname>cdp_event_latency_log</varname> parameter usage</title>
+        <title><varname>cdp_event_latency_log</varname> parameter
+        usage</title>
 
         <programlisting format="linespecific">
 ...
@@ -185,27 +181,50 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
         </programlisting>
       </example>
     </section>
-  
+    <section>
+      <title><varname>authorize_video_flow</varname> (integer)</title>
+
+      <para>This is a flag that specifies whether or not to authorize video flows.
+      1 means video flows will be authorized over Rx and
+      0 means video flows will not be authorized over Rx</para>
+
+      <para><emphasis> Default value is 1. </emphasis></para>
+
+      <example>
+        <title><varname>authorize_video_flow</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "authorize_video_flow", 0)
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
     <title>Functions</title>
 
     <section>
-      <title><function
-      moreinfo="none">Rx_AAR_Register(domain)</function></title>
+      <title><function moreinfo="none">Rx_AAR_Register(route_block,
+      domain)</function></title>
 
-      <para>Perform a AAR on Diameter RX interface to subscribe to signalling 
-      status. This purpose of this is tell a Diameter server (typically a PCRF)
-      to inform the requesting Diameter client on changes to the status of 
-      signalling bearer for the same framed IP address.  For more details see
-      3GGP TS 29.214. </para>
+      <para>Perform a AAR on Diameter RX interface to subscribe to signalling
+      status. This purpose of this is tell a Diameter server (typically a
+      PCRF) to inform the requesting Diameter client on changes to the status
+      of signalling bearer for the same framed IP address. For more details
+      see 3GGP TS 29.214.</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>domain</emphasis> that usrloc_pcscf uses to store 
+          <para>Route block to resume after async UAR Diameter reply.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>domain</emphasis> that usrloc_pcscf uses to store
           user information.</para>
         </listitem>
       </itemizedlist>
@@ -220,8 +239,12 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
 
         <programlisting format="linespecific">
 ...
-    Rx_AAR_Register("location");
-    
+if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
+    exit;
+}
+...
+route[REG_AAR_REPLY]
+{
     switch ($avp(s:aar_return_code)) {
         case 1:
             xlog("L_DBG", "Diameter: AAR success on subscription to signalling\n");
@@ -231,30 +254,34 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
             t_reply("403", "Can't register to QoS for signalling");
             exit;
     }
-
 ...
 </programlisting>
       </example>
     </section>
-    
-    <section>
-      <title><function
-      moreinfo="none">Rx_AAR(domain)</function></title>
 
-      <para>Perform a AAR on Diameter RX interface to request resource 
-      authorisation from a Diameter server (typically a PCRF). For more details 
-      see 3GGP TS 29.214. </para>
-      
+    <section>
+      <title><function moreinfo="none">Rx_AAR(route_block,
+      direction)</function></title>
+
+      <para>Perform a AAR on Diameter RX interface to request resource
+      authorisation from a Diameter server (typically a PCRF). For more
+      details see 3GGP TS 29.214.</para>
+
       <para>Meaning of the parameters is as follows:</para>
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>domain</emphasis> that usrloc_pcscf uses to store 
-          user information.</para>
+          <para>Route block to resume after async UAR Diameter reply.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>direction</emphasis>the direction of this message -
+          orig, term, etc.</para>
         </listitem>
       </itemizedlist>
 
-      <para>This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.</para>
+      <para>This function can be used from REQUEST_ROUTE or
+      ONREPLY_ROUTE.</para>
 
       <para>p.s. this is executed asynchronously. See example on how to
       retrieve return value</para>
@@ -264,26 +291,24 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
 
         <programlisting format="linespecific">
 ...
-    Rx_AAR("location");
-    
-    switch ($avp(s:aar_return_code)) {
-        case 1:
-            xlog("L_DBG", "Diameter: AAR success\n");
-            break;
-        default:
-            xlog("L_ERR", "Diameter: AAR failed\n");
-            t_reply("403", "QoS not authorized");
-            exit;
-    }
-
+if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig")==0){
+    exit;
+}
+...
+route[ORIGN_SESSION_AAR_REPLY]
+{
+    if ($avp(s:aar_return_code) != 1) {
+        xlog("L_ERR", "IMS: AAR failed Orig\n");
+        dlg_terminate("all", "Sorry no QoS available");
+    } else {
+        xlog("L_DBG", "Diameter: Orig AAR success on media authorization\n");
+    } 
+}
 ...
 </programlisting>
       </example>
     </section>
-
-    
-    
-   </section>
+  </section>
 
   <section>
     <title>Statistics</title>

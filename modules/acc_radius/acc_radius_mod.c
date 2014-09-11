@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -95,11 +95,11 @@ static cmd_export_t cmds[] = {
 
 
 static param_export_t params[] = {
-	{"radius_config",        STR_PARAM, &radius_config        },
+	{"radius_config",        PARAM_STRING, &radius_config        },
 	{"radius_flag",          INT_PARAM, &radius_flag          },
 	{"radius_missed_flag",   INT_PARAM, &radius_missed_flag   },
 	{"service_type",         INT_PARAM, &service_type         },
-	{"radius_extra",         STR_PARAM, &rad_extra_str        },
+	{"radius_extra",         PARAM_STRING, &rad_extra_str        },
 	{0,0,0}
 };
 

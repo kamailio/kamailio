@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <stdio.h>
@@ -209,12 +209,12 @@ static cmd_export_t commands[] = {
 
 static param_export_t parameters[] = {
     {"disable",            INT_PARAM, &mediaproxy_disabled},
-    {"mediaproxy_socket",  STR_PARAM, &(mediaproxy_socket.name)},
+    {"mediaproxy_socket",  PARAM_STRING, &(mediaproxy_socket.name)},
     {"mediaproxy_timeout", INT_PARAM, &(mediaproxy_socket.timeout)},
-    {"signaling_ip_avp",   STR_PARAM, &(signaling_ip_avp.spec.s)},
-    {"media_relay_avp",    STR_PARAM, &(media_relay_avp.spec.s)},
-    {"ice_candidate",      STR_PARAM, &(ice_candidate.s)},
-    {"ice_candidate_avp",  STR_PARAM, &(ice_candidate_avp.spec.s)},
+    {"signaling_ip_avp",   PARAM_STR, &(signaling_ip_avp.spec)},
+    {"media_relay_avp",    PARAM_STR, &(media_relay_avp.spec)},
+    {"ice_candidate",      PARAM_STR, &(ice_candidate)},
+    {"ice_candidate_avp",  PARAM_STR, &(ice_candidate_avp.spec)},
     {0, 0, 0}
 };
 
@@ -2027,11 +2027,12 @@ mod_init(void)
     modparam_t type;
 
     // initialize the signaling_ip_avp structure
-    if (signaling_ip_avp.spec.s==NULL || *(signaling_ip_avp.spec.s)==0) {
+    if (!signaling_ip_avp.spec.s || signaling_ip_avp.spec.len<=0) {
         LM_WARN("missing/empty signaling_ip_avp parameter. will use default.\n");
         signaling_ip_avp.spec.s = SIGNALING_IP_AVP_SPEC;
+        signaling_ip_avp.spec.len = strlen(signaling_ip_avp.spec.s);
     }
-    signaling_ip_avp.spec.len = strlen(signaling_ip_avp.spec.s);
+
     if (pv_parse_spec(&(signaling_ip_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
         LM_CRIT("invalid AVP specification for signaling_ip_avp: `%s'\n", signaling_ip_avp.spec.s);
         return -1;
@@ -2042,11 +2043,12 @@ mod_init(void)
     }
 
     // initialize the media_relay_avp structure
-    if (media_relay_avp.spec.s==NULL || *(media_relay_avp.spec.s)==0) {
+    if (!media_relay_avp.spec.s || media_relay_avp.spec.len<=0) {
         LM_WARN("missing/empty media_relay_avp parameter. will use default.\n");
         media_relay_avp.spec.s = MEDIA_RELAY_AVP_SPEC;
+        media_relay_avp.spec.len = strlen(media_relay_avp.spec.s);
     }
-    media_relay_avp.spec.len = strlen(media_relay_avp.spec.s);
+
     if (pv_parse_spec(&(media_relay_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
         LM_CRIT("invalid AVP specification for media_relay_avp: `%s'\n", media_relay_avp.spec.s);
         return -1;
@@ -2057,11 +2059,12 @@ mod_init(void)
     }
 
     // initialize the ice_candidate_avp structure
-    if (ice_candidate_avp.spec.s==NULL || *(ice_candidate_avp.spec.s)==0) {
+    if (!ice_candidate_avp.spec.s || ice_candidate_avp.spec.len<=0) {
         LM_WARN("missing/empty ice_candidate_avp parameter. will use default.\n");
         ice_candidate_avp.spec.s = ICE_CANDIDATE_AVP_SPEC;
+        ice_candidate_avp.spec.len = strlen(ice_candidate_avp.spec.s);
     }
-    ice_candidate_avp.spec.len = strlen(ice_candidate_avp.spec.s);
+
     if (pv_parse_spec(&(ice_candidate_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
         LM_CRIT("invalid AVP specification for ice_candidate_avp: `%s'\n", ice_candidate_avp.spec.s);
         return -1;
@@ -2072,7 +2075,6 @@ mod_init(void)
     }
 
     // initialize ice_candidate module parameter
-    ice_candidate.len = strlen(ice_candidate.s);
     if (!STR_IMATCH(ice_candidate, "none") && !STR_IMATCH(ice_candidate, "low-priority") && !STR_IMATCH(ice_candidate, "high-priority")) {
         LM_CRIT("invalid value specified for ice_candidate: `%s'\n", ice_candidate.s);
         return -1;

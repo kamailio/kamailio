@@ -150,7 +150,7 @@
 #	define MY_STATUS(...) 0
 #	define MY_SUMS do{}while(0)
 #	define MY_MEMINFO	mspace_info
-#	define  shm_malloc_init(buf, len) create_mspace_with_base(buf, len, 0)
+#	define  shm_malloc_init(buf, len, type) create_mspace_with_base(buf, len, 0)
 #	define shm_malloc_destroy(b) do{}while(0)
 #	define shm_malloc_on_fork() do{}while(0)
 #else

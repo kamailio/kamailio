@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
  * History:
@@ -74,14 +74,14 @@ MODULE_VERSION
 
 /*! \brief Configuration parameters in .cfg file */
 static param_export_t mi_params[] = {			
-	{"fifo_name",        STR_PARAM, &mi_fifo},
+	{"fifo_name",        PARAM_STRING, &mi_fifo},
 	{"fifo_mode",        INT_PARAM, &mi_fifo_mode},
-	{"fifo_group",       STR_PARAM, &mi_fifo_gid_s},
+	{"fifo_group",       PARAM_STRING, &mi_fifo_gid_s},
 	{"fifo_group",       INT_PARAM, &mi_fifo_gid},
-	{"fifo_user",        STR_PARAM, &mi_fifo_uid_s},
+	{"fifo_user",        PARAM_STRING, &mi_fifo_uid_s},
 	{"fifo_user",        INT_PARAM, &mi_fifo_uid},
-	{"reply_dir",        STR_PARAM, &mi_fifo_reply_dir},
-	{"reply_indent",     STR_PARAM, &mi_reply_indent},
+	{"reply_dir",        PARAM_STRING, &mi_fifo_reply_dir},
+	{"reply_indent",     PARAM_STRING, &mi_reply_indent},
 	{0,0,0}
 };
 

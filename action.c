@@ -23,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -111,7 +111,38 @@
 int _last_returned_code  = 0;
 struct onsend_info* p_onsend=0; /* onsend route send info */
 
+/* current action executed from config file */
+static cfg_action_t *_cfg_crt_action = 0;
 
+/*!< maximum number of recursive calls for blocks of actions */
+static unsigned int max_recursive_level = 256;
+
+void set_max_recursive_level(unsigned int lev)
+{
+	max_recursive_level = lev;
+}
+
+/* return current action executed from config file */
+cfg_action_t *get_cfg_crt_action(void)
+{
+	return _cfg_crt_action;
+}
+
+/* return line in config for current executed action */
+int get_cfg_crt_line(void)
+{
+	if(_cfg_crt_action==0)
+		return 0;
+	return _cfg_crt_action->cline;
+}
+
+/* return name of config for current executed action */
+char *get_cfg_crt_name(void)
+{
+	if(_cfg_crt_action==0)
+		return 0;
+	return _cfg_crt_action->cfile;
+}
 
 /* handle the exit code of a module function call.
  * (used internally in do_action())
@@ -1544,7 +1575,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 
 	ret=E_UNSPEC;
 	h->rec_lev++;
-	if (unlikely(h->rec_lev>ROUTE_MAX_REC_LEV)){
+	if (unlikely(h->rec_lev>max_recursive_level)){
 		LOG(L_ERR, "WARNING: too many recursive routing table lookups (%d)"
 					" giving up!\n", h->rec_lev);
 		ret=E_UNSPEC;
@@ -1572,7 +1603,9 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	for (t=a; t!=0; t=t->next){
 		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0))
 			ms = TICKS_TO_MS(get_ticks_raw());
+		_cfg_crt_action = t;
 		ret=do_action(h, t, msg);
+		_cfg_crt_action = 0;
 		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
 			ms = TICKS_TO_MS(get_ticks_raw()) - ms;
 			if(ms >= cfg_get(core, core_cfg, latency_limit_action)) {

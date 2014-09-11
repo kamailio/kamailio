@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /* History:
  * --------
@@ -50,6 +50,7 @@
 MODULE_VERSION
 
 #include "ctl_defaults.h"
+#include "binrpc_run.h"
 #ifdef USE_FIFO
 #include "fifo_server.h"
 #endif
@@ -228,6 +229,8 @@ error:
 static int mod_init(void)
 {
 	struct id_list* l;
+
+	binrpc_callbacks_init();
 
 	if(binrpc_max_body_size<=0)
 		binrpc_max_body_size = 4;

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  */
@@ -25,6 +25,12 @@
 #define SCA_UTIL_H
 
 #include "sca_common.h"
+
+enum {
+    SCA_AOR_TYPE_AUTO = (1 << 0),
+    SCA_AOR_TYPE_UAC = (1 << 1),
+    SCA_AOR_TYPE_UAS = (1 << 2),
+};
 
 /* get method, regardless of whether message is a request or response */
 int	sca_get_msg_method( sip_msg_t * );
@@ -54,6 +60,9 @@ int	sca_uri_extract_aor( str *, str * );
 int	sca_uri_build_aor( str *, int, str *, str * );
 
 int	sca_aor_create_from_info( str *, uri_type, str *, str *, str * );
+
+int	sca_create_canonical_aor_for_ua( sip_msg_t *, str *, int );
+int	sca_create_canonical_aor( sip_msg_t *, str * );
 
 /* convenient call hold detection */
 int	sca_call_is_held( sip_msg_t * );

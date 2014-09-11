@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -687,7 +687,7 @@ static int pv_www_authenticate2(struct sip_msg *msg, char* realm,
 	}
 
 	if (get_str_fparam(&smethod, msg, (fparam_t*)method) < 0) {
-		LM_ERR("failed to get method value\n");
+		LM_ERR("failed to get method value from msg %p var %p\n", msg, method);
 		goto error;
 	}
 
@@ -830,6 +830,7 @@ static int fixup_pv_auth(void **param, int param_no)
 	switch(param_no) {
 		case 1:
 		case 2:
+		case 4:
 			return fixup_var_pve_str_12(param, 1);
 		case 3:
 			return fixup_var_int_12(param, 1);

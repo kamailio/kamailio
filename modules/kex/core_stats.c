@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * History:
  * ---------
@@ -42,6 +42,8 @@
 #include "../../script_cb.h"
 #include "../../mem/meminfo.h"
 #include "../../mem/shm_mem.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 
 #ifdef STATISTICS
@@ -103,6 +105,9 @@ static mi_export_t mi_stat_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
 
+int stats_proc_stats_init_rpc(void);
+
+
 int register_mi_stats(void)
 {
 	/* register MI commands */
@@ -117,6 +122,8 @@ static int km_cb_req_stats(struct sip_msg *msg,
 		unsigned int flags, void *param)
 {
 	update_stat(rcv_reqs, 1);
+	if(!IS_SIP(msg))
+		return 1;
 	if(msg->first_line.u.request.method_value==METHOD_OTHER)
 		update_stat(unsupported_methods, 1);
 	return 1;
@@ -192,8 +199,288 @@ int register_core_stats(void)
 		LM_ERR("failed to register PRE request callback\n");
 		return -1;
 	}
+	if (stats_proc_stats_init_rpc()<0) return -1;
 	sr_event_register_cb(SREV_CORE_STATS, sts_update_core_stats);
 
+	return 0;
+}
+
+
+/***************************** RPC STUFF *******************************/
+
+/**
+ * Parameters for RPC callback functions.
+ */
+struct rpc_list_params {
+	rpc_t* rpc;
+	void* ctx;
+	int clear;
+};
+
+
+/**
+ * Satistic getter RPC callback.
+ */
+static void rpc_get_grp_vars_cbk(void* p, str* g, str* n, counter_handle_t h)
+{
+	struct rpc_list_params *packed_params;
+	rpc_t* rpc;
+	void* ctx;
+
+	packed_params = p;
+	rpc = packed_params->rpc;
+	ctx = packed_params->ctx;
+
+	rpc->rpl_printf(ctx, "%.*s:%.*s = %lu",
+		g->len, g->s, n->len, n->s, counter_get_val(h));
+}
+
+/**
+ * Group statistic getter RPC callback.
+ */
+static void rpc_get_all_grps_cbk(void* p, str* g)
+{
+	counter_iterate_grp_vars(g->s, rpc_get_grp_vars_cbk, p);
+}
+
+/**
+ * All statistic getter RPC callback.
+ */
+static void stats_get_all(rpc_t* rpc, void* ctx, char* stat)
+{
+	int len = strlen(stat);
+	struct rpc_list_params packed_params;
+	str s_statistic;
+	stat_var *s_stat;
+
+	if (len==3 && strcmp("all", stat)==0) {
+		packed_params.rpc = rpc;
+		packed_params.ctx = ctx;
+		counter_iterate_grp_names(rpc_get_all_grps_cbk, &packed_params);
+	}
+	else if (stat[len-1]==':') {
+		packed_params.rpc = rpc;
+		packed_params.ctx = ctx;
+		stat[len-1] = '\0';
+		counter_iterate_grp_vars(stat, rpc_get_grp_vars_cbk, &packed_params);
+		stat[len-1] = ':';
+	}
+	else {
+		s_statistic.s = stat;
+		s_statistic.len = strlen(stat);
+		s_stat = get_stat(&s_statistic);
+		if (s_stat) {
+			rpc->rpl_printf(ctx, "%s:%s = %lu",
+				ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
+				get_stat_val(s_stat));
+		}
+	}
+}
+
+/**
+ * RPC statistics getter.
+ */
+static void rpc_stats_get_statistics(rpc_t* rpc, void* ctx)
+{
+	char* stat;
+
+	if (stats_support()==0) {
+		rpc->fault(ctx, 400, "stats support not enabled");
+		return;
+	}
+	if (rpc->scan(ctx, "s", &stat) < 1) {
+		rpc->fault(ctx, 400, "Please provide which stats to retrieve");
+		return;
+	}
+	stats_get_all(rpc, ctx, stat);
+	while((rpc->scan(ctx, "*s", &stat)>0)) {
+		stats_get_all(rpc, ctx, stat);
+	}
+	return;
+}
+
+
+/**
+ * Satistic reset/clear-er RPC callback..
+ */
+static void rpc_reset_or_clear_grp_vars_cbk(void* p, str* g, str* n, counter_handle_t h)
+{
+	struct rpc_list_params *packed_params;
+	rpc_t* rpc;
+	void* ctx;
+	int clear;
+	stat_var *s_stat;
+	long old_val, new_val;
+
+	packed_params = p;
+	rpc = packed_params->rpc;
+	ctx = packed_params->ctx;
+	clear = packed_params->clear;
+	s_stat = get_stat(n);
+	if (s_stat) {
+		if (clear) {
+			old_val=get_stat_val(s_stat);
+			reset_stat(s_stat);
+			new_val=get_stat_val(s_stat);
+			if (old_val==new_val) {
+				rpc->rpl_printf(ctx, "%s:%s = %lu",
+					ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
+					new_val);
+			}
+			else {
+				rpc->rpl_printf(ctx, "%s:%s = %lu (%lu)",
+					ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
+					new_val, old_val);
+			}
+		}
+		else {
+			reset_stat(s_stat);
+		}
+	}
+}
+
+/**
+ * Group statistics reset/clear-er RPC callback.
+ */
+static void rpc_reset_or_clear_all_grps_cbk(void* p, str* g)
+{
+	counter_iterate_grp_vars(g->s, rpc_reset_or_clear_grp_vars_cbk, p);
+}
+
+/**
+ * All statistics reset/clear-er RPC callback.
+ */
+static void stats_reset_or_clear_all(rpc_t* rpc, void* ctx, char* stat, int clear)
+{
+	int len = strlen(stat);
+	struct rpc_list_params packed_params;
+	str s_statistic;
+	stat_var *s_stat;
+	long old_val, new_val;
+
+	if (len==3 && strcmp("all", stat)==0) {
+		packed_params.rpc   = rpc;
+		packed_params.ctx   = ctx;
+		packed_params.clear = clear;
+		counter_iterate_grp_names(rpc_reset_or_clear_all_grps_cbk, &packed_params);
+	}
+	else if (stat[len-1]==':') {
+		packed_params.rpc   = rpc;
+		packed_params.ctx   = ctx;
+		packed_params.clear = clear;
+		stat[len-1] = '\0';
+		counter_iterate_grp_vars(stat, rpc_reset_or_clear_grp_vars_cbk, &packed_params);
+		stat[len-1] = ':';
+	}
+	else {
+		s_statistic.s = stat;
+		s_statistic.len = strlen(stat);
+		s_stat = get_stat(&s_statistic);
+		if (s_stat) {
+			if (clear) {
+				old_val=get_stat_val(s_stat);
+				reset_stat(s_stat);
+				new_val=get_stat_val(s_stat);
+				if (old_val==new_val) {
+					rpc->rpl_printf(ctx, "%s:%s = %lu",
+						ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
+						new_val);
+				}
+				else {
+					rpc->rpl_printf(ctx, "%s:%s = %lu (%lu)",
+						ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
+						new_val, old_val);
+				}
+			}
+			else {
+				reset_stat(s_stat);
+			}
+		}
+	}
+}
+
+/**
+ * RPC statistics reseter/getter framework.
+ */
+static void stats_reset_or_clear_statistics(rpc_t* rpc, void* ctx, int clear)
+{
+	char* stat;
+
+	if (stats_support()==0) {
+		rpc->fault(ctx, 400, "stats support not enabled");
+		return;
+	}
+	if (rpc->scan(ctx, "s", &stat) < 1) {
+		rpc->fault(ctx, 400, "Please provide which stats to retrieve");
+		return;
+	}
+	stats_reset_or_clear_all(rpc, ctx, stat, clear);
+	while((rpc->scan(ctx, "*s", &stat)>0)) {
+		stats_reset_or_clear_all(rpc, ctx, stat, clear);
+	}
+	return;
+}
+
+
+/**
+ * RPC statistics reseter.
+ */
+static void rpc_stats_reset_statistics(rpc_t* rpc, void* ctx)
+{
+	stats_reset_or_clear_statistics(rpc, ctx, 0);
+	return;
+}
+
+
+/**
+ * RPC statistics clearer.
+ */
+static void rpc_stats_clear_statistics(rpc_t* rpc, void* ctx)
+{
+	stats_reset_or_clear_statistics(rpc, ctx, 1);
+	return;
+}
+
+
+/**
+ * RPC statistics getter doc.
+ */
+static const char* rpc_stats_get_statistics_doc[2] =
+	{"get core and modules stats",   0};
+/**
+ * RPC statistics reseter doc.
+ */
+static const char* rpc_stats_reset_statistics_doc[2] =
+	{"reset core and modules stats (silent operation)", 0};
+/**
+ * RPC statistics clearer doc.
+ */
+static const char* rpc_stats_clear_statistics_doc[2] =
+	{"clear core and modules stats (verbose operation)", 0};
+
+/**
+ * Stats RPC  commands.
+ */
+rpc_export_t kex_stats_rpc[] =
+{
+	{"stats.get_statistics",   rpc_stats_get_statistics,
+							rpc_stats_get_statistics_doc,   RET_ARRAY},
+	{"stats.reset_statistics", rpc_stats_reset_statistics,
+							rpc_stats_reset_statistics_doc, 0},
+	{"stats.clear_statistics", rpc_stats_clear_statistics,
+							rpc_stats_clear_statistics_doc, 0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * Stats RPC initializer.
+ */
+int stats_proc_stats_init_rpc(void)
+{
+	if (rpc_register_array(kex_stats_rpc)!=0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }
 

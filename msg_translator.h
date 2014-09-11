@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -162,4 +162,7 @@ void fix_global_req_flags(str* gname, str* name);
 
 int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
 		unsigned int id);
+
+/* returns a copy in private memory of the boundary in a multipart body */
+int get_boundary(struct sip_msg* msg, str* boundary);
 #endif

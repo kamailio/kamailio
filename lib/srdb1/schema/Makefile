@@ -195,6 +195,50 @@ db_sqlite:
 db_sqlite_clean:
 	-@rm -f $(SCHEME)/db_sqlite/*
 
+.PHONY: docbook-xml
+docbook-xml:
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/doc/databases/kamailio" \
+		--stringparam prefix "$$FILE-" \
+		$(DOCBOOK_XSL) kamailio-"$$FILE".xml ; \
+	done
+	# link all documents to one file, to get nicer output
+	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" \
+		> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	echo "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.4//EN\"" \
+		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	echo "        \"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd\" [" \
+		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	#Include general documentation entities
+	echo "    <!ENTITY % docentities SYSTEM \"../../../docbook/entities.xml\">" \
+		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	echo "    %docentities;" \
+		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	echo "]>" \
+		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	echo "<book xmlns:xi=\"http://www.w3.org/2001/XInclude\">" \
+		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	# add bookinfo
+	cat "$(ROOT)/doc/stylesheets/dbschema_k/bookinfo.xml" | tail -n +2 \
+		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	# actually include the entities
+	for FILE in $(wildcard $(ROOT)/doc/databases/kamailio/*-dbschema.xml); do \
+		echo "    <xi:include href=\"$$FILE\" />" \
+			>> "$(ROOT)/doc/databases/kamailio/tables.xml" ; \
+	done
+	echo "</book>" \
+		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	# generate makefile
+	echo "docs = tables.xml" \
+		> "$(ROOT)/doc/databases/kamailio/Makefile"
+	echo \
+		>> "$(ROOT)/doc/databases/kamailio/Makefile"
+	echo "docbook_dir = ../../../docbook" \
+		>> "$(ROOT)/doc/databases/kamailio/Makefile"
+	echo "include \$$(docbook_dir)/Makefile" \
+		>> "$(ROOT)/doc/databases/kamailio/Makefile"
+
 .PHONY: docbook docbook_clean
 docbook:
 	for FILE in $(TABLES); do \

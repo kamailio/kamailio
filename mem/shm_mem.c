@@ -178,7 +178,7 @@ int shm_getmem(void)
 int shm_mem_init_mallocs(void* mempool, unsigned long pool_size)
 {
 	/* init it for malloc*/
-	shm_block=shm_malloc_init(mempool, pool_size);
+	shm_block=shm_malloc_init(mempool, pool_size, MEM_TYPE_SHM);
 	if (shm_block==0){
 		LOG(L_CRIT, "ERROR: shm_mem_init: could not initialize shared"
 				" malloc\n");

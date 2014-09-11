@@ -10,7 +10,7 @@ Carsten Bock
 
    <carsten@ng-voice.com>
 
-   Copyright © 2011 Carsten Bock, carsten@ng-voice.com,
+   Copyright � 2011 Carsten Bock, carsten@ng-voice.com,
    http://www.ng-voice.com
      __________________________________________________________________
 
@@ -27,25 +27,23 @@ Carsten Bock
         3. Parameters
 
               3.1. default_domain(str)
-              3.2. default_domain(str)
-              3.3. publish_reginfo(int)
-              3.4. outbound_proxy(str)
-              3.5. server_address(str)
+              3.2. publish_reginfo(int)
+              3.3. outbound_proxy(str)
+              3.4. server_address(str)
 
         4. Functions
 
-              4.1. reginfo_handle_notify
+              4.1. reginfo_handle_notify(uldomain)
               4.2. reginfo_subscribe(uri[, expires])
 
    List of Examples
 
    1.1. Set default_domain parameter
-   1.2. Set default_domain parameter
-   1.3. Set publish_reginfo parameter
-   1.4. Set outbound_proxy parameter
-   1.5. Set server_address parameter
-   1.6. reginfo_handle_notify usage
-   1.7. reginfo_subscribe usage
+   1.2. Set publish_reginfo parameter
+   1.3. Set outbound_proxy parameter
+   1.4. Set server_address parameter
+   1.5. reginfo_handle_notify usage
+   1.6. reginfo_subscribe usage
 
 Chapter 1. Admin Guide
 
@@ -60,14 +58,13 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. default_domain(str)
-        3.2. default_domain(str)
-        3.3. publish_reginfo(int)
-        3.4. outbound_proxy(str)
-        3.5. server_address(str)
+        3.2. publish_reginfo(int)
+        3.3. outbound_proxy(str)
+        3.4. server_address(str)
 
    4. Functions
 
-        4.1. reginfo_handle_notify
+        4.1. reginfo_handle_notify(uldomain)
         4.2. reginfo_subscribe(uri[, expires])
 
 1. Overview
@@ -115,69 +112,59 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. default_domain(str)
-   3.2. default_domain(str)
-   3.3. publish_reginfo(int)
-   3.4. outbound_proxy(str)
-   3.5. server_address(str)
+   3.2. publish_reginfo(int)
+   3.3. outbound_proxy(str)
+   3.4. server_address(str)
 
 3.1. default_domain(str)
 
    The default domain for the registered users to be used when
    constructing the uri for the registrar callback.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.1. Set default_domain parameter
-...
-modparam("pua_bla", "default_domain", "kamailio.org")
-...
-
-3.2. default_domain(str)
-
-   The domain to be used to publish information about a user.
-
-   Example 1.2. Set default_domain parameter
 ...
 modparam("pua_reginfo", "default_domain", "kamailio.org")
 ...
 
-3.3. publish_reginfo(int)
+3.2. publish_reginfo(int)
 
    Whether or not to generate PUBLISH requests.
 
-   Default value is “1” (enabled).
+   Default value is "1" (enabled).
 
-   Example 1.3. Set publish_reginfo parameter
+   Example 1.2. Set publish_reginfo parameter
 ...
 modparam("pua_reginfo", "publish_reginfo", 0)
 ...
 
-3.4. outbound_proxy(str)
+3.3. outbound_proxy(str)
 
    The outbound_proxy uri to be used when sending Subscribe requests.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
-   Example 1.4. Set outbound_proxy parameter
+   Example 1.3. Set outbound_proxy parameter
 ...
 modparam("pua_reginfo", "outbound_proxy", "sip:proxy@kamailio.org")
 ...
 
-3.5. server_address(str)
+3.4. server_address(str)
 
    The IP address of the server.
 
-   Example 1.5. Set server_address parameter
+   Example 1.4. Set server_address parameter
 ...
 modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 ...
 
 4. Functions
 
-   4.1. reginfo_handle_notify
+   4.1. reginfo_handle_notify(uldomain)
    4.2. reginfo_subscribe(uri[, expires])
 
-4.1.  reginfo_handle_notify
+4.1. reginfo_handle_notify(uldomain)
 
    This function processes received "NOTIFY"-requests and updates the
    local registry accordingly.
@@ -185,20 +172,23 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
    This method does not create any SIP-Reponse, this has to be done the
    script-writer.
 
+   The parameter has to correspond to user location table (domain) where
+   to store the record.
+
    Return codes:
      * 2 - contacts successfully updated, but no more contacts online now.
        1 - contacts successfully updated and at at least one contact still
        registered.
        -1 - Invalid NOTIFY or other error (see log-file)
 
-   Example 1.6. reginfo_handle_notify usage
+   Example 1.5. reginfo_handle_notify usage
 ...
 if(is_method("NOTIFY"))
-        if (reginfo_handle_notify())
+        if (reginfo_handle_notify("location"))
                 send_reply("202", "Accepted");
 ...
 
-4.2.  reginfo_subscribe(uri[, expires])
+4.2. reginfo_subscribe(uri[, expires])
 
    This function will subscribe for reginfo-information at the given
    server URI.
@@ -209,7 +199,7 @@ if(is_method("NOTIFY"))
        expires - Expiration date for this subscription, in seconds
        (default 3600)
 
-   Example 1.7. reginfo_subscribe usage
+   Example 1.6. reginfo_subscribe usage
 ...
 route {
         t_on_reply("1");

@@ -1,0 +1,220 @@
+GZCompress Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2013 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. header_name (str)
+              3.2. header_value (str)
+              3.3. sanity_checks (integer)
+
+        4. Functions
+        5. Config File
+
+   List of Examples
+
+   1.1. Set header_name parameter
+   1.2. Set header_value parameter
+   1.3. Set sanity_checks parameter
+   1.4. Enable body compression
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. header_name (str)
+        3.2. header_value (str)
+        3.3. sanity_checks (integer)
+
+   4. Functions
+   5. Config File
+
+1. Overview
+
+   This module is able to detect compressed body in received SIP message
+   and decompress it as well as compress the body for outgoing SIP
+   message. It works also for received HTTP request and replied HTTP
+   response (Kamailio cannot work in HTTP proxy mode).
+
+   The decision of whether to do compression or decompression is made by
+   detecting a special SIP header (default 'Content-Encoding') that
+   matches a given value - both header name and value can be set via
+   module parameters. If a SIP message is received with clear body and you
+   want to compress the body for outgoing, add the header in config file.
+   The header can be added to the local generated replies as well.
+
+   In other words, if the header is present in incoming SIP message, its
+   body is decompressed. If the header is present in outgoing SIP message,
+   its body is compressed. Therefore inside configuration file, the body
+   is in original format(e.g., plain text). In this way, the existing
+   functions to handle content of the body work as usual (e.g., to strip
+   codecs in sdp via sdpops or do substitutions via textops).
+
+   The functions used to compress and decompress are from zlib library
+   (http://zlib.net).
+
+   NOTE: for the moment the module cannot be used with topoh module,
+   overlapping in core event callbacks (will be fixed soon).
+
+   The immediate benefit of compressing the body is to reduce the size of
+   the SIP message, increasing the chances to stay under MTU for UDP
+   packts. From observation, the compressed body is in between 50% to 67%
+   smaller than the original size (e.g., a body of 431 bytes was
+   compressed to 230).
+
+   An use case can be when having peering traffic between two Kamailio
+   servers. Before relaying to the other Kamailio, use in config file:
+   append_hf("Content-Encoding: deflate\r\n").
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * zlib compression library (http://zlib.net).
+
+3. Parameters
+
+   3.1. header_name (str)
+   3.2. header_value (str)
+   3.3. sanity_checks (integer)
+
+3.1. header_name (str)
+
+   Name of the header that indicates compression or decompression has to
+   be done.
+
+   Default value is "Content-Encoding".
+
+   Example 1.1. Set header_name parameter
+...
+modparam("gzcompress", "header_name", "Encoded")
+...
+
+3.2. header_value (str)
+
+   Value of the header that indicates compression or decompression has to
+   be done.
+
+   Default value is "deflate".
+
+   Example 1.2. Set header_value parameter
+...
+modparam("gzcompress", "header_value", "gzip")
+...
+
+3.3. sanity_checks (integer)
+
+   If set to 1, gzcompress module will bind to sanity module in order to
+   perform sanity checks over received SIP request. Default sanity checks
+   are done. It is useful to check if received request is well formated
+   before proceeding to encoding/decoding.
+
+   Default value is 0 (do not bind to sanity module).
+
+   Example 1.3. Set sanity_checks parameter
+...
+modparam("gzcompress", "sanity_checks", 1)
+...
+
+4. Functions
+
+   None.
+
+5. Config File
+
+   Next example shows how to enable compression for forwarded requests, as
+   well as replying with compressed body for HTTP requests. For SIP, the
+   request is recevied and forwarded to itself once, just for the sake of
+   showing a simple example.
+
+   Example 1.4. Enable body compression
+...
+
+#!KAMAILIO
+
+debug=3
+memdbg=5
+memlog=5
+
+children=2
+
+log_stderror=yes
+listen=udp:127.0.0.1:5060
+listen=tcp:127.0.0.1:5060
+
+tcp_accept_no_cl=yes
+http_reply_parse=yes
+
+mpath="modules/"
+
+loadmodule "sl.so"
+loadmodule "pv.so"
+loadmodule "xlog.so"
+loadmodule "corex.so"
+loadmodule "textops.so"
+loadmodule "xhttp.so"
+loadmodule "gzcompress.so"
+
+modparam("gzcompress", "header_value", "deflate")
+
+request_route {
+        xlog("received sip request from $si:$sp\r\n");
+
+        if(src_port==5060) {
+                remove_hf("Content-Encoding");
+                $du = "sip:127.0.0.1:9";
+        } else {
+                append_hf("Content-Encoding: deflate\r\n");
+                $du = "sip:127.0.0.1:5060";
+        }
+        forward();
+        exit;
+}
+
+event_route[xhttp:request] {
+        xlog("received http request from $si:$sp\r\n");
+        append_to_reply("Content-Encoding: deflate\r\n");
+    xhttp_reply("200", "OK", "text/html",
+        "<html><body>OK - [$si:$sp]</body></html>");
+}
+
+...

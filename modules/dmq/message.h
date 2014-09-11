@@ -19,13 +19,13 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
-int dmq_handle_message(struct sip_msg*, char*, char*);
+int dmq_handle_message(struct sip_msg*, char* str1, char* str2);
 
 #endif

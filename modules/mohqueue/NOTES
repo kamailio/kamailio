@@ -1,0 +1,6 @@
+Things to look into:
+
+* RFC3261, section 12.1.1 requires UAS to copy Record-Route
+* Check to see if any memory leaks.
+* Should probably respond when caller says BYE after queue says BYE.
+* check RAck number

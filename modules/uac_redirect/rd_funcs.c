@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
  * History:
@@ -96,9 +96,12 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 		}
 		if (max==0)
 			continue;
-		/* put the response code into the acc_param reason struct */
-		reason->code = t->uac[i].last_received;
-		reason->code_s.s = int2bstr((unsigned long)reason->code, code_buf, &reason->code_s.len);
+		if(reason!=NULL)
+		{
+			/* put the response code into the acc_param reason struct */
+			reason->code = t->uac[i].last_received;
+			reason->code_s.s = int2bstr((unsigned long)reason->code, code_buf, &reason->code_s.len);
+		}
 		/* get the contact from it */
 		n = shmcontact2dset( msg, t->uac[i].reply, max, reason, bflags);
 		if ( n<0 ) {
@@ -162,7 +165,7 @@ static int sort_contacts(hdr_field_t *chdr, contact_t **ct_array,
 					ct_list->uri.len,ct_list->uri.s,q);
 			/*insert the contact into the sorted array */
 			for(i=0;i<n;i++) {
-				/* keep in mind that the contact list is reversts */
+				/* keep in mind that the contact list is reversed */
 				if (q_array[i]<=q)
 					continue;
 				break;
@@ -220,7 +223,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		/* contact header is not parsed */
 		if ( sh_rpl->msg_flags&FL_SHM_CLONE ) {
 			/* duplicate the reply into private memory to be able 
-			 * to parse it and after words to free the parsed mems */
+			 * to parse it and afterwards to free the parsed mems */
 			memcpy( &dup_rpl, sh_rpl, sizeof(struct sip_msg) );
 			dup = 2;
 			/* ok -> force the parsing of contact header */
@@ -282,14 +285,18 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		goto restore;
 	}
 
-	/* to many branches ? */
+	i=0;
+
+	/* more branches than requested in the parameter
+	 * - add only the last ones from sorted array,
+	 *   because the order is by increasing q */
 	if (max!=-1 && n>max)
-		n = max;
+		i = n - max;
 
 	added = 0;
 
 	/* add the sortet contacts as branches in dset and log this! */
-	for ( i=0 ; i<n ; i++ ) {
+	for (  ; i<n ; i++ ) {
 		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len,
 				scontacts[i]->uri.s);
 		if(sruid_next(&_redirect_sruid)==0) {

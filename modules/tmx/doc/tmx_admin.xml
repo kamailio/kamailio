@@ -20,8 +20,8 @@
 	</para>
 	<para>
 	&kamailio; TM (Transaction Management) module documentation is available at:
-	<ulink url="http://www.kamailio.org/docs/modules/1.5.x/tm.html">
-	http://www.kamailio.org/docs/modules/1.5.x/tm.html</ulink>
+	<ulink url="http://www.kamailio.org/docs/modules/stable/tm.html">
+	http://www.kamailio.org/docs/modules/stable/tm.html</ulink>
 	</para>
 	</section>
 	
@@ -53,6 +53,31 @@
 			</listitem>
 			</itemizedlist>
 		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="tmx.p.precheck_trans">
+		<title>
+		<function moreinfo="none">precheck_trans</function>
+		</title>
+		<para>
+		Enable/disable transaction pre-check via t_precheck_trans()
+		function. If set to 0, the internal structures are not created
+		at startup and the funcation will return false always.
+		</para>
+		<para>
+		Default value is <emphasis>1</emphasis> (enabled).
+		</para>
+		<example>
+		<title><function>precheck_trans</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("tmx", "precheck_trans", 0)
+...
+</programlisting>
+		</example>
 	</section>
 	</section>
 
@@ -97,7 +122,7 @@ if (t_cancel_branches("all")) {
 	</section>
 	<section>
 		<title>
-			<function moreinfo="none">t_cancel_callid(callid, cseq, flag)
+			<function moreinfo="none">t_cancel_callid(callid, cseq, flag [, rcode])
 			</function>
 		</title>
 		<para>
@@ -117,6 +142,11 @@ if (t_cancel_branches("all")) {
 			<listitem><para>
 				<emphasis>flag</emphasis> - index of the flag to set.
 			</para></listitem>
+			<listitem><para>
+					<emphasis>rcode</emphasis> - code to be added as
+					cause attribute in Reason header for generated
+					CANCEL request. This parameter is optional.
+			</para></listitem>
 		</itemizedlist>
 		<para>
 		This function can be used in ANY_ROUTE.
@@ -127,6 +157,10 @@ if (t_cancel_branches("all")) {
 ...
 if (t_cancel_callid("123qaz", "5", "22")) {
 	xlog("transaction cancelled\n");
+}
+...
+if (t_cancel_callid("123qaz", "5", "22", "200")) {
+	xlog("transaction cancelled with [Reason: cause=200]\n");
 }
 ...
 </programlisting>
@@ -327,11 +361,71 @@ if(t_suspend())
 		<title><function>t_continue</function> usage</title>
 		<programlisting format="linespecific">
 ...
-tcontinue('123', '456', 'MYROUTE');
+t_continue('123', '456', 'MYROUTE');
 ...
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_reuse_branch()</function>
+		</title>
+		<para>
+		Creates new "main" branch by making copy of branch-failure
+                branch. Currently the following branch attributes are copied
+		from branch-failure branch: request-uri, ruid, path, instance,
+		and branch flags.
+		</para>
+		<para>
+		This function can be used from tm:branch-failure event_route.
+		</para>
+		<example>
+		<title><function>t_reuse_branch</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route [tm:branch-failure:contact] {
+    t_reuse_branch();
+    setbflag(10);
+    t_relay();
+    exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="tmx.f.t_precheck_trans">
+		<title>
+		<function moreinfo="none">t_precheck_trans()</function>
+		</title>
+		<para>
+		Check if current processed message is handled by other process.
+		This function is useful to catch retransmissions before transaction
+		is created. The function returns true if the request is handled by
+		another process.
+		</para>
+		<para>
+		Note that ACK and CANCEL requests are not tracked by this function,
+		the return code being false for them.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE .
+		</para>
+		<example>
+		<title><function>t_precheck_trans</function> usage</title>
+		<programlisting format="linespecific">
+...
+    # handle retransmissions
+    if(t_precheck_trans()) {
+        t_check_trans();
+        exit;
+    }
+    t_check_trans();
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -357,6 +451,9 @@ tcontinue('123', '456', 'MYROUTE');
 			</para></listitem>
 			<listitem><para>
 				<emphasis>$T_reply_ruid</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T_branch(name)</emphasis>
 			</para></listitem>
 		</itemizedlist>
 		<para>

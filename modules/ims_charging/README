@@ -1,0 +1,714 @@
+The IMS Charging Module
+
+Jason Penton
+
+   Smile Communications
+   <jason.penton@smilecoms.com>
+
+Carsten Bock
+
+   ng-voice GmbH
+   <carsten@ng-voice.com>
+
+Carlos Ruiz Diaz
+
+   ng-voice GmbH
+   <carlos@ng-voice.com>
+
+   Copyright © 2013 Smile Communications
+
+   Copyright © 2013 ng-voice GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
+
+              3.1. Offline Charging (Rf)
+              3.2. Online Charging (Ro)
+              3.3. Online Charging (Ro): A practical example
+
+        4. Parameters
+
+              4.1. hash_size(int)
+              4.2. interim_update_credits(int)
+              4.3. timer_buffer(int)
+              4.4. ro_forced_peer(string)
+              4.5. ro_auth_expiry(integer)
+              4.6. ro_auth_expiry(integer)
+              4.7. cdp_event_latency(integer)
+              4.8. cdp_event_threshold(integer)
+              4.9. cdp_event_latency_log(integer)
+              4.10. origin_host(string)
+              4.11. origin_realm(string)
+              4.12. destination_host(string)
+              4.13. destination_realm(string)
+              4.14. service_context_id_root(string)
+              4.15. service_context_id_ext(string)
+              4.16. service_context_id_mnc(string)
+              4.17. service_context_id_mcc(string)
+              4.18. service_context_id_release(string)
+
+        5. Functions
+
+              5.1. Ro_CCR(route_name, direction, charge_type, unit_type,
+                      reservation_units)
+
+        6. Statistics
+
+              6.1. Initial CCRs (initial_ccrs)
+              6.2. Interim CCRs (interim_ccrs)
+              6.3. Final CCRs (final_ccrs)
+              6.4. Sucessful initial CCRs (successful_initial_ccrs)
+              6.5. Sucessful interim CCRs (successful_interim_ccrs)
+              6.6. Sucessful final CCRs (successful_final_ccrs)
+              6.7. Failed initial CCRs (failed_initial_ccrs)
+              6.8. Failed interim CCRs (failed_interim_ccrs)
+              6.9. Failed final CCRs (failed_final_ccrs)
+              6.10. CCRs average response time (ccr_avg_response_time)
+              6.11. CCRs responses time (ccr_responses_time)
+              6.12. CCRs requests, which ended with a timeout
+                      (ccr_timeouts)
+
+              6.13. Billed seconds (billed_secs)
+              6.14. Killed calls (killed_calls)
+
+   List of Examples
+
+   1.1. hash_sizeparameter usage
+   1.2. interim_update_creditsparameter usage
+   1.3. timer_bufferparameter usage
+   1.4. ro_forced_peerparameter usage
+   1.5. ro_auth_expiryparameter usage
+   1.6. ro_auth_expiryparameter usage
+   1.7. cdp_event_latencyparameter usage
+   1.8. cdp_event_thresholdparameter usage
+   1.9. cdp_event_latency_logparameter usage
+   1.10. origin_hostparameter usage
+   1.11. origin_realmparameter usage
+   1.12. destination_hostparameter usage
+   1.13. destination_realmparameter usage
+   1.14. service_context_id_rootparameter usage
+   1.15. service_context_id_extparameter usage
+   1.16. service_context_id_mncparameter usage
+   1.17. service_context_id_mccparameter usage
+   1.18. service_context_id_releaseparameter usage
+   1.19. Ro_CCR
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
+
+        3.1. Offline Charging (Rf)
+        3.2. Online Charging (Ro)
+        3.3. Online Charging (Ro): A practical example
+
+   4. Parameters
+
+        4.1. hash_size(int)
+        4.2. interim_update_credits(int)
+        4.3. timer_buffer(int)
+        4.4. ro_forced_peer(string)
+        4.5. ro_auth_expiry(integer)
+        4.6. ro_auth_expiry(integer)
+        4.7. cdp_event_latency(integer)
+        4.8. cdp_event_threshold(integer)
+        4.9. cdp_event_latency_log(integer)
+        4.10. origin_host(string)
+        4.11. origin_realm(string)
+        4.12. destination_host(string)
+        4.13. destination_realm(string)
+        4.14. service_context_id_root(string)
+        4.15. service_context_id_ext(string)
+        4.16. service_context_id_mnc(string)
+        4.17. service_context_id_mcc(string)
+        4.18. service_context_id_release(string)
+
+   5. Functions
+
+        5.1. Ro_CCR(route_name, direction, charge_type, unit_type,
+                reservation_units)
+
+   6. Statistics
+
+        6.1. Initial CCRs (initial_ccrs)
+        6.2. Interim CCRs (interim_ccrs)
+        6.3. Final CCRs (final_ccrs)
+        6.4. Sucessful initial CCRs (successful_initial_ccrs)
+        6.5. Sucessful interim CCRs (successful_interim_ccrs)
+        6.6. Sucessful final CCRs (successful_final_ccrs)
+        6.7. Failed initial CCRs (failed_initial_ccrs)
+        6.8. Failed interim CCRs (failed_interim_ccrs)
+        6.9. Failed final CCRs (failed_final_ccrs)
+        6.10. CCRs average response time (ccr_avg_response_time)
+        6.11. CCRs responses time (ccr_responses_time)
+        6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+        6.13. Billed seconds (billed_secs)
+        6.14. Killed calls (killed_calls)
+
+1. Overview
+
+   This module contains all methods related to the IMS charging control
+   functions performed by an network element (e.g. a S-CSCF) over the Ro
+   interface. This module is dependent on the CDP (C Diameter Peer)
+   modules for communicating with a Charging-Server as specified in 3GPP
+   specification TS xx.xxx.
+
+   Please also refer to RFC 4006 (Diameter Credit-Control Application)
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The Following mouldes must be loaded before this module:
+     * Dialog_ng
+     * TM - Transaction Manager
+     * CDP - C Diameter Peer
+     * CDP_AVP - CDP AVP Applications
+
+2.2. External Libraries or Applications
+
+   This modules requires the internal IMS library.
+
+3. Understanding Charging in the IP-Multimedia-Subsystem (IMS)
+
+   3.1. Offline Charging (Rf)
+   3.2. Online Charging (Ro)
+   3.3. Online Charging (Ro): A practical example
+
+   Before each service usage, the charging system must be asked for
+   permission (credit authorization). The charging server must make a
+   decision: Either authorize or deny the session. For postpaid scenarios
+   this is fairly easy: The charging-server only needs to collect the
+   usage data for processing it at the end of the month. As no realtime
+   account updating is needed, this is often called "offline-charging".
+   For prepaid scenarios the charging server needs to know the user's
+   account balance and it will need to update the account in real-time.
+   This is often referred to as "online-charging".
+
+   Question: What is the double of the Radius? Answer: It's the Diameter!
+
+   As quite often, we use the Diameter-Protocol to do the Charging in the
+   IMS. And as quite often, IMS uses a huge bunch of acronyms to describe
+   the different interfaces: We call the diameter-interface for
+   offline-charging the "Rf"-interface and the interface for online
+   charging the "Ro"-interface.
+
+   Each system, that needs this credit authorization, have to be equipped
+   with a proper charging trigger, a so-called charging-trigger-function
+   (CTF) in order to communicate with the charging-server (also called
+   charging-function):
+   [charging1.png]
+
+3.1. Offline Charging (Rf)
+
+   For the offlinc charging (Rf), we have the following two
+   diameter-messages:
+     * ACR - Accounting Request
+     * ACA - Accounting Answer
+
+   Each request can have the following Accounting-Record-Type:
+     * START_RECORD - used to start an accounting session, typically when
+       the application receives a SIP 200 OK acknowledging an initial SIP
+       INVITE.
+     * INTERIM_RECORD - used to update a session, for example, in the case
+       of SIP RE-INVITE and/or UPDATE in the current SIP dialog.
+     * STOP_RECORD - used to stop an accounting session, for example, when
+       the application receives a SIP BYE message.
+     * EVENT_RECORD - used for event-based accounting, e.g. a short
+       message or similar
+
+3.2. Online Charging (Ro)
+
+   For online charging (Ro), this get's a little bit more complicated. The
+   charging function needs to perform credit control before allowing
+   resource usage. The prepaid subscriber needs to exist in the
+   charging-server and all activities must be monitored by the
+   charging-server. We must distinguish between the following two cases:
+     * Direct debiting - the amount is immediately deducted from the
+       user's account in one single transaction. This could be for example
+       a SMS or the ordering of a movie in case of Video-on-Demand.
+     * Unit reservation - an amount is reserved by the charging-server.
+       This is done, because the charging-server does not know yet, how
+       many units are needed to provide the service. During the session,
+       the used amount may be deducted and more units can be requested; at
+       the end of the session the used sessions are reported in the final
+       request. These sessions could be typically a voice- or video-call
+       or a Pay-TV session, if you pay per usage.
+
+   As a result, we have the following three scenarios:
+     * Immediate Event Charging (IEC) - used for simple Event-based
+       charging
+     * Event Charging with Unit Reservation (ECUR) (of type Event-based
+       charging)
+     * Session Charging with Unit Reservation (SCUR) (of type
+       Session-based charging)
+
+3.3. Online Charging (Ro): A practical example
+
+   But how does it look in reality? Let us make a more practical example:
+
+   Let us assume we have a subscriber, who has sufficient credit for 75
+   seconds of talking. The subscriber initiates a call; as we do not know,
+   how long the call will take, we start with requesting credit for 30
+   seconds (CCR-Request, we could request any duration, e.g. 2 hours, but
+   it would probably block other calls if we reserve all the required
+   credit).
+
+   The call proceeds, so after 30 seconds we send another CCR-Request with
+   the indication that we used the reserved 30 seconds and that we request
+   another 30 seconds. We reduce the account of the subscriber by 30
+   seconds, so he has a credit of 45 seconds. Since 45 seconds is more
+   than the requested 30 seconds, this second request can also easily be
+   accepted and another 30 seconds can be granted. After this request, the
+   account is at 45 seconds and we still (or again) have 30 seconds
+   reserved.
+
+   Meanwhile the subscriber initiates a second call. We try to request
+   again 30 seconds from the charging-server, but as our account is at 45
+   seconds of speaking time and since we reserved another 30 seconds for
+   the first call, we can only grant 15 seconds for the second call. The
+   last 15 seconds are now reserved for this subscriber; we have 45
+   seconds on the account of which 45 seconds are reserved.
+
+   Now the first call gets terminated: We only used 20 seconds from the
+   granted 30 seconds. So we decrease the account of the subscriber by 20
+   seconds and we reduce the amount of reserved units by 30. We have 25
+   seconds in the account and we have still reserved 15 seconds for the
+   second call.
+
+   As the second call is still proceeding, we will try to request another
+   30 seconds and we indicate, that we used the granted 15 seconds. The
+   account is deducted by 15 seconds (the used units) and we can grant
+   another 10 seconds for the second call, as this is the remains on the
+   account.
+
+   After 10 seconds, no more units can be granted, so the call is teared
+   down.
+
+   The following diagram is a graphical representation of the above
+   example:
+   [charging2.png]
+
+4. Parameters
+
+   4.1. hash_size(int)
+   4.2. interim_update_credits(int)
+   4.3. timer_buffer(int)
+   4.4. ro_forced_peer(string)
+   4.5. ro_auth_expiry(integer)
+   4.6. ro_auth_expiry(integer)
+   4.7. cdp_event_latency(integer)
+   4.8. cdp_event_threshold(integer)
+   4.9. cdp_event_latency_log(integer)
+   4.10. origin_host(string)
+   4.11. origin_realm(string)
+   4.12. destination_host(string)
+   4.13. destination_realm(string)
+   4.14. service_context_id_root(string)
+   4.15. service_context_id_ext(string)
+   4.16. service_context_id_mnc(string)
+   4.17. service_context_id_mcc(string)
+   4.18. service_context_id_release(string)
+
+4.1.  hash_size(int)
+
+   The size of the hash table internally used to keep the
+   Diameter-Ro-Session. A larger table is much faster but consumes more
+   memory. The hash size must be a power of two number.
+
+   IMPORTANT: If Ro-Session's information should be stored in a database,
+   a constant hash_size should be used, otherwise the restoring process
+   will not take place. If you really want to modify the hash_size you
+   must delete all table's rows before restarting the server.
+
+   Default value is 4096.
+
+   Example 1.1.  hash_sizeparameter usage
+...
+modparam("ims_charging", "hash_size", 1024)
+...
+
+4.2.  interim_update_credits(int)
+
+   How much credit should be requested interim request? At the start of
+   the call, we request the amout of seconds as per Command. For each
+   interim request, we would request credit for "interim_update_credits".
+
+   Default value is 30.
+
+   Example 1.2.  interim_update_creditsparameter usage
+...
+modparam("ims_charging", "interim_update_credits", 600)
+...
+
+4.3.  timer_buffer(int)
+
+   How many seconds before expiry of our credit should we request more
+   credit?
+
+   Default value is 8.
+
+   Example 1.3.  timer_bufferparameter usage
+...
+modparam("ims_charging", "timer_buffer", 10)
+...
+
+4.4.  ro_forced_peer(string)
+
+   This is the optional name of the origin host of the Diameter server
+   (typically a Charging Server). If not set then realm routing is used.
+
+   Default value is ''.
+
+   Example 1.4.  ro_forced_peerparameter usage
+...
+modparam("ims_charging", "ro_forced_peer", "ocs.ims.smilecoms.com")
+...
+
+4.5.  ro_auth_expiry(integer)
+
+   This is the expiry length in seconds of the initiated Diameter
+   sessions.
+
+   Default value is 7200.
+
+   Example 1.5.  ro_auth_expiryparameter usage
+...
+modparam("ims_charging", "ro_auth_expiry", 14400)
+...
+
+4.6.  ro_auth_expiry(integer)
+
+   This is the expiry length in seconds of the initiated Diameter
+   sessions.
+
+   Default value is 7200.
+
+   Example 1.6.  ro_auth_expiryparameter usage
+...
+modparam("ims_charging", "ro_auth_expiry", 14400)
+...
+
+4.7.  cdp_event_latency(integer)
+
+   This is a flag to determine whether or slow CDP responses should be
+   reported in the log file. 1 is enabled and 0 is disabled.
+
+   Default value is 1.
+
+   Example 1.7.  cdp_event_latencyparameter usage
+...
+modparam("ims_charging", "cdp_event_latency", 1)
+...
+
+4.8.  cdp_event_threshold(integer)
+
+   This time in milliseconds is the limit we should report a CDP response
+   as slow. i.e. if a CDP response exceeds this limit it will be reported
+   in the log file. This is only relevant is cdp_event_latency is enabled
+   (set to 0).
+
+   Default value is 500.
+
+   Example 1.8.  cdp_event_thresholdparameter usage
+...
+modparam("ims_charging", "cdp_event_threshold", 500)
+...
+
+4.9.  cdp_event_latency_log(integer)
+
+   This time log level at which we should report slow CDP responses. 0 is
+   ERROR, 1 is WARN, 2 is INFO and 3 is DEBUG. This is only relevant is
+   cdp_event_latency is enabled (set to 0)
+
+   Default value is 0.
+
+   Example 1.9.  cdp_event_latency_logparameter usage
+...
+modparam("ims_charging", "cdp_event_latency_log", 1)
+...
+
+4.10.  origin_host(string)
+
+   Origin host to be used in Diameter messages to charging-server.
+
+   Default value is "scscf.ims.smilecoms.com".
+
+   Example 1.10.  origin_hostparameter usage
+...
+modparam("ims_charging", "origin_host", "scscf.kamailio-ims.org")
+...
+
+4.11.  origin_realm(string)
+
+   Origin Realm to be used in Diameter messages to charging-server.
+
+   Default value is "ims.smilecome.com".
+
+   Example 1.11.  origin_realmparameter usage
+...
+modparam("ims_charging", "origin_realm", "kamailio-ims.org")
+...
+
+4.12.  destination_host(string)
+
+   Destination host to be used in Diameter messages to charging-server.
+
+   Default value is 5s.
+
+   Example 1.12.  destination_hostparameter usage
+...
+modparam("ims_charging", "destination_host", "ocs.kamailio-ims.org")
+...
+
+4.13.  destination_realm(string)
+
+   Destination realm to be used in Diameter messages to charging-server.
+
+   Default value is "ims.smilecoms.com".
+
+   Example 1.13.  destination_realmparameter usage
+...
+modparam("ims_charging", "destination_realm", "kamailio-ims.org")
+...
+
+4.14.  service_context_id_root(string)
+
+   This defines a root-element of the Service-Context-Id AVP used in the
+   diameter-message
+
+   The Service-Context-Id AVP is of type UTF8String (AVP Code 461) and
+   contains a unique identifier of the Diameter credit-control service
+   specific document that applies to the request (as defined in section
+   RFC 4006 4.1.2). This is an identifier allocated by the service
+   provider, by the service element manufacturer, or by a standardization
+   body, and MUST uniquely identify a given Diameter credit-control
+   service specific document. The format of the Service-Context-Id is:
+"service-context" "@" "domain" service-context = Token
+
+   The Token is an arbitrary string of characters and digits.
+
+   'domain' represents the entity that allocated the Service-Context-Id.
+   It can be ietf.org, 3gpp.org, etc., if the identifier is allocated by a
+   standardization body, or it can be the FQDN of the service provider
+   (e.g., provider.example.com) or of the vendor (e.g.,
+   vendor.example.com) if the identifier is allocated by a private entity.
+
+   Service-specific documents that are for private use only (i.e., to one
+   provider's own use, where no interoperability is deemed useful) may
+   define private identifiers without need of coordination. However, when
+   interoperability is wanted, coordination of the identifiers via, for
+   example, publication of an informational RFC is RECOMMENDED in order to
+   make Service-Context-Id globally available.
+
+   Default value is "32260@3gpp.org".
+
+   Example 1.14.  service_context_id_rootparameter usage
+...
+modparam("ims_charging", "service_context_id_root", "calls@kamailio-ims.org")
+...
+
+4.15.  service_context_id_ext(string)
+
+   This defines the extension of the Service-Context-Id AVP used in the
+   diameter-message.
+
+   Default value is "ext".
+
+   Example 1.15.  service_context_id_extparameter usage
+...
+modparam("ims_charging", "service_context_id_ext", "ext2")
+...
+
+4.16.  service_context_id_mnc(string)
+
+   This defines Mobile-Network-Code (MNC) of the Service-Context-Id AVP
+   used in the diameter-message.
+
+   Default value is "01".
+
+   Example 1.16.  service_context_id_mncparameter usage
+...
+modparam("ims_charging", "service_context_id_mnc", "42")
+...
+
+4.17.  service_context_id_mcc(string)
+
+   This defines Mobile-Country-Code (MCC) of the Service-Context-Id AVP
+   used in the diameter-message.
+
+   see https://en.wikipedia.org/wiki/Mobile_country_code_(MCC) for
+   details.
+
+   Default value is "001".
+
+   Example 1.17.  service_context_id_mccparameter usage
+...
+modparam("ims_charging", "service_context_id_mcc", "262")
+...
+
+4.18.  service_context_id_release(string)
+
+   This defines Release of the Service-Context-Id AVP used in the
+   diameter-message.
+
+   Default value is "8" (Release 8).
+
+   Example 1.18.  service_context_id_releaseparameter usage
+...
+modparam("ims_charging", "service_context_id_release", "262")
+...
+
+5. Functions
+
+   5.1. Ro_CCR(route_name, direction, charge_type, unit_type,
+          reservation_units)
+
+5.1.  Ro_CCR(route_name, direction, charge_type, unit_type,
+reservation_units)
+
+   Perform a CCR on Diameter Ro interface for Charging
+
+   Meaning of the parameters is as follows:
+     * route_nameroute to be executed upon reception of charging requests
+     * direction"orig"inating or "term"inating
+     * charge_type"IEC" = Immediate Event Charging, "ECUR" - Event
+       Charging with Unit Reservation or "SCUR" - Session Charging with
+       Unit Reservation.
+       (Note: At the moment only SCUR is supported)
+     * unit_typeTypes of the unit to be requested
+       (unused at the moment)
+     * reservation_unitshow many units (at the moment seconds) should be
+       reservated at the moment.
+
+   This function can be used from REQUEST_ROUTE.
+
+   This method is executed asynchronously. See example on how to retrieve
+   return value.
+
+   Example 1.19. Ro_CCR
+...
+  xlog("L_DBG","Sending initial CCR Request for call\n");
+  Ro_CCR("CHARGING_CCR_REPLY", "orig", "SCUR", "", "30");
+}
+
+route[CHARGING_CCR_REPLY]
+  xlog("L_DBG","cca_return code is $avp(s:cca_return_code)\n");
+  switch ($avp(s:cca_return_code)) {
+    case 1: #success
+        xlog("L_DBG", "CCR success - will route message\n");
+        route(Finalize_Orig);
+        break;
+    case -1: #failure
+        xlog("L_ERR", "CCR failure - error response sent from module\n");
+        sl_send_reply("402","Payment required");
+        break;
+    case -2: #error
+        xlog("L_ERR", "CCR error - error response sent from module\n");
+        sl_send_reply("500", "Charging Error");
+        break;
+    default:
+        xlog("L_ERR", "Unknown return code from CCR: [$avp(s:cca_return_code)] \
+n");
+        break;
+  }
+  exit;
+  }
+...
+
+6. Statistics
+
+   6.1. Initial CCRs (initial_ccrs)
+   6.2. Interim CCRs (interim_ccrs)
+   6.3. Final CCRs (final_ccrs)
+   6.4. Sucessful initial CCRs (successful_initial_ccrs)
+   6.5. Sucessful interim CCRs (successful_interim_ccrs)
+   6.6. Sucessful final CCRs (successful_final_ccrs)
+   6.7. Failed initial CCRs (failed_initial_ccrs)
+   6.8. Failed interim CCRs (failed_interim_ccrs)
+   6.9. Failed final CCRs (failed_final_ccrs)
+   6.10. CCRs average response time (ccr_avg_response_time)
+   6.11. CCRs responses time (ccr_responses_time)
+   6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+   6.13. Billed seconds (billed_secs)
+   6.14. Killed calls (killed_calls)
+
+6.1. Initial CCRs (initial_ccrs)
+
+   The number of initial CCRs, i.e., the CCRs that were sent for the
+   initial INVITEs.
+
+6.2. Interim CCRs (interim_ccrs)
+
+   The number of CCRs sent within established sessions.
+
+6.3. Final CCRs (final_ccrs)
+
+   The number of CCRs sent to terminate a session.
+
+6.4. Sucessful initial CCRs (successful_initial_ccrs)
+
+   Initial CCRs that ended with DIAMETER_SUCCESS response code.
+
+6.5. Sucessful interim CCRs (successful_interim_ccrs)
+
+   Interim CCRs that ended with DIAMETER_SUCCESS response code.
+
+6.6. Sucessful final CCRs (successful_final_ccrs)
+
+   Final CCRs that ended with DIAMETER_SUCCESS response code.
+
+6.7. Failed initial CCRs (failed_initial_ccrs)
+
+   Initial CCRs that ended with no DIAMETER_SUCCESS response or with some
+   other error during processing.
+
+6.8. Failed interim CCRs (failed_interim_ccrs)
+
+   Interim CCRs that ended with no DIAMETER_SUCCESS response or with some
+   other error during processing.
+
+6.9. Failed final CCRs (failed_final_ccrs)
+
+   Final CCRs that ended with no DIAMETER_SUCCESS response or with some
+   other error during processing.
+
+6.10. CCRs average response time (ccr_avg_response_time)
+
+   Average CCA arrival time in milliseconds.
+
+6.11. CCRs responses time (ccr_responses_time)
+
+   Total CCA arrival time in milliseconds.
+
+6.12. CCRs requests, which ended with a timeout (ccr_timeouts)
+
+   Number of CCR-Requests, which ran into an timeout.
+
+6.13. Billed seconds (billed_secs)
+
+   Number of seconds billed in total.
+
+6.14. Killed calls (killed_calls)
+
+   Number of calls that were killed due to lack of credit.

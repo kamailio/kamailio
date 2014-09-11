@@ -61,7 +61,7 @@
     <section>
 	<title>Parameters</title>
 
-	<section>
+	<section id="mqueue.p.mqueue">
 	    <title><varname>mqueue</varname> (string)</title>
 	    <para>
 		Definition of a memory queue
@@ -96,7 +96,7 @@ modparam("mqueue", "mqueue", "name=qaz")
 	
     <section>
 	<title>Functions</title>
- 	<section>
+ 	<section id="mqueue.f.mq_add">
 	    <title>
 		<function moreinfo="none">mq_add(queue, key, value)</function>
 	    </title>
@@ -114,7 +114,7 @@ mq_add("myq", "$rU", "call from $fU");
 	    </example>
 	</section>
 	
- 	<section>
+ 	<section id="mqueue.f.mq_fetch">
 	    <title>
 		<function moreinfo="none">mq_fetch(queue)</function>
 	    </title>
@@ -139,7 +139,7 @@ while(mq_fetch("myq"))
 	    </example>
 	</section>
 	
- 	<section>
+ 	<section id="mqueue.f.mq_pv_free">
 	    <title>
 		<function moreinfo="none">mq_pv_free(queue)</function>
 	    </title>
@@ -157,7 +157,7 @@ mq_pv_free("myq");
 	    </example>
 	</section>
 
-	<section>
+	<section id="mqueue.f.mq_size">
 	    <title>
 		<function moreinfo="none">mq_size(queue)</function>
 	    </title>
@@ -176,6 +176,24 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 	</section>
 	
     </section>
-	
+
+    <section>
+	<title>Exported Pseudo-variables</title>
+		<itemizedlist>
+			<listitem>
+				<emphasis>$mqv(mqueue)</emphasis> - the most recent item key fetched from the specified mqueue
+			</listitem>
+			<listitem>
+				<emphasis>$mqv(mqueue)</emphasis> - the most recent item value fetched from the specified mqueue
+			</listitem>
+			<listitem>
+				<emphasis>$mq_size(mqueue)</emphasis> - the size of the specified mqueue
+			</listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+    </section>
+
 </chapter>
 

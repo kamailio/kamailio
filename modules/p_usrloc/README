@@ -1,18 +1,16 @@
 p_usrloc - Distributed databases
 
-Jonas Appel
-
-   1&1 Internet AG
-
 Henning Westerholt
 
    1&1 Internet AG
 
-Marius Zbihlei
+Edited by
+
+Patric Marschall
 
    1&1 Internet AG
 
-   Copyright � 2007 1&1 Internet AG
+   Copyright © 2007 1&1 Internet AG
      __________________________________________________________________
 
    Table of Contents
@@ -275,7 +273,7 @@ Warning
 
    The url to the master database where errors are written to.
 
-   Default value is "mysql://openser:openserrw@localhost/openser"
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”
 
    Example 1.1. Set write_db_url parameter
 ...
@@ -289,7 +287,7 @@ sename")
    from. It is seperated from write access, so for better performance, a
    local replicate can be used for read access.
 
-   Default value is mysql://openser:openserrw@localhost/openser .
+   Default value is mysql://kamailio:kamailiorw@localhost/kamailio .
 
    Example 1.2. Set read_db_url parameter
 ...
@@ -301,7 +299,7 @@ modparam("p_usrloc", "read_db_url", "mysql://user:passwd@localhost/db")
    Specifies the table where the information about the distributed
    databases is stored.
 
-   Default value is "locdb".
+   Default value is “locdb”.
 
    Example 1.3. Set reg_db_table parameter
 ...
@@ -312,7 +310,7 @@ modparam("p_usrloc", "reg_db_table", "locdb")
 
    Specifies the column where the id of a distributed database is stored.
 
-   Default value is "id".
+   Default value is “id”.
 
    Example 1.4. Set id_column parameter
 ...
@@ -326,7 +324,7 @@ modparam("p_usrloc", "id_column", "id")
    least two databases available, the databases above the second are
    ignored.
 
-   Default value is "no".
+   Default value is “no”.
 
    Example 1.5. Set num_column parameter
 ...
@@ -338,7 +336,7 @@ modparam("p_usrloc", "num_column", "nr")
    Specifies the column where the url of the distributed database is
    stored.
 
-   Default value is "url".
+   Default value is “url”.
 
    Example 1.6. Set url_column parameter
 ...
@@ -350,7 +348,7 @@ modparam("p_usrloc", "url_column", "url")
    Specifies the column where the status of the distributed database is
    stored.
 
-   Default value is "status".
+   Default value is “status”.
 
    Example 1.7. Set status_column parameter
 ...
@@ -363,7 +361,7 @@ modparam("p_usrloc", "status_column", "status")
    is stored. This field is set to the current time when a databases is
    turned off or turned on.
 
-   Default value is "failover".
+   Default value is “failover”.
 
    Example 1.8. Set failover_time_column parameter
 ...
@@ -378,7 +376,7 @@ modparam("p_usrloc", "failover_time_column", "fail")
    stored in two databases and it takes the spare the complete expire time
    to be up to date, it is not very useful.
 
-   Default value is "spare".
+   Default value is “spare”.
 
    Example 1.9. Set spare_flag_column parameter
 ...
@@ -391,7 +389,7 @@ modparam("p_usrloc", "spare_flag_column", "spare")
    stored. Each call to db_handle_error increases the error counter. After
    exceeding the error threshold, the database's status is set to off.
 
-   Default value is "errors".
+   Default value is “errors”.
 
    Example 1.10. Set error_column parameter
 ...
@@ -405,7 +403,7 @@ modparam("p_usrloc", "error_column", "error")
    is only useful when using spares and prevents the module from taking a
    spare which shares the same risk as the broken database.
 
-   Default value is "rg".
+   Default value is “rg”.
 
    Example 1.11. Set risk_group_column parameter
 ...
@@ -419,7 +417,7 @@ modparam("p_usrloc", "risk_group_column", "rg")
    equal or greater than the contact expiration time of the registrar
    module.
 
-   Default value is "3600".
+   Default value is “3600”.
 
    Example 1.12. Set expire_time parameter
 ...
@@ -430,7 +428,7 @@ modparam("p_usrloc", "expire_time", "3600")
 
    Specifies the error value on which a database shall be turned of.
 
-   Default value is "50".
+   Default value is “50”.
 
    Example 1.13. Set db_err_threshold parameter
 ...
@@ -444,7 +442,7 @@ modparam("p_usrloc", "db_err_threshold", "50")
      * 2 - Try to find a spare, if none found, just turn off the broken
        database
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.14. Set failover_level parameter
 ...
@@ -459,7 +457,7 @@ modparam("p_usrloc", "failover_level", "1")
    to provide a writeable master database, otherwise this check stays
    disabled.
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.15. Set db_retry_interval parameter
 ...
@@ -472,7 +470,7 @@ modparam("p_usrloc", "db_retry_interval", "10")
    data consistency. Keep in mind that this will probably decrease
    performance.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.16. Set db_use_transactions parameter
 ...
@@ -486,7 +484,7 @@ modparam("p_usrloc", "db_use_transactions", "0")
    activate transaction the db_use_transactions parameter must be also
    set.
 
-   Default value is "READ UNCOMMITED".
+   Default value is “READ UNCOMMITED”.
 
    Example 1.17. Set db_transaction_level parameter
 ...
@@ -498,7 +496,7 @@ modparam("p_usrloc", "db_transaction_level", "READ UNCOMMITED")
    Sets the write access to the master database. If set to 0, no write
    operations are permitted on the master database.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.18. Set write_on_master_db parameter
 ...
@@ -510,7 +508,7 @@ modparam("p_usrloc", "write_on_master_db", "0")
    Sets the write access to the distributed databases. If set to 0, no
    write operations are permitted on the databases.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.19. Set write_on_db parameter
 ...
@@ -522,7 +520,7 @@ modparam("p_usrloc", "write_on_db", "0")
    Specifies the period (in seconds) after a database connection expires.
    Usage of a too small value will probably decrease the performance.
 
-   Default value is "300".
+   Default value is “300”.
 
    Example 1.20. Set connection_expires parameter
 ...
@@ -535,7 +533,7 @@ modparam("p_usrloc", "connection_expires", "300")
    the moment the only way is to use the CRC32 algorithm to compute the
    location ID. Any integer value is fine.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.21. Set alg_location parameter
 ...
@@ -548,7 +546,7 @@ modparam("p_usrloc", "alg_location", 1)
    single. For example, if you have a location table that is large and
    needs to be partitioned, and a smaller table cfa that is ok to be on
    only the master db(so there is no need to have it distributed), you can
-   set this parameter to "location=cluster,cfa=single". This means that a
+   set this parameter to “location=cluster,cfa=single”. This means that a
    call to
 lookup(location)
 
@@ -558,7 +556,7 @@ lookup(cfa)
 
    will be done on only the master database (as with usrloc module)
 
-   Default value is "location=cluster,cfa=single".
+   Default value is “location=cluster,cfa=single”.
 
    Example 1.22. Set domain_db parameter
 ...
@@ -571,7 +569,7 @@ modparam("p_usrloc", "domain_db", "location=cluster,cfa=single")
    definition, the type is configured by using this parameter. Accepted
    values are single and cluster.
 
-   Default value is "single".
+   Default value is “single”.
 
    Example 1.23. Set default_db_type parameter
 ...
@@ -583,7 +581,7 @@ modparam("p_usrloc", "default_db_type", "cluster")
    The URL of the default database for Location domains (for domains that
    are single). This must be configured if they are use.
 
-   Default value is "DEFAULT_DB_URL".
+   Default value is “DEFAULT_DB_URL”.
 
    Example 1.24. Set default_db_type parameter
 ...
@@ -659,9 +657,9 @@ modparam("p_usrloc", "db_mode", 2)
 ...
 
    The URLs are omitted for a better overview, but you can use standard
-   Kamailio database URLs like mysql://openser:openserrw@localhost/openser
-   Databases don't need to be on different hosts, e.g. for testing
-   purposes.
+   Kamailio database URLs like
+   mysql://kamailio:kamailiorw@localhost/kamailio Databases don't need to
+   be on different hosts, e.g. for testing purposes.
 
    This table contains two database groups. The first with id one, and the
    second with the id two.
@@ -670,16 +668,16 @@ modparam("p_usrloc", "db_mode", 2)
 
    The module supports the decativation of redundant databases for
    maintenance reasons. This can be done by setting the status column of
-   the respective database in the p_usrloc to the value "2". This setting
+   the respective database in the p_usrloc to the value “2”. This setting
    is autodetected from all modules on the server cluster. Changes in the
    locdb table are periodically polled with help of a timer process. After
    one minute the all read and write traffic is removed from the
    deactivated database, and maintenance can be done.
 
    In order to activate the database again, after the maintenance has been
-   finished, the respective status column needs to be set to "0". This is
+   finished, the respective status column needs to be set to “0”. This is
    autodetected as well, the first module that noticed the change will set
-   the status column to "1" and setting the failover column to the current
+   the status column to “1” and setting the failover column to the current
    time and date. Write requests are now transfered again to the database,
    but no reads are done yet.
 
@@ -725,14 +723,14 @@ Chapter 2. Developer's Guide
    These are the primary functions that are used to perform the SQL
    queries.
 
-1. load_ul_db_api(ul_db_api_t * api)
+1.  load_ul_db_api(ul_db_api_t * api)
 
    Import the dbd API, setup the master database connection.
 
    Meaning of the parameters is as follows:
      * api - Pointer to distributed database API structure
 
-2. int (* ul_db_insert_t) (str * table, str * first, str * second, db_key_t*
+2.  int (* ul_db_insert_t) (str * table, str * first, str * second, db_key_t*
 _k, db_val_t* _v, int _n)
 
    Lookup the first and if needed the second key, and insert the given
@@ -746,7 +744,7 @@ _k, db_val_t* _v, int _n)
      * _v - Pointer to the inserted db values.
      * _n - Number of key-value pairs in _k and _v parameters.
 
-3. int (* ul_db_update_t) (str * table, str * first, str * second, db_key_t*
+3.  int (* ul_db_update_t) (str * table, str * first, str * second, db_key_t*
 _k, db_op_t * _op, db_val_t* _v, db_key_t* _uk, db_val_t* _uv, int _n, int
 _un);
 
@@ -765,7 +763,7 @@ _un);
      * _n - Number of key-value pairs in _k and _v parameters.
      * _un - Number of key-value pairs in _uk and _uv parameters.
 
-4. int (* ul_db_insert_update_t) (str * table, str * first, str * second,
+4.  int (* ul_db_insert_update_t) (str * table, str * first, str * second,
 db_key_t* _k, db_val_t* _v, int _n)
 
    Lookup the first and if needed the second key, and insert on duplicate
@@ -780,8 +778,8 @@ db_key_t* _k, db_val_t* _v, int _n)
      * _v - Pointer to the inserted or updated db values.
      * _n - Number of key-value pairs in _k and _v parameters.
 
-5. int (* ul_db_replace_t) (str * table, str * first, str * second, db_key_t*
-_k, db_val_t* _v, int _n)
+5.  int (* ul_db_replace_t) (str * table, str * first, str * second,
+db_key_t* _k, db_val_t* _v, int _n)
 
    Lookup the first and if needed the second key, and replace the given
    values in the choosen databases.
@@ -794,7 +792,7 @@ _k, db_val_t* _v, int _n)
      * _v - Pointer to the replaced db values.
      * _n - Number of key-value pairs in _k and _v parameters.
 
-6. int (* ul_db_delete_t) (str * table, str * first, str * second, db_key_t*
+6.  int (* ul_db_delete_t) (str * table, str * first, str * second, db_key_t*
 _k, db_op_t* _o, db_val_t* _v, int _n)
 
    Lookup the first and if needed the second key, and delete the given
@@ -809,7 +807,7 @@ _k, db_op_t* _o, db_val_t* _v, int _n)
      * _v - Pointer to the deleted db values.
      * _n - Number of key-value pairs in _k and _v parameters.
 
-7. int (* ul_db_query_t) (str * table, str * first, str * second, db_con_t
+7.  int (* ul_db_query_t) (str * table, str * first, str * second, db_con_t
 *** _r_h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int
 _nc, db_key_t _o, db_res_t** _r);
 
@@ -833,7 +831,7 @@ _nc, db_key_t _o, db_res_t** _r);
      * _o - Order by options for the query.
      * _nc - Pointer to the result set.
 
-8. int (* ul_db_free_result_t)(db_con_t ** dbh, db_res_t * res);
+8.  int (* ul_db_free_result_t)(db_con_t ** dbh, db_res_t * res);
 
    Frees the given result set, .
 

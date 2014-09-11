@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
  *
  * History:
@@ -456,7 +456,7 @@ int handle_kamailioSIPOtherwiseDiscardedMsgs(netsnmp_mib_handler *handler,
  * Parameter Setting Functions 
  */
 
-/* If type==STR_PARAM and stringParam is valid, this function will overwrite
+/* If type==PARAM_STRING and stringParam is valid, this function will overwrite
  * kamailioEntityType with a bit value corresponding to the IETF's RFC  for 
  * the SIP MIB.  (Textual Convention SipEntityRole).  Anything else is
  * considered an error.

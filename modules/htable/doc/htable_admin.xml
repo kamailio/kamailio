@@ -31,6 +31,10 @@
 		be adjusted per itme via assignment operation at runtime.
 	</para>
 	<para>
+		Replication between multiple servers is performed automatically (if 
+		enabled) via the DMQ module.
+	</para>
+	<para>
 		You can read more about hash tables at:
 		http://en.wikipedia.org/wiki/Hash_table.
 	</para>
@@ -110,6 +114,108 @@ if(is_present_hf("Authorization"))
 ...
 </programlisting>
 	</example>
+	<para>
+		The module also provides a way to store multiple values for a single key.
+		This is emulated by storing individual keys as 'key_name[n]', where n is
+		incremented for each key.  The total number of keys is stored in a
+		dedicated key, by default: 'key_name::size'.
+	</para>
+	<para>
+		The array is built when the table is loaded in memory and afterwards all
+		the keys are treated as individual keys.
+		If a particular entry in the array is deleted, it is the administarator's
+		responsability to update the size of the array and any other elements
+		(if required).
+	</para>
+	<example>
+	<title>Storring array values</title>
+	<programlisting format="linespecific">
+# Example of dbtext with multiple keys
+$ cat /usr/local/etc/kamailio/dbtext/htable
+1:key:1:0:value3:0
+2:key:1:0:value2:0
+3:key:1:0:value1:0
+
+# The array key will be loaded in memory in the following format:
+$ kamcmd htable.dump htable
+{
+        entry: 35
+        size: 1
+        slot: {
+                item: {
+                        name: key[0]
+                        value: value1
+                }
+        }
+}
+{
+        entry: 50
+        size: 1
+        slot: {
+                item: {
+                        name: key::size
+                        value: 3
+                }
+        }
+}
+{
+        entry: 67
+        size: 1
+        slot: {
+                item: {
+                        name: key[1]
+                        value: value2
+                }
+        }
+}
+{
+        entry: 227
+        size: 1
+        slot: {
+                item: {
+                        name: key[2]
+                        value: value3
+                }
+        }
+}
+
+# Now let's delete a particular entry in the array: key[0].
+$ kamcmd htable.delete htable key[0]
+
+# The array key will look like this after a key was deleted:
+$ kamcmd htable.dump htable
+{
+        entry: 50
+        size: 1
+        slot: {
+                item: {
+                        name: key::size
+                        value: 3
+                }
+        }
+}
+{
+        entry: 67
+        size: 1
+        slot: {
+                item: {
+                        name: key[1]
+                        value: value2
+                }
+        }
+}
+{
+        entry: 227
+        size: 1
+        slot: {
+                item: {
+                        name: key[2]
+                        value: value3
+                }
+        }
+}
+</programlisting>
+	</example>
 
 	</section>
 	<section>
@@ -121,7 +227,7 @@ if(is_present_hf("Authorization"))
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				<emphasis>If DMQ replication is enabled, the DMQ module must be loaded first.</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -171,8 +277,10 @@ if(is_present_hf("Authorization"))
 				<listitem>
 				<para>
 					<emphasis>1</emphasis> - array key - the key is added
-					as 'key_name[n]'. n is incremented for each key with this
-					name to build an array in hash table.
+					as 'key_name[n]' - n is incremented for each key with this
+					name to build an array in hash table.  In addition, an additional
+					key is built to hold the total number of key in the array,
+					by default key_name::size (see array_size_suffix parameter).
 				</para>
 				</listitem>
 			</itemizedlist>
@@ -206,7 +314,7 @@ if(is_present_hf("Authorization"))
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="htable.p.htable">
 		<title><varname>htable</varname> (str)</title>
 		<para>
 		The definition of a hash table. The value of the parameter must have the
@@ -272,6 +380,11 @@ if(is_present_hf("Authorization"))
 			<emphasis>updateexpire</emphasis> - if set to 1 (default), the time until expiration of an item is reset when that item is updated.  Certain uses of htable may dictate that updates should not reset the expiration timeout, however, in which case this attribute can be set to 0.
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>dmqreplicate</emphasis> - if set to 1, any actions (set, update, delete etc.) performed upon entries in this table will be replicated to other nodes (htable peers). Please note, module parameter "enable_dmq" must also be set in order for this to apply (see below). Default is 0 (no replication).
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>
@@ -284,12 +397,12 @@ if(is_present_hf("Authorization"))
 ...
 modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
 modparam("htable", "htable", "b=&gt;size=5;")
-modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;")
+modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;dmqreplicate=1;")
 ...
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.db_url">
 		<title><varname>db_url</varname> (str)</title>
 		<para>
 			The URL to connect to database for loading values in hash
@@ -309,7 +422,7 @@ modparam("htable", "db_url", "&defaultdb;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.key_name_column">
 		<title><varname>key_name_column</varname> (str)</title>
 		<para>
 			The name of the column containing hash table key name.
@@ -328,7 +441,7 @@ modparam("htable", "key_name_column", "kname")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.key_type_column">
 		<title><varname>key_type_column</varname> (str)</title>
 		<para>
 			The name of the column containing hash table key type.
@@ -347,7 +460,7 @@ modparam("htable", "key_type_column", "ktype")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.value_type_column">
 		<title><varname>value_type_column</varname> (str)</title>
 		<para>
 			The name of the column containing hash table value type.
@@ -366,7 +479,7 @@ modparam("htable", "value_type_column", "vtype")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.key_value_column">
 		<title><varname>key_value_column</varname> (str)</title>
 		<para>
 			The name of the column containing hash table key value.
@@ -385,7 +498,7 @@ modparam("htable", "key_value_column", "kvalue")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.expires_column">
 		<title><varname>expires_column</varname> (str)</title>
 		<para>
 			The name of the column containing expires type.
@@ -404,11 +517,11 @@ modparam("htable", "expires", "expiry")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.array_size_suffix">
 		<title><varname>array_size_suffix</varname> (str)</title>
 		<para>
 			The suffix to be added to store the number of items in an
-			array.
+			array (see key type).
 		</para>
 		<para>
 		<emphasis>
@@ -424,7 +537,7 @@ modparam("htable", "array_size_suffix", "-count")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.fetch_rows">
 		<title><varname>fetch_rows</varname> (integer)</title>
 		<para>
 		How many rows to fetch at once from database.
@@ -443,7 +556,7 @@ modparam("htable", "fetch_rows", 1000)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.timer_interval">
 		<title><varname>timer_interval</varname> (integer)</title>
 		<para>
 		Interval in seconds to check for expired htable values.
@@ -462,7 +575,7 @@ modparam("htable", "timer_interval", 10)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.timer_mode">
 		<title><varname>timer_mode</varname> (integer)</title>
 		<para>
 		If set to 1, will start a new timer process. If set to 0
@@ -483,7 +596,7 @@ modparam("htable", "timer_mode", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.p.db_expires">
 		<title><varname>db_expires</varname> (integer)</title>
 		<para>
 			If set to 1, will load/save the expires values of the items in
@@ -504,10 +617,37 @@ modparam("htable", "db_expires", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.p.enable_dmq">
+		<title><varname>enable_dmq</varname> (integer)</title>
+		<para>
+			If set to 1, will enable DMQ replication of actions performed upon 
+			entries in all tables having "dmqreplicate" parameter set. Any update 
+			action performed via pseudo-variables, MI and RPC commands will be 
+			repeated on all other nodes. Therefore, it is important to ensure the
+			table definition (size, autoexpire etc.) is identical across all instances.
+		</para>
+		<para>
+			Currently, values are not replicated on load from DB as it is expected 
+			that in these cases, all servers will load their values from the same DB.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_dmq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "enable_dmq", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="htable.f.sht_print">
 		<title>
 		<function moreinfo="none">sht_print()</function>
 		</title>
@@ -528,7 +668,7 @@ sht_print();
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.f.sht_rm_name_re">
 		<title>
 		<function moreinfo="none">sht_rm_name_re(htable=>regexp)</function>
 		</title>
@@ -549,7 +689,7 @@ sht_rm_name_re("ha=>.*");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="htable.f.sht_rm_value_re">
 		<title>
 		<function moreinfo="none">sht_rm_value_re(htable=>regexp)</function>
 		</title>
@@ -566,6 +706,26 @@ sht_rm_name_re("ha=>.*");
 		<programlisting format="linespecific">
 ...
 sht_rm_value_re("ha=>.*");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_reset">
+		<title>
+		<function moreinfo="none">sht_reset(htable)</function>
+		</title>
+		<para>
+			Delete all entries in the htable. The name of the hash table
+			can be a dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_reset</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_reset("ha$var(x)");
 ...
 </programlisting>
 		</example>
@@ -610,6 +770,97 @@ sht_unlock("ha=>test");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_iterator_start">
+		<title>
+		<function moreinfo="none">sht_iterator_start(iname, hname)</function>
+		</title>
+		<para>
+			Start an iterator for hash table named by the value of parameter
+			hname. The parameter iname is used to identify the iterator. There
+			can be up to 4 iterators at the same time, with different name.
+		</para>
+		<para>
+			Both parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			IMPORTANT: the slot of the hash table is left locked when
+			retrieving in item. Therefore be sure you do not update the
+			content of the hash table in between sht_iterator_start()
+			and sht_iterator_end(), because it may end up in dead lock.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_start</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_iterator_start("i1", "h1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_iterator_end">
+		<title>
+		<function moreinfo="none">sht_iterator_end(iname)</function>
+		</title>
+		<para>
+			Close the iterator identified by iname parameter and release
+			the hash table slot aquired by the iterator. The iname value
+			must be the same used for sht_iterator_start().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_end</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_iterator_next">
+		<title>
+		<function moreinfo="none">sht_iterator_next(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the next item in hash table. It must
+			be called also after sht_iterator_start() to get the first
+			item in the hash table. Items are returned as they are found
+			in the hash table slot, starting with the first slot.
+		</para>
+		<para>
+			The return code is false when there is no (more) item in the
+			hash table.
+		</para>
+		<para>
+			The item name and value are accessible via variables:
+			$shtitkey(iname) and $shtitval(iname).
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_next</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sht_iterator_start("i1", "h1");
+    while(sht_iterator_next("i1")) {
+        xlog("h1[$shtitkey(i1)] is: $shtitval(i1)\n");
+    }
+    sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 		<section>
 		<title>Exported pseudo-variables</title>
@@ -631,6 +882,9 @@ sht_unlock("ha=>test");
 			</para></listitem>
 			<listitem><para>
 				<emphasis>$shtval(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtrecord(attribute)</emphasis>
 			</para></listitem>
 		</itemizedlist>
 		<para>
@@ -742,6 +996,9 @@ sht_unlock("ha=>test");
 ...
 # Dump $sht(students=>daniel)
 kamcmd htable.get students daniel
+
+# Dump first entry in array key course $sht(students=>course[0])
+kamcmd htable.get students course[0]
 ...
 </programlisting>
 	</section>
@@ -769,7 +1026,10 @@ kamcmd htable.get students daniel
 <programlisting  format="linespecific">
 ...
 # Delete $sht(students=>anna)
-kamcmd htable.get students anna
+kamcmd htable.delete students anna
+
+# Delete first entry in array key course $sht(students=>course[0])
+kamcmd htable.delete students course[0]
 ...
 </programlisting>
 	</section>
@@ -798,8 +1058,11 @@ kamcmd htable.get students anna
                 </para>
 <programlisting  format="linespecific">
 ...
-# Set $sht(test=>x)
+# Set $sht(test=>x) as string
 kamcmd htable.sets test x abc
+
+# Set firsti entry in array key x $sht(test=>x[0]) as string
+kamcmd htable.sets test x[0] abc
 ...
 </programlisting>
 	</section>
@@ -828,8 +1091,11 @@ kamcmd htable.sets test x abc
                 </para>
 <programlisting  format="linespecific">
 ...
-# Set $sht(test=>x)
-kamcmd htable.sets test x 123
+# Set $sht(test=>x) as integer
+kamcmd htable.seti test x 123
+
+# Set firsti entry in array key x $sht(test=>x[0]) as integer
+kamcmd htable.sets test x[0] 123
 ...
 </programlisting>
 	</section>
@@ -951,15 +1217,34 @@ kamcmd htable.stats
 			once, after core and module initialization, but before &kamailio; forks any
 			child processes.
 		</para>
-        <programlisting  format="linespecific">
-...			
+<programlisting  format="linespecific">
+...
 event_route[htable:mod-init] {
     $sht(a=>x) = 1;
 }
 ...
-		</programlisting>
-    </section>
-    </section>
+</programlisting>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">htable:expired:&lt;table&gt;</function>
+		</title>
+		<para>
+			When defined, the module calls event_route[htable:expired:&lt;table&gt;]
+			when an entry in the given table expires. In this event route, the key and value
+			of the expired record are available with the $shtrecord(key) and $shtrecord(value)
+			pseudo-variables.
+		</para>
+<programlisting  format="linespecific">
+...
+
+event_route[htable:expired:mytable] {
+    xlog("mytable record expired $shtrecord(key) => $shtrecord(value)\n");
+}
+...
+</programlisting>
+	</section>
+	</section>
 
 </chapter>
 

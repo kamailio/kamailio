@@ -4,7 +4,7 @@
 			<db_table_id>dialog</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>hash_entry</field></col>
 				<col><field>hash_id</field></col>
 				<col><field>callid</field></col>
@@ -105,7 +105,7 @@
 			<db_table_id>dialog_vars</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>hash_entry</field></col>
 				<col><field>hash_id</field></col>
 				<col><field>dialog_key</field></col>

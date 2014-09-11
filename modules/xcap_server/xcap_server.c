@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -116,13 +116,13 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{ "db_url",             STR_PARAM, &xcaps_db_url.s    },
-	{ "xcap_table",         STR_PARAM, &xcaps_db_table.s  },
-	{ "xcap_root",          STR_PARAM, &xcaps_root.s  },
+	{ "db_url",             PARAM_STR, &xcaps_db_url    },
+	{ "xcap_table",         PARAM_STR, &xcaps_db_table  },
+	{ "xcap_root",          PARAM_STR, &xcaps_root  },
 	{ "buf_size",           INT_PARAM, &xcaps_buf.len  },
-	{ "xml_ns",             STR_PARAM|USE_FUNC_PARAM, (void*)xcaps_xpath_ns_param },
+	{ "xml_ns",             PARAM_STRING|USE_FUNC_PARAM, (void*)xcaps_xpath_ns_param },
 	{ "directory_scheme",   INT_PARAM, &xcaps_directory_scheme },
-	{ "directory_hostname", STR_PARAM, &xcaps_directory_hostname.s },
+	{ "directory_hostname", PARAM_STR, &xcaps_directory_hostname },
 	{ 0, 0, 0 }
 };
 
@@ -158,13 +158,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-
-	xcaps_db_url.len   = (xcaps_db_url.s) ? strlen(xcaps_db_url.s) : 0;
-	xcaps_db_table.len = (xcaps_db_table.s) ? strlen(xcaps_db_table.s) : 0;
-	xcaps_root.len     = (xcaps_root.s) ? strlen(xcaps_root.s) : 0;
-	xcaps_directory_hostname.len
-			   = xcaps_directory_hostname.s
-				? strlen(xcaps_directory_hostname.s) : 0;
 
 	if (xcaps_directory_scheme < -1 || xcaps_directory_scheme > 1)
 	{
@@ -1070,7 +1063,8 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 	str uri;
 	str path;
 	str etag = {0, 0};
-	str body;
+	str body = {0, 0};
+	str new_body = {0, 0};
 	int ret = 0;
 	xcap_uri_t xuri;
 	str *ctype;
@@ -1170,30 +1164,69 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 			LM_ERR("could not fetch xcap document\n");
 			goto error;
 		}
-
-		if(ret==0)
+		if(ret!=0)
 		{
-			/* doc found */
-			ctype = &xcaps_str_appxml;
-			if(xuri.type==RESOURCE_LIST)
-				ctype = &xcaps_str_apprlxml;
-			else if(xuri.type==PRES_RULES)
-				ctype = &xcaps_str_appapxml;
-			else if(xuri.type==RLS_SERVICE)
-				ctype = &xcaps_str_apprsxml;
-			else if(xuri.type==USER_PROFILE)
-				ctype = &xcaps_str_appupxml;
-			else if(xuri.type==PRES_CONTENT)
-				ctype = &xcaps_str_apppcxml;
-			else if(xuri.type==PIDF_MANIPULATION)
-				ctype = &xcaps_str_apppdxml;
-			xcaps_send_reply(msg, 200, &xcaps_str_ok, &etag,
-					ctype, &body);
-		} else {
 			/* doc not found */
 			xcaps_send_reply(msg, 404, &xcaps_str_notfound, NULL,
 					NULL, NULL);
+			break;
 		}
+
+		if(xuri.nss!=NULL && xuri.node.len>0)
+		{
+			if((new_body.s = pkg_malloc(body.len))==NULL)
+			{
+				LM_ERR("allocating package memory\n");
+				goto error;
+			}
+			new_body.len = body.len;
+			
+			if(xcaps_xpath_hack(&body, 0)<0)
+			{
+				LM_ERR("could not hack xcap document\n");
+				goto error;
+			}
+			if(xcaps_xpath_get(&body, &xuri.node, &new_body)<0)
+			{
+				LM_ERR("could not retrieve element from xcap document\n");
+				goto error;
+			}
+			if(new_body.len<=0)
+			{
+				/* element not found */
+				xcaps_send_reply(msg, 404, &xcaps_str_notfound, NULL,
+					NULL, NULL);
+				pkg_free(new_body.s);
+				new_body.s = NULL;
+				break;
+			}
+			if(xcaps_xpath_hack(&new_body, 1)<0)
+			{
+				LM_ERR("could not hack xcap document\n");
+				goto error;
+			}
+			memcpy(body.s, new_body.s, new_body.len);
+			body.len = new_body.len;
+			pkg_free(new_body.s);
+			new_body.s = NULL;
+		}
+
+		/* doc or element found */
+		ctype = &xcaps_str_appxml;
+		if(xuri.type==RESOURCE_LIST)
+			ctype = &xcaps_str_apprlxml;
+		else if(xuri.type==PRES_RULES)
+			ctype = &xcaps_str_appapxml;
+		else if(xuri.type==RLS_SERVICE)
+			ctype = &xcaps_str_apprsxml;
+		else if(xuri.type==USER_PROFILE)
+			ctype = &xcaps_str_appupxml;
+		else if(xuri.type==PRES_CONTENT)
+			ctype = &xcaps_str_apppcxml;
+		else if(xuri.type==PIDF_MANIPULATION)
+			ctype = &xcaps_str_apppdxml;
+		xcaps_send_reply(msg, 200, &xcaps_str_ok, &etag,
+				ctype, &body);
 
 		break;
 	}
@@ -1201,6 +1234,7 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 	return 1;
 
 error:
+	if (new_body.s) pkg_free(new_body.s);
 	xcaps_send_reply(msg, 500, &xcaps_str_srverr, NULL,
 				NULL, NULL);
 	return -1;

@@ -1,7 +1,5 @@
 /**
- * $Id$
- *
- * Copyright (C) 2008 Elena-Ramona Modroiu (asipto.com)
+ * Copyright (C) 2008-2014 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -17,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <stdio.h>
@@ -33,6 +31,7 @@
 #include "../../route.h"
 #include "../../dprint.h"
 #include "../../hashes.h"
+#include "../../mod_fix.h"
 #include "../../ut.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
@@ -44,12 +43,14 @@
 #include "ht_db.h"
 #include "ht_var.h"
 #include "api.h"
+#include "ht_dmq.h"
 
 
 MODULE_VERSION
 
 int  ht_timer_interval = 20;
 int  ht_db_expires_flag = 0;
+int  ht_enable_dmq = 0;
 
 static int htable_init_rpc(void);
 
@@ -64,6 +65,10 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
 static int ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
+static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
+static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname);
+static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo);
+static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo);
 
 int ht_param(modparam_t type, void* val);
 
@@ -85,6 +90,12 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_ht_name, 0, 0, 0 },
 	{ {"shtdec", sizeof("shtdec")-1}, PVT_OTHER, pv_get_ht_dec, 0,
 		pv_parse_ht_name, 0, 0, 0 },
+	{ {"shtrecord", sizeof("shtrecord")-1}, PVT_OTHER, pv_get_ht_expired_cell, 0,
+		pv_parse_ht_expired_cell, 0, 0, 0 },
+	{ {"shtitkey", sizeof("shtitkey")-1}, PVT_OTHER, pv_get_iterator_key, 0,
+		pv_parse_iterator_name, 0, 0, 0 },
+	{ {"shtitval", sizeof("shtitval")-1}, PVT_OTHER, pv_get_iterator_val, 0,
+		pv_parse_iterator_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -107,23 +118,32 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"sht_unlock",      (cmd_function)ht_slot_unlock,  1, fixup_ht_key, 0,
 		ANY_ROUTE},
+	{"sht_reset",		(cmd_function)ht_reset,		   1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"sht_iterator_start",	(cmd_function)w_ht_iterator_start,	2, fixup_spve_spve, 0,
+		ANY_ROUTE},
+	{"sht_iterator_next",	(cmd_function)w_ht_iterator_next,	1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"sht_iterator_end",	(cmd_function)w_ht_iterator_end,	1, fixup_spve_null, 0,
+		ANY_ROUTE},
 	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
 		ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
 static param_export_t params[]={
-	{"htable",             STR_PARAM|USE_FUNC_PARAM, (void*)ht_param},
-	{"db_url",             STR_PARAM, &ht_db_url.s},
-	{"key_name_column",    STR_PARAM, &ht_db_name_column.s},
-	{"key_type_column",    STR_PARAM, &ht_db_ktype_column.s},
-	{"value_type_column",  STR_PARAM, &ht_db_vtype_column.s},
-	{"key_value_column",   STR_PARAM, &ht_db_value_column.s},
-	{"expires_column",     STR_PARAM, &ht_db_expires_column.s},
-	{"array_size_suffix",  STR_PARAM, &ht_array_size_suffix.s},
+	{"htable",             PARAM_STRING|USE_FUNC_PARAM, (void*)ht_param},
+	{"db_url",             PARAM_STR, &ht_db_url},
+	{"key_name_column",    PARAM_STR, &ht_db_name_column},
+	{"key_type_column",    PARAM_STR, &ht_db_ktype_column},
+	{"value_type_column",  PARAM_STR, &ht_db_vtype_column},
+	{"key_value_column",   PARAM_STR, &ht_db_value_column},
+	{"expires_column",     PARAM_STR, &ht_db_expires_column},
+	{"array_size_suffix",  PARAM_STR, &ht_array_size_suffix},
 	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
 	{"timer_interval",     INT_PARAM, &ht_timer_interval},
 	{"db_expires",         INT_PARAM, &ht_db_expires_flag},
+	{"enable_dmq",         INT_PARAM, &ht_enable_dmq},
 	{0,0,0}
 };
 
@@ -188,6 +208,14 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if (ht_enable_dmq>0 && ht_dmq_initialize()!=0) {
+		LM_ERR("failed to initialize dmq integration\n");
+		return -1;
+	}
+
+	ht_iterator_init();
+
 	return 0;
 }
 
@@ -257,12 +285,12 @@ static int fixup_ht_key(void** param, int param_no)
 	pv_spec_t *sp;
 	str s;
 
-	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if(param_no != 1)
 	{
 		LM_ERR("invalid parameter number %d\n", param_no);
 		return -1;
 	}
+	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if (sp == 0)
 	{
 		LM_ERR("no pkg memory left\n");
@@ -286,6 +314,7 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo)
 	str sre;
 	pv_spec_t *sp;
 	sp = (pv_spec_t*)key;
+	int_str isval;
 
 	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
 
@@ -299,6 +328,12 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo)
 	{
 		LM_ERR("cannot get $ht expression\n");
 		return -1;
+	}
+	if (hpv->ht->dmqreplicate>0) {
+		isval.s = sre;
+		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &hpv->htname, NULL, AVP_VAL_STR, &isval, 0)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
 	}
 	if(ht_rm_cell_re(&sre, hpv->ht, 0)<0)
 		return -1;
@@ -311,6 +346,7 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
 	str sre;
 	pv_spec_t *sp;
 	sp = (pv_spec_t*)key;
+	int_str isval;
 
 	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
 
@@ -326,7 +362,83 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
 		return -1;
 	}
 
+	if (hpv->ht->dmqreplicate>0) {
+		isval.s = sre;
+		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &hpv->htname, NULL, AVP_VAL_STR, &isval, 1)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
+	}
 	if(ht_rm_cell_re(&sre, hpv->ht, 1)<0)
+		return -1;
+	return 1;
+}
+
+static int ht_reset(struct sip_msg* msg, char* htname, char* foo)
+{
+	ht_t *ht;
+	str sname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)htname, &sname)<0 || sname.len<=0)
+	{
+		LM_ERR("cannot get hash table name\n");
+		return -1;
+	}
+	ht = ht_get_table(&sname);
+	if(ht==NULL)
+	{
+		LM_ERR("cannot get hash table [%.*s]\n", sname.len, sname.s);
+		return -1;
+	}
+	if(ht_reset_content(ht)<0)
+		return -1;
+	return 1;
+}
+
+static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname)
+{
+	str siname;
+	str shname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)hname, &shname)<0 || shname.len<=0)
+	{
+		LM_ERR("cannot get hash table name\n");
+		return -1;
+	}
+
+	if(ht_iterator_start(&siname, &shname)<0)
+		return -1;
+	return 1;
+}
+
+static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo)
+{
+	str siname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(ht_iterator_next(&siname)<0)
+		return -1;
+	return 1;
+}
+
+static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo)
+{
+	str siname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(ht_iterator_end(&siname)<0)
 		return -1;
 	return 1;
 }
@@ -467,7 +579,8 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree( 500, "no such hash table", 18);
 	}
 	memcpy(&nht, ht, sizeof(ht_t));
-	nht.entries = (ht_entry_t*)shm_malloc(nht.htsize*sizeof(ht_entry_t));
+	/* it's temporary operation - use system malloc */
+	nht.entries = (ht_entry_t*)malloc(nht.htsize*sizeof(ht_entry_t));
 	if(nht.entries == NULL)
 	{
 		ht_db_close_con();
@@ -477,6 +590,18 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 
 	if(ht_db_load_table(&nht, &ht->dbtable, 0)<0)
 	{
+		/* free any entry set if it was a partial load */
+		for(i=0; i<nht.htsize; i++)
+		{
+			first = nht.entries[i].first;
+			while(first)
+			{
+				it = first;
+				first = first->next;
+				ht_cell_free(it);
+			}
+		}
+		free(nht.entries);
 		ht_db_close_con();
 		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
 	}
@@ -502,6 +627,7 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 			ht_cell_free(it);
 		}
 	}
+	free(nht.entries);
 	ht_db_close_con();
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
@@ -530,6 +656,13 @@ static struct mi_root* ht_mi_delete(struct mi_root* cmd_tree, void* param) {
 	ht = ht_get_table(htname);
 	if (!ht)
 		return init_mi_tree(404, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &ht->name, key, 0, NULL, 0)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}
+
+	LM_DBG("deleting key [%.*s] from [%.*s]\n",
+		key->len, key->s, htname->len, htname->s);
 
 	ht_del_cell(ht, key);
 
@@ -608,6 +741,8 @@ error:
 	return 0;
 }
 
+#define RPC_DATE_BUF_LEN 21
+
 static const char* htable_dump_doc[2] = {
 	"Dump the contents of hash table.",
 	0
@@ -655,6 +790,10 @@ static void htable_rpc_delete(rpc_t* rpc, void* c) {
 		return;
 	}
 
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &ht->name, &keyname, 0, NULL, 0)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}
+
 	ht_del_cell(ht, &keyname);
 }
 
@@ -665,6 +804,8 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 	ht_cell_t *htc;	/*!< One HT cell */
 	void* th;
 	void* vh;
+	struct tm *_expire_t;
+	char expire_buf[RPC_DATE_BUF_LEN]="NEVER";
 
 	if (rpc->scan(c, "SS", &htname, &keyname) < 2) {
 		rpc->fault(c, 500, "Not enough parameters (htable name and key name)");
@@ -697,14 +838,26 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 		goto error;
 	}
 
+	if (htc->expire) {
+		_expire_t = localtime(&htc->expire);
+		strftime(expire_buf, RPC_DATE_BUF_LEN - 1,
+			"%Y-%m-%d %H:%M:%S", _expire_t);
+	}
+
 	if(htc->flags&AVP_VAL_STR) {
-		if(rpc->struct_add(vh, "SS", "name",  &htc->name.s, "value", &htc->value.s)<0)
+		if(rpc->struct_add(vh, "SSds", "name",  &htc->name.s,
+							"value", &htc->value.s,
+							"flags", htc->flags,
+							"expire", expire_buf)<0)
 		{
 			rpc->fault(c, 500, "Internal error adding item");
 			goto error;
 		}
 	} else {
-		if(rpc->struct_add(vh, "Sd", "name",  &htc->name.s, "value", (int)htc->value.n))
+		if(rpc->struct_add(vh, "Sdds", "name",  &htc->name.s,
+							"value", (int)htc->value.n,
+							"flags", htc->flags,
+							"expire", expire_buf)<0)
 		{
 			rpc->fault(c, 500, "Internal error adding item");
 			goto error;
@@ -737,6 +890,10 @@ static void htable_rpc_sets(rpc_t* rpc, void* c) {
 		return;
 	}
 	
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}
+
 	if(ht_set_cell(ht, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0)
 	{
 		LM_ERR("cannot set $ht(%.*s=>%.*s)\n", htname.len, htname.s,
@@ -765,6 +922,10 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 	if (!ht) {
 		rpc->fault(c, 500, "No such htable");
 		return;
+	}
+
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname, 0, &keyvalue, 1)!=0) {
+		LM_ERR("dmq relication failed\n");
 	}
 	
 	if(ht_set_cell(ht, &keyname, 0, &keyvalue, 1)!=0)
@@ -839,7 +1000,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 				} else {
 					if(rpc->struct_add(vh, "Sd",
 							"name",  &it->name.s,
-							"value", (int)it->value.n))
+							"value", (int)it->value.n)<0)
 					{
 						rpc->fault(c, 500, "Internal error adding item");
 						goto error;
@@ -886,13 +1047,14 @@ static void  htable_rpc_list(rpc_t* rpc, void* c)
 			dbname[0] = '\0';
 		}
 
-		if(rpc->struct_add(th, "Ssdddd",
+		if(rpc->struct_add(th, "Ssddddd",
 						"name", &ht->name,	/* String */
 						"dbtable", &dbname ,	/* Char * */
 						"dbmode", (int)  ht->dbmode,		/* u int */
 						"expire", (int) ht->htexpire,		/* u int */
 						"updateexpire", ht->updateexpire,	/* int */
-						"size", (int) ht->htsize		/* u int */
+						"size", (int) ht->htsize,			/* u int */
+						"dmqreplicate", ht->dmqreplicate	/* int */
 						) < 0) {
 			rpc->fault(c, 500, "Internal error creating data rpc");
 			goto error;
@@ -995,7 +1157,8 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 
 
 	memcpy(&nht, ht, sizeof(ht_t));
-	nht.entries = (ht_entry_t*)shm_malloc(nht.htsize*sizeof(ht_entry_t));
+	/* it's temporary operation - use system malloc */
+	nht.entries = (ht_entry_t*)malloc(nht.htsize*sizeof(ht_entry_t));
 	if(nht.entries == NULL)
 	{
 		ht_db_close_con();
@@ -1006,6 +1169,18 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 
 	if(ht_db_load_table(&nht, &ht->dbtable, 0)<0)
 	{
+		/* free any entry set if it was a partial load */
+		for(i=0; i<nht.htsize; i++)
+		{
+			first = nht.entries[i].first;
+			while(first)
+			{
+				it = first;
+				first = first->next;
+				ht_cell_free(it);
+			}
+		}
+		free(nht.entries);
 		ht_db_close_con();
 		rpc->fault(c, 500, "Mtree reload failed");
 		return;
@@ -1032,19 +1207,20 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 			ht_cell_free(it);
 		}
 	}
+	free(nht.entries);
 	ht_db_close_con();
 	return;
 }
 
 rpc_export_t htable_rpc[] = {
-	{"htable.dump", htable_rpc_dump, htable_dump_doc, 0},
+	{"htable.dump", htable_rpc_dump, htable_dump_doc, RET_ARRAY},
 	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
 	{"htable.get", htable_rpc_get, htable_get_doc, 0},
 	{"htable.sets", htable_rpc_sets, htable_sets_doc, 0},
 	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
-	{"htable.listTables", htable_rpc_list, htable_list_doc, 0},
+	{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
-	{"htable.stats", htable_rpc_stats, htable_stats_doc, 0},
+	{"htable.stats", htable_rpc_stats, htable_stats_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
 

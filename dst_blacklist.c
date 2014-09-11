@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /* History:
  * --------
@@ -1075,11 +1075,11 @@ void dst_blst_view(rpc_t* rpc, void* ctx)
 				continue;
 			}
 			dst_blst_entry2ip(&ip, e);
-			rpc->printf(ctx, "{\n    protocol: %s", get_proto_name(e->proto));
-			rpc->printf(ctx, "    ip: %s", ip_addr2a(&ip));
-			rpc->printf(ctx, "    port: %d", e->port);
-			rpc->printf(ctx, "    expires in (s): %d", expires); 
-			rpc->printf(ctx, "    flags: %d\n}", e->flags);
+			rpc->rpl_printf(ctx, "{\n    protocol: %s", get_proto_name(e->proto));
+			rpc->rpl_printf(ctx, "    ip: %s", ip_addr2a(&ip));
+			rpc->rpl_printf(ctx, "    port: %d", e->port);
+			rpc->rpl_printf(ctx, "    expires in (s): %d", expires); 
+			rpc->rpl_printf(ctx, "    flags: %d\n}", e->flags);
 		}
 		UNLOCK_BLST(h);
 	}

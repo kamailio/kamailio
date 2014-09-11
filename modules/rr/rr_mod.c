@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -49,8 +49,7 @@
 #ifdef ENABLE_USER_CHECK
 #include <string.h>
 #include "../../str.h"
-str i_user;
-char *ignore_user = NULL;
+str i_user = {0,0};
 #endif
 
 int append_fromtag = 1;		/*!< append from tag by default */
@@ -61,7 +60,6 @@ int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
 static str custom_user_spec = {NULL, 0};
 pv_spec_t custom_user_avp;
 
-static unsigned int last_rr_msg;
 ob_api_t rr_obb;
 
 MODULE_VERSION
@@ -78,6 +76,7 @@ static int w_record_route_advertised_address(struct sip_msg *, char *, char *);
 static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
 static int w_is_direction(struct sip_msg *,char *, char *);
+static int remove_record_route(sip_msg_t*, char*, char*);
 /* PV functions */
 static int pv_get_route_uri_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 /*!
@@ -102,6 +101,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE},
 	{"is_direction",         (cmd_function)w_is_direction, 		1, direction_fixup, 0,
 			REQUEST_ROUTE},
+	{"remove_record_route",  remove_record_route, 0, 0, 0,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 	{"load_rr",              (cmd_function)load_rr, 				0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -115,11 +116,11 @@ static param_export_t params[] ={
 	{"enable_double_rr",	INT_PARAM, &enable_double_rr},
 	{"enable_full_lr",		INT_PARAM, &enable_full_lr},
 #ifdef ENABLE_USER_CHECK
-	{"ignore_user",		STR_PARAM, &ignore_user},
+	{"ignore_user",		PARAM_STR, &i_user},
 #endif
 	{"add_username",		INT_PARAM, &add_username},
 	{"enable_socket_mismatch_warning",INT_PARAM,&enable_socket_mismatch_warning},
-	{"custom_user_avp",           STR_PARAM, &custom_user_spec.s},
+	{"custom_user_avp",           PARAM_STR, &custom_user_spec},
 	{0, 0, 0 }
 };
 
@@ -161,20 +162,10 @@ static int mod_init(void)
 	}
 
 #ifdef ENABLE_USER_CHECK
-	if(ignore_user)
+	if(i_user.s && rr_obb.use_outbound)
 	{
-		if (rr_obb.use_outbound)
-		{
-			LM_ERR("cannot use \"ignore_user\" with outbound\n");
-			return -1;
-		}
-		i_user.s = ignore_user;
-		i_user.len = strlen(ignore_user);
-	}
-	else
-	{
-		i_user.s = 0;
-		i_user.len = 0;
+    LM_ERR("cannot use \"ignore_user\" with outbound\n");
+    return -1;
 	}
 #endif
 
@@ -185,7 +176,6 @@ static int mod_init(void)
 	}
 
 	if (custom_user_spec.s) {
-		custom_user_spec.len = strlen(custom_user_spec.s);
 		if (pv_parse_spec(&custom_user_spec, &custom_user_avp) == 0
 				&& (custom_user_avp.type != PVT_AVP)) {
 			LM_ERR("malformed or non AVP custom_user "
@@ -268,7 +258,7 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 {
 	str s;
 
-	if (msg->id == last_rr_msg) {
+	if (msg->msg_flags & FL_RR_ADDED) {
 		LM_ERR("Double attempt to record-route\n");
 		return -1;
 	}
@@ -280,7 +270,7 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 	if ( record_route( msg, key?&s:0 )<0 )
 		return -1;
 
-	last_rr_msg = msg->id;
+	msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -289,7 +279,7 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *key2)
 {
 	str s;
 
-	if (msg->id == last_rr_msg) {
+	if (msg->msg_flags & FL_RR_ADDED) {
 		LM_ERR("Duble attempt to record-route\n");
 		return -1;
 	}
@@ -316,7 +306,7 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *key2)
 		return -1;
 
 done:
-	last_rr_msg = msg->id;
+	msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -328,7 +318,7 @@ static int w_record_route_advertised_address(struct sip_msg *msg, char *addr, ch
 {
 	str s;
 
-	if (msg->id == last_rr_msg) {
+	if (msg->msg_flags & FL_RR_ADDED) {
 		LM_ERR("Double attempt to record-route\n");
 		return -1;
 	}
@@ -340,7 +330,7 @@ static int w_record_route_advertised_address(struct sip_msg *msg, char *addr, ch
 	if ( record_route_advertised_address( msg, &s ) < 0)
 		return -1;
 
-	last_rr_msg = msg->id;
+	msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -413,3 +403,79 @@ pv_get_route_uri_f(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &uri);
 }
 
+static void free_rr_lump(struct lump **list)
+{
+	struct lump *prev_lump, *lump, *a, *foo, *next;
+	int first_shmem;
+
+	first_shmem=1;
+	next=0;
+	prev_lump=0;
+	for(lump=*list;lump;lump=next) {
+		next=lump->next;
+		if (lump->type==HDR_RECORDROUTE_T) {
+			/* may be called from railure_route */
+			/* if (lump->flags & (LUMPFLAG_DUPED|LUMPFLAG_SHMEM)){
+				LOG(L_CRIT, "BUG: free_rr_lmp: lump %p, flags %x\n",
+						lump, lump->flags);
+			*/	/* ty to continue */
+			/*}*/
+			a=lump->before;
+			while(a) {
+				foo=a; a=a->before;
+				if (!(foo->flags&(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)))
+					free_lump(foo);
+				if (!(foo->flags&LUMPFLAG_SHMEM))
+					pkg_free(foo);
+			}
+			a=lump->after;
+			while(a) {
+				foo=a; a=a->after;
+				if (!(foo->flags&(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)))
+					free_lump(foo);
+				if (!(foo->flags&LUMPFLAG_SHMEM))
+					pkg_free(foo);
+			}
+			
+			if (first_shmem && (lump->flags&LUMPFLAG_SHMEM)) {
+				/* This is the first element of the
+				shmemzied lump list, we can not unlink it!
+				It wound corrupt the list otherwise if we
+				are in failure_route. -- No problem, only the
+				anchor is left in the list */
+				
+				LOG(L_DBG, "DEBUG: free_rr_lump: lump %p" \
+						" is left in the list\n",
+						lump);
+				
+				if (lump->len)
+				    LOG(L_CRIT, "BUG: free_rr_lump: lump %p" \
+						" can not be removed, but len=%d\n",
+						lump, lump->len);
+						
+				prev_lump=lump;
+			} else {
+				if (prev_lump) prev_lump->next = lump->next;
+				else *list = lump->next;
+				if (!(lump->flags&(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)))
+					free_lump(lump);
+				if (!(lump->flags&LUMPFLAG_SHMEM))
+					pkg_free(lump);
+			}
+		} else {
+			/* store previous position */
+			prev_lump=lump;
+		}
+		if (first_shmem && (lump->flags&LUMPFLAG_SHMEM))
+			first_shmem=0;
+	}
+}
+
+/*
+ * Remove Record-Route header from message lumps
+ */
+static int remove_record_route(sip_msg_t* _m, char* _s1, char* _s2)
+{
+	free_rr_lump(&(_m->add_rm));
+	return 1;
+}

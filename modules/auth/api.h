@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef API_H
@@ -60,6 +60,7 @@ typedef enum auth_cfg_result {
  * flags for checks in auth functions
  */
 #define AUTH_CHECK_ID_F 1<<0
+#define AUTH_CHECK_SKIPFWD_F 1<<1
 
 /**
  * return codes to auth API functions

@@ -4,8 +4,7 @@ CREATE TABLE dbaliases (
     alias_username VARCHAR2(64) DEFAULT '',
     alias_domain VARCHAR2(64) DEFAULT '',
     username VARCHAR2(64) DEFAULT '',
-    domain VARCHAR2(64) DEFAULT '',
-    CONSTRAINT dbaliases_alias_idx  UNIQUE (alias_username, alias_domain)
+    domain VARCHAR2(64) DEFAULT ''
 );
 
 CREATE OR REPLACE TRIGGER dbaliases_tr
@@ -16,5 +15,7 @@ END dbaliases_tr;
 /
 BEGIN map2users('dbaliases'); END;
 /
+CREATE INDEX dbaliases_alias_user_idx  ON dbaliases (alias_username);
+CREATE INDEX dbaliases_alias_idx  ON dbaliases (alias_username, alias_domain);
 CREATE INDEX dbaliases_target_idx  ON dbaliases (username, domain);
 

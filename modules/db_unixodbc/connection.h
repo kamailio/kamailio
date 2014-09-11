@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  * History:
@@ -34,6 +34,7 @@
 
 #include "../../lib/srdb1/db_pool.h"
 #include "../../lib/srdb1/db_id.h"
+#include "../../lib/srdb1/db_val.h"
 
 #include <time.h>
 #include <stdio.h>
@@ -47,7 +48,8 @@
 
 typedef struct strn
 {
-	char s[STRN_LEN];
+	unsigned int buflen;
+	char *s;
 } strn;
 
 
@@ -89,5 +91,20 @@ void db_unixodbc_free_connection(struct my_con* con);
 char *db_unixodbc_build_conn_str(const struct db_id* id, char *buf);
 
 void db_unixodbc_extract_error(const char *fn, const SQLHANDLE handle, const SQLSMALLINT type, char* stret);
+
+/*
+ * Allocate a new row of cells, without any data
+ */
+strn * db_unixodbc_new_cellrow(size_t ncols);
+
+/*
+ * Free row of cells and all associated memory
+ */
+void db_unixodbc_free_cellrow(size_t ncols, strn * row);
+
+/*
+ * Load ODBC cell data into a single cell
+ */
+int db_unixodbc_load_cell(const db1_con_t* _h, int colindex, strn * cell, const db_type_t _t);
 
 #endif  /* MY_CON_H */

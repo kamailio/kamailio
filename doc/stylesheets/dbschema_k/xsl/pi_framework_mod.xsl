@@ -16,7 +16,7 @@
   *
   * You should have received a copy of the GNU General Public License
   * along with this program; if not, write to the Free Software
-  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -52,9 +52,18 @@
 		<xsl:text>&#x9;&#x9;&#x9;&lt;cmd_type&gt;DB1_QUERY&lt;/cmd_type&gt;&#xa;</xsl:text>
 		<xsl:text>&#x9;&#x9;&#x9;&lt;query_cols&gt;&#xa;</xsl:text>
 		<xsl:for-each select="column">
-			<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
-			<xsl:call-template name="get-name"/>
-			<xsl:text>&lt;/field&gt;&lt;/col&gt;&#xa;</xsl:text>
+			<xsl:choose>
+				<xsl:when test="primary">
+					<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
+					<xsl:call-template name="get-name"/>
+					<xsl:text>&lt;/field&gt;&lt;link_cmd&gt;update&lt;/link_cmd&gt;&lt;/col&gt;&#xa;</xsl:text>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
+					<xsl:call-template name="get-name"/>
+					<xsl:text>&lt;/field&gt;&lt;/col&gt;&#xa;</xsl:text>
+				</xsl:otherwise>
+			</xsl:choose>
 		</xsl:for-each>
 		<xsl:text>&#x9;&#x9;&#x9;&lt;/query_cols&gt;&#xa;</xsl:text>
 		<xsl:text>&#x9;&#x9;&lt;/cmd&gt;&#xa;</xsl:text>

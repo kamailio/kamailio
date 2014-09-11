@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -89,6 +89,8 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->delete_ucontact = delete_ucontact;
 	api->get_ucontact = get_ucontact;
 	api->update_ucontact = update_ucontact;
+	api->add_dialog_data_to_contact = add_dialog_data_to_contact;
+	api->remove_dialog_data_from_contact = remove_dialog_data_from_contact;
 
 	api->get_subscriber = get_subscriber;
 	api->add_subscriber = add_subscriber;
@@ -96,6 +98,8 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->update_subscriber = update_subscriber;
 
 	api->get_impus_from_subscription_as_string = get_impus_from_subscription_as_string;
+	
+	api->get_presentity_from_subscriber_dialog = get_presentity_from_subscriber_dialog;
         
     api->register_ulcb = register_ulcb;
 

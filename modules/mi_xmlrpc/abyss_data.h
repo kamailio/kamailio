@@ -3,6 +3,25 @@
 
 #include "abyss_thread.h"
 
+#ifndef XMLRPC_OLD_VERSION
+#define MAX_CONN        16
+typedef struct
+{
+	void *data;
+	int size;
+	int staticid;
+} TBuffer;
+
+typedef struct
+{
+	TBuffer buffer;
+	int size;
+} TString;
+
+abyss_bool StringAlloc(TString *s);
+void StringFree(TString *s);
+#endif
+
 /*********************************************************************
 ** List
 *********************************************************************/

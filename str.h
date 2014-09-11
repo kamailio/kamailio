@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef str_h
@@ -120,5 +120,14 @@ typedef struct _str str;
 					 (memcmp((x).s, (y).s, (x).len) == 0))
 
 /** @} */
+
+/** Appends a sufffix
+ * @param orig is the original string
+ * @param suffix is the suffix string
+ * @param dest is the result ::str of appending suffix to orig
+ * @return 0 if ok -1 if error
+ * remember to free the dest->s private memory
+ */
+int str_append(str *orig, str *suffix, str *dest);
 
 #endif

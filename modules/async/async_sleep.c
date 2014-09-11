@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -31,6 +31,7 @@
 #include "../../ut.h"
 #include "../../locking.h"
 #include "../../timer.h"
+#include "../../async_task.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_sleep.h"
@@ -183,5 +184,79 @@ void async_timer_exec(unsigned int ticks, void *param)
 			break;
 		if(ai->act!=NULL)
 			tmb.t_continue(ai->tindex, ai->tlabel, ai->act);
+		shm_free(ai);
 	}
+}
+
+
+/**
+ *
+ */
+void async_exec_task(void *param)
+{
+	cfg_action_t *act;
+	unsigned int *p;
+	unsigned int tindex;
+	unsigned int tlabel;
+
+	act = *((cfg_action_t**)param);
+	p = (unsigned int*)((char*)param + sizeof(cfg_action_t*));
+	tindex = p[0];
+	tlabel = p[1];
+
+	if(act!=NULL)
+		tmb.t_continue(tindex, tlabel, act);
+	/* param is freed along with the async task strucutre in core */
+}
+
+/**
+ *
+ */
+int async_send_task(sip_msg_t* msg, cfg_action_t *act)
+{
+	async_task_t *at;
+	tm_cell_t *t = 0;
+	unsigned int tindex;
+	unsigned int tlabel;
+	int dsize;
+	unsigned int *p;
+
+	t = tmb.t_gett();
+	if (t==NULL || t==T_UNDEFINED)
+	{
+		if(tmb.t_newtran(msg)<0)
+		{
+			LM_ERR("cannot create the transaction\n");
+			return -1;
+		}
+		t = tmb.t_gett();
+		if (t==NULL || t==T_UNDEFINED)
+		{
+			LM_ERR("cannot lookup the transaction\n");
+			return -1;
+		}
+	}
+	dsize = sizeof(async_task_t) + sizeof(cfg_action_t*)
+		+ 2*sizeof(unsigned int);
+	at = (async_task_t*)shm_malloc(dsize);
+	if(at==NULL)
+	{
+		LM_ERR("no more shm\n");
+		return -1;
+	}
+	memset(at, 0, dsize);
+	if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
+	{
+		LM_ERR("failed to suppend the processing\n");
+		shm_free(at);
+		return -1;
+	}
+	at->exec = async_exec_task;
+	at->param = (char*)at + sizeof(async_task_t);
+	*((cfg_action_t**)at->param) = act;
+	p = (unsigned int*)((char*)at->param + sizeof(cfg_action_t*));
+	p[0] = tindex;
+	p[1] = tlabel;
+	async_task_push(at);
+	return 0;
 }

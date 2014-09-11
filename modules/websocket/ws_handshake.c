@@ -17,7 +17,12 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
  *
  */
 
@@ -122,7 +127,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0}, origin = {0, 0};
 	unsigned char sha1[SHA_DIGEST_LENGTH];
 	unsigned int hdr_flags = 0, sub_protocol = 0;
-	int version;
+	int version = 0;
 	struct hdr_field *hdr = msg->headers;
 	struct tcp_connection *con;
 	ws_connection_t *wsc;
@@ -422,8 +427,10 @@ int ws_handle_handshake(struct sip_msg *msg)
 				&headers) < 0)
 	{
 		if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) != NULL)
+		{
 			wsconn_rm(wsc, WSCONN_EVENTROUTE_NO);
-
+			wsconn_put(wsc);
+		}
 		goto end;
 	}
 	else

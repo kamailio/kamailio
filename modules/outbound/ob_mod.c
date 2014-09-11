@@ -17,7 +17,12 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
  *
  */
 #include <openssl/hmac.h>
@@ -214,7 +219,7 @@ int decode_flow_token(struct sip_msg *msg, struct receive_info **rcv, str flow_t
 {
 	int pos = FLOW_TOKEN_START_POS, flow_length, i;
 
-	if (msg->flow.decoded)
+	if (msg->ldv.flow.decoded)
 		goto end;
 
 	if (flow_token.s == NULL)
@@ -263,31 +268,31 @@ int decode_flow_token(struct sip_msg *msg, struct receive_info **rcv, str flow_t
 	/* Decode protocol information */
 	if (unenc_flow_token[pos] & 0x80)
 	{
-		msg->flow.rcv.dst_ip.af = msg->flow.rcv.src_ip.af = AF_INET6;
-		msg->flow.rcv.dst_ip.len = msg->flow.rcv.src_ip.len = 16;
+		msg->ldv.flow.rcv.dst_ip.af = msg->ldv.flow.rcv.src_ip.af = AF_INET6;
+		msg->ldv.flow.rcv.dst_ip.len = msg->ldv.flow.rcv.src_ip.len = 16;
 	}
 	else
 	{
-		msg->flow.rcv.dst_ip.af = msg->flow.rcv.src_ip.af = AF_INET;
-		msg->flow.rcv.dst_ip.len = msg->flow.rcv.src_ip.len = 4;
+		msg->ldv.flow.rcv.dst_ip.af = msg->ldv.flow.rcv.src_ip.af = AF_INET;
+		msg->ldv.flow.rcv.dst_ip.len = msg->ldv.flow.rcv.src_ip.len = 4;
 	}
-	msg->flow.rcv.proto = unenc_flow_token[pos++] & 0x7f;
+	msg->ldv.flow.rcv.proto = unenc_flow_token[pos++] & 0x7f;
 
 	/* Decode destination address */
-	for (i = 0; i < (msg->flow.rcv.dst_ip.af == AF_INET6 ? 16 : 4); i++)
-		msg->flow.rcv.dst_ip.u.addr[i] = unenc_flow_token[pos++];
-	msg->flow.rcv.dst_port = unenc_flow_token[pos++] << 8;
-	msg->flow.rcv.dst_port |= unenc_flow_token[pos++];
+	for (i = 0; i < (msg->ldv.flow.rcv.dst_ip.af == AF_INET6 ? 16 : 4); i++)
+		msg->ldv.flow.rcv.dst_ip.u.addr[i] = unenc_flow_token[pos++];
+	msg->ldv.flow.rcv.dst_port = unenc_flow_token[pos++] << 8;
+	msg->ldv.flow.rcv.dst_port |= unenc_flow_token[pos++];
 
 	/* Decode source address */
-	for (i = 0; i < (msg->flow.rcv.src_ip.af == AF_INET6 ? 16 : 4); i++)
-		msg->flow.rcv.src_ip.u.addr[i] = unenc_flow_token[pos++];
-	msg->flow.rcv.src_port = unenc_flow_token[pos++] << 8;
-	msg->flow.rcv.src_port |= unenc_flow_token[pos++];
-	msg->flow.decoded = 1;
+	for (i = 0; i < (msg->ldv.flow.rcv.src_ip.af == AF_INET6 ? 16 : 4); i++)
+		msg->ldv.flow.rcv.src_ip.u.addr[i] = unenc_flow_token[pos++];
+	msg->ldv.flow.rcv.src_port = unenc_flow_token[pos++] << 8;
+	msg->ldv.flow.rcv.src_port |= unenc_flow_token[pos++];
+	msg->ldv.flow.decoded = 1;
 
 end:
-	*rcv = &msg->flow.rcv;
+	*rcv = &msg->ldv.flow.rcv;
 	return 0;
 }
 
@@ -321,7 +326,7 @@ static int use_outbound_register(struct sip_msg *msg)
 		
 		if (contact->reg_id)
 		{
-			LM_DBG("found REGISTER with ;reg-id paramter on"
+			LM_DBG("found REGISTER with ;reg-id parameter on"
 				" Contact-URI - outbound used\n");
 			return 1;
 		}
@@ -380,6 +385,8 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 			LM_ERR("parsing Route-URI parameters\n");
 			return 0;
 		}
+		/* Not interested in param body - just the hooks */
+		free_params(params);
 
 		if (hooks.uri.ob)
 		{
@@ -445,6 +452,9 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 			LM_ERR("parsing Contact-URI parameters\n");
 			return 0;
 		}
+		/* Not interested in param body - just the hooks */
+		free_params(params);
+
 		if (hooks.contact.ob)
 		{
 			LM_DBG("found ;ob parameter on Contact-URI - outbound"

@@ -4,7 +4,7 @@
 			<db_table_id>carrierroute</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>carrier</field></col>
 				<col><field>domain</field></col>
 				<col><field>scan_prefix</field></col>
@@ -69,7 +69,7 @@
 			<db_table_id>carrierfailureroute</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>carrier</field></col>
 				<col><field>domain</field></col>
 				<col><field>scan_prefix</field></col>
@@ -128,7 +128,7 @@
 			<db_table_id>carrier_name</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>carrier</field></col>
 			</query_cols>
 		</cmd>
@@ -163,7 +163,7 @@
 			<db_table_id>domain_name</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>domain</field></col>
 			</query_cols>
 		</cmd>

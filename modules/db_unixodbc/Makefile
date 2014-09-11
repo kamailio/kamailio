@@ -6,12 +6,24 @@ include ../../Makefile.defs
 auto_gen=
 NAME=db_unixodbc.so
 
-# sql.h locations (freebsd,openbsd  solaris)
-DEFS += -I$(LOCALBASE)/include
+ifeq ($(CROSS_COMPILE),)
+ODBCCFG=$(shell which odbc_config)
+endif
 
-# libodbc locations on RH/Suse, Solaris /OpenBSD, FreeBSD
-# (Debian does the right thing and puts it in /usr/lib)
-LIBS= -L$(LOCALBASE)/lib -lodbc
+ifneq ($(ODBCCFG),)
+
+	DEFS += $(shell $(ODBCCFG) --cflags )
+	LIBS += $(shell $(ODBCCFG) --libs)
+
+else
+
+	# sql.h locations (freebsd,openbsd  solaris)
+	DEFS += -I$(LOCALBASE)/include
+
+	# libodbc locations on RH/Suse, Solaris /OpenBSD, FreeBSD
+	# (Debian does the right thing and puts it in /usr/lib)
+	LIBS= -L$(LOCALBASE)/lib -lodbc
+endif
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 

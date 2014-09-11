@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -69,6 +69,9 @@ void mem_delete_ppublic(pcontact_t* _r/*, ucontact_t* _c*/);
 void timer_pcontact(pcontact_t* _r);
 int delete_ppublic(pcontact_t* _r/*, struct ucontact* _c*/);
 int get_ppublic(pcontact_t* _r);
+int aor_to_contact(str* aor, str* contact);
+unsigned int get_hash_slot(udomain_t* _d, str* _aor);
+unsigned int get_aor_hash(udomain_t* _d, str* _aor);
 
 
 #endif

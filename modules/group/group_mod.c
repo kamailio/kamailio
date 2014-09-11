@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -87,41 +87,28 @@ static int get_gid_fixup(void** param, int param_no);
 
 
 #define TABLE "grp"
-#define TABLE_LEN (sizeof(TABLE) - 1)
-
 #define USER_COL "username"
-#define USER_COL_LEN (sizeof(USER_COL) - 1)
-
 #define DOMAIN_COL "domain"
-#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
-
 #define GROUP_COL "grp"
-#define GROUP_COL_LEN (sizeof(GROUP_COL) - 1)
-
 #define RE_TABLE "re_grp"
-#define RE_TABLE_LEN (sizeof(TABLE) - 1)
-
 #define RE_EXP_COL "reg_exp"
-#define RE_EXP_COL_LEN (sizeof(USER_COL) - 1)
-
 #define RE_GID_COL "group_id"
-#define RE_GID_COL_LEN (sizeof(DOMAIN_COL) - 1)
 
 /*
  * Module parameter variables
  */
-static str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+static str db_url = str_init(DEFAULT_RODB_URL);
 /*! Table name where group definitions are stored */
-str table         = {TABLE, TABLE_LEN}; 
-str user_column   = {USER_COL, USER_COL_LEN};
-str domain_column = {DOMAIN_COL, DOMAIN_COL_LEN};
-str group_column  = {GROUP_COL, GROUP_COL_LEN};
+str table         = str_init(TABLE);
+str user_column   = str_init(USER_COL);
+str domain_column = str_init(DOMAIN_COL);
+str group_column  = str_init(GROUP_COL);
 int use_domain    = 0;
 
 /* table and columns used for regular expression-based groups */
 str re_table      = {0, 0};
-str re_exp_column = {RE_EXP_COL, RE_EXP_COL_LEN};
-str re_gid_column = {RE_GID_COL, RE_GID_COL_LEN};
+str re_exp_column = str_init(RE_EXP_COL);
+str re_gid_column = str_init(RE_GID_COL);
 int multiple_gid  = 1;
 
 /* DB functions and handlers */
@@ -145,15 +132,15 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",        STR_PARAM, &db_url.s       },
-	{"table",         STR_PARAM, &table.s        },
-	{"user_column",   STR_PARAM, &user_column.s  },
-	{"domain_column", STR_PARAM, &domain_column.s},
-	{"group_column",  STR_PARAM, &group_column.s },
+	{"db_url",        PARAM_STR, &db_url       },
+	{"table",         PARAM_STR, &table        },
+	{"user_column",   PARAM_STR, &user_column  },
+	{"domain_column", PARAM_STR, &domain_column},
+	{"group_column",  PARAM_STR, &group_column },
 	{"use_domain",    INT_PARAM, &use_domain     },
-	{"re_table",      STR_PARAM, &re_table.s     },
-	{"re_exp_column", STR_PARAM, &re_exp_column.s},
-	{"re_gid_column", STR_PARAM, &re_gid_column.s},
+	{"re_table",      PARAM_STR, &re_table     },
+	{"re_exp_column", PARAM_STR, &re_exp_column},
+	{"re_gid_column", PARAM_STR, &re_gid_column},
 	{"multiple_gid",  INT_PARAM, &multiple_gid   },
 	{0, 0, 0}
 };
@@ -189,17 +176,6 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
-	/* Calculate lengths */
-	db_url.len = strlen(db_url.s);
-	table.len = strlen(table.s);
-	user_column.len = strlen(user_column.s);
-	domain_column.len = strlen(domain_column.s);
-	group_column.len = strlen(group_column.s);
-
-	re_table.len = (re_table.s && re_table.s[0])?strlen(re_table.s):0;
-	re_exp_column.len = strlen(re_exp_column.s);
-	re_gid_column.len = strlen(re_gid_column.s);
-
 	/* Find a database module */
 	if (group_db_bind(&db_url)) {
 		return -1;

@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -98,7 +98,7 @@ int I_perform_location_information_request(struct sip_msg* msg, char* route, cha
 
     /* extract data from message */
     if (orig) {
-        public_identity = cscf_get_asserted_identity(msg);
+        public_identity = cscf_get_asserted_identity(msg, 0);
     } else {
         public_identity = cscf_get_public_identity_from_requri(msg);
     }

@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -56,6 +56,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "ims_getters.h"
+#include "../../parser/parse_ppi_pai.h"
 
 
 /**
@@ -121,6 +122,61 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm)
 {
 	str pi={0,0};
 	struct hdr_field* h=0;
+	int ret,i,res;
+
+	if (parse_headers(msg,HDR_AUTHORIZATION_F,0)!=0) {
+		return pi;
+	}
+        
+        h = msg->authorization;
+	if (!msg->authorization){
+		goto fallback;
+	}
+        
+        if (realm.len && realm.s) {
+            ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
+            if (ret < 0) {
+                    goto fallback;
+            } else 
+                    if (ret > 0) {
+                            goto fallback;
+                    }
+        }
+
+	res = parse_credentials(h);
+        if (res != 0) {
+                LOG(L_ERR, "Error while parsing credentials\n");
+                return pi;
+        }
+
+	if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
+
+	goto done;
+
+	fallback:
+	pi = cscf_get_public_identity(msg);
+	if (pi.len>4&&strncasecmp(pi.s,"sip:",4)==0) {pi.s+=4;pi.len-=4;}
+	for(i=0;i<pi.len;i++)
+		if (pi.s[i]==';') {
+			pi.len=i;
+			break;
+		}
+	done:
+	return pi;	
+}
+
+/**
+ * Returns the Private Identity extracted from the Authorization header.
+ * If none found there takes the SIP URI in To without the "sip:" prefix
+ * \todo - remove the fallback case to the To header
+ * @param msg - the SIP message
+ * @param realm - the realm to match in an Authorization header
+ * @returns the str containing the private id, no mem dup
+ */
+str cscf_get_private_identity_no_realm(struct sip_msg *msg, str realm)
+{
+	str pi={0,0};
+	struct hdr_field* h=0;
 	int ret,i;
 
 	if (parse_headers(msg,HDR_AUTHORIZATION_F,0)!=0) {
@@ -131,15 +187,8 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm)
 		goto fallback;
 	}
 
-	ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
-	if (ret < 0) {
-		goto fallback;
-	} else 
-		if (ret > 0) {
-			goto fallback;
-		}
-
-	if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
+        h = msg->authorization;
+        if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
 
 	goto done;
 
@@ -314,6 +363,62 @@ str cscf_get_public_identity_from_requri(struct sip_msg *msg)
 }
 
 /**
+ * Get the contact from the Request URI of the message
+ * NB: free returned result str when done from shm
+ * @param msg - the SIP message
+ * @returns the contact (don't forget to free from shm)
+ * 
+ * NOTE: should only be called when REQ URI has been converted sip:user@IP_ADDRESS:PORT or tel:IP_ADDRESS:PORT
+ */
+str cscf_get_contact_from_requri(struct sip_msg *msg)
+{
+	str pu={0,0};
+
+	if (msg->first_line.type!=SIP_REQUEST) {
+		return pu;
+	}
+	if (parse_sip_msg_uri(msg)<0){
+		return pu;
+	}
+	if(!msg->parsed_uri.port.len){
+	    return pu;
+	}
+
+	if(msg->parsed_uri.type==TEL_URI_T){
+		pu.len = 4 + msg->parsed_uri.user.len + msg->parsed_uri.port.len + 1 /*for colon before port*/;
+		pu.s = shm_malloc(pu.len+1);
+		if (!pu.s){
+                        LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d bytes\n", pu.len + 1);
+                        pu.len = 0;
+			goto done;
+                }
+		sprintf(pu.s,"tel:%.*s:%.*s",
+				msg->parsed_uri.user.len,
+				msg->parsed_uri.user.s,
+				msg->parsed_uri.port.len,
+				msg->parsed_uri.port.s);
+	}else{
+		pu.len = 4 + msg->parsed_uri.user.len + 1/*for @*/ + msg->parsed_uri.host.len + msg->parsed_uri.port.len + 1 /*for colon before port*/;
+		pu.s = shm_malloc(pu.len+1);
+		if (!pu.s){
+                        LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d bytes\n", pu.len + 1);
+                        pu.len = 0;
+			goto done;
+                }
+		sprintf(pu.s,"sip:%.*s@%.*s:%.*s",
+				msg->parsed_uri.user.len,
+				msg->parsed_uri.user.s,
+				msg->parsed_uri.host.len,
+				msg->parsed_uri.host.s,
+				msg->parsed_uri.port.len,
+				msg->parsed_uri.port.s);
+	}
+
+	done:
+	return pu;
+}
+
+/**
  * Finds if the message contains the orig parameter in the first Route header
  * @param msg - the SIP message
  * @param str1 - not used
@@ -387,47 +492,34 @@ str s_asserted_identity={"P-Asserted-Identity",19};
  * @param msg - the sip message
  * @returns the asserted identity
  */
-str cscf_get_asserted_identity(struct sip_msg *msg)
-{
-	name_addr_t id;
-	struct hdr_field *h;
-	rr_t *r;
-	memset(&id,0,sizeof(name_addr_t));
-	if (!msg) return id.uri;
-	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
-		return id.uri;
-	}
-	h = msg->headers;
-	while(h)
-	{
-		if (h->name.len == s_asserted_identity.len  &&
-				strncasecmp(h->name.s,s_asserted_identity.s,s_asserted_identity.len)==0)
-		{
-			if (parse_rr(h)<0){
-				//This might be an old client
-				LM_CRIT("WARN:cscf_get_asserted_identity: P-Asserted-Identity header must contain a Nameaddr!!! Fix the client!\n");
-				id.name.s = h->body.s;
-				id.name.len = 0;
-				id.len = h->body.len;
-				id.uri = h->body;
-				while(id.uri.len && (id.uri.s[0]==' ' || id.uri.s[0]=='\t' || id.uri.s[0]=='<')){
-					id.uri.s = id.uri.s+1;
-					id.uri.len --;
-				}
-				while(id.uri.len && (id.uri.s[id.uri.len-1]==' ' || id.uri.s[id.uri.len-1]=='\t' || id.uri.s[id.uri.len-1]=='>')){
-					id.uri.len--;
-				}
-				return id.uri;	
-			}
-			r = (rr_t*) h->parsed;
-			id = r->nameaddr; 
-			free_rr(&r);
-			h->parsed=r;
-			return id.uri;
+str cscf_get_asserted_identity(struct sip_msg *msg, int is_shm) {
+	int len;
+	str uri = { 0, 0 };
+
+	if (!msg || !msg->pai)
+		return uri;
+
+	if ((parse_pai_header(msg) == 0) && (msg->pai) && (msg->pai->parsed)) {
+		to_body_t *pai = get_pai(msg)->id;
+		if (!is_shm)
+			return pai->uri;
+
+		//make a pkg malloc str to return to consuming function
+		len = pai->uri.len + 1;
+		uri.s = (char*) pkg_malloc(pai->uri.len + 1);
+		if (!uri.s) {
+			LM_ERR("no more pkg mem\n");
+			return uri;
 		}
-		h = h->next;
+		memset(uri.s, 0, len);
+		memcpy(uri.s, pai->uri.s, pai->uri.len);
+		uri.len = pai->uri.len;
+
+		p_id_body_t* ptr = (p_id_body_t*) msg->pai->parsed;
+		msg->pai->parsed = 0;
+		free_pai_ppi_body(ptr);
 	}
-	return id.uri;
+	return uri;
 }
 
 static str phone_context_s={";phone-context=",15};
@@ -886,7 +978,7 @@ int cscf_is_initial_request(struct sip_msg *msg)
 int cscf_get_originating_user( struct sip_msg * msg, str *uri )
 {
 	struct to_body * from;
-	*uri = cscf_get_asserted_identity(msg);
+	*uri = cscf_get_asserted_identity(msg, 0);
 	if (!uri->len) {		
 		/* Fallback to From header */
 		if ( parse_from_header( msg ) == -1 ) {
@@ -1361,14 +1453,16 @@ str* cscf_get_service_route(struct sip_msg *msg, int *size, int is_shm) {
 		h = h->next;
 	}
 	if (is_shm) {
-		while (h)
+		h = msg->headers;
+		while (h) {
 			if (h->name.len == 13
 					&& strncasecmp(h->name.s, "Service-Route", 13) == 0) {
-				h->parsed = 0;
 				r = (rr_t*) h->parsed;
+				h->parsed = 0;
 				free_rr(&r);
 			}
-		h = h->next;
+			h = h->next;
+		}
 	}
 
 	return x;
@@ -1500,5 +1594,59 @@ int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr)
 	for(i=0;i<cseq->number.len;i++)
 		nr = (nr*10)+(cseq->number.s[i]-'0');
 	return nr;
+}
+
+static str s_called_party_id={"P-Called-Party-ID",17};
+/**
+ * Looks for the P-Called-Party-ID header and extracts the public identity from it
+ * @param msg - the sip message
+ * @param hr - ptr to return the found hdr_field 
+ * @returns the P-Called_Party-ID
+ */
+str cscf_get_public_identity_from_called_party_id(struct sip_msg *msg,struct hdr_field **hr)
+{
+	str id={0,0};
+	struct hdr_field *h;
+	int after_semi_colon=0;
+	int len=0;
+	int i=0;
+	
+	if (hr) *hr=0;
+	if (!msg) return id;
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		return id;
+	}
+	h = msg->headers;
+	while(h)
+	{
+		if (h->name.len == s_called_party_id.len  &&
+			strncasecmp(h->name.s,s_called_party_id.s,s_called_party_id.len)==0)
+		{
+			id = h->body;
+			while(id.len && (id.s[0]==' ' || id.s[0]=='\t' || id.s[0]=='<')){
+				id.s = id.s+1;
+				id.len --;
+			}
+			while(id.len && (id.s[id.len-1]==' ' || id.s[id.len-1]=='\t' || id.s[id.len-1]=='>')){
+				id.len--;
+			}	
+			//get only text in front of ';' there might not even be a semi-colon
+			//this caters for extra information after the public identity - e.g. phone-context
+			len= id.len;
+			for(i=0; i<len;i++) {
+			    if(id.s[i]==';'){
+				//found semi-colon
+				after_semi_colon = 1;
+			    }
+			    if(after_semi_colon){
+				id.len--;
+			    }
+			}
+			if (hr) *hr = h;
+			return id;
+		}
+		h = h->next;
+	}
+	return id;
 }
 

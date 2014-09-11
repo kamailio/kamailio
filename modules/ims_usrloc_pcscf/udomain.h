@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -78,6 +78,11 @@ int update_pcontact(struct udomain* _d, struct pcontact_info* _ci, struct pconta
 int insert_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, struct pcontact** _r);
 int get_pcontact(udomain_t* _d, str* _aor, struct pcontact** _r);
 int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, struct pcontact** _c);
+int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
 int delete_pcontact(udomain_t* _d, str* _aor, struct pcontact* _r);
+int update_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
+int update_temp_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
+
+int preload_udomain(db1_con_t* _c, udomain_t* _d);
 
 #endif

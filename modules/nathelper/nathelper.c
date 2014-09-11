@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -288,6 +288,7 @@ static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_0_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_3_f(struct sip_msg *, char *, char *, char *);
+static int set_contact_alias_f(struct sip_msg* msg, char* str1, char* str2);
 static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
 static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
@@ -327,6 +328,7 @@ static struct {
 	{"10.0.0.0",    0, 0xffffffffu << 24},
 	{"172.16.0.0",  0, 0xffffffffu << 20},
 	{"192.168.0.0", 0, 0xffffffffu << 16},
+	{"100.64.0.0",  0, 0xffffffffu << 22}, /* rfc6598 - cg-nat */
 	{NULL, 0, 0}
 };
 
@@ -336,7 +338,7 @@ static struct {
  */
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
-static char *force_socket_str = 0;
+static str force_socket_str = STR_NULL;
 static pid_t mypid;
 static int sipping_flag = -1;
 static int natping_disable_flag = -1;
@@ -349,6 +351,7 @@ static unsigned short rcv_avp_type = 0;
 static int_str rcv_avp_name;
 
 static char *natping_socket = 0;
+static int udpping_from_path = 0;
 static int raw_sock = -1;
 static unsigned int raw_ip = 0;
 static unsigned short raw_port = 0;
@@ -368,6 +371,9 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"add_contact_alias",  (cmd_function)add_contact_alias_3_f,  3,
 		fixup_add_contact_alias, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"set_contact_alias",  (cmd_function)set_contact_alias_f,  0,
+		0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"handle_ruri_alias",  (cmd_function)handle_ruri_alias_f,    0,
 		0, 0,
@@ -407,16 +413,17 @@ static pv_export_t mod_pvs[] = {
 static param_export_t params[] = {
 	{"natping_interval",      INT_PARAM, &natping_interval      },
 	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
-	{"nortpproxy_str",        STR_PARAM, &nortpproxy_str.s      },
-	{"received_avp",          STR_PARAM, &rcv_avp_param         },
-	{"force_socket",          STR_PARAM, &force_socket_str      },
-	{"sipping_from",          STR_PARAM, &sipping_from.s        },
-	{"sipping_method",        STR_PARAM, &sipping_method.s      },
+	{"nortpproxy_str",        PARAM_STR, &nortpproxy_str      },
+	{"received_avp",          PARAM_STRING, &rcv_avp_param         },
+	{"force_socket",          PARAM_STR, &force_socket_str      },
+	{"sipping_from",          PARAM_STR, &sipping_from        },
+	{"sipping_method",        PARAM_STR, &sipping_method      },
 	{"sipping_bflag",         INT_PARAM, &sipping_flag          },
 	{"natping_disable_bflag", INT_PARAM, &natping_disable_flag  },
 	{"natping_processes",     INT_PARAM, &natping_processes     },
-	{"natping_socket",        STR_PARAM, &natping_socket        },
+	{"natping_socket",        PARAM_STRING, &natping_socket        },
 	{"keepalive_timeout",     INT_PARAM, &nh_keepalive_timeout  },
+	{"udpping_from_path",     INT_PARAM, &udpping_from_path     },
 
 	{0, 0, 0}
 };
@@ -594,7 +601,6 @@ mod_init(void)
 	int i;
 	bind_usrloc_t bind_usrloc;
 	struct in_addr addr;
-	str socket_str;
 	pv_spec_t avp_spec;
 	str s;
 
@@ -622,30 +628,22 @@ mod_init(void)
 		rcv_avp_type = 0;
 	}
 
-	if (force_socket_str) {
-		socket_str.s=force_socket_str;
-		socket_str.len=strlen(socket_str.s);
-		force_socket=grep_sock_info(&socket_str,0,0);
+	if (force_socket_str.s && force_socket_str.len>0) {
+		force_socket=grep_sock_info(&force_socket_str,0,0);
 	}
 
 	/* create raw socket? */
-	if (natping_socket && natping_socket[0]) {
-		if (get_natping_socket( natping_socket, &raw_ip, &raw_port)!=0)
+	if ((natping_socket && natping_socket[0]) ||  udpping_from_path) {
+		if ((!udpping_from_path) && get_natping_socket( natping_socket, &raw_ip, &raw_port)!=0)
 			return -1;
 		if (init_raw_socket() < 0)
 			return -1;
 	}
 
-	if (nortpproxy_str.s==NULL || nortpproxy_str.s[0]==0) {
-		nortpproxy_str.len = 0;
-		nortpproxy_str.s = NULL;
-	} else {
-		nortpproxy_str.len = strlen(nortpproxy_str.s);
+	if (nortpproxy_str.s && nortpproxy_str.len>0) {
 		while (nortpproxy_str.len > 0 && (nortpproxy_str.s[nortpproxy_str.len - 1] == '\r' ||
 			nortpproxy_str.s[nortpproxy_str.len - 1] == '\n'))
 				nortpproxy_str.len--;
-		if (nortpproxy_str.len == 0)
-			nortpproxy_str.s = NULL;
 	}
 
 	if (natping_interval > 0) {
@@ -681,11 +679,11 @@ mod_init(void)
 
 		/* set reply function if SIP natping is enabled */
 		if (sipping_flag) {
-			if (sipping_from.s==0 || sipping_from.s[0]==0) {
+			if (sipping_from.s==0 || sipping_from.len<=0) {
 				LM_ERR("SIP ping enabled, but SIP ping FROM is empty!\n");
 				return -1;
 			}
-			if (sipping_method.s==0 || sipping_method.s[0]==0) {
+			if (sipping_method.s==0 || sipping_method.len<=0) {
 				LM_ERR("SIP ping enabled, but SIP ping method is empty!\n");
 				return -1;
 			}
@@ -693,13 +691,11 @@ mod_init(void)
 				ul.set_keepalive_timeout(nh_keepalive_timeout);
 			}
 
-			sipping_method.len = strlen(sipping_method.s);
 			if(parse_method_name(&sipping_method, &sipping_method_id) < 0) {
 				LM_ERR("invalid SIP ping method [%.*s]!\n", sipping_method.len,
 						sipping_method.s);
 				return -1;
 			}
-			sipping_from.len = strlen(sipping_from.s);
 			exports.response_f = sipping_rpl_filter;
 			init_sip_ping();
 		}
@@ -836,6 +832,74 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		len = len1;
 	hostport.s[0] = temp[0];
 	c->uri.s[c->uri.len] = temp[1];
+	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_T) == 0) {
+		pkg_free(buf);
+		return -1;
+	}
+	c->uri.s = buf;
+	c->uri.len = len;
+
+	return 1;
+}
+
+/*
+ * Replaces ip:port pair in the Contact: field with the source address
+ * of the packet.
+ */
+static int
+set_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	char nbuf[MAX_URI_SIZE];
+	str nuri;
+	int br;
+
+	int offset, len;
+	char *buf;
+	contact_t *c;
+	struct lump *anchor;
+	struct sip_uri uri;
+
+	nuri.s = nbuf;
+	nuri.len = MAX_URI_SIZE;
+	if (get_contact_uri(msg, &uri, &c) == -1)
+		return -1;
+	if ((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
+		LM_ERR("you can't update contact twice, check your config!\n");
+		return -1;
+	}
+
+	if(uri_add_rcv_alias(msg, &c->uri, &nuri)<0) {
+		LM_DBG("cannot add the alias parameter\n");
+		return -1;
+	}
+
+	br = 1;
+	if(c->uri.s[-1]=='<')
+		br = 0;
+
+
+	len = nuri.len + 2*br;
+	buf = pkg_malloc(len + 1);
+	if (buf == NULL) {
+		LM_ERR("out of pkg memory\n");
+		return -1;
+	}
+	if(br==1) {
+		buf[0] = '<';
+		strncpy(buf+1, nuri.s, nuri.len);
+		buf[len-1] = '>';
+	} else {
+		strncpy(buf, nuri.s, nuri.len);
+	}
+	buf[len] = '\0';
+
+	offset = c->uri.s - msg->buf;
+	anchor = del_lump(msg, offset, c->uri.len, HDR_CONTACT_T);
+	if (anchor == 0) {
+		pkg_free(buf);
+		return -1;
+	}
+
 	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_T) == 0) {
 		pkg_free(buf);
 		return -1;
@@ -1916,6 +1980,53 @@ static int send_raw(const char *buf, int buf_len, union sockaddr_union *to,
 	return sendto(raw_sock, packet, len, 0, (struct sockaddr *) to, sizeof(struct sockaddr_in));
 }
 
+/**
+ * quick function to extract ip:port from path
+ */
+static char *extract_last_path_ip(str path)
+{
+	/* used for raw UDP ping which works only on IPv4 */
+	static char ip[24];
+	char *start = NULL, *end = NULL, *p;
+	int i;
+	int path_depth = 0;
+	int max_path_depth;
+
+	max_path_depth = udpping_from_path - 1;
+
+	if (!path.len || !path.s) return NULL;
+
+	p = path.s;
+	for (i = 0; i < path.len; i++) {
+		if (!strncmp("<sip:", p, 5) && i < path.len - 4) {
+			start = p + 5;
+
+			end = NULL;
+		}
+		if ((*p == ';' || *p == '>') && !end) {
+			end = p;
+			if (max_path_depth) {
+				path_depth++;
+				if (path_depth >= max_path_depth) {
+					break;
+				}
+			}
+		}
+		p++;
+	}
+	if (start && end) {
+		int len = end - start;
+		if (len > sizeof(ip) -1) {
+			return NULL;
+		}
+		memcpy(ip, start, len);
+		ip[len] = '\0';
+		return (char *) ip;
+	} else {
+		return NULL;
+	}
+}
+
 
 static void
 nh_timer(unsigned int ticks, void *timer_idx)
@@ -1934,6 +2045,9 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	unsigned int flags;
 	char proto;
 	struct dest_info dst;
+	char *path_ip_str = NULL;
+	unsigned int path_ip = 0;
+	unsigned short path_port = 0;
 
 	if((*natping_state) == 0)
 		goto done;
@@ -2009,6 +2123,20 @@ nh_timer(unsigned int ticks, void *timer_idx)
 				LM_ERR("can't parse contact dst_uri\n");
 				continue;
 			}
+		} else if (path.len && udpping_from_path) {
+			path_ip_str = extract_last_path_ip(path);
+			if (path_ip_str == NULL) {
+				LM_ERR( "ERROR:nathelper:nh_timer: unable to parse path from location\n");
+				continue;
+			}
+			if (get_natping_socket(path_ip_str, &path_ip, &path_port)) {
+				LM_ERR("could not parse path host for udpping_from_path\n");
+				continue;
+			}
+			if (parse_uri(c.s, c.len, &curi) < 0) {
+				LM_ERR("can't parse contact uri\n");
+				continue;
+			}
 		} else {
 			/* send to the contact/received */
 			if (parse_uri(c.s, c.len, &curi) < 0) {
@@ -2051,6 +2179,11 @@ nh_timer(unsigned int ticks, void *timer_idx)
 			if (send_raw((char*)sbuf, sizeof(sbuf), &dst.to, raw_ip, 
 						 raw_port)<0) {
 				LM_ERR("send_raw failed\n");
+			}
+		} else if (udpping_from_path) {
+			if (send_raw((char*)sbuf, sizeof(sbuf), &dst.to, path_ip, 
+						 path_port)<0) {
+				LM_ERR("send_raw from path failed\n");
 			}
 		} else {
 			if (udp_send(&dst, (char *)sbuf, sizeof(sbuf))<0 ) {
@@ -2208,6 +2341,7 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 		}
 		if (anchor == NULL) {
 			LM_ERR("anchor_lump failed\n");
+			pkg_free(param);
 			return -1;
 		}		
 

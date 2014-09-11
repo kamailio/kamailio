@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -42,8 +42,10 @@ int async_init_timer_list(void);
 
 int async_destroy_timer_list(void);
 
-int async_sleep(struct sip_msg* msg, int seconds, cfg_action_t *act);
+int async_sleep(sip_msg_t* msg, int seconds, cfg_action_t *act);
 
 void async_timer_exec(unsigned int ticks, void *param);
+
+int async_send_task(sip_msg_t* msg, cfg_action_t *act);
 
 #endif

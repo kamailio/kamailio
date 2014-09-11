@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "../../sr_module.h"
@@ -37,6 +37,7 @@ int dbcl_con_param(modparam_t type, void *val);
 int dbcl_cls_param(modparam_t type, void *val);
 
 int dbcl_inactive_interval = 300;
+int dbcl_max_query_length = 0;
 
 /*! \brief
  * DB Cluster module interface
@@ -50,9 +51,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"connection",  STR_PARAM|USE_FUNC_PARAM, (void*)dbcl_con_param},
-	{"cluster",     STR_PARAM|USE_FUNC_PARAM, (void*)dbcl_cls_param},
+	{"connection",  PARAM_STRING|USE_FUNC_PARAM, (void*)dbcl_con_param},
+	{"cluster",     PARAM_STRING|USE_FUNC_PARAM, (void*)dbcl_cls_param},
 	{"inactive_interval",     INT_PARAM,    &dbcl_inactive_interval},
+	{"max_query_length",     INT_PARAM,    &dbcl_max_query_length},
 	{0, 0, 0}
 };
 

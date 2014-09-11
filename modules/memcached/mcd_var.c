@@ -28,6 +28,7 @@
 #include "memcached.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
+#include "../../pvapi.h"
 #include "../pv/pv_svar.h"
 #include "../../md5utils.h"
 
@@ -44,12 +45,12 @@ static inline int pv_mcd_key_expiry_split_str(str *data, str *key, unsigned int 
 	str str_exp;
 	str_exp.s = NULL;
 	str_exp.len = 0;
-	
+
 	if (data == NULL || data->s == NULL || data->len <= 0) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
-	
+
 	p = data->s;
 	key->s = p;
 	key->len = 0;
@@ -161,6 +162,15 @@ static int pv_get_mcd_value_helper(struct sip_msg *msg, str *key,
 	return 0;
 }
 
+static void pv_free_mcd_value(char** buf) {
+	if (*buf!=NULL) {
+		if (mcd_memory) {
+			pkg_free(*buf);
+		} else {
+			free(*buf);
+		}
+	}
+}
 
 /*!
  * \brief Get a cached value from memcached
@@ -186,7 +196,7 @@ int pv_get_mcd_value(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 		return pv_get_null(msg, param, res);
 
 	if (pv_get_mcd_value_helper(msg, &key, &return_value, &return_flags) < 0) {
-		return pv_get_null(msg, param, res);
+		goto errout;
 	}
 
 
@@ -198,11 +208,16 @@ int pv_get_mcd_value(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 
 	trim_len(res_str.len, res_str.s, res_str);
 
-	if(return_flags&VAR_VAL_STR) {
-		 if (pkg_str_dup(&(res->rs), &res_str) < 0) {
-			LM_ERR("could not copy string\n");
+	if(return_flags&VAR_VAL_STR || mcd_stringify) {
+		res->rs.s = pv_get_buffer();
+		res->rs.len = pv_get_buffer_size();
+		if(res_str.len>=res->rs.len) {
+			LM_ERR("value is too big (%d) - increase pv buffer size\n", res_str.len);
 			goto errout;
 		}
+		memcpy(res->rs.s, res_str.s, res_str.len);
+		res->rs.len = res_str.len;
+		res->rs.s[res->rs.len] = '\0';
 		res->flags = PV_VAL_STR;
 	} else {
 		if (str2int(&res_str, &res_int) < 0) {
@@ -214,9 +229,11 @@ int pv_get_mcd_value(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 		res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 	}
 
+	pv_free_mcd_value(&return_value);
 	return 0;
 
 errout:
+	pv_free_mcd_value(&return_value);
 	return pv_get_null(msg, param, res);
 }
 
@@ -297,7 +314,7 @@ static int pv_mcd_atomic_helper(struct sip_msg* msg, pv_param_t *param, int op, 
 	char *return_value;
 	uint32_t return_flags;
 	memcached_return rc;
-	
+
 	if (!(val->flags&PV_VAL_INT)) {
 		LM_ERR("invalid value %.*s for atomic operation, strings not allowed\n",
 			val->rs.len, val->rs.s);
@@ -308,8 +325,11 @@ static int pv_mcd_atomic_helper(struct sip_msg* msg, pv_param_t *param, int op, 
 		return -1;
 
 	if (pv_get_mcd_value_helper(msg, &key, &return_value, &return_flags) < 0) {
+		pv_free_mcd_value(&return_value);
 		return -1;
 	}
+
+	pv_free_mcd_value(&return_value);
 
 	if(return_flags&VAR_VAL_STR) {
 		LM_ERR("could not do atomic operations on string for key %.*s\n", key.len, key.s);
@@ -322,6 +342,7 @@ static int pv_mcd_atomic_helper(struct sip_msg* msg, pv_param_t *param, int op, 
 	}
 
 	return 0;
+
 }
 
 
@@ -365,9 +386,9 @@ int pv_set_mcd_expire(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t
 {
 	str key;
 	unsigned int expiry = mcd_expire;
-        char *return_value;
-        uint32_t return_flags;
-        memcached_return rc;
+	char *return_value;
+	uint32_t return_flags;
+	memcached_return rc;
 
 	if (!(val->flags&PV_VAL_INT)) {
 		LM_ERR("invalid value %.*s for expire time, strings not allowed\n",
@@ -379,17 +400,22 @@ int pv_set_mcd_expire(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t
 		return -1;
 
 	if (pv_get_mcd_value_helper(msg, &key, &return_value, &return_flags) < 0) {
-		return -1;
+		goto errout;
 	}
 
 	LM_DBG("set expire time %d for key %.*s with flag %d\n", val->ri, key.len, key.s, return_flags);
 
 	if ((rc= memcached_set(memcached_h, key.s, key.len, return_value, strlen(return_value), val->ri, return_flags)) != MEMCACHED_SUCCESS) {
 		LM_ERR("could not set expire time %d for key %.*s - error was %s\n", val->ri, key.len, key.s, memcached_strerror(memcached_h, rc));
-		return -1;
+		goto errout;
 	}
 
+	pv_free_mcd_value(&return_value);
 	return 0;
+
+errout:
+	pv_free_mcd_value(&return_value);
+	return -1;
 }
 
 

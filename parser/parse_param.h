@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -166,6 +166,19 @@ extern inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *
  * on an error
  */
 int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p);
+
+/*! \brief
+ * Parse parameters
+ *  \param _s is string containing parameters
+ *  \param _c is class of parameters
+ *  \param _h is pointer to structure that will be filled with pointer to well known parameters
+ * linked list of parsed parameters will be stored in the variable _p is pointing to
+ * \param separator single character separator
+ * \return The function returns 0 on success and negative number
+ * on an error
+ */
+int parse_params2(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p,
+			char separator);
 
 
 /*! \brief

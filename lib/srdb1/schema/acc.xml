@@ -9,7 +9,7 @@
 
 <table id="acc" xmlns:db="http://docbook.org/ns/docbook">
     <name>acc</name>
-    <version>4</version>
+    <version>5</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the ACC module to report on transactions - accounted calls. More information is available at: &KAMAILIO_MOD_DOC;acc.html

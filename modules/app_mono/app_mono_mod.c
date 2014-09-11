@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -50,8 +50,8 @@ int app_mono_load_param(modparam_t type, void *val);
 int app_mono_register_param(modparam_t type, void *val);
 
 static param_export_t params[]={
-	{"load",     STR_PARAM|USE_FUNC_PARAM, (void*)app_mono_load_param},
-	{"register", STR_PARAM|USE_FUNC_PARAM, (void*)app_mono_register_param},
+	{"load",     PARAM_STRING|USE_FUNC_PARAM, (void*)app_mono_load_param},
+	{"register", PARAM_STRING|USE_FUNC_PARAM, (void*)app_mono_register_param},
 	{0, 0, 0}
 };
 

@@ -23,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * History:
@@ -150,12 +150,12 @@ unsigned int get_on_branch(void)
 	return goto_on_branch;
 }
 
+void set_branch_route( unsigned int on_branch)
+{
+	branch_route = on_branch;
+}
 
 
-/* prepare_new_uac flags */
-#define UAC_DNS_FAILOVER_F 1 /**< new branch due to dns failover */
-#define UAC_SKIP_BR_DST_F  2 /**< don't set next hop as dst_uri for
-							   branch_route */
 
 
 /** prepares a new branch "buffer".
@@ -630,6 +630,7 @@ error03:
 	i_req->parsed_uri_ok=parsed_uri_ok_bak;
 	i_req->path_vec=path_bak;
 	i_req->instance=instance_bak;
+	i_req->ruid=ruid_bak;
 	i_req->location_ua=ua_bak;
 	
 	/* Delete the duplicated lump lists, this will also delete
@@ -755,6 +756,11 @@ int add_blind_uac( /*struct cell *t*/ )
 	membar_write(); /* to allow lockless prepare_to_cancel() we want to be sure
 					   all the writes finished before updating branch number*/
 	t->nr_of_outgoings=(branch+1);
+	t->async_backup.blind_uac = branch; /* whenever we create a blind UAC, lets save the current branch
+					 * this is used in async tm processing specifically to be able to route replies
+					 * that were possibly in response to a request forwarded on this blind UAC......
+					 * we still want replies to be processed as if it were a normal UAC */
+	
 	/* start FR timer -- protocol set by default to PROTO_NONE,
        which means retransmission timer will not be started
     */
@@ -791,7 +797,7 @@ int add_blind_uac( /*struct cell *t*/ )
  *                    @see prepare_new_uac().
  *  @returns branch id (>=0) or error (<0)
 */
-static int add_uac( struct cell *t, struct sip_msg *request, str *uri,
+int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 					str* next_hop, str* path, struct proxy_l *proxy,
 					struct socket_info* fsocket, snd_flags_t snd_flags,
 					int proto, int flags, str *instance, str *ruid,
@@ -1687,6 +1693,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	if (t->on_branch) {
 		/* tell add_uac that it should run branch route actions */
 		branch_route = t->on_branch;
+		/* save the branch route so that it
+		 * can be used for adding branches later
+		 */
+		t->on_branch_delayed = t->on_branch;
 		/* reset the flag before running the actions (so that it
 		 * could be set again in branch_route if needed
 		 */

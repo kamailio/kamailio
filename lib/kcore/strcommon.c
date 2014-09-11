@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
 
  */
@@ -108,17 +108,6 @@ int unescape_common(char *dst, char *src, int src_len)
 		i++;
 	}
 	return j;
-}
-
-/*! \brief Compute MD5 checksum */
-void compute_md5(char *dst, char *src, int src_len)
-{
-	MD5_CTX context;
-	unsigned char digest[16];
-	MD5Init (&context);
-  	MD5Update (&context, src, src_len);
-	U_MD5Final (digest, &context);
-	string2hex(digest, 16, dst);
 }
 
 /*! \brief Unscape all printable ASCII characters */
@@ -312,7 +301,11 @@ int unescape_param(str *sin, str *sout)
 
 /*! \brief
  * Escape all printable characters that are not valid in
- * a param part of request uri: = | ; | , |   | " | ? | &
+ * a param part of request uri
+ * no_need_to_escape = unreserved | param-unreserved
+ * unreserved = alphanum | mark
+ * mark = - | _ | . | ! | ~ | * | ' | ( | )
+ * param-unreserved = [ | ] | / | : | & | + | $
  */
 int escape_param(str *sin, str *sout)
 {
@@ -329,33 +322,47 @@ int escape_param(str *sin, str *sout)
         if (*p < 32 || *p > 126) {
             LM_ERR("invalid escaped character <%u>\n", (unsigned int)*p);
             return -1;
-        }
-        switch (*p) {
-        case ' ':
-        case '?':
-        case '&':
-        case '=':
-        case ',':
-        case ';':
-        case '"':
-        case '+':
-            *at++ = '%';
-            x = (*p) >> 4;
-            if (x < 10)
-            {
-                *at++ = x + '0';
-            } else {
-                *at++ = x - 10 + 'a';
-            }
-            x = (*p) & 0x0f;
-            if (x < 10) {
-                *at = x + '0';
-            } else {
-                *at = x - 10 + 'a';
-            }
-            break;
-        default:
+        } else if (isdigit((int)*p) || ((*p >= 'A') && (*p <= 'Z')) ||
+                ((*p >= 'a') && (*p <= 'z'))) {
             *at = *p;
+        } else {
+            switch (*p) {
+                case '-':
+                case '_':
+                case '.':
+                case '!':
+                case '~':
+                case '*':
+                case '\'':
+                case '(':
+                case ')':
+                case '[':
+                case ']':
+                case '/':
+                case ':':
+                case '&':
+                case '+':
+                case '$':
+                    *at = *p;
+                    break;
+                default:
+
+                    *at++ = '%';
+                    x = (*p) >> 4;
+                    if (x < 10)
+                    {
+                        *at++ = x + '0';
+                    } else {
+                        *at++ = x - 10 + 'a';
+                    }
+                    x = (*p) & 0x0f;
+                    if (x < 10) {
+                        *at = x + '0';
+                    } else {
+                        *at = x - 10 + 'a';
+                    }
+                    break;
+            }
         }
         at++;
         p++;

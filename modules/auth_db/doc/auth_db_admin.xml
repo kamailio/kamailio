@@ -527,7 +527,9 @@ if (!proxy_authorize("$fd", "subscriber)) {
 			From header username. REGISTER requests: From and To must match the 
 			authentication user. PUBLISH requests: From, To and Request-URI must
 			match the authentication user. All other requests: From header must
-			match the authentication user.
+			match the authentication user. If bit 2 is set as well (flags==3),
+			the ID check is skipped for INVITE, BYE, PRACK, UPDATE, MESSAGE
+			- these requests can come with anonymoys caller id.
 			</para>
 			<para>
 			Additionally all domains in the checked URIs and the realm in the 

@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * HOWTO:
  *	If you need a new configuration variable within the core, put it into
@@ -80,6 +80,7 @@ struct cfg_group_core {
 	int dns_search_list;
 	int dns_search_fmatch;
 	int dns_reinit;
+	int dns_naptr_ignore_rfc;
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
 	int use_dns_cache;

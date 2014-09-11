@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*! \file
@@ -73,6 +73,7 @@ void sql_destroy(void);
 int sql_connect(void);
 
 int sql_do_query(sql_con_t *con, str *query, sql_result_t *res);
+int sql_do_query_async(sql_con_t *con, str *query);
 #ifdef WITH_XAVP
 int sql_do_xquery(sip_msg_t *msg, sql_con_t *con, pv_elem_t *query,
 		pv_elem_t *res);

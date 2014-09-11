@@ -153,14 +153,13 @@ modparam("registrar", "default_expires", 1800)
 </programlisting>
 		</example>
 	</section>
-		<section>
+	<section>
 		<title><varname>default_expires_range</varname> (integer)</title>
 		<para>
 		This parameter specifies that the expiry used for newly created usrloc records
-		are not fixed(when <quote>default_expires</quote> applies), but a random value in the interval 
-		<quote>[default_expires-default_expires_range%, default_expires+default_expires_range%]</quote>.
-		The value is between 0 and 100 and represent the maximim percentage from default_expires that
-		will be substracted or added when computing the value. Default in 0, meaning default_expires
+		are not fixed, but a random value in the interval <quote>[default_expires-default_expires_range%, default_expires]</quote>.
+		The value is between 0 and 100 and represent the maximim percentage from expires that
+		will be substracted when computing the value. Default in 0, meaning default_expires
 		is left unmodified. This parameter can be modified via ser config framework.
 		</para>
 		<para>
@@ -177,7 +176,27 @@ modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 </programlisting>
 		</example>
 	</section>
-	
+	<section>
+		<title><varname>expires_range</varname> (integer)</title>
+		<para>
+		Similar to default_expires_range, but it applies to the incoming expires
+		value. Default in 0, meaning the expires is left unmodified. 
+		This parameter can be modified via config framework.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expires_range</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "expires_range", 30) # expires within [0.7*expires .. expires]
+...
+</programlisting>
+		</example>
+	</section>
 
 	<section>
 		<title><varname>min_expires</varname> (integer)</title>
@@ -364,7 +383,8 @@ modparam("registrar", "received_avp", "$avp(s:rcv)")
 		<title><varname>received_param</varname> (string)</title>
 		<para>
 		The name of the parameter that will be appended to Contacts of 
-		200 OK when the received URI was set by nathelper module.
+		200 OK when the received URI was set by nathelper module. If the
+		value is empty string, then the parameter is not appended anymore.
 		</para>
 		<para>
 		<emphasis>
@@ -477,7 +497,7 @@ modparam("registrar", "sock_flag", 18)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>sock_hdr_namer</varname> parameter</title>
+		<title>Set <varname>sock_hdr_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
@@ -639,6 +659,13 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				<emphasis>max_contacts</emphasis> - the number of maximum
 				contacts to be stored for current registration AoR. It
 				overwrites the 'max_contacts' module parameter value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>socket</emphasis> - the string representing the
+				socket on which the register rquest was received, as alternative
+				to using the sock_hdr.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -911,7 +938,7 @@ modparam("registrar", "flow_timer", 25)
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and REPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>save</function> usage</title>
@@ -1241,7 +1268,7 @@ reg_free_contacts("callee");
 		<programlisting format="linespecific">
 ...
 event_route[usrloc:contact-expired] {
-    xlog("expired contact for $ulc(exp->aor)\n");
+    xlog("expired contact for $ulc(exp=>aor)\n");
 }
 ...
 </programlisting>

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
  * History:
@@ -117,14 +117,14 @@ static proc_export_t mi_procs[] = {
 
 static param_export_t mi_params[] = {
 	{"children_count",      INT_PARAM,    &mi_procs[0].no           },
-	{"socket_name",         STR_PARAM,    &mi_socket                },
+	{"socket_name",         PARAM_STRING,    &mi_socket                },
 	{"socket_timeout",      INT_PARAM,    &mi_socket_timeout        },
 	{"unix_socket_mode",    INT_PARAM,    &mi_unix_socket_mode      },
-	{"unix_socket_group",   STR_PARAM,    &mi_unix_socket_gid_s     },
+	{"unix_socket_group",   PARAM_STRING,    &mi_unix_socket_gid_s     },
 	{"unix_socket_group",   INT_PARAM,    &mi_unix_socket_gid       },
-	{"unix_socket_user",    STR_PARAM,    &mi_unix_socket_uid_s     },
+	{"unix_socket_user",    PARAM_STRING,    &mi_unix_socket_uid_s     },
 	{"unix_socket_user",    INT_PARAM,    &mi_unix_socket_uid       },
-	{"reply_indent",        STR_PARAM,    &mi_reply_indent          },
+	{"reply_indent",        PARAM_STRING,    &mi_reply_indent          },
 	{0,0,0}
 };
 

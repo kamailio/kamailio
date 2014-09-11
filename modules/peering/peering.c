@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -75,7 +75,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-    {"radius_config", STR_PARAM, &radius_config},
+    {"radius_config", PARAM_STRING, &radius_config},
     {"verify_destination_service_type", INT_PARAM,
      &verify_destination_service_type},
     {"verify_source_service_type", INT_PARAM,

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
  * History:
@@ -62,16 +62,6 @@
 #endif
 /* here we copy the strings returned by int2str (which uses a static buffer) */
 static char int_buf[INT2STR_MAX_LEN*MAX_ACC_INT_BUF];
-
-static char *static_detector = 0;
-
-void init_acc_extra(void)
-{
-	int i;
-	/* ugly trick to get the address of the static buffer */
-	static_detector = int2str( (unsigned long)3, &i) + i;
-}
-
 
 struct acc_extra *parse_acc_leg(char *extra_str)
 {
@@ -244,17 +234,15 @@ int extra2int( struct acc_extra *extra, int *attrs )
 	return i;
 }
 
-
-
 int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 		int *int_arr, char *type_arr)
 {
 	pv_value_t value;
 	int n;
-	int r;
+	int i;
 
 	n = 0;
-	r = 0;
+	i = 0;
 	
 	while (extra) {
 		/* get the value */
@@ -274,15 +262,22 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 			val_arr[n].len = 0;
 			type_arr[n] = TYPE_NULL;
 		} else {
-			/* set the value into the acc buffer */
-			if (value.rs.s+value.rs.len==static_detector) {
-				val_arr[n].s = int_buf + r*INT2STR_MAX_LEN;
-				val_arr[n].len = value.rs.len;
-				memcpy(val_arr[n].s, value.rs.s, value.rs.len);
-				r++;
-			} else {
-				val_arr[n] = value.rs;
-			}
+		    val_arr[n].s = (char *)pkg_malloc(value.rs.len);
+		    if (val_arr[n].s == NULL ) {
+		        LM_ERR("extra2strar: out of memory.\n");
+		        /* Cleanup already allocated memory and
+                   return that we didn't do anything */
+                for (i = 0; i < n ; i++) {
+						if (NULL != val_arr[i].s){
+							pkg_free(val_arr[i].s);
+							val_arr[i].s = NULL;
+						}
+                }
+                n = 0;
+                goto done;
+            }
+            memcpy(val_arr[n].s, value.rs.s, value.rs.len);
+            val_arr[n].len = value.rs.len;
 			if (value.flags&PV_VAL_INT) {
 			    int_arr[n] = value.ri;
 			    type_arr[n] = TYPE_INT;
@@ -299,6 +294,52 @@ done:
 	return n;
 }
 
+int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val_arr,
+		int *int_arr, char *type_arr, const struct dlg_binds* p_dlgb)
+{
+   //string value;
+   str* value = 0;
+   int n=0;
+
+   if( !dlg || !val_arr || !int_arr || !type_arr || !p_dlgb)
+   {
+       LM_ERR( "invalid input parameter!\n");
+       return 0;
+   }
+
+   while (extra) {
+
+       /* check for overflow */
+       if (n==MAX_ACC_EXTRA) {
+           LM_WARN("array to short -> ommiting extras for accounting\n");
+           goto done;
+       }
+
+       val_arr[n].s = 0;
+       val_arr[n].len = 0;
+       type_arr[n] = TYPE_NULL;
+
+	   str key = extra->spec.pvp.pvn.u.isname.name.s;
+	   if ( key.len == 0 || !key.s)
+	   {
+		   n++; extra = extra->next; continue;
+	   }
+	   /* get the value */
+	   value = p_dlgb->get_dlg_var( dlg, &key);
+
+       if (value)
+       {
+           val_arr[n].s = value->s;
+           val_arr[n].len = value->len;
+           type_arr[n] = TYPE_STR;
+       }
+
+       n++;
+       extra = extra->next;
+   }
+done:
+    return n;
+}
 
 int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 		int *int_arr, char *type_arr, int start)

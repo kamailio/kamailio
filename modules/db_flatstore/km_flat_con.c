@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <string.h>
@@ -115,6 +115,7 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 	fn = get_name(id);
 	if (fn==0){
 		LM_ERR("get_name() failed\n");
+		pkg_free(res);
 		return 0;
 	}
 

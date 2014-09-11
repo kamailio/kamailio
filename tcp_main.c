@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * History:
@@ -150,7 +150,7 @@
 #ifdef HAVE_SELECT
 #include <sys/select.h>
 #endif
-#include <sys/poll.h>
+#include <poll.h>
 
 
 #include "ip_addr.h"
@@ -4404,7 +4404,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 			c->wbuf_q.queued);
 	
 	tcp_async=cfg_get(tcp, tcp_cfg, async);
-	if (likely(TICKS_LT(t, c->timeout) && ( !tcp_async | _wbufq_empty(c) |
+	if (likely(TICKS_LT(t, c->timeout) && ( !tcp_async || _wbufq_empty(c) ||
 					TICKS_LT(t, c->wbuf_q.wr_timeout)) )){
 		if (unlikely(tcp_async && _wbufq_non_empty(c)))
 			return (ticks_t)MIN_unsigned(c->timeout-t, c->wbuf_q.wr_timeout-t);
@@ -4517,9 +4517,12 @@ static inline void tcpconn_destroy_all(void)
 #ifdef USE_TLS
 				if (fd>0 && (c->type==PROTO_TLS || c->type==PROTO_WSS))
 					tls_close(c, fd);
+				if (unlikely(c->type==PROTO_TLS || c->type==PROTO_WSS))
+					(*tls_connections_no)--;
 #endif
-				_tcpconn_rm(c);
+				(*tcp_connections_no)--;
 				c->flags &= ~F_CONN_HASHED;
+				_tcpconn_rm(c);
 				if (fd>0) {
 #ifdef TCP_FD_CACHE
 					if (likely(cfg_get(tcp, tcp_cfg, fd_cache)))
@@ -4527,9 +4530,6 @@ static inline void tcpconn_destroy_all(void)
 #endif /* TCP_FD_CACHE */
 					tcp_safe_close(fd);
 				}
-				(*tcp_connections_no)--;
-				if (unlikely(c->type==PROTO_TLS || c->type==PROTO_WSS))
-					(*tls_connections_no)--;
 			c=next;
 		}
 	}
@@ -4934,6 +4934,17 @@ int tcp_init_children()
 			}
 		}
 	}
+#ifdef USE_TLS
+	for(si=tls_listen; si; si=si->next) {
+		if(si->workers>0) {
+			si->workers_tcpidx = i - si->workers + 1;
+			for(r=0; r<si->workers; r++) {
+				tcp_children[i].mysocket = si;
+				i--;
+			}
+		}
+	}
+#endif
 	tcp_sockets_gworkers = (i != tcp_children_no-1)?(1 + i + 1):0;
 
 	/* create the tcp sock_info structures */

@@ -35,10 +35,6 @@ Daniel-Constantin Mierla
               3.8. callid_prefix (str)
               3.9. sanity_checks (integer)
 
-        4. Functions
-
-              4.1.
-
    List of Examples
 
    1.1. Set mask_key parameter
@@ -72,10 +68,6 @@ Chapter 1. Admin Guide
         3.7. vparam_prefix (str)
         3.8. callid_prefix (str)
         3.9. sanity_checks (integer)
-
-   4. Functions
-
-        4.1.
 
 1. Overview
 
@@ -136,11 +128,12 @@ modparam("topoh", "mask_key", "some secret here")
 3.2. mask_ip (str)
 
    IP address to be used in masked headers to build valid SIP URIs. Can be
-   any IP address, even a private-space IP address (e.g., 192.168.1.1),
-   but must not be SIP server's local IP address. It is not used at all
-   for SIP routing.
+   any IP address, even a private-space or non-existing IP address (e.g.,
+   192.168.1.1, 127.0.0.2), including the SIP server address, but must not
+   be an address potentially used by clients. It is not used at all for
+   SIP routing.
 
-   Default value is "10.1.1.10".
+   Default value is "127.0.0.8".
 
    Example 1.2. Set mask_ip parameter
 ...
@@ -229,9 +222,3 @@ modparam("topoh", "callid_prefix", "***")
 ...
 modparam("topoh", "sanity_checks", 1)
 ...
-
-4. Functions
-
-   4.1.
-
-   None.

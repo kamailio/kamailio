@@ -57,6 +57,7 @@ files_list= \
 			$(COREPATH)/modules/pv/pv.c:pv \
 			$(COREPATH)/modules/ratelimit/ratelimit.c:ratelimit \
 			$(COREPATH)/modules/sca/sca.c:sca \
+			$(COREPATH)/modules/sctp/sctp_rpc.c:sctp \
 			$(COREPATH)/modules/sipcapture/sipcapture.c:sipcapture \
 			$(COREPATH)/modules/siptrace/siptrace.c:siptrace \
 			$(COREPATH)/modules/sl/sl_stats.c:sl \

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <time.h>
@@ -30,6 +30,7 @@
 #include "../../ut.h"
 #include "../../trim.h"
 #include "../../hashes.h"
+#include "../../locking.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
@@ -49,6 +50,8 @@
 #define UAC_REG_AUTHSENT	(1<<3)
 
 #define MAX_UACH_SIZE 2048
+#define UAC_REG_GC_INTERVAL	150
+#define UAC_REG_MAX_PASSWD_SIZE	63
 
 typedef struct _reg_uac
 {
@@ -60,9 +63,9 @@ typedef struct _reg_uac
 	str   r_username;
 	str   r_domain;
 	str   realm;
+	str   auth_proxy;
 	str   auth_username;
 	str   auth_password;
-	str   auth_proxy;
 	unsigned int flags;
 	unsigned int expires;
 	time_t timer_expires;
@@ -81,35 +84,39 @@ typedef struct _reg_entry
 	unsigned int usize;
 	reg_item_t *byuser;
 	reg_item_t *byuuid;
+	gen_lock_t lock;
 } reg_entry_t;
 
 typedef struct _reg_ht
 {
 	unsigned int htsize;
+	time_t stime;
 	reg_entry_t *entries;
 } reg_ht_t;
 
 static reg_ht_t *_reg_htable = NULL;
+static reg_ht_t *_reg_htable_gc = NULL;
+static gen_lock_t *_reg_htable_gc_lock = NULL;
 
 int reg_use_domain = 0;
 int reg_timer_interval = 90;
 int reg_retry_interval = 0;
 int reg_htable_size = 4;
 int reg_fetch_rows = 1000;
-str reg_contact_addr = {0, 0};
-str reg_db_url = {0, 0};
-str reg_db_table = {"uacreg", 0};
+str reg_contact_addr = STR_NULL;
+str reg_db_url = STR_NULL;
+str reg_db_table = str_init("uacreg");
 
-str l_uuid_column = {"l_uuid", 0};
-str l_username_column = {"l_username", 0};
-str l_domain_column = {"l_domain", 0};
-str r_username_column = {"r_username", 0};
-str r_domain_column = {"r_domain", 0};
-str realm_column = {"realm", 0};
-str auth_username_column = {"auth_username", 0};
-str auth_password_column = {"auth_password", 0};
-str auth_proxy_column = {"auth_proxy", 0};
-str expires_column = {"expires", 0};
+str l_uuid_column = str_init("l_uuid");
+str l_username_column = str_init("l_username");
+str l_domain_column = str_init("l_domain");
+str r_username_column = str_init("r_username");
+str r_domain_column = str_init("r_domain");
+str realm_column = str_init("realm");
+str auth_username_column = str_init("auth_username");
+str auth_password_column = str_init("auth_password");
+str auth_proxy_column = str_init("auth_proxy");
+str expires_column = str_init("expires");
 
 #if 0
 INSERT INTO version (table_name, table_version) values ('uacreg','1');
@@ -135,39 +142,58 @@ extern pv_spec_t auth_username_spec;
 extern pv_spec_t auth_realm_spec;
 extern pv_spec_t auth_password_spec;
 
-/**
- *
- */
-int uac_reg_init_db(void)
-{
-	reg_contact_addr.len = strlen(reg_contact_addr.s);
-	
-	reg_db_url.len = strlen(reg_db_url.s);
-	reg_db_table.len = strlen(reg_db_table.s);
-
-	l_uuid_column.len = strlen(l_uuid_column.s);
-	l_username_column.len = strlen(l_username_column.s);
-	l_domain_column.len = strlen(l_domain_column.s);
-	r_username_column.len = strlen(r_username_column.s);
-	r_domain_column.len = strlen(r_domain_column.s);
-	realm_column.len = strlen(realm_column.s);
-	auth_username_column.len = strlen(auth_username_column.s);
-	auth_password_column.len = strlen(auth_password_column.s);
-	auth_proxy_column.len = strlen(auth_proxy_column.s);
-	expires_column.len = strlen(expires_column.s);
-
-	return 0;
-}
 
 /**
  *
  */
 int uac_reg_init_ht(unsigned int sz)
 {
+	int i;
+
+	_reg_htable_gc_lock = (gen_lock_t*)shm_malloc(sizeof(gen_lock_t));
+	if(_reg_htable_gc_lock == NULL)
+	{
+		LM_ERR("no more shm for lock\n");
+		return -1;
+	}
+	if(lock_init(_reg_htable_gc_lock)==0)
+	{
+		LM_ERR("cannot init global lock\n");
+		shm_free((void*)_reg_htable_gc_lock);
+		return -1;
+	}
+	_reg_htable_gc = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
+	if(_reg_htable_gc==NULL)
+	{
+		LM_ERR("no more shm\n");
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
+		return -1;
+	}
+	memset(_reg_htable_gc, 0, sizeof(reg_ht_t));
+	_reg_htable_gc->htsize = sz;
+
+	_reg_htable_gc->entries =
+			(reg_entry_t*)shm_malloc(_reg_htable_gc->htsize*sizeof(reg_entry_t));
+	if(_reg_htable_gc->entries==NULL)
+	{
+		LM_ERR("no more shm.\n");
+		shm_free(_reg_htable_gc);
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
+		return -1;
+	}
+	memset(_reg_htable_gc->entries, 0, _reg_htable_gc->htsize*sizeof(reg_entry_t));
+
+
 	_reg_htable = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
 	if(_reg_htable==NULL)
 	{
 		LM_ERR("no more shm\n");
+		shm_free(_reg_htable_gc->entries);
+		shm_free(_reg_htable_gc);
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
 		return -1;
 	}
 	memset(_reg_htable, 0, sizeof(reg_ht_t));
@@ -178,10 +204,34 @@ int uac_reg_init_ht(unsigned int sz)
 	if(_reg_htable->entries==NULL)
 	{
 		LM_ERR("no more shm.\n");
+		shm_free(_reg_htable_gc->entries);
+		shm_free(_reg_htable_gc);
 		shm_free(_reg_htable);
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
 		return -1;
 	}
 	memset(_reg_htable->entries, 0, _reg_htable->htsize*sizeof(reg_entry_t));
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		if(lock_init(&_reg_htable->entries[i].lock)==0)
+		{
+			LM_ERR("cannot initalize lock[%d] n", i);
+			i--;
+			while(i>=0)
+			{
+				lock_destroy(&_reg_htable->entries[i].lock);
+				i--;
+			}
+			shm_free(_reg_htable->entries);
+			shm_free(_reg_htable);
+			shm_free(_reg_htable_gc->entries);
+			shm_free(_reg_htable_gc);
+			lock_destroy(_reg_htable_gc_lock);
+			shm_free((void*)_reg_htable_gc_lock);
+			return -1;
+		}
+	}
 
 	return 0;
 }
@@ -195,6 +245,37 @@ int uac_reg_free_ht(void)
 	reg_item_t *it = NULL;
 	reg_item_t *it0 = NULL;
 
+	if(_reg_htable_gc_lock != NULL)
+	{
+		lock_destroy(_reg_htable_gc_lock);
+		shm_free((void*)_reg_htable_gc_lock);
+		_reg_htable_gc_lock = NULL;
+	}
+	if(_reg_htable_gc!=NULL)
+	{
+		for(i=0; i<_reg_htable_gc->htsize; i++)
+		{
+			it = _reg_htable_gc->entries[i].byuuid;
+			while(it)
+			{
+				it0 = it;
+				it = it->next;
+				shm_free(it0);
+			}
+			it = _reg_htable_gc->entries[i].byuser;
+			while(it)
+			{
+				it0 = it;
+				it = it->next;
+				shm_free(it0->r);
+				shm_free(it0);
+			}
+		}
+		shm_free(_reg_htable_gc->entries);
+		shm_free(_reg_htable_gc);
+		_reg_htable_gc = NULL;
+	}
+
 	if(_reg_htable==NULL)
 	{
 		LM_DBG("no hash table\n");
@@ -202,6 +283,7 @@ int uac_reg_free_ht(void)
 	}
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
+		lock_get(&_reg_htable->entries[i].lock);
 		/* free entries */
 		it = _reg_htable->entries[i].byuuid;
 		while(it)
@@ -218,10 +300,90 @@ int uac_reg_free_ht(void)
 			shm_free(it0->r);
 			shm_free(it0);
 		}
+		lock_destroy(&_reg_htable->entries[i].lock);
 	}
 	shm_free(_reg_htable->entries);
 	shm_free(_reg_htable);
 	_reg_htable = NULL;
+	return 0;
+}
+
+/**
+ *
+ */
+int uac_reg_reset_ht_gc(void)
+{
+	int i;
+	reg_item_t *it = NULL;
+	reg_item_t *it0 = NULL;
+
+	if(_reg_htable_gc==NULL)
+	{
+		LM_DBG("no hash table\n");
+		return -1;
+	}
+	for(i=0; i<_reg_htable_gc->htsize; i++)
+	{
+		/* free entries */
+		it = _reg_htable_gc->entries[i].byuuid;
+		while(it)
+		{
+			it0 = it;
+			it = it->next;
+			shm_free(it0);
+		}
+		_reg_htable_gc->entries[i].byuuid = NULL;
+		_reg_htable_gc->entries[i].isize=0;
+		it = _reg_htable_gc->entries[i].byuser;
+		while(it)
+		{
+			it0 = it;
+			it = it->next;
+			shm_free(it0->r);
+			shm_free(it0);
+		}
+		_reg_htable_gc->entries[i].byuser = NULL;
+		_reg_htable_gc->entries[i].usize = 0;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int uac_reg_ht_shift(void)
+{
+	time_t tn;
+	int i;
+
+	if(_reg_htable==NULL || _reg_htable_gc==NULL)
+	{
+		LM_ERR("data struct invalid\n");
+		return -1;
+	}
+	tn = time(NULL);
+
+	lock_get(_reg_htable_gc_lock);
+	if(_reg_htable_gc->stime > tn-UAC_REG_GC_INTERVAL) {
+		lock_release(_reg_htable_gc_lock);
+		LM_ERR("shifting the memory table is not possible in less than %d\n", UAC_REG_GC_INTERVAL);
+		return -1;
+	}
+	uac_reg_reset_ht_gc();
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		/* shift entries */
+		_reg_htable_gc->entries[i].byuuid = _reg_htable->entries[i].byuuid;
+		_reg_htable_gc->entries[i].byuser = _reg_htable->entries[i].byuser;
+		_reg_htable_gc->stime = time(NULL);
+
+		/* reset active table entries */
+		_reg_htable->entries[i].byuuid = NULL;
+		_reg_htable->entries[i].isize=0;
+		_reg_htable->entries[i].byuser = NULL;
+		_reg_htable->entries[i].usize = 0;
+	}
+	lock_release(_reg_htable_gc_lock);
 	return 0;
 }
 
@@ -236,6 +398,12 @@ int reg_ht_add_byuuid(reg_uac_t *reg)
 	unsigned int slot;
 	reg_item_t *ri = NULL;
 
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return -1;
+	}
+
 	ri = (reg_item_t*)shm_malloc(sizeof(reg_item_t));
 	if(ri==NULL)
 	{
@@ -245,9 +413,11 @@ int reg_ht_add_byuuid(reg_uac_t *reg)
 	memset(ri, 0, sizeof(reg_item_t));
 	slot = reg_get_entry(reg->h_uuid, _reg_htable->htsize);
 	ri->r = reg;
+	lock_get(&_reg_htable->entries[slot].lock);
 	ri->next = _reg_htable->entries[slot].byuuid;
 	_reg_htable->entries[slot].byuuid = ri;
 	_reg_htable->entries[slot].isize++;
+	lock_release(&_reg_htable->entries[slot].lock);
 	return 0;
 }
 
@@ -259,6 +429,12 @@ int reg_ht_add_byuser(reg_uac_t *reg)
 	unsigned int slot;
 	reg_item_t *ri = NULL;
 
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return -1;
+	}
+
 	ri = (reg_item_t*)shm_malloc(sizeof(reg_item_t));
 	if(ri==NULL)
 	{
@@ -268,9 +444,11 @@ int reg_ht_add_byuser(reg_uac_t *reg)
 	memset(ri, 0, sizeof(reg_item_t));
 	slot = reg_get_entry(reg->h_user, _reg_htable->htsize);
 	ri->r = reg;
+	lock_get(&_reg_htable->entries[slot].lock);
 	ri->next = _reg_htable->entries[slot].byuser;
 	_reg_htable->entries[slot].byuser = ri;
 	_reg_htable->entries[slot].usize++;
+	lock_release(&_reg_htable->entries[slot].lock);
 	return 0;
 }
 
@@ -295,18 +473,25 @@ int reg_ht_add(reg_uac_t *reg)
 
 	if(reg==NULL || _reg_htable==NULL)
 	{
-		LM_ERR("bad paramaers: %p/%p\n", reg, _reg_htable);
+		LM_ERR("bad parameters: %p/%p\n", reg, _reg_htable);
 		return -1;
 	}
+	if(reg->auth_password.len>UAC_REG_MAX_PASSWD_SIZE)
+	{
+		LM_ERR("bad parameters: %p/%p -- password too long %d\n",
+				reg, _reg_htable, reg->auth_password.len);
+		return -1;
+	}
+
 	len = reg->l_uuid.len + 1
 			+ reg->l_username.len + 1
 			+ reg->l_domain.len + 1
 			+ reg->r_username.len + 1
 			+ reg->r_domain.len + 1
 			+ reg->realm.len + 1
+			+ reg->auth_proxy.len + 1
 			+ reg->auth_username.len + 1
-			+ reg->auth_password.len + 1
-			+ reg->auth_proxy.len + 1;
+			+ UAC_REG_MAX_PASSWD_SIZE /*reg->auth_password.len*/ + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
 	{
@@ -326,9 +511,10 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->r_username, &reg->r_username);
 	reg_copy_shm(&nr->r_domain, &reg->r_domain);
 	reg_copy_shm(&nr->realm, &reg->realm);
-	reg_copy_shm(&nr->auth_username, &reg->auth_username);
-	reg_copy_shm(&nr->auth_password, &reg->auth_password);
 	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy);
+	reg_copy_shm(&nr->auth_username, &reg->auth_username);
+	/* password at the end, to be able to update it easily */
+	reg_copy_shm(&nr->auth_password, &reg->auth_password);
 
 	reg_ht_add_byuser(nr);
 	reg_ht_add_byuuid(nr);
@@ -340,11 +526,57 @@ int reg_ht_add(reg_uac_t *reg)
 /**
  *
  */
+int reg_ht_update_password(reg_uac_t *reg)
+{
+	unsigned int slot;
+	reg_item_t *ri = NULL;
+
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return -1;
+	}
+
+	if(reg->auth_password.len>UAC_REG_MAX_PASSWD_SIZE)
+	{
+		LM_ERR("password is too big: %d\n", reg->auth_password.len);
+		return -1;
+	}
+
+	slot = reg_get_entry(reg->h_user, _reg_htable->htsize);
+	lock_get(&_reg_htable->entries[slot].lock);
+	ri = _reg_htable->entries[slot].byuser;
+	while(ri) {
+		if(ri->r->l_uuid.len == reg->l_uuid.len
+				&& strncmp(ri->r->l_uuid.s, reg->l_uuid.s, reg->l_uuid.len)==0)
+		{
+			/* record found */
+			strncpy(ri->r->auth_password.s, reg->auth_password.s, reg->auth_password.len);
+			ri->r->auth_password.len = reg->auth_password.len;
+			ri->r->auth_password.s[reg->auth_password.len] = '\0';
+			lock_release(&_reg_htable->entries[slot].lock);
+			return 0;
+		}
+		ri = ri->next;
+	}
+	lock_release(&_reg_htable->entries[slot].lock);
+	return -1;
+}
+
+/**
+ *
+ */
 reg_uac_t *reg_ht_get_byuuid(str *uuid)
 {
 	unsigned int hash;
 	unsigned int slot;
 	reg_item_t *it = NULL;
+
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return NULL;
+	}
 
 	hash = reg_compute_hash(uuid);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
@@ -369,6 +601,12 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 	unsigned int hash;
 	unsigned int slot;
 	reg_item_t *it = NULL;
+
+	if(_reg_htable==NULL)
+	{
+		LM_ERR("reg hash table not initialized\n");
+		return NULL;
+	}
 
 	hash = reg_compute_hash(user);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
@@ -646,7 +884,7 @@ error:
 		ri->flags |= UAC_REG_DISABLED;
 done:
 	if(ri)
-		ri->flags &= ~UAC_REG_ONGOING|UAC_REG_AUTHSENT;
+		ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
 	shm_free(uuid);
 }
 
@@ -740,16 +978,28 @@ void uac_reg_timer(unsigned int ticks)
 	reg_item_t *it = NULL;
 	time_t tn;
 
+	if(_reg_htable==NULL)
+		return;
+
 	tn = time(NULL);
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
-		/* free entries */
+		/* walk through entries */
 		it = _reg_htable->entries[i].byuuid;
 		while(it)
 		{
 			uac_reg_update(it->r, tn);
 			it = it->next;
 		}
+	}
+
+	if(_reg_htable_gc!=NULL)
+	{
+		lock_get(_reg_htable_gc_lock);
+		if(_reg_htable_gc->stime!=0
+				&& _reg_htable_gc->stime < tn - UAC_REG_GC_INTERVAL)
+			uac_reg_reset_ht_gc();
+		lock_release(_reg_htable_gc_lock);
 	}
 }
 
@@ -813,7 +1063,7 @@ int uac_reg_load_db(void)
 	reg_db_con = reg_dbf.init(&reg_db_url);
 	if(reg_db_con==NULL)
 	{
-		LM_ERR("failed to connect to the database\n");        
+		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
 	if (reg_dbf.use_table(reg_db_con, &reg_db_table) < 0)
@@ -894,12 +1144,143 @@ int uac_reg_load_db(void)
 		}
 	}  while(RES_ROW_N(db_res)>0);
 	reg_dbf.free_result(reg_db_con, db_res);
+	reg_dbf.close(reg_db_con);
 
 done:
 	return 0;
 
 error:
+	if (reg_db_con) {
+		reg_dbf.free_result(reg_db_con, db_res);
+		reg_dbf.close(reg_db_con);
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+int uac_reg_db_refresh(str *pl_uuid)
+{
+	db1_con_t *reg_db_con = NULL;
+	db_func_t reg_dbf;
+	reg_uac_t reg;
+	db_key_t db_cols[10] = {
+		&l_uuid_column,
+		&l_username_column,
+		&l_domain_column,
+		&r_username_column,
+		&r_domain_column,
+		&realm_column,
+		&auth_username_column,
+		&auth_password_column,
+		&auth_proxy_column,
+		&expires_column
+	};
+	db_key_t db_keys[1] = {&l_uuid_column};
+	db_val_t db_vals[1];
+
+	db1_res_t* db_res = NULL;
+	int i, ret;
+
+	/* binding to db module */
+	if(reg_db_url.s==NULL)
+	{
+		LM_ERR("no db url\n");
+		return -1;
+	}
+
+	if(db_bind_mod(&reg_db_url, &reg_dbf))
+	{
+		LM_ERR("database module not found\n");
+		return -1;
+	}
+
+	if (!DB_CAPABILITY(reg_dbf, DB_CAP_ALL))
+	{
+		LM_ERR("database module does not "
+		    "implement all functions needed by the module\n");
+		return -1;
+	}
+
+	/* open a connection with the database */
+	reg_db_con = reg_dbf.init(&reg_db_url);
+	if(reg_db_con==NULL)
+	{
+		LM_ERR("failed to connect to the database\n");
+		return -1;
+	}
+	if (reg_dbf.use_table(reg_db_con, &reg_db_table) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
+	db_vals[0].type = DB1_STR;
+	db_vals[0].nul = 0;
+	db_vals[0].val.str_val.s = pl_uuid->s;
+	db_vals[0].val.str_val.len = pl_uuid->len;
+
+	if((ret=reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
+			1 /*nr keys*/, 10 /*nr cols*/, 0, &db_res))!=0
+		|| RES_ROW_N(db_res)<=0 )
+	{
+		reg_dbf.free_result(reg_db_con, db_res);
+		if( ret==0)
+		{
+			return 0;
+		} else {
+			goto error;
+		}
+	}
+
+	memset(&reg, 0, sizeof(reg_uac_t));;
+	i = 0;
+	/* check for NULL values ?!?! */
+	reg_db_set_attr(l_uuid, 0);
+	reg_db_set_attr(l_username, 1);
+	reg_db_set_attr(l_domain, 2);
+	reg_db_set_attr(r_username, 3);
+	reg_db_set_attr(r_domain, 4);
+	/* realm may be empty */
+	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
+		reg.realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
+		reg.realm.len = strlen(reg.realm.s);
+	}
+	reg_db_set_attr(auth_username, 6);
+	reg_db_set_attr(auth_password, 7);
+	reg_db_set_attr(auth_proxy, 8);
+	reg.expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
+
+	lock_get(_reg_htable_gc_lock);
+	if(reg_ht_get_byuuid(pl_uuid)!=NULL)
+	{
+		if(reg_ht_update_password(&reg)<0)
+		{
+			lock_release(_reg_htable_gc_lock);
+			LM_ERR("Error updating reg to htable\n");
+			goto error;
+		}
+	} else {
+		if(reg_ht_add(&reg)<0)
+		{
+			lock_release(_reg_htable_gc_lock);
+			LM_ERR("Error adding reg to htable\n");
+			goto error;
+		}
+	}
+	lock_release(_reg_htable_gc_lock);
+
 	reg_dbf.free_result(reg_db_con, db_res);
+	reg_dbf.close(reg_db_con);
+
+	return 0;
+
+error:
+	if (reg_db_con) {
+		reg_dbf.free_result(reg_db_con, db_res);
+		reg_dbf.close(reg_db_con);
+	}
 	return -1;
 }
 
@@ -1067,7 +1448,8 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
-		/* free entries */
+		lock_get(&_reg_htable->entries[i].lock);
+		/* walk through entries */
 		reg = _reg_htable->entries[i].byuuid;
 		while(reg)
 		{
@@ -1094,16 +1476,247 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 					"timer_expires", (int)reg->r->timer_expires
 				)<0)
 			{
+				lock_release(&_reg_htable->entries[i].lock);
 				rpc->fault(ctx, 500, "Internal error adding item");
 				return;
 			}
 			reg = reg->next;
 		}
+		lock_release(&_reg_htable->entries[i].lock);
+	}
+}
+
+static const char* rpc_uac_reg_info_doc[2] = {
+	"Return the details of registration for a particular record.",
+	0
+};
+
+static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
+{
+	int i;
+	reg_item_t *reg = NULL;
+	void* th;
+	str none = {"none", 4};
+	time_t tn;
+	str attr = {0};
+	str val = {0};
+	str *rval;
+
+	if(_reg_htable==NULL)
+	{
+		rpc->fault(ctx, 500, "Not enabled");
+		return;
+	}
+
+	if(rpc->scan(ctx, "S.S", &attr, &val)<2)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL)
+	{
+		LM_ERR("bad parameter values\n");
+		rpc->fault(ctx, 500, "Invalid Parameter Values");
+		return;
+	}
+
+	tn = time(NULL);
+
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		/* walk through entries */
+		lock_get(&_reg_htable->entries[i].lock);
+		reg = _reg_htable->entries[i].byuuid;
+		while(reg)
+		{
+			if(attr.len==10 && strncmp(attr.s, "l_username", 10)==0) {
+				rval = &reg->r->l_username;
+			} else if(attr.len==10 && strncmp(attr.s, "r_username", 10)==0) {
+				rval = &reg->r->r_username;
+			} else if(attr.len==6 && strncmp(attr.s, "l_uuid", 6)==0) {
+				rval = &reg->r->l_uuid;
+			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
+				rval = &reg->r->auth_username;
+			} else {
+				lock_release(&_reg_htable->entries[i].lock);
+				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
+				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
+				return;
+			}
+
+			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
+				/* add entry node */
+				if (rpc->add(ctx, "{", &th) < 0)
+				{
+					rpc->fault(ctx, 500, "Internal error creating rpc");
+					return;
+				}
+				if(rpc->struct_add(th, "SSSSSSSSSdddd",
+						"l_uuid",        &reg->r->l_uuid,
+						"l_username",    &reg->r->l_username,
+						"l_domain",      &reg->r->l_domain,
+						"r_username",    &reg->r->r_username,
+						"r_domain",      &reg->r->r_domain,
+						"realm",         &reg->r->realm,
+						"auth_username", &reg->r->auth_username,
+						"auth_password", &reg->r->auth_password,
+						"auth_proxy",    (reg->r->auth_proxy.len)?
+											&reg->r->auth_proxy:&none,
+						"expires",       (int)reg->r->expires,
+						"flags",         (int)reg->r->flags,
+						"diff_expires",  (int)(reg->r->timer_expires - tn),
+						"timer_expires", (int)reg->r->timer_expires
+					)<0)
+				{
+					lock_release(&_reg_htable->entries[i].lock);
+					rpc->fault(ctx, 500, "Internal error adding item");
+					return;
+				}
+				return;
+			}
+			reg = reg->next;
+		}
+		lock_release(&_reg_htable->entries[i].lock);
+	}
+}
+
+
+static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
+{
+	int i;
+	reg_item_t *reg = NULL;
+	str attr = {0};
+	str val = {0};
+	str *rval;
+
+	if(_reg_htable==NULL)
+	{
+		rpc->fault(ctx, 500, "Not enabled");
+		return;
+	}
+
+	if(rpc->scan(ctx, "S.S", &attr, &val)<2)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL)
+	{
+		LM_ERR("bad parameter values\n");
+		rpc->fault(ctx, 500, "Invalid Parameter Values");
+		return;
+	}
+
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		lock_get(&_reg_htable->entries[i].lock);
+		/* walk through entries */
+		reg = _reg_htable->entries[i].byuuid;
+		while(reg)
+		{
+			if(attr.len==10 && strncmp(attr.s, "l_username", 10)==0) {
+				rval = &reg->r->l_username;
+			} else if(attr.len==10 && strncmp(attr.s, "r_username", 10)==0) {
+				rval = &reg->r->r_username;
+			} else if(attr.len==6 && strncmp(attr.s, "l_uuid", 6)==0) {
+				rval = &reg->r->l_uuid;
+			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
+				rval = &reg->r->auth_username;
+			} else {
+				lock_release(&_reg_htable->entries[i].lock);
+				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
+				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
+				return;
+			}
+
+			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
+				/* found */
+				if(mode==1) {
+					reg->r->flags |= fval;
+				} else {
+					reg->r->flags &= ~fval;
+				}
+				reg->r->timer_expires = time(NULL) + 1;
+				lock_release(&_reg_htable->entries[i].lock);
+				return;
+			}
+			reg = reg->next;
+		}
+		lock_release(&_reg_htable->entries[i].lock);
+	}
+}
+
+static const char* rpc_uac_reg_enable_doc[2] = {
+	"Enable registration for a particular record.",
+	0
+};
+
+static void rpc_uac_reg_enable(rpc_t* rpc, void* ctx)
+{
+	rpc_uac_reg_update_flag(rpc, ctx, 1, UAC_REG_DISABLED);
+}
+
+static const char* rpc_uac_reg_disable_doc[2] = {
+	"Disable registration for a particular record.",
+	0
+};
+
+static void rpc_uac_reg_disable(rpc_t* rpc, void* ctx)
+{
+	rpc_uac_reg_update_flag(rpc, ctx, 0, UAC_REG_DISABLED);
+}
+
+static const char* rpc_uac_reg_reload_doc[2] = {
+	"Reload records from database.",
+	0
+};
+
+static void rpc_uac_reg_reload(rpc_t* rpc, void* ctx)
+{
+	int ret;
+	if(uac_reg_ht_shift()<0) {
+		rpc->fault(ctx, 500, "Failed to shift records - check log messages");
+		return;
+	}
+	lock_get(_reg_htable_gc_lock);
+	ret =  uac_reg_load_db();
+	lock_release(_reg_htable_gc_lock);
+	if(ret<0) {
+		rpc->fault(ctx, 500, "Failed to reload records - check log messages");
+		return;
+	}
+}
+
+static const char* rpc_uac_reg_refresh_doc[2] = {
+	"Refresh a record from database.",
+	0
+};
+
+static void rpc_uac_reg_refresh(rpc_t* rpc, void* ctx)
+{
+	int ret;
+	str l_uuid;
+
+	if(rpc->scan(ctx, "S", &l_uuid)<1)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	ret =  uac_reg_db_refresh(&l_uuid);
+	if(ret<0) {
+		rpc->fault(ctx, 500, "Failed to refresh record - check log messages");
+		return;
 	}
 }
 
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, 0},
+	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
+	{"uac.reg_enable",  rpc_uac_reg_enable,  rpc_uac_reg_enable_doc,  0},
+	{"uac.reg_disable", rpc_uac_reg_disable, rpc_uac_reg_disable_doc, 0},
+	{"uac.reg_reload",  rpc_uac_reg_reload,  rpc_uac_reg_reload_doc,  0},
+	{"uac.reg_refresh", rpc_uac_reg_refresh, rpc_uac_reg_refresh_doc, 0},
 	{0, 0, 0, 0}
 };
 

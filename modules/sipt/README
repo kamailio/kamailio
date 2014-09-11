@@ -21,12 +21,21 @@ Torrey Searle
 
         4. Exported pseudo-variables
 
-              4.1. $sipt_presentation
-              4.2. $sipt_screening
-              4.3. $sipt_hop_counter
-              4.4. $sipt_cpc
-              4.5. $sipt_calling_party_nai
-              4.6. $sipt_called_party_nai
+              4.1. $sipt(calling_party_number.presentation) /
+                      $sipt_presentation
+
+              4.2. $sipt(calling_party_number.screening) / $sipt_screening
+              4.3. $sipt(hop_counter) / $sipt_hop_counter
+              4.4. $sipt(calling_party_category) / $sipt(cpc) / $sipt_cpc
+              4.5. $sipt(calling_party_number.nature_of_address) /
+                      $sipt.(calling_party_number.nai) /
+                      $sipt_calling_party_nai
+
+              4.6. $sipt(called_party_number.nature_of_address) /
+                      $sipt(called_party_number.nai) /
+                      $sipt_called_party_nai
+
+              4.7. $sipt(event_info)
 
    List of Tables
 
@@ -34,6 +43,7 @@ Torrey Searle
    1.2. Screening Indicator Values
    1.3. Calling Nature of Address Values
    1.4. Called Nature of Address Values
+   1.5. Event Info Values
 
    List of Examples
 
@@ -59,12 +69,17 @@ Chapter 1. Admin Guide
 
    4. Exported pseudo-variables
 
-        4.1. $sipt_presentation
-        4.2. $sipt_screening
-        4.3. $sipt_hop_counter
-        4.4. $sipt_cpc
-        4.5. $sipt_calling_party_nai
-        4.6. $sipt_called_party_nai
+        4.1. $sipt(calling_party_number.presentation) / $sipt_presentation
+        4.2. $sipt(calling_party_number.screening) / $sipt_screening
+        4.3. $sipt(hop_counter) / $sipt_hop_counter
+        4.4. $sipt(calling_party_category) / $sipt(cpc) / $sipt_cpc
+        4.5. $sipt(calling_party_number.nature_of_address) /
+                $sipt.(calling_party_number.nai) / $sipt_calling_party_nai
+
+        4.6. $sipt(called_party_number.nature_of_address) /
+                $sipt(called_party_number.nai) / $sipt_called_party_nai
+
+        4.7. $sipt(event_info)
 
 1. Overview
 
@@ -115,14 +130,19 @@ sipt_set_calling($fU, 4, 0, 3);
 
 4. Exported pseudo-variables
 
-   4.1. $sipt_presentation
-   4.2. $sipt_screening
-   4.3. $sipt_hop_counter
-   4.4. $sipt_cpc
-   4.5. $sipt_calling_party_nai
-   4.6. $sipt_called_party_nai
+   4.1. $sipt(calling_party_number.presentation) / $sipt_presentation
+   4.2. $sipt(calling_party_number.screening) / $sipt_screening
+   4.3. $sipt(hop_counter) / $sipt_hop_counter
+   4.4. $sipt(calling_party_category) / $sipt(cpc) / $sipt_cpc
+   4.5. $sipt(calling_party_number.nature_of_address) /
+          $sipt.(calling_party_number.nai) / $sipt_calling_party_nai
 
-4.1. $sipt_presentation
+   4.6. $sipt(called_party_number.nature_of_address) /
+          $sipt(called_party_number.nai) / $sipt_called_party_nai
+
+   4.7. $sipt(event_info)
+
+4.1. $sipt(calling_party_number.presentation) / $sipt_presentation
 
    Returns the value of the Address presentation restricted indicator
    contained in the Calling Party Number header of the IAM message if it
@@ -137,7 +157,7 @@ sipt_set_calling($fU, 4, 0, 3);
    Example 1.3. sipt_presentation pseudo-variable usage
 ...
 # add privacy header if restriction is requested
-if($sipt_presentation == 1)
+if($sipt(calling_party_number.presentation) == 1)
 {
         append_hf("Privacy: id\r\n");
         $fn = "Anonymous";
@@ -145,7 +165,7 @@ if($sipt_presentation == 1)
 
 ...
 
-4.2. $sipt_screening
+4.2. $sipt(calling_party_number.screening) / $sipt_screening
 
    Returns the value of the Screening Indicator contained in the Calling
    Party Number header of the IAM message if it exists. Returns -1 if
@@ -162,7 +182,7 @@ if($sipt_presentation == 1)
 
 # remove P-Asserted-Identity header if the screening isn't verified
 # or network provided
-$avp(s:screening) = $sipt_screening;
+$avp(s:screening) = $sipt(calling_party_number.screening);
 if($avp(s:screening) != 1 && $avp(s:screening) != 3)
 {
         remove_hf("P-Asserted-Id");
@@ -170,7 +190,7 @@ if($avp(s:screening) != 1 && $avp(s:screening) != 3)
 
 ...
 
-4.3. $sipt_hop_counter
+4.3. $sipt(hop_counter) / $sipt_hop_counter
 
    Returns the value of the Hop Counter for the IAM message if it exists.
    Returns -1 if there isn't a hop counter.
@@ -178,7 +198,7 @@ if($avp(s:screening) != 1 && $avp(s:screening) != 3)
    Example 1.5. sipt_hop_counter pseudo-variable usage
 ...
 # get the hop counter and update the Max-Forwards header if it exists
-$avp(s:hop) = $sipt_hop_counter;
+$avp(s:hop) = $sipt(hop_counter);
 if($avp(s:hop) > 0)
 {
         remove_hf("Max-Forwards");
@@ -187,7 +207,7 @@ if($avp(s:hop) > 0)
 
 ...
 
-4.4. $sipt_cpc
+4.4. $sipt(calling_party_category) / $sipt(cpc) / $sipt_cpc
 
    Returns the value of the Calling Party Category for the IAM message.
    Returns -1 if there is a parsing error.
@@ -195,11 +215,12 @@ if($avp(s:hop) > 0)
    Example 1.6. sipt_cpc pseudo-variable usage
 ...
 # get the Cpc code and set put it in a custom sip header
-append_hf("X-CPC: $sipt_cpc\r\n");
+append_hf("X-CPC: $sipt(cpc)\r\n");
 
 ...
 
-4.5. $sipt_calling_party_nai
+4.5. $sipt(calling_party_number.nature_of_address) /
+$sipt.(calling_party_number.nai) / $sipt_calling_party_nai
 
    Returns the value of the Nature of Address Indicator of the Calling
    Party for the IAM message. Returns -1 if there is a parsing error or if
@@ -215,14 +236,15 @@ append_hf("X-CPC: $sipt_cpc\r\n");
    Example 1.7. sipt_calling_party_nai pseudo-variable usage
 ...
 # get the Calling Nai and add country code if national
-if($sipt_calling_party_nai == 3)
+if($sipt(calling_party_number.nai) == 3)
 {
         $fU = "32" + "$fU";
 }
 
 ...
 
-4.6. $sipt_called_party_nai
+4.6. $sipt(called_party_number.nature_of_address) /
+$sipt(called_party_number.nai) / $sipt_called_party_nai
 
    Returns the value of the Nature of Address Indicator of the Called
    Party for the IAM message. Returns -1 if there is a parsing error.
@@ -238,9 +260,23 @@ if($sipt_calling_party_nai == 3)
    Example 1.8. sipt_called_party_nai pseudo-variable usage
 ...
 # get the Called Nai and add country code if national
-if($sipt_called_party_nai == 3)
+if($sipt(called_party_number.nai) == 3)
 {
         $rU = "32" + "$rU";
 }
 
 ...
+
+4.7. $sipt(event_info)
+
+   Returns the value of the Event Info header of the CPG message. Returns
+   -1 if there is a parsing error.
+
+   Table 1.5. Event Info Values
+   0 Spare
+   1 ALERTING
+   2 PROGRESS
+   3 In-band information or an appropriate pattern is now available
+   4 Call forward on busy
+   5 Call forward on no reply
+   6 Call forward unconditional

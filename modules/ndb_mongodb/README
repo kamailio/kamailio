@@ -1,0 +1,251 @@
+NDB_MONGODB Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. server (str)
+
+        4. Functions
+
+              4.1. mongodb_cmd(srvname, dbname, cname, command, replyid)
+              4.2. mongodb_cmd(srvname, dbname, cname, command, replyid)
+              4.3. mongodb_find(srvname, dbname, cname, command, replyid)
+              4.4. mongodb_next(replyid)
+              4.5. mongodb_free(replyid)
+
+   List of Examples
+
+   1.1. Set server parameter
+   1.2. mongodb_cmd usage
+   1.3. mongodb_cmd_simple usage
+   1.4. mongodb_find usage
+   1.5. mongodb_next usage
+   1.6. mongodb_free usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. server (str)
+
+   4. Functions
+
+        4.1. mongodb_cmd(srvname, dbname, cname, command, replyid)
+        4.2. mongodb_cmd(srvname, dbname, cname, command, replyid)
+        4.3. mongodb_find(srvname, dbname, cname, command, replyid)
+        4.4. mongodb_next(replyid)
+        4.5. mongodb_free(replyid)
+
+1. Overview
+
+   This module provides a non-db connector to interact with MongoDB NoSQL
+   server from configuration file. You can read more about MongoDB at
+   http://www.mongodb.org.
+
+   It can connect to many MongoDB servers and store the results in
+   different containers.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * mongo-c-driver - available at
+       https://github.com/mongodb/mongo-c-driver
+
+3. Parameters
+
+   3.1. server (str)
+
+3.1. server (str)
+
+   Specify the details to connect to REDIS server. It takes a list of
+   attribute=value separated by semicolon, the attributes can be name and
+   uri. Name is a generic identifier to be used with module functions. The
+   uri parameter must be a valid MongoDB database connection string.
+
+   You can set this parameter many times, in case you want to connect to
+   many MongoDB servers, just give different attributes and use the
+   specific server name when querying the MongoDB instance.
+
+   Default value is NULL.
+
+   Example 1.1. Set server parameter
+...
+modparam("ndb_mongodb", "server", "name=mgs1;uri='mongodb://localhost/kamailio'"
+)
+modparam("ndb_mongodb", "server", "name=mgs2;uri='mongodb://127.0.0.2/kamailio'"
+)
+...
+
+4. Functions
+
+   4.1. mongodb_cmd(srvname, dbname, cname, command, replyid)
+   4.2. mongodb_cmd(srvname, dbname, cname, command, replyid)
+   4.3. mongodb_find(srvname, dbname, cname, command, replyid)
+   4.4. mongodb_next(replyid)
+   4.5. mongodb_free(replyid)
+
+4.1.  mongodb_cmd(srvname, dbname, cname, command, replyid)
+
+   Send a valid command to MongoDB server identified by srvname. The reply
+   will be stored in a local container identified by replyid. All the
+   parameters can be strings with pseudo-variables that are evaluated at
+   runtime.
+
+   The reply can be accessed via pseudo-variable $mongodb(key). The key
+   can be: type - type of the reply; value - the value in JSON format
+   returned by MongoDB server; info - in case of error from MongoDB, it
+   will contain an info message.
+
+   The result can contain many documents, see mongodb_next() function for
+   more details.
+
+   Meaning of the parameters:
+     * srvname - MongoDB server name as given via 'server' parameter.
+     * dbname - MongoDB database name.
+     * cname - MongodDB collection (table) name.
+     * command - valid MongoDB command given as JSON string.
+     * replyid - the name of the container to store the response.
+
+   The function can be used from ANY_ROUTE.
+
+   Example 1.2. mongodb_cmd usage
+...
+if(mongodb_cmd("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "mgr1"))
+ {
+        xlog("response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+}
+...
+
+4.2.  mongodb_cmd(srvname, dbname, cname, command, replyid)
+
+   Send a valid command to MongoDB server identified by srvname. The reply
+   will be stored in a local container identified by replyid. All the
+   parameters can be strings with pseudo-variables that are evaluated at
+   runtime.
+
+   The reply can be accessed via pseudo-variable $mongodb(key). The key
+   can be: type - type of the reply; value - the value in JSON format
+   returned by MongoDB server; info - in case of error from MongoDB, it
+   will contain an info message.
+
+   This function should be used when the response has only one document.
+
+   See mongodb_cmd() for the meaning of the parameters.
+
+   The function can be used from ANY_ROUTE.
+
+   Example 1.3. mongodb_cmd_simple usage
+...
+if(mongodb_cmd_simple("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "
+mgr1")) {
+        xlog("response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+}
+...
+
+4.3.  mongodb_find(srvname, dbname, cname, command, replyid)
+
+   Send a find command to MongoDB server identified by srvname. The reply
+   will be stored in a local container identified by replyid. All the
+   parameters can be strings with pseudo-variables that are evaluated at
+   runtime.
+
+   The reply can be accessed via pseudo-variable $mongodb(key). The key
+   can be: type - type of the reply; value - the value in JSON format
+   returned by MongoDB server; info - in case of error from MongoDB, it
+   will contain an info message.
+
+   This function is useful for querying collections and accessing the
+   results.
+
+   See mongodb_cmd() for the meaning of the parameters, with the remark
+   that command has to be a valid filter JSON document, like for find()
+   command in mongoc command line client tool.
+
+   The function can be used from ANY_ROUTE.
+
+   Example 1.4. mongodb_find usage
+...
+if(mongodb_find("mgs1", "kamailio", "acc", "{ \"src_user\" : \"111\" }", "mgr1")
+) {
+        xlog("response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+}
+...
+
+4.4.  mongodb_next(replyid)
+
+   Moves to next document in a MongoDB reply. This function can be used
+   after a succesful mongodb_cmd() or mongodb_find(). It returns true if
+   there is a shift to document. The current document becomes available
+   via $mongodb(key) variable.
+
+   Example 1.5. mongodb_next usage
+...
+if(mongodb_find("mgs1", "kamailio", "acc", "{ \"src_user\" : \"111\" }", "mgr1")
+) {
+    xlog("first response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+    while(mongodb_next("mgr1") ){
+        xlog("next response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+    }
+}
+mongodb_free("mgr1");
+...
+
+4.5.  mongodb_free(replyid)
+
+   Frees data in a previous reply from memory. After this function call,
+   accessing to a freed replyid returns null value.
+
+   It is not really necessary to free a reply to use it again in a new
+   mongodb_cmd function, being automatically freed on next command
+   execution, but for freeing used resources (e.g., memory), it is
+   recommended to do it.
+
+   Example 1.6. mongodb_free usage
+...
+if(mongodb_cmd_simple("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "
+mgr1")) {
+        xlog("response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+}
+mongodb_free("mgr1");
+...

@@ -9,7 +9,7 @@
 
 <table id="missed_calls" xmlns:db="http://docbook.org/ns/docbook">
     <name>missed_calls</name>
-    <version>3</version>
+    <version>4</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the ACC module for keeping track of missed calls. This table is similar to the 'acc' table. More information is available at: &KAMAILIO_MOD_DOC;acc.html</db:para>

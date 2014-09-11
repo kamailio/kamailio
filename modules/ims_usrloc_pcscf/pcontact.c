@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -55,6 +55,11 @@
 #include "ul_callback.h"
 #include "usrloc.h"
 #include "../../lib/ims/useful_defs.h"
+#include "usrloc_db.h"
+#include "../../parser/parse_uri.h"
+
+extern int db_mode;
+extern int hashing_type;
 
 /*! retransmission detection interval in seconds */
 int cseq_delay = 20;
@@ -111,6 +116,8 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 	int i;
 	ppublic_t* ppublic_ptr;
 	int is_default = 1;
+	struct sip_uri sip_uri;
+
 
 	*_c = (pcontact_t*)shm_malloc(sizeof(pcontact_t));
 	if (*_c == 0) {
@@ -126,7 +133,7 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 
 	(*_c)->aor.s = (char*) shm_malloc(_contact->len);
 	if ((*_c)->aor.s == 0) {
-		LM_ERR("no more share memory\n");
+		LM_ERR("no more shared memory\n");
 		shm_free(*_c);
 		*_c = 0;
 		return -2;
@@ -134,7 +141,20 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 	memcpy((*_c)->aor.s, _contact->s, _contact->len);
 	(*_c)->aor.len = _contact->len;
 	(*_c)->domain = (str*)_d;
-	(*_c)->aorhash = core_hash(_contact, 0, 0);
+
+	if (parse_uri((*_c)->aor.s, (*_c)->aor.len, &sip_uri) != 0) {
+		LM_ERR("unable to determine contact host from uri [%.*s\n", (*_c)->aor.len, (*_c)->aor.s);
+		shm_free((*_c)->aor.s);
+		shm_free(*_c);
+		*_c = 0;
+		return -2;
+	}
+	(*_c)->contact_host.s = sip_uri.host.s;
+	(*_c)->contact_host.len = sip_uri.host.len;
+	(*_c)->contact_port = sip_uri.port_no;
+	(*_c)->contact_user.s = sip_uri.user.s;
+	(*_c)->contact_user.len = sip_uri.user.len;
+
 	(*_c)->expires = _ci->expires;
 	(*_c)->reg_state = _ci->reg_state;
 
@@ -152,6 +172,18 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 		(*_c)->received_host.len = _ci->received_host.len;
 		(*_c)->received_port = _ci->received_port;
 		(*_c)->received_proto = _ci->received_proto;
+	}
+
+	if (hashing_type==0) {
+		(*_c)->aorhash = core_hash(_contact, 0, 0);
+	} else if (hashing_type==1) {
+		(*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
+	} else {
+		if ((*_c)->received_host.len > 0) {
+			(*_c)->aorhash = core_hash(&(*_c)->received_host, 0, 0);	
+		} else {
+			(*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
+		}
 	}
 
 	//setup public ids
@@ -230,7 +262,19 @@ void free_pcontact(pcontact_t* _c) {
 
 static inline void nodb_timer(pcontact_t* _c)
 {
-	LM_DBG("Running nodb timer on <%.*s> which has expires %d and expires in %d seconds\n", _c->aor.len, _c->aor.s, (int)_c->expires, (int)(_c->expires - time(NULL)));
+	LM_DBG("Running nodb timer on <%.*s>, "
+			"Reg state: %s, "
+			"Expires: %d, "
+			"Expires in: %d seconds, "
+			"Received: %.*s:%d, "
+			"Proto: %d\n",
+			_c->aor.len, _c->aor.s,
+			reg_state_to_string(_c->reg_state),
+			(int)_c->expires,
+			(int)(_c->expires - time(NULL)),
+			_c->received_host.len, _c->received_host.s,
+			_c->received_port,
+			_c->received_proto);
 
 	get_act_time();
 	if ((_c->expires - act_time) <= -10) {//we've allowed some grace time TODO: add as parameter
@@ -238,6 +282,11 @@ static inline void nodb_timer(pcontact_t* _c)
 		if (exists_ulcb_type(PCSCF_CONTACT_EXPIRE)) {
 			run_ul_callbacks(PCSCF_CONTACT_EXPIRE, _c);
 		}
+
+		if (db_mode == WRITE_THROUGH && db_delete_pcontact(_c) != 0) {
+			LM_ERR("Error deleting ims_usrloc_pcscf record in DB");
+		}
+
 		update_stat(_c->slot->d->expired, 1);
 		mem_delete_pcontact(_c->slot->d, _c);
 		return;

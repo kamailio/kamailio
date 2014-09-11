@@ -35,9 +35,9 @@ extern str carrierroute_db_url;
 extern db1_con_t * carrierroute_dbh;
 extern db_func_t carrierroute_dbf;
 
-#define carrierroute_DB_URL { "db_url", STR_PARAM, &carrierroute_db_url.s },
+#define carrierroute_DB_URL { "db_url", PARAM_STR, &carrierroute_db_url },
 
-#define carrierroute_DB_TABLE { "carrierroute_table", STR_PARAM, &carrierroute_table.s },
+#define carrierroute_DB_TABLE { "carrierroute_table", PARAM_STR, &carrierroute_table },
 
 extern str carrierroute_table;
 
@@ -55,23 +55,23 @@ extern str carrierroute_rewrite_prefix_col;
 extern str carrierroute_rewrite_suffix_col;
 extern str carrierroute_description_col;
 #define carrierroute_DB_COLS \
-{ "carrierroute_id_col", STR_PARAM, &carrierroute_id_col.s }, \
-{ "carrierroute_carrier_col", STR_PARAM, &carrierroute_carrier_col.s }, \
-{ "carrierroute_domain_col", STR_PARAM, &carrierroute_domain_col.s }, \
-{ "carrierroute_scan_prefix_col", STR_PARAM, &carrierroute_scan_prefix_col.s }, \
-{ "carrierroute_flags_col", STR_PARAM, &carrierroute_flags_col.s }, \
-{ "carrierroute_mask_col", STR_PARAM, &carrierroute_mask_col.s }, \
-{ "carrierroute_prob_col", STR_PARAM, &carrierroute_prob_col.s }, \
-{ "carrierroute_strip_col", STR_PARAM, &carrierroute_strip_col.s }, \
-{ "carrierroute_rewrite_host_col", STR_PARAM, &carrierroute_rewrite_host_col.s }, \
-{ "carrierroute_rewrite_prefix_col", STR_PARAM, &carrierroute_rewrite_prefix_col.s }, \
-{ "carrierroute_rewrite_suffix_col", STR_PARAM, &carrierroute_rewrite_suffix_col.s }, \
-{ "carrierroute_description_col", STR_PARAM, &carrierroute_description_col.s }, \
+{ "carrierroute_id_col", PARAM_STR, &carrierroute_id_col }, \
+{ "carrierroute_carrier_col", PARAM_STR, &carrierroute_carrier_col }, \
+{ "carrierroute_domain_col", PARAM_STR, &carrierroute_domain_col }, \
+{ "carrierroute_scan_prefix_col", PARAM_STR, &carrierroute_scan_prefix_col }, \
+{ "carrierroute_flags_col", PARAM_STR, &carrierroute_flags_col }, \
+{ "carrierroute_mask_col", PARAM_STR, &carrierroute_mask_col }, \
+{ "carrierroute_prob_col", PARAM_STR, &carrierroute_prob_col }, \
+{ "carrierroute_strip_col", PARAM_STR, &carrierroute_strip_col }, \
+{ "carrierroute_rewrite_host_col", PARAM_STR, &carrierroute_rewrite_host_col }, \
+{ "carrierroute_rewrite_prefix_col", PARAM_STR, &carrierroute_rewrite_prefix_col }, \
+{ "carrierroute_rewrite_suffix_col", PARAM_STR, &carrierroute_rewrite_suffix_col }, \
+{ "carrierroute_description_col", PARAM_STR, &carrierroute_description_col }, \
 
 /* table version */
 extern const unsigned int carrierroute_version;
 
-#define carrierfailureroute_DB_TABLE { "carrierfailureroute_table", STR_PARAM, &carrierfailureroute_table.s },
+#define carrierfailureroute_DB_TABLE { "carrierfailureroute_table", PARAM_STR, &carrierfailureroute_table },
 
 extern str carrierfailureroute_table;
 
@@ -87,21 +87,21 @@ extern str carrierfailureroute_mask_col;
 extern str carrierfailureroute_next_domain_col;
 extern str carrierfailureroute_description_col;
 #define carrierfailureroute_DB_COLS \
-{ "carrierfailureroute_id_col", STR_PARAM, &carrierfailureroute_id_col.s }, \
-{ "carrierfailureroute_carrier_col", STR_PARAM, &carrierfailureroute_carrier_col.s }, \
-{ "carrierfailureroute_domain_col", STR_PARAM, &carrierfailureroute_domain_col.s }, \
-{ "carrierfailureroute_scan_prefix_col", STR_PARAM, &carrierfailureroute_scan_prefix_col.s }, \
-{ "carrierfailureroute_host_name_col", STR_PARAM, &carrierfailureroute_host_name_col.s }, \
-{ "carrierfailureroute_reply_code_col", STR_PARAM, &carrierfailureroute_reply_code_col.s }, \
-{ "carrierfailureroute_flags_col", STR_PARAM, &carrierfailureroute_flags_col.s }, \
-{ "carrierfailureroute_mask_col", STR_PARAM, &carrierfailureroute_mask_col.s }, \
-{ "carrierfailureroute_next_domain_col", STR_PARAM, &carrierfailureroute_next_domain_col.s }, \
-{ "carrierfailureroute_description_col", STR_PARAM, &carrierfailureroute_description_col.s }, \
+{ "carrierfailureroute_id_col", PARAM_STR, &carrierfailureroute_id_col }, \
+{ "carrierfailureroute_carrier_col", PARAM_STR, &carrierfailureroute_carrier_col }, \
+{ "carrierfailureroute_domain_col", PARAM_STR, &carrierfailureroute_domain_col }, \
+{ "carrierfailureroute_scan_prefix_col", PARAM_STR, &carrierfailureroute_scan_prefix_col }, \
+{ "carrierfailureroute_host_name_col", PARAM_STR, &carrierfailureroute_host_name_col }, \
+{ "carrierfailureroute_reply_code_col", PARAM_STR, &carrierfailureroute_reply_code_col }, \
+{ "carrierfailureroute_flags_col", PARAM_STR, &carrierfailureroute_flags_col }, \
+{ "carrierfailureroute_mask_col", PARAM_STR, &carrierfailureroute_mask_col }, \
+{ "carrierfailureroute_next_domain_col", PARAM_STR, &carrierfailureroute_next_domain_col }, \
+{ "carrierfailureroute_description_col", PARAM_STR, &carrierfailureroute_description_col }, \
 
 /* table version */
 extern const unsigned int carrierfailureroute_version;
 
-#define carrier_name_DB_TABLE { "carrier_name_table", STR_PARAM, &carrier_name_table.s },
+#define carrier_name_DB_TABLE { "carrier_name_table", PARAM_STR, &carrier_name_table },
 
 extern str carrier_name_table;
 
@@ -109,13 +109,13 @@ extern str carrier_name_table;
 extern str carrier_name_id_col;
 extern str carrier_name_carrier_col;
 #define carrier_name_DB_COLS \
-{ "carrier_name_id_col", STR_PARAM, &carrier_name_id_col.s }, \
-{ "carrier_name_carrier_col", STR_PARAM, &carrier_name_carrier_col.s }, \
+{ "carrier_name_id_col", PARAM_STR, &carrier_name_id_col }, \
+{ "carrier_name_carrier_col", PARAM_STR, &carrier_name_carrier_col }, \
 
 /* table version */
 extern const unsigned int carrier_name_version;
 
-#define domain_name_DB_TABLE { "domain_name_table", STR_PARAM, &domain_name_table.s },
+#define domain_name_DB_TABLE { "domain_name_table", PARAM_STR, &domain_name_table },
 
 extern str domain_name_table;
 
@@ -123,8 +123,8 @@ extern str domain_name_table;
 extern str domain_name_id_col;
 extern str domain_name_domain_col;
 #define domain_name_DB_COLS \
-{ "domain_name_id_col", STR_PARAM, &domain_name_id_col.s }, \
-{ "domain_name_domain_col", STR_PARAM, &domain_name_domain_col.s }, \
+{ "domain_name_id_col", PARAM_STR, &domain_name_id_col }, \
+{ "domain_name_domain_col", PARAM_STR, &domain_name_domain_col }, \
 
 /* table version */
 extern const unsigned int domain_name_version;
@@ -151,11 +151,5 @@ int carrierroute_db_init(void);
  * \return 0 means ok, -1 means an error occured.
  */
 int carrierroute_db_open(void);
-
-/*!
- * Update the variable length after eventual assignments from the config script.
- * This is necessary because we're using the 'str' type.
- */
-void carrierroute_db_vars(void);
 
 #endif

@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -111,7 +111,9 @@ typedef struct _peer_t{
 	int R_sock;				/**< socket used as receiver */
 	
 	time_t activity;		/**< timestamp of last activity */
+	time_t last_selected;	/**< timestamp this peer was last selected for routing - used in least recently used load balancing across metric */
 	int is_dynamic;			/**< whether this peer was accepted although it was not initially configured */
+	int disabled;			/**< administratively enable/disable a peer - ie remove/re-add from service dynamically */
 	int waitingDWA;			/**< if a Diameter Watch-dog Request was sent out and waiting for an answer */
 	
 	str send_pipe_name;		/**< pipe to signal messages to be sent out*/

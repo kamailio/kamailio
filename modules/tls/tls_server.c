@@ -1,10 +1,8 @@
 /*
- * $Id$
- *
  * TLS module - main server part
- * 
- * Copyright (C) 2001-2003 FhG FOKUS
+ *
  * Copyright (C) 2005-2010 iptelorg GmbH
+ * Copyright (C) 2013 Motorola Solutions, Inc.
  *
  * This file is part of SIP-router, a free SIP server.
  *
@@ -48,15 +46,21 @@
 #include "../../tcp_int_send.h"
 #include "../../tcp_read.h"
 #include "../../cfg/cfg.h"
+#include "../../route.h"
+#include "../../forward.h"
+#include "../../onsend.h"
 
 #include "tls_init.h"
 #include "tls_domain.h"
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_server.h"
+#include "tls_select.h"
 #include "tls_bio.h"
 #include "tls_dump_vf.h"
 #include "tls_cfg.h"
+
+int tls_run_event_routes(struct tcp_connection *c);
 
 /* low memory treshold for openssl bug #1491 workaround */
 #define LOW_MEM_NEW_CONNECTION_TEST() \
@@ -151,13 +155,10 @@ static int tls_complete_init(struct tcp_connection* c)
 		goto error2;
 	}
 	     /* Get current TLS configuration and increase reference
-	      * count immediately. There is no need to lock the structure
-	      * here, because it does not get deleted immediately. When
-	      * SER reloads TLS configuration it will put the old configuration
-	      * on a garbage queue and delete it later, so we know here that
-	      * the pointer we get from *tls_domains_cfg will be valid for a while,
-		  * at least by the time this function finishes
+	      * count immediately.
 	      */
+
+	lock_get(tls_domains_cfg_lock);
 	cfg = *tls_domains_cfg;
 
 	     /* Increment the reference count in the configuration structure, this
@@ -165,6 +166,7 @@ static int tls_complete_init(struct tcp_connection* c)
 	      * not get deleted if there are still connection referencing its SSL_CTX
 	      */
 	cfg->ref_count++;
+	lock_release(tls_domains_cfg_lock);
 
 	if (c->flags & F_CONN_PASSIVE) {
 		state=S_TLS_ACCEPTING;
@@ -439,6 +441,7 @@ int tls_connect(struct tcp_connection *c, int* error)
 			LOG(tls_log, "tls_connect: server did not "
 							"present a certificate\n");
 		}
+		tls_run_event_routes(c);
 	} else { /* 0 or < 0 */
 		*error = SSL_get_error(ssl, ret);
 	}
@@ -1346,4 +1349,43 @@ bug:
 	TLS_RD_TRACE("(%p, %p) end error => %d (*flags=%d)\n",
 					c, flags, ssl_read, *flags);
 	return -1;
+}
+
+
+static int _tls_evrt_connection_out = -1; /* default disabled */
+
+/*!
+ * lookup tls event routes
+ */
+void tls_lookup_event_routes(void)
+{
+	_tls_evrt_connection_out=route_lookup(&event_rt, "tls:connection-out");
+	if (_tls_evrt_connection_out>=0 && event_rt.rlist[_tls_evrt_connection_out]==0)
+		_tls_evrt_connection_out=-1; /* disable */
+	if(_tls_evrt_connection_out!=-1)
+		forward_set_send_info(1);
+}
+
+/**
+ *
+ */
+int tls_run_event_routes(struct tcp_connection *c)
+{
+	int backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t tmsg;
+
+	if(_tls_evrt_connection_out<0)
+		return 0;
+	if(p_onsend==0 || p_onsend->msg==0)
+		return 0;
+
+	backup_rt = get_route_type();
+	set_route_type(LOCAL_ROUTE);
+	init_run_actions_ctx(&ctx);
+	tls_set_pv_con(c);
+	run_top_route(event_rt.rlist[_tls_evrt_connection_out], &tmsg, 0);
+	tls_set_pv_con(0);
+	set_route_type(backup_rt);
+	return 0;
 }

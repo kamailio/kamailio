@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  *! \file
@@ -96,31 +96,6 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
 int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
 
 
-/* ==== Database related functions ====== */
-
-/*!
- * \brief Insert contact into the database
- * \param _c inserted contact
- * \return 0 on success, -1 on failure
- */
-int db_insert_ucontact(ucontact_t* _c);
-
-
-/*!
- * \brief Update contact in the database
- * \param _c updated contact
- * \return 0 on success, -1 on failure
- */
-int db_update_ucontact(ucontact_t* _c);
-
-
-/*!
- * \brief Delete contact from the database
- * \param _c deleted contact
- * \return 0 on success, -1 on failure
- */
-int db_delete_ucontact(ucontact_t* _c);
-
 /* ====== Module interface ====== */
 
 /*!
@@ -131,5 +106,9 @@ int db_delete_ucontact(ucontact_t* _c);
  * \return 0 on success, -1 on failure
  */
 int update_ucontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
+
+int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);
+
+int add_dialog_data_to_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);
 
 #endif

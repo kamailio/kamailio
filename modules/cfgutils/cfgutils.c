@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * cfgutils module: random probability functions for Kamailio;
  * it provide functions to make a decision in the script
@@ -131,7 +131,7 @@ static int mod_init(void);
 static void mod_destroy(void);
 
 static int initial_prob = 10;
-static int *probability;
+static int *probability = NULL;
 
 static char config_hash[MD5_LEN];
 static char* hash_file = NULL;
@@ -195,7 +195,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={ 
 	{"initial_probability", INT_PARAM, &initial_prob   },
 	{"initial_gflags",      INT_PARAM, &initial_gflags },
-	{"hash_file",           STR_PARAM, &hash_file      },
+	{"hash_file",           PARAM_STRING, &hash_file      },
 	{"lock_set_size",       INT_PARAM, &_cfg_lock_size },
 	{0,0,0}
 };

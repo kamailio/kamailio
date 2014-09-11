@@ -1,5 +1,6 @@
 table_name(string) table_version(int) 
 acc:4
+acc_cdrs:1
 active_watchers:11
 address:6
 aliases:6
@@ -32,6 +33,8 @@ location:6
 location_attrs:1
 matrix:1
 missed_calls:3
+mohqcalls:1
+mohqueues:1
 mtree:1
 mtrees:2
 pdt:1

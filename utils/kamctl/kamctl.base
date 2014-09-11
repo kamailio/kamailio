@@ -53,6 +53,17 @@ if [ -z "$AWK" ] ; then
 	fi
 	AWK="$TOOLPATH"
 fi
+if [ -z "$GDB" ] ; then
+	locate_tool gdb
+	if [ -z "$TOOLPATH" ] ; then
+		# now error, but we can look for alternative names if it is the case
+		GDB=""
+		# echo "error: 'gdb' tool not found: set GDB variable to correct tool path"
+		# exit
+	else
+		GDB="$TOOLPATH"
+	fi
+fi
 if [ -z "$MD5" ]; then
 	locate_tool md5sum md5
 	if [ -z "$TOOLPATH" ] ; then
@@ -310,7 +321,14 @@ DISPATCHER_ID_COLUMN=id
 DISPATCHER_SETID_COLUMN=setid
 DISPATCHER_DESTINATION_COLUMN=destination
 DISPATCHER_FLAGS_COLUMN=flags
+DISPATCHER_PRIORITY_COLUMN=priority
+DISPATCHER_ATTRS_COLUMN=attrs
 DISPATCHER_DESCRIPTION_COLUMN=description
+
+# dialog tables
+if [ -z "$DIALOG_TABLE" ] ; then
+	DIALOG_TABLE=dialog
+fi
 
 # dialplan tables
 if [ -z "$DIALPLAN_TABLE" ] ; then
@@ -333,9 +351,10 @@ DIALPLAN_ATTRS_COLUMN=attrs
 
 usage_base() {
 	echo
-	mecho " -- command 'start|stop|restart'"
+	mecho " -- command 'start|stop|restart|trap'"
 	echo
 cat <<EOF
+ trap ............................... trap with gdb Kamailio processes
  restart ............................ restart Kamailio
  start .............................. start Kamailio
  stop ............................... stop Kamailio
@@ -425,6 +444,8 @@ cat <<EOF
  show <username> .................... show subscriber attributes (*)
  passwd <username> <passwd> ......... change user's password (*)
  rm <username> ...................... delete a user (*)
+ sets <username> <attr> <val> ....... set string attribute (column value)
+ setn <username> <attr> <val> ....... set numeric attribute (column value)
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_subscriber"
@@ -466,18 +487,31 @@ usage_dispatcher() {
 	mecho " -- command 'dispatcher' - manage dispatcher"
 	echo
 cat <<EOF
-   * Examples:  dispatcher addgw 1 sip:1.2.3.1:5050 1 'outbound gateway'
-   *            dispatcher addgw 2 sip:1.2.3.4:5050 3 ''
-   *            dispatcher rmgw 4
+   * Examples: dispatcher add 1 sip:1.2.3.1:5050 1 5 'prefix=123' 'gw one'
+   *           dispatcher add 2 sip:1.2.3.4:5050 3 0
+   *           dispatcher rm 4
  dispatcher show ..................... show dispatcher gateways
  dispatcher reload ................... reload dispatcher gateways
  dispatcher dump ..................... show in memory dispatcher gateways
- dispatcher addgw <setid> <destination> <flags> <description>
+ dispatcher add <setid> <destination> [flags] [priority] [attrs] [description]
             .......................... add gateway
- dispatcher rmgw <id> ................ delete gateway
+ dispatcher rm <id> .................. delete gateway
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dispatcher"
+
+usage_dialog() {
+	echo
+	mecho " -- command 'dialog' - manage dialog records"
+	echo
+cat <<EOF
+   * Examples: dialog show
+   *           dialog showdb
+ dialog show ..................... show in-memory dialog records
+ dialog showdb ................... show database dialog records
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dialog"
 
 usage_dialplan() {
 	echo

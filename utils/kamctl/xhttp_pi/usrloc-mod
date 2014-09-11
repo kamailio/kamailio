@@ -4,7 +4,7 @@
 			<db_table_id>location</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>ruid</field></col>
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
@@ -90,7 +90,7 @@
 			<db_table_id>location_attrs</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>ruid</field></col>
 				<col><field>username</field></col>
 				<col><field>domain</field></col>

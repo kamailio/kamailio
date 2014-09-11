@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -32,6 +32,8 @@ int pv_parse_mq_name(pv_spec_p sp, str *in);
 int pv_get_mqk(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_get_mqv(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+int pv_get_mq_size(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int mq_head_defined(void);

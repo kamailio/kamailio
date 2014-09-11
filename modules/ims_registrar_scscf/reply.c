@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -412,61 +412,66 @@ int build_contact(ucontact_t* c, contact_for_header_t** contact_header) {
     tmp_contact_header->data_len = calc_buf_len(c);
     tmp_contact_header->buf = (char*)shm_malloc(tmp_contact_header->data_len);
 
-    p = tmp_contact_header->buf;
+    if (tmp_contact_header->data_len) {
+        p = tmp_contact_header->buf;
 
-    memcpy(p, CONTACT_BEGIN, CONTACT_BEGIN_LEN);
-    p += CONTACT_BEGIN_LEN;
+        memcpy(p, CONTACT_BEGIN, CONTACT_BEGIN_LEN);
+        p += CONTACT_BEGIN_LEN;
 
-    fl = 0;
-    while (c) {
-        if (VALID_CONTACT(c, act_time)) {
-            if (fl) {
-                memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
-                p += CONTACT_SEP_LEN;
-            } else {
-                fl = 1;
-            }
+        fl = 0;
+        while (c) {
+            if (VALID_CONTACT(c, act_time)) {
+                if (fl) {
+                    memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
+                    p += CONTACT_SEP_LEN;
+                } else {
+                    fl = 1;
+                }
 
-            *p++ = '<';
-            memcpy(p, c->c.s, c->c.len);
-            p += c->c.len;
-            *p++ = '>';
+                *p++ = '<';
+                memcpy(p, c->c.s, c->c.len);
+                p += c->c.len;
+                *p++ = '>';
 
-            len = len_q(c->q);
-            if (len) {
-                memcpy(p, Q_PARAM, Q_PARAM_LEN);
-                p += Q_PARAM_LEN;
-                memcpy(p, q2str(c->q, 0), len);
+                len = len_q(c->q);
+                if (len) {
+                    memcpy(p, Q_PARAM, Q_PARAM_LEN);
+                    p += Q_PARAM_LEN;
+                    memcpy(p, q2str(c->q, 0), len);
+                    p += len;
+                }
+
+                memcpy(p, EXPIRES_PARAM, EXPIRES_PARAM_LEN);
+                p += EXPIRES_PARAM_LEN;
+                cp = int2str((int) (c->expires - act_time), &len);
+                memcpy(p, cp, len);
                 p += len;
+    
+                if (c->received.s) {
+                    *p++ = ';';
+                    memcpy(p, rcv_param.s, rcv_param.len);
+                    p += rcv_param.len;
+                    *p++ = '=';
+                    *p++ = '\"';
+                    memcpy(p, c->received.s, c->received.len);
+                    p += c->received.len;
+                    *p++ = '\"';
+                }
             }
 
-            memcpy(p, EXPIRES_PARAM, EXPIRES_PARAM_LEN);
-            p += EXPIRES_PARAM_LEN;
-            cp = int2str((int) (c->expires - act_time), &len);
-            memcpy(p, cp, len);
-            p += len;
-
-            if (c->received.s) {
-                *p++ = ';';
-                memcpy(p, rcv_param.s, rcv_param.len);
-                p += rcv_param.len;
-                *p++ = '=';
-                *p++ = '\"';
-                memcpy(p, c->received.s, c->received.len);
-                p += c->received.len;
-                *p++ = '\"';
-            }
+            c = c->next;
         }
 
-        c = c->next;
-    }
+        memcpy(p, CRLF, CRLF_LEN);
+        p += CRLF_LEN;
 
-    memcpy(p, CRLF, CRLF_LEN);
-    p += CRLF_LEN;
+        tmp_contact_header->data_len = p - tmp_contact_header->buf;
 
-    tmp_contact_header->data_len = p - tmp_contact_header->buf;
+        LM_DBG("created Contact HF: %.*s\n", tmp_contact_header->data_len, tmp_contact_header->buf);
+    } else 
+        LM_DBG("No Contact HF created, no contacts.\n");
 
-    LM_DBG("created Contact HF: %.*s\n", tmp_contact_header->data_len, tmp_contact_header->buf);
+
     *contact_header = tmp_contact_header;
     return 0;
 }

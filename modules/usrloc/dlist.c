@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ========
@@ -79,6 +79,11 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 	return 1;
 }
 
+extern int ul_db_raw_fetch_type;
+
+#define UL_DB_RAW_FETCH_COMMON	 "select %.*s, %.*s, %.*s, %.*s, %.*s, %.*s from %s where %.*s > %.*s and %.*s & %d = %d and id %% %u = %u"
+
+#define UL_DB_RAW_FETCH_ORACLE   "select %.*s, %.*s, %.*s, %.*s, %.*s, %.*s from %s where %.*s > %.*s and  bitand(%.*s, %d) = %d and mod(id, %u) = %u"
 
 /*!
  * \brief Get all contacts from the database, in partitions if wanted
@@ -134,13 +139,9 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 	for (dom = root; dom!=NULL ; dom=dom->next) {
 		/* build query */
-		i = snprintf( query_buf, sizeof(query_buf), "select %.*s, %.*s, %.*s,"
-			" %.*s, %.*s, %.*s from %s where %.*s > %.*s and"
-#ifdef ORACLE_USRLOC
-			" bitand(%.*s, %d) = %d and mod(id, %u) = %u",
-#else
-			" %.*s & %d = %d and id %% %u = %u",
-#endif
+		i = snprintf( query_buf, sizeof(query_buf),
+			(ul_db_raw_fetch_type==1)?
+					UL_DB_RAW_FETCH_ORACLE:UL_DB_RAW_FETCH_COMMON,
 			received_col.len, received_col.s,
 			contact_col.len, contact_col.s,
 			sock_col.len, sock_col.s,
@@ -342,8 +343,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 
 					if(ul_keepalive_timeout>0 && c->last_keepalive>0)
 					{
-						if((c->cflags & nat_bflag) != 0 && c->sock!=NULL
-								&& c->sock->proto==PROTO_UDP)
+						if(c->sock!=NULL && c->sock->proto==PROTO_UDP)
 						{
 							if(c->last_keepalive+ul_keepalive_timeout < tnow)
 							{

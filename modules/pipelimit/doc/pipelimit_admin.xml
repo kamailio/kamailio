@@ -65,6 +65,28 @@
 	</section>
 	<section>
 	<title>Parameters</title>
+	<section id="pipelimit.p.hash_size">
+	    <title><varname>hash_size</varname> (int)</title>
+	    <para>
+		Used to compute the number of slots for the internal hash table,
+		as power of 2 (number of slots = 2^hash_size, aka 1&lt;&lt;hash_size).
+		If you have many pipes, increase this value for proper performances,
+		but don't go too high (hash_size=10 means 1024 slots).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>6</quote> (64 slots).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "hash_size", 10)
+...
+</programlisting>
+	    </example>
+	</section>
 	<section id="pipelimit.p.db_url">
 	    <title><varname>db_url</varname> (string)</title>
 	    <para>
@@ -256,10 +278,17 @@ modparam("pipelimit", "reply_reason", "Limiting")
 	<title>Functions</title>
 	<section id="pipelimit.f.pl_check">
 		<title>
-		<function moreinfo="none">pl_check(name)</function>
+		<function moreinfo="none">pl_check(name [, algorithm, limit])</function>
 		</title>
 		<para>
 		Check the current request against the 'name' pipe.
+		</para>
+		<para>	
+		If algorithm and limit are provided, the function attempts to create a
+		new pipe of one with that name doesn't exit. If it exists, no changes
+		to algorithm and limit are done.
+		</para>
+		<para>	
 		The pipe name can be provided via a pseudo variabile.
 		</para>
 		<para>The method will return:

@@ -24,17 +24,17 @@ Table of Contents
 =================
 
 1. SIP Server Flavours
-2. Supported Architectures and Requirements
-3. Howto Build SIP Server From the Source Distribution
+2. Supported Architectures And Requirements
+3. How-To Build SIP Server From The Source Code Distribution
    3.1 Kamailio Fast Track Installation
-   3.2 Details Installing from Source Code
+   3.2 Details Installing From Source Code
      A) Set SIP Server Flavour
      B) Build Commands
 4. Quick-Start Installation Guide
    A) Getting Help
    B) Disclaimers
-   C) Quick Start
-   D) SIP Server with Persistent Data Storage
+   C) Quick Atart
+   D) SIP Server With Persistent Data Storage
 5. Troubleshooting
 
 
@@ -43,7 +43,7 @@ Table of Contents
 ----------------------
 
 The two major SIP server flavours are:
-  - SIP Express Router (aka SER)
+  - SIP Express Router (aka SER, the initial project name, started in 2001)
   - Kamailio (former OpenSER)
 
 Starting with version 3.0.0, the two SIP server flavours are built from
@@ -69,7 +69,7 @@ Several installation tutorials for Kamailio are available on the web wiki:
   - http://www.kamailio.org/wiki/
 
 
-2. Supported Architectures and Requirements
+2. Supported Architectures And Requirements
 -------------------------------------------
 
 Supported operating systems:
@@ -97,7 +97,7 @@ Requirements:
 
 - gcc or icc : gcc >= 2.9x; 3.[12] recommended (it will work with older version
   but it might require some options tweaking for best performance)
-- bison or yacc (Berkley yacc)
+- bison or yacc (Berkley Yacc)
 - flex
 - GNU make (on Linux this is the standard "make", on *BSD and Solaris it is
   called "gmake") version >= 3.80 (recommended 3.81).
@@ -105,10 +105,10 @@ Requirements:
 - GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
 - GNU install, BSD install or Solaris install if you want "make
   install", "make bin", "make sunpkg" to work
-- libmysqlclient & libz (zlib) if you want Mysql support (the db_mysql module)
+- libmysqlclient & libz (zlib) if you want MySQL support (the db_mysql module)
 - libxml2 if you want to compile the cpl-c (CPL support) or pa (presence) 
    modules
-- libradiusclient-ng (> 5.0) if you need radius support (the auth_radius,
+- libradiusclient-ng (> 5.0) if you need RADIUS support (the auth_radius,
   group_radius, uri_radius and avp_radius modules)
 - libpq if you need PostgreSQL support (the db_postgres module)
 - libexpat if you want the jabber gateway support (the jabber module) or the
@@ -120,19 +120,19 @@ Requirements:
 - unixodbc - libs and devel headers - if you want UNIXODBC support as
   DB underlayer
 - libxmlrpc-c3 - libs and devel headers - if you want to have XML-RPC support
-  for the Management interface (MI)
-- libperl - libs and devel headers - if you want PERL connector to support
-  perl scripting from you config file (perl module)
+  for the management interface (MI)
+- libperl - libs and devel headers - if you want the perl connector to support
+  perl scripting from your config file (perl module)
 - libsnmp9 - libs and devel headers - if you want SNMP client functionality 
   (SNMP AgentX subagent) for Kamailio
 - libldap libs and devel headers v2.1 or greater - if you want LDAP support
-- libconfuse and devel headers - if you want to compile the carrierroute
-  module
 - libpcre libs and devel headers - if you want to compile the lcr and dialplan
   modules
 - libsctp devel headers - if you want to compile the SCTP transport in the core
-- libssl devel headers (openssl project) - if you want to compule the TLS module
-- linunistring - for the Websockets module
+- libssl devel headers (openssl project) - if you want to compile the TLS module
+- libunistring - for the WebSocket module
+- python and devel headers for the Python module
+- jdk and gcj for Java module
 
 
 OS Notes:
@@ -225,8 +225,8 @@ OS Notes:
      make bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
 
 
-3. Howto Build SIP Server From Source Distribution
---------------------------------------------------
+3. Howto Build SIP Server From Source Code Distribution
+-------------------------------------------------------
 
 (NOTE: if make doesn't work try gmake instead)
 
@@ -234,8 +234,8 @@ OS Notes:
 ....................................
 
 
-If you are familiar with Unix/Linux  build tools aready and you installed
-required dependency, then you can just follow this section, otherwise
+If you are familiar with Unix/Linux build tools aready and you installed
+the required dependencies, then you can just follow this section, otherwise
 skip over it.
 
 To get the SIP server installed, in the folder with source code run:
@@ -251,7 +251,7 @@ tls, run:
   make all
   make install
 
-3.2 Details Installing from Source Code
+3.2 Details Installing From Source Code
 .......................................
 
 
@@ -331,12 +331,12 @@ are grouped based on Debian packaging rules. For example:
 
   There are also in addition some "convenience" groups:
 
-	mysql 		- Include all the db modules dependent and the mysql db driver
-	postgres 	- Include all the db modules and the postgres db driver
+	mysql 		- Include all the db modules dependent and the MySQL db driver
+	postgres 	- Include all the db modules and the PostgreSQL db driver
 	radius 		- Include all modules on radiusclient
 	presence 	- Include all the presence modules
 
-  Ex. to make a standard installation with Mysql, use:
+  Ex. to make a standard installation with MySQL, use:
 	make group_include="standard mysql" all
 
   In addition to group_include (or instead), you can use 
@@ -408,8 +408,8 @@ are grouped based on Debian packaging rules. For example:
 Make targets:
 =============
 
-Configure:
-----------
+Make Local Build Config:
+------------------------
 
   * make cfg or make config - force config and module list regeneration
   
@@ -419,7 +419,7 @@ Configure:
 
   All future make invocations will include the mysql module and will build in debug mode
 
-  Note: if config.mak doesn't exist (e.g. initial checkout or after a make 
+  Note: If config.mak doesn't exist (e.g. initial checkout or after a make 
   proper) or if Makefile.defs was changed, the config will be re-generated
   automatically by the first make command. For example:
   	make cfg  include_modules=db_mysql; make all
@@ -473,7 +473,7 @@ Compile:
   * make modules 
   or make modules exclude_modules="CVS print" etc.
 
-Other make targets:
+Other Make Targets:
 -------------------
   Make tags:
 	make TAGS
@@ -514,9 +514,9 @@ Install:
 
   Note: If you use prefix parameter in make install then you also need
   to use this parameter in previous make commands, i.e. make, make modules,
-  or make all. If you fail to do this then SIP Router will look for the default
+  or make all. If you fail to do this then SIP server will look for the default
   configuration file in a wrong directory, because the directory of the
-  default configuration file is hard coded into SIP server during compile time. 
+  default configuration file is hardcoded into SIP server during compile time. 
   When you use a different prefix parameter when installing then the 
   directory hard coded in SIP server and the directory in which the file will be 
   installed by make install will not match. (You can specify exact location
@@ -532,7 +532,7 @@ Install:
   /usr/local/etc/kamailio/kamailio.cfg (because there was no prefix parameter
   make all and /usr/local is the default value of prefix).
 
-  Workaround is trivial, use the same parameters in all make commands:
+  The workaround is trivial, use the same parameters in all make commands:
 	make prefix=/ all
 	make prefix=/ install
   or save the desired prefix in the make config (e.g.: make cfg prefix=/).
@@ -623,7 +623,7 @@ C) Quick Start
     		You can start SIP server directly with /usr/local/sbin/ser or
 			/usr/local/sbin/kamailio.
     
-  4) optionally, watch server's health using the
+  4) Optionally, watch server's health using the
    	serctl or kamctl utility
 
     - to do so, first set the environment variable SIP_DOMAIN to your domain 
@@ -655,7 +655,7 @@ C) Quick Start
 	Auth user:	the ID used for authentication
 	Secret/Password:	The configured authentication password
 
-D) SIP Server with Persistent Data Storage
+D) SIP Server With Persistent Data Storage
 ------------------------------------------
 
   The default configuration is very simple and features many simplifications. 
@@ -753,15 +753,6 @@ D) SIP Server with Persistent Data Storage
 4. Troubleshooting
 ------------------
 
-Q: Windows Messenger authentication fails. 
-
-A: The most likely reason for this problem is a bug in Windows Messenger. 
-WM only authenticates if server name in request URI equals authentication 
-realm. After a challenge is sent by SIP server, WM does not resubmit the 
-challenged request at all and pops up authentication window again. If you 
-want to authenticate WM, you need to set up your realm value to equal server 
-name. If your server has no name, IP address can be used as realm too.
-
 Q: SIP requests are replied by SIP server with "483 Too Many Hops" or 
    "513 Message Too Large"
 
@@ -778,3 +769,11 @@ A: In both cases, the reason is probably an error in request routing script
    introduce a config option to ser.cfg or kamailio.cfg: alias=domainname,
    where domainname shall be replaced with name of domain, which you wish to
    server and which appears in request-URIs.
+
+Q: Where to report issues?
+
+A: Use bug tracker at: http://sip-router.org/tracker
+
+Q: Any F.A.Q. that could be helpful to check before reporting an issue?
+
+A: See: http://www.kamailio.org/wiki/tutorials/faq/main

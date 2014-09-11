@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -1215,6 +1215,9 @@ void free_dlg(dlg_t* _d)
 	if (_d->rem_uri.s) shm_free(_d->rem_uri.s);
 	if (_d->rem_target.s) shm_free(_d->rem_target.s);
 	if (_d->dst_uri.s) shm_free(_d->dst_uri.s);
+
+	if (_d->loc_dname.s) shm_free(_d->loc_dname.s);
+	if (_d->rem_dname.s) shm_free(_d->rem_dname.s);
 
 	     /* Free all routes in the route set */
 	shm_free_rr(&_d->route_set);

@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -51,6 +51,10 @@
 #include "diameter_peer.h"
 #include "config.h"
 #include "cdp_load.h"
+#include "cdp_rpc.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
+#include "../../cfg/cfg_struct.h"
 
 MODULE_VERSION
 
@@ -196,6 +200,10 @@ struct module_exports exports = {
  */
 static int cdp_init( void )
 {
+	if (rpc_register_array(cdp_rpc) != 0) {
+		LM_ERR("failed to register RPC commands for CDP module\n");
+		return -1;
+	}
 #ifdef STATISTICS
 	/* register statistics */
 	if ( register_stat("cdp", "replies_response_time", &replies_response_time,0 )!=0 ) {
@@ -219,6 +227,7 @@ static int cdp_init( void )
 		return 1;
 	}
 	register_procs(2+config->workers + 2 * config->peers_cnt);
+	cfg_register_child(2+config->workers + 2 * config->peers_cnt);
 	return 0;
 }
 

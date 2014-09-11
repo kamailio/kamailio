@@ -444,6 +444,23 @@ case $1 in
 		kamailio_db_revoke $DBNAME
 		exit $?
 		;;
+	add-tables)
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE don't support add-tables operation"
+			exit 1
+		fi
+		if [ $# -ne 2 ] ; then
+			merr "add-tables requires 1 parameter: group id of tables"
+			exit 1
+		fi
+		if [ -z "$DBNAME" ] ; then
+			merr "DBNAME is not set"
+			exit 1
+		fi
+
+		kamailio_add_tables $DBNAME $2
+		exit $?
+		;;
 	bdb|db_berkeley)
 		shift
 		kamailio_berkeley "$@"

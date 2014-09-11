@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -56,6 +56,7 @@
 int save(struct sip_msg* _m, udomain_t* _d, int _cflags);
 int save_pending(struct sip_msg* _m, udomain_t* _d);
 int unregister(struct sip_msg* _m, char* _d, char* _uri);
+struct sip_msg* get_request_from_reply(struct sip_msg* reply);
 
 
 #endif /* SAVE_H */

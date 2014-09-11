@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -118,13 +118,13 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"db_url",         STR_PARAM, &db_url.s},
-	{"db_table",       STR_PARAM, &db_table.s},
-	{"sdomain_column", STR_PARAM, &sdomain_column.s},
-	{"prefix_column",  STR_PARAM, &prefix_column.s},
-	{"domain_column",  STR_PARAM, &domain_column.s},
-	{"prefix",         STR_PARAM, &pdt_prefix.s},
-	{"char_list",      STR_PARAM, &pdt_char_list.s},
+	{"db_url",         PARAM_STR, &db_url},
+	{"db_table",       PARAM_STR, &db_table},
+	{"sdomain_column", PARAM_STR, &sdomain_column},
+	{"prefix_column",  PARAM_STR, &prefix_column},
+	{"domain_column",  PARAM_STR, &domain_column},
+	{"prefix",         PARAM_STR, &pdt_prefix},
+	{"char_list",      PARAM_STR, &pdt_char_list},
 	{"fetch_rows",     INT_PARAM, &pdt_fetch_rows},
 	{"check_domain",   INT_PARAM, &pdt_check_domain},
 	{0, 0, 0}
@@ -167,13 +167,6 @@ static int mod_init(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-
-	db_url.len = strlen(db_url.s);
-	db_table.len = strlen(db_table.s);
-	sdomain_column.len = strlen(sdomain_column.s);
-	prefix_column.len = strlen(prefix_column.s);
-	domain_column.len = strlen(domain_column.s);
-	pdt_prefix.len = strlen(pdt_prefix.s);
 
 	if(pdt_fetch_rows<=0)
 		pdt_fetch_rows = 1000;

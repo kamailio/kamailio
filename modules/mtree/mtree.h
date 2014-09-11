@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -27,6 +27,8 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
+#include "../../lib/kmi/mi.h"
+#include "../../rpc.h"
 
 #define MT_TREE_SVAL	0	
 #define MT_TREE_DW	1
@@ -66,9 +68,12 @@ typedef struct _m_tree
 	str tname;
 	str dbtable;
 	int type;
+	int multi;
 	unsigned int nrnodes;
 	unsigned int nritems;
 	unsigned int memsize;
+	unsigned int reload_count;
+	unsigned int reload_time;
 	mt_node_t *head;
 	struct _m_tree *next;
 } m_tree_t;
@@ -80,11 +85,11 @@ int mt_add_to_tree(m_tree_t *pt, str *tprefix, str *svalue);
 m_tree_t* mt_get_tree(str *tname);
 m_tree_t* mt_get_first_tree();
 
-is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch);
+is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *len);
 int mt_match_prefix(struct sip_msg *msg, m_tree_t *pt,
 		    str *tomatch, int mode);
 
-m_tree_t* mt_init_tree(str* tname, str* dbtable, int type);
+m_tree_t* mt_init_tree(str* tname, str* dbtable, int type, int multi);
 void mt_free_tree(m_tree_t *pt);
 int mt_print_tree(m_tree_t *pt);
 void mt_free_node(mt_node_t *pn, int type);
@@ -100,7 +105,11 @@ int mt_defined_trees(void);
 m_tree_t *mt_swap_list_head(m_tree_t *ntree);
 int mt_init_list_head(void);
 m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable,
-		int type);
+		      int type, int multi);
 
+int mt_mi_match_prefix(struct mi_node *rpl, m_tree_t *pt,
+		    str *tomatch, int mode);
+int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *pt,
+		    str *tomatch, int mode);
 #endif
 

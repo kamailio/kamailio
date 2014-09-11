@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -109,7 +109,7 @@ static int mod_init(void)
 	}
 
 	pres_add_event = pres.add_event;
-	if (add_event == NULL) {
+	if (pres_add_event == NULL) {
 		LM_ERR("could not import add_event function\n");
 		return -1;
 	}

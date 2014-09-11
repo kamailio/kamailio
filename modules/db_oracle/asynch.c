@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * History:
@@ -66,8 +66,8 @@ static int set_tv(unsigned type, const char* val, struct timeval* tv)
 	unsigned long s, ms;
 	double dv;
 
-	if (PARAM_TYPE_MASK(type) != STR_PARAM) {
-		LM_ERR("type of parameter is no STR\n");
+	if (PARAM_TYPE_MASK(type) != PARAM_STRING) {
+		LM_ERR("type of parameter is not PARAM_STRING\n");
 		return -1;
 	}
 

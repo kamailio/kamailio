@@ -1,28 +1,22 @@
-/*
- * $Id$
+/* 
+ * TLS module
  *
- * TLS module - common functions
- *
- * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
  * Copyright (C) 2005 iptelorg GmbH
+ * Copyright (C) 2013 Motorola Solutions, Inc.
  *
- * This file is part of SIP-router, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * SIP-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * SIP-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 
 #define _GNU_SOURCE 1 /* Needed for strndup */
 
@@ -30,6 +24,7 @@
 #include <libgen.h>
 #include "../../mem/shm_mem.h"
 #include "../../globals.h"
+#include "../../dprint.h"
 #include "tls_mod.h"
 #include "tls_util.h"
 /*!
@@ -73,7 +68,7 @@ int shm_asciiz_dup(char** dest, char* val)
  */
 void collect_garbage(void)
 {
-	tls_domains_cfg_t* prev, *cur;
+	tls_domains_cfg_t *prev, *cur, *next;
 
 	     /* Make sure we do not run two garbage collectors
 	      * at the same time
@@ -87,14 +82,16 @@ void collect_garbage(void)
 	cur = (*tls_domains_cfg)->next;
 
 	while(cur) {
+		next = cur->next;
 		if (cur->ref_count == 0) {
-			     /* Not referenced by any existing connection */
+			/* Not referenced by any existing connection */
 			prev->next = cur->next;
 			tls_free_cfg(cur);
+		} else {
+			/* Only update prev if we didn't remove cur */
+			prev = cur;
 		}
-
-		prev = cur;
-		cur = cur->next;
+		cur = next;
 	}
 
 	lock_release(tls_domains_cfg_lock);

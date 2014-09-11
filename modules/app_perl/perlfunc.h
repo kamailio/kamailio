@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -41,5 +41,7 @@ int perl_exec_simple2(struct sip_msg* _msg, char* fnc, char* str2);
  */
 int perl_exec1(struct sip_msg* _msg, char* fnc, char *foobar);
 int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr);
+
+int app_perl_reset_interpreter(void);
 
 #endif /* PERL_FUNC_H */

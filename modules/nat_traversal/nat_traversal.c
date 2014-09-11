@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -225,6 +225,7 @@ static NetInfo rfc1918nets[] = {
     {"10.0.0.0",    0x0a000000UL, 0xff000000UL},
     {"172.16.0.0",  0xac100000UL, 0xfff00000UL},
     {"192.168.0.0", 0xc0a80000UL, 0xffff0000UL},
+    {"100.64.0.0",  0x64400000UL, 0xffc00000UL}, // include rfc6598 shared address space as technically the same for our purpose
     {NULL,          0UL,          0UL}
 };
 
@@ -247,10 +248,10 @@ static cmd_export_t commands[] = {
 
 static param_export_t parameters[] = {
     {"keepalive_interval",       INT_PARAM, &keepalive_interval},
-    {"keepalive_method",         STR_PARAM, &keepalive_params.method},
-    {"keepalive_from",           STR_PARAM, &keepalive_params.from},
-    {"keepalive_extra_headers",  STR_PARAM, &keepalive_params.extra_headers},
-    {"keepalive_state_file",     STR_PARAM, &keepalive_state_file},
+    {"keepalive_method",         PARAM_STRING, &keepalive_params.method},
+    {"keepalive_from",           PARAM_STRING, &keepalive_params.from},
+    {"keepalive_extra_headers",  PARAM_STRING, &keepalive_params.extra_headers},
+    {"keepalive_state_file",     PARAM_STRING, &keepalive_state_file},
     {0, 0, 0}
 };
 
@@ -685,7 +686,7 @@ Dialog_Param_add_candidate(Dialog_Param *param, char *candidate)
     if (param->callee_candidates.count == param->callee_candidates.size) {
         new_size = param->callee_candidates.size + URI_LIST_RESIZE_INCREMENT;
         LM_DBG("growing callee_candidates list size from %d to %d entries\n", param->callee_candidates.size, new_size);
-        new_uri = shm_realloc(param->callee_candidates.uri, new_size);
+        new_uri = shm_realloc(param->callee_candidates.uri, new_size * sizeof(char*));
         if (!new_uri) {
             LM_ERR("failed to grow callee_candidates uri list\n");
             return False;

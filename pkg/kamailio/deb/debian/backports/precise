@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Hook for automatic backports at buildserver.net
+#
+# Target dist: Debian Squeeze
+DIST=precise
+
+rm -rf ${DIST}
+cp -r debian ${DIST}
+
+# No mi_xmlrpc module
+sed -i -e '/libxmlrpc-c3-dev/d' -e '/^Package: kamailio-xmlrpc-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ mi_xmlrpc[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mi_xmlrpc/' ${DIST}/rules
+
+# No dnssec module:
+sed -i -e '/libval-dev/d' -e '/^Package: kamailio-dnssec-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ dnssec[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ dnssec/' ${DIST}/rules
+
+# use old radius-client-ng
+sed -i 's/libfreeradius-client-dev/libradiusclient-ng-dev/' ${DIST}/control
+sed -i -e '/FREERADIUS/d' ${DIST}/rules
+
+# use old json
+sed -i 's/libjson-c-dev/libjson0-dev/' ${DIST}/control
+
+# clean backports scripts
+rm -rf ${DIST}/backports
+exit 0

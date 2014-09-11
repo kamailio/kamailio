@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -354,7 +354,7 @@ int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
     if (strncasecmp(uri.s, "tel:", 4) != 0) return 1;
     
     /* reserve memory for clean tel uri */
-    tel_uri.s = pkg_malloc(uri.len);
+    tel_uri.s = pkg_malloc(uri.len+1);
     if (tel_uri.s == 0) {
 	LM_ERR("no more pkg memory\n");
 	return -1;

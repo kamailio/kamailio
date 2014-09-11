@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <stdio.h>
@@ -37,6 +37,8 @@
 #include "../../socket_info.h"
 #include "../../dset.h"
 #include "../../pt.h"
+#include "../../usr_avp.h"
+#include "../../xavp.h"
 #include "../../timer_proc.h"
 #include "../../script_cb.h"
 #include "../../parser/parse_param.h"
@@ -74,8 +76,8 @@ void stm_timer_exec(unsigned int ticks, void *param);
 
 
 static param_export_t params[]={
-	{"timer",             STR_PARAM|USE_FUNC_PARAM, (void*)stm_t_param},
-	{"exec",              STR_PARAM|USE_FUNC_PARAM, (void*)stm_e_param},
+	{"timer",             PARAM_STRING|USE_FUNC_PARAM, (void*)stm_t_param},
+	{"exec",              PARAM_STRING|USE_FUNC_PARAM, (void*)stm_e_param},
 	{0,0,0}
 };
 
@@ -190,6 +192,10 @@ void stm_timer_exec(unsigned int ticks, void *param)
 		set_route_type(REQUEST_ROUTE);
 		run_top_route(main_rt.rlist[rt->route], fmsg, 0);
 		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
+		reset_avps();
+#ifdef WITH_XAVP
+		xavp_reset_list();
+#endif
 	}
 }
 

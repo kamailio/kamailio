@@ -1,0 +1,1 @@
+id(int,auto) mohq_id(int) call_id(string) call_status(int) call_from(string) call_contact(string,null) call_time(int) 

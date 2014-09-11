@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <stdio.h>
@@ -94,6 +94,8 @@ int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			{
 				LM_ERR("subst result too big %d, increase buffer size\n",
 						result->len);
+				pkg_free(result->s);
+				pkg_free(result);
 				goto error;
 			}
 			memcpy(tr_txt_buf, result->s, result->len);

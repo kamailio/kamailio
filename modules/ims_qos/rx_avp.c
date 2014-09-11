@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  *
  * History:
@@ -55,6 +55,8 @@
 #include "rx_authdata.h"
 #include "rx_avp.h"
 #include "mod.h"
+
+#include "../../lib/ims/ims_getters.h"
 
 /**< Structure with pointers to cdp funcs, global variable defined in mod.c  */
 extern struct cdp_binds cdpb;
@@ -86,7 +88,7 @@ inline int rx_add_avp(AAAMessage *m, char *d, int len, int avp_code,
         cdpb.AAAFreeAVP(&avp);
         return 0;
     }
-    return RX_RETURN_TRUE;
+    return CSCF_RETURN_TRUE;
 }
 
 /**
@@ -122,7 +124,7 @@ static inline int rx_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_
         avp->prev = 0;
     }
 
-    return RX_RETURN_TRUE;
+    return CSCF_RETURN_TRUE;
 }
 
 /**
@@ -154,9 +156,12 @@ static inline str rx_get_avp(AAAMessage *msg, int avp_code, int vendor_id,
  * 	see http://beej.us/guide/bgnet/output/html/multipage/inet_ntopman.html
  * 	http://beej.us/guide/bgnet/output/html/multipage/sockaddr_inman.html
  */
+
+static unsigned int ip_buflen = 0;
+static char* ip_buf = 0;
+
 int rx_add_framed_ip_avp(AAA_AVP_LIST * list, str ip, uint16_t version) {
     ip_address_prefix ip_adr;
-    char* ip_pkg = 0;
     int ret = 0;
 
     if (ip.len < 0) return 0;
@@ -167,28 +172,36 @@ int rx_add_framed_ip_avp(AAA_AVP_LIST * list, str ip, uint16_t version) {
         if (ip.len > INET6_ADDRSTRLEN)
             goto error;
     }
-    ip_pkg = (char*) pkg_malloc((ip.len + 1) * sizeof (char));
-    if (!ip_pkg) {
-        LM_ERR("PCC_create_framed_ip_avp: could not allocate %i from pkg\n", ip.len + 1);
-        goto error;
+    int len = ip.len + 1;
+    if (!ip_buf || ip_buflen < len) {
+        if (ip_buf)
+                pkg_free(ip_buf);
+        ip_buf = (char*)pkg_malloc(len);
+        if (!ip_buf) {
+	    LM_ERR("rx_add_framed_ip_avp: out of memory \
+					    when allocating %i bytes in pkg\n", len);
+	    goto error;
+        }
+        ip_buflen = len;
     }
-    memcpy(ip_pkg, ip.s, ip.len);
-    ip_pkg[ip.len] = '\0';
-
+    memcpy(ip_buf, ip.s, ip.len);
+    ip_buf[ip.len] = '\0';
+    
     ip_adr.addr.ai_family = version;
 
     if (version == AF_INET) {
 
-        if (inet_pton(AF_INET, ip_pkg, &(ip_adr.addr.ip.v4.s_addr)) != 1) goto error;
+        if (inet_pton(AF_INET, ip_buf, &(ip_adr.addr.ip.v4.s_addr)) != 1) goto error;
         ret = cdp_avp->nasapp.add_Framed_IP_Address(list, ip_adr.addr);
     } else {
 
-        if (inet_pton(AF_INET6, ip_pkg, &(ip_adr.addr.ip.v6.s6_addr)) != 1) goto error;
+        if (inet_pton(AF_INET6, ip_buf, &(ip_adr.addr.ip.v6.s6_addr)) != 1) goto error;
         ret = cdp_avp->nasapp.add_Framed_IPv6_Prefix(list, ip_adr);
     }
 
+    //TODO: should free ip_buf in module shutdown....
+    
 error:
-    if (ip_pkg) pkg_free(ip_pkg);
     return ret;
 }
 
@@ -272,7 +285,7 @@ inline int rx_add_destination_realm_avp(AAAMessage *msg, str data) {
  * Creates and adds an Acct-Application-Id AVP.
  * @param msg - the Diameter message to add to.
  * @param data - the value for the AVP payload
- * @return RX_RETURN_TRUE on success or 0 on error
+ * @return CSCF_RETURN_TRUE on success or 0 on error
  */
 inline int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data) {
     char x[4];
@@ -292,7 +305,7 @@ inline int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data) {
  * @param msg - the Diameter message to add to.
  * @param r - the sip_message to extract the data from.
  * @param tag - originating (0) terminating (1)
- * @return RX_RETURN_TRUE on success or 0 on error
+ * @return CSCF_RETURN_TRUE on success or 0 on error
  * 
  */
 
@@ -503,8 +516,14 @@ static str permit_out = {"permit out ", 11};
 static str permit_in = {"permit in ", 10};
 static str from_s = {" from ", 6};
 static str to_s = {" to ", 4};
-static char * permit_out_with_ports = "permit out %i from %.*s %u to %.*s %u %s";
-static char * permit_in_with_ports = "permit in %i from %.*s %u to %.*s %u %s";
+//removed final %s - this is options which Rx 29.214 says will not be used for flow-description AVP
+static char * permit_out_with_ports = "permit out %i from %.*s %u to %.*s %u";
+//static char * permit_out_with_ports = "permit out %i from %.*s %u to %.*s %u %s";
+static char * permit_in_with_ports = "permit in %i from %.*s %u to %.*s %u";
+//static char * permit_in_with_ports = "permit in %i from %.*s %u to %.*s %u %s";
+
+static unsigned int flowdata_buflen = 0;
+static str flowdata_buf = {0,0};
 
 AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
         str *ipA, str *portA,
@@ -512,8 +531,8 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
 
     str data;
     int len, len2;
-    str flow_data = {0, 0};
-    str flow_data2 = {0, 0};
+//    str flow_data = {0, 0};
+//    str flow_data2 = {0, 0};
     AAA_AVP *flow_description1 = 0, *flow_description2 = 0, *flow_number = 0;
     AAA_AVP *flow_usage = 0;
 
@@ -529,55 +548,63 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
     int intportB = atoi(portB->s);
 
     len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-            proto_len + portA->len + portB->len) * sizeof (char);
+            proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof (char);
 
-    flow_data.s = (char*) pkg_malloc(len);
-    if (!flow_data.s) {
-        LM_ERR("PCC_create_media_component: out of memory \
-					when allocating %i bytes in pkg\n", len);
-        return NULL;
-    }
-
-    len2 = len - (permit_out.len - permit_in.len) * sizeof (char);
-    flow_data2.s = (char*) pkg_malloc(len2);
-    if (!flow_data2.s) {
-        LM_ERR("PCC_create_media_component: out of memory \
-					when allocating %i bytes in pkg\n", len);
-        pkg_free(flow_data.s);
-        flow_data.s = 0;
-        return NULL;
+    if (!flowdata_buf.s || flowdata_buflen < len) {
+        if (flowdata_buf.s)
+                pkg_free(flowdata_buf.s);
+        flowdata_buf.s = (char*)pkg_malloc(len);
+        if (!flowdata_buf.s) {
+                        LM_ERR("PCC_create_media_component: out of memory \
+                                                        when allocating %i bytes in pkg\n", len);
+                        return NULL ;
+        }
+        flowdata_buflen = len;
     }
 
     set_4bytes(x, number);
-
+    
     flow_number = cdpb.AAACreateAVP(AVP_IMS_Flow_Number,
             AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
             IMS_vendor_id_3GPP, x, 4,
             AVP_DUPLICATE_DATA);
     cdpb.AAAAddAVPToList(&list, flow_number);
-
+    
     /*IMS Flow descriptions*/
     /*first flow is the receive flow*/
-    flow_data.len = snprintf(flow_data.s, len, permit_out_with_ports, proto_int,
-            ipB->len, ipB->s, intportB,
-            ipA->len, ipA->s, intportA);
-
-    flow_data.len = strlen(flow_data.s);
-    flow_description1 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-            AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-            IMS_vendor_id_3GPP, flow_data.s, flow_data.len,
-            AVP_DUPLICATE_DATA);
-    cdpb.AAAAddAVPToList(&list, flow_description1);
-
-    /*second flow*/
-    flow_data2.len = snprintf(flow_data2.s, len2, permit_in_with_ports, proto_int,
+    flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_int,
             ipA->len, ipA->s, intportA,
             ipB->len, ipB->s, intportB);
 
-    flow_data2.len = strlen(flow_data2.s);
+    flowdata_buf.len = strlen(flowdata_buf.s);
+    flow_description1 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+            AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+            IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+            AVP_DUPLICATE_DATA);
+    cdpb.AAAAddAVPToList(&list, flow_description1);
+
+        /*second flow*/
+    len2 = len - (permit_out.len - permit_in.len) * sizeof (char);
+        if (!flowdata_buf.s || flowdata_buflen <= len2) {
+                if (flowdata_buf.s)
+                        pkg_free(flowdata_buf.s);
+                flowdata_buf.s = (char*) pkg_malloc(len2);
+                if (!flowdata_buf.s) {
+                        LM_ERR("PCC_create_media_component: out of memory \
+                                                                when allocating %i bytes in pkg\n", len2);
+                        return NULL ;
+                }
+                flowdata_buflen = len2;
+        }
+
+    flowdata_buf.len = snprintf(flowdata_buf.s, len2, permit_in_with_ports, proto_int,
+            ipB->len, ipB->s, intportB,
+            ipA->len, ipA->s, intportA);
+
+    flowdata_buf.len = strlen(flowdata_buf.s);
     flow_description2 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
             AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-            IMS_vendor_id_3GPP, flow_data2.s, flow_data2.len,
+            IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
             AVP_DUPLICATE_DATA);
     cdpb.AAAAddAVPToList(&list, flow_description2);
 
@@ -591,20 +618,15 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
     /*group all AVPS into one big.. and then free the small ones*/
 
     data = cdpb.AAAGroupAVPS(list);
-
-
     cdpb.AAAFreeAVPList(&list);
-    pkg_free(flow_data.s);
-    flow_data.s = 0;
-    pkg_free(flow_data2.s);
-    flow_data2.s = 0;
+
+    //TODO: should free the buffer for the flows in module shutdown....
 
     return (cdpb.AAACreateAVP(AVP_IMS_Media_Sub_Component,
             AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
             IMS_vendor_id_3GPP, data.s, data.len,
             AVP_FREE_DATA));
 }
-
 
 //just for registration to signalling status much cut down MSC AVP
 //see 3GPP TS 29.214 4.4.5

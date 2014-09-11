@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
@@ -30,7 +30,6 @@
 
 int extract_body(struct sip_msg * , str *);
 int check_content_type(struct sip_msg * );
-void *ser_memmem(const void *, const void *, size_t, size_t);
 int get_contact_uri(struct sip_msg *, struct sip_uri *, contact_t **);
 
 #endif

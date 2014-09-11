@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -456,11 +456,19 @@ int update_subs_db(subs_t* subs, int type)
 void delete_subs(str* pres_uri, str* ev_name, str* to_tag,
 		str* from_tag, str* callid)
 {
+	subs_t subs;
+	memset(&subs, 0, sizeof(subs_t));
+	
+	subs.pres_uri = *pres_uri;
+	subs.from_tag = *from_tag;
+	subs.to_tag = *to_tag;
+	subs.callid = *callid;
+	
 	/* delete record from hash table also if not in dbonly mode */
 	if(subs_dbmode != DB_ONLY)
 	{
 		unsigned int hash_code= core_hash(pres_uri, ev_name, shtable_size);
-		if(delete_shtable(subs_htable, hash_code, *to_tag) < 0)
+		if(delete_shtable(subs_htable, hash_code, &subs) < 0)
 			LM_ERR("Failed to delete subscription from memory\n");
 	}
 
@@ -682,7 +690,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		}
 		else
 		{
-			if(notify(subs, NULL, NULL, 0)< 0)
+			if(send_fast_notify && (notify(subs, NULL, NULL, 0)< 0))
 			{
 				LM_ERR("Could not send notify\n");
 				goto error;
@@ -863,7 +871,7 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 			LM_ERR("unsuccessful use_table sql operation\n");
 			goto error;
 		}
-		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -1662,7 +1670,7 @@ void update_db_subs_timer_notifier(void)
 
 	if (pa_dbf.start_transaction)
 	{
-		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;

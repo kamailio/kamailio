@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -132,7 +132,7 @@ int dlg_ka_add(dlg_cell_t *dlg)
 
 	if(dlg_ka_interval<=0)
 		return 0;
-	if(!(dlg->iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_SRC)))
+	if(!(dlg->iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_DST)))
 		return 0;
 
 	dka = (dlg_ka_t*)shm_malloc(sizeof(dlg_ka_t));
@@ -249,6 +249,13 @@ int dlg_clean_run(ticks_t ti)
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
 			}
+			if(tdlg->state==DLG_STATE_CONFIRMED_NA && tdlg->start_ts<tm-60) {
+				if(update_dlg_timer(&dlg->tl, 10)<0) {
+					LM_ERR("failed to update dialog lifetime in long non-ack state\n");
+				}
+				dlg->lifetime = 10;
+				dlg->dflags |= DLG_FLAG_CHANGED;
+			}
 		}
 		lock_set_release(d_table->locks, d_table->entries[i].lock_idx);
 	}
@@ -340,7 +347,7 @@ error0:
  * \brief Destroy a dialog, run callbacks and free memory
  * \param dlg destroyed dialog
  */
-inline void destroy_dlg(struct dlg_cell *dlg)
+void destroy_dlg(struct dlg_cell *dlg)
 {
 	int ret = 0;
 	struct dlg_var *var;
@@ -517,18 +524,24 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 					str *cseq, unsigned int leg)
 {
 	char *p;
+	str cs = {"0", 1};
+
+	/* if we don't have cseq, set it to 0 */
+	if(cseq->len>0) {
+		cs = *cseq;
+	}
 
 	if(dlg->tag[leg].s)
 		shm_free(dlg->tag[leg].s);
 	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len + contact->len );
 
 	if(dlg->cseq[leg].s) {
-		if (dlg->cseq[leg].len < cseq->len) {
+		if (dlg->cseq[leg].len < cs.len) {
 			shm_free(dlg->cseq[leg].s);
-			dlg->cseq[leg].s = (char*)shm_malloc(cseq->len);
+			dlg->cseq[leg].s = (char*)shm_malloc(cs.len);
 		}
 	} else {
-		dlg->cseq[leg].s = (char*)shm_malloc( cseq->len );
+		dlg->cseq[leg].s = (char*)shm_malloc( cs.len );
 	}
 
 	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL) {
@@ -564,8 +577,8 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 	}
 
 	/* cseq */
-	dlg->cseq[leg].len = cseq->len;
-	memcpy( dlg->cseq[leg].s, cseq->s, cseq->len);
+	dlg->cseq[leg].len = cs.len;
+	memcpy( dlg->cseq[leg].s, cs.s, cs.len);
 
 	return 0;
 }
@@ -579,7 +592,12 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
  * \return 0 on success, -1 on failure
  */
 int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq)
-{
+{	dlg_entry_t *d_entry;
+
+	d_entry = &(d_table->entries[dlg->h_entry]);
+
+	dlg_lock(d_table, d_entry);
+
 	if ( dlg->cseq[leg].s ) {
 		if (dlg->cseq[leg].len < cseq->len) {
 			shm_free(dlg->cseq[leg].s);
@@ -596,9 +614,12 @@ int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq)
 	memcpy( dlg->cseq[leg].s, cseq->s, cseq->len );
 	dlg->cseq[leg].len = cseq->len;
 
-	LM_DBG("cseq is %.*s\n", dlg->cseq[leg].len, dlg->cseq[leg].s);
+	LM_DBG("cseq of leg[%d] is %.*s\n", leg,
+			dlg->cseq[leg].len, dlg->cseq[leg].s);
+	dlg_unlock(d_table, d_entry);
 	return 0;
 error:
+	dlg_unlock(d_table, d_entry);
 	LM_ERR("not more shm mem\n");
 	return -1;
 }
@@ -670,10 +691,12 @@ dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
+ * \param mode let hash table slot locked if dialog is not found
  * \return dialog structure on success, NULL on failure
  */
 static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
-						str *callid, str *ftag, str *ttag, unsigned int *dir)
+						str *callid, str *ftag, str *ttag,
+						unsigned int *dir, int mode)
 {
 	struct dlg_cell *dlg;
 	struct dlg_entry *d_entry;
@@ -693,7 +716,7 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 		}
 	}
 
-	dlg_unlock( d_table, d_entry);
+	if(likely(mode==0)) dlg_unlock( d_table, d_entry);
 	LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 	return 0;
 }
@@ -722,7 +745,7 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 	unsigned int he;
 
 	he = core_hash(callid, 0, d_table->size);
-	dlg = internal_get_dlg(he, callid, ftag, ttag, dir);
+	dlg = internal_get_dlg(he, callid, ftag, ttag, dir, 0);
 
 	if (dlg == 0) {
 		LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
@@ -733,17 +756,68 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 
 
 /*!
+ * \brief Search dialog that corresponds to CallId, From Tag and To Tag
+ *
+ * Get dialog that correspond to CallId, From Tag and To Tag.
+ * See RFC 3261, paragraph 4. Overview of Operation:
+ * "The combination of the To tag, From tag, and Call-ID completely
+ * defines a peer-to-peer SIP relationship between [two UAs] and is
+ * referred to as a dialog."
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * If the dialog is not found, the hash slot is left locked, to allow
+ * linking the structure of a new dialog.
+ * \param callid callid
+ * \param ftag from tag
+ * \param ttag to tag
+ * \param dir direction
+ * \return dialog structure on success, NULL on failure (and slot locked)
+ */
+dlg_cell_t* search_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
+{
+	struct dlg_cell *dlg;
+	unsigned int he;
+
+	he = core_hash(callid, 0, d_table->size);
+	dlg = internal_get_dlg(he, callid, ftag, ttag, dir, 1);
+
+	if (dlg == 0) {
+		LM_DBG("dialog with callid='%.*s' not found\n", callid->len, callid->s);
+		return 0;
+	}
+	return dlg;
+}
+
+
+/*!
+ * \brief Release hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_release(str *callid)
+{
+	unsigned int he;
+	struct dlg_entry *d_entry;
+
+	he = core_hash(callid, 0, d_table->size);
+	d_entry = &(d_table->entries[he]);
+	dlg_unlock(d_table, d_entry);
+}
+
+
+
+/*!
  * \brief Link a dialog structure
  * \param dlg dialog
  * \param n extra increments for the reference counter
+ * \param mode link in safe mode (0 - lock slot; 1 - don't)
  */
-void link_dlg(struct dlg_cell *dlg, int n)
+void link_dlg(struct dlg_cell *dlg, int n, int mode)
 {
 	struct dlg_entry *d_entry;
 
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
-	dlg_lock( d_table, d_entry);
+	if(unlikely(mode==0)) dlg_lock( d_table, d_entry);
 
 	/* keep id 0 for special cases */
 	dlg->h_id = 1 + d_entry->next_id++;
@@ -759,7 +833,7 @@ void link_dlg(struct dlg_cell *dlg, int n)
 
 	ref_dlg_unsafe(dlg, 1+n);
 
-	dlg_unlock( d_table, d_entry);
+	if(unlikely(mode==0)) dlg_unlock( d_table, d_entry);
 	return;
 }
 
@@ -977,6 +1051,13 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 	}
 	*new_state = dlg->state;
+
+	/* remove the dialog from profiles when is not no longer active */
+	if(*new_state==DLG_STATE_DELETED && dlg->profile_links!=NULL
+				&& *old_state!=*new_state) {
+		destroy_linkers(dlg->profile_links);
+		dlg->profile_links = NULL;
+	}
 
 	dlg_unlock( d_table, d_entry);
 

@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -176,6 +176,10 @@ static int dbt_convert_row(db1_con_t* _h, db1_res_t* _res, db_row_t* _r)
 					DBT_CON_ROW(_h)->fields[i].val.bitmap_val;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_INT;
 			break;
+
+			default:
+				LM_ERR("val type [%d] not supported", RES_TYPES(_res)[i]);
+				return -1;
 		}
 	}
 	return 0;

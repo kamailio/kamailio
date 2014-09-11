@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -171,7 +171,7 @@ void rpc_check_client_stats(rpc_t* rpc, void* ctx)
 	return;
 
 nomem:
-	LM_ERR("No more pkg memory");
+	LM_ERR("No more pkg memory\n");
 	rpc->fault(ctx, 500, "No more memory\n");
 }
 
@@ -251,7 +251,7 @@ static int iterate_over_table(hash_tables_t *hts, str *result, credit_type_t typ
 	return 0;
 
 nomem:
-	LM_ERR("No more pkg memory");
+	LM_ERR("No more pkg memory\n");
 	return -1;
 }
 

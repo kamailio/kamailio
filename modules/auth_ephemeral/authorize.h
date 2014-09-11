@@ -17,17 +17,26 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
  *
  */
 #ifndef AUTHORIZE_H
 #define AUTHORIZE_H
 
+#include "../../str.h"
 #include "../../parser/msg_parser.h"
 
-int autheph_check(struct sip_msg* _m, char* _realm);
-int autheph_www(struct sip_msg* _m, char* _realm);
-int autheph_www2(struct sip_msg* _m, char* _realm, char *_method);
-int autheph_proxy(struct sip_msg* _m, char* _realm);
+int autheph_verify_timestamp(str *_username);
+
+int autheph_check(struct sip_msg *_m, char *_realm);
+int autheph_www(struct sip_msg *_m, char *_realm);
+int autheph_www2(struct sip_msg *_m, char *_realm, char *_method);
+int autheph_proxy(struct sip_msg *_m, char *_realm);
+int autheph_authenticate(struct sip_msg *_m, char *_username, char *_password);
 
 #endif /* AUTHORIZE_H */

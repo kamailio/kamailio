@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -59,7 +59,7 @@
 MODULE_VERSION
 
 /** header variables */
-str imc_hdr_ctype = { "Content-Type: text/plain\r\n",  26};
+str imc_hdr_ctype = str_init("Content-Type: text/plain\r\n");
 char hdr_buf[1024];
 str all_hdrs;
 
@@ -109,13 +109,13 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"db_url",				STR_PARAM, &db_url.s},
+	{"db_url",				PARAM_STR, &db_url},
 	{"hash_size",			INT_PARAM, &imc_hash_size},
-	{"imc_cmd_start_char",	STR_PARAM, &imc_cmd_start_str.s},
-	{"rooms_table",			STR_PARAM, &rooms_table.s},
-	{"members_table",		STR_PARAM, &members_table.s},
-	{"outbound_proxy",		STR_PARAM, &outbound_proxy.s},
-	{"extra_hdrs",                  STR_PARAM, &extra_hdrs.s},
+	{"imc_cmd_start_char",	PARAM_STR, &imc_cmd_start_str},
+	{"rooms_table",			PARAM_STR, &rooms_table},
+	{"members_table",		PARAM_STR, &members_table},
+	{"outbound_proxy",		PARAM_STR, &outbound_proxy},
+	{"extra_hdrs",        PARAM_STR, &extra_hdrs},
 	{0,0,0}
 };
 
@@ -371,31 +371,21 @@ static int mod_init(void)
 		return -1;
 	}
 
-	imc_cmd_start_str.len = strlen(imc_cmd_start_str.s);
-
-	if(outbound_proxy.s)
-		outbound_proxy.len = strlen(outbound_proxy.s);
-
-	rooms_table.len = strlen(rooms_table.s);
-	members_table.len = strlen(members_table.s);
-
 	if (extra_hdrs.s) {
-	    extra_hdrs.len = strlen(extra_hdrs.s);
-	    if (extra_hdrs.len + imc_hdr_ctype.len > 1024) {
-		LM_ERR("extra_hdrs too long\n");
-		return -1;
-	    }
-	    all_hdrs.s = &(hdr_buf[0]);
-	    memcpy(all_hdrs.s, imc_hdr_ctype.s, imc_hdr_ctype.len);
-	    memcpy(all_hdrs.s + imc_hdr_ctype.len, extra_hdrs.s,
-		   extra_hdrs.len);
-	    all_hdrs.len = extra_hdrs.len + imc_hdr_ctype.len;
+    if (extra_hdrs.len + imc_hdr_ctype.len > 1024) {
+      LM_ERR("extra_hdrs too long\n");
+      return -1;
+    }
+    all_hdrs.s = &(hdr_buf[0]);
+    memcpy(all_hdrs.s, imc_hdr_ctype.s, imc_hdr_ctype.len);
+    memcpy(all_hdrs.s + imc_hdr_ctype.len, extra_hdrs.s,
+        extra_hdrs.len);
+    all_hdrs.len = extra_hdrs.len + imc_hdr_ctype.len;
 	} else {
 	    all_hdrs = imc_hdr_ctype;
 	}
 
 	/*  binding to mysql module */
-	db_url.len = strlen(db_url.s);
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	
 	if (db_bind_mod(&db_url, &imc_dbf))

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -33,6 +33,7 @@
 
 #include "../../dprint.h"
 #include "../../hashes.h"
+#include "../../resolve.h"
 #include "../../pvar.h"
 
 
@@ -261,6 +262,7 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 
 error:
 	LM_ERR("error at PV dns name: %.*s\n", in->len, in->s);
+	if(dpv) pkg_free(dpv);
 	return -1;
 }
 
@@ -427,4 +429,169 @@ int dns_update_pv(str *hostname, str *name)
 	LM_DBG("dns PV updated for: %s (%d)\n", dr->hostname, i);
 
 	return 1;
+}
+
+
+struct _hn_pv_data {
+	str data;
+	str fullname;
+	str hostname;
+	str domain;
+	str ipaddr;
+};
+
+static struct _hn_pv_data *_hn_data = NULL;
+
+/**
+ *
+ */
+int hn_pv_data_init(void)
+{
+	char hbuf[512];
+	int hlen;
+	char *d;
+	struct hostent *he;
+	int i;
+
+	if(_hn_data != NULL)
+		return 0;
+
+	if (gethostname(hbuf, 512)<0) {
+		LM_WARN("gethostname failed - host pvs will be null\n");
+		return -1;
+	}
+
+	hlen = strlen(hbuf);
+	if(hlen<=0) {
+		LM_WARN("empty hostname result - host pvs will be null\n");
+		return -1;
+	}
+
+	_hn_data = (struct _hn_pv_data*)pkg_malloc(sizeof(struct _hn_pv_data)+46+2*(hlen+1));
+	if(_hn_data==NULL) {
+		LM_ERR("no more pkg to init hostname data\n");
+		return -1;
+	}
+	memset(_hn_data, 0, sizeof(struct _hn_pv_data)+46+2*(hlen+1));
+
+	_hn_data->data.len = hlen;
+	_hn_data->data.s = (char*)_hn_data + sizeof(struct _hn_pv_data);
+	_hn_data->fullname.len = hlen;
+	_hn_data->fullname.s = _hn_data->data.s + hlen + 1;
+
+	strcpy(_hn_data->data.s, hbuf);
+	strcpy(_hn_data->fullname.s, hbuf);
+
+	d=strchr(_hn_data->data.s, '.');
+	if (d) {
+		_hn_data->hostname.len   = d - _hn_data->data.s;
+		_hn_data->hostname.s     = _hn_data->data.s;
+		_hn_data->domain.len     = _hn_data->fullname.len
+										- _hn_data->hostname.len-1;
+		_hn_data->domain.s       = d+1;
+	} else {
+		_hn_data->hostname       = _hn_data->fullname;
+	}
+
+	he=resolvehost(_hn_data->fullname.s);
+	if (he) {
+		if ((strlen(he->h_name)!=_hn_data->fullname.len)
+				|| strncmp(he->h_name, _hn_data->fullname.s,
+									_hn_data->fullname.len)) {
+			LM_WARN("hostname '%.*s' different than gethostbyname '%s'\n",
+					_hn_data->fullname.len, _hn_data->fullname.s, he->h_name);
+		}
+
+		if (he->h_addr_list) {
+			for (i=0; he->h_addr_list[i]; i++) {
+				if (inet_ntop(he->h_addrtype, he->h_addr_list[i], hbuf, 46)) {
+					if (_hn_data->ipaddr.len==0) {
+						_hn_data->ipaddr.len = strlen(hbuf);
+						_hn_data->ipaddr.s = _hn_data->fullname.s + hlen + 1;
+						strcpy(_hn_data->ipaddr.s, hbuf);
+					} else if (strncmp(_hn_data->ipaddr.s, hbuf,
+								_hn_data->ipaddr.len)!=0) {
+						LM_WARN("many IPs to hostname: %s not used\n", hbuf);
+					}
+				}
+			}
+		} else {
+			LM_WARN(" can't resolve hostname's address: %s\n",
+					_hn_data->fullname.s);
+		}
+	}
+
+	DBG("Hostname: %.*s\n", _hn_data->hostname.len, ZSW(_hn_data->hostname.s));
+	DBG("Domain:   %.*s\n", _hn_data->domain.len, ZSW(_hn_data->domain.s));
+	DBG("Fullname: %.*s\n", _hn_data->fullname.len, ZSW(_hn_data->fullname.s));
+	DBG("IPaddr:   %.*s\n", _hn_data->ipaddr.len, ZSW(_hn_data->ipaddr.s));
+
+	return 0;
+}
+
+/**
+ *
+ */
+int pv_parse_hn_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 1: 
+			if(strncmp(in->s, "n", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "f", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "d", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "i", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	hn_pv_data_init();
+
+	return 0;
+
+error:
+	LM_ERR("unknown host PV name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_hn(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(param==NULL)
+		return -1;
+	if(_hn_data==NULL)
+		return pv_get_null(msg, param, res);;
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1:
+			if(_hn_data->fullname.len==0)
+				return pv_get_null(msg, param, res);;
+			return pv_get_strval(msg, param, res, &_hn_data->fullname);
+		case 2:
+			if(_hn_data->domain.len==0)
+				return pv_get_null(msg, param, res);;
+			return pv_get_strval(msg, param, res, &_hn_data->domain);
+		case 3:
+			if(_hn_data->ipaddr.len==0)
+				return pv_get_null(msg, param, res);;
+			return pv_get_strval(msg, param, res, &_hn_data->ipaddr);
+		default:
+			if(_hn_data->hostname.len==0)
+				return pv_get_null(msg, param, res);;
+			return pv_get_strval(msg, param, res, &_hn_data->hostname);
+	}
 }

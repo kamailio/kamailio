@@ -1,4 +1,3 @@
-
 textops Module
 
 Andrei Pelinescu-Onciul
@@ -24,8 +23,8 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright � 2003 FhG FOKUS
-     _________________________________________________________________
+   Copyright © 2003 FhG FOKUS
+     __________________________________________________________________
 
    Table of Contents
 
@@ -42,44 +41,47 @@ Juha Heinanen
 
         3. Functions
 
-              3.1. search(re) 
-              3.2. search_body(re) 
-              3.3. search_hf(hf, re, flags) 
-              3.4. search_append(re, txt) 
-              3.5. search_append_body(re, txt) 
-              3.6. replace(re, txt) 
-              3.7. replace_body(re, txt) 
-              3.8. replace_all(re, txt) 
-              3.9. replace_body_all(re, txt) 
-              3.10. replace_body_atonce(re, txt) 
-              3.11. subst('/re/repl/flags') 
-              3.12. subst_uri('/re/repl/flags') 
-              3.13. subst_user('/re/repl/flags') 
-              3.14. subst_body('/re/repl/flags') 
-              3.15. subst_hf(hf, subexp, flags) 
-              3.16. set_body(txt,content_type) 
-              3.17. set_reply_body(txt,content_type) 
-              3.18. filter_body(content_type) 
-              3.19. append_to_reply(txt) 
-              3.20. append_hf(txt) 
-              3.21. append_hf(txt, hdr) 
-              3.22. insert_hf(txt) 
-              3.23. insert_hf(txt, hdr) 
-              3.24. append_urihf(prefix, suffix) 
-              3.25. is_present_hf(hf_name) 
-              3.26. is_present_hf_re(hf_name_re) 
-              3.27. append_time() 
-              3.28. append_time_to_request() 
-              3.29. is_method(name) 
-              3.30. remove_hf(hname) 
-              3.31. remove_hf_re(re) 
-              3.32. has_body(), has_body(mime) 
-              3.33. is_audio_on_hold() 
-              3.34. is_privacy(privacy_type) 
-              3.35. in_list(subject, list, separator) 
-              3.36. cmp_str(str1, str2) 
-              3.37. cmp_istr(str1, str2) 
-              3.38. starts_with(str1, str2) 
+              3.1. search(re)
+              3.2. search_body(re)
+              3.3. search_hf(hf, re, flags)
+              3.4. search_append(re, txt)
+              3.5. search_append_body(re, txt)
+              3.6. replace(re, txt)
+              3.7. replace_body(re, txt)
+              3.8. replace_all(re, txt)
+              3.9. replace_body_all(re, txt)
+              3.10. replace_body_atonce(re, txt)
+              3.11. subst('/re/repl/flags')
+              3.12. subst_uri('/re/repl/flags')
+              3.13. subst_user('/re/repl/flags')
+              3.14. subst_body('/re/repl/flags')
+              3.15. subst_hf(hf, subexp, flags)
+              3.16. set_body(txt,content_type)
+              3.17. set_reply_body(txt,content_type)
+              3.18. filter_body(content_type)
+              3.19. append_to_reply(txt)
+              3.20. append_hf(txt[, hdr])
+              3.21. insert_hf(txt[, hdr])
+              3.22. append_urihf(prefix, suffix)
+              3.23. is_present_hf(hf_name)
+              3.24. is_present_hf_re(hf_name_re)
+              3.25. append_time()
+              3.26. append_time_to_request()
+              3.27. is_method(name)
+              3.28. remove_hf(hname)
+              3.29. remove_hf_re(re)
+              3.30. has_body(), has_body(mime)
+              3.31. is_audio_on_hold()
+              3.32. is_privacy(privacy_type)
+              3.33. in_list(subject, list, separator)
+              3.34. cmp_str(str1, str2)
+              3.35. cmp_istr(str1, str2)
+              3.36. starts_with(str1, str2)
+              3.37. set_body_multipart([txt,content_type][,boundary])
+              3.38. append_body_part(txt,content_type[,
+                      content_disposition])
+
+              3.39. remove_body_part(content_type)
 
         4. Known Limitations
 
@@ -87,7 +89,7 @@ Juha Heinanen
 
         1. Functions
 
-              1.1. load_textops(*import_structure) 
+              1.1. load_textops(*import_structure)
 
    List of Examples
 
@@ -111,24 +113,25 @@ Juha Heinanen
    1.18. filter_body usage
    1.19. append_to_reply usage
    1.20. append_hf usage
-   1.21. append_hf usage
-   1.22. insert_hf usage
-   1.23. insert_hf usage
-   1.24. append_urihf usage
-   1.25. is_present_hf usage
-   1.26. is_present_hf_re usage
-   1.27. append_time usage
-   1.28. append_time_to_request usage
-   1.29. is_method usage
-   1.30. remove_hf usage
-   1.31. remove_hf_re usage
-   1.32. has_body usage
-   1.33. is_audio_on_hold usage
-   1.34. is_privacy usage
-   1.35. in_list() usage
-   1.36. cmp_str usage
-   1.37. cmp_str usage
-   1.38. starts_with usage
+   1.21. insert_hf usage
+   1.22. append_urihf usage
+   1.23. is_present_hf usage
+   1.24. is_present_hf_re usage
+   1.25. append_time usage
+   1.26. append_time_to_request usage
+   1.27. is_method usage
+   1.28. remove_hf usage
+   1.29. remove_hf_re usage
+   1.30. has_body usage
+   1.31. is_audio_on_hold usage
+   1.32. is_privacy usage
+   1.33. in_list() usage
+   1.34. cmp_str usage
+   1.35. cmp_str usage
+   1.36. starts_with usage
+   1.37. set_body_multipart usage
+   1.38. append_body_part usage
+   1.39. remove_body_part usage
 
 Chapter 1. Admin Guide
 
@@ -145,44 +148,45 @@ Chapter 1. Admin Guide
 
    3. Functions
 
-        3.1. search(re) 
-        3.2. search_body(re) 
-        3.3. search_hf(hf, re, flags) 
-        3.4. search_append(re, txt) 
-        3.5. search_append_body(re, txt) 
-        3.6. replace(re, txt) 
-        3.7. replace_body(re, txt) 
-        3.8. replace_all(re, txt) 
-        3.9. replace_body_all(re, txt) 
-        3.10. replace_body_atonce(re, txt) 
-        3.11. subst('/re/repl/flags') 
-        3.12. subst_uri('/re/repl/flags') 
-        3.13. subst_user('/re/repl/flags') 
-        3.14. subst_body('/re/repl/flags') 
-        3.15. subst_hf(hf, subexp, flags) 
-        3.16. set_body(txt,content_type) 
-        3.17. set_reply_body(txt,content_type) 
-        3.18. filter_body(content_type) 
-        3.19. append_to_reply(txt) 
-        3.20. append_hf(txt) 
-        3.21. append_hf(txt, hdr) 
-        3.22. insert_hf(txt) 
-        3.23. insert_hf(txt, hdr) 
-        3.24. append_urihf(prefix, suffix) 
-        3.25. is_present_hf(hf_name) 
-        3.26. is_present_hf_re(hf_name_re) 
-        3.27. append_time() 
-        3.28. append_time_to_request() 
-        3.29. is_method(name) 
-        3.30. remove_hf(hname) 
-        3.31. remove_hf_re(re) 
-        3.32. has_body(), has_body(mime) 
-        3.33. is_audio_on_hold() 
-        3.34. is_privacy(privacy_type) 
-        3.35. in_list(subject, list, separator) 
-        3.36. cmp_str(str1, str2) 
-        3.37. cmp_istr(str1, str2) 
-        3.38. starts_with(str1, str2) 
+        3.1. search(re)
+        3.2. search_body(re)
+        3.3. search_hf(hf, re, flags)
+        3.4. search_append(re, txt)
+        3.5. search_append_body(re, txt)
+        3.6. replace(re, txt)
+        3.7. replace_body(re, txt)
+        3.8. replace_all(re, txt)
+        3.9. replace_body_all(re, txt)
+        3.10. replace_body_atonce(re, txt)
+        3.11. subst('/re/repl/flags')
+        3.12. subst_uri('/re/repl/flags')
+        3.13. subst_user('/re/repl/flags')
+        3.14. subst_body('/re/repl/flags')
+        3.15. subst_hf(hf, subexp, flags)
+        3.16. set_body(txt,content_type)
+        3.17. set_reply_body(txt,content_type)
+        3.18. filter_body(content_type)
+        3.19. append_to_reply(txt)
+        3.20. append_hf(txt[, hdr])
+        3.21. insert_hf(txt[, hdr])
+        3.22. append_urihf(prefix, suffix)
+        3.23. is_present_hf(hf_name)
+        3.24. is_present_hf_re(hf_name_re)
+        3.25. append_time()
+        3.26. append_time_to_request()
+        3.27. is_method(name)
+        3.28. remove_hf(hname)
+        3.29. remove_hf_re(re)
+        3.30. has_body(), has_body(mime)
+        3.31. is_audio_on_hold()
+        3.32. is_privacy(privacy_type)
+        3.33. in_list(subject, list, separator)
+        3.34. cmp_str(str1, str2)
+        3.35. cmp_istr(str1, str2)
+        3.36. starts_with(str1, str2)
+        3.37. set_body_multipart([txt,content_type][,boundary])
+        3.38. append_body_part(txt,content_type[, content_disposition])
+        3.39. remove_body_part(content_type)
 
    4. Known Limitations
 
@@ -190,18 +194,17 @@ Chapter 1. Admin Guide
 
    1.1. Known Limitations
 
-   The  module  implements  text  based  operations  over the SIP message
-   processed  by  Kamailio.  SIP  is a text based protocol and the module
-   provides  a  large  set  of  very  useful  functions to manipulate the
-   message  at  text  level, e.g., regular expression search and replace,
-   Perl-like  substitutions,  checks  for  method  type, header presence,
-   insert of new header and date, etc.
+   The module implements text based operations over the SIP message
+   processed by Kamailio. SIP is a text based protocol and the module
+   provides a large set of very useful functions to manipulate the message
+   at text level, e.g., regular expression search and replace, Perl-like
+   substitutions, checks for method type, header presence, insert of new
+   header and date, etc.
 
 1.1. Known Limitations
 
-   search ignores folded lines. For example,
-   search("(From|f):.*@foo.bar")  doesn't match the following From header
-   field:
+   search ignores folded lines. For example, search(“(From|f):.*@foo.bar”)
+   doesn't match the following From header field:
 From: medabeda
  <sip:medameda@foo.bar>;tag=1234
 
@@ -217,50 +220,51 @@ From: medabeda
 
 2.2. External Libraries or Applications
 
-   The  following  libraries  or  applications  must  be installed before
+   The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
 3. Functions
 
-   3.1. search(re) 
-   3.2. search_body(re) 
-   3.3. search_hf(hf, re, flags) 
-   3.4. search_append(re, txt) 
-   3.5. search_append_body(re, txt) 
-   3.6. replace(re, txt) 
-   3.7. replace_body(re, txt) 
-   3.8. replace_all(re, txt) 
-   3.9. replace_body_all(re, txt) 
-   3.10. replace_body_atonce(re, txt) 
-   3.11. subst('/re/repl/flags') 
-   3.12. subst_uri('/re/repl/flags') 
-   3.13. subst_user('/re/repl/flags') 
-   3.14. subst_body('/re/repl/flags') 
-   3.15. subst_hf(hf, subexp, flags) 
-   3.16. set_body(txt,content_type) 
-   3.17. set_reply_body(txt,content_type) 
-   3.18. filter_body(content_type) 
-   3.19. append_to_reply(txt) 
-   3.20. append_hf(txt) 
-   3.21. append_hf(txt, hdr) 
-   3.22. insert_hf(txt) 
-   3.23. insert_hf(txt, hdr) 
-   3.24. append_urihf(prefix, suffix) 
-   3.25. is_present_hf(hf_name) 
-   3.26. is_present_hf_re(hf_name_re) 
-   3.27. append_time() 
-   3.28. append_time_to_request() 
-   3.29. is_method(name) 
-   3.30. remove_hf(hname) 
-   3.31. remove_hf_re(re) 
-   3.32. has_body(), has_body(mime) 
-   3.33. is_audio_on_hold() 
-   3.34. is_privacy(privacy_type) 
-   3.35. in_list(subject, list, separator) 
-   3.36. cmp_str(str1, str2) 
-   3.37. cmp_istr(str1, str2) 
-   3.38. starts_with(str1, str2) 
+   3.1. search(re)
+   3.2. search_body(re)
+   3.3. search_hf(hf, re, flags)
+   3.4. search_append(re, txt)
+   3.5. search_append_body(re, txt)
+   3.6. replace(re, txt)
+   3.7. replace_body(re, txt)
+   3.8. replace_all(re, txt)
+   3.9. replace_body_all(re, txt)
+   3.10. replace_body_atonce(re, txt)
+   3.11. subst('/re/repl/flags')
+   3.12. subst_uri('/re/repl/flags')
+   3.13. subst_user('/re/repl/flags')
+   3.14. subst_body('/re/repl/flags')
+   3.15. subst_hf(hf, subexp, flags)
+   3.16. set_body(txt,content_type)
+   3.17. set_reply_body(txt,content_type)
+   3.18. filter_body(content_type)
+   3.19. append_to_reply(txt)
+   3.20. append_hf(txt[, hdr])
+   3.21. insert_hf(txt[, hdr])
+   3.22. append_urihf(prefix, suffix)
+   3.23. is_present_hf(hf_name)
+   3.24. is_present_hf_re(hf_name_re)
+   3.25. append_time()
+   3.26. append_time_to_request()
+   3.27. is_method(name)
+   3.28. remove_hf(hname)
+   3.29. remove_hf_re(re)
+   3.30. has_body(), has_body(mime)
+   3.31. is_audio_on_hold()
+   3.32. is_privacy(privacy_type)
+   3.33. in_list(subject, list, separator)
+   3.34. cmp_str(str1, str2)
+   3.35. cmp_istr(str1, str2)
+   3.36. starts_with(str1, str2)
+   3.37. set_body_multipart([txt,content_type][,boundary])
+   3.38. append_body_part(txt,content_type[, content_disposition])
+   3.39. remove_body_part(content_type)
 
 3.1.  search(re)
 
@@ -269,7 +273,7 @@ From: medabeda
    Meaning of the parameters is as follows:
      * re - Regular expression.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.1. search usage
@@ -284,7 +288,7 @@ if ( search("[Ss][Ii][Pp]") ) { /*....*/ };
    Meaning of the parameters is as follows:
      * re - Regular expression.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.2. search_body usage
@@ -299,11 +303,11 @@ if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
    Meaning of the parameters is as follows:
      * hf - header field name.
      * re - regular expression.
-     * flags  -  control  flags  -  it  has to be one of: a - all headers
-       matching  the  name;  f - only first header matching the name; l -
+     * flags - control flags - it has to be one of: a - all headers
+       matching the name; f - only first header matching the name; l -
        only the last header matching the name.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.3. search_body usage
@@ -319,7 +323,7 @@ if ( search_hf("From", ":test@", "a") ) { /*....*/ };
      * re - Regular expression.
      * txt - String to be appended.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.4. search_append usage
@@ -329,14 +333,14 @@ search_append("[Oo]pen[Ss]er", " SIP Proxy");
 
 3.5.  search_append_body(re, txt)
 
-   Searches  for  the  first  match  of re in the body of the message and
+   Searches for the first match of re in the body of the message and
    appends txt after it.
 
    Meaning of the parameters is as follows:
      * re - Regular expression.
      * txt - String to be appended.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.5. search_append_body usage
@@ -352,7 +356,7 @@ search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
      * re - Regular expression.
      * txt - String.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.6. replace usage
@@ -362,14 +366,14 @@ replace("openser", "Kamailio SIP Proxy");
 
 3.7.  replace_body(re, txt)
 
-   Replaces  the  first  occurrence of re in the body of the message with
+   Replaces the first occurrence of re in the body of the message with
    txt.
 
    Meaning of the parameters is as follows:
      * re - Regular expression.
      * txt - String.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.7. replace_body usage
@@ -385,7 +389,7 @@ replace_body("openser", "Kamailio SIP Proxy");
      * re - Regular expression.
      * txt - String.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.8. replace_all usage
@@ -395,14 +399,14 @@ replace_all("openser", "Kamailio SIP Proxy");
 
 3.9.  replace_body_all(re, txt)
 
-   Replaces  all  occurrence  of  re in the body of the message with txt.
+   Replaces all occurrence of re in the body of the message with txt.
    Matching is done on a per-line basis.
 
    Meaning of the parameters is as follows:
      * re - Regular expression.
      * txt - String.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.9. replace_body_all usage
@@ -412,14 +416,14 @@ replace_body_all("openser", "Kamailio SIP Proxy");
 
 3.10.  replace_body_atonce(re, txt)
 
-   Replaces  all  occurrence  of  re in the body of the message with txt.
+   Replaces all occurrence of re in the body of the message with txt.
    Matching is done over the whole body.
 
    Meaning of the parameters is as follows:
      * re - Regular expression.
      * txt - String.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.10. replace_body_atonce usage
@@ -434,14 +438,14 @@ if(has_body() && replace_body_atonce("^.+$", ""))
    Replaces re with repl (sed or perl like).
 
    Meaning of the parameters is as follows:
-     * '/re/repl/flags'  -  sed  like  regular expression. flags can be a
-       combination  of  i  (case  insensitive),  g  (global)  or s (match
-       newline don't treat it as end of line).
+     * '/re/repl/flags' - sed like regular expression. flags can be a
+       combination of i (case insensitive), g (global) or s (match newline
+       don't treat it as end of line).
        're' - is regular expresion
        'repl' - is replacement string - may contain pseudo-varibales
        'flags' - substitution flags (i - ignore case, g - global)
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.11. subst usage
@@ -450,8 +454,8 @@ if(has_body() && replace_body_atonce("^.+$", ""))
 if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
 
 # replace the uri in to: with the value of avp sip_address (just an example)
-if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig')
-) {};
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') )
+ {};
 
 ...
 
@@ -461,14 +465,14 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig')
    on the uri)
 
    Meaning of the parameters is as follows:
-     * '/re/repl/flags'  -  sed  like  regular expression. flags can be a
-       combination  of  i  (case  insensitive),  g  (global)  or s (match
-       newline don't treat it as end of line).
+     * '/re/repl/flags' - sed like regular expression. flags can be a
+       combination of i (case insensitive), g (global) or s (match newline
+       don't treat it as end of line).
        're' - is regular expresion
        'repl' - is replacement string - may contain pseudo-varibales
        'flags' - substitution flags (i - ignore case, g - global)
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.12. subst_uri usage
@@ -479,25 +483,24 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
 
 # adds the avp 'uri_prefix' as prefix to numeric uris, and save the original
 # uri (\0 match) as a parameter: orig_uri (just an example)
-if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){
-$
+if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
 
 ...
 
 3.13.  subst_user('/re/repl/flags')
 
-   Runs  the re substitution on the message uri (like subst_uri but works
+   Runs the re substitution on the message uri (like subst_uri but works
    only on the user portion of the uri)
 
    Meaning of the parameters is as follows:
-     * '/re/repl/flags'  -  sed  like  regular expression. flags can be a
-       combination  of  i  (case  insensitive),  g  (global)  or s (match
-       newline don't treat it as end of line).
+     * '/re/repl/flags' - sed like regular expression. flags can be a
+       combination of i (case insensitive), g (global) or s (match newline
+       don't treat it as end of line).
        're' - is regular expresion
        'repl' - is replacement string - may contain pseudo-varibales
        'flags' - substitution flags (i - ignore case, g - global)
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.13. subst usage
@@ -516,14 +519,14 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
    Replaces re with repl (sed or perl like) in the body of the message.
 
    Meaning of the parameters is as follows:
-     * '/re/repl/flags'  -  sed  like  regular expression. flags can be a
-       combination  of  i  (case  insensitive),  g  (global)  or s (match
-       newline don't treat it as end of line).
+     * '/re/repl/flags' - sed like regular expression. flags can be a
+       combination of i (case insensitive), g (global) or s (match newline
+       don't treat it as end of line).
        're' - is regular expresion
        'repl' - is replacement string - may contain pseudo-varibales
        'flags' - substitution flags (i - ignore case, g - global)
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.14. subst_body usage
@@ -538,13 +541,13 @@ if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 
    Meaning of the parameters is as follows:
      * hf - header field name.
-     * subexp  -  substitution  expression  in  the same format as of the
+     * subexp - substitution expression in the same format as of the
        'subst' function parameter.
-     * flags  -  control  flags  -  it  has to be one of: a - all headers
-       matching  the  name;  f - only first header matching the name; l -
+     * flags - control flags - it has to be one of: a - all headers
+       matching the name; f - only first header matching the name; l -
        only the last header matching the name.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.15. search_body usage
@@ -558,10 +561,10 @@ if ( subst_hf("From", "/:test@/:best@/", "a") ) { /*....*/ };
 
    Meaning of the parameters is as follows:
      * txt - text for the body, can include pseudo-variables.
-     * content_type   -   value   of  Content-Type  header,  can  include
+     * content_type - value of Content-Type header, can include
        pseudo-variables.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.16. set_body usage
@@ -575,10 +578,10 @@ set_body("test", "text/plain");
 
    Meaning of the parameters is as follows:
      * txt - text for the body, can include pseudo-variables.
-     * content_type   -   value   of  Content-Type  header,  can  include
+     * content_type - value of Content-Type header, can include
        pseudo-variables.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  FAILURE_ROUTE,
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
    Example 1.17. set_reply_body usage
@@ -588,13 +591,13 @@ set_reply_body("test", "text/plain");
 
 3.18.  filter_body(content_type)
 
-   Filters  multipart/mixed  body  by  leaving  out  all other body parts
-   except the first body part of given type.
+   Filters multipart/mixed body by leaving out all other body parts except
+   the first body part of given type.
 
    Meaning of the parameters is as follows:
      * content_type - Content type to be left in the body.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.18. filter_body usage
@@ -616,7 +619,7 @@ if (has_body("multipart/mixed")) {
    Meaning of the parameters is as follows:
      * txt - String which may contains pseudo-variables.
 
-   This   function   can   be   used  from  REQUEST_ROUTE,  BRANCH_ROUTE,
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    FAILURE_ROUTE, ERROR_ROUTE.
 
    Example 1.19. append_to_reply usage
@@ -625,83 +628,47 @@ append_to_reply("Foo: bar\r\n");
 append_to_reply("Foo: $rm at $Ts\r\n");
 ...
 
-3.20.  append_hf(txt)
+3.20.  append_hf(txt[, hdr])
 
-   Appends 'txt' as header after the last header field.
+   Appends 'txt' as header after first header field or after last 'hdr'
+   header field.
 
    Meaning of the parameters is as follows:
-     * txt  -  Header  field  to  be  appended.  The  value  can  contain
+     * txt - Header field to be appended. The value can contain
        pseudo-variables which will be replaced at run time.
+     * hdr - Header name after which the 'txt' is appended.
 
-   Note:  Headers  which  are  added  in  main route cannot be removed in
-   further routes (e.g. failure routes). So, the idea is not to add there
-   any  headers  that  you  might  want  to  remove later. To add headers
-   temporarely  use the branch route because the changes you do there are
-   per-branch.
-
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1.20. append_hf usage
 ...
 append_hf("P-hint: VOICEMAIL\r\n");
-append_hf("From-username: $fU\r\n");
-...
-
-3.21.  append_hf(txt, hdr)
-
-   Appends 'txt' as header after first 'hdr' header field.
-
-   Meaning of the parameters is as follows:
-     * txt  -  Header  field  to  be  appended.  The  value  can  contain
-       pseudo-variables which will be replaced at run time.
-     * hdr - Header name after which the 'txt' is appended.
-
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
-   FAILURE_ROUTE, BRANCH_ROUTE.
-
-   Example 1.21. append_hf usage
-...
-append_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
 append_hf("From-username: $fU\r\n", "Call-ID");
 ...
 
-3.22.  insert_hf(txt)
+3.21.  insert_hf(txt[, hdr])
 
-   Inserts 'txt' as header before the first header field.
-
-   Meaning of the parameters is as follows:
-     * txt  -  Header  field  to  be  inserted.  The  value  can  contain
-       pseudo-variables which will be replaced at run time.
-
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
-   FAILURE_ROUTE, BRANCH_ROUTE.
-
-   Example 1.22. insert_hf usage
-...
-insert_hf("P-hint: VOICEMAIL\r\n");
-insert_hf("To-username: $tU\r\n");
-...
-
-3.23.  insert_hf(txt, hdr)
-
-   Inserts 'txt' as header before first 'hdr' header field.
+   Inserts 'txt' as header before the first header field or before first
+   'hdr' header field if 'hdr' is given.
 
    Meaning of the parameters is as follows:
-     * txt  -  Header  field  to  be  inserted.  The  value  can  contain
+     * txt - Header field to be inserted. The value can contain
        pseudo-variables which will be replaced at run time.
      * hdr - Header name before which the 'txt' is inserted.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.23. insert_hf usage
+   Example 1.21. insert_hf usage
 ...
+insert_hf("P-hint: VOICEMAIL\r\n");
+insert_hf("To-username: $tU\r\n");
 insert_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
 insert_hf("To-username: $tU\r\n", "Call-ID");
 ...
 
-3.24.  append_urihf(prefix, suffix)
+3.22.  append_urihf(prefix, suffix)
 
    Append header field name with original Request-URI in middle.
 
@@ -709,56 +676,56 @@ insert_hf("To-username: $tU\r\n", "Call-ID");
      * prefix - string (usually at least header field name).
      * suffix - string (usually at least line terminator).
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  FAILURE_ROUTE,
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.24. append_urihf usage
+   Example 1.22. append_urihf usage
 ...
 append_urihf("CC-Diversion: ", "\r\n");
 ...
 
-3.25.  is_present_hf(hf_name)
+3.23.  is_present_hf(hf_name)
 
    Return true if a header field is present in message.
 
 Note
 
-   The  function  is  also  able  to  distinguish  the compact names. For
-   exmaple "From" will match with "f"
+   The function is also able to distinguish the compact names. For exmaple
+   “From” will match with “f”
 
    Meaning of the parameters is as follows:
      * hf_name - Header field name.(long or compact form)
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.25. is_present_hf usage
+   Example 1.23. is_present_hf usage
 ...
 if (is_present_hf("From")) log(1, "From HF Present");
 ...
 
-3.26.  is_present_hf_re(hf_name_re)
+3.24.  is_present_hf_re(hf_name_re)
 
-   Return  true  if  a header field whose name matches regular expression
+   Return true if a header field whose name matches regular expression
    'hf_name_re' is present in message.
 
    Meaning of the parameters is as follows:
      * hf_name_re - Regular expression to match header field name.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.26. is_present_hf_re usage
+   Example 1.24. is_present_hf_re usage
 ...
 if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
 ...
 
-3.27.  append_time()
+3.25.  append_time()
 
    Adds a time header to the reply of the request. You must use it before
-   functions  that  are  likely  to  send  a  reply,  e.g.,  save()  from
-   'registrar'  module.  Header  format  is: "Date: %a, %d %b %Y %H:%M:%S
-   GMT", with the legend:
+   functions that are likely to send a reply, e.g., save() from
+   'registrar' module. Header format is: “Date: %a, %d %b %Y %H:%M:%S
+   GMT”, with the legend:
      * %a abbreviated week of day name (locale)
      * %d day of month as decimal number
      * %b abbreviated month name (locale)
@@ -769,18 +736,18 @@ if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
 
    Return true if a header was succesfully appended.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  FAILURE_ROUTE,
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.27. append_time usage
+   Example 1.25. append_time usage
 ...
 append_time();
 ...
 
-3.28.  append_time_to_request()
+3.26.  append_time_to_request()
 
-   Adds  a time header to the request. Header format is: "Date: %a, %d %b
-   %Y %H:%M:%S GMT", with the legend:
+   Adds a time header to the request. Header format is: “Date: %a, %d %b
+   %Y %H:%M:%S GMT”, with the legend:
      * %a abbreviated week of day name (locale)
      * %d day of month as decimal number
      * %b abbreviated month name (locale)
@@ -791,28 +758,28 @@ append_time();
 
    Return true if a header was succesfully appended.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.28. append_time_to_request usage
+   Example 1.26. append_time_to_request usage
 ...
 if(!is_present_hf("Date"))
     append_time_to_request();
 ...
 
-3.29.  is_method(name)
+3.27.  is_method(name)
 
-   Check  if  the  method  of  the message matches the name. If name is a
-   known  method  (invite,  cancel,  ack,  bye,  options,  info,  update,
-   register,  message,  subscribe,  notify,  refer,  prack), the function
-   performs method ID testing (integer comparison) instead of ignore case
-   string comparison.
+   Check if the method of the message matches the name. If name is a known
+   method (invite, cancel, ack, bye, options, info, update, register,
+   message, subscribe, notify, refer, prack), the function performs method
+   ID testing (integer comparison) instead of ignore case string
+   comparison.
 
-   The   'name'   can   be   a   list   of   methods   in   the  form  of
-   'method1|method2|...'.  In this case, the function returns true if the
+   The 'name' can be a list of methods in the form of
+   'method1|method2|...'. In this case, the function returns true if the
    SIP message's method is one from the list. IMPORTANT NOTE: in the list
    must be only methods defined in Kamailio with ID (invite, cancel, ack,
-   bye,  options,  info,  update,  register,  message, subscribe, notify,
+   bye, options, info, update, register, message, subscribe, notify,
    refer, prack, publish; for more see:
    http://www.iana.org/assignments/sip-parameters).
 
@@ -822,10 +789,10 @@ if(!is_present_hf("Date"))
    Meaning of the parameters is as follows:
      * name - SIP method name
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.29. is_method usage
+   Example 1.27. is_method usage
 ...
 if(is_method("INVITE"))
 {
@@ -837,9 +804,9 @@ if(is_method("OPTION|UPDATE"))
 }
 ...
 
-3.30.  remove_hf(hname)
+3.28.  remove_hf(hname)
 
-   Remove  from message all headers with name "hname". Header matching is
+   Remove from message all headers with name “hname”. Header matching is
    case-insensitive. Matches and removes also the compact header forms.
 
    Returns true if at least one header is found and removed.
@@ -847,10 +814,10 @@ if(is_method("OPTION|UPDATE"))
    Meaning of the parameters is as follows:
      * hname - header name to be removed.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.30. remove_hf usage
+   Example 1.28. remove_hf usage
 ...
 if(remove_hf("User-Agent"))
 {
@@ -862,20 +829,20 @@ remove_hf("Contact")
 remove_hf("m")
 ...
 
-3.31.  remove_hf_re(re)
+3.29.  remove_hf_re(re)
 
-   Remove  from message all headers with name matching regular expression
-   "re"
+   Remove from message all headers with name matching regular expression
+   “re”
 
    Returns true if at least one header is found and removed.
 
    Meaning of the parameters is as follows:
      * re - regular expression to match the header name to be removed.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.31. remove_hf_re usage
+   Example 1.29. remove_hf_re usage
 ...
 if(remove_hf_re("^P-"))
 {
@@ -883,22 +850,22 @@ if(remove_hf_re("^P-"))
 }
 ...
 
-3.32.  has_body(), has_body(mime)
+3.30.  has_body(), has_body(mime)
 
-   The  function returns true if the SIP message has a body attached. The
-   checked includes also the "Content-Length" header presence and value.
+   The function returns true if the SIP message has a body attached. The
+   checked includes also the “Content-Length” header presence and value.
 
-   If  a  parameter  is  given,  the  mime described will be also checked
-   against the "Content-Type" header.
+   If a parameter is given, the mime described will be also checked
+   against the “Content-Type” header.
 
    Meaning of the parameters is as follows:
-     * mime  -  mime  to be checked against the "Content-Type" header. If
-       not present or 0, this check will be disabled.
+     * mime - mime to be checked against the “Content-Type” header. If not
+       present or 0, this check will be disabled.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.32. has_body usage
+   Example 1.30. has_body usage
 ...
 if(has_body("application/sdp"))
 {
@@ -906,15 +873,15 @@ if(has_body("application/sdp"))
 }
 ...
 
-3.33.  is_audio_on_hold()
+3.31.  is_audio_on_hold()
 
-   The  function  returns true if the SIP message has a body attached and
-   at least one audio stream in on hold.
+   The function returns true if the SIP message has a body attached and at
+   least one audio stream in on hold.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.33. is_audio_on_hold usage
+   Example 1.31. is_audio_on_hold usage
 ...
 if(is_audio_on_hold())
 {
@@ -922,17 +889,17 @@ if(is_audio_on_hold())
 }
 ...
 
-3.34.  is_privacy(privacy_type)
+3.32.  is_privacy(privacy_type)
 
-   The  function  returns  true  if  the SIP message has a Privacy header
-   field  that  includes the given privacy_type among its privacy values.
-   See   http://www.iana.org/assignments/sip-priv-values   for   possible
-   privacy type values.
+   The function returns true if the SIP message has a Privacy header field
+   that includes the given privacy_type among its privacy values. See
+   http://www.iana.org/assignments/sip-priv-values for possible privacy
+   type values.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.34. is_privacy usage
+   Example 1.32. is_privacy usage
 ...
 if(is_privacy("id"))
 {
@@ -940,16 +907,16 @@ if(is_privacy("id"))
 }
 ...
 
-3.35.  in_list(subject, list, separator)
+3.33.  in_list(subject, list, separator)
 
-   Function  checks  if subject string is found in list string where list
-   items  are separated by separator string. Subject and list strings may
-   contain  pseudo  variables. Separator string needs to be one character
+   Function checks if subject string is found in list string where list
+   items are separated by separator string. Subject and list strings may
+   contain pseudo variables. Separator string needs to be one character
    long. Returns 1 if subject is found and -1 otherwise.
 
    Function can be used from all kinds of routes.
 
-   Example 1.35. in_list() usage
+   Example 1.33. in_list() usage
 ...
 $var(subject) = "fi";
 $var(list) = "dk,fi,no,se";
@@ -958,15 +925,15 @@ if (in_list("$var(subject)", "$var(list)", ",") {
 }
 ...
 
-3.36.  cmp_str(str1, str2)
+3.34.  cmp_str(str1, str2)
 
    The function returns true if the two parameters matches as string case
    sensitive comparison.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.36. cmp_str usage
+   Example 1.34. cmp_str usage
 ...
 if(cmp_str("$rU", "kamailio"))
 {
@@ -974,15 +941,15 @@ if(cmp_str("$rU", "kamailio"))
 }
 ...
 
-3.37.  cmp_istr(str1, str2)
+3.35.  cmp_istr(str1, str2)
 
    The function returns true if the two parameters matches as string case
    insensitive comparison.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.37. cmp_str usage
+   Example 1.35. cmp_str usage
 ...
 if(cmp_istr("$rU@you", "kamailio@YOU"))
 {
@@ -990,15 +957,15 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 }
 ...
 
-3.38.  starts_with(str1, str2)
+3.36.  starts_with(str1, str2)
 
-   The  function  returns true if the first string starts with the second
+   The function returns true if the first string starts with the second
    string.
 
-   This   function   can   be  used  from  REQUEST_ROUTE,  ONREPLY_ROUTE,
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.38. starts_with usage
+   Example 1.36. starts_with usage
 ...
 if (starts_with("$rU", "+358"))
 {
@@ -1006,11 +973,99 @@ if (starts_with("$rU", "+358"))
 }
 ...
 
+3.37.  set_body_multipart([txt,content_type][,boundary])
+
+   Set multipart body to a SIP message. If called with no parameters, will
+   convert present body to multipart.
+
+   Meaning of the parameters is as follows:
+     * txt - text for the body, can include pseudo-variables.
+     * content_type - value of Content-Type header, can include
+       pseudo-variables.
+     * boundary - string to use as boundary, can include pseudo-variables.
+       Default: unique-boundary-1
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   The core will take care of the last boundary ending "--". Detecting
+   wich one is the last and fixing the others if needed.
+
+   Example 1.37. set_body_multipart usage
+...
+set_body_multipart("test", "text/plain", "delimiter");
+...
+Will produce:
+...
+Content-Type: multipart/mixed;boundary="delimiter"
+Mime-Version: 1.0
+
+--delimiter
+Content-Type: text/plain
+
+text
+
+--delimiter
+...
+
+3.38.  append_body_part(txt,content_type[, content_disposition])
+
+   Append a part on multipart body SIP message. Will use
+   "unique-boundary-1" as boundary.
+
+   Meaning of the parameters is as follows:
+     * txt - text for the multipart body, can include pseudo-variables.
+     * content_type - value of Content-Type header, can include
+       pseudo-variables.
+     * content_disposition - value of Content-Disposition header, can
+       include pseudo-variables.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   The core will take care of the last boundary ending "--". Detecting
+   wich one is the last and fixing the others if needed.
+
+   Example 1.38. append_body_part usage
+...
+$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c"
+append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handling
+=required");
+...
+Will append this the body:
+...
+Content-Type: application/vnd.cirpack.isdn-ext
+Content-Disposition: signal;handling=required
+
+7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c
+
+--unique-boundary-1
+...
+
+3.39.  remove_body_part(content_type)
+
+   Remove a part on a multipart body SIP message.
+
+   Meaning of the parameters is as follows:
+     * content_type - value of Content-Type header of the part to be
+       removed. If more than one exists the first occurrence will be
+       removed.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   The core will take care of the last boundary ending "--". Detecting
+   wich one is the last and fixing the others if needed.
+
+   Example 1.39. remove_body_part usage
+...
+remove_body_part("application/vnd.cirpack.isdn-ext");
+...
+
 4. Known Limitations
 
-   Search  functions  are  applied  to  the  original request, i.e., they
-   ignore  all  changes  resulting  from  message  processing in Kamailio
-   script.
+   Search functions are applied to the original request, i.e., they ignore
+   all changes resulting from message processing in Kamailio script.
 
 Chapter 2. Developer Guide
 
@@ -1018,16 +1073,16 @@ Chapter 2. Developer Guide
 
    1. Functions
 
-        1.1. load_textops(*import_structure) 
+        1.1. load_textops(*import_structure)
 
 1. Functions
 
-   1.1. load_textops(*import_structure) 
+   1.1. load_textops(*import_structure)
 
 1.1.  load_textops(*import_structure)
 
    For programmatic use only--import the Textops API.
 
    Meaning of the parameters is as follows:
-     * import_structure  -  Pointer to the import structure - see "struct
-       textops_binds" in modules/textops/api.h
+     * import_structure - Pointer to the import structure - see “struct
+       textops_binds” in modules/textops/api.h

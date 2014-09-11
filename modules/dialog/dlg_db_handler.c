@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -360,7 +360,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			}
 
 			/*link the dialog*/
-			link_dlg(dlg, 0);
+			link_dlg(dlg, 0, 0);
 
 			dlg->h_id = VAL_INT(values+1);
 			next_id = d_table->entries[dlg->h_entry].next_id;
@@ -383,11 +383,13 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			dlg->tl.timeout = (unsigned int)(VAL_INT(values+9));
 			LM_DBG("db dialog timeout is %u (%u/%u)\n", dlg->tl.timeout,
 					get_ticks(), (unsigned int)time(0));
-			if (dlg->tl.timeout<=(unsigned int)time(0))
+			if (dlg->tl.timeout<=(unsigned int)time(0)) {
 				dlg->tl.timeout = 0;
-			else
+				dlg->lifetime = 0;
+			} else {
+				dlg->lifetime = dlg->tl.timeout - dlg->start_ts;
 				dlg->tl.timeout -= (unsigned int)time(0);
-			dlg->lifetime = dlg->tl.timeout;
+			}
 
 			GET_STR_VALUE(cseq1, values, 10 , 1, 1);
 			GET_STR_VALUE(cseq2, values, 11 , 1, 1);
@@ -414,7 +416,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			dlg_set_toroute(dlg, &toroute_name);
 
 			GET_STR_VALUE(xdata, values, 21, 0, 0);
-			if(xdata.s!=NULL)
+			if(xdata.s!=NULL && dlg->state!=DLG_STATE_DELETED)
 			{
 				srjson_InitDoc(&jdoc, NULL);
 				jdoc.buf = xdata;

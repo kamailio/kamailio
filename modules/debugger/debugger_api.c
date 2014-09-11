@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -152,6 +152,11 @@ int _dbg_cfgtrace = 0;
 /**
  *
  */
+int _dbg_cfgpkgcheck = 0;
+
+/**
+ *
+ */
 int _dbg_breakpoint = 0;
 
 /**
@@ -168,6 +173,11 @@ int _dbg_cfgtrace_facility = DEFAULT_FACILITY;
  *
  */
 char *_dbg_cfgtrace_prefix = "*** cfgtrace:";
+
+/**
+ *
+ */
+char *_dbg_cfgtrace_lname = NULL;
 
 /**
  *
@@ -263,17 +273,43 @@ int dbg_msgid_filter(struct sip_msg *msg, unsigned int flags, void *bar)
 	}
 	msgid_base = _dbg_pid_list[indx].msgid_base;
 	lock_release(_dbg_pid_list[indx].lock);
-	msgid_new = msg->id - msgid_base;
-	LM_DBG("msg->id:%d msgid_base:%d -> %d\n", msg->id, msgid_base, msgid_new);
-	if(msgid_new>0)
+	if(msg->id > msgid_base)
 	{
+		msgid_new = msg->id - msgid_base;
+		LM_DBG("msg->id:%d msgid_base:%d -> %d\n",
+			msg->id, msgid_base, msgid_new);
 		msg->id = msgid_new;
-		return 1;
 	}
 	else
 	{
-		LM_WARN("msgid_new<=0??\n");
-		return -1;
+		LM_DBG("msg->id:%d already processed\n", msg->id);
+	}
+	return 1;
+}
+
+char* get_current_route_type_name()
+{
+	switch(route_type){
+		case REQUEST_ROUTE:
+			return "request_route";
+		case FAILURE_ROUTE:
+			return "failure_route";
+		case TM_ONREPLY_ROUTE:
+		case CORE_ONREPLY_ROUTE:
+		case ONREPLY_ROUTE:
+			return "onreply_route";
+		case BRANCH_ROUTE:
+			return "branch_route";
+		case ONSEND_ROUTE:
+			return "onsend_route";
+		case ERROR_ROUTE:
+			return "error_route";
+		case LOCAL_ROUTE:
+			return "local_route";
+		case BRANCH_FAILURE_ROUTE:
+			return "branch_failure_route";
+		default:
+			return "unknown_route";
 	}
 }
 
@@ -302,14 +338,27 @@ int dbg_cfg_trace(void *data)
 
 	an = dbg_get_action_name(a);
 
+	if(_dbg_cfgpkgcheck!=0)
+	{
+#if defined (PKG_MEMORY) && defined (q_malloc_h)
+		LM_DBG("checking pkg memory before action %.*s (line %d)\n",
+				an->len, an->s, a->cline);
+		qm_check(mem_block);
+#else
+		LM_DBG("cfg pkg check is disbled due to missing qm handler\n");
+#endif
+	}
+
 	if(_dbg_pid_list[process_no].set&DBG_CFGTRACE_ON)
 	{
 		if(is_printable(_dbg_cfgtrace_level))
 		{
-			LOG_(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
-					_dbg_cfgtrace_prefix,
-					" c=[%s] l=%d a=%d n=%.*s\n",
-					ZSW(a->cfile), a->cline, a->type, an->len, ZSW(an->s)
+			LOG__(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
+					_dbg_cfgtrace_lname, _dbg_cfgtrace_prefix,
+					"%s=[%s] c=[%s] l=%d a=%d n=%.*s\n",
+					get_current_route_type_name(), ZSW(a->rname),
+					ZSW(a->cfile), a->cline,
+					a->type, an->len, ZSW(an->s)
 				);
 		}
 	}

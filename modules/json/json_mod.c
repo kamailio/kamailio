@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -88,7 +88,7 @@ static int fixup_get_field_free(void** param, int param_no)
 	}
 
 	if (param_no == 3) {
-		return fixup_free_pvar_null(param, 3);
+		return fixup_free_pvar_null(param, 1);
 	}
 
 	LM_ERR("invalid parameter number <%d>\n", param_no);

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>DB_MONGODB Module</title>
+	<productname class="trade">kamailio.org</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+	    </author>
+	    <editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2014</year>
+	    <holder>asipto.com</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+    
+    <xi:include href="db_mongodb_admin.xml"/>
+    
+    
+</book>

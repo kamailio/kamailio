@@ -10,3 +10,27 @@ RPC Exports for usrloc
  2. ul.lookup
         Lookup one AOR in the usrloc location table
 
+ 3. ul.rm
+        Delete a address of record including its contacts
+
+ 4. ul.rm_contact
+        Delete a contact from an AOR record
+
+ 5. ul.flush
+        Flush the usrloc memory cache to DB
+
+ 6. ul.add
+        Add a new contact for an address of record
+
+ 7. ul.db_users
+        Tell number of different unexpired users (AoRs) in database
+        table (db_mode!=0 only)
+
+ 8. ul.db_contacts
+        Tell number of unexpired contacts in database table (db_mode=3
+        only)
+
+ 9. ul.db_expired_contacts
+        Tell number of expired contacts in database table (db_mode=3
+        only)
+

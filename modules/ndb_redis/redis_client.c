@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -316,9 +316,10 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	redisc_server_t *rsrv=NULL;
 	redisc_reply_t *rpl;
 	char c;
-	va_list ap;
+	va_list ap, ap2;
 
 	va_start(ap, cmd);
+	va_copy(ap2, ap);
 
 	rsrv = redisc_get_server(srv);
 	if(srv==NULL || cmd==NULL || res==NULL)
@@ -365,7 +366,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		}
 		if(redisc_reconnect_server(rsrv)==0)
 		{
-			rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap);
+			rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap2);
 		} else {
 			LM_ERR("unable to reconnect to redis server: %.*s\n", srv->len, srv->s);
 			cmd->s[cmd->len] = c;
@@ -374,10 +375,12 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	}
 	cmd->s[cmd->len] = c;
 	va_end(ap);
+	va_end(ap2);
 	return 0;
 
 error_exec:
 	va_end(ap);
+	va_end(ap2);
 	return -1;
 
 }

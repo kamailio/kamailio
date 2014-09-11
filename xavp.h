@@ -104,6 +104,10 @@ sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list);
 void xavp_print_list(sr_xavp_t **head);
 
 sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold);
+
+sr_xavp_t* xavp_get_child(str *rname, str *cname);
+sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname);
+sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname);
 #endif
 
 #endif

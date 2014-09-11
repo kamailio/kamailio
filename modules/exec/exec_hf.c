@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * history
  * -------
@@ -363,6 +363,7 @@ environment_t *replace_env(struct hf_wrapper *list)
 	new_env=pkg_malloc((var_cnt+1)*sizeof(char *));
 	if (!new_env) {
 		LM_ERR("no pkg mem\n");
+		pkg_free(backup_env);
 		return 0;
 	}
 	/* put all var pointers into new environment */

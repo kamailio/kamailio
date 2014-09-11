@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -92,7 +92,7 @@ int w_cmp_aor(struct sip_msg *msg, char *uri1, char *uri2)
 
 int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2)
 {
-	str s1;
+        str s1, *s2;
 	sip_uri_t turi;
 	sip_uri_t *puri;
 
@@ -103,12 +103,17 @@ int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2)
 			LM_ERR("cannot get first parameter\n");
 			return -8;
 		}
-		if(parse_uri(s1.s, s1.len, &turi)!=0)
-			return -1;
+		if(parse_uri(s1.s, s1.len, &turi)!=0) {
+		    LM_ERR("parsing of uri '%.*s' failed\n", s1.len, s1.s);
+		    return -1;
+		}
 		puri = &turi;
 	} else {
-		if(parse_sip_msg_uri(msg)<0)
-			return -1;
+  	        if(parse_sip_msg_uri(msg)<0) {
+		    s2 = GET_RURI(msg);
+  		    LM_ERR("parsing of uri '%.*s' failed\n", s2->len, s2->s);
+		    return -1;
+		}
 		puri = &msg->parsed_uri;
 	}
 	if(puri->gr.s!=NULL)

@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -49,8 +49,10 @@
 #include "udomain.h"
 #include "../../sr_module.h"
 #include "ul_mod.h"
+#include "../../parser/parse_uri.h"
 
 extern unsigned int init_flag;
+extern int hashing_type;
 
 int bind_usrloc(usrloc_api_t* api) {
 	if (!api) {
@@ -67,18 +69,50 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->get_udomain = get_udomain;
 	api->lock_udomain = lock_udomain;
 	api->unlock_udomain = unlock_udomain;
-
 	api->insert_pcontact = insert_pcontact;
 	api->delete_pcontact = delete_pcontact;
 	api->get_pcontact = get_pcontact;
 	api->get_pcontact_by_src = get_pcontact_by_src;
-
+	api->assert_identity = assert_identity;
 	api->update_pcontact = update_pcontact;
 	api->update_rx_regsession = update_rx_regsession;
-
 	api->get_all_ucontacts = get_all_ucontacts;
-
+	api->update_security = update_security;
+	api->update_temp_security = update_temp_security;
 	api->register_ulcb = register_ulcb;
 
 	return 0;
+}
+
+/* return the slot id for inserting contacts in the hash */
+unsigned int get_hash_slot(udomain_t* _d, str* _aor){
+	struct sip_uri contact_uri;
+	unsigned int sl;
+
+	if ((hashing_type == 0) /*use full AOR for hash*/ || (parse_uri(_aor->s, _aor->len, &contact_uri) != 0)) {
+		if (hashing_type!=0) {
+			LM_DBG("Unable to get contact host:port from contact header [%.*s]... falling back to full AOR\n", _aor->len, _aor->s);
+		}
+		sl = core_hash(_aor, 0, _d->size);
+	} else {
+		sl = core_hash(&contact_uri.host, 0, _d->size);
+	}
+
+	return sl;
+}
+
+unsigned int get_aor_hash(udomain_t* _d, str* _aor) {
+	struct sip_uri contact_uri;
+	unsigned int aorhash;
+
+	if ((hashing_type == 0) || (parse_uri(_aor->s, _aor->len, &contact_uri) != 0)) {
+		if (hashing_type !=0) {
+			LM_DBG("Unable to get contact host:port from contact header [%.*s]... falling back to full AOR\n", _aor->len, _aor->s);
+		}
+		aorhash = core_hash(_aor, 0, 0);
+	} else {
+		LM_DBG("using host in lookup [%.*s]\n", contact_uri.host.len, contact_uri.host.s);
+		aorhash = core_hash(&contact_uri.host, 0, 0);
+	}
+	return aorhash;
 }

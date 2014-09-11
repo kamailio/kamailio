@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -334,15 +334,15 @@ int xcaps_xpath_get(str *inbuf, str *xpaths, str *outbuf)
 		LM_ERR("unable to evaluate xpath expression [%s]\n", xpaths->s);
 		goto error;
 	}
-    nodes = xpathObj->nodesetval;
-	if(nodes==NULL)
+	nodes = xpathObj->nodesetval;
+	if(nodes==NULL || nodes->nodeNr==0 || nodes->nodeTab == NULL)
 	{
 		outbuf->len = 0;
 		outbuf->s[outbuf->len] = '\0';
 		goto done;
 	}
 	size = nodes->nodeNr;
-    p = outbuf->s;
+	p = outbuf->s;
 	end = outbuf->s + outbuf->len;
 	for(i = 0; i < size; ++i)
 	{
@@ -586,7 +586,7 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 		goto error;
 	}
 	outbuf->s = (char*)pkg_malloc(size+1);
-	if(size<=0)
+	if(outbuf->s==NULL)
 	{
 		LM_ERR("no pkg for output\n");
 		xmlFree(xmem);

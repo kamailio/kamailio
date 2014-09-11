@@ -3,7 +3,7 @@
  *
  * hep related functions
  *
- * Copyright (C) 2011-12 Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+ * Copyright (C) 2011-14 Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -31,8 +31,12 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
+#include "../../receive.h"
 
 #include "hep.h"
+#include "sipcapture.h"
+
+
 
 static int count = 0;
 
@@ -208,8 +212,7 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
 
         hep_payload = buf + hep_offset;
 
-        receive_msg(hep_payload,(unsigned int)(len - hep_offset) , ri);
-	//memset(buf, '\n', hep_offset); /* the parser will ignore the starting \n no need to do expensive memmove */
+        receive_msg(hep_payload,(unsigned int)(len - hep_offset), ri);
 	
 	return -1;
 }
@@ -386,7 +389,6 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
                                         hg->capt_id  = (hep_chunk_uint32_t *) (tmp);
                                         i+=chunk_length;
                                         heptime->captid = ntohs(hg->capt_id->data);
-                                        //LM_ERR("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: [%i] vs [%i]\n", heptime->captid, ntohl(hg->capt_id->data));
                                         totelem++;
                                         break;
 
@@ -396,7 +398,7 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
                                         break;                                                     
 
                                 case 14:
-                                        hg->auth_key  = (hep_chunk_str_t *) (tmp);
+                                        authkey = (char *) tmp + sizeof(hep_chunk_t);
                                         i+=chunk_length;                                                                             
                                         break;
                                                      
@@ -407,6 +409,12 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
                                         i+=chunk_length;
                                         totelem++;
                                         break;
+                                case 17:
+                                
+                                        correlation_id = (char *) tmp + sizeof(hep_chunk_t);
+                                        i+=chunk_length;                                                                            
+					break;
+
                                                      
                                 default:
                                         i+=chunk_length;
@@ -474,12 +482,14 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
         heptime->tv_usec = hg->time_usec->data;
         heptime->captid = ntohs(hg->capt_id->data);
           
- 
+
         if(payload != NULL ) {
-                /* and now recieve message */
-                receive_msg(payload, payload_len, &ri);
+                /* and now recieve message */                
+                if (hg->proto_t->data == 5) receive_logging_json_msg(payload, payload_len, hg, "rtcp_capture");
+                else if (hg->proto_t->data == 100) receive_logging_json_msg(payload, payload_len, hg, "logs_capture");                
+                else receive_msg(payload, payload_len, &ri);
         }
-        
+
 done:
         if(si) pkg_free(si);
         if(hg) pkg_free(hg);                     

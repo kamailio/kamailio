@@ -24,10 +24,21 @@
 		</otheraddr>
 		</address>
 	    </author>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>TutPro Inc.</orgname></affiliation>
+		<email>jh@tutpro.com</email>
+	    </author>
 	    <editor>
 		<firstname>Daniel-Constantin</firstname>
 		<surname>Mierla</surname>
 		<email>miconda@gmail.com</email>
+	    </editor>
+	    <editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@tutpro.com</email>
 	    </editor>
 	</authorgroup>
 	<copyright>

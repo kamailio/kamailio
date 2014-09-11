@@ -1,0 +1,97 @@
+DB_MONGODB Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+
+              1.1. Limitations
+
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Usage
+
+   List of Examples
+
+   1.1. Usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+
+        1.1. Limitations
+
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Usage
+
+1. Overview
+
+   1.1. Limitations
+
+   This module provides DB APIv1 connector for MongoDB NoSQL server.
+
+   It can be used as a replacement for other database modules such as
+   db_mysql, db_postgres, a.s.o. Not all the specs of DB APIv1 are
+   implemented, thus the usage of this module might be restricted to
+   specific modules.
+
+   You can read more about MongoDB at: http://www.mongodb.org.
+
+1.1. Limitations
+
+     * This module has implemented INSERT, UPDATE and DELETE. Query
+       (SELECT) is not yet storing the result.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * mongo-c-driver - available at
+       https://github.com/mongodb/mongo-c-driver
+
+3. Usage
+
+   Load the module and set the the DB URL for specific modules to:
+   mongodb://username:password@host:port/database. Username, password and
+   port are optional.
+
+   Example 1.1. Usage
+...
+loadmodule "db_mongodb.so"
+...
+#!define DBURL "mongodb://localhost/kamailio"
+modparam("acc", "db_url", DBURL)
+...

@@ -1,9 +1,5 @@
 userblacklist Module
 
-Hardy Kahl
-
-   1&1 Internet AG
-
 Edited by
 
 Henning Westerholt
@@ -11,7 +7,14 @@ Henning Westerholt
    1&1 Internet AG
    <henning.westerholt@1und1.de>
 
-   Copyright � 2008 1&1 Internet AG
+Edited by
+
+Pawel Kuzak
+
+   1&1 Internet AG
+   <pawel.kuzak@1und1.de>
+
+   Copyright © 2008 1&1 Internet AG
      __________________________________________________________________
 
    Table of Contents
@@ -38,6 +41,7 @@ Henning Westerholt
                       string number, string table)
 
               4.3. check_blacklist ([string table])
+              4.4. check_whitelist (string table)
 
         5. MI Commands
 
@@ -69,9 +73,10 @@ Henning Westerholt
    1.3. check_user_blacklist usage
    1.4. check_user_blacklist usage
    1.5. check_blacklist usage
-   1.6. reload_blacklists usage
-   1.7. Example database content - globalblacklist table
-   1.8. Example database content - userblacklist table
+   1.6. check_whitelist usage
+   1.7. reload_blacklists usage
+   1.8. Example database content - globalblacklist table
+   1.9. Example database content - userblacklist table
    2.1. Set db_url parameter
    2.2. Set userblacklist_table parameter
    2.3. Set userblacklist_id_col parameter
@@ -109,6 +114,7 @@ Chapter 1. Admin Guide
                 number, string table)
 
         4.3. check_blacklist ([string table])
+        4.4. check_whitelist (string table)
 
    5. MI Commands
 
@@ -172,7 +178,7 @@ Chapter 1. Admin Guide
    If set to non-zero value, the domain column in the userblacklist is
    used.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.1. Set use_domain parameter
 ...
@@ -188,7 +194,7 @@ modparam("userblacklist", "use_domain", 0)
    matching. Please be aware that memory requirements for storing the
    routing tree in shared memory will also increase by a factor of 12.8.
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.2. Set match_mode parameter
 ...
@@ -204,8 +210,9 @@ modparam("userblacklist", "match_mode", 128)
           string table)
 
    4.3. check_blacklist ([string table])
+   4.4. check_whitelist (string table)
 
-4.1. check_user_blacklist (string user, string domain, string number, string
+4.1.  check_user_blacklist (string user, string domain, string number, string
 table)
 
    Finds the longest prefix that matches the request URI user (or the
@@ -226,7 +233,7 @@ if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)")) {
 }
 ...
 
-4.2. check_user_whitelist (string user, string domain, string number, string
+4.2.  check_user_whitelist (string user, string domain, string number, string
 table)
 
    Finds the longest prefix that matches the request URI user (or the
@@ -247,7 +254,7 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)")) {
 }
 ...
 
-4.3. check_blacklist ([string table])
+4.3.  check_blacklist ([string table])
 
    Finds the longest prefix that matches the request URI for the given
    table. If a match is found and it is not set to whitelist, false is
@@ -262,16 +269,30 @@ if (!check_blacklist("globalblacklist")) {
 }
 ...
 
+4.4.  check_whitelist (string table)
+
+   Finds the longest prefix that matches the request URI for the given
+   table. If a match is found and it is set to whitelist, true is
+   returned. Otherwise, false is returned.
+
+   Example 1.6. check_whitelist usage
+...
+if (!check_whitelist("globalblacklist")) {
+        sl_send_reply("403", "Forbidden");
+        exit;
+}
+...
+
 5. MI Commands
 
    5.1. reload_blacklist
 
-5.1. reload_blacklist
+5.1.  reload_blacklist
 
    Reload the internal global blacklist cache. This is necessary after the
    database tables for the global blacklist have been changed.
 
-   Example 1.6. reload_blacklists usage
+   Example 1.7. reload_blacklists usage
 ...
 kamctl fifo reload_blacklist
 ...
@@ -293,7 +314,7 @@ kamctl fifo reload_blacklist
    complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.7. Example database content - globalblacklist table
+   Example 1.8. Example database content - globalblacklist table
 ...
 +----+-----------+-----------+
 | id | prefix    | whitelist |
@@ -306,11 +327,11 @@ kamctl fifo reload_blacklist
 ...
 
    This table will setup a global blacklist for all numbers, only allowing
-   calls starting with "1". Numbers that starting with "123456" and
-   "123455787" are also blacklisted, because the longest prefix will be
+   calls starting with “1”. Numbers that starting with “123456” and
+   “123455787” are also blacklisted, because the longest prefix will be
    matched.
 
-   Example 1.8. Example database content - userblacklist table
+   Example 1.9. Example database content - userblacklist table
 ...
 +----+----------------+-------------+-----------+-----------+
 | id | username       | domain      | prefix    | whitelist |
@@ -326,10 +347,10 @@ kamctl fifo reload_blacklist
 ...
 
    This table will setup user specific blacklists for certain usernames.
-   For example for user "49721123456788" the prefix "1234" will be not
-   allowed, but the number "123456788" is allowed. Additionally a domain
+   For example for user “49721123456788” the prefix “1234” will be not
+   allowed, but the number “123456788” is allowed. Additionally a domain
    could be specified that is used for username matching if the
-   "use_domain" parameter is set.
+   “use_domain” parameter is set.
 
 Chapter 2. Module parameter for database access.
 
@@ -352,7 +373,7 @@ Chapter 2. Module parameter for database access.
 
    URL to the database containing the data.
 
-   Default value is "mysql://openserro:openserro@localhost/openser".
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 2.1. Set db_url parameter
 ...
@@ -364,7 +385,7 @@ modparam("userblacklist", "db_url", "dbdriver://username:password@dbhost/dbname"
 
    Name of the userblacklist table for the userblacklist module.
 
-   Default value is "userblacklist".
+   Default value is “userblacklist”.
 
    Example 2.2. Set userblacklist_table parameter
 ...
@@ -422,7 +443,7 @@ modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
    note that this table is used when the check_blacklist function is
    called with no parameters.
 
-   Default value is "globalblacklist".
+   Default value is “globalblacklist”.
 
    Example 2.8. Set globalblacklist_table parameter
 ...

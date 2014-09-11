@@ -4,7 +4,7 @@
 			<db_table_id>rls_presentity</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>rlsubs_did</field></col>
 				<col><field>resource_uri</field></col>
 				<col><field>content_type</field></col>
@@ -60,7 +60,7 @@
 			<db_table_id>rls_watchers</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
-				<col><field>id</field></col>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>presentity_uri</field></col>
 				<col><field>to_user</field></col>
 				<col><field>to_domain</field></col>

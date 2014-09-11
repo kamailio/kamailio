@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -44,6 +44,7 @@
 extern int disable_presence;
 extern int disable_winfo;
 extern int disable_bla;
+extern int disable_xcapdiff;
 
 static str pu_415_rpl  = str_init("Unsupported media type");
 
@@ -119,6 +120,25 @@ int xml_add_events(void)
 		LM_DBG("added 'dialog;sla' event to presence module\n");
 	}
 	
+	if (!disable_xcapdiff) {
+		/* constructing xcap-diff event */
+		memset(&event, 0, sizeof(pres_ev_t));
+		event.name.s= "xcap-diff";
+		event.name.len= 9;
+
+		event.content_type.s= "application/xcap-diff+xml";
+		event.content_type.len= 25;
+
+		event.type= PUBL_TYPE;
+		event.default_expires= 3600;
+		if(pres_add_event(&event)< 0)
+		{
+			LM_ERR("while adding event xcap-diff\n");
+			return -1;
+		}
+		LM_DBG("added 'xcap-diff' event to presence module\n");
+	}
+
 	return 0;
 }
 /*

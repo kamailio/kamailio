@@ -42,7 +42,14 @@ mysql_ro_query() {
 	$MYSQL $2 -h $DBHOST -u $DBROUSER "-p$DBROPW" -e "$1 ;" $DBNAME
 }
 
+mysql_connect() {
+	# if password not yet queried, query it now
+	prompt_pw "MySQL password for user '$DBRWUSER@$DBHOST'"
+	$MYSQL $2 -h $DBHOST -u $DBRWUSER "-p$DBRWPW" $DBNAME
+}
+
 DBCMD=mysql_query
 DBROCMD=mysql_ro_query
 DBRAWPARAMS="-B"
+DBCMDCONNECT=mysql_connect
 

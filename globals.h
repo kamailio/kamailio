@@ -25,7 +25,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
@@ -206,7 +206,7 @@ extern int rt_timer2_prio;  /* "slow" timer */
 extern int rt_timer1_policy; /* "fast" timer, SCHED_OTHER */
 extern int rt_timer2_policy; /* "slow" timer, SCHED_OTHER */
 
-extern int http_reply_hack;
+extern int http_reply_parse;
 
 #ifdef USE_DNS_CACHE
 extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */

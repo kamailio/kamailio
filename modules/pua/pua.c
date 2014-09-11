@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -123,12 +123,12 @@ static cmd_export_t cmds[]=
 
 static param_export_t params[]={
 	{"hash_size",                INT_PARAM, &HASH_SIZE},
-	{"db_url",                   STR_PARAM, &db_url.s},
-	{"db_table",                 STR_PARAM, &db_table.s},
+	{"db_url",                   PARAM_STR, &db_url},
+	{"db_table",                 PARAM_STR, &db_table},
 	{"min_expires",	             INT_PARAM, &min_expires},
 	{"default_expires",          INT_PARAM, &default_expires},
 	{"update_period",            INT_PARAM, &update_period},
-	{"outbound_proxy",           STR_PARAM, &outbound_proxy.s},
+	{"outbound_proxy",           PARAM_STR, &outbound_proxy},
 	{"dlginfo_increase_version", INT_PARAM, &dlginfo_increase_version},
 	{"reginfo_increase_version", INT_PARAM, &reginfo_increase_version},
 	{"check_remote_contact",     INT_PARAM, &check_remote_contact},
@@ -184,9 +184,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
-	db_table.len = db_table.s ? strlen(db_table.s) : 0;
 
 	/* binding to database module  */
 	if (db_bind_mod(&db_url, &pua_dbf))
@@ -285,8 +283,6 @@ static int mod_init(void)
 	if(pua_db)
 		pua_dbf.close(pua_db);
 	pua_db = NULL;
-
-	outbound_proxy.len = outbound_proxy.s ? strlen(outbound_proxy.s) : 0;
 
 	return 0;
 }
@@ -993,7 +989,7 @@ static void db_update(unsigned int ticks,void *param)
 		p = HashT->p_records[i].entity->next;
 		while(p)
 		{
-			if(p->expires - (int)time(NULL)< 0)	
+			if((int)p->expires - (int)time(NULL)< 0)	
 			{
 				p= p->next;
 				continue;

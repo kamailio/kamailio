@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  * History:
@@ -29,7 +29,7 @@
  *  2006-04-03  fixed invalid handle to extract error (sgupta)
  *  2006-04-04  removed deprecated ODBC functions, closed cursors on error
  *              (sgupta)
- *  2006-05-05  Fixed reconnect code to actually work on connection loss 
+ *  2006-05-05  Fixed reconnect code to actually work on connection loss
  *              (sgupta)
  */
 
@@ -115,7 +115,7 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 				(int)(long)CON_CONNECTION(_h));
 		db_unixodbc_extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,
 			(char*)sqlstate);
-		
+
 		/* Connection broken */
 		if( !strncmp((char*)sqlstate,"08003",5) ||
 		!strncmp((char*)sqlstate,"08S01",5) ) {
@@ -136,7 +136,7 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 
 		/* Connection broken */
 		if( !strncmp((char*)sqlstate,"08003",5) ||
-		    !strncmp((char*)sqlstate,"08S01",5) 
+		    !strncmp((char*)sqlstate,"08S01",5)
 		    )
 		{
 			ret = reconnect(_h);
@@ -155,7 +155,7 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 
 		}
 		else {
-			/* Close the cursor */ 
+			/* Close the cursor */
 			SQLCloseCursor(CON_RESULT(_h));
 			SQLFreeHandle(SQL_HANDLE_STMT, CON_RESULT(_h));
 		}
@@ -321,13 +321,6 @@ int db_unixodbc_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrow
 
 	SQLNumResultCols(CON_RESULT(_h), (SQLSMALLINT *)&columns);
 
-	/* Allocate a temporary row */
-	temp_row = (strn*)pkg_malloc( columns*sizeof(strn) );
-	if(!temp_row) {
-		LM_ERR("no private memory left\n");
-		return -1;
-	}
-
 	/* Now fetch nrows at most */
 	len = sizeof(db_row_t) * nrows;
 	RES_ROWS(*_r) = (struct db_row*)pkg_malloc(len);
@@ -339,19 +332,25 @@ int db_unixodbc_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrow
 
 	LM_DBG("Now fetching %i rows at most\n", nrows);
 	while(SQL_SUCCEEDED(ret = SQLFetch(CON_RESULT(_h)))) {
+		/* Allocate a temporary row */
+		temp_row = db_unixodbc_new_cellrow(columns);
+		if (!temp_row) {
+			LM_ERR("no private memory left\n");
+			pkg_free(RES_ROWS(*_r));
+			pkg_free(*_r);
+			*_r = 0;
+			return -1;
+		}
+
 		LM_DBG("fetching %d columns for row %d...\n",columns, row_n);
 		for(i=0; i < columns; i++) {
-			SQLLEN indicator;
 			LM_DBG("fetching column %d\n",i);
-
-			ret = SQLGetData(CON_RESULT(_h), i+1, SQL_C_CHAR,
-					temp_row[i].s, STRN_LEN, &indicator);
-
-			if (SQL_SUCCEEDED(ret)) {
-				if (indicator == SQL_NULL_DATA)
-					strcpy(temp_row[i].s, "NULL");
-			} else {
-				LM_ERR("SQLGetData failed\n");
+			if (!db_unixodbc_load_cell(_h, i+1, temp_row + i, RES_TYPES(*_r)[i])) {
+			    pkg_free(RES_ROWS(*_r));
+			    db_unixodbc_free_cellrow(columns, temp_row);
+			    pkg_free(*_r);
+			    *_r = 0;
+			    return -5;
 			}
 		}
 
@@ -359,27 +358,30 @@ int db_unixodbc_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrow
 
 		if (db_unixodbc_list_insert(&rowstart, &rows, columns, temp_row) < 0) {
 			LM_ERR("SQL result row insert failed\n");
-			pkg_free(temp_row);
-			temp_row= NULL;
+			pkg_free(RES_ROWS(*_r));
+			db_unixodbc_free_cellrow(columns, temp_row);
 			pkg_free(*_r);
 			*_r = 0;
 			return -5;
 		}
+
+		/* Free temporary row data */
+		LM_DBG("freeing temp_row at %p\n", temp_row);
+		db_unixodbc_free_cellrow(columns, temp_row);
+		temp_row = NULL;
 
 		row_n++;
 		if (row_n == nrows) {
 			break;
 		}
 	}
-	
-	/* Free temporary row data */
-	LM_DBG("freeing temp_row at %p\n", temp_row);
-	pkg_free(temp_row);
+
 	CON_ROW(_h) = NULL;
 
 	RES_ROW_N(*_r) = row_n;
 	if (!row_n) {
 		LM_DBG("no more rows to process for db fetch");
+		pkg_free(RES_ROWS(*_r));
 		RES_ROWS(*_r) = 0;
 		return 0;
 	}

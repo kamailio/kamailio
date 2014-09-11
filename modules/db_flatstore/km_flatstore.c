@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -212,6 +212,10 @@ int flat_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
 		case DB1_BITMAP:
 			fprintf(f, "%u", VAL_BITMAP(v + i));
 			break;
+
+		default:
+			LM_ERR("val type [%d] not supported", VAL_TYPE(v + i));
+			return -1;
 		}
 
 		if (i < (n - 1)) {

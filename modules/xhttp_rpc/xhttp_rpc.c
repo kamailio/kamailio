@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * 2011-11-11  initial version (osas)
  */
@@ -93,7 +93,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"xhttp_rpc_root",	STR_PARAM,	&xhttp_rpc_root.s},
+	{"xhttp_rpc_root",	PARAM_STR,	&xhttp_rpc_root},
 	{"xhttp_rpc_buf_size",	INT_PARAM,	&buf_size},
 	{0, 0, 0}
 };
@@ -354,7 +354,7 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 	}
 	va_start(ap, fmt);
 	while(*fmt) {
-		if (*fmt == '{') {
+		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
 			ds = new_data_struct(ctx);
 			if (!ds) goto err;
@@ -467,12 +467,12 @@ error:
 }
 
 
-/** Implementation of rpc_printf function required by the management API.
+/** Implementation of rpc_rpl_printf function required by the management API.
  *
  * This function will be called whenever an RPC management function calls
  * rpc-printf to add a parameter to the xhttp_rpc reply being constructed.
  */
-static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int n, size;
 	char *p;
@@ -544,7 +544,7 @@ static int rpc_struct_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
 	while(*fmt) {
 		member_name.s = va_arg(ap, char*);
 		member_name.len = (member_name.s?strlen(member_name.s):0);
-		if (*fmt == '{') {
+		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
 			ds = new_data_struct(ctx);
 			if (!ds) goto err;
@@ -630,7 +630,6 @@ static int mod_init(void)
 		buf_size = pkg_mem_size/3;
 
 	/* Check xhttp_rpc_root param */
-	xhttp_rpc_root.len = strlen(xhttp_rpc_root.s);
 	for(i=0;i<xhttp_rpc_root.len;i++){
 		if ( !isalnum(xhttp_rpc_root.s[i]) && xhttp_rpc_root.s[i]!='_') {
 			LM_ERR("bad xhttp_rpc_root param [%.*s], char [%c] "
@@ -641,12 +640,15 @@ static int mod_init(void)
 		}
 	}
 
+	memset(&func_param, 0, sizeof(func_param));
 	func_param.send = (rpc_send_f)rpc_send;
 	func_param.fault = (rpc_fault_f)rpc_fault;
 	func_param.add = (rpc_add_f)rpc_add;
 	func_param.scan = (rpc_scan_f)rpc_scan;
-	func_param.printf = (rpc_printf_f)rpc_printf;
+	func_param.rpl_printf = (rpc_rpl_printf_f)rpc_rpl_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
+	/* use rpc_struct_add for array_add */
+	func_param.array_add = (rpc_struct_add_f)rpc_struct_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
 	func_param.capabilities = (rpc_capabilities_f)rpc_capabilities;

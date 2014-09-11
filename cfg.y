@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
  /*
  * History:
@@ -141,6 +141,7 @@
 #include "rvalue.h"
 #include "sr_compat.h"
 #include "msg_translator.h"
+#include "async_task.h"
 
 #include "ppcfg.h"
 #include "pvapi.h"
@@ -255,12 +256,15 @@ extern int column;
 extern int startcolumn;
 extern int startline;
 extern char *finame;
+extern char *routename;
+extern char *default_routename;
 
 #define set_cfg_pos(x) \
 	do{\
 		if(x) {\
 		(x)->cline = line;\
 		(x)->cfile = (finame!=0)?finame:((cfg_file!=0)?cfg_file:"default");\
+		(x)->rname = (routename!=0)?routename:((default_routename!=0)?default_routename:"DEFAULT");\
 		}\
 	}while(0)
 
@@ -391,6 +395,7 @@ extern char *finame;
 %token LOGFACILITY
 %token LOGNAME
 %token LOGCOLOR
+%token LOGPREFIX
 %token LISTEN
 %token ADVERTISE
 %token ALIAS
@@ -409,6 +414,7 @@ extern char *finame;
 %token DNS_SERVERS_NO
 %token DNS_USE_SEARCH
 %token DNS_SEARCH_FMATCH
+%token DNS_NAPTR_IGNORE_RFC
 %token DNS_CACHE_INIT
 %token DNS_USE_CACHE
 %token DNS_USE_FAILOVER
@@ -438,6 +444,7 @@ extern char *finame;
 %token STAT
 %token CHILDREN
 %token SOCKET_WORKERS
+%token ASYNC_WORKERS
 %token CHECK_VIA
 %token PHONE2TEL
 %token MEMLOG
@@ -531,10 +538,11 @@ extern char *finame;
 %token MAX_WLOOPS
 %token PVBUFSIZE
 %token PVBUFSLOTS
-%token HTTP_REPLY_HACK
+%token HTTP_REPLY_PARSE
 %token VERSION_TABLE_CFG
 %token CFG_DESCRIPTION
 %token SERVER_ID
+%token MAX_RECURSIVE_LEVEL
 %token LATENCY_LOG
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
@@ -836,6 +844,8 @@ assign_stm:
 	| LOGNAME EQUAL error { yyerror("string value expected"); }
 	| LOGCOLOR EQUAL NUMBER { log_color=$3; }
 	| LOGCOLOR EQUAL error { yyerror("boolean value expected"); }
+	| LOGPREFIX EQUAL STRING { log_prefix_fmt=$3; }
+	| LOGPREFIX EQUAL error { yyerror("string value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
@@ -865,6 +875,8 @@ assign_stm:
 	| DNS_USE_SEARCH error { yyerror("boolean value expected"); }
 	| DNS_SEARCH_FMATCH EQUAL NUMBER   { default_core_cfg.dns_search_fmatch=$3; }
 	| DNS_SEARCH_FMATCH error { yyerror("boolean value expected"); }
+	| DNS_NAPTR_IGNORE_RFC EQUAL NUMBER   { default_core_cfg.dns_naptr_ignore_rfc=$3; }
+	| DNS_NAPTR_IGNORE_RFC error { yyerror("boolean value expected"); }
 	| DNS_CACHE_INIT EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_init=$3); }
 	| DNS_CACHE_INIT error { yyerror("boolean value expected"); }
 	| DNS_USE_CACHE EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.use_dns_cache=$3); }
@@ -934,6 +946,8 @@ assign_stm:
 	| CHILDREN EQUAL error { yyerror("number expected"); }
 	| SOCKET_WORKERS EQUAL NUMBER { socket_workers=$3; }
 	| SOCKET_WORKERS EQUAL error { yyerror("number expected"); }
+	| ASYNC_WORKERS EQUAL NUMBER { async_task_set_workers($3); }
+	| ASYNC_WORKERS EQUAL error { yyerror("number expected"); }
 	| CHECK_VIA EQUAL NUMBER { check_via=$3; }
 	| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
 	| PHONE2TEL EQUAL NUMBER { phone2tel=$3; }
@@ -1553,9 +1567,10 @@ assign_stm:
 	| PVBUFSIZE EQUAL error { yyerror("number expected"); }
 	| PVBUFSLOTS EQUAL NUMBER { pv_set_buffer_slots($3); }
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
-	| HTTP_REPLY_HACK EQUAL NUMBER { http_reply_hack=$3; }
-	| HTTP_REPLY_HACK EQUAL error { yyerror("boolean value expected"); }
+	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
+	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
+    | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | LATENCY_LOG EQUAL NUMBER { default_core_cfg.latency_log=$3; }
 	| LATENCY_LOG EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_DB EQUAL NUMBER { default_core_cfg.latency_limit_db=$3; }
@@ -1734,9 +1749,10 @@ route_name:		NUMBER	{
 						memcpy($$, tmp, i_tmp);
 						$$[i_tmp]=0;
 					}
+					routename = tmp;
 						}
-			|	ID		{ $$=$1; }
-			|	STRING	{ $$=$1; }
+			|	ID		{ routename = $1; $$=$1; }
+			|	STRING	{ routename = $1; $$=$1; }
 ;
 
 
@@ -2756,8 +2772,24 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr BIN_LSHIFT rval_expr {$$=mk_rve2(RVE_BLSHIFT_OP, $1,  $3);}
 		| rval_expr BIN_RSHIFT rval_expr {$$=mk_rve2(RVE_BRSHIFT_OP, $1,  $3);}
 		| rval_expr rve_cmpop rval_expr %prec GT { $$=mk_rve2( $2, $1, $3);}
-		| rval_expr rve_equalop rval_expr %prec EQUAL_T
-			{ $$=mk_rve2( $2, $1, $3);}
+		| rval_expr rve_equalop rval_expr %prec EQUAL_T {
+			/* comparing with $null => treat as defined or !defined */
+			if($3->op==RVE_RVAL_OP && $3->left.rval.type==RV_PVAR
+					&& $3->left.rval.v.pvs.type==PVT_NULL) {
+				if($2==RVE_DIFF_OP || $2==RVE_IDIFF_OP
+						|| $2==RVE_STRDIFF_OP) {
+					DBG("comparison with $null switched to notdefined operator\n");
+					$$=mk_rve1(RVE_DEFINED_OP, $1);
+				} else {
+					DBG("comparison with $null switched to defined operator\n");
+					$$=mk_rve1(RVE_NOTDEFINED_OP, $1);
+				}
+				/* free rve struct for $null */
+				rve_destroy($3);
+			} else {
+				$$=mk_rve2($2, $1, $3);
+			}
+		}
 		| rval_expr LOG_AND rval_expr	{ $$=mk_rve2(RVE_LAND_OP, $1, $3);}
 		| rval_expr LOG_OR rval_expr	{ $$=mk_rve2(RVE_LOR_OP, $1, $3);}
 		| LPAREN rval_expr RPAREN		{ $$=$2;}
@@ -3250,7 +3282,8 @@ cmd:
 					LOG(L_ERR, "misused command %s\n", $1);
 					yyerror("Command cannot be used in the block\n");
 			} else {
-				LOG(L_ERR, "cfg. parser: failed to find command %s\n", $1);
+				LOG(L_ERR, "cfg. parser: failed to find command %s (params %ld)\n",
+						$1, mod_func_action->val[1].u.number);
 				yyerror("unknown command, missing loadmodule?\n");
 			}
 			free_mod_func_action(mod_func_action);
@@ -3346,6 +3379,7 @@ static void get_cpos(struct cfg_pos* pos)
 	if(finame==0)
 		finame = (cfg_file!=0)?cfg_file:"default";
 	pos->fname=finame;
+	pos->rname=(routename!=0)?routename:default_routename;
 }
 
 

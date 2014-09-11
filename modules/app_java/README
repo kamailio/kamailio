@@ -6,7 +6,7 @@ Edited by
 
 Konstantin Mosesov
 
-   Copyright © 2013 Konstantin Mosesov
+   Copyright © 2013, 2014 Konstantin Mosesov
      __________________________________________________________________
 
    Table of Contents
@@ -21,7 +21,7 @@ Konstantin Mosesov
 
         3. Java runtime
 
-              3.1.
+              3.1. JRE or JDK is required to use this module
 
         4. Parameters
 
@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
 
    3. Java runtime
 
-        3.1.
+        3.1. JRE or JDK is required to use this module
 
    4. Parameters
 
@@ -155,11 +155,12 @@ Chapter 1. Admin Guide
 
 3. Java runtime
 
-   3.1.
+   3.1. JRE or JDK is required to use this module
 
-3.1.
+3.1. JRE or JDK is required to use this module
 
-   Java runtime library (JRE or JDK) is required to use this module.
+   Java runtime library (JRE and JDK for building app_java) is required to
+   use this module.
 
 4. Parameters
 
@@ -205,24 +206,25 @@ modparam("app_java", "java_options", "-Djava.compiler=NONE")
    Example 1.4. Set java_options parameter (live configuration)
 ...
 # Assumes "application java folder" is located at /opt/kamailio/java
-modparam("app_java", "java_options", "-Djava.compiler=NONE -Djava.class.path=/pa
-th/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+modparam("app_java", "java_options", "-Djava.compiler=NONE
+    -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:
+    /opt/kamailio/java/kamailio.jar")
 ...
 
    Example 1.5. Set java_options parameter (verbose configuration)
 ...
 # Assumes "application java folder" is located at /opt/kamailio/java
-modparam("app_java", "java_options", "-verbose:gc,class,jni -Djava.compiler=NONE
- -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/ja
-va/kamailio.jar")
+modparam("app_java", "java_options", "-verbose:gc,class,jni
+    -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:
+    /opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
 ...
 
    Example 1.6. Set java_options parameter (debug configuration)
 ...
 # Assumes "application java folder" is located at /opt/kamailio/java
-modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compi
-ler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kam
-ailio/java/kamailio.jar")
+modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni
+    -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:
+    /opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
 ...
 
 4.4. force_cmd_exec (int)
@@ -269,8 +271,8 @@ modparam("app_java", "force_cmd_exec", 1)
                 object       L
                 short        S
                 void         V
-                Note that to specify an object, the "L" is followed by the objec
-t's class name and ends with a semi-colon, ';' .
+                Note that to specify an object, the "L" is followed by the
+                object's class name and ends with a semi-colon, ';' .
 
    app_java supports the following signatures:
                 Primitives: Z,B,C,D,F,I,J,L,S,V
@@ -294,7 +296,8 @@ ure.
         Parameters count should be exactly the same as signature count.
         Note 1: Arrays representation (symbol '[') is not supported yet.
         Note 2: You shall use a correct signature, e.g. the following examples o
-f combinations are invalid:
+f
+        combinations are invalid:
         java_method_exec("ExampleMethod", "ZI", "False");
         java_method_exec("ExampleMethod", "LI", "something", "5");
 
@@ -314,8 +317,8 @@ java_method_exec("ExampleMethod", "V");
 # Java
 public int ExampleMethod()
 {
-                ... do something;
-                return 1;
+    ... do something;
+    return 1;
 }
      * Example 1.9. Signature: "Ljava/lang/String;I"
        Kamailio prototype
@@ -331,8 +334,8 @@ java_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Java
 public int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
 {
-                ... do something with buffer;
-                return 1;
+    ... do something with buffer;
+    return 1;
 }
      * Example 1.10. Signature: "ZB"
        Kamailio prototype
@@ -348,11 +351,12 @@ java_method_exec("ExampleMethod", "ZB", "true", "0x05");
 # Java
 public int ExampleMethod(boolean flagSet, byte bFlag);
 {
-                if (flagSet)
-                {
-                        ... do something with flags;
-                }
-                return 1;
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
 }
 
 5.3. java_staticmethod_exec(method, method_signature, [param1[, param2[,
@@ -372,8 +376,8 @@ java_staticmethod_exec("ExampleMethod", "V");
 # Java
 public static int ExampleMethod()
 {
-                ... do something;
-                return 1;
+    ... do something;
+    return 1;
 }
      * Example 1.12. Signature: "Ljava/lang/String;I"
        Kamailio prototype
@@ -390,8 +394,8 @@ java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Java
 public static int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
 {
-                ... do something with buffer;
-                return 1;
+    ... do something with buffer;
+    return 1;
 }
      * Example 1.13. Signature: "ZB"
        Kamailio prototype
@@ -407,11 +411,12 @@ java_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");
 # Java
 public static int ExampleMethod(boolean flagSet, byte bFlag);
 {
-                if (flagSet)
-                {
-                        ... do something with flags;
-                }
-                return 1;
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
 }
 
 5.4. java_s_method_exec(method, method_signature, [param1[, param2[, ...]]])
@@ -432,8 +437,8 @@ java_s_method_exec("ExampleMethod", "V");
 # Java
 public synchronized int ExampleMethod()
 {
-                ... do something;
-                return 1;
+    ... do something;
+    return 1;
 }
      * Example 1.15. Signature: "Ljava/lang/String;I"
        Kamailio prototype
@@ -450,8 +455,8 @@ java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLen
 ght)
 {
-                ... do something with buffer;
-                return 1;
+    ... do something with buffer;
+    return 1;
 }
      * Example 1.16. Signature: "ZB"
        Kamailio prototype
@@ -467,11 +472,12 @@ java_s_method_exec("ExampleMethod", "ZB", "true", "0x05");
 # Java
 public synchronized int ExampleMethod(boolean flagSet, byte bFlag);
 {
-                if (flagSet)
-                {
-                        ... do something with flags;
-                }
-                return 1;
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
 }
 
 5.5. java_s_staticmethod_exec(method, method_signature, [param1[, param2[,
@@ -493,8 +499,8 @@ java_s_staticmethod_exec("ExampleMethod", "V");
 # Java
 public static synchronized int ExampleMethod()
 {
-                ... do something;
-                return 1;
+    ... do something;
+    return 1;
 }
      * Example 1.18. Signature: "Ljava/lang/String;I"
        Kamailio prototype
@@ -512,8 +518,8 @@ java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMes
 sageLenght)
 {
-                ... do something with buffer;
-                return 1;
+    ... do something with buffer;
+    return 1;
 }
      * Example 1.19. Signature: "ZB"
        Kamailio prototype
@@ -529,11 +535,12 @@ java_s_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");
 # Java
 public static synchronized int ExampleMethod(boolean flagSet, byte bFlag);
 {
-                if (flagSet)
-                {
-                        ... do something with flags;
-                }
-                return 1;
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
 }
 
 6. Java Module API
@@ -549,25 +556,24 @@ import org.siprouter.NativeInterface.*;
 
 public class Kamailio extends NativeMethods
 {
-                /* Here you should specify a full path to app_java.so */
-                static
-                {
-                                System.load("/opt/kamailio/lib/kamailio/modules/
-app_java.so");
-                }
+    /* Here you should specify a full path to app_java.so */
+    static
+    {
+        System.load("/opt/kamailio/lib/kamailio/modules/app_java.so");
+    }
 
-                /* Constructor. Do not remove !!! */
-                public Kamailio()
-                {
-                }
+    /* Constructor. Do not remove !!! */
+    public Kamailio()
+    {
+    }
 
-                /*
-                This method should be executed for each children process, immedi
-ately after forking.
-                Required. Do not remove !!!
-                */
-                public int child_init(int rank)
-                {
-                                return 1;
-                }
+    /*
+        This method should be executed for each children process, immediately af
+ter forking.
+        Required. Do not remove !!!
+    */
+    public int child_init(int rank)
+    {
+        return 1;
+    }
 }

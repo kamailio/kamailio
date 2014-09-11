@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -45,6 +45,7 @@
 #include "../../pvar.h"
 
 #include "api.h"
+#include "xhttp_trans.h"
 
 MODULE_VERSION
 
@@ -85,8 +86,8 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{"url_match",       STR_PARAM, &xhttp_url_match},
-	{"url_skip",        STR_PARAM, &xhttp_url_skip},
+	{"url_match",       PARAM_STRING, &xhttp_url_match},
+	{"url_skip",        PARAM_STRING, &xhttp_url_skip},
 	{0, 0, 0}
 };
 
@@ -104,6 +105,13 @@ struct module_exports exports= {
 	0,
 	0,
 	0           /* per-child init function */
+};
+
+static tr_export_t mod_trans[] = {
+	{ {"url", sizeof("url")-1},
+		xhttp_tr_parse_url },
+
+	{ { 0, 0 }, 0 }
 };
 
 /** 
@@ -160,6 +168,11 @@ static int mod_init(void)
 		}
 	}
 	return 0;
+}
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	return register_trans_mod(path, mod_trans);
 }
 
 /** 
@@ -372,7 +385,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 		tbuf.len=sizeof("Content-Type: ") - 1 + ctype->len + CRLF_LEN;
 		tbuf.s=pkg_malloc(sizeof(char)*(tbuf.len));
 
-		if (tbuf.len==0)
+		if (tbuf.s==0)
 		{
 			LM_ERR("out of pkg memory\n");
 			return -1;

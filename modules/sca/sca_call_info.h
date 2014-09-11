@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  */
@@ -35,6 +35,8 @@ enum {
     SCA_CALL_INFO_SHARED_CALLER = (1 << 0),
     SCA_CALL_INFO_SHARED_CALLEE = (1 << 1),
 };
+#define SCA_CALL_INFO_SHARED_BOTH \
+	(SCA_CALL_INFO_SHARED_CALLER | SCA_CALL_INFO_SHARED_CALLEE)
 
 struct _sca_call_info {
     str		sca_uri;
@@ -48,8 +50,9 @@ struct _sca_call_info {
 typedef struct _sca_call_info		sca_call_info;
 
 #define SCA_CALL_INFO_EMPTY( ci1 ) \
-	(!(ci1) || ((ci1)->index == SCA_CALL_INFO_APPEARANCE_INDEX_ANY && \
-			(ci1)->state == SCA_APPEARANCE_STATE_UNKNOWN))
+	((void*)(ci1) == NULL || \
+		((ci1)->index == SCA_CALL_INFO_APPEARANCE_INDEX_ANY && \
+		(ci1)->state == SCA_APPEARANCE_STATE_UNKNOWN))
 
 #define SCA_CALL_INFO_IS_SHARED_CALLER( ci1 ) \
 	(!SCA_CALL_INFO_EMPTY((ci1)) && \

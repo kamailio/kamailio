@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
@@ -1030,8 +1030,12 @@ int send_subscribe(subs_info_t* subs)
 insert:
 	
 		if (subs->expires == 0)
+		{
 			/* Don't create a new dialog when expires == 0 */
-			goto done;	
+       			if (dbmode != PUA_DB_ONLY)
+				lock_release(&HashT->p_records[hash_code].lock);
+			goto done;
+		}
 
 		if(subs->flag & UPDATE_TYPE)
 		{
@@ -1044,6 +1048,8 @@ insert:
 		{
 			LM_ERR("while building callback"
 					" param\n");
+       			if (dbmode != PUA_DB_ONLY)
+				lock_release(&HashT->p_records[hash_code].lock);
 			goto error;
 		}
 		hentity->flag= flag;
@@ -1068,6 +1074,8 @@ insert:
 				uac_r.dialog = 0;
 			}
 			shm_free(hentity);
+       			if (dbmode != PUA_DB_ONLY)
+				lock_release(&HashT->p_records[hash_code].lock);
 
 			/* Although this is an error must not return -1 as the
 			   calling function must continue processing. */
@@ -1089,6 +1097,8 @@ insert:
 		if(presentity== NULL)
 		{
 			LM_ERR("no more share memory\n");
+       			if (dbmode != PUA_DB_ONLY)
+				lock_release(&HashT->p_records[hash_code].lock);
 			goto error;
 		}
 		memset(presentity, 0, size);

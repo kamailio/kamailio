@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * History:
@@ -358,12 +358,22 @@ handle_ret:
 		/* we don't want to pass upstream any reply regarding replicating
 		 * a request; replicated branch must stop at us*/
 		if (likely(!replicate)) {
+			if(t->flags&T_DISABLE_INTERNAL_REPLY) {
+				/* flag set to don't generate the internal negative reply
+				 * - let the transaction live further, processing should
+				 *   continue in config */
+				DBG("not generating immediate reply for error %d\n", ser_error);
+				tm_error=ser_error;
+				ret = -4;
+				goto done;
+			}
 #ifdef TM_DELAYED_REPLY
 			/* current error in tm_error */
 			tm_error=ser_error;
 			set_kr(REQ_ERR_DELAYED);
 			DBG("%d error reply generation delayed \n", ser_error);
 #else
+
 			reply_ret=kill_transaction( t, ser_error );
 			if (reply_ret>0) {
 				/* we have taken care of all -- do nothing in

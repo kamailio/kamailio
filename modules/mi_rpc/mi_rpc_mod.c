@@ -34,7 +34,7 @@ MODULE_VERSION
 static int child_init(int rank);
 static int mod_init(void);
 
-static str mi_rpc_indent = { "\t", 1 };
+static str mi_rpc_indent = str_init("\t");
 static char *rpc_url = "";
 
 static const char* rpc_mi_exec_doc[2] = {
@@ -43,7 +43,7 @@ static const char* rpc_mi_exec_doc[2] = {
 };
 
 static param_export_t parameters[] = {
-    {"rpc_url",            STR_PARAM, &rpc_url},
+    {"rpc_url",            PARAM_STRING, &rpc_url},
     {0, 0, 0}
 };
 
@@ -268,7 +268,7 @@ static int mi_rpc_print_tree(rpc_t* rpc, void* ctx, struct mi_root *tree,
 		case MI_FIFO_PRINT:
 		case MI_DATAGRAM_PRINT:
 			/* always success, code & reason are the part of the reply */
-			rpc->printf(ctx, "%d %.*s\n", tree->code,
+			rpc->rpl_printf(ctx, "%d %.*s\n", tree->code,
 						tree->reason.len, tree->reason.s);
 			break;
 		case MI_PRETTY_PRINT:
@@ -288,7 +288,7 @@ static int mi_rpc_print_tree(rpc_t* rpc, void* ctx, struct mi_root *tree,
 	}
 	if (mode==MI_FIFO_PRINT){
 		/* mi fifo adds an extra "\n" at the end */
-		rpc->printf(ctx, "\n");
+		rpc->rpl_printf(ctx, "\n");
 	}
 	
 	return 0;
@@ -323,8 +323,8 @@ static void mi_rpc_async_close(struct mi_root* mi_rpl,
 		if (dctx==0){
 			BUG("null dctx\n");
 			shm_free(mi_h->param);
-			shm_free(mi_h);
 			mi_h->param=0;
+			shm_free(mi_h);
 			goto error;
 		}
 		mode=((struct mi_rpc_handler_param*)mi_h->param)->mode;

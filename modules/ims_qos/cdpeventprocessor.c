@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -200,40 +200,37 @@ void cdp_cb_event_process() {
         switch (ev->event) {
             case AUTH_EV_SESSION_TIMEOUT:
             case AUTH_EV_SESSION_GRACE_TIMEOUT:
-            case AUTH_EV_SESSION_LIFETIME_TIMEOUT:
-                LM_DBG("Rx CDP Session: AUTH EV SESSION TIMEOUT or GRACE TIMEOUT or LIFE TIMEOUT\n");
+            case AUTH_EV_RECV_ASR:
+                LM_DBG("Received notification of ASR from transport plane or CDP timeout for CDP session with Rx session ID: [%.*s] and associated contact [%.*s]"
+                        " and domain [%.*s]\n",
+                        rx_session_id->len, rx_session_id->s,
+                        p_session_data->registration_aor.len, p_session_data->registration_aor.s,
+                        p_session_data->domain.len, p_session_data->domain.s);
+
 
                 if (p_session_data->subscribed_to_signaling_path_status) {
-                    LM_DBG("Received notification of CDP timeout of CDP session with Rx session ID: [%.*s] and associated contact [%.*s]"
-                            " and domain [%.*s]\n",
-                            rx_session_id->len, rx_session_id->s,
-                            p_session_data->registration_aor.len, p_session_data->registration_aor.s,
-                            p_session_data->domain.len, p_session_data->domain.s);
                     LM_DBG("This is a subscription to signalling bearer session");
+                    //nothing to do here - just wait for AUTH_EV_SERVICE_TERMINATED event
                 } else {
-                    LM_DBG("Received notification of CDP timeout of CDP session with Rx session ID: [%.*s] and associated contact [%.*s]"
-                            " and domain [%.*s]\n",
-                            rx_session_id->len, rx_session_id->s,
-                            p_session_data->registration_aor.len, p_session_data->registration_aor.s,
-                            p_session_data->domain.len, p_session_data->domain.s);
                     LM_DBG("This is a media bearer session session");
+                    //this is a media bearer session that was terminated from the transport plane - we need to terminate the associated dialog
+                    //so we set p_session_data->must_terminate_dialog to 1 and when we receive AUTH_EV_SERVICE_TERMINATED event we will terminate the dialog
+                    p_session_data->must_terminate_dialog = 1;
                 }
                 break;
 
             case AUTH_EV_SERVICE_TERMINATED:
-                LM_DBG("Rx CDP Session: Service terminated\n");
-                
+                LM_DBG("Received notification of CDP TERMINATE of CDP session with Rx session ID: [%.*s] and associated contact [%.*s]"
+                        " and domain [%.*s]\n",
+                        rx_session_id->len, rx_session_id->s,
+                        p_session_data->registration_aor.len, p_session_data->registration_aor.s,
+                        p_session_data->domain.len, p_session_data->domain.s);
+
                 if (p_session_data->subscribed_to_signaling_path_status) {
-                    LM_DBG("Received notification of CDP TERMINATE of CDP session with Rx session ID: [%.*s] and associated contact [%.*s]"
-                            " and domain [%.*s]\n",
-                            rx_session_id->len, rx_session_id->s,
-                            p_session_data->registration_aor.len, p_session_data->registration_aor.s,
-                            p_session_data->domain.len, p_session_data->domain.s);
                     LM_DBG("This is a subscription to signalling bearer session");
-                    
                     //instead of removing the contact from usrloc_pcscf we just change the state of the contact to TERMINATE_PENDING_NOTIFY
                     //pcscf_registrar sees this, sends a SIP PUBLISH and on SIP NOTIFY the contact is deleted
-                    
+
                     if (ul.register_udomain(p_session_data->domain.s, &domain)
                             < 0) {
                         LM_DBG("Unable to register usrloc domain....aborting\n");
@@ -251,25 +248,24 @@ void cdp_cb_event_process() {
                     }
                     ul.unlock_udomain(domain, &p_session_data->registration_aor);
                 } else {
-                    LM_DBG("Received notification of CDP TERMINATE of CDP session with Rx session ID: [%.*s] and associated contact [%.*s]"
-                            " and domain [%.*s]\n",
-                            rx_session_id->len, rx_session_id->s,
-                            p_session_data->registration_aor.len, p_session_data->registration_aor.s,
-                            p_session_data->domain.len, p_session_data->domain.s);
                     LM_DBG("This is a media bearer session session");
-                    LM_DBG("Terminating dialog with callid, ftag, ttag: [%.*s], [%.*s], [%.*s]\n",
-                            p_session_data->callid.len, p_session_data->callid.s,
-                            p_session_data->ftag.len, p_session_data->ftag.s,
-                            p_session_data->ttag.len, p_session_data->ttag.s);
-                    dlgb.terminate_dlg(&p_session_data->callid,
-                            &p_session_data->ftag, &p_session_data->ttag, NULL,
-                            &release_reason);
+                    
+                    //we only terminate the dialog if this was triggered from the transport plane or timeout - i.e. if must_terminate_dialog is set
+                    //if this was triggered from the signalling plane (i.e. someone hanging up) then we don'y need to terminate the dialog
+                    if (p_session_data->must_terminate_dialog) {
+                        LM_DBG("Terminating dialog with callid, ftag, ttag: [%.*s], [%.*s], [%.*s]\n",
+                                p_session_data->callid.len, p_session_data->callid.s,
+                                p_session_data->ftag.len, p_session_data->ftag.s,
+                                p_session_data->ttag.len, p_session_data->ttag.s);
+                        dlgb.terminate_dlg(&p_session_data->callid,
+                                &p_session_data->ftag, &p_session_data->ttag, NULL,
+                                &release_reason);
+                    }
                 }
-                
+
                 //free callback data
                 if (p_session_data) {
-                    shm_free(p_session_data);
-                    p_session_data = 0;
+		    free_callsessiondata(p_session_data);
                 }
                 break;
             default:

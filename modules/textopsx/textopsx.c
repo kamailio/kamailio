@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <stdio.h>
@@ -164,9 +164,14 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 		obuf.s = generate_res_buf_from_sip_res(msg,
 				(unsigned int*)&obuf.len, BUILD_NO_VIA1_UPDATE);
 	} else {
+		if(msg->msg_flags & FL_RR_ADDED) {
+			LM_ERR("cannot apply msg changes after adding record-route"
+					" header - it breaks conditional 2nd header\n");
+			return -1;
+		}
 		obuf.s = build_req_buf_from_sip_req(msg,
 				(unsigned int*)&obuf.len, &dst,
-				BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
+				BUILD_NO_PATH|BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
 	}
 	if(obuf.s == NULL)
 	{
@@ -223,8 +228,11 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 	/* reparse the message */
 	LM_DBG("SIP message content updated - reparsing\n");
 	if (parse_msg(msg->buf, msg->len, msg)!=0){
-		LM_ERR("parsing new sip message failed\n");
-		return -1;
+		LM_ERR("parsing new sip message failed [[%.*s]]\n",
+				msg->len, msg->buf);
+		/* exit config execution - sip_msg_t structure is no longer
+		 * valid/safe for config */
+		return 0;
 	}
 
 	return 1;
@@ -1040,8 +1048,9 @@ static void get_uri_and_skip_until_params(str *param_area, str *name, str *uri) 
 
 	name->len = 0;
 	uri->len = 0;
+	uri->s = 0;
 	uri_done = 0;
-        name->s = param_area->s;
+    name->s = param_area->s;
 	for (i=0; i<param_area->len && param_area->s[i]!=';'; ) {	/* [ *(token LSW)/quoted-string ] "<" addr-spec ">" | addr-spec */
 		/* skip name */
 		for (quoted=0, uri_pos=i; i<param_area->len; i++) {
@@ -1078,7 +1087,7 @@ static void get_uri_and_skip_until_params(str *param_area, str *name, str *uri) 
 			}
 		}
 	}
-        param_area->s+= i;
+    param_area->s+= i;
 	param_area->len-= i;
 	if (uri->s == name->s)
 		name->len = 0;
@@ -1200,7 +1209,8 @@ static int assign_hf_process2_params(struct sip_msg* msg, struct hdr_field* hf, 
 static int insupddel_hf_value_f(struct sip_msg* msg, char* _hname, char* _val) {
 	struct hname_data* hname = (void*) _hname;
 	struct hdr_field* hf;
-	str val, hval1, hval2;
+	str val = {0};
+	str hval1, hval2;
 	int res;
 
 	if (_val) {

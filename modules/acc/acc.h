@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -92,6 +92,7 @@ int  acc_db_init(const str* db_url);
 int  acc_db_init_child(const str* db_url);
 void acc_db_close(void);
 int  acc_db_request( struct sip_msg *req);
+int acc_get_db_handlers(void **vf, void **vh);
 #endif
 
 #ifdef RAD_ACC

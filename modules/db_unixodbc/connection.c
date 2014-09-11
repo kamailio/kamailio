@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$
  *
  * UNIXODBC module
@@ -20,13 +20,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  * History:
  * --------
  *  2005-12-01  initial commit (chgen)
- *  2006-01-10  UID (username) and PWD (password) attributes added to 
+ *  2006-01-10  UID (username) and PWD (password) attributes added to
  *              connection string (bogdan)
  *  2006-05-05  extract_error passes back last error state on return (sgupta)
  */
@@ -216,10 +216,138 @@ void db_unixodbc_extract_error(const char *fn, const SQLHANDLE handle, const SQL
 		ret = SQLGetDiagRec(type, handle, ++i, state, &native, text,
 			sizeof(text), &len );
 		if (SQL_SUCCEEDED(ret)) {
-			LM_ERR("unixodbc:%s=%s:%ld:%ld:%s\n", fn, state, (long)i, 
+			LM_ERR("unixodbc:%s=%s:%ld:%ld:%s\n", fn, state, (long)i,
 					(long)native, text);
 			if(stret) strcpy( stret, (char*)state );
 		}
 	}
 	while( ret == SQL_SUCCESS );
+}
+
+/*
+ * Allocate a new row of cells, without any data
+ */
+strn * db_unixodbc_new_cellrow(size_t ncols)
+{
+	strn * temp_row;
+
+	temp_row = (strn *)pkg_malloc(ncols * sizeof(strn));
+	if (temp_row) memset(temp_row, 0, ncols * sizeof(strn));
+	return temp_row;
+}
+
+/*
+ * Free row of cells and all associated memory
+ */
+void db_unixodbc_free_cellrow(size_t ncols, strn * row)
+{
+	size_t i;
+
+	for (i = 0; i < ncols; i++) {
+		if (row[i].s != NULL) pkg_free(row[i].s);
+	}
+	pkg_free(row);
+}
+
+/*
+ * Load ODBC cell data into a single cell
+ */
+int db_unixodbc_load_cell(const db1_con_t* _h, int colindex, strn * cell, const db_type_t _t)
+{
+	SQLRETURN ret = 0;
+	unsigned int truesize = 0;
+	unsigned char hasnull = (_t != DB1_BLOB) ? 1 : 0;
+
+	do {
+		SQLLEN indicator;
+		int chunklen;
+		char * s;	/* Pointer to available area for next chunk */
+		char * ns;
+
+		if (cell->buflen > 0) {
+			ns = (char *)pkg_realloc(cell->s, cell->buflen + STRN_LEN);
+			if (ns == NULL) {
+				LM_ERR("no memory left\n");
+				return 0;
+			}
+			cell->s = ns;
+
+			/* Overwrite the previous null terminator */
+			s = cell->s + cell->buflen - hasnull;
+			chunklen = STRN_LEN + hasnull;
+		} else {
+			ns = (char *)pkg_malloc(STRN_LEN);
+			if (ns == NULL) {
+				LM_ERR("no memory left\n");
+				return 0;
+			}
+			cell->s = ns;
+			s = cell->s;
+			chunklen = STRN_LEN;
+		}
+		cell->buflen += STRN_LEN;
+
+		ret = SQLGetData(CON_RESULT(_h), colindex, hasnull ? SQL_C_CHAR : SQL_C_BINARY,
+					s, chunklen, &indicator);
+		LM_DBG("SQLGetData returned ret=%d indicator=%d\n", (int)ret, (int)indicator);
+		if (ret == SQL_SUCCESS) {
+			if (indicator == SQL_NULL_DATA) {
+			    /* TODO: set buffer pointer to NULL instead of string "NULL" */
+			    strcpy(cell->s, "NULL");
+			    truesize = 4 + (1 - hasnull);
+			} else {
+			    /* Get length of data that was available before last SQLGetData call */
+			    if (truesize == 0) truesize = indicator;
+			}
+		} else if (ret == SQL_SUCCESS_WITH_INFO) {
+			SQLINTEGER   i = 0;
+			SQLINTEGER   native;
+			SQLCHAR  state[ 7 ];
+			SQLCHAR  text[256];
+			SQLSMALLINT  len;
+			SQLRETURN	ret2;
+
+			/* Check whether field data was truncated */
+			do
+			{
+				ret2 = SQLGetDiagRec(SQL_HANDLE_STMT, CON_RESULT(_h), ++i, state, &native, text,
+					sizeof(text), &len );
+				if (SQL_SUCCEEDED(ret2)) {
+					if (!strcmp("00000", (const char*)state)) break;
+					if (strcmp("01004", (const char*)state) != 0) {
+						/* Not a string truncation */
+						LM_ERR("SQLGetData failed unixodbc:  =%s:%ld:%ld:%s\n", state, (long)i,
+							(long)native, text);
+						return 0;
+					}
+
+					/* Get length of data that was available before last SQLGetData call */
+					if (truesize == 0) truesize = indicator;
+				} else if (ret2 == SQL_NO_DATA) {
+				    /* Reached end of diagnostic records */
+					break;
+				} else {
+					/* Failed to get diagnostics */
+					LM_ERR("SQLGetData failed, failed to get diagnostics (ret2=%d i=%d)\n",
+						ret2, i);
+					return 0;
+				}
+			}
+			while( ret2 == SQL_SUCCESS );
+		} else {
+			LM_ERR("SQLGetData failed\n");
+		}
+	} while (ret == SQL_SUCCESS_WITH_INFO);
+
+	LM_DBG("Total allocated for this cell (before resize): %d bytes\n", cell->buflen);
+
+	if (cell->buflen > truesize) {
+		cell->s[truesize] = '\0'; /* guarantee strlen() will terminate */
+	}
+	cell->buflen = truesize + hasnull;
+
+	LM_DBG("Total allocated for this cell (after resize): %d bytes\n", cell->buflen);
+	LM_DBG("strlen() reports for this cell: %d bytes\n", (int)strlen(cell->s));
+
+	return 1;
 }

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -191,12 +191,12 @@ int reload_address_table(void)
 		//	goto dberror;
 		} else {
 			if(ipa->af == AF_INET6) {
-				if(mask<0 || mask>128) {
+				if((int)mask<0 || mask>128) {
 					LM_DBG("failure during IP mask check for v6\n");
 					goto dberror;
 				}
 			} else {
-				if(mask<0 || mask>32) {
+				if((int)mask<0 || mask>32) {
 					LM_DBG("failure during IP mask check for v4\n");
 					goto dberror;
 				}
@@ -253,6 +253,31 @@ dberror:
 	return -1;
 }
 
+/*
+ * Wrapper to reload addr table from mi or rpc
+ * we need to open the db_handle
+ */
+int reload_address_table_cmd(void)
+{
+	if (!db_handle) {
+		db_handle = perm_dbf.init(&db_url);
+		if (!db_handle) {
+			LM_ERR("unable to connect database\n");
+			return -1;
+		}
+	}
+
+	if (reload_address_table () != 1) {
+		perm_dbf.close(db_handle);
+		db_handle = 0;
+		return -1;
+	}
+
+	perm_dbf.close(db_handle);
+	db_handle = 0;
+
+	return 1;
+}
 
 /*
  * Initialize data structures

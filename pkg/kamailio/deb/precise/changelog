@@ -1,3 +1,66 @@
+kamailio (4.2.0~dev9) unstable; urgency=medium
+
+  * update version to 4.2.0~dev9
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Tue, 02 Sep 2014 11:18:12 +0200
+
+kamailio (4.2.0~dev8) unstable; urgency=medium
+
+  * update version to 4.2.0~dev8
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Sat, 26 Jul 2014 10:03:22 +0200
+
+kamailio (4.2.0~dev7) unstable; urgency=medium
+
+  * update version to 4.2.0~dev7
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Thu, 12 Jun 2014 12:55:05 +0200
+
+kamailio (4.2.0~dev6) unstable; urgency=medium
+
+  * update version to 4.2.0~dev6
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Sat, 03 May 2014 21:49:21 +0200
+
+kamailio (4.2.0~dev5) unstable; urgency=medium
+
+  * update version to 4.2.0~dev5
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Mon, 21 Apr 2014 22:52:17 +0200
+
+kamailio (4.2.0~dev4) unstable; urgency=medium
+
+  * update version to 4.2.0~dev4
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Tue, 08 Apr 2014 11:56:12 +0200
+
+kamailio (4.2.0~dev3) unstable; urgency=medium
+
+  * update version to 4.2.0~dev3
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Fri, 21 Feb 2014 22:52:43 +0100
+
+kamailio (4.2.0~dev2) unstable; urgency=medium
+
+  * update version to 4.2.0~dev2
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Mon, 03 Feb 2014 11:12:36 +0100
+
+kamailio (4.2.0~dev1) unstable; urgency=medium
+
+  * update version to 4.2.0~dev1
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Wed, 08 Jan 2014 19:13:30 +0100
+
+kamailio (4.2.0~dev0) unstable; urgency=low
+
+  * Added packages:
+    - kamailio-autheph-modules
+    - kamailio-sctp-modules
+    - kamailio-java-modules
+
+ --  Victor Seva <linuxmaniac@torreviejawireless.org>  Tue, 03 Dec 2013 14:26:58 +0100
+
 kamailio (4.0.0) unstable; urgency=low
 
   * update to 4.0.0 from upstream
@@ -9,12 +72,6 @@ kamailio (3.4.0~dev0) unstable; urgency=low
   * update version to 3.4.0~dev0
 
  -- Jon Bonilla <manwe@aholab.ehu.es>  Wed, 15 Jun 2012 03:15:00 +0100
-
-kamailio (3.3-dev) unstable; urgency=low
-
-  * Set version to 3.3-dev for dev builds
-
- -- Jon Bonilla <manwe@aholab.ehu.es>  Wed, 19 Oct 2011 17:24:00 +0100
 
 kamailio (3.2.0) unstable; urgency=low
 

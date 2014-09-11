@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -49,7 +49,7 @@ char **split(char *str, char *sep)
     buf = (char **)pkg_malloc(sizeof(char *));
     if (!buf)
     {
-	LM_ERR("pkg_malloc() has failed. Not enough memory!\n");
+	LM_ERR("%s: pkg_malloc() has failed. Not enough memory!\n", APP_NAME);
 	return NULL;
     }
     memset(&buf, 0, sizeof(char *));
@@ -75,7 +75,7 @@ char **split(char *str, char *sep)
 	buf = (char **)pkg_realloc(buf, (i+1) * sizeof(char *));
 	if (!buf)
 	{
-	    LM_ERR("pkg_realloc() has failed. Not enough memory!\n");
+	    LM_ERR("%s: pkg_realloc() has failed. Not enough memory!\n", APP_NAME);
 	    return NULL;
 	}
         buf[i] = strdup(token);

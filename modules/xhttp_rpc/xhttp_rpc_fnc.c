@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * 2011-11-11  initial version (osas)
  */
@@ -310,7 +310,16 @@ void xhttp_rpc_get_next_arg(rpc_ctx_t* ctx, str *arg)
 	int i;
 
 	trim_leading(&ctx->arg2scan);
-	if (ctx->arg2scan.len) {
+
+	if (ctx->arg2scan.len<=0) {
+		*arg = XHTTP_RPC_NULL_ARG;
+		return;
+	}
+	if (ctx->arg2scan.len==1 && ctx->arg2scan.s[0]=='\0') {
+		*arg = XHTTP_RPC_NULL_ARG;
+		return;
+	}
+	else {
 		*arg = ctx->arg2scan;
 		for(i=1; i<arg->len-1; i++) {
 			if(arg->s[i]==' '||arg->s[i]=='\t'||
@@ -322,8 +331,6 @@ void xhttp_rpc_get_next_arg(rpc_ctx_t* ctx, str *arg)
 		i++;
 		ctx->arg2scan.s += i;
 		ctx->arg2scan.len -= i;
-	} else {
-		*arg = XHTTP_RPC_NULL_ARG;
 	}
 	return;
 }

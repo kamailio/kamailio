@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2001-2003 FhG FOKUS
+ * TLS module
+ *
  * Copyright (C) 2005,2006 iptelorg GmbH
+ * Copyright (C) 2013 Motorola Solutions, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -48,6 +50,12 @@ enum tls_method {
 	TLS_USE_SSLv23_cli,
 	TLS_USE_SSLv23_srv,
 	TLS_USE_SSLv23,
+	TLS_USE_TLSv1_1_cli,
+	TLS_USE_TLSv1_1_srv,
+	TLS_USE_TLSv1_1,
+	TLS_USE_TLSv1_2_cli,
+	TLS_USE_TLSv1_2_srv,
+	TLS_USE_TLSv1_2,
 	TLS_METHOD_MAX
 };
 
@@ -92,7 +100,7 @@ typedef struct tls_domains_cfg {
 	tls_domain_t* srv_list;    /**< Server domain list */
 	tls_domain_t* cli_list;    /**< Client domain list */
 	struct tls_domains_cfg* next; /**< Next element in the garbage list */
-	int ref_count;             /**< How many connections use this configuration */
+	volatile int ref_count;             /**< How many connections use this configuration */
 } tls_domains_cfg_t;
 
 

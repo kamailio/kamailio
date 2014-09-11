@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	  Apache Cassandra is an open source distributed database management system.
+	  It is designed to handle very large amounts of data spread out across many
+	  servers. It is a NoSQL solution.
+	</para>
+	<para>
+	  The module allows the insertion and retrieval of information from Cassandra
+	  clusters. This is not a DB driver module.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		  This module depends on the thrift library version 0.7.0. Please install this
+		  library in order to be able to successful compile this module. You can find
+		  this library at http://thrift.apache.org/
+		  <itemizedlist>
+		    <listitem>
+		      <para>
+			<emphasis>thrift 0.7.0</emphasis> - available at
+			http://thrift.apache.org/
+		      </para>		      
+		    </listitem>
+		  </itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>host</varname> (str)</title>
+		<para>
+		  Host of Cassandra node.
+		</para>
+		<title><varname>port</varname> (int)</title>
+		<para>
+		  Port of Cassandra node.
+		</para>
+		<example>
+			<title>Set <varname>host</varname> and <varname>port</varname> parameters</title>
+		<programlisting format="linespecific">
+...
+modparam("ndb_cassandra", "host", "10.22.22.190")
+modparam("ndb_cassandra", "port", 9160)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	  <title>Functions</title>
+	  <section>
+	    <title>
+		<function moreinfo="none">cass_insert(keyspace, column_family, key, column, value)</function>
+	    </title>
+	    <para>
+	      Inserts the value for the given key, column, column_family and keyspace.
+	      There must be an existing keyspace called 'keyspace' with a column_family
+	      called 'column_family' in the targeted Cassandra node.
+	    </para>
+	    <para>
+	      Return integer needs to be checked:
+	      <itemizedlist>
+		<listitem>
+		  <para>ret &lt; 0, error</para>
+		</listitem>
+		<listitem>
+		  <para>ret &gt; 0, success</para>
+		  </listitem>
+		</itemizedlist>
+	      </para>
+	    </section>
+	    <section>
+	      <title>
+		<function moreinfo="none">cass_retrieve(keyspace, column_family, key, column, value)</function>
+	      </title>
+	      <para>
+		Retrieves the value for the given key, column, column_family and keyspace.
+		There must be an existing keyspace called 'keyspace' with a column_family
+		called 'column_family' in the targeted Cassandra node.
+	      </para>
+	      <para>
+	    <varname>value</varname> will be returned as well as a integer return code.
+	  </para>
+	  <para>
+	    Return integer needs to be checked:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  ret &lt; 0, error
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  ret &gt; 0, success
+		  </para>
+		</listitem>
+	      </itemizedlist>
+	    </para>
+	  </section>
+
+	  <example>
+	    <title>Example usage</title>
+	    <programlisting format="linespecific">
+	      ...
+    loadmodule "ndb_cassandra.so"
+    # (...)
+    modparam("ndb_cassandra", "host", "10.22.22.190")
+    modparam("ndb_cassandra", "port", 9160)
+    # (...)
+    xlog("L_DBG", "Testing ndb_cassandra module.");
+    # Inserting to cassandra
+    $var(keyspace) = "indigital";
+    $var(column_family) = "employees";
+    $var(column) = "name";
+    $var(val_write) = "TestMyName"; # To be written
+    if (cass_insert("$var(keyspace)", "$var(column_family)", "$ru", "$var(column)", "$var(val_write)") > 0) {
+       xlog("L_DBG", "ndb_cassandra. Sucess while inserting to Cassandra. val_write: \"$var(val_write)\"");
+    } else {
+       xlog("L_DBG", "ndb_cassandra. Error while inserting to Cassandra");
+    }
+
+    # Retrieving from cassandra
+    $var(keyspace) = "indigital";
+    $var(column_family) = "employees";
+    $var(key) = "sip:10.22.22.110"; # Before we saved our $ru, which was 'sip:10.22.22.110'
+    $var(column) = "name";
+    $var(val_read) = ""; # To be read
+    if (cass_retrieve("$var(keyspace)", "$var(column_family)", "$var(key)", "$var(column)", "$var(val_read)") > 0) {
+       xlog("L_DBG", "ndb_cassandra. Sucess while reading from Cassandra. val_read: \"$var(val_read)\"");
+    } else {
+       xlog("L_DBG", "ndb_cassandra. Error while reading from Cassandra");
+    }
+	      ...
+	    </programlisting>
+	  </example>	 
+	</section>
+	</chapter>

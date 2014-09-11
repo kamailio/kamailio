@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
  * History:
@@ -155,17 +155,17 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",          STR_PARAM, &db_url.s        },
-	{"drd_table",       STR_PARAM, &drd_table.s     },
-	{"drr_table",       STR_PARAM, &drr_table.s     },
-	{"drg_table",       STR_PARAM, &drg_table.s     },
-	{"drl_table",       STR_PARAM, &drl_table.s     },
+	{"db_url",          PARAM_STR, &db_url        },
+	{"drd_table",       PARAM_STR, &drd_table     },
+	{"drr_table",       PARAM_STR, &drr_table     },
+	{"drg_table",       PARAM_STR, &drg_table     },
+	{"drl_table",       PARAM_STR, &drl_table     },
 	{"use_domain",      INT_PARAM, &use_domain      },
-	{"drg_user_col",    STR_PARAM, &drg_user_col.s  },
-	{"drg_domain_col",  STR_PARAM, &drg_domain_col.s},
-	{"drg_grpid_col",   STR_PARAM, &drg_grpid_col.s },
-	{"ruri_avp",        STR_PARAM, &ruri_avp_spec.s },
-	{"attrs_avp",       STR_PARAM, &attrs_avp_spec.s},
+	{"drg_user_col",    PARAM_STR, &drg_user_col  },
+	{"drg_domain_col",  PARAM_STR, &drg_domain_col},
+	{"drg_grpid_col",   PARAM_STR, &drg_grpid_col },
+	{"ruri_avp",        PARAM_STR, &ruri_avp_spec },
+	{"attrs_avp",       PARAM_STR, &attrs_avp_spec},
 	{"sort_order",      INT_PARAM, &sort_order      },
 	{"fetch_rows",      INT_PARAM, &dr_fetch_rows   },
 	{"force_dns",       INT_PARAM, &dr_force_dns    },
@@ -263,44 +263,33 @@ static int dr_init(void)
 	}
 
 	/* check the module params */
-	if (db_url.s==NULL || db_url.s[0]==0) {
+	if (db_url.s==NULL || db_url.len<=0) {
 		LM_CRIT("mandatory parameter \"DB_URL\" found empty\n");
 		goto error;
 	}
-	db_url.len = strlen(db_url.s);
 
-	drd_table.len = strlen(drd_table.s);
-	if (drd_table.s[0]==0) {
+	if (drd_table.len<=0) {
 		LM_CRIT("mandatory parameter \"DRD_TABLE\" found empty\n");
 		goto error;
 	}
 
-	drr_table.len = strlen(drr_table.s);
-	if (drr_table.s[0]==0) {
+	if (drr_table.len<=0) {
 		LM_CRIT("mandatory parameter \"DRR_TABLE\" found empty\n");
 		goto error;
 	}
 
-	drg_table.len = strlen(drg_table.s);
-	if (drg_table.s[0]==0) {
+	if (drg_table.len<=0) {
 		LM_CRIT("mandatory parameter \"DRG_TABLE\"  found empty\n");
 		goto error;
 	}
 
-	drl_table.len = strlen(drl_table.s);
-	if (drl_table.s[0]==0) {
+	if (drl_table.len<=0) {
 		LM_CRIT("mandatory parameter \"DRL_TABLE\"  found empty\n");
 		goto error;
 	}
 
-	drg_user_col.len = strlen(drg_user_col.s);
-	drg_domain_col.len = strlen(drg_domain_col.s);
-	drg_grpid_col.len = strlen(drg_grpid_col.s);
-
 	/* fix AVP spec */
 	if (ruri_avp_spec.s) {
-		ruri_avp_spec.len = strlen(ruri_avp_spec.s);
-
 		if (pv_parse_spec( &ruri_avp_spec, &avp_spec)==0
 		|| avp_spec.type!=PVT_AVP) {
 			LM_ERR("malformed or non AVP [%.*s] for RURI AVP definition\n",
@@ -316,8 +305,6 @@ static int dr_init(void)
 		}
 	}
 	if (attrs_avp_spec.s) {
-		attrs_avp_spec.len = strlen(attrs_avp_spec.s);
-
 		if (pv_parse_spec( &attrs_avp_spec, &avp_spec)==0
 		|| avp_spec.type!=PVT_AVP) {
 			LM_ERR("malformed or non AVP [%.*s] for ATTRS AVP definition\n",
@@ -469,17 +456,17 @@ static void rpc_reload(rpc_t *rpc, void *c)
 	if (db_hdl==NULL) {
 		db_hdl=dr_dbf.init(&db_url);
 		if(db_hdl==0 ) {
-			rpc->printf(c, "cannot initialize database connection");
+			rpc->rpl_printf(c, "cannot initialize database connection");
 			return;
 		}
 	}
 
 	if ( (n=dr_reload_data())!=0 ) {
-		rpc->printf(c, "failed to load routing data");
+		rpc->rpl_printf(c, "failed to load routing data");
 		return;
 	}
 
-	rpc->printf(c, "relaad OK");
+	rpc->rpl_printf(c, "relaad OK");
 	return;
 }
 
@@ -652,7 +639,7 @@ int dr_already_choosen(rt_info_t* rt_info, int* local_gwlist, int lgw_size, int 
 
 	for ( l = 0; l<lgw_size; l++ ) {
 		if ( rt_info->pgwl[local_gwlist[l]].pgw == rt_info->pgwl[check].pgw ) {
-			LM_INFO("Gateway already choosen %.*s, local_gwlist[%d]=%d, %d\n",
+			LM_INFO("Gateway already chosen %.*s, local_gwlist[%d]=%d, %d\n",
 					rt_info->pgwl[check].pgw->ip.len, rt_info->pgwl[check].pgw->ip.s, l, local_gwlist[l], check);
 			return 1;
 		}
@@ -754,7 +741,7 @@ again:
 		}
 	}
 
-	if (rt_info->route_idx>0 && rt_info->route_idx<RT_NO) {
+	if (rt_info->route_idx>0 && main_rt.rlist[rt_info->route_idx]!=NULL) {
 		ret = run_top_route(main_rt.rlist[rt_info->route_idx], msg, 0);
 		if (ret<1) {
 			/* drop the action */

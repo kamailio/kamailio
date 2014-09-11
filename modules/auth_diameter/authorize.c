@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -478,9 +478,9 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	{
 		port_flag = 1;	
 		memcpy(user_name.s+ruri.user.len+ruri.host.len+1, ":", 1);
-	}	
-	memcpy(user_name.s+ruri.user.len+ruri.host.len+name_flag+port_flag, 
+		memcpy(user_name.s+ruri.user.len+ruri.host.len+name_flag+port_flag, 
 					ruri.port.s, ruri.port.len);
+	}
 #ifdef DEBUG
 	LM_DBG(": AVP_Resource=%.*s\n", user_name.len, user_name.s);
 #endif

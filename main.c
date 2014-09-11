@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -190,6 +190,7 @@
 #include "pv_core.h" /* register core pvars */
 #include "ppcfg.h"
 #include "sock_ut.h"
+#include "async_task.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -227,8 +228,10 @@ Options:\n\
                   (to use both use `-rR`)\n\
     -K           Turn on \"via:\" host checking when forwarding replies\n\
     -d           Debugging mode (multiple -d increase the level)\n\
-    -D no        1..do not fork (almost) anyway, 2..do not daemonize creator\n\
-                  3..daemonize (default)\n\
+    -D           Control how daemonize is done:\n\
+                  -D..do not fork (almost) anyway;\n\
+                  -DD..do not daemonize creator;\n\
+                  -DDD..daemonize (default)\n\
     -E           Log to stderr\n\
     -e           Log messages printed in terminal colors (requires -E)\n"
 #ifdef USE_TCP
@@ -377,6 +380,7 @@ int log_stderr = 0;
 int log_color = 0;
 /* set custom app name for syslog printing */
 char *log_name = 0;
+char *log_prefix_fmt = 0;
 pid_t creator_pid = (pid_t) -1;
 int config_check = 0;
 /* check if reply first via host==us */
@@ -1224,6 +1228,7 @@ int fix_cfg_file(void)
 	
 	if (cfg_file == NULL) cfg_file = CFG_FILE;
 	if (cfg_file[0] == '/') return 0;
+	if (cfg_file[0] == '-' && strlen(cfg_file)==1) return 0;
 	
 	/* cfg_file contains a relative pathname, get the current
 	 * working directory and add it at the beginning
@@ -1347,6 +1352,9 @@ int main_loop(void)
 		 * to make the group instances available in PROC_INIT.
 		 */
 		cfg_main_set_local();
+
+		/* init log prefix format */
+		log_prefix_init();
 
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
@@ -1560,6 +1568,9 @@ int main_loop(void)
 		 * to make the group instances available in PROC_INIT.
 		 */
 		cfg_main_set_local();
+
+		/* init log prefix format */
+		log_prefix_init();
 
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
@@ -1785,6 +1796,18 @@ static int calc_proc_no(void)
 			 tcp_e_listeners = tcp_cfg_children_no;
 	}
 	tcp_listeners += tcp_e_listeners;
+#ifdef USE_TLS
+	tcp_e_listeners = 0;
+	for (si=tls_listen, tcp_e_listeners=0; si; si=si->next) {
+		if(si->workers>0)
+			tcp_listeners += si->workers;
+		else {
+			if(tcp_listeners==0)
+				tcp_e_listeners = tcp_cfg_children_no;
+		}
+	}
+	tcp_listeners += tcp_e_listeners;
+#endif
 	tcp_children_no = tcp_listeners;
 #endif
 #ifdef USE_SCTP
@@ -2044,7 +2067,11 @@ int main(int argc, char** argv)
 	if (fix_cfg_file() < 0) goto error;
 
 	/* load config file or die */
-	cfg_stream=fopen (cfg_file, "r");
+	if (cfg_file[0] == '-' && strlen(cfg_file)==1) {
+		cfg_stream=stdin;
+	} else {
+		cfg_stream=fopen (cfg_file, "r");
+	}
 	if (cfg_stream==0){
 		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
 				strerror(errno));
@@ -2083,6 +2110,8 @@ try_again:
 	debug_save = default_core_cfg.debug;
 	if ((yyparse()!=0)||(cfg_errors)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
+		if (debug_flag) default_core_cfg.debug = debug_save;
+		pp_ifdef_level_check();
 
 		goto error;
 	}
@@ -2090,6 +2119,7 @@ try_again:
 		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}
 	if (debug_flag) default_core_cfg.debug = debug_save;
+	pp_ifdef_level_check();
 	print_rls();
 
 	/* options with higher priority than cfg file */

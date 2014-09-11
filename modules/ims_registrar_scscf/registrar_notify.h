@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -53,6 +53,7 @@
 
 #define MSG_REG_SUBSCRIBE_OK "Subscription to REG saved"
 #define MSG_REG_UNSUBSCRIBE_OK "Subscription to REG dropped"
+#define MSG_REG_PUBLISH_OK "Publish to REG saved"
 
 
 
@@ -112,6 +113,10 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *str1, char *str2);
 
 int subscribe_to_reg(struct sip_msg *msg, char *str1, char *str2);
 
+int can_publish_reg(struct sip_msg *msg, char *str1, char *str2);
+
+int publish_reg(struct sip_msg *msg, char *str1, char *str2);
+
 int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str *contact);
 
 int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int event_type, str *presentity_uri, str *watcher_contact);
@@ -138,5 +143,8 @@ dlg_t* build_dlg_t_from_notification(reg_notification* n);
 
 int notify_init();
 void notify_destroy();
+
+int aor_to_contact(str* aor, str* contact);
+int contact_port_ip_match(str *c1, str *c2);
 
 #endif //S_CSCF_REGISTRAR_NOTIFY_H_

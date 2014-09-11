@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -58,6 +58,7 @@
 #include "../../lib/kcore/statistics.h"
 #include "../../action.h"
 #include "../../script_cb.h"
+#include "../../pt.h"
 #include "../../lib/kcore/faked_msg.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_cseq.h"
@@ -82,6 +83,7 @@ static int       default_timeout;	/*!< default dialog timeout */
 static int       seq_match_mode;	/*!< dlg_match mode */ 
 static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
 extern int       detect_spirals;
+extern int       dlg_timeout_noreset;
 extern int       initial_cbs_inscript;
 extern int       dlg_send_bye;
 extern int       dlg_event_rt[DLG_EVENTRT_MAX];
@@ -451,6 +453,13 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 
 	unref = 0;
+	if (type & (TMCB_RESPONSE_IN|TMCB_ON_FAILURE)) {
+		/* Set the dialog context so it is available in onreply_route and failure_route*/
+		set_current_dialog(req, dlg);
+		dlg_set_ctx_iuid(dlg);
+		goto done;
+	}
+
 	if (type==TMCB_RESPONSE_FWDED) {
 		/* The state does not change, but the msg is mutable in this callback*/
 		run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
@@ -543,6 +552,8 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		LM_DBG("dialog %p failed (negative reply)\n", dlg);
 		/* dialog setup not completed (3456XX) */
 		run_dlg_callbacks( DLGCB_FAILED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
+		if(dlg_wait_ack==1)
+			dlg_set_tm_waitack(t, dlg);
 		/* do unref */
 		if (unref)
 			dlg_unref(dlg, unref);
@@ -551,8 +562,6 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 		if_update_stat(dlg_enable_stats, failed_dlgs, 1);
 
-		if(dlg_wait_ack==1)
-			dlg_set_tm_waitack(t, dlg);
 		goto done;
 	}
 
@@ -774,6 +783,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
     str ttag;
     str req_uri;
     unsigned int dir;
+    int mlock;
 
 	dlg = dlg_get_ctx_dialog();
     if(dlg != NULL) {
@@ -798,18 +808,20 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
     }
     trim(&req_uri);
 
-    if (detect_spirals)
-    {
-        if (spiral_detected == 1)
-            return 0;
+	dir = DLG_DIR_NONE;
+	mlock = 1;
+	/* search dialog by SIP attributes
+	 * - if not found, hash table slot is left locked, to avoid races
+	 *   to add 'same' dialog on parallel forking or not-handled-yet
+	 *   retransmissions. Release slot after linking new dialog */
+	dlg = search_dlg(&callid, &ftag, &ttag, &dir);
+	if(dlg) {
+		mlock = 0;
+		if (detect_spirals) {
+			if (spiral_detected == 1)
+				return 0;
 
-        dir = DLG_DIR_NONE;
-
-        dlg = get_dlg(&callid, &ftag, &ttag, &dir);
-        if (dlg)
-        {
-			if ( dlg->state != DLG_STATE_DELETED )
-			{
+			if ( dlg->state != DLG_STATE_DELETED ) {
 				LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
 					callid.len, callid.s);
 				spiral_detected = 1;
@@ -817,9 +829,12 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 				if (run_initial_cbs)
 					run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL,
 							DLG_DIR_DOWNSTREAM, 0);
-				/* get_dlg() has incremented the ref count by 1
-				 * - it's ok, dlg will be unref at the end of function */
-				goto finish;
+				/* set ctx dlg id shortcuts */
+				_dlg_ctx.iuid.h_entry = dlg->h_entry;
+				_dlg_ctx.iuid.h_id = dlg->h_id;
+				/* search_dlg() has incremented the ref count by 1 */
+				dlg_release(dlg);
+				return 0;
 			}
 			dlg_release(dlg);
         }
@@ -832,16 +847,16 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
                          &ftag/*from_tag*/,
                          &req_uri /*r-uri*/ );
 
-	if (dlg==0)
-	{
+	if (dlg==0) {
+		if(likely(mlock==1)) dlg_hash_release(&callid);
 		LM_ERR("failed to create new dialog\n");
 		return -1;
 	}
 
 	/* save caller's tag, cseq, contact and record route*/
 	if (populate_leg_info(dlg, req, t, DLG_CALLER_LEG,
-			&(get_from(req)->tag_value)) !=0)
-	{
+			&(get_from(req)->tag_value)) !=0) {
+		if(likely(mlock==1)) dlg_hash_release(&callid);
 		LM_ERR("could not add further info to the dialog\n");
 		shm_free(dlg);
 		return -1;
@@ -850,7 +865,9 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	/* Populate initial varlist: */
 	dlg->vars = get_local_varlist_pointer(req, 1);
 
-	link_dlg(dlg, 0);
+	/* if search_dlg() returned NULL, slot was kept locked */
+	link_dlg(dlg, 0, mlock);
+	if(likely(mlock==1)) dlg_hash_release(&callid);
 
 	dlg->lifetime = get_dlg_timeout(req);
 	s.s   = _dlg_ctx.to_route_name;
@@ -871,16 +888,12 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 		goto error;
 	}
 
-	/* new dlg - reference it once more for current dialog iuid shortcut */
-    dlg_ref(dlg, 1);
-
     if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
-finish:
+	_dlg_ctx.cpid = my_pid();
     _dlg_ctx.iuid.h_entry = dlg->h_entry;
     _dlg_ctx.iuid.h_id = dlg->h_id;
     set_current_dialog(req, dlg);
-	dlg_release(dlg);
 
 	return 0;
 
@@ -914,7 +927,7 @@ int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
 			goto error;
 		}
 		if ( d_tmb.register_tmcb( req, t,
-				TMCB_RESPONSE_READY|TMCB_RESPONSE_FWDED,
+				TMCB_RESPONSE_IN|TMCB_RESPONSE_READY|TMCB_RESPONSE_FWDED|TMCB_ON_FAILURE,
 				dlg_onreply, (void*)iuid, dlg_iuid_sfree)<0 ) {
 			LM_ERR("failed to register TMCB\n");
 			goto error;
@@ -1043,30 +1056,59 @@ static void unref_dlg_from_cb(struct cell* t, int type, struct tmcb_params *para
 	dlg_unref(dlg, 2);
 }
 
-
-dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
+/*!
+ *
+ */
+dlg_cell_t *dlg_lookup_msg_dialog(sip_msg_t *msg, unsigned int *dir)
 {
 	dlg_cell_t *dlg = NULL;
 	str callid;
 	str ftag;
 	str ttag;
-	unsigned int dir;
+	unsigned int vdir;
 
 	/* Retrieve the current dialog */
 	dlg = dlg_get_ctx_dialog();
-	if(dlg!=NULL)
+	if(dlg!=NULL) {
+		if(dir) {
+			if (pre_match_parse(msg, &callid, &ftag, &ttag, 0)<0) {
+				dlg_release(dlg);
+				return NULL;
+			}
+			if (dlg->tag[DLG_CALLER_LEG].len == ftag.len &&
+					   strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag.s, ftag.len)==0 &&
+					   strncmp(dlg->callid.s, callid.s, callid.len)==0) {
+				*dir = DLG_DIR_DOWNSTREAM;
+			} else {
+				if (ttag.len>0 && dlg->tag[DLG_CALLER_LEG].len == ttag.len &&
+						   strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag.s, ttag.len)==0 &&
+						   strncmp(dlg->callid.s, callid.s, callid.len)==0) {
+					*dir = DLG_DIR_UPSTREAM;
+				}
+			}
+		}
 		return dlg;
+	}
 	
 	if (pre_match_parse(msg, &callid, &ftag, &ttag, 0)<0)
 		return NULL;
-	dir = DLG_DIR_NONE;
-	dlg = get_dlg(&callid, &ftag, &ttag, &dir);
+	vdir = DLG_DIR_NONE;
+	dlg = get_dlg(&callid, &ftag, &ttag, &vdir);
 	if (dlg==NULL){
 		LM_DBG("dlg with callid '%.*s' not found\n",
 				msg->callid->body.len, msg->callid->body.s);
 		return NULL;
 	}
+	if(dir) *dir = vdir;
 	return dlg;
+}
+
+/*!
+ *
+ */
+dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
+{
+	return dlg_lookup_msg_dialog(msg, NULL);
 }
 
 /*!
@@ -1085,7 +1127,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	dlg_cell_t *dlg;
 	dlg_iuid_t *iuid;
 	str val, callid, ftag, ttag;
-	int h_entry, h_id, new_state, old_state, unref, event, timeout;
+	int h_entry, h_id, new_state, old_state, unref, event, timeout, reset;
 	unsigned int dir;
 	int ret = 0;
 
@@ -1180,6 +1222,20 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
     _dlg_ctx.iuid.h_entry = dlg->h_entry;
     _dlg_ctx.iuid.h_id = dlg->h_id;
 
+	if (req->first_line.u.request.method_value != METHOD_ACK) {
+		iuid = dlg_get_iuid_shm_clone(dlg);
+		if(iuid!=NULL)
+		{
+			/* register callback for the replies of this request */
+			if ( d_tmb.register_tmcb( req, 0, TMCB_RESPONSE_IN|TMCB_ON_FAILURE,
+					dlg_onreply, (void*)iuid, dlg_iuid_sfree)<0 ) {
+				LM_ERR("failed to register TMCB (3)\n");
+				shm_free(iuid);
+			}
+			iuid = NULL;
+		}
+	}
+	
 	/* run state machine */
 	switch ( req->first_line.u.request.method_value ) {
 		case METHOD_PRACK:
@@ -1258,7 +1314,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		if (timeout!=default_timeout) {
 			dlg->lifetime = timeout;
 		}
-		if (new_state!=DLG_STATE_EARLY) {
+		reset = !((dlg->iflags & DLG_IFLAG_TIMER_NORESET) || dlg_timeout_noreset);
+
+		if ((new_state!=DLG_STATE_EARLY) && (old_state!=DLG_STATE_CONFIRMED || reset)) {
 			if (update_dlg_timer( &dlg->tl, dlg->lifetime )==-1) {
 				LM_ERR("failed to update dialog lifetime\n");
 			} else {
@@ -1353,7 +1411,8 @@ void dlg_ontimeout(struct dlg_tl *tl)
 
 		if(dlg->iflags&DLG_IFLAG_TIMEOUTBYE)
 		{
-			dlg_bye_all(dlg, NULL);
+			if(dlg_bye_all(dlg, NULL)<0)
+				dlg_unref(dlg, 1);
 			/* run event route for end of dlg */
 			dlg_run_event_route(dlg, NULL, dlg->state, DLG_STATE_DELETED);
 			dlg_unref(dlg, 1);
@@ -1453,6 +1512,7 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 {
 	sip_msg_t *fmsg;
 	int rt;
+	int bkroute;
 
 	if(dlg==NULL)
 		return;
@@ -1477,16 +1537,18 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 	else
 		fmsg = msg;
 
-	if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)>0)
+	if (exec_pre_script_cb(fmsg, LOCAL_CB_TYPE)>0)
 	{
 		dlg_ref(dlg, 1);
 		dlg_set_ctx_iuid(dlg);
 		LM_DBG("executing event_route %d on state %d\n", rt, nstate);
-		set_route_type(REQUEST_ROUTE);
+		bkroute = get_route_type();
+		set_route_type(LOCAL_ROUTE);
 		run_top_route(event_rt.rlist[rt], fmsg, 0);
 		dlg_reset_ctx_iuid();
-		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
+		exec_post_script_cb(fmsg, LOCAL_CB_TYPE);
 		dlg_unref(dlg, 1);
+		set_route_type(bkroute);
 	}
 }
 

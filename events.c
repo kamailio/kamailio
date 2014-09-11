@@ -61,10 +61,19 @@ void sr_core_ert_init(void)
  */
 void sr_core_ert_run(sip_msg_t *msg, int e)
 {
+	struct run_act_ctx ctx;
+	int rtb;
+
 	switch(e) {
 		case SR_CORE_ERT_RECEIVE_PARSE_ERROR:
 			if(likely(_sr_core_ert_list.init_parse_error<=0))
 				return;
+			rtb = get_route_type();
+			set_route_type(REQUEST_ROUTE);
+			init_run_actions_ctx(&ctx);
+			run_top_route(event_rt.rlist[_sr_core_ert_list.init_parse_error],
+					msg, &ctx);
+			set_route_type(rtb);
 		break;
 	}
 }
@@ -86,17 +95,27 @@ void sr_event_cb_init(void)
  */
 int sr_event_register_cb(int type, sr_event_cb_f f)
 {
+	int i;
+
 	sr_event_cb_init();
 	switch(type) {
 		case SREV_NET_DATA_IN:
-				if(_sr_events_list.net_data_in==0)
-					_sr_events_list.net_data_in = f;
-				else return -1;
+				for(i=0; i<SREV_CB_LIST_SIZE; i++) {
+					if(_sr_events_list.net_data_in[i]==0) {
+						_sr_events_list.net_data_in[i] = f;
+						break;
+					}
+				}
+				if(i==SREV_CB_LIST_SIZE) return -1;
 			break;
 		case SREV_NET_DATA_OUT:
-				if(_sr_events_list.net_data_out==0)
-					_sr_events_list.net_data_out = f;
-				else return -1;
+				for(i=SREV_CB_LIST_SIZE-1; i>=0; i--) {
+					if(_sr_events_list.net_data_out[i]==0) {
+						_sr_events_list.net_data_out[i] = f;
+						break;
+					}
+				}
+				if(i<0) return -1;
 			break;
 		case SREV_CORE_STATS:
 				if(_sr_events_list.core_stats==0)
@@ -108,14 +127,9 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.run_action = f;
 				else return -1;
 			break;
-		case SREV_PKG_SET_USED:
-				if(_sr_events_list.pkg_set_used==0)
-					_sr_events_list.pkg_set_used = f;
-				else return -1;
-			break;
-		case SREV_PKG_SET_REAL_USED:
-				if(_sr_events_list.pkg_set_real_used==0)
-					_sr_events_list.pkg_set_real_used = f;
+		case SREV_PKG_UPDATE_STATS:
+				if(_sr_events_list.pkg_update_stats==0)
+					_sr_events_list.pkg_update_stats = f;
 				else return -1;
 			break;
 		case SREV_NET_DGRAM_IN:
@@ -148,6 +162,11 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.stun_in = f;
 				else return -1;
 			break;
+		case SREV_RCV_NOSIP:
+				if(_sr_events_list.rcv_nosip==0)
+					_sr_events_list.rcv_nosip = f;
+				else return -1;
+			break;
 		default:
 			return -1;
 	}
@@ -160,19 +179,24 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 int sr_event_exec(int type, void *data)
 {
 	int ret;
+	int i;
 #ifdef EXTRA_DEBUG
 	str *p;
 #endif /* EXTRA_DEBUG */
 	switch(type) {
 		case SREV_NET_DATA_IN:
-				if(unlikely(_sr_events_list.net_data_in!=0))
+				if(unlikely(_sr_events_list.net_data_in[0]!=0))
 				{
 #ifdef EXTRA_DEBUG
 					p = (str*)data;
 					LM_DBG("PRE-IN ++++++++++++++++++++++++++++++++\n"
 							"%.*s\n+++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
-					ret = _sr_events_list.net_data_in(data);
+					ret = 0;
+					for(i=0; i<SREV_CB_LIST_SIZE
+							&& _sr_events_list.net_data_in[i]; i++) {
+						ret |= _sr_events_list.net_data_in[i](data);
+					}
 #ifdef EXTRA_DEBUG
 					LM_DBG("POST-IN ++++++++++++++++++++++++++++++++\n"
 							"%.*s\n+++++\n", p->len, p->s);
@@ -181,14 +205,19 @@ int sr_event_exec(int type, void *data)
 				} else return 1;
 			break;
 		case SREV_NET_DATA_OUT:
-				if(unlikely(_sr_events_list.net_data_out!=0))
+				if(unlikely(_sr_events_list.net_data_out[SREV_CB_LIST_SIZE-1]!=0))
 				{
 #ifdef EXTRA_DEBUG
 					p = (str*)data;
 					LM_DBG("PRE-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
-					ret = _sr_events_list.net_data_out(data);
+					ret = 0;
+					for(i=0; i<SREV_CB_LIST_SIZE; i++) {
+						if(_sr_events_list.net_data_out[i]) {
+							ret |= _sr_events_list.net_data_out[i](data);
+						}
+					}
 #ifdef EXTRA_DEBUG
 					LM_DBG("POST-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
@@ -209,16 +238,10 @@ int sr_event_exec(int type, void *data)
 					ret = _sr_events_list.run_action(data);
 					return ret;
 				} else return 1;
-		case SREV_PKG_SET_USED:
-				if(unlikely(_sr_events_list.pkg_set_used!=0))
+		case SREV_PKG_UPDATE_STATS:
+				if(unlikely(_sr_events_list.pkg_update_stats!=0))
 				{
-					ret = _sr_events_list.pkg_set_used(data);
-					return ret;
-				} else return 1;
-		case SREV_PKG_SET_REAL_USED:
-				if(unlikely(_sr_events_list.pkg_set_real_used!=0))
-				{
-					ret = _sr_events_list.pkg_set_real_used(data);
+					ret = _sr_events_list.pkg_update_stats(data);
 					return ret;
 				} else return 1;
 		case SREV_NET_DGRAM_IN:
@@ -257,6 +280,12 @@ int sr_event_exec(int type, void *data)
 					ret = _sr_events_list.stun_in(data);
 					return ret;
 				} else return 1;
+		case SREV_RCV_NOSIP:
+				if(unlikely(_sr_events_list.rcv_nosip!=0))
+				{
+					ret = _sr_events_list.rcv_nosip(data);
+					return ret;
+				} else return 1;
 		default:
 			return -1;
 	}
@@ -269,17 +298,15 @@ int sr_event_enabled(int type)
 {
 	switch(type) {
 		case SREV_NET_DATA_IN:
-				return (_sr_events_list.net_data_in!=0)?1:0;
+				return (_sr_events_list.net_data_in[0]!=0)?1:0;
 		case SREV_NET_DATA_OUT:
-				return (_sr_events_list.net_data_out!=0)?1:0;
+				return (_sr_events_list.net_data_out[SREV_CB_LIST_SIZE-1]!=0)?1:0;
 		case SREV_CORE_STATS:
 				return (_sr_events_list.core_stats!=0)?1:0;
 		case SREV_CFG_RUN_ACTION:
 				return (_sr_events_list.run_action!=0)?1:0;
-		case SREV_PKG_SET_USED:
-				return (_sr_events_list.pkg_set_used!=0)?1:0;
-		case SREV_PKG_SET_REAL_USED:
-				return (_sr_events_list.pkg_set_real_used!=0)?1:0;
+		case SREV_PKG_UPDATE_STATS:
+				return (_sr_events_list.pkg_update_stats!=0)?1:0;
 		case SREV_NET_DGRAM_IN:
 				return (_sr_events_list.net_dgram_in!=0)?1:0;
 		case SREV_TCP_HTTP_100C:
@@ -292,6 +319,8 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.tcp_ws_frame_out!=0)?1:0;
 		case SREV_STUN_IN:
 				return (_sr_events_list.stun_in!=0)?1:0;
+		case SREV_RCV_NOSIP:
+				return (_sr_events_list.rcv_nosip!=0)?1:0;
 	}
 	return 0;
 }

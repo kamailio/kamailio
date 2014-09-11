@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -142,15 +142,19 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	if(likely(sr_msg_time==1)) msg_set_time(msg);
 
 	if (parse_msg(buf,len, msg)!=0){
-		LOG(cfg_get(core, core_cfg, corelog),
+		if(sr_event_exec(SREV_RCV_NOSIP, (void*)msg)!=0) {
+			LOG(cfg_get(core, core_cfg, corelog),
 				"core parsing of SIP message failed (%s:%d/%d)\n",
 				ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port,
 				(int)msg->rcv.proto);
-		sr_core_ert_run(msg, SR_CORE_ERT_RECEIVE_PARSE_ERROR);
+			sr_core_ert_run(msg, SR_CORE_ERT_RECEIVE_PARSE_ERROR);
+		}
 		goto error02;
 	}
 	DBG("After parse_msg...\n");
 
+	/* set log prefix */
+	log_prefix_set(msg);
 
 	/* ... clear branches from previous message */
 	clear_branches();
@@ -299,7 +303,10 @@ end:
 #ifdef STATS
 	if (skipped) STATS_RX_DROPS;
 #endif
+	/* reset log prefix */
+	log_prefix_set(NULL);
 	return 0;
+
 #ifndef NO_ONREPLY_ROUTE_ERROR
 error_rpl:
 	/* execute post reply-script callbacks */
@@ -325,6 +332,8 @@ error02:
 	pkg_free(msg);
 error00:
 	STATS_RX_DROPS;
+	/* reset log prefix */
+	log_prefix_set(NULL);
 	return -1;
 }
 

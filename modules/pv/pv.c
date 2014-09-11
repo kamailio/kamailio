@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <stdio.h>
@@ -115,6 +115,9 @@ static pv_export_t mod_pvs[] = {
 	{{"aU", (sizeof("aU")-1)}, /* */
 		PVT_OTHER, pv_get_authattr, 0,
 		0, 0, pv_init_iname, 5},
+	{{"aa", (sizeof("aa")-1)}, /* auth algorithm */
+		PVT_OTHER, pv_get_authattr, 0,
+		0, 0, pv_init_iname, 6},	
 	{{"Au", (sizeof("Au")-1)}, /* */
 		PVT_OTHER, pv_get_acc_username, 0,
 		0, 0, pv_init_iname, 1},
@@ -370,6 +373,9 @@ static pv_export_t mod_pvs[] = {
 	{{"sp", (sizeof("sp")-1)}, /* */
 		PVT_OTHER, pv_get_srcport, 0,
 		0, 0, 0, 0},
+	{{"su", (sizeof("su")-1)}, /* */
+		PVT_OTHER, pv_get_srcaddr_uri, 0,
+		0, 0, 0, 0},
 	{{"td", (sizeof("td")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, pv_set_to_domain,
 		0, 0, pv_init_iname, 3},
@@ -436,6 +442,8 @@ static pv_export_t mod_pvs[] = {
 		0, pv_parse_sr_version_name, 0, 0, 0},
 	{ {"K", (sizeof("K")-1)}, PVT_OTHER, pv_get_K, 0,
 		pv_parse_K_name, 0, 0, 0 },
+	{ {"expires", (sizeof("expires")-1)}, PVT_OTHER, pv_get_expires, 0,
+		pv_parse_expires_name, 0, 0, 0 },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -443,9 +451,9 @@ static pv_export_t mod_pvs[] = {
 static int add_avp_aliases(modparam_t type, void* val);
 
 static param_export_t params[]={ 
-	{"shvset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_shvar },
-	{"varset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_var },
-	{"avp_aliases",         STR_PARAM|USE_FUNC_PARAM, (void*)add_avp_aliases },
+	{"shvset",              PARAM_STRING|USE_FUNC_PARAM, (void*)param_set_shvar },
+	{"varset",              PARAM_STRING|USE_FUNC_PARAM, (void*)param_set_var },
+	{"avp_aliases",         PARAM_STRING|USE_FUNC_PARAM, (void*)add_avp_aliases },
 	{0,0,0}
 };
 

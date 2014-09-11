@@ -24,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * History:
@@ -78,8 +78,6 @@ MODULE_VERSION
 static int default_code = 500;
 static str default_reason = STR_STATIC_INIT("Internal Server Error");
 
-int _sl_filtered_ack_route = -1; /* default disabled */
-
 static int sl_bind_tm = 1;
 static struct tm_binds tmb;
 
@@ -101,7 +99,7 @@ static cmd_export_t cmds[]={
 	{"sl_reply",       w_sl_send_reply,             2, fixup_sl_reply,
 		REQUEST_ROUTE},
 	{"send_reply",     w_send_reply,                2, fixup_sl_reply,
-		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"sl_reply_error", w_sl_reply_error,            0, 0,
 		REQUEST_ROUTE},
 	{"sl_forward_reply",  w_sl_forward_reply0,      0, 0,
@@ -176,9 +174,7 @@ static int mod_init(void)
 		}
 	}
 
-	_sl_filtered_ack_route=route_lookup(&event_rt, "sl:filtered-ack");
-	if (_sl_filtered_ack_route>=0 && event_rt.rlist[_sl_filtered_ack_route]==0)
-		_sl_filtered_ack_route=-1; /* disable */
+	sl_lookup_event_routes();
 
 	return 0;
 }
@@ -285,6 +281,9 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 			goto done;
 		}
 	}
+
+	if(msg->first_line.type==SIP_REPLY)
+		goto error;
 
 	LM_DBG("reply in stateless mode (sl)\n");
 	ret = sl_send_reply(msg, code, r);
@@ -433,7 +432,7 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 			goto restore;
 		}
 	}
-	ret = forward_reply(msg);
+	ret = forward_reply_nocb(msg);
 restore:
 	if(reason!=NULL) {
 		if(ldel!=NULL) {

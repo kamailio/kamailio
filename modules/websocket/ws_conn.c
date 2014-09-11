@@ -17,7 +17,12 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
  *
  */
 
@@ -41,6 +46,9 @@ ws_connection_t **wsconn_id_hash = NULL;
 gen_lock_t *wsconn_lock = NULL;
 #define WSCONN_LOCK	lock_get(wsconn_lock)
 #define WSCONN_UNLOCK	lock_release(wsconn_lock)
+
+#define wsconn_ref(c)   atomic_inc(&((c)->refcnt))
+#define wsconn_unref(c) atomic_dec_and_test(&((c)->refcnt))
 
 gen_lock_t *wsstat_lock = NULL;
 
@@ -138,7 +146,6 @@ static inline void _wsconn_rm(ws_connection_t *wsc)
 		update_stat(ws_msrp_current_connections, -1);
 
 	shm_free(wsc);
-	wsc = NULL;
 }
 
 void wsconn_destroy(void)
@@ -193,6 +200,8 @@ int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
 	int id_hash = tcp_id_hash(id);
 	ws_connection_t *wsc;
 
+	LM_DBG("wsconn_add id [%d]\n", id);
+
 	/* Allocate and fill in new WebSocket connection */
 	wsc = shm_malloc(sizeof(ws_connection_t));
 	if (wsc == NULL)
@@ -206,6 +215,10 @@ int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
 	wsc->state = WS_S_OPEN;
 	wsc->rcv = rcv;
 	wsc->sub_protocol = sub_protocol;
+	wsc->run_event = 0;
+	atomic_set(&wsc->refcnt, 0);
+
+	LM_DBG("wsconn_add new wsc => [%p], ref => [%d]\n", wsc, atomic_get(&wsc->refcnt));
 
 	WSCONN_LOCK;
 	/* Add to WebSocket connection table */
@@ -221,7 +234,11 @@ int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
 		wsconn_used_list->tail->used_next = wsc;
 		wsconn_used_list->tail = wsc;
 	}
+	wsconn_ref(wsc);
+
 	WSCONN_UNLOCK;
+
+	LM_DBG("wsconn_add added to conn_table wsc => [%p], ref => [%d]\n", wsc, atomic_get(&wsc->refcnt));
 
 	/* Update connection statistics */
 	lock_get(wsstat_lock);
@@ -286,32 +303,29 @@ static void wsconn_run_route(ws_connection_t *wsc)
 	set_route_type(backup_rt);
 }
 
-int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route)
+static void wsconn_dtor(ws_connection_t *wsc)
 {
 	if (!wsc)
-	{
-		LM_ERR("wsconn_rm: null pointer\n");
-		return -1;
-	}
+		return;
 
-	if (run_event_route == WSCONN_EVENTROUTE_YES)
+	LM_DBG("wsconn_dtor for [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+
+	if (wsc->run_event)
 		wsconn_run_route(wsc);
 
-	WSCONN_LOCK;
-	/* Remove from the WebSocket used list */
-	if (wsconn_used_list->head == wsc)
-		wsconn_used_list->head = wsc->used_next;
-	if (wsconn_used_list->tail == wsc)
-		wsconn_used_list->tail = wsc->used_prev;
-	if (wsc->used_prev)
-		wsc->used_prev->used_next = wsc->used_next;
-	if (wsc->used_next)
-		wsc->used_next->used_prev = wsc->used_prev;
+	shm_free(wsc);
 
-	_wsconn_rm(wsc);
-	WSCONN_UNLOCK;
+	LM_DBG("wsconn_dtor for [%p] destroyed\n", wsc);
+}
 
-	return 0;
+int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route)
+{
+	LM_DBG("wsconn_rm for [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+
+	if (run_event_route == WSCONN_EVENTROUTE_YES)
+		wsc->run_event = 1;
+
+	return wsconn_put(wsc);
 }
 
 int wsconn_update(ws_connection_t *wsc)
@@ -362,23 +376,155 @@ void wsconn_close_now(ws_connection_t *wsc)
 	con->timeout = get_ticks_raw();
 }
 
+/* must be called with unlocked WSCONN_LOCK */
+int wsconn_put(ws_connection_t *wsc)
+{
+	int destroy = 0;
+
+	LM_DBG("wsconn_put start for [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+
+	if (!wsc)
+		return -1;
+
+	WSCONN_LOCK;
+	/* refcnt == 0*/
+	if (wsconn_unref(wsc))
+	{
+		/* Remove from the WebSocket used list */
+		if (wsconn_used_list->head == wsc)
+			wsconn_used_list->head = wsc->used_next;
+		if (wsconn_used_list->tail == wsc)
+			wsconn_used_list->tail = wsc->used_prev;
+		if (wsc->used_prev)
+			wsc->used_prev->used_next = wsc->used_next;
+		if (wsc->used_next)
+			wsc->used_next->used_prev = wsc->used_prev;
+
+		/* remove from wsconn_id_hash */
+		wsconn_listrm(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
+
+		/* stat */
+		update_stat(ws_current_connections, -1);
+		if (wsc->sub_protocol == SUB_PROTOCOL_SIP)
+			update_stat(ws_sip_current_connections, -1);
+		else if (wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+			update_stat(ws_msrp_current_connections, -1);
+
+		destroy = 1;
+	}
+	WSCONN_UNLOCK;
+
+	LM_DBG("wsconn_put end for [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+
+	/* wsc is removed from all lists and can be destroyed safely */
+	if (destroy)
+		wsconn_dtor(wsc);
+
+	return 0;
+}
+
 ws_connection_t *wsconn_get(int id)
 {
 	int id_hash = tcp_id_hash(id);
 	ws_connection_t *wsc;
+
+	LM_DBG("wsconn_get for id [%d]\n", id);
 
 	WSCONN_LOCK;
 	for (wsc = wsconn_id_hash[id_hash]; wsc; wsc = wsc->id_next)
 	{
 		if (wsc->id == id)
 		{
+			wsconn_ref(wsc);
+			LM_DBG("wsconn_get returns wsc [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+
 			WSCONN_UNLOCK;
+
 			return wsc;
 		}
 	}
 	WSCONN_UNLOCK;
 
 	return NULL;
+}
+
+ws_connection_t **wsconn_get_list(void)
+{
+	ws_connection_t **list = NULL;
+	ws_connection_t *wsc   = NULL;
+	size_t list_size = 0;
+	size_t list_len  = 0;
+	size_t i = 0;
+
+	LM_DBG("wsconn_get_list\n");
+
+	WSCONN_LOCK;
+
+	/* get the number of used connections */
+	wsc = wsconn_used_list->head;
+	while (wsc)
+	{
+		LM_DBG("counter wsc [%p] prev => [%p] next => [%p]\n", wsc, wsc->used_prev, wsc->used_next);
+		list_len++;
+		wsc = wsc->used_next;
+	}
+
+	if (!list_len)
+		goto end;
+
+	/* allocate a NULL terminated list of wsconn pointers */
+	list_size = (list_len + 1) * sizeof(ws_connection_t *);
+	list = pkg_malloc(list_size);
+	if (!list)
+		goto end;
+
+	memset(list, 0, list_size);
+
+	/* copy */
+	wsc = wsconn_used_list->head;
+	for(i = 0; i < list_len; i++)
+	{
+		if (!wsc) {
+			LM_ERR("Wrong list length\n");
+		}
+
+		list[i] = wsc;
+		wsconn_ref(wsc);
+		LM_DBG("wsc [%p] id [%d] ref++\n", wsc, wsc->id);
+
+		wsc = wsc->used_next;
+	}
+	list[list_len] = NULL; /* explicit NULL termination */
+
+end:
+	WSCONN_UNLOCK;
+
+	LM_DBG("wsconn_get_list returns list [%p] with [%d] members\n", list, (int)list_len);
+
+	return list;
+}
+
+int wsconn_put_list(ws_connection_t **list_head)
+{
+	ws_connection_t **list = NULL;
+	ws_connection_t *wsc   = NULL;
+
+	LM_DBG("wsconn_put_list [%p]\n", list_head);
+
+	if (!list_head)
+		return -1;
+
+	list =  list_head;
+	wsc  = *list_head;
+	while (wsc)
+	{
+		wsconn_put(wsc);
+		wsc = *(++list);
+	}
+
+	pkg_free(list_head);
+
+	return 0;
 }
 
 static int add_node(struct mi_root *tree, ws_connection_t *wsc)
@@ -440,10 +586,7 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 	int h, connections = 0, truncated = 0, order = 0, found = 0;
 	ws_connection_t *wsc;
 	struct mi_node *node = NULL;
-	struct mi_root *rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	
-	if (!rpl_tree)
-		return 0;
+	struct mi_root *rpl_tree;
 
 	node = cmd->node.kids;
 	if (node != NULL)
@@ -476,6 +619,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 		}
 	}
 
+	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree == NULL)
+		return 0;
+
 	WSCONN_LOCK;
 	if (order == 0)
 	{
@@ -485,7 +632,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 			while(wsc)
 			{
 				if ((found = add_node(rpl_tree, wsc)) < 0)
+				{
+					free_mi_tree(rpl_tree);
 					return 0;
+				}
 
 
 				connections += found;
@@ -508,7 +658,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 		while (wsc)
 		{
 			if ((found = add_node(rpl_tree, wsc)) < 0)
+			{
+				free_mi_tree(rpl_tree);
 				return 0;
+			}
 
 			connections += found;
 			if (connections >= MAX_WS_CONNS_DUMP)
@@ -526,7 +679,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 		while (wsc)
 		{
 			if ((found = add_node(rpl_tree, wsc)) < 0)
+			{
+				free_mi_tree(rpl_tree);
 				return 0;
+			}
 
 			connections += found;
 			if (connections >= MAX_WS_CONNS_DUMP)
@@ -544,7 +700,10 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 				"%d WebSocket connection%s found%s",
 				connections, connections == 1 ? "" : "s",
 				truncated == 1 ? "(truncated)" : "") == 0)
+	{
+		free_mi_tree(rpl_tree);
 		return 0;
+	}
 
 	return rpl_tree;
 }

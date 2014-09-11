@@ -1,10 +1,8 @@
 /*
- * $Id$
- *
  * TLS module - management interface
  *
- * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2005 iptelorg GmbH
+ * Copyright (C) 2013 Motorola Solutions, Inc.
  *
  * This file is part of sip-router, a free SIP server.
  *
@@ -32,6 +30,7 @@
 #include "../../tcp_info.h"
 #include "../../timer.h"
 #include "../../cfg/cfg.h"
+#include "../../dprint.h"
 #include "tls_init.h"
 #include "tls_mod.h"
 #include "tls_domain.h"
@@ -58,10 +57,11 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	     /* Try to delete old configurations first */
+	/* Try to delete old configurations first */
 	collect_garbage();
 
 	cfg = tls_load_config(&tls_domains_cfg_file);
+
 	if (!cfg) {
 		rpc->fault(ctx, 500, "Error while loading TLS configuration file"
 							" (consult server log)");
@@ -80,8 +80,14 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 	}
 
 	DBG("TLS configuration successfuly loaded");
+
+	lock_get(tls_domains_cfg_lock);
+
 	cfg->next = (*tls_domains_cfg);
 	*tls_domains_cfg = cfg;
+
+	lock_release(tls_domains_cfg_lock);
+
 	return;
 
  error:

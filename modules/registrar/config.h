@@ -8,7 +8,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -30,6 +30,7 @@ struct cfg_group_registrar {
 	str 		realm_pref;
 	unsigned int	default_expires;
 	unsigned int	default_expires_range;
+	unsigned int	expires_range;
 	unsigned int	min_expires;
 	unsigned int	max_expires;
 	unsigned int	max_contacts;
@@ -45,6 +46,7 @@ extern cfg_def_t	registrar_cfg_def[];
 
 extern void default_expires_stats_update(str*, str*);
 extern void default_expires_range_update(str*, str*);
+extern void expires_range_update(str*, str*);
 extern void max_expires_stats_update(str*, str*);
 
 #endif

@@ -28,6 +28,7 @@
 #include "../../ut.h"
 #include "../../socket_info.h"
 #include "../../name_alias.h"
+#include "../../mem/shm_mem.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
 
@@ -145,12 +146,41 @@ static void corex_rpc_list_aliases(rpc_t* rpc, void* ctx)
 	return;
 }
 
+static const char* corex_rpc_shm_status_doc[2] = {
+	"Trigger shm status dump to syslog",
+	0
+};
+
+/*
+ * RPC command to dump shm status to syslog
+ */
+static void corex_rpc_shm_status(rpc_t* rpc, void* ctx)
+{
+	shm_status();
+}
+
+static const char* corex_rpc_shm_summary_doc[2] = {
+	"Trigger shm summary dump to syslog",
+	0
+};
+
+/*
+ * RPC command to dump shm summary to syslog
+ */
+static void corex_rpc_shm_summary(rpc_t* rpc, void* ctx)
+{
+	shm_sums();
+}
 
 rpc_export_t corex_rpc_cmds[] = {
 	{"corex.list_sockets", corex_rpc_list_sockets,
-		corex_rpc_list_sockets_doc, 0},
+		corex_rpc_list_sockets_doc, RET_ARRAY},
 	{"corex.list_aliases", corex_rpc_list_aliases,
-		corex_rpc_list_aliases_doc, 0},
+		corex_rpc_list_aliases_doc, RET_ARRAY},
+	{"corex.shm_status", corex_rpc_shm_status,
+		corex_rpc_shm_status_doc, 0},
+	{"corex.shm_summary", corex_rpc_shm_summary,
+		corex_rpc_shm_summary_doc, 0},
 	{0, 0, 0, 0}
 };
 

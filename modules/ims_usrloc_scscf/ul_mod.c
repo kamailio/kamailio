@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -59,6 +59,13 @@
 #include "ul_callback.h"
 #include "usrloc.h"
 #include "hslot_sp.h"
+#include "usrloc_db.h"
+
+#include "../presence/bind_presence.h"
+#include "../presence/hash.h"
+
+#include "../../modules/dialog_ng/dlg_load.h"
+#include "../../modules/dialog_ng/dlg_hash.h"
 
 MODULE_VERSION
 
@@ -92,9 +99,27 @@ int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
 int subs_hash_size = 9;					/*!<number of ims subscription slots*/
 
+int db_mode = 0;						/*!<database mode*/
+db1_con_t* ul_dbh = 0;
+db_func_t ul_dbf;
+str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
+
 /* flags */
 unsigned int nat_bflag = (unsigned int)-1;
 unsigned int init_flag = 0;
+
+struct dlg_binds dlgb;
+
+int sub_dialog_hash_size = 9;
+shtable_t sub_dialog_table;
+
+new_shtable_t pres_new_shtable;
+insert_shtable_t pres_insert_shtable;
+search_shtable_t pres_search_shtable;
+update_shtable_t pres_update_shtable;
+delete_shtable_t pres_delete_shtable;
+destroy_shtable_t pres_destroy_shtable;
+extract_sdialog_info_t pres_extract_sdialog_info;
 
 /*! \brief
  * Exported functions
@@ -117,14 +142,17 @@ static param_export_t params[] = {
 	{"hash_size",         	INT_PARAM, &ul_hash_size    },
 	{"subs_hash_size",    	INT_PARAM, &subs_hash_size  },
 	{"nat_bflag",         	INT_PARAM, &nat_bflag       },
-	{"usrloc_debug_file", 	STR_PARAM, &usrloc_debug_file.s},
+	{"usrloc_debug_file", 	PARAM_STR, &usrloc_debug_file},
 	{"enable_debug_file", 	INT_PARAM, &usrloc_debug},
-    {"user_data_dtd",     	STR_PARAM, &scscf_user_data_dtd},
-    {"user_data_xsd",     	STR_PARAM, &scscf_user_data_xsd},
+    {"user_data_dtd",     	PARAM_STRING, &scscf_user_data_dtd},
+    {"user_data_xsd",     	PARAM_STRING, &scscf_user_data_xsd},
     {"support_wildcardPSI",	INT_PARAM, &scscf_support_wildcardPSI},
     {"unreg_validity",		INT_PARAM, &unreg_validity},
-    {"maxcontact_behaviour", INT_PARAM, &maxcontact_behaviour},
+    {"maxcontact_behaviour",INT_PARAM, &maxcontact_behaviour},
     {"maxcontact",			INT_PARAM, &maxcontact},
+    {"sub_dialog_hash_size",INT_PARAM, &sub_dialog_hash_size},
+    {"db_mode",				INT_PARAM, &db_mode},
+    {"db_url", 				PARAM_STR, &db_url},
 	{0, 0, 0}
 };
 
@@ -161,6 +189,7 @@ struct module_exports exports = {
  */
 static int mod_init(void) {
 
+	load_dlg_f load_dlg;
 	if (usrloc_debug){
 		LM_INFO("Logging usrloc records to %.*s\n", usrloc_debug_file.len, usrloc_debug_file.s);
 		debug_file = fopen(usrloc_debug_file.s, "a");
@@ -180,9 +209,6 @@ static int mod_init(void) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-
-	/* Compute the lengths of string parameters */
-	usrloc_debug_file.len = strlen(usrloc_debug_file.s);
 
 	if (ul_hash_size <= 1)
 		ul_hash_size = 512;
@@ -216,6 +242,78 @@ static int mod_init(void) {
 		return -1;
 	}
 
+	/* presence binding for subscribe processing*/
+	presence_api_t pres;
+	bind_presence_t bind_presence;
+
+	bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);
+	if (!bind_presence) {
+	    LM_ERR("can't bind presence\n");
+	    return -1;
+	}
+	if (bind_presence(&pres) < 0) {
+	    LM_ERR("can't bind pua\n");
+	    return -1;
+	}
+
+	pres_extract_sdialog_info= pres.extract_sdialog_info;
+	pres_new_shtable          = pres.new_shtable;
+	pres_destroy_shtable      = pres.destroy_shtable;
+	pres_insert_shtable       = pres.insert_shtable;
+	pres_delete_shtable       = pres.delete_shtable;
+	pres_update_shtable       = pres.update_shtable;
+	pres_search_shtable       = pres.search_shtable;
+
+
+	if(!pres_new_shtable || !pres_destroy_shtable || !pres_insert_shtable || !pres_delete_shtable
+		     || !pres_update_shtable || !pres_search_shtable || !pres_extract_sdialog_info) {
+	    LM_ERR("could not import add_event\n");
+	    return -1;
+	}
+
+	/* subscriber dialog hash table */
+	if(sub_dialog_hash_size<=1) {
+	    sub_dialog_hash_size= 512;
+	}
+	else {
+	    sub_dialog_hash_size = 1<<sub_dialog_hash_size;
+	}
+
+	sub_dialog_table= pres_new_shtable(sub_dialog_hash_size);
+	if(sub_dialog_table== NULL)
+	{
+		LM_ERR("while creating new hash table\n");
+		return -1;
+	}
+
+	/* Shall we use database ? */
+	if (db_mode != NO_DB) { /* Yes */
+		if (db_bind_mod(&db_url, &ul_dbf) < 0) { /* Find database module */
+			LM_ERR("failed to bind database module\n");
+			return -1;
+		}
+		if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
+			LM_ERR("database module does not implement all functions"
+					" needed by the module\n");
+			return -1;
+		}
+		if (ul_fetch_rows <= 0) {
+			LM_ERR("invalid fetch_rows number '%d'\n", ul_fetch_rows);
+			return -1;
+		}
+	}
+
+	if (!(load_dlg = (load_dlg_f) find_export("load_dlg", 0, 0))) { /* bind to dialog module */
+		LM_ERR("can not import load_dlg. This module requires Kamailio dialog module.\n");
+	}
+	if (load_dlg(&dlgb) == -1) {
+		return -1;
+	}
+	if (load_dlg_api(&dlgb) != 0) { /* load the dialog API */
+		LM_ERR("can't load Dialog API\n");
+		return -1;
+	}
+	
 	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
@@ -235,13 +333,45 @@ static int mod_init(void) {
 	}
 
 	init_flag = 1;
-
+	
 	return 0;
 }
 
 
 static int child_init(int rank)
 {
+	dlist_t* ptr;
+
+	/* connecting to DB ? */
+	switch (db_mode) {
+	case NO_DB:
+		return 0;
+	case WRITE_THROUGH:
+		/* we need connection from working SIP and TIMER and MAIN
+		 * processes only */
+		if (rank <= 0 && rank != PROC_TIMER && rank != PROC_MAIN)
+			return 0;
+		break;
+	}
+
+	ul_dbh = ul_dbf.init(&db_url); /* Get a database connection per child */
+	if (!ul_dbh) {
+		LM_ERR("child(%d): failed to connect to database\n", rank);
+		return -1;
+	}
+
+	/* _rank==PROC_SIPINIT is used even when fork is disabled */
+	if (rank == PROC_SIPINIT && db_mode != DB_ONLY) {
+		/* if cache is used, populate from DB */
+		for (ptr = root; ptr; ptr = ptr->next) {
+			if (preload_udomain(ul_dbh, ptr->d) < 0) {
+				LM_ERR("child(%d): failed to preload domain '%.*s'\n",
+						rank, ptr->name.len, ZSW(ptr->name.s));
+				return -1;
+			}
+		}
+	}
+
 	return 0;
 }
 
@@ -249,8 +379,19 @@ static int child_init(int rank)
 /*! \brief
  * Module destroy function
  */
-static void destroy(void)
-{
+static void destroy(void) {
+	if (sub_dialog_table) {
+		pres_destroy_shtable(sub_dialog_table, sub_dialog_hash_size);
+	}
+
+	if (ul_dbh) {
+		ul_unlock_locks();
+		if (synchronize_all_udomains() != 0) {
+			LM_ERR("flushing cache failed\n");
+		}
+		ul_dbf.close(ul_dbh);
+	}
+
 	free_all_udomains();
 	ul_destroy_locks();
 

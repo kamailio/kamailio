@@ -1,11 +1,10 @@
-
 cnxcc Module
 
 Carlos Ruiz Diaz
 
-   ConexionGroup SA
+   ConexionGroup S.A.
 
-   Copyright © 2012 Carlos Ruiz Diaz, carlos.ruizdiaz@gmail.com
+   Copyright © 2013 Carlos Ruiz Diaz, carlos.ruizdiaz@gmail.com
      __________________________________________________________________
 
    Table of Contents
@@ -26,6 +25,9 @@ Carlos Ruiz Diaz
 
               4.1. cnxcc_set_max_credit()
               4.2. cnxcc_set_max_time()
+              4.3. cnxcc_update_max_time()
+              4.4. cnxcc_set_max_channel()
+              4.5. cnxcc_terminate_all()
 
         5. Exported RPC Commands
 
@@ -43,7 +45,10 @@ Carlos Ruiz Diaz
    1.2. credit_check_period
    1.3. cnxcc_set_max_credit()
    1.4. cnxcc_set_max_time()
-   1.5. kamailio-cnxcc.cfg
+   1.5. cnxcc_update_max_time()
+   1.6. cnxcc_set_max_channels()
+   1.7. cnxcc_set_max_time()
+   1.8. kamailio-cnxcc.cfg
 
 Chapter 1. Admin Guide
 
@@ -63,6 +68,9 @@ Chapter 1. Admin Guide
 
         4.1. cnxcc_set_max_credit()
         4.2. cnxcc_set_max_time()
+        4.3. cnxcc_update_max_time()
+        4.4. cnxcc_set_max_channel()
+        4.5. cnxcc_terminate_all()
 
    5. Exported RPC Commands
 
@@ -99,6 +107,9 @@ Chapter 1. Admin Guide
 
    If your accounting program does not maintain the state of the call in
    real time, this module can provide you that ability.
+
+   Cnxcc can also provide more common means of monitoring, i.e., by time
+   limit or by maximum simultaneous calls.
 
 2. Dependencies
 
@@ -142,6 +153,9 @@ modparam("cnxcc", "credit_check_period", 1)
 
    4.1. cnxcc_set_max_credit()
    4.2. cnxcc_set_max_time()
+   4.3. cnxcc_update_max_time()
+   4.4. cnxcc_set_max_channel()
+   4.5. cnxcc_terminate_all()
 
 4.1.  cnxcc_set_max_credit()
 
@@ -152,6 +166,7 @@ modparam("cnxcc", "credit_check_period", 1)
    Return code:
      * 1 - successful
      * -1 - failed, error logged
+     * -2 - failed, credit value is less than initial pulse value
 
    Example 1.3. cnxcc_set_max_credit()
 ...
@@ -178,7 +193,84 @@ l_p)", "$var(final_p)");
 $var(customer) = "john-doe-123-basic";
 $var(max_time) = 120;
 
-cnxcc_set_max_tim ("$var(customer)", "$var(max_time)");
+cnxcc_set_max_time("$var(customer)", "$var(max_time)");
+...
+
+4.3.  cnxcc_update_max_time()
+
+   Updates max-time of an established and monitored call. This can be used
+   to grant minimum values and to update them every short periods on time
+   as a mean to prevent frauds and/or to mimic requested/granted units of
+   time of Credit Control Application behavior.
+
+   Return code:
+     * 1 - successful
+     * -1 - failed, error logged
+
+   Example 1.5. cnxcc_update_max_time()
+...
+        $var(update_time)  = 5;
+        $var(client)       = "john-doe-123-basic";
+
+        if (!cnxcc_update_max_time("$var(client)",
+                                  "$var(update_time)")) {
+                xlog("Error updating max-time");
+                return;
+        }
+
+...
+
+4.4.  cnxcc_set_max_channel()
+
+   Specifies a limit for the number of simultaneous calls
+
+   Return code:
+     * 1 - successful
+     * -1 - failed, error logged
+     * -2 - failed, calls established plus calls being established result
+       in more than the limit you specified
+     * -3 - failed, number of calls established is more than the limit you
+       specified
+
+   Example 1.6. cnxcc_set_max_channels()
+...
+$var(customer)  = "john-doe-123-basic";
+$var(max_chan)  = 2;
+$var(retcode)   = cnxcc_set_max_channels("$var(customer)", "$var(max_chan)");
+
+if ($var(retcode) == -1) {
+        xlog("Error setting up credit control");
+        return;
+}
+
+if ($var(retcode) < -1) {
+        xlog("Too many channels for customer");
+        sl_send_reply(403, "Forbidden");
+
+        if (!cnxcc_terminate_all("$var(customer)")) {
+                xlog("Error terminating customer's calls");
+        }
+
+        exit;
+}
+
+...
+
+4.5.  cnxcc_terminate_all()
+
+   Terminates all calls of the specified customer/profile
+
+   Return code:
+     * 1 - successful
+     * -1 - failed, error logged
+
+   Example 1.7. cnxcc_set_max_time()
+...
+$var(customer)  = "john-doe-123-basic";
+
+if (!cnxcc_terminate_all("$var(customer)")) {
+        xlog("Error terminating customer's calls");
+}
 ...
 
 5. Exported RPC Commands
@@ -194,7 +286,7 @@ cnxcc_set_max_tim ("$var(customer)", "$var(max_time)");
    Parameters: none
 
    Example:
-            sercmd cnxcc.active_clients
+            kamcmd cnxcc.active_clients
 
 5.2. cnxcc.check_client
 
@@ -203,7 +295,7 @@ cnxcc_set_max_tim ("$var(customer)", "$var(max_time)");
    Parameters: client/customer identifier
 
    Example:
-            sercmd cnxcc.check_client john-doe-123-premium
+            kamcmd cnxcc.check_client john-doe-123-premium
 
 5.3. cnxcc.kill_call
 
@@ -212,7 +304,7 @@ cnxcc_set_max_tim ("$var(customer)", "$var(max_time)");
    Parameters: Call-ID
 
    Example:
-            sercmd cnxcc.kill_call qumojlaahitafih@carlosrdcnx-laptop.site
+            kamcmd cnxcc.kill_call qumojlaahitafih@carlosrdcnx-laptop.site
 
 6. Events
 
@@ -242,7 +334,7 @@ event_route[cnxcc:call-shutdown]
 
 8. Sample
 
-   Example 1.5. kamailio-cnxcc.cfg
+   Example 1.8. kamailio-cnxcc.cfg
 ...
 route[CNXCC]
 {

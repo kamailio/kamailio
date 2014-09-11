@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "db_ut.h"
@@ -183,6 +183,9 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 		VAL_BLOB(_v).len = _l;
 		VAL_TYPE(_v) = DB1_BLOB;
 		return 0;
+
+	default:
+		return -10;
 	}
 	return -10;
 }

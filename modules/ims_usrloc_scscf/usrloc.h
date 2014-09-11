@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -52,6 +52,14 @@
 #include "../../str.h"
 #include "../../modules/tm/dlg.h"
 #include "../cdp/diameter_ims_code_avp.h"
+
+#define DEFAULT_DBG_FILE "/var/log/usrloc_debug"
+
+/* DB modes */
+#define NO_DB         0
+#define WRITE_THROUGH 1
+#define WRITE_BACK    2		//not implemented yet
+#define DB_ONLY	      3		//not implemented yet
 
 /*IMPU states*/
 #define IMS_USER_NOT_REGISTERED 0		/** User not registered */
@@ -263,6 +271,15 @@ typedef struct security {
     float q;
 } security_t;
 
+/*! \brief Structure to hold dialog data used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed */
+typedef struct contact_dialog_data {
+    unsigned int h_entry;
+    unsigned int h_id;
+
+    struct contact_dialog_data* next; /*!< Next contact in the linked list */
+    struct contact_dialog_data* prev; /*!< Previous contact in the linked list */
+} contact_dialog_data_t;
+
 /*! \brief Main structure for handling of registered Contact data */
 typedef struct ucontact {
     str* domain; /*!< Pointer to domain name (NULL terminated) */
@@ -288,6 +305,9 @@ typedef struct ucontact {
     security_t *security; /**< Security-Client Information		*/
 
     struct ulcb_head_list* cbs;	/**< individual callbacks per contact */
+    
+    struct contact_dialog_data *first_dialog_data;
+    struct contact_dialog_data *last_dialog_data;
 
     struct ucontact* next; /*!< Next contact in the linked list */
     struct ucontact* prev; /*!< Previous contact in the linked list */
@@ -349,6 +369,7 @@ typedef struct impurecord {
     ucontact_t* contacts; 			/*!< One or more contact fields */
     reg_subscriber *shead, *stail; 	/**< list of subscribers attached			*/
     time_t expires; 				/*!< timer when this IMPU expires - currently only used for unreg IMPU */
+    int send_sar_on_delete;			/* used to distinguish between explicit contact removal and contact expiry - SAR only sent on contact expiry*/
 
     struct hslot* slot; 			/*!< Collision slot in the hash table array we belong to */
     struct ulcb_head_list* cbs;		/**< individual callbacks per impurecord */
@@ -373,7 +394,7 @@ typedef int (*get_impurecord_t)(struct udomain* _d, str* _aor, struct impurecord
 
 typedef int (*delete_impurecord_t)(struct udomain* _d, str* _aor, struct impurecord* _r);
 
-typedef int (*update_impurecord_t)(struct udomain* _d, str* public_identity, int reg_state, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
+typedef int (*update_impurecord_t)(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
 typedef int (*update_ucontact_t)(struct impurecord* _r, struct ucontact* _c, struct ucontact_info* _ci);
 
@@ -382,6 +403,10 @@ typedef int (*insert_ucontact_t)(struct impurecord* _r, str* _contact, struct uc
 typedef int (*delete_ucontact_t)(struct impurecord* _r, struct ucontact* _c);
 
 typedef int (*get_ucontact_t)(struct impurecord* _r, str* _c, str* _callid, str* _path, int _cseq, struct ucontact** _co);
+
+typedef int (*add_dialog_data_to_contact_t)(struct ucontact* _c, unsigned int h_entry, unsigned int h_id);
+
+typedef int (*remove_dialog_data_from_contact_t)(struct ucontact* _c, unsigned int h_entry, unsigned int h_id);
 
 typedef void (*lock_udomain_t)(struct udomain* _d, str *_aor);
 
@@ -399,7 +424,7 @@ typedef int (*update_subscriber_t)(impurecord_t* urec,
         str *watcher_uri, str *watcher_contact,
         int *expires, reg_subscriber** _reg_subscriber);
 
-typedef void (*external_delete_subscriber_t)(reg_subscriber *s, udomain_t* _t);
+typedef void (*external_delete_subscriber_t)(reg_subscriber *s, udomain_t* _t, int lock_domain);
 
 //typedef int (*get_subscriber_t)(udomain_t* _d, impurecord_t* urec, str *watcher_contact, str *presentity_uri, int event, reg_subscriber** reg_subscriber);
 typedef int (*get_subscriber_t)(impurecord_t* urec, str *watcher_contact, str *presentity_uri, int event, reg_subscriber** reg_subscriber);
@@ -413,6 +438,8 @@ typedef int (*add_subscriber_t)(impurecord_t* urec,
 		subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber);
 
 typedef int (*get_impus_from_subscription_as_string_t)(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus);
+
+typedef str (*get_presentity_from_subscriber_dialog_t)(str *callid, str *to_tag, str *from_tag);
 
 /*! usrloc API export structure */
 typedef struct usrloc_api {
@@ -436,6 +463,9 @@ typedef struct usrloc_api {
     get_all_ucontacts_t get_all_ucontacts;
     update_ucontact_t update_ucontact;
     //update_user_profile_t update_user_profile;
+    
+    add_dialog_data_to_contact_t add_dialog_data_to_contact;
+    remove_dialog_data_from_contact_t remove_dialog_data_from_contact;
 
     add_subscriber_t add_subscriber;
     update_subscriber_t update_subscriber;
@@ -445,6 +475,9 @@ typedef struct usrloc_api {
     get_impus_from_subscription_as_string_t get_impus_from_subscription_as_string;
 
     register_ulcb_t register_ulcb;
+    
+    get_presentity_from_subscriber_dialog_t get_presentity_from_subscriber_dialog;
+    
 } usrloc_api_t;
 
 /*! usrloc API export bind function */

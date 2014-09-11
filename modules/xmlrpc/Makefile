@@ -1,5 +1,3 @@
-# $Id$
-#
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile
 
@@ -20,6 +18,8 @@ else
 	LIBS += -L$(LOCALBASE)/lib -lxml2
 endif
 
+# use system malloc
+DEFS+=-DXMLRPC_SYSTEM_MALLOC
 DEFS+=-DSER_MOD_INTERFACE
 
 include ../../Makefile.modules

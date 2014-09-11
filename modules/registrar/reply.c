@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -111,7 +111,7 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str *host, int mode)
 			qlen = len_q(c->q);
 			if (qlen) len += Q_PARAM_LEN + qlen;
 			len += EXPIRES_PARAM_LEN + INT2STR_MAX_LEN;
-			if (c->received.s) {
+			if (rcv_param.len>0 && c->received.s) {
 				len += 1 /* ; */ 
 					+ rcv_param.len 
 					+ 1 /* = */ 
@@ -252,7 +252,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 			memcpy(p, cp, len);
 			p += len;
 
-			if (c->received.s) {
+			if (rcv_param.len>0 && c->received.s) {
 				*p++ = ';';
 				memcpy(p, rcv_param.s, rcv_param.len);
 				p += rcv_param.len;

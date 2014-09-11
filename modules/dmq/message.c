@@ -1,6 +1,3 @@
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h"
-#include "../../sip_msg_clone.h"
 /*
  * $Id$
  *
@@ -22,11 +19,13 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 
+#include "../../parser/parse_to.h"
+#include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
@@ -46,8 +45,6 @@ str dmq_404_rpl  = str_init("User Not Found");
 int dmq_handle_message(struct sip_msg* msg, char* str1, char* str2)
 {
 	dmq_peer_t* peer;
-	struct sip_msg* cloned_msg = NULL;
-	int cloned_msg_len;
 	if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s)) {
 			LM_ERR("error parsing msg uri\n");
 			goto error;
@@ -68,12 +65,7 @@ int dmq_handle_message(struct sip_msg* msg, char* str1, char* str2)
 		return 0;
 	}
 	LM_DBG("dmq_handle_message peer found: %.*s\n", msg->parsed_uri.user.len, msg->parsed_uri.user.s);
-	cloned_msg = sip_msg_shm_clone(msg, &cloned_msg_len, 1);
-	if(!cloned_msg) {
-		LM_ERR("error cloning sip message\n");
-		goto error;
-	}
-	if(add_dmq_job(cloned_msg, peer)<0) {
+	if(add_dmq_job(msg, peer)<0) {
 		LM_ERR("failed to add dmq job\n");
 		goto error;
 	}

@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -45,7 +45,7 @@
 #include "../mem/mem.h"
 #include "../ut.h"
 
-int http_reply_hack = 0;
+int http_reply_parse = 0;
 
 /* grammar:
 	request  =  method SP uri SP version CRLF
@@ -77,6 +77,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	*/
 	
 
+	offset = 0;
 	end=buffer+len;
 	/* see if it's a reply (status) */
 
@@ -98,7 +99,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 			fl->type=SIP_REPLY;
 			fl->u.reply.version.len=SIP_VERSION_LEN;
 			tmp=buffer+SIP_VERSION_LEN;
-	} else if (http_reply_hack != 0 && 
+	} else if (http_reply_parse != 0 &&
 		 	(*tmp=='H' || *tmp=='h') &&
 			/* 'HTTP/1.' */
 			strncasecmp( tmp+1, HTTP_VERSION+1, HTTP_VERSION_LEN-1)==0 &&
@@ -225,21 +226,21 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	return nl;
 
 error:
-	LOG(L_INFO, "ERROR:parse_first_line: bad %s first line\n",
+	LOG(L_DBG, "parse_first_line: bad %s first line\n",
 		(fl->type==SIP_REPLY)?"reply(status)":"request");
 
-	LOG(L_INFO, "ERROR: at line 0 char %d: \n", offset );
+	LOG(L_DBG, "at line 0 char %d: \n", offset );
 	prn=pkg_malloc( offset );
 	if (prn) {
 		for (t=0; t<offset; t++)
 			if (*(buffer+t)) *(prn+t)=*(buffer+t);
-			else *(prn+t)='°';
-		LOG(L_INFO, "ERROR: parsed so far: %.*s\n", offset, ZSW(prn) );
+			else *(prn+t)=176; /* '°' */
+		LOG(L_DBG, "parsed so far: %.*s\n", offset, ZSW(prn) );
 		pkg_free( prn );
 	};
 error1:
 	fl->type=SIP_INVALID;
-	LOG(L_INFO, "ERROR:parse_first_line: bad message\n");
+	LOG(L_ERR, "parse_first_line: bad message (offset: %d)\n", offset);
 	/* skip  line */
 	nl=eat_line(buffer,len);
 	return nl;

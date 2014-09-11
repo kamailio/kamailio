@@ -1,0 +1,2 @@
+kamailio binary: example-interpreter-not-absolute usr/share/doc/kamailio/examples/outbound/edge.cfg #!KAMAILIO
+kamailio binary: example-interpreter-not-absolute usr/share/doc/kamailio/examples/outbound/registrar.cfg #!KAMAILIO

@@ -787,4 +787,53 @@ sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list)
 	}
 	return NULL;
 }
+
+/**
+ * return child node of an xavp
+ * - $xavp(rname=>cname)
+ */
+sr_xavp_t* xavp_get_child(str *rname, str *cname)
+{
+	sr_xavp_t *ravp=NULL;
+
+	ravp = xavp_get(rname, NULL);
+	if(ravp==NULL || ravp->val.type!=SR_XTYPE_XAVP)
+		return NULL;
+
+	return xavp_get(cname, ravp->val.v.xavp);
+}
+
+
+/**
+ * return child node of an xavp if it has int value
+ * - $xavp(rname=>cname)
+ */
+sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname)
+{
+	sr_xavp_t *vavp=NULL;
+
+	vavp = xavp_get_child(rname, cname);
+
+	if(vavp==NULL || vavp->val.type!=SR_XTYPE_INT)
+		return NULL;
+
+	return vavp;
+}
+
+
+/**
+ * return child node of an xavp if it has string value
+ * - $xavp(rname=>cname)
+ */
+sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname)
+{
+	sr_xavp_t *vavp=NULL;
+
+	vavp = xavp_get_child(rname, cname);
+
+	if(vavp==NULL || vavp->val.type!=SR_XTYPE_STR)
+		return NULL;
+
+	return vavp;
+}
 #endif

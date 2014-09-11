@@ -38,7 +38,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -153,9 +153,10 @@ int cscf_has_originating(struct sip_msg *msg, char *str1, char *str2);
 /**
  * Looks for the P-Asserted-Identity header and extracts its content
  * @param msg - the sip message
+ * @is_shm - is the message a shm message
  * @returns the asserted identity
  */
-str cscf_get_asserted_identity(struct sip_msg *msg);
+str cscf_get_asserted_identity(struct sip_msg *msg, int is_shm);
 /**
  * Extracts the realm from a SIP/TEL URI. 
  * - SIP - the hostname
@@ -176,6 +177,17 @@ str cscf_get_realm_from_ruri(struct sip_msg *msg);
  * @returns the public identity
  */
 str cscf_get_public_identity_from_requri(struct sip_msg *msg);
+
+/**
+ * Get the contact from the Request URI of the message
+ * NB: free returned result str when done from shm
+ * @param msg - the SIP message
+ * @returns the contact (don't forget to free from shm)
+ * 
+ * NOTE: should only be called when REQ URI has been converted sip:user@IP_ADDRESS:PORT or tel:IP_ADDRESS:PORT
+ */
+str cscf_get_contact_from_requri(struct sip_msg *msg);
+
 /**
  * Looks for the Call-ID header
  * @param msg - the sip message
@@ -417,6 +429,14 @@ int cscf_add_header_rpl(struct sip_msg *msg, str *hdr);
  * @returns the callid value
  */
 int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr);
+
+/**
+ * Looks for the P-Called-Party-ID header and extracts the public identity from it
+ * @param msg - the sip message
+ * @param hr - ptr to return the found hdr_field 
+ * @returns the P-Called_Party-ID
+ */
+str cscf_get_public_identity_from_called_party_id(struct sip_msg *msg,struct hdr_field **hr);
 
 #endif
 

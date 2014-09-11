@@ -32,4 +32,20 @@ RPC Exports for debugger
 </para>
 </section>
 
+<section id="dbg.mod_level"><title>dbg.mod_level</title>
+<para>
+        Specify module log level
+</para>
+<para>
+</para>
+</section>
+
+<section id="dbg.reset_msgid"><title>dbg.reset_msgid</title>
+<para>
+        Reset msgid on all process
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

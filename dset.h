@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -170,6 +170,11 @@ void set_ruri_q(qvalue_t q);
 
 
 /*! \brief
+ * Get src ip, port and proto as SIP uri or proxy address
+ */
+int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode);
+
+/*! \brief
  * Get the q value of the Request-URI
  */
 qvalue_t get_ruri_q(void);
@@ -249,5 +254,8 @@ int getbflagsval(unsigned int branch, flag_t* res);
  * @return 1 on success, -1 on failure
  */
 int setbflagsval(unsigned int branch, flag_t val);
+
+int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri);
+int uri_restore_rcv_alias(str *uri, str *nuri, str *suri);
 
 #endif /* _DSET_H */

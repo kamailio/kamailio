@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -141,90 +141,6 @@ inline int ims_find_credentials(struct sip_msg* _m, str* _realm,
 	return 1;
 }
 
-
-/**
- * Returns the Private Identity extracted from the Authorization header.
- * If none found there takes the SIP URI in To without the "sip:" prefix
- * \todo - remove the fallback case to the To header
- * @param msg - the SIP message
- * @param realm - the realm to match in an Authorization header
- * @param is_proxy_auth 0 if the header is Authorization, anything else for Proxy-Authorization
- * @returns the str containing the private id, no mem dup
- */
-str get_private_identity(struct sip_msg *msg, str realm, int is_proxy_auth)
-{
-	str pi={0,0};
-	struct hdr_field* h=0;
-	int ret,i;
-
-	if (parse_headers(msg, is_proxy_auth ? HDR_PROXYAUTH_F : HDR_AUTHORIZATION_F,0)!=0) {
-		return pi;
-	}
-
-	if (!(is_proxy_auth ? msg->proxy_auth : msg->authorization)){
-		goto fallback;
-	}
-
-	ret = find_credentials(msg, &realm, is_proxy_auth ? HDR_PROXYAUTH_F : HDR_AUTHORIZATION_F, &h);
-	if (ret < 0) {
-		goto fallback;
-	} else 
-		if (ret > 0) {
-			goto fallback;
-		}
-	
-	if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
-
-	goto done;
-		
-fallback:
-	pi = get_public_identity(msg);
-	if (pi.len>4&&strncasecmp(pi.s,"sip:",4)==0) {pi.s+=4;pi.len-=4;}
-	for(i=0;i<pi.len;i++)
-		if (pi.s[i]==';') {
-			pi.len=i;
-			break;
-		}
-done:	
-	return pi;	
-}
-
-/**
- * Returns the Public Identity extracted from the From header
- * @param msg - the SIP message
- * @returns the str containing the public id, no mem dup
- */
-str get_public_identity(struct sip_msg *msg)
-{
-	str pu={0,0};
-	struct to_body *from;
-	int i;
-	
-	if (parse_headers(msg,HDR_TO_F,0)!=0) {
-		return pu;
-	}
-	
-	if ( get_from(msg) == NULL ) {
-		from = (struct to_body*) pkg_malloc(sizeof(struct to_body));
-		if (!from) {
-			LM_ERR("out of pkg memory\n");
-			return pu;
-		}
-		parse_to( msg->from->body.s, msg->from->body.s + msg->from->body.len, from );
-        msg->from->parsed = from;
-	}
-	else from=(struct to_body *) msg->from->parsed;
-
-	pu = from->uri;
-	
-	/* truncate to sip:username@host or tel:number */
-	for(i=4;i<pu.len;i++)
-		if (pu.s[i]==';' || pu.s[i]=='?' ||pu.s[i]==':'){
-			pu.len = i;
-		}
-	return pu;
-}
-
 /**
  * Looks for the nonce and response parameters in the Authorization header and returns them
  * @param msg - the SIP message
@@ -283,20 +199,17 @@ int get_nonce_response(struct sip_msg *msg, str realm,str *nonce,str *response,
 str ims_get_body(struct sip_msg * msg)
 {		
 	str x={0,0};
-	x.s = get_body(msg);	
-	if (x.s==0) return x;
+	
 	if (parse_headers(msg,HDR_CONTENTLENGTH_F,0)!=0) {
 		LM_DBG("Error parsing until header Content-Length: \n");
 		return x;
 	}
-	if  (msg->content_length->parsed==NULL) {
-		LM_ERR(" body <%.*s>\n",msg->content_length->body.len,msg->content_length->body.s);
-		parse_content_length(msg->content_length->body.s,
-			msg->content_length->body.s+msg->content_length->body.len,&(x.len));
-		msg->content_length->parsed=(void*)(long)(x.len);
-	}else 
-		x.len = (long)msg->content_length->parsed;
-	return x;
+	x.len = (int)(long)msg->content_length->parsed;
+        
+        if (x.len>0) 
+            x.s = get_body(msg);	
+	
+        return x;
 }
 
 

@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -252,6 +252,7 @@ static int cassa_convert_result(db_key_t qcol, std::vector<oac::ColumnOrSuperCol
 	res_col = result[idx_rescol].column;
 
 	col_val.s = (char*)res_col.value.c_str();
+
 	if(!col_val.s) {
 		LM_DBG("Column not found in result %.*s- NULL\n", qcol->len, qcol->s);
 		sr_cell->nul  = 1;
@@ -439,6 +440,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
 	int key_len=0, seckey_len = 0;
 	int no_kc, no_sec_kc;
 	dbcassa_table_p tbc;
+	char pk[256];
 
 	/** Lock table schema and construct primary and secondary key **/
 	if(_k) {
@@ -495,7 +497,14 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
 		} else { /* the table doesn't have any secondary key defined */
 			if(_c) {
 				for(int i=0; i< _nc; i++) {
-					sp.column_names.push_back(_c[i]->s);
+					/*sp.column_names.push_back(_c[i]->s);*/
+					if(_c[i]->len>255) {
+						LM_ERR("column key is too long [%.*s]\n", _c[i]->len, _c[i]->s);
+						return ColumnVecPtr(NULL);
+					}
+					memcpy(pk, _c[i]->s, _c[i]->len);
+					pk[_c[i]->len] = '\0';
+					sp.column_names.push_back(pk);
 					LM_DBG("Query col: %s\n", _c[i]->s);
 				}
 				LM_DBG("get %d columns\n", _nc);
@@ -561,7 +570,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
 			}
 			dbcassa_reconnect(CON_CASSA(_h));
 		} while(cassa_auto_reconnect && retr++ < cassa_retries);
-
+		LM_ERR("Failed to connect, retries exceeded.\n");
 	} catch (const oac::InvalidRequestException ir) {
 		LM_ERR("Failed Invalid query request: %s\n", ir.why.c_str());
 	} catch (const at::TException &tx) {
@@ -585,7 +594,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
  * \param _r result set for storage
  * \return zero on success, negative value on failure
  */
-int cql_get_columns(oac::CqlResult& _cql_res, db1_res_t* _r)
+int cql_get_columns(oac::CqlResult& _cql_res, db1_res_t* _r, dbcassa_table_p tbc)
 {
 	std::vector<oac::CqlRow>  res_cql_rows = _cql_res.rows;
 	int rows_no = res_cql_rows.size();
@@ -630,14 +639,86 @@ int cql_get_columns(oac::CqlResult& _cql_res, db1_res_t* _r)
 		/* The pointer that is here returned is part of the result structure. */
 		RES_NAMES(_r)[col]->s = (char*) res_cql_rows[0].columns[col].name.c_str();
 		RES_NAMES(_r)[col]->len = strlen(RES_NAMES(_r)[col]->s);
-		RES_TYPES(_r)[col] = DB1_STR;
 
+		/* search the column in table schema to get the type */
+		dbcassa_column_p colp = cassa_search_col(tbc, (db_key_t) RES_NAMES(_r)[col]);
+		if(!colp) {
+			LM_ERR("No column with name [%.*s] found\n", RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s);
+			RES_COL_N(_r) = col;
+			db_free_columns(_r);
+			return -4;
+		}
+
+		RES_TYPES(_r)[col] = colp->type;
+
+		LM_DBG("Column with name [%.*s] found: %d\n", RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s, colp->type);
 		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_r)[col], col,
 			RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s);
 	}
 	return 0;
 }
 
+static int cassa_convert_result_raw(db_val_t* sr_cell, str *col_val) {
+
+	if(!col_val->s) {
+		LM_DBG("Column not found in result - NULL\n");
+		sr_cell->nul  = 1;
+		return 0;
+	}
+	col_val->len = strlen(col_val->s);
+
+	sr_cell->nul  = 0;
+	sr_cell->free  = 0;
+
+	switch (sr_cell->type) {
+		case DB1_INT:
+			if(str2int(col_val, (unsigned int*)&sr_cell->val.int_val) < 0) {
+				LM_ERR("Wrong value [%s] - len=%d, expected integer\n", col_val->s, col_val->len);
+				return -1;
+			}
+			break;
+		case DB1_BIGINT:
+			if(sscanf(col_val->s, "%lld", &sr_cell->val.ll_val) < 0) {
+				LM_ERR("Wrong value [%s], expected integer\n", col_val->s);
+				return -1;
+			}
+			break;
+		case DB1_DOUBLE:
+			if(sscanf(col_val->s, "%lf", &sr_cell->val.double_val) < 0) {
+				LM_ERR("Wrong value [%s], expected integer\n", col_val->s);
+				return -1;
+			}
+			break;
+		case DB1_STR:
+			pkg_str_dup(&sr_cell->val.str_val, col_val);
+			sr_cell->free  = 1;
+			break;
+		case DB1_STRING:
+			col_val->len++;
+			pkg_str_dup(&sr_cell->val.str_val, col_val);
+			sr_cell->val.str_val.len--;
+			sr_cell->val.str_val.s[col_val->len-1]='\0';
+			sr_cell->free  = 1;
+			break;
+		case DB1_BLOB:
+			pkg_str_dup(&sr_cell->val.blob_val, col_val);
+			sr_cell->free  = 1;
+			break;
+		case DB1_BITMAP:
+			if(str2int(col_val, &sr_cell->val.bitmap_val) < 0) {
+				LM_ERR("Wrong value [%s], expected integer\n", col_val->s);
+				return -1;
+			}
+			break;
+		case DB1_DATETIME:
+			if(sscanf(col_val->s, "%ld", (long int*)&sr_cell->val.time_val) < 0) {
+				LM_ERR("Wrong value [%s], expected integer\n", col_val->s);
+				return -1;
+			}
+			break;
+	}
+	return 0;
+}
 
 
 /**
@@ -649,35 +730,33 @@ int cql_get_columns(oac::CqlResult& _cql_res, db1_res_t* _r)
  * \param _r result set for storage
  * \return zero on success, negative value on failure
  */
+
 int cql_convert_row(oac::CqlResult& _cql_res, db1_res_t* _r)
 {
 	std::vector<oac::CqlRow>  res_cql_rows = _cql_res.rows;
-	int rows_no = res_cql_rows.size();
-	int cols_no = res_cql_rows[0].columns.size();
-	str col_val;
+        int rows_no = res_cql_rows.size();
+        int cols_no = res_cql_rows[0].columns.size();
+        str col_val;
+        RES_ROW_N(_r) = rows_no;
 
-	RES_ROW_N(_r) = rows_no;
+        if (db_allocate_rows(_r) < 0) {
+                LM_ERR("Could not allocate rows.\n");
+                return -1;
+        }
 
-	if (db_allocate_rows(_r) < 0) {
-		LM_ERR("Could not allocate rows.\n");
-		return -1; 
-	}
+        for(int ri=0; ri < rows_no; ri++) {
+                if (db_allocate_row(_r, &(RES_ROWS(_r)[ri])) != 0) {
+                        LM_ERR("Could not allocate row.\n");
+                        return -2;
+                }
 
-	for(int ri=0; ri < rows_no; ri++) {
-		if (db_allocate_row(_r, &(RES_ROWS(_r)[ri])) != 0) {
-			LM_ERR("Could not allocate row.\n");
-			return -2; 
-		}
-
-		/* complete the row with the columns */
+		// complete the row with the columns 
 		for(int col = 0; col< cols_no; col++) {
-			RES_ROWS(_r)[ri].values[col].type = DB1_STR;
-
 			col_val.s = (char*)res_cql_rows[ri].columns[col].value.c_str();
-			col_val.len = strlen(col_val.s);
-			pkg_str_dup(&RES_ROWS(_r)[ri].values[col].val.str_val, &col_val);
-			RES_ROWS(_r)[ri].values[col].free  = 1;
-			RES_ROWS(_r)[ri].values[col].nul  = 0;
+                        col_val.len = strlen(col_val.s);
+
+			RES_ROWS(_r)[ri].values[col].type = RES_TYPES(_r)[col];	
+			cassa_convert_result_raw(&RES_ROWS(_r)[ri].values[col], &col_val);
 
 			LM_DBG("Field index %d. %s = %s.\n", col,
 				res_cql_rows[ri].columns[col].name.c_str(),
@@ -685,12 +764,61 @@ int cql_convert_row(oac::CqlResult& _cql_res, db1_res_t* _r)
 		}
 	}
 	return 0;
-}
-
+} 
 
 /*
  *	The functions for the DB Operations: query, delete, update.
  * */
+
+/*
+ * Extracts table name from DML query being used
+ *
+ * */
+static int get_table_from_query(const str *cql, str *table) {
+
+	char *ptr = cql->s,
+		*begin = NULL;
+
+        if (cql->s[0] == 's' || cql->s[0] == 'S') {
+                ptr = strcasestr(cql->s, "from");
+                ptr += sizeof(char) * 4;
+        }
+        else if (cql->s[0] == 'u' || cql->s[0] == 'U') {
+                ptr = cql->s + sizeof("update") - 1;
+        }
+        else if (cql->s[0] == 'd' || cql->s[0] == 'D') {
+                ptr = strcasestr(cql->s, "from");
+                ptr += sizeof(char) * 4;
+        }
+        else if (cql->s[0] == 'i' || cql->s[0] == 'I') {
+                ptr = strcasestr(cql->s, "into");
+                ptr += sizeof(char) * 4;
+        }
+	else 
+		goto error;
+
+        while (*ptr == ' ' && (ptr - cql->s) <= cql->len) {
+                ptr++;
+        }
+
+        begin = ptr;
+        ptr   = strchr(begin, ' ');
+
+        if (ptr == NULL)
+		ptr = cql->s + cql->len;
+	
+	if (ptr - begin <= 0)
+		goto error;
+	
+	table->s = begin;
+	table->len = ptr - begin;
+
+	return 0;
+
+error:
+	LM_ERR("Unable to determine operation in cql [%*s]\n", cql->len, cql->s);
+	return -1;
+}
 
 /**
  * Execute a raw SQL query.
@@ -702,13 +830,28 @@ int cql_convert_row(oac::CqlResult& _cql_res, db1_res_t* _r)
 int db_cassa_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 {
 	db1_res_t* db_res = 0;
+	str table_name;
+	dbcassa_table_p tbc;
+	std::vector<oac::CqlRow>  res_cql_rows;
 
-	if (!_h || !CON_TABLE(_h) || !_r) {
+	if (!_h || !_r) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
-	LM_DBG("query table=%s\n", _h->table->s);
+	
+	if (get_table_from_query(_s, &table_name) < 0) { 
+		LM_ERR("Error parsing table name in CQL string");
+		return -1;
+	}
+
+	LM_DBG("query table=%.*s\n", table_name.len, table_name.s);
 	LM_DBG("CQL=%s\n", _s->s);
+
+	tbc = dbcassa_db_get_table(&CON_CASSA(_h)->db_name, &table_name);
+        if(!tbc) {
+                LM_ERR("table %.*s does not exist!\n", table_name.len, table_name.s);
+                return -1;
+        }
 
 	std::string cql_query(_s->s);
 
@@ -728,8 +871,10 @@ int db_cassa_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 
 	if (!cassa_cql_res.__isset.rows) {
 		LM_ERR("The resultype rows was not set, no point trying to parse result.\n");
-		return -1;
+		goto error;
 	}
+
+	res_cql_rows = cassa_cql_res.rows;
 
 	/* TODO Handle the other types */
 	switch(cassa_cql_res.type) {
@@ -740,8 +885,6 @@ int db_cassa_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 		case 3: LM_DBG("Result set is an INT Type.\n");
 			break;
 	}
-
-	std::vector<oac::CqlRow>  res_cql_rows = cassa_cql_res.rows;
 
 	db_res = db_new_result();
 	if (!db_res) {
@@ -754,10 +897,10 @@ int db_cassa_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 		RES_ROW_N(db_res) = 0;
 		RES_COL_N(db_res)= 0;
 		*_r = db_res;
-		return 0;
+		goto done;
 	}
 
-	if (cql_get_columns(cassa_cql_res, db_res) < 0) {
+	if (cql_get_columns(cassa_cql_res, db_res, tbc) < 0) {
 		LM_ERR("Error getting column names.");
 		goto error;
 	}
@@ -768,12 +911,17 @@ int db_cassa_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 	}
 
 	*_r = db_res;
+done:
+	dbcassa_lock_release(tbc);
+
 	LM_DBG("Exited with success\n");
 	return 0;
 
 error:
 	if(db_res)
 		db_free_result(db_res);
+	
+	dbcassa_lock_release(tbc);
 	return -1;
 }
 
@@ -914,7 +1062,7 @@ int db_cassa_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 done:
 	*_r = db_res;
 	LM_DBG("Exited with success\n");
-	return 1;
+	return 0;
 
 error:
 	if(db_res)
@@ -1060,14 +1208,14 @@ int db_cassa_modify(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 			if(CON_CASSA(_h)->con) {
 				try{
 					CON_CASSA(_h)->con->batch_mutate(CFMap, oac::ConsistencyLevel::ONE);
-					return 1;
+					return 0;
 				}  catch (const att::TTransportException &tx) {
 					LM_ERR("Failed to query: %s\n", tx.what());
 				}
 			}
 			dbcassa_reconnect(CON_CASSA(_h));
 		} while (cassa_auto_reconnect && retr++ < cassa_retries);
-
+		LM_ERR("Failed to connect, retries exceeded.\n");
 	} catch (const oac::InvalidRequestException ir) {
 		LM_ERR("Failed Invalid query request: %s\n", ir.why.c_str());
 	} catch (const at::TException &tx) {
@@ -1188,13 +1336,14 @@ int db_cassa_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 				if(CON_CASSA(_h)->con) {
 					try {
 						cassa_client->remove(row_key, cp, (int64_t)time(0), oac::ConsistencyLevel::ONE);
-						return 1;
+						return 0;
 					} catch  (const att::TTransportException &tx) {
 							LM_ERR("Failed to query: %s\n", tx.what());
 					}
 				}
 				dbcassa_reconnect(CON_CASSA(_h));
 			} while(cassa_auto_reconnect && retr++ < cassa_retries);
+			LM_ERR("Failed to connect, retries exceeded.\n");
 		} else {
 
 			if(!seckey_len) {
@@ -1247,7 +1396,7 @@ int db_cassa_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 				if(CON_CASSA(_h)->con) {
 					try {
 						cassa_client->batch_mutate(CFMap, oac::ConsistencyLevel::ONE);
-						return 1;
+						return 0;
 					} catch  (const att::TTransportException &tx) {
 							LM_ERR("Failed to query: %s\n", tx.what());
 					}
@@ -1255,7 +1404,7 @@ int db_cassa_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 				dbcassa_reconnect(CON_CASSA(_h));
 			} while(cassa_auto_reconnect && retr++ < cassa_retries);
 		}
-		return 1;
+		LM_ERR("Failed to connect, retries exceeded.\n");
 	} catch (const oac::InvalidRequestException ir) {
 		LM_ERR("Invalid query: %s\n", ir.why.c_str());
 	} catch (const at::TException &tx) {

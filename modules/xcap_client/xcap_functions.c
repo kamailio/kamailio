@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -85,8 +85,8 @@ void xcapFreeNodeSel(xcap_node_sel_t* node)
 	{
 		m= n;
 		n= n->next;
-		pkg_free(n->value.s);
-		pkg_free(n);
+		pkg_free(m->value.s);
+		pkg_free(m);
 	}
 
 	pkg_free(node);

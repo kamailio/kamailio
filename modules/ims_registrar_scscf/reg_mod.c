@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -88,19 +88,19 @@ usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
 char *scscf_user_data_dtd = 0; /* Path to "CxDataType.dtd" */
 char *scscf_user_data_xsd = 0; /* Path to "CxDataType_Rel6.xsd" or "CxDataType_Rel7.xsd" */
 int scscf_support_wildcardPSI = 0;
-char *scscf_name = "sip:scscf2.ims.smilecoms.com:6060"; /* default scscf_name - actual should be set via parameter*/
 int store_data_on_dereg = 0; /**< should we store SAR data on de-registration  */
 
+int ue_unsubscribe_on_dereg = 0;  /*many UEs do not unsubscribe on de reg - therefore we should remove their subscription and not send a notify
+				   Some UEs do unsubscribe then everything is fine*/
+
 /* parameters storage */
-char* cxdx_dest_realm_s = "ims.smilecoms.com";
-str cxdx_dest_realm;
+str cxdx_dest_realm = str_init("ims.smilecoms.com");
 
 //Only used if we want to force the Rx peer
 //Usually this is configured at a stack level and the first request uses realm routing
-char* cxdx_forced_peer_s = "";
-str cxdx_forced_peer;
+str cxdx_forced_peer = {0,0};
 
-str scscf_name_str;
+str scscf_name_str = str_init("sip:scscf2.ims.smilecoms.com:6060"); /* default scscf_name - actual should be set via parameter*/
 str scscf_serviceroute_uri_str; /* Service Route URI */
 
 /*! \brief Module init & destroy function */
@@ -195,6 +195,8 @@ static cmd_export_t cmds[] = {
     {"reg_free_contacts", (cmd_function) pv_free_contacts, 1, fixup_str_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"can_subscribe_to_reg", (cmd_function) can_subscribe_to_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
     {"subscribe_to_reg", (cmd_function) subscribe_to_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
+    {"can_publish_reg", (cmd_function) can_publish_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
+    {"publish_reg", (cmd_function) publish_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
     //{"bind_registrar", (cmd_function) bind_registrar, 0, 0, 0, 0},  TODO put this back in !
     {0, 0, 0, 0, 0, 0}
 };
@@ -215,31 +217,32 @@ static param_export_t params[] = {
     {"default_q", INT_PARAM, &default_registrar_cfg.default_q},
     {"append_branches", INT_PARAM, &default_registrar_cfg.append_branches},
     {"case_sensitive", INT_PARAM, &default_registrar_cfg.case_sensitive},
-    {"realm_prefix", STR_PARAM, &default_registrar_cfg.realm_pref},
+    {"realm_prefix", PARAM_STRING, &default_registrar_cfg.realm_pref},
 
-    {"received_param", STR_PARAM, &rcv_param},
-    {"received_avp", STR_PARAM, &rcv_avp_param},
-    {"aor_avp", STR_PARAM, &aor_avp_param},
-    {"reg_callid_avp", STR_PARAM, &reg_callid_avp_param},
+    {"received_param", PARAM_STR, &rcv_param},
+    {"received_avp", PARAM_STRING, &rcv_avp_param},
+    {"aor_avp", PARAM_STRING, &aor_avp_param},
+    {"reg_callid_avp", PARAM_STRING, &reg_callid_avp_param},
     {"max_contacts", INT_PARAM, &default_registrar_cfg.max_contacts},
     {"retry_after", INT_PARAM, &default_registrar_cfg.retry_after},
     {"sock_flag", INT_PARAM, &sock_flag},
-    {"sock_hdr_name", STR_PARAM, &sock_hdr_name.s},
+    {"sock_hdr_name", PARAM_STR, &sock_hdr_name},
     {"method_filtering", INT_PARAM, &method_filtering},
     {"use_path", INT_PARAM, &path_enabled},
     {"path_mode", INT_PARAM, &path_mode},
     {"path_use_received", INT_PARAM, &path_use_params},
-    {"user_data_dtd", STR_PARAM, &scscf_user_data_dtd},
-    {"user_data_xsd", STR_PARAM, &scscf_user_data_xsd},
+    {"user_data_dtd", PARAM_STRING, &scscf_user_data_dtd},
+    {"user_data_xsd", PARAM_STRING, &scscf_user_data_xsd},
     {"support_wildcardPSI", INT_PARAM, &scscf_support_wildcardPSI},
-    {"scscf_name", STR_PARAM, &scscf_name}, //TODO: need to set this to default
+    {"scscf_name", PARAM_STR, &scscf_name_str}, //TODO: need to set this to default
     {"store_profile_dereg", INT_PARAM, &store_data_on_dereg},
-    {"cxdx_forced_peer", STR_PARAM, &cxdx_forced_peer_s},
-    {"cxdx_dest_realm", STR_PARAM, &cxdx_dest_realm_s},
+    {"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
+    {"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
 
     {"subscription_default_expires", INT_PARAM, &subscription_default_expires},
     {"subscription_min_expires", INT_PARAM, &subscription_min_expires},
     {"subscription_max_expires", INT_PARAM, &subscription_max_expires},
+    {"ue_unsubscribe_on_dereg", INT_PARAM, &ue_unsubscribe_on_dereg},
 
     {0, 0, 0}
 };
@@ -288,9 +291,6 @@ static int mod_init(void) {
     qvalue_t dq;
 
     /*build the required strings */
-    scscf_name_str.s = scscf_name;
-    scscf_name_str.len = strlen(scscf_name);
-
     scscf_serviceroute_uri_str.s =
             (char*) pkg_malloc(orig_prefix.len + scscf_name_str.len);
 
@@ -311,12 +311,6 @@ static int mod_init(void) {
                 scscf_name_str.s, scscf_name_str.len);
         scscf_serviceroute_uri_str.len += scscf_name_str.len;
     }
-
-    cxdx_forced_peer.s = cxdx_forced_peer_s;
-    cxdx_forced_peer.len = strlen(cxdx_forced_peer_s);
-
-    cxdx_dest_realm.s = cxdx_dest_realm_s;
-    cxdx_dest_realm.len = strlen(cxdx_dest_realm_s);
 
     /* </build required strings> */
 
@@ -355,8 +349,6 @@ static int mod_init(void) {
         LM_ERR("can't load CDP_AVP API\n");
         return -1;
     }
-
-    rcv_param.len = strlen(rcv_param.s);
 
     if (cfg_declare("registrar", registrar_cfg_def, &default_registrar_cfg,
             cfg_sizeof(registrar), &registrar_cfg)) {
@@ -453,12 +445,8 @@ static int mod_init(void) {
     }
 
     if (sock_hdr_name.s) {
-        sock_hdr_name.len = strlen(sock_hdr_name.s);
         if (sock_hdr_name.len == 0 || sock_flag == -1) {
             LM_WARN("empty sock_hdr_name or sock_flag no set -> reseting\n");
-            pkg_free(
-                    sock_hdr_name.s);
-            sock_hdr_name.s = 0;
             sock_hdr_name.len = 0;
             sock_flag = -1;
         }

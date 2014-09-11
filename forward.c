@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -121,6 +121,12 @@
 static int mhomed_sock_cache_disabled = 0;
 static int sock_inet = -1;
 static int sock_inet6 = -1;
+static int _forward_set_send_info = 0;
+
+void forward_set_send_info(int v)
+{
+	_forward_set_send_info = v;
+}
 
 static void apply_force_send_socket(struct dest_info* dst, struct sip_msg* msg);
 
@@ -497,6 +503,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	int ret;
 	struct ip_addr ip; /* debugging only */
 	char proto;
+	struct onsend_info onsnd_info = {0};
 #ifdef USE_DNS_FAILOVER
 	struct socket_info* prev_send_sock;
 	int err;
@@ -623,7 +630,18 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			}
 		}
 #endif
+
+		if(unlikely(_forward_set_send_info==1)) {
+			onsnd_info.to=&send_info->to;
+			onsnd_info.send_sock=send_info->send_sock;
+			onsnd_info.buf=buf;
+			onsnd_info.len=len;
+			onsnd_info.msg=msg;
+			p_onsend=&onsnd_info;
+		}
+
 		if (msg_send(send_info, buf, len)<0){
+			p_onsend=0;
 			ret=ser_error=E_SEND;
 #ifdef USE_DST_BLACKLIST
 			(void)dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
@@ -634,6 +652,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			goto error;
 #endif
 		}else{
+			p_onsend=0;
 			ret=ser_error=E_OK;
 			/* sent requests stats */
 			STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
@@ -837,6 +856,17 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 		STATS_RPL_FWD_DROP();
 		goto error;
 	}
+	/* call onsend_route */
+	if(dst.send_sock == NULL) {
+		dst.send_sock=get_send_socket(msg, &dst.to, dst.proto);
+		if (dst.send_sock==0){
+			LOG(L_ERR, "forward_reply: ERROR: cannot forward reply\n");
+			goto done;
+		}
+	}
+	run_onsend(msg, &dst, new_buf, new_len);
+
+	done:
 #ifdef STATS
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif

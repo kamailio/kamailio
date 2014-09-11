@@ -17,14 +17,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 		       
 #include "ht_api.h"
 #include "ht_var.h"
+#include "ht_dmq.h"
 
 /* pkg copy */
 ht_cell_t *_htc_local=NULL;
+extern ht_cell_t *ht_expired_cell;
 
 int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
@@ -90,6 +92,9 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
 		/* delete it */
+		if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &hpv->htname, &htname, 0, NULL, 0)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
 		ht_del_cell(hpv->ht, &htname);
 		return 0;
 	}
@@ -97,6 +102,9 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 	if(val->flags&PV_TYPE_INT)
 	{
 		isval.n = val->ri;
+		if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &isval, 1)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
 		if(ht_set_cell(hpv->ht, &htname, 0, &isval, 1)!=0)
 		{
 			LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
@@ -104,6 +112,9 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		}
 	} else {
 		isval.s = val->rs;
+		if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname, &htname, AVP_VAL_STR, &isval, 1)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
 		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval, 1)!=0)
 		{
 			LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
@@ -229,6 +240,9 @@ int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
 		if(val->flags&PV_TYPE_INT)
 			isval.n = val->ri;
 	}
+	if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, &hpv->htname, &htname, 0, &isval, 0)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}	
 	if(ht_set_cell_expire(hpv->ht, &htname, 0, &isval)!=0)
 	{
 		LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
@@ -327,6 +341,11 @@ int pv_get_ht_add(struct sip_msg *msg,  pv_param_t *param,
 		return pv_get_null(msg, param, res);
 
 	/* integer */
+	if (hpv->ht->dmqreplicate>0) {
+		if (ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &htc->value, 1)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
+	}	
 	return pv_get_sintval(msg, param, res, htc->value.n);
 }
 
@@ -340,4 +359,103 @@ int pv_get_ht_dec(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	return pv_get_ht_add(msg, param, res, -1);
+}
+
+int pv_parse_ht_expired_cell(pv_spec_t *sp, str *in)
+{
+	if ((in->len != 3 || strncmp(in->s, "key", in->len) != 0) &&
+	    (in->len != 5 || strncmp(in->s, "value", in->len) != 0))
+	{
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.s.s = in->s;
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+	sp->pvp.pvn.u.isname.type = 0;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+
+	return 0;
+}
+
+int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if (res == NULL || ht_expired_cell == NULL)
+	{
+		return -1;
+	}
+
+	if (param->pvn.u.isname.name.s.len == 3 &&
+		strncmp(param->pvn.u.isname.name.s.s, "key", 3) == 0)
+	{
+		res->rs = ht_expired_cell->name;
+	}
+	else if (param->pvn.u.isname.name.s.len == 5 &&
+		strncmp(param->pvn.u.isname.name.s.s, "value", 5) == 0)
+	{
+		if(ht_expired_cell->flags&AVP_VAL_STR) {
+			res->rs = ht_expired_cell->value.s;
+			res->flags = PV_VAL_STR;
+		} else {
+			res->ri = ht_expired_cell->value.n;
+			res->flags = PV_VAL_INT|PV_TYPE_INT;
+		}
+		return 0;
+	}
+
+	if (res->rs.s == NULL)
+		res->flags = PV_VAL_NULL;
+	else
+		res->flags = PV_VAL_STR;
+
+	return 0;
+}
+
+int pv_parse_iterator_name(pv_spec_t *sp, str *in)
+{
+	if(in->len<=0)
+	{
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.s.s = in->s;
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+	sp->pvp.pvn.u.isname.type = 0;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+
+	return 0;
+}
+
+int pv_get_iterator_key(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	ht_cell_t *it=NULL;
+	if (res == NULL)
+	{
+		return -1;
+	}
+
+	it = ht_iterator_get_current(&param->pvn.u.isname.name.s);
+	if(it==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &it->name);
+}
+
+int pv_get_iterator_val(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	ht_cell_t *it=NULL;
+	if (res == NULL)
+	{
+		return -1;
+	}
+
+	it = ht_iterator_get_current(&param->pvn.u.isname.name.s);
+	if(it==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	if(it->flags&AVP_VAL_STR)
+		return pv_get_strval(msg, param, res, &it->value.s);
+
+	/* integer */
+	return pv_get_sintval(msg, param, res, it->value.n);
 }

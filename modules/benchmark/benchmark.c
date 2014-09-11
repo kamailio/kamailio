@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -524,27 +524,36 @@ struct mi_root* mi_bm_enable_timer(struct mi_root *cmd, void *param)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	p1 = pkg_strndup(node->value.s, node->value.len);
+	p2 = pkg_strndup(node->next->value.s, node->next->value.len);
+	if(!p1 || !p2)
+		goto error;
 
 	if(_bm_register_timer(p1, 0, &id)!=0)
 	{
 		pkg_free(p1);
+		pkg_free(p2);
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 	}
-	p2 = pkg_strndup(node->next->value.s, node->next->value.len);
 	v2 = strtol(p2, &e2, 0);
 	
 	pkg_free(p1);
-	pkg_free(p2);
 
-	if (*e2 != '\0' || *p2 == '\0')
+	if (*e2 != '\0' || *p2 == '\0') {
+		pkg_free(p2);
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
 
+	pkg_free(p2);
 	if ((v2 < 0) || (v2 > 1))
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 
 	bm_mycfg->timers[id].enabled = v2;
 
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+error:
+	if(p1) pkg_free(p1);
+	if(p2) pkg_free(p2);
+	return init_mi_tree(500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 }
 
 struct mi_root* mi_bm_granularity(struct mi_root *cmd, void *param)
@@ -563,10 +572,13 @@ struct mi_root* mi_bm_granularity(struct mi_root *cmd, void *param)
 
 	v1 = strtol(p1, &e1, 0);
 
-	pkg_free(p1);
-
 	if ((*e1 != '\0') || (*p1 == '\0'))
+	{
+		pkg_free(p1);
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	pkg_free(p1);
 
 	if (v1 < 1)
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
@@ -592,10 +604,13 @@ struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param)
 
 	v1 = strtol(p1, &e1, 0);
 	
-	pkg_free(p1);
-
 	if ((*e1 != '\0') || (*p1 == '\0'))
+	{
+		pkg_free(p1);
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	pkg_free(p1);
 
 	if ((v1 < -3) || (v1 > 4)) /* Maximum log levels */
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);

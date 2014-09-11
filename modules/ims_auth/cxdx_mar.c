@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -138,7 +138,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     }
 
     /* get the private_identity */
-    private_identity = get_private_identity(t->uas.request, data->realm, data->is_proxy_auth);
+    private_identity = cscf_get_private_identity(t->uas.request, data->realm);
     if (!private_identity.len) {
         LM_ERR("No private identity specified (Authorization: username)\n");
         stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_PRIVATE);
@@ -146,7 +146,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
         goto error;
     }
     /* get the public_identity */
-    public_identity = get_public_identity(t->uas.request);
+    public_identity = cscf_get_public_identity(t->uas.request);
     if (!public_identity.len) {
         LM_ERR("No public identity specified (To:)\n");
         stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_PUBLIC);
@@ -387,8 +387,6 @@ success:
         //TODO need to confirm that removing this has done no problems
         //tmp->auth_data->code = -tmp->auth_data->code;
 
-	LM_DBG("Added new auth-vector.\n");
-
         tmp = tmp->next;
     }
 
@@ -396,29 +394,34 @@ success:
     //right now we take the first and put the rest in the AV queue
     //then we use the first one and then add it to the queue as sent!
 
-    for (i = 1; i < sip_number_auth_items; i++)
+    for (i = 1; i < sip_number_auth_items; i++) {
         if (!add_auth_vector(private_identity, public_identity, avlist[i]))
             free_auth_vector(avlist[i]);
-
-    if (!pack_challenge(t->uas.request, data->realm, avlist[0], data->is_proxy_auth)) {
-        stateful_request_reply_async(t, t->uas.request, 500, MSG_500_PACK_AV);
-        result = CSCF_RETURN_FALSE;
-        goto done;
     }
 
-    if (data->is_proxy_auth)
-        stateful_request_reply_async(t, t->uas.request, 407, MSG_407_CHALLENGE);
-    else
-        stateful_request_reply_async(t, t->uas.request, 401, MSG_401_CHALLENGE);
+    if (!data->is_resync) {
+		if (!pack_challenge(t->uas.request, data->realm, avlist[0], data->is_proxy_auth)) {
+			stateful_request_reply_async(t, t->uas.request, 500, MSG_500_PACK_AV);
+			result = CSCF_RETURN_FALSE;
+			goto done;
+		}
+
+		if (data->is_proxy_auth)
+			stateful_request_reply_async(t, t->uas.request, 407, MSG_407_CHALLENGE);
+		else
+			stateful_request_reply_async(t, t->uas.request, 401, MSG_401_CHALLENGE);
+    }
 
 done:
-    if (avlist) {
-        start_reg_await_timer(avlist[0]); //start the timer to remove stale or unused Auth Vectors
 
-        //now we add it to the queue as sent as we have already sent the challenge and used it and set the status to SENT
-        if (!add_auth_vector(private_identity, public_identity, avlist[0]))
-            free_auth_vector(avlist[0]);
-    }
+	if (avlist) {
+		if (!data->is_resync)	//only start the timer if we used the vector above - we dont use it resync mode
+		start_reg_await_timer(avlist[0]); //start the timer to remove stale or unused Auth Vectors
+
+		//now we add it to the queue as sent as we have already sent the challenge and used it and set the status to SENT
+		if (!add_auth_vector(private_identity, public_identity, avlist[0]))
+			free_auth_vector(avlist[0]);
+	}
 
     //free memory
     if (maa) cdpb.AAAFreeMessage(&maa);

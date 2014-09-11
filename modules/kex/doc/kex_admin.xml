@@ -662,6 +662,56 @@ resetdebug();
 		&sercmd; pkg.stats index 10
 		</programlisting>
     </section>
+	<section id="kex.r.stats.get_statistics">
+		<title>
+		<function moreinfo="none">stats.get_statistics</function>
+		</title>
+		<para>Print the list of available internal statistics.</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
+			be printed. If set to 'all' then all statistics are printed; if
+			set to 'statsgroup:' then all statistics in the group are printed;
+			if set to 'statsname' then the statistics identified by the name
+			is printed.</para>
+		<para>Examples:</para>
+        <programlisting  format="linespecific">
+		&sercmd; stats.get_statistics all
+		&sercmd; stats.get_statistics core:
+		&sercmd; stats.get_statistics unsupported_methods
+		&sercmd; stats.get_statistics shmem: fwd_requests fwd_replies
+		</programlisting>
+    </section>
+	<section id="kex.r.stats.reset_statistics">
+		<title>
+		<function moreinfo="none">stats.reset_statistics</function>
+		</title>
+		<para>Reset internal statistics.</para>
+		<para>
+		Parameters: <emphasis>statsid</emphasis> - same as for get_statistics.
+		</para>
+		<para>Examples:</para>
+        <programlisting  format="linespecific">
+		&sercmd; stats.reset_statistics all
+		&sercmd; stats.reset_statistics core:
+		&sercmd; stats.reset_statistics unsupported_methods
+		&sercmd; stats.reset_statistics shmem: fwd_requests fwd_replies
+		</programlisting>
+    </section>
+	<section id="kex.r.stats.clear_statistics">
+		<title>
+		<function moreinfo="none">stats.clear_statistics</function>
+		</title>
+		<para>Return statistics and reset their value in one command.</para>
+		<para>
+		Parameters: <emphasis>statsid</emphasis> - same as for get_statistics.
+		</para>
+		<para>Examples:</para>
+        <programlisting  format="linespecific">
+		&sercmd; stats.reset_statistics all
+		&sercmd; stats.reset_statistics core:
+		&sercmd; stats.reset_statistics unsupported_methods
+		&sercmd; stats.reset_statistics shmem: fwd_requests fwd_replies
+		</programlisting>
+    </section>
     </section>
 </chapter>
 

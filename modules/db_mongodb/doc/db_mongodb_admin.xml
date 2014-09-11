@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides DB APIv1 connector for MongoDB NoSQL server.
+	</para>
+	<para>
+	It can be used as a replacement for other database modules such as
+	db_mysql, db_postgres, a.s.o. Not all the specs of DB APIv1 are
+	implemented, thus the usage of this module might be restricted to
+	specific modules.
+	</para>
+	<para>
+		You can read more about MongoDB at:
+		<ulink url="http://www.mongodb.org">http://www.mongodb.org</ulink>.
+	</para>
+
+	<section>
+	<title>Limitations</title>
+	<itemizedlist>
+	<listitem>
+	<para>
+		This module has implemented INSERT, UPDATE and DELETE. Query
+		(SELECT) is not yet storing the result.
+	</para>
+	</listitem>
+	</itemizedlist>
+	</section>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>mongo-c-driver</emphasis> - available at
+				<ulink url="https://github.com/mongodb/mongo-c-driver">https://github.com/mongodb/mongo-c-driver</ulink>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Usage</title>
+		<para>
+			Load the module and set the the DB URL for specific modules to:
+			mongodb://username:password@host:port/database. Username, password
+			and port are optional.
+		</para>
+		<example>
+		<title>Usage</title>
+		<programlisting format="linespecific">
+...
+loadmodule "db_mongodb.so"
+...
+#!define DBURL "mongodb://localhost/kamailio"
+modparam("acc", "db_url", DBURL)
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+

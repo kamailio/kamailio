@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*! \file
@@ -175,8 +175,8 @@ int pl_pipe_add(str *pipeid, str *algorithm, int limit)
 		(pl_pipe_t*)shm_malloc(sizeof(pl_pipe_t)+(1+pipeid->len)*sizeof(char));
 	if(cell == NULL)
 	{
-		LM_ERR("cannot create new cell.\n");
 		lock_release(&_pl_pipes_ht->slots[idx].lock);
+		LM_ERR("cannot create new cell.\n");
 		return -1;
 	}
 	memset(cell, 0, sizeof(pl_pipe_t)+(1+pipeid->len)*sizeof(char));
@@ -189,9 +189,10 @@ int pl_pipe_add(str *pipeid, str *algorithm, int limit)
 	cell->limit = limit;
 	if (str_map_str(algo_names, algorithm, &cell->algo))
 	{
+		lock_release(&_pl_pipes_ht->slots[idx].lock);
+		shm_free(cell);
 		LM_ERR("cannot find algorithm [%.*s].\n", algorithm->len,
 				algorithm->s);
-		lock_release(&_pl_pipes_ht->slots[idx].lock);
 		return -1;
 	}
 
@@ -604,7 +605,7 @@ void rpc_pl_stats(rpc_t *rpc, void *c)
 		while(it)
 		{
 			if (it->algo != PIPE_ALGO_NOP) {
-				if (rpc->printf(c, "PIPE: id=%.*s load=%d counter=%d",
+				if (rpc->rpl_printf(c, "PIPE: id=%.*s load=%d counter=%d",
 					it->name.len, it->name.s,
 					it->load, it->last_counter) < 0)
 				{
@@ -636,7 +637,7 @@ void rpc_pl_get_pipes(rpc_t *rpc, void *c)
 					lock_release(&_pl_pipes_ht->slots[i].lock);
 					return;
 				}
-				if (rpc->printf(c, "PIPE: id=%.*s algorithm=%.*s limit=%d counter=%d",
+				if (rpc->rpl_printf(c, "PIPE: id=%.*s algorithm=%.*s limit=%d counter=%d",
 					it->name.len, it->name.s, algo.len, algo.s,
 					it->limit, it->counter) < 0)
 				{

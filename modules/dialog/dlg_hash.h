@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -85,6 +85,8 @@
 #define DLG_IFLAG_TIMEOUTBYE        (1<<0) /*!< send bye on time-out */
 #define DLG_IFLAG_KA_SRC            (1<<1) /*!< send keep alive to src */
 #define DLG_IFLAG_KA_DST            (1<<2) /*!< send keep alive to dst */
+#define DLG_IFLAG_TIMER_NORESET     (1<<3) /*!< don't reset dialog timers on in-dialog messages reception */
+#define DLG_IFLAG_CSEQ_DIFF         (1<<4) /*!< CSeq changed in dialog */
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
@@ -213,7 +215,7 @@ static inline void unlink_unsafe_dlg(dlg_entry_t *d_entry, dlg_cell_t *dlg)
  * \brief Destroy a dialog, run callbacks and free memory
  * \param dlg destroyed dialog
  */
-inline void destroy_dlg(dlg_cell_t *dlg);
+void destroy_dlg(dlg_cell_t *dlg);
 
 
 /*!
@@ -317,11 +319,40 @@ dlg_cell_t* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 
 /*!
+ * \brief Search dialog that corresponds to CallId, From Tag and To Tag
+ *
+ * Get dialog that correspond to CallId, From Tag and To Tag.
+ * See RFC 3261, paragraph 4. Overview of Operation:
+ * "The combination of the To tag, From tag, and Call-ID completely
+ * defines a peer-to-peer SIP relationship between [two UAs] and is
+ * referred to as a dialog."
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * If the dialog is not found, the hash slot is left locked, to allow
+ * linking the structure of a new dialog.
+ * \param callid callid
+ * \param ftag from tag
+ * \param ttag to tag
+ * \param dir direction
+ * \return dialog structure on success, NULL on failure (and slot locked)
+ */
+dlg_cell_t* search_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
+
+
+/*!
+ * \brief Release hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_release(str *callid);
+
+
+/*!
  * \brief Link a dialog structure
  * \param dlg dialog
  * \param n extra increments for the reference counter
+ * \param mode link in safe mode (0 - lock slot; 1 - don't)
  */
-void link_dlg(dlg_cell_t *dlg, int n);
+void link_dlg(struct dlg_cell *dlg, int n, int mode);
 
 
 /*!

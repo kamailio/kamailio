@@ -10,7 +10,7 @@ Matthew Williams
 
    <matthew@flowroute.com>
 
-   Copyright Â© 2011 Flowroute LLC (flowroute.com)
+   Copyright © 2011 Flowroute LLC (flowroute.com)
      __________________________________________________________________
 
    Table of Contents
@@ -23,13 +23,9 @@ Matthew Williams
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Parameters
+        3. Functions
 
-              3.1.
-
-        4. Functions
-
-              4.1. json_get_field(json_string, field_name, destination)
+              3.1. json_get_field(json_string, field_name, destination)
 
    List of Examples
 
@@ -45,13 +41,9 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Parameters
+   3. Functions
 
-        3.1.
-
-   4. Functions
-
-        4.1. json_get_field(json_string, field_name, destination)
+        3.1. json_get_field(json_string, field_name, destination)
 
 1. Overview
 
@@ -73,17 +65,11 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libjson (https://github.com/json-c/json-c/wiki)
 
-3. Parameters
+3. Functions
 
-   3.1.
+   3.1. json_get_field(json_string, field_name, destination)
 
-   None
-
-4. Functions
-
-   4.1. json_get_field(json_string, field_name, destination)
-
-4.1.  json_get_field(json_string, field_name, destination)
+3.1. json_get_field(json_string, field_name, destination)
 
    Copy field 'field_name' from json object 'json_string' and store it in
    pvar 'destination'.

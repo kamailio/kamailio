@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -958,7 +958,7 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 			/* delete from cache table */
 			hash_code= core_hash(&subs.callid, &subs.to_tag , hash_size);
 
-			if(pres_delete_shtable(rls_table,hash_code, subs.to_tag)< 0)
+			if(pres_delete_shtable(rls_table,hash_code, &subs)< 0)
 			{
 				LM_ERR("record not found in hash table\n");
 			}
@@ -1028,6 +1028,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 			uri.len = strlen(uri.s);
 			if (uri.len > MAX_URI_SIZE-1) {
 			    LM_ERR("XCAP URI is too long\n");
+			    xmlFree(uri.s);
 			    return -1;
 			}
 			LM_DBG("got resource-list uri <%.*s>\n", uri.len, uri.s);
@@ -1036,6 +1037,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 			unescaped_uri.len = 0;
 			if (un_escape(&uri, &unescaped_uri) < 0) {
 			    LM_ERR("Error un-escaping XCAP URI\n");
+			    xmlFree(uri.s);
 			    return -1;
 			}
 			unescaped_uri.s[unescaped_uri.len] = 0;
@@ -1047,7 +1049,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 					&& (hostname.len == 0
 						|| check_self(&hostname, 0, PROTO_NONE) == 1))
 				{
-					LM_DBG("fetching local <resource-list/>\n");
+					LM_DBG("fetching local <resource-list - %.*s>\n", uri.len, uri.s);
 					if (rls_get_resource_list(&rl_uri, &username, &domain, &rl_node, &rl_doc)>0)
 					{
 						LM_DBG("calling myself for rl_node\n");
@@ -1057,7 +1059,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 					}
 					else
 					{
-						LM_ERR("<resource-list/> not found\n");
+						LM_ERR("<resource-list - %.*s> not found\n", uri.len, uri.s);
 						xmlFree(uri.s);
 						return -1;
 					}
@@ -1065,14 +1067,14 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 				}
 				else
 				{
-					LM_ERR("<resource-list/> is not local - unsupported at this time\n");
+					LM_ERR("<resource-list - %.*s> is not local - unsupported at this time\n", uri.len, uri.s);
 					xmlFree(uri.s);
 					return -1;
 				}
 			}
 			else
 			{
-				LM_ERR("unable to parse URI for <resource-list/>\n");
+				LM_ERR("unable to parse URI for <resource-list - %.*s>\n", uri.len, uri.s);
 				xmlFree(uri.s);
 				return -1;
 			}
@@ -1364,7 +1366,7 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 	{
 		/* No path specified - use all resource-lists. */
 		*rl_node = XMLDocGetNodeByName(*xmldoc,"resource-lists", NULL);
-		if(rl_node==NULL)
+		if(*rl_node==NULL)
 		{
 			LM_ERR("no resource-lists node in XML document\n");
 			goto error;

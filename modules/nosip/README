@@ -1,0 +1,199 @@
+NOSIP Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. msg_match (str)
+              3.2. msg_skip (str)
+
+        4. Event Routes
+
+              4.1. event_route[nosip:msg]
+
+        5. Examples of Usage
+
+   List of Examples
+
+   1.1. Set msg_match parameter
+   1.2. Set msg_match parameter
+   1.3. event_route[nosip:msg] usage
+   1.4. event_route[nosip:msg] use case
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. msg_match (str)
+        3.2. msg_skip (str)
+
+   4. Event Routes
+
+        4.1. event_route[nosip:msg]
+
+   5. Examples of Usage
+
+1. Overview
+
+   This module provides a way to get access to non-SIP packages received
+   by Kamailio via its SIP worker processes. The content of such packages
+   is available in the $mb variable inside the event_route[nosip:msg].
+
+   Note that packets with size less than 32 bytes are discarded, this
+   threshold being set to avoid handling the NAT keepalive packets coming
+   from devices. The limit is planned to be made configurable. Also, by
+   default Kamailio writes a log messages in case of SIP parsing error,
+   that can be controlled via 'corelog' global parameter.
+
+   Besides the content of the packet, $si and $sp provide the source IP
+   and port, allowing to do filtering and authorization.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. msg_match (str)
+   3.2. msg_skip (str)
+
+3.1. msg_match (str)
+
+   Regular expression to match against content of the packet in order to
+   execute the event_route[nosip:msg].
+
+   Default value is empty.
+
+   Example 1.1. Set msg_match parameter
+...
+modparam("nosip", "msg_match", "^KREQUEST-")
+...
+
+3.2. msg_skip (str)
+
+   Regular expression to match against content of the packet in order to
+   skip execution the event_route[nosip:msg].
+
+   Default value is empty.
+
+   Example 1.2. Set msg_match parameter
+...
+modparam("nosip", "msg_skip", "^GET ")
+...
+
+4. Event Routes
+
+   4.1. event_route[nosip:msg]
+
+4.1. event_route[nosip:msg]
+
+   Event route block to be executed when a non-sip message is received by
+   a SIP worker process.
+
+   The routename parameter can be a static string or a dynamic string
+   value with config variables.
+
+   The sleep parameter represent the number of seconds to suspend the
+   processing of a SIP request. Maximum value is 100. The parameter can be
+   a static integer or a variable holding an integer.
+
+   Since the SIP request handling is resumed in another process, the
+   config file execution state is practically lost. Therefore beware that
+   the execution of config after resume will end once the route[routename]
+   is finished.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.3. event_route[nosip:msg] usage
+...
+loadmodule "nosip.so"
+...
+event_route[nosip:msg] {
+   xlog("non-sip packet received - content [[$mb]] from [$si:$sp]\n");
+   exit;
+}
+...
+
+5. Examples of Usage
+
+   There can be many useful cases when one wants to get a SIP worker back
+   to handle a suspended SIP transaction. While this could be achieved via
+   XMLRPC or HTTP for TCP workers, UDP workers are the least loaded in
+   terms of network interaction layer (ie., there is no overhad for
+   connections management like for TCP).
+
+   Parsing of the non-sip message can be done using config file actions:
+   functions, expressions with variables and transformations.
+
+   Next is a basic example of parsing a message from the network and
+   resuming the transaction.
+
+   Example 1.4. event_route[nosip:msg] use case
+...
+# expect: :KREQUEST-RESUME-TRANSACTION:tindex:tlabel:routename:
+# example: :KREQUEST-RESUME-TRANSACTION:4242:8686:RESUME:
+loadmodule "nosip.so"
+...
+event_route[nosip:msg] {
+    xlog("non-sip packet received - content [[$mb]] from [$si:$sp]\n");
+
+    # must be a trusted IP
+    if($si!="127.0.0.1") {
+        exit;
+    }
+
+    # validation of the format and resume transaction
+    if($mb=~":KREQUEST-RESUME-TRANSACTION:[0-9]+:[0-9]+:[a-zA-Z0-9]+:$") {
+        $var(tindex) = $(mb{s.select,1,:});
+        $var(tlabel) = $(mb{s.select,2,:});
+        $var(rname) = $(mb{s.select,3,:});
+        t_continue("$var(tindex)", "$var(tlabel)", "$var(rname)");
+    }
+    exit;
+}
+
+route[RESUME] {
+    ...
+}
+...

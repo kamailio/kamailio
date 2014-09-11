@@ -2,6 +2,7 @@
  * script functions of utils module
  *
  * Copyright (C) 2008 Juha Heinanen
+ * Copyright (C) 2013 Carsten Bock, ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -51,7 +52,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream)
     /* Allocate memory and copy */
     char* data;
 
-    data = (char*)malloc((size* nmemb) + 1);
+    data = (char*)pkg_malloc((size* nmemb) + 1);
     if (data == NULL) {
 	LM_ERR("cannot allocate memory for stream\n");
 	return CURLE_WRITE_ERROR;
@@ -70,12 +71,12 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream)
  * Performs http_query and saves possible result (first body line of reply)
  * to pvar.
  */
-int http_query(struct sip_msg* _m, char* _url, char* _dst)
+int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 {
     CURL *curl;
     CURLcode res;  
-    str value;
-    char *url, *at;
+    str value, post_value;
+    char *url, *at, *post;
     char* stream;
     long stat;
     pv_spec_t *dst;
@@ -103,6 +104,28 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst)
     *(url + value.len) = (char)0;
     curl_easy_setopt(curl, CURLOPT_URL, url);
 
+    if (_post) {
+        /* Now specify we want to POST data */ 
+	curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+    	if (fixup_get_svalue(_m, (gparam_p)_post, &post_value) != 0) {
+		LM_ERR("cannot get post value\n");
+		pkg_free(url);
+		return -1;
+    	}
+        post = pkg_malloc(post_value.len + 1);
+        if (post == NULL) {
+		curl_easy_cleanup(curl);
+		pkg_free(url);
+        	LM_ERR("cannot allocate pkg memory for post\n");
+        	return -1;
+	}
+	memcpy(post, post_value.s, post_value.len);
+	*(post + post_value.len) = (char)0;
+ 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post);
+    }
+       
+
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)http_query_timeout);
 
@@ -112,15 +135,28 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst)
 
     res = curl_easy_perform(curl);  
     pkg_free(url);
-    curl_easy_cleanup(curl);
+    if (_post) {
+	pkg_free(post);
+    }
 
-    if (res != CURLE_OK) {
-	LM_ERR("failed to perform curl\n");
-	return -1;
+	if (res != CURLE_OK) {
+		/* http://curl.haxx.se/libcurl/c/libcurl-errors.html */
+		if (res == CURLE_COULDNT_CONNECT) {
+			LM_WARN("failed to connect() to host\n");
+		} else if ( res == CURLE_COULDNT_RESOLVE_HOST ) {
+			LM_WARN("couldn't resolve host\n");
+		} else {
+			LM_ERR("failed to perform curl (%d)\n", res);
+		}
+	
+		curl_easy_cleanup(curl);
+		if(stream)
+			pkg_free(stream);
+		return -1;
     }
 
     curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-    if ((stat >= 200) && (stat < 400)) {
+    if ((stat >= 200) && (stat < 500)) {
 	curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
 	LM_DBG("http_query download size: %u\n", (unsigned int)download_size);
 	/* search for line feed */
@@ -131,11 +167,13 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst)
 	}
 	val.rs.s = stream;
 	val.rs.len = at - stream;
-	LM_DBG("http)query result: %.*s\n", val.rs.len, val.rs.s);
+	LM_DBG("http_query result: %.*s\n", val.rs.len, val.rs.s);
 	val.flags = PV_VAL_STR;
 	dst = (pv_spec_t *)_dst;
 	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
     }
 	
+    curl_easy_cleanup(curl);
+    pkg_free(stream);
     return stat;
 }

@@ -20,10 +20,22 @@
 			<email>andrei@iptel.org</email>
 		</address>
 		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<address>
+			<email>carsten@ng-voice.com</email>
+		</address>
+		</author>
 	</authorgroup>
 	<copyright>
 		<year>2007</year>
 		<holder>iptelorg GmbH</holder>
+	</copyright>
+	<copyright>
+		<year>2014</year>
+		<holder>ng-voice GmbH</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>
@@ -111,6 +123,9 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 		</para>
 		<para>
 			In general, if Kamailio fails to start with a symbol not found error when trying to load the tls module (check the log), it means some needed library was not linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
+		</para>
+		<para>
+<ulink url="http://wiki.openssl.org/index.php/Elliptic_Curve_Diffie_Hellman">Elliptic Curve Diffie-Hellman (EDCH)</ulink>-Ciphers are only supported in OpenSSL 1.0.0e and later.
 		</para>
 	</section>
 

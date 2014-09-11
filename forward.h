@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * History:
@@ -84,6 +84,8 @@ inline static struct socket_info* get_send_socket(struct sip_msg* msg,
 }
 
 
+#define GET_URI_PORT(uri) ((uri)->port_no?(uri)->port_no:(((uri)->proto==PROTO_TLS)?SIPS_PORT:SIP_PORT))
+
 struct socket_info* get_out_socket(union sockaddr_union* to, int proto);
 typedef int (*check_self_f)(str* host, unsigned short port,
 		unsigned short proto);
@@ -106,6 +108,8 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 
 int forward_reply( struct sip_msg* msg);
 int forward_reply_nocb( struct sip_msg* msg);
+
+void forward_set_send_info(int v);
 
 int is_check_self_func_list_set(void);
 

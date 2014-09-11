@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Author: Andreea Spirea
  *
@@ -181,15 +181,15 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{ "backend",			STR_PARAM, &backend },
-	{ "domain_separator",	STR_PARAM, &domain_sep_str },
-	{ "gateway_domain",		STR_PARAM, &gateway_domain },
-	{ "xmpp_domain",		STR_PARAM, &xmpp_domain },
-	{ "xmpp_host",			STR_PARAM, &xmpp_host },
+	{ "backend",			PARAM_STRING, &backend },
+	{ "domain_separator",	PARAM_STRING, &domain_sep_str },
+	{ "gateway_domain",		PARAM_STRING, &gateway_domain },
+	{ "xmpp_domain",		PARAM_STRING, &xmpp_domain },
+	{ "xmpp_host",			PARAM_STRING, &xmpp_host },
 	{ "xmpp_port",			INT_PARAM, &xmpp_port },
-	{ "xmpp_password",		STR_PARAM, &xmpp_password },
-	{ "outbound_proxy",		STR_PARAM, &outbound_proxy.s},
-	{ "gwmap",              STR_PARAM|USE_FUNC_PARAM, (void*)xmpp_gwmap_param},
+	{ "xmpp_password",		PARAM_STRING, &xmpp_password },
+	{ "outbound_proxy",		PARAM_STR, &outbound_proxy},
+	{ "gwmap",              PARAM_STRING|USE_FUNC_PARAM, (void*)xmpp_gwmap_param},
 	{0, 0, 0}
 };
 
@@ -236,9 +236,6 @@ static int mod_init(void) {
 	/* fix up the domain separator -- we only need 1 char */
 	if (domain_sep_str && *domain_sep_str)
 		domain_separator = *domain_sep_str;
-
-	if(outbound_proxy.s)
-		outbound_proxy.len= strlen(outbound_proxy.s);
 
 	if(init_xmpp_cb_list()<0){
 		LM_ERR("failed to init callback list\n");

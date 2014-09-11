@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -32,7 +32,7 @@
  */
 
 #ifndef _DP_DB_H_
-#define _DP_DB_H
+#define _DP_DB_H_
 
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
@@ -48,7 +48,7 @@
 #define ATTRS_COL				"attrs"
 
 
-#define DP_TABLE_VERSION		1
+#define DP_TABLE_VERSION		2
 #define DP_TABLE_COL_NO 		8
 
 extern str dp_db_url;

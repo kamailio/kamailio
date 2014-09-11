@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -245,7 +245,7 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		LM_CRIT("empty expire\n");
 		return 0;
 	}
-	ci.expires = VAL_TIME(vals+1);
+	ci.expires = UL_DB_EXPIRES_GET(vals+1);
 
 	if (VAL_NULL(vals+2)) {
 		LM_CRIT("empty q\n");
@@ -331,7 +331,7 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 
 	/* last modified time */
 	if (!VAL_NULL(vals+12)) {
-		ci.last_modified = VAL_TIME(vals+12);
+		ci.last_modified = UL_DB_EXPIRES_GET(vals+12);
 	}
 
 	/* record internal uid */
@@ -350,6 +350,9 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	if (!VAL_NULL(vals+15)) {
 		ci.reg_id = VAL_UINT(vals+15);
 	}
+
+	/* tcp connection id */
+	ci.tcpconn_id = -1;
 
 	return &ci;
 }
@@ -767,15 +770,13 @@ int db_timer_udomain(udomain_t* _d)
 
 	keys[0] = &expires_col;
 	ops[0] = "<";
-	vals[0].type = DB1_DATETIME;
 	vals[0].nul = 0;
-	vals[0].val.time_val = act_time + 1;
+	UL_DB_EXPIRES_SET(&vals[0], act_time + 1);
 
 	keys[1] = &expires_col;
 	ops[1] = "!=";
-	vals[1].type = DB1_DATETIME;
 	vals[1].nul = 0;
-	vals[1].val.time_val = 0;
+	UL_DB_EXPIRES_SET(&vals[1], 0);
 
 	if (ul_dbf.use_table(ul_dbh, _d->name) < 0) {
 		LM_ERR("use_table failed\n");
@@ -1247,8 +1248,8 @@ int uldb_preload_attrs(udomain_t *_d)
 			}
 
 			if (use_domain) {
-				domain.s = (char*)VAL_STRING(ROW_VALUES(row) + 6);
-				if (VAL_NULL(ROW_VALUES(row)+6) || domain.s==0 || domain.s[0]==0){
+				domain.s = (char*)VAL_STRING(ROW_VALUES(row) + 5);
+				if (VAL_NULL(ROW_VALUES(row)+5) || domain.s==0 || domain.s[0]==0){
 					LM_CRIT("empty domain record for user %.*s...skipping\n",
 							user.len, user.s);
 					continue;
@@ -1267,8 +1268,7 @@ int uldb_preload_attrs(udomain_t *_d)
 				suri = user;
 			}
 
-			lock_udomain(_d, &suri);
-			if (get_urecord_by_ruid(_d, ul_get_aorhash(&suri), &ruid, &r, &c) > 0) {
+			if (get_urecord_by_ruid(_d, ul_get_aorhash(&suri), &ruid, &r, &c) < 0) {
 				/* delete attrs records from db table */
 				LM_INFO("no contact record for this ruid\n");
 				uldb_delete_attrs(_d->name, &user, &domain, &ruid);
@@ -1284,8 +1284,9 @@ int uldb_preload_attrs(udomain_t *_d)
 							LM_INFO("cannot add values to contact xavp\n");
 					}
 				}
+				/* get_urecord_by_ruid() locks the slot */
+				unlock_udomain(_d, &suri);
 			}
-			unlock_udomain(_d, &user);
 		}
 
 		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {

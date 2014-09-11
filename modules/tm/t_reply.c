@@ -23,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -806,13 +806,13 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	}
 }
 
-/** create or restore a "fake environment" for running a failure_route.
- *if msg is set -> it will fake the env. vars conforming with the msg; if NULL
+/** create or restore a "fake environment" for running a failure_route, 
+ * OR an "async environment" depending on is_async_value (0=std failure-faked, 1=async)
+ * if msg is set -> it will fake the env. vars conforming with the msg; if NULL
  * the env. will be restore to original.
- * Side-effect: mark_ruri_consumed().
+ * Side-effect: mark_ruri_consumed() for faked env only.
  */
-void faked_env( struct cell *t, struct sip_msg *msg)
-{
+void faked_env(struct cell *t, struct sip_msg *msg, int is_async_env) {
 	static int backup_route_type;
 	static struct cell *backup_t;
 	static int backup_branch;
@@ -835,40 +835,54 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 		 * a shmem-ed replica of the request; advertise it in route type;
 		 * for example t_reply needs to know that
 		 */
-		backup_route_type=get_route_type();
-		set_route_type(FAILURE_ROUTE);
-		/* don't bother backing up ruri state, since failure route
-		   is called either on reply or on timer and in both cases
-		   the ruri should not be used again for forking */
-		ruri_mark_consumed(); /* in failure route we assume ruri
-								 should not be used again for forking */
+		backup_route_type = get_route_type();
+
+		if (is_async_env) {
+			set_route_type(t->async_backup.backup_route);
+			if (t->async_backup.ruri_new) {
+				ruri_mark_new();
+			}
+		} else {
+			set_route_type(FAILURE_ROUTE);
+			/* don't bother backing up ruri state, since failure route
+			   is called either on reply or on timer and in both cases
+			   the ruri should not be used again for forking */
+			ruri_mark_consumed(); /* in failure route we assume ruri
+								     should not be used again for forking */
+		}
 		/* also, tm actions look in beginning whether transaction is
 		 * set -- whether we are called from a reply-processing
 		 * or a timer process, we need to set current transaction;
 		 * otherwise the actions would attempt to look the transaction
 		 * up (unnecessary overhead, refcounting)
 		 */
-		/* backup */
-		backup_t=get_t();
-		backup_branch=get_t_branch();
-		backup_msgid=global_msg_id;
-		/* fake transaction and message id */
-		global_msg_id=msg->id;
-		set_t(t, T_BR_UNDEFINED);
-		/* make available the avp list from transaction */
 
-		backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from );
-		backup_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to );
-		backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
-		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
-		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
-		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
+		/* backup */
+		backup_t = get_t();
+		backup_branch = get_t_branch();
+		backup_msgid = global_msg_id;
+		/* fake transaction and message id */
+		global_msg_id = msg->id;
+
+		if (is_async_env) {
+			set_t(t, t->async_backup.backup_branch);
+		} else {
+			set_t(t, T_BR_UNDEFINED);
+		}
+
+		/* make available the avp list from transaction */
+		backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+		backup_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+		backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 #ifdef WITH_XAVP
 		backup_xavps = xavp_set_list(&t->xavps_list);
 #endif
 		/* set default send address to the saved value */
-		backup_si=bind_address;
-		bind_address=t->uac[0].request.dst.send_sock;
+		backup_si = bind_address;
+		bind_address = t->uac[0].request.dst.send_sock;
 		/* backup lump lists */
 		backup_add_rm = t->uas.request->add_rm;
 		backup_body_lumps = t->uas.request->body_lumps;
@@ -876,19 +890,19 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 	} else {
 		/* restore original environment */
 		set_t(backup_t, backup_branch);
-		global_msg_id=backup_msgid;
+		global_msg_id = backup_msgid;
 		set_route_type(backup_route_type);
 		/* restore original avp list */
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from );
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from );
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to );
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to);
 #ifdef WITH_XAVP
 		xavp_set_list(backup_xavps);
 #endif
-		bind_address=backup_si;
+		bind_address = backup_si;
 		/* restore lump lists */
 		t->uas.request->add_rm = backup_add_rm;
 		t->uas.request->body_lumps = backup_body_lumps;
@@ -954,6 +968,7 @@ error00:
 	if (faked_req->dst_uri.s) {
 		pkg_free(faked_req->dst_uri.s);
 		faked_req->dst_uri.s = 0;
+		faked_req->dst_uri.len = 0;
 	}
 error01:
 	return 0;
@@ -963,15 +978,8 @@ void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 {
 	struct hdr_field *hdr;
 
-	if (faked_req->new_uri.s) {
-		pkg_free(faked_req->new_uri.s);
-		faked_req->new_uri.s = 0;
-	}
-
-	if (faked_req->dst_uri.s) {
-		pkg_free(faked_req->dst_uri.s);
-		faked_req->dst_uri.s = 0;
-	}
+	reset_new_uri(faked_req);
+	reset_dst_uri(faked_req);
 
 	/* free all types of lump that were added in failure handlers */
 	del_nonshm_lump( &(faked_req->add_rm) );
@@ -997,6 +1005,13 @@ void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 			faked_req->body->free(&faked_req->body);
 		faked_req->body = 0;
 	}
+
+	/* free sip_msg_t fileds that can be set in pkg */
+	reset_path_vector(faked_req);
+	reset_instance(faked_req);
+	reset_ruid(faked_req);
+	reset_ua(faked_req);
+	msg_ldata_reset(faked_req);
 }
 
 
@@ -1030,7 +1045,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 0;
 	}
 	/* fake also the env. conforming to the fake msg */
-	faked_env( t, &faked_req);
+	faked_env( t, &faked_req, 0);
 	/* DONE with faking ;-) -> run the failure handlers */
 
 	if (unlikely(has_tran_tmcbs( t, TMCB_ON_FAILURE)) ) {
@@ -1052,7 +1067,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	}
 
 	/* restore original environment and free the fake msg */
-	faked_env( t, 0);
+	faked_env( t, 0, 0);
 	free_faked_req(&faked_req,t);
 
 	/* if failure handler changed flag, update transaction context */
@@ -1073,7 +1088,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
-		LOG(L_WARN,"Warning: run_branch_failure_handlers: no UAC support (%d, %d) \n",
+		LOG(L_WARN,"no UAC support (%d, %d) \n",
 			on_branch_failure, t->tmcb_hl.reg_types);
 		return 0;
 	}
@@ -1081,17 +1096,17 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	/* don't start faking anything if we don't have to */
 	if (unlikely((on_branch_failure < 0) && !has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE))) {
 		LOG(L_WARN,
-			"Warning: run_failure_handlers: no branch_failure handler (%d, %d)\n",
+			"no branch_failure handler (%d, %d)\n",
 			on_branch_failure, t->tmcb_hl.reg_types);
 		return 1;
 	}
 
 	if (!fake_req(&faked_req, shmem_msg, extra_flags, &t->uac[picked_branch])) {
-		LOG(L_ERR, "ERROR: run_branch_failure_handlers: fake_req failed\n");
+		LOG(L_ERR, "fake_req failed\n");
 		return 0;
 	}
 	/* fake also the env. conforming to the fake msg */
-	faked_env( t, &faked_req);
+	faked_env( t, &faked_req, 0);
 	set_route_type(BRANCH_FAILURE_ROUTE);
 	set_t(t, picked_branch);
 	/* DONE with faking ;-) -> run the branch_failure handlers */
@@ -1104,7 +1119,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		if (exec_pre_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE)>0) {
 			/* run a branch_failure_route action if some was marked */
 			if (run_top_route(event_rt.rlist[on_branch_failure], &faked_req, 0)<0)
-				LOG(L_ERR, "ERROR: run_branch_failure_handlers: Error in run_top_route\n");
+				LOG(L_ERR, "error in run_top_route\n");
 			exec_post_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE);
 		}
 		/* update message flags, if changed in branch_failure route */
@@ -1112,7 +1127,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	}
 
 	/* restore original environment and free the fake msg */
-	faked_env( t, 0);
+	faked_env( t, 0, 0);
 	free_faked_req(&faked_req,t);
 
 	/* if branch_failure handler changed flag, update transaction context */
@@ -1202,8 +1217,8 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 		 * to be a pending, incomplete branch. */
 		if ((!t->uac[b].request.buffer) && (t->uac[b].last_received>=200))
 			continue;
-		/* there is still an unfinished UAC transaction; wait now! */
-		if ( t->uac[b].last_received<200 )
+		/* there is still an unfinished UAC transaction (we ignore unfinished blind UACs) wait now! */
+		if ( t->uac[b].last_received<200 && !((t->flags&T_ASYNC_CONTINUE) && b==t->async_backup.blind_uac))
 			return -2;
 		/* if reply is null => t_send_branch "faked" reply, skip over it */
 		if ( rpl && 
@@ -1337,9 +1352,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* also append the current reply to the transaction to
 		 * make it available in failure routes - a kind of "fake"
 		 * save of the final reply per branch */
-		Trans->uac[branch].reply = reply;
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_BRANCH_FAILURE_RO|TMCB_ON_BRANCH_FAILURE)
-						|| (Trans->uac[picked_branch].on_branch_failure) )) {
+						|| (Trans->uac[branch].on_branch_failure) )) {
+			Trans->uac[branch].reply = reply;
 			extra_flags=
 				((Trans->uac[branch].request.flags & F_RB_TIMEOUT)?
 							FL_TIMEOUT:0) | 
@@ -1349,6 +1364,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			picked_branch = branch;
 			run_branch_failure_handlers( Trans, Trans->uac[branch].reply,
 									new_code, extra_flags);
+			Trans->uac[branch].reply = 0;
 		}
 
 
@@ -1829,8 +1845,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		 * or a stored message */
 		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
 		if (relayed_msg==FAKED_REPLY) {
-			relayed_code = branch==relay
-				? msg_status : t->uac[relay].last_received;
+			if(t->flags & T_CANCELED) {
+				/* transaction canceled - send 487 */
+				relayed_code = 487;
+			} else {
+				relayed_code = branch==relay
+					? msg_status : t->uac[relay].last_received;
+			}
 			/* use to_tag from the original request, or if not present,
 			 * generate a new one */
 			if (relayed_code>=180 && t->uas.request->to
@@ -1977,8 +1998,10 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		if (likely(uas_rb->dst.send_sock &&
 					SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0)){
 			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
+				LOCK_REPLIES( t );
 				run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb, t->uas.request,
 				                              relayed_msg, relayed_code);
+				UNLOCK_REPLIES( t );
 			}
 			if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
@@ -1986,7 +2009,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 									res_len,
 									(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0,
 									uas_rb->branch, relayed_code);
+				LOCK_REPLIES( t );
 				run_trans_callbacks_off_params(TMCB_RESPONSE_SENT, t, &onsend_params);
+				UNLOCK_REPLIES( t );
 			}
 		} else if (unlikely(uas_rb->dst.send_sock == 0))
 			ERR("no resolved dst to send reply to\n");
@@ -2315,6 +2340,11 @@ int reply_received( struct sip_msg  *p_msg )
 	/* processing of on_reply block */
 	if (onreply_route) {
 		set_route_type(TM_ONREPLY_ROUTE);
+
+		/* lock onreply_route, for safe avp usage */
+		LOCK_REPLIES( t );
+		replies_locked=1;
+
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
@@ -2332,9 +2362,6 @@ int reply_received( struct sip_msg  *p_msg )
 		/* Pre- and post-script callbacks have already
 		 * been executed by the core. (Miklos)
 		 */
-		/* lock onreply_route, for safe avp usage */
-		LOCK_REPLIES( t );
-		replies_locked=1;
 		run_top_route(onreply_rt.rlist[onreply_route], p_msg, &ctx);
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
@@ -2446,12 +2473,18 @@ int reply_received( struct sip_msg  *p_msg )
 			}
 		}
 #endif
+        
+	if (unlikely(p_msg->msg_flags&FL_RPL_SUSPENDED)) {
+		goto skip_send_reply;
+		/* suspend the reply (async), no error */
+	}
 	if (unlikely(!replies_locked)){
 		LOCK_REPLIES( t );
 		replies_locked=1;
 	}
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_data );
+		replies_locked=0;
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 			      * be still pending branches ...
@@ -2469,6 +2502,7 @@ int reply_received( struct sip_msg  *p_msg )
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
 									&cancel_data, 1 );
+		replies_locked=0;
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 				be still pending branches ...
@@ -2502,6 +2536,14 @@ int reply_received( struct sip_msg  *p_msg )
 		restart_rb_fr(& uac->request, t->fr_inv_timeout);
 		uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
 	} /* provisional replies */
+        
+skip_send_reply:
+
+	if (likely(replies_locked)){
+		/* unlock replies if still locked coming via goto skip_send_reply */
+		UNLOCK_REPLIES(t);
+		replies_locked=0;
+	}
 
 done:
 	tm_ctx_set_branch_index(T_BR_UNDEFINED);

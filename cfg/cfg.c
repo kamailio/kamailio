@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History
  * -------
@@ -45,6 +45,9 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 	cfg_mapping_t	*mapping = NULL;
 	cfg_group_t	*group;
 	int types;
+
+	if(def==NULL || def[0].name==NULL)
+		return -1;
 
 	/* check the number of the variables */
 	for (num=0; def[num].name; num++);

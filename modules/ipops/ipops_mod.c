@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * -------
@@ -96,6 +96,8 @@ static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
 static pv_export_t mod_pvs[] = {
 	{ {"dns", sizeof("dns")-1}, PVT_OTHER, pv_get_dns, 0,
 		pv_parse_dns_name, 0, 0, 0 },
+	{ {"HN", sizeof("HN")-1}, PVT_OTHER, pv_get_hn, 0,
+		pv_parse_hn_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -703,7 +705,6 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 	str ips;
 	struct hostent* he;
 	char ** h;
-	int ret;
 
 	if (fixup_get_svalue(msg, (gparam_p)hnp, &hns))
 	{
@@ -729,7 +730,7 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 		DBG("could not resolve %s\n", hns.s);
 		return -4;
 	}
-	ret = 0;
+
 	if (he->h_addrtype==ipa->af)
 	{
 		for(h=he->h_addr_list; (*h); h++)

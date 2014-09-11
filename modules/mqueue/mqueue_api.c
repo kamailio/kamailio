@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -364,15 +364,14 @@ int pv_parse_mq_name(pv_spec_t *sp, str *in)
 
 str *pv_get_mq_name(sip_msg_t *msg, str *in)
 {
-	str *queue;
+	static str queue;
+	pv_spec_t *pvs;
+	pv_value_t pvv;
 
 	if (in->s[0] != '$')
-		queue = in;
+		return in;
 	else
 	{
-		pv_spec_t *pvs;
-		pv_value_t pvv;
-
 		if (pv_locate_name(in) != in->len)
 		{
 			LM_ERR("invalid pv [%.*s]\n", in->len, in->s);
@@ -396,10 +395,10 @@ str *pv_get_mq_name(sip_msg_t *msg, str *in)
 			return NULL;
 		}
 
-		queue = &pvv.rs;
+		queue = pvv.rs;
 	}
 
-	return queue;
+	return &queue;
 }
 
 /**
@@ -456,6 +455,31 @@ int pv_get_mqv(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &mp->item->val);
 }
 
+/**
+ *
+ */
+int pv_get_mq_size(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	int mqs = -1;
+	str *in = pv_get_mq_name(msg, &param->pvn.u.isname.name.s);
+
+	if (in == NULL)
+	{
+		LM_ERR("failed to get mq name\n");
+		return -1;
+	}
+
+	mqs = _mq_get_csize(in);
+
+	if (mqs < 0)
+	{
+		LM_ERR("mqueue not found: %.*s\n", in->len, in->s);
+		return -1;
+	}
+
+	return pv_get_sintval(msg, param, res, mqs);
+}
 /* Return head->csize for a given queue */
 
 int _mq_get_csize(str *name) 

@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
@@ -162,7 +162,7 @@ int int_to_static_buffer(str* res, int val)
 {
 	char *c;
 	c = int2str(abs(val), &res->len);
-	res->s = get_static_buffer(res->len+(val<0)?1:0);
+	res->s = get_static_buffer(res->len+((val<0)?1:0));
 	if (!res->s) return -1;
 	if (val < 0) {
 		res->s[0] = '-';	

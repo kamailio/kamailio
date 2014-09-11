@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
 
@@ -47,11 +47,17 @@
 #include "save.h"
 #include "reg_mod.h"
 #include "ul_callback.h"
+#include "subscribe.h"
+
+#include "../pua/pua_bind.h"
 
 extern struct tm_binds tmb;
 extern usrloc_api_t ul;
 extern time_t time_now;
 extern unsigned int pending_reg_expires;
+extern int subscribe_to_reginfo;
+extern int subscription_expires;
+extern pua_api_t pua;
 
 struct sip_msg* get_request_from_reply(struct sip_msg* reply)
 {
@@ -125,6 +131,10 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 		 * then, we will update on NOTIFY */
 		return 0;
 	}
+
+	// Set the structure to "0", to make sure it's properly initialized
+	memset(&ci, 0, sizeof(struct pcontact_info));
+
 	for (h = rpl->contact; h; h = h->next) {
 		if (h->type == HDR_CONTACT_T && h->parsed)
 			for (c = ((contact_body_t*) h->parsed)->contacts; c; c = c->next) {
@@ -146,32 +156,37 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 				ci.received_port = 0;
 				ci.received_proto = 0;
 
+				// Received Info: First try AVP, otherwise simply take the source of the request:
+				memset(&val, 0, sizeof(int_str));
+				if (rcv_avp_name.n!=0 && search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0) && val.s.len > 0) {
+					if (val.s.len>RECEIVED_MAX_SIZE) {
+						LM_ERR("received too long\n");
+						goto error;
+					}
+					if (parse_uri(val.s.s, val.s.len, &parsed_received) < 0) {
+						LM_DBG("Error parsing Received URI <%.*s>\n", val.s.len, val.s.s);
+						continue;
+					}
+					ci.received_host = parsed_received.host;
+					ci.received_port = parsed_received.port_no;
+					ci.received_proto = parsed_received.proto;
+				} else {
+					ci.received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, sizeof(srcip));
+					ci.received_host.s = srcip;
+					ci.received_port = req->rcv.src_port;
+					ci.received_proto = req->rcv.proto;
+				}
+				// Set to default, if not set:
+				if (ci.received_port == 0) ci.received_port = 5060;
+
 				ul.lock_udomain(_d, &c->uri);
 				if (ul.get_pcontact(_d, &c->uri, &pcontact) != 0) { //need to insert new contact
+					if ((expires-local_time_now)<=0) { //remove contact - de-register
+						LM_DBG("This is a de-registration for contact <%.*s> but contact is not in usrloc - ignore\n", c->uri.len, c->uri.s);
+						goto next_contact;
+					} 
+				    
 					LM_DBG("Adding pcontact: <%.*s>, expires: %d which is in %d seconds\n", c->uri.len, c->uri.s, expires, expires-local_time_now);
-
-					// Received Info: First try AVP, otherwise simply take the source of the request:
-					memset(&val, 0, sizeof(int_str));
-					if (rcv_avp_name.n!=0 && search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0) && val.s.len > 0) {
-						if (val.s.len>RECEIVED_MAX_SIZE) {
-							LM_ERR("received too long\n");
-							goto error;
-						}
-						if (parse_uri(val.s.s, val.s.len, &parsed_received) < 0) {
-							LM_DBG("Error parsing Received URI <%.*s>\n", val.s.len, val.s.s);
-							continue;
-						}
-						ci.received_host = parsed_received.host;
-						ci.received_port = parsed_received.port_no;
-						ci.received_proto = parsed_received.proto;
-					} else {
-						ci.received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, sizeof(srcip));
-						ci.received_host.s = srcip;
-						ci.received_port = req->rcv.src_port;
-						ci.received_proto = req->rcv.proto;
-					}
-					// Set to default, if not set:
-					if (ci.received_port == 0) ci.received_port = 5060;
 
 					if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
 						LM_ERR("Failed inserting new pcontact\n");
@@ -199,6 +214,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 						pcontact->expires = expires;
 					}
 				}
+next_contact:
 				ul.unlock_udomain(_d, &c->uri);
 			}
 	}
@@ -324,7 +340,8 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 	int num_public_ids = 0;
 	str *service_routes=0;
 	int num_service_routes = 0;
-
+	pv_elem_t *presentity_uri_pv;
+	
 	//get request from reply
 	req = get_request_from_reply(_m);
 	if (!req) {
@@ -346,8 +363,46 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 		goto error;
 	}
 
-	//TODO: we need to subscribe to SCSCF for reg events on the impu!
-
+	if(subscribe_to_reginfo == 1){
+	    
+	    //use the first p_associated_uri - i.e. the default IMPU
+	    LM_DBG("Subscribe to reg event for primary p_associated_uri");
+	    if(num_public_ids > 0){
+		//find the first routable (not a tel: URI and use that that presentity)
+		//if you can not find one then exit
+		int i = 0;
+		int found_presentity_uri=0;
+		while (i < num_public_ids && found_presentity_uri == 0)
+		{
+		    //check if public_id[i] is NOT a tel URI - if it isn't then concert to pv format and set found presentity_uri to 1
+		    if (strncasecmp(public_ids[i].s,"tel:",4)==0) {
+			LM_DBG("This is a tel URI - it is not routable so we don't use it to subscribe");
+			i++;
+		    }
+		    else {
+			//convert primary p_associated_uri to pv_elem_t
+			if(pv_parse_format(&public_ids[i], &presentity_uri_pv)<0) {
+				LM_ERR("wrong format[%.*s]\n",public_ids[i].len, public_ids[i].s);
+				goto error;
+			}
+			found_presentity_uri=1;
+		    }
+		}
+		if(found_presentity_uri!=1){
+		    LM_ERR("Could not find routable URI in p_assoiated_uri list - failed to subscribe");
+		    goto error;
+		}
+	    }else{
+		//Now some how check if there is a pua record and what the presentity uri is from there - if nothing there
+		LM_DBG("No p_associated_uri in 200 OK this must be a de-register - we ignore this - will unsubscribe when the notify is received");
+		goto done;
+		
+	    }
+	    reginfo_subscribe_real(_m, presentity_uri_pv, service_routes, subscription_expires);
+	    pv_elem_free_all(presentity_uri_pv);
+	}
+    
+done:
 	if (public_ids && public_ids->s) pkg_free(public_ids);
 	if (service_routes && service_routes->s) pkg_free(service_routes);
 	return 1;

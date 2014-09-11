@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * ---------
@@ -46,6 +46,8 @@
 #include "reg_mod.h"
 #include "lookup.h"
 #include "config.h"
+
+#include "save.h"
 
 #define allowed_method(_msg, _c) \
 	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
@@ -214,35 +216,58 @@ int impu_registered(struct sip_msg* _m, char* _t, char* _s)
  */
 int term_impu_registered(struct sip_msg* _m, char* _t, char* _s)
 {
-	str uri, aor;
+	//str uri, aor;
+	struct sip_msg *req;	
+	int i;
+	str uri;
 	impurecord_t* r;
 	int res;
 
-	if (_m->new_uri.s) uri = _m->new_uri;
-	else uri = _m->first_line.u.request.uri;
-
-	if (extract_aor(&uri, &aor) < 0) {
-		LM_ERR("failed to extract address of record\n");
+//	if (_m->new_uri.s) uri = _m->new_uri;
+//	else uri = _m->first_line.u.request.uri;
+//
+//	if (extract_aor(&uri, &aor) < 0) {
+//		LM_ERR("failed to extract address of record\n");
+//		return -1;
+//	}
+	
+	req = _m;	
+	if (!req){
+		LM_ERR(":term_impu_registered: NULL message!!!\n");
 		return -1;
 	}
+ 	if (req->first_line.type!=SIP_REQUEST){
+ 		req = get_request_from_reply(req);
+ 	}
+	
+	if (_m->new_uri.s) uri = _m->new_uri;
+	else uri = _m->first_line.u.request.uri;
+		
+	for(i=0;i<uri.len;i++)
+		if (uri.s[i]==';' || uri.s[i]=='?') {
+			uri.len = i;
+			break;
+		}
+	
+	LM_DBG("term_impu_registered: Looking for <%.*s>\n",uri.len,uri.s);
 
-	ul.lock_udomain((udomain_t*)_t, &aor);
-	res = ul.get_impurecord((udomain_t*)_t, &aor, &r);
+	ul.lock_udomain((udomain_t*)_t, &uri);
+	res = ul.get_impurecord((udomain_t*)_t, &uri, &r);
 
 	if (res < 0) {
-		ul.unlock_udomain((udomain_t*)_t, &aor);
-		LM_ERR("failed to query for terminating IMPU <%.*s>\n", aor.len, aor.s);
+		ul.unlock_udomain((udomain_t*)_t, &uri);
+		LM_ERR("failed to query for terminating IMPU <%.*s>\n", uri.len, uri.s);
 		return -1;
 	}
 
 	if (res == 0) {
 		//ul.release_impurecord(r);
-		ul.unlock_udomain((udomain_t*) _t, &aor);
-		LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
+		ul.unlock_udomain((udomain_t*) _t, &uri);
+		LM_DBG("'%.*s' found in usrloc\n", uri.len, ZSW(uri.s));
 		return 1;
 	}
 
-	ul.unlock_udomain((udomain_t*)_t, &aor);
-	LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+	ul.unlock_udomain((udomain_t*)_t, &uri);
+	LM_DBG("'%.*s' not found in usrloc\n", uri.len, ZSW(uri.s));
 	return -1;
 }

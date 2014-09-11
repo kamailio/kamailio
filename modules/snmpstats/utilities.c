@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
  *
  * History:
@@ -84,9 +84,9 @@ int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
 	char *theString = (char *)val;
 
 	/* Make sure the function was called correctly. */
-	if (PARAM_TYPE_MASK(type) != STR_PARAM) {
+	if (PARAM_TYPE_MASK(type) != PARAM_STRING) {
 		LM_ERR("the %s parameter was assigned a type %d instead of %d\n",
-				parameterName, type, STR_PARAM);
+				parameterName, type, PARAM_STRING);
 		return 0;
 	}
 

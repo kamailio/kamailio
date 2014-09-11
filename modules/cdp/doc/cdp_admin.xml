@@ -15,9 +15,9 @@
     <para>CDP (C Diameter Peer) allows Diameter communication to and from
     Kamailio. Most of the code is inherited from DISC
     http://developer.berlios.de/projects/disc/ and OpenIMS and modified for
-    use within Kamailio. A few improvements and new functionality has been added
-    along the way, for example, threshold reporting on Diameter calls that are
-    serviced above a certain threshold.</para>
+    use within Kamailio. A few improvements and new functionality has been
+    added along the way, for example, threshold reporting on Diameter calls
+    that are serviced above a certain threshold.</para>
   </section>
 
   <section>
@@ -129,11 +129,20 @@ modparam("cdp", "latency_threshold", 1000)
   </section>
 
   <section>
-    <title>Functions</title>
+    <title>RPC Commands</title>
+
+    <para>exported RPC commands.</para>
 
     <section>
-      <para>No functions available from configuration. See API for internal
-      functions.</para>
+      <title>cdp.disable_peer</title>
+
+      <para>instantly disable a particular diameter peer.</para>
+    </section>
+
+    <section>
+      <title>cdp.enable_peer</title>
+
+      <para>enabe/re-enable a diameter peer</para>
     </section>
   </section>
 

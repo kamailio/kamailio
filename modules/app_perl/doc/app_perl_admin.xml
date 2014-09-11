@@ -152,7 +152,7 @@ if (perl_exec("ldap_alias")) {
 
 	<section>
 		<title>Parameters</title>
-		<section>
+		<section id="app_perl.p.filename">
 			<title><varname>filename</varname> (string)</title>
 			<para>
 			This is the file name of your script. This may be set once only, but it may include an arbitary
@@ -160,20 +160,20 @@ if (perl_exec("ldap_alias")) {
 			</para>
 			<para>
 			<emphasis>
-				May not be empty!
+				Must not be empty!
 			</emphasis>
 			</para>
 			<example>
 			<title>Set <varname>filename</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("perl", "filename", "/home/test/kamailio/myperl.pl")
+modparam("app_perl", "filename", "/home/test/kamailio/myperl.pl")
 ...
 </programlisting>
 			</example>
 		</section>
 
-		<section>
+		<section id="app_perl.p.modpath">
 			<title><varname>modpath</varname> (string)</title>
 			<para>
 			The path to the Perl modules included (Kamailio.pm et.al). It is not absolutely
@@ -187,16 +187,63 @@ modparam("perl", "filename", "/home/test/kamailio/myperl.pl")
 			<title>Set <varname>modpath</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("perl", "modpath", "/usr/local/lib/kamailio/perl/")
+modparam("app_perl", "modpath", "/usr/local/lib/kamailio/perl/")
 ...
 </programlisting>
 			</example>
 		</section>
+
+		<section id="app_perl.p.reset_cycles">
+			<title><varname>reset_cycles</varname> (int)</title>
+			<para>
+			The number of execution cycles after which the embedded perl interpreter
+			is reset. Sometimes is hard to track the scope of variables in all used
+			perl modules and that can result in leaks of system memory. Resetting the
+			interpreter cleans the memory space.
+			</para>
+			<para>
+			When the interpreter is reset, the perl script is loaded again. Note that
+			not all &kamailio; processes will reset the interpreter at the same time.
+			Each will do it when it has executed the script for the number of
+			reset_cycles. Also, be aware that the reset of the interpreter is taking
+			a bit of time (in the order of tens of mili-seconds).
+			</para>
+			<para>
+			Default value is <emphasis>0</emphasis> - never reset the interpreter.
+			</para>
+			<example>
+			<title>Set <varname>reset_cycles</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "reset_cycles", 100000)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="app_perl.p.perl_destroy_func">
+			<title><varname>perl_destroy_func</varname> (string)</title>
+			<para>
+			The name of Perl function to be executed before the interpreter is
+			re-initialized (reset -- see reset_cycles parameter) at runtime.
+			This could be useful to clean global variables or file descriptors
+			from the Perl script.
+			</para>
+			<example>
+			<title>Set <varname>perl_destroy_func</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
+...
+</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section>
 		<title>Functions</title>
-		<section>
+		<section id="app_perl.f.perl_exec_simple">
 			<title>
 			<function moreinfo="none">perl_exec_simple(func, [param])</function>
 			</title>
@@ -224,7 +271,7 @@ if (method=="INVITE") {
 			</example>
 		</section>
 
-		<section>
+		<section id="app_perl.f.perl_exec">
 			<title>
 			<function moreinfo="none">perl_exec(func, [param])</function>
 			</title>
@@ -247,6 +294,43 @@ if (method=="INVITE") {
 if (perl_exec("ldapalias")) {
 	...
 };
+...
+</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+		<title>RPC Commands</title>
+		<section id="app_perl.r.set_reset_cycles">
+			<title>
+			<function moreinfo="none">app_perl.set_reset_cycles</function>
+			</title>
+			<para>
+				Set the value of the reset_cycle. The command has one integer
+				parameter.
+			</para>
+			<example>
+			<title><function>app_perl.set_reset_cycles</function> usage</title>
+			<programlisting format="linespecific">
+...
+kamcmd app_perl.set_reset_cycles 20000
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="app_perl.r.get_reset_cycles">
+			<title>
+			<function moreinfo="none">app_perl.get_reset_cycles</function>
+			</title>
+			<para>
+				Return the value of the reset_cycle.
+			</para>
+			<example>
+			<title><function>app_perl.get_reset_cycles</function> usage</title>
+			<programlisting format="linespecific">
+...
+kamcmd app_perl.get_reset_cycles
 ...
 </programlisting>
 			</example>

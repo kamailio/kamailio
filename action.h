@@ -23,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -68,6 +68,11 @@ int run_actions(struct run_act_ctx* c, struct action* a, struct sip_msg* msg);
 
 int run_top_route(struct action* a, sip_msg_t* msg, struct run_act_ctx* c);
 
+cfg_action_t *get_cfg_crt_action(void);
+int get_cfg_crt_line(void);
+char *get_cfg_crt_name(void);
+
+void set_max_recursive_level(unsigned int lev);
 
 #ifdef USE_LONGJMP
 int run_actions_safe(struct run_act_ctx* c, struct action* a,
@@ -75,5 +80,7 @@ int run_actions_safe(struct run_act_ctx* c, struct action* a,
 #else /*! USE_LONGJMP */
 #define run_actions_safe(c, a, m) run_actions(c, a, m)
 #endif /* USE_LONGJMP */
+
+void log_prefix_set(sip_msg_t *msg);
 
 #endif

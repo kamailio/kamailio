@@ -133,6 +133,9 @@ Chapter 1. Admin Guide
    AVPs and SIP messages and a function for testing/checking the value of
    an AVP.
 
+   If you just need a way to execute SQL statements in a Kamailio
+   configuration script, please consider use the sqlops module instead.
+
    AVPs are persistent per SIP transaction, being available in "route",
    "branch_route" and "failure_route". A tutorial providing more
    information (detailed explanations and commented examples) can be found
@@ -419,7 +422,9 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 
 5.4. avp_db_query(query[,dest])
 
-   Make a database query and store the result in AVPs.
+   Make a database query and store the result in AVPs. This command is
+   deprecated, please use the more flexible and advanced sqlops module
+   instead.
 
    The meaning and usage of the parameters:
      * query - must be a valid SQL query. The parameter can contain
@@ -544,9 +549,22 @@ avp_pushto("$br","$avp(i:680)");
 ...
 avp_check("$avp(i:678)", "lt/i:345/g");
 avp_check("$fd","eq/$td/I");
-avp_check("$avp(s:foo)","gt/$avp($bar)/g");
+avp_check("$avp(s:foo)","gt/$avp($var(bar))/g");
 avp_check("$avp(s:foo)","re/sip:.*@bar.net/g");
 avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
+...
+
+   NOTE: you can use a xavp variable ($xavp(key1[indx1]=>key2[indx2])) as
+   first or second parameter. If you want to check all the values of the
+   key2 you should use [*] at indx2. The [*] index is not allowed at
+   indx1.
+...
+avp_check("$xavp(op[0]=>lt[0])", "lt/i:345/g");
+avp_check("$xavp(op=>fd","eq/$td/I");
+avp_check("$xavp(op[1]=>foo[*])","gt/$avp($var(bar))/g");
+avp_check("$avp(s:foo)","re/$xavp(op[0]=>re[*]/g");
+$var(id)=2;
+avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
 ...
 
 5.8. avp_copy(old_name,new_name)

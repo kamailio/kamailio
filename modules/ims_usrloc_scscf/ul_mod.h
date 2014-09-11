@@ -39,7 +39,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  *
  * History:
@@ -67,6 +67,8 @@
 #define UL_TABLE_VERSION 1004
 
 #include "../../lib/ims/useful_defs.h"
+#include "../presence/event_list.h"
+#include "../presence/hash.h"
 
 extern int timer_interval;
 extern int desc_time_order;
@@ -74,12 +76,22 @@ extern int cseq_delay;
 extern int ul_fetch_rows;
 extern int ul_hash_size;
 
+/* functions imported from presence to handle subscribe hash table */
+extern new_shtable_t pres_new_shtable;
+extern insert_shtable_t pres_insert_shtable;
+extern search_shtable_t pres_search_shtable;
+extern update_shtable_t pres_update_shtable;
+extern delete_shtable_t pres_delete_shtable;
+extern destroy_shtable_t pres_destroy_shtable;
+extern extract_sdialog_info_t pres_extract_sdialog_info;
+
 /*
  * Matching algorithms
  */
 #define CONTACT_ONLY            (0)
 #define CONTACT_CALLID          (1)
 #define CONTACT_PATH		(2)
+#define CONTACT_PORT_IP_ONLY    (3)
 
 extern int matching_mode;
 

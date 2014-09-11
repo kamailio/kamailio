@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -1473,8 +1473,10 @@ int pv_elem_free_all(pv_elem_p log)
 void pv_value_destroy(pv_value_t *val)
 {
 	if(val==0) return;
+
 	if(val->flags&PV_VAL_PKG) pkg_free(val->rs.s);
-	if(val->flags&PV_VAL_SHM) shm_free(val->rs.s);
+	else if(val->flags&PV_VAL_SHM) shm_free(val->rs.s);
+
 	memset(val, 0, sizeof(pv_value_t));
 }
 

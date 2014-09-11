@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -40,6 +40,7 @@
 #include <mysql/mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../../async_task.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "mysql_mod.h"
@@ -124,6 +125,66 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 }
 
 
+/**
+ *
+ */
+void db_mysql_async_exec_task(void *param)
+{
+	str *p;
+	db1_con_t* dbc;
+	
+	p = (str*)param;
+	
+	dbc = db_mysql_init(&p[0]);
+
+	if(dbc==NULL) {
+		LM_ERR("failed to open connection for [%.*s]\n", p[0].len, p[0].s);
+		return;
+	}
+	if(db_mysql_submit_query(dbc, &p[1])<0) {
+		LM_ERR("failed to execute query on async worker\n");
+	}
+	db_mysql_close(dbc);
+}
+
+/**
+ * Execute a raw SQL query via core async framework.
+ * \param _h handle for the database
+ * \param _s raw query string
+ * \return zero on success, negative value on failure
+ */
+int db_mysql_submit_query_async(const db1_con_t* _h, const str* _s)
+{
+	struct db_id* di;
+	async_task_t *atask;
+	int asize;
+	str *p;
+
+	di = ((struct pool_con*)_h->tail)->id;
+
+	asize = sizeof(async_task_t) + 2*sizeof(str) + di->url.len + _s->len + 2;
+	atask = shm_malloc(asize);
+	if(atask==NULL) {
+		LM_ERR("no more shared memory to allocate %d\n", asize);
+		return -1;
+	}
+
+	atask->exec = db_mysql_async_exec_task;
+	atask->param = (char*)atask + sizeof(async_task_t);
+
+	p = (str*)((char*)atask + sizeof(async_task_t));
+	p[0].s = (char*)p + 2*sizeof(str);
+	p[0].len = di->url.len;
+	strncpy(p[0].s, di->url.s, di->url.len);
+	p[1].s = p[0].s + p[0].len + 1;
+	p[1].len = _s->len;
+	strncpy(p[1].s, _s->s, _s->len);
+
+	async_task_push(atask);
+
+	return 0;
+}
+
 
 /**
  * Initialize the database module.
@@ -190,25 +251,24 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 	if (db_mysql_convert_result(_h, *_r) < 0) {
 		LM_ERR("error while converting result\n");
 		LM_DBG("freeing result set at %p\n", _r);
-		pkg_free(*_r);
-		*_r = 0;
 		/* all mem on Kamailio API side is already freed by
 		 * db_mysql_convert_result in case of error, but we also need
-		 * to free the mem from the mysql lib side */
-		mysql_free_result(RES_RESULT(*_r));
+		 * to free the mem from the mysql lib side, internal pkg for it
+		 * and *_r */
+		db_mysql_free_result(_h, *_r);
+		*_r = 0;
 #if (MYSQL_VERSION_ID >= 40100)
-		while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) > 0 ) {
+		while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) == 0 ) {
 			MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
 			mysql_free_result(res);
 		}
 #endif
-		RES_RESULT(*_r) = 0;
 		return -4;
 	}
 
 done:
 #if (MYSQL_VERSION_ID >= 40100)
-	while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) > 0 ) {
+	while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) == 0 ) {
 		MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
 		mysql_free_result(res);
 	}
@@ -397,6 +457,16 @@ int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 	db_mysql_store_result);
 }
 
+/**
+ * Execute a raw SQL query via core async framework.
+ * \param _h handle for the database
+ * \param _s raw query string
+ * \return zero on success, negative value on failure
+ */
+int db_mysql_raw_query_async(const db1_con_t* _h, const str* _s)
+{
+	return db_mysql_submit_query_async(_h, _s);
+}
 
 /**
  * Insert a row into a specified table.
@@ -509,8 +579,8 @@ int db_mysql_affected_rows(const db1_con_t* _h)
  */
 int db_mysql_start_transaction(db1_con_t* _h, db_locking_t _l)
 {
-	str begin_str = str_init("BEGIN");
-	str lock_start_str = str_init("LOCK TABLE ");
+	str begin_str = str_init("SET autocommit=0");
+	str lock_start_str = str_init("LOCK TABLES ");
 	str lock_end_str  = str_init(" WRITE");
 	str lock_str = {0, 0};
 
@@ -559,6 +629,7 @@ int db_mysql_start_transaction(db1_con_t* _h, db_locking_t _l)
 		}
 
 		if (lock_str.s) pkg_free(lock_str.s);
+		CON_LOCKEDTABLES(_h) = 1;
 		break;
 
 	default:
@@ -575,13 +646,43 @@ error:
 }
 
 /**
+ * Unlock tables in the session
+ * \param _h database handle
+ * \return 0 on success, negative on failure
+ */
+int db_mysql_unlock_tables(db1_con_t* _h)
+{
+	str query_str = str_init("UNLOCK TABLES");
+
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_LOCKEDTABLES(_h) == 0) {
+		LM_DBG("no active locked tables\n");
+		return 0;
+	}
+
+	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	CON_LOCKEDTABLES(_h) = 0;
+	return 0;
+}
+
+/**
  * Ends a transaction and commits the changes (SQL COMMIT)
  * \param _h database handle
  * \return 0 on success, negative on failure
  */
 int db_mysql_end_transaction(db1_con_t* _h)
 {
-	str query_str = str_init("COMMIT");
+	str commit_query_str = str_init("COMMIT");
+	str set_query_str = str_init("SET autocommit=1");
 
 	if (!_h) {
 		LM_ERR("invalid parameter value\n");
@@ -593,7 +694,13 @@ int db_mysql_end_transaction(db1_con_t* _h)
 		return -1;
 	}
 
-	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
+	if (db_mysql_raw_query(_h, &commit_query_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	if (db_mysql_raw_query(_h, &set_query_str, NULL) < 0)
 	{
 		LM_ERR("executing raw_query\n");
 		return -1;
@@ -603,6 +710,10 @@ int db_mysql_end_transaction(db1_con_t* _h)
  	   raw_query fails, and the calling module does an abort_transaction()
 	   to clean-up, a ROLLBACK will be sent to the DB. */
 	CON_TRANSACTION(_h) = 0;
+
+	if(db_mysql_unlock_tables(_h)<0)
+		return -1;
+
 	return 0;
 }
 
@@ -613,7 +724,9 @@ int db_mysql_end_transaction(db1_con_t* _h)
  */
 int db_mysql_abort_transaction(db1_con_t* _h)
 {
-	str query_str = str_init("ROLLBACK");
+	str rollback_query_str = str_init("ROLLBACK");
+	str set_query_str = str_init("SET autocommit=1");
+	int ret;
 
 	if (!_h) {
 		LM_ERR("invalid parameter value\n");
@@ -622,20 +735,33 @@ int db_mysql_abort_transaction(db1_con_t* _h)
 
 	if (CON_TRANSACTION(_h) == 0) {
 		LM_DBG("nothing to rollback\n");
-		return 0;
+		ret = 0;
+		goto done;
 	}
 
 	/* Whether the rollback succeeds or not we need to _end_ the
  	   transaction now or all future starts will fail */
 	CON_TRANSACTION(_h) = 0;
 
-	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
+	if (db_mysql_raw_query(_h, &rollback_query_str, NULL) < 0)
 	{
 		LM_ERR("executing raw_query\n");
-		return -1;
+		ret = -1;
+		goto done;
 	}
 
-	return 1;
+	if (db_mysql_raw_query(_h, &set_query_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		ret = -1;
+		goto done;
+	}
+
+	ret = 1;
+
+done:
+	db_mysql_unlock_tables(_h);
+	return ret;
 }
 
 
@@ -710,6 +836,21 @@ int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k, const db_va
 	return db_do_insert_delayed(_h, _k, _v, _n, db_mysql_val2str,
 	db_mysql_submit_query);
 }
+
+/**
+ * Insert a row into a specified table via core async framework.
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
+ * \return zero on success, negative value on failure
+ */
+int db_mysql_insert_async(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+{
+	return db_do_insert(_h, _k, _v, _n, db_mysql_val2str,
+	db_mysql_submit_query_async);
+}
+
 
 
 /**

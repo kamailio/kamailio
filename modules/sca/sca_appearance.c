@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  */
@@ -28,6 +28,7 @@
 #include "sca.h"
 #include "sca_appearance.h"
 #include "sca_hash.h"
+#include "sca_notify.h"
 #include "sca_util.h"
 
 const str SCA_APPEARANCE_INDEX_STR = STR_STATIC_INIT( "appearance-index" );
@@ -44,11 +45,13 @@ const str SCA_APPEARANCE_STATE_STR_HELD_PRIVATE = STR_STATIC_INIT("held-private"
 const str SCA_APPEARANCE_STATE_STR_UNKNOWN = STR_STATIC_INIT( "unknown" );
 
 
+/* STR_ACTIVE is repeated, once for ACTIVE_PENDING, once for ACTIVE */
 const str	*state_names[] = {
 			&SCA_APPEARANCE_STATE_STR_IDLE,
 			&SCA_APPEARANCE_STATE_STR_SEIZED,
 			&SCA_APPEARANCE_STATE_STR_PROGRESSING,
 			&SCA_APPEARANCE_STATE_STR_ALERTING,
+			&SCA_APPEARANCE_STATE_STR_ACTIVE,
 			&SCA_APPEARANCE_STATE_STR_ACTIVE,
 			&SCA_APPEARANCE_STATE_STR_HELD,
 			&SCA_APPEARANCE_STATE_STR_HELD_PRIVATE,
@@ -119,7 +122,9 @@ sca_appearance_create( int appearance_index, str *owner_uri )
     SCA_STR_COPY( &new_appearance->owner, owner_uri );
 
     new_appearance->index = appearance_index;
-    new_appearance->state = SCA_APPEARANCE_STATE_IDLE;
+    new_appearance->times.ctime = time( NULL );
+    sca_appearance_update_state_unsafe( new_appearance,
+				SCA_APPEARANCE_STATE_IDLE );
     new_appearance->next = NULL;
 
     return( new_appearance );
@@ -149,6 +154,16 @@ sca_appearance_free( sca_appearance *appearance )
 	if ( appearance->dialog.id.s != NULL ) {
 	    shm_free( appearance->dialog.id.s );
 	}
+
+        if ( appearance->prev_owner.s != NULL ) {
+            shm_free( appearance->prev_owner.s );
+        }
+        if ( appearance->prev_callee.s != NULL ) {
+            shm_free( appearance->prev_callee.s );
+        }
+        if ( appearance->prev_dialog.id.s != NULL ) {
+            shm_free( appearance->prev_dialog.id.s );
+        }
 
 	shm_free( appearance );
     }
@@ -260,6 +275,32 @@ sca_appearance_list_unlink_index( sca_appearance_list *app_list, int idx )
 }
 
     int
+sca_appearance_list_unlink_appearance( sca_appearance_list *app_list,
+	sca_appearance **app )
+{
+    sca_appearance	**cur;
+    int			rc = 0;
+
+    assert( app_list != NULL );
+    assert( app != NULL && *app != NULL );
+
+    for ( cur = &app_list->appearances; *cur != NULL; cur = &(*cur)->next ) {
+	if ( *cur == *app ) {
+	    *cur = (*cur)->next;
+
+	    (*app)->appearance_list = NULL;
+	    (*app)->next = NULL;
+
+	    rc = 1;
+
+	    break;
+	}
+    }
+
+    return( rc );
+}
+
+    int
 sca_appearance_list_aor_cmp( str *aor, void *cmp_value )
 {
     sca_appearance_list	*app_list = (sca_appearance_list *)cmp_value;
@@ -345,6 +386,24 @@ done:
     return( rc );
 }
 
+    int
+sca_appearance_unregister( sca_mod *scam, str *aor )
+{
+    int			rc = 0;
+
+    assert( scam != NULL );
+    assert( aor != NULL );
+
+    if ( sca_uri_is_shared_appearance( scam, aor )) {
+	if (( rc = sca_hash_table_kv_delete( scam->appearances, aor )) == 0 ) {
+	    rc = 1;
+	    LM_INFO( "unregistered SCA AoR %.*s", STR_FMT( aor ));
+	}
+    }
+
+    return( rc );
+}
+
     sca_appearance *
 sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
 	int app_idx, int slot_idx, int *seize_error )
@@ -386,7 +445,7 @@ sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
 	error = SCA_APPEARANCE_ERR_MALLOC;
         goto done;
     }
-    app->state = SCA_APPEARANCE_STATE_SEIZED;
+    sca_appearance_update_state_unsafe( app, SCA_APPEARANCE_STATE_SEIZED );
 
     sca_appearance_list_insert_appearance( app_list, app );
 
@@ -464,7 +523,7 @@ sca_appearance_seize_next_available_unsafe( sca_mod *scam, str *aor,
 		STR_FMT( owner_uri ), idx );
 	goto done;
     }
-    app->state = SCA_APPEARANCE_STATE_SEIZED;
+    sca_appearance_update_state_unsafe( app, SCA_APPEARANCE_STATE_SEIZED );
 
     sca_appearance_list_insert_appearance( app_list, app );
 
@@ -492,6 +551,15 @@ sca_appearance_seize_next_available_index( sca_mod *scam, str *aor,
     sca_hash_table_unlock_index( scam->appearances, slot_idx );
 
     return( idx );
+}
+
+    void
+sca_appearance_update_state_unsafe( sca_appearance *app, int state )
+{
+    assert( app != NULL );
+
+    app->state = state;
+    app->times.mtime = time( NULL );
 }
 
     int
@@ -638,7 +706,7 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *display,
     int			len;
 
     if ( state != SCA_APPEARANCE_STATE_UNKNOWN ) {
-	app->state = state;
+	sca_appearance_update_state_unsafe( app, state );
     }
 
     if ( !SCA_STR_EMPTY( uri )) {
@@ -780,6 +848,10 @@ sca_uri_lock_shared_appearance( sca_mod *scam, str *aor )
     sca_appearance_list	*app_list;
     int			slot_idx;
 
+    if ( SCA_STR_EMPTY( aor )) {
+	return( -1 );
+    }
+
     slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
     slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
 
@@ -801,6 +873,11 @@ sca_uri_lock_if_shared_appearance( sca_mod *scam, str *aor, int *slot_idx )
     sca_appearance_list	*app_list;
 
     assert( slot_idx != NULL );
+
+    if ( SCA_STR_EMPTY( aor )) {
+	*slot_idx = -1;
+	return( 0 );
+    }
 
     *slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
     slot = sca_hash_table_slot_for_index( scam->appearances, *slot_idx );
@@ -888,6 +965,10 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
     for ( app = app_list->appearances; app != NULL; app = app->next ) {
 	if ( app->index == idx ) {
 	    break;
+	} else if ( idx == 0 ) {
+	    if ( SCA_STR_EQ( &dialog->id, &app->dialog.id )) {
+		break;
+	    }
 	}
     }
     if ( app == NULL ) {
@@ -898,7 +979,7 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
     }
 
     if ( state != SCA_APPEARANCE_STATE_UNKNOWN && app->state != state ) {
-	app->state = state;
+	sca_appearance_update_state_unsafe( app, state );
     }
 
     if ( !SCA_STR_EMPTY( uri )) {
@@ -1022,6 +1103,60 @@ done:
     sca_hash_table_unlock_index( scam->appearances, slot_idx );
 
     return( rc );
+}
+
+    int
+sca_appearance_owner_release_all( str *aor, str *owner )
+{
+    sca_appearance_list	*app_list = NULL;
+    sca_appearance	*app, **cur_app, **tmp_app;
+    sca_hash_slot	*slot;
+    sca_hash_entry	*ent;
+    int			slot_idx = -1;
+    int			released = -1;
+
+    slot_idx = sca_uri_lock_shared_appearance( sca, aor );
+    slot = sca_hash_table_slot_for_index( sca->appearances, slot_idx );
+
+    for ( ent = slot->entries; ent != NULL; ent = ent->next ) {
+	if ( ent->compare( aor, ent->value ) == 0 ) {
+	    app_list = (sca_appearance_list *)ent->value;
+	    break;
+	}
+    }
+
+    released = 0;
+
+    if ( app_list == NULL ) {
+	LM_DBG( "sca_appearance_owner_release_all: No appearances for %.*s",
+		STR_FMT( aor ));
+	goto done;
+    }
+
+    for ( cur_app = &app_list->appearances; *cur_app != NULL;
+		cur_app = tmp_app ) {
+	tmp_app = &(*cur_app)->next;
+
+	if ( !SCA_STR_EQ( owner, &(*cur_app)->owner )) {
+	    continue;
+	}
+
+	app = *cur_app;
+	*cur_app = (*cur_app)->next;
+	tmp_app = cur_app;
+
+	if ( app ) {
+	    sca_appearance_free( app );
+	    released++;
+	}
+    }
+
+done:
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->appearances, slot_idx );
+    }
+
+    return( released );
 }
 
     sca_appearance *
@@ -1148,4 +1283,131 @@ done:
     }
 
     return( app );
+}
+
+    void
+sca_appearance_purge_stale( unsigned int ticks, void *param )
+{
+    struct notify_list {
+	struct notify_list	*next;
+	str			aor;
+    };
+
+    sca_mod		*scam = (sca_mod *)param;
+    sca_hash_table	*ht;
+    sca_hash_entry	*ent;
+    sca_appearance_list	*app_list;
+    sca_appearance	**cur_app, **tmp_app, *app = NULL;
+    struct notify_list	*notify_list = NULL, *tmp_nl;
+    int			i;
+    int			unlinked;
+    time_t		now, ttl;
+
+    LM_INFO( "SCA: purging stale appearances" );
+
+    assert( scam != NULL );
+    assert( scam->appearances != NULL );
+
+    now = time( NULL );
+
+    ht = scam->appearances;
+    for ( i = 0; i < ht->size; i++ ) {
+	sca_hash_table_lock_index( ht, i );
+
+	for ( ent = ht->slots[ i ].entries; ent != NULL; ent = ent->next ) {
+	    app_list = (sca_appearance_list *)ent->value;
+	    if ( app_list == NULL ) {
+		continue;
+	    }
+
+	    unlinked = 0;
+
+	    for ( cur_app = &app_list->appearances; *cur_app != NULL;
+			cur_app = tmp_app ) {
+		tmp_app = &(*cur_app)->next;
+
+		switch ((*cur_app)->state ) {
+		case SCA_APPEARANCE_STATE_ACTIVE_PENDING:
+		    ttl = SCA_APPEARANCE_STATE_PENDING_TTL;
+		    break;
+
+		case SCA_APPEARANCE_STATE_SEIZED:
+		    ttl = SCA_APPEARANCE_STATE_SEIZED_TTL;
+		    break;
+
+		default:
+		    /* XXX for now just skip other appearances */
+		    ttl = now + 60;
+		    break;
+		}
+		if (( now - (*cur_app)->times.mtime ) < ttl ) {
+		    continue;
+		}
+
+		/* unlink stale appearance */
+		app = *cur_app;
+		*cur_app = (*cur_app)->next;
+		tmp_app = cur_app;
+
+		if ( app ) {
+		    sca_appearance_free( app );
+		}
+
+		if ( unlinked ) {
+		    /* we've already added this AoR to the NOTIFY list */
+		    continue;
+		}
+		unlinked++;
+
+		/*
+		 * can't notify while slot is locked. make a list of AoRs to
+		 * notify after unlocking.
+		 */
+		tmp_nl = (struct notify_list *)pkg_malloc(
+				sizeof( struct notify_list ));
+		if ( tmp_nl == NULL ) {
+		    LM_ERR( "sca_appearance_purge_stale: failed to pkg_malloc "
+			    "notify list entry for %.*s",
+			    STR_FMT( &app_list->aor ));
+		    continue;
+		}
+
+		tmp_nl->aor.s = (char *)pkg_malloc( app_list->aor.len );
+		if ( tmp_nl->aor.s == NULL ) {
+		    LM_ERR( "sca_appearance_purge_stale: failed to pkg_malloc "
+			    "space for copy of %.*s",
+			    STR_FMT( &app_list->aor ));
+		    pkg_free( tmp_nl );
+		    continue;
+		}
+		SCA_STR_COPY( &tmp_nl->aor, &app_list->aor );
+
+		/* simple insert-at-head. order doesn't matter. */
+		tmp_nl->next = notify_list;
+		notify_list = tmp_nl;
+	    }
+	}
+
+	sca_hash_table_unlock_index( ht, i );
+
+	for ( ; notify_list != NULL; notify_list = tmp_nl ) {
+	    tmp_nl = notify_list->next;
+
+	    LM_INFO( "sca_appearance_purge_stale: notifying %.*s call-info "
+		    "subscribers", STR_FMT( &notify_list->aor ));
+
+	    if ( sca_notify_call_info_subscribers( scam,
+			&notify_list->aor ) < 0 ) {
+		LM_ERR( "sca_appearance_purge_stale: failed to send "
+			"call-info NOTIFY %.*s subscribers",
+			STR_FMT( &notify_list->aor ));
+		/* fall through, free memory anyway */
+	    }
+
+	    if ( notify_list->aor.s ) {
+		pkg_free( notify_list->aor.s );
+	    }
+	    pkg_free( notify_list );
+	}
+    }
 }

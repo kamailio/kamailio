@@ -17,7 +17,12 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
  *
  */
 
@@ -86,7 +91,7 @@ static param_export_t params[]=
 	/* ws_frame.c */
 	{ "keepalive_mechanism",	INT_PARAM, &ws_keepalive_mechanism },
 	{ "keepalive_timeout",		INT_PARAM, &ws_keepalive_timeout },
-	{ "ping_application_data",	STR_PARAM, &ws_ping_application_data.s },
+	{ "ping_application_data",	PARAM_STR, &ws_ping_application_data },
 
 	/* ws_handshake.c */
 	{ "sub_protocols",		INT_PARAM, &ws_sub_protocols },
@@ -206,9 +211,6 @@ static int mod_init(void)
 		goto error;
 	}
 
-	if (ws_ping_application_data.s != 0)
-		ws_ping_application_data.len =
-					strlen(ws_ping_application_data.s);
 	if (ws_ping_application_data.len < 1
 		|| ws_ping_application_data.len > 125)
 	{

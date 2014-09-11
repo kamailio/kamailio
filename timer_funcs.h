@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /* History:
@@ -157,6 +157,8 @@ static inline void timer_redist(ticks_t t, struct timer_head *h)
 
 static inline void timer_run(ticks_t t)
 {
+	struct timer_head *thp;
+
 	/* trust the compiler for optimizing */
 	if ((t & H0_MASK)==0){              /*r1*/
 		if ((t & H1_H0_MASK)==0){        /*r2*/
@@ -168,7 +170,8 @@ static inline void timer_run(ticks_t t)
 	/*
 	DBG("timer_run: ticks %u, expire h0[%u]\n",
 						(unsigned ) t, (unsigned)(t & H0_MASK));*/
-	_timer_mv_expire(&timer_lst->h0[t & H0_MASK]);  /*r1*/
+	thp = &timer_lst->h0[t & H0_MASK];
+	_timer_mv_expire(thp);  /*r1*/
 }
 #else
 

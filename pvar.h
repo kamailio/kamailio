@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
@@ -287,6 +287,16 @@ int tr_exec(struct sip_msg *msg, trans_t *t, pv_value_t *v);
 void tr_param_free(tr_param_t *tp);
 
 int register_trans_mod(char *mod_name, tr_export_t *items);
+
+
+/**
+ * XAVP
+ */
+typedef struct _pv_xavp_name {
+	str name;
+	pv_spec_t index;
+	struct _pv_xavp_name *next;
+} pv_xavp_name_t;
 
 #endif
 

@@ -33,9 +33,10 @@ Richard Good
               4.1. config_file (string)
               4.2. latency_threshold (int)
 
-        5. Functions
+        5. RPC Commands
 
-              5.1.
+              5.1. cdp.disable_peer
+              5.2. cdp.enable_peer
 
         6. Configuration Examples
 
@@ -138,9 +139,10 @@ Chapter 1. Admin Guide
         4.1. config_file (string)
         4.2. latency_threshold (int)
 
-   5. Functions
+   5. RPC Commands
 
-        5.1.
+        5.1. cdp.disable_peer
+        5.2. cdp.enable_peer
 
    6. Configuration Examples
 
@@ -225,12 +227,20 @@ modparam("cdp", "config_file", "/etc/kamailio/diametercfg.xml")
 modparam("cdp", "latency_threshold", 1000)
 ...
 
-5. Functions
+5. RPC Commands
 
-   5.1.
+   5.1. cdp.disable_peer
+   5.2. cdp.enable_peer
 
-   No functions available from configuration. See API for internal
-   functions.
+   exported RPC commands.
+
+5.1. cdp.disable_peer
+
+   instantly disable a particular diameter peer.
+
+5.2. cdp.enable_peer
+
+   enabe/re-enable a diameter peer
 
 6. Configuration Examples
 

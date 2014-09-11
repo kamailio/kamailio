@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a non-db connector to interact with MongoDB NoSQL
+		server from configuration file. You can read more about MongoDB at
+		<ulink url="http://www.mongodb.org">http://www.mongodb.org</ulink>.
+	</para>
+	<para>
+		It can connect to many MongoDB servers and store the results in different
+		containers.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>mongo-c-driver</emphasis> - available at
+				<ulink url="https://github.com/mongodb/mongo-c-driver">https://github.com/mongodb/mongo-c-driver</ulink>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="ndb_redis.p.server">
+		<title><varname>server</varname> (str)</title>
+		<para>
+			Specify the details to connect to REDIS server. It takes a list of
+			attribute=value separated by semicolon, the attributes can be
+			name and uri. Name is a generic identifier to be used
+			with module functions. The uri parameter must be a valid
+			MongoDB database connection string.
+		</para>
+		<para>
+			You can set this parameter many times, in case you want to connect to
+			many MongoDB servers, just give different attributes and use the specific
+			server name when querying the MongoDB instance.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>server</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ndb_mongodb", "server", "name=mgs1;uri='mongodb://localhost/kamailio'")
+modparam("ndb_mongodb", "server", "name=mgs2;uri='mongodb://127.0.0.2/kamailio'")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="ndb_mongodb.f.mongodb_cmd">
+	    <title>
+		<function moreinfo="none">mongodb_cmd(srvname, dbname, cname, command, replyid)</function>
+	    </title>
+	    <para>
+			Send a valid command to MongoDB server identified by srvname. The reply will
+			be stored in a local container identified by replyid. All the
+			parameters can be strings with pseudo-variables that are evaluated
+			at runtime.
+		</para>
+		<para>
+			The reply can be accessed via pseudo-variable $mongodb(key). The key
+			can be: type - type of the reply; value - the value in JSON format
+			returned by MongoDB server; info - in case of error from MongoDB, it will
+			contain an info message.
+		</para>
+		<para>
+			The result can contain many documents, see mongodb_next() function for
+			more details.
+		</para>
+		<para>
+			Meaning of the parameters:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>srvname</emphasis> - MongoDB server name as given via
+				'server' parameter.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>dbname</emphasis> - MongoDB database name.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>cname</emphasis> - MongodDB collection (table) name.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>command</emphasis> - valid MongoDB command given
+				as JSON string.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>replyid</emphasis> - the name of the container to
+				store the response.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			The function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>mongodb_cmd</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(mongodb_cmd("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "mgr1")) {
+	xlog("response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="ndb_mongodb.f.mongodb_cmd_simple">
+	    <title>
+		<function moreinfo="none">mongodb_cmd(srvname, dbname, cname, command, replyid)</function>
+	    </title>
+	    <para>
+			Send a valid command to MongoDB server identified by srvname. The reply will
+			be stored in a local container identified by replyid. All the
+			parameters can be strings with pseudo-variables that are evaluated
+			at runtime.
+		</para>
+		<para>
+			The reply can be accessed via pseudo-variable $mongodb(key). The key
+			can be: type - type of the reply; value - the value in JSON format
+			returned by MongoDB server; info - in case of error from MongoDB, it will
+			contain an info message.
+		</para>
+		<para>
+			This function should be used when the response has only one document.
+		</para>
+		<para>
+			See mongodb_cmd() for the meaning of the parameters.
+		</para>
+		<para>
+			The function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>mongodb_cmd_simple</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(mongodb_cmd_simple("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "mgr1")) {
+	xlog("response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="ndb_mongodb.f.mongodb_find">
+	    <title>
+		<function moreinfo="none">mongodb_find(srvname, dbname, cname, command, replyid)</function>
+	    </title>
+	    <para>
+			Send a find command to MongoDB server identified by srvname. The reply will
+			be stored in a local container identified by replyid. All the
+			parameters can be strings with pseudo-variables that are evaluated
+			at runtime.
+		</para>
+		<para>
+			The reply can be accessed via pseudo-variable $mongodb(key). The key
+			can be: type - type of the reply; value - the value in JSON format
+			returned by MongoDB server; info - in case of error from MongoDB, it will
+			contain an info message.
+		</para>
+		<para>
+			This function is useful for querying collections and accessing the results.
+		</para>
+		<para>
+			See mongodb_cmd() for the meaning of the parameters, with the remark that
+			command has to be a valid filter JSON document, like for find() command
+			in mongoc command line client tool.
+		</para>
+		<para>
+			The function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>mongodb_find</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(mongodb_find("mgs1", "kamailio", "acc", "{ \"src_user\" : \"111\" }", "mgr1")) {
+	xlog("response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="ndb_mongodb.f.mongodb_next">
+	<title>
+		<function moreinfo="none">mongodb_next(replyid)</function>
+	</title>
+	<para>
+		Moves to next document in a MongoDB reply. This function can be used
+		after a succesful mongodb_cmd() or mongodb_find(). It returns true if
+		there is a shift to document. The current document becomes available
+		via $mongodb(key) variable.
+	</para>
+	<example>
+		<title><function>mongodb_next</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(mongodb_find("mgs1", "kamailio", "acc", "{ \"src_user\" : \"111\" }", "mgr1")) {
+    xlog("first response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+    while(mongodb_next("mgr1") ){
+        xlog("next response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+    }
+}
+mongodb_free("mgr1");
+...
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="ndb_mongodb.f.mongodb_free">
+	<title>
+		<function moreinfo="none">mongodb_free(replyid)</function>
+	</title>
+	<para>
+		Frees data in a previous reply from memory.
+		After this function call, accessing to a freed replyid returns null value.
+	</para>
+	<para>
+		It is not really necessary to free a reply to use it again in a new mongodb_cmd
+		function, being automatically freed on next command execution, but for freeing
+		used resources (e.g., memory), it is recommended to do it.
+	</para>
+	<example>
+		<title><function>mongodb_free</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(mongodb_cmd_simple("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "mgr1")) {
+	xlog("response from mongodb is [[$mongodb(mgr1=>value)]]\n");
+}
+mongodb_free("mgr1");
+...
+		</programlisting>
+	</example>
+	</section>
+	</section>
+</chapter>
+
