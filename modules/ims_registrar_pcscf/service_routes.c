@@ -297,7 +297,7 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 		if (r) {
 			LM_DBG("Route is %.*s\n", r->nameaddr.uri.len, r->nameaddr.uri.s);
 			/* Skip first headers containing myself: */
-			while (parse_uri(r->nameaddr.uri.s, r->nameaddr.uri.len, &uri) == 0
+			while (r && (parse_uri(r->nameaddr.uri.s, r->nameaddr.uri.len, &uri) == 0)
 			  && check_self(&uri.host,uri.port_no?uri.port_no:SIP_PORT,0)) {
 				LM_DBG("Self\n");
 				/* Check for more headers and fail, if it was the last one
@@ -315,6 +315,7 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 				if (r)
 					LM_DBG("Next Route is %.*s\n", r->nameaddr.uri.len, r->nameaddr.uri.s);
 			}
+			LM_DBG("We have %d service-routes\n");
 			/* Then check the following headers: */
 			for (i=0; i< c->num_service_routes; i++) {
 				LM_DBG("Route must be: %.*s\n", c->service_routes[i].len, c->service_routes[i].s);
