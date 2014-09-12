@@ -12,11 +12,870 @@
 <chapter xmlns:xi="http://www.w3.org/2001/XInclude">
 	<title>&adminguide;</title>
 
-	<section>
-	<title>Overview</title>
-	<para>
-		Documentation to come in the next days.
-	</para>
-	</section>
+    
+    <section>
+    <title>Overview</title>
+    <para> The Kazoo is a general purpose AMQP connector (tested with rabbitmq-server). It exposes publish/consume capabilities into Kamailio.
+    </para>
+<para>
+From a high-level, the purpose of the module might be for things like:
+<itemizedlist>
+<listitem>
+<para>
+Integrate to an AMQP application to make real-time routing decisions (instead of using, say, a SQL database)
+</para>
+</listitem>
+<listitem>
+<para>
+Provide a real-time integration into your program, instead of your database, so you can overlay additional logic in your preferred language while also utilizing a message bus
+</para>
+</listitem>
+<listitem>
+<para>
+Utilize messaging to have a distributed messaging layer, such that machines processing requests/responses/events can go up/down or share the workload and your Kamailio node will still be happy
+</para>
+</listitem>
+</itemizedlist>
+</para>
+
+
+<para>
+supported operations are:
+<itemizedlist>
+<listitem>
+<para>
+publish json payloads to rabbitmq
+</para>
+</listitem>
+<listitem>
+<para>
+publish json payloads to rabbitmq and wait for correlated response message
+</para>
+</listitem>
+<listitem>
+<para>
+subscribe to an exchange with a routing key
+</para>
+</listitem>
+</itemizedlist>
+</para>
+<para>
+The Kazoo module also has support to publish updates to presence module thru the kazoo_pua_publish function
+</para>
+
+</section>
+    <section>
+    <title>How it works</title>
+<para>  
+The module works with a main forked process that does the communication with rabbitmq for issuing publishes, waiting for replies and consuming messages. When it consumes a message it defers the process to a worker process so that it doesn't block this main process.
+</para>
+    <section>
+    <title>event routes</title>
+    <para>
+The worker process issues an event-route where we can act on the received payload. The name of the event-route is composed by values extracted from the payload.
+    </para>
+    <para>
+    Kazoo module will try to execute the event route from most significant to less significant. 
+    define the event route like event_route[kazoo:consumer-event[-payload_key_value[-payload_subkey_value]]]
+    </para>
+        <example>
+        <title>define the event route</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_consumer_event_key", "Event-Category")
+modparam("kazoo", "amqp_consumer_event_subkey", "Event-Name")
+...
+
+event_route[kazoo:consumer-event-presence-update]
+{
+# presence is the value extracted from Event-Category field in json payload 
+# update is the value extracted from Event-Name field in json payload 
+xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,From})");
+...
+}
+
+event_route[kazoo:consumer-event-event-category-event-name]
+{
+# event-category is the name of the amqp_consumer_event_key parameter
+# event-name is the name of the amqp_consumer_event_subkey parameter
+# this event route is executed if we can't find the previous 
+...
+}
+
+event_route[kazoo:consumer-event]
+{
+# this event route is executed if we can't find the previous 
+}
+
+</programlisting>
+        </example>
+</section>
+    <section>
+    <title>aknowledge messages</title>
+<para>
+Consumed messages have the option of being acknowledge in two ways:
+<itemizedlist>
+<listitem>
+<para>
+immediately when received 
+</para>
+</listitem>
+<listitem>
+<para>
+after processing by the worker 
+</para>
+</listitem>
+</itemizedlist>
+
+    </para>
+    
+</section>
+    </section>
+
+    <section>
+    <title>Dependencies</title>
+    <section>
+        <title>&kamailio; Modules</title>
+        <para>
+        The following modules must be loaded before this module:
+            <itemizedlist>
+            <listitem>
+            <para>
+                <emphasis>none</emphasis>.
+            </para>
+            </listitem>
+            </itemizedlist>
+        </para>
+    </section>
+    <section>
+        <title>External Libraries or Applications</title>
+        <itemizedlist>
+            <listitem>
+            <para>
+                <emphasis>librabbitmq</emphasis>.
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+                <emphasis>libjson</emphasis>.
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+                <emphasis>libuuid</emphasis>.
+            </para>
+            </listitem>
+        </itemizedlist>
+
+        </section>
+    </section>
+    
+    
+    <section>
+    <title>Parameters</title>
+    <section>
+    <title>amqp related</title>
+    <section>
+        <title><varname>node_hostname</varname>(str)</title>
+        <para>
+        The name of this host to register in rabbitmq.
+        </para>
+        <para>
+        <emphasis>Default value is NULL. you must set this parameter value for the module to work</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>node_hostname</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "node_hostname", "sipproxy.mydomain.com")
+...
+</programlisting>
+        </example>
+    </section>
+    <section>
+        <title><varname>amqp_consumer_processes</varname>(int)</title>
+        <para>
+        The number of worker processes to handle messages consumption.
+        </para>
+        <para>
+        <emphasis>Default value is 4.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_consumer_processes</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_consumer_processes", 10)
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>amqp_consumer_event_key</varname>(str)</title>
+        <para>
+        The name of the field in json payload to compose the event name 1st part
+        </para>
+        <para>
+        <emphasis>Default value is <quote>Event-Category</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_consumer_event_key</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_consumer_event_key", "My-JSON-Field-Name")
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>amqp_consumer_event_subkey</varname>(str)</title>
+        <para>
+        The name of the field in json payload to compose the event name 2nd part
+        </para>
+        <para>
+        <emphasis>Default value is <quote>Event-Name</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_consumer_event_subkey</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_consumer_event_subkey", "My-JSON-SubField-Name")
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>amqp_max_channels</varname>(str)</title>
+        <para>
+        The number of pre allocated channels for the connection.
+        </para>
+        <para>
+        <emphasis>Default value is 50.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_max_channels</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_max_channels", 100)
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>amqp_connection</varname>(str)</title>
+        <para>
+        The connection url to rabbitmq. can be set multiple times for failover.
+        </para>
+        <example>
+        <title>Set <varname>amqp_connection</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_connection", "amqp://guest:guest@localhost:5672")
+modparam("kazoo", "amqp_connection", "kazoo://guest:guest@otherhost:5672")
+...
+</programlisting>
+        </example>
+    </section>
+
+    
+
+    
+
+
+    </section>
+
+    <section>
+    <title>execution control</title>
+    <para>execution control of main loop can be controlled by changing the parameter values in this section.</para>
+    <para>The main loop has 3 sub-loops were it listen for actions to execute with a timeout. These group of parameters allow to set the maximum number of times the sub-loop is executed if it doesn't timeout.</para>
+    <para>On busy systems, we may have a condition where a sub-loop never times out because it always has data to process. The purpose of these parameters is to set a maximum number of times it executes before it handles control to the next sub-loop.</para>
+        <programlisting format="linespecific">
+...
+while(true) // main  loop
+ while(ACK or timeout)  // acknowledge from worker process
+ while(SEND or timeout) // anything to send ?
+ while(CONSUME or timeout) // any data on consumed exchanges ?
+...
+</programlisting>
+
+    <section>
+        <title><varname>amqp_consumer_loop_count</varname>(int)</title>
+        <para>
+        The database url.
+        </para>
+        <para>If set, the module is a fully operational
+        presence server. Otherwise, it is used as a 'library', for 
+        its exported functions.
+        </para>
+        <para>
+        <emphasis>Default value is 10.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_consumer_loop_count</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_consumer_loop_count", 3)
+...
+</programlisting>
+        </example>
+    </section>    
+    
+    <section>
+        <title><varname>amqp_internal_loop_count</varname>(int)</title>
+        <para>
+        The database url.
+        </para>
+        <para>If set, the module is a fully operational
+        presence server. Otherwise, it is used as a 'library', for 
+        its exported functions.
+        </para>
+        <para>
+        <emphasis>Default value is 5.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_internal_loop_count</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_internal_loop_count", 1)
+...
+</programlisting>
+        </example>
+    </section>    
+    
+    <section>
+        <title><varname>amqp_consumer_ack_loop_count</varname>(int)</title>
+        <para>
+        The database url.
+        </para>
+        <para>If set, the module is a fully operational
+        presence server. Otherwise, it is used as a 'library', for 
+        its exported functions.
+        </para>
+        <para>
+        <emphasis>Default value is 20.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_consumer_ack_loop_count</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_consumer_ack_loop_count", 5)
+...
+</programlisting>
+        </example>
+    </section><section>
+        <title><varname>consume_messages_on_reconnect</varname>(int)</title>
+        <para>
+        This parameter indicates if the module ignores the loop counters on reconnect and consumes all the pending messages ready to be consumed.
+        </para>
+        <para>
+        <emphasis>Default value is 1.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>consume_messages_on_reconnect</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "consume_messages_on_reconnect", 0)
+...
+</programlisting>
+        </example>
+    </section><section>
+        <title><varname>single_consumer_on_reconnect</varname>(int)</title>
+        <para>
+        When the main loop receives a message from rabbitmq it will defer the execution to a worker in a round-robin manner. this parameter allows to use the same worker when kazoo reconnects to rabbitmq.
+        </para>
+        <para>
+        <emphasis>Default value is 1.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>single_consumer_on_reconnect</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "single_consumer_on_reconnect", 0)
+...
+</programlisting>
+        </example>
+    </section>    
+    
+    
+    </section>
+
+    <section>
+    <title>timers</title>
+    <para>
+    each functional parameter related to timers come with 2 reflected parameters. name_sec and name_micro 
+    </para>
+    <section>
+        <title><varname>amqp_consumer_ack_timeout</varname>(str)</title>
+        <para>
+        Timeout when checking for aknowledge from workers.
+        </para>
+        <para>
+        <emphasis>Default value is 100000 micro.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_consumer_ack_timeout</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_consumer_ack_timeout_sec", 1)
+modparam("kazoo", "amqp_consumer_ack_timeout_micro", 200000)
+...
+</programlisting>
+        </example>
+    </section>    
+
+    <section>
+        <title><varname>amqp_interprocess_timeout</varname>(str)</title>
+        <para>
+        Timeout when checking for commands (publish/query) for sending to rabbitmq.
+        </para>
+        <para>
+        <emphasis>Default value is 100000 micro.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_interprocess_timeout</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_interprocess_timeout_sec", 1)
+modparam("kazoo", "amqp_interprocess_timeout_micro", 200000)
+...
+</programlisting>
+        </example>
+    </section>    
+
+    <section>
+        <title><varname>amqp_waitframe_timout</varname>(str)</title>
+        <para>
+        Timeout when checking for messages from rabbitmq.
+        </para>
+        <para>
+        <emphasis>Default value is 100000 micro.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_waitframe_timout</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_waitframe_timout_sec", 1)
+modparam("kazoo", "amqp_waitframe_timout_micro", 200000)
+...
+</programlisting>
+        </example>
+    </section>    
+
+    <section>
+        <title><varname>amqp_query_timout</varname>(str)</title>
+        <para>
+        Timeout when checking for reply messages from rabbitmq for kazoo_query commands.
+        </para>
+        <para>
+        <emphasis>Default value is 2 sec.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>amqp_query_timout</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_query_timout_sec", 1)
+modparam("kazoo", "amqp_query_timout_micro", 200000)
+...
+</programlisting>
+        </example>
+    </section>    
+ 
+    </section>
+        
+    <section>
+    <title>presence related</title>
+    <section>
+        <title><varname>db_url</varname>(str)</title>
+        <para>
+        The database url.
+        </para>
+        <para>If set, the module is a fully operational
+        presence server. Otherwise, it is used as a 'library', for 
+        its exported functions.
+        </para>
+        <para>
+        <emphasis>Default value is <quote>NULL</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>db_url</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "db_url", "&defaultdb;")
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>presentity_table</varname>(str)</title>
+        <para>
+        The name of the presentity table in the database.
+        </para>
+        <para>
+        <emphasis>Default value is <quote>presentity</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>presentity_table</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "presentity_table", "my_presentity_table")
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>dialog_expires</varname>(str)</title>
+        <para>
+        The default Expires value for dialog event.
+        </para>
+        <para>
+        <emphasis>Default value is 30.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>dialog_expires</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "dialog_expires", 3600)
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>presence_expires</varname>(str)</title>
+        <para>
+        The default Expires value for presence event.
+        </para>
+        <para>
+        <emphasis>Default value is 3600.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>presence_expires</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "presence_expires", 600)
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>mwi_expires</varname>(str)</title>
+        <para>
+        The default Expires value for message-summary (mwi) event.
+        </para>
+        <para>
+        <emphasis>Default value is 3600.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>presence_expires</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "mwi_expires", 600)
+...
+</programlisting>
+        </example>
+    </section>
+    
+    </section>
+    
+    
+    
+
+
+</section>    
+<section>
+    <title>Functions</title>
+    <section>
+    <title>amqp related</title>
+
+    <section>
+        <title>
+        <function moreinfo="none">kazoo_publish(exchange, routing_key, json_payload)</function>
+        </title>
+        <para>
+        The function publishes a json payload to rabbitmq. The routing_key parameter should be encoded.
+        </para>
+        <para>
+        This function can be used from ANY ROUTE.
+        </para>
+
+        <example>
+        <title><function>kazoo_publish</function> usage</title>
+        <programlisting format="linespecific">
+...
+$var(amqp_payload_request) = "{'Event-Category' : 'directory', 'Event-Name' : 'reg_success', 'Contact' : '" + $var(fs_contact) + "', 'Call-ID' : '" + $ci + "', 'Realm' : '" + $fd +"', 'Username' : '" + $fU + "', 'From-User' : '" + $fU + "', 'From-Host' : '" + $fd + "', 'To-User' : '" + $tU +"', 'To-Host' : '" + $td + "', 'User-Agent' : '" + $ua +"' ," + $var(register_contants)+ " }";
+$var(amqp_routing_key) = "registration.success." + $(fd{kz.encode}) + "." + $fU;
+kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request)); 
+...
+</programlisting>
+        </example>
+    </section>
+    
+    <section>
+        <title>
+        <function moreinfo="none">kazoo_query(exchange, routing_key, json_payload [, target_var])</function>
+        </title>
+        <para>
+        The function publishes a json payload to rabbitmq, waits for a correlated messageand puts the result in target_var. The routing_key parameter should be encoded.
+        target_var is optional as the function also puts the result in pseudo-variable $kzR.
+        </para>
+        <para>
+        This function can be used from ANY ROUTE.
+        </para>
+
+        <example>
+        <title><function>kazoo_query</function> usage</title>
+        <programlisting format="linespecific">
+...
+$var(amqp_payload_request) = "{'Event-Category' : 'call_event' , 'Event-Name' : 'query_user_channels_req', 'Realm' : '" + $fd + "', 'Username' : '" + $fU + "', 'Active-Only' : false }";
+kazoo_encode("$ci", "$var(callid_encoded)");
+$var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
+if(kazoo_query("callevt", $var(amqp_routing_key), $var(amqp_payload_request), "$var(amqp_result)")) {
+   kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
+   if($du != $null) {
+       xlog("L_INFO", "$ci|log|user channels found redirecting call to $du");
+       return;
+   }
+}
+...
+</programlisting>
+        </example>
+    </section>
+    
+    <section>
+        <title>
+        <function moreinfo="none">kazoo_subscribe(exchange, exchange_type, queue, routing_key)</function>
+        </title>
+        <para>
+        The function subscribes to exchange/type on queue with routing_key. The routing_key parameter should be encoded.
+        </para>
+        <para>
+        This function  must be called from event_route[kazoo:mod-init].
+        </para>
+
+        <example>
+        <title><function>kazoo_subscribe</function> usage</title>
+        <programlisting format="linespecific">
+...
+event_route[kazoo:mod-init]
+{
+   kazoo_subscribe("dialoginfo", "direct", "BLF-QUEUE-MY_HOSTNAME", "BLF-MY_HOSTNAME");
+}
+
+event_route[kazoo:consumer-event]
+{
+    xlog("L_INFO","Received json payload : $kzE");
+}
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title>
+        <function moreinfo="none">kazoo_subscribe(json_description)</function>
+        </title>
+        <para>
+        The function takes additional parameters to the subscribe function.
+        </para>
+        <para>        
+        <itemizedlist>
+            <title>json payload fields description</title>
+            <listitem>
+               <para>exchange : str, required</para> 
+            </listitem>
+            <listitem>
+               <para>type : str, required</para> 
+            </listitem>
+            <listitem>
+               <para>queue : str, required</para> 
+            </listitem>
+            <listitem>
+               <para>routing : str, required</para> 
+            </listitem>
+            <listitem>
+               <para>auto_delete : int, default 1</para> 
+            </listitem>
+            <listitem>
+               <para>durable : int, default 0</para> 
+            </listitem>
+            <listitem>
+               <para>no_ack : int, default 1</para> 
+            </listitem>
+            <listitem>
+               <para>wait_for_consumer_ack : int, default 0</para> 
+            </listitem>
+        </itemizedlist>
+        </para>
+        <para>
+        This function  must be called from event_route[kazoo:mod-init].
+        </para>
+        <example>
+        <title><function>kazoo_subscribe</function> usage</title>
+        <programlisting format="linespecific">
+...
+event_route[kazoo:mod-init]
+{
+    $var(payload) = "{ 'exchange' : 'dialoginfo' , 'type' : 'direct', 'queue' : 'BLF-QUEUE-MY_HOSTNAME', 'routing' : 'BLF-MY_HOSTNAME', 'auto_delete' : 0, 'durable' : 1, 'no_ack' : 0, 'wait_for_consumer_ack' : 1 }";
+    kazoo_subscribe("$var(payload)");
+}
+
+event_route[kazoo:consumer-event]
+{
+    xlog("L_INFO","Received json payload : $kzE");
+}
+...
+</programlisting>
+        </example>
+    </section>
+    
+</section>
+    <section>
+    <title>presence related</title>
+    <section>
+        <title>
+        <function moreinfo="none">kazoo_pua_publish(json_payload)</function>
+        </title>
+        <para>
+        The function build presentity state from json_payload and updates presentity table.
+        </para>
+        <para>
+        This function can be used from ANY ROUTE.
+        </para>
+
+        <example>
+        <title><function>kazoo_pua_publish</function> usage</title>
+        <programlisting format="linespecific">
+...
+event_route[kazoo:consumer-event-presence-update]
+{
+    xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,From})");
+    kazoo_pua_publish($kzE);
+    pres_refresh_watchers("$(kzE{kz.json,From})", "$(kzE{kz.json,Event-Package})", 1);
+}    
+...
+</programlisting>
+        </example>
+    </section>
+
+    
+</section>
+    <section>
+    <title>other</title>
+    <section>
+        <title>
+        <function moreinfo="none">kazoo_encode(to_encode, target_var)</function>
+        </title>
+        <para>
+        The function encodes the 1st parameter for amqp and puts the result in the 2nd parameter.
+        </para>
+        <para>
+        This function can be used from ANY ROUTE.
+        </para>
+
+        <example>
+        <title><function>kazoo_encode</function> usage</title>
+        <programlisting format="linespecific">
+...
+kazoo_encode("$ci", "$var(callid_encoded)");
+$var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title>
+        <function moreinfo="none">kazoo_json(json_payload, field, target_var)</function>
+        </title>
+        <para>
+        The function extracts the value from a json payload and puts the result in the 3rd parameter.
+        It can use nested values for the query part.
+        </para>
+        <para>
+        This function can be used from ANY ROUTE.
+        </para>
+
+        <example>
+        <title><function>kazoo_json</function> usage</title>
+        <programlisting format="linespecific">
+...
+kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
+if($du != $null) {
+  xlog("L_INFO", "$ci|log|user channels found redirecting call to $du");
+  return;
+}
+...
+</programlisting>
+        </example>
+    </section>
+    
+</section>
+</section>
+    
+        <section>
+        <title>Exported pseudo-variables</title>
+        <itemizedlist>
+            <listitem>
+            <para>
+                <emphasis>$kzR</emphasis>
+                Contains the payload result of kazoo_query execution.
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+                <emphasis>$kzE</emphasis>
+                Contains the payload of a consumed message
+            </para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    
+        <section>
+        <title>Transformations</title>
+        <para>The prefix for kazoo transformations is kz.</para>
+        <itemizedlist>
+            <listitem><para>
+                <emphasis>json</emphasis>
+            </para>
+        <example>
+        <title><function>kz.json</function> usage</title>
+        <programlisting format="linespecific">
+...
+#kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
+$du = $kzR{kz.json,Channels[0].switch_url};
+if($du != $null) {
+  xlog("L_INFO", "$ci|log|user channels found redirecting call to $du");
+  return;
+}
+...
+</programlisting>
+        </example>
+            
+            </listitem>
+            <listitem><para>
+                <emphasis>encode</emphasis>
+            </para>
+        <example>
+        <title><function>kz.encode</function> usage</title>
+        <programlisting format="linespecific">
+...
+#kazoo_encode("$ci", "$var(callid_encoded)");
+#$var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
+$var(amqp_routing_key) = "call.status_req." + $(ci{kz.encode})
+...
+</programlisting>
+        </example>
+            
+            </listitem>
+        </itemizedlist>
+    </section>
+    
+
 </chapter>
 
