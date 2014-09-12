@@ -78,6 +78,9 @@ The worker process issues an event-route where we can act on the received payloa
     Kazoo module will try to execute the event route from most significant to less significant. 
     define the event route like event_route[kazoo:consumer-event[-payload_key_value[-payload_subkey_value]]]
     </para>
+    <para>
+    we can set the key/subkey pair on a subscription base. check the payload on subscribe.
+    </para>
         <example>
         <title>define the event route</title>
         <programlisting format="linespecific">
@@ -94,10 +97,24 @@ xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,
 ...
 }
 
+event_route[kazoo:consumer-event-presence]
+{
+# presence is the value extracted from Event-Category field in json payload 
+xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,From})");
+...
+}
+
 event_route[kazoo:consumer-event-event-category-event-name]
 {
 # event-category is the name of the amqp_consumer_event_key parameter
 # event-name is the name of the amqp_consumer_event_subkey parameter
+# this event route is executed if we can't find the previous 
+...
+}
+
+event_route[kazoo:consumer-event-event-category]
+{
+# event-category is the name of the amqp_consumer_event_key parameter
 # this event route is executed if we can't find the previous 
 ...
 }
@@ -213,7 +230,7 @@ modparam("kazoo", "amqp_consumer_processes", 10)
     <section>
         <title><varname>amqp_consumer_event_key</varname>(str)</title>
         <para>
-        The name of the field in json payload to compose the event name 1st part
+        The default name of the field in json payload to compose the event name 1st part
         </para>
         <para>
         <emphasis>Default value is <quote>Event-Category</quote>.</emphasis>
@@ -231,7 +248,7 @@ modparam("kazoo", "amqp_consumer_event_key", "My-JSON-Field-Name")
     <section>
         <title><varname>amqp_consumer_event_subkey</varname>(str)</title>
         <para>
-        The name of the field in json payload to compose the event name 2nd part
+        The default name of the field in json payload to compose the event name 2nd part
         </para>
         <para>
         <emphasis>Default value is <quote>Event-Name</quote>.</emphasis>
@@ -304,11 +321,7 @@ while(true) // main  loop
     <section>
         <title><varname>amqp_consumer_loop_count</varname>(int)</title>
         <para>
-        The database url.
-        </para>
-        <para>If set, the module is a fully operational
-        presence server. Otherwise, it is used as a 'library', for 
-        its exported functions.
+        The consumer loop count.
         </para>
         <para>
         <emphasis>Default value is 10.</emphasis>
@@ -326,11 +339,7 @@ modparam("kazoo", "amqp_consumer_loop_count", 3)
     <section>
         <title><varname>amqp_internal_loop_count</varname>(int)</title>
         <para>
-        The database url.
-        </para>
-        <para>If set, the module is a fully operational
-        presence server. Otherwise, it is used as a 'library', for 
-        its exported functions.
+        The internal listen for commands loop count.
         </para>
         <para>
         <emphasis>Default value is 5.</emphasis>
@@ -348,11 +357,7 @@ modparam("kazoo", "amqp_internal_loop_count", 1)
     <section>
         <title><varname>amqp_consumer_ack_loop_count</varname>(int)</title>
         <para>
-        The database url.
-        </para>
-        <para>If set, the module is a fully operational
-        presence server. Otherwise, it is used as a 'library', for 
-        its exported functions.
+        The work ack loop count.
         </para>
         <para>
         <emphasis>Default value is 20.</emphasis>
@@ -572,7 +577,7 @@ modparam("kazoo", "presence_expires", 600)
         <emphasis>Default value is 3600.</emphasis>
         </para>
         <example>
-        <title>Set <varname>presence_expires</varname> parameter</title>
+        <title>Set <varname>mwi_expires</varname> parameter</title>
         <programlisting format="linespecific">
 ...
 modparam("kazoo", "mwi_expires", 600)
@@ -709,6 +714,12 @@ event_route[kazoo:consumer-event]
             </listitem>
             <listitem>
                <para>wait_for_consumer_ack : int, default 0</para> 
+            </listitem>
+            <listitem>
+               <para>event_key : str, no default</para> 
+            </listitem>
+            <listitem>
+               <para>event_subkey : str, no default</para> 
             </listitem>
         </itemizedlist>
         </para>

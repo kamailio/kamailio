@@ -84,6 +84,8 @@ typedef struct {
 	char* payload;
 	uint64_t delivery_tag;
 	amqp_channel_t channel;
+	char* event_key;
+	char* event_subkey;
 } kz_amqp_consumer_delivery, *kz_amqp_consumer_delivery_ptr;
 
 typedef struct {
@@ -91,6 +93,8 @@ typedef struct {
 	amqp_bytes_t exchange_type;
 	amqp_bytes_t routing_key;
 	amqp_bytes_t queue;
+	amqp_bytes_t event_key;
+	amqp_bytes_t event_subkey;
 	amqp_boolean_t passive;
 	amqp_boolean_t durable;
 	amqp_boolean_t exclusive;
