@@ -3,7 +3,7 @@
  *
  * Kazoo module interface
  *
- * Copyright (C) 2013 2600Hz
+ * Copyright (C) 2010-2014 2600Hz
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- * 2013-04  first version (Anca Vamanu)
+ * 2014-08  first version (2600hz)
  */
 
 #include <stdio.h>
@@ -33,13 +33,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../lib/kmi/mi.h"
-#include "../tm/tm_load.h"
 #include "../../cfg/cfg_struct.h"
-
-#include "../pua/pua.h"
-#include "../pua/pua_bind.h"
-#include "../pua/send_publish.h"
-#include "../presence/bind_presence.h"
 
 #include "kz_amqp.h"
 #include "kz_json.h"

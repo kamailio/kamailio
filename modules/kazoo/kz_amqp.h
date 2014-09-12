@@ -11,7 +11,6 @@
 #include <amqp.h>
 
 #include "../../sr_module.h"
-#include "../tm/tm_load.h"
 
 #include "const.h"
 #include "defs.h"
