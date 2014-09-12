@@ -856,7 +856,7 @@ int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, cha
 			return -1;
 		}
 
-		char* strjson = json_object_to_json_string(ret);
+		char* strjson = (char*)json_object_to_json_string(ret);
 		int len = strlen(strjson);
 		char* value = pkg_malloc(len+1);
 		memcpy(value, strjson, len);
@@ -1162,43 +1162,6 @@ int get_channel_index() {
 	channel_index = 0;
 	return get_channel_index();
 }
-
-/*
-int kz_amqp_unbind_channel(kz_amqp_conn_ptr kz_conn, int idx )
-{
-    kz_amqp_bind_ptr reply = channels[idx].targeted;
-    int ret = 0;
-	if(reply == NULL) {
-		LM_ERR("unbinding channel NULL??\n");
-		ret = -1;
-		goto error;
-	}
-
-    if (amqp_basic_cancel(kz_conn->conn, channels[idx].channel, amqp_empty_bytes) < 0
-	    || kz_amqp_error("Canceling", amqp_get_rpc_reply(kz_conn->conn)))
-    {
-		ret = -RET_AMQP_ERROR;
-		goto error;
-    }
-
-    if (amqp_queue_unbind(kz_conn->conn, channels[idx].channel, reply->queue, reply->exchange, reply->routing_key, amqp_empty_table) < 0
-	    || kz_amqp_error("Unbinding queue", amqp_get_rpc_reply(kz_conn->conn)))
-    {
-		ret = -RET_AMQP_ERROR;
-		goto error;
-    }
-
-    amqp_queue_delete(kz_conn->conn, channels[idx].channel, reply->queue, 0, 0);
-
-    kz_amqp_free_binding(reply);
-    channels[idx].targeted = NULL;
-    channels[idx].state = KZ_AMQP_FREE;
-
-error:
-	return ret;
-}
-*/
-
 
 int kz_amqp_bind_targeted_channel(kz_amqp_conn_ptr kz_conn, int loopcount, int idx )
 {
@@ -1551,7 +1514,6 @@ int consumer = 1;
 
 void kz_amqp_send_consumer_event_ex(char* payload, char* event_key, char* event_subkey, amqp_channel_t channel, uint64_t delivery_tag, int nextConsumer)
 {
-	int len = 0;
 	kz_amqp_consumer_delivery_ptr ptr = (kz_amqp_consumer_delivery_ptr) shm_malloc(sizeof(kz_amqp_consumer_delivery));
 	if(ptr == NULL) {
 		LM_ERR("NO MORE SHARED MEMORY!");
