@@ -38,7 +38,7 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils lua memcached \
 			   snmpstats carrierroute xmpp cpl redis python geoip\
 			   sqlite json mono ims sctp java \
-			   tls outbound websocket autheph cassandra
+			   tls outbound websocket autheph 
 
 # module groups to be packaged onto kamailio-extra-modules
 EXTRA_GROUPS=gzcompress uuid ev
@@ -216,4 +216,5 @@ get-orig-source:
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure
+
 
