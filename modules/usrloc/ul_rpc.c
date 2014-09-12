@@ -552,7 +552,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	}
 	LM_DBG("ret: %d table:%.*s aor:%.*s contact:%.*s expires:%d dtemp:%f path:%.*s flags:%d bflags:%d methods:%d\n",
 		ret, table.len, table.s, aor.len, aor.s, contact.len, contact.s,
-		(int) ci.expires, dtemp, ci.path->len, ci.path->s, ci.flags, ci.cflags, (int) ci.methods);
+		(int) ci.expires, dtemp, (ci.path)?ci.path->len:0, (ci.path && ci.path->s)?ci.path->s:"", ci.flags, ci.cflags, (int) ci.methods);
 	if ( ret != 9) {
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
