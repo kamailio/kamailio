@@ -80,8 +80,6 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt);
 #define PASS_COL "ha1"
 #define PASS_COL_2 "ha1b"
 
-#define DEFAULT_CRED_LIST "rpid"
-
 /*
  * Module parameter variables
  */
@@ -100,7 +98,7 @@ db1_con_t* auth_db_handle    = 0; /* database connection handle */
 db_func_t auth_dbf;
 auth_api_s_t auth_api;
 
-char *credentials_list      = DEFAULT_CRED_LIST;
+char *credentials_list      = 0;
 pv_elem_t *credentials      = 0; /* Parsed list of credentials to load */
 int credentials_n           = 0; /* Number of credentials in the list */
 
@@ -353,11 +351,11 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 	char *sep;
 
 	p = definition;
-	*pv_def = 0;
-	*cnt = 0;
-
 	if (p==0 || *p==0)
 		return 0;
+
+	*pv_def = 0;
+	*cnt = 0;
 
 	/* get element by element */
 	while ( (end=strchr(p,';'))!=0 || (end=p+strlen(p))!=p ) {
