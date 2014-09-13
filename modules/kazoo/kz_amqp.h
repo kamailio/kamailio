@@ -11,7 +11,6 @@
 #include <amqp.h>
 
 #include "../../sr_module.h"
-#include "../tm/tm_load.h"
 
 #include "const.h"
 #include "defs.h"
@@ -22,7 +21,6 @@ typedef kz_amqp_connection_info *kz_amqp_connection_info_ptr;
 
 extern int dbk_channels;
 extern str dbk_node_hostname;
-extern struct tm_binds tmb;
 extern str dbk_consumer_event_key;
 extern str dbk_consumer_event_subkey;
 extern int dbk_consumer_processes;
@@ -86,6 +84,8 @@ typedef struct {
 	char* payload;
 	uint64_t delivery_tag;
 	amqp_channel_t channel;
+	char* event_key;
+	char* event_subkey;
 } kz_amqp_consumer_delivery, *kz_amqp_consumer_delivery_ptr;
 
 typedef struct {
@@ -93,6 +93,8 @@ typedef struct {
 	amqp_bytes_t exchange_type;
 	amqp_bytes_t routing_key;
 	amqp_bytes_t queue;
+	amqp_bytes_t event_key;
+	amqp_bytes_t event_subkey;
 	amqp_boolean_t passive;
 	amqp_boolean_t durable;
 	amqp_boolean_t exclusive;

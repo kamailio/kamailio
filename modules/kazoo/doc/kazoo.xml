@@ -14,9 +14,8 @@
 	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 	    <author>
-		<firstname>Luis</firstname>
-		<surname>Azedo</surname>
-		<email>luis@2600hz.com</email>
+		<firstname>2600hz Inc.</firstname>
+		<email>engineering@2600hz.com</email>
 	    </author>
 	    <editor>
 		<firstname>Luis</firstname>
@@ -27,12 +26,12 @@
 	<copyright>
 	    <year>2010</year>
 	    <year>2014</year>
-	    <holder>&fhg;</holder>
+	    <holder>2600hz</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
     
-    <xi:include href="db_text_admin.xml"/>
+    <xi:include href="kazoo_admin.xml"/>
     <!-- <xi:include href="db_text_devel.xml"/> -->
     
 

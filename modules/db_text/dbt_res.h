@@ -44,18 +44,12 @@ typedef struct _dbt_result
 	dbt_row_p rows;
 } dbt_result_t, *dbt_result_p;
 
-//typedef db1_res_t dbt_result_t, *dbt_result_p;
-
 typedef struct _dbt_con
 {
 	dbt_cache_p con;
-	dbt_result_p res;
-	dbt_row_p row;
 } dbt_con_t, *dbt_con_p;
 
 #define DBT_CON_CONNECTION(db_con) (((dbt_con_p)((db_con)->tail))->con)
-#define DBT_CON_RESULT(db_con)     (((dbt_con_p)((db_con)->tail))->res)
-#define DBT_CON_ROW(db_con)        (((dbt_con_p)((db_con)->tail))->row)
 
 dbt_result_p dbt_result_new(dbt_table_p, int*, int);
 int dbt_result_free(dbt_result_p);

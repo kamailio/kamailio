@@ -3,7 +3,7 @@
  *
  * Kazoo module interface
  *
- * Copyright (C) 2013 2600Hz
+ * Copyright (C) 2010-2014 2600Hz
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- * 2013-04  first version (Anca Vamanu)
+ * 2014-08  first version (2600hz)
  */
 
 #include <stdio.h>
@@ -33,13 +33,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../lib/kmi/mi.h"
-#include "../tm/tm_load.h"
 #include "../../cfg/cfg_struct.h"
-
-#include "../pua/pua.h"
-#include "../pua/pua_bind.h"
-#include "../pua/send_publish.h"
-#include "../presence/bind_presence.h"
 
 #include "kz_amqp.h"
 #include "kz_json.h"
@@ -63,9 +57,9 @@ int dbk_reconn_retries = 8;
 
 int dbk_presentity_phtable_size = 4096;
 
-int dbk_dialog_expires = 30;
-int dbk_presence_expires = 3600;
-int dbk_mwi_expires = 3600;
+//int dbk_dialog_expires = 30;
+//int dbk_presence_expires = 3600;
+//int dbk_mwi_expires = 3600;
 int dbk_create_empty_dialog = 1;
 
 int dbk_channels = 50;
@@ -89,11 +83,6 @@ int dbk_pua_mode = 1;
 
 int dbk_single_consumer_on_reconnect = 1;
 int dbk_consume_messages_on_reconnect = 1;
-
-
-struct tm_binds tmb;
-pua_api_t kz_pua_api;
-presence_api_t kz_presence_api;
 
 int startup_time = 0;
 
@@ -151,9 +140,9 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
     {"node_hostname", STR_PARAM, &dbk_node_hostname.s},
-    {"dialog_expires", INT_PARAM, &dbk_dialog_expires},
-    {"presence_expires", INT_PARAM, &dbk_presence_expires},
-    {"mwi_expires", INT_PARAM, &dbk_mwi_expires},
+  //  {"dialog_expires", INT_PARAM, &dbk_dialog_expires},
+  //  {"presence_expires", INT_PARAM, &dbk_presence_expires},
+  //  {"mwi_expires", INT_PARAM, &dbk_mwi_expires},
     {"amqp_connection", STR_PARAM|USE_FUNC_PARAM,(void*)kz_amqp_add_connection},
     {"amqp_max_channels", INT_PARAM, &dbk_channels},
     {"amqp_consumer_ack_timeout_micro", INT_PARAM, &kz_ack_tv.tv_usec},
@@ -195,20 +184,6 @@ struct module_exports exports = {
     mod_child_init				/* per-child init function */
 };
 
-
-
-static int kz_initialize_bindings() {
-    LM_DBG("kz_initialize_bindings\n");
-
-    /* load all TM stuff */
-    if (load_tm_api(&tmb) == -1) {
-    	LM_ERR("Can't load tm functions. Module TM not loaded?\n");
-    	return -1;
-    }
-
-    return 0;
-}
-
 static int mod_init(void) {
 	int i;
     startup_time = (int) time(NULL);
@@ -224,11 +199,6 @@ static int mod_init(void) {
    	dbk_consumer_event_subkey.len = strlen(dbk_consumer_event_subkey.s);
 
     kz_amqp_init();
-
-    if(kz_initialize_bindings() == -1) {
-   		LM_ERR("Error initializing bindings\n");
-   		return -1;
-   	}
 
     if(dbk_pua_mode == 1) {
 		kz_db_url.len = kz_db_url.s ? strlen(kz_db_url.s) : 0;
@@ -278,6 +248,7 @@ static int mod_init(void) {
     }
 
     register_procs(total_workers);
+    cfg_register_child(total_workers);
 
     return 0;
 }

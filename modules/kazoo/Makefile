@@ -6,14 +6,11 @@ include ../../Makefile.defs
 auto_gen=
 NAME=kazoo.so
 
-DEFS+=-I/usr/local/include -DKAMAILIO_MOD_INTERFACE
-LIBS=-L/usr/local/lib -lrabbitmq -ljson
+DEFS+=-I$(LOCALBASE)/include -I$(SYSBASE)/include -DKAMAILIO_MOD_INTERFACE
+LIBS=-L$(LOCALBASE)/lib -I$(SYSBASE)/lib -lrabbitmq -ljson -luuid
 
 DEFS += -DSER_MOD_INTERFACE
 
-ifeq ($(CROSS_COMPILE),)
-XML2CFG=$(shell which xml2-config)
-endif
 
 SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1

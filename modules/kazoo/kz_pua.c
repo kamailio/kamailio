@@ -18,9 +18,6 @@
 #include "const.h"
 
 
-extern int dbk_dialog_expires;
-extern int dbk_presence_expires;
-extern int dbk_mwi_expires;
 extern int dbk_include_entity;
 extern int dbk_pua_mode;
 
@@ -87,7 +84,7 @@ int kz_pua_update_presentity(str* event, str* realm, str* user, str* etag, str* 
 	query_cols[n_query_cols] = &str_expires_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = expires+(int)time(NULL);
+	query_vals[n_query_cols].val.int_val = expires;
 	n_query_cols++;
 
 	if (kz_pa_dbf.use_table(kz_pa_db, &kz_presentity_table) < 0)
@@ -173,7 +170,7 @@ int kz_pua_publish_presence_to_presentity(struct json_object *json_obj) {
     str activity = str_init("");
     str note = str_init("Idle");
     str status = str_presence_status_online;
-    int expires = dbk_presence_expires;
+    int expires = 0;
 
     char *body = (char *)pkg_malloc(PRESENCE_BODY_BUFFER_SIZE);
     if(body == NULL) {
@@ -197,6 +194,8 @@ int kz_pua_publish_presence_to_presentity(struct json_object *json_obj) {
     struct json_object* ExpiresObj = json_object_object_get(json_obj, BLF_JSON_EXPIRES);
     if(ExpiresObj != NULL) {
     	expires = json_object_get_int(ExpiresObj);
+    	if(expires > 0)
+    		expires += (int)time(NULL);
     }
 
     if (!from_user.len || !to_user.len || !state.len) {
@@ -250,7 +249,7 @@ int kz_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
         mwi_new = { 0, 0 }, mwi_saved = { 0, 0 },
         mwi_urgent = { 0, 0 }, mwi_urgent_saved = { 0, 0 },
         mwi_account = { 0, 0 }, mwi_body = { 0, 0 };
-    int expires = dbk_mwi_expires;
+    int expires = 0;
 
     char *body = (char *)pkg_malloc(MWI_BODY_BUFFER_SIZE);
     if(body == NULL) {
@@ -280,6 +279,8 @@ int kz_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
     struct json_object* ExpiresObj = json_object_object_get(json_obj, BLF_JSON_EXPIRES);
     if(ExpiresObj != NULL) {
     	expires = json_object_get_int(ExpiresObj);
+    	if(expires > 0)
+    		expires += (int)time(NULL);
     }
 
     sprintf(body, MWI_BODY, mwi_waiting.len, mwi_waiting.s,
@@ -314,7 +315,7 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
     char sender_buf[1024];
     str sender = {0, 0};
     str dialoginfo_body = {0 , 0};
-    int expires = dbk_dialog_expires;
+    int expires = 0;
     str event = str_init("dialog");
     int reset = 0;
 
@@ -341,6 +342,8 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
     struct json_object* ExpiresObj = json_object_object_get(json_obj, BLF_JSON_EXPIRES);
     if(ExpiresObj != NULL) {
     	expires = json_object_get_int(ExpiresObj);
+    	if(expires > 0)
+    		expires += (int)time(NULL);
     }
 
     ExpiresObj = json_object_object_get(json_obj, "Flush-Level");
