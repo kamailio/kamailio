@@ -57,9 +57,9 @@ int dbk_reconn_retries = 8;
 
 int dbk_presentity_phtable_size = 4096;
 
-int dbk_dialog_expires = 30;
-int dbk_presence_expires = 3600;
-int dbk_mwi_expires = 3600;
+//int dbk_dialog_expires = 30;
+//int dbk_presence_expires = 3600;
+//int dbk_mwi_expires = 3600;
 int dbk_create_empty_dialog = 1;
 
 int dbk_channels = 50;
@@ -140,9 +140,9 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
     {"node_hostname", STR_PARAM, &dbk_node_hostname.s},
-    {"dialog_expires", INT_PARAM, &dbk_dialog_expires},
-    {"presence_expires", INT_PARAM, &dbk_presence_expires},
-    {"mwi_expires", INT_PARAM, &dbk_mwi_expires},
+  //  {"dialog_expires", INT_PARAM, &dbk_dialog_expires},
+  //  {"presence_expires", INT_PARAM, &dbk_presence_expires},
+  //  {"mwi_expires", INT_PARAM, &dbk_mwi_expires},
     {"amqp_connection", STR_PARAM|USE_FUNC_PARAM,(void*)kz_amqp_add_connection},
     {"amqp_max_channels", INT_PARAM, &dbk_channels},
     {"amqp_consumer_ack_timeout_micro", INT_PARAM, &kz_ack_tv.tv_usec},
@@ -248,6 +248,7 @@ static int mod_init(void) {
     }
 
     register_procs(total_workers);
+    cfg_register_child(total_workers);
 
     return 0;
 }

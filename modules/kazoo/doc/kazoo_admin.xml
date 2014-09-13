@@ -495,11 +495,9 @@ modparam("kazoo", "amqp_query_timout_micro", 200000)
     <section>
         <title><varname>db_url</varname>(str)</title>
         <para>
-        The database url.
+        The database for the presentity table.
         </para>
-        <para>If set, the module is a fully operational
-        presence server. Otherwise, it is used as a 'library', for 
-        its exported functions.
+        <para>If set, the kazoo_ppua_publish function will update the presentity status in the database.
         </para>
         <para>
         <emphasis>Default value is <quote>NULL</quote>.</emphasis>
@@ -532,59 +530,6 @@ modparam("kazoo", "presentity_table", "my_presentity_table")
         </example>
     </section>
 
-    <section>
-        <title><varname>dialog_expires</varname>(str)</title>
-        <para>
-        The default Expires value for dialog event.
-        </para>
-        <para>
-        <emphasis>Default value is 30.</emphasis>
-        </para>
-        <example>
-        <title>Set <varname>dialog_expires</varname> parameter</title>
-        <programlisting format="linespecific">
-...
-modparam("kazoo", "dialog_expires", 3600)
-...
-</programlisting>
-        </example>
-    </section>
-
-    <section>
-        <title><varname>presence_expires</varname>(str)</title>
-        <para>
-        The default Expires value for presence event.
-        </para>
-        <para>
-        <emphasis>Default value is 3600.</emphasis>
-        </para>
-        <example>
-        <title>Set <varname>presence_expires</varname> parameter</title>
-        <programlisting format="linespecific">
-...
-modparam("kazoo", "presence_expires", 600)
-...
-</programlisting>
-        </example>
-    </section>
-
-    <section>
-        <title><varname>mwi_expires</varname>(str)</title>
-        <para>
-        The default Expires value for message-summary (mwi) event.
-        </para>
-        <para>
-        <emphasis>Default value is 3600.</emphasis>
-        </para>
-        <example>
-        <title>Set <varname>mwi_expires</varname> parameter</title>
-        <programlisting format="linespecific">
-...
-modparam("kazoo", "mwi_expires", 600)
-...
-</programlisting>
-        </example>
-    </section>
     
     </section>
     
