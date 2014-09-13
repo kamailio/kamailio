@@ -448,7 +448,6 @@ static void link_profile(struct dlg_profile_link *linker, str *vkey)
 {
 	unsigned int hash;
 	struct dlg_profile_entry *p_entry;
-	struct dlg_entry *d_entry;
 
 	/* calculate the hash position */
 	hash = calc_hash_profile(&linker->hash_linker.value, vkey, linker->profile);
@@ -477,8 +476,6 @@ static void link_profile(struct dlg_profile_link *linker, str *vkey)
  */
 static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *dlg)
 {
-	unsigned int hash;
-	struct dlg_profile_entry *p_entry;
 	struct dlg_entry *d_entry;
 
 	/* add the linker to the dialog */
