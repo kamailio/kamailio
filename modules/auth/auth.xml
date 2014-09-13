@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-  "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
+  "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 
 <refentry id="module.auth"
           xmlns:serdoc="http://sip-router.org/xml/serdoc">
