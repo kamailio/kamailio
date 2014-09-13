@@ -24,9 +24,12 @@ Federico Cabiddu
               2.2. External libraries or applications
 
         3. Parameters
+
+              3.1. hash_size (integer)
+
         4. Functions
 
-              4.1. tstore()
+              4.1. t_store()
               4.2. t_append(domain, ruri)
               4.3. t_append_to(tindex, tlabel, domain)
 
@@ -34,9 +37,10 @@ Federico Cabiddu
 
    List of Examples
 
-   1.1. tstore usage
-   1.2. t_append usage
-   1.3. t_append_to usage
+   1.1. Set hash_size parameter
+   1.2. t_store usage
+   1.3. t_append usage
+   1.4. t_append_to usage
 
 Chapter 1. Admin Guide
 
@@ -49,9 +53,12 @@ Chapter 1. Admin Guide
         2.2. External libraries or applications
 
    3. Parameters
+
+        3.1. hash_size (integer)
+
    4. Functions
 
-        4.1. tstore()
+        4.1. t_store()
         4.2. t_append(domain, ruri)
         4.3. t_append_to(tindex, tlabel, domain)
 
@@ -89,23 +96,39 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
+   3.1. hash_size (integer)
+
+3.1. hash_size (integer)
+
+   The size of the hash table internally used to keep the transaction. A
+   larger table is much faster but consumes more memory. The hash size
+   must be a power of two, otherwise it will be rounded down to the
+   nearest power of two.
+
+   Default value is “2048”.
+
+   Example 1.1. Set hash_size parameter
+...
+modparam("tsilo", "hash_size", 1024)
+...
+
 4. Functions
 
-   4.1. tstore()
+   4.1. t_store()
    4.2. t_append(domain, ruri)
    4.3. t_append_to(tindex, tlabel, domain)
 
-4.1. tstore()
+4.1. t_store()
 
    The method stores r-uri, tindex and tlabel of the current transaction.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.1. tstore usage
+   Example 1.2. t_store usage
 ...
 if (is_method("INVITE")) {
         if (t_newtran()) {
-                tstore();
+                t_store();
         }
 }
 ...
@@ -126,7 +149,7 @@ if (is_method("INVITE")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.2. t_append usage
+   Example 1.3. t_append usage
 ...
 if (is_method("REGISTER")) {
         t_append("location", "$tu");
@@ -150,7 +173,7 @@ if (is_method("REGISTER")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.3. t_append_to usage
+   Example 1.4. t_append_to usage
 ...
 if (is_method("REGISTER")) {
         $var(tindex) = ...

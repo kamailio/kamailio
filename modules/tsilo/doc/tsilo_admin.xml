@@ -96,7 +96,7 @@ modparam("tsilo", "hash_size", 1024)
 	<section>
 	<title>Functions</title>
 	<section>
-		<title><function moreinfo="none">tstore()</function></title>
+		<title><function moreinfo="none">t_store()</function></title>
 		<para>
 		The method stores r-uri, tindex and tlabel of the current transaction.
 		</para>
@@ -104,12 +104,12 @@ modparam("tsilo", "hash_size", 1024)
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>tstore</function> usage</title>
+		<title><function>t_store</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (is_method("INVITE")) {
 	if (t_newtran()) {
-		tstore();
+		t_store();
 	}
 }
 ...
