@@ -266,7 +266,8 @@ modparam("auth_db", "use_domain", 1)
 		</itemizedlist>
 		</para>
 		<para>
-		Default value of this parameter is <quote>rpid</quote>.
+		Default value of this parameter is <quote>NULL</quote> (no credientials
+		loaded).
 		</para>
 		<example>
 		<title><varname>load_credentials</varname> parameter usage</title>

@@ -276,7 +276,7 @@ modparam("auth_db", "use_domain", 1)
      * credential = (avp_specification '=' column_name) | (column_name)
      * avp_specification = '$avp(' + 'i:'ID | 's:'NAME | alias + ')'
 
-   Default value of this parameter is "rpid".
+   Default value of this parameter is "NULL" (no credientials loaded).
 
    Example 1.8. load_credentials parameter usage
 ...
