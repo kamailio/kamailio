@@ -27,6 +27,14 @@
 #include "mongodb_connection.h"
 #include "mongodb_dbase.h"
 
+typedef struct db_mongodb_result {
+	mongoc_collection_t *collection;   /*!< Collection link */
+	mongoc_cursor_t *cursor;           /*!< Cursor link */
+	bson_t *rdoc;
+	int idx;
+	bson_t *colsdoc;
+	int nrcols;
+} db_mongodb_result_t;
 
 /*
  * Initialize database module
@@ -139,14 +147,77 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 error:
 	return -1;
 }
+
+db1_res_t* db_mongodb_new_result(void)
+{
+	db1_res_t* obj;
+
+	obj = db_new_result();
+	if (!obj)
+		return NULL;
+	RES_PTR(obj) = pkg_malloc(sizeof(db_mongodb_result_t));
+	if (!RES_PTR(obj)) {
+		db_free_result(obj);
+		return NULL;
+	}
+	memset(RES_PTR(obj), 0, sizeof(db_mongodb_result_t));
+	return obj;
+}
 /*
  * Retrieve result set
  */
 static int db_mongodb_store_result(const db1_con_t* _h, db1_res_t** _r)
 {
-	if(_r) *_r = NULL;
+	km_mongodb_con_t *mgcon;
+	db_mongodb_result_t *mgres;
+	const bson_t *itdoc;
+	char *jstr;
 
+	mgcon = MONGODB_CON(_h);
+	if(!_r) {
+		LM_ERR("invalid result parameter\n");
+		return -1;
+	}
+
+	*_r = db_mongodb_new_result();
+	if (!*_r)  {
+		LM_ERR("no memory left for result \n");
+		goto error;
+	}
+	mgres = (db_mongodb_result_t*)RES_PTR(*_r);
+	mgres->collection = mgcon->collection;
+	mgcon->collection = NULL;
+	mgres->cursor = mgcon->cursor;
+	mgcon->cursor = NULL;
+	mgres->colsdoc = mgcon->colsdoc;
+	mgcon->colsdoc = NULL;
+	mgres->nrcols = mgcon->nrcols;
+	mgcon->nrcols = 0;
+	while (mongoc_cursor_more (mgres->cursor)
+			&& mongoc_cursor_next (mgres->cursor, &itdoc)) {
+		if(is_printable(L_DBG)) {
+			jstr = bson_as_json (itdoc, NULL);
+			LM_DBG("selected document: %s\n", jstr);
+			bson_free (jstr);
+		}
+	}
 	return 0;
+
+error:
+	if(mgcon->colsdoc) {
+		bson_destroy (mgcon->colsdoc);
+		mgcon->colsdoc = NULL;
+	}
+	mgcon->nrcols = 0;
+	if(mgcon->cursor) {
+		mongoc_cursor_destroy (mgcon->cursor);
+		mgcon->cursor = NULL;
+	}
+	if(mgcon->collection) {
+		mongoc_collection_destroy (mgcon->collection);
+		mgcon->collection = NULL;
+	}
+	return -1;
 }
 
 /*
@@ -154,6 +225,29 @@ static int db_mongodb_store_result(const db1_con_t* _h, db1_res_t** _r)
  */
 int db_mongodb_free_result(db1_con_t* _h, db1_res_t* _r)
 {
+	if(!_r)
+		return -1;
+	if(RES_PTR(_r)) {
+		if(((db_mongodb_result_t*)RES_PTR(_r))->rdoc) {
+			bson_destroy(((db_mongodb_result_t*)RES_PTR(_r))->rdoc);
+			((db_mongodb_result_t*)RES_PTR(_r))->rdoc = NULL;
+		}
+		if(((db_mongodb_result_t*)RES_PTR(_r))->colsdoc) {
+			bson_destroy (((db_mongodb_result_t*)RES_PTR(_r))->colsdoc);
+			((db_mongodb_result_t*)RES_PTR(_r))->colsdoc = NULL;
+		}
+		((db_mongodb_result_t*)RES_PTR(_r))->nrcols = 0;
+		if(((db_mongodb_result_t*)RES_PTR(_r))->cursor) {
+			mongoc_cursor_destroy (((db_mongodb_result_t*)RES_PTR(_r))->cursor);
+			((db_mongodb_result_t*)RES_PTR(_r))->cursor = NULL;
+		}
+		if(((db_mongodb_result_t*)RES_PTR(_r))->collection) {
+			mongoc_collection_destroy (((db_mongodb_result_t*)RES_PTR(_r))->collection);
+			((db_mongodb_result_t*)RES_PTR(_r))->collection = NULL;
+		}
+		pkg_free(RES_PTR(_r));
+	}
+		db_free_result(_r);
 	return 0;
 }
 
@@ -175,10 +269,7 @@ int db_mongodb_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op
 	int i;
 	km_mongodb_con_t *mgcon;
 	mongoc_client_t *client;
-	mongoc_collection_t *collection = NULL;
-	bson_t *doc = NULL;
-	const bson_t *itdoc;
-	mongoc_cursor_t *cursor = NULL;
+	bson_t *seldoc = NULL;
 	char *cname;
 	char b1;
 	char *jstr;
@@ -188,57 +279,112 @@ int db_mongodb_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op
 		LM_ERR("connection to server is null\n");
 		return -1;
 	}
+	if(mgcon->collection) {
+		mongoc_collection_destroy (mgcon->collection);
+		mgcon->collection = NULL;
+	}
+	if(mgcon->cursor) {
+		mongoc_cursor_destroy (mgcon->cursor);
+		mgcon->cursor = NULL;
+	}
+	if(mgcon->colsdoc) {
+		bson_destroy (mgcon->colsdoc);
+		mgcon->colsdoc = NULL;
+	}
+	mgcon->nrcols = 0;
 	client = mgcon->con;
 	if(CON_TABLE(_h)->s==NULL) {
 		LM_ERR("collection (table) name not set\n");
 		return -1;
 	}
+
+	if(_r) *_r = NULL;
+
 	b1 = '\0';
 	if(CON_TABLE(_h)->s[CON_TABLE(_h)->len]!='\0') {
 		b1 = CON_TABLE(_h)->s[CON_TABLE(_h)->len];
 		CON_TABLE(_h)->s[CON_TABLE(_h)->len] = '\0';
 	}
 	cname = CON_TABLE(_h)->s;
-	collection = mongoc_client_get_collection(client, mgcon->id->database, cname);
-	if(collection==NULL) {
+	LM_DBG("query to collection [%s]\n", cname);
+	mgcon->collection = mongoc_client_get_collection(client, mgcon->id->database, cname);
+	if(mgcon->collection==NULL) {
 		LM_ERR("cannot get collection (table): %s\n", cname);
 		if(b1 != '\0') CON_TABLE(_h)->s[CON_TABLE(_h)->len] = b1;
 		return -1;
 	}
 	if(b1 != '\0') CON_TABLE(_h)->s[CON_TABLE(_h)->len] = b1;
 
-	doc = bson_new();
-	if(doc==NULL) {
-		LM_ERR("cannot initialize bson document\n");
+	seldoc = bson_new();
+	if(seldoc==NULL) {
+		LM_ERR("cannot initialize query bson document\n");
 		goto error;
 	}
 
 	for(i = 0; i < _n; i++) {
-		if(db_mongodb_bson_add(doc, VAL_TYPE(_v + i), _k[i], _v+i, i)<0)
+		if(db_mongodb_bson_add(seldoc, VAL_TYPE(_v + i), _k[i], _v+i, i)<0)
 			goto error;
 	}
-
-	cursor = mongoc_collection_find (collection, MONGOC_QUERY_NONE, 0, 0, 0,
-			doc, NULL, NULL);
-	while (mongoc_cursor_more (cursor) && mongoc_cursor_next (cursor, &itdoc)) {
-		jstr = bson_as_json (itdoc, NULL);
-		LM_DBG("selected document: %s\n", jstr);
-		if(db_mongodb_store_result(_h, _r)<0) {
-			LM_ERR("failed to store result\n");
-			bson_free (jstr);
-			goto error;
-		}
+	if(is_printable(L_DBG)) {
+		jstr = bson_as_json (seldoc, NULL);
+		LM_DBG("query filter: %s\n", jstr);
 		bson_free (jstr);
 	}
-	mongoc_cursor_destroy (cursor);
-	bson_destroy (doc);
-	mongoc_collection_destroy (collection);
-	
+	if(_nc > 0) {
+		mgcon->colsdoc = bson_new();
+		if(mgcon->colsdoc==NULL) {
+			LM_ERR("cannot initialize columns bson document\n");
+			goto error;
+		}
+		for(i = 0; i < _n; i++) {
+			if(!bson_append_int32(mgcon->colsdoc, _c[i]->s, _c[i]->len, 1))
+			{
+				LM_ERR("failed to append int to columns bson %.*s = %d [%d]\n",
+						_c[i]->len, _c[i]->s, 1, i);
+				goto error;
+			}
+		}
+		if(is_printable(L_DBG)) {
+			jstr = bson_as_json (mgcon->colsdoc, NULL);
+			LM_DBG("query filter: %s\n", jstr);
+			bson_free (jstr);
+		}
+		mgcon->nrcols = _nc;
+	}
+	mgcon->cursor = mongoc_collection_find (mgcon->collection,
+						MONGOC_QUERY_NONE, 0, 0, 0,
+						seldoc, mgcon->colsdoc, NULL);
+
+	if(!_r) {
+		goto done;
+	}
+
+	if(db_mongodb_store_result(_h, _r)<0) {
+		LM_ERR("failed to store result\n");
+		goto error;
+	}
+
+done:
+	bson_destroy (seldoc);
 	return 0;
+
 error:
-	if(cursor) mongoc_cursor_destroy (cursor);
-	if(doc) bson_destroy (doc);
-	if(collection) mongoc_collection_destroy (collection);
+	LM_ERR("failed to do the query\n");
+	if(seldoc) bson_destroy (seldoc);
+	if(mgcon->colsdoc) {
+		bson_destroy (mgcon->colsdoc);
+		mgcon->colsdoc = NULL;
+	}
+	mgcon->nrcols = 0;
+	if(mgcon->collection) {
+		mongoc_collection_destroy (mgcon->collection);
+		mgcon->collection = NULL;
+	}
+	if(mgcon->cursor) {
+		mongoc_cursor_destroy (mgcon->cursor);
+		mgcon->cursor = NULL;
+	}
+	if(_r && *_r) { db_mongodb_free_result((db1_con_t*)_h, *_r); *_r = NULL; }
 	return -1;
 }
 

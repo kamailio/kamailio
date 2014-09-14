@@ -31,10 +31,15 @@
 
 typedef struct km_mongodb_con {
 	struct db_id* id;        /*!< Connection identifier */
-    unsigned int ref;        /*!< Reference count */
-    struct pool_con* next;   /*!< Next connection in the pool */
+	unsigned int ref;        /*!< Reference count */
+	struct pool_con* next;   /*!< Next connection in the pool */
 
-    mongoc_client_t *con;              /*!< Connection representation */
+	mongoc_client_t *con;              /*!< Connection representation */
+	mongoc_collection_t *collection;   /*!< Collection link */
+	mongoc_cursor_t *cursor;           /*!< Cursor link */
+
+	bson_t *colsdoc; /*!< Names of columns */
+	int nrcols;  /*!< Nunmber of columns */
 } km_mongodb_con_t;
 
 #define MONGODB_CON(db_con)  ((km_mongodb_con_t*)((db_con)->tail))
