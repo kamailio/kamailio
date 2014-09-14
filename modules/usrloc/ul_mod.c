@@ -167,6 +167,7 @@ int handle_lost_tcp = 0;				/*!< By default do not remove contacts before expira
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
+int ul_db_insert_null = 0;
 
 /* flags */
 unsigned int nat_bflag = (unsigned int)-1;
@@ -226,6 +227,7 @@ static param_export_t params[] = {
 	{"db_ops_ruid",         INT_PARAM, &ul_db_ops_ruid},
 	{"expires_type",        PARAM_INT, &ul_expires_type},
 	{"db_raw_fetch_type",   PARAM_INT, &ul_db_raw_fetch_type},
+	{"db_insert_null",      PARAM_INT, &ul_db_insert_null},
 	{0, 0, 0}
 };
 

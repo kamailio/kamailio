@@ -945,6 +945,28 @@ modparam("usrloc", "db_raw_fetch_type", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.db_insert_null">
+		<title><varname>db_insert_null</varname> (int)</title>
+		<para>
+			If set to 1, the insert operation to database will add null values
+			in the sql statement.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (don't add null fields in insert
+			statement).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_insert_null</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_insert_null", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

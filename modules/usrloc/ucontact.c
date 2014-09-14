@@ -48,6 +48,8 @@
 #include "ucontact.h"
 #include "usrloc.h"
 
+extern int ul_db_insert_null;
+
 static int ul_xavp_contact_clone = 1;
 
 void ul_set_xavp_contact_clone(int v)
@@ -531,12 +533,17 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	nr_cols = 9;
 
-	if (_c->received.s ) {
+	if (_c->received.s) {
 		keys[nr_cols] = &received_col;
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val.s = _c->received.s;
 		vals[nr_cols].val.str_val.len = _c->received.len;
+		nr_cols++;
+	} else if(ul_db_insert_null!=0) {
+		keys[nr_cols] = &received_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 1;
 		nr_cols++;
 	}
 	
@@ -547,6 +554,11 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[nr_cols].val.str_val.s = _c->path.s;
 		vals[nr_cols].val.str_val.len = _c->path.len;
 		nr_cols++;
+	} else if(ul_db_insert_null!=0) {
+		keys[nr_cols] = &path_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 1;
+		nr_cols++;
 	}
 
 	if (_c->sock) {
@@ -555,6 +567,11 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[nr_cols].val.str_val = _c->sock->sock_str;
 		vals[nr_cols].nul = 0;
 		nr_cols++;
+	} else if(ul_db_insert_null!=0) {
+		keys[nr_cols] = &sock_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 1;
+		nr_cols++;
 	}
 
 	if (_c->methods != 0xFFFFFFFF) {
@@ -562,6 +579,11 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[nr_cols].type = DB1_BITMAP;
 		vals[nr_cols].val.bitmap_val = _c->methods;
 		vals[nr_cols].nul = 0;
+		nr_cols++;
+	} else if(ul_db_insert_null!=0) {
+		keys[nr_cols] = &methods_col;
+		vals[nr_cols].type = DB1_BITMAP;
+		vals[nr_cols].nul = 1;
 		nr_cols++;
 	}
 
@@ -578,6 +600,11 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val = _c->ruid;
 		nr_cols++;
+	} else if(ul_db_insert_null!=0) {
+		keys[nr_cols] = &ruid_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 1;
+		nr_cols++;
 	}
 
 	if(_c->instance.len>0)
@@ -586,6 +613,11 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val = _c->instance;
+		nr_cols++;
+	} else if(ul_db_insert_null!=0) {
+		keys[nr_cols] = &instance_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 1;
 		nr_cols++;
 	}
 

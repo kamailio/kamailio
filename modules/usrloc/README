@@ -71,6 +71,7 @@ Bogdan-Andrei Iancu
               3.33. handle_lost_tcp (int)
               3.34. expires_type (int)
               3.35. db_raw_fetch_type (int)
+              3.36. db_insert_null (int)
 
         4. Functions
         5. MI Commands
@@ -163,6 +164,7 @@ Bogdan-Andrei Iancu
    1.33. Set handle_lost_tcp parameter
    1.34. Set expires_type parameter
    1.35. Set db_raw_fetch_type parameter
+   1.36. Set db_insert_null parameter
 
 Chapter 1. Admin Guide
 
@@ -214,6 +216,7 @@ Chapter 1. Admin Guide
         3.33. handle_lost_tcp (int)
         3.34. expires_type (int)
         3.35. db_raw_fetch_type (int)
+        3.36. db_insert_null (int)
 
    4. Functions
    5. MI Commands
@@ -337,6 +340,7 @@ Chapter 1. Admin Guide
    3.33. handle_lost_tcp (int)
    3.34. expires_type (int)
    3.35. db_raw_fetch_type (int)
+   3.36. db_insert_null (int)
 
 3.1. nat_bflag (integer)
 
@@ -816,6 +820,18 @@ modparam("usrloc", "expires_type", 1)
    Example 1.35. Set db_raw_fetch_type parameter
 ...
 modparam("usrloc", "db_raw_fetch_type", 1)
+...
+
+3.36. db_insert_null (int)
+
+   If set to 1, the insert operation to database will add null values in
+   the sql statement.
+
+   Default value is "0" (don't add null fields in insert statement).
+
+   Example 1.36. Set db_insert_null parameter
+...
+modparam("usrloc", "db_insert_null", 1)
 ...
 
 4. Functions
