@@ -75,13 +75,13 @@ static int db_mongodb_bind_api(db_func_t *dbb)
 	dbb->init             = db_mongodb_init;
 	dbb->close            = db_mongodb_close;
 	dbb->query            = db_mongodb_query;
-	dbb->fetch_result     = db_mongodb_fetch_result;
-	dbb->raw_query        = db_mongodb_raw_query;
+	dbb->fetch_result     = 0; //db_mongodb_fetch_result;
+	dbb->raw_query        = 0; //db_mongodb_raw_query;
 	dbb->free_result      = db_mongodb_free_result;
 	dbb->insert           = db_mongodb_insert;
 	dbb->delete           = db_mongodb_delete; 
 	dbb->update           = db_mongodb_update;
-	dbb->replace          = db_mongodb_replace;
+	dbb->replace          = 0; //db_mongodb_replace;
 
 	return 0;
 }
