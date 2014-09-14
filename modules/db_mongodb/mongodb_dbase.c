@@ -824,6 +824,7 @@ int db_mongodb_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _
 	bson_error_t error;
 	bson_t *doc = NULL;
 	char *cname;
+	char *jstr;
 	char b1;
 
 	mgcon = MONGODB_CON(_h);
@@ -860,6 +861,11 @@ int db_mongodb_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _
 		if(db_mongodb_bson_add(doc, VAL_TYPE(_v + i), _k[i], _v+i, i)<0)
 			goto error;
 	}
+	if(is_printable(L_DBG)) {
+		jstr = bson_as_json (doc, NULL);
+		LM_DBG("insert document: %s\n", jstr);
+		bson_free (jstr);
+	}
 
 	if (!mongoc_collection_insert (collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
 		LM_ERR("failed to insert in collection: %s\n", error.message);
@@ -893,6 +899,7 @@ int db_mongodb_delete(const db1_con_t* _h, const db_key_t* _k,
 	bson_error_t error;
 	bson_t *doc = NULL;
 	char *cname;
+	char *jstr;
 	char b1;
 
 	mgcon = MONGODB_CON(_h);
@@ -931,6 +938,11 @@ int db_mongodb_delete(const db1_con_t* _h, const db_key_t* _k,
 			goto error;
 	}
 
+	if(is_printable(L_DBG)) {
+		jstr = bson_as_json (doc, NULL);
+		LM_DBG("delete filter document: %s\n", jstr);
+		bson_free (jstr);
+	}
 	if (!mongoc_collection_remove (collection, MONGOC_REMOVE_NONE,
 				doc, NULL, &error)) {
 		LM_ERR("failed to delete in collection: %s\n", error.message);
