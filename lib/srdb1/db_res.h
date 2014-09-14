@@ -131,4 +131,12 @@ int db_allocate_columns(db1_res_t* _r, const unsigned int cols);
  */
 int db_allocate_rows(db1_res_t* _res);
 
+/**
+ * Reallocate memory for rows.
+ * \param _res result set
+ * \param _nsize new number of rows in result set
+ * \return zero on success, negative on errors
+ */
+int db_reallocate_rows(db1_res_t* _res, int _nsize);
+
 #endif /* DB1_RES_H */
