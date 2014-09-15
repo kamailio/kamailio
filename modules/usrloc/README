@@ -773,11 +773,11 @@ modparam("usrloc", "xavp_contact", "ulattrs")
    value. If it is set to 0, the old style using aor, contact and call-id
    is done.
 
-   Default value is "0".
+   Default value is "1".
 
    Example 1.32. Set db_ops_ruid parameter
 ...
-modparam("usrloc", "db_ops_ruid", 1)
+modparam("usrloc", "db_ops_ruid", 0)
 ...
 
 3.33. handle_lost_tcp (int)

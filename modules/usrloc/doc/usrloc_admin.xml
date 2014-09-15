@@ -862,14 +862,14 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>0</quote>.
+			Default value is <quote>1</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_ops_ruid</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "db_ops_ruid", 1)
+modparam("usrloc", "db_ops_ruid", 0)
 ...
 </programlisting>
 		</example>

@@ -118,7 +118,7 @@ int ul_timer_procs = 0;
 int ul_db_check_update = 0;
 int ul_keepalive_timeout = 0;
 
-int ul_db_ops_ruid = 0;
+int ul_db_ops_ruid = 1;
 int ul_expires_type = 0;
 int ul_db_raw_fetch_type = 0;
 
