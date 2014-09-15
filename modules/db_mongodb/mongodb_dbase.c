@@ -57,13 +57,23 @@ void db_mongodb_close(db1_con_t* _h)
 	db_do_close(_h, db_mongodb_free_connection);
 }
 
-int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_t *_v, int idx)
+int db_mongodb_bson_add(bson_t *doc, const db_key_t _k, const db_val_t *_v, int idx)
 {
+	int vtype;
+
+	vtype = VAL_TYPE(_v);
+	if(VAL_NULL(_v)) {
+		if(!bson_append_null(doc, _k->s, _k->len)) {
+			LM_ERR("failed to append int to bson doc %.*s = %d [%d]\n",
+					_k->len, _k->s, VAL_INT(_v), idx);
+			goto error;
+		}
+		goto done;
+	}
 	switch(vtype) {
 		case DB1_INT:
 			if(!bson_append_int32(doc, _k->s, _k->len,
-						VAL_INT(_v)))
-			{
+						VAL_INT(_v))) {
 				LM_ERR("failed to append int to bson doc %.*s = %d [%d]\n",
 						_k->len, _k->s, VAL_INT(_v), idx);
 				goto error;
@@ -72,8 +82,7 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 
 		case DB1_BIGINT:
 			if(!bson_append_int64(doc, _k->s, _k->len,
-						VAL_BIGINT(_v )))
-			{
+						VAL_BIGINT(_v ))) {
 				LM_ERR("failed to append bigint to bson doc %.*s = %lld [%d]\n",
 						_k->len, _k->s, VAL_BIGINT(_v), idx);
 				goto error;
@@ -82,8 +91,7 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 
 		case DB1_DOUBLE:
 			if(!bson_append_double(doc, _k->s, _k->len,
-						VAL_DOUBLE(_v)))
-			{
+						VAL_DOUBLE(_v))) {
 				LM_ERR("failed to append double to bson doc %.*s = %f [%d]\n",
 						_k->len, _k->s, VAL_DOUBLE(_v), idx);
 				goto error;
@@ -92,8 +100,7 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 
 		case DB1_STRING:
 			if(!bson_append_utf8(doc, _k->s, _k->len,
-						VAL_STRING(_v), strlen(VAL_STRING(_v))) )
-			{
+						VAL_STRING(_v), strlen(VAL_STRING(_v))) ) {
 				LM_ERR("failed to append string to bson doc %.*s = %s [%d]\n",
 						_k->len, _k->s, VAL_STRING(_v), idx);
 				goto error;
@@ -101,9 +108,9 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 			break;
 
 		case DB1_STR:
+
 			if(!bson_append_utf8(doc, _k->s, _k->len,
-						VAL_STR(_v).s, VAL_STR(_v).len) )
-			{
+						VAL_STR(_v).s, VAL_STR(_v).len) ) {
 				LM_ERR("failed to append str to bson doc %.*s = %.*s [%d]\n",
 						_k->len, _k->s, VAL_STR(_v).len, VAL_STR(_v).s, idx);
 				goto error;
@@ -112,8 +119,7 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 
 		case DB1_DATETIME:
 			if(!bson_append_time_t(doc, _k->s, _k->len,
-						VAL_TIME(_v)))
-			{
+						VAL_TIME(_v))) {
 				LM_ERR("failed to append time to bson doc %.*s = %ld [%d]\n",
 						_k->len, _k->s, VAL_TIME(_v), idx);
 				goto error;
@@ -123,8 +129,7 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 		case DB1_BLOB:
 			if(!bson_append_binary(doc, _k->s, _k->len,
 						BSON_SUBTYPE_BINARY,
-						(const uint8_t *)VAL_BLOB(_v).s, VAL_BLOB(_v).len) )
-			{
+						(const uint8_t *)VAL_BLOB(_v).s, VAL_BLOB(_v).len) ) {
 				LM_ERR("failed to append blob to bson doc %.*s = [bin] [%d]\n",
 						_k->len, _k->s, idx);
 				goto error;
@@ -133,8 +138,7 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 
 		case DB1_BITMAP:
 			if(!bson_append_int32(doc, _k->s, _k->len,
-						VAL_INT(_v)))
-			{
+						VAL_INT(_v))) {
 				LM_ERR("failed to append bitmap to bson doc %.*s = %d [%d]\n",
 						_k->len, _k->s, VAL_INT(_v), idx);
 				goto error;
@@ -146,6 +150,7 @@ int db_mongodb_bson_add(bson_t *doc, int vtype, const db_key_t _k, const db_val_
 			return -1;
 	}
 
+done:
 	return 0;
 error:
 	return -1;
@@ -713,7 +718,7 @@ int db_mongodb_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op
 	}
 
 	for(i = 0; i < _n; i++) {
-		if(db_mongodb_bson_add(seldoc, VAL_TYPE(_v + i), _k[i], _v+i, i)<0)
+		if(db_mongodb_bson_add(seldoc, _k[i], _v+i, i)<0)
 			goto error;
 	}
 	if(is_printable(L_DBG)) {
@@ -858,7 +863,7 @@ int db_mongodb_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _
 	}
 
 	for(i = 0; i < _n; i++) {
-		if(db_mongodb_bson_add(doc, VAL_TYPE(_v + i), _k[i], _v+i, i)<0)
+		if(db_mongodb_bson_add(doc, _k[i], _v+i, i)<0)
 			goto error;
 	}
 	if(is_printable(L_DBG)) {
@@ -934,7 +939,7 @@ int db_mongodb_delete(const db1_con_t* _h, const db_key_t* _k,
 	}
 
 	for(i = 0; i < _n; i++) {
-		if(db_mongodb_bson_add(doc, VAL_TYPE(_v + i), _k[i], _v+i, i)<0)
+		if(db_mongodb_bson_add(doc, _k[i], _v+i, i)<0)
 			goto error;
 	}
 
@@ -1020,12 +1025,12 @@ int db_mongodb_update(const db1_con_t* _h, const db_key_t* _k,
 	}
 
 	for(i = 0; i < _un; i++) {
-		if(db_mongodb_bson_add(udoc, VAL_TYPE(_uv + i), _uk[i], _uv+i, i)<0)
+		if(db_mongodb_bson_add(udoc, _uk[i], _uv+i, i)<0)
 			goto error;
 	}
 
 	for(i = 0; i < _n; i++) {
-		if(db_mongodb_bson_add(mdoc, VAL_TYPE(_v + i), _k[i], _v+i, i)<0)
+		if(db_mongodb_bson_add(mdoc, _k[i], _v+i, i)<0)
 			goto error;
 	}
 
