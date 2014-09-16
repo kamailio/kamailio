@@ -181,7 +181,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 		wsev.id = con->id;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
 		tcpconn_put(con);
-		return ret;
+		goto done;
 	}
 #endif
 
@@ -275,9 +275,11 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			LOG(L_CRIT, "BUG: msg_send: unknown proto %d\n", dst->proto);
 			goto error;
 	}
+	ret = 0;
+done:
 	if(outb.s != buf)
 		pkg_free(outb.s);
-	return 0;
+	return ret;
 error:
 	if(outb.s != buf)
 		pkg_free(outb.s);
