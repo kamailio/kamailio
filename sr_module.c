@@ -650,7 +650,7 @@ reload:
 		if (new_dlflags!=dlflags && new_dlflags!=DEFAULT_DLFLAGS) {
 			/* we have to reload the module */
 			dlclose(handle);
-			NOTICE("%s: exports dlflags interface is deprecated and it will not"
+			DEBUG("%s: exports dlflags interface is deprecated and it will not"
 					" be supported in newer versions; consider using"
 					" mod_register() instead\n", path);
 			dlflags=new_dlflags;
