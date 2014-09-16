@@ -303,6 +303,11 @@ int dlg_cseq_msg_sent(void *data)
 				- get_cseq(&msg)->number.len;
 
 	/* replace old msg content */
+	obuf->s = pkg_malloc((tbuf_len+1)*sizeof(char));
+	if(obuf->s==NULL) {
+		LM_ERR("not enough memory for new message\n");
+		goto done;
+	}
 	memcpy(obuf->s, tbuf, tbuf_len);
 	obuf->s[tbuf_len] = 0;
 	obuf->len = tbuf_len;
