@@ -145,6 +145,11 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	outb.len = len;
 	sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
 
+	if(outb.s==NULL) {
+		LM_ERR("failed to update outgoing buffer\n");
+		return -1;
+	}
+
 #ifdef USE_TCP
 	if (unlikely((dst->proto == PROTO_WS
 #ifdef USE_TLS
