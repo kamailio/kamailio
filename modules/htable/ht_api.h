@@ -63,6 +63,7 @@ typedef struct _ht
 	int updateexpire;
 	unsigned int htsize;
 	int dmqreplicate;
+	int evrt_expired;
 	ht_entry_t *entries;
 	struct _ht *next;
 } ht_t;
@@ -95,7 +96,7 @@ int ht_db_sync_tables(void);
 int ht_has_autoexpire(void);
 void ht_timer(unsigned int ticks, void *param);
 void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell);
-void ht_expired_run_event_route(char *route);
+void ht_expired_run_event_route(int routeid);
 int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val);
 int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val);
 
