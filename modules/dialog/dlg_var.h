@@ -42,7 +42,8 @@ typedef struct _dlg_ctx {
 	int cpid;
 	int set;
 	unsigned int dir;
-	int t;
+	int t;				/* set to 1 if tm req in callback executed */
+	int expect_t;		/* set to 1 if expects that t is set after config */
 } dlg_ctx_t;
 
 /* A dialog-variable */
