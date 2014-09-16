@@ -45,11 +45,18 @@ int dlg_cfg_cb(sip_msg_t *msg, unsigned int flags, void *cbp)
 	if(flags&POST_SCRIPT_CB) {
 		dlg = dlg_get_ctx_dialog();
 		if(dlg!=NULL) {
-			if(_dlg_ctx.t==0 && dlg->state==DLG_STATE_UNCONFIRMED) {
+			if(_dlg_ctx.t==0 && (dlg->state==DLG_STATE_UNCONFIRMED
+						|| _dlg_ctx.expect_t==1)) {
 				if(_dlg_ctx.cpid!=0 && _dlg_ctx.cpid==my_pid()) {
 					/* release to destroy dialog if created by this process
 					 * and request was not forwarded */
-					LM_DBG("new dialog with no trasaction after config execution\n");
+					if(dlg->state==DLG_STATE_UNCONFIRMED) {
+						LM_DBG("new dialog with no trasaction after config"
+									" execution\n");
+					} else {
+						LM_DBG("dialog with no expected trasaction after"
+								" config execution\n");
+					}
 					dlg_release(dlg);
 				}
 			}
