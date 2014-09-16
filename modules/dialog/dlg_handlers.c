@@ -713,6 +713,11 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	sip_msg_t *req = param->req;
 	dlg_cell_t *dlg = NULL;
 
+	if(req->first_line.u.request.method_value == METHOD_BYE) {
+		_dlg_ctx.t = 1;
+		return;
+	}
+
 	if(req->first_line.u.request.method_value != METHOD_INVITE)
 		return;
 
@@ -1302,6 +1307,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
         dlg_terminated( req, dlg, dir);
 
 		dlg_unref(dlg, unref);
+
+		_dlg_ctx.cpid = my_pid();
+		_dlg_ctx.expect_t = 1;
 
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 		goto done;
