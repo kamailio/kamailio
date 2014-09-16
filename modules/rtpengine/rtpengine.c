@@ -1236,12 +1236,13 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				break;
 
 			case 9:
-				if (str_eq(&key, "RTP/SAVPF")) {
+				if (str_eq(&key, "RTP/SAVPF"))
 					ng_flags->transport = 0x103;
-					goto next;
-				}
 				else if (str_eq(&key, "direction"))
 					bencode_list_add_str(ng_flags->direction, &val);
+				else
+					goto generic;
+				goto next;
 				break;
 
 			case 10:
