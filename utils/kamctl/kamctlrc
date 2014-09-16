@@ -56,11 +56,7 @@
 # FIXME
 
 # FOREVER="2030-05-28 21:32:15"
-# DEFAULT_ALIASES_EXPIRES=$FOREVER
 # DEFAULT_Q="1.0"
-# DEFAULT_CALLID="Default-Call-ID"
-# DEFAULT_CSEQ="13"
-# DEFAULT_LOCATION_EXPIRES=$FOREVER
 
 
 # Program to calculate a message-digest fingerprint 

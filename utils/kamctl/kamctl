@@ -2454,6 +2454,10 @@ usrloc() {
 				exit 1
 			fi
 
+			if [ -z "$DEFAULT_Q" ] ; then
+				DEFAULT_Q = "1.0"
+			fi
+
 			$CTLCMD ul_add "$USRLOC_TABLE" "$OSERUSER@$OSERDOMAIN" "$2" \
 "$UL_EXPIRES" "$DEFAULT_Q" "$UL_PATH" "$UL_FLAGS" "$BR_FLAGS" "$ALL_METHODS"
 			exit $?
