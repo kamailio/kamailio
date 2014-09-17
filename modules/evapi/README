@@ -85,7 +85,15 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module pushes event details to remote applications, via TCP.
+   The EVAPI module can be used to create an event message flow from
+   Kamailio to any application that can connect to a TCP socket. The
+   remote application can also issue messages received by Kamailio.
+
+   There is no protocol definition, it is all up to the author of the
+   routing script. Events can be generated for any event in Kamailio. For
+   3rd party transaction control, a transaction can be automatically
+   suspended when sending the event, to be resumed at a later point, maybe
+   triggered by an incoming message on the event socket.
 
 2. Dependencies
 
@@ -134,7 +142,8 @@ modparam("evapi", "bind_addr", "1.2.3.4:8228")
 
 3.3. netstring_format (int)
 
-   Control if messages from clients are encapsulated in netstring format.
+   Control if messages on the socket (to and from clients) are
+   encapsulated in netstring format.
 
    Default value is 1 (netstring format).
 
@@ -182,7 +191,7 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 
    Example 1.6. evapi_async_relay usage
 ...
-evapi_relay("{ \"event\": \"suspend\",\n \"data\":"
+evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
         " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
 ...
 
@@ -243,7 +252,7 @@ event_route[evapi:message-received] {
      * $evapi(srcaddr) - source ip
      * $evapi(srcport) - source port
      * $evapi(msg) - received event message
-     * $evapi(conidx) - internal connexion index
+     * $evapi(conidx) - internal connection index
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
