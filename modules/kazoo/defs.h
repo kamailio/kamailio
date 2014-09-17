@@ -75,11 +75,11 @@
 <state>%.*s</state>\
 <local>\
 <identity>%.*s</identity>\
-<target uri=\"sip:%.*s\"/>\
+<target uri=\"%.*s\"/>\
 </local>\
 <remote>\
 <identity>%.*s</identity>\
-<target uri=\"sip:%.*s\"/>\
+<target uri=\"%.*s\"/>\
 </remote>\
 </dialog>\
 </dialog-info>"

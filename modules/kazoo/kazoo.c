@@ -78,7 +78,7 @@ str dbk_consumer_event_subkey = str_init("Event-Name");
 int dbk_internal_loop_count = 5;
 int dbk_consumer_loop_count = 10;
 int dbk_consumer_ack_loop_count = 20;
-int dbk_include_entity = 0;
+int dbk_include_entity = 1;
 int dbk_pua_mode = 1;
 
 int dbk_single_consumer_on_reconnect = 1;
