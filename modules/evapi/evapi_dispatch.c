@@ -122,7 +122,7 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt)
 	fmsg = &tmsg;
 	evapi_set_msg_env(fmsg, evenv);
 	backup_rt = get_route_type();
-	set_route_type(REQUEST_ROUTE);
+	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
 	run_top_route(event_rt.rlist[rt], fmsg, 0);
 	set_route_type(backup_rt);
