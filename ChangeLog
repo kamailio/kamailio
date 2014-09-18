@@ -1,3 +1,427 @@
+===================== 2014-09-18 Version 4.1.6 Released =====================
+
+===================== Changes Since Version 4.1.5 ===========================
+
+commit 895be72fff0ebbb8041737c567db2e7a72b1493e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 18 15:29:32 2014 +0200
+
+    Makefile.defs: version set to 4.1.6
+
+commit aceb784c2b5705bb1f9c89f9df6bdf1891856946
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 18 15:27:26 2014 +0200
+
+    pkg/rpm: version set to 4.1.5 in rpm specs
+
+commit 32fd8a7b52ec13c2cd7059d7389ff663edb40d84
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 18 15:25:26 2014 +0200
+
+    pkg/deb: version set to 4.1.6 in debian specs
+
+commit c59199c69f6fe492bdb9888b623da85cf086bd4b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 25 23:16:31 2014 +0200
+
+    sms: domain is not allocated in pkg by the module
+    
+    - skip freeing in mod destroy
+    
+    (cherry picked from commit fc383b13c32d4f89fbb8a7de14a07cbb26f38693)
+
+commit e47f3cbb168a6cf73de4ba5a7ea6f797ebb4a176
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 30 15:58:27 2014 +0200
+
+    dialog: if ACK for 200ok is not coming in 60sec, dialog lifetime is shortened for 10 more sec
+    
+    - should handle the situation when caller cancels the call but the
+      callee answered before getting the cancel
+    - reported by Alex Balashov
+    
+    (cherry picked from commit ca3da467f59dbaed2d20aa45314ac12a362e2deb)
+
+commit 15a8dbb8898f6430591500d6302b4ec0afc636a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 17 21:23:10 2014 +0200
+
+    core: revert rpc printf name cherry picked for fixing result
+
+commit 555537769f5ecbf8dacc3de7529da05bfbdd3d04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 16 23:38:35 2014 +0200
+
+    core: safety check for outbound buffer
+    
+    - pointer can end up being NULL if replacement fails to be built (e.g.,
+      via topoh)
+    
+    (cherry picked from commit c2b0be97a3ef8e4e1bff34a5c73328a63979aa61)
+
+commit b58b5fd3c8c2f9cef6362f7f069bad7f814475ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 16 23:33:20 2014 +0200
+
+    core: hanlde replacement buffer free for WS/WSS frame sending
+    
+    - affected when using topoh for ws/wss traffic
+    
+    (cherry picked from commit ec8fe1e7ea904a51ca933d0b15408ca464002cbe)
+
+commit c13b5a0bfe80bea3cf76a16675f9261334ab4998
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 16 19:05:57 2014 +0200
+
+    dialog: check if the transaction is created for BYE closing the dialog
+    
+    - if not, release the dialog, because there will be no tm callbacks
+      called later to release it. In this way avoid zombie dialog.
+    - reported by Ovidiu Sas, FS#424
+    
+    (cherry picked from commit 02e43f87b2fa3be61bc4c63a9f8359457e3e0484)
+
+commit e37c57c0cd430d0e0ce158af63fa929036695041
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 16 18:13:02 2014 +0200
+
+    utils/kamctl: removed unused default values
+    
+    - test if DEFAULT_Q is set inside the function using it, because it has
+      single place usage
+    
+    (cherry picked from commit 1735feed8e287e92c3d81cf6a4d873460f6ee878)
+
+commit 95aa4a4265fef62f347bbd6c32aafcfe34d87954
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 12 20:41:55 2014 +0200
+
+    usrloc: safety check for debug message printing path value from rpc add command
+    
+    - reported and patch by Thomas Arimont, FS#467
+    
+    (cherry picked from commit b1ba03f1fe41522b62aa727966c4dec3062cbbb9)
+
+commit 118c901bd1879a46d9e392093994bc544cf511c1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 11 22:36:56 2014 +0200
+
+    dispatcher: free dset root structure at reload
+    
+    - reported by Heenan, Timothy Steven
+    
+    (cherry picked from commit 7fb8c88c1d4aeb50d1e637697132ab0994dcdb28)
+
+commit 0d64a8f9838cb682600685bb23709f1652c4cc5a
+Author: Alekzander Spiridonov <sipidronov@gmail.com>
+Date:   Thu Sep 4 07:09:02 2014 -0700
+
+    msg_parser: fix To parameter with null value parsing
+    
+    (cherry picked from commit 14183ffa5e1bab1659d1df87a77057d50c376029)
+
+commit 9c1126fddba58e6a63409ee3cf210fb24b1e7922
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Wed Sep 10 15:23:45 2014 +0100
+
+    proposed change for dbtext query results.
+    this behaviour was observed by interacting with module presence.
+    
+    presentity clean runs from timer every 6 secs.
+    if the first run returns a large set of rows, it iterates all rows doing
+    some notifications and deleting the presentity.
+    if it takes more then 6 secs to complete, the next run will override the
+    results internal structure pointer maintained in the connection level.
+    
+    the proposed patch, maintains the query result internal structure within
+    the result, using the ptr field for that.
+    
+    (cherry picked from commit dae74e974a028082a3250805da83223220123c10)
+
+commit f66d5efb20e5acec87c8b9d38a9a6c5faacc4a18
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Mon Sep 8 17:46:55 2014 +0100
+
+    parser: Fix parsing of Retry-After header
+    
+    - Allow no space between duration and optional comment
+    
+    (cherry picked from commit accfbe0abb0d811e249b687cb6047c9234a6d884)
+
+commit 53c60551f1316d846f0cbafc04f8d8772156f7b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 8 14:14:17 2014 +0200
+
+    presence: take in consideration send_fast_notify when sending empty NOTIFY
+    
+    - patch by Luis Azedo <luis.azedo@factorlusitano.com>
+    
+    (cherry picked from commit 5bffcf8bdc83628aea4f5e3cda06b20ce88f659f)
+
+commit 8925975c4e82693fbf262ed45ac179e494fb0ca3
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Fri Aug 22 13:55:42 2014 +0200
+
+    dialog: Correctly restore dialog lifetime from DB
+    
+    Restore the lifetime to the configured value instead of the offset from the
+    time the reload from the DB took place.
+    
+    (cherry picked from commit 3d5f8af6efb5a33e46427a1a9b273e445a3064c7)
+
+commit af985c5fe70dcaa6a92c5e67fff81807dbef27bc
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Jul 7 16:38:29 2014 +0200
+
+    dialog: Set the dialog context on transaction failure
+    
+    Before, the dialog context would be derived from the callid and tags. This
+    could select the wrong dialog in case of spirals. This patch sets the correct
+    dialog context by storing the it in the transaction and restoring it on a
+    failure. Now the correct dialog variables are available in failure_route.
+    
+    (cherry picked from commit 811bb515c09e7270d1d7f8a28d280e184874e487)
+
+commit b12a01e553699786953ec601197669314bf414c7
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Jul 7 16:38:29 2014 +0200
+
+    dialog: Set the dialog context on incoming replies
+    
+    Before, the dialog context would be derived from the callid and tags. This
+    could select the wrong dialog in case of spirals. This patch sets the correct
+    dialog context by storing the it in the transaction and restoring it on an
+    incoming response. Now the correct dialog variables are available in
+    onreply_route.
+    
+    (cherry picked from commit 25a3297915fbcc0a267d444d245526de978a5d62)
+
+commit 63e9a59290316e7603fb7e527cb6f6bb75653e16
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Sep 2 14:25:42 2014 -0400
+
+    xhttp_pi: proper sizeof for memset
+    
+    (cherry picked from commit 613d188f92401c60549ea0337ea0dcf3c68067d7)
+
+commit 45567abeb463fb69ce54dd0ed337d28275e04a12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 2 10:29:22 2014 +0200
+
+    msilo: proper walk through sent list for cleanup
+    
+    - reported by Bhupendra Singh
+    
+    (cherry picked from commit 5fd8a1bdaae82decdb606901fe7bf3e6e9149803)
+
+commit 6c92649113c95538b6940596fb14f1f90f34bd1b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 2 09:50:57 2014 +0200
+
+    Makefile.defs: don't set gcc flag -maltivec if not advertised for powerpc
+    
+    - reported at FS#444,
+      https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=729635
+    - following a patch by Roland Stigge <stigge@antcom.de> on debian bug
+      tracker
+    
+    (cherry picked from commit 6fe4e56937563a413cfd83794e0fe71a20caf3d5)
+
+commit 3f528195fdb08c68881e584bb64dd2474a3ea01f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 1 23:45:13 2014 +0200
+
+    core: return OK as string for a successful dns.delete rpc command
+    
+    - closes FS#260
+    
+    (cherry picked from commit b77613398fe7a69d4ac52add3630c94373cbe3e8)
+
+commit 870535c346f70a20c1e3f2b2d0736ea00bc29a5a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 1 23:36:25 2014 +0200
+
+    tm: rebuild the local request if uri was changed in event route
+    
+    - rebuild was done only on changes over headers and body, with an
+      eventual new r-uri being used in that case
+    - no should work also when only r-uri is changed
+    - closes FS#158
+    
+    (cherry picked from commit dbd8ea9b1fa216e59d4c36e2eb4b671202824259)
+
+commit b3215ff4e69b31cd24ed2226003529113a765413
+Author: Kristian Frederik HÃ¸gh <kfh@uni-tel.dk>
+Date:   Mon Sep 1 22:03:20 2014 +0200
+
+    tm: rebuild local Via when force socket is changed in event_route[tm:local-request]
+    
+    - new forced socket is also set for sending out
+    
+    (cherry picked from commit e404d123610b63ddd1c75d39667b373c40071eab)
+
+commit e41ddd2878e1281f7ff7e4c12d115acea1ff7e8a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 25 16:56:16 2014 +0200
+
+    core: update content for -D option in man page
+    
+    (cherry picked from commit ee9ea2f543975769ca544dcf3b75b97698e3b53e)
+
+commit 8a53fa7a680c573c6d08bdc166793bbaf7c6e2f4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 25 16:55:27 2014 +0200
+
+    core: main - proper info for -D command line option
+    
+    (cherry picked from commit 2b33768745130b91e984b679f9eed01a6267d8cc)
+
+commit ad5972f97df4a13a1044dc13e9570c1dd216d30f
+Author: Luis Azedo <luis.azedo@factorlusitano.com>
+Date:   Fri Aug 22 16:05:15 2014 +0200
+
+    json: fixed parameter number for free fixup function
+    
+    (cherry picked from commit a1b6093aaee9e96f00475752273c9c925ba390d3)
+
+commit e65b32a7fef536638babe848d8b796fc26929bf7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 22 15:53:47 2014 +0200
+
+    pua_dialoginfo: proper jump to end of the structure
+    
+    - void has no standard size
+    - descovered on a report by Charles Chance
+    
+    (cherry picked from commit 4108c7a125a3e50d1d670bc4c842b29cc32ec438)
+
+commit e4c7b4349cb04d657488794e68d46bcd172e0fd6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 15 16:01:38 2014 +0200
+
+    textopsx: msg_apply_changes() exits config execution if result is not parsing well
+    
+    - sip_msg_t structure is can be invalid
+    - similar behavior with the case when the message is broken from the
+      network, it doesn't get to config file
+    - reported by Marco B.
+    
+    (cherry picked from commit 55960106bbaa908057c3f619034b146fda7df48b)
+
+commit 1913bead1dbc8a6ccd1424cd5b0d50430ca87cbd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 14 17:49:18 2014 +0200
+
+    dialog: when adding a new dialog, lock the slot until the structure is linked
+    
+    - search for dialog based on sip attributes and if no result found, then
+      lock the hash table slot until the new structure is built and linked
+      in the table
+    - should avoid simulataneous creation for same dialog if there is a
+      not-handled retransmission or parallel forking upstream, resulting in
+      many processing managing duplicated requests
+    
+    (cherry picked from commit 6fb686de57f783b3c29e5b4e11ad1509882616bb)
+
+commit be02c48d9335dc71a023244d20ef669f4e986e9e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 14 14:59:09 2014 +0200
+
+    dialog: release of dialog for not-forwarded initial request done by creator
+    
+    - avoid releasing new dialog in case of upstream paralel forking
+      or retransmission by other processes than the other which created the
+      dialog
+    - it could result in destroying the dialog in initial state if the
+      request was not forwarded yet, likely to happen because creator
+      process runs more callbacks
+    
+    (cherry picked from commit c125cf6f36aedb75b4f1e0b32dbe5bdd0a48b8b5)
+
+commit 939ab9bd2d6c09054bfa21860635c26a4d106fbb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 14 14:46:21 2014 +0200
+
+    dialog: simplified dlg referencing on creation and spiral detection
+    
+    (cherry picked from commit fcf5f5b3115c0c40f4df9eb066489bb3e590c3b1)
+
+commit b19a94889eed0dde7131ac5328192962504ed928
+Author: Marcus Hunger <hunger@sipgate.de>
+Date:   Tue Aug 12 16:09:28 2014 +0200
+
+    rtpproxy: swap tags for lookup command (l) to fix one way audio on reinvite
+    
+    - affected cases when the lookup was used explicitely
+    
+    (cherry picked from commit 21e54da18f9bc6f87f913a897c9183074de4c937)
+
+commit 77662cf6075dce9a94d4ae4f840cb5c52ac26491
+Author: Jorj Bauer <jorj@isc.upenn.edu>
+Date:   Fri Aug 8 09:26:21 2014 -0400
+
+        modules/sca: fix 180 replies in sca_call_info_invite_reply_18x_handler()
+    
+        - Per Broadworks Release 13.0v1 documentation, 180s should produce
+          "appearance-state=progressing" just like 183s do; Polycom OS 3.3.4
+          doesn't care, but 4.x swaps leg information when it hears
+          "appearance-state=alerting"
+        - report and patch from  Joao Vitor Arruda
+    
+    (cherry picked from commit 82e67c07eebe9f7277156a6a6d87ffd5e04c892d)
+
+commit a0d8ea1c69e01b90d57a2352f94a0aca691a245a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 1 18:29:20 2014 +0200
+
+    app_lua: search for for lua 5.1 compilation flags
+    
+    - lua 5.2 embedded api is not compatible with 5.1
+    - an upgrade to c code in app_lua is required, till then, lua-5.1 has to
+      be installed (can co-exist with lua 5.2)
+    
+    (cherry picked from commit 04da8d891cdf1314e24cf025b64ed1cc70ce7b5e)
+
+commit 2fd085d21fb1a026d31d98541a9e33c568245771
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Aug 19 17:21:57 2014 +0200
+
+    debugger: fix reset_msgid
+    
+    Don't change the msg->id when that message has been processed already
+    
+    (cherry picked from commit 6b2f7d0b9d405d8ffd2310f788254453d6748f0b)
+
+commit 1d44d71e1786182df3f81f7abf206e13faae9d26
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 14 18:24:31 2014 +0200
+
+    parser/rr: free_rr() is expecting rr_t** parameter
+    
+    - give the parameter as &r, following the commit
+      b40d92962b680ac29dd38ffe3c8f1aa1e39d3a97
+    
+    (cherry picked from commit 34ba948cdabf7139c8563e531f18c4a486b31a00)
+
+commit 8ce72b602046e39c862c7db7eb885ca4b3ac960c
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Tue Aug 12 19:56:45 2014 +0100
+
+    core/parser: Free rr correctly in error cases
+    
+    - Fix potential memory leak if parameters are parsed into rr structure
+    (cherry picked from commit b40d92962b680ac29dd38ffe3c8f1aa1e39d3a97)
+
+commit 6c967cebd213d1820cd1af428db5449b1af9aec1
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Tue Aug 12 19:52:27 2014 +0100
+
+    outbound: Fix memory leak
+    
+    - Free parameters parsed when checking for ob markers
+    (cherry picked from commit 392689597376eb6f047c12504bcce367f5940260)
+
+
 ===================== 2014-08-06 Version 4.1.5 Released =====================
 
 ===================== Changes Since Version 4.1.4 ===========================
