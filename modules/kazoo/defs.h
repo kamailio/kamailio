@@ -9,12 +9,17 @@
 #define DBK_DEFS_H_
 
 #define BLF_MAX_DIALOGS 8
+#define BLF_JSON_PRES		"Presentity"
+#define BLF_JSON_PRES_USER	"Presentity-User"
+#define BLF_JSON_PRES_REALM	"Presentity-Realm"
 #define BLF_JSON_FROM      	"From"
 #define BLF_JSON_FROM_USER 	"From-User"
 #define BLF_JSON_FROM_REALM	"From-Realm"
+#define BLF_JSON_FROM_URI	"From-URI"
 #define BLF_JSON_TO        	"To"
 #define BLF_JSON_TO_USER 	"To-User"
 #define BLF_JSON_TO_REALM	"To-Realm"
+#define BLF_JSON_TO_URI		"To-URI"
 #define BLF_JSON_CALLID    	"Call-ID"
 #define BLF_JSON_TOTAG     	"To-Tag"
 #define BLF_JSON_FROMTAG   	"From-Tag"
@@ -74,11 +79,11 @@
 <dialog id=\"%.*s\" call-id=\"%.*s\" local-tag=\"%.*s\" remote-tag=\"%.*s\" direction=\"%.*s\">\
 <state>%.*s</state>\
 <local>\
-<identity>%.*s</identity>\
+<identity display=\"%.*s\">%.*s</identity>\
 <target uri=\"%.*s\"/>\
 </local>\
 <remote>\
-<identity>%.*s</identity>\
+<identity display=\"%.*s\">%.*s</identity>\
 <target uri=\"%.*s\"/>\
 </remote>\
 </dialog>\
@@ -89,10 +94,10 @@
 <dialog id=\"%.*s\" call-id=\"%.*s\" local-tag=\"%.*s\" remote-tag=\"%.*s\" direction=\"%.*s\">\
 <state>%.*s</state>\
 <local>\
-<identity>%.*s</identity>\
+<identity display=\"%.*s\">%.*s</identity>\
 </local>\
 <remote>\
-<identity>%.*s</identity>\
+<identity display=\"%.*s\">%.*s</identity>\
 </remote>\
 </dialog>\
 </dialog-info>"

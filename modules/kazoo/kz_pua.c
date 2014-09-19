@@ -306,9 +306,10 @@ int kz_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
 
 int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
     int ret = 1;
-    str from = { 0, 0 }, to = { 0, 0 };
-    str from_user = { 0, 0 }, to_user = { 0, 0 };
-    str from_realm = { 0, 0 }, to_realm = { 0, 0 };
+    str from = { 0, 0 }, to = { 0, 0 }, pres = {0, 0};
+    str from_user = { 0, 0 }, to_user = { 0, 0 }, pres_user = { 0, 0 };
+    str from_realm = { 0, 0 }, to_realm = { 0, 0 }, pres_realm = { 0, 0 };
+    str from_uri = { 0, 0 }, to_uri = { 0, 0 };
     str callid = { 0, 0 }, fromtag = { 0, 0 }, totag = { 0, 0 };
     str state = { 0, 0 };
     str direction = { 0, 0 };
@@ -327,12 +328,17 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
     }
 
 
+    json_extract_field(BLF_JSON_PRES, pres);
+    json_extract_field(BLF_JSON_PRES_USER, pres_user);
+    json_extract_field(BLF_JSON_PRES_REALM, pres_realm);
     json_extract_field(BLF_JSON_FROM, from);
     json_extract_field(BLF_JSON_FROM_USER, from_user);
     json_extract_field(BLF_JSON_FROM_REALM, from_realm);
+    json_extract_field(BLF_JSON_FROM_URI, from_uri);
     json_extract_field(BLF_JSON_TO, to);
     json_extract_field(BLF_JSON_TO_USER, to_user);
     json_extract_field(BLF_JSON_TO_REALM, to_realm);
+    json_extract_field(BLF_JSON_TO_URI, to_uri);
     json_extract_field(BLF_JSON_CALLID, callid);
     json_extract_field(BLF_JSON_FROMTAG, fromtag);
     json_extract_field(BLF_JSON_TOTAG, totag);
@@ -351,16 +357,45 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
     	reset = json_object_get_int(ExpiresObj);
     }
 
-    if (!from_user.len || !to_user.len || !state.len) {
+    if (!from.len || !to.len || !state.len) {
     	LM_ERR("missing one of From / To / State\n");
 		goto error;
     }
+
+    if(!pres.len || !pres_user.len || !pres_realm.len) {
+    	pres = from;
+    	pres_user = from_user;
+    	pres_realm = from_realm;
+    }
+
+    if(!from_uri.len)
+    	from_uri = from;
+
+    if(!to_uri.len)
+    	to_uri = to;
 
     if(callid.len) {
 
     	if(dbk_include_entity) {
         sprintf(body, DIALOGINFO_BODY,
+        		pres.len, pres.s,
+        		callid.len, callid.s,
+        		callid.len, callid.s,
+        		fromtag.len, fromtag.s,
+        		totag.len, totag.s,
+        		direction.len, direction.s,
+        		state.len, state.s,
+        		from_user.len, from_user.s,
         		from.len, from.s,
+        		from_uri.len, from_uri.s,
+        		to_user.len, to_user.s,
+        		to.len, to.s,
+        		to_uri.len, to_uri.s
+        		);
+    	} else {
+
+        sprintf(body, DIALOGINFO_BODY_2,
+        		pres.len, pres.s,
         		callid.len, callid.s,
         		callid.len, callid.s,
         		fromtag.len, fromtag.s,
@@ -372,23 +407,10 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
         		to_user.len, to_user.s,
         		to.len, to.s
         		);
-    	} else {
-
-        sprintf(body, DIALOGINFO_BODY_2,
-        		from.len, from.s,
-        		callid.len, callid.s,
-        		callid.len, callid.s,
-        		fromtag.len, fromtag.s,
-        		totag.len, totag.s,
-        		direction.len, direction.s,
-        		state.len, state.s,
-        		from_user.len, from_user.s,
-        		to_user.len, to_user.s
-        		);
     	}
 
     } else {
-    	sprintf(body, DIALOGINFO_EMPTY_BODY, from_user.len, from_user.s);
+    	sprintf(body, DIALOGINFO_EMPTY_BODY, pres.len, pres.s);
     }
 
     sprintf(sender_buf, "sip:%s",callid.s);
@@ -399,7 +421,7 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
     dialoginfo_body.len = strlen(body);
 
     if(dbk_pua_mode == 1) {
-    	kz_pua_update_presentity(&event, &from_realm, &from_user, &callid, &sender, &dialoginfo_body, expires, reset);
+    	kz_pua_update_presentity(&event, &pres_realm, &pres_user, &callid, &sender, &dialoginfo_body, expires, reset);
     }
 
  error:

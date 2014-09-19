@@ -58,9 +58,6 @@ Luis Azedo
 
                     4.4.1. db_url(str)
                     4.4.2. presentity_table(str)
-                    4.4.3. dialog_expires(str)
-                    4.4.4. presence_expires(str)
-                    4.4.5. mwi_expires(str)
 
         5. Functions
 
@@ -109,18 +106,15 @@ Luis Azedo
    1.16. Set amqp_query_timout parameter
    1.17. Set db_url parameter
    1.18. Set presentity_table parameter
-   1.19. Set dialog_expires parameter
-   1.20. Set presence_expires parameter
-   1.21. Set mwi_expires parameter
-   1.22. kazoo_publish usage
-   1.23. kazoo_query usage
-   1.24. kazoo_subscribe usage
-   1.25. kazoo_subscribe usage
-   1.26. kazoo_pua_publish usage
-   1.27. kazoo_encode usage
-   1.28. kazoo_json usage
-   1.29. kz.json usage
-   1.30. kz.encode usage
+   1.19. kazoo_publish usage
+   1.20. kazoo_query usage
+   1.21. kazoo_subscribe usage
+   1.22. kazoo_subscribe usage
+   1.23. kazoo_pua_publish usage
+   1.24. kazoo_encode usage
+   1.25. kazoo_json usage
+   1.26. kz.json usage
+   1.27. kz.encode usage
 
 Chapter 1. Admin Guide
 
@@ -167,9 +161,6 @@ Chapter 1. Admin Guide
 
               4.4.1. db_url(str)
               4.4.2. presentity_table(str)
-              4.4.3. dialog_expires(str)
-              4.4.4. presence_expires(str)
-              4.4.5. mwi_expires(str)
 
    5. Functions
 
@@ -340,9 +331,6 @@ event_route[kazoo:consumer-event]
 
         4.4.1. db_url(str)
         4.4.2. presentity_table(str)
-        4.4.3. dialog_expires(str)
-        4.4.4. presence_expires(str)
-        4.4.5. mwi_expires(str)
 
 4.1. amqp related
 
@@ -551,10 +539,10 @@ modparam("kazoo", "amqp_query_timout_micro", 200000)
 
 4.4.1. db_url(str)
 
-   The database url.
+   The database for the presentity table.
 
-   If set, the module is a fully operational presence server. Otherwise,
-   it is used as a 'library', for its exported functions.
+   If set, the kazoo_ppua_publish function will update the presentity
+   status in the database.
 
    Default value is “NULL”.
 
@@ -572,39 +560,6 @@ modparam("kazoo", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
    Example 1.18. Set presentity_table parameter
 ...
 modparam("kazoo", "presentity_table", "my_presentity_table")
-...
-
-4.4.3. dialog_expires(str)
-
-   The default Expires value for dialog event.
-
-   Default value is 30.
-
-   Example 1.19. Set dialog_expires parameter
-...
-modparam("kazoo", "dialog_expires", 3600)
-...
-
-4.4.4. presence_expires(str)
-
-   The default Expires value for presence event.
-
-   Default value is 3600.
-
-   Example 1.20. Set presence_expires parameter
-...
-modparam("kazoo", "presence_expires", 600)
-...
-
-4.4.5. mwi_expires(str)
-
-   The default Expires value for message-summary (mwi) event.
-
-   Default value is 3600.
-
-   Example 1.21. Set mwi_expires parameter
-...
-modparam("kazoo", "mwi_expires", 600)
 ...
 
 5. Functions
@@ -638,7 +593,7 @@ modparam("kazoo", "mwi_expires", 600)
 
    This function can be used from ANY ROUTE.
 
-   Example 1.22. kazoo_publish usage
+   Example 1.19. kazoo_publish usage
 ...
 $var(amqp_payload_request) = "{'Event-Category' : 'directory', 'Event-Name' : '
 reg_success', 'Contact' : '" + $var(fs_contact) + "', 'Call-ID' : '" + $ci + "'
@@ -659,7 +614,7 @@ kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 
    This function can be used from ANY ROUTE.
 
-   Example 1.23. kazoo_query usage
+   Example 1.20. kazoo_query usage
 ...
 $var(amqp_payload_request) = "{'Event-Category' : 'call_event' , 'Event-Name' :
  'query_user_channels_req', 'Realm' : '" + $fd + "', 'Username' : '" + $fU + "'
@@ -683,7 +638,7 @@ $var(amqp_result)")) {
 
    This function must be called from event_route[kazoo:mod-init].
 
-   Example 1.24. kazoo_subscribe usage
+   Example 1.21. kazoo_subscribe usage
 ...
 event_route[kazoo:mod-init]
 {
@@ -715,7 +670,7 @@ event_route[kazoo:consumer-event]
 
    This function must be called from event_route[kazoo:mod-init].
 
-   Example 1.25. kazoo_subscribe usage
+   Example 1.22. kazoo_subscribe usage
 ...
 event_route[kazoo:mod-init]
 {
@@ -740,7 +695,7 @@ event_route[kazoo:consumer-event]
 
    This function can be used from ANY ROUTE.
 
-   Example 1.26. kazoo_pua_publish usage
+   Example 1.23. kazoo_pua_publish usage
 ...
 event_route[kazoo:consumer-event-presence-update]
 {
@@ -761,7 +716,7 @@ json,From})");
 
    This function can be used from ANY ROUTE.
 
-   Example 1.27. kazoo_encode usage
+   Example 1.24. kazoo_encode usage
 ...
 kazoo_encode("$ci", "$var(callid_encoded)");
 $var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
@@ -774,7 +729,7 @@ $var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
 
    This function can be used from ANY ROUTE.
 
-   Example 1.28. kazoo_json usage
+   Example 1.25. kazoo_json usage
 ...
 kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
 if($du != $null) {
@@ -792,7 +747,7 @@ if($du != $null) {
 
    The prefix for kazoo transformations is kz.
      * json
-       Example 1.29. kz.json usage
+       Example 1.26. kz.json usage
 ...
 #kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
 $du = $kzR{kz.json,Channels[0].switch_url};
@@ -802,7 +757,7 @@ if($du != $null) {
 }
 ...
      * encode
-       Example 1.30. kz.encode usage
+       Example 1.27. kz.encode usage
 ...
 #kazoo_encode("$ci", "$var(callid_encoded)");
 #$var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
