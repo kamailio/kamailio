@@ -257,7 +257,7 @@ int received_test( struct sip_msg *msg )
 {
 	int rcvd;
 
-	rcvd=msg->via1->received
+	rcvd=msg->via1->received || msg->via1->rport
 			|| check_via_address(&msg->rcv.src_ip, &msg->via1->host,
 							msg->via1->port, received_dns);
 	return rcvd;
