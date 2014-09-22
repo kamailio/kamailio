@@ -247,7 +247,7 @@
 		<para>
 		Rules are stored in a database table specified by module
 		parameters.  There also exists a module parameter
-	        <varname>dm_mode</varname> that
+	        <varname>db_mode</varname> that
 		determines if rules are cached into memory for faster
 		matching or if database is consulted for each invocation
 		of allow_trusted function call.
