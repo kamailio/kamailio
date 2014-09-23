@@ -95,7 +95,7 @@ modparam("xmlrpc", "escape_cr", 1)
 		When enabled double LFs ('\n\n') in the input xmlrpc strings
 		will be replaced with CR LF ('\r\n'). This makes LF LF behave like
 		an escape character for CR LF and is needed for compatibility with
-		kamailio tools and to work around buggy xmlrpc clients that don't
+		&kamailio; tools and to work around buggy xmlrpc clients that don't
 		escape the CR in CR LF ('\r' should be escaped to "&amp;#xD;"
 		otherwise according to the xml spec "\r\n" will be transformed to
 		'\n'), but need to send CR LF in the strings (e.g. they use
@@ -119,9 +119,9 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
 	<section id="param_mode">
 	<title><varname>mode</varname> (integer)</title>
 	<para>
-		When set to 1, xmlrpc module does not register to core the callback
-		functions for non-SIP messages. Useful when other module register
-		a callback for HTTP request, being the decision of admin when to
+		When set to 1, the xmlrpc module does not register to core the callback
+		functions for non-SIP messages. Useful when another module register
+		a callback for HTTP request, letting the admin decide when to
 		call the XMLRPC route (or functions).
 	</para>
 	<para>
@@ -137,8 +137,8 @@ modparam("xmlrpc", "mode", 1)
 	<section>
 		<title><varname>url_skip</varname> (str)</title>
 		<para>
-			Regular expression to match the HTPP URL. If there is match,
-			then xmlrpc route is not executed.
+			Regular expression to match the HTTP URL. If there is a match,
+			then the xmlrpc route is not executed.
 		</para>
 		<para>
 		<emphasis>

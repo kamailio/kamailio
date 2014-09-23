@@ -47,17 +47,17 @@ Jan Janak
 
      * Implemented as a module.
      * API independent of transport protocols.
-     * Reuse transports available in SER.
+     * Reuse transports available in Kamailio.
      * The possibility to encrypt all communication.
      * The possibility to authenticate clients.
      * Easy integration with existing languages and implementations.
      * Easy and straightforward implementation of management functions in
-       SER modules.
+       Kamailio modules.
 
 2. Overview of Operation
 
    This module implements the XML-RPC transport and encoding interface for
-   ser RPCs.
+   Kamailio RPCs.
 
    The XML-RPC protocol encodes the name of the method to be called along
    with its parameter in an XML document which is then conveyed using HTTP
@@ -107,15 +107,15 @@ Server: UserLand Frontier/7.0.1-WinNT
 </methodResponse>
 
    XML-RPC specification spells HTTP as the official transport protocol
-   for XML-RPC documents. SER does not directly support HTTP, it is a SIP
-   server so SIP is the only protocol supported by SER. Because we would
-   like to reuse all transport protocols available in SER, such as TCP and
-   TLS, it would be natural to use modified version of XML-RPC which would
-   run on top of SIP instead of HTTP. XML-RPC documents would be then
-   encoded in the bodies of SIP requests and replies would be sent by the
-   server in the bodies of SIP replies. This way we could reuse all
-   transport protocols (including UDP) and message parsers available in
-   SER.
+   for XML-RPC documents. Kamailio does not directly support HTTP, it is a
+   SIP server so SIP is the only protocol supported by Kamailio. Because
+   we would like to reuse all transport protocols available in Kamailio,
+   such as TCP and TLS, it would be natural to use modified version of
+   XML-RPC which would run on top of SIP instead of HTTP. XML-RPC
+   documents would be then encoded in the bodies of SIP requests and
+   replies would be sent by the server in the bodies of SIP replies. This
+   way we could reuse all transport protocols (including UDP) and message
+   parsers available in Kamailio.
 
    Although this approach seems to be the logical choice, there is one big
    drawback. No existing XML-RPC implementations support SIP as the
@@ -126,22 +126,22 @@ Server: UserLand Frontier/7.0.1-WinNT
 
    Because extending available XML-RPC implementation would be too
    expensive, we could also do it the other way around, keep existing
-   XML-RPC implementations and extend SER to support HTTP. Extending SER
-   with HTTP support is easier than it might seem at a first glance, due
-   to the similarity between SIP requests and HTTP requests.
+   XML-RPC implementations and extend Kamailio to support HTTP. Extending
+   Kamailio with HTTP support is easier than it might seem at a first
+   glance, due to the similarity between SIP requests and HTTP requests.
 
-   SER already supports TCP, so existing HTTP implementations can send
-   HTTP requests to it. HTTP requests are missing certain mandatory SIP
-   header fields, such as Via, From, and CSeq. The contents of the header
-   fields is mainly used for transaction matching. A SIP server could
-   perform two basic operations when processing an HTTP request:
+   Kamailio already supports TCP, so existing HTTP implementations can
+   send HTTP requests to it. HTTP requests are missing certain mandatory
+   SIP header fields, such as Via, From, and CSeq. The contents of the
+   header fields is mainly used for transaction matching. A SIP server
+   could perform two basic operations when processing an HTTP request:
      * Terminate the request, execute the function and send a reply back.
      * Forward the request to another SIP server.
 
    Nothing special is needed on the SIP server terminating the request,
    except that it has to know where it should send the reply. Parsing of
    HTTP header field bodies would fail because we do not have parsers for
-   them in SER, but that does not matter anyway because all the
+   them in Kamailio, but that does not matter anyway because all the
    information is encoded in the body of the request. HTTP requests
    contain no Via header fields. Via header fields are used by SIP
    implementations to determine the destination (IP, transport protocol,
@@ -193,7 +193,7 @@ Content-Length: 111
 </methodCall>
 
    This particular request calls method "statistics" from from usrloc
-   module of SER. The method has no parameters.
+   module of Kamailio. The method has no parameters.
 
    The outbound SIP server receives the HTTP request and performs a set of
    actions called "SIP-normalization". This includes creation of fake Via
@@ -220,24 +220,24 @@ Content-Length: 111
    target SIP server over TCP.
 
    Step 3. The target SIP server receives the HTTP request and executes
-   function called dispatch_rpc from xmlrpc SER module. This function will
-   parse the XML-RPC document in the body of the request and lookup the
-   function to be called among all RPC functions exported by the SER core
-   and modules. Function dispatch_rpc will be called from the
-   configuration file just like any other function:
+   function called dispatch_rpc from xmlrpc Kamailio module. This function
+   will parse the XML-RPC document in the body of the request and lookup
+   the function to be called among all RPC functions exported by the
+   Kamailio core and modules. Function dispatch_rpc will be called from
+   the configuration file just like any other function:
 if (method == "POST" || method == "GET") {
     dispatch_rpc();
     break;
 };
 
    This particular configuration snippet executes the function whenever
-   SER receives GET or POST requests. These two method names indicate
+   Kamailio receives GET or POST requests. These two method names indicate
    HTTP.
 
    Step 4. The function dispatch_rpc scans through the list of all
    exported RPC functions searching for the statistics function of the
-   usrloc module. The SER RPC Module API describes in detail how modules
-   export RPC functions.
+   usrloc module. The Kamailio RPC Module API describes in detail how
+   modules export RPC functions.
 
    Step 5. As the RPC function from usrloc module is running and gathering
    statistics, it calls functions of RPC interface to prepare the result
@@ -334,19 +334,19 @@ Content-Length: 112
 </methodCall>
 
    The name of the method to be called in this example is "listMethods".
-   This is one of the introspection methods. SER will call dispatch_rpc
-   function of xmlrpc module to handle the request. The function will
-   parse the XML-RPC document, lookup listMethods function in the list of
-   all export RPC functions, prepare the context for the function and
-   execute it.
+   This is one of the introspection methods. Kamailio will call
+   dispatch_rpc function of xmlrpc module to handle the request. The
+   function will parse the XML-RPC document, lookup listMethods function
+   in the list of all export RPC functions, prepare the context for the
+   function and execute it.
 
 3.2. Replies
 
    The module will always generate 200 OK. Other response codes and
-   classes are reserved for SER. The status code of the XML-RPC reply,
-   response code, and additional data will be encoded in the body of the
-   reply. Failure replies do not contain any data, just the response code
-   and reason phrase:
+   classes are reserved for Kamailio. The status code of the XML-RPC
+   reply, response code, and additional data will be encoded in the body
+   of the reply. Failure replies do not contain any data, just the
+   response code and reason phrase:
 HTTP/1.0 200 OK
 Via: SIP/2.0/TCP 127.0.0.1:2464
 Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
@@ -388,8 +388,8 @@ Content-Length: 150
 
    If an RPC function adds just a single item (it calls add once with just
    one character in the formatting string) then the data will be converted
-   to XML-RPC representation according to the rules described in SER RPC
-   Type Conversion and the reply will contain just the single value:
+   to XML-RPC representation according to the rules described in Kamailio
+   RPC Type Conversion and the reply will contain just the single value:
 HTTP/1.0 200 OK
 Via: SIP/2.0/TCP 127.0.0.1:3793
 Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
@@ -454,7 +454,7 @@ Content-Length: 276
 
 3.4. Limitations
 
-   SER xmlrpc modules does not implement all data types allowed in
+   Kamailio xmlrpc modules does not implement all data types allowed in
    XML-RPC. As well it does not implement arrays and nested structures.
    This simplification is a feature, not bug. In our case the XML-RPC
    interface will be used mainly for management purposes and we do not
@@ -594,7 +594,7 @@ modparam("xmlrpc", "escape_cr", 1)
 
    When enabled double LFs ('\n\n') in the input xmlrpc strings will be
    replaced with CR LF ('\r\n'). This makes LF LF behave like an escape
-   character for CR LF and is needed for compatibility with kamailio tools
+   character for CR LF and is needed for compatibility with Kamailio tools
    and to work around buggy xmlrpc clients that don't escape the CR in CR
    LF ('\r' should be escaped to "&#xD;" otherwise according to the xml
    spec "\r\n" will be transformed to '\n'), but need to send CR LF in the
@@ -610,9 +610,9 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
 
 1.5. mode (integer)
 
-   When set to 1, xmlrpc module does not register to core the callback
-   functions for non-SIP messages. Useful when other module register a
-   callback for HTTP request, being the decision of admin when to call the
+   When set to 1, the xmlrpc module does not register to core the callback
+   functions for non-SIP messages. Useful when another module register a
+   callback for HTTP request, letting the admin decide when to call the
    XMLRPC route (or functions).
 
    Default: 0.
@@ -622,7 +622,7 @@ modparam("xmlrpc", "mode", 1)
 
 1.6. url_skip (str)
 
-   Regular expression to match the HTPP URL. If there is match, then
+   Regular expression to match the HTTP URL. If there is a match, then the
    xmlrpc route is not executed.
 
    Default value is null (don't skip).
@@ -651,7 +651,7 @@ modparam("xmlrpc", "url_match", "^/RPC2")
    2.1. dispatch_rpc()
    2.2. xmlrpc_reply(code, reason)
 
-2.1.  dispatch_rpc()
+2.1. dispatch_rpc()
 
    This function processes an XMLRPC request, found in the body of the
    request.
@@ -678,7 +678,7 @@ route[XMLRPC]{
         dispatch_rpc();
 }
 
-2.2.  xmlrpc_reply(code, reason)
+2.2. xmlrpc_reply(code, reason)
 
    This function can be called from the config script to directly generate
    an XML-RPC reply.
