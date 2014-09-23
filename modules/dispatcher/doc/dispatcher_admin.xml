@@ -1295,7 +1295,7 @@ onreply_route {
 
    </section>
 
-	<section>
+	<section id="dispatcher.ex.install">
 	<title>Installation and Running</title>
 	<section>
 		<title>Destination List File</title>
@@ -1358,7 +1358,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 		</example>
 		</section>
 	
-		<section>
+		<section id="dispatcher.ex.config">
 		<title>&kamailio; config file</title>
 		<para>
 		Next picture shows a sample usage of the dispatcher module.
@@ -1374,7 +1374,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 	</section>
 	</section>
 
-        <section>
+        <section id="dispatcher.ex.event_routes">
         <title>Event routes</title>
         <section>
                 <title>
