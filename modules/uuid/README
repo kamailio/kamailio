@@ -44,7 +44,10 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module exports the $uuid(type) class of variables that return
-   unique values using libuuid functions.
+   unique values using functions from the libuuid library. UUIDs are used
+   in the +sip.instance media feature tag in SIP, but can also be used for
+   other purposes, like defining a unique session ID for a group of SIP
+   dialogs.
 
 2. Dependencies
 
@@ -64,7 +67,7 @@ Chapter 1. Admin Guide
 
 3. Usage
 
-   Following variables can be used:
+   The following variables can be used:
      * $uuid(g) - return the UUID value using uuid_generate().
      * $uuid(r) - return the UUID value using uuid_generate_random().
      * $uuid(t) - return the UUID value using uuid_generate_time().

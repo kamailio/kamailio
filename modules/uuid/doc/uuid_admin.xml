@@ -17,7 +17,10 @@
 	<title>Overview</title>
 	<para>
 		This module exports the $uuid(type) class of variables that return
-		unique values using libuuid functions.
+		unique values using functions from the libuuid library. UUIDs are
+		used in the +sip.instance media feature tag in SIP, but can also
+		be used for other purposes, like defining a unique session ID for a
+		group of SIP dialogs.
 	</para>
 	</section>
 
@@ -55,7 +58,7 @@
 	<section>
 		<title>Usage</title>
 		<para>
-			Following variables can be used:
+			The following variables can be used:
 			<itemizedlist>
 			<listitem>
 			<para>
