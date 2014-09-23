@@ -16,8 +16,9 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides JSONRPC server over HTTP implementation,
-		tailored for the needs of &kamailio;.
+		This module provides a JSON-RPC server over HTTP implementation,
+		tailored for the needs of &kamailio;. It implements the &kamailio;
+		RPC interface over JSON-RPC.
 	<para>
 	</para>
 		The JSONRPC-S module uses the xHTTP module to handle HTTP requests.
@@ -31,13 +32,13 @@
 	<para>
 		This module does not implement asynchronous RPC commands.
 		It is unlikely that asynchronous RPC commands will be executed
-		from an JSONRPC over HTTP client.
+		from an JSON-RPC over HTTP client.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
 		This module does not accept parameters embedded in a structure
-		(see RPC documentation for more info about how parameters can be
+		(see the RPC documentation for more info about how parameters can be
 		passed to RPC).
 	</para>
 	</listitem>
@@ -80,7 +81,7 @@
 	<section>
 		<title><varname>pretty_format</varname> (int)</title>
 		<para>
-			Pretty format for JSONRPC response document. 
+			Pretty format for JSON-RPC response document. 
 		</para>
 		<para>
 		<emphasis>
@@ -159,12 +160,12 @@ event_route[xhttp:request] {
 		<function moreinfo="none">jsonrpc_exec(cmd)</function>
 	    </title>
 	    <para>
-			Execute JSONRPC command given as parameter.
+			Execute a JSON-RPC command given as a parameter.
 		</para>
 		<para>
-			The parameter has to be a full valid JSONRPC document. It can
+			The parameter has to be a valid full JSON-RPC document. It can
 			be a dynamic string with variables. The result of the command
-			can be accessed via $jsonrpl(key) variables.
+			can be accessed via $jsonrpl(key) pseudo variables.
 	    </para>
 		<example>
 		<title><function>jsonrpc_exec</function> usage</title>
