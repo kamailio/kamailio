@@ -1280,6 +1280,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 		_dlg_ctx.cpid = my_pid();
 		_dlg_ctx.expect_t = 1;
+		dlg_set_ctx_iuid(dlg);
 
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 		goto done;
