@@ -45,16 +45,25 @@
 	<section id="tls.overview">
 		<title>Overview</title>
 		<para>
-			This module implements the TLS transport for &kamailio; using the <ulink url="http://www.openssl.org">OpenSSL library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the Kamailio config file 
+			This module implements the TLS transport for &kamailio;
+			using the <ulink url="http://www.openssl.org">OpenSSL library</ulink>
+			(http://www.openssl.org). To enable the &kamailio; TLS support this
+			module must be loaded and <emphasis>enable_tls=yes</emphasis> core setting 
+			must be added to the Kamailio config file 
 		</para>
 	</section>
 	<section id="tls.quick_start">
 		<title>Quick Start</title>
 		<para>
-			Make sure you have a proper certificate and private key and either use the certificate and private_key module parameters, or make sure the certificate and key are in the same PEM file, named cert.pem an placed in [your-cfg-install-prefix]/etc/kamailio/. Don't forget to load the tls module and to enable TLS (add <emphasis>enable_tls=yes</emphasis> to your config).
+			Make sure you have a proper certificate and private key and either
+			use the <varname>certificate</varname> and <varname>private_key</varname>
+			module parameters, or make sure the certificate and key are in the same PEM file,
+			named <emphasis>cert.pem</emphasis> an placed in [your-cfg-install-prefix]/etc/kamailio/.
+			Don't forget to load the tls module and to enable TLS
+			(add <emphasis>enable_tls=yes</emphasis> to your config).
 		</para>
 		<example>
-		<title>quick start config</title>
+		<title>Quick start config</title>
 		<programlisting>
 #...
 loadmodule "modules/tls/tls.so"
@@ -75,25 +84,61 @@ route{
 	<section id="tls.notes">
 		<title>Important Notes</title>
 		<para>
-			The TLS module needs some special options enabled when compiling Kamailio. These options are enabled by default, however in case you're using a modified Kamailio version or Makefile, make sure that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care of both options). To quickly check if your Kamailio version was compiled with these options, run kamailio -V and look for USE_TLS and TLS_HOOKS among the flags.
+			The TLS module needs some special options enabled when compiling
+			Kamailio. These options are enabled by default, however in case
+			you're using a modified Kamailio version or Makefile, make sure
+			that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make
+			TLS_HOOKS=1 which will take care of both options).
 		</para>
 		<para>
-			This module includes several workarounds for various Openssl bugs (like compression and Kerberos using 
-			the wrong memory allocations functions, low memory problems a.s.o). On startup it will try to enable 
-			the needed workarounds based on the openssl library version. Each time a known problem is detected and 
-			a workaround is enabled, a message will be logged. In general it is recommended to compile this module on the same machine or a similar machine to where kamailio will be run or to link it statically with libssl. For example if on the compile machine openssl does not have the kerberos support enabled, but on the target machine a kerberos enabled openssl library is installed, kamailio cannot apply the needed workarounds and will refuse to start. The same thing will happen if the openssl versions are too different (to force kamailio startup anyway, see the <varname>tls_force_run</varname> module parameter).
+			To quickly check if your Kamailio version was compiled with these
+			options, run kamailio -V and look for USE_TLS and TLS_HOOKS among the flags.
 		</para>
 		<para>
-			Try to avoid using keys larger then 1024 bytes. Large keys significantly slow down the TLS connection handshake, thus limiting the maximum Kamailio TLS connection rate.
+			This module includes several workarounds for various Openssl bugs
+			(like compression and Kerberos using the wrong memory allocations
+			functions, low memory problems a.s.o). On startup it will try to enable 
+			the needed workarounds based on the Openssl library version. Each time
+			a known problem is detected and a workaround is enabled, a message will
+			be logged. In general it is recommended to compile this module on the
+			same machine or a similar machine to where kamailio will be run or to
+			link it statically with <emphasis>libssl</emphasis>. For example if on
+			the compile machine Openssl does not have the Kerberos support enabled,
+			but on the target machine a Kerberos enabled Openssl library is installed,
+			Kamailio cannot apply the needed workarounds and will refuse to start.
+			The same thing will happen if the Openssl versions are too different
+			(to force Kamailio startup anyway, see the <varname>tls_force_run</varname>
+			module parameter).
 		</para>
 		<para>
-			Compression is fully supported if you have a new enough Openssl version (starting with 0.9.8).  Although there are some problems with zlib compression in currently deployed Openssl versions (up to and including 0.9.8d, see openssl bug #1468), the TLS module will automatically switch to its own fixed version.
-			Note however that starting with sr 3.1 compression is not enabled by default, due to the huge extra memory consumption that it causes (about 10x more memory). To enable it use modparam("tls", "tls_disable_compression", 0)
- (see <varname>tls_disable_compression</varname>).
+			Compression is fully supported if you have a new enough Openssl version
+			(starting with 0.9.8). Although there are some problems with zlib compression
+			in currently deployed Openssl versions (up to and including 0.9.8d, see
+			openssl bug #1468), the TLS module will automatically switch to its own fixed version.
+			Note however that starting with &kamailio; 3.1 compression is not enabled by
+			default, due to the huge extra memory consumption that it causes (about 10x
+			more memory). To enable it use
+			<emphasis>modparam("tls", "tls_disable_compression", 0)</emphasis>
+ 			(see <varname>tls_disable_compression</varname>).
 		</para>
 		<para>
-			The TLS module includes workarounds for the following known openssl bugs:  openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled, for versions between 0.9.8 and 0.9.8c), openssl #1468 (fix zlib compression memory allocation), openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1) and openssl #1491 (stop using tls in low memory situations due to the very high risk of openssl crashing or leaking memory). The bug reports can be viewed at
-  <ulink url="http://rt.openssl.org/">http://rt.openssl.org/</ulink>.
+			The TLS module includes workarounds for the following known openssl bugs: 
+			<itemizedlist>
+                        <listitem><para>
+			openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled,
+			for versions between 0.9.8 and 0.9.8c),
+                        </para></listitem>
+                        <listitem><para>
+			openssl #1468 (fix zlib compression memory allocation),
+                        </para></listitem>
+                        <listitem><para>
+			openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1) 
+                        </para></listitem>
+                        <listitem><para>
+			openssl #1491 (stop using tls in low memory situations due to the very high risk of openssl crashing or leaking memory).
+                        </para></listitem>
+			</itemizedlist>
+			The bug reports can be viewed at <ulink url="http://rt.openssl.org/">http://rt.openssl.org/</ulink>.
 		</para>
 	</section>
 
@@ -116,13 +161,18 @@ make all include_modules=tls
 			.
 		</para>
 		<para>
-			However in some cases the openssl library requires linking with other libraries. For example compiling the openssl library with kerberos and zlib-shared support will require linking the tls module with libkrb5 and libz. In this case just add  <emphasis>TLS_EXTRA_LIBS</emphasis>="library list" to make's command line. E.g.:
+			However in some cases the Openssl library requires linking with other libraries.
+			For example compiling the Openssl library with Kerberos and zlib-shared support
+			will require linking the TLS module with libkrb5 and libz. In this case just add
+			<emphasis>TLS_EXTRA_LIBS</emphasis>="library list" to make's command line. E.g.:
 			<programlisting>
 make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 			</programlisting>
 		</para>
 		<para>
-			In general, if Kamailio fails to start with a symbol not found error when trying to load the tls module (check the log), it means some needed library was not linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
+			In general, if Kamailio fails to start with a symbol not found error when trying
+			to load the TLS module (check the log), it means some needed library was not
+			linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
 		</para>
 		<para>
 <ulink url="http://wiki.openssl.org/index.php/Elliptic_Curve_Diffie_Hellman">Elliptic Curve Diffie-Hellman (EDCH)</ulink>-Ciphers are only supported in OpenSSL 1.0.0e and later.
@@ -132,7 +182,14 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 	<section id="tls.low_memory">
 		<title>TLS and Low Memory</title>
 		<para>
-			The openssl library doesn't handle very well low memory situations. If memory allocations start to fail (due to memory shortage), openssl can crash or cause memory leaks (making the memory shortage even worse). As of this writing all openssl versions were affected (includind 0.9.8e), see openssl bug #1491. The tls module has some workarounds for preventing this problem (see <varname>low_mem_treshold1</varname> and <varname>low_mem_threshold2</varname>), however starting Kamailio with enough shared memory is higly recommended. When this is not possible a quick way to significantly reduce openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).
+			The Openssl library doesn't handle low memory situations very well. If memory
+			allocations start to fail (due to memory shortage), Openssl can crash or cause memory
+			leaks (making the memory shortage even worse). As of this writing all Openssl versions
+			were affected (including 0.9.8e), see Openssl bug #1491. The TLS module has some
+			workarounds for preventing this problem (see <varname>low_mem_treshold1</varname>
+			and <varname>low_mem_threshold2</varname>), however starting Kamailio with enough shared
+			memory is higly recommended. When this is not possible a quick way to significantly
+			reduce Openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).
 		</para>
 	</section>
 
@@ -140,7 +197,7 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 		<title>TLS Debugging</title>
 		<para>
 			Debugging messages can be selectively enabled by recompiling
-			the tls module with a combination of the following defines:
+			the TLS module with a combination of the following defines:
 			<itemizedlist>
 				<listitem>
 					<para>
@@ -175,13 +232,19 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 	<section id="tls.known_limitations">
 		<title>Known Limitations</title>
 		<para>
-			The private key must not encrypted (Kamailio cannot ask you for a password on startup).
+			The private key must not be encrypted (Kamailio cannot ask you for a password on startup).
 		</para>
 		<para>
-			The TLS certificate verifications ignores the certificate name, subject altname and ip extensions, it just checks if the certificate is signed by a recognized CA. One can use the select framework to try to overcome this limitation (check in the script for the contents of various certificate fields), but this is not only slow, but also not exactly standard conforming (the verification should happen during TLS connection establishment and not after).
+			The TLS certificate verifications ignores the certificate name, subject altname
+			and ip extensions, it just checks if the certificate is signed by a recognized CA.
+			One can use the select framework to try to overcome this limitation (check in the
+			script for the contents of various certificate fields), but this is not only slow,
+			but also not exactly standard conforming (the verification should happen during TLS
+			connection establishment and not after).
 		</para>
 		<para>
-			TLS specific config reloading is not safe, so for now better don't use it, especially under heavy traffic.
+			TLS specific config reloading is not safe, so for now better don't use it,
+			especially under heavy traffic.
 		</para>
 		<para>
 			This documentation is incomplete.
