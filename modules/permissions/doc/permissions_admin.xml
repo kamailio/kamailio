@@ -519,7 +519,8 @@ modparam("permissions", "ip_addr_col", "ip_address")
 		<title><varname>mask_col</varname> (string)</title>
 		<para>
 		Name of address table column containing the network mask of
-		the IPv4 address.  Possible values are 0-32.
+		the address.  Possible values are 0-32 for IPv4 and 0-128 for
+		IPv6 addresses.
 		</para>
 		<para>
 		<emphasis>

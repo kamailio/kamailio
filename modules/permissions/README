@@ -520,8 +520,9 @@ modparam("permissions", "ip_addr_col", "ip_address")
 
 3.10. mask_col (string)
 
-   Name of address table column containing the network mask of the IPv4
-   address. Possible values are 0-32.
+   Name of address table column containing the network mask of the
+   address. Possible values are 0-32 for IPv4 and 0-128 for IPv6
+   addresses.
 
    Default value is "mask".
 
