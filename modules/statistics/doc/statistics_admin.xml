@@ -9,7 +9,7 @@
 <chapter>
   <title>&adminguide;</title>
 
-  <section>
+  <section id="statistics.overview">
     <title>Overview</title>
 
     <para>The <acronym>Statistics</acronym> module is a wrapper over the
@@ -21,7 +21,7 @@
     implementation of any kind of statistic scenario.</para>
   </section>
 
-  <section>
+  <section id="statistics.dependencies">
     <title>Dependencies</title>
 
     <section>
@@ -48,10 +48,10 @@
     </section>
   </section>
 
-  <section>
+  <section id="statistics.parameters">
     <title>Parameters</title>
 
-    <section>
+    <section id="statistics.p.variable">
       <title><varname>variable</varname> (string)</title>
 
       <para>Name of a new statistic variable. The name may be followed by
@@ -75,10 +75,10 @@ modparam("statistics", "variable", "active_calls/no_reset")
     </section>
   </section>
 
-  <section>
+  <section id="statistics.functions">
     <title>Functions</title>
 
-    <section>
+    <section id="statistics.f.update_stat">
       <title><function
       moreinfo="none">update_stat(variable,value)</function></title>
 
@@ -115,7 +115,7 @@ update_stat("$var(a_calls)", "-1");
       </example>
     </section>
 
-    <section>
+    <section id="statistics.f.reset_stat">
       <title><function moreinfo="none">reset_stat(variable)</function></title>
 
       <para>Resets to zero the value of the statistic variable.</para>
@@ -124,7 +124,7 @@ update_stat("$var(a_calls)", "-1");
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>variable</emphasis> - variable to be reset-ed (it
+          <para><emphasis>variable</emphasis> - variable to be reset (it
           can be a string or a pseudovariable).</para>
         </listitem>
       </itemizedlist>
