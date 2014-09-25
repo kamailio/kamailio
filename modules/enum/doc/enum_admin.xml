@@ -84,7 +84,7 @@
 		and -1 if not.
 	</para>
 	<para>
-		Enum module also implements is_from_user_enum function.
+		Enum module also implements <function>is_from_user_enum</function> function.
 		This function does an enum lookup on the from user and
 		returns true if found, false otherwise.
 	</para>
@@ -105,7 +105,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="enum.p.domain_suffix">
 		<title><varname>domain_suffix</varname> (string)</title>
 		<para>
 		The domain suffix to be added to the domain name obtained from
@@ -123,7 +123,7 @@ modparam("enum", "domain_suffix", "e1234.arpa.")
 		</example>
 	</section>
 
-	<section>
+	<section id="enum.p.tel_uri_params">
 		<title><varname>tel_uri_params</varname> (string)</title>
 		<para>
 		A string whose contents is appended to each new tel URI in the 
@@ -145,7 +145,7 @@ modparam("enum", "tel_uri_params", ";npdi")
 </programlisting>
 		</example>
 	</section>
-        <section>
+	<section id="enum.p.i_enum_suffix">
                 <title><varname>i_enum_suffix</varname> (string)</title>
                 <para>
                 The domain suffix to be used for i_enum_query() lookups.
@@ -161,7 +161,7 @@ modparam("enum", "i_enum_suffix", "e1234.arpa.")
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="enum.p.branchlabel">
                 <title><varname>branchlabel</varname> (string)</title>
                 <para>
                 This parameter determines which label i_enum_query() will use
@@ -177,10 +177,11 @@ modparam("enum", "branchlabel", "i")
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="enum.p.bl_algorithm">
                 <title><varname>bl_algorithm</varname> (string)</title>
                 <para>
-                This parameter determines which algorithm i_enum_query() will use
+                This parameter determines which algorithm the 
+		<function>i_enum_query()</function> function will use
                 to select the position in the DNS tree where the infrastructure tree
                 branches off the user ENUM tree.
                 </para>
@@ -234,7 +235,7 @@ modparam("enum", "bl_algorithm", "txt")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="enum.f.enum_query">
 		<title>
 		<function moreinfo="none">enum_query(["suffix"[,"service"]])</function>
 		</title>
@@ -288,7 +289,7 @@ enum_query("e164.arpa.","+sip+voice:sip");
 		</example>
 	</section>
 
-	<section>
+	<section id="enum.f.enum_pv_query">
 		<title>
 		<function moreinfo="none">enum_pv_query("pvar"[,"suffix"[,"service"]])</function>
 		</title>
@@ -347,7 +348,7 @@ enum_pv_query("$avp(i:100)","e164.arpa.","+sip+voice:sip");
 		</example>
 	</section>
 
-        <section>
+	<section id="enum.f.i_enum_query">
                 <title>
                 <function moreinfo="none">i_enum_query(["suffix"[,"service"]])</function>
                 </title>
@@ -363,7 +364,7 @@ enum_pv_query("$avp(i:100)","e164.arpa.","+sip+voice:sip");
                 </para>
         </section>
 
-	<section>
+	<section id="enum.f.is_from_user_enum">
 		<title><function moreinfo="none">is_from_user_enum()</function></title>
 		<para>
 		Checks if the user part of from <abbrev>URI</abbrev>

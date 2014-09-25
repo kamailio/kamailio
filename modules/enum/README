@@ -185,9 +185,9 @@ modparam("enum", "branchlabel", "i")
 
 3.5. bl_algorithm (string)
 
-   This parameter determines which algorithm i_enum_query() will use to
-   select the position in the DNS tree where the infrastructure tree
-   branches off the user ENUM tree.
+   This parameter determines which algorithm the i_enum_query() function
+   will use to select the position in the DNS tree where the
+   infrastructure tree branches off the user ENUM tree.
 
    If set to "cc", i_enum_query() will always insert the label at the
    country-code level. Examples: i.1.e164.arpa, i.3.4.e164.arpa,
