@@ -36,7 +36,7 @@
 #include "worker.h"
 
 #define DEFAULT_NUM_WORKERS	2
-#define MIN_PING_INTERVAL	60
+#define MIN_PING_INTERVAL	5
 
 extern int num_workers;
 extern dmq_worker_t* workers;

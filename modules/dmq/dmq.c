@@ -66,7 +66,7 @@ struct sip_uri dmq_server_uri;
 
 str dmq_notification_address = {0, 0};
 struct sip_uri dmq_notification_uri;
-int ping_interval = MIN_PING_INTERVAL;
+int ping_interval = 60;
 
 /* TM bind */
 struct tm_binds tmb;
