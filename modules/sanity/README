@@ -1,4 +1,3 @@
-
 The Sanity Module - SIP syntax checking
 
 Nils Ohlmeier
@@ -6,7 +5,7 @@ Nils Ohlmeier
    iptelorg GmbH
 
    Copyright © 2006 iptelorg GmbH
-     _________________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
@@ -23,7 +22,7 @@ Nils Ohlmeier
 
         4. Functions
 
-              4.1. sanity_check([msg_checks [, uri_checks]]) 
+              4.1. sanity_check([msg_checks [, uri_checks]])
 
    List of Examples
 
@@ -50,49 +49,49 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. sanity_check([msg_checks [, uri_checks]]) 
+        4.1. sanity_check([msg_checks [, uri_checks]])
 
 1. Overview
 
-   This  module  aims  to  implement  several  sanity  checks on incoming
-   requests  which  are  suggested or even required by a RFC, but are not
+   This module aims to implement several sanity checks on incoming
+   requests which are suggested or even required by a RFC, but are not
    available yet in the core of Kamailio.
 
-   These   checks   are   not   required   by  Kamailio  itself  for  its
-   functionality.  But  on  the  other  side it makes not much sence if a
-   broken  request  traverses  through  a  SIP  network if it is rejected
-   sooner  or  later  by a SIP device any way. As every sanity check cost
-   extra  performance  because of additional parsing and evaluation it is
-   with  this  module  now  up  to the Kamailio adminstrator which checks
-   should be done on which request.
+   These checks are not required by Kamailio itself for its functionality.
+   But on the other side it does not make much sense if a broken request
+   traverses through a SIP network if it is rejected sooner or later by a
+   SIP device any way. As every sanity check cost extra performance
+   because of additional parsing and evaluation it is with this module now
+   up to the Kamailio adminstrator what checks should be done on which
+   request.
 
    The following checks are available:
-     * ruri  sip version - (1) - checks if the SIP version in the request
+     * ruri sip version - (1) - checks if the SIP version in the request
        URI is supported, currently only 2.0.
      * ruri scheme - (2) - checks if the URI scheme of the request URI is
        supported (sip[s]|tel[s]) by Kamailio
-     * required  headers  -  (4)  -checks  if the minimum set of required
+     * required headers - (4) -checks if the minimum set of required
        headers to, from, cseq, callid and via is present in the request.
-     * via  sip  version - (8) - not working because parser fails already
+     * via sip version - (8) - not working because parser fails already
        when another version then 2.0 is present.
-     * via  protocol - (16) - not working because parser fails already if
+     * via protocol - (16) - not working because parser fails already if
        an unsupported transport is present.
-     * cseq  method - (32) - checks if the method from the cseq header is
+     * Cseq method - (32) - checks if the method from the Cseq header is
        equal to the request method.
-     * cseq  value  - (64) - checks if the number in the cseq header is a
-       valid unsigend integer.
-     * content  length  -  (128) - checks if the size of the body matches
+     * Cseq value - (64) - checks if the number in the Cseq header is a
+       valid unsigned integer.
+     * content length - (128) - checks if the size of the body matches
        with the value from the content length header.
-     * expires  value - (256) - checks if the value of the expires header
+     * expires value - (256) - checks if the value of the expires header
        is a valid unsigned integer.
-     * proxy  require  - (512) - checks if all items of the proxy require
-       header  are  present in the list of the extensions from the module
+     * proxy require - (512) - checks if all items of the proxy require
+       header are present in the list of the extensions from the module
        parameter proxy_require.
-     * parse  uri's  -  (1024) - checks if the specified URIs are present
-       and parseable by the Kamailio parsers
-     * digest   credentials   (2048)   Check   all  instances  of  digest
-       credentials  in  a  message. The test checks whether there are all
-       required digest parameters and have meaningful values.
+     * parse uri's - (1024) - checks if the specified URIs are present and
+       parseable by the Kamailio parsers
+     * digest credentials (2048) - Check all instances of digest
+       credentials in a message. The test checks whether there are all
+       required digest parameters and that they have meaningful values.
 
 2. Dependencies
 
@@ -108,15 +107,15 @@ Chapter 1. Admin Guide
 
 3.1. default_checks (integer)
 
-   This  parameter  determines which of the checks from the sanity module
-   are  executed  if  no parameter was given to the sanity_check function
-   call.  By default all implemented checks are included in the execution
-   of  the  sanity_check  function.  The  integer value is the sum of the
-   check numbers which should be executed by default.
+   This parameter determines which of the checks from the sanity module
+   are executed if no parameter was given to the sanity_check function
+   call. By default all implemented checks are included in the execution
+   of the sanity_check function. The integer value is the sum of the check
+   numbers which should be executed by default.
 
-   Default  value  is 999. This resolves to the following list of checks:
-   ruri_sip_version   (1),   ruri_scheme   (2),   required_headers   (4),
-   cseq_method  (32), cseq_value (64), cotent_length (128), expires_value
+   Default value is "999". This resolves to the following list of checks:
+   ruri_sip_version (1), ruri_scheme (2), required_headers (4),
+   cseq_method (32), cseq_value (64), cotent_length (128), expires_value
    (256), proxy_require (512).
 
    Example 1.1. Set default_checks parameter
@@ -126,11 +125,11 @@ modparam("sanity", "default_checks", 1)
 
 3.2. uri_checks (integer)
 
-   This  parameter  determines  which URIs are going to be checked if the
+   This parameter determines which URIs are going to be checked if the
    'parse uri' will be executed.
 
-   Default  value  is  7.  This  resolves to the following list of parsed
-   URIs: Request RUI (1), From URI (2) and To URI (4).
+   Default value is 7. This resolves to the following list of parsed URIs:
+   Request RUI (1), From URI (2) and To URI (4).
 
    Example 1.2. Set uri_checks parameter
 ...
@@ -139,10 +138,10 @@ modparam("sanity", "uri_checks", 3)
 
 3.3. proxy_require (string)
 
-   This  parameter  sets  the  list  of  supported  extensions  for  this
-   Kamailio.  The  value  is  expected  as  a  comma  separated  list  of
+   This parameter sets the list of supported SIP extensions for this
+   Kamailio. The value is expected as a comma separated list of
    extensions. This list is separated into single tokens. Each token from
-   a proxy require header will be compared to the tokens from this list.
+   a proxy require header will be compared with the tokens from this list.
 
    Example 1.3. Set proxy_require parameter
 ...
@@ -151,11 +150,11 @@ modparam("sanity", "proxy_require", "foo, bar")
 
 3.4. autodrop (integer)
 
-   This  parameter controls whether the module drops automatically or not
-   the  SIP  message  if the sanity checks fail. Default value is 1 (auto
-   drop).  If set to 0, sanity_check() function will return -1 (false) to
-   configuration  file,  allowing  to write log messages for example - be
-   sure  you exit execution of config without sending a SIP reply because
+   This parameter controls whether the module drops the SIP message
+   automatically if the sanity checks fail. Default value is 1 (auto
+   drop). If set to 0, sanity_check() function will return -1 (false) to
+   configuration file, allowing to write log messages for example - be
+   sure you "exit" execution of config without sending a SIP reply because
    it is sent by module itself.
 
    Example 1.4. Set autodrop parameter
@@ -165,16 +164,16 @@ modparam("sanity", "autodrop", 1)
 
 4. Functions
 
-   4.1. sanity_check([msg_checks [, uri_checks]]) 
+   4.1. sanity_check([msg_checks [, uri_checks]])
 
-4.1.  sanity_check([msg_checks [, uri_checks]])
+4.1. sanity_check([msg_checks [, uri_checks]])
 
    This function makes a row of sanity checks over the given SIP request.
-   The  behavior  of  the  function  is  also  controlled  by  'autodrop'
-   parameter.  If  autodrop=0,  the function returns false (-1) if one of
-   the  checks  failed. When autodrop=1, the function stops the execution
-   of  configuration  file. In both cases, if one of the checks fails the
-   module  sends a precise error reply via SL send_reply(). Thus there is
+   The behavior of the function is also controlled by autodrop parameter.
+   If autodrop=0, the function returns false (-1) if one of the checks
+   failed. When autodrop=1, the function stops the execution of
+   configuration file. In both cases, if one of the checks fails the
+   module sends a precise error reply via SL send_reply(). Thus there is
    no need to reply with a generic error message.
 
    Example 1.5. sanity_check usage
@@ -185,29 +184,29 @@ if (!sanity_check()) {
 ...
 
    Optionally the function takes an integer argument which overwrites the
-   global  module  parameter  default_checks. This allows to make certain
-   test  from  script  regions. The integer value is again the sum of the
-   checks  (like  for  the  module parameter) which should be executed at
-   this function call.
+   global module parameter default_checks. This makes it possible to run
+   certain tests from script regions. The integer value is again the sum
+   of the checks (like for the module parameter) which should be executed
+   at this function call.
 
    Example 1.6. sanity_check usage with parameter
 ...
 if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
- 400 */
+400 */
         exit;
 }
 ...
 
-   Optionally   the  function  takes  a  second  integer  argument  which
-   overwrites  the global module parameter uri_checks and thus determines
+   Optionally the function takes a second integer argument which
+   overwrites the global module parameter uri_checks and thus determines
    which URIs will be checked if the parse uri test will be executed.
 
    Example 1.7. sanity_check usage with two parameters
 ...
 if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with
- a 400 */
+a 400 */
         exit;
 }
 ...
