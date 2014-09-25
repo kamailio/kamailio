@@ -44,6 +44,7 @@
 MODULE_VERSION
 
 unsigned int time_to_kill=0;
+int exec_bash_safety=1;
 
 static int mod_init( void );
 
@@ -77,6 +78,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"time_to_kill", INT_PARAM, &time_to_kill},
 	{"setvars",      INT_PARAM, &setvars     },
+	{"bash_safety",  INT_PARAM, &exec_bash_safety     },
 	{0, 0, 0}
 };
 
