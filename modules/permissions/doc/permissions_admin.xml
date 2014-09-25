@@ -15,6 +15,29 @@
 	
 	<section>
 	<title>Overview</title>
+	<para>
+		The Permissions module provides functions for handling
+		IP based access control lists (ACL) in a number of ways.
+		<itemizedlist>
+                <listitem><para>
+                          Call Routing
+                </para></listitem>
+                <listitem><para>
+                          Registration permissions
+                </para></listitem>
+                <listitem><para>
+                          URI permissions
+                </para></listitem>
+                <listitem><para>
+                          Address permissions
+                </para></listitem>
+                <listitem><para>
+                          Trusted Requests
+                </para></listitem>
+                </itemizedlist>
+		The Address permissions and Trusted request handling supports
+		using a database to load ACLs into RAM for fast processing.
+	</para>
 	<section id="sec-call-routing">
 		<title>Call Routing</title>
 		<para>
@@ -93,42 +116,41 @@
 		configuration.
 		</para>
 		<para>
-		Function for registration checking is called <function
+		The function for registration checking is called <function
 		moreinfo="none">allow_register</function> and the algorithm is very 
 		similar to the algorithm described in 
 		<xref linkend="sec-call-routing"/>. The only difference is in the way 
 		how pairs are created.
 		</para>
 		<para>
-		Instead of From header field the function uses To header field because 
-		To header field in REGISTER messages contains the URI of the person 
+		Instead of the From header field the function uses the To header field because 
+		th To header field in REGISTER messages contains the URI of the person 
 		being registered. Instead of the Request-URI of branches the function 
-		uses Contact header field.
+		uses the Contact header field.
 		</para>
 		<para>
-		Thus, pairs used in matching will look like this: (To, Contact 1), 
+		Thus, the pairs used in matching will look like this: (To, Contact 1), 
 		(To, Contact 2), (To, Contact 3), and so on..
 		</para>
 		<para>
-		The algorithm of matching is same as described in 
+		The algorithm of matching is the same as described in 
 		<xref linkend="sec-call-routing"/>.
 		</para>
 	</section>
 	<section id="sec-uri-permissions">
 		<title>URI Permissions</title>
 		<para>
-		The module can be used to determine if request is
-		allowed to the destination specified by an URI stored in
-		a pvar.  Permission rules are stored in
-		plaintext configuration files similar to
+		The module can be used to determine if a request to a destionation
+		is allowed, based on an URI stored in a pvar. Permission rules are
+		stored in plaintext configuration files similar to
 		<filename moreinfo="none">hosts.allow</filename> and
 		<filename moreinfo="none">hosts.deny</filename> used by tcpd.
 		</para>
 		<para>
-		When <function moreinfo="none">allow_uri</function>
+		When the <function moreinfo="none">allow_uri</function>
 		function is called, it tries to find a rule that matches
 		selected fields of the message.
-		The matching algorithm is as follows, first match wins:
+		The matching algorithm is as follows, where the first match wins:
 		</para>
 		<itemizedlist>
 		<listitem>
@@ -144,7 +166,7 @@
 		</listitem>
 		<listitem>
 			<para>
-			Otherwise request will be denied when the pair
+			Request will be denied when the pair
 			matches an entry in the	deny file.
 			</para>
 		</listitem>
@@ -160,7 +182,7 @@
 		no permission control files.
 		</para>
 		<para>
-		From URI and URI stored in pvar are always compared with regular 
+		The From URI and the URI stored in pvar are always compared with regular 
 		expressions! For the syntax see the sample file: 
 		<filename moreinfo="none">config/permissions.allow</filename>.
 		</para>
@@ -170,7 +192,7 @@
 		<para>
 		The module can be used to determine if an address (IP
 		address and port or DNS domain name) matches any of the
-		addresses stored in cached &kamailio; database table.
+		addresses stored in a cached &kamailio; database table.
 		IP addresses in the database table can be subnet addresses.
 		Port 0 in cached database table matches any port. The
 		address and port to be matched can be either taken from
@@ -178,18 +200,18 @@
 		arguments (allow_address).
 		</para>
 		<para>
-		Addresses stored in database table can be grouped
+		Addresses stored in the database table can be grouped
 		together into one or more groups specified by a group
 		identifier (positive integer value, i.e., equal or greater than 1).
-		Group identifier is given as argument to allow_address and
-		allow_source_address functions.
+		The group identifier is given as an argument to the allow_address() and
+		allow_source_address() functions.
 		One group can contain all of the three types of addresses: exact 
 		IP address, subnet IP address or DNS domain name.
 		</para>
 		<para>
-		When matching is done if the argument is an IP, it is tried to
-		be matched with the records from that group that are of type exact
-		IP or subnet. If the argument is not an IP it is tried to be matched
+		When the argument is an IP addess, it is tried to be matched with the 
+		records from that group that are of type exact IP or subnet. If the 
+		argument is not an IP it is tried to be matched
 		with the records that are DNS domain names. No DNS lookup is performed,
 		only strict matching.
 		</para>
@@ -206,7 +228,7 @@
 		request can be trusted without authentication.
 		</para>
 		<para>
-		When <function moreinfo="none">allow_trusted</function>
+		When the <function moreinfo="none">allow_trusted</function>
 		function is called, it tries to find a rule that matches
 		the request.  Rules contain the following fields:
 		&lt;source address, transport protocol, regular
@@ -218,21 +240,21 @@
 		<itemizedlist>
 		<listitem>
 			<para>
-			source address is equal to source address of
-			request or source address given in pvar,
+			source address is equal to the source address of
+			the request or the source address given in pvar,
 			</para>
 		</listitem>
 		<listitem>
 			<para>
 			transport protocol is either "ANY" or equal to
-			transport protocol of request or transport
+			the transport protocol of request or the transport
 			protocol given in pvar, and
 			</para>
 		</listitem>
 		<listitem>
 			<para>
 			regular expression is either empty (NULL in
-			database) or matches From URI of request.
+			database) or matches the From URI of request.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -240,17 +262,17 @@
 		Otherwise the request is rejected.
 		</para>
 		<para>
-		As a side effect of accepting the request, peer's
+		As a side effect of accepting the request, the peer's
 	non-NULL tag (see tag_col module parameter) is added as value to
-	peer_tag AVP if peer_tag_avp module parameter has been defined.
+	peer_tag AVP if the peer_tag_avp module parameter has been defined.
 		</para>
 		<para>
-		Rules are stored in a database table specified by module
-		parameters.  There also exists a module parameter
+		Rules are stored in a database table specified by the module
+		parameters.  There is a module parameter called
 	        <varname>db_mode</varname> that
-		determines if rules are cached into memory for faster
-		matching or if database is consulted for each invocation
-		of allow_trusted function call.
+		determines if the rules are cached into memory for faster
+		matching or if the database is consulted for each invocation
+		of the allow_trusted() function call.
 		</para>
 	</section>
 	</section>
@@ -288,11 +310,11 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id ="permissions.p.default_allow_file">
 		<title><varname>default_allow_file</varname> (string)</title>
 		<para>
-		Default allow file used by functions without parameters. If you 
-		don't specify full pathname then the directory in which is the main 
+		Default allow file used by the functions with no parameters. If you 
+		don't specify a full pathname then the directory in which is the main 
 		config file is located will be used.
 		</para>
 		<para>
@@ -309,11 +331,11 @@ modparam("permissions", "default_allow_file", "/etc/permissions.allow")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.default_deny_file">
 		<title><varname>default_deny_file</varname> (string)</title>
 		<para>
 		Default file containing deny rules. The file is used by functions
-		without parameters. If you don't specify full pathname then the 
+		with no parameters. If you don't specify a full pathname then the 
 		directory in which the main config file is located will be used.
 		</para>
 		<para>
@@ -330,7 +352,7 @@ modparam("permissions", "default_deny_file", "/etc/permissions.deny")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.check_all_branches">
 		<title><varname>check_all_branches</varname> (integer)</title>
 		<para>
 		If set then allow_routing functions will check Request-URI of all 
@@ -357,7 +379,7 @@ modparam("permissions", "check_all_branches", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.allow_suffix">
 		<title><varname>allow_suffix</varname> (string)</title>
 		<para>
 		Suffix to be appended to basename to create filename of the allow 
@@ -384,7 +406,7 @@ modparam("permissions", "allow_suffix", ".allow")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.deny_suffix">
 		<title><varname>deny_suffix</varname> (string)</title>
 		<para>
 		Suffix to be appended to basename to create filename of the deny file 
@@ -411,7 +433,7 @@ modparam("permissions", "deny_suffix", ".deny")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		This is URL of the database to be used to store rules used by 
@@ -431,10 +453,10 @@ modparam("permissions", "db_url", "&exampledb;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.address_table">
 		<title><varname>address_table</varname> (string)</title>
 		<para>
-		Name of database table containing IP subnets and DNS domain names used by
+		The name of the database table containing IP subnets and DNS domain names used by
 		<function moreinfo="none">allow_address</function> and
                 <function moreinfo="none">allow_source_address</function>
                 functions.
@@ -453,10 +475,10 @@ modparam("permissions", "address_table", "addr")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.grp_col">
 		<title><varname>grp_col</varname> (string)</title>
 		<para>
-		Name of address table column containing group
+		Name of address table column containing the group
 		identifier of the address.
 		</para>
 		<para>
@@ -473,10 +495,10 @@ modparam("permissions", "grp_col", "group_id")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.ip_addr_col">
 		<title><varname>ip_addr_col</varname> (string)</title>
 		<para>
-		Name of address table column containing IP address
+		Name of address table column containing the IP address
 		part of the address.
 		</para>
 		<para>
@@ -493,11 +515,11 @@ modparam("permissions", "ip_addr_col", "ip_address")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.mask_col">
 		<title><varname>mask_col</varname> (string)</title>
 		<para>
-		Name of address table column containing network mask of
-		the address.  Possible values are 0-32.
+		Name of address table column containing the network mask of
+		the IPv4 address.  Possible values are 0-32.
 		</para>
 		<para>
 		<emphasis>
@@ -513,10 +535,10 @@ modparam("permissions", "mask_col", "subnet_length")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.port_col">
 		<title><varname>port_col</varname> (string)</title>
 		<para>
-		Name of address table column containing port
+		Name of address table column containing the port
 		part of the address.
 		</para>
 		<para>
@@ -533,11 +555,11 @@ modparam("permissions", "port_col", "prt")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.db_mode">
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
 		Database mode. 0 means non-caching, 1 means caching.
-		Valid only for allow_trusted function.
+		Valid only for the <function moreinfo="none">allow_trusted</function> function.
 		</para>
 		<para>
 		<emphasis>
@@ -553,11 +575,11 @@ modparam("permissions", "db_mode", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.trusted_table">
 		<title><varname>trusted_table</varname> (string)</title>
 		<para>
-		Name of database table containing matching rules used by
-		<function moreinfo="none">allow_trusted</function> function.
+		Name of database table containing the matching rules used by
+		the <function moreinfo="none">allow_trusted</function> function.
 		</para>
 		<para>
 		<emphasis>
@@ -573,10 +595,10 @@ modparam("permissions", "trusted_table", "pbx")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.source_col">
 		<title><varname>source_col</varname> (string)</title>
 		<para>
-		Name of trusted table column containing source IP
+		Name of column in the <quote>trusted</quote> table containing the source IP
 		address that is matched against source IP address of
 		received request.
 		</para>
@@ -594,15 +616,16 @@ modparam("permissions", "source_col", "source_ip_address")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.proto_col">
 		<title><varname>proto_col</varname> (string)</title>
 		<para>
-		Name of trusted table column containing transport
+		Name of column in the <quote>trusted</quote> table containing the transport
 		protocol that is matched against transport protocol of
-		received request.  Possible values that can be stored in
+		the received request.  Possible values that can be stored in
 		proto_col are <quote>any</quote>, <quote>udp</quote>,
 		<quote>tcp</quote>, <quote>tls</quote>,
-		<quote>sctp</quote>, and <quote>none</quote>.  Value
+		<quote>sctp</quote>, <quote>ws</quote>, <quote>wss</quote>, 
+		and <quote>none</quote>.  Value
 		<quote>any</quote> matches always and value
 		<quote>none</quote> never.
 		</para>
@@ -620,11 +643,11 @@ modparam("permissions", "proto_col", "transport")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.from_col">
 		<title><varname>from_col</varname> (string)</title>
 		<para>
-		Name of trusted table column containing regular
-		expression that is matched against From URI.
+		Name of the column trusted table containing a regular
+		expression that is matched against the From URI.
 		</para>
 		<para>
 		<emphasis>
@@ -640,12 +663,13 @@ modparam("permissions", "from_col", "regexp")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.tag_col">
 		<title><varname>tag_col</varname> (string)</title>
 		<para>
-		Name of address or trusted table column containing a string
+		Name of the column in the <quote>address</quote> or 
+		<quote>trusted</quote> table containing a string
 		that is added as value to peer_tag AVP if peer_tag AVP
-        has been defined and if the address or peer matches.
+        	has been defined and if the address or peer matches.
 		</para>
 		<para>
 		<emphasis>
@@ -661,12 +685,12 @@ modparam("permissions", "tag_col", "peer_tag")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.peer_tag_avp">
 		<title><varname>peer_tag_avp</varname> (AVP string)</title>
 		<para>
 		If defined, the AVP will be
-                set as side effect of allow_trusted() call to not NULL
-                tag column value of the matching peer.
+                set as a side effect of <function moreinfo="none">allow_trusted</function>
+		call to not NULL tag column value of the matching peer.
 		</para>
 		<para>
 		<emphasis>
@@ -682,13 +706,14 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.p.peer_tag_mode">
 		<title><varname>peer_tag_mode</varname> (integer)</title>
 		<para>
-		Tag mode for allow_trusted(). 0 sets only the tag of the
-		first match. 1 adds the tags of all matches to the avp. In addition
-		the return value of allow_trusted() is the number of matches. This
-		parameter is not used for address table matching functions.
+		Tag mode for <function moreinfo="none">allow_trusted</function>.
+		<quote>0</quote> sets only the tag of the first match. 
+		<quote>1</quote> adds the tags of all matches to the avp. In addition
+		the return value of <function moreinfo="none">allow_trusted</function>
+		is the number of matches. This parameter is not used for address table matching functions.
 		</para>
 		<para>
 		<emphasis>
@@ -708,7 +733,7 @@ modparam("permissions", "peer_tag_mode", 1)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id ="permissions.f.allow_routing">
 		<title>
 		<function moreinfo="none">allow_routing()</function>
 		</title>
@@ -733,7 +758,7 @@ if (allow_routing()) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_routing_basename">
 		<title>
 		<function moreinfo="none">allow_routing(basename)</function>
 		</title>
@@ -771,7 +796,7 @@ if (allow_routing("basename")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_routing_fileargs">
 		<title>
 		<function moreinfo="none">allow_routing(allow_file,deny_file)</function>
 		</title>
@@ -815,7 +840,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_register">
 		<title>
 		<function moreinfo="none">allow_register(basename)</function>
 		</title>
@@ -858,7 +883,7 @@ if (method=="REGISTER") {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_register_fileargs">
 		<title>
 		<function moreinfo="none">allow_register(allow_file, deny_file)</function>
 		</title>
@@ -907,7 +932,7 @@ if (method=="REGISTER") {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_uri">
 		<title>
 		<function moreinfo="none">allow_uri(basename, pvar)</function>
 		</title>
@@ -953,22 +978,24 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_address">
 		<title>
 		<function moreinfo="none">allow_address(group_id, ip_addr_pvar, port_pvar)</function>
 		</title>
 		<para>
-		Returns true if address and port given as values of pvar
+		Returns true if the address and port given as values of pvar
 		arguments belonging to a group given as group_id argument
 		matches an IP subnet or a DNS domain name found in cached
 		address table.
-		When matching is done if the argument is an IP, it is tried to
-		be matched with the records from that group that are of type exact
+		</para>
+		<para>
+		When matching is done if the argument is an IP address, it is 
+		matched with the records from that group that are of type exact
 		IP or subnet. If the argument is not an IP it is tried to be matched
 		with the records that are DNS domain names. No DNS lookup is performed,
 		only strict matching.
-		Cached address table entry containing port value 0
-		matches any port.  group_id argument can be an integer
+		Cached address table entry containing port value <quote>0</quote>
+		matches any port. The <quote>group_id</quote> argument can be an integer
 		string or a pseudo variable. 
 		</para>
 		<para>
@@ -993,12 +1020,12 @@ if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_source_address">
 		<title>
 		<function moreinfo="none">allow_source_address([group_id])</function>
 		</title>
 		<para>
-		Equal to allow_address(group_id, "$si", "$sp"). If 'group_id' is
+		Equal to <quote>allow_address(group_id, "$si", "$sp")</quote>. If 'group_id' is
 		missing, the function is equal to allow_address("1", "$si", "$sp").
 		</para>
 		<para>
@@ -1017,7 +1044,7 @@ if (!allow_source_address("1")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_source_address_group">
 		<title>
 		<function moreinfo="none">allow_source_address_group()</function>
 		</title>
@@ -1043,7 +1070,7 @@ if ($var(group) != -1) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_address_group">
 		<title>
 		<function moreinfo="none">allow_address_group(addr, port)</function>
 		</title>
@@ -1069,7 +1096,7 @@ if ($var(group) != -1) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id ="permissions.f.allow_trusted">
 		<title>
 		<function moreinfo="none">allow_trusted([src_ip_pvar, proto_pvar])</function>
 		</title>
@@ -1078,10 +1105,10 @@ if ($var(group) != -1) {
 		protocol or source address and transport protocol given
 		in pvar arguments, and From URI of request
 		if request can be trusted without
-		authentication.  Returns 1 if a match is found
+		authentication.  Returns <quote>1</quote> if a match is found
 		as described in <xref linkend="sec-trusted-requests"/>
-		and -1 otherwise.  If a match is found
-		and peer_tag_avp has been defined, adds a
+		and <quote>-1</quote> otherwise.  If a match is found
+		and <varname>peer_tag_avp</varname> has been defined, adds a
                 non-NULL tag column value of the
 		matching peer to AVP peer_tag_avp.
 		</para>
@@ -1113,85 +1140,84 @@ if (allow_trusted("$si", "$proto")) {
 	
 	<section>
 	<title>MI Commands</title>
-	<section>
+	<section id ="permissions.m.address_reload">
 		<title>
 		<function moreinfo="none">address_reload</function>
 		</title>
 		<para>
-				Causes permissions module to re-read the contents of
-				address database table into cache
-				memory.  In cache memory the entries are
-				for performance reasons stored in two
-                                different tables:  address table and
-				subnet table depending on the value of
-				the mask field (32 or smaller).
+			Causes the permissions module to re-read the contents of
+			address database table into cache memory. 
+			The in-cache memory entries are
+			for performance reasons stored in two
+                        different tables:  address table and
+			subnet table depending on the value of
+			the mask field (32 or smaller).
 
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 	
-	<section>
+	<section id ="permissions.m.address_dump">
 		<title>
 		<function moreinfo="none">address_dump</function>
 		</title>
 		<para>
-				Causes permissions module to dump
+		Causes permissions module to dump
                    contents of cache memory address table.
 
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 
-	<section>
+	<section id ="permissions.m.subnet_dump">
 		<title>
 		<function moreinfo="none">subnet_dump</function>
 		</title>
 		<para>
-				Causes permissions module to dump
+		Causes permissions module to dump
                    contents of cache memory subnet table.
 
 				</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 
-	<section>
+	<section id ="permissions.m.trusted_reload">
 		<title>
 		<function moreinfo="none">trusted_reload</function>
 		</title>
 		<para>
-				Causes permissions module to re-read the contents of
-				trusted table into cache memory.
-				</para>
+			Causes the permissions module to re-read the contents of
+			trusted table into cache memory.
+		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 
-	<section>
+	<section id ="permissions.m.trusted_dump">
 		<title>
 		<function moreinfo="none">trusted_dump</function>
 		</title>
 		<para>
-				Causes permissions module to dump contents of trusted
-				table from cache memory.
-				</para>
+			Causes the permissions module to dump the 
+			contents of trusted table from cache memory.
+		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 
-	<section>
+	<section id ="permissions.m.allow_uri">
 		<title>
 		<function moreinfo="none">allow_uri</function>
 		</title>
 		<para>
 		Tests if (URI, Contact) pair is allowed according to
-		allow/deny files.  The files must already have been
+		the allow/deny files.  The files must already have been
 		 loaded by &kamailio;.
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>
 			<listitem><para>
 				<emphasis>basename</emphasis> -
-						Basename from
-		which allow and deny filenames will be created by
-		appending contents of allow_suffix and deny_suffix
+			Basename from which allow and deny filenames will be created by
+		appending contents of <varname>allow_suffix</varname> and <varname>deny_suffix</varname>
 		parameters.
 			</para></listitem>
 			<listitem><para>
@@ -1208,12 +1234,12 @@ if (allow_trusted("$si", "$proto")) {
 	</section>
 	<section>
 	<title>RPC Commands</title>
-	<section>
+	<section id ="permissions.r.addressReload">
 		<title>
 		<function moreinfo="none">addressReload</function>
 		</title>
 		<para>
-			Causes permissions module to re-read the contents of
+			Causes the permissions module to re-read the contents of
 			address database table into cache
 			memory.  In cache memory the entries are
 			for performance reasons stored in two
@@ -1225,20 +1251,20 @@ if (allow_trusted("$si", "$proto")) {
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 	
-	<section>
+	<section id ="permissions.r.addressDump">
 		<title>
 		<function moreinfo="none">addressDump</function>
 		</title>
 		<para>
-			Causes permissions module to dump
-                   	contents of cache memory address table.
+			Causes the permissions module to dump
+                   	the contents of cache memory address table.
 			(Not the subnet table).
 
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 
-	<section>
+	<section id ="permissions.r.subnetDump">
 		<title>
 		<function moreinfo="none">subnetDump</function>
 		</title>
@@ -1248,12 +1274,12 @@ if (allow_trusted("$si", "$proto")) {
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
-	<section>
+	<section id ="permissions.r.testUri">
 		<title>
 		<function moreinfo="none">testUri basename uri contact</function>
 		</title>
 		<para>
-			Tests if (URI, Contact) pair is allowed according to
+			Tests if the (URI, Contact) pair is allowed according to
 			allow/deny files.  The files must already have been
 		 	loaded by &kamailio;.
 		</para>
@@ -1262,7 +1288,7 @@ if (allow_trusted("$si", "$proto")) {
 			<listitem><para>
 				<emphasis>basename</emphasis> -
 				Basename from which allow and deny filenames will be created by
-				appending contents of allow_suffix and deny_suffix
+				appending contents of the allow_suffix and deny_suffix
 				parameters.
 			</para></listitem>
 			<listitem><para>
@@ -1275,23 +1301,23 @@ if (allow_trusted("$si", "$proto")) {
 
 	</section>
 
-	<section>
+	<section id ="permissions.r.trustedReload">
 		<title>
 		<function moreinfo="none">trustedReload</function>
 		</title>
 		<para>
-			Causes permissions module to re-read the contents of
-			trusted table into cache memory.
+			Causes the permissions module to re-read the contents of
+			the trusted database table into cache memory.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
-	<section>
+	<section id ="permissions.r.trustedDump">
 		<title>
 		<function moreinfo="none">trustedDump</function>
 		</title>
 		<para>
-			Causes permissions module to dump contents of trusted
-			table from cache memory.
+			Causes the permissions module to dump contents of the trusted
+			database table from cache memory.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1299,4 +1325,3 @@ if (allow_trusted("$si", "$proto")) {
 	</section> <!-- RPC commands -->
 
 </chapter>
-
