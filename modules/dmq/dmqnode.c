@@ -228,12 +228,14 @@ error:
  */
 dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri)
 {
-	dmq_node_t *ret, *find;
-	find =  build_dmq_node(uri, 0);
-	if(find==NULL)
+	dmq_node_t *ret, find;
+
+	memset(&find, 0, sizeof(find));
+	if(parse_uri(uri->s, uri->len, &find.uri) < 0) {
+		LM_ERR("error parsing uri\n");
 		return NULL;
-	ret = find_dmq_node(list, find);
-	destroy_dmq_node(find, 0);
+	}
+	ret = find_dmq_node(list, &find);
 	return ret;
 }
 
