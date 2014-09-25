@@ -269,10 +269,10 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
 5.3. xlogl([ [facility,] level,] format)
 
-   Similar to xlog(), in addition is printing cfg line number at the
-   beginning of message.
+   Similar to xlog(), in addition prints configuration file line number at
+   the beginning of message.
 
 5.4. xdbgl(format)
 
-   Similar to xdbg(), in addition is printing cfg line number at the
-   beginning of message.
+   Similar to xdbg(), in addition prints configuration file line number at
+   the beginning of message.

@@ -28,8 +28,8 @@
 	<title>Implemented Specifiers</title>
 	<para>
 	In the xlog function, you use pseudo-variables, that are a part
-	of &kamailio; core and are used by other modules as well (e.g., avpops
-	in the function avp_printf())
+	of &kamailio; core and are used by other modules as well (e.g., <emphasis>avpops</emphasis>
+	in the function <function>avp_printf()</function>)
 	</para>
 	<para>
 	The most important changes from earlier versions of &kamailio; are:
@@ -93,7 +93,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="xlog.p.buf_size">
 		<title><varname>buf_size</varname> (integer)</title>
 		<para>
 		Maximum size of the log message.
@@ -112,7 +112,7 @@ modparam("xlog", "buf_size", 8192)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xlog.p.force_color">
 		<title><varname>force_color</varname> (integer)</title>
 		<para>
 		When set to 1, forces color printing even if log_stderror=0.
@@ -131,7 +131,7 @@ modparam("xlog", "force_color", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xlog.p.long_format">
 		<title><varname>long_format</varname> (integer)</title>
 		<para>
 		When set to 1, prints config file name in xlogl() and xdbgl()
@@ -151,7 +151,7 @@ modparam("xlog", "long_format", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xlog.p.varname">
 		<title><varname>prefix</varname> (str)</title>
 		<para>
 		Prefix to be printed before the log message.
@@ -170,7 +170,7 @@ modparam("xlog", "prefix", "-xlog: ")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xlog.p.log_facility">
 		<title><varname>log_facility</varname> (string)</title>
 		<para>
 		Syslog facility to be used when printing xlog messages.
@@ -188,7 +188,7 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xlog.p.log_colors">
 		<title><varname>log_colors</varname> (string)</title>
 		<para>
 		Update terminal colors used by core for log levels (when log_stderr=1
@@ -215,7 +215,7 @@ modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="xlog.f.xlog">
 		<title>
 		<function moreinfo="none">xlog([ [facility,] level,] format)</function>
 		</title>
@@ -318,7 +318,7 @@ xlog("LOG_LOCAL3", "L_ERR", "this message will be sent to syslog facility LOG_LO
 		</example>
 	</section>
 
-	<section>
+	<section id="xlog.f.xdbg">
 		<title>
 		<function moreinfo="none">xdbg(format)</function>
 		</title>
@@ -345,21 +345,21 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xlog.f.xlogl">
 		<title>
 		<function moreinfo="none">xlogl([ [facility,] level,] format)</function>
 		</title>
 		<para>
-		Similar to xlog(), in addition is printing cfg line number
+		Similar to xlog(), in addition prints configuration file line number
 		at the beginning of message.
 		</para>
 	</section>
-	<section>
+	<section id="xlog.f.xdbgl">
 		<title>
 		<function moreinfo="none">xdbgl(format)</function>
 		</title>
 		<para>
-		Similar to xdbg(), in addition is printing cfg line number
+		Similar to xdbg(), in addition prints configuration file line number
 		at the beginning of message.
 		</para>
 	</section>
