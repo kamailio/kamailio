@@ -19,8 +19,9 @@
     <section>
 		<title>Overview</title>
 		<para>
-			This module allows executing Java compiled classes from config file, exporting
-			functions to access the SIP message from Java using Java Native Interface (JNI).
+			This module allows execution of Java compiled classes from the &kamailio;
+			config file, exporting functions to access the SIP message from Java
+			using the Java Native Interface (JNI).
 		</para>
     </section>
 	<!-- end op section Overview -->
@@ -99,7 +100,7 @@
 		<title>Parameters</title>
 
 		<!-- class_name -->
-		<section>
+		<section id="app_java.p.class_name">
 			<title><varname>class_name</varname> (string)</title>
 		    <para>
 		    	The class name should have the same compiled file name.
@@ -121,7 +122,7 @@ modparam("app_java", "class_name", "&kamailio;")
 		</section>
 
 		<!-- child_init_method -->
-		<section>
+		<section id="app_java.p.child_init_method">
 			<title><varname>child_init_method</varname> (string)</title>
 			<para>
 				TBD.
@@ -142,7 +143,7 @@ modparam("app_java", "child_init_method", "my_mod_init")
 		</section>
 
 		<!-- java_options -->
-		<section>
+		<section id="app_java.p.java_option">
 			<title><varname>java_options</varname> (string)</title>
 			<para>
 				Java options for Java Virtual Machine.
@@ -197,7 +198,7 @@ modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni
 		</section>
 
 		<!-- force_cmd_exec -->
-		<section>
+		<section id="app_java.p.force_cmd_exec">
 			<title><varname>force_cmd_exec</varname> (int)</title>
 			<para>
 				This parameter forces execution a &kamailiobinary; comnmand with java native method <quote>KamExec</quote>.
@@ -282,7 +283,7 @@ modparam("app_java", "force_cmd_exec", 1)
     	<!-- End of section Common Requirements -->
   
     	<!-- Section java_method_exec -->
-    	<section>
+	<section id="app_java.f.java_method_exec">
     		<title>java_method_exec(method, method_signature, [param1[, param2[, ...]]])</title>
     		<para>Executes a java class method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
     		<itemizedlist>
@@ -363,9 +364,9 @@ public int ExampleMethod(boolean flagSet, byte bFlag);
     	<!-- end of section java_method_exec -->
 
     	<!-- Section java_staticmethod_method_exec -->
-    	<section>
+	<section id="app_java.f.java_staticmethod_exec">
     		<title>java_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</title>
-    		<para>Executes a java static method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
+    		<para>Executes a Java static method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
     		<itemizedlist>
     			<listitem>
     				<example>
@@ -444,9 +445,9 @@ public static int ExampleMethod(boolean flagSet, byte bFlag);
     	<!-- end of section java_staticmethod_exec -->
     	
     	<!-- Section java_s_method_exec -->
-    	<section>
+	<section id="app_java.f.java_s_method_exec">
     		<title>java_s_method_exec(method, method_signature, [param1[, param2[, ...]]])</title>
-    		<para>Executes a java class synchronized method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
+    		<para>Executes a Java class synchronized method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
     		<para>For more info see <ulink url="http://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html"><citetitle>Synchronized Methods</citetitle></ulink></para>
     		<itemizedlist>
     			<listitem>
@@ -526,7 +527,7 @@ public synchronized int ExampleMethod(boolean flagSet, byte bFlag);
     	<!-- end of section java_s_method_exec -->
     	
     	<!-- Section java_s_staticmethod_exec -->
-    	<section>
+	<section id="app_java.f.java_s_staticmethod_exec">
     		<title>java_s_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</title>
     		<para>Executes a java synchronized static method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
     		<para>For more info see <ulink url="http://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html"><citetitle>Synchronized Methods</citetitle></ulink></para>

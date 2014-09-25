@@ -6,7 +6,7 @@ Edited by
 
 Konstantin Mosesov
 
-   Copyright © 2013, 2014 Konstantin Mosesov
+   Copyright � 2013, 2014 Konstantin Mosesov
      __________________________________________________________________
 
    Table of Contents
@@ -114,9 +114,9 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module allows executing Java compiled classes from config file,
-   exporting functions to access the SIP message from Java using Java
-   Native Interface (JNI).
+   This module allows execution of Java compiled classes from the Kamailio
+   config file, exporting functions to access the SIP message from Java
+   using the Java Native Interface (JNI).
 
 2. Dependencies
 
@@ -174,7 +174,7 @@ Chapter 1. Admin Guide
    The class name should have the same compiled file name. If the value is
    "Kamailio", then the compiled file should be named as "Kamailio.class".
 
-   Default value is “Kamailio”.
+   Default value is "Kamailio".
 
    Example 1.1. Set class_name parameter
 ...
@@ -185,7 +185,7 @@ modparam("app_java", "class_name", "Kamailio")
 
    TBD.
 
-   Default value is “child_init”.
+   Default value is "child_init".
 
    Example 1.2. Set child_init_method parameter
 ...
@@ -196,7 +196,7 @@ modparam("app_java", "child_init_method", "my_mod_init")
 
    Java options for Java Virtual Machine. For more info read java docs
 
-   Default value is “-Djava.compiler=NONE”.
+   Default value is "-Djava.compiler=NONE".
 
    Example 1.3. Set java_options parameter
 ...
@@ -230,10 +230,10 @@ modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni
 4.4. force_cmd_exec (int)
 
    This parameter forces execution a kamailio comnmand with java native
-   method “KamExec”. # Note: this is an untested yet feature, may cause
+   method "KamExec". # Note: this is an untested yet feature, may cause
    (but may not) a memory leaks if used from embedded languages.
 
-   Default value is “0 (off)”.
+   Default value is "0 (off)".
 
    Example 1.7. Set force_cmd_exec parameter
 ...
@@ -255,9 +255,9 @@ modparam("app_java", "force_cmd_exec", 1)
    5.5. java_s_staticmethod_exec(method, method_signature, [param1[,
           param2[, ...]]])
 
-5.1.  Common requirements
+5.1. Common requirements
 
-   Each function has a required parameter “method_signature”. For more
+   Each function has a required parameter "method_signature". For more
    info see Determine the signature of a method. Signature represents the
    variable type. The mapping between the Java type and C type is
                 Type     Chararacter
@@ -362,7 +362,7 @@ public int ExampleMethod(boolean flagSet, byte bFlag);
 5.3. java_staticmethod_exec(method, method_signature, [param1[, param2[,
 ...]]])
 
-   Executes a java static method method. Parameter method_signature is
+   Executes a Java static method method. Parameter method_signature is
    required.
      * Example 1.11. Signature: "V"
        Kamailio prototype
@@ -421,7 +421,7 @@ public static int ExampleMethod(boolean flagSet, byte bFlag);
 
 5.4. java_s_method_exec(method, method_signature, [param1[, param2[, ...]]])
 
-   Executes a java class synchronized method method. Parameter
+   Executes a Java class synchronized method method. Parameter
    method_signature is required.
 
    For more info see Synchronized Methods
