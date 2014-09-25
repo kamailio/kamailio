@@ -16,13 +16,13 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The module keeps trace of all (or selected ones) incoming request's IP
-		source and blocks the ones that exceeded some limit. 
-		Works simultaneous for IPv4 and IPv6 addresses.
+		The pike module keeps trace of all (or selected ones) incoming request's IP
+		source and blocks the ones that exceed the limit. 
+		It works simultaneously for IPv4 and IPv6 addresses.
 	</para>
 	<para>
 		The module does not implement any actions on blocking - it just simply
-		reports that there is a high traffic from an IP; what to do, is
+		reports that there is high traffic from an IP; what to do, is
 		the administator decision (via scripting).
 	</para>
 	</section>
@@ -64,16 +64,16 @@
 		Time period in seconds used for sampling (or the sampling accuracy).
 		The smaller the better, but slower. If you want to detect peeks, use
 		a small one. To limit the access (like total number of requests on a 
-		long period of time) to a proxy resource (a gateway for ex), use 
+		long period of time) to a proxy resource (a gateway for example), use 
 		a bigger value of this parameter.
 		</para>
 		<para>
 		IMPORTANT: a too small value may lead to performance penalties due 
-		timer process overloading.
+		to timer process overloading.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 2.
+			Default value is <quote>2</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -88,10 +88,10 @@ modparam("pike", "sampling_time_unit", 10)
 	<section id="pike.p.reqs_density_per_unit">
 		<title><varname>reqs_density_per_unit</varname> (integer)</title>
 		<para>
-		How many requests should be allowed per sampling_time_unit before 
-		blocking all the incoming request from that IP. Practically, the 
+		How many requests should be allowed per <varname>sampling_time_unit</varname>
+		before blocking all the incoming request from that IP. Practically, the 
 		blocking limit is between ( let's have x=reqs_density_per_unit) x 
-		and 3*x for IPv4 addresses and between x and 8*x for ipv6 addresses.
+		and 3*x for IPv4 addresses and between x and 8*x for IPv6 addresses.
 		</para>
 		<para>
 		<emphasis>
@@ -110,7 +110,7 @@ modparam("pike", "reqs_density_per_unit", 30)
 	<section id="pike.p.remove_latency">
 		<title><varname>remove_latency</varname> (integer)</title>
 		<para>
-		For how long the IP address will be kept in memory after the last 
+		Speciies for how long the IP address will be kept in memory after the last 
 		request from that IP address. It's a sort of timeout value, in seconds.
 		Note that it is not the duration to keep the IP in state 'blocked'. An
 		IP is unblocked next occurence of 'sampling_time_unit' that does not
@@ -135,7 +135,7 @@ modparam("pike", "remove_latency", 130)
 	<section id="pike.p.pike_log_level">
 		<title><varname>pike_log_level</varname> (integer)</title>
 		<para>
-		Log level to be used by module to auto report the blocking (only first
+		Syslog log level to be used by module to auto report the blocking (only first
 		time) and unblocking of IPs detected as source of floods.
 		</para>
 		<para>
@@ -162,7 +162,7 @@ modparam("pike", "pike_log_level", -1)
 		<function moreinfo="none">pike_check_req()</function>
 		</title>
 		<para>
-		Process the source IP of the current request and returns false if 
+		Process the source IP of the current request and return false if 
 		the IP was exceeding the blocking limit.
 		</para>
 		<para>
@@ -181,7 +181,7 @@ modparam("pike", "pike_log_level", -1)
 			<listitem>
 			<para>
 				<emphasis>-1 (false)</emphasis> - IP is source of
-				flooding, being previously detected
+				flooding, previously detected
 			</para>
 			</listitem>
 			<listitem>

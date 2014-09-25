@@ -78,12 +78,12 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The module keeps trace of all (or selected ones) incoming request's IP
-   source and blocks the ones that exceeded some limit. Works simultaneous
-   for IPv4 and IPv6 addresses.
+   The pike module keeps trace of all (or selected ones) incoming
+   request's IP source and blocks the ones that exceed the limit. It works
+   simultaneously for IPv4 and IPv6 addresses.
 
    The module does not implement any actions on blocking - it just simply
-   reports that there is a high traffic from an IP; what to do, is the
+   reports that there is high traffic from an IP; what to do, is the
    administator decision (via scripting).
 
 2. Dependencies
@@ -114,13 +114,13 @@ Chapter 1. Admin Guide
    Time period in seconds used for sampling (or the sampling accuracy).
    The smaller the better, but slower. If you want to detect peeks, use a
    small one. To limit the access (like total number of requests on a long
-   period of time) to a proxy resource (a gateway for ex), use a bigger
-   value of this parameter.
+   period of time) to a proxy resource (a gateway for example), use a
+   bigger value of this parameter.
 
-   IMPORTANT: a too small value may lead to performance penalties due
+   IMPORTANT: a too small value may lead to performance penalties due to
    timer process overloading.
 
-   Default value is 2.
+   Default value is "2".
 
    Example 1.1. Set sampling_time_unit parameter
 ...
@@ -132,7 +132,7 @@ modparam("pike", "sampling_time_unit", 10)
    How many requests should be allowed per sampling_time_unit before
    blocking all the incoming request from that IP. Practically, the
    blocking limit is between ( let's have x=reqs_density_per_unit) x and
-   3*x for IPv4 addresses and between x and 8*x for ipv6 addresses.
+   3*x for IPv4 addresses and between x and 8*x for IPv6 addresses.
 
    Default value is 30.
 
@@ -143,13 +143,13 @@ modparam("pike", "reqs_density_per_unit", 30)
 
 3.3. remove_latency (integer)
 
-   For how long the IP address will be kept in memory after the last
-   request from that IP address. It's a sort of timeout value, in seconds.
-   Note that it is not the duration to keep the IP in state 'blocked'. An
-   IP is unblocked next occurence of 'sampling_time_unit' that does not
-   exceed 'reqs_density_per_unit'. Keeping an IP in memory results in
-   faster reaching of blocked state -- see the notes about the limits of
-   getting to state 'blocked'.
+   Speciies for how long the IP address will be kept in memory after the
+   last request from that IP address. It's a sort of timeout value, in
+   seconds. Note that it is not the duration to keep the IP in state
+   'blocked'. An IP is unblocked next occurence of 'sampling_time_unit'
+   that does not exceed 'reqs_density_per_unit'. Keeping an IP in memory
+   results in faster reaching of blocked state -- see the notes about the
+   limits of getting to state 'blocked'.
 
    Default value is 120.
 
@@ -160,8 +160,8 @@ modparam("pike", "remove_latency", 130)
 
 3.4. pike_log_level (integer)
 
-   Log level to be used by module to auto report the blocking (only first
-   time) and unblocking of IPs detected as source of floods.
+   Syslog log level to be used by module to auto report the blocking (only
+   first time) and unblocking of IPs detected as source of floods.
 
    Default value is 1 (L_WARN).
 
@@ -176,8 +176,8 @@ modparam("pike", "pike_log_level", -1)
 
 4.1. pike_check_req()
 
-   Process the source IP of the current request and returns false if the
-   IP was exceeding the blocking limit.
+   Process the source IP of the current request and return false if the IP
+   was exceeding the blocking limit.
 
    Return codes:
      * 1 (true) - IP is not to be blocked or internal error occured.
@@ -185,7 +185,7 @@ modparam("pike", "pike_log_level", -1)
 Warning
        IMPORTANT: in case of internal error, the function returns true to
        avoid reporting the current processed IP as blocked.
-     * -1 (false) - IP is source of flooding, being previously detected
+     * -1 (false) - IP is source of flooding, previously detected
      * -2 (false) - IP is detected as a new source of flooding - first
        time detection
 
