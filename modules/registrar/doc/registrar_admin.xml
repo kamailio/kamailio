@@ -13,7 +13,7 @@
 	
 	<title>&adminguide;</title>
 	
-	<section>
+	<section id="rergistrar.overview">
 	<title>Overview</title>
 	<para>The module contains REGISTER processing logic. The actual location
 		database is managed by the USRLOC module.
@@ -77,8 +77,8 @@
 			addresses.
 		</para>
 		<para>
-			The public GRUU is build based on '+sip.instance'
-			parameter as recommended by RFC.
+			The public GRUU is build based on the '+sip.instance'
+			UUID parameter as recommended by RFC.
 		</para>
 		<para>
 			The temporary GRUU is built based on internal SRUID (unique
@@ -127,7 +127,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="registrar.p.default_expires">
 		<title><varname>default_expires</varname> (integer)</title>
 		<para>
 		If the processed message contains neither Expires 
@@ -153,14 +153,14 @@ modparam("registrar", "default_expires", 1800)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="registrar.p.default_expires_range">
 		<title><varname>default_expires_range</varname> (integer)</title>
 		<para>
 		This parameter specifies that the expiry used for newly created usrloc records
 		are not fixed, but a random value in the interval <quote>[default_expires-default_expires_range%, default_expires]</quote>.
 		The value is between 0 and 100 and represent the maximim percentage from expires that
-		will be substracted when computing the value. Default in 0, meaning default_expires
-		is left unmodified. This parameter can be modified via ser config framework.
+		will be substracted when computing the value. Default is 0, meaning default_expires
+		is left unmodified. This parameter can be modified via the &kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -176,12 +176,12 @@ modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="registrar.p.expires_range">
 		<title><varname>expires_range</varname> (integer)</title>
 		<para>
 		Similar to default_expires_range, but it applies to the incoming expires
 		value. Default in 0, meaning the expires is left unmodified. 
-		This parameter can be modified via config framework.
+		This parameter can be modified via the &kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -198,12 +198,12 @@ modparam("registrar", "expires_range", 30) # expires within [0.7*expires .. expi
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.min_expires">
 		<title><varname>min_expires</varname> (integer)</title>
 		<para>
-		The minimum expires value of a Contact, values lower than this 
+		The minimum expires value of a <quote>Contact</quote>. Values lower than this 
 		minimum will be automatically set to the minimum. Value 0 disables 
-		the checking. This parameter can be modified via ser config framework.
+		the checking. This parameter can be modified via the &kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -219,12 +219,12 @@ modparam("registrar", "min_expires", 60)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="registrar.p.max_expires">
 		<title><varname>max_expires</varname> (integer)</title>
 		<para>
-		The maximum expires value of a Contact, values higher than this 
+		The maximum accepted expires value of a <quote>Contact</quote>, values higher than this 
 		maximum will be automatically set to the maximum. Value 0 disables 
-		the checking. This parameter can be modified via ser config framework.
+		the checking. This parameter can be modified via the &kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -241,13 +241,14 @@ modparam("registrar", "max_expires", 120)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.default_q">
 		<title><varname>default_q</varname> (integer)</title>
 		<para>
-		The parameter represents default q value for new contacts. Because 
+		The parameter represents default <quote>q</quote> value for new contacts. Because 
 		&kamailio; doesn't support float parameter types, the value in the parameter 
 		is divided by 1000 and stored as float. For example, if you want 
-		default_q to be 0.38, use value 380 here. This parameter can be modified via ser config framework.
+		default_q to be 0.38, use value 380 here. This parameter can be modified via 
+		the &kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -264,7 +265,7 @@ modparam("registrar", "default_q", 1000)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.realm_prefix">
 		<title><varname>realm_prefix</varname> (string)</title>
 		<para>
 		 Prefix to be automatically stripped from realm. As an alternative to 
@@ -272,7 +273,7 @@ modparam("registrar", "default_q", 1000)
 		 the master domain can be defined for SIP purposes (like 
 		 sip.mydomain.net pointing to same IP address as the SRV record for 
 		 mydomain.net). By ignoring the realm_prefix "sip.", at registration,
-		 sip.mydomain.net will be equivalent to mydomain.net.This parameter 
+		 sip.mydomain.net will be equivalent to mydomain.net. This parameter 
 		 can be modified via the &kamailio; config framework.
 		</para>
 		<para>
@@ -318,7 +319,7 @@ modparam("registrar", "append_branches", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.aor_avp">
 		<title><varname>aor_avp</varname> (str)</title>
 		<para>
 		This module parameter has been removed. Use the 'uri' parameter from
@@ -326,12 +327,12 @@ modparam("registrar", "append_branches", 0)
 		</para>
 	</section>
 
-	<section>
+	<section id="registrar.p.case_sensitive">
 		<title><varname>case_sensitive</varname> (integer)</title>
 		<para>
 		If set to 1 then <acronym>AOR</acronym> comparison and also
 		storing will be case sensitive, if set to 0 then <acronym>AOR</acronym>
-		comparison and storing will be case insensitive--This is recommended.
+		comparison and storing will be case insensitive. This is recommended.
 		This parameter can be modified via &kamailio; config framework.
 		</para>
 		<para>
@@ -349,14 +350,14 @@ modparam("registrar", "case_sensitive", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.received_avp">
 		<title><varname>received_avp</varname> (str)</title>
 		<para>
 		Registrar will store the value of the AVP configured by this 
 		parameter in the received column in the user location database. 
 		It will leave the column empty if the AVP is empty. The AVP should 
 		contain a SIP URI consisting of the source IP, port,
-		and protocol of the REGISTER message being processed.
+		and transport protocol of the REGISTER message being processed.
 		</para>
 		<note>
 		<para>
@@ -379,12 +380,12 @@ modparam("registrar", "received_avp", "$avp(s:rcv)")
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.received_param">
 		<title><varname>received_param</varname> (string)</title>
 		<para>
-		The name of the parameter that will be appended to Contacts of 
-		200 OK when the received URI was set by nathelper module. If the
-		value is empty string, then the parameter is not appended anymore.
+		The name of the parameter that will be appended to Contact URI's of 
+		200 OK when the received URI was set by the <quote>nathelper</quote> module. If the
+		value is an empty string, then the parameter is not appended anymore.
 		</para>
 		<para>
 		<emphasis>
@@ -401,7 +402,7 @@ modparam("registrar", "received_param", "rcv")
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.max_contacts">
 		<title><varname>max_contacts</varname> (integer)</title>
 		<para>
 		The parameter can be used to limit the number of contacts per 
@@ -425,10 +426,10 @@ modparam("registrar", "max_contacts", 10)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.retry_after">
 		<title><varname>retry_after</varname> (integer)</title>
 		<para>
-		The registrar can generate 5xx reply to REGISTER in various 
+		The registrar can generate a 5xx reply to REGISTER requests in various 
 		situations. It can, for example, happen when the 
 		<varname>max_contacts</varname> parameter is set and the
 		processing of REGISTER request would exceed the limit. In this case 
@@ -455,12 +456,12 @@ modparam("registrar", "retry_after", 30)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.sock_flag">
 		<title><varname>sock_flag</varname> (integer)</title>
 		<para>
-		Message flag to signal to register module to look into REGISTER 
+		Message flag to signal to the registrar module to look into REGISTER 
 		request for a header which contains a socket description (IP:port). 
-		This socket info will be stored by register instead of the received 
+		This socket info will be stored by registrar instead of the received 
 		socket info.
 		</para>
 		<para>
@@ -481,7 +482,7 @@ modparam("registrar", "sock_flag", 18)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.sock_hdr_name">
 		<title><varname>sock_hdr_name</varname> (string)</title>
 		<para>
 		Header which contains a socket description (proto:IP:port) to override
@@ -506,12 +507,13 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.method_filtering">
 		<title><varname>method_filtering</varname> (integer)</title>
 		<para>
 		Tells if the contact filtering based on supported methods should be
 		performed during lookup. It's enabled only if it has a non zero 
-		value.
+		value. Supported methods are listed in the <quote>Allow:</quote> 
+		header in the REGISTER message and stored in the location database.
 		</para>
 		<para>
 		<emphasis>
@@ -528,11 +530,11 @@ modparam("registrar", "method_filtering", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.use_path">
 		<title><varname>use_path</varname> (integer)</title>
 		<para>
-		If set to 1, the Path header is handled according to the parameter 
-		This parameter can be modified via ser config framework.
+		If set to 1, the <quote>Path:</quote> header is handled according to the parameter 
+		This parameter can be modified via &kamailio; config framework.
 		<quote>path_mode</quote>.
 		</para>
 		<para>
@@ -550,7 +552,7 @@ modparam("registrar", "use_path", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.path_mode">
 		<title><varname>path_mode</varname> (integer)</title>
 		<para>
 		The registrar module implements three different modes regarding the 
@@ -567,8 +569,8 @@ modparam("registrar", "use_path", 1)
 			<para>
 			1 - The Path header is saved into usrloc, but is only included in 
 			the reply if path support is indicated in the registration request 
-			by the <quote>path</quote> option of the 
-			<quote>Supported</quote> header.
+			by the <quote>path</quote> option in the 
+			<quote>Supported:</quote> header.
 			</para>
 		</listitem>
 		<listitem>
@@ -599,7 +601,7 @@ modparam("registrar", "path_mode", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.path_use_received">
 		<title><varname>path_use_received</varname> (integer)</title>
 		<para>
 		If set to 1, the <quote>received</quote> parameter of the first Path 
@@ -624,11 +626,12 @@ modparam("registrar", "path_use_received", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.reg_callid_avp">
 		<title><varname>reg_callid_avp</varname> (string)</title>
 		<para>
-		If reg_callid_avp is defined and populated when registered() is
-		invoked, the result is TRUE only if an active registration with
+		If reg_callid_avp is defined and populated when the
+		<function>registered()</function> is invoked, the result is 
+		TRUE only if an active registration with
 		the specified callID is found.
 		</para>
 		<para>
@@ -646,7 +649,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.xavp_cfg">
 		<title><varname>xavp_cfg</varname> (string)</title>
 		<para>
 			Defines the name of XAVP class to store runtime module config
@@ -657,7 +660,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		<listitem>
 			<para>
 				<emphasis>max_contacts</emphasis> - the number of maximum
-				contacts to be stored for current registration AoR. It
+				contacts to be stored for the current registration AoR. It
 				overwrites the 'max_contacts' module parameter value.
 			</para>
 		</listitem>
@@ -688,7 +691,7 @@ modparam("registrar", "xavp_cfg", "reg")
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.xavp_rcd">
 		<title><varname>xavp_rcd</varname> (string)</title>
 		<para>
 			Defines the name of XAVP class to store details from the
@@ -722,10 +725,10 @@ modparam("registrar", "xavp_rcd", "ulrcd")
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.gruu_enabled">
 		<title><varname>gruu_enabled</varname> (integer)</title>
 		<para>
-		If set to 1 and GRUU <quote>+sip.instance</quote> parameter to
+		If set to 1 and the <quote>+sip.instance</quote> parameter to
 		Contact header of REGISTER is present, then the value of the
 		parameter is saved to location and pub-gruu and temp-gruu addresses
 		are generated.
@@ -748,28 +751,29 @@ modparam("registrar", "gruu_enabled", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.outbound_mode">
 		<title><varname>outbound_mode</varname> (integer)</title>
 		<para>
 		If set to 0 this module will accept REGISTER requests that do
-		not contain a Supported: header with the outbound options-tag.
+		not contain a <quote>Supported:</quote> header with the outbound options-tag.
 		The 200 OK response to REGISTER requests that this module
-		generates will not contain Require: or Supported: headers with
-		the outbound options-tag. If the client has a Require: header
+		generates will not contain <quote>Require:</quote> or 
+		<quote>Supported:</quote> headers with
+		the outbound options-tag. If the client has a <quote>Require:</quote> header
 		with the outbound options tag the REGISTER will be rejected
-		with a 420 Bad Extension response.
+		with a <quote>420 Bad Extension</quote> response.
 		</para>
 		<para>
 		If set to 1 this module will accept REGISTER requests that
-		do not contain a Supported: header with the outbound
+		do not contain a <quote>Supported:</quote> header with the outbound
 		options-tag and REGISTER requests that do contain a Supported:
 		or Requires: header with the outbound options-tag. When the
-		client supports outbound the appropriate RFC5626 procedures
-		will be followed.
+		client supports <emphasis>outbound</emphasis> the appropriate
+		RFC5626 procedures will be followed.
 		</para>
 		<para>
 		If set to 2 this module will reject REGISTER requests that
-		do not contain a Supported: header with the outbound
+		do not contain a <quote>Supported:</quote> header with the outbound
 		options-tag. When the client supports outbound the appropriate
 		RFC5626 procedures will be followed.
 		</para>
@@ -788,15 +792,15 @@ modparam("registrar", "outbound_mode", 2)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.regid_mode">
 		<title><varname>regid_mode</varname> (integer)</title>
 		<para>
-		If set to 0 this module will ignore regid contact param
-		when saving REGISTER request if REGISTER request does not
+		If set to 0 this module will ignore the <quote>regid</quote> contact param
+		when saving REGISTER request if the request does not
 		indicate support for outbound.
 		</para>
 		<para>
-		If set to 1 this module will use regid contact param
+		If set to 1 this module will use <quote>regid</quote> contact param
 		(if present) when saving REGISTER request even if 
 		REGISTER request does not indicate support for outbound.
 		</para>
@@ -815,20 +819,20 @@ modparam("registrar", "regid_mode", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.p.flow_timer">
 		<title><varname>flow_timer</varname> (integer)</title>
 		<para>
-		If set to 0 then this module will not add a Flow-Timer: header
+		If set to 0 then this module will not add a <quote>Flow-Timer:</quote> header
 		to 200 OK responses to REGISTER requests.
 		</para>
 		<para>
-		If set to > 0 then this module will add a Flow-Timer: header
+		If set to > 0 then this module will add a <quote>Flow-Timer:</quote> header
 		containing this value to 200 OK responses to REGISTER requests.
 		This parameter may only be set to a value > 0 when
 		<emphasis>outbound_mode</emphasis> is set to 1 or 2.
 		</para>
 		<para>
-		When set to a value > 0 this parameter should be set to slightly
+		When set to a value greater than 0 this parameter should be set to slightly
 		less than the connection timeout value between the UAC and the
 		network (this corresponds to the core
 		<emphasis>tcp_connection_lifetime</emphasis> option and
@@ -838,7 +842,7 @@ modparam("registrar", "regid_mode", 1)
 		proxy/registrar or if you have an edge proxy that cannot modify
 		responses. If you are using a separate edge proxy you should
 		consider leaving this parameter set to 0 and adding the
-		Flow-Timer: header on the edge proxy as this allows you to
+		<quote>Flow-Timer:</quote> header on the edge proxy as this allows you to
 		keep all of the timer values for a specific flow in one
 		configuration.
 		</para>
@@ -863,24 +867,24 @@ modparam("registrar", "flow_timer", 25)
 	
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="registrar.f.save">
 		<title>
 		<function moreinfo="none">save(domain, [, flags [, uri]])</function>
 		</title>
 		<para>
-		The function processes a REGISTER message. It can add, remove or 
-		modify usrloc records depending on Contact and Expires HFs in the 
+		The function processes a <emphasis>REGISTER</emphasis> message. It can add, remove or 
+		modify location records (in usrloc) depending on Contact and Expires HFs in the 
 		REGISTER message. On success and when called from the REQUEST_ROUTE, 
-		200 OK will be returned listing all	contacts that are currently in 
-		usrloc. On an error, error message will be send with a short
+		<quote>200 OK</quote> will be returned listing all contacts that are currently in 
+		the location database. On an error, an error message will be sent with a short
 		description in reason phrase.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Logical domain within registrar. 
-			If database is used then this must be name of the table which 
+			<emphasis>domain</emphasis> - Logical domain within the registrar. 
+			If a database is used then this must be name of the table which 
 			stores the contacts.
 			</para>
 		</listitem>
@@ -952,12 +956,12 @@ save("location", "0x00", "sip:test@kamailio.org");
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.f.lookup">
 		<title>
 		<function moreinfo="none">lookup(domain [, uri])</function>
 		</title>
 		<para>
-		The function extracts username from Request-URI and tries to find 
+		The lookup function extracts username and/or domain from Request-URI and tries to find 
 		all contacts for the username in usrloc. If there are no such 
 		contacts, -1 will be returned.  If there are such contacts, 
 		Request-URI will be overwritten with the contact that has
@@ -965,7 +969,8 @@ save("location", "0x00", "sip:test@kamailio.org");
 		the message (depending on append_branches parameter value).
 		</para>
 		<para>
-		If the method_filtering option is enabled, the lookup function
+		If the <varname>method_filtering</varname> option is enabled,
+		the <function>lookup</function> function
 		will return only the contacts that support the method of the
 		processed request.
 		</para>
@@ -1024,7 +1029,7 @@ switch ($retcode) {
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.f.lookup_branches">
 		<title>
 		<function moreinfo="none">lookup_branches(domain)</function>
 		</title>
@@ -1041,7 +1046,8 @@ switch ($retcode) {
 			</para>
 		</listitem>
 		</itemizedlist>
-		<para>Return codes are propagated from lookup(domain).</para>
+		<para>Return codes are propagated from the <function>lookup(domain)</function> function.
+		</para>
 
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -1056,7 +1062,7 @@ lookup_branches("location");
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.f.registered">
 		<title>
 		<function moreinfo="none">registered(domain [, uri])</function>
 		</title>
@@ -1064,7 +1070,7 @@ lookup_branches("location");
 		The function returns true if the AOR in the Request-URI is 
 		registered, false otherwise.  The function does not modify the 
 		message being process, it neither rewrites the Request-URI if a 
-		contact is found not append branches.
+		contact is found nor append branches.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -1097,17 +1103,17 @@ if (registered("location")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="registrar.f.add_sock_hdr">
 		<title>
 		<function moreinfo="none">add_sock_hdr(hdr_name)</function>
 		</title>
 		<para>
-		Adds to the current REGISTER request a new header with 
+		Adds a new header to the current REGISTER request with 
 		<quote>hdr_name</quote> which contains the description of the
 		received socket (proto:ip:port)
 		</para>
 		<para>
-		This make sens only in multiple replicated servers scenarios.
+		This makes sense only in multiple replicated servers scenarios.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -1129,15 +1135,16 @@ add_sock_hdr("Sock-Info");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="registrar.f.unregister">
 		<title>
 		<function moreinfo="none">unregister(domain, uri[, ruid])</function>
 		</title>
 		<para>
-		The function removes contacts associated with 'uri'. If 'ruid' is
-		provided a specific contact is removed, if 'ruid' is not provided
-		all contacts are removed.  If 'ruid' is provided and usrloc is
-		using db_mode=3, 'uri' does not need to be given and can be
+		The function removes contacts associated with 'uri' from the location
+		database. If 'ruid' is provided a specific contact is removed,
+		if 'ruid' is not provided all the current contacts are removed. 
+		If 'ruid' is provided and the <quote>usrloc</quote> module is
+		using <quote>db_mode=3</quote>, 'uri' does not need to be given and can be
 		empty string.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -1178,7 +1185,7 @@ unregister("location", "", "$ruid");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="registrar.f.reg_fetch_contacts">
 		<title>
 		<function moreinfo="none">reg_fetch_contacts(domain, uri, profile)</function>
 		</title>
@@ -1221,7 +1228,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="registrar.f.reg_free_contacts">
 		<title>
 		<function moreinfo="none">reg_free_contacts(profile)</function>
 		</title>
