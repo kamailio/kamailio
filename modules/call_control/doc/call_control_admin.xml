@@ -13,7 +13,7 @@
   
   <title>&adminguide;</title>
   
-  <section>
+  <section id="call_control.overview">
   <title>Overview</title>
     <para>
       This module allows one to limit the duration of calls and automatically
@@ -164,12 +164,12 @@
   
   <section>
   <title>Exported parameters</title>
-    <section>
+    <section id="call_control.p.disable">
     <title><varname>disable</varname> (int)</title>
       <para>
         Boolean flag that specifies if callcontrol should be disabled. This
         is useful when you want to use the same &kamailio; configuration in
-        two different context, one using callcontrol, the other not. In the
+        two different contexts, one using callcontrol, the other not. In the
         case callcontrol is disabled, calls to the call_control() function
         will return a code indicating that there is no limit associated with
         the call, allowing the use of the same configuration without changes.
@@ -191,10 +191,10 @@ modparam("call_control", "disable", 1)
       </example>
     </section>
 
-    <section>
+    <section id="call_control.p.socket_name">
     <title><varname>socket_name</varname> (string)</title>
       <para>
-        It is the path to the filesystem socket where the callcontrol
+        The path to the filesystem socket where the callcontrol
         application listens for commands from the module.
       </para>
 
@@ -215,16 +215,16 @@ modparam("call_control", "socket_name", "/var/run/callcontrol/socket")
       </example>
     </section>
 
-    <section>
+    <section id="call_control.p.socket_time">
     <title><varname>socket_timeout</varname> (int)</title>
       <para>
-        How much time (in milliseconds) to wait for an answer from the
+        How long time (in milliseconds) to wait for an answer from the
         callcontrol application.
       </para>
 
       <para>
         <emphasis>
-          Default value is <quote>500</quote> (ms).
+          Default value is <quote>500</quote> ms.
         </emphasis>
       </para>
 
@@ -238,7 +238,7 @@ modparam("call_control", "socket_timeout", 500)
       </example>
     </section>
 
-    <section>
+    <section id="call_control.p.signaling_ip_avp">
     <title><varname>signaling_ip_avp</varname> (string)</title>
       <para>
         Specification of the AVP which holds the IP address from where
@@ -278,7 +278,7 @@ modparam("call_control", "signaling_ip_avp", "$avp(s:signaling_ip)")
       </example>
     </section>
 
-    <section>
+    <section id="call_control.p.canonical_uri_avp">
     <title><varname>canonical_uri_avp</varname> (string)</title>
       <para>
         Specification of the AVP which holds an optional application defined
@@ -305,7 +305,7 @@ modparam("call_control", "canonical_uri_avp", "$avp(s:can_uri)")
       </example>
     </section>
 
-    <section>
+    <section id="call_control.p.diverter_avp_id">
     <title><varname>diverter_avp_id</varname> (string)</title>
       <para>
         Specification of the id of an integer AVP which holds an optional
@@ -351,7 +351,7 @@ route {
 
   <section>
   <title>Functions</title>
-    <section>
+    <section id="call_control.f.call_control">
     <title><function moreinfo="none">call_control()</function></title>
       <para>
         Trigger the use of callcontrol for the dialog started by the INVITE

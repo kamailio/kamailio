@@ -172,7 +172,7 @@ Chapter 1. Admin Guide
 
    Boolean flag that specifies if callcontrol should be disabled. This is
    useful when you want to use the same Kamailio configuration in two
-   different context, one using callcontrol, the other not. In the case
+   different contexts, one using callcontrol, the other not. In the case
    callcontrol is disabled, calls to the call_control() function will
    return a code indicating that there is no limit associated with the
    call, allowing the use of the same configuration without changes.
@@ -186,8 +186,8 @@ modparam("call_control", "disable", 1)
 
 5.2. socket_name (string)
 
-   It is the path to the filesystem socket where the callcontrol
-   application listens for commands from the module.
+   The path to the filesystem socket where the callcontrol application
+   listens for commands from the module.
 
    Default value is "/var/run/callcontrol/socket".
 
@@ -198,10 +198,10 @@ modparam("call_control", "socket_name", "/var/run/callcontrol/socket")
 
 5.3. socket_timeout (int)
 
-   How much time (in milliseconds) to wait for an answer from the
+   How long time (in milliseconds) to wait for an answer from the
    callcontrol application.
 
-   Default value is "500" (ms).
+   Default value is "500" ms.
 
    Example 1.3. Setting the socket_timeout parameter
 ...
