@@ -1664,11 +1664,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* make -Wall happy */
 	current_uri.s=0;
 
-	if (t->flags & T_CANCELED){
-		DBG("t_forward_non_ack: no forwarding on a canceled transaction\n");
-		ser_error=E_CANCELED;
-		return -1;
-	}
+	getbflagsval(0, &backup_bflags);
+
+	if (t->flags & T_CANCELED) goto canceled;
+
 	if (p_msg->REQ_METHOD==METHOD_CANCEL) { 
 		t_invite=t_lookupOriginalT(  p_msg );
 		if (t_invite!=T_NULL_CELL) {
@@ -1680,8 +1679,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			return 1;
 		}
 	}
-
-	getbflagsval(0, &backup_bflags);
 
 	/* if no more specific error code is known, use this */
 	lowest_ret=E_UNSPEC;
@@ -1727,6 +1724,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 							p_msg->fwd_send_flags, proto,
 							(p_msg->dst_uri.len)?0:UAC_SKIP_BR_DST_F, &p_msg->instance,
 							&p_msg->ruid, &p_msg->location_ua);
+		/* test if cancel was received meanwhile */
+		if (t->flags & T_CANCELED) goto canceled;
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else
@@ -1744,6 +1743,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 							&path, proxy, si, p_msg->fwd_send_flags,
 							proto, (dst_uri.len)?0:UAC_SKIP_BR_DST_F, &instance,
 							&ruid, &location_ua);
+		/* test if cancel was received meanwhile */
+		if (t->flags & T_CANCELED) goto canceled;
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
@@ -1817,6 +1818,17 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	ser_error=0; /* clear branch send errors, we have overall success */
 	set_kr(REQ_FWDED);
 	return 1;
+
+canceled:
+	DBG("t_forward_non_ack: no forwarding on a canceled transaction\n");
+	/* reset processed branches */
+	clear_branches();
+	/* restore backup flags from initial env */
+	setbflagsval(0, backup_bflags);
+	/* update message flags, if changed in branch route */
+	t->uas.request->flags = p_msg->flags;
+	ser_error=E_CANCELED;
+	return -1;
 }
 
 
