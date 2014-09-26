@@ -13,7 +13,7 @@
 	
 	<title>&adminguide;</title>
 	
-	<section>
+	<section id="exec.overview">
 	<title>Overview</title>
 	<para>
 		The exec module allows external commands to be executed from a &kamailio; 
@@ -112,7 +112,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="exec.p.setvars">
 		<title><varname>setvars</varname> (integer)</title>
 		<para>
 		Turn off to disable setting environment variables for executed commands.
@@ -131,7 +131,7 @@ modparam("exec", "setvars", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="exec.p.time_to_kill">
 		<title>
 			<varname>time_to_kill</varname> (integer)
 		</title>
@@ -156,7 +156,7 @@ modparam("exec", "time_to_kill", 20)
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="exec.f.exec_dset">
 		<title>
 		<function moreinfo="none">exec_dset(command)</function>
 		</title>
@@ -191,7 +191,7 @@ exec_dset("echo TEST > /tmp/$rU.txt");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="exec.f.exec_msg">
 		<title>
 		<function moreinfo="none">exec_msg(command)</function>
 		</title>
@@ -230,7 +230,7 @@ exec_msg("echo TEST > /tmp/$rU.txt");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="exec.f.exec_avp">
 		<title>
 		<function moreinfo="none">exec_avp(command [, avplist])</function>
 		</title>
@@ -271,11 +271,11 @@ exec_avp("echo TEST", "$avp(s:test)");
 		</example>
 	</section>
 	</section>
-	<section>
+	<section id="exec.known_issues">
 	<title>Known Issues</title>
 	<para>
 		There is currently no guarantee that scripts ever return and stop 
-		blocking &sip; server. (There is kill.c but it is not used along with 
+		blocking the &sip; server. (There is kill.c but it is not used along with 
 		the current mechanisms based on popen. Besides that kill.c is ugly).
 	</para>
 	</section>

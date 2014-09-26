@@ -216,5 +216,5 @@ exec_avp("echo TEST", "$avp(s:test)");
 5. Known Issues
 
    There is currently no guarantee that scripts ever return and stop
-   blocking SIP server. (There is kill.c but it is not used along with the
-   current mechanisms based on popen. Besides that kill.c is ugly).
+   blocking the SIP server. (There is kill.c but it is not used along with
+   the current mechanisms based on popen. Besides that kill.c is ugly).
