@@ -156,12 +156,10 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 	total_len = 0;
 	last = &sl;
 	last->next = 0;
+	sock_name = 0;
+	portname = 0;
 	if (ssock){
-		sock_name = &ssock->address_str;
-		portname = &ssock->port_no_str;
-	}else{
-		sock_name = 0;
-		portname = 0;
+		si_get_signaling_data(ssock, &sock_name, &portname);
 	}
 
 	for (; hf; hf = hf->next) {
@@ -197,8 +195,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 										" failed\n");
 							goto error;
 						}
-						sock_name = &di.send_sock->address_str;
-						portname = &di.send_sock->port_no_str;
+						si_get_signaling_data(di.send_sock, &sock_name, &portname);
 					}
 					if (!append_str_list(sock_name->s, sock_name->len, &last,
 									&total_len))
