@@ -807,4 +807,6 @@ inline static void init_dst_from_rcv(struct dest_info* dst,
  */
 int ip_addr_match_net(ip_addr_t *iaddr, ip_addr_t *naddr, int mask);
 
+int si_get_signaling_data(struct socket_info *si, str **addr, str **port);
+
 #endif
