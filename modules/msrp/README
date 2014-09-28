@@ -16,7 +16,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright Â© 2012 asipto.com
+   Copyright © 2012 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -134,7 +134,7 @@ Chapter 1. Admin Guide
    the scalability and performance of Kamailio in handling TCP/TLS, this
    module reuses Kamailio's core framework to offer MSRP routing
    capabilities. Along with embedded Presence and XCAP servers, Kamailio
-   offers now a complete solution for SIP beyond VoIP.
+   now offers a complete solution for SIP beyond VoIP.
 
    One of the main benefits of this module is the ability to reuse all the
    other extensions that exist in the SIP server, including accounting,
@@ -178,10 +178,10 @@ Chapter 1. Admin Guide
 
 3.1. sipmsg (int)
 
-   If 1, the module will build a SIP message from MSRP frame headers,
-   providing it to event_route[msrp:frame-in]. All the config file
-   functions (apart from SIP request relay) that can be used in a request
-   route block can be used in msrp event_route.
+   If set to 1, the module will build a SIP message from MSRP frame
+   headers, providing it to "event_route[msrp:frame-in]". All the config
+   file functions (apart from SIP request relay) that can be used in a
+   request route block can be used in the MSRP event_route.
 
    Default value is '1'.
 
@@ -216,7 +216,7 @@ modparam("msrp", "timer_interval", 90)
 
 3.4. auth_min_expires (int)
 
-   The minimum value accepted for Expires header in AUTH requests.
+   The minimum value accepted for the "Expires" header in AUTH requests.
 
    Default value is '60'.
 
@@ -227,7 +227,7 @@ modparam("msrp", "auth_min_expiresl", 90)
 
 3.5. auth_max_expires (int)
 
-   The maximum value accepted for Expires header in AUTH requests.
+   The maximum value accepted for "Expires" header in AUTH requests.
 
    Default value is '3600'.
 
@@ -238,7 +238,7 @@ modparam("msrp", "auth_max_expiresl", 1800)
 
 3.6. use_path_addr (str)
 
-   The hostname:port to be used when building Use-Path header.
+   The hostname:port to be used when building the Path header.
 
    Default value is NULL (server IP and port are used).
 
@@ -259,11 +259,11 @@ modparam("msrp", "use_path_addr", "msrp.kamailio.org:5061")
    4.8. msrp_cmap_save()
    4.9. msrp_cmap_lookup()
 
-4.1.  msrp_relay()
+4.1. msrp_relay()
 
    Relay MSRP frame according to the To-Path. This function has to be
    executed for each MSRP request or reply that has to be forwarded. Note
-   that due to nature of MSRP transport layer, which is reliable
+   that due to nature of the MSRP transport layer, which is reliable
    (TCP/TLS), there is no retransmission of MSRP frames.
 
    This function can be used in ANY_ROUTE.
@@ -275,7 +275,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.2.  msrp_reply(code, text [, hdrs])
+4.2. msrp_reply(code, text [, hdrs])
 
    Send a reply for the current MSRP request, adding optional headers.
 
@@ -290,7 +290,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.3.  msrp_is_request()
+4.3. msrp_is_request()
 
    Return true if the MSRP frame is a request.
 
@@ -307,7 +307,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.4.  msrp_is_reply()
+4.4. msrp_is_reply()
 
    Return true if the MSRP frame is a reply.
 
@@ -324,7 +324,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.5.  msrp_set_dst(addr, sock)
+4.5. msrp_set_dst(addr, sock)
 
    Set destination attributes: addr - target address as MSRP URI; sock -
    local socket to be used (format 'proto:ip:port').
@@ -342,7 +342,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.6.  msrp_relay_flags(flags)
+4.6. msrp_relay_flags(flags)
 
    Set transport layer sending flags for forwarding current MSRP frame;
    flags - a bitmask of flags - 1 (don't create a new connection), 2
@@ -361,7 +361,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.7.  msrp_reply_flags(flags)
+4.7. msrp_reply_flags(flags)
 
    Set transport layer sending flags for replies to the current MSRP
    frame; flags - a bitmask of flags - 1 (don't create a new connection),
@@ -380,7 +380,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.8.  msrp_cmap_save()
+4.8. msrp_cmap_save()
 
    Save details of a MSRP connection upon AUTH request inside the internal
    map table, indexed by session id.
@@ -396,7 +396,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.9.  msrp_cmap_lookup()
+4.9. msrp_cmap_lookup()
 
    Lookup MSRP connection details for current session id.
 
@@ -432,7 +432,7 @@ event_route[msrp:frame-in] {
 
    6.1. msrp.cmaplist
 
-6.1.  msrp.cmaplist
+6.1. msrp.cmaplist
 
    List active MSRP connections.
 
@@ -448,10 +448,11 @@ kamcmd msrp.cmaplist
 
 8. Usage
 
-   When 'sipmsg' parameter is set to 1 (which is default), the module
-   internally builds a SIP request from the MSRP frame and exposes it to
-   the config file interpreter. This way, all the functions that are valid
-   for SIP requests can be used safely in event_route[msrp:frame-in].
+   When the sipmsg parameter is set to 1 (which is the default), the
+   module internally builds a SIP request from the MSRP frame and exposes
+   it to the config file interpreter. This way, all the functions that are
+   valid for SIP requests can be used safely in
+   event_route[msrp:frame-in].
 
    To build the SIP request, the module takes the first line and the
    headers from an MSRP message and appends them to a static buffer. The
