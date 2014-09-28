@@ -415,3 +415,24 @@ int ip_addr_match_net(ip_addr_t *iaddr, ip_addr_t *naddr,
 		return 0;
 	return -1;
 }
+
+int si_get_signaling_data(struct socket_info *si, str **addr, str **port)
+{
+	if(si==NULL)
+		return -1;
+	if(addr) {
+		if(si->useinfo.name.len>0) {
+			*addr = &si->useinfo.name;
+		} else {
+			*addr = &si->address_str;
+		}
+	}
+	if(port) {
+		if(si->useinfo.port_no>0) {
+			*port = &si->useinfo.port_no_str;
+		} else {
+			*port = &si->port_no_str;
+		}
+	}
+	return 0;
+}
