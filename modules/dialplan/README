@@ -210,7 +210,7 @@ modparam("dialplan", "db_url", "mysql://user:passwb@localhost/db")
 
 5.2. table_name (string)
 
-   The table's name from which to load the translation rules.
+   The name of the database table used to load the translation rules.
 
    Default value is "dialplan".
 
@@ -300,8 +300,8 @@ modparam("dialplan", "repl_exp_col", "column_name")
 
 5.10. attrs_col (string)
 
-   The column name to store the rule's attributes to be set to the
-   message.
+   The column name to store the rule's attributes to be set after match
+   (see attrs_pvar )
 
    Default value is "attrs".
 
@@ -312,9 +312,9 @@ modparam("dialplan", "attrs_col", "column_name")
 
 5.11. attrs_pvar (string)
 
-   The pvar to store the rule's attributes, after translation
-   (dp_translate() succeeds). This parameter can be an AVP or a SCRIPT
-   VAR.
+   The pseudovariable used to store the rule's attributes, after
+   translation (when dp_translate() succeeds). This parameter can be an
+   "AVP" or a script variable ("$var()")..
 
    Default value is "NULL".
 
@@ -338,13 +338,13 @@ modparam("dialplan", "fetch_rows", 4000)
 
    6.1. dp_translate(id, [src[/dest]])
 
-6.1.  dp_translate(id, [src[/dest]])
+6.1. dp_translate(id, [src[/dest]])
 
-   Will try to translate src into dest according to the translation rules
-   with dialplan ID equal to id. If src/dest is missing the default
-   parameter "ruri.user/ruri.user" will be used, thus translating the
-   request uri user part. If only dest is missing, only matching and
-   storing of matching rule's attributes is done.
+   Will try to translate "src" into "dest" according to the translation
+   rules in the dialplan identified by "id" . If src/dest is missing the
+   default parameter "ruri.user/ruri.user" will be used, thus translating
+   the request URI user part. If only "dest" is missing, only matching and
+   storing of the matching rule's attributes is done.
 
    Returns 1, if translation succeeded, -1 in case of some error occurred,
    and -2 if dialplan with ID equal to id does not exist.

@@ -13,7 +13,7 @@
 <chapter>
     <title>&adminguide;</title>
 	
-	<section>
+	<section id="dialplan.overview">
 	<title>Overview</title>
 	<para>
 	This module implements generic string translations based on matching and
@@ -22,7 +22,7 @@
 	</para>
 	</section>
 
-	<section>
+	<section id="dialplan.introduction">
 	<title>How it works</title>
 	<para>
 	At startup, the module will load a set of transformation rules from a 
@@ -46,7 +46,7 @@
 	</para>
 	</section>
 
-	<section>
+	<section id="dialplan.usecases">
 	<title>Dialplan use cases</title>
 	<para>
 	The module can be used to implement multiple dialplans - do to 
@@ -105,7 +105,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="dialplan.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		The translation rules will be loaded using this database URL.
@@ -126,10 +126,10 @@ modparam("dialplan", "db_url", "mysql://user:passwb@localhost/db")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.table_name">
 		<title><varname>table_name</varname> (string)</title>
 		<para>
-		The table's name from which to load the translation rules.
+		The name of the database table used to load the translation rules.
 		</para>
 		<para>
 		<emphasis>
@@ -146,7 +146,7 @@ modparam("dialplan", "table_name", "my_table")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.dpid_col">
 		<title><varname>dpid_col</varname> (string)</title>
 		<para>
 		The column name used to store the dialplan group ID.
@@ -166,7 +166,7 @@ modparam("dialplan", "dpid_col", "column_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.pr_col">
 		<title><varname>pr_col</varname> (string)</title>
 		<para>
 		The column name used to store the priority of the corresponding rule from the database
@@ -187,7 +187,7 @@ modparam("dialplan", "pr_col", "column_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.match_op_col">
 		<title><varname>match_op_col</varname> (string)</title>
 		<para>
 		The column name used to store the type of matching of the rule.
@@ -207,7 +207,7 @@ modparam("dialplan", "match_op_col", "column_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.match_exp_col">
 		<title><varname>match_exp_col</varname> (string)</title>
 		<para>
 		The column name to store the rule match expression.
@@ -227,7 +227,7 @@ modparam("dialplan", "match_exp_col", "column_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.match_len_col">
 		<title><varname>match_len_col</varname> (string)</title>
 		<para>
 		The column name to store the length of a string matching the 
@@ -248,7 +248,7 @@ modparam("dialplan", "match_len_col", "column_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.subst_exp_col">
 		<title><varname>subst_exp_col</varname> (string)</title>
 		<para>
 		The column name to store the rule's substitution expression.
@@ -268,7 +268,7 @@ modparam("dialplan", "subst_exp_col", "column_name")
 		</example>
 	</section>
 
-		<section>
+	<section id="dialplan.p.repl_exp_col">
 		<title><varname>repl_exp_col</varname> (string)</title>
 		<para>
 		The column name to store the rule's replacement expression.
@@ -288,10 +288,11 @@ modparam("dialplan", "repl_exp_col", "column_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.attrs_col">
 		<title><varname>attrs_col</varname> (string)</title>
 		<para>
-		The column name to store the rule's attributes to be set to the message.
+		The column name to store the rule's attributes to be set after match (see 
+		<varname>attrs_pvar</varname> )
 		</para>
 		<para>
 		<emphasis>
@@ -308,11 +309,12 @@ modparam("dialplan", "attrs_col", "column_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.attrs_pvar">
 		<title><varname>attrs_pvar</varname> (string)</title>
 		<para>
-		The pvar to store the rule's attributes, after translation (dp_translate() succeeds).
-		This parameter can be an AVP or a SCRIPT VAR.
+		The pseudovariable used to store the rule's attributes, 
+		after translation (when <function>dp_translate</function>() succeeds).
+		This parameter can be an <quote>AVP</quote> or a script variable (<quote>$var()</quote>)..
 		</para>
 		<para>
 		<emphasis>
@@ -329,7 +331,7 @@ modparam("dialplan", "attrs_pvar", "$avp(s:dest)")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialplan.p.fetch_rows">
 		<title><varname>fetch_rows</varname> (int)</title>
 		<para>
 		The number of rows to be fetched at once from database
@@ -356,17 +358,16 @@ modparam("dialplan", "fetch_rows", 4000)
 	<section>
 	<title>Functions</title>
 	
-	<section>
+	<section id="dialplan.p.dp_translate">
 	<title>
 		<function moreinfo="none">dp_translate(id, [src[/dest]])</function>
 	</title>
 	<para>
-	Will try to translate src into dest according to 
-	the translation rules with dialplan ID equal to id.  If src/dest is
-	missing the default parameter <quote>ruri.user/ruri.user</quote> will
-	be used, thus translating the request uri user part.  If only dest is
-	missing, only matching and storing of matching rule's
-	attributes is done.
+	Will try to translate <quote>src</quote> into <quote>dest</quote> according to 
+	the translation rules in the dialplan identified by <quote>id</quote> .
+	If src/dest is missing the default parameter <quote>ruri.user/ruri.user</quote> will
+	be used, thus translating the request URI user part. If only <quote>dest</quote> is
+	missing, only matching and storing of the matching rule's attributes is done.
 
 	</para>
 	<para>
@@ -465,95 +466,95 @@ xlog("translated to var $var(y) \n");
 	<section>
 	<title>MI Commands</title>
 
-		<section>
+		<section id="dialplan.m.dp_reload">
 			<title><varname>dp_reload</varname></title>
 			<para>
 			Forces an update of the translation rules from the database.
 			</para>
-		<para>
-		Name: <emphasis>dp_reload</emphasis>
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI DATAGRAM Command Format:
-		</para>
+			<para>
+			Name: <emphasis>dp_reload</emphasis>
+			</para>
+			<para>Parameters: <emphasis>none</emphasis></para>
+ 			<para>
+			MI DATAGRAM Command Format:
+			</para>
         <programlisting  format="linespecific">
 		:dp_reload:
 		_empty_line_
 		</programlisting>
 		</section>
     
-    <section>
+		<section id="dialplan.m.dp_translate">
 			<title><varname>dp_translate</varname></title>
 			<para>
-                Will apply a translation rule identified by a dialplan
-                id and an input string.
+                	Will apply a translation rule identified by a dialplan
+                	id and an input string.
 			</para>
-		<para>
-		Name: <emphasis>dp_translate</emphasis>
-		</para>
-        <para>Parameters: <emphasis>2</emphasis></para>
-        	<itemizedlist>
-                <listitem>
-                <para><emphasis>Dial plan ID</emphasis></para>
-                </listitem>
-                <listitem>
-                <para><emphasis>Input String</emphasis></para>
-                </listitem>
-            </itemizedlist>
- 		<para>
-		MI DATAGRAM Command Format:
-		</para>
+			<para>
+			Name: <emphasis>dp_translate</emphasis>
+			</para>
+        		<para>Parameters: <emphasis>2</emphasis></para>
+        		<itemizedlist>
+                	<listitem>
+                		<para><emphasis>Dial plan ID</emphasis></para>
+                	</listitem>
+                	<listitem>
+                		<para><emphasis>Input String</emphasis></para>
+                	</listitem>
+            		</itemizedlist>
+ 			<para>
+			MI DATAGRAM Command Format:
+			</para>
         <programlisting  format="linespecific">
             :dp_translate:
             dpid
             input
 		_empty_line_
 		</programlisting>
-		</section>
+			</section>
 	</section>
 
 	<section>
 	<title>Exported RPC Commands</title>
 
-		<section>
+		<section id="dialplan.r.dp.reload">
 			<title><varname>dialplan.reload</varname></title>
 			<para>
 			Forces an update of the translation rules from the database.
 			</para>
-		<para>
-		Name: <emphasis>dialplan.reload</emphasis>
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-		<para>
-		Example:
-		</para>
+			<para>
+			Name: <emphasis>dialplan.reload</emphasis>
+			</para>
+			<para>Parameters: <emphasis>none</emphasis></para>
+			<para>
+			Example:
+			</para>
         <programlisting  format="linespecific">
 		&sercmd; dialplan.reload
 		</programlisting>
 		</section>
     
-    <section>
+    		<section>
 			<title><varname>dialplan.translate</varname></title>
 			<para>
-                Will apply a translation rule identified by a dialplan
-                id and an input string.
+                	Will apply a translation rule identified by a dialplan
+                	id and an input string.
 			</para>
-		<para>
-		Name: <emphasis>dialplan.translate</emphasis>
-		</para>
-        <para>Parameters: <emphasis>2</emphasis></para>
-        <itemizedlist>
-                <listitem>
-                <para><emphasis>Dial plan ID</emphasis></para>
-                </listitem>
-                <listitem>
-                <para><emphasis>Input String</emphasis></para>
-                </listitem>
-		</itemizedlist>
-		<para>
-		Example:
-		</para>
+			<para>
+			Name: <emphasis>dialplan.translate</emphasis>
+			</para>
+        		<para>Parameters: <emphasis>2</emphasis></para>
+        		<itemizedlist>
+                	<listitem>
+                	<para><emphasis>Dial plan ID</emphasis></para>
+                	</listitem>
+                	<listitem>
+                	<para><emphasis>Input String</emphasis></para>
+                	</listitem>
+			</itemizedlist>
+			<para>
+			Example:
+			</para>
         <programlisting  format="linespecific">
         # &sercmd; dp_translate dpid "input"
         &sercmd; dp_translate 1 "abcdxyz"
@@ -561,19 +562,19 @@ xlog("translated to var $var(y) \n");
 		</section>
 	</section>
 
-    <section>
+    	<section id="dialplan.installation">
 	    <title>Installation</title>
 	    <para>
 		The modules requires one table in &kamailio; database: dialplan.
 		The SQL syntax to create them can be found in dialplan-create.sql     
-        script in the database directories in the kamailio/scripts folder.
-        You can also find the complete database documentation on the
-        project webpage, &kamailiodbdocslink;.
-        </para>
+       		 script in the database directories in the kamailio/scripts folder.
+        	You can also find the complete database documentation on the
+        	project webpage, &kamailiodbdocslink;.
+        	</para>
 		<para>
 		Some sample records from a dialplan table are presented in the next
 		figure.
-        </para>
+        	</para>
 		<example>
 		<title>Example of rules</title>
 		<programlisting format="linespecific">
