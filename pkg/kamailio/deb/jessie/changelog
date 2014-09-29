@@ -1,3 +1,9 @@
+kamailio (4.2.0~pre1) UNRELEASED; urgency=medium
+
+  * update version to 4.2.0~pre1
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Mon, 29 Sep 2014 10:17:56 +0200
+
 kamailio (4.2.0~pre0) UNRELEASED; urgency=medium
 
   * update version to 4.2.0~pre0
