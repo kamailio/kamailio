@@ -35,9 +35,9 @@
 #include "../../parser/contact/parse_contact.h"
 #include "tsilo.h"
 #include "ts_hash.h"
-#include "t_store.h"
+#include "ts_store.h"
 
-int t_store(struct sip_msg* msg) {
+int ts_store(struct sip_msg* msg) {
 	struct cell     *t;
 	str ruri;
 	ts_urecord_t* r;

@@ -19,9 +19,10 @@
  *
  */
 
-#ifndef _T_STORE_H
-#define _T_STORE_H
+#ifndef _TS_APPEND_H
+#define _TS_APPEND_H
 
-int t_store(struct sip_msg* msg);
+int ts_append(struct sip_msg* msg, str *ruri, char *table);
+int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table);
 
 #endif

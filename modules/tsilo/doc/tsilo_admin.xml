@@ -96,7 +96,7 @@ modparam("tsilo", "hash_size", 1024)
 	<section>
 	<title>Functions</title>
 	<section>
-		<title><function moreinfo="none">t_store()</function></title>
+		<title><function moreinfo="none">ts_store()</function></title>
 		<para>
 		The method stores r-uri, tindex and tlabel of the current transaction.
 		</para>
@@ -104,12 +104,12 @@ modparam("tsilo", "hash_size", 1024)
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>t_store</function> usage</title>
+		<title><function>ts_store</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (is_method("INVITE")) {
 	if (t_newtran()) {
-		t_store();
+		ts_store();
 	}
 }
 ...
@@ -117,7 +117,7 @@ if (is_method("INVITE")) {
 		</example>
 	</section>
 	<section>
-		<title><function moreinfo="none">t_append(domain, ruri)</function></title>
+		<title><function moreinfo="none">ts_append(domain, ruri)</function></title>
 		<para>
 		The method add branches to all the stored transactions for the &sip;
 		ruri passed as parameter, performing a contact lookup on the table specified by
@@ -144,18 +144,18 @@ if (is_method("INVITE")) {
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>t_append</function> usage</title>
+		<title><function>ts_append</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (is_method("REGISTER")) {
-	t_append("location", "$tu");
+	ts_append("location", "$tu");
 }
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><function moreinfo="none">t_append_to(tindex, tlabel, domain)</function></title>
+		<title><function moreinfo="none">ts_append_to(tindex, tlabel, domain)</function></title>
 		<para>
 		The method add branches to the transaction identified by tindex and tlabel,
 		performing a contacts lookup on the table specified by the domain parameter.
@@ -186,13 +186,13 @@ if (is_method("REGISTER")) {
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>t_append_to</function> usage</title>
+		<title><function>ts_append_to</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (is_method("REGISTER")) {
 	$var(tindex) = ...
 	$var(tlabel) = ...
-	t_append_to("$var(tindex)", "$var(tlabel", "location");
+	ts_append_to("$var(tindex)", "$var(tlabel", "location");
 }
 ...
 </programlisting>

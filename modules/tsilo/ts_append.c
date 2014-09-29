@@ -35,9 +35,9 @@
 #include "../../parser/contact/parse_contact.h"
 #include "tsilo.h"
 #include "ts_hash.h"
-#include "t_append.h"
+#include "ts_append.h"
 
-int t_append(struct sip_msg* msg, str *ruri, char *table) {
+int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 	ts_urecord_t* _r;
 	ts_transaction_t* ptr;
 
@@ -57,7 +57,7 @@ int t_append(struct sip_msg* msg, str *ruri, char *table) {
 
 	while(ptr) {
 		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",ptr->tindex, ptr->tlabel, ruri->len, ruri->s);
-		t_append_to(msg, ptr->tindex, ptr->tlabel, table);
+		ts_append_to(msg, ptr->tindex, ptr->tlabel, table);
 		ptr = ptr->next;
 	}
 
@@ -66,7 +66,7 @@ int t_append(struct sip_msg* msg, str *ruri, char *table) {
 	return 1;
 }
 
-int t_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table) {
+int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table) {
 	struct cell     *t;
 	struct sip_msg *orig_msg;
 

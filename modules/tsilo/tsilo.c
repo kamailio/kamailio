@@ -35,8 +35,8 @@
 
 #include "ts_hash.h"
 #include "ts_handlers.h"
-#include "t_append.h"
-#include "t_store.h"
+#include "ts_append.h"
+#include "ts_store.h"
 
 MODULE_VERSION
 
@@ -53,20 +53,20 @@ static int hash_size = 2048;
 static int mod_init(void);
 static void destroy(void);
 
-static int w_t_append_to(struct sip_msg* msg, char *idx, char *lbl, char *d);
-static int fixup_t_append_to(void** param, int param_no);
-static int w_t_append(struct sip_msg* _msg, char *_table, char *_ruri);
-static int fixup_t_append(void** param, int param_no);
+static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *d);
+static int fixup_ts_append_to(void** param, int param_no);
+static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri);
+static int fixup_ts_append(void** param, int param_no);
 
-static int w_t_store(struct sip_msg* msg);
+static int w_ts_store(struct sip_msg* msg);
 
 
 static cmd_export_t cmds[]={
-	{"t_append_to", (cmd_function)w_t_append_to,  3,
-		fixup_t_append_to, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_append", (cmd_function)w_t_append,  2,
-		fixup_t_append, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_store", (cmd_function)w_t_store,  0,
+	{"ts_append_to", (cmd_function)w_ts_append_to,  3,
+		fixup_ts_append_to, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"ts_append", (cmd_function)w_ts_append,  2,
+		fixup_ts_append, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"ts_store", (cmd_function)w_ts_store,  0,
 		0 , REQUEST_ROUTE | FAILURE_ROUTE },
 	{0,0,0,0,0}
 };
@@ -151,7 +151,7 @@ static void destroy(void)
  *
  */
 
-static int fixup_t_append_to(void** param, int param_no)
+static int fixup_ts_append_to(void** param, int param_no)
 {
 	if (param_no==1 || param_no==2) {
 		return fixup_igp_null(param, 1);
@@ -167,7 +167,7 @@ static int fixup_t_append_to(void** param, int param_no)
 	return 0;
 }
 
-static int fixup_t_append(void** param, int param_no)
+static int fixup_ts_append(void** param, int param_no)
 {
 	if (param_no==1) {
 		if(strlen((char*)*param)<=1 && (*(char*)(*param)==0 || *(char*)(*param)=='0')) {
@@ -186,7 +186,7 @@ static int fixup_t_append(void** param, int param_no)
 /**
  *
  */
-static int w_t_append(struct sip_msg* _msg, char *_table, char *_ruri)
+static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri)
 {
 	str ruri = {0};
 
@@ -194,12 +194,12 @@ static int w_t_append(struct sip_msg* _msg, char *_table, char *_ruri)
 		LM_ERR("invalid ruri parameter\n");
 		return -1;
 	}
-	return t_append(_msg, &ruri, _table);
+	return ts_append(_msg, &ruri, _table);
 }
 /**
  *
  */
-static int w_t_append_to(struct sip_msg* msg, char *idx, char *lbl, char *table)
+static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *table)
 {
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -214,13 +214,13 @@ static int w_t_append_to(struct sip_msg* msg, char *idx, char *lbl, char *table)
 		return -1;
 	}
 
-	return t_append_to(msg, tindex, tlabel, table);
+	return ts_append_to(msg, tindex, tlabel, table);
 }
 
 /**
  *
  */
-static int w_t_store(struct sip_msg* msg)
+static int w_ts_store(struct sip_msg* msg)
 {
-	return t_store(msg);
+	return ts_store(msg);
 }

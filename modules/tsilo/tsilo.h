@@ -20,8 +20,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TM_APPEND_MOD_H_
-#define _TM_APPEND_MOD_H_
+#ifndef _TSILO_MOD_H_
+#define _TSILO_MOD_H_
 
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/registrar/api.h"
