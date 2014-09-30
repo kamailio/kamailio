@@ -37,6 +37,7 @@ touch dispatcher.list
 
 echo "loadmodule \"$SR_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"dispatcher\", \"list_file\", \"$SR_DIR/$TEST_DIR/dispatcher.list\")" >> $CFG
+echo -e "\nrequest_route {\n ;\n}" >> $CFG
 
 # start
 $BIN -w . -f $CFG > /dev/null
