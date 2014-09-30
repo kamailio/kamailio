@@ -370,7 +370,7 @@ error:
 
 
 
-inline int send_error(struct sms_msg *sms_messg, char *msg1_s, int msg1_len,
+static inline int send_error(struct sms_msg *sms_messg, char *msg1_s, int msg1_len,
 													char *msg2_s, int msg2_len)
 {
 	str  body;
@@ -398,7 +398,7 @@ error:
 
 
 
-inline unsigned int split_text(str *text, unsigned char *lens,int nice)
+static inline unsigned int split_text(str *text, unsigned char *lens,int nice)
 {
 	int  nr_chunks;
 	int  k,k1,len;
