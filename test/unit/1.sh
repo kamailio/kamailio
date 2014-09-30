@@ -24,7 +24,7 @@ source include/common
 CFG=1.cfg
 
 # setup config
-echo -e "debug=2" > $CFG
+echo -e "debug=2\nrequest_route {\n ; \n}" > $CFG
 
 $BIN -w . -f $CFG > /dev/null
 ret=$?
