@@ -610,7 +610,7 @@ reload:
 	}
 	/* version control */
 	if (!version_control(handle, path)) {
-		exit(0);
+		exit(-1);
 	}
 	mod_if_ver = (unsigned *)dlsym(handle,
 									DLSYM_PREFIX "module_interface_ver");
