@@ -254,7 +254,7 @@ void reset_timers(void)
  *  1 - Timing enabled for all timers
  */
 
-inline int timer_active(unsigned int id)
+static inline int timer_active(unsigned int id)
 {
 	if (bm_mycfg->enable_global > 0 || bm_mycfg->timers[id].enabled > 0)
 		return 1;
