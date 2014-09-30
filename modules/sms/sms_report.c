@@ -112,7 +112,7 @@ void set_gettime_function(void)
 
 
 
-inline void free_report_cell(struct report_cell *cell)
+static inline void free_report_cell(struct report_cell *cell)
 {
 	if (!cell)
 		return;
