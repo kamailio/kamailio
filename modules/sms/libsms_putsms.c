@@ -155,7 +155,7 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 
 
 /* search into modem reply for the sms id */
-inline int fetch_sms_id(char *answer)
+static inline int fetch_sms_id(char *answer)
 {
 	char *p;
 	int  id;
