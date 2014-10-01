@@ -337,6 +337,7 @@ int own_pgid = 0; /* whether or not we have our own pgid (and it's ok
 					 to use kill(0, sig) */
 
 char* mods_dir = MODS_DIR;  /* search path for dyn. loadable modules */
+int   mods_dir_cmd = 0; /* mods dir path set in command lin e*/
 
 char* cfg_file = 0;
 unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
@@ -1939,6 +1940,7 @@ int main(int argc, char** argv)
 					break;
 			case 'L':
 					mods_dir = optarg;
+					mods_dir_cmd = 1;
 					break;
 			case 'm':
 					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
