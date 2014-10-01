@@ -44,6 +44,7 @@
 
 
 extern char* mods_dir;   /* directory with dyn. loadable modules */
+extern int mods_dir_cmd; /* marker if mods dir was set in command line */
 extern char* cfg_file;
 extern int config_check;
 extern char* stat_file;

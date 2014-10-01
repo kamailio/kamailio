@@ -1795,15 +1795,25 @@ module_stm:
 	}
 	| LOADMODULE error	{ yyerror("string expected"); }
 	| LOADPATH STRING {
-		DBG("loading modules under %s\n", $2);
-		printf("loading modules under %s\n", $2);
-		mods_dir = $2;
+		if(mods_dir_cmd==0) {
+			DBG("loading modules under %s\n", $2);
+			printf("loading modules under config path: %s\n", $2);
+			mods_dir = $2;
+		} else {
+			DBG("ignoring mod path given in config: %s\n", $2);
+			printf("loading modules under command line path: %s\n", mods_dir);
+		}
 	}
 	| LOADPATH error	{ yyerror("string expected"); }
 	| LOADPATH EQUAL STRING {
-		DBG("loading modules under %s\n", $3);
-		printf("loading modules under %s\n", $3);
-		mods_dir = $3;
+		if(mods_dir_cmd==0) {
+			DBG("loading modules under %s\n", $3);
+			printf("loading modules under config path: %s\n", $3);
+			mods_dir = $3;
+		} else {
+			DBG("ignoring mod path given in config: %s\n", $3);
+			printf("loading modules under command line path: %s\n", mods_dir);
+		}
 	}
 	| LOADPATH EQUAL error	{ yyerror("string expected"); }
 	| MODPARAM LPAREN STRING COMMA STRING COMMA STRING RPAREN {
