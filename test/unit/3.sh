@@ -22,6 +22,8 @@
 # Needs a mysql database, the root user password must be assigned to
 # the 'PW' variable in the file 'dbrootpw' in the test directory, e.g.:
 # PW=sql_root_passwd
+# If MySQL root password is empty, add in the file the line:
+# PWSKIP=yes
 
 source include/common
 
@@ -38,22 +40,23 @@ cd $CTL_DIR
 
 # setup config file
 cp $CTLRC $CTLRC.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/g" $CTLRC
-sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" $CTLRC
-sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" $CTLRC
+sed -i '' -e "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/g" $CTLRC
+sed -i '' -e "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" $CTLRC
+sed -i '' -e "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" $CTLRC
+sed -i '' -e "s/# INSTALL_DBUID_TABLES=ask/INSTALL_DBUID_TABLES=yes/g" $CTLRC
 
 cp $DBCTL $DBCTL.bak
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" $DBCTL
+sed -i '' -e "s/TEST=\"false\"/TEST=\"true\"/g" $DBCTL
 
 # set the mysql root password
 cp $DBCTL.mysql $DBCTL.mysql.bak
-sed -i "s/#PW=\"\"/PW=\"$PW\"/g" $DBCTL.mysql
+sed -i '' -e "s/#PW=\"\"/PW=\"$PW\"/g" $DBCTL.mysql
 
-./$DBCTL create $tmp_name > /dev/null
+PWSKIP="$PWSKIP" CHARSET="latin1" ./$DBCTL create $tmp_name > /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	./$DBCTL drop $tmp_name > /dev/null
+	PWSKIP="$PWSKIP" ./$DBCTL drop $tmp_name > /dev/null
 	ret=$?
 fi ;
 
