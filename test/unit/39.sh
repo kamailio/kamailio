@@ -36,7 +36,7 @@ NR=25
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"$SR_DIR/modules/db_unixodbc/db_unixodbc.so\"" >> $CFG
+echo "loadmodule \"$SRC_DIR/modules/db_unixodbc/db_unixodbc.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"db_url\", \"unixodbc://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 

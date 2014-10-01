@@ -35,7 +35,7 @@ NR=50
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"$SR_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"$SRC_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
 COUNTER=0

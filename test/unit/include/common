@@ -1,18 +1,18 @@
 # all database modules
 DB_ALL_MOD="acc|alias_db|auth_db|avpops|dialog|dialplan|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist"
 # root directory relative to tests
-SR_DIR="../.."
-CTL_DIR="$SR_DIR/utils/kamctl"
+SRC_DIR="../.."
+CTL_DIR="$SRC_DIR/utils/kamctl"
 CTLRC="$CTL_DIR/kamctlrc"
 CTL="$CTL_DIR/kamctl"
 DBCTL="$CTL_DIR/kamdbctl"
-BIN="$SR_DIR/ser"
-if [ -f $SR_DIR/kamailio ] ; then
-    BIN="$SR_DIR/kamailio"
+BIN="$SRC_DIR/kamailio"
+if [ -f $SRC_DIR/kamailio ] ; then
+    BIN="$SRC_DIR/kamailio"
     BNAME="kamailio"
 else
-    if [ -f $SR_DIR/ser ] ; then
-		BIN="$SR_DIR/ser"
+    if [ -f $SRC_DIR/ser ] ; then
+		BIN="$SRC_DIR/ser"
 		BNAME="ser"
     else
 		echo "WARNING Binary not found!"

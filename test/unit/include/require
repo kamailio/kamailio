@@ -32,8 +32,8 @@ function check_module() {
 		return 1
 	fi
 
-	if ! (test -e $SR_DIR/modules/$1/$1.so) ; then
-		echo "$SR_DIR/modules/$1/$1.so not found, not run"
+	if ! (test -e $SRC_DIR/modules/$1/$1.so) ; then
+		echo "$SRC_DIR/modules/$1/$1.so not found, not run"
 		return 1
 	fi;
 	return 0

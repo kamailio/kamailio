@@ -24,7 +24,7 @@
 source include/common
 source include/require
 
-CFG=5.cfg
+CFG=$SRC_DIR/etc/kamailio.cfg
 
 if ! (check_kamailio); then
 	exit 0
@@ -32,7 +32,7 @@ fi ;
         
 
 # start
-$BIN -w . -f $CFG &> /dev/null
+$BIN -w . -L $SRC_DIR/modules/ -f $CFG -A WITH_SRCPATH -a no > /dev/null 2>&1
 ret=$?
 
 sleep 1

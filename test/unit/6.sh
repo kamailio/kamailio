@@ -1,5 +1,5 @@
 #!/bin/bash
-# checks a configuration with 'kamailio -c' and 'kamailio -C'
+# checks a specific configuration with 'kamailio -c'
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -29,12 +29,7 @@ if ! (check_kamailio); then
 fi ;
 
 # start
-../$BIN -w . -c -f $CFG > /dev/null 2>&1
+cat $CFG | cat - route-empty.cfg | $BIN -w . -a no -c -f - > /dev/null 2>&1
 ret=$?
-
-if [ "$ret" -eq 0 ] ; then
-	../$BIN -C -f $CFG > /dev/null 2>&1
-	ret=$?
-fi ;
 
 exit $ret

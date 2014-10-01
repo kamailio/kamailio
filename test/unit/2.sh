@@ -35,8 +35,8 @@ cp $CFG $CFG.bak
 
 touch dispatcher.list
 
-echo "loadmodule \"$SR_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
-echo "modparam(\"dispatcher\", \"list_file\", \"$SR_DIR/$TEST_DIR/dispatcher.list\")" >> $CFG
+echo "loadmodule \"$SRC_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
+echo "modparam(\"dispatcher\", \"list_file\", \"$SRC_DIR/$TEST_DIR/dispatcher.list\")" >> $CFG
 echo -e "\nrequest_route {\n ;\n}" >> $CFG
 
 # start
