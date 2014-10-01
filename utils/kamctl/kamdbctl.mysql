@@ -130,9 +130,10 @@ kamailio_db_create () # pars: <database name>
 		exit 1
 	fi
 
-	minfo "test server charset"
-
-	db_charset_test
+	if [ "$CHARSET" = "" ]; then
+		minfo "test server charset"
+		db_charset_test
+	fi
 
 	minfo "creating database $1 ..."
 
@@ -536,5 +537,7 @@ fi
 
 export PW
 if [ "$#" -ne 0 ] && [ "$PW" = "" ]; then
-	prompt_pw
+	if [ "$PWSKIP" = "" ]; then
+		prompt_pw
+	fi
 fi
