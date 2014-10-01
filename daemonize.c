@@ -272,6 +272,14 @@ int daemonize(char*  name,  int status_wait)
 	pid_t pid;
 	int r, p;
 	char pipe_status;
+	uid_t pid_uid;
+	gid_t pid_gid;
+
+	if(uid) pid_uid = uid;
+	else pid_uid = -1;
+
+	if(gid) pid_gid = gid;
+	else pid_gid = -1;
 
 	p=-1;
 	/* flush std file descriptors to avoid flushes after fork
@@ -360,6 +368,10 @@ int daemonize(char*  name,  int status_wait)
 		}else{
 			fprintf(pid_stream, "%i\n", (int)pid);
 			fclose(pid_stream);
+			if(chown(pid_file, pid_uid, pid_gid)<0) {
+				LM_ERR("failed to chwon PID file: %s\n", strerror(errno));
+				goto error;
+			}
 		}
 	}
 
@@ -384,6 +396,10 @@ int daemonize(char*  name,  int status_wait)
 			}else{
 				fprintf(pid_stream, "%i\n", (int)pid);
 				fclose(pid_stream);
+				if(chown(pid_file, pid_uid, pid_gid)<0) {
+					LM_ERR("failed to chwon PGID file: %s\n", strerror(errno));
+					goto error;
+				}
 			}
 		}else{
 			LOG(L_WARN, "we don't have our own process so we won't save"
