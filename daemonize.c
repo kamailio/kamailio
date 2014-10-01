@@ -224,11 +224,11 @@ int enable_dumpable(void)
 			} else {
 				LM_DBG("core dumping has just been enabled...\n");
 				if (getrlimit(RLIMIT_CORE, &lim)<0){
-					LOG(L_CRIT, "cannot get the maximum core size: %s\n",
+					LM_CRIT( "cannot get the maximum core size: %s\n",
 							strerror(errno));
 					return -1;
 				} else {
-					DBG("current core file limit: %lu (max: %lu)\n",
+					LM_DBG("current core file limit: %lu (max: %lu)\n",
 						(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max);
 				}
 			}
@@ -289,12 +289,12 @@ int daemonize(char*  name,  int status_wait)
 	setbuf(stdout, 0);
 	setbuf(stderr, 0);
 	if (chroot_dir&&(chroot(chroot_dir)<0)){
-		LOG(L_CRIT, "Cannot chroot to %s: %s\n", chroot_dir, strerror(errno));
+		LM_CRIT("Cannot chroot to %s: %s\n", chroot_dir, strerror(errno));
 		goto error;
 	}
 	
 	if (chdir(working_dir)<0){
-		LOG(L_CRIT,"cannot chdir to %s: %s\n", working_dir, strerror(errno));
+		LM_CRIT("cannot chdir to %s: %s\n", working_dir, strerror(errno));
 		goto error;
 	}
 
@@ -305,14 +305,14 @@ int daemonize(char*  name,  int status_wait)
 		}
 		/* fork to become!= group leader*/
 		if ((pid=fork())<0){
-			LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
+			LM_CRIT("Cannot fork:%s\n", strerror(errno));
 			goto error;
 		}else if (pid!=0){
 			if (status_wait) {
 				if (daemon_status_wait(&pipe_status) == 0)
 					exit((int)pipe_status);
 				else{
-					LOG(L_ERR, "Main process exited before writing to pipe\n");
+					LM_ERR("Main process exited before writing to pipe\n");
 					exit(-1);
 				}
 			}
@@ -322,13 +322,13 @@ int daemonize(char*  name,  int status_wait)
 			daemon_status_no_wait(); /* clean unused read fd */
 		/* become session leader to drop the ctrl. terminal */
 		if (setsid()<0){
-			LOG(L_WARN, "setsid failed: %s\n",strerror(errno));
+			LM_WARN("setsid failed: %s\n",strerror(errno));
 		}else{
 			own_pgid=1;/* we have our own process group */
 		}
 		/* fork again to drop group  leadership */
 		if ((pid=fork())<0){
-			LOG(L_CRIT, "Cannot  fork:%s\n", strerror(errno));
+			LM_CRIT("Cannot  fork:%s\n", strerror(errno));
 			goto error;
 		}else if (pid!=0){
 			/*parent process => exit */
@@ -348,21 +348,21 @@ int daemonize(char*  name,  int status_wait)
 			}
 			fclose(pid_stream);
 			if (p==-1){
-				LOG(L_CRIT, "pid file %s exists, but doesn't contain a valid"
+				LM_CRIT("pid file %s exists, but doesn't contain a valid"
 					" pid number\n", pid_file);
 				goto error;
 			}
 			if (kill((pid_t)p, 0)==0 || errno==EPERM){
-				LOG(L_CRIT, "running process found in the pid file %s\n",
+				LM_CRIT("running process found in the pid file %s\n",
 					pid_file);
 				goto error;
 			}else{
-				LOG(L_WARN, "pid file contains old pid, replacing pid\n");
+				LM_WARN("pid file contains old pid, replacing pid\n");
 			}
 		}
 		pid=getpid();
 		if ((pid_stream=fopen(pid_file, "w"))==NULL){
-			LOG(L_WARN, "unable to create pid file %s: %s\n", 
+			LM_WARN("unable to create pid file %s: %s\n", 
 				pid_file, strerror(errno));
 			goto error;
 		}else{
@@ -382,7 +382,7 @@ int daemonize(char*  name,  int status_wait)
 			}
 			fclose(pid_stream);
 			if (p==-1){
-				LOG(L_CRIT, "pgid file %s exists, but doesn't contain a valid"
+				LM_CRIT("pgid file %s exists, but doesn't contain a valid"
 				    " pgid number\n", pgid_file);
 				goto error;
 			}
@@ -390,7 +390,7 @@ int daemonize(char*  name,  int status_wait)
 		if (own_pgid){
 			pid=getpgid(0);
 			if ((pid_stream=fopen(pgid_file, "w"))==NULL){
-				LOG(L_WARN, "unable to create pgid file %s: %s\n",
+				LM_WARN("unable to create pgid file %s: %s\n",
 					pgid_file, strerror(errno));
 				goto error;
 			}else{
@@ -402,7 +402,7 @@ int daemonize(char*  name,  int status_wait)
 				}
 			}
 		}else{
-			LOG(L_WARN, "we don't have our own process so we won't save"
+			LM_WARN("we don't have our own process so we won't save"
 					" our pgid\n");
 			unlink(pgid_file); /* just to be sure nobody will miss-use the old
 								  value*/
@@ -411,18 +411,18 @@ int daemonize(char*  name,  int status_wait)
 	
 	/* try to replace stdin, stdout & stderr with /dev/null */
 	if (freopen("/dev/null", "r", stdin)==0){
-		LOG(L_ERR, "unable to replace stdin with /dev/null: %s\n",
+		LM_ERR("unable to replace stdin with /dev/null: %s\n",
 				strerror(errno));
 		/* continue, leave it open */
 	};
 	if (freopen("/dev/null", "w", stdout)==0){
-		LOG(L_ERR, "unable to replace stdout with /dev/null: %s\n",
+		LM_ERR("unable to replace stdout with /dev/null: %s\n",
 				strerror(errno));
 		/* continue, leave it open */
 	};
 	/* close stderr only if log_stderr=0 */
 	if ((!log_stderr) &&(freopen("/dev/null", "w", stderr)==0)){
-		LOG(L_ERR, "unable to replace stderr with /dev/null: %s\n",
+		LM_ERR("unable to replace stderr with /dev/null: %s\n",
 				strerror(errno));
 		/* continue, leave it open */
 	};
@@ -453,23 +453,23 @@ int do_suid()
 	
 	if (gid){
 		if(setgid(gid)<0){
-			LOG(L_CRIT, "cannot change gid to %d: %s\n", gid, strerror(errno));
+			LM_CRIT("cannot change gid to %d: %s\n", gid, strerror(errno));
 			goto error;
 		}
 	}
 	
 	if(uid){
 		if (!(pw = getpwuid(uid))){
-			LOG(L_CRIT, "user lookup failed: %s\n", strerror(errno));
+			LM_CRIT("user lookup failed: %s\n", strerror(errno));
 			goto error;
 		}
 		if(initgroups(pw->pw_name, pw->pw_gid)<0){
-			LOG(L_CRIT, "cannot set supplementary groups: %s\n", 
+			LM_CRIT("cannot set supplementary groups: %s\n", 
 							strerror(errno));
 			goto error;
 		}
 		if(setuid(uid)<0){
-			LOG(L_CRIT, "cannot change uid to %d: %s\n", uid, strerror(errno));
+			LM_CRIT("cannot change uid to %d: %s\n", uid, strerror(errno));
 			goto error;
 		}
 	}
@@ -491,7 +491,7 @@ int increase_open_fds(int target)
 	struct rlimit orig;
 	
 	if (getrlimit(RLIMIT_NOFILE, &lim)<0){
-		LOG(L_CRIT, "cannot get the maximum number of file descriptors: %s\n",
+		LM_CRIT("cannot get the maximum number of file descriptors: %s\n",
 				strerror(errno));
 		goto error;
 	}
@@ -505,7 +505,7 @@ int increase_open_fds(int target)
 		lim.rlim_cur=target; /* increase soft limit to target */
 	}else{
 		/* more than the hard limit */
-		LOG(L_INFO, "trying to increase the open file limit"
+		LM_INFO("trying to increase the open file limit"
 				" past the hard limit (%ld -> %d)\n", 
 				(unsigned long)lim.rlim_max, target);
 		lim.rlim_max=target;
@@ -514,7 +514,7 @@ int increase_open_fds(int target)
 	DBG("increasing open file limits to: %lu/%lu\n",
 			(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max);
 	if (setrlimit(RLIMIT_NOFILE, &lim)<0){
-		LOG(L_CRIT, "cannot increase the open file limit to"
+		LM_CRIT("cannot increase the open file limit to"
 				" %lu/%lu: %s\n",
 				(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max,
 				strerror(errno));
@@ -524,7 +524,7 @@ int increase_open_fds(int target)
 			lim.rlim_max=orig.rlim_max;
 			lim.rlim_cur=orig.rlim_max;
 			if (setrlimit(RLIMIT_NOFILE, &lim)==0){
-				LOG(L_CRIT, " maximum number of file descriptors increased to"
+				LM_CRIT(" maximum number of file descriptors increased to"
 						" %u\n",(unsigned)orig.rlim_max);
 			}
 		}
@@ -546,7 +546,7 @@ int set_core_dump(int enable, long unsigned int size)
 	
 	if (enable){
 		if (getrlimit(RLIMIT_CORE, &lim)<0){
-			LOG(L_CRIT, "cannot get the maximum core size: %s\n",
+			LM_CRIT("cannot get the maximum core size: %s\n",
 					strerror(errno));
 			goto error;
 		}
@@ -565,10 +565,10 @@ int set_core_dump(int enable, long unsigned int size)
 			newlim.rlim_max=lim.rlim_max;
 			newlim.rlim_cur=newlim.rlim_max;
 			if (setrlimit(RLIMIT_CORE, &newlim)<0){
-				LOG(L_CRIT, "could increase core limits at all: %s\n",
+				LM_CRIT("could increase core limits at all: %s\n",
 						strerror (errno));
 			}else{
-				LOG(L_CRIT, "core limits increased only to %lu\n",
+				LM_CRIT("core limits increased only to %lu\n",
 						(unsigned long)lim.rlim_max);
 			}
 			goto error; /* it's an error we haven't got the size we wanted*/
@@ -582,7 +582,7 @@ int set_core_dump(int enable, long unsigned int size)
 		newlim.rlim_cur=0;
 		newlim.rlim_max=0;
 		if (setrlimit(RLIMIT_CORE, &newlim)<0){
-			LOG(L_CRIT, "failed to disable core dumps: %s\n",
+			LM_CRIT("failed to disable core dumps: %s\n",
 					strerror(errno));
 			goto error;
 		}
@@ -601,7 +601,7 @@ int mem_lock_pages()
 {
 #ifdef HAVE_MLOCKALL
 	if (mlockall(MCL_CURRENT|MCL_FUTURE) !=0){
-		LOG(L_WARN,"failed to lock the memory pages (disable swap): %s [%d]\n",
+		LM_WARN("failed to lock the memory pages (disable swap): %s [%d]\n",
 				strerror(errno), errno);
 		goto error;
 	}
@@ -609,7 +609,7 @@ int mem_lock_pages()
 error:
 	return -1;
 #else /* if MLOCKALL not defined return error */
-		LOG(L_WARN,"failed to lock the memory pages: no mlockall support\n");
+		LM_WARN("failed to lock the memory pages: no mlockall support\n");
 	return -1;
 #endif 
 }
@@ -635,7 +635,7 @@ int set_rt_prio(int prio, int policy)
 			sched_policy=SCHED_FIFO;
 			break;
 		default:
-			LOG(L_WARN, "WARNING: invalid scheduling policy,using"
+			LM_WARN("WARNING: invalid scheduling policy,using"
 						" SCHED_OTHER\n");
 			sched_policy=SCHED_OTHER;
 	}
@@ -643,23 +643,23 @@ int set_rt_prio(int prio, int policy)
 	max_prio=sched_get_priority_max(policy);
 	min_prio=sched_get_priority_min(policy);
 	if (prio<min_prio){
-		LOG(L_WARN, "scheduling priority %d too small, using minimum value"
+		LM_WARN("scheduling priority %d too small, using minimum value"
 					" (%d)\n", prio, min_prio);
 		prio=min_prio;
 	}else if (prio>max_prio){
-		LOG(L_WARN, "scheduling priority %d too big, using maximum value"
+		LM_WARN("scheduling priority %d too big, using maximum value"
 					" (%d)\n", prio, max_prio);
 		prio=max_prio;
 	}
 	sch_p.sched_priority=prio;
 	if (sched_setscheduler(0, sched_policy, &sch_p) != 0){
-		LOG(L_WARN, "could not switch to real time priority: %s [%d]\n",
+		LM_WARN("could not switch to real time priority: %s [%d]\n",
 					strerror(errno), errno);
 		return -1;
 	};
 	return 0;
 #else
-	LOG(L_WARN, "real time support not available\n");
+	LM_WARN("real time support not available\n");
 	return -1;
 #endif
 }
