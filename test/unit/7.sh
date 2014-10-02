@@ -33,7 +33,8 @@ if ! (check_kamailio); then
 fi ;
 
 # start
-$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG -a no -E -e -dd
+#> /dev/null
 ret=$?
 
 sleep 1
