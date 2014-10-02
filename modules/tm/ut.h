@@ -340,7 +340,9 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 	dst->send_sock = get_send_socket2(force_send_socket, &dst->to,
 										dst->proto, 0);
 	if (dst->send_sock==0) {
-		ERR("no corresponding socket for af %d\n", dst->to.s.sa_family);
+		ERR("no corresponding socket found for \"%.*s\" af %d (%s:%s)\n",
+			host->len, ZSW(host->s), dst->to.s.sa_family,
+			proto2a(dst->proto), su2a(&dst->to, sizeof(dst->to)));
 		/* ser_error = E_NO_SOCKET;*/
 		/* try to continue */
 	}
