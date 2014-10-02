@@ -375,11 +375,12 @@ static int copy_flow_token(str *token, struct sip_msg *_m)
 int record_route(struct sip_msg* _m, str *params)
 {
 	struct lump* l, *l2;
-	str user;
+	str user = {NULL, 0};
 	struct to_body* from = NULL;
 	str* tag;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
 	int sips;
+	int ret = 0;
 	
 	user.len = 0;
 	
@@ -406,7 +407,8 @@ int record_route(struct sip_msg* _m, str *params)
 	if (append_fromtag) {
 		if (parse_from_header(_m) < 0) {
 			LM_ERR("From parsing failed\n");
-			return -2;
+			ret = -2;
+			goto error;
 		}
 		from = (struct to_body*)_m->from->parsed;
 		tag = &from->tag_value;
@@ -426,17 +428,20 @@ int record_route(struct sip_msg* _m, str *params)
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
 			LM_ERR("failed to create an anchor\n");
-			return -5;
+			ret = -5;
+			goto error;
 		}
 		l = insert_cond_lump_after(l, COND_IF_DIFF_REALMS, 0);
 		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_REALMS, 0);
 		if (!l || !l2) {
 			LM_ERR("failed to insert conditional lump\n");
-			return -6;
+			ret = -6;
+			goto error;
 		}
 		if (build_rr(l, l2, &user, tag, params, OUTBOUND, 0, sips) < 0) {
 			LM_ERR("failed to insert outbound Record-Route\n");
-			return -7;
+			ret = -7;
+			goto error;
 		}
 	}
 	
@@ -444,18 +449,25 @@ int record_route(struct sip_msg* _m, str *params)
 	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
 		LM_ERR("failed to create an anchor\n");
-		return -3;
+		ret = -3;
+		goto error;
 	}
 	
 	if (build_rr(l, l2, &user, tag, params, use_ob ? OUTBOUND : INBOUND,
 			use_ob, sips) < 0) {
 		LM_ERR("failed to insert inbound Record-Route\n");
-		return -4;
+		ret = -4;
+		goto error;
 	}
 
 	/* reset the rr_param buffer */
 	rr_param_buf.len = 0;
-	return 0;
+	ret = 0;
+error:
+	if ((use_ob == 1) || (use_ob == 2))
+		if (user.s != NULL)
+			pkg_free(user.s);
+	return ret;
 }
 
 
@@ -471,7 +483,7 @@ int record_route(struct sip_msg* _m, str *params)
  */
 int record_route_preset(struct sip_msg* _m, str* _data)
 {
-	str user;
+	str user = {NULL, 0};
 	struct to_body* from;
 	struct lump* l;
 	char* hdr, *p;
@@ -480,6 +492,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	char *rr_prefix;
 	int rr_prefix_len;
 	int sips;
+	int ret = 0;
 
 	sips = rr_is_sips(_m);
 	if(sips==0) {
@@ -514,7 +527,8 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	if (append_fromtag) {
 		if (parse_from_header(_m) < 0) {
 			LM_ERR("From parsing failed\n");
-			return -2;
+			ret = -2;
+			goto error;
 		}
 		from = (struct to_body*)_m->from->parsed;
 	}
@@ -522,7 +536,8 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 	if (!l) {
 		LM_ERR("failed to create lump anchor\n");
-		return -3;
+		ret = -3;
+		goto error;
 	}
 
 	hdr_len = rr_prefix_len;
@@ -545,7 +560,8 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	hdr = pkg_malloc(hdr_len);
 	if (!hdr) {
 		LM_ERR("no pkg memory left\n");
-		return -4;
+		ret = -4;
+		goto error;
 	}
 
 	p = hdr;
@@ -582,9 +598,15 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	if (!insert_new_lump_after(l, hdr, hdr_len, 0)) {
 		LM_ERR("failed to insert new lump\n");
 		pkg_free(hdr);
-		return -5;
+		ret = -5;
+		goto error;
 	}
-	return 1;
+	ret = 1;
+error:
+	if ((use_ob == 1) || (use_ob == 2))
+		if (user.s != NULL)
+			pkg_free(user.s);
+	return ret;
 }
 
 /*!
@@ -723,12 +745,13 @@ lump_err:
 
 int record_route_advertised_address(struct sip_msg* _m, str* _data)
 {
-	str user;
+	str user = {NULL, 0};
 	str *tag = NULL;
 	struct lump* l;
 	struct lump* l2;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
 	int sips;
+	int ret = 0;
 	
 	user.len = 0;
 	user.s = 0;
@@ -753,7 +776,8 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	if (append_fromtag) {
 		if (parse_from_header(_m) < 0) {
 			LM_ERR("From parsing failed\n");
-			return -2;
+			ret = -2;
+			goto error;
 		}
 		tag = &((struct to_body*)_m->from->parsed)->tag_value;
 	}
@@ -765,18 +789,21 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
 			LM_ERR("failed to create an anchor\n");
-			return -3;
+			ret = -3;
+			goto error;
 		}
 		l = insert_cond_lump_after(l, COND_IF_DIFF_PROTO, 0);
 		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_PROTO, 0);
 		if (!l || !l2) {
 			LM_ERR("failed to insert conditional lump\n");
-			return -4;
+			ret = -4;
+			goto error;
 		}
 		if (build_advertised_rr(l, l2, _data, &user, tag, OUTBOUND,
 					0, sips) < 0) {
 			LM_ERR("failed to insert outbound Record-Route\n");
-			return -5;
+			ret = -5;
+			goto error;
 		}
 	}
 	
@@ -784,16 +811,23 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
 		LM_ERR("failed to create an anchor\n");
-		return -6;
+		ret = -6;
+		goto error;
 	}
 	
 	if (build_advertised_rr(l, l2, _data, &user, tag,
 				use_ob ? OUTBOUND: INBOUND,
 				use_ob, sips) < 0) {
 		LM_ERR("failed to insert outbound Record-Route\n");
-		return -7;
+		ret = -7;
+		goto error;
 	}
-	return 1;
+	ret = 1;
+error:
+	if ((use_ob == 1) || (use_ob == 2))
+		if (user.s != NULL)
+			pkg_free(user.s);
+	return ret;
 }
 
 
