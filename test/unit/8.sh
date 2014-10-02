@@ -27,12 +27,13 @@ cd $CTL_DIR
 
 # setup config file
 cp $CTLRC $CTLRC.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" $CTLRC
-sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" $CTLRC
-sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" $CTLRC
+sed -i'' -e "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" $CTLRC
+sed -i'' -e "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" $CTLRC
+sed -i'' -e "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" $CTLRC
+sed -i'' -e "s/# INSTALL_DBUID_TABLES=ask/INSTALL_DBUID_TABLES=yes/g" $CTLRC
 
 cp $DBCTL $DBCTL.bak
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" $DBCTL
+sed -i'' -e "s/TEST=\"false\"/TEST=\"true\"/g" $DBCTL
 
 ./$DBCTL create $tmp_name > /dev/null
 ret=$?
