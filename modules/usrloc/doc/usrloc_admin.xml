@@ -722,19 +722,19 @@ modparam("usrloc", "fetch_rows", 3000)
 		<title><varname>hash_size</varname> (integer)</title>
 		<para>
 		The number of entries of the hash table used by usrloc to store the
-		location records is 2^hash_size. For hash_size=4, the number of entries
+		location records is 2^hash_size. For hash_size=4, the number of slots
 		of the hash table is 16.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>9</quote>.
+			Default value is <quote>10</quote> (1024 slots).
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>hash_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "hash_size", 10)
+modparam("usrloc", "hash_size", 12)
 ...
 </programlisting>
 		</example>

@@ -689,14 +689,14 @@ modparam("usrloc", "fetch_rows", 3000)
 3.26. hash_size (integer)
 
    The number of entries of the hash table used by usrloc to store the
-   location records is 2^hash_size. For hash_size=4, the number of entries
+   location records is 2^hash_size. For hash_size=4, the number of slots
    of the hash table is 16.
 
-   Default value is "9".
+   Default value is "10" (1024 slots).
 
    Example 1.26. Set hash_size parameter
 ...
-modparam("usrloc", "hash_size", 10)
+modparam("usrloc", "hash_size", 12)
 ...
 
 3.27. preload (string)

@@ -166,7 +166,7 @@ int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 int handle_lost_tcp = 0;				/*!< By default do not remove contacts before expiration time */
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
-int ul_hash_size = 9;
+int ul_hash_size = 10;
 int ul_db_insert_null = 0;
 
 /* flags */
