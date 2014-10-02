@@ -173,7 +173,7 @@ ts_transaction_t* clone_ts_transaction(ts_transaction_t* ts);
  * \brief remove a transaction from the urecord transactions list
  * \param tma unlinked transaction
  */
-inline void remove_ts_transaction(ts_transaction_t* ts_t);
+void remove_ts_transaction(ts_transaction_t* ts_t);
 
-inline void free_ts_transaction(void *ts_t);
+void free_ts_transaction(void *ts_t);
 #endif

@@ -44,7 +44,7 @@ struct ts_table *t_table = 0;
  * \brief Destroy a urecord and free memory
  * \param tma destroyed urecord
  */
-inline void free_ts_urecord(struct ts_urecord *urecord)
+void free_ts_urecord(struct ts_urecord *urecord)
 {
 	LM_DBG("destroying urecord %p\n", urecord);
 	ts_transaction_t* ptr;
@@ -389,7 +389,7 @@ ts_transaction_t* clone_ts_transaction(ts_transaction_t* ts)
  * \brief remove a transaction from the urecord transactions list
  * \param tma unlinked transaction
  */
-inline void remove_ts_transaction(ts_transaction_t* ts_t)
+void remove_ts_transaction(ts_transaction_t* ts_t)
 {
 	if (ts_t->next)
 		ts_t->next->prev = ts_t->prev;
