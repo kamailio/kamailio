@@ -165,7 +165,7 @@
 #define BUF_SIZE 65535
 
 #define MAX_VIA_LINE_SIZE	240	/*!< forwarding  -- Via buffer dimensioning */
-#define MAX_RECEIVED_SIZE	57	/*!< forwarding  -- Via buffer dimensioning - Received header */
+#define MAX_RECEIVED_SIZE	59	/*!< forwarding  -- Via buffer dimensioning - Received header */
 #define MAX_RPORT_SIZE		13	/*!< forwarding  -- Via buffer dimensioning - Rport */
 
 #define MAX_BRANCHES    	12	/*!< maximum number of branches per transaction */
