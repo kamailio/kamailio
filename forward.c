@@ -218,6 +218,8 @@ retry:
 	return si;
 error:
 	LOG(L_ERR, "ERROR: get_out_socket: no socket found\n");
+	ERR("no corresponding socket found for(%s:%s)\n",
+			proto2a(proto), su2a(to, sizeof(*to)));
 	if (unlikely(mhomed_sock_cache_disabled && *temp_sock >=0)){
 		close(*temp_sock);
 		*temp_sock=-1;
