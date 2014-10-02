@@ -599,7 +599,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	init_cancel_info(&cancel_data);
 	if (!buf)
 	{
-		DBG("DEBUG: _reply_light: response building failed\n");
+		LOG(L_ERR, "ERROR: _reply_light: response building failed\n");
 		/* determine if there are some branches to be canceled */
 		if ( is_invite(trans) ) {
 			prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
