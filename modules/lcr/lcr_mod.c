@@ -1638,7 +1638,7 @@ int reload_tables()
 }
 
 
-inline int encode_avp_value(char *value, unsigned int gw_index,
+static inline int encode_avp_value(char *value, unsigned int gw_index,
 			    char *scheme, unsigned int scheme_len,
 			    unsigned int strip,
 			    char *prefix, unsigned int prefix_len,
@@ -1703,7 +1703,7 @@ inline int encode_avp_value(char *value, unsigned int gw_index,
     return at - value;
 }
 
-inline int decode_avp_value(char *value, unsigned int *gw_index, str *scheme,
+static inline int decode_avp_value(char *value, unsigned int *gw_index, str *scheme,
 			    unsigned int *strip, str *prefix, str *tag,
 			    struct ip_addr *addr, str *hostname, str *port,
 			    str *params, str *transport, unsigned int *flags)
