@@ -692,7 +692,27 @@ static inline char* ip_addr2a(struct ip_addr* ip)
 	return buff;
 }
 
+/* full address in text representation, including [] for ipv6 */
+static inline char* ip_addr2strz(struct ip_addr* ip)
+{
 
+	static char buff[IP_ADDR_MAX_STR_SIZE+2];
+	char *p;
+	int len;
+
+	p = buff;
+	if(ip->af==AF_INET6) {
+		*p++ = '[';
+	}
+	len=ip_addr2sbuf(ip, p, sizeof(buff)-3);
+	p += len;
+	if(ip->af==AF_INET6) {
+		*p++ = ']';
+	}
+	*p=0;
+
+	return buff;
+}
 
 #define SU2A_MAX_STR_SIZE  (IP6_MAX_STR_SIZE + 2 /* [] */+\
 								1 /* : */ + USHORT2SBUF_MAX_LEN + 1 /* \0 */)
