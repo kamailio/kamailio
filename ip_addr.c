@@ -59,13 +59,13 @@ struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask)
 	
 	warning=0;
 	if ((ip->af != mask->af) || (ip->len != mask->len)){
-		LOG(L_CRIT, "ERROR: mk_net: trying to use a different mask family"
+		LM_CRIT("trying to use a different mask family"
 				" (eg. ipv4/ipv6mask or ipv6/ipv4mask)\n");
 		goto error;
 	}
 	n=(struct net*)pkg_malloc(sizeof(struct net));
 	if (n==0){ 
-		LOG(L_CRIT, "ERROR: mk_net: memory allocation failure\n");
+		LM_CRIT("memory allocation failure\n");
 		goto error;
 	}
 	n->ip=*ip;
@@ -75,7 +75,7 @@ struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask)
 		if (n->ip.u.addr32[r]!=ip->u.addr32[r]) warning=1;
 	};
 	if (warning){
-		LOG(L_WARN, "WARNING: mk_net: invalid network address/netmask "
+		LM_WARN("invalid network address/netmask "
 					"combination fixed...\n");
 		print_ip("original network address:", ip, "/");
 		print_ip("", mask, "\n");
@@ -95,7 +95,7 @@ struct net* mk_new_net_bitlen(struct ip_addr* ip, unsigned int bitlen)
 	int r;
 	
 	if (bitlen>ip->len*8){
-		LOG(L_CRIT, "ERROR: mk_net_bitlen: bad bitlen number %d\n", bitlen);
+		LM_CRIT("bad bitlen number %d\n", bitlen);
 		goto error;
 	}
 	memset(&mask,0, sizeof(mask));
@@ -292,7 +292,7 @@ void stdout_print_ip(struct ip_addr* ip)
 void print_net(struct net* net)
 {
 	if (net==0){
-		LOG(L_WARN, "ERROR: print net: null pointer\n");
+		LM_WARN("null pointer\n");
 		return;
 	}
 	print_ip("", &net->ip, "/"); print_ip("", &net->mask, "");
@@ -305,7 +305,7 @@ void print_net(struct net* net)
 int is_mcast(struct ip_addr* ip)
 {
 	if (!ip){
-		LOG(L_ERR, "ERROR: is_mcast: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -314,7 +314,7 @@ int is_mcast(struct ip_addr* ip)
 	} else if (ip->af==AF_INET6){
 		return IN6_IS_ADDR_MULTICAST((struct in6_addr*)ip->u.addr32);
 	} else {
-		LOG(L_ERR, "ERROR: is_mcast: Unsupported protocol family\n");
+		LM_ERR("Unsupported protocol family\n");
 		return -1;
 	}
 }
