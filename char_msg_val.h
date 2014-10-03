@@ -57,7 +57,7 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	str src[8];
 
 	if (unlikely(!check_transaction_quadruple(msg))) {
-		LOG(L_ERR, "ERROR: can't calculate char_value due "
+		LM_ERR("can't calculate char_value due "
 			"to a parsing error\n");
 		memset( cv, '0', MD5_LEN );
 		return 0;
@@ -81,7 +81,7 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	if (msg->from->parsed==0){
 		/* parse from body */
 		if (unlikely(parse_from_header(msg) == -1)){
-			LOG(L_ERR, "error while parsing From header\n");
+			LM_ERR("error while parsing From header\n");
 			return 0;
 		}
 	}
