@@ -28,11 +28,12 @@ if ! (check_kamailio); then
 	exit 0
 fi ;
 
-echo "loadmodule \"../../modules/db_text/db_text.so\"" >> $CFG
+echo "loadmodule \"../../modules/db_text/db_text.so\"" > $CFG
 cat 2.cfg >> $CFG
 echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"text://`pwd`/../../utils/kamctl/dbtext/kamailio\")" >> $CFG
+echo -e "\nrequest_route {\n ;\n}" >> $CFG
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1

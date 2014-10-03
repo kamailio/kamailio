@@ -28,11 +28,12 @@ if ! (check_kamailio && check_module "db_postgres" ); then
 	exit 0
 fi ;
 
-CFG=2.cfg
-cp $CFG $CFG.bak
+CFG=16.cfg
 
+cp 2.cfg $CFG
 echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"postgres://kamailioro:kamailioro@localhost/kamailio\")" >> $CFG
+echo -e "\nrequest_route {\n ;\n}" >> $CFG
 
 # start
 $BIN -w . -f $CFG > /dev/null
@@ -41,7 +42,6 @@ ret=$?
 sleep 1
 $KILL
 
-mv $CFG.bak $CFG
-rm -f dispatcher.list
+rm $CFG
 
 exit $ret

@@ -31,10 +31,6 @@ fi ;
 
 cp $CFG $CFG.bak
 
-# setup config
-echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
-echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
-
 # setup database
 $MYSQL "insert into carrier_name (id, carrier) values ('1', 'carrier1');"
 $MYSQL "insert into carrier_name (id, carrier) values ('2', 'default');"
@@ -65,7 +61,7 @@ mask, next_domain) values ('3', '2', '1', '49', 'host1.local', '503', '0', '0', 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
 mask, next_domain) values ('4', '2', '2', '49', 'host1.local', '5..', '0', '0', '3');"
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG -a no > /dev/null
 
 ret=$?
 
@@ -75,6 +71,7 @@ TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 if [ "$ret" -eq 0 ] ; then
 	$CTL fifo cr_dump_routes > $TMPFILE
+	# cat $TMPFILE
 	ret=$?
 fi ;
 
@@ -86,13 +83,15 @@ Printing tree for domain 'domain2' (1)
 Printing tree for domain 'domain3' (2)
       NULL: 100.000 %, 'host5.local': ON, '0', '', '', ''
 Printing tree for domain 'domain1' (10)
-        42: 70.140 %, 'host4.local': ON, '0', '', '', ''
-        42: 30.060 %, 'host3.local': ON, '0', '', '', ''
+        42: 70.000 %, 'host4.local': ON, '0', '', '', ''
+        42: 30.000 %, 'host3.local': ON, '0', '', '', ''
         49: 50.000 %, 'host2.local': ON, '0', '', '', ''
         49: 50.000 %, 'host1.local': ON, '0', '', '', ''
       NULL: 100.000 %, 'host5.local': ON, '0', '', '', ''
 Printing tree for carrier 'default' (2)
 Printing tree for domain 'domain2' (1)
+      NULL: 100.000 %, 'host6.local': ON, '0', '', '', ''
+Printing tree for domain 'domain3' (2)
       NULL: 100.000 %, 'host6.local': ON, '0', '', '', ''
 Printing tree for domain 'domain1' (10)
       NULL: 100.000 %, 'host6.local': ON, '0', '', '', ''

@@ -1,6 +1,6 @@
 #!/bin/bash
 # runs ../kamailio with all command line arguments.
-# ommited options are -h -v -C -c -D
+# ommited options are -h -v -I -c -D -V
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -31,10 +31,10 @@ fi ;
 CFG=18.cfg
 
 # setup config
-echo -e "debug=3" > $CFG
+echo -e "debug=3\nrequest_route {\n ;\n}" > $CFG
 
 # start:
-$BIN -f ./$CFG -l 127.0.0.1 -n 0 -rR -v  -E -d -T -N 0 -b 23 -m 42 -w ./  -u $(id -u)  -g $(id -g) -P ./pid.out -G ./pgid.out  > /dev/null 2>&1
+$BIN -f ./$CFG -l 127.0.0.1 -n 0 -r -R -E -d -e -K -T -N 0 -b 23 -m 42 -w . -u $(id -u) -g $(id -g) -P ./pid.out -G ./pgid.out -a no -A TESTDEF > /dev/null 2>&1
 
 ret=$?
 

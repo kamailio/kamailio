@@ -29,22 +29,22 @@ if ! (check_sipsak && check_kamailio && check_module "db_mysql" && check_mysql);
 	exit 0
 fi ;
 
+SIPDOMAIN=127.0.0.1
+
 cp $CFG $CFG.bak
 
-echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
-
-$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1
 
 # register two contacts
-sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
-sipsak -U -C sip:foobar1@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+sipsak -U -C sip:foobar@127.0.0.1 -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN > /dev/null 2>&1
+sipsak -U -C sip:foobar1@127.0.0.1 -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN > /dev/null 2>&1
 ret=$?
 
 if [ "$ret" -eq 0 ]; then
-	$CTL ul show | grep "AOR:: 49721123456789" &> /dev/null
+	$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
 	ret=$?
 fi;
 
@@ -57,53 +57,55 @@ fi;
 
 if [ "$ret" -eq 0 ]; then
 	# check if the contact is registered
-	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar@localhost>" &> /dev/null
+	sipsak -U -C empty -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -q "Contact: <sip:foobar@127.0.0.1>" > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	# update the registration
-	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+	sipsak -U -C sip:foobar@127.0.0.1 -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	# check if we get a hint when we try to unregister a non-existent conctact
-	sipsak -U -C "sip:foobar2@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 -q "Contact: <sip:foobar@localhost>" &> /dev/null
+	sipsak -U -C "sip:foobar2@127.0.0.1" -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -x 0 -q "Contact: <sip:foobar@127.0.0.1>" > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	# unregister the contact
-	sipsak -U -C "sip:foobar@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
+	sipsak -U -C "sip:foobar@127.0.0.1" -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -x 0 > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	# unregister the user again should not fail
-	sipsak -U -C "sip:foobar@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
+	sipsak -U -C "sip:foobar@127.0.0.1" -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -x 0 > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	# check if the other contact is still registered
-	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar1@localhost>" &> /dev/null
+	sipsak -U -C empty -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -q "Contact: <sip:foobar1@127.0.0.1>" > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	# register the other again
-	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+	sipsak -U -C sip:foobar@127.0.0.1 -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	# unregister all contacts
-	sipsak -U -C "*" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
+	sipsak -U -C "*" -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -x 0 > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
+	# let the timer cleanup the previous registrations
+	sleep 2
 	$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ]; then
@@ -119,20 +121,20 @@ fi;
 
 if [ "$ret" -eq 0 ]; then
 	# test min_expires functionality
-	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost -x 2 &> /dev/null
+	sipsak -U -C sip:foobar@127.0.0.1 -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -x 2 > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	sleep 3
 	# check if the contact is still registered
-	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar@localhost>" &> /dev/null
+	sipsak -U -C empty -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -q "Contact: <sip:foobar@127.0.0.1>" > /dev/null 2>&1
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
 	# register a few more contacts
-	sipsak -U -e 9 -s sip:49721123456789@localhost -H localhost &> /dev/null
+	sipsak -U -e 9 -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN > /dev/null 2>&1
 fi;
 
 if [ "$ret" -eq 0 ]; then
@@ -151,27 +153,27 @@ $MYSQL "delete from location where username like '49721123456789%';"
 
 if [ "$ret" -eq 0 ]; then
 	# register again
-	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+	sipsak -U -C sip:foobar@127.0.0.1 -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN > /dev/null 2>&1
 	ret=$?
 fi;
 
 $KILL
 
 # restart to test preload_udomain functionality
-$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG -a no> /dev/null
 ret=$?
 
 sleep 1
 
 if [ "$ret" -eq 0 ]; then
 	# check if the contact is still registered
-	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar@localhost>" &> /dev/null
+	sipsak -U -C empty -s sip:49721123456789@$SIPDOMAIN -H $SIPDOMAIN -q "Contact: <sip:foobar@127.0.0.1>" > /dev/null 2>&1
 	ret=$?
 fi;
 
 # check if the methods value is correct
 if [ "$ret" -eq 0 ]; then
-	$CTL ul show | grep "Methods:: 4294967295" &> /dev/null
+	$CTL ul show | grep "Methods:: 4294967295" > /dev/null
 	ret=$?
 fi;
 

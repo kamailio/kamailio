@@ -30,10 +30,7 @@ fi ;
 
 cp $CFG $CFG.bak
 
-# setup config
-echo "modparam(\"carrierroute\", \"config_file\", \"carrierroute.cfg\")" >> $CFG
-
-$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1

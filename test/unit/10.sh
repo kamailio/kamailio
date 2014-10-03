@@ -26,8 +26,8 @@ cd $CTL_DIR
 # setup config file
 cp $CTLRC $CTLRC.bak
 cp $CTL $CTL.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" $CTLRC
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" $CTL
+sed -i'' -e "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" $CTLRC
+sed -i'' -e "s/TEST=\"false\"/TEST=\"true\"/g" $CTL
 
 ./$CTL avp list > /dev/null
 
@@ -39,7 +39,7 @@ if [ "$ret" -eq 0 ] ; then
 fi ;
 
 if [ "$ret" -eq 0 ] ; then
-	./$CTL lcr show > /dev/null
+	./$CTL dispatcher show > /dev/null
 	ret=$?
 fi ;
 
