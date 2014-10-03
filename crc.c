@@ -243,7 +243,7 @@ void crcitt_string_array( char *dst, str src[], int size )
 	ccitt = ~ccitt;
 	if (int2reverse_hex( &dst, &str_len, ccitt )==-1) {
 		/* bug ... printed ccitt value longer than CRC32_LEN */
-		LOG(L_CRIT, "ERROR: crcitt_string_array: string conversion incomplete\n");
+		LM_CRIT("string conversion incomplete\n");
 	}
 	/* padding */
 	while( str_len ) {
