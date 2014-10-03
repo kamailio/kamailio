@@ -71,7 +71,7 @@ inline static gen_lock_set_t* lock_set_alloc(int n)
 	gen_lock_set_t* ls;
 	ls=(gen_lock_set_t*)shm_malloc(sizeof(gen_lock_set_t)+n*sizeof(gen_lock_t));
 	if (ls==0){
-		LOG(L_CRIT, "ERROR: lock_set_alloc (FL): could not allocate lock_set\n");
+		LM_CRIT("could not allocate lock_set\n");
 	}else{
 		ls->locks=(gen_lock_t*)((char*)ls+sizeof(gen_lock_set_t));
 		ls->size=n;
