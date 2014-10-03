@@ -55,9 +55,8 @@ int init_lock_ops(void)
 	
 	os_ver=get_sys_version(0, 0, 0);
 	if (os_ver < 0x020546 ){ /* if ver < 2.5.70 */
-		LOG(L_CRIT, "ERROR: init_lock_ops: old kernel:"
-				" compiled with FUTEX support which is not present in the"
-				" running kernel (try  2.6+)\n");
+		LM_CRIT("old kernel: compiled with FUTEX support which is not"
+				" present in the running kernel (try  2.6+)\n");
 		return -1;
 	}
 #endif
