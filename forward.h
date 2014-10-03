@@ -171,7 +171,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 		else if (likely(dst->id))
 			con = tcpconn_get(dst->id, 0, 0, 0, 0);
 		else {
-			LM_CRIT("BUG: msg_send called with null_id & to\n");
+			LM_CRIT("null_id & to\n");
 			goto error;
 		}
 
@@ -198,14 +198,14 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			new_dst=*dst;
 			new_dst.send_sock=get_send_socket(0, &dst->to, dst->proto);
 			if (unlikely(new_dst.send_sock==0)){
-				LOG(L_ERR, "msg_send: ERROR: no sending socket found\n");
+				LM_ERR("no sending socket found\n");
 				goto error;
 			}
 			dst=&new_dst;
 		}
 		if (unlikely(udp_send(dst, outb.s, outb.len)==-1)){
 			STATS_TX_DROPS;
-			LOG(L_ERR, "msg_send: ERROR: udp_send failed\n");
+			LM_ERR("udp_send failed\n");
 			goto error;
 		}
 	}
@@ -213,8 +213,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	else if (dst->proto==PROTO_TCP){
 		if (unlikely(tcp_disable)){
 			STATS_TX_DROPS;
-			LOG(L_WARN, "msg_send: WARNING: attempt to send on tcp and tcp"
-					" support is disabled\n");
+			LM_WARN("attempt to send on tcp and tcp support is disabled\n");
 			goto error;
 		}else{
 			if (unlikely((dst->send_flags.f & SND_F_FORCE_SOCKET) &&
@@ -225,7 +224,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			}
 			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
-				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
+				LM_ERR("tcp_send failed\n");
 				goto error;
 			}
 		}
@@ -234,8 +233,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	else if (dst->proto==PROTO_TLS){
 		if (unlikely(tls_disable)){
 			STATS_TX_DROPS;
-			LOG(L_WARN, "msg_send: WARNING: attempt to send on tls and tls"
-					" support is disabled\n");
+			LM_WARN("attempt to send on tls and tls support is disabled\n");
 			goto error;
 		}else{
 			if (unlikely((dst->send_flags.f & SND_F_FORCE_SOCKET) &&
@@ -246,7 +244,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			}
 			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
-				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
+				LM_ERR("tcp_send failed\n");
 				goto error;
 			}
 		}
@@ -257,29 +255,28 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	else if (dst->proto==PROTO_SCTP){
 		if (unlikely(sctp_disable)){
 			STATS_TX_DROPS;
-			LOG(L_WARN, "msg_send: WARNING: attempt to send on sctp and sctp"
-					" support is disabled\n");
+			LM_WARN("attempt to send on sctp and sctp support is disabled\n");
 			goto error;
 		}else{
 			if (unlikely(dst->send_sock==0)){
 				new_dst=*dst;
 				new_dst.send_sock=get_send_socket(0, &dst->to, dst->proto);
 				if (unlikely(new_dst.send_sock==0)){
-					LOG(L_ERR, "msg_send: ERROR: no sending SCTP socket found\n");
+					LM_ERR("no sending SCTP socket found\n");
 					goto error;
 				}
 				dst=&new_dst;
 			}
 			if (unlikely(sctp_core_msg_send(dst, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
-				LOG(L_ERR, "msg_send: ERROR: sctp_msg_send failed\n");
+				LM_ERR("sctp_msg_send failed\n");
 				goto error;
 			}
 		}
 	}
 #endif /* USE_SCTP */
 	else{
-			LOG(L_CRIT, "BUG: msg_send: unknown proto %d\n", dst->proto);
+			LM_CRIT("unknown proto %d\n", dst->proto);
 			goto error;
 	}
 	ret = 0;
