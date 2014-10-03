@@ -61,7 +61,7 @@ int init_nonsip_hooks()
 	memset(nonsip_hooks, 0, nonsip_max_hooks*sizeof(struct nonsip_hook));
 	return 0;
 error:
-	LOG(L_ERR, "nonsip_hooks: memory allocation failure\n");
+	LM_ERR("memory allocation failure\n");
 	return -1;
 }
 
