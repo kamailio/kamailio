@@ -328,8 +328,7 @@ static inline unsigned tcp_addr_hash(	struct ip_addr* ip,
 			(l_ip->u.addr32[0]^l_ip->u.addr32[1]^l_ip->u.addr32[2]^
 				l_ip->u.addr32[3]^l_port);
 	else{
-		LOG(L_CRIT, "tcp_addr_hash: BUG: bad len %d for an ip address\n",
-				ip->len);
+		LM_CRIT("bad len %d for an ip address\n", ip->len);
 		return 0;
 	}
 	/* make sure the first bits are influenced by all 32
