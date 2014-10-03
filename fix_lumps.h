@@ -65,7 +65,7 @@ inline static void free_via_clen_lump( struct lump **list )
 		next=lump->next;
 		if (lump->type==HDR_VIA_T||lump->type==HDR_CONTENTLENGTH_T) {
 			if (lump->flags & (LUMPFLAG_DUPED|LUMPFLAG_SHMEM)){
-				LOG(L_CRIT, "BUG: free_via_clen_lmp: lump %p, flags %x\n",
+				LM_CRIT("free_via_clen_lmp: lump %p, flags %x\n",
 						lump, lump->flags);
 				/* ty to continue */
 			}
