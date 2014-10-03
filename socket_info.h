@@ -116,7 +116,7 @@ char* get_valid_proto_name(unsigned short proto);
 static inline int next_proto(unsigned short proto)
 {
 	if (proto>PROTO_LAST)
-			LOG(L_ERR, "ERROR: next_proto: unknown proto %d\n", proto);
+		LM_ERR("unknown proto %d\n", proto);
 	else
 		return nxt_proto[proto];
 	return 0;
