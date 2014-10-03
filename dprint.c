@@ -98,8 +98,7 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val)
 	int	i;
 
 	if ((i = str2facility((char *)*val)) == -1) {
-		LOG(L_ERR, "log_facility_fixup: invalid log facility: %s\n",
-			(char *)*val);
+		LM_ERR("invalid log facility: %s\n", (char *)*val);
 		return -1;
 	}
 	*val = (void *)(long)i;
