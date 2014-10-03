@@ -116,7 +116,7 @@ static inline int _timer_dist_tl(struct timer_ln* tl, ticks_t delta)
 {
 	if (delta<H0_ENTRIES){
 		if (delta==0){
-			LOG(L_WARN, "WARNING: timer: add_timeout: 0 expire timer added\n");
+			LM_WARN("0 expire timer added\n");
 			_timer_add_list(&timer_lst->expired, tl);
 		}else{
 			_timer_add_list( &timer_lst->h0[tl->expire & H0_MASK], tl);
