@@ -94,7 +94,7 @@ struct expr* mk_exp(int op, struct expr* left, struct expr* right)
 	e->r.expr=right;
 	return e;
 error:
-	LOG(L_CRIT, "ERROR: mk_exp: memory allocation failure\n");
+	LM_CRIT("memory allocation failure\n");
 	return 0;
 }
 
@@ -116,7 +116,7 @@ struct expr* mk_exp_rve(int op, void* left, void* right)
 	}
 	return e;
 error:
-	LOG(L_CRIT, "ERROR: mk_exp_rve: memory allocation failure\n");
+	LM_CRIT("memory allocation failure\n");
 	return 0;
 }
 
@@ -134,7 +134,7 @@ struct expr* mk_elem(int op, expr_l_type ltype, void* lparam,
 	e->r.param=rparam;
 	return e;
 error:
-	LOG(L_CRIT, "ERROR: mk_elem: memory allocation failure\n");
+	LM_CRIT("memory allocation failure\n");
 	return 0;
 }
 
@@ -171,7 +171,7 @@ struct action* mk_action(enum action_type type, int count, ...)
 	return a;
 
 error:
-	LOG(L_CRIT, "ERROR: mk_action: memory allocation failure\n");
+	LM_CRIT("memory allocation failure\n");
 	return 0;
 }
 
@@ -192,7 +192,7 @@ struct action* append_action(struct action* a, struct action* b)
 void print_expr(struct expr* exp)
 {
 	if (exp==0){
-		LOG(L_CRIT, "ERROR: print_expr: null expression!\n");
+		LM_CRIT("null expression!\n");
 		return;
 	}
 	if (exp->type==ELEM_T){
