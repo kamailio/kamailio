@@ -100,17 +100,17 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 		} else {
 			     /* Get From URI username */
 			if (parse_from_header(msg) < 0) {
-				LOG(L_ERR, "get_from_uid: Error while parsing From header\n");
+				LM_ERR("unable to parse From header\n");
 				return -1;
 			}
 			from = get_from(msg);
 			if (parse_uri(from->uri.s, from->uri.len, &puri) == -1) {
-				LOG(L_ERR, "get_from_uid: Error while parsing From URI\n");
+				LM_ERR("unable to parsie From URI\n");
 				return -1;
 			}
 		
 			if (puri.user.len > MAX_URI_SIZE) {
-				LOG(L_ERR, "get_from_uid: Username too long\n");
+				LM_ERR("username too long\n");
 				return -1;
 			}
 			memcpy(buf, puri.user.s, puri.user.len);
