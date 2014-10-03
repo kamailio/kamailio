@@ -68,7 +68,7 @@ struct lump* append_new_lump(struct lump** list, char* new_hdr,
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
-		LOG(L_ERR, "ERROR: append_new_lump: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 		
@@ -94,7 +94,7 @@ struct lump* add_new_lump(struct lump** list, char* new_hdr,
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
-		LOG(L_ERR, "ERROR: add_new_lump: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 		
@@ -119,7 +119,7 @@ struct lump* insert_new_lump(struct lump** list, char* new_hdr,
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
-		LOG(L_ERR, "ERROR: insert_new_lump: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -144,7 +144,7 @@ struct lump* insert_new_lump_after( struct lump* after, char* new_hdr,
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: insert_new_lump_after: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -169,7 +169,7 @@ struct lump* insert_new_lump_before( struct lump* before, char* new_hdr,
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR,"ERROR: insert_new_lump_before: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -194,7 +194,7 @@ struct lump* insert_subst_lump_after( struct lump* after, enum lump_subst subst,
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: insert_new_lump_after: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -220,7 +220,7 @@ struct lump* insert_subst_lump_before(	struct lump* before,
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR,"ERROR: insert_new_lump_before: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -245,7 +245,7 @@ struct lump* insert_cond_lump_after( struct lump* after, enum lump_conditions c,
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: insert_new_lump_after: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -271,7 +271,7 @@ struct lump* insert_cond_lump_before(	struct lump* before,
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR,"ERROR: insert_new_lump_before: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -299,23 +299,22 @@ struct lump* del_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_
 
 	/* extra checks */
 	if (offset>msg->len){
-		LOG(L_CRIT, "BUG: del_lump: offset exceeds message size (%d > %d)"
-					" aborting...\n", offset, msg->len);
+		LM_CRIT("offset exceeds message size (%d > %d) aborting...\n",
+					offset, msg->len);
 		abort();
 	}
 	if (offset+len>msg->len){
-		LOG(L_CRIT, " BUG: del_lump: offset + len exceeds message"
-				" size (%d + %d > %d)\n", offset, len,  msg->len);
+		LM_CRIT("offset + len exceeds message size (%d + %d > %d)\n",
+					offset, len,  msg->len);
 		abort();
 	}
 	if (len==0){
-		LOG(L_WARN, "WARNING: del_lump: called with 0 len (offset =%d)\n",
-				offset);
+		LM_WARN("0 len (offset=%d)\n", offset);
 	}
 	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
-		LOG(L_ERR, "ERROR: del_lump: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -356,21 +355,21 @@ struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, enum _hdr_typ
 	
 	/* extra checks */
 	if (offset>msg->len){
-		LOG(L_CRIT, "BUG: anchor_lump: offset exceeds message size (%d > %d)"
-					" aborting...\n", offset, msg->len);
+		LM_CRIT("offset exceeds message size (%d > %d) aborting...\n",
+					offset, msg->len);
 		abort();
 	}
 	if (len){
-		LOG(L_WARN, "WARNING: anchor_lump: called with len !=0 (%d)\n", len);
+		LM_WARN("len !=0 (%d)\n", len);
 		if (offset+len>msg->len)
-			LOG(L_WARN, "WARNING: anchor_lump: offset + len exceeds message"
-					" size (%d + %d > %d)\n", offset, len,  msg->len);
+			LM_WARN("offset + len exceeds message size (%d + %d > %d)\n",
+					offset, len,  msg->len);
 	}
 	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: anchor_lump: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -416,15 +415,15 @@ struct lump* anchor_lump2(struct sip_msg* msg, int offset, int len, enum _hdr_ty
 	
 	/* extra checks */
 	if (offset>msg->len){
-		LOG(L_CRIT, "BUG: anchor_lump2: offset exceeds message size (%d > %d)"
-					" aborting...\n", offset, msg->len);
+		LM_CRIT("offset exceeds message size (%d > %d) aborting...\n",
+					offset, msg->len);
 		abort();
 	}
 	if (len){
-		LOG(L_WARN, "WARNING: anchor_lump2: called with len !=0 (%d)\n", len);
+		LM_WARN("len !=0 (%d)\n", len);
 		if (offset+len>msg->len)
-			LOG(L_WARN, "WARNING: anchor_lump2: offset + len exceeds message"
-					" size (%d + %d > %d)\n", offset, len,  msg->len);
+			LM_WARN("offset + len exceeds message size (%d + %d > %d)\n",
+					offset, len,  msg->len);
 	}
 	
 	prev=0;
@@ -448,7 +447,7 @@ struct lump* anchor_lump2(struct sip_msg* msg, int offset, int len, enum _hdr_ty
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: anchor_lump2: out of memory\n");
+		LM_ERR("out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -472,8 +471,7 @@ void free_lump(struct lump* lmp)
 	if (lmp && (lmp->op==LUMP_ADD)){
 		if (lmp->u.value){
 			if (lmp->flags &(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)){
-				LOG(L_CRIT, "BUG: free_lump: called on a not free-able lump:"
-						"%p flags=%x\n", lmp, lmp->flags);
+				LM_CRIT("non free-able lump: %p flags=%x\n", lmp, lmp->flags);
 				abort();
 			}else{
 				pkg_free(lmp->u.value);
@@ -574,8 +572,7 @@ static struct lump *dup_lump_list_r( struct lump *l,
 								LD_AFTER, &deep_error);
 				break;
 		default:
-				LOG(L_CRIT, "BUG: dup_limp_list_r: unknown dir: "
-						"%d\n", dir );
+				LM_CRIT("unknown dir: %d\n", dir );
 				deep_error=1;
 	}
 	if (deep_error) goto deeperror;
@@ -584,7 +581,7 @@ static struct lump *dup_lump_list_r( struct lump *l,
 	return new_lump;
 
 deeperror:
-	LOG(L_ERR, "ERROR: dup_lump_list_r: out of mem\n");
+	LM_ERR("out of mem\n");
 	free_shallow_lump(new_lump);
 	*error=1;
 	return 0;
