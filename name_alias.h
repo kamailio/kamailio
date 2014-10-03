@@ -107,7 +107,7 @@ static inline int add_alias(char* name, int len, unsigned short port,
 	aliases=a;
 	return 1;
 error:
-	LOG(L_ERR, "ERROR: add_alias: memory allocation error\n");
+	LM_ERR("memory allocation error\n");
 	if (a) pkg_free(a);
 	return -1;
 }
