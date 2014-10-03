@@ -68,7 +68,7 @@ static inline int add_callback( struct script_cb **list,
 
 	new_cb=pkg_malloc(sizeof(struct script_cb));
 	if (new_cb==0) {
-		LOG(L_CRIT, "add_script_callback: out of memory\n");
+		LM_CRIT("out of memory\n");
 		return -1;
 	}
 	new_cb->cbf = f;
@@ -121,7 +121,7 @@ int register_script_cb( cb_function f, unsigned int flags, void *param )
 	return 0;
 
 add_error:
-	LOG(L_ERR,"register_script_cb: failed to add callback\n");
+	LM_ERR("failed to add callback\n");
 	return -1;
 }
 
