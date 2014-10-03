@@ -50,27 +50,27 @@
  * @param proto - protocol used
  */
 #define TCP_EV_CONNECT_RST(err, lip, lport, dst, proto) \
-	LOG(L_ERR, "connect %s failed (RST) %s\n", \
+	LM_ERR("connect %s failed (RST) %s\n", \
 			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
 
 /** a connect failed because the remote host/network is unreachable. */
 #define TCP_EV_CONNECT_UNREACHABLE(err, lip, lport, dst, proto) \
-	LOG(L_ERR, "connect %s failed (unreachable) %s\n", \
+	LM_ERR("connect %s failed (unreachable) %s\n", \
 			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
 
 /** a connect attempt did timeout. */
 #define TCP_EV_CONNECT_TIMEOUT(err, lip, lport, dst, proto) \
-	LOG(L_ERR, "connect %s failed (timeout) %s\n", \
+	LM_ERR("connect %s failed (timeout) %s\n", \
 			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
 
 /** a connect attempt failed because the local ports are exhausted. */
 #define TCP_EV_CONNECT_NO_MORE_PORTS(err, lip, lport, dst, proto) \
-	LOG(L_ERR, "connect %s failed (no more ports) %s\n", \
+	LM_ERR("connect %s failed (no more ports) %s\n", \
 			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
 
 /** a connect attempt failed for some unknown reason.  */
 #define TCP_EV_CONNECT_ERR(err, lip, lport, dst, proto) \
-	LOG(L_ERR, "connect %s failed %s\n", \
+	LM_ERR("connect %s failed %s\n", \
 			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
 
 
