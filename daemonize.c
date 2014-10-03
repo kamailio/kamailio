@@ -635,8 +635,7 @@ int set_rt_prio(int prio, int policy)
 			sched_policy=SCHED_FIFO;
 			break;
 		default:
-			LM_WARN("WARNING: invalid scheduling policy,using"
-						" SCHED_OTHER\n");
+			LM_WARN("invalid scheduling policy,using SCHED_OTHER\n");
 			sched_policy=SCHED_OTHER;
 	}
 	memset(&sch_p, 0, sizeof(sch_p));
