@@ -33,7 +33,7 @@ int str_append(str *orig, str *suffix, str *dest)
 	dest->s = pkg_malloc(sizeof(char)*dest->len);
 	if(dest->s==NULL)
 	{
-		LOG(L_ERR, "memory allocation failure\n");
+		LM_ERR("memory allocation failure\n");
 		return -1;
 	}
 	if(orig->len>0)
