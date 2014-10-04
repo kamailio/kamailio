@@ -290,7 +290,7 @@ static int register_module(unsigned ver, union module_exports_u* e,
 
 	/* add module to the list */
 	if ((mod=pkg_malloc(sizeof(struct sr_module)))==0){
-		LOG(L_ERR, "load_module: memory allocation failure\n");
+		LM_ERR("memory allocation failure\n");
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -305,7 +305,7 @@ static int register_module(unsigned ver, union module_exports_u* e,
 		if (e->v0.cmds) {
 			mod->exports.cmds = sr_cmd_exports_convert(ver, e->v0.cmds, mod);
 			if (mod->exports.cmds == 0) {
-				ERR("failed to convert module command exports to 3.1 format"
+				LM_ERR("failed to convert module command exports to 3.1 format"
 						" for module \"%s\" (%s), interface version %d\n",
 						mod->exports.name, mod->path, ver);
 				ret = E_UNSPEC;
@@ -327,7 +327,7 @@ static int register_module(unsigned ver, union module_exports_u* e,
 		if (e->v1.cmds) {
 			mod->exports.cmds = sr_cmd_exports_convert(ver, e->v1.cmds, mod);
 			if (mod->exports.cmds == 0) {
-				ERR("failed to convert module command exports to 3.1 format"
+				LM_ERR("failed to convert module command exports to 3.1 format"
 						" for module \"%s\" (%s), interface version %d\n",
 						mod->exports.name, mod->path, ver);
 				ret = E_UNSPEC;
@@ -347,7 +347,7 @@ static int register_module(unsigned ver, union module_exports_u* e,
 		mod->exports.items = e->v1.items;
 		mod->exports.procs = e->v1.procs;
 	} else {
-		ERR("unsupported module interface version %d\n", ver);
+		LM_ERR("unsupported module interface version %d\n", ver);
 		ret = E_UNSPEC;
 		goto error;
 	}
@@ -366,12 +366,12 @@ static int register_module(unsigned ver, union module_exports_u* e,
 		/* register rpcs for ser modules */
 		i=rpc_register_array(mod->exports.rpc_methods);
 		if (i<0){
-			ERR("failed to register RPCs for module %s (%s)\n",
+			LM_ERR("failed to register RPCs for module %s (%s)\n",
 					mod->exports.name, path);
 			ret = E_UNSPEC;
 			goto error;
 		}else if (i>0){
-			ERR("%d duplicate RPCs name detected while registering RPCs"
+			LM_ERR("%d duplicate RPCs name detected while registering RPCs"
 					" declared in module %s (%s)\n",
 					i, mod->exports.name, path);
 			ret = E_UNSPEC;
@@ -417,22 +417,20 @@ static inline int version_control(void *handle, char *path)
 
 	m_ver=(char **)dlsym(handle, DLSYM_PREFIX "module_version");
 	if ((error=(char *)dlerror())!=0) {
-		LOG(L_ERR, "ERROR: no version info in module <%s>: %s\n",
-			path, error );
+		LM_ERR("no version info in module <%s>: %s\n", path, error);
 		return 0;
 	}
 	m_flags=(char **)dlsym(handle, DLSYM_PREFIX "module_flags");
 	if ((error=(char *)dlerror())!=0) {
-		LOG(L_ERR, "ERROR: no compile flags info in module <%s>: %s\n",
-			path, error );
+		LM_ERR("no compile flags info in module <%s>: %s\n", path, error);
 		return 0;
 	}
 	if (!m_ver || !(*m_ver)) {
-		LOG(L_ERR, "ERROR: no version in module <%s>\n", path );
+		LM_ERR("no version in module <%s>\n", path );
 		return 0;
 	}
 	if (!m_flags || !(*m_flags)) {
-		LOG(L_ERR, "ERROR: no compile flags in module <%s>\n", path );
+		LM_ERR("no compile flags in module <%s>\n", path );
 		return 0;
 	}
 
@@ -440,13 +438,13 @@ static inline int version_control(void *handle, char *path)
 		if (strcmp(SER_COMPILE_FLAGS, *m_flags)==0)
 			return 1;
 		else {
-			LOG(L_ERR, "ERROR: module compile flags mismatch for %s "
+			LM_ERR("module compile flags mismatch for %s "
 						" \ncore: %s \nmodule: %s\n",
 						path, SER_COMPILE_FLAGS, *m_flags);
 			return 0;
 		}
 	}
-	LOG(L_ERR, "ERROR: module version mismatch for %s; "
+	LM_ERR("module version mismatch for %s; "
 		"core: %s; module: %s\n", path, SER_FULL_VERSION, *m_ver );
 	return 0;
 }
@@ -584,8 +582,8 @@ int load_module(char* mod_path)
 			mdir=nxt_mdir?nxt_mdir+1:0;
 		}while(path==0 && mdir);
 		if (path==0){
-			LOG(L_ERR, "ERROR: load_module: could not find module <%.*s> in"
-						" <%s>\n", modname.len, modname.s, mods_dir);
+			LM_ERR("could not find module <%.*s> in <%s>\n",
+						modname.len, modname.s, mods_dir);
 			goto error;
 		}
 	}
@@ -596,15 +594,13 @@ int load_module(char* mod_path)
 reload:
 	handle=dlopen(path, dlflags); /* resolve all symbols now */
 	if (handle==0){
-		LOG(L_ERR, "ERROR: load_module: could not open module <%s>: %s\n",
-			path, dlerror());
+		LM_ERR("could not open module <%s>: %s\n", path, dlerror());
 		goto error;
 	}
 
 	for(t=modules;t; t=t->next){
 		if (t->handle==handle){
-			LOG(L_WARN, "WARNING: load_module: attempting to load the same"
-						" module twice (%s)\n", path);
+			LM_WARN("attempting to load the same module twice (%s)\n", path);
 			goto skip;
 		}
 	}
@@ -615,8 +611,7 @@ reload:
 	mod_if_ver = (unsigned *)dlsym(handle,
 									DLSYM_PREFIX "module_interface_ver");
 	if ( (error =(char*)dlerror())!=0 ){
-		LOG(L_ERR, "ERROR: no module interface version in module <%s>\n",
-					path );
+		LM_ERR("no module interface version in module <%s>\n", path );
 		goto error1;
 	}
 	/* launch register */
@@ -625,7 +620,7 @@ reload:
 		/* no error call it */
 		new_dlflags=dlflags;
 		if (mr(path, &new_dlflags, 0, 0)!=0) {
-			LOG(L_ERR, "ERROR: load_module: %s: mod_register failed\n", path);
+			LM_ERR("%s: mod_register failed\n", path);
 			goto error1;
 		}
 		if (new_dlflags!=dlflags && new_dlflags!=0) {
@@ -634,14 +629,13 @@ reload:
 			dlflags=new_dlflags;
 			retries--;
 			if (retries>0) goto reload;
-			LOG(L_ERR, "ERROR: load_module: %s: cannot agree"
-					" on the dlflags\n", path);
+			LM_ERR("%s: cannot agree on the dlflags\n", path);
 			goto error;
 		}
 	}
 	exp = (union module_exports_u*)dlsym(handle, DLSYM_PREFIX "exports");
 	if ( (error =(char*)dlerror())!=0 ){
-		LOG(L_ERR, "ERROR: load_module: %s\n", error);
+		LM_ERR("%s\n", error);
 		goto error1;
 	}
 	/* hack to allow for kamailio style dlflags inside exports */
@@ -656,8 +650,7 @@ reload:
 			dlflags=new_dlflags;
 			retries--;
 			if (retries>0) goto reload;
-			LOG(L_ERR, "ERROR: load_module: %s: cannot agree"
-					" on the dlflags\n", path);
+			LM_ERR("%s: cannot agree on the dlflags\n", path);
 			goto error;
 		}
 	}
@@ -849,8 +842,7 @@ int init_modules(void)
 	for(t = modules; t; t = t->next) {
 		if (t->exports.init_f) {
 			if (t->exports.init_f() != 0) {
-				LOG(L_ERR, "init_modules(): Error while"
-						" initializing module %s\n", t->exports.name);
+				LM_ERR("Error while initializing module %s\n", t->exports.name);
 				return -1;
 			}
 			/* delay next module init, if configured */
@@ -863,8 +855,8 @@ int init_modules(void)
 	mod_response_cbks=pkg_malloc(mod_response_cbk_no * 
 									sizeof(response_function));
 	if (mod_response_cbks==0){
-		LOG(L_ERR, "init_modules(): memory allocation failure"
-					" for %d response_f callbacks\n", mod_response_cbk_no);
+		LM_ERR("memory allocation failure for %d response_f callbacks\n",
+					mod_response_cbk_no);
 		return -1;
 	}
 	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next) {
@@ -901,8 +893,7 @@ int init_child(int rank)
 	for(t = modules; t; t = t->next) {
 		if (t->exports.init_child_f) {
 			if ((t->exports.init_child_f(rank)) < 0) {
-				LOG(L_ERR, "init_child(): Initialization of child"
-							" %d failed\n", rank);
+				LM_ERR("Initialization of child %d failed\n", rank);
 				return -1;
 			}
 		}
@@ -928,8 +919,7 @@ static int init_mod_child( struct sr_module* m, int rank )
 		if (m->exports.init_child_f) {
 			DBG("DEBUG: init_mod_child (%d): %s\n", rank, m->exports.name);
 			if (m->exports.init_child_f(rank)<0) {
-				LOG(L_ERR, "init_mod_child(): Error while"
-							" initializing module %s (%s)\n",
+				LM_ERR("Error while initializing module %s (%s)\n",
 							m->exports.name, m->path);
 				return -1;
 			} else {
@@ -974,8 +964,7 @@ static int init_mod( struct sr_module* m )
 			if (m->exports.init_f) {
 				DBG("DEBUG: init_mod: %s\n", m->exports.name);
 				if (m->exports.init_f()!=0) {
-					LOG(L_ERR, "init_mod(): Error while initializing"
-								" module %s (%s)\n",
+					LM_ERR("Error while initializing module %s (%s)\n",
 								m->exports.name, m->path);
 					return -1;
 				} else {
@@ -1013,8 +1002,7 @@ int init_modules(void)
 	mod_response_cbks=pkg_malloc(mod_response_cbk_no * 
 									sizeof(response_function));
 	if (mod_response_cbks==0){
-		LOG(L_ERR, "init_modules(): memory allocation failure"
-					" for %d response_f callbacks\n", mod_response_cbk_no);
+		LM_ERR("memory allocation failure for %d response_f callbacks\n", mod_response_cbk_no);
 		return -1;
 	}
 	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next)
@@ -1089,7 +1077,7 @@ int fix_flag( modparam_t type, void* val,
 	char *p;
 
 	if ((type & PARAM_STRING)==0){
-		LOG(L_CRIT, "BUG: %s: fix_flag(%s): bad parameter type\n",
+		LM_CRIT("%s: fix_flag(%s): bad parameter type\n",
 					mod_name, param_name);
 		return -1;
 	}
@@ -1104,8 +1092,8 @@ int fix_flag( modparam_t type, void* val,
 		if (p){
 			f= str2s(p+1, strlen(p+1), &err);
 			if (err!=0){
-				LOG(L_ERR, "ERROR: %s: invalid %s format:"
-						" \"%s\"", mod_name, param_name, s);
+				LM_ERR("%s: invalid %s format: \"%s\"",
+						mod_name, param_name, s);
 				return -1;
 			}
 			*p=0;
@@ -1115,10 +1103,10 @@ int fix_flag( modparam_t type, void* val,
 			num=register_flag(s, f);
 		}
 		if (num<0){
-			LOG(L_ERR, "ERROR: %s: bad %s %s\n", mod_name, param_name, s);
+			LM_ERR("%s: bad %s %s\n", mod_name, param_name, s);
 			return -1;
 		} else if ((f>0) && (num!=f)){
-			LOG(L_ERR, "WARNING: %s: flag %s already defined"
+			LM_ERR("%s: flag %s already defined"
 					" as %d (and not %d), using %s:%d\n",
 					mod_name, s, num, f, s, num);
 		}
@@ -1150,7 +1138,7 @@ int fix_param(int type, void** param)
 
 	p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
 	if (!p) {
-		ERR("No memory left\n");
+		LM_ERR("No memory left\n");
 		return E_OUT_OF_MEM;
 	}
 	memset(p, 0, sizeof(fparam_t));
@@ -1158,7 +1146,7 @@ int fix_param(int type, void** param)
 	
 	switch(type) {
 		case FPARAM_UNSPEC:
-			ERR("Invalid type value\n");
+			LM_ERR("Invalid type value\n");
 			goto error;
 		case FPARAM_STRING:
 			p->v.asciiz = *param;
@@ -1183,7 +1171,7 @@ int fix_param(int type, void** param)
 			break;
 		case FPARAM_REGEX:
 			if ((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
-				ERR("No memory left\n");
+				LM_ERR("No memory left\n");
 				goto error;
 			}
 			if (regcomp(p->v.regex, *param,
@@ -1220,7 +1208,7 @@ int fix_param(int type, void** param)
 				goto no_match;
 			}
 			if (parse_select(&name.s, &p->v.select) < 0) {
-				ERR("Error while parsing select identifier\n");
+				LM_ERR("Error while parsing select identifier\n");
 				goto error;
 			}
 			p->fixed = &p->v;
@@ -1230,7 +1218,7 @@ int fix_param(int type, void** param)
 			s.len = strlen(s.s);
 			p->v.subst = subst_parser(&s);
 			if (!p->v.subst) {
-				ERR("Error while parsing regex substitution\n");
+				LM_ERR("Error while parsing regex substitution\n");
 				goto error;
 			}
 			p->fixed = &p->v;
@@ -1245,7 +1233,7 @@ int fix_param(int type, void** param)
 			}
 			p->v.pvs=pkg_malloc(sizeof(pv_spec_t));
 			if (p->v.pvs==0){
-				ERR("out of memory while parsing pv_spec_t\n");
+				LM_ERR("out of memory while parsing pv_spec_t\n");
 				goto error;
 			}
 			if (pv_parse_spec2(&name, p->v.pvs, 1)==0){
@@ -1260,7 +1248,7 @@ int fix_param(int type, void** param)
 			name.s = (char*)*param;
 			name.len = strlen(name.s);
 			if (pv_parse_format(&name, &p->v.pve)<0){
-				ERR("bad PVE format: \"%.*s\"\n", name.len, name.s);
+				LM_ERR("bad PVE format: \"%.*s\"\n", name.len, name.s);
 				goto error;
 			}
 			p->fixed = &p->v;
@@ -1409,7 +1397,7 @@ int fixup_var_str_12(void** param, int param_no)
 		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
 	}
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
-	ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
+	LM_ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
 			" failed\n");
 	return -1;
 }
@@ -1461,7 +1449,7 @@ int fixup_var_pve_12(void** param, int param_no)
 		
 	}
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
-	ERR("Error while fixing parameter - PVE or str conversions failed\n");
+	LM_ERR("Error while fixing parameter - PVE or str conversions failed\n");
 	return -1;
 }
 
@@ -1503,7 +1491,7 @@ int fixup_var_pve_str_12(void** param, int param_no)
 		
 	}
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
-	ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
+	LM_ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
 			" failed\n");
 	return -1;
 }
@@ -1545,7 +1533,7 @@ int fixup_var_int_12(void** param, int param_no)
 		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
 	}
 	if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;
-	ERR("Error while fixing parameter, PV, AVP, SELECT, and int conversions"
+	LM_ERR("Error while fixing parameter, PV, AVP, SELECT, and int conversions"
 			" failed\n");
 	return -1;
 }
@@ -1574,7 +1562,7 @@ int fixup_regex_12(void** param, int param_no)
 	int ret;
 
 	if ((ret = fix_param(FPARAM_REGEX, param)) <= 0) return ret;
-	ERR("Error while compiling regex in function parameter\n");
+	LM_ERR("Error while compiling regex in function parameter\n");
 	return -1;
 }
 
@@ -1600,7 +1588,7 @@ int fixup_int_12(void** param, int param_no)
 	int ret;
 
 	if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;
-	ERR("Cannot function parameter to integer\n");
+	LM_ERR("Cannot function parameter to integer\n");
 	return -1;
 
 }
@@ -1628,7 +1616,7 @@ int fixup_str_12(void** param, int param_no)
 	int ret;
 
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
-	ERR("Cannot function parameter to string\n");
+	LM_ERR("Cannot function parameter to string\n");
 	return -1;
 }
 
@@ -1697,7 +1685,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 					   ((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR))){
 					*dst=pv_val.rs;
 			}else{
-				ERR("Could not convert PV to str\n");
+				LM_ERR("Could not convert PV to str\n");
 				return -1;
 			}
 			break;
@@ -1705,7 +1693,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			dst->s=pv_get_buffer();
 			dst->len=pv_get_buffer_size();
 			if (unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len)!=0)){
-				ERR("Could not convert the PV-formated string to str\n");
+				LM_ERR("Could not convert the PV-formated string to str\n");
 				dst->len=0;
 				return -1;
 			};
@@ -1746,7 +1734,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 			}
 			if (avp->flags & AVP_VAL_STR) {
 				if (str2int(&val.s, (unsigned int*)dst) < 0) {
-					ERR("Could not convert AVP string value to int\n");
+					LM_ERR("Could not convert AVP string value to int\n");
 					return -1;
 				}
 			} else {
@@ -1757,7 +1745,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 			ret = run_select(&tmp, param->v.select, msg);
 			if (unlikely(ret < 0 || ret > 0)) return -1;
 			if (unlikely(str2int(&tmp, (unsigned int*)dst) < 0)) {
-				ERR("Could not convert select result to int\n");
+				LM_ERR("Could not convert select result to int\n");
 				return -1;
 			}
 			break;
@@ -1766,7 +1754,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 					   ((pv_val.flags&(PV_VAL_NULL|PV_VAL_INT))==PV_VAL_INT))){
 					*dst=pv_val.ri;
 			}else{
-				ERR("Could not convert PV to int\n");
+				LM_ERR("Could not convert PV to int\n");
 				return -1;
 			}
 			break;
@@ -1817,7 +1805,7 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 				*s_dst = val.s;
 				*flags |= PARAM_STR;
 				if (str2int(&val.s, (unsigned int*)i_dst) < 0) {
-					ERR("Could not convert AVP string value to int\n");
+					LM_ERR("Could not convert AVP string value to int\n");
 					return -1;
 				}
 			} else {
@@ -1829,7 +1817,7 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 			ret = run_select(&tmp, param->v.select, msg);
 			if (unlikely(ret < 0 || ret > 0)) return -1;
 			if (unlikely(str2int(&tmp, (unsigned int*)i_dst) < 0)) {
-				ERR("Could not convert select result to int\n");
+				LM_ERR("Could not convert select result to int\n");
 				return -1;
 			}
 			*flags |= PARAM_INT;
@@ -1845,7 +1833,7 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 					*flags |= PARAM_STR;
 				}
 			}else{
-				ERR("Could not get PV\n");
+				LM_ERR("Could not get PV\n");
 				return -1;
 			}
 			break;
@@ -1853,7 +1841,7 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 			s_dst->s=pv_get_buffer();
 			s_dst->len=pv_get_buffer_size();
 			if (unlikely(pv_printf(msg, param->v.pve, s_dst->s, &s_dst->len)!=0)){
-				ERR("Could not convert the PV-formated string to str\n");
+				LM_ERR("Could not convert the PV-formated string to str\n");
 				s_dst->len=0;
 				return -1;
 			}
@@ -1881,7 +1869,7 @@ int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param)
 			*dst = *param->v.regex;
 			return 0;
 		default:
-			ERR("unexpected parameter type (%d), instead of regexp.\n", 
+			LM_ERR("unexpected parameter type (%d), instead of regexp.\n", 
 					param->type);
 	}
 	return -1;
