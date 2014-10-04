@@ -115,7 +115,7 @@ char* get_static_buffer(int req_size) {
 
 #ifdef EXTRA_DEBUG
 	if ((active_buffer < 0) || (active_buffer > MAX_BUFFERS-1)) {
-		LOG(L_CRIT, "BUG: buffers have not been initialized yet. "
+		LM_CRIT("buffers have not been initialized yet. "
 			"Call reset_static_buffer() before executing "
 			"a route block.\n");
 		abort();
