@@ -101,8 +101,7 @@ int raw_udp4_rcv_loop(int rsock, int port1, int port2)
 		len=raw_udp4_recv(rsock, &p, BUF_SIZE, &from, &to, &rf);
 		if (len<0){
 			if (len==-1){
-				LOG(L_ERR, "ERROR: raw_udp4_rcv_loop:raw_udp4_recv: %s [%d]\n",
-						strerror(errno), errno);
+				LM_ERR("raw_udp4_recv: %s [%d]\n", strerror(errno), errno);
 				if ((errno==EINTR)||(errno==EWOULDBLOCK))
 					continue;
 				else
@@ -128,8 +127,7 @@ int raw_udp4_rcv_loop(int rsock, int port1, int port2)
 		}
 		if (ri.src_port==0){
 			tmp=ip_addr2a(&ri.src_ip);
-			LOG(L_INFO, "raw_udp4_rcv_loop: dropping 0 port packet from %s\n",
-						tmp);
+			LM_INFO("dropping 0 port packet from %s\n", tmp);
 			continue;
 		}
 		tmp=ip_addr2a(&ri.src_ip);
