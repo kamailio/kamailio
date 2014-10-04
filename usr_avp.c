@@ -101,7 +101,7 @@ int init_avps(void)
 	def_glist = (avp_list_t*)shm_malloc(sizeof(avp_list_t));
 	crt_glist = (avp_list_t**)shm_malloc(sizeof(avp_list_t*));
 	if (!def_glist || !crt_glist) {
-		LOG(L_ERR, "ERROR: No memory to allocate default global AVP list\n");
+		LM_ERR("No memory to allocate default global AVP list\n");
 		return -1;
 	}
 	*def_glist = 0;
@@ -161,7 +161,7 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 	int len;
 
 	if (name.s.s == 0 && name.s.len == 0) {
-		LOG(L_ERR,"ERROR:avp:add_avp: 0 ID or NULL NAME AVP!");
+		LM_ERR("0 ID or NULL NAME AVP!");
 		goto error;
 	}
 
@@ -169,7 +169,7 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 	len = sizeof(struct usr_avp);
 	if (flags&AVP_NAME_STR) {
 		if ( name.s.s==0 || name.s.len==0) {
-			LOG(L_ERR,"ERROR:avp:add_avp: EMPTY NAME AVP!");
+			LM_ERR("EMPTY NAME AVP!");
 			goto error;
 		}
 		if (flags&AVP_VAL_STR) {
@@ -186,7 +186,7 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 
 	avp = (struct usr_avp*)shm_malloc( len );
 	if (avp==0) {
-		LOG(L_ERR,"ERROR:avp:add_avp: no more shm mem\n");
+		LM_ERR("no more shm mem\n");
 		return 0;
 	}
 
@@ -287,7 +287,7 @@ int add_avp_before(avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t v
 	if ((flags & AVP_TRACK_ALL) == 0) flags |= (avp->flags & AVP_TRACK_ALL);
 
 	if ((avp->flags & (AVP_CLASS_ALL|AVP_TRACK_ALL)) != (flags & (AVP_CLASS_ALL|AVP_TRACK_ALL))) {
-		ERR("add_avp_before:Source and target AVPs have different CLASS/TRACK\n");
+		LM_ERR("Source and target AVPs have different CLASS/TRACK\n");
 		return -1;
 	}
 	if ((new_avp=create_avp(flags, name, val))) {
@@ -321,8 +321,7 @@ inline str* get_avp_name(avp_t *avp)
 			return &ssd->name;
 	}
 
-	LOG(L_ERR,"BUG:avp:get_avp_name: unknown avp type (name&val) %d\n",
-	    avp->flags&(AVP_NAME_STR|AVP_VAL_STR));
+	LM_ERR("unknown avp type (name&val) %d\n", avp->flags&(AVP_NAME_STR|AVP_VAL_STR));
 	return 0;
 }
 
@@ -434,7 +433,7 @@ avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* sta
 	avp_list_t* list;
 
 	if (ident.name.s.s==0 && ident.name.s.len == 0) {
-		LOG(L_ERR,"ERROR:avp:search_first_avp: 0 ID or NULL NAME AVP!");
+		LM_ERR("0 ID or NULL NAME AVP!");
 		return 0;
 	}
 
@@ -488,7 +487,7 @@ avp_t *search_next_avp(struct search_state* s, avp_value_t *val )
 	avp_list_t *list;
 
 	if (s == 0) {
-		LOG(L_ERR, "search_next:avp: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return 0;
 	}
 
@@ -754,24 +753,24 @@ int add_avp_galias(str *alias, int type, int_str avp_name)
 	if ((type&AVP_NAME_STR && (!avp_name.s.s ||
 				   !avp_name.s.len)) ||!alias || !alias->s ||
 		!alias->len ){
-		LOG(L_ERR, "ERROR:add_avp_galias: null params received\n");
+		LM_ERR("null params received\n");
 		goto error;
 	}
 
 	if (check_avp_galias(alias,type,avp_name)!=0) {
-		LOG(L_ERR, "ERROR:add_avp_galias: duplicate alias/avp entry\n");
+		LM_ERR("duplicate alias/avp entry\n");
 		goto error;
 	}
 
 	ga = (struct avp_galias*)pkg_malloc( sizeof(struct avp_galias) );
 	if (ga==0) {
-		LOG(L_ERR, "ERROR:add_avp_galias: no more pkg memory\n");
+		LM_ERR("no more pkg memory\n");
 		goto error;
 	}
 
 	ga->alias.s = (char*)pkg_malloc( alias->len+1 );
 	if (ga->alias.s==0) {
-		LOG(L_ERR, "ERROR:add_avp_galias: no more pkg memory\n");
+		LM_ERR("no more pkg memory\n");
 		goto error1;
 	}
 	memcpy( ga->alias.s, alias->s, alias->len);
@@ -782,7 +781,7 @@ int add_avp_galias(str *alias, int type, int_str avp_name)
 	if (type&AVP_NAME_STR) {
 		ga->avp.name.s.s = (char*)pkg_malloc( avp_name.s.len+1 );
 		if (ga->avp.name.s.s==0) {
-			LOG(L_ERR, "ERROR:add_avp_galias: no more pkg memory\n");
+			LM_ERR("no more pkg memory\n");
 			goto error2;
 		}
 		ga->avp.name.s.len = avp_name.s.len;
@@ -828,7 +827,7 @@ int lookup_avp_galias(str *alias, int *type, int_str *avp_name)
 /* parsing functions */
 #define ERR_IF_CONTAINS(name,chr) \
 	if (memchr(name->s,chr,name->len)) { \
-		ERR("Unexpected control character '%c' in AVP name\n", chr); \
+		LM_ERR("Unexpected control character '%c' in AVP name\n", chr); \
 		goto error; \
 	}
 
@@ -887,7 +886,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 	str s;
 
 	if (name==0 || name->s==0 || name->len==0) {
-		ERR("NULL name or name->s or name->len\n");
+		LM_ERR("NULL name or name->s or name->len\n");
 		goto error;
 	}
 
@@ -908,15 +907,14 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 			case 'i': case 'I':
 				attr->flags = 0;
 				if (str2int( name, &id)!=0) {
-					ERR("invalid ID "
-						"<%.*s> - not a number\n", name->len, name->s);
+					LM_ERR("invalid ID <%.*s> - not a number\n",
+						name->len, name->s);
 					goto error;
 				}
 				attr->name.n = (int)id;
 				break;
 			default:
-				ERR("unsupported type "
-					"[%c]\n", c);
+				LM_ERR("unsupported type [%c]\n", c);
 				goto error;
 		}
 	} else if ((p=memchr(name->s, '.', name->len))) {
@@ -929,11 +927,11 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 			name->s +=3;
 			name->len -=3;
 		} else {
-			ERR("AVP unknown class prefix '%.*s'\n", name->len, name->s);
+			LM_ERR("AVP unknown class prefix '%.*s'\n", name->len, name->s);
 			goto error;
 		}
 		if (name->len==0) {
-			ERR("AVP name not specified after the prefix separator\n");
+			LM_ERR("AVP name not specified after the prefix separator\n");
 			goto error;
 		}
 		switch (id) {
@@ -966,15 +964,15 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 				break;
 			default:
 				if (id < 1<<8)
-					ERR("AVP unknown class prefix '%c'\n", id);
+					LM_ERR("AVP unknown class prefix '%c'\n", id);
 				else
-					ERR("AVP unknown class prefix '%c%c'\n", id>>8,id);
+					LM_ERR("AVP unknown class prefix '%c%c'\n", id>>8,id);
 				goto error;
 		}
 		if (name->s[name->len-1]==']') {
 			p=memchr(name->s, '[', name->len);
 			if (!p) {
-				ERR("missing '[' for AVP index\n");
+				LM_ERR("missing '[' for AVP index\n");
 				goto error;
 			}
 			s.s=p+1;
@@ -989,7 +987,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 					attr->flags |= AVP_INDEX_FORWARD;
 				}
 				if ((str2int(&s, &id) != 0)||(id==0)) {
-					ERR("Invalid AVP index '%.*s'\n", s.len, s.s);
+					LM_ERR("Invalid AVP index '%.*s'\n", s.len, s.s);
 					goto error;
 				}
 				attr->index = id;
@@ -1074,7 +1072,7 @@ int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index)
 	if (name->s[0]==GALIAS_CHAR_MARKER) {
 		/* it's an avp alias */
 		if (name->len==1) {
-			LOG(L_ERR,"ERROR:parse_avp_spec: empty alias\n");
+			LM_ERR("empty alias\n");
 			return -1;
 		}
 		alias.s = name->s+1;
@@ -1142,21 +1140,20 @@ int add_avp_galias_str(char *alias_definition)
 		}
 
 		if (parse_avp_name( &name, &type, &avp_name, &index)!=0) {
-			LOG(L_ERR, "ERROR:add_avp_galias_str: <%.*s> not a valid AVP "
-				"name\n", name.len, name.s);
+			LM_ERR("<%.*s> not a valid AVP name\n", name.len, name.s);
 			goto error;
 		}
 
 		if (add_avp_galias( &alias, type, avp_name)!=0) {
-			LOG(L_ERR, "ERROR:add_avp_galias_str: add global alias failed\n");
+			LM_ERR("add global alias failed\n");
 			goto error;
 		}
 	} /*end while*/
 
 	return 0;
 parse_error:
-	LOG(L_ERR, "ERROR:add_avp_galias_str: parse error in <%s> around "
-		"pos %ld\n", alias_definition, (long)(s-alias_definition));
+	LM_ERR("parse error in <%s> around pos %ld\n",
+		alias_definition, (long)(s-alias_definition));
 error:
 	return -1;
 }
@@ -1200,7 +1197,8 @@ avp_flags_t register_avpflag(char* name) {
 	ret = get_avpflag_no(name);
 	if (ret == 0) {
 		if (registered_avpflags_no >= MAX_AVPFLAG) {
-			LOG(L_ERR, "register_avpflag: cannot register new avp flag ('%s'), max.number of flags (%d) reached\n", name, MAX_AVPFLAG);
+			LM_ERR("cannot register new avp flag ('%s'), max.number of flags (%d) reached\n",
+					name, MAX_AVPFLAG);
 			return -1;
 		}
 		ret = 1<<(AVP_CUSTOM_FLAGS+registered_avpflags_no);
