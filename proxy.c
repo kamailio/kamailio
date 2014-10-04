@@ -189,7 +189,7 @@ static int hostent_cpy(struct hostent *dst, struct hostent* src)
 	int ret;
 	HOSTENT_CPY(dst, src, pkg_malloc, pkg_free);
 error:
-	LOG(L_CRIT, "ERROR: hostent_cpy: memory allocation failure\n");
+	LM_CRIT("memory allocation failure\n");
 	return ret;
 }
 
@@ -199,7 +199,7 @@ static int hostent_shm_cpy(struct hostent *dst, struct hostent* src)
 	int ret;
 	HOSTENT_CPY(dst, src, shm_malloc, shm_free);
 error:
-	LOG(L_CRIT, "ERROR: hostent_shm_cpy: memory allocation failure\n");
+	LM_CRIT("memory allocation failure\n");
 	return ret;
 }
 
@@ -241,7 +241,7 @@ error:
 		p=(struct proxy_l*) p_malloc(sizeof(struct proxy_l));			\
 		if (p==0){														\
 			ser_error=E_OUT_OF_MEM;										\
-			ERR("ERROR: mk_proxy: memory allocation failure\n");		\
+			LM_ERR("memory allocation failure\n");		\
 			goto error;													\
 		}																\
 		memset(p,0,sizeof(struct proxy_l));								\
@@ -253,7 +253,7 @@ error:
 		he=sip_resolvehost(name, &(p->port), &proto);					\
 		if (he==0){														\
 			ser_error=E_BAD_ADDRESS;									\
-			LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"	\
+			LM_CRIT("could not resolve hostname:"	\
 				" \"%.*s\"\n", name->len, name->s);						\
 			p_free(p);													\
 			goto error;													\
@@ -294,7 +294,7 @@ struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
 
 	p=(struct proxy_l*) pkg_malloc(sizeof(struct proxy_l));
 	if (p==0){
-		LOG(L_CRIT, "ERROR: mk_proxy_from_ip: memory allocation failure\n");
+		LM_CRIT("memory allocation failure\n");
 		goto error;
 	}
 	memset(p,0,sizeof(struct proxy_l));
