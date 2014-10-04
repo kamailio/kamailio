@@ -222,7 +222,7 @@ static int init_blacklist_hooks()
 		goto error;
 	return 0;
 error:
-	LOG(L_ERR, "blacklist_hooks: failure initializing internal lists\n");
+	LM_ERR("failure initializing internal lists\n");
 	destroy_blacklist_hooks();
 	return -1;
 }
@@ -240,7 +240,7 @@ int register_blacklist_hook(struct blacklist_hook *h, int type)
 	int new_max_hooks;
 
 	if (dst_blacklist_init==0) {
-		LOG(L_ERR, "register_blacklist_hook: blacklist is turned off, "
+		LM_ERR("blacklist is turned off, "
 			"the hook cannot be registered\n");
 		goto error;
 	}
@@ -500,7 +500,7 @@ int init_dst_blacklist()
 	if (blst_timer_interval){
 		timer_init(blst_timer_h, blst_timer, 0 ,0); /* slow timer */
 		if (timer_add(blst_timer_h, S_TO_TICKS(blst_timer_interval))<0){
-			LOG(L_CRIT, "BUG: init_dst_blacklist: failed to add the timer\n");
+			LM_CRIT("failed to add the timer\n");
 			timer_free(blst_timer_h);
 			blst_timer_h=0;
 			goto error;
@@ -1173,8 +1173,7 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 int use_dst_blacklist_fixup(void *handle, str *gname, str *name, void **val)
 {
 	if ((int)(long)(*val) && !dst_blacklist_init) {
-		LOG(L_ERR, "ERROR: use_dst_blacklist_fixup(): "
-			"dst blacklist is turned off by dst_blacklist_init=0, "
+		LM_ERR("dst blacklist is turned off by dst_blacklist_init=0, "
 			"it cannot be enabled runtime.\n");
 		return -1;
 	}
