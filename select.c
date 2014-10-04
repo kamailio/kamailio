@@ -313,10 +313,10 @@ int resolve_select(select_t* s)
 		}
 		switch (s->params[param_idx].type) {
 			case SEL_PARAM_STR:
-				LOG(L_ERR, "Unable to resolve select '%.*s' at level %d\n", s->params[param_idx].v.s.len, s->params[param_idx].v.s.s, param_idx);
+				LM_ERR("Unable to resolve select '%.*s' at level %d\n", s->params[param_idx].v.s.len, s->params[param_idx].v.s.s, param_idx);
 				break;
 			case SEL_PARAM_INT:
-				LOG(L_ERR, "Unable to resolve select [%d] at level %d\n", s->params[param_idx].v.i, param_idx);
+				LM_ERR("Unable to resolve select [%d] at level %d\n", s->params[param_idx].v.i, param_idx);
 				break;
 			default:
 				BUG ("Unable to resolve select at level %d\n", param_idx);
