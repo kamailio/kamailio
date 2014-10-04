@@ -101,7 +101,7 @@ static int dbg_msg_qa(char *buf, int len)
 
 	/* is there a zero character in there ? */	
 	if (memchr(buf, 0, len)) {
-		LOG(L_CRIT, "BUG: message with 0 in it\n");
+		LM_CRIT("message with 0 in it\n");
 		return 0;
 	}
 
@@ -115,8 +115,7 @@ static int dbg_msg_qa(char *buf, int len)
 			case ' ':	if (state==QA_SPACE) {
 							space_cnt++;
 							if (space_cnt==4) {
-								LOG(L_CRIT, "BUG(probably): DBG_MSG_QA: "
-									"too many spaces\n");
+								LM_CRIT("DBG_MSG_QA: too many spaces\n");
 								return 0;
 							}
 						} else space_cnt=0;
@@ -165,15 +164,15 @@ int probe_max_receive_buffer( int udp_sock )
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &ioptval,
 		    &ioptvallen) == -1 )
 	{
-		LOG(L_ERR, "ERROR: udp_init: getsockopt: %s\n", strerror(errno));
+		LM_ERR("getsockopt: %s\n", strerror(errno));
 		return -1;
 	}
 	if ( ioptval==0 ) 
 	{
-		LOG(L_DBG, "DEBUG: udp_init: SO_RCVBUF initially set to 0; resetting to %d\n",
+		LM_DBG("SO_RCVBUF initially set to 0; resetting to %d\n",
 			BUFFER_INCREMENT );
 		ioptval=BUFFER_INCREMENT;
-	} else LOG(L_INFO, "INFO: udp_init: SO_RCVBUF is initially %d\n", ioptval );
+	} else LM_INFO("SO_RCVBUF is initially %d\n", ioptval );
 	for (optval=ioptval; ;  ) {
 		/* increase size; double in initial phase, add linearly later */
 		if (phase==0) optval <<= 1; else optval+=BUFFER_INCREMENT;
@@ -181,12 +180,11 @@ int probe_max_receive_buffer( int udp_sock )
 			if (phase==1) break; 
 			else { phase=1; optval >>=1; continue; }
 		}
-		LOG(L_DBG, "DEBUG: udp_init: trying SO_RCVBUF: %d\n", optval );
+		LM_DBG("trying SO_RCVBUF: %d\n", optval );
 		if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
 			(void*)&optval, sizeof(optval)) ==-1){
 			/* Solaris returns -1 if asked size too big; Linux ignores */
-			LOG(L_DBG, "DEBUG: udp_init: SOL_SOCKET failed"
-					" for %d, phase %d: %s\n", optval, phase, strerror(errno));
+			LM_DBG("SOL_SOCKET failed for %d, phase %d: %s\n", optval, phase, strerror(errno));
 			/* if setting buffer size failed and still in the aggressive
 			   phase, try less aggressively; otherwise give up 
 			*/
@@ -201,13 +199,13 @@ int probe_max_receive_buffer( int udp_sock )
 		if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &voptval,
 		    &voptvallen) == -1 )
 		{
-			LOG(L_ERR, "ERROR: udp_init: getsockopt: %s\n", strerror(errno));
+			LM_ERR("getsockopt: %s\n", strerror(errno));
 			return -1;
 		} else {
-			LOG(L_DBG, "DEBUG: setting SO_RCVBUF; set=%d,verify=%d\n", 
+			LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n", 
 				optval, voptval);
 			if (voptval<optval) {
-				LOG(L_DBG, "DEBUG: setting SO_RCVBUF has no effect\n");
+				LM_DBG("setting SO_RCVBUF has no effect\n");
 				/* if setting buffer size failed and still in the aggressive
 				phase, try less aggressively; otherwise give up 
 				*/
@@ -221,10 +219,10 @@ int probe_max_receive_buffer( int udp_sock )
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &foptval,
 		    &foptvallen) == -1 )
 	{
-		LOG(L_ERR, "ERROR: udp_init: getsockopt: %s\n", strerror(errno));
+		LM_ERR("getsockopt: %s\n", strerror(errno));
 		return -1;
 	}
-	LOG(L_INFO, "INFO: udp_init: SO_RCVBUF is finally %d\n", foptval );
+	LM_INFO("SO_RCVBUF is finally %d\n", foptval );
 
 	return 0;
 
@@ -249,8 +247,7 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 		
 		if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,&mreq,
 			       sizeof(mreq))==-1){
-			LOG(L_ERR, "ERROR: setup_mcast_rcvr: setsockopt: %s\n",
-			    strerror(errno));
+			LM_ERR("setsockopt: %s\n", strerror(errno));
 			return -1;
 		}
 		
@@ -264,13 +261,12 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq6,
 #endif
 			       sizeof(mreq6))==-1){
-			LOG(L_ERR, "ERROR: setup_mcast_rcvr: setsockopt:%s\n",
-			    strerror(errno));
+			LM_ERR("setsockopt:%s\n", strerror(errno));
 			return -1;
 		}
 		
 	} else {
-		LOG(L_ERR, "ERROR: setup_mcast_rcvr: Unsupported protocol family\n");
+		LM_ERR("setup_mcast_rcvr: Unsupported protocol family\n");
 		return -1;
 	}
 	return 0;
@@ -290,26 +286,26 @@ int udp_init(struct socket_info* sock_info)
 /*
 	addr=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
 	if (addr==0){
-		LOG(L_ERR, "ERROR: udp_init: out of memory\n");
+		LM_ERR("out of memory\n");
 		goto error;
 	}
 */
 	sock_info->proto=PROTO_UDP;
 	if (init_su(addr, &sock_info->address, sock_info->port_no)<0){
-		LOG(L_ERR, "ERROR: udp_init: could not init sockaddr_union\n");
+		LM_ERR("could not init sockaddr_union\n");
 		goto error;
 	}
 	
 	sock_info->socket = socket(AF2PF(addr->s.sa_family), SOCK_DGRAM, 0);
 	if (sock_info->socket==-1){
-		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror(errno));
+		LM_ERR("socket: %s\n", strerror(errno));
 		goto error;
 	}
 	/* set sock opts? */
 	optval=1;
 	if (setsockopt(sock_info->socket, SOL_SOCKET, SO_REUSEADDR ,
 					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
+		LM_ERR("setsockopt: %s\n", strerror(errno));
 		goto error;
 	}
 	/* tos */
@@ -317,15 +313,13 @@ int udp_init(struct socket_info* sock_info)
 	if (addr->s.sa_family==AF_INET){
 		if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval, 
 				sizeof(optval)) ==-1){
-			LOG(L_WARN, "WARNING: udp_init: setsockopt tos: %s\n",
-					strerror(errno));
+			LM_WARN("setsockopt tos: %s\n", strerror(errno));
 			/* continue since this is not critical */
 		}
 	} else if (addr->s.sa_family==AF_INET6){
 		if (setsockopt(sock_info->socket, IPPROTO_IPV6, IPV6_TCLASS,
 					(void*)&optval, sizeof(optval)) ==-1) {
-			LOG(L_WARN, "WARNING: udp_init: setsockopt v6 tos: %s\n",
-					strerror(errno));
+			LM_WARN("setsockopt v6 tos: %s\n", strerror(errno));
 			/* continue since this is not critical */
 		}
 	}
@@ -335,7 +329,7 @@ int udp_init(struct socket_info* sock_info)
 	/* enable error receiving on unconnected sockets */
 	if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
 					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
+		LM_ERR("setsockopt: %s\n", strerror(errno));
 		goto error;
 	}
 #endif
@@ -345,7 +339,7 @@ int udp_init(struct socket_info* sock_info)
 	optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
 	if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
 			(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
+		LM_ERR("setsockopt: %s\n", strerror(errno));
 		goto error;
 	}
 #endif
@@ -360,8 +354,7 @@ int udp_init(struct socket_info* sock_info)
 		m_loop=mcast_loopback;
 		if (setsockopt(sock_info->socket, IPPROTO_IP, IP_MULTICAST_LOOP, 
 						&m_loop, sizeof(m_loop))==-1){
-			LOG(L_WARN, "WARNING: udp_init: setsockopt(IP_MULTICAST_LOOP):"
-						" %s\n", strerror(errno));
+			LM_WARN("setsockopt(IP_MULTICAST_LOOP): %s\n", strerror(errno));
 			/* it's only a warning because we might get this error if the
 			  network interface doesn't support multicasting -- andrei */
 		}
@@ -369,26 +362,22 @@ int udp_init(struct socket_info* sock_info)
 			m_ttl=mcast_ttl;
 			if (setsockopt(sock_info->socket, IPPROTO_IP, IP_MULTICAST_TTL,
 						&m_ttl, sizeof(m_ttl))==-1){
-				LOG(L_WARN, "WARNING: udp_init: setsockopt (IP_MULTICAST_TTL):"
-						" %s\n", strerror(errno));
+				LM_WARN("setsockopt (IP_MULTICAST_TTL): %s\n", strerror(errno));
 			}
 		}
 	} else if (addr->s.sa_family==AF_INET6){
 		if (setsockopt(sock_info->socket, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, 
 						&mcast_loopback, sizeof(mcast_loopback))==-1){
-			LOG(L_WARN, "WARNING: udp_init: setsockopt (IPV6_MULTICAST_LOOP):"
-					" %s\n", strerror(errno));
+			LM_WARN("setsockopt (IPV6_MULTICAST_LOOP): %s\n", strerror(errno));
 		}
 		if (mcast_ttl>=0){
 			if (setsockopt(sock_info->socket, IPPROTO_IP, IPV6_MULTICAST_HOPS,
 							&mcast_ttl, sizeof(mcast_ttl))==-1){
-				LOG(L_WARN, "WARNING: udp_init: setssckopt "
-						"(IPV6_MULTICAST_HOPS): %s\n", strerror(errno));
+				LM_WARN("setssckopt (IPV6_MULTICAST_HOPS): %s\n", strerror(errno));
 			}
 		}
 	} else {
-		LOG(L_ERR, "ERROR: udp_init: Unsupported protocol family %d\n",
-					addr->s.sa_family);
+		LM_ERR("Unsupported protocol family %d\n", addr->s.sa_family);
 		goto error;
 	}
 #endif /* USE_MCAST */
@@ -396,14 +385,13 @@ int udp_init(struct socket_info* sock_info)
 	if ( probe_max_receive_buffer(sock_info->socket)==-1) goto error;
 	
 	if (bind(sock_info->socket,  &addr->s, sockaddru_len(*addr))==-1){
-		LOG(L_ERR, "ERROR: udp_init: bind(%x, %p, %d) on %s: %s\n",
+		LM_ERR("bind(%x, %p, %d) on %s: %s\n",
 				sock_info->socket, &addr->s, 
 				(unsigned)sockaddru_len(*addr),
 				sock_info->address_str.s,
 				strerror(errno));
 		if (addr->s.sa_family==AF_INET6)
-			LOG(L_ERR, "ERROR: udp_init: might be caused by using a link "
-					" local address, try site local or global\n");
+			LM_ERR("might be caused by using a link local address, try site local or global\n");
 		goto error;
 	}
 
@@ -433,7 +421,7 @@ int udp_rcv_loop()
 
 	from=(union sockaddr_union*) pkg_malloc(sizeof(union sockaddr_union));
 	if (from==0){
-		LOG(L_ERR, "ERROR: udp_rcv_loop: out of memory\n");
+		LM_ERR("out of memory\n");
 		goto error;
 	}
 	memset(from, 0 , sizeof(union sockaddr_union));
@@ -450,8 +438,7 @@ int udp_rcv_loop()
 #ifdef DYN_BUF
 		buf=pkg_malloc(BUF_SIZE+1);
 		if (buf==0){
-			LOG(L_ERR, "ERROR: udp_rcv_loop: could not allocate receive"
-					 " buffer\n");
+			LM_ERR("could not allocate receive buffer\n");
 			goto error;
 		}
 #endif
@@ -463,8 +450,7 @@ int udp_rcv_loop()
 				DBG("udp_rcv_loop: packet with bad checksum received\n");
 				continue;
 			}
-			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom:[%d] %s\n",
-						errno, strerror(errno));
+			LM_ERR("recvfrom:[%d] %s\n", errno, strerror(errno));
 			if ((errno==EINTR)||(errno==EWOULDBLOCK)|| (errno==ECONNREFUSED))
 				continue; /* goto skip;*/
 			else goto error;
@@ -504,8 +490,7 @@ int udp_rcv_loop()
 #ifdef TRASH_ZEROTERMINATED_PACKETS
 		if (buf[len-1]==0) {
 			tmp=ip_addr2a(&ri.src_ip);
-			LOG(L_WARN, "WARNING: udp_rcv_loop: "
-					"upstream bug - 0-terminated packet from %s %d\n",
+			LM_WARN("upstream bug - 0-terminated packet from %s %d\n",
 					tmp, htons(ri.src_port));
 			len--;
 		}
@@ -513,14 +498,14 @@ int udp_rcv_loop()
 #endif
 #ifdef DBG_MSG_QA
 		if (!dbg_msg_qa(buf, len)) {
-			LOG(L_WARN, "WARNING: an incoming message didn't pass test,"
+			LM_WARN("an incoming message didn't pass test,"
 						"  drop it: %.*s\n", len, buf );
 			continue;
 		}
 #endif
 		if (ri.src_port==0){
 			tmp=ip_addr2a(&ri.src_ip);
-			LOG(L_INFO, "udp_rcv_loop: dropping 0 port packet from %s\n", tmp);
+			LM_INFO("dropping 0 port packet from %s\n", tmp);
 			continue;
 		}
 		
@@ -568,7 +553,7 @@ int udp_send(struct dest_info* dst, char *buf, unsigned len)
 #ifdef DBG_MSG_QA
 	/* aborts on error, does nothing otherwise */
 	if (!dbg_msg_qa( buf, len )) {
-		LOG(L_ERR, "ERROR: udp_send: dbg_msg_qa failed\n");
+		LM_ERR("dbg_msg_qa failed\n");
 		abort();
 	}
 #endif
@@ -582,16 +567,16 @@ int udp_send(struct dest_info* dst, char *buf, unsigned len)
 again:
 		n=sendto(dst->send_sock->socket, buf, len, 0, &dst->to.s, tolen);
 #ifdef XL_DEBUG
-		LOG(L_INFO, "INFO: send status: %d\n", n);
+		LM_INFO("send status: %d\n", n);
 #endif
 		if (unlikely(n==-1)){
 			su2ip_addr(&ip, &dst->to);
-			LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%u,0,%s:%d,%d):"
-					" %s(%d)\n", buf,len, ip_addr2a(&ip),
+			LM_ERR("sendto(sock,%p,%u,0,%s:%d,%d): %s(%d)\n",
+					buf,len, ip_addr2a(&ip),
 					su_getport(&dst->to), tolen, strerror(errno), errno);
 			if (errno==EINTR) goto again;
 			if (errno==EINVAL) {
-				LOG(L_CRIT,"CRITICAL: invalid sendtoparameters\n"
+				LM_CRIT("invalid sendtoparameters\n"
 				"one possible reason is the server is bound to localhost and\n"
 				"attempts to send to the net\n");
 			}
@@ -607,8 +592,8 @@ raw_again:
 								mtu);
 		if (unlikely(n==-1)){
 			su2ip_addr(&ip, &dst->to);
-			LOG(L_ERR, "ERROR: raw_iphdr_udp4_send(%d,%p,%u,...,%s:%d,%d):"
-					" %s(%d)\n", raw_udp4_send_sock, buf,len, ip_addr2a(&ip),
+			LM_ERR("raw_iphdr_udp4_send(%d,%p,%u,...,%s:%d,%d): %s(%d)\n",
+					raw_udp4_send_sock, buf,len, ip_addr2a(&ip),
 					su_getport(&dst->to), mtu, strerror(errno), errno);
 			if (errno==EINTR) goto raw_again;
 		}
