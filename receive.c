@@ -119,7 +119,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 	msg=pkg_malloc(sizeof(struct sip_msg));
 	if (msg==0) {
-		LOG(L_ERR, "ERROR: receive_msg: no mem for sip_msg\n");
+		LM_ERR("no mem for sip_msg\n");
 		goto error00;
 	}
 	msg_no++;
@@ -171,7 +171,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
-			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
+			LM_ERR("no via found in request\n");
 			STATS_BAD_MSG();
 			goto error02;
 		}
@@ -187,7 +187,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			){
 			if (tcpconn_add_alias(rcv_info->proto_reserved1, msg->via1->port,
 									rcv_info->proto)!=0){
-				LOG(L_ERR, " ERROR: receive_msg: tcp alias failed\n");
+				LM_ERR("tcp alias failed\n");
 				/* continue */
 			}
 		}
@@ -214,8 +214,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		set_route_type(REQUEST_ROUTE);
 		/* exec the routing script */
 		if (run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0)<0){
-			LOG(L_WARN, "WARNING: receive_msg: "
-					"error while trying script\n");
+			LM_WARN("error while trying script\n");
 			goto error_req;
 		}
 
@@ -234,7 +233,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
-			LOG(L_ERR, "ERROR: receive_msg: no via found in reply\n");
+			LM_ERR("no via found in reply\n");
 			STATS_BAD_RPL();
 			goto error02;
 		}
@@ -263,8 +262,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
 #ifndef NO_ONREPLY_ROUTE_ERROR
 			if (unlikely(ret<0)){
-				LOG(L_WARN, "WARNING: receive_msg: "
-						"error while trying onreply script\n");
+				LM_WARN("error while trying onreply script\n");
 				goto error_rpl;
 			}else
 #endif /* NO_ONREPLY_ROUTE_ERROR */
