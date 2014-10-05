@@ -18,30 +18,26 @@
 	<title>Overview</title>
 	<para>
 		This is a module to help with &nat; traversal and reuse
-	of tcp connections.  In particular, 
+		of <acronym>TCP</acronym> connections. In particular, 
 		it helps symmetric &ua;s that don't advertise they are symmetric 
-		and are not able to determine their public
-	address. 
+		and are not able to determine their public address. 
 	</para>
 	<para>
-		Function fix_nated_contact() rewrites Contact header field with request's source
-		address:port pair. Function fix_nated_sdp() adds the active direction ndication 
-		to &sdp; (flag 0x01) and updates source &ip; address too (flag 0x02). Function
-		fix_nated_register() exports exports the request's source address:port into an AVP
-		to be used during save() and should be used for REGISTER requests.
+		The function <function>fix_nated_contact()</function> rewrites the <quote>Contact</quote>
+		header field with request's source address:port pair. The function
+		<function>fix_nated_sdp()</function> adds the active direction indication 
+		to &sdp; (flag 0x01) and updates the source &ip; address too (flag 0x02). The function
+		<function>fix_nated_register()</function> exports exports the request's source
+		address:port into an AVP to be used during <function>save()</function> and should
+		be used for <quote>REGISTER</quote> requests.
 	</para>
         <para>
-		Note: fix_nated_contact changes the Contact header, thus it breaks the RFC.
-		Although usually this is not an issue, it may cause problems with strict
-		SIP clients.  An alternative is to use add_contact_alias() that
-		together with handle_ruri_alias() is standards
-	conforming and also supports reuse of TCP/TLS connections.
-	</para>
-	<para>
-		Known devices that get along over &nat;s with nathelper are ATAs 
-		(as clients) and Cisco Gateways (since 12.2(T)) as servers.  See <ulink
-		url="http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html">
-		http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html"></ulink>
+		Note: <function>fix_nated_contact</function> changes the <quote>Contact</quote>
+		header, thus it breaks the RFC. Although usually this is not an issue, it may
+		cause problems with strict SIP clients.  An alternative is to use
+		<function>add_contact_alias()</function> that together with
+		the <function>handle_ruri_alias()</function> is standards conforming and also
+		supports reuse of TCP/TLS connections.
 	</para>
 	</section>
 
@@ -128,7 +124,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="nathelper.p.force_socket">
 		<title><varname>force_socket</varname> (string)</title>
 		<para>
 		Socket to be used when sending NAT pings for UDP communication.
@@ -148,7 +144,7 @@ modparam("nathelper", "force_socket", "localhost:33333")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.natping_interval">
 		<title><varname>natping_interval</varname> (integer)</title>
 		<para>
 		Period of time in seconds between sending the NAT pings to all 
@@ -173,7 +169,7 @@ modparam("nathelper", "natping_interval", 10)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.ping_nated_only">
 		<title><varname>ping_nated_only</varname> (integer)</title>
 		<para>
 		If this variable is set then only contacts that have 
@@ -194,7 +190,7 @@ modparam("nathelper", "ping_nated_only", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.natping_processes">
 		<title><varname>natping_processes</varname> (integer)</title>
 		<para>
 		How many timer processes should be created by the module for the
@@ -214,7 +210,7 @@ modparam("nathelper", "natping_processes", 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.natping_socket">
 		<title><varname>natping_socket</varname> (string)</title>
 		<para>
 		Spoof the natping's source-ip to this address. Works only for IPv4.
@@ -233,7 +229,7 @@ modparam("nathelper", "natping_socket", "192.168.1.1:5006")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.received_avp">
 		<title><varname>received_avp</varname> (str)</title>
 		<para>
 		The name of the Attribute-Value-Pair (AVP) used to store the URI 
@@ -245,8 +241,8 @@ modparam("nathelper", "natping_socket", "192.168.1.1:5006")
 		</para>
 		<note>
 		<para>
-		You must set this parameter if you use "fix_nated_register". In such
-		case you must set the parameter with same name of "registrar"
+		You must set this parameter if you use <function>fix_nated_register</function>. In such
+		case you must set the parameter with same name in the <quote>registrar</quote>
 		module to same value.
 		</para>
 		</note>
@@ -264,10 +260,10 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.sipping_bflag">
 		<title><varname>sipping_bflag</varname> (integer)</title>
 		<para>
-		What branch flag should be used by the module to identify NATed 
+		Which branch flag should be used by the module to identify NATed 
 		contacts for which it should perform NAT ping via a SIP request 
 		instead if dummy UDP package.
 		</para>
@@ -285,7 +281,7 @@ modparam("nathelper", "sipping_bflag", 7)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.sipping_from">
 		<title><varname>sipping_from</varname> (string)</title>
 		<para>
 		The parameter sets the SIP URI to be used in generating the SIP
@@ -307,7 +303,7 @@ modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.sipping_method">
 		<title><varname>sipping_method</varname> (string)</title>
 		<para>
 		The parameter sets the SIP method to be used in generating the SIP
@@ -327,7 +323,7 @@ modparam("nathelper", "sipping_method", "INFO")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.natping_disable_bflag">
 		<title><varname>natping_disable_bflag</varname> (integer)</title>
 		<para>
 		What branch flag should be used by the module to disable NAT pings
@@ -349,11 +345,11 @@ modparam("nathelper", "natping_disable_bflag", 8)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.nortpproxy_str">
 		<title><varname>nortpproxy_str</varname> (string)</title>
 		<para>
 		The parameter sets the SDP attribute used by nathelper to mark
-		the packet SDP informations have already been mangled.
+		the packet SDP that information have already been mangled.
 		</para>
 		<para>
 		If empty string, no marker will be added or checked.
@@ -375,7 +371,7 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.p.keepalive_timeout">
 		<title><varname>keepalive_timeout</varname> (int)</title>
 		<para>
 		The parameter sets the interval in secods after which a natted
@@ -429,12 +425,12 @@ modparam("nathelper", "udpping_from_path", 1)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="nathelper.f.fix_nated_contact">
 		<title>
 		<function moreinfo="none">fix_nated_contact()</function>
 		</title>
 		<para>
-		Rewrites Contact <acronym>HF</acronym> to contain request's source 
+		Rewrites the <quote>Contact</quote> header to contain the request's source 
 		address:port.
 		</para>
 		<para>
@@ -449,7 +445,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.f.fix_nated_sdp">
 		<title>
 		<function moreinfo="none">fix_nated_sdp(flags [, ip_address])</function>
 		</title>
@@ -511,18 +507,17 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.f.add_rcv_param">
 		<title>
 		<function moreinfo="none">add_rcv_param([flag])</function>,
 		</title>
 		<para>
-		Add received parameter to Contact header fields or Contact URI.
-		The parameter will 
-		contain URI created from the source IP, port, and protocol of the 
-		packet containing the SIP message. The parameter can be then 
-		processed by another registrar, this is useful, for example, when 
-		replicating register messages using t_replicate function to
-		another registrar.
+		Add a received parameter to the <quote>Contact</quote> header fields
+		or the Contact URI. The parameter will contain the URI created from the
+		source IP, port, and protocol of the packet containing the SIP message.
+		The parameter can be then processed by another registrar. This is useful,
+		for example, when replicating register messages using <function>t_replicate</function>
+		function to another registrar.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -548,7 +543,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.f.fix_nated_register">
 		<title>
 		<function moreinfo="none">fix_nated_register()</function>
 		</title>
@@ -559,9 +554,9 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 		registrar will store it in the received cloumn in the location table.
 		</para>
 		<para>
-		Note: You have to set the received_avp parameter of the nathelper module
-		and the registrar module (both module parameters must have the same value)
-		to use this function.
+		Note: You have to set the <quote>received_avp</quote> parameter of the
+		nathelper module and the registrar module (both module parameters must
+		have the same value) to use this function.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -575,7 +570,7 @@ fix_nated_register();
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="nathelper.f.nat_uac_test">
 		<title>
 			<function>nat_uac_test(flags)</function>
 		</title>
@@ -586,37 +581,38 @@ fix_nated_register();
 		<para>Meaning of the flags is as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>1</emphasis> -  Contact header field is searched 
-			for occurrence of RFC1918 or rfc6598 addresses.
+			<emphasis>1</emphasis> -  The <quote>Contact</quote> header field is searched 
+			for occurrence of RFC1918 or RFC6598 addresses.
 			</para></listitem>
 			<listitem><para>
 			<emphasis>2</emphasis> -  the "received" test is used: address
-			in Via is compared against source IP address of signaling
+			in the <quote>Via</quote> header is compared against source
+			IP address of signaling
 			</para></listitem>
 			<listitem><para>
-			<emphasis>4</emphasis> -  Top Most VIA is searched 
-			for occurrence of RFC1918 or rfc6598 addresses
+			<emphasis>4</emphasis> -  The Top Most <quote>Via</quote> is searched 
+			for occurrence of RFC1918 or RFC6598 addresses
 			</para></listitem>
 			<listitem><para>
-			<emphasis>8</emphasis> -  SDP is searched for occurrence of 
-			RFC1918 or rfc6598 addresses
+			<emphasis>8</emphasis> -  The SDP is searched for occurrence of 
+			RFC1918 or RFC6598 addresses
 			</para></listitem>
 			<listitem><para>
-			<emphasis>16</emphasis> -  test if the source port is different
-			from the port in Via 
+			<emphasis>16</emphasis> -  Test if the source port is different
+			from the port in the <quote>Via</quote> header
 			</para></listitem>
 			<listitem><para>
-			<emphasis>32</emphasis> -  test if the source IP address of
-			signaling is a RFC1918 or rfc6598 address
+			<emphasis>32</emphasis> -  Test if the source IP address of
+			signaling is a RFC1918 or RFC6598 address
 			</para></listitem>
 			<listitem><para>
-			<emphasis>64</emphasis> -  test if the source connection of
+			<emphasis>64</emphasis> -  Test if the source connection of
 			signaling is a WebSocket
 			</para></listitem>
 			<listitem><para>
-			<emphasis>128</emphasis> -  test if the Contact URI port differs
-			from the source port of the request (Warning: this is might be legal
-			or even intended combination in non natted scenarios)
+			<emphasis>128</emphasis> -  Test if the <quote>Contact</quote> header
+			URI port differs from the source port of the request (Warning: this is
+			might be legal or even intended combination in non NATted scenarios)
 			</para></listitem>
 			</itemizedlist>
 		<para>
@@ -628,7 +624,7 @@ fix_nated_register();
 		</para>
 	</section>
 
-	<section>
+	<section id="nathelper.f.is_rfc1918">
 		<title>
 		<function>is_rfc1918(ip_address)</function>
 		</title>
@@ -641,12 +637,12 @@ fix_nated_register();
 		</para>
 	</section>
 
-	<section>
+	<section id="nathelper.f.add_contact_alias">
 		<title>
 		<function moreinfo="none">add_contact_alias([ip_addr, port, proto])</function>
 		</title>
 		<para>
-		Adds ;alias=ip~port~transport parameter to contact URI
+		Adds an <quote>;alias=ip~port~transport</quote> parameter to the contact URI
 		containing either received ip, port, and transport protocol
 		or those given as parameters.
 		</para>
@@ -670,24 +666,25 @@ fix_nated_register();
 		</example>
 	</section>
 
-	<section>
+	<section id="nathelper.f.handle_ruri_alias">
 		<title>
 		<function moreinfo="none">handle_ruri_alias()</function>
 		</title>
 		<para>
-		Checks if Request URI has alias param and if so, removes
-		it and sets $du based on its value.  Note that this
-		means that routing of request is based on ;alias
-		parameter value of Request URI rather than Request URI
-		itself. If you call handle_ruri_alias() on a request,
-		make thus sure that you screen alias parameter value of
-		Request URI the same way as you would screen
+		Checks if the Request URI has an <quote>alias</quote>
+		parameter and if so, removes it and sets the <quote>$du</quote> based
+		on its value.  Note that this means that routing of request is based on 
+		<quote>;alias</quote> parameter value of the Request URI rather than 
+		the Request URI itself. If you call <function>handle_ruri_alias()</function>
+		on a request, make sure that you screen the alias parameter value of
+		Request URI the same way as you would screen the
 		Request URI itself.
 		</para>
 		<para>
-		Returns 1 if ;alias param was found and $du was set and
-		$ru rewritten, 2 if alias param was not found and
-		nothing was done, or -1 in case of error.
+		Returns <emphasis>1</emphasis> if <quote>;alias</quote> parameter was
+		found and <quote>$du</quote> was set and the <quote>$ru</quote> rewritten,
+		<emphasis>2</emphasis> if the alias parameter was not found and
+		nothing was done, or <emphasis>-1</emphasis> in case of error.
 		</para>
 		<para>
 		This function can be used from
@@ -722,10 +719,10 @@ fix_nated_register();
 		<function moreinfo="none">set_contact_alias()</function>
 		</title>
 		<para>
-		Adds ;alias=ip~port~transport parameter to contact URI
-		containing received ip, port, and transport protocol. The new
-		contact URI is immediately visible to other modules in the
-		way fix_nated_contact() does it.
+		Adds an <quote>;alias=ip~port~transport</quote> parameter to the
+		contact URI containing the received ip, port, and transport protocol.
+		The new contact URI is immediately visible to other modules in the
+		way the <function>fix_nated_contact()</function> does it.
 		</para>
 		<para>
 		This function can be used from
@@ -793,7 +790,7 @@ fix_nated_register();
 
 	<section>
 		<title><acronym>MI</acronym> Commands</title>
-		<section>
+		<section id="nathelper.m.nh_enable_ping">
 			<title><function moreinfo="none">nh_enable_ping</function></title>
 			<para>
 			Enables natping if parameter value greater than 0.
@@ -817,7 +814,7 @@ $ &ctltool; fifo nh_enable_ping 1
 	<section>
 		<title>Selects</title>
 
-		<section id="nathelper.rewrite_contact">
+		<section id="nathelper.s.rewrite_contact">
 		<title>@nathelper.rewrite_contact[n]</title>
 		<para>
 			Get n-th Contact value with IP:Port rewritten to source ip:port. N is counted from 1.

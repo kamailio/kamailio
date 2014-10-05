@@ -168,27 +168,22 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This is a module to help with NAT traversal and reuse of tcp
+   This is a module to help with NAT traversal and reuse of TCP
    connections. In particular, it helps symmetric UAs that don't advertise
    they are symmetric and are not able to determine their public address.
 
-   Function fix_nated_contact() rewrites Contact header field with
-   request's source address:port pair. Function fix_nated_sdp() adds the
-   active direction ndication to SDP (flag 0x01) and updates source IP
-   address too (flag 0x02). Function fix_nated_register() exports exports
-   the request's source address:port into an AVP to be used during save()
-   and should be used for REGISTER requests.
+   The function fix_nated_contact() rewrites the "Contact" header field
+   with request's source address:port pair. The function fix_nated_sdp()
+   adds the active direction indication to SDP (flag 0x01) and updates the
+   source IP address too (flag 0x02). The function fix_nated_register()
+   exports exports the request's source address:port into an AVP to be
+   used during save() and should be used for "REGISTER" requests.
 
-   Note: fix_nated_contact changes the Contact header, thus it breaks the
-   RFC. Although usually this is not an issue, it may cause problems with
-   strict SIP clients. An alternative is to use add_contact_alias() that
-   together with handle_ruri_alias() is standards conforming and also
-   supports reuse of TCP/TLS connections.
-
-   Known devices that get along over NATs with nathelper are ATAs (as
-   clients) and Cisco Gateways (since 12.2(T)) as servers. See
-   http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature
-   _guide09186a0080110bf9.html">
+   Note: fix_nated_contact changes the "Contact" header, thus it breaks
+   the RFC. Although usually this is not an issue, it may cause problems
+   with strict SIP clients. An alternative is to use add_contact_alias()
+   that together with the handle_ruri_alias() is standards conforming and
+   also supports reuse of TCP/TLS connections.
 
 2. NAT pinging types
 
@@ -318,8 +313,8 @@ modparam("nathelper", "natping_socket", "192.168.1.1:5006")
 
 Note
 
-   You must set this parameter if you use "fix_nated_register". In such
-   case you must set the parameter with same name of "registrar" module to
+   You must set this parameter if you use fix_nated_register. In such case
+   you must set the parameter with same name in the "registrar" module to
    same value.
 
    Default value is "NULL" (disabled).
@@ -331,7 +326,7 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 
 4.7. sipping_bflag (integer)
 
-   What branch flag should be used by the module to identify NATed
+   Which branch flag should be used by the module to identify NATed
    contacts for which it should perform NAT ping via a SIP request instead
    if dummy UDP package.
 
@@ -385,7 +380,7 @@ modparam("nathelper", "natping_disable_bflag", 8)
 4.11. nortpproxy_str (string)
 
    The parameter sets the SDP attribute used by nathelper to mark the
-   packet SDP informations have already been mangled.
+   packet SDP that information have already been mangled.
 
    If empty string, no marker will be added or checked.
 
@@ -445,7 +440,8 @@ modparam("nathelper", "udpping_from_path", 1)
 
 5.1. fix_nated_contact()
 
-   Rewrites Contact HF to contain request's source address:port.
+   Rewrites the "Contact" header to contain the request's source
+   address:port.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
@@ -487,12 +483,12 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
 5.3. add_rcv_param([flag]),
 
-   Add received parameter to Contact header fields or Contact URI. The
-   parameter will contain URI created from the source IP, port, and
-   protocol of the packet containing the SIP message. The parameter can be
-   then processed by another registrar, this is useful, for example, when
-   replicating register messages using t_replicate function to another
-   registrar.
+   Add a received parameter to the "Contact" header fields or the Contact
+   URI. The parameter will contain the URI created from the source IP,
+   port, and protocol of the packet containing the SIP message. The
+   parameter can be then processed by another registrar. This is useful,
+   for example, when replicating register messages using t_replicate
+   function to another registrar.
 
    Meaning of the parameters is as follows:
      * flag - flags to indicate if the parameter should be added to
@@ -516,7 +512,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
    appended as "received" parameter to Contact in 200 OK and registrar
    will store it in the received cloumn in the location table.
 
-   Note: You have to set the received_avp parameter of the nathelper
+   Note: You have to set the "received_avp" parameter of the nathelper
    module and the registrar module (both module parameters must have the
    same value) to use this function.
 
@@ -533,20 +529,22 @@ fix_nated_register();
    parameter determines what heuristics is used.
 
    Meaning of the flags is as follows:
-     * 1 - Contact header field is searched for occurrence of RFC1918 or
-       rfc6598 addresses.
-     * 2 - the "received" test is used: address in Via is compared against
-       source IP address of signaling
-     * 4 - Top Most VIA is searched for occurrence of RFC1918 or rfc6598
+     * 1 - The "Contact" header field is searched for occurrence of
+       RFC1918 or RFC6598 addresses.
+     * 2 - the "received" test is used: address in the "Via" header is
+       compared against source IP address of signaling
+     * 4 - The Top Most "Via" is searched for occurrence of RFC1918 or
+       RFC6598 addresses
+     * 8 - The SDP is searched for occurrence of RFC1918 or RFC6598
        addresses
-     * 8 - SDP is searched for occurrence of RFC1918 or rfc6598 addresses
-     * 16 - test if the source port is different from the port in Via
-     * 32 - test if the source IP address of signaling is a RFC1918 or
-       rfc6598 address
-     * 64 - test if the source connection of signaling is a WebSocket
-     * 128 - test if the Contact URI port differs from the source port of
-       the request (Warning: this is might be legal or even intended
-       combination in non natted scenarios)
+     * 16 - Test if the source port is different from the port in the
+       "Via" header
+     * 32 - Test if the source IP address of signaling is a RFC1918 or
+       RFC6598 address
+     * 64 - Test if the source connection of signaling is a WebSocket
+     * 128 - Test if the "Contact" header URI port differs from the source
+       port of the request (Warning: this is might be legal or even
+       intended combination in non NATted scenarios)
 
    All flags can be bitwise combined, the test returns true if any of the
    tests identified a NAT.
@@ -563,9 +561,9 @@ fix_nated_register();
 
 5.7. add_contact_alias([ip_addr, port, proto])
 
-   Adds ;alias=ip~port~transport parameter to contact URI containing
-   either received ip, port, and transport protocol or those given as
-   parameters.
+   Adds an ";alias=ip~port~transport" parameter to the contact URI
+   containing either received ip, port, and transport protocol or those
+   given as parameters.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.
@@ -583,16 +581,16 @@ fix_nated_register();
 
 5.8. handle_ruri_alias()
 
-   Checks if Request URI has alias param and if so, removes it and sets
-   $du based on its value. Note that this means that routing of request is
-   based on ;alias parameter value of Request URI rather than Request URI
-   itself. If you call handle_ruri_alias() on a request, make thus sure
-   that you screen alias parameter value of Request URI the same way as
-   you would screen Request URI itself.
+   Checks if the Request URI has an "alias" parameter and if so, removes
+   it and sets the "$du" based on its value. Note that this means that
+   routing of request is based on ";alias" parameter value of the Request
+   URI rather than the Request URI itself. If you call handle_ruri_alias()
+   on a request, make sure that you screen the alias parameter value of
+   Request URI the same way as you would screen the Request URI itself.
 
-   Returns 1 if ;alias param was found and $du was set and $ru rewritten,
-   2 if alias param was not found and nothing was done, or -1 in case of
-   error.
+   Returns 1 if ";alias" parameter was found and "$du" was set and the
+   "$ru" rewritten, 2 if the alias parameter was not found and nothing was
+   done, or -1 in case of error.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
@@ -618,10 +616,10 @@ fix_nated_register();
 
 5.9. set_contact_alias()
 
-   Adds ;alias=ip~port~transport parameter to contact URI containing
-   received ip, port, and transport protocol. The new contact URI is
-   immediately visible to other modules in the way fix_nated_contact()
-   does it.
+   Adds an ";alias=ip~port~transport" parameter to the contact URI
+   containing the received ip, port, and transport protocol. The new
+   contact URI is immediately visible to other modules in the way the
+   fix_nated_contact() does it.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and FAILURE_ROUTE.
