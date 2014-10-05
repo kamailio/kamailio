@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # Script for maintaining Kamailio Berkeley DB tables
 # Copyright (C) 2007 Cisco Systems
 #
@@ -59,6 +57,19 @@ if [ $ret -eq 0 ] ; then
 fi ;
 
 
+which db5.0_dump > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	DUMP_CMD="db5.0_dump"
+fi ;
+
+which db5.1_dump > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	DUMP_CMD="db5.1_dump"
+fi ;
+
+
 #berkeley db utility program that imports data from plain text file
 #small hack to autodetect the db load command, debian prefix the version..
 
@@ -84,6 +95,19 @@ which db4.6_load > /dev/null
 ret=$?
 if [ $ret -eq 0 ] ; then
 	LOAD_CMD="db4.6_load"
+fi ;
+
+
+which db5.0_load > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	LOAD_CMD="db5.0_load"
+fi ;
+
+which db5.1_load > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	LOAD_CMD="db5.1_load"
 fi ;
 
 # path to the database schemas
