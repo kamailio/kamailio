@@ -1,10 +1,11 @@
 #!/bin/bash 
 #
-# $Id$
-#
 # control tool for maintaining Kamailio databases
 #
 #===================================================================
+
+### version for this script
+VERSION='4.2.0'
 
 PATH=$PATH:/usr/local/sbin/
 
@@ -13,6 +14,15 @@ PATH=$PATH:/usr/local/sbin/
 TEST="false"
 
 ### include resource files, if any
+which readlink > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	KAMCTLFULLPATH=$(readlink -f "$0")
+	KAMCTLDIRPATH=$(dirname "$KAMCTLFULLPATH")
+	if [ -f $KAMCTLDIRPATH/kamctlrc ]; then
+		. $KAMCTLDIRPATH/kamctlrc
+	fi
+fi
 if [ -f /etc/kamailio/kamctlrc ]; then
 	. /etc/kamailio/kamctlrc
 fi
@@ -29,9 +39,6 @@ if [ $TEST = "true" ]; then
 	fi
 fi
 
-
-### version for this script
-VERSION='$Revision$'
 
 if [ -z "$MYDIR" ] ; then
 	MYDIR=`dirname $0`
