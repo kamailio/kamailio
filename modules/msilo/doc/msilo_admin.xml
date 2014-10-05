@@ -93,7 +93,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="msilo.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		Database &url;.
@@ -113,7 +113,7 @@ modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.db_table">
 		<title><varname>db_table</varname> (string)</title>
 		<para>
 		The name of table where to store the messages.
@@ -132,7 +132,7 @@ modparam("msilo", "db_table", "silo")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.from_address">
 		<title><varname>from_address</varname> (string)</title>
 		<para>
 		The &sip; address used to inform users that destination of their 
@@ -155,10 +155,10 @@ modparam("msilo", "from_address", "sip:$rU@example.org")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.contact_hdr">
 		<title><varname>contact_hdr</varname> (string)</title>
 		<para>
-		The value of the Contact header (including header name and ending
+		The value of the <quote>Contact</quote> header (including header name and ending
 		\r\n) to be added in notification messages.
 		It can contain pseudo-variables.
 		</para>
@@ -176,7 +176,7 @@ modparam("msilo", "contact_hdr", "Contact: &lt;sip:null@example.com&gt;\r\n")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.extra_hdrs">
 		<title><varname>extra_hdrs</varname> (string)</title>
 		<para>
 		Extra headers (each ending with	\r\n) to be added in
@@ -197,7 +197,7 @@ modparam("msilo", "extra_hdrs", "X-Extra: $tu\r\nY-Extra: foo\r\n")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.offline_message">
 		<title><varname>offline_message</varname> (string)</title>
 		<para>
 		The body of the notification message.
@@ -218,7 +218,7 @@ modparam("msilo", "offline_message", "&lt;em&gt;I am offline!&lt;/em&gt;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.content_type_hdr">
 		<title><varname>content_type_hdr</varname> (string)</title>
 		<para>
 		The value of the Content-Type header (including header name and ending
@@ -241,7 +241,7 @@ modparam("msilo", "content_type_hdr", "Content-Type: text/html\r\n")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.reminder">
 		<title><varname>reminder</varname> (string)</title>
 		<para>
 		The &sip; address used to send reminder messages. If this value
@@ -261,11 +261,11 @@ modparam("msilo", "reminder", "sip:registrar@example.org")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.outbound_proxy">
 		<title><varname>outbound_proxy</varname> (string)</title>
 		<para>
 		The &sip; address used as next hop when sending the message. Very
-		useful when using &kamailio; with a domain name not in DNS, or when
+		useful when using &kamailio; with a domain name not in <acronym>DNS</acronym>, or when
 		using a separate &kamailio; instance for msilo processing. If not set,
 		the message will be sent to the address in destination URI.
 		</para>
@@ -283,7 +283,7 @@ modparam("msilo", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.expire_time">
 		<title><varname>expire_time</varname> (int)</title>
 		<para>
 		Expire time of stored messages - seconds. When this time passed, the message is
@@ -303,7 +303,7 @@ modparam("msilo", "expire_time", 36000)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.check_time">
 		<title><varname>check_time</varname> (int)</title>
 		<para>
 		Timer interval to check if dumped messages are sent OK - seconds. The module keeps
@@ -324,7 +324,7 @@ modparam("msilo", "check_time", 10)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.send_time">
 		<title><varname>send_time</varname> (int)</title>
 		<para>
 		Timer interval in seconds to check if there are reminder messages.
@@ -348,7 +348,7 @@ modparam("msilo", "send_time", 60)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.clean_period">
 		<title><varname>clean_period</varname> (int)</title>
 		<para>
 		Number of <quote>check_time</quote> cycles when to check if
@@ -368,11 +368,11 @@ modparam("msilo", "clean_period", 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.use_contact">
 		<title><varname>use_contact</varname> (int)</title>
 		<para>
-		Turns on/off the usage of the Contact address to send notification
-		back to sender whose message is stored by MSILO.
+		Turns on/off the usage of the <quote>Contact</quote> address to send notification
+		back to sender whose message is stored by <acronym>MSILO</acronym>.
 		</para>
 		<para>
 		<emphasis>
@@ -389,7 +389,7 @@ modparam("msilo", "use_contact", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="msilo.p.sc_mid">
 		<title><varname>sc_mid</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing message id. 
@@ -405,7 +405,7 @@ modparam("msilo", "sc_mid", "other_mid")
 		</example>
     </section>
 
-	<section>
+	<section id="msilo.p.sc_from">
 		<title><varname>sc_from</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing the source address. 
@@ -420,7 +420,7 @@ modparam("msilo", "sc_from", "source_address")
 </programlisting>
 		</example>
     </section>
-	<section>
+	<section id="msilo.p.sc_to">
 		<title><varname>sc_to</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing the destination address. 
@@ -435,7 +435,7 @@ modparam("msilo", "sc_to", "destination_address")
 </programlisting>
 		</example>
     </section>
-	<section>
+	<section id="msilo.p.sc_uri_user">
 		<title><varname>sc_uri_user</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing the user name.
@@ -450,7 +450,7 @@ modparam("msilo", "sc_uri_user", "user")
 </programlisting>
 		</example>
     </section>
-	<section>
+	<section id="msilo.p.sc_uri_host">
 		<title><varname>sc_uri_host</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing the domain. 
@@ -465,7 +465,7 @@ modparam("msilo", "sc_uri_host", "domain")
 </programlisting>
 		</example>
     </section>
-	<section>
+	<section id="msilo.p.sc_body">
 		<title><varname>sc_body</varname> (string)</title>
 		<para>
 		The name of the column storing the message body in silo table. 
@@ -480,7 +480,7 @@ modparam("msilo", "sc_body", "message_body")
 </programlisting>
 		</example>
     </section>
-	<section>
+	<section id="msilo.p.sc_ctype">
 		<title><varname>sc_ctype</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing content type.
@@ -495,7 +495,7 @@ modparam("msilo", "sc_ctype", "content_type")
 </programlisting>
 		</example>
     </section>
-	<section>
+	<section id="msilo.p.sc_exp_time">
 		<title><varname>sc_exp_time</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing the expire time of the message. 
@@ -510,7 +510,7 @@ modparam("msilo", "sc_exp_time", "expire_time")
 </programlisting>
 		</example>
     </section>
-	<section>
+	<section id="msilo.p.sc_inc_time">
 		<title><varname>sc_inc_time</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing the incoming time of the message. 
@@ -525,7 +525,7 @@ modparam("msilo", "sc_inc_time", "incoming_time")
 </programlisting>
 		</example>
     </section>
-	<section>
+	<section id="msilo.p.sc_snd_time">
 		<title><varname>sc_snd_time</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing the send time for the reminder. 
@@ -541,7 +541,7 @@ modparam("msilo", "sc_snd_time", "send_reminder_time")
 		</example>
     </section>
 
-	<section>
+	<section id="msilo.p.snd_time_avp">
 		<title><varname>snd_time_avp</varname> (str)</title>
 		<para>
 		The name of an AVP which may contain the time when to sent
@@ -550,7 +550,7 @@ modparam("msilo", "sc_snd_time", "send_reminder_time")
 		<para>
 		If the parameter is not set, the module does not look for this AVP. If
 		the value is set to a valid AVP name, then the module expects in the AVP
-		to be a time value in format YYYYMMDDHHMMSS (e.g., 20060101201500).
+		to be a time value in format <quote>YYYYMMDDHHMMSS</quote> (e.g., 20060101201500).
 		</para>
 		<para>
 		<emphasis>
@@ -567,7 +567,7 @@ modparam("msilo", "snd_time_avp", "$avp(i:123)")
 		</example>
 	</section>
 
-	<section>
+	<section id="msilo.p.add_date">
 		<title><varname>add_date</varname> (int)</title>
 		<para>
 		Wheter to add as prefix the date when the message was stored.
@@ -586,7 +586,7 @@ modparam("msilo", "add_date", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.max_messages">
 		<title><varname>max_messages</varname> (int)</title>
 		<para>
 		Maximum number of stored message for an AoR.  Value 0
@@ -606,7 +606,7 @@ modparam("msilo", "max_messages", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.p.add_contact">
 		<title><varname>add_contact</varname> (int)</title>
 		<para>
 		Wheter to add contact header to generated messages. The
@@ -628,7 +628,7 @@ modparam("msilo", "add_contact", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="msilo.p.extra_hdrs_avp">
 		<title><varname>extra_hdrs_avp</varname> (str)</title>
 		<para>
 		Name of an AVP which may contain extra headers that are
@@ -659,7 +659,7 @@ modparam("msilo", "extra_hdrs_avp", "$avp(msilo_extra_hdrs)")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="msilo.f.m_store">
 		<title><function moreinfo="none">m_store([owner])</function></title>
 		<para>
 		The method stores certain parts of the current &sip; request (it 
@@ -693,7 +693,7 @@ m_store("$tu");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="msilo.f.m_dump">
 		<title><function moreinfo="none">m_dump([owner])</function></title>
 		<para>
 		The method sends stored messages for the &sip; user that is going to 

@@ -263,7 +263,7 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.1. Set the "db_url" parameter
 ...
@@ -298,8 +298,9 @@ modparam("msilo", "from_address", "sip:$rU@example.org")
 
 3.4. contact_hdr (string)
 
-   The value of the Contact header (including header name and ending \r\n)
-   to be added in notification messages. It can contain pseudo-variables.
+   The value of the "Contact" header (including header name and ending
+   \r\n) to be added in notification messages. It can contain
+   pseudo-variables.
 
    Default value is "NULL".
 
@@ -426,8 +427,8 @@ modparam("msilo", "clean_period", 3)
 
 3.14. use_contact (int)
 
-   Turns on/off the usage of the Contact address to send notification back
-   to sender whose message is stored by MSILO.
+   Turns on/off the usage of the "Contact" address to send notification
+   back to sender whose message is stored by MSILO.
 
    Default value is "1 (0 = off, 1 = on)".
 
@@ -556,7 +557,8 @@ modparam("msilo", "sc_snd_time", "send_reminder_time")
 
    If the parameter is not set, the module does not look for this AVP. If
    the value is set to a valid AVP name, then the module expects in the
-   AVP to be a time value in format YYYYMMDDHHMMSS (e.g., 20060101201500).
+   AVP to be a time value in format "YYYYMMDDHHMMSS" (e.g.,
+   20060101201500).
 
    Default value is "null".
 
