@@ -53,7 +53,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 	}
 	/* A NULL string is a SQL NULL value, otherwise its an empty value */
 	if (!_s) {
-		LM_DBG("converting NULL value");
+		LM_DBG("converting NULL value\n");
 		memset(_v, 0, sizeof(db_val_t));
 			/* Initialize the string pointers to a dummy empty
 			 * string so that we do not crash when the NULL flag
@@ -124,7 +124,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 				LM_ERR("no private memory left\n");
 				return -6;
 			}
-			LM_DBG("allocate %d bytes memory for STRING at %p", _l + 1, VAL_STRING(_v));
+			LM_DBG("allocate %d bytes memory for STRING at %p\n", _l + 1, VAL_STRING(_v));
 			strncpy((char*)VAL_STRING(_v), _s, _l);
 			((char*)VAL_STRING(_v))[_l] = '\0';
 			VAL_FREE(_v) = 1;
@@ -144,7 +144,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 				LM_ERR("no private memory left\n");
 				return -7;
 			}
-			LM_DBG("allocate %d bytes memory for STR at %p", _l, VAL_STR(_v).s);
+			LM_DBG("allocate %d bytes memory for STR at %p\n", _l, VAL_STR(_v).s);
 			strncpy(VAL_STR(_v).s, _s, _l);
 			VAL_FREE(_v) = 1;
 		}
@@ -175,7 +175,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 				LM_ERR("no private memory left\n");
 				return -9;
 			}
-			LM_DBG("allocate %d bytes memory for BLOB at %p", _l, VAL_BLOB(_v).s);
+			LM_DBG("allocate %d bytes memory for BLOB at %p\n", _l, VAL_BLOB(_v).s);
 			strncpy(VAL_BLOB(_v).s, _s, _l);
 			VAL_FREE(_v) = 1;
 		}
