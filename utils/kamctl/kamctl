@@ -1,7 +1,5 @@
 #!/bin/bash
 #
-# $Id$
-#
 # control tool for maintaining Kamailio
 #
 #===================================================================
@@ -16,6 +14,16 @@ PATH=$PATH:/usr/local/sbin/
 TEST="false"
 
 ### include config files
+
+which readlink > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	KAMCTLFULLPATH=$(readlink -f "$0")
+	KAMCTLDIRPATH=$(dirname "$KAMCTLFULLPATH")
+	if [ -f $KAMCTLDIRPATH/kamctlrc ]; then
+		. $KAMCTLDIRPATH/kamctlrc
+	fi
+fi
 if [ -f /etc/kamailio/kamctlrc ]; then
 	. /etc/kamailio/kamctlrc
 fi
