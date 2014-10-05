@@ -13,19 +13,17 @@
 	
 	<title>&adminguide;</title>
 	
-	<section>
+	<section id="diversion.overview">
 	<title>Overview</title>
 	<para>
 		The module implements the Diversion extensions as per 
-		draft-levy-sip-diversion-08.  The
-		diversion extensions are useful in various scenarios involving call
-		forwarding. Typically one needs to communicate the original recipient 
-		of the call to the PSTN gateway and this is what the diversion 
-		extensions can be used for.
+		RFC 5806. The diversion extensions are useful in various
+		scenarios involving call forwarding. Typically one needs to communicate
+		the original recipient of the call to the PSTN gateway and this is what
+		the diversion extensions can be used for.
 	</para>
 	<warning><para>
-		The draft-levy-sip-diversion-08 is expired!! See
-		<ulink url="https://datatracker.ietf.org/public/idindex.cgi?command=id_detail&amp;and;id=6002"> IETF I-D tracker</ulink>.
+		Note that RFC 5806 has historic status.
 	</para></warning>
 	</section>
 
@@ -52,7 +50,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="diversion.p.suffix">
 		<title><varname>suffix</varname> (string)</title>
 		<para>
 		The suffix to be appended to the end of the header field. You can use 
@@ -72,7 +70,7 @@ modparam("diversion", "suffix", ";privacy=full")
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="diversion.f.add_diversion">
 		<title><function moreinfo="none">add_diversion(reason [, uri])</function></title>
 		<para>
 		The function adds a new diversion header field before any other 

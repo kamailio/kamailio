@@ -13,9 +13,9 @@
     
     <title>&develguide;</title>
     <para>
-	According to the specification new Diversion header field should be inserted as the topmost
-	Diversion header field in the message, that means before any other existing Diversion header
-	field in the message. In addition to that, <function
+	According to the specification a new <quote>Diversion</quote> header field should be inserted
+	as the topmost Diversion header field in the message, that means before any other existing
+	Diversion header field in the message. In addition to that, the <function
 	moreinfo="none">add_diversion</function> function can be called several times and each time
 	it should insert the new Diversion header field as the topmost one.
     </para>

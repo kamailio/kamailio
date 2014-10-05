@@ -60,15 +60,15 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The module implements the Diversion extensions as per
-   draft-levy-sip-diversion-08. The diversion extensions are useful in
-   various scenarios involving call forwarding. Typically one needs to
-   communicate the original recipient of the call to the PSTN gateway and
-   this is what the diversion extensions can be used for.
+   The module implements the Diversion extensions as per RFC 5806. The
+   diversion extensions are useful in various scenarios involving call
+   forwarding. Typically one needs to communicate the original recipient
+   of the call to the PSTN gateway and this is what the diversion
+   extensions can be used for.
 
 Warning
 
-   The draft-levy-sip-diversion-08 is expired!! See IETF I-D tracker.
+   Note that RFC 5806 has historic status.
 
 2. Dependencies
 
@@ -158,12 +158,12 @@ Content-Length: 0
 
 Chapter 2. Developer Guide
 
-   According to the specification new Diversion header field should be
+   According to the specification a new "Diversion" header field should be
    inserted as the topmost Diversion header field in the message, that
    means before any other existing Diversion header field in the message.
-   In addition to that, add_diversion function can be called several times
-   and each time it should insert the new Diversion header field as the
-   topmost one.
+   In addition to that, the add_diversion function can be called several
+   times and each time it should insert the new Diversion header field as
+   the topmost one.
 
    In order to implement this, add_diversion function creates the anchor
    in data_lump lists as a static variable to ensure that the next call of
