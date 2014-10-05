@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('acc','4');
+INSERT INTO version (table_name, table_version) values ('acc','5');
 CREATE TABLE acc (
     id NUMBER(10) PRIMARY KEY,
     method VARCHAR2(16) DEFAULT '',
@@ -6,7 +6,7 @@ CREATE TABLE acc (
     to_tag VARCHAR2(64) DEFAULT '',
     callid VARCHAR2(255) DEFAULT '',
     sip_code VARCHAR2(3) DEFAULT '',
-    sip_reason VARCHAR2(32) DEFAULT '',
+    sip_reason VARCHAR2(128) DEFAULT '',
     time DATE
 );
 
@@ -38,7 +38,7 @@ BEGIN map2users('acc_cdrs'); END;
 /
 CREATE INDEX acc_cdrs_start_time_idx  ON acc_cdrs (start_time);
 
-INSERT INTO version (table_name, table_version) values ('missed_calls','3');
+INSERT INTO version (table_name, table_version) values ('missed_calls','4');
 CREATE TABLE missed_calls (
     id NUMBER(10) PRIMARY KEY,
     method VARCHAR2(16) DEFAULT '',
@@ -46,7 +46,7 @@ CREATE TABLE missed_calls (
     to_tag VARCHAR2(64) DEFAULT '',
     callid VARCHAR2(255) DEFAULT '',
     sip_code VARCHAR2(3) DEFAULT '',
-    sip_reason VARCHAR2(32) DEFAULT '',
+    sip_reason VARCHAR2(128) DEFAULT '',
     time DATE
 );
 

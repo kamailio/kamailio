@@ -9,7 +9,7 @@ METADATA_LOGFLAGS
 METADATA_DEFAULTS
 NIL|0
 acc|
-acc|4
+acc|5
 acc_cdrs|
 acc_cdrs|1
 active_watchers|
@@ -33,7 +33,7 @@ dialog|7
 dialog_vars|
 dialog_vars|1
 dialplan|
-dialplan|1
+dialplan|2
 dispatcher|
 dispatcher|4
 domain|
@@ -75,7 +75,7 @@ location_attrs|1
 matrix|
 matrix|1
 missed_calls|
-missed_calls|3
+missed_calls|4
 mohqcalls|
 mohqcalls|1
 mohqueues|

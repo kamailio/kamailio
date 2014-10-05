@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('acc','4');
+INSERT INTO version (table_name, table_version) values ('acc','5');
 CREATE TABLE acc (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     method VARCHAR(16) DEFAULT '' NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE acc (
     to_tag VARCHAR(64) DEFAULT '' NOT NULL,
     callid VARCHAR(255) DEFAULT '' NOT NULL,
     sip_code VARCHAR(3) DEFAULT '' NOT NULL,
-    sip_reason VARCHAR(32) DEFAULT '' NOT NULL,
+    sip_reason VARCHAR(128) DEFAULT '' NOT NULL,
     time DATETIME NOT NULL
 );
 
@@ -22,7 +22,7 @@ CREATE TABLE acc_cdrs (
 
 CREATE INDEX start_time_idx ON acc_cdrs (start_time);
 
-INSERT INTO version (table_name, table_version) values ('missed_calls','3');
+INSERT INTO version (table_name, table_version) values ('missed_calls','4');
 CREATE TABLE missed_calls (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     method VARCHAR(16) DEFAULT '' NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE missed_calls (
     to_tag VARCHAR(64) DEFAULT '' NOT NULL,
     callid VARCHAR(255) DEFAULT '' NOT NULL,
     sip_code VARCHAR(3) DEFAULT '' NOT NULL,
-    sip_reason VARCHAR(32) DEFAULT '' NOT NULL,
+    sip_reason VARCHAR(128) DEFAULT '' NOT NULL,
     time DATETIME NOT NULL
 );
 

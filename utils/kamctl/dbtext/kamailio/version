@@ -1,5 +1,5 @@
 table_name(string) table_version(int) 
-acc:4
+acc:5
 acc_cdrs:1
 active_watchers:11
 address:6
@@ -11,7 +11,7 @@ cpl:1
 dbaliases:1
 dialog:7
 dialog_vars:1
-dialplan:1
+dialplan:2
 dispatcher:4
 domain:2
 domain_attrs:1
@@ -32,7 +32,7 @@ lcr_rule_target:1
 location:6
 location_attrs:1
 matrix:1
-missed_calls:3
+missed_calls:4
 mohqcalls:1
 mohqueues:1
 mtree:1
