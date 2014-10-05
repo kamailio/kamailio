@@ -46,11 +46,14 @@ sed -i'' -e "s/# INSTALL_DBUID_TABLES=ask/INSTALL_DBUID_TABLES=yes/g" $CTLRC
 cp $DBCTL $DBCTL.bak
 sed -i'' -e "s/TEST=\"false\"/TEST=\"true\"/g" $DBCTL
 
+CRT_DIR=`pwd`
+cd $CTL_DIR
 $DBCTL create $tmp_name > /dev/null
 ret=$?
+cd $CRT_DIR
 
 if [ "$ret" -eq 0 ] ; then
-	$BIN -w . -f $CFG > /dev/null
+	$BIN -w . -f $CFG -a no > /dev/null
 	ret=$?
 fi ;
 
@@ -58,7 +61,9 @@ sleep 1
 $KILL
 
 # cleanup
+cd $CTL_DIR
 $DBCTL drop $tmp_name > /dev/null
+cd $CRT_DIR
 mv $CTLRC.bak $CTLRC
 mv $DBCTL.bak $DBCTL
 
