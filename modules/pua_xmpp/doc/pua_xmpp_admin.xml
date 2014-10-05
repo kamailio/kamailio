@@ -66,7 +66,7 @@
 
 	<section>
 	<title>Parameters</title>
-		<section>
+		<section id="pua_xmpp.p.server_address">
 		<title><varname>server_address</varname>(str)</title>
 		<para>
 		The SIP URI specifying the address of the SIP server. 
@@ -87,7 +87,7 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 	<para>
 	Functions exported to be used in configuration file.
 	</para>
-	<section>
+	<section id="pua_xmpp.f.pua_xmpp_notify">
 		<title>
 		<function moreinfo="none">pua_xmpp_notify()</function>
 		</title>
@@ -115,7 +115,7 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 		</example>
 	</section>
 
-	<section>
+	<section id="pua_xmpp.f.pua_xmpp_req_winfo">
 		<title>
 		<function moreinfo="none">pua_xmpp_req_winfo(request_uri, expires)</function>
 		</title>

@@ -21,11 +21,11 @@ Anca-Maria Vamanu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. server_address(str)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. pua_xmpp_notify()
               4.2. pua_xmpp_req_winfo(request_uri, expires)
@@ -50,11 +50,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. server_address(str)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. pua_xmpp_notify()
         4.2. pua_xmpp_req_winfo(request_uri, expires)
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libxml.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. server_address(str)
 
@@ -99,7 +99,7 @@ Chapter 1. Admin Guide
 modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. pua_xmpp_notify()
    4.2. pua_xmpp_req_winfo(request_uri, expires)
