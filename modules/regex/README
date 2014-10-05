@@ -1,16 +1,16 @@
 Regex Module
 
-Iñaki Baz Castillo
+I�aki Baz Castillo
 
    <ibc@aliax.net>
 
 Edited by
 
-Iñaki Baz Castillo
+I�aki Baz Castillo
 
    <ibc@aliax.net>
 
-   Copyright © 2009 Iñaki Baz Castillo
+   Copyright � 2009 I�aki Baz Castillo
      __________________________________________________________________
 
    Table of Contents
@@ -98,14 +98,14 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module offers matching operations against regular expressions
-   using the powerful PCRE library.
+   This module offers matching operations using regular expressions based
+   on the powerful PCRE library.
 
    A text file containing regular expressions categorized in groups is
-   compiled when the module is loaded, storing the compiled PCRE objects
-   in an array. A function to match a string or pseudo-variable against
-   any of these groups is provided. The text file can be modified and
-   reloaded at any time via a MI command. The module also offers a
+   compiled when the module is loaded, the resulting PCRE objects are
+   stored in an array. A function to match a string or pseudo-variable
+   against any of these groups is provided. The text file can be modified
+   and reloaded at any time via a MI command. The module also offers a
    function to perform a PCRE matching operation against a regular
    expression provided as function parameter.
 
@@ -142,7 +142,7 @@ Chapter 1. Admin Guide
    Text file containing the regular expression groups. It must be set in
    order to enable the group matching function.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.1. Set file parameter
 ...
@@ -153,7 +153,7 @@ modparam("regex", "file", "/etc/kamailio/regex_groups")
 
    Max number of regular expression groups in the text file.
 
-   Default value is “20”.
+   Default value is "20".
 
    Example 1.2. Set max_groups parameter
 ...
@@ -164,7 +164,7 @@ modparam("regex", "max_groups", 40)
 
    Max content size of a group in the text file.
 
-   Default value is “8192”.
+   Default value is "8192".
 
    Example 1.3. Set group_max_size parameter
 ...
@@ -177,7 +177,7 @@ modparam("regex", "group_max_size", 16384)
    Perl's /i option, and it can be changed within a pattern by a (?i) or
    (?-i) option setting.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.4. Set pcre_caseless parameter
 ...
@@ -200,7 +200,7 @@ modparam("regex", "pcre_caseless", 1)
    are no newlines in a subject string, or no occurrences of ^ or $ in a
    pattern, setting this option has no effect.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.5. Set pcre_multiline parameter
 ...
@@ -215,7 +215,7 @@ modparam("regex", "pcre_multiline", 1)
    is equivalent to Perl's /s option, and it can be changed within a
    pattern by a (?s) or (?-s) option setting.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.6. Set pcre_dotall parameter
 ...
@@ -232,7 +232,7 @@ modparam("regex", "pcre_dotall", 1)
    /x option, and it can be changed within a pattern by a (?x) or (?-x)
    option setting.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.7. Set pcre_extended parameter
 ...
@@ -244,7 +244,7 @@ modparam("regex", "pcre_extended", 1)
    4.1. pcre_match (string, pcre_regex)
    4.2. pcre_match_group (string [, group])
 
-4.1.  pcre_match (string, pcre_regex)
+4.1. pcre_match (string, pcre_regex)
 
    Matches the given string parameter against the regular expression
    pcre_regex, which is compiled in runtime into a PCRE object. Returns
@@ -261,24 +261,24 @@ modparam("regex", "pcre_extended", 1)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.8.  pcre_match usage (forcing case insensitive)
+   Example 1.8. pcre_match usage (forcing case insensitive)
 ...
 if (pcre_match("$ua", "(?i)^twinkle")) {
     xlog("L_INFO", "User-Agent matches\n");
 }
 ...
 
-   Example 1.9.  pcre_match usage (using "end of line" symbol)
+   Example 1.9. pcre_match usage (using "end of line" symbol)
 ...
 if (pcre_match("$rU", "^user[1234]$$")) {  # Will be converted to "^user[1234]$"
     xlog("L_INFO", "RURI username matches\n");
 }
 ...
 
-4.2.  pcre_match_group (string [, group])
+4.2. pcre_match_group (string [, group])
 
    Tries to match the given string against a specific group in the text
-   file (see Section 6.1, “File format”). Returns TRUE if it matches,
+   file (see Section 6.1, "File format"). Returns TRUE if it matches,
    FALSE otherwise.
 
    Meaning of the parameters is as follows:
@@ -290,15 +290,14 @@ if (pcre_match("$rU", "^user[1234]$$")) {  # Will be converted to "^user[1234]$"
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.10.  pcre_match_group usage
+   Example 1.10. pcre_match_group usage
 ...
 if (pcre_match_group("$rU", "2")) {
     xlog("L_INFO", "RURI username matches group 2\n");
 }
 ...
 
-   Example 1.11.  pcre_match_group usage (using a pseudo-variable as
-   group)
+   Example 1.11. pcre_match_group usage (using a pseudo-variable as group)
 ...
 $avp(i:10) = 5;  # Maybe got from a DB query.
 if (pcre_match_group("$ua", "$avp(i:10)")) {
@@ -310,7 +309,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 
    5.1. regex_reload
 
-5.1.  regex_reload
+5.1. regex_reload
 
    Causes regex module to re-read the content of the text file and
    re-compile the regular expressions. The number of groups in the file

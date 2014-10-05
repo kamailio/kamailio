@@ -13,18 +13,18 @@
 	
 	<title>&adminguide;</title>
 	
-	<section>
+	<section id="regex.overview">
 		
 		<title>Overview</title>
 		
 		<para>
-			This module offers matching operations against regular expressions using the
+			This module offers matching operations using regular expressions based on the
 			powerful <ulink url="http://www.pcre.org/">PCRE</ulink> library.
 		</para>
 		
 		<para>
 			A text file containing regular expressions categorized in groups is compiled
-			when the module is loaded, storing the compiled PCRE objects in an array. A
+			when the module is loaded,  the resulting PCRE objects are stored in an array. A
 			function to match a string or pseudo-variable against any of these groups is
 			provided. The text file can be modified and reloaded at any time via a MI command.
 			The module also offers a function to perform a PCRE matching operation against a
@@ -76,7 +76,7 @@
 	<section>
 		<title>Parameters</title>
 
-		<section>
+		<section id="regex.p.file">
 			<title><varname>file</varname> (string)</title>
 			<para>
 				Text file containing the regular expression groups. It must be set in order
@@ -95,7 +95,7 @@ modparam("regex", "file", "/etc/kamailio/regex_groups")
 			</example>
 		</section>
 
-		<section>
+		<section id="regex.p.max_groups">
 			<title><varname>max_groups</varname> (int)</title>
 			<para>
 				Max number of regular expression groups in the text file.
@@ -113,7 +113,7 @@ modparam("regex", "max_groups", 40)
 			</example>
 		</section>
 
-		<section>
+		<section id="regex.p.group_max_size">
 			<title><varname>group_max_size</varname> (int)</title>
 			<para>
 				Max content size of a group in the text file.
@@ -131,7 +131,7 @@ modparam("regex", "group_max_size", 16384)
 			</example>
 		</section>
 
-		<section>
+		<section id="regex.p.pcre_caseless">
 			<title><varname>pcre_caseless</varname> (int)</title>
 			<para>
 				If this options is set, matching is done caseless. It is equivalent to
@@ -151,7 +151,7 @@ modparam("regex", "pcre_caseless", 1)
 			</example>
 		</section>
 
-		<section>
+		<section id="regex.p.pcre_multiline">
 			<title><varname>pcre_multiline</varname> (int)</title>
 			<para>
 				By default, PCRE treats the subject string as consisting of a single line
@@ -181,7 +181,7 @@ modparam("regex", "pcre_multiline", 1)
 			</example>
 		</section>
 
-		<section>
+		<section id="regex.p.pcre_dotall">
 			<title><varname>pcre_dotall</varname> (int)</title>
 			<para>
 				If this option is set, a dot metacharater in the pattern matches all characters,
@@ -202,7 +202,7 @@ modparam("regex", "pcre_dotall", 1)
 			</example>
 		</section>
 
-		<section>
+		<section id="regex.p.pcre_extended">
 			<title><varname>pcre_extended</varname> (int)</title>
 			<para>
 				If this option is set, whitespace data characters in the pattern are totally
@@ -230,7 +230,7 @@ modparam("regex", "pcre_extended", 1)
 	<section>
 		<title>Functions</title>
 
-		<section>
+		<section id="regex.p.pcre_match">
 			<title>
 				<function moreinfo="none">pcre_match (string, pcre_regex)</function>
 			</title>
@@ -294,7 +294,7 @@ if (pcre_match("$rU", "^user[1234]$$")) {  # Will be converted to "^user[1234]$"
 
 		</section>
 
-		<section>
+		<section id="regex.p.pcre_match_group">
 			<title>
 				<function moreinfo="none">pcre_match_group (string [, group])</function>
 			</title>
@@ -361,7 +361,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 	<section>
 		<title>MI Commands</title>
 
-		<section>
+		<section id="regex.m.regex_reload">
 			<title>
 				<function moreinfo="none">regex_reload</function>
 			</title>
