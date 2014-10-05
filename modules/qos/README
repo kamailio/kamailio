@@ -76,22 +76,22 @@ Chapter 1. Admin Guide
    entire life of a dialog.
 
    All of this happens with a properly configured dialog and qos module
-   and setting the dialog flag and the qos flag at the time any INVITE sip
+   and setting the dialog flag and the qos flag at the time any INVITE SIP
    message is seen. There is no config script function call required to
    set the SDP session tracking mechanism. See the dialog module users
    guide for more information.
 
    A dialog can have one or more SDP sessions active in one of the
    following states:
-     * pending - only one end point of the SDP session is known.
-     * negotiated - both end points of the SDP session are known.
+     * pending - only one endpoint of the SDP session is known.
+     * negotiated - both endpoints of the SDP session are known.
 
    An SDP session can be established in one of the following scenarios:
      * INVITE/200ok - typical "INVITE" and "200 OK" SDP exchange.
      * 200ok/ACK - "200 OK" and "ACK" SDP exchange (for calls starting
        with an empty INVITE).
      * 183/PRACK - early media via "183 Session Progress" and "PRACK" (see
-       rfc3959 for more information) - not implemented yet.
+       RFC 3959 for more information) - not implemented yet.
 
 3. Dependencies
 
@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
 3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * dialog - dialog module and its decencies (tm).
+     * dialog - dialog module and its dependencies (tm).
 
 3.2. External Libraries or Applications
 
@@ -115,17 +115,17 @@ Chapter 1. Admin Guide
 
 4.1. qos_flag (integer)
 
-   Keeping with Kamailio, the module will not do anything to any message
-   unless instructed to do so via the config script. You must set the
-   qos_flag value in the setflag() call of the INVITE you want the qos
-   module to process. But before you can do that, you need to tell the qos
-   module which flag value you are assigning to qos.
+   The module will not do anything to any message unless instructed to do
+   so via the config script. You must set the qos_flag value in the
+   setflag() call of the INVITE you want the qos module to process. But
+   before you can do that, you need to tell the qos module which flag
+   value you are assigning to qos.
 
    In most cases when ever you set the dialog flag you will want to set
    the qos flag. If the dialog flag is not set and the qos flag is set, it
    will not have any effect.
 
-   This parameter must be set of the module will not load.
+   This parameter must be set or the module will not load.
 
    Default value is "Not set!".
 

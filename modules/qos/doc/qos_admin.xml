@@ -13,7 +13,7 @@
 	
 	<title>&adminguide;</title>
 	
-	<section>
+	<section id="qos.overview">
 		<title>Overview</title>
 
 		<para>The qos module provides a way to keep track of
@@ -23,36 +23,42 @@
 	<section>
 	<title>How it works</title>
 	
-	<para>The qos module uses the dialog module to be notified of
-	any new or updated dialogs.  It will then look for and extract
-	the SDP session (if present) from SIP requests and replies and
-	keep track of it for the entire life of a dialog.</para>
+	<para>
+	The <emphasis>qos</emphasis> module uses the
+	<emphasis>dialog</emphasis> module to be notified of any new or
+	updated dialogs.  It will then look for and extract
+	the <acronym>SDP</acronym> session (if present) from SIP requests
+	and replies and keep track of it for the entire life of a dialog.
+	</para>
 
-	<para>All of this happens with a properly configured dialog
+	<para>
+	All of this happens with a properly configured dialog
 	and qos module and setting the dialog flag and the qos flag at
-	the time any INVITE sip message is seen.  There is no
+	the time any INVITE SIP message is seen.  There is no
 	config script function call required to set the SDP session
 	tracking mechanism.  See the dialog module users guide for
-	more information.</para>
+	more information.
+	</para>
 
-	<para>A dialog can have one or more SDP sessions active in one
+	<para>
+	A dialog can have one or more SDP sessions active in one
 	of the following states:
 	<itemizedlist>
 	<listitem>
-	<para><emphasis>pending</emphasis> - only one end point of the
+	<para><emphasis>pending</emphasis> - only one endpoint of the
 	SDP session is known.
 	</para>
 	</listitem>
 	<listitem>
-	<para><emphasis>negotiated</emphasis> - both end points of the
+	<para><emphasis>negotiated</emphasis> - both endpoints of the
 	SDP session are known.
 	</para>
 	</listitem>
 	</itemizedlist>
 	</para>
 
-	<para>An SDP session can be established in one of the following
-	scenarios:
+	<para>
+	An SDP session can be established in one of the following scenarios:
 	<itemizedlist>
 	<listitem>
 	<para><emphasis>INVITE/200ok</emphasis> - typical "INVITE" and
@@ -60,14 +66,16 @@
 	</para>
 	</listitem>
 	<listitem>
-	<para><emphasis>200ok/ACK</emphasis> - "200 OK" and  "ACK" SDP
+	<para>
+	<emphasis>200ok/ACK</emphasis> - "200 OK" and  "ACK" SDP
 	exchange (for calls starting with an empty INVITE).
 	</para>
 	</listitem>
 	<listitem>
-	<para><emphasis>183/PRACK</emphasis> - early media via "183
-	Session Progress" and "PRACK" (see rfc3959 for more information) -
-	not implemented yet.
+	<para>
+	<emphasis>183/PRACK</emphasis> - early media via "183
+	Session Progress" and "PRACK" (see RFC 3959 for more information)
+	<emphasis>- not implemented yet</emphasis>.
 	</para>
 	</listitem>
 	</itemizedlist>
@@ -85,7 +93,7 @@
 		<listitem>
 		<para>
 		<emphasis>dialog</emphasis> - dialog module and
-		its decencies (tm).
+		its dependencies (tm).
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -108,24 +116,23 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="qos.p.qos_flag">
 		<title><varname>qos_flag</varname> (integer)</title>
 		
-		<para>Keeping with &kamailio;, the module will not do
-		anything to any message unless instructed to do so via
-		the config script. You must set the qos_flag
-		value in the setflag() call of the INVITE you want the
-		qos module to process. But before you can do that, you
-		need to tell the qos module which flag value you are
-		assigning to qos.</para>
+		<para>The module will not do anything to any message unless
+		instructed to do so via the config script. You must set the
+		<varname>qos_flag</varname> value in the <function>setflag()</function>
+		call of the INVITE you want the qos module to process. But
+		before you can do that, you need to tell the qos module which
+		flag value you are assigning to qos.</para>
 
 		<para>In most cases when ever you set the dialog flag
 		you will want to set the qos flag. If the dialog flag
 		is not set and the qos flag is set, it will not have
 		any effect.</para>
 
-		<para>This parameter must be set of the module will
-		not load.</para>
+		<para><emphasis>This parameter must be set or the module will
+		not load.</emphasis></para>
 
 		<para>
 		<emphasis>
