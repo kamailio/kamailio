@@ -1526,6 +1526,28 @@ modparam("acc", "reason_from_hf", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="acc.p.clone_msg">
+		<title><varname>clone_msg</varname> (int)</title>
+		<para>
+		If set to 1, request structure from transaction is cloned temporarily
+		in the callback to get acc attributes. It is required if you account
+		values from SIP headers to avoid concurent access to the shared memory
+		transaction structure, specially when accounting 1xx events. If set to
+		0, it uses directly the shared memory structure, be sure you store all
+		needed attributes in AVPs/XAVPs inside request route.
+		</para>
+		<para>
+		Default value is 1.
+		</para>
+		<example>
+		<title>clone_msg</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "clone_msg", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

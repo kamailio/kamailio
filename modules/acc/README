@@ -29,11 +29,11 @@ Sven Knoblich
    1&1 Internet AG
    <sven.knoblich@1und1.de>
 
-   Copyright (c) 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
 
-   Copyright (c) 2004, 2006 Voice Sistem SRL
+   Copyright © 2004, 2006 Voice Sistem SRL
 
-   Copyright (c) 2011 1&1 Internet AG
+   Copyright © 2011 1&1 Internet AG
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -119,19 +119,21 @@ Sven Knoblich
               6.36. diameter_client_port (int)
               6.37. diameter_extra (string)
               6.38. cdr_enable (integer)
-              6.39. cdr_start_on_confirmed (integer)
-              6.40. cdr_facility (integer)
-              6.41. cdr_extra (string)
-              6.42. cdr_start_id (string)
-              6.43. cdr_end_id (string)
-              6.44. cdr_duration_id (string)
-              6.45. cdr_log_enable (int)
-              6.46. cdrs_table (str)
-              6.47. time_mode (int)
-              6.48. time_attr (str)
-              6.49. time_exten (str)
-              6.50. time_format (str)
-              6.51. reason_from_hf (int)
+              6.39. cdr_expired_dlg_enable (integer)
+              6.40. cdr_start_on_confirmed (integer)
+              6.41. cdr_facility (integer)
+              6.42. cdr_extra (string)
+              6.43. cdr_start_id (string)
+              6.44. cdr_end_id (string)
+              6.45. cdr_duration_id (string)
+              6.46. cdr_log_enable (int)
+              6.47. cdrs_table (str)
+              6.48. time_mode (int)
+              6.49. time_attr (str)
+              6.50. time_exten (str)
+              6.51. time_format (str)
+              6.52. reason_from_hf (int)
+              6.53. clone_msg (int)
 
         7. Functions
 
@@ -182,23 +184,25 @@ Sven Knoblich
    1.36. diameter_client_host example
    1.37. diameter_extra example
    1.38. cdr_enable example
-   1.39. cdr_start_on_confirmed example
-   1.40. cdr_facility example
-   1.41. cdr_extra example
-   1.42. cdr_start_id example
-   1.43. cdr_end_id example
-   1.44. cdr_duration_id example
-   1.45. cdr_log_enable example
-   1.46. cdrs_table example
-   1.47. time_mode example
-   1.48. time_attr example
-   1.49. time_exten example
-   1.50. time_format example
-   1.51. reason_from_hf
-   1.52. acc_log_request usage
-   1.53. acc_db_request usage
-   1.54. acc_rad_request usage
-   1.55. acc_diam_request usage
+   1.39. cdr_expired_dlg_enable example
+   1.40. cdr_start_on_confirmed example
+   1.41. cdr_facility example
+   1.42. cdr_extra example
+   1.43. cdr_start_id example
+   1.44. cdr_end_id example
+   1.45. cdr_duration_id example
+   1.46. cdr_log_enable example
+   1.47. cdrs_table example
+   1.48. time_mode example
+   1.49. time_attr example
+   1.50. time_exten example
+   1.51. time_format example
+   1.52. reason_from_hf
+   1.53. clone_msg
+   1.54. acc_log_request usage
+   1.55. acc_db_request usage
+   1.56. acc_rad_request usage
+   1.57. acc_diam_request usage
 
 Chapter 1. Admin Guide
 
@@ -281,19 +285,21 @@ Chapter 1. Admin Guide
         6.36. diameter_client_port (int)
         6.37. diameter_extra (string)
         6.38. cdr_enable (integer)
-        6.39. cdr_start_on_confirmed (integer)
-        6.40. cdr_facility (integer)
-        6.41. cdr_extra (string)
-        6.42. cdr_start_id (string)
-        6.43. cdr_end_id (string)
-        6.44. cdr_duration_id (string)
-        6.45. cdr_log_enable (int)
-        6.46. cdrs_table (str)
-        6.47. time_mode (int)
-        6.48. time_attr (str)
-        6.49. time_exten (str)
-        6.50. time_format (str)
-        6.51. reason_from_hf (int)
+        6.39. cdr_expired_dlg_enable (integer)
+        6.40. cdr_start_on_confirmed (integer)
+        6.41. cdr_facility (integer)
+        6.42. cdr_extra (string)
+        6.43. cdr_start_id (string)
+        6.44. cdr_end_id (string)
+        6.45. cdr_duration_id (string)
+        6.46. cdr_log_enable (int)
+        6.47. cdrs_table (str)
+        6.48. time_mode (int)
+        6.49. time_attr (str)
+        6.50. time_exten (str)
+        6.51. time_format (str)
+        6.52. reason_from_hf (int)
+        6.53. clone_msg (int)
 
    7. Functions
 
@@ -347,7 +353,10 @@ Chapter 1. Admin Guide
        out about it. In general, a better practice is to account from an
        end-device (such as PSTN gateway), which best knows about call
        status (including media status and PSTN status in case of the
-       gateway).
+       gateway). However, CDR-base logging has the option to log existing
+       information from expired dialogs (the dlg_vars in cdr_extra) Please
+       see cdr_expired_dlg_enable parameter - Section 6.39,
+       "cdr_expired_dlg_enable (integer)".
 
    The SQL backend support is compiled in the module. For RADIUS and
    DIAMETER you need to enable it by recompiling the module with properly
@@ -560,6 +569,12 @@ Note
    set up an exterior process (i.e., a script living outside of Kamailio)
    and implement the storage task yourself.
 
+   Sometimes, dialogs expire because the UA has a problem and a final
+   message is never transmitted. You can toggle on/off the generation of
+   CDR-based logging in such cases with only the dlg_vars showing by using
+   the cdr_expired_dlg_enable parameter - Section 6.39,
+   "cdr_expired_dlg_enable (integer)". Default behavior is not logging.
+
 4.2. CDR Extra
 
    This section is similar to the "LOG accounting" part of Section 2,
@@ -572,7 +587,7 @@ Note
      * cdr_extra = cdr_extra_definition (';'cdr_extra_definition)*
      * cdr_extra_definition = cdr_log_name '=' pseudo_variable
 
-   See also Section 6.41, "cdr_extra (string)".
+   See also Section 6.42, "cdr_extra (string)".
 
    The full list of supported pseudo-variables in Sip-Router is available
    at: http://sip-router.org/wiki/cookbooks/pseudo-variables/devel
@@ -696,19 +711,21 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.36. diameter_client_port (int)
    6.37. diameter_extra (string)
    6.38. cdr_enable (integer)
-   6.39. cdr_start_on_confirmed (integer)
-   6.40. cdr_facility (integer)
-   6.41. cdr_extra (string)
-   6.42. cdr_start_id (string)
-   6.43. cdr_end_id (string)
-   6.44. cdr_duration_id (string)
-   6.45. cdr_log_enable (int)
-   6.46. cdrs_table (str)
-   6.47. time_mode (int)
-   6.48. time_attr (str)
-   6.49. time_exten (str)
-   6.50. time_format (str)
-   6.51. reason_from_hf (int)
+   6.39. cdr_expired_dlg_enable (integer)
+   6.40. cdr_start_on_confirmed (integer)
+   6.41. cdr_facility (integer)
+   6.42. cdr_extra (string)
+   6.43. cdr_start_id (string)
+   6.44. cdr_end_id (string)
+   6.45. cdr_duration_id (string)
+   6.46. cdr_log_enable (int)
+   6.47. cdrs_table (str)
+   6.48. time_mode (int)
+   6.49. time_attr (str)
+   6.50. time_exten (str)
+   6.51. time_format (str)
+   6.52. reason_from_hf (int)
+   6.53. clone_msg (int)
 
 6.1. early_media (integer)
 
@@ -1199,7 +1216,18 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
 modparam("acc", "cdr_enable", 1)
 ...
 
-6.39. cdr_start_on_confirmed (integer)
+6.39. cdr_expired_dlg_enable (integer)
+
+   Should CDR-based logging be enabled in case of expired dialogs?
+
+   0 - off (default). 1 - on.
+
+   Example 1.39. cdr_expired_dlg_enable example
+...
+modparam("acc", "cdr_expired_dlg_enable", 1)
+...
+
+6.40. cdr_start_on_confirmed (integer)
 
    Should the start time be taken from the time when the dialog is
    created, or when the dialog is confirmed?
@@ -1207,91 +1235,91 @@ modparam("acc", "cdr_enable", 1)
    0 - use time of dialog creation (default). 1 - use time of dialog
    confirmation.
 
-   Example 1.39. cdr_start_on_confirmed example
+   Example 1.40. cdr_start_on_confirmed example
 ...
 modparam("acc", "cdr_start_on_confirmed", 1)
 ...
 
-6.40. cdr_facility (integer)
+6.41. cdr_facility (integer)
 
    Log facility to which CDR messages are issued to syslog. This allows to
    easily seperate CDR-specific logging from the other log messages.
 
    Default value is LOG_DAEMON.
 
-   Example 1.40. cdr_facility example
+   Example 1.41. cdr_facility example
 ...
 modparam("acc", "cdr_facility", "LOG_DAEMON")
 ...
 
-6.41. cdr_extra (string)
+6.42. cdr_extra (string)
 
    Set of pseudo-variables defining custom CDR fields. See Section 4.2,
    "CDR Extra" for more details.
 
    Default value is NULL.
 
-   Example 1.41. cdr_extra example
+   Example 1.42. cdr_extra example
 ...
 modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 ...
 
-6.42. cdr_start_id (string)
+6.43. cdr_start_id (string)
 
    Modifying the id which is used to store the start time.
 
    Default value is 'start_time'
 
-   Example 1.42. cdr_start_id example
+   Example 1.43. cdr_start_id example
 ...
 modparam("acc", "cdr_start_id", "start")
 ...
 
-6.43. cdr_end_id (string)
+6.44. cdr_end_id (string)
 
    Modifying the id which is used to store the end time.
 
    Default value is 'end_time'
 
-   Example 1.43. cdr_end_id example
+   Example 1.44. cdr_end_id example
 ...
 modparam("acc", "cdr_end_id", "end")
 ...
 
-6.44. cdr_duration_id (string)
+6.45. cdr_duration_id (string)
 
    Modify the id which is used to store the duration.
 
    Default value is 'duration'
 
-   Example 1.44. cdr_duration_id example
+   Example 1.45. cdr_duration_id example
 ...
 modparam("acc", "cdr_duration_id", "d")
 ...
 
-6.45. cdr_log_enable (int)
+6.46. cdr_log_enable (int)
 
    Control if CDR-based accounting should be written to syslog.
 
    0 - off. 1 - on (default).
 
-   Example 1.45. cdr_log_enable example
+   Example 1.46. cdr_log_enable example
 ...
 modparam("acc", "cdr_log_enable", 0)
 ...
 
-6.46. cdrs_table (str)
+6.47. cdrs_table (str)
 
    Name of db table to store dialog-based CDRs.
 
    Default value is "" (no db storage for dialog-based CDRs).
 
-   Example 1.46. cdrs_table example
+   Example 1.47. cdrs_table example
 ...
 modparam("acc", "cdrs_table", "acc_cdrs")
 ...
 
-6.47. time_mode (int)
+6.48. time_mode (int)
 
    Store additional value related to the time of event.
 
@@ -1305,12 +1333,12 @@ modparam("acc", "cdrs_table", "acc_cdrs")
      * 4 - save formatted time according to time_format parameter, using
        the output of gmtime().
 
-   Example 1.47. time_mode example
+   Example 1.48. time_mode example
 ...
 modparam("acc", "time_mode", 1)
 ...
 
-6.48. time_attr (str)
+6.49. time_attr (str)
 
    Name of the syslog attribute or database column where to store
    additional value related to the time of event.
@@ -1326,35 +1354,35 @@ modparam("acc", "time_mode", 1)
    value is already unix timestamp, but in db accounting time value is
    datetime and requires a function to get the timestamp.
 
-   Example 1.48. time_attr example
+   Example 1.49. time_attr example
 ...
 modparam("acc", "time_attr", "seconds")
 ...
 
-6.49. time_exten (str)
+6.50. time_exten (str)
 
    Name of the syslog attribute or database column where to store extended
    value related to the time of event.
 
    It is used now only for time_mode=1 and database column has to be int:
 
-   Example 1.49. time_exten example
+   Example 1.50. time_exten example
 ...
 modparam("acc", "time_exten", "micorsecs")
 ...
 
-6.50. time_format (str)
+6.51. time_format (str)
 
    Specify the format to print the time for time_mode 3 or 4.
 
    Default value is %Y-%m-%d %H:%M:%S".
 
-   Example 1.50. time_format example
+   Example 1.51. time_format example
 ...
 modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 ...
 
-6.51. reason_from_hf (int)
+6.52. reason_from_hf (int)
 
    Tells where to take sip_reason from. If value is 0, sip_reason is taken
    from status line. Otherwise, sip_reason is taken from Reason header
@@ -1362,9 +1390,25 @@ modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 
    Default value is 0.
 
-   Example 1.51. reason_from_hf
+   Example 1.52. reason_from_hf
 ...
 modparam("acc", "reason_from_hf", 1)
+...
+
+6.53. clone_msg (int)
+
+   If set to 1, request structure from transaction is cloned temporarily
+   in the callback to get acc attributes. It is required if you account
+   values from SIP headers to avoid concurent access to the shared memory
+   transaction structure, specially when accounting 1xx events. If set to
+   0, it uses directly the shared memory structure, be sure you store all
+   needed attributes in AVPs/XAVPs inside request route.
+
+   Default value is 1.
+
+   Example 1.53. clone_msg
+...
+modparam("acc", "clone_msg", 0)
 ...
 
 7. Functions
@@ -1374,7 +1418,7 @@ modparam("acc", "reason_from_hf", 1)
    7.3. acc_rad_request(comment)
    7.4. acc_diam_request(comment)
 
-7.1.  acc_log_request(comment)
+7.1. acc_log_request(comment)
 
    acc_request reports on a request, for example, it can be used to report
    on missed calls to off-line users who are replied 404 - Not Found. To
@@ -1387,7 +1431,7 @@ modparam("acc", "reason_from_hf", 1)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.52. acc_log_request usage
+   Example 1.54. acc_log_request usage
 ...
 acc_log_request("Some comment");
 $var(code) = 404;
@@ -1395,7 +1439,7 @@ $avp(reason) = "Not found";
 acc_log_request("$var(code) Error: $avp(reason)");
 ...
 
-7.2.  acc_db_request(comment, table)
+7.2. acc_db_request(comment, table)
 
    Like acc_log_request, acc_db_request reports on a request. The report
    is sent to database at "db_url", in the table referred to in the second
@@ -1409,14 +1453,14 @@ acc_log_request("$var(code) Error: $avp(reason)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.53. acc_db_request usage
+   Example 1.55. acc_db_request usage
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 ...
 
-7.3.  acc_rad_request(comment)
+7.3. acc_rad_request(comment)
 
    Like acc_log_request, acc_rad_request reports on a request. It reports
    to radius server as configured in "radius_config".
@@ -1427,13 +1471,13 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.54. acc_rad_request usage
+   Example 1.56. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 acc_rad_request("$var(code) Error: $avp(reason)");
 ...
 
-7.4.  acc_diam_request(comment)
+7.4. acc_diam_request(comment)
 
    Like acc_log_request, acc_diam_request reports on a request. It reports
    to the configured Diameter server.
@@ -1444,7 +1488,7 @@ acc_rad_request("$var(code) Error: $avp(reason)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.55. acc_diam_request usage
+   Example 1.57. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 acc_diam_request("$var(code) Error: $avp(reason)");
@@ -1461,55 +1505,55 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       What happend with old log_fmt parameter
+   What happend with old log_fmt parameter
 
-       The parameter became obsolete with the restructure of the data logged
-       by ACC module (refer to the Overview chapter). For similar behaviour
-       you can use the extra accouting (see the coresponding chapter).
+   The parameter became obsolete with the restructure of the data logged
+   by ACC module (refer to the Overview chapter). For similar behaviour
+   you can use the extra accouting (see the coresponding chapter).
 
    2.2.
 
-       What happend with old multi_leg_enabled parameter
+   What happend with old multi_leg_enabled parameter
 
-       The parameter becaome obsolete by the addition of the new
-       multi_leg_info parameter. The multi-leg accouting is automatically
-       enabled when multi_leg_info is defined.
+   The parameter becaome obsolete by the addition of the new
+   multi_leg_info parameter. The multi-leg accouting is automatically
+   enabled when multi_leg_info is defined.
 
    2.3.
 
-       What happend with old src_leg_avp_id and dst_leg_avp_id parameters
+   What happend with old src_leg_avp_id and dst_leg_avp_id parameters
 
-       The parameter was replaced by the more generic new parameter
-       multi_leg_info. This allows logging (per-leg) of more information than
-       just dst and src.
+   The parameter was replaced by the more generic new parameter
+   multi_leg_info. This allows logging (per-leg) of more information than
+   just dst and src.
 
    2.4.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.5.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.6.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.
