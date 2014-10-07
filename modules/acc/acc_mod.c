@@ -119,6 +119,7 @@ int reason_from_hf = 0; /*!< assign reason from reason hf if present */
 int acc_time_mode  = 0;
 str acc_time_attr  = str_init("time_attr");
 str acc_time_exten  = str_init("time_exten");
+int _acc_clone_msg  = 1;
 
 /*@}*/
 
@@ -275,14 +276,14 @@ static param_export_t params[] = {
 	{"cdr_extra",            PARAM_STRING, &cdr_log_extra_str          },
 	{"cdr_start_id",	 PARAM_STR, &cdr_start_str		},
 	{"cdr_end_id",		 PARAM_STR, &cdr_end_str		},
-	{"cdr_duration_id",	 PARAM_STR, &cdr_duration_str		},
+	{"cdr_duration_id",	 PARAM_STR, &cdr_duration_str	},
 	{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable   },
 #ifdef RAD_ACC
-	{"radius_config",        PARAM_STRING, &radius_config        },
+	{"radius_config",        PARAM_STRING, &radius_config     },
 	{"radius_flag",          INT_PARAM, &radius_flag          },
 	{"radius_missed_flag",   INT_PARAM, &radius_missed_flag   },
 	{"service_type",         INT_PARAM, &service_type         },
-	{"radius_extra",         PARAM_STRING, &rad_extra_str        },
+	{"radius_extra",         PARAM_STRING, &rad_extra_str     },
 #endif
 	/* DIAMETER specific */
 #ifdef DIAM_ACC
@@ -290,13 +291,13 @@ static param_export_t params[] = {
 	{"diameter_missed_flag", INT_PARAM, &diameter_missed_flag },
 	{"diameter_client_host", PARAM_STRING, &diameter_client_host },
 	{"diameter_client_port", INT_PARAM, &diameter_client_port },
-	{"diameter_extra",       PARAM_STRING, &dia_extra_str        },
+	{"diameter_extra",       PARAM_STRING, &dia_extra_str     },
 #endif
 	/* db-specific */
 #ifdef SQL_ACC
-	{"db_flag",              INT_PARAM, &db_flag              },
-	{"db_missed_flag",       INT_PARAM, &db_missed_flag       },
-	{"db_extra",             PARAM_STRING, &db_extra_str         },
+	{"db_flag",              INT_PARAM, &db_flag            },
+	{"db_missed_flag",       INT_PARAM, &db_missed_flag     },
+	{"db_extra",             PARAM_STRING, &db_extra_str    },
 	{"db_url",               PARAM_STR, &db_url             },
 	{"db_table_acc",         PARAM_STR, &db_table_acc       },
 	{"db_table_missed_calls",PARAM_STR, &db_table_mc        },
@@ -307,14 +308,15 @@ static param_export_t params[] = {
 	{"acc_sip_code_column",  PARAM_STR, &acc_sipcode_col    },
 	{"acc_sip_reason_column",PARAM_STR, &acc_sipreason_col  },
 	{"acc_time_column",      PARAM_STR, &acc_time_col       },
-	{"db_insert_mode",       INT_PARAM, &acc_db_insert_mode   },
+	{"db_insert_mode",       INT_PARAM, &acc_db_insert_mode },
 #endif
 	/* time-mode-specific */
 	{"time_mode",            INT_PARAM, &acc_time_mode        },
 	{"time_attr",            PARAM_STR, &acc_time_attr        },
 	{"time_exten",           PARAM_STR, &acc_time_exten       },
 	{"cdrs_table",           PARAM_STR, &acc_cdrs_table       },
-	{"time_format",          PARAM_STRING, &acc_time_format      },
+	{"time_format",          PARAM_STRING, &acc_time_format   },
+	{"clone_msg",            PARAM_INT, &_acc_clone_msg       },
 	{0,0,0}
 };
 

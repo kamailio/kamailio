@@ -482,6 +482,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 }
 
 
+extern int _acc_clone_msg;
 
 /* initiate a report if we previously enabled accounting for this t */
 static inline void acc_onreply( struct cell* t, struct sip_msg *req,
@@ -490,6 +491,8 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	str new_uri_bk;
 	int br = -1;
 	hdr_field_t *hdr;
+	sip_msg_t tmsg;
+	sip_msg_t *preq;
 
 	/* acc_onreply is bound to TMCB_REPLY which may be called
 	   from _reply, like when FR hits; we should not miss this
@@ -499,6 +502,13 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 
 	if (!should_acc_reply(req, reply, code))
 		return;
+
+	if(_acc_clone_msg==1) {
+		memcpy(&tmsg, req, sizeof(sip_msg_t));
+		preq = &tmsg;
+	} else {
+		preq = req;
+	}
 
 	/* get winning branch index, if set */
 	if (t->relayed_reply_branch>=0) {
@@ -511,9 +521,9 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 
 	/* for reply processing, set as new_uri the one from selected branch */
 	if (br>=0) {
-		new_uri_bk = req->new_uri;
-		req->new_uri = t->uac[br].uri;
-		req->parsed_uri_ok = 0;
+		new_uri_bk = preq->new_uri;
+		preq->new_uri = t->uac[br].uri;
+		preq->parsed_uri_ok = 0;
 	} else {
 		new_uri_bk.len = -1;
 		new_uri_bk.s = 0;
@@ -522,31 +532,31 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	env_set_to( get_rpl_to(t,reply) );
 	env_set_code_status( code, reply);
 
-	if ( is_log_acc_on(req) ) {
+	if ( is_log_acc_on(preq) ) {
 		env_set_text( ACC_ANSWERED, ACC_ANSWERED_LEN);
-		acc_log_request(req);
+		acc_log_request(preq);
 	}
 #ifdef SQL_ACC
-	if (is_db_acc_on(req)) {
-		if(acc_db_set_table_name(req, db_table_acc_data, &db_table_acc)<0) {
+	if (is_db_acc_on(preq)) {
+		if(acc_db_set_table_name(preq, db_table_acc_data, &db_table_acc)<0) {
 			LM_ERR("cannot set acc db table name\n");
 		} else {
-			acc_db_request(req);
+			acc_db_request(preq);
 		}
 	}
 #endif
 #ifdef RAD_ACC
-	if (is_rad_acc_on(req))
-		acc_rad_request(req);
+	if (is_rad_acc_on(preq))
+		acc_rad_request(preq);
 #endif
 /* DIAMETER */
 #ifdef DIAM_ACC
-	if (is_diam_acc_on(req))
-		acc_diam_request(req);
+	if (is_diam_acc_on(preq))
+		acc_diam_request(preq);
 #endif
 
 	/* run extra acc engines */
-	acc_run_engines(req, 0, NULL);
+	acc_run_engines(preq, 0, NULL);
 
 	if (new_uri_bk.len>=0) {
 		req->new_uri = new_uri_bk;
@@ -556,8 +566,8 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	/* free header's parsed structures that were added by resolving acc attributes */
 	for( hdr=req->headers ; hdr ; hdr=hdr->next ) {
 		if ( hdr->parsed && hdr_allocs_parse(hdr) &&
-		(hdr->parsed<(void*)t->uas.request ||
-		hdr->parsed>=(void*)t->uas.end_request)) {
+					(hdr->parsed<(void*)t->uas.request ||
+					hdr->parsed>=(void*)t->uas.end_request)) {
 			/* header parsed filed doesn't point inside uas.request memory
 			 * chunck -> it was added by resolving acc attributes -> free it as pkg */
 			DBG("removing hdr->parsed %d\n", hdr->type);
