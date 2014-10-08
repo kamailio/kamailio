@@ -384,13 +384,12 @@ int extract_sendrecv_mode(str *body, str *sendrecv_mode, int *is_on_hold)
 	cp1 = body->s;
 	if ( !( (strncasecmp(cp1, "a=sendrecv", 10) == 0) ||
 		(strncasecmp(cp1, "a=recvonly", 10) == 0))) {
-		if ( !( (strncasecmp(cp1, "a=inactive", 10) == 0) ||
-			(strncasecmp(cp1, "a=sendonly", 10) == 0) )) {
-			return -1;
-		} else {
+		if ((strncasecmp(cp1, "a=inactive", 10) == 0) ||
+		    (strncasecmp(cp1, "a=sendonly", 10) == 0) ) {
 			*is_on_hold = 1;
+		} else {
+			return -1;
 		}
-		return -1;
 	}
 
 	sendrecv_mode->s = body->s + 2; /* skip `a=' */
