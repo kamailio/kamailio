@@ -12,7 +12,7 @@ Edited by
 
 Juha Heinanen
 
-   Copyright © 2006 Voice Sistem SRL
+   Copyright (c) 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -30,8 +30,7 @@ Juha Heinanen
         5. Exported MI functions
 
               5.1. pua_publish
-
-        6. pua_subscribe
+              5.2. pua_subscribe
 
    List of Examples
 
@@ -52,8 +51,7 @@ Chapter 1. Admin Guide
    5. Exported MI functions
 
         5.1. pua_publish
-
-   6. pua_subscribe
+        5.2. pua_subscribe
 
 1. Overview
 
@@ -94,8 +92,9 @@ Chapter 1. Admin Guide
 5. Exported MI functions
 
    5.1. pua_publish
+   5.2. pua_subscribe
 
-5.1. pua_publish
+5.1.  pua_publish
 
    Command parameters:
      * presentity_uri - e.g. sip:system@kamailio.org
@@ -135,7 +134,7 @@ le id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd
 748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:4
 76</dm:note></dm:person></presence>
 
-6. pua_subscribe
+5.2.  pua_subscribe
 
    Command parameters:
      * presentity_uri - e.g. sip:presentity@kamailio.org

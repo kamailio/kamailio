@@ -171,7 +171,6 @@ application/pidf+xml
 ]]>
 </programlisting>
 		</example>
-		</section>
 
 	</section>		
 	<section>
@@ -208,5 +207,7 @@ application/pidf+xml
 			</listitem>	
 			</itemizedlist>
 	</section>
+	</section>
+	
 </chapter>
 
