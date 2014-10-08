@@ -610,7 +610,7 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 	</section>
 
 	<section>
-		<title><varname>caller_cseq_column</varname> (string)</title>
+		<title><varname>from_cseq_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the cseq from caller
 			side.
@@ -621,17 +621,17 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>caller_cseq_column</varname> parameter</title>
+		<title>Set <varname>from_cseq_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "caller_cseq_column", "column_name")
+modparam("dialog", "from_cseq_column", "column_name")
 ...
 </programlisting>
 		</example>
 	</section>
 
 	<section>
-		<title><varname>callee_cseq_column</varname> (string)</title>
+		<title><varname>to_cseq_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the cseq from callee
 			side.
@@ -642,17 +642,17 @@ modparam("dialog", "caller_cseq_column", "column_name")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>callee_cseq_column</varname> parameter</title>
+		<title>Set <varname>to_cseq_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "callee_cseq_column", "column_name")
+modparam("dialog", "to_cseq_column", "column_name")
 ...
 </programlisting>
 		</example>
 	</section>
 
 	<section>
-		<title><varname>caller_route_column</varname> (string)</title>
+		<title><varname>from_route_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the route records from
 			caller side (proxy to caller).
@@ -663,17 +663,17 @@ modparam("dialog", "callee_cseq_column", "column_name")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>caller_route_column</varname> parameter</title>
+		<title>Set <varname>from_route_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "caller_route_column", "column_name")
+modparam("dialog", "from_route_column", "column_name")
 ...
 </programlisting>
 		</example>
 	</section>
 
 	<section>
-		<title><varname>callee_route_column</varname> (string)</title>
+		<title><varname>to_route_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the route records from
 			callee side (proxy to callee).
@@ -687,35 +687,35 @@ modparam("dialog", "caller_route_column", "column_name")
 		<title>Set <varname>to_route_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "callee_route_column", "column_name")
+modparam("dialog", "to_route_column", "column_name")
 ...
 </programlisting>
 		</example>
 	</section>
 
 	<section>
-		<title><varname>caller_contact_column</varname> (string)</title>
+		<title><varname>from_contact_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the caller's contact
 			uri.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>from_contact</quote>.
+			Default value is <quote>caller_contact</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>caller_contact_column</varname> parameter</title>
+		<title>Set <varname>from_contact_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "caller_contact_column", "column_name")
+modparam("dialog", "from_contact_column", "column_name")
 ...
 </programlisting>
 		</example>
 	</section>
 
 	<section>
-		<title><varname>callee_contact_column</varname> (string)</title>
+		<title><varname>to_contact_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the callee's contact
 			uri.
@@ -726,17 +726,17 @@ modparam("dialog", "caller_contact_column", "column_name")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>callee_contact_column</varname> parameter</title>
+		<title>Set <varname>to_contact_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "callee_contact_column", "column_name")
+modparam("dialog", "to_contact_column", "column_name")
 ...
 </programlisting>
 		</example>
 	</section>
 
 <section>
-		<title><varname>caller_sock_column</varname> (string)</title>
+		<title><varname>from_sock_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the information about
 			the local interface receiving the traffic from caller.
@@ -747,31 +747,31 @@ modparam("dialog", "callee_contact_column", "column_name")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>caller_sock_column</varname> parameter</title>
+		<title>Set <varname>from_sock_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "caller_sock_column", "column_name")
+modparam("dialog", "from_sock_column", "column_name")
 ...
 </programlisting>
 		</example>
 	</section>
 
 <section>
-		<title><varname>callee_sock_column</varname> (string)</title>
+		<title><varname>to_sock_column</varname> (string)</title>
 		<para>
 			The column name in the database to store information about the
 			local interface receiving the traffic from callee.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>callee_contact</quote>.
+			Default value is <quote>callee_sock</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>callee_sock_column</varname> parameter</title>
+		<title>Set <varname>to_sock_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "callee_sock_column", "column_name")
+modparam("dialog", "to_sock_column", "column_name")
 ...
 </programlisting>
 		</example>
