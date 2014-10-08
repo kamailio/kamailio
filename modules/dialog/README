@@ -60,14 +60,14 @@ Alex Balashov
               5.17. from_tag_column (string)
               5.18. to_uri_column (string)
               5.19. to_tag_column (string)
-              5.20. caller_cseq_column (string)
-              5.21. callee_cseq_column (string)
-              5.22. caller_route_column (string)
-              5.23. callee_route_column (string)
-              5.24. caller_contact_column (string)
-              5.25. callee_contact_column (string)
-              5.26. caller_sock_column (string)
-              5.27. callee_sock_column (string)
+              5.20. from_cseq_column (string)
+              5.21. to_cseq_column (string)
+              5.22. from_route_column (string)
+              5.23. to_route_column (string)
+              5.24. from_contact_column (string)
+              5.25. to_contact_column (string)
+              5.26. from_sock_column (string)
+              5.27. to_sock_column (string)
               5.28. h_id_column (string)
               5.29. h_entry_column (string)
               5.30. state_column (string)
@@ -188,14 +188,14 @@ Alex Balashov
    1.17. Set from_tag_column parameter
    1.18. Set to_uri_column parameter
    1.19. Set to_tag_column parameter
-   1.20. Set caller_cseq_column parameter
-   1.21. Set callee_cseq_column parameter
-   1.22. Set caller_route_column parameter
+   1.20. Set from_cseq_column parameter
+   1.21. Set to_cseq_column parameter
+   1.22. Set from_route_column parameter
    1.23. Set to_route_column parameter
-   1.24. Set caller_contact_column parameter
-   1.25. Set callee_contact_column parameter
-   1.26. Set caller_sock_column parameter
-   1.27. Set callee_sock_column parameter
+   1.24. Set from_contact_column parameter
+   1.25. Set to_contact_column parameter
+   1.26. Set from_sock_column parameter
+   1.27. Set to_sock_column parameter
    1.28. Set h_id_column parameter
    1.29. Set h_entry_column parameter
    1.30. Set state_column parameter
@@ -218,7 +218,7 @@ Alex Balashov
    1.47. Set ka_timer parameter
    1.48. Set ka_interval parameter
    1.49. Set timeout_noreset parameter
-   1.50. Set timeout_procs parameter
+   1.50. Set timer_procs parameter
    1.51. Set track_cseq_updates parameter
    1.52. set_dlg_profile usage
    1.53. unset_dlg_profile usage
@@ -271,14 +271,14 @@ Chapter 1. Admin Guide
         5.17. from_tag_column (string)
         5.18. to_uri_column (string)
         5.19. to_tag_column (string)
-        5.20. caller_cseq_column (string)
-        5.21. callee_cseq_column (string)
-        5.22. caller_route_column (string)
-        5.23. callee_route_column (string)
-        5.24. caller_contact_column (string)
-        5.25. callee_contact_column (string)
-        5.26. caller_sock_column (string)
-        5.27. callee_sock_column (string)
+        5.20. from_cseq_column (string)
+        5.21. to_cseq_column (string)
+        5.22. from_route_column (string)
+        5.23. to_route_column (string)
+        5.24. from_contact_column (string)
+        5.25. to_contact_column (string)
+        5.26. from_sock_column (string)
+        5.27. to_sock_column (string)
         5.28. h_id_column (string)
         5.29. h_entry_column (string)
         5.30. state_column (string)
@@ -474,14 +474,14 @@ Chapter 1. Admin Guide
    5.17. from_tag_column (string)
    5.18. to_uri_column (string)
    5.19. to_tag_column (string)
-   5.20. caller_cseq_column (string)
-   5.21. callee_cseq_column (string)
-   5.22. caller_route_column (string)
-   5.23. callee_route_column (string)
-   5.24. caller_contact_column (string)
-   5.25. callee_contact_column (string)
-   5.26. caller_sock_column (string)
-   5.27. callee_sock_column (string)
+   5.20. from_cseq_column (string)
+   5.21. to_cseq_column (string)
+   5.22. from_route_column (string)
+   5.23. to_route_column (string)
+   5.24. from_contact_column (string)
+   5.25. to_contact_column (string)
+   5.26. from_sock_column (string)
+   5.27. to_sock_column (string)
    5.28. h_id_column (string)
    5.29. h_entry_column (string)
    5.30. state_column (string)
@@ -780,41 +780,41 @@ modparam("dialog", "to_uri_column", "to_uri_c_name")
 modparam("dialog", "to_tag_column", "to_tag_c_name")
 ...
 
-5.20. caller_cseq_column (string)
+5.20. from_cseq_column (string)
 
    The column name in the database to store the cseq from caller side.
 
    Default value is "caller_cseq".
 
-   Example 1.20. Set caller_cseq_column parameter
+   Example 1.20. Set from_cseq_column parameter
 ...
-modparam("dialog", "caller_cseq_column", "column_name")
+modparam("dialog", "from_cseq_column", "column_name")
 ...
 
-5.21. callee_cseq_column (string)
+5.21. to_cseq_column (string)
 
    The column name in the database to store the cseq from callee side.
 
    Default value is "callee_cseq".
 
-   Example 1.21. Set callee_cseq_column parameter
+   Example 1.21. Set to_cseq_column parameter
 ...
-modparam("dialog", "callee_cseq_column", "column_name")
+modparam("dialog", "to_cseq_column", "column_name")
 ...
 
-5.22. caller_route_column (string)
+5.22. from_route_column (string)
 
    The column name in the database to store the route records from caller
    side (proxy to caller).
 
    Default value is "caller_route_set".
 
-   Example 1.22. Set caller_route_column parameter
+   Example 1.22. Set from_route_column parameter
 ...
-modparam("dialog", "caller_route_column", "column_name")
+modparam("dialog", "from_route_column", "column_name")
 ...
 
-5.23. callee_route_column (string)
+5.23. to_route_column (string)
 
    The column name in the database to store the route records from callee
    side (proxy to callee).
@@ -823,53 +823,53 @@ modparam("dialog", "caller_route_column", "column_name")
 
    Example 1.23. Set to_route_column parameter
 ...
-modparam("dialog", "callee_route_column", "column_name")
+modparam("dialog", "to_route_column", "column_name")
 ...
 
-5.24. caller_contact_column (string)
+5.24. from_contact_column (string)
 
    The column name in the database to store the caller's contact uri.
 
-   Default value is "from_contact".
+   Default value is "caller_contact".
 
-   Example 1.24. Set caller_contact_column parameter
+   Example 1.24. Set from_contact_column parameter
 ...
-modparam("dialog", "caller_contact_column", "column_name")
+modparam("dialog", "from_contact_column", "column_name")
 ...
 
-5.25. callee_contact_column (string)
+5.25. to_contact_column (string)
 
    The column name in the database to store the callee's contact uri.
 
    Default value is "callee_contact".
 
-   Example 1.25. Set callee_contact_column parameter
+   Example 1.25. Set to_contact_column parameter
 ...
-modparam("dialog", "callee_contact_column", "column_name")
+modparam("dialog", "to_contact_column", "column_name")
 ...
 
-5.26. caller_sock_column (string)
+5.26. from_sock_column (string)
 
    The column name in the database to store the information about the
    local interface receiving the traffic from caller.
 
    Default value is "caller_sock".
 
-   Example 1.26. Set caller_sock_column parameter
+   Example 1.26. Set from_sock_column parameter
 ...
-modparam("dialog", "caller_sock_column", "column_name")
+modparam("dialog", "from_sock_column", "column_name")
 ...
 
-5.27. callee_sock_column (string)
+5.27. to_sock_column (string)
 
    The column name in the database to store information about the local
    interface receiving the traffic from callee.
 
-   Default value is "callee_contact".
+   Default value is "callee_sock".
 
-   Example 1.27. Set callee_sock_column parameter
+   Example 1.27. Set to_sock_column parameter
 ...
-modparam("dialog", "callee_sock_column", "column_name")
+modparam("dialog", "to_sock_column", "column_name")
 ...
 
 5.28. h_id_column (string)
@@ -1153,7 +1153,7 @@ modparam("dialog", "timeout_noreset", 1)
 
    Default value is "0" (use core time process).
 
-   Example 1.50. Set timeout_procs parameter
+   Example 1.50. Set timer_procs parameter
 ...
 modparam("dialog", "timer_procs", 1)
 ...
