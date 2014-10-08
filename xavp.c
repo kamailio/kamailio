@@ -614,44 +614,48 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list)
 {
 	sr_xavp_t *crt = 0;
-	sr_xavp_t *fst = 0;
 	sr_xavp_t *lst = 0;
 	sr_xval_t val;
 	int n = 0;
 	int i = 0;
 
-	if(idx==0)
+	crt = xavp_get_internal(&xavp->name, list, 0, NULL);
+
+	if (idx == 0 && (!crt || crt->val.type != SR_XTYPE_NULL))
 		return xavp_add(xavp, list);
 
-	crt = xavp_get_internal(&xavp->name, list, 0, 0);
 	while(crt!=NULL && n<idx) {
 		lst = crt;
 		n++;
 		crt = xavp_get_next(lst);
 	}
+
+	if (crt && crt->val.type == SR_XTYPE_NULL) {
+		xavp->next = crt->next;
+		crt->next = xavp;
+
+		xavp_rm(crt, list);
+		return 0;
+	}
+
 	memset(&val, 0, sizeof(sr_xval_t));
 	val.type = SR_XTYPE_NULL;
 	for(i=0; i<idx-n; i++) {
-		crt = xavp_add_value(&xavp->name, &val, list);
+		crt = xavp_new_value(&xavp->name, &val);
 		if(crt==NULL)
 			return -1;
-		if(fst==NULL)
-			fst = crt;
-		if(lst==NULL) {
-			if(xavp_add(crt, list)<0)
-				return -1;
+		if (lst == NULL) {
+			crt->next = *list;
+			*list = crt;
 		} else {
 			crt->next = lst->next;
 			lst->next = crt;
 		}
+		lst = crt;
 	}
 
-	if(fst==NULL) {
-		return xavp_add(xavp, list);
-	} else {
-		xavp->next = fst->next;
-		fst->next = xavp;
-	}
+	xavp->next = lst->next;
+	lst->next = xavp;
 
 	return 0;
 }
