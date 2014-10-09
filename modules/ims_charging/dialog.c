@@ -1,11 +1,15 @@
+#include "mod.h"
 #include "dialog.h"
 #include "ro_session_hash.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "../ims_usrloc_scscf/udomain.h"
+#include "ro_db_handler.h"
 
 struct cdp_binds cdpb;
 
 extern usrloc_api_t ul;
+extern int ro_db_mode;
+extern char *domain;
 
 void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 	struct sip_msg *reply;
@@ -91,6 +95,13 @@ void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 		} else {
 			ref_ro_session_unsafe(session, 1); // lock already acquired
 		}
+
+		if (ro_db_mode == DB_MODE_REALTIME) {
+		    session->flags |= RO_SESSION_FLAG_CHANGED;
+		    if (update_ro_dbinfo_unsafe(session) != 0) {
+			LM_ERR("Failed to update ro_session in database... continuing\n");
+		    };
+		}
 				
 		ro_session_unlock(ro_session_table, ro_session_entry);
 
@@ -173,6 +184,14 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 				LM_DBG("Sending CCR STOP on Ro_Session [%p]\n", ro_session);
 				send_ccr_stop(ro_session);
 				ro_session->active = 0;
+				
+				if (ro_db_mode == DB_MODE_REALTIME) {
+				    ro_session->flags |= RO_SESSION_FLAG_DELETED;
+				    if (update_ro_dbinfo_unsafe(ro_session) != 0) {
+					LM_ERR("Unable to update Ro session in DB...continuing\n");
+				    }
+				}
+				
 				//ro_session->start_time;
 				unref_ro_session_unsafe(ro_session, 1+unref, ro_session_entry); //lock already acquired
 				//unref_ro_session_unsafe(ro_session, 2+unref, ro_session_entry); //lock already acquired
@@ -189,8 +208,14 @@ void remove_dlg_data_from_contact(struct dlg_cell *dlg, int type, struct dlg_cb_
     struct ucontact* ucontact;
     str callid = {0, 0};
     str path = {0, 0};
+    udomain_t* domain_t;
     
     LM_DBG("dialog [%p] terminated, lets remove dlg data from contact\n", dlg);
+    
+    if (ul.register_udomain(domain, &domain_t) < 0) {
+	    LM_ERR("Unable to register usrloc domain....aborting\n");
+	    return;
+    }
     
     if(_params && _params->param){
 	impu_data = (struct impu_data*)*_params->param;
@@ -200,10 +225,10 @@ void remove_dlg_data_from_contact(struct dlg_cell *dlg, int type, struct dlg_cb_
 	}
 	
 	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
-	LM_DBG("IMPU data domain <%.*s>", impu_data->d->name->len, impu_data->d->name->s);
+	LM_DBG("IMPU data domain <%.*s>", domain_t->name->len, domain_t->name->s);
 	
-	ul.lock_udomain(impu_data->d, &impu_data->identity);
-	if (ul.get_impurecord(impu_data->d, &impu_data->identity, &implicit_impurecord) != 0) {
+	ul.lock_udomain(domain_t, &impu_data->identity);
+	if (ul.get_impurecord(domain_t, &impu_data->identity, &implicit_impurecord) != 0) {
 	    LM_DBG("usrloc does not have imprecord for implicity IMPU, ignore\n");
 	}else {
 	    if (ul.get_ucontact(implicit_impurecord, &impu_data->contact, &callid, &path, 0/*cseq*/,  &ucontact) != 0) { //contact does not exist
@@ -212,7 +237,7 @@ void remove_dlg_data_from_contact(struct dlg_cell *dlg, int type, struct dlg_cb_
 		ul.remove_dialog_data_from_contact(ucontact, dlg->h_entry, dlg->h_id);
 	    }
 	}
-	ul.unlock_udomain(impu_data->d, &impu_data->identity);
+	ul.unlock_udomain(domain_t, &impu_data->identity);
 	free_impu_data(impu_data);
     }
 }
@@ -224,8 +249,14 @@ void add_dlg_data_to_contact(struct dlg_cell *dlg, int type, struct dlg_cb_param
     struct ucontact* ucontact;
     str callid = {0, 0};
     str path = {0, 0};
+    udomain_t* domain_t;
     
     LM_DBG("dialog [%p] confirmed, lets add dlg data to contact\n", dlg);
+    
+    if (ul.register_udomain(domain, &domain_t) < 0) {
+	    LM_ERR("Unable to register usrloc domain....aborting\n");
+	    return;
+    }
     
     if(_params && _params->param){
 	impu_data = (struct impu_data*)*_params->param;
@@ -235,10 +266,10 @@ void add_dlg_data_to_contact(struct dlg_cell *dlg, int type, struct dlg_cb_param
 	}
 	
 	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
-	LM_DBG("IMPU data domain <%.*s>", impu_data->d->name->len, impu_data->d->name->s);
+	LM_DBG("IMPU data domain <%.*s>", domain_t->name->len, domain_t->name->s);
 	
-	ul.lock_udomain(impu_data->d, &impu_data->identity);
-	if (ul.get_impurecord(impu_data->d, &impu_data->identity, &implicit_impurecord) != 0) {
+	ul.lock_udomain(domain_t, &impu_data->identity);
+	if (ul.get_impurecord(domain_t, &impu_data->identity, &implicit_impurecord) != 0) {
 	    LM_DBG("usrloc does not have imprecord for implicity IMPU, ignore\n");
 	}else {
 	    if (ul.get_ucontact(implicit_impurecord, &impu_data->contact, &callid, &path, 0/*cseq*/,  &ucontact) != 0) { //contact does not exist
@@ -247,6 +278,6 @@ void add_dlg_data_to_contact(struct dlg_cell *dlg, int type, struct dlg_cb_param
 		ul.add_dialog_data_to_contact(ucontact, dlg->h_entry, dlg->h_id);
 	    }
 	}
-	ul.unlock_udomain(impu_data->d, &impu_data->identity);
+	ul.unlock_udomain(domain_t, &impu_data->identity);
     }
 } 

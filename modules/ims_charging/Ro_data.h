@@ -281,6 +281,8 @@ typedef struct {
     str *icid;
 
     str *service_id;
+    
+    str *trunk_id;
 
     service_specific_info_list_t service_specific_info;
 
@@ -393,7 +395,8 @@ ims_information_t * new_ims_information(event_type_t * event_type,
         str * icid,
         str * orig_ioi,
         str * term_ioi,
-        int node_role);
+        int node_role,
+		str *trunk_id);
 
 void event_type_free(event_type_t *x);
 void time_stamps_free(time_stamps_t *x);

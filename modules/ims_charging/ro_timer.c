@@ -15,10 +15,12 @@
 #include "ro_session_hash.h"
 #include "ims_ro.h"
 #include "stats.h"
+#include "ro_db_handler.h"
+#include "mod.h"
 
 extern int interim_request_credits;
 extern int ro_timer_buffer;
-
+extern int ro_db_mode;
 extern struct dlg_binds dlgb;
 
 /*! global dialog timer */
@@ -316,6 +318,13 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
 		}
 		else {
 			ref_ro_session_unsafe(i_req->ro_session, 1);
+		}
+		
+		if (ro_db_mode == DB_MODE_REALTIME) {
+		    i_req->ro_session->flags |= RO_SESSION_FLAG_CHANGED;
+		    if (update_ro_dbinfo_unsafe(i_req->ro_session) != 0) {
+			LM_ERR("Failed to update Ro session in DB... continuing\n");
+		    }
 		}
 	}
 	else {

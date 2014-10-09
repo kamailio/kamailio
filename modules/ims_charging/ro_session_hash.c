@@ -174,10 +174,12 @@ void destroy_dlg_table(void) {
     return;
 }
 
-struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout){
+struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, 
+	str* called_asserted_identity, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
+	int active_rating_group, int active_service_identifier, str *trunk_id){
     LM_DBG("Building Ro Session **********");
     char *p;
-    unsigned int len = session_id->len + callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + sizeof (struct ro_session);
+    unsigned int len = session_id->len + callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + trunk_id->len + sizeof (struct ro_session);
     struct ro_session *new_ro_session = (struct ro_session*) shm_malloc(len);
 
     if (!new_ro_session) {
@@ -208,6 +210,9 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     new_ro_session->h_entry = dlg_h_entry; /* we will use the same entry ID as the dlg - saves us using our own hash function */
     new_ro_session->h_id = 0;
     new_ro_session->ref = 0;
+    
+    new_ro_session->rating_group = active_rating_group;
+    new_ro_session->service_identifier = active_service_identifier;
 
     p = (char*) (new_ro_session + 1);
     new_ro_session->callid.s = p;
@@ -229,6 +234,11 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     new_ro_session->called_asserted_identity.len = called_asserted_identity->len;
     memcpy(p, called_asserted_identity->s, called_asserted_identity->len);
     p += called_asserted_identity->len;
+    
+    new_ro_session->trunk_id.s = p;
+    new_ro_session->trunk_id.len = trunk_id->len;
+    memcpy(p, trunk_id->s, trunk_id->len);
+    p += trunk_id->len;
     
     new_ro_session->avp_value.mac.s		= p;
     new_ro_session->avp_value.mac.len	= mac->len;

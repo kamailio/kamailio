@@ -14,9 +14,9 @@
 #define RO_CC_INTERIM 	2
 #define RO_CC_STOP 		3
 
-#define RO_UNKNOWN_DIRECTION 0
-#define RO_ORIG_DIRECTION 1
-#define RO_TERM_DIRECTION 2
+#define RO_UNKNOWN_DIRECTION -1
+#define RO_ORIG_DIRECTION 0
+#define RO_TERM_DIRECTION 1
 
 /** Return and break the execution of routing script */
 #define RO_RETURN_BREAK	0
@@ -46,5 +46,11 @@
 #define RO_AVP_CCA_RETURN_CODE_LENGTH 15
 
 #define RO_MAC_AVP_NAME	"$avp(ro_mac_value)"
+
+#define DB_DEFAULT_UPDATE_PERIOD	60
+
+#define DB_MODE_NONE				0
+#define DB_MODE_REALTIME			1
+#define DB_MODE_SHUTDOWN			2
 
 #endif /* MOD_H_ */

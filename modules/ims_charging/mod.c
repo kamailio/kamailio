@@ -20,6 +20,7 @@
 #include "dialog.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "../../lib/ims/ims_getters.h"
+#include "ro_db_handler.h"
 
 MODULE_VERSION
 
@@ -40,8 +41,15 @@ int voice_rating_group = 100;
 int video_service_identifier = 1001;
 int video_rating_group = 200;
 
-int active_service_identifier = 1000; //current SID to be used - will  be changed depending on SDP info
-int active_rating_group = 200; //current RG to be used - will  be changed depending on SDP info
+
+/* DB params */
+static str db_url = str_init(DEFAULT_DB_URL);
+static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
+int ro_db_mode_param = DB_MODE_NONE;
+static int db_fetch_rows = 200;
+int ro_db_mode = DB_MODE_NONE;
+
+char *domain = "location";
 
 client_ro_cfg cfg = { str_init("scscf.ims.smilecoms.com"),
     str_init("ims.smilecoms.com"),
@@ -83,10 +91,9 @@ static int mod_init(void);
 static int mod_child_init(int);
 static void mod_destroy(void);
 
-static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* charge_type, str* unit_type, int reservation_units, char *_d);
+static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* charge_type, str* unit_type, int reservation_units, str* trunk_id);
 //void ro_session_ontimeout(struct ro_tl *tl);
 
-static int domain_fixup(void** param);
 static int ro_fixup(void **param, int param_no);
 
 static cmd_export_t cmds[] = {
@@ -115,11 +122,14 @@ static param_export_t params[] = {
 		{ "service_context_id_ext", PARAM_STRING,			&ro_service_context_id_ext_s 	},
 		{ "service_context_id_mnc", PARAM_STRING,			&ro_service_context_id_mnc_s 	},
 		{ "service_context_id_mcc", PARAM_STRING,			&ro_service_context_id_mcc_s 	},
-		{ "service_context_id_release",	PARAM_STRING, 		&ro_service_context_id_release_s},
+		{ "service_context_id_release",	PARAM_STRING,			&ro_service_context_id_release_s},
 		{ "voice_service_identifier", 	INT_PARAM, 			&voice_service_identifier },/*service id for voice*/
 		{ "voice_rating_group", 	INT_PARAM, 			&voice_rating_group },/*rating group for voice*/
 		{ "video_service_identifier", 	INT_PARAM, 			&video_service_identifier },/*service id for voice*/
 		{ "video_rating_group", 	INT_PARAM, 			&video_rating_group },/*rating group for voice*/
+		{ "db_mode",			INT_PARAM,			&ro_db_mode_param		},
+		{ "db_url",			PARAM_STRING,			&db_url 			},
+		{ "db_update_period",		INT_PARAM,			&db_update_period		},
 		{ 0, 0, 0 }
 };
 
@@ -280,6 +290,27 @@ static int mod_init(void) {
 		LM_ERR("failed to register core statistics\n");
 		return -1;
 	}*/
+	
+	/* if a database should be used to store the dialogs' information */
+	ro_db_mode = ro_db_mode_param;
+	if (ro_db_mode == DB_MODE_NONE) {
+	    db_url.s = 0;
+	    db_url.len = 0;
+	} else {
+	    if (ro_db_mode != DB_MODE_REALTIME && ro_db_mode != DB_MODE_SHUTDOWN) {
+		LM_ERR("unsupported db_mode %d\n", ro_db_mode);
+		return -1;
+	    }
+	    if (!db_url.s || db_url.len == 0) {
+		LM_ERR("db_url not configured for db_mode %d\n", ro_db_mode);
+		return -1;
+	    }
+	    if (init_ro_db(&db_url, ro_session_hash_size, db_update_period, db_fetch_rows) != 0) {
+		LM_ERR("failed to initialize the DB support\n");
+		return -1;
+	    }
+//	    run_load_callbacks();
+	}
 
 	return 0;
 
@@ -290,14 +321,32 @@ error:
 }
 
 static int mod_child_init(int rank) {
-	return 0;
+    ro_db_mode = ro_db_mode_param;
+
+    if (((ro_db_mode == DB_MODE_REALTIME) && (rank > 0 || rank == PROC_TIMER)) ||
+	    (ro_db_mode == DB_MODE_SHUTDOWN && (rank == PROC_MAIN))) {
+	if (ro_connect_db(&db_url)) {
+	    LM_ERR("failed to connect to database (rank=%d)\n", rank);
+	    return -1;
+	}
+    }
+
+    /* in DB_MODE_SHUTDOWN only PROC_MAIN will do a DB dump at the end, so
+     * for the rest of the processes will be the same as DB_MODE_NONE */
+    if (ro_db_mode == DB_MODE_SHUTDOWN && rank != PROC_MAIN)
+	ro_db_mode = DB_MODE_NONE;
+    /* in DB_MODE_REALTIME and DB_MODE_DELAYED the PROC_MAIN have no DB handle */
+    if ((ro_db_mode == DB_MODE_REALTIME) && rank == PROC_MAIN)
+	ro_db_mode = DB_MODE_NONE;
+    
+    return 0;
 }
 
 static void mod_destroy(void) {
 
 }
 
-static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* charge_type, str* unit_type, int reservation_units, char* _d) {
+static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* charge_type, str* unit_type, int reservation_units, str* trunk_id) {
 	/* PSEUDOCODE/NOTES
 	 * 1. What mode are we in - terminating or originating
 	 * 2. check request type - 	IEC - Immediate Event Charging
@@ -322,7 +371,6 @@ static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* c
 	unsigned int tindex = 0,
 				 tlabel = 0;
 	struct impu_data *impu_data;
-	udomain_t* domain_t = (udomain_t*) _d;
 	char *p;
 	struct dlg_cell* dlg;
 	unsigned int len;
@@ -402,8 +450,6 @@ static int w_ro_ccr(struct sip_msg *msg, str* route_name, str* direction, str* c
 	memcpy(p, contact.s, contact.len);
 	p += contact.len;
 	
-	impu_data->d = domain_t;
-
 	if (p != (((char*) impu_data) + len)) {
 	    LM_ERR("buffer overflow creating impu data, trying to send CCR\n");
 	    shm_free(impu_data);
@@ -475,7 +521,7 @@ send_ccr:
 		goto done;
 	}
 	
-	ret = Ro_Send_CCR(msg, dlg, dir, charge_type, unit_type, reservation_units, cfg_action, tindex, tlabel);
+	ret = Ro_Send_CCR(msg, dlg, dir, charge_type, unit_type, reservation_units, trunk_id, cfg_action, tindex, tlabel);
 	
 	if(ret < 0){
 	    LM_ERR("Failed to send CCR\n");
@@ -487,24 +533,11 @@ done:
 	return ret;
 }
 
-///* fixups */
-static int domain_fixup(void** param)
-{
-	udomain_t* d;
-
-	if (ul.register_udomain((char*)*param, &d) < 0) {
-		LM_ERR("failed to register domain\n");
-		return E_UNSPEC;
-	}
-	*param = (void*)d;
-	return 0;
-}
-
 static int ro_fixup(void **param, int param_no) {
 	str s;
 	unsigned int num;
 
-	if (param_no > 0 && param_no <= 4) {
+	if ( (param_no > 0 && param_no <= 4) || (param_no == 6) ) {
 		return fixup_var_str_12(param, param_no);
 	} else if (param_no == 5) {
 		/*convert to int */
@@ -517,9 +550,6 @@ static int ro_fixup(void **param, int param_no) {
 		}
 		LM_ERR("Bad reservation units: <%s>n", (char*)(*param));
 		return E_CFG;
-	} 
-	else if (param_no == 6) {
-		return domain_fixup(param);
 	}
 	
 	return 0;
