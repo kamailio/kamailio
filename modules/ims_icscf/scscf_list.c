@@ -56,6 +56,9 @@ extern int scscf_entry_expiry; //time for scscf entries to remain the scscf_list
 
 extern struct tm_binds tmb; //Structure with pointers to tm funcs
 
+extern int use_preferred_scscf_uri;
+extern str preferred_scscf_uri;
+
 int i_hash_size;
 i_hash_slot *i_hash_table = 0;
 
@@ -427,19 +430,51 @@ out_of_memory:
 str take_scscf_entry(str call_id) {
     str scscf = {0, 0};
     scscf_list *l = 0;
+    scscf_entry *scscf_entry = 0;
     unsigned int hash = get_call_id_hash(call_id, i_hash_size);
 
+    LM_DBG("Getting scscf entry from list\n");
+    
     i_lock(hash);
     l = i_hash_table[hash].head;
-    while (l) {
-        if (l->call_id.len == call_id.len &&
-                strncasecmp(l->call_id.s, call_id.s, call_id.len) == 0) {
-            if (l->list) {
-                scscf = l->list->scscf_name;
-            }
-            break;
-        }
-        l = l->next;
+    
+    //if use_preferred_scscf_uri then check the table for the preferred scscf set
+    if(use_preferred_scscf_uri) {
+	LM_DBG("use_preferred_scscf_uri is set so will check for preferred_scscf_uri first [%.*s]\n", preferred_scscf_uri.len, preferred_scscf_uri.s);
+	while (l) {
+	    if (l->call_id.len == call_id.len &&
+		    strncasecmp(l->call_id.s, call_id.s, call_id.len) == 0) {
+		scscf_entry = l->list;
+		while (scscf_entry) {
+		    LM_DBG("scscf_entry [%.*s]\n", scscf_entry->scscf_name.len, scscf_entry->scscf_name.s);
+		    if (strncasecmp(scscf_entry->scscf_name.s, preferred_scscf_uri.s, preferred_scscf_uri.len) == 0) {
+			LM_DBG("scscf_entry matches\n");
+			scscf = scscf_entry->scscf_name;
+			break;
+		    }
+		    scscf_entry = scscf_entry->next;
+		}
+		
+		break;
+	    }
+	    l = l->next;
+	}
+    }
+    
+    // if scscf has not yet been set then find the first scscf that matches
+    if(scscf.len <= 0 ) {
+	LM_DBG("scscf has not been set so we just look for first match\n");
+	while (l) {
+	    if (l->call_id.len == call_id.len &&
+		    strncasecmp(l->call_id.s, call_id.s, call_id.len) == 0) {
+		if (l->list) {
+		    LM_DBG("scscf_entry [%.*s]\n", l->list->scscf_name.len, l->list->scscf_name.s);
+		    scscf = l->list->scscf_name;
+		}
+		break;
+	    }
+	    l = l->next;
+	}
     }
     i_unlock(hash);
     return scscf;

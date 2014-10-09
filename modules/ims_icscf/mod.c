@@ -76,6 +76,9 @@ int scscf_entry_expiry = 300;
 char* cxdx_dest_realm_s = "ims.smilecoms.com";
 str cxdx_dest_realm;
 
+str preferred_scscf_uri = str_init("sip:scscf.ims.smilecoms.com:4060");
+int use_preferred_scscf_uri = 0;
+
 //Only used if we want to force the Rx peer
 //Usually this is configured at a stack level and the first request uses realm routing
 char* cxdx_forced_peer_s = "";
@@ -123,6 +126,8 @@ static param_export_t params[] = {
     {"db_capabilities_table", 	PARAM_STRING, &ims_icscf_db_capabilities_table},
     {"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
     {"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
+    {"preferred_scscf_uri",	PARAM_STR, &preferred_scscf_uri},
+    {"use_preferred_scscf_uri", INT_PARAM, &use_preferred_scscf_uri},
     {0, 0, 0}
 };
 

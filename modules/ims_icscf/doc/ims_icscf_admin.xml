@@ -140,7 +140,7 @@ modparam("ims_icscf", "cxdx_forced_peer", "hss.ims.smilecoms.com")
       <para><emphasis> Default value is "ims.smilecoms.com".</emphasis></para>
 
       <example>
-        <title><varname>version_table</varname> parameter usage</title>
+        <title><varname>cxdx_dest_realm</varname> parameter usage</title>
 
         <programlisting format="linespecific">
 ...
@@ -149,6 +149,47 @@ modparam("ims_icscf", "cxdx_dest_realm", "ims.smilecoms.com")
     </programlisting>
       </example>
     </section>
+    
+    <section>
+      <title><varname>use_preferred_scscf_uri</varname> (int)</title>
+
+      <para>Whether or not this ICSCF has a preferred S-CSCF to use when the
+      HSS returns a list of SCSCFs.  0 means this I-CSCF has no preferred
+      SCSCF.  1 means it has a preferred S-CSCF.</para>
+
+      <para><emphasis> Default value is 0.</emphasis></para>
+
+      <example>
+        <title><varname>use_preferred_scscf_uri</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "use_preferred_scscf_uri", 1)
+...
+    </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><varname>preferred_scscf_uri</varname> (string)</title>
+
+      <para>If use_preferred_scscf_uri is set then this is the URI of the preferred
+	  SCSCF.</para>
+
+      <para><emphasis> Default value is "".</emphasis></para>
+
+      <example>
+        <title><varname>preferred_scscf_uri</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "preferred_scscf_uri", "sip:scscf.ims.smilecoms.com:6060")
+...
+    </programlisting>
+      </example>
+    </section>
+    
+    
   </section>
 
   <section>
@@ -299,7 +340,7 @@ route[REG_UAR_REPLY]
       retrieve return value</para>
 
       <example>
-        <title>I_perform_location_information_request()</title>
+        <title>I_perform_location_information_request</title>
 
         <programlisting format="linespecific">
 ...
