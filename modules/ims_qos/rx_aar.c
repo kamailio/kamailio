@@ -94,7 +94,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
     struct cell *t = 0;
     unsigned int cdp_result;
     int result = CSCF_RETURN_ERROR;
-
+    
     LM_DBG("Received AAR callback\n");
     saved_transaction_t* data = (saved_transaction_t*) param;
 
@@ -135,9 +135,9 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
 
     if (cdp_result >= 2000 && cdp_result < 3000) {
         LM_DBG("Success, received code: [%i] from PCRF for AAR request\n", cdp_result);
-
-        LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len, aaa->sessionId->data.s);
 	
+	LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len, aaa->sessionId->data.s);
+
 	if(!data->aar_update) {
 	    LM_DBG("This is an AAA response to an initial AAR");
 	    str * passed_rx_session_id = shm_malloc(sizeof (struct _str));
@@ -181,6 +181,8 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
     struct pcontact_info ci;
     udomain_t* domain_t;
     int finalReply = 0;
+    AAASession *auth = 0;
+    rx_authsessiondata_t* p_session_data = 0;
     int result = CSCF_RETURN_ERROR;
 
     LM_DBG("Received AAR callback\n");
@@ -245,6 +247,25 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
             create_return_code(result);
             goto done;
         }
+	//need to set Rx auth data to say this session has been successfully opened
+	//This is used elsewhere to prevent acting on termination events when the session has not been opened
+	//getting auth session
+	auth = cdpb.AAAGetAuthSession(aaa->sessionId->data);
+	if (!auth) {
+	    LM_DBG("Could not get Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
+	    goto error;
+	}
+	//getting session data
+	p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
+	if (!p_session_data) {
+	    LM_DBG("Could not get session data on Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
+	    if (auth) cdpb.AAASessionsUnlock(auth->hash);
+	    goto error;
+	}
+	p_session_data->session_has_been_opened = 1;
+	if (auth) cdpb.AAASessionsUnlock(auth->hash);
+	
+	
         LM_DBG("Success, received code: [%i] from PCRF for AAR request (contact: [%.*s]), (auth session id: %.*s)\n",
                 cdp_result, local_data->contact.len, local_data->contact.s,
                 local_data->auth_session_id.len, local_data->auth_session_id.s);

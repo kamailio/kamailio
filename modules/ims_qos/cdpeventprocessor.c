@@ -230,23 +230,26 @@ void cdp_cb_event_process() {
                     LM_DBG("This is a subscription to signalling bearer session");
                     //instead of removing the contact from usrloc_pcscf we just change the state of the contact to TERMINATE_PENDING_NOTIFY
                     //pcscf_registrar sees this, sends a SIP PUBLISH and on SIP NOTIFY the contact is deleted
-
-                    if (ul.register_udomain(p_session_data->domain.s, &domain)
-                            < 0) {
-                        LM_DBG("Unable to register usrloc domain....aborting\n");
-                        return;
-                    }
-                    ul.lock_udomain(domain, &p_session_data->registration_aor);
-                    if (ul.get_pcontact(domain, &p_session_data->registration_aor,
-                            &pcontact) != 0) {
-                        LM_DBG("no contact found for terminated Rx reg session..... ignoring\n");
-                    } else {
-                        LM_DBG("Updating contact [%.*s] after Rx reg session terminated, setting state to PCONTACT_DEREG_PENDING_PUBLISH\n", pcontact->aor.len, pcontact->aor.s);
-                        ci.reg_state = PCONTACT_DEREG_PENDING_PUBLISH;
-                        ci.num_service_routes = 0;
-                        ul.update_pcontact(domain, &ci, pcontact);
-                    }
-                    ul.unlock_udomain(domain, &p_session_data->registration_aor);
+		    //note we only send SIP PUBLISH if the session has been successfully opened
+		    
+		    if(p_session_data->session_has_been_opened) {
+			if (ul.register_udomain(p_session_data->domain.s, &domain)
+				< 0) {
+			    LM_DBG("Unable to register usrloc domain....aborting\n");
+			    return;
+			}
+			ul.lock_udomain(domain, &p_session_data->registration_aor);
+			if (ul.get_pcontact(domain, &p_session_data->registration_aor,
+				&pcontact) != 0) {
+			    LM_DBG("no contact found for terminated Rx reg session..... ignoring\n");
+			} else {
+			    LM_DBG("Updating contact [%.*s] after Rx reg session terminated, setting state to PCONTACT_DEREG_PENDING_PUBLISH\n", pcontact->aor.len, pcontact->aor.s);
+			    ci.reg_state = PCONTACT_DEREG_PENDING_PUBLISH;
+			    ci.num_service_routes = 0;
+			    ul.update_pcontact(domain, &ci, pcontact);
+			}
+			ul.unlock_udomain(domain, &p_session_data->registration_aor);
+		    }
                 } else {
                     LM_DBG("This is a media bearer session session");
                     

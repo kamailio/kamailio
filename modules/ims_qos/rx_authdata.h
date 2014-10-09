@@ -84,6 +84,7 @@ typedef struct rx_authsessiondata {
     int ip_version;
     //for registration session
     int subscribed_to_signaling_path_status; // 0 not subscribed 1 is subscribed
+    int session_has_been_opened; // 0 has not been opened 1 has been opened
     str domain;				//the domain the registration aor belongs to (for registration)
     str registration_aor; //the aor if this rx session is a subscription to signalling status
     int must_terminate_dialog; //0 means when this session terminates it must not terminate the relevant dialog, 1 means it must terminate the dialog
