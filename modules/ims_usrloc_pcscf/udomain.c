@@ -64,6 +64,7 @@
 extern int db_mode;
 extern unsigned int hashing_type;
 extern int lookup_check_received;
+extern int match_contact_host_port;
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -477,7 +478,21 @@ int get_pcontact(udomain_t* _d, str* _contact, struct pcontact** _c) {
 			*_c = c;
 			return 0;
 		}
+		
+		if(match_contact_host_port) {
+		    LM_DBG("Comparing needle user@host:port [%.*s@%.*s:%d] and contact_user@contact_host:port [%.*s@%.*s:%d]\n", needle_uri.user.len, needle_uri.user.s, 
+			    needle_uri.host.len, needle_uri.host.s, needle_uri.port_no,
+			    c->contact_user.len, c->contact_user.s, c->contact_host.len, c->contact_host.s, c->contact_port);
 
+		    if((needle_uri.user.len == c->contact_user.len && (memcmp(needle_uri.user.s, c->contact_user.s, needle_uri.user.len) ==0)) &&
+			    (needle_uri.host.len == c->contact_host.len && (memcmp(needle_uri.host.s, c->contact_host.s, needle_uri.host.len) ==0)) &&
+			    (needle_uri.port_no == c->contact_port)) {
+			LM_DBG("Match!!\n");
+			*_c = c;
+			return 0;
+		    }
+		}
+		
 		LM_DBG("Searching for [%.*s] and comparing to [%.*s]\n", _contact->len, _contact->s, c->aor.len, c->aor.s);
 
 		/* hosts HAVE to match */

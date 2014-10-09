@@ -235,6 +235,34 @@ modparam("ims_usrloc_pcscf", "lookup_check_received", 0)
 </programlisting>
       </example>
     </section>
+    <section>
+      <title>match_contact_host_port (int)</title>
+
+      <para>If set to 1 (default), the contact is matched using only host
+	  and port in the contact URI.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>0 - When matching contact do full contact match procedure.</para>
+        </listitem>
+
+        <listitem>
+          <para>1 - When matching contact compare only host and port of the contact URI.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para><emphasis>Default value is 1.</emphasis></para>
+
+      <example>
+        <title>Set match_contact_host_port parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "match_contact_host_port", 0)
+...
+</programlisting>
+      </example>
+    </section>
+    
   </section>
 
   <section>
