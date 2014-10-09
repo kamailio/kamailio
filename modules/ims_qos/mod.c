@@ -374,7 +374,7 @@ void callback_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params * para
 	//getting auth session
 	auth = cdpb.AAAGetAuthSession(*rx_session_id);
 	if (!auth) {
-	    LM_DBG("Could not get Auth Session for session id: [%.*s] - this is fine as this might have been started by already sending an STR\n", rx_session_id->len, rx_session_id->s);
+	    LM_DBG("Could not get Auth Session for session id: [%.*s]\n", rx_session_id->len, rx_session_id->s);
 	    goto error;
 	}
 
@@ -414,7 +414,7 @@ void callback_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params * para
 	//getting auth session
 	auth = cdpb.AAAGetAuthSession(*rx_session_id);
 	if (!auth) {
-	    LM_DBG("Could not get Auth Session for session id: [%.*s] - this is fine as this might have been started by already sending an STR\n", rx_session_id->len, rx_session_id->s);
+	    LM_DBG("Could not get Auth Session for session id: [%.*s]\n", rx_session_id->len, rx_session_id->s);
 	    goto error;
 	}
 
@@ -848,6 +848,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
     int aar_sent = 0;
     saved_transaction_local_t* local_data = 0; //data to be shared across all async calls
     saved_transaction_t* saved_t_data = 0; //data specific to each contact's AAR async call
+    str ip;
     
     if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
         LM_ERR("no async route block for assign_server_unreg\n");
@@ -977,25 +978,20 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                     LM_DBG("Contact [%.*s] exists and is in state PCONTACT_REG_PENDING or PCONTACT_REGISTERED\n"
                             , pcontact->aor.len, pcontact->aor.s);
 
-                    //get IP address from contact
-                    struct sip_uri puri;
-                    if (parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
-                        LM_ERR("failed to parse Contact\n");
-                        ul.unlock_udomain(domain_t, &c->uri);
-                        lock_release(saved_t_data->lock);
-                        goto error;
 
-                    }
-                    LM_DBG("Parsed URI of from host is [%.*s]\n", puri.host.len, puri.host.s);
-                    uint16_t ip_version = AF_INET; //TODO IPv6!!!?
-
+		    //we use the received IP address for the framed_ip_address 
+		    ip.s = ip_addr2a(&msg->rcv.src_ip);
+		    ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
+		    LM_DBG("Message received IP address is: [%.*s]\n", ip.len, ip.s);
+		    uint16_t ip_version = AF_INET; //TODO IPv6!!!?
+                    
                     //check for existing Rx session
                     if (pcontact->rx_session_id.len > 0
                             && pcontact->rx_session_id.s
                             && (auth = cdpb.AAAGetAuthSession(pcontact->rx_session_id))) {
                         LM_DBG("Rx session already exists for this user\n");
                         if (memcmp(pcontact->rx_session_id.s, auth->id.s, auth->id.len) != 0) {
-                            LM_ERR("Rx session mismatch when URI is [%.*s].......Aborting\n", puri.host.len, puri.host.s);
+                            LM_ERR("Rx session mismatch for rx_session_id [%.*s].......Aborting\n", pcontact->rx_session_id.len, pcontact->rx_session_id.s);
                             if (auth) cdpb.AAASessionsUnlock(auth->hash);
                             lock_release(saved_t_data->lock);
                             goto error;
@@ -1007,7 +1003,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                         LM_DBG("Creating new Rx session for contact <%.*s>\n", pcontact->aor.len, pcontact->aor.s);
                         int ret = create_new_regsessiondata(domain_t->name, &pcontact->aor, &rx_regsession_data_p);
                         if (!ret) {
-                            LM_ERR("Unable to create regsession data parcel when URI is [%.*s]...Aborting\n", puri.host.len, puri.host.s);
+                            LM_ERR("Unable to create regsession data parcel for rx_session_id [%.*s]...Aborting\n", pcontact->rx_session_id.len, pcontact->rx_session_id.s);
                             ul.unlock_udomain(domain_t, &c->uri);
                             if (rx_regsession_data_p) {
                                 shm_free(rx_regsession_data_p);
@@ -1018,7 +1014,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                         }
                         auth = cdpb.AAACreateClientAuthSession(1, callback_for_cdp_session, rx_regsession_data_p); //returns with a lock
                         if (!auth) {
-                            LM_ERR("Rx: unable to create new Rx Reg Session when URI is [%.*s]\n", puri.host.len, puri.host.s);
+                            LM_ERR("Rx: unable to create new Rx Reg Session for rx_session_id is [%.*s]\n", pcontact->rx_session_id.len, pcontact->rx_session_id.s);
                             if (rx_regsession_data_p) {
                                 shm_free(rx_regsession_data_p);
                                 rx_regsession_data_p = 0;
@@ -1068,7 +1064,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 
                     //TODOD remove - no longer user AOR parm
                     //ret = rx_send_aar_register(msg, auth, &puri.host, &ip_version, &c->uri, local_data); //returns a locked rx auth object
-                    ret = rx_send_aar_register(msg, auth, &puri.host, &ip_version, local_data); //returns a locked rx auth object
+                    ret = rx_send_aar_register(msg, auth, &ip, &ip_version, local_data); //returns a locked rx auth object
 
                     ul.unlock_udomain(domain_t, &c->uri);
 
