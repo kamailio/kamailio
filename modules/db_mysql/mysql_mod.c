@@ -109,6 +109,7 @@ static param_export_t params[] = {
 	{"timeout_interval", INT_PARAM, &db_mysql_timeout_interval},
 	{"auto_reconnect",   INT_PARAM, &db_mysql_auto_reconnect},
 	{"insert_delayed",   INT_PARAM, &db_mysql_insert_all_delayed},
+	{"update_affected_found", INT_PARAM, &db_mysql_update_affected_found},
 	{0, 0, 0}
 };
 

@@ -141,6 +141,25 @@ modparam("db_mysql", "insert_delayed", 1)
 </programlisting>
 		</example>
 	</section>
+        <section id="db_mysql.p.update_affected_found">
+		<title><varname>update_affected_found</varname> (integer)</title>
+		<para>
+		If set to 1, all UPDATE SQL queries will return the number of matched rows instead of the number of "updated" rows.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (1 - on / 0 - off).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>update_affected_found</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "update_affected_found", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>

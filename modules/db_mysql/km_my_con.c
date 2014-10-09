@@ -44,6 +44,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 {
 	struct my_con* ptr;
 	char *host, *grp;
+	unsigned int connection_flag = 0;
 
 	if (!id) {
 		LM_ERR("invalid parameter value\n");
@@ -99,12 +100,16 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	mysql_options(ptr->con, MYSQL_OPT_READ_TIMEOUT, (const char *)&db_mysql_timeout_interval);
 	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const char *)&db_mysql_timeout_interval);
 
+	if (db_mysql_update_affected_found) { 
+	    connection_flag |= CLIENT_FOUND_ROWS;
+	}
+	
 #if (MYSQL_VERSION_ID >= 40100)
 	if (!mysql_real_connect(ptr->con, host, id->username, id->password,
-				id->database, id->port, 0, CLIENT_MULTI_STATEMENTS)) {
+				id->database, id->port, 0, connection_flag|CLIENT_MULTI_STATEMENTS)) {
 #else
 	if (!mysql_real_connect(ptr->con, host, id->username, id->password,
-				id->database, id->port, 0, 0)) {
+				id->database, id->port, 0, connection_flag)) {
 #endif
 		LM_ERR("driver error: %s\n", mysql_error(ptr->con));
 		/* increase error counter */
