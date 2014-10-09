@@ -371,9 +371,9 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 
     while (c) {
 	if (c->path.len) {
-            for (i = 0; i < c->path.len - asserted_id.len; i++)
-		LM_DBG("Path: <%.*s>.\n",
+	    LM_DBG("Path: <%.*s>.\n",
 		c->path.len, c->path.s);
+            for (i = 0; i < c->path.len - (asserted_id.len-4); i++)
 		//we compare the asserted_id without "sip:" to the path 
                 if (strncasecmp(c->path.s + i, asserted_id.s+4, asserted_id.len-4) == 0) {
                     LM_DBG("Identity found in Path <%.*s>\n",
