@@ -222,17 +222,20 @@ int fork_sync_timer(int child_id, char* desc, int make_sock,
 	if (pid<0) return -1;
 	if (pid==0){
 		/* child */
-		ts2 = interval*1000; /* miliseconds */
+		interval *= 1000;  /* miliseconds */
+		ts2 = interval;
 		if (cfg_child_init()) return -1;
 		for(;;){
-			if(ts2>0) sleep_us(ts2*1000); /* microseconds sleep */
-			else sleep_us(1000); /* 1 milisecond sleep to catch up */
+			if (ts2>interval)
+				sleep_us(1000);    /* 1 milisecond sleep to catch up */
+			else
+				sleep_us(ts2*1000); /* microseconds sleep */
 			ts1 = get_ticks_raw();
 			cfg_update();
 			f(TICKS_TO_S(ts1), param); /* ticks in sec for compatibility with old
 									  timers */
-			/* convert to mili-seconds and adjust the next sleep duration */
-			ts2 = interval*1000 - TICKS_TO_MS(get_ticks_raw()) + TICKS_TO_MS(ts1);
+			/* adjust the next sleep duration */
+			ts2 = interval - TICKS_TO_MS(get_ticks_raw()) + TICKS_TO_MS(ts1);
 		}
 	}
 	/* parent */
@@ -271,8 +274,10 @@ int fork_sync_utimer(int child_id, char* desc, int make_sock,
 		ts2 = uinterval;
 		if (cfg_child_init()) return -1;
 		for(;;){
-			if(ts2>0) sleep_us(uinterval);
-			else sleep_us(1);
+			if(ts2>uinterval)
+				sleep_us(1);
+			else
+				sleep_us(ts2);
 			ts1 = get_ticks_raw();
 			cfg_update();
 			f(TICKS_TO_MS(ts1), param); /* ticks in mili-seconds */
