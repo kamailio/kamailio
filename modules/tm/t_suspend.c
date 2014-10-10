@@ -108,6 +108,7 @@ int t_suspend(struct sip_msg *msg,
 	} else {
 		LM_DBG("this is a suspend on reply - setting msg flag to SUSPEND\n");
 		msg->msg_flags |= FL_RPL_SUSPENDED;
+                t->flags |= T_ASYNC_SUSPENDED;
 		/* this is a reply suspend find which branch */
 
 		if (t_check( msg  , &branch )==-1){

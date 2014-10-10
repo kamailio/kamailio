@@ -298,6 +298,7 @@ static int t_any_timeout(struct sip_msg* msg, char*, char*);
 static int t_any_replied(struct sip_msg* msg, char*, char*);
 static int w_t_is_canceled(struct sip_msg* msg, char*, char*);
 static int t_is_expired(struct sip_msg* msg, char*, char*);
+static int w_t_is_retr_async_reply(struct sip_msg* msg, char*, char*);
 static int t_grep_status(struct sip_msg* msg, char*, char*);
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
@@ -472,6 +473,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_is_canceled",     w_t_is_canceled,          0, 0,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+        {"t_is_retr_async_reply",     w_t_is_retr_async_reply,          0, 0,
+			TM_ONREPLY_ROUTE},                
 	{"t_is_expired",      t_is_expired,             0, 0,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_grep_status",     t_grep_status,            1, fixup_var_int_1, 
@@ -1948,6 +1951,29 @@ int t_is_canceled(struct sip_msg* msg)
 static int w_t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
 {
 	return t_is_canceled(msg);
+}
+
+/* script function, returns: 1 if the transaction is currently suspended, -1 if not */
+int t_is_retr_async_reply(struct sip_msg* msg)
+{
+	struct cell *t;
+	int ret;	
+	
+	if (t_check( msg , 0 )==-1) return -1;
+	t=get_t();
+	if ((t==0) || (t==T_UNDEFINED)){
+		LOG(L_ERR, "ERROR: t_is_retr_async_reply: cannot check a message "
+			"for which no T-state has been established\n");
+		ret=-1;
+	}else{
+        LOG(L_DBG, "TRANSACTION FLAGS IS %d\n", t->flags);
+		ret=(t->flags & T_ASYNC_SUSPENDED)?1:-1;
+	}
+	return ret;
+}
+static int w_t_is_retr_async_reply(struct sip_msg* msg, char* foo, char* bar)
+{
+	return t_is_retr_async_reply(msg);
 }
 
 /* script function, returns: 1 if the transaction lifetime interval has already elapsed, -1 if not */

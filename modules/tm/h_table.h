@@ -322,6 +322,7 @@ typedef struct async_state {
 
 #define T_DISABLE_INTERNAL_REPLY (1<<13) /* don't send internal negative reply */
 #define T_ADMIN_REPLY (1<<14) /* t reply sent by admin (e.g., from cfg script) */
+#define T_ASYNC_SUSPENDED (1<<15)
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ms =>
  * max retr. = 65 s which should be enough and saves us 2*2 bytes */

@@ -1723,5 +1723,29 @@ t_use_uac_headers();
 	    </programlisting>
 	</example>
     </section>
-
-</section>
+	<section id="tm.f.t_is_retr_async_reply">
+	<title>                                                               </section>
+	    <function>t_is_retr_async_reply()</function>
+	</title>
+	<para>
+	Check to see if the reply is a retransmitted reply on a transaction that is 
+	currently suspended asynchronously (suspended during reply processing). Right now the check is only on the 
+	transaction, we don't actually check to see if the reply message is an actual 
+	retransmission of the suspended reply. This is expected as you should not process 
+	another reply until the suspended reply processing has been completed. The trick here 
+	is to make sure you don't suspend for too long or even worse, indefinitely.
+	</para>
+	<para>returns true if the transaction is currently reply suspended or false if not.</para>
+	<example>
+	    <title><function>t_is_retr_async_reply</function> usage</title>
+	    <programlisting>
+...
+if (t_is_retr_async_reply()) {
+	xlog("L_DBG", "Dropping retransmitted reply which is still currently suspended\n");
+        drop();
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+    </section>
