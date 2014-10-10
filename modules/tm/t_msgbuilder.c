@@ -1578,9 +1578,9 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;                                    /* CSeq */
 	*len += calculate_routeset_length(dialog);                                                   /* Route set */
 	*len += maxfwd_len;                                                                          /* Max-forwards */	
-	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN; /* Content-
-																	 Length */
-	*len += (server_signature ? (user_agent_hdr.len + CRLF_LEN) : 0);	                         /* Signature */
+	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN; /* Content-Length */
+	*len += ((server_signature && user_agent_hdr.len>0)
+							? (user_agent_hdr.len + CRLF_LEN) : 0);	                         /* Signature */
 	*len += (headers ? headers->len : 0);                                                        /* Additional headers */
 	*len += (body ? body->len : 0);                                                              /* Message body */
 	*len += CRLF_LEN;                                                                            /* End of Header */
@@ -1610,13 +1610,13 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	memapp(w, CRLF, CRLF_LEN);
 	
 	     /* Server signature */
-	if (server_signature) {
+	if (server_signature && user_agent_hdr.len>0) {
 		memapp(w, user_agent_hdr.s, user_agent_hdr.len);
 		memapp(w, CRLF, CRLF_LEN);
 	}
 	if (headers) memapp(w, headers->s, headers->len);
 	memapp(w, CRLF, CRLF_LEN);
-     	if (body) memapp(w, body->s, body->len);
+	if (body) memapp(w, body->s, body->len);
 
 #ifdef EXTRA_DEBUG
 	assert(w-buf == *len);
