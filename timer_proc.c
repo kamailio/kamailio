@@ -96,19 +96,19 @@ int fork_basic_timer(int child_id, char* desc, int make_sock,
 }
 
 /**
- * \brief Forks a separate simple milisecond-sleep() periodic timer
+ * \brief Forks a separate simple microsecond-sleep() periodic timer
  * 
- * Forks a very basic periodic timer process, that just ms-sleep()s for 
+ * Forks a very basic periodic timer process, that just us-sleep()s for 
  * the specified interval and then calls the timer function.
- * The new "basic timer" process execution start immediately, the ms-sleep()
+ * The new "basic timer" process execution start immediately, the us-sleep()
  * is called first (so the first call to the timer function will happen
- * \<interval\> seconds after the call to fork_basic_utimer)
+ * \<interval\> microseconds after the call to fork_basic_utimer)
  * @param child_id  @see fork_process()
  * @param desc      @see fork_process()
  * @param make_sock @see fork_process()
  * @param f         timer function/callback
  * @param param     parameter passed to the timer function
- * @param uinterval  interval in mili-seconds.
+ * @param uinterval  interval in micro-seconds.
  * @return pid of the new process on success, -1 on error
  * (doesn't return anything in the child process)
  */
@@ -244,19 +244,19 @@ int fork_sync_timer(int child_id, char* desc, int make_sock,
 
 
 /**
- * \brief Forks a separate simple milisecond-sleep() -&- sync periodic timer
+ * \brief Forks a separate simple microsecond-sleep() -&- sync periodic timer
  *
- * Forks a very basic periodic timer process, that just ms-sleep()s for 
+ * Forks a very basic periodic timer process, that just us-sleep()s for 
  * the specified interval and then calls the timer function.
- * The new "sync timer" process execution start immediately, the ms-sleep()
+ * The new "sync timer" process execution start immediately, the us-sleep()
  * is called first (so the first call to the timer function will happen
- * \<interval\> seconds after the call to fork_basic_utimer)
+ * \<interval\> microseconds after the call to fork_basic_utimer)
  * @param child_id  @see fork_process()
  * @param desc      @see fork_process()
  * @param make_sock @see fork_process()
  * @param f         timer function/callback
  * @param param     parameter passed to the timer function
- * @param uinterval  interval in mili-seconds.
+ * @param uinterval  interval in micro-seconds.
  * @return pid of the new process on success, -1 on error
  * (doesn't return anything in the child process)
  */
