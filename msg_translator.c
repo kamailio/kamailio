@@ -2398,7 +2398,7 @@ char * build_res_buf_from_sip_req( unsigned int code, str *text ,str *new_tag,
 			body = lump;
 	}
 	/* server header */
-	if (server_signature)
+	if (server_signature && server_hdr.len)
 		len += server_hdr.len + CRLF_LEN;
 	/* warning hdr */
 	if (sip_warning) {
@@ -2536,7 +2536,7 @@ char * build_res_buf_from_sip_req( unsigned int code, str *text ,str *new_tag,
 			p += lump->text.len;
 		}
 	/* server header */
-	if (server_signature) {
+	if (server_signature && server_hdr.len>0) {
 		memcpy( p, server_hdr.s, server_hdr.len );
 		p+=server_hdr.len;
 		memcpy( p, CRLF, CRLF_LEN );
