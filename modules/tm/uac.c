@@ -67,6 +67,7 @@
 #include "../../md5.h"
 #include "../../crc.h"
 #include "../../ip_addr.h"
+#include "../../dset.h"
 #include "../../socket_info.h"
 #include "../../compiler_opt.h"
 #include "config.h"
@@ -738,6 +739,14 @@ fin:
  */
 int req_within(uac_req_t *uac_r)
 {
+	int ret;
+	char nbuf[MAX_URI_SIZE];
+#define REQ_DST_URI_SIZE	80
+	char dbuf[REQ_DST_URI_SIZE];
+	str ouri = {0, 0};
+	str nuri = {0, 0};
+	str duri = {0, 0};
+
 	if (!uac_r || !uac_r->method || !uac_r->dialog) {
 		LOG(L_ERR, "req_within: Invalid parameter value\n");
 		goto err;
@@ -749,15 +758,49 @@ int req_within(uac_req_t *uac_r)
 		uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
 	}
 
+	/* handle alias parameter in uri
+	 * - only if no dst uri and no route set - */
+	if(uac_r->dialog && uac_r->dialog->rem_target.len>0
+			&& uac_r->dialog->dst_uri.len==0
+			&& uac_r->dialog->route_set==NULL) {
+		ouri = uac_r->dialog->rem_target;
+		/*restore alias parameter*/
+		nuri.s = nbuf;
+		nuri.len = MAX_URI_SIZE;
+		duri.s = dbuf;
+		duri.len = REQ_DST_URI_SIZE;
+		if(uri_restore_rcv_alias(&ouri, &nuri, &duri)<0) {
+			nuri.len = 0;
+			duri.len = 0;
+		}
+		if(nuri.len>0 && duri.len>0) {
+			uac_r->dialog->rem_target = nuri;
+			uac_r->dialog->dst_uri    = duri;
+		} else {
+			ouri.len = 0;
+		}
+	}
+
 	if ((uac_r->method->len == 3) && (!memcmp("ACK", uac_r->method->s, 3))) goto send;
 	if ((uac_r->method->len == 6) && (!memcmp("CANCEL", uac_r->method->s, 6))) goto send;
 	uac_r->dialog->loc_seq.value++; /* Increment CSeq */
  send:
-	return t_uac(uac_r);
+	ret = t_uac(uac_r);
+	if(ouri.len>0) {
+		uac_r->dialog->rem_target = ouri;
+		uac_r->dialog->dst_uri.s = 0;
+		uac_r->dialog->dst_uri.len = 0;
+	}
+	return ret;
 
  err:
 	/* callback parameter must be freed outside of tm module
 	if (cbp) shm_free(cbp); */
+	if(ouri.len>0) {
+		uac_r->dialog->rem_target = ouri;
+		uac_r->dialog->dst_uri.s = 0;
+		uac_r->dialog->dst_uri.len = 0;
+	}
 	return -1;
 }
 
