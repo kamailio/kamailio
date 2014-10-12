@@ -351,6 +351,34 @@ modparam("dialplan", "fetch_rows", 4000)
 		</example>
 	</section>
 
+	<section id="dialplan.p.match_dynamic">
+		<title><varname>match_dynamic</varname> (int)</title>
+		<para>
+		If set to 1, the match and substitution expressions can
+		include script variables and their values are evaluated at
+		runtime.
+		</para>
+		<para>
+		During the loading process, the values that contain
+		variables are no longer pre-compiled to PCRE structure in
+		memory, because the values change at runtime, thus expect slightly
+		slower performances. Values without script variables are pre-compiled
+		even if this parameter is enabled.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>match_dynamic</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "match_dynamic", 1)
+...
+		</programlisting>
+		</example>
+	</section>
 
 	</section>
 

@@ -43,6 +43,7 @@ Juha Heinanen
               5.10. attrs_col (string)
               5.11. attrs_pvar (string)
               5.12. fetch_rows (int)
+              5.13. match_dynamic (int)
 
         6. Functions
 
@@ -76,9 +77,10 @@ Juha Heinanen
    1.10. Set attrs_col parameter
    1.11. Set attrs_pvar parameter
    1.12. Set fetch_rows parameter
-   1.13. dp_translate usage
+   1.13. Set match_dynamic parameter
    1.14. dp_translate usage
-   1.15. Example of rules
+   1.15. dp_translate usage
+   1.16. Example of rules
 
 Chapter 1. Admin Guide
 
@@ -106,6 +108,7 @@ Chapter 1. Admin Guide
         5.10. attrs_col (string)
         5.11. attrs_pvar (string)
         5.12. fetch_rows (int)
+        5.13. match_dynamic (int)
 
    6. Functions
 
@@ -196,6 +199,7 @@ Chapter 1. Admin Guide
    5.10. attrs_col (string)
    5.11. attrs_pvar (string)
    5.12. fetch_rows (int)
+   5.13. match_dynamic (int)
 
 5.1. db_url (string)
 
@@ -334,6 +338,24 @@ modparam("dialplan", "attrs_pvar", "$avp(s:dest)")
 modparam("dialplan", "fetch_rows", 4000)
 ...
 
+5.13. match_dynamic (int)
+
+   If set to 1, the match and substitution expressions can include script
+   variables and their values are evaluated at runtime.
+
+   During the loading process, the values that contain variables are no
+   longer pre-compiled to PCRE structure in memory, because the values
+   change at runtime, thus expect slightly slower performances. Values
+   without script variables are pre-compiled even if this parameter is
+   enabled.
+
+   Default value is "0" (disabled).
+
+   Example 1.13. Set match_dynamic parameter
+...
+modparam("dialplan", "match_dynamic", 1)
+...
+
 6. Functions
 
    6.1. dp_translate(id, [src[/dest]])
@@ -373,13 +395,13 @@ modparam("dialplan", "fetch_rows", 4000)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. dp_translate usage
+   Example 1.14. dp_translate usage
 ...
 dp_translate("240", "$ruri.user/$avp(s:dest)");
 xlog("translated to var $avp(s:dest) \n");
 ...
 
-   Example 1.14. dp_translate usage
+   Example 1.15. dp_translate usage
 ...
 $avp(s:src) = $ruri.user;
 dp_translate("$var(x)", "$avp(s:src)/$var(y)");
@@ -462,7 +484,7 @@ xlog("translated to var $var(y) \n");
    Some sample records from a dialplan table are presented in the next
    figure.
 
-   Example 1.15. Example of rules
+   Example 1.16. Example of rules
 ...
 dpid: 1
 pr: 1
