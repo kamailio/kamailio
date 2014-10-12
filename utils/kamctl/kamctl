@@ -1703,7 +1703,7 @@ dialplan() {
 
 		addrule)
 			shift
-			if [ $# -lt 8 ] ; then
+			if [ $# -lt 4 ] ; then
 				merr "too few parameters"
 				usage_dialplan
 				exit 1
@@ -1719,15 +1719,27 @@ dialplan() {
 				regexp)
 					DIALPLAN_MATCH_OP=1
 					;;
+				fnmatch)
+					DIALPLAN_MATCH_OP=2
+					;;
 				*)
 					merr "dialplan - unexpected $DIALPLAN_MATCH_OP for operating matching. Use 'equal' or 'regexp'!"
 					exit 1
 			esac
 			DIALPLAN_MATCH_EXP=$4
-			DIALPLAN_MATCH_LEN=$5
-			DIALPLAN_SUBST_EXP=$6
-			DIALPLAN_REPL_EXP=$7
-			DIALPLAN_ATTRS=$8
+			DIALPLAN_MATCH_LEN=0
+			if [ $# -gt 4 ] ; then
+				DIALPLAN_MATCH_LEN=$5
+			fi
+			if [ $# -gt 5 ] ; then
+				DIALPLAN_SUBST_EXP=$6
+			fi
+			if [ $# -gt 6 ] ; then
+				DIALPLAN_REPL_EXP=$7
+			fi
+			if [ $# -gt 7 ] ; then
+				DIALPLAN_ATTRS=$8
+			fi
 
 			QUERY="insert into $DIALPLAN_TABLE \
 				( $DIALPLAN_DPID_COLUMN, $DIALPLAN_PR_COLUMN, $DIALPLAN_MATCH_OP_COLUMN, \
@@ -1737,7 +1749,7 @@ dialplan() {
 				VALUES ( $DIALPLAN_DPID, $DIALPLAN_PR, $DIALPLAN_MATCH_OP, \
 					'$DIALPLAN_MATCH_EXP', $DIALPLAN_MATCH_LEN, '$DIALPLAN_SUBST_EXP', \
 					'$DIALPLAN_REPL_EXP', '$DIALPLAN_ATTRS')";
-			mecho "$QUERY"
+			mdbg "$QUERY"
 			$DBCMD "$QUERY"
 
 			if [ $? -ne 0 ] ; then
@@ -1745,7 +1757,8 @@ dialplan() {
 				exit 1
 			fi
 
-			$CTLCMD dp_reload
+			minfo "do not forget to do dialplan reload"
+			# $CTLCMD dp_reload
 			;;
 
 		rm)
@@ -1757,7 +1770,8 @@ dialplan() {
 				exit 1
 			fi
 
-			$CTLCMD dp_reload
+			minfo "do not forget to do dialplan reload"
+			# $CTLCMD dp_reload
 			;;
 
 		rmdpid)
@@ -1778,7 +1792,8 @@ dialplan() {
 				exit 1
 			fi
 
-			$CTLCMD dp_reload
+			minfo "do not forget to do dialplan reload"
+			# $CTLCMD dp_reload
 			;;
 
 		rmrule)
@@ -1800,7 +1815,8 @@ dialplan() {
 				exit 1
 			fi
 
-			$CTLCMD dp_reload
+			minfo "do not forget to do dialplan reload"
+			# $CTLCMD dp_reload
 			;;
 
 		reload)
