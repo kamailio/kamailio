@@ -118,7 +118,7 @@ Chapter 1. Admin Guide
 
    If the db_url string is empty, the default database URL will be used.
 
-   Default value is "mysql://openserro:openserro@localhost/openser".
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
@@ -129,7 +129,7 @@ modparam("uri_db", "db_url", "mysql://username:password@localhost/openser")
 
    The DB table that should be used. Its possible to use the "subscriber"
    and "uri" table. If the "uri" table should be used, an additional
-   parameter (Section 3.6, "use_uri_table (integer)") must be set.
+   parameter "use-uri-table") must be set.
 
    Default value is "subscriber".
 
@@ -208,8 +208,8 @@ modparam("uri_db", "use_domain", 1)
 
 4.1. check_to()
 
-   Check To username against URI table (if use_uri_table is set) or digest
-   credentials (no DB backend required).
+   Check "To" username against URI table (if use_uri_table is set) or
+   digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -222,7 +222,7 @@ if (check_to()) {
 
 4.2. check_from()
 
-   Check From username against URI table (if use_uri_table is set) or
+   Check "From" username against URI table (if use_uri_table is set) or
    digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
@@ -238,8 +238,8 @@ if (check_from()) {
 
    Check if username in the request URI belongs to an existing user.
 
-   As the checking is done against URI table (if use_uri_table is set) or
-   subscriber table.
+   The checking is done against the URI table (if use_uri_table is set) or
+   the subscriber table.
 
    This function can be used from REQUEST_ROUTE.
 
