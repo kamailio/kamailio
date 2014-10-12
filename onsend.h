@@ -104,5 +104,6 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 	return ret;
 }
 
+#define onsend_route_enabled(rtype) (onsend_rt.rlist[DEFAULT_RT]?((rtype==SIP_REPLY)?onsend_route_reply:1):0)
 
 #endif

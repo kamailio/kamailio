@@ -758,6 +758,7 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 	struct dest_info dst;
 	unsigned int new_len;
 	int r;
+	struct ip_addr ip;
 #ifdef USE_TCP
 	char* s;
 	int len;
@@ -836,11 +837,6 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 
 	apply_force_send_socket(&dst, msg);
 
-	if (msg_send(&dst, new_buf, new_len)<0)
-	{
-		STATS_RPL_FWD_DROP();
-		goto error;
-	}
 	/* call onsend_route */
 	if(dst.send_sock == NULL) {
 		dst.send_sock=get_send_socket(msg, &dst.to, dst.proto);
@@ -849,7 +845,21 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 			goto done;
 		}
 	}
-	run_onsend(msg, &dst, new_buf, new_len);
+	if (onsend_route_enabled(SIP_REPLY)){
+		if (run_onsend(msg, &dst, new_buf, new_len)==0){
+			su2ip_addr(&ip, &(dst.to));
+			LOG(L_ERR, "forward_reply: reply to %s:%d(%d) dropped"
+					" (onsend_route)\n", ip_addr2a(&ip),
+						su_getport(&(dst.to)), dst.proto);
+			goto error; /* error ? */
+		}
+	}
+
+	if (msg_send(&dst, new_buf, new_len)<0)
+	{
+		STATS_RPL_FWD_DROP();
+		goto error;
+	}
 
 	done:
 #ifdef STATS

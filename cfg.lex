@@ -495,7 +495,7 @@ LATENCY_LIMIT_DB		latency_limit_db
 LATENCY_LIMIT_ACTION	latency_limit_action
 
 MSG_TIME	msg_time
-
+ONSEND_RT_REPLY		"onsend_route_reply"
 CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
@@ -938,6 +938,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{MAX_RECURSIVE_LEVEL}  { count(); yylval.strval=yytext; return MAX_RECURSIVE_LEVEL;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}
 <INITIAL>{MSG_TIME}  { count(); yylval.strval=yytext; return MSG_TIME;}
+<INITIAL>{ONSEND_RT_REPLY}	{ count(); yylval.strval=yytext; return ONSEND_RT_REPLY; }
 <INITIAL>{LATENCY_LIMIT_DB}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_DB;}
 <INITIAL>{LATENCY_LIMIT_ACTION}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_ACTION;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }

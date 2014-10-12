@@ -198,6 +198,9 @@ extern int open_files_limit;
 extern int shm_force_alloc;
 extern int mlock_pages;
 
+/* execute onsend_route for replies */
+extern int onsend_route_reply;
+
 /* real time stuff */
 extern int real_time;
 extern int rt_prio;
