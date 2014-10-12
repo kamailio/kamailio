@@ -16,32 +16,34 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Offer a possibility to store incoming and outgoing SIP messages in a database
-		and/or duplicate to the capturing server (using the Homer encapsulation protocol 
-		or plain SIP mode)
+		The SIPtrace module offer a possibility to store incoming and outgoing SIP
+		messages in a database and/or duplicate to the capturing server (using <acronym>HEP</acronym>
+		the Homer encapsulation protocol or plain SIP mode)
 	</para>
 	<para>
-	There are two ways of storing information.
+		There are two ways of storing information:
 		<itemizedlist>
 		<listitem>
 		<para>
-		by calling explicitely the sip_trace() method in &kamailio; configuration
+		by calling the sip_trace() method explicitely in the &kamailio; configuration
 		file. In this case the original message is processed.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-		by setting the flag equal with the value of 'trace_flag' (e.g.,
+		by setting the flag equal with the value of <quote>trace_flag</quote> (e.g.,
 		setflag(__trace_flag__)) parameter of the module. In this case, the
 		message sent forward is processed. The logging mechanism is based on
-		TM/SL callbacks, so only messages processed with TM/SL are logged.
+		TM/SL callbacks, so only messages processed with the TM module or sent statelessly
+		are logged.
 		</para>
 		</listitem>
 		</itemizedlist>
 	</para>
 
 	<para>
-	The tracing can be turned on/off using Kamailio mi or RPC commands.
+	The tracing can be turned on/off using Kamailio <acronym>mi</acronym> or <acronym>RPC</acronym>
+	commands.
 	</para>
 	<para>
 	&ctltool; fifo sip_trace on
@@ -59,7 +61,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>database module</emphasis> - Mysql, Postgres,
+				<emphasis>A database module</emphasis> - Mysql, Postgres,
 				dbtext, unixODBC...
 			</para>
 			</listitem>
@@ -89,7 +91,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="siptrace.p.db_url">
 		<title><varname>db_url</varname> (str)</title>
 		<para>
 		Database URL.
@@ -108,14 +110,14 @@ modparam("siptrace", "db_url", "mysql://user:passwd@host/dbname")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.table">
 		<title><varname>table</varname> (str)</title>
 		<para>
 		Name of the table where to store the SIP messages.
 		</para>
 		<para>
 		<emphasis>
-			Default value is "sip_trace".
+			Default value is <quote>sip_trace</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -127,7 +129,7 @@ modparam("siptrace", "table", "strace")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.trace_flag">
 		<title><varname>trace_flag</varname> (integer)</title>
 		<para>
 		Which flag is used to mark messages to trace
@@ -146,7 +148,7 @@ modparam("siptrace", "trace_flag", 22)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.trace_on">
 		<title><varname>trace_on</varname> (integer)</title>
 		<para>
 		Parameter to enable/disable trace (on(1)/off(0))
@@ -165,12 +167,12 @@ modparam("siptrace", "trace_on", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.traced_user_avp">
 		<title><varname>traced_user_avp</varname> (str)</title>
 		<para>
-		The name of the AVP storing the SIP URI of the traced user. If
+		The name of the <acronym>AVP</acronym> storing the SIP URI of the traced user. If
 		the AVP is set, messages are stored in database table and
-		'traced_user' column is filled with AVP's value. You can store
+		the <quote>traced_user</quote> column is filled with AVP's value. You can store
 		the message many times for many users by having multiple values
 		for this AVP.
 		</para>
@@ -189,14 +191,14 @@ modparam("siptrace", "traced_user_avp", "$avp(s:user)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.trace_table_avp">
 		<title><varname>trace_table_avp</varname> (str)</title>
 		<para>
 		The name of the AVP storing the name of the table where to
 		store the SIP messages. If it is not set, the value of
-		'table' parameter is used. In this way one can select
+		<quote>table</quote> parameter is used. In this way one can select
 		dynamically where to store the traced messages. The table
-		must exists, and must have the same structure as 'sip_trace'
+		must exists, and must have the same structure as the <quote>sip_trace</quote>
 		table.
 		</para>
 		<para>
@@ -214,10 +216,10 @@ modparam("siptrace", "trace_table_avp", "$avp(s:siptrace_table)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.duplicate_uri">
 		<title><varname>duplicate_uri</varname> (str)</title>
 		<para>
-		The address in form of SIP uri where to send a duplicate
+		The address in form of a SIP URI where to send a duplicate
 		of traced message. It uses UDP all the time.
 		</para>
 		<para>
@@ -234,15 +236,15 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.trace_to_database">
 		<title><varname>trace_to_database</varname> (integer)</title>
 		<para>
-		Parameter to enable/disable inserts to the Database from this
-		Kamailio. 
+		Parameter to enable/disable inserts to the database from this
+		&kamailio;. 
 		</para>
 		<para>
-		In case we only want to send the SIP-Messages to the 
-		duplicate_uri and not store the information to the local 
+		In case we only want to send the SIP messages to the 
+		<quote>duplicate_uri</quote> and not store the information to the local 
 		database we can set this to "0".  
 		</para>
 		<para>
@@ -259,11 +261,11 @@ modparam("siptrace", "trace_to_database", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.trace_local_ip">
 		<title><varname>trace_local_ip</varname> (str)</title>
 		<para>
-		The address to be used in fromip field for local generated
-		messages. If not set, the module sets it to the address
+		The address to be used in <quote>fromip</quote> field for
+		locally generated messages. If not set, the module sets it to the address
 		of the socket that will be used to send the message.
 		</para>
 		<para>
@@ -280,7 +282,7 @@ modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.trace_sl_acks">
 		<title><varname>trace_sl_acks</varname> (integer)</title>
 		<para>
 		Parameter to enable/disable tracing of SL-filtered ACKs (on=1
@@ -288,9 +290,9 @@ modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 		</para>
 		<para>
 		By default all ACKs to replies generated by SL module are traced. There
-		is no way to select among them. Now SL module is able to run an event
-		route when such ACK arrives (event_route[sl:filtered-ack]). You can set
-		this parameter to 0 and then execute sip_trace() in the event route,
+		is no way to select among them. The SL module is able to run an event
+		route when such an ACK arrives (<emphasis>event_route[sl:filtered-ack]</emphasis>).
+		You can set this parameter to 0 and then execute sip_trace() in the event route,
 		accompanied by config rules to decide which ACK to trace.
 		</para>
 		<para>
@@ -307,15 +309,16 @@ modparam("siptrace", "trace_sl_acks", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	 <section id="siptrace.p.xheaders_write">
 		<title><varname>xheaders_write</varname> (integer)</title>
 		<para>
 		Parameter to enable/disable writing of x-headers.
 		</para>
 		<para>
-		Stores fromip, toip, method and direction in X-Siptrace-* headers.
-		This allows to transmit them to a second kamailio server
-		using the duplicate_uri feature.
+		Stores <quote>fromip</quote>, <quote>toip</quote>, <quote>method</quote> and
+		<quote>direction</quote> in <quote>X-Siptrace-*</quote> headers.
+		This allows to transmit them to a second &kamailio; server
+		using the <quote>duplicate_uri</quote> feature.
 		Because the headers are added after the data is written to the database,
 		the headers only show up in the packets sent by duplicate_uri.
 		</para>
@@ -324,8 +327,8 @@ modparam("siptrace", "trace_sl_acks", 0)
 		side.
 		</para>
 		<para>
-		Note: The headers are first read, then written. This allows to relay
-		the information over more then two kamailio servers by setting both
+		<emphasis>Note:</emphasis> The headers are first read, then written. This allows 
+		relaying the information over more than two &kamailio; servers by setting both
 		<varname>xheaders_write</varname> and <varname>xheaders_read</varname>
 		to "1" on the servers in the middle.
 		</para>
@@ -343,13 +346,13 @@ modparam("siptrace", "xheaders_write", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	 <section id="siptrace.p.xheaders_read">
 		<title><varname>xheaders_read</varname> (integer)</title>
 		<para>
 		Parameter to enable/disable reading of x-headers.
 		</para>
 		<para>
-		Reads and removes the X-Siptrace-* headers. Packets not containing the
+		Reads and removes the <quote>X-Siptrace-*</quote> headers. Packets not containing the
 		headers are neither stored to the database nor relayed (duplicate_uri).
 		See <varname>xheaders_write</varname> for further information.
 		</para>
@@ -367,10 +370,10 @@ modparam("siptrace", "xheaders_read", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siptrace.p.hep_mode_on">
                 <title><varname>hep_mode_on</varname> (integer)</title>
                 <para>
-                Parameter to enable/disable homer encapsulate mode (on(1)/off(0))
+                Parameter to enable/disable Homer encapsulate mode (on(1)/off(0))
                 </para>
                 <para>
                 <emphasis>
@@ -387,13 +390,12 @@ modparam("siptrace", "hep_mode_on", 1)
                 </example>
         </section>
         
-        <section>
+	<section id="siptrace.p.hep_version">
                 <title><varname>hep_version</varname> (integer)</title>
                 <para>
-                The parameter indicate the version of HEP protocol.
-                Can be 1 or 2. In HEPv2 the timestamp and capture agent ID
-                will
-                be included to HEP header.
+                The parameter indicate the version of the HEP protocol.
+                Can be <quote>1</quote> or <quote>2</quote>. In HEPv2 the timestamp and capture agent ID
+                will be included to HEP header.
                 </para>
                 <para>
                 <emphasis>
@@ -409,10 +411,10 @@ modparam("siptrace", "hep_version", 2)
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="siptrace.p.hep_capture_id">
                 <title><varname>hep_capture_id</varname> (integer)</title>
                 <para>
-                The parameter indicate the capture agent ID for HEPv2
+                The parameter indicate the capture agent ID for the <acronym>HEPv2</acronym>
                 protocol.
                 Limitation: 16-bit integer.
                 </para>
@@ -431,11 +433,11 @@ modparam("siptrace", "hep_capture_id", 234)
 </programlisting>
                 </example>
         </section>
-        <section>
+	<section id="siptrace.p.trace_delayed">
                 <title><varname>trace_delayed</varname> (integer)</title>
                 <para>
-				Use 'INSERT DELAYED' to store to database when it is available,
-				instead of 'INSERT'.
+		Use <quote>INSERT DELAYED</quote> to store to database when it is available,
+		instead of <quote>INSERT</quote>.
                 </para>
                 <para>
                 Default value is <emphasis>0 (off)</emphasis>.
@@ -450,16 +452,15 @@ modparam("siptrace", "trace_delayed", 1)
 </programlisting>
                 </example>
         </section>
-<section>
+	<section id="siptrace.p.force_send_sock">
                 <title><varname>force_send_sock</varname> (str)</title>
                 <para>
-				The local interface in form of SIP uri from where to send
-				the duplicated traffic. In the absence of this parameter
-				kamailio automatically picks an interface.
+			The local interface in the form of SIP uri from where to send
+			the duplicated traffic. In the absence of this parameter
+			&kamailio; automatically picks an interface.
                 </para>
                 <example>
-                <title>Set <varname>force_send_sock</varname>
-                parameter</title>
+                <title>Set <varname>force_send_sock</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
 modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
@@ -471,13 +472,13 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 	
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="siptrace.f.sip_trace">
 		<title>
 		<function moreinfo="none">sip_trace([address])</function>
 		</title>
 		<para>
-		Store current processed SIP message in database. It is stored in the
-		form prior applying chages made to it.
+		Store or forward the current processed SIP message in database. It is stored in the
+		form prior applying changes made to it.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -511,7 +512,7 @@ sip_trace("sip:10.1.1.2:5085");
 
     <section>
 	<title>MI Commands</title>
-	<section>
+	<section id="siptrace.m.sip_trace">
 		<title>
 		<function moreinfo="none">sip_trace</function>
 		</title>
@@ -548,7 +549,7 @@ sip_trace("sip:10.1.1.2:5085");
 	</section><!-- MI Commands -->
     	<section>
 	<title>RPC Commands</title>
-	<section>
+	<section id="siptrace.r.siptrace.status">
 		<title>
 		<function moreinfo="none">siptrace.status param</function>
 		</title>
