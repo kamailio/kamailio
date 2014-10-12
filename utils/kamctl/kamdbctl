@@ -14,15 +14,27 @@ PATH=$PATH:/usr/local/sbin/
 TEST="false"
 
 ### include resource files, if any
-which readlink > /dev/null
+
+# check for rc file at same location with kamdbctl
+which greadlink > /dev/null
 ret=$?
 if [ $ret -eq 0 ] ; then
-	KAMCTLFULLPATH=$(readlink -f "$0")
+	KAMCTLFULLPATH=$(greadlink -f "$0")
+else
+	which readlink > /dev/null
+	ret=$?
+	if [ $ret -eq 0 ] ; then
+		KAMCTLFULLPATH=$(readlink -f "$0")
+	fi
+fi
+if [ -n "$KAMCTLFULLPATH" ] ; then
 	KAMCTLDIRPATH=$(dirname "$KAMCTLFULLPATH")
 	if [ -f $KAMCTLDIRPATH/kamctlrc ]; then
 		. $KAMCTLDIRPATH/kamctlrc
 	fi
 fi
+
+# check for rc file at standard locations
 if [ -f /etc/kamailio/kamctlrc ]; then
 	. /etc/kamailio/kamctlrc
 fi
