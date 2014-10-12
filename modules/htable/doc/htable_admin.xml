@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The module adds a hash table container to configuration language. The
+		The module adds a hash table container to the configuration language. The
 		hash table is stored in shared memory and the access to it can be
 		done via pseudo-variables: $sht(htname=&gt;name). The module supports
 		definition of many hash tables and can load values at startup from
@@ -28,7 +28,7 @@
 		it from database and store it in hash table so next time the access to
 		it is very fast. In the definition of the table you can define the
 		default expiration time of cached items. The expiration time can
-		be adjusted per itme via assignment operation at runtime.
+		be adjusted per item via assignment operation at runtime.
 	</para>
 	<para>
 		Replication between multiple servers is performed automatically (if 
@@ -56,16 +56,16 @@ $sht(a=&gt;$ci::srcip) = $si;
 	<para>
 		Next example shows a way to protect against dictionary attacks. If
 		someone fails to authenticate 3 times, it is forbidden for 15min.
-		Authenticatin against database is expensive as it does a select
-		on subscriber table. By disabling the DB auth for 15min, resources
-		on server as saved and time to discover the password is increased
+		Authenticatiion against database is expensive as it does a select
+		on the <quote>subscriberthe</quote> table. By disabling the DB auth for 15min,
+		resources on the server are saved and time to discover the password is increased
 		substantially. Additional alerting can be done by writing a message
 		to syslog or sending email, etc.
 	</para>
 	<para>
-		To implement the logic, two hash table variables are user: one counting
+		To implement the logic, two hash table variables are used: one counting
 		the failed authentications per user and one for storing the time of 
-		last authentication attempt. To ensure unique name per user, the
+		last authentication attempt. To ensure a unique name per user, the
 		hash table uses a combination of authentication username and text
 		<quote>::auth_count</quote> and <quote>::last_auth</quote>.
 	</para>
@@ -117,18 +117,18 @@ if(is_present_hf("Authorization"))
 	<para>
 		The module also provides a way to store multiple values for a single key.
 		This is emulated by storing individual keys as 'key_name[n]', where n is
-		incremented for each key.  The total number of keys is stored in a
+		incremented for each key. The total number of keys is stored in a
 		dedicated key, by default: 'key_name::size'.
 	</para>
 	<para>
 		The array is built when the table is loaded in memory and afterwards all
 		the keys are treated as individual keys.
-		If a particular entry in the array is deleted, it is the administarator's
-		responsability to update the size of the array and any other elements
+		If a particular entry in the array is deleted, it is the administrator's
+		responsibility to update the size of the array and any other elements
 		(if required).
 	</para>
 	<example>
-	<title>Storring array values</title>
+	<title>Storing array values</title>
 	<programlisting format="linespecific">
 # Example of dbtext with multiple keys
 $ cat /usr/local/etc/kamailio/dbtext/htable
@@ -250,7 +250,7 @@ $ kamcmd htable.dump htable
 	<section>
 		<title>Loading from database</title>
 		<para>
-		The module is able to load values in hash table at startup upon
+		The module is able to load values in a hash table at startup upon
 		providing a DB URL and table name.
 		</para>
 		<para>
@@ -335,8 +335,8 @@ $ kamcmd htable.dump htable
 		<listitem>
 		<para>
 			<emphasis>htname</emphasis> - string specifying the name of
-			the hash table. This string is used by $sht(...) to refer to the
-			hash table.
+			the hash table. This string is used by <emphasis>$sht(...)</emphasis>
+			to refer to the hash table.
 		</para>
 		</listitem>
 		<listitem>
@@ -377,12 +377,18 @@ $ kamcmd htable.dump htable
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>updateexpire</emphasis> - if set to 1 (default), the time until expiration of an item is reset when that item is updated.  Certain uses of htable may dictate that updates should not reset the expiration timeout, however, in which case this attribute can be set to 0.
+			<emphasis>updateexpire</emphasis> - if set to 1 (default), the time until
+			expiration of an item is reset when that item is updated.  Certain uses of
+			htable may dictate that updates should not reset the expiration timeout, however,
+			in which case this attribute can be set to 0.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>dmqreplicate</emphasis> - if set to 1, any actions (set, update, delete etc.) performed upon entries in this table will be replicated to other nodes (htable peers). Please note, module parameter "enable_dmq" must also be set in order for this to apply (see below). Default is 0 (no replication).
+			<emphasis>dmqreplicate</emphasis> - if set to 1, any actions (set, update, delete
+			etc.) performed upon entries in this table will be replicated to other nodes (htable
+			peers). Please note, module parameter <quote>enable_dmq</quote> must also be set in
+			order for this to apply (see below). Default is 0 (no replication).
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -405,7 +411,7 @@ modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;dmqreplicat
 	<section id="htable.p.db_url">
 		<title><varname>db_url</varname> (str)</title>
 		<para>
-			The URL to connect to database for loading values in hash
+			The <acronym>URL</acronym> to connect to database for loading values in hash
 			table at start up.
 		</para>
 		<para>
@@ -425,7 +431,7 @@ modparam("htable", "db_url", "&defaultdb;")
 	<section id="htable.p.key_name_column">
 		<title><varname>key_name_column</varname> (str)</title>
 		<para>
-			The name of the column containing hash table key name.
+			The name of the column containing the hash table key name.
 		</para>
 		<para>
 		<emphasis>
@@ -444,7 +450,7 @@ modparam("htable", "key_name_column", "kname")
 	<section id="htable.p.key_type_column">
 		<title><varname>key_type_column</varname> (str)</title>
 		<para>
-			The name of the column containing hash table key type.
+			The name of the column containing the hash table key type.
 		</para>
 		<para>
 		<emphasis>
@@ -463,7 +469,7 @@ modparam("htable", "key_type_column", "ktype")
 	<section id="htable.p.value_type_column">
 		<title><varname>value_type_column</varname> (str)</title>
 		<para>
-			The name of the column containing hash table value type.
+			The name of the column containing the hash table value type.
 		</para>
 		<para>
 		<emphasis>
@@ -501,7 +507,7 @@ modparam("htable", "key_value_column", "kvalue")
 	<section id="htable.p.expires_column">
 		<title><varname>expires_column</varname> (str)</title>
 		<para>
-			The name of the column containing expires type.
+			The name of the column containing the expires value.
 		</para>
 		<para>
 		<emphasis>
@@ -578,8 +584,8 @@ modparam("htable", "timer_interval", 10)
 	<section id="htable.p.timer_mode">
 		<title><varname>timer_mode</varname> (integer)</title>
 		<para>
-		If set to 1, will start a new timer process. If set to 0
-		will use default timer process to check for expired htable
+		If set to 1, the module will start a new timer process. If set to 0
+		will use the default timer process to check for expired htable
 		values.
 		</para>
 		<para>
@@ -599,9 +605,9 @@ modparam("htable", "timer_mode", 1)
 	<section id="htable.p.db_expires">
 		<title><varname>db_expires</varname> (integer)</title>
 		<para>
-			If set to 1, will load/save the expires values of the items in
-			hash table fromm/to database. It applies only to hash tables that
-			have auto-expires attribute defined.
+			If set to 1, the module will load/save the expires values of the items in
+			hash table from/to database. It applies only to hash tables that
+			have the auto-expires attribute defined.
 		</para>
 		<para>
 		<emphasis>

@@ -23,7 +23,7 @@ Ovidiu Sas
 
    <osas@voipembedded.com>
 
-   Copyright © 2008-2011 http://www.asipto.com
+   Copyright � 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -92,7 +92,7 @@ Ovidiu Sas
 
    1.1. Accessing $sht(htname=>key)
    1.2. Dictionary attack limitation
-   1.3. Storring array values
+   1.3. Storing array values
    1.4. Set hash_size parameter
    1.5. Set db_url parameter
    1.6. Set key_name_column parameter
@@ -180,9 +180,9 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The module adds a hash table container to configuration language. The
-   hash table is stored in shared memory and the access to it can be done
-   via pseudo-variables: $sht(htname=>name). The module supports
+   The module adds a hash table container to the configuration language.
+   The hash table is stored in shared memory and the access to it can be
+   done via pseudo-variables: $sht(htname=>name). The module supports
    definition of many hash tables and can load values at startup from a
    database table.
 
@@ -191,7 +191,7 @@ Chapter 1. Admin Guide
    from database and store it in hash table so next time the access to it
    is very fast. In the definition of the table you can define the default
    expiration time of cached items. The expiration time can be adjusted
-   per itme via assignment operation at runtime.
+   per item via assignment operation at runtime.
 
    Replication between multiple servers is performed automatically (if
    enabled) via the DMQ module.
@@ -199,7 +199,7 @@ Chapter 1. Admin Guide
    You can read more about hash tables at:
    http://en.wikipedia.org/wiki/Hash_table.
 
-   The “name” can be a static string or can include pseudo- variables that
+   The "name" can be a static string or can include pseudo- variables that
    will be replaced at runtime.
 
    Example 1.1. Accessing $sht(htname=>key)
@@ -212,17 +212,17 @@ $sht(a=>$ci::srcip) = $si;
 
    Next example shows a way to protect against dictionary attacks. If
    someone fails to authenticate 3 times, it is forbidden for 15min.
-   Authenticatin against database is expensive as it does a select on
-   subscriber table. By disabling the DB auth for 15min, resources on
-   server as saved and time to discover the password is increased
-   substantially. Additional alerting can be done by writing a message to
-   syslog or sending email, etc.
+   Authenticatiion against database is expensive as it does a select on
+   the "subscriberthe" table. By disabling the DB auth for 15min,
+   resources on the server are saved and time to discover the password is
+   increased substantially. Additional alerting can be done by writing a
+   message to syslog or sending email, etc.
 
-   To implement the logic, two hash table variables are user: one counting
+   To implement the logic, two hash table variables are used: one counting
    the failed authentications per user and one for storing the time of
-   last authentication attempt. To ensure unique name per user, the hash
+   last authentication attempt. To ensure a unique name per user, the hash
    table uses a combination of authentication username and text
-   “::auth_count” and “::last_auth”.
+   "::auth_count" and "::last_auth".
 
    Example 1.2. Dictionary attack limitation
 ...
@@ -273,10 +273,10 @@ if(is_present_hf("Authorization"))
 
    The array is built when the table is loaded in memory and afterwards
    all the keys are treated as individual keys. If a particular entry in
-   the array is deleted, it is the administarator's responsability to
+   the array is deleted, it is the administrator's responsibility to
    update the size of the array and any other elements (if required).
 
-   Example 1.3. Storring array values
+   Example 1.3. Storing array values
 # Example of dbtext with multiple keys
 $ cat /usr/local/etc/kamailio/dbtext/htable
 1:key:1:0:value3:0
@@ -382,7 +382,7 @@ $ kamcmd htable.dump htable
 
 2.3. Loading from database
 
-   The module is able to load values in hash table at startup upon
+   The module is able to load values in a hash table at startup upon
    providing a DB URL and table name.
 
    The structure of the table must contain:
@@ -475,7 +475,7 @@ modparam("htable", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 
 3.3. key_name_column (str)
 
-   The name of the column containing hash table key name.
+   The name of the column containing the hash table key name.
 
    Default value is 'key_name'.
 
@@ -486,7 +486,7 @@ modparam("htable", "key_name_column", "kname")
 
 3.4. key_type_column (str)
 
-   The name of the column containing hash table key type.
+   The name of the column containing the hash table key type.
 
    Default value is 'key_type'.
 
@@ -497,7 +497,7 @@ modparam("htable", "key_type_column", "ktype")
 
 3.5. value_type_column (str)
 
-   The name of the column containing hash table value type.
+   The name of the column containing the hash table value type.
 
    Default value is 'value_type'.
 
@@ -519,7 +519,7 @@ modparam("htable", "key_value_column", "kvalue")
 
 3.7. expires_column (str)
 
-   The name of the column containing expires type.
+   The name of the column containing the expires value.
 
    Default value is 'expires'.
 
@@ -564,8 +564,8 @@ modparam("htable", "timer_interval", 10)
 
 3.11. timer_mode (integer)
 
-   If set to 1, will start a new timer process. If set to 0 will use
-   default timer process to check for expired htable values.
+   If set to 1, the module will start a new timer process. If set to 0
+   will use the default timer process to check for expired htable values.
 
    Default value is 0.
 
@@ -576,9 +576,9 @@ modparam("htable", "timer_mode", 1)
 
 3.12. db_expires (integer)
 
-   If set to 1, will load/save the expires values of the items in hash
-   table fromm/to database. It applies only to hash tables that have
-   auto-expires attribute defined.
+   If set to 1, the module will load/save the expires values of the items
+   in hash table from/to database. It applies only to hash tables that
+   have the auto-expires attribute defined.
 
    Default value is 0.
 
@@ -619,7 +619,7 @@ modparam("htable", "enable_dmq", 1)
    4.8. sht_iterator_end(iname)
    4.9. sht_iterator_next(iname)
 
-4.1.  sht_print()
+4.1. sht_print()
 
    Dump content of hash table to L_ERR log level. Intended for debug
    purposes.
@@ -632,7 +632,7 @@ modparam("htable", "enable_dmq", 1)
 sht_print();
 ...
 
-4.2.  sht_rm_name_re(htable=>regexp)
+4.2. sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -645,7 +645,7 @@ sht_print();
 sht_rm_name_re("ha=>.*");
 ...
 
-4.3.  sht_rm_value_re(htable=>regexp)
+4.3. sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -658,7 +658,7 @@ sht_rm_name_re("ha=>.*");
 sht_rm_value_re("ha=>.*");
 ...
 
-4.4.  sht_reset(htable)
+4.4. sht_reset(htable)
 
    Delete all entries in the htable. The name of the hash table can be a
    dynamic string with variables.
@@ -670,7 +670,7 @@ sht_rm_value_re("ha=>.*");
 sht_reset("ha$var(x)");
 ...
 
-4.5.  sht_lock(htable=>key)
+4.5. sht_lock(htable=>key)
 
    Lock the slot in htable corespoding to the key item.
 
@@ -681,7 +681,7 @@ sht_reset("ha$var(x)");
 sht_lock("ha=>test");
 ...
 
-4.6.  sht_unlock(htable=>key)
+4.6. sht_unlock(htable=>key)
 
    Unlock the slot in htable corespoding to the key item.
 
@@ -694,7 +694,7 @@ $sht(ha=>test) = $sht(ha=>test) + 10;
 sht_unlock("ha=>test");
 ...
 
-4.7.  sht_iterator_start(iname, hname)
+4.7. sht_iterator_start(iname, hname)
 
    Start an iterator for hash table named by the value of parameter hname.
    The parameter iname is used to identify the iterator. There can be up
@@ -714,7 +714,7 @@ sht_unlock("ha=>test");
 sht_iterator_start("i1", "h1");
 ...
 
-4.8.  sht_iterator_end(iname)
+4.8. sht_iterator_end(iname)
 
    Close the iterator identified by iname parameter and release the hash
    table slot aquired by the iterator. The iname value must be the same
@@ -729,7 +729,7 @@ sht_iterator_start("i1", "h1");
 sht_iterator_end("i1");
 ...
 
-4.9.  sht_iterator_next(iname)
+4.9. sht_iterator_next(iname)
 
    Move the iterator to the next item in hash table. It must be called
    also after sht_iterator_start() to get the first item in the hash
@@ -774,7 +774,7 @@ sht_iterator_end("i1");
    6.2. sht_dump
    6.3. sht_delete
 
-6.1.  sht_reload
+6.1. sht_reload
 
    Reload a hash table from database.
 
@@ -787,7 +787,7 @@ sht_iterator_end("i1");
                 _hash_table_name_
                 _empty_line_
 
-6.2.  sht_dump
+6.2. sht_dump
 
    Dump content of a hash table via MI.
 
@@ -800,7 +800,7 @@ sht_iterator_end("i1");
                 _hash_table_name_
                 _empty_line_
 
-6.3.  sht_delete
+6.3. sht_delete
 
    Delete a key from a hash table via MI.
 
@@ -830,7 +830,7 @@ sht_iterator_end("i1");
    7.7. htable.listTables
    7.8. htable.stats
 
-7.1.  htable.get htable key
+7.1. htable.get htable key
 
    Lists one value in a hash table
 
@@ -849,7 +849,7 @@ kamcmd htable.get students daniel
 kamcmd htable.get students course[0]
 ...
 
-7.2.  htable.delete htable key
+7.2. htable.delete htable key
 
    Delete one value in a hash table
 
@@ -868,7 +868,7 @@ kamcmd htable.delete students anna
 kamcmd htable.delete students course[0]
 ...
 
-7.3.  htable.sets htable key value
+7.3. htable.sets htable key value
 
    Set an item in hash table to string value.
 
@@ -888,7 +888,7 @@ kamcmd htable.sets test x abc
 kamcmd htable.sets test x[0] abc
 ...
 
-7.4.  htable.seti htable key value
+7.4. htable.seti htable key value
 
    Set an item in hash table to integer value.
 
@@ -908,7 +908,7 @@ kamcmd htable.seti test x 123
 kamcmd htable.sets test x[0] 123
 ...
 
-7.5.  htable.dump htable
+7.5. htable.dump htable
 
    Lists all the values in a hash table
 
@@ -922,7 +922,7 @@ kamcmd htable.sets test x[0] 123
 kamcmd htable.dump ipban
 ...
 
-7.6.  htable.reload htable
+7.6. htable.reload htable
 
    Reload hash table from database.
 
@@ -936,7 +936,7 @@ kamcmd htable.dump ipban
 kamcmd htable.reload ipban
 ...
 
-7.7.  htable.listTables
+7.7. htable.listTables
 
    Lists all defined tables
 
@@ -950,7 +950,7 @@ kamcmd htable.reload ipban
 kamcmd htable.listTables
 ...
 
-7.8.  htable.stats
+7.8. htable.stats
 
    Get statistics for hash tables - name, number of slots, number of
    items, max number of items per slot, min number of items per slot.
@@ -970,7 +970,7 @@ kamcmd htable.stats
    8.1. htable:mod-init
    8.2. htable:expired:<table>
 
-8.1.  htable:mod-init
+8.1. htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
    modules have been initialized. A typical use case is to initialise
@@ -983,7 +983,7 @@ event_route[htable:mod-init] {
 }
 ...
 
-8.2.  htable:expired:<table>
+8.2. htable:expired:<table>
 
    When defined, the module calls event_route[htable:expired:<table>] when
    an entry in the given table expires. In this event route, the key and
