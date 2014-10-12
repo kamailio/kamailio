@@ -64,7 +64,7 @@
 
 MODULE_VERSION
 
-#define DEFAULT_PARAM    "$ruri.user"
+#define DEFAULT_PARAM    "$rU"
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -85,6 +85,7 @@ str default_param_s = str_init(DEFAULT_PARAM);
 dp_param_p default_par2 = NULL;
 
 int dp_fetch_rows = 1000;
+int dp_match_dynamic = 0;
 
 static param_export_t mod_params[]={
 	{ "db_url",			PARAM_STR,	&dp_db_url },
@@ -97,8 +98,9 @@ static param_export_t mod_params[]={
 	{ "subst_exp_col",	PARAM_STR,	&subst_exp_column },
 	{ "repl_exp_col",	PARAM_STR,	&repl_exp_column },
 	{ "attrs_col",		PARAM_STR,	&attrs_column },
-	{ "attrs_pvar",	    PARAM_STR,	&attr_pvar_s},
-	{ "fetch_rows",		INT_PARAM,	&dp_fetch_rows},
+	{ "attrs_pvar",	    PARAM_STR,	&attr_pvar_s },
+	{ "fetch_rows",		PARAM_INT,	&dp_fetch_rows },
+	{ "match_dynamic",	PARAM_INT,	&dp_match_dynamic },
 	{0,0,0}
 };
 
@@ -165,7 +167,7 @@ static int mod_init(void)
 	}
 	memset(default_par2, 0, sizeof(dp_param_t));
 
-	/* A.Spiridonov: Some weird sections with default_param processing */
+	/* emulate "$rU/$rU" as second parameter for dp_translate() */
 	default_param_s.len = strlen(default_param_s.s);
 	default_par2->v.sp[0] = pv_cache_get(&default_param_s);
 	if (default_par2->v.sp[0]==NULL) {
@@ -179,7 +181,6 @@ static int mod_init(void)
 		LM_ERR("output pv is invalid\n");
 		return -1;
 	}
-	/* End of weird sections */
 
 	if(dp_fetch_rows<=0)
 		dp_fetch_rows = 1000;
@@ -342,7 +343,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 	LM_DBG("input %.*s with dpid %i => output %.*s\n",
 			input.len, input.s, idp->dp_id, output.len, output.s);
 
-	/*set the output*/
+	/* set the output */
 	if (dp_update(msg, repl_par->v.sp[0], repl_par->v.sp[1],
 				&output, attrs_par) !=0){
 		LM_ERR("cannot set the output\n");

@@ -55,6 +55,7 @@ str repl_exp_column =   str_init(REPL_EXP_COL);
 str attrs_column    =   str_init(ATTRS_COL); 
 
 extern int dp_fetch_rows;
+extern int dp_match_dynamic;
 
 static db1_con_t* dp_db_handle    = 0; /* database connection handle */
 static db_func_t dp_dbf;
@@ -84,6 +85,52 @@ dpl_id_p* rules_hash = NULL;
 int * crt_idx, *next_idx;
 
 
+/**
+ * check if string has pvs
+ * returns -1 if error, 0 if found, 1 if not found
+ */
+int dpl_check_pv(str *in)
+{
+	char *p;
+	pv_spec_t *spec = NULL;
+	str s;
+	int len;
+
+	if(in==NULL || in->s==NULL)
+		return -1;
+
+	LM_DBG("parsing [%.*s]\n", in->len, in->s);
+
+	if(in->len == 0)
+		return 1;
+
+	p = in->s;
+
+	while(is_in_str(p,in))
+	{
+		while(is_in_str(p,in) && *p!=PV_MARKER)
+			p++;
+		if(*p == '\0' || !is_in_str(p,in))
+			break;
+		/* last char is $ ? */
+		if(!is_in_str(p+1, in))
+			break;
+		s.s = p;
+		s.len = in->s+in->len-p;
+		len = 0;
+		spec = pv_spec_lookup(&s, &len);
+		if(spec!=NULL) {
+			/* found a variable */
+			LM_DBG("string [%.*s] has variables\n", in->len, in->s);
+			return 0;
+		}
+		if(len) p += len;
+		else p++;
+	}
+
+	/* not found */
+	return 1;
+}
 
 int init_db_data(void)
 {
@@ -294,12 +341,19 @@ err2:
 }
 
 
-int str_to_shm(str src, str * dest)
+int dpl_str_to_shm(str src, str *dest, int mterm)
 {
+	int mdup = 0;
+
 	if(src.len ==0 || src.s ==0)
 		return 0;
 
-	dest->s = (char*)shm_malloc((src.len+1) * sizeof(char));
+	if(mterm!=0 && PV_MARKER=='$') {
+		if(src.len>1 && src.s[src.len-1]=='$' && src.s[src.len-2]!='$') {
+			mdup = 1;
+		}
+	}
+	dest->s = (char*)shm_malloc((src.len+1+mdup) * sizeof(char));
 	if(!dest->s){
 		LM_ERR("out of shm memory\n");
 		return -1;
@@ -308,13 +362,20 @@ int str_to_shm(str src, str * dest)
 	memcpy(dest->s, src.s, src.len);
 	dest->s[src.len] = '\0';
 	dest->len = src.len;
+	if(mdup) {
+		dest->s[dest->len] = '$';
+		dest->len++;
+		dest->s[dest->len] = '\0';
+	}
 
 	return 0;
 }
 
 
-/* Compile pcre pattern and return pointer to shm copy of result */
-static pcre *reg_ex_comp(const char *pattern, int *cap_cnt)
+/* Compile pcre pattern
+ * if mtype==0 - return pointer to shm copy of result
+ * if mtype==1 - return pcre pointer that has to be pcre_free() */
+pcre *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype)
 {
 	pcre *re, *result;
 	const char *error;
@@ -341,15 +402,19 @@ static pcre *reg_ex_comp(const char *pattern, int *cap_cnt)
 				pattern, rc);
 		return (pcre *)0;
 	}
-	result = (pcre *)shm_malloc(size);
-	if (result == NULL) {
+	if(mtype==0) {
+		result = (pcre *)shm_malloc(size);
+		if (result == NULL) {
+			pcre_free(re);
+			LM_ERR("not enough shared memory for compiled PCRE pattern\n");
+			return (pcre *)0;
+		}
+		memcpy(result, re, size);
 		pcre_free(re);
-		LM_ERR("not enough shared memory for compiled PCRE pattern\n");
-		return (pcre *)0;
+		return result;
+	} else {
+		return re;
 	}
-	memcpy(result, re, size);
-	pcre_free(re);
-	return result;
 }
 
 
@@ -362,6 +427,7 @@ dpl_node_t * build_rule(db_val_t * values)
 	str match_exp, subst_exp, repl_exp, attrs;
 	int matchop;
 	int cap_cnt=0;
+	unsigned int tflags=0;
 
 	matchop = VAL_INT(values+2);
 
@@ -371,17 +437,24 @@ dpl_node_t * build_rule(db_val_t * values)
 		return NULL;
 	}
 
-	match_comp = subst_comp =0;
+	match_comp = subst_comp = 0;
 	repl_comp = 0;
 	new_rule = 0;
 
 	GET_STR_VALUE(match_exp, values, 3);
 	if(matchop == DP_REGEX_OP){
-		match_comp = reg_ex_comp(match_exp.s, &cap_cnt);
-		if(!match_comp){
-			LM_ERR("failed to compile match expression %.*s\n",
-					match_exp.len, match_exp.s);
-			goto err;
+		if(unlikely(dp_match_dynamic==1)) {
+			if(dpl_check_pv(&match_exp)==0) {
+				tflags |= DP_TFLAGS_PV_MATCH;
+			}
+		}
+		if(!(tflags&DP_TFLAGS_PV_MATCH)) {
+			match_comp = reg_ex_comp(match_exp.s, &cap_cnt, 0);
+			if(!match_comp){
+				LM_ERR("failed to compile match expression %.*s\n",
+						match_exp.len, match_exp.s);
+				goto err;
+			}
 		}
 	}
 
@@ -395,18 +468,26 @@ dpl_node_t * build_rule(db_val_t * values)
 		}
 	}
 
+	cap_cnt = 0;
 	GET_STR_VALUE(subst_exp, values, 5);
 	if(subst_exp.s && subst_exp.len){
-		subst_comp = reg_ex_comp(subst_exp.s, &cap_cnt);
-		if(!subst_comp){
-			LM_ERR("failed to compile subst expression %.*s\n",
-					subst_exp.len, subst_exp.s);
-			goto err;
+		if(unlikely(dp_match_dynamic==1)) {
+			if(dpl_check_pv(&subst_exp)==0) {
+				tflags |= DP_TFLAGS_PV_SUBST;
+			}
 		}
-		if (cap_cnt > MAX_REPLACE_WITH) {
-			LM_ERR("subst expression %.*s has too many sub-expressions\n",
-					subst_exp.len, subst_exp.s);
-			goto err;
+		if(!(tflags&DP_TFLAGS_PV_SUBST)) {
+			subst_comp = reg_ex_comp(subst_exp.s, &cap_cnt, 0);
+			if(!subst_comp){
+				LM_ERR("failed to compile subst expression %.*s\n",
+						subst_exp.len, subst_exp.s);
+				goto err;
+			}
+			if (cap_cnt > MAX_REPLACE_WITH) {
+				LM_ERR("subst expression %.*s has too many sub-expressions\n",
+						subst_exp.len, subst_exp.s);
+				goto err;
+			}
 		}
 	}
 
@@ -429,13 +510,15 @@ dpl_node_t * build_rule(db_val_t * values)
 	}
 	memset(new_rule, 0, sizeof(dpl_node_t));
 
-	if(str_to_shm(match_exp, &new_rule->match_exp)!=0)
+	if(dpl_str_to_shm(match_exp, &new_rule->match_exp,
+				tflags&DP_TFLAGS_PV_MATCH)!=0)
 		goto err;
 
-	if(str_to_shm(subst_exp, &new_rule->subst_exp)!=0)
+	if(dpl_str_to_shm(subst_exp, &new_rule->subst_exp,
+				tflags&DP_TFLAGS_PV_SUBST)!=0)
 		goto err;
 
-	if(str_to_shm(repl_exp, &new_rule->repl_exp)!=0)
+	if(dpl_str_to_shm(repl_exp, &new_rule->repl_exp, 0)!=0)
 		goto err;
 
 	/*set the rest of the rule fields*/
@@ -444,14 +527,15 @@ dpl_node_t * build_rule(db_val_t * values)
 	new_rule->matchlen	= 	VAL_INT(values+4);
 	new_rule->matchop	=	matchop;
 	GET_STR_VALUE(attrs, values, 7);
-	if(str_to_shm(attrs, &new_rule->attrs)!=0)
+	if(dpl_str_to_shm(attrs, &new_rule->attrs, 0)!=0)
 		goto err;
 
-	LM_DBG("attrs are %.*s\n", new_rule->attrs.len, new_rule->attrs.s);
+	LM_DBG("attrs are: '%.*s'\n", new_rule->attrs.len, new_rule->attrs.s);
 
 	new_rule->match_comp = match_comp;
 	new_rule->subst_comp = subst_comp;
 	new_rule->repl_comp  = repl_comp;
+	new_rule->tflags     = tflags;
 
 	return new_rule;
 
@@ -662,15 +746,15 @@ void list_hash(int h_index)
 }
 
 
-void list_rule(dpl_node_t * rule)
+void list_rule(dpl_node_t *rule)
 {
-	LM_DBG("RULE %p: pr %i next %p op %d match_exp %.*s, "
+	LM_DBG("RULE %p: pr %i next %p op %d tflags %u match_exp %.*s, "
 			"subst_exp %.*s, repl_exp %.*s and attrs %.*s\n", rule,
 			rule->pr, rule->next,
-			rule->matchop,
-			rule->match_exp.len, rule->match_exp.s, 
-			rule->subst_exp.len, rule->subst_exp.s,
-			rule->repl_exp.len, rule->repl_exp.s,
-			rule->attrs.len,	rule->attrs.s);
+			rule->matchop, rule->tflags,
+			rule->match_exp.len, ZSW(rule->match_exp.s),
+			rule->subst_exp.len, ZSW(rule->subst_exp.s),
+			rule->repl_exp.len, ZSW(rule->repl_exp.s),
+			rule->attrs.len,	ZSW(rule->attrs.s));
 
 }

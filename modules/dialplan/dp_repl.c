@@ -41,6 +41,43 @@
 #include "dialplan.h"
 
 
+pcre *dpl_dynamic_pcre(sip_msg_t *msg, str *expr, int *cap_cnt)
+{
+	pv_elem_t *pelem = NULL;
+	pcre *re = NULL;
+	int ccnt = 0;
+	str vexpr;
+
+	if(expr==NULL || expr->s==NULL || expr->len<=0)
+		return NULL;
+
+	if(pv_parse_format(expr, &pelem)<0){
+		LM_ERR("parsing pcre expression: %.*s\n",
+				expr->len, expr->s);
+		return NULL;
+	}
+	if(pv_printf_s(msg, pelem, &vexpr)<0){
+		LM_ERR("cannot get pcre dynamic expression value: %.*s\n",
+				expr->len, expr->s);
+		pv_elem_free_all(pelem);
+		return NULL;
+	}
+	pv_elem_free_all(pelem);
+
+	re = reg_ex_comp(vexpr.s, &ccnt, 1);
+	if(!re) {
+		LM_ERR("failed to compile pcre expression: %.*s (%.*s)\n",
+				expr->len, expr->s, vexpr.len, vexpr.s);
+		return NULL;
+	}
+	if(cap_cnt) {
+		*cap_cnt = ccnt;
+	}
+	LM_DBG("compiled dynamic pcre expression: %.*s (%.*s) %d\n",
+				expr->len, expr->s, vexpr.len, vexpr.s, ccnt);
+	return re;
+}
+
 void repl_expr_free(struct subst_expr *se)
 {
 	if(!se)
@@ -126,7 +163,7 @@ error:
 
 #define MAX_PHONE_NB_DIGITS		127
 static char dp_output_buf[MAX_PHONE_NB_DIGITS+1];
-int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
+int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 		str * result)
 {
 	int repl_nb, offset, match_nb, rc, cap_cnt;
@@ -144,12 +181,16 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 	result->s = dp_output_buf;
 	result->len = 0;
 
-	subst_comp 	= rule->subst_comp;
 	repl_comp 	= rule->repl_comp;
-
 	if(!repl_comp){
 		LM_DBG("null replacement\n");
 		return 0;
+	}
+
+	if(rule->tflags&DP_TFLAGS_PV_SUBST) {
+		subst_comp = dpl_dynamic_pcre(msg, &rule->subst_exp, NULL);
+	} else {
+		subst_comp = rule->subst_comp;
 	}
 
 	if(subst_comp){
@@ -159,22 +200,25 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 		if (rc != 0) {
 			LM_ERR("pcre_fullinfo on compiled pattern yielded error: %d\n",
 					rc);
-			return -1;;
+			if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
+			return -1;
 		}
 		if(repl_comp->max_pmatch > cap_cnt){
-			LM_ERR("illegal access to the %i-th subexpr of the subst expr\n",
-					repl_comp->max_pmatch);
+			LM_ERR("illegal access to %i-th subexpr of subst expr (max %d)\n",
+					repl_comp->max_pmatch, cap_cnt);
+			if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
 			return -1;
 		}
 
 		/*search for the pattern from the compiled subst_exp*/
-		if (pcre_exec(rule->subst_comp, NULL, string.s, string.len,
+		if (pcre_exec(subst_comp, NULL, string.s, string.len,
 					0, 0, ovector, 3 * (MAX_REPLACE_WITH + 1)) <= 0) {
 			LM_ERR("the string %.*s matched "
 					"the match_exp %.*s but not the subst_exp %.*s!\n", 
 					string.len, string.s, 
 					rule->match_exp.len, rule->match_exp.s,
 					rule->subst_exp.len, rule->subst_exp.s);
+			if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
 			return -1;
 		}
 	}
@@ -191,6 +235,7 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 				repl_comp->replacement.len);
 		result->len = repl_comp->replacement.len;
 		result->s[result->len] = '\0';
+		if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
 		return 0;
 	}
 
@@ -300,9 +345,12 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 	}
 
 	result->s[result->len] = '\0';
+	if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
 	return 0;
 
 error:
+	if((rule->tflags&DP_TFLAGS_PV_SUBST) && subst_comp!=NULL)
+		pcre_free(subst_comp);
 	result->s = 0;
 	result->len = 0;
 	return -1;
@@ -310,13 +358,14 @@ error:
 
 #define DP_MAX_ATTRS_LEN	128
 static char dp_attrs_buf[DP_MAX_ATTRS_LEN+1];
-int translate(struct sip_msg *msg, str input, str *output, dpl_id_p idp,
+int translate(sip_msg_t *msg, str input, str *output, dpl_id_p idp,
 		str *attrs)
 {
 	dpl_node_p rulep;
 	dpl_index_p indexp;
 	int user_len, rez;
 	char b;
+	pcre *match_re;
 
 	if(!input.s || !input.len) {
 		LM_ERR("invalid input string\n");
@@ -338,9 +387,22 @@ search_rule:
 		switch(rulep->matchop) {
 
 			case DP_REGEX_OP:
-				LM_DBG("regex operator testing\n");
-				rez = pcre_exec(rulep->match_comp, NULL, input.s, input.len,
+				LM_DBG("regex operator testing over [%.*s]\n",
+						input.len, input.s);
+				if(rulep->tflags&DP_TFLAGS_PV_MATCH) {
+					match_re = dpl_dynamic_pcre(msg, &rulep->match_exp, NULL);
+					if(match_re==NULL) {
+						/* failed to compile dynamic pcre -- ignore */
+						continue;
+					}
+				} else {
+					match_re = rulep->match_comp;
+				}
+				rez = pcre_exec(match_re, NULL, input.s, input.len,
 						0, 0, NULL, 0);
+				if(rulep->tflags&DP_TFLAGS_PV_MATCH) {
+					pcre_free(match_re);
+				}
 				break;
 
 			case DP_EQUAL_OP:

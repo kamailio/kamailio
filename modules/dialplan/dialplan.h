@@ -46,18 +46,25 @@
 
 #define MAX_REPLACE_WITH	10
 
-typedef struct dpl_node{
-	int dpid;
-	int pr;
-	int matchop;
-	int matchlen;
-	str match_exp, subst_exp, repl_exp; /*keeping the original strings*/
-	pcre *match_comp, *subst_comp; /*compiled patterns*/
-	struct subst_expr * repl_comp; 
-	str attrs;
+#define DP_TFLAGS_PV_MATCH		(1 << 0)
+#define DP_TFLAGS_PV_SUBST		(1 << 1)
 
-	struct dpl_node * next; /*next rule*/
-}dpl_node_t, *dpl_node_p;
+typedef struct dpl_node {
+	int dpid;         /* dialplan id */
+	int pr;           /* priority */
+	int matchop;      /* matching operator */
+	int matchlen;     /* matching value length */
+	str match_exp;    /* match-first string */
+	str subst_exp;    /* match string with subtitution groupping */
+	str repl_exp;     /* replacement expression string */
+	pcre *match_comp; /* compiled matching expression */
+	pcre *subst_comp; /* compiled substitution expression */
+	struct subst_expr *repl_comp; /* compiled replacement */
+	str attrs;        /* attributes string */
+	unsigned int tflags; /* flags for type of values for matching */
+
+	struct dpl_node * next; /* next rule */
+} dpl_node_t, *dpl_node_p;
 
 /*For every distinct length of a matching string*/
 typedef struct dpl_index{
@@ -97,4 +104,6 @@ struct subst_expr* repl_exp_parse(str subst);
 void repl_expr_free(struct subst_expr *se);
 int translate(struct sip_msg *msg, str user_name, str* repl_user, dpl_id_p idp, str *);
 int rule_translate(struct sip_msg *msg, str , dpl_node_t * rule,  str *);
+
+pcre *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype);
 #endif
