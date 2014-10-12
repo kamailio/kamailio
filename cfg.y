@@ -547,6 +547,7 @@ extern char *default_routename;
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
 %token MSG_TIME
+%token ONSEND_RT_REPLY
 
 %token FLAGS_DECL
 %token AVPFLAGS_DECL
@@ -1579,6 +1580,8 @@ assign_stm:
 	| LATENCY_LIMIT_ACTION EQUAL error  { yyerror("number  expected"); }
     | MSG_TIME EQUAL NUMBER { sr_msg_time=$3; }
 	| MSG_TIME EQUAL error  { yyerror("number  expected"); }
+	| ONSEND_RT_REPLY EQUAL NUMBER { onsend_route_reply=$3; }
+	| ONSEND_RT_REPLY EQUAL error { yyerror("int value expected"); }
 	| UDP_MTU EQUAL NUMBER { default_core_cfg.udp_mtu=$3; }
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
 	| FORCE_RPORT EQUAL NUMBER 

@@ -427,6 +427,9 @@ int server_id = 0; /* Configurable unique ID of the server */
 /* set timeval for each received sip message */
 int sr_msg_time = 1;
 
+/* onsend_route is executed for replies*/
+int onsend_route_reply = 0;
+
 /* more config stuff */
 int disable_core_dump=0; /* by default enabled */
 int open_files_limit=-1; /* don't touch it by default */
