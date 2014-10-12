@@ -1,12 +1,13 @@
-
+Kamailio example CA
+===================
 
 This directory contains an already generated TLS certificate that can be
-used in your OpenSER configuration. It's a generic certificate with the 
+used in your Kamailio configuration. It's a generic certificate with the 
 main purpose of serving as example and for testings.
 
 IMPORTANT: it's not a trustable certificate - the CA is also an example.
 
-All TLS configuration file may be found in "user" directory. If you want to
+All TLS configuration files may be found in "user" directory. If you want to
 generate your own certificate, you may find in the "rootCA" directory the 
 root CA to sign your request with. Use "kamctl tls userCERT" command to
 create a new certificate; the rootCA password is "openser".
@@ -17,6 +18,5 @@ Second, to give access to the same CA root to a large community in order to
 encourage testings and interconnections via TLS with minimum of troubles.
 
 For any questions, please address to :
-	team@openser.org (if you want to keep your question private)
-	users@openser.org (public mailing list)
+	sr-users@lists.sip-router.org (public mailing list)
 
