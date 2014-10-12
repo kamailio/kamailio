@@ -50,7 +50,7 @@
 	<section>
 	<title>Parameters</title>
 
-	<section>
+	<section id="uri_db.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		&url; of the database to be used.
@@ -74,13 +74,13 @@ modparam("uri_db", "db_url", "mysql://username:password@localhost/openser")
 		</example>
 	</section>
 
-	<section>
+	<section id="uri_db.p.db_table">
 		<title><varname>db_table</varname> (string)</title>
 		<para>
 		The DB table that should be used. Its possible to use the
 		<quote>subscriber</quote> and <quote>uri</quote> table. If the
 		<quote>uri</quote> table should be used, an additional parameter
-		(<xref linkend="use-uri-table"/>) must be set.
+		<quote>use-uri-table</quote>) must be set.
 		</para>
 		<para>
 		<emphasis>
@@ -97,7 +97,7 @@ modparam("uri_db", "db_table", "uri")
 		</example>
 	</section>
 
-	<section>
+	<section id="uri_db.p.user_column">
 		<title><varname>user_column</varname> (string)</title>
 		<para>
 		Column holding usernames in the table.
@@ -117,7 +117,7 @@ modparam("uri_db", "user_column", "username")
 		</example>
 	</section>
 
-	<section>
+	<section id="uri_db.p.domain_column">
 		<title><varname>domain_column</varname> (string)</title>
 		<para>
 		Column holding domain in the table.
@@ -137,7 +137,7 @@ modparam("uri_db", "domain_column", "domain")
 		</example>
 	</section>
 
-	<section>
+	<section id="uri_db.p.uriuser_column">
 		<title><varname>uriuser_column</varname> (string)</title>
 		<para>
 		Column holding &uri; username in the table.
@@ -157,7 +157,7 @@ modparam("uri_db", "uriuser_column", "uri_user")
 		</example>
 	</section>
 
-	<section id="use-uri-table">
+	<section id="uri_db.p.use_uri_table">
 		<title><varname>use_uri_table</varname> (integer)</title>
 		<para>
 		Specify if the <quote>uri</quote> table should be used for checkings
@@ -178,7 +178,7 @@ modparam("uri_db", "use_uri_table", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="uri_db.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		Specify if the domain part of the URI should be used to identify the
@@ -207,12 +207,12 @@ modparam("uri_db", "use_domain", 1)
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="uri_db.f.check_to">
 		<title>
 		<function moreinfo="none">check_to()</function>
 		</title>
 		<para>
-		Check To username against &uri; table (if use_uri_table is set) or
+		Check <quote>To</quote> username against &uri; table (if use_uri_table is set) or
 		digest credentials (no DB backend required).
 		</para>
 		<para>
@@ -230,12 +230,12 @@ if (check_to()) {
 		</example>
 	</section>
 
-	<section>
+	<section id="uri_db.f.check_from">
 		<title>
 		<function moreinfo="none">check_from()</function>
 		</title>
 		<para>
-		Check From username against &uri; table (if use_uri_table is set) or
+		Check <quote>From</quote> username against &uri; table (if use_uri_table is set) or
 		digest credentials (no DB backend required).
 		</para>
 		<para>
@@ -253,7 +253,7 @@ if (check_from()) {
 		</example>
 	</section>
 
-	<section>
+	<section id="uri_db.f.does_uri_exist">
 		<title>
 		<function moreinfo="none">does_uri_exist()</function>
 		</title>
@@ -261,8 +261,8 @@ if (check_from()) {
 		Check if username in the request &uri; belongs to an existing user.
 		</para>
 		<para>
-		As the checking is done against &uri; table (if use_uri_table is set) 
-		or subscriber table.
+		The checking is done against the &uri; table (if use_uri_table is set) 
+		or the subscriber table.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
