@@ -1887,7 +1887,7 @@ void pv_destroy_api(void)
  * - buffer to print PVs
  */
 static char **_pv_print_buffer = NULL;
-#define PV_DEFAULT_PRINT_BUFFER_SIZE 1024
+#define PV_DEFAULT_PRINT_BUFFER_SIZE 8192 /* 8kB */
 static int _pv_print_buffer_size  = PV_DEFAULT_PRINT_BUFFER_SIZE;
 static int _pv_print_buffer_size_active  = 0;
 /* 6 mod params + 4 direct usage from mods */
