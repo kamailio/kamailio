@@ -82,7 +82,7 @@ Carsten Bock
               5.2. ds_list
               5.3. ds_reload
 
-        6. Exported RPC Commands
+        6. RPC Commands
 
               6.1. dispatcher.set_state
               6.2. dispatcher.list
@@ -198,7 +198,7 @@ Chapter 1. Admin Guide
         5.2. ds_list
         5.3. ds_reload
 
-   6. Exported RPC Commands
+   6. RPC Commands
 
         6.1. dispatcher.set_state
         6.2. dispatcher.list
@@ -982,7 +982,7 @@ onreply_route {
    MI DATAGRAM Command Format:
                 ":ds_reload:\n."
 
-6. Exported RPC Commands
+6. RPC Commands
 
    6.1. dispatcher.set_state
    6.2. dispatcher.list
