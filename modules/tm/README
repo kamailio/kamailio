@@ -120,6 +120,7 @@ Juha Heinanen
               5.48. t_set_no_e2e_cancel_reason(0|1)
               5.49. t_is_set(target)
               5.50. t_use_uac_headers()
+              5.51. t_is_retr_async_reply()
 
         6. TM Module API
 
@@ -231,7 +232,8 @@ Juha Heinanen
    1.86. t_set_no_e2e_cancel_reason usage
    1.87. t_replicate usage
    1.88. t_use_uac_headers usage
-   1.89. event_route[tm:branch-failure] usage
+   1.89. t_is_retr_async_reply usage
+   1.90. event_route[tm:branch-failure] usage
 
 Chapter 1. Admin Guide
 
@@ -340,6 +342,7 @@ Chapter 1. Admin Guide
         5.48. t_set_no_e2e_cancel_reason(0|1)
         5.49. t_is_set(target)
         5.50. t_use_uac_headers()
+        5.51. t_is_retr_async_reply()
 
    6. TM Module API
 
@@ -1444,11 +1447,11 @@ modparam("tm", "local_ack_mode", 1)
        destination, you will get in failure_route the reply coming from
        that destination or a local timeout).
 
-   The default value is 0.
+   The default value is 3.
 
    Example 1.39. Set failure_reply_mode parameter
 ...
-modparam("tm", "failure_reply_mode", 3)
+modparam("tm", "failure_reply_mode", 0)
 ...
 
 4.40. faked_reply_prio (integer)
@@ -1610,6 +1613,7 @@ modparam("tm", "dns_reuse_rcv_socket", 1)
    5.48. t_set_no_e2e_cancel_reason(0|1)
    5.49. t_is_set(target)
    5.50. t_use_uac_headers()
+   5.51. t_is_retr_async_reply()
 
 5.1. t_relay([host, port])
 
@@ -2671,6 +2675,29 @@ if(!t_is_set("failure_route"))
 t_use_uac_headers();
 ...
 
+5.51. t_is_retr_async_reply()
+
+   Check to see if the reply is a retransmitted reply on a transaction
+   that is currently suspended asynchronously (suspended during reply
+   processing). Right now the check is only on the transaction, we don't
+   actually check to see if the reply message is an actual retransmission
+   of the suspended reply. This is expected as you should not process
+   another reply until the suspended reply processing has been completed.
+   The trick here is to make sure you don't suspend for too long or even
+   worse, indefinitely.
+
+   returns true if the transaction is currently reply suspended or false
+   if not.
+
+   Example 1.89. t_is_retr_async_reply usage
+...
+if (t_is_retr_async_reply()) {
+        xlog("L_DBG", "Dropping retransmitted reply which is still currently sus
+pended\n");
+        drop();
+}
+...
+
 6. TM Module API
 
    6.1. Defines
@@ -2852,7 +2879,7 @@ action *route)
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.89. event_route[tm:branch-failure] usage
+   Example 1.90. event_route[tm:branch-failure] usage
 ...
 route {
     t_on_branch_failure("myroute");

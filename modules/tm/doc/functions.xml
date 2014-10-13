@@ -1724,7 +1724,7 @@ t_use_uac_headers();
 	</example>
     </section>
 	<section id="tm.f.t_is_retr_async_reply">
-	<title>                                                               </section>
+	<title>
 	    <function>t_is_retr_async_reply()</function>
 	</title>
 	<para>
