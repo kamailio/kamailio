@@ -12,7 +12,7 @@ Edited by
 
 Juha Heinanen
 
-   Copyright (c) 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -25,12 +25,10 @@ Juha Heinanen
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Parameters
-        4. Functions
-        5. Exported MI functions
+        3. MI Commands
 
-              5.1. pua_publish
-              5.2. pua_subscribe
+              3.1. pua_publish
+              3.2. pua_subscribe
 
    List of Examples
 
@@ -46,12 +44,10 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Parameters
-   4. Functions
-   5. Exported MI functions
+   3. MI Commands
 
-        5.1. pua_publish
-        5.2. pua_subscribe
+        3.1. pua_publish
+        3.2. pua_subscribe
 
 1. Overview
 
@@ -80,21 +76,12 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * none
 
-3. Parameters
+3. MI Commands
 
-     * none
+   3.1. pua_publish
+   3.2. pua_subscribe
 
-4. Functions
-
-   The module does not export functions to be used in configuration
-   script.
-
-5. Exported MI functions
-
-   5.1. pua_publish
-   5.2. pua_subscribe
-
-5.1.  pua_publish
+3.1. pua_publish
 
    Command parameters:
      * presentity_uri - e.g. sip:system@kamailio.org
@@ -134,7 +121,7 @@ le id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd
 748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:4
 76</dm:note></dm:person></presence>
 
-5.2.  pua_subscribe
+3.2. pua_subscribe
 
    Command parameters:
      * presentity_uri - e.g. sip:presentity@kamailio.org
