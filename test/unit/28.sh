@@ -32,38 +32,40 @@ CPL=cpl_ignore.xml
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 
-$BIN -w . -f $CFG &> /dev/null;
+$BIN -w . -f $CFG -a no >/dev/null
 ret=$?
 sleep 1
 
-$CTL fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
+$CTL mi LOAD_CPL sip:alice@127.0.0.1 $CPL
 
 if [ "$ret" -eq 0 ] ; then
-	sipp -m 1 -f 1 127.0.0.1:5060 -sf cpl_test.xml &> /dev/null;
+	sipp -m 1 -f 1 127.0.0.1:5060 -sf cpl_test.xml >/dev/null 2>&1 &
 	ret=$?
-fi;
+fi
 
 if [ "$ret" -eq 0 ] ; then
   $CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
   diff $TMPFILE $CPL 
   ret=$?
-fi; 
+fi 
 
 if [ "$ret" -eq 0 ] ; then
   $CTL fifo REMOVE_CPL sip:alice@127.0.0.1
   $CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
-fi;
+fi
 
-diff $TMPFILE $CPL &> /dev/null;
+diff $TMPFILE $CPL >/dev/null
 ret=$?
 
 if [ ! "$ret" -eq 0 ] ; then
   ret=0
 fi;
 
+sleep 1
+
 #cleanup:
-$KILL &> /dev/null;
-killall -9 sipp &> /dev/null;
+$KILL >/dev/null
+killall -9 sipp >/dev/null 2>&1
 rm $TMPFILE
 
-exit $ret;
+exit $ret

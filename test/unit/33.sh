@@ -35,41 +35,43 @@ CFG=33.cfg
 
 cp $CFG $CFG.bak
 
-$BIN -w . -f $CFG > /dev/null
+ulimit -c unlimited
+
+$BIN -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1
 
 if [ $ret -eq 0 ] ; then
-	$CTL fifo check_config_hash |grep "The actual config file hash is identical to the stored one." > /dev/null
+	$CTL mi check_config_hash | grep "The actual config file hash is identical to the stored one." >/dev/null
 	ret=$?
 fi;
 
 echo " " >> $CFG
 if [ $ret -eq 0 ] ; then
-	$CTL fifo check_config_hash |grep "The actual config file hash is identical to the stored one." /dev/null
+	$CTL mi check_config_hash | grep "The actual config file hash is identical to the stored one." >/dev/null
 	ret=$?
-fi;
+fi
 
 if [ ! $ret -eq 0 ] ; then
 	# send a message
-	cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
-fi;
+	cat register.sip | nc -q 1 -u 127.0.0.1 5060 > /dev/null
+fi
 
 sleep 1
-$KILL &> /dev/null
+$KILL >/dev/null 2>&1
 ret=$?
 
 if [ $ret -eq 0 ] ; then
 	ret=1
 else
 	ret=0
-fi;
+fi
 
 if [ ! -e core ] ; then
 	ret=1
-fi;
-rm core
+fi
+rm -f core
 mv $CFG.bak $CFG
 
 exit $ret

@@ -1,7 +1,7 @@
 #!/bin/bash
 # test publish and subscribe for presence
 
-# Copyright (C) 2008 Voice System
+# Copyright (C) 2007 1&1 Internet AG
 #
 # This file is part of Kamailio, a free SIP server.
 #
@@ -31,24 +31,24 @@ fi ;
 
 CFG=presence.cfg
 
-../$BIN -w . -f $CFG &> /dev/null;
+$BIN -w . -f $CFG -a no >/dev/null
 ret=$?
 sleep 1
 
 if [ "$ret" -eq 0 ] ; then
-    sipp -sf publish_scenario.xml -i 127.0.0.1 -p 5061 -inf publish.csv 127.0.0.1:5059 -recv_timeout 500000 -m 1 &> /dev/null;
+    sipp -sf publish_scenario.xml -i 127.0.0.1 -p 5061 -inf publish.csv 127.0.0.1:5059 -recv_timeout 500000 -m 1 >/dev/null 2>&1 &
     ret=$?
-fi;
-
+fi
 
 if [ "$ret" -eq 0 ] ; then
-    sipp -sf subscribe_notify_scenario.xml -i 127.0.0.1 -p 5061 -inf subscribe_notify.csv 127.0.0.1:5059 -recv_timeout 500000 -m 1 &> /dev/null;
+    sipp -sf subscribe_notify_scenario.xml -i 127.0.0.1 -p 5061 -inf subscribe_notify.csv 127.0.0.1:5059 -recv_timeout 500000 -m 1 >/dev/null 2>&1 &
     ret=$?
-fi;
+fi
 
+sleep 1
 
 #cleanup:
-$KILL &> /dev/null;
-killall -9 sipp &> /dev/null;
+$KILL >/dev/null
+killall -9 sipp >/dev/null 2>&1
 
-exit $ret;
+exit $ret

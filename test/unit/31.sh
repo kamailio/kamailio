@@ -31,27 +31,20 @@ CFG=11.cfg
 
 DOMAIN="local"
 # setup 500 contacts
-NR=50
-
-cp $CFG $CFG.bak
-
-echo "loadmodule \"$SRC_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
-echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
+NR=500
 
 COUNTER=0
 while [  $COUNTER -lt $NR ]; do
 	COUNTER=$(($COUNTER+1))
-	$MYSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___');"
+	$MYSQL "insert into location (ruid, username, domain, contact, user_agent) values ('ul-ruid-$COUNTER', 'foobar-$RANDOM', '$DOMAIN', 'sip:foobar-$RANDOM@$DOMAIN', '___test___');"
 done
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG -A FETCHROWS=17 -a no >/dev/null
 ret=$?
 
 sleep 1
-$KILL
+$KILL >/dev/null
 
 $MYSQL "delete from location where user_agent = '___test___'"
-
-mv $CFG.bak $CFG
 
 exit $ret

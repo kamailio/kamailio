@@ -35,29 +35,29 @@ echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"cpl-c\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 
 
-$BIN -w . -f $CFG &> /dev/null;
+$BIN -w . -f $CFG >/dev/null
 ret=$?
 sleep 1
 
 $CTL fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
 
 if [ "$ret" -eq 0 ] ; then
-	sipp -m 1 -f 1 127.0.0.1:5060 -sf cpl_test.xml &> /dev/null;
+	sipp -m 1 -f 1 127.0.0.1:5060 -sf cpl_test.xml >/dev/null 2>&1 &
 	ret=$?
-fi;
+fi
 
 if [ "$ret" -eq 0 ] ; then
   $CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
   diff $TMPFILE $CPL 
   ret=$?
-fi; 
+fi 
 
 if [ "$ret" -eq 0 ] ; then
   $CTL fifo REMOVE_CPL sip:alice@127.0.0.1
   $CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
-fi;
+fi
 
-diff $TMPFILE $CPL &> /dev/null;
+diff $TMPFILE $CPL >/dev/null
 ret=$?
 
 if [ ! "$ret" -eq 0 ] ; then
@@ -65,9 +65,9 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup:
-$KILL &> /dev/null;
-killall -9 sipp &> /dev/null;
+$KILL >/dev/null
+killall -9 sipp >/dev/null 2>&1
 rm $TMPFILE
 mv $CFG.tmp $CFG
 
-exit $ret;
+exit $ret
