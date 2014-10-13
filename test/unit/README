@@ -15,6 +15,14 @@ This tests should (in the current state) only run by developers who know
 what they do. They could delete your database, produce core dumps that fill
 your harddisk or do other nasty things..
 
+Dependencies
+------------
+
+External tools needed by some test units:
+
+  - SIPP (sipp.sourceforge.net)
+  - SIPSAK  
+
 Usage
 -----
 
