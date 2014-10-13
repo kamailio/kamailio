@@ -191,7 +191,7 @@ extern int tm_remap_503_500;
  * - 3 - all branches are discarded if a new leg of serial forking
  *       is started (default kamailio 1.5.x behaviour)
  */
-int failure_reply_mode = 0;
+int failure_reply_mode = 3;
 
 /* responses priority (used by t_pick_branch)
  *  0xx is used only for the initial value (=> should have no chance to be
