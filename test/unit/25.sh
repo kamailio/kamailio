@@ -27,7 +27,7 @@ function cleanup() {
 	killall -9 sipp > /dev/null 2>&1
 	$KILL > /dev/null 2>&1
 
-	$MYSQL "delete from location where (user_agent = \"ser_test\");"
+	$MYSQL "delete from location where (user_agent = \"kamailio_test\");"
 	$MYSQL "delete from userblacklist where username='49721123456786';"
 	$MYSQL "delete from userblacklist where username='49721123456788';"
 	$MYSQL "delete from userblacklist where username='49721123456789';"
@@ -47,19 +47,19 @@ fi ;
 CFG=25.cfg
 
 # add an registrar entry to the db;
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456789\",\"sip:123456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-aa\",\"49721123456789\",\"sip:123456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456788\",\"sip:123456788@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-bb\",\"49721123456788\",\"sip:123456788@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456787\",\"sip:123456787@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-cc\",\"49721123456787\",\"sip:123456787@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456786\",\"sip:123456786@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-dd\",\"49721123456786\",\"sip:123456786@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456785\",\"sip:223456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-ee\",\"49721123456785\",\"sip:223456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456784\",\"sip:2.23456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-ff\",\"49721123456784\",\"sip:2.23456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"user4946\",\"sip:user4946@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-gg\",\"user4946\",\"sip:user4946@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
 # setup userblacklist, first some dummy data
 $MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('494675454','','49900','0');"
@@ -77,7 +77,7 @@ $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('1'
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('','0','_test_');"
 
 
-$BIN -w . -f $CFG &> /dev/null
+$BIN -w . -f $CFG > /dev/null 2>&1
 sleep 1
 
 sipp -sn uas -bg -i 127.0.0.1 -p 5060 #&> /dev/null
@@ -110,7 +110,7 @@ if [ "$ret" -ne 1 ] ; then
 fi;
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('123456786','1','_test_');"
-$CTL fifo reload_blacklist
+$CTL mi reload_blacklist
 
 sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?
@@ -133,7 +133,7 @@ ret=$?
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('2','1','_test_');"
 
-$CTL fifo reload_blacklist
+$CTL mi reload_blacklist
 
 sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?
