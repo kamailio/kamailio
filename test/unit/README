@@ -17,8 +17,11 @@ your harddisk or do other nasty things..
 
 Dependencies
 ------------
-- SIPP (sipp.sourceforge.net) is required by some tests.
-  
+
+External tools needed by some test units:
+
+  - SIPP (sipp.sourceforge.net)
+  - SIPSAK  
 
 Usage
 -----
