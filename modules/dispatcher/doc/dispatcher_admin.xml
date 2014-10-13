@@ -1213,7 +1213,7 @@ onreply_route {
     </section>
 
 	<section>
-	<title>Exported RPC Commands</title>
+	<title>RPC Commands</title>
 	<section id="dispatcher.rpc.set_state">
 		<title>
 		<function moreinfo="none">dispatcher.set_state</function>
