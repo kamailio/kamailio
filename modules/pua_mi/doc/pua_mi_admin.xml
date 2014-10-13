@@ -65,23 +65,7 @@
 	</section>
 	
 	<section>
-		<title>Parameters</title>
-		<itemizedlist>
-			<listitem>
-			<para>
-				<emphasis>none</emphasis>
-			</para>
-			</listitem>
-		</itemizedlist>	
-	</section>	
-
-	<section>
-		<title>Functions</title>
-		<para>The module does not export functions to be used
-		in configuration script.</para>
-	</section>	
-	<section>
-		<title>Exported MI functions</title>
+		<title>MI Commands</title>
 		<section>
 				<title>
 				<function moreinfo="none">pua_publish</function>
