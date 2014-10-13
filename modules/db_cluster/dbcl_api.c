@@ -40,7 +40,7 @@
 
 extern int dbcl_max_query_length;
 
-#define DBCL_READ(command) \
+#define DBCL_READ(qfunc, command) \
 	do {\
 	int ret;\
 	int i;\
@@ -65,6 +65,10 @@ extern int dbcl_max_query_length;
 								cls->name.len, cls->name.s, i, j);\
 						sec = get_ticks();\
 						dbh = cls->rlist[i].clist[j]->dbh;\
+						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+							LM_ERR("unsupported command by db connector\n");\
+							return -1;\
+						}\
 						ret = cls->rlist[i].clist[j]->dbf.command;\
 						if (ret==0) {\
 							cls->usedcon = cls->rlist[i].clist[j];\
@@ -92,6 +96,10 @@ extern int dbcl_max_query_length;
 								cls->name.len, cls->name.s, i, j);\
 						sec = get_ticks();\
 						dbh = cls->rlist[i].clist[j]->dbh;\
+						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+							LM_ERR("unsupported command by db connector\n");\
+							return -1;\
+						}\
 						ret = cls->rlist[i].clist[j]->dbf.command;\
 						if (ret==0)\
 						{\
@@ -121,7 +129,7 @@ extern int dbcl_max_query_length;
 	return ret;\
 	} while(0)
 
-#define DBCL_WRITE(command) \
+#define DBCL_WRITE(qfunc, command) \
 	do {\
 	int ret;\
 	int rc;\
@@ -150,6 +158,10 @@ extern int dbcl_max_query_length;
 								cls->name.len, cls->name.s, i, j);\
 						sec = get_ticks();\
 						dbh = cls->wlist[i].clist[j]->dbh;\
+						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+							LM_ERR("unsupported command by db connector\n");\
+							return -1;\
+						}\
 						ret = cls->wlist[i].clist[j]->dbf.command;\
 						if (ret==0) {\
 							cls->usedcon = cls->wlist[i].clist[j];\
@@ -177,6 +189,10 @@ extern int dbcl_max_query_length;
 								cls->name.len, cls->name.s, i, j);\
 						sec = get_ticks();\
 						dbh = cls->wlist[i].clist[j]->dbh;\
+						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+							LM_ERR("unsupported command by db connector\n");\
+							return -1;\
+						}\
 						ret = cls->wlist[i].clist[j]->dbf.command;\
 						if (ret==0)\
 						{\
@@ -205,6 +221,10 @@ extern int dbcl_max_query_length;
 								cls->name.len, cls->name.s, i, j);\
 						sec = get_ticks();\
 						dbh = cls->wlist[i].clist[j]->dbh;\
+						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+							LM_ERR("unsupported command by db connector\n");\
+							return -1;\
+						}\
 						rc = cls->wlist[i].clist[j]->dbf.command;\
 						if(rc==0) {\
 							cls->usedcon = cls->wlist[i].clist[j];\
@@ -321,7 +341,7 @@ int db_cluster_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op
 	     const db_key_t _o, db1_res_t** _r)
 {
 	LM_DBG("executing db cluster query command\n");
-	DBCL_READ(query(dbh, _k, _op, _v, _c, _n, _nc, _o, _r));
+	DBCL_READ(query, query(dbh, _k, _op, _v, _c, _n, _nc, _o, _r));
 }
 
 
@@ -346,7 +366,7 @@ int db_cluster_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows
 int db_cluster_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 {
 	LM_DBG("executing db cluster raw query command\n");
-	DBCL_READ(raw_query(dbh, _s, _r));
+	DBCL_READ(raw_query, raw_query(dbh, _s, _r));
 }
 
 
@@ -356,7 +376,7 @@ int db_cluster_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 int db_cluster_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	LM_DBG("executing db cluster insert command\n");
-	DBCL_WRITE(insert(dbh, _k, _v, _n));
+	DBCL_WRITE(insert, insert(dbh, _k, _v, _n));
 }
 
 
@@ -367,7 +387,7 @@ int db_cluster_delete(const db1_con_t* _h, const db_key_t* _k, const
 	db_op_t* _o, const db_val_t* _v, const int _n)
 {
 	LM_DBG("executing db cluster delete command\n");
-	DBCL_WRITE(delete(dbh, _k, _o, _v, _n));
+	DBCL_WRITE(delete, delete(dbh, _k, _o, _v, _n));
 }
 
 
@@ -379,7 +399,7 @@ int db_cluster_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o
 	const int _un)
 {
 	LM_DBG("executing db cluster update command\n");
-	DBCL_WRITE(update(dbh, _k, _o, _v, _uk, _uv, _n, _un));
+	DBCL_WRITE(update, update(dbh, _k, _o, _v, _uk, _uv, _n, _un));
 }
 
 
@@ -390,7 +410,7 @@ int db_cluster_replace(const db1_con_t* _h, const db_key_t* _k,
 		const db_val_t* _v, const int _n, const int _un, const int _m)
 {
 	LM_DBG("executing db cluster replace command\n");
-	DBCL_WRITE(replace(dbh, _k, _v, _n, _un, _m));
+	DBCL_WRITE(replace, replace(dbh, _k, _v, _n, _un, _m));
 }
 
 /*! \brief
@@ -430,7 +450,7 @@ int db_cluster_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_v
 	const int _n)
 {
 	LM_DBG("executing db cluster insert-update command\n");
-	DBCL_WRITE(insert_update(dbh, _k, _v, _n));
+	DBCL_WRITE(insert_update, insert_update(dbh, _k, _v, _n));
 }
 
 
@@ -441,7 +461,7 @@ int db_cluster_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
 		const db_val_t* _v, const int _n)
 {
 	LM_DBG("executing db cluster insert delayed command\n");
-	DBCL_WRITE(insert_delayed(dbh, _k, _v, _n));
+	DBCL_WRITE(insert_delayed, insert_delayed(dbh, _k, _v, _n));
 }
 
 
