@@ -1444,11 +1444,11 @@ modparam("tm", "local_ack_mode", 1)
        destination, you will get in failure_route the reply coming from
        that destination or a local timeout).
 
-   The default value is 0.
+   The default value is 3.
 
    Example 1.39. Set failure_reply_mode parameter
 ...
-modparam("tm", "failure_reply_mode", 3)
+modparam("tm", "failure_reply_mode", 0)
 ...
 
 4.40. faked_reply_prio (integer)

@@ -1221,13 +1221,13 @@ modparam("tm", "local_ack_mode", 1)
 		</para></listitem>
 	</itemizedlist>
 	<para>
-		The default value is 0.
+		The default value is 3.
 	</para>
 	<example>
 		<title>Set <varname>failure_reply_mode</varname> parameter</title>
 		<programlisting>
 ...
-modparam("tm", "failure_reply_mode", 3)
+modparam("tm", "failure_reply_mode", 0)
 ...
 	    </programlisting>
 	</example>
