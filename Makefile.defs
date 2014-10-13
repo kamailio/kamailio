@@ -165,7 +165,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 4
 PATCHLEVEL = 3
 SUBLEVEL =  0
-EXTRAVERSION = -dev0
+EXTRAVERSION = -dev1
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
