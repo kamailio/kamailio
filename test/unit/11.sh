@@ -31,8 +31,6 @@ fi ;
 
 SIPDOMAIN=127.0.0.1
 
-cp $CFG $CFG.bak
-
 $BIN -w . -f $CFG -a no > /dev/null
 ret=$?
 
@@ -181,7 +179,5 @@ fi;
 $MYSQL "delete from location where username like '49721123456789%';"
 
 $KILL
-
-mv $CFG.bak $CFG
 
 exit $ret
