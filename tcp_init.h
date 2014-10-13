@@ -41,7 +41,7 @@
 
 #define DEFAULT_TLS_MAX_CONNECTIONS 2048 /* maximum tls connections */
 
-#define DEFAULT_TCP_BUF_SIZE	4096  /* buffer size used for reads */
+#define DEFAULT_TCP_BUF_SIZE	16384  /* 16k - buffer size used for reads */
 
 #define DEFAULT_TCP_WBUF_SIZE	2100 /*  after debugging switch to 4-16k */
 
