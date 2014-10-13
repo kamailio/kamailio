@@ -189,7 +189,7 @@ int clean_puadb( int update_period, int min_expires )
 	if (RES_ROW_N(res) == 0)
 	{
 		/* no match */ 
-		LM_INFO( "No records matched for clean\n");
+		LM_DBG( "No records matched for clean\n");
 		pua_dbf.free_result(pua_db, res);
 		return(0);
 	}
