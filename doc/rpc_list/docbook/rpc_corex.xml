@@ -13,12 +13,30 @@ RPC Exports for corex
         List listening sockets
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
 <section id="corex.list_aliases"><title>corex.list_aliases</title>
 <para>
         List socket aliases
+</para>
+<para>
+        Returns an array.
+</para>
+</section>
+
+<section id="corex.shm_status"><title>corex.shm_status</title>
+<para>
+        Trigger shm status dump to syslog
+</para>
+<para>
+</para>
+</section>
+
+<section id="corex.shm_summary"><title>corex.shm_summary</title>
+<para>
+        Trigger shm summary dump to syslog
 </para>
 <para>
 </para>

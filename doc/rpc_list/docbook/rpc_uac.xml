@@ -16,4 +16,44 @@ RPC Exports for uac
 </para>
 </section>
 
+<section id="uac.reg_info"><title>uac.reg_info</title>
+<para>
+        Return the details of registration for a particular record.
+</para>
+<para>
+</para>
+</section>
+
+<section id="uac.reg_enable"><title>uac.reg_enable</title>
+<para>
+        Enable registration for a particular record.
+</para>
+<para>
+</para>
+</section>
+
+<section id="uac.reg_disable"><title>uac.reg_disable</title>
+<para>
+        Disable registration for a particular record.
+</para>
+<para>
+</para>
+</section>
+
+<section id="uac.reg_reload"><title>uac.reg_reload</title>
+<para>
+        Reload records from database.
+</para>
+<para>
+</para>
+</section>
+
+<section id="uac.reg_refresh"><title>uac.reg_refresh</title>
+<para>
+        Refresh a record from database.
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

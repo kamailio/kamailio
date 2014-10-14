@@ -45,6 +45,7 @@ RPC Exports for core
 
 12. core.psx
         Returns the detailed description of running SER processes.
+        Returns an array.
 
 13. core.pwd
         Returns the working directory of SER server.

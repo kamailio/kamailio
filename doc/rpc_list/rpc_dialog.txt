@@ -6,9 +6,11 @@ RPC Exports for dialog
 
  1. dlg.list
         Print all dialogs
+        Returns an array.
 
  2. dlg.list_ctx
         Print all dialogs with associated context
+        Returns an array.
 
  3. dlg.dlg_list
         Print dialog based on callid and fromtag
@@ -25,6 +27,7 @@ RPC Exports for dialog
 
  7. dlg.profile_list
         Lists all the dialogs belonging to a profile
+        Returns an array.
 
  8. dlg.bridge_dlg
         Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE

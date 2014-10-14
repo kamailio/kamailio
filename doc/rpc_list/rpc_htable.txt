@@ -6,6 +6,7 @@ RPC Exports for htable
 
  1. htable.dump
         Dump the contents of hash table.
+        Returns an array.
 
  2. htable.delete
         Delete one key from a hash table.
@@ -21,10 +22,12 @@ RPC Exports for htable
 
  6. htable.listTables
         List all htables.
+        Returns an array.
 
  7. htable.reload
         Reload hash table.
 
  8. htable.stats
         Statistics about htables.
+        Returns an array.
 

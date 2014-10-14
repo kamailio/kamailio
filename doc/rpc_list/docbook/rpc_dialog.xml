@@ -13,6 +13,7 @@ RPC Exports for dialog
         Print all dialogs
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
@@ -21,6 +22,7 @@ RPC Exports for dialog
         Print all dialogs with associated context
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
@@ -62,6 +64,7 @@ RPC Exports for dialog
         Lists all the dialogs belonging to a profile
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 

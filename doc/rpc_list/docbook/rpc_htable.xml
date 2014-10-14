@@ -13,6 +13,7 @@ RPC Exports for htable
         Dump the contents of hash table.
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
@@ -53,6 +54,7 @@ RPC Exports for htable
         List all htables.
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
@@ -69,6 +71,7 @@ RPC Exports for htable
         Statistics about htables.
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
