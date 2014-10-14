@@ -37,13 +37,9 @@ static int set_reply_body(struct sip_msg* msg, str* body, str* content_type)
 {
 	char* buf;
 	int len;
-	int value_len;
-	str nb = *body;
-	str nc = *content_type;
 
 	/* add content-type */
-	value_len = nc.len;
-	len=sizeof("Content-Type: ") - 1 + value_len + CRLF_LEN;
+	len=sizeof("Content-Type: ") - 1 + content_type->len + CRLF_LEN;
 	buf=pkg_malloc(sizeof(char)*(len));
 
 	if (buf==0) {
@@ -51,8 +47,8 @@ static int set_reply_body(struct sip_msg* msg, str* body, str* content_type)
 		return -1;
 	}
 	memcpy(buf, "Content-Type: ", sizeof("Content-Type: ") - 1);
-	memcpy(buf+sizeof("Content-Type: ") - 1, nc.s, value_len);
-	memcpy(buf+sizeof("Content-Type: ") - 1 + value_len, CRLF, CRLF_LEN);
+	memcpy(buf+sizeof("Content-Type: ") - 1, content_type->s, content_type->len);
+	memcpy(buf+sizeof("Content-Type: ") - 1 + content_type->len, CRLF, CRLF_LEN);
 	if (add_lump_rpl(msg, buf, len, LUMP_RPL_HDR) == 0) {
 		LM_ERR("failed to insert content-type lump\n");
 		pkg_free(buf);
@@ -61,7 +57,7 @@ static int set_reply_body(struct sip_msg* msg, str* body, str* content_type)
 	pkg_free(buf);
 
 	/* add body */
-	if (add_lump_rpl(msg, nb.s, nb.len, LUMP_RPL_BODY) == 0) {
+	if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) == 0) {
 		LM_ERR("cannot add body lump\n");
 		return -1;
 	}
