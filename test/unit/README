@@ -20,8 +20,8 @@ Dependencies
 
 External tools needed by some test units:
 
-  - SIPP (sipp.sourceforge.net)
-  - SIPSAK  
+  - SIPP (http://sipp.sourceforge.net)
+  - SIPSAK  (https://github.com/nils-ohlmeier/sipsak)
 
 Usage
 -----
