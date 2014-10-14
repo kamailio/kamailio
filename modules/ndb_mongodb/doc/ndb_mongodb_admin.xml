@@ -59,7 +59,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section id="ndb_redis.p.server">
+	<section id="ndb_mongodb.p.server">
 		<title><varname>server</varname> (str)</title>
 		<para>
 			Specify the details to connect to REDIS server. It takes a list of
