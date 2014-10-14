@@ -211,9 +211,17 @@ int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node,
 	str_hdr.len = len;
 	
 	cb_param = shm_malloc(sizeof(*cb_param));
+	if (cb_param == NULL) {
+		LM_ERR("no more shm for building callback parameter\n");
+		goto error;
+	}
 	memset(cb_param, 0, sizeof(*cb_param));
 	cb_param->resp_cback = *resp_cback;
 	cb_param->node = shm_dup_node(node);
+	if (cb_param->node == NULL) {
+		LM_ERR("error building callback parameter\n");
+		goto error;
+	}
 	
 	if(build_uri_str(&peer->peer_id, &dmq_server_uri, &from) < 0) {
 		LM_ERR("error building from string [username %.*s]\n",
@@ -246,6 +254,11 @@ error:
 		pkg_free(from.s);
 	if (to.s!=NULL) 
 		pkg_free(to.s);
+	if (cb_param) {
+		if (cb_param->node)
+			destroy_dmq_node(cb_param->node, 1);
+		shm_free(cb_param);
+	}
 	return -1;
 }
 
