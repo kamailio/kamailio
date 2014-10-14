@@ -260,6 +260,7 @@ str* build_notification_body()
 	body->len = clen;
 	return body;
 error:
+	lock_release(&node_list->lock);
 	pkg_free(body->s);
 	pkg_free(body);
 	return NULL;
