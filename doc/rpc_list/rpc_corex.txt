@@ -6,7 +6,15 @@ RPC Exports for corex
 
  1. corex.list_sockets
         List listening sockets
+        Returns an array.
 
  2. corex.list_aliases
         List socket aliases
+        Returns an array.
+
+ 3. corex.shm_status
+        Trigger shm status dump to syslog
+
+ 4. corex.shm_summary
+        Trigger shm summary dump to syslog
 

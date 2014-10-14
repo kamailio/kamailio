@@ -107,6 +107,7 @@ RPC Exports for core
         Returns the detailed description of running SER processes.
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 

@@ -7,3 +7,18 @@ RPC Exports for uac
  1. uac.reg_dump
         Dump the contents of user registrations table.
 
+ 2. uac.reg_info
+        Return the details of registration for a particular record.
+
+ 3. uac.reg_enable
+        Enable registration for a particular record.
+
+ 4. uac.reg_disable
+        Disable registration for a particular record.
+
+ 5. uac.reg_reload
+        Reload records from database.
+
+ 6. uac.reg_refresh
+        Refresh a record from database.
+

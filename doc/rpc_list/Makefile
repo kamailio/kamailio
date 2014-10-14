@@ -23,7 +23,9 @@ docbook_output_dir=docbook
 files_list= \
 			$(COREPATH)/core_cmd.c:core \
 			$(COREPATH)/modules/app_lua/app_lua_mod.c:app_lua \
+			$(COREPATH)/modules/app_perl/app_perl_mod.c:app_perl \
 			$(COREPATH)/modules/carrierroute/carrierroute.c:carrierroute \
+			$(COREPATH)/modules/cdp/cdp_rpc.c:cdp \
 			$(COREPATH)/modules/cfg_rpc/cfg_rpc.c:cfg_rpc \
 			$(COREPATH)/modules/cnxcc/cnxcc_mod.c:cnxcc \
 			$(COREPATH)/modules/corex/corex_rpc.c:corex \
@@ -37,11 +39,14 @@ files_list= \
 			$(COREPATH)/modules/dialog_ng/dialog.c:dialog_ng \
 			$(COREPATH)/modules/dialplan/dialplan.c:dialplan \
 			$(COREPATH)/modules/dispatcher/dispatcher.c:dispatcher \
+			$(COREPATH)/modules/dmq/dmq.c:dmq \
 			$(COREPATH)/modules/domain/domain_mod.c:domain \
 			$(COREPATH)/modules/drouting/drouting.c:drouting \
 			$(COREPATH)/modules/htable/htable.c:htable \
 			$(COREPATH)/modules/ims_usrloc_pcscf/ul_rpc.c:ims_usrloc_pcscf \
 			$(COREPATH)/modules/ims_usrloc_scscf/ul_rpc.c:ims_usrloc_scscf \
+			$(COREPATH)/modules/jsonrpc-s/jsonrpc-s_mod.c:jsonrpc-s \
+			$(COREPATH)/modules/kex/core_stats.c:kex \
 			$(COREPATH)/modules/kex/pkg_stats.c:kex \
 			$(COREPATH)/modules/lcr/lcr_rpc.c:lcr \
 			$(COREPATH)/modules/malloc_test/malloc_test.c:malloc_test \
@@ -100,16 +105,18 @@ gcc=gcc
 # defines used by gcc
 # -D__CPU_i386 -DARCH="i386"
 c_defsX= -D__CPU_x86_64 -D__OS_linux -DSER_VER=3003000 -DPKG_MALLOC -DSHM_MEM  \
-		-DVERSION='\"3.3.0-dev2\"' -DARCH='\"x86_64\"' -DOS=linux_ -DOS_QUOTED='\"linux\"' \
+		-DVERSION='\"4.3.0\"' -DARCH='\"x86_64\"' -DOS=linux_ -DOS_QUOTED='\"linux\"' \
 		-DSHM_MMAP -DDNS_IP_HACK -DUSE_MCAST -DUSE_TCP \
 		-DUSE_DNS_CACHE -DUSE_DNS_FAILOVER -DUSE_DST_BLACKLIST -DUSE_NAPTR \
 		-DUSE_TLS -DTLS_HOOKS -DFAST_LOCK   -DCC_GCC_LIKE_ASM \
 		-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
 		-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
-		-DHAVE_SCHED_SETSCHEDULER -DHAVE_EPOLL -DUSE_SCTP -DNAME='\"ser\"' \
-		-DCFG_DIR='\"/tmp/\"'
+		-DHAVE_SCHED_SETSCHEDULER -DHAVE_EPOLL -DUSE_SCTP -DNAME='\"kamailio\"' \
+		-DMOD_NAME='\"rpcmod\"' -DCFG_DIR='\"/tmp/\"'
 
 c_defs=$(subst ^^,='\",$(subst ",\"',$(subst =",^^,$(shell make -s -C ../.. printcdefs))))
+
+c_defs+= -DMOD_NAME='\"rpcgen\"'
 
 # common makefile vars used in defs
 LOCALBASE=/usr/local

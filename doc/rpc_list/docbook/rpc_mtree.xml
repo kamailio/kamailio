@@ -13,12 +13,21 @@ RPC Exports for mtree
         Print summary of loaded mtree tables
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
 <section id="mtree.reload"><title>mtree.reload</title>
 <para>
         Reload mtrees from database to memory
+</para>
+<para>
+</para>
+</section>
+
+<section id="mtree.match"><title>mtree.match</title>
+<para>
+        Match prefix value against mtree
 </para>
 <para>
 </para>
