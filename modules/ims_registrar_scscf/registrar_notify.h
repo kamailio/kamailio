@@ -49,6 +49,7 @@
 
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "../../locking.h"
+#include "sem.h"
 
 
 #define MSG_REG_SUBSCRIBE_OK "Subscription to REG saved"
@@ -86,6 +87,7 @@ typedef struct {
     gen_lock_t *lock; /**< lock for notifications ops		*/
     reg_notification *head; /**< first notification in the list	*/
     reg_notification *tail; /**< last notification in the list	*/
+    gen_sem_t *empty;
 } reg_notification_list;
 
 /** Events for subscriptions */
@@ -128,15 +130,16 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type);
 
 void create_notifications(udomain_t* _t, impurecord_t* r_passed, ucontact_t* c_passed, str *presentity_uri, str *watcher_contact, str content, int event_type);
 
-void notification_timer(unsigned int ticks, void* param);
+void notification_event_process();
 
 void free_notification(reg_notification *n);
 
 void send_notification(reg_notification * n);
 
 void add_notification(reg_notification *n);
+
 reg_notification* new_notification(str subscription_state,
-        str content_type, str content, int version, reg_subscriber* r);
+        str content_type, str content, reg_subscriber* r);
 
 dlg_t* build_dlg_t_from_notification(reg_notification* n);
 

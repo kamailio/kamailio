@@ -57,6 +57,7 @@
 #include "../../lib/kcore/statistics.h"
 #include "../../modules/sl/sl.h"
 #include "../../mod_fix.h"
+#include "../../cfg/cfg_struct.h"
 
 #include "save.h"
 #include "api.h"
@@ -471,6 +472,21 @@ static int mod_init(void) {
 }
 
 static int child_init(int rank) {
+    LM_DBG("Initialization of module in child [%d] \n", rank);
+    int pid;
+    
+    if (rank == PROC_MAIN) {
+        pid = fork_process(PROC_SIPINIT, "sip_notification_event_process", 1);
+        if (pid < 0)
+            return -1; //error
+        if (pid == 0) {
+            if (cfg_child_init())
+                return -1; //error
+            notification_event_process();
+        }
+    }
+    
+    
     if (rank == PROC_MAIN || rank == PROC_TCP_MAIN)
         return 0;
     if (rank == 1) {
