@@ -1417,6 +1417,7 @@ int ht_iterator_next(str *iname)
 	int i;
 	int k;
 
+	k = -1;
 	for(i=0; i<HT_ITERATOR_SIZE; i++)
 	{
 		if(_ht_iterators[i].name.len>0)
