@@ -1546,7 +1546,7 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 	str default_delimiter = {"unique-boundary-1", 17};
 	str nc = {0,0};
 	str cth = {"Content-Type: ", 14};
-	str* nbb;
+	str* nbb = NULL;
 	unsigned int convert = 0;
 	fparam_t header;
 	header.orig = NULL;
