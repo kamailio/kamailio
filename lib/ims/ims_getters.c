@@ -177,7 +177,7 @@ str cscf_get_private_identity_no_realm(struct sip_msg *msg, str realm)
 {
 	str pi={0,0};
 	struct hdr_field* h=0;
-	int ret,i;
+	int i;
 
 	if (parse_headers(msg,HDR_AUTHORIZATION_F,0)!=0) {
 		return pi;
