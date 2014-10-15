@@ -486,6 +486,7 @@ ws_connection_t **wsconn_get_list(void)
 	{
 		if (!wsc) {
 			LM_ERR("Wrong list length\n");
+			break;
 		}
 
 		list[i] = wsc;
@@ -494,7 +495,7 @@ ws_connection_t **wsconn_get_list(void)
 
 		wsc = wsc->used_next;
 	}
-	list[list_len] = NULL; /* explicit NULL termination */
+	list[i] = NULL; /* explicit NULL termination */
 
 end:
 	WSCONN_UNLOCK;
