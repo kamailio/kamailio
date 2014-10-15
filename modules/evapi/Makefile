@@ -8,7 +8,7 @@ NAME=evapi.so
 ifeq ($(CROSS_COMPILE),)
 	BUILDER = $(shell which pkg-config)
 ifneq ($(BUILDER),)
-		PKGLIBUV = $(shell $(BUILDER) --exists libuv > /dev/null 2>&1 ; echo $$? )
+		PKGLIBUV = $(shell $(BUILDER) --exists libev > /dev/null 2>&1 ; echo $$? )
 ifneq ($(PKGLIBUV),0)
 			BUILDER =
 endif
