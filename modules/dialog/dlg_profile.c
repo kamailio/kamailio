@@ -1257,8 +1257,8 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 					val.len = strlen(val.s);
 				} else if(strcmp(jt->string, "puid")==0) {
 					puid.s = jt->valuestring;
-					puid.len = strlen(val.s);
-				} else if(strcmp(jt->string, "puid")==0) {
+					puid.len = strlen(puid.s);
+				} else if(strcmp(jt->string, "expires")==0) {
 					expires = (time_t)jt->valueint;
 				} else if(strcmp(jt->string, "flags")==0) {
 					flags = jt->valueint;
