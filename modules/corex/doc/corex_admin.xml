@@ -267,7 +267,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
 		<title><function>send_data</function> usage</title>
 		<programlisting format="linespecific">
 ...
-	send("sip:example.com:5070;transport=sctp", "Message at $Ts");
+	send_data("sip:example.com:5070;transport=sctp", "Message at $Ts");
 ...
 </programlisting>
 		</example>
