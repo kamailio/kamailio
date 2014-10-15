@@ -288,7 +288,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
 
    Example 1.7. send_data usage
 ...
-        send("sip:example.com:5070;transport=sctp", "Message at $Ts");
+        send_data("sip:example.com:5070;transport=sctp", "Message at $Ts");
 ...
 
 4.5. is_incoming()
