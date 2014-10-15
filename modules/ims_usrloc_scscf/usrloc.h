@@ -99,16 +99,20 @@ typedef struct udomain udomain_t;
 typedef struct _subscriber_data {
 	int event;
 	int expires;
+	int version;
 	str* callid;
 	str* ftag;
 	str* ttag;
 	unsigned int local_cseq;
 	str* record_route;
 	str* sockinfo_str;
+	str* presentity_uri;
+	str *watcher_uri;
+	str* watcher_contact;
 } subscriber_data_t;
 
 typedef struct _reg_subscriber {
-    char event;
+    int event;
     time_t expires; /**< Time of expiration		 			*/
     int version; /**< Last version sent to this subs.	*/
 
@@ -418,24 +422,15 @@ typedef int (*get_all_ucontacts_t)(void* buf, int len, unsigned int flags, unsig
 
 typedef int (*get_udomain_t)(const char* _n, udomain_t** _d);
 
-//typedef int (*update_subscriber_t)(udomain_t* _d, int event,int* expires, str *callid, str *ftag, str *ttag, unsigned int local_cseq, str *watcher_uri, str *watcher_contact, str *presentity_uri, str *record_route, str *sockinfo_str, reg_subscriber** reg_subscriber );
-
-typedef int (*update_subscriber_t)(impurecord_t* urec,
-        str *watcher_uri, str *watcher_contact,
-        int *expires, reg_subscriber** _reg_subscriber);
+typedef int (*update_subscriber_t)(impurecord_t* urec, reg_subscriber** _reg_subscriber,
+        int *expires, int *local_cseq, int *version);
 
 typedef void (*external_delete_subscriber_t)(reg_subscriber *s, udomain_t* _t, int lock_domain);
 
-//typedef int (*get_subscriber_t)(udomain_t* _d, impurecord_t* urec, str *watcher_contact, str *presentity_uri, int event, reg_subscriber** reg_subscriber);
 typedef int (*get_subscriber_t)(impurecord_t* urec, str *watcher_contact, str *presentity_uri, int event, reg_subscriber** reg_subscriber);
 
-//typedef int (*add_subscriber_t)(udomain_t* _d, impurecord_t* urec,
-//		str *watcher_uri, str *watcher_contact,
-//		subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber);
-
 typedef int (*add_subscriber_t)(impurecord_t* urec,
-		str *watcher_uri, str *watcher_contact,
-		subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber);
+		subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber, int db_load);
 
 typedef int (*get_impus_from_subscription_as_string_t)(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus);
 

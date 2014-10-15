@@ -227,6 +227,7 @@ static int mod_init(void) {
 		case CONTACT_ONLY:
 		case CONTACT_CALLID:
 		case CONTACT_PATH:
+		case CONTACT_PORT_IP_ONLY:
 			break;
 		default:
 			LM_ERR("invalid matching mode %d\n", matching_mode);

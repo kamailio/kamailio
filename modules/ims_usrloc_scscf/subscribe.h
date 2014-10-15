@@ -48,24 +48,16 @@
 
 #include "usrloc.h"
 
-reg_subscriber* new_subscriber(str* presentity_uri, str* watcher_uri,
-		str* watcher_contact, subscriber_data_t* subscriber_data);
+reg_subscriber* new_subscriber(subscriber_data_t* subscriber_data);
 
 //API declarations
 int get_subscriber(impurecord_t* urec, str *watcher_uri,
 		str *watcher_contact, int event, reg_subscriber** r_subscriber);
 
-int add_subscriber(impurecord_t* urec, str *watcher_uri,
-		str *watcher_contact, subscriber_data_t* subscriber_data,
-		reg_subscriber** _reg_subscriber);
+int add_subscriber(impurecord_t* urec, subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber, int db_load);
 
 
-int update_subscriber(impurecord_t* urec,
-        str *watcher_uri, str *watcher_contact,
-        int *expires, reg_subscriber** _reg_subscriber);
-
-
-
+int update_subscriber(impurecord_t* urec, reg_subscriber** _reg_subscriber, int *expires, int *local_cseq, int *version);
 
 void delete_subscriber(impurecord_t* urec, reg_subscriber *s);
 

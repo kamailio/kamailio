@@ -31,6 +31,29 @@ extern db_func_t ul_dbf;
 #define ECF2_COL       "ecf2"
 #define IMS_SUB_COL    "ims_subscription_data"
 
+#define IMPU_TABLE  "impu"
+#define CONTACT_TABLE  "contact"
+#define IMPU_CONTACT_TABLE  "impu_contact"
+
+/*subscriber table*/
+#define SUBSCRIBER_TABLE "subscriber"
+#define SUB_EVENT_COL "event"
+#define SUB_EXPIRES_COL "expires"
+#define SUB_VERSION_COL "version"
+#define SUB_WATCHER_URI_COL "watcher_uri"
+#define SUB_WATCHER_CONTACT_COL "watcher_contact"
+#define SUB_PRESENTITY_URI_COL "presentity_uri"
+#define SUB_LOCAL_CSEQ_COL "local_cseq"
+#define SUB_CALL_ID_COL "call_id"
+#define SUB_FROM_TAG_COL "from_tag"
+#define SUB_TO_TAG_COL "to_tag"
+#define SUB_RECORD_ROUTE_COL "record_route"
+#define SUB_SOCKINFO_STR_COL "sockinfo_str"
+
+/*impu subscriber table*/
+#define IMPU_SUBSCRIBER_TABLE "impu_subscriber"
+#define SUBSCRIBER_ID_COL "subscriber_id"
+
 int init_db(const str *db_url, int db_update_period, int fetch_num_rows);
 int connect_db(const str *db_url);
 void destroy_db();
@@ -42,6 +65,9 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity, int reg_state
 int db_delete_impurecord(udomain_t* _d, struct impurecord* _r);
 int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c);
 int db_delete_ucontact(impurecord_t* _r, ucontact_t* _c);
+
+int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber);
+int db_delete_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber);
 
 int preload_udomain(db1_con_t* _c, udomain_t* _d);
 
