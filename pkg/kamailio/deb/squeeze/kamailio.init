@@ -17,7 +17,7 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/kamailio
 NAME=kamailio
-DESC="Kamailio SIP server"
+DESC="Kamailio SIP Server"
 HOMEDIR=/var/run/kamailio
 PIDFILE=$HOMEDIR/$NAME.pid
 DEFAULTS=/etc/default/kamailio

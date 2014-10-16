@@ -17,7 +17,7 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/kamailio
 NAME=kamailio
-DESC="Kamailio SIP server"
+DESC="Kamailio SIP Server"
 HOMEDIR=/var/run/kamailio
 PIDFILE=$HOMEDIR/$NAME.pid
 DEFAULTS=/etc/default/kamailio
@@ -28,7 +28,7 @@ GROUP=kamailio
 # Amount of shared and private memory to allocate
 # for the running Kamailio server (in Mb)
 SHM_MEMORY=64
-PKG_MEMORY=4
+PKG_MEMORY=8
 DUMP_CORE=no
 
 # Do not start kamailio if fork=no is set in the config file
