@@ -18,12 +18,12 @@
 
 
 # Check for missing binaries (stale symlinks should not happen)
-OSER_BIN=/usr/sbin/kamailio
-test -x $OSER_BIN || exit 5
+KAM_BIN=/usr/sbin/kamailio
+test -x $KAM_BIN || exit 5
 
 # Check for existence of needed config file and read it
-OSER_CONFIG=/etc/kamailio/kamailio.cfg
-test -r $OSER_CONFIG || exit 6
+KAM_CONFIG=/etc/kamailio/kamailio.cfg
+test -r $KAM_CONFIG || exit 6
 
 # Shell functions sourced from /etc/rc.status:
 #      rc_check         check and set local and overall rc status
@@ -64,7 +64,7 @@ case "$1" in
 		echo -n "Starting Kamailio "
 		## Start daemon with startproc(8). If this fails
 		## the return value is set appropriately by startproc.
-		startproc $OSER_BIN -f $OSER_CONFIG
+		startproc $KAM_BIN -f $KAM_CONFIG
 
 		# Remember status and be verbose
 		rc_status -v
@@ -74,7 +74,7 @@ case "$1" in
 		## Stop daemon with killproc(8) and if this fails
 		## killproc sets the return value according to LSB.
 
-		killproc -TERM $OSER_BIN
+		killproc -TERM $KAM_BIN
 
 		# Remember status and be verbose
 		rc_status -v
@@ -120,7 +120,7 @@ case "$1" in
 		# 5--199 reserved (5--99 LSB, 100--149 distro, 150--199 appl.)
 
 		# NOTE: checkproc returns LSB compliant status values.
-		checkproc $OSER_BIN
+		checkproc $KAM_BIN
 		# NOTE: rc_status knows that we called this init script with
 		# "status" option and adapts its messages accordingly.
 		rc_status -v

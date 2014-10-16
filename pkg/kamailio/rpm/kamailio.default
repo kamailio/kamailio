@@ -15,7 +15,7 @@ GROUP=kamailio
 SHM_MEMORY=64
 
 # Amount of private memory to allocate for the running Kamailio server (in Mb)
-PKG_MEMORY=4
+PKG_MEMORY=8
 
 # Enable the server to leave a core file when it crashes.
 # Set this to 'yes' to enable kamailio to leave a core file when it crashes
