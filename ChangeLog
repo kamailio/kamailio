@@ -2,6 +2,30 @@
 
 ===================== Changes Since Version 4.1.0 ===========================
 
+commit f73862c80d27abdcebb2a8e931d0dd16c3aa8e02
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 16 14:34:51 2014 +0200
+
+    Makefile.defs: version set to 4.2.0
+
+commit 33813b2057a73c64362e26473ac64a6501c5d7c7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 16 14:32:33 2014 +0200
+
+    pkg/deb: version set to 4.2.0 in specs
+
+commit a6ca57d60df230aa3d334a1276bbfba2cfdd29a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 16 14:27:54 2014 +0200
+
+    pkg/rpm: set version to 4.2.0 in specs
+
+commit d353917c9e880da60282e39cb8c5c06193f6e4c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 16 10:19:22 2014 +0200
+
+    ChangeLog: updates to content in preparation for 4.2.0 release
+
 commit 3948305d86f6211428f60c58e138b18aacb3dde5
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Thu Oct 16 09:55:58 2014 +0200
