@@ -240,13 +240,16 @@ str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_ta
 int add_subscriber(impurecord_t* urec,
         subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber, int db_load) {
 
+    reg_subscriber *s;
     LM_DBG("Adding reg subscription to IMPU record");
 
     if (!urec) {
         LM_ERR("no presentity impu record provided\n");
         return 0;
     }
-    reg_subscriber *s = new_subscriber(subscriber_data);
+    
+    s = new_subscriber(subscriber_data);
+    
 
     if (!s) return -1;
 

@@ -537,7 +537,7 @@ int delete_impurecord(udomain_t* _d, str* _aor, struct impurecord* _r)
 {
 	struct ucontact* c, *t;
 
-    LM_DBG("Deleting IMPURECORD\n");
+    LM_DBG("Deleting IMPURECORD [%.*s]\n", _r->public_identity.len, _r->public_identity.s);
 
 	if (_r==0) {
 		if (get_impurecord(_d, _aor, &_r) > 0) {
@@ -550,7 +550,7 @@ int delete_impurecord(udomain_t* _d, str* _aor, struct impurecord* _r)
 		t = c;
 		c = c->next;
 		if (delete_ucontact(_r, t) < 0) {
-			LM_ERR("deleting contact failed\n");
+			LM_ERR("deleting contact failed [%.*s]\n", c->aor->len, c->aor->s);
 			return -1;
 		}
 	}
@@ -562,7 +562,7 @@ int delete_impurecord(udomain_t* _d, str* _aor, struct impurecord* _r)
 	/*DB?*/
 	if (db_mode == WRITE_THROUGH
 			&& db_delete_impurecord(_d, _r) != 0) {
-		LM_ERR("error inserting contact into db");
+		LM_ERR("error deleting IMPU record from db");
 		return 0;
 	}
 
