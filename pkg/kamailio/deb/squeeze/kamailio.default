@@ -14,7 +14,7 @@
 # Amount of shared and private memory to allocate
 # for the running Kamailio server (in Mb)
 #SHM_MEMORY=64
-#PKG_MEMORY=4
+#PKG_MEMORY=8
 
 # Config file
 #CFGFILE=/etc/kamailio/kamailio.cfg
