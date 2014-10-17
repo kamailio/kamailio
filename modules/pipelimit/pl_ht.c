@@ -240,7 +240,7 @@ pl_pipe_t* pl_pipe_get(str *pipeid, int mode)
 		if(pipeid->len==it->name.len 
 				&& strncmp(pipeid->s, it->name.s, pipeid->len)==0)
 		{
-			 /* lock_release(&_pl_pipes_ht->slots[idx].lock);*/
+			 if(mode==0) lock_release(&_pl_pipes_ht->slots[idx].lock);
 			 return it;
 		}
 		it = it->next;
