@@ -308,7 +308,11 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
      * 2 if pipe has NOP algorithm
 
    Meaning of the parameters is as follows:
-     * name - the pseudovariable holding the pipe name.
+     * name - the string or pseudovariable with the pipe name.
+     * algorithm - the string or pseudovariable with the algorithm. The
+       values can be: taildrop, red, network or feedback - see readme of
+       ratelimit module for details on each algorithm.
+     * limit - the integer or pseudovariable with the limit value.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -343,6 +347,13 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
         default:
                 xlog("L_ERR","pl_check(\"$var(p)\") dropping \
 with unexpected retcode=$var(check_result)\n");
+                pl_drop();
+                exit;
+        }
+...
+        # perform pipe match for authenticated user
+        $var(limit) = 20;
+        if (!pl_check("$au", "traildrop", "$var(limit)")) {
                 pl_drop();
                 exit;
         }
