@@ -645,7 +645,7 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 		return -1;
 	}
 
-	pipe = pl_pipe_get(&pipeid, 1);
+	pipe = pl_pipe_get(&pipeid, 0);
 	if(pipe==NULL)
 	{
 		LM_DBG("pipe not found [%.*s] - trying to add it\n",
@@ -656,7 +656,7 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 				pipeid.len, pipeid.s);
 			return -2;
 		}
-		pipe = pl_pipe_get(&pipeid, 1);
+		pipe = pl_pipe_get(&pipeid, 0);
 		if(pipe==NULL)
 		{
 			LM_ERR("failed to retrieve pipe [%.*s]\n",
@@ -665,7 +665,7 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 		}
 	}
 
-	return 1;
+	return pl_check(msg, &pipeid);
 }
 
 static int fixup_pl_check3(void** param, int param_no)

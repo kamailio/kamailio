@@ -302,7 +302,15 @@ modparam("pipelimit", "reply_reason", "Limiting")
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>name</emphasis> - the pseudovariable holding the pipe name.
+			<emphasis>name</emphasis> - the string or pseudovariable with the pipe name.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>algorithm</emphasis> - the string or pseudovariable with the
+			algorithm. The values can be: taildrop, red, network or feedback - see
+			readme of ratelimit module for details on each algorithm.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>limit</emphasis> - the integer or pseudovariable with the limit value.
 			</para></listitem>
 		</itemizedlist>
 		<para>
@@ -345,6 +353,14 @@ with unexpected retcode=$var(check_result)\n");
 		exit;
 	}
 ...
+	# perform pipe match for authenticated user
+	$var(limit) = 20;
+	if (!pl_check("$au", "traildrop", "$var(limit)")) {
+		pl_drop();
+		exit;
+	}
+...
+
 </programlisting>
 		</example>
 	</section>
