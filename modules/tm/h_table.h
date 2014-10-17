@@ -427,7 +427,7 @@ typedef struct cell
 	/* UA Server */
 	struct ua_server  uas;
 	/* UA Clients */
-	struct ua_client  uac[ MAX_BRANCHES ];
+	struct ua_client  *uac;
 	
 	/* store transaction state to be used for async transactions */
 	struct async_state async_backup;
@@ -461,7 +461,7 @@ typedef struct cell
 #endif
 	ticks_t end_of_life; /* maximum lifetime */
 
-	/* nr of replied branch; 0..MAX_BRANCHES=branch value,
+	/* nr of replied branch; 0..sr_dst_max_branches=branch value,
 	 * -1 no reply, -2 local reply */
 	short relayed_reply_branch;
 

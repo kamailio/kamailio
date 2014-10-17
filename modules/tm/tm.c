@@ -801,9 +801,9 @@ static int mod_init(void)
 
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
-	if (MAX_BRANCHES+1>31) {
+	if (sr_dst_max_branches+1>31) {
 		LOG(L_CRIT, "Too many max UACs for UAC branch_bm_t bitmap: %d\n",
-			MAX_BRANCHES );
+			sr_dst_max_branches );
 		return -1;
 	}
 

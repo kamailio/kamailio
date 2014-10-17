@@ -746,7 +746,7 @@ int add_blind_uac( /*struct cell *t*/ )
 	}
 
 	branch=t->nr_of_outgoings;	
-	if (branch==MAX_BRANCHES) {
+	if (branch==sr_dst_max_branches) {
 		LOG(L_ERR, "ERROR: add_blind_uac: "
 			"maximum number of branches exceeded\n");
 		return -1;
@@ -811,7 +811,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 #endif /* TM_UAC_FLAGS */
 
 	branch=t->nr_of_outgoings;
-	if (branch==MAX_BRANCHES) {
+	if (branch==sr_dst_max_branches) {
 		LOG(L_ERR, "ERROR: add_uac: maximum number of branches exceeded\n");
 		ret=ser_error=E_TOO_MANY_BRANCHES;
 		goto error;
@@ -898,7 +898,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	unsigned int len;
 
 	branch=t->nr_of_outgoings;
-	if (branch==MAX_BRANCHES) {
+	if (branch==sr_dst_max_branches) {
 		LOG(L_ERR, "ERROR: add_uac_from_buf: maximum number of branches"
 					" exceeded\n");
 		ret=ser_error=E_TOO_MANY_BRANCHES;
@@ -1060,7 +1060,7 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 					return ret;
 				}
 			}
-			if (t->nr_of_outgoings >= MAX_BRANCHES){
+			if (t->nr_of_outgoings >= sr_dst_max_branches){
 				LOG(L_ERR, "ERROR: add_uac_dns_fallback: maximum number of "
 							"branches exceeded\n");
 				if (lock_replies)

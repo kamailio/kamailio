@@ -290,7 +290,7 @@ static void inline init_branches(struct cell *t)
 	unsigned int i;
 	struct ua_client *uac;
 
-	for(i=0;i<MAX_BRANCHES;i++)
+	for(i=0;i<sr_dst_max_branches;i++)
 	{
 		uac=&t->uac[i];
 		uac->request.my_T = t;
@@ -313,21 +313,29 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 #ifdef WITH_XAVP
 	sr_xavp_t** xold;
 #endif
+	unsigned int cell_size;
 
-	/* allocs a new cell, add space for md5 (MD5_LEN - sizeof(struct cell.md5)) */
-	new_cell = (struct cell*)shm_malloc( sizeof( struct cell )+
-			MD5_LEN-sizeof(((struct cell*)0)->md5) );
+	/* allocs a new cell, add space for:
+	 * md5 (MD5_LEN - sizeof(struct cell.md5))
+	 * uac (sr_dst_max_banches * sizeof(struct ua_client) ) */
+	cell_size = sizeof( struct cell ) + MD5_LEN - sizeof(((struct cell*)0)->md5)
+				+ (sr_dst_max_branches * sizeof(struct ua_client));
+
+	new_cell = (struct cell*)shm_malloc( cell_size );
 	if  ( !new_cell ) {
 		ser_error=E_OUT_OF_MEM;
 		return NULL;
 	}
 
 	/* filling with 0 */
-	memset( new_cell, 0, sizeof( struct cell ) );
+	memset( new_cell, 0, cell_size );
 
 	/* UAS */
 	new_cell->uas.response.my_T=new_cell;
 	init_rb_timers(&new_cell->uas.response);
+	/* UAC */
+	new_cell->uac = (struct ua_client*)((char*)new_cell + sizeof(struct cell)
+							+ MD5_LEN - sizeof(((struct cell*)0)->md5));
 	/* timers */
 	init_cell_timers(new_cell);
 

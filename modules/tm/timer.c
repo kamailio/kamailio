@@ -491,7 +491,7 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 #ifdef EXTRA_DEBUG
 	DBG("DEBUG: final_response_handler:stop retr. and send CANCEL (%p)\n", t);
 #endif
-	if ((r_buf->branch < MAX_BRANCHES) && /* r_buf->branch is always >=0 */
+	if ((r_buf->branch < sr_dst_max_branches) && /* r_buf->branch is always >=0 */
 			(t->uac[r_buf->branch].last_received==0) &&
 			(t->uac[r_buf->branch].request.buffer!=NULL) /* not a blind UAC */
 	){
