@@ -258,4 +258,6 @@ int setbflagsval(unsigned int branch, flag_t val);
 int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri);
 int uri_restore_rcv_alias(str *uri, str *nuri, str *suri);
 
+int init_dst_set(void);
+
 #endif /* _DSET_H */

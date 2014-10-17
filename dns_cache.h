@@ -166,10 +166,8 @@ struct dns_hash_entry{
 };
 
 
-#if MAX_BRANCHES < 16
-/* forking is limited by tm to 12 by default */
-typedef unsigned short srv_flags_t;
-#elif MAX_BRANCHES < 32
+/* to fit in the limit of MAX_BRANCHES */
+#if MAX_BRANCHES_LIMIT < 32
 typedef unsigned int srv_flags_t;
 #else
 typedef unsigned long long srv_flags_t;

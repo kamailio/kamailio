@@ -50,6 +50,8 @@ extern int config_check;
 extern char* stat_file;
 extern unsigned short port_no;
 
+extern unsigned int sr_dst_max_branches; /* max number of branches per transaction */
+
 extern time_t up_since;
 extern pid_t creator_pid;  /* pid of first process before daemonization */
 extern int uid;

@@ -169,7 +169,8 @@
 #define MAX_RECEIVED_SIZE	59	/*!< forwarding  -- Via buffer dimensioning - Received header */
 #define MAX_RPORT_SIZE		13	/*!< forwarding  -- Via buffer dimensioning - Rport */
 
-#define MAX_BRANCHES    	12	/*!< maximum number of branches per transaction */
+#define MAX_BRANCHES_DEFAULT	12	/*!< default maximum number of branches per transaction */
+#define MAX_BRANCHES_LIMIT		32	/*!< limit of maximum number of branches per transaction */
 
 #define MAX_PRINT_TEXT 		256	/*!< max length of the text of fifo 'print' command */
 

@@ -424,6 +424,9 @@ int sock_mode= S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* rw-rw---- */
 
 int server_id = 0; /* Configurable unique ID of the server */
 
+/* maximum number of branches for transaction */
+unsigned int sr_dst_max_branches = MAX_BRANCHES_DEFAULT;
+
 /* set timeval for each received sip message */
 int sr_msg_time = 1;
 
@@ -2119,6 +2122,10 @@ try_again:
 	pp_ifdef_level_check();
 	print_rls();
 
+	if(init_dst_set()<0) {
+		LM_ERR("failed to initialize destination set structure\n");
+		goto error;
+	}
 	/* options with higher priority than cfg file */
 	optind = 1;  /* reset getopt */
 	while((c=getopt(argc,argv,options))!=-1) {

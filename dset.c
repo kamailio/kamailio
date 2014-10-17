@@ -39,6 +39,7 @@
 #include "parser/parser_f.h"
 #include "parser/parse_uri.h"
 #include "parser/msg_parser.h"
+#include "globals.h"
 #include "ut.h"
 #include "hash_func.h"
 #include "error.h"
@@ -58,9 +59,9 @@
 
 /* 
  * Where we store URIs of additional transaction branches
- * (-1 because of the default branch, #0)
+ * (sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm)
  */
-static struct branch branches[MAX_BRANCHES - 1];
+static struct branch *branches = NULL;
 
 /* how many of them we have */
 unsigned int nr_branches = 0;
@@ -77,6 +78,23 @@ static qvalue_t ruri_q = Q_UNSPECIFIED;
 /* Branch flags of the Request-URI */
 static flag_t ruri_bflags;
 
+
+int init_dst_set(void)
+{
+	if(sr_dst_max_branches<=0 || sr_dst_max_branches>=MAX_BRANCHES_LIMIT) {
+		LM_ERR("invalid value for max branches parameter: %u\n",
+				sr_dst_max_branches);
+		return -1;
+	}
+	/* sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm */
+	branches = (branch_t*)pkg_malloc((sr_dst_max_branches-1)*sizeof(branch_t));
+	if(branches==NULL) {
+		LM_ERR("not enough memory to initialize destination branches\n");
+		return -1;
+	}
+	memset(branches, 0, (sr_dst_max_branches-1)*sizeof(branch_t));
+	return 0;
+}
 
 /*! \brief
  * Return pointer to branch[idx] structure
@@ -333,7 +351,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	/* if we have already set up the maximum number
 	 * of branches, don't try new ones 
 	 */
-	if (unlikely(nr_branches == MAX_BRANCHES - 1)) {
+	if (unlikely(nr_branches == sr_dst_max_branches - 1)) {
 		LM_ERR("max nr of branches exceeded\n");
 		ser_error = E_TOO_MANY_BRANCHES;
 		return -1;
