@@ -27,6 +27,12 @@ sed -i -e '/FREERADIUS/d' ${DIST}/rules
 # use old json
 sed -i 's/libjson-c-dev/libjson0-dev/' ${DIST}/control
 
+# no kazoo module
+sed -i -e '/librabbitmq-dev/d' ${DIST}/control
+sed -i -e 's/ kazoo[ ,$]*//' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ kazoo/' ${DIST}/rules
+sed -i -e 's/ kazoo[ ,$]*//' ${DIST}/control
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
