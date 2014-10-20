@@ -600,6 +600,15 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 		t->uac[branch].location_ua.s[i_req->location_ua.len]=0;
 		memcpy( t->uac[branch].location_ua.s, i_req->location_ua.s, i_req->location_ua.len);
 	}
+
+#ifdef TM_UAC_FLAGS
+	len = count_applied_lumps(i_req->add_rm, HDR_RECORDROUTE_T);
+	if(len==1)
+		t->uac[branch].flags = TM_UAC_FLAG_RR;
+	else if(len==2)
+		t->uac[branch].flags = TM_UAC_FLAG_RR|TM_UAC_FLAG_R2;
+#endif
+
 	ret=0;
 
 error01:
@@ -806,9 +815,6 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 
 	int ret;
 	unsigned short branch;
-#ifdef TM_UAC_FLAGS
-	unsigned int len;
-#endif /* TM_UAC_FLAGS */
 
 	branch=t->nr_of_outgoings;
 	if (branch==MAX_BRANCHES) {
@@ -851,13 +857,6 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 		ser_error=ret;
 		goto error01;
 	}
-#ifdef TM_UAC_FLAGS
-	len = count_applied_lumps(request->add_rm, HDR_RECORDROUTE_T);
-	if(len==1)
-		t->uac[branch].flags = TM_UAC_FLAG_RR;
-	else if(len==2)
-		t->uac[branch].flags = TM_UAC_FLAG_RR|TM_UAC_FLAG_R2;
-#endif
 	getbflagsval(0, &t->uac[branch].branch_flags);
 	membar_write(); /* to allow lockless ops (e.g. prepare_to_cancel()) we want
 					   to be sure everything above is fully written before
