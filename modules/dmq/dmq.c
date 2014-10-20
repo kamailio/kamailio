@@ -228,6 +228,10 @@ static int mod_init(void)
 		LM_ERR("failed to create socket out of server_uri\n");
 		return -1;
 	}
+	if (lookup_local_socket(&dmq_server_socket) == NULL) {
+		LM_ERR("server_uri is not a socket the proxy is listening on\n");
+		return -1;
+	}
 
 	/* allocate workers array */
 	workers = shm_malloc(num_workers * sizeof(*workers));
