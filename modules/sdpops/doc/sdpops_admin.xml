@@ -60,13 +60,13 @@
 	<section>
 	<title>Parameters</title>
 		<para>
-		The module does not export any config parameter yet.
+		The module does not export any config parameters yet.
 		</para>
 	</section>
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="sdpops.f.remove_codecs_by_id">
 	    <title>
 		<function moreinfo="none">sdp_remove_codecs_by_id(list)</function>
 	    </title>
@@ -92,7 +92,7 @@ sdp_remove_codecs_by_id("0,8,3");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.remove_codecs_by_name">
 	    <title>
 		<function moreinfo="none">sdp_remove_codecs_by_name(list)</function>
 	    </title>
@@ -118,7 +118,7 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.remove_line_by_prefix">
 	<title>
 		<function moreinfo="none">sdp_remove_line_by_prefix(string)</function>
 	</title>
@@ -145,7 +145,7 @@ if ($si == "2001:DB8::8:800:200C:417A"
 </programlisting>
 	</example>
         </section>
-	<section>
+	<section id="sdpops.f.keep_codecs_by_id">
 	    <title>
 		<function moreinfo="none">sdp_keep_codecs_by_id(list [, mtype])</function>
 	    </title>
@@ -175,7 +175,7 @@ sdp_keep_codecs_by_id("0,8,3", "audio");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.keep_codecs_by_name">
 	    <title>
 		<function moreinfo="none">sdp_keep_codecs_by_name(list [, mtype])</function>
 	    </title>
@@ -209,7 +209,7 @@ sdp_keep_codecs_by_name("PCMU,PCMA,GSM");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_with_media">
 	    <title>
 		<function moreinfo="none">sdp_with_media(type)</function>
 	    </title>
@@ -234,7 +234,7 @@ if(sdp_with_media("video"))
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_remove_media">
 	    <title>
 		<function moreinfo="none">sdp_remove_media(type)</function>
 	    </title>
@@ -255,7 +255,7 @@ sdp_remove_media("video");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_with_transport">
 	    <title>
 		<function moreinfo="none">sdp_with_transport(type)</function>
 	    </title>
@@ -280,7 +280,7 @@ if(sdp_with_transport("RTP/SAVP"))
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_with_transport_like">
 	    <title>
 		<function moreinfo="none">sdp_with_transport_like(string)</function>
 	    </title>
@@ -305,7 +305,7 @@ if(sdp_with_transport_like("SAVPF"))
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_transport">
 	    <title>
 		<function moreinfo="none">sdp_transport(pv)</function>
 	    </title>
@@ -327,7 +327,7 @@ sdp_transport("$avp(caller_rtp_transport)");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_remove_transport">
 	    <title>
 		<function moreinfo="none">sdp_remove_transport(type)</function>
 	    </title>
@@ -348,7 +348,7 @@ sdp_remove_transport("RTP/AVP");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_with_codecs_by_id">
 	    <title>
 		<function moreinfo="none">sdp_with_codecs_by_id(list)</function>
 	    </title>
@@ -374,7 +374,7 @@ if(sdp_with_codecs_by_id("0,8,3")) { ... }
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdspops.f.sdp.with_codecs_by_name">
 	    <title>
 		<function moreinfo="none">sdp_with_codecs_by_name(list)</function>
 	    </title>
@@ -400,7 +400,7 @@ if(sdp_with_codecs_by_name("PCMU,PCMA,GSM")) { ... }
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_print">
 	    <title>
 		<function moreinfo="none">sdp_print(level)</function>
 	    </title>
@@ -422,7 +422,7 @@ sdp_print("1");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_get">
 	    <title>
 		<function moreinfo="none">sdp_get(avpvar)</function>
 	    </title>
@@ -442,7 +442,7 @@ sdp_get("$avp(sdp)");
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_content">
 	    <title>
 		<function moreinfo="none">sdp_content()</function>
 	    </title>
@@ -463,7 +463,7 @@ if(sdp_content()) {
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_with_ice">
 	    <title>
 		<function moreinfo="none">sdp_with_ice()</function>
 	    </title>
@@ -484,7 +484,7 @@ if(sdp_with_ice()) {
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="sdpops.f.sdp_get_line_startswith">
 		<title>
 			<function moreinfo="none">sdp_get_line_startswith(avpvar, string)</function>
 		</title>
