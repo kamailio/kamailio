@@ -441,9 +441,9 @@ int print_rr_body(struct hdr_field *iroute, str *oroute, int order,
 	oroute->len=cp - start;
 
 	LM_DBG("out rr [%.*s]\n", oroute->len, oroute->s);
-	LM_DBG("we have %i records\n", n);
+	LM_DBG("we have %i records\n", (nb_recs == NULL) ? n : n-*nb_recs);
 	if(nb_recs != NULL)
-		*nb_recs = (unsigned int)n; 
+		*nb_recs = (unsigned int)n-*nb_recs;
 
 	return 0;
 
