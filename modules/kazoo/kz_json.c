@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <json/json.h>
 
 #include "../../mod_fix.h"
 #include "../../lvalue.h"
@@ -124,7 +123,7 @@ int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
 				int sresult = sscanf(field.s, "%[^[][%[^]]]", f1, f2); //, f3);
 				LM_DBG("CHECK IDX %d - %s , %s, %s\n", sresult, field.s, f1, f2);
 
-				jtree = json_object_object_get(jtree, f1);
+				jtree = kz_json_get_object(jtree, f1);
 				if(jtree != NULL) {
 					char *value = (char*)json_object_get_string(jtree);
 					LM_DBG("JTREE OK %s\n", value);
@@ -190,4 +189,35 @@ int kz_json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
 		shm_free(dst_val.rs.s);
 
 	return 1;
+}
+
+struct json_object* kz_json_parse(const char *str)
+{
+    struct json_tokener* tok;
+    struct json_object* obj;
+
+    tok = json_tokener_new();
+    if (!tok) {
+      LM_ERR("Error parsing json: cpuld not allocate tokener\n");
+      return NULL;
+    }
+
+    obj = json_tokener_parse_ex(tok, str, -1);
+    if(tok->err != json_tokener_success) {        
+      LM_ERR("Error parsing json: %s\n", json_tokener_error_desc(tok->err));
+      LM_ERR("%s\n", str);
+      if (obj != NULL)
+	   json_object_put(obj);
+      obj = NULL;
+    }
+
+    json_tokener_free(tok);
+    return obj;
+}
+
+struct json_object* kz_json_get_object(struct json_object* jso, const char *key)
+{
+	struct json_object *result = NULL;
+	json_object_object_get_ex(jso, key, &result);
+	return result;
 }

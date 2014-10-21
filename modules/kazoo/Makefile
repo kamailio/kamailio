@@ -5,11 +5,33 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=kazoo.so
+JLIB=json
 
-DEFS+=-I$(LOCALBASE)/include -I$(SYSBASE)/include -DKAMAILIO_MOD_INTERFACE
-LIBS=-L$(LOCALBASE)/lib -I$(SYSBASE)/lib -lrabbitmq -ljson -luuid
+BUILDER = $(shell which pkg-config)
+ifeq ($(BUILDER),)
+	JSONC=$(shell ls $(SYSBASE)/include/lib/libjson*.so $(LOCALBASE)/lib/libjson*.so 2>/dev/null | grep json-c)
+else
+	JSONC=$(shell pkg-config --libs json-c 2>/dev/null | grep json-c)
+endif
 
-DEFS += -DSER_MOD_INTERFACE
+ifneq ($(JSONC),)
+	JLIB=json-c
+endif
+
+ifeq ($(BUILDER),)
+	DEFS+=-I$(LOCALBASE)/include -I$(SYSBASE)/include \
+		-I$(SYSBASE)/include/$(JLIB)
+	LIBS=-L$(LOCALBASE)/lib -I$(SYSBASE)/lib -lrabbitmq -l$(JLIB) -luuid
+else
+	DEFS += $(shell $(BUILDER) --cflags $(JLIB))
+	LIBS += $(shell $(BUILDER) --libs $(JLIB))
+	DEFS += $(shell $(BUILDER) --cflags uuid)
+	LIBS += $(shell $(BUILDER) --libs uuid)
+	DEFS += $(shell $(BUILDER) --cflags librabbitmq)
+	LIBS += $(shell $(BUILDER) --libs librabbitmq)
+endif
+
+DEFS += -DKAMAILIO_MOD_INTERFACE
 
 
 SERLIBPATH=../../lib
