@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <json/json.h>
+#include <json-c/json.h>
 #include "../../mem/mem.h"
 #include "../../timer_proc.h"
 #include "../../sr_module.h"
@@ -16,6 +16,7 @@
 #include "kz_pua.h"
 #include "defs.h"
 #include "const.h"
+#include "kz_json.h"
 
 
 extern int dbk_include_entity;
@@ -191,7 +192,7 @@ int kz_pua_publish_presence_to_presentity(struct json_object *json_obj) {
     json_extract_field(BLF_JSON_DIRECTION, direction);
     json_extract_field(BLF_JSON_STATE, state);
 
-    struct json_object* ExpiresObj = json_object_object_get(json_obj, BLF_JSON_EXPIRES);
+    struct json_object* ExpiresObj =  kz_json_get_object(json_obj, BLF_JSON_EXPIRES);
     if(ExpiresObj != NULL) {
     	expires = json_object_get_int(ExpiresObj);
     	if(expires > 0)
@@ -276,7 +277,7 @@ int kz_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
     json_extract_field(MWI_JSON_URGENT_SAVED, mwi_urgent_saved);
     json_extract_field(MWI_JSON_ACCOUNT, mwi_account);
 
-    struct json_object* ExpiresObj = json_object_object_get(json_obj, BLF_JSON_EXPIRES);
+    struct json_object* ExpiresObj =  kz_json_get_object(json_obj, BLF_JSON_EXPIRES);
     if(ExpiresObj != NULL) {
     	expires = json_object_get_int(ExpiresObj);
     	if(expires > 0)
@@ -345,14 +346,14 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
     json_extract_field(BLF_JSON_DIRECTION, direction);
     json_extract_field(BLF_JSON_STATE, state);
 
-    struct json_object* ExpiresObj = json_object_object_get(json_obj, BLF_JSON_EXPIRES);
+    struct json_object* ExpiresObj =  kz_json_get_object(json_obj, BLF_JSON_EXPIRES);
     if(ExpiresObj != NULL) {
     	expires = json_object_get_int(ExpiresObj);
     	if(expires > 0)
     		expires += (int)time(NULL);
     }
 
-    ExpiresObj = json_object_object_get(json_obj, "Flush-Level");
+    ExpiresObj =  kz_json_get_object(json_obj, "Flush-Level");
     if(ExpiresObj != NULL) {
     	reset = json_object_get_int(ExpiresObj);
     }
@@ -446,10 +447,8 @@ int kz_pua_publish(struct sip_msg* msg, char *json) {
     }
 
     /* extract info from json and construct xml */
-    json_obj = json_tokener_parse(json);
-    if (is_error(json_obj)) {
-    	LM_ERR("Error parsing json: %s\n", json_tokener_errors[-(unsigned long)json_obj]);
-    	LM_ERR("%s\n", json);
+    json_obj = kz_json_parse(json);
+    if (json_obj == NULL) {
     	ret = -1;
     	goto error;
     }

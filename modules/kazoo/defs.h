@@ -103,7 +103,7 @@
 </dialog-info>"
 
 #define json_extract_field(json_name, field)  do {                      \
-    struct json_object* obj = json_object_object_get(json_obj, json_name); \
+    struct json_object* obj =  kz_json_get_object(json_obj, json_name); \
     field.s = (char*)json_object_get_string(obj);                       \
     if (field.s == NULL) {                                              \
       LM_DBG("Json-c error - failed to extract field [%s]\n", json_name); \
