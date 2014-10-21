@@ -508,7 +508,8 @@ Revoking a certificate and using a CRL
        with openssl/libssl v1.0.1)
      * TLSv1 - only TLSv1 connections are accepted. This is the default
        value.
-     * SSLv3 - only SSLv3 connections are accepted
+     * SSLv3 - only SSLv3 connections are accepted. Note: you shouldn't
+       use SSLv3 for anything which should be highly secure.
      * SSLv2 - only SSLv2 connections, for old clients. Note: you
        shouldn't use SSLv2 for anything which should be highly secure.
        Newer versions of libssl don't include support for it anymore.
@@ -517,7 +518,8 @@ Revoking a certificate and using a CRL
        message must be V2 (in the initial hello all the supported
        protocols are advertised enabling switching to a higher and more
        secure version). This means connections from SSLv3 or TLSv1 clients
-       will be accepted.
+       will be accepted. Note: you shouldn't use SSLv2 or SSLv3 for
+       anything which should be highly secure.
 
    If rfc3261 conformance is desired, TLSv1 must be used. For
    compatibility with older clients SSLv23 is a good option.

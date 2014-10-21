@@ -39,7 +39,8 @@
 			</listitem>
 			<listitem>
 				<para>
-				<emphasis>SSLv3</emphasis> - only SSLv3 connections are accepted
+				<emphasis>SSLv3</emphasis> - only SSLv3 connections are accepted.
+				Note: you shouldn't use SSLv3 for anything which should be highly secure.
 				</para>
 			</listitem>
 			<listitem>
@@ -56,6 +57,7 @@
 				message must be V2 (in the initial hello all the supported protocols
 				are advertised enabling switching to a higher and more secure version).
 				This means connections from SSLv3 or TLSv1 clients will be accepted.
+				Note: you shouldn't use SSLv2 or SSLv3 for anything which should be highly secure.
 				</para>
 			</listitem>
 	</itemizedlist>
