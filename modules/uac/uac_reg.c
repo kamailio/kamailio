@@ -1574,6 +1574,7 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Internal error adding item");
 					return;
 				}
+				lock_release(&_reg_htable->entries[i].lock);
 				return;
 			}
 			reg = reg->next;
