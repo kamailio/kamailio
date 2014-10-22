@@ -186,10 +186,10 @@ exit;
 
    Example 1.4. async_task_route usage
 ...
-async_task_rroute("RESUME");
+async_task_route("RESUME");
 ...
 route[RESUME] {
-   send_reply("404", "Not found");
+   t_relay();
    exit;
 }
 ...
