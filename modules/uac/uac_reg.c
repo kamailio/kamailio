@@ -1251,6 +1251,8 @@ int uac_reg_db_refresh(str *pl_uuid)
 	reg_db_set_attr(auth_password, 7);
 	reg_db_set_attr(auth_proxy, 8);
 	reg.expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
+	reg.h_uuid = reg_compute_hash(&reg.l_uuid);
+	reg.h_user = reg_compute_hash(&reg.l_username);
 
 	lock_get(_reg_htable_gc_lock);
 	if(reg_ht_get_byuuid(pl_uuid)!=NULL)
