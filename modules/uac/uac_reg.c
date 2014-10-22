@@ -1656,7 +1656,7 @@ static const char* rpc_uac_reg_enable_doc[2] = {
 
 static void rpc_uac_reg_enable(rpc_t* rpc, void* ctx)
 {
-	rpc_uac_reg_update_flag(rpc, ctx, 1, UAC_REG_DISABLED);
+	rpc_uac_reg_update_flag(rpc, ctx, 0, UAC_REG_DISABLED);
 }
 
 static const char* rpc_uac_reg_disable_doc[2] = {
@@ -1666,7 +1666,7 @@ static const char* rpc_uac_reg_disable_doc[2] = {
 
 static void rpc_uac_reg_disable(rpc_t* rpc, void* ctx)
 {
-	rpc_uac_reg_update_flag(rpc, ctx, 0, UAC_REG_DISABLED);
+	rpc_uac_reg_update_flag(rpc, ctx, 1, UAC_REG_DISABLED);
 }
 
 static const char* rpc_uac_reg_reload_doc[2] = {
