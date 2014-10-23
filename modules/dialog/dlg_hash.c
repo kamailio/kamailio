@@ -242,7 +242,7 @@ int dlg_clean_run(ticks_t ti)
 		while (dlg) {
 			tdlg = dlg;
 			dlg = dlg->next;
-			if(tdlg->state==DLG_STATE_UNCONFIRMED && tdlg->init_ts<tm-300) {
+			if(tdlg->state==DLG_STATE_UNCONFIRMED && tdlg->init_ts<tm-300 && tdlg->ref<=1) {
 				/* dialog in early state older than 5min */
 				LM_NOTICE("dialog in early state is too old (%p ref %d)\n",
 						tdlg, tdlg->ref);
