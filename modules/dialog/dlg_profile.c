@@ -375,33 +375,33 @@ int remove_profile(dlg_profile_table_t *profile, str *value, str *puid)
 	unsigned int hash;
 	struct dlg_profile_entry *p_entry;
 	struct dlg_profile_hash *lh;
-	struct dlg_profile_hash *kh;
 
 	hash = calc_hash_profile(value, puid, profile);
 	lock_get(&profile->lock );
 	p_entry = &profile->entries[hash];
 	lh = p_entry->first;
-	while(lh) {
-		kh = lh->next;
-		if(lh->dlg==NULL && lh->puid_len==puid->len
-				&& lh->value.len==value->len
-				&& strncmp(lh->puid, puid->s, puid->len)==0
-				&& strncmp(lh->value.s, value->s, value->len)==0) {
-			/* last element on the list? */
-			if (lh==lh->next) {
-				p_entry->first = NULL;
-			} else {
-				if (p_entry->first==lh)
-					p_entry->first = lh->next;
-				lh->next->prev = lh->prev;
-				lh->prev->next = lh->next;
+	if(lh) {
+		do {
+			if(lh->dlg==NULL && lh->puid_len==puid->len
+					&& lh->value.len==value->len
+					&& strncmp(lh->puid, puid->s, puid->len)==0
+					&& strncmp(lh->value.s, value->s, value->len)==0) {
+				/* last element on the list? */
+				if (lh==lh->next) {
+					p_entry->first = NULL;
+				} else {
+					if (p_entry->first==lh)
+						p_entry->first = lh->next;
+					lh->next->prev = lh->prev;
+					lh->prev->next = lh->next;
+				}
+				lh->next = lh->prev = NULL;
+				if(lh->linker) shm_free(lh->linker);
+				p_entry->content--;
+				return 1;
 			}
-			lh->next = lh->prev = NULL;
-			if(lh->linker) shm_free(lh->linker);
-			p_entry->content--;
-			return 1;
-		}
-		lh = kh;
+			lh = lh->next;
+		} while(lh != p_entry->first);
 	}
 	lock_release(&profile->lock );
 	return 0;
