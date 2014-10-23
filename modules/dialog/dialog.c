@@ -1660,7 +1660,7 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 		ph = profile->entries[i].first;
 		if(ph) {
 			do {
-				if (!value || (STR_EQ(*value, ph->value))) {
+				if ((!value || (STR_EQ(*value, ph->value))) && ph->dlg) {
 					/* print dialog */
 					internal_rpc_print_dlg(rpc, c, ph->dlg, 0);
 				}
