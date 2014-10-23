@@ -327,6 +327,9 @@ static int mod_init(void) {
     }
 #endif
 
+    /*register space for notification processor*/
+    register_procs(1);
+
     /* bind the SL API */
     if (sl_load_api(&slb) != 0) {
         LM_ERR("cannot bind to SL API\n");
