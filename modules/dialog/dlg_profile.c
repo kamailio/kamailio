@@ -353,6 +353,7 @@ void remove_expired_remote_profiles(time_t te)
 						lh->next = lh->prev = NULL;
 						if(lh->linker) shm_free(lh->linker);
 						p_entry->content--;
+						lock_release(&profile->lock);
 						return;
 					}
 					lh = kh;
