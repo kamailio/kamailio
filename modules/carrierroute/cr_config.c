@@ -402,7 +402,7 @@ int load_config(struct route_data_t * rd) {
 				}
 				backup = target_options[TO_ID_BACKUP].value.int_data;
 
-				LM_ERR("\n Adding route to tree <'%.*s'>: prefix_name:%s\n,"
+				LM_DBG("\n Adding route to tree <'%.*s'>: prefix_name:%s\n,"
 						" max_targets =%d\n, prob=%f\n, rewr_host=%s\n,"
 						" strip=%i\n, rwr_prefix=%s\n, rwr_suff=%s\n,"
 						" status=%i\n, hash_index=%i\n, comment=%s \n",
@@ -452,7 +452,7 @@ int load_config(struct route_data_t * rd) {
 		goto errclose;
 	}
 
-	LM_ERR("File parsed successfully \n");
+	LM_INFO("File parsed successfully \n");
 	fclose(file);
 	return 0;
 errclose:
