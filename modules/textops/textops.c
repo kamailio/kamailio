@@ -1455,8 +1455,8 @@ static int set_rpl_body_f(struct sip_msg* msg, char* p1, char* p2)
 	return 1;
 }
 
-static str* generate_boundary(str txt, str content_type,
-	str content_disposition, str delimiter, unsigned int initial)
+static str* generate_boundary(str *txt, str *content_type,
+	str *content_disposition, str *delimiter, unsigned int initial)
 {
 	unsigned int i = 0;
 	str cth = {"Content-Type: ", 14};
@@ -1464,9 +1464,15 @@ static str* generate_boundary(str txt, str content_type,
 	str* n;
 	unsigned int flag = 0;
 
-	if(txt.len==0||content_type.len==0||delimiter.len==0)
+	if(txt==NULL||txt->len==0
+		||content_type==NULL||content_type->len==0
+		||delimiter==NULL||delimiter->len==0)
 	{
 		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+	if (delimiter->s[0] == '-') {
+		LM_ERR("delimiter with initial '-'. Invalid parameter.\n");
 		return NULL;
 	}
 	n = pkg_malloc(sizeof(str));
@@ -1475,21 +1481,20 @@ static str* generate_boundary(str txt, str content_type,
 		LM_ERR("out of pkg memory\n");
 		return NULL;
 	}
-	n->len = delimiter.len + 2 + CRLF_LEN;
+	n->len = delimiter->len + 2 + CRLF_LEN;
 	if(initial) n->len = 2*n->len;
-	if(strncmp("\r\n\r\n", txt.s+txt.len-4,4)!=0)
+	if(strncmp("\r\n\r\n", txt->s+txt->len-4,4)!=0)
 	{
 		n->len = n->len + CRLF_LEN;
 		flag = 1;
 		LM_DBG("adding final CRLF+CRLF\n");
 	}
-	n->len=n->len + cth.len + content_type.len + 2*CRLF_LEN;
-	if(content_disposition.len>0)
+	n->len=n->len + cth.len + content_type->len + 2*CRLF_LEN;
+	if(content_disposition->len>0)
 	{
-		n->len = n->len + cdh.len + content_disposition.len + CRLF_LEN;
+		n->len = n->len + cdh.len + content_disposition->len + CRLF_LEN;
 	}
-	n->len = n->len + txt.len;
-
+	n->len = n->len + txt->len;
 	n->s = pkg_malloc(sizeof(char)*(n->len));
 	if(n->s==0)
 	{
@@ -1497,31 +1502,32 @@ static str* generate_boundary(str txt, str content_type,
 		pkg_free(n);
 		return NULL;
 	}
+	memset(n->s, 0, sizeof(char)*n->len);
 	if(initial)
 	{
 		memcpy(n->s, "--", 2); i=2;
-		memcpy(n->s+i, delimiter.s, delimiter.len); i=i+delimiter.len;
+		memcpy(n->s+i, delimiter->s, delimiter->len); i=i+delimiter->len;
 		memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
 	}
 
 	memcpy(n->s+i, cth.s, cth.len); i=i+cth.len;
-	memcpy(n->s+i, content_type.s, content_type.len); i=i+content_type.len;
+	memcpy(n->s+i, content_type->s, content_type->len); i=i+content_type->len;
 	memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
 
-	if(content_disposition.len>0)
+	if(content_disposition->len>0)
 	{
 		memcpy(n->s+i, cdh.s, cdh.len); i=i+cdh.len;
-		memcpy(n->s+i, content_disposition.s, content_disposition.len);
-		i=i+content_disposition.len;
+		memcpy(n->s+i, content_disposition->s, content_disposition->len);
+		i=i+content_disposition->len;
 		memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
 	}
 	memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
 
-	memcpy(n->s+i, txt.s, txt.len); i=i+txt.len;
+	memcpy(n->s+i, txt->s, txt->len); i=i+txt->len;
 	if(flag) { memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN; }
 
 	memcpy(n->s+i, "--", 2); i=i+2;
-	memcpy(n->s+i, delimiter.s, delimiter.len); i=i+delimiter.len;
+	memcpy(n->s+i, delimiter->s, delimiter->len); i=i+delimiter->len;
 	memcpy(n->s+i, CRLF, CRLF_LEN); i=i+CRLF_LEN;
 
 	if(i!=n->len)
@@ -1668,7 +1674,7 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 	}
 
 	/* get initial boundary */
-	nbb = generate_boundary(nb, oc, cd, delimiter, 1);
+	nbb = generate_boundary(&nb, &oc, &cd, &delimiter, 1);
 	if(nbb==NULL)
 	{
 		LM_ERR("couldn't create initial boundary\n");
@@ -1857,19 +1863,17 @@ int append_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 		LM_ERR("WTF\n");
 		return -1;
 	}
-	/* get boundary */
-	if(get_boundary(msg, &delimiter)!=0) {
+	/* get delimiter no initial -- */
+	if(get_mixed_part_delimiter(&msg->content_type->body, &delimiter) < 0) {
 		LM_ERR("Cannot get boundary. Is body multipart?\n");
 		return -1;
 	}
-	nbb = generate_boundary(txt, nc, cd, delimiter, 0);
+	nbb = generate_boundary(&txt, &nc, &cd, &delimiter, 0);
 	if(nbb==NULL)
 	{
 		LM_ERR("couldn't create initial boundary\n");
-		pkg_free(delimiter.s);
 		return -1;
 	}
-	pkg_free(delimiter.s);
 	if(insert_new_lump_after(l, nbb->s, nbb->len, 0)==0){
 		LM_ERR("could not insert new lump\n");
 		pkg_free(nbb->s); pkg_free(nbb);
