@@ -377,7 +377,7 @@ int parse_struct_header(FILE* file, char* expected_struct_type, str* struct_name
 			ret = SUCCESSFUL_PARSING;
 		break;
 	default:
-		LM_ERR("Wrong number of tokens in line: %s\n", data.s);
+		LM_DBG("Wrong number of tokens in line: %s\n", data.s);
 	}
 
 	if ( SUCCESSFUL_PARSING == ret ){
