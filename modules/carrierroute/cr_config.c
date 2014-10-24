@@ -66,6 +66,13 @@ static void reset_opts(option_description * opts, int size){
 			opts[i].value.string_data.len = 0;
 		}
 	}
+
+	opts[TO_ID_STRIP     ].value.int_data=0;
+	opts[TO_ID_PROB      ].value.float_data=0;
+	opts[TO_ID_HASH_INDEX].value.int_data=0;
+	opts[TO_ID_STATUS    ].value.int_data=0;
+	opts[TO_ID_BACKUP    ].value.int_data=-1;
+
 	return;
 }
 
@@ -108,6 +115,7 @@ static int init_prefix_opts(option_description * opts){
 	memset(opts, '\0', sizeof(option_description) * PO_MAX_IDS);
 	strcpy((char*)(opts[PO_MAX_TARGETS].name), "max_targets");
 	opts[PO_MAX_TARGETS].type=CFG_INT;
+	opts[PO_MAX_TARGETS].value.int_data=-1;
 	return 0;
 }
 

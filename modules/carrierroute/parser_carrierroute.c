@@ -178,8 +178,9 @@ int parse_rv_option(str src, option_description* opt){
 						LM_ERR("Not a string \n");
 						return ERROR_IN_PARSING;
 					}
-				strcpy( opt->value.string_data.s, src.s);
-				opt->value.string_data.len = src.len;
+				strncpy( opt->value.string_data.s, src.s+1, src.len-2);
+				opt->value.string_data.s[src.len-2] = '\0';
+				opt->value.string_data.len = src.len-2;
 				LM_DBG("String Key=<%s>, value=<%s> \n", opt->name, opt->value.string_data.s);
 				ret = SUCCESSFUL_PARSING;
 			}
