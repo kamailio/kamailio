@@ -154,6 +154,10 @@ int add_dmq_job(struct sip_msg* msg, dmq_peer_t* peer)
 		LM_ERR("error in add_dmq_job: no workers spawned\n");
 		goto error;
 	}
+	if (!workers[0].queue) {
+		LM_ERR("workers not (yet) initialized\n");
+		goto error;
+	}
 	/* initialize the worker with the first one */
 	worker = workers;
 	/* search for an available worker, or, if not possible,
