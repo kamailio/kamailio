@@ -197,7 +197,8 @@ modparam("pua", "update_period", 100)
 		<title><varname>outbound_proxy</varname> (str)</title>
 		<para>
 		SIP URI of outbound proxy to be used when sending
-		PUBLISH requests.
+		PUBLISH requests if no outbound proxy is given in
+                outbound_proxy field of struct publ_info.
 		</para>
 		<para>
 		<emphasis>By default, no outbound proxy has been defined.

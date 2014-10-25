@@ -81,6 +81,7 @@ typedef struct ua_pres{
 	void* cb_param;
 	struct ua_pres* next;
 	int ua_flag;
+	str* outbound_proxy; /* croc-not sored in db_only mode */
 	
 	/* publish */
 	str etag;
@@ -96,7 +97,6 @@ typedef struct ua_pres{
 	int cseq;
 	int version;
 /*  int watcher_count; croc-nolonger used!! */
-	str* outbound_proxy; /* croc-not sored in db_only mode */
 	str* extra_headers;
 	str record_route;
 	str remote_contact;

@@ -86,6 +86,8 @@ typedef struct publ_info
                           for that event)*/
   str* etag;          /*  (optional) the value of the etag the request
                           should match */
+  str* outbound_proxy;/*  outbound_proxy to use when sending the 
+                          Publish request */
   str* extra_headers  /*  (optional) extra_headers that should be added
                           to Publish msg*/
 }publ_info_t;

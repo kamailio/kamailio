@@ -44,6 +44,7 @@ typedef struct publ_info
 	str content_type;  /*! the content_type of the body if present(optional if the
 				same as the default value for that event) */
 	str* etag;
+	str* outbound_proxy;
 	str* extra_headers;
 	void* cb_param;   /*! the parameter for the function to be called on the callback 
 				for the received reply; it must be allocated in share memory;

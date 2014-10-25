@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright © 2006 Voice Sistem SRL
+   Copyright (c) 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -186,7 +186,7 @@ modparam("pua", "hash_size", 11)
 
    Database url.
 
-   Default value is ">mysql://openser:openserrw@localhost/openser".
+   Default value is ">mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.2. Set db_url parameter
 ...
@@ -243,7 +243,8 @@ modparam("pua", "update_period", 100)
 
 3.7. outbound_proxy (str)
 
-   SIP URI of outbound proxy to be used when sending PUBLISH requests.
+   SIP URI of outbound proxy to be used when sending PUBLISH requests if
+   no outbound proxy is given in outbound_proxy field of struct publ_info.
 
    By default, no outbound proxy has been defined.
 
@@ -334,7 +335,7 @@ modparam("pua", "fetch_rows", 1000)
 
    4.1. pua_update_contact()
 
-4.1. pua_update_contact()
+4.1.  pua_update_contact()
 
    The remote target can be updated by the Contact of a subsequent in
    dialog request. In the PUA watcher case (sending a SUBSCRIBE messages),
@@ -359,7 +360,7 @@ if(method=="NOTIFY")
 
    5.1. pua_cleanup
 
-5.1. pua_cleanup
+5.1.  pua_cleanup
 
    Manually triggers the cleanup functions for the pua table. Useful if
    you have set update_period to zero or less.
@@ -394,7 +395,7 @@ Chapter 2. Developer Guide
    The module provides the following functions that can be used by other
    Kamailio modules.
 
-1. bind_pua(pua_api_t* api)
+1.  bind_pua(pua_api_t* api)
 
    This function binds the pua modules and fills the structure with the
    two exported functions.
@@ -410,7 +411,7 @@ typedef struct pua_api {
 } pua_api_t;
 ...
 
-2. send_publish
+2.  send_publish
 
    Field type:
 ...
@@ -445,12 +446,14 @@ typedef struct publ_info
                           for that event)*/
   str* etag;          /*  (optional) the value of the etag the request
                           should match */
+  str* outbound_proxy;/*  outbound_proxy to use when sending the
+                          Publish request */
   str* extra_headers  /*  (optional) extra_headers that should be added
                           to Publish msg*/
 }publ_info_t;
 ...
 
-3. send_subscribe
+3.  send_subscribe
 
    Field type:
 ...
@@ -489,7 +492,7 @@ typedef struct subs_info
 }subs_info_t;
 ...
 
-4. is_dialog
+4.  is_dialog
 
    Field type:
 ...
@@ -508,7 +511,7 @@ typedef int  (*query_dialog_t)(ua_pres_t* presentity);
         }
 ...
 
-5. register_puacb
+5.  register_puacb
 
    Field type:
 ...
@@ -537,7 +540,7 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
 typedef int (pua_cb)(ua_pres_t* hentity, struct sip_msg*);
 ...
 
-6. add_event
+6.  add_event
 
    Field type:
 ...
