@@ -735,7 +735,7 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 	    }
 	    res->ri = t->uac[branch].branch_flags;
 	    res->flags = PV_VAL_INT;
-	    LM_INFO("branch flags is [%u]\n", res->ri);
+	    LM_DBG("branch flags is [%u]\n", res->ri);
 	    break;
 	default:
 	    LM_ERR("unsupported route_type %d\n", get_route_type());
