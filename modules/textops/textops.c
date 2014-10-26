@@ -65,6 +65,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_param.h"
 #include "../../parser/sdp/sdp.h"
+#include "../../parser/sdp/sdp_helpr_funcs.h"
 #include "../../lib/kcore/parse_privacy.h"
 #include "../../msg_translator.h"
 #include "../../ut.h"
