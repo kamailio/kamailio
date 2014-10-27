@@ -506,8 +506,10 @@ int pv_parse_xavp_name(pv_spec_p sp, str *in)
 		return -1;
 
 	xname = (pv_xavp_name_t*)pkg_malloc(sizeof(pv_xavp_name_t));
-	if(xname==NULL)
+	if(xname==NULL) {
+		LM_ERR("not enough pkg mem\n");
 		return -1;
+	}
 
 	memset(xname, 0, sizeof(pv_xavp_name_t));
 
@@ -530,9 +532,10 @@ int pv_parse_xavp_name(pv_spec_p sp, str *in)
 			xname->name.s, s.len, s.s);
 
 	xname->next = (pv_xavp_name_t*)pkg_malloc(sizeof(pv_xavp_name_t));
-	if(xname->next==NULL)
+	if(xname->next==NULL) {
+		LM_ERR("not enough pkg mem\n");
 		goto error;
-
+	}
 	memset(xname->next, 0, sizeof(pv_xavp_name_t));
 
 	p = pv_xavp_fill_ni(&s, xname->next);
