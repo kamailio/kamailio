@@ -1400,6 +1400,8 @@ int ht_iterator_start(str *iname, str *hname)
 		}
 		strncpy(_ht_iterators[k].bname, iname->s, iname->len);
 		_ht_iterators[k].bname[iname->len] = '\0';
+		_ht_iterators[k].name.len = iname->len;
+		_ht_iterators[k].name.s = _ht_iterators[k].bname;
 	}
 	_ht_iterators[k].it = NULL;
 	_ht_iterators[k].slot = 0;
