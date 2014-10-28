@@ -126,127 +126,127 @@ void notify_destroy() {
     shm_free(notification_list);
 }
 
-
 int can_publish_reg(struct sip_msg *msg, char *_t, char *str2) {
-    
-	int ret = CSCF_RETURN_FALSE;
-	str presentity_uri = {0, 0};
-	str event;
-	str asserted_id;
-	ucontact_t* c = 0;
-	impurecord_t* r;
-	int res;
-	ims_public_identity *pi = 0;
-	int i, j;
 
-	LM_DBG("Checking if allowed to publish reg event\n");
+    int ret = CSCF_RETURN_FALSE;
+    str presentity_uri = {0, 0};
+    str event;
+    str asserted_id;
+    ucontact_t* c = 0;
+    impurecord_t* r;
+    int res;
+    ims_public_identity *pi = 0;
+    int i, j;
 
-	//check that this is a request
-	if (msg->first_line.type != SIP_REQUEST) {
-	    LM_ERR("This message is not a request\n");
-	    goto error;
-	}
+    LM_DBG("Checking if allowed to publish reg event\n");
 
-	//check that this is a subscribe request
-	if (msg->first_line.u.request.method.len != 7 ||
-		memcmp(msg->first_line.u.request.method.s, "PUBLISH", 7) != 0) {
-	    LM_ERR("This message is not a PUBLISH\n");
-	    goto error;
-	}
+    //check that this is a request
+    if (msg->first_line.type != SIP_REQUEST) {
+	LM_ERR("This message is not a request\n");
+	goto error;
+    }
 
-	//check that this is a reg event - currently we only support reg event!
-	event = cscf_get_event(msg);
-	if (event.len != 3 || strncasecmp(event.s, "reg", 3) != 0) {
-	    LM_ERR("Accepting only <Event: reg>. Found: <%.*s>\n",
-		    event.len, event.s);
-	    goto done;
-	}
+    //check that this is a subscribe request
+    if (msg->first_line.u.request.method.len != 7 ||
+	    memcmp(msg->first_line.u.request.method.s, "PUBLISH", 7) != 0) {
+	LM_ERR("This message is not a PUBLISH\n");
+	goto error;
+    }
 
-	asserted_id = cscf_get_asserted_identity(msg, 0);
-	if (!asserted_id.len) {
-	    LM_ERR("P-Asserted-Identity empty.\n");
-	    goto error;
-	}
-	LM_DBG("P-Asserted-Identity <%.*s>.\n", asserted_id.len, asserted_id.s);
+    //check that this is a reg event - currently we only support reg event!
+    event = cscf_get_event(msg);
+    if (event.len != 3 || strncasecmp(event.s, "reg", 3) != 0) {
+	LM_ERR("Accepting only <Event: reg>. Found: <%.*s>\n",
+		event.len, event.s);
+	goto done;
+    }
 
-	//get presentity URI
-	presentity_uri = cscf_get_public_identity_from_requri(msg);
-	
-	LM_DBG("Looking for IMPU in usrloc <%.*s>\n", presentity_uri.len, presentity_uri.s);
+    asserted_id = cscf_get_asserted_identity(msg, 0);
+    if (!asserted_id.len) {
+	LM_ERR("P-Asserted-Identity empty.\n");
+	goto error;
+    }
+    LM_DBG("P-Asserted-Identity <%.*s>.\n", asserted_id.len, asserted_id.s);
 
-	ul.lock_udomain((udomain_t*) _t, &presentity_uri);
-	res = ul.get_impurecord((udomain_t*) _t, &presentity_uri, &r);
+    //get presentity URI
+    presentity_uri = cscf_get_public_identity_from_requri(msg);
 
-	if (res > 0) {
-	    LM_DBG("'%.*s' Not found in usrloc\n", presentity_uri.len, presentity_uri.s);
-	    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-	    goto done;
-	}
+    LM_DBG("Looking for IMPU in usrloc <%.*s>\n", presentity_uri.len, presentity_uri.s);
 
-	LM_DBG("<%.*s> found in usrloc\n", presentity_uri.len, presentity_uri.s);
+    ul.lock_udomain((udomain_t*) _t, &presentity_uri);
+    res = ul.get_impurecord((udomain_t*) _t, &presentity_uri, &r);
 
-	//check if the asserted identity is in the same group as that presentity uri
-	if (r->public_identity.len == asserted_id.len &&
-		strncasecmp(r->public_identity.s, asserted_id.s, asserted_id.len) == 0) {
-	    LM_DBG("Identity found as AOR <%.*s>\n",
-		    presentity_uri.len, presentity_uri.s);
-	    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-	    ret = CSCF_RETURN_TRUE;
-	    goto done;
-	}
-
-	//check if asserted identity is in service profile
-	lock_get(r->s->lock);
-	if (r->s) {
-	    for (i = 0; i < r->s->service_profiles_cnt; i++)
-		for (j = 0; j < r->s->service_profiles[i].public_identities_cnt; j++) {
-		    pi = &(r->s->service_profiles[i].public_identities[j]);
-		    if (!pi->barring &&
-			    pi->public_identity.len == asserted_id.len &&
-			    strncasecmp(pi->public_identity.s, asserted_id.s, asserted_id.len) == 0) {
-			LM_DBG("Identity found in SP[%d][%d]\n",
-				i, j);
-			ret = CSCF_RETURN_TRUE;
-			ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-			lock_release(r->s->lock);
-			goto done;
-		    }
-		}
-	}
-	lock_release(r->s->lock);
-	LM_DBG("Did not find p-asserted-identity <%.*s> in SP\n", asserted_id.len, asserted_id.s);
-
-	//check if asserted is present in any of the path headers
-	c = r->contacts;
-
-	while (c) {
-	    if (c->path.len) {
-		LM_DBG("Path: <%.*s>.\n",
-		    c->path.len, c->path.s);
-		for (i = 0; i < c->path.len - (asserted_id.len-4); i++)
-		    //we compare the asserted_id without "sip:" to the path 
-		    if (strncasecmp(c->path.s + i, asserted_id.s+4, asserted_id.len-4) == 0) {
-			LM_DBG("Identity found in Path <%.*s>\n",
-				c->path.len, c->path.s);
-			ret = CSCF_RETURN_TRUE;
-			ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-			goto done;
-		    }
-	    }
-	    c = c->next;
-	}
-	LM_DBG("Did not find p-asserted-identity <%.*s> on Path\n", asserted_id.len, asserted_id.s);
-	
+    if (res > 0) {
+	LM_DBG("'%.*s' Not found in usrloc\n", presentity_uri.len, presentity_uri.s);
 	ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-	LM_DBG("Publish forbidden\n");
-    
+	goto done;
+    }
+
+    LM_DBG("<%.*s> found in usrloc\n", presentity_uri.len, presentity_uri.s);
+
+    //check if the asserted identity is in the same group as that presentity uri
+    if (r->public_identity.len == asserted_id.len &&
+	    strncasecmp(r->public_identity.s, asserted_id.s, asserted_id.len) == 0) {
+	LM_DBG("Identity found as AOR <%.*s>\n",
+		presentity_uri.len, presentity_uri.s);
+	ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
+	ret = CSCF_RETURN_TRUE;
+	goto done;
+    }
+
+    //check if asserted identity is in service profile
+    lock_get(r->s->lock);
+    if (r->s) {
+	for (i = 0; i < r->s->service_profiles_cnt; i++)
+	    for (j = 0; j < r->s->service_profiles[i].public_identities_cnt; j++) {
+		pi = &(r->s->service_profiles[i].public_identities[j]);
+		if (!pi->barring &&
+			pi->public_identity.len == asserted_id.len &&
+			strncasecmp(pi->public_identity.s, asserted_id.s, asserted_id.len) == 0) {
+		    LM_DBG("Identity found in SP[%d][%d]\n",
+			    i, j);
+		    ret = CSCF_RETURN_TRUE;
+		    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
+		    lock_release(r->s->lock);
+		    goto done;
+		}
+	    }
+    }
+    lock_release(r->s->lock);
+    LM_DBG("Did not find p-asserted-identity <%.*s> in SP\n", asserted_id.len, asserted_id.s);
+
+    //check if asserted is present in any of the path headers
+    j=0;
+
+    while (j<MAX_CONTACTS_PER_IMPU && (c=r->newcontacts[j])) {
+	if (c->path.len) {
+	    LM_DBG("Path: <%.*s>.\n",
+		    c->path.len, c->path.s);
+	    for (i = 0; i < c->path.len - (asserted_id.len - 4); i++){
+		//we compare the asserted_id without "sip:" to the path 
+		if (strncasecmp(c->path.s + i, asserted_id.s + 4, asserted_id.len - 4) == 0) {
+		    LM_DBG("Identity found in Path <%.*s>\n",
+			    c->path.len, c->path.s);
+		    ret = CSCF_RETURN_TRUE;
+		    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
+		    goto done;
+		}
+	    }
+	}
+	j++;
+    }
+    LM_DBG("Did not find p-asserted-identity <%.*s> on Path\n", asserted_id.len, asserted_id.s);
+
+    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
+    LM_DBG("Publish forbidden\n");
+
 done:
-	if (presentity_uri.s) shm_free(presentity_uri.s); // shm_malloc in cscf_get_public_identity_from_requri
-	return ret;
+    if (presentity_uri.s) shm_free(presentity_uri.s); // shm_malloc in cscf_get_public_identity_from_requri
+    return ret;
 error:
-	if (presentity_uri.s) shm_free(presentity_uri.s); // shm_malloc in cscf_get_public_identity_from_requri
-	ret = CSCF_RETURN_ERROR;
-	return ret;
+    if (presentity_uri.s) shm_free(presentity_uri.s); // shm_malloc in cscf_get_public_identity_from_requri
+    ret = CSCF_RETURN_ERROR;
+    return ret;
 }
 
 int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
@@ -374,24 +374,25 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     LM_DBG("Did not find p-asserted-identity <%.*s> in SP\n", asserted_id.len, asserted_id.s);
 
     //check if asserted is present in any of the path headers
-    c = r->contacts;
-
-    while (c) {
+    j = 0;
+    while (j < MAX_CONTACTS_PER_IMPU && (c = r->newcontacts[j])) {
 	if (c->path.len) {
 	    LM_DBG("Path: <%.*s>.\n",
-		c->path.len, c->path.s);
-            for (i = 0; i < c->path.len - (asserted_id.len-4); i++)
+		    c->path.len, c->path.s);
+	    for (i = 0; i < c->path.len - (asserted_id.len - 4); i++) {
 		//we compare the asserted_id without "sip:" to the path 
-                if (strncasecmp(c->path.s + i, asserted_id.s+4, asserted_id.len-4) == 0) {
-                    LM_DBG("Identity found in Path <%.*s>\n",
-                            c->path.len, c->path.s);
-                    ret = CSCF_RETURN_TRUE;
-                    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-                    goto done;
-                }
-        }
-        c = c->next;
+		if (strncasecmp(c->path.s + i, asserted_id.s + 4, asserted_id.len - 4) == 0) {
+		    LM_DBG("Identity found in Path <%.*s>\n",
+			    c->path.len, c->path.s);
+		    ret = CSCF_RETURN_TRUE;
+		    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
+		    goto done;
+		}
+	    }
+	}
+	j++;
     }
+
     LM_DBG("Did not find p-asserted-identity <%.*s> on Path\n", asserted_id.len, asserted_id.s);
     
     ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
@@ -539,10 +540,13 @@ int process_contact(impurecord_t* presentity_impurecord, udomain_t * _d, int exp
 			if (contact_state == STATE_TERMINATED) {
 				//delete contact
 				LM_DBG("This contact <%.*s> is in state terminated and is in usrloc so removing it from usrloc\n", contact_uri.len, contact_uri.s);
-				if (ul.delete_ucontact(implicit_impurecord, ucontact) != 0) {
+				ul.lock_contact_slot(&contact_uri);
+				if (ul.unlink_contact_from_impu(implicit_impurecord, ucontact, 1) != 0) {
 				    LM_ERR("Failed to delete ucontact <%.*s> from implicit IMPU\n", contact_uri.len, contact_uri.s);
-				    goto next_implicit_impu;
+				    ul.unlock_contact_slot(&contact_uri);
+				    goto next_implicit_impu;	//TODO: don't need to use goto here...
 				}
+				ul.unlock_contact_slot(&contact_uri);
 			}else {//state is active
 				LM_DBG("This contact: <%.*s> is not in state terminated and is in usrloc, ignore\n", contact_uri.len, contact_uri.s);
 				goto next_implicit_impu;
@@ -568,11 +572,14 @@ next_implicit_impu:
 		if (contact_state == STATE_TERMINATED) {
 			//delete contact
 			LM_DBG("This contact <%.*s> is in state terminated and is in usrloc so removing it from usrloc\n", contact_uri.len, contact_uri.s);
-			if (ul.delete_ucontact(presentity_impurecord, ucontact) != 0) {
+			ul.lock_contact_slot(&contact_uri);
+			if (ul.unlink_contact_from_impu(presentity_impurecord, ucontact, 1) != 0) {
 			    LM_ERR("Failed to delete ucontact <%.*s>\n", contact_uri.len, contact_uri.s);
 			    ret = CSCF_RETURN_FALSE;
+    			    ul.unlock_contact_slot(&contact_uri);
 			    goto done;
 			}
+			ul.unlock_contact_slot(&contact_uri);
 		}else {//state is active
 			LM_DBG("This contact: <%.*s> is not in state terminated and is in usrloc, ignore\n", contact_uri.len, contact_uri.s);
 			goto done;
@@ -1434,8 +1441,8 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
     impurecord_t *r;
-    ucontact_t *c;
-    int i, res;
+    int i, j, res;
+    ucontact_t* ptr;
 
     buf.s = bufc;
     buf.len = 0;
@@ -1472,33 +1479,35 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
         }
         pad.len = strlen(pad.s);
         STR_APPEND(buf, pad);
-        c = r->contacts;
-        LM_DBG("Scrolling through contact for this IMPU");
-        while (c) {
-            if (c->q != -1) {
-                LM_DBG("q value not equal to -1");
-                float q = (float) c->q / 1000;
-                sprintf(pad.s, contact_s_q.s, c, r_active.len, r_active.s,
-                        r_registered.len, r_registered.s, c->expires - act_time,
-                        q);
-            } else {
-                LM_DBG("q value equal to -1");
-                sprintf(pad.s, contact_s.s, c, r_active.len, r_active.s,
-                        r_registered.len, r_registered.s,
-                        c->expires - act_time);
-            }
-            pad.len = strlen(pad.s);
-            STR_APPEND(buf, pad);
-            STR_APPEND(buf, uri_s);
+        
+	j=0;
+	LM_DBG("Scrolling through contact for this IMPU");
+	while (j < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[j])) {
+	    if (ptr->q != -1) {
+		LM_DBG("q value not equal to -1");
+		float q = (float) ptr->q / 1000;
+		sprintf(pad.s, contact_s_q.s, ptr, r_active.len, r_active.s,
+			r_registered.len, r_registered.s, ptr->expires - act_time,
+			q);
+	    } else {
+		LM_DBG("q value equal to -1");
+		sprintf(pad.s, contact_s.s, ptr, r_active.len, r_active.s,
+			r_registered.len, r_registered.s,
+			ptr->expires - act_time);
+	    }
+	    pad.len = strlen(pad.s);
+	    STR_APPEND(buf, pad);
+	    STR_APPEND(buf, uri_s);
 
-            LM_DBG("Appending contact address: <%.*s>", c->c.len, c->c.s);
-	    
-            STR_APPEND(buf, (c->c));
-            STR_APPEND(buf, uri_e);
+	    LM_DBG("Appending contact address: <%.*s>", ptr->c.len, ptr->c.s);
 
-            STR_APPEND(buf, contact_e);
-            c = c->next;
-        }
+	    STR_APPEND(buf, (ptr->c));
+	    STR_APPEND(buf, uri_e);
+
+	    STR_APPEND(buf, contact_e);
+	    j++;
+	}
+	
         STR_APPEND(buf, registration_e);
 
         ul.unlock_udomain(_t, &impu_list[i]);
@@ -1529,14 +1538,12 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
 
 str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
     str x = {0, 0};
+    int i;
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
     int expires = -1;
-    
     int terminate_impu = 1;
-    
     ucontact_t *c_tmp;
-
     str state, event;
 
     buf.s = bufc;
@@ -1552,31 +1559,28 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
 
     if (r) {
         expires = c->expires - act_time;
-        if (r->contacts == c &&
-                //richard we only use expired and unregistered
+        if (//richard we only use expired and unregistered
                 (event_type == IMS_REGISTRAR_CONTACT_EXPIRED ||
                 event_type == IMS_REGISTRAR_CONTACT_UNREGISTERED)
                 ){
 	    //check if impu record has any other active contacts - if not then set this to terminated - if so then keep this active
 	    //check if asserted is present in any of the path headers
-	    c_tmp = r->contacts;
-
-	    while (c_tmp) {
-		if ((strncasecmp(c_tmp->c.s, c->c.s, c_tmp->c.len) != 0)  && ((c_tmp->expires - act_time) > 0)) {
-		    LM_DBG("IMPU <%.*s> has another active contact <%.*s> so will set its state to active\n",
-			r->public_identity.len, r->public_identity.s, c_tmp->c.len, c_tmp->c.s);
-			terminate_impu = 0;
-			break;
-		}
-		c_tmp = c_tmp->next;
-	    }
 	    
-	    if(terminate_impu){
-		sprintf(pad.s, registration_s.s, r->public_identity.len, r->public_identity.s, r, r_terminated.len, r_terminated.s);
-	    }else
-	    {
-		sprintf(pad.s, registration_s.s, r->public_identity.len, r->public_identity.s, r, r_active.len, r_active.s);
+	    
+	    i=0;
+	    while (i<MAX_CONTACTS_PER_IMPU && (c_tmp=r->newcontacts[i])) {
+		if ((strncasecmp(c_tmp->c.s, c->c.s, c_tmp->c.len) != 0) && ((c_tmp->expires - act_time) > 0)) {
+		    LM_DBG("IMPU <%.*s> has another active contact <%.*s> so will set its state to active\n",
+			    r->public_identity.len, r->public_identity.s, c_tmp->c.len, c_tmp->c.s);
+		    terminate_impu = 0;
+		    break;
+		}
+		i++;
 	    }
+	    if(terminate_impu)
+		sprintf(pad.s, registration_s.s, r->public_identity.len, r->public_identity.s, r, r_terminated.len, r_terminated.s);
+	    else
+		sprintf(pad.s, registration_s.s, r->public_identity.len, r->public_identity.s, r, r_active.len, r_active.s);
 	}
         else{
 	    sprintf(pad.s, registration_s.s, r->public_identity.len, r->public_identity.s, r, r_active.len, r_active.s);
@@ -1620,7 +1624,6 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
             STR_APPEND(buf, uri_s);
             STR_APPEND(buf, (c->c));
             STR_APPEND(buf, uri_e);
-
             STR_APPEND(buf, contact_e);
             STR_APPEND(buf, registration_e);
         }

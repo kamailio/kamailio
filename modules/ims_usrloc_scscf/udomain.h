@@ -62,21 +62,20 @@
 #include "hslot.h"
 #include "usrloc.h"
 
-struct hslot;   /*!< Hash table slot */
+struct hslot; /*!< Hash table slot */
 struct impurecord; /*!< Usrloc record */
-
 
 /*! \brief
  * The structure represents a usrloc domain
  */
 struct udomain {
-	str* name;                 /*!< Domain name (NULL terminated) */
-	int size;                  /*!< Hash table size */
-	struct hslot* table;       /*!< Hash table - array of collision slots */
-	/* statistics */
-	stat_var *users;           /*!< no of registered users */
-	stat_var *contacts;        /*!< no of registered contacts */
-	stat_var *expires;         /*!< no of expires */
+    str* name; /*!< Domain name (NULL terminated) */
+    int size; /*!< Hash table size */
+    struct hslot* table; /*!< Hash table - array of collision slots */
+    /* statistics */
+    stat_var *users; /*!< no of registered users */
+    stat_var *contacts; /*!< no of registered contacts */
+    stat_var *expires; /*!< no of expires */
 };
 
 
@@ -159,6 +158,11 @@ void lock_ulslot(udomain_t* _d, int i);
  */
 void unlock_ulslot(udomain_t* _d, int i);
 
+void lock_contact_slot(str* contact_uri);
+void unlock_contact_slot(str* contact_uri);
+void lock_contact_slot_i(int i);
+void unlock_contact_slot_i(int i);
+
 /* ===== module interface ======= */
 
 
@@ -170,8 +174,8 @@ void unlock_ulslot(udomain_t* _d, int i);
  * \return return 0 on success, -1 on failure
  */
 int insert_impurecord(struct udomain* _d, str* public_identity, int reg_state, int barring,
-		ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
-		struct impurecord** _r);
+        ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
+        struct impurecord** _r);
 
 
 /*!

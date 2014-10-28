@@ -82,14 +82,12 @@ struct ul_callback {
 	struct ul_callback* next;
 };
 
-struct ulcb_head_list {
+    struct ulcb_head_list {
 	struct ul_callback *first;
 	int reg_types;
 };
 
-
 extern struct ulcb_head_list*  ulcb_list;
-
 
 static inline int exists_ulcb_type(struct ulcb_head_list* list, int types) {
 	if (list==NULL)
@@ -101,7 +99,6 @@ static inline int exists_ulcb_type(struct ulcb_head_list* list, int types) {
 int init_ulcb_list(void);
 
 void destroy_ulcb_list(void);
-
 
 /*! \brief register a callback for several types of events */
 int register_ulcb( struct impurecord* r, struct ucontact* c, int types, ul_cb f, void *param );

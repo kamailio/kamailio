@@ -134,15 +134,8 @@ end:
  */
 static inline int star(udomain_t* _d, str* _a) {
     impurecord_t* r;
-    ucontact_t* c = 0;
 
     ul.lock_udomain(_d, _a);
-
-    if (!ul.get_impurecord(_d, _a, &r)) {
-        c = r->contacts;
-    } else {
-        r = NULL;
-    }
 
     if (ul.delete_impurecord(_d, _a, r) < 0) {
         LM_ERR("failed to remove record from usrloc\n");
@@ -155,7 +148,7 @@ static inline int star(udomain_t* _d, str* _a) {
 
         if (!ul.get_impurecord(_d, _a, &r)) {
             contact_for_header_t** contact_header = 0;
-            build_contact(c, contact_header);
+            build_contact(r, contact_header);
             free_contact_buf(*contact_header);
         }
         ul.unlock_udomain(_d, _a);
@@ -485,7 +478,7 @@ static inline int is_impu_registered(udomain_t* _d, str* public_identity) {
         }
 	
 	//check valid contacts
-        if(impu->contacts == 0)
+        if((impu->num_contacts <=0) || (impu->newcontacts[0]==0))
 	{
 	    LM_DBG("IMPU <%.*s> has no valid contacts\n", public_identity->len, public_identity->s);
             ret = 0;
@@ -561,22 +554,29 @@ static inline int update_contacts_helper(struct sip_msg* msg, impurecord_t* impu
 
                         LM_DBG("adding/updating contact based on prior existence\n");
                         //stick the contacts into usrloc
+//			ul.lock_contact_slot(&chi->uri);
                         if (ul.get_ucontact(impu_rec, &chi->uri, ci->callid,
-                                ci->path, ci->cseq, &ucontact) != 0) {
+                                ci->path, ci->cseq, &ucontact) != 0) {	//get_contact returns with lock
                             LM_DBG("inserting new contact\n");
                             if (ul.insert_ucontact(impu_rec, &chi->uri, ci,
                                     &ucontact) != 0) {
                                 LM_ERR("Error inserting contact <%.*s>\n", chi->uri.len, chi->uri.s);
+//				ul.unlock_contact_slot(&chi->uri);
                                 goto error;
                             }
                         } else {
                             LM_DBG("Contact already exists - updating\n");
                             if (ul.update_ucontact(impu_rec, ucontact, ci) != 0) {
                                 LM_ERR("Error updating contact <%.*s>\n", chi->uri.len, chi->uri.s);
+				ul.release_ucontact(ucontact);
+//				ul.unlock_contact_slot(&chi->uri);
                                 goto error;
                             }
+			    ul.release_ucontact(ucontact);
                         }
-
+			
+			
+//			ul.unlock_contact_slot(&chi->uri);
                     }
                 }
             }
@@ -628,10 +628,14 @@ static inline int unregister_contact(udomain_t* _d, str* public_identity, contac
 	}
     }
     
-    if (ul.delete_ucontact(impu_rec, ucontact) != 0) {
+//    if (ul.delete_ucontact(impu_rec, ucontact) != 0) {
+    ul.lock_contact_slot_i(ucontact->contact_hash);
+    if (ul.unlink_contact_from_impu(impu_rec, ucontact, 1) != 0) {
         LM_ERR("Failed to delete ucontact <%.*s>\n", chi->uri.len, chi->uri.s);
     }
-    LM_DBG("Contact deleted successfully <%.*s>\n", chi->uri.len, chi->uri.s);
+    ul.unlock_contact_slot_i(ucontact->contact_hash);
+    ul.release_ucontact(ucontact);
+    LM_DBG("Contact unlinked successfully <%.*s>\n", chi->uri.len, chi->uri.s);
     return 0;
 
 error:
@@ -705,7 +709,7 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                 goto error;
             }
             //now build the contact buffer to be include in the reply message and unlock
-            build_contact(impu_rec->contacts, contact_header);
+            build_contact(impu_rec, contact_header);
             ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_RE_REGISTRATION:
@@ -727,7 +731,7 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                 goto error;
             }
             //build the contact buffer for all registered contacts on explicit IMPU
-            build_contact(impu_rec->contacts, contact_header);
+            build_contact(impu_rec, contact_header);
 
             subscription = impu_rec->s;
             if (!subscription) {
@@ -738,7 +742,7 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                     LM_ERR("Unable to update explicit impurecord for <%.*s>\n", public_identity->len, public_identity->s);
                 }
                 ul.unlock_udomain(_d, public_identity);
-                build_contact(impu_rec->contacts, contact_header);
+                build_contact(impu_rec, contact_header);
                 break;
             }
 
@@ -830,7 +834,7 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                 goto error;
             }
 
-            if (impu_rec->contacts) {
+            if (impu_rec->num_contacts>=0 && impu_rec->newcontacts[0]) {
                 LM_DBG("contacts still available\n");
                 //TODO: add all other remaining contacts to reply message (contacts still registered for this IMPU)
                 ret = 1;
@@ -898,7 +902,7 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                             continue;
                         }
 
-                        if (impu_rec->contacts)
+                        if (impu_rec->num_contacts && impu_rec->newcontacts[0])
                             LM_DBG("contacts still available after implicit dereg for IMPU: <%.*s>\n", pi->public_identity.len, pi->public_identity.s);
                         else {
                             LM_DBG("no contacts left after implicit dereg for IMPU: <%.*s>\n", pi->public_identity.len, pi->public_identity.s);

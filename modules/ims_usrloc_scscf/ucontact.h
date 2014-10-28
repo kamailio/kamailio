@@ -111,4 +111,6 @@ int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsign
 
 int add_dialog_data_to_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);
 
+void release_ucontact(struct ucontact* _c);
+
 #endif

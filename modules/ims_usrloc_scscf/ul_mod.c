@@ -60,10 +60,9 @@
 #include "usrloc.h"
 #include "hslot_sp.h"
 #include "usrloc_db.h"
-
+#include "contact_hslot.h"
 #include "../presence/bind_presence.h"
 #include "../presence/hash.h"
-
 #include "../../modules/dialog_ng/dlg_load.h"
 #include "../../modules/dialog_ng/dlg_hash.h"
 
@@ -81,6 +80,7 @@ static int child_init(int rank);                    /*!< Per-child init function
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
 extern int subs_locks_no;
+extern int contacts_locks_no;
 /*
  * Module parameters and their default values
  */
@@ -98,6 +98,9 @@ int maxcontact_behaviour = 0;			/*!< max contact behaviour - 0-disabled(default)
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
 int subs_hash_size = 9;					/*!<number of ims subscription slots*/
+int contacts_hash_size = 9;
+
+struct contact_list* contact_list;
 
 int db_mode = 0;						/*!<database mode*/
 db1_con_t* ul_dbh = 0;
@@ -188,7 +191,7 @@ struct module_exports exports = {
  * Module initialization function
  */
 static int mod_init(void) {
-
+	int i;
 	load_dlg_f load_dlg;
 	if (usrloc_debug){
 		LM_INFO("Logging usrloc records to %.*s\n", usrloc_debug_file.len, usrloc_debug_file.s);
@@ -221,6 +224,12 @@ static int mod_init(void) {
 	else
 		subs_hash_size = 1 << subs_hash_size;
 	subs_locks_no = subs_hash_size;
+	
+	if (contacts_hash_size <= 1)
+		contacts_hash_size = 512;
+	else
+		contacts_hash_size = 1 << contacts_hash_size;
+	contacts_locks_no = contacts_hash_size;
 
 	/* check matching mode */
 	switch (matching_mode) {
@@ -242,7 +251,27 @@ static int mod_init(void) {
 		LM_ERR("IMS Subscription locks array initialization failed\n");
 		return -1;
 	}
-
+	
+	/* create hash table for storing registered contacts */
+	if (init_contacts_locks() !=0) {
+	    LM_ERR("failed to initialise locks array for contacts\n");
+	    return -1;
+	}
+	contact_list = (struct contact_list*)shm_malloc(sizeof(struct contact_list));
+	if (!contact_list) {
+	    LM_ERR("no more memory to create contact list structure\n");
+	    return -1;
+	}
+	contact_list->slot = (struct contact_hslot*) shm_malloc(sizeof(struct contact_hslot) * contacts_hash_size);
+	if (!contact_list->slot) {
+	    LM_ERR("no more memory to create contact list structure\n");
+	    return -1;
+	}
+	for (i=0; i<contacts_hash_size;i++) {
+	    init_contact_slot(&contact_list->slot[i], i);
+	} 
+	contact_list->size = contacts_hash_size;
+	
 	/* presence binding for subscribe processing*/
 	presence_api_t pres;
 	bind_presence_t bind_presence;
@@ -395,6 +424,8 @@ static void destroy(void) {
 
 	free_all_udomains();
 	ul_destroy_locks();
+	subs_destroy_locks();
+	destroy_contacts_locks();
 
 	/* free callbacks list */
 	destroy_ulcb_list();

@@ -64,7 +64,7 @@ int reg_send_reply_transactional(struct sip_msg* _m, contact_for_header_t* conta
 /*! \brief
  * Build Contact HF for reply
  */
-int build_contact(ucontact_t* c, contact_for_header_t** contact_header);
+int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header);
 int build_expired_contact(contact_t* chi, contact_for_header_t** contact_header); //this is for building the expired response - ie reply to dereg
 
 int build_p_associated_uri(ims_subscription* s);

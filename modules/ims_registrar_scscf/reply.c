@@ -88,12 +88,14 @@ static struct {
  * Calculate the length of buffer needed to
  * print contacts
  */
-static inline unsigned int calc_buf_len(ucontact_t* c) {
+static inline unsigned int calc_buf_len(impurecord_t* impurec) {
     unsigned int len;
     int qlen;
+    int i=0;
+    ucontact_t* c;
 
     len = 0;
-    while (c) {
+    while (i<MAX_CONTACTS_PER_IMPU && (c=impurec->newcontacts[i])) {
         if (VALID_CONTACT(c, act_time)) {
             if (len) len += CONTACT_SEP_LEN;
             len += 2 /* < > */ + c->c.len;
@@ -110,7 +112,7 @@ static inline unsigned int calc_buf_len(ucontact_t* c) {
                         ;
             }
         }
-        c = c->next;
+	i++;
     }
 
     if (len) len += CONTACT_BEGIN_LEN + CRLF_LEN;
@@ -395,12 +397,12 @@ int build_expired_contact(contact_t* chi, contact_for_header_t** contact_header)
 
 //We use shared memory for this so we can use it when we use async diameter
 
-int build_contact(ucontact_t* c, contact_for_header_t** contact_header) {
-
+int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) {
     char *p, *cp;
     int fl, len;
-
+    ucontact_t* c;
     *contact_header = 0;
+    int i=0;
 
     contact_for_header_t* tmp_contact_header = shm_malloc(sizeof (contact_for_header_t));
     if (!tmp_contact_header) {
@@ -409,7 +411,7 @@ int build_contact(ucontact_t* c, contact_for_header_t** contact_header) {
     }
     memset(tmp_contact_header, 0, sizeof (contact_for_header_t));
 
-    tmp_contact_header->data_len = calc_buf_len(c);
+    tmp_contact_header->data_len = calc_buf_len(impurec);
     tmp_contact_header->buf = (char*)shm_malloc(tmp_contact_header->data_len);
 
     if (tmp_contact_header->data_len) {
@@ -419,7 +421,8 @@ int build_contact(ucontact_t* c, contact_for_header_t** contact_header) {
         p += CONTACT_BEGIN_LEN;
 
         fl = 0;
-        while (c) {
+	    
+        while (i<MAX_CONTACTS_PER_IMPU && (c=impurec->newcontacts[i])) {
             if (VALID_CONTACT(c, act_time)) {
                 if (fl) {
                     memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
@@ -458,8 +461,7 @@ int build_contact(ucontact_t* c, contact_for_header_t** contact_header) {
                     *p++ = '\"';
                 }
             }
-
-            c = c->next;
+	    i++;
         }
 
         memcpy(p, CRLF, CRLF_LEN);
@@ -666,7 +668,7 @@ int reg_send_reply(struct sip_msg* _m, contact_for_header_t* contact_header) {
     str msg = str_init(MSG_200); /* makes gcc shut up */
     char* buf;
 
-    if (contact_header && contact_header->buf && contact_header->data_len > 0) {
+    if (contact_header && contact_header->buf && (contact_header->buf_len > 0) && (contact_header->data_len > 0)) {
     	LM_DBG("Contacts: %.*s\n", contact_header->data_len, contact_header->buf);
         add_lump_rpl(_m, contact_header->buf, contact_header->data_len, LUMP_RPL_HDR | LUMP_RPL_NODUP | LUMP_RPL_NOFREE);
         contact_header->data_len = 0;

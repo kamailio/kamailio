@@ -62,6 +62,10 @@ str subscriber_id_col = str_init(SUBSCRIBER_ID_COL);
 str query_buffer 		= { 0, 0 };
 int query_buffer_len		= 0;
 
+char* impu_contact_insert_query = "INSERT INTO impu_contact (impu_id, contact_id) (SELECT I.id, C.id FROM impu I, contact C WHERE I.impu='%.*s' and C.contact='%.*s')";
+int impu_contact_insert_query_len;
+char* impu_contact_delete_query = "DELETE FROM impu_contact WHERE impu_id in (select impu.id from impu where impu.impu='%.*s') AND contact_id in (select contact.id from contact where contact.contact='%.*s')";
+int impu_contact_delete_query_len;
 
 
 extern db1_con_t* ul_dbh;
@@ -134,19 +138,23 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity,
 	db_key_t key[8];
 	db_val_t val[8];
 	str bin_str;
+	
+	LM_DBG("DB: Inserting/Updating IMPU [%.*s]\n", public_identity->len, public_identity->s);
 
 	//serialise ims_subscription
-	if (!bin_alloc(&x, 256)) {
-		LM_DBG("unable to allocate buffer for binary serialisation\n");
-		return -1;
+	if (s) {
+	    if (!bin_alloc(&x, 256)) {
+		    LM_DBG("unable to allocate buffer for binary serialisation\n");
+		    return -1;
+	    }
+	    if (!bin_encode_ims_subscription(&x, (*s))) {
+		    LM_DBG("Unable to serialise ims_subscription data\n");
+		    bin_free(&x);
+		    return -1;
+	    }
+	    bin_str.s = x.s;
+	    bin_str.len = x.len;
 	}
-	if (!bin_encode_ims_subscription(&x, (*s))) {
-		LM_DBG("Unable to serialise ims_subscription data\n");
-		bin_free(&x);
-		return -1;
-	}
-	bin_str.s = x.s;
-	bin_str.len = x.len;
 
 	key[0] = &impu_col;
 	key[1] = &barring_col;
@@ -194,8 +202,13 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity,
 	}
 	key[i] = &ims_sub_data_col;
 	val[i].type = DB1_BLOB;
-	val[i].nul = 0;
-	val[i].val.blob_val = bin_str;
+	if (s) {
+	    val[i].nul = 0;
+	    val[i].val.blob_val = bin_str;
+	} else {
+	    val[i].nul = 1;
+	}
+	
 	i++;
 
 	if (ul_dbf.use_table(ul_dbh, &impu_table) != 0) {
@@ -208,7 +221,9 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity,
 		bin_free(&x);
 		return -1;
 	}
-	bin_free(&x);
+	
+	if (s)
+	    bin_free(&x);
 
 	return 0;
 }
@@ -216,6 +231,8 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity,
 int db_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 	db_key_t key[1];
 	db_val_t val[1];
+	
+	LM_DBG("DB: deleting IMPU [%.*s]\n", _r->public_identity.len, _r->public_identity.s);
 
 	key[0] = &impu_col;
 	val[0].type = DB1_STR;
@@ -229,15 +246,10 @@ int db_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 }
 
 int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
-	db1_res_t* _rs;
-	int contact_id;
-	int impu_id;
 	db_key_t key[6];
 	db_val_t val[6];
-	db_key_t key_return[1];
-	db_val_t* ret_val;
-
-	key_return[0] = &id_col;
+	
+	LM_DBG("DB: inserting ucontact [%.*s]\n", _c->c.len, _c->c.s);
 
 	key[0] = &contact_col;
 	key[1] = &path_col;
@@ -278,128 +290,15 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 		LM_ERR("Failed to insert/update contact record for [%.*s]\n", _c->c.len, _c->c.s);
 		return -1;
 	}
-	contact_id = ul_dbf.last_inserted_id(ul_dbh);
-	if (contact_id <= 0) {
-		/* search for the ID if the contact just entered */
-		if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-			LM_ERR("Unable to find contact [%.*s] in DB to complete IMPU-contact mapping\n", _c->c.len, _c->c.s);
-			ul_dbf.free_result(ul_dbh, _rs);
-			return -1;
-		}
-
-		if (RES_ROW_N(_rs) == 0) {
-			LM_DBG("Contact %.*s not found in DB\n",_c->c.len, _c->c.s);
-			ul_dbf.free_result(ul_dbh, _rs);
-			return -1;
-		}
-
-		if (RES_ROW_N(_rs) > 1) {
-			LM_WARN("more than one contact found in DB for contact [%.*s] - this should not happen... proceeding with first entry\n",
-				_c->c.len, _c->c.s);
-		}
-
-		ret_val = ROW_VALUES(RES_ROWS(_rs));
-		contact_id = ret_val[0].val.int_val;
-		ul_dbf.free_result(ul_dbh, _rs);
-	}
-	LM_DBG("contact ID is %d\n", contact_id);
-
-	/* search for ID of the associated IMPU */
-	key[0] = &impu_col;
-	val[0].nul = 0;
-	val[0].type = DB1_STR;
-	val[0].val.str_val = _r->public_identity;
-
-	if (ul_dbf.use_table(ul_dbh, &impu_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", impu_table.len, impu_table.s);
-		return -1;
-	}
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-		LM_ERR("Unable to find IMPU [%.*s] in DB to complete IMPU-contact mapping\n", _r->public_identity.len, _r->public_identity.s);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) == 0) {
-		LM_DBG("IMPU %.*s not found in DB\n", _r->public_identity.len, _r->public_identity.s);
-		ul_dbf.free_result(ul_dbh, _rs);
-		return -1;
-	}
-
-	if (RES_ROW_N(_rs) > 1) {
-		LM_WARN("more than one IMPU found in DB for contact [%.*s] - this should not happen... proceeding with first entry\n",
-				_r->public_identity.len, _r->public_identity.s);
-	}
-	ret_val = ROW_VALUES(RES_ROWS(_rs));
-	impu_id = ret_val[0].val.int_val;
-
-	ul_dbf.free_result(ul_dbh, _rs);
-	LM_DBG("IMPU ID is %d\n", impu_id);
-
-	/* update mapping table between contact and IMPU */
-	key[0] = &impu_id_col;
-	key[1] = &contact_id_col;
-	val[0].nul = 0;
-	val[0].type = DB1_INT;
-	val[0].val.int_val = impu_id;
-	val[1].nul = 0;
-	val[1].type = DB1_INT;
-	val[1].val.int_val = contact_id;
-
-	if (ul_dbf.use_table(ul_dbh, &impu_contact_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", impu_table.len, impu_table.s);
-		return -1;
-	}
-
-	if (ul_dbf.insert_update(ul_dbh, key, val, 2) != 0) {
-		LM_ERR("Failed to insert/update impu-contact mapping record for contact [%.*s] and impu [%.*s]\n",
-				_c->c.len, _c->c.s,
-				_r->public_identity.len, _r->public_identity.s);
-		return -1;
-	}
 
 	return 0;
 }
 
-int db_delete_ucontact(impurecord_t* _r, ucontact_t* _c) {
-	db_key_t key[2];
-	db_val_t val[2];
-	db_key_t key_return[1];
-	db_val_t* ret_val;
-	db1_res_t* _rs;
-	int impu_id, contact_id;
+int db_delete_ucontact(ucontact_t* _c) {
+	db_key_t key[1];
+	db_val_t val[1];
 
-	LM_DBG("Deleting contact binding [%.*s] on impu [%.*s]\n",
-			_c->c.len, _c->c.s,
-			_r->public_identity.len, _r->public_identity.s);
-
-	/* get id of IMPU entry */
-	key[0] = &impu_col;
-	val[0].type = DB1_STR;
-	val[0].nul = 0;
-	val[0].val.str_val = _r->public_identity;
-	key_return[0] = &id_col;
-
-	if (ul_dbf.use_table(ul_dbh, &impu_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", impu_table.len, impu_table.s);
-		return -1;
-	}
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-		LM_ERR("Unable to find IMPU [%.*s] in DB to complete IMPU-contact mapping\n", _r->public_identity.len, _r->public_identity.s);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) == 0) {
-		LM_DBG("IMPU %.*s not found in DB\n", _r->public_identity.len, _r->public_identity.s);
-		ul_dbf.free_result(ul_dbh, _rs);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) > 1) {
-		LM_WARN("more than one IMPU found in DB for contact [%.*s] - this should not happen... proceeding with first entry\n",
-				_r->public_identity.len, _r->public_identity.s);
-	}
-	ret_val = ROW_VALUES(RES_ROWS(_rs));
-	impu_id = ret_val[0].val.int_val;
-
-	ul_dbf.free_result(ul_dbh, _rs);
-	LM_DBG("IMPU ID is %d\n", impu_id);
+	LM_DBG("Deleting ucontact [%.*s]\n",_c->c.len, _c->c.s);
 
 	/* get contact id from DB */
 	if (ul_dbf.use_table(ul_dbh, &contact_table) != 0) {
@@ -410,69 +309,9 @@ int db_delete_ucontact(impurecord_t* _r, ucontact_t* _c) {
 	val[0].type = DB1_STR;
 	val[0].nul = 0;
 	val[0].val.str_val = _c->c;
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-		LM_ERR("Unable to find contact [%.*s] in DB to complete IMPU-contact mapping removal\n", _c->c.len, _c->c.s);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) == 0) {
-		LM_DBG("Contact %.*s not found in DB\n",_c->c.len, _c->c.s);
-		ul_dbf.free_result(ul_dbh, _rs);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) > 1) {
-		LM_WARN("more than one contact found in DB for contact [%.*s] - this should not happen... proceeding with first entry\n",
-				_c->c.len, _c->c.s);
-	}
-	ret_val = ROW_VALUES(RES_ROWS(_rs));
-	contact_id = ret_val[0].val.int_val;
-	ul_dbf.free_result(ul_dbh, _rs);
-	LM_DBG("contact ID is %d\n", contact_id);
-
-	LM_DBG("need to remove contact-impu mapping %d:%d\n", impu_id, contact_id);
-
-	/* update impu-contact mapping table */
-	if (ul_dbf.use_table(ul_dbh, &impu_contact_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", impu_contact_table.len, impu_contact_table.s);
-		return -1;
-	}
-	key[0] = &contact_id_col;
-	key[1] = &impu_id_col;
-	val[0].type = DB1_INT;
-	val[0].nul = 0;
-	val[0].val.int_val = contact_id;
-	val[1].type = DB1_INT;
-	val[1].nul = 0;
-	val[1].val.int_val = impu_id;
-
-	if (ul_dbf.delete(ul_dbh, key, 0, val, 2) != 0) {
-		LM_ERR("unable to remove impu-contact mapping from DB for contact [%.*s], impu [%.*s]  ..... continuing\n",
-				_c->c.len, _c->c.s,
-				_r->public_identity.len, _r->public_identity.s);
-	}
-
-	/* delete contact from contact table - IFF there are no more mappings for it to impus */
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-		LM_WARN("error searching for impu-contact mappings in DB\n");
-	}
-	if (RES_ROW_N(_rs) > 0) {
-		ul_dbf.free_result(ul_dbh, _rs);
-		LM_DBG("impu-contact mappings still exist, not removing contact from DB\n");
-		return 0;
-	}
-	ul_dbf.free_result(ul_dbh, _rs);
-
-	key[0] = &contact_col;
-	val[0].type = DB1_STR;
-	val[0].nul = 0;
-	val[0].val.str_val = _c->c;
-
-	if (ul_dbf.use_table(ul_dbh, &contact_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", contact_table.len, contact_table.s);
-		return -1;
-	}
-
 	if (ul_dbf.delete(ul_dbh, key, 0, val, 1) != 0) {
-		LM_ERR("unable to remove contact from DB [%.*s]\n", _c->c.len, _c->c.s);
+		LM_ERR("Unable to delete contact [%.*s] from DB\n", _c->c.len, _c->c.s);
+		return -1;
 	}
 
 	return 0;
@@ -937,306 +776,383 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 }
 
 int preload_udomain(db1_con_t* _c, udomain_t* _d) {
-	db_key_t col[9];
-	db_row_t* row;
-	db_row_t* contact_row;
-	db_row_t* subscriber_row;
-	db1_res_t* rs;
-	db1_res_t* contact_rs;
-	db1_res_t* subscriber_rs;
-	db_val_t* vals;
-	db_val_t* contact_vals;
-	db_val_t* subscriber_vals;
-	int barring = 0, reg_state = 0, impu_id, n, nn, i, j, len;
-	str query_contact, query_subscriber, impu, ccf1 = { 0, 0 }, ecf1 = { 0, 0 }, ccf2 = { 0, 0 }, ecf2 = {
-			0, 0 }, blob = { 0, 0 }, contact={0,0}, presentity_uri={0,0};
-	bin_data x;
-	ims_subscription* subscription = 0;
-	impurecord_t* impurecord;
-	int impu_id_len;
-	ucontact_t* c;
-	ucontact_info_t contact_data;
-	subscriber_data_t subscriber_data;
-	reg_subscriber *reg_subscriber;
+    db_key_t col[9];
+    db_row_t* row;
+    db_row_t* contact_row;
+    db_row_t* subscriber_row;
+    db1_res_t* rs;
+    db1_res_t* contact_rs;
+    db1_res_t* subscriber_rs;
+    db_val_t* vals;
+    db_val_t* contact_vals;
+    db_val_t* subscriber_vals;
+    int barring = 0, reg_state = 0, impu_id, n, nn, i, j, len;
+    str query_contact, query_subscriber, impu, ccf1 = {0, 0}, ecf1 = {0, 0}, ccf2 = {0, 0}, ecf2 = {
+	0, 0
+    }, blob = {0, 0}, contact = {0, 0}, presentity_uri = {0, 0};
+    bin_data x;
+    ims_subscription* subscription = 0;
+    impurecord_t* impurecord;
+    int impu_id_len;
+    ucontact_t* c;
+    ucontact_info_t contact_data;
+    subscriber_data_t subscriber_data;
+    reg_subscriber *reg_subscriber;
 
-	/*
-	 * the two queries - get the IMPUs, then get associated contacts for each IMPU:
-	 * SELECT impu.impu,impu.barring,impu.reg_state,impu.ccf1,impu.ccf2,impu.ecf1,impu.ecf2,impu.ims_subscription_data FROM impu;
-	 * SELECT c.contact,c.path,c.user_agent,c.received,c.expires FROM impu_contact m LEFT JOIN contact c ON c.id=m.contact_id WHERE m.impu_id=20;
-	 */
+    /*
+     * the two queries - get the IMPUs, then get associated contacts for each IMPU:
+     * SELECT impu.impu,impu.barring,impu.reg_state,impu.ccf1,impu.ccf2,impu.ecf1,impu.ecf2,impu.ims_subscription_data FROM impu;
+     * SELECT c.contact,c.path,c.user_agent,c.received,c.expires FROM impu_contact m LEFT JOIN contact c ON c.id=m.contact_id WHERE m.impu_id=20;
+     */
 
-	char *p_contact =
-			"SELECT c.contact,c.path,c.user_agent,c.received,c.expires,c.callid FROM impu_contact m LEFT JOIN contact c ON c.id=m.contact_id WHERE m.impu_id=";
-	
-	char *p_subscriber =
-			"SELECT s.presentity_uri,s.watcher_uri,s.watcher_contact,s.event,s.expires,s.version,s.local_cseq,s.call_id,s.from_tag,"
-	"s.to_tag,s.record_route,s.sockinfo_str FROM impu_subscriber m LEFT JOIN subscriber s ON s.id=m.subscriber_id WHERE m.impu_id=";
+    char *p_contact =
+	    "SELECT c.contact,c.path,c.user_agent,c.received,c.expires,c.callid FROM impu_contact m LEFT JOIN contact c ON c.id=m.contact_id WHERE m.impu_id=";
 
-	query_contact.s = p_contact;
-	query_contact.len = strlen(query_contact.s);
-	
-	query_subscriber.s = p_subscriber;
-	query_subscriber.len = strlen(query_subscriber.s);
-	
+    char *p_subscriber =
+	    "SELECT s.presentity_uri,s.watcher_uri,s.watcher_contact,s.event,s.expires,s.version,s.local_cseq,s.call_id,s.from_tag,"
+	    "s.to_tag,s.record_route,s.sockinfo_str FROM impu_subscriber m LEFT JOIN subscriber s ON s.id=m.subscriber_id WHERE m.impu_id=";
 
-	col[0] = &impu_col;
-	col[1] = &barring_col;
-	col[2] = &reg_state_col;
-	col[3] = &ccf1_col;
-	col[4] = &ecf1_col;
-	col[5] = &ccf2_col;
-	col[6] = &ecf2_col;
-	col[7] = &ims_sub_data_col;
-	col[8] = &id_col;
+    query_contact.s = p_contact;
+    query_contact.len = strlen(query_contact.s);
 
-	if (ul_dbf.use_table(_c, &impu_table) != 0) {
-		LM_ERR("SQL use table failed\n");
-		return -1;
-	}
-	if (ul_dbf.query(_c, NULL, 0, NULL, col, 0, 9, NULL, &rs) != 0) {
-		LM_ERR("Unable to query DB to preload S-CSCF usrloc\n");
-		return -1;
-	}
+    query_subscriber.s = p_subscriber;
+    query_subscriber.len = strlen(query_subscriber.s);
 
-	if (RES_ROW_N(rs) == 0) {
-		LM_DBG("table is empty\n");
-		ul_dbf.free_result(_c, rs);
-		return 0;
-	}
 
-	LM_DBG("preloading S-CSCF usrloc...\n");
-	LM_DBG("%d rows returned in preload\n", RES_ROW_N(rs));
+    col[0] = &impu_col;
+    col[1] = &barring_col;
+    col[2] = &reg_state_col;
+    col[3] = &ccf1_col;
+    col[4] = &ecf1_col;
+    col[5] = &ccf2_col;
+    col[6] = &ecf2_col;
+    col[7] = &ims_sub_data_col;
+    col[8] = &id_col;
 
-	n = 0;
-	do {
-		n++;		
-		LM_DBG("loading S-CSCF usrloc records - cycle [%d]\n", n);
-		for (i = 0; i < RES_ROW_N(rs); i++) {
-			impu_id = -1;
+    if (ul_dbf.use_table(_c, &impu_table) != 0) {
+	LM_ERR("SQL use table failed\n");
+	return -1;
+    }
+    if (ul_dbf.query(_c, NULL, 0, NULL, col, 0, 9, NULL, &rs) != 0) {
+	LM_ERR("Unable to query DB to preload S-CSCF usrloc\n");
+	return -1;
+    }
 
-			row = RES_ROWS(rs) + i;
-			LM_DBG("Fetching IMPU row %d\n", i+1);
-			vals = ROW_VALUES(row);
-
-			impu.s = (char*) VAL_STRING(vals);
-			if (VAL_NULL(vals) || !impu.s || !impu.s[0]) {
-				impu.len = 0;
-				impu.s = 0;
-			} else {
-				impu.len = strlen(impu.s);
-			}
-			LM_DBG("IMPU from DB is [%.*s]\n", impu.len, impu.s);
-			if (!VAL_NULL(vals + 1)) {
-				barring = VAL_INT(vals + 1);
-			}
-			if (!VAL_NULL(vals + 2)) {
-				reg_state = VAL_INT(vals + 2);
-			}
-			if (!VAL_NULL(vals + 3)) {
-				ccf1.s = (char*) VAL_STRING(vals + 3);
-				ccf1.len = strlen(ccf1.s);
-			}
-			LM_DBG("CCF1 from DB is [%.*s]\n", ccf1.len, ccf1.s);
-			if (!VAL_NULL(vals + 4)) {
-				ecf1.s = (char*) VAL_STRING(vals + 3);
-				ecf1.len = strlen(ecf1.s);
-			}
-			LM_DBG("ECF1 from DB is [%.*s]\n", ecf1.len, ecf1.s);
-			if (!VAL_NULL(vals + 5)) {
-				ccf2.s = (char*) VAL_STRING(vals + 5);
-				ccf2.len = strlen(ccf2.s);
-			}
-			LM_DBG("CCF2 from DB is [%.*s]\n", ccf2.len, ccf2.s);
-			if (!VAL_NULL(vals + 6)) {
-				ecf2.s = (char*) VAL_STRING(vals + 6);
-				ecf2.len = strlen(ecf2.s);
-			}
-			LM_DBG("ECF2 from DB is [%.*s]\n", ecf2.len, ecf2.s);
-
-			if (!VAL_NULL(vals + 7)) {
-				blob = VAL_BLOB(vals + 7);
-				bin_alloc(&x, blob.len);
-				memcpy(x.s, blob.s, blob.len);
-				x.len = blob.len;
-				x.max = 0;
-				subscription = bin_decode_ims_subscription(&x);
-				bin_free(&x);
-			}
-			if (!VAL_NULL(vals + 8)) {
-				impu_id = VAL_INT(vals + 8);
-			}
-
-			/* insert impu into memory */
-			lock_udomain(_d, &impu);
-			if (mem_insert_impurecord(_d, &impu, reg_state, barring,
-					&subscription, &ccf1, &ccf2, &ecf1, &ecf2, &impurecord)
-					!= 0) {
-				LM_ERR("Unable to insert IMPU into memory [%.*s]\n", impu.len, impu.s);
-			}
-
-			/* add contacts */
-			if (impu_id < 0) {
-				LM_ERR("impu_id has not been set [%.*s] - we cannot read contacts or subscribers from DB....aborting preload\n", impu.len, impu.s);
-				//TODO: check frees
-				unlock_udomain(_d, &impu);
-				continue;
-			}
-			impu_id_len = int_to_str_len(impu_id);
-			len = query_contact.len + impu_id_len + 1/*nul*/;
-			if (!query_buffer_len || query_buffer_len < len) {
-				if (query_buffer.s) {
-					pkg_free(query_buffer.s);
-				}
-				query_buffer.s = (char*) pkg_malloc(len);
-				if (!query_buffer.s) {
-					LM_ERR("mo more pkg mem\n");
-					//TODO: check free
-					unlock_udomain(_d, &impu);
-					return -1;
-				}
-				query_buffer_len = len;
-			}
-			memcpy(query_buffer.s, query_contact.s, query_contact.len);
-			p_contact = query_buffer.s + query_contact.len;
-			snprintf(p_contact, impu_id_len + 1, "%d", impu_id);
-			query_buffer.len = query_contact.len + impu_id_len;
-			if (ul_dbf.raw_query(_c, &query_buffer, &contact_rs) != 0) {
-				LM_ERR("Unable to query DB for contacts associated with impu [%.*s]\n",
-						impu.len, impu.s);
-				ul_dbf.free_result(_c, contact_rs);
-			} else {
-			    if (RES_ROW_N(contact_rs) == 0) {
-				    LM_DBG("no contacts associated with impu [%.*s]\n",impu.len, impu.s);
-				    ul_dbf.free_result(_c, contact_rs);
-			    } else {
-				nn = 0;
-				do {
-					nn++;
-					LM_DBG("loading S-CSCF contact - cycle [%d]\n", nn);
-					for (j = 0; j < RES_ROW_N(contact_rs); j++) {
-						contact_row = RES_ROWS(contact_rs) + j;
-						contact_vals = ROW_VALUES(contact_row);
-
-						if (!VAL_NULL(contact_vals)) {
-							contact.s = (char*) VAL_STRING(contact_vals);
-							contact.len = strlen(contact.s);
-						}
-						if (dbrow2contact(contact_vals, &contact_data) != 0) {
-							LM_ERR("unable to convert contact row from DB into valid data... moving on\n");
-							continue;
-						}
-
-						if ((c = mem_insert_ucontact(impurecord, &contact, &contact_data)) == 0) {
-							LM_ERR("Unable to insert contact [%.*s] for IMPU [%.*s] into memory... continuing...\n",
-									contact.len, contact.s,
-									impu.len, impu.s);
-						}
-					}
-					if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-						if (ul_dbf.fetch_result(_c, &contact_rs, ul_fetch_rows) < 0) {
-							LM_ERR("fetching rows failed\n");
-							ul_dbf.free_result(_c, contact_rs);
-							unlock_udomain(_d, &impu);
-							return -1;
-						}
-					} else {
-						break;
-					}
-				} while (RES_ROW_N(contact_rs) > 0);
-				ul_dbf.free_result(_c, contact_rs);
-			    }
-			}
-						
-			/* add subscriber */
-			impu_id_len = int_to_str_len(impu_id);
-			len = query_subscriber.len + impu_id_len + 1/*nul*/;
-			if (!query_buffer_len || query_buffer_len < len) {
-				if (query_buffer.s) {
-					pkg_free(query_buffer.s);
-				}
-				query_buffer.s = (char*) pkg_malloc(len);
-				if (!query_buffer.s) {
-					LM_ERR("mo more pkg mem\n");
-					//TODO: check free
-					unlock_udomain(_d, &impu);
-					return -1;
-				}
-				query_buffer_len = len;
-			}
-			memcpy(query_buffer.s, query_subscriber.s, query_subscriber.len);
-			p_subscriber = query_buffer.s + query_subscriber.len;
-			snprintf(p_subscriber, impu_id_len + 1, "%d", impu_id);
-			query_buffer.len = query_subscriber.len + impu_id_len;
-			if (ul_dbf.raw_query(_c, &query_buffer, &subscriber_rs) != 0) {
-				LM_ERR("Unable to query DB for subscriber associated with impu [%.*s]\n",
-						impu.len, impu.s);
-				ul_dbf.free_result(_c, subscriber_rs);
-				unlock_udomain(_d, &impu);
-				continue;
-			}
-			if (RES_ROW_N(subscriber_rs) == 0) {
-				LM_DBG("no subscriber associated with impu [%.*s]\n",impu.len, impu.s);
-				ul_dbf.free_result(_c, subscriber_rs);
-				unlock_udomain(_d, &impu);
-				continue;
-			}
-
-			nn = 0;
-			do {
-				nn++;				
-				LM_DBG("loading S-CSCF subscriber - cycle [%d]\n", nn);
-				for (j = 0; j < RES_ROW_N(subscriber_rs); j++) {
-					subscriber_row = RES_ROWS(subscriber_rs) + j;
-					subscriber_vals = ROW_VALUES(subscriber_row);
-
-					/*presentity uri*/
-					if (!VAL_NULL(subscriber_vals)) {
-					    presentity_uri.s = (char*) VAL_STRING(subscriber_vals);
-					    presentity_uri.len = strlen(presentity_uri.s);
-					}
-
-					if (dbrow2subscriber(subscriber_vals, &subscriber_data) != 0) {
-						LM_ERR("unable to convert subscriber row from DB into valid subscriberdata... moving on\n");
-						continue;
-					}
-					
-					if (add_subscriber(impurecord, &subscriber_data, &reg_subscriber, 1 /*db_load*/) != 0) {
-						LM_ERR("Unable to insert subscriber with presentity_uri [%.*s] for IMPU [%.*s] into memory... continuing...\n",
-								presentity_uri.len, presentity_uri.s,
-								impu.len, impu.s);
-					}
-				}
-				if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-					if (ul_dbf.fetch_result(_c, &subscriber_rs, ul_fetch_rows) < 0) {
-						LM_ERR("fetching rows failed\n");
-						ul_dbf.free_result(_c, subscriber_rs);
-						unlock_udomain(_d, &impu);
-						return -1;
-					}
-				} else {
-					break;
-				}
-			} while (RES_ROW_N(subscriber_rs) > 0);
-			ul_dbf.free_result(_c, subscriber_rs);
-						
-			unlock_udomain(_d, &impu);
-			
-		}
-
-		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-			if (ul_dbf.fetch_result(_c, &rs, ul_fetch_rows) < 0) {
-				LM_ERR("fetching rows (1) failed\n");
-				ul_dbf.free_result(_c, rs);
-				return -1;
-			}
-		} else {
-			break;
-		}
-	} while (RES_ROW_N(rs) > 0);
-
+    if (RES_ROW_N(rs) == 0) {
+	LM_DBG("table is empty\n");
 	ul_dbf.free_result(_c, rs);
-	
-	LM_DBG("Completed preload_udomain");
-
 	return 0;
+    }
+
+    LM_DBG("preloading S-CSCF usrloc...\n");
+    LM_DBG("%d rows returned in preload\n", RES_ROW_N(rs));
+
+    n = 0;
+    do {
+	n++;
+	LM_DBG("loading S-CSCF usrloc records - cycle [%d]\n", n);
+	for (i = 0; i < RES_ROW_N(rs); i++) {
+	    impu_id = -1;
+
+	    row = RES_ROWS(rs) + i;
+	    LM_DBG("Fetching IMPU row %d\n", i + 1);
+	    vals = ROW_VALUES(row);
+
+	    impu.s = (char*) VAL_STRING(vals);
+	    if (VAL_NULL(vals) || !impu.s || !impu.s[0]) {
+		impu.len = 0;
+		impu.s = 0;
+	    } else {
+		impu.len = strlen(impu.s);
+	    }
+	    LM_DBG("IMPU from DB is [%.*s]\n", impu.len, impu.s);
+	    if (!VAL_NULL(vals + 1)) {
+		barring = VAL_INT(vals + 1);
+	    }
+	    if (!VAL_NULL(vals + 2)) {
+		reg_state = VAL_INT(vals + 2);
+	    }
+	    if (!VAL_NULL(vals + 3)) {
+		ccf1.s = (char*) VAL_STRING(vals + 3);
+		ccf1.len = strlen(ccf1.s);
+	    }
+	    LM_DBG("CCF1 from DB is [%.*s]\n", ccf1.len, ccf1.s);
+	    if (!VAL_NULL(vals + 4)) {
+		ecf1.s = (char*) VAL_STRING(vals + 3);
+		ecf1.len = strlen(ecf1.s);
+	    }
+	    LM_DBG("ECF1 from DB is [%.*s]\n", ecf1.len, ecf1.s);
+	    if (!VAL_NULL(vals + 5)) {
+		ccf2.s = (char*) VAL_STRING(vals + 5);
+		ccf2.len = strlen(ccf2.s);
+	    }
+	    LM_DBG("CCF2 from DB is [%.*s]\n", ccf2.len, ccf2.s);
+	    if (!VAL_NULL(vals + 6)) {
+		ecf2.s = (char*) VAL_STRING(vals + 6);
+		ecf2.len = strlen(ecf2.s);
+	    }
+	    LM_DBG("ECF2 from DB is [%.*s]\n", ecf2.len, ecf2.s);
+
+	    if (!VAL_NULL(vals + 7)) {
+		blob = VAL_BLOB(vals + 7);
+		bin_alloc(&x, blob.len);
+		memcpy(x.s, blob.s, blob.len);
+		x.len = blob.len;
+		x.max = 0;
+		subscription = bin_decode_ims_subscription(&x);
+		bin_free(&x);
+	    }
+	    if (!VAL_NULL(vals + 8)) {
+		impu_id = VAL_INT(vals + 8);
+	    }
+
+	    /* insert impu into memory */
+	    lock_udomain(_d, &impu);
+	    if (get_impurecord(_d, &impu, &impurecord) != 0) {
+		if (mem_insert_impurecord(_d, &impu, reg_state, barring,
+			&subscription, &ccf1, &ccf2, &ecf1, &ecf2, &impurecord)
+			!= 0) {
+		    LM_ERR("Unable to insert IMPU into memory [%.*s]\n", impu.len, impu.s);
+		}
+	    }
+
+	    /* add contacts */
+	    if (impu_id < 0) {
+		LM_ERR("impu_id has not been set [%.*s] - we cannot read contacts or subscribers from DB....aborting preload\n", impu.len, impu.s);
+		//TODO: check frees
+		unlock_udomain(_d, &impu);
+		continue;
+	    }
+	    impu_id_len = int_to_str_len(impu_id);
+	    len = query_contact.len + impu_id_len + 1/*nul*/;
+	    if (!query_buffer_len || query_buffer_len < len) {
+		if (query_buffer.s) {
+		    pkg_free(query_buffer.s);
+		}
+		query_buffer.s = (char*) pkg_malloc(len);
+		if (!query_buffer.s) {
+		    LM_ERR("mo more pkg mem\n");
+		    //TODO: check free
+		    unlock_udomain(_d, &impu);
+		    return -1;
+		}
+		query_buffer_len = len;
+	    }
+	    memcpy(query_buffer.s, query_contact.s, query_contact.len);
+	    p_contact = query_buffer.s + query_contact.len;
+	    snprintf(p_contact, impu_id_len + 1, "%d", impu_id);
+	    query_buffer.len = query_contact.len + impu_id_len;
+	    if (ul_dbf.raw_query(_c, &query_buffer, &contact_rs) != 0) {
+		LM_ERR("Unable to query DB for contacts associated with impu [%.*s]\n",
+			impu.len, impu.s);
+		ul_dbf.free_result(_c, contact_rs);
+	    } else {
+		if (RES_ROW_N(contact_rs) == 0) {
+		    LM_DBG("no contacts associated with impu [%.*s]\n", impu.len, impu.s);
+		    ul_dbf.free_result(_c, contact_rs);
+		} else {
+		    nn = 0;
+		    do {
+			nn++;
+			LM_DBG("loading S-CSCF contact - cycle [%d]\n", nn);
+			for (j = 0; j < RES_ROW_N(contact_rs); j++) {
+			    contact_row = RES_ROWS(contact_rs) + j;
+			    contact_vals = ROW_VALUES(contact_row);
+
+			    if (!VAL_NULL(contact_vals)) {
+				contact.s = (char*) VAL_STRING(contact_vals);
+				contact.len = strlen(contact.s);
+			    }
+			    if (dbrow2contact(contact_vals, &contact_data) != 0) {
+				LM_ERR("unable to convert contact row from DB into valid data... moving on\n");
+				continue;
+			    }
+
+			    if (get_ucontact(impurecord, &contact, contact_data.callid, contact_data.path, contact_data.cseq, &c) != 0) {
+				LM_DBG("Contact doesn't exist yet, creating new one [%.*s]\n", contact.len, contact.s);
+				if ((c = mem_insert_ucontact(impurecord, &contact, &contact_data)) == 0) {
+				    LM_ERR("Unable to insert contact [%.*s] for IMPU [%.*s] into memory... continuing...\n",
+					    contact.len, contact.s,
+					    impu.len, impu.s);
+				    continue;
+				}
+			    }
+			    link_contact_to_impu(impurecord, c, 0);
+			    release_ucontact(c);
+			}
+			if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+			    if (ul_dbf.fetch_result(_c, &contact_rs, ul_fetch_rows) < 0) {
+				LM_ERR("fetching rows failed\n");
+				ul_dbf.free_result(_c, contact_rs);
+				unlock_udomain(_d, &impu);
+				return -1;
+			    }
+			} else {
+			    break;
+			}
+		    } while (RES_ROW_N(contact_rs) > 0);
+		    ul_dbf.free_result(_c, contact_rs);
+		}
+	    }
+
+	    /* add subscriber */
+	    impu_id_len = int_to_str_len(impu_id);
+	    len = query_subscriber.len + impu_id_len + 1/*nul*/;
+	    if (!query_buffer_len || query_buffer_len < len) {
+		if (query_buffer.s) {
+		    pkg_free(query_buffer.s);
+		}
+		query_buffer.s = (char*) pkg_malloc(len);
+		if (!query_buffer.s) {
+		    LM_ERR("mo more pkg mem\n");
+		    //TODO: check free
+		    unlock_udomain(_d, &impu);
+		    return -1;
+		}
+		query_buffer_len = len;
+	    }
+	    memcpy(query_buffer.s, query_subscriber.s, query_subscriber.len);
+	    p_subscriber = query_buffer.s + query_subscriber.len;
+	    snprintf(p_subscriber, impu_id_len + 1, "%d", impu_id);
+	    query_buffer.len = query_subscriber.len + impu_id_len;
+	    if (ul_dbf.raw_query(_c, &query_buffer, &subscriber_rs) != 0) {
+		LM_ERR("Unable to query DB for subscriber associated with impu [%.*s]\n",
+			impu.len, impu.s);
+		ul_dbf.free_result(_c, subscriber_rs);
+		unlock_udomain(_d, &impu);
+		continue;
+	    }
+	    if (RES_ROW_N(subscriber_rs) == 0) {
+		LM_DBG("no subscriber associated with impu [%.*s]\n", impu.len, impu.s);
+		ul_dbf.free_result(_c, subscriber_rs);
+		unlock_udomain(_d, &impu);
+		continue;
+	    }
+
+	    nn = 0;
+	    do {
+		nn++;
+		LM_DBG("loading S-CSCF subscriber - cycle [%d]\n", nn);
+		for (j = 0; j < RES_ROW_N(subscriber_rs); j++) {
+		    subscriber_row = RES_ROWS(subscriber_rs) + j;
+		    subscriber_vals = ROW_VALUES(subscriber_row);
+
+		    /*presentity uri*/
+		    if (!VAL_NULL(subscriber_vals)) {
+			presentity_uri.s = (char*) VAL_STRING(subscriber_vals);
+			presentity_uri.len = strlen(presentity_uri.s);
+		    }
+
+		    if (dbrow2subscriber(subscriber_vals, &subscriber_data) != 0) {
+			LM_ERR("unable to convert subscriber row from DB into valid subscriberdata... moving on\n");
+			continue;
+		    }
+
+		    if (add_subscriber(impurecord, &subscriber_data, &reg_subscriber, 1 /*db_load*/) != 0) {
+			LM_ERR("Unable to insert subscriber with presentity_uri [%.*s] for IMPU [%.*s] into memory... continuing...\n",
+				presentity_uri.len, presentity_uri.s,
+				impu.len, impu.s);
+		    }
+		}
+		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+		    if (ul_dbf.fetch_result(_c, &subscriber_rs, ul_fetch_rows) < 0) {
+			LM_ERR("fetching rows failed\n");
+			ul_dbf.free_result(_c, subscriber_rs);
+			unlock_udomain(_d, &impu);
+			return -1;
+		    }
+		} else {
+		    break;
+		}
+	    } while (RES_ROW_N(subscriber_rs) > 0);
+	    ul_dbf.free_result(_c, subscriber_rs);
+
+	    unlock_udomain(_d, &impu);
+
+	}
+
+	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+	    if (ul_dbf.fetch_result(_c, &rs, ul_fetch_rows) < 0) {
+		LM_ERR("fetching rows (1) failed\n");
+		ul_dbf.free_result(_c, rs);
+		return -1;
+	    }
+	} else {
+	    break;
+	}
+    } while (RES_ROW_N(rs) > 0);
+
+    ul_dbf.free_result(_c, rs);
+
+    LM_DBG("Completed preload_udomain");
+
+    return 0;
 }
+
+int db_link_contact_to_impu(impurecord_t* _r, ucontact_t* _c) {
+    int len;
+    db1_res_t* rs;
+
+    LM_DBG("DB: linking contact to IMPU\n");
+
+    len = strlen(impu_contact_insert_query) + _r->public_identity.len + _c->c.len + 1;
+
+    if (!query_buffer_len || query_buffer_len < len) {
+	if (query_buffer.s) {
+	    pkg_free(query_buffer.s);
+	}
+	query_buffer.s = (char*) pkg_malloc(len);
+	if (!query_buffer.s) {
+	    LM_ERR("no more pkg mem\n");
+	    return -1;
+	}
+	query_buffer_len = len;
+	
+    }
+
+    snprintf(query_buffer.s, query_buffer_len, impu_contact_insert_query, _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
+    query_buffer.len = strlen(query_buffer.s);//len;
+
+    LM_DBG("QUERY IS [%.*s] and len is %d\n", query_buffer.len, query_buffer.s, query_buffer.len);
+    if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
+	LM_ERR("Unable to link impu-contact in DB - impu [%.*s], contact [%.*s]\n", _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
+	return -1;
+    }
+    LM_DBG("Query success\n");
+
+    return 0;
+}
+
+int db_unlink_contact_from_impu(impurecord_t* _r, ucontact_t* _c) {
+    int len;
+    db1_res_t* rs;
+
+    LM_DBG("DB: un-linking contact to IMPU\n");
+
+    len = strlen(impu_contact_delete_query) + _r->public_identity.len + _c->c.len + 1;
+
+    if (!query_buffer_len || query_buffer_len < len) {
+	if (query_buffer.s) {
+	    pkg_free(query_buffer.s);
+	}
+	query_buffer.s = (char*) pkg_malloc(len);
+	if (!query_buffer.s) {
+	    LM_ERR("no more pkg mem\n");
+	    return -1;
+	}
+	query_buffer_len = len;
+	
+    }
+
+    snprintf(query_buffer.s, query_buffer_len, impu_contact_delete_query, _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
+    query_buffer.len = strlen(query_buffer.s);//len;
+
+    if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
+	LM_ERR("Unable to un-link impu-contact in DB - impu [%.*s], contact [%.*s]\n", _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
+	return -1;
+    }
+    LM_DBG("Delete query success\n");
+
+    return 0;
+}
+

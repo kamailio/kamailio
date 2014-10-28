@@ -64,6 +64,11 @@
 #include "impurecord.h"
 #include "ucontact.h"
 #include "usrloc.h"
+#include "usrloc_db.h"
+#include "../../hashes.h"
+#include "contact_hslot.h"
+
+extern struct contact_list* contact_list;
 
 /*!
  * \brief Create a new contact structure
@@ -82,6 +87,9 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
         return 0;
     }
     memset(c, 0, sizeof (ucontact_t));
+    
+    c->lock = lock_alloc();
+    c->lock = lock_init(c->lock);
 
     //setup callback list
     c->cbs = (struct ulcb_head_list*) shm_malloc(sizeof (struct ulcb_head_list));
@@ -95,21 +103,23 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
     if (shm_str_dup(&c->c, _contact) < 0) goto error;
     if (shm_str_dup(&c->callid, _ci->callid) < 0) goto error;
     if (shm_str_dup(&c->user_agent, _ci->user_agent) < 0) goto error;
-
+    if (shm_str_dup(&c->aor, _aor) < 0) goto error;
+    if (shm_str_dup(&c->domain, _dom) < 0) goto error;
+    
     if (_ci->received.s && _ci->received.len) {
         if (shm_str_dup(&c->received, &_ci->received) < 0) goto error;
     }
     if (_ci->path && _ci->path->len) {
         if (shm_str_dup(&c->path, _ci->path) < 0) goto error;
     }
-
-    c->domain = _dom;
-    c->aor = _aor;
+    
+    LM_DBG("generating hash based on [%.*s]\n", _contact->len, _contact->s);
+    c->contact_hash = core_hash(_contact, 0, contact_list->size);
+    c->ref_count = 1;
     c->expires = _ci->expires;
     c->q = _ci->q;
     c->sock = _ci->sock;
     c->cseq = _ci->cseq;
-    c->state = CS_NEW;
     c->flags = _ci->flags;
     c->cflags = _ci->cflags;
     c->methods = _ci->methods;
@@ -123,6 +133,8 @@ error:
     if (c->user_agent.s) shm_free(c->user_agent.s);
     if (c->callid.s) shm_free(c->callid.s);
     if (c->c.s) shm_free(c->c.s);
+    if (c->domain.s) shm_free(c->domain.s);
+    if (c->aor.s) shm_free(c->aor.s);
     shm_free(c);
     return 0;
 }
@@ -136,17 +148,20 @@ void free_ucontact(ucontact_t* _c) {
     struct contact_dialog_data *dialog_data, *tmp_dialog_data; 
 
     if (!_c) return;
+    LM_DBG("Freeing ucontact [%.*s]\n", _c->aor.len, _c->aor.s);    
     if (_c->path.s) shm_free(_c->path.s);
     if (_c->received.s) shm_free(_c->received.s);
     if (_c->user_agent.s) shm_free(_c->user_agent.s);
     if (_c->callid.s) shm_free(_c->callid.s);
     if (_c->c.s) shm_free(_c->c.s);
+    if (_c->domain.s) shm_free(_c->domain.s);
+    if (_c->aor.s) shm_free(_c->aor.s);
 
     //free dialog data
     for (dialog_data = _c->first_dialog_data; dialog_data;) {
         tmp_dialog_data = dialog_data;
         dialog_data = dialog_data->next;
-	shm_free(tmp_dialog_data);
+		shm_free(tmp_dialog_data);
     }
     
     //free callback list
@@ -158,6 +173,8 @@ void free_ucontact(ucontact_t* _c) {
         shm_free(cbp_tmp);
     }
     shm_free(_c->cbs);
+    lock_dealloc(_c->lock);
+    lock_destroy(_c->lock);
     shm_free(_c);
 }
 
@@ -168,22 +185,11 @@ void free_ucontact(ucontact_t* _c) {
  */
 void print_ucontact(FILE* _f, ucontact_t* _c) {
     time_t t = time(0);
-    char* st;
-
-    switch (_c->state) {
-        case CS_NEW: st = "CS_NEW";
-            break;
-        case CS_SYNC: st = "CS_SYNC";
-            break;
-        case CS_DIRTY: st = "CS_DIRTY";
-            break;
-        default: st = "CS_UNKNOWN";
-            break;
-    }
+    char* st = "";
 
     fprintf(_f, "~~~Contact(%p)~~~\n", _c);
-    fprintf(_f, "domain    : '%.*s'\n", _c->domain->len, ZSW(_c->domain->s));
-    fprintf(_f, "aor       : '%.*s'\n", _c->aor->len, ZSW(_c->aor->s));
+    fprintf(_f, "domain    : '%.*s'\n", _c->domain.len, ZSW(_c->domain.s));
+    fprintf(_f, "aor       : '%.*s'\n", _c->aor.len, ZSW(_c->aor.s));
     fprintf(_f, "Contact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
     fprintf(_f, "Expires   : ");
     if (_c->expires == 0) {
@@ -279,25 +285,6 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci) {
 }
 
 /*!
- * \brief Remove a contact from list belonging to a certain record
- * \param _r record the contact belongs
- * \param _c removed contact
- */
-static inline void unlink_contact(struct impurecord* _r, ucontact_t* _c) {
-    if (_c->prev) {
-        _c->prev->next = _c->next;
-        if (_c->next) {
-            _c->next->prev = _c->prev;
-        }
-    } else {
-        _r->contacts = _c->next;
-        if (_c->next) {
-            _c->next->prev = 0;
-        }
-    }
-}
-
-/*!
  * \brief Insert a new contact into the list at the correct position
  * \param _r record that holds the sorted contacts
  * \param _c new contact
@@ -345,10 +332,19 @@ static inline void update_contact_pos(struct impurecord* _r, ucontact_t* _c) {
 int update_ucontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci) {
     /* we have to update memory in any case, but database directly
      * only in db_mode 1 */
+    LM_DBG("Updating contact aor: [%.*s] and contact uri: [%.*s]\n", _c->aor.len, _c->aor.s, _c->c.len, _c->c.s);
     if (mem_update_ucontact(_c, _ci) < 0) {
         LM_ERR("failed to update memory\n");
         return -1;
     }
+    
+    if (db_insert_ucontact(_r, _c) != 0) {  /* this is an insert/update */
+	LM_ERR("failed to update contact in DB [%.*s]\n", _c->aor.len, _c->aor.s);
+	return -1;
+    }
+    
+    //make sure IMPU is linked to this contact
+    link_contact_to_impu(_r, _c, 1);
 
     /* run callbacks for UPDATE event */
     if (exists_ulcb_type(_c->cbs, UL_CONTACT_UPDATE)) {
@@ -359,7 +355,7 @@ int update_ucontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
         run_ul_callbacks(_r->cbs, UL_IMPU_UPDATE_CONTACT, _r, _c);
     }
 
-    update_contact_pos(_r, _c);
+//    update_contact_pos(_r, _c);
 
     return 0;
 }
@@ -427,4 +423,10 @@ int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsign
     }
     LM_DBG("Did not find dialog data to remove from contact");
     return 0;
+}
+
+void release_ucontact(struct ucontact* _c) {
+    lock_contact_slot_i(_c->contact_hash);
+    _c->ref_count--;
+    unlock_contact_slot_i(_c->contact_hash);
 }

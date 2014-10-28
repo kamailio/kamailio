@@ -102,18 +102,16 @@ ucontact_t* mem_insert_ucontact(impurecord_t* _r, str* _c, ucontact_info_t* _ci)
 
 /*!
  * \brief Remove the contact from lists in memory
- * \param _r record this contact belongs to
- * \param _c removed contact
+  * \param _c contact to remove
  */
-void mem_remove_ucontact(impurecord_t* _r, ucontact_t* _c);
+void mem_remove_ucontact(ucontact_t* _c);
 
 
 /*!
  * \brief Remove contact in memory from the list and delete it
- * \param _r record this contact belongs to
- * \param _c deleted contact
+ * \param _c contact to delete
  */
-void mem_delete_ucontact(impurecord_t* _r, ucontact_t* _c);
+void mem_delete_ucontact(ucontact_t* _c);
 
 
 /*!
@@ -154,7 +152,7 @@ int insert_ucontact(impurecord_t* _r, str* _contact,
  * \param _c deleted contact
  * \return 0 on success, -1 on failure
  */
-int delete_ucontact(impurecord_t* _r, struct ucontact* _c);
+int delete_ucontact(struct ucontact* _c);
 
 
 /*!
@@ -174,4 +172,8 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path,
 
 int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
+int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db);
+int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db);
+
 #endif
+

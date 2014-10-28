@@ -64,8 +64,10 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity, int reg_state
 		struct impurecord** _r);
 int db_delete_impurecord(udomain_t* _d, struct impurecord* _r);
 int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c);
-int db_delete_ucontact(impurecord_t* _r, ucontact_t* _c);
-
+int db_update_ucontact(impurecord_t* _r, ucontact_t* _c);
+int db_delete_ucontact(ucontact_t* _c);
+int db_link_contact_to_impu(impurecord_t* _r, ucontact_t* _c);
+int db_unlink_contact_from_impu(impurecord_t* _r, ucontact_t* _c);
 int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber);
 int db_delete_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber);
 
