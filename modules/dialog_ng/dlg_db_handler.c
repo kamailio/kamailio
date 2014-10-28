@@ -885,7 +885,7 @@ error:
 int update_dialog_out_dbinfo_unsafe(struct dlg_cell * cell)
 {
 	struct dlg_cell_out *dlg_out	= cell->dlg_entry_out.first;
-
+	str x = {0,0};
 	if(use_dialog_out_table()!=0)
 		return -1;
 
@@ -935,7 +935,7 @@ int update_dialog_out_dbinfo_unsafe(struct dlg_cell * cell)
 		    SET_STR_VALUE(GET_FIELD_IDX(values, DLGO_CALLEE_CSEQ_IDX), dlg_out->callee_cseq);
 		    SET_STR_VALUE(GET_FIELD_IDX(values, DLGO_CALLEE_CONTACT_IDX), dlg_out->callee_contact);
 		    SET_STR_VALUE(GET_FIELD_IDX(values, DLGO_CALLEE_ROUTESET_IDX), dlg_out->callee_route_set);
-		    SET_STR_VALUE(GET_FIELD_IDX(values, DLGO_CALLEE_SOCK_IDX), dlg_out->callee_bind_addr->sock_str);
+		    SET_STR_VALUE(GET_FIELD_IDX(values, DLGO_CALLEE_SOCK_IDX), dlg_out->callee_bind_addr?dlg_out->callee_bind_addr->sock_str:x);
 
 		    SET_PROPER_NULL_FLAG(dlg_out->callee_route_set, values, DLGO_CALLEE_ROUTESET_IDX);
 		    SET_PROPER_NULL_FLAG(dlg_out->caller_cseq, values, DLGO_CALLER_CSEQ_IDX);
