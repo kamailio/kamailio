@@ -339,9 +339,9 @@ void mem_timer_udomain(udomain_t* _d) {
 #ifdef EXTRA_DEBUG
 	    LM_DBG("ULSLOT %d LOCKED\n", i);
 #endif
-	    timer_impurecord(ptr);
 	    t = ptr;
 	    ptr = ptr->next;
+	    timer_impurecord(t);
 
 	    			if (t->reg_state == IMPU_NOT_REGISTERED && t->shead == 0) {
 	    				//remove it - housekeeping - not sure why its still here...?
