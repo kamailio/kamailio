@@ -94,6 +94,8 @@ int store_data_on_dereg = 0; /**< should we store SAR data on de-registration  *
 int ue_unsubscribe_on_dereg = 0;  /*many UEs do not unsubscribe on de reg - therefore we should remove their subscription and not send a notify
 				   Some UEs do unsubscribe then everything is fine*/
 
+int user_data_always = 0; /* Always Reports that user data is missing to HSS */
+
 /* parameters storage */
 str cxdx_dest_realm = str_init("ims.smilecoms.com");
 
@@ -244,6 +246,7 @@ static param_export_t params[] = {
     {"subscription_min_expires", INT_PARAM, &subscription_min_expires},
     {"subscription_max_expires", INT_PARAM, &subscription_max_expires},
     {"ue_unsubscribe_on_dereg", INT_PARAM, &ue_unsubscribe_on_dereg},
+    {"user_data_always", INT_PARAM, &user_data_always},
 
     {0, 0, 0}
 };

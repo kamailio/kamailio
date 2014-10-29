@@ -305,6 +305,25 @@
 ...</programlisting>
       </example>
     </section>
+    
+    <section>
+      <title>user_data_always (integer)</title>
+
+      <para>If specified this will make the S-CSCF always request user
+	  data from HSS.</para>
+
+      <para><emphasis> Default value is 0 (disabled)</emphasis></para>
+
+      <example>
+        <title>Set <varname>user_data_always</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "user_data_always", 1)
+...
+	</programlisting>
+      </example>
+    </section>
+    
   </section>
 
   <section>

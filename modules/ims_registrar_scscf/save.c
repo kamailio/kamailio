@@ -84,6 +84,7 @@ extern struct tm_binds tmb;
 extern int store_data_on_dereg; /**< should we store SAR user data on de-registration  */
 
 extern int ue_unsubscribe_on_dereg;
+extern int user_data_always;
 
 /*! \brief
  * Calculate absolute expires value per contact as follows:
@@ -1224,11 +1225,16 @@ int save(struct sip_msg* msg, char* str1, char *route) {
             }
         }
     }
-    if (require_user_data)
-        data_available = AVP_IMS_SAR_USER_DATA_NOT_AVAILABLE;
-    else
-        data_available = AVP_IMS_SAR_USER_DATA_ALREADY_AVAILABLE;
-
+    
+    if (!user_data_always) {
+	if (require_user_data)
+	    data_available = AVP_IMS_SAR_USER_DATA_NOT_AVAILABLE;
+	else
+	    data_available = AVP_IMS_SAR_USER_DATA_ALREADY_AVAILABLE;
+    } else {
+	data_available = AVP_IMS_SAR_USER_DATA_NOT_AVAILABLE;
+    }
+    
     //before we send lets suspend the transaction
     t = tmb.t_gett();
     if (t == NULL || t == T_UNDEFINED) {
