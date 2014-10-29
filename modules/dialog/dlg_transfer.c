@@ -196,7 +196,7 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len,
 			CRLF, CRLF_LEN);
 	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len+CRLF_LEN,
-			dlg_bridge_controller.s, dlg_bridge_controller.len);
+			dlg_bridge_ref_hdrs.s, dlg_bridge_ref_hdrs.len);
 
 	memset(&uac_r, '\0', sizeof(uac_req_t));
 	set_uac_req(&uac_r, &met, &hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
