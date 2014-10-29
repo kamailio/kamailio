@@ -479,7 +479,7 @@ static int child_init(int rank) {
     int pid;
     
     if (rank == PROC_MAIN) {
-        pid = fork_process(PROC_SIPINIT, "sip_notification_event_process", 1);
+        pid = fork_process(PROC_MIN, "sip_notification_event_process", 1);
         if (pid < 0)
             return -1; //error
         if (pid == 0) {
