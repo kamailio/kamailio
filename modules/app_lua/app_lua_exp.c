@@ -606,17 +606,125 @@ static int lua_sr_tm_t_replicate(lua_State *L)
 /**
  *
  */
+#define BRANCH_FAILURE_ROUTE_PREFIX "tm:branch-failure"
+static int lua_sr_tm_t_on_branch_failure(lua_State *L)
+{
+	static str rt_name = {NULL, 0};
+	char *name;
+	int rt_name_len;
+	int i;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	name = (char*)lua_tostring(L, -1);
+	if(name==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	rt_name_len = strlen(BRANCH_FAILURE_ROUTE_PREFIX) + 1 + strlen(name);
+	if (rt_name_len > rt_name.len)
+	{
+		if ((rt_name.s = pkg_realloc(rt_name.s, rt_name_len+1)) == NULL)
+		{
+			LM_ERR("No memory left in branch_failure fixup\n");
+			return -1;
+		}
+		rt_name.len = rt_name_len;
+	}
+	sprintf(rt_name.s, "%s:%s", BRANCH_FAILURE_ROUTE_PREFIX, name);
+
+	i = route_get(&event_rt, rt_name.s);
+	if(i < 0 || event_rt.rlist[i]==0)
+	{
+		LM_WARN("no actions in branch_failure_route[%s]\n", name);
+		return app_lua_return_error(L);
+	}
+
+	_lua_xtmb.t_on_branch_failure((unsigned int)i);
+	return app_lua_return_int(L, 1);
+}
+
+/**
+ *
+ */
+static int lua_sr_tm_t_load_contacts(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_tmb.t_load_contacts(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_tm_t_next_contacts(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_tmb.t_next_contacts(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
 static const luaL_reg _sr_tm_Map [] = {
-	{"t_reply",        lua_sr_tm_t_reply},
-	{"t_relay",        lua_sr_tm_t_relay},
-	{"t_on_failure",   lua_sr_tm_t_on_failure},
-	{"t_on_branch",    lua_sr_tm_t_on_branch},
-	{"t_on_reply",     lua_sr_tm_t_on_reply},
-	{"t_check_trans",  lua_sr_tm_t_check_trans},
-	{"t_is_canceled",  lua_sr_tm_t_is_canceled},
-	{"t_newtran",      lua_sr_tm_t_newtran},
-	{"t_release",      lua_sr_tm_t_release},
-	{"t_replicate",    lua_sr_tm_t_replicate},
+	{"t_reply",             lua_sr_tm_t_reply},
+	{"t_relay",             lua_sr_tm_t_relay},
+	{"t_on_failure",        lua_sr_tm_t_on_failure},
+	{"t_on_branch",         lua_sr_tm_t_on_branch},
+	{"t_on_reply",          lua_sr_tm_t_on_reply},
+	{"t_check_trans",       lua_sr_tm_t_check_trans},
+	{"t_is_canceled",       lua_sr_tm_t_is_canceled},
+	{"t_newtran",           lua_sr_tm_t_newtran},
+	{"t_release",           lua_sr_tm_t_release},
+	{"t_replicate",         lua_sr_tm_t_replicate},
+	{"t_on_branch_failure", lua_sr_tm_t_on_branch_failure},
+	{"t_load_contacts",     lua_sr_tm_t_load_contacts},
+	{"t_next_contacts",     lua_sr_tm_t_next_contacts},
 	{NULL, NULL}
 };
 
