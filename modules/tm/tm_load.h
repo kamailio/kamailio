@@ -51,6 +51,7 @@
 #include "t_suspend.h"
 #include "t_append_branches.h"
 #include "t_stats.h"
+#include "t_serial.h"
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
@@ -135,6 +136,8 @@ struct tm_binds {
 	void* reserved5;
 #endif
 	t_append_branches_f	t_append_branches;
+	cmd_function	t_load_contacts;
+	cmd_function	t_next_contacts;
 };
 
 typedef struct tm_binds tm_api_t;
@@ -182,6 +185,7 @@ int t_is_canceled(struct sip_msg* msg);
 typedef struct tm_xbinds {
 	t_on_route_f t_on_failure;
 	t_on_route_f t_on_branch;
+	t_on_route_f t_on_branch_failure;
 	t_on_route_f t_on_reply;
 	t_no_param_f t_check_trans;
 	t_no_param_f t_is_canceled;
