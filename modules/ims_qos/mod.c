@@ -232,7 +232,7 @@ static int mod_child_init(int rank) {
     LM_DBG("Initialization of module in child [%d] \n", rank);
 
     if (rank == PROC_MAIN) {
-        int pid = fork_process(PROC_SIPINIT, "Rx Event Processor", 1);
+	int pid = fork_process(PROC_MIN, "Rx Event Processor", 1);
         if (pid < 0)
             return -1; //error
         if (pid == 0) {
