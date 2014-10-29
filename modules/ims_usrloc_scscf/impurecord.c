@@ -938,6 +938,12 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
 	} else {
 	    if (ptr == contact) {
 		LM_DBG("unlinking contact [%.*s] from impu [%.*s]\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
+
+		if (exists_ulcb_type(impu->cbs, UL_IMPU_DELETE_CONTACT)) {
+		    LM_DBG("Running callback UL_IMPU_DELETE_CONTACT for contact [%.*s] and impu [%.*s]\n", impu->public_identity.len, impu->public_identity.s, ptr->c.len, ptr->c.s);
+		    run_ul_callbacks(impu->cbs, UL_IMPU_DELETE_CONTACT, impu, ptr);
+		}
+
 		found = 1;
 		impu->newcontacts[i]=0;
 		impu->num_contacts--;
