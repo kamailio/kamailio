@@ -887,6 +887,9 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	if ((is_route_type(REQUEST_ROUTE)) && !is_cflag_set(REG_SAVE_NORPL_FL) && (reg_send_reply(_m) < 0))
 		return -1;
 
+	if (path_enabled && path_mode != PATH_MODE_OFF) {
+		reset_path_vector(_m);
+	}
 	return ret;
 error:
 	update_stat(rejected_registrations, 1);
