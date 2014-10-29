@@ -234,6 +234,32 @@ if(sdp_with_media("video"))
 </programlisting>
 	    </example>
 	</section>
+	<section id="sdpops.f.sdp_with_active_media">
+	    <title>
+		<function moreinfo="none">sdp_with_active_media(type)</function>
+	    </title>
+	    <para>
+		Return true of the SDP has 'media=type ...' line and the media is active.
+		Useful to check	the content of the RTP sessions, such as 'audio' or 'video'.
+		Active media means the port is non-zero and the direction is not "inactive"
+		The parameter can be static string or variable holding the media type.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_with_active_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+# check for active video stream
+if(sdp_with_active_media("video"))
+{
+    # the session has an active video stream
+}
+...
+</programlisting>
+	    </example>
+	</section>
 	<section id="sdpops.f.sdp_remove_media">
 	    <title>
 		<function moreinfo="none">sdp_remove_media(type)</function>

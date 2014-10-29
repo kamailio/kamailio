@@ -48,6 +48,7 @@ static int w_sdp_remove_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
+static int w_sdp_with_active_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_with_transport(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_with_transport_like(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_transport(sip_msg_t* msg, char *bar);
@@ -80,6 +81,8 @@ static cmd_export_t cmds[] = {
 	{"sdp_keep_codecs_by_name",  (cmd_function)w_sdp_keep_codecs_by_name,
 		2, fixup_spve_spve,  0, ANY_ROUTE},
 	{"sdp_with_media",             (cmd_function)w_sdp_with_media,
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_with_active_media",       (cmd_function)w_sdp_with_active_media,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_remove_media",             (cmd_function)w_sdp_remove_media,
 		1, fixup_spve_null,  0, ANY_ROUTE},
@@ -805,6 +808,86 @@ static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar)
 	}
 
 	if(sdp_with_media(msg, &lmedia)<=0)
+		return -1;
+	return 1;
+}
+
+/**
+ * @brief check 'media' matches the value of any 'm=value ...' lines, and that line is active
+ * @return -1 - error; 0 - not found or inactive; 1 - at least one sendrecv, recvonly or sendonly stream
+ */
+static int sdp_with_active_media(sip_msg_t *msg, str *media)
+{
+	int sdp_session_num;
+	int sdp_stream_num;
+	int port_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to search for media type: [%.*s]\n",
+			media->len, media->s);
+
+	sdp_session_num = 0;
+	for(;;)
+	{
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
+		for(;;)
+		{
+			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+			if(!sdp_stream) break;
+
+			LM_DBG("stream %d of %d - media [%.*s]\n",
+					sdp_stream_num, sdp_session_num,
+					sdp_stream->media.len, sdp_stream->media.s);
+			if(media->len==sdp_stream->media.len
+					&& strncasecmp(sdp_stream->media.s, media->s,
+						media->len)==0) {
+				port_num = atoi(sdp_stream->port.s);
+				LM_DBG("Port number is %d\n", port_num);
+				if (port_num != 0) {  /* Zero port number => inactive */
+					LM_DBG("sendrecv_mode %.*s\n", sdp_stream->sendrecv_mode.len, sdp_stream->sendrecv_mode.s);
+					if ((sdp_stream->sendrecv_mode.len == 0) || /* No send/recv mode given => sendrecv */
+						(strncasecmp(sdp_stream->sendrecv_mode.s, "inactive", 8) != 0)) { /* Explicit mode is not inactive */
+						/* Found an active stream for the correct media type */
+						return 1;
+					}
+				}
+			}
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int w_sdp_with_active_media(sip_msg_t* msg, char* media, char *bar)
+{
+	str lmedia = {0, 0};
+
+	if(media==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)media, &lmedia)!=0)
+	{
+		LM_ERR("unable to get the media value\n");
+		return -1;
+	}
+
+	if(sdp_with_active_media(msg, &lmedia)<=0)
 		return -1;
 	return 1;
 }
