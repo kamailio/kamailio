@@ -236,6 +236,10 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	if (param1) {
 		argv[0] = (char *)pkg_malloc(strlen(param1)+1);
+		if (!argv[0]) {
+			LM_ERR("not enough pkg mem\n");
+			return -1;
+		}
 		strcpy(argv[0], param1);
 		argc++;
 	} else {
@@ -244,6 +248,11 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	if (param2) {
 		argv[1] = (char *)pkg_malloc(strlen(param2)+1);
+		if (!argv[1]) {
+			LM_ERR("not enough pkg mem\n");
+			if (argv[0]) pkg_free(argv[0]);
+			return -1;
+		}
 		strcpy(argv[1], param2);
 		argc++;
 	} else {
@@ -362,25 +371,24 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
  */
 char *pv_sprintf(struct sip_msg *m, char *fmt) {
 	int buf_size = 4096;
-	char out[4096];
+	static char out[4096];
 	pv_elem_t *model;
 	str s;
-	char *ret = NULL;
-
+	char *ret;
 
 	s.s = fmt; s.len = strlen(s.s);
 	if(pv_parse_format(&s, &model) < 0) {
-		LM_ERR("pv_sprintf: ERROR: wrong format[%s]!\n",
+		LM_ERR("pv_sprintf: wrong format[%s]!\n",
 			fmt);
 		return NULL;
 	}
 
 	if(pv_printf(m, model, out, &buf_size) < 0) {
+		LM_ERR("pv_printf: failed to print pv value\n");
 		ret = NULL;
 	} else {
 		ret = strdup(out);
 	}
-
 	pv_elem_free_all(model);
 
 	return ret;
