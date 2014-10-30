@@ -270,7 +270,8 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 	if ( record_route( msg, key?&s:0 )<0 )
 		return -1;
 
-	msg->msg_flags |= FL_RR_ADDED;
+	if(get_route_type()!=BRANCH_ROUTE)
+		msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
