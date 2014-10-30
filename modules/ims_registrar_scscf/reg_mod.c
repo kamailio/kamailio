@@ -153,6 +153,7 @@ str sock_hdr_name = {0, 0};
 int subscription_default_expires = 3600; /**< the default value for expires if none found*/
 int subscription_min_expires = 10; /**< minimum subscription expiration time 		*/
 int subscription_max_expires = 1000000; /**< maximum subscription expiration time 		*/
+int subscription_expires_range = 0;
 
 
 extern reg_notification_list *notification_list; /**< list of notifications for reg to be sent			*/
@@ -246,6 +247,7 @@ static param_export_t params[] = {
     {"subscription_min_expires", INT_PARAM, &subscription_min_expires},
     {"subscription_max_expires", INT_PARAM, &subscription_max_expires},
     {"ue_unsubscribe_on_dereg", INT_PARAM, &ue_unsubscribe_on_dereg},
+    {"subscription_expires_range", INT_PARAM, &subscription_expires_range},
     {"user_data_always", INT_PARAM, &user_data_always},
 
     {0, 0, 0}

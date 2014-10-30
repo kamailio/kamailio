@@ -91,6 +91,22 @@ static str ctype_hdr1 = {"Content-Type: ", 14};
 static str ctype_hdr2 = {"\r\n", 2};
 
 extern int ue_unsubscribe_on_dereg;
+extern int subscription_expires_range;
+
+/* \brief
+ * Return randomized expires between expires-range% and expires.
+ * RFC allows only value less or equal to the one provided by UAC.
+ */
+
+static inline int randomize_expires( int expires, int range )
+{
+	/* if no range is given just return expires */
+	if(range == 0) return expires;
+
+	int range_min = expires - (float)range/100 * expires;
+
+	return range_min + (float)(rand()%100)/100 * ( expires - range_min );
+}
 
 int notify_init() {
     notification_list = shm_malloc(sizeof (reg_notification_list));
@@ -1055,6 +1071,8 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 
         if (expires < subscription_min_expires) expires = subscription_min_expires;
         if (expires > subscription_max_expires) expires = subscription_max_expires;
+	
+	expires = randomize_expires(expires, subscription_expires_range);
 
         get_act_time();
         expires_time = expires + act_time;

@@ -86,6 +86,22 @@ extern int store_data_on_dereg; /**< should we store SAR user data on de-registr
 extern int ue_unsubscribe_on_dereg;
 extern int user_data_always;
 
+
+/* \brief
+ * Return randomized expires between expires-range% and expires.
+ * RFC allows only value less or equal to the one provided by UAC.
+ */
+static inline int randomize_expires( int expires, int range )
+{
+	/* if no range is given just return expires */
+	if(range == 0) return expires;
+
+	int range_min = expires - (float)range/100 * expires;
+
+	return range_min + (float)(rand()%100)/100 * ( expires - range_min );
+}
+
+
 /*! \brief
  * Calculate absolute expires value per contact as follows:
  * 1) If the contact has expires value, use the value. If it
@@ -124,6 +140,9 @@ static inline int calc_contact_expires(contact_t *c, unsigned int expires_hdr, i
         r = default_registrar_cfg.em_min_expires;
 
 end:
+	    
+    r = randomize_expires(r, default_registrar_cfg.default_expires_range);
+	    
     LM_DBG("Calculated expires for contact is %d\n", r);
     return time(NULL) + r;
 }
