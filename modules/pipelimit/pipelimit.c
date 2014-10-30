@@ -625,9 +625,9 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 	if(msg==NULL)
 		return -1;
 
-	if(fixup_get_ivalue(msg, (gparam_t*)p3limit, &limit)!=0 || limit<=0)
+	if(fixup_get_ivalue(msg, (gparam_t*)p3limit, &limit)!=0 || limit<0)
 	{
-		LM_ERR("invalid limit value\n");
+		LM_ERR("invalid limit value: %d\n", limit);
 		return -1;
 	}
 
@@ -645,7 +645,7 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 		return -1;
 	}
 
-	pipe = pl_pipe_get(&pipeid, 0);
+	pipe = pl_pipe_get(&pipeid, 1);
 	if(pipe==NULL)
 	{
 		LM_DBG("pipe not found [%.*s] - trying to add it\n",
@@ -663,6 +663,9 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 				pipeid.len, pipeid.s);
 			return -2;
 		}
+	} else {
+		if(limit>0) pipe->limit = limit;
+		pl_pipe_release(&pipe->name);
 	}
 
 	return pl_check(msg, &pipeid);
