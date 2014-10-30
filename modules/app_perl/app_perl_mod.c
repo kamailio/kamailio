@@ -241,6 +241,10 @@ PerlInterpreter *parser_init(void) {
 				} else {
 					LM_INFO("setting lib path: '%s'\n", entry);
 					argv[argc] = pkg_malloc(strlen(entry)+20);
+					if (!argv[argc]) {
+						LM_ERR("not enough pkg mem\n");
+						return NULL;
+					}
 					sprintf(argv[argc], "-I%s", entry);
 					modpathset_end = argc;
 					argc++;
