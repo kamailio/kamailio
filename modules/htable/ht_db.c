@@ -198,7 +198,11 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	do {
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
-			/* not NULL values enforced in table definition ?!?! */
+			if(RES_ROWS(db_res)[i].values[0].type!=DB1_STRING
+					|| VAL_NULL(&RES_ROWS(db_res)[i].values[0])) {
+				LM_ERR("key type must be string and its value not null\n");
+				goto error;
+			}
 			kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
 			if(kname.s==NULL) {
 				LM_ERR("null key in row %d\n", i);
