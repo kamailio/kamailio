@@ -219,7 +219,7 @@ str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_ta
 	    LM_DBG("Subscriber dialog record not found in hash table\n");
 	    lock_release(&sub_dialog_table[hash_code].lock);
 	    return pres_uri;
-    }
+}
 
     //make copy of pres_uri
     pres_uri.s = (char*) shm_malloc(s->pres_uri.len);
@@ -263,10 +263,20 @@ int add_subscriber(impurecord_t* urec,
     *_reg_subscriber = s;
     
     /*DB?*/
-    if (!db_load && db_mode == WRITE_THROUGH && db_insert_subscriber(urec, s) != 0) {
-	    LM_ERR("error inserting subscriber into db");
-	    return -1;
+    if(!db_load && db_mode == WRITE_THROUGH) {
+	if(db_insert_subscriber(urec, s) != 0) {
+	    LM_ERR("Failed to insert subscriber into DB subscriber [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", 
+		    s->presentity_uri.len, s->presentity_uri.s, urec->public_identity.len, urec->public_identity.s);
+	    goto done;
+	}
+	
+	if(db_link_subscriber_to_impu(urec, s) !=0) {
+	    LM_ERR("Failed to update DB linking subscriber [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", 
+		    s->presentity_uri.len, s->presentity_uri.s, urec->public_identity.len, urec->public_identity.s);
+	}
     }
+    
+done:
     return 0;
 }
 
@@ -292,10 +302,10 @@ int update_subscriber(impurecord_t* urec, reg_subscriber** _reg_subscriber, int 
     
     /*DB?*/
     if (db_mode == WRITE_THROUGH && db_insert_subscriber(urec, rs) != 0) {
-	    LM_ERR("error updating subscriber in db");
-	    return -1;
+	    LM_ERR("Failed to insert subscriber into DB subscriber [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", 
+		    rs->presentity_uri.len, rs->presentity_uri.s, urec->public_identity.len, urec->public_identity.s);
     }
-    
+
     return 1;
 }
 
@@ -322,6 +332,11 @@ void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domai
 void delete_subscriber(impurecord_t* urec, reg_subscriber *s) {
     LM_DBG("Deleting subscriber");
     
+    if (db_mode == WRITE_THROUGH && db_unlink_subscriber_from_impu(urec, s) !=0) {
+	    LM_ERR("Failed to delete DB linking subscriber [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", 
+		    s->presentity_uri.len, s->presentity_uri.s, urec->public_identity.len, urec->public_identity.s);
+	    
+    }    
     if (db_mode == WRITE_THROUGH && db_delete_subscriber(urec, s) != 0) {
 	    LM_ERR("error removing subscriber from DB [%.*s]... will still remove from memory\n", s->presentity_uri.len, s->presentity_uri.s);
     }
@@ -364,6 +379,6 @@ void free_subscriber(reg_subscriber *s) {
 
 }
 
-int valid_subscriber(reg_subscriber *s) {
-    return (s->expires > act_time);
+int valid_subscriber(reg_subscriber *s, time_t time) {
+    return (s->expires > time);
 }

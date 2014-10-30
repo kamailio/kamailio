@@ -67,6 +67,12 @@ int impu_contact_insert_query_len;
 char* impu_contact_delete_query = "DELETE FROM impu_contact WHERE impu_id in (select impu.id from impu where impu.impu='%.*s') AND contact_id in (select contact.id from contact where contact.contact='%.*s')";
 int impu_contact_delete_query_len;
 
+char* impu_subscriber_insert_query = "INSERT INTO impu_subscriber (impu_id, subscriber_id) (SELECT I.id, S.id FROM impu I, subscriber S WHERE I.impu='%.*s' and S.event='%.*s' and S.watcher_contact='%.*s' and S.presentity_uri='%.*s')";
+int impu_subscriber_insert_query_len;
+char* impu_subscriber_delete_query = "DELETE FROM impu_subscriber WHERE impu_id in (select impu.id from impu where impu.impu='%.*s') AND subscriber_id in (select subscriber.id from subscriber where subscriber.event='%.*s' and subscriber.watcher_contact='%.*s' and subscriber.presentity_uri='%.*s')";
+int impu_subscriber_delete_query_len;
+
+
 
 extern db1_con_t* ul_dbh;
 extern db_func_t ul_dbf;
@@ -239,9 +245,15 @@ int db_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 	val[0].nul = 0;
 	val[0].val.str_val = _r->public_identity;
 
-	ul_dbf.use_table(ul_dbh, &impu_table);
-	ul_dbf.delete(ul_dbh, key, 0, val, 1);
-
+	if (ul_dbf.use_table(ul_dbh, &impu_table) != 0) {
+		LM_ERR("Unable to use table [%.*s]\n", impu_table.len, impu_table.s);
+		return -1;
+	}
+	if (ul_dbf.delete(ul_dbh, key, 0, val, 1) != 0) {
+		LM_ERR("Unable to delete impu [%.*s] from DB\n", _r->public_identity.len, _r->public_identity.s);
+		return -1;
+	}
+	
 	return 0;
 }
 
@@ -318,17 +330,12 @@ int db_delete_ucontact(ucontact_t* _c) {
 }
 
 int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
-	db1_res_t* _rs;
-	int subscriber_id;
-	int impu_id;
 	int col_num = 12;
 	db_key_t key[col_num];
 	db_val_t val[col_num];
-	db_key_t key_return[1];
-	db_val_t* ret_val;
 	
-	key_return[0] = &id_col;
-
+	LM_DBG("DB: inserting subscriber [%.*s]\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
+	
 	key[0] = &sub_watcher_uri_col;
 	key[1] = &sub_watcher_contact_col;
 	key[2] = &sub_presentity_uri_col;
@@ -389,7 +396,7 @@ int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 	val[11].type = DB1_STR;
 	val[11].nul = 0;
 	val[11].val.str_val = _reg_subscriber->sockinfo_str;
-
+	
 	if (ul_dbf.use_table(ul_dbh, &subscriber_table) != 0) {
 		LM_ERR("Unable to use table [%.*s]\n", subscriber_table.len, subscriber_table.s);
 		return -1;
@@ -398,85 +405,7 @@ int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 		LM_ERR("Failed to insert/update subscriber record for [%.*s]\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
 		return -1;
 	}
-	subscriber_id = ul_dbf.last_inserted_id(ul_dbh);
-	if (subscriber_id <= 0) {
-		/* search for the ID if the contact just entered */
-		if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-			LM_ERR("Unable to find subscriber [%.*s] in DB to complete IMPU-contact mapping\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-			ul_dbf.free_result(ul_dbh, _rs);
-			return -1;
-		}
-
-		if (RES_ROW_N(_rs) == 0) {
-			LM_DBG("Subscriber %.*s not found in DB\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-			ul_dbf.free_result(ul_dbh, _rs);
-			return -1;
-		}
-
-		if (RES_ROW_N(_rs) > 1) {
-			LM_WARN("more than one subscriber found in DB for presentity uri [%.*s] - this should not happen... proceeding with first entry\n",
-				_reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-		}
-
-		ret_val = ROW_VALUES(RES_ROWS(_rs));
-		subscriber_id = ret_val[0].val.int_val;
-		ul_dbf.free_result(ul_dbh, _rs);
-	}
-	LM_DBG("Subscriber ID is %d\n", subscriber_id);
-
-	/* search for ID of the associated IMPU */
-	key[0] = &impu_col;
-	val[0].nul = 0;
-	val[0].type = DB1_STR;
-	val[0].val.str_val = _r->public_identity;
-
-	if (ul_dbf.use_table(ul_dbh, &impu_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", impu_table.len, impu_table.s);
-		return -1;
-	}
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-		LM_ERR("Unable to find IMPU [%.*s] in DB to complete IMPU-contact mapping\n", _r->public_identity.len, _r->public_identity.s);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) == 0) {
-		LM_DBG("IMPU %.*s not found in DB\n", _r->public_identity.len, _r->public_identity.s);
-		ul_dbf.free_result(ul_dbh, _rs);
-		return -1;
-	}
-
-	if (RES_ROW_N(_rs) > 1) {
-		LM_WARN("more than one IMPU found in DB for contact [%.*s] - this should not happen... proceeding with first entry\n",
-				_r->public_identity.len, _r->public_identity.s);
-	}
-	ret_val = ROW_VALUES(RES_ROWS(_rs));
-	impu_id = ret_val[0].val.int_val;
-
-	ul_dbf.free_result(ul_dbh, _rs);
-	LM_DBG("IMPU ID is %d\n", impu_id);
-
-	/* update mapping table between subscriber and IMPU */
-	key[0] = &impu_id_col;
-	key[1] = &subscriber_id_col;
-	val[0].nul = 0;
-	val[0].type = DB1_INT;
-	val[0].val.int_val = impu_id;
-	val[1].nul = 0;
-	val[1].type = DB1_INT;
-	val[1].val.int_val = subscriber_id;
-
-	if (ul_dbf.use_table(ul_dbh, &impu_subscriber_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", impu_subscriber_table.len, impu_subscriber_table.s);
-		return -1;
-	}
-
-	if (ul_dbf.insert_update(ul_dbh, key, val, 2) != 0) {
-		LM_ERR("Failed to insert/update impu-subscriber mapping record for subscriber [%.*s] and impu [%.*s]\n",
-				_reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s,
-				_r->public_identity.len, _r->public_identity.s);
-		return -1;
-	}
-	LM_DBG("Inserted subscriber and impu-subscriber mappings for presentity URI: [%.*s] into DB\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-
+	
 	return 0;
 }
 
@@ -485,44 +414,9 @@ int db_delete_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 	db_key_t key[3];
 	db_val_t val[3];
 	
-	db_key_t key_return[1];
-	db_val_t* ret_val;
-	db1_res_t* _rs;
-	int impu_id, subscriber_id;
-
 	LM_DBG("Deleting subscriber binding [%.*s] on impu [%.*s]\n",
 			_reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s,
 			_r->public_identity.len, _r->public_identity.s);
-
-	/* get id of IMPU entry */
-	key[0] = &impu_col;
-	val[0].type = DB1_STR;
-	val[0].nul = 0;
-	val[0].val.str_val = _r->public_identity;
-	key_return[0] = &id_col;
-
-	if (ul_dbf.use_table(ul_dbh, &impu_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", impu_table.len, impu_table.s);
-		return -1;
-	}
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-		LM_ERR("Unable to find IMPU [%.*s] in DB to complete IMPU-subscriber mapping\n", _r->public_identity.len, _r->public_identity.s);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) == 0) {
-		LM_DBG("IMPU %.*s not found in DB\n", _r->public_identity.len, _r->public_identity.s);
-		ul_dbf.free_result(ul_dbh, _rs);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) > 1) {
-		LM_WARN("more than one IMPU found in DB for contact [%.*s] - this should not happen... proceeding with first entry\n",
-				_r->public_identity.len, _r->public_identity.s);
-	}
-	ret_val = ROW_VALUES(RES_ROWS(_rs));
-	impu_id = ret_val[0].val.int_val;
-
-	ul_dbf.free_result(ul_dbh, _rs);
-	LM_DBG("IMPU ID is %d\n", impu_id);
 
 	/* get subscriber id from DB */
 	if (ul_dbf.use_table(ul_dbh, &subscriber_table) != 0) {
@@ -544,79 +438,13 @@ int db_delete_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 	val[2].nul = 0;
 	val[2].val.str_val = _reg_subscriber->presentity_uri;
 	
-	LM_DBG("Looking for subscriber with event: [%d], watcher contact: [%.*s] and presentity URI [%.*s]\n",
-		_reg_subscriber->event,
-		_reg_subscriber->watcher_contact.len, _reg_subscriber->watcher_contact.s,
-		_reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-	
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 3, 1, NULL, &_rs) != 0) {
-		LM_ERR("Unable to find subscriber [%.*s] in DB to complete IMPU-subscriber mapping removal\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
+	if (ul_dbf.delete(ul_dbh, key, 0, val, 3) != 0) {
+		LM_ERR("Unable to delete subscriber [%.*s] from DB\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
 		return -1;
 	}
-	if (RES_ROW_N(_rs) == 0) {
-		LM_DBG("Subscriber %.*s not found in DB\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-		ul_dbf.free_result(ul_dbh, _rs);
-		return -1;
-	}
-	if (RES_ROW_N(_rs) > 1) {
-		LM_WARN("more than one subscriber found in DB for contact [%.*s] - this should not happen... proceeding with first entry\n",
-				_reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-	}
-	ret_val = ROW_VALUES(RES_ROWS(_rs));
-	subscriber_id = ret_val[0].val.int_val;
-	ul_dbf.free_result(ul_dbh, _rs);
-	LM_DBG("subscriber ID is %d\n", subscriber_id);
-
-	LM_DBG("need to remove subscriber-impu mapping %d:%d\n", impu_id, subscriber_id);
-
-	/* update impu-subscribe mapping table */
-	if (ul_dbf.use_table(ul_dbh, &impu_subscriber_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", impu_subscriber_table.len, impu_subscriber_table.s);
-		return -1;
-	}
-	key[0] = &subscriber_id_col;
-	key[1] = &impu_id_col;
-	val[0].type = DB1_INT;
-	val[0].nul = 0;
-	val[0].val.int_val = subscriber_id;
-	val[1].type = DB1_INT;
-	val[1].nul = 0;
-	val[1].val.int_val = impu_id;
-
-	if (ul_dbf.delete(ul_dbh, key, 0, val, 2) != 0) {
-		LM_ERR("unable to remove impu-subscriber mapping from DB for subscriber [%.*s], impu [%.*s]  ..... continuing\n",
-				_reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s,
-				_r->public_identity.len, _r->public_identity.s);
-	}
-
-	/* delete subscriber from subscriber table - IFF there are no more mappings for it to impus */
-	if (ul_dbf.query(ul_dbh, key, 0, val, key_return, 1, 1, NULL, &_rs) != 0) {
-		LM_WARN("error searching for impu-subscriber mappings in DB\n");
-	}
-	if (RES_ROW_N(_rs) > 0) {
-		ul_dbf.free_result(ul_dbh, _rs);
-		LM_DBG("impu-subscriber mappings still exist, not removing subscriber from DB\n");
-		return 0;
-	}
-	ul_dbf.free_result(ul_dbh, _rs);
-
-	key[0] = &id_col;
-	val[0].type = DB1_INT;
-	val[0].nul = 0;
-	val[0].val.int_val = subscriber_id;
-	
-	if (ul_dbf.use_table(ul_dbh, &subscriber_table) != 0) {
-		LM_ERR("Unable to use table [%.*s]\n", subscriber_table.len, subscriber_table.s);
-		return -1;
-	}
-
-	if (ul_dbf.delete(ul_dbh, key, 0, val, 1) != 0) {
-		LM_ERR("unable to remove subscriber from DB [%.*s]\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-	}
-	
-	LM_DBG("Deleted subscriber and impu-subscriber mappings for presentity URI: [%.*s] from DB\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
 	
 	return 0;
+	
 }
 
 
@@ -1152,6 +980,85 @@ int db_unlink_contact_from_impu(impurecord_t* _r, ucontact_t* _c) {
 	return -1;
     }
     LM_DBG("Delete query success\n");
+
+    return 0;
+}
+
+int db_unlink_subscriber_from_impu(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
+    int len;
+    db1_res_t* rs;
+    char event[11];
+    int event_len;
+
+    LM_DBG("DB: un-linking subscriber to IMPU\n");
+    
+    event_len = int_to_str_len(_reg_subscriber->event);
+    snprintf(event, event_len + 1, "%d", _reg_subscriber->event);
+
+    len = strlen(impu_subscriber_delete_query) + _r->public_identity.len + _reg_subscriber->watcher_contact.len + _reg_subscriber->presentity_uri.len + strlen(event) + 1;
+
+    if (!query_buffer_len || query_buffer_len < len) {
+	if (query_buffer.s) {
+	    pkg_free(query_buffer.s);
+	}
+	query_buffer.s = (char*) pkg_malloc(len);
+	if (!query_buffer.s) {
+	    LM_ERR("no more pkg mem\n");
+	    return -1;
+	}
+	query_buffer_len = len;
+	
+    }
+
+    snprintf(query_buffer.s, query_buffer_len, impu_subscriber_delete_query, _r->public_identity.len, _r->public_identity.s, strlen(event), event, 
+	    _reg_subscriber->watcher_contact.len, _reg_subscriber->watcher_contact.s, _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
+    query_buffer.len = strlen(query_buffer.s);//len;
+
+    if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
+	LM_ERR("Unable to un-link impu-subscriber in DB - impu [%.*s], subscriber [%.*s]\n", _r->public_identity.len, _r->public_identity.s, _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
+	return -1;
+    }
+    LM_DBG("Delete query success\n");
+
+    return 0;
+}
+
+int db_link_subscriber_to_impu(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
+    int len;
+    db1_res_t* rs;
+    char event[11];
+    int event_len;
+    
+    LM_DBG("DB: linking subscriber to IMPU\n");
+    
+    event_len = int_to_str_len(_reg_subscriber->event);
+    snprintf(event, event_len + 1, "%d", _reg_subscriber->event);
+
+    len = strlen(impu_subscriber_insert_query) + _r->public_identity.len + _reg_subscriber->watcher_contact.len + _reg_subscriber->presentity_uri.len + strlen(event) + 1;
+
+    if (!query_buffer_len || query_buffer_len < len) {
+	if (query_buffer.s) {
+	    pkg_free(query_buffer.s);
+	}
+	query_buffer.s = (char*) pkg_malloc(len);
+	if (!query_buffer.s) {
+	    LM_ERR("no more pkg mem\n");
+	    return -1;
+	}
+	query_buffer_len = len;
+	
+    }
+
+    snprintf(query_buffer.s, query_buffer_len, impu_subscriber_insert_query, _r->public_identity.len, _r->public_identity.s, strlen(event), event, 
+	    _reg_subscriber->watcher_contact.len, _reg_subscriber->watcher_contact.s, _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
+    query_buffer.len = strlen(query_buffer.s);//len;
+
+    LM_DBG("QUERY IS [%.*s] and len is %d\n", query_buffer.len, query_buffer.s, query_buffer.len);
+    if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
+	LM_ERR("Unable to link impu-subscriber in DB - impu [%.*s], subscriber [%.*s]\n", _r->public_identity.len, _r->public_identity.s, _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
+	return -1;
+    }
+    LM_DBG("Query success\n");
 
     return 0;
 }

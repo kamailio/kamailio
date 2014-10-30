@@ -327,7 +327,7 @@ static inline void nodb_timer(impurecord_t* _r) {
     s = _r->shead;
     LM_DBG("Checking validity of IMPU: <%.*s> registration subscriptions\n", _r->public_identity.len, _r->public_identity.s);
     while (s) {
-        if (!valid_subscriber(s)) {
+        if (!valid_subscriber(s, act_time)) {
             LM_DBG("DBG:registrar_timer: Subscriber with watcher_contact <%.*s> and presentity uri <%.*s> expired and removed.\n",
                     s->watcher_contact.len, s->watcher_contact.s, s->presentity_uri.len, s->presentity_uri.s);
             delete_subscriber(_r, s);
@@ -938,7 +938,7 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
 	} else {
 	    if (ptr == contact) {
 		LM_DBG("unlinking contact [%.*s] from impu [%.*s]\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
-
+		
 		if (exists_ulcb_type(impu->cbs, UL_IMPU_DELETE_CONTACT)) {
 		    LM_DBG("Running callback UL_IMPU_DELETE_CONTACT for contact [%.*s] and impu [%.*s]\n", impu->public_identity.len, impu->public_identity.s, ptr->c.len, ptr->c.s);
 		    run_ul_callbacks(impu->cbs, UL_IMPU_DELETE_CONTACT, impu, ptr);

@@ -65,7 +65,7 @@ void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domai
 
 void free_subscriber(reg_subscriber *s);
 
-int valid_subscriber(reg_subscriber *s);
+int valid_subscriber(reg_subscriber *s, time_t act_time);
 
 str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_tag);
 

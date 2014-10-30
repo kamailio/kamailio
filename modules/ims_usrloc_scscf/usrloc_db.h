@@ -71,6 +71,9 @@ int db_unlink_contact_from_impu(impurecord_t* _r, ucontact_t* _c);
 int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber);
 int db_delete_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber);
 
+int db_unlink_subscriber_from_impu(impurecord_t* _r, reg_subscriber* _reg_subscriber);
+int db_link_subscriber_to_impu(impurecord_t* _r, reg_subscriber* _reg_subscriber);
+
 int preload_udomain(db1_con_t* _c, udomain_t* _d);
 
 #endif /* USRLOC_DB_H_ */
