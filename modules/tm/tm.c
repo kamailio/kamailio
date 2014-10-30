@@ -2140,6 +2140,13 @@ int t_check_trans(struct sip_msg* msg)
 	int branch;
 	int ret;
 	
+	/* already processing a T */
+	if(get_route_type()==FAILURE_ROUTE
+			|| get_route_type()==BRANCH_ROUTE
+			|| get_route_type()==TM_ONREPLY_ROUTE) {
+		return 1;
+	}
+
 	if (msg->first_line.type==SIP_REPLY) {
 		branch = 0;
 		ret = (t_check_msg( msg , &branch)==1) ? 1 : -1;
@@ -2171,7 +2178,7 @@ int t_check_trans(struct sip_msg* msg)
 				}
 				/* no need for UNREF(t); set_t(0) - the end-of-script
 				   t_unref callback will take care of them */
-				return 0; /* return from the script */
+				return 0; /* exit from the script */
 		}
 		/* not found or error */
 	}
