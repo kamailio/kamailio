@@ -394,19 +394,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				tm_xdata_swap(new_cell, &backup_xd, 1);
 				setsflagsval(sflag_bk);
 
-				if (unlikely(lreq.new_uri.s))
-				{
-					pkg_free(lreq.new_uri.s);
-					lreq.new_uri.s=0;
-					lreq.new_uri.len=0;
-				}
-				if (unlikely(lreq.dst_uri.s))
-				{
-					pkg_free(lreq.dst_uri.s);
-					lreq.dst_uri.s=0;
-					lreq.dst_uri.len=0;
-				}
-
+				/* rebuild the new message content */
 				if(lreq.force_send_socket != uac_r->dialog->send_sock) {
 					LM_DBG("Send socket updated to: %.*s",
 							lreq.force_send_socket->address_str.len,
@@ -457,6 +445,20 @@ normal_update:
 							/* a possible change of the method is not handled! */
 						}
 					}
+				}
+
+				/* clean local msg structure */
+				if (unlikely(lreq.new_uri.s))
+				{
+					pkg_free(lreq.new_uri.s);
+					lreq.new_uri.s=0;
+					lreq.new_uri.len=0;
+				}
+				if (unlikely(lreq.dst_uri.s))
+				{
+					pkg_free(lreq.dst_uri.s);
+					lreq.dst_uri.s=0;
+					lreq.dst_uri.len=0;
 				}
 				lreq.buf=0; /* covers the obsolete DYN_BUF */
 				free_sip_msg(&lreq);
