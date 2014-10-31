@@ -140,6 +140,9 @@ void dlg_refer_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 
+	/* after REFER, the CSeq must be increased */
+	dialog_info->loc_seq.value++;
+
 	set_uac_req(&uac_r, &met, NULL, NULL, dialog_info, 0, NULL, NULL);
 	result = d_tmb.t_request_within(&uac_r);
 
