@@ -191,6 +191,7 @@
 #include "ppcfg.h"
 #include "sock_ut.h"
 #include "async_task.h"
+#include "dset.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
