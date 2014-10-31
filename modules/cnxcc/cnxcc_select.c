@@ -29,35 +29,32 @@
 
 extern data_t _data;
 
-int sel_root(str* res, select_t* s, struct sip_msg* msg)  /* dummy */
-{
+int sel_root(str* res, select_t* s, struct sip_msg* msg)  /* dummy */ {
 	return 0;
 }
 
-int sel_channels(str* res, select_t* s, struct sip_msg* msg)
-{
-	LM_DBG("sel_channels");
+int sel_channels(str* res, select_t* s, struct sip_msg* msg) {
+	LM_DBG("sel_channels\n");
 
 	return 0;
 }
 
-int sel_channels_count(str* res, select_t* s, struct sip_msg* msg)
-{
-	LM_DBG("sel_channels_count for [%.*s]",  s->params[2].v.s.len, s->params[2].v.s.s);
+int sel_channels_count(str* res, select_t* s, struct sip_msg* msg) {
+	LM_DBG("sel_channels_count for [%.*s]\n",  s->params[2].v.s.len, s->params[2].v.s.s);
 
 	credit_data_t *credit_data	= NULL;
 	int value					= 0;
 
 	if (s->params[2].v.s.len <= 0)
 	{
-		LM_ERR("Client must be specified");
+		LM_ERR("Client must be specified\n");
 		return -1;
 	}
 
 	if (try_get_credit_data_entry(&s->params[2].v.s, &credit_data) >= 0)
 		value = credit_data->number_of_calls;
 	else
-		LM_DBG("Client [%.*s] not found", s->params[2].v.s.len, s->params[2].v.s.s);
+		LM_DBG("Client [%.*s] not found\n", s->params[2].v.s.len, s->params[2].v.s.s);
 
 	res->s 	= int2str(value, &res->len);
 
