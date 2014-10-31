@@ -69,6 +69,7 @@
 #include "../../ip_addr.h"
 #include "../../socket_info.h"
 #include "../../compiler_opt.h"
+#include "../../parser/parse_cseq.h"
 #include "config.h"
 #include "ut.h"
 #include "h_table.h"
@@ -184,6 +185,43 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 	return hashid;
 }
 
+/**
+ * refresh hdr shortcuts inside new buffer
+ */
+int uac_refresh_hdr_shortcuts(tm_cell_t *tcell, char *buf, int buf_len)
+{
+	sip_msg_t lreq;
+	struct cseq_body *cs;
+
+	if(likely(build_sip_msg_from_buf(&lreq, buf, buf_len, inc_msg_no())<0)) {
+		LM_ERR("failed to parse msg buffer\n");
+		return -1;
+	}
+	if(parse_headers(&lreq,HDR_CSEQ_F|HDR_CALLID_F|HDR_FROM_F|HDR_TO_F,0)<0) {
+		LM_ERR("failed to parse headers in new message\n");
+		goto error;
+	}
+	tcell->from.s = lreq.from->name.s;
+	tcell->from.len = lreq.from->len;
+	tcell->to.s = lreq.to->name.s;
+	tcell->to.len = lreq.to->len;
+	tcell->callid.s = lreq.callid->name.s;
+	tcell->callid.len = lreq.callid->len;
+
+	cs = get_cseq(&lreq);
+	tcell->cseq_n.s = lreq.cseq->name.s;
+	tcell->cseq_n.len = (int)(cs->number.s + cs->number.len - lreq.cseq->name.s);
+
+	LM_DBG("=========== cseq: [%.*s]\n", tcell->cseq_n.len, tcell->cseq_n.s);
+	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	free_sip_msg(&lreq);
+	return 0;
+
+error:
+	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	free_sip_msg(&lreq);
+	return -1;
+}
 
 /* WARNING: - dst_cell contains the created cell, but it is un-referenced
  *            (before using it make sure you REF() it first)
@@ -220,6 +258,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	snd_flags_t snd_flags;
 	tm_xlinks_t backup_xd;
 	tm_xdata_t local_xd;
+	int refresh_shortcuts = 0;
 
 	ret=-1;
 	hi=0; /* make gcc happy */
@@ -427,6 +466,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 						buf = buf1;
 						buf_len = buf_len1;
 						/* a possible change of the method is not handled! */
+						refresh_shortcuts = 1;
 					}
 
 				} else {
@@ -443,6 +483,7 @@ normal_update:
 							buf = buf1;
 							buf_len = buf_len1;
 							/* a possible change of the method is not handled! */
+							refresh_shortcuts = 1;
 						}
 					}
 				}
@@ -472,6 +513,12 @@ normal_update:
 
 	request->buffer = buf;
 	request->buffer_len = buf_len;
+	if(unlikely(refresh_shortcuts==1)) {
+		if(uac_refresh_hdr_shortcuts(new_cell, buf, buf_len)<0) {
+			LM_ERR("failed to refresh header shortcuts\n");
+			goto error1;
+		}
+	}
 	new_cell->nr_of_outgoings++;
 
 	/* Register the callbacks after everything is successful and nothing can fail.
