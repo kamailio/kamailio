@@ -35,7 +35,7 @@
 	</para>
 	<para>
 		If your accounting program does not maintain the state of the call in real time, this module can provide you
-		that ability.
+		with that ability.
 	</para>
 	<para>
 		Cnxcc can also provide more common means of monitoring, i.e., by time limit or by maximum simultaneous calls.
@@ -59,22 +59,41 @@
 		</itemizedlist>
 	    </para>
 	</section>
+	<section>
+	    <title>Libraries</title>
+	    <para>
+		The following module must be loaded before this module: 
+		<itemizedlist>
+		    <listitem>
+		    <para>
+			<emphasis> hiredis-devel >= 0.11.0 </emphasis>
+		    </para>
+		    </listitem>
+		    <listitem>
+		    <para>
+			<emphasis> libevent-devel >= 2.0.18-2 </emphasis>
+		    </para>
+		    </listitem>
+
+		</itemizedlist>
+	    </para>
+	</section>
+
     </section>
 
     <section>
 	<title>Parameters</title>
 	<section>
-		<title><varname> dlg_flag </varname> (integer)</title>
+		<title><varname> redis </varname> (integer)</title>
 	    <para>
-		Flag to indicate if the dialog must be monitored or not. Messages are flagged with this value if we call one of
-		the monitoring functions.
+		Redis datasource connection information
 	    </para>
 	    <example>
 
 		<title>dlg_flag</title>
 		<programlisting format="linespecific">
 ...
-modparam("cnxcc", "dlg_flag", 29)
+modparam("cnxcc", "redis", "addr=127.0.0.1;port=6379;db=1")
 ...		
 		</programlisting>
 	    </example>
@@ -144,8 +163,7 @@ $var(cps)   = "2.00";         # cost per second
 $var(initial_p)   = "030";    # intial pulse
 $var(final_p)   = "006";      # final pulse
 
-cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)",
-                     "$var(initial_p)", "$var(final_p)");
+cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)", "$var(initial_p)", "$var(final_p)");
 ...		
 		</programlisting>
 	    </example>
@@ -275,17 +293,17 @@ $var(max_chan)  = 2;
 $var(retcode)   = cnxcc_set_max_channels("$var(customer)", "$var(max_chan)");
 
 if ($var(retcode) == -1) {
-    xlog("Error setting up credit control");
-    return;
+	xlog("Error setting up credit control");
+	return;
 }
 
 if ($var(retcode) &lt; -1) {
-    xlog("Too many channels for customer");
-    sl_send_reply(403, "Forbidden");
+        xlog("Too many channels for customer");
+        sl_send_reply(403, "Forbidden");
 
-    if (!cnxcc_terminate_all("$var(customer)")) {
-        xlog("Error terminating customer's calls");
-    }
+        if (!cnxcc_terminate_all("$var(customer)")) {
+		xlog("Error terminating customer's calls");
+	}
 
 	exit;
 }
@@ -325,7 +343,7 @@ if ($var(retcode) &lt; -1) {
 $var(customer)  = "john-doe-123-basic";
 
 if (!cnxcc_terminate_all("$var(customer)")) {
-    xlog("Error terminating customer's calls");
+	xlog("Error terminating customer's calls");
 }
 ...
 		</programlisting>
@@ -400,9 +418,9 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 ...
 event_route[cnxcc:call-shutdown]
 {
-    xlog("L_INFO", "[$ci]: call killed");
+	xlog("L_INFO", "[$ci]: call killed");
 
-    # perform some kind of notification, database update, email sending, etc.
+        # perform some kind of notification, database update, email sending, etc.
 }
 ...
 		</programlisting>
@@ -439,13 +457,14 @@ route[CNXCC]
                           "$var(cost_per_sec)",
                           "$var(i_pulse)",
                           "$var(f_pulse)")) {
-             xlog("Error setting up credit control");
+		 xlog("Error setting up credit control");
       	}
 }
 
 event_route[cnxcc:call-shutdown]
 {
 	xlog("L_INFO", "[$ci]: call killed");
+
 
 }	    
 ...

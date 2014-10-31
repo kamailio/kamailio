@@ -1,10 +1,12 @@
 cnxcc Module
 
-Carlos Ruiz Diaz
+Carlos Ruiz Díaz
 
    ConexionGroup S.A.
 
-   Copyright © 2013 Carlos Ruiz Diaz, carlos.ruizdiaz@gmail.com
+   Copyright © 2013 Carlos Ruiz Díaz, carlos.ruizdiaz@gmail.com
+
+   Copyright © 2014 Carlos Ruiz Díaz, carlos@latamvoices.com
      __________________________________________________________________
 
    Table of Contents
@@ -15,10 +17,11 @@ Carlos Ruiz Diaz
         2. Dependencies
 
               2.1. Modules
+              2.2. Libraries
 
         3. Parameters
 
-              3.1. dlg_flag (integer)
+              3.1. redis (integer)
               3.2. credit_check_period (integer)
 
         4. Functions
@@ -58,10 +61,11 @@ Chapter 1. Admin Guide
    2. Dependencies
 
         2.1. Modules
+        2.2. Libraries
 
    3. Parameters
 
-        3.1. dlg_flag (integer)
+        3.1. redis (integer)
         3.2. credit_check_period (integer)
 
    4. Functions
@@ -106,7 +110,7 @@ Chapter 1. Admin Guide
    that are equal to the cost per second of both calls.
 
    If your accounting program does not maintain the state of the call in
-   real time, this module can provide you that ability.
+   real time, this module can provide you with that ability.
 
    Cnxcc can also provide more common means of monitoring, i.e., by time
    limit or by maximum simultaneous calls.
@@ -114,25 +118,31 @@ Chapter 1. Admin Guide
 2. Dependencies
 
    2.1. Modules
+   2.2. Libraries
 
 2.1. Modules
 
    The following module must be loaded before this module:
      * dialog
 
+2.2. Libraries
+
+   The following module must be loaded before this module:
+     * hiredis-devel >= 0.11.0
+     * libevent-devel >= 2.0.18-2
+
 3. Parameters
 
-   3.1. dlg_flag (integer)
+   3.1. redis (integer)
    3.2. credit_check_period (integer)
 
-3.1.  dlg_flag (integer)
+3.1.  redis (integer)
 
-   Flag to indicate if the dialog must be monitored or not. Messages are
-   flagged with this value if we call one of the monitoring functions.
+   Redis datasource connection information
 
    Example 1.1. dlg_flag
 ...
-modparam("cnxcc", "dlg_flag", 29)
+modparam("cnxcc", "redis", "addr=127.0.0.1;port=6379;db=1")
 ...
 
 3.2. credit_check_period (integer)

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 #ifndef _CNXCC_MOD_H
@@ -30,37 +30,34 @@
 
 #define str_shm_free_if_not_null(_var_) if (_var_.s != NULL)  { shm_free(_var_.s); _var_.s = NULL; _var_.len = 0; }
 
-typedef struct stats
-{
+typedef struct stats {
 	unsigned int total;
 	unsigned int active;
 	unsigned int dropped;
 } stats_t;
 
-typedef enum cnxpvtypes
-{
+typedef enum cnxpvtypes {
 	CNX_PV_ACTIVE = 1,
 	CNX_PV_TOTAL,
 	CNX_PV_DROPPED
 } cnxpvtypes_t;
 
-typedef enum credit_type
-{
+typedef enum credit_type {
 	CREDIT_TIME,
 	CREDIT_MONEY,
 	CREDIT_CHANNEL
 } credit_type_t;
 
-typedef struct hash_tables
-{
+typedef struct hash_tables {
 	struct str_hash_table *credit_data_by_client;
 	struct str_hash_table *call_data_by_cid;
 
 	gen_lock_t lock;
 } hash_tables_t;
 
-typedef struct data
-{
+struct redis;
+
+typedef struct data {
 	gen_lock_t lock;
 
 	hash_tables_t time;
@@ -84,10 +81,17 @@ typedef struct data
 
 	int check_period;
 
+	str redis_cnn_str;
+	struct {
+		char host[40];
+		int port;
+		int db;
+	} redis_cnn_info;
+	struct redis *redis;
+
 } data_t;
 
-typedef struct sip_data
-{
+typedef struct sip_data {
 	str callid;
 	str from_uri;
 	str from_tag;
@@ -95,8 +99,7 @@ typedef struct sip_data
 	str to_tag;
 } sip_data_t;
 
-typedef struct money_spec_data
-{
+typedef struct money_spec_data {
 	double cost_per_second;
 	int initial_pulse;
 	int final_pulse;
@@ -104,8 +107,7 @@ typedef struct money_spec_data
 } money_spec_data_t;
 
 struct call;
-typedef struct call
-{
+typedef struct call {
 	struct call *prev;
 	struct call *next;
 
@@ -126,15 +128,13 @@ typedef struct call
 	sip_data_t sip_data;
 } call_t;
 
-typedef struct call_array
-{
+typedef struct call_array {
 	call_t *array;
 	int length;
 
 } call_array_t;
 
-typedef struct credit_data
-{
+typedef struct credit_data {
 	gen_lock_t lock;
 
 	double max_amount;
@@ -147,6 +147,9 @@ typedef struct credit_data
 
 	call_t *call_list;
 
+	char *str_id;
+	// flag to mark this instance in the process of being eliminated
+	int deallocating:1;
 } credit_data_t;
 
 

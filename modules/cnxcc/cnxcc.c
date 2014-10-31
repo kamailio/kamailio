@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 #include <time.h>
@@ -28,17 +28,17 @@
 
 #include "cnxcc.h"
 
-void get_datetime(str *dest)
+inline void get_datetime(str *dest)
 {
 	timestamp2isodt(dest, get_current_timestamp());
 }
 
-unsigned int get_current_timestamp()
+inline unsigned int get_current_timestamp()
 {
 	return time(NULL);
 }
 
-int timestamp2isodt(str *dest, unsigned int timestamp)
+inline int timestamp2isodt(str *dest, unsigned int timestamp)
 {
 	time_t  		tim;
 	struct tm 		*tmPtr;

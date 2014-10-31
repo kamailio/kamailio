@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -34,26 +34,23 @@ char _faked_sip_msg_buf[FAKED_SIP_MSG_BUF_LEN];
 
 static struct sip_msg _faked_msg;
 
-int faked_msg_init_with_dlg_info(str *callid, str *from_uri, str *from_tag, str *to_uri, str *to_tag, struct sip_msg **msg)
-{
+int faked_msg_init_with_dlg_info(str *callid, str *from_uri, str *from_tag, str *to_uri, str *to_tag, struct sip_msg **msg) {
 	memset(_faked_sip_msg_buf, 0, FAKED_SIP_MSG_BUF_LEN);
 
 	sprintf(_faked_sip_msg_buf, FAKED_SIP_MSG_FORMAT,
 				from_uri->len, from_uri->s, from_tag->len, from_tag->s,
 				to_uri->len, to_uri->s, to_tag->len, to_tag->s,
 				callid->len, callid->s);
-
+ 
 	LM_DBG("fake msg:\n%s\n", _faked_sip_msg_buf);
-	memset(&_faked_msg, 0, sizeof(struct sip_msg));
 
 	_faked_msg.buf = _faked_sip_msg_buf;
 	_faked_msg.len = strlen(_faked_sip_msg_buf);
 
 	_faked_msg.set_global_address	= default_global_address;
-	_faked_msg.set_global_port		= default_global_port;
+	_faked_msg.set_global_port	= default_global_port;
 
-	if (parse_msg(_faked_msg.buf, _faked_msg.len, &_faked_msg) != 0)
-	{
+	if (parse_msg(_faked_msg.buf, _faked_msg.len, &_faked_msg) != 0) {
 		LM_ERR("parse_msg failed\n");
 		return -1;
 	}
