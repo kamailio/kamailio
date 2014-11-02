@@ -89,6 +89,7 @@ static str grp_avp_param = {NULL, 0};
 static str cnt_avp_param = {NULL, 0};
 static str dstid_avp_param = {NULL, 0};
 static str attrs_avp_param = {NULL, 0};
+static str sock_avp_param = {NULL, 0};
 str hash_pvar_param = {NULL, 0};
 
 int_str dst_avp_name;
@@ -101,6 +102,8 @@ int_str dstid_avp_name;
 unsigned short dstid_avp_type;
 int_str attrs_avp_name;
 unsigned short attrs_avp_type;
+int_str sock_avp_name;
+unsigned short sock_avp_type;
 
 pv_elem_t * hash_param_model = NULL;
 
@@ -114,6 +117,9 @@ int ds_probing_mode  = DS_PROBE_NONE;
 static str ds_ping_reply_codes_str= {NULL, 0};
 static int** ds_ping_reply_codes = NULL;
 static int* ds_ping_reply_codes_cnt;
+
+str ds_default_socket       = {NULL, 0};
+struct socket_info * ds_default_sockinfo = NULL;
 
 int ds_hash_size = 0;
 int ds_hash_expire = 7200;
@@ -224,6 +230,7 @@ static param_export_t params[]={
 	{"cnt_avp",         PARAM_STR, &cnt_avp_param},
 	{"dstid_avp",       PARAM_STR, &dstid_avp_param},
 	{"attrs_avp",       PARAM_STR, &attrs_avp_param},
+	{"sock_avp",        PARAM_STR, &sock_avp_param},
 	{"hash_pvar",       PARAM_STR, &hash_pvar_param},
 	{"setid_pvname",    PARAM_STR, &ds_setid_pvname},
 	{"attrs_pvname",    PARAM_STR, &ds_attrs_pvname},
@@ -238,6 +245,7 @@ static param_export_t params[]={
 	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
 	{"outbound_proxy",  PARAM_STR, &ds_outbound_proxy},
+	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
 	{0,0,0}
 };
 
@@ -272,6 +280,8 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	pv_spec_t avp_spec;
+	str host;
+	int port, proto;
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -432,6 +442,28 @@ static int mod_init(void)
 		attrs_avp_type = 0;
 	}
 
+	if (sock_avp_param.s && sock_avp_param.len > 0)
+	{
+		if (pv_parse_spec(&sock_avp_param, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP)
+		{
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+					sock_avp_param.len, sock_avp_param.s);
+			return -1;
+		}
+
+		if(pv_get_avp_name(0, &(avp_spec.pvp), &sock_avp_name,
+					&sock_avp_type)!=0)
+		{
+			LM_ERR("[%.*s]- invalid AVP definition\n", sock_avp_param.len,
+					sock_avp_param.s);
+			return -1;
+		}
+	} else {
+		sock_avp_name.n = 0;
+		sock_avp_type = 0;
+	}
+
 	if (hash_pvar_param.s && *hash_pvar_param.s) {
 		if(pv_parse_format(&hash_pvar_param, &hash_param_model) < 0
 				|| hash_param_model==NULL) {
@@ -493,11 +525,25 @@ static int mod_init(void)
 		register_timer(ds_check_timer, NULL, ds_ping_interval);
 	}
 
+	if (ds_default_socket.s && ds_default_socket.len > 0) {
+		if (parse_phostport( ds_default_socket.s, &host.s, &host.len,
+				&port, &proto)!=0) {
+			LM_ERR("bad socket <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
+			return -1;
+		}
+		ds_default_sockinfo = grep_sock_info( &host, (unsigned short)port, proto);
+		if (ds_default_sockinfo==0) {
+			LM_WARN("non-local socket <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
+			return -1;
+		}
+		LM_INFO("default dispatcher socket set to <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
+	}
+
 	return 0;
 }
 
 /*! \brief
- * Initialize children
+ * Initialize childreng
  */
 static int child_init(int rank)
 {
@@ -720,7 +766,7 @@ static int w_ds_load_update(struct sip_msg *msg, char *str1, char *str2)
  */
 static int ds_warn_fixup(void** param, int param_no)
 {
-	if(!dst_avp_param.s || !grp_avp_param.s || !cnt_avp_param.s)
+	if(!dst_avp_param.s || !grp_avp_param.s || !cnt_avp_param.s || !sock_avp_param.s)
 	{
 		LM_ERR("failover functions used, but AVPs paraamters required"
 				" are NULL -- feature disabled\n");
@@ -1149,12 +1195,14 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Internal error creating dest struct");
 					return;
 				}
-				if(rpc->struct_add(wh, "SSdd",
+				if(rpc->struct_add(wh, "SSddS",
 							"BODY", &(list->dlist[j].attrs.body),
 							"DUID", (list->dlist[j].attrs.duid.s)?
 							&(list->dlist[j].attrs.duid):&data,
 							"MAXLOAD", list->dlist[j].attrs.maxload,
-							"WEIGHT", list->dlist[j].attrs.weight)<0)
+							"WEIGHT", list->dlist[j].attrs.weight,
+							"SOCKET", (list->dlist[j].attrs.socket.s)?
+							&(list->dlist[j].attrs.socket):&data)<0)
 				{
 					rpc->fault(ctx, 500, "Internal error creating attrs struct");
 					return;

@@ -50,20 +50,22 @@ Carsten Bock
               3.13. cnt_avp (str)
               3.14. dstid_avp (str)
               3.15. attrs_avp (str)
-              3.16. hash_pvar (str)
-              3.17. setid_pvname (str)
-              3.18. attrs_pvname (str)
-              3.19. ds_ping_method (string)
-              3.20. ds_ping_from (string)
-              3.21. ds_ping_interval (int)
-              3.22. ds_probing_threshold (int)
-              3.23. ds_ping_reply_codes (string)
-              3.24. ds_probing_mode (int)
-              3.25. ds_hash_size (int)
-              3.26. ds_hash_expire (int)
-              3.27. ds_hash_initexpire (int)
-              3.28. ds_hash_check_interval (int)
-              3.29. outbound_proxy (str)
+              3.16. sock_avp (str)
+              3.17. hash_pvar (str)
+              3.18. setid_pvname (str)
+              3.19. attrs_pvname (str)
+              3.20. ds_ping_method (string)
+              3.21. ds_ping_from (string)
+              3.22. ds_ping_interval (int)
+              3.23. ds_probing_threshold (int)
+              3.24. ds_ping_reply_codes (string)
+              3.25. ds_probing_mode (int)
+              3.26. ds_hash_size (int)
+              3.27. ds_hash_expire (int)
+              3.28. ds_hash_initexpire (int)
+              3.29. ds_hash_check_interval (int)
+              3.30. outbound_proxy (str)
+              3.31. ds_default_socket (str)
 
         4. Functions
 
@@ -117,27 +119,29 @@ Carsten Bock
    1.13. Set the "cnt_avp" parameter
    1.14. Set the "dstid_avp" parameter
    1.15. Set the "attrs_avp" parameter
-   1.16. Use $avp(i:273) for hashing:
-   1.17. Use combination of PVs for hashing:
-   1.18. Set the "setid_pvname" parameter
-   1.19. Set the "attrs_pvname" parameter
-   1.20. Set the "ds_ping_method" parameter
-   1.21. Set the "ds_ping_from" parameter
-   1.22. Set the "ds_ping_interval" parameter
-   1.23. Set the "ds_probing_threshhold" parameter
-   1.24. Set the "ds_ping_reply_codes" parameter
-   1.25. Set the "ds_probing_mode" parameter
-   1.26. Set the "ds_hash_size" parameter
-   1.27. Set the "ds_hash_expire" parameter
-   1.28. Set the "ds_hash_initexpire" parameter
-   1.29. Set the "ds_hash_check_interval" parameter
-   1.30. Set the "outbound_proxy" parameter
-   1.31. ds_select_dst usage
-   1.32. ds_mark_dst usage
-   1.33. ds_mark_dst usage
-   1.34. ds_load_unset usage
-   1.35. dispatcher list file
-   1.36. Kamailio config script - sample dispatcher usage
+   1.16. Set the "sock_avp" parameter
+   1.17. Use $avp(i:273) for hashing:
+   1.18. Use combination of PVs for hashing:
+   1.19. Set the "setid_pvname" parameter
+   1.20. Set the "attrs_pvname" parameter
+   1.21. Set the "ds_ping_method" parameter
+   1.22. Set the "ds_ping_from" parameter
+   1.23. Set the "ds_ping_interval" parameter
+   1.24. Set the "ds_probing_threshhold" parameter
+   1.25. Set the "ds_ping_reply_codes" parameter
+   1.26. Set the "ds_probing_mode" parameter
+   1.27. Set the "ds_hash_size" parameter
+   1.28. Set the "ds_hash_expire" parameter
+   1.29. Set the "ds_hash_initexpire" parameter
+   1.30. Set the "ds_hash_check_interval" parameter
+   1.31. Set the "outbound_proxy" parameter
+   1.32. Set the "ds_default_socket" parameter
+   1.33. ds_select_dst usage
+   1.34. ds_mark_dst usage
+   1.35. ds_mark_dst usage
+   1.36. ds_load_unset usage
+   1.37. dispatcher list file
+   1.38. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -166,20 +170,22 @@ Chapter 1. Admin Guide
         3.13. cnt_avp (str)
         3.14. dstid_avp (str)
         3.15. attrs_avp (str)
-        3.16. hash_pvar (str)
-        3.17. setid_pvname (str)
-        3.18. attrs_pvname (str)
-        3.19. ds_ping_method (string)
-        3.20. ds_ping_from (string)
-        3.21. ds_ping_interval (int)
-        3.22. ds_probing_threshold (int)
-        3.23. ds_ping_reply_codes (string)
-        3.24. ds_probing_mode (int)
-        3.25. ds_hash_size (int)
-        3.26. ds_hash_expire (int)
-        3.27. ds_hash_initexpire (int)
-        3.28. ds_hash_check_interval (int)
-        3.29. outbound_proxy (str)
+        3.16. sock_avp (str)
+        3.17. hash_pvar (str)
+        3.18. setid_pvname (str)
+        3.19. attrs_pvname (str)
+        3.20. ds_ping_method (string)
+        3.21. ds_ping_from (string)
+        3.22. ds_ping_interval (int)
+        3.23. ds_probing_threshold (int)
+        3.24. ds_ping_reply_codes (string)
+        3.25. ds_probing_mode (int)
+        3.26. ds_hash_size (int)
+        3.27. ds_hash_expire (int)
+        3.28. ds_hash_initexpire (int)
+        3.29. ds_hash_check_interval (int)
+        3.30. outbound_proxy (str)
+        3.31. ds_default_socket (str)
 
    4. Functions
 
@@ -265,20 +271,22 @@ Chapter 1. Admin Guide
    3.13. cnt_avp (str)
    3.14. dstid_avp (str)
    3.15. attrs_avp (str)
-   3.16. hash_pvar (str)
-   3.17. setid_pvname (str)
-   3.18. attrs_pvname (str)
-   3.19. ds_ping_method (string)
-   3.20. ds_ping_from (string)
-   3.21. ds_ping_interval (int)
-   3.22. ds_probing_threshold (int)
-   3.23. ds_ping_reply_codes (string)
-   3.24. ds_probing_mode (int)
-   3.25. ds_hash_size (int)
-   3.26. ds_hash_expire (int)
-   3.27. ds_hash_initexpire (int)
-   3.28. ds_hash_check_interval (int)
-   3.29. outbound_proxy (str)
+   3.16. sock_avp (str)
+   3.17. hash_pvar (str)
+   3.18. setid_pvname (str)
+   3.19. attrs_pvname (str)
+   3.20. ds_ping_method (string)
+   3.21. ds_ping_from (string)
+   3.22. ds_ping_interval (int)
+   3.23. ds_probing_threshold (int)
+   3.24. ds_ping_reply_codes (string)
+   3.25. ds_probing_mode (int)
+   3.26. ds_hash_size (int)
+   3.27. ds_hash_expire (int)
+   3.28. ds_hash_initexpire (int)
+   3.29. ds_hash_check_interval (int)
+   3.30. outbound_proxy (str)
+   3.31. ds_default_socket (str)
 
 3.1. list_file (string)
 
@@ -492,7 +500,24 @@ Note
  modparam("dispatcher", "attrs_avp", "$avp(dsattrs)")
  ...
 
-3.16. hash_pvar (str)
+3.16. sock_avp (str)
+
+   The name of the avp which will hold the list with the sockets
+   associated to the addresses stored in dst_avp avp.
+
+Note
+
+   If you want to do load balancing fail over, you have to set this
+   parameter to use the correct socket for each gateway.
+
+   Default value is "null" - don't add AVPs.
+
+   Example 1.16. Set the "sock_avp" parameter
+ ...
+ modparam("dispatcher", "sock_avp", "$avp(dssocket)")
+ ...
+
+3.17. hash_pvar (str)
 
    String with PVs used for the hashing algorithm 7.
 
@@ -503,41 +528,41 @@ Note
 
    Default value is "null" - disabled.
 
-   Example 1.16. Use $avp(i:273) for hashing:
+   Example 1.17. Use $avp(i:273) for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "$avp(i:273)")
  ...
 
-   Example 1.17. Use combination of PVs for hashing:
+   Example 1.18. Use combination of PVs for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
  ...
 
-3.17. setid_pvname (str)
+3.18. setid_pvname (str)
 
    The name of the PV where to store the set ID (group ID) when calling
    ds_is_from_list() with no parameter.
 
    Default value is "null" - don't set PV.
 
-   Example 1.18. Set the "setid_pvname" parameter
+   Example 1.19. Set the "setid_pvname" parameter
  ...
  modparam("dispatcher", "setid_pvname", "$var(setid)")
  ...
 
-3.18. attrs_pvname (str)
+3.19. attrs_pvname (str)
 
    The name of the PV where to store the attributes of matching address
    when calling ds_is_from_list().
 
    Default value is "null" - don't set PV.
 
-   Example 1.19. Set the "attrs_pvname" parameter
+   Example 1.20. Set the "attrs_pvname" parameter
  ...
  modparam("dispatcher", "attrs_pvname", "$var(attrs)")
  ...
 
-3.19. ds_ping_method (string)
+3.20. ds_ping_method (string)
 
    With this method you can define, with which method you want to probe
    the gateways. Pinging gateways feature depends on ds_ping_interval
@@ -545,12 +570,12 @@ Note
 
    Default value is "OPTIONS".
 
-   Example 1.20. Set the "ds_ping_method" parameter
+   Example 1.21. Set the "ds_ping_method" parameter
  ...
  modparam("dispatcher", "ds_ping_method", "INFO")
  ...
 
-3.20. ds_ping_from (string)
+3.21. ds_ping_from (string)
 
    With this Method you can define the "From:"-Line for the request, sent
    to the failed gateways. This method is only available, if compiled with
@@ -558,12 +583,12 @@ Note
 
    Default value is "sip:dispatcher@localhost".
 
-   Example 1.21. Set the "ds_ping_from" parameter
+   Example 1.22. Set the "ds_ping_from" parameter
  ...
  modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
  ...
 
-3.21. ds_ping_interval (int)
+3.22. ds_ping_interval (int)
 
    With this parameter you can define the interval for sending a request
    to a gateway marked as inactive upon a failed request routing to it.
@@ -572,12 +597,12 @@ Note
 
    Default value is "0".
 
-   Example 1.22. Set the "ds_ping_interval" parameter
+   Example 1.23. Set the "ds_ping_interval" parameter
  ...
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
-3.22. ds_probing_threshold (int)
+3.23. ds_probing_threshold (int)
 
    If you want to set a gateway into inactive mode, there can be a
    specific number of failed requests until it will change from "active"
@@ -588,12 +613,12 @@ Note
 
    Default value is "1" (set inactive with first failure).
 
-   Example 1.23. Set the "ds_probing_threshhold" parameter
+   Example 1.24. Set the "ds_probing_threshhold" parameter
  ...
  modparam("dispatcher", "ds_probing_threshhold", 10)
  ...
 
-3.23. ds_ping_reply_codes (string)
+3.24. ds_ping_reply_codes (string)
 
    This parameter defines the valid response codes, which are accepted as
    a valid reply to the PING-Method. It is a list separated by colons,
@@ -605,13 +630,13 @@ Note
 
    Default value is "" (only 200 OK is accepted).
 
-   Example 1.24. Set the "ds_ping_reply_codes" parameter
+   Example 1.25. Set the "ds_ping_reply_codes" parameter
  ...
  modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=
 3")
  ...
 
-3.24. ds_probing_mode (int)
+3.25. ds_probing_mode (int)
 
    Controls what gateways are tested to see if they are reachable. If set
    to 0, only the gateways with state PROBING are tested; if set to 1, all
@@ -621,12 +646,12 @@ Note
 
    Default value is "0".
 
-   Example 1.25. Set the "ds_probing_mode" parameter
+   Example 1.26. Set the "ds_probing_mode" parameter
  ...
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
 
-3.25. ds_hash_size (int)
+3.26. ds_hash_size (int)
 
    The value to be used as power of two to set the number of slots to hash
    table storing data for call load dispatching (e.g., value 8 will create
@@ -635,24 +660,24 @@ Note
 
    Default value is "0".
 
-   Example 1.26. Set the "ds_hash_size" parameter
+   Example 1.27. Set the "ds_hash_size" parameter
  ...
  modparam("dispatcher", "ds_hash_size", 9)
  ...
 
-3.26. ds_hash_expire (int)
+3.27. ds_hash_expire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    BYE was received meanwhile.
 
    Default value is "7200".
 
-   Example 1.27. Set the "ds_hash_expire" parameter
+   Example 1.28. Set the "ds_hash_expire" parameter
  ...
  modparam("dispatcher", "ds_hash_expire", 3600)
  ...
 
-3.27. ds_hash_initexpire (int)
+3.28. ds_hash_initexpire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    200 for INVITE was received meanwhile and state updated with
@@ -660,32 +685,45 @@ Note
 
    Default value is "7200".
 
-   Example 1.28. Set the "ds_hash_initexpire" parameter
+   Example 1.29. Set the "ds_hash_initexpire" parameter
  ...
  modparam("dispatcher", "ds_hash_initexpire", 60)
  ...
 
-3.28. ds_hash_check_interval (int)
+3.29. ds_hash_check_interval (int)
 
    Time interval in seconds to scan internal hash table with call load
    dispatching data for expired items.
 
    Default value is "30".
 
-   Example 1.29. Set the "ds_hash_check_interval" parameter
+   Example 1.30. Set the "ds_hash_check_interval" parameter
  ...
  modparam("dispatcher", "ds_hash_check_interval", 60)
  ...
 
-3.29. outbound_proxy (str)
+3.30. outbound_proxy (str)
 
    SIP URI of outbound proxy to be used when sending pings.
 
    By default no outbound proxy is defined.
 
-   Example 1.30. Set the "outbound_proxy" parameter
+   Example 1.31. Set the "outbound_proxy" parameter
  ...
  modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
+ ...
+
+3.31. ds_default_socket (str)
+
+   Default socket to be used for sending pings and dispatching requests
+   when a gateway has no send socket configured.
+
+   By default no default socket is defined, the first configuration script
+   listen directive is used.
+
+   Example 1.32. Set the "ds_default_socket" parameter
+ ...
+ modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
  ...
 
 4. Functions
@@ -760,7 +798,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. ds_select_dst usage
+   Example 1.33. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -824,7 +862,7 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.32. ds_mark_dst usage
+   Example 1.34. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -870,7 +908,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.33. ds_mark_dst usage
+   Example 1.35. ds_mark_dst usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -901,7 +939,7 @@ if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.34. ds_load_unset usage
+   Example 1.36. ds_load_unset usage
 ...
 route {
     ...
@@ -1056,9 +1094,11 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
        probing destination (sending keep alives);
      * priority: sets the priority in destination list (based on it is
        done the initial ordering inside the set)
-     * attributes: extra filed in form of name1=value1;...;nameN=valueN.
-       There are some predefined names that are used of weight and call
-       load dispatching.
+     * attributes: extra field in form of name1=value1;...;nameN=valueN.
+       There are some predefined names:
+          + 'duid' - used for call load dispatching
+          + 'weight' - used for weight based load distribution
+          + 'socket' - used to set the sending socket for the gateway
 
    Line format is:
 ...
@@ -1067,13 +1107,13 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 
    Full line example:
 ...
-1 sip:127.0.0.1:5080 0 0 duid=abc;my=xyz
+1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz
 ...
 
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.35. dispatcher list file
+   Example 1.37. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1098,7 +1138,7 @@ r,opt)
 
    Next picture shows a sample usage of the dispatcher module.
 
-   Example 1.36. Kamailio config script - sample dispatcher usage
+   Example 1.38. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #

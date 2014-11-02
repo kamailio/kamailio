@@ -232,6 +232,9 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 		} else if(pit->name.len==7
 				&& strncasecmp(pit->name.s, "maxload", 7)==0) {
 			str2sint(&pit->body, &dest->attrs.maxload);
+		} else if(pit->name.len==6
+				&& strncasecmp(pit->name.s, "socket", 6)==0) {
+			dest->attrs.socket = pit->body;
 		}
 	}
 	return 0;
@@ -253,6 +256,8 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	struct hostent* he;
 	struct sip_uri puri;
 	int orig_id = 0, orig_nr = 0;
+	str host;
+	int port, proto;
 	ds_set_t *orig_ds_lists = ds_lists[list_idx];
 
 	/* check uri */
@@ -315,6 +320,7 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	strncpy(dp->uri.s, uri.s, uri.len);
 	dp->uri.s[uri.len]='\0';
 	dp->uri.len = uri.len;
+
 	dp->flags = flags;
 	dp->priority = priority;
 
@@ -322,6 +328,22 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	{
 		LM_ERR("cannot set attributes!\n");
 		goto err;
+	}
+
+	/* check socket attribute */
+	if (dp->attrs.socket.s && dp->attrs.socket.len > 0) {
+		if (parse_phostport(dp->attrs.socket.s, &host.s, &host.len,
+				&port, &proto)!=0) {
+			LM_ERR("bad socket <%.*s>\n", dp->attrs.socket.len, dp->attrs.socket.s);
+			goto err;
+		}
+		dp->sock = grep_sock_info( &host, (unsigned short)port, proto);
+		if (dp->sock==0) {
+			LM_ERR("non-local socket <%.*s>\n", dp->attrs.socket.len, dp->attrs.socket.s);
+			goto err;
+		}
+	} else if (ds_default_sockinfo) {
+		dp->sock = ds_default_sockinfo;
 	}
 
 	/* The Hostname needs to be \0 terminated for resolvehost, so we
@@ -580,11 +602,11 @@ int ds_load_list(char *lfile)
 		while(*p && (*p==' ' || *p=='\t' || *p=='\r' || *p=='\n'))
 			p++;
 		if(*p=='\0' || *p=='#')
-			goto add_destination; /* no priority given */
+			goto add_destination; /* no attrs given */
 
 		/* get attributes */
 		attrs.s = p;
-		while(*p && *p!=' ' && *p!='\t' && *p!='\r' && *p!='\n' && *p!='#')
+		while(*p && *p!=' ' && *p!='\t' && *p!='\r' && *p!='\n')
 			p++;
 		attrs.len = p-attrs.s;
 
@@ -1556,7 +1578,8 @@ int ds_load_unset(struct sip_msg *msg)
 /**
  *
  */
-static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
+static inline int ds_update_dst(struct sip_msg *msg, str *uri,
+								struct socket_info *sock, int mode)
 {
 	struct action act;
 	struct run_act_ctx ra_ctx;
@@ -1587,6 +1610,8 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			ruri_mark_new(); /* re-use uri for serial forking */
 			break;
 	}
+	if (sock)
+		msg->force_send_socket = sock;
 	return 0;
 }
 
@@ -1604,6 +1629,7 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 	unsigned int hash;
 	int_str avp_val;
 	ds_set_t *idx = NULL;
+	char buf[2+16+1];
 
 	if(msg==NULL)
 	{
@@ -1773,7 +1799,7 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 
 	hash = i;
 
-	if(ds_update_dst(msg, &idx->dlist[hash].uri, mode)!=0)
+	if(ds_update_dst(msg, &idx->dlist[hash].uri, idx->dlist[hash].sock, mode)!=0)
 	{
 		LM_ERR("cannot set dst addr\n");
 		return -1;
@@ -1804,6 +1830,17 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 							avp_val)!=0)
 					return -1;
 			}
+
+			/* only add sock_avp if dst_avp is set */
+			if(sock_avp_name.n!=0 && idx->dlist[idx->nr-1].sock)
+			{
+				avp_val.s.len = 1 + sprintf(buf, "%p", idx->dlist[idx->nr-1].sock);
+				avp_val.s.s = buf;
+				if(add_avp(AVP_VAL_STR|sock_avp_type, sock_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
+
 			if(alg==DS_ALG_LOAD)
 			{
 				if(idx->dlist[idx->nr-1].attrs.duid.len<=0)
@@ -1840,6 +1877,16 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 							avp_val)!=0)
 					return -1;
 			}
+
+			if(sock_avp_name.n!=0 && idx->dlist[i].sock)
+			{
+				avp_val.s.len = 1 + sprintf(buf, "%p", idx->dlist[i].sock);
+				avp_val.s.s = buf;
+				if(add_avp(AVP_VAL_STR|sock_avp_type, sock_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
+
 			if(alg==DS_ALG_LOAD)
 			{
 				if(idx->dlist[i].attrs.duid.len<=0)
@@ -1874,6 +1921,16 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 							avp_val)!=0)
 					return -1;
 			}
+
+			if(sock_avp_name.n!=0 && idx->dlist[i].sock)
+			{
+				avp_val.s.len = 1 + sprintf(buf, "%p", idx->dlist[i].sock);
+				avp_val.s.s = buf;
+				if(add_avp(AVP_VAL_STR|sock_avp_type, sock_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
+
 			if(alg==DS_ALG_LOAD)
 			{
 				if(idx->dlist[i].attrs.duid.len<=0)
@@ -1903,6 +1960,15 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 						avp_val)!=0)
 				return -1;
 		}
+		if(sock_avp_name.n!=0 && idx->dlist[hash].sock)
+		{
+			avp_val.s.len = 1 + sprintf(buf, "%p", idx->dlist[hash].sock);
+			avp_val.s.s = buf;
+			if(add_avp(AVP_VAL_STR|sock_avp_type, sock_avp_name,
+						avp_val)!=0)
+				return -1;
+		}
+
 		if(alg==DS_ALG_LOAD)
 		{
 			if(idx->dlist[hash].attrs.duid.len<=0)
@@ -1944,7 +2010,9 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	struct search_state st;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
+	struct socket_info *sock;
 	int_str avp_value;
+	int_str sock_avp_value;
 	int alg = 0;
 
 	if(!(ds_flags&DS_FAILOVER_ON) || dst_avp_name.n==0)
@@ -1976,6 +2044,20 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 		}
 	}
 
+	if(sock_avp_name.n!=0)
+	{
+		prev_avp = search_first_avp(sock_avp_type,
+				attrs_avp_name, &avp_value, &st);
+		if(prev_avp!=NULL)
+		{
+			if (sscanf( sock_avp_value.s.s, "%p", (void**)&sock ) != 1)
+				sock = NULL;
+			destroy_avp(prev_avp);
+		} else {
+			sock = NULL;
+		}
+	}
+
 	prev_avp = search_first_avp(dst_avp_type, dst_avp_name, &avp_value, &st);
 	if(prev_avp==NULL)
 		return -1; /* used avp deleted -- strange */
@@ -1985,7 +2067,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	if(avp==NULL || !(avp->flags&AVP_VAL_STR))
 		return -1; /* no more avps or value is int */
 
-	if(ds_update_dst(msg, &avp_value.s, mode)!=0)
+	if(ds_update_dst(msg, &avp_value.s, sock, mode)!=0)
 	{
 		LM_ERR("cannot set dst addr\n");
 		return -1;
@@ -2381,6 +2463,9 @@ int ds_print_mi_list(struct mi_node* rpl)
 			if(node == NULL)
 				return -1;
 
+			if(attr == 0)
+				return -1;
+
 			memset(&c, 0, sizeof(c));
 			if (list->dlist[j].flags & DS_INACTIVE_DST)
 				c[0] = 'I';
@@ -2519,6 +2604,11 @@ void ds_check_timer(unsigned int ticks, void* param)
 				set_uac_req(&uac_r, &ds_ping_method, 0, 0, 0,
 						TMCB_LOCAL_COMPLETED, ds_options_callback,
 						(void*)(long)list->id);
+				if (list->dlist[j].attrs.socket.s != NULL && list->dlist[j].attrs.socket.len > 0) {
+					uac_r.ssock = &list->dlist[j].attrs.socket;
+				} else if (ds_default_socket.s != NULL && ds_default_socket.len > 0) {
+					uac_r.ssock = &ds_default_socket;
+				}
 				if (tmb.t_request(&uac_r,
 							&list->dlist[j].uri,
 							&list->dlist[j].uri,

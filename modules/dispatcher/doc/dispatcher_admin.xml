@@ -421,6 +421,30 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
+	<section id="dispatcher.p.sock_avp">
+		<title><varname>sock_avp</varname> (str)</title>
+		<para>
+			The name of the avp which will hold the list with the sockets associated to the addresses stored in dst_avp avp.
+		</para>
+		<note>
+		<para>
+			If you want to do load balancing fail over, you have to set this parameter to use the correct socket for each gateway.
+		</para>
+		</note>
+		<para>
+		<emphasis>
+			Default value is <quote>null</quote> - don't add AVPs.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>sock_avp</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "sock_avp", "$avp(dssocket)")
+ ...
+ </programlisting>
+		</example>
+	</section>
  	<section id="dispatcher.p.hash_pvar">
  		<title><varname>hash_pvar</varname> (str)</title>
  		<para>
@@ -729,6 +753,26 @@ modparam("dispatcher", "force_dst", 1)
  ...
  </programlisting>
  		</example>
+	</section>
+
+	<section id="dispatcher.p.ds_default_socket">
+		<title><varname>ds_default_socket</varname> (str)</title>
+		<para>
+		Default socket to be used for sending pings and dispatching requests when a gateway has no send socket configured.
+		</para>
+		<para>
+		<emphasis>
+			By default no default socket is defined, the first configuration script <emphasis>listen</emphasis> directive is used.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_default_socket</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
+ ...
+ </programlisting>
+		</example>
 	</section>
 
 	</section>
@@ -1321,9 +1365,20 @@ onreply_route {
 			is done the initial ordering inside the set)</para>
 			</listitem>
 			<listitem>
-			<para>attributes: extra filed in form of
-			name1=value1;...;nameN=valueN. There are some predefined names
-			that are used of weight and call load dispatching.</para>
+			<para>attributes: extra fields in form of
+				name1=value1;...;nameN=valueN. There are some predefined names:
+				<itemizedlist>
+					<listitem>
+						'duid' - used for call load dispatching
+					</listitem>
+					<listitem>
+						'weight' - used for weight based load distribution
+					</listitem>
+					<listitem>
+						'socket' - used to set the sending socket for the gateway
+					</listitem>
+				</itemizedlist>
+			</para>
 			</listitem>
 		</itemizedlist>
 		<para>
@@ -1340,7 +1395,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 		</para>
 		<programlisting format="linespecific">
 ...
-1 sip:127.0.0.1:5080 0 0 duid=abc;my=xyz
+1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz
 ...
 </programlisting>
 

@@ -86,6 +86,8 @@ extern int_str dstid_avp_name;
 extern unsigned short dstid_avp_type;
 extern int_str attrs_avp_name;
 extern unsigned short attrs_avp_type;
+extern int_str sock_avp_name;
+extern unsigned short sock_avp_type;
 
 extern pv_elem_t * hash_param_model;
 
@@ -102,6 +104,8 @@ extern int probing_threshhold; /*!< number of failed requests,
 								 before a destination is taken into probing */ 
 extern int ds_probing_mode;
 extern str ds_outbound_proxy;
+extern str ds_default_socket;
+extern struct socket_info * ds_default_sockinfo;
 
 int init_data(void);
 int init_ds_db(void);
@@ -150,6 +154,7 @@ typedef struct _ds_attrs
 {
 	str body;
 	str duid;
+	str socket;
 	int maxload;
 	int weight;
 } ds_attrs_t;
@@ -161,6 +166,7 @@ typedef struct _ds_dest
 	int priority;
 	int dload;
 	ds_attrs_t attrs;
+	struct socket_info * sock;
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
 	unsigned short int port; 	/*!< Port of the URI */
 	unsigned short int proto; 	/*!< Protocol of the URI */
