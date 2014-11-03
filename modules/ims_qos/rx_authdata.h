@@ -81,6 +81,7 @@ typedef struct rx_authsessiondata {
     str ttag;
     str identifier;
     str ip;
+    int recv_port;
     int ip_version;
     //for registration session
     int subscribed_to_signaling_path_status; // 0 not subscribed 1 is subscribed
@@ -92,7 +93,7 @@ typedef struct rx_authsessiondata {
     flow_description_t *first_new_flow_description;
 } rx_authsessiondata_t;
 
-int create_new_regsessiondata(str* domain, str* aor, rx_authsessiondata_t** session_data);
+int create_new_regsessiondata(str* domain, str* aor,  str *ip, int ip_version, int recv_port, rx_authsessiondata_t** session_data);
 int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, str *ip, int ip_version, rx_authsessiondata_t** session_data);
 void free_callsessiondata(rx_authsessiondata_t* session_data);
 

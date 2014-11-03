@@ -104,7 +104,7 @@ int rx_send_aar_update_no_video(AAASession* auth);
 
 //TODOD remove - no longer user AOR parm
 //int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip_address, uint16_t *ip_version, str *aor, saved_transaction_local_t* saved_t_data);
-int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip_address, uint16_t *ip_version, saved_transaction_local_t* saved_t_data);
+int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transaction_local_t* saved_t_data);
 
 int rx_process_aaa(AAAMessage *aaa, unsigned int * rc);
 enum dialog_direction get_dialog_direction(char *direction);

@@ -848,7 +848,8 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
     int aar_sent = 0;
     saved_transaction_local_t* local_data = 0; //data to be shared across all async calls
     saved_transaction_t* saved_t_data = 0; //data specific to each contact's AAR async call
-    str ip;
+    str recv_ip;
+    int recv_port;
     
     if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
         LM_ERR("no async route block for assign_server_unreg\n");
@@ -962,15 +963,22 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
         LM_DBG("No contact headers in Register message\n");
         goto error;
     }
+    
+    //we use the received IP address for the framed_ip_address 
+    recv_ip.s = ip_addr2a(&msg->rcv.src_ip);
+    recv_ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
+    recv_port = msg->rcv.src_port;
+    LM_DBG("Message received IP address is: [%.*s]\n", recv_ip.len, recv_ip.s);
+    uint16_t ip_version = AF_INET; //TODO IPv6!!!?
 
     lock_get(saved_t_data->lock); //we lock here to make sure we send all requests before processing replies asynchronously
     for (h = msg->contact; h; h = h->next) {
         if (h->type == HDR_CONTACT_T && h->parsed) {
             for (c = ((contact_body_t*) h->parsed)->contacts; c; c = c->next) {
-                ul.lock_udomain(domain_t, &c->uri);
-                if (ul.get_pcontact(domain_t, &c->uri, &pcontact) != 0) {
+                ul.lock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
+                if (ul.get_pcontact(domain_t, &c->uri, &recv_ip, recv_port, &pcontact) != 0) {
                     LM_DBG("This contact does not exist in PCSCF usrloc - error in cfg file\n");
-                    ul.unlock_udomain(domain_t, &c->uri);
+                    ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
                     lock_release(saved_t_data->lock);
                     goto error;
                 } else if (pcontact->reg_state == PCONTACT_REG_PENDING
@@ -978,14 +986,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                     LM_DBG("Contact [%.*s] exists and is in state PCONTACT_REG_PENDING or PCONTACT_REGISTERED\n"
                             , pcontact->aor.len, pcontact->aor.s);
 
-
-		    //we use the received IP address for the framed_ip_address 
-		    ip.s = ip_addr2a(&msg->rcv.src_ip);
-		    ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
-		    LM_DBG("Message received IP address is: [%.*s]\n", ip.len, ip.s);
-		    uint16_t ip_version = AF_INET; //TODO IPv6!!!?
-                    
-                    //check for existing Rx session
+		    //check for existing Rx session
                     if (pcontact->rx_session_id.len > 0
                             && pcontact->rx_session_id.s
                             && (auth = cdpb.AAAGetAuthSession(pcontact->rx_session_id))) {
@@ -1001,10 +1002,10 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                         is_rereg = 1;
                     } else {
                         LM_DBG("Creating new Rx session for contact <%.*s>\n", pcontact->aor.len, pcontact->aor.s);
-                        int ret = create_new_regsessiondata(domain_t->name, &pcontact->aor, &rx_regsession_data_p);
+                        int ret = create_new_regsessiondata(domain_t->name, &pcontact->aor, &recv_ip, ip_version, recv_port, &rx_regsession_data_p);
                         if (!ret) {
                             LM_ERR("Unable to create regsession data parcel for rx_session_id [%.*s]...Aborting\n", pcontact->rx_session_id.len, pcontact->rx_session_id.s);
-                            ul.unlock_udomain(domain_t, &c->uri);
+                            ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
                             if (rx_regsession_data_p) {
                                 shm_free(rx_regsession_data_p);
                                 rx_regsession_data_p = 0;
@@ -1019,7 +1020,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                                 shm_free(rx_regsession_data_p);
                                 rx_regsession_data_p = 0;
                             }
-                            ul.unlock_udomain(domain_t, &c->uri);
+                            ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
                             if (auth) cdpb.AAASessionsUnlock(auth->hash);
                             if (rx_regsession_data_p) {
                                 shm_free(rx_regsession_data_p);
@@ -1064,9 +1065,9 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 
                     //TODOD remove - no longer user AOR parm
                     //ret = rx_send_aar_register(msg, auth, &puri.host, &ip_version, &c->uri, local_data); //returns a locked rx auth object
-                    ret = rx_send_aar_register(msg, auth, &ip, &ip_version, local_data); //returns a locked rx auth object
+                    ret = rx_send_aar_register(msg, auth, local_data); //returns a locked rx auth object
 
-                    ul.unlock_udomain(domain_t, &c->uri);
+                    ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
 
                     if (!ret) {
                         LM_ERR("Failed to send AAR\n");
@@ -1081,7 +1082,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                 } else {
                     //contact exists - this is a re-registration, for now we just ignore this
                     LM_DBG("This contact exists and is not in state REGISTER PENDING - we assume re (or de) registration and ignore\n");
-                    ul.unlock_udomain(domain_t, &c->uri);
+                    ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
                     //now we loop for any other contacts.
                 }
             }

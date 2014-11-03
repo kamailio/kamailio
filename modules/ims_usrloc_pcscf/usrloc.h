@@ -209,19 +209,19 @@ typedef struct pcontact {
 	struct pcontact* next; 					/*!< Previous item in the hash entry */
 } pcontact_t;
 
-typedef int (*get_pcontact_t)(struct udomain* _d, str* _contact, struct pcontact** _c);
+typedef int (*get_pcontact_t)(struct udomain* _d, str* _contact, str* _received_host, int received_port, struct pcontact** _c);
 
 typedef int (*get_pcontact_by_src_t)(struct udomain* _d, str * _host, unsigned short _port, unsigned short _proto, struct pcontact** _c);
 
 typedef int (*assert_identity_t)(struct udomain* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
 
 typedef int (*insert_pcontact_t)(struct udomain* _d, str* _aor, struct pcontact_info* ci, struct pcontact** _c);
-typedef int (*delete_pcontact_t)(struct udomain* _d, str* _aor, struct pcontact* _c);
+typedef int (*delete_pcontact_t)(struct udomain* _d, str* _aor, str* _received_host, int received_port, struct pcontact* _c);
 typedef int (*update_pcontact_t)(struct udomain* _d, struct pcontact_info* ci, struct pcontact* _c);
 typedef int (*update_rx_regsession_t)(struct udomain* _d, str* session_id, struct pcontact* _c);
 
-typedef void (*lock_udomain_t)(struct udomain* _d, str *_aor);
-typedef void (*unlock_udomain_t)(struct udomain* _d, str *_aor);
+typedef void (*lock_udomain_t)(struct udomain* _d, str *_aor, str* _received_host, unsigned short received_port);
+typedef void (*unlock_udomain_t)(struct udomain* _d, str *_aor, str* _received_host, unsigned short received_port);
 typedef int (*register_udomain_t)(const char* _n, struct udomain** _d);
 typedef int (*get_udomain_t)(const char* _n, udomain_t** _d);
 typedef int (*get_all_ucontacts_t)(void* buf, int len, unsigned int flags, unsigned int part_idx, unsigned int part_max);

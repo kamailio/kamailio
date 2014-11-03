@@ -70,8 +70,8 @@ void timer_pcontact(pcontact_t* _r);
 int delete_ppublic(pcontact_t* _r/*, struct ucontact* _c*/);
 int get_ppublic(pcontact_t* _r);
 int aor_to_contact(str* aor, str* contact);
-unsigned int get_hash_slot(udomain_t* _d, str* _aor);
-unsigned int get_aor_hash(udomain_t* _d, str* _aor);
+unsigned int get_hash_slot(udomain_t* _d, str* _aor, str* received_host, int received_port);
+unsigned int get_aor_hash(udomain_t* _d, str* _aor, str* received_host, int received_port);
 
 
 #endif

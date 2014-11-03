@@ -271,10 +271,10 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
                 local_data->auth_session_id.len, local_data->auth_session_id.s);
         LM_DBG("Registering for Usrloc callbacks on DELETE\n");
 
-        ul.lock_udomain(domain_t, &local_data->contact);
-        if (ul.get_pcontact(domain_t, &local_data->contact, &pcontact) != 0) {
+        ul.lock_udomain(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port);
+        if (ul.get_pcontact(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port, &pcontact) != 0) {
             LM_ERR("Shouldn't get here, can find contact....\n");
-            ul.unlock_udomain(domain_t, &local_data->contact);
+            ul.unlock_udomain(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port);
             goto error;
         }
 
@@ -284,7 +284,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
          * */
         if (ul.update_rx_regsession(domain_t, &local_data->auth_session_id, pcontact) != 0) {
             LM_ERR("unable to update pcontact......\n");
-            ul.unlock_udomain(domain_t, &local_data->contact);
+            ul.unlock_udomain(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port);
             goto error;
         }
         memset(&ci, 0, sizeof (struct pcontact_info));
@@ -296,10 +296,10 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         //register for callbacks on contact
         ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE,
                 callback_pcscf_contact_cb, NULL);
-        ul.unlock_udomain(domain_t, &local_data->contact);
+        ul.unlock_udomain(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port);
         result = CSCF_RETURN_TRUE;
     } else {
-        LM_ERR("Received negative reply from PCRF for AAR Request\n");
+        LM_DBG("Received negative reply from PCRF for AAR Request\n");
         result = CSCF_RETURN_FALSE;
         goto error;
     }
@@ -827,13 +827,22 @@ error:
  * @returns int >0 if sent AAR successfully, otherwise 0
  */
 
-int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip,
-        uint16_t *ip_version, saved_transaction_local_t* saved_t_data) {
+int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transaction_local_t* saved_t_data) {
     AAAMessage* aar = 0;
     int ret = 0;
     AAA_AVP* avp = 0;
     char x[4];
     str identifier;
+    
+    str ip;
+    uint16_t ip_version;
+
+    //we get ip and identifier for the auth session data 
+    rx_authsessiondata_t* p_session_data = 0;
+    p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
+    identifier = p_session_data->identifier;
+    ip = p_session_data->ip;
+    ip_version = p_session_data->ip_version;
 
     LM_DBG("Send AAR register\n");
 
@@ -871,7 +880,7 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, str *ip,
     rx_add_media_component_description_avp_register(aar);
 
     /* Add Framed IP address AVP*/
-    if (!rx_add_framed_ip_avp(&aar->avpList, *ip, *ip_version)) {
+    if (!rx_add_framed_ip_avp(&aar->avpList, ip, ip_version)) {
         LM_ERR("Unable to add framed IP AVP\n");
         goto error;
     }

@@ -76,7 +76,7 @@
 extern usrloc_api_t ul;
 extern time_t time_now;
 
-int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_state) {
+int process_contact(udomain_t * _d, int expires, str contact_uri, str * received_host, int received_port, int contact_state) {
 	
 	pcontact_t* pcontact;
 	
@@ -102,9 +102,9 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
 	ci.reg_state = PCONTACT_REGISTERED;
 	
 	
-	ul.lock_udomain(_d, &contact_uri);
+	ul.lock_udomain(_d, &contact_uri, received_host, received_port);
 	
-	if (ul.get_pcontact(_d, &contact_uri, &pcontact) != 0) { //contact does not exist
+	if (ul.get_pcontact(_d, &contact_uri, received_host, received_port, &pcontact) != 0) { //contact does not exist
 	    if (contact_state == STATE_TERMINATED) {
 		LM_DBG("This contact: <%.*s> is in state terminated and is not in usrloc, ignore\n", contact_uri.len, contact_uri.s);
 		ret = RESULT_CONTACTS_FOUND;
@@ -124,7 +124,7 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
 		if (contact_state == STATE_TERMINATED) {
 			//delete contact
 			LM_DBG("This contact <%.*s> is in state terminated and is in usrloc so removing it from usrloc\n", contact_uri.len, contact_uri.s);
-			if (ul.delete_pcontact(_d, &contact_uri, pcontact) != 0) {
+			if (ul.delete_pcontact(_d, &contact_uri, received_host, received_port, pcontact) != 0) {
 				LM_DBG("failed to delete pcscf contact <%.*s> - not a problem this may have been removed by de registration", contact_uri.len, contact_uri.s);
 			}
 		}else {//state is active
@@ -143,7 +143,7 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
 	}
 	
 done:	 
-	ul.unlock_udomain(_d, &contact_uri);
+	ul.unlock_udomain(_d, &contact_uri, received_host, received_port);
 	return ret;
 }
 
@@ -366,7 +366,7 @@ int process_body(struct sip_msg* msg, str notify_body, udomain_t * domain) {
 					contact_uri.len, contact_uri.s);
 
 				/* Add to Usrloc: */
-				result = process_contact(domain, expires, contact_uri, contact_state);
+				result = process_contact(domain, expires, contact_uri, 0/*we don't have the recv ip*/, 0 /*we don't have the recv port*/, contact_state);
 
 				/* Process the result */
 				if (final_result != RESULT_CONTACTS_FOUND) final_result = result;

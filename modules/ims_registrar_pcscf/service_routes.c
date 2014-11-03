@@ -169,14 +169,14 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 	str received_host = {0, 0};
 	char srcip[50];	
 
+	received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+			received_host.s = srcip;
+			
 	if (_m->id != current_msg_id) {
 		current_msg_id = _m->id;
 		c = NULL;
 
 		if (is_registered_fallback2ip == 2) {
-			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-			received_host.s = srcip;
-
 			LM_DBG("Searching in usrloc for %.*s:%i (Proto %i)\n",
 				received_host.len, received_host.s,
 				_m->rcv.src_port, _m->rcv.proto);
@@ -195,7 +195,7 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 
 			if (b && b->contacts) {
 				for (ct = b->contacts; ct; ct = ct->next) {
-					if (ul.get_pcontact(_d, &ct->uri, &c) == 0) {
+					if (ul.get_pcontact(_d, &ct->uri, &received_host, _m->rcv.src_port, &c) == 0) {
 						if (checkcontact(_m, c) != 0) {
 							c = NULL;
 						} else {
@@ -276,6 +276,8 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 	int i;
 	struct hdr_field *hdr;
 	rr_t *r;
+	char srcip[20];
+	str received_host;
 	pcontact_t * c = getContactP(_m, _d);
 	/* Contact not found => not following service-routes */
 	if (c == NULL) return -1;
@@ -285,8 +287,11 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 
 	LM_DBG("Got %i Route-Headers.\n", c->num_service_routes);
 
+	received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+	received_host.s = srcip;
+	
 	/* Lock this record while working with the data: */
-	ul.lock_udomain(_d, &c->aor);
+	ul.lock_udomain(_d, &c->aor, &received_host, _m->rcv.src_port);
 
 	/* Check the route-set: */
 	if (_m->route) {
@@ -315,7 +320,7 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 				if (r)
 					LM_DBG("Next Route is %.*s\n", r->nameaddr.uri.len, r->nameaddr.uri.s);
 			}
-			LM_DBG("We have %d service-routes\n");
+			LM_DBG("We have %d service-routes\n", c->num_service_routes);
 			/* Then check the following headers: */
 			for (i=0; i< c->num_service_routes; i++) {
 				LM_DBG("Route must be: %.*s\n", c->service_routes[i].len, c->service_routes[i].s);
@@ -358,11 +363,11 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 		if (c->num_service_routes > 0) goto error;
 	}
 	/* Unlock domain */
-	ul.unlock_udomain(_d, &c->aor);
+	ul.unlock_udomain(_d, &c->aor, &received_host, _m->rcv.src_port);
 	return 1;
 error:
 	/* Unlock domain */
-	ul.unlock_udomain(_d, &c->aor);
+	ul.unlock_udomain(_d, &c->aor, &received_host, _m->rcv.src_port);
 	return -1;
 }
 
@@ -380,6 +385,8 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 	struct lump* lmp = NULL;
 	char * buf;
 	pcontact_t * c = getContactP(_m, _d);
+	char srcip[20];
+	str received_host;
 	
 	// Contact not found => not following service-routes
 	if (c == NULL) return -1;
@@ -408,9 +415,12 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 		_m->dst_uri.s = NULL;
 		_m->dst_uri.len = 0;
 	}
+	
+	received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+	received_host.s = srcip;
 
 	/* Lock this record while working with the data: */
-	ul.lock_udomain(_d, &c->aor);
+	ul.lock_udomain(_d, &c->aor, &received_host, _m->rcv.src_port);
 
 	if (c->num_service_routes > 0) {
 		/* Create anchor for new Route-Header: */
@@ -458,11 +468,11 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 		}
 	}
 	/* Unlock domain */
-	ul.unlock_udomain(_d, &c->aor);
+	ul.unlock_udomain(_d, &c->aor, &received_host, _m->rcv.src_port);
 	return 1;
 error:
 	/* Unlock domain */
-	ul.unlock_udomain(_d, &c->aor);
+	ul.unlock_udomain(_d, &c->aor, &received_host, _m->rcv.src_port);
 	return -1;
 	
 }

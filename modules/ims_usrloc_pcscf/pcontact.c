@@ -177,7 +177,12 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 	if (hashing_type==0) {
 		(*_c)->aorhash = core_hash(_contact, 0, 0);
 	} else if (hashing_type==1) {
-		(*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
+		if ((*_c)->received_host.len > 0 && memcmp((*_c)->contact_host.s, (*_c)->received_host.s, (*_c)->contact_host.len) != 0) {
+		    LM_DBG("Looks like this contact is natted - contact URI: [%.*s] but came from [%.*s]\n", (*_c)->contact_host.len, 
+		    (*_c)->contact_host.s, (*_c)->received_host.len, (*_c)->received_host.s);
+		    (*_c)->aorhash = core_hash(&(*_c)->received_host, 0, 0);
+		} else 
+		    (*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
 	} else {
 		if ((*_c)->received_host.len > 0) {
 			(*_c)->aorhash = core_hash(&(*_c)->received_host, 0, 0);	

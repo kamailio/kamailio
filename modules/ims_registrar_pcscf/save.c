@@ -179,8 +179,9 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 				// Set to default, if not set:
 				if (ci.received_port == 0) ci.received_port = 5060;
 
-				ul.lock_udomain(_d, &c->uri);
-				if (ul.get_pcontact(_d, &c->uri, &pcontact) != 0) { //need to insert new contact
+				
+				ul.lock_udomain(_d, &c->uri, &ci.received_host, ci.received_port);
+				if (ul.get_pcontact(_d, &c->uri, &ci.received_host, ci.received_port, &pcontact) != 0) { //need to insert new contact
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
 						LM_DBG("This is a de-registration for contact <%.*s> but contact is not in usrloc - ignore\n", c->uri.len, c->uri.s);
 						goto next_contact;
@@ -200,7 +201,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 					LM_DBG("contact already exists and is in state (%d) : [%s]\n",pcontact->reg_state, reg_state_to_string(pcontact->reg_state));
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
 						LM_DBG("This is a de-registration for contact <%.*s>\n", c->uri.len, c->uri.s);
-						if (ul.delete_pcontact(_d, &c->uri, pcontact) != 0) {
+						if (ul.delete_pcontact(_d, &c->uri, &ci.received_host, ci.received_port, pcontact) != 0) {
 							LM_ERR("failed to delete pcscf contact <%.*s>\n", c->uri.len, c->uri.s);
 						}
 					} else { //update contact
@@ -215,7 +216,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 					}
 				}
 next_contact:
-				ul.unlock_udomain(_d, &c->uri);
+				ul.unlock_udomain(_d, &c->uri, &ci.received_host, ci.received_port);
 			}
 	}
 	return 1;
@@ -304,8 +305,8 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	if (ci.received_port == 0)
 		ci.received_port = 5060;
 
-	ul.lock_udomain(_d, &c->uri);
-	if (ul.get_pcontact(_d, &c->uri, &pcontact) != 0) { //need to insert new contact
+	ul.lock_udomain(_d, &c->uri, &ci.received_host, ci.received_port);
+	if (ul.get_pcontact(_d, &c->uri, &ci.received_host, ci.received_port, &pcontact) != 0) { //need to insert new contact
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
 		if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
 			LM_ERR("Failed inserting new pcontact\n");
@@ -316,7 +317,7 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	} else { //contact already exists - update
 		LM_DBG("Contact already exists - not doing anything for now\n");
 	}
-	ul.unlock_udomain(_d, &c->uri);
+	ul.unlock_udomain(_d, &c->uri, &ci.received_host, ci.received_port);
 
 	return 1;
 

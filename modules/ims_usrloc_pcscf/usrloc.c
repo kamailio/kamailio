@@ -84,35 +84,106 @@ int bind_usrloc(usrloc_api_t* api) {
 	return 0;
 }
 
-/* return the slot id for inserting contacts in the hash */
-unsigned int get_hash_slot(udomain_t* _d, str* _aor){
-	struct sip_uri contact_uri;
-	unsigned int sl;
+#define ALIAS        "alias="
+#define ALIAS_LEN (sizeof(ALIAS) - 1)
 
-	if ((hashing_type == 0) /*use full AOR for hash*/ || (parse_uri(_aor->s, _aor->len, &contact_uri) != 0)) {
-		if (hashing_type!=0) {
-			LM_DBG("Unable to get contact host:port from contact header [%.*s]... falling back to full AOR\n", _aor->len, _aor->s);
-		}
-		sl = core_hash(_aor, 0, _d->size);
-	} else {
-		sl = core_hash(&contact_uri.host, 0, _d->size);
-	}
+inline int get_alias_host_from_contact(str *contact_uri_params, str *alias_host) {
+    char *rest, *sep;
+    unsigned int rest_len;
+    
+    rest = contact_uri_params->s;
+    rest_len = contact_uri_params->len;
+    if (rest_len == 0) {
+        LM_DBG("no params\n");
+        return -1;
+    }
 
-	return sl;
+    /*Get full alias parameter*/
+    while (rest_len >= ALIAS_LEN) {
+        if (strncmp(rest, ALIAS, ALIAS_LEN) == 0) break;
+        sep = memchr(rest, 59 /* ; */, rest_len);
+        if (sep == NULL) {
+            LM_DBG("no alias param\n");
+            return -1;
+        } else {
+            rest_len = rest_len - (sep - rest + 1);
+            rest = sep + 1;
+        }
+    }
+
+    if (rest_len < ALIAS_LEN) {
+        LM_DBG("no alias param\n");
+        return -1;
+    }
+
+    alias_host->s = rest + ALIAS_LEN;
+    alias_host->len = rest_len - ALIAS_LEN;
+
+    /*Get host from alias*/
+    rest = memchr(alias_host->s, 126 /* ~ */, alias_host->len);
+    if (rest == NULL) {
+        LM_ERR("no '~' in alias param value\n");
+        return -1;
+    }
+    alias_host->len = rest - alias_host->s;
+    LM_DBG("Alias host to return [%.*s]\n", alias_host->len, alias_host->s);
+    return 0;
 }
 
-unsigned int get_aor_hash(udomain_t* _d, str* _aor) {
-	struct sip_uri contact_uri;
-	unsigned int aorhash;
 
-	if ((hashing_type == 0) || (parse_uri(_aor->s, _aor->len, &contact_uri) != 0)) {
-		if (hashing_type !=0) {
-			LM_DBG("Unable to get contact host:port from contact header [%.*s]... falling back to full AOR\n", _aor->len, _aor->s);
-		}
-		aorhash = core_hash(_aor, 0, 0);
-	} else {
-		LM_DBG("using host in lookup [%.*s]\n", contact_uri.host.len, contact_uri.host.s);
-		aorhash = core_hash(&contact_uri.host, 0, 0);
+/* return the slot id for inserting contacts in the hash */
+unsigned int get_hash_slot(udomain_t* _d, str* _aor, str* received_host, int received_port) {
+    struct sip_uri contact_uri;
+    unsigned int sl;
+    str alias_host = {0, 0};
+
+    if ((hashing_type == 0) /*use full AOR for hash*/ || (parse_uri(_aor->s, _aor->len, &contact_uri) != 0)) {
+	if (hashing_type != 0) {
+	    LM_DBG("Unable to get contact host:port from contact header [%.*s]... falling back to full AOR\n", _aor->len, _aor->s);
 	}
-	return aorhash;
+	sl = core_hash(_aor, 0, _d->size);
+    } else {
+	if ( received_host && (memcmp(contact_uri.host.s, received_host->s, received_host->len) != 0)) {
+	    LM_DBG("Looks like this contact is natted - contact URI: [%.*s] but came from received_host: [%.*s] so will use received_host for hash\n", contact_uri.host.len, contact_uri.host.s,
+		    received_host->len, received_host->s);
+	    sl = core_hash(received_host, 0, _d->size);
+	} else if (((get_alias_host_from_contact(&contact_uri.params, &alias_host)) == 0 && (memcmp(contact_uri.host.s, alias_host.s, alias_host.len) != 0))) {
+	    LM_DBG("Looks like this contact is natted - as it has alias [%.*s] different from contact URI [%.*s] so will use alias for hash\n", 
+		    alias_host.len, alias_host.s, contact_uri.host.len, contact_uri.host.s);
+	    sl = core_hash(&alias_host, 0, _d->size);
+	}else {
+	    LM_DBG("using host for hash [%.*s]\n", contact_uri.host.len, contact_uri.host.s);
+	    sl = core_hash(&contact_uri.host, 0, _d->size);
+	}
+    } 
+    LM_DBG("Returning hash slot: [%d]\n", sl);
+    return sl;
+}
+
+unsigned int get_aor_hash(udomain_t* _d, str* _aor, str* received_host, int received_port) {
+    struct sip_uri contact_uri;
+    unsigned int aorhash;
+    str alias_host = {0, 0};
+
+    if ((hashing_type == 0) /*use full AOR for hash*/ || (parse_uri(_aor->s, _aor->len, &contact_uri) != 0)) {
+	if (hashing_type != 0) {
+	    LM_DBG("Unable to get contact host:port from contact header [%.*s]... falling back to full AOR\n", _aor->len, _aor->s);
+	}
+	aorhash = core_hash(_aor, 0, 0);
+    } else {
+	if ( received_host && (memcmp(contact_uri.host.s, received_host->s, received_host->len) != 0)) {
+	    LM_DBG("Looks like this contact is natted - contact URI: [%.*s] but came from received_host: [%.*s] so will use received_host for hash\n", contact_uri.host.len, contact_uri.host.s,
+		    received_host->len, received_host->s);
+	    aorhash = core_hash(received_host, 0, 0);
+	} else if (((get_alias_host_from_contact(&contact_uri.params, &alias_host)) == 0 && (memcmp(contact_uri.host.s, alias_host.s, alias_host.len) != 0))) {
+	    LM_DBG("Looks like this contact is natted - as it has alias [%.*s] different from contact URI [%.*s] so will use alias for hash\n", 
+		    alias_host.len, alias_host.s, contact_uri.host.len, contact_uri.host.s);
+	    aorhash = core_hash(&alias_host, 0, 0);
+	}else {
+	    LM_DBG("using host for hash [%.*s]\n", contact_uri.host.len, contact_uri.host.s);
+	    aorhash = core_hash(&contact_uri.host, 0, 0);
+	}
+    } 
+    LM_DBG("Returning hash slot: [%d]\n", aorhash);
+    return aorhash;
 }
