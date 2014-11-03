@@ -469,8 +469,10 @@ int uac_auth( struct sip_msg *msg)
 		goto error;
 	}
 
-	/* mark msg wit uac auth for increase of cseq via dialog */
-	msg->msg_flags |= FL_UAC_AUTH;
+	/* mark request in T with uac auth for increase of cseq via dialog
+	 * - this function is executed in failure route, msg_flags will be
+	 *   reset afterwards by tm fake env */
+	if(t->uas.request) t->uas.request->msg_flags |= FL_UAC_AUTH;
 
 	return 0;
 error:
