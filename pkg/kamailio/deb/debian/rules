@@ -39,10 +39,10 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils lua memcached \
 			   snmpstats carrierroute xmpp cpl redis python geoip\
 			   sqlite json mono ims sctp java \
-			   purple tls outbound websocket autheph dnssec
+			   purple tls outbound websocket autheph dnssec kazoo cnxcc
 
 # module groups to be packaged onto kamailio-extra-modules
-EXTRA_GROUPS=gzcompress uuid ev kazoo
+EXTRA_GROUPS=gzcompress uuid ev
 
 # name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
 LIBDIR ?= lib/$(DEB_HOST_MULTIARCH)

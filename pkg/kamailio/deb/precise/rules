@@ -28,7 +28,7 @@ EXCLUDED_MODULES=
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
 # they will be excluded from compile and install of all
-EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy mi_xmlrpc dnssec kazoo
+EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy mi_xmlrpc dnssec kazoo cnxcc
 
 # module groups that are packaged in seperate packages
 # (with the name kamailio-$(group_name)-modules)
