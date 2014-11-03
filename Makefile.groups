@@ -16,7 +16,7 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   textopsx tm tmx topoh xlog rtpengine stun sipt
 
 # - extra used modules, with no extra dependency
-mod_list_extra=avp auth_diameter call_control cnxcc dmq domainpolicy msrp pdb \
+mod_list_extra=avp auth_diameter call_control dmq domainpolicy msrp pdb \
 			     qos sca seas sms sst timer tmrec uac_redirect xhttp \
 				 xhttp_rpc xprint jsonrpc-s nosip
 
@@ -169,6 +169,9 @@ mod_list_kazoo=kazoo
 # - modules depending on mongodb
 mod_list_mongodb=db_mongodb ndb_mongodb
 
+# - modules depending on redis and event library
+mod_list_cnxcc=cnxcc
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -193,7 +196,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
 			   $(mod_list_ev) $(mod_list_kazoo) \
-			   $(mod_list_mongodb))
+			   $(mod_list_mongodb) $(mod_list_cnxcc))
 
 
 
@@ -365,6 +368,9 @@ module_group_kkazoo=$(mod_list_kazoo)
 
 # pkg mongodb modules
 module_group_kmongodb=$(mod_list_mongodb)
+
+# pkg cnxcc module
+module_group_kcnxcc=$(mod_list_cnxcc)
 
 # list of static modules
 #
