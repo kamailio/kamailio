@@ -21,6 +21,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef __PUA_REGINFO_USRLOC_CB__
+#define __PUA_REGINFO_USRLOC_CB__
+
 #include "../usrloc/usrloc.h"
 
 void reginfo_usrloc_cb(ucontact_t* c, int type, void* param);
+void pua_reginfo_update_self_op(int v);
+
+#endif

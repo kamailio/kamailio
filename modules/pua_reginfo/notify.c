@@ -28,6 +28,7 @@
 #include "../../modules/usrloc/usrloc.h"
 #include "../../lib/srutils/sruid.h"
 #include <libxml/parser.h>
+#include "usrloc_cb.h"
 #include "pua_reginfo.h"
 
 /*<?xml version="1.0"?>
@@ -71,7 +72,9 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 	static str no_ua = str_init("n/a");
 	static ucontact_info_t ci;
 	ucontact_t * ul_contact;
+	int ret;
 
+	pua_reginfo_update_self_op(1);
 	if (*ul_record == NULL) {
 		switch(event) {
 			case EVENT_REGISTERED:
@@ -81,14 +84,15 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 				   create a new entry for this user in the usrloc-DB */
 				if (ul.insert_urecord(domain, &aor, ul_record) < 0) {
 					LM_ERR("failed to insert new user-record\n");
-					return RESULT_ERROR;
+					ret = RESULT_ERROR;
+					goto done;
 				}
 				break;
 			default:
 				/* No entry in usrloc and the contact is expired, deleted, unregistered, whatever:
                                    We do not need to do anything. */
-				return RESULT_NO_CONTACTS;
-				break;
+				ret = RESULT_NO_CONTACTS;
+				goto done;
 		}
 	}
 	
@@ -118,12 +122,14 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 		|| (ul.get_ucontact(*ul_record, &contact_uri, &callid, &no_str, cseq+1, &ul_contact) != 0)) {
 		if (ul.insert_ucontact(*ul_record, &contact_uri, &ci, &ul_contact) < 0) {
 			LM_ERR("failed to insert new contact\n");
-			return RESULT_ERROR;
+			ret = RESULT_ERROR;
+			goto done;
 		}
 	} else {
 		if (ul.update_ucontact(*ul_record, ul_contact, &ci) < 0) {
 			LM_ERR("failed to update contact\n");
-			return RESULT_ERROR;
+			ret = RESULT_ERROR;
+			goto done;
 		}
 	}
 	ul_contact = (*ul_record)->contacts;
@@ -132,7 +138,10 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 		ul_contact = ul_contact->next;
 	}
 
-	return RESULT_NO_CONTACTS;
+	ret = RESULT_NO_CONTACTS;
+done:
+	pua_reginfo_update_self_op(0);
+	return ret;
 }
 
 xmlNodePtr xmlGetNodeByName(xmlNodePtr parent, const char *name) {
