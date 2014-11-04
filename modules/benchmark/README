@@ -174,13 +174,15 @@ modparam("benchmark", "granularity", 500)
 3.3. loglevel (int)
 
    Set the log level for the benchmark logs. These levels should be used:
-     * -3 - L_ALERT
-     * -2 - L_CRIT
+     * -5 - L_ALERT
+     * -4 - L_BUG
+     * -3 - L_CRIT
+     * -2 - L_CRIT (no prefix)
      * -1 - L_ERR
-     * 1 - L_WARN
-     * 2 - L_NOTICE
-     * 3 - L_INFO
-     * 4 - L_DBG
+     * 0 - L_WARN
+     * 1 - L_NOTICE
+     * 2 - L_INFO
+     * 3 - L_DBG
 
    Default value is "3" (L_INFO).
 
