@@ -127,13 +127,15 @@ modparam("benchmark", "granularity", 500)
 		<para>
 			Set the log level for the benchmark logs. These levels should be used:
 			<itemizedlist>
-			<listitem><para>-3 - L_ALERT</para></listitem>
-			<listitem><para>-2 - L_CRIT</para></listitem>
+			<listitem><para>-5 - L_ALERT</para></listitem>
+			<listitem><para>-4 - L_BUG</para></listitem>
+			<listitem><para>-3 - L_CRIT</para></listitem>
+			<listitem><para>-2 - L_CRIT (no prefix)</para></listitem>
 			<listitem><para>-1 - L_ERR</para></listitem>
-			<listitem><para>1 - L_WARN</para></listitem>
-			<listitem><para>2 - L_NOTICE</para></listitem>
-			<listitem><para>3 - L_INFO</para></listitem>
-			<listitem><para>4 - L_DBG</para></listitem>
+			<listitem><para>0 - L_WARN</para></listitem>
+			<listitem><para>1 - L_NOTICE</para></listitem>
+			<listitem><para>2 - L_INFO</para></listitem>
+			<listitem><para>3 - L_DBG</para></listitem>
 			</itemizedlist>
 		</para>
 		<para>
