@@ -63,6 +63,28 @@
 			</itemizedlist>
 	</section>
 	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>publish_with_ob_proxy</varname> (int)</title>
+		<para>
+		If 1, pua_publish MI command has outbound proxy parameter.
+        	</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>publish_with_ob_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_mi", "publish_with_ob_proxy", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
 	
 	<section>
 		<title>MI Commands</title>
@@ -119,6 +141,15 @@
 					<emphasis>ETag</emphasis>
 					- ETag that publish should
 		match or . if no ETag is given.
+		                </para> 
+			</listitem>
+			<listitem>
+				<para>
+				  <emphasis>outbound proxy</emphasis>
+				  - SIP URI of outbound proxy to be used when
+       sending PUBLISH request or . if no outbound proxy is given.  This
+       parameter is present only when publish_with_ob_proxy module
+       parameter has value 1. 
 		                </para> 
 			</listitem>
 			<listitem>

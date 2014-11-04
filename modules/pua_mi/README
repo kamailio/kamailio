@@ -12,7 +12,7 @@ Edited by
 
 Juha Heinanen
 
-   Copyright © 2006 Voice Sistem SRL
+   Copyright (c) 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -25,14 +25,19 @@ Juha Heinanen
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. MI Commands
+        3. Parameters
 
-              3.1. pua_publish
-              3.2. pua_subscribe
+              3.1. publish_with_ob_proxy (int)
+
+        4. MI Commands
+
+              4.1. pua_publish
+              4.2. pua_subscribe
 
    List of Examples
 
-   1.1. pua_publish FIFO example
+   1.1. Set publish_with_ob_proxy parameter
+   1.2. pua_publish FIFO example
 
 Chapter 1. Admin Guide
 
@@ -44,10 +49,14 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. MI Commands
+   3. Parameters
 
-        3.1. pua_publish
-        3.2. pua_subscribe
+        3.1. publish_with_ob_proxy (int)
+
+   4. MI Commands
+
+        4.1. pua_publish
+        4.2. pua_subscribe
 
 1. Overview
 
@@ -76,12 +85,27 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * none
 
-3. MI Commands
+3. Parameters
 
-   3.1. pua_publish
-   3.2. pua_subscribe
+   3.1. publish_with_ob_proxy (int)
 
-3.1. pua_publish
+3.1. publish_with_ob_proxy (int)
+
+   If 1, pua_publish MI command has outbound proxy parameter.
+
+   Default value is "0".
+
+   Example 1.1. Set publish_with_ob_proxy parameter
+...
+modparam("pua_mi", "publish_with_ob_proxy", 1)
+...
+
+4. MI Commands
+
+   4.1. pua_publish
+   4.2. pua_subscribe
+
+4.1.  pua_publish
 
    Command parameters:
      * presentity_uri - e.g. sip:system@kamailio.org
@@ -97,13 +121,17 @@ Chapter 1. Admin Guide
        user take place. The dialog-id from the dialog-info body qualifies
        as a suitable id here.
      * ETag - ETag that publish should match or . if no ETag is given.
+     * outbound proxy - SIP URI of outbound proxy to be used when sending
+       PUBLISH request or . if no outbound proxy is given. This parameter
+       is present only when publish_with_ob_proxy module parameter has
+       value 1.
      * extra_headers - Extra headers added to PUBLISH request or . if no
        extra headers.
      * body - The body of the publish request containing published
        information or missing if no published information. It has to be a
        single line for FIFO transport.
 
-   Example 1.1. pua_publish FIFO example
+   Example 1.2. pua_publish FIFO example
 ...
 
 :pua_publish:fifo_test_reply
@@ -121,7 +149,7 @@ le id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd
 748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:4
 76</dm:note></dm:person></presence>
 
-3.2. pua_subscribe
+4.2.  pua_subscribe
 
    Command parameters:
      * presentity_uri - e.g. sip:presentity@kamailio.org

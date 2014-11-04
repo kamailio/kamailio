@@ -27,6 +27,8 @@
 
 #include "../pua/pua_bind.h"
 
+extern int publish_with_ob_proxy;
+
 extern send_publish_t pua_send_publish;
 extern send_subscribe_t pua_send_subscribe;
 
