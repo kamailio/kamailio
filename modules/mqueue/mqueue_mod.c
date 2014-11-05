@@ -158,7 +158,8 @@ static int w_mq_size(struct sip_msg *msg, char *mq, char *str2)
 	ret = _mq_get_csize(&q);
 
 	if(ret < 0)
-		LM_ERR("mqueue not found\n");
+		LM_ERR("mqueue %.*s not found\n", q.len, q.s);
+	if(ret<=0) ret--;
 
 	return ret;
 }
