@@ -2410,7 +2410,7 @@ int reply_received( struct sip_msg  *p_msg )
 		restart_rb_fr(& uac->request, t->fr_inv_timeout);
 		uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
 	} /* provisional replies */
-        
+
 done:
 	tm_ctx_set_branch_index(T_BR_UNDEFINED);
 	/* we are done with the transaction, so unref it - the reference
