@@ -164,6 +164,10 @@ mq_pv_free("myq");
 	    <para>
 		Returns the current number of elements in the mqueue.
 	    </para>
+	    <para>
+	    If the mqueue is empty, the function returns -1. If the
+	    mqueue is not found, the function returns -2.
+	    </para>
 		<example>
 		<title><function>mq_size</function> usage</title>
 		<programlisting format="linespecific">
