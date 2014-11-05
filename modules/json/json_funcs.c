@@ -33,10 +33,12 @@
 
 int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
 {
-  str json_s;
-  str field_s;
-  pv_spec_t *dst_pv;
-  pv_value_t dst_val;
+	str json_s;
+	str field_s;
+	pv_spec_t *dst_pv;
+	pv_value_t dst_val;
+	char *value;
+	struct json_object *j = NULL;
 
 	if (fixup_get_svalue(msg, (gparam_p)json, &json_s) != 0) {
 		LM_ERR("cannot get json string value\n");
@@ -47,22 +49,25 @@ int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
 		LM_ERR("cannot get field string value\n");
 		return -1;
 	}
-	
+
 	dst_pv = (pv_spec_t *)dst;
-	
-	struct json_object *j = json_tokener_parse(json_s.s);
+
+
+	j = json_tokener_parse(json_s.s);
 
 	if (is_error(j)) {
 		LM_ERR("empty or invalid JSON\n");
+		if(j!=NULL) json_object_put(j);
 		return -1;
 	}
 
-	char *value = (char*)json_object_to_json_string(json_object_object_get(j, field_s.s));
+	value = (char*)json_object_to_json_string(json_object_object_get(j, field_s.s));
 
 	dst_val.rs.s = value;
 	dst_val.rs.len = strlen(value);
 	dst_val.flags = PV_VAL_STR;
 	dst_pv->setf(msg, &dst_pv->pvp, (int)EQ_T, &dst_val);
 
+	if(j!=NULL) json_object_put(j);
 	return 1;
 }
