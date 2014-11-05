@@ -832,7 +832,20 @@ void sig_usr(int signo)
 					_exit(0);
 					break;
 			case SIGUSR1:
-				/* statistics, do nothing, printed only from the main proc */
+#ifdef PKG_MALLOC
+					cfg_update_no_cbs();
+					memlog=cfg_get(core, core_cfg, memlog);
+					if (memlog <= cfg_get(core, core_cfg, debug)){
+						if (cfg_get(core, core_cfg, mem_summary) & 1) {
+							LOG(memlog, "Memory status (pkg):\n");
+							pkg_status();
+						}
+						if (cfg_get(core, core_cfg, mem_summary) & 2) {
+							LOG(memlog, "Memory still-in-use summary (pkg):\n");
+							pkg_sums();
+						}
+					}
+#endif
 					break;
 				/* ignored*/
 			case SIGUSR2:
