@@ -480,8 +480,9 @@ int pv_get_mq_size(struct sip_msg *msg, pv_param_t *param,
 
 	return pv_get_sintval(msg, param, res, mqs);
 }
-/* Return head->csize for a given queue */
-
+/**
+ * Return head->csize for a given queue
+ */
 int _mq_get_csize(str *name) 
 {
 	mq_head_t *mh = mq_head_get(name);
