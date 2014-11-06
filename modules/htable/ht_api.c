@@ -577,7 +577,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 					if(it->next)
 						it->next->prev = it->prev;
 					ht->entries[idx].esize--;
-					lock_release(&ht->entries[idx].lock);
+					if(mode) lock_release(&ht->entries[idx].lock);
 					ht_cell_free(it);
 					return NULL;
 				}
@@ -596,7 +596,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 					if(old->msize>=it->msize)
 					{
 						memcpy(old, it, it->msize);
-						lock_release(&ht->entries[idx].lock);
+						if(mode) lock_release(&ht->entries[idx].lock);
 						return old;
 					}
 				}
@@ -644,7 +644,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 		if(old->msize>=it->msize)
 		{
 			memcpy(old, it, it->msize);
-			lock_release(&ht->entries[idx].lock);
+			if(mode) lock_release(&ht->entries[idx].lock);
 			return old;
 		}
 	}
