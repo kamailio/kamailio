@@ -2723,25 +2723,21 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 					memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
 					memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
 					tmp[SRV_UDP_PREFIX_LEN + name->len] = '\0';
-					len=SRV_UDP_PREFIX_LEN + name->len;
 					break;
 				case PROTO_TCP:
 					memcpy(tmp, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
 					memcpy(tmp+SRV_TCP_PREFIX_LEN, name->s, name->len);
 					tmp[SRV_TCP_PREFIX_LEN + name->len] = '\0';
-					len=SRV_TCP_PREFIX_LEN + name->len;
 					break;
 				case PROTO_TLS:
 					memcpy(tmp, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
 					memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
 					tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
-					len=SRV_TLS_PREFIX_LEN + name->len;
 					break;
 				case PROTO_SCTP:
 					memcpy(tmp, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
 					memcpy(tmp+SRV_SCTP_PREFIX_LEN, name->s, name->len);
 					tmp[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
-					len=SRV_SCTP_PREFIX_LEN + name->len;
 					break;
 				default:
 					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
@@ -4071,7 +4067,7 @@ void dns_cache_delete_all(rpc_t* rpc, void* ctx)
 		return;
 	}
 	dns_cache_flush(0);
-	rpc->rpl_printf(ctx, "OK");
+	rpc->printf(ctx, "OK");
 }
 
 /* deletes all the entries from the cache,
@@ -4083,7 +4079,7 @@ void dns_cache_delete_all_force(rpc_t* rpc, void* ctx)
 		return;
 	}
 	dns_cache_flush(1);
-	rpc->rpl_printf(ctx, "OK");
+	rpc->printf(ctx, "OK");
 }
 
 /* clones an entry and extends its memory area to hold a new rr.
