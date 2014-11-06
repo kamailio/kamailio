@@ -593,6 +593,20 @@ Description: authentication using ephemeral credentials module for Kamailio
  .
  This package provides the ephemeral module for Kamailio.
 
+Package: kamailio-kazoo-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: kamailio (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: kazoo modules for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the kazoo module for Kamailio.
+
 Package: kamailio-extra-modules
 Architecture: linux-any
 Multi-Arch: same
@@ -605,7 +619,7 @@ Description: extra modules for Kamailio
  proxy server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides: gzcompress uuid ev kazoo
+ This package provides: gzcompress uuid ev
 
 Package: kamailio-nth
 Architecture: any
