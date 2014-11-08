@@ -63,8 +63,8 @@ static void destroy(void);
 static int fixup_ht_key(void** param, int param_no);
 static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
-static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
-static int ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
+static int w_ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
+static int w_ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
 static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
 static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname);
 static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo);
@@ -114,9 +114,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"sht_rm_value_re", (cmd_function)ht_rm_value_re,  1, fixup_ht_key, 0,
 		ANY_ROUTE},
-	{"sht_lock",        (cmd_function)ht_slot_lock,    1, fixup_ht_key, 0,
+	{"sht_lock",        (cmd_function)w_ht_slot_lock,    1, fixup_ht_key, 0,
 		ANY_ROUTE},
-	{"sht_unlock",      (cmd_function)ht_slot_unlock,  1, fixup_ht_key, 0,
+	{"sht_unlock",      (cmd_function)w_ht_slot_unlock,  1, fixup_ht_key, 0,
 		ANY_ROUTE},
 	{"sht_reset",		(cmd_function)ht_reset,		   1, fixup_spve_null, 0,
 		ANY_ROUTE},
@@ -446,7 +446,7 @@ static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo)
 /**
  * lock the slot for a given key in a hash table
  */
-static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo)
+static int w_ht_slot_lock(struct sip_msg* msg, char* key, char* foo)
 {
 	ht_pv_t *hpv;
 	str skey;
@@ -480,7 +480,7 @@ static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo)
 			hpv->htname.len, hpv->htname.s,
 			idx, skey.len, skey.s);
 
-	lock_get(&hpv->ht->entries[idx].lock);
+	ht_slot_lock(hpv->ht, idx);
 
 	return 1;
 }
@@ -488,7 +488,7 @@ static int ht_slot_lock(struct sip_msg* msg, char* key, char* foo)
 /**
  * unlock the slot for a given key in a hash table
  */
-static int ht_slot_unlock(struct sip_msg* msg, char* key, char* foo)
+static int w_ht_slot_unlock(struct sip_msg* msg, char* key, char* foo)
 {
 	ht_pv_t *hpv;
 	str skey;
@@ -522,7 +522,7 @@ static int ht_slot_unlock(struct sip_msg* msg, char* key, char* foo)
 			hpv->htname.len, hpv->htname.s,
 			idx, skey.len, skey.s);
 
-	lock_release(&hpv->ht->entries[idx].lock);
+	ht_slot_unlock(hpv->ht, idx);
 
 	return 1;
 }
@@ -609,11 +609,11 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 	/* replace old entries */
 	for(i=0; i<nht.htsize; i++)
 	{
-		lock_get(&ht->entries[i].lock);
+		ht_slot_lock(ht, i);
 		first = ht->entries[i].first;
 		ht->entries[i].first = nht.entries[i].first;
 		ht->entries[i].esize = nht.entries[i].esize;
-		lock_release(&ht->entries[i].lock);
+		ht_slot_unlock(ht, i);
 		nht.entries[i].first = first;
 	}
 	/* free old entries */
@@ -708,7 +708,7 @@ static struct mi_root* ht_mi_dump(struct mi_root* cmd_tree, void* param)
 
 	for(i=0; i<ht->htsize; i++)
 	{
-		lock_get(&ht->entries[i].lock);
+		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		if(it)
 		{
@@ -732,7 +732,7 @@ static struct mi_root* ht_mi_dump(struct mi_root* cmd_tree, void* param)
 				it = it->next;
 			}
 		}
-		lock_release(&ht->entries[i].lock);
+		ht_slot_unlock(ht, i);
 	}
 
 	return rpl_tree;
@@ -963,7 +963,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 	}
 	for(i=0; i<ht->htsize; i++)
 	{
-		lock_get(&ht->entries[i].lock);
+		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		if(it)
 		{
@@ -1009,13 +1009,13 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 				it = it->next;
 			}
 		}
-		lock_release(&ht->entries[i].lock);
+		ht_slot_unlock(ht, i);
 	}
 
 	return;
 
 error:
-	lock_release(&ht->entries[i].lock);
+	ht_slot_unlock(ht, i);
 }
 
 static void  htable_rpc_list(rpc_t* rpc, void* c)
@@ -1093,13 +1093,13 @@ static void  htable_rpc_stats(rpc_t* rpc, void* c)
 		max = 0;
 		min = 4294967295U;
 		for(i=0; i<ht->htsize; i++) {
-			lock_get(&ht->entries[i].lock);
+			ht_slot_lock(ht, i);
 			if(ht->entries[i].esize<min)
 				min = ht->entries[i].esize;
 			if(ht->entries[i].esize>max)
 				max = ht->entries[i].esize;
 			all += ht->entries[i].esize;
-			lock_release(&ht->entries[i].lock);
+			ht_slot_unlock(ht, i);
 		}
 
 		if(rpc->struct_add(th, "Sddd",
@@ -1189,11 +1189,11 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 	/* replace old entries */
 	for(i=0; i<nht.htsize; i++)
 	{
-		lock_get(&ht->entries[i].lock);
+		ht_slot_lock(ht, i);
 		first = ht->entries[i].first;
 		ht->entries[i].first = nht.entries[i].first;
 		ht->entries[i].esize = nht.entries[i].esize;
-		lock_release(&ht->entries[i].lock);
+		ht_slot_unlock(ht, i);
 		nht.entries[i].first = first;
 	}
 	/* free old entries */

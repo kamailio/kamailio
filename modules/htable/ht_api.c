@@ -140,6 +140,37 @@ void keyvalue_destroy(keyvalue_t *res)
 	memset(res, 0, sizeof(keyvalue_t));
 }
 
+/**
+ * recursive/re-entrant lock of the slot in hash table
+ */
+void ht_slot_lock(ht_t *ht, int idx)
+{
+	int mypid;
+
+	mypid = my_pid();
+	if (likely(atomic_get(&ht->entries[idx].locker_pid) != mypid)) {
+		lock_get(&ht->entries[idx].lock);
+		atomic_set(&ht->entries[idx].locker_pid, mypid);
+	} else {
+		/* locked within the same process that executed us */
+		ht->entries[idx].rec_lock_level++;
+	}
+}
+
+/**
+ * recursive/re-entrant unlock of the slot in hash table
+ */
+void ht_slot_unlock(ht_t *ht, int idx)
+{
+	if (likely(ht->entries[idx].rec_lock_level == 0)) {
+		atomic_set(&ht->entries[idx].locker_pid, 0);
+		lock_release(&ht->entries[idx].lock);
+	} else  {
+		/* recursive locked => decrease lock count */
+		ht->entries[idx].rec_lock_level--;
+	}
+}
+
 ht_cell_t* ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
 {
 	ht_cell_t *cell;
@@ -393,7 +424,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 	if(ht->htexpire>0)
 		now = time(NULL);
 	prev = NULL;
-	if(mode) lock_get(&ht->entries[idx].lock);
+	if(mode) ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 	{
@@ -425,7 +456,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 						if(cell == NULL)
 						{
 							LM_ERR("cannot create new cell\n");
-							if(mode) lock_release(&ht->entries[idx].lock);
+							if(mode) ht_slot_unlock(ht, idx);
 							return -1;
 						}
 						cell->next = it->next;
@@ -446,7 +477,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 					if(ht->updateexpire)
 						it->expire = now + ht->htexpire;
 				}
-				if(mode) lock_release(&ht->entries[idx].lock);
+				if(mode) ht_slot_unlock(ht, idx);
 				return 0;
 			} else {
 				if(type&AVP_VAL_STR)
@@ -456,7 +487,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 					if(cell == NULL)
 					{
 						LM_ERR("cannot create new cell.\n");
-						if(mode) lock_release(&ht->entries[idx].lock);
+						if(mode) ht_slot_unlock(ht, idx);
 						return -1;
 					}
 					cell->expire = now + ht->htexpire;
@@ -475,7 +506,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 					if(ht->updateexpire)
 						it->expire = now + ht->htexpire;
 				}
-				if(mode) lock_release(&ht->entries[idx].lock);
+				if(mode) ht_slot_unlock(ht, idx);
 				return 0;
 			}
 		}
@@ -487,7 +518,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 	if(cell == NULL)
 	{
 		LM_ERR("cannot create new cell.\n");
-		if(mode) lock_release(&ht->entries[idx].lock);
+		if(mode) ht_slot_unlock(ht, idx);
 		return -1;
 	}
 	cell->expire = now + ht->htexpire;
@@ -507,7 +538,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 		prev->next = cell;
 	}
 	ht->entries[idx].esize++;
-	if(mode) lock_release(&ht->entries[idx].lock);
+	if(mode) ht_slot_unlock(ht, idx);
 	return 0;
 }
 
@@ -528,7 +559,7 @@ int ht_del_cell(ht_t *ht, str *name)
 	if(ht->entries[idx].first==NULL)
 		return 0;
 	
-	lock_get(&ht->entries[idx].lock);
+	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 		it = it->next;
@@ -545,13 +576,13 @@ int ht_del_cell(ht_t *ht, str *name)
 			if(it->next)
 				it->next->prev = it->prev;
 			ht->entries[idx].esize--;
-			lock_release(&ht->entries[idx].lock);
+			ht_slot_unlock(ht, idx);
 			ht_cell_free(it);
 			return 0;
 		}
 		it = it->next;
 	}
-	lock_release(&ht->entries[idx].lock);
+	ht_slot_unlock(ht, idx);
 	return 0;
 }
 
@@ -575,7 +606,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(ht->htexpire>0)
 		now = time(NULL);
 	prev = NULL;
-	if(mode) lock_get(&ht->entries[idx].lock);
+	if(mode) ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 	{
@@ -606,7 +637,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 					if(it->next)
 						it->next->prev = it->prev;
 					ht->entries[idx].esize--;
-					if(mode) lock_release(&ht->entries[idx].lock);
+					if(mode) ht_slot_unlock(ht, idx);
 					ht_cell_free(it);
 					return NULL;
 				}
@@ -615,7 +646,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 			if(it->flags&AVP_VAL_STR)
 			{
 				/* string value cannot be incremented */
-				if(mode) lock_release(&ht->entries[idx].lock);
+				if(mode) ht_slot_unlock(ht, idx);
 				return NULL;
 			} else {
 				it->value.n += val;
@@ -625,7 +656,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 					if(old->msize>=it->msize)
 					{
 						memcpy(old, it, it->msize);
-						if(mode) lock_release(&ht->entries[idx].lock);
+						if(mode) ht_slot_unlock(ht, idx);
 						return old;
 					}
 				}
@@ -633,7 +664,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 				if(cell!=NULL)
 					memcpy(cell, it, it->msize);
 
-				if(mode) lock_release(&ht->entries[idx].lock);
+				if(mode) ht_slot_unlock(ht, idx);
 				return cell;
 			}
 		}
@@ -648,7 +679,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(it == NULL)
 	{
 		LM_ERR("cannot create new cell.\n");
-		if(mode) lock_release(&ht->entries[idx].lock);
+		if(mode) ht_slot_unlock(ht, idx);
 		return NULL;
 	}
 	it->expire = now + ht->htexpire;
@@ -673,7 +704,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 		if(old->msize>=it->msize)
 		{
 			memcpy(old, it, it->msize);
-			if(mode) lock_release(&ht->entries[idx].lock);
+			if(mode) ht_slot_unlock(ht, idx);
 			return old;
 		}
 	}
@@ -681,7 +712,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(cell!=NULL)
 		memcpy(cell, it, it->msize);
 
-	if(mode) lock_release(&ht->entries[idx].lock);
+	if(mode) ht_slot_unlock(ht, idx);
 	return cell;
 }
 
@@ -703,7 +734,7 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 	if(ht->entries[idx].first==NULL)
 		return NULL;
 	
-	lock_get(&ht->entries[idx].lock);
+	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 		it = it->next;
@@ -724,7 +755,7 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 				if(it->next)
 					it->next->prev = it->prev;
 				ht->entries[idx].esize--;
-				lock_release(&ht->entries[idx].lock);
+				ht_slot_unlock(ht, idx);
 				ht_cell_free(it);
 				return NULL;
 			}
@@ -733,19 +764,19 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 				if(old->msize>=it->msize)
 				{
 					memcpy(old, it, it->msize);
-					lock_release(&ht->entries[idx].lock);
+					ht_slot_unlock(ht, idx);
 					return old;
 				}
 			}
 			cell = (ht_cell_t*)pkg_malloc(it->msize);
 			if(cell!=NULL)
 				memcpy(cell, it, it->msize);
-			lock_release(&ht->entries[idx].lock);
+			ht_slot_unlock(ht, idx);
 			return cell;
 		}
 		it = it->next;
 	}
-	lock_release(&ht->entries[idx].lock);
+	ht_slot_unlock(ht, idx);
 	return NULL;
 }
 
@@ -762,7 +793,7 @@ int ht_dbg(void)
 				ht->name.s, ht->htid, ht->htexpire);
 		for(i=0; i<ht->htsize; i++)
 		{
-			lock_get(&ht->entries[i].lock);
+			ht_slot_lock(ht, i);
 			LM_ERR("htable[%d] -- <%d>\n", i, ht->entries[i].esize);
 			it = ht->entries[i].first;
 			while(it)
@@ -776,7 +807,7 @@ int ht_dbg(void)
 					LM_ERR("\tv-i:%d\n", it->value.n);
 				it = it->next;
 			}
-			lock_release(&ht->entries[i].lock);
+			ht_slot_unlock(ht, i);
 		}
 		ht = ht->next;
 	}
@@ -945,7 +976,7 @@ void ht_timer(unsigned int ticks, void *param)
 			for(i=0; i<ht->htsize; i++)
 			{
 				/* free entries */
-				lock_get(&ht->entries[i].lock);
+				ht_slot_lock(ht, i);
 				it = ht->entries[i].first;
 				while(it)
 				{
@@ -965,7 +996,7 @@ void ht_timer(unsigned int ticks, void *param)
 					}
 					it = it0;
 				}
-				lock_release(&ht->entries[i].lock);
+				ht_slot_unlock(ht, i);
 			}
 		}
 		ht = ht->next;
@@ -1040,7 +1071,7 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 	LM_DBG("set auto-expire to %u (%d)\n", (unsigned int)now,
 			val->n);
 
-	lock_get(&ht->entries[idx].lock);
+	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 		it = it->next;
@@ -1051,12 +1082,12 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 		{
 			/* update value */
 			it->expire = now;
-			lock_release(&ht->entries[idx].lock);
+			ht_slot_unlock(ht, idx);
 			return 0;
 		}
 		it = it->next;
 	}
-	lock_release(&ht->entries[idx].lock);
+	ht_slot_unlock(ht, idx);
 	return 0;
 }
 
@@ -1080,7 +1111,7 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 	idx = ht_get_entry(hid, ht->htsize);
 
 	now = time(NULL);
-	lock_get(&ht->entries[idx].lock);
+	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 		it = it->next;
@@ -1091,12 +1122,12 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 		{
 			/* update value */
 			*val = (unsigned int)(it->expire - now);
-			lock_release(&ht->entries[idx].lock);
+			ht_slot_unlock(ht, idx);
 			return 0;
 		}
 		it = it->next;
 	}
-	lock_release(&ht->entries[idx].lock);
+	ht_slot_unlock(ht, idx);
 	return 0;
 }
 
@@ -1121,7 +1152,7 @@ int ht_rm_cell_re(str *sre, ht_t *ht, int mode)
 	for(i=0; i<ht->htsize; i++)
 	{
 		/* free entries */
-		lock_get(&ht->entries[i].lock);
+		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		while(it)
 		{
@@ -1149,7 +1180,7 @@ int ht_rm_cell_re(str *sre, ht_t *ht, int mode)
 			}
 			it = it0;
 		}
-		lock_release(&ht->entries[i].lock);
+		ht_slot_unlock(ht, i);
 	}
 	regfree(&re);
 	return 0;
@@ -1167,7 +1198,7 @@ int ht_reset_content(ht_t *ht)
 	for(i=0; i<ht->htsize; i++)
 	{
 		/* free entries */
-		lock_get(&ht->entries[i].lock);
+		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		while(it)
 		{
@@ -1182,7 +1213,7 @@ int ht_reset_content(ht_t *ht)
 			ht_cell_free(it);
 			it = it0;
 		}
-		lock_release(&ht->entries[i].lock);
+		ht_slot_unlock(ht, i);
 	}
 	return 0;
 }
@@ -1285,7 +1316,7 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 	for(i=0; i<ht->htsize; i++)
 	{
 		/* free entries */
-		lock_get(&ht->entries[i].lock);
+		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		while(it)
 		{
@@ -1332,7 +1363,7 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 			}
 			it = it0;
 		}
-		lock_release(&ht->entries[i].lock);
+		ht_slot_unlock(ht, i);
 	}
 	if(op==1)
 		regfree(&re);
@@ -1388,7 +1419,7 @@ int ht_iterator_start(str *iname, str *hname)
 		{
 			if(_ht_iterators[k].slot>=0 && _ht_iterators[k].slot<_ht_iterators[k].ht->htsize)
 			{
-				lock_release(&_ht_iterators[k].ht->entries[_ht_iterators[k].slot].lock);
+				ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
 			}
 		}
 	} else {
@@ -1457,19 +1488,19 @@ int ht_iterator_next(str *iname)
 		}
 		/* next is not in the same slot - release and try next one */
 		_ht_iterators[k].it = NULL;
-		lock_release(&_ht_iterators[k].ht->entries[_ht_iterators[k].slot].lock);
+		ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
 		_ht_iterators[k].slot++;
 	}
 
 	for( ; _ht_iterators[k].slot<_ht_iterators[k].ht->htsize; _ht_iterators[k].slot++)
 	{
-		lock_get(&_ht_iterators[k].ht->entries[_ht_iterators[k].slot].lock);
+		ht_slot_lock(_ht_iterators[k].ht, _ht_iterators[k].slot);
 		if(_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first!=NULL)
 		{
 			_ht_iterators[k].it = _ht_iterators[k].ht->entries[_ht_iterators[k].slot].first;
 			return 0;
 		}
-		lock_release(&_ht_iterators[k].ht->entries[_ht_iterators[k].slot].lock);
+		ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
 	}
 	return -1;
 }
@@ -1489,7 +1520,7 @@ int ht_iterator_end(str *iname)
 				{
 					if(_ht_iterators[i].slot>=0 && _ht_iterators[i].slot<_ht_iterators[i].ht->htsize)
 					{
-						lock_release(&_ht_iterators[i].ht->entries[_ht_iterators[i].slot].lock);
+						ht_slot_unlock(_ht_iterators[i].ht, _ht_iterators[i].slot);
 					}
 				}
 				memset(&_ht_iterators[i], 0, sizeof(ht_iterator_t));

@@ -28,6 +28,7 @@
 #include "../../usr_avp.h"
 #include "../../locking.h"
 #include "../../pvar.h"
+#include "../../atomic_ops.h"
 
 #define ht_compute_hash(_s)        core_case_hash(_s,0,0)
 #define ht_get_entry(_h,_size)    (_h)&((_size)-1)
@@ -46,9 +47,11 @@ typedef struct _ht_cell
 
 typedef struct _ht_entry
 {
-	unsigned int esize;
-	ht_cell_t *first;
-	gen_lock_t lock;	
+	unsigned int esize;  /* number of items in the slot */
+	ht_cell_t *first;    /* first item in the slot */
+	gen_lock_t lock;     /* mutex to access items in the slot */
+	atomic_t locker_pid; /* pid of the process that holds the lock */
+	int rec_lock_level;  /* recursive lock count */
 } ht_entry_t;
 
 typedef struct _ht
@@ -111,4 +114,6 @@ int ht_iterator_next(str *iname);
 int ht_iterator_end(str *iname);
 ht_cell_t* ht_iterator_get_current(str *iname);
 
+void ht_slot_lock(ht_t *ht, int idx);
+void ht_slot_unlock(ht_t *ht, int idx);
 #endif
