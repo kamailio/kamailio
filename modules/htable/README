@@ -672,7 +672,9 @@ sht_reset("ha$var(x)");
 
 4.5. sht_lock(htable=>key)
 
-   Lock the slot in htable corespoding to the key item.
+   Lock the slot in htable corespoding to the key item. Note that the
+   locking is re-entrant for the process, therefore the lock and unlock
+   should be done by the same process.
 
    This function can be used from ANY_ROUTE.
 
@@ -683,7 +685,9 @@ sht_lock("ha=>test");
 
 4.6. sht_unlock(htable=>key)
 
-   Unlock the slot in htable corespoding to the key item.
+   Unlock the slot in htable corespoding to the key item. Note that the
+   locking is re-entrant for the process, therefore the lock and unlock
+   should be done by the same process.
 
    This function can be used from ANY_ROUTE.
 
