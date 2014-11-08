@@ -435,7 +435,7 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 
 	for(i=0; i<ht->htsize; i++)
 	{
-		lock_get(&ht->entries[i].lock);
+		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		while(it)
 		{
@@ -495,6 +495,7 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 			}
 			it = it->next;
 		}
+		ht_slot_unlock(ht, i);
 	}
 	return 0;
 }
