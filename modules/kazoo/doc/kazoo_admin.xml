@@ -169,17 +169,7 @@ after processing by the worker
         <itemizedlist>
             <listitem>
             <para>
-                <emphasis>librabbitmq</emphasis>.
-            </para>
-            </listitem>
-            <listitem>
-            <para>
-                <emphasis>libjson</emphasis>.
-            </para>
-            </listitem>
-            <listitem>
-            <para>
-                <emphasis>libuuid</emphasis>.
+                <emphasis>*none</emphasis>.
             </para>
             </listitem>
         </itemizedlist>
