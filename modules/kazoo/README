@@ -297,9 +297,7 @@ event_route[kazoo:consumer-event]
 
 3.2. External Libraries or Applications
 
-     * librabbitmq.
-     * libjson.
-     * libuuid.
+     * *none.
 
 4. Parameters
 
