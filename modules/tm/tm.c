@@ -2115,9 +2115,10 @@ int t_check_trans(struct sip_msg* msg)
 	int ret;
 	
 	/* already processing a T */
-	if(get_route_type()==FAILURE_ROUTE
-			|| get_route_type()==BRANCH_ROUTE
-			|| get_route_type()==TM_ONREPLY_ROUTE) {
+	if(is_route_type(FAILURE_ROUTE)
+			|| is_route_type(BRANCH_ROUTE)
+			|| is_route_type(BRANCH_FAILURE_ROUTE)
+			|| is_route_type(TM_ONREPLY_ROUTE)) {
 		return 1;
 	}
 
