@@ -200,12 +200,6 @@ static int mod_init(void) {
 
     kz_amqp_init();
 
-    if (kz_callid_init() < 0) {
-	LOG(L_CRIT, "Error while initializing Call-ID generator\n");
-	return -1;
-    }
-
-
     if(dbk_pua_mode == 1) {
 		kz_db_url.len = kz_db_url.s ? strlen(kz_db_url.s) : 0;
 		LM_DBG("db_url=%s/%d/%p\n", ZSW(kz_db_url.s), kz_db_url.len,kz_db_url.s);
@@ -276,15 +270,6 @@ static int mod_child_init(int rank)
 	int i;
 
 	fire_init_event(rank);
-
-	if (rank != PROC_INIT) {
-	   if (kz_callid_child_init(rank) < 0) { 
-		/* don't init callid for PROC_INIT*/
-		LOG(L_ERR, "ERROR: child_init: Error while initializing Call-ID"
-				" generator\n");
-		return -2;
-           }
-	}
 
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0;

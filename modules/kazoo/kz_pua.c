@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <json-c/json.h>
 #include "../../mem/mem.h"
 #include "../../timer_proc.h"
 #include "../../sr_module.h"
@@ -12,11 +13,11 @@
 #include "../pua/pua_bind.h"
 #include "../pua/send_publish.h"
 
+#include "kz_pua.h"
 #include "defs.h"
 #include "const.h"
 #include "kz_json.h"
 
-#include "kz_pua.h"
 
 extern int dbk_include_entity;
 extern int dbk_pua_mode;
