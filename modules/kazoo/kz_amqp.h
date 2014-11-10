@@ -11,7 +11,6 @@
 #include <amqp.h>
 
 #include "../../sr_module.h"
-#include "../../str.h"
 
 #include "const.h"
 #include "defs.h"
@@ -143,11 +142,6 @@ void kz_amqp_manager_loop(int child_no);
 int kz_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
 int kz_pv_get_last_query_result(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
 int kz_pv_get_connection_host(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
-
-/* callid generator */
-int kz_callid_init(void);
-int kz_callid_child_init(int rank);
-void kz_generate_callid(str* callid);
 
 static inline int kz_amqp_error(char const *context, amqp_rpc_reply_t x)
 {
