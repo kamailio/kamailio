@@ -1,3 +1,656 @@
+===================== 2014-11-11 Version 4.2.1 Released =====================
+
+===================== Changes Since Version 4.1.1 ===========================
+
+commit 23a70da2e560ff9cae84271930321dc3075a2ad3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 11 13:38:23 2014 +0100
+
+    Makefile.defs: version set to 4.2.1
+
+commit 79aea2314f3f4ef93645726c53ae3b9e9a66037b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 11 12:56:52 2014 +0100
+
+    pkg/deb: version set to 4.2.1 in spec files
+
+commit 3bd165bc6efa87920cc0bbdf5084755ebc62d66e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 11 12:46:54 2014 +0100
+
+    pkg/rpm: set version 4.2.1 in spec files
+
+commit 00c884a644689ec9e135283c26d0d9f90711bb4c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 10 15:42:39 2014 +0100
+
+    tm: handle BRANCH_FAILURE_ROUTE in t_check_trans() test
+    
+    (cherry picked from commit 08248bae17024246442046376a4350007a100025)
+
+commit 69db8e643ac2356e443eddd9eecb14430f3e7452
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 8 11:10:11 2014 +0100
+
+    htable: elaborated docs about sht_lock() and sht_unlock()
+    
+    (cherry picked from commit 44269cd654a6ab0557ca242f25ec41158e7dcbaf)
+
+commit 7e6a27a907806fc48c35895c471c7d1ab97f2d27
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 8 10:57:00 2014 +0100
+
+    htable: make locking to access a slot re-entrant for a process
+    
+    - proper functionality for sht_lock()/sht_unlock()
+    
+    (cherry picked from commit 4f07daab9cb95e13c7c89a9a566d4a8c88b9145e)
+
+commit 4bd289f1d893fd36c4fe508f34c0d2a58901d119
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 6 18:43:50 2014 +0100
+
+    htable: use mode everywhere to control the locks for add operation
+    
+    (cherry picked from commit c7ff8a88e773e8d25958f86d178f05ee10fd0410)
+
+commit 39d6a77084f6c32af1f0de646410a247e55355c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 4 16:32:13 2014 +0100
+
+    pua_reginfo: avoid sending notify when processing location record action triggered by itself
+    
+    (cherry picked from commit e070257321853d799a6325ac5e94f69b4ccb85e7)
+
+commit 2965000599c1b03ad9b90eb6c773d03953b6e603
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Nov 10 12:24:11 2014 +0100
+
+    perl: Sync log levels with kamailio core
+    
+    (cherry picked from commit 92fa1ac28b4991cd83338d1f99e898dfe1d8742f)
+
+commit f39c6ae6934550eff8ba5b01bfe94abfea6a094e
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 23 17:49:44 2014 +0200
+
+    dialog: fix crash when trying to RPC export a "remote" profile
+    
+    (cherry picked from commit 79695ed2628db60199647baf653ce5f9b9005fe9)
+
+commit 0b46ce64d443c5d271f32b2ec759eca0f066105e
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 23 17:46:26 2014 +0200
+
+    dialog: break loop when profile entry doesn't exist
+    
+    (cherry picked from commit a65a212c1e7587182f113a94f3d0d8b46c97baa0)
+
+commit 950fb8e421daea12d268bc09b53297a175ccc758
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 23 17:46:00 2014 +0200
+
+    dialog: release lock when profile has been found
+    
+    (cherry picked from commit 10a655b5545f5170f339a9f18d702f4e85dd5778)
+
+commit c161bd375b2e00215fa3d657aa6ec273ce515e6c
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 30 17:15:38 2014 +0100
+
+    perl: check for and handle memory allocation failures
+    
+    (cherry picked from commit 293caa403bba6741d15254a42d106392fc657888)
+
+commit d14ba3700928a16b500cf832c1101d2fdd12a0e2
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 30 17:12:28 2014 +0100
+
+    core: Don't log errors when dns find no more records
+    
+    If the proxy is listeneing on both ipv4 and ipv6, DNS attempts are done for
+    both A and AAAA records. If the last of these lookup fails with no records
+    found, don't log an error if the first lookup did already return records.
+    
+    (cherry picked from commit 3aec75e97b579cc67340c0fb81b276321b4ab73a)
+
+commit 51b7e8f539ada81cdb8e7fe49d5c0ccf5e3cc274
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Oct 16 14:57:42 2012 +0200
+
+    dispatcher: Ignore IPv6 addresses if IPv6 lookups are disabled.
+    
+    (cherry picked from commit 2d7f748ef690846365e4dd5bc5a91df21e39321c)
+
+commit 2d311c5897f68362f3bde53a3bbe21316d7c769f
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Oct 14 15:58:41 2014 +0200
+
+    tm: backup xavps before running callbacks
+    
+    regular avps were being backupped, just not xavps.
+    
+    (cherry picked from commit e1f96b11379abd60fd53c49a376f6cf3cb1fc69d)
+
+commit 3ed4a1b4d29b7ab2eac4d40d3efbf6a3e00efe4f
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Fri Oct 10 11:06:43 2014 +0200
+
+    core: fork_*_utimer()'s interval is in microseconds
+    
+    Sync comments with code and function names
+    
+    (cherry picked from commit e2596876b830783de88934d45c9c5563ba2c3577)
+
+commit 2a0fab2d66b299cb6003cead79a986324d16560d
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 9 17:54:20 2014 +0200
+
+    core: time_t is unsigned, handle integer underflow correctly
+    
+    When the processing of the timer code takes longer than the interval, don't
+    sleep for 4Gs.
+    
+    (cherry picked from commit 8adcf8f0e3ba2fa969583f6630dbd9e3aaecfcac)
+
+commit 0c7df3a8375ee3dba52e42c098d70c54e779183c
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 2 16:33:26 2014 +0200
+
+    tm: remove dead code
+    
+    (cherry picked from commit 3d24997fd1ba34bd4e426656b1533530718008a0)
+
+commit 50c60c511259bff8c8e782f949547a9f0967c5c6
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 2 16:46:23 2014 +0200
+
+    tm: log an error message as error, not debug
+    
+    (cherry picked from commit 54f19e018a1a569b532555311505d4962de49bd7)
+
+commit 579c53be3fd6ad7cd8e90e56fb703084f5b94a78
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Oct 14 11:39:12 2014 +0200
+
+    dmq: unlock in failure path in build_notification_body()
+    
+    (cherry picked from commit 5f05db99979e6c74d8303437d6c422478a1fbc7c)
+
+commit b4c2800ced527f056dd907efe4b0987e94689ce8
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Oct 14 11:38:36 2014 +0200
+
+    dmq: handle failure to build callback parameter
+    
+    (cherry picked from commit e98c601c43edbfbf7b389e04e9fb16839577ef5a)
+
+commit 2109a705b4ccabca6642d00121e7253f0a2a661e
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Oct 20 22:35:59 2014 +0200
+
+    dmq: check if dmq socket exists
+    
+    (cherry picked from commit c6d2480efd95336ae34a2fb732dd4cb62ac89cbb)
+
+commit 9cc499e8350ee8f37dfb844c02497d7233e146d1
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Fri Aug 22 15:56:22 2014 +0200
+
+    mi_datagram: Send error response on out-of-memory
+    
+    (cherry picked from commit 902a77af1501f78fcc1205a37a5307e1d300f301)
+
+commit 293d7cb86bc1c59ede155dfbcf8627ccfcbc1710
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Fri Aug 22 15:16:00 2014 +0200
+
+    core: Document the right type for 'str*' in the RPC interface
+    
+    (cherry picked from commit a4eacbb469909978b7a9eff8767dcbdd5110ee99)
+
+commit a7ab7030ea0f5afb08009985a245e1499e1f8517
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Aug 19 12:36:23 2014 +0200
+
+    core: sip_msg_shm_clone: clone parsed maxforwards value in shm
+    
+    maxfwd module modified the msg buf directly instead of adding a lump. In
+    addition it is filling the parsed value of the header field.
+    
+    Clone this field into shm so later code can at least determine if the msg
+    has been mangled so it can retreive the original value of the header.
+    
+    (cherry picked from commit 42f506c08073c5f8ca84f1f12ea9e6c820f162d8)
+
+commit ae01e2ed5e7decace416fefbfd64073ffd3d62ac
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Oct 20 15:38:51 2014 +0200
+
+    kcore: print_rr_body: return number of printed Record-Route bodies
+    
+    Act like the documentation, return the number of printed RR bodies, not the
+    total number of RR bodies.
+    
+    (cherry picked from commit aa4fabe05dd3b6dc841325fe279596293d327a92)
+
+commit d68066614211d1a406c0c12f11ce907340e42255
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Oct 20 15:38:11 2014 +0200
+
+    tm: Fix setting flags for record-route headers
+    
+    The flags where set in add_uac() by counting the number of record-route
+    headers added by prepare_new_uac(). The latter function backups and
+    restores the list of lumps, so add_uac() only sees the original list,
+    which is not what has happened on the branch being handled.
+    
+    Moving setting the flags into prepare_new_uac() fixes this.
+    
+    This fixed the dialog module, which has to remove the correct number
+    of RR headers from the callee's routeset (which it does based on the
+    tm flags).
+    
+    (cherry picked from commit ee9b78709516b935e087b0efcb620c13aad1a740)
+
+commit 2f465eccc23ce472daa709322809e863b3702f16
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Mon Nov 10 13:35:53 2014 +0000
+
+    Revert "kazoo : remove dependencies"
+    
+    This reverts commit 1630ec25958bda98a98864cbef57000dab8f2aeb.
+
+commit 1630ec25958bda98a98864cbef57000dab8f2aeb
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Mon Nov 10 13:25:30 2014 +0000
+
+    kazoo : remove dependencies
+
+commit 9a2d304f961d87d70ad6d27e85c3dac6d05f2a01
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 6 19:05:48 2014 +0100
+
+    pkg/kamailio/deb: add kazoo module package
+
+commit 8eea9aa8faafd5a248a00caaba43379fc7b52423
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 5 14:29:34 2014 +0100
+
+    json: unreference the json object in json_get_field()
+    
+    - the parsed json object has to be freed
+    - reported by dongwflj@163.com
+    
+    (cherry picked from commit def8d2600422a442b971c204df98594b0dfdaacd)
+
+commit bcfd43b42eb8115d7698201250a15f5ddd82b4c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 5 14:04:33 2014 +0100
+
+    mqueue: elaborated the docs for mq_size() to reflect return codes
+    
+    (cherry picked from commit cf9303b8063e77426e0506bed09577fe7a584fb1)
+
+commit 281c668b5e3a0ef9f7edde2bbea6b81201bd00b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 5 13:59:53 2014 +0100
+
+    mqueue: fix mq_size() not to return 0
+    
+    - return 0 for a config function is considered 'exit' by interpreter
+    - if size of the queue is 0, the function return -1
+    - for other error cases, the return code was decremented by 1
+    
+    (cherry picked from commit bde57b53386e792651b5ac86ea32d16ab721a07c)
+
+commit 3ddda387934842542c2952ee912db55ba91f1c0e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 4 10:20:46 2014 +0100
+
+    benchmark: sync'ed log level values in documentation
+    
+    (cherry picked from commit 61ab723bb46f46f9013587e26ee07f39e5388ff8)
+
+commit aeb98d3deae7a551f11a6bb947378da7448e11fe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 3 18:41:01 2014 +0100
+
+    uac: use transaction to propagate uac_auth() flag
+    
+    - needed by dialog to increase the cseq
+    - local request is no longer accessible at forwarding callback
+    
+    (cherry picked from commit 952227ef749da464c7990fa7f056764daf4bda0d)
+
+commit e82f1b2c3ab45472fcabf0ed4053d8ecc057d0ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 31 12:35:56 2014 +0100
+
+    dialog: increase local cseq after REFER generated by dlg_bridge
+    
+    - otherwise the next BYE can be rejected
+    
+    (cherry picked from commit c76ee9facb771d2eae792214e6d4cef39c94a9eb)
+
+commit 4aea47fa023b705947af1bff747745cf105a64bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 31 12:33:38 2014 +0100
+
+    tm: update headers shortcuts if buffer rebuilt after event_route[tm:local-requests]
+    
+    - affecting transactions for local generated requests
+    - bulding local ACK uses the shortcuts and they ended up being broken
+    - reported by Kristian F. HÃ¸gh
+    
+    (cherry picked from commit b6d3dc61a78e549c9a75ddfa2fbb86aa2a1682c5)
+
+commit 4f74bfc615ce29088762eed7e41873fd07c4d2d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 31 11:09:53 2014 +0100
+
+    main.c: fix compile warning
+    
+    (cherry picked from commit e4f18cb322d54035fb6825df3a2f712ed03a71db)
+
+commit bf78e8498a9ac9441fcdb7141b0cf2a7b8739e83
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 31 00:31:11 2014 +0100
+
+    tm: do all the clean local msg structure in one place
+    
+    - uri/dst-uri were clened before the entire local sip message, not being
+      visible while rebuilding the content
+    
+    (cherry picked from commit a2252afe90e0acd779e64c47eacc174b4bbdc41c)
+
+commit 7b220da5d06b316617e33d04e5cdc481672e5e83
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 30 22:29:01 2014 +0100
+
+    pipelimit: update the limit of pipe for pl_check(pipeid, alg, limit)
+    
+    - affects the dynamic pipes that could have been created by same
+      function on a previous execution, allowing to be on-the-fly updated
+    - reported by Alex Balashov
+    
+    (cherry picked from commit 280f947eac5c66bfa6151c75983ffa9e533dd709)
+
+commit 34c82570c23a0d133c82483bfd9425eb9a65b06e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 30 20:47:42 2014 +0100
+
+    rr: dont set msg flag FL_RR_ADDED for record_route() in branch_route
+    
+    - the operation is specific only for the branch
+    
+    (cherry picked from commit 58ad681ab68a14e8fe2b0f6ebc6cf03bdabeea80)
+
+commit 631e558f97728b91b3c0b3341c6c4ecc16902a82
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 30 11:41:41 2014 +0100
+
+    tm: safety catch inside t_check_trans() when already in a tm routing block
+    
+    - transaction is known and some of these routing blocks are inside tm
+      lock, which can result in deadlock if not tested
+    - reported by Andrew Pogrebennyk, FS#482
+    
+    (cherry picked from commit a8d50919bd614b704f3a4e08ff90d844b2c29829)
+
+commit b5ead3683782495da208fad2dffef61f893371b3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 30 10:23:51 2014 +0100
+
+    sqlops: use row index for storing result of sql_pvquery()
+    
+    - reported by Savolainen Dmitri, FS#487
+    
+    (cherry picked from commit 367840503010d1be0da23e79525f2f88eb09ebcf)
+
+commit 3209d2245cbc3d2def94065aed0ccdab23678a64
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 30 10:10:15 2014 +0100
+
+    htable: safety check for key type and value
+    
+    - reported by FS#486
+    
+    (cherry picked from commit f5d9b59ee5aabb1da934ae2ce8101250041c05d1)
+
+commit 7d31ee740c49034f83192feffdcba2f7b8601fab
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Wed Oct 29 16:18:28 2014 +0000
+
+    registrar: Prevent incorrect application of path when forwarding a register
+    
+    - Reset the internal path pointer after a save() to prevent it being added
+      as a Route: header, e.g. when running t_replicate()
+    
+    (cherry picked from commit 61a1eee4fe2b7e3a7c6a8f82c86ac52957439053)
+
+commit e968d72f51787f53b154c2cbc614188e60d8f9fb
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Mon Oct 20 15:02:59 2014 +0100
+
+    sdpops/documentation: Add id's to function sections
+    
+    (cherry picked from commit 69cd679496c482aabd17f2c7fbde7a5282864308)
+
+commit 49c39a3b2409636d1360d943e6785a34002c9009
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Wed Oct 8 21:11:55 2014 +0100
+
+    core/parser: Fix extract_sendrecv_mode to always return mode if valid
+    
+    - All four sendrecv directions return 0
+    - is_on_hold flag set for inactive and sendonly
+    
+    (cherry picked from commit 0a019df8f2922a940a41742ce0e4560bb6523d6c)
+
+commit d503b1159af85ae17667ae943a515c3e9700c276
+Author: Jason Penton <jason.penton@gmail.com>
+Date:   Tue Oct 28 17:26:43 2014 +0200
+
+    modules/dialog_ng: prevent seg fault if socket struct is null
+    
+    (cherry picked from commit de369d4b466078c4c5aada0fc55d9689b2d13047)
+
+commit 96d3484b8f381be96162af94eb4afa5b9d110e3b
+Author: lucian balanceanu <lucian.balanceanu@1and1.ro>
+Date:   Fri Oct 24 17:29:35 2014 +0300
+
+    cr: fix some cr kamctl fifo problems
+    
+    - initialize builtin structures with appropiate values
+    
+    (cherry picked from commit 22d125e3b73688b227a951dce1ce12b4c798229a)
+
+commit c059fd51289945f34cfd38ad478e5ca62ad5c78c
+Author: lucian balanceanu <lucian.balanceanu@1and1.ro>
+Date:   Fri Oct 24 17:12:34 2014 +0300
+
+    cr: decreased logging severity of some messages
+    
+    - moved some informative messages from ERR to INFO, DBG
+    
+    (cherry picked from commit 2a57414fd952f36f88b1ab2dc038934a8ddf6d64)
+
+commit 8c52d68aa4cf432f693a4e7eff9e56da251423f0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 21 16:32:26 2014 +0200
+
+    tls: note that SSLv3 should not be used if high security is needed
+    
+    - the note was already for SSLv2
+    
+    (cherry picked from commit 5fe0d14745303c61d3fafe9decbb735d5424a442)
+
+commit adc3d44f70f2c79bfeea95b1336798ce227d8170
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Oct 14 09:25:12 2014 +0200
+
+    test/unit: Add Sipsak URL in README
+    
+    (cherry picked from commit c2180873931408e7ff35e826f82505a7a99167e6)
+
+commit a0cadc6c6a435b43545d28f1ecc7c01240db0f16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 13 23:50:21 2014 +0200
+
+    test/unit: updates to units 27, 28, 29, 31 ane 33
+    
+    - parametrizied 11.cfg
+    
+    (cherry picked from commit 4d898e9391ff4990eb5ce2319c9a5ca7d66d98b4)
+
+commit 3987ba284a09a71ed6a1f266867414ddcaf4953a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 13 22:49:38 2014 +0200
+
+    test/unit: sipsak listed as dependency in readme
+    
+    (cherry picked from commit dad6e668c3839bafb20fcee31fdd35a1ce7ceac7)
+    
+    Conflicts:
+    	test/unit/README
+
+commit 2b4bb3e0153cd951d3559382185382a838f3a728
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 13 22:47:28 2014 +0200
+
+    test/unit: updated unit 25.sh
+    
+    (cherry picked from commit 66b93da82ed075c0a4d9d6b1e5f93932432a1aee)
+
+commit fcc470429bf5dfee411cca052db424c29002499c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 13 22:35:07 2014 +0200
+
+    test/unit: updates to unit 22
+    
+    (cherry picked from commit 6f476de8d0e658c148328ace7f0f27f0574fb52e)
+
+commit 97cab82e1217776b248a424b6d0ee6aaf9b092de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 29 12:07:57 2014 +0100
+
+    dialog: fixed adding contact header to REFER generated by dlg_bridge
+    
+    - reported by Paul Smith
+    
+    (cherry picked from commit ab7519006b6a53792d66b6903a4b0694083179b6)
+
+commit 7d6ad74fece3cb038ce3c8c3e82bd7380bfca3fa
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Tue Oct 28 11:41:47 2014 +0100
+
+    htable: set str shortcut to iterator name
+    
+    - intended for optimization of iterator search by name
+    (cherry picked from commit 583c705374c9e1da7817bf204b3da225c784e54a)
+
+commit c46df63add89b5840759fef0137b110fe7c971f2
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sun Oct 26 19:11:28 2014 +0200
+
+    modules/tmx: downgraded info message to debug message
+    - INFO: tmx [t_var.c:738]: pv_get_t_branch(): branch flags is [32768]
+    (cherry picked from commit b3635962175dae2ba4d2df3e056248d08f0f6ad1)
+
+commit 8107f39a866817e12dcd5ef5a95dc562fcf121a2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 26 16:32:13 2014 +0100
+
+    textops: include sdp_helpr_funcs.h to get rid of compile warning
+    
+    - needed for use of get_mixed_part_delimiter()
+    - reported by Juha Heinanen
+    (cherry picked from commit 8608da35d224c70d2bd8cfc728f3d07e1ea7a3ce)
+
+commit 7a6e87eea35a9599d5a52d2cbf5f7dd8362e067c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Oct 24 11:48:53 2014 +0200
+
+    textops: fix append_body_part
+    
+    append was adding double '--' to the delimiter
+    
+    (cherry picked from commit e71c7f014f1217cb4431f2644e8c4c32cc6544f2)
+
+commit 324e085a2f982120a075befb6ef420ca0b2fac75
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 23 00:54:59 2014 +0200
+
+    async: fixed typo in docs and adjusted example
+    
+    (cherry picked from commit 46f3342428cd52fb01756c696e4e0f44199109da)
+
+commit 6649d9809ed6e527aaef45bb7a137c49e3d9d3de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 22 19:14:03 2014 +0200
+
+    uac: proper set of enabled/disabled flag for reg reocrds via rpc
+    
+    - patch by Savolainen Dmitri, FS#483
+    
+    (cherry picked from commit da844d7cc76e4db3b4bb2d9e5ba62cdfb394b110)
+
+commit 2c7374e3b671546355f5d546f0555e2fc65ace3f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 22 19:08:25 2014 +0200
+
+    uac: release lock when listing records via rpc
+    
+    - patch by Savolainen Dmitri, FS#484
+    
+    (cherry picked from commit f63865041136aec65e2f7824967a702b23191364)
+
+commit 800a84c203a5a22236514bddfdc1762debfc5a14
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 22 19:01:32 2014 +0200
+
+    uac: set hash ids for record refresh command
+    
+    - reported by Savolainen Dmitri, FS#485
+    
+    (cherry picked from commit 148c03b35ae3489910a02ba530441862b805be65)
+
+commit 438f8838a23646d99c5c119c3719e18d79d1b402
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Oct 20 13:07:41 2014 +0200
+
+    pkg/kamailio/deb: Add kazoo module to kamailio-extra-modules
+    
+    (cherry picked from commit 3869b9d6eac5af5120bc275201d6c04e7596d929)
+
+commit dc4ce76cc54ba58006fac6f4eec5084fdaff4a3b
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Tue Oct 21 18:35:03 2014 +0100
+
+    kazoo : compatibility issues with json-c & rabbitmq recent versions
+
+commit 6d89d2328a375a6660e46a5031d66b16e05d0efb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 17 09:42:13 2014 +0200
+
+    pipelimit: enhanced docs for pl_check() function
+    
+    - documented the algorithm and limit parameters
+    
+    (cherry picked from commit 24e76b1932fa8c4e1136ad82cb582a97c50244c4)
+
+commit f78361d777c20436641bf16a024f12e6a8f3ed7f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 17 09:40:33 2014 +0200
+
+    pipelimit: fix dynamic pipe limit check
+    
+    - proper add and check at the same time
+    
+    (cherry picked from commit b76afe7c0699b936bec3d7bb1c3a740bf08fdb1c)
+
+
 ===================== 2014-10-16 Version 4.2.0 Released =====================
 
 ===================== Changes Since Version 4.1.0 ===========================
