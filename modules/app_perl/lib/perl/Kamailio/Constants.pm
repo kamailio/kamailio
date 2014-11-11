@@ -165,7 +165,11 @@ BEGIN {
 #####################
 # non-enum constants from dprint.h:
 # Logging levels
-	const( L_ALERT	=> -3);
+	const( L_NPRL	=> -6);
+	const( L_MIN	=> -5);
+	const( L_ALERT	=> -5);
+	const( L_BUG	=> -4);
+	const( L_CRIT2  => -3);
 	const( L_CRIT	=> -2);
 	const( L_ERR	=> -1);
 	const( L_WARN	=> 0);
