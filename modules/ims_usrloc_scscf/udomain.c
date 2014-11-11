@@ -343,14 +343,14 @@ void mem_timer_udomain(udomain_t* _d) {
 	    ptr = ptr->next;
 	    timer_impurecord(t);
 
-	    			if (t->reg_state == IMPU_NOT_REGISTERED && t->shead == 0) {
-	    				//remove it - housekeeping - not sure why its still here...?
-	    				if (exists_ulcb_type(t->cbs, UL_IMPU_NR_DELETE))
-	    					run_ul_callbacks(t->cbs, UL_IMPU_NR_DELETE, t, NULL);
-	    					    
-	    				LM_DBG("about to delete impurecord\n");
-	    				delete_impurecord(_d, &t->public_identity, t);
-	    			} //else if (t->reg_state == IMPU_UNREGISTERED) {//Remove IMPU record if it is in state IMPU_UNREGISTERED and has expired
+//	    			if (t->reg_state == IMPU_NOT_REGISTERED && t->shead == 0) {
+//	    				//remove it - housekeeping - not sure why its still here...?
+//	    				if (exists_ulcb_type(t->cbs, UL_IMPU_NR_DELETE))
+//	    					run_ul_callbacks(t->cbs, UL_IMPU_NR_DELETE, t, NULL);
+//	    					    
+//	    				LM_DBG("about to delete impurecord\n");
+//	    				delete_impurecord(_d, &t->public_identity, t);
+//	    			} //else if (t->reg_state == IMPU_UNREGISTERED) {//Remove IMPU record if it is in state IMPU_UNREGISTERED and has expired
 	    //			    
 	    //				if (time_now >= t->expires) {//check here and only remove if no subscribes - if there is a subscribe then bump the validity by unreg_validity
 	    //				    if(t->shead != 0){

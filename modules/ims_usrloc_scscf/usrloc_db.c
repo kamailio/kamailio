@@ -946,6 +946,7 @@ int db_link_contact_to_impu(impurecord_t* _r, ucontact_t* _c) {
 	LM_ERR("Unable to link impu-contact in DB - impu [%.*s], contact [%.*s]\n", _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
 	return -1;
     }
+    ul_dbf.free_result(ul_dbh, rs);
     LM_DBG("Query success\n");
 
     return 0;
@@ -979,6 +980,7 @@ int db_unlink_contact_from_impu(impurecord_t* _r, ucontact_t* _c) {
 	LM_ERR("Unable to un-link impu-contact in DB - impu [%.*s], contact [%.*s]\n", _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
 	return -1;
     }
+    ul_dbf.free_result(ul_dbh, rs);
     LM_DBG("Delete query success\n");
 
     return 0;
