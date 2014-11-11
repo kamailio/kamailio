@@ -1,3 +1,9 @@
+kamailio (4.2.1) unstable; urgency=medium
+
+  * update versionto 4.2.1
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Tue, 11 Nov 2014 11:55:40 +0100
+
 kamailio (4.2.0) unstable; urgency=medium
 
   * update versionto 4.2.0
