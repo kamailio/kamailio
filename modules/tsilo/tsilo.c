@@ -32,11 +32,13 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/registrar/api.h"
 #include "../../dset.h"
+#include "../../lib/kmi/mi.h"
 
 #include "ts_hash.h"
 #include "ts_handlers.h"
 #include "ts_append.h"
 #include "ts_store.h"
+#include "ts_mi.h"
 
 MODULE_VERSION
 
@@ -57,18 +59,22 @@ static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *d);
 static int fixup_ts_append_to(void** param, int param_no);
 static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri);
 static int fixup_ts_append(void** param, int param_no);
-
 static int w_ts_store(struct sip_msg* msg);
-
 
 static cmd_export_t cmds[]={
 	{"ts_append_to", (cmd_function)w_ts_append_to,  3,
-		fixup_ts_append_to, REQUEST_ROUTE | FAILURE_ROUTE },
+		fixup_ts_append_to, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"ts_append", (cmd_function)w_ts_append,  2,
-		fixup_ts_append, REQUEST_ROUTE | FAILURE_ROUTE },
+		fixup_ts_append, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"ts_store", (cmd_function)w_ts_store,  0,
-		0 , REQUEST_ROUTE | FAILURE_ROUTE },
+		0 , 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0,0,0,0,0}
+};
+
+static mi_export_t mi_cmds[] = {
+	{ "ts_dump",		mi_tsilo_dump,		0,	0,	0 },
+	{ "ts_lookup",		mi_tsilo_lookup,	0,	0,	0 },
+    { 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
@@ -80,13 +86,16 @@ static param_export_t params[]={
 /** module exports */
 struct module_exports exports= {
 	"tsilo",
+    DEFAULT_DLFLAGS,
 	cmds,
-	0, /* RPC methods */
 	params,
+	0, /* exported statistics */
+    mi_cmds,    /* exported MI functions */
+    0,
+    0,
 	mod_init,   /* module initialization function */
 	0,
 	(destroy_function) destroy,  /* destroy function */
-	0,
 	0
 };
 
@@ -96,6 +105,13 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	unsigned int n;
+
+	/* register the MI commands */
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+    {
+        LM_ERR("failed to register MI commands\n");
+        return -1;
+    }
 
 	/* load the TM API */
 	if (load_tm_api(&_tmb)!=0) {

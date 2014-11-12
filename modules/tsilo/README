@@ -10,7 +10,7 @@ Federico Cabiddu
 
    <federico.cabiddu@gmail.com>
 
-   Copyright � 2014 Federico Cabiddu
+   Copyright © 2014 Federico Cabiddu
      __________________________________________________________________
 
    Table of Contents
@@ -33,7 +33,10 @@ Federico Cabiddu
               4.2. ts_append(domain, ruri)
               4.3. ts_append_to(tindex, tlabel, domain)
 
-        5. Statistics
+        5. MI Commands
+
+              5.1. ts_dump
+              5.2. ts_lookup
 
    List of Examples
 
@@ -62,19 +65,26 @@ Chapter 1. Admin Guide
         4.2. ts_append(domain, ruri)
         4.3. ts_append_to(tindex, tlabel, domain)
 
-   5. Statistics
+   5. MI Commands
+
+        5.1. ts_dump
+        5.2. ts_lookup
 
 1. Overview
 
    This modules provides transaction storage for the Kamailio SIP Server
-   Platform. It stores in an internal table transactions for an user and
-   add branches to them if new contacts are added.
+   Platform. It stores in an internal table transactions for a Request-URI
+   (R-URI) and add branches to them later if new contacts for the AOR are
+   added.
 
-   For each message, the modules stores "Request-URI" ("R-URI"), URI and
-   the internal transaction index and label.
+   When the ts_store function is called, the modules stores the current
+   transaction R-URI URI, index and label. Two functions (ts_append and
+   ts_append_to) provide the ability to add new branches either to a
+   specific transaction or to all of the transactions stored for a given
+   R-URI.
 
-   When the transaction is destroyed (by the TM module, the transaction is
-   removed from the module table.
+   When a transaction is destroyed by the TM module, it is removed from
+   the module's table too.
 
 2. Dependencies
 
@@ -105,7 +115,7 @@ Chapter 1. Admin Guide
    must be a power of two, otherwise it will be rounded down to the
    nearest power of two.
 
-   Default value is "2048".
+   Default value is “2048”.
 
    Example 1.1. Set hash_size parameter
 ...
@@ -182,4 +192,23 @@ if (is_method("REGISTER")) {
 }
 ...
 
-5. Statistics
+5. MI Commands
+
+   5.1. ts_dump
+   5.2. ts_lookup
+
+5.1.  ts_dump
+
+   Dumps the entire content of the TSILO table
+
+   Parameters:
+     * brief - (optional, may not be present); if equals to string
+       “brief”, a brief dump will be done (only RURI, without the
+       transaction(s) details)
+
+5.2.  ts_lookup
+
+   Dumps the transactions stored for the given RURI
+
+   Parameters:
+     * ruri - RURI for which we want to show the transactions.

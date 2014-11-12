@@ -26,8 +26,8 @@
  * Module: \ref tsilo
  */
 
-#ifndef _DIALOG_TS_HASH_H_
-#define _DIALOG_TS_HASH_H_
+#ifndef _TS_HASH_H_
+#define _TS_HASH_H_
 
 #include "../../locking.h"
 #include "../../lib/kmi/mi.h"
@@ -64,10 +64,10 @@ typedef struct ts_urecord
 /*! entries in the main transaction table */
 typedef struct ts_entry
 {
-	int n;                  	/*!< Number of elements in the collision slot */
+	int n;                  	    /*!< Number of elements in the collision slot */
 	struct ts_urecord    *first;	/*!< urecord list */
-	struct ts_urecord    *last;	/*!< optimisation, end of the urecord list */
-	unsigned int       next_id;	/*!< next id */
+	struct ts_urecord    *last;	    /*!< optimisation, end of the urecord list */
+	unsigned int       next_id;	    /*!< next id */
 	unsigned int       lock_idx;	/*!< lock index */
 } ts_entry_t;
 
@@ -75,13 +75,13 @@ typedef struct ts_entry
 /*! main transaction table */
 typedef struct ts_table
 {
-	unsigned int       size;	/*!< size of the dialog table */
+	unsigned int       size;	    /*!< size of the tsilo table */
 	struct ts_entry    *entries;	/*!< urecord hash table */
 	unsigned int       locks_no;	/*!< number of locks */
-	gen_lock_set_t     *locks;	/*!< lock table */
+	gen_lock_set_t     *locks;	    /*!< lock table */
 } ts_table_t;
 
-/*! global dialog table */
+/*! global transactions table */
 extern ts_table_t *t_table;
 
 /*!

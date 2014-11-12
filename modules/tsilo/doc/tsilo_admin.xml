@@ -17,17 +17,15 @@
 	<title>Overview</title>
 	<para>
 		This modules provides transaction storage for the &kamailioname;. It
-		stores in an internal table transactions for an user and add branches
-		to them if new contacts are added.
+		stores in an internal table transactions for a Request-URI (R-URI) and add branches
+		to them later if new contacts for the AOR are added.
 	</para>
 	<para>
-		For each message, the modules stores <quote>Request-URI</quote>
-		(<quote>R-URI</quote>), &uri; and the internal transaction index
-		and label.
+		When the <emphasis>ts_store</emphasis> function is called, the modules stores the current transaction R-URI &uri;, index and label. Two functions (<emphasis>ts_append</emphasis> and <emphasis>ts_append_to</emphasis>) provide the ability to add new branches either to a specific transaction or to all of the transactions stored for a given R-URI.
 	</para>
 	<para>
-		When the transaction is destroyed (by the <emphasis>TM</emphasis> module,
-		the transaction is removed from the module table.
+		When a transaction is destroyed by the <emphasis>TM</emphasis> module,
+		it is removed from the module's table too.
 	</para>
 	</section>
 	<section>
@@ -201,6 +199,36 @@ if (is_method("REGISTER")) {
 	</section>
 
 	<section>
-	<title>Statistics</title>
+		<title>MI Commands</title>
+		<section id="tsilo.mi.ts_dump">
+			<title>
+			<function moreinfo="none">ts_dump</function>
+			</title>
+			<para>
+			Dumps the entire content of the TSILO table
+			</para>
+			<para>Parameters: </para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>brief</emphasis> - (optional, may not be present); if
+					equals to string <quote>brief</quote>, a brief dump will be
+					done (only RURI, without the transaction(s) details)
+				</para></listitem>
+			</itemizedlist>
+		</section>
+		<section id="tsilo.mi.ts_lookup">
+			<title>
+			<function moreinfo="none">ts_lookup</function>
+			</title>
+			<para>
+			Dumps the transactions stored for the given RURI
+			</para>
+			<para>Parameters: </para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>ruri</emphasis> - RURI for which we want to show the transactions.
+				</para></listitem>
+			</itemizedlist>
+		</section>
 	</section>
 </chapter>

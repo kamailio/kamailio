@@ -9,10 +9,13 @@ include ../../Makefile.defs
 auto_gen=
 NAME=tsilo.so
 LIBS=
-DEFS+= -DSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 ifeq ($(INSTALL_FLAVOUR),kamailio)
 DEFS+= -DWITH_EVENT_LOCAL_REQUEST
 endif # INSTALL_FLAVOUR
+
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 
 include ../../Makefile.modules

@@ -162,7 +162,7 @@ void unlock_entry(ts_entry_t *entry) {
 
 void lock_entry_by_ruri(str* ruri)
 {
-        unsigned int sl;
+	unsigned int sl;
 
 	sl = core_hash(ruri, 0, 0) & (t_table->size-1);
 	ts_lock(t_table, &t_table->entries[sl]);
