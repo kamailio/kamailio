@@ -231,4 +231,25 @@ if (is_method("REGISTER")) {
 			</itemizedlist>
 		</section>
 	</section>
+	<section>
+	<title>Exported RPC Functions</title>
+		<section>
+			<title><varname>ts.dump</varname></title>
+			<para>Dumps the content of the TSILO table</para>
+			<para>Name: <emphasis>ts.dump</emphasis></para>
+			<para>RPC Command Format:</para>
+			<programlisting  format="linespecific">
+			kamcmd ts.dump
+			</programlisting>
+		</section>
+		<section>
+			<title><varname>ts.lookup</varname></title>
+			<para>Dumps the transactions stored for the given RURI</para>
+			<para>Name: <emphasis>ts.lookup</emphasis></para>
+			<para>RPC Command Format:</para>
+			<programlisting  format="linespecific">
+			kamcmd ts.lookup sip:abcd@example.com
+			</programlisting>
+		</section>
+	</section>
 </chapter>

@@ -10,7 +10,7 @@ Federico Cabiddu
 
    <federico.cabiddu@gmail.com>
 
-   Copyright © 2014 Federico Cabiddu
+   Copyright � 2014 Federico Cabiddu
      __________________________________________________________________
 
    Table of Contents
@@ -37,6 +37,11 @@ Federico Cabiddu
 
               5.1. ts_dump
               5.2. ts_lookup
+
+        6. Exported RPC Functions
+
+              6.1. ts.dump
+              6.2. ts.lookup
 
    List of Examples
 
@@ -69,6 +74,11 @@ Chapter 1. Admin Guide
 
         5.1. ts_dump
         5.2. ts_lookup
+
+   6. Exported RPC Functions
+
+        6.1. ts.dump
+        6.2. ts.lookup
 
 1. Overview
 
@@ -115,7 +125,7 @@ Chapter 1. Admin Guide
    must be a power of two, otherwise it will be rounded down to the
    nearest power of two.
 
-   Default value is “2048”.
+   Default value is "2048".
 
    Example 1.1. Set hash_size parameter
 ...
@@ -203,7 +213,7 @@ if (is_method("REGISTER")) {
 
    Parameters:
      * brief - (optional, may not be present); if equals to string
-       “brief”, a brief dump will be done (only RURI, without the
+       "brief", a brief dump will be done (only RURI, without the
        transaction(s) details)
 
 5.2.  ts_lookup
@@ -212,3 +222,26 @@ if (is_method("REGISTER")) {
 
    Parameters:
      * ruri - RURI for which we want to show the transactions.
+
+6. Exported RPC Functions
+
+   6.1. ts.dump
+   6.2. ts.lookup
+
+6.1. ts.dump
+
+   Dumps the content of the TSILO table
+
+   Name: ts.dump
+
+   RPC Command Format:
+                        kamcmd ts.dump
+
+6.2. ts.lookup
+
+   Dumps the transactions stored for the given RURI
+
+   Name: ts.lookup
+
+   RPC Command Format:
+                        kamcmd ts.lookup sip:abcd@example.com
