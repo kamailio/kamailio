@@ -243,7 +243,7 @@ void mem_delete_pcontact(udomain_t* _d, struct pcontact* _c)
 
 void mem_timer_udomain(udomain_t* _d)
 {
-	struct pcontact* ptr;
+	struct pcontact* ptr, *tmp;
 	int i;
 
 	for(i=0; i<_d->size; i++)
@@ -253,17 +253,11 @@ void mem_timer_udomain(udomain_t* _d)
 		ptr = _d->table[i].first;
 
 		while(ptr) {
-			timer_pcontact(ptr);
-			/* Remove the entire record if it is empty */
-			//if (ptr->contacts == 0) {
-			//	t = ptr;
-			//	ptr = ptr->next;
-			//	mem_delete_pcontact(_d, t);
-			//}//// else {
-			//	ptr = ptr->next;
-			//}
-			ptr = ptr->next;
+		    tmp = ptr;
+		    ptr = ptr->next;
+		    timer_pcontact(tmp);
 		}
+		
 		unlock_ulslot(_d, i);
 	}
 }
