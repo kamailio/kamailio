@@ -8,6 +8,7 @@
 MODULE_VERSION
 
 str interconnectroute_db_url = str_init(DEFAULT_IXDB_URL);
+str service_code = str_init("ext.01.001.8.32260@3gpp.org_1000");
 	
 static int mod_init(void);
 static int child_init(int);
@@ -16,21 +17,21 @@ static void mod_destroy(void);
 
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
-	{"ix_trunk_query",  (cmd_function)ix_trunk_query,  1, ix_trunk_query_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"ix_orig_trunk_query",  (cmd_function)ix_orig_trunk_query,  0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"ix_term_trunk_query",  (cmd_function)ix_term_trunk_query,  1, ix_trunk_query_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]= {
     { "db_url", PARAM_STR, &interconnectroute_db_url },
-    { "numbertable", PARAM_STR, &interconnectnumber_table },
-    { "trunktable", PARAM_STR, &interconnecttrunk_table },
+    { "service_code", PARAM_STR, &service_code },
     {0,0,0}
 };
 
 static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
-	"carrierroute",
+	"interconnectroute",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Export parameters */

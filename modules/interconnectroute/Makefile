@@ -13,5 +13,6 @@ DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/trie/trie $(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/kmi/kmi $(SERLIBPATH)/kcore/kcore
+SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 
 include ../../Makefile.modules

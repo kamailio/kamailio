@@ -18,8 +18,6 @@
 #define QUERY_LEN 2048
 
 extern str interconnectroute_db_url;
-extern str interconnectnumber_table;
-extern str interconnecttrunk_table;
 
 extern db1_con_t * interconnectroute_dbh;
 extern db_func_t interconnectroute_dbf;
@@ -28,7 +26,10 @@ void interconnectroute_db_close(void);
 int interconnectroute_db_init(void);
 int interconnectroute_db_open(void);
 
-int get_routes(str* dst_number, route_data_t** route_data);
+int get_orig_route_data(str* a_number, str* b_number, str* leg, str* sc, ix_route_list_t** ix_route_list);
+int get_term_route_data(str* a_number, str* b_number, str* leg, str* sc, str* ext_trunk_id, ix_route_list_t** ix_route_list);
+
+
 
 #endif	/* DB_H */
 

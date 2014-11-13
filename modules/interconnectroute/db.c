@@ -4,17 +4,40 @@
 db1_con_t * interconnectroute_dbh = NULL;
 db_func_t interconnectroute_dbf;
 
-static char *query_fmt = "select N.OPERATOR_KEY, T.TRUNK_ID, T.PRIORITY, T.IPV4, T.EXTERNAL_TRUNK_ID "
-	"from operator_number N left join operator_trunk T on N.OPERATOR_KEY=T.OPERATOR_KEY "
-	"where %.*s >= CAST(NUMBER_START AS UNSIGNED) and %.*s <= CAST(NUMBER_END AS UNSIGNED) ORDER BY T.PRIORITY DESC";
+static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID, TTO.INTERNAL_ID as TO_TRUNK_ID, RT.ROUTE_ID as ROUTE_ID from "
+    "service_rate SR "
+    "join interconnect_trunk TFROM on TFROM.INTERCONNECT_PARTNER_ID = SR.FROM_INTERCONNECT_PARTNER_ID "
+    "join interconnect_trunk TTO on TTO.INTERCONNECT_PARTNER_ID = SR.TO_INTERCONNECT_PARTNER_ID " 
+    "join interconnect_route RT on TTO.EXTERNAL_ID = RT.EXTERNAL_ID "
+    "where "
+    "%.*s >= SR.FROM_START "
+    "and %.*s <= SR.FROM_END "
+    "and %.*s >= SR.TO_START "
+    "and %.*s <= SR.TO_END "
+    "and SR.SERVICE_CODE = '%.*s' "
+    "and SR.LEG = '%.*s' "
+    "order by SR.PRIORITY DESC, RT.PRIORITY DESC LIMIT 1";
+
+static char *term_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID, TTO.INTERNAL_ID as TO_TRUNK_ID from "
+    "service_rate SR "
+    "join interconnect_trunk TFROM on TFROM.INTERCONNECT_PARTNER_ID = SR.FROM_INTERCONNECT_PARTNER_ID "
+    "join interconnect_trunk TTO on TTO.INTERCONNECT_PARTNER_ID = SR.TO_INTERCONNECT_PARTNER_ID "
+    "where "
+    "%.*s >= SR.TO_START "
+    "and %.*s <= SR.TO_END "
+    "and %.*s >= SR.FROM_START "
+    "and %.*s <= SR.FROM_END "
+    "and SR.SERVICE_CODE = '%.*s' "
+    "and SR.LEG = '%.*s' "
+    "and TFROM.EXTERNAL_ID = '%.*s';";
+
 static char query[QUERY_LEN];
 
-str interconnectnumber_table = str_init("operator_number");
 
-/* table version */
-const unsigned int interconnectroute_version = 1;
+str interconnect_trunk_table = str_init("interconnect_trunk");
+str interconnect_route_table = str_init("interconnect_route");
+str service_rate_table = str_init("service_rate");
 
-str interconnecttrunk_table = str_init("operator_trunk");
 
 /*
  * Closes the DB connection.
@@ -40,13 +63,6 @@ int interconnectroute_db_init(void) {
 	LM_ERR("can't connect to database using [%.*s]\n", interconnectroute_db_url.len, interconnectroute_db_url.s);
 	return -1;
     }
-    if (
-	    (db_check_table_version(&interconnectroute_dbf, interconnectroute_dbh, &interconnectnumber_table, interconnectroute_version) < 0) ||
-	    (db_check_table_version(&interconnectroute_dbf, interconnectroute_dbh, &interconnecttrunk_table, interconnectroute_version) < 0)) {
-	LM_ERR("during table version check.\n");
-	interconnectroute_db_close();
-	return -1;
-    }
     interconnectroute_db_close();
     return 0;
 }
@@ -63,35 +79,37 @@ int interconnectroute_db_open(void) {
     return 0;
 }
 
-int get_routes(str* dst_number, route_data_t** route_data) {
-    int i,n, priority;
+
+int get_orig_route_data(str* a_number, str* b_number, str* leg, str* sc, ix_route_list_t** ix_route_list) {
+    int i,n;
     db1_res_t* route_rs;
     db_row_t* route_row;
     db_val_t* route_vals;
-    str query_s, operator_key, trunk_id, external_trunk_id, gateway_ipv4;
+    str query_s, incoming_trunk_id, outgoing_trunk_id, route_id;
     route_data_t* new_route;
     ix_route_list_t* route_list = new_route_list();
     int num_rows;
     
 
-    if (strlen(query_fmt) + dst_number->len > QUERY_LEN) {
+    if (strlen(orig_route_data_query) + a_number->len + a_number->len + b_number->len + b_number->len + leg->len + sc->len > QUERY_LEN) {
 	LM_ERR("query too big\n");
 	return -1;
     }
-    snprintf(query, QUERY_LEN, query_fmt, dst_number->len, dst_number->s, dst_number->len, dst_number->s);
+    
+    snprintf(query, QUERY_LEN, orig_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, b_number->len, b_number->s,
+	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s);
     query_s.s = query;
     query_s.len = strlen(query);
 
-    LM_DBG("QUERY IS: [%s]\n", query);
-
+    LM_DBG("get_orig_route_data query is: [%s]\n", query);
     if (interconnectroute_dbf.raw_query(interconnectroute_dbh, &query_s, &route_rs) != 0) {
-	LM_ERR("Unable to query DB for interconnect routes with number [%.*s]\n", dst_number->len, dst_number->s);
+	LM_ERR("Unable to query DB for interconnect routes with a_number [%.*s] b_number [%.*s]\n", a_number->len, a_number->s, b_number->len, b_number->s);
 	interconnectroute_dbf.free_result(interconnectroute_dbh, route_rs);
     }
 
     LM_DBG("Received route results [%d]\n", RES_ROW_N(route_rs));
     if (RES_ROW_N(route_rs) <= 0) {
-	LM_DBG("No routes found for number [%.*s]\n", dst_number->len, dst_number->s);
+	LM_DBG("No routes found for a_number [%.*s] b_number [%.*s]\n", a_number->len, a_number->s, b_number->len, b_number->s);
 	return -1;
     } else {
 	n = 0;
@@ -103,31 +121,22 @@ int get_routes(str* dst_number, route_data_t** route_data) {
 		route_vals = ROW_VALUES(route_row);
 
 		if (!VAL_NULL(route_vals)) {
-		    operator_key.s = (char*) VAL_STRING(route_vals);
-		    operator_key.len = strlen(operator_key.s);
-		    LM_DBG("Received route for operator key: [%.*s]\n", operator_key.len, operator_key.s);
+		    incoming_trunk_id.s = (char*) VAL_STRING(route_vals);
+		    incoming_trunk_id.len = strlen(incoming_trunk_id.s);
+		    LM_DBG("incoming_trunk_id: [%.*s]\n", incoming_trunk_id.len, incoming_trunk_id.s);
 		}
 		if (!VAL_NULL(route_vals+1)) {
-		    trunk_id.s = (char*) VAL_STRING(route_vals+1);
-		    trunk_id.len = strlen(trunk_id.s);
-		    LM_DBG("Trunk is: [%.*s]\n", trunk_id.len, trunk_id.s);
+		    outgoing_trunk_id.s = (char*) VAL_STRING(route_vals+1);
+		    outgoing_trunk_id.len = strlen(outgoing_trunk_id.s);
+		    LM_DBG("outgoing_trunk_id: [%.*s]\n", outgoing_trunk_id.len, outgoing_trunk_id.s);
 		}
 		if (!VAL_NULL(route_vals+2)) {
-		    priority = VAL_INT(route_vals+2);
-		    LM_DBG("Priority is: [%d]\n", priority);
-		}
-		if (!VAL_NULL(route_vals+3)) {
-		    gateway_ipv4.s = (char*) VAL_STRING(route_vals+3);
-		    gateway_ipv4.len = strlen(gateway_ipv4.s);
-		    LM_DBG("Gateway IP for trunk to this operator is: [%.*s]\n", gateway_ipv4.len, gateway_ipv4.s);
-		}
-		if (!VAL_NULL(route_vals+4)) {
-		    external_trunk_id.s = (char*) VAL_STRING(route_vals+4);
-		    external_trunk_id.len = strlen(external_trunk_id.s);
-		    LM_DBG("External trunk ID: [%.*s]\n", external_trunk_id.len, external_trunk_id.s);
+		    route_id.s = (char*) VAL_STRING(route_vals+2);
+		    route_id.len = strlen(route_id.s);
+		    LM_DBG("route_id: [%.*s]\n", route_id.len, route_id.s);
 		}
 		
-		new_route = new_route_data(&operator_key, &trunk_id, priority, &gateway_ipv4, &external_trunk_id);
+		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, &route_id);
 		if (!new_route) {
 		    LM_DBG("Could not get new route... continuing\n");
 		    continue;
@@ -155,7 +164,98 @@ int get_routes(str* dst_number, route_data_t** route_data) {
 	interconnectroute_dbf.free_result(interconnectroute_dbh, route_rs);
     }
     
-    *route_data = new_route;
+    //*route_data = new_route;
+    *ix_route_list = route_list;
+    num_rows = route_list->count;//RES_ROW_N(route_rs);
+    interconnectroute_dbf.free_result(interconnectroute_dbh, route_rs);
+    LM_DBG("Returning %d rows\n", num_rows);
+    return num_rows;
+}
+
+
+int get_term_route_data(str* a_number, str* b_number, str* leg, str* sc, str* ext_trunk_id, ix_route_list_t** ix_route_list) {
+    
+    int i,n;
+    db1_res_t* route_rs;
+    db_row_t* route_row;
+    db_val_t* route_vals;
+    str query_s, incoming_trunk_id, outgoing_trunk_id;
+    route_data_t* new_route;
+    ix_route_list_t* route_list = new_route_list();
+    int num_rows;
+    
+
+    if (strlen(term_route_data_query) + a_number->len + a_number->len + b_number->len + a_number->len + leg->len + sc->len + ext_trunk_id->len > QUERY_LEN) {
+	LM_ERR("query too big\n");
+	return -1;
+    }
+    
+    snprintf(query, QUERY_LEN, term_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, b_number->len, b_number->s,
+	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s, ext_trunk_id->len, ext_trunk_id->s);
+    query_s.s = query;
+    query_s.len = strlen(query);
+
+    LM_DBG("get_term_route_data query is: [%s]\n", query);
+
+    if (interconnectroute_dbf.raw_query(interconnectroute_dbh, &query_s, &route_rs) != 0) {
+	LM_ERR("Unable to query DB for interconnect routes with ext trunk id [%.*s]\n", ext_trunk_id->len, ext_trunk_id->s);
+	interconnectroute_dbf.free_result(interconnectroute_dbh, route_rs);
+    }
+
+    LM_DBG("Received route results [%d]\n", RES_ROW_N(route_rs));
+    if (RES_ROW_N(route_rs) <= 0) {
+	LM_DBG("No routes found for ext trunk id [%.*s]\n", ext_trunk_id->len, ext_trunk_id->s);
+	return -1;
+    } else {
+	n = 0;
+	do {
+	    n++;
+	    LM_DBG("looping through route recordset [%d]\n", n);
+	    for (i = 0; i < RES_ROW_N(route_rs); i++) {
+		route_row = RES_ROWS(route_rs) + i;
+		route_vals = ROW_VALUES(route_row);
+
+		if (!VAL_NULL(route_vals)) {
+		    incoming_trunk_id.s = (char*) VAL_STRING(route_vals);
+		    incoming_trunk_id.len = strlen(incoming_trunk_id.s);
+		    LM_DBG("incoming_trunk_id: [%.*s]\n", incoming_trunk_id.len, incoming_trunk_id.s);
+		}
+		if (!VAL_NULL(route_vals+1)) {
+		    outgoing_trunk_id.s = (char*) VAL_STRING(route_vals+1);
+		    outgoing_trunk_id.len = strlen(outgoing_trunk_id.s);
+		    LM_DBG("outgoing_trunk_id: [%.*s]\n", outgoing_trunk_id.len, outgoing_trunk_id.s);
+		}
+		
+		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, 0);
+		if (!new_route) {
+		    LM_DBG("Could not get new route... continuing\n");
+		    continue;
+		}
+		
+		if (!add_route(route_list, new_route)) {
+		    LM_DBG("unable to add route.....\n");
+		    continue;
+		}
+		
+		LM_DBG("route list now has %d elements\n", route_list->count);
+		
+		
+	    }
+	    if (DB_CAPABILITY(interconnectroute_dbf, DB_CAP_FETCH)) {
+		if (interconnectroute_dbf.fetch_result(interconnectroute_dbh, &route_rs, 2000/*ul_fetch_rows*/) < 0) {
+		    LM_ERR("fetching rows failed\n");
+		    interconnectroute_dbf.free_result(interconnectroute_dbh, route_rs);
+		    return -1;
+		}
+	    } else {
+		break;
+	    }
+	} while (RES_ROW_N(route_rs) > 0);
+	interconnectroute_dbf.free_result(interconnectroute_dbh, route_rs);
+    }
+    
+    //*route_data = new_route;
+    *ix_route_list = route_list;
     num_rows = route_list->count;//RES_ROW_N(route_rs);
     interconnectroute_dbf.free_result(interconnectroute_dbh, route_rs);
     LM_DBG("Returning %d rows\n", num_rows);

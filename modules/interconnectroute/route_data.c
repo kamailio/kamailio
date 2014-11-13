@@ -6,10 +6,29 @@
 /* creates a new structure to hold route data in pkg memory 
    NB: remember to free when done!
  */
-route_data_t* new_route_data(str* operator_key, str* trunk_id, int priority, str* gw_ip, str* external_trunk_id) {
+
+int free_route_data(route_data_t* route_data) {
+    if(route_data) pkg_free(route_data);
+        return 1;
+}
+
+int free_route_list (ix_route_list_t* ix_route_list) {
+    route_data_t* tmp, *tmp1;
+    tmp = ix_route_list->first;
+    while(tmp) {
+	tmp1 = tmp->next;
+	free_route_data(tmp);
+	tmp = tmp1;
+    }
+    return 1;
+}
+
+route_data_t* new_route_data(str* incoming_trunk_id, str* outgoing_trunk_id, str* route_id) {
     struct route_data* route_data;
     char *p;
-    int len = sizeof(struct route_data) + operator_key->len + trunk_id->len + gw_ip->len + external_trunk_id->len;
+    int len = sizeof(struct route_data) + incoming_trunk_id->len + outgoing_trunk_id->len;
+    if(route_id) len = len + route_id->len;
+    
     route_data = (struct route_data*)pkg_malloc(len);
     if (!route_data) {
 	LM_ERR("no more pkg memory\n");
@@ -18,28 +37,24 @@ route_data_t* new_route_data(str* operator_key, str* trunk_id, int priority, str
     
     memset(route_data, 0, len);
     
-    route_data->priority = priority;
     p = (char*)(route_data + 1);
     
-    route_data->operator_key.s = p;
-    route_data->operator_key.len = operator_key->len;
-    memcpy(p, operator_key->s, operator_key->len);
-    p+=operator_key->len;
+    route_data->incoming_trunk_id.s = p;
+    memcpy(p, incoming_trunk_id->s, incoming_trunk_id->len);
+    route_data->incoming_trunk_id.len = incoming_trunk_id->len;
+    p+= incoming_trunk_id->len;
     
-    route_data->trunk_id.s = p;
-    memcpy(p, trunk_id->s, trunk_id->len);
-    route_data->trunk_id.len = trunk_id->len;
-    p+= trunk_id->len;
+    route_data->outgoing_trunk_id.s = p;
+    memcpy(p, outgoing_trunk_id->s, outgoing_trunk_id->len);
+    route_data->outgoing_trunk_id.len = outgoing_trunk_id->len;
+    p+= outgoing_trunk_id->len;
     
-    route_data->ipv4.s = p;
-    memcpy(p, gw_ip->s, gw_ip->len);
-    route_data->ipv4.len = gw_ip->len;
-    p+=gw_ip->len;
-    
-    route_data->external_trunk_id.s = p;
-    memcpy(p, external_trunk_id->s, external_trunk_id->len);
-    route_data->external_trunk_id.len = external_trunk_id->len;
-    p+=external_trunk_id->len;  
+    if(route_id) {
+	route_data->route_id.s = p;
+	memcpy(p, route_id->s, route_id->len);
+	route_data->route_id.len = route_id->len;
+	p+=route_id->len;
+    }
     
     if (p != (((char*) route_data) + len)) {
         LM_CRIT("buffer overflow\n");
