@@ -239,7 +239,14 @@ static int mod_init(void)
 		LM_ERR("error in shm_malloc\n");
 		return -1;
 	}
-	
+
+	dmq_init_callback_done = shm_malloc(sizeof(int));
+	if (!dmq_init_callback_done) {
+		LM_ERR("no more shm\n");
+		return -1;
+	}
+	*dmq_init_callback_done = 0;
+
 	/**
 	 * add the dmq notification peer.
 	 * the dmq is a peer itself so that it can receive node notifications
@@ -325,6 +332,9 @@ static void destroy(void) {
 	}
 	if (dmq_server_socket.s) {
 		pkg_free(dmq_server_socket.s);
+	}
+	if (dmq_init_callback_done) {
+		shm_free(dmq_init_callback_done);
 	}
 }
 
