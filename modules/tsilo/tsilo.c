@@ -32,7 +32,6 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/registrar/api.h"
 #include "../../dset.h"
-#include "../../lib/kmi/mi.h"
 #include "../../rpc_lookup.h"
 
 #include "ts_hash.h"
