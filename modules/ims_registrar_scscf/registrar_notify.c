@@ -1064,7 +1064,7 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     subscriber_data.watcher_uri = &watcher_impu;
     subscriber_data.watcher_contact = &watcher_contact;
     subscriber_data.version = 1; /*default version starts at 1*/
-
+    
     if (expires > 0) {
         LM_DBG("expires is more than zero - SUBSCRIBE");
         event_type = IMS_REGISTRAR_SUBSCRIBE;
@@ -1112,15 +1112,32 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 
         } else {
 
-            LM_DBG("this must be a re subscribe, lets update it\n");
-	    res = ul.update_subscriber(presentity_impurecord, &reg_subscriber, &expires_time, 0, 0);
-            if (res != 1) {
-                LM_ERR("Failed to update subscription - expires is %d\n", expires_time);
-                ul.unlock_udomain(domain, &presentity_uri);
-                ret = CSCF_RETURN_FALSE;
-                goto error;
-            }
-            new_subscription = 0;
+            if(memcmp(reg_subscriber->call_id.s, subscriber_data.callid->s, reg_subscriber->call_id.len) == 0 && 
+		    memcmp(reg_subscriber->from_tag.s, subscriber_data.ftag->s, reg_subscriber->from_tag.len) == 0 && 
+		    memcmp(reg_subscriber->to_tag.s, subscriber_data.ttag->s, reg_subscriber->to_tag.len) == 0) {
+		LM_DBG("This has same callid, fromtag and totag - must be a re subscribe, lets update it\n");
+		res = ul.update_subscriber(presentity_impurecord, &reg_subscriber, &expires_time, 0, 0);
+		if (res != 1) {
+		    LM_ERR("Failed to update subscription - expires is %d\n", expires_time);
+		    ul.unlock_udomain(domain, &presentity_uri);
+		    ret = CSCF_RETURN_FALSE;
+		    goto error;
+		}
+		new_subscription = 0;
+	    } else {
+		LM_ERR("Re-subscribe for same watcher_contact, presentity_uri, event but with different callid, fromtag and totag  - What happened?\n");
+		LM_DBG("Removing old subscriber and adding new one\n");
+		subscriber_data.presentity_uri = &presentity_impurecord->public_identity;
+		ul.external_delete_subscriber(reg_subscriber, (udomain_t*) _t, 0 /*domain is already locked*/);
+		res = ul.add_subscriber(presentity_impurecord, &subscriber_data, &reg_subscriber, 0 /*not a db_load*/);
+		if (res != 0) {
+		    LM_ERR("Failed to add new subscription\n");
+		    ul.unlock_udomain(domain, &presentity_uri);
+		    ret = CSCF_RETURN_FALSE;
+		    goto error;
+		}
+		new_subscription = 1;
+	    }
         }
 
         ul.unlock_udomain(domain, &presentity_uri);
@@ -1419,6 +1436,35 @@ out_of_memory:
     return;
 }
 
+/*We currently only support certain unknown params to be sent in NOTIFY bodies
+ This prevents having compatability issues with UEs including non-standard params in contact header
+ Supported params:
+ */
+static str param_q = {"q", 1};
+static str param_video = {"video", 5};
+static str param_expires = {"expires", 7};
+static str param_sip_instance = {"+sip.instance", 13};
+static str param_3gpp_smsip = {"+g.3gpp.smsip", 13};
+static str param_3gpp_icsi_ref = {"+g.3gpp.icsi-ref", 16};
+int inline supported_param(str *param_name) {
+    
+    if(strncasecmp(param_name->s, param_q.s, param_name->len) == 0) {
+	return 0;
+    } else if (strncasecmp(param_name->s, param_video.s, param_name->len) == 0) {
+	return 0;
+    } else if (strncasecmp(param_name->s, param_expires.s, param_name->len) == 0) {
+	return 0;
+    } else if (strncasecmp(param_name->s, param_sip_instance.s, param_name->len) == 0) {
+	return 0;
+    } else if (strncasecmp(param_name->s, param_3gpp_smsip.s, param_name->len) == 0) {
+	return 0;
+    } else if (strncasecmp(param_name->s, param_3gpp_icsi_ref.s, param_name->len) == 0) {
+	return 0;
+    } else {
+	return -1;
+    }
+}
+
 /** Maximum reginfo XML size */
 #define MAX_REGINFO_SIZE 16384
 
@@ -1441,6 +1487,11 @@ static str r_expired = {"expired", 7};
 static str r_unregistered = {"unregistered", 12};
 static str contact_s = {"\t\t<contact id=\"%p\" state=\"%.*s\" event=\"%.*s\" expires=\"%d\">\n", 59};
 static str contact_s_q = {"\t\t<contact id=\"%p\" state=\"%.*s\" event=\"%.*s\" expires=\"%d\" q=\"%.3f\">\n", 69};
+static str contact_s_params_with_body = {"\t\t<unknown-param name=\"%.*s\">\"%.*s\"</unknown-param>\n", 1};
+/**NOTIFY XML needs < to be replaced by &lt; and > to be replaced by &gt;*/
+/*For params that need to be fixed we pass in str removing first and last character and replace them with &lt; and &gt;**/
+static str contact_s_params_with_body_fix = {"\t\t<unknown-param name=\"%.*s\">\"&lt;%.*s&gt;\"</unknown-param>\n", 1};
+static str contact_s_params_no_body = {"\t\t<unknown-param name=\"%.*s\"></unknown-param>\n", 1};
 static str contact_e = {"\t\t</contact>\n", 13};
 
 static str uri_s = {"\t\t\t<uri>", 8};
@@ -1461,6 +1512,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
     impurecord_t *r;
     int i, j, res;
     ucontact_t* ptr;
+    param_t *param;
 
     buf.s = bufc;
     buf.len = 0;
@@ -1509,19 +1561,41 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
 			q);
 	    } else {
 		LM_DBG("q value equal to -1");
-		sprintf(pad.s, contact_s.s, ptr, r_active.len, r_active.s,
+	    sprintf(pad.s, contact_s.s, ptr, r_active.len, r_active.s,
 			r_registered.len, r_registered.s,
 			ptr->expires - act_time);
 	    }
 	    pad.len = strlen(pad.s);
 	    STR_APPEND(buf, pad);
 	    STR_APPEND(buf, uri_s);
-
+	    
 	    LM_DBG("Appending contact address: <%.*s>", ptr->c.len, ptr->c.s);
 
 	    STR_APPEND(buf, (ptr->c));
 	    STR_APPEND(buf, uri_e);
-
+	    
+	    param = ptr->params;
+	    while (param && supported_param(&param->name) == 0) {
+		
+		if(param->body.len > 0) {
+		    LM_DBG("This contact has params name: [%.*s] body [%.*s]\n", param->name.len, param->name.s, param->body.len, param->body.s);
+		    if (param->body.s[0] == '<' && param->body.s[param->body.len -1] == '>') {
+			LM_DBG("This param body starts with '<' and ends with '>' we will clean these for the NOTIFY XML with &lt; and &gt;\n");
+			sprintf(pad.s, contact_s_params_with_body_fix.s, param->name.len, param->name.s, param->body.len - 2, param->body.s + 1);
+		    } else {
+			sprintf(pad.s, contact_s_params_with_body.s, param->name.len, param->name.s, param->body.len, param->body.s);
+		    }
+		    
+		    pad.len = strlen(pad.s);
+		    STR_APPEND(buf, pad);
+		} else {
+		    LM_DBG("This contact has params name: [%.*s] \n", param->name.len, param->name.s);
+		    sprintf(pad.s, contact_s_params_no_body.s, param->name.len, param->name.s);
+		    pad.len = strlen(pad.s);
+		    STR_APPEND(buf, pad);
+		}
+		param = param->next;
+	    }
 	    STR_APPEND(buf, contact_e);
 	    j++;
 	}
