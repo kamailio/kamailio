@@ -66,6 +66,7 @@ int update_node_list(dmq_node_list_t* remote_list);
 dmq_node_t* add_dmq_node(dmq_node_list_t* list, str* uri);
 dmq_node_t* find_dmq_node(dmq_node_list_t* list, dmq_node_t* node);
 dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri);
+dmq_node_t* find_dmq_node_uri2(str* uri);
 int del_dmq_node(dmq_node_list_t* list, dmq_node_t* node);
 int cmp_dmq_node(dmq_node_t* node, dmq_node_t* cmpnode);
 dmq_node_t* shm_dup_node(dmq_node_t* node);

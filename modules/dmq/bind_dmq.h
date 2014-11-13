@@ -34,11 +34,13 @@ typedef int (*bcast_message_t)(dmq_peer_t* peer, str* body, dmq_node_t* except,
 		dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type);
 typedef int (*send_message_t)(dmq_peer_t* peer, str* body, dmq_node_t* node,
 		dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type);
+typedef dmq_node_t* (*find_dmq_node_uri_t)(str* uri);
 
 typedef struct dmq_api {
 	register_dmq_peer_t register_dmq_peer;
 	bcast_message_t bcast_message;
 	send_message_t send_message;
+	find_dmq_node_uri_t find_dmq_node_uri;
 } dmq_api_t;
 
 typedef int (*bind_dmq_f)(dmq_api_t* api);

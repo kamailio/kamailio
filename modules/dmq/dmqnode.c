@@ -239,6 +239,11 @@ dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri)
 	return ret;
 }
 
+dmq_node_t* find_dmq_node_uri2(str* uri)
+{
+	return find_dmq_node_uri(node_list, uri);
+}
+
 /**
  * @brief destroy dmq node
  */
