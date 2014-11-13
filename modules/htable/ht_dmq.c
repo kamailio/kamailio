@@ -89,7 +89,7 @@ int ht_dmq_broadcast(str* body) {
 /**
  * @brief ht dmq callback
  */
-int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
+int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq_node)
 {
 	int content_length;
 	str body;
