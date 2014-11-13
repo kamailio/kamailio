@@ -179,11 +179,14 @@ reg_subscriber* new_subscriber(subscriber_data_t* subscriber_data) {
     }
     
     /*This lets us get presentity URI info for subsequent SUBSCRIBEs that don't have presentity URI as req URI*/
+    get_act_time();
     
     subs.pres_uri = s->presentity_uri;
     subs.from_tag = s->from_tag;
     subs.to_tag = s->to_tag;
     subs.callid = s->call_id;
+    subs.expires = s->expires - act_time;
+    subs.contact = s->watcher_contact;
     
     hash_code = core_hash(&subs.callid, &subs.to_tag, sub_dialog_hash_size);
     
@@ -283,6 +286,8 @@ done:
 
 int update_subscriber(impurecord_t* urec, reg_subscriber** _reg_subscriber, int *expires, int *local_cseq, int *version) {
 
+    subs_t subs;
+    unsigned int hash_code = 0;
     reg_subscriber *rs = *_reg_subscriber;
     if (expires) {
         rs->expires = *expires;
@@ -300,6 +305,26 @@ int update_subscriber(impurecord_t* urec, reg_subscriber** _reg_subscriber, int 
         LM_DBG("No version so will not update subscriber version.\n");
     }
     
+    /*This lets us get presentity URI info for subsequent SUBSCRIBEs that don't have presentity URI as req URI*/
+    get_act_time();
+    
+    subs.pres_uri = rs->presentity_uri;
+    subs.from_tag = rs->from_tag;
+    subs.to_tag = rs->to_tag;
+    subs.callid = rs->call_id;
+    subs.expires = rs->expires - act_time;
+    subs.contact = rs->watcher_contact;
+    
+    hash_code = core_hash(&subs.callid, &subs.to_tag, sub_dialog_hash_size);
+    
+    LM_DBG("Updating sub dialog hash info with call_id: <%.*s> and ttag <%.*s> amd ftag <%.*s> and hash code <%d>", subs.callid.len, subs.callid.s, subs.to_tag.len, subs.to_tag.s, subs.from_tag.len,  subs.from_tag.s, hash_code);
+    
+    if (pres_update_shtable(sub_dialog_table, hash_code, &subs, REMOTE_TYPE))
+    {
+	LM_ERR("while updating new subscription\n");
+	return 0;
+    }
+        
     /*DB?*/
     if (db_mode == WRITE_THROUGH && db_insert_subscriber(urec, rs) != 0) {
 	    LM_ERR("Failed to insert subscriber into DB subscriber [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", 
