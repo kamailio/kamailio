@@ -43,7 +43,7 @@
 #include "mod_Logger.h"
 
 
-int init_modules(void)
+int ap_init_modules(void)
 {
     init_mod_Router();
     init_mod_Core();

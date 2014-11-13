@@ -156,7 +156,7 @@ static int mod_init(void)
     PyList_Insert(sys_path, 0, pDir);
     Py_DECREF(pDir);
 
-    if (init_modules() != 0) {
+    if (ap_init_modules() != 0) {
 	if (!PyErr_Occurred())
 	    PyErr_SetString(PyExc_AttributeError, "init_modules() has failed");
 	python_handle_exception("mod_init");
