@@ -187,7 +187,7 @@ int run_init_callbacks() {
 /**
  * @brief dmq notification callback
  */
-int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
+int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq_node)
 {
 	int nodes_recv;
 	str* response_body = NULL;
