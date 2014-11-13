@@ -127,7 +127,7 @@ static int mod_init(void)
 				return -1;
 			}
 		} else {
-			register_basic_timers(1);
+			register_basic_timers(it->mode);
 		}
 		it = it->next;
 	}
@@ -138,6 +138,9 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	stm_timer_t *it;
+	int i;
+	char si_desc[MAX_PT_DESC];
+
 	if(_stm_list==NULL)
 		return 0;
 
@@ -147,18 +150,20 @@ static int child_init(int rank)
 	it = _stm_list;
 	while(it)
 	{
-		if(it->mode!=0)
+		for(i=0; i<it->mode; i++)
 		{
+			snprintf(si_desc, MAX_PT_DESC, "RTIMER EXEC child=%d timer=%.*s",
+			         i, it->name.len, it->name.s);
 			if(it->flags & RTIMER_INTERVAL_USEC)
 			{
-				if(fork_basic_utimer(PROC_TIMER, "RTIMER USEC EXEC", 1 /*socks flag*/,
+				if(fork_basic_utimer(PROC_TIMER, si_desc, 1 /*socks flag*/,
 								stm_timer_exec, (void*)it, it->interval
 								/*usec*/)<0) {
 					LM_ERR("failed to start utimer routine as process\n");
 					return -1; /* error */
 				}
 			} else {
-				if(fork_basic_timer(PROC_TIMER, "RTIMER SEC EXEC", 1 /*socks flag*/,
+				if(fork_basic_timer(PROC_TIMER, si_desc, 1 /*socks flag*/,
 								stm_timer_exec, (void*)it, it->interval
 								/*sec*/)<0) {
 					LM_ERR("failed to start timer routine as process\n");
@@ -236,7 +241,9 @@ int stm_t_param(modparam_t type, void *val)
 					|| pit->body.s[pit->body.len-1]=='U') {
 				pit->body.len--;
 				tmp.flags |= RTIMER_INTERVAL_USEC;
-				tmp.mode = 1;
+				if (tmp.mode==0) {
+					tmp.mode = 1;
+				}
 			}
 			if (str2int(&pit->body, &tmp.interval) < 0) {
 				LM_ERR("invalid interval: %.*s\n", pit->body.len, pit->body.s);
