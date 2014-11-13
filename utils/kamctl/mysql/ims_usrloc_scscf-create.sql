@@ -2,6 +2,7 @@ INSERT INTO version (table_name, table_version) values ('contact','6');
 CREATE TABLE `contact` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `contact` char(255) NOT NULL,
+  `params` varchar(255) DEFAULT NULL,
   `path` varchar(255) DEFAULT NULL,
   `received` varchar(255) DEFAULT NULL,
   `user_agent` varchar(255) DEFAULT NULL,
