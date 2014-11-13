@@ -224,8 +224,12 @@ int stm_t_param(modparam_t type, void *val)
 			tmp.name = pit->body;
 		} else if(pit->name.len==4
 				&& strncasecmp(pit->name.s, "mode", 4)==0) {
-			if(tmp.mode==0)
-				str2int(&pit->body, &tmp.mode);
+			if(tmp.mode==0) {
+				if (str2int(&pit->body, &tmp.mode) < 0) {
+					LM_ERR("invalid mode: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
 		}  else if(pit->name.len==8
 				&& strncasecmp(pit->name.s, "interval", 8)==0) {
 			if(pit->body.s[pit->body.len-1]=='u'
@@ -234,7 +238,10 @@ int stm_t_param(modparam_t type, void *val)
 				tmp.flags |= RTIMER_INTERVAL_USEC;
 				tmp.mode = 1;
 			}
-			str2int(&pit->body, &tmp.interval);
+			if (str2int(&pit->body, &tmp.interval) < 0) {
+				LM_ERR("invalid interval: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+			}
 		}
 	}
 	if(tmp.name.s==NULL)
