@@ -383,6 +383,7 @@ error:
 int cfg_dmq_t_replicate(struct sip_msg* msg, char* s)
 {
 	dmq_node_t* node;
+	struct socket_info* sock;
 	int i = 0;
 
 	/* avoid loops - do not replicate if message has come from another node
@@ -392,6 +393,12 @@ int cfg_dmq_t_replicate(struct sip_msg* msg, char* s)
 			&& (is_from_remote_node(msg) > 0)) {
 		LM_DBG("message is from another node - skipping replication\n");
 		return -1;
+	}
+
+	/* TODO - backup/restore original send socket */
+	sock = lookup_local_socket(&dmq_server_socket);
+	if (sock) {
+		set_force_socket(msg, sock);
 	}
 
 	lock_get(&node_list->lock);
