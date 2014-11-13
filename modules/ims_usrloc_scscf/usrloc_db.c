@@ -5,6 +5,7 @@
 #include "udomain.h"
 #include "math.h"
 #include "subscribe.h"
+#include "../../lib/ims/useful_defs.h"
 
 str id_col = str_init(ID_COL); /*!< Name of column containing ID (gen. auto_increment field */
 str impu_id_col = str_init(IMPU_ID_COL); /*!< Name of column containing impu ID in mapping table */
@@ -18,6 +19,7 @@ str ecf1_col = str_init(ECF1_COL); /*!< Name of column containing ecf1 */
 str ecf2_col = str_init(ECF2_COL); /*!< Name of column containing ecf2 */
 str ims_sub_data_col = str_init(IMS_SUB_COL); /*!< Name of column containing ims_subscription data */
 str contact_col = str_init(CONTACT_COL); /*!< Name of column containing contact addresses */
+str params_col = str_init(PARAMS_COL); /*!< Name of column containing contact addresses */
 str expires_col = str_init(EXPIRES_COL); /*!< Name of column containing expires values */
 str q_col = str_init(Q_COL); /*!< Name of column containing q values */
 str callid_col = str_init(CALLID_COL); /*!< Name of column containing callid string */
@@ -257,18 +259,46 @@ int db_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 	return 0;
 }
 
+static int MAX_PARAMS_SIZE = 1000;
+static str param_name_and_nody = {"%.*s=%.*s;", 1};
+static str param_name_no_body = {"%.*s;", 1};
+
 int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
-	db_key_t key[6];
-	db_val_t val[6];
+	
+	str param_buf, param_pad;
+	param_t * tmp;
+	char param_bufc[MAX_PARAMS_SIZE], param_padc[MAX_PARAMS_SIZE];
+	param_buf.s = param_bufc;
+	param_buf.len = 0;
+	param_pad.s = param_padc;
+	param_pad.len = 0;
+	
+	db_key_t key[7];
+	db_val_t val[7];
 	
 	LM_DBG("DB: inserting ucontact [%.*s]\n", _c->c.len, _c->c.s);
+	
+	tmp = _c->params;
+	while (tmp) {
+	    if(tmp->body.len > 0) {
+		sprintf(param_pad.s, param_name_and_nody.s, tmp->name.len, tmp->name.s, tmp->body.len, tmp->body.s);
+	    } else {
+		sprintf(param_pad.s, param_name_no_body.s, tmp->name.len, tmp->name.s);
+	    }
+	    param_pad.len = strlen(param_pad.s);
+	    STR_APPEND(param_buf, param_pad);
+	    tmp = tmp->next;
+	}
+	LM_DBG("Converted params to string to insert into db: [%.*s]\n", param_buf.len, param_buf.s);
+	
 
 	key[0] = &contact_col;
-	key[1] = &path_col;
-	key[2] = &user_agent_col;
-	key[3] = &received_col;
-	key[4] = &expires_col;
-	key[5] = &callid_col;
+	key[1] = &params_col;
+	key[2] = &path_col;
+	key[3] = &user_agent_col;
+	key[4] = &received_col;
+	key[5] = &expires_col;
+	key[6] = &callid_col;
 
 	val[0].type = DB1_STR;
 	val[0].nul = 0;
@@ -276,29 +306,33 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 
 	val[1].type = DB1_STR;
 	val[1].nul = 0;
-	val[1].val.str_val = _c->path;
-
+	val[1].val.str_val = param_buf;
+	
 	val[2].type = DB1_STR;
 	val[2].nul = 0;
-	val[2].val.str_val = _c->user_agent;
+	val[2].val.str_val = _c->path;
 
 	val[3].type = DB1_STR;
 	val[3].nul = 0;
-	val[3].val.str_val = _c->received;
+	val[3].val.str_val = _c->user_agent;
 
-	val[4].type = DB1_DATETIME;
+	val[4].type = DB1_STR;
 	val[4].nul = 0;
-	val[4].val.time_val = _c->expires;
+	val[4].val.str_val = _c->received;
 
-	val[5].type = DB1_STR;
+	val[5].type = DB1_DATETIME;
 	val[5].nul = 0;
-	val[5].val.str_val = _c->callid;
+	val[5].val.time_val = _c->expires;
+
+	val[6].type = DB1_STR;
+	val[6].nul = 0;
+	val[6].val.str_val = _c->callid;
 
 	if (ul_dbf.use_table(ul_dbh, &contact_table) != 0) {
 		LM_ERR("Unable to use table [%.*s]\n", contact_table.len, contact_table.s);
 		return -1;
 	}
-	if (ul_dbf.insert_update(ul_dbh, key, val, 6) != 0) {
+	if (ul_dbf.insert_update(ul_dbh, key, val, 7) != 0) {
 		LM_ERR("Failed to insert/update contact record for [%.*s]\n", _c->c.len, _c->c.s);
 		return -1;
 	}
@@ -473,35 +507,45 @@ int inline int_to_str_len(int i) {
 }
 
 static inline int dbrow2contact(db_val_t* val, ucontact_info_t* ci) {
-	static str path, user_agent, callid;
+	static str params, path, user_agent, callid;
 
+	
+	//TODO FIX PARAMS
+//	/* params */
+//	if (!VAL_NULL(val + 1)) {
+//		params.s = (char*)VAL_STRING(val + 1);
+//		params.len = strlen(params.s);
+//	}
+//	ci->params = &params;
+//	LM_DBG("Loading contact params: [%.*s]", ci->params->len, ci->params->s);
+	
 	/* path */
-	if (!VAL_NULL(val + 1)) {
-		path.s = (char*)VAL_STRING(val + 1);
+	if (!VAL_NULL(val + 2)) {
+		path.s = (char*)VAL_STRING(val + 2);
 		path.len = strlen(path.s);
 	}
 	ci->path = &path;
 
 	/* user-agent */
-	if (!VAL_NULL(val + 2)) {
-		user_agent.s = (char*)VAL_STRING(val + 2);
+	if (!VAL_NULL(val + 3)) {
+		user_agent.s = (char*)VAL_STRING(val + 3);
 		user_agent.len = strlen(user_agent.s);
 	}
 	ci->user_agent = &user_agent;
 
 	/* received */
-	if (!VAL_NULL(val + 3)) {
-		ci->received.s = (char*)VAL_STRING(val + 3);
+	if (!VAL_NULL(val + 4)) {
+		ci->received.s = (char*)VAL_STRING(val + 4);
 		ci->received.len = strlen(ci->received.s);
 	}
 
 	/* expires */
-	if (!VAL_NULL(val + 4)) {
-		ci->expires = VAL_TIME(val + 4);
+	if (!VAL_NULL(val + 5)) {
+		ci->expires = VAL_TIME(val + 5);
 	}
 	/* callid */
-	if (!VAL_NULL(val + 5)) {
-		callid.s = (char*) VAL_STRING(val + 5);
+	if (!VAL_NULL(val + 6)) {
+		callid.s = (char*) VAL_STRING(val + 6);
 		callid.len = strlen(callid.s);
 	}
 	ci->callid = &callid;
@@ -634,7 +678,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
      */
 
     char *p_contact =
-	    "SELECT c.contact,c.path,c.user_agent,c.received,c.expires,c.callid FROM impu_contact m LEFT JOIN contact c ON c.id=m.contact_id WHERE m.impu_id=";
+	    "SELECT c.contact,c.params,c.path,c.user_agent,c.received,c.expires,c.callid FROM impu_contact m LEFT JOIN contact c ON c.id=m.contact_id WHERE m.impu_id=";
 
     char *p_subscriber =
 	    "SELECT s.presentity_uri,s.watcher_uri,s.watcher_contact,s.event,s.expires,s.version,s.local_cseq,s.call_id,s.from_tag,"

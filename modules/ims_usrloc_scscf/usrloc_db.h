@@ -11,6 +11,7 @@ extern db_func_t ul_dbf;
 #define USER_COL       "username"
 #define DOMAIN_COL     "domain"
 #define CONTACT_COL    "contact"
+#define PARAMS_COL    "params"
 #define EXPIRES_COL    "expires"
 #define Q_COL          "q"
 #define CALLID_COL     "callid"

@@ -301,6 +301,7 @@ typedef struct ucontact {
     str domain; /*!< Pointer to domain name (NULL terminated) */
     str aor; /*!< Pointer to the AOR string in record structure*/
     str c; /*!< Contact address */
+    param_t *params; /*!< Params header details> */
     str received; /*!< IP+port+protocol we received the REGISTER from */
     str path; /*!< Path header */
     time_t expires; /*!< Expires parameter */
@@ -336,6 +337,7 @@ typedef struct ucontact_info {
     time_t expires; /*!< Contact expires */
     qvalue_t q; /*!< Q-value */
     str* callid; /*!< call-ID */
+    param_t *params;
     int cseq; /*!< CSEQ number */
     unsigned int flags; /*!< message flags */
     unsigned int cflags; /*!< contact flags */

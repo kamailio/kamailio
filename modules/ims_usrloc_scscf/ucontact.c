@@ -80,6 +80,8 @@ extern struct contact_list* contact_list;
  */
 ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _ci) {
     ucontact_t *c;
+    param_t *prev, *curr, *param;
+    int first = 1;
 
     c = (ucontact_t*) shm_malloc(sizeof (ucontact_t));
     if (!c) {
@@ -99,7 +101,29 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
     }
     c->cbs->first = 0;
     c->cbs->reg_types = 0;
-
+    
+    /*Copy parameter list into shm**/
+    param = _ci->params;
+    while(param) {
+	/*Copy first param in curr*/
+	curr = shm_malloc(sizeof (param_t));
+	curr->len = param->len;
+	curr->type = param->type;
+	curr->next = 0;
+	if (shm_str_dup(&curr->body, &param->body) < 0) goto error;
+	if (shm_str_dup(&curr->name, &param->name) < 0) goto error;
+	
+	if(first) {
+	    c->params = curr;
+	    first = 0;
+	} else {
+	    prev->next = curr;
+	}
+	prev = curr;
+	param = param->next;
+	
+    }
+    
     if (shm_str_dup(&c->c, _contact) < 0) goto error;
     if (shm_str_dup(&c->callid, _ci->callid) < 0) goto error;
     if (shm_str_dup(&c->user_agent, _ci->user_agent) < 0) goto error;
@@ -146,7 +170,8 @@ error:
 void free_ucontact(ucontact_t* _c) {
     struct ul_callback *cbp, *cbp_tmp;
     struct contact_dialog_data *dialog_data, *tmp_dialog_data; 
-
+    param_t * tmp, *tmp1;
+    
     if (!_c) return;
     LM_DBG("Freeing ucontact [%.*s]\n", _c->aor.len, _c->aor.s);    
     if (_c->path.s) shm_free(_c->path.s);
@@ -154,6 +179,16 @@ void free_ucontact(ucontact_t* _c) {
     if (_c->user_agent.s) shm_free(_c->user_agent.s);
     if (_c->callid.s) shm_free(_c->callid.s);
     if (_c->c.s) shm_free(_c->c.s);
+    
+    tmp = _c->params;
+    while(tmp){
+	tmp1 = tmp->next;
+	if (tmp->body.s) shm_free(tmp->body.s);
+	if (tmp->name.s) shm_free(tmp->name.s);
+	if(tmp) shm_free(tmp);
+	tmp = tmp1;
+    }
+    
     if (_c->domain.s) shm_free(_c->domain.s);
     if (_c->aor.s) shm_free(_c->aor.s);
 
@@ -186,11 +221,21 @@ void free_ucontact(ucontact_t* _c) {
 void print_ucontact(FILE* _f, ucontact_t* _c) {
     time_t t = time(0);
     char* st = "";
-
+    param_t * tmp;
+    
     fprintf(_f, "~~~Contact(%p)~~~\n", _c);
     fprintf(_f, "domain    : '%.*s'\n", _c->domain.len, ZSW(_c->domain.s));
     fprintf(_f, "aor       : '%.*s'\n", _c->aor.len, ZSW(_c->aor.s));
     fprintf(_f, "Contact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
+    
+    fprintf(_f, "Params   :\n");
+    tmp = _c->params;
+    while (tmp) {
+	fprintf(_f, "Param Name: '%.*s' Param Body '%.*s'\n", tmp->name.len, ZSW(tmp->name.s), tmp->body.len, ZSW(tmp->body.s));
+	tmp = tmp->next;
+    }
+    
+    
     fprintf(_f, "Expires   : ");
     if (_c->expires == 0) {
         fprintf(_f, "Permanent\n");
@@ -270,7 +315,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci) {
         _c->path.s = 0;
         _c->path.len = 0;
     }
-
+    
     LM_DBG("Setting contact expires to %d which is in %d seconds time\n", (unsigned int) _ci->expires, (unsigned int) (_ci->expires - time(NULL)));
     _c->sock = _ci->sock;
     _c->expires = _ci->expires;

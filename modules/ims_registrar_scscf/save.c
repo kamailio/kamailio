@@ -298,8 +298,10 @@ static inline ucontact_info_t* pack_ci(struct sip_msg* _m, contact_t* _c, unsign
                 }
             }
         }
-
-        ci.last_modified = act_time;
+	
+	if(_c->params) {
+	    ci.params = _c->params;
+	}
 
         /* set flags */
         ci.flags = _f;
@@ -566,7 +568,7 @@ static inline int update_contacts_helper(struct sip_msg* msg, impurecord_t* impu
                                 "sos: [%d],"
                                 "expires [%ld]\n", chi->uri.len, chi->uri.s, qvalue, sos, expires - time(NULL));
 
-                        LM_DBG("packing contact information\n");
+			LM_DBG("packing contact information\n");
                         if ((ci = pack_ci(msg, chi, expires, 0)) == 0) {
                             LM_ERR("Failed to extract contact info\n");
                             goto error;
