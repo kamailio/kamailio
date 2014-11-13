@@ -199,39 +199,6 @@ if (is_method("REGISTER")) {
 	</section>
 
 	<section>
-		<title>MI Commands</title>
-		<section id="tsilo.mi.ts_dump">
-			<title>
-			<function moreinfo="none">ts_dump</function>
-			</title>
-			<para>
-			Dumps the entire content of the TSILO table
-			</para>
-			<para>Parameters: </para>
-			<itemizedlist>
-				<listitem><para>
-					<emphasis>brief</emphasis> - (optional, may not be present); if
-					equals to string <quote>brief</quote>, a brief dump will be
-					done (only RURI, without the transaction(s) details)
-				</para></listitem>
-			</itemizedlist>
-		</section>
-		<section id="tsilo.mi.ts_lookup">
-			<title>
-			<function moreinfo="none">ts_lookup</function>
-			</title>
-			<para>
-			Dumps the transactions stored for the given RURI
-			</para>
-			<para>Parameters: </para>
-			<itemizedlist>
-				<listitem><para>
-					<emphasis>ruri</emphasis> - RURI for which we want to show the transactions.
-				</para></listitem>
-			</itemizedlist>
-		</section>
-	</section>
-	<section>
 	<title>Exported RPC Functions</title>
 		<section>
 			<title><varname>ts.dump</varname></title>

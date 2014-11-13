@@ -33,15 +33,10 @@ Federico Cabiddu
               4.2. ts_append(domain, ruri)
               4.3. ts_append_to(tindex, tlabel, domain)
 
-        5. MI Commands
+        5. Exported RPC Functions
 
-              5.1. ts_dump
-              5.2. ts_lookup
-
-        6. Exported RPC Functions
-
-              6.1. ts.dump
-              6.2. ts.lookup
+              5.1. ts.dump
+              5.2. ts.lookup
 
    List of Examples
 
@@ -70,15 +65,10 @@ Chapter 1. Admin Guide
         4.2. ts_append(domain, ruri)
         4.3. ts_append_to(tindex, tlabel, domain)
 
-   5. MI Commands
+   5. Exported RPC Functions
 
-        5.1. ts_dump
-        5.2. ts_lookup
-
-   6. Exported RPC Functions
-
-        6.1. ts.dump
-        6.2. ts.lookup
+        5.1. ts.dump
+        5.2. ts.lookup
 
 1. Overview
 
@@ -202,33 +192,12 @@ if (is_method("REGISTER")) {
 }
 ...
 
-5. MI Commands
+5. Exported RPC Functions
 
-   5.1. ts_dump
-   5.2. ts_lookup
+   5.1. ts.dump
+   5.2. ts.lookup
 
-5.1.  ts_dump
-
-   Dumps the entire content of the TSILO table
-
-   Parameters:
-     * brief - (optional, may not be present); if equals to string
-       "brief", a brief dump will be done (only RURI, without the
-       transaction(s) details)
-
-5.2.  ts_lookup
-
-   Dumps the transactions stored for the given RURI
-
-   Parameters:
-     * ruri - RURI for which we want to show the transactions.
-
-6. Exported RPC Functions
-
-   6.1. ts.dump
-   6.2. ts.lookup
-
-6.1. ts.dump
+5.1. ts.dump
 
    Dumps the content of the TSILO table
 
@@ -237,7 +206,7 @@ if (is_method("REGISTER")) {
    RPC Command Format:
                         kamcmd ts.dump
 
-6.2. ts.lookup
+5.2. ts.lookup
 
    Dumps the transactions stored for the given RURI
 

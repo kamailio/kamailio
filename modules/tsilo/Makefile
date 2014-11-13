@@ -15,7 +15,4 @@ ifeq ($(INSTALL_FLAVOUR),kamailio)
 DEFS+= -DWITH_EVENT_LOCAL_REQUEST
 endif # INSTALL_FLAVOUR
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kmi/kmi
-
 include ../../Makefile.modules

@@ -33,12 +33,13 @@
 #include "../../modules/registrar/api.h"
 #include "../../dset.h"
 #include "../../lib/kmi/mi.h"
+#include "../../rpc_lookup.h"
 
 #include "ts_hash.h"
 #include "ts_handlers.h"
 #include "ts_append.h"
 #include "ts_store.h"
-#include "ts_mi.h"
+#include "ts_rpc.h"
 
 MODULE_VERSION
 
@@ -71,12 +72,6 @@ static cmd_export_t cmds[]={
 	{0,0,0,0,0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "ts_dump",		mi_tsilo_dump,		0,	0,	0 },
-	{ "ts_lookup",		mi_tsilo_lookup,	0,	0,	0 },
-    { 0, 0, 0, 0, 0}
-};
-
 static param_export_t params[]={
 	{"hash_size",	INT_PARAM,	&hash_size},
 	{0,0,0}
@@ -90,7 +85,7 @@ struct module_exports exports= {
 	cmds,
 	params,
 	0, /* exported statistics */
-    mi_cmds,    /* exported MI functions */
+    0,    /* exported MI functions */
     0,
     0,
 	mod_init,   /* module initialization function */
@@ -106,13 +101,12 @@ static int mod_init(void)
 {
 	unsigned int n;
 
-	/* register the MI commands */
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	/* register the RPC methods */
+	if(rpc_register_array(rpc_methods)!=0)
     {
-        LM_ERR("failed to register MI commands\n");
+        LM_ERR("failed to register RPC commands\n");
         return -1;
     }
-
 	/* load the TM API */
 	if (load_tm_api(&_tmb)!=0) {
 		LM_ERR("can't load TM API\n");
