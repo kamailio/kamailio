@@ -26,6 +26,6 @@
 #include <Python.h>
 
 extern PyMethodDef RouterMethods[];
-int init_modules(void);
+int ap_init_modules(void);
 
 #endif
