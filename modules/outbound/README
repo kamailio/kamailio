@@ -270,7 +270,7 @@ failure_route[FAIL_OUTBOUND] {
 }
 
    Example 1.2. Registrar Configuration
-MAILIO
+#!KAMAILIO
 #
 # Registrar configuration
 #

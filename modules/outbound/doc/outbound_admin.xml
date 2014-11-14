@@ -227,7 +227,7 @@ failure_route[FAIL_OUTBOUND] {
 	<example>
 	<title>Registrar Configuration</title>
 	<programlisting><![CDATA[
-MAILIO
+#!KAMAILIO
 #
 # Registrar configuration
 #
