@@ -642,9 +642,12 @@ fix_nated_register();
 		<function moreinfo="none">add_contact_alias([ip_addr, port, proto])</function>
 		</title>
 		<para>
-		Adds an <quote>;alias=ip~port~transport</quote> parameter to the contact URI
-		containing either received ip, port, and transport protocol
-		or those given as parameters.
+		Adds an <quote>;alias=ip~port~transport</quote> parameter to
+		the contact URI containing either received ip, port, and
+		transport protocol or those given as parameters.  If called
+		without parameters, <quote>;alias</quote> parameter is
+		only added if received ip and port differ from those in
+		contact URI.
 		</para>
 		<para>
 		This function can be used from
