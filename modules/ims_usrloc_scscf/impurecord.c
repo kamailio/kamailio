@@ -900,8 +900,8 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
 	LM_DBG("contact [%.*s] needs to be linked to impu [%.*s] at position %d\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
 	if (overwrite)
 	    unlink_contact_from_impu(impu, impu->newcontacts[i], write_to_db);    //unlink the contact we are overwriting
-	else
-	    impu->num_contacts = i+1;
+
+	impu->num_contacts = i+1;   //we always bump this - as unlink (in overwrite would have decremented)
 	
 	impu->newcontacts[i] = contact;
 	
