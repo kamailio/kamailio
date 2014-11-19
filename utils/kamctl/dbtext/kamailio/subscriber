@@ -1,1 +1,1 @@
-id(int,auto) username(string) domain(string) password(string) email_address(string) ha1(string) ha1b(string) rpid(string,null) 
+id(int,auto) username(string) domain(string) password(string) email_address(string,null) ha1(string,null) ha1b(string,null) rpid(string,null) 
