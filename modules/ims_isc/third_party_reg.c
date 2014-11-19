@@ -45,6 +45,66 @@
 
 #include "third_party_reg.h"
 
+/*! \brief
+ * Combines all Path HF bodies into one string.
+ */
+int build_path_vector(struct sip_msg *_m, str *path, str *received)
+{
+	static char buf[MAX_PATH_SIZE];
+	char *p;
+	struct hdr_field *hdr;
+	struct sip_uri puri;
+
+	rr_t *route = 0;
+
+	path->len = 0;
+	path->s = 0;
+	received->s = 0;
+	received->len = 0;
+
+	if(parse_headers(_m, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse the message\n");
+		goto error;
+	}
+
+	for( hdr=_m->path,p=buf ; hdr ; hdr = next_sibling_hdr(hdr)) {
+		/* check for max. Path length */
+		if( p-buf+hdr->body.len+1 >= MAX_PATH_SIZE) {
+			LM_ERR("Overall Path body exceeds max. length of %d\n",
+					MAX_PATH_SIZE);
+			goto error;
+		}
+		if(p!=buf)
+			*(p++) = ',';
+		memcpy( p, hdr->body.s, hdr->body.len);
+		p +=  hdr->body.len;
+	}
+
+	if (p!=buf) {
+		/* check if next hop is a loose router */
+		if (parse_rr_body( buf, p-buf, &route) < 0) {
+			LM_ERR("failed to parse Path body, no head found\n");
+			goto error;
+		}
+		if (parse_uri(route->nameaddr.uri.s,route->nameaddr.uri.len,&puri)<0){
+			LM_ERR("failed to parse the first Path URI\n");
+			goto error;
+		}
+		if (!puri.lr.s) {
+			LM_ERR("first Path URI is not a loose-router, not supported\n");
+			goto error;
+		}
+		free_rr(&route);
+	}
+
+	path->s = buf;
+	path->len = p-buf;
+	return 0;
+error:
+	if(route) free_rr(&route);
+	return -1;
+}
+
 /**
  * Handle third party registration
  * @param msg - the SIP REGISTER message
@@ -54,6 +114,7 @@
  */
 int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
 	r_third_party_registration r;
+	str path, path_received;
 	int expires = 0;
 	str req_uri = { 0, 0 };
 	str to = { 0, 0 };
@@ -82,6 +143,12 @@ int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
 	pvni = cscf_get_visited_network_id(msg, &hdr);
 	/* Get P-Access-Network-Info header */
 	pani = cscf_get_access_network_info(msg, &hdr);
+	
+	if (build_path_vector(msg, &path, &path_received) < 0) {
+	    LM_ERR("Failed to parse PATH header for third-party reg\n");
+	    return ISC_RETURN_FALSE;
+	}
+	LM_DBG("PATH header in REGISTER is [%.*s]\n", path.len, path.s);
 
 	/* Get P-Charging-Vector header */
 	/* Just forward the charging header received from P-CSCF */
@@ -99,6 +166,7 @@ int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
 		r.pani = pani;
 		r.cv = cv;
 		r.service_info = m->service_info;
+		r.path = path;
 
 		if (expires <= 0)
 			r_send_third_party_reg(&r, 0);
@@ -126,6 +194,15 @@ static str p_access_network_info_e = { "\r\n", 2 };
 
 static str p_charging_vector_s = { "P-Charging-Vector: ", 19 };
 static str p_charging_vector_e = { "\r\n", 2 };
+
+static str path_s = { "Path: ", 6 };
+static str path_e = { "\r\n", 2 };
+
+static str comma = { ",", 1};
+
+static str path_mine_s = { "<", 1};
+static str path_mine_e = { ";lr>", 4};
+
 static str body_s = { "<ims-3gpp version=\"1\"><service-info>", 36 };
 static str body_e = { "</service-info></ims-3gpp>", 26 };
 
@@ -159,6 +236,9 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
 
 	if (r->cv.len)
 		h.len += p_charging_vector_s.len + p_charging_vector_e.len + r->cv.len;
+	
+	if (r->path.len) 
+	    h.len += path_s.len + path_e.len + r->path.len + 6/*',' and ';lr' and '<' and '>'*/ + r->from.len /*adding our own address to path*/;
 
 	h.s = pkg_malloc(h.len);
 	if (!h.s) {
@@ -176,6 +256,16 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
 	sprintf(h.s + h.len, "%d", expires);
 	h.len += strlen(h.s + h.len);
 	STR_APPEND(h, expires_e);
+	
+	if (r->path.len) {
+	    STR_APPEND(h, path_s);
+	    STR_APPEND(h, r->path);
+	    STR_APPEND(h, comma);
+	    STR_APPEND(h, path_mine_s);
+	    STR_APPEND(h, r->from);
+	    STR_APPEND(h, path_mine_e);
+	    STR_APPEND(h, path_e);
+	}
 
 	STR_APPEND(h, contact_s);
 	STR_APPEND(h, isc_my_uri_sip);
@@ -198,7 +288,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
 		STR_APPEND(h, r->cv);
 		STR_APPEND(h, p_charging_vector_e);
 	}
-	LM_CRIT("SRV INFO:<%.*s>\n", r->service_info.len, r->service_info.s);
+	LM_DBG("SRV INFO:<%.*s>\n", r->service_info.len, r->service_info.s);
 	if (r->service_info.len) {
 		b.len = body_s.len + r->service_info.len + body_e.len;
 		b.s = pkg_malloc(b.len);

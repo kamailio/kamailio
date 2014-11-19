@@ -65,13 +65,14 @@ extern struct tm_binds isc_tmb; 	/**< Structure with pointers to tm funcs 		*/
 
 /** reg event notification structure */
 typedef struct _r_third_party_reg {
-	str req_uri; 		/* AS sip uri:  	*/
+	str req_uri;                    /* AS sip uri:  	*/
 	str from; 			/* SCSCF uri            */
 	str to; 			/* Public user id       */
 	str pvni; 			/* Visited network id 	*/
 	str pani; 			/* Access Network info 	*/
 	str cv; 			/* Charging vector 	*/
-	str service_info; 	/* Service info body */
+	str service_info;               /* Service info body */
+    str path;                       /* Path header  */
 } r_third_party_registration;
 
 int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark);

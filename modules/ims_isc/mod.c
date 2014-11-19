@@ -401,6 +401,13 @@ done:
     return ret;
 }
 
+void clean_impu_str(str* impu_s) {
+    char *p;
+    
+    if ((p = memchr(impu_s->s, ';', impu_s->len))) {
+	impu_s->len = p - impu_s->s;
+    }
+}
 /**
  * Checks if there is a match on REGISTER.
  * Inserts route headers and set the dst_uri
@@ -436,7 +443,10 @@ int isc_match_filter_reg(struct sip_msg *msg, char *str1, udomain_t* d) {
             else
                 k = 1;
 
-            LM_DBG("Orig User <%.*s> [%d]\n", s.len, s.s, k);
+	    LM_DBG("Orig User before clean: <%.*s> [%d]\n", s.len, s.s, k);
+	    clean_impu_str(&s);
+            LM_DBG("Orig User after clean: <%.*s> [%d]\n", s.len, s.s, k);
+	    
             m = isc_checker_find(s, old_mark.direction, old_mark.skip, msg, k, d);
             while (m) {
                 LM_DBG("REGISTER match found in filter criteria\n");

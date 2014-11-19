@@ -397,7 +397,7 @@ isc_match* isc_checker_find(str uri, char direction, int skip,
 	//need to get the urecord
 	if ((ret = isc_ulb.get_impurecord(d, &uri, &p)) != 0) {
 		isc_ulb.unlock_udomain(d, &uri);
-		LM_ERR("Failure getting record");
+		LM_ERR("Failure getting IMPU record for [%.*s] - ISC checker find METHOD: [%.*s]\n", uri.len, uri.s, msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
 		return 0;
 	};
 
