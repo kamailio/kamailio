@@ -1637,7 +1637,8 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
     int terminate_impu = 1;
     ucontact_t *c_tmp;
     str state, event;
-
+    param_t *param;
+    
     buf.s = bufc;
     buf.len = 0;
     pad.s = padc;
@@ -1716,6 +1717,30 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
             STR_APPEND(buf, uri_s);
             STR_APPEND(buf, (c->c));
             STR_APPEND(buf, uri_e);
+	    
+	    param = c->params;
+	    while (param && supported_param(&param->name) == 0) {
+		
+		if(param->body.len > 0) {
+		    LM_DBG("This contact has params name: [%.*s] body [%.*s]\n", param->name.len, param->name.s, param->body.len, param->body.s);
+		    if (param->body.s[0] == '<' && param->body.s[param->body.len -1] == '>') {
+			LM_DBG("This param body starts with '<' and ends with '>' we will clean these for the NOTIFY XML with &lt; and &gt;\n");
+			sprintf(pad.s, contact_s_params_with_body_fix.s, param->name.len, param->name.s, param->body.len - 2, param->body.s + 1);
+		    } else {
+			sprintf(pad.s, contact_s_params_with_body.s, param->name.len, param->name.s, param->body.len, param->body.s);
+		    }
+		    
+		    pad.len = strlen(pad.s);
+		    STR_APPEND(buf, pad);
+		} else {
+		    LM_DBG("This contact has params name: [%.*s] \n", param->name.len, param->name.s);
+		    sprintf(pad.s, contact_s_params_no_body.s, param->name.len, param->name.s);
+		    pad.len = strlen(pad.s);
+		    STR_APPEND(buf, pad);
+		}
+		param = param->next;
+	    }
+	    
             STR_APPEND(buf, contact_e);
             STR_APPEND(buf, registration_e);
         }
