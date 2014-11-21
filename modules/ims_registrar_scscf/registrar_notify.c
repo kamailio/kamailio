@@ -915,7 +915,6 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     reg_subscriber *reg_subscriber;
     subscriber_data_t subscriber_data;
 
-    int new_subscription = 1;
     int event_type = IMS_REGISTRAR_NONE;
 
     int rt = 0;
@@ -1106,10 +1105,6 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
                 ret = CSCF_RETURN_FALSE;
                 goto error;
             }
-            //send full update on first registration
-
-            new_subscription = 1;
-
         } else {
 
             if(memcmp(reg_subscriber->call_id.s, subscriber_data.callid->s, reg_subscriber->call_id.len) == 0 && 
@@ -1123,7 +1118,6 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 		    ret = CSCF_RETURN_FALSE;
 		    goto error;
 		}
-		new_subscription = 0;
 	    } else {
 		LM_ERR("Re-subscribe for same watcher_contact, presentity_uri, event but with different callid, fromtag and totag  - What happened?\n");
 		LM_DBG("Removing old subscriber and adding new one\n");
@@ -1136,7 +1130,6 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 		    ret = CSCF_RETURN_FALSE;
 		    goto error;
 		}
-		new_subscription = 1;
 	    }
         }
 
@@ -1146,16 +1139,14 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
         LM_DBG("Sending 200 OK to subscribing user");
         subscribe_reply(msg, 200, MSG_REG_SUBSCRIBE_OK, &expires, &scscf_name_str);
 
-        //only do reg event on new subscriptions
-        if (new_subscription) {
-            if (event_reg(domain, 0, 0, event_type, &presentity_uri, &watcher_contact) != 0) {
-                LM_ERR("failed adding notification for reg events\n");
-                ret = CSCF_RETURN_ERROR;
-                goto error;
-            } else {
-                LM_DBG("success adding notification for reg events\n");
-            }
-        }
+        //do reg event every time you get a subscribe
+	if (event_reg(domain, 0, 0, event_type, &presentity_uri, &watcher_contact) != 0) {
+	    LM_ERR("failed adding notification for reg events\n");
+	    ret = CSCF_RETURN_ERROR;
+	    goto error;
+	} else {
+	    LM_DBG("success adding notification for reg events\n");
+	}
     } else {
         event_type = IMS_REGISTRAR_UNSUBSCRIBE;
         LM_DBG("expires is zero or less - UNSUBSCRIBE");
