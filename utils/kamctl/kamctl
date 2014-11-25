@@ -16,12 +16,12 @@ TEST="false"
 ### include config files
 
 # check for rc file at same location with kamctl
-which greadlink > /dev/null
+which greadlink >/dev/null 2>&1
 ret=$?
 if [ $ret -eq 0 ] ; then
 	KAMCTLFULLPATH=$(greadlink -f "$0")
 else
-	which readlink > /dev/null
+	which readlink >/dev/null 2>&1
 	ret=$?
 	if [ $ret -eq 0 ] ; then
 		KAMCTLFULLPATH=$(readlink -f "$0")
