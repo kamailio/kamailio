@@ -857,7 +857,7 @@ int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
 
     run_ul_callbacks((*_r)->cbs, UL_IMPU_UPDATE, *_r, NULL);
     
-    if (db_mode == WRITE_THROUGH && db_insert_impurecord(_d, public_identity, reg_state, barring, s, ccf1, ccf2, ecf1, ecf2, _r) != 0) {
+    if (db_mode == WRITE_THROUGH && db_insert_impurecord(_d, &(*_r)->public_identity, (*_r)->reg_state, (*_r)->barring, &(*_r)->s, &(*_r)->ccf1, &(*_r)->ccf2, &(*_r)->ecf1, &(*_r)->ecf2, _r) != 0) {
 	LM_ERR("error inserting IMPU [%.*s] into db... continuing", (*_r)->public_identity.len, (*_r)->public_identity.s);
     }
     
