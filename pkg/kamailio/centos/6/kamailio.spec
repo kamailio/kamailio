@@ -566,7 +566,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.rr
 %doc %{_docdir}/kamailio/modules/README.rtimer
 %doc %{_docdir}/kamailio/modules/README.rtpproxy
-%doc %{_docdir}/kamailio/modules/README.rtpproxy-ng
+%doc %{_docdir}/kamailio/modules/README.rtpengine
 %doc %{_docdir}/kamailio/modules/README.sanity
 %doc %{_docdir}/kamailio/modules/README.sca
 %doc %{_docdir}/kamailio/modules/README.sdpops
@@ -603,6 +603,10 @@ fi
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
 %doc %{_docdir}/kamailio/modules/README.xlog
 %doc %{_docdir}/kamailio/modules/README.xprint
+%doc %{_docdir}/kamailio/modules/README.jsonrpc-s
+%doc %{_docdir}/kamailio/modules/README.nosip
+%doc %{_docdir}/kamailio/modules/README.tsilo
+
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
@@ -706,7 +710,7 @@ fi
 %{_libdir}/kamailio/modules/rr.so
 %{_libdir}/kamailio/modules/rtimer.so
 %{_libdir}/kamailio/modules/rtpproxy.so
-%{_libdir}/kamailio/modules/rtpproxy-ng.so
+%{_libdir}/kamailio/modules/rtpengine.so
 %{_libdir}/kamailio/modules/sanity.so
 %{_libdir}/kamailio/modules/sca.so
 %{_libdir}/kamailio/modules/sdpops.so
@@ -743,6 +747,10 @@ fi
 %{_libdir}/kamailio/modules/xhttp_rpc.so
 %{_libdir}/kamailio/modules/xlog.so
 %{_libdir}/kamailio/modules/xprint.so
+%{_libdir}/kamailio/modules/jsonrpc-s.so
+%{_libdir}/kamailio/modules/nosip.so
+%{_libdir}/kamailio/modules/tsilo.so
+
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
