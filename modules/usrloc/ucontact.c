@@ -805,7 +805,7 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	keys2[nr_cols2] = &last_mod_col;
 	vals2[nr_cols2].type = DB1_DATETIME;
 	vals2[nr_cols2].nul = 0;
-	vals2[nr_cols2].val = _c->last_modified;
+	vals2[nr_cols2].val.time_val = _c->last_modified;
 	nr_cols2++;
 
 	keys2[nr_cols2] = &ruid_col;
