@@ -560,13 +560,16 @@ int process_contact(impurecord_t* presentity_impurecord, udomain_t * _d, int exp
 				if (ul.unlink_contact_from_impu(implicit_impurecord, ucontact, 1) != 0) {
 				    LM_ERR("Failed to delete ucontact <%.*s> from implicit IMPU\n", contact_uri.len, contact_uri.s);
 				    ul.unlock_contact_slot(&contact_uri);
+				    ul.release_ucontact(ucontact);
 				    goto next_implicit_impu;	//TODO: don't need to use goto here...
 				}
 				ul.unlock_contact_slot(&contact_uri);
 			}else {//state is active
 				LM_DBG("This contact: <%.*s> is not in state terminated and is in usrloc, ignore\n", contact_uri.len, contact_uri.s);
+				ul.release_ucontact(ucontact);
 				goto next_implicit_impu;
 			}
+			ul.release_ucontact(ucontact);
 		}
 next_implicit_impu:
 		ul.unlock_udomain(_d, &pi->public_identity);
@@ -593,13 +596,16 @@ next_implicit_impu:
 			    LM_ERR("Failed to delete ucontact <%.*s>\n", contact_uri.len, contact_uri.s);
 			    ret = CSCF_RETURN_FALSE;
     			    ul.unlock_contact_slot(&contact_uri);
+			    ul.release_ucontact(ucontact);
 			    goto done;
 			}
 			ul.unlock_contact_slot(&contact_uri);
 		}else {//state is active
 			LM_DBG("This contact: <%.*s> is not in state terminated and is in usrloc, ignore\n", contact_uri.len, contact_uri.s);
+			ul.release_ucontact(ucontact);
 			goto done;
 		}
+		ul.release_ucontact(ucontact);
 	}
 	
 done:
