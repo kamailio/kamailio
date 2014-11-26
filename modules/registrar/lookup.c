@@ -354,21 +354,48 @@ done:
 }
 
 
-int reset_ruri_branch(sip_msg_t *msg)
+/**
+ * only reset the pointers after local backup in lookup_branches
+ */
+int clear_ruri_branch(sip_msg_t *msg)
 {
 	if(msg==NULL)
 		return -1;
 
-	reset_dst_uri(msg);
-	reset_path_vector(msg);
+	msg->dst_uri.s = 0;
+	msg->dst_uri.len = 0;
+	msg->path_vec.s = 0;
+	msg->path_vec.len = 0;
 	set_ruri_q(Q_UNSPECIFIED);
 	reset_force_socket(msg);
 	setbflagsval(0, 0);
-	reset_instance(msg);
+	msg->instance.len = 0;
 	msg->reg_id = 0;
-	reset_ruid(msg);
-	reset_ua(msg);
+	msg->ruid.s = 0;
+	msg->ruid.len = 0;
+	msg->location_ua.s = 0;
+	msg->location_ua.len = 0;
 	return 0;
+}
+
+/**
+ * reset and free the pointers after cloning to a branch in lookup_branches
+ */
+int reset_ruri_branch(sip_msg_t *msg)
+{
+    if(msg==NULL)
+        return -1;
+
+    reset_dst_uri(msg);
+    reset_path_vector(msg);
+    set_ruri_q(Q_UNSPECIFIED);
+    reset_force_socket(msg);
+    setbflagsval(0, 0);
+    reset_instance(msg);
+    msg->reg_id = 0;
+    reset_ruid(msg);
+    reset_ua(msg);
+    return 0;
 }
 
 /*! \brief
@@ -420,7 +447,7 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	ruri_b_reg_id = msg->reg_id;
 	ruri_b_ruid = msg->ruid;
 	ruri_b_ua = msg->location_ua;
-	reset_ruri_branch(msg);
+	clear_ruri_branch(msg);
 	/* set new uri buf to null, otherwise is freed or overwritten by
 	 * rewrite_uri() during branch lookup */
 	msg->new_uri.len=0;
