@@ -50,7 +50,7 @@
 
 int t_append_branches(void) {
 	struct cell *t = NULL;
-	struct sip_msg *orig_msg;
+	struct sip_msg *orig_msg = NULL;
 	short outgoings;
 
 	int success_branch;
