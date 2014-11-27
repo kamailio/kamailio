@@ -185,7 +185,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 	str scseqmet;
 	str scseqnum;
 	str sftag;
-	str svbranch;
+	str svbranch = {NULL, 0};
 	pretran_t *it;
 
 	if(_tmx_ptran_table==NULL) {
