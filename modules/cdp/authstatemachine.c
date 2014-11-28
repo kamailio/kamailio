@@ -145,7 +145,7 @@ void add_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg) {
         }
         set_4bytes(data, v);
         avp = AAACreateAVP(AVP_Authorization_Lifetime, AAA_AVP_FLAG_MANDATORY, 0, data, 4, AVP_DUPLICATE_DATA);
-        if (avp) AAAAddAVPToMessage(msg, avp, 0);
+        if (avp) AAAAddAVPToMessage(msg, avp, msg->avpList.tail);
     }
     if (x->lifetime != -1) {
         avp = AAAFindMatchingAVP(msg, 0, AVP_Auth_Grace_Period, 0, 0);
@@ -153,7 +153,7 @@ void add_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg) {
             v = x->grace_period;
             set_4bytes(data, v);
             avp = AAACreateAVP(AVP_Auth_Grace_Period, AAA_AVP_FLAG_MANDATORY, 0, data, 4, AVP_DUPLICATE_DATA);
-            if (avp) AAAAddAVPToMessage(msg, avp, 0);
+            if (avp) AAAAddAVPToMessage(msg, avp, msg->avpList.tail);
         }
     }
     avp = AAAFindMatchingAVP(msg, 0, AVP_Session_Timeout, 0, 0);
@@ -165,7 +165,7 @@ void add_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg) {
         }
         set_4bytes(data, v);
         avp = AAACreateAVP(AVP_Session_Timeout, AAA_AVP_FLAG_MANDATORY, 0, data, 4, AVP_DUPLICATE_DATA);
-        if (avp) AAAAddAVPToMessage(msg, avp, 0);
+        if (avp) AAAAddAVPToMessage(msg, avp, msg->avpList.tail);
     }
 }
 
