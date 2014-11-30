@@ -884,7 +884,6 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                         pi = &(subscription->service_profiles[i].public_identities[j]);
                         if (memcmp(public_identity->s, pi->public_identity.s, public_identity->len) == 0) { //we don't need to update the explicit IMPU
                             LM_DBG("Ignoring explicit identity <%.*s>, already de-reg/updated\n", public_identity->len, public_identity->s);
-                            ul.unlock_udomain(_d, &pi->public_identity);
                             continue;
                         }
                         ul.lock_udomain(_d, &pi->public_identity);
