@@ -493,8 +493,8 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 				break;
 			case CORE_ONREPLY_ROUTE:
 				/*  t_check() above has the side effect of setting T and
-				    REFerencing T => we must unref and unset it for the 
-				    main/core onreply_route. */
+					REFerencing T => we must unref and unset it for the 
+					main/core onreply_route. */
 				_tmx_tmb.t_unref(msg);
 				/* no break */
 			case TM_ONREPLY_ROUTE:
@@ -546,8 +546,8 @@ int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
 		switch (get_route_type()) {
 			case CORE_ONREPLY_ROUTE:
 				/*  t_check() above has the side effect of setting T and
-				    REFerencing T => we must unref and unset it for the 
-				    main/core onreply_route. */
+					REFerencing T => we must unref and unset it for the 
+					main/core onreply_route. */
 				_tmx_tmb.t_unref(msg);
 				/* no break */
 			case TM_ONREPLY_ROUTE:
@@ -635,26 +635,26 @@ int pv_parse_t_name(pv_spec_p sp, str *in)
 			if(strncmp(in->s, "flags", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else goto error;
-		break;
+			break;
 		case 8:
 			if(strncmp(in->s, "id_label", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "id_index", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
-		break;
+			break;
 		case 10:
 			if(strncmp(in->s, "reply_code", 10)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "reply_type", 10)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
-		break;
+			break;
 		case 12:
 			if(strncmp(in->s, "branch_index", 12)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else goto error;
-		break;
+			break;
 		default:
 			goto error;
 	}
@@ -709,38 +709,38 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 }
 
 int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
-		    pv_value_t *res)
+		pv_value_t *res)
 {
-    tm_cell_t *t;
-    int branch;
+	tm_cell_t *t;
+	int branch;
 
-    if ((msg == NULL) || (param == NULL)) return -1;
+	if ((msg == NULL) || (param == NULL)) return -1;
 
-    t = _tmx_tmb.t_gett();
-    if ((t == NULL) || (t == T_UNDEFINED)) {
-	/* no T */
-	return pv_get_null(msg, param, res);
-    }
-
-    switch(param->pvn.u.isname.name.n) {
-    case 5:
-	switch (get_route_type()) {
-	case FAILURE_ROUTE:
-	case BRANCH_FAILURE_ROUTE:
-	    /* use the reason of the winning reply */
-	    if ((branch=_tmx_tmb.t_get_picked_branch()) < 0) {
-		LM_CRIT("no picked branch (%d) for a final response"
-			" in MODE_ONFAILURE\n", branch);
-		return -1;
-	    }
-	    res->ri = t->uac[branch].branch_flags;
-	    res->flags = PV_VAL_INT;
-	    LM_DBG("branch flags is [%u]\n", res->ri);
-	    break;
-	default:
-	    LM_ERR("unsupported route_type %d\n", get_route_type());
-	    return -1;
+	t = _tmx_tmb.t_gett();
+	if ((t == NULL) || (t == T_UNDEFINED)) {
+		/* no T */
+		return pv_get_null(msg, param, res);
 	}
-    }
-    return 0;
+
+	switch(param->pvn.u.isname.name.n) {
+		case 5:
+			switch (get_route_type()) {
+				case FAILURE_ROUTE:
+				case BRANCH_FAILURE_ROUTE:
+					/* use the reason of the winning reply */
+					if ((branch=_tmx_tmb.t_get_picked_branch()) < 0) {
+						LM_CRIT("no picked branch (%d) for a final response"
+								" in MODE_ONFAILURE\n", branch);
+						return -1;
+					}
+					res->ri = t->uac[branch].branch_flags;
+					res->flags = PV_VAL_INT;
+					LM_DBG("branch flags is [%u]\n", res->ri);
+					break;
+				default:
+					LM_ERR("unsupported route_type %d\n", get_route_type());
+					return -1;
+			}
+	}
+	return 0;
 }
