@@ -820,7 +820,7 @@ test_source_address(struct sip_msg *msg)
     Bool different_ip, different_port;
     int via1_port;
 
-    different_ip = received_test(msg);
+    different_ip = received_via_test(msg);
     via1_port = (msg->via1->port ? msg->via1->port : SIP_PORT);
     different_port = (msg->rcv.src_port != via1_port);
 
