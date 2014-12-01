@@ -1567,7 +1567,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 * test if source address of signaling is different from
 	 * address advertised in Via
 	 */
-	if ((tests & NAT_UAC_TEST_RCVD) && received_test(msg))
+	if ((tests & NAT_UAC_TEST_RCVD) && received_via_test(msg))
 		return 1;
 	/*
 	 * test for occurrences of RFC1918 addresses in Contact
