@@ -129,8 +129,12 @@ int branch_builder( unsigned int hash_index,
 
 char* id_builder(struct sip_msg* msg, unsigned int *id_len);
 
-/* check if IP address in Via != source IP address of signaling */
+/* check if IP address in Via != source IP address of signaling,
+ * or the sender is asking to set the values for rport or received */
 int received_test( struct sip_msg *msg );
+
+/* check if IP address in Via != source IP address of signaling */
+int received_via_test( struct sip_msg *msg );
 
 /* builds a char* buffer from message headers without body
  * first line is excluded in case of skip_first_line=1

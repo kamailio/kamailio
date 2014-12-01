@@ -251,7 +251,8 @@ static int check_via_address(struct ip_addr* ip, str *name,
 }
 
 
-/* check if IP address in Via != source IP address of signaling */
+/* check if IP address in Via != source IP address of signaling,
+ * or the sender requires adding rport or received values */
 int received_test( struct sip_msg *msg )
 {
 	int rcvd;
@@ -262,6 +263,15 @@ int received_test( struct sip_msg *msg )
 	return rcvd;
 }
 
+/* check if IP address in Via != source IP address of signaling */
+int received_via_test( struct sip_msg *msg )
+{
+	int rcvd;
+
+	rcvd = (check_via_address(&msg->rcv.src_ip, &msg->via1->host,
+							msg->via1->port, received_dns)!=0);
+	return rcvd;
+}
 
 static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 {
