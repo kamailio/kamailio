@@ -96,7 +96,7 @@ db1_con_t* dbt_init(const str* _sqlurl)
 	memset(_res, 0, sizeof(db1_con_t) + sizeof(dbt_con_t));
 	_res->tail = (unsigned long)((char*)_res+sizeof(db1_con_t));
 
-	LM_INFO("using database at: %.*s", _s.len, _s.s);
+	LM_INFO("using database at: %.*s\n", _s.len, _s.s);
 	DBT_CON_CONNECTION(_res) = dbt_cache_get_db(&_s);
 	if (!DBT_CON_CONNECTION(_res))
 	{
