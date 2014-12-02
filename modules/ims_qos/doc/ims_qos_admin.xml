@@ -229,6 +229,22 @@ modparam("ims_qos", "authorize_video_flow", 0)
         </listitem>
       </itemizedlist>
 
+	<para>Return codes:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>-1</emphasis> - error: There was an error, so we must either ignore it (no subscription) or send 403 (depends on behaviour you want)
+			</para>
+			<para>
+			<emphasis>0</emphasis> - Success: AAR-Request sent, reply is processed asynchronously.
+			</para>
+			<para>
+			<emphasis>1</emphasis> - Success: No need to send AAR-Request, as a subscription still exists (continue as normal)
+			</para>
+		</listitem>
+		</itemizedlist>
+
+
       <para>This function can be used from REQUEST_ROUTE.</para>
 
       <para>p.s. this is executed asynchronously. See example on how to
