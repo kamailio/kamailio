@@ -2,8 +2,12 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	[ <!ENTITY % local.common.attrib
-	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">]
->
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	<!ENTITY % docentities SYSTEM "../../docbook/entities.xml">
+	%docentities;
+
+]>
+<!-- Include general documentation entities -->
 
 <section id="rpc.main" xmlns:xi="http://www.w3.org/2001/XInclude">
     <!--
@@ -14,7 +18,7 @@
     -->
  
     <title>
-	RPC Control Interface
+	The Kamailio RPC Control Interface
     </title>
 
 	<section id="rpc.overview">
@@ -23,8 +27,8 @@
 		The RPC (Remote Procedure Call) interface is an interface for
 		communicating with external applications. Using it an external
 		application can call a function or procedure that will be executed
-		inside SIP Server (SER or Kamailio). Function parameters are
-		supported as well as returning multiple values as results.
+		inside Kamailio. Function parameters are supported as well as returning
+		multiple values as results.
 	</para>
 	<para>
 		By itself RPC consists of two APIs, one for defining RPC functions
@@ -78,7 +82,7 @@
 	<title>Module API</title>
 	<para>
 	    Each module can export RPC functions just like it can export
-	    parameters and functions to be called from the script. Whenever SIP server
+	    parameters and functions to be called from the script. Whenever &kamailio;
 	    receives an RPC request, it will search through the list of
 	    exported RPC functions and the function with matching name will be
 	    executed. A couple of essential RPC functions are also embedded into
@@ -98,7 +102,7 @@
 	</para>
 	<para>
 	    The whole RPC API is described in header file
-	    <filename>sip_router/rpc.h</filename>.  This file defines the set
+	    <filename>kamailio/rpc.h</filename>.  This file defines the set
 	    of functions that must be implemented by RPC transport modules, as
 	    described in <xref linkend="rpc.new_transport"/>, prototypes of RPC
 	    functions and structures used for the communication between RPC
@@ -142,7 +146,7 @@ typedef void (*rpc_function_t)(rpc_t* rpc, void* ctx);
 	    </para>
 	    <para>
 		Each module containing RPC functions has to export all the
-		RPC functions to SIP server core in order to make them visible to the RPC
+		RPC functions to the &kamailio; core in order to make them visible to the RPC
 		transport modules.
 		The export process involves a <emphasis>rpc_export_t</emphasis> 
 		structure (either by itself or in an array):
@@ -163,7 +167,7 @@ typedef struct rpc_export {
 		use and is currently unused.
 	    </para>
 		<para>
-		There are several ways of exporting the RPC functions to the SIP server core:
+		There are several ways of exporting the RPC functions to the &kamailio; core:
 		<itemizedlist>
 			<listitem><para>
 				register a null terminated array of rpc_export_t structures
@@ -209,10 +213,9 @@ rpc_export_t ul_rpc[] = {
 			</para></listitem>
 			<listitem><para>
 				register a null terminated array of rpc_export_t structures
-				using the SIP server module interface SER_MOD_INTERFACE (specific
-				for SER flavour).
+				using the &kamailio;  module interface SER_MOD_INTERFACE
 				For this purpose, the
-				<varname>module_exports</varname> structure of SIP server module API
+				<varname>module_exports</varname> structure of the &kamailio; module API
 				contains a new attribute called <varname>rpc_methods</varname>:
 				<programlisting>
 struct module_exports {
@@ -252,7 +255,7 @@ struct module_exports exports = {
 				</example>
 				<note><para>
 					This mode works only with modules using the SER flavour module
-					interface. It does not work for kamailio modules and it
+					interface. It does not work for &kamailio; modules and it
 					will probably not work for future sip-router modules. It is
 					safer and recommended to use instead the
 					<function>rpc_register_array()</function> function.
@@ -263,7 +266,7 @@ struct module_exports exports = {
 		<para>
 			By convention the name of every exported function consists of
 			two parts delimited by a dot. The first part is the name of the
-			module or SIP server subsystem this function belongs to. The second
+			module or &kamailio; subsystem this function belongs to. The second
 			part is the name of the function.
 		</para>
 	</section>
@@ -271,7 +274,7 @@ struct module_exports exports = {
 	<section id="rpc.data_types">
 	    <title>Data Types</title>
 	    <para>
-		The RPC API defines several basic and 1 compound data type
+		The RPC API defines several basic and one compound data type
 		that can be used in communication with the caller of RPC
 		functions. The RPC API uses formating strings to describe data
 		types. Each data type is described by exactly one character in
@@ -908,7 +911,7 @@ static void rpc_register(rpc_t* rpc, void *ctx)
 <section id="rpc.xmlrpc_examples">
 	<title>Examples using xmlrpc</title>
 	<para>See the <varname>xmlrpc</varname> module documentation:
-	<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules/xmlrpc/xmlrpc.html'>modules/xmlrpc/README</ulink>.
+	<ulink url='http://www.kamailio.org/docs/modules/devel/modules/xmlrpc.html'>modules/xmlrpc/README</ulink>.
 	</para>
 </section>
 
