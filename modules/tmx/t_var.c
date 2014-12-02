@@ -631,6 +631,11 @@ int pv_parse_t_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
+		case 3:
+			if(strncmp(in->s, "uri", 3) == 0)
+				sp->pvp.pvn.u.isname.name.n = 6;
+			else goto error;
+			break;
 		case 5:
 			if(strncmp(in->s, "flags", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 5;
@@ -711,6 +716,7 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
+	tm_ctx_t *tcx = 0;
 	tm_cell_t *t;
 	int branch;
 
@@ -741,6 +747,21 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 					LM_ERR("unsupported route_type %d\n", get_route_type());
 					return -1;
 			}
+		case 6:
+			if (get_route_type() != TM_ONREPLY_ROUTE) {
+				LM_ERR("$T_branch(uri) - unsupported route_type %d\n",
+						get_route_type());
+				return pv_get_null(msg, param, res);
+			}
+			tcx = _tmx_tmb.tm_ctx_get();
+			if(tcx == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			branch = tcx->branch_index;
+			if(branch<0 || branch>=t->nr_of_outgoings) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &t->uac[branch].uri);
 	}
 	return 0;
 }
