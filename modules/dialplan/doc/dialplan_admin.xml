@@ -18,16 +18,19 @@
 	<para>
 	This module implements generic string translations based on matching and
 	replacement rules. It can be used to manipulate the request URI or a PV and to 
-	translate to a new format/value.
+	translate it to a new format/value. Dialplan can also be used to match
+	a given URI and retrieve a set of attributes based on the match. It is a very
+	flexible module that can be used to handle call routing, prefix rewrites
+	and much more.
 	</para>
 	</section>
 
 	<section id="dialplan.introduction">
 	<title>How it works</title>
 	<para>
-	At startup, the module will load a set of transformation rules from a 
+	At startup the module will load a set of matching and transformation rules from a 
 	database. Rules are grouped into dialplans. Every database row will be
-	stored in memory as a translation rule. Each rule will describe how the 
+	stored in memory as a dialplan rule. Each rule will describe how the 
 	matching will be made, how the input value will be modified and which 
 	attributes that will be set for the matching transformation.
 	</para>
@@ -35,7 +38,12 @@
 	The module expects an input value which will be matched against a rule
 	by using regular expressions (see 'man pcresyntax' for syntax), string
 	or fnmatch (see 'man fnmatch') matching. Overlapping matching expressions
-	can be controlled via priorities. 
+	can be controlled via priorities. One priority can have multiple
+	dialplan entries. Priorities need not be numbered with consecutive
+	numbers. The next higher priority will be used after trying to match all 
+	entries in one priority.
+	</para>
+	<para>
 	Once a rule is matched, the defined transformation (if any) is applied and 
 	the result is returned as output value. Also, if any string attribute is 
 	associated to the rule, this will be returned to the script along with
@@ -49,7 +57,7 @@
 	<section id="dialplan.usecases">
 	<title>Dialplan use cases</title>
 	<para>
-	The module can be used to implement multiple dialplans - do to 
+	The module can be used to implement multiple dialplans - to do
 	auto-completion of dialed numbers (like national to international),
 	to convert generic numbers to specific numbers (like for emergency numbers).
 	</para>
@@ -61,8 +69,8 @@
 	<para>
 	Non-SIP string translation can be implemented - like converting country 
 	names from all possible formats to a canonical format:
-	(UK, England, United Kingdom) -> GB.
-	</para>
+	<emphasis>(UK, England, United Kingdom) -> GB.
+	</emphasis></para>
 	<para>
 	Any other string-base translation or detection for whatever other purposes.
 	</para>
@@ -610,7 +618,7 @@ xlog("translated to var $var(y) \n");
 dpid: 1
 pr: 1
 match_op: 1
-match_exp: ^0([1-9][0-9]+)$
+match_exp: ^0[1-9][0-9]+$
 match_len: 0
 subst_exp: ^0([1-9][0-9]+)$
 repl_exp: 0049\1
@@ -619,7 +627,7 @@ attrs: de
 dpid: 1
 pr: 2
 match_op: 1
-match_exp: ^0([1-9][0-9]+)$
+match_exp: ^0[1-9][0-9]+$
 match_len: 0
 subst_exp: ^0(.+)$
 repl_exp: $var(prefix)\1
@@ -637,8 +645,17 @@ attrs: xyz
 		</para>
 		<para>
 		The match_op field specify matching operator, valid values:
-		0 - string comparison; 1 - regular expression matching (pcre);
+        	<itemizedlist>
+               	<listitem>
+		0 - string comparison; 
+               	</listitem>
+               	<listitem>
+		1 - regular expression matching (pcre);
+               	</listitem>
+               	<listitem>
 		2 - fnmatch (shell-like pattern) matching.
+               	</listitem>
+        	</itemizedlist>
 		</para>
     </section>
 

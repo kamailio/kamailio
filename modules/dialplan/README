@@ -130,30 +130,39 @@ Chapter 1. Admin Guide
 
    This module implements generic string translations based on matching
    and replacement rules. It can be used to manipulate the request URI or
-   a PV and to translate to a new format/value.
+   a PV and to translate it to a new format/value. Dialplan can also be
+   used to match a given URI and retrieve a set of attributes based on the
+   match. It is a very flexible module that can be used to handle call
+   routing, prefix rewrites and much more.
 
 2. How it works
 
-   At startup, the module will load a set of transformation rules from a
-   database. Rules are grouped into dialplans. Every database row will be
-   stored in memory as a translation rule. Each rule will describe how the
-   matching will be made, how the input value will be modified and which
-   attributes that will be set for the matching transformation.
+   At startup the module will load a set of matching and transformation
+   rules from a database. Rules are grouped into dialplans. Every database
+   row will be stored in memory as a dialplan rule. Each rule will
+   describe how the matching will be made, how the input value will be
+   modified and which attributes that will be set for the matching
+   transformation.
 
    The module expects an input value which will be matched against a rule
    by using regular expressions (see 'man pcresyntax' for syntax), string
    or fnmatch (see 'man fnmatch') matching. Overlapping matching
-   expressions can be controlled via priorities. Once a rule is matched,
-   the defined transformation (if any) is applied and the result is
-   returned as output value. Also, if any string attribute is associated
-   to the rule, this will be returned to the script along with the output
-   value. This can be used to identify the used rule.
+   expressions can be controlled via priorities. One priority can have
+   multiple dialplan entries. Priorities need not be numbered with
+   consecutive numbers. The next higher priority will be used after trying
+   to match all entries in one priority.
+
+   Once a rule is matched, the defined transformation (if any) is applied
+   and the result is returned as output value. Also, if any string
+   attribute is associated to the rule, this will be returned to the
+   script along with the output value. This can be used to identify the
+   used rule.
 
    The first matching rule will be processed.
 
 3. Dialplan use cases
 
-   The module can be used to implement multiple dialplans - do to
+   The module can be used to implement multiple dialplans - to do
    auto-completion of dialed numbers (like national to international), to
    convert generic numbers to specific numbers (like for emergency
    numbers).
@@ -489,7 +498,7 @@ xlog("translated to var $var(y) \n");
 dpid: 1
 pr: 1
 match_op: 1
-match_exp: ^0([1-9][0-9]+)$
+match_exp: ^0[1-9][0-9]+$
 match_len: 0
 subst_exp: ^0([1-9][0-9]+)$
 repl_exp: 0049\1
@@ -498,7 +507,7 @@ attrs: de
 dpid: 1
 pr: 2
 match_op: 1
-match_exp: ^0([1-9][0-9]+)$
+match_exp: ^0[1-9][0-9]+$
 match_len: 0
 subst_exp: ^0(.+)$
 repl_exp: $var(prefix)\1
@@ -512,9 +521,10 @@ attrs: xyz
    private variables ($var(...)) and AVPs with static name are among those
    that are safe to use in replacement expressions.
 
-   The match_op field specify matching operator, valid values: 0 - string
-   comparison; 1 - regular expression matching (pcre); 2 - fnmatch
-   (shell-like pattern) matching.
+   The match_op field specify matching operator, valid values:
+     * 0 - string comparison;
+     * 1 - regular expression matching (pcre);
+     * 2 - fnmatch (shell-like pattern) matching.
 
 Chapter 2. Developer's Guide
 
