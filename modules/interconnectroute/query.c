@@ -4,18 +4,56 @@
 #include "../../sr_module.h"
 #include "../../lib/ims/ims_getters.h"
 #include "interconnectroute.h"
+#include "../../parser/sdp/sdp.h"
 
-extern str service_code;
+extern str voice_service_code, video_service_code;
 
 /**We need to get the service code
  currently we hard code this to voice service context id _ voice service id
  This is Smile specific - think about making this more generic*/
-inline int get_service_code(str *sc) {
-    if(!service_code.s) {
+inline int get_service_code(str *sc, struct sip_msg* msg) {
+    int sdp_stream_num = 0;
+    sdp_session_cell_t* msg_sdp_session;
+    sdp_stream_cell_t* msg_sdp_stream;
+    int intportA;
+    
+    //check SDP - if there is video then use video service code otherwise use voice service code
+    if (parse_sdp(msg) < 0) {
+	LM_ERR("Unable to parse req SDP\n");
 	return -1;
     }
-    sc->s = service_code.s;
-    sc->len = service_code.len;
+
+    msg_sdp_session = get_sdp_session(msg, 0);
+    if (!msg_sdp_session ) {
+	LM_ERR("Missing SDP session information from rpl\n");
+    } else {
+	for (;;) {
+	    msg_sdp_stream = get_sdp_stream(msg, 0, sdp_stream_num);
+	    if (!msg_sdp_stream) {
+		break;
+	    }
+
+	    intportA = atoi(msg_sdp_stream->port.s);
+	    if(intportA != 0 && strncasecmp(msg_sdp_stream->media.s,"video",5)==0){
+		LM_DBG("This SDP has a video component and src ports not equal to 0 - so we use video service code: [%.*s]", 
+			video_service_code.len, video_service_code.s);
+		sc->s = video_service_code.s;
+		sc->len = video_service_code.len;
+		break;
+	    }
+
+	    sdp_stream_num++;
+	}
+    }
+
+    free_sdp((sdp_info_t**) (void*) &msg->body);
+    
+    if(sc->len == 0) {
+	LM_DBG("We use default voice service code: [%.*s]", 
+			voice_service_code.len, voice_service_code.s);
+		sc->s = voice_service_code.s;
+		sc->len = voice_service_code.len;
+    }
     return 1;
     
 }
@@ -63,7 +101,7 @@ int isonlydigits(str* s) {
 }
 
 int ix_orig_trunk_query(struct sip_msg* msg) {
-    str sc;
+    str sc = {0, 0};
     sip_uri_t calling_party_sip_uri, called_party_sip_uri;
     ix_route_list_t* ix_route_list;
     str called_asserted_identity = {0 , 0 },
@@ -139,7 +177,7 @@ int ix_orig_trunk_query(struct sip_msg* msg) {
 	goto error;
     }
     
-    if(!get_service_code(&sc)){
+    if(!get_service_code(&sc, msg)){
 	LM_ERR("Could not get service code\n");
 	goto error;
     }
@@ -188,7 +226,7 @@ error:
 int ix_term_trunk_query(struct sip_msg* msg, char* ext_trunk_id) {
     str external_trunk_id = {0, 0};
     ix_route_list_t* ix_route_list;
-    str sc;
+    str sc = {0, 0};
     sip_uri_t calling_party_sip_uri, called_party_sip_uri;
     str called_asserted_identity = {0 , 0 },
 	asserted_identity = {0 , 0 },
@@ -266,7 +304,7 @@ int ix_term_trunk_query(struct sip_msg* msg, char* ext_trunk_id) {
 	goto error;
     }
     
-    if(!get_service_code(&sc)){
+    if(!get_service_code(&sc, msg)){
 	LM_ERR("Could not get service code\n");
 	goto error;
     }

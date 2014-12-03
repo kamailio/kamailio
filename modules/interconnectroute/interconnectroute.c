@@ -8,23 +8,29 @@
 MODULE_VERSION
 
 str interconnectroute_db_url = str_init(DEFAULT_IXDB_URL);
-str service_code = str_init("ext.01.001.8.32260@3gpp.org_1000");
-	
+str voice_service_code = str_init("ext.01.001.8.32260@3gpp.org_1000");
+str video_service_code = str_init("ext.01.001.8.32260@3gpp.org_1001");	
+
 static int mod_init(void);
 static int child_init(int);
-static int mi_child_init(void);
+//static int mi_child_init(void);
 static void mod_destroy(void);
+
+
+static int w_ix_orig_trunk_query(struct sip_msg* msg);
+static int w_ix_term_trunk_query(struct sip_msg* msg, char* ext_trunk_id);
 
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
-	{"ix_orig_trunk_query",  (cmd_function)ix_orig_trunk_query,  0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"ix_term_trunk_query",  (cmd_function)ix_term_trunk_query,  1, ix_trunk_query_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"ix_orig_trunk_query",  (cmd_function)w_ix_orig_trunk_query,  0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"ix_term_trunk_query",  (cmd_function)w_ix_term_trunk_query,  1, ix_trunk_query_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]= {
     { "db_url", PARAM_STR, &interconnectroute_db_url },
-    { "service_code", PARAM_STR, &service_code },
+    { "voice_service_code", PARAM_STR, &voice_service_code },
+    { "video_service_code", PARAM_STR, &video_service_code },
     {0,0,0}
 };
 
@@ -68,12 +74,20 @@ static int child_init(int rank) {
 }
 
 
-static int mi_child_init(void) {
+static int w_ix_orig_trunk_query(struct sip_msg* msg) {
+    return ix_orig_trunk_query(msg);
+}
+
+static int w_ix_term_trunk_query(struct sip_msg* msg, char* ext_trunk_id) {
+    return ix_term_trunk_query(msg, ext_trunk_id);
+}
+
+//static int mi_child_init(void) {
 //	if(mode == CARRIERROUTE_MODE_DB){
 //		return carrierroute_db_open();
 //	}
-	return 0;
-}
+//	return 0;
+//}
 
 static void mod_destroy(void) {
 //	if(mode == CARRIERROUTE_MODE_DB){
@@ -82,15 +96,15 @@ static void mod_destroy(void) {
 //	destroy_route_data();
 }
 
-static const char *rpc_cr_reload_routes_doc[2] = {
-	"Reload routes", 0
-};
+//static const char *rpc_cr_reload_routes_doc[2] = {
+//	"Reload routes", 0
+//};
 
-static void rpc_cr_reload_routes(rpc_t *rpc, void *c) {
+//static void rpc_cr_reload_routes(rpc_t *rpc, void *c) {
+//
+//}
 
-}
-
-static rpc_export_t rpc_methods[] = {
-//	{ "cr.reload_routes",  rpc_cr_reload_routes, rpc_cr_reload_routes_doc, 0},
-	{0, 0, 0, 0}
-};
+//static rpc_export_t rpc_methods[] = {
+////	{ "cr.reload_routes",  rpc_cr_reload_routes, rpc_cr_reload_routes_doc, 0},
+//	{0, 0, 0, 0}
+//};
