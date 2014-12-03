@@ -716,7 +716,6 @@ done:
 	goto finish;
 
 error:
-	ret = -1;
 	if(cb_param)
 		shm_free(cb_param);
 
