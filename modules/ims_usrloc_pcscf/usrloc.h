@@ -64,6 +64,8 @@
 struct hslot;		/*!< Hash table slot */
 struct socket_info;
 
+int get_alias_host_from_contact(str *contact_uri_params, str *alias_host);
+
 struct udomain {
 	str* name;                 /*!< Domain name (NULL terminated) */
 	int size;                  /*!< Hash table size */

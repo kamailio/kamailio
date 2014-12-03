@@ -254,7 +254,7 @@ void mem_timer_udomain(udomain_t* _d)
 
 		while(ptr) {
 		    tmp = ptr;
-		    ptr = ptr->next;
+			ptr = ptr->next;
 		    timer_pcontact(tmp);
 		}
 		
@@ -451,7 +451,9 @@ int get_pcontact(udomain_t* _d, str* _contact, str* _received_host, int received
 	ppublic_t* impu;
 	struct sip_uri needle_uri, impu_uri;
 	int port_match = 0;
-
+	str alias_host = {0, 0};
+	struct sip_uri contact_uri;
+	
 	if (parse_uri(_contact->s, _contact->len, &needle_uri) != 0 ) {
 		LM_ERR("failed to parse search URI [%.*s]\n", _contact->len, _contact->s);
 		return 1;
@@ -553,13 +555,23 @@ int get_pcontact(udomain_t* _d, str* _contact, str* _received_host, int received
 		}
 
 		/* user parts must match (if not wildcarded) with either primary contact OR with any userpart in the implicit set (associated URIs).. */
-		if (((needle_uri.user.len == 1)
-				&& (memcmp(needle_uri.user.s, "*", 1) == 0))
-				|| ((needle_uri.user.len == c->contact_user.len)
-						&& (memcmp(needle_uri.user.s, c->contact_user.s,
-								needle_uri.user.len) == 0))) {
+		if((needle_uri.user.len == c->contact_user.len) && (memcmp(needle_uri.user.s, c->contact_user.s,needle_uri.user.len) == 0)) {
+		    LM_DBG("Needle user part matches contact user part therefore this is a match\n");
+		    *_c = c;
+		    return 0;
+		} else if ((needle_uri.user.len == 1) && (memcmp(needle_uri.user.s, "*", 1) == 0)) { /*wild card*/
+		    LM_DBG("This a wild card user part - we must check if hosts match or needle host matches alias\n");
+		    if(memcmp(needle_uri.host.s, c->contact_host.s, needle_uri.host.len) == 0) {
+			LM_DBG("Needle host matches contact host therefore this is a match\n");
 			*_c = c;
 			return 0;
+		    } else if ((parse_uri(c->aor.s, c->aor.len, &contact_uri) == 0) && ((get_alias_host_from_contact(&contact_uri.params, &alias_host)) == 0) &&
+			    (memcmp(needle_uri.host.s, alias_host.s, alias_host.len) == 0)) {
+			LM_DBG("Needle host matches contact alias therefore this is a match\n");
+			*_c = c;
+			return 0;
+			
+		    }
 		}
 
 		/* check impus user parts */

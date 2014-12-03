@@ -87,7 +87,7 @@ int bind_usrloc(usrloc_api_t* api) {
 #define ALIAS        "alias="
 #define ALIAS_LEN (sizeof(ALIAS) - 1)
 
-inline int get_alias_host_from_contact(str *contact_uri_params, str *alias_host) {
+int get_alias_host_from_contact(str *contact_uri_params, str *alias_host) {
     char *rest, *sep;
     unsigned int rest_len;
     
