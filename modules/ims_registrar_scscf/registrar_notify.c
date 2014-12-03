@@ -1125,11 +1125,12 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 		    goto error;
 		}
 	    } else {
-		LM_ERR("Re-subscribe for same watcher_contact, presentity_uri, event but with different callid [%.*s], fromtag [%.*s] and totag [%.*s] for presentity [%.*s] - What happened?\n",
+		LM_ERR("Re-subscribe for same watcher_contact, presentity_uri, event but with different callid [%.*s], fromtag [%.*s] and totag [%.*s] for presentity [%.*s] and watcher contact [%.*s] - What happened?\n",
 			subscriber_data.callid->len, subscriber_data.callid->s,
 			subscriber_data.ftag->len, subscriber_data.ftag->s,
 			subscriber_data.ttag->len, subscriber_data.ttag->s,
-			presentity_impurecord->public_identity.len, presentity_impurecord->public_identity.s);
+			presentity_impurecord->public_identity.len, presentity_impurecord->public_identity.s,
+			subscriber_data.watcher_contact->len, subscriber_data.watcher_contact->s);
 		LM_DBG("Removing old subscriber and adding new one\n");
 		subscriber_data.presentity_uri = &presentity_impurecord->public_identity;
 		ul.external_delete_subscriber(reg_subscriber, (udomain_t*) _t, 0 /*domain is already locked*/);
