@@ -73,9 +73,8 @@
 	</para>
 	<para>
 	The module exports external commands that can be used to change
-	the global flags via Management Interface. The MI commands are:
-	<quote>set_gflag</quote>, <quote>reset_gflag</quote> and
-	<quote>is_gflag</quote>.
+	the global flags via Management Interface and RPC. See relevant
+	sections below.
 	</para>
 	</section>
 	<section>
@@ -802,6 +801,78 @@ TRUE
 $ &ctltool; fifo get_gflags
 0x3039
 12345
+...
+</programlisting>
+			</example>
+		</section>
+</section>
+	<section>
+		<title><acronym>RPC</acronym> Commands</title>
+		<section  id="cfgutils.rpc.set_gflag">
+			<title><function moreinfo="none">cfgutils.set_gflag</function></title>
+			<para>
+			Set the value of some flags (specified by bitmask) to 1.
+			</para>
+			<para>
+			The parameter value must be a bitmask in decimal or
+			hexadecimal format.  The bitmask has a 32 bit size.
+			</para>
+			<example>
+			<title><function moreinfo="none">cfgutils.set_gflag</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &ctltool; cfgutils.set_gflag s:1
+...
+</programlisting>
+			</example>
+
+		</section>
+		<section  id="cfgutils.rpc.reset_gflag">
+			<title><function moreinfo="none">cfgutils.reset_gflag</function></title>
+			<para>
+			Reset the value of some flags to 0.
+			</para>
+			<para>
+			Reset the value of some flags (specified by bitmask)
+			to 1.
+			</para>
+			<para>
+			The parameter value must be a bitmask in decimal or
+			hexadecimal format.  The bitmask has a 32 bit size.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">cfgutils.reset_gflag</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &ctltool; cfgutils.reset_gflag s:0x1
+...
+</programlisting>
+			</example>
+		</section>
+		<section  id="cfgutils.rpc.is_gflag">
+			<title><function moreinfo="none">cfgutils.is_gflag</function></title>
+			<para>
+			Returns string "TRUE" if all the
+			flags from the given set are set
+			and "FALSE" if at least one is not set.
+			</para>
+			<para>
+			The parameter value must be a bitmask in decimal or
+			hexadecimal format.  The bitmask has a 32 bit size.
+			</para>
+			<example>
+			<title><function moreinfo="none">cfgutils.is_gflag</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &ctltool; cfgutils.set_gflag s:1024
+$ &ctltool; cfgutils.is_gflag s:1024
+TRUE
+$ &ctltool; cfgutils.is_gflag s:1023
+FALSE
+$ &ctltool; cfgutils.set_gflag s:0x7FFF
+$ &ctltool; cfgutils.is_gflag s:1023
+TRUE
 ...
 </programlisting>
 			</example>

@@ -42,6 +42,11 @@
 		<surname>Johansson</surname>
 		<email>oej@edvina.net</email>
 		</author>
+		<author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@tutpro.com</email>
+		</author>
 		<editor>
 		<firstname>Daniel-Constantin</firstname>
 		<surname>Mierla</surname>
@@ -49,6 +54,7 @@
 		</editor>
 	</authorgroup>
 	<copyright>
+		<year>2014</year>
 		<year>2013</year>
 		<year>2007</year>
 		<year>2008</year>
@@ -57,6 +63,7 @@
 		<holder>1und1 Internet AG</holder>
 		<holder>BASIS AudioNet GmbH</holder>
 		<holder>Elena-Ramona Modroiu</holder>
+		<holder>Juha Heinanen</holder>
 		<holder>&fhg;</holder>
 	</copyright>
 	</bookinfo>

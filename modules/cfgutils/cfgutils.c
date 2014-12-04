@@ -72,6 +72,7 @@
 #include "../../hashes.h"
 #include "../../locking.h"
 #include "../../route.h"
+#include "../../rpc_lookup.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -212,6 +213,106 @@ static mi_export_t mi_cmds[] = {
 	{ FIFO_IS_GFLAG,    mi_is_gflag,    0,                 0,  0 },
 	{ FIFO_GET_GFLAGS,  mi_get_gflags,  MI_NO_INPUT_FLAG,  0,  0 },
 	{ 0, 0, 0, 0, 0}
+};
+
+
+static void rpc_is_gflag(rpc_t* rpc, void* c)
+{
+	str flag_str;
+	unsigned int flag;
+	
+	if (rpc->scan(c, "S", &flag_str) != 1) {
+		rpc->fault(c, 400, "flag parameter error");
+		return;
+	}
+
+	flag = 0;
+	if ((strno2int(&flag_str, &flag) < 0) || !flag) {
+		rpc->fault(c, 400, "incorrect flag parameter value");
+		return;
+	}
+
+	if (((*gflags) & flag) == flag)
+		rpc->add(c, "s", "TRUE");
+	else
+		rpc->add(c, "s", "FALSE");
+
+	return;
+}
+
+
+static void rpc_set_gflag(rpc_t* rpc, void* c)
+{
+	str flag_str;
+	unsigned int flag;
+	
+	if (rpc->scan(c, "S", &flag_str) != 1) {
+		rpc->fault(c, 400, "flag parameter error");
+		return;
+	}
+
+	flag = 0;
+	if ((strno2int(&flag_str, &flag) < 0) || !flag) {
+		rpc->fault(c, 400, "incorrect flag parameter value '%.*s'",
+			   flag_str.len, flag_str.s);
+		return;
+	}
+
+	lock_get(gflags_lock);
+	(*gflags) |= flag;
+	lock_release(gflags_lock);
+	
+	return;
+}
+
+
+static void rpc_reset_gflag(rpc_t* rpc, void* c)
+{
+	str flag_str;
+	unsigned int flag;
+	
+	if (rpc->scan(c, "S", &flag_str) != 1) {
+		rpc->fault(c, 400, "flag parameter error");
+		return;
+	}
+
+	flag = 0;
+	if ((strno2int(&flag_str, &flag) < 0) || !flag) {
+		rpc->fault(c, 400, "incorrect flag parameter value");
+		return;
+	}
+
+	lock_get(gflags_lock);
+	(*gflags) &= ~ flag;
+	lock_release(gflags_lock);
+	
+	return;
+}
+
+
+static const char* is_gflag_doc[2] = {
+	"Checks if the bits specified by the argument are all set.",
+	0
+};
+
+
+static const char* set_gflag_doc[2] = {
+	"Sets the bits specified by the argument.",
+	0
+};
+
+
+static const char* reset_gflag_doc[2] = {
+	"Resets the bits specified by the argument.",
+	0
+};
+
+
+static rpc_export_t rpc_cmds[] = {
+	{"cfgutils.is_gflag", rpc_is_gflag, is_gflag_doc, 0},
+	{"cfgutils.set_gflag", rpc_set_gflag, set_gflag_doc, 0},
+	{"cfgutils.reset_gflag", rpc_reset_gflag, reset_gflag_doc, 0},
+	{0, 0, 0, 0}
 };
 
 
@@ -774,6 +875,12 @@ static int route_exists(struct sip_msg *msg, char *route)
 
 static int mod_init(void)
 {
+	/* Register RPC commands */
+	if (rpc_register_array(rpc_cmds)!=0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
