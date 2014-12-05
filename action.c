@@ -932,8 +932,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 
 				if (a->type==SET_USERPASS_T) tmp=0;
 				else tmp=uri.passwd.s;
-				/* passwd */
-				if (tmp){
+				/* passwd - keep it only if user is set */
+				if (user && tmp){
 					len=uri.passwd.len; if(crt+len+1>end) goto error_uri;
 					*crt=':'; crt++;
 					memcpy(crt,tmp,len);crt+=len;
