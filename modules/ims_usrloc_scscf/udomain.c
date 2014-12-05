@@ -677,6 +677,10 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
 
     len = (sizeof (str)*(*num_impus)) + bytes_needed;
     *impus = (str*) pkg_malloc(len);
+    if (*impus == 0) {
+	LM_ERR("no more pkg_mem\n");
+	return 0;
+    }
     char* ptr = (char*) (*impus + *num_impus);
 
     //now populate the data
