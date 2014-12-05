@@ -258,21 +258,23 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 	memcpy(envvar, w->prefix, w->prefix_len); c=envvar+w->prefix_len;
 	memcpy(c, hname, hlen ); c+=hlen;
 	*c=EV_ASSIGN;c++;
-	if (exec_bash_safety && !strncmp(w->u.hf->body.s,"() {",MIN(w->u.hf->body.len,4))) {
+	if (exec_bash_safety && !strncmp(w->u.hf->body.s, "() {",
+				MIN(w->u.hf->body.len,4))) {
 		memcpy(c, w->u.hf->body.s+offset+2, w->u.hf->body.len-2 );
 		c+=(w->u.hf->body.len-2);
 	} else {
 		memcpy(c, w->u.hf->body.s+offset, w->u.hf->body.len );
 		c+=w->u.hf->body.len;
 	}
-	for (wi=w->next_same; wi; wi=wi->next_same) {
+	for(wi=w->next_same; wi; wi=wi->next_same) {
 		*c=HF_SEPARATOR;c++;
-		if (exec_bash_safety && !strncmp(w->u.hf->body.s,"() {",MIN(w->u.hf->body.len,4))) {
-			memcpy(c, w->u.hf->body.s+offset+2, w->u.hf->body.len-2 );
-			c+=(w->u.hf->body.len-2);
+		if (exec_bash_safety && !strncmp(wi->u.hf->body.s, "() {",
+					MIN(w->u.hf->body.len,4))) {
+			memcpy(c, wi->u.hf->body.s+offset+2, wi->u.hf->body.len-2 );
+			c+=(wi->u.hf->body.len-2);
 		} else {
-			memcpy(c, w->u.hf->body.s+offset, w->u.hf->body.len );
-			c+=w->u.hf->body.len;
+			memcpy(c, wi->u.hf->body.s+offset, wi->u.hf->body.len );
+			c+=wi->u.hf->body.len;
 		}
 	}
 	*c=0; /* zero termination */
