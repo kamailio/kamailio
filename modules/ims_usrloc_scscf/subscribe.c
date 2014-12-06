@@ -355,7 +355,7 @@ void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domai
 }
 
 void delete_subscriber(impurecord_t* urec, reg_subscriber *s) {
-    LM_DBG("Deleting subscriber [%.*s] from IMPU: [%.*s]", s->watcher_uri.len, s->watcher_uri.s, urec->public_identity.len, urec->public_identitys);
+    LM_DBG("Deleting subscriber [%.*s] from IMPU: [%.*s]", s->watcher_uri.len, s->watcher_uri.s, urec->public_identity.len, urec->public_identity.s);
     
     if (db_mode == WRITE_THROUGH && db_unlink_subscriber_from_impu(urec, s) !=0) {
 	    LM_ERR("Failed to delete DB linking subscriber [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", 
