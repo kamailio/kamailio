@@ -456,7 +456,7 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 					(_vp->val.int_val>_v->val.int_val)?1:0;
 
 		case DB1_BIGINT:
-			LM_ERR("BIGINT not supported");
+			LM_ERR("BIGINT not supported\n");
 			return -1;
 
 		case DB1_DOUBLE:

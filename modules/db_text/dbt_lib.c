@@ -264,7 +264,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 	int hashidx;
 
 	if(!_dbt_cachetbl || !_dc || !_s || !_s->s || _s->len<=0) {
-		LM_ERR("invalid parameter");
+		LM_ERR("invalid parameter\n");
 		return NULL;
 	}
 
@@ -304,7 +304,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 
 	if(!_tbc)
 	{
-		LM_ERR("could not load database from file [%.*s]", _s->len, _s->s);
+		LM_ERR("could not load database from file [%.*s]\n", _s->len, _s->s);
 		lock_release(&_dbt_cachetbl[hashidx].sem);
 		return NULL;
 	}
@@ -438,7 +438,7 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 				return 0;
 
 		case DB1_BIGINT:
-			LM_ERR("BIGINT not supported");
+			LM_ERR("BIGINT not supported\n");
 			return 0;
 
 		case DB1_DATETIME:
