@@ -109,7 +109,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libev
+     * libev - http://software.schmorp.de/pkg/libev
 
 3. Parameters
 
