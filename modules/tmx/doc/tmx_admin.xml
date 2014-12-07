@@ -465,7 +465,7 @@ event_route [tm:branch-failure:contact] {
 	<section>
 	<title>MI Commands</title>
 
-	<section>
+	<section id="tmx.mi.t_uac_dlg">
 		<title>
 		<function moreinfo="none">t_uac_dlg</function>
 		</title>
@@ -503,7 +503,7 @@ event_route [tm:branch-failure:contact] {
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="tmx.mi.t_uac_cancel">
 		<title>
 		<function moreinfo="none">t_uac_cancel</function>
 		</title>
@@ -523,7 +523,7 @@ event_route [tm:branch-failure:contact] {
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="tmx.mi.t_hash">
 		<title>
 		<function moreinfo="none">t_hash</function>
 		</title>
@@ -538,7 +538,7 @@ event_route [tm:branch-failure:contact] {
 		</itemizedlist>
 	</section>
 
-	<section>
+	<section id="tmx.mi.t_reply">
 		<title>
 		<function moreinfo="none">t_reply</function>
 		</title>
@@ -573,7 +573,7 @@ event_route [tm:branch-failure:contact] {
 			</para></listitem>
 		</itemizedlist>
 	</section>
-	<section>
+	<section id="tmx.mi.t_reply_callid">
 		<title>
 		<function moreinfo="none">t_reply_callid</function>
 		</title>
