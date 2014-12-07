@@ -64,7 +64,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="auth_db.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		This is URL of the database to be used. Value of the parameter depends 
@@ -88,7 +88,7 @@ modparam("auth_db", "db_url", "&exampledb;")
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.p.user_column">
 		<title><varname>user_column</varname> (string)</title>
 		<para>
 		This is the name of the column holding usernames. Default value is 
@@ -107,7 +107,7 @@ modparam("auth_db", "user_column", "user")
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.p.domain_column">
 		<title><varname>domain_column</varname> (string)</title>
 		<para>
 		This is the name of the column holding domains of users. Default value 
@@ -127,7 +127,7 @@ modparam("auth_db", "domain_column", "domain")
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.p.password_column">
 		<title><varname>password_column</varname> (string)</title>
 		<para>
 		This is the name of the column holding passwords. Passwords can be 
@@ -149,7 +149,7 @@ modparam("auth_db", "password_column", "password")
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.p.2password_column_2">
 		<title><varname>password_column_2</varname> (string)</title>
 		<para>
 		As described in the previous section this parameter contains name of 
@@ -171,7 +171,7 @@ modparam("auth_db", "password_column_2", "ha1_2")
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.p.calculate_ha1">
 		<title><varname>calculate_ha1</varname> (integer)</title>
 		<para>
 		This parameter tells the server whether it should use a pre-calculated
@@ -216,7 +216,7 @@ modparam("auth_db", "calculate_ha1", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		If true (not 0), domain will be also used when looking up in the 
@@ -242,7 +242,7 @@ modparam("auth_db", "use_domain", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.p.load_credentials">
 		<title><varname>load_credentials</varname> (string)</title>
 		<para>
 		This parameter specifies of credentials to be fetch from database when
@@ -281,7 +281,7 @@ modparam("auth_db", "load_credentials", "$avp(i:123)=rpid;email_address")
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.p.version_table">
 		<title><varname>version_table</varname> (integer)</title>
 		<para>
 		If set to 0, the module will skip checking the version
