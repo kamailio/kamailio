@@ -71,6 +71,8 @@
 			<listitem>
 			<para>
 				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				Note that many modules publish pseudovariables that you can use
+				in this module. The core module for this is the <emphasis>pv</emphasis> module.
 			</para>
 			</listitem>
 			</itemizedlist>

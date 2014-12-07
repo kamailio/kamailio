@@ -114,7 +114,9 @@ Chapter 1. Admin Guide
 3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * No dependencies on other Kamailio modules.
+     * No dependencies on other Kamailio modules. Note that many modules
+       publish pseudovariables that you can use in this module. The core
+       module for this is the pv module.
 
 3.2. External Libraries or Applications
 
