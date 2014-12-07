@@ -32,6 +32,10 @@
 		<firstname>Juha</firstname>
 		<surname>Heinanen</surname>
 		</editor>
+		<editor>
+		<firstname>Olle E.</firstname>
+		<surname>Johansson</surname>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2007-2008</year>
@@ -40,6 +44,10 @@
 	<copyright>
 		<year>2008-2010</year>
 		<holder>Juha Heinanen</holder>
+	</copyright>
+	<copyright>
+		<year>2014</year>
+		<holder>Olle E. Johansson, Edvina AB</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>

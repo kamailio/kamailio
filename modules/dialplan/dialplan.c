@@ -5,7 +5,7 @@
  *
  * Copyright (C)  2008 Juha Heinanen
  *
- * Copyright (C)  2015 Olle E. Johansson, Edvina AB
+ * Copyright (C)  2014 Olle E. Johansson, Edvina AB
  *
  * This file is part of SIP-router, a free SIP server.
  *
