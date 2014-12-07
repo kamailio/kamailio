@@ -229,7 +229,7 @@ int acc_log_request( struct sip_msg *rq)
 	char *p;
 	int n;
 	int m;
-	int o = 0;
+	int o;
 	int i;
 	struct tm *t;
 
@@ -237,7 +237,7 @@ int acc_log_request( struct sip_msg *rq)
 	m = core2strar( rq, val_arr, int_arr, type_arr);
 
 	/* get extra values */
-	o += extra2strar( log_extra, rq, val_arr+m, int_arr+m, type_arr+m);
+	o = extra2strar( log_extra, rq, val_arr+m, int_arr+m, type_arr+m);
 	m += o;
 
 	for ( i=0,p=log_msg ; i<m ; i++ ) {
@@ -476,7 +476,7 @@ int acc_db_request( struct sip_msg *rq)
 	}
 
 	/* extra columns */
-	o += extra2strar( db_extra, rq, val_arr+m, int_arr+m, type_arr+m);
+	o = extra2strar( db_extra, rq, val_arr+m, int_arr+m, type_arr+m);
 	m += o;
 
 	for( i++ ; i<m; i++)
