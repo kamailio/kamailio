@@ -553,6 +553,22 @@ xlog("translated to var $var(y) \n");
 	<section>
 	<title>Exported RPC Commands</title>
 
+		<section id="dialplan.r.dp.dump">
+			<title><varname>dialplan.dump</varname></title>
+			<para>
+			Dumps the content of one dialplan ID
+			</para>
+			<para>
+			Name: <emphasis>dialplan.dump</emphasis>
+			</para>
+			<para>Parameters: <emphasis>Dialplan ID</emphasis></para>
+			<para>
+			Example:
+			</para>
+        <programlisting  format="linespecific">
+		&sercmd; dialplan.dump 100
+		</programlisting>
+		</section>
 		<section id="dialplan.r.dp.reload">
 			<title><varname>dialplan.reload</varname></title>
 			<para>

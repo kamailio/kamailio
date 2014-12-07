@@ -56,8 +56,9 @@ Juha Heinanen
 
         8. Exported RPC Commands
 
-              8.1. dialplan.reload
-              8.2. dialplan.translate
+              8.1. dialplan.dump
+              8.2. dialplan.reload
+              8.3. dialplan.translate
 
         9. Installation
 
@@ -121,8 +122,9 @@ Chapter 1. Admin Guide
 
    8. Exported RPC Commands
 
-        8.1. dialplan.reload
-        8.2. dialplan.translate
+        8.1. dialplan.dump
+        8.2. dialplan.reload
+        8.3. dialplan.translate
 
    9. Installation
 
@@ -453,10 +455,22 @@ xlog("translated to var $var(y) \n");
 
 8. Exported RPC Commands
 
-   8.1. dialplan.reload
-   8.2. dialplan.translate
+   8.1. dialplan.dump
+   8.2. dialplan.reload
+   8.3. dialplan.translate
 
-8.1. dialplan.reload
+8.1. dialplan.dump
+
+   Dumps the content of one dialplan ID
+
+   Name: dialplan.dump
+
+   Parameters: Dialplan ID
+
+   Example:
+                kamcmd dialplan.dump 100
+
+8.2. dialplan.reload
 
    Forces an update of the translation rules from the database.
 
@@ -467,7 +481,7 @@ xlog("translated to var $var(y) \n");
    Example:
                 kamcmd dialplan.reload
 
-8.2. dialplan.translate
+8.3. dialplan.translate
 
    Will apply a translation rule identified by a dialplan id and an input
    string.

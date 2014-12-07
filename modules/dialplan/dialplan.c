@@ -5,6 +5,8 @@
  *
  * Copyright (C)  2008 Juha Heinanen
  *
+ * Copyright (C)  2015 Olle E. Johansson, Edvina AB
+ *
  * This file is part of SIP-router, a free SIP server.
  *
  * SIP-router is free software; you can redistribute it and/or modify
@@ -25,6 +27,7 @@
  * --------
  *  2007-08-01 initial version (ancuta onofrei)
  *  2008-10-09 module is now using pcre regexp lib (juha heinanen)
+ *  2015-11-25 added RPC command for listing dialplan
  */
 
 /*!
@@ -657,12 +660,111 @@ static void dialplan_rpc_translate(rpc_t* rpc, void* ctx)
 	return;
 }
 
+/*
+ * RPC command to dump dialplan 
+ */
+static void dialplan_rpc_dump(rpc_t* rpc, void* ctx)
+{
+	dpl_id_p idp;
+	dpl_index_p indexp;
+	dpl_node_p rulep;
+	str input;
+	int dpid;
+	str attrs  = {"", 0};
+	str output = {0, 0};
+	void* th;
+	void* ih;
+	void* sh;
+
+	if (rpc->scan(ctx, "d", &dpid) < 1)
+	{
+		rpc->fault(ctx, 500, "Missing parameter");
+		return;
+	}
+
+	if ((idp = select_dpid(dpid)) == 0 ) {
+		LM_ERR("no information available for dpid %i\n", dpid);
+		rpc->fault(ctx, 500, "Dialplan ID not matched");
+		return;
+	}
+
+	LM_DBG("trying to dump dpid %i\n", idp->dp_id);
+
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+
+	if(rpc->struct_add(th, "d[",
+				"DPID",  dpid,
+				"ENTRIES", &ih)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error sets structure");
+		return;
+	}
+
+	for(indexp=idp->first_index; indexp!=NULL;indexp=indexp->next) {
+		LM_DBG("INDEX LEN: %i\n", indexp->len);
+                for(rulep = indexp->first_rule; rulep!= NULL;rulep = rulep->next) {
+			LM_DBG("DPID: %i PRIO : %i\n", rulep->dpid, rulep->pr);
+			if (rpc->struct_add(ih, "{","ENTRY", &sh) < 0)
+			{
+				rpc->fault(ctx, 500, "Internal error root reply");
+				return;
+			}
+
+			if (rpc->struct_add(sh, "dd", "PRIO", rulep->pr, 
+				"MATCHOP", rulep->matchop)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error adding prio");
+				return;
+			}
+			if (rpc->struct_add(sh, "s", "MATCHEXP", rulep->match_exp) < 0 )
+			{
+				rpc->fault(ctx, 500, "Internal error adding match exp");
+				return;
+			}
+			if (rpc->struct_add(sh, "d", "MATCHLEN", rulep->matchlen) < 0 )
+			{
+				rpc->fault(ctx, 500, "Internal error adding expression data and attribute");
+				return;
+			}
+			if (rpc->struct_add(sh, "s", "SUBSTEXP", rulep->subst_exp) < 0 )
+			{
+				rpc->fault(ctx, 500, "Internal error adding subst exp");
+				return;
+			}
+			if (rpc->struct_add(sh, "s", "REPLEXP", rulep->repl_exp) < 0 )
+			{
+				rpc->fault(ctx, 500, "Internal error adding replace exp ");
+				return;
+			}
+			if (rpc->struct_add(sh, "s", "ATTRS", rulep->attrs) < 0 )
+			{
+				rpc->fault(ctx, 500, "Internal error adding attribute");
+				return;
+			}
+		}
+	}
+
+	return;
+}
+
+static const char* dialplan_rpc_dump_doc[2] = {
+	"Dump dialplan content",
+	0
+};
+
 
 rpc_export_t dialplan_rpc_list[] = {
 	{"dialplan.reload", dialplan_rpc_reload,
 		dialplan_rpc_reload_doc, 0},
 	{"dialplan.translate",   dialplan_rpc_translate,
 		dialplan_rpc_translate_doc, 0},
+	{"dialplan.dump",   dialplan_rpc_dump,
+		dialplan_rpc_dump_doc, 0},
 	{0, 0, 0, 0}
 };
 
