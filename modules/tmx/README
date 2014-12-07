@@ -412,6 +412,8 @@ event_route [tm:branch-failure:contact] {
      * $T_rpl(pv)
      * $T_reply_ruid
      * $T_branch(name)
+     * $T_inv(pv)
+     * $T(name)
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
