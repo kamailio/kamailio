@@ -166,7 +166,7 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
 		<title><function>pv_isset</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(pv_isset("$avp("s:x")"))
+if(pv_isset("$avp(s:x)"))
 {
     ...
 }
@@ -194,7 +194,7 @@ if(pv_isset("$avp("s:x")"))
 		<title><function>pv_unset</function> usage</title>
 		<programlisting format="linespecific">
 ...
-pv_unset("$avp("s:x")");
+pv_unset("$avp(s:x)");
 ...
 </programlisting>
 		</example>
