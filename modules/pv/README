@@ -199,7 +199,7 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
 
    Example 1.4. pv_isset usage
 ...
-if(pv_isset("$avp("s:x")"))
+if(pv_isset("$avp(s:x)"))
 {
     ...
 }
@@ -216,7 +216,7 @@ if(pv_isset("$avp("s:x")"))
 
    Example 1.5. pv_unset usage
 ...
-pv_unset("$avp("s:x")");
+pv_unset("$avp(s:x)");
 ...
 
 4.3. is_int(pvar)
