@@ -304,7 +304,7 @@ modparam("auth_db", "version_table", 0)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="auth_db.f.www_authenticate">
 		<title>
 			<function moreinfo="none">www_authenticate(realm, table [, method])</function>
 		</title>
@@ -395,7 +395,7 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.f.www_authorize">
 		<title>
 			<function moreinfo="none">www_authorize(realm, table)</function>
 		</title>
@@ -406,7 +406,7 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 		</para>
 	</section>
 
-	<section>
+	<section id="auth_db.f.proxy_authenticate">
 		<title>
 			<function moreinfo="none">proxy_authenticate(realm, table)</function>
 		</title>
@@ -469,7 +469,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_db.f.proxy_authorize">
 		<title>
 			<function moreinfo="none">proxy_authorize(realm, table)</function>
 		</title>
@@ -480,7 +480,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 		</para>
 	</section>
 
-	<section>
+	<section id="auth_db.f.auth_check">
 		<title>
 			<function moreinfo="none">auth_check(realm, table, flags)</function>
 		</title>
@@ -557,9 +557,8 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		</example>
 	</section>
 
-
 	<section>
-		<title>
+		<title id="auth_db.f.is_subscriber">
 			<function moreinfo="none">is_subscriber(uri, dbtable, flags)</function>
 		</title>
 		<para>The function checks if there is a subscriber corresponding to
