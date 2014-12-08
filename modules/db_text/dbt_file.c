@@ -232,7 +232,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						c = fgetc(fin);
 					if(c=='N' || c=='n')
 					{
-						//LM_DBG("NULL flag set!\n");
+						LM_DBG("column[%d] NULL flag set!\n", ccol+1);
 						colp->flag |= DBT_FLAG_NULL;
 					}
 					else if(colp->type==DB1_INT && dtp->auto_col<0
