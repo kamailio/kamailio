@@ -668,10 +668,7 @@ static void dialplan_rpc_dump(rpc_t* rpc, void* ctx)
 	dpl_id_p idp;
 	dpl_index_p indexp;
 	dpl_node_p rulep;
-	str input;
 	int dpid;
-	str attrs  = {"", 0};
-	str output = {0, 0};
 	void* th;
 	void* ih;
 	void* sh;
