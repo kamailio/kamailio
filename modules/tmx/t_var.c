@@ -729,7 +729,7 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 	}
 
 	switch(param->pvn.u.isname.name.n) {
-		case 5:
+		case 5: /* $T_branch(flags) */
 			switch (get_route_type()) {
 				case FAILURE_ROUTE:
 				case BRANCH_FAILURE_ROUTE:
@@ -737,7 +737,7 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 					if ((branch=_tmx_tmb.t_get_picked_branch()) < 0) {
 						LM_CRIT("no picked branch (%d) for a final response"
 								" in MODE_ONFAILURE\n", branch);
-						return -1;
+						return pv_get_null(msg, param, res);
 					}
 					res->ri = t->uac[branch].branch_flags;
 					res->flags = PV_VAL_INT;
@@ -745,10 +745,10 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 					break;
 				default:
 					LM_ERR("unsupported route_type %d\n", get_route_type());
-					return -1;
+					return pv_get_null(msg, param, res);
 			}
 			break;
-		case 6:
+		case 6: /* $T_branch(uri) */
 			if (get_route_type() != TM_ONREPLY_ROUTE) {
 				LM_ERR("$T_branch(uri) - unsupported route_type %d\n",
 						get_route_type());
