@@ -96,6 +96,8 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 				LM_ERR("failed to parse parameters of first hop\n");
 				goto error;
 			}
+			/* Not interested in param body - just the hooks */
+			free_params(params);
 
 			if (hooks.contact.received) {
 			        uri_str.s = uri_buf;
@@ -107,14 +109,6 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 				*received = uri_str;
 				LM_DBG("received is <%.*s>\n", received->len, received->s);
 			}
-				
-			/*for (;params; params = params->next) {
-				if (params->type == P_RECEIVED) {
-					*received = hooks.contact.received->body;
-					break;
-				}
-			}*/
-			free_params(params);
 		}
 		free_rr(&route);
 	}

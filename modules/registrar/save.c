@@ -923,17 +923,21 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 			}
 			if (parse_uri(route->nameaddr.uri.s, route->nameaddr.uri.len, &puri) < 0) {
 				LM_ERR("Failed to parse Path: URI\n");
+				free_rr(&route);
 				goto error;
 			}
 			if (parse_params(&puri.params, CLASS_URI, &hooks, &params) != 0) {
 				LM_ERR("Failed to parse Path: URI parameters\n");
+				free_rr(&route);
 				goto error;
 			}
+			/* Not interested in param body - just the hooks */
+			free_params(params);
 			if (!hooks.uri.ob) {
 				/* No ;ob parameter to top Path: URI - no outbound */
 				use_ob = 0;
 			}
-
+			free_rr(&route);
 		} else {
 			/* No Path: header - no outbound */
 			use_ob = 0;
