@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>&adminguide;</title>
+
+    <section>
+        <title>Overview</title>
+        <para> This is the overview for the module statsd of kamailio</para>
+    </section>
+
+    <section>
+        <title>Parameters</title>
+        <section id="statsd.p.serverIP">
+            <title><varname>ip</varname>(string)</title>
+            <para>
+            Statsd server ip
+            </para>
+            <example>
+                <title>Set ip parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("statsd", "ip", "127.0.0.1")
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section id="statsd.p.serverPort">
+            <title><varname>port</varname>(int)</title>
+            <para>
+            Statsd server ip
+            </para>
+            <example>
+                <title>Set ip parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("statsd", "port", "8125")
+...
+                </programlisting>
+            </example>
+        </section>
+    </section>
+
+    <section>
+        <title>Functions</title>
+        <section id="statsd.f.statsd_set">
+            <title>
+                <function moreinfo="none">statsd_set(key, value)</function>
+            </title>
+            <para>
+                Sets count the number of unique values passed to a key.
+            </para>
+            <para>
+                If that method is called multiple times with the same userid in the same sample period, that userid will only be counted once.
+            </para>
+            <para>
+                This function can be used in ALL ROUTES.
+            </para>
+            <example>
+                <title><function>statsd_set</function> usage</title>
+                <programlisting format="linespecific">
+...
+failure_route[tryagain] {
+...
+    statsd_set("customerFailure", 1);
+...
+}
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section id="statsd.f.statsd_gauge">
+            <title>
+                <function moreinfo="none">statsd_gauge(key, value)</function>
+            </title>
+            <para>
+                Gauges are a constant data type. They are not subject to averaging, and they don’t change unless you change them. That is, once you set a gauge value, it will be a flat line on the graph until you change it again.
+            </para>
+            <para>
+                Gauges are useful for things that are already averaged, or don’t need to reset periodically
+            </para>
+            <para>
+                This function can be used in ALL ROUTES.
+            </para>
+            <para>
+                The statsd server collects gauges under the stats.gauges prefix.
+            </para>
+            <example>
+                <title><function>statsd_set</function> usage</title>
+                <programlisting format="linespecific">
+route [gauge_method]{
+    statsd_gauge("method"+$rm, "+1");
+    statsd_gauge("customer_credit"+$var(customer),"$var(customer_credit)");
+}
+                </programlisting>
+            </example>
+        </section>
+
+        <section id="statsd.f.statsd_start">
+            <title>
+                <function moreinfo="none">statsd_start(key)</function>
+            </title>
+            <para>
+statsd start set a avp with the key name, and when you use statsd_stop(key), module will send to statsd the difference in milliseconds. this is useful to know the time of a sql query, or how many time take your replies.
+            </para>
+            <para>
+                this function can be used in all routes.
+            </para>
+            <para>
+                the statsd server collects all timers under the stats.timers prefix, and will calculate the lower bound, mean, 90th percentile, upper bound, and count of each timer for each period (by the time you see it in graphite, that’s usually per minute).
+            </para>
+            <example>
+                <title><function>statsd_start</function> usage</title>
+                <programlisting format="linespecific">
+...
+statsd_start("long_mysql_query");
+sql_query("ca", "select sleep(0.2)", "ra");
+statsd_stop("long_mysql_query");
+...
+                </programlisting>
+            </example>
+        </section>
+
+
+        <section id="statsd.f.statsd_stop">
+            <title>
+                <function moreinfo="none">statsd_stop(key)</function>
+            </title>
+            <para>
+                statsd_stop(key) get the avp string with the key and calculate the difference from the start time. When finish app send the milliseconds to statsd.
+            </para>
+            <para>
+                This function can be used in all routes.
+            </para>
+            <example>
+                <title><function>statsd_stop</function> usage</title>
+                <programlisting format="linespecific">
+...
+statsd_start("long_mysql_query");
+sql_query("ca", "select sleep(0.2)", "ra");
+statsd_stop("long_mysql_query");
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section id="statsd.f.statsd_incr">
+            <title>
+                <function moreinfo="none">statsd_incr(key)</function>
+            </title>
+            <para>
+            Increment a counter
+            </para>
+            <para>
+                This function can be used in all routes.
+            </para>
+            <example>
+                <title><function>statsd_incr</function> usage</title>
+                <programlisting format="linespecific">
+...
+if(geoip_match("$si", "src")){
+    statsd_incr("country."+$(gip(src=>cc)));
+}
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section id="statsd.f.statsd_decr">
+            <title>
+                <function moreinfo="none">statsd_decr(key)</function>
+            </title>
+            <para>
+                Decrement a counter
+            </para>
+            <para>
+                This function can be used in all routes.
+            </para>
+            <example>
+                <title><function>statsd_decr</function> usage</title>
+                <programlisting format="linespecific">
+...
+if (t_check_status("408")) {
+    statsd_decr("kamailio.successfulCalls");
+    statsd_incr("kamailio.reply.busy");
+}
+...
+                </programlisting>
+            </example>
+        </section>
+    </section>
+</chapter>
+

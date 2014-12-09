@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    <title>Statsd Module</title>
+    <productname class="trade"></productname>
+    <authorgroup>
+        <author>
+        <firstname>Eloy</firstname>
+        <surname>Coto Pereiro</surname>
+        <email>eloy.coto@gmail.com</email>
+        </author>
+        <editor>
+        <firstname>Eloy</firstname>
+        <surname>Coto Pereiro</surname>
+        <email>eloy.coto@gmail.com</email>
+        </editor>
+    </authorgroup>
+    <copyright>
+        <year>2014</year>
+        <holder>Eloy Coto</holder>
+    </copyright>
+   </bookinfo>
+   <toc></toc>
+
+    <xi:include href="statsd_admin.xml"/>
+</book>
+
