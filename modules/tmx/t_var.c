@@ -747,6 +747,7 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 					LM_ERR("unsupported route_type %d\n", get_route_type());
 					return -1;
 			}
+			break;
 		case 6:
 			if (get_route_type() != TM_ONREPLY_ROUTE) {
 				LM_ERR("$T_branch(uri) - unsupported route_type %d\n",
