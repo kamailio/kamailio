@@ -626,6 +626,16 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (register_script_cb( cb_dlg_locals_reset, POST_SCRIPT_CB|ONREPLY_CB_TYPE,0)<0) {
+		LM_ERR("cannot register reply post-script dlg locals reset callback\n");
+		return -1;
+	}
+
+	if (register_script_cb( cb_dlg_locals_reset, POST_SCRIPT_CB|FAILURE_CB_TYPE,0)<0) {
+		LM_ERR("cannot register failure post-script dlg locals reset callback\n");
+		return -1;
+	}
+
 	if(dlg_timer_procs<=0) {
 		if ( register_timer( dlg_timer_routine, 0, 1)<0 ) {
 			LM_ERR("failed to register timer \n");

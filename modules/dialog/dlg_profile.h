@@ -116,6 +116,16 @@ struct dlg_profile_table* search_dlg_profile(str *name);
 
 
 /*!
+ * \brief Callback for cleanup of profile local vars
+ * \param msg SIP message
+ * \param flags unused
+ * \param param unused
+ * \return 1
+ */
+int cb_profile_reset( struct sip_msg *msg, unsigned int flags, void *param );
+
+
+/*!
  * \brief Cleanup a profile
  * \param msg SIP message
  * \param flags unused
