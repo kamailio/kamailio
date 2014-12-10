@@ -40,4 +40,10 @@ extern int http_query_timeout;
 extern db1_con_t *pres_dbh;
 extern db_func_t pres_dbf;
 
+typedef struct {
+	char		*buf;
+	size_t		curr_size;
+	size_t		pos;
+} http_res_stream_t;
+
 #endif /* UTILS_H */
