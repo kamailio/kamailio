@@ -82,6 +82,8 @@ int pv_get_dlg(sip_msg_t *msg,  pv_param_t *param,
 int pv_parse_dlg_name(pv_spec_p sp, str *in);
 
 int dlg_cfg_cb(sip_msg_t *foo, unsigned int flags, void *bar);
+int cb_dlg_cfg_reset(sip_msg_t *msg, unsigned int flags, void *cbp);
+int cb_dlg_locals_reset(sip_msg_t *msg, unsigned int flags, void *cbp);
 
 void dlg_set_ctx_iuid(dlg_cell_t *dlg);
 void dlg_reset_ctx_iuid(void);
