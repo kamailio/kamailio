@@ -117,4 +117,9 @@ int w_is_reply(struct sip_msg* msg, char *foo, char *bar);
  */
 int get_uri_param(struct sip_msg* _msg, char* _param, char* _value);
 
+/*
+ * Check if parameter value has a telephone number format
+ */
+int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2);
+
 #endif /* CHECKS_H */
