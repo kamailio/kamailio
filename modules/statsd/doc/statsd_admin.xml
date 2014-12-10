@@ -15,7 +15,16 @@
 
     <section>
         <title>Overview</title>
-        <para> This is the overview for the module statsd of kamailio</para>
+		<para>
+			The module provides the ability to send commands to statsd
+			(you can use InfluxDB too) with different kind of information.
+			It provides native integration with statsd (https://github.com/etsy/statsd/)
+			and graphite (http://graphite.wikidot.com/).
+		</para>
+		<para>
+			The module does not have any special dependency, it does a direct
+			socket connection to Graphite.
+		</para>
     </section>
 
     <section>

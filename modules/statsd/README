@@ -10,7 +10,7 @@ Eloy Coto Pereiro
 
    <eloy.coto@gmail.com>
 
-   Copyright © 2014 Eloy Coto
+   Copyright � 2014 Eloy Coto
      __________________________________________________________________
 
    Table of Contents
@@ -64,7 +64,13 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This is the overview for the module statsd of kamailio
+   The module provides the ability to send commands to statsd (you can use
+   InfluxDB too) with different kind of information. It provides native
+   integration with statsd (https://github.com/etsy/statsd/) and graphite
+   (http://graphite.wikidot.com/).
+
+   The module does not have any special dependency, it does a direct
+   socket connection to Graphite.
 
 2. Parameters
 
@@ -98,7 +104,7 @@ modparam("statsd", "port", "8125")
    3.5. statsd_incr(key)
    3.6. statsd_decr(key)
 
-3.1.  statsd_set(key, value)
+3.1. statsd_set(key, value)
 
    Sets count the number of unique values passed to a key.
 
@@ -116,14 +122,13 @@ failure_route[tryagain] {
 }
 ...
 
-3.2.  statsd_gauge(key, value)
+3.2. statsd_gauge(key, value)
 
    Gauges are a constant data type. They are not subject to averaging, and
-   they donât change unless you change them. That is, once you set a
-   gauge value, it will be a flat line on the graph until you change it
-   again.
+   they don�t change unless you change them. That is, once you set a gauge
+   value, it will be a flat line on the graph until you change it again.
 
-   Gauges are useful for things that are already averaged, or donât need
+   Gauges are useful for things that are already averaged, or don�t need
    to reset periodically
 
    This function can be used in ALL ROUTES.
@@ -136,7 +141,7 @@ route [gauge_method]{
     statsd_gauge("customer_credit"+$var(customer),"$var(customer_credit)");
 }
 
-3.3.  statsd_start(key)
+3.3. statsd_start(key)
 
    statsd start set a avp with the key name, and when you use
    statsd_stop(key), module will send to statsd the difference in
@@ -148,7 +153,7 @@ route [gauge_method]{
    the statsd server collects all timers under the stats.timers prefix,
    and will calculate the lower bound, mean, 90th percentile, upper bound,
    and count of each timer for each period (by the time you see it in
-   graphite, thatâs usually per minute).
+   graphite, that�s usually per minute).
 
    Example 1.5. statsd_start usage
 ...
@@ -157,7 +162,7 @@ sql_query("ca", "select sleep(0.2)", "ra");
 statsd_stop("long_mysql_query");
 ...
 
-3.4.  statsd_stop(key)
+3.4. statsd_stop(key)
 
    statsd_stop(key) get the avp string with the key and calculate the
    difference from the start time. When finish app send the milliseconds
@@ -172,7 +177,7 @@ sql_query("ca", "select sleep(0.2)", "ra");
 statsd_stop("long_mysql_query");
 ...
 
-3.5.  statsd_incr(key)
+3.5. statsd_incr(key)
 
    Increment a counter
 
@@ -185,7 +190,7 @@ if(geoip_match("$si", "src")){
 }
 ...
 
-3.6.  statsd_decr(key)
+3.6. statsd_decr(key)
 
    Decrement a counter
 
