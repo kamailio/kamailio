@@ -608,6 +608,33 @@ if (is_uri_user_e164("$avp(i:705)") {
 		</example>
 	</section>
 
+	<section id="siputils.f.is_tel_number">
+		<title>
+		<function moreinfo="none">is_tel_number(tval)</function>
+		</title>
+		<para>
+			Checks if the parameter value is a telephone number: starting with
+			one optional +, followed by digits. The parameter can include
+			variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_tel_number</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_tel_number("$rU")) {  # Test if R-URI user is telephone number
+   ...
+}
+if (is_tel_number("+24242424") {
+   ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="siputils.f.encode_contact">
 		<title>
 		<function moreinfo="none">encode_contact(encoding_prefix,hostpart)</function>
