@@ -69,6 +69,21 @@ int dlg_cfg_cb(sip_msg_t *msg, unsigned int flags, void *cbp)
 	return 1;
 }
 
+int cb_dlg_cfg_reset(sip_msg_t *msg, unsigned int flags, void *cbp)
+{
+	memset(&_dlg_ctx, 0, sizeof(dlg_ctx_t));
+
+	return 1;
+}
+
+int cb_dlg_locals_reset(sip_msg_t *msg, unsigned int flags, void *cbp)
+{
+	LM_DBG("resetting the local dialog shortcuts\n");
+	cb_dlg_cfg_reset(msg, flags, cbp);
+	cb_profile_reset(msg, flags, cbp);
+
+	return 1;
+}
 
 static inline struct dlg_var *new_dlg_var(str *key, str *val)
 {

@@ -292,6 +292,27 @@ void destroy_linkers(struct dlg_profile_link *linker)
 
 
 /*!
+ * \brief Callback for cleanup of profile local vars
+ * \param msg SIP message
+ * \param flags unused
+ * \param param unused
+ * \return 1
+ */
+int cb_profile_reset( struct sip_msg *msg, unsigned int flags, void *param )
+{
+	current_dlg_msg_id = 0;
+	current_dlg_msg_pid = 0;
+	if (current_pending_linkers) {
+		destroy_linkers(current_pending_linkers);
+		current_pending_linkers = NULL;
+	}
+
+	/* need to return non-zero - 0 will break the exec of the request */
+	return 1;
+}
+
+
+/*!
  * \brief Cleanup a profile
  * \param msg SIP message
  * \param flags unused
