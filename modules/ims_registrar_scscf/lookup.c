@@ -123,11 +123,6 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
 		ret = -3;
 		goto done;
 	    }
-	    if (set_path_vector(_m, &ptr->path) < 0) {
-		LM_ERR("failed to set path vector\n");
-		ret = -3;
-		goto done;
-	    }
 	    if (set_dst_uri(_m, &path_dst) < 0) {
 		LM_ERR("failed to set dst_uri of Path\n");
 		ret = -3;
