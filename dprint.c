@@ -396,7 +396,7 @@ void log_prefix_set(sip_msg_t *msg)
 {
 	if(log_prefix_pvs == NULL)
 		return;
-	if(msg==NULL) {
+	if(msg==NULL || !IS_SIP(msg)) {
 		log_prefix_val = NULL;
 		return;
 	}
