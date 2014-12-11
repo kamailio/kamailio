@@ -741,11 +741,17 @@ int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
 		LM_ERR("cannot get parameter value\n");
 		return -1;
 	}
-	if(tval.len<=0)
+	if(tval.len<1)
 		return -2;
 
 	i = 0;
-	if(tval.s[i]=='+') i++;
+	if(tval.s[0]=='+') {
+		if(tval.len<2)
+			return -2;
+		if(tval.s[1]<'1' || tval.s[1]>'9')
+			return -2;
+		i = 2;
+	}
 
 	for(; i<tval.len; i++) {
 		if(tval.s[i]<'0' || tval.s[i]>'9')
