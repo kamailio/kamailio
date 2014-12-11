@@ -507,7 +507,7 @@ int inline int_to_str_len(int i) {
 }
 
 static inline int dbrow2contact(db_val_t* val, ucontact_info_t* ci) {
-	static str params, path, user_agent, callid;
+	static str path, user_agent, callid;
 
 	
 	//TODO FIX PARAMS

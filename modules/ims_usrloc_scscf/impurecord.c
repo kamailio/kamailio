@@ -315,9 +315,10 @@ void mem_delete_ucontact(ucontact_t* _c) {
  */
 static inline void nodb_timer(impurecord_t* _r) {
     ucontact_t* ptr;
-    int i, flag, mustdeleteimpu=1;
+    int i, flag, mustdeleteimpu=1, hascontacts=0;
     udomain_t* udomain;
     unsigned int hash_code = 0;
+    impurecord_t* tmp_impu;
 
     reg_subscriber *s;
     subs_t* sub_dialog;
@@ -370,6 +371,7 @@ static inline void nodb_timer(impurecord_t* _r) {
                     ptr->c.len, ptr->c.s,
                     (unsigned int) (ptr->expires - time(NULL)));
 		mustdeleteimpu = 0;
+		hascontacts = 1;
 	    }
 	    
 	} else {
@@ -380,10 +382,17 @@ static inline void nodb_timer(impurecord_t* _r) {
     if (!flag)
         LM_DBG("no contacts\n");
 
-    
     register_udomain("location", &udomain);
     if (mustdeleteimpu) {
 	delete_impurecord(udomain, &_r->public_identity, _r);
+    } else {
+	if (!hascontacts) {
+	    LM_DBG("This impu is not to be deleted but has no contacts - should change state to IMPU_UNREGISTERED\n");
+	    if (update_impurecord(udomain, &_r->public_identity, IMPU_UNREGISTERED,
+		    -1/*do not change*/, -1 /*do not change */, -1/*do not change*/, NULL, NULL, NULL, NULL, NULL, &tmp_impu) != 0) {
+		LM_ERR("Unable to update impurecord for <%.*s>\n", _r->public_identity.len, _r->public_identity.s);
+	    }
+	}
     }
 }
 
