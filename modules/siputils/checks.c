@@ -754,3 +754,29 @@ int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
 
 	return 1;
 }
+
+
+/*
+ * Check if the parameter contains decimal digits only
+ */
+int is_numeric(sip_msg_t *msg, char *_sp, char* _s2)
+{
+    str tval = {0, 0};
+    int i;
+
+    if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
+	{
+		LM_ERR("cannot get parameter value\n");
+		return -1;
+	}
+	if(tval.len<=0)
+		return -2;
+
+	i = 0;
+	for(; i<tval.len; i++) {
+		if(tval.s[i]<'0' || tval.s[i]>'9')
+			return -2;
+	}
+
+	return 1;
+}

@@ -177,6 +177,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"is_tel_number", (cmd_function)is_tel_number,           1, fixup_spve_null,
 		0, ANY_ROUTE},
+	{"is_numeric", (cmd_function)is_numeric,                 1, fixup_spve_null,
+		0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 

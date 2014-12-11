@@ -122,4 +122,9 @@ int get_uri_param(struct sip_msg* _msg, char* _param, char* _value);
  */
 int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2);
 
+/*
+ * Check if parameter value consists solely of decimal digits
+ */
+int is_numeric(sip_msg_t *msg, char *_sp, char* _s2);
+
 #endif /* CHECKS_H */
