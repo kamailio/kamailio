@@ -408,10 +408,16 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						
 						bp = 0;
 						if(c==DBT_DELIM || 
-								(ccol == dtp->nrcols-1
-								 && (c == DBT_DELIM_R || c==EOF)))
-							dtval.nul = 1;
-						else
+							(ccol == dtp->nrcols-1
+							 && (c == DBT_DELIM_R || c==EOF))) {
+							/* If empty_string is enabled, we'll just return
+							 * an empty string and avoid NULL
+							 */
+							if (empty_string == 0) {
+								/* Default - NULL */
+								dtval.nul = 1;
+							}
+						} else
 						{
 							dtval.nul = 0;
 							while(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)

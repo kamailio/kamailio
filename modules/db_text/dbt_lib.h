@@ -54,6 +54,7 @@
  *  * Module parameters variables
  *   */
 extern int db_mode; /* Database usage mode: 0 = no cache, 1 = cache */
+extern int empty_string; /* If TRUE, an empty string is an empty string, otherwise NULL */
 
 typedef db_val_t dbt_val_t, *dbt_val_p;
 

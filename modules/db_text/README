@@ -16,6 +16,12 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Edited by
+
+Olle E. Johansson
+
+   <oej@edvina.net>
+
    Copyright © 2003, 2004 FhG FOKUS
      __________________________________________________________________
 
@@ -37,6 +43,7 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. db_mode (integer)
+              3.2. emptystring (integer)
 
         4. Exported RPC Functions
 
@@ -54,11 +61,12 @@ Daniel-Constantin Mierla
    1.2. Minimal Kamailio location dbtext table definition
    1.3. Minimal Kamailio subscriber dbtext table example
    1.4. Set db_mode parameter
-   1.5. Load the dbtext module
-   1.6. Definition of 'subscriber' table (one line)
-   1.7. Definition of 'location' and 'aliases' tables (one line)
-   1.8. Definition of 'version' table and sample records
-   1.9. Configuration file
+   1.5. Set emptystring parameter
+   1.6. Load the dbtext module
+   1.7. Definition of 'subscriber' table (one line)
+   1.8. Definition of 'location' and 'aliases' tables (one line)
+   1.9. Definition of 'version' table and sample records
+   1.10. Configuration file
 
 Chapter 1. Admin Guide
 
@@ -78,6 +86,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. db_mode (integer)
+        3.2. emptystring (integer)
 
    4. Exported RPC Functions
 
@@ -111,7 +120,8 @@ Chapter 1. Admin Guide
    NOTE: even when db_text is in non-caching mode, the module does not
    write back to hard drive after changes. In this mode, the module checks
    if the corresponding file on disk has changed, and reloads it. The
-   write to disk happens at Kamailio shut down.
+   write to disk happens at Kamailio shut down. If db_text is in caching
+   mode, many "reload" functions in various modules will not work.
 
 1.1. Design of dbtext engine
 
@@ -150,7 +160,8 @@ Chapter 1. Admin Guide
      * each other line is a row with data. The line ends with "\n".
      * the fields are separated by ":".
      * no value between two ':' (or between ':' and start/end of a row)
-       means "null" value.
+       means "null" value. If the parameter "emptystring" is enabled,
+       db_text sets a NULL string to an empty string value.
      * next characters must be escaped in strings: "\n", "\r", "\t", ":".
      * 0 -- the zero value must be escaped too.
 
@@ -199,8 +210,7 @@ suser:supasswd:xxx:alpha.org:xxx
 3. Parameters
 
    3.1. db_mode (integer)
-
-   None.
+   3.2. emptystring (integer)
 
 3.1. db_mode (integer)
 
@@ -216,11 +226,25 @@ suser:supasswd:xxx:alpha.org:xxx
 modparam("db_text", "db_mode", 1)
 ...
 
+3.2. emptystring (integer)
+
+   db_text by default handles an empty string as a NULL value. Some
+   modules, like the dialplan module, does not accept NULL strings. If you
+   enable emptystring an empty string will not be NULL, but an empty
+   string.
+
+   Default value is "0" (off).
+
+   Example 1.5. Set emptystring parameter
+...
+modparam("db_text", "emptystring", 1)
+...
+
 4. Exported RPC Functions
 
    4.1. db_text.dump
 
-4.1.  db_text.dump
+4.1. db_text.dump
 
    Write back to hard drive all modified tables.
 
@@ -244,7 +268,7 @@ modparam("db_text", "db_mode", 1)
    database path. So, either you provide an absolute path to database
    directory or a relative one to "CFG_DIR" directory.
 
-   Example 1.5. Load the dbtext module
+   Example 1.6. Load the dbtext module
 ...
 loadmodule "/path/to/kamailio/modules_k/db_text.so"
 ...
@@ -263,7 +287,7 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
    in order to have authentication. To use with the given configuration
    file, the table files must be placed in the '/tmp/serdb' directory.
 
-   Example 1.6. Definition of 'subscriber' table (one line)
+   Example 1.7. Definition of 'subscriber' table (one line)
 ...
 username(str) domain(str) password(str) first_name(str) last_name(str) phone(str
 ) email_address(str) datetime_created(int) datetime_modified(int) confirmation(s
@@ -271,14 +295,14 @@ tr) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(str)
 allow_find(str) timezone(str,null) rpid(str,null)
 ...
 
-   Example 1.7. Definition of 'location' and 'aliases' tables (one line)
+   Example 1.8. Definition of 'location' and 'aliases' tables (one line)
 ...
 username(str) domain(str,null) contact(str,null) received(str) expires(int,null)
  q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) us
 er_agent(str) socket(str)
 ...
 
-   Example 1.8. Definition of 'version' table and sample records
+   Example 1.9. Definition of 'version' table and sample records
 ...
 table_name(str) table_version(int)
 subscriber:3
@@ -286,7 +310,7 @@ location:6
 aliases:6
 ...
 
-   Example 1.9. Configuration file
+   Example 1.10. Configuration file
 ...
 #
 # $Id$

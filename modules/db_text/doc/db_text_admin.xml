@@ -36,7 +36,8 @@
 		NOTE: even when db_text is in non-caching mode, the module does not write
 		back to hard drive after changes. In this mode, the module checks if
 		the corresponding file on disk has changed, and reloads it. The write
-		to disk happens at &kamailio; shut down.
+		to disk happens at &kamailio; shut down. If db_text is in caching
+		mode, many "reload" functions in various modules will not work.
 	</para>
 		<section>
 		<title>Design of dbtext engine</title>
@@ -159,7 +160,8 @@
 			<listitem>
 				<para>
 				no value between two ':' (or between ':' and start/end of a row)
-				means <quote>null</quote> value.
+				means <quote>null</quote> value. If the parameter "emptystring" is
+				enabled, db_text sets a NULL string to an empty string value.
 				</para>
 			</listitem>
 			<listitem>
@@ -245,30 +247,51 @@ suser:supasswd:xxx:alpha.org:xxx
 	</section>
 	<section>
 	<title>Parameters</title>
-		<para>
-			<emphasis>None</emphasis>.
-	   	</para>
 		<section>
 			<title><varname>db_mode</varname> (integer)</title>
-		<para>
-		Set caching mode (0) or non-caching mode (1). In caching mode, data
-		is loaded at startup. In non-caching mode, the module check every time
-		a table is requested whether the corresponding file on disk has
-		changed, and if yes, will re-load the table from file.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>0</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>db_mode</varname> parameter</title>
+			<para>
+			Set caching mode (0) or non-caching mode (1). In caching mode, data
+			is loaded at startup. In non-caching mode, the module check every time
+			a table is requested whether the corresponding file on disk has
+			changed, and if yes, will re-load the table from file.
+			</para>
+
+			<para>
+			<emphasis>
+				Default value is <quote>0</quote>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>db_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("db_text", "db_mode", 1)
 ...
 </programlisting>
-		</example>
+			</example>
+		</section>
+		<section>
+			<title><varname>emptystring</varname> (integer)</title>
+			<para>
+			db_text by default handles an empty string as a NULL value.
+			Some modules, like the dialplan module, does not accept
+			NULL strings. If you enable emptystring an empty string
+			will not be NULL, but an empty string.
+			</para>
+
+			<para>
+			<emphasis>
+				Default value is <quote>0</quote> (off).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>emptystring</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_text", "emptystring", 1)
+...
+</programlisting>
+			</example>
 		</section>
 	</section>
 	<section>

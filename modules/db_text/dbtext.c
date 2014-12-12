@@ -4,6 +4,7 @@
  * DBText module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2014 Edvina AB, Olle E. Johansson
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -26,6 +27,7 @@
  * 2003-01-30 created by Daniel
  * 2003-03-11 New module interface (janakj)
  * 2003-03-16 flags export parameter added (janakj)
+ * 2014-12-10 added the null string handling (for compatibility with dialplan)
  * 
  */
 
@@ -48,6 +50,7 @@ static void destroy(void);
  * Module parameter variables
  */
 int db_mode = 0;  /* Database usage mode: 0 = cache, 1 = no cache */
+int empty_string = 0;  /* Treat empty string as "" = 0, 1 = NULL */
 
 int dbt_bind_api(db_func_t *dbb);
 
@@ -65,6 +68,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"db_mode", INT_PARAM, &db_mode},
+	{"emptystring", INT_PARAM, &empty_string},
 	{0, 0, 0}
 };
 
