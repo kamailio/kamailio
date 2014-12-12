@@ -1275,6 +1275,33 @@ static inline int ds_get_index(int group, ds_set_t **index)
 	return 0;
 }
 
+/*
+ * Check if a destination set exists
+ */
+int ds_list_exist(int set)
+{
+	ds_set_t *si = NULL;
+	LM_DBG("-- Looking for set %d\n", set);
+
+	/* get the index of the set */
+	si = _ds_list;
+	while(si)
+	{
+		if(si->id == set)
+		{
+			break;
+		}
+		si = si->next;
+	}
+
+	if(si==NULL)
+	{
+		LM_INFO("destination set [%d] not found\n", set);
+		return -1;	/* False */
+	}
+	LM_INFO("destination set [%d] found\n", set);
+	return 1;	/* True */
+}
 
 /**
  *

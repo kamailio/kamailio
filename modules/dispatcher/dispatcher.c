@@ -33,6 +33,7 @@
  *				to ds_is_from_list.  (carsten)
  * 2007-07-18  Added support for load/reload groups from DB 
  * 			   reload triggered from ds_reload MI_Command (ancuta)
+ * 2014-12-12  Added "ds_list_exist" function
  */
 
 /*! \file
@@ -167,7 +168,10 @@ static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list2(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list3(struct sip_msg*, char*, char*, char*);
+static int w_ds_list_exist(struct sip_msg*, char*);
+
 static int fixup_ds_is_from_list(void** param, int param_no);
+static int fixup_ds_list_exist(void** param,int param_no);
 
 static void destroy(void);
 
@@ -203,6 +207,8 @@ static cmd_export_t cmds[]={
 		fixup_ds_is_from_list, 0, ANY_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list3, 3,
 		fixup_ds_is_from_list, 0, ANY_ROUTE},
+	{"ds_list_exist",  (cmd_function)w_ds_list_exist, 1,
+		fixup_ds_list_exist, 0, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
@@ -944,6 +950,26 @@ static int fixup_ds_is_from_list(void** param, int param_no)
 		return fixup_igp_null(param, 1);
 	if(param_no==3)
 		return fixup_spve_null(param, 1);
+	return 0;
+}
+
+/* Check if a given set exist in memory */
+static int w_ds_list_exist(struct sip_msg *msg, char *param)
+{
+	int set;
+
+	if(fixup_get_ivalue(msg, (gparam_p)param, &set)!=0)
+	{
+		LM_ERR("cannot get set id param value\n");
+		return -1;
+	}
+	LM_DBG("--- Looking for dispatcher set %d\n", set);
+	return ds_list_exist(set);
+}
+
+static int fixup_ds_list_exist(void** param, int param_no)
+{
+	return fixup_igp_null(param, param_no);
 	return 0;
 }
 

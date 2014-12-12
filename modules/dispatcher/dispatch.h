@@ -124,6 +124,8 @@ int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_print_mi_list(struct mi_node* rpl);
 int ds_print_sets(void);
+int ds_list_exist(int set);
+
 
 int ds_load_unset(struct sip_msg *msg);
 int ds_load_update(struct sip_msg *msg);

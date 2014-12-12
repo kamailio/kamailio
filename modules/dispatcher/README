@@ -16,11 +16,19 @@ Carsten Bock
 
    ng-voice GmbH
 
+Edited by
+
+Olle E. Johansson
+
+   Edvina AB
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice Sistem
 
    Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+
+   Copyright © 2014 Olle E. Johansson, Edvina AB
      __________________________________________________________________
 
    Table of Contents
@@ -74,9 +82,10 @@ Carsten Bock
               4.3. ds_next_dst()
               4.4. ds_next_domain()
               4.5. ds_mark_dst([state])
-              4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
-              4.7. ds_load_update()
-              4.8. ds_load_unset()
+              4.6. ds_list_exist(groupid)
+              4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
+              4.8. ds_load_update()
+              4.9. ds_load_unset()
 
         5. MI Commands
 
@@ -138,10 +147,11 @@ Carsten Bock
    1.32. Set the "ds_default_socket" parameter
    1.33. ds_select_dst usage
    1.34. ds_mark_dst usage
-   1.35. ds_mark_dst usage
-   1.36. ds_load_unset usage
-   1.37. dispatcher list file
-   1.38. Kamailio config script - sample dispatcher usage
+   1.35. ds_list_exist usage
+   1.36. ds_mark_dst usage
+   1.37. ds_load_unset usage
+   1.38. dispatcher list file
+   1.39. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -194,9 +204,10 @@ Chapter 1. Admin Guide
         4.3. ds_next_dst()
         4.4. ds_next_domain()
         4.5. ds_mark_dst([state])
-        4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
-        4.7. ds_load_update()
-        4.8. ds_load_unset()
+        4.6. ds_list_exist(groupid)
+        4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
+        4.8. ds_load_update()
+        4.9. ds_load_unset()
 
    5. MI Commands
 
@@ -733,9 +744,10 @@ Note
    4.3. ds_next_dst()
    4.4. ds_next_domain()
    4.5. ds_mark_dst([state])
-   4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
-   4.7. ds_load_update()
-   4.8. ds_load_unset()
+   4.6. ds_list_exist(groupid)
+   4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
+   4.8. ds_load_update()
+   4.9. ds_load_unset()
 
 4.1. ds_select_dst(set, alg[, limit])
 
@@ -872,7 +884,21 @@ failure_route[tryagain] {
 }
 ...
 
-4.6. ds_is_from_list([groupid [, mode [, uri] ] ])
+4.6. ds_list_exist(groupid)
+
+   Check if a specific group is defined in dispatcher list or database.
+     * groupid - A group ID to check.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.35. ds_list_exist usage
+...
+if(ds_list_exist("10")) {
+    ...
+}
+...
+
+4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
 
    This function returns true, if there is a match of source address or
    uri with an address in the given group of the dispatcher-list;
@@ -908,7 +934,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.35. ds_mark_dst usage
+   Example 1.36. ds_mark_dst usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -921,7 +947,7 @@ if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
 }
 ...
 
-4.7. ds_load_update()
+4.8. ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -932,14 +958,14 @@ if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.8. ds_load_unset()
+4.9. ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.36. ds_load_unset usage
+   Example 1.37. ds_load_unset usage
 ...
 route {
     ...
@@ -1094,7 +1120,7 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
        probing destination (sending keep alives);
      * priority: sets the priority in destination list (based on it is
        done the initial ordering inside the set)
-     * attributes: extra field in form of name1=value1;...;nameN=valueN.
+     * attributes: extra fields in form of name1=value1;...;nameN=valueN.
        There are some predefined names:
           + 'duid' - used for call load dispatching
           + 'weight' - used for weight based load distribution
@@ -1113,7 +1139,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.37. dispatcher list file
+   Example 1.38. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1138,7 +1164,7 @@ r,opt)
 
    Next picture shows a sample usage of the dispatcher module.
 
-   Example 1.38. Kamailio config script - sample dispatcher usage
+   Example 1.39. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #

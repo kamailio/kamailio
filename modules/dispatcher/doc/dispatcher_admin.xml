@@ -1036,6 +1036,34 @@ failure_route[tryagain] {
 </programlisting>
 		</example>
  	</section>
+  	<section  id="dispatcher.f.ds_list_exist">
+ 		<title>
+		<function moreinfo="none">ds_list_exist(groupid)</function>
+ 		</title>
+ 		<para>
+		Check if a specific group is defined in dispatcher list
+		or database.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>groupid</emphasis> - A group ID to check.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_list_exist</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(ds_list_exist("10")) {
+    ...
+}
+...
+</programlisting>
+	</example>
+	</section>
   	<section  id="dispatcher.f.ds_is_from_list">
  		<title>
 		<function moreinfo="none">ds_is_from_list([groupid [, mode [, uri] ] ])</function>
