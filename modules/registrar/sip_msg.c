@@ -283,11 +283,29 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 
 /*! \brief
  * Calculate contact q value as follows:
- * 1) If q parameter exists, use it
- * 2) If the parameter doesn't exist, use the default value
+ * 1) If xavp_cfg q has been defined, use it
+ * 2) If q parameter exists in contact, use it
+ * 3) If the parameter doesn't exist in contact, use the default value
  */
 int calc_contact_q(param_t* _q, qvalue_t* _r)
 {
+	sr_xavp_t *vavp = NULL;
+	str xqname = str_init("q");
+
+	if (reg_xavp_cfg.s != NULL)
+		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &xqname);
+
+	if (vavp != NULL) {
+		if ((vavp->val.v.i >= 0) && (vavp->val.v.i <= 1000)) {
+			*_r = vavp->val.v.i;
+			return 0;
+		} else {
+			rerrno = R_INV_Q; /* Invalid q parameter */
+			LM_ERR("invalid q parameter\n");
+			return -1;
+		}
+	}
+
 	if (!_q || (_q->body.len == 0)) {
 		*_r = cfg_get(registrar, registrar_cfg, default_q);
 	} else {
@@ -297,5 +315,6 @@ int calc_contact_q(param_t* _q, qvalue_t* _r)
 			return -1;
 		}
 	}
+
 	return 0;
 }

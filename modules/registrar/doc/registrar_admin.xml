@@ -671,6 +671,14 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				to using the sock_hdr.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+				<emphasis>q</emphasis> - q value of contact
+				(integer 0-1000). It
+				overrides q value given in contact header and
+				default_q parameter.
+			</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 			For example. if this parameter is set to 'reg', then the number
