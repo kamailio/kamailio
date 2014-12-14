@@ -1321,11 +1321,48 @@ onreply_route {
 			is done the initial ordering inside the set)</para>
 			</listitem>
 			<listitem>
-			<para>attributes: extra filed in form of
-			name1=value1;...;nameN=valueN. There are some predefined names
-			that are used of weight and call load dispatching.</para>
+			<para>attributes: extra fields in form of
+				name1=value1;...;nameN=valueN. There are some reserved names
+				for attributes used by the module for specific load balancing
+				algorithms, see the section 'Special Attributes'.
+			</para>
 			</listitem>
 		</itemizedlist>
+		<section id="dispatcher.ex.attributes">
+			<title>Special Attributes</title>
+			<para>
+			There are some predefined names:
+			<itemizedlist>
+				<listitem>
+					'duid' - used for call load dispatching. It must be an
+					unique value to identify a destination (gateway address).
+					Practically the load within the group is associated with
+					this value.
+				</listitem>
+				<listitem>
+					'maxload' - used for call load dispatching. It must be
+					a positive integer, defining the upper limit of active
+					calls per destination. When the limit is reached, then
+					the gateway is no longer selected for new calls until
+					an exiting call via that gateway is terminated. If set
+					to 0, then no active call limit is used.
+				</listitem>
+				<listitem>
+					'weight' - used for weight based load distribution. It
+					must be set to a positive integer value beteen 0 and
+					100. The value represents the percent of calls to be
+					sent to that gateways.
+				</listitem>
+				<listitem>
+					'socket' - used to set the sending socket for the gateway.
+					It is used for sending the SIP traffic as well as
+					OPTIONS keepalives.
+				</listitem>
+			</itemizedlist>
+		</para>
+		</section>
+		<section id="dispatcher.ex.fileforma">
+			<title>File Format</title>
 		<para>
 		Line format is:
 		</para>
@@ -1356,6 +1393,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 ...
 </programlisting>
 		</example>
+		</section>
 		</section>
 	
 		<section id="dispatcher.ex.config">
