@@ -1312,11 +1312,12 @@ int ds_get_leastloaded(ds_set_t *dset)
 	int k;
 	int t;
 
-	k = 0;
-	t = dset->dlist[k].dload;
-	for(j=1; j<dset->nr; j++)
+	k = -1;
+	t = 0x7fffffff; /* high load */
+	for(j=0; j<dset->nr; j++)
 	{
-		if(!ds_skip_dst(dset->dlist[j].flags & DS_PROBING_DST))
+		if(!ds_skip_dst(dset->dlist[j].flags)
+				&& dset->dlist[j].dload<dset->dlist[j].attrs.maxload)
 		{
 			if(dset->dlist[j].dload<t)
 			{
@@ -1650,7 +1651,14 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 	return ds_select_dst_limit(msg, set, alg, 0, mode);
 }
 
-int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limit, int mode)
+/**
+ * Set destination address from group 'set' selected with alogorithm 'alg'
+ * - the rest of addresses in group are added as next destination in avps,
+ *   up to the 'limit'
+ * - mode specify to set address in R-URI or outboud proxy
+ *
+ */
+int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, int mode)
 {
 	int i, cnt;
 	unsigned int hash;
@@ -1781,7 +1789,13 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 				hash = 0;
 				alg = 0;
 			} else {
-				hash = ds_get_leastloaded(idx);
+				i = ds_get_leastloaded(idx);
+				if(i<0)
+				{
+					/* no address selected */
+					return -1;
+				}
+				hash = i;
 				if(ds_load_add(msg, idx, set, hash)<0)
 				{
 					LM_ERR("unable to update destination load"
@@ -1803,6 +1817,8 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 	else
 		hash = hash%idx->nr;
 	i=hash;
+
+	/* if selected address is inactive, find next active */
 	while (ds_skip_dst(idx->dlist[i].flags))
 	{
 		if(ds_use_default!=0 && idx->nr!=1)
@@ -1892,6 +1908,10 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
 				continue;
+			/* max load exceeded per destination */
+			if(alg==DS_ALG_LOAD
+					&& idx->dlist[i].dload>=idx->dlist[i].attrs.maxload)
+				continue;
 			LM_DBG("using entry [%d/%d]\n", set, i);
 			avp_val.s = idx->dlist[i].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
@@ -1936,6 +1956,9 @@ int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limi
 			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
 				continue;
+			/* max load exceeded per destination */
+			if(alg==DS_ALG_LOAD
+					&& idx->dlist[i].dload>=idx->dlist[i].attrs.maxload)
 			LM_DBG("using entry [%d/%d]\n", set, i);
 			avp_val.s = idx->dlist[i].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
