@@ -102,6 +102,10 @@ Olle E. Johansson
         7. Installation and Running
 
               7.1. Destination List File
+
+                    7.1.1. Special Attributes
+                    7.1.2. File Format
+
               7.2. Kamailio config file
 
         8. Event routes
@@ -224,6 +228,10 @@ Chapter 1. Admin Guide
    7. Installation and Running
 
         7.1. Destination List File
+
+              7.1.1. Special Attributes
+              7.1.2. File Format
+
         7.2. Kamailio config file
 
    8. Event routes
@@ -1103,6 +1111,10 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 7. Installation and Running
 
    7.1. Destination List File
+
+        7.1.1. Special Attributes
+        7.1.2. File Format
+
    7.2. Kamailio config file
 
 7.1. Destination List File
@@ -1121,10 +1133,25 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
      * priority: sets the priority in destination list (based on it is
        done the initial ordering inside the set)
      * attributes: extra fields in form of name1=value1;...;nameN=valueN.
-       There are some predefined names:
-          + 'duid' - used for call load dispatching
-          + 'weight' - used for weight based load distribution
-          + 'socket' - used to set the sending socket for the gateway
+
+7.1.1. Special Attributes
+
+   There are some predefined names:
+     * 'duid' - used for call load dispatching. It must be an unique value
+       to identify a destination (gateway address). Practically the load
+       within the group is associated with this value.
+     * 'maxload' - used for call load dispatching. It must be a positive
+       integer, defining the upper limit of active calls per destination.
+       When the limit is reached, then the gateway is no longer selected
+       for new calls until an exiting call via that gateway is terminated.
+       If set to 0, then no active call limit is used.
+     * 'weight' - used for weight based load distribution. It must be set
+       to a positive integer value beteen 0 and 100. The value represents
+       the percent of calls to be sent to that gateways.
+     * 'socket' - used to set the sending socket for the gateway. It is
+       used for sending the SIP traffic as well as OPTIONS keepalives.
+
+7.1.2. File Format
 
    Line format is:
 ...
