@@ -417,7 +417,7 @@ err:
 
 /**
  * Initialize the weight distribution for a destination set
- * - build an array of 0..99 where to keep the index of the
+ * - fill the array of 0..99 elements where to keep the index of the
  *   destination address to be used. The Nth call will use
  *   the address with the index at possition N%100
  */
