@@ -416,7 +416,10 @@ err:
 }
 
 /**
- *
+ * Initialize the weight distribution for a destination set
+ * - build an array of 0..99 where to keep the index of the
+ *   destination address to be used. The Nth call will use
+ *   the address with the index at possition N%100
  */
 int dp_init_weights(ds_set_t *dset)
 {
@@ -431,6 +434,11 @@ int dp_init_weights(ds_set_t *dset)
 	if(dset->dlist[0].attrs.weight==0)
 		return 0;
 
+	/* first fill the array based on the weight of each destination
+	 * - the weight is the percentage (e.g., if weight=20, the afferent
+	 *   address gets its index 20 times in the array)
+	 * - if the sum of weights is more than 100, the addresses over the
+	 *   limit are ignored */
 	t = 0;
 	for(j=0; j<dset->nr; j++)
 	{
@@ -442,10 +450,15 @@ int dp_init_weights(ds_set_t *dset)
 			t++;
 		}
 	}
-	j = (t-1>=0)?t-1:0;
+	/* if the array was not completely filled (i.e., the sum of weights is
+	 * less than 100), then use last address to fill the rest */
 	for(; t<100; t++)
-		dset->wlist[t] = (unsigned int)j;
+		dset->wlist[t] = (unsigned int)(dset->nr-1);
 randomize:
+	/* shuffle the content of the array in order to mix the selection
+	 * of the addresses (e.g., if first address has weight=20, avoid
+	 * sending first 20 calls to it, but ensure that within a 100 calls,
+	 * 20 go to first address */
 	srand(time(0));
 	for (j=0; j<100; j++)
 	{
