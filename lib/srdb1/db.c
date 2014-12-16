@@ -78,19 +78,19 @@ int db_check_api(db_func_t* dbf, char *mname)
 
 	/* All modules must export db_use_table */
 	if (dbf->use_table == 0) {
-		LM_ERR("module %s does not export db_use_table function\n", mname);
+		LM_ERR("module %s does not export db_use_table function. Please check if module is loaded.\n", mname);
 		goto error;
 	}
 
 	/* All modules must export db_init */
 	if (dbf->init == 0) {
-		LM_ERR("module %s does not export db_init function\n", mname);
+		LM_ERR("module %s does not export db_init function. Please check if module is loaded.\n", mname);
 		goto error;
 	}
 
 	/* All modules must export db_close */
 	if (dbf->close == 0) {
-		LM_ERR("module %s does not export db_close function\n", mname);
+		LM_ERR("module %s does not export db_close function. Please check if module is loaded.\n", mname);
 		goto error;
 	}
 
