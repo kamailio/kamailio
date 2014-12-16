@@ -39,6 +39,7 @@
 #include "pg_con.h"
 #include "pg_uri.h"
 #include "pg_sql.h"
+#include "pg_mod.h"
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -47,6 +48,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <time.h>
 
 
@@ -237,7 +239,9 @@ int pg_con_connect(db_con_t* con)
 	struct pg_con* pcon;
 	struct pg_uri* puri;
 	char* port_str;
-	int ret;
+	int ret, i = 0;
+	const char *keywords[10], *values[10];
+	char to[16];
 	
 	pcon = DB_GET_PAYLOAD(con);
 	puri = DB_GET_PAYLOAD(con->uri);
@@ -251,6 +255,8 @@ int pg_con_connect(db_con_t* con)
 
 	if (puri->port > 0) {
 		port_str = int2str(puri->port, 0);
+		keywords[i] = "port";
+		values[i++] = port_str;
 	} else {
 		port_str = NULL;
 	}
@@ -260,12 +266,26 @@ int pg_con_connect(db_con_t* con)
 		pcon->con = NULL;
 	}
 
-	pcon->con = PQsetdbLogin(puri->host, port_str,
-							 NULL, NULL, puri->database,
-							 puri->username, puri->password);
+	keywords[i] = "host";
+	values[i++] = puri->host;
+	keywords[i] = "dbname";
+	values[i++] = puri->database;
+	keywords[i] = "user";
+	values[i++] = puri->username;
+	keywords[i] = "password";
+	values[i++] = puri->password;
+	if (pg_timeout > 0) {
+		snprintf(to, sizeof(to)-1, "%d", pg_timeout + 3);
+		keywords[i] = "connect_timeout";
+		values[i++] = to;
+	}
+
+	keywords[i] = values[i] = NULL;
+
+	pcon->con = PQconnectdbParams(keywords, values, 1);
 	
 	if (pcon->con == NULL) {
-		ERR("postgres: PQsetdbLogin ran out of memory\n");
+		ERR("postgres: PQconnectdbParams ran out of memory\n");
 		goto error;
 	}
 	
@@ -283,6 +303,14 @@ int pg_con_connect(db_con_t* con)
 #else
 	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n", 
 	    PQprotocolVersion(pcon->con), 0 );
+#endif
+
+#if defined(SO_KEEPALIVE) && defined(TCP_KEEPIDLE)
+	if (pg_keepalive) {
+		i = 1;
+		setsockopt(PQsocket(pcon->con), SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i));
+		setsockopt(PQsocket(pcon->con), IPPROTO_TCP, TCP_KEEPIDLE, &pg_keepalive, sizeof(pg_keepalive));
+	}
 #endif
 
 	ret = timestamp_format(pcon->con);

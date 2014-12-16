@@ -61,6 +61,8 @@ int pg_retries = 2;  /* How many times should the module try re-execute failed c
 					  * 0 disables reconnecting */
 
 int pg_lockset = 4;
+int pg_timeout = 0; /* default = no timeout */
+int pg_keepalive = 0;
 
 /*
  * Postgres module interface
@@ -92,6 +94,8 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"retries",         PARAM_INT, &pg_retries },
 	{"lockset",         PARAM_INT, &pg_lockset },
+	{"timeout",         PARAM_INT, &pg_timeout },
+	{"tcp_keepalive",   PARAM_INT, &pg_keepalive },
 	{0, 0, 0}
 };
 

@@ -24,12 +24,16 @@ Greg Fausak
         3. Parameters
 
               3.1. retries (integer)
+              3.2. timeout (integer)
+              3.3. tcp_keepalive (integer)
 
         4. Functions
 
    List of Examples
 
    1.1. Set retries parameter
+   1.2. Set timeout parameter
+   1.3. Set tcp_keepalive parameter
 
 Chapter 1. Admin Guide
 
@@ -44,6 +48,8 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. retries (integer)
+        3.2. timeout (integer)
+        3.3. tcp_keepalive (integer)
 
    4. Functions
 
@@ -73,6 +79,8 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. retries (integer)
+   3.2. timeout (integer)
+   3.3. tcp_keepalive (integer)
 
 3.1. retries (integer)
 
@@ -86,6 +94,37 @@ Chapter 1. Admin Guide
    Example 1.1. Set retries parameter
 ...
 modparam("db_postgres", "retries", 3)
+...
+
+3.2. timeout (integer)
+
+   Setting this variable to any value larger than zero (which is the
+   default value) enables both a connection timeout and a query timeout.
+   If a connection attempt or a query takes longer than this many seconds,
+   the operation will be aborted and an error will be returned.
+
+   Note that this timeout is applied to each underlying operation (i.e.
+   for each connection attempt), so depending on circumstances and on the
+   value of the “retries” variable, a single query from the SIP proxy's
+   point of view can take longer than the “timeout”.
+
+   Example 1.2. Set timeout parameter
+...
+modparam("db_postgres", "timeout", 10)
+...
+
+3.3. tcp_keepalive (integer)
+
+   Enable the TCP keepalive timer and set the number of seconds the
+   connection must be idle before to start sending keepalive packets.
+   Defaults to zero, which disables TCP keepalive packets.
+
+   Only supported on platforms which understand and support the
+   “TCP_KEEPIDLE” socket option.
+
+   Example 1.3. Set tcp_keepalive parameter
+...
+modparam("db_postgres", "tcp_keepalive", 600)
 ...
 
 4. Functions

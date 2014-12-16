@@ -41,6 +41,8 @@
  */
 
 extern int pg_retries;
+extern int pg_timeout;
+extern int pg_keepalive;
 
 /** @} */
 

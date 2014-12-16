@@ -81,6 +81,55 @@ modparam("db_postgres", "retries", 3)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>timeout</varname> (integer)</title>
+		<para>
+			Setting this variable to any value larger than zero (which is the
+			default value) enables both a connection timeout and a query
+			timeout. If a connection attempt or a query takes longer than this
+			many seconds, the operation will be aborted and an error will be
+			returned.
+		</para>
+		<para>
+			Note that this timeout is applied to each underlying operation
+			(i.e. for each connection attempt), so depending on circumstances
+			and on the value of the <quote>retries</quote> variable, a single
+			query from the &sip; proxy's point of view can take longer than the
+			<quote>timeout</quote>.
+		</para>
+		<example>
+		<title>Set <varname>timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "timeout", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>tcp_keepalive</varname> (integer)</title>
+		<para>
+			Enable the TCP keepalive timer and set the number of seconds the
+			connection must be idle before to start sending keepalive packets.
+			Defaults to zero, which disables TCP keepalive packets.
+		</para>
+		<para>
+		<emphasis>
+			Only supported on platforms which understand and support the
+			<quote>TCP_KEEPIDLE</quote> socket option.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_keepalive</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "tcp_keepalive", 600)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

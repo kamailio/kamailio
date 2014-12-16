@@ -167,6 +167,10 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 	int i, retries;
 	ExecStatusType pqresult;
 	PGresult *res = NULL;
+	int sock, ret;
+	fd_set fds;
+	time_t max_time;
+	struct timeval wait_time;
 
 	if(! _con || !_s || !_s->s)
 	{
@@ -217,6 +221,44 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 		/* exec the query */
 
 		if (PQsendQuery(CON_CONNECTION(_con), s)) {
+			if (pg_timeout <= 0)
+				goto do_read;
+
+			max_time = time(NULL) + pg_timeout;
+
+			while (1) {
+				sock = PQsocket(CON_CONNECTION(_con));
+				FD_ZERO(&fds);
+				FD_SET(sock, &fds);
+
+				wait_time.tv_usec = 0;
+				wait_time.tv_sec = max_time - time(NULL);
+				if (wait_time.tv_sec <= 0 || wait_time.tv_sec > 0xffffff)
+					goto timeout;
+
+				ret = select(sock + 1, &fds, NULL, NULL, &wait_time);
+				if (ret < 0) {
+					if (errno == EINTR)
+						continue;
+					LM_WARN("select() error\n");
+					goto reset;
+				}
+				if (!ret) {
+timeout:
+					LM_WARN("timeout waiting for postgres reply\n");
+					goto reset;
+				}
+
+				if (!PQconsumeInput(CON_CONNECTION(_con))) {
+					LM_WARN("error reading data from postgres server: %s\n",
+							PQerrorMessage(CON_CONNECTION(_con)));
+					goto reset;
+				}
+				if (!PQisBusy(CON_CONNECTION(_con)))
+					break;
+			}
+
+do_read:
 			/* Get the result of the query */
 			while ((res = PQgetResult(CON_CONNECTION(_con))) != NULL) {
 				db_postgres_free_query(_con);
@@ -239,6 +281,7 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 				PQerrorMessage(CON_CONNECTION(_con)));
 		if(PQstatus(CON_CONNECTION(_con))!=CONNECTION_OK)
 		{
+reset:
 			LM_DBG("reseting the connection to postgress server\n");
 			PQreset(CON_CONNECTION(_con));
 		}
