@@ -406,9 +406,13 @@ modparam("registrar", "received_param", "rcv")
 		<title><varname>max_contacts</varname> (integer)</title>
 		<para>
 		The parameter can be used to limit the number of contacts per 
-		AOR (Address of Record) in the user location database. Value 0 
-		disables the check. This parameter can be modified via the &kamailio;
-		config framework.
+		AOR (Address of Record) in the user location database.
+		If the maximum number of contacts is exceeded, &kamailio; will not
+		accept the registration and send an error response. 
+		Value 0 disables the check. This parameter can be modified via 
+		the &kamailio; config framework.
+		(Please also check the flag for <function>save()</function> if you only want
+		only one active registration).
 		</para>
 		<para>
 		<emphasis>
