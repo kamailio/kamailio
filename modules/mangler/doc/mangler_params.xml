@@ -8,18 +8,18 @@
 
     <title>Parameters</title>
 
-    <section id="contact_flds_separator">
+    <section id="mangler.p.contact_flds_separator">
 	<title><varname>contact_flds_separator</varname> (string)</title>
 	<para>
-	    First char of this parameter is used as separator for
-	    encoding/decoding Contact header.
+	    First char of this parameter is used as a separator for
+	    encoding/decoding Contact headers.
 	    If you set this parameter to "-", 
-	    then an encoded uri might look sip:user-password-ip-port-protocol@PublicIP
+	    then an encoded URI will look like "sip:user-password-ip-port-protocol@PublicIP"
 	</para>
 	<warning>
 	    <para>
-		First char of this field must be set to a value which is not
-		used inside username,password or other fields of
+		The first character of this field must be set to a value which is not
+		used inside username, password or other fields of
 		contact.Otherwise it is possible for the decoding step to
 		fail/produce wrong results.
 	    </para>
