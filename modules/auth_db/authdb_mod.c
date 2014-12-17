@@ -274,8 +274,9 @@ static int w_is_subscriber(sip_msg_t *msg, char *_uri, char* _table,
 
 	LM_DBG("uri [%.*s] table [%.*s] flags [%d]\n", suri.len, suri.s,
 			stable.len,  stable.s, iflags);
-	ret = fetch_credentials(msg, &puri.user, (iflags==1)?&puri.host:NULL,
-			&stable);
+	ret = fetch_credentials(msg, &puri.user,
+				(iflags&AUTH_DB_SUBS_USE_DOMAIN)?&puri.host:NULL,
+				&stable, iflags);
 
 	if(ret>=0)
 		return 1;
