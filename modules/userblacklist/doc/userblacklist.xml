@@ -32,6 +32,5 @@
 	</bookinfo>
 	<toc></toc>
 	<xi:include href="userblacklist_admin.xml"/>
-	<xi:include href="userblacklist_db.xml"/>
 	
 </book>
