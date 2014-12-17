@@ -31,6 +31,18 @@ Pawel Kuzak
 
               3.1. use_domain (integer)
               3.2. match_mode (integer)
+              3.3. db_url (String)
+              3.4. userblacklist_table (String)
+              3.5. userblacklist_id_col (string)
+              3.6. userblacklist_username_col (string)
+              3.7. userblacklist_domain_col (string)
+              3.8. userblacklist_prefix_col (string)
+              3.9. userblacklist_whitelist_col (string)
+              3.10. globalblacklist_table (String)
+              3.11. globalblacklist_id_col (string)
+              3.12. globalblacklist_prefix_col (string)
+              3.13. globalblacklist_whitelist_col (string)
+              3.14. globalblacklist_description_col (string)
 
         4. Functions
 
@@ -51,44 +63,29 @@ Pawel Kuzak
 
               6.1. Database setup
 
-   2. Module parameter for database access.
-
-        1. db_url (String)
-        2. userblacklist_table (String)
-        3. userblacklist_id_col (string)
-        4. userblacklist_username_col (string)
-        5. userblacklist_domain_col (string)
-        6. userblacklist_prefix_col (string)
-        7. userblacklist_whitelist_col (string)
-        8. globalblacklist_table (String)
-        9. globalblacklist_id_col (string)
-        10. globalblacklist_prefix_col (string)
-        11. globalblacklist_whitelist_col (string)
-        12. globalblacklist_description_col (string)
-
    List of Examples
 
    1.1. Set use_domain parameter
    1.2. Set match_mode parameter
-   1.3. check_user_blacklist usage
-   1.4. check_user_blacklist usage
-   1.5. check_blacklist usage
-   1.6. check_whitelist usage
-   1.7. reload_blacklist usage
-   1.8. Example database content - globalblacklist table
-   1.9. Example database content - userblacklist table
-   2.1. Set db_url parameter
-   2.2. Set userblacklist_table parameter
-   2.3. Set userblacklist_id_col parameter
-   2.4. Set userblacklist_username_col parameter
-   2.5. Set userblacklist_domain_col parameter
-   2.6. Set userblacklist_prefix_col parameter
-   2.7. Set userblacklist_whitelist_col parameter
-   2.8. Set globalblacklist_table parameter
-   2.9. Set globalblacklist_id_col parameter
-   2.10. Set globalblacklist_prefix_col parameter
-   2.11. Set globalblacklist_whitelist_col parameter
-   2.12. Set globalblacklist_description_col parameter
+   1.3. Set db_url parameter
+   1.4. Set userblacklist_table parameter
+   1.5. Set userblacklist_id_col parameter
+   1.6. Set userblacklist_username_col parameter
+   1.7. Set userblacklist_domain_col parameter
+   1.8. Set userblacklist_prefix_col parameter
+   1.9. Set userblacklist_whitelist_col parameter
+   1.10. Set globalblacklist_table parameter
+   1.11. Set globalblacklist_id_col parameter
+   1.12. Set globalblacklist_prefix_col parameter
+   1.13. Set globalblacklist_whitelist_col parameter
+   1.14. Set globalblacklist_description_col parameter
+   1.15. check_user_blacklist usage
+   1.16. check_user_blacklist usage
+   1.17. check_blacklist usage
+   1.18. check_whitelist usage
+   1.19. reload_blacklist usage
+   1.20. Example database content - globalblacklist table
+   1.21. Example database content - userblacklist table
 
 Chapter 1. Admin Guide
 
@@ -104,6 +101,18 @@ Chapter 1. Admin Guide
 
         3.1. use_domain (integer)
         3.2. match_mode (integer)
+        3.3. db_url (String)
+        3.4. userblacklist_table (String)
+        3.5. userblacklist_id_col (string)
+        3.6. userblacklist_username_col (string)
+        3.7. userblacklist_domain_col (string)
+        3.8. userblacklist_prefix_col (string)
+        3.9. userblacklist_whitelist_col (string)
+        3.10. globalblacklist_table (String)
+        3.11. globalblacklist_id_col (string)
+        3.12. globalblacklist_prefix_col (string)
+        3.13. globalblacklist_whitelist_col (string)
+        3.14. globalblacklist_description_col (string)
 
    4. Functions
 
@@ -172,6 +181,18 @@ Chapter 1. Admin Guide
 
    3.1. use_domain (integer)
    3.2. match_mode (integer)
+   3.3. db_url (String)
+   3.4. userblacklist_table (String)
+   3.5. userblacklist_id_col (string)
+   3.6. userblacklist_username_col (string)
+   3.7. userblacklist_domain_col (string)
+   3.8. userblacklist_prefix_col (string)
+   3.9. userblacklist_whitelist_col (string)
+   3.10. globalblacklist_table (String)
+   3.11. globalblacklist_id_col (string)
+   3.12. globalblacklist_prefix_col (string)
+   3.13. globalblacklist_whitelist_col (string)
+   3.14. globalblacklist_description_col (string)
 
 3.1. use_domain (integer)
 
@@ -201,6 +222,123 @@ modparam("userblacklist", "use_domain", 0)
 modparam("userblacklist", "match_mode", 128)
 ...
 
+3.3. db_url (String)
+
+   URL to the database containing the data.
+
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
+
+   Example 1.3. Set db_url parameter
+...
+modparam("userblacklist", "db_url", "dbdriver://username:password@dbhost/dbname"
+)
+...
+
+3.4. userblacklist_table (String)
+
+   Name of the userblacklist table for the userblacklist module.
+
+   Default value is "userblacklist".
+
+   Example 1.4. Set userblacklist_table parameter
+...
+modparam("userblacklist", "userblacklist_table", "userblacklist")
+...
+
+3.5. userblacklist_id_col (string)
+
+   unique ID
+
+   Example 1.5. Set userblacklist_id_col parameter
+...
+modparam("userblacklist", "userblacklist_id_col", "id")
+...
+
+3.6. userblacklist_username_col (string)
+
+   The user that is used for the blacklist lookup.
+
+   Example 1.6. Set userblacklist_username_col parameter
+...
+modparam("userblacklist", "userblacklist_username_col", "username")
+...
+
+3.7. userblacklist_domain_col (string)
+
+   The domain that is used for the blacklist lookup.
+
+   Example 1.7. Set userblacklist_domain_col parameter
+...
+modparam("userblacklist", "userblacklist_domain_col", "domain")
+...
+
+3.8. userblacklist_prefix_col (string)
+
+   The prefix that is matched for the blacklist.
+
+   Example 1.8. Set userblacklist_prefix_col parameter
+...
+modparam("userblacklist", "userblacklist_prefix_col", "prefix")
+...
+
+3.9. userblacklist_whitelist_col (string)
+
+   Specify if this a blacklist (0) or a whitelist (1) entry.
+
+   Example 1.9. Set userblacklist_whitelist_col parameter
+...
+modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
+...
+
+3.10. globalblacklist_table (String)
+
+   Name of the globalblacklist table for the userblacklist module. Please
+   note that this table is used when the check_blacklist function is
+   called with no parameters.
+
+   Default value is "globalblacklist".
+
+   Example 1.10. Set globalblacklist_table parameter
+...
+modparam("userblacklist", "globalblacklist_table", "globalblacklist")
+...
+
+3.11. globalblacklist_id_col (string)
+
+   unique ID
+
+   Example 1.11. Set globalblacklist_id_col parameter
+...
+modparam("userblacklist", "globalblacklist_id_col", "id")
+...
+
+3.12. globalblacklist_prefix_col (string)
+
+   The prefix that is matched for the blacklist.
+
+   Example 1.12. Set globalblacklist_prefix_col parameter
+...
+modparam("userblacklist", "globalblacklist_prefix_col", "prefix")
+...
+
+3.13. globalblacklist_whitelist_col (string)
+
+   Specify if this a blacklist (0) or a whitelist (1) entry.
+
+   Example 1.13. Set globalblacklist_whitelist_col parameter
+...
+modparam("userblacklist", "globalblacklist_whitelist_col", "whitelist")
+...
+
+3.14. globalblacklist_description_col (string)
+
+   A comment for the entry.
+
+   Example 1.14. Set globalblacklist_description_col parameter
+...
+modparam("userblacklist", "globalblacklist_description_col", "description")
+...
+
 4. Functions
 
    4.1. check_user_blacklist (string user, string domain, string number,
@@ -223,7 +361,7 @@ table)
    are optional, the defaults are used if they are omitted. The number
    parameter can be used to check for example against the from URI user.
 
-   Example 1.3. check_user_blacklist usage
+   Example 1.15. check_user_blacklist usage
 ...
 $avp(i:80) = $rU;
 # rewrite the R-URI
@@ -244,7 +382,7 @@ table)
    are optional, the defaults are used if they are omitted. The number
    parameter can be used to check for example against the from URI user.
 
-   Example 1.4. check_user_blacklist usage
+   Example 1.16. check_user_blacklist usage
 ...
 $avp(i:80) = $rU;
 # rewrite the R-URI
@@ -261,7 +399,7 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)")) {
    returned. Otherwise, true is returned. If no table is given, then
    globalblacklist_table is used.
 
-   Example 1.5. check_blacklist usage
+   Example 1.17. check_blacklist usage
 ...
 if (!check_blacklist("globalblacklist")) {
         sl_send_reply("403", "Forbidden");
@@ -275,7 +413,7 @@ if (!check_blacklist("globalblacklist")) {
    table. If a match is found and it is set to whitelist, true is
    returned. Otherwise, false is returned.
 
-   Example 1.6. check_whitelist usage
+   Example 1.18. check_whitelist usage
 ...
 if (!check_whitelist("globalblacklist")) {
         sl_send_reply("403", "Forbidden");
@@ -292,7 +430,7 @@ if (!check_whitelist("globalblacklist")) {
    Reload the internal global blacklist cache. This is necessary after the
    database tables for the global blacklist have been changed.
 
-   Example 1.7. reload_blacklist usage
+   Example 1.19. reload_blacklist usage
 ...
 kamctl fifo reload_blacklist
 ...
@@ -314,7 +452,7 @@ kamctl fifo reload_blacklist
    complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.8. Example database content - globalblacklist table
+   Example 1.20. Example database content - globalblacklist table
 ...
 +----+-----------+-----------+
 | id | prefix    | whitelist |
@@ -331,7 +469,7 @@ kamctl fifo reload_blacklist
    "123455787" are also blacklisted, because the longest prefix will be
    matched.
 
-   Example 1.9. Example database content - userblacklist table
+   Example 1.21. Example database content - userblacklist table
 ...
 +----+----------------+-------------+-----------+-----------+
 | id | username       | domain      | prefix    | whitelist |
@@ -351,137 +489,3 @@ kamctl fifo reload_blacklist
    allowed, but the number "123456788" is allowed. Additionally a domain
    could be specified that is used for username matching if the
    "use_domain" parameter is set.
-
-Chapter 2. Module parameter for database access.
-
-   Table of Contents
-
-   1. db_url (String)
-   2. userblacklist_table (String)
-   3. userblacklist_id_col (string)
-   4. userblacklist_username_col (string)
-   5. userblacklist_domain_col (string)
-   6. userblacklist_prefix_col (string)
-   7. userblacklist_whitelist_col (string)
-   8. globalblacklist_table (String)
-   9. globalblacklist_id_col (string)
-   10. globalblacklist_prefix_col (string)
-   11. globalblacklist_whitelist_col (string)
-   12. globalblacklist_description_col (string)
-
-1. db_url (String)
-
-   URL to the database containing the data.
-
-   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
-
-   Example 2.1. Set db_url parameter
-...
-modparam("userblacklist", "db_url", "dbdriver://username:password@dbhost/dbname"
-)
-...
-
-2. userblacklist_table (String)
-
-   Name of the userblacklist table for the userblacklist module.
-
-   Default value is "userblacklist".
-
-   Example 2.2. Set userblacklist_table parameter
-...
-modparam("userblacklist", "userblacklist_table", "userblacklist")
-...
-
-3. userblacklist_id_col (string)
-
-   unique ID
-
-   Example 2.3. Set userblacklist_id_col parameter
-...
-modparam("userblacklist", "userblacklist_id_col", "id")
-...
-
-4. userblacklist_username_col (string)
-
-   The user that is used for the blacklist lookup.
-
-   Example 2.4. Set userblacklist_username_col parameter
-...
-modparam("userblacklist", "userblacklist_username_col", "username")
-...
-
-5. userblacklist_domain_col (string)
-
-   The domain that is used for the blacklist lookup.
-
-   Example 2.5. Set userblacklist_domain_col parameter
-...
-modparam("userblacklist", "userblacklist_domain_col", "domain")
-...
-
-6. userblacklist_prefix_col (string)
-
-   The prefix that is matched for the blacklist.
-
-   Example 2.6. Set userblacklist_prefix_col parameter
-...
-modparam("userblacklist", "userblacklist_prefix_col", "prefix")
-...
-
-7. userblacklist_whitelist_col (string)
-
-   Specify if this a blacklist (0) or a whitelist (1) entry.
-
-   Example 2.7. Set userblacklist_whitelist_col parameter
-...
-modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
-...
-
-8. globalblacklist_table (String)
-
-   Name of the globalblacklist table for the userblacklist module. Please
-   note that this table is used when the check_blacklist function is
-   called with no parameters.
-
-   Default value is "globalblacklist".
-
-   Example 2.8. Set globalblacklist_table parameter
-...
-modparam("userblacklist", "globalblacklist_table", "globalblacklist")
-...
-
-9. globalblacklist_id_col (string)
-
-   unique ID
-
-   Example 2.9. Set globalblacklist_id_col parameter
-...
-modparam("userblacklist", "globalblacklist_id_col", "id")
-...
-
-10. globalblacklist_prefix_col (string)
-
-   The prefix that is matched for the blacklist.
-
-   Example 2.10. Set globalblacklist_prefix_col parameter
-...
-modparam("userblacklist", "globalblacklist_prefix_col", "prefix")
-...
-
-11. globalblacklist_whitelist_col (string)
-
-   Specify if this a blacklist (0) or a whitelist (1) entry.
-
-   Example 2.11. Set globalblacklist_whitelist_col parameter
-...
-modparam("userblacklist", "globalblacklist_whitelist_col", "whitelist")
-...
-
-12. globalblacklist_description_col (string)
-
-   A comment for the entry.
-
-   Example 2.12. Set globalblacklist_description_col parameter
-...
-modparam("userblacklist", "globalblacklist_description_col", "description")
-...
