@@ -22,7 +22,7 @@
 	An additional functionality that this module provides is the ability
 	to handle global blacklists. This lists are loaded on startup into
 	memory, thus providing a better performance then in the userblacklist
-	case. This global blacklists are useful to only allow calls to certain 
+	case. These global blacklists are useful to only allow calls to certain 
 	international destinations, i.e. block all not whitelisted numbers.
 	They could also used to prevent the blacklisting of important	
 	numbers, as whitelisting is supported too. This is useful for example
@@ -30,9 +30,10 @@
 	hotlines.
 	</para>
 	<para>
-	The module exports three functions, <emphasis>check_blacklist</emphasis>
-	<emphasis>check_user_blacklist</emphasis> and <emphasis>check_user_whitelist</emphasis>
-	for usage in the config file. Furthermore its provide a FIFO function to
+	The module exports four functions, <function>check_blacklist</function>,
+	<function>check_whitelist</function>,
+	<function>check_user_blacklist</function> and <function>check_user_whitelist</function>
+	for usage in the config file. Furthermore its provides a MI function to
 	reload the global blacklist cache.
 	</para>
 	<para>
@@ -74,7 +75,7 @@
 
 	<section>
 	<title>Parameters</title>
-    <section>
+    <section id="userblacklist.p.use_domain">
 	    <title><varname>use_domain</varname> (integer)</title>
 	    <para>
 			If set to non-zero value, the domain column in the userblacklist is used.
@@ -93,14 +94,14 @@ modparam("userblacklist", "use_domain", 0)
 		    </programlisting>
 	    </example>
     </section>
-    <section>
+    <section id="userblacklist.p.match_mode">
     	    <title><varname>match_mode</varname> (integer)</title>
 	    <para>
-The number of individual characters that are used for matching. 
-Valid values are 10 or 128. When you specifiy 10, only digits will be used for matching, 
-this operation mode is equivalent to the old behaviour. When configured with 128, 
-all standard ascii chars are available for matching. Please be aware that memory 
-requirements for storing the routing tree in shared memory will also increase by a factor of 12.8.
+		The number of individual characters that are used for matching. 
+		Valid values are 10 or 128. When you specifiy 10, only digits will be used for matching, 
+		this operation mode is equivalent to the old behaviour. When configured with 128, 
+		all standard ASCII chars are available for matching. Please be aware that memory 
+		requirements for storing the routing tree in shared memory will also increase by a factor of 12.8.
 	    </para>
 	    <para>
 		    <emphasis>
@@ -121,7 +122,7 @@ modparam("userblacklist", "match_mode", 128)
 </section>
 <section>
 	<title>Functions</title>
-	<section>
+    	<section id="userblacklist.f.check_user_blacklist">
 	    <title>
 		<function moreinfo="none">check_user_blacklist (string user, string domain, string number, string table)</function>
 	    </title>
@@ -131,7 +132,7 @@ modparam("userblacklist", "match_mode", 128)
 		If a match is found and it is not set to whitelist, false is returned.
 		Otherwise, true is returned. Pseudo-variables or AVPs can be used for
 		the user, domain and number parameters. The number and table variables
-		are optional, the defaults are used if they are ommited. The number
+		are optional, the defaults are used if they are omitted. The number
 		parameter can be used to check for example against the from URI user.
 	    </para>
 	<example>
@@ -148,7 +149,7 @@ if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)")) {
 		</programlisting>
 	    </example>
 	</section>
-	<section>
+    	<section id="userblacklist.f.check_user_whitelist">
 	    <title>
 		<function moreinfo="none">check_user_whitelist (string user, string domain, string number, string table)</function>
 	    </title>
@@ -158,7 +159,7 @@ if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)")) {
 		If a match is found and it is set to whitelist, true is returned.
 		Otherwise, false is returned. Pseudo-variables or AVPs can be used for
 		the user, domain and number parameters. The number and table variables
-		are optional, the defaults are used if they are ommited. The number
+		are optional, the defaults are used if they are omitted. The number
 		parameter can be used to check for example against the from URI user.
 	    </para>
 	<example>
@@ -175,7 +176,7 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)")) {
 		</programlisting>
 	    </example>
 	</section>
-	<section>
+    	<section id="userblacklist.f.check_blacklist">
 	    <title>
 		<function moreinfo="none">check_blacklist ([string table])</function>
 	    </title>
@@ -197,7 +198,7 @@ if (!check_blacklist("globalblacklist")) {
 		</programlisting>
 	    </example>
 	</section>
-	<section>
+    	<section id="userblacklist.f.check_whitelist">
 	    <title>
 		<function moreinfo="none">check_whitelist (string table)</function>
 	    </title>
@@ -231,7 +232,7 @@ if (!check_whitelist("globalblacklist")) {
 		the database tables for the global blacklist have been changed.
 	    </para>
 	<example>
-		<title><function>reload_blacklists</function> usage</title>
+		<title><function>reload_blacklist</function> usage</title>
 		<programlisting format="linespecific">
 ...
 &ctltool; fifo reload_blacklist
@@ -245,7 +246,7 @@ if (!check_whitelist("globalblacklist")) {
 	<section>
 		<title>Database setup</title>
 		<para>
-			Before running &kamailio; with userblacklist, you have to setup the database 
+			Before running &kamailio; with the userblacklist module, you have to setup the database 
 			table where the module will read the blacklist data. For that, if 
 			the table was not created by the installation script or you choose
 			to install everything by yourself you can use the userblacklist-create.sql
@@ -275,7 +276,7 @@ if (!check_whitelist("globalblacklist")) {
 	</example>
 	<para>
 		This table will setup a global blacklist for all numbers, only allowing calls
-		starting with <quote>1</quote>. Numbers that starting with <quote>123456</quote>
+		starting with <quote>1</quote>. Numbers that starts with <quote>123456</quote>
 		and <quote>123455787</quote> are also blacklisted, because the longest prefix
 		will be matched.
 	</para>
