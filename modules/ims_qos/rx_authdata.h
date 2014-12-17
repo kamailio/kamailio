@@ -80,6 +80,7 @@ typedef struct rx_authsessiondata {
     str ftag;
     str ttag;
     str identifier;
+    int identifier_type;
     str ip;
     int recv_port;
     int ip_version;
@@ -94,7 +95,7 @@ typedef struct rx_authsessiondata {
 } rx_authsessiondata_t;
 
 int create_new_regsessiondata(str* domain, str* aor,  str *ip, int ip_version, int recv_port, rx_authsessiondata_t** session_data);
-int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, str *ip, int ip_version, rx_authsessiondata_t** session_data);
+int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, int identifier_type, str *ip, int ip_version, rx_authsessiondata_t** session_data);
 void free_callsessiondata(rx_authsessiondata_t* session_data);
 
 int add_flow_description(rx_authsessiondata_t* session_data, int stream_num, str *media, str *req_sdp_ip_addr, str *req_sdp_port,

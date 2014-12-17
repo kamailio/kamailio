@@ -277,7 +277,7 @@ route[REG_AAR_REPLY]
 
     <section>
       <title><function moreinfo="none">Rx_AAR(route_block,
-      direction)</function></title>
+      direction, subscription_id, subscription_id_type)</function></title>
 
       <para>Perform a AAR on Diameter RX interface to request resource
       authorisation from a Diameter server (typically a PCRF). For more
@@ -287,14 +287,27 @@ route[REG_AAR_REPLY]
 
       <itemizedlist>
         <listitem>
-          <para>Route block to resume after async UAR Diameter reply.</para>
+          <para><emphasis>Route block</emphasis> to resume after async UAR Diameter reply.</para>
         </listitem>
 
         <listitem>
-          <para><emphasis>direction</emphasis>the direction of this message -
+          <para><emphasis>direction</emphasis> of this message -
           orig, term, etc.</para>
         </listitem>
-      </itemizedlist>
+	
+	<listitem>
+          <para><emphasis>subscription_id</emphasis> to hard code subscription ID for AAR.
+	  Used for some broken PCRFs.  Leave blank to use default</para>
+        </listitem>
+	
+	<listitem>
+          <para><emphasis>subscription_id_type</emphasis> to hard code subscription ID type
+	  for AAR. Only applicable if subscription_id is set. Set to -1 to use default.
+	  This is as per RFC 4006: 
+	  END_USER_E164 0, END_USER_IMSI 1, END_USER_SIP_URI 2, END_USER_NAI 3,
+	  END_USER_PRIVATE 4</para>
+	</listitem>
+	</itemizedlist>
 
       <para>This function can be used from REQUEST_ROUTE or
       ONREPLY_ROUTE.</para>
@@ -307,7 +320,7 @@ route[REG_AAR_REPLY]
 
         <programlisting format="linespecific">
 ...
-if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig")==0){
+if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
     exit;
 }
 ...

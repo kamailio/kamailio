@@ -480,7 +480,6 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 int rx_send_aar_update_no_video(AAASession* auth) {
 
     AAAMessage* aar = 0;
-    int must_free_asserted_identity = 0;
     
     str identifier;
     int identifier_type;
@@ -497,6 +496,7 @@ int rx_send_aar_update_no_video(AAASession* auth) {
     rx_authsessiondata_t* p_session_data = 0;
     p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
     identifier = p_session_data->identifier;
+    identifier_type = p_session_data->identifier_type;
     ip = p_session_data->ip;
     ip_version = p_session_data->ip_version;
     
@@ -558,17 +558,7 @@ int rx_send_aar_update_no_video(AAASession* auth) {
 
     LM_DBG("Adding subscription id...\n");
 
-    if (strncasecmp(identifier.s,"tel:",4)==0) {
-	identifier_type = AVP_Subscription_Id_Type_E164; //
-    }else{
-	identifier_type = AVP_Subscription_Id_Type_SIP_URI; //default is END_USER_SIP_URI
-    }
-    
-    
     rx_add_subscription_id_avp(aar, identifier, identifier_type);
-    if (must_free_asserted_identity) {
-            pkg_free(identifier.s);
-    }
 
 
     LM_DBG("Adding reservation priority...\n");
@@ -651,7 +641,6 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
         AAASession* auth, char* direction, saved_transaction_t* saved_t_data) {
 
     AAAMessage* aar = 0;
-    int must_free_asserted_identity = 0;
     
     str identifier;
     int identifier_type;
@@ -668,6 +657,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
     rx_authsessiondata_t* p_session_data = 0;
     p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
     identifier = p_session_data->identifier;
+    identifier_type = p_session_data->identifier_type;
     ip = p_session_data->ip;
     ip_version = p_session_data->ip_version;
     
@@ -737,17 +727,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
 
     LM_DBG("Adding subscription id...\n");
 
-    if (strncasecmp(identifier.s,"tel:",4)==0) {
-	identifier_type = AVP_Subscription_Id_Type_E164; //
-    }else{
-	identifier_type = AVP_Subscription_Id_Type_SIP_URI; //default is END_USER_SIP_URI
-    }
-    
-    
     rx_add_subscription_id_avp(aar, identifier, identifier_type);
-    if (must_free_asserted_identity) {
-            pkg_free(identifier.s);
-    }
 
 
     LM_DBG("Adding reservation priority...\n");

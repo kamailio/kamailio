@@ -114,11 +114,11 @@ str rx_dest_realm = str_init("ims.smilecoms.com");
 str rx_forced_peer = str_init("");
 
 /* commands wrappers and fixups */
-static int w_rx_aar(struct sip_msg *msg, char *route, char* direction, char *bar);
+static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *id, int id_type);
 static int w_rx_aar_register(struct sip_msg *msg, char *route, char* str1, char *bar);
 
 static cmd_export_t cmds[] = {
-    { "Rx_AAR", (cmd_function) w_rx_aar, 2, fixup_aar, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+    { "Rx_AAR", (cmd_function) w_rx_aar, 4, fixup_aar, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
     { "Rx_AAR_Register", (cmd_function) w_rx_aar_register, 2, fixup_aar_register, 0, REQUEST_ROUTE},
     { 0, 0, 0, 0, 0, 0}
 };
@@ -522,7 +522,7 @@ void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param) {
 /* Wrapper to send AAR from config file - this only allows for AAR for calls - not register, which uses r_rx_aar_register
  * return: 1 - success, <=0 failure. 2 - message not a AAR generating message (ie proceed without PCC if you wish)
  */
-static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
+static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int id_type) {
 
     int ret = CSCF_RETURN_ERROR;
     int result = CSCF_RETURN_ERROR;
@@ -537,16 +537,23 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
     
     str route_name;
     str identifier, ip;
+    int identifier_type;
     int ip_version = 0;
     int must_free_asserted_identity = 0;
     sdp_session_cell_t* sdp_session;
+    str s_id;
 
     cfg_action_t* cfg_action = 0;
     saved_transaction_t* saved_t_data = 0; //data specific to each contact's AAR async call
-    char* direction = str1;
+    char* direction = dir;
     if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
         LM_ERR("no async route block for assign_server_unreg\n");
         return result;
+    }
+    
+    if (get_str_fparam(&s_id, msg, (fparam_t*) c_id) < 0) {
+	LM_ERR("failed to get s__id\n");
+	return result;
     }
     
     LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
@@ -684,30 +691,53 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
 	//get ip and subscription_id and store them in the call session data
 	
 	//SUBSCRIPTION-ID
+	
+	//if subscription-id and identifier_type is passed from config file we use them - if not we use default behaviour of
+	
 	//if its mo we use p_asserted_identity in request - if that not there we use from_uri
 	//if its mt we use p_asserted_identity in reply - if that not there we use to_uri
+	if(s_id.len > 0 && id_type > -1) {
+	    identifier.s = s_id.s;
+	    identifier.len = s_id.len;
+	    identifier_type = id_type;
+	    LM_DBG("Passed in subscription_id [%.*s] and subscription_id_type [%d]\n", identifier.len, identifier.s, identifier_type);
+	} else {
+	    if (dlg_direction == DLG_MOBILE_ORIGINATING) {
+		LM_DBG("originating direction\n");
+		if ((identifier = cscf_get_asserted_identity(t->uas.request, 1)).len == 0) {
+		    LM_DBG("No P-Asserted-Identity hdr found in request. Using From hdr in req");
+
+		    if (!cscf_get_from_uri(t->uas.request, &identifier)) {
+			    LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
+			    goto error;
+		    }
+		} else {
+		    must_free_asserted_identity = 1;
+		}
+	    } else {
+		LM_DBG("terminating direction\n");
+		if ((identifier = cscf_get_asserted_identity(msg, 0)).len == 0) {
+		    LM_DBG("No P-Asserted-Identity hdr found in response. Using To hdr in resp");
+		    identifier = cscf_get_public_identity(msg); //get public identity from to header
+		}
+	    }
+	    if (strncasecmp(identifier.s,"tel:",4)==0) {
+		identifier_type = AVP_Subscription_Id_Type_E164; //
+	    }else{
+		identifier_type = AVP_Subscription_Id_Type_SIP_URI; //default is END_USER_SIP_URI
+	    }
+	}
 	//IP 
 	//if its mo we use request SDP
 	//if its mt we use reply SDP
 	if (dlg_direction == DLG_MOBILE_ORIGINATING) {
 	    LM_DBG("originating direction\n");
-	    if ((identifier = cscf_get_asserted_identity(t->uas.request, 1)).len == 0) {
-		LM_DBG("No P-Asserted-Identity hdr found in request. Using From hdr in req");
-
-		if (!cscf_get_from_uri(t->uas.request, &identifier)) {
-			LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
-			goto error;
-		}
-	    } else {
-		must_free_asserted_identity = 1;
-	    }
-	    
 	    //get ip from request sdp (we use first SDP session)
 	    if (parse_sdp(t->uas.request) < 0) {
 		LM_ERR("Unable to parse req SDP\n");
 		goto error;
 	    }
-	    
+
 	    sdp_session = get_sdp_session(t->uas.request, 0);
 	    if (!sdp_session) {
 		    LM_ERR("Missing SDP session information from req\n");
@@ -716,20 +746,15 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
 	    ip = sdp_session->ip_addr;
 	    ip_version = sdp_session->pf;
 	    free_sdp((sdp_info_t**) (void*) &t->uas.request->body);
-	    
+
 	} else {
 	    LM_DBG("terminating direction\n");
-	    if ((identifier = cscf_get_asserted_identity(msg, 0)).len == 0) {
-		LM_DBG("No P-Asserted-Identity hdr found in response. Using To hdr in resp");
-		identifier = cscf_get_public_identity(msg); //get public identity from to header
-	    }
-	    
 	    //get ip from reply sdp (we use first SDP session)
 	    if (parse_sdp(msg) < 0) {
 		LM_ERR("Unable to parse req SDP\n");
 		goto error;
 	    }
-	    
+
 	    sdp_session = get_sdp_session(msg, 0);
 	    if (!sdp_session) {
 		    LM_ERR("Missing SDP session information from reply\n");
@@ -738,10 +763,9 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* str1, char* bar) {
 	    ip = sdp_session->ip_addr;
 	    ip_version = sdp_session->pf;
 	    free_sdp((sdp_info_t**) (void*) &msg->body);
-	    
 	}
-
-        int ret = create_new_callsessiondata(&callid, &ftag, &ttag, &identifier, &ip, ip_version, &rx_authdata_p);
+	
+        int ret = create_new_callsessiondata(&callid, &ftag, &ttag, &identifier, identifier_type, &ip, ip_version, &rx_authdata_p);
         if (!ret) {
             LM_DBG("Unable to create new media session data parcel\n");
             goto error;
@@ -1171,6 +1195,9 @@ static int fixup_aar_register(void** param, int param_no) {
 }
 
 static int fixup_aar(void** param, int param_no) {
+    str s;
+    unsigned int num;
+    
     if (strlen((char*) *param) <= 0) {
         LM_ERR("empty parameter %d not allowed\n", param_no);
         return -1;
@@ -1180,6 +1207,19 @@ static int fixup_aar(void** param, int param_no) {
         if (fixup_spve_null(param, param_no) < 0)
             return -1;
         return 0;
+    } else if (param_no == 3) {
+	return fixup_var_str_12(param, param_no);
+    } else if (param_no == 4) {
+	/*convert to int */
+	s.s = (char*)*param;
+	s.len = strlen(s.s);
+	if (str2int(&s, &num)==0) {
+		pkg_free(*param);
+		*param = (void*)(unsigned long)num;
+		return 0;
+	}
+	LM_ERR("Bad reservation units: <%s>n", (char*)(*param));
+	return E_CFG;
     }
 
     return 0;

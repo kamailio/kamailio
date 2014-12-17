@@ -113,7 +113,7 @@ int create_new_regsessiondata(str* domain, str* aor, str *ip, int ip_version, in
 	return 1;
 }
 
-int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, str* ip, int ip_version, rx_authsessiondata_t** session_data) {
+int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, int identifier_type, str* ip, int ip_version, rx_authsessiondata_t** session_data) {
 
 	int len = callid->len + ftag->len + ttag->len + identifier->len + ip->len + sizeof(rx_authsessiondata_t);
 	rx_authsessiondata_t* call_session_data = shm_malloc(len);
@@ -128,6 +128,7 @@ int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifie
 	call_session_data->first_current_flow_description=0;
 	call_session_data->first_new_flow_description=0;
 	call_session_data->ip_version = ip_version;
+	call_session_data->identifier_type = identifier_type;
 	
 	char *p = (char*)(call_session_data + 1);
 
