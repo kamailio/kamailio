@@ -675,7 +675,7 @@ modparam("tm", "fr_timer", 10000)
    Timer which hits if no final reply for an INVITE arrives after a
    provisional message was received (in milliseconds).
 
-   Note: this timer can be restarted when a provisional response is
+   Note: This timer can be restarted when a provisional response is
    received. For more details see restart_fr_on_each_reply.
 
    Default value is 120000 ms (120 seconds).
@@ -696,7 +696,7 @@ modparam("tm", "fr_inv_timer", 180000)
    transaction fr_inv_timer and fr_timer values.
 
    An INVITE transaction will be kept in memory for maximum:
-   max_inv_lifetime+fr_timer(from the ack to the final reply
+   max_inv_lifetime+fr_timer(from the ACK to the final reply
    wait)+wt_timer.
 
    The main difference between this timer and fr_inv_timer is that the
@@ -707,8 +707,8 @@ modparam("tm", "fr_inv_timer", 180000)
    provisional reply. Even if restart_fr_on_each_reply is not set the
    fr_inv_timer will still be restarted for each increasing reply (e.g.
    180, 181, 182, ...). Another example when a transaction can live
-   substantially more then its fr_inv_timer and where max_inv_lifetime
-   will help is when dns failover is used (each failed dns destination can
+   substantially more than its fr_inv_timer and where max_inv_lifetime
+   will help is when DNS failover is used (each failed DNS destination can
    introduce a new branch).
 
    The default value is 180000 ms (180 seconds - the rfc3261 timer C
@@ -732,17 +732,17 @@ modparam("tm", "max_inv_lifetime", 150000)
    transaction fr_timer value. It's the same as max_inv_lifetime, but for
    non-INVITEs.
 
-   A non-INVITE transaction will be kept in memory for maximum:
+   A non-INVITE transaction will be kept in memory for a maximum of:
    max_noninv_lifetime+wt_timer.
 
    The main difference between this timer and fr_timer is that the
    fr_timer is per branch, while max_noninv_lifetime is per the whole
    transaction. An example when a transaction can live substantially more
-   then its fr_timer and where max_noninv_lifetime will help is when dns
-   failover is used (each failed dns destination can introduce a new
+   then its fr_timer and where max_noninv_lifetime will help is when DNS
+   failover is used (each failed DNS SRV destination can introduce a new
    branch).
 
-   The default value is 32000 ms (32 seconds - the rfc3261 timer F value).
+   The default value is 32000 ms (32 seconds - the RFC3261 timer F value).
 
    See also: max_inv_lifetime, t_set_max_lifetime() (allows changing
    max_noninv_lifetime on a per transaction basis), t_reset_max_lifetime
@@ -757,9 +757,9 @@ modparam("tm", "max_noninv_lifetime", 30000)
 
    Time for which a transaction stays in memory to absorb delayed messages
    after it completed (in milliseconds); also, when this timer hits,
-   retransmission of local cancels is stopped (a puristic but complex
-   behavior would be not to enter wait state until local branches are
-   finished by a final reply or FR timer--we simplified).
+   retransmission of local CANCEL requests is stopped (a puristic but
+   complex behavior would be not to enter wait state until local branches
+   are finished by a final reply or FR timer--we simplified).
 
    Default value is 5000 ms (5 seconds).
 
@@ -773,7 +773,7 @@ modparam("tm", "wt_timer", 1000)
    Time after which a to-be-deleted transaction currently ref-ed by a
    process will be tried to be deleted again (in milliseconds).
 
-   Note: this parameter is obsolete for ser 2.1 (in 2.1 the transaction is
+   Note: this parameter is obsolete for SER 2.1 (in 2.1 the transaction is
    deleted the moment it's not referenced anymore).
 
    Default value is 200 milliseconds.
@@ -814,10 +814,11 @@ modparam("tm", "retr_timer2", 2000)
    response was ever received on this branch, it will be silently dropped
    (no 408 reply will be generated) This behavior is overridden if a
    request is forked, the transaction has a failure route or callback, or
-   some functionality explicitly turned it on for a transaction (like acc
-   does to avoid unaccounted transactions due to expired timer). Turn this
-   off only if you know the client UACs will timeout and their timeout
-   interval for INVITEs is lower or equal than tm's fr_inv_timer.
+   some functionality explicitly turned it on for a transaction (like the
+   ACC module does to avoid unaccounted transactions due to expired
+   timer). Turn this off only if you know the client UACs will timeout and
+   their timeout interval for INVITEs is lower or equal than tm's
+   fr_inv_timer.
 
    Default value is 1 (on).
 
@@ -852,7 +853,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 
    If set (default) tm will automatically send and 100 reply to INVITEs.
 
-   Setting it to 0 one can be used to enable doing first some tests or
+   Setting it to 0 can be used to enable first running some tests or
    pre-processing on the INVITE and only if some conditions are met
    manually send a 100 (using t_reply()). Note however that in this case
    all the 100s have to be sent "by hand". t_set_auto_inv_100() might help
@@ -870,7 +871,7 @@ modparam("tm", "auto_inv_100", 0)
 
 4.12. auto_inv_100_reason (string)
 
-   Set reason text of the automatically send 100 to an INVITE.
+   Set reason text of the automatically sent 100 to an INVITE.
 
    Default value is "trying -- your call is important to us".
 
@@ -885,8 +886,8 @@ modparam("tm", "auto_inv_100_reason", "Trying")
 
    Unix socket transmission timeout, in milliseconds.
 
-   If unix sockets are used (e.g.: to communicate with sems) and sending a
-   message on a unix socket takes longer then unix_tx_timeout, the send
+   If UNIX sockets are used (e.g.: to communicate with sems) and sending a
+   message on a UNIX socket takes longer than unix_tx_timeout, the send
    will fail.
 
    The default value is 500 milliseconds.
@@ -898,15 +899,17 @@ modparam("tm", "unix_tx_timeout", 250)
 
 4.14. aggregate_challenges (integer)
 
-   If set (default), the final reply is a 401 or a 407 and more then one
-   branch received a 401 or 407, then all the WWW-Authenticate and
+   If set (default) and the final response is a 401 or a 407 and more than
+   one branch received a 401 or 407, then all the WWW-Authenticate and
    Proxy-Authenticate headers from all the 401 and 407 replies will be
-   aggregated in a new final reply. If only one branch received the
+   aggregated in a new final response. If only one branch received the
    winning 401 or 407 then this reply will be forwarded (no new one will
-   be built). If 0 only the first 401, or if no 401 was received the first
-   407, will be forwarded (no header aggregation).
+   be built).
 
-   Default value is 1 (required by rfc3261).
+   If disabled (set to 0) only the first 401, or if no 401 was received
+   the first 407, will be forwarded (no header aggregation).
+
+   Default value is 1 (required by RFC 3261).
 
    Example 1.14. Set aggregate_challenges parameter
 ...
@@ -923,13 +926,13 @@ modparam("tm", "aggregate_challenges", 0)
    INVITE message. Do not disable the INVITE re-parsing for example in the
    following cases:
 
-   - The INVITE contains a preloaded route-set, and SER forwards the
-   message to the next hop according to the Route header. The Route header
-   is not removed in the CANCEL without reparse_invite=1.
+   - The INVITE contains a preloaded route-set, and Kamailio forwards the
+   message to the next hop according to the "Route" header. The "Route"
+   header is not removed in the CANCEL without reparse_invite=1.
 
-   - SER record-routes, thus an in-dialog INVITE contains a Route header
-   which is removed during loose routing. If the in-dialog INVITE is
-   rejected, the negative ACK still contains the Route header without
+   - Kamailio record-routes, thus an in-dialog INVITE contains a "Route"
+   header which is removed during loose routing. If the in-dialog INVITE
+   is rejected, the negative ACK still contains the "Route" header without
    reparse_invite=1.
 
    Default value is 1.
@@ -946,7 +949,7 @@ modparam("tm", "reparse_invite", 0)
    INVITE.
 
    Note, that the parameter value effects only those headers which are not
-   covered by RFC-3261 (which are neither mandatory nor prohibited in
+   covered by RFC 3261 (which are neither mandatory nor prohibited in
    CANCEL and ACK), and the parameter can be used only together with
    reparse_invite=1.
 
@@ -959,11 +962,11 @@ modparam("tm", "ac_extra_hdrs", "myfavoriteheaders-")
 
 4.17. blst_503 (integer)
 
-   If set and the blacklist support is enabled, every 503 reply source is
-   added to the blacklist. The initial blacklist timeout (or ttl) depends
-   on the presence of a Retry-After header in the reply and the values of
-   the following tm parameters: blst_503_def_timeout, blst_503_min_timeout
-   and blst_503_max_timeout.
+   If set and the Kamailio blacklist support is enabled, every 503 reply
+   source is added to the blacklist. The initial blacklist timeout (or
+   ttl) depends on the presence of a "Retry-After" header in the reply and
+   the values of the following tm parameters: blst_503_def_timeout,
+   blst_503_min_timeout and blst_503_max_timeout.
 
    WARNING:blindly allowing 503 blacklisting could be very easily
    exploited for DOS attacks in most network setups.
@@ -977,13 +980,13 @@ modparam("tm", "blst_503", 1)
 
 4.18. blst_503_def_timeout (integer)
 
-   Blacklist interval in seconds for a 503 reply with no Retry-After
+   Blacklist interval in seconds for a 503 reply with no "Retry-After"
    header. See also blst_503, blst_503_min_timeout and
    blst_503_max_timeout.
 
-   The default value is 0, which means that if no Retry-After header is
-   present, the 503 reply source will not be blacklisted (rfc conformant
-   behaviour).
+   The default value is 0, which means that if no "Retry-After" header is
+   present, the 503 reply source will not be blacklisted (RFC 3261
+   conformant behaviour).
 
    Example 1.18. Set blst_503_def_timeout parameter
 ...
@@ -993,9 +996,10 @@ modparam("tm", "blst_503_def_timeout", 120)
 4.19. blst_503_min_timeout (integer)
 
    Minimum blacklist interval in seconds for a 503 reply with a
-   Retry-After header. It will be used if the Retry-After value is
-   smaller. See also blst_503, blst_503_def_timeout and
-   blst_503_max_timeout.
+   "Retry-After" header. It will be used if the "Retry-After" value is
+   smaller than this value.
+
+   See also blst_503, blst_503_def_timeout and blst_503_max_timeout.
 
    The default value is 0
 
@@ -1007,9 +1011,10 @@ modparam("tm", "blst_503_min_timeout", 30)
 4.20. blst_503_max_timeout (integer)
 
    Maximum blacklist interval in seconds for a 503 reply with a
-   Retry-After header. It will be used if the Retry-After value is
-   greater. See also blst_503, blst_503_def_timeout and
-   blst_503_min_timeout.
+   "Retry-After header". It will be used if the "Retry-After" value is
+   greater than this limit.
+
+   See also blst_503, blst_503_def_timeout and blst_503_min_timeout.
 
    The default value is 3600
 
@@ -1029,11 +1034,11 @@ modparam("tm", "blst_503_max_timeout", 604800)
    INFO=16, REGISTER=32, SUBSCRIBE=64, NOTIFY=126, OTHER=256 (all the
    unknown types). Check parser/msg_parser.h for farther details.
 
-   Change the value carefully, because requests not having provisional
-   response (everything but INVITE) can easily cause the next hop to be
-   inserted into the blacklist by mistake. For exmaple the next hop is a
-   proxy, it is alive, but waiting for the response of the UAS, and has
-   higher fr_timer value.
+   Change the value carefully, because requests that doesn't get a
+   provisional response (everything but INVITE) can easily cause the next
+   hop to be inserted into the blacklist by mistake. For exmaple the next
+   hop is a proxy, it is alive, but waiting for the response of the UAS,
+   and has higher fr_timer value.
 
    The default value is 1, only INVITEs trigger blacklisting
 
@@ -1045,8 +1050,8 @@ modparam("tm", "blst_methods_add", 33)
 
 4.22. blst_methods_lookup (unsigned integer)
 
-   Bitmap of method types that are looked-up in the blacklist before
-   statefull forwarding. See also blst_methods_add
+   Bitmap of method types that are looked-up in the blacklist before being
+   forwarded statefully. See also blst_methods_add
 
    The default value is 4294967287, every method type except BYE. (We try
    to deliver BYEs no matter what)
@@ -1060,10 +1065,10 @@ modparam("tm", "blst_methods_lookup", 1)
 4.23. cancel_b_method (integer)
 
    Method used when attempting to CANCEL an unreplied transaction branch
-   (a branch where no reply greater the 99 was received). The possible
-   values are 0, 1, and 2.
+   (a branch where no response was received). The possible values are 0,
+   1, and 2.
 
-   0 will immediately stop the request (INVITE) retransmission on the
+   - 0 will immediately stop the request (INVITE) retransmission on the
    branch and it will behave as if the branch was immediately replied with
    a 487 (a fake internal 487 reply). The advantage is the unreplied
    branches will be terminated immediately. However it introduces a race
@@ -1071,22 +1076,22 @@ modparam("tm", "blst_methods_lookup", 1)
    have an UA receiving a 2xx after a 487. Moreover this risk is greatly
    amplified by packet loss (e.g. if an 180 is lost the branch will look
    as unreplied and a CANCEL will silently drop the branch, but a 2xx can
-   still come at a later time). This is the behaviour for ser versions
-   older then 2.1.
+   still come at a later time). This is the behaviour for SER versions
+   older than 2.1.
 
-   1 will keep retransmitting the request on unreplied branches. If a
-   provisional answer is later received a CANCEL will be immediately sent
-   back (attempting to quickly trigger a 487). This approach is race free
-   and avoids the 2xx after 487 problem, but it's more resource intensive:
+   - 1 will keep retransmitting the request on unreplied branches. If a
+   provisional answer is received a CANCEL will be immediately sent back
+   (attempting to quickly trigger a 487). This approach is race free and
+   avoids the 2xx after 487 problem, but it's more resource intensive:
    faced with a branch towards and UA that doesn't answer, a CANCEL
    attempt will keep the transaction alive for the whole timeout interval
    (fr_timer).
 
-   2 will send and retransmit CANCEL even on unreplied branches, stopping
-   the request retransmissions. This has the same advantages as 1 and also
-   avoids the extra roundtrip in the case of the provisional reply, but
-   it's not RFC 3261 conforming (the RFC allows sending CANCELs only on
-   pending branches).
+   - 2 will send and retransmit CANCEL even on unreplied branches,
+   stopping the request retransmissions. This has the same advantages as 1
+   and also avoids the extra roundtrip in the case of the provisional
+   reply, but it's not RFC 3261 conforming (the RFC allows sending CANCELs
+   only on pending branches).
 
    The default value is 1.
 
@@ -1113,8 +1118,8 @@ modparam("tm", "cancel_b_method", 1)
    the outgoing socket address is not corrected in any other part of the
    message. It is dangerous on multihomed hosts: when the new SIP request
    after the DNS failover is sent via different interface than the first
-   request, the message can contain incorrect ip address in the
-   Record-Route header for instance.
+   request, the message can contain incorrect IP address in the
+   Record-Route header.
 
    Default value is 1.
 
@@ -1142,7 +1147,7 @@ onreply_route["stateless_replies"] {
 
 4.26. contacts_avp (string)
 
-   This is the name of an XAVP that t_load_contacts() function uses to
+   This is the name of an XAVP that the t_load_contacts() function uses to
    store contacts of the destination set and that t_next_contacts()
    function uses to restore those contacts.
 
@@ -1156,7 +1161,7 @@ modparam("tm", "contacts_avp", "tm_contacts")
 
 4.27. contact_flows_avp (string)
 
-   This is the name of an XAVP that t_next_contacts() function uses to
+   This is the name of an XAVP that the t_next_contacts() function uses to
    store contacts (if any) that it skipped, because they contained same
    +sip.instance value than some other contact, and that
    t_next_contact_flows() function uses to restore those contacts.
@@ -1178,9 +1183,6 @@ modparam("tm", "contact_flows_avp", "tm_contact_flows")
    fr_timer timer, effectively overriding the value configured in fr_timer
    parameter for the current transaction.
 
-   The value of this parameter is the the name of the AVP to be checked,
-   without the $ character or "$avp" prefix.
-
 Note
 
    The value of the AVP is expected to be expressed in seconds and not
@@ -1195,13 +1197,14 @@ Note
 
    In Kamailio compatibility mode (defined by #!KAMAILIO), the value of
    the parameter must be the name of an AVP in pseudo-variable format:
-   $avp(name). In SER compatibility mode it must by just AVP name.
+   $avp(name). In SER compatibility mode it must be just AVP name.
 
    Example 1.28. Set fr_timer_avp parameter
 ...
-modparam("tm", "fr_timer_avp", "i:708")
-# K mode
+# Kamailio mode
 modparam("tm", "fr_timer_avp", "$avp(i:708)")
+# Old SER mode
+modparam("tm", "fr_timer_avp", "i:708")
 ...
 
 4.29. fr_inv_timer_avp (string)
@@ -1213,9 +1216,6 @@ modparam("tm", "fr_timer_avp", "$avp(i:708)")
    non-zero then its value will be used for the fr_inv_timer timer,
    effectively overriding the value configured in fr_inv_timer parameter
    for the current transaction.
-
-   The value of this parameter is the the name of the AVP to be checked,
-   without the $ character or "$avp" prefix.
 
 Note
 
@@ -1235,22 +1235,24 @@ Note
 
    Example 1.29. Set fr_inv_timer_avp parameter
 ...
-modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
-# K mode
+# Kamailio mode
 modparam("tm", "fr_inv_timer_avp", "$avp(my_fr_inv_timer)")
+# Old SER mode
+modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 ...
 
 4.30. unmatched_cancel (string)
 
    This parameter selects between forwarding CANCELs that do not match any
    transaction statefully (0, default value), statelessly (1) or dropping
-   them (2). Note that the statefull forwarding has an additional hidden
-   advantage: tm will be able to recognize INVITEs that arrive after their
-   CANCEL. Note also that this feature could be used to try a memory
-   exhaustion DOS attack against a proxy that authenticates all requests,
-   by continuously flooding the victim with CANCELs to random destinations
-   (since the CANCEL cannot be authenticated, each received bogus CANCEL
-   will create a new transaction that will live by default 30s).
+   them (2). Note that the stateful forwarding has an additional hidden
+   advantage: the tm module will be able to recognize INVITEs that arrive
+   after their CANCEL. Note also that this feature could be used to try a
+   memory exhaustion DOS attack against a proxy that authenticates all
+   requests, by continuously flooding the victim with CANCELs to random
+   destinations (since the CANCEL cannot be authenticated, each received
+   bogus CANCEL will create a new transaction that will live by default
+   30s).
 
    Default value is 0.
 
@@ -1261,9 +1263,9 @@ modparam("tm", "unmatched_cancel", "2")
 
 4.31. ruri_matching (integer)
 
-   If set it will also try to match the request uri when doing pre-3261
-   transaction matching (the via branch parameter does not contain the
-   3261 cookie).
+   If set the TM module will try to match the request URI when doing SIP
+   1.0 (pre-RFC 3261) transaction matching (the "Via" header branch
+   parameter does not contain the 3261 cookie).
 
    The only reason to have it not set is for interoperability with old,
    broken implementations.
@@ -1280,9 +1282,9 @@ modparam("tm", "ruri_matching", 1)
 
 4.32. via1_matching (integer)
 
-   If set it will also try to match the topmost via when doing pre-3261
-   transaction matching (the via branch parameter does not contain the
-   3261 cookie).
+   If set the TM module will try to match the topmost "Via" header when
+   doing SIP 1.0 (pre-RFC 3261) transaction matching (the "Via" header
+   branch parameter does not contain the 3261 cookie).
 
    The only reason to have it not set is for interoperability with old,
    broken implementations.
@@ -1299,12 +1301,12 @@ modparam("tm", "via1_matching", 1)
 
 4.33. callid_matching (integer)
 
-   If set it will also try to match the callid when doing transaction
-   matching.
+   If set the TM module will try to match the callid when doing
+   transaction matching.
 
    Turn on if you don't want replies/requests from broken clients who send
    a mangled Call-ID to match the transaction. For example when the other
-   side won't recognise the response anyway because of changed Call-ID,
+   side won't recognise the response anyway because of a changed Call-ID,
    this setting will prevent accounting records to be created or
    failure_route to be skipped.
 
@@ -1365,11 +1367,11 @@ modparam("tm", "default_reason", "Unknown reason")
 
 4.37. disable_6xx_block (integer)
 
-   If set tm will treat all the 6xx replies like normal replies (warning:
-   this would be non-rfc conformant behaviour).
+   If set the TM module will treat all the 6xx replies like normal replies
+   (warning: this would be non-RFC conformant behaviour).
 
    If not set (default) receiving a 6xx will cancel all the running
-   parallel branches, will stop dns failover and forking. However serial
+   parallel branches, will stop DNS failover and forking. However serial
    forking using append_branch() in the failure_route will still work.
 
    It can be overwritten on a per transaction basis using
@@ -1389,12 +1391,12 @@ modparam("tm", "disable_6xx_block", 1)
 
 4.38. local_ack_mode (integer)
 
-   It controls where locally generated ACKs for 2xx replies to local
-   transactions (transactions created via t_uac*() either thorugh the tm
-   api or via RPC/mi/fifo) are sent.
+   This setting controls where locally generated ACKs for 2xx replies to
+   local transactions (transactions created via t_uac*() either through
+   the TM api or via RPC/mi/fifo) are sent.
 
    It has 3 possible values:
-     * 0 - the ACK destination is choosen according to the rfc: the next
+     * 0 - the ACK destination is choosen according to the RFC: the next
        hop is found using the contact and the route set and then DNS
        resolution is used on it.
      * 1 - the ACK is sent to the same address as the corresponding INVITE
@@ -1403,11 +1405,11 @@ modparam("tm", "disable_6xx_block", 1)
 
 Note
 
-   Mode 1 and 2 break the rfc, but are useful to deal with some simple UAs
-   behind the NAT cases (no different routing for the ACK and the contact
-   contains an address behind the NAT).
+   Mode 1 and 2 does not follow RFC 3261, but are useful to deal with some
+   simple UAs behind a NAT (no different routing for the ACK and the
+   contact contains an address behind the NAT).
 
-   The default value is 0 (rfc conformant behaviour).
+   The default value is 0 (RFC conformant behaviour).
 
    Can be set at runtime, e.g.:
         $ kamcmd cfg.set_now_int tm local_ack_mode 0
@@ -1419,9 +1421,9 @@ modparam("tm", "local_ack_mode", 1)
 
 4.39. failure_reply_mode (integer)
 
-   It controls how branches are managed and replies are selected for
-   failure_route handling: keep all, drop all, drop last branches in SIP
-   serial forking handling.
+   This parameter controls how branches are managed and replies are
+   selected for failure_route handling: keep all, drop all, drop last
+   branches in SIP serial forking handling.
 
    To control per transaction see t_drop_replies().
 
@@ -1433,7 +1435,7 @@ modparam("tm", "local_ack_mode", 1)
        redirection in failure route, sent to a new destination and this
        one timeout, you will get again the 3xx). Use t_drop_replies() on
        per transaction fashion to control the behavior you want. It is the
-       default behaviour comming from SER 2.1.x.
+       default behaviour coming from SER 2.1.x.
      * 1 - all branches are discarded by default. You can still overwrite
        the behaviour via t_drop_replies()
      * 2 - by default only the branches of previous leg of serial forking
@@ -1530,7 +1532,7 @@ modparam("tm", "remap_503_500", 0)
 
 4.44. failure_exec_mode (boolean)
 
-   Add local failed branches in timer to be cosidered for failure routing
+   Add local failed branches in timer to be considered for failure routing
    blocks. If disabled, relay functions will return false in case the
    branch could not be forwarded (default behaviour before v4.1.0).
 
@@ -1544,15 +1546,16 @@ modparam("tm", "failure_exec_mode", 1)
 4.45. dns_reuse_rcv_socket (boolean)
 
    Control reuse of the receive socket for additional branches added by
-   dns failover. If set to 1, the receive socket is used for sending out
+   DNS failover. If set to 1, the receive socket is used for sending out
    the new branches, unless the socket is forced explicitely in
    configuration file. If set to 0, selected socket is done depending on
-   value of global parameter mhomed (if mhomed=0, then the first listen
+   value of global parameter "mhomed" (if mhomed=0, then the first listen
    socket is used, otherwise the socket is selected based on routing
    rules).
 
-   Do enable it with caution, it might create troubles on dns results with
-   different transport layer. Better let it disabled and enable mhomed.
+   Do enable it with caution, it might create troubles on DNS results with
+   different transport layer. Better let it be disabled and enable
+   "mhomed".
 
    Default value is 0 (disabled).
 
