@@ -585,8 +585,10 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		</listitem>
 		<listitem>
 			<para><emphasis>flags</emphasis> - set of flags to control the
-			behaviour of the function. If it is 1, then the function will
+			behaviour of the function. If 1st bit is set, then the function will
 			use the domain part of the URI to perform the database table search.
+			If 2nd bit is set, then the credentials are not loaded in variables
+			(a simple check if subscriber exists).
 			</para>
 			<para>
 			The parameter may be a pseudo variable.
@@ -600,7 +602,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		<title>is_subscriber usage</title>
 		<programlisting format="linespecific">
 ...
-if (!is_subscriber("$ru", "subscriber", "1")) {
+if (!is_subscriber("$ru", "subscriber", "3")) {
     # callee is not a local subscriber
     ...
 }
