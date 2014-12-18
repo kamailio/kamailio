@@ -127,22 +127,20 @@ int I_perform_user_authorization_request(struct sip_msg* msg, char* route, char*
     b = cscf_parse_contacts(msg);
 
     if (!b || (!b->contacts && !b->star)) {
-        LM_DBG("DBG:I_UAR: No contacts found\n");
-        return CSCF_RETURN_ERROR;
-    }
-
-    for (c = b->contacts; c; c = c->next) {
-
-        sos_reg = cscf_get_sos_uri_param(c->uri);
-        if (sos_reg == -1) {
-            //error case
-            LM_ERR("ERR:I_UAR: MSG_400_MALFORMED_CONTACT, responding with 400\n");
-            cscf_reply_transactional(msg, 400, MSG_400_MALFORMED_CONTACT);
-            return CSCF_RETURN_BREAK;
-        } else if (sos_reg == -2) {
-            LM_ERR("ERR:I_UAR: MSG_500_SERVER_ERROR_OUT_OF_MEMORY, responding with 500\n");
-            cscf_reply_transactional(msg, 500, MSG_500_SERVER_ERROR_OUT_OF_MEMORY);
-            return CSCF_RETURN_BREAK;
+        LM_DBG("DBG:I_UAR: No contacts found - just fetching bindings\n");
+    } else {
+        for (c = b->contacts; c; c = c->next) {
+            sos_reg = cscf_get_sos_uri_param(c->uri);
+            if (sos_reg == -1) {
+                //error case
+                LM_ERR("ERR:I_UAR: MSG_400_MALFORMED_CONTACT, responding with 400\n");
+                cscf_reply_transactional(msg, 400, MSG_400_MALFORMED_CONTACT);
+                return CSCF_RETURN_BREAK;
+            } else if (sos_reg == -2) {
+                LM_ERR("ERR:I_UAR: MSG_500_SERVER_ERROR_OUT_OF_MEMORY, responding with 500\n");
+                cscf_reply_transactional(msg, 500, MSG_500_SERVER_ERROR_OUT_OF_MEMORY);
+                return CSCF_RETURN_BREAK;
+            }
         }
     }
 
