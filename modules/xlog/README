@@ -86,8 +86,7 @@ Chapter 1. Admin Guide
    This module provides the possibility to print user formatted log or
    debug messages from Kamailio scripts, similar to the printf function. A
    C-style printf specifier is replaced with a part of the SIP request or
-   other variables from system. Section 2, "Implemented Specifiers" shows
-   what can be printed out.
+   other variables from system.
 
 2. Implemented Specifiers
 
@@ -97,7 +96,7 @@ Chapter 1. Admin Guide
 
    The most important changes from earlier versions of Kamailio are:
      * - '%' has been replaced by '$'
-     * - to print a header, use now $hdr(header_name[index]) instead of
+     * - to print a header, use $hdr(header_name[index]) instead of
        %{header_name[index]}
      * - to print an AVP, use now $avp([si]:avp_id[index]) instead of
        %{[si]:avp_id[index]} or $avp([$avp_alias[index]) instead of
@@ -146,7 +145,8 @@ modparam("xlog", "buf_size", 8192)
 
 4.2. force_color (integer)
 
-   When set to 1, forces color printing even if log_stderror=0.
+   When set to 1, forces color codes in log messages even if log_stderror
+   is set to 0.
 
    Default value is 0.
 
@@ -157,8 +157,8 @@ modparam("xlog", "force_color", 0)
 
 4.3. long_format (integer)
 
-   When set to 1, prints config file name in xlogl() and xdbgl() before
-   line number.
+   When set to 1, outputs the configuration file name in xlogl() and
+   xdbgl() before the line number.
 
    Default value is 0.
 
@@ -169,7 +169,7 @@ modparam("xlog", "long_format", 1)
 
 4.4. prefix (str)
 
-   Prefix to be printed before the log message.
+   Prefix to be output before the log message.
 
    Default value is "<script>: ".
 
@@ -180,9 +180,9 @@ modparam("xlog", "prefix", "-xlog: ")
 
 4.5. log_facility (string)
 
-   Syslog facility to be used when printing xlog messages. In this way you
-   can get the xlog messages in a separate syslog file than the debug
-   messages issued from source code.
+   Syslog facility to be used for the xlog output. By setting this, and
+   configuring syslog, you can get the xlog messages in a separate syslog
+   file than the debug messages issued from the source code.
 
    Default value is NULL (unset - use same facility as source code debug
    messages).
@@ -192,13 +192,13 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 
 4.6. log_colors (string)
 
-   Update terminal colors used by core for log levels (when log_stderr=1
-   and log_color=1). The value has to be 'logname=colors', where colors is
-   two characters specifying foreground and background in the same format
-   as $C(xy) variable.
+   Update terminal colors used by the Kamailio core for log levels (when
+   log_stderr=1 and log_color=1). The value has to be 'logname=colors',
+   where colors is two characters specifying foreground and background in
+   the same format as $C(xy) variable.
 
-   The parameter can be set many times, its value can also be a
-   ';'-separated list of color specs.
+   The parameter can be set many times. The value can also be a
+   ';'-separated list of color specifications.
 
    Default value is NULL.
 
@@ -215,11 +215,11 @@ modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
 
 5.1. xlog([ [facility,] level,] format)
 
-   Print a formated message using LOG function.
+   Output a formated log message.
 
    Meaning of the parameters are as follows:
-     * facility - The log facility that will be used for this single log
-       message.
+     * facility - The syslog facility that will be used for this single
+       log message.
        If this parameter is missing, the implicit facility is either the
        facility set with the 'log_facility' module parameter or the core's
        log facility.
