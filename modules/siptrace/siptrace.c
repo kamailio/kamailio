@@ -533,6 +533,13 @@ static int sip_trace_prepare(sip_msg_t *msg)
 		goto error;
 	}
 
+	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
+				|| (msg->cseq==NULL)))
+	{
+		LM_ERR("cannot parse cseq\n");
+		goto error;
+	}
+
 	return 0;
 error:
 	return -1;
@@ -1249,7 +1256,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 
 	sto.callid = msg->callid->body;
 
-	sto.method = t->method;
+	sto.method = get_cseq(msg)->method;
 
 	strcpy(statusbuf, int2str(ps->code, &sto.status.len));
 	sto.status.s = statusbuf;
@@ -1349,7 +1356,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 
 	sto.callid = msg->callid->body;
-	sto.method = t->method;
+	sto.method = get_cseq(msg)->method;
 
 	if(trace_local_ip.s && trace_local_ip.len > 0) {
 		sto.fromip = trace_local_ip;
