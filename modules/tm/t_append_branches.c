@@ -75,12 +75,16 @@ int t_append_branches(void) {
 	LM_DBG("transaction %u:%u in status %d\n", t->hash_index, t->label, t->uas.status);
 
 	/* test if transaction has already been canceled */
-	if (t->flags & T_CANCELED) goto canceled;
+	if (t->flags & T_CANCELED) {
+		ser_error=E_CANCELED;
+		return -1;
+	}
 
 	if ((t->uas.status >= 200 && t->uas.status<=399)
 			|| ((t->uas.status >= 600 && t->uas.status)
 				&& !(t->flags & (T_6xx | T_DISABLE_6xx))) ) {
-		LM_DBG("transaction %u:%u in status %d: cannot append new branch\n", t->hash_index, t->label, t->uas.status);
+		LM_DBG("transaction %u:%u in status %d: cannot append new branch\n",
+				t->hash_index, t->label, t->uas.status);
 		return -1;
 	}
 
@@ -90,7 +94,8 @@ int t_append_branches(void) {
 	outgoings = t->nr_of_outgoings;
 	orig_msg = t->uas.request;
 
-	LM_DBG("Call %.*s: %d (%d) outgoing branches\n",orig_msg->callid->body.len, orig_msg->callid->body.s,outgoings, nr_branches);
+	LM_DBG("Call %.*s: %d (%d) outgoing branches\n",orig_msg->callid->body.len,
+			orig_msg->callid->body.s,outgoings, nr_branches);
 
 	lowest_ret=E_UNSPEC;
 	added_branches=0;
@@ -142,7 +147,8 @@ int t_append_branches(void) {
 
 	clear_branches();
 
-	LM_DBG("Call %.*s: %d (%d) outgoing branches after clear_branches()\n",orig_msg->callid->body.len, orig_msg->callid->body.s,outgoings, nr_branches);
+	LM_DBG("Call %.*s: %d (%d) outgoing branches after clear_branches()\n",
+			orig_msg->callid->body.len, orig_msg->callid->body.s,outgoings, nr_branches);
 	setbflagsval(0, backup_bflags);
 
 	/* update message flags, if changed in branch route */
@@ -169,7 +175,8 @@ int t_append_branches(void) {
 				if (branch_ret==i) { /* success */
 					success_branch++;
 					if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
-						run_trans_callbacks_with_buf( TMCB_REQUEST_OUT, &t->uac[nr_branches].request,
+						run_trans_callbacks_with_buf( TMCB_REQUEST_OUT,
+								&t->uac[nr_branches].request,
 								orig_msg, 0, -orig_msg->REQ_METHOD);
 				}
 				else /* new branch added */
