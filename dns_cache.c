@@ -2808,7 +2808,11 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 	char origproto;
 	str srv_name;
 
-	origproto=*proto;
+	if(proto) {
+		origproto=*proto;
+	} else {
+		origproto=PROTO_NONE;
+	}
 	he=0;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LM_WARN("called before dns cache initialization\n");
@@ -2848,7 +2852,7 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 		dns_hash_put(e);
 	}
 naptr_not_found:
-	*proto = origproto;
+	if(proto) *proto = origproto;
 	he = no_naptr_srv_sip_resolvehost(name,port,proto);
 	/* fallback all the way down to A/AAAA */
 	if (he==0) {
