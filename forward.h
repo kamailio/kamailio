@@ -205,7 +205,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 		}
 		if (unlikely(udp_send(dst, outb.s, outb.len)==-1)){
 			STATS_TX_DROPS;
-			LM_ERR("udp_send failed\n");
+			LOG(cfg_get(core, core_cfg, corelog), "udp_send failed\n");
 			goto error;
 		}
 	}
@@ -224,7 +224,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			}
 			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
-				LM_ERR("tcp_send failed\n");
+				LOG(cfg_get(core, core_cfg, corelog), "tcp_send failed\n");
 				goto error;
 			}
 		}
@@ -244,7 +244,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			}
 			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
-				LM_ERR("tcp_send failed\n");
+				LOG(cfg_get(core, core_cfg, corelog), "tcp_send failed\n");
 				goto error;
 			}
 		}
@@ -269,7 +269,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			}
 			if (unlikely(sctp_core_msg_send(dst, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
-				LM_ERR("sctp_msg_send failed\n");
+				LOG(cfg_get(core, core_cfg, corelog), "sctp_msg_send failed\n");
 				goto error;
 			}
 		}
