@@ -100,8 +100,8 @@ extern pv_spec_t ds_attrs_pv;
 extern struct tm_binds tmb;
 extern str ds_ping_method;
 extern str ds_ping_from;
-extern int probing_threshhold; /*!< number of failed requests,
-								 before a destination is taken into probing */ 
+extern int probing_threshold; /*!< number of failed requests, before a destination is taken into probing */
+extern int inactive_threshold;								 
 extern int ds_probing_mode;
 extern str ds_outbound_proxy;
 extern str ds_default_socket;
@@ -172,7 +172,7 @@ typedef struct _ds_dest
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
 	unsigned short int port; 	/*!< Port of the URI */
 	unsigned short int proto; 	/*!< Protocol of the URI */
-	int failure_count;
+	int message_count;
 	struct _ds_dest *next;
 } ds_dest_t;
 

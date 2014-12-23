@@ -30,7 +30,7 @@
  * 2006-08-15  added support for authorization username hashing (carsten)
  * 2007-01-11  Added a function to check if a specific gateway is in a
  * group (carsten)
- * 2007-01-12  Added a threshhold for automatic deactivation (carsten)
+ * 2007-01-12  Added a threshold for automatic deactivation (carsten)
  * 2007-02-09  Added active probing of failed destinations and automatic
  * re-enabling of destinations (carsten)
  * 2007-05-08  Ported the changes to SVN-Trunk, renamed ds_is_domain to
@@ -2187,7 +2187,43 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 }
 
 /**
- *
+ * Get state for given destination
+ */
+int ds_get_state(int group, str *address)
+{
+	int i=0;
+	int state = 0;
+	ds_set_t *idx = NULL;
+
+	if(_ds_list==NULL || _ds_list_nr<=0)
+	{
+		LM_ERR("the list is null\n");
+		return -1;
+	}
+
+	/* get the index of the set */
+	if(ds_get_index(group, &idx)!=0)
+	{
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+
+	while(i<idx->nr)
+	{
+		if(idx->dlist[i].uri.len==address->len
+				&& strncasecmp(idx->dlist[i].uri.s, address->s,
+					address->len)==0)
+		{
+			/* destination address found */
+			state = idx->dlist[i].flags;
+		}
+		i++;
+	}
+	return state;
+}
+
+/**
+ * Update destionation's state
  */
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 {
@@ -2219,7 +2255,10 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 
 			/* reset the bits used for states */
 			idx->dlist[i].flags &= ~(DS_STATES_ALL);
-
+			
+			/* we need the initial state for inactive counter */
+			int init_state = state;
+			
 			if((state & DS_TRYING_DST) && (old_state & DS_INACTIVE_DST))
 			{
 				/* old state is inactive, new state is trying => keep it inactive
@@ -2235,15 +2274,17 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			} else {
 				idx->dlist[i].flags |= state;
 			}
-
+			
 			if(state & DS_TRYING_DST)
 			{
-				idx->dlist[i].failure_count++;
-				if (idx->dlist[i].failure_count >= probing_threshhold)
+				idx->dlist[i].message_count++;
+				/* Destination is not replying.. Increasing failure counter */
+				if (idx->dlist[i].message_count >= probing_threshold)
 				{
+					/* Destionation has too much lost messages.. Bringing it to inactive state */
 					idx->dlist[i].flags &= ~DS_TRYING_DST;
 					idx->dlist[i].flags |= DS_INACTIVE_DST;
-					idx->dlist[i].failure_count = 0;
+					idx->dlist[i].message_count = 0;
 				}
 			} else {
 				idx->dlist[i].failure_count = 0;
@@ -2375,10 +2416,10 @@ int ds_print_list(FILE *fout)
 			else if (list->dlist[j].flags&DS_TRYING_DST) {
 				fprintf(fout, "    Trying");
 				/* print the tries for this host. */
-				if (list->dlist[j].failure_count > 0) {
+				if (list->dlist[j].message_count > 0) {
 					fprintf(fout, " (Fail %d/%d)",
-							list->dlist[j].failure_count,
-							probing_threshhold);
+							list->dlist[j].message_count,
+							probing_threshold);
 				} else {
 					fprintf(fout, "           ");
 				}
@@ -2607,7 +2648,8 @@ static void ds_options_callback( struct cell *t, int type,
 		state = 0;
 		if (ds_probing_mode==DS_PROBE_ALL)
 			state |= DS_PROBING_DST;
-		if (ds_update_state(fmsg, group, &uri, state) != 0)
+		// Check if in the meantime someone disabled the target through RPC or MI
+		if (!(ds_get_state(group, &uri) & DS_DISABLED_DST) && ds_update_state(fmsg, group, &uri, state) != 0)
 		{
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
@@ -2616,8 +2658,8 @@ static void ds_options_callback( struct cell *t, int type,
 		state = DS_TRYING_DST;
 		if (ds_probing_mode!=DS_PROBE_NONE)
 			state |= DS_PROBING_DST;
-
-		if (ds_update_state(fmsg, group, &uri, state) != 0)
+		// Check if in the meantime someone disabled the target through RPC or MI
+		if (!(ds_get_state(group, &uri) & DS_DISABLED_DST) && ds_update_state(fmsg, group, &uri, state) != 0)
 		{
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);
