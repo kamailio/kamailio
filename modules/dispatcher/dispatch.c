@@ -2257,6 +2257,9 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			/* reset the bits used for states */
 			idx->dlist[i].flags &= ~(DS_STATES_ALL);
 			
+			/* we need the initial state for inactive counter */
+			int init_state = state;
+			
 			if((state & DS_TRYING_DST) && (old_state & DS_INACTIVE_DST))
 			{
 				/* old state is inactive, new state is trying => keep it inactive
@@ -2285,7 +2288,20 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 					idx->dlist[i].message_count = 0;
 				}
 			} else {
-				idx->dlist[i].message_count = 0;
+				if(!(init_state & DS_TRYING_DST) && (old_state & DS_INACTIVE_DST)){
+					idx->dlist[i].message_count++;
+					/* Destination was inactive but it is just replying.. Increasing successful counter */
+					if (idx->dlist[i].message_count < inactive_threshold)
+					{
+						/* Destination has not enough successful replies.. Leaving it into inactive state */
+						idx->dlist[i].flags |= DS_INACTIVE_DST;
+					}else{
+						/* Destination has enough replied messages.. Bringing it to active state */
+						idx->dlist[i].message_count = 0;
+					}
+				}else{ 
+					idx->dlist[i].message_count = 0;
+				}
 			}
 
 			if (!ds_skip_dst(old_state) && ds_skip_dst(idx->dlist[i].flags))
