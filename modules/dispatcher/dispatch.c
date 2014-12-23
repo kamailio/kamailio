@@ -2431,7 +2431,7 @@ int ds_print_list(FILE *fout)
 				fprintf(fout, "    Trying");
 				/* print the tries for this host. */
 				if (list->dlist[j].message_count > 0) {
-					fprintf(fout, "Fail ( %d/%d)",
+					fprintf(fout, " (Fail %d/%d)",
 							list->dlist[j].message_count,
 							probing_threshold);
 				} else {
