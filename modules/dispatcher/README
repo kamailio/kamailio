@@ -22,6 +22,12 @@ Olle E. Johansson
 
    Edvina AB
 
+Edited by
+
+Alessandro Arrichiello
+
+   Hewlett-Packard
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice Sistem
@@ -66,14 +72,15 @@ Olle E. Johansson
               3.21. ds_ping_from (string)
               3.22. ds_ping_interval (int)
               3.23. ds_probing_threshold (int)
-              3.24. ds_ping_reply_codes (string)
-              3.25. ds_probing_mode (int)
-              3.26. ds_hash_size (int)
-              3.27. ds_hash_expire (int)
-              3.28. ds_hash_initexpire (int)
-              3.29. ds_hash_check_interval (int)
-              3.30. outbound_proxy (str)
-              3.31. ds_default_socket (str)
+              3.24. ds_inactive_threshold (int)
+              3.25. ds_ping_reply_codes (string)
+              3.26. ds_probing_mode (int)
+              3.27. ds_hash_size (int)
+              3.28. ds_hash_expire (int)
+              3.29. ds_hash_initexpire (int)
+              3.30. ds_hash_check_interval (int)
+              3.31. outbound_proxy (str)
+              3.32. ds_default_socket (str)
 
         4. Functions
 
@@ -140,22 +147,23 @@ Olle E. Johansson
    1.21. Set the "ds_ping_method" parameter
    1.22. Set the "ds_ping_from" parameter
    1.23. Set the "ds_ping_interval" parameter
-   1.24. Set the "ds_probing_threshhold" parameter
-   1.25. Set the "ds_ping_reply_codes" parameter
-   1.26. Set the "ds_probing_mode" parameter
-   1.27. Set the "ds_hash_size" parameter
-   1.28. Set the "ds_hash_expire" parameter
-   1.29. Set the "ds_hash_initexpire" parameter
-   1.30. Set the "ds_hash_check_interval" parameter
-   1.31. Set the "outbound_proxy" parameter
-   1.32. Set the "ds_default_socket" parameter
-   1.33. ds_select_dst usage
-   1.34. ds_mark_dst usage
-   1.35. ds_list_exist usage
-   1.36. ds_mark_dst usage
-   1.37. ds_load_unset usage
-   1.38. dispatcher list file
-   1.39. Kamailio config script - sample dispatcher usage
+   1.24. Set the "ds_probing_threshold" parameter
+   1.25. Set the "ds_inactive_threshold" parameter
+   1.26. Set the "ds_ping_reply_codes" parameter
+   1.27. Set the "ds_probing_mode" parameter
+   1.28. Set the "ds_hash_size" parameter
+   1.29. Set the "ds_hash_expire" parameter
+   1.30. Set the "ds_hash_initexpire" parameter
+   1.31. Set the "ds_hash_check_interval" parameter
+   1.32. Set the "outbound_proxy" parameter
+   1.33. Set the "ds_default_socket" parameter
+   1.34. ds_select_dst usage
+   1.35. ds_mark_dst usage
+   1.36. ds_list_exist usage
+   1.37. ds_mark_dst usage
+   1.38. ds_load_unset usage
+   1.39. dispatcher list file
+   1.40. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -632,12 +640,24 @@ Note
 
    Default value is "1" (set inactive with first failure).
 
-   Example 1.24. Set the "ds_probing_threshhold" parameter
+   Example 1.24. Set the "ds_probing_threshold" parameter
  ...
- modparam("dispatcher", "ds_probing_threshhold", 10)
+ modparam("dispatcher", "ds_probing_threshold", 10)
  ...
 
-3.24. ds_ping_reply_codes (string)
+3.24. ds_inactive_threshold (int)
+
+   If you want to set a gateway into active mode, there can be a
+   specific number of successful requests until it will change from "inactive"
+   to "active". This parameter can be modified via ser config framework.
+
+   Default value is "1" (set active with first success).
+
+   Example 1.25. Set the "ds_inactive_threshold" parameter
+ ...
+ modparam("dispatcher", "ds_inactive_threshold", 10)
+
+3.25. ds_ping_reply_codes (string)
 
    This parameter defines the valid response codes, which are accepted as
    a valid reply to the PING-Method. It is a list separated by colons,
@@ -649,13 +669,13 @@ Note
 
    Default value is "" (only 200 OK is accepted).
 
-   Example 1.25. Set the "ds_ping_reply_codes" parameter
+   Example 1.26. Set the "ds_ping_reply_codes" parameter
  ...
  modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=
 3")
  ...
 
-3.25. ds_probing_mode (int)
+3.26. ds_probing_mode (int)
 
    Controls what gateways are tested to see if they are reachable. If set
    to 0, only the gateways with state PROBING are tested; if set to 1, all
@@ -665,12 +685,12 @@ Note
 
    Default value is "0".
 
-   Example 1.26. Set the "ds_probing_mode" parameter
+   Example 1.27. Set the "ds_probing_mode" parameter
  ...
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
 
-3.26. ds_hash_size (int)
+3.27. ds_hash_size (int)
 
    The value to be used as power of two to set the number of slots to hash
    table storing data for call load dispatching (e.g., value 8 will create
@@ -679,24 +699,24 @@ Note
 
    Default value is "0".
 
-   Example 1.27. Set the "ds_hash_size" parameter
+   Example 1.28. Set the "ds_hash_size" parameter
  ...
  modparam("dispatcher", "ds_hash_size", 9)
  ...
 
-3.27. ds_hash_expire (int)
+3.28. ds_hash_expire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    BYE was received meanwhile.
 
    Default value is "7200".
 
-   Example 1.28. Set the "ds_hash_expire" parameter
+   Example 1.29. Set the "ds_hash_expire" parameter
  ...
  modparam("dispatcher", "ds_hash_expire", 3600)
  ...
 
-3.28. ds_hash_initexpire (int)
+3.29. ds_hash_initexpire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    200 for INVITE was received meanwhile and state updated with
@@ -704,35 +724,35 @@ Note
 
    Default value is "7200".
 
-   Example 1.29. Set the "ds_hash_initexpire" parameter
+   Example 1.30. Set the "ds_hash_initexpire" parameter
  ...
  modparam("dispatcher", "ds_hash_initexpire", 60)
  ...
 
-3.29. ds_hash_check_interval (int)
+3.30. ds_hash_check_interval (int)
 
    Time interval in seconds to scan internal hash table with call load
    dispatching data for expired items.
 
    Default value is "30".
 
-   Example 1.30. Set the "ds_hash_check_interval" parameter
+   Example 1.31. Set the "ds_hash_check_interval" parameter
  ...
  modparam("dispatcher", "ds_hash_check_interval", 60)
  ...
 
-3.30. outbound_proxy (str)
+3.31. outbound_proxy (str)
 
    SIP URI of outbound proxy to be used when sending pings.
 
    By default no outbound proxy is defined.
 
-   Example 1.31. Set the "outbound_proxy" parameter
+   Example 1.32. Set the "outbound_proxy" parameter
  ...
  modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
  ...
 
-3.31. ds_default_socket (str)
+3.32. ds_default_socket (str)
 
    Default socket to be used for sending pings and dispatching requests
    when a gateway has no send socket configured.
@@ -740,7 +760,7 @@ Note
    By default no default socket is defined, the first configuration script
    listen directive is used.
 
-   Example 1.32. Set the "ds_default_socket" parameter
+   Example 1.33. Set the "ds_default_socket" parameter
  ...
  modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
  ...
@@ -818,7 +838,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.33. ds_select_dst usage
+   Example 1.34. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -882,7 +902,7 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.34. ds_mark_dst usage
+   Example 1.35. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -899,7 +919,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.35. ds_list_exist usage
+   Example 1.36. ds_list_exist usage
 ...
 if(ds_list_exist("10")) {
     ...
@@ -942,7 +962,7 @@ if(ds_list_exist("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.36. ds_mark_dst usage
+   Example 1.37. ds_mark_dst usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -973,7 +993,7 @@ if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.37. ds_load_unset usage
+   Example 1.38. ds_load_unset usage
 ...
 route {
     ...
@@ -1166,7 +1186,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.38. dispatcher list file
+   Example 1.39. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1191,7 +1211,7 @@ r,opt)
 
    Next picture shows a sample usage of the dispatcher module.
 
-   Example 1.39. Kamailio config script - sample dispatcher usage
+   Example 1.40. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
