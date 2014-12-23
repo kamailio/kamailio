@@ -1604,7 +1604,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		}
 #endif
 		uac->icode = 908; /* internal code set to delivery failure */
-		LOG(L_ERR, "ERROR: t_send_branch: sending request on branch %d "
+		LOG(L_WARN, "ERROR: t_send_branch: sending request on branch %d "
 				"failed\n", branch);
 		if (proxy) { proxy->errors++; proxy->ok=0; }
 		if(tm_failure_exec_mode==1) {
