@@ -111,6 +111,8 @@ pv_elem_t * hash_param_model = NULL;
 
 int probing_threshold = 1; /* number of failed requests, before a destination
 							   is taken into probing */
+int inactive_threshhold = 1; /* number of successful requests, before a destination
+							   is taken into active */
 str ds_ping_method = str_init("OPTIONS");
 str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
