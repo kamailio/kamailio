@@ -30,6 +30,7 @@
  *		re-enabling of destinations
  * 2007-05-08  Ported the changes to SVN-Trunk and renamed ds_is_domain
  *		to ds_is_from_list.
+ * 2014-12-23  Corrected misspelled words in some variables' name (alezzandro) 
  */
 
 /*! \file
@@ -100,7 +101,7 @@ extern pv_spec_t ds_attrs_pv;
 extern struct tm_binds tmb;
 extern str ds_ping_method;
 extern str ds_ping_from;
-extern int probing_threshhold; /*!< number of failed requests,
+extern int probing_threshold; /*!< number of failed requests,
 								 before a destination is taken into probing */ 
 extern int ds_probing_mode;
 extern str ds_outbound_proxy;

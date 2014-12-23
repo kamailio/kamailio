@@ -38,6 +38,7 @@
  * 2007-07-18  removed index stuff
  * 			   added DB support to load/reload data(ancuta)
  * 2007-09-17  added list-file support for reload data (carstenbock)
+ * 2014-12-23  Corrected misspelled words in some variables' name (alezzandro)
  */
 
 /*! \file
@@ -2239,7 +2240,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			if(state & DS_TRYING_DST)
 			{
 				idx->dlist[i].failure_count++;
-				if (idx->dlist[i].failure_count >= probing_threshhold)
+				if (idx->dlist[i].failure_count >= probing_threshold)
 				{
 					idx->dlist[i].flags &= ~DS_TRYING_DST;
 					idx->dlist[i].flags |= DS_INACTIVE_DST;
@@ -2378,7 +2379,7 @@ int ds_print_list(FILE *fout)
 				if (list->dlist[j].failure_count > 0) {
 					fprintf(fout, " (Fail %d/%d)",
 							list->dlist[j].failure_count,
-							probing_threshhold);
+							probing_threshold);
 				} else {
 					fprintf(fout, "           ");
 				}
