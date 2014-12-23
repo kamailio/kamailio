@@ -148,21 +148,22 @@ Alessandro Arrichiello
    1.22. Set the "ds_ping_from" parameter
    1.23. Set the "ds_ping_interval" parameter
    1.24. Set the "ds_probing_threshold" parameter
-   1.25. Set the "ds_ping_reply_codes" parameter
-   1.26. Set the "ds_probing_mode" parameter
-   1.27. Set the "ds_hash_size" parameter
-   1.28. Set the "ds_hash_expire" parameter
-   1.29. Set the "ds_hash_initexpire" parameter
-   1.30. Set the "ds_hash_check_interval" parameter
-   1.31. Set the "outbound_proxy" parameter
-   1.32. Set the "ds_default_socket" parameter
-   1.33. ds_select_dst usage
-   1.34. ds_mark_dst usage
-   1.35. ds_list_exist usage
-   1.36. ds_mark_dst usage
-   1.37. ds_load_unset usage
-   1.38. dispatcher list file
-   1.39. Kamailio config script - sample dispatcher usage
+   1.25. Set the "ds_inactive_threshold" parameter
+   1.26. Set the "ds_ping_reply_codes" parameter
+   1.27. Set the "ds_probing_mode" parameter
+   1.28. Set the "ds_hash_size" parameter
+   1.29. Set the "ds_hash_expire" parameter
+   1.30. Set the "ds_hash_initexpire" parameter
+   1.31. Set the "ds_hash_check_interval" parameter
+   1.32. Set the "outbound_proxy" parameter
+   1.33. Set the "ds_default_socket" parameter
+   1.34. ds_select_dst usage
+   1.35. ds_mark_dst usage
+   1.36. ds_list_exist usage
+   1.37. ds_mark_dst usage
+   1.38. ds_load_unset usage
+   1.39. dispatcher list file
+   1.40. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -837,7 +838,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.33. ds_select_dst usage
+   Example 1.34. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -901,7 +902,7 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.34. ds_mark_dst usage
+   Example 1.35. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -918,7 +919,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.35. ds_list_exist usage
+   Example 1.36. ds_list_exist usage
 ...
 if(ds_list_exist("10")) {
     ...
@@ -961,7 +962,7 @@ if(ds_list_exist("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.36. ds_mark_dst usage
+   Example 1.37. ds_mark_dst usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -992,7 +993,7 @@ if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.37. ds_load_unset usage
+   Example 1.38. ds_load_unset usage
 ...
 route {
     ...
@@ -1185,7 +1186,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.38. dispatcher list file
+   Example 1.39. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1210,7 +1211,7 @@ r,opt)
 
    Next picture shows a sample usage of the dispatcher module.
 
-   Example 1.39. Kamailio config script - sample dispatcher usage
+   Example 1.40. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
