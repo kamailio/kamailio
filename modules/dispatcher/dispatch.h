@@ -30,6 +30,7 @@
  *		re-enabling of destinations
  * 2007-05-08  Ported the changes to SVN-Trunk and renamed ds_is_domain
  *		to ds_is_from_list.
+ * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state
  */
 
 /*! \file

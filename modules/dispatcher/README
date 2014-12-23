@@ -22,6 +22,12 @@ Olle E. Johansson
 
    Edvina AB
 
+Edited by
+
+Alessandro Arrichiello
+
+   <alezzandro@gmail.com>
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice Sistem
@@ -29,6 +35,8 @@ Olle E. Johansson
    Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
 
    Copyright © 2014 Olle E. Johansson, Edvina AB
+
+   Copyright © 2014 Alessandro Arrichiello
      __________________________________________________________________
 
    Table of Contents
@@ -66,14 +74,15 @@ Olle E. Johansson
               3.21. ds_ping_from (string)
               3.22. ds_ping_interval (int)
               3.23. ds_probing_threshold (int)
-              3.24. ds_ping_reply_codes (string)
-              3.25. ds_probing_mode (int)
-              3.26. ds_hash_size (int)
-              3.27. ds_hash_expire (int)
-              3.28. ds_hash_initexpire (int)
-              3.29. ds_hash_check_interval (int)
-              3.30. outbound_proxy (str)
-              3.31. ds_default_socket (str)
+              3.24. ds_inactive_threshold (int)
+              3.25. ds_ping_reply_codes (string)
+              3.26. ds_probing_mode (int)
+              3.27. ds_hash_size (int)
+              3.28. ds_hash_expire (int)
+              3.29. ds_hash_initexpire (int)
+              3.30. ds_hash_check_interval (int)
+              3.31. outbound_proxy (str)
+              3.32. ds_default_socket (str)
 
         4. Functions
 

@@ -34,6 +34,7 @@
  * 2007-07-18  Added support for load/reload groups from DB 
  * 			   reload triggered from ds_reload MI_Command (ancuta)
  * 2014-12-12  Added "ds_list_exist" function
+ * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state
  */
 
 /*! \file

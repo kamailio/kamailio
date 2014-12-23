@@ -38,6 +38,7 @@
  * 2007-07-18  removed index stuff
  * 			   added DB support to load/reload data(ancuta)
  * 2007-09-17  added list-file support for reload data (carstenbock)
+ * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state
  */
 
 /*! \file
