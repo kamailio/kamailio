@@ -28,6 +28,7 @@
 
 struct cfg_group_dispatcher {
 	int probing_threshold;
+	int inactive_threshold;
 	str ds_ping_reply_codes_str;
 };
 

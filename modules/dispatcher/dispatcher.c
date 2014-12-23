@@ -35,6 +35,7 @@
  * 			   reload triggered from ds_reload MI_Command (ancuta)
  * 2014-12-12  Added "ds_list_exist" function
  * 2014-12-23  Corrected misspelled words in some variables' name (alezzandro)
+ * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state (alezzandro)
  */
 
 /*! \file

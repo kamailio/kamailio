@@ -31,6 +31,7 @@
  * 2007-05-08  Ported the changes to SVN-Trunk and renamed ds_is_domain
  *		to ds_is_from_list.
  * 2014-12-23  Corrected misspelled words in some variables' name (alezzandro) 
+ * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state (alezzandro)
  */
 
 /*! \file
@@ -101,8 +102,8 @@ extern pv_spec_t ds_attrs_pv;
 extern struct tm_binds tmb;
 extern str ds_ping_method;
 extern str ds_ping_from;
-extern int probing_threshold; /*!< number of failed requests,
-								 before a destination is taken into probing */ 
+extern int probing_threshold; /*!< number of failed requests, before a destination is taken into probing */
+extern int inactive_threshold; /*!< number of successful requests, before a destination is taken into active */
 extern int ds_probing_mode;
 extern str ds_outbound_proxy;
 extern str ds_default_socket;
@@ -173,7 +174,7 @@ typedef struct _ds_dest
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
 	unsigned short int port; 	/*!< Port of the URI */
 	unsigned short int proto; 	/*!< Protocol of the URI */
-	int failure_count;
+	int message_count;
 	struct _ds_dest *next;
 } ds_dest_t;
 
