@@ -32,6 +32,7 @@
 
 struct cfg_group_dispatcher	default_dispatcher_cfg = {
 		3,	/* Probing threshold */	
+		3,      /* Inactive threshold */
 		{0,0}	/* reply codes */
 	    };
 
