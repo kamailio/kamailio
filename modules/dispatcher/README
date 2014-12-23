@@ -22,6 +22,12 @@ Olle E. Johansson
 
    Edvina AB
 
+Edited by
+
+Alessandro Arrichiello
+
+   Hewlett-Packard
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice Sistem
@@ -140,7 +146,7 @@ Olle E. Johansson
    1.21. Set the "ds_ping_method" parameter
    1.22. Set the "ds_ping_from" parameter
    1.23. Set the "ds_ping_interval" parameter
-   1.24. Set the "ds_probing_threshhold" parameter
+   1.24. Set the "ds_probing_threshold" parameter
    1.25. Set the "ds_ping_reply_codes" parameter
    1.26. Set the "ds_probing_mode" parameter
    1.27. Set the "ds_hash_size" parameter
@@ -632,9 +638,9 @@ Note
 
    Default value is "1" (set inactive with first failure).
 
-   Example 1.24. Set the "ds_probing_threshhold" parameter
+   Example 1.24. Set the "ds_probing_threshold" parameter
  ...
- modparam("dispatcher", "ds_probing_threshhold", 10)
+ modparam("dispatcher", "ds_probing_threshold", 10)
  ...
 
 3.24. ds_ping_reply_codes (string)

@@ -598,10 +598,10 @@ modparam("dispatcher", "force_dst", 1)
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>ds_probing_threshhold</quote> parameter</title>
+ 		<title>Set the <quote>ds_probing_threshold</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "ds_probing_threshhold", 10)
+ modparam("dispatcher", "ds_probing_threshold", 10)
  ...
  </programlisting>
  		</example>
