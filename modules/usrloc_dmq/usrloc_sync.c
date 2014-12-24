@@ -148,57 +148,57 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 	if (buf == NULL)
 		goto done;	
 	cp = buf;
-	while (1) {
-		memcpy(&(c.len), cp, sizeof(c.len));
-		if (c.len == 0)
-			break;
-		c.s = (char*)cp + sizeof(c.len);
-		cp =  (char*)cp + sizeof(c.len) + c.len;
-		memcpy( &send_sock, cp, sizeof(send_sock));
-		cp = (char*)cp + sizeof(send_sock);
-		memcpy( &flags, cp, sizeof(flags));
-		cp = (char*)cp + sizeof(flags);
-		memcpy( &(path.len), cp, sizeof(path.len));
-		path.s = path.len ? ((char*)cp + sizeof(path.len)) : NULL ;
-		cp =  (char*)cp + sizeof(path.len) + path.len;
-		memcpy( &(ruid.len), cp, sizeof(ruid.len));
-		ruid.s = ruid.len ? ((char*)cp + sizeof(ruid.len)) : NULL ;
-		cp =  (char*)cp + sizeof(ruid.len) + ruid.len;
-		memcpy( &aorhash, cp, sizeof(aorhash));
-		cp = (char*)cp + sizeof(aorhash);
+    while (1) {
+        memcpy(&(c.len), cp, sizeof(c.len));
+        if (c.len == 0)
+            break;
+        c.s = (char*)cp + sizeof(c.len);
+        cp =  (char*)cp + sizeof(c.len) + c.len;
+        memcpy( &send_sock, cp, sizeof(send_sock));
+        cp = (char*)cp + sizeof(send_sock);
+        memcpy( &flags, cp, sizeof(flags));
+        cp = (char*)cp + sizeof(flags);
+        memcpy( &(path.len), cp, sizeof(path.len));
+        path.s = path.len ? ((char*)cp + sizeof(path.len)) : NULL ;
+        cp =  (char*)cp + sizeof(path.len) + path.len;
+        memcpy( &(ruid.len), cp, sizeof(ruid.len));
+        ruid.s = ruid.len ? ((char*)cp + sizeof(ruid.len)) : NULL ;
+        cp =  (char*)cp + sizeof(ruid.len) + ruid.len;
+        memcpy( &aorhash, cp, sizeof(aorhash));
+        cp = (char*)cp + sizeof(aorhash);
 
 
-		str aor;
-		sip_uri_t puri;
-		urecord_t* r;
-		udomain_t* _d;
-		ucontact_t* ptr = 0;
-		int res;
-		
-		if (extract_aor(&c, &aor, &puri) < 0) {
-			LM_ERR("failed to extract address of record\n");
-			continue;
-		}
-		ul.get_udomain("location", &_d);
-		ul.lock_udomain(_d, &aor);
-		res = ul.get_urecord(_d, &aor, &r);
-		if (res > 0) {
-			LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-			ul.unlock_udomain(_d, &aor);
-			continue;
-		}
-		
-		LM_DBG("- AoR: %.*s  AoRhash=%d  Flags=%d\n", aor.len, aor.s, aorhash, flags);
-		
-		ptr = r->contacts;
-		
-		while (ptr) {
-			usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, node);
-			ptr = ptr->next;
-		}
-		ul.release_urecord(r);
-		ul.unlock_udomain(_d, &aor);
-	}
+        str aor;
+        sip_uri_t puri;
+        urecord_t* r;
+        udomain_t* _d;
+        ucontact_t* ptr = 0;
+
+        int res;
+
+        if (extract_aor(&c, &aor, &puri) < 0) {
+            LM_ERR("failed to extract address of record\n");
+            continue;
+        }
+        ul.get_udomain("location", &_d);
+
+        res = ul.get_urecord_by_ruid(_d, aorhash, &ruid, &r, &ptr);
+        aor = r->aor;
+        if (res > 0) {
+            LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+            ul.release_urecord(r);
+            ul.unlock_udomain(_d, &aor);
+            continue;
+        }
+        LM_DBG("- AoR: %.*s  AoRhash=%d  Flags=%d\n", aor.len, aor.s, aorhash, flags);
+
+        while (ptr) {
+            usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, node);
+            ptr = ptr->next;
+        }
+        ul.release_urecord(r);
+        ul.unlock_udomain(_d, &aor);
+    }
 	pkg_free(buf);
 	
 done:
