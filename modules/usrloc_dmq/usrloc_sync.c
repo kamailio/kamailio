@@ -263,7 +263,7 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	srjson_t *it = NULL;
 	static ucontact_info_t ci;
 
-	int action, expires, cseq, flags, cflags, q, last_modified, methods, reg_id, tcpconn_id;
+	int action, expires, cseq, flags, cflags, q, last_modified, methods, reg_id;
 	str aor, ruid, c, received, path, callid, user_agent, instance;
 
 	parse_from_header(msg);
@@ -346,8 +346,6 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 			methods = it->valueint;
 		} else if (strcmp(it->string, "reg_id")==0) {
 			reg_id = it->valueint;
-		} else if (strcmp(it->string, "tcpconn_id")==0) {
-			tcpconn_id = it->valueint;
 		} else {
 			LM_ERR("unrecognized field in json object\n");
 		}		
@@ -369,7 +367,7 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	ci.methods = methods;
 	ci.instance = instance;
 	ci.reg_id = reg_id;
-	ci.tcpconn_id = tcpconn_id;
+	ci.tcpconn_id = -1;
 	ci.last_modified = last_modified;
 
 	switch(action) {
@@ -477,8 +475,7 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "last_modified", ptr->last_modified);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "methods", ptr->methods);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "reg_id", ptr->reg_id);
-	srjson_AddNumberToObject(&jdoc, jdoc.root, "tcpconn_id", ptr->tcpconn_id);
-	
+
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
 	if(jdoc.buf.s==NULL) {
 		LM_ERR("unable to serialize data\n");
