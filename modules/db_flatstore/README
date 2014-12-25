@@ -1,4 +1,3 @@
-
 Db_flatstore Module
 
 Jan Janak
@@ -7,7 +6,7 @@ Jan Janak
    <jan@iptel.org>
 
    Copyright © 2004, 2005 FhG FOKUS
-     _________________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
@@ -37,73 +36,71 @@ Chapter 1. Admin Guide
 
    1.1. Rotating Log Files
 
-   Db_flatstore  is  one  of the SIP Router database modules. It does not
+   Db_flatstore is one of the Kamailio database modules. It does not
    export any functions executable from the configuration scripts, but it
-   exports  a  subset  of  functions from the database API and thus other
-   modules  can use it as a database driver, instead of, for example, the
-   Mysql module.
+   exports a subset of functions from the database API and thus other
+   modules can use it as a database driver, instead of, for example, the
+   db_mysql module.
 
-   The  module  does  not implement all functions of the database API, it
-   supports  only  one  function,  insert.  This means that the module is
-   limited   but  very  fast.  It  is  especially  suitable  for  storing
-   accounting  information on sites with extremely high traffic. If MySQL
-   is  too  slow  or if you get a huge amount of accounting data then you
-   can consider using this module. Please note that the acc module is the
-   only module that was tested with the flastore module.
+   The module does not implement all functions of the database API, it
+   supports only one function, insert. This means that the module is
+   limited but very fast. It is especially suitable for storing accounting
+   information on sites with extremely high traffic. If MySQL is too slow
+   or if you get a huge amount of accounting data then you can consider
+   using this module. Please note that the acc module is the only module
+   that was tested with the flastore module.
 
-   The  format  of  the files produced by this module is plain text. Each
-   line  consists  of  several  fields,  fields  are separated by the "|"
-   character  (vertical  bar).  New information is always appended at the
-   end  of the file. Searching, deleting and updating of existing data is
-   not supported by the module.
+   The format of the files produced by this module is plain text. Each
+   line consists of several fields, fields are separated by the "|"
+   character (vertical bar). New information is always appended at the end
+   of the file. Searching, deleting and updating of existing data is not
+   supported by the module.
 
-   The  acc  module  can  be  configured  to  use  db_flatstore module as
-   database backend using the db_url_parameter:
+   The acc module can be configured to use db_flatstore module as database
+   backend using the db_url_parameter:
 modparam("acc", "db_url", "flatstore:/var/log/acc")
 
-   This  configuration option tells the acc module that it should use the
-   db_flatstore  module  and  the  db_flatstore  module should create all
-   files  in the /var/log/acc directory. The directory must exist and SIP
-   Router  processes  must  have  permissions  to  create  files  in that
-   directory.
+   This configuration option tells the acc module that it should use the
+   db_flatstore module and the db_flatstore module should create all files
+   in the /var/log/acc directory. The directory must exist and Kamailio
+   processes must have permissions to create files in that directory.
 
    Name of files in that directory will follow the following pattern:
 <table_name>_<process_name>.log
 
-   For  example,  entries writen by the SIP Router process 8 into the acc
+   For example, entries writen by the Kamailio process 8 into the acc
    table would be written in file acc_8.log. For each table there will be
-   several  files,  one file for every SIP Router process that wrote some
-   data  into that table. The main reason why there are several files for
-   each  table  is  that  it is much faster to have one file per process,
-   because  it does not require any locking and thus SIP Router processes
-   will  not  block  each other. To get the complete data for a table you
-   can  simply concatenate the contents of files with the same table name
-   but different process id.
+   several files, one file for every Kamailio process that wrote some data
+   into that table. The main reason why there are several files for each
+   table is that it is much faster to have one file per process, because
+   it does not require any locking and thus Kamailio processes will not
+   block each other. To get the complete data for a table you can simply
+   concatenate the contents of files with the same table name but
+   different process id.
 
 1.1. Rotating Log Files
 
-   The module implements a SIP Router management interface command called
-   flatstore.rotate.  When  SIP Router receives the command it will close
-   and  reopen  all  files  used by the db_flatstore module. The rotation
-   itself  has  to  be  done  by another application (such as logrotate).
-   Follow  these  steps  to  rotate  files  generated by the db_flatstore
-   module:
+   The module implements a Kamailio management interface command called
+   flatstore.rotate. When Kamailio receives the command it will close and
+   reopen all files used by the db_flatstore module. The rotation itself
+   has to be done by another application (such as logrotate). Follow these
+   steps to rotate files generated by the db_flatstore module:
      * Rename the files that you want to rotate:
 cd /var/log/acc
 mv acc_1.log acc_1.log.20050605
 mv acc_2.log acc_2.log.20050605
 mv acc_4.log acc_3.log.20050605
 ...
-       Note  that at this point SIP Router will still be writing all data
+       Note that at this point Kamailio will still be writing all data
        into the renamed files.
-     * Send  SIP  Router  the  management command to close and reopen the
+     * Send Kamailio the management command to close and reopen the
        renamed files:
 kamcmd flatstore.rotate
-       This will force SIP Router to close the renamed files and open new
-       ones  with  original  names,  such as acc_1.log. New files will be
-       open  at  the  point when SIP Router has some data to write. It is
-       normal  that the files will be not created immediately if there is
-       no traffic on the SIP server.
+       This will force Kamailio to close the renamed files and open new
+       ones with original names, such as acc_1.log. New files will be open
+       at the point when Kamailio has some data to write. It is normal
+       that the files will be not created immediately if there is no
+       traffic on the SIP server.
      * Move the renamed files somewhere else and process them.
 
 2. Parameters
