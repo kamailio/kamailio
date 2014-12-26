@@ -276,7 +276,7 @@ static int mod_child_init(int rank)
 
 
 	if (rank==PROC_MAIN) {
-		pid=fork_process(1, "AMQP Manager", 0);
+		pid=fork_process(1, "AMQP Manager", 1);
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0){
@@ -284,7 +284,7 @@ static int mod_child_init(int rank)
 		}
 		else {
 			for(i=0; i < dbk_consumer_processes; i++) {
-				pid=fork_process(i+2, "AMQP Consumer", 0);
+				pid=fork_process(i+2, "AMQP Consumer", 1);
 				if (pid<0)
 					return -1; /* error */
 				if(pid==0){
