@@ -359,20 +359,10 @@ struct str_list* get_str_list(unsigned short avp_flags, int_str avp_name) {
 
 }
 
-static void
-__dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
+struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 {
-	struct sip_msg *request = _params->req;
 	struct dlginfo_cell *dlginfo;
 	int len;
-
-	if (request->REQ_METHOD != METHOD_INVITE)
-		return;
-
-	if(send_publish_flag > -1 && !(request->flags & (1<<send_publish_flag)))
-		return;
-
-	LM_DBG("new INVITE dialog created: from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
 
 	/* create dlginfo structure to store important data inside the module*/
 	len = sizeof(struct dlginfo_cell) + 
@@ -386,7 +376,7 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	dlginfo = (struct dlginfo_cell*)shm_malloc( len );
 	if (dlginfo==0) {
 		LM_ERR("no more shm mem (%d)\n",len);
-		return;
+		return NULL;
 	}
 	memset( dlginfo, 0, len);
 
@@ -413,28 +403,37 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	memcpy(dlginfo->from_contact.s, dlg->contact[0].s, dlg->contact[0].len);
 
 	if (use_pubruri_avps) {
+		if(type==DLGCB_CREATED) {
+			dlginfo->pubruris_caller = get_str_list(pubruri_caller_avp_type,pubruri_caller_avp_name);
+			dlginfo->pubruris_callee = get_str_list(pubruri_callee_avp_type,pubruri_callee_avp_name);
 
-		dlginfo->pubruris_caller = get_str_list(pubruri_caller_avp_type,pubruri_caller_avp_name);
-		dlginfo->pubruris_callee = get_str_list(pubruri_callee_avp_type,pubruri_callee_avp_name);
-
+			if(dlginfo->pubruris_caller == 0 && dlginfo->pubruris_callee == 0 ) {
+				/* No reason to save dlginfo, we have nobody to publish to */
+				LM_DBG("Neither pubruris_caller nor pubruris_callee found in dialog.\n");
+				free_dlginfo_cell(dlginfo);
+				return NULL;
+			}
+		} else {
+			/* Nobody to publish to */
+			LM_DBG("Can't restore caller/callee when use_pubruri_avps is set.\n");
+			free_dlginfo_cell(dlginfo);
+			return NULL;
+		}
 	} else {
-
 		dlginfo->pubruris_caller = (struct str_list*)shm_malloc( sizeof(struct str_list) );
-
 		if (dlginfo->pubruris_caller==0) {
 			LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
-			return;
+			free_dlginfo_cell(dlginfo);
+			return NULL;
 		}
 		memset( dlginfo->pubruris_caller, 0, sizeof(struct str_list));
-
 		dlginfo->pubruris_caller->s=dlginfo->from_uri;
 
-
 		dlginfo->pubruris_callee = (struct str_list*)shm_malloc( sizeof(struct str_list) );
-
 		if (dlginfo->pubruris_callee==0) {
 			LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
-			return;
+			free_dlginfo_cell(dlginfo);
+			return NULL;
 		}
 		memset( dlginfo->pubruris_callee, 0, sizeof(struct str_list));
 
@@ -443,34 +442,72 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 		} else {
 			dlginfo->pubruris_callee->s = dlginfo->to_uri;
 		}
-
 	}
 
 	/* register dialog callbacks which triggers sending PUBLISH */
-	if (dlg_api.register_dlgcb(dlg, 
-		DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED | DLGCB_EXPIRED |
-		DLGCB_REQ_WITHIN | DLGCB_EARLY,
-		__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
+	if (dlg_api.register_dlgcb(dlg,
+				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED
+				| DLGCB_EXPIRED | DLGCB_REQ_WITHIN | DLGCB_EARLY,
+				__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
 		LM_ERR("cannot register callback for interesting dialog types\n");
-		return;
+		free_dlginfo_cell(dlginfo);
+		return NULL;
 	}
 
 #ifdef PUA_DIALOGINFO_DEBUG
 	/* dialog callback testing (registered last to be executed frist) */
 	if (dlg_api.register_dlgcb(dlg, 
-		DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_CONFIRMED | DLGCB_REQ_WITHIN | DLGCB_TERMINATED |
-		DLGCB_EXPIRED | DLGCB_EARLY | DLGCB_RESPONSE_FWDED | DLGCB_RESPONSE_WITHIN  |
-		DLGCB_MI_CONTEXT | DLGCB_DESTROY,
-		__dialog_cbtest, NULL, NULL) != 0) {
+				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_CONFIRMED
+				| DLGCB_REQ_WITHIN | DLGCB_TERMINATED | DLGCB_EXPIRED
+				| DLGCB_EARLY | DLGCB_RESPONSE_FWDED | DLGCB_RESPONSE_WITHIN
+				| DLGCB_MI_CONTEXT | DLGCB_DESTROY,
+				__dialog_cbtest, NULL, NULL) != 0) {
 		LM_ERR("cannot register callback for all dialog types\n");
-		return;
+		free_dlginfo_cell(dlginfo);
+		return NULL;
 	}
 #endif
 
-	dialog_publish_multi("Trying", dlginfo->pubruris_caller, &(dlg->from_uri), (include_req_uri)?&(dlg->req_uri):&(dlg->to_uri), &(dlg->callid), 1, dlginfo->lifetime, 0, 0, 0, 0, send_publish_flag==-1?1:0);
+	return(dlginfo);
 }
 
+static void
+__dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
+{
+	struct sip_msg *request = _params->req;
+	struct dlginfo_cell *dlginfo;
 
+	if (request->REQ_METHOD != METHOD_INVITE)
+		return;
+
+	if(send_publish_flag > -1 && !(request->flags & (1<<send_publish_flag)))
+		return;
+
+	LM_DBG("new INVITE dialog created: from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
+
+	dlginfo=get_dialog_data(dlg, type);
+	if(dlginfo==NULL)
+		return;
+
+	dialog_publish_multi("Trying", dlginfo->pubruris_caller,
+				&(dlg->from_uri),
+				(include_req_uri)?&(dlg->req_uri):&(dlg->to_uri),
+				&(dlg->callid), 1, dlginfo->lifetime,
+				0, 0, 0, 0, (send_publish_flag==-1)?1:0);
+	free_dlginfo_cell(dlginfo);
+
+}
+
+static void
+__dialog_loaded(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
+{
+	struct dlginfo_cell *dlginfo;
+
+	LM_DBG("INVITE dialog loaded: from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
+
+	dlginfo=get_dialog_data(dlg, type);
+	if(dlginfo!=NULL) free_dlginfo_cell(dlginfo);
+}
 
 
 /**
@@ -512,6 +549,11 @@ static int mod_init(void)
 		LM_ERR("cannot register callback for dialog creation\n");
 		return -1;
 	}
+	/* register dialog loaded callback */
+	if (dlg_api.register_dlgcb(NULL, DLGCB_LOADED, __dialog_loaded, NULL, NULL) != 0) {
+		LM_ERR("cannot register callback for dialog loaded\n");
+		return -1;
+	}
 
 	if(use_pubruri_avps) {
 
@@ -547,8 +589,12 @@ static int mod_init(void)
 
 void free_dlginfo_cell(void *param) {
 
-	struct dlginfo_cell *cell = param;
+	struct dlginfo_cell *cell = NULL;
 
+	if(param==NULL)
+		return;
+
+	cell = param;
 	free_str_list_all(cell->pubruris_caller);
 	free_str_list_all(cell->pubruris_callee);
 
