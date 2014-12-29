@@ -1,6 +1,4 @@
 /*
- * $Id: pua_usrloc.c 4657 2008-08-10 22:51:44Z henningw $
- *
  * pua_dialoginfo module - publish dialog-info from dialo module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -81,6 +79,9 @@ int_str pubruri_caller_avp_name;
 unsigned short pubruri_callee_avp_type;
 int_str pubruri_callee_avp_name;
 
+static str caller_dlg_var = {0, 0}; /* pubruri_caller */
+static str callee_dlg_var = {0, 0}; /* pubruri_callee */
+
 /* Module parameter variables */
 int include_callid         = DEF_INCLUDE_CALLID;
 int include_localremote    = DEF_INCLUDE_LOCALREMOTE;
@@ -116,6 +117,8 @@ static param_export_t params[]={
 	{"use_pubruri_avps",    INT_PARAM, &use_pubruri_avps },
 	{"pubruri_caller_avp",  PARAM_STRING, &pubruri_caller_avp },
 	{"pubruri_callee_avp",  PARAM_STRING, &pubruri_callee_avp },
+	{"pubruri_caller_dlg_var",  PARAM_STR, &caller_dlg_var },
+	{"pubruri_callee_dlg_var",  PARAM_STR, &callee_dlg_var },
 	{0, 0, 0 }
 };
 
@@ -363,6 +366,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 {
 	struct dlginfo_cell *dlginfo;
 	int len;
+	str* s=NULL;
 
 	/* create dlginfo structure to store important data inside the module*/
 	len = sizeof(struct dlginfo_cell) + 
@@ -407,15 +411,47 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 			dlginfo->pubruris_caller = get_str_list(pubruri_caller_avp_type,pubruri_caller_avp_name);
 			dlginfo->pubruris_callee = get_str_list(pubruri_callee_avp_type,pubruri_callee_avp_name);
 
-			if(dlginfo->pubruris_caller == 0 && dlginfo->pubruris_callee == 0 ) {
-				/* No reason to save dlginfo, we have nobody to publish to */
-				LM_DBG("Neither pubruris_caller nor pubruris_callee found in dialog.\n");
-				free_dlginfo_cell(dlginfo);
-				return NULL;
-			}
+			if(dlginfo->pubruris_callee!=NULL && callee_dlg_var.len>0)
+				dlg_api.set_dlg_var(dlg, &callee_dlg_var, &dlginfo->pubruris_callee->s);
+
+			if(dlginfo->pubruris_caller!=NULL && caller_dlg_var.len>0)
+				dlg_api.set_dlg_var(dlg, &caller_dlg_var, &dlginfo->pubruris_caller->s);
+
 		} else {
-			/* Nobody to publish to */
-			LM_DBG("Can't restore caller/callee when use_pubruri_avps is set.\n");
+			if(caller_dlg_var.len>0
+					&& (s = dlg_api.get_dlg_var(dlg, &caller_dlg_var))!=0) {
+				dlginfo->pubruris_caller =
+							(struct str_list*)shm_malloc( sizeof(struct str_list) );
+				if (dlginfo->pubruris_caller==0) {
+					LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
+					free_dlginfo_cell(dlginfo);
+					return NULL;
+				}
+				memset( dlginfo->pubruris_caller, 0, sizeof(struct str_list));
+				dlginfo->pubruris_caller->s=*s;
+				LM_DBG("Found pubruris_caller in dialog '%.*s'\n",
+						dlginfo->pubruris_caller->s.len, dlginfo->pubruris_caller->s.s);
+			}
+
+			if(callee_dlg_var.len>0
+					&& (s = dlg_api.get_dlg_var(dlg, &callee_dlg_var))!=0) {
+				dlginfo->pubruris_callee =
+							(struct str_list*)shm_malloc( sizeof(struct str_list) );
+				if (dlginfo->pubruris_callee==0) {
+					LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
+					free_dlginfo_cell(dlginfo);
+					return NULL;
+				}
+				memset( dlginfo->pubruris_callee, 0, sizeof(struct str_list));
+				dlginfo->pubruris_callee->s=*s;
+				LM_DBG("Found pubruris_callee in dialog '%.*s'\n",
+						dlginfo->pubruris_callee->s.len, dlginfo->pubruris_callee->s.s);
+			}
+		}
+
+		if(dlginfo->pubruris_caller == 0 && dlginfo->pubruris_callee == 0 ) {
+			/* No reason to save dlginfo, we have nobody to publish to */
+			LM_DBG("Neither pubruris_caller nor pubruris_callee found.\n");
 			free_dlginfo_cell(dlginfo);
 			return NULL;
 		}
@@ -519,7 +555,13 @@ static int mod_init(void)
 
 	str s;
 	pv_spec_t avp_spec;
-	
+
+	if(caller_dlg_var.len<=0)
+		LM_WARN("pubruri_caller_dlg_var is not set - restore on restart disabled\n");
+
+	if(callee_dlg_var.len<=0)
+		LM_WARN("pubruri_callee_dlg_var is not set - restore on restart disabled\n");
+
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
 	{
@@ -557,8 +599,10 @@ static int mod_init(void)
 
 	if(use_pubruri_avps) {
 
-		if(!(pubruri_caller_avp && *pubruri_caller_avp) && (pubruri_callee_avp && *pubruri_callee_avp)) {
-			LM_ERR("pubruri_caller_avp and pubruri_callee_avp must be set, if use_pubruri_avps is enabled\n");
+		if(!(pubruri_caller_avp && *pubruri_caller_avp)
+				&& (pubruri_callee_avp && *pubruri_callee_avp)) {
+			LM_ERR("pubruri_caller_avp and pubruri_callee_avp must be set,"
+					" if use_pubruri_avps is enabled\n");
 			return -1;
 		}
 
@@ -567,7 +611,8 @@ static int mod_init(void)
 			LM_ERR("malformed or non AVP %s AVP definition\n", pubruri_caller_avp);
 			return -1;
 		}
-		if(pv_get_avp_name(0, &avp_spec.pvp, &pubruri_caller_avp_name, &pubruri_caller_avp_type)!=0) {
+		if(pv_get_avp_name(0, &avp_spec.pvp, &pubruri_caller_avp_name,
+					&pubruri_caller_avp_type)!=0) {
 			LM_ERR("[%s]- invalid AVP definition\n", pubruri_caller_avp);
 			return -1;
 		}
@@ -577,7 +622,8 @@ static int mod_init(void)
 			LM_ERR("malformed or non AVP %s AVP definition\n", pubruri_callee_avp);
 			return -1;
 		}
-		if(pv_get_avp_name(0, &avp_spec.pvp, &pubruri_callee_avp_name, &pubruri_callee_avp_type)!=0) {
+		if(pv_get_avp_name(0, &avp_spec.pvp, &pubruri_callee_avp_name,
+					&pubruri_callee_avp_type)!=0) {
 			LM_ERR("[%s]- invalid AVP definition\n", pubruri_callee_avp);
 			return -1;
 		}
