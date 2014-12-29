@@ -47,6 +47,8 @@ Klaus Darilion
               5.7. use_pubruri_avps (int)
               5.8. pubruri_caller_avp (int)
               5.9. pubruri_callee_avp (int)
+              5.10. pubruri_caller_dlg_var (str)
+              5.11. pubruri_callee_dlg_var (int)
 
         6. Functions
 
@@ -61,6 +63,8 @@ Klaus Darilion
    1.7. Set use_pubruri_avps parameter
    1.8. Set pubruri_caller_avp parameter
    1.9. Set pubruri_callee_avp parameter
+   1.10. Set pubruri_caller_avp parameter
+   1.11. Set pubruri_callee_dlg_var parameter
 
 Chapter 1. Admin Guide
 
@@ -85,6 +89,8 @@ Chapter 1. Admin Guide
         5.7. use_pubruri_avps (int)
         5.8. pubruri_caller_avp (int)
         5.9. pubruri_callee_avp (int)
+        5.10. pubruri_caller_dlg_var (str)
+        5.11. pubruri_callee_dlg_var (int)
 
    6. Functions
 
@@ -262,6 +268,8 @@ Chapter 1. Admin Guide
    5.7. use_pubruri_avps (int)
    5.8. pubruri_caller_avp (int)
    5.9. pubruri_callee_avp (int)
+   5.10. pubruri_caller_dlg_var (str)
+   5.11. pubruri_callee_dlg_var (int)
 
 5.1. include_callid (int)
 
@@ -390,6 +398,34 @@ modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
    Example 1.9. Set pubruri_callee_avp parameter
 ...
 modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
+...
+
+5.10. pubruri_caller_dlg_var (str)
+
+   Must be set to the name of dialog variable where to store the URI for
+   caller, used to send the notifications. This is needed to restored the
+   value after Kamailio restart. If not set, loaded dialogs at restart are
+   no longer sending notifications. New dialogs are working fine.
+
+   Default value is "NULL".
+
+   Example 1.10. Set pubruri_caller_avp parameter
+...
+modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
+...
+
+5.11. pubruri_callee_dlg_var (int)
+
+   Must be set to the name of dialog variable where to store the URI for
+   callee, used to send the notifications. This is needed to restored the
+   value after Kamailio restart. If not set, loaded dialogs at restart are
+   no longer sending notifications. New dialogs are working fine.
+
+   Default value is "NULL".
+
+   Example 1.11. Set pubruri_callee_dlg_var parameter
+...
+modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 ...
 
 6. Functions
