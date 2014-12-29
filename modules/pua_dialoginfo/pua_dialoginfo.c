@@ -144,12 +144,16 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
 	str tag;
 	struct sip_msg *msg;
-	LM_ERR("dialog callback received, from=%.*s, to=%.*s\n", dlg->from_uri.len, dlg->from_uri.s, dlg->to_uri.len, dlg->to_uri.s);
+	LM_ERR("dialog callback received, from=%.*s, to=%.*s\n",
+			dlg->from_uri.len, dlg->from_uri.s, dlg->to_uri.len,
+			dlg->to_uri.s);
 	if (dlg->tag[0].len && dlg->tag[0].s ) {
-		LM_ERR("dialog callback: tag[0] = %.*s", dlg->tag[0].len, dlg->tag[0].s);
+		LM_ERR("dialog callback: tag[0] = %.*s",
+				dlg->tag[0].len, dlg->tag[0].s);
 	}
 	if (dlg->tag[0].len && dlg->tag[1].s ) {
-		LM_ERR("dialog callback: tag[1] = %.*s", dlg->tag[1].len, dlg->tag[1].s);
+		LM_ERR("dialog callback: tag[1] = %.*s",
+				dlg->tag[1].len, dlg->tag[1].s);
 	}
 
 	if (type != DLGCB_DESTROY) {
@@ -170,7 +174,7 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 				tag.len = 0;
 			} else if (!msg->to) {
 				// to header still not defined
-				LM_ERR("no to although to-header is parsed: bad reply or missing TO hdr :-/\n");
+				LM_ERR("bad reply or missing TO header\n");
 				tag.s = 0;
 				tag.len = 0;
 			} else 
@@ -184,46 +188,59 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 			}
 		}
 		if (tag.s) {
-			LM_ERR("dialog callback: msg->to->parsed->tag_value = %.*s", tag.len, tag.s);
+			LM_ERR("dialog callback: msg->to->parsed->tag_value = %.*s",
+					tag.len, tag.s);
 		}
 	}
 
 	switch (type) {
-	case DLGCB_FAILED:
-		LM_ERR("dialog callback type 'DLGCB_FAILED' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_CONFIRMED_NA:
-		LM_ERR("dialog callback type 'DLGCB_CONFIRMED_NA' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_CONFIRMED:
-		LM_ERR("dialog callback type 'DLGCB_CONFIRMED' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_REQ_WITHIN:
-		LM_ERR("dialog callback type 'DLGCB_REQ_WITHIN' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_TERMINATED:
-		LM_ERR("dialog callback type 'DLGCB_TERMINATED' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_EXPIRED:
-		LM_ERR("dialog callback type 'DLGCB_EXPIRED' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_EARLY:
-		LM_ERR("dialog callback type 'DLGCB_EARLY' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_RESPONSE_FWDED:
-		LM_ERR("dialog callback type 'DLGCB_RESPONSE_FWDED' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_RESPONSE_WITHIN:
-		LM_ERR("dialog callback type 'DLGCB_RESPONSE_WITHIN' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_MI_CONTEXT:
-		LM_ERR("dialog callback type 'DLGCB_MI_CONTEXT' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	case DLGCB_DESTROY:
-		LM_ERR("dialog callback type 'DLGCB_DESTROY' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
-		break;
-	default:
-		LM_ERR("dialog callback type 'unknown' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
+		case DLGCB_FAILED:
+			LM_ERR("dialog callback type 'DLGCB_FAILED' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_CONFIRMED_NA:
+			LM_ERR("dialog callback type 'DLGCB_CONFIRMED_NA' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_CONFIRMED:
+			LM_ERR("dialog callback type 'DLGCB_CONFIRMED' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_REQ_WITHIN:
+			LM_ERR("dialog callback type 'DLGCB_REQ_WITHIN' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_TERMINATED:
+			LM_ERR("dialog callback type 'DLGCB_TERMINATED' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_EXPIRED:
+			LM_ERR("dialog callback type 'DLGCB_EXPIRED' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_EARLY:
+			LM_ERR("dialog callback type 'DLGCB_EARLY' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_RESPONSE_FWDED:
+			LM_ERR("dialog callback type 'DLGCB_RESPONSE_FWDED' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_RESPONSE_WITHIN:
+			LM_ERR("dialog callback type 'DLGCB_RESPONSE_WITHIN' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_MI_CONTEXT:
+			LM_ERR("dialog callback type 'DLGCB_MI_CONTEXT' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		case DLGCB_DESTROY:
+			LM_ERR("dialog callback type 'DLGCB_DESTROY' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
+			break;
+		default:
+			LM_ERR("dialog callback type 'unknown' received, from=%.*s\n",
+					dlg->from_uri.len, dlg->from_uri.s);
 	}
 }
 #endif
@@ -245,70 +262,114 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	}
 
 	switch (type) {
-	case DLGCB_FAILED:
-	case DLGCB_TERMINATED:
-	case DLGCB_EXPIRED:
-		LM_DBG("dialog over, from=%.*s\n", dlginfo->from_uri.len, dlginfo->from_uri.s);
-		dialog_publish_multi("terminated", dlginfo->pubruris_caller, &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target, send_publish_flag==-1?1:0);
-		dialog_publish_multi("terminated", dlginfo->pubruris_callee, &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact), send_publish_flag==-1?1:0);
-		break;
-	case DLGCB_CONFIRMED:
-	case DLGCB_REQ_WITHIN:
-	case DLGCB_CONFIRMED_NA:
-		LM_DBG("dialog confirmed, from=%.*s\n", dlginfo->from_uri.len, dlginfo->from_uri.s);
-		dialog_publish_multi("confirmed", dlginfo->pubruris_caller, &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target, send_publish_flag==-1?1:0);
-		dialog_publish_multi("confirmed", dlginfo->pubruris_callee, &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact), send_publish_flag==-1?1:0);
-		break;
-	case DLGCB_EARLY:
-		LM_DBG("dialog is early, from=%.*s\n", dlginfo->from_uri.len, dlginfo->from_uri.s);
-		if (include_tags) {
-			/* get remotetarget */
-			if ( !_params->rpl->contact && ((parse_headers(_params->rpl, HDR_CONTACT_F,0)<0) || !_params->rpl->contact) ) {
-				LM_ERR("bad reply or missing CONTACT hdr\n");
-			} else {
-				if ( parse_contact(_params->rpl->contact)<0 ||
-						((contact_body_t *)_params->rpl->contact->parsed)->contacts==NULL ||
-						((contact_body_t *)_params->rpl->contact->parsed)->contacts->next!=NULL ) {
-					LM_ERR("Malformed CONTACT hdr\n");
+		case DLGCB_FAILED:
+		case DLGCB_TERMINATED:
+		case DLGCB_EXPIRED:
+			LM_DBG("dialog over, from=%.*s\n", dlginfo->from_uri.len,
+					dlginfo->from_uri.s);
+			dialog_publish_multi("terminated", dlginfo->pubruris_caller,
+					&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
+					dlginfo->lifetime, 0, 0, &(dlginfo->from_contact),
+					&target, send_publish_flag==-1?1:0);
+			dialog_publish_multi("terminated", dlginfo->pubruris_callee,
+					&uri, &(dlginfo->from_uri), &(dlginfo->callid), 0,
+					dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact),
+					send_publish_flag==-1?1:0);
+			break;
+		case DLGCB_CONFIRMED:
+		case DLGCB_REQ_WITHIN:
+		case DLGCB_CONFIRMED_NA:
+			LM_DBG("dialog confirmed, from=%.*s\n", dlginfo->from_uri.len,
+					dlginfo->from_uri.s);
+			dialog_publish_multi("confirmed", dlginfo->pubruris_caller,
+					&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
+					dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target,
+					send_publish_flag==-1?1:0);
+			dialog_publish_multi("confirmed", dlginfo->pubruris_callee, &uri,
+					&(dlginfo->from_uri), &(dlginfo->callid), 0,
+					dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact),
+					send_publish_flag==-1?1:0);
+			break;
+		case DLGCB_EARLY:
+			LM_DBG("dialog is early, from=%.*s\n", dlginfo->from_uri.len,
+					dlginfo->from_uri.s);
+			if (include_tags) {
+				/* get remotetarget */
+				if ( !_params->rpl->contact && ((parse_headers(_params->rpl,
+									HDR_CONTACT_F,0)<0) || !_params->rpl->contact) ) {
+					LM_ERR("bad reply or missing CONTACT hdr\n");
 				} else {
-					target = ((contact_body_t *)_params->rpl->contact->parsed)->contacts->uri;
+					if ( parse_contact(_params->rpl->contact)<0 ||
+							((contact_body_t *)_params->rpl->contact->parsed)->contacts==NULL ||
+							((contact_body_t *)_params->rpl->contact->parsed)->contacts->next!=NULL ) {
+						LM_ERR("Malformed CONTACT hdr\n");
+					} else {
+						target = ((contact_body_t *)_params->rpl->contact->parsed)->contacts->uri;
+					}
 				}
-			}
-			/* get to tag*/
-			if ( !_params->rpl->to && ((parse_headers(_params->rpl, HDR_TO_F,0)<0) || !_params->rpl->to) ) {
-				LM_ERR("bad reply or missing TO hdr :-/\n");
-				tag.s = 0;
-				tag.len = 0;
-			} else {
-				tag = get_to(_params->rpl)->tag_value;
-				if (tag.s==0 || tag.len==0) {
-					LM_ERR("missing TAG param in TO hdr :-/\n");
+				/* get to tag*/
+				if ( !_params->rpl->to && ((parse_headers(_params->rpl, HDR_TO_F,0)<0)
+							|| !_params->rpl->to) ) {
+					LM_ERR("bad reply or missing TO hdr :-/\n");
 					tag.s = 0;
 					tag.len = 0;
+				} else {
+					tag = get_to(_params->rpl)->tag_value;
+					if (tag.s==0 || tag.len==0) {
+						LM_ERR("missing TAG param in TO hdr :-/\n");
+						tag.s = 0;
+						tag.len = 0;
+					}
 				}
-			}
-			if (caller_confirmed) {
-				dialog_publish_multi("confirmed", dlginfo->pubruris_caller, &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, &(dlginfo->from_tag), &tag, &(dlginfo->from_contact), &target, send_publish_flag==-1?1:0);
+				if (caller_confirmed) {
+					dialog_publish_multi("confirmed", dlginfo->pubruris_caller,
+							&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
+							dlginfo->lifetime, &(dlginfo->from_tag), &tag,
+							&(dlginfo->from_contact), &target,
+							send_publish_flag==-1?1:0);
+				} else {
+					dialog_publish_multi("early", dlginfo->pubruris_caller,
+							&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
+							dlginfo->lifetime, &(dlginfo->from_tag), &tag,
+							&(dlginfo->from_contact), &target,
+							send_publish_flag==-1?1:0);
+				}
+				dialog_publish_multi("early", dlginfo->pubruris_callee, &uri,
+						&(dlginfo->from_uri), &(dlginfo->callid), 0,
+						dlginfo->lifetime, &tag, &(dlginfo->from_tag), &target,
+						&(dlginfo->from_contact), send_publish_flag==-1?1:0);
+
 			} else {
-				dialog_publish_multi("early", dlginfo->pubruris_caller, &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, &(dlginfo->from_tag), &tag, &(dlginfo->from_contact), &target, send_publish_flag==-1?1:0);
+				if (caller_confirmed) {
+					dialog_publish_multi("confirmed", dlginfo->pubruris_caller,
+							&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
+							dlginfo->lifetime, 0, 0, &(dlginfo->from_contact),
+							&target, send_publish_flag==-1?1:0);
+
+				} else {
+					dialog_publish_multi("early", dlginfo->pubruris_caller,
+							&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
+							dlginfo->lifetime, 0, 0, &(dlginfo->from_contact),
+							&target, send_publish_flag==-1?1:0);
+				}
+				dialog_publish_multi("early", dlginfo->pubruris_callee, &uri,
+						&(dlginfo->from_uri), &(dlginfo->callid), 0,
+						dlginfo->lifetime, 0, 0, &target,
+						&(dlginfo->from_contact), send_publish_flag==-1?1:0);
+
 			}
-			dialog_publish_multi("early", dlginfo->pubruris_callee, &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, &tag, &(dlginfo->from_tag), &target, &(dlginfo->from_contact), send_publish_flag==-1?1:0);
-
-		} else {
-			if (caller_confirmed) {
-				dialog_publish_multi("confirmed", dlginfo->pubruris_caller, &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target, send_publish_flag==-1?1:0);
-
-			} else {
-				dialog_publish_multi("early", dlginfo->pubruris_caller, &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target, send_publish_flag==-1?1:0);
-			}
-			dialog_publish_multi("early", dlginfo->pubruris_callee, &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact), send_publish_flag==-1?1:0);
-
-		}
-		break;
-	default:
-		LM_ERR("unhandled dialog callback type %d received, from=%.*s\n", type, dlginfo->from_uri.len, dlginfo->from_uri.s);
-		dialog_publish_multi("terminated", dlginfo->pubruris_caller, &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target, send_publish_flag==-1?1:0);
-		dialog_publish_multi("terminated", dlginfo->pubruris_callee, &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact), send_publish_flag==-1?1:0);
+			break;
+		default:
+			LM_ERR("unhandled dialog callback type %d received, from=%.*s\n",
+					type, dlginfo->from_uri.len, dlginfo->from_uri.s);
+			dialog_publish_multi("terminated", dlginfo->pubruris_caller,
+					&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
+					dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target,
+					send_publish_flag==-1?1:0);
+			dialog_publish_multi("terminated", dlginfo->pubruris_callee, &uri,
+					&(dlginfo->from_uri), &(dlginfo->callid), 0,
+					dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact),
+					send_publish_flag==-1?1:0);
 
 	}
 }
@@ -369,13 +430,13 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 	str* s=NULL;
 
 	/* create dlginfo structure to store important data inside the module*/
-	len = sizeof(struct dlginfo_cell) + 
-			dlg->from_uri.len + 
-			dlg->to_uri.len + 
-			dlg->callid.len + 
-			dlg->tag[0].len +
-			dlg->req_uri.len +
-			dlg->contact[0].len;
+	len = sizeof(struct dlginfo_cell)
+		+ dlg->from_uri.len
+		+ dlg->to_uri.len
+		+ dlg->callid.len
+		+ dlg->tag[0].len
+		+ dlg->req_uri.len
+		+ dlg->contact[0].len;
 
 	dlginfo = (struct dlginfo_cell*)shm_malloc( len );
 	if (dlginfo==0) {
@@ -408,20 +469,24 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 
 	if (use_pubruri_avps) {
 		if(type==DLGCB_CREATED) {
-			dlginfo->pubruris_caller = get_str_list(pubruri_caller_avp_type,pubruri_caller_avp_name);
-			dlginfo->pubruris_callee = get_str_list(pubruri_callee_avp_type,pubruri_callee_avp_name);
+			dlginfo->pubruris_caller = get_str_list(pubruri_caller_avp_type,
+					pubruri_caller_avp_name);
+			dlginfo->pubruris_callee = get_str_list(pubruri_callee_avp_type,
+					pubruri_callee_avp_name);
 
 			if(dlginfo->pubruris_callee!=NULL && callee_dlg_var.len>0)
-				dlg_api.set_dlg_var(dlg, &callee_dlg_var, &dlginfo->pubruris_callee->s);
+				dlg_api.set_dlg_var(dlg, &callee_dlg_var,
+						&dlginfo->pubruris_callee->s);
 
 			if(dlginfo->pubruris_caller!=NULL && caller_dlg_var.len>0)
-				dlg_api.set_dlg_var(dlg, &caller_dlg_var, &dlginfo->pubruris_caller->s);
+				dlg_api.set_dlg_var(dlg, &caller_dlg_var,
+						&dlginfo->pubruris_caller->s);
 
 		} else {
 			if(caller_dlg_var.len>0
 					&& (s = dlg_api.get_dlg_var(dlg, &caller_dlg_var))!=0) {
 				dlginfo->pubruris_caller =
-							(struct str_list*)shm_malloc( sizeof(struct str_list) );
+					(struct str_list*)shm_malloc( sizeof(struct str_list) );
 				if (dlginfo->pubruris_caller==0) {
 					LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
 					free_dlginfo_cell(dlginfo);
@@ -436,7 +501,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 			if(callee_dlg_var.len>0
 					&& (s = dlg_api.get_dlg_var(dlg, &callee_dlg_var))!=0) {
 				dlginfo->pubruris_callee =
-							(struct str_list*)shm_malloc( sizeof(struct str_list) );
+					(struct str_list*)shm_malloc( sizeof(struct str_list) );
 				if (dlginfo->pubruris_callee==0) {
 					LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
 					free_dlginfo_cell(dlginfo);
@@ -456,7 +521,8 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 			return NULL;
 		}
 	} else {
-		dlginfo->pubruris_caller = (struct str_list*)shm_malloc( sizeof(struct str_list) );
+		dlginfo->pubruris_caller =
+			(struct str_list*)shm_malloc( sizeof(struct str_list) );
 		if (dlginfo->pubruris_caller==0) {
 			LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
 			free_dlginfo_cell(dlginfo);
@@ -465,7 +531,8 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 		memset( dlginfo->pubruris_caller, 0, sizeof(struct str_list));
 		dlginfo->pubruris_caller->s=dlginfo->from_uri;
 
-		dlginfo->pubruris_callee = (struct str_list*)shm_malloc( sizeof(struct str_list) );
+		dlginfo->pubruris_callee =
+			(struct str_list*)shm_malloc( sizeof(struct str_list) );
 		if (dlginfo->pubruris_callee==0) {
 			LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
 			free_dlginfo_cell(dlginfo);
@@ -507,7 +574,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 	return(dlginfo);
 }
 
-static void
+	static void
 __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
 	struct sip_msg *request = _params->req;
@@ -519,22 +586,23 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	if(send_publish_flag > -1 && !(request->flags & (1<<send_publish_flag)))
 		return;
 
-	LM_DBG("new INVITE dialog created: from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
+	LM_DBG("new INVITE dialog created: from=%.*s\n",
+			dlg->from_uri.len, dlg->from_uri.s);
 
 	dlginfo=get_dialog_data(dlg, type);
 	if(dlginfo==NULL)
 		return;
 
 	dialog_publish_multi("Trying", dlginfo->pubruris_caller,
-				&(dlg->from_uri),
-				(include_req_uri)?&(dlg->req_uri):&(dlg->to_uri),
-				&(dlg->callid), 1, dlginfo->lifetime,
-				0, 0, 0, 0, (send_publish_flag==-1)?1:0);
+			&(dlg->from_uri),
+			(include_req_uri)?&(dlg->req_uri):&(dlg->to_uri),
+			&(dlg->callid), 1, dlginfo->lifetime,
+			0, 0, 0, 0, (send_publish_flag==-1)?1:0);
 	free_dlginfo_cell(dlginfo);
 
 }
 
-static void
+	static void
 __dialog_loaded(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
 	struct dlginfo_cell *dlginfo;
@@ -568,7 +636,7 @@ static int mod_init(void)
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
-	
+
 	if (bind_pua(&pua) < 0)
 	{
 		LM_ERR("Can't bind pua\n");
