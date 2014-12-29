@@ -416,7 +416,51 @@ modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
 </programlisting>
 		</example>
 		</section>
+
+		<section id="pua_dialoginfo.p.pubruri_caller_dlg_var">
+		<title><varname>pubruri_caller_dlg_var</varname> (str)</title>
+		<para>
+			Must be set to the name of dialog variable where to store
+			the URI for caller, used to send the notifications. This is needed
+			to restored the value after &kamailio; restart. If not set, loaded
+			dialogs at restart are no longer sending notifications. New dialogs
+			are working fine.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>pubruri_caller_avp</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
+...
+</programlisting>
+		</example>
+		</section>
 		
+		<section id="pua_dialoginfo.p.pubruri_callee_dlg_var">
+		<title><varname>pubruri_callee_dlg_var</varname> (int)</title>
+		<para>
+			Must be set to the name of dialog variable where to store
+			the URI for callee, used to send the notifications. This is needed
+			to restored the value after &kamailio; restart. If not set, loaded
+			dialogs at restart are no longer sending notifications. New dialogs
+			are working fine.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>pubruri_callee_dlg_var</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
+...
+</programlisting>
+		</example>
+		</section>
+
 	</section>
 
 	<section>
