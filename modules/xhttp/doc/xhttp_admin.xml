@@ -16,17 +16,19 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides basic HTTP/1.0 server functionality inside SIP
-		Router. SIP and HTTP are very similar protocols, so, practically, the
+		This module provides basic HTTP/1.0 server functionality inside 
+		&kamailio;. SIP and HTTP are very similar protocols, so, practically, the
 		SIP parser can easily handle HTTP requests just by adding a fake
 		Via header.
 	</para>
 	<para>
-		The xmlrpc module uses the same concept. xHTTP module offers a
-		generic HTTP handling way, by calling event_route[xhttp:request]
-		in your config. You can check the HTTP URL via config variable
-		$hu. Note that use of $ru will raise errors since the structure 
-		of an HTTP URL is not compatible with that of a SIP URI.
+		The <module>xmlrpc</module> module uses the same concept.
+		The xHTTP module offers a generic way of handling the <acronym>HTTP</acronym>
+		protocol, by calling <emphasis>event_route[xhttp:request]</emphasis>
+		in your config. You can check the HTTP URL via the config variable
+		<acronym>$hu</acronym>. Note that use of <acronym>$ru</acronym> will
+		raise errors since the structure of an HTTP URL is not compatible with
+		that of a SIP URI.
 	</para>
 	</section>
 
@@ -54,7 +56,8 @@
 		SIP processing.  SIP worker threads will block, pending the outcome of the 
 		event route just like any other config script route.  
 	</para>
-	<para>  This is no more or less true for <emphasis>xhttp</emphasis> than it is for 
+	<para>
+		This is no more or less true for <emphasis>xhttp</emphasis> than it is for 
 		any other block of script in any other scenario, and does not warrant any 
 		extraordinary concern.  It nevertheless bears mention here because some 
 		processes with embedded HTTP servers have the request processing take place 
@@ -115,7 +118,7 @@
 		<title><varname>url_skip</varname> (str)</title>
 		<para>
 			Regular expression to match the HTTP URL. If there is a match,
-			then event route is not executed.
+			the event route is not executed.
 		</para>
 		<para>
 		<emphasis>
@@ -135,7 +138,7 @@ modparam("xhttp", "url_skip", "^/RPC2")
 		<title><varname>url_match</varname> (str)</title>
 		<para>
 			Regular expression to match the HTTP URL. If there is no match,
-			then event route is not executed. This check is done after
+			the event route is not executed. This check is done after
 			url_skip, so if both url_skip and url_match would match then
 			the event route is not executed (url_skip has higher priority).
 		</para>

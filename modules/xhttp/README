@@ -69,16 +69,17 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module provides basic HTTP/1.0 server functionality inside SIP
-   Router. SIP and HTTP are very similar protocols, so, practically, the
+   This module provides basic HTTP/1.0 server functionality inside
+   Kamailio. SIP and HTTP are very similar protocols, so, practically, the
    SIP parser can easily handle HTTP requests just by adding a fake Via
    header.
 
-   The xmlrpc module uses the same concept. xHTTP module offers a generic
-   HTTP handling way, by calling event_route[xhttp:request] in your
-   config. You can check the HTTP URL via config variable $hu. Note that
-   use of $ru will raise errors since the structure of an HTTP URL is not
-   compatible with that of a SIP URI.
+   The <module>xmlrpc</module> module uses the same concept. The xHTTP
+   module offers a generic way of handling the HTTP protocol, by calling
+   event_route[xhttp:request] in your config. You can check the HTTP URL
+   via the config variable $hu. Note that use of $ru will raise errors
+   since the structure of an HTTP URL is not compatible with that of a SIP
+   URI.
 
 2. Note on Latency
 
@@ -140,7 +141,7 @@ Chapter 1. Admin Guide
 
 4.1. url_skip (str)
 
-   Regular expression to match the HTTP URL. If there is a match, then
+   Regular expression to match the HTTP URL. If there is a match, the
    event route is not executed.
 
    Default value is null (don't skip).
@@ -152,7 +153,7 @@ modparam("xhttp", "url_skip", "^/RPC2")
 
 4.2. url_match (str)
 
-   Regular expression to match the HTTP URL. If there is no match, then
+   Regular expression to match the HTTP URL. If there is no match, the
    event route is not executed. This check is done after url_skip, so if
    both url_skip and url_match would match then the event route is not
    executed (url_skip has higher priority).
