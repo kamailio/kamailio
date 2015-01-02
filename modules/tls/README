@@ -504,25 +504,37 @@ Revoking a certificate and using a CRL
    Sets the SSL/TLS protocol method. Possible values are:
      * TLSv1.2 - only TLSv1.2 connections are accepted (available starting
        with openssl/libssl v1.0.1e)
+     * TLSv1.1+ - TLSv1.1 or newer (TLSv1.2, ...) connections are accepted
+       (available starting with openssl/libssl v1.0.1)
      * TLSv1.1 - only TLSv1.1 connections are accepted (available starting
        with openssl/libssl v1.0.1)
-     * TLSv1 - only TLSv1 connections are accepted. This is the default
-       value.
+     * TLSv1+ - TLSv1.0 or newer (TLSv1.1, TLSv1.2, ...) connections are
+       accepted.
+     * TLSv1 - only TLSv1 (TLSv1.0) connections are accepted. This is the
+       default value.
      * SSLv3 - only SSLv3 connections are accepted. Note: you shouldn't
        use SSLv3 for anything which should be highly secure.
      * SSLv2 - only SSLv2 connections, for old clients. Note: you
        shouldn't use SSLv2 for anything which should be highly secure.
        Newer versions of libssl don't include support for it anymore.
-     * SSLv23 - any of the SSLv2, SSLv3 and TLSv1 methods will be
-       accepted, with the following limitation: the initial SSL hello
-       message must be V2 (in the initial hello all the supported
-       protocols are advertised enabling switching to a higher and more
-       secure version). This means connections from SSLv3 or TLSv1 clients
-       will be accepted. Note: you shouldn't use SSLv2 or SSLv3 for
-       anything which should be highly secure.
+     * SSLv23 - any of the SSLv2, SSLv3 and TLSv1 or newer methods will be
+       accepted.
+       From OpenSSL manual: "A TLS/SSL connection established with these
+       methods may understand the SSLv3, TLSv1, TLSv1.1 and TLSv1.2
+       protocols. If extensions are required (for example server name) a
+       client will send out TLSv1 client hello messages including
+       extensions and will indicate that it also understands TLSv1.1,
+       TLSv1.2 and permits a fallback to SSLv3. A server will support
+       SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols. This is the best
+       choice when compatibility is a concern."
+       Note: For older libssl version, this option allows SSLv2, with
+       hello messages done over SSLv2. You shouldn't use SSLv2 or SSLv3
+       for anything which should be highly secure.
 
-   If rfc3261 conformance is desired, TLSv1 must be used. For
-   compatibility with older clients SSLv23 is a good option.
+   If rfc3261 conformance is desired, at least TLSv1 must be used. For
+   compatibility with older clients SSLv23 is the option, but again, be
+   aware of security concerns, SSLv2/3 being considered very insecure by
+   2014.
 
    Example 1.3. Set tls_method parameter
 ...
