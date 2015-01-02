@@ -87,20 +87,26 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 		p = strchr(vp->strvalue,'#');
 		q = strchr(vp->strvalue,':');
 		r = strrchr(vp->strvalue,'#');
-		if ( p != NULL && p == r && p == vp->strvalue && q != NULL ) {
+		if ( p == vp->strvalue && q != NULL ) {
 			// int name and str value
 			*flags |= AVP_VAL_STR;
 			p++;
 			name->n = strtol(p,&q,10);
 			q++;
 			value->s.len = strlen(q);
-			value->s.s = malloc(value->s.len + 1);
+			if (!(value->s.s = pkg_malloc(value->s.len + 1))) {
+				*flags = 0;
+				return 0;
+			}
 			strcpy (value->s.s,q);
-		} else if ( p != NULL && p == r && q == NULL ) {
+		} else if ( p != NULL && p == r && p > vp->strvalue && q == NULL ) {
 			// str name and int value
 			*flags |= AVP_NAME_STR;
 			name->s.len = p - vp->strvalue;
-			name->s.s = malloc(name->s.len + 1);
+			if (!(name->s.s = pkg_malloc(name->s.len + 1))) {
+				*flags = 0;
+				return 0;
+			}
 			strncpy(name->s.s,vp->strvalue,name->s.len);
 			name->s.s[name->s.len] = '\0';
 			p++;
@@ -111,21 +117,33 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 			name->n = strtol(p,&q,10);
 			r++;
 			value->n = strtol(r,&q,10);
-		} else if ( p == NULL && q != NULL ) {
+		} else if ( (p == NULL || p > q) && q != NULL ) {
 			// str name and str value
 			*flags |= AVP_VAL_STR|AVP_NAME_STR;
 			name->s.len = q - vp->strvalue;
-			name->s.s = malloc(name->s.len + 1);
+			if (!(name->s.s = pkg_malloc(name->s.len + 1))) {
+				*flags = 0;
+				return 0;
+			}
 			strncpy(name->s.s,vp->strvalue,name->s.len);
 			name->s.s[name->s.len] = '\0';
 			q++;
 			value->s.len = strlen(q);
-			value->s.s = malloc(value->s.len + 1);
+			if (!(value->s.s = pkg_malloc(value->s.len + 1))) {
+				pkg_free(name->s.s);
+				*flags = 0;
+				return 0;
+			}
 			strcpy (value->s.s,q);
 		} else // error - unknown
 			return 0;
 	    if ( errno != 0 ) {
 			perror("strtol");
+			if (*flags&AVP_NAME_STR) 
+				pkg_free(name->s.s);
+			if (*flags&AVP_VAL_STR) 
+				pkg_free(value->s.s);
+			*flags = 0;
 			return 0;
 		}
 	} else if (vp->type == PW_TYPE_STRING) {
@@ -138,16 +156,26 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 				} else p++;
 			} else p++;
 			value->s.len = vp->lvalue - (p - vp->strvalue);
-			value->s.s = malloc(value->s.len + 1);
+			if (!(value->s.s = pkg_malloc(value->s.len + 1))) {
+				*flags = 0;
+				return 0;
+			}
 			strcpy (value->s.s, p);
 			name->s.len = strlen(vp->name); 
-			name->s.s = malloc(name->s.len + 1);
+			if (!(name->s.s = pkg_malloc(name->s.len + 1))) {
+				pkg_free(value->s.s);
+				*flags = 0;
+				return 0;
+			}
 			strcpy(name->s.s,vp->name);
 	} else if ((vp->type == PW_TYPE_INTEGER) || (vp->type == PW_TYPE_IPADDR) || (vp->type == PW_TYPE_DATE)) {
 			*flags |= AVP_NAME_STR;
 			value->n = vp->lvalue;
 			name->s.len = strlen(vp->name); 
-			name->s.s = malloc(name->s.len+1);
+			if (!(name->s.s = pkg_malloc(name->s.len+1))) {
+				*flags = 0;
+				return 0;
+			}
 			strcpy(name->s.s,vp->name);
 	} else {
 			LM_ERR("Unknown AVP type '%d'!\n",vp->type);
@@ -166,15 +194,15 @@ static int generate_avps(VALUE_PAIR* received)
 	unsigned short flags;
 	VALUE_PAIR *vp;
 
-	LM_DBG("getting AVPs from RADIUS Reply");
+	LM_DBG("getting AVPs from RADIUS Reply\n");
 	for( vp = received; vp; vp=vp->next) {
 		flags = 0;
 		if (!extract_avp( vp, &flags, &name, &val)){
-			LM_DBG("error while extracting AVP '%.*s'\n",(int)strlen(vp->name),vp->name);
+			LM_ERR("error while extracting AVP '%.*s'\n",(int)strlen(vp->name),vp->name);
 			continue;
 		}
 		if (add_avp( flags, name, val) < 0) {
-			LM_ERR("unable to create a new AVP\n");
+			LM_ERR("error while creating a new AVP\n");
 		} else {
 			if (flags&PV_VAL_STR) {
 				LM_DBG("Added AVP name '%.*s'='%.*s'\n",(int)strlen(name.s.s),name.s.s,(int)strlen(val.s.s),val.s.s);
@@ -189,6 +217,10 @@ static int generate_avps(VALUE_PAIR* received)
 					(flags&AVP_VAL_STR)?val.s.s:"null",
 					(flags&AVP_VAL_STR)?0:val.n );
 		}
+		if (flags&AVP_NAME_STR) 
+			pkg_free(name.s.s);
+		if (flags&AVP_VAL_STR) 
+			pkg_free(val.s.s);
 	}
 	return 0;
 }
