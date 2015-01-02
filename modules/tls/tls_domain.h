@@ -33,29 +33,46 @@
 #include <openssl/ssl.h>
 
 
+#define TLS_OP_SSLv2_PLUS   0
+#define TLS_OP_SSLv3_PLUS   (TLS_OP_SSLv2_PLUS   | SSL_OP_NO_SSLv2)
+#define TLS_OP_TLSv1_PLUS   (TLS_OP_SSLv3_PLUS   | SSL_OP_NO_SSLv3)
+
+#ifdef SSL_OP_NO_TLSv1
+#  define TLS_OP_TLSv1_1_PLUS (TLS_OP_TLSv1_PLUS   | SSL_OP_NO_TLSv1)
+
+#  ifdef SSL_OP_NO_TLSv1_1
+#    define TLS_OP_TLSv1_2_PLUS (TLS_OP_TLSv1_1_PLUS | SSL_OP_NO_TLSv1_1)
+#  endif /*SSL_OP_NO_TLSv1_1*/
+
+#endif /*SSL_OP_NO_TLSv1*/
+
 /**
  * Available TLS methods
  */
 enum tls_method {
 	TLS_METHOD_UNSPEC = 0,
-	TLS_USE_SSLv2_cli,
-	TLS_USE_SSLv2_srv,
-	TLS_USE_SSLv2,
-	TLS_USE_SSLv3_cli,
-	TLS_USE_SSLv3_srv,
-	TLS_USE_SSLv3,
-	TLS_USE_TLSv1_cli,
-	TLS_USE_TLSv1_srv,
-	TLS_USE_TLSv1,
 	TLS_USE_SSLv23_cli,
 	TLS_USE_SSLv23_srv,
-	TLS_USE_SSLv23,
+	TLS_USE_SSLv23,     /* any SSL/TLS version */
+	TLS_USE_SSLv2_cli,
+	TLS_USE_SSLv2_srv,
+	TLS_USE_SSLv2,      /* only SSLv2 (deprecated) */
+	TLS_USE_SSLv3_cli,
+	TLS_USE_SSLv3_srv,
+	TLS_USE_SSLv3,      /* only SSLv3 (insecure) */
+	TLS_USE_TLSv1_cli,
+	TLS_USE_TLSv1_srv,
+	TLS_USE_TLSv1,      /* only TLSv1.0 */
 	TLS_USE_TLSv1_1_cli,
 	TLS_USE_TLSv1_1_srv,
-	TLS_USE_TLSv1_1,
+	TLS_USE_TLSv1_1,    /* only TLSv1.1 */
 	TLS_USE_TLSv1_2_cli,
 	TLS_USE_TLSv1_2_srv,
-	TLS_USE_TLSv1_2,
+	TLS_USE_TLSv1_2,    /* only TLSv1.2 */
+	TLS_USE_TLSvRANGE,    /* placeholder - TLSvX ranges must be after it */
+	TLS_USE_TLSv1_PLUS,   /* TLSv1.0 or greater */
+	TLS_USE_TLSv1_1_PLUS, /* TLSv1.1 or greater */
+	TLS_USE_TLSv1_2_PLUS, /* TLSv1.1 or greater */
 	TLS_METHOD_MAX
 };
 
