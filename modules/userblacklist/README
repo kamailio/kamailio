@@ -142,17 +142,18 @@ Chapter 1. Admin Guide
 
    An additional functionality that this module provides is the ability to
    handle global blacklists. This lists are loaded on startup into memory,
-   thus providing a better performance then in the userblacklist case.
-   These global blacklists are useful to only allow calls to certain
+   thus providing a better performance than the userblacklist case. These
+   global blacklists are useful to allow only calls to certain
    international destinations, i.e. block all not whitelisted numbers.
-   They could also used to prevent the blacklisting of important numbers,
-   as whitelisting is supported too. This is useful for example to prevent
-   the customer from blocking emergency call number or service hotlines.
+   They could also be used to prevent the blacklisting of important
+   numbers, as whitelisting is supported too. This is useful for example
+   to prevent the customer from blocking emergency call number or service
+   hotlines.
 
    The module exports four functions, check_blacklist, check_whitelist,
-   check_user_blacklist and check_user_whitelist for usage in the config
-   file. Furthermore its provides a MI function to reload the global
-   blacklist cache.
+   check_user_blacklist and check_user_whitelist for usage in the
+   configuration file. Furthermore it provides a MI function to reload the
+   global blacklist cache.
 
    Please note that only numerical strings for matching are supported at
    the moment (the used library supports this already, but its not yet
@@ -169,7 +170,7 @@ Chapter 1. Admin Guide
 
    The module depends on the following modules (in the other words the
    listed modules must be loaded before this module):
-     * database -- Any database module
+     * database -- Any db_* database module
 
 2.2. External Libraries or Applications
 
@@ -196,14 +197,14 @@ Chapter 1. Admin Guide
 
 3.1. use_domain (integer)
 
-   If set to non-zero value, the domain column in the userblacklist is
-   used.
+   If set to non-zero value, the domain column in the userblacklist table
+   is used.
 
    Default value is "0".
 
    Example 1.1. Set use_domain parameter
 ...
-modparam("userblacklist", "use_domain", 0)
+modparam("userblacklist", "use_domain", 1)
 ...
 
 3.2. match_mode (integer)

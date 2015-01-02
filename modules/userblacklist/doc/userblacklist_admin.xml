@@ -21,10 +21,10 @@
 	<para>
 	An additional functionality that this module provides is the ability
 	to handle global blacklists. This lists are loaded on startup into
-	memory, thus providing a better performance then in the userblacklist
-	case. These global blacklists are useful to only allow calls to certain 
+	memory, thus providing a better performance than the userblacklist
+	case. These global blacklists are useful to allow only calls to certain 
 	international destinations, i.e. block all not whitelisted numbers.
-	They could also used to prevent the blacklisting of important	
+	They could also be used to prevent the blacklisting of important	
 	numbers, as whitelisting is supported too. This is useful for example
 	to prevent the customer from blocking emergency call number or service
 	hotlines.
@@ -33,7 +33,7 @@
 	The module exports four functions, <function>check_blacklist</function>,
 	<function>check_whitelist</function>,
 	<function>check_user_blacklist</function> and <function>check_user_whitelist</function>
-	for usage in the config file. Furthermore its provides a MI function to
+	for usage in the configuration file. Furthermore it provides a MI function to
 	reload the global blacklist cache.
 	</para>
 	<para>
@@ -54,7 +54,8 @@
 			</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>database</emphasis> -- Any database module</para>
+				<para><emphasis>database</emphasis> 
+				-- Any db_* database module</para>
 			</listitem>
 			</itemizedlist>
 		</section>
@@ -75,10 +76,11 @@
 
 	<section  xmlns:xi="http://www.w3.org/2001/XInclude">
 	<title>Parameters</title>
-    <section id="userblacklist.p.use_domain">
+    	<section id="userblacklist.p.use_domain">
 	    <title><varname>use_domain</varname> (integer)</title>
 	    <para>
-			If set to non-zero value, the domain column in the userblacklist is used.
+			If set to non-zero value, the domain column in the
+			userblacklist table is used.
 	    </para>
 	    <para>
 		    <emphasis>
@@ -89,7 +91,7 @@
 		    <title>Set <varname>use_domain</varname> parameter</title>
 		    <programlisting format="linespecific">
 ...
-modparam("userblacklist", "use_domain", 0)
+modparam("userblacklist", "use_domain", 1)
 ...
 		    </programlisting>
 	    </example>
@@ -101,7 +103,8 @@ modparam("userblacklist", "use_domain", 0)
 		Valid values are 10 or 128. When you specifiy 10, only digits will be used for matching, 
 		this operation mode is equivalent to the old behaviour. When configured with 128, 
 		all standard ASCII chars are available for matching. Please be aware that memory 
-		requirements for storing the routing tree in shared memory will also increase by a factor of 12.8.
+		requirements for storing the routing tree in shared memory will also
+		increase by a factor of 12.8.
 	    </para>
 	    <para>
 		    <emphasis>
@@ -211,7 +214,8 @@ modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
   <section>
     <title><varname>globalblacklist_table</varname> (String)</title>
     <para>Name of the globalblacklist table for the userblacklist module.
-    Please note that this table is used when the check_blacklist function is called with no parameters.</para>
+    Please note that this table is used when the check_blacklist
+	function is called with no parameters.</para>
     <para>
       <emphasis>Default value is <quote>globalblacklist</quote>.</emphasis>
     </para>
@@ -279,7 +283,8 @@ modparam("userblacklist", "globalblacklist_description_col", "description")
 	<title>Functions</title>
     	<section id="userblacklist.f.check_user_blacklist">
 	    <title>
-		<function moreinfo="none">check_user_blacklist (string user, string domain, string number, string table)</function>
+		<function moreinfo="none">check_user_blacklist
+		(string user, string domain, string number, string table)</function>
 	    </title>
 	    <para>
 		Finds the longest prefix that matches the request URI user (or the number
@@ -306,7 +311,8 @@ if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)")) {
 	</section>
     	<section id="userblacklist.f.check_user_whitelist">
 	    <title>
-		<function moreinfo="none">check_user_whitelist (string user, string domain, string number, string table)</function>
+		<function moreinfo="none">check_user_whitelist
+		(string user, string domain, string number, string table)</function>
 	    </title>
 	    <para>
 		Finds the longest prefix that matches the request URI user (or the number
@@ -401,10 +407,11 @@ if (!check_whitelist("globalblacklist")) {
 	<section>
 		<title>Database setup</title>
 		<para>
-			Before running &kamailio; with the userblacklist module, you have to setup the database 
-			table where the module will read the blacklist data. For that, if 
-			the table was not created by the installation script or you choose
-			to install everything by yourself you can use the userblacklist-create.sql
+			Before running &kamailio; with the userblacklist module,
+			you have to setup the database table where the module will
+			read the blacklist data. For that, if the table was not created
+			by the installation script or you choose to install everything
+			by yourself you can use the <emphasis>userblacklist-create.sql</emphasis>
 			<acronym>SQL</acronym> script in the database directories in the 
 			kamailio/scripts folder as template. 
 			Database and table name can be set with module parameters so they 
