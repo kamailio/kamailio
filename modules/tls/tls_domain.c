@@ -896,12 +896,24 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 		ERR("%s: Cannot allocate shared memory\n", tls_domain_str(d));
 		return -1;
 	}
+	if(d->method>TLS_USE_TLSvRANGE) {
+		LM_DBG("using tls methods range: %d\n", d->method);
+	} else {
+		LM_DBG("using one tls method version: %d\n", d->method);
+	}
 	memset(d->ctx, 0, sizeof(SSL_CTX*) * procs_no);
 	for(i = 0; i < procs_no; i++) {
-		d->ctx[i] = SSL_CTX_new((SSL_METHOD*)ssl_methods[d->method - 1]);
+		if(d->method>TLS_USE_TLSvRANGE) {
+			d->ctx[i] = SSL_CTX_new(SSLv23_method());
+		} else {
+			d->ctx[i] = SSL_CTX_new((SSL_METHOD*)ssl_methods[d->method - 1]);
+		}
 		if (d->ctx[i] == NULL) {
 			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
 			return -1;
+		}
+		if(d->method>TLS_USE_TLSvRANGE) {
+			SSL_CTX_set_options(d->ctx[i], (long)ssl_methods[d->method - 1]);
 		}
 	}
 	

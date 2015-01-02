@@ -329,6 +329,12 @@ static void init_ssl_methods(void)
 {
 	memset(ssl_methods, 0, sizeof(ssl_methods));
 
+	/* any SSL/TLS version */
+	ssl_methods[TLS_USE_SSLv23_cli - 1] = SSLv23_client_method();
+	ssl_methods[TLS_USE_SSLv23_srv - 1] = SSLv23_server_method();
+	ssl_methods[TLS_USE_SSLv23 - 1] = SSLv23_method();
+
+	/* only specific SSL or TLS version */
 #ifndef OPENSSL_NO_SSL2
 	ssl_methods[TLS_USE_SSLv2_cli - 1] = SSLv2_client_method();
 	ssl_methods[TLS_USE_SSLv2_srv - 1] = SSLv2_server_method();
@@ -343,10 +349,6 @@ static void init_ssl_methods(void)
 	ssl_methods[TLS_USE_TLSv1_srv - 1] = TLSv1_server_method();
 	ssl_methods[TLS_USE_TLSv1 - 1] = TLSv1_method();
 
-	ssl_methods[TLS_USE_SSLv23_cli - 1] = SSLv23_client_method();
-	ssl_methods[TLS_USE_SSLv23_srv - 1] = SSLv23_server_method();
-	ssl_methods[TLS_USE_SSLv23 - 1] = SSLv23_method();
-
 #if OPENSSL_VERSION_NUMBER >= 0x1000100fL
 	ssl_methods[TLS_USE_TLSv1_1_cli - 1] = TLSv1_1_client_method();
 	ssl_methods[TLS_USE_TLSv1_1_srv - 1] = TLSv1_1_server_method();
@@ -357,6 +359,17 @@ static void init_ssl_methods(void)
 	ssl_methods[TLS_USE_TLSv1_2_cli - 1] = TLSv1_2_client_method();
 	ssl_methods[TLS_USE_TLSv1_2_srv - 1] = TLSv1_2_server_method();
 	ssl_methods[TLS_USE_TLSv1_2 - 1] = TLSv1_2_method();
+#endif
+
+	/* ranges of TLS versions (require a minimum TLS version) */
+	ssl_methods[TLS_USE_TLSv1_PLUS - 1] = (void*)TLS_OP_TLSv1_PLUS;
+
+#if OPENSSL_VERSION_NUMBER >= 0x1000100fL
+	ssl_methods[TLS_USE_TLSv1_1_PLUS - 1] = (void*)TLS_OP_TLSv1_1_PLUS;
+#endif
+
+#if OPENSSL_VERSION_NUMBER >= 0x1000105fL
+	ssl_methods[TLS_USE_TLSv1_2_PLUS - 1] = (void*)TLS_OP_TLSv1_2_PLUS;
 #endif
 }
 
