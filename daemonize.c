@@ -452,9 +452,11 @@ int do_suid()
 	struct passwd *pw;
 	
 	if (gid){
-		if(setgid(gid)<0){
-			LM_CRIT("cannot change gid to %d: %s\n", gid, strerror(errno));
-			goto error;
+		if(gid!=getgid()) {
+			if(setgid(gid)<0){
+				LM_CRIT("cannot change gid to %d: %s\n", gid, strerror(errno));
+				goto error;
+			}
 		}
 	}
 	
@@ -468,9 +470,11 @@ int do_suid()
 							strerror(errno));
 			goto error;
 		}
-		if(setuid(uid)<0){
-			LM_CRIT("cannot change uid to %d: %s\n", uid, strerror(errno));
-			goto error;
+		if(uid!=getuid()) {
+			if(setuid(uid)<0){
+				LM_CRIT("cannot change uid to %d: %s\n", uid, strerror(errno));
+				goto error;
+			}
 		}
 	}
 
