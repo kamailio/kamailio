@@ -165,7 +165,7 @@ static int tls_complete_init(struct tcp_connection* c)
 	      * is to ensure that, while on the garbage queue, the configuration does
 	      * not get deleted if there are still connection referencing its SSL_CTX
 	      */
-	cfg->ref_count++;
+	atomic_inc(&cfg->ref_count);
 	lock_release(tls_domains_cfg_lock);
 
 	if (c->flags & F_CONN_PASSIVE) {
@@ -218,7 +218,7 @@ static int tls_complete_init(struct tcp_connection* c)
 	return 0;
 
  error:
-	cfg->ref_count--;
+	atomic_dec(&cfg->ref_count);
 	if (data) shm_free(data);
  error2:
 	return -1;
@@ -574,7 +574,7 @@ void tls_h_tcpconn_clean(struct tcp_connection *c)
 	if (c->extra_data) {
 		extra = (struct tls_extra_data*)c->extra_data;
 		SSL_free(extra->ssl);
-		extra->cfg->ref_count--;
+		atomic_dec(&extra->cfg->ref_count);
 		if (extra->ct_wq)
 			tls_ct_wq_free(&extra->ct_wq);
 		if (extra->enc_rd_buf) {

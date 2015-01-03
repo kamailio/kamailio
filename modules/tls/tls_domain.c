@@ -1181,6 +1181,7 @@ tls_domains_cfg_t* tls_new_cfg(void)
 		return 0;
 	}
 	memset(r, 0, sizeof(tls_domains_cfg_t));
+	atomic_set(&r->ref_count, 0);
 	return r;
 }
 
