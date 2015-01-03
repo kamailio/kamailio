@@ -18,7 +18,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: event handling
+ * \brief Kamailio core :: event handling
  * \ingroup core
  * Module: \ref core
  */

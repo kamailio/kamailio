@@ -16,7 +16,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: tcp options
+ * \brief Kamailio core :: tcp options
  * \ingroup core
  * Module: \ref core
  */

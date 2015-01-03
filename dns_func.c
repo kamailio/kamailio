@@ -16,7 +16,8 @@
  */
 /*!
  * \file 
- * \brief SIP-router core :: DNS wrappers
+ * \brief Kamailio core :: DNS wrappers
+ * \author mariuszbi@gmail.com
  * \ingroup core
  * Module: \ref core
  */

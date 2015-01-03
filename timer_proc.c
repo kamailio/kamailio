@@ -16,7 +16,7 @@
 
 /**
  * @file
- * @brief SIP-router core ::  timer - separate process timers
+ * @brief Kamailio core ::  timer - separate process timers
  *
  *  (unrelated to the main fast and slow timers)
  *

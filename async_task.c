@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2014 Daniel-Constantin Mierla (asipto.com)
  *
- * This file is part of Extensible SIP Router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+/*!
+* \file
+* \brief Kamailio core :: Asynchronus tasks
+* \ingroup core
+* Module: \ref core
+*/
 
 #include <stdio.h>
 #include <unistd.h>

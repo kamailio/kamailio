@@ -16,7 +16,7 @@
  */
 /*!
  * \file 
- * \brief SIP-router core ::
+ * \brief Kamailio core ::
  * \ingroup core
  * Module: \ref core
  */

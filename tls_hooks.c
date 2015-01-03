@@ -16,7 +16,7 @@
 
 /**
  * @file
- * @brief SIP-router TLS support :: TLS hooks for modules
+ * @brief Kamailio TLS support :: TLS hooks for modules
  * @ingroup tls
  * Module: @ref tls
  */

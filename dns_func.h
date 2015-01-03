@@ -22,6 +22,7 @@
  * Module: \ref core                    
  *  
  *
+ */
 
 #ifndef DNS_FUNC_H
 #define DNS_FUNC_H

@@ -16,7 +16,7 @@
 
 /*!
  * \file
- * \brief SIP-router core ::  bit scan operations, see bit_scan.h.
+ * \brief Kamailio core ::  bit scan operations, see bit_scan.h.
  * \ingroup core
  * Module: \ref core
  */
