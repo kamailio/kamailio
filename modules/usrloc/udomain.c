@@ -1,6 +1,4 @@
 /*
- * $Id$ 
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,13 +17,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
- * 2003-03-11 changed to the new locking scheme: locking.h (andrei)
- * 2003-03-12 added replication mark and zombie state (nils)
- * 2004-06-07 updated to the new DB api (andrei)
- * 2004-08-23  hash function changed to process characters as unsigned
- *             -> no negative results occur (jku)
  */
 
 /*! \file

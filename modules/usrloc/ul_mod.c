@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Usrloc module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,16 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
- * 2003-01-27 timer activity printing #ifdef-ed to EXTRA_DEBUG (jiri)
- * 2003-03-11 New module interface (janakj)
- * 2003-03-12 added replication and state columns (nils)
- * 2003-03-16 flags export parameter added (janakj)
- * 2003-04-05: default_uri #define used (jiri)
- * 2003-04-21 failed fifo init stops init process (jiri)
- * 2004-03-17 generic callbacks added (bogdan)
- * 2004-06-07 updated to the new DB api (andrei)
  */
 
 /*! \file
