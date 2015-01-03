@@ -19,17 +19,12 @@
  *
  * WARNING: Don't forget to update the dictionary if you update this file !!!
  *
- * History:
- * --------
- * 2005-06-28  multi leg call support added (bogdan)
- * 2008-09-03  added type field to attribute structure, which is set
- *             during INIT_AV.
- *
  */
 
 /*!
  * \file
  * \brief Radius support
+ * \ingroup libkcore
  */
 
 

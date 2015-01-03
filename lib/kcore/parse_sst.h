@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (c) 2006 SOMA Networks, Inc. <http://www.somanetworks.com/>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,15 +17,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2006-02-17 Initial revision (dhsueh@somanetworks.com)
  */
 
 /*!
  * \file
  * \brief SST parser
  * \ingroup parser
+ * \author dhsueh@somanetworks.com
  */
 
 #ifndef PARSE_SST_H

@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,12 +16,8 @@
 /** k compatible statistics implemented in terms of sr counters.
  * @file kstats_wrapper.h
  * @ingroup: libkcore
+ * @author andrei
  */
-/*
- * History:
- * --------
- *  2010-08-08  initial version (andrei)
-*/
 
 #include "kstats_wrapper.h"
 

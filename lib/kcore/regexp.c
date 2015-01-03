@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Regular expression functions
  *
  * Copyright (C) 2003 Juha Heinanen
@@ -26,6 +24,8 @@
 /*!
  * \file 
  * \brief Regular Expression functions
+ * Copyright (C) 2003 Juha Heinanen
+ * \ingroup libkcore
  */
 
 #include <sys/types.h>

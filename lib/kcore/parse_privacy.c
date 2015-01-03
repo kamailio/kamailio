@@ -28,6 +28,7 @@
  * \file
  * \brief Privacy value parser
  * \ingroup parser
+ * Copyright (c) 2006 Juha Heinanen
  */
 
 #include <stdlib.h>

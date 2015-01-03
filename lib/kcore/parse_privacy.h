@@ -1,6 +1,4 @@
 /*
- * $Id: parse_privacy.h 4720 2008-08-23 10:56:15Z henningw $
- *
  * Copyright (c) 2006 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.

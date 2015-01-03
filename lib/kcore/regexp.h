@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Regular expression definitions
- *
  * Copyright (C) 2003 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,6 +24,9 @@
 /*!
  * \file 
  * \brief Regular expression definitions 
+ * Copyright (C) 2003 Juha Heinanen
+ * \author Juha Heinanen
+ * \ingroup libkcore
  */
 
 

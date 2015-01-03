@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -20,17 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
- * History:
- * ---------
- *  2006-01-16  first version (bogdan)
- *  2006-11-28  added get_stat_var_from_num_code() (Jeffrey Magder -
- *              SOMA Networks)
- *  2010-08-08  removed all the parts emulated by kstats_wrapper.[ch] (andrei)
  */
 
 /*!
  * \file
  * \brief Statistics support
+ * \author bogdan, andrei
+ * \author Jeffrey Magder - SOMA Networks
+ * \ingroup libkcore
  */
 
 
