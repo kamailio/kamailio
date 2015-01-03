@@ -1,22 +1,14 @@
 /*
- * $Id$
- *
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,82 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-01-19  faked lump list created in on_reply handlers
- *  2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
- *  2003-02-13  updated to use rb->dst (andrei)
- *  2003-02-18  replaced TOTAG_LEN w/ TOTAG_VALUE_LEN (TOTAG_LEN was defined
- *               twice with different values!)  (andrei)
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
- *  2003-03-01  kr set through a function now (jiri)
- *  2003-03-06  saving of to-tags for ACK/200 matching introduced,
- *              voicemail changes accepted, updated to new callback
- *              names (jiri)
- *  2003-03-10  fixed new to tag bug/typo (if w/o {})  (andrei)
- *  2003-03-16  removed _TOTAG (jiri)
- *  2003-03-31  200 for INVITE/UAS resent even for UDP (jiri)
- *  2003-03-31  removed msg->repl_add_rm (andrei)
- *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
- *  2003-04-14  local acks generated before reply processing to avoid
- *              delays in length reply processing (like opening TCP
- *              connection to an unavailable destination) (jiri)
- *  2003-09-11  updates to new build_res_buf_from_sip_req() interface (bogdan)
- *  2003-09-11  t_reply_with_body() reshaped to use reply_lumps +
- *              build_res_buf_from_sip_req() instead of
- *              build_res_buf_with_body_from_sip_req() (bogdan)
- *  2003-11-05  flag context updated from failure/reply handlers back
- *              to transaction context (jiri)
- *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
- *  2003-12-04  global TM callbacks switched to per transaction callbacks
- *              (bogdan)
- *  2004-02-06: support for user pref. added - destroy_avps (bogdan)
- *  2003-11-05  flag context updated from failure/reply handlers back
- *              to transaction context (jiri)
- *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
- *  2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
- *  2004-02-18  fifo_t_reply imported from vm module (bogdan)
- *  2004-08-23  avp list is available from failure/on_reply routes (bogdan)
- *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
- *  2005-03-01  force for statefull replies the incoming interface of
- *              the request (bogdan)
- *  2005-09-01  reverted to the old way of checking response.dst.send_sock
- *               in t_retransmit_reply & reply_light (andrei)
- *  2005-11-09  updated to the new timers interface (andrei)
- *  2006-02-07  named routes support (andrei)
- *  2006-09-13  t_pick_branch will skip also over branches with empty reply 
- *              t_should_relay_response will re-pick the branch if failure 
- *               route /handlers added new branches (andrei)
- * 2006-10-05  better final reply selection: t_pick_branch will prefer 6xx,
- *              if no 6xx reply => lowest class/code; if class==4xx =>
- *              prefer 401, 407, 415, 420 and 484   (andrei)
- * 2006-10-12  dns failover when a 503 is received
- *              replace a 503 final relayed reply by a 500 (andrei)
- * 2006-10-16  aggregate all the authorization headers/challenges when
- *               the final response is 401 or 407 (andrei)
- * 2007-03-08  membar_write() used in update_totag_set(...)(andrei)
- * 2007-03-15  build_local_ack: removed next_hop and replaced with dst to 
- *              avoid resolving next_hop twice
- *              added TMCB_ONSEND callbacks support for replies & ACKs (andrei)
- * 2007-05-28: build_ack() constructs the ACK from the
- *             outgoing INVITE instead of the incomming one.
- *             (it can be disabled with reparse_invite=0) (Miklos)
- * 2007-09-03: drop_replies() has been introduced (Miklos)
- * 2008-03-12  use cancel_b_method on 6xx (andrei)
- * 2008-05-30  make sure the wait timer is started after we don't need t
- *             anymore to allow safe calls from fr_timer (andrei)
- * 2009-06-01  Pre- and post-script callbacks of branch route are 
- *             executed (Miklos)
- * 2009-12-10  reply route is executed under lock to protect the avps (andrei)
- * 2010-02-22  _reply() will cleanup any reply lumps that it might have added
- *             (andrei)
- * 2010-02-26  added experimental support for final reply dropping, not
- *             enabled by default (performance hit) (andrei)
- * 2010-02-26  cancel reason (rfc3326) basic support (andrei)
- *
  */
 
- /* Defines:
+ /** Defines:
   *           TM_ONREPLY_FINAL_DROP_OK - allows dropping the final reply
   *            from the tm onreply_routes, but comes with a small performance
   *            hit (extra unlock()/lock() for each final reply when a onreply

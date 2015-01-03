@@ -1,23 +1,16 @@
 /*
- * $Id$
- *
  * message printing
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,27 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * ----------
- * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-02-13  build_uac_request uses proto (andrei)
- * 2003-02-28  scratchpad compatibility abandoned (jiri)
- * 2003-04-14  build_local no longer checks reply status as it
- *             is now called before reply status is updated to
- *             avoid late ACK sending (jiri)
- * 2003-10-02  added via_builder set host/port support (andrei)
- * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
- * 2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
- * 2006-04-21  build_uac_req, assemble_via use struct dest_info now;
- *              uri2sock replaced with uri2dst (andrei)
- * 2006-08-11  build_dlg_ack: use the first dns ip for which a send_sock
- *              is found (andrei)
- * 2007-03-15  build_dls_ack: removed next_hop and replaced by dst to avoid
- *               resolving nexthop twice (andrei)
- * 2007-05-28: build_local_reparse() is introdued: it uses the outgoing
- *             INVITE as a source to construct a CANCEL or ACK (Miklos)
- * 2010-02-26  cancel reason (rfc3326) basic support (andrei)
  */
 
 #include "defs.h"

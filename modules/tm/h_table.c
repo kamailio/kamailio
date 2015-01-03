@@ -1,16 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -19,28 +17,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History
- * -------
- * 2003-03-06  200/INV to-tag list deallocation added;
- *             setting "kill_reason" moved in here -- it is moved
- *             from transaction state to a static var(jiri)
- * 2003-03-16  removed _TOTAG (jiri)
- * 2003-03-30  set_kr for requests only (jiri)
- * 2003-04-04  bug_fix: REQ_IN callback not called for local 
- *             UAC transactions (jiri)
- * 2003-09-12  timer_link->tg will be set only if EXTRA_DEBUG (andrei)
- * 2003-12-04  global callbacks replaceed with callbacks per transaction;
- *             completion callback merged into them as LOCAL_COMPETED (bogdan)
- * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
- * 2004-02-13  t->is_invite and t->local replaced with flags;
- *             timer_link.payload removed (bogdan)
- * 2004-08-23  avp support added - move and remove avp list to/from
- *             transactions (bogdan)
- * 2006-08-11  dns failover support (andrei)
- * 2007-05-16  callbacks called on destroy (andrei)
- * 2007-06-06  don't allocate extra space for md5 if not used: syn_branch==1 
- *              (andrei)
- * 2007-06-06  switched tm bucket list to a simpler and faster clist (andrei)
  */
 
 /*!

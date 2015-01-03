@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * simple UAC for things such as SUBSCRIBE or SMS gateway;
  * no authentication and other UAC features -- just send
  * a message, retransmit and await a reply; forking is not
@@ -9,19 +7,14 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -30,34 +23,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-01-23  t_uac_dlg now uses get_out_socket (jiri)
- *  2003-01-27  fifo:t_uac_dlg completed (jiri)
- *  2003-01-29  scratchpad removed (jiri)
- *  2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
- *               proto & rb->dst (andrei)
- *  2003-02-27  FIFO/UAC now dumps reply -- good for CTD (jiri)
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
- *  2003-03-01  kr set through a function now (jiri)
- *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-02  port_no_str does not contain a leading ':' anymore (andrei)
- *  2003-07-08  appropriate log messages in check_params(...), 
- *               call calculate_hooks if next_hop==NULL in t_uac (dcm) 
- *  2003-10-24  updated to the new socket_info lists (andrei)
- *  2003-12-03  completion filed removed from transaction and uac callbacks
- *              merged in transaction callbacks as LOCAL_COMPLETED (bogdan)
- *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
- *  2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced (bogdan)
- *  2004-08-23  avp support in t_uac (bogdan)
- *  2005-12-16  t_uac will set the new_cell timers to the default values,
- *               fixes 0 fr_timer bug (andrei)
- *  2006-08-11  t_uac uses dns failover until it finds a send socket (andrei)
- *  2007-03-15  TMCB_ONSEND callbacks support added (andrei)
- *  2007-03-23  TMCB_LOCAL_REQUEST_IN callbacks support (andrei)
- *  2007-04-23  per dialog callbacks support (andrei)
- *  2007-06-01  support for per transaction different retransmissions intervals
- *              (andrei)
  */
 
 #include <string.h>

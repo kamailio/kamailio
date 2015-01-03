@@ -23,9 +23,6 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * History:
- * -------
- *  2008-10-22: Moved functions from lcr module to tm module (jh)
  */
 
 #include "../../qvalue.h"

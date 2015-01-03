@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * TM module
  *
  *
@@ -30,14 +28,14 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -45,50 +43,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-/*
- * History:
- * --------
- *  2003-02-18  added t_forward_nonack_{udp, tcp}, t_relay_to_{udp,tcp},
- *               t_replicate_{udp, tcp} (andrei)
- *  2003-02-19  added t_rely_{udp, tcp} (andrei)
- *  2003-03-06  voicemail changes accepted (jiri)
- *  2003-03-10  module export interface updated to the new format (andrei)
- *  2003-03-16  flags export parameter added (janakj)
- *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-03-30  set_kr for requests only (jiri)
- *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
- *  2003-04-14  use protocol from uri (jiri)
- *  2003-07-07  added t_relay_to_tls, t_replicate_tls, t_forward_nonack_tls
- *              added #ifdef USE_TCP, USE_TLS
- *              removed t_relay_{udp,tcp,tls} (andrei)
- *  2003-09-26  added t_forward_nonack_uri() - same as t_forward_nonack() but
- *              takes no parameters -> forwards to uri (bogdan)
- *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
- *  2004-02-18  t_reply exported via FIFO - imported from VM (bogdan)
- *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
- *  2005-11-14  new timer support, changed timer related module params (andrei)
- *  2005-12-09  fixup_hostport2proxy uses route_struct to access param #1
- *              when fixing param #2
- *  2005-12-09  added t_set_fr() (andrei)
- *  2006-02-07  named routes support (andrei)
- *  2006-09-28  added t_branch_replied, t_branch_timeout, t_any_replied, 
- *               t_any_timeout, t_is_canceled (andrei)
- *  2006-10-16  added a new param.: aggregate challenges (andrei)
- *  2007-05-28  two new params: reparse_invite, ac_extra_hdrs
- *              added w_t_relay_cancel() (Miklos)
- *  2007-06-05  added t_set_auto_inv_100() and auto_inv_100 (param);
- *               t_set_max_lifetime(), max_{non}inv_lifetime  (andrei)
- *  2008-02-05	module config parameters use the configuration framework (Miklos)
- *  2008-02-29  added t_grep_status(code) (andrei)
- *  2008-05-15  added t_relay(host, port) (similar to forward(host, port)) &
- *               t_relay_to_{udp,tcp,tls}(<no param>) (force protocol, but 
- *               forward to uri)  (andrei)
- *  2008-08-11  sctp support: t_relay_to_sctp, t_replicate_sctp,
- *               t_forward_nonack_sctp (andrei)
- *  2009-03-18  added a new param: auto_inv_100_reason (aheise) 
- *  2010-03-03  added new params: local_cancel_reason and e2e_cancel_reason
- *              (andrei)
  */
 
 /** TM :: Module API (core).

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * This C-file takes care of matching requests and replies with
  * existing transactions. Note that we do not do SIP-compliant
  * request matching as asked by SIP spec. We do bitwise matching of 
@@ -21,19 +19,14 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -42,60 +35,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ----------
- * 2003-01-23  options for disabling r-uri matching introduced (jiri)
- *              nameser_compat.h (andrei)
- * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-01-28  scratchpad removed (jiri)
- * 2003-02-13  init_rb() is proto indep. & it uses struct dest_info (andrei)
- * 2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
- * 2003-02-27  3261 ACK/200 consumption bug removed (jiri)
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-03-01  kr set through a function now (jiri)
- * 2003-03-06  dialog matching introduced for ACKs -- that's important for 
- *             INVITE UAS (like INVITE) and 200/ACK proxy matching (jiri)
- * 2003-03-29  optimization: e2e ACK matching only if callback installed
- *             (jiri)
- * 2003-03-30  set_kr for requests only (jiri)
- * 2003-04-04  bug_fix: RESPONSE_IN callback not called for local
- *             UAC transactions (jiri)
- * 2003-04-07  new transactions inherit on_failure and on_relpy from script
- *             variables on instantiation (jiri)
- * 2003-04-30  t_newtran clean up (jiri)
- * 2003-08-21  request lookups fixed to skip UAC transactions, 
- *             thanks Ed (jiri)
- * 2003-12-04  global TM callbacks switched to per transaction callbacks
- *             (bogdan)
- * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
- * 2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
- * 2004-10-10: use of mhomed disabled for replies (jiri)
- * 2005-02-01: use the incoming request interface for sending the replies
- *             - changes in init_rb() (bogdan)
- * 2005-12-09  added t_set_fr()  (andrei)
- * 2006-01-27  transaction lookup function will set up a cancel flag
- *             if the searched transaction was pre-canceled (andrei)
- * 2006-10-16  401 & 407 replies are completely parsed if tm_aggregate_auth is
- *              set (andrei)
- * 2006-11-10  a valid msg->hash_index is now marked by FL_HASH_INDEX in 
- *              msg_flags
- *             t_lookupOriginalT computes the hash_index by itself  if 
- *               needed (andrei)
- * 2007-03-17  added callbacks for retransmitted request, ack to negative 
- *              replies and replies to local transactions (andrei)
- * 2007-06-01  support for different retransmissions intervals per transaction;
- *             added maximum inv. and non-inv. transaction life time (andrei)
- * 2007-06-05  added delayed error reply support in t_unref;
-*              added support for turning off 100 repl. sending on inv. (andrei)
- * 2007-06-01  support for different retransmissions intervals per transaction;
- *             added maximum inv. and non-inv. transaction life time (andrei)
- * 2007-06-06  switched tm bucket list to a simpler and faster clist;
- * 2008-02-28  try matching e2e acks in t_lookup() only for transactions
- *               which have E2EACK callbacks registered (andrei)
- * 2008-03-31  message flags are updated in shared memory even if they are set
- *             after t_newtran() (Miklos)
- * 2009-06-24  added T_branch and changed set_t() to take also a branch
- *              parameter (andrei)
  */
 
 #include "defs.h"

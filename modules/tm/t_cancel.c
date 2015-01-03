@@ -1,22 +1,14 @@
 /*
- * $Id$
- *
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,28 +17,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ----------
- * 2003-04-14  checking if a reply sent before cancel is initiated
- *             moved here (jiri)
- * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
- * 2004-02-13  timer_link.payload removed (bogdan)
- * 2006-10-10  cancel_uacs  & cancel_branch take more options now (andrei)
- * 2007-03-15  TMCB_ONSEND hooks added (andrei)
- * 2007-05-28: cancel_branch() constructs the CANCEL from the
- *             outgoing INVITE instead of the incomming one.
- *             (it can be disabled with reparse_invite=0) (Miklos)
- * 2007-06-04  cancel_branch() can operate in lockless mode (with a lockless
- *              should_cancel()) (andrei)
- * 2008-03-07  cancel_branch() takes a new flag: F_CANCEL_B_FORCE_RETR (andrei)
- * 2008-03-08  e2e_cancel handles non replied branches in 3 different ways,
- *              selectable by the tm cancel_b_method parameter: fake reply,
- *              retransmit request and send cancel on branch (andrei)
- * 2009-07-14  renamed which_cancel() to prepare_to_cancel() for better
- *              reflecting its purpose
- *             prepare_to_cancel() takes now an additional skip_branches
- *              bitmap parameter (andrei)
- * 2010-02-26  cancel reason (rfc3326) basic support (andrei)
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */

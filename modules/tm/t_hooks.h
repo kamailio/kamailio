@@ -1,21 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,20 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2003-03-16 : backwards-compatibility callback names introduced (jiri)
- * 2003-03-06 : old callbacks renamed, new one introduced (jiri)
- * 2003-12-04 : global callbacks moved into transaction callbacks;
- *              multiple events per callback added; single list per
- *              transaction for all its callbacks (bogdan)
- * 2007-03-14   added *_SENT callbacks (andrei)
- * 2007-03-17   added TMCB_NEG_ACK_IN, TMCB_REQ_RETR_IN & 
- *               TMCB_LOCAL_RESPONSE_IN (andrei)
- * 2007-03-23   added TMCB_LOCAL_REQUEST_IN (andrei)
- * 2007-05-16   added TMCB_DESTROY (andrei)
- * 2007-05-24   fixed has_tran_tmcbs() & added TMCB_E2ECANCEL_IN (andrei)
- * 2007-11-12   added TMCB_E2EACK_RETR_IN (andrei)
  */
 
 

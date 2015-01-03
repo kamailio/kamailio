@@ -1,16 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -19,25 +17,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2003-03-16  removed _TOTAG (jiri)
- * 2003-03-06  we keep a list of 200/INV to-tags now (jiri)
- * 2003-03-01  kr set through a function now (jiri)
- * 2003-12-04  callbacks per transaction added; completion callback
- *             merge into them as LOCAL_COMPETED (bogdan)
- * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
- * 2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced
- *             with flags (bogdan)
- * 2004-08-23  avp support added - avp list linked in transaction (bogdan)
- * 2005-11-03  updated to the new timer interface (dropped tm timers) (andrei)
- * 2006-08-11  dns failover support (andrei)
- * 2007-05-29  switch ref_count to atomic and delete a cell automatically on
- *             UNREF if the ref_count reaches 0 (andrei)
- * 2007-06-01  support for different retransmissions intervals per transaction;
- *             added maximum inv. and non-inv. transaction life time (andrei)
- * 2007-06-06  switched tm bucket list to a simpler and faster clist;
- *              inlined often used functions (andrei)
  */
 
 /**  TM :: hash table, flags and other general defines.

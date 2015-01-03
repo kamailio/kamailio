@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,11 +16,6 @@
 /*
  * modules/tm/rpc_uac.c
  */
-/*
- * History:
- * --------
- *  2009-07-20  initial version (andrei)
-*/
 
 #include "rpc_uac.h"
 #include "../../rpc.h"
