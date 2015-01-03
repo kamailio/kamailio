@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Portions Copyright (C) 2013 Crocodile RCS Ltd
  *
  * Based on "ser_stun.c". Copyright (C) 2001-2003 FhG Fokus
@@ -21,6 +19,15 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ */
+/*!
+ * \file
+ * \brief STUN :: Configuration
+ * \ingroup stun
+ */
+/*!
+ * \defgroup stun STUN Nat traversal support
+ * 
  */
 
 #include <arpa/inet.h>
