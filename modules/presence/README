@@ -56,6 +56,7 @@ Juha Heinanen
               3.21. fetch_rows (integer)
               3.22. db_table_lock_type (integer)
               3.23. local_log_level (int)
+              3.24. subs_remove_match (int)
 
         4. Functions
 
@@ -123,11 +124,12 @@ Juha Heinanen
    1.21. Set fetch_rows parameter
    1.22. Set db_table_lock_type parameter
    1.23. Set local_log_level parameter
-   1.24. handle_publish usage
-   1.25. handle_subscribe usage
-   1.26. pres_auth_status usage
-   1.27. pres_refresh_watchers usage
-   1.28. pres_update_watchers usage
+   1.24. Set subs_remove_match parameter
+   1.25. handle_publish usage
+   1.26. handle_subscribe usage
+   1.27. pres_auth_status usage
+   1.28. pres_refresh_watchers usage
+   1.29. pres_update_watchers usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -165,6 +167,7 @@ Chapter 1. Admin Guide
         3.21. fetch_rows (integer)
         3.22. db_table_lock_type (integer)
         3.23. local_log_level (int)
+        3.24. subs_remove_match (int)
 
    4. Functions
 
@@ -253,6 +256,7 @@ Chapter 1. Admin Guide
    3.21. fetch_rows (integer)
    3.22. db_table_lock_type (integer)
    3.23. local_log_level (int)
+   3.24. subs_remove_match (int)
 
 3.1. db_url(str)
 
@@ -601,6 +605,20 @@ modparam("presence", "db_table_lock_type", 0)
 modparam("presence", "local_log_level", 3)
 ...
 
+3.24. subs_remove_match (int)
+
+   Control how to match the subscriptions to remove from memory. If set to
+   0, then the match is done on To-Tag (local generated), if set to 1,
+   then the match is done on all dialog attributes (Call-Id, From-Tag,
+   To-Tag).
+
+   Default value is 0.
+
+   Example 1.24. Set subs_remove_match parameter
+...
+modparam("presence", "subs_remove_match", 1)
+...
+
 4. Functions
 
    4.1. handle_publish(char* sender_uri)
@@ -629,7 +647,7 @@ modparam("presence", "local_log_level", 3)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.24. handle_publish usage
+   Example 1.25. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -660,7 +678,7 @@ modparam("presence", "local_log_level", 3)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.25. handle_subscribe usage
+   Example 1.26. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -677,7 +695,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.26. pres_auth_status usage
+   Example 1.27. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -713,7 +731,7 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.27. pres_refresh_watchers usage
+   Example 1.28. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
@@ -731,7 +749,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.28. pres_update_watchers usage
+   Example 1.29. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
