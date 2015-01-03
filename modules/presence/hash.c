@@ -42,6 +42,13 @@
 #include "hash.h"
 #include "notify.h"
 
+/* matching mode when removing subscriptions from memory */
+extern int pres_subs_remove_match;
+
+/**
+ * create the subscription hash table in shared memory
+ * - hash_size: number of slots
+ */
 shtable_t new_shtable(int hash_size)
 {
 	shtable_t htable= NULL;
@@ -287,12 +294,26 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,subs_t* subs)
 		
 	while(s)
 	{
-		if(s->callid.len==subs->callid.len
+		if(pres_subs_remove_match==0) {
+			/* match on to-tag only (unique, local generated - faster) */
+			if(s->to_tag.len==subs->to_tag.len
+				&& strncmp(s->to_tag.s,subs->to_tag.s,subs->to_tag.len)==0)
+			{
+				found = 0;
+			}
+		} else {
+			/* match on all dialog attributes (distributed systems) */
+			if(s->callid.len==subs->callid.len
 				&& s->to_tag.len==subs->to_tag.len
 				&& s->from_tag.len==subs->from_tag.len
 				&& strncmp(s->callid.s,subs->callid.s,subs->callid.len)==0
 				&& strncmp(s->to_tag.s,subs->to_tag.s,subs->to_tag.len)==0
 				&& strncmp(s->from_tag.s,subs->from_tag.s,subs->from_tag.len)==0)
+			{
+				found = 0;
+			}
+		}
+		if(found==0)
 		{
 			found= s->local_cseq +1;
 			ps->next= s->next;

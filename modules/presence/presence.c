@@ -98,6 +98,7 @@ int pres_fetch_rows = 500;
 int library_mode= 0;
 str server_address= {0, 0};
 evlist_t* EvList= NULL;
+int pres_subs_remove_match = 0;
 
 /* to tag prefix */
 char* to_tag_pref = "10";
@@ -205,6 +206,7 @@ static param_export_t params[]={
 	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
 	{ "db_table_lock_type",     INT_PARAM, &db_table_lock_type},
 	{ "local_log_level",        PARAM_INT, &pres_local_log_level},
+	{ "subs_remove_match",      PARAM_INT, &pres_subs_remove_match},
     {0,0,0}
 };
 
