@@ -1,5 +1,4 @@
 /*
- * $Id$
  * Standalone Configuration File Parser
  *
  * Copyright (C) 2008 iptelorg GmbH
@@ -23,7 +22,7 @@
  */
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: Standalone Configuration File Parser
  * \ingroup core
  *
  * Module: \ref core

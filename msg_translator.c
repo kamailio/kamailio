@@ -1,12 +1,9 @@
 /*
- * $Id$
- *
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -16,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,48 +23,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
- * History:
- * --------
- * 2003-01-20  bug_fix: use of return value of snprintf aligned to C99 (jiri)
- * 2003-01-23  added rport patches, contributed by
- *              Maxim Sobolev <sobomax@FreeBSD.org> and heavily modified by me
- *              (andrei)
- * 2003-01-24  added i param to via of outgoing requests (used by tcp),
- *              modified via_builder params (andrei)
- * 2003-01-27  more rport fixes (make use of new via_param->start)  (andrei)
- * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-01-29  scratchpad removed (jiri)
- * 2003-02-28  scratchpad compatibility abandoned (jiri)
- * 2003-03-01  VOICE_MAIL defs removed (jiri)
- * 2003-03-06  totags in outgoing replies bookmarked to enable
- *             ACK/200 tag matching (andrei)
- * 2003-03-18  killed the build_warning snprintf (andrei)
- * 2003-03-31  added subst lump support (andrei)
- * 2003-04-01  added opt (conditional) lump support (andrei)
- * 2003-04-02  added more subst lumps: SUBST_{SND,RCV}_ALL
- *              => ip:port;transport=proto (andrei)
- * 2003-04-12  added FL_FORCE_RPORT support (andrei)
- * 2003-04-13  updated warning builder -- fixed (andrei)
- * 2003-07-10  check_via_address knows now how to compare with ipv6 address
- *              references (e.g [::1]) (andrei)
- *             build_req_fomr_sip_req no longer adds 1 for ipv6 via parameter
- *              position calculations ([] are part of host.s now) (andrei)
- * 2003-10-02  via+lump dst address/port can be set to preset values (andrei)
- * 2003-10-08  receive_test function-alized (jiri)
- * 2003-10-20  added body_lump list (sip_msg), adjust_clen (andrei & jan)
- * 2003-11-11  type of rpl_lumps replaced by flags (bogdan)
- * 2006-04-20  build_req_from_sip_req, via_builder and lump_* functions
- *              use now struct dest_info; lumps & via comp param support
- *              (rfc3486) (andrei)
- * 2007-08-31  id_builder() and via_builder() are grouped into one function:
- *             create_via_hf() -- tm module needs them as well (Miklos)
- * 2008-12-17  build_req_from_sip_req() will now fallback to tcp, tls or sctp
- *              if packet size > udp_mtu and fallback is enabled 
- *             build_req_from_sip_req() uses now global_req_flags along
- *               msg->msg_flags  (andrei)
  *
  */
-/* Via special params:
+/** Via special params:
  * requests:
  * - if the address in via is different from the src_ip or an existing
  *   received=something is found, received=src_ip is added (and any preexisting
@@ -119,7 +77,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: Message translations
  * \ingroup core
  * Module: \ref core
  */

@@ -1,11 +1,9 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,19 +22,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/* local, per process timer routines
- * WARNING: this should be used only within the same process, the timers
- *  are not multi-process safe or multi-thread safe
- *  (there are no locks)
- *
- * History:
- * --------
- *  2006-02-03  created by andrei
- */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: local, per process timer routines
+ * WARNING: this should be used only within the same process, the timers
+ *  are not multi-process safe or multi-thread safe
+ *  (there are no locks)
  * \ingroup core
  * Module: \ref core
  */
@@ -53,7 +45,7 @@
 
 
 
-/* init a local_timer handle
+/** init a local_timer handle
  * returns 0 on success, -1 on error */
 int init_local_timer(struct local_timer *t, ticks_t crt_ticks)
 {
@@ -83,7 +75,7 @@ void destroy_local_timer(struct local_timer* lt)
 
 
 
-/* generic add timer entry to the timer lists function (see _timer_add)
+/** generic add timer entry to the timer lists function (see _timer_add)
  * tl->expire must be set previously, delta is the difference in ticks
  * from current time to the timer desired expire (should be tl->expire-*tick)
  * If you don't know delta, you probably want to call _timer_add instead.
@@ -124,7 +116,7 @@ static inline void local_timer_redist(struct local_timer* l,
 
 
 
-/* local timer add function (no lock, not multithread or multiprocess safe,
+/** local timer add function (no lock, not multithread or multiprocess safe,
  * designed for local process use only)
  * t = current ticks
  * tl must be filled (the intial_timeout and flags must be set)
@@ -141,7 +133,7 @@ static inline int _local_timer_add(struct local_timer *h, ticks_t t,
 
 
 
-/* "public", safe timer add functions (local process use only)
+/** "public", safe timer add functions (local process use only)
  * adds a timer at delta ticks from the current time
  * returns -1 on error, 0 on success
  * WARNING: to re-add a deleted or expired timer you must call
@@ -173,7 +165,7 @@ error:
 
 
 
-/* safe timer delete
+/** safe timer delete
  * deletes tl and inits the list pointer to 0
  * WARNING: to be able to reuse a deleted timer you must call
  *          timer_reinit(tl) on it
@@ -199,7 +191,7 @@ void local_timer_del(struct local_timer* h, struct timer_ln* tl)
 
 
 
-/* called from timer_handle*/
+/** called from timer_handle*/
 inline static void local_timer_list_expire(struct local_timer* l, 
 											ticks_t t, struct timer_head* h)
 {
@@ -226,7 +218,7 @@ inline static void local_timer_list_expire(struct local_timer* l,
 
 
 
-/* run all the handler that expire at t ticks */
+/** run all the handler that expire at t ticks */
 static inline void local_timer_expire(struct local_timer* h, ticks_t t)
 {
 	/* trust the compiler for optimizing */
@@ -245,7 +237,7 @@ static inline void local_timer_expire(struct local_timer* h, ticks_t t)
 
 
 
-/* "main" local timer routine, should be called with a proper ticks value
+/** "main" local timer routine, should be called with a proper ticks value
  * WARNING: it should never be called twice for the same ticks value
  * (it could cause too fast expires for long timers), ticks must be also
  *  always increasing */

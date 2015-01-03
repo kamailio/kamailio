@@ -1,11 +1,9 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,21 +22,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- /*
-  * History:
-  * --------
-  *  2002-11-29  created by andrei
-  *  2003-02-20  added solaris support (! HAVE_MSGHDR_MSG_CONTROL) (andrei)
-  *  2003-11-03  added send_all, recv_all  and updated send/get_fd
-  *               to handle signals  (andrei)
-  *  2005-06-13  added flags to recv_all & receive_fd, to allow full blocking
-  *              or semi-nonblocking mode (andrei)
-  *  2008-04-30  added MSG_WAITALL emulation for cygwin (andrei)
-  */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: 
  * \ingroup core
  * Module: \ref core
  */
@@ -61,7 +48,7 @@
 
 
 
-/* receive all the data or returns error (handles EINTR etc.)
+/** receive all the data or returns error (handles EINTR etc.)
  * params: socket
  *         data     - buffer for the results
  *         data_len - 
@@ -141,7 +128,7 @@ poll_retry:
 
 
 
-/* sends all data (takes care of signals) (assumes blocking fd)
+/** sends all data (takes care of signals) (assumes blocking fd)
  * returns number of bytes sent or < 0 for an error */
 int send_all(int socket, void* data, int data_len)
 {
@@ -160,7 +147,7 @@ again:
 }
 
 
-/* at least 1 byte must be sent! */
+/** at least 1 byte must be sent! */
 int send_fd(int unix_socket, void* data, int data_len, int fd)
 {
 	struct msghdr msg;
@@ -214,7 +201,7 @@ again:
 
 
 
-/* receives a fd and data_len data
+/** receives a fd and data_len data
  * params: unix_socket 
  *         data
  *         data_len

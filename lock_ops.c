@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,18 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- *  lock operations init
- */
-/* 
- * History:
- * --------
- *  2007-05-14  created by andrei
- */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core ::  lock operations init
  * \ingroup core
  *
  * Module: \ref core

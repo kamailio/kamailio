@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  *  Crc - 32 + 16 BIT ANSI X3.66 + CCITT CRC checksum files
  *
  * Copyright (C) 2001-2003 FhG Fokus

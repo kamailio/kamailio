@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * resolver related functions
  *
  * Copyright (C) 2006 iptelorg GmbH
@@ -26,31 +24,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/* History:
- * --------
- *  2006-07-13  created by andrei
- *  2006-10-06  port fix (andrei)
- *  2007-06-14  dns iterate through A & AAAA records fix (andrei)
- *  2007-06-15  srv rr weight based load balancing support (andrei)
- *  2007-06-16  naptr support (andrei)
- *  2008-07-18  DNS watchdog support -- can be used to inform the core
- *              that the DNS servers are down (Miklos)
- *  2008-07-25  various rpc commands to manipulate the content
- *		of the cache (Miklos)
- *  2007-07-30  DNS cache measurements added (Gergo)
- *  2007-08-17  dns_cache_del_nonexp config option is introduced (Miklos)
- *  2008-02-04  DNS cache options are adapted for the configuration
- *		framework (Miklos)
- *  2008-02-11  dns_cache_init cfg parameter is introduced (Miklos)
- *  2008-10-17  fixed srv continue with 0 hostname (when falling back to
-                  aaaa) (andrei)
- *  2009-03-30  TXT record support, more rpcs (andrei)
- *  2009-03-30  EBL record support (andrei)
- *  2009-04-01  PTR record support (andrei)
- */
+
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: DNS cache handling
  * \ingroup core
  * Module: \ref core
  */

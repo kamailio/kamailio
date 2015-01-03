@@ -1,13 +1,11 @@
 /*
- * $Id$
- *
  * route structures helping functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -17,7 +15,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,19 +24,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/* History:
- * --------
- *  2003-01-29  src_port introduced (jiri)
- *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-12  FORCE_RPORT_T added (andrei)
- *  2003-10-02  added SET_ADV_ADDRESS & SET_ADV_PORT (andrei)
- *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
- *  2005-12-19  select framework added SELECT_O and SELECT_ST (mma)
- */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: route structures helping functions
  * \ingroup core
  * Module: \ref core
  */

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,9 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * History
- * -------
- *  2010-04-26	Initial version (Miklos)
+ */
+/*!
+ * \file 
+ * \brief SIP-router core ::
+ * \ingroup core
+ * Module: \ref core
  */
 
 #include "bit_count.h"

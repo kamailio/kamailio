@@ -1,6 +1,5 @@
 
 /*
- * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -25,34 +24,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
- *  2003-01-29  removed scratchpad (jiri)
- *  2003-03-19  fixed set* len calculation bug & simplified a little the code
- *              (should be a little faster now) (andrei)
- *              replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-01  Added support for loose routing in forward (janakj)
- *  2003-04-12  FORCE_RPORT_T added (andrei)
- *  2003-04-22  strip_tail added (jiri)
- *  2003-10-02  added SET_ADV_ADDR_T & SET_ADV_PORT_T (andrei)
- *  2003-10-29  added FORCE_TCP_ALIAS_T (andrei)
- *  2004-11-30  added FORCE_SEND_SOCKET_T (andrei)
- *  2005-12-12  return & drop/exit differentiation (andrei)
- *  2005-12-19  select framework (mma)
- *  2006-04-12  updated *_send() calls to use a struct dest_info (andrei)
- *  2006-07-27  dns cache and dns based send address failover support (andrei)
- *  2006-12-06  on popular request last_retcode set also by module functions
- *              (andrei)
- *  2007-06-14  run_actions & do_action need a ctx or handle now, no more
- *               static vars (andrei)
- *  2008-11-18  support for variable parameter module functions (andrei)
- *  2008-12-03  use lvalues/rvalues for assignments (andrei)
- *  2008-12-17  added UDP_MTU_TRY_PROTO_T (andrei)
- *  2009-05-04  switched IF_T to rval_expr (andrei)
- *  2009-09-15  added SET_{FWD,RPL}_NO_CONNECT, SET_{FWD,RPL}_CLOSE (andrei)
- *  2010-06-01  special hack/support for fparam fixups so that they can handle
- *               variable RVEs (andrei)
  */
 
 /*!

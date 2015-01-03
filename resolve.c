@@ -1,11 +1,9 @@
-/* $Id$*/
 /*
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,34 +22,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/*
- * History:
- * -------
- *  2003-02-13  added proto to sip_resolvehost, for SRV lookups (andrei)
- *  2003-07-03  default port value set according to proto (andrei)
- *  2005-07-11  added resolv_init (timeouts a.s.o) (andrei)
- *  2006-04-13  added sip_hostport2su()  (andrei)
- *  2006-07-13  rdata structures put on diet (andrei)
- *  2006-07-17  rdata contains now also the record name (andrei)
- *  2006-08-18  get_record can append also the additional records to the
- *               returned list (andrei)
- *  2007-06-15  naptr support (andrei)
- *  2007-10-10  short name resolution using search list supported (mma)
- *              set dns_use_search_list=1 (default on)
- *              new option dns_search_full_match (default on) controls
- *              whether rest of the name is matched against search list
- *              or blindly accepted (better performance but exploitable)
- *  2008-01-31  resolver options use the configuration framework, and the
- *               resolver is reinitialized when the options change (Miklos)
- *  2008-08-12  sctp preference support for NAPTR queries (andrei)
- *  2009-03-30  TXT record support (andrei)
- *  2009-03-31  EBL record support (andrei)
- *  2009-04-01  PTR record support (andrei)
- */ 
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: DNS resolver
  * \ingroup core
  * Module: \ref core
  */
@@ -171,7 +145,7 @@ error:
 	return -1;
 }
 
-/* init. the resolver
+/** init. the resolver
  * params: retr_time  - time before retransmitting (must be >0)
  *         retr_no    - retransmissions number
  *         servers_no - how many dns servers will be used
@@ -205,7 +179,7 @@ static int _resolv_init(void)
 	return 0;
 }
 
-/* wrapper function to initialize the resolver at startup */
+/** wrapper function to initialize the resolver at startup */
 int resolv_init(void)
 {
 	int res = -1;
@@ -219,7 +193,7 @@ int resolv_init(void)
 	return res;
 }
 
-/* wrapper function to reinitialize the resolver
+/** wrapper function to reinitialize the resolver
  * This function must be called by each child process whenever
  * a resolver option changes
  */
@@ -233,7 +207,7 @@ void resolv_reinit(str *gname, str *name)
 	LM_DBG("DNS resolver has been reinitialized\n");
 }
 
-/* fixup function for dns_reinit variable
+/** fixup function for dns_reinit variable
  * (resets the variable to 0)
  */
 int dns_reinit_fixup(void *handle, str *gname, str *name, void **val)
@@ -242,7 +216,7 @@ int dns_reinit_fixup(void *handle, str *gname, str *name, void **val)
 	return 0;
 }
 
-/* wrapper function to recalculate the naptr and srv protocol preferences */
+/** wrapper function to recalculate the naptr and srv protocol preferences */
 void reinit_proto_prefs(str *gname, str *name)
 {
 #ifdef USE_NAPTR
@@ -251,8 +225,8 @@ void reinit_proto_prefs(str *gname, str *name)
 	init_srv_proto_prefs();
 }
 
-/* fixup function for dns_try_ipv6
- * verifies that SER really listens on an ipv6 interface
+/** fixup function for dns_try_ipv6
+ * verifies that Kamailio really listens on an ipv6 interface
  */
 int dns_try_ipv6_fixup(void *handle, str *gname, str *name, void **val)
 {
@@ -264,7 +238,7 @@ int dns_try_ipv6_fixup(void *handle, str *gname, str *name, void **val)
 	return 0;
 }
 
- /*  skips over a domain name in a dns message
+/**  skips over a domain name in a dns message
  *  (it can be  a sequence of labels ending in \0, a pointer or
  *   a sequence of labels ending in a pointer -- see rfc1035
  *   returns pointer after the domain name or null on error*/
@@ -290,13 +264,14 @@ unsigned char* dns_skipname(unsigned char* p, unsigned char* end)
 
 
 
-/* parses the srv record into a srv_rdata structure
+/** parses the srv record into a srv_rdata structure
  *   msg   - pointer to the dns message
  *   end   - pointer to the end of the message
  *   eor   - pointer to the end of the record/rdata
  *   rdata - pointer  to the rdata part of the srv answer
- * returns 0 on error, or a dyn. alloc'ed srv_rdata structure */
-/* SRV rdata format:
+ * returns 0 on error, or a dyn. alloc'ed srv_rdata structure 
+ *
+ * SRV rdata format:
  *            111111
  *  0123456789012345
  * +----------------+
@@ -354,12 +329,13 @@ error:
 }
 
 
-/* parses the naptr record into a naptr_rdata structure
+/** parses the naptr record into a naptr_rdata structure
  *   msg   - pointer to the dns message
  *   end   - pointer to the end of the message
  *   eor   - pointer to the end of the record/rdata
  *   rdata - pointer  to the rdata part of the naptr answer
  * returns 0 on error, or a dyn. alloc'ed naptr_rdata structure */
+
 /* NAPTR rdata format:
  *            111111
  *  0123456789012345
@@ -451,7 +427,7 @@ error:
 
 
 
-/* parses a CNAME record into a cname_rdata structure */
+/** parses a CNAME record into a cname_rdata structure */
 struct cname_rdata* dns_cname_parser( unsigned char* msg, unsigned char* end,
 									  unsigned char* rdata)
 {
@@ -482,7 +458,7 @@ error:
 
 
 
-/* parses an A record rdata into an a_rdata structure
+/** parses an A record rdata into an a_rdata structure
  * returns 0 on error or a dyn. alloc'ed a_rdata struct
  */
 struct a_rdata* dns_a_parser(unsigned char* rdata, unsigned char* eor)
@@ -503,7 +479,7 @@ error:
 
 
 
-/* parses an AAAA (ipv6) record rdata into an aaaa_rdata structure
+/** parses an AAAA (ipv6) record rdata into an aaaa_rdata structure
  * returns 0 on error or a dyn. alloc'ed aaaa_rdata struct */
 struct aaaa_rdata* dns_aaaa_parser(unsigned char* rdata, unsigned char* eor)
 {
@@ -654,7 +630,7 @@ error:
 
 
 
-/* parses a PTR record into a ptr_rdata structure */
+/** parses a PTR record into a ptr_rdata structure */
 struct ptr_rdata* dns_ptr_parser( unsigned char* msg, unsigned char* end,
 									  unsigned char* rdata)
 {
@@ -685,7 +661,7 @@ error:
 
 
 
-/* frees completely a struct rdata list */
+/** frees completely a struct rdata list */
 void free_rdata_list(struct rdata* head)
 {
 	struct rdata* l;
@@ -701,7 +677,7 @@ void free_rdata_list(struct rdata* head)
 }
 
 #ifdef HAVE_RESOLV_RES
-/* checks whether supplied name exists in the resolver search list
+/** checks whether supplied name exists in the resolver search list
  * returns 1 if found
  *         0 if not found
  */
@@ -715,7 +691,7 @@ int match_search_list(const struct __res_state* res, char* name) {
 }
 #endif
 
-/* gets the DNS records for name:type
+/** gets the DNS records for name:type
  * returns a dyn. alloc'ed struct rdata linked list with the parsed responses
  * or 0 on error
  * see rfc1035 for the query/response format */
@@ -1049,7 +1025,7 @@ not_found:
 #define SIPS_D2T	0x7432642b
 
 
-/* get protocol from a naptr rdata and check for validity
+/** get protocol from a naptr rdata and check for validity
  * returns > 0 (PROTO_UDP, PROTO_TCP, PROTO_SCTP or PROTO_TLS)
  *         <=0  on error 
  */
@@ -1126,7 +1102,7 @@ inline static int srv_proto_pref_score(char proto)
 
 
 
-/* returns true if we support the protocol */
+/** returns true if we support the protocol */
 int naptr_proto_supported(char proto)
 {
 	if (naptr_proto_pref_score(proto)<0)
@@ -1153,14 +1129,14 @@ int naptr_proto_supported(char proto)
 
 
 
-/* returns true if new_proto is preferred over old_proto */
+/** returns true if new_proto is preferred over old_proto */
 int naptr_proto_preferred(char new_proto, char old_proto)
 {
 	return naptr_proto_pref_score(new_proto)>naptr_proto_pref_score(old_proto);
 }
 
 
-/* choose between 2 naptr records, should take into account local
+/** choose between 2 naptr records, should take into account local
  * preferences too
  * returns 1 if the new record was selected, 0 otherwise */
 int naptr_choose (struct naptr_rdata** crt, char* crt_proto,
@@ -1196,7 +1172,7 @@ change:
 
 
 
-/* internal sip srv resolver: resolves a host name trying:
+/** internal sip srv resolver: resolves a host name trying:
  * - SRV lookup if the address is not an ip *port==0. The result of the SRV
  *   query will be used for an A/AAAA lookup.
  *  - normal A/AAAA lookup (either fallback from the above or if *port!=0
@@ -1214,7 +1190,7 @@ change:
  *  0 on error
  */
 struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
-									char* proto, int is_srv, struct rdata* ars)
+	char* proto, int is_srv, struct rdata* ars)
 {
 	struct hostent* he;
 	struct ip_addr* ip;
@@ -1369,7 +1345,7 @@ end:
 #ifdef USE_NAPTR 
 
 
-/* iterates over a naptr rr list, returning each time a "good" naptr record
+/** iterates over a naptr rr list, returning each time a "good" naptr record
  * is found.( srv type, no regex and a supported protocol)
  * params:
  *         naptr_head - naptr rr list head
@@ -1446,7 +1422,7 @@ end:
 	return 0;
 }
 
-/* Prepend srv prefix according to the proto. */
+/** Prepend srv prefix according to the proto. */
 void create_srv_name(char proto, str *name, char *srv) {
 	switch (proto) {
 		case PROTO_UDP:
@@ -1529,13 +1505,12 @@ size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list) {
 	return list_len;
 }
 
-/* Resolves SRV if no naptr found. 
+/** Resolves SRV if no naptr found. 
  * It reuse dns_pref values and according that resolves supported protocols. 
  * If dns_pref are equal then it use udp,tcp,tls,sctp order.
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-
 struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, char* proto)
 {
 	struct dns_srv_proto srv_proto_list[PROTO_LAST];
@@ -1603,7 +1578,7 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 
 } 
 
-/* internal sip naptr resolver function: resolves a host name trying:
+/** internal sip naptr resolver function: resolves a host name trying:
  * - NAPTR lookup if the address is not an ip and *proto==0 and *port==0.
  *   The result of the NAPTR query will be used for a SRV lookup
  * - SRV lookup if the address is not an ip *port==0. The result of the SRV
@@ -1681,7 +1656,7 @@ end:
 
 
 
-/* resolves a host name trying:
+/** resolves a host name trying:
  * - NAPTR lookup if enabled, the address is not an ip and *proto==0 and 
  *   *port==0. The result of the NAPTR query will be used for a SRV lookup
  * - SRV lookup if the address is not an ip *port==0. The result of the SRV
@@ -1711,7 +1686,7 @@ struct hostent* _sip_resolvehost(str* name, unsigned short* port, char* proto)
 }
 
 
-/* resolve host, port, proto using sip rules (e.g. use SRV if port=0 a.s.o)
+/** resolve host, port, proto using sip rules (e.g. use SRV if port=0 a.s.o)
  *  and write the result in the sockaddr_union to
  *  returns -1 on error (resolve failed), 0 on success */
 int sip_hostport2su(union sockaddr_union* su, str* name, unsigned short port,

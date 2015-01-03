@@ -1,6 +1,4 @@
 /*
- *$Id$
- *
  * various general purpose functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -20,7 +18,7 @@
  */
 
 
-/** various general purpose/utility functions.
+/** Kamailio core :: various general purpose/utility functions.
  * @file ut.c
  * @ingroup core
  * Module: core

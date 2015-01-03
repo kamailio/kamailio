@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,15 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** tcp statistics.
+
+/** Kamailio core :: TCP statistics.
  * @file tcp_stats.c
  * @ingroup:  core
+ * Module: \ref core
  */
-/*
- * History:
- * --------
- *  2010-08-08  initial version (andrei)
-*/
 
 #ifdef USE_TCP
 #include "tcp_stats.h"

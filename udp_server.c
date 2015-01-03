@@ -1,11 +1,9 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,28 +22,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History
- * --------
- *  2003-01-28  packet zero-termination moved to receive_msg (jiri)
- *  2003-02-10  undoed the above changes (andrei)
- *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-14  set sockopts to TOS low delay (andrei)
- *  2004-05-03  applied multicast support patch from janakj
- *              added set multicast ttl support (andrei)
- *  2004-07-05  udp_rcv_loop: drop packets with 0 src port + error msg.
- *              cleanups (andrei)
- *  2005-03-10  multicast options are now set for all the udp sockets (andrei)
- *  2005-06-26  failure to set mcast options is not an error anymore (andrei)
- *  2006-04-12  udp_send() switched to struct dest_info (andrei)
- *  2006-10-13  added STUN support (vlada)
- *  2007-08-28  disable/set MTU discover option for the udp sockets
- *               (in linux it's enabled by default which produces udp packets
- *                with the DF flag ser) (patch from hscholz)
- *  2010-06-15  support for using raw sockets for sending (andrei)
  */
 
 
-/** udp send and loop-receive functions.
+/** Kamailio core :: udp send and loop-receive functions.
  * @file udp_server.c
  * @ingroup core
  * Module: @ref core

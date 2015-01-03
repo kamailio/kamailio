@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,15 +13,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** version strings.
+
+/** Kamailio core :: version strings.
  * @file ver.c
  * @ingroup: core
  */
-/*
- * History:
- * --------
- *  2010-07-13  initial version (andrei)
-*/
 
 #include "ver_defs.h"
 #include "autover.h" /* REPO_VER, REPO_STATE */

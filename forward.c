@@ -1,11 +1,9 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,41 +22,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2001-??-??  created by andrei
- *  ????-??-??  lots of changes by a lot of people
- *  2003-01-23  support for determination of outbound interface added :
- *               get_out_socket (jiri)
- *  2003-01-24  reply to rport support added, contributed by
- *               Maxim Sobolev <sobomax@FreeBSD.org> and modified by andrei
- *  2003-02-11  removed calls to upd_send & tcp_send & replaced them with
- *               calls to msg_send (andrei)
- *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-02  fixed get_send_socket for tcp fwd to udp (andrei)
- *  2003-04-03  added su_setport (andrei)
- *  2003-04-04  update_sock_struct_from_via now differentiates between
- *               local replies  & "normal" replies (andrei)
- *  2003-04-12  update_sock_struct_from via uses also FL_FORCE_RPORT for
- *               local replies (andrei)
- *  2003-08-21  check_self properly handles ipv6 addresses & refs   (andrei)
- *  2003-10-21  check_self updated to handle proto (andrei)
- *  2003-10-24  converted to the new socket_info lists (andrei)
- *  2004-10-10  modified check_self to use grep_sock_info (andrei)
- *  2004-11-08  added force_send_socket support in get_send_socket (andrei)
- *  2005-12-11  onsend_router support; forward_request to no longer
- *              pkg_malloc'ed (andrei)
- *  2006-04-12  forward_{request,reply} use now struct dest_info (andrei)
- *  2006-04-21  basic comp via param support (andrei)
- *  2006-07-31  forward_request can resolve destination on its own, uses the 
- *              dns cache and falls back on send error to other ips (andrei)
- *  2007-10-08  get_send_socket() will ignore force_send_socket if the forced
- *               socket is multicast (andrei)
  */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: Message forwarding
  * \ingroup core
  * Module: \ref core
  */
@@ -391,7 +359,7 @@ static struct _check_self_func {
 	struct _check_self_func *next;
 } *_check_self_func_list = NULL;
 
-/* check if _check_self_func_list is set
+/** check if _check_self_func_list is set
  * - return 1 if yes, 0 if no
  */
 int is_check_self_func_list_set(void)
@@ -399,7 +367,7 @@ int is_check_self_func_list_set(void)
 	return (_check_self_func_list)?1:0;
 }
 
-/* register a function to be called when matching for myself
+/** register a function to be called when matching for myself
  * - return 0 on success, -1 on error
  * - f must have same prototype as check_self() and return same kind of values
  */
@@ -418,7 +386,7 @@ int register_check_self_func(check_self_f f)
 	return 0;
 }
 
-/* run registered check self functions
+/** run registered check self functions
  * returns 1 if true, 0 if false
  */
 int run_check_self_func(str* host, unsigned short port, unsigned short proto)
@@ -433,7 +401,8 @@ int run_check_self_func(str* host, unsigned short port, unsigned short proto)
 	return 0;
 }
 
-/* checks if the proto: host:port is one of the address we listen on;
+/** checks if the proto: host:port is one of the address we listen on;
+ *
  * if port==0, the  port number is ignored
  * if proto==0 (PROTO_NONE) the protocol is ignored
  * returns 1 if true, 0 if false, -1 on error
@@ -453,7 +422,7 @@ found:
 	return 1;
 }
 
-/* checks if the proto:port is one of the ports we listen on;
+/** checks if the proto:port is one of the ports we listen on;
  * if proto==0 (PROTO_NONE) the protocol is ignored
  * returns 1 if true, 0 if false, -1 on error
  */
@@ -468,7 +437,7 @@ int check_self_port(unsigned short port, unsigned short proto)
 
 
 
-/* forwards a request to dst
+/** forwards a request to dst
  * parameters:
  *   msg       - sip msg
  *   dst       - destination name, if non-null it will be resolved and
@@ -750,7 +719,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 
 
 
-/* removes first via & sends msg to the second
+/** removes first via & sends msg to the second
  * - mode param controls if modules sip response callbacks are executed */
 static int do_forward_reply(struct sip_msg* msg, int mode)
 {
@@ -879,13 +848,13 @@ error:
 	return -1;
 }
 
-/* removes first via & sends msg to the second */
+/** removes first via & sends msg to the second */
 int forward_reply(struct sip_msg* msg)
 {
 	return do_forward_reply(msg, 0);
 }
 
-/* removes first via & sends msg to the second - no module callbacks */
+/** removes first via & sends msg to the second - no module callbacks */
 int forward_reply_nocb(struct sip_msg* msg)
 {
 	return do_forward_reply(msg, 1);

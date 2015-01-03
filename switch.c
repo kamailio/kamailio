@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,19 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * switch.c
- */
-/*
- * History:
- * --------
- *  2009-02-02  initial version (andrei)
- *  2009-02-19  string and RE switch support added (andrei)
-*/
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: 
  * \ingroup core
  * Module: \ref core
  */

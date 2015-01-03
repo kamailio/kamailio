@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of SIP-router, a free SIP server.

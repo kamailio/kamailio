@@ -16,21 +16,10 @@
 
 /**
  * @file 
- * @brief SIP-router core :: lvalues (assignment)
+ * @brief Kamailio core :: lvalues (assignment)
  * \ingroup core
  * Module: \ref core
  */
-
-/* 
- * History:
- * --------
- *  2008-11-30  initial version (andrei)
- *  2009-04-24  delete avps after finding their new value and not before
- *               (fixed $avp=$avp)
- *              when assigning something undefined (e.g. non-existing avp),
- *              delete the lvalue (similar to perl)  (andrei)
- */
-
 
 #include "lvalue.h"
 #include "dprint.h"

@@ -1,11 +1,9 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,29 +22,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/*
- * History:
- * --------
- * 2002-12-??  created by andrei.
- * 2003-02-10  zero term before calling receive_msg & undo afterward (andrei)
- * 2003-05-13  l: (short form of Content-Length) is now recognized (andrei)
- * 2003-07-01  tcp_read & friends take no a single tcp_connection 
- *              parameter & they set c->state to S_CONN_EOF on eof (andrei)
- * 2003-07-04  fixed tcp EOF handling (possible infinite loop) (andrei)
- * 2005-07-05  migrated to the new io_wait code (andrei)
- * 2006-02-03  use tsend_stream instead of send_all (andrei)
- * 2006-10-13  added STUN support - state machine for TCP (vlada)
- * 2007-02-20  fixed timeout calc. bug (andrei)
- * 2007-11-26  improved tcp timers: switched to local_timer (andrei)
- * 2008-02-04  optimizations: handle POLLRDHUP (if supported), detect short
- *              reads (sock. buffer empty) (andrei)
- * 2009-02-26  direct blacklist support (andrei)
- * 2009-04-09  tcp ev and tcp stats macros added (andrei)
- * 2010-05-14  split tcp_read() into tcp_read() and tcp_read_data() (andrei)
- * 2010-05-17  new RD_CONN_REPEAT_READ flag, used by the tls hooks (andrei)
- */
 
-/** tcp readers processes, tcp read and pre-parse msg. functions.
+/** Kamailio core :: tcp readers processes, tcp read and pre-parse msg. functions.
  * @file tcp_read.c
  * @ingroup core
  * Module: @ref core

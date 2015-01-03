@@ -16,24 +16,12 @@
 
 /**
  * @file 
- * @brief SIP-router core :: rvalue expressions
+ * @brief Kamailio core :: rvalue expressions
  * @ingroup core
  * Module: \ref core
  */
 
-/* 
- * History:
- * --------
- *  2008-12-01  initial version (andrei)
- *  2009-04-24  added support for defined, strempty, strlen (andrei)
- *  2009-04-28  int and str automatic conversions: (int)undef=0,
- *               (str)undef="", (int)""=0, (int)"123"=123, (int)"abc"=0
- *              handle undef == expr, in function of the UNDEF_EQ_* defines.
- *              (andrei)
- *  2009-05-05  casts operator for int & string (andrei)
- */
-
-/* special defines:
+/** special defines:
  *
  *  UNDEF_EQ_* - how to behave when undef is on the right side of a generic
  *               compare operator

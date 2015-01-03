@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,8 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * ppcfg.c - config preprocessor directives
+
+/*!
+ * \file
+ * \brief Kamailio core :: ppcfg.c - config preprocessor directives
+ * \ingroup core
+ * Module: \ref core
  */
 
 #include <stdio.h>

@@ -1,16 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -19,23 +17,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/* History:
- * --------
- *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
- *  2005-07-27  complete re-design/re-implementation (andrei)
- *  2005-12-12  workaround & bug reporting for timer_del(self) called from
- *              a timer handle; added timer_allow_del()  (andrei)
- *  2007-05-26  workaround for darwin sigwait() bug, see slow_timer_main() or
- *              grep __OS_darwin for more info (andrei)
- *  2007-07-01  timer_del() returns <0 if the timer is not active or 
- *               cannot be deleted (andrei)
- */
-
 
 /**
  * @file
- * @brief SIP-router core :: 
+ * @brief Kamailio core :: Timer
  * @ingroup core
  * Module: @ref core
  */

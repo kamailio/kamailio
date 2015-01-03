@@ -1,11 +1,9 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,19 +22,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/*
- * send with timeout for stream and datagram sockets
- * 
- * History:
- * --------
- *  2004-02-26  created by andrei
- *  2003-03-03  switched to heavy macro use, added tsend_dgram_ev (andrei) 
- *  2006-02-03  tsend* will wait forever if timeout==-1 (andrei)
- */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: send with timeout for stream and datagram sockets
  * \ingroup core
  * Module: \ref core
  */

@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,16 +13,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * pv_core.c - pvars needed in the core, e.g. $?, $retcode
- *
- * Note: in general please avoid adding pvars directly to the core, unless
- * absolutely necessary (use/create a new module instead).
- */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core ::  pv_core.c - pvars needed in the core, e.g. $?, $retcode
+ *
+ * \note Note: in general please avoid adding pvars directly to the core, unless
+ * absolutely necessary (use/create a new module instead).
  * \ingroup core
  * Module: \ref core
  */
@@ -45,7 +40,7 @@ static pv_export_t core_pvs[] = {
 };
 
 
-/* ugly hack to get the return code, needed because the PVs do not know (yet)
+/** ugly hack to get the return code, needed because the PVs do not know (yet)
    about the script context */
 extern int _last_returned_code;
 

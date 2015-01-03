@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2005 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,21 +13,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* 
- * tcp io wait common stuff used by tcp_main.c & tcp_read.c
- * (see io_wait.h)
- */
-/* 
- * History:
- * --------
- *  2005-06-15  created by andrei
- *  2005-06-26  added kqueue (andrei)
- *  2005-07-04  added /dev/poll (andrei)
- */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: tcp io wait common stuff used by tcp_main.c & tcp_read.c
+ * (see io_wait.h)
  * \ingroup core
  * Module: \ref core
  */

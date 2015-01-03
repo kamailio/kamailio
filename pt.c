@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Process Table
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -17,17 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * History:
- * --------
- *  2006-06-14	added process table in shared mem (dragos)
- *  2006-09-20	added profile support (-DPROFILING) (hscholz)
- *  2006-10-25	sanity check before allowing forking w/ tcp support (is_main
- *               & tcp not started yet); set is_main=0 in childs (andrei)
- *  2007-07-04	added register_fds() and get_max_open_fds(() (andrei)
- *  2010-08-19	use daemon_status_on_fork_cleanup() (andrei)
- */
-/** internal fork functions and process table.
+/** Kamailio Core :: internal fork functions and process table.
  * @file: pt.c
  * @ingroup core
  */

@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,18 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * tcp options
- *
- * History:
- * --------
- *  2007-11-28  created by andrei
- *  2009-03-05  use cfg framework (andrei)
- */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: tcp options
  * \ingroup core
  * Module: \ref core
  */

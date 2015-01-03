@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 iptelorg GmbH
  *
  * This file is part of SIP-router, a free SIP server.
@@ -19,11 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History
- * -------
- *  2007-12-03	Initial version (Miklos)
- *  2008-01-31  added DNS resolver parameters (Miklos)
  */
+
 /** core runtime config.
  * @file cfg_core.c
  * @ingroup core

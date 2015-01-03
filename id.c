@@ -1,11 +1,9 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -27,7 +25,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: UID handling
  * \ingroup core
  * Module: \ref core
  */
@@ -42,7 +40,7 @@ static str uid_name = STR_STATIC_INIT(AVP_UID);
 static str did_name = STR_STATIC_INIT(AVP_DID);
 
 
-/*
+/**
  * Set From UID
  */
 int set_from_uid(str* uid)
@@ -63,7 +61,7 @@ int set_from_uid(str* uid)
 }
 
 
-/* Extract username attribute from authorized credentials */
+/** Extract username attribute from authorized credentials */
 static inline str* cred_user(struct sip_msg* msg)
 {
 	struct hdr_field* h;
@@ -77,7 +75,7 @@ static inline str* cred_user(struct sip_msg* msg)
 	return &cred->digest.username.user;
 }
 
-/*
+/**
  * Set From UID
  */
 int get_from_uid(str* uid, struct sip_msg* msg)
@@ -125,7 +123,8 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 	}
 }
 
-
+/** Get to UID
+ */
 int get_to_uid(str* uid, struct sip_msg* msg)
 {
 	static char buf[MAX_URI_SIZE];
@@ -181,7 +180,7 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 }
 
 
-/*
+/**
  * Set To UID
  */
 int set_to_uid(str* uid)
@@ -202,7 +201,7 @@ int set_to_uid(str* uid)
 }
 
 
-/*
+/**
  * Return current To domain id
  */
 int get_to_did(str* did, struct sip_msg* msg)
@@ -218,7 +217,7 @@ int get_to_did(str* did, struct sip_msg* msg)
 }
 
 
-/*
+/**
  * Return current To domain id
  */
 int get_from_did(str* did, struct sip_msg* msg)

@@ -1,13 +1,11 @@
 /*
- * $Id$
- *
  * resolver related functions
  *
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -17,7 +15,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,20 +24,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/* History:
- * --------
- *  2006-07-29  created by andrei
- *  2007-05-39  added hooks for add; more locks to reduce contention (andrei)
- *  2007-06-26  added hooks for search (andrei)
- *  2007-07-30  added dst_blacklist_del() and dst_blacklist_add_to()  (andrei)
- *  2007-07-30  dst blacklist measurements added (Gergo)
- *  2008-02-11  dns_blacklist_init cfg parameter is introduced (Miklos)
- *  2009-02-26  added dst_blacklist_su* variant (andrei)
- */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: resolver related functions
  * \ingroup core
  * Module: \ref core
  */

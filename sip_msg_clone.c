@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,16 +13,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * sip_msg_clone.c - moved sip msg clone-in-shm functions from tm
- */
-/*
- * History:
- * --------
- *  2009-07-22  initial version: functions moved from tm/sip_msg.c (andrei)
-*/
 
-/** SIP-router core :: sip message shared memory cloner.
+/** Kamailio core :: sip message shared memory cloner.
  * @file
  * @ingroup core
  * Module: @ref core

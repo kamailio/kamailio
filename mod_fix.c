@@ -14,15 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* 
- * History:
- * --------
- *  2008-11-25  initial version (andrei)
- */
-
 /*!
  * \file
- * \brief SIP-router core :: kamailio compatible fixups
+ * \brief Kamailio core :: kamailio compatible fixups
  * \ingroup core
  * Module: \ref core
  */

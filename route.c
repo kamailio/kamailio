@@ -1,14 +1,11 @@
 /*
- * $Id$
- *
  * SIP routing engine
- *
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -18,7 +15,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -27,37 +24,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-01-28  scratchpad removed, src_port introduced (jiri)
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
- *  2003-03-10  updated to the new module exports format (andrei)
- *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-01  added dst_port, proto, af; renamed comp_port to comp_no,
- *               inlined all the comp_* functions (andrei)
- *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
- *  2003-05-23  comp_ip fixed, now it will resolve its operand and compare
- *              the ip with all the addresses (andrei)
- *  2003-10-10  added more operators support to comp_* (<,>,<=,>=,!=) (andrei)
- *  2004-10-19  added from_uri & to_uri (andrei)
- *  2005-12-12  added retcode support (anrei)
- *  2005-12-19  select framework (mma)
- *  2006-01-30  removed rec. protection from eval_expr (andrei)
- *  2006-02-06  added named route tables (andrei)
- *  2008-04-14  (expr1 != expr2) is evaluated true if at least one of
- *		the expressions does not exist (Miklos)
- *  2008-04-23  errors are treated as false during expression evaluation
- *  		unless the operator is DIFF_OP (Miklos)
- *  2008-12-03  fixups for rvalues in assignments (andrei)
- *  2009-05-04  switched IF_T to rval_expr (andrei)
- *  2010-06-01  special hack/support for fparam fixups so that they can handle
- *               variable RVEs (andrei)
- *  2010-06-18  ip comparison (comp_ip()) normalizes strings to
- *              ip/netmask  (andrei)
  */
 
 
-/** expression evaluation, route fixups and routing lists.
+/** Kamailio core :: expression evaluation, route fixups and routing lists.
  * @file route.c
  * @ingroup core
  * Module: @ref core

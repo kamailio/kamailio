@@ -1,11 +1,9 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -15,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,89 +22,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/*
- * History:
- * --------
- *  2002-11-29  created by andrei
- *  2002-12-11  added tcp_send (andrei)
- *  2003-01-20  locking fixes, hashtables (andrei)
- *  2003-02-20  s/lock_t/gen_lock_t/ to avoid a conflict on solaris (andrei)
- *  2003-02-25  Nagle is disabled if -DDISABLE_NAGLE (andrei)
- *  2003-03-29  SO_REUSEADDR before calling bind to allow
- *              server restart, Nagle set on the (hopefuly) 
- *              correct socket (jiri)
- *  2003-03-31  always try to find the corresponding tcp listen socket for
- *               a temp. socket and store in in *->bind_address: added
- *               find_tcp_si, modified tcpconn_connect (andrei)
- *  2003-04-14  set sockopts to TOS low delay (andrei)
- *  2003-06-30  moved tcp new connect checking & handling to
- *               handle_new_connect (andrei)
- *  2003-07-09  tls_close called before closing the tcp connection (andrei)
- *  2003-10-24  converted to the new socket_info lists (andrei)
- *  2003-10-27  tcp port aliases support added (andrei)
- *  2003-11-04  always lock before manipulating refcnt; sendchild
- *              does not inc refcnt by itself anymore (andrei)
- *  2003-11-07  different unix sockets are used for fd passing
- *              to/from readers/writers (andrei)
- *  2003-11-17  handle_new_connect & tcp_connect will close the 
- *              new socket if tcpconn_new return 0 (e.g. out of mem) (andrei)
- *  2003-11-28  tcp_blocking_write & tcp_blocking_connect added (andrei)
- *  2004-11-08  dropped find_tcp_si and replaced with find_si (andrei)
- *  2005-06-07  new tcp optimized code, supports epoll (LT), sigio + real time
- *               signals, poll & select (andrei)
- *  2005-06-26  *bsd kqueue support (andrei)
- *  2005-07-04  solaris /dev/poll support (andrei)
- *  2005-07-08  tcp_max_connections, tcp_connection_lifetime, don't accept
- *               more connections if tcp_max_connections is exceeded (andrei)
- *  2005-10-21  cleanup all the open connections on exit
- *              decrement the no. of open connections on timeout too    (andrei) *  2006-01-30  queue send_fd request and execute them at the end of the
- *              poll loop  (#ifdef) (andrei)
- *              process all children requests, before attempting to send
- *              them new stuff (fixes some deadlocks) (andrei)
- *  2006-02-03  timers are run only once per s (andrei)
- *              tcp children fds can be non-blocking; send fds are queued on
- *              EAGAIN; lots of bug fixes (andrei)
- *  2006-02-06  better tcp_max_connections checks, tcp_connections_no moved to
- *              shm (andrei)
- *  2006-04-12  tcp_send() changed to use struct dest_info (andrei)
- *  2006-11-02  switched to atomic ops for refcnt, locking improvements 
- *               (andrei)
- *  2006-11-04  switched to raw ticks (to fix conversion errors which could
- *               result in inf. lifetime) (andrei)
- *  2007-07-25  tcpconn_connect can now bind the socket on a specified
- *                source addr/port (andrei)
- *  2007-07-26   tcp_send() and tcpconn_get() can now use a specified source
- *                addr./port (andrei)
- *  2007-08-23   getsockname() for INADDR_ANY(SI_IS_ANY) sockets (andrei)
- *  2007-08-27   split init_sock_opt into a lightweight init_sock_opt_accept() 
- *               used when accepting connections and init_sock_opt used for 
- *               connect/ new sockets (andrei)
- *  2007-11-22  always add the connection & clear the coresponding flags before
- *               io_watch_add-ing its fd - it's safer this way (andrei)
- *  2007-11-26  improved tcp timers: switched to local_timer (andrei)
- *  2007-11-27  added send fd cache and reader fd reuse (andrei)
- *  2007-11-28  added support for TCP_DEFER_ACCEPT, KEEPALIVE, KEEPINTVL,
- *               KEEPCNT, QUICKACK, SYNCNT, LINGER2 (andrei)
- *  2007-12-04  support for queueing write requests (andrei)
- *  2007-12-12  destroy connection asap on wbuf. timeout (andrei)
- *  2007-12-13  changed the refcnt and destroy scheme, now refcnt is 1 if
- *                linked into the hash tables (was 0) (andrei)
- *  2007-12-21  support for pending connects (connections are added to the
- *               hash immediately and writes on them are buffered) (andrei)
- *  2008-02-05  handle POLLRDHUP (if supported), POLLERR and
- *               POLLHUP (andrei)
- *              on write error check if there's still data in the socket 
- *               read buffer and process it first (andrei)
- *  2009-02-26  direct blacklist support (andrei)
- *  2009-03-20  s/wq_timeout/send_timeout ; send_timeout is now in ticks
- *              (andrei)
- *  2009-04-09  tcp ev and tcp stats macros added (andrei)
- *  2009-09-15  support for force connection reuse and close after send
- *               send flags (andrei)
- *  2010-03-23  tcp_send() split in 3 smaller functions (andrei)
- */
 
-/** tcp main/dispatcher and tcp send functions.
+/** Kamailio core: tcp main/dispatcher and tcp send functions.
  * @file tcp_main.c
  * @ingroup core
  * Module: @ref core

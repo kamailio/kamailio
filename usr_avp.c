@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -13,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,19 +22,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
- *  2004-07-21  created (bogdan)
- *  2004-10-09  interface more flexible - more function available (bogdan)
- *  2004-11-07  AVP string values are kept 0 terminated (bogdan)
- *  2004-11-14  global aliases support added
- *  2005-01-05  parse avp name according new syntax
  */
 
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief Kamailio core :: Attribute value pair handling (AVP)
  * \ingroup core
  * Module: \ref core
  */

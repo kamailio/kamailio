@@ -13,15 +13,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** raw socket udp listen functions.
+
+/** Kamailio core :: raw socket udp listen functions.
  *  @file raw_listener.c
  *  @ingroup core
  *  Module: @ref core
- */
-/*
- * History:
- * --------
- *  2010-06-09  intial version (from older code) andrei
  */
 
 #ifdef USE_RAW_SOCKS

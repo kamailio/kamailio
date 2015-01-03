@@ -1,16 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -19,73 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2002-01-29  argc/argv globalized via my_{argc|argv} (jiri)
- *  2003-01-23  mhomed added (jiri)
- *  2003-03-19  replaced all malloc/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-03-29  pkg cleaners for fifo and script callbacks introduced (jiri)
- *  2003-03-31  removed snmp part (obsolete & no place in core) (andrei)
- *  2003-04-06  child_init called in all processes (janakj)
- *  2003-04-08  init_mallocs split into init_{pkg,shm}_mallocs and
- *               init_shm_mallocs called after cmd. line parsing (andrei)
- *  2003-04-15  added tcp_disable support (andrei)
- *  2003-05-09  closelog() before openlog to force opening a new fd
- *               (needed on solaris) (andrei)
- *  2003-06-11  moved all signal handlers init. in install_sigs and moved it
- *               after daemonize (so that we won't catch anymore our own
- *               SIGCHLD generated when becoming session leader) (andrei)
- *              changed is_main default value to 1 (andrei)
- *  2003-06-28  kill_all_children is now used instead of kill(0, sig)
- *                see comment above it for explanations. (andrei)
- *  2003-06-29  replaced port_no_str snprintf w/ int2str (andrei)
- *  2003-10-10  added switch for config check (-c) (andrei)
- *  2003-10-24  converted to the new socket_info lists (andrei)
- *  2004-03-30  core dump is enabled by default
- *              added support for increasing the open files limit    (andrei)
- *  2004-04-28  sock_{user,group,uid,gid,mode} added
- *              user2uid() & user2gid() added  (andrei)
- *  2004-09-11  added timeout on children shutdown and final cleanup
- *               (if it takes more than 60s => something is definitely wrong
- *                => kill all or abort)  (andrei)
- *              force a shm_unlock before cleaning-up, in case we have a
- *               crashed childvwhich still holds the lock  (andrei)
- *  2004-12-02  removed -p, extended -l to support [proto:]address[:port],
- *               added parse_phostport, parse_proto (andrei)
- *  2005-06-16  always record the pid in pt[process_no].pid twice: once in the
- *               parent & once in the child to avoid a short window when one
- *               of them might use it "unset" (andrei)
- *  2005-07-25  use sigaction for setting the signal handlers (andrei)
- *  2006-07-13  added dns cache/failover init. (andrei)
- *  2006-10-13  added global variables stun_refresh_interval, stun_allow_stun
- *               and stun_allow_fp (vlada)
- *  2006-10-25  don't log messages from signal handlers if NO_SIG_DEBUG is
- *               defined; improved exit kill timeout (andrei)
- *              init_childs(PROC_MAIN) before starting tcp_main, to allow
- *               tcp usage for module started processes (andrei)
- * 2007-01-18  children shutdown procedure moved into shutdown_children;
- *               safer shutdown on start-up error (andrei)
- * 2007-02-09  TLS support split into tls-in-core (CORE_TLS) and generic TLS
- *             (USE_TLS)  (andrei)
- * 2007-06-07  added support for locking pages in mem. and using real time
- *              scheduling policies (andrei)
- * 2007-07-30  dst blacklist and DNS cache measurements added (Gergo)
- * 2008-08-08  sctp support (andrei)
- * 2008-08-19  -l support for mmultihomed addresses/addresses lists
- *                (e.g. -l (eth0, 1.2.3.4, foo.bar) ) (andrei)
- * 2010-04-19  added daemon_status_fd pipe to communicate the parent process
- *              with the main process in daemonize mode, so the parent process
- *              can return the proper exit status code (ibc)
- * 2010-08-19  moved the daemon status stuff to daemonize.c (andrei)
  */
 
-/** main file (init, daemonize, startup) 
+/** Kamailio core :: main file (init, daemonize, startup) 
  * @file main.c
  * @ingroup core
  * Module: core
  */
 
-/*! @defgroup core SIP-router core
+/*! @defgroup core Kamailio core
  *
  * sip router core part.
  */

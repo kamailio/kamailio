@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * convert/decode to/from ascii using various bases
  *
  * Copyright (C) 2008 iptelorg GmbH
@@ -16,15 +14,10 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-/*
+ *
  * Defines:
  *  BASE64_LOOKUP_TABLE - use small lookup tables for conversions (faster
  *                         in general)
- *
- * History:
- * --------
- *  2008-06-11  created by andrei
  */
 /*!
  * \file

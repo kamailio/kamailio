@@ -23,7 +23,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: md5 hash support
+ * \brief Kamailio core :: md5 hash support
  * \ingroup core
  * Module: \ref core
  */

@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,12 +16,7 @@
 /*
  *  atomic operations init
  */
-/* 
- * History:
- * --------
- *  2006-03-08  created by andrei
- *  2007-05-11  added lock_set support (andrei)
- */
+
 /*!
  * \file
  * \brief SIP-router core :: 

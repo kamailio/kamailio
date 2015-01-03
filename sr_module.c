@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -13,7 +13,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -23,27 +23,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
- * History:
- * --------
- *  2003-03-10  switched to new module_exports format: updated find_export,
- *               find_export_param, find_module (andrei)
- *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-03-19  Support for flags in find_export (janakj)
- *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
- *  2003-04-24  module version checking introduced (jiri)
- *  2004-09-19  compile flags are checked too (andrei)
- *  2005-01-07  removed find_module-overloading problems, added
- *               find_export_record
- *  2006-02-07  added fix_flag (andrei)
- *  2008-02-29  store all the reponse callbacks in their own array (andrei)
- *  2008-11-17  support dual module interface: ser & kamailio (andrei)
- *  2008-11-26  added fparam_free_contents() and fix_param_types (andrei)
- */
-
 /**
  * @file
- * @brief SIP-Router core :: modules loading, structures declarations and utilities
+ * @brief Kamailio core :: modules loading, structures declarations and utilities
  * @ingroup core
  * Module: \ref core
  */

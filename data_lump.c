@@ -1,6 +1,4 @@
-/* $Id$
- *
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of SIP-router, a free SIP server.
@@ -19,19 +17,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-01-19  support for duplication lump lists added (jiri)
- *  2003-03-31  added subst lumps --they expand in ip addr, port a.s.o (andrei)
- *  2003-04-01  added conditional lump support functions (andrei)
- *  2003-10-20  anchor_lump & del_lump will automatically choose the lump list
- *              based on  msg->eoh comparisons (andrei)
- *  2003-10-28  added extra checks (paranoia) for {anchor,del}_lump (andrei)
- *  2005-03-24  the type of type attribute changed to enum _hdr_types_t (janakj)
  */
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: Data lumps
  * \ingroup core
  * Module: \ref core
  */

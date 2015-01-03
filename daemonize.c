@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,17 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * 
- * History:
- * --------
- *  2004-02-20  removed from ser main.c into its own file (andrei)
- *  2004-03-04  moved setuid/setgid in do_suid() (andrei)
- *  2004-03-25  added increase_open_fds & set_core_dump (andrei)
- *  2004-05-03  applied pgid patch from janakj
- *  2007-06-07  added mlock_pages (no swap) support (andrei)
-  *             added set_rt_prio() (andrei)
- */
+
 /*!
  * \file
  * \brief SIP-router core :: 
