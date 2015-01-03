@@ -1,0 +1,86 @@
+usrloc_dmq Module
+
+Andrey Rybkin
+
+   bks.tv
+   <rybkin.a@bks.tv>
+
+Edited by
+
+Andrey Rybkin
+
+   bks.tv
+   <rybkin.a@bks.tv>
+
+   Copyright © 2014
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+
+        3. Parameters
+
+              3.1. enable (int)
+              3.2. flag (int)
+
+   List of Examples
+
+   1.1. Set flag parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+
+   3. Parameters
+
+        3.1. enable (int)
+        3.2. flag (int)
+
+1. Overview
+
+   The module add usrloc contacts replication between multiple servers via
+   DMQ module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * DMQ module must be loaded first.. USRLOC module must be loaded
+       first..
+
+3. Parameters
+
+   3.1. enable (int)
+   3.2. flag (int)
+
+3.1. enable (int)
+
+   USRLOC replication 0 - disabled 1 - enabled
+
+   Default value is 0.
+
+3.2. flag (int)
+
+   Flag to be used for marking if a contact should be constructed for the
+   DMQ
+
+   Default value is 2.
+
+   Example 1.1. Set flag parameter
+...
+modparam("usrloc_dmq", "flag", 2)
+...
