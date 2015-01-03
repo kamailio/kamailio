@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * DNSSEC module
  *
  * Copyright (C) 2013 mariuszbi@gmail.com
@@ -24,6 +22,11 @@
  * History:
  * --------
  *  2013-03	initial implementation
+ */
+/*!
+ * \brief DNSsec support
+ * \ingroup DNSsec
+ * \author mariuszbi@gmail.com
  */
 
 
@@ -107,13 +110,6 @@ static int dnssec_init(void)
 {
 	LOG(L_INFO, "DNSSEC  - initializing\n");
 
-/*	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-*/
-	
 	//set parameters
 	if(flags) set_context_flags(flags);
 

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * DNSSEC module
  *
  * Copyright (C) 2013 mariuszbi@gmail.com
@@ -21,9 +19,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2013-03	initial implementation
+ */
+/*!
+ * \brief DNSsec support
+ * \ingroup DNSsec
+ * \author mariuszbi@gmail.com
  */
 
 #ifndef DNSSEC_FUNC_H

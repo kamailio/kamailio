@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * DNSSEC module
  *
  * Copyright (C) 2013 mariuszbi@gmail.com
@@ -25,6 +23,16 @@
  * --------
  *  2013-03	initial implementation
  */
+/*!
+ * \brief DNSsec support
+ * \ingroup DNSsec 
+ * \author mariuszbi@gmail.com
+ */
+/*!
+ * \defgroup DNSsec DNS security extensions support
+ *
+ */
+
 
 #include <validator/validator-config.h>
 #include <validator/validator.h>
