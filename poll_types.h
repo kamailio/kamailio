@@ -1,21 +1,14 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2005 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,18 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/* 
- * io wait poll methods (enum, strings, related function)
- * see io_wait.h for more details
- * 
- *  
+/*!
+ * \file
+ * \brief Kamailio core :: I/O wait poll methods (enum, strings, related function)
+ * see \ref io_wait.h for more details
+ * \ingroup core
+ * \author andrei
+ * Module: \ref core
  */
-/* 
- * History:
- * --------
- *  2005-06-15  created by andrei
- */
-
 
 #ifndef _poll_types_h
 #define _poll_types_h

@@ -1,23 +1,17 @@
 /*
- * $Id$
  *
  * adding/removing headers or any other data chunk from a message
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,18 +20,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/* History:
- * --------
- *  2003-01-29  s/int/enum ... more convenient for gdb (jiri)
- *  2003-03-31  added subst lumps -- they expand in ip addr, port a.s.o (andrei)
- *  2003-04-01  added opt (condition) lumps (andrei)
- *  2003-04-02  added more subst lumps: SUBST_{SND,RCV}_ALL  
- *              => ip:port;transport=proto (andrei)
- *  2003-10-20  split from data_lump.h (andrei)
- *  2005-03-24  the type of type attribute changed to enum _hdr_types_t (janakj)
- *
- */
-
+/*!
+* \file
+* \brief Kamailio core :: Adding/removing headers or any other data chunk from a message
+* \ingroup core
+* \author jiri, andrei, janakj
+* Module: \ref core
+*/
 
 #ifndef lump_struct_h
 #define lump_struct_h

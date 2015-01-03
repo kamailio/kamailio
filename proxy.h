@@ -1,22 +1,14 @@
 /*
- * $Id$
- *
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,12 +17,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- /*
-  * History:
-  * -------
-  *  2003-02-13  added proto to struct proxy_l & to *_proxy functions (andrei)
-  */
-
+/*!
+ * \file
+ * \brief Kamailio core :: Proxy 
+ * \ingroup core
+ * \author andrei
+ * Module: \ref core
+ */
 
 #ifndef proxy_h
 #define proxy_h
@@ -70,7 +63,7 @@ void free_shm_proxy(struct proxy_l* p);
 
 
 
-/* returns 0 on success, -1 on error (unknown af/bug) */
+/** returns 0 on success, -1 on error (unknown af/bug) */
 inline static int proxy2su(union sockaddr_union* su, struct proxy_l* p)
 {
 	/* if error try next ip address if possible */
@@ -87,7 +80,7 @@ inline static int proxy2su(union sockaddr_union* su, struct proxy_l* p)
 
 
 
-/* mark as proxy either as ok (err>=0) or as bad (err<0) */
+/** mark proxy either as ok (err>=0) or as bad (err<0) */
 inline static void proxy_mark(struct proxy_l* p, int err)
 {
 	if (err<0){

@@ -1,5 +1,4 @@
 /* 
- * $Id$
  * 
  * Copyright (C) 2008 iptelorg GmbH
  *
@@ -18,11 +17,7 @@
 /**
  * @file 
  * @brief lvalues (assignment)
- */
-/* 
- * History:
- * --------
- *  2008-11-30  initial version (andrei)
+ * @author andrei
  */
 
 #ifndef __lvalue_h_

@@ -1,21 +1,15 @@
-/* $Id$ */
 /*
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,17 +19,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
- *   ser locking library
+/*!
+* \file
+* \brief Kamailio core :: Kamailio locking library
+* \ingroup core
+* \author andrei
+* Module: \ref core
  *
- *  2002-12-16  created by andrei
- *  2003-02-20  s/gen_lock_t/gen_lock_t/ to avoid a type conflict 
- *               on solaris  (andrei)
- *  2003-03-05  lock set support added for FAST_LOCK & SYSV (andrei)
- *  2003-03-06  split in two: lock_ops.h & lock_alloc.h, to avoid
- *               shm_mem.h<->locking.h interdependency (andrei)
- *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
- *              on darwin (andrei)
  *
 Implements (in lock_ops.h & lock_alloc.h):
 

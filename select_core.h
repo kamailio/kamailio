@@ -1,21 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005-2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,12 +17,15 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2005-12-19  select framework, basic core functions (mma)
- *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
- *  2007-01-26  date, identity, identity_info support added (gergo)
  */
+
+/*!
+* \file
+* \brief Kamailio core :: Select framework, basic core functions
+* \author mma
+* \ingroup core
+* Module: \ref core
+*/
 
  
 #ifndef _SELECT_CORE_H

@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,9 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * pv_core.h
- */
+/*!
+* \file
+* \brief Kamailio core :: Pseudovariable handling core
+* \ingroup core
+* Module: \ref core
+*/
 
 #ifndef __pv_core_h
 #define __pv_core_h

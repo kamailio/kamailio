@@ -1,9 +1,5 @@
 /*
- * $Id$
- *
  * Process Table
- *
- *
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -19,18 +15,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * History:
- * --------
- *  2003-04-15  added tcp_disable support (andrei)
- *  2006-06-14	added process table in shared mem (dragos)
- *  2007-07-04	added register_fds() and get_max_open_fds(() (andrei)
- */
-/** internal fork functions and process table.
+/** Kamailio core :: internal fork functions and process table.
  * @file: pt.h
  * @ingroup core
  */
-
 
 #ifndef _PT_H
 #define _PT_H

@@ -19,18 +19,9 @@
  * @brief SIP-router core :: rvalue expressions
  * @ingroup core
  * Module: \ref core
+ * @author andrei
  */
  
-/* 
- * History:
- * --------
- *  2008-11-30  initial version (andrei)
- *  2009-04-28  added string and interger versions for the EQ and DIFF
- *              operators (andrei)
- *  2009-05-05  casts operator for int & string (andrei)
- *  2010-03-16  space for an int2str result inside rval_cache (andrei)
- */
-
 #ifndef _rvalue_h_
 #define _rvalue_h_
 

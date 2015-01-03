@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * time related functions
  *
  * Copyright (C) 2006 iptelorg GmbH
@@ -17,9 +15,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* History:
- * --------
- *  2008-07-16  initial version (andrei)
+
+/*!
+ * \file
+ * \brief Kamailio core :: Time related functions
+ * \author andrei
+ * \ingroup core
+ * Module: \ref core
  */
 #ifndef _ser_time_h
 #define _ser_time_h

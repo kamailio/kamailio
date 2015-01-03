@@ -1,23 +1,16 @@
 /*
- * $Id$
- *
  * resolver related functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,17 +19,14 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/* History:
- * --------
- *  2003-04-12  support for resolving ipv6 address references added (andrei)
- *  2004-07-28  darwin needs nameser_compat.h (andrei)
- *  2006-07-13  rdata structures put on diet (andrei)
- *  2006-07-17  rdata contains now also the record name (andrei)
- *  2006-08-18  get_record uses flags (andrei)
- *  2006-06-16  naptr support (andrei)
+
+/*!
+ * \file
+ * \brief Kamailio core :: DNS resolver
+ * \author andrei
+ * \ingroup core
+ * Module: \ref core
  */
-
-
 
 #ifndef __resolve_h
 #define __resolve_h

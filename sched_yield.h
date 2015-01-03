@@ -1,10 +1,6 @@
 /*
  * sched_yield wrapper
  *
- * $Id$
- *
- * 
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,13 +15,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- *
- *History:
- *--------
- *  2007-07-13  splitted from fastlock.h (andrei)
+/*!
+ * \file
+ * \brief Kamailio core :: Sched_yield wrapper
+ * \ingroup core
+ * Module: \ref core
+ * \author andrei
  */
-
 
 #ifndef _sched_yield_h
 #define _sched_yield_h

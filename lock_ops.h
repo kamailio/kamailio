@@ -1,4 +1,3 @@
-/* $Id$ */
 /*
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -16,25 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- *   ser locking library
+/*!
+* \file
+* \brief Kamailio core :: Kamailio locking library
+* \ingroup core
+* \author andrei
+* Module: \ref core
+*
  *   WARNING: do not include this file directly, use instead locking.h
  *   (unless you don't need to alloc/dealloc locks)
  *
- *  2002-12-16  created by andrei
- *  2003-02-20  s/gen_lock_t/gen_lock_t/ to avoid a type conflict 
- *               on solaris  (andrei)
- *  2003-03-05  lock set support added for FAST_LOCK & SYSV (andrei)
- *  2003-03-06  removed *_alloc,*_dealloc & moved them to lock_alloc.h
- *              renamed locking.h to lock_ops.h (all this to solve
- *              the locking.h<->shm_mem.h interdependency) (andrei)
- *  2003-03-10  lock set support added also for PTHREAD_MUTEX & POSIX_SEM
- *               (andrei)
- *  2003-03-17  possible signal interruptions treated for sysv (andrei)
- *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
- *              on darwin (andrei)
- *  2006-04-04  added lock_try(lock) and lock_set_try(s,i) (andrei)
- *  2007-05-13  added futex support (andrei)
  *
 Implements:
 

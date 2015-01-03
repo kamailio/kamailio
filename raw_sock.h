@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,15 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** raw socket functions.
+
+/** Kamailio core :: raw socket functions.
  *  @file raw_sock.c
  *  @ingroup core
+ *  @author andrei
  *  Module: @ref core
- */
-/* 
- * History:
- * --------
- *  2010-06-07  initial version (from older code) andrei
  */
 
 #ifndef _raw_sock_h

@@ -1,22 +1,16 @@
-/* $Id$
- *
- * SER Remote Procedure Call Interface
+/* 
+ * Kamailio Remote Procedure Call Interface
  *
  * Copyright (C) 2005 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,6 +19,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+/*!
+* \file
+* \brief Kamailio core :: RPC, Remote procedure call interface
+* \ingroup core
+* Module: \ref core
+*/
 
 #ifndef _RPC_H
 #define _RPC_H
@@ -46,15 +47,15 @@ struct rpc_delayed_ctx;
 
 
 /* Send the result to the caller */
-typedef int (*rpc_send_f)(void* ctx);                                      /* Send the reply to the client */
-typedef void (*rpc_fault_f)(void* ctx, int code, char* fmt, ...);          /* Signal a failure to the client */
-typedef int (*rpc_add_f)(void* ctx, char* fmt, ...);                       /* Add a new piece of data to the result */
-typedef int (*rpc_scan_f)(void* ctx, char* fmt, ...);                      /* Retrieve request parameters */
-typedef int (*rpc_rpl_printf_f)(void* ctx, char* fmt, ...);                /* Add printf-like formated data to the result set */
-typedef int (*rpc_struct_add_f)(void* ctx, char* fmt, ...);                /* Add fields in a structure */
-typedef int (*rpc_array_add_f)(void* ctx, char* fmt, ...);                 /* Add values in an array */
-typedef int (*rpc_struct_scan_f)(void* ctx, char* fmt, ...);               /* Scan attributes of a structure */
-typedef int (*rpc_struct_printf_f)(void* ctx, char* name, char* fmt, ...); /* Struct version of rpc_printf */
+typedef int (*rpc_send_f)(void* ctx);                                      /*!< Send the reply to the client */
+typedef void (*rpc_fault_f)(void* ctx, int code, char* fmt, ...);          /*!< Signal a failure to the client */
+typedef int (*rpc_add_f)(void* ctx, char* fmt, ...);                       /*!< Add a new piece of data to the result */
+typedef int (*rpc_scan_f)(void* ctx, char* fmt, ...);                      /*!< Retrieve request parameters */
+typedef int (*rpc_rpl_printf_f)(void* ctx, char* fmt, ...);                /*!< Add printf-like formated data to the result set */
+typedef int (*rpc_struct_add_f)(void* ctx, char* fmt, ...);                /*!< Add fields in a structure */
+typedef int (*rpc_array_add_f)(void* ctx, char* fmt, ...);                 /*!< Add values in an array */
+typedef int (*rpc_struct_scan_f)(void* ctx, char* fmt, ...);               /*!< Scan attributes of a structure */
+typedef int (*rpc_struct_printf_f)(void* ctx, char* name, char* fmt, ...); /*!< Struct version of rpc_printf */
 
 /* returns the supported capabilities */
 typedef rpc_capabilities_t (*rpc_capabilities_f)(void* ctx);
@@ -91,13 +92,12 @@ typedef struct rpc_delayed_ctx{
 } rpc_delayed_ctx_t;
 
 
-/*
+/**
  * RPC Function Prototype
  */
-
 typedef void (*rpc_function_t)(rpc_t* rpc, void* ctx);
 
-/*
+/**
  * RPC callback context.
  *
  * Defines a convenient way of packing an rpc callback
@@ -110,14 +110,14 @@ typedef struct rpc_cb_ctx {
 } rpc_cb_ctx_t;
 
 
-/*
+/**
  * Remote Procedure Call Export
  */
 typedef struct rpc_export {
-	const char* name;        /* Name of the RPC function (null terminated) */
-	rpc_function_t function; /* Pointer to the function */
-	const char** doc_str;  /* Documentation strings, method signature and description */
-	unsigned int flags;      /* Various flags, reserved for future use */
+	const char* name;        /*!< Name of the RPC function (null terminated) */
+	rpc_function_t function; /*!< Pointer to the function */
+	const char** doc_str;  /*!< Documentation strings, method signature and description */
+	unsigned int flags;      /*!< Various flags, reserved for future use */
 } rpc_export_t;
 
 
