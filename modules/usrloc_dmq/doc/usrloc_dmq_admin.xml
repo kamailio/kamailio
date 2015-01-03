@@ -35,6 +35,7 @@
 			</itemizedlist>
 		</para>
 	</section>
+	</section>
 	<section>
 	<title>Parameters</title>
 	<section id="usrloc_dmq.p.enable">
@@ -44,6 +45,7 @@
 			0 - disabled
 			1 - enabled
 		</para>
+		<para>
 		<emphasis>
 			Default value is 0.
 		</emphasis>
