@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * SNMPStats Module 
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
@@ -21,12 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
- *
- * History:
- * --------
- * 2006-11-23 initial version (jmagder)
- * 
- * Originally Generated with mib2c using mib2c.array-user.conf
  *
  * The file implements the kamailioSIPMethodSupportedTable.  The table is
  * populated by looking to see which modules are loaded, and guessing what SIP

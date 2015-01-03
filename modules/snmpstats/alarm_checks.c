@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * SNMPStats Module 
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
@@ -22,18 +20,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
  *
- * History:
- * --------
- * 2006-11-23 initial version (jmagder)
- * 
- * This file groups together alarm checking and handling
  */
 
 /*!
  *\file
  * \brief SNMP statistic module
+ * This file groups together alarm checking and handling
  * \ingroup snmpstats
  * - Module: \ref snmpstats
+ * \author jmagder
  */
 
 #include <signal.h>

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * SNMPStats Module 
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
@@ -24,11 +22,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
  *
- * History:
- * --------
- * 2006-11-23 initial version (jmagder)
- * 2013-04-01 updates of the MIB with core memory, tcp stats and much more (oej)
- * 
  * There are some important points to understanding the SNMPStat modules
  * architecture.
  *
@@ -60,6 +53,8 @@
  * \brief SNMP statistic module
  * \ingroup snmpstats
  * - Module: \ref snmpstats
+ * \author Jeffrey Magder (jmagder@somanetworks.com)
+ * \author Olle E. Johansson (oej@edvina.net)
  */
 
 /*!

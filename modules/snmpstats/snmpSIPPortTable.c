@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * SNMPStats Module 
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
@@ -25,12 +23,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
  *
- * History:
- * --------
- * 2006-11-23 initial version (jmagder)
- * 2013-02-24 Added SCTP support (oej)
- * 2013-04-07 Added IPv6 support (oej)
- * 
  * Originally Generated with mib2c using mib2c.array-user.conf
  *
  * This file implements the kamailioSIPPortTable.  For a full description of the table,
