@@ -331,7 +331,12 @@ dp_config* parse_dp_config(xmlDocPtr doc)
 				x->peers[x->peers_cnt].port = atoi((char*)xc);
 				xmlFree(xc);
 			}
-			x->peers_cnt++;		
+			xc = xmlGetProp(child,(xmlChar*)"src_addr");
+			if (xc){
+				quote_trim_dup(&(x->peers[x->peers_cnt].src_addr),(char*)xc);
+				xmlFree(xc);
+			}
+			x->peers_cnt++;
 		}
 		else if (xmlStrlen(child->name)==8 && strncasecmp((char*)child->name,"Acceptor",8)==0){
 			//Acceptor
@@ -459,7 +464,7 @@ dp_config* parse_dp_config(xmlDocPtr doc)
 												rei->next = re;
 												break;
 											}
-										} 					
+										}					
 								}
 							}
 						}
