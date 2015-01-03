@@ -92,7 +92,7 @@ int peer_manager_init(dp_config *config)
 	*endtoend_id |= rand() & 0xFFFFF;
 
 	for(i=0;i<config->peers_cnt;i++){
-		p = new_peer(config->peers[i].fqdn,config->peers[i].realm,config->peers[i].port);
+		p = new_peer(config->peers[i].fqdn,config->peers[i].realm,config->peers[i].port,config->peers[i].src_addr);
 		if (!p) continue;
 		p->is_dynamic = 0;
 		add_peer(p);
@@ -209,6 +209,8 @@ peer *get_peer_from_sock(int sock)
 peer *get_peer_from_fqdn(str fqdn,str realm)
 {
 	peer *i;
+	str dumb;
+
 	lock_get(peer_list_lock);
 	i = peer_list->head;
 	while(i){
@@ -218,7 +220,7 @@ peer *get_peer_from_fqdn(str fqdn,str realm)
 	}
 	lock_release(peer_list_lock);
 	if (!i&&config->accept_unknown_peers){
-		i = new_peer(fqdn,realm,3868);
+		i = new_peer(fqdn,realm,3868,dumb);
 		if (i){
 			i->is_dynamic=1;
 			touch_peer(i);
