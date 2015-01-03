@@ -21,14 +21,9 @@
  * they won't do anything).
  * @file
  * @ingroup core
+ * @author andrei
  */
  
-/*
- * History:
- * --------
- *  2010-02-01  initial version (andrei)
-*/
-
 #ifndef __core_stats_h
 #define __core_stats_h
 

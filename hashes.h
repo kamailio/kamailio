@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 iptelorg GmbH 
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,14 +13,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * History:
- * --------
- *  2006-02-02  created by andrei
- *  2006-11-24  added numeric string optimized hash function (andrei)
- *  2006-12-13  split into hashes.h (more generic) and str_hash.h (andrei)
- *  2007-02-22  added case insensitive versions (andrei)
- */
+/*!
+* \file
+* \brief Kamailio core :: hash support
+* \author Andrei
+* \ingroup core
+* Module: \ref core
+*/
 
 
 #ifndef _hashes_h
@@ -32,7 +29,7 @@
 
 
 
-/* internal use: hash update
+/** internal use: hash update
  * params: char* s   - string start,
  *         char* end - end
  *         char* p,  and unsigned v temporary vars (used)
@@ -57,7 +54,7 @@
 		(h)+=(v)^((v)>>3); \
 	}while(0)
 
-/* like hash_update_str, but case insensitive 
+/** like hash_update_str, but case insensitive 
  * params: char* s   - string start,
  *         char* end - end
  *         char* p,  and unsigned v temporary vars (used)
@@ -75,12 +72,12 @@
 	}while(0)
 
 
-/* internal use: call it to adjust the h from hash_update_str */
+/** internal use: call it to adjust the h from hash_update_str */
 #define hash_finish(h) (((h)+((h)>>11))+(((h)>>13)+((h)>>23)))
 
 
 
-/* "raw" 2 strings hash
+/** "raw" 2 strings hash
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
 inline static unsigned int get_hash2_raw(const str* key1, const str* key2)
@@ -98,7 +95,7 @@ inline static unsigned int get_hash2_raw(const str* key1, const str* key2)
 
 
 
-/* "raw" 1 string hash
+/** "raw" 1 string hash
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
 inline static unsigned int get_hash1_raw(const char* s, int len)
@@ -115,7 +112,7 @@ inline static unsigned int get_hash1_raw(const char* s, int len)
 
 
 
-/* a little slower than hash_* , but better distribution for 
+/** a little slower than hash_* , but better distribution for 
  * numbers and about the same for strings */
 #define hash_update_str2(s, end, p, v, h) \
 	do{ \
@@ -128,7 +125,7 @@ inline static unsigned int get_hash1_raw(const char* s, int len)
 		(h)=16777259*(h)+((v)^((v)<<17)); \
 	}while(0)
 
-/*  like hash_update_str2 but case insensitive */
+/**  like hash_update_str2 but case insensitive */
 #define hash_update_case_str2(s, end, p, v, h) \
 	do{ \
 		for ((p)=(s); (p)<=((end)-4); (p)+=4){ \
@@ -141,12 +138,12 @@ inline static unsigned int get_hash1_raw(const char* s, int len)
 		(h)=16777259*(h)+((v)^((v)<<17)); \
 	}while(0)
 
-/* internal use: call it to adjust the h from hash_update_str */
+/** internal use: call it to adjust the h from hash_update_str */
 #define hash_finish2(h) (((h)+((h)>>7))+(((h)>>13)+((h)>>23)))
 
 
 
-/* a little slower than get_hash1_raw() , but better distribution for 
+/** a little slower than get_hash1_raw() , but better distribution for 
  * numbers and about the same for strings */
 inline static unsigned int get_hash1_raw2(const char* s, int len)
 {

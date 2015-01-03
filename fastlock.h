@@ -1,10 +1,6 @@
 /*
  * fast architecture specific locking
  *
- * $Id$
- *
- * 
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,38 +15,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- *
- *History:
- *--------
- *  2002-02-05  created by andrei
- *  2003-01-16  added PPC locking code contributed by Dinos Dorkofikis
- *               <kdor@intranet.gr>
- *  2004-09-12  added MIPS locking for ISA>=2 (>r3000)  (andrei)
- *  2004-12-16  for now use the same locking code for sparc32 as for sparc64
- *               (it will work only if NOSMP is defined) (andrei)
- *  2005-04-27  added alpha locking code (andrei)
- *  2005-05-25  PPC locking code enabled for PPC64; added a lwsync to
- *               the tsl part and replaced the sync with a lwsync for the
- *               unlock part (andrei)
- *  2006-03-08  mips2 NOSMP (skip sync), optimized x86 & mips clobbers and
- *               input/output constraints (andrei)
- *  2006-04-03  optimization: call lock_get memory barrier outside tsl,in the 
- *               calling function, only if the lock operation succeeded
- *               (membar_getlock()) (andrei)
- *              added try_lock(); more x86 optimizations, x86  release_lock
- *               fix (andrei)
- * 2006-04-04  sparc* optimizations, sparc32 smp support, armv6 no smp support,
- *              ppc, mips*, alpha optimizations (andrei)
- * 2006-04-05  ppc fixes (s/stw/stwx/, s/lwz/lwzx), early clobber added
- *             where needed (andrei)
- * 2006-11-22  arm early clobber added: according to the swp instruction 
- *              specification the address register must be != from the other 2
- *              (Julien Blache <jblache@debian.org>)
- *
- */
-
-/*
+/*!
+* \file
+* \brief Kamailio core :: fast architecture specific locking
+* \author andrei
+* \ingroup core
+* Module: \ref core
  * WARNING: the code was not tested on the following architectures:
  *           - arm6  (cross-compiles ok, no test)
  *           - alpha (cross-compiles ok, no test)

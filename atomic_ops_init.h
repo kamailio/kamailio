@@ -1,16 +1,14 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,18 +20,15 @@
 
 /*!
  * \file
- * \brief SIP-router core :: atomic_ops init functions
+ * \brief Kamailio core :: atomic_ops init functions
+ *
+ * Copyright (C) 2006 iptelorg GmbH
  *
  * \ingroup core
  * Module: \ref core
  *
  * Needed for lock intializing if no native asm locks are available
  *  for the current arch./compiler combination, see \ref atomic_ops.c
- */
-/* 
- * History:
- * --------
- *  2006-03-30  created by andrei
  */
 
 #ifndef __atomic_ops_init_h

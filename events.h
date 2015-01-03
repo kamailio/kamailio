@@ -1,9 +1,8 @@
 /**
- * $Id$
  *
  * Copyright (C) 2009 SIP-Router.org
  *
- * This file is part of Extensible SIP Router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -1,4 +1,4 @@
-/* $Id$
+/* 
  *
  * ip address family related structures
  *
@@ -25,17 +25,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/*
- * History:
- * --------
- *  2003-02-13  added struct dest_info (andrei)
- *  2003-04-06  all ports are stored/passed in host byte order now (andrei)
- *  2006-04-20  comp support in recv_info and dest_info (andrei)
- *  2006-04-21  added init_dst_from_rcv (andrei)
- *  2007-06-26  added ip_addr_mk_any() (andrei)
- *  2008-05-21  added su2a(), ip_addr2sbuf(), ip4tosbuf(), ip62sbuf() (andrei)
- *  2009-09-14  added send flags support to dest_info (andrei)
- */
+/*!
+* \file
+* \brief Kamailio core :: ip address family related structures
+* \ingroup core
+* Module: \ref core
+*/
 
 #ifndef ip_addr_h
 #define ip_addr_h

@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,11 +15,10 @@
  */
 
 /** @file
- *  endianness compile and runtime  tests
+ *  Kamailio core :: endianness compile and runtime  tests
+ *  @author andrei
+ *  @ingroup core
  * 
- * History:
- * --------
- *  2008-06-13  created by andrei
  *
  * Defines:
  *  -  __IS_LITTLE_ENDIAN if the system is little endian and

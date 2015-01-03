@@ -1,5 +1,4 @@
 /*
- * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -15,13 +14,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
+/*!
+ * \file
+ * \brief SIP-router core :: Daemonize
+ * \author andrei
+ *      
+ * \ingroup core 
+ * Module: \ref core                    
+ *  
  * 
- * History:
- * --------
- *  2004-02-20  created by andrei
- *  2007-06-07  added mem_lock_pages() (andrei)
- *  2010-08-19  send status via pipe code derived from 9167c1 (ibc) (andrei)
  */
 
 #ifndef _daemonize_h

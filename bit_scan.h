@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +15,9 @@
  */
 /*!
  * \file
- * \brief SIP-router core :: bit scan operations
+ * \brief Kamailio core :: bit scan operations
+ *
+ * Copyright (C) 2007 iptelorg GmbH
  * \ingroup core
  * Module: \ref core
  *

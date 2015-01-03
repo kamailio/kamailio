@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,20 +13,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * char_msg_val.h
- */
-/*
- * History:
- * --------
- *  2010-02-10  moved from parser/msg_parser.h and added tag only mode
- *               by default (andrei)
-*/
+
 /** compute the characteristic value of a message.
  * @file
  * @ingroup core
- */
-/* Defines:
+ * \author andrei
+ *
+ * Defines:
  *  BRANCH_INCLUDE_FROMTO_BODY - if defined the old (pre 3.1) mode of
  *   including the full from & to bodies will be used (instead of only the
  *   tags).

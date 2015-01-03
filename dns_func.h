@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2013 mariuszbi@gmail.com
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,14 +13,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * DNS Wrapper functions 
- */
-/*
- * History:
- * --------
- *  2013-03  initial version (marius)
-*/
+/*!
+ * \file
+ * \brief Kamailio core :: DNS wrapper functions
+ * \author mariuszbi@gmail.com
+ *      
+ * \ingroup core 
+ * Module: \ref core                    
+ *  
+ *
 
 #ifndef DNS_FUNC_H
 #define DNS_FUNC_H

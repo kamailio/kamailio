@@ -1,18 +1,16 @@
 /*
- * $Id$
- *
  * resolver/dns related functions, dns cache and failover
  *
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,16 +20,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* History:
- * --------
- *  2006-07-13  created by andrei
- *  2007-06-16  naptr support (andrei)
- *  2007-07-30  DNS cache measurements added (Gergo)
- */
 
 /**
  * @file
  * @brief SIP-router core :: resolver/dns related functions, dns cache and failover
+ * @author andrei
  * @ingroup core
  * Module: @ref core
  */

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,10 +13,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * tcp io wait common stuff used by tcp_main.c & tcp_read.c
+/*!
+* \file
+* \brief Kamailio core :: tcp io wait common stuff used by tcp_main.c & tcp_read.c
+* \ingroup core
+* Module: \ref core
+* \author andrei
+*
  * All the functions are inline because of speed reasons and because they are
  * used only from 2 places.
+ *
  * You also have to define:
  *     int handle_io(struct fd_map* fm, short events, int idx) (see below)
  *     (this could be trivially replaced by a callback pointer entry attached
@@ -33,22 +37,6 @@
  *     local_free   (defaults to pkg_free)
  *
  */
-/*
- * History:
- * --------
- *  2005-06-13  created by andrei
- *  2005-06-26  added kqueue (andrei)
- *  2005-07-01  added /dev/poll (andrei)
- *  2006-05-30  sigio 64 bit workarround enabled for kernels < 2.6.5 (andrei)
- *  2007-11-22  when handle_io() is called in a loop check & stop if the fd was
- *               removed inside handle_io() (andrei)
- *  2007-11-29  support for write (POLLOUT); added io_watch_chg() (andrei)
- *  2008-02-04  POLLRDHUP & EPOLLRDHUP support (automatically enabled if POLLIN
- *               is set) (andrei)
- *  2010-06-17  re-enabled & enhanced the EV_ERROR for kqueue (andrei)
- */
-
-
 
 #ifndef _io_wait_h
 #define _io_wait_h

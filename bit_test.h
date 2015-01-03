@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,13 +13,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * History
- * -------
- *  2010-04-26	Initial version (Miklos)
- *  2011-01-05	bit_test_and_reset added (Miklos)
  */
 
-/* Bit test functions:
+/** Kamailio core :: Bit test functions
+ * @ingroup core
+ * Module: core
+ *
+ * Bit test functions:
  *  - int bit_test(int offset, unsigned int *addr)
  *      Returns the bit found at offset position 
  *      in a bitstring pointed by addr.

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,15 +13,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * History
- * -------
- *  2010-04-26	Initial version (Miklos)
  */
 
-/* Implements the bit counting function:
+/** Kamailio core ::  Implements the bit counting function:
+ * Copyright (C) 2010 iptelorg GmbH
+ * @ingroup core
+ * Module: core
+ *
  *   int bit_count(unsigned int u)
  *   Returns the number of bits in u.
  */
+
 
 #ifndef _BIT_COUNT_H
 #define _BIT_COUNT_H

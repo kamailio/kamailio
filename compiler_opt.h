@@ -1,6 +1,4 @@
 /*
- * $Id$
- * 
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,8 +16,9 @@
 
 /*!
  * \file
- * \brief SIP-router core :: Compiler specific optimizations
+ * \brief Kamailio core :: Compiler specific optimizations
  * \see \ref CompilerOptions
+ * \auth Andrei
  *
  * \ingroup core
  * Module: \ref core
@@ -43,12 +42,6 @@
  *                                prefetch_loc_r(addr, 3).
  *  prefetch_loc_w(addr, loc) - like above but for writing.
 \endverbatim
- */
-
-/* 
- * History:
- * --------
- *  2007-05-14  created by andrei
  */
 
 #ifndef __compiler_opt_h

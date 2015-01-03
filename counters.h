@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +13,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** counter/stats.
+/** Kamailio core :: counter/stats.
+ * @author andrei
  * @file counters.h
  * @ingroup:  core
  *
@@ -31,11 +30,6 @@
  *  4. get a counter value (the handle can be obtained like above)
  *    val = counter_get(h);
  */
-/*
- * History:
- * --------
- *  2010-08-06  initial version (andrei)
-*/
 
 #ifndef __counters_h
 #define __counters_h

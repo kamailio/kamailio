@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,13 +16,14 @@
 
 /*!
  * \file
- * \brief SIP-router core :: Atomic operations and memory barriers
+ * \brief Kamailio core :: Atomic operations and memory barriers
+ * Copyright (C) 2006 iptelorg GmbH
  * \ingroup core
  * Module: \ref core
  * See \ref atomic
  */
 
-/*
+/**
  * \page atomicops  Atomic operations and memory barriers
  *
  *  WARNING: atomic ops do not include memory barriers

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * here, we delete message lumps which are generated in
  * core functions using pkg_malloc and applied to shmem
  * requests; not doing so would result ugly memory problems
@@ -9,14 +7,14 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,14 +23,17 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/*
- * History:
- * -------
- *  2003-11-24  changed free_via_lump to free_via_clen_lump and make it
- *              handle CONTENTLENGTH lumps also (andrei)
- *  2005-07-04  lumps in SHM or dup'ed lumps are not freed and an warning
- *               message is logged (temporary fix) (andrei)
- */
+/*!
+* \file
+* \brief Kamailio core :: Lump handling
+* \ingroup core
+* Module: \ref core
+ * here, we delete message lumps which are generated in
+ * core functions using pkg_malloc and applied to shmem
+ * requests; not doing so would result ugly memory problems
+ *
+ * I admit it is not a nice hack; -jiri 
+*/
 
 
 

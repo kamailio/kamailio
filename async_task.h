@@ -1,7 +1,7 @@
-/**
+/*
  * Copyright (C) 2014 Daniel-Constantin Mierla (asipto.com)
  *
- * This file is part of Extensible SIP Router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/** Kamailio core :: Aync tasks
+ * @ingroup core
+ * Module: core
+ */
 
 #ifndef _ASYNC_TASK_H_
 #define _ASYNC_TASK_H_

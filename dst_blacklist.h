@@ -1,14 +1,14 @@
 /*
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -20,16 +20,9 @@
 
 /** SIP-router core :: Destination blacklists.
  * @file
+ * @author andrei, Gergo
  * @ingroup core
  * Module: @ref core
- */
-
-/* History:
- * --------
- *  2006-07-29  created by andrei
- *  2007-07-30  dst blacklist measurements added (Gergo)
- *  2009-12-22  blacklist ignore mask support and dst_blacklist_{add,su}
- *               switched to macros (andrei)
  */
 
 #ifndef dst_black_list_h
