@@ -30,6 +30,7 @@
 
 #include "../../str.h"
 #include "../../ip_addr.h"
+#include "../../atomic_ops.h"
 #include <openssl/ssl.h>
 
 
@@ -117,7 +118,7 @@ typedef struct tls_domains_cfg {
 	tls_domain_t* srv_list;    /**< Server domain list */
 	tls_domain_t* cli_list;    /**< Client domain list */
 	struct tls_domains_cfg* next; /**< Next element in the garbage list */
-	volatile int ref_count;             /**< How many connections use this configuration */
+	atomic_t ref_count;        /**< How many connections use this configuration */
 } tls_domains_cfg_t;
 
 

@@ -83,7 +83,7 @@ void collect_garbage(void)
 
 	while(cur) {
 		next = cur->next;
-		if (cur->ref_count == 0) {
+		if (atomic_get(&cur->ref_count) == 0) {
 			/* Not referenced by any existing connection */
 			prev->next = cur->next;
 			tls_free_cfg(cur);
