@@ -48,7 +48,7 @@ Compilation with ser:
 --------------------
 
 Compilation and installation of these libraries is NOT DONE by running
-main ser makefile now - it MUST be done MANUALLY. To compile and install
+main Kamailio makefile now - it MUST be done MANUALLY. To compile and install
 libraries simply run
 
    make install
@@ -62,15 +62,15 @@ AFTER COMPILATION of libraries you can COMPILE MODULES using this
 libraries like PA, RLS or dialog.
 
 
-Running with ser (Linux):
+Running with Kamailio (Linux):
 ----------------
 
 The path to installed libraries must be known to linker on startup. This
-can be done by setting variable LD_LIBRARY_PATH before running ser. For
+can be done by setting variable LD_LIBRARY_PATH before running Kamailio. For
 example, if libraries were installed to default directory (/usr/local),
-you should set LD_LIBRARY_PATH=/usr/local/lib/ser. In the case of 
+you should set LD_LIBRARY_PATH=/usr/local/lib/kamailio. In the case of 
 nonstandard installation, you can use something like 
-LD_LIBRARY_PATH=/my/ser/directory/lib/ser.
+LD_LIBRARY_PATH=/my/ser/directory/lib/kamailio.
 
 Compilation without ser:
 --------------------
