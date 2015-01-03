@@ -465,12 +465,12 @@ int do_suid()
 			LM_CRIT("user lookup failed: %s\n", strerror(errno));
 			goto error;
 		}
-		if(initgroups(pw->pw_name, pw->pw_gid)<0){
-			LM_CRIT("cannot set supplementary groups: %s\n", 
-							strerror(errno));
-			goto error;
-		}
 		if(uid!=getuid()) {
+			if(initgroups(pw->pw_name, pw->pw_gid)<0){
+				LM_CRIT("cannot set supplementary groups: %s\n", 
+							strerror(errno));
+				goto error;
+			}
 			if(setuid(uid)<0){
 				LM_CRIT("cannot change uid to %d: %s\n", uid, strerror(errno));
 				goto error;
