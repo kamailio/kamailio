@@ -19,6 +19,16 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+/*! @defgroup srutils Various utilities
+ *
+ * Kamailio core library.
+ */
+/*!
+* \file
+* \brief srutils :: SHA and other hashing utilities
+* \ingroup srutils
+* Module: \ref srutils
+*/
 
 #include "../../md5.h"
 #include "../../ut.h"

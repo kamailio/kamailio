@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * sruid - unique id generator
  *
  * Copyright (C) 2012 Daniel-Constantin Mierla (asipto.com)
@@ -21,6 +19,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+/*!
+* \file
+* \brief srutils :: Unique ID generator
+* \ingroup srutils
+* Module: \ref srutils
+*/
 
 #ifndef _SRUID_H_
 #define _SRUID_H_

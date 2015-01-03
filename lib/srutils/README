@@ -1,7 +1,7 @@
 Library collecting various utility components needed by several modules
 #######################################################################
 
-The licesing matches the rules for core - owned by FhG or more liberal
+The licensing matches the rules for core - owned by FhG or more liberal
 like BSD or MIT style.
 
 1. TMREC
@@ -15,17 +15,17 @@ COS - RFC 2445)
 =========
 
 Adapted verision of cJSON - a C JSON parsing library - that integrates better
-with Kamailio/SER environment.
+with Kamailio environment.
 
 The changes so far:
   - rename cJSON to srjson to avoid name space conflicts
   - ability to specify malloc/free functions per JSON document. In
-  Kamailio/SER, based on needs, it can be PKG or SHM type of used memory.
+  Kamailio based on needs, it can be PKG or SHM type of used memory.
   - ability to add a string value by pointer and length - the very common
   str structure
 
 Next targets:
-  - option to clone or not the full JSON document buffer and parse using
+- option to clone or not the full JSON document buffer and parse using
   the clone (tied to and becomes usefule with the next item in this list)
   - don't clone the string values when parsing a JSON document, but set
   references to names and string values

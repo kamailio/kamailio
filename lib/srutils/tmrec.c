@@ -1,5 +1,4 @@
 /*
- * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -25,7 +24,9 @@
  * Time Recurence Library according to iCalendar (RFC 2445)
  * - implemented at FhG Fokus, 2003 - external link:
  *   https://github.com/miconda/tmrec
- * - this is a clone adapted for kamailio/ser
+ * \brief srutils :: <description of this file>
+ * \ingroup srutils
+ * Module: \ref srutils
  */
 
 #include <stdio.h>
