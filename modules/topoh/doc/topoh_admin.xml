@@ -118,6 +118,11 @@ modparam("topoh", "mask_ip", "192.168.0.1")
 			Call-id.
 		</para>
 		<para>
+			NOTE: if you are using dialog module to terminate calls and this
+			parameter is enabled, you must set the dialog module parameter
+			'lreq_callee_headers' to include the header: 'TH: dlh\r\n'.
+		</para>
+		<para>
 		<emphasis>
 			Default value is 0 (do not mask).
 		</emphasis>
