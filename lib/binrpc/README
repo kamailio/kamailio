@@ -1,4 +1,4 @@
-binrcp library
+binrpc library
 --------------
 
 prepared by Vladimir Marek
@@ -7,7 +7,7 @@ inspirated by sercmd from Andrei Pelinescu-Onciul
 Description:
 ------------
 
-This library using binrpc implementation from CTL module of SER and encapsulets
+This library using binrpc implementation from CTL module of Kamailio and encapsulates
 it for socket communication. It offers simple functional interface for sending
 messages over UNIX sockets, TCP or UDP protocol. The messages are encoded into
 binary RCP format that is much more efficient then standard XMLRPC.
