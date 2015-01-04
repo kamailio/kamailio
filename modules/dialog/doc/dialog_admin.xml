@@ -1306,6 +1306,28 @@ modparam("dialog", "track_cseq_updates", 1)
 		</example>
 	</section>
 
+	<section id="dialog.p.lreq_callee_headers">
+		<title><varname>lreq_callee_headers</varname> (string)</title>
+		<para>
+			SIP headers to be added when sending local generated requests
+			(e.g., BYE) to callee. It can be useful when you use topoh module
+			with call-id masking (see the docs of topoh module).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>null</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>lreq_callee_headers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "lreq_callee_headers", "TH: dlh\r\n")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
