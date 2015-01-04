@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * Copyright (C) 2001-2005 iptel.org
  * Copyright (C) 2007-2008 1&1 Internet AG
  *

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
  * 
@@ -20,12 +18,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- /*
-  * History:
-  * --------
-  *  2004-06-06  bind_dbmod takes dbf as parameter (andrei)
-  *  2006-10-10  Added support for retrieving the last inserted ID (Carsten Bock, BASIS AudioNet GmbH)
-  */
 
 /**
  * \file lib/srdb1/db.c

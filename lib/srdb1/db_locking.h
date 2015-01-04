@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
