@@ -201,9 +201,9 @@ int dlg_ka_run(ticks_t ti)
 			dka = NULL;
 		} else {
 			if(dka->iflags & DLG_IFLAG_KA_SRC)
-				dlg_send_ka(dlg, DLG_CALLER_LEG, 0);
+				dlg_send_ka(dlg, DLG_CALLER_LEG);
 			if(dka->iflags & DLG_IFLAG_KA_DST)
-				dlg_send_ka(dlg, DLG_CALLEE_LEG, 0);
+				dlg_send_ka(dlg, DLG_CALLEE_LEG);
 			dlg_release(dlg);
 		}
 		/* append to tail */

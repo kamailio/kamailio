@@ -52,6 +52,6 @@ dlg_t* build_dlg_t(struct dlg_cell * cell, int dir);
 int free_tm_dlg(dlg_t *td);
 int dlg_bye(struct dlg_cell *dlg, str *hdrs, int side);
 int dlg_bye_all(struct dlg_cell *dlg, str *hdrs);
-int dlg_send_ka(dlg_cell_t *dlg, int dir, str *hdrs);
+int dlg_send_ka(dlg_cell_t *dlg, int dir);
 
 #endif

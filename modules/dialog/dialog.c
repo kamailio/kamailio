@@ -147,6 +147,8 @@ int dlg_ka_timer = 0;
 int dlg_ka_interval = 0;
 int dlg_clean_timer = 90;
 
+str dlg_lreq_callee_headers = {0};
+
 /* db stuff */
 static str db_url = str_init(DEFAULT_DB_URL);
 static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
@@ -297,6 +299,7 @@ static param_export_t mod_params[]={
 	{ "timeout_noreset",       INT_PARAM, &dlg_timeout_noreset      },
 	{ "timer_procs",           PARAM_INT, &dlg_timer_procs          },
 	{ "track_cseq_updates",    PARAM_INT, &_dlg_track_cseq_updates  },
+	{ "lreq_callee_headers",   PARAM_STR, &dlg_lreq_callee_headers  },
 	{ 0,0,0 }
 };
 

@@ -50,7 +50,7 @@
 #define MAX_FWD_HDR_LEN    (sizeof(MAX_FWD_HDR) - 1)
 
 extern str dlg_extra_hdrs;
-
+extern str dlg_lreq_callee_headers;
 
 
 int free_tm_dlg(dlg_t *td)
@@ -280,12 +280,19 @@ static inline int build_extra_hdr(struct dlg_cell * cell, str *extra_hdrs,
 		str *str_hdr)
 {
 	char *p;
+	int blen;
 
 	str_hdr->len = MAX_FWD_HDR_LEN + dlg_extra_hdrs.len;
 	if(extra_hdrs && extra_hdrs->len>0)
 		str_hdr->len += extra_hdrs->len;
 
-	str_hdr->s = (char*)pkg_malloc( str_hdr->len * sizeof(char) );
+	blen = str_hdr->len + 1 /* '\0' */;
+
+	/* reserve space for callee headers in local requests */
+	if(dlg_lreq_callee_headers.len>0)
+		blen += dlg_lreq_callee_headers.len + 2 /* '\r\n' */;
+
+	str_hdr->s = (char*)pkg_malloc( blen * sizeof(char) );
 	if(!str_hdr->s){
 		LM_ERR("out of pkg memory\n");
 		goto error;
@@ -320,6 +327,7 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 	str met = {"BYE", 3};
 	int result;
 	dlg_iuid_t *iuid = NULL;
+	str lhdrs;
 
 	/* do not send BYE request for non-confirmed dialogs (not supported) */
 	if (cell->state != DLG_STATE_CONFIRMED_NA && cell->state != DLG_STATE_CONFIRMED) {
@@ -343,7 +351,20 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 		goto err;
 	}
 
-	set_uac_req(&uac_r, &met, hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
+	lhdrs = *hdrs;
+
+	if(dir==DLG_CALLEE_LEG && dlg_lreq_callee_headers.len>0) {
+		/* space allocated in hdrs->s by build_extra_hdrs() */
+		memcpy(lhdrs.s+lhdrs.len, dlg_lreq_callee_headers.s,
+				dlg_lreq_callee_headers.len);
+		lhdrs.len += dlg_lreq_callee_headers.len;
+		if(dlg_lreq_callee_headers.s[dlg_lreq_callee_headers.len-1]!='\n') {
+			strncpy(lhdrs.s+lhdrs.len, CRLF, CRLF_LEN);
+			lhdrs.len += CRLF_LEN;
+		}
+	}
+
+	set_uac_req(&uac_r, &met, &lhdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
 				bye_reply_cb, (void*)iuid);
 	result = d_tmb.t_request_within(&uac_r);
 
@@ -370,7 +391,7 @@ err:
  * 		DLG_CALLER_LEG (0): caller
  * 		DLG_CALLEE_LEG (1): callee
  */
-int dlg_send_ka(dlg_cell_t *dlg, int dir, str *hdrs)
+int dlg_send_ka(dlg_cell_t *dlg, int dir)
 {
 	uac_req_t uac_r;
 	dlg_t* di;
@@ -406,8 +427,13 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir, str *hdrs)
 		goto err;
 	}
 
-	set_uac_req(&uac_r, &met, hdrs, NULL, di, TMCB_LOCAL_COMPLETED,
+	if(dir==DLG_CALLEE_LEG && dlg_lreq_callee_headers.len>0) {
+		set_uac_req(&uac_r, &met, &dlg_lreq_callee_headers, NULL, di,
+				TMCB_LOCAL_COMPLETED, dlg_ka_cb, (void*)iuid);
+	} else {
+		set_uac_req(&uac_r, &met, NULL, NULL, di, TMCB_LOCAL_COMPLETED,
 				dlg_ka_cb, (void*)iuid);
+	}
 	result = d_tmb.t_request_within(&uac_r);
 
 	if(result < 0){
