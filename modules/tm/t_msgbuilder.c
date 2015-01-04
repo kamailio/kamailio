@@ -1553,7 +1553,13 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN; /* Content-Length */
 	*len += ((server_signature && user_agent_hdr.len>0)
 							? (user_agent_hdr.len + CRLF_LEN) : 0);	                         /* Signature */
-	*len += (headers ? headers->len : 0);                                                        /* Additional headers */
+	if(headers && headers->len>2) {
+		/* Additional headers */
+		*len += headers->len;
+		/* End of header if missing */
+		if(headers->s[headers->len - 1] != '\n')
+			*len += CRLF_LEN;
+	}
 	*len += (body ? body->len : 0);                                                              /* Message body */
 	*len += CRLF_LEN;                                                                            /* End of Header */
 
@@ -1586,7 +1592,11 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 		memapp(w, user_agent_hdr.s, user_agent_hdr.len);
 		memapp(w, CRLF, CRLF_LEN);
 	}
-	if (headers) memapp(w, headers->s, headers->len);
+	if(headers && headers->len>2) {
+		memapp(w, headers->s, headers->len);
+		if(headers->s[headers->len - 1] != '\n')
+			memapp(w, CRLF, CRLF_LEN);
+	}
 	memapp(w, CRLF, CRLF_LEN);
 	if (body) memapp(w, body->s, body->len);
 
