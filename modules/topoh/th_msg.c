@@ -1002,6 +1002,15 @@ int th_del_cookie(sip_msg_t *msg)
 }
 
 
+/**
+ * return the special topoh cookie
+ * - TH header of TH Via parame
+ * - value is 3 chars
+ *   [0] - direction:    d - downstream; u - upstream
+ *   [1] - request type: i - initial; c - in-dialog; l - local in-dialog
+ *   [2] - location:     h - header; v - via param
+ * - if not found, returns 'xxx'
+ */
 char* th_get_cookie(sip_msg_t *msg, int *clen)
 {
 	hdr_field_t *hf;

@@ -401,13 +401,24 @@ int th_msg_sent(void *data)
 	{
 		direction = (th_cookie_value.s[0]=='u')?1:0; /* upstream/downstram */
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
-		local = (th_cookie_value.s[0]!='d'&&th_cookie_value.s[0]!='u')?1:0;
+
+		if(msg.via2==0) {
+			local = 1;
+			if(direction==0 && th_cookie_value.s[1]=='l') {
+				/* downstream local request (e.g., dlg bye) */
+				local = 2;
+			}
+		} else {
+			/* more than one Via, but no received th cookie */
+			local = (th_cookie_value.s[0]!='d' && th_cookie_value.s[0]!='u')?1:0;
+		}
 		/* local generated requests */
 		if(local)
 		{
 			/* ACK and CANCEL go downstream */
 			if(get_cseq(&msg)->method_id==METHOD_ACK
-					|| get_cseq(&msg)->method_id==METHOD_CANCEL)
+					|| get_cseq(&msg)->method_id==METHOD_CANCEL
+					|| local==2)
 			{
 				th_mask_callid(&msg);
 				goto ready;
