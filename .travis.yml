@@ -7,11 +7,16 @@ before_install:
   - sudo apt-get install -y gdebi-core
   - sudo pkg/kamailio/deb/build_deps.sh precise $TRAVIS_BUILD_DIR
 script: ./pkg/kamailio/deb/build_travis.sh
+branches:
+  only:
+    - master
+    - 4.2
+    - 4.1
 notifications:
   irc:
     channels:
       - "chat.freenode.net#Kamailio"
-    on_success: change
+    on_success: never
     on_failure: always
   email:
     - sr-dev@lists.sip-router.org
