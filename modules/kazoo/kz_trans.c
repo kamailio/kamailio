@@ -133,8 +133,9 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 				return -1;
 			}
 
+            /*
 			// it seems that val memory is not freed
-			// event with flag set to PV_VAL_PKG
+			// even with flag set to PV_VAL_PKG
 
 			strncpy(_kz_tr_buffer, val->rs.s, val->rs.len);
 			if(val->flags & PV_VAL_PKG)
@@ -145,6 +146,7 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 			val->flags = PV_VAL_STR;
 			val->ri = 0;
 			val->rs.s = _kz_tr_buffer;
+            */
 
 			if(oldflags & PV_VAL_PKG) {
 				pkg_free(tofree);
@@ -168,8 +170,10 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 				LM_ERR("error getting json\n");
 				return -1;
 			}
+            
+            /*
 			// it seems that val memory is not freed
-			// event with flag set to PV_VAL_PKG
+			// even with flag set to PV_VAL_PKG
 
 			strncpy(_kz_tr_buffer, val->rs.s, val->rs.len);
 			if(val->flags & PV_VAL_PKG)
@@ -180,6 +184,7 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 			val->flags = PV_VAL_STR;
 			val->ri = 0;
 			val->rs.s = _kz_tr_buffer;
+            */
 
 			if(oldflags & PV_VAL_PKG) {
 				pkg_free(tofree);

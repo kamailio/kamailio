@@ -30,6 +30,7 @@
 
 #include "kz_json.h"
 
+static str kz_pv_str_empty  {"", 0};
 
 char** str_split(char* a_str, const char a_delim)
 {
@@ -150,8 +151,11 @@ int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
 		dst_val->rs.s[len] = '\0';
 		dst_val->rs.len = len;
 		dst_val->flags = PV_VAL_STR | PV_VAL_PKG;
+        dst_val->ri = 0;
 	} else {
 		dst_val->flags = PV_VAL_NULL;
+        dst_val->rs kz_pv_str_empty;
+        dst_val->ri = 0;
 	}
 
 	json_object_put(j);
