@@ -810,7 +810,7 @@ int param_set_xvar( modparam_t type, void* val, int mode)
 		isv.n = ival;
 	}
 	if(mode==0) {
-		pkv = add_var(&s);
+		pkv = add_var(&s, VAR_TYPE_ZERO);
 		if(pkv==NULL)
 			goto error;
 		if(set_var_value(pkv, &isv, flags)==NULL)

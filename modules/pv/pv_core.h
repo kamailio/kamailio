@@ -301,6 +301,7 @@ int pv_set_from_display(struct sip_msg* msg, pv_param_t *param,
 /********* end PV set functions *********/
 
 int pv_parse_scriptvar_name(pv_spec_p sp, str *in);
+int pv_parse_scriptvarnull_name(pv_spec_p sp, str *in);
 
 int pv_parse_hdr_name(pv_spec_p sp, str *in);
 

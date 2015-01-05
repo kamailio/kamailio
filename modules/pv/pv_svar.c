@@ -37,15 +37,21 @@
 #include "pv_svar.h"
 
 static script_var_t *script_vars = 0;
+static script_var_t *script_vars_null = 0;
 
-script_var_t* add_var(str *name)
+script_var_t* add_var(str *name, int vtype)
 {
 	script_var_t *it;
 
 	if(name==0 || name->s==0 || name->len<=0)
 		return 0;
 
-	for(it=script_vars; it; it=it->next)
+	if(vtype==VAR_TYPE_NULL) {
+		it=script_vars_null;
+	} else {
+		it=script_vars;
+	}
+	for(; it; it=it->next)
 	{
 		if(it->name.len==name->len
 				&& strncmp(name->s, it->name.s, name->len)==0)
@@ -69,9 +75,14 @@ script_var_t* add_var(str *name)
 	strncpy(it->name.s, name->s, name->len);
 	it->name.s[it->name.len] = '\0';
 
-	it->next = script_vars;
-
-	script_vars = it;
+	if(vtype==VAR_TYPE_NULL) {
+		it->v.flags = VAR_VAL_NULL|VAR_TYPE_NULL;
+		it->next = script_vars_null;
+		script_vars_null = it;
+	} else {
+		it->next = script_vars;
+		script_vars = it;
+	}
 
 	return it;
 }
@@ -87,11 +98,16 @@ script_var_t* set_var_value(script_var_t* var, int_str *value, int flags)
 			pkg_free(var->v.value.s.s);
 			var->v.flags &= ~VAR_VAL_STR;
 		}
+
+		if(var->v.flags&VAR_TYPE_NULL)
+			var->v.flags |= VAR_VAL_NULL;
+
 		memset(&var->v.value, 0, sizeof(int_str));
 
 		return var;
 	}
 
+	var->v.flags &= ~VAR_VAL_NULL;
 	if(flags&VAR_VAL_STR)
 	{
 		if(var->v.flags&VAR_VAL_STR)
@@ -156,6 +172,22 @@ script_var_t* get_var_by_name(str *name)
 	return 0;
 }
 
+script_var_t* get_varnull_by_name(str *name)
+{
+	script_var_t *it;
+
+	if(name==0 || name->s==0 || name->len<=0)
+		return 0;
+
+	for(it=script_vars_null; it; it=it->next)
+	{
+		if(it->name.len==name->len
+				&& strncmp(name->s, it->name.s, name->len)==0)
+			return it;
+	}
+	return 0;
+}
+
 void reset_vars(void)
 {
 	script_var_t *it;
@@ -166,6 +198,16 @@ void reset_vars(void)
 			pkg_free(it->v.value.s.s);
 			it->v.flags &= ~VAR_VAL_STR;
 		}
+		memset(&it->v.value, 0, sizeof(int_str));
+	}
+	for(it=script_vars_null; it; it=it->next)
+	{
+		if(it->v.flags&VAR_VAL_STR)
+		{
+			pkg_free(it->v.value.s.s);
+			it->v.flags &= ~VAR_VAL_STR;
+		}
+		it->v.flags |= VAR_VAL_NULL;
 		memset(&it->v.value, 0, sizeof(int_str));
 	}
 }
@@ -192,4 +234,5 @@ void destroy_vars_list(script_var_t *svl)
 void destroy_vars(void)
 {
 	destroy_vars_list(script_vars);
+	destroy_vars_list(script_vars_null);
 }

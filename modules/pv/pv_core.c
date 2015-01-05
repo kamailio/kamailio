@@ -1804,6 +1804,9 @@ int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 	
 	sv= (script_var_t*)param->pvn.u.dname;
 
+	if((sv->v.flags&VAR_TYPE_NULL) && (sv->v.flags&VAR_VAL_NULL))
+			return pv_get_null(msg, param, res);
+
 	if(sv->v.flags&VAR_VAL_STR)
 	{
 		res->rs = sv->v.value.s;
@@ -2748,9 +2751,24 @@ int pv_parse_scriptvar_name(pv_spec_p sp, str *in)
 {
 	if(in==NULL || in->s==NULL || sp==NULL)
 		return -1;
-	
+
 	sp->pvp.pvn.type = PV_NAME_PVAR;
-	sp->pvp.pvn.u.dname = (void*)add_var(in);
+	sp->pvp.pvn.u.dname = (void*)add_var(in, VAR_TYPE_ZERO);
+	if(sp->pvp.pvn.u.dname==NULL)
+	{
+		LM_ERR("cannot register var [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+	return 0;
+}
+
+int pv_parse_scriptvarnull_name(pv_spec_p sp, str *in)
+{
+	if(in==NULL || in->s==NULL || sp==NULL)
+		return -1;
+
+	sp->pvp.pvn.type = PV_NAME_PVAR;
+	sp->pvp.pvn.u.dname = (void*)add_var(in, VAR_TYPE_NULL);
 	if(sp->pvp.pvn.u.dname==NULL)
 	{
 		LM_ERR("cannot register var [%.*s]\n", in->len, in->s);
