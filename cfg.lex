@@ -1043,6 +1043,7 @@ IMPORTFILE      "import_file"
 								if (p_nest==0){
 									count();
 									addstr(&s_buf, yytext, yyleng);
+									r = pp_subst_run(&s_buf.s);
 									yylval.strval=s_buf.s;
 									memset(&s_buf, 0, sizeof(s_buf));
 									state=INITIAL_S;
@@ -1060,6 +1061,7 @@ IMPORTFILE      "import_file"
 <PVARID>{CR}|{EAT_ABLE}|.	{	yyless(yyleng-1);
 								count();
 								addstr(&s_buf, yytext, yyleng);
+								r = pp_subst_run(&s_buf.s);
 								yylval.strval=s_buf.s;
 								memset(&s_buf, 0, sizeof(s_buf));
 								state=INITIAL_S;
