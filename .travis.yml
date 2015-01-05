@@ -19,4 +19,7 @@ notifications:
     on_success: never
     on_failure: always
   email:
-    - sr-dev@lists.sip-router.org
+    recipients:
+      - sr-dev@lists.sip-router.org
+    on_success: never
+    on_failure: always
