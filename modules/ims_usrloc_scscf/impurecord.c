@@ -641,9 +641,8 @@ static inline struct ucontact* contact_path_match(unsigned int slot, str* _c, st
 int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path, int _cseq, struct ucontact** _co) {
     unsigned int sl;
     ucontact_t* ptr;
-    int no_callid;
+    int with_callid = 1;
     ptr = 0;
-    no_callid = 0;
     *_co = 0;
 
     sl = core_hash(_c, 0, contact_list->size);
@@ -658,11 +657,11 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
             break;
         case CONTACT_CALLID:
             ptr = contact_callid_match(sl, _c, _callid);
-            no_callid = 1;
+            with_callid = 1;
             break;
         case CONTACT_PATH:
             ptr = contact_path_match(sl, _c, _path);
-            break;
+	    break;
 	case CONTACT_PORT_IP_ONLY:
 	    ptr = contact_port_ip_match(sl, _c);
 	    break;
@@ -677,7 +676,7 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
     if (ptr) {
 	LM_DBG("have partially found a contact\n");
         /* found -> check callid and cseq */
-        if (no_callid || (ptr->callid.len == _callid->len
+        if (!with_callid || (ptr->callid.len == _callid->len
                 && memcmp(_callid->s, ptr->callid.s, _callid->len) == 0)) {
             if (_cseq < ptr->cseq) {
 		LM_DBG("cseq less than expected\n");
