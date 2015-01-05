@@ -202,30 +202,6 @@ pcre *dpl_dyn_pcre_comp(sip_msg_t *msg, str *expr, str *vexpr, int *cap_cnt)
 	return re;
 }
 
-pcre *dpl_dynamic_pcre(sip_msg_t *msg, str *expr, int *cap_cnt)
-{
-	pv_elem_t *pelem = NULL;
-	str vexpr;
-
-	if(expr==NULL || expr->s==NULL || expr->len<=0)
-		return NULL;
-
-	if(pv_parse_format(expr, &pelem)<0){
-		LM_ERR("parsing pcre expression: %.*s\n",
-				expr->len, expr->s);
-		return NULL;
-	}
-	if(pv_printf_s(msg, pelem, &vexpr)<0){
-		LM_ERR("cannot get pcre dynamic expression value: %.*s\n",
-				expr->len, expr->s);
-		pv_elem_free_all(pelem);
-		return NULL;
-	}
-	pv_elem_free_all(pelem);
-
-	return dpl_dyn_pcre_comp(msg, expr, &vexpr, cap_cnt);
-}
-
 dpl_dyn_pcre_p dpl_dynamic_pcre_list(sip_msg_t *msg, str *expr)
 {
 	pv_elem_p elem = NULL;
@@ -402,11 +378,10 @@ error:
 #define MAX_PHONE_NB_DIGITS		127
 static char dp_output_buf[MAX_PHONE_NB_DIGITS+1];
 int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
-		str * result)
+		pcre *subst_comp, str * result)
 {
 	int repl_nb, offset, match_nb, rc, cap_cnt;
 	struct replace_with token;
-	pcre *subst_comp;
 	struct subst_expr * repl_comp;
 	str match;
 	pv_value_t sv;
@@ -419,22 +394,10 @@ int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 	result->s = dp_output_buf;
 	result->len = 0;
 
-	repl_comp 	= rule->repl_comp;
+	repl_comp = rule->repl_comp;
 	if(!repl_comp){
 		LM_DBG("null replacement\n");
 		return 0;
-	}
-
-	if(rule->tflags&DP_TFLAGS_PV_SUBST) {
-		subst_comp = dpl_dynamic_pcre(msg, &rule->subst_exp, &cap_cnt);
-		if (cap_cnt > MAX_REPLACE_WITH) {
-			LM_ERR("subst expression %.*s has too many sub-expressions\n",
-				rule->subst_exp.len, rule->subst_exp.s);
-			if(subst_comp) pcre_free(subst_comp);
-			return -1;
-		}
-	} else {
-		subst_comp = rule->subst_comp;
 	}
 
 	if(subst_comp){
@@ -444,13 +407,16 @@ int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 		if (rc != 0) {
 			LM_ERR("pcre_fullinfo on compiled pattern yielded error: %d\n",
 					rc);
-			if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
 			return -1;
 		}
 		if(repl_comp->max_pmatch > cap_cnt){
 			LM_ERR("illegal access to %i-th subexpr of subst expr (max %d)\n",
 					repl_comp->max_pmatch, cap_cnt);
-			if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
+			return -1;
+		}
+		if (rule->tflags&DP_TFLAGS_PV_SUBST && (cap_cnt > MAX_REPLACE_WITH)) {
+			LM_ERR("subst expression %.*s has too many sub-expressions\n",
+				rule->subst_exp.len, rule->subst_exp.s);
 			return -1;
 		}
 
@@ -462,7 +428,6 @@ int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 					string.len, string.s, 
 					rule->match_exp.len, rule->match_exp.s,
 					rule->subst_exp.len, rule->subst_exp.s);
-			if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
 			return -1;
 		}
 	}
@@ -479,7 +444,6 @@ int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 				repl_comp->replacement.len);
 		result->len = repl_comp->replacement.len;
 		result->s[result->len] = '\0';
-		if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
 		return 0;
 	}
 
@@ -589,12 +553,9 @@ int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 	}
 
 	result->s[result->len] = '\0';
-	if(rule->tflags&DP_TFLAGS_PV_SUBST) pcre_free(subst_comp);
 	return 0;
 
 error:
-	if((rule->tflags&DP_TFLAGS_PV_SUBST) && subst_comp!=NULL)
-		pcre_free(subst_comp);
 	result->s = 0;
 	result->len = 0;
 	return -1;
@@ -724,11 +685,34 @@ repl:
 					attrs->len, attrs->s);
 		}
 	}
-
-	if(rule_translate(msg, input, rulep, output)!=0){
-		LM_ERR("could not build the output\n");
-		return -1;
+	if(rulep->tflags&DP_TFLAGS_PV_SUBST) {
+		re_list = dpl_dynamic_pcre_list(msg, &rulep->match_exp);
+		if(re_list==NULL) {
+			/* failed to compile dynamic pcre -- ignore */
+			LM_DBG("failed to compile dynamic pcre[%.*s]\n",
+				rulep->subst_exp.len, rulep->subst_exp.s);
+			return -1;
+		}
+		rez = -1;
+		do {
+			if(rez<0) {
+				rez = rule_translate(msg, input, rulep, re_list->re, output);
+				LM_DBG("subst check: [%.*s] %d\n",
+					re_list->expr.len, re_list->expr.s, rez);
+			}
+			else LM_DBG("subst check skipped: [%.*s] %d\n",
+					re_list->expr.len, re_list->expr.s, rez);
+			rt = re_list->next;
+			pcre_free(re_list->re);
+			pkg_free(re_list);
+			re_list = rt;
+		} while(re_list);
 	}
-
+	else {
+		if(rule_translate(msg, input, rulep, rulep->subst_comp, output)!=0){
+			LM_ERR("could not build the output\n");
+			return -1;
+		}
+	}
 	return 0;
 }
