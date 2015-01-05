@@ -117,6 +117,7 @@
 	#define IFDEF_EOL_S             14
 	#define IFDEF_SKIP_S            15
 	#define DEFINE_DATA_S           16
+	#define EVRT_NAME_S             17
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -181,7 +182,7 @@
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
-%x PVARID INCLF IMPTF
+%x PVARID INCLF IMPTF EVRTNAME
 %x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
@@ -619,7 +620,19 @@ IMPORTFILE      "import_file"
 <INITIAL>{ROUTE_SEND} { count(); default_routename="DEFAULT_SEND";
 							yylval.strval=yytext; return ROUTE_SEND; }
 <INITIAL>{ROUTE_EVENT} { count(); default_routename="DEFAULT_EVENT";
-							yylval.strval=yytext; return ROUTE_EVENT; }
+							yylval.strval=yytext;
+							state=EVRT_NAME_S; BEGIN(EVRTNAME);
+							return ROUTE_EVENT; }
+<EVRTNAME>{LBRACK}          { count(); return LBRACK; }
+<EVRTNAME>{EAT_ABLE}|{CR}				{ count(); };
+<EVRTNAME>{EVENT_RT_NAME}	{ count();
+								addstr(&s_buf, yytext, yyleng);
+								yylval.strval=s_buf.s;
+								memset(&s_buf, 0, sizeof(s_buf));
+								return EVENT_RT_NAME; }
+<EVRTNAME>{RBRACK}          { count();
+								state=INITIAL_S; BEGIN(INITIAL);
+								return RBRACK; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }
@@ -1150,11 +1163,6 @@ IMPORTFILE      "import_file"
 <INITIAL>{DOT}		{ count(); return DOT; }
 <INITIAL>\\{CR}		{count(); } /* eat the escaped CR */
 <INITIAL>{CR}		{ count();/* return CR;*/ }
-<INITIAL>{EVENT_RT_NAME}	{ count();
-								addstr(&s_buf, yytext, yyleng);
-								yylval.strval=s_buf.s;
-								memset(&s_buf, 0, sizeof(s_buf));
-								return EVENT_RT_NAME; }
 
 
 <INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START; 
