@@ -494,8 +494,10 @@ dpl_node_t * build_rule(db_val_t * values)
 	LM_DBG("building rule for [%d:%.*s/%.*s/%.*s]\n", matchop,
 			match_exp.len, ZSW(match_exp.s), subst_exp.len, ZSW(subst_exp.s),
 			repl_exp.len, ZSW(repl_exp.s));
-	if (repl_comp && (cap_cnt < repl_comp->max_pmatch) && 
-			(repl_comp->max_pmatch != 0)) {
+	if (!(tflags&(DP_TFLAGS_PV_SUBST|DP_TFLAGS_PV_MATCH)) &&
+		repl_comp && (cap_cnt < repl_comp->max_pmatch) &&
+		(repl_comp->max_pmatch != 0))
+	{
 		LM_ERR("repl_exp %.*s refers to %d sub-expressions, but "
 				"subst_exp %.*s has only %d\n",
 				repl_exp.len, repl_exp.s, repl_comp->max_pmatch,
