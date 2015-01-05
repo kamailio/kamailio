@@ -188,7 +188,13 @@ int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 	}
 
 	if(rule->tflags&DP_TFLAGS_PV_SUBST) {
-		subst_comp = dpl_dynamic_pcre(msg, &rule->subst_exp, NULL);
+		subst_comp = dpl_dynamic_pcre(msg, &rule->subst_exp, &cap_cnt);
+		if (cap_cnt > MAX_REPLACE_WITH) {
+			LM_ERR("subst expression %.*s has too many sub-expressions\n",
+				rule->subst_exp.len, rule->subst_exp.s);
+			if(subst_comp) pcre_free(subst_comp);
+			return -1;
+		}
 	} else {
 		subst_comp = rule->subst_comp;
 	}
