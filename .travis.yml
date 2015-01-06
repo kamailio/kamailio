@@ -5,8 +5,8 @@ compiler:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y gdebi-core
-  - sudo pkg/kamailio/deb/build_deps.sh precise $TRAVIS_BUILD_DIR
-script: ./pkg/kamailio/deb/build_travis.sh
+  - sudo test/travis/build_deps.sh precise $TRAVIS_BUILD_DIR
+script: ./test/travis/build_travis.sh
 branches:
   only:
     - master
