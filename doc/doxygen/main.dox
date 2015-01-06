@@ -1,5 +1,5 @@
 /**
- * \mainpage The SIP Router Development Documentation
+ * \mainpage The Kamailio Development Documentation
  *
  * This development documentation contains annotated and documented
  * source files. For the sake of clarity the documentation is split into the
@@ -10,18 +10,21 @@
  * \ref db_api Database Abstraction Layer is a group of data structures and functions that
  * are used by all SIP Router modules that need to access a database.
  *
- * \section sr_modules SIP Router Modules
+ * \section sr_modules Kamailio Modules
  * Please click on the "modules" tab above for more information about the modules
  *
  * The documentation can be generated using doxygen by running "make doxygen"
  *
- * \section License SIP-router license
- * SIP-router is free software; you can redistribute it and/or modify
+ * \section Other information
+ * If you want other informaiton about Kamailio, please visit http://www.kamailio.org
+ *
+ * \section License Kamailio license
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
