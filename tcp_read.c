@@ -200,6 +200,16 @@ int tcp_http11_continue(struct tcp_connection *c)
 		c->req.flags |= F_TCP_REQ_BCHUNKED;
 		ret = 1;
 	}
+	/* check for HTTP Via header
+	 * - HTTP Via format is different that SIP Via
+	 * - workaround: replace with Hia to be ignored by SIP parser
+	 */
+	if((p=strfindcasestrz(&msg, "\nVia:"))!=NULL)
+	{
+		p++;
+		*p = 'H';
+		LM_DBG("replaced HTTP Via with Hia [[\n%.*s]]\n", msg.len, msg.s);
+	}
 	return ret;
 }
 #endif /* HTTP11 */
@@ -480,6 +490,10 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					case '\n':
 						/* found LF LF */
 						r->state=H_BODY;
+#ifdef READ_HTTP11
+						if (cfg_get(tcp, tcp_cfg, accept_no_cl)!=0)
+							tcp_http11_continue(c);
+#endif
 						if (TCP_REQ_HAS_CLEN(r)){
 							r->body=p+1;
 							r->bytes_to_go=r->content_len;
@@ -489,9 +503,42 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 								goto skip;
 							}
 						}else{
-							DBG("tcp_read_headers: ERROR: no clen, p=%X\n",
-									*p);
-							r->error=TCP_REQ_BAD_LEN;
+							if(cfg_get(tcp, tcp_cfg, accept_no_cl)!=0) {
+#ifdef READ_MSRP
+								/* if MSRP message */
+								if(c->req.flags&F_TCP_REQ_MSRP_FRAME)
+								{
+									r->body=p+1;
+									/* at least 3 bytes: 0\r\n */
+									r->bytes_to_go=3;
+									p++;
+									r->content_len = 0;
+									r->state=H_MSRP_BODY;
+									break;
+								}
+#endif
+
+#ifdef READ_HTTP11
+								if(TCP_REQ_BCHUNKED(r)) {
+									r->body=p+1;
+									/* at least 3 bytes: 0\r\n */
+									r->bytes_to_go=3;
+									p++;
+									r->content_len = 0;
+									r->state=H_HTTP11_CHUNK_START;
+									break;
+								}
+#endif
+								r->body=p+1;
+								r->bytes_to_go=0;
+								r->flags|=F_TCP_REQ_COMPLETE;
+								p++;
+								goto skip;
+							} else {
+								DBG("tcp_read_headers: ERROR: no clen, p=%X\n",
+										*p);
+								r->error=TCP_REQ_BAD_LEN;
+							}
 						}
 						break;
 					case '-':
