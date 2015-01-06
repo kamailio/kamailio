@@ -211,6 +211,36 @@ modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
 </programlisting>
 		</example>
 	</section>
+	<section id="xlog.p.methods_filter">
+		<title><varname>methods_filter</varname> (int)</title>
+		<para>
+		The bitmask with internal SIP method ids to be ignored by
+		xlogm() function. The value can be changed at runtime via
+		cfg reload framework:
+		</para>
+		<programlisting format="linespecific">
+...
+kamcmd cfg.set_now_int xlog methods_filter 15
+...
+</programlisting>
+		<para>
+		To see the associated internal ids for SIP requests, look
+		in source tree inside parser/msg_parser.h for enum request_method.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1 (all SIP methods are ignored).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>methods_filter</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "long_format", 1)
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 	<section>
@@ -361,6 +391,16 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 		<para>
 		Similar to xdbg(), in addition prints configuration file line number
 		at the beginning of message.
+		</para>
+	</section>
+	<section id="xlog.f.xlogm">
+		<title>
+		<function moreinfo="none">xlogm(level, format)</function>
+		</title>
+		<para>
+			Similar to xlog(level, format), but skips writing the log messages
+			for SIP requests and responses that match the SIP method id with
+			methods_filter parameter value.
 		</para>
 	</section>
 	</section>

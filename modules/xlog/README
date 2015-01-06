@@ -35,6 +35,7 @@ Elena-Ramona Modroiu
               4.4. prefix (str)
               4.5. log_facility (string)
               4.6. log_colors (string)
+              4.7. methods_filter (int)
 
         5. Functions
 
@@ -42,6 +43,7 @@ Elena-Ramona Modroiu
               5.2. xdbg(format)
               5.3. xlogl([ [facility,] level,] format)
               5.4. xdbgl(format)
+              5.5. xlogm(level, format)
 
    List of Examples
 
@@ -51,8 +53,9 @@ Elena-Ramona Modroiu
    1.4. Set prefix parameter
    1.5. log_facility example
    1.6. log_colors example
-   1.7. xlog usage
-   1.8. xdbg usage
+   1.7. Set methods_filter parameter
+   1.8. xlog usage
+   1.9. xdbg usage
 
 Chapter 1. Admin Guide
 
@@ -73,6 +76,7 @@ Chapter 1. Admin Guide
         4.4. prefix (str)
         4.5. log_facility (string)
         4.6. log_colors (string)
+        4.7. methods_filter (int)
 
    5. Functions
 
@@ -80,6 +84,7 @@ Chapter 1. Admin Guide
         5.2. xdbg(format)
         5.3. xlogl([ [facility,] level,] format)
         5.4. xdbgl(format)
+        5.5. xlogm(level, format)
 
 1. Overview
 
@@ -131,6 +136,7 @@ Chapter 1. Admin Guide
    4.4. prefix (str)
    4.5. log_facility (string)
    4.6. log_colors (string)
+   4.7. methods_filter (int)
 
 4.1. buf_size (integer)
 
@@ -206,12 +212,31 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 modparam("xlog", "log_colors", "L_ERR=cr")
 modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
 
+4.7. methods_filter (int)
+
+   The bitmask with internal SIP method ids to be ignored by xlogm()
+   function. The value can be changed at runtime via cfg reload framework:
+...
+kamcmd cfg.set_now_int xlog methods_filter 15
+...
+
+   To see the associated internal ids for SIP requests, look in source
+   tree inside parser/msg_parser.h for enum request_method.
+
+   Default value is -1 (all SIP methods are ignored).
+
+   Example 1.7. Set methods_filter parameter
+...
+modparam("xlog", "long_format", 1)
+...
+
 5. Functions
 
    5.1. xlog([ [facility,] level,] format)
    5.2. xdbg(format)
    5.3. xlogl([ [facility,] level,] format)
    5.4. xdbgl(format)
+   5.5. xlogm(level, format)
 
 5.1. xlog([ [facility,] level,] format)
 
@@ -242,7 +267,7 @@ modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.7. xlog usage
+   Example 1.8. xlog usage
 ...
 xlog("L_ERR", "time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
 ...
@@ -264,7 +289,7 @@ CAL3\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. xdbg usage
+   Example 1.9. xdbg usage
 ...
 xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
@@ -278,3 +303,9 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
    Similar to xdbg(), in addition prints configuration file line number at
    the beginning of message.
+
+5.5. xlogm(level, format)
+
+   Similar to xlog(level, format), but skips writing the log messages for
+   SIP requests and responses that match the SIP method id with
+   methods_filter parameter value.
