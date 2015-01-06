@@ -1,6 +1,4 @@
 /*
- * $Id$ 
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,15 +17,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-02-25 - created by janakj
- *  2003-03-11 - New module interface (janakj)
- *  2003-03-16 - flags export parameter added (janakj)
- *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free
- *  2003-04-05  default_uri #define used (jiri)
- *  2004-06-07  updated to the new DB api: calls to group_db_* (andrei)
- *  2005-10-06 - added support for regexp-based groups (bogdan)
  */
 
 /**
