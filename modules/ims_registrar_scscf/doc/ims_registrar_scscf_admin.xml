@@ -67,10 +67,9 @@
       contact parameters, this value will be used for newly created S-CSCF
       usrloc records. The parameter contains number of second to expire (for
       example use 3600 for one hour). If it is set to a lower value than the
-      min_expires parameter then it will be ignored. This
-      parameter can be modified via ser config framework. A random value in a
-      specific interval can be selected by using the default_expires_range
-      parameter</para>
+      min_expires parameter then it will be ignored. This parameter can be
+      modified via ser config framework. A random value in a specific interval
+      can be selected by using the default_expires_range parameter</para>
 
       <para><emphasis> Default value is 3600. </emphasis></para>
 
@@ -87,14 +86,13 @@
       <title>default_expires_range (int)</title>
 
       <para>This parameter specifies that the expiry used for newly created
-      S-CSCF usrloc records are not fixed(when default_expires
-      applies), but a random value in the intervalrdq
-      [default_expires-default_expires_range%,
-      default_expires+default_expires_range%]. The value is between 0
-      and 100 and represent the maximim percentage from default_expires that
-      will be substracted or added when computing the value. Default in 0,
-      meaning default_expires is left unmodified. This parameter can be
-      modified via ser config framework.</para>
+      S-CSCF usrloc records are not fixed(when default_expires applies), but a
+      random value in the intervalrdq [default_expires-default_expires_range%,
+      default_expires+default_expires_range%]. The value is between 0 and 100
+      and represent the maximim percentage from default_expires that will be
+      substracted or added when computing the value. Default in 0, meaning
+      default_expires is left unmodified. This parameter can be modified via
+      ser config framework.</para>
 
       <para><emphasis> Default value is 0. </emphasis></para>
 
@@ -144,21 +142,23 @@
 ...</programlisting>
       </example>
     </section>
-    
+
     <section>
       <title>subscription_default_expires (int)</title>
 
       <para>If the processed message contains neither Expires HFs nor expires
-      contact parameters, this value will be used for newly created subscriptions.
-      The parameter contains number of second to expire (for example use 3600 for one hour). 
-      If it is set to a lower value than the subscription_min_expires parameter 
-      then it will be ignored. A random value in a specific interval can be selected 
-      by using the subscription_expires_range parameter</para>
+      contact parameters, this value will be used for newly created
+      subscriptions. The parameter contains number of second to expire (for
+      example use 3600 for one hour). If it is set to a lower value than the
+      subscription_min_expires parameter then it will be ignored. A random
+      value in a specific interval can be selected by using the
+      subscription_expires_range parameter</para>
 
       <para><emphasis> Default value is 3600. </emphasis></para>
 
       <example>
-        <title>Set <varname>subscription_default_expires</varname> parameter</title>
+        <title>Set <varname>subscription_default_expires</varname>
+        parameter</title>
 
         <programlisting format="linespecific">...
         modparam("ims_registrar_scscf", "subscription_default_expires", 3600)
@@ -170,19 +170,20 @@
       <title>subscription_expires_range (int)</title>
 
       <para>This parameter specifies that the expiry used for newly created
-      subscriptions are not fixed(when subscription_default_expires
-      applies), but a random value in the interval
+      subscriptions are not fixed(when subscription_default_expires applies),
+      but a random value in the interval
       [subscription_default_expires-subscription_expires_range%,
-      subscription_default_expires+subscription_expires_range%]. 
-      The value is between 0 and 100 and represent the maximim percentage 
-      from subscription_default_expires that will be substracted or added when 
-      computing the value. Default in 0, meaning subscription_default_expires is 
-      left unmodified.</para>
+      subscription_default_expires+subscription_expires_range%]. The value is
+      between 0 and 100 and represent the maximim percentage from
+      subscription_default_expires that will be substracted or added when
+      computing the value. Default in 0, meaning subscription_default_expires
+      is left unmodified.</para>
 
       <para><emphasis> Default value is 0. </emphasis></para>
 
       <example>
-        <title>Set <varname>subscription_expires_range </varname>parameter</title>
+        <title>Set <varname>subscription_expires_range
+        </varname>parameter</title>
 
         <programlisting format="linespecific">...
         modparam("ims_registrar_scscf", "subscription_expires_range", 30) # +- 30% from subscription_expires_range
@@ -193,14 +194,15 @@
     <section>
       <title>subscription_min_expires (int)</title>
 
-      <para>The minimum expires value of a subscription, values lower than this
-      minimum will be automatically set to the minimum. Value 0 disables the
-      checking.</para>
+      <para>The minimum expires value of a subscription, values lower than
+      this minimum will be automatically set to the minimum. Value 0 disables
+      the checking.</para>
 
       <para><emphasis> Default value is 10. </emphasis></para>
 
       <example>
-        <title>Set <varname>subscription_min_expires</varname>parameter</title>
+        <title>Set
+        <varname>subscription_min_expires</varname>parameter</title>
 
         <programlisting format="linespecific">...
         modparam("subscription_min_expires", "min_expires", 1800)
@@ -211,14 +213,15 @@
     <section>
       <title>subscription_max_expires (int)</title>
 
-      <para>The maximum expires value of a subscription, values higher than this
-      maximum will be automatically set to the maximum. Value 0 disables the
-      checking.</para>
+      <para>The maximum expires value of a subscription, values higher than
+      this maximum will be automatically set to the maximum. Value 0 disables
+      the checking.</para>
 
       <para><emphasis> Default value is 1000000. </emphasis></para>
 
       <example>
-        <title>Set <varname>subscription_max_expires</varname>parameter</title>
+        <title>Set
+        <varname>subscription_max_expires</varname>parameter</title>
 
         <programlisting format="linespecific">...
         modparam("ims_registrar_scscf", "subscription_max_expires", 3600)
@@ -386,12 +389,12 @@
 ...</programlisting>
       </example>
     </section>
-    
+
     <section>
       <title>user_data_always (integer)</title>
 
-      <para>If specified this will make the S-CSCF always request user
-	  data from HSS.</para>
+      <para>If specified this will make the S-CSCF always request user data
+      from HSS.</para>
 
       <para><emphasis> Default value is 0 (disabled)</emphasis></para>
 
@@ -404,7 +407,6 @@
 	</programlisting>
       </example>
     </section>
-    
   </section>
 
   <section>
@@ -508,6 +510,46 @@ switch ($retcode) {
         sl_send_reply("405", "Not Found");
         exit;
 };
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">lookup_path_to_contact(uri)</function></title>
+
+      <para>This function take a URI and tries to find the contact in usrloc.
+      If the contact is found and has a path set, then a path header is added
+      to the SIP message so it can be loose routed.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <para><itemizedlist>
+          <listitem>
+            <para>uri - URI of contact to lookup</para>
+          </listitem>
+        </itemizedlist></para>
+
+      <para>Return codes:</para>
+
+      <para><itemizedlist>
+          <listitem>
+            <para><emphasis>1</emphasis> - Success</para>
+          </listitem>
+
+          <listitem>
+            <para>-1 - Failure</para>
+          </listitem>
+        </itemizedlist></para>
+
+      <para>This function can be used from REQUEST_ROUTE, FAILURE_ROUTE</para>
+
+      <example>
+        <title><function>lookup</function> usage</title>
+
+        <programlisting format="linespecific">...
+lookup_path_to_contact($ruri);
 ...
 </programlisting>
       </example>

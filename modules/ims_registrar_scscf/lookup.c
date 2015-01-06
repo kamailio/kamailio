@@ -123,6 +123,10 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
 		ret = -3;
 		goto done;
 	    }
+	    if (set_path_vector(_m, &ptr->path) < 0) {
+		LM_ERR("failed to set path vector\n");
+		return -1;
+	    }
 	    if (set_dst_uri(_m, &path_dst) < 0) {
 		LM_ERR("failed to set dst_uri of Path\n");
 		ret = -3;
@@ -175,6 +179,41 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
 done:
     ul.unlock_udomain(_d, &aor);
     return ret;
+}
+
+int lookup_path_to_contact(struct sip_msg* _m, char* contact_uri) {
+    ucontact_t* contact;
+    str s_contact_uri;
+    str path_dst;
+    
+    if (get_str_fparam(&s_contact_uri, _m, (fparam_t*) contact_uri) < 0) {
+	    LM_ERR("failed to get RURI\n");
+	    return -1;
+    }
+    LM_DBG("Looking up contact [%.*s]\n", s_contact_uri.len, s_contact_uri.s);
+
+    if (ul.get_ucontact(NULL, &s_contact_uri, 0, 0, 0, &contact) == 0) { //get_contact returns with lock
+	LM_DBG("CONTACT FOUND and path is [%.*s]\n", contact->path.len, contact->path.s);
+	
+	if (get_path_dst_uri(&contact->path, &path_dst) < 0) {
+	    LM_ERR("failed to get dst_uri for Path\n");
+	    return -1;
+	}
+	if (set_path_vector(_m, &contact->path) < 0) {
+	    LM_ERR("failed to set path vector\n");
+	    return -1;
+	}
+	if (set_dst_uri(_m, &path_dst) < 0) {
+	    LM_ERR("failed to set dst_uri of Path\n");
+	    return -1;
+	}
+	
+	ul.release_ucontact(contact);
+	return 1;
+    }
+
+    LM_DBG("no contact found for [%.*s]\n", s_contact_uri.len, s_contact_uri.s);
+    return -1;
 }
 
 /*! \brief the impu_registered() function

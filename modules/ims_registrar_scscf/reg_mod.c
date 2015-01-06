@@ -113,6 +113,7 @@ static void mod_destroy(void);
 static int w_save(struct sip_msg* _m, char * _route, char* _d, char* mode, char* _cflags);
 static int w_assign_server_unreg(struct sip_msg* _m, char* _route, char* _d, char* _direction);
 static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
+static int w_lookup_path_to_contact(struct sip_msg* _m, char* contact_uri);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -190,6 +191,7 @@ static pv_export_t mod_pvs[] = {
 static cmd_export_t cmds[] = {
     {"save", (cmd_function) w_save, 2, assign_save_fixup3_async, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
     {"lookup", (cmd_function) w_lookup, 1, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+    {"lookup_path_to_contact", (cmd_function) w_lookup_path_to_contact, 1, fixup_var_str_12, 0, REQUEST_ROUTE},
     {"term_impu_registered", (cmd_function) term_impu_registered, 1, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"impu_registered", (cmd_function) impu_registered, 1, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"assign_server_unreg", (cmd_function) w_assign_server_unreg, 3, assign_save_fixup3_async, 0, REQUEST_ROUTE},
@@ -531,6 +533,10 @@ static int w_assign_server_unreg(struct sip_msg* _m, char* _route, char* _d, cha
     direction.len = strlen(_direction);
     return assign_server_unreg(_m, _d, &direction, _route);
 
+}
+
+static int w_lookup_path_to_contact(struct sip_msg* _m, char* contact_uri) {
+    return lookup_path_to_contact(_m, contact_uri);
 }
 
 /*! \brief
