@@ -70,77 +70,69 @@ static str val_arr[MAX_EXTRA];
 static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 			      int_str *name, int_str *value)
 {
-	static str names, values;
-	unsigned int r;
-	char *p;
-	char *end;
+	char *p, *q, *r;
 
-	/* empty? */
-	if (vp->lvalue==0 || vp->strvalue==0)
-		goto error;
+	LM_DBG("vp->name '%.*s'\n",(int)strlen(vp->name),vp->name);
+	LM_DBG("vp->attribute '%d'\n",vp->attribute);
+	LM_DBG("vp->type '%d'\n",vp->type);
+	LM_DBG("vp->lvalue '%d'\n",vp->lvalue);
+	if (vp->type == PW_TYPE_STRING) 
+		LM_DBG("vp->strvalue '%.*s'\n",(int)strlen(vp->strvalue),vp->strvalue);
 
-	p = vp->strvalue;
-	end = vp->strvalue + vp->lvalue;
-
-	LM_DBG("string is <%.*s>\n", (int)(long)(end-p), p);
-
-	/* get name */
-	if (*p!='#') {
-		/* name AVP */
-		*flags |= AVP_NAME_STR;
-		names.s = p;
+	if ( vp->attribute == attrs[A_SIP_AVP].v && vp->type == PW_TYPE_STRING ) {
+		p = strchr(vp->strvalue,'#');
+		q = strchr(vp->strvalue,':');
+		r = strrchr(vp->strvalue,'#');
+		errno = 0;
+		if ( p == vp->strvalue && q != NULL ) {
+			// int name and str value
+			*flags |= AVP_VAL_STR;
+			name->n = strtol(++p,&q,10);
+			value->s.s = ++q;
+			value->s.len = strlen(q);
+		} else if ( p != NULL && p == r && p > vp->strvalue && q == NULL ) {
+			// str name and int value
+			*flags |= AVP_NAME_STR;
+			name->s.len = p - vp->strvalue;
+			name->s.s = vp->strvalue;
+			value->n = strtol(++p,&r,10);
+		} else if ( p != NULL && p != r && q == NULL ) {
+			// int name and int vale
+			name->n = strtol(++p,&q,10);
+			value->n = strtol(++r,&q,10);
+		} else if ( (p == NULL || p > q) && q != NULL ) {
+			// str name and str value
+			*flags |= AVP_VAL_STR|AVP_NAME_STR;
+			name->s.len = q - vp->strvalue;
+			name->s.s = vp->strvalue;
+			value->s.len = strlen(++q);
+			value->s.s = q;
+		} else // error - unknown
+			return 0;
+	    if ( errno != 0 )
+			return 0;
+	} else if (vp->type == PW_TYPE_STRING) {
+			*flags |= AVP_VAL_STR|AVP_NAME_STR;
+			// if start of value is the name of value
+			if (vp->strvalue == strstr(vp->strvalue,vp->name))
+				// then get value after name + one char delimiter
+				p = vp->strvalue + strlen(vp->name) + sizeof(char);
+			else
+				p = vp->strvalue;
+			value->s.len = vp->lvalue - (p - vp->strvalue);
+			value->s.s = p;
+			name->s.len = strlen(vp->name); 
+			name->s.s = vp->name;
+	} else if ((vp->type == PW_TYPE_INTEGER) || (vp->type == PW_TYPE_IPADDR) || (vp->type == PW_TYPE_DATE)) {
+			*flags |= AVP_NAME_STR;
+			value->n = vp->lvalue;
+			name->s.len = strlen(vp->name); 
+			name->s.s = vp->name;
 	} else {
-		names.s = ++p;
+			LM_ERR("Unknown AVP type '%d'!\n",vp->type);
+			return 0;
 	}
-
-	names.len = 0;
-	while( p<end && *p!=':' && *p!='#')
-		p++;
-	if (names.s==p || p==end) {
-		LM_ERR("empty AVP name\n");
-		goto error;
-	}
-	names.len = p - names.s;
-	LM_DBG("AVP name is <%.*s>\n", names.len, names.s);
-
-	/* get value */
-	if (*p!='#') {
-		/* string value */
-		*flags |= AVP_VAL_STR;
-	}
-	values.s = ++p;
-	values.len = end-values.s;
-	if (values.len==0) {
-		LM_ERR("empty AVP value\n");
-		goto error;
-	}
-	LM_DBG("AVP val is <%.*s>\n", values.len, values.s);
-
-	if ( !((*flags)&AVP_NAME_STR) ) {
-		/* convert name to id*/
-		if (str2int(&names,&r)!=0 ) {
-			LM_ERR("invalid AVP ID '%.*s'\n", names.len,names.s);
-			goto error;
-		}
-		name->n = (int)r;
-	} else {
-		name->s = names;
-	}
-
-	if ( !((*flags)&AVP_VAL_STR) ) {
-		/* convert value to integer */
-		if (str2int(&values,&r)!=0 ) {
-			LM_ERR("invalid AVP numrical value '%.*s'\n", values.len,values.s);
-			goto error;
-		}
-		value->n = (int)r;
-	} else {
-		value->s = values;
-	}
-
-	return 0;
-error:
-	return -1;
+	return 1;
 }
 
 
@@ -153,14 +145,13 @@ static int generate_avps(VALUE_PAIR* received)
 	unsigned short flags;
 	VALUE_PAIR *vp;
 
-	vp = received;
-
-	LM_DBG("getting SIP AVPs from avpair %d\n",	attrs[A_SIP_AVP].v);
-
-	for( ; (vp=rc_avpair_get(vp,attrs[A_SIP_AVP].v,0)) ; vp=vp->next) {
+	LM_DBG("getting AVPs from RADIUS Reply\n");
+	for( vp = received; vp; vp=vp->next) {
 		flags = 0;
-		if (extract_avp( vp, &flags, &name, &val)!=0 )
+		if (!extract_avp( vp, &flags, &name, &val)){
+			LM_ERR("error while extracting AVP '%.*s'\n",(int)strlen(vp->name),vp->name);
 			continue;
+		}
 		if (add_avp( flags, name, val) < 0) {
 			LM_ERR("unable to create a new AVP\n");
 		} else {
