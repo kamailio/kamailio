@@ -10,6 +10,7 @@ PACKAGE_GROUPS="mysql postgres berkeley unixodbc radius presence ldap xml perl u
 	snmpstats carrierroute xmpp cpl redis python geoip\
 	sqlite json mono ims sctp java \
 	purple tls outbound websocket autheph"
+export TESTS_EXCLUDE="3 12 17 19 20 23 25 26 30 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 50"
 echo "make cfg"
 make FLAVOUR=kamailio cfg \
 	skip_modules="${EXCLUDED_MODULES} ${EXTRA_EXCLUDED_MODULES}" \
@@ -20,3 +21,5 @@ echo "make groups"
 for grp in ${PACKAGE_GROUPS}; do
 	make every-module group_include="k${grp}"
 done
+echo "unit tests"
+make -C test/unit
