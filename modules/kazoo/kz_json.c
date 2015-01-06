@@ -30,7 +30,7 @@
 
 #include "kz_json.h"
 
-static str kz_pv_str_empty  {"", 0};
+static str kz_pv_str_empty = {"", 0};
 
 char** str_split(char* a_str, const char a_delim)
 {
