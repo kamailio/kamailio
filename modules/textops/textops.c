@@ -1,5 +1,4 @@
-/*$Id$
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,34 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
- * History:
- * -------
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
- *  2003-01-29: - rewriting actions (replace, search_append) now begin
- *                at the second line -- previously, they could affect
- *                first line too, which resulted in wrong calculation of
- *                forwarded requests and an error consequently
- *              - replace_all introduced
- *  2003-01-28  scratchpad removed (jiri)
- *  2003-01-18  append_urihf introduced (jiri)
- *  2003-03-10  module export interface updated to the new format (andrei)
- *  2003-03-16  flags export parameter added (janakj)
- *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-97  actions permitted to be used from failure/reply routes (jiri)
- *  2003-04-21  remove_hf and is_present_hf introduced (jiri)
- *  2003-08-19  subst added (support for sed like res:s/re/repl/flags) (andrei)
- *  2003-08-20  subst_uri added (like above for uris) (andrei)
- *  2003-09-11  updated to new build_lump_rpl() interface (bogdan)
- *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
- *  2004-05-09: append_time introduced (jiri)
- *  2004-07-06  subst_user added (like subst_uri but only for user) (sobomax)
- *  2004-11-12  subst_user changes (old serdev mails) (andrei)
- *  2005-07-05  is_method("name") to check method using id (ramona)
- *  2006-03-17  applied patch from Marc Haisenko <haisenko@comdasys.com> 
- *              for adding has_body() function (bogdan)
- *  2008-07-14  Moved some function declarations to a separate file (Ardjan Zwartjes) 
- *
  */
+
+/*!
+ * \file
+ * \brief Module interface
+ * \ingroup textops
+ * Module: \ref textops
+ */
+
+/**
+ * @defgroup Textops Various text operatoins on messages
+ * @brief Kamailio textops module
+ */
+
 
 
 #include "../../action.h"

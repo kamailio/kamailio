@@ -17,10 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
- * History:
- * ---------
- *  2008-07-14 first version, function definitions copied from textops.c (Ardjan Zwartjes)
  */
+
+/*!
+ * \file
+ * \brief Module interface
+ * \ingroup textops
+ * Module: \ref textops
+ */
+
 
 #ifndef TEXTOPS_H_
 #define TEXTOPS_H_

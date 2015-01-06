@@ -17,9 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
- * History:
- * ---------
- *  2008-07-14 first version (Ardjan Zwartjes)
+ */
+
+/*!
+ * \file
+ * \brief API integration
+ * \ingroup textops
+ * Module: \ref textops
  */
 
 

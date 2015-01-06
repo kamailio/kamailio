@@ -1,6 +1,4 @@
-/**
- * $Id$
- *
+/*
  * Copyright (C) 2008 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of kamailio, a free SIP server.
@@ -19,6 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+/*!
+ * \file
+ * \brief Regular expressions
+ * \ingroup textops
+ * Module: \ref textops
+ */
+
 		       
 #ifndef _TXT_VAR_H_
 #define _TXT_VAR_H_
