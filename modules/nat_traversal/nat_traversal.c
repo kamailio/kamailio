@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (C) 2007-2009 Dan Pascu
  *
  * This file is part of Kamailio, a free SIP server.
@@ -18,6 +17,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ */
+
+/*!
+ * \file
+ * \brief Module interface and functions
+ * \ingroup nat_traversal
+ * Module: \ref nat_traversal
+ */
+
+/**
+ * @defgroup nat_traversal Nat
+ * @brief Kamailio nat_traversal module
+
+   The nat_traversal module provides support for handling far-end NAT
+   traversal for SIP signaling. 
  */
 
 #include <stdio.h>
