@@ -1,7 +1,7 @@
-/**
+/*
  * Copyright (C) 2009 SIP-Router.org
  *
- * This file is part of Extensible SIP Router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,12 +18,12 @@
 
 /*!
  * \file
- * \brief SIP-router topoh :: Module interface
+ * \brief Kamailio topoh :: Module interface
  * \ingroup topoh
  * Module: \ref topoh
  */
 
-/*! \defgroup topoh SIP-router :: Topology hiding
+/*! \defgroup topoh Kamailio :: Topology hiding
  *
  * This module hides the SIP routing headers that show topology details.
  * It it is not affected by the server being transaction stateless or
