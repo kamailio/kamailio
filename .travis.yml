@@ -4,7 +4,7 @@ compiler:
   - clang
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y gdebi-core
+  - sudo apt-get install -y gdebi-core sip-tester sipsak
   - sudo pkg/kamailio/deb/build_deps.sh precise $TRAVIS_BUILD_DIR
   - ./pkg/kamailio/deb/databases_travis.sh
 script: ./pkg/kamailio/deb/build_travis.sh
