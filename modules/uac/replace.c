@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,18 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- *
- * History:
- * ---------
- *  2005-01-31  first version (ramona)
- *  2005-08-12  encoded old FROM URI stored in RR hdr and not in FROM anymore;
- *              some TM callbacks replaced with RR callback - more efficient;
- *              XOR used to mix together old and new URI
- *              (bogdan)
- *  2006-03-03  new display name is added even if there is no previous one
- *              (bogdan)
- *  2006-03-03  the RR parameter is encrypted via XOR with a password
- *              (bogdan)
  */
 
 

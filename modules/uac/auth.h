@@ -1,16 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005 Voice Sistem SRL
  *
- * This file is part of opnser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * UAC SER-module is free software; you can redistribute it and/or
+ * Kamailio is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * UAC SER-module is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -20,9 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
- * History:
- * ---------
- *  2005-01-31  first version (ramona)
  */
 
 

@@ -1,9 +1,7 @@
 /**
- * $Id$
- *
  * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
  *
- * This file is part of kamailio, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

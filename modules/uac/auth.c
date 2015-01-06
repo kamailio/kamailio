@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,11 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- *
- * History:
- * ---------
- *  2005-01-31  first version (ramona)
- *  2006-03-02  UAC authentication looks first in AVPs for credential (bogdan)
  */
 
 

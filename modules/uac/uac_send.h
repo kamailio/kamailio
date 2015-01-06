@@ -1,6 +1,4 @@
-/**
- * $Id$
- *
+/*
  * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of kamailio, a free SIP server.
