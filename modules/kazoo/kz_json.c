@@ -154,7 +154,7 @@ int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
         dst_val->ri = 0;
 	} else {
 		dst_val->flags = PV_VAL_NULL;
-        dst_val->rs kz_pv_str_empty;
+        dst_val->rs = kz_pv_str_empty;
         dst_val->ri = 0;
 	}
 
