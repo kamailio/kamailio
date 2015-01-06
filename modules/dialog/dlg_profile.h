@@ -17,12 +17,15 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2008-04-20  initial version (bogdan)
- *
  */
 
+
+/*!
+ * \file
+ * \brief Profile handling
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
 
 
 #ifndef _DIALOG_DLG_PROFILE_H_

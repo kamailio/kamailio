@@ -20,6 +20,14 @@
  *
  */
 
+
+/*!
+ * \file
+ * \brief CSeq handling
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
+
 #ifndef _DLG_CSEQ_H_
 #define _DLG_CSEQ_H_
 

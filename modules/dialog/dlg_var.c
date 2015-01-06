@@ -1,6 +1,4 @@
-/**
- * $Id$
- *
+/*
  * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
  * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
@@ -19,6 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+/*!
+ * \file
+ * \brief Dialog variables
+ * \ingroup dialog
+ * Module: \ref dialog
  */
 		       
 #include "../../route.h"
@@ -51,10 +56,10 @@ int dlg_cfg_cb(sip_msg_t *msg, unsigned int flags, void *cbp)
 					/* release to destroy dialog if created by this process
 					 * and request was not forwarded */
 					if(dlg->state==DLG_STATE_UNCONFIRMED) {
-						LM_DBG("new dialog with no trasaction after config"
+						LM_DBG("new dialog with no transaction after config"
 									" execution\n");
 					} else {
-						LM_DBG("dialog with no expected trasaction after"
+						LM_DBG("dialog with no expected transaction after"
 								" config execution\n");
 					}
 					dlg_release(dlg);

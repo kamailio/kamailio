@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 Voice Sistem SRLs
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,14 +17,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2006-04-11  initial version (bogdan)
- * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
- * 2008-04-14  added new type of callback to be triggered when dialogs are 
- *              loaded from DB (bogdan)
- * 2008-04-17  added new type of callback to be triggered right before the
- *              dialog is destroyed (deleted from memory) (bogdan)
+ */
+
+/*!
+ * \file
+ * \brief Callbacks
+ * \ingroup dialog
+ * Module: \ref dialog
  */
 
 #ifndef _DIALOG_DLG_CB_H_

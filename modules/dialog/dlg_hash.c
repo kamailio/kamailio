@@ -18,27 +18,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2006-04-14  initial version (bogdan)
- * 2007-03-06  syncronized state machine added for dialog state. New tranzition
- *             design based on events; removed num_1xx and num_2xx (bogdan)
- * 2007-04-30  added dialog matching without DID (dialog ID), but based only
- *             on RFC3261 elements - based on an original patch submitted 
- *             by Michel Bensoussan <michel@extricom.com> (bogdan)
- * 2007-07-06  additional information stored in order to save it in the db:
- *             cseq, route_set, contact and sock_info for both caller and 
- *             callee (ancuta)
- * 2007-07-10  Optimized dlg_match_mode 2 (DID_NONE), it now employs a proper
- *             hash table lookup and isn't dependant on the is_direction 
- *             function (which requires an RR param like dlg_match_mode 0 
- *             anyways.. ;) ; based on a patch from 
- *             Tavis Paquette <tavis@galaxytelecom.net> 
- *             and Peter Baer <pbaer@galaxytelecom.net>  (bogdan)
- * 2008-04-17  added new type of callback to be triggered right before the
- *              dialog is destroyed (deleted from memory) (bogdan)
- * 2008-04-17  added new dialog flag to avoid state tranzitions from DELETED to
- *             CONFIRMED_NA due delayed "200 OK" (bogdan)
  */
 
 

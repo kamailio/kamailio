@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * dialog module - basic support for dialog tracking
  *
  * Copyright (C) 2006 Voice Sistem SRL
@@ -21,9 +19,14 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2006-04-14  initial version (bogdan)
+ */
+
+
+/*!
+ * \file
+ * \brief Functions related to dialog handling
+ * \ingroup dialog
+ * Module: \ref dialog
  */
 
 #ifndef _DIALOG_DLG_LOAD_H_

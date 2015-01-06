@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 Voice System SRL
  * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
@@ -20,11 +18,14 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2007-05-10  initial version (ancuta)
  */
 
+/*!
+ * \file
+ * \brief Database interface
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
 
 #ifndef _DLG_DB_HANDLER_H_
 #define _DLG_DB_HANDLER_H_

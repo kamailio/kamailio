@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2014 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -18,6 +18,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ */
+
+
+/*!
+ * \file
+ * \brief Cseq handling
+ * \ingroup dialog
+ * Module: \ref dialog
  */
 
 #include <stdio.h>

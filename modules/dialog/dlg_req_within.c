@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 Voice System SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,11 +17,15 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2007-07-10  initial version (ancuta)
- * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
 */
+
+
+/*!
+ * \file
+ * \brief Requests
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
 
 #include <stdlib.h>
 #include <string.h>

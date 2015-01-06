@@ -17,28 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2006-04-14  initial version (bogdan)
- * 2006-11-28  Added support for tracking the number of early dialogs, and the
- *             number of failed dialogs. This involved updates to dlg_onreply()
- *             (Jeffrey Magder - SOMA Networks)
- * 2007-03-06  syncronized state machine added for dialog state. New tranzition
- *             design based on events; removed num_1xx and num_2xx (bogdan)
- * 2007-04-30  added dialog matching without DID (dialog ID), but based only
- *             on RFC3261 elements - based on an original patch submitted
- *             by Michel Bensoussan <michel@extricom.com> (bogdan)
- * 2007-05-17  new feature: saving dialog info into a database if
- *             realtime update is set(ancuta)
- * 2007-07-06  support for saving additional dialog info : cseq, contact,
- *             route_set and socket_info for both caller and callee (ancuta)
- * 2007-07-10  Optimized dlg_match_mode 2 (DID_NONE), it now employs a proper
- *             hash table lookup and isn't dependant on the is_direction
- *             function (which requires an RR param like dlg_match_mode 0
- *             anyways.. ;) ; based on a patch from
- *             Tavis Paquette <tavis@galaxytelecom.net>
- *             and Peter Baer <pbaer@galaxytelecom.net>  (bogdan)
- * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
  */
 
 

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * dialog module - basic support for dialog tracking
  *
  * Copyright (C) 2006 Voice Sistem SRL
@@ -22,20 +20,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2006-04-14 initial version (bogdan)
- *  2006-11-28 Added statistic support for the number of early and failed
- *              dialogs. (Jeffrey Magder - SOMA Networks) 
- *  2007-04-30 added dialog matching without DID (dialog ID), but based only
- *              on RFC3261 elements - based on an original patch submitted 
- *              by Michel Bensoussan <michel@extricom.com> (bogdan)
- *  2007-05-15 added saving dialogs' information to database (ancuta)
- *  2007-07-04 added saving dialog cseq, contact, record route 
- *              and bind_addresses(sock_info) for caller and callee (ancuta)
- *  2008-04-14 added new type of callback to be triggered when dialogs are 
- *              loaded from DB (bogdan)
- *  2010-06-16 added sip-router rpc interface (osas)
+ */
+
+/*!
+ * \file
+ * \brief Module interface
+ * \ingroup dialog
+ * Module: \ref dialog
  */
 
 /**
@@ -376,7 +367,7 @@ static int fixup_profile(void** param, int param_no)
 	if (param_no==1) {
 		profile = search_dlg_profile( &s );
 		if (profile==NULL) {
-			LM_CRIT("profile <%s> not definited\n",s.s);
+			LM_CRIT("profile <%s> not defined\n",s.s);
 			return E_CFG;
 		}
 		pkg_free(*param);
