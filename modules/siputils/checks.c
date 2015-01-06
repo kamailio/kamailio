@@ -1,20 +1,18 @@
 /*
- * $Id$
- *
  * Various URI checks and URI manipulation
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * Copyright (C) 2004-2010 Juha Heinanen
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -23,11 +21,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2003-02-26: Created by janakj
- * 2004-03-20: has_totag introduced (jiri)
- * 2004-04-14: uri_param and add_uri_param introduced (jih)
  */
 
 /*!
