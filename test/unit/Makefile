@@ -1,19 +1,23 @@
 # Makefile for running test unit
 #
+TESTS_FILES ?= $(wildcard *.sh)
+TESTS_EXCLUDE ?=
+TESTS ?= $(filter-out $(patsubst %,%.sh,$(TESTS_EXCLUDE)), $(TESTS_FILES))
 
 all:
-	-@for FILE in $(wildcard *.sh) ; do \
+	@for FILE in $(TESTS) ; do \
 		if [ -f $$FILE ] ; then \
 			if [ -x $$FILE ] ; then \
 				echo "run test `basename $$FILE .sh`:" `head -n 2 "$$FILE" | tail -n 1 | cut -c 3-` ; \
 				./$$FILE ; \
 				ret=$$? ; \
 					if [ ! "$$ret" -eq 0 ] ; then \
-						echo "failed" ; \
+						echo "failed" ; RES=1;\
 					fi ; \
 			fi ; \
 		fi ; \
-	done ;
+	done ; \
+	exit $$RES;
 
 run:
 	-@if [ -f $(UNIT) ] ; then \
@@ -30,4 +34,3 @@ run:
 	else \
 		echo "Test unit file $(UNIT): not found" ; \
 	fi ;
-
