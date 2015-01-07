@@ -69,7 +69,8 @@
 #define PUBLISH_LEN 7
 
 struct msg_start {
-	int type;					/*!< Type of the Message - Request/Response */
+	short type;					/*!< Type of the message - request/response */
+	short flags;				/*!< First line flags */
 	int len; 					/*!< length including delimiter */
 	union {
 		struct {

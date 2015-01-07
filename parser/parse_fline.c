@@ -45,6 +45,11 @@
 #include "../mem/mem.h"
 #include "../ut.h"
 
+/* flags for first line
+ * - stored on a short field (16 flags) */
+#define FLINE_FLAG_PROTO_SIP	(1<<0)
+#define FLINE_FLAG_PROTO_HTTP	(1<<1)
+
 int http_reply_parse = 0;
 
 /* grammar:
@@ -56,7 +61,7 @@ int http_reply_parse = 0;
 
 /* parses the first line, returns pointer to  next line  & fills fl;
    also  modifies buffer (to avoid extra copy ops) */
-char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
+char* parse_first_line(char* buffer, unsigned int len, struct msg_start* fl)
 {
 	
 	char *tmp;
@@ -77,6 +82,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	*/
 	
 
+	memset(fl, 0, sizeof(struct msg_start));
 	offset = 0;
 	end=buffer+len;
 	/* see if it's a reply (status) */
@@ -97,6 +103,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 		strncasecmp( tmp+1, SIP_VERSION+1, SIP_VERSION_LEN-1)==0 &&
 		(*(tmp+SIP_VERSION_LEN)==' ')) {
 			fl->type=SIP_REPLY;
+			fl->flags|=FLINE_FLAG_PROTO_SIP;
 			fl->u.reply.version.len=SIP_VERSION_LEN;
 			tmp=buffer+SIP_VERSION_LEN;
 	} else if (http_reply_parse != 0 &&
@@ -111,6 +118,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 			 *       - the message is marked as SIP_REPLY (ugly)
 			 */
 				fl->type=SIP_REPLY;
+				fl->flags|=FLINE_FLAG_PROTO_HTTP;
 				fl->u.reply.version.len=HTTP_VERSION_LEN+1 /*include last digit*/;
 				tmp=buffer+HTTP_VERSION_LEN+1 /* last digit */;
 	} else IFISMETHOD( INVITE, 'I' )
@@ -223,6 +231,22 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	fl->u.request.version.len=tmp-third;
 	fl->len=nl-buffer;
 
+	if (fl->type==SIP_REQUEST) {
+		if(fl->u.request.version.len >= SIP_VERSION_LEN
+				&& (fl->u.request.version.s[0]=='S'
+					|| fl->u.request.version.s[0]=='s')
+				&& !strncasecmp(fl->u.request.version.s+1,
+					SIP_VERSION+1, SIP_VERSION_LEN-1)) {
+			fl->flags|=FLINE_FLAG_PROTO_SIP;
+		} else if(fl->u.request.version.len >= HTTP_VERSION_LEN
+				&& (fl->u.request.version.s[0]=='H'
+					|| fl->u.request.version.s[0]=='h')
+				&& !strncasecmp(fl->u.request.version.s+1,
+					HTTP_VERSION+1, HTTP_VERSION_LEN-1)) {
+			fl->flags|=FLINE_FLAG_PROTO_HTTP;
+		}
+	}
+
 	return nl;
 
 error:
@@ -244,4 +268,13 @@ error1:
 	/* skip  line */
 	nl=eat_line(buffer,len);
 	return nl;
+}
+
+char* parse_fline(char* buffer, char* end, struct msg_start* fl)
+{
+	if(end<=buffer) {
+		/* make it throw error via parse_first_line() for consistency */
+		return parse_first_line(buffer, 0, fl);
+	}
+	return parse_first_line(buffer, (unsigned int)(end-buffer), fl);
 }
