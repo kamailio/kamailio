@@ -79,7 +79,7 @@ struct statstable* init_seas_stats_table(void)
    return seas_stats_table;
 }
 
-inline void destroy_seas_stats_table(void)
+static inline void destroy_seas_stats_table(void)
 {
    /*deallocs the table*/
    if(seas_stats_table){
@@ -93,7 +93,7 @@ inline void destroy_seas_stats_table(void)
  *
  * TODO handle locking ?
  */
-inline void as_relay_stat(struct cell *t)
+void as_relay_stat(struct cell *t)
 {
    struct statscell *s;
    struct totag_elem *to;
@@ -131,7 +131,7 @@ inline void as_relay_stat(struct cell *t)
  *
  * TODO handle locking/mutexing ?
  */
-inline void event_stat(struct cell *t)
+void event_stat(struct cell *t)
 {
    struct statscell *s;
    struct totag_elem *to;
@@ -167,7 +167,7 @@ static inline int assignIndex(int i)
 /** this will be called from the SEAS action dispatcher
  * when it receives the action from the socket
  */
-inline void action_stat(struct cell *t)
+void action_stat(struct cell *t)
 {
    unsigned int seas_dispatch;
    //unsigned int as_delay;
@@ -305,7 +305,7 @@ error:
  * 1 if stats properly started
  * -1 if error
  */
-inline int stop_stats_server(void)
+int stop_stats_server(void)
 {
    if(pid)
       kill(SIGTERM,pid);
@@ -370,7 +370,7 @@ void serve_stats(int fd)
  * this limit then the return value is the number of characters (not including the trailing '\\0') which would have been written to the final string
  * if  enough space had been available. Thus, a return value of size or more means that the output was truncated."
  */
-inline int print_stats_info(int f,int sock)
+static inline int print_stats_info(int f,int sock)
 {
 #define STATS_BUF_SIZE  400
    int j,k,writen;
@@ -442,7 +442,7 @@ error:/*mutex is locked*/
    return -1;
 }
 
-inline void stats_reply(void)
+void stats_reply(void)
 {
    lock_get(seas_stats_table->mutex);
    seas_stats_table->received_replies++;
