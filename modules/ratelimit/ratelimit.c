@@ -293,6 +293,36 @@ static int str_cpy(str * dest, str * src)
 	return 0;
 }
 
+#if defined (__OS_darwin) || defined (__OS_freebsd)
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#else
+#include <unistd.h>
+#endif
+
+int get_num_cpus() {
+	int count = 0;
+
+#if defined (__OS_darwin) || defined (__OS_freebsd)
+    int nm[2];
+    size_t len;
+
+    len = sizeof(count);
+
+    nm[0] = CTL_HW; nm[1] = HW_AVAILCPU;
+    sysctl(nm, 2, &count, &len, NULL, 0);
+
+    if(count < 1) {
+        nm[1] = HW_NCPU;
+        sysctl(nm, 2, &count, &len, NULL, 0);
+    }
+#else
+    count = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+    if(count < 1) return 1;
+    return count;
+}
+
 /* not using /proc/loadavg because it only works when our_timer_interval == theirs */
 static int get_cpuload(double * load)
 {
@@ -301,6 +331,8 @@ static int get_cpuload(double * load)
 	long long n_user, n_nice, n_sys, n_idle, n_iow, n_irq, n_sirq, n_stl;
 	static int first_time = 1;
 	FILE * f = fopen("/proc/stat", "r");
+	double vload;
+	int ncpu;
 
 	if (! f) {
 		LM_ERR("could not open /proc/stat\n");
@@ -327,7 +359,16 @@ static int get_cpuload(double * load)
 					(n_stl	- o_stl);
 		long long d_idle =	(n_idle - o_idle);
 
-		*load = 1.0 - ((double)d_idle) / (double)d_total;
+		vload = ((double)d_idle) / (double)d_total;
+
+		/* divide by numbers of cpu */
+		ncpu = get_num_cpus();
+		vload = vload/ncpu;
+		vload = 1.0 - vload;
+		if(vload<0.0) vload = 0.0;
+		else if (vload>1.0) vload = 1.0;
+
+		*load = vload;
 	}
 
 	o_user	= n_user; 
