@@ -1097,12 +1097,14 @@ int dlg_set_toroute(struct dlg_cell *dlg, str *route)
 
 int	update_dlg_timeout(dlg_cell_t *dlg, int timeout)
 {
-	if(update_dlg_timer(&dlg->tl, timeout) < 0) {
-		LM_ERR("failed to update dialog lifetime\n");
-		dlg_release(dlg);
-		return -1;
-	} 
-
+	if(dlg->state!=DLG_STATE_UNCONFIRMED
+			&& dlg->state!=DLG_STATE_EARLY) {
+		if(update_dlg_timer(&dlg->tl, timeout) < 0) {
+			LM_ERR("failed to update dialog lifetime\n");
+			dlg_release(dlg);
+			return -1;
+		}
+	}
 	dlg->lifetime = timeout;
 	dlg->dflags |= DLG_FLAG_CHANGED;
 
