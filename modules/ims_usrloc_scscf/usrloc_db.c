@@ -1064,6 +1064,7 @@ int db_unlink_subscriber_from_impu(impurecord_t* _r, reg_subscriber* _reg_subscr
 	LM_ERR("Unable to un-link impu-subscriber in DB - impu [%.*s], subscriber [%.*s]\n", _r->public_identity.len, _r->public_identity.s, _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
 	return -1;
     }
+    ul_dbf.free_result(ul_dbh, rs);
     LM_DBG("Delete query success\n");
 
     return 0;
@@ -1105,6 +1106,7 @@ int db_link_subscriber_to_impu(impurecord_t* _r, reg_subscriber* _reg_subscriber
 	return -1;
     }
     LM_DBG("Query success\n");
+    ul_dbf.free_result(ul_dbh, rs);
 
     return 0;
 }
