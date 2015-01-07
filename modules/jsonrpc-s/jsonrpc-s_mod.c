@@ -935,8 +935,8 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 
 	/* sanity checks on jsonrpc request */
 	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "jsonrpc");
-	if(nj==NULL) {
-		LM_ERR("missing jsonrpc field in request\n");
+	if(nj==NULL || nj->valuestring==NULL) {
+		LM_ERR("missing or invalid jsonrpc field in request\n");
 		goto send_reply;
 	}
 	val.s = nj->valuestring;
@@ -947,8 +947,8 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	}
 	/* run jsonrpc command */
 	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "method");
-	if(nj==NULL) {
-		LM_ERR("missing jsonrpc method field in request\n");
+	if(nj==NULL || nj->valuestring==NULL) {
+		LM_ERR("missing or invalid jsonrpc method field in request\n");
 		goto send_reply;
 	}
 	val.s = nj->valuestring;
