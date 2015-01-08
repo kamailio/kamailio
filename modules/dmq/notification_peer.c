@@ -29,7 +29,7 @@
 str notification_content_type = str_init("text/plain");
 dmq_resp_cback_t notification_callback = {&notification_resp_callback_f, 0};
 
-int *dmq_init_callback_done;
+int *dmq_init_callback_done = 0;
 
 
 /**
@@ -229,7 +229,7 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp, dmq_nod
 				&notification_callback, maxforwards, &notification_content_type);
 	}
 	pkg_free(response_body);
-	if (!*dmq_init_callback_done) {
+	if (dmq_init_callback_done && !*dmq_init_callback_done) {
 		*dmq_init_callback_done = 1;
 		run_init_callbacks();
 	}
@@ -325,7 +325,7 @@ int notification_resp_callback_f(struct sip_msg* msg, int code,
 	if(code == 200) {
 		nodes_recv = extract_node_list(node_list, msg);
 		LM_DBG("received %d new or changed nodes\n", nodes_recv);
-		if (!*dmq_init_callback_done) {
+		if (dmq_init_callback_done && !*dmq_init_callback_done) {
 			*dmq_init_callback_done = 1;
 			run_init_callbacks();
 		}
