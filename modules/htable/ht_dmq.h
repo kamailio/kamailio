@@ -40,7 +40,7 @@ typedef enum {
 } ht_dmq_action_t;
 
 int ht_dmq_initialize();
-int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq_node);
+int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp);
 int ht_dmq_replicate_action(ht_dmq_action_t action, str* htname, str* cname, int type, int_str* val, int mode);
 int ht_dmq_replay_action(ht_dmq_action_t action, str* htname, str* cname, int type, int_str* val, int mode);
 int ht_dmq_resp_callback_f(struct sip_msg* msg, int code, dmq_node_t* node, void* param);
