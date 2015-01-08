@@ -1,6 +1,767 @@
+===================== 2015-01-08 Version 4.2.2 Released =====================
+
+===================== Changes Since Version 4.2.1 ===========================
+
+commit 0dbf946ac54611b0ea359799f8e007b1851f3122
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 18:02:30 2015 +0100
+
+    htable: revert usage of dmq nodes
+    
+    - back to v4.2.1 state
+
+commit 486bfe7f037ea27dc8705b3e81c39ba79c54a6dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 17:54:56 2015 +0100
+
+    Makefile.defs: version set to 4.2.2
+
+commit 6a9133a119cd2556cdfc5260b5c3442fe2290584
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 17:52:24 2015 +0100
+
+    dmq: reverted dmq to the state of v4.2.1
+    
+    - some of the tunings in master introduced side effects
+
+commit d97a2f6936fd84459e167143fc5c3a2571712e89
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 17:15:19 2015 +0100
+
+    dmq: more initialization of pointers at declaration of vars
+    
+    (cherry picked from commit 4d52cc0556d2e9cf334aca89325589f1c86b4dc7)
+
+commit 4acf9930fbeed2764a74c0f2ccb6348bee9716d7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 16:23:51 2015 +0100
+
+    pkg/rpm: set version 4.2.2 in spec files
+
+commit e2b91d68d1fe411621587a552c15b4b705ae17eb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 16:10:00 2015 +0100
+
+    dmq: initialize peer_list to NULL by default
+    
+    - credits to Olle E. Jonansson for testing and reports
+    
+    (cherry picked from commit b27c38b71c09e6763e8412b7e33aab77af3dfc76)
+
+commit edbed4cc15a250e4b7c12d3d322b8a6575582c21
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 16:00:47 2015 +0100
+
+    dmq: be sure dmq_init_callback_done is initialized before accessing it
+    
+    (cherry picked from commit b29a45f0a23ef0f1a26598a45d3e6eddc9dbedb5)
+
+commit ca0171557021a5138f52fed9ea492e1d498b881d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 15:19:57 2015 +0100
+
+    pkg/deb: version set to 4.2.2 in spec files
+
+commit 2556a840208f4d16973772547af8258f314cef8c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 14:19:58 2015 +0100
+
+    dmq: safety check for peer_list when calling the callbacks
+    
+    - can result in crashing if it is not set
+    - reported by Olle E. Johansson
+    
+    (cherry picked from commit cc5f96f9c847d285085b0b9809ff0db76ea0a835)
+
+commit 3fb17ae591fcdfb0b1127f6f9547fe2c7f4c4619
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 17:02:45 2015 +0100
+
+    ratelimite: take in consideration number of cpus for load
+    
+    - on multi core systems, the sums of stats can go over 100%, resulting
+      in out of range for expected load_value to be 0.0 to 1.0
+    - safety checks to avoid overflows
+    
+    (cherry picked from commit b22c63a930a3c8d4055ddeea48bb29b7fb3b2eb1)
+
+commit 4b435cb33c86844e6f8339090f445ab062a24f28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 16:57:36 2015 +0100
+
+    pipelimit: take in consideration number of cpus for load
+    
+    - on multi core systems, the sums of stats can go over 100%, resulting
+      in out of range for expected load_value to be 0.0 to 1.0
+    - safety checks to avoid overflows
+    - reported by Luca M.
+    
+    (cherry picked from commit d9e87383613d4d24efe3d1eb144ad6c9cc30b2b0)
+
+commit 71aae0b0dda086219663af38357801e05c49124f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 13:15:10 2015 +0100
+
+    seas: fixed inline functions warnings for clang
+    
+    (cherry picked from commit c52e4e13ea57702aeed45a7a2059b97faf4d06f6)
+
+commit b46dd08b927215eeb5c14373803f52dbabb0965b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 6 23:41:59 2015 +0100
+
+    core: use Sia header name instead of Via for HTTP responses sent out
+    
+    (cherry picked from commit dfb34a6516e358023543f2a30664d30ed723e934)
+
+commit 3d59966eb252faea756a628876336a398e1d0847
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 6 23:23:43 2015 +0100
+
+    core: tcp - handle http read on \n\n EOH and deal with HTTP Via header
+    
+    - handling \n\n for http makes same code as for sip, being easier to
+      test injecting a request from file
+    - HTTP Via is not compatible with SIP Via, resulting in errors - replace
+      its name with Hia to be ignored. FS#237
+    
+    (cherry picked from commit 54c178a9072339233085372e60e611ba889f46b3)
+
+commit 0a9d23605b50bef00f516255e3bc2d1ab75f0494
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 6 22:24:35 2015 +0100
+
+    utils/protoshoot: fixed name and ticks
+    
+    - version to 0.4
+    
+    (cherry picked from commit 72a616f074f554dfb177ca8ec2b55f9ff11ad352)
+
+commit 4c824c01d2a222167c81b1478de69773dabe1f42
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 5 18:50:40 2015 +0100
+
+    core: cfg parser - resolve conflict between proto:host and event route name
+    
+    - there was a conflict on same kind of id:id format
+    - event route name is expected now only after an event_route
+    
+    (cherry picked from commit 5e701d6a0826611dc980db2f434bee49e0fdcf88)
+
+commit 4fb321cb441e38ca5b0fc65904cddf4f65f0bb53
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 5 15:58:50 2015 +0100
+
+    core: preprocessor subst rules are applied to pv names
+    
+    - all name is matched and substituted before pv is looked up
+    - reported in FS#139
+    
+    (cherry picked from commit 39ffe589035fce17145023204b1005702e02a66f)
+
+commit c3ce62ca27ddd348635f048ec9e7840a5a7f4c48
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 4 23:55:18 2015 +0100
+
+    tm: safety check for CRLF at end of custom headers for local requests
+    
+    - if hdrs value is not ending in '\n', add '\r\n'
+    
+    (cherry picked from commit b60b337e04f41d4b5262cb068f1bef6f827dba27)
+
+commit a75107f2abb406f5d857896fea95799a994c6781
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 3 23:28:57 2015 +0100
+
+    tls: use atomic ops for config ref counter
+    
+    - closes FS#380
+    
+    (cherry picked from commit af408c882ed70028c7dbc84b7876be996a49235e)
+
+commit 85be1066008b6a837f6e39e0ce2cd825af95972f
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri Jan 2 22:03:22 2015 -0500
+
+    core: don't do initgroups() if started by same user as -u
+     - closing FS#473
+    
+    (cherry picked from commit df92a532f82a25f0b1ea0cb18cb800562d7f7a97)
+
+commit 6cbc44828291264e1d119e209a9977e14b34f7ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 2 13:41:44 2015 +0100
+
+    presence: more verbose debug message when failing to delete item from memory
+    
+    - re-ordered comparison expression to check first lengths
+    
+    (cherry picked from commit 497777e042166e441767101db05c85ad69c13722)
+
+commit c674193b213fa92aa4c5c6d55d8fa715fe43d448
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 2 11:22:21 2015 +0100
+
+    tls: refreshed the README
+    
+    (cherry picked from commit 5573fded91a0dc330003ba064e524407d92b2a8a)
+
+commit e8566cd87577bee028d754db88b29841cd521303
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 2 11:21:39 2015 +0100
+
+    tls: more documentation about tls method values
+    
+    - added notes about tls minimum versions
+    
+    (cherry picked from commit 99311ce3fd37eebd4c9f37d25b043c4fae8dd621)
+
+commit a0f88f59c6687b8a59ec90578b01aa3bf1e45eb6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 2 11:18:47 2015 +0100
+
+    tls: options to set TLS versions lower limit
+    
+    - example: if method is set to TLSv1.1+, then the connection must be
+      TLSv1.1 or newer
+    - closes FS#502
+    
+    (cherry picked from commit 711833b82d17a8875ffa68a3314554a59cefb0f5)
+
+commit 93bb006ef1dcaadaf077b40920afd4fcf332087d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 2 11:16:28 2015 +0100
+
+    core: don't do setuid() if started by same user as -u
+    
+    - closing FS#473
+    
+    (cherry picked from commit 241ac2813d30792c713dd6e585bae3c1d6e76f47)
+
+commit a8ac25dc14e4bfb744159148bb7edcdb6f77b58a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 29 21:23:01 2014 +0100
+
+    db_mysql: fixing include in Makefile for many paths
+    
+    - sed matching should break at whitespace, to fix the case when
+      mysql_config returns multiple include paths
+    - reported by FS#503
+    
+    (cherry picked from commit 487d4160b99a1a5ea48751d2f7404cb08e1f4546)
+
+commit c7ed2f48858f45925e6076715a640bb897220a6e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 23 10:25:58 2014 +0100
+
+    core: use corelog level for debug messages when sending out fails
+    
+    - allow better control of what is printed, FS#68
+    
+    (cherry picked from commit 40971d1ed829bc8e18a684cd4431649acd47999e)
+
+commit 8dfcf311562861dcf36c19be80ad1594169b57b1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 23 10:24:32 2014 +0100
+
+    tm: downgraded err to warn when sending out for a branch fails
+    
+    - can happen if tcp connection is not active and no connect is set, FS#68
+    
+    (cherry picked from commit c10c13b2582fd667d24e691219939e224cffaf30)
+
+commit 0702109631ac1cd56a5ce575c1674dc41db1a4de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 23 00:51:45 2014 +0100
+
+    siptrace: use the method from cseq header for tm replies
+    
+    - the hook in transaction structure is invalid for cancel replies,
+      because the transaction structure is built for invite
+    - reported by Klaus Darilion, FS#489
+    
+    (cherry picked from commit 88173da2b684a3a3f86ee01ac5de401f492ff240)
+
+commit 813b25663adbaae1c4f5ea2731c1fe16cad756e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 22 21:41:53 2014 +0100
+
+    core: safety checks on proto variable for dsn resolving
+    
+    - avoid crashes if functions used inadequately with a null pointer
+    
+    (cherry picked from commit aff1dcd3dc63c0fe124fc138d553da0723c615a8)
+
+commit b97ee8732103edc6391c2625ea38c448c371054a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 22 21:37:43 2014 +0100
+
+    nat_traversal: use local variable for port and proto on keepalive resolve
+    
+    - safe execution for those resolving functions expecting PROTO_NONE
+    - reported by Jason Penton, FS#491
+    
+    (cherry picked from commit 0bbcbe8328d558a9bf3cb151ab53be93b09c2669)
+
+commit d47f5722d68105cade1b940c3cf0fb749215e093
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 22 18:37:25 2014 +0100
+
+    tm: don't clean local vars when trying to append a new branch to an active canceled transaction
+    
+    - they are not set, reported by Ovidiu Sas, FS#498
+    
+    (cherry picked from commit 7a6b86576220b423c4dc5ccab7e7f22a50be27bd)
+
+commit 53b9d2218793a91abe705670e8dbb96d07ee15fb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 17 23:34:21 2014 +0100
+
+    auth_db: more details for is_subscriber()
+    
+    (cherry picked from commit 7bf4c6d72774b521b4e9bbc5375c4e952a224676)
+
+commit 0b0b47277becda0926db0e60b6119a2621c28891
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 17 23:30:29 2014 +0100
+
+    auth_db: fixed is_subscriber() when load_credentials is not set
+    
+    - the flag parameter can be also explicit on skipping the credentials
+    
+    (cherry picked from commit d948ca564b4f669905485e040e295f54bd3f36a2)
+
+commit 3d90d4412e04e9a244459715d6ca0a97027cd201
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 15 23:11:15 2014 +0100
+
+    dispatcher: better phrasing of comment in the code
+    
+    (cherry picked from commit d035d0fe5e6f8298c7973432216ee0ba16840124)
+
+commit 8d3bd7c6bed2fcae9d3529ea22fad2d1d05f7d7d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 15 12:37:42 2014 +0100
+
+    dispatcher: proper filling of weights array when summ is less than 100
+    
+    - more comments on building the array for weight based distribution
+    
+    (cherry picked from commit a2b52c52e8a2503c53825b82fb66d7af11b9bc4e)
+
+commit b172dc23f8ee9778868e44839b1632684697fe9d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 14 22:21:14 2014 +0100
+
+    dispatcher: take in consideration the value of maxload attribute
+    
+    (cherry picked from commit ecd5c5846483e9069df875a181b58de7f8035604)
+
+commit 2d1032b3c8a1184357615b37da99dfd76526afa7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 10 16:14:16 2014 +0100
+
+    siputils: fix for e164_check()
+    
+    - the condition for non-digit matching was always false
+    
+    (cherry picked from commit fbcfa198a2c89868fa021f6a63774425e480b27b)
+
+commit df180f1ddea079b432dd89bcdee90ce8a6cbde77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 1 11:53:23 2014 +0100
+
+    tmx: proper indentation to match the module style
+    
+    (cherry picked from commit 6c14b13f118dc20daec39bdde40c030c14e2d9c3)
+
+commit 82a60e0c7a7e33908bae52d11fe4911df91823c2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 26 16:39:07 2014 +0100
+
+    registrar: don't free r-uri branch attributes in lookup_branches()
+    
+    - just clear the values in sip_msg_t structure so the pointers can be
+      reused and avoid double free
+    - reported by Anthony Messina
+    
+    (cherry picked from commit 9a46223c077c8d058cdc633563b0d9f14af332ae)
+
+commit 67ecb465428b4ff91b3b898f538a12d3dc1577da
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Nov 13 19:54:26 2014 +0000
+
+    dmq: Let the handler know about the sending node
+    
+    Try to find a node based on the from uri of the incoming request and hand
+    it to the request handler.
+    
+    (cherry picked from commit c2dcf4dbd884b13423159a7d94a3cb9f4e1a3e87)
+
+commit 373c643a4cf63c8ddfae23f39103e36156032428
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Nov 13 19:45:32 2014 +0000
+
+    dmq: Add init_callback() to API
+    
+    The init_callback is called after DMQ has synced with the notification_peer.
+    This callback can thus be used to send/broadcast messages as early as
+    possible.
+    
+    (cherry picked from commit b1aadf4cf9ea8fa91465fadc24ad268398a74880)
+
+commit e09ad6120e6373f9f635ee4907603c53ce4b7eda
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Aug 26 16:37:08 2014 +0200
+
+    dmq: Don't delete the original notification_peer on timeout
+    
+    (cherry picked from commit e73aa4032873b3fca88bb809d6d4ce4f28c0f237)
+    (cherry picked from commit 69dc8ec9fce8628cdf9bf39f7a25136544ae9a29)
+
+commit 1db387a5f75f84f4eb7a446041cd6657090dc1b8
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Thu Nov 13 18:30:34 2014 +0000
+
+    dmq: force to send replicated messages from configured server address - as reported on list by Victor Kustov
+    
+    (cherry picked from commit 7b5f79f9f384bfe3c16c399184281ebe63bb7785)
+
+commit c76b6edeb0ce5a39b9346d44dfca589423df0958
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 11:30:01 2015 +0100
+
+    jsonrpc-s: safety check for str value of jsonrpc and method fileds
+    
+    - reported by Alex Balashov
+    
+    (cherry picked from commit 29fe7a813b17af898dbe0c4e978dd05766f41aec)
+
+commit bff4e99d81353dbf02e0a6f609f762237ff589fd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 25 12:20:36 2014 +0100
+
+    usrloc: fixed issue updating last_modified
+    
+    - introduced in previos commit
+    
+    (cherry picked from commit 767c2bc60f7f5a601118329df2c16b2646dbb58f)
+
+commit 84100f0399c765c58d0de74086f97bc70440f5e9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Nov 24 14:48:16 2014 +0100
+
+    usrloc: fix db_update_addr and db_delete_ucontact_addr
+    
+    use query WHERE columns depending on matching_mode option
+    
+    (cherry picked from commit e8a795a6a413ae453f619e3deaf36c26b85b0077)
+
+commit a0d6ec4487530147d90c0dd988824fd57260cfcc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jan 6 21:55:25 2015 +0100
+
+    test/travis: move travis scripts to tests/travis ( Closes #20 )
+    
+    (cherry picked from commit d8642e20ae37e7724b9b9c517054b5d41c3c52f8)
+    
+    Conflicts:
+    	.travis.yml
+    	test/travis/databases_travis.sh
+
+commit 0e87a461e9c2a2914204f1597070d54af3798bd5
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Tue Jan 6 01:00:02 2015 +0000
+
+    kazoo : missing operator
+    
+    (cherry picked from commit 6cf4ba4ed83b5f9e8dd736efee86174602cdd14e)
+
+commit d2bd1e573c72a24cd9e6382cdfd96a79b139f31d
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Tue Jan 6 00:03:08 2015 +0000
+
+    kazoo : missing operator
+    
+    (cherry picked from commit fd3520acd7ab75890a0f514dfb349d94c2ce2807)
+
+commit 4f6e524633924320c6bcc018611e90883191d00f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jan 5 19:07:08 2015 +0100
+
+    travis-ci: set proper email notification options
+    
+    (cherry picked from commit 04999c90b074bf1571036ab88bb0a384a58f97a2)
+
+commit 6a1c998785bf763d16c11e261deea4a2d83e0f78
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jan 5 15:38:26 2015 +0100
+
+    travis-ci: build only supported branches. Send email notifications on failure only
+    
+    (cherry picked from commit dc9928ec99901ec713d1a79b02a8554ed5f6618e)
+
+commit 2d88f43202dee40c322755758d8ef1061f58acc3
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Mon Jan 5 13:24:39 2015 +0000
+
+    kazoo :  fix transform
+    
+    (cherry picked from commit 767fb51adbaecf37a0812731d9bf63a86f2b3c0e)
+
+commit 11dc171ae98212bb22321e03f3c10e15b6017a80
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Fri Dec 26 18:46:41 2014 +0000
+
+    kazoo : fork process with tcp option
+
+commit a2aa22d8f23a8bcad0ed83831d0f6f10e9059a7c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 18 21:41:46 2014 +0100
+
+    pkg/kamailio: Initial Travis CI configuration
+    
+    (cherry picked from commit 3cdfb23b6e9d13fea3ee0994b450279c3cc6a488)
+
+commit 9bb59f922da4474e3b30e7f47cf841c9e40c3ffd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 18 00:52:48 2014 +0100
+
+    dispatcher: readme file updated
+
+commit 3cb767da8e049da87fd4e4c8dd824a59cd10b971
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 14 14:21:06 2014 +0100
+
+    dispatcher: dedicated section for attributes in docs
+    
+    - file format has it own section too
+    
+    (cherry picked from commit 610a93ea038f9eb10ac611263891813b734fc7a0)
+    
+    Conflicts:
+    	modules/dispatcher/doc/dispatcher_admin.xml
+
+commit d80dfcc179af4cb45552722887a35cfe8efcc435
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 11 23:37:24 2014 +0100
+
+    core: set log prefix only for sip messages
+    
+    (cherry picked from commit 79a23a4fc154ad1ff174c3a8c2a14c3c5f85f402)
+
+commit 8a6660697bf08d0522fcd7ffa60698ebcdc4f990
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 10 10:54:56 2014 +0100
+
+    dialog: reset local variables shortcuts after reply and failure processing
+    
+    - avoid using wrong values to find dialogs with processing of next messages
+    - reported by Julia Boudniatsky
+    
+    (cherry picked from commit dcdb73d792719e38844eef60f821365b587893d7)
+
+commit 2f04794b8357ccfa1304ce53ff5795c6f4f0ca7f
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Tue Dec 9 19:05:31 2014 +0000
+
+    registrar: Fix memory leak around path and outbound header parsing
+    
+    - Fix leak of parsed URI and URI parameters during a call to save()
+    (cherry picked from commit 56c880120c07443eceb732117f0f1aa3558dcfe5)
+
+commit 725501d7a96348f08376646112bd58c009b4b06f
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Dec 8 13:22:38 2014 +0100
+
+    pv Update error in docs.
+
+commit 0a377769262f95579878b6a48fad04fcdfca1e79
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sun Dec 7 09:19:00 2014 +0100
+
+    evapi Add link to external library.
+    (cherry picked from commit 8370ef43f0fbd2ee447ab65c5b5172677a47f644)
+
+commit b4c4f72bdcdeec12068276a97fde62ba17921e51
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 8 09:11:32 2014 +0100
+
+    auth_db: added sections ids for functions
+    
+    - better reference for web indexing
+    
+    (cherry picked from commit d17f162ee565b80ecd46b6f8f916a683748bf08b)
+
+commit 9243615c6a6a4616d5aca621902eac7f0878cb0a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 7 20:26:37 2014 +0100
+
+    acc: fixed computation of extra accounting fields
+    
+    - introduced in previous commit
+    - reported by and credits for troubleshooting to Anthony Messina
+    
+    (cherry picked from commit 0cf6fdc78d2171dba8d31370b84da99d8c94fb29)
+
+commit b59e77cebcb5b9db2dff3aa9d4afaa4190210985
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 7 19:44:38 2014 +0100
+
+    auth_db: added ids to parameters
+    
+    - better reference for web indexing
+    
+    (cherry picked from commit 4eebd5d5cbf6c3f8c6b350c6d7e62f4f2a3e7610)
+
+commit a9fc427270ad903a08042fcbc71d45ad4781474a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 7 12:23:07 2014 +0100
+
+    tmx: added its for mi functions in doc
+    
+    - better indexing for web
+    
+    (cherry picked from commit 7d6c87d4ba129dd2e7d28e183dbbf43b2df12557)
+
+commit 693e8bcafbcda774a7cfd16f03923eb17c1e3d7c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 6 01:03:14 2014 +0100
+
+    tmx: added section ids for functions
+    
+    (cherry picked from commit dc6d9ba4c4f581e37c2bcbb7f1a3b4defe847e13)
+
+commit db8859587bb5b97637e1f815ab631fc42e8d49c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 5 22:40:25 2014 +0100
+
+    exec: use proper header field iterator to print env variables
+    
+    - issue introduced with the patch for shellshock
+    - reported by and credits for troubleshooting to Kristian Kielhofner
+    
+    (cherry picked from commit 8855e3e7fcece4ca2ab33e1f9c54b15831152400)
+
+commit f03a1769c55b4992613e153bd8d7bd012fc67525
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 5 18:17:39 2014 +0100
+
+    core: keep the password only if the user part is set
+    
+    - a report by Timo Klecker
+    
+    (cherry picked from commit 8c3d167b63096d3b465c53aca92ee18c5255188c)
+
+commit 4fb1266b2222df1c3452683cc64dbce2d0ba5b98
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 5 16:39:32 2014 +0100
+
+    acc: free extra attributes for db, radius and diameter
+    
+    - after the commit to allocate memory for extra attributes, only log
+      accounting was freeing the memory
+    - reported by Luca M.
+    
+    (cherry picked from commit 3afb2ea88fea4765a73e37f24b40dff8c8487122)
+
+commit 0ac4c8e579214a75b102f2f1c6877dffb2db8597
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Dec 3 09:13:49 2014 +0200
+
+    modules/pua: do not override send_publish return value at error
+
+commit fad00aeb2fb96cd9796ef41568e9b3cb535f300c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 1 11:50:15 2014 +0100
+
+    nat_traversal: use dedicated function for testing via address against source ip
+    
+    (cherry picked from commit c6c4230fb0c4ca18f5c681c7195d3e1531255f3a)
+
+commit a2832bf95bf0fa4e866ee4a04cabe944d5374ffb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 1 11:48:39 2014 +0100
+
+    nathelper: use dedicated function for testing via address against source ip
+    
+    - reported by Igor Potjevlesch
+    - previous used functions was checking the presence of rport and
+      received parameters, ending in a wrong result for nat testing
+    
+    (cherry picked from commit 0b10377df11977d7ddd7e6bf30fe060d1fe200aa)
+
+commit 7ebf861b27ae7e90092bc875d75772e5a1c941d5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 1 11:47:19 2014 +0100
+
+    core: dedicated function to check Via address with source ip
+    
+    - received_via_test() as alternative to received_test() which looks also
+      for rport and received parameters, confusing nat detection tests
+    
+    (cherry picked from commit 194743bf0de92ae09fdc817e57863f6bdb159539)
+
+commit 15435f96b50a7bf71d321eb925988ebb7498bdf0
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Nov 27 16:45:06 2014 -0500
+
+    tmx: fix warning: may be used uninitialized in this function
+    
+    (cherry picked from commit 022ae9be87b11838345a3d22b1170b280aef8aa7)
+
+commit 2c61fc8af3766844084c3ab669ded2527e458a63
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Nov 27 16:16:26 2014 -0500
+
+    tm: fix warning: may be used uninitialized in this function
+    
+    (cherry picked from commit 76ad065338e6970c09c5ed8bc0f84fd2bfdf0ac2)
+
+commit 9eb85067e4c93ad952f87abcfc1d2ede6d194b97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 25 16:07:31 2014 +0100
+
+    kamctl: supress all output of which command searching for g/readlink
+    
+    - based on patch and report by Morten Tryfoss, FS#492
+    
+    (cherry picked from commit ed301d16f30195d9352245f782269f2b3ddf40cf)
+
+commit 31d6d85beda8c2fd49d35c32ec8982fb7a09e4d9
+Author: Morten Tryfoss <morten@tryfoss.no>
+Date:   Tue Nov 25 10:18:04 2014 +0100
+
+    fixes for centos rpm specs
+    
+    - updates for rtpengine and the new modules
+    
+    (cherry picked from commit 16fd690d1857dfb16681d918f11ed0863cd3845c)
+
+commit 32791c6329bc54ad0b542c2459489a83433eae3c
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Wed Nov 19 13:15:36 2014 +0000
+
+    dbtext database definition: several fields in subscriber can be null
+
+commit 27b566619cb69345a35f7af82b0b2a6a1c4ed5a6
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Nov 18 04:32:35 2014 +0200
+
+    nathelper: improved add_contact_alias() description
+    - thanks to Dan Christian Bogos for pointing out the deficiency
+    (cherry picked from commit c04f9554df58b1323a46f6e40337fa34b34f1cc9)
+
+commit ca60c77acddc13d36ab691f8cac1f566323f6d86
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Thu Nov 13 12:16:25 2014 +0100
+
+    app_python	Avoid collission in name space - rename init_modules to ap_init_modules
+
+
 ===================== 2014-11-11 Version 4.2.1 Released =====================
 
-===================== Changes Since Version 4.1.1 ===========================
+===================== Changes Since Version 4.2.0 ===========================
 
 commit 23a70da2e560ff9cae84271930321dc3075a2ad3
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
