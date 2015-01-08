@@ -521,7 +521,7 @@ int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity) {
 			    } else LM_DBG("Length does not match.\n");
 			}
 		}
-	LM_WARN("Contact not found based on Contact, trying IP/Port/Proto\n");
+	LM_INFO("Contact not found based on Contact, trying IP/Port/Proto\n");
 	str received_host = {0, 0};
 	char srcip[50];	
 	
