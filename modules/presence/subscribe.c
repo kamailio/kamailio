@@ -470,7 +470,9 @@ void delete_subs(str* pres_uri, str* ev_name, str* to_tag,
 		unsigned int hash_code= core_hash(pres_uri, ev_name, shtable_size);
 		if(delete_shtable(subs_htable, hash_code, &subs) < 0) {
 			LM_ERR("Failed to delete subscription from memory"
-					" [%.*s : %.*s / %.*s / %.*s]\n", ev_name->len, ev_name->s,
+					" [slot: %u ev: %.*s pu: %.*s ci: %.*s ft: %.*s tt: %.*s]\n",
+					hash_code, pres_uri->len, pres_uri->s,
+					ev_name->len, ev_name->s,
 					callid->len, callid->s, from_tag->len, from_tag->s,
 					to_tag->len, to_tag->s);
 		}
