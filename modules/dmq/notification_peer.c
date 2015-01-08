@@ -38,6 +38,8 @@ int *dmq_init_callback_done = 0;
 int add_notification_peer()
 {
 	dmq_peer_t not_peer;
+
+	memset(&not_peer, 0, sizeof(dmq_peer_t));
 	not_peer.callback = dmq_notification_callback;
 	not_peer.init_callback = NULL;
 	not_peer.description.s = "notification_peer";
