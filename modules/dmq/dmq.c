@@ -75,12 +75,12 @@ sl_api_t slb;
 
 /** module variables */
 str dmq_request_method = str_init("KDMQ");
-dmq_worker_t* workers = NULL;
-dmq_peer_list_t* peer_list = 0;
+dmq_worker_t* workers;
+dmq_peer_list_t* peer_list;
 /* the list of dmq servers */
-dmq_node_list_t* node_list = NULL;
+dmq_node_list_t* node_list;
 // the dmq module is a peer itself for receiving notifications regarding nodes
-dmq_peer_t* dmq_notification_peer = NULL;
+dmq_peer_t* dmq_notification_peer;
 
 /** module functions */
 static int mod_init(void);
@@ -239,14 +239,7 @@ static int mod_init(void)
 		LM_ERR("error in shm_malloc\n");
 		return -1;
 	}
-
-	dmq_init_callback_done = shm_malloc(sizeof(int));
-	if (!dmq_init_callback_done) {
-		LM_ERR("no more shm\n");
-		return -1;
-	}
-	*dmq_init_callback_done = 0;
-
+	
 	/**
 	 * add the dmq notification peer.
 	 * the dmq is a peer itself so that it can receive node notifications
@@ -332,9 +325,6 @@ static void destroy(void) {
 	}
 	if (dmq_server_socket.s) {
 		pkg_free(dmq_server_socket.s);
-	}
-	if (dmq_init_callback_done) {
-		shm_free(dmq_init_callback_done);
 	}
 }
 

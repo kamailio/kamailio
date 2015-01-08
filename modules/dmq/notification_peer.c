@@ -29,19 +29,13 @@
 str notification_content_type = str_init("text/plain");
 dmq_resp_cback_t notification_callback = {&notification_resp_callback_f, 0};
 
-int *dmq_init_callback_done = 0;
-
-
 /**
  * @brief add notification peer
  */
 int add_notification_peer()
 {
 	dmq_peer_t not_peer;
-
-	memset(&not_peer, 0, sizeof(dmq_peer_t));
 	not_peer.callback = dmq_notification_callback;
-	not_peer.init_callback = NULL;
 	not_peer.description.s = "notification_peer";
 	not_peer.description.len = 17;
 	not_peer.peer_id.s = "notification_peer";
@@ -171,29 +165,10 @@ error:
 	return -1;
 }
 
-
-int run_init_callbacks() {
-	dmq_peer_t* crt;
-
-	if(peer_list==0) {
-		LM_WARN("peer list is null\n");
-		return 0;
-	}
-	crt = peer_list->peers;
-	while(crt) {
-		if (crt->init_callback) {
-			crt->init_callback();
-		}
-		crt = crt->next;
-	}
-	return 0;
-}
-
-
 /**
  * @brief dmq notification callback
  */
-int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq_node)
+int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp)
 {
 	int nodes_recv;
 	str* response_body = NULL;
@@ -231,10 +206,6 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp, dmq_nod
 				&notification_callback, maxforwards, &notification_content_type);
 	}
 	pkg_free(response_body);
-	if (dmq_init_callback_done && !*dmq_init_callback_done) {
-		*dmq_init_callback_done = 1;
-		run_init_callbacks();
-	}
 	return 0;
 error:
 	return -1;
@@ -321,25 +292,13 @@ int notification_resp_callback_f(struct sip_msg* msg, int code,
 		dmq_node_t* node, void* param)
 {
 	int ret;
-	int nodes_recv;
-
 	LM_DBG("notification_callback_f triggered [%p %d %p]\n", msg, code, param);
-	if(code == 200) {
-		nodes_recv = extract_node_list(node_list, msg);
-		LM_DBG("received %d new or changed nodes\n", nodes_recv);
-		if (dmq_init_callback_done && !*dmq_init_callback_done) {
-			*dmq_init_callback_done = 1;
-			run_init_callbacks();
-		}
-	} else if(code == 408) {
+	if(code == 408) {
 		/* deleting node - the server did not respond */
 		LM_ERR("deleting server %.*s because of failed request\n", STR_FMT(&node->orig_uri));
-		if (STR_EQ(node->orig_uri, dmq_notification_address)) {
-			LM_ERR("not deleting notification_peer\n");
-			return 0;
-		}
 		ret = del_dmq_node(node_list, node);
 		LM_DBG("del_dmq_node returned %d\n", ret);
 	}
 	return 0;
 }
+

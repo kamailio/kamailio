@@ -29,8 +29,6 @@
 #include "../../data_lump_rpl.h"
 #include "../../mod_fix.h"
 #include "../../sip_msg_clone.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
 
 /**
  * @brief set the body of a response
@@ -80,7 +78,6 @@ void worker_loop(int id)
 	dmq_job_t* current_job;
 	peer_reponse_t peer_response;
 	int ret_value;
-	dmq_node_t *dmq_node = NULL;
 
 	worker = &workers[id];
 	for(;;) {
@@ -95,14 +92,7 @@ void worker_loop(int id)
 			current_job = job_queue_pop(worker->queue);
 			/* job_queue_pop might return NULL if queue is empty */
 			if(current_job) {
-				/* extract the from uri */
-				if (parse_from_header(current_job->msg) < 0) {
-					LM_ERR("bad sip message or missing From hdr\n");
-				} else {
-					dmq_node = find_dmq_node_uri(node_list, &((struct to_body*)current_job->msg->from->parsed)->uri);
-				}
-
-				ret_value = current_job->f(current_job->msg, &peer_response, dmq_node);
+				ret_value = current_job->f(current_job->msg, &peer_response);
 				if(ret_value < 0) {
 					LM_ERR("running job failed\n");
 					continue;

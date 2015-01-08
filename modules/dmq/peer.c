@@ -97,7 +97,7 @@ dmq_peer_t* find_peer(str peer_id)
 /**
  * @empty callback
  */
-int empty_peer_callback(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq_node)
+int empty_peer_callback(struct sip_msg* msg, peer_reponse_t* resp)
 {
 	return 0;
 }
