@@ -173,6 +173,10 @@ error:
 int run_init_callbacks() {
 	dmq_peer_t* crt;
 
+	if(peer_list==0) {
+		LM_WARN("peer list is null\n");
+		return 0;
+	}
 	crt = peer_list->peers;
 	while(crt) {
 		if (crt->init_callback) {
