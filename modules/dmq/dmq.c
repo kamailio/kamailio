@@ -76,7 +76,7 @@ sl_api_t slb;
 /** module variables */
 str dmq_request_method = str_init("KDMQ");
 dmq_worker_t* workers;
-dmq_peer_list_t* peer_list;
+dmq_peer_list_t* peer_list = 0;
 /* the list of dmq servers */
 dmq_node_list_t* node_list;
 // the dmq module is a peer itself for receiving notifications regarding nodes
