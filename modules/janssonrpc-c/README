@@ -1,0 +1,355 @@
+janssonrpc-c Module
+
+Joe Hillenbrand
+
+   <joe@flowroute.com>
+
+Edited by
+
+Matthew Williams
+
+   <matthew@flowroute.com>
+
+   Copyright © 2013 Flowroute LLC (flowroute.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. min_srv_ttl (integer)
+              3.2. result_pv (string)
+              3.3. server (string)
+              3.4. retry_codes (string)
+
+        4. Functions
+
+              4.1. janssonrpc_notification(conn, method, parameters)
+              4.2. janssonrpc_request(conn, method, params[, options]])
+              4.3. Error Handling
+
+   List of Examples
+
+   1.1. Set min_srv_ttl parameter
+   1.2. Set result_pv parameter
+   1.3. Set server parameter
+   1.4. Set retry_codes parameter
+   1.5. janssonrpc_notification usage
+   1.6. janssonrpc_request usage
+   1.7. route example with internal_error handling
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. min_srv_ttl (integer)
+        3.2. result_pv (string)
+        3.3. server (string)
+        3.4. retry_codes (string)
+
+   4. Functions
+
+        4.1. janssonrpc_notification(conn, method, parameters)
+        4.2. janssonrpc_request(conn, method, params[, options]])
+        4.3. Error Handling
+
+1. Overview
+
+   This module provides access to JSON-RPC 2.0 services (operating over
+   TCP/Netstrings) in accordance with
+   http://www.jsonrpc.org/specification. It uses JANSSON library for JSON
+   document management.
+
+   It uses t_suspend() and t_continue() from the TM module.
+
+   Note that after invoking an asyncronous operation, the processing will
+   continue later, in another application process. Therefore, do not rely
+   on variables stored in private memory, use shared memory if you want to
+   get values after the processing is resumend (e.g., $shv(...) or htable
+   $sht(...)).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * jansson - jansson json handling.
+     * tm - transaction management.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * jansson (http://www.digip.org/jansson/), tested with: 2.2+
+     * libevent 2.0.5+ (http://libevent.org/), tested with: 2.0.16
+
+3. Parameters
+
+   3.1. min_srv_ttl (integer)
+   3.2. result_pv (string)
+   3.3. server (string)
+   3.4. retry_codes (string)
+
+3.1. min_srv_ttl (integer)
+
+   The minimum acceptable TTL in seconds for SRV DNS entries. This means
+   that TTLs from the DNS will be ignored if they are lower than this
+   value. It cannot be set lower than 1 second.
+
+   Default is 5 seconds.
+
+   Example 1.1. Set min_srv_ttl parameter
+...
+modparam("janssonrpc-c", "min_srv_ttl", 30)
+...
+
+   This will set any SRV TTL lower than 30 seconds to 30 seconds.
+
+3.2. result_pv (string)
+
+   The PV spec where to store the result of a call to
+   janssonrpc_request(). It can be any writtable PV.
+
+   Default value is "$var(jsrpc_result)".
+
+   Example 1.2. Set result_pv parameter
+...
+modparam("janssonrpc-c", "result_pv", "$var(result)")
+...
+
+3.3. server (string)
+
+   The server providing the remote jsonrpc service. Format can be
+   "conn=example;addr=localhost;port=9999;priority=10;weight=20" or
+   "conn=bar;srv=_sip._tcp.example.net".
+
+     * conn - name for a collection of servers (required).
+     * srv - DNS SRV domain name (optional).
+     * addr - host address (required, except when using srv).
+     * port - host port (required, except when using srv).
+     * priority - server are grouped by priority. Servers with higher
+       priority (lower number) are used first. Default is 0. (optional
+       when using addr, invalid otherwise).
+     * weight - functions the same as a DNS SRV weight. Requests are
+       distributed between servers of the same priority proportional to
+       their weight. Default is 1. (optional when using addr, invalid
+       otherwise).
+
+   Example 1.3. Set server parameter
+...
+modparam("janssonrpc-c", "server", "conn=tests;srv=_test1._tcp.example.net");
+modparam("janssonrpc-c", "server", "conn=tests;srv=_test2._tcp.example.net");
+modparam("janssonrpc-c", "server", "conn=local;addr=localhost;port=8080;priority
+=10;weight=10");
+modparam("janssonrpc-c", "server", "conn=user_db;addr=rpc.prod.exmaple.net;port=
+5060;priority=10;weight=10");
+...
+
+3.4. retry_codes (string)
+
+   A comma delimited list of error codes or error code ranges to
+   automatically schedule a request retry if received.
+
+   This will only be used if there is no route specified for the request.
+
+   An error code can be any interger, but is typically a negative number.
+
+   An error code range is delimited by ".." . For example,
+   "-32099..-32000".
+
+   Spaces are ignored.
+
+   Example 1.4. Set retry_codes parameter
+...
+modparam("janssonrpc-s", "retry_codes", "-32603, -32000..-32099");
+...
+
+4. Functions
+
+   4.1. janssonrpc_notification(conn, method, parameters)
+   4.2. janssonrpc_request(conn, method, params[, options]])
+   4.3. Error Handling
+
+4.1. janssonrpc_notification(conn, method, parameters)
+
+     * conn - name for a collection of servers (required)
+     * method - jsonrpc method (required)
+     * params - jsonrpc request params (required) Use $null or empty
+       string to not send any parameters in the jsonrpc notification.
+
+   Unlike janssonrpc_request (below), notifications do not receive a
+   response. Script processing continues in the usual fashion as soon as
+   the notification has been sent.
+
+   If no servers can be reached, a message is sent to the logs.
+
+   The 'method' and 'params' can be a static string or dynamic string
+   value with config variables.
+
+   Example 1.5. janssonrpc_notification usage
+...
+janssonrpc_notification("user_db", "update_user", '{"id": 1234, "name": "Daniel"
+}');
+...
+
+4.2. janssonrpc_request(conn, method, params[, options]])
+
+   The conn, method, params, and options can be a static string or a
+   dynamic string value with config variables.
+
+     * conn - name for a collection of servers (required)
+     * method - jsonrpc method (required)
+     * params - jsonrpc request params (required) Use $null or empty
+       string to not send any parameters in the jsonrpc request.
+     * options
+       Options for the janssonrpc_request function. Format can be
+       "route=RESPONSE;retry=2;timeout=100". All these parameters are
+       optional.
+          + retry - number of times you retry a failed request. -1 means
+            retry forever. Default is 0. Request will be retried if they
+            either timeout or fail to send. Retries untilize exponential
+            back off between successive retries, up to 60 seconds. The
+            equation for time between retries is:
+            time = n^2 * timeout (for time < 60 seconds)
+            where n is the number of times a request has been tried.
+          + timeout - request timeout in milliseconds. Default is 500.
+          + route - resume script execution at this route.
+
+   When a response is received, processing continues for the SIP request
+   in the route specified.
+
+   If no route is specified, then any errors are logged and successes are
+   ignored. The function will also not interupt script execution.
+
+   Since the SIP request handling is resumed in another process, the
+   config file execution is lost. Only shared variables ($shv, $avp, etc)
+   should be used for any value that will be needed when the script is
+   resumed.
+
+   The result is stored in the pseudo-variable specified in the module
+   parameter 'result_pv'. This pseudo-variable is set after the response
+   is received.
+
+   Example 1.6. janssonrpc_request usage
+...
+janssonrpc_request("user_db", "get_user", '{"id": 1234}', "route=RESPONSE;retry=
+1");
+        ...
+
+route[RESPONSE] {
+        xlog("Result received: $var(result)");
+        ...
+}
+...
+
+4.3. Error Handling
+
+   When a route is specified as part of the janssonrpc_request() function,
+   a JSON object is stored in the result pseudo-variable (see
+   'Parameters').
+
+   The JSON object can be accessed using the jansson_get() function from
+   the jansson module and is of the form:
+...
+{
+  "result" : {...},
+  "error": {...},
+  "internal_error": { "code": ..., "message": ..., "data": ... }
+}
+...
+
+   'result' or 'error' come from the server and should follow the JSONRPC
+   specification. Keep in mind a server's 'error' might not follow the
+   JSONRPC specification and not include a 'code' and/or 'message', so be
+   sure to check that they are there before trying to use them.
+
+   When 'internal_error' is present, that means there was a problem with
+   sending or receiving the request. 'internal_error' contains a 'code'
+   which is an integer representing the type of error, a 'message' which
+   is the error in string form, and possibly 'data' which is usually the
+   failed request, which is optional and can be useful for debugging.
+
+   Here are the possible values for internal error codes:
+     * -1: "Failed to build request"
+     * -5: "Failed to send request"
+     * -10: "JSON parse error"
+     * -11: "Failed to convert response to a pseudo-variable"
+     * -20: "Bad response from server"
+     * -50: "Request retry failed"
+     * -75: "Request dropped for server disconnection"
+     * -100: "Message timeout"
+     * -1000: "There is a bug". Please report these errors to the module
+       maintainers.
+
+   Example 1.7. route example with internal_error handling
+...
+route {
+        janssonrpc_request("user_db", "get_user", '{"id": 1234}', "route=RESPONS
+E;retry=1");
+}
+
+route[RESPONSE] {
+        if(jansson_get($var(jsrpc_result), "internal_error", "$var(internal)"))
+{
+                route(INTERNAL);
+        } else if(jansson_get($var(jsrpc_result), "error", "$var(error)")) {
+                route(ERROR);
+        } else if(jansson_get($var(jsrpc_result), "result", "$var(result)")) {
+                route(RESULT);
+        }
+    t_reply("200", "OK");
+}
+
+route[RESULT] {
+        xlog("result is $var(result)\n");
+        xlog("success\n");
+}
+
+route[ERROR] {
+        xlog("There was an error\n");
+        if(jansson_get($var(error), "code", "$var(c)")) {
+                xlog("code is $var(c)\n");
+        }
+
+        if(jansson_get($var(error), "message", "$var(r)")) {
+                xlog("error is $var(r)\n");
+        }
+
+        if(jansson_get($var(error), "data", "$var(d)")) {
+                xlog("data is $var(d)\n");
+        }
+}
+
+route[INTERNAL] {
+        xlog("There was an internal error\n");
+
+        jansson_get($var(internal), "code", "$var(c)");
+        xlog("code is $var(c)\n");
+
+        jansson_get($var(internal), "message", "$var(r)");
+        xlog("error is $var(r)\n");
+
+        if(jansson_get($var(internal), "data", "$var(d)")) {
+                xlog("request is $var(d)\n");
+        }
+}
+...
