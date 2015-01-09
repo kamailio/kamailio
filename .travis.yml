@@ -4,9 +4,8 @@ compiler:
   - clang
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y gdebi-core sip-tester sipsak
+  - sudo apt-get install -y gdebi-core
   - sudo test/travis/build_deps.sh precise $TRAVIS_BUILD_DIR
-  - ./test/travis/databases_travis.sh
 script: ./test/travis/build_travis.sh
 branches:
   only:

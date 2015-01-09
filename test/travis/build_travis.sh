@@ -21,5 +21,5 @@ echo "make groups"
 for grp in ${PACKAGE_GROUPS}; do
 	make every-module group_include="k${grp}"
 done
-echo "unit tests"
-make -C test/unit
+#echo "unit tests"
+#make -C test/unit
