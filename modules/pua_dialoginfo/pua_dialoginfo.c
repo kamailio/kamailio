@@ -598,7 +598,6 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 			(include_req_uri)?&(dlg->req_uri):&(dlg->to_uri),
 			&(dlg->callid), 1, dlginfo->lifetime,
 			0, 0, 0, 0, (send_publish_flag==-1)?1:0);
-	free_dlginfo_cell(dlginfo);
 
 }
 
