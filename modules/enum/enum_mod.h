@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Enum module headers
  *
  * Copyright (C) 2002-2003 Juha Heinanen
