@@ -633,6 +633,11 @@ modparam("htable", "db_expires", 1)
 			table definition (size, autoexpire etc.) is identical across all instances.
 		</para>
 		<para>
+		<emphasis>
+			Important: If this parameter is enabled, the DMQ module must be loaded first - otherwise, startup will fail.
+		</emphasis>
+		</para>
+		<para>
 			Currently, values are not replicated on load from DB as it is expected 
 			that in these cases, all servers will load their values from the same DB.
 		</para>
