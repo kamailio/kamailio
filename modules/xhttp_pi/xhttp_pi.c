@@ -17,7 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * 2012-10-18  initial version (osas)
+ */
+
+/*!
+ * \file
+ * \brief XHTTP_PI :: Module interface (main file)
+ * \ingroup xhttp_pi
+ * Module: \ref xhttp_pi
+ *
+ * This is the main file of xhttp_pi module which contains all the functions
+ * related to http processing, as well as the module interface.
  */
 
 #include <string.h>
@@ -43,11 +52,6 @@
  * It is built on top of the xhttp API module.
  */
 
-/** @file
- *
- * This is the main file of xhttp_pi module which contains all the functions
- * related to http processing, as well as the module interface.
- */
 
 MODULE_VERSION
 

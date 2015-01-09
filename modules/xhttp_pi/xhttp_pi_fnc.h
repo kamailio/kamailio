@@ -17,9 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * 2012-10-18  initial version (osas)
  */
 
+/*!
+ * \file
+ * \brief XHTTP_PI :: 
+ * \ingroup xhttp_pi
+ * Module: \ref xhttp_pi
+ */
 
 #ifndef _XHTTP_PI_FNC_H
 #define _XHTTP_PI_FNC_H
