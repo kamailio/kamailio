@@ -34,6 +34,8 @@
  * 2007-07-18  Added support for load/reload groups from DB 
  * 			   reload triggered from ds_reload MI_Command (ancuta)
  * 2014-12-12  Added "ds_list_exist" function
+ * 2014-12-23  Corrected misspelled words in some variables' name (alezzandro)
+ * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state (alezzandro)
  */
 
 /*! \file
@@ -108,7 +110,7 @@ unsigned short sock_avp_type;
 
 pv_elem_t * hash_param_model = NULL;
 
-int probing_threshhold = 1; /* number of failed requests, before a destination
+int probing_threshold = 1; /* number of failed requests, before a destination
 							   is taken into probing */
 str ds_ping_method = str_init("OPTIONS");
 str ds_ping_from   = str_init("sip:dispatcher@localhost");
@@ -240,7 +242,7 @@ static param_export_t params[]={
 	{"hash_pvar",       PARAM_STR, &hash_pvar_param},
 	{"setid_pvname",    PARAM_STR, &ds_setid_pvname},
 	{"attrs_pvname",    PARAM_STR, &ds_attrs_pvname},
-	{"ds_probing_threshhold", INT_PARAM, &probing_threshhold},
+	{"ds_probing_threshold", INT_PARAM, &probing_threshold},
 	{"ds_ping_method",     PARAM_STR, &ds_ping_method},
 	{"ds_ping_from",       PARAM_STR, &ds_ping_from},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
@@ -321,8 +323,8 @@ static int mod_init(void)
 		}
 	}	
 	/* Copy Threshhold to Config */
-	cfg_get(dispatcher, dispatcher_cfg, probing_threshhold)
-		= probing_threshhold;
+	cfg_get(dispatcher, dispatcher_cfg, probing_threshold)
+		= probing_threshold;
 
 
 	if(init_data()!= 0)
@@ -549,7 +551,7 @@ static int mod_init(void)
 }
 
 /*! \brief
- * Initialize childreng
+ * Initialize children
  */
 static int child_init(int rank)
 {

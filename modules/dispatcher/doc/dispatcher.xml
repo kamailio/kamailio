@@ -39,6 +39,14 @@
                 <email>oej@edvina.net</email>
                 </address>
             </editor>
+            <editor>
+                <firstname>Alessandro</firstname>
+                <surname>Arrichiello</surname>
+                <affiliation><orgname>Hewlett Packard</orgname></affiliation>
+                <address>
+                <email>alezzandro@gmail.com</email>
+                </address>
+            </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2004</year>
@@ -56,6 +64,10 @@
 	    <year>2014</year>
 	    <holder>Olle E. Johansson, Edvina AB</holder>
 	</copyright>
+	<copyright>
+            <year>2015</year>
+            <holder>Alessandro Arrichiello, Hewlett Packard</holder>
+        </copyright>
    </bookinfo>
     <toc></toc>
     

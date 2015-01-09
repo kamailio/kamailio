@@ -598,14 +598,36 @@ modparam("dispatcher", "force_dst", 1)
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>ds_probing_threshhold</quote> parameter</title>
+ 		<title>Set the <quote>ds_probing_threshold</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "ds_probing_threshhold", 10)
+ modparam("dispatcher", "ds_probing_threshold", 10)
  ...
  </programlisting>
  		</example>
 	</section>
+	<section id="dispatcher.p.ds_inactive_threshold">
+                <title><varname>ds_inactive_threshold</varname> (int)</title>
+                <para>
+                If you want to set a gateway into active mode (after being inactive), there can be
+                a specific number of successful requests until it will change from "inactive"
+                to "active". The number of attempts can be set with this parameter.
+                This parameter can be modified via ser config framework.
+                </para>
+                <para>
+                <emphasis>
+                Default value is <quote>1</quote> (set active with first success).
+                </emphasis>
+                </para>
+                <example>
+                <title>Set the <quote>ds_inactive_threshold</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_inactive_threshold", 10)
+ ...
+ </programlisting>
+                </example>
+        </section>
  	<section id="dispatcher.p.ds_ping_reply_codes">
  		<title><varname>ds_ping_reply_codes</varname> (string)</title>
  		<para>

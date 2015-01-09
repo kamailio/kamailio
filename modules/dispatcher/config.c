@@ -31,15 +31,18 @@
 #include "config.h"
 
 struct cfg_group_dispatcher	default_dispatcher_cfg = {
-		3,	/* Probing threshhold */	
+		1,	/* Probing threshold */	
+		1,      /* Inactive threshold */
 		{0,0}	/* reply codes */
 	    };
 
 void	*dispatcher_cfg = &default_dispatcher_cfg;
 
 cfg_def_t	dispatcher_cfg_def[] = {
-	{"probing_threshhold",		CFG_VAR_INT | CFG_ATOMIC, 	0, 0, 0, 0,
+	{"probing_threshold",		CFG_VAR_INT | CFG_ATOMIC, 	0, 0, 0, 0,
 		"Number of failed requests, before a destination is set to probing."},
+	{"inactive_threshold",           CFG_VAR_INT | CFG_ATOMIC,       0, 0, 0, 0,
+                "Number of successful requests, before a destination is set to active."},
 	{"ping_reply_codes",		CFG_VAR_STR | CFG_CB_ONLY_ONCE ,			0, 0, 0, ds_ping_reply_codes_update,
 		"Additional, valid reply codes for the OPTIONS Pinger. Default is \"\""},
 	{0, 0, 0, 0, 0, 0}
