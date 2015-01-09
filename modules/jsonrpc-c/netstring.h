@@ -23,7 +23,7 @@
  */
 
 #ifndef __NETSTRING_STREAM_H
-#define __NETSTRNG_STREAM_H
+#define __NETSTRING_STREAM_H
 
 #include <string.h>
 
