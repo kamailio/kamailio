@@ -131,8 +131,11 @@ mod_list_sqlite=db_sqlite
 # - modules depending on oracle library
 mod_list_oracle=db_oracle
 
-# - modules depending on json library
+# - modules depending on json (+libevent) library
 mod_list_json=json jsonrpc-c
+
+# - modules depending on jansson (+libevent) library
+mod_list_jansson=jansson janssonrpc-c
 
 # - modules depending on redis library
 mod_list_redis=ndb_redis
@@ -196,7 +199,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
 			   $(mod_list_ev) $(mod_list_kazoo) \
-			   $(mod_list_mongodb) $(mod_list_cnxcc))
+			   $(mod_list_mongodb) $(mod_list_cnxcc) \
+			   $(mod_list_jansson))
 
 
 
@@ -329,6 +333,9 @@ module_group_ksqlite=$(mod_list_sqlite)
 
 # K json modules
 module_group_kjson=$(mod_list_json)
+
+# K jansson modules
+module_group_kjansson=$(mod_list_jansson)
 
 # pkg redis module
 module_group_kredis=$(mod_list_redis)
