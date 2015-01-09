@@ -37,7 +37,8 @@
  * and last but not least -- we don't know the child pid (we use popen)
  * so we cannot close anyway
  *
- *
+ * From the README:
+ *  (There is kill.c but it is not used along with the current mechanisms based on popen. Besides that kill.c is ugly).
  */
 
 
