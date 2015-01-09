@@ -19,6 +19,7 @@ Build-Depends: bison,
                libradiusclient-ng-dev,
                libgeoip-dev (>= 1.4.5),
                libhiredis-dev (>= 0.10.0),
+               libjansson-dev,
                libjson0-dev,
                libldap2-dev,
                liblua5.1-0-dev,
@@ -572,7 +573,7 @@ Description: extra modules for Kamailio
  proxy server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides: gzcompress uuid ev
+ This package provides: gzcompress uuid ev jansson
 
 Package: kamailio-nth
 Architecture: any

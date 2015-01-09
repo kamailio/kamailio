@@ -84,6 +84,12 @@ sed -i -e '/^Package: kamailio-cnxcc-modules/,/^$/d' ${DIST}/control
 sed -i -e 's/ cnxcc[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ cnxcc/' ${DIST}/rules
 
+# no jansson module
+sed -i -e '/libjansson-dev/d' ${DIST}/control
+sed -i -e 's/ jansson[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ jansson/' ${DIST}/rules
+sed -i -e 's/ jansson[ ,$]*//' ${DIST}/control
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
