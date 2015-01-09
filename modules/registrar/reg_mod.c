@@ -116,6 +116,7 @@ int path_mode = PATH_MODE_STRICT;		/*!< if the Path HF should be inserted in the
 
 int path_use_params = 0;			/*!< if the received- and nat-parameters of last Path uri should be used
  						 * to determine if UAC is nat'ed */
+int path_check_local = 0;
 
 /* sruid to get internal uid */
 sruid_t _reg_sruid;
@@ -233,6 +234,7 @@ static param_export_t params[] = {
 	{"use_path",           INT_PARAM, &path_enabled        					},
 	{"path_mode",          INT_PARAM, &path_mode           					},
 	{"path_use_received",  INT_PARAM, &path_use_params     					},
+        {"path_check_local",   INT_PARAM, &path_check_local                                     },
 	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     					},
 	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
