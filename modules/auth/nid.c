@@ -1,36 +1,32 @@
 /*
- * $Id$
- *
+ * Digest Authentication Module
  * nonce id and pool management (stuff common to nonce-count and one
  * time nonces)
  *
  * Copyright (C) 2008 iptelorg GmbH
- *
- * This file is part of ser, a free SIP server.
- *
- * ser is free software; you can redistribute it and/or modify
+ * 
+ * This file is part of Kamailio, a free SIP server.
+ * 
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- *
- * ser is distributed in the hope that it will be useful,
+ * 
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
  */
+
 /*
  * Defines: 
  *  USE_NC, USE_OT_NONCE  - if neither of them defined no code will be 
  *                          compiled
- */
-/*
- * History:
- * --------
- * 2008-07-08  initial version (andrei)
  */
 
 unsigned int nid_pool_no; /* number of index pools, 2^k */
