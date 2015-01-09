@@ -2231,6 +2231,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 {
 	int i=0;
 	int old_state = 0;
+	int init_state = 0;
 	ds_set_t *idx = NULL;
 
 	if(_ds_list==NULL || _ds_list_nr<=0)
@@ -2259,7 +2260,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			idx->dlist[i].flags &= ~(DS_STATES_ALL);
 			
 			/* we need the initial state for inactive counter */
-			int init_state = state;
+			init_state = state;
 			
 			if((state & DS_TRYING_DST) && (old_state & DS_INACTIVE_DST))
 			{
