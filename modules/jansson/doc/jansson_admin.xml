@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+    <title>Overview</title>
+    <para>
+		This module provides operations on JSON strings using JANSSON
+		library. It has support for JSON-PATH operations.
+    </para>
+    </section>
+
+    <section>
+    <title>Dependencies</title>
+    <section>
+        <title>&kamailio; Modules</title>
+        <para>
+        The following modules must be loaded before this module:
+            <itemizedlist>
+            <listitem>
+            <para>
+                <emphasis>None</emphasis>
+            </para>
+            </listitem>
+            </itemizedlist>
+        </para>
+    </section>
+    <section>
+        <title>External Libraries or Applications</title>
+        <para>
+        The following libraries or applications must be installed before running
+        &kamailio; with this module loaded:
+            <itemizedlist>
+            <listitem>
+            <para>
+                <emphasis>jansson (http://www.digip.org/jansson/)</emphasis>, tested with: 2.2+
+            </para>
+            </listitem>
+            </itemizedlist>
+        </para>
+    </section>
+    </section>
+    <section>
+    <title>Parameters</title>
+    <section>
+        <para>
+            <emphasis>None</emphasis>
+        </para>
+    </section>
+    </section>
+
+    <section>
+    <title>Functions</title>
+    <section>
+        <title>
+            <function moreinfo="none">jansson_get(key/path, src, dst)</function>
+        </title>
+        <para>
+            Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'.
+        </para>
+        <para>
+            The path string supports dot delimited notation (e.g. foo.bar.baz), array notation (e.g. [0]), or a combination of the two (e.g. foo.bar[0][1].baz).
+        </para>
+        <para>
+            The function can put a string, integer, null, or new json string into destination.
+        </para>
+        <example>
+        <title><function>jansson_get</function> usage</title>
+        <programlisting format="linespecific">
+...
+jansson_get("inner.deep.list[3]", $var(myjson), "$var(n)");
+xlog("foo is $var(n)");
+...
+        </programlisting>
+        </example>
+    </section>
+    <section>
+        <title>
+            <function moreinfo="none">jansson_set(type, key/path, value, result)</function>
+        </title>
+        <para>
+            Insert 'value' as 'type' at location 'path' into 'result'.
+        </para>
+        <para>
+            The path string works the same as in jansson_get.
+        </para>
+        <para>
+            Valid 'type' parameters are 'integer', 'real', 'string', 'object', 'array', 'true', 'false', and 'null'  as well as
+            abbriviated names such as 'int', 'str', and 'obj'. 'value' is ignored when type is 'true', 'false', or 'null'.
+        </para>
+        <example>
+        <title><function>jansson_set</function> usage</title>
+        <programlisting format="linespecific">
+...
+# create a new json object and put a string in it at key "mystr"
+jansson_set("string", "mystr", "my input string", "$var(myjson)");
+# $var(myjson) =='{"mystr":"my input string"}'
+
+# add other values
+jansson_set("integer", "count", 9000, "$var(myjson)");
+jansson_set("true", "mybool", 0, "$var(myjson)");
+jansson_set("real", "pi", "3.14159", "$var(myjson)");
+# $var(myjson) == '{"mystr":"my input string", "count":9000, "mybool":true, "pi":3.14159}'
+
+# add a nested object
+jansson_set("obj", "myobj", '{"foo":"bar"}', "$var(myjson)");
+# $var(myjson) =='{"mystr":"my input string", "count":9000, "mybool":true, "pi":3.14159, "myobj":{"foo":"bar"}}'
+
+# change the nested object
+jansson_set("str", "myobj.foo", "baz", "$var(myjson)");
+# $var(myjson) == '{"mystr":"my input string", "count":9000, "mybool":true, "pi":3.14159, "myobj":{"foo":"baz"}}'
+...
+        </programlisting>
+        </example>
+    </section>
+    <section>
+        <title>
+            <function moreinfo="none">jansson_append(type, key/path, value, result)</function>
+        </title>
+        <para>
+            Like jansson_set but can be used to append to arrays. It can also be used to combine two json objects.
+        </para>
+        <para>
+            Note that when appending a json object to another json object, if there is a key that is shared between the two objects, that value will be overwritten by the new object.
+        </para>
+        <example>
+        <title><function>jansson_append</function> usage</title>
+        <programlisting format="linespecific">
+...
+# create a new json array and append values to it
+$var(myarray) = '[]';
+jansson_append("int", "", 0, "$var(myarray)");
+jansson_append("int", "", 1, "$var(myarray)");
+jansson_append("int", "", 2, "$var(myarray)");
+jansson_append("int", "", 3, "$var(myarray)");
+jansson_append("int", "", 4, "$var(myarray)");
+# $var(myarray) == '[0,1,2,3,4]'
+
+# add that array to an object
+jansson_set("array", "list", $var(myarray), "$var(myjson)");
+# $var(myjson) == '{"list":[0,1,2,3,4]}'
+
+# append another value to the list
+jansson_append("int", "list", 5, "$var(myjson)");
+# $var(myjson) == '{"list":[0,1,2,3,4,5]}'
+
+# combining two json objects
+$var(newobj) = '{"b":2, "c":3}';
+jansson_append('obj', "", '{"a":1, "b":100}', "$var(newobj)");
+# $var(newobj) == '{"a":1,"b":100","c":3}';
+...
+        </programlisting>
+        </example>
+    </section>
+    <section>
+        <title>
+            <function moreinfo="none">jansson_array_size(key/path, src, dst)</function>
+        </title>
+        <para>
+            Puts the size of the array in 'src' at location 'path' into the pvar 'dst'.
+        </para>
+        <para>
+            This is particularly useful for looping through an array. See example.
+        </para>
+        <example>
+        <title><function>jansson_array_size</function> usage</title>
+        <programlisting format="linespecific">
+...
+$var(array) = "{\"loopme\":[0,1,2,3,4,5]}";
+$var(count) = 0;
+jansson_array_size("loopme", $var(array), "$var(size)");
+while($var(count) &lt; $var(size)) {
+    jansson_get("loopme[$var(count)]", $var(array), "$var(v)");
+    xlog("loopme[$var(count)] == $var(v)\n");
+    $var(count) = $var(count) + 1;
+}
+...
+        </programlisting>
+        </example>
+        <example>
+        <title>array concatination</title>
+        <programlisting format="linespecific">
+...
+$var(count) = 0;
+$var(appendme) = '[0,1]';
+$var(mylist) = '[2,3,4,5]';
+jansson_array_size("", $var(mylist), "$var(appendme_size)");
+while($var(count) &lt; $var(appendme_size)) {
+    jansson_get("[$var(count)]", $var(mylist), "$var(tmp)");
+    jansson_append('int', "", $var(tmp), "$var(appendme)");
+    $var(count) = $var(count) + 1;
+}
+...
+        </programlisting>
+        </example>
+    </section>
+    <section>
+        <title>
+            <function moreinfo="none">jansson_get_field(src, field_name, dst)</function>
+        </title>
+        <para>
+            Copy field 'field_name' from json object 'src' and store it in pvar 'dst'.
+        </para>
+        <para>
+            <emphasis>This function is deprecated</emphasis> but kept for backwards compatibility. Right now it is just a wrapper around <function>jansson_get</function>, and its functionality is the same.
+        </para>
+        <example>
+        <title><function>jansson_get_field</function> usage</title>
+        <programlisting format="linespecific">
+...
+jansson_get_field("{'foo':'bar'}", "foo", "$var(foo)");
+xlog("foo is $var(foo)");
+...
+        </programlisting>
+        </example>
+    </section>
+    </section>
+</chapter>
+
