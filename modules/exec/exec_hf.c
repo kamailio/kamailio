@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,15 +17,15 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * history
- * -------
- *  2003-02-28 scratchpad compatibility abandoned
- *  2003-01-29 scratchpad removed
- *  2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
- *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  */
 
-/* functions for creating environment variables out of a request's
+/*!
+ * \file
+ * \brief Exec module:: Module interface
+ * \ingroup exec 
+ * Module: \ref exec
+ *
+ * functions for creating environment variables out of a request's
  * header; known compact header field names are translated to
  * canonical form; multiple header field occurrences are merged
  * into a single variable
