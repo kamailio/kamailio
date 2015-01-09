@@ -630,6 +630,32 @@ modparam("registrar", "path_use_received", 1)
 		</example>
 	</section>
 
+	<section id="registrar.p.path_check_local">
+		<title><varname>path_check_local</varname> (integer)</title>
+		<para>
+		If set to 1, when performing a lookup the Path (if present) is evaluated
+		and if the first hop is local (according to <quote>myself</quote> test), we
+		skip it	to avoid unnecessary looping.
+		</para>
+		<para>
+		This is useful if multiple servers are sharing a common location database,
+		each saving contacts with their local address as the Path.
+		</para>
+		<para>
+		<emphasis>
+		Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>path_check_local</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "path_check_local", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="registrar.p.reg_callid_avp">
 		<title><varname>reg_callid_avp</varname> (string)</title>
 		<para>
