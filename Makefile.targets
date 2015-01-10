@@ -1,16 +1,9 @@
+# Kamailio build system
 
-#
-# $Id$
-#
-#
 # Makefile targets that should be treated specially, 
 # e.g.:  non obj/executable affecting targets => don't build dependencies for
 #  them or don't try any action that would be useful only for generating
 #  actual code
-#
-# History:
-# --------
-#  2008-06-26  initial version (andrei) 
 #
 
 ifeq (,$(strip $(modules_dirs)))

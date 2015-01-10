@@ -1,11 +1,6 @@
-# $Id$
-#
+# Kamailio build system
 # path config makefile
 #
-# History:
-# --------
-#  2009-03-27  initial version (andrei)
-
 ifneq ($(makefile_dirs_included),1)
 
 override makefile_dirs_included:=1

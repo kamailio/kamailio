@@ -1,6 +1,4 @@
-#
-# $Id$
-#
+# Kamailio build system
 #
 # common Makefile rules, included by main Makefile & the  modules
 #
@@ -15,21 +13,6 @@
 #  built if necessary. Format: path/shortname, where shortname is the 
 #  name passed to -l (e.g. for libprint.so the shortname is print)
 #
-# History:
-# --------
-#  2007-03-29  set rpath differently for make install
-#              automatically build listed SER_LIBS if needed (andrei)
-#  2008-06-23  automatically rebuild if make time defines or includes
-#              changed (via makecfg.lst)
-#  2009-03-10  support for C_DEFS and C_INCLUDES (DEFS and INCLUDES are now
-#              used only for "temporary" defines/includes inside modules or
-#              libs, C_DEFS and C_INCLUDES are used for the common stuff)
-#              (andrei)
-#  2010-03-09  generate dependencies when compiling .o instead of on
-#               include .d and fix build errors when a .h is moved
-#              support for using MKDEP="makedepend-f-"      (andrei)
-#  2010-03-10  support for on the-fly dependency generation (while compiling,
-#               see CC_MKDEP_OPTS)  (andrei)
 
 
 # check if the saved cfg corresponds with the current one

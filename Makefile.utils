@@ -1,12 +1,8 @@
-#
-# $Id$
+# Kamailio build system
 #
 # utils Makefile
 #(to be included from each util/ subdirectory)
 #
-# History:
-# --------
-#  2009-04-23  initial version derived from Makefile.modules (andrei)
 
 #
 # Variables that should be defined in the util Makefiles, prior to including

@@ -1,69 +1,8 @@
-# $Id$
-#
-# sip_router makefile
+# Kamailio makefile
 #
 # WARNING: requires gmake (GNU Make)
 #  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 8), OpenBSD (3.2),
-#  NetBSD (1.6).
-#
-#  History:
-#  --------
-#              created by andrei
-#  2003-02-24  make install no longer overwrites ser.cfg  - patch provided
-#               by Maxim Sobolev   <sobomax@FreeBSD.org> and 
-#                  Tomas Björklund <tomas@webservices.se>
-#  2003-03-11  PREFIX & LOCALBASE must also be exported (andrei)
-#  2003-04-07  hacked to work with solaris install (andrei)
-#  2003-04-17  exclude modules overwritable from env. or cmd. line,
-#               added include_modules and skip_modules (andrei)
-#  2003-05-30  added extra_defs & EXTRA_DEFS
-#               Makefile.defs force-included to allow recursive make
-#               calls -- see comment (andrei)
-#  2003-06-02  make tar changes -- unpacks in $NAME-$RELEASE  (andrei)
-#  2003-06-03  make install-cfg will properly replace the module path
-#               in the cfg (re: /usr/.*lib/ser/modules)
-#              ser.cfg.default is installed only if there is a previous
-#               cfg. -- fixes packages containing ser.cfg.default (andrei)
-#  2003-08-29  install-modules-doc split from install-doc, added 
-#               install-modules-all, removed README.cfg (andrei)
-#              added skip_cfg_install (andrei)
-#  2004-09-02  install-man will automatically "fix" the path of the files
-#               referred in the man pages
-#  2006-02-14  added utils & install-utils (andrei)
-#  2006-03-15  added nodeb parameter for make tar (andrei)
-#  2006-09-29  added modules-doc as target and doc_format= as make option (greger)
-#  2006-12-09  added new group_include as make option and defined groups 
-#               defining which modules to include. Also added new target 
-#               print-modules that you can use to check which modules will be 
-#               compiled (greger)
-#  2007-01-10  added new group_include targets mysql, radius, and presence 
-#               improved print-modules output fixed problem in include/exclude
-#               logic when using group_include (greger)
-#  2007-03-01  fail if a module or a required utility make fail unless 
-#              err_fail=0; don't try to make modules with no Makefiles (andrei)
-#  2007-03-16  moved the exports to Makefile.defs (andrei)
-#  2007-03-29  install-modules changed to use make -C modpath install (andrei)
-#  2007-05-04  "if ! foo" not supported in standard sh, switched to 
-#                "if foo; then :; else ... ; fi" (andrei)
-#  2008-06-23  added 2 new targets: README and man (re-generate the README
-#              or manpages for all the modules) (andrei)
-#  2008-06-25  make cfg support (use a pre-built cfg.: config.mak) (andrei)
-#  2008-06-28  added clean-all, proper-all, install-modules-man and error 
-#               checks for install-utils & doc (andrei)
-#  2008-07-01  split module list from config.mak into modules.lst so that
-#               the modules list can be changed without rebuilding the whole
-#               ser (andrei)
-#              added cfg-defs, new target that only rebuilds config.mak
-#  2009-03-10  replaced DEFS with C_DEFS (DEFS are now used only for
-#              "temporary" defines inside modules or libs) (andrei)
-#  2009-03-27  multiple modules directory support, see modules_dirs (andrei)
-#  2009-04-02  workaround for export not supported in gnu make 3.80
-#               target specific variables: use mk_params for each
-#               $(MAKE) invocation (andrei)
-#  2009-04-22  don't rebuild config.mak or modules.lst if not needed
-#              (e.g. on clean) (andrei)
-#  2009-06-24  auto-generate autover.h, containing the REPO_VER macro, defined
-#               to the top git commit sha (if git is found) (andrei)
+#  NetBSD (1.6), OS/X
 #
 
 # check make version

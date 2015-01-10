@@ -1,23 +1,8 @@
-#
-# $Id$
+# Kamailio build system
 #
 # module Makefile
 #(to be included from each module)
 #
-# History:
-# --------
-#  2007-03-29  if a module depends on SER_LIBS, it will be rebuilt on install
-#               with the proper rpath; libraries will be automatically
-#               installed if needed (andrei)
-#  2008-06-23  added the README & man targets (andrei)
-#  2008-06-27  make cfg / config.mak support (andrei)
-#  2009-03-10  replaced DEFS with C_DEFS and INCLUDES with C_INCLUDES (DEFS
-#              and INCLUDES are now used only for "temporary" defines/includes
-#              inside modules or libs) (andrei)
-#  2009-10-01  added support for automatically installing extra utils,
-#               scripts and cfg files (andrei)
-#  2010-03-04  don't overwrite already installed .cfgs, save the .cfg as
-#              .sample in this case (andrei)
 #
 
 #

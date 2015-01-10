@@ -1,15 +1,8 @@
-#
-# $Id$
+# Kamailio build system
 #
 # module Makefile
 #(to be included from each library makefile)
 #
-# History:
-# --------
-#  2007-03-16  created by andrei
-#  2007-05-19  rebuild on changed install name on darwin  (andrei)
-#  2008-06-27  make cfg / config.mak support (andrei)
-
 # NAME, MAJOR_VER and MINOR_VER should be pre-defined in the library 
 # makefile
 #
