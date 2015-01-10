@@ -17,7 +17,7 @@
  */
 /*!
  * \file
- * \brief SIP-router TLS support :: Configuration file parser
+ * \brief Kamailio TLS support :: Configuration file parser
  * \ingroup tls
  * Module: \ref tls
  */

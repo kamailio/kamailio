@@ -18,7 +18,7 @@
  */
 
 /**
- * SIP-router TLS support :: virtual domain configuration support
+ * Kamailio TLS support :: virtual domain configuration support
  * @file
  * @ingroup tls
  * Module: @ref tls

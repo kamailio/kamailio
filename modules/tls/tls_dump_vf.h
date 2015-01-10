@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2006 enum.at
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -29,11 +29,6 @@
  * @ingroup: tls
  * Module: @ref tls
  */
-/*
- * History:
- * --------
- *  2010-05-20  split from tls_server.c
-*/
 
 #ifndef __tls_dump_vf_h
 #define __tls_dump_vf_h

@@ -17,7 +17,7 @@
  */
 /*!
  * \file
- * \brief SIP-router TLS support :: Common functions
+ * \brief Kamailio TLS support :: Common functions
  * \ingroup tls
  * Module: \ref tls
  */

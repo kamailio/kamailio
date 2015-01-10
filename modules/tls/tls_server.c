@@ -4,7 +4,7 @@
  * Copyright (C) 2005-2010 iptelorg GmbH
  * Copyright (C) 2013 Motorola Solutions, Inc.
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,14 +18,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * History:
- * --------
- *  2007-01-26  openssl kerberos malloc bug detection/workaround (andrei)
- *  2007-02-23  openssl low memory bugs workaround (andrei)
- *  2009-09-21  tls connection state is now kept in c->extra_data (no
- *               longer shared with tcp state) (andrei)
- */
+
 /** main tls part (implements the tls hooks that are called from the tcp code).
  * @file tls_server.c
  * @ingroup tls

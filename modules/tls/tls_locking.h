@@ -15,16 +15,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * tls locking and atomic ops related init functions
- *
- * History:
- * --------
- *  2007-01-22  created by andrei
- */
+
 /*!
  * \file
- * \brief SIP-router TLS support ::  tls locking and atomic ops related init functions
+ * \brief Kamailio  TLS support ::  tls locking and atomic ops related init functions
  * \ingroup tls
  * Module: \ref tls
  */

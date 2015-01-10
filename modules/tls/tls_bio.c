@@ -1,5 +1,5 @@
 /* 
- * TLS module
+ * Kamailio TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
  *
@@ -21,14 +21,6 @@
  * @file
  * @ingroup tls
  */
-
-/*
- * History:
- * --------
- *  2010-03-25  initial version (andrei)
- *  2010-05-20  emulate EAGAIN on null rd/wr memory buffer; handle some
- *              needed commands in ctrl; debug support (TLS_BIO_DBG) (andrei)
-*/
 
 #include "tls_bio.h"
 #include "../../compiler_opt.h"

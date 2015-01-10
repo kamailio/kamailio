@@ -8,7 +8,16 @@
  *
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  */
-/*
+/*!
+ * \file
+ * \brief Kamailio TLS support :: Zlib functions
+ * \ingroup tls
+ * Module: \ref tls
+ *
+ * This file contains modified zlib compression functions
+ * originally part of crypto/comp/c_zlib.c from the openssl library 
+ * (version 0.9.8a).
+ *
  * The changes are: 
  *   - proper zalloc and zfree initialization for the zlib compression
  *     methods (use OPENSSL_malloc & OPENSSL_free to construct zalloc/zfree)
@@ -19,13 +28,6 @@
  *    version).
  *  -- andrei
  */
-/*!
- * \file
- * \brief SIP-router TLS support :: Zlib functions
- * \ingroup tls
- * Module: \ref tls
- */
-
 
 
 #ifdef TLS_FIX_ZLIB_COMPRESSION

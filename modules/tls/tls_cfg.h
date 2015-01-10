@@ -24,12 +24,6 @@
  * Module: @ref tls
  */
 
-/*
- * History:
- * --------
- *  2010-05-27  initial version (andrei)
-*/
-
 #ifndef __tls_cfg_h
 #define __tls_cfg_h
 

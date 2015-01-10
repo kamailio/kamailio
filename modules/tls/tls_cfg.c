@@ -1,5 +1,5 @@
 /* 
- * TLS module
+ * Kamailio TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
  * Copyright (C) 2013 Motorola Solutions, Inc.
@@ -18,17 +18,11 @@
  */
 
 /**
- * SIP-router TLS support :: tls runtime configuration
+ * Kamailio TLS support :: tls runtime configuration
  * @file tls_cfg.c
  * @ingroup tls
  * Module: @ref tls
  */
-
-/*
- * History:
- * --------
- *  2010-05-27  initial version (andrei)
-*/
 
 #include "tls_cfg.h"
 #include "../../config.h"

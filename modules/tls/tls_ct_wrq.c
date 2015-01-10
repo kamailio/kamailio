@@ -25,12 +25,6 @@
  * Module: @ref tls
  */
 
-/*
- * History:
- * --------
- *  2010-03-31  initial version (andrei)
-*/
-
 #include "tls_ct_wrq.h"
 #include "tls_cfg.h"
 #include "tls_server.h"

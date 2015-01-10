@@ -18,7 +18,7 @@
 
 /*!
  * \file
- * \brief SIP-router TLS support :: Locking
+ * \brief Kamailio TLS support :: Locking
  * \ingroup tls
  * Module: \ref tls
  */

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2005 iptelorg GmbH
  *
- * This file is part of sip-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

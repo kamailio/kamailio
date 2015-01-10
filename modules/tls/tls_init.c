@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*! \defgroup tls SIP-router TLS support
+/*! \defgroup tls Kamailio TLS support
  *
  * This modules implements SIP over TCP with TLS encryption.
  * Make sure you read the README file that describes configuration
@@ -27,7 +27,7 @@
  */
 /*!
  * \file
- * \brief SIP-router TLS support :: Initialization
+ * \brief Kamailio TLS support :: Initialization
  * \ingroup tls
  * Module: \ref tls
  */

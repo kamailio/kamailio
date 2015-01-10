@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** SIP-router TLS support :: Module interface.
+/** Kamailio TLS support :: Module interface.
  * @file
  * @ingroup tls
  * Module: @ref tls
