@@ -99,6 +99,10 @@ html_css ?= /css/sr-doc.css
 # file or docbook xsl stylesheets are being installed.
 catalog  ?= $(docbook_dir)/catalog.xml
 
+# Use standard catalog from OS, set it to no to use the above path to a
+# custom catalog file.
+nocatalog ?= yes
+
 lynx     ?= lynx
 dia      ?= dia
 xsltproc ?= xsltproc
