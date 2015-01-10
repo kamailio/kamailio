@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * dispatcher module
  * 
  * Copyright (C) 2004-2006 FhG Fokus

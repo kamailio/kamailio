@@ -1,10 +1,9 @@
 /**
- * $Id$
- *
- * dispatcher module -- stateless load balancing
+ * dispatcher module - load balancing
  *
  * Copyright (C) 2004-2005 FhG Fokus
  * Copyright (C) 2006 Voice Sistem SRL
+ * Copyright (C) 2015 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -21,21 +20,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History
- * -------
- * 2004-07-31  first version, by daniel
- * 2007-01-11  Added a function to check if a specific gateway is in a group
- *				(carsten - Carsten Bock, BASIS AudioNet GmbH)
- * 2007-02-09  Added active probing of failed destinations and automatic
- *				re-enabling of destinations (carsten)
- * 2007-05-08  Ported the changes to SVN-Trunk and renamed ds_is_domain
- *				to ds_is_from_list.  (carsten)
- * 2007-07-18  Added support for load/reload groups from DB 
- * 			   reload triggered from ds_reload MI_Command (ancuta)
- * 2014-12-12  Added "ds_list_exist" function
- * 2014-12-23  Corrected misspelled words in some variables' name (alezzandro)
- * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state (alezzandro)
  */
 
 /*! \file

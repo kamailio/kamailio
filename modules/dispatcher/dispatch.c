@@ -1,10 +1,9 @@
 /*
- * $Id$
- *
  * dispatcher module
  *
  * Copyright (C) 2004-2006 FhG Fokus
  * Copyright (C) 2005 Voice-System.ro
+ * Copyright (C) 2015 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -21,25 +20,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History
- * -------
- * 2004-07-31  first version, by daniel
- * 2005-04-22  added ruri  & to_uri hashing (andrei)
- * 2005-12-10  added failover support via avp (daniel)
- * 2006-08-15  added support for authorization username hashing (carsten)
- * 2007-01-11  Added a function to check if a specific gateway is in a
- * group (carsten)
- * 2007-01-12  Added a threshhold for automatic deactivation (carsten)
- * 2007-02-09  Added active probing of failed destinations and automatic
- * re-enabling of destinations (carsten)
- * 2007-05-08  Ported the changes to SVN-Trunk, renamed ds_is_domain to
- * ds_is_from_list and modified the function to work with IPv6 adresses.
- * 2007-07-18  removed index stuff
- * 			   added DB support to load/reload data(ancuta)
- * 2007-09-17  added list-file support for reload data (carstenbock)
- * 2014-12-23  Corrected misspelled words in some variables' name (alezzandro)
- * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state (alezzandro)
  */
 
 /*! \file

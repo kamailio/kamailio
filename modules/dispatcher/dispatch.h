@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * dispatcher module
  * 
  * Copyright (C) 2004-2006 FhG Fokus
@@ -20,18 +18,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History
- * -------
- * 2004-07-31  first version, by daniel
- * 2007-01-11  Added a function to check if a specific gateway is in
- *		a group (carsten)
- * 2007-02-09  Added active probing of failed destinations and automatic
- *		re-enabling of destinations
- * 2007-05-08  Ported the changes to SVN-Trunk and renamed ds_is_domain
- *		to ds_is_from_list.
- * 2014-12-23  Corrected misspelled words in some variables' name (alezzandro) 
- * 2014-12-23  Added support for custom number of successful probing requests before moving a destination from 'inactive' to 'active' state (alezzandro)
  */
 
 /*! \file
