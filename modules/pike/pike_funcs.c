@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,16 +17,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-03-11  converted to the new locking interface: locking.h --
- *               major changes (andrei)
- *  2005-05-02  flags field added to node stucture -better sync between timer
- *              and worker processes; some races eliminated (bogdan)
- *  2008-04-17  new parameter to control the module's log regarding the
- *               blocking/unblocking of IPs (bogdan)
- *  2008-04-17  the leaf nodes memorize (via flags) if they are in RED state
- *               (detected) or not -> better logging and MI (bogdan)
  */
 
 

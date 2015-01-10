@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,11 +17,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2004-11-05: adaptiv init lock (bogdan)
- *  2008-04-17  the leaf nodes memorize (via flags) if they are in RED state
- *               (detected) or not -> better logging and MI (bogdan)
  */
 
 

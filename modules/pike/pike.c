@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * PIKE module
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,14 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-03-11  updated to the new module exports interface (andrei)
- *  2003-03-11  converted to the new locking interface: locking.h --
- *               major changes (andrei)
- *  2003-03-16  flags export parameter added (janakj)
- *  2008-04-17  new parameter to control the module's log regarding the
- *               blocking/unblocking of IPs (bogdan)
  */
 
 

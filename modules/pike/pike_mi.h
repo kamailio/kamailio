@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Header file for PIKE MI functions
  *
  * Copyright (C) 2006 Voice Sistem SRL
@@ -21,9 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2006-12-05  created (bogdan)
  */
 
 
