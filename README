@@ -35,7 +35,8 @@ of other leading SIP vendors.
 The Kamailio software enables a flexible plug-in model for new applications: Third parties 
 can easily link their plug-ins with the server code and provide thereby advanced and
 customized services. With a modern RPC interface, 3rd party application can integrate
-and interact with services provided by Kamailio.
+and interact with services provided by Kamailio. By using the EVAPI interface or the
+embedded HTTP server restful applications can be built.
 
 Kamailio's performance and robustness allows it to serve millions of users and accommodate needs
 of very large operators. With a low-cost dual-CPU, the Kamailio server is able to power 
