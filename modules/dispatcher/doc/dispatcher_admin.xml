@@ -868,7 +868,7 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			<listitem>
 				<para>
-				<quote>6</quote> - random (using rand()).
+				<quote>6</quote> - random destination (using rand()).
 				</para>
 			</listitem>
 			<listitem>
@@ -879,7 +879,8 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			<listitem>
 				<para>
-				<quote>8</quote> - use first destination (good for failover).
+				<quote>8</quote> - select destination sorted by priority
+				attribute value (serial forking ordered by priority).
 				</para>
 			</listitem>
 			<listitem>
