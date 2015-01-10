@@ -1,14 +1,17 @@
 
 
-SIP-ROUTER modules
+Kamailio  modules
 ==================
 
-This is the second major release of the merged SIP Server - Kamailio and SER. 
-In the previous release some modules where provided in two versions, in Kamailio
+This is a major release of the merged SIP Server - Kamailio and SER. 
+
+In  previous releases (v3.x) some modules where provided in two versions, in Kamailio
 and SER flavours. These are now merged. In some cases, the functionality has 
 changed. You can still do the same operation, but how you do it may be different.
 
-Modules are in the "modules" directory.
+Modules are found in the "modules" directory. After installation that can
+be /usr/local/lib/kamailio/modules or /usr/lib/kamailio/modules.
+
 In previous releases there was a "modules_k" and "modules_s" directory, but in
 this release these directories are empty.
 
@@ -16,15 +19,16 @@ What is a module?
 =================
 A module consists of a lot of functions that enhance the core. Some of the modules
 depends on other modules. It's all properly documented in the README that belongs
-to each module (available as web pages on the sip-router.org web site).
+to each module (available as web pages on the kamailio.org web site).
 
-A module providers up to five different APIs:
+A module providers up to six different APIs:
 
-- Enhancements to the core SIP-router routing script (functions)
-- Commands for the management interface (MI and RPC)
+- Enhancements to the core Kamailio routing script (functions)
+- Commands for the management interfaces (MI and RPC)
 - Development interface for other modules
 - Pseudo-variables
 - Selects and config framework variables
+- Event-Routes
 
 A single module may provide a selection of this, maybe only one of them.
 
@@ -33,18 +37,19 @@ Kamailio Modules
 acc			Accounting
 acc_radius		Accounting with RADIUS backend
 alias_db		Alias management in database modules
+app_java		Lang :: Execute embedded Java applications
 app_lua			Lang :: Execute embedded LUA scripts
 app_mono		Lang :: Execute embedded MONO scripts (like C#, Java, javascript)
 app_perl		Lang :: Embedded perl script support
 app_python		Lang :: Execute embedded Python scripts
-app_java		Lang :: Execute embedded Java compiled code
 async			Asynchronus SIP request handling functions
 auth			MD5 digest authentication support
 auth_db			Authentication using a database module
 auth_diameter		Authentication based on Diameter
+auth_ephemeral		User authentication with ephemeral credentials
 auth_identity		SIP Identity support (RFC 4474)
 auth_radius		Radius authentication
-acp			Collection of functions for handling AVP's (from SER)
+avp			Collection of functions for handling AVP's (from SER)
 avpops			Attribute-value pair operations ("variables")
 benchmark		Development benchmark module
 blst			Blacklisting API for configuration scripts
@@ -63,42 +68,51 @@ db_berkeley		Database :: Berkeley DB (Oracle)
 db_cluster		Generic database connectors clustering and failover
 db_cassandra		Database :: Cassandra database server connector
 db_flatstore		Database :: Flatstore
+db_mongodb		Database :: MongoDB
 db_mysql		Database :: Mysql
 db_oracle		Database :: Oracle support
 db_perlvdb		Database :: Use perl database functions
 db_postgres		Database :: PostgreSQL
 db_text			Database :: Text support
 db_unixodbc		Database :: Unix ODBC support
-db2_ldap		Database connector to LDAP using the DB2 API
-db2_ops			Database operations for DB API v2
+db2_ldap		DB2 :: Database connector to LDAP using the DB2 API
+db2_ops			DB2 :: Database operations for DB API v2
 debugger		Interactive configuration processing debugger
 dialog			Dialog ("call") state module
 dialplan		Dialplan management
 dialog_ng		Dialog tracking module - next generation
 dispatcher		Load balancing and failover
 diversion		Call redirect support (SIP Diversion: header)
-dmq			Devel :: Distributed message queue system using SIP (early development)
+dmq			Distributed message queue system using SIP
+dnssec			DNSsec support in the DNS resolver
 domain			Proxy :: Multiple domain support using databases
 domainpolicy		Proxy :: Obsolete module - This module is no longer maintained
 drouting		Proxy :: Dynamic routing
 enum			Enum support
 exec			External exec module
+evapi			Network event broadcast API
 geoip			GeoIP API to configuration file
 group			Utils :: Group membership checking
+gzcompress		Compress and decompress SIP message body with zlib
 h350			LDAP/ITU H.350 multimedia schema support
 htable			Utils :: Hash table support
 imc			IM :: Instant messaging conference
 ims_auth		IMS authentication module
+ims_charging		IMS charging component module
 ims_icscf		IMS ICSCF component module
 ims_isc			IMS ISC component module
 ims_qos			IMS Diameter Rx interface
 ims_registrar_pcscf	IMS PCSCF registrar module
 ims_registrar_scscf	IMS SCSCF registrar module
+ims_usrloc_pcscf	IMS PCSCF usrloc module
+ims_usrloc_scscf	IMS SCSCF usrloc module
 ipops			IP and DNS related operations
 iptrtpproxy		NAT traversal :: Kernel based RTP proxy
 jabber			IM :: Jabber gateway
 json			Access to JSON document attributes
 jsonrpc-c		JSON-RPC client over netstrings protocol
+jsonrpc-s		JSON-RPC interface to the Kamailio RPC API
+kazoo			Middle layer connector for Kazoo VoIP platform
 kex			Proxy :: Kamailio core functions (backwards compatibility)
 lcr			Least cost routing
 ldap			LDAP Directory access
@@ -115,11 +129,14 @@ mi_xmlrpc		Management Interface :: XML-rpc
 misc_radius		Various Radius functions
 msilo			Text message storage
 msrp			Embedded MSRP relay (RFC 4975 and RFC 4976)
+mohqueue		Music on hold queuing system
 mqueue			Message queue system for configuration file
 nat_traversal		NAT :: NAT traversal module
 nathelper		NAT :: NAT traversal module :: RTPproxy (SIPPY software)
-ndb_redis		Connector to REDIS NoSQL Database engine
 ndb_cassandra		Connector to Apache Cassandra
+ndb_mongodb		Connector to MongoDB
+ndb_redis		Connector to REDIS NoSQL Database engine
+nosip			Handle non-sip messages received by SIP workers via event_route
 osp			Open Settlement Protocol support
 outbound		SIP Outbound Implementation
 p_usrloc		Partitioned and distributed user location services
@@ -156,12 +173,14 @@ registrar		Registrar/location server support
 rls			Presence :: Resource list server
 rr			Proxy :: Record routing
 rtimer			Utils :: Timer based routing script processing
+rtpengine		NAT :: RTPEngine media relay control functions
 rtpproxy		NAT :: Nat traversal module for RTPproxy control
 sanity			Syntax checking for incoming SIP requests
 sca			PRESENCE :: Shared call appearances
 sdpops			SDP operations
 seas			Application server interface
 sipcapture		SIP Capture Server module (used in the Homer project)
+sipt			SIP-T and SIP-I operations
 siptrace		Store SIP messages in database
 siputils		Various utilities for SIP call handling
 sl			Proxy :: Stateless handling of SIP messages
@@ -171,6 +190,7 @@ speeddial		Per-user speed-dial controller module
 sqlops			SQL operations
 sst			SIP Session Timers implementation
 statistics		Script statistics support
+statsd			Connector for statsd application
 textops			Text operations
 textopsx		Extra Text operations
 timer			Execute routing blocks on core timers (From SER)
@@ -189,6 +209,7 @@ uri_db			URI operation with database support
 userblacklist		User-specific blacklists
 usrloc			Proxy :: Location server
 utils			Various utilities (http query, xcap status)
+uuid			Unique string value generator using libuuid
 websocket		HTTP :: Websocket transport layer for proxy
 xcap_client		Presence :: XCAP support
 xcap_server		Presence :: XCAP server implementation
