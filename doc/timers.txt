@@ -1,18 +1,12 @@
-# $Id$
-#
-# History:
-# --------
-# 2005-11-30    created by andrei
 
-
-SIP-router :: timer interface
+Kamailio :: timer interface
 =============================
 
 
 1. Introduction
 ---------------
 
-SIP-router's timer interface is based on a 3 level hierarchical timing wheel
+Kamailio's timer interface is based on a 3 level hierarchical timing wheel
 (see [1]). Most timeouts will go in the first "wheel" (all timeouts < 1<<14 
 ticks, which by default mean 1024 s). Each wheel acts as a circular buffer.
 The big advantage of this scheme is that most of the time you just run all the 
@@ -78,10 +72,12 @@ timer_free(t);
 
 To use a timer you need a timer_ln structure. This structure must be stored
  in shared memory.
-You can either use timer_alloc() which will return a pointer to a shared memory allocated timer_ln structure or you can "attach" timer_ln as a member to one
+You can either use timer_alloc() which will return a pointer to a shared memory 
+allocated timer_ln structure or you can "attach" timer_ln as a member to one
  of your structures which is already stored in the shared memory.
 
-The timer_ln structure must be always initialized. Use the timer_init(...) macro for this. To the timer_init macro takes as parameters a pointer to the timer_ln structure, a pointer to a timer_handler_f function, a void* parameter for this
+The timer_ln structure must be always initialized. Use the timer_init(...) macro for this. 
+To the timer_init macro takes as parameters a pointer to the timer_ln structure, a pointer to a timer_handler_f function, a void* parameter for this
  function and some timer flags.
 Example:
 
@@ -145,15 +141,26 @@ timer_add(&f->timer, rand());
 timer_del(&f->timer); /* if the timer is already expired => f is already
                          deleted => problems */
 
-The above timer_del/free_in_one_shot_timer race example is very simple, but consider that you can have much more complex scenarios, when timer_del can be called from different processes on some asynchronous events. If this looks like your intended usage, make sure you use some  reference counters or some other protection mechanism to avoid the above race.
+The above timer_del/free_in_one_shot_timer race example is very simple, but 
+consider that you can have much more complex scenarios, when timer_del can be 
+called from different processes on some asynchronous events. If this looks like your 
+intended usage, make sure you use some  reference counters or some other 
+protection mechanism to avoid the above race.
 
 4.5 timer_allow_del
 -------------------
 
-Marks a timer as "to be deleted when the handler ends", usefull when the timer handler knows it won't prolong the timer anymore (it will return 0) and will do some time consuming work. Calling this function will cause simultaneous timer_dels to return immediately (they won't  wait anymore for the timer handle to finish). It will also allow  self-deleting from the timer handle without logging a bug.
- WARNING: - if you rely on timer_del to know when the timer handle execution finishes (e.g. to free resources used in the timer handle), don't use this function.
-          - call this function only if this is your last timer handle run (the timer handle will return 0)
-          - this function can be called only from a timer handle (in timer context), all other calls will have no effect and will log a bug message
+Marks a timer as "to be deleted when the handler ends", usefull when the timer handler 
+knows it won't prolong the timer anymore (it will return 0) and will do some time 
+consuming work. Calling this function will cause simultaneous timer_dels to return 
+immediately (they won't  wait anymore for the timer handle to finish). 
+It will also allow  self-deleting from the timer handle without logging a bug.
+ WARNING: - if you rely on timer_del to know when the timer handle execution 
+	    finishes (e.g. to free resources used in the timer handle), don't use this function.
+          - call this function only if this is your last timer handle run
+	    (the timer handle will return 0)
+          - this function can be called only from a timer handle (in timer context), 
+  	    all other calls will have no effect and will log a bug message
 
 
 4.6 Getting the ticks value
@@ -179,26 +186,30 @@ TICKS_TO_S(t)  /* converts from ticks to s, rounded down */
 4.8 Ticks value comparison
 ---------------------------
 
-The ticks value can (and will) overflow so ticks values should never be compared directly (e.g. ticks1<ticks2). To compare them include timer_ticks.h and use
- one of the macros:
+The ticks value can (and will) overflow so ticks values should never be compared directly
+(e.g. ticks1<ticks2). To compare them include timer_ticks.h and use
+one of the macros:
 
 TICKS_LT(t1, t2)  /*  t1 < t2 */
 TICKS_GT(t1, t2)  /*  t1 > t2 */
 TICKS_LE(t1, t2)  /*  t1 <= t2 */
 TICKS_GE(t1, t2)  /*  t1 >= t2 */
 
-These macros work as long as the difference between t1 and t2 is less then 2^(sizeof(ticks_t)*8-1). For the default TIMER_TICKS_HZ values, this means 4.25 years.
+These macros work as long as the difference between t1 and t2 is less than 2^(sizeof(ticks_t)*8-1). 
+For the default TIMER_TICKS_HZ values, this means 4.25 years.
 
 4.9 Backward compatibility
 --------------------------
 
-The old  register_timer and get_ticks() are still supported for backward compatibility. This means that you don't have to change your existing working code.
+The old  register_timer and get_ticks() are still supported for backward compatibility. 
+This means that you don't have to change your existing working code.
 
 
 5.0 Debugging
 -------------
 
-The timers have built-in debugging information. To activate it you only need to define TIMER_DEBUG (recompile ser with make CC_EXTRA_OPTS=-DTIMER_DEBUG all).
+The timers have built-in debugging information. To activate it you only need to
+define TIMER_DEBUG (recompile Kamailio with make CC_EXTRA_OPTS=-DTIMER_DEBUG all).
 The timer debug log level is by default L_WARN. [ FIXME: add it as script option]
 TIMER_DEBUG enables extra sanity checks and it will log a lot of information
  (like the caller of timer_* functions, where a timer was added a.s.o).

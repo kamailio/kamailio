@@ -1,23 +1,23 @@
-# $Id$
-#
-# SIP-router git commit rules
-
+Kamailio git commit rules
+=========================
 
 1. Changing other people's code:
 --------------------------------
- - send a patch to the code/module mantainer and/or sr-dev (don't commit changes to code you don't own if you don't have the mantainer's approval)
+ - send a patch to the code/module mantainer and/or sr-dev 
+   (don't commit changes to code you don't own if you don't have the mantainer's approval)
 Exceptions:
  a. compilation (this includes warning) fixes
  b. bug fixes
- c. api changes (some external functions definitions change)
+ c. API changes (some external functions definitions change)
  d. small changes due to a new release in the very near future (allowed only for the release manager)
 
 2. Code requirements
 --------------------
 2.1 Unstable branch:
- - the code must compile (at least on one architecture). If the code does not compile, but you still want to commit it, comment it out (#if 0 ... #endif)
+ - the code must compile (at least on one architecture). If the code does not compile, 
+   but you still want to commit it, comment it out (#if 0 ... #endif)
  - the code should compile without warnings (with -Wall) (exceptions: very difficult to avoid warnings)
- - follow SIP-router coding style
+ - follow Kamailio coding style
 
 2.2. Stable branch (everything for unstable branch +)
 ------------------------------------------------------

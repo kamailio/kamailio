@@ -7,7 +7,7 @@
                          Ondrej Martinek <ondra@iptel.org>
                                               January 2009
 
-This document contains the short description of the logging API in SIP-router
+This document contains the short description of the logging API in Kamailio
 for developers.
 
 Source files:
@@ -121,7 +121,7 @@ Source files:
 !!! IMPORTANT! READ ME!
 !!!
 !!!  These changes (mainly the first two) require reformating of the most log
-!!!  messages in SIP-router core and module source files.  This step can be done
+!!!  messages in Kamailio core and module source files.  This step can be done
 !!!  automatically by running "scripts/logging/fix-logs-all" script BUT it
 !!!  was NOT originally performed because it would have generated too many
 !!!  changes in CVS which was discouraged by Andrei.  Instead, the developers
@@ -130,5 +130,3 @@ Source files:
 !!! IMPORTANT! READ ME!
 !!!  
 
---
-$Id$

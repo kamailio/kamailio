@@ -1,17 +1,11 @@
-# $Id$
-#
-# History:
-# --------
-# 2006-01-26  created by andrei
-
-SIP-router TCP Tunning/monitoring for lots of open connections
+Kamailio TCP Tunning/monitoring for lots of open connections
 ==============================================================
 
 0. Introduction
 ----------------
 
 This document describes very briefly various settings that should improve
-sip-router+TCP performance for sites handling a lot of TCP traffic (> 1000 open
+Kamailio TCP performance for sites handling a lot of TCP traffic (> 1000 open
 connections or very high connection/disconnection rates).
 
 For now it deals only with Linux specific optimizations.
@@ -77,7 +71,6 @@ iptables  - remove the ip_conntrack module (it limits the maximum tcp
   all the iptables modules.
 
 
-
 2. Monitoring (values to watch for)
 -----------------------------------
 
@@ -96,15 +89,15 @@ fs.inode-state  -  format: nr. allocated, nr. free, preshrink
 /proc/net/sockstat
 
 
-3. Sip-router settings
+3. Kamailio settings
 ----------------------
 
 - Don't forget to increase tcp_max_connections and the amount of shared memory
-- You should increase the number of ser "tcp_children" processes (-N no)
+- You should increase the number of Kamailio "tcp_children" processes (-N no)
   As a rule of thumb, (maximum simultaneous connections)/2000 should be ok
 - You might have to decrease TCP_BUF_SIZE to a smaller value (e.g 8K)
 - You might want to increase PKG_MEM_POOL_SIZE (for large queues)
 
-- You might need to increase the maximum open fds limit before starting ser
+- You might need to increase the maximum open fds limit before starting Kamailio
   (e.g. ulimit -n 1000000)
 

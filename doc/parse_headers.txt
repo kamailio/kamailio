@@ -1,5 +1,3 @@
-# $Id$
-#
 # parse headers api changes
 #
 # 2004.02.23  created (andrei)

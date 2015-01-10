@@ -1,27 +1,22 @@
-# $Id$
-#
-# History:
-# --------
-# 2006-09-08  created by andrei
-# 2007-06-18  added naptr & friends, dns_srv_lb, more compile options (andrei)
-#
 
-SIP-router and DNS Overview
+Kamailio and DNS Overview
 ---------------------------
 
- The dns subsystem in sip-router can either directly use libresolv and a combination
-  of the locally configured dns server, /etc/hosts and the local Network 
+ The DNS subsystem in Kamailio can either directly use libresolv and a combination
+  of the locally configured DNS server, /etc/hosts and the local Network 
   Information Service (NIS/YP a.s.o) or cache the query results (both positive
   and negative) and look first in its internal cache.
- When its internal dns cache is enabled, sip-router can also use dns failover: if
-  one destination resolves to multiple addresses sip-router can try all of them until
+
+ When its internal DNS cache is enabled, Kamailio can also use DNS failover: if
+  one destination resolves to multiple addresses Kamailio can try all of them until
   it finds one to which it can successfully send the packet or it exhausts all 
-  of them. sip-router (The tm module to be more precise) uses the DNS failover also 
+  of them. Kamailio (The tm module to be more precise) uses the DNS failover also 
   when the destination host doesn't send any reply to a forwarded invite within the
   SIP timeout interval (whose value can be configured using the tm fr_timer
   parameter).
-  When SRV based load balancing is enabled sip-router can even do DNS based load 
-  balancing (see RFC2782 and the dns_srv_lb option below).
+  When SRV based load balancing is enabled Kamailio can even do DNS based load 
+  balancing (see RFC2782 and the dns_srv_lb option below). This is using the
+  weight value in the DNS SRV record.
 
 
 DNS Cache and Failover Drawbacks
@@ -29,18 +24,18 @@ DNS Cache and Failover Drawbacks
 
  Using the DNS cache and the DNS failover has also some drawbacks: 
 
-  1. only the locally configured DNS server (usually in /etc/resolv.conf) is
-  used for the requests (/etc/hosts and the local Network Information Service
-  are ignored). 
-     Workaround: disable the dns cache (use_dns_cache=off or compile without -DUSE_DNS_CACHE).
+  1. Only the locally configured DNS server (usually in /etc/resolv.conf) is
+     used for the requests (/etc/hosts and the local Network Information Service
+     are ignored). 
+     Workaround: disable the DNS cache (use_dns_cache=off or compile without -DUSE_DNS_CACHE).
 
-  2. the DNS cache uses extra memory
+  2. The DNS cache uses extra memory
       Workaround: disable the DNS cache.
 
-  3. the DNS failover introduces a very small performance penalty 
+  3. The DNS failover introduces a very small performance penalty 
      Workaround: disable the DNS failover (use_dns_failover=off).
 
-  4. the DNS failover increases the memory usage (the internal structures
+  4. The DNS failover increases the memory usage (the internal structures
      used to represent the transaction are bigger when the DNS failover support is
      compiled).
      Workaround: compile without DNS failover support (-DUSE_DNS_FAILOVER).
@@ -49,9 +44,9 @@ DNS Cache and Failover Drawbacks
  
  On the other hand using the DNS cache saves lots of DNS queries and makes
  DNS based failover and DNS based load balancing possible. If the destination
- blacklist is enabled, sip-router can do failover even if forwarding in stateless 
+ blacklist is enabled, Kamailio can do failover even if forwarding in stateless 
  mode.
- In the ideal case with the DNS cache enabled sip-router will do only one query for
+ In the ideal case with the DNS cache enabled Kamailio will do only one query for
  a NAPTR (if enabled) or SRV lookup and then it will use the results for the
  record's TTL (for example if all the resulting records have 1 minute TTL,
  the server won't make another query for this domain for 1 minute). Even negative
@@ -64,29 +59,29 @@ DNS Cache and Failover Drawbacks
 DNS Resolver Options
 --------------------
 
- The DNS resolver options control how sip-router will interact with the external
+ The DNS resolver options control how Kamailio will interact with the external
  DNS servers. These options (with the dns_try_ipv6 exception) are passed to
- libresolv and are used each time a dns request is made.
+ libresolv and are used each time a DNS request is made.
 
  The default values are system specific and generally depend on the
  /etc/resolv.conf content. For servers doing a lot of DNS requests it is
- highly recommended to change the default values in the sip-router config file
-  (even if using sip-router's internal dns cache).
+ highly recommended to change the default values in the Kamailio config file
+  (even if using Kamailio's internal DNS cache).
 
-   dns_try_ipv6 = on | off - if on and sip-router listens on at least one ipv6 socket,
+   dns_try_ipv6 = on | off - if on and Kamailio listens on at least one ipv6 socket,
       ipv6 (AAAA) lookups will be performed if the ipv4 (A) lookups fail. 
       If off only ipv4 (A) lookups will be used.
-      Default: on if sip-router is compiled with ipv6 support.
+      Default: on if Kamailio is compiled with ipv6 support.
 
-   dns_try_naptr = on | off - if on sip-router will first try a NAPTR lookup for
+   dns_try_naptr = on | off - if on Kamailio will first try a NAPTR lookup for
       destinations that don't have the protocol or port specified and 
       are not simple ip addresses (as described in RFC 3263). This will 
       introduce a slight performance penalty and will probably cause extra
       DNS lookups. For example a lookup for a non-existing domain will
       produce one extra query: NAPTR(domain), SRV(_sip._udp.domain) 
       and A/AAAA(domain).
-      If the result of a query contains several NAPTR records, sip-router will select
-      among them according to the RFC2915 and sip-router preference towards a
+      If the result of a query contains several NAPTR records, Kamailio will select
+      among them according to the RFC2915 and Kamailio preference towards a
       specific protocol (see dns_udp_pref, dns_tcp_pref and dns_tls_pref 
       below). For an RFC3263 compliant configuration (choose the remote side
       preferred protocol if supported), set dns_udp_pref, dns_tcp_pref and
@@ -96,17 +91,17 @@ DNS Resolver Options
    dns_udp_pref = number - udp protocol preference when doing NAPTR lookups.
       This option works together with dns_tcp_pref, dns_tls_pref and 
       dns_sctp_pref. If all this options have the same positive value and more
-      NAPTR records are available, ser will select the NAPTR record preferred
+      NAPTR records are available, Kamailio will select the NAPTR record preferred
       by the remote side (according to RFC2915). If the values are positive
-      but different, ser will select the NAPTR record whose protocol it
+      but different, Kamailio will select the NAPTR record whose protocol it
       prefers the most (the protocol with the highest dns_<proto>_pref
       number). If there are several NAPTR records with the same preferred
-      protocol, ser will select among them based on their order and preference
+      protocol, Kamailio will select among them based on their order and preference
       (see RFC2915).
       To completely disable selecting a specific protocol, use  a negative
       number. For example dns_tcp_pref=-1 will completely disable selection
       of tcp NAPTR records, even if this will result in the NAPTR lookup
-      failure. Note: if a protocol is disabled in ser (e.g. tls_disable=1)
+      failure. Note: if a protocol is disabled in Kamailio (e.g. tls_disable=1)
       the corresponding NAPTR records selection will be also disabled,
       irrespective of the dns_<proto>_preference value.
       Default: dns_udp_pref=30, dns_tcp_pref=20,  dns_tls_pref=10 and 
@@ -121,14 +116,14 @@ DNS Resolver Options
 
    dns_sctp_pref = number (see dns_udp_pref above)
 
-   dns_retr_time = time - time in s before retrying a dns request.
+   dns_retr_time = time - time in s before retrying a DNS request.
       Default: system specific, depends also on the/etc/resolv.conf content
       (usually 5 s).
 
-   dns_retr_no = no. - number of dns retransmissions before giving up.
+   dns_retr_no = no. - number of DNS retransmissions before giving up.
       Default: see above (usually 4)
 
-   dns_servers_no = no. - how many dns servers from the ones defined in 
+   dns_servers_no = no. - how many DNS servers from the ones defined in 
       /etc/resolv.conf will be used. Default: all of them.
 
    dns_use_search_list= yes/no - if no, the search list in /etc/resolv.conf
@@ -137,7 +132,7 @@ DNS Resolver Options
       HINT: even if you don't have a search list defined, setting this option
       to "no" will still be "faster", because an empty search list is in 
       fact search "" (so even if the search list is empty/missing there will
-      still be 2 dns queries, eg. foo+'.' and foo+""+'.')
+      still be 2 DNS queries, eg. foo+'.' and foo+""+'.')
 
    dns_search_full_match = yes/no - controls the check of the name part
       which is found in the answer expanding the searched name before
@@ -147,11 +142,11 @@ DNS Resolver Options
       If set to no - no additional check is done.
       If set to yes - the additional part is checked against the search list.
 
- The maximum time a dns request can take (before failing) is:
- (dns_retr_time*dns_retr_no)*(search_list_domains) If dns_try_ipv6 is yes,
+ The maximum time a DNS request can take (before failing) is:
+ (dns_retr_time*dns_retr_no) * (search_list_domains) If dns_try_ipv6 is yes,
  mutliply it again by 2.
 
- The option combination that produces the "fastest" dns resolver config
+ The option combination that produces the "fastest" DNS resolver config
   (the "faster" in the sense that it gives up the quickest) is:
 
       dns_try_ipv6=no
@@ -160,19 +155,19 @@ DNS Resolver Options
       dns_servers_no=1
       dns_use_search_list=no
 
- The recommended dns configuration is to have a "close" dns caching recursive
- server configured in /etc/resolv.conf, set the dns resolver options in ser's
- config as in the above example and enable the dns cache (in ser).
+ The recommended DNS configuration is to have a "close" DNS caching recursive
+ server configured in /etc/resolv.conf, set the DNS resolver options in Kamailio's
+ config as in the above example and enable the DNS cache (in Kamailio).
  Pay particular attention to dns_servers_no and dns_use_search_list. It's a
  good idea to make sure you don't need / use the search list or more then one
- dns server (to avoid unnecessary extra lookups).
+ DNS server (to avoid unnecessary extra lookups).
 
 
 DNS Resolver Compile Options
 ----------------------------
 
    USE_NAPTR - if defined the naptr lookup support will be compiled in.
-      NAPTR support still has to be enabled from ser's config file (it's
+      NAPTR support still has to be enabled from Kamailio's config file (it's
       off by default).
 
    RESOLVE_DBG - if defined, the resolver will be very verbose: it will log
@@ -185,8 +180,8 @@ DNS Resolver Compile Options
 DNS Cache and Failover Config Variables
 ---------------------------------------
 
-   use_dns_cache = on | off - if off the dns cache won't be used (all dns
-      lookups will result into a dns request).  When on all the dns request
+   use_dns_cache = on | off - if off the DNS cache won't be used (all dns
+      lookups will result into a DNS request).  When on all the DNS request
       results will be cached.
       WARNING: when enabled /etc/hosts will be completely bypassed, all the dns
       request will go directly to the system configured (resolv.conf) dns
@@ -200,17 +195,17 @@ DNS Cache and Failover Config Variables
       re-tried using the next ip/record. In tm's case a new branch will be
       created for each new send attempt.
       Default: off.
-   Depends on use_dns_cache being on. If tm is used along with dns failover is
+   Depends on use_dns_cache being on. If tm is used along with DNS failover is
    recommended to also turn on dst_blacklist.
 
    dns_srv_lb = on | off or
-   dns_srv_loadbalancing = on | off - if on instead of doing simple dns 
-        failover (like above), ser will load balance requests to different srv
-        records of the same priority based on the srv records weights (like 
+   dns_srv_loadbalancing = on | off - if on instead of doing simple DNS 
+        failover (like above), Kamailio will load balance requests to different srv
+        records of the same priority based on the SRV records weights (like 
         described in RFC2782). For a destination which has different priorities
-        for all its srv records, this option will be equivalent with simple
-        dns failover.
-        Note: this option requires having dns failover enabled (see 
+        for all its SRV records, this option will be equivalent with simple
+        DNS failover.
+        Note: this option requires having DNS failover enabled (see 
         use_dns_failover above).
         Default: off.
 
@@ -229,13 +224,13 @@ DNS Cache and Failover Config Variables
    dns_tls_pref =  number - shared with the resolver (see resolver 
         description).
 
-   dns_cache_flags = dns cache specific resolver flags, used for overriding
+   dns_cache_flags = DNS cache specific resolver flags, used for overriding
      the default behaviour (low level).
       Possible values:
-         1 - ipv4 only: only DNS A requests are performed, even if ser listens
+         1 - ipv4 only: only DNS A requests are performed, even if Kamailio listens
                         also on ipv6 addresses.
          2 - ipv6 only: only DNS AAAA requests are performed. Ignored if
-                        dns_try_ipv6 is off or ser doesn't listen on any ipv6
+                        dns_try_ipv6 is off or Kamailio doesn't listen on any ipv6
                         address.
          4 - prefer ipv6: try first to resolve a host name to an ipv6 address
                           (DNS AAAA request) and only if this fails try an ipv4
@@ -257,10 +252,10 @@ DNS Cache and Failover Config Variables
       dns_cache_max_ttl will be used instead.
       Default: MAXINT
 
-   dns_cache_mem = maximum memory used for the dns cache in Kb.
+   dns_cache_mem = maximum memory used for the DNS cache in Kb.
       Default: 500 Kb
 
-   dns_cache_gc_interval = how often (in s) the dns cache will be garbage 
+   dns_cache_gc_interval = how often (in s) the DNS cache will be garbage 
       collected.
       Default:  120 s.
       
@@ -270,37 +265,37 @@ DNS Cache and Failover Config Variables
       ones. The last-recently used entries are deleted first.
       Default: no
 
-   dns_cache_init = on | off - if off, the dns cache is not initialized
+   dns_cache_init = on | off - if off, the DNS cache is not initialized
       at startup and cannot be enabled runtime, that saves some memory.
       Default: on
 
 DNS Cache Compile Options
 -------------------------
 
-   USE_DNS_CACHE - if defined the dns cache support will be compiled in 
+   USE_DNS_CACHE - if defined the DNS cache support will be compiled in 
       (default). If not needed/wanted the dns_cache can be disabled from the
-      ser's config file. The only advantages for not compiling the dns cache
+      Kamailio's config file. The only advantages for not compiling the DNS cache
       support is a slight decrease of the executable size and an extremely 
-      small performance increase (1 less comparison per dns request).
+      small performance increase (1 less comparison per DNS request).
 
-   USE_DNS_FAILOVER - if defined the dns failover support will be compiled in.
-      (default). Compiling the dns failover support has a few disadvantages,
+   USE_DNS_FAILOVER - if defined the DNS failover support will be compiled in.
+      (default). Compiling the DNS failover support has a few disadvantages,
       see the "Drawbacks" section.
 
    DNS_SRV_LB  - if defined (default) support for load balancing using 
-       srv records weights (as described in RFC2782) will be compiled in.
-       Note however that it still must be enabled from the ser config, it's
+       SRV records weights (as described in RFC2782) will be compiled in.
+       Note however that it still must be enabled from the Kamailio config, it's
        disabled by default (see the dns_srv_lb config option).
 
    USE_NAPTR  - (shared with the resolver)  if defined NAPTR support will
        be compiled in (default). Note that even if compiled, NAPTR support
-       must be enabled also from the ser config (see the dns_try_naptr option).
+       must be enabled also from the Kamailio config (see the dns_try_naptr option).
 
    NAPTR_CACHE_ALL_ARS - if defined all the additional records in a NAPTR
-       answer will be cached. Normally ser would cache only "related" records
+       answer will be cached. Normally Kamailio would cache only "related" records
        (records that are directly referred), but for answers with lots of 
         A/AAAA records it might happen that not all of the SRV records will fit
-       in the AR section. In this case, without this compile option ser will 
+       in the AR section. In this case, without this compile option Kamailio will 
        not cache the un-referred A/AAAA records. BY default this option is
        disabled.
 
@@ -312,10 +307,10 @@ DNS Cache Compile Options
        If this option is not defined (experimental), everything in the AR
        section will be added to the cache.
 
-   DNS_CACHE_DEBUG - if defined the dns cache will be very verbose (it will
+   DNS_CACHE_DEBUG - if defined the DNS cache will be very verbose (it will
        log lots of messages at the L_DBG levell).
  
- Note: To remove a compile options,  edit sip-router's Makefile.defs and remove it 
+ Note: To remove a compile options,  edit Kamailio's Makefile.defs and remove it 
    from DEFS list. To add a compile options add it to the make command line,
      e.g.: make proper; make all extra_defs=-DUSE_DNS_FAILOVER
    or for a permanent solution, edit Makefile.defs and add it to DEFS 

@@ -1,6 +1,4 @@
-# $Id$
-#
-# SIP-router Coding Style
+# Kamailio Coding Style
 #
 #  2004-06-07  Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.franhofer.de>
 
@@ -47,7 +45,7 @@ Doxygen
 -------
 - try to always add doxygen comments to functions and variables declared in your code. 
   Especially remember to document public functions, functions and structures
-  that are part of the SIP-router API.
+  that are part of the Kamailio API.
 - each file needs a declaration of the purpose of the file in the \file section
 
 If you are editing someone elses code, try to use his coding conventions

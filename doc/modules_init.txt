@@ -1,12 +1,5 @@
-#$Id$
-#
-#
-# History
-#--------
-#  2007-06-07  created by Andrei Pelinescu <andrei@iptel.org>
-#
 
-SIP-router Module intialization description
+Kamailio Module intialization description
 ===========================================
 
 This document is a very brief overview on what possibilities are for a module
@@ -24,21 +17,21 @@ mod_init is called after parsing the config, loading all the modules and
 going into daemon mode. mod_init is called in the main process context,
 before changing the uid or gid (so if you want to do something requiring
 higher privileges this is the place to do it). This is not the right place
-to fork more SIP-router processes, but instead is the only place where one can 
+to fork more Kamailio processes, but instead is the only place where one can 
 register future forked processes (see register_procs()).
 
 mod_init is ideal for initializing per process variables, assuming that you
-don't need different values for each SIP-router child (in which case see 
+don't need different values for each Kamailio child (in which case see 
 mod_child_init below) and shared memory variables assuming that you don't 
-need SIP-router's number of processes (which is not available at this point).
+need Kamailio's number of processes (which is not available at this point).
 
 
 mod_child_init
 ---------------
 
-mod_child_init is called for each forked SIP-router process with 2 exceptions:
+mod_child_init is called for each forked Kamailio process with 2 exceptions:
  - it's called for the main process too and it's called twice
- - it's not called for SIP-router processes forked with PROC_NOCHLDINIT
+ - it's not called for Kamailio processes forked with PROC_NOCHLDINIT
 
 mod_child_init is always called after mod_init. It takes one parameter, the
  process rank. This parameter can be used to differentiate between normal
@@ -48,7 +41,7 @@ There are two very special rank values: PROC_INIT (as of 2007-06-06) and
 mod_child_init(PROC_INIT) is the first mod_child_init call made, and it's
  guaranteed to happen before any child process is forked. The process context
   is the "main" process (as for mod_init), but this time we have a little bit
- more information: we know the number of SIP-router processes. This is the right
+ more information: we know the number of Kamailio processes. This is the right
   place to initialize things like shared arrays[get_max_procs()].
 Note also that everything done here will be inherited in all the future
  children processes (since it's executed in the "main" process context before
@@ -56,14 +49,14 @@ Note also that everything done here will be inherited in all the future
 
 mod_child_init(PROC_MAIN) is another call that is done in the same "main"
  process context. This call happens just before initializing the main tcp
-  process. This is the only right place for forking more SIP-router processes
+  process. This is the only right place for forking more Kamailio processes
   (see fork_process()). WARNING: the context is the same "main" process as
  for mod_child_init(PROC_INIT) and mod_init() so care must be taken not to
  initialize things twice or three times for the "main" process.
 
 Except for the "main" process case mod_child_init(rank) will be called only
 once for each new child process, just after forking. A positive non-zero rank
- means the current process is a normal SIP-router process and a negative rank has
+ means the current process is a normal Kamailio process and a negative rank has
   some special meaning (grep PROC_ sr_module.h for more info).
 mod_child_init(rank) is the best place for initializing per process variables,
  opening per process database connections, new sockets a.s.o. Note however
@@ -76,7 +69,7 @@ mod_child_init(rank) is the best place for initializing per process variables,
 mod_child_init in the no-fork case
 ----------------------------------
 
-If SIP-router is started in no-fork mode it will try to start as few processes as
+If Kamailio is started in no-fork mode it will try to start as few processes as
 possible (as of this date it will start 3 processes the main process and the
 2 timers). In this case mod_child_init() will be called 3 times in the
 same "main" process context: mod_child_init(PROC_INIT);
@@ -84,7 +77,7 @@ mod_child_init(PROC_MAIN) and mod_child_init(1) (since the first process is
 also the "main" one).
 
 
-Forking new SIP-router processes from a module
+Forking new Kamailio processes from a module
 ---------------------------------------
 
 static int mod_init()
@@ -140,7 +133,7 @@ mod_child_init(PROC_INIT)
   process.
 
 mod_child_init(PROC_MAIN)
- - the only place from where another SIP-router process can be forked 
+ - the only place from where another Kamailio process can be forked 
    (see fork_process  ()), but remember first to register the number of 
    to-be-forked processes in mod_init()
 

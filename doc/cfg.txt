@@ -1,9 +1,3 @@
-# $Id$
-#
-# History:
-# --------
-# 2007-12-06:	Created by Miklos
-
 SIP-router Configuration Framework
 
 1. Overview

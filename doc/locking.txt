@@ -1,19 +1,12 @@
-# $Id$
-#
-# History:
-#---------
-#  2003-03-11  created by andrei
-#  2006-04-04  minor archs updates, added lock_try(..)  (andrei)
 
-
-SIP-router locking interface
+Kamailio locking interface
 ============================
 
 1. Why use it?
 --------------
 
 The main reason for creating it was to have a single transparent interface to various locking methods. 
-For example right now SIP-router uses the following locking methods, depending on their availability on the 
+For example right now Kamailio uses the following locking methods, depending on their availability on the 
 target system:
 	FAST_LOCK - fast inline assembly locks, defined in fast_lock.h. They are currently available for 
 	x86, x86_64, sparc, sparc64, arm , armv6 (no smp mode supported yet), ppc, ppc64, mips, mips64 
@@ -39,7 +32,7 @@ target system:
 -----------------
 
 First of all you have to include locking.h. Then when compiling the code one or all of FAST_LOCK, 
-USE_PTHREAD_MUTEX, USE_PTHREAD_SEM or USE_SYSV_SEM must be defined (the SIP-router Makefile.defs takes 
+USE_PTHREAD_MUTEX, USE_PTHREAD_SEM or USE_SYSV_SEM must be defined (the Kamailio Makefile.defs takes 
 care of this, you should need to change it only for new arhitectures or compilers).
 
 locking.h defines 2 new types: gen_lock_t and lock_set_t.

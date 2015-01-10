@@ -1,7 +1,7 @@
-Management API's in SIP-router
+Management API's in Kamailio
 ------------------------------
 
-SIP-router has an API based on RPC. This allows modules and core to expose commands that can be 
+Kamailio has an API based on RPC. This allows modules and core to expose commands that can be 
 issued by external applications. Commands can change states, read status variables or expose
 internal structures.
 
@@ -14,7 +14,7 @@ you can adapt the interface to one of several protocols supported:
 
 The MI interfaces can often run over Unix fifo sockets, UDP or TCP connections.
 
-The "sercmd" application is the command line tool used to connect to SIP-router
+The "kamcmd" application is the command line tool used to connect to Kamailio
 over the command line. Use it to discover available commands.
 
 For backwards compatibilty, the kamctrl and kamdbctrl commands are still supported.
@@ -25,7 +25,7 @@ web site in the wiki section.
 Modules
 -------
 
-mi_rpc		Exports Kamailio's MI interface over SIP-router's RPC interface
+mi_rpc		Exports Kamailio's MI interface over Kamailio's RPC interface
 xmlrpc		Exports the RPC interface using XML-rpc
 ctl		Implements the binrpc transport interface for SER rpcs
 		Also implements the old SER fifo-based management interface.

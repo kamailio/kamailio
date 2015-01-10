@@ -1,5 +1,3 @@
-$Id$
-
 iptel.org SIP Express Router (SER) is a high-performance, 
 configurable, free server implementing Session Initiation 
 Protocol (SIP, RFC3216). SIP is a signaling protocol that 
