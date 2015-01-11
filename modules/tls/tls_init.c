@@ -519,11 +519,11 @@ int init_tls_h(void)
 	 * (e.g. 0.9.8a & 0.9.8c are ok, but 0.9.8 and 0.9.9x are not) */
 	if ((ssl_version>>8)!=(OPENSSL_VERSION_NUMBER>>8)){
 		LOG(L_CRIT, "ERROR: tls: init_tls_h: installed openssl library "
-				"version is too different from the library the ser tls module "
+				"version is too different from the library the Kamailio tls module "
 				"was compiled with: installed \"%s\" (0x%08lx), compiled "
 				"\"%s\" (0x%08lx).\n"
 				" Please make sure a compatible version is used"
-				" (tls_force_run in ser.cfg will override this check)\n",
+				" (tls_force_run in kamailio.cfg will override this check)\n",
 				SSLeay_version(SSLEAY_VERSION), ssl_version,
 				OPENSSL_VERSION_TEXT, (long)OPENSSL_VERSION_NUMBER);
 		if (cfg_get(tls, tls_cfg, force_run))
@@ -572,8 +572,8 @@ int init_tls_h(void)
 		if (lib_kerberos!=-1){
 			LOG(L_CRIT, "ERROR: tls: init_tls_h: openssl compile options"
 						" mismatch: library has kerberos support"
-						" %s and ser tls %s (unstable configuration)\n"
-						" (tls_force_run in ser.cfg will override this"
+						" %s and Kamailio tls %s (unstable configuration)\n"
+						" (tls_force_run in kamailio.cfg will override this"
 						" check)\n",
 						lib_kerberos?"enabled":"disabled",
 						kerberos_support?"enabled":"disabled"
@@ -624,7 +624,7 @@ int init_tls_h(void)
 				low_mem_threshold1, low_mem_threshold2);
 	
 	if (shm_available()==(unsigned long)(-1)){
-		LOG(L_WARN, "tls: ser compiled without MALLOC_STATS support:"
+		LOG(L_WARN, "tls: Kamailio is compiled without MALLOC_STATS support:"
 				" the workaround for low mem. openssl bugs will _not_ "
 				"work\n");
 		low_mem_threshold1=0;
