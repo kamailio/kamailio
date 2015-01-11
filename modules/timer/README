@@ -1,4 +1,3 @@
-
 timer module
 
 Tomas Mandys
@@ -6,7 +5,7 @@ Tomas Mandys
    Iptel.org
 
    Copyright © 2007 iptelorg GmbH
-     _________________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
@@ -21,9 +20,9 @@ Tomas Mandys
 
         5. Functions
 
-              5.1. timer_enable(timer_id, enable_disable) 
-              5.2. @timer.timer.timer_id.enabled 
-              5.3. @timer.executed 
+              5.1. timer_enable(timer_id, enable_disable)
+              5.2. @timer.timer.timer_id.enabled
+              5.3. @timer.executed
 
         6. Examples
 
@@ -49,9 +48,9 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. timer_enable(timer_id, enable_disable) 
-        5.2. @timer.timer.timer_id.enabled 
-        5.3. @timer.executed 
+        5.1. timer_enable(timer_id, enable_disable)
+        5.2. @timer.timer.timer_id.enabled
+        5.3. @timer.executed
 
    6. Examples
 
@@ -67,8 +66,8 @@ Chapter 1. Admin Guide
 
         timer_id = alphanum
         slow_fast = "slow" | "fast"
-        declare_timer_syntax = timer_id "=" (route#|route_name) "," interval ",
-" slow_fast "," ["enable"]
+        declare_timer_syntax = timer_id "=" (route#|route_name) "," interval ","
+ slow_fast "," ["enable"]
         enable_disable = "0" | "1"
 
 4. Parameters
@@ -83,31 +82,31 @@ Chapter 1. Admin Guide
                         declare_timer = declare_timer_syntax
 
    timer_id is timer identifier, route is handler to be called when timer
-   is  triggered,  interval  is timer interval in milliseconds, slow_fast
+   is triggered, interval is timer interval in milliseconds, slow_fast
    determines if handler will be hooked in slow or fast timer queue, fast
-   timer  handler  returns as quickly as possible, slow timer handler may
-   spend longer time, see ser/doc/timers.txt documentation. Use enable to
-   enable timer when ser is starting, otherwise use timer_enable to start
-   it later.
+   timer handler returns as quickly as possible, slow timer handler may
+   spend longer time, see kamailio/doc/timers.txt documentation. Use
+   enable to enable timer when Kamailio is starting, otherwise use
+   timer_enable to start it later.
 
    Example 1.1. Example declare_timer
         ...
-        modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,ena
-ble");
+        modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,enab
+le");
         ...
 
 5. Functions
 
-   5.1. timer_enable(timer_id, enable_disable) 
-   5.2. @timer.timer.timer_id.enabled 
-   5.3. @timer.executed 
+   5.1. timer_enable(timer_id, enable_disable)
+   5.2. @timer.timer.timer_id.enabled
+   5.3. @timer.executed
 
-5.1.  timer_enable(timer_id, enable_disable)
+5.1. timer_enable(timer_id, enable_disable)
 
-   Enable/disable  timer  route  specified  by timer_id. Because of timer
-   core  API the callback is not disabled immediately but is removed from
-   handler  by itself not to decrease performance. Disabling and enabling
-   in  sequence  may  be tricky. timer_id references to timer declared by
+   Enable/disable timer route specified by timer_id. Because of timer core
+   API the callback is not disabled immediately but is removed from
+   handler by itself not to decrease performance. Disabling and enabling
+   in sequence may be tricky. timer_id references to timer declared by
    declare_timer.
 
    Example 1.2. timer_enable usage
@@ -115,7 +114,7 @@ ble");
         timer_enable("MY_TIMER", 1);
         ...
 
-5.2.  @timer.timer.timer_id.enabled
+5.2. @timer.timer.timer_id.enabled
 
    Return true ("1") if timer specified by timer_id is enabled, otherwise
    returns false ("0").
@@ -125,7 +124,7 @@ ble");
         ....
         }
 
-5.3.  @timer.executed
+5.3. @timer.executed
 
    Returns name of timer which has been executed, i.e. non empty value is
    returned only when handler is being processed.
@@ -162,9 +161,9 @@ route["ONTIMER2"] {
 
    Example 1.6. Using timer module for testing a functionality
 
-   The  timer  module may be used to test a functionality being developed
-   and  not  requiring  real  request.A  developer may put tested code in
-   route section which is called once after ser starts.
+   The timer module may be used to test a functionality being developed
+   and not requiring real request.A developer may put tested code in route
+   section which is called once after Kamailio starts.
 loadmodule "timer";
 loadmodule "xprint";
 

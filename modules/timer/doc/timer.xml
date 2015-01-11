@@ -1,6 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <book id="timer" xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
@@ -70,8 +76,8 @@
 			<emphasis>timer_id</emphasis> is timer identifier, <emphasis>route</emphasis> is handler to be called when
 			timer is triggered, <emphasis>interval</emphasis> is timer interval in milliseconds, <emphasis>slow_fast</emphasis>
 			determines if handler will be hooked in slow or fast timer queue, fast timer handler returns
-			as quickly as possible, slow timer handler may spend longer time, see ser/doc/timers.txt documentation. Use <emphasis>enable</emphasis>
-			to enable timer when ser is starting, otherwise use <function>timer_enable</function> to start it later.		
+			as quickly as possible, slow timer handler may spend longer time, see kamailio/doc/timers.txt documentation. Use <emphasis>enable</emphasis>
+			to enable timer when &kamailio; is starting, otherwise use <function>timer_enable</function> to start it later.		
 			</para>
 			<example>
 				<title>Example <varname>declare_timer</varname></title>
@@ -188,7 +194,7 @@ route["ONTIMER2"] {
 			<para>
 				The timer module may be used to test a functionality being developed and 
 				not requiring real request.A developer may put tested code in route section
-				which is called once after ser starts.
+				which is called once after &kamailio; starts.
 			</para>
 			<programlisting>
 			
