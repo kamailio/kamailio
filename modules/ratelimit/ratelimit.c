@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * ratelimit module
  *
  * Copyright (C) 2006 Hendrik Scholz <hscholz@raisdorf.net>
@@ -22,12 +20,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
- *
- * 2008-01-10 ported from SER project (osas)
- * 2008-01-16 ported enhancements from openims project (osas)
- * 2020-04-28 add sip-router rpc interface (osas)
  */
 
 #include <stdio.h>
