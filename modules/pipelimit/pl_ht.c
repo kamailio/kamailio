@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * pipelimit module
  *
  * Copyright (C) 2006 Hendrik Scholz <hscholz@raisdorf.net>

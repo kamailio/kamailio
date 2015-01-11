@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * pipelimit module
  *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
@@ -23,11 +21,14 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
+ */
+ 
+/*! \file
+ * \ingroup pipelimit
+ * \brief pipelimit :: pl_db
  *
- * 2008-01-10 ported from SER project (osas)
- * 2008-01-16 ported enhancements from openims project (osas) 
+ */
+/*! \defgroup pipelimit Pipelimit - rate limiting using BSD pipe model
  */
 
 #include <stdio.h>

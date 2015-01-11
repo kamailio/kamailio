@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * pipelimit module
  *
  * Copyright (C) 2006 Hendrik Scholz <hscholz@raisdorf.net>
@@ -23,6 +21,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+ 
+/*! \file
+ * \ingroup pipelimit
+ * \brief pipelimit :: pl_ht
+ *
 
 #ifndef _RL_HT_H_
 #define _RL_HT_H_
