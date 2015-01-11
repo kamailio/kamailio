@@ -2153,19 +2153,6 @@ exp_elem:
 		{ $$=0; yyerror(" URI, SRCIP or DSTIP expected"); }
 	| MYSELF error	{ $$=0; yyerror ("invalid operator, == or != expected"); }
 	;
-/*
-exp_elem2:
-	rval_expr cmpop rval_expr %prec GT
-		{ $$=mk_elem( $2, RVE_ST, $1, RVE_ST, $3);}
-	|
-	rval_expr equalop rval_expr %prec EQUAL_T
-		{ $$=mk_elem( $2, RVE_ST, $1, RVE_ST, $3);}
-	| rval_expr LOG_AND rval_expr
-		{ $$=mk_exp_rve(LOGAND_OP, $1, $3);}
-	| rval_expr LOG_OR rval_expr
-		{ $$=mk_exp_rve(LOGOR_OP, $1, $3);}
-;
-*/
 
 ipnet:
 	ip SLASH ip	{ $$=mk_new_net($1, $3); }

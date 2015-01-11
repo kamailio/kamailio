@@ -83,27 +83,6 @@ error:
 }
 
 
-struct expr* mk_exp_rve(int op, void* left, void* right)
-{
-	struct expr * e;
-	e=(struct expr*)pkg_malloc(sizeof (struct expr));
-	if (e==0) goto error;
-	e->type=EXP_T;
-	e->op=op;
-	e->l.param=mk_elem(RVEXP_O, RVE_ST, left, 0, 0);
-	e->r.param=mk_elem(RVEXP_O, RVE_ST, right, 0, 0);
-	if (e->l.param==0 || e->r.param==0){
-		if (e->l.param) pkg_free(e->l.param);
-		if (e->r.param) pkg_free(e->r.param);
-		pkg_free(e);
-		goto error;
-	}
-	return e;
-error:
-	LM_CRIT("memory allocation failure\n");
-	return 0;
-}
-
 struct expr* mk_elem(int op, expr_l_type ltype, void* lparam,
 							 expr_r_type rtype, void* rparam)
 {
