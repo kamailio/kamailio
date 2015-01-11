@@ -25,7 +25,7 @@
 /*! \file
  * \ingroup pipelimit
  * \brief pipelimit :: pl_ht
- *
+ */
 
 #ifndef _RL_HT_H_
 #define _RL_HT_H_
