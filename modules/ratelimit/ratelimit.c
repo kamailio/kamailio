@@ -293,7 +293,7 @@ static int str_cpy(str * dest, str * src)
 	return 0;
 }
 
-#if defined (__OS_darwin) || defined (__OS_freebsd)
+#ifdef __OS_darwin
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #else
@@ -303,7 +303,7 @@ static int str_cpy(str * dest, str * src)
 int get_num_cpus() {
 	int count = 0;
 
-#if defined (__OS_darwin) || defined (__OS_freebsd)
+#ifdef __OS_darwin
     int nm[2];
     size_t len;
 
