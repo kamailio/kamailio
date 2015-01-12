@@ -46,7 +46,7 @@ static param_export_t params[] = {
 };
 
 struct module_exports exports = {
-	"usrloc_dmq",				/* module name */
+	"dmq_usrloc",				/* module name */
 	DEFAULT_DLFLAGS,		/* dlopen flags */
 	0,						/* exported functions */
 	params,					/* exported parameters */
@@ -63,7 +63,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-		LM_ERR("dmq_sync loaded: usrloc=%d\n", enable_usrloc);
+		LM_ERR("dmq_usrloc loaded: usrloc=%d\n", enable_usrloc);
 		
 		if (enable_usrloc) {
 			usrloc_dmq_flag = 1 << usrloc_syncflag;
@@ -86,9 +86,9 @@ static int mod_init(void)
 				}
 			}					
 			if (!usrloc_dmq_initialize()){
-				LM_DBG("usrloc_dmq initialized\n");
+				LM_DBG("dmq_usrloc initialized\n");
 			} else {
-				LM_ERR("Error in usrloc_dmq_initialize()\n");
+				LM_ERR("Error in dmq_usrloc_initialize()\n");
 			}
 		}
 		return 0;

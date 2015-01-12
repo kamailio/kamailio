@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-	<title>usrloc_dmq Module</title>
+	<title>dmq_usrloc Module</title>
 	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 	    <author>
@@ -42,7 +42,7 @@
     </bookinfo>
     <toc></toc>
     
-    <xi:include href="usrloc_dmq_admin.xml"/>
+    <xi:include href="dmq_usrloc_admin.xml"/>
     
     
 </book>

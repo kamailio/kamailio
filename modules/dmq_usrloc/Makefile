@@ -1,6 +1,6 @@
 include ../../Makefile.defs
 auto_gen=
-NAME=usrloc_dmq.so
+NAME=dmq_usrloc.so
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 

@@ -65,7 +65,7 @@
 		<title>Set <varname>flag</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc_dmq", "flag", 2)
+modparam("dmq_usrloc", "flag", 2)
 ...
 </programlisting>
 		</example>

@@ -1,4 +1,4 @@
-usrloc_dmq Module
+dmq_usrloc Module
 
 Andrey Rybkin
 
@@ -82,5 +82,5 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set flag parameter
 ...
-modparam("usrloc_dmq", "flag", 2)
+modparam("dmq_usrloc", "flag", 2)
 ...
