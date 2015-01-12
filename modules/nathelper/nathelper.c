@@ -352,6 +352,7 @@ static int_str rcv_avp_name;
 
 static char *natping_socket = 0;
 static int udpping_from_path = 0;
+static int sdp_oldmediaip = 1;
 static int raw_sock = -1;
 static unsigned int raw_ip = 0;
 static unsigned short raw_port = 0;
@@ -424,6 +425,7 @@ static param_export_t params[] = {
 	{"natping_socket",        PARAM_STRING, &natping_socket        },
 	{"keepalive_timeout",     INT_PARAM, &nh_keepalive_timeout  },
 	{"udpping_from_path",     INT_PARAM, &udpping_from_path     },
+	{"append_sdp_oldmediaip", INT_PARAM, &sdp_oldmediaip        },
 
 	{0, 0, 0}
 };
@@ -1668,7 +1670,7 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 		}
 		body2.s = oldip.s + oldip.len;
 		body2.len = bodylimit - body2.s;
-		ret = alter_mediaip(msg, &body1, &oldip, pf, &newip, pf,1);
+		ret = alter_mediaip(msg, &body1, &oldip, pf, &newip, pf, sdp_oldmediaip);
 		if (ret == -1) {
 			LM_ERR("can't alter '%s' IP\n",line);
 			return -1;

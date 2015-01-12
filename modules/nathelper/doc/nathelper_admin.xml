@@ -420,6 +420,25 @@ modparam("nathelper", "udpping_from_path", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="nathelper.p.append_sdp_oldmediaip">
+		<title><varname>append_sdp_oldmediaip</varname> (int)</title>
+		<para>
+		The parameter controls if oldmediaip field should be appended to the SDP.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote> (feature enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>append_sdp_oldmediaip</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "append_sdp_oldmediaip", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 
