@@ -70,7 +70,7 @@
 		<title><varname>workers</varname> (int)</title>
 		<para>
 			Number of worker processes to be started to handle the asynchronous
-			tasks.
+			tasks for async_route() and async_sleep(). 
 		</para>
 		<para>
 		<emphasis>
@@ -173,6 +173,20 @@ exit;
 		framework. The task is executed as soon as a process from asynchronous
 		framework is idle, there is no wait time for the task like for
 		async_route(...).
+		</para>
+		<para>
+		To enable the core asynchronous framework, you need to set the
+		<emphasis>async_workers</emphasis> core parameter in the configuration
+		file. See the core cookbook for more information.
+		<example>
+		<title><function>async_workers</function> usage</title>
+		<programlisting format="linespecific">
+...
+; Enable 8 worker processes used by async and other modules
+async_workers=8
+...
+</programlisting>
+	    </example>
 		</para>
 		<para>
 		In case of internal errors, the function returns false, otherwise the
