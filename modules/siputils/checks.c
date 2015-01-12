@@ -417,7 +417,7 @@ static inline int e164_check(str* _user)
 	char c;
 
 	if ((_user->len > 2) && (_user->len < 17) && ((_user->s)[0] == '+')) {
-		for (i = 1; i <= _user->len; i++) {
+		for (i = 1; i < _user->len; i++) {
 			c = (_user->s)[i];
 			if (c < '0' || c > '9') return -1;
 		}
