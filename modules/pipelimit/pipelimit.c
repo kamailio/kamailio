@@ -176,7 +176,7 @@ struct module_exports exports= {
 };
 
 
-#if defined (__OS_darwin) || defined (__OS_freebsd)
+#ifdef __OS_darwin
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #else
@@ -186,7 +186,7 @@ struct module_exports exports= {
 int get_num_cpus() {
 	int count = 0;
 
-#if defined (__OS_darwin) || defined (__OS_freebsd)
+#ifdef __OS_darwin
     int nm[2];
     size_t len;
 
