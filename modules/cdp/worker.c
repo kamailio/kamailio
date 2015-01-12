@@ -70,6 +70,7 @@ task_queue_t *tasks; /**< queue of tasks */
 cdp_cb_list_t *callbacks; /**< list of callbacks for message processing */
 
 extern unsigned int workerq_latency_threshold; /**<max delay for putting task into worker queue */
+extern unsigned int workerq_length_threshold_percentage;	/**< default threshold for worker queue length, percentage of max queue length */
 /**
  * Initializes the worker structures, like the task queue.
  */
@@ -207,6 +208,8 @@ void cb_remove(cdp_cb_t *cb) {
 int put_task(peer *p, AAAMessage *msg) {
 
     struct timeval start, stop;
+    int num_tasks, length_percentage;
+    
     long elapsed_useconds=0, elapsed_seconds=0, elapsed_millis=0;
     lock_get(tasks->lock);
 
@@ -246,6 +249,13 @@ int put_task(peer *p, AAAMessage *msg) {
         LM_WARN("Error releasing tasks->empty semaphore > %s!\n", strerror(errno));
     lock_release(tasks->lock);
 
+    if(workerq_length_threshold_percentage > 0) {
+	num_tasks = tasks->end - tasks->start;
+	length_percentage = num_tasks/tasks->max*100;
+	if(length_percentage > workerq_length_threshold_percentage) {
+	    LM_WARN("Queue length has exceeded length threshold percentage [%i] and is length [%i]", length_percentage, num_tasks);
+	}
+    }
     //int num_tasks = tasks->end - tasks->start;
     //LM_ERR("Added task to task queue.  Queue length [%i]", num_tasks);
 

@@ -126,6 +126,24 @@ modparam("cdp", "latency_threshold", 1000)
 </programlisting>
       </example>
     </section>
+    <section>
+      <title>workerq_length_threshold_percentage (int)</title>
+
+      <para>The threshold of the length of the worker queue as a percentage of 
+	  the maximum queue size - when exceeded a warning is written to the log
+	  file. 0  means disabled</para>
+
+      <para><emphasis> Default value is <quote>0</quote>. </emphasis></para>
+
+      <example>
+        <title>Set <varname>workerq_length_threshold_percentage</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "workerq_length_threshold_percentage", 25)
+...
+	</programlisting>
+      </example>
+    </section>
   </section>
 
   <section>

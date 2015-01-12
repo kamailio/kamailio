@@ -62,6 +62,7 @@ char* config_file="DiameterPeer.xml"; 	/**< default DiameterPeer configuration f
 unsigned int latency_threshold = 500;			/**< default threshold for Diameter calls (ms) */
 unsigned int *latency_threshold_p = &latency_threshold;
 unsigned int workerq_latency_threshold = 100;	/**< default threshold for putting a task into worker queue (ms) */
+unsigned int workerq_length_threshold_percentage = 0;	/**< default threshold for worker queue length, percentage of max queue length - by default disabled */
 
 extern dp_config *config; 				/**< DiameterPeer configuration structure */
 
@@ -165,6 +166,7 @@ static param_export_t cdp_params[] = {
 	{ "config_file",				PARAM_STRING,	&config_file}, 				/**< configuration filename */
 	{ "latency_threshold", 			PARAM_INT, 		&latency_threshold},		/**<threshold above which we will log*/
 	{ "workerq_latency_threshold", 	PARAM_INT, 		&workerq_latency_threshold},/**<time threshold putting job into queue*/
+	{ "workerq_length_threshold_percentage", 	PARAM_INT, 		&workerq_length_threshold_percentage},/**<queue length threshold - percentage of max queue length*/
 	{ 0, 0, 0 }
 };
 
@@ -215,7 +217,7 @@ static int cdp_init( void )
 		LM_ERR("failed to register stat\n");
 		return -1;
 	}
-
+	
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
 		LM_ERR("failed to register core statistics\n");
 		return -1;
