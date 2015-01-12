@@ -743,6 +743,11 @@ int ws_frame_transmit(void *data)
 	frame.payload_len = wsev->len;
 	frame.payload_data = wsev->buf;
 	frame.wsc = wsconn_get(wsev->id);
+	if (frame.wsc == NULL)
+	{
+		LM_ERR("WebSocket outbound connection not found\n");
+		return -1;
+	}
 
 	LM_DBG("Tx message:\n%.*s\n", frame.payload_len,
 			frame.payload_data);
