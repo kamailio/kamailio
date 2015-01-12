@@ -2110,41 +2110,40 @@ start_recording_f(struct sip_msg* msg, char *foo, char *bar)
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, NULL, 1);
 }
 
-/*
- * Returns the current RTP-Statistics from the RTP-Proxy
- */
-static int
-pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
-		  pv_value_t *res)
-{
+static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {
+	void **parms;
+	pv_param_t *param;
+	pv_value_t *res;
 	bencode_buffer_t bencbuf;
-	bencode_item_t *dict, *tot, *in, *out;
+	bencode_item_t *dict, *tot, *rtp, *rtcp;
 	static char buf[256];
 	str ret;
+
+	parms = d;
+	param = parms[0];
+	res = parms[1];
 
 	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL);
 	if (!dict)
 		return -1;
 
 	tot = bencode_dictionary_get_expect(dict, "totals", BENCODE_DICTIONARY);
-	in = bencode_dictionary_get_expect(tot, "input", BENCODE_DICTIONARY);
-	in = bencode_dictionary_get_expect(in, "rtp", BENCODE_DICTIONARY);
-	out = bencode_dictionary_get_expect(tot, "output", BENCODE_DICTIONARY);
-	out = bencode_dictionary_get_expect(out, "rtp", BENCODE_DICTIONARY);
+	rtp = bencode_dictionary_get_expect(tot, "RTP", BENCODE_DICTIONARY);
+	rtcp = bencode_dictionary_get_expect(tot, "RTCP", BENCODE_DICTIONARY);
 
-	if (!in || !out)
+	if (!rtp || !rtcp)
 		goto error;
 
 	ret.s = buf;
 	ret.len = snprintf(buf, sizeof(buf),
-			"Input: %lli bytes, %lli packets, %lli errors; "
-			"Output: %lli bytes, %lli packets, %lli errors",
-			bencode_dictionary_get_integer(in, "bytes", -1),
-			bencode_dictionary_get_integer(in, "packets", -1),
-			bencode_dictionary_get_integer(in, "errors", -1),
-			bencode_dictionary_get_integer(out, "bytes", -1),
-			bencode_dictionary_get_integer(out, "packets", -1),
-			bencode_dictionary_get_integer(out, "errors", -1));
+			"RTP: %lli bytes, %lli packets, %lli errors; "
+			"RTCP: %lli bytes, %lli packets, %lli errors",
+			bencode_dictionary_get_integer(rtp, "bytes", -1),
+			bencode_dictionary_get_integer(rtp, "packets", -1),
+			bencode_dictionary_get_integer(rtp, "errors", -1),
+			bencode_dictionary_get_integer(rtcp, "bytes", -1),
+			bencode_dictionary_get_integer(rtcp, "packets", -1),
+			bencode_dictionary_get_integer(rtcp, "errors", -1));
 
 	bencode_buffer_free(&bencbuf);
 	return pv_get_strval(msg, param, res, &ret);
@@ -2152,5 +2151,20 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 error:
 	bencode_buffer_free(&bencbuf);
 	return -1;
+}
+
+/*
+ * Returns the current RTP-Statistics from the RTP-Proxy
+ */
+static int
+pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
+		  pv_value_t *res)
+{
+	void *parms[2];
+
+	parms[0] = param;
+	parms[1] = res;
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_rtpstat_wrap, parms, 1);
 }
 
