@@ -6,7 +6,7 @@
 #include "../../usr_avp.c"
 #include "../../pvar.h"
 #include "../../lvalue.h"
-#include "lib_statsd.c"
+#include "lib_statsd.h"
 
 
 MODULE_VERSION
