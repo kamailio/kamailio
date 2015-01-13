@@ -676,9 +676,9 @@ void handle_sigs(void)
 		case SIGTERM:
 			/* we end the program in all these cases */
 			if (sig_flag==SIGINT)
-				DBG("INT received, program terminates\n");
+				LM_DBG("INT received, program terminates\n");
 			else
-				DBG("SIGTERM received, program terminates\n");
+				LM_DBG("SIGTERM received, program terminates\n");
 			LM_NOTICE("Thank you for flying " NAME "!!!\n");
 			/* shutdown/kill all the children */
 			shutdown_children(SIGTERM, 1);
@@ -743,12 +743,12 @@ void handle_sigs(void)
 #endif
 			/* exit */
 			shutdown_children(SIGTERM, 1);
-			DBG("terminating due to SIGCHLD\n");
+			LM_DBG("terminating due to SIGCHLD\n");
 			exit(0);
 			break;
 
 		case SIGHUP: /* ignoring it*/
-					DBG("SIGHUP received, ignoring it\n");
+					LM_DBG("SIGHUP received, ignoring it\n");
 					break;
 		default:
 			LM_CRIT("unhandled signal %d\n", sig_flag);
@@ -824,7 +824,7 @@ void sig_usr(int signo)
 			case SIGCHLD:
 #ifndef 			STOP_JIRIS_CHANGES
 #ifdef SIG_DEBUG /* signal unsafe stuff follows */
-					DBG("SIGCHLD received: "
+					LM_DBG("SIGCHLD received: "
 						"we do not worry about grand-children\n");
 #endif
 #else
@@ -1253,7 +1253,7 @@ int main_loop(void)
 			if (default_core_cfg.udp4_raw < 0) {
 				/* auto-detect => use it */
 				default_core_cfg.udp4_raw = 1; /* enabled */
-				DBG("raw socket possible => turning it on\n");
+				LM_DBG("raw socket possible => turning it on\n");
 			}
 			if (default_core_cfg.udp4_raw_ttl < 0) {
 				/* auto-detect */
@@ -1426,7 +1426,7 @@ int main_loop(void)
 				if (default_core_cfg.udp4_raw < 0) {
 					/* auto-detect => use it */
 					default_core_cfg.udp4_raw = 1; /* enabled */
-					DBG("raw socket possible => turning it on\n");
+					LM_DBG("raw socket possible => turning it on\n");
 				}
 				if (default_core_cfg.udp4_raw_ttl < 0) {
 					/* auto-detect */
@@ -1687,7 +1687,7 @@ int main_loop(void)
 			fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
 		}
 #endif
-		DBG("Expect maximum %d  open fds\n", get_max_open_fds());
+		LM_DBG("Expect maximum %d  open fds\n", get_max_open_fds());
 		/* in daemonize mode send the exit code back to the parent process */
 		if (!dont_daemonize) {
 			if (daemon_status_send(0) < 0) {
@@ -2029,17 +2029,17 @@ try_again:
 			if (errno==EINTR) goto try_again; /* interrupted by signal */
 			LM_WARN("could not read from /dev/urandom (%d)\n", errno);
 		}
-		DBG("read %u from /dev/urandom\n", seed);
+		LM_DBG("read %u from /dev/urandom\n", seed);
 			close(rfd);
 	}else{
 		LM_WARN("could not open /dev/urandom (%d)\n", errno);
 	}
 	seed+=getpid()+time(0);
-	DBG("seeding PRNG with %u\n", seed);
+	LM_DBG("seeding PRNG with %u\n", seed);
 	srand(seed);
 	fastrand_seed(rand());
 	srandom(rand()+time(0));
-	DBG("test random numbers %u %lu %u\n", rand(), random(), fastrand());
+	LM_DBG("test random numbers %u %lu %u\n", rand(), random(), fastrand());
 
 	/*register builtin  modules*/
 	register_builtin_modules();
@@ -2477,7 +2477,7 @@ try_again:
 	 * function being called before this point may rely on the
 	 * number of processes !
 	 */
-	DBG("Expect (at least) %d SER processes in your process list\n",
+	LM_DBG("Expect (at least) %d kamailio processes in your process list\n",
 			get_max_procs());
 
 #if defined USE_DNS_CACHE && defined USE_DNS_CACHE_STATS
