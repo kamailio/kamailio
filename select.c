@@ -99,7 +99,7 @@ int w_parse_select(char**p, select_t* sel)
 	sel->n=0;
 	while (isalpha((unsigned char)*(*p))) {
 		if (sel->n > MAX_SELECT_PARAMS -2) {
-			ERR("parse_select: select depth exceeds max\n");
+			LM_ERR("select depth exceeds max\n");
 			goto error;
 		}
 		name.s=(*p);
@@ -108,7 +108,7 @@ int w_parse_select(char**p, select_t* sel)
 		name.len=(*p)-name.s;
 		sel->params[sel->n].type=SEL_PARAM_STR;
 		sel->params[sel->n].v.s=name;
-		DBG("parse_select: part %d: %.*s\n", sel->n, sel->params[sel->n].v.s.len, sel->params[sel->n].v.s.s);
+		LM_DBG("part %d: %.*s\n", sel->n, sel->params[sel->n].v.s.len, sel->params[sel->n].v.s.s);
 		sel->n++;
 		if (*(*p)=='[') {
 			(*p)++; 
@@ -118,33 +118,33 @@ int w_parse_select(char**p, select_t* sel)
 				name.s=(*p);
 				while ((*(*p)!='\0') && (*(*p)!='"')) (*p)++;
 				if (*(*p)!='"') {
-					ERR("parse_select: end of string is missing\n");
+					LM_ERR("end of string is missing\n");
 					goto error;
 				}
 				name.len=(*p)-name.s;
 				if (*((*p)-1)=='\\') name.len--;
 				(*p)++;
 				if (*(*p)!=']') {
-					ERR("parse_select: invalid string index, no closing ]\n");
+					LM_ERR("invalid string index, no closing ]\n");
 					goto error;
 				};
 				(*p)++;
 				sel->params[sel->n].type=SEL_PARAM_STR;
 				sel->params[sel->n].v.s=name;
-				DBG("parse_select: part %d: [\"%.*s\"]\n", sel->n, sel->params[sel->n].v.s.len, sel->params[sel->n].v.s.s);
+				LM_DBG("part %d: [\"%.*s\"]\n", sel->n, sel->params[sel->n].v.s.len, sel->params[sel->n].v.s.s);
 			} else {
 				name.s=(*p);
 				if (*(*p)=='-') (*p)++;
 				while (isdigit((unsigned char)*(*p))) (*p)++;
 				name.len=(*p)-name.s;
 				if (*(*p)!=']') {
-					ERR("parse_select: invalid index, no closing ]\n");
+					LM_ERR("invalid index, no closing ]\n");
 					goto error;
 				};
 				(*p)++;
 				sel->params[sel->n].type=SEL_PARAM_INT;
 				sel->params[sel->n].v.i=atoi(name.s);
-				DBG("parse_select: part %d: [%d]\n", sel->n, sel->params[sel->n].v.i);
+				LM_DBG("part %d: [%d]\n", sel->n, sel->params[sel->n].v.i);
 			}
 			sel->n++;
 		}
@@ -152,12 +152,12 @@ int w_parse_select(char**p, select_t* sel)
 		(*p)++;
 	};
 	if (sel->n==0) {
-		ERR("parse_select: invalid select '%.*s'\n", (int)(*p - select_name), select_name);
+		LM_ERR("invalid select '%.*s'\n", (int)(*p - select_name), select_name);
 		goto error;
 	};
-	DBG("parse_select: end, total elements: %d, calling resolve_select\n", sel->n);
+	LM_DBG("end, total elements: %d, calling resolve_select\n", sel->n);
 	if (resolve_select(sel)<0) {
-		ERR("parse_select: error while resolve_select '%.*s'\n", (int)(*p - select_name), select_name);
+		LM_ERR("error while resolve_select '%.*s'\n", (int)(*p - select_name), select_name);
 		goto error;
 	}
 	return 0;
@@ -203,7 +203,7 @@ int parse_select (char** p, select_t** s)
 	
 	sel=(select_t*)pkg_malloc(sizeof(select_t));
 	if (!sel) {
-		ERR("parse_select: no free memory\n");
+		LM_ERR("no free memory\n");
 		return -1;
 	}
 	memset(sel, 0, sizeof(select_t));
@@ -233,7 +233,7 @@ int shm_parse_select (char** p, select_t** s)
 	
 	sel=(select_t*)shm_malloc(sizeof(select_t));
 	if (!sel) {
-		ERR("parse_select: no free shared memory\n");
+		LM_ERR("no free shared memory\n");
 		return -1;
 	}
 	if (w_parse_select(p, sel)<0) {
@@ -260,10 +260,10 @@ int resolve_select(select_t* s)
 		accept = 0;
 		switch (s->params[param_idx].type) {
 		case SEL_PARAM_STR:
-			DBG("resolve_select: '%.*s'\n", s->params[param_idx].v.s.len, s->params[param_idx].v.s.s);
+			LM_DBG("'%.*s'\n", s->params[param_idx].v.s.len, s->params[param_idx].v.s.s);
 			break;
 		case SEL_PARAM_INT:
-			DBG("resolve_select: [%d]\n", s->params[param_idx].v.i);
+			LM_DBG("[%d]\n", s->params[param_idx].v.i);
 			break;
 		default:
 			/* just to avoid the warning */
@@ -409,7 +409,7 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 		BUG("Select structure has not been resolved\n");
 		return -1;
 	}
-	DBG("Calling SELECT %p \n", s->f);
+	LM_DBG("Calling SELECT %p\n", s->f);
 
 	/* reset the uri pointer */
 	select_uri_p = NULL;
@@ -447,7 +447,7 @@ int register_select_table(select_row_t* mod_tab)
 	select_table_t* t;
 	t=(select_table_t*)pkg_malloc(sizeof(select_table_t));
 	if (!t) {
-		ERR("No memory for new select_table structure\n");
+		LM_ERR("No memory for new select_table structure\n");
 		return -1;
 	}
 
