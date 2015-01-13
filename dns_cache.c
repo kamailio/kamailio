@@ -534,8 +534,7 @@ inline static struct dns_hash_entry* _dns_hash_find(str* name, int type,
 again:
 	*h=dns_hash_no(name->s, name->len, type);
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_hash_find(%.*s(%d), %d), h=%d\n", name->len, name->s,
-												name->len, type, *h);
+	LM_DBG("(%.*s(%d), %d), h=%d\n", name->len, name->s, name->len, type, *h);
 #endif
 	clist_foreach_safe(&dns_hash[*h], e, tmp, next){
 		if (
@@ -795,7 +794,7 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 	atomic_inc(&e->refcnt);
 	h=dns_hash_no(e->name, e->name_len, e->type);
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_cache_add: adding %.*s(%d) %d (flags=%0x) at %d\n",
+	LM_DBG("adding %.*s(%d) %d (flags=%0x) at %d\n",
 			e->name_len, e->name, e->name_len, e->type, e->ent_flags, h);
 #endif
 	LOCK_DNS_HASH();
@@ -837,7 +836,7 @@ inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 	atomic_inc(&e->refcnt);
 	h=dns_hash_no(e->name, e->name_len, e->type);
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_cache_add: adding %.*s(%d) %d (flags=%0x) at %d\n",
+	LM_DBG("adding %.*s(%d) %d (flags=%0x) at %d\n",
 			e->name_len, e->name, e->name_len, e->type, e->ent_flags, h);
 #endif
 	*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
@@ -862,8 +861,7 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 	ticks_t now;
 
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_cache_mk_bad_entry(%.*s, %d, %d, %d)\n", name->len, name->s,
-									type, ttl, flags);
+	LM_DBG("(%.*s, %d, %d, %d)\n", name->len, name->s, type, ttl, flags);
 #endif
 	size=sizeof(struct dns_hash_entry)+name->len-1+1;
 	e=shm_malloc(size);
@@ -1209,8 +1207,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	*tail=0; /* mark the end of our tmp_lst */
 	if (size==0){
 #ifdef DNS_CACHE_DEBUG
-		DBG("dns_cache_mk_rd_entry: entry %.*s (%d) not found\n",
-				name->len, name->s, type);
+		LM_DBG("entry %.*s (%d) not found\n", name->len, name->s, type);
 #endif
 		return 0;
 	}
@@ -1740,7 +1737,7 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 	ret=0;
 	l=e;
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_get_related(%p (%.*s, %d), %d, *%p) (%d)\n", e,
+	LM_DBG("(%p (%.*s, %d), %d, *%p) (%d)\n", e,
 			e->name_len, e->name, e->type, type, *records, cname_chain_len);
 #endif
 	clist_init(l, next, prev);
@@ -1907,7 +1904,7 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 					((struct cname_rdata*)l->prev->rr_lst->rdata)->name;
 				cname_val.len=
 					((struct cname_rdata*)l->prev->rr_lst->rdata)->name_len;
-				DBG("dns_cache_do_request: cname detected: %.*s (%d)\n",
+				LM_DBG("cname detected: %.*s (%d)\n",
 						cname_val.len, cname_val.s, cname_val.len);
 			}
 			/* add all the records to the hash */
@@ -1971,7 +1968,7 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 			UNLOCK_DNS_HASH();
 			/* if only cnames found => try to resolve the last one */
 			if (cname_val.s){
-				DBG("dns_cache_do_request: dns_get_entry(cname: %.*s (%d))\n",
+				LM_DBG("dns_get_entry(cname: %.*s (%d))\n",
 						cname_val.len, cname_val.s, cname_val.len);
 				e=dns_get_entry(&cname_val, type);
 			}
@@ -2160,7 +2157,7 @@ error:
  *    *no=0;
  *    now=get_ticks_raw();
  *    while(rr=dns_entry_get_rr(e, no, now){
- *       DBG("address %d\n", *no);
+ *       LM_DBG("address %d\n", *no);
  *       *no++;  ( get the next address next time )
  *     }
  *  }
@@ -2236,7 +2233,7 @@ inline static unsigned dns_srv_random(unsigned max)
  *    srv_reset_tried(&tried);
  *    now=get_ticks_raw();
  *    while(rr=dns_srv_get_nxt_rr(e, &tried, &no, now){
- *       DBG("address %d\n", *no);
+ *       LM_DBG("address %d\n", *no);
  *     }
  *  }
  *
@@ -2330,7 +2327,7 @@ retry:
 	for (i=0; (i<idx) && (r_sums[i].r_sum<rand_w); i++);
 found:
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_srv_get_nxt_rr(%p, %lx, %d, %u): selected %d/%d in grp. %d"
+	LM_DBG("(%p, %lx, %d, %u): selected %d/%d in grp. %d"
 			" (rand_w=%d, rr=%p rd=%p p=%d w=%d rsum=%d)\n",
 		e, (unsigned long)*tried, *no, now, i, idx, n, rand_w, r_sums[i].rr,
 		(r_sums[i].rr)?r_sums[i].rr->rdata:0,
@@ -2395,7 +2392,7 @@ inline static struct hostent* dns_entry2he(struct dns_hash_entry* e)
 				memcpy(p_addr[i], ((struct a_rdata*)rr->rdata)->ip, len);
 	}
 	if (i==0){
-		DBG("DEBUG: dns_entry2he: no good records found (%d) for %.*s (%d)\n",
+		LM_DBG("no good records found (%d) for %.*s (%d)\n",
 				rr_no, e->name_len, e->name, e->type);
 		return 0; /* no good record found */
 	}
@@ -2731,9 +2728,8 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 			continue; /* already tried */
 		}
 #ifdef DNS_CACHE_DEBUG
-		DBG("naptr_iterate: found a valid sip NAPTR rr %.*s,"
-					" proto %d\n", naptr->repl_len, naptr->repl,
-					(int)naptr_proto);
+		LM_DBG("found a valid sip NAPTR rr %.*s, proto %d\n",
+				naptr->repl_len, naptr->repl, (int)naptr_proto);
 #endif
 		if ((naptr_proto_supported(naptr_proto))){
 			if (naptr_choose(&naptr_saved, &saved_proto,
@@ -2745,9 +2741,8 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 	if (naptr_saved){
 		/* found something */
 #ifdef DNS_CACHE_DEBUG
-		DBG("naptr_iterate: choosed NAPTR rr %.*s, proto %d"
-					" tried: 0x%x\n", naptr_saved->repl_len,
-					naptr_saved->repl, (int)saved_proto, *tried);
+		LM_DBG("choosed NAPTR rr %.*s, proto %d tried: 0x%x\n",
+			naptr_saved->repl_len, naptr_saved->repl, (int)saved_proto, *tried);
 #endif
 		*tried|=1<<idx;
 		*proto=saved_proto;
@@ -2812,7 +2807,7 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 												&srv_name, &n_proto)){
 			if ((he=dns_srv_get_he(&srv_name, port, dns_flags))!=0){
 #ifdef DNS_CACHE_DEBUG
-				DBG("dns_naptr_sip_resolvehost(%.*s, %d, %d) srv, ret=%p\n",
+				LM_DBG("(%.*s, %d, %d) srv, ret=%p\n",
 							name->len, name->s, (int)*port, (int)*proto, he);
 #endif
 				dns_hash_put(e);
@@ -2928,8 +2923,7 @@ inline static int dns_a_resolve( struct dns_hash_entry** e,
 		ret=-E_DNS_EOR;
 	}
 error:
-	DBG("dns_a_resolve(%.*s, %d) returning %d\n",
-			name->len, name->s, *rr_no, ret);
+	LM_DBG("(%.*s, %d) returning %d\n", name->len, name->s, *rr_no, ret);
 	return ret;
 }
 
@@ -3170,7 +3164,7 @@ inline static int dns_srv_resolve_ip(struct dns_srv_handle* h,
 	}while(ret<0);
 error:
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_srv_resolve_ip(\"%.*s\", %d, %d), ret=%d, ip=%s\n",
+	LM_DBG("(\"%.*s\", %d, %d), ret=%d, ip=%s\n",
 			name->len, name->s, h->srv_no, h->ip_no, ret,
 			ip?ZSW(ip_addr2a(ip)):"");
 #endif
@@ -3262,7 +3256,7 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 						{
 							h->proto = *proto = srv_proto_list[i].proto;
 #ifdef DNS_CACHE_DEBUG
-							DBG("dns_srv_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n",
+							LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
 #endif
 							return ret;
@@ -3281,7 +3275,7 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 			ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags);
 			if (proto)
 				*proto=h->proto;
-			DBG("dns_srv_sip_resolve(%.*s, %d, %d), srv, ret=%d\n",
+			LM_DBG("(%.*s, %d, %d), srv, ret=%d\n",
 					name->len, name->s, h->srv_no, h->ip_no, ret);
 			return ret;
 	}
@@ -3295,7 +3289,7 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 	if (proto)
 		*proto=h->proto;
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_srv_sip_resolve(%.*s, %d, %d), ip, ret=%d\n",
+	LM_DBG("(%.*s, %d, %d), ip, ret=%d\n",
 			name->len, name->s, h->srv_no, h->ip_no, ret);
 #endif
 	return ret;
@@ -3370,7 +3364,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 									from previous dns_srv_sip_resolve calls */
 			if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0){
 #ifdef DNS_CACHE_DEBUG
-				DBG("dns_naptr_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n",
+				LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
 #endif
 				dns_hash_put(e);
@@ -3917,7 +3911,7 @@ void dns_cache_flush(int del_permanent)
 	struct dns_hash_entry* e;
 	struct dns_hash_entry* tmp;
 
-	DBG("dns_cache_flush(): removing elements from the cache\n");
+	LM_DBG("removing elements from the cache\n");
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
 			clist_foreach_safe(&dns_hash[h], e, tmp, next){
