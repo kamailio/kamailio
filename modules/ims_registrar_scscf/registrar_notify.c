@@ -1764,7 +1764,7 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
  * Callback for the UAC response to NOTIFY
  */
 void uac_request_cb(struct cell *t, int type, struct tmcb_params * ps) {
-    LM_DBG("DBG:uac_request_cb: Type %d\n", type);
+    LM_DBG("DBG: uac_request_cb on response to NOTIFY: Type %d and code %d\n", type, ps->code);
 }
 
 static int free_tm_dlg(dlg_t * td) {
