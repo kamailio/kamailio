@@ -228,19 +228,19 @@ error:
 		p=(struct proxy_l*) p_malloc(sizeof(struct proxy_l));			\
 		if (p==0){														\
 			ser_error=E_OUT_OF_MEM;										\
-			LM_ERR("memory allocation failure\n");		\
+			LM_ERR("memory allocation failure\n");						\
 			goto error;													\
 		}																\
 		memset(p,0,sizeof(struct proxy_l));								\
 		p->name=*name;													\
 		p->port=port;													\
 																		\
-		DBG("DEBUG: mk_proxy: doing DNS lookup...\n");					\
+		LM_DBG("doing DNS lookup...\n");								\
 		proto=protocol;													\
 		he=sip_resolvehost(name, &(p->port), &proto);					\
 		if (he==0){														\
 			ser_error=E_BAD_ADDRESS;									\
-			LM_CRIT("could not resolve hostname:"	\
+			LM_CRIT("could not resolve hostname:"						\
 				" \"%.*s\"\n", name->len, name->s);						\
 			p_free(p);													\
 			goto error;													\
