@@ -96,6 +96,8 @@ pv_elem_t * hash_param_model = NULL;
 
 int probing_threshold = 1; /* number of failed requests, before a destination
 							   is taken into probing */
+int inactive_threshold = 1; /* number of replied requests, before a destination
+							   is taken into back in active state */
 str ds_ping_method = str_init("OPTIONS");
 str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
@@ -227,6 +229,7 @@ static param_export_t params[]={
 	{"setid_pvname",    PARAM_STR, &ds_setid_pvname},
 	{"attrs_pvname",    PARAM_STR, &ds_attrs_pvname},
 	{"ds_probing_threshold", INT_PARAM, &probing_threshold},
+	{"ds_inactive_threshold", INT_PARAM, &inactive_threshold},
 	{"ds_ping_method",     PARAM_STR, &ds_ping_method},
 	{"ds_ping_from",       PARAM_STR, &ds_ping_from},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
@@ -306,9 +309,11 @@ static int mod_init(void)
 			return -1;
 		}
 	}	
-	/* Copy Threshhold to Config */
+	/* copy threshholds to config */
 	cfg_get(dispatcher, dispatcher_cfg, probing_threshold)
 		= probing_threshold;
+	cfg_get(dispatcher, dispatcher_cfg, inactive_threshold)
+		= inactive_threshold;
 
 
 	if(init_data()!= 0)
