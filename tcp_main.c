@@ -982,7 +982,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		c->rcv.dst_port=ba->port_no;
 	}
 	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
-	DBG(     "tcpconn_new: on port %d, type %d\n", c->rcv.src_port, type);
+	LM_DBG("on port %d, type %d\n", c->rcv.src_port, type);
 	init_tcp_req(&c->req, (char*)c+sizeof(struct tcp_connection), rd_b_size);
 	c->id=(*connection_id)++;
 	c->rcv.proto_reserved1=0; /* this will be filled before receive_message*/
@@ -1287,7 +1287,7 @@ inline static struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 		 *  of the add_alias would fail (e.g. first add_alias for 2 connections
 		 *   with the same destination but different src. ip*/
 		TCPCONN_UNLOCK;
-		DBG("tcpconn_add: hashes: %d:%d:%d, %d\n",
+		LM_DBG("hashes: %d:%d:%d, %d\n",
 												c->con_aliases[0].hash,
 												c->con_aliases[1].hash,
 												c->con_aliases[2].hash,
@@ -1372,14 +1372,14 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 	int is_local_ip_any;
 	
 #ifdef EXTRA_DEBUG
-	DBG("tcpconn_find: %d  port %d\n",id, port);
+	LM_DBG("%d  port %d\n",id, port);
 	if (ip) print_ip("tcpconn_find: ip ", ip, "\n");
 #endif
 	if (likely(id)){
 		hash=tcp_id_hash(id);
 		for (c=tcpconn_id_hash[hash]; c; c=c->id_next){
 #ifdef EXTRA_DEBUG
-			DBG("c=%p, c->id=%d, port=%d\n",c, c->id, c->rcv.src_port);
+			LM_DBG("c=%p, c->id=%d, port=%d\n", c, c->id, c->rcv.src_port);
 			print_ip("ip=", &c->rcv.src_ip, "\n");
 #endif
 			if ((id==c->id)&&(c->state!=S_CONN_BAD)) return c;
@@ -1389,7 +1389,7 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 		is_local_ip_any=ip_addr_any(l_ip);
 		for (a=tcpconn_aliases_hash[hash]; a; a=a->next){
 #ifdef EXTRA_DEBUG
-			DBG("a=%p, c=%p, c->id=%d, alias port= %d port=%d\n", a, a->parent,
+			LM_DBG("a=%p, c=%p, c->id=%d, alias port= %d port=%d\n", a, a->parent,
 					a->parent->id, a->port, a->parent->rcv.src_port);
 			print_ip("ip=",&a->parent->rcv.src_ip,"\n");
 #endif
@@ -1531,8 +1531,8 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
 	}else goto error_not_found;
 ok:
 #ifdef EXTRA_DEBUG
-	if (a) DBG("_tcpconn_add_alias_unsafe: alias already present\n");
-	else   DBG("_tcpconn_add_alias_unsafe: alias port %d for hash %d, id %d\n",
+	if (a) LM_DBG("alias already present\n");
+	else   LM_DBG("alias port %d for hash %d, id %d\n",
 			port, hash, c->id);
 #endif
 	return 0;
@@ -1727,7 +1727,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 		if (unlikely((dst->send_flags.f & SND_F_FORCE_CON_REUSE) ||
 						cfg_get(tcp, tcp_cfg, no_connect)))
 			return -1;
-		DBG("tcp_send: no open tcp connection found, opening new one\n");
+		LM_DBG("no open tcp connection found, opening new one\n");
 		/* create tcp connection */
 		if (likely(from==0)){
 			/* check to see if we have to use a specific source addr. */
@@ -2189,7 +2189,7 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 		/* check if this is not the same reader process holding
 		 *  c  and if so send directly on c->fd */
 		if (c->reader_pid==my_pid()){
-			DBG("tcp_send: send from reader (%d (%d)), reusing fd\n",
+			LM_DBG("send from reader (%d (%d)), reusing fd\n",
 					my_pid(), process_no);
 			fd=c->fd;
 			do_close_fd=0; /* don't close the fd on exit, it's in use */
@@ -2202,11 +2202,10 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 							((fd_cache_e=tcp_fd_cache_get(c))!=0))){
 			fd=fd_cache_e->fd;
 			do_close_fd=0;
-			DBG("tcp_send: found fd in cache ( %d, %p, %d)\n",
-					fd, c, fd_cache_e->id);
+			LM_DBG("found fd in cache (%d, %p, %d)\n", fd, c, fd_cache_e->id);
 #endif /* TCP_FD_CACHE */
 		}else{
-			DBG("tcp_send: tcp connection found (%p), acquiring fd\n", c);
+			LM_DBG("tcp connection found (%p), acquiring fd\n", c);
 			/* get the fd */
 			response[0]=(long)c;
 			response[1]=CONN_GET_FD;
@@ -2216,7 +2215,7 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 				n=-1;
 				goto release_c;
 			}
-			DBG("tcp_send, c= %p, n=%d\n", c, n);
+			LM_DBG("c=%p, n=%d\n", c, n);
 			n=receive_fd(unix_tcp_sock, &tmp, sizeof(tmp), &fd, MSG_WAITALL);
 			if (unlikely(n<=0)){
 				LM_ERR("failed to get fd(receive_fd): %s (%d)\n",
@@ -2246,7 +2245,7 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 #endif /* TCP_FD_CACHE */
 				goto end;
 			}
-			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
+			LM_DBG("after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
 		}
 	
 #ifdef USE_TLS
@@ -2425,7 +2424,7 @@ static int tcpconn_do_send(int fd, struct tcp_connection* c,
 	int enable_write_watch;
 #endif /* TCP_ASYNC */
 
-	DBG("tcp_send: sending...\n");
+	LM_DBG("sending...\n");
 	*resp = CONN_NOP;
 	if (likely(!locked)) lock_get(&c->write_lock);
 	/* update connection send flags with the current ones */
@@ -2459,8 +2458,8 @@ static int tcpconn_do_send(int fd, struct tcp_connection* c,
 	if (likely(!locked)) lock_release(&c->write_lock);
 #endif /* TCP_ASYNC */
 	
-	DBG("tcp_send: after real write: c= %p n=%d fd=%d\n",c, n, fd);
-	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
+	LM_DBG("after real write: c= %p n=%d fd=%d\n",c, n, fd);
+	LM_DBG("buf=\n%.*s\n", (int)len, buf);
 	if (unlikely(n<(int)len)){
 #ifdef TCP_ASYNC
 		if (cfg_get(tcp, tcp_cfg, async) &&
@@ -2605,8 +2604,8 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 		   ENOTCONN appears on newer FreeBSD versions (non-blocking socket,
 		   connect() & send immediately) */
 		if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK || errno==ENOTCONN){
-			DBG("pending write on new connection %p "
-				" (%d/%d bytes written)\n", c, n, len);
+			LM_DBG("pending write on new connection %p "
+				"(%d/%d bytes written)\n", c, n, len);
 			if (unlikely(n<0)) n=0;
 			else{
 				if (likely(c->state == S_CONN_CONNECT))
@@ -2712,7 +2711,7 @@ int tcp_init(struct socket_info* sock_info)
 		LM_ERR("could no init sockaddr_union\n");
 		goto error;
 	}
-	DBG("tcp_init: added %s\n", su2a(addr, sizeof(*addr)));
+	LM_DBG("added %s\n", su2a(addr, sizeof(*addr)));
 	sock_info->socket=socket(AF2PF(addr->s.sa_family), SOCK_STREAM, 0);
 	if (sock_info->socket==-1){
 		LM_ERR("tcp_init: socket: %s\n", strerror(errno));
@@ -2852,9 +2851,8 @@ inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 inline static int tcpconn_chld_put(struct tcp_connection* tcpconn)
 {
 	if (unlikely(atomic_dec_and_test(&tcpconn->refcnt))){
-		DBG("tcpconn_chld_put: destroying connection %p (%d, %d) "
-				"flags %04x\n", tcpconn, tcpconn->id,
-				tcpconn->s, tcpconn->flags);
+		LM_DBG("destroying connection %p (%d, %d) flags %04x\n",
+				tcpconn, tcpconn->id, tcpconn->s, tcpconn->flags);
 		/* sanity checks */
 		membar_read_atomic_op(); /* make sure we see the current flags */
 		if (unlikely(!(tcpconn->flags & F_CONN_FD_CLOSED) ||
@@ -2877,9 +2875,8 @@ inline static int tcpconn_chld_put(struct tcp_connection* tcpconn)
  */
 inline static void tcpconn_destroy(struct tcp_connection* tcpconn)
 {
-		DBG("tcpconn_destroy: destroying connection %p (%d, %d) "
-				"flags %04x\n", tcpconn, tcpconn->id,
-				tcpconn->s, tcpconn->flags);
+		LM_DBG("destroying connection %p (%d, %d) flags %04x\n",
+				tcpconn, tcpconn->id, tcpconn->s, tcpconn->flags);
 		if (unlikely(tcpconn->flags & F_CONN_HASHED)){
 			LM_CRIT("called with hashed connection (%p)\n", tcpconn);
 			/* try to continue */
@@ -3211,8 +3208,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 	if (unlikely(bytes<(int)sizeof(response))){
 		if (bytes==0){
 			/* EOF -> bad, child has died */
-			DBG("DBG: handle_tcp_child: dead tcp child %d (pid %ld, no %d)"
-					" (shutting down?)\n", (int)(tcp_c-&tcp_children[0]), 
+			LM_DBG("dead tcp child %d (pid %ld, no %d) (shutting down?)\n",
+					(int)(tcp_c-&tcp_children[0]), 
 					(long)tcp_c->pid, tcp_c->proc_no );
 			/* don't listen on it any more */
 			io_watch_del(&io_h, tcp_c->unix_sock, fd_i, 0); 
@@ -3239,7 +3236,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 		}
 	}
 	
-	DBG("handle_tcp_child: reader response= %lx, %ld from %d \n",
+	LM_DBG("reader response= %lx, %ld from %d \n",
 					response[0], response[1], (int)(tcp_c-&tcp_children[0]));
 	cmd=response[1];
 	tcpconn=(struct tcp_connection*)response[0];
@@ -3290,9 +3287,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			if (unlikely(cfg_get(tcp, tcp_cfg, async) && 
 							_wbufq_non_empty(tcpconn) )){
 				if (unlikely(TICKS_GE(t, tcpconn->wbuf_q.wr_timeout))){
-					DBG("handle_tcp_child: wr. timeout on CONN_RELEASE for %p "
-							"refcnt= %d\n", tcpconn,
-							atomic_get(&tcpconn->refcnt));
+					LM_DBG("wr. timeout on CONN_RELEASE for %p refcnt= %d\n",
+							tcpconn, atomic_get(&tcpconn->refcnt));
 					/* timeout */
 					if (unlikely(tcpconn->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
@@ -3367,7 +3363,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 #endif /* TCP_ASYNC */
 				break;
 			}
-			DBG("handle_tcp_child: CONN_RELEASE  %p refcnt= %d\n", 
+			LM_DBG("CONN_RELEASE  %p refcnt= %d\n", 
 							tcpconn, atomic_get(&tcpconn->refcnt));
 			break;
 		case CONN_ERROR:
@@ -3445,8 +3441,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 		/* too few bytes read */
 		if (bytes==0){
 			/* EOF -> bad, child has died */
-			DBG("DBG: handle_ser_child: dead child %d, pid %d"
-					" (shutting down?)\n", (int)(p-&pt[0]), p->pid);
+			LM_DBG("dead child %d, pid %d (shutting down?)\n",
+					(int)(p-&pt[0]), p->pid);
 			/* don't listen on it any more */
 			io_watch_del(&io_h, p->unix_sock, fd_i, 0);
 			goto error; /* child dead => no further io events from it */
@@ -3473,7 +3469,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 		}
 	}
 	ret=1; /* something was received, there might be more queued */
-	DBG("handle_ser_child: read response= %lx, %ld, fd %d from %d (%d)\n",
+	LM_DBG("read response= %lx, %ld, fd %d from %d (%d)\n",
 					response[0], response[1], fd, (int)(p-&pt[0]), p->pid);
 	cmd=response[1];
 	tcpconn=(struct tcp_connection*)response[0];
@@ -3617,9 +3613,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 					local_timer_reinit(&tcpconn->timer);
 					local_timer_add(&tcp_main_ltimer, &tcpconn->timer,
 										tcpconn->wbuf_q.wr_timeout-t, t);
-					DBG("tcp_main: handle_ser_child: CONN_QUEUED_WRITE; %p "
-							"timeout adjusted to %d s\n", tcpconn, 
-							TICKS_TO_S(tcpconn->wbuf_q.wr_timeout-t));
+					LM_DBG("CONN_QUEUED_WRITE; %p timeout adjusted to %d s\n",
+							tcpconn, TICKS_TO_S(tcpconn->wbuf_q.wr_timeout-t));
 				}
 				if (!(tcpconn->flags & F_CONN_WRITE_W)){
 					tcpconn->flags|=F_CONN_WRITE_W;
@@ -3805,8 +3800,8 @@ inline static int send2child(struct tcp_connection* tcpconn)
 	tcp_children[idx].busy++;
 	tcp_children[idx].n_reqs++;
 	if (unlikely(min_busy)){
-		DBG("WARNING: send2child: no free tcp receiver, "
-				" connection passed to the least busy one (%d)\n",
+		LM_DBG("WARNING: no free tcp receiver, "
+				"connection passed to the least busy one (%d)\n",
 				min_busy);
 	}
 	LM_DBG("selected tcp worker %d %d(%ld) for activity on [%s], %p\n",
@@ -3965,7 +3960,7 @@ static inline int handle_new_connect(struct socket_info* si)
 		/* prepare it for passing to a child */
 		tcpconn->flags|=F_CONN_READER;
 		tcpconn_add(tcpconn);
-		DBG("handle_new_connect: new connection from %s: %p %d flags: %04x\n",
+		LM_DBG("new connection from %s: %p %d flags: %04x\n",
 			su2a(&su, sizeof(su)), tcpconn, tcpconn->s, tcpconn->flags);
 		if(unlikely(send2child(tcpconn)<0)){
 			tcpconn->flags&=~F_CONN_READER;
@@ -4128,7 +4123,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 #ifdef TCP_ASYNC
 send_to_child:
 #endif
-		DBG("tcp: DBG: sending to child, events %x\n", ev);
+		LM_DBG("sending to child, events %x\n", ev);
 #ifdef POLLRDHUP
 		tcpconn->flags|=((int)!(ev & (POLLRDHUP|POLLHUP|POLLERR)) -1) &
 							F_CONN_EOF_SEEN;
@@ -4225,7 +4220,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	/* or (struct tcp...*)(tl-offset(c->timer)) */
 	
 #ifdef TCP_ASYNC
-	DBG( "tcp_main: entering timer for %p (ticks=%d, timeout=%d (%d s), "
+	LM_DBG("entering timer for %p (ticks=%d, timeout=%d (%d s), "
 			"wr_timeout=%d (%d s)), write queue: %d bytes\n",
 			c, t, c->timeout, TICKS_TO_S(c->timeout-t),
 			c->wbuf_q.wr_timeout, TICKS_TO_S(c->wbuf_q.wr_timeout-t),
@@ -4271,7 +4266,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
 	TCP_STATS_CON_TIMEOUT();
 #endif /* TCP_ASYNC */
-	DBG("tcp_main: timeout for %p\n", c);
+	LM_DBG("timeout for %p\n", c);
 	if (likely(c->flags & F_CONN_HASHED)){
 		c->flags&=~(F_CONN_HASHED|F_CONN_MAIN_TIMER);
 		c->state=S_CONN_BAD;
