@@ -131,7 +131,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		}
 		goto error02;
 	}
-	DBG("After parse_msg...\n");
+	LM_DBG("After parse_msg...\n");
 
 	/* set log prefix */
 	log_prefix_set(msg);
@@ -174,7 +174,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 #endif
 
 	/*	skip: */
-		DBG("preparing to run routing scripts...\n");
+		LM_DBG("preparing to run routing scripts...\n");
 #ifdef  STATS
 		gettimeofday( & tvb, &tz );
 #endif
@@ -203,7 +203,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
 		stats->processed_requests++;
 		stats->acc_req_time += diff;
-		DBG("successfully ran routing scripts...(%d usec)\n", diff);
+		LM_DBG("successfully ran routing scripts...(%d usec)\n", diff);
 		STATS_RX_REQUEST( msg->first_line.u.request.method_value );
 #endif
 
@@ -259,7 +259,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
 		stats->processed_responses++;
 		stats->acc_res_time+=diff;
-		DBG("successfully ran reply processing...(%d usec)\n", diff);
+		LM_DBG("successfully ran reply processing...(%d usec)\n", diff);
 #endif
 
 		/* execute post reply-script callbacks */
@@ -275,7 +275,7 @@ end:
 #ifdef WITH_XAVP
 	xavp_reset_list();
 #endif
-	DBG("receive_msg: cleaning up\n");
+	LM_DBG("cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
 #ifdef STATS
@@ -296,7 +296,7 @@ error_rpl:
 	goto error02;
 #endif /* NO_ONREPLY_ROUTE_ERROR */
 error_req:
-	DBG("receive_msg: error:...\n");
+	LM_DBG("error:...\n");
 	/* execute post request-script callbacks */
 	exec_post_script_cb(msg, REQUEST_CB_TYPE);
 error03:
