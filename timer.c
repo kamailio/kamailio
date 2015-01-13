@@ -441,7 +441,7 @@ inline static void adjust_ticks(void)
 							(long)(delta*1000)/TIMER_TICKS_HZ, (long)delta);
 					*ticks+=(ticks_t)delta;
 				}else{
-					/*DBG("incredible, but our timer is in sync with"
+					/*LM_DBG("incredible, but our timer is in sync with"
 							" real time (%lu)\n", (unsigned long)*ticks);
 					*/
 				}
