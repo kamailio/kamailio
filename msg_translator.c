@@ -155,8 +155,7 @@ static int check_via_address(struct ip_addr* ip, str *name,
 	/* maybe we are lucky and name it's an ip */
 	s=ip_addr2a(ip);
 	if (s){
-		DBG("check_via_address(%s, %.*s, %d)\n",
-			s, name->len, name->s, resolver);
+		LM_DBG("(%s, %.*s, %d)\n", s, name->len, name->s, resolver);
 
 		len=strlen(s);
 
@@ -181,7 +180,7 @@ static int check_via_address(struct ip_addr* ip, str *name,
 
 	if (port==0) port=SIP_PORT;
 	if (resolver&DO_DNS){
-		DBG("check_via_address: doing dns lookup\n");
+		LM_DBG("doing dns lookup\n");
 		/* try all names ips */
 		lproto = PROTO_NONE;
 		he=sip_resolvehost(name, &port, &lproto); /* don't use naptr */
@@ -193,7 +192,7 @@ static int check_via_address(struct ip_addr* ip, str *name,
 		}
 	}
 	if (resolver&DO_REV_DNS){
-		DBG("check_via_address: doing rev. dns lookup\n");
+		LM_DBG("doing rev. dns lookup\n");
 		/* try reverse dns */
 		he=rev_resolvehost(ip);
 		if (he && (strncmp(he->h_name, name->s, name->len)==0))
@@ -420,7 +419,7 @@ char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff,
 	}
 	value=msg->len-(int)(body-msg->buf)+diff;
 	value_s=int2str(value, &value_len);
-	DBG("clen_builder: content-length: %d (%s)\n", value, value_s);
+	LM_DBG("content-length: %d (%s)\n", value, value_s);
 
 	if (body_only) {
 		len=value_len;
@@ -1350,7 +1349,7 @@ skip_after:
 			case LUMP_DEL:
 				/* copy till offset */
 				if (s_offset>t->u.offset){
-					DBG("Warning: (%d) overlapped lumps offsets,"
+					LM_DBG("WARNING: (%d) overlapped lumps offsets,"
 						" ignoring(%x, %x)\n", t->op, s_offset,t->u.offset);
 					/* this should've been fixed above (when computing len) */
 					/* just ignore it*/
@@ -1523,8 +1522,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 				}
 				body_only=0;
 			} /* else
-				DBG("adjust_clen: UDP packet with no clen => "
-						"not adding one \n"); */
+				LM_DBG("UDP packet with no clen => not adding one \n"); */
 		}else{
 			/* Content-Length has been found, remove it */
 			anchor = del_lump(	msg, msg->content_length->body.s - msg->buf,
@@ -2228,7 +2226,7 @@ char * generate_res_buf_from_sip_res( struct sip_msg* msg,
 	new_len=len+body_delta+lumps_len(msg, msg->add_rm, 0); /*FIXME: we don't
 														know the send sock */
 
-	DBG(" old size: %d, new size: %d\n", len, new_len);
+	LM_DBG("old size: %d, new size: %d\n", len, new_len);
 	new_buf=(char*)pkg_malloc(new_len+1); /* +1 is for debugging
 											 (\0 to print it )*/
 	if (new_buf==0){
@@ -2245,8 +2243,8 @@ char * generate_res_buf_from_sip_res( struct sip_msg* msg,
 		buf+s_offset,
 		len-s_offset);
 	 /* send it! */
-	DBG("copied size: orig:%d, new: %d, rest: %d"
-			" msg=\n%s\n", s_offset, offset, len-s_offset, new_buf);
+	LM_DBG("copied size: orig:%d, new: %d, rest: %d msg=\n%s\n",
+			s_offset, offset, len-s_offset, new_buf);
 
 	*returned_len=new_len;
 	return new_buf;
@@ -2842,7 +2840,7 @@ char* create_via_hf( unsigned int *len,
 			return 0; /* we don't need to free anything,
 			                 nothing alloc'ed yet*/
 		}
-		DBG("create_via_hf: id added: <%.*s>, rcv proto=%d\n",
+		LM_DBG("id added: <%.*s>, rcv proto=%d\n",
 				(int)id_len, id_buf, msg->rcv.proto);
 		extra_params.s=id_buf;
 		extra_params.len=id_len;
