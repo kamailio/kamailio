@@ -90,7 +90,7 @@ static int dbg_msg_qa(char *buf, int len)
 			case ' ':	if (state==QA_SPACE) {
 							space_cnt++;
 							if (space_cnt==4) {
-								LM_CRIT("DBG_MSG_QA: too many spaces\n");
+								LM_CRIT("too many spaces\n");
 								return 0;
 							}
 						} else space_cnt=0;
@@ -422,7 +422,7 @@ int udp_rcv_loop()
 											&fromlen);
 		if (len==-1){
 			if (errno==EAGAIN){
-				DBG("udp_rcv_loop: packet with bad checksum received\n");
+				LM_DBG("packet with bad checksum received\n");
 				continue;
 			}
 			LM_ERR("recvfrom:[%d] %s\n", errno, strerror(errno));
@@ -452,8 +452,7 @@ int udp_rcv_loop()
 		if (!unlikely(sr_event_enabled(SREV_STUN_IN)) || (unsigned char)*buf != 0x00) {
 			if (len<MIN_UDP_PACKET) {
 				tmp=ip_addr2a(&ri.src_ip);
-				DBG("udp_rcv_loop: probing packet received from %s %d\n",
-					tmp, htons(ri.src_port));
+				LM_DBG("probing packet received from %s %d\n", tmp, htons(ri.src_port));
 				continue;
 			}
 		}
