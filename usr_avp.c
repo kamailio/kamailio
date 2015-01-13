@@ -628,7 +628,7 @@ inline void destroy_avp_list(avp_list_t* list)
 {
 	avp_t *avp, *foo;
 
-	DBG("DEBUG:destroy_avp_list: destroying list %p\n", *list);
+	LM_DBG("destroying list %p\n", *list);
 	avp = *list;
 	while( avp ) {
 		foo = avp;
@@ -775,11 +775,11 @@ int add_avp_galias(str *alias, int type, int_str avp_name)
 		ga->avp.name.s.len = avp_name.s.len;
 		memcpy( ga->avp.name.s.s, avp_name.s.s, avp_name.s.len);
 		ga->avp.name.s.s[avp_name.s.len] = 0;
-		DBG("DEBUG:add_avp_galias: registering <%s> for avp name <%s>\n",
+		LM_DBG("registering <%s> for avp name <%s>\n",
 			ga->alias.s, ga->avp.name.s.s);
 	} else {
 		ga->avp.name.n = avp_name.n;
-		DBG("DEBUG:add_avp_galias: registering <%s> for avp id <%d>\n",
+		LM_DBG("registering <%s> for avp id <%d>\n",
 			ga->alias.s, ga->avp.name.n);
 	}
 
@@ -879,7 +879,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 	}
 
 	attr->index = 0;
-	DBG("Parsing '%.*s'\n", name->len, name->s);
+	LM_DBG("Parsing '%.*s'\n", name->len, name->s);
 	if (name->len>=2 && name->s[1]==':') { /* old fashion i: or s: */
 	        /* WARN("i: and s: avp name syntax is deprecated!\n"); */
 		c = name->s[0];
