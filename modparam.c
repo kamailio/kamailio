@@ -78,8 +78,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 	mod_found = 0;
 	for(t = modules; t; t = t->next) {
 		if (regexec(&preg, t->exports.name, 0, 0, 0) == 0) {
-			DBG("set_mod_param_regex: '%s' matches module '%s'\n",
-					regex, t->exports.name);
+			LM_DBG("'%s' matches module '%s'\n", regex, t->exports.name);
 			mod_found = 1;
 			/* PARAM_STR (PARAM_STRING) may be assigned also to PARAM_STRING(PARAM_STR) so let get both module param */
 			ptr = find_param_export(t, name, type | ((type & (PARAM_STR|PARAM_STRING))?PARAM_STR|PARAM_STRING:0), &param_type);
@@ -95,8 +94,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 				} else {
 					val2 = val;
 				}
-				DBG("set_mod_param_regex: found <%s> in module %s [%s]\n",
-						name, t->exports.name, t->path);
+				LM_DBG("found <%s> in module %s [%s]\n", name, t->exports.name, t->path);
 				if (param_type & PARAM_USE_FUNC) {
 					if ( ((param_func_t)(ptr))(param_type, val2) < 0) {
 						regfree(&preg);
