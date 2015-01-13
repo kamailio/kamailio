@@ -488,7 +488,7 @@ int increase_open_fds(int target)
 		goto error;
 	}
 	orig=lim;
-	DBG("current open file limits: %lu/%lu\n",
+	LM_DBG("current open file limits: %lu/%lu\n",
 			(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max);
 	if ((lim.rlim_cur==RLIM_INFINITY) || (target<=lim.rlim_cur))
 		/* nothing to do */
@@ -503,7 +503,7 @@ int increase_open_fds(int target)
 		lim.rlim_max=target;
 		lim.rlim_cur=target;
 	}
-	DBG("increasing open file limits to: %lu/%lu\n",
+	LM_DBG("increasing open file limits to: %lu/%lu\n",
 			(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max);
 	if (setrlimit(RLIMIT_NOFILE, &lim)<0){
 		LM_CRIT("cannot increase the open file limit to"
@@ -580,7 +580,7 @@ int set_core_dump(int enable, long unsigned int size)
 		}
 	}
 done:
-	DBG("core dump limits set to %lu\n", (unsigned long)newlim.rlim_cur);
+	LM_DBG("core dump limits set to %lu\n", (unsigned long)newlim.rlim_cur);
 	return 0;
 error:
 	return -1;
