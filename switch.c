@@ -173,11 +173,11 @@ int fix_switch(struct action* t)
 			rve_destroy(sw_rve);
 			t->val[0].type=BLOCK_ST;
 			t->val[0].u.data=0;
-			DBG("SWITCH: null switch optimized away\n");
+			LM_DBG("null switch optimized away\n");
 		}else{
 			t->type=EVAL_T;
 			t->val[0].type=RVE_ST;
-			DBG("SWITCH: null switch turned to EVAL_T\n");
+			LM_DBG("null switch turned to EVAL_T\n");
 		}
 		return 0;
 	}
@@ -215,7 +215,7 @@ int fix_switch(struct action* t)
 		if ( c->actions && ((ret=fix_actions(c->actions))<0))
 			goto error;
 	}
-	DBG("SWITCH: %d cases, %d default\n", n, default_found);
+	LM_DBG("%d cases, %d default\n", n, default_found);
 	/*: handle n==0 (no case only a default:) */
 	if (n==0){
 		if (default_found){
@@ -227,10 +227,10 @@ int fix_switch(struct action* t)
 				t->val[0].u.data=def_a;
 				t->val[1].type=0;
 				t->val[1].u.data=0;
-				DBG("SWITCH: default only switch optimized away (BLOCK_T)\n");
+				LM_DBG("default only switch optimized away (BLOCK_T)\n");
 				return 0;
 			}
-			DBG("SWITCH: default only switch with side-effect...\n");
+			LM_DBG("default only switch with side-effect...\n");
 		}else{
 			LM_CRIT("empty switch not expected at this point\n");
 			ret=E_BUG;
@@ -304,7 +304,7 @@ int fix_switch(struct action* t)
 		t->val[1].type=0;
 		t->val[1].u.data=0;
 		ret=0;
-		DBG("SWITCH: constant switch(%d) with %d cases optimized away to case "
+		LM_DBG("constant switch(%d) with %d cases optimized away to case"
 				" %d \n", val, n, i);
 		goto end;
 	}
@@ -363,8 +363,8 @@ int fix_switch(struct action* t)
 		t->val[1].type=JUMPTABLE_ST;
 		t->val[1].u.data=jmp;
 		ret=0;
-		DBG("SWITCH: optimized to jumptable [%d, %d] and %d condtable,"
-				"default: %s\n ",
+		LM_DBG("optimized to jumptable [%d, %d] and %d condtable,"
+				" default: %s\n ",
 				jmp->first, jmp->last, jmp->rest.n, jmp->rest.def?"yes":"no");
 	}else{
 		sct=mk_switch_cond_table(n);
@@ -382,7 +382,7 @@ int fix_switch(struct action* t)
 		t->type=SWITCH_COND_T;
 		t->val[1].type=CONDTABLE_ST;
 		t->val[1].u.data=sct;
-		DBG("SWITCH: optimized to condtable (%d) default: %s\n ",
+		LM_DBG("optimized to condtable (%d) default: %s\n",
 				sct->n, sct->def?"yes":"no");
 		ret=0;
 	}
@@ -439,11 +439,11 @@ static int fix_match(struct action* t)
 			rve_destroy(m_rve);
 			t->val[0].type=BLOCK_ST;
 			t->val[0].u.data=0;
-			DBG("MATCH: null switch optimized away\n");
+			LM_DBG("null switch optimized away\n");
 		}else{
 			t->type=EVAL_T;
 			t->val[0].type=RVE_ST;
-			DBG("MATCH: null switch turned to EVAL_T\n");
+			LM_DBG("null switch turned to EVAL_T\n");
 		}
 		return 0;
 	}
@@ -530,7 +530,7 @@ static int fix_match(struct action* t)
 		if ( c->actions && ((ret=fix_actions(c->actions))<0))
 			goto error;
 	}
-	DBG("MATCH: %d cases, %d default\n", n, default_found);
+	LM_DBG("%d cases, %d default\n", n, default_found);
 	/*: handle n==0 (no case only a default:) */
 	if (n==0){
 		if (default_found){
@@ -542,10 +542,10 @@ static int fix_match(struct action* t)
 				t->val[0].u.data=def_a;
 				t->val[1].type=0;
 				t->val[1].u.data=0;
-				DBG("MATCH: default only switch optimized away (BLOCK_T)\n");
+				LM_DBG("default only switch optimized away (BLOCK_T)\n");
 				return 0;
 			}
-			DBG("MATCH: default only switch with side-effect...\n");
+			LM_DBG("default only switch with side-effect...\n");
 		}else{
 			LM_CRIT("empty switch not expected at this point\n");
 			ret=E_BUG;
@@ -636,7 +636,7 @@ static int fix_match(struct action* t)
 				break;
 			}
 		}
-		DBG("MATCH: constant switch(\"%.*s\") with %d cases optimized away"
+		LM_DBG("constant switch(\"%.*s\") with %d cases optimized away"
 				" to case no. %d\n", s.len, ZSW(s.s), n, i);
 		/* cleanup */
 		rval_destroy(rv);
@@ -670,7 +670,7 @@ static int fix_match(struct action* t)
 	t->type=MATCH_COND_T;
 	t->val[1].type=MATCH_CONDTABLE_ST;
 	t->val[1].u.data=mct;
-	DBG("MATCH: optimized to match condtable (%d) default: %s\n ",
+	LM_DBG("optimized to match condtable (%d) default: %s\n",
 				mct->n, mct->def?"yes":"no");
 		ret=0;
 end:
