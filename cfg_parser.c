@@ -283,7 +283,7 @@ static void print_token(cfg_token_t* token)
 	char* buf;
 
 	if ((buf = pkg_malloc(token->val.len * 2)) == NULL) {
-		DBG("token(%d, '%.*s', <%d,%d>-<%d,%d>)\n", 
+		LM_DBG("token(%d, '%.*s', <%d,%d>-<%d,%d>)\n", 
 			token->type, STR_FMT(&token->val),
 			token->start.line, token->start.col, 
 			token->end.line, token->end.col);
@@ -298,7 +298,7 @@ static void print_token(cfg_token_t* token)
 			default: buf[j++] = token->val.s[i];
 			}
 		}
-		DBG("token(%d, '%.*s', <%d,%d>-<%d,%d>)\n", 
+		LM_DBG("token(%d, '%.*s', <%d,%d>-<%d,%d>)\n", 
 			token->type, j, buf,
 			token->start.line, token->start.col, 
 			token->end.line, token->end.col);
