@@ -252,7 +252,7 @@ int init_timer()
 		goto error;
 	}
 	last_time=start_time;
-	DBG("init_timer: starting with *ticks=%u\n", (unsigned) *ticks);
+	LM_DBG("starting with *ticks=%u\n", (unsigned) *ticks);
 	
 	/* init timer structures */
 	for (r=0; r<H0_ENTRIES; r++)
@@ -293,7 +293,7 @@ int init_timer()
 	
 #endif
 	
-	DBG("init_timer: timer_list between %p and %p\n",
+	LM_DBG("timer_list between %p and %p\n",
 			&timer_lst->h0[0], &timer_lst->h2[H2_ENTRIES]);
 	return 0;
 error:
@@ -435,7 +435,7 @@ inline static void adjust_ticks(void)
 #ifndef TIMER_DEBUG
 					if (delta > 2*(s_ticks_t)TIMER_MAX_DRIFT+1)
 #endif
-						DBG("adjusting timer ticks (%lu) with %ld ms"
+						LM_DBG("adjusting timer ticks (%lu) with %ld ms"
 								" (%ld ticks)\n",
 								(unsigned long)*ticks,
 							(long)(delta*1000)/TIMER_TICKS_HZ, (long)delta);
@@ -570,7 +570,7 @@ int timer_add_safe(struct timer_ln* tl, ticks_t delta)
 					tl->del_calls, tl->del_func, tl->del_file, tl->del_line,
 					tl->init, tl->expires_no);
 #else
-		DBG("timer_add called on an active timer %p (%p, %p),"
+		LM_DBG("timer_add called on an active timer %p (%p, %p),"
 					" flags %x\n", tl, tl->next, tl->prev, tl->flags);
 #endif
 		ret=-1; /* refusing to add active or non-reinit. timer */
@@ -629,7 +629,7 @@ again:
 					tl->init, tl->expires_no);
 #else
 /*
-		DBG("timer_del called on an inactive timer %p (%p, %p),"
+		LM_DBG("called on an inactive timer %p (%p, %p),"
 					" flags %x\n", tl, tl->next, tl->prev, tl->flags);
 */
 #endif
@@ -695,7 +695,7 @@ again:
 						tl->init, tl->expires_no);
 #else
 /*
-				DBG("timer_del: (s) timer %p (%p, %p) flags %x "
+				LM_DBG("(s) timer %p (%p, %p) flags %x "
 							"already detached\n",
 							tl, tl->next, tl->prev, tl->flags);
 */
@@ -765,7 +765,7 @@ again:
 						tl->init, tl->expires_no);
 #else
 /*
-				DBG("timer_del: (f) timer %p (%p, %p) flags %x "
+				LM_DBG("(f) timer %p (%p, %p) flags %x "
 							"already detached\n",
 							tl, tl->next, tl->prev, tl->flags);
 */
@@ -828,7 +828,7 @@ inline static void timer_list_expire(ticks_t t, struct timer_head* h
 	first=h->next;
 #endif
 	
-	/*DBG("timer_list_expire @ ticks = %lu, list =%p\n",
+	/*LM_DBG("@ ticks = %lu, list =%p\n",
 			(unsigned long) *ticks, h);
 	*/
 	while(h->next!=(struct timer_ln*)h){
@@ -914,7 +914,7 @@ static void timer_handler(void)
 	i=(slow_idx_t)(*t_idx%SLOW_LISTS_NO);
 #endif
 	
-	/*DBG("timer_handler: called, ticks=%lu, prev_ticks=%lu\n",
+	/*LM_DBG("called, ticks=%lu, prev_ticks=%lu\n",
 			(unsigned long)*ticks, (unsigned long)prev_ticks);
 	*/
 	run_timer=0; /* reset run_timer */
@@ -989,7 +989,7 @@ static ticks_t compat_old_handler(ticks_t ti, struct timer_ln* tl,
 	struct sr_timer* t;
 	
 #ifdef TIMER_DEBUG
-	DBG("timer: compat_old_handler: calling, ticks=%u/%u, tl=%p, t=%p\n",
+	LM_DBG("calling, ticks=%u/%u, tl=%p, t=%p\n",
 			prev_ticks, (unsigned)*ticks, tl, data);
 #endif
 	t=(struct sr_timer*)data;
