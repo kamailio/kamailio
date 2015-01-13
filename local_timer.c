@@ -57,7 +57,7 @@ int init_local_timer(struct local_timer *t, ticks_t crt_ticks)
 	for (r=0; r<H2_ENTRIES; r++)
 		_timer_init_list(&t->timer_lst.h2[r]);
 	_timer_init_list(&t->timer_lst.expired);
-	DBG("init_local_timer: timer_list between %p and %p\n",
+	LM_DBG("timer_list between %p and %p\n",
 			&t->timer_lst.h0[0], &t->timer_lst.h2[H2_ENTRIES]);
 	return 0;
 }
@@ -141,8 +141,8 @@ int local_timer_add(struct local_timer* h, struct timer_ln* tl, ticks_t delta,
 	int ret;
 	
 	if (unlikely(tl->flags & F_TIMER_ACTIVE)){
-		DBG("timer_add called on an active timer %p (%p, %p),"
-					" flags %x\n", tl, tl->next, tl->prev, tl->flags);
+		LM_DBG("called on an active timer %p (%p, %p), flags %x\n",
+				tl, tl->next, tl->prev, tl->flags);
 		ret=-1; /* refusing to add active or non-reinit. timer */
 		goto error;
 	}
@@ -170,16 +170,15 @@ void local_timer_del(struct local_timer* h, struct timer_ln* tl)
 {
 	/* quick exit if timer inactive */
 	if (unlikely(!(tl->flags & F_TIMER_ACTIVE))){
-		DBG("timer_del called on an inactive timer %p (%p, %p),"
-					" flags %x\n", tl, tl->next, tl->prev, tl->flags);
+		LM_DBG("called on an inactive timer %p (%p, %p), flags %x\n",
+				tl, tl->next, tl->prev, tl->flags);
 		return;
 	}
 	if (likely((tl->next!=0)&&(tl->prev!=0))){
 		_timer_rm_list(tl); /* detach */
 		tl->next=tl->prev=0;
 	}else{
-		DBG("timer_del: (f) timer %p (%p, %p) flags %x "
-			"already detached\n",
+		LM_DBG("(f) timer %p (%p, %p) flags %x already detached\n",
 			tl, tl->next, tl->prev, tl->flags);
 	}
 }
@@ -193,9 +192,7 @@ inline static void local_timer_list_expire(struct local_timer* l,
 	struct timer_ln * tl;
 	ticks_t ret;
 	
-	/*DBG("timer_list_expire @ ticks = %lu, list =%p\n",
-			(unsigned long) *ticks, h);
-	*/
+	/*LM_DBG("@ ticks = %lu, list =%p\n", (unsigned long) *ticks, h); */
 	while(h->next!=(struct timer_ln*)h){
 		tl=h->next;
 		_timer_rm_list(tl); /* detach */
