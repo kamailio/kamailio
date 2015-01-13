@@ -275,7 +275,7 @@ again:
 					(*flags & RD_CONN_FORCE_EOF))){
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
-			DBG("EOF on %p, FD %d\n", c, fd);
+			LM_DBG("EOF on %p, FD %d\n", c, fd);
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
@@ -329,7 +329,7 @@ int tcp_read(struct tcp_connection *c, int* flags)
 		return -1;
 	}
 #ifdef EXTRA_DEBUG
-	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
+	LM_DBG("read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
 #endif
 	r->pos+=bytes_read;
 	return bytes_read;
@@ -507,8 +507,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 								p++;
 								goto skip;
 							} else {
-								DBG("tcp_read_headers: ERROR: no clen, p=%X\n",
-										*p);
+								LM_DBG("ERROR: no clen, p=%X\n", *p);
 								r->error=TCP_REQ_BAD_LEN;
 							}
 						}
@@ -580,8 +579,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 							p++;
 							goto skip;
 						} else {
-							DBG("tcp_read_headers: ERROR: no clen, p=%X\n",
-									*p);
+							LM_DBG("ERROR: no clen, p=%X\n", *p);
 							r->error=TCP_REQ_BAD_LEN;
 						}
 					}
@@ -628,7 +626,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						/* body will used as pointer to the last used byte */
 							r->body=p;
 							r->content_len = 0;
-							DBG("stun msg detected\n");
+							LM_DBG("stun msg detected\n");
 						} else {
 							r->state=H_SKIP;
 						}
@@ -1286,10 +1284,10 @@ again:
 				bytes=tcp_read_headers(con, read_flags);
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
-			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
+			LM_DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
 					bytes, (int)(req->parsed-req->start), req->state,
 					req->error );
-			DBG("tcp_read_req: last char=0x%02X, parsed msg=\n%.*s\n",
+			LM_DBG("last char=0x%02X, parsed msg=\n%.*s\n",
 					*(req->parsed-1), (int)(req->parsed-req->start),
 					req->start);
 #endif
@@ -1307,7 +1305,7 @@ again:
 			 */
 			if (unlikely((con->state==S_CONN_EOF) && 
 						(! TCP_REQ_COMPLETE(req)))) {
-				DBG( "tcp_read_req: EOF\n");
+				LM_DBG("EOF\n");
 				resp=CONN_EOF;
 				goto end_req;
 			}
@@ -1317,23 +1315,23 @@ again:
 					req->state, req->error,
 					(int)(req->pos-req->buf), req->buf,
 					(int)(req->parsed-req->start), req->start);
-			DBG("- received from: port %d\n", con->rcv.src_port);
-			print_ip("- received from: ip ",&con->rcv.src_ip, "\n");
+			LM_DBG("received from: port %d\n", con->rcv.src_port);
+			print_ip("received from: ip", &con->rcv.src_ip, "\n");
 			resp=CONN_ERROR;
 			goto end_req;
 		}
 		if (likely(TCP_REQ_COMPLETE(req))){
 #ifdef EXTRA_DEBUG
-			DBG("tcp_read_req: end of header part\n");
-			DBG("- received from: port %d\n", con->rcv.src_port);
-			print_ip("- received from: ip ", &con->rcv.src_ip, "\n");
-			DBG("tcp_read_req: headers:\n%.*s.\n",
+			LM_DBG("end of header part\n");
+			LM_DBG("received from: port %d\n", con->rcv.src_port);
+			print_ip("received from: ip", &con->rcv.src_ip, "\n");
+			LM_DBG("headers:\n%.*s.\n",
 					(int)(req->body-req->start), req->start);
 #endif
 			if (likely(TCP_REQ_HAS_CLEN(req))){
-				DBG("tcp_read_req: content-length= %d\n", req->content_len);
+				LM_DBG("content-length=%d\n", req->content_len);
 #ifdef EXTRA_DEBUG
-				DBG("tcp_read_req: body:\n%.*s\n", req->content_len,req->body);
+				LM_DBG("body:\n%.*s\n", req->content_len,req->body);
 #endif
 			}else{
 				if (cfg_get(tcp, tcp_cfg, accept_no_cl)==0) {
@@ -1346,7 +1344,7 @@ again:
 			/* if we are here everything is nice and ok*/
 			resp=CONN_RELEASE;
 #ifdef EXTRA_DEBUG
-			DBG("receiving msg(%p, %d, )\n",
+			LM_DBG("receiving msg(%p, %d)\n",
 					req->start, (int)(req->parsed-req->start));
 #endif
 			/* rcv.bind_address should always be !=0 */
@@ -1425,13 +1423,12 @@ again:
 				memmove(req->buf, req->parsed, size);
 				req->parsed=req->buf; /* fix req->parsed after using it */
 #ifdef EXTRA_DEBUG
-				DBG("tcp_read_req: preparing for new request, kept %ld"
-						" bytes\n", size);
+				LM_DBG("preparing for new request, kept %ld bytes\n", size);
 #endif
 				/*if we still have some unparsed bytes, try to parse them too*/
 				goto again;
 			} else if (unlikely(con->state==S_CONN_EOF)){
-				DBG( "tcp_read_req: EOF after reading complete request\n");
+				LM_DBG("EOF after reading complete request\n");
 				resp=CONN_EOF;
 			}
 			req->parsed=req->buf; /* fix req->parsed */
@@ -1449,9 +1446,9 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 {
 	long response[2];
 	
-		DBG( "releasing con %p, state %ld, fd=%d, id=%d\n",
+		LM_DBG("releasing con %p, state %ld, fd=%d, id=%d\n",
 				c, state, c->fd, c->id);
-		DBG(" extra_data %p\n", c->extra_data);
+		LM_DBG("extra_data %p\n", c->extra_data);
 		/* release req & signal the parent */
 		c->reader_pid=0; /* reset it */
 		if (c->fd!=-1){
@@ -1523,7 +1520,7 @@ inline static int handle_io(struct fd_map* fm, short events, int idx)
 		case F_TCPMAIN:
 again:
 			ret=n=receive_fd(fm->fd, &con, sizeof(con), &s, 0);
-			DBG("received n=%d con=%p, fd=%d\n", n, con, s);
+			LM_DBG("received n=%d con=%p, fd=%d\n", n, con, s);
 			if (unlikely(n<0)){
 				if (errno == EWOULDBLOCK || errno == EAGAIN){
 					ret=0;
