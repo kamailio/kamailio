@@ -2129,7 +2129,7 @@ static void print_rl(struct route_list* rt, char* name)
 				LM_DBG("WARNING: the main routing table is empty\n");
 			continue;
 		}
-		DBG("%s routing table %d:\n", name, j);
+		LM_DBG("%s routing table %d:\n", name, j);
 		print_actions(rt->rlist[j]);
 		DBG("\n");
 	}
