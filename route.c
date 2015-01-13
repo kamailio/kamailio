@@ -370,7 +370,7 @@ static int exp_optimize_left(struct expr* exp)
 		}
 	}
 	if (ret>0)
-		DBG("left EXP optimized: op%d(_O%d_, ST%d) => op%d(_O%d_, ST%d)\n",
+		LM_DBG("op%d(_O%d_, ST%d) => op%d(_O%d_, ST%d)\n",
 			old_op, old_ltype, old_rtype, exp->op, exp->l_type, exp->r_type);
 	return ret;
 }
@@ -468,7 +468,7 @@ static int exp_optimize_right(struct expr* exp)
 		}
 	}
 	if (ret>0)
-		DBG("right EXP optimized: op%d(O%d, _ST%d_) => op%d(O%d, _ST%d_)\n",
+		LM_DBG("op%d(O%d, _ST%d_) => op%d(O%d, _ST%d_)\n",
 			old_op, old_ltype, old_rtype, exp->op, exp->l_type, exp->r_type);
 	return ret;
 }
@@ -869,7 +869,7 @@ int fix_actions(struct action* a)
 				cmd = t->val[0].u.data;
 				rve_param_no = 0;
 				if (cmd) {
-					DBG("fixing %s()\n", cmd->name);
+					LM_DBG("fixing %s()\n", cmd->name);
 					if (t->val[1].u.number==0) {
 						ret = call_fixup(cmd->fixup, 0, 0);
 						if (ret < 0)
@@ -1700,7 +1700,7 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype,
 			/* 2: resolve (name) & compare w/ all the ips */
 			he=resolvehost(right->s);
 			if (he==0){
-				DBG("comp_ip: could not resolve %s\n", r->str.s);
+				LM_DBG("could not resolve %s\n", r->str.s);
 			}else if (he->h_addrtype==ip->af){
 				for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
 					ret=(memcmp(ip->u.addr, *h, ip->len)==0);
@@ -1735,7 +1735,7 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype,
 			/* 2: resolve (name) & compare w/ all the ips */
 			he=resolvehost(right->s);
 			if (he==0){
-				DBG("comp_ip: could not resolve %s\n", r->str.s);
+				LM_DBG("could not resolve %s\n", r->str.s);
 			}else if (he->h_addrtype==ip->af){
 				for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
 					ret=(memcmp(ip->u.addr, *h, ip->len)==0);
@@ -2126,7 +2126,7 @@ static void print_rl(struct route_list* rt, char* name)
 	for(j=0; j<rt->entries; j++){
 		if (rt->rlist[j]==0){
 			if ((j==0) && (rt==&main_rt))
-				DBG("WARNING: the main routing table is empty\n");
+				LM_DBG("WARNING: the main routing table is empty\n");
 			continue;
 		}
 		DBG("%s routing table %d:\n", name, j);
