@@ -141,7 +141,7 @@ retry1:
 			goto error;
 	}
 
-	DBG("init_sigio: trying signal %d... \n", h->signo);
+	LM_DBG("trying signal %d... \n", h->signo);
 	
 	if (sigaddset(&h->sset, h->signo)==-1){
 		LM_ERR("sigaddset failed for %d: %s [%d]\n",
