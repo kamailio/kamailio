@@ -499,7 +499,7 @@ int load_module(char* mod_path)
 					strcat(path, ".so");
 
 				if (stat(path, &stat_buf) == -1) {
-					DBG("load_module: module file not found <%s>\n", path);
+					LM_DBG("module file not found <%s>\n", path);
 					pkg_free(path);
 
 					/* try path <MODS_DIR>/<modname>/<modname>.so */
@@ -522,7 +522,7 @@ int load_module(char* mod_path)
 						strcat(path, ".so");
 
 					if (stat(path, &stat_buf) == -1) {
-						DBG("load_module: module file not found <%s>\n", path);
+						LM_DBG("module file not found <%s>\n", path);
 						pkg_free(path);
 						path=0;
 					}
@@ -531,7 +531,7 @@ int load_module(char* mod_path)
 				/* try mod_path - S compat */
 				if(path==mod_path) {
 					if (stat(path, &stat_buf) == -1) {
-						DBG("load_module: module file not found <%s>\n", path);
+						LM_DBG("module file not found <%s>\n", path);
 						path=0;
 					}
 				}
@@ -550,7 +550,7 @@ int load_module(char* mod_path)
 					strcat(path, mod_path);
 
 					if (stat(path, &stat_buf) == -1) {
-						DBG("load_module: module file not found <%s>\n", path);
+						LM_DBG("module file not found <%s>\n", path);
 						pkg_free(path);
 						path=0;
 					}
@@ -564,7 +564,7 @@ int load_module(char* mod_path)
 			goto error;
 		}
 	}
-	DBG("load_module: trying to load <%s>\n", path);
+	LM_DBG("trying to load <%s>\n", path);
 
 	retries=2;
 	dlflags=RTLD_NOW;
@@ -668,14 +668,14 @@ sr31_cmd_export_t* find_mod_export_record(char* mod, char* name,
 					 (cmd->param_no==VAR_PARAM_NO)) &&
 					((cmd->flags & flags) == flags)
 				){
-					DBG("find_export_record: found <%s> in module %s [%s]\n",
+					LM_DBG("find_export_record: found <%s> in module %s [%s]\n",
 						name, t->exports.name, t->path);
 					*mod_if_ver=t->orig_mod_interface_ver;
 					return cmd;
 				}
 			}
 	}
-	DBG("find_export_record: <%s> not found \n", name);
+	LM_DBG("find_export_record: <%s> not found \n", name);
 	return 0;
 }
 
@@ -728,7 +728,7 @@ cmd_function find_mod_export(char* mod, char* name, int param_no, int flags)
 	if (cmd)
 		return cmd->function;
 	
-	DBG("find_mod_export: <%s> in module <%s> not found\n", name, mod);
+	LM_DBG("<%s> in module <%s> not found\n", name, mod);
 	return 0;
 }
 
@@ -741,7 +741,7 @@ struct sr_module* find_module_by_name(char* mod) {
 			return t;
 		}
 	}
-	DBG("find_module_by_name: module <%s> not found\n", mod);
+	LM_DBG("module <%s> not found\n", mod);
 	return 0;
 }
 
@@ -764,13 +764,13 @@ void* find_param_export(struct sr_module* mod, char* name,
 	for(param = mod->exports.params ;param && param->name ; param++) {
 		if ((strcmp(name, param->name) == 0) &&
 			((param->type & PARAM_TYPE_MASK(type_mask)) != 0)) {
-			DBG("find_param_export: found <%s> in module %s [%s]\n",
+			LM_DBG("found <%s> in module %s [%s]\n",
 				name, mod->exports.name, mod->path);
 			*param_type = param->type;
 			return param->param_pointer;
 		}
 	}
-	DBG("find_param_export: parameter <%s> not found in module <%s>\n",
+	LM_DBG("parameter <%s> not found in module <%s>\n",
 			name, mod->exports.name);
 	return 0;
 }
@@ -862,7 +862,7 @@ int init_child(int rank)
 	case PROC_TCP_MAIN: type = "PROC_TCP_MAIN"; break;
 	default:            type = "CHILD";         break;
 	}
-	DBG("init_child: initializing %s with rank %d\n", type, rank);
+	LM_DBG("initializing %s with rank %d\n", type, rank);
 
 	if(async_task_child_init(rank)<0)
 		return -1;
@@ -894,7 +894,7 @@ static int init_mod_child( struct sr_module* m, int rank )
 		 */
 		if (init_mod_child(m->next, rank)!=0) return -1;
 		if (m->exports.init_child_f) {
-			DBG("DEBUG: init_mod_child (%d): %s\n", rank, m->exports.name);
+			LM_DBG("rank %d: %s\n", rank, m->exports.name);
 			if (m->exports.init_child_f(rank)<0) {
 				LM_ERR("Error while initializing module %s (%s)\n",
 							m->exports.name, m->path);
@@ -939,7 +939,7 @@ static int init_mod( struct sr_module* m )
 		 */
 		if (init_mod(m->next)!=0) return -1;
 			if (m->exports.init_f) {
-				DBG("DEBUG: init_mod: %s\n", m->exports.name);
+				LM_DBG("%s\n", m->exports.name);
 				if (m->exports.init_f()!=0) {
 					LM_ERR("Error while initializing module %s (%s)\n",
 								m->exports.name, m->path);
@@ -1640,7 +1640,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
 									&val, 0);
 			if (unlikely(!avp)) {
-				DBG("Could not find AVP from function parameter '%s'\n",
+				LM_DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
 			}
@@ -1705,7 +1705,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
 									&val, 0);
 			if (unlikely(!avp)) {
-				DBG("Could not find AVP from function parameter '%s'\n",
+				LM_DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
 			}
@@ -1774,7 +1774,7 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
 									&val, 0);
 			if (unlikely(!avp)) {
-				DBG("Could not find AVP from function parameter '%s'\n",
+				LM_DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
 			}
