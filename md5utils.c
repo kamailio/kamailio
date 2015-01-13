@@ -64,6 +64,6 @@ void MD5StringArray (char *dst, str src[], int size)
   U_MD5Final (digest, &context);
 
   string2hex(digest, 16, dst );
-  DBG("DEBUG: MD5 calculated: %.*s\n", MD5_LEN, dst );
+  LM_DBG("MD5 calculated: %.*s\n", MD5_LEN, dst );
 
 }
