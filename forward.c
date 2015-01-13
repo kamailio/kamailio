@@ -171,7 +171,7 @@ retry:
 	su2ip_addr(&ip, &from);
 	si=find_si(&ip, 0, proto);
 	if (si==0) goto error;
-	DBG("DEBUG: get_out_socket: socket determined: %p\n", si );
+	LM_DBG("socket determined: %p\n", si );
 	if (unlikely(mhomed_sock_cache_disabled)){
 		close(*temp_sock);
 		*temp_sock=-1;
@@ -234,7 +234,7 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 			if (likely(mismatch)) *mismatch=SS_MISMATCH_PROTO;
 		}
 		if (unlikely(force_send_socket->address.af!=to->s.sa_family)){
-			DBG("get_send_socket: force_send_socket of different af"
+			LM_DBG("force_send_socket of different af"
 					" (dst %d - %s:%s forced %d -%s:%s:%d)\n",
 					to->s.sa_family, proto2a(proto), su2a(to, sizeof(*to)),
 					force_send_socket->address.af,
@@ -409,7 +409,7 @@ int check_self(str* host, unsigned short port, unsigned short proto)
 	if (grep_sock_info(host, port, proto)) goto found;
 	/* try to look into the aliases*/
 	if (grep_aliases(host->s, host->len, port, proto)==0){
-		DBG("check_self: host != me\n");
+		LM_DBG("host != me\n");
 		return (_check_self_func_list==NULL)?0:run_check_self_func(host,
 														port, proto);
 	}
@@ -553,8 +553,8 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		}
 #endif
 		 /* send it! */
-		DBG("Sending:\n%.*s.\n", (int)len, buf);
-		DBG("orig. len=%d, new_len=%d, proto=%d\n",
+		LM_DBG("Sending:\n%.*s.\n", (int)len, buf);
+		LM_DBG("orig. len=%d, new_len=%d, proto=%d\n",
 				msg->len, len, send_info->proto );
 	
 		if (run_onsend(msg, send_info, buf, len)==0){
@@ -671,7 +671,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	}else{
 		/* "normal" reply, we use rport's & received value if present */
 		if (via->rport && via->rport->value.s){
-			DBG("update_sock_struct_from_via: using 'rport'\n");
+			LM_DBG("using 'rport'\n");
 			port=str2s(via->rport->value.s, via->rport->value.len, &err);
 			if (err){
 				LM_ERR("bad rport value(%.*s)\n",
@@ -680,13 +680,13 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 			}
 		}
 		if (via->received){
-			DBG("update_sock_struct_from_via: using 'received'\n");
+			LM_DBG("using 'received'\n");
 			name=&(via->received->value);
 			/* making sure that we won't do SRV lookup on "received"
 			 * (possible if no DNS_IP_HACK is used)*/
 			if (port==0) port=via->port?via->port:SIP_PORT; 
 		}else{
-			DBG("update_sock_struct_from_via: using via host\n");
+			LM_DBG("using via host\n");
 			name=&(via->host);
 			if (port==0) port=via->port;
 		}
@@ -699,7 +699,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	    Yes -- it happened on generating a 408 by TM; -jiri
 	    sip_resolvehost now accepts str -janakj
 	*/
-	DBG("update_sock_struct_from_via: trying SRV lookup\n");
+	LM_DBG("trying SRV lookup\n");
 	proto=via->proto;
 	he=sip_resolvehost(name, &port, &proto);
 	
@@ -789,7 +789,7 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 		if (msg->via1->i && msg->via1->i->value.s){
 			s=msg->via1->i->value.s;
 			len=msg->via1->i->value.len;
-			DBG("forward_reply: i=%.*s\n",len, ZSW(s));
+			LM_DBG("i=%.*s\n",len, ZSW(s));
 			if (reverse_hex2int(s, len, (unsigned int*)&dst.id)<0){
 				LM_ERR("bad via i param \"%.*s\"\n", len, ZSW(s));
 				dst.id=0;
@@ -830,7 +830,7 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
 
-	DBG(" reply forwarded to %.*s:%d\n", 
+	LM_DBG("reply forwarded to %.*s:%d\n", 
 			msg->via2->host.len, msg->via2->host.s,
 			(unsigned short) msg->via2->port);
 
