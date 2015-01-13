@@ -668,7 +668,7 @@ inline static int dst_blacklist_clean_expired(unsigned int target,
 			/* check for timeout only "between" hash cells */
 			now=get_ticks_raw();
 			if ((now-start_time)>=timeout){
-				DBG("_dst_blacklist_clean_expired_unsafe: timeout: %d > %d\n",
+				LM_DBG("timeout: %d > %d\n",
 						TICKS_TO_MS(now-start_time), TICKS_TO_MS(timeout));
 				goto skip;
 			}
@@ -677,7 +677,7 @@ inline static int dst_blacklist_clean_expired(unsigned int target,
 skip:
 	start=h; /* next time we start where we left */
 	if (no){
-		DBG("dst_blacklist_clean_expired, %d entries removed\n", no);
+		LM_DBG("%d entries removed\n", no);
 	}
 	return no;
 }
