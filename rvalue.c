@@ -2817,7 +2817,7 @@ static int rve_can_optimize_int(struct rval_expr* rve)
 		if (rve->right.rve->left.rval.type!=RV_INT)
 			return 0;
 	}
-	DBG("rve_can_optimize_int: left %d, right %d\n", 
+	LM_DBG("left %d, right %d\n", 
 			rve->left.rve->op, rve->right.rve?rve->right.rve->op:0);
 	return 1;
 }
@@ -2835,7 +2835,7 @@ static int rve_can_optimize_str(struct rval_expr* rve)
 		return 0;
 	if (rve->op == RVE_RVAL_OP)
 		return 0;
-	DBG("rve_can_optimize_str: left %d, right %d\n", 
+	LM_DBG("left %d, right %d\n", 
 			rve->left.rve->op, rve->right.rve?rve->right.rve->op:0);
 	if (rve->left.rve->op != RVE_RVAL_OP)
 		return 0;
@@ -2856,15 +2856,15 @@ static int rve_can_optimize_str(struct rval_expr* rve)
 
 static int fix_rval(struct rvalue* rv)
 {
-	DBG("RV fixing type %d\n", rv->type);
+	LM_DBG("RV fixing type %d\n", rv->type);
 	switch(rv->type){
 		case RV_INT:
 			/*nothing to do*/
-			DBG("RV is int: %d\n", (int)rv->v.l);
+			LM_DBG("RV is int: %d\n", (int)rv->v.l);
 			return 0;
 		case RV_STR:
 			/*nothing to do*/
-			DBG("RV is str: \"%s\"\n", rv->v.s.s);
+			LM_DBG("RV is str: \"%s\"\n", rv->v.s.s);
 			return 0;
 		case RV_BEXPR:
 			return fix_expr(rv->v.bexpr);
@@ -3263,13 +3263,13 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 			if (right){
 				if (rve->op==RVE_RVAL_OP){
 					if (rve->left.rval.type==RV_INT)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, %d) -> %d\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, i, (int)rve->left.rval.v.l);
 					else
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, %d) -> $v (rval)\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
@@ -3277,19 +3277,19 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 				}else if (rve->op==RVE_INT_OP){
 					if (rve->left.rve->op==RVE_RVAL_OP &&
 							rve->left.rve->left.rval.type==RV_INT)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, %d) -> (int)%d\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, i, (int)rve->left.rve->left.rval.v.l);
 					else
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, %d) -> (int)$v\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, i);
 				}else{
-					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+					LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 							" op%d($v, %d) -> $v\n",
 							rve->fpos.s_line, rve->fpos.s_col,
 							rve->fpos.e_line, rve->fpos.e_col,
@@ -3298,13 +3298,13 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 			}else{
 				if (rve->op==RVE_RVAL_OP){
 					if (rve->left.rval.type==RV_INT)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(%d, $v) -> %d\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, i, (int)rve->left.rval.v.l);
 					else
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(%d, $v) -> $v (rval)\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
@@ -3312,19 +3312,19 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 				}else if (rve->op==RVE_INT_OP){
 					if (rve->left.rve->op==RVE_RVAL_OP &&
 							rve->left.rve->left.rval.type==RV_INT)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(%d, $v) -> (int)%d\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, i, (int)rve->left.rve->left.rval.v.l);
 					else
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(%d, $v) -> (int)$v\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, i);
 				}else{
-					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+					LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 							" op%d(%d, $v) -> $v\n",
 							rve->fpos.s_line, rve->fpos.s_col,
 							rve->fpos.e_line, rve->fpos.e_col,
@@ -3355,7 +3355,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					rve->right.rve=0;
 					ret=1;
 					if (dbg)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, \"\") -> strempty($v)\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
@@ -3376,31 +3376,31 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 			if (right){
 				if (rve->op==RVE_RVAL_OP){
 					if (rve->left.rval.type==RV_STR)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, <string>) -> \"%s\"\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, rve->left.rval.v.s.s);
 					else
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, <string>) -> $v (rval)\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col, op);
 				}else if (rve->op==RVE_STR_OP){
 					if (rve->left.rve->op==RVE_RVAL_OP &&
 							rve->left.rve->left.rval.type==RV_STR)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, <string>) -> (str)\"%s\"\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, rve->left.rve->left.rval.v.s.s);
 					else
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, <string>) -> (str)$v\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col, op);
 				}else{
-					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+					LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 							" op%d($v, <string>) -> $v\n",
 							rve->fpos.s_line, rve->fpos.s_col,
 							rve->fpos.e_line, rve->fpos.e_col, op);
@@ -3408,31 +3408,31 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 			}else{
 				if (rve->op==RVE_RVAL_OP){
 					if (rve->left.rval.type==RV_STR)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(<string>, $v) -> \"%s\"\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, rve->left.rval.v.s.s);
 					else
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(<string>, $v) -> $v (rval)\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col, op);
 				}else if (rve->op==RVE_STR_OP){
 					if (rve->left.rve->op==RVE_RVAL_OP &&
 							rve->left.rve->left.rval.type==RV_STR)
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(<string>, $v) -> (str)\"%s\"\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, rve->left.rve->left.rval.v.s.s);
 					else
-						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(<string>, $v) -> (str)$v\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col, op);
 				}else{
-					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+					LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 							" op%d(<string>, $v) -> $v\n",
 							rve->fpos.s_line, rve->fpos.s_col,
 							rve->fpos.e_line, rve->fpos.e_col, op);
@@ -3481,13 +3481,13 @@ static int rve_optimize(struct rval_expr* rve)
 		rv=0;
 		trv=&rve->left.rval;
 		if (trv->type==RV_INT)
-			DBG("FIXUP RVE (%d,%d-%d,%d): optimized constant int rve "
+			LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized constant int rve "
 					"(old op %d) to %d\n",
 					rve->fpos.s_line, rve->fpos.s_col,
 					rve->fpos.e_line, rve->fpos.e_col,
 					op, (int)trv->v.l);
 		else if (trv->type==RV_STR)
-			DBG("FIXUP RVE (%d,%d-%d,%d): optimized constant str rve "
+			LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized constant str rve "
 					"(old op %d) to \"%.*s\"\n",
 					rve->fpos.s_line, rve->fpos.s_col,
 					rve->fpos.e_line, rve->fpos.e_col,
@@ -3526,7 +3526,7 @@ static int rve_optimize(struct rval_expr* rve)
 				if (rve_replace_with_ct_rv(rve->right.rve, rv)<0)
 					goto error;
 				rve->op=RVE_IPLUS_OP;
-				DBG("FIXUP RVE (%d,%d-%d,%d): optimized $v - a into "
+				LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized $v - a into "
 						"$v + (%d)\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col,
@@ -3541,12 +3541,12 @@ static int rve_optimize(struct rval_expr* rve)
 			l_type=rve_guess_type(rve->left.rve);
 			if (l_type==RV_INT){
 				rve->op=RVE_IPLUS_OP;
-				DBG("FIXUP RVE (%d,%d-%d,%d): changed + into integer plus\n",
+				LM_DBG("FIXUP RVE (%d,%d-%d,%d): changed + into integer plus\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col);
 			}else if (l_type==RV_STR){
 				rve->op=RVE_CONCAT_OP;
-				DBG("FIXUP RVE (%d,%d-%d,%d): changed + into string concat\n",
+				LM_DBG("FIXUP RVE (%d,%d-%d,%d): changed + into string concat\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col);
 			}
@@ -3557,13 +3557,13 @@ static int rve_optimize(struct rval_expr* rve)
 			l_type=rve_guess_type(rve->left.rve);
 			if (l_type==RV_INT){
 				rve->op=(rve->op==RVE_EQ_OP)?RVE_IEQ_OP:RVE_IDIFF_OP;
-				DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into integer"
+				LM_DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into integer"
 						" ==/!=\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col);
 			}else if (l_type==RV_STR){
 				rve->op=(rve->op==RVE_EQ_OP)?RVE_STREQ_OP:RVE_STRDIFF_OP;
-				DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into string"
+				LM_DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into string"
 						" ==/!=\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col);
@@ -3594,7 +3594,7 @@ static int rve_optimize(struct rval_expr* rve)
 					   or a combination of them */
 					if ((rve->op==RVE_PLUS_OP) &&
 						(rve_guess_type(tmp_rve.left.rve)!=RV_STR)){
-						DBG("RVE optimization failed (%d,%d-%d,%d): cannot "
+						LM_DBG("RVE optimization failed (%d,%d-%d,%d): cannot "
 							"optimize +(+($v, a), b) when typeof(a)==INT\n",
 							rve->fpos.s_line, rve->fpos.s_col,
 							rve->fpos.e_line, rve->fpos.e_col);
@@ -3613,13 +3613,13 @@ static int rve_optimize(struct rval_expr* rve)
 					rve->left.rve=rve->left.rve->left.rve;
 					trv=&rve->right.rve->left.rval;
 					if (trv->type==RV_INT)
-						DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
+						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
 								"op(op($v, a), b) with op($v, %d); op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								(int)trv->v.l, rve->op);
 					else if (trv->type==RV_STR)
-						DBG("FIXUP RVE (%d,%d-%d,%d): optimized str rve "
+						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized str rve "
 								"op(op($v, a), b) with op($v, \"%.*s\");"
 								" op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3651,13 +3651,13 @@ static int rve_optimize(struct rval_expr* rve)
 					rv=0;
 					trv=&rve->left.rve->left.rval;
 					if (trv->type==RV_INT)
-						DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
+						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
 								"op(op(a, $v), b) with op(%d, $v); op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								(int)trv->v.l, rve->op);
 					else if (trv->type==RV_STR)
-						DBG("FIXUP RVE (%d,%d-%d,%d): optimized str rve "
+						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized str rve "
 								"op(op(a, $v), b) with op(\"%.*s\", $v);"
 								" op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3697,13 +3697,13 @@ static int rve_optimize(struct rval_expr* rve)
 					rve->right.rve=rve->right.rve->left.rve;
 					trv=&rve->left.rve->left.rval;
 					if (trv->type==RV_INT)
-						DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
+						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
 								"op(a, op($v, b)) with op(%d, $v); op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								(int)trv->v.l, rve->op);
 					else if (trv->type==RV_STR)
-						DBG("FIXUP RVE (%d,%d-%d,%d): optimized str rve "
+						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized str rve "
 								"op(a, op($v, b)) with op(\"%.*s\", $v);"
 								" op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3721,7 +3721,7 @@ static int rve_optimize(struct rval_expr* rve)
 					if ((rve->op==RVE_PLUS_OP) &&
 						(rve_guess_type(tmp_rve.left.rve) != 
 						 	rve_guess_type(tmp_rve.right.rve))){
-						DBG("RVE optimization failed (%d,%d-%d,%d): cannot "
+						LM_DBG("RVE optimization failed (%d,%d-%d,%d): cannot "
 								"optimize +(a, +(b, $v)) when "
 								"typeof(a)!=typeof(b)\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3741,13 +3741,13 @@ static int rve_optimize(struct rval_expr* rve)
 					rve->right.rve=rve->right.rve->right.rve;
 					trv=&rve->left.rve->left.rval;
 					if (trv->type==RV_INT)
-						DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
+						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
 								"op(a, op(b, $v)) with op(%d, $v); op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								(int)trv->v.l, rve->op);
 					else if (trv->type==RV_STR)
-						DBG("FIXUP RVE (%d,%d-%d,%d): optimized str rve "
+						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized str rve "
 								"op(a, op(b, $v)) with op(\"%.*s\", $v);"
 								" op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
