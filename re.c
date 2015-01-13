@@ -310,7 +310,7 @@ found_re:
 	se->n_escapes=rw_no;
 	se->max_pmatch=max_pmatch;
 	for (r=0; r<rw_no; r++) se->replace[r]=rw[r];
-	DBG("subst_parser: ok, se is %p\n", se);
+	LM_DBG("ok, se is %p\n", se);
 	return se;
 	
 error:
@@ -433,7 +433,7 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 	eflags=0;
 	do{
 		r=regexec(se->re, p, nmatch, pmatch, eflags);
-		DBG("subst_run: running. r=%d\n", r);
+		LM_DBG("running. r=%d\n", r);
 		/* subst */
 		if (r==0){ /* != REG_NOMATCH */
 			if (pmatch[0].rm_so==-1) {
@@ -452,7 +452,7 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 			memset(*crt, 0, sizeof(struct replace_lst));
 			(*crt)->offset=pmatch[0].rm_so+(int)(p-input);
 			(*crt)->size=pmatch[0].rm_eo-pmatch[0].rm_so;
-			DBG("subst_run: matched (%d, %d): [%.*s]\n",
+			LM_DBG("matched (%d, %d): [%.*s]\n",
 					(*crt)->offset, (*crt)->size, 
 					(*crt)->size, input+(*crt)->offset);
 			/* create subst. string */
@@ -502,7 +502,7 @@ str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se,
 	end=input+len;
 	lst=subst_run(se, input, msg, count);
 	if (lst==0){
-		DBG("subst_str: no match\n");
+		LM_DBG("no match\n");
 		return 0;
 	}
 	for (l=lst; l; l=l->next)
