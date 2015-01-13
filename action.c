@@ -532,7 +532,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				goto error;
 			}
-			/* DBG("XXX: message length %d, max %d\n",
+			/* LM_DBG("message length %d, max %d\n",
 				msg->len, a->val[0].u.number ); */
 			ret = msg->len >= a->val[0].u.number ? 1 : -1;
 			break;
@@ -1537,7 +1537,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	}
 
 	if (unlikely(a==0)){
-		DBG("DEBUG: run_actions: null action list (rec_level=%d)\n", h->rec_lev);
+		LM_DBG("null action list (rec_level=%d)\n", h->rec_lev);
 		ret=1;
 	}
 
