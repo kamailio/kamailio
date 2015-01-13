@@ -257,7 +257,7 @@ static int fixup_t_flag(void** param, int param_no)
 	char *c;
 	int token;
 
-	DBG("DEBUG: fixing flag: %s\n", (char *) (*param));
+	LM_DBG("fixing flag: %s\n", (char *) (*param));
 
 	if (param_no!=1) {
 		LM_ERR("TM module: only parameter #1 for flags can be fixed\n");
