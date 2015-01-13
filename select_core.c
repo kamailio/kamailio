@@ -221,7 +221,7 @@ SELECT_uri_header(rpid)
 int parse_contact_header( struct sip_msg *msg)
 {
         if ( !msg->contact && ( parse_headers(msg,HDR_CONTACT_F,0)==-1 || !msg->contact)) {
-                DBG("bad msg or missing CONTACT header\n");
+                LM_DBG("bad msg or missing CONTACT header\n");
                 return -1;
         }
 
@@ -526,14 +526,14 @@ int select_sdp_line(str* res, select_t* sel, struct sip_msg* msg)
 		if (sel->n < 5) return -1;
 
 		if (sel->params[4].type != SEL_PARAM_STR) {
-			ERR("wrong parameter type");
+			LM_ERR("wrong parameter type");
 			return -1;
 		}
 		if ((sel->params[4].v.s.len < 1) ||
 			(sel->params[4].v.s.len > 2) ||
 			((sel->params[4].v.s.len == 2) && (sel->params[4].v.s.s[1] != '='))
 		) {
-			ERR("wrong sdp line format: %.*s\n",
+			LM_ERR("wrong sdp line format: %.*s\n",
 				sel->params[4].v.s.len, sel->params[4].v.s.s);
 			return -1;
 		}
@@ -555,7 +555,7 @@ int select_sdp_line(str* res, select_t* sel, struct sip_msg* msg)
 			/* the requested SDP line is found, return its value */
 			buf++;
 			if ((buf >= buf_end) || (*buf != '=')) {
-				ERR("wrong SDP line format\n");
+				LM_ERR("wrong SDP line format\n");
 				return -1;
 			}
 			buf++;
@@ -565,14 +565,14 @@ int select_sdp_line(str* res, select_t* sel, struct sip_msg* msg)
 				line_end++;
 
 			if (line_end >= buf_end) {
-				ERR("wrong SDP line format\n");
+				LM_ERR("wrong SDP line format\n");
 				return -1;
 			}
 			line_end--;
 			if (*line_end == '\r') line_end--;
 
 			if (line_end < buf) {
-				ERR("wrong SDP line format\n");
+				LM_ERR("wrong SDP line format\n");
 				return -1;
 			}
 
@@ -621,7 +621,7 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 			s->params[2].v.s.s[s->params[2].v.s.len]=':';
 			if (parse_hname2(s->params[2].v.s.s,s->params[2].v.s.s+(s->params[2].v.s.len<3?4:s->params[2].v.s.len+1),
 						&hdr)==0) {
-				ERR("select_anyhdr:fixup_call:parse error\n");
+				LM_ERR("fixup_call:parse error\n");
 				return -1;
 			}
 			s->params[2].v.s.s[s->params[2].v.s.len]=c;
@@ -654,7 +654,7 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 
 	/* we need to be sure we have parsed all headers */
 	if (!msg->eoh && (parse_headers(msg,HDR_EOH_F,0)==-1 || !msg->eoh)) {
-		ERR("bad msg while parsing to EOH \n");
+		LM_ERR("bad msg while parsing to EOH \n");
 		return -1;
 	}
 	for (hf=msg->headers; hf; hf=hf->next) {
@@ -952,7 +952,7 @@ int select_any_params(str* res, select_t* s, struct sip_msg* msg)
 	if (!res->len) return -1;
 
 	if (search_param(*res, wanted->s, wanted->len, res) <= 0) {
-		DBG("SELECT ...uri.params.%s NOT FOUND !\n", wanted->s);
+		LM_DBG("uri.params.%s NOT FOUND !\n", wanted->s);
 		return -1;
 	} else {
 		return (res->len) ? 0 : 1;
@@ -962,17 +962,17 @@ int select_any_params(str* res, select_t* s, struct sip_msg* msg)
 int select_event(str* res, select_t* s, struct sip_msg* msg)
 {
 	if (!msg->event && parse_headers(msg, HDR_EVENT_F, 0) == -1) {
-		ERR("Error while searching Event header field\n");
+		LM_ERR("Error while searching Event header field\n");
 		return -1;
 	}
 
 	if (!msg->event) {
-		DBG("Event header field not found\n");
+		LM_DBG("Event header field not found\n");
 		return -1;
 	}
 
 	if (parse_event(msg->event) < 0) {
-		ERR("Error while parsing Event header field\n");
+		LM_ERR("Error while parsing Event header field\n");
 		return -1;
 	}
 
@@ -985,12 +985,12 @@ int select_event(str* res, select_t* s, struct sip_msg* msg)
 static int parse_rr_header(struct sip_msg *msg)
 {
         if ( !msg->record_route && ( parse_headers(msg,HDR_RECORDROUTE_F,0) == -1)) {
-                ERR("bad msg or missing Record-Route header\n");
+                LM_ERR("bad msg or missing Record-Route header\n");
                 return -1;
         }
 
 	if (!msg->record_route) {
-		DBG("No Record-Route header field found\n");
+		LM_DBG("No Record-Route header field found\n");
 		return -1;
 	}
 
@@ -1056,12 +1056,12 @@ int select_rr_params(str* res, select_t* s, struct sip_msg* msg)
 static inline struct cseq_body* sel_parse_cseq(struct sip_msg* msg)
 {
         if (!msg->cseq && (parse_headers(msg, HDR_CSEQ_F, 0) == -1)) {
-                ERR("Unable to parse CSeq header\n");
+                LM_ERR("Unable to parse CSeq header\n");
                 return 0;
         }
 
 	if (!msg->cseq) {
-		DBG("No CSeqheader field found\n");
+		LM_DBG("No CSeq header field found\n");
 		return 0;
 	}
 
@@ -1222,7 +1222,7 @@ int select_nameaddr_name(str* res, select_t* s, struct sip_msg* msg)
 	
 	p=find_not_quoted(res, '<');
 	if (!p) {
-		DBG("select_nameaddr_name: no < found, whole string is uri\n");
+		LM_DBG("no < found, whole string is uri\n");
 		res->len=0;
 		return 1;
 	}
@@ -1238,7 +1238,7 @@ int select_nameaddr_uri(str* res, select_t* s, struct sip_msg* msg)
 	
 	p=find_not_quoted(res, '<');
 	if (!p) {
-		DBG("select_nameaddr_uri: no < found, string up to first semicolon is uri\n");
+		LM_DBG("no < found, string up to first semicolon is uri\n");
 		p = q_memchr(res->s, ';', res->len);
 		if (p)
 			res->len = p-res->s;
@@ -1250,7 +1250,7 @@ int select_nameaddr_uri(str* res, select_t* s, struct sip_msg* msg)
 	
 	p=find_not_quoted(res, '>');
 	if (!p) {
-		ERR("select_nameaddr_uri: no > found, invalid nameaddr value\n");
+		LM_ERR("no > found, invalid nameaddr value\n");
 		return -1;
 	}
 
@@ -1270,7 +1270,7 @@ int select_nameaddr_params(str* res, select_t* s, struct sip_msg* msg)
 		res->s=p +1;
 		p=find_not_quoted(res, '>');
 		if (!p) {
-			ERR("select_nameaddr_params: no > found, invalid nameaddr value\n");
+			LM_ERR("no > found, invalid nameaddr value\n");
 			return -1;
 		}
 		res->len=res->len - (p-res->s) -1;
@@ -1352,7 +1352,7 @@ int select_ip_port(str* res, select_t* s, struct sip_msg* msg)
 				break;
 
 			default:
-				ERR("BUG: select_ip_port: Unknown transport protocol\n");
+				LM_ERR("Unknown transport protocol\n");
 				return -1;
 			}
 		}
