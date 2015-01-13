@@ -555,16 +555,14 @@ retry:
 		if (list==0) /* disabled or unknown protocol */
 			continue;
 		for (si=*list; si; si=si->next){
-			DBG("grep_sock_info - checking if host==us: %d==%d &&"
-					" [%.*s] == [%.*s]\n",
+			LM_DBG("checking if host==us: %d==%d && [%.*s] == [%.*s]\n",
 						hname.len,
 						si->name.len,
 						hname.len, hname.s,
 						si->name.len, si->name.s
 				);
 			if (port) {
-				DBG("grep_sock_info - checking if port %d (advertise %d)"
-						" matches port %d\n",
+				LM_DBG("checking if port %d (advertise %d) matches port %d\n",
 						si->port_no, si->useinfo.port_no, port);
 				if (si->port_no!=port && si->useinfo.port_no!=port) {
 					continue;
@@ -575,7 +573,7 @@ retry:
 				goto found;
 			if(si->useinfo.name.s!=NULL)
 			{
-				DBG("grep_sock_info - checking advertise if host==us:"
+				LM_DBG("checking advertise if host==us:"
 						" %d==%d && [%.*s] == [%.*s]\n",
 						hname.len,
 						si->useinfo.name.len,
@@ -632,8 +630,7 @@ struct socket_info* grep_sock_info_by_port(unsigned short port,
 			continue;
 		
 		for (si=*list; si; si=si->next){
-			DBG("grep_sock_info_by_port - checking if port %d matches"
-					" port %d\n", si->port_no, port);
+			LM_DBG("checking if port %d matches port %d\n", si->port_no, port);
 			if (si->port_no==port) {
 				goto found;
 			}
@@ -1160,9 +1157,10 @@ int add_interfaces_via_netlink(char* if_name, int family, unsigned short port,
 			//if(! (ifaces[i].flags & IFF_UP) ) continue;
 
 			for(tmp = ifaces[i].addresses; tmp; tmp = tmp->next){
-				LM_DBG("\t in add_iface_via_netlink Name %s Address %s\n", ifaces[i].name, tmp->addr);
-		                /* match family */
-                                if (family == tmp->family){
+				LM_DBG("in add_iface_via_netlink Name %s Address %s\n",
+							ifaces[i].name, tmp->addr);
+					/* match family */
+					if (family == tmp->family){
 					/* check if loopback */
 					if (ifaces[i].flags & IFF_LOOPBACK){
 						LM_DBG("INTERFACE %s is loopback", ifaces[i].name);
@@ -1542,7 +1540,7 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 	}
 	/* get ips & fill the port numbers*/
 #ifdef EXTRA_DEBUG
-	DBG("Listening on \n");
+	LM_DBG("Listening on\n");
 #endif
 	for (si=*list;si;si=si->next){
 		/* fix port number, port_no should be !=0 here */
