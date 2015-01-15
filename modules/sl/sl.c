@@ -437,9 +437,8 @@ restore:
 	if(reason!=NULL) {
 		if(ldel!=NULL) {
 			remove_lump(msg, ldel);
-		}
-		if(ladd!=NULL) {
-			remove_lump(msg, ladd);
+			/* ladd is liked in the 'after' list inside ldel,
+			 * destroyed together, no need for its own remove operation */
 		}
 	}
 	if(code!=NULL) {
