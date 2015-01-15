@@ -1,6 +1,6 @@
-/* $Id: nathelper.c 1808 2007-03-10 17:36:19Z bogdan_iancu $
- *
+/*
  * Copyright (C) 2003 Porta Software Ltd
+ * Copyright (C) 2014-2015 Sipwise GmbH, http://www.sipwise.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -17,10 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * ---------
- * 2007-04-13   splitted from nathelper.c (ancuta)
 */
 
 

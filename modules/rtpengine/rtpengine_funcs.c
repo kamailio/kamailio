@@ -1,7 +1,6 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2014-2015 Sipwise GmbH, http://www.sipwise.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -18,13 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * --------
- *  2003-11-06  body len is computed using the message len (it's
- *               not taken any more from the msg. content-length) (andrei)
- *  2008-08-30  body len is taken from Conent-length header as it is more
- *               reliable (UDP packages may contain garbage at the end)(bogdan)
  */
 
 #include <stdio.h>

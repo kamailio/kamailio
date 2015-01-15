@@ -1,7 +1,6 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2014-2015 Sipwise GmbH, http://www.sipwise.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
