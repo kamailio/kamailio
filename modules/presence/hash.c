@@ -508,14 +508,16 @@ int insert_phtable(str* pres_uri, int event, char* sphere)
 		if(p->sphere== NULL)
 		{
 			lock_release(&pres_htable[hash_code].lock);
+			shm_free(p);
 			ERR_MEM(SHARE_MEM);
 		}
 		strcpy(p->sphere, sphere);
 	}
 
 	p->event= event;
-	
+	p->publ_count=1;
 
+	/* link the item in the hash table */
 	p->next= pres_htable[hash_code].entries->next;
 	pres_htable[hash_code].entries->next= p;
 
