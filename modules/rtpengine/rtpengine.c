@@ -354,6 +354,8 @@ static int *rtpp_socks = 0;
 static int     setid_avp_type;
 static int_str setid_avp;
 
+char* force_send_ip_str="";
+
 typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
 	pv_spec_t *rpv;
@@ -421,6 +423,7 @@ static param_export_t params[] = {
 	{"url_col",               PARAM_STR, &rtpp_url_col },
 	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param },
 	{"setid_avp",             PARAM_STRING, &setid_avp_param },
+	{"force_send_interface",  PARAM_STRING, &force_send_ip_str	},
 	{0, 0, 0}
 };
 
@@ -629,7 +632,6 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy)
 		pnode->rn_url.s[p2 - p1] 	= 0;
 		pnode->rn_url.len 			= p2-p1;
 
-		LM_DBG("url is %s, len is %i\n", pnode->rn_url.s, pnode->rn_url.len);
 		/* Leave only address in rn_address */
 		pnode->rn_address = pnode->rn_url.s;
 		if (strncasecmp(pnode->rn_address, "udp:", 4) == 0) {
@@ -918,6 +920,7 @@ mod_init(void)
 	pv_spec_t *avp_spec;
 	unsigned short avp_flags;
 	str s;
+	unsigned char ip_buff[sizeof(struct in6_addr)];
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -990,6 +993,12 @@ mod_init(void)
 		memset(&tmb, 0, sizeof(struct tm_binds));
 	}
 
+	if ( 0 != strlen(force_send_ip_str)) {
+		if ( inet_pton(AF_INET, force_send_ip_str, ip_buff) <= 0) {
+			LM_ERR("Invalid IP address for force_send_interface <%s>\n", force_send_ip_str);
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -1002,6 +1011,8 @@ child_init(int rank)
 	struct addrinfo hints, *res;
 	struct rtpp_set  *rtpp_list;
 	struct rtpp_node *pnode;
+	struct sockaddr_in tmp, ip4addr;
+	socklen_t sock_len = sizeof(struct sockaddr);
 
 	if(rtpp_set_list==NULL )
 		return 0;
@@ -1062,6 +1073,25 @@ child_init(int rank)
 				LM_ERR("can't create socket\n");
 				freeaddrinfo(res);
 				return -1;
+			}
+
+			if (strlen(force_send_ip_str)!=0) {
+				memset(&ip4addr, 0, sizeof(ip4addr));
+				ip4addr.sin_family = AF_INET;
+				ip4addr.sin_port = htons(0);
+				inet_pton(AF_INET, force_send_ip_str, &ip4addr.sin_addr);
+
+				if (bind(rtpp_socks[pnode->idx], (struct sockaddr*)&ip4addr, sizeof(ip4addr)) <0) {
+					LM_ERR("can't bind socket to required interface \n");
+					close( rtpp_socks[pnode->idx] );
+					rtpp_socks[pnode->idx] = -1;
+					freeaddrinfo(res);
+					return -1;
+				}
+
+				memset(&tmp, 0, sizeof(tmp)); sock_len = sizeof(struct sockaddr);
+				getsockname(rtpp_socks[pnode->idx], (struct sockaddr *) &tmp, &sock_len);
+				LM_INFO("Binding on %s:%d\n", inet_ntoa(tmp.sin_addr), ntohs(tmp.sin_port));
 			}
 
 			if (connect( rtpp_socks[pnode->idx], res->ai_addr, res->ai_addrlen) == -1) {
