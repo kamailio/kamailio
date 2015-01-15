@@ -712,6 +712,11 @@ unsigned int count_applied_lumps(struct lump *ll, int type)
 	return n;
 }
 
+/**
+ * remove a lump in a root list
+ * - it doesn't look for lumps added as before/after rule
+ * - destroys the entire lump, with associated before/after rules
+ */
 int remove_lump(sip_msg_t *msg, struct lump *l)
 {
 	struct lump *t = NULL;
@@ -736,7 +741,9 @@ int remove_lump(sip_msg_t *msg, struct lump *l)
 		} else {
 			prev->next = t->next;
 		}
-		free_lump(t);
+		/* detach and free all its content */
+		t->next = NULL;
+		free_lump_list(t);
 		return 1;
 	}
 	return 0;
