@@ -134,7 +134,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			event.s = (char *) VAL_STRING(&values[event_col]);
 			event.len = strlen(event.s);
 			pres.event= contains_event(&event, NULL);
-			if(pres.event== NULL)
+			if(pres.event==NULL || pres.event->evp==NULL)
 			{
 				LM_ERR("event not found\n");
 				goto error;
@@ -147,7 +147,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			}
 		
 			/* delete from hash table */
-			if(publ_cache_enabled && delete_phtable(&uri, pres.event->type)< 0)
+			if(publ_cache_enabled && delete_phtable(&uri, pres.event->evp->type)< 0)
 			{
 				LM_ERR("deleting from pres hash table\n");
 				goto error;
