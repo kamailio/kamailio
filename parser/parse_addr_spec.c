@@ -913,6 +913,7 @@ endofheader:
 	return tmp;
 
 error:
+	free_to_params(to_b);
 	to_b->error=PARSE_ERROR;
 	return tmp;
 
