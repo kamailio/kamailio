@@ -62,6 +62,8 @@ int parse_pai_ppi_body(char *buf, int len, p_id_body_t **body)
 		LM_ERR("Error parsing PAI/PPI body %u '%.*s'\n", num_uri, len, buf);
 		return -1;
 	}
+	/* should be no header params, but in case there are, free them */
+	free_to_params(&uri_b[num_uri]);
 	num_uri++;
 	while ((*tmp == ',') && (num_uri < NUM_PAI_BODIES))
 	{
@@ -72,6 +74,8 @@ int parse_pai_ppi_body(char *buf, int len, p_id_body_t **body)
 			LM_ERR("Error parsing PAI/PPI body %u '%.*s'\n", num_uri, len, buf);
 			return -1;
 		}
+		/* should be no header params, but in case there are, free them */
+		free_to_params(&uri_b[num_uri]);
 		num_uri++;
 	}
 	if (num_uri >= NUM_PAI_BODIES)
