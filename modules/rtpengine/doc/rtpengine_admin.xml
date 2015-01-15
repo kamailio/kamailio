@@ -239,6 +239,28 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.force_send_interface">
+		<title><varname>force_send_interface</varname> (string)</title>
+		<para>
+			Forces all control messages between the &sip; proxy and
+			the &rtp; proxy to be sent from the specified local
+			interface. Only IPv4 addresses are supported so far. If
+			not specified, the default interface selected by the
+			operating system will be used.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<example>
+		<title>Set <varname>force_send_interface</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "force_send_interface", "10.3.7.123")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
