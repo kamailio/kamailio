@@ -31,17 +31,17 @@
 	<para>
 	    The module implements RPC commands to set and get
 	    configuration variables on-the-fly, that are declared
-		by &siprouter; core and by the modules.
+		by &kamailio; core and by the modules.
 	</para>
 	<para>
 		For example, it can be used to fine-tune values for
 		global parameters such as debug, tcp/sctp/dns attributes,
-	    a.s.o. without the need of restart.
+	    	without the need of restart.
 	</para>
 	<para>
 		RPC connector modules, such as <quote>ctl</quote> or <quote>xmlrpc</quote>, although
 		not a dependecy, should be loaded in order to execute
-		the RPC commands exported by this module. When ctl module
+		the RPC commands exported by this module. When the ctl module
 		is loaded, the tool '&sercmd;' can be used to execute
 		the RPC commands implemented in this module.
 	</para>
