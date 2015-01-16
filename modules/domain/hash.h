@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Header file for hash table functions
  *
  * Copyright (C) 2002-2012 Juha Heinanen

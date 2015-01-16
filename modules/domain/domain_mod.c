@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Domain module
  *
  * Copyright (C) 2002-2012 Juha Heinanen
@@ -20,16 +18,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * -------
- * 2003-03-11: New module interface (janakj)
- * 2003-03-16: flags export parameter added (janakj)
- * 2003-04-05: default_uri #define used (jiri)
- * 2003-04-06: db connection closed in mod_init (janakj)
- * 2004-06-06: updated to the new DB api, cleanup: static dbf & handler,
- *             calls to domain_db_{bind,init,close,ver} (andrei)
- * 2006-01-22: added is_domain_local(variable) function (dan)
  *
  */
 

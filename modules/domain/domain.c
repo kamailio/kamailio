@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * Domain table related functions
  *
  * Copyright (C) 2002-2012 Juha Heinanen
@@ -21,12 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2004-06-07  updated to the new DB api, moved reload_table here, created 
- *               domain_db_{init.bind,ver,close} (andrei)
- *  2004-09-06  is_uri_host_local() can now be called also from
- *              failure route (juhe)
  */
 
 #include "domain_mod.h"

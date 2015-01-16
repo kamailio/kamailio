@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Hash functions for cached domain table
  *
  * Copyright (C) 2002-2012 Juha Heinanen

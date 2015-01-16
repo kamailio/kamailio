@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Domain module headers
  *
  * Copyright (C) 2002-2012 Juha Heinanen

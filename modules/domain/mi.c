@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Domain MI functions
  *
  * Copyright (C) 2006 Voice Sistem SRL
