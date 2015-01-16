@@ -15,7 +15,7 @@
  */
 
 /**
- * @brief counters/stats
+ * @brief Kamailio core :: counters/stats
  * @file
  * @ingroup: core
  */

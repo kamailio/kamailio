@@ -23,7 +23,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: Standalone Configuration File Parser
+ * \brief Kamailio core :: Standalone Configuration File Parser
  * Written by Jan Janak <jan@iptel.org>
  *
  * \ingroup core

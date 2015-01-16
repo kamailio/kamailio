@@ -16,7 +16,7 @@
  */
 /**
  * @file 
- * @brief lvalues (assignment)
+ * @brief Kamailio core :: lvalues (assignment)
  * @author andrei
  */
 

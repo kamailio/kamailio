@@ -1,8 +1,6 @@
 /*
- * $Id$
- *
  * - utility for generating to-tags
- *   in SER, to-tags consist of two parts: a fixed part
+ *   in Kamailio, to-tags consist of two parts: a fixed part
  *   which is bound to server instance and variable part
  *   which is bound to request -- that helps to recognize,
  *   who generated the to-tag in loops through the same
@@ -12,19 +10,14 @@
  *   
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -33,13 +26,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/*
- * History:
- * --------
- *  2003-02-18  changed TOTAG_LEN into TOTAG_VALUE_LEN, to solve
- *               redefinition conflict with tm/t_msgbuilder.h (andrei)
- */
-
 
 #ifndef _TAGS_H
 #define _TAGS_H
@@ -52,7 +38,7 @@
 
 #define TOTAG_VALUE_LEN (MD5_LEN+CRC16_LEN+1)
 
-/* generate variable part of to-tag for a request;
+/*! generate variable part of to-tag for a request;
  * it will have length of CRC16_LEN, sufficiently
  * long buffer must be passed to the function */
 static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)

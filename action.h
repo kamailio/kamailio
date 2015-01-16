@@ -20,7 +20,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: Actions
+ * \brief Kamailio core :: Actions
  * \ingroup core
  * Module: \ref core
  */

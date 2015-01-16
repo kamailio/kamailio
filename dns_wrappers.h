@@ -22,7 +22,7 @@
 
 /**
  * @file
- * @brief SIP-router core :: resolver related functions
+ * @brief Kamailio core :: resolver related functions
  * @author andrei
  * @ingroup core
  * Module: @ref core

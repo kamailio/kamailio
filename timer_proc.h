@@ -14,15 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * History:
- * --------
- *  2009-03-10  initial version (andrei)
-*/
-
 /**
  * @file
- * @brief SIP-router core :: timer_proc.h - separate process timers
+ * @brief Kamailio core :: timer_proc.h - separate process timers
  *
  * (unrelated to the main fast and slow timers)
  * @ingroup core

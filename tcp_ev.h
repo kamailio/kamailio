@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,14 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * tcp_ev.h - tcp events
+/*!
+ * \brief Kamailio core :: tcp_ev.h - tcp events
+ * \ingroup core
  */
-/*
- * History:
- * --------
- *  2009-04-09  initial version (andrei)
-*/
 
 #ifndef __tcp_ev_h
 #define __tcp_ev_h

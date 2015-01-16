@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 iptelorg GmbH 
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,14 +13,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * History:
- * --------
- *  2006-02-02  created by andrei
- *  2006-11-24  added numeric string optimized hash function (andrei)
- *  2006-12-13  split into hashes.h (more generic) and str_hash.h (andrei)
- */
-
 
 #ifndef _str_hashs_h
 #define _str_hashs_h

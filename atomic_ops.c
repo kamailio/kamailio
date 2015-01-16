@@ -16,7 +16,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: atomic operations init
+ * \brief Kamailio core :: atomic operations init
  * \ingroup core
  * Module: \ref core
  */

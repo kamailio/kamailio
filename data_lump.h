@@ -22,7 +22,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: Data_lumps
+ * \brief Kamailio core :: Data_lumps
  * \author jiri, andrei, janakj
  * adding/removing headers or any other data chunk from a message
  * \ingroup core

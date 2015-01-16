@@ -21,7 +21,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: Configuration options
+ * \brief Kamailio core :: Configuration options
  * \author jiri, andrei
  *
  * These settings are settable by the user before compilation

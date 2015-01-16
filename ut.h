@@ -1,6 +1,4 @@
 /*
- *$Id$
- *
  * - various general purpose functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -17,27 +15,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * History
- * ------
- * 2003-01-18 un_escape function introduced for convenience of code needing
- *            the complex&slow feature of unescaping
- * 2003-01-28 scratchpad removed (jiri)
- * 2003-01-29 pathmax added (jiri)
- * 2003-02-13 strlower added (janakj)
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-03-30 str2int and str2float added (janakj)
- * 2003-04-26 ZSW (jiri)
- * 2004-03-08 updated int2str (64 bits, INT2STR_MAX_LEN used) (andrei)
- * 2005-11-29 reverse_hex2int/int2reverse_hex switched to unsigned int (andrei)
- * 2005-12-09 added msgid_var (andrei)
- * 2007-05-14 added get_sys_ver() (andrei)
- * 2007-06-05 added MAX_UVAR_VALUE(), MAX_int(a,b) MIN_int(a,b) (andrei)
- * 2008-05-21 added ushort2sbuf(), ushort2str() (andrei)
- * 2009-03-16 added sint2strbuf() and incremented INST2STR_MAX_LEN to account
- *             for sign (andrei)
  */
-/** various general purpose/helper functions.
+/** Kamailio core :: various general purpose/helper functions.
  * @file
+ * @ingroup core
  */
 
 

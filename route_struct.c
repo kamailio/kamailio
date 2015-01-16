@@ -22,7 +22,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: route structures helping functions
+ * \brief Kamailio core :: route structures helping functions
  * \ingroup core
  * Module: \ref core
  */

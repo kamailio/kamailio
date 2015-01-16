@@ -1,19 +1,14 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -23,32 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
- * History:
- * --------
- *  2003-03-10  changed module exports interface: added struct cmd_export
- *               and param_export (andrei)
- *  2003-03-16  Added flags field to cmd_export_ (janakj)
- *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
- *  2004-03-12  extra flag USE_FUNC_PARAM added to modparam type -
- *              instead of copying the param value, a func is called (bogdan)
- *  2004-09-19  switched to version.h for the module versions checks (andrei)
- *  2004-12-03  changed param_func_t to (modparam_t, void*), killed
- *               param_func_param_t   (andrei)
- *  2007-06-07  added PROC_INIT, called in the main process context
- *               (same as PROC_MAIN), buf guaranteed to be called before
- *               any other process is forked (andrei)
- *  2008-11-17  sip-router version: includes some of the openser/kamailio
- *               changes: f(void) instead of f(), free_fixup_function()
- *              dual module interface support: ser & kamailio (andrei)
- *  2008-11-18  prototypes for various fixed parameters numbers module
- *               functions (3, 4, 5 & 6) and variable parameters (andrei)
- *  2008-11-26  added fparam_free_contents() and fix_param_types (andrei)
- */
-
 /**
  * @file
- * @brief SIP-Router core :: modules loading, structures declarations and utilities
+ * @brief Kamailio core :: modules loading, structures declarations and utilities
  * @ingroup core
  * Module: \ref core
  */

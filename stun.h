@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Portions Copyright (C) 2013 Crocodile RCS Ltd
  *
  * Based on "ser_stun.h". Copyright (C) 2001-2003 FhG Fokus

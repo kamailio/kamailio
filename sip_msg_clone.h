@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,14 +13,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * /home/andrei/sr.git/sip_msg_clone.h
- */
-/*
- * History:
- * --------
- *  2009-07-22  initial version (andrei)
-*/
 
 #ifndef __sip_msg_clone_h
 #define __sip_msg_clone_h

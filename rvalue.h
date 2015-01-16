@@ -16,7 +16,7 @@
  
 /**
  * @file 
- * @brief SIP-router core :: rvalue expressions
+ * @brief Kamailio core :: rvalue expressions
  * @ingroup core
  * Module: \ref core
  * @author andrei

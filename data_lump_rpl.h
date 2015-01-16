@@ -21,7 +21,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: Data lumps
+ * \brief Kamailio core :: Data lumps
  * \author bogdan, andrei
  * \ingroup core
  * Module: \ref core

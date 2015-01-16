@@ -20,7 +20,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: Destination set handling
+ * \brief Kamailio core :: Destination set handling
  * \ingroup core
  * Module: \ref core
  */

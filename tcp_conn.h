@@ -1,21 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,20 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * --------
- *  2003-01-29  tcp buffer size ++-ed to allow for 0-terminator
- *  2003-06-30  added tcp_connection flags & state (andrei) 
- *  2003-10-27  tcp port aliases support added (andrei)
- *  2006-10-13  added tcp_req_states for STUN (vlada)
- *  2007-07-26  improved tcp connection hash function; increased aliases
- *               hash size (andrei)
- *  2007-11-26  switched to local_timer (andrei)
- *  2007-11-30  buffered write support (andrei)
  */
-
-
 
 #ifndef _tcp_conn_h
 #define _tcp_conn_h

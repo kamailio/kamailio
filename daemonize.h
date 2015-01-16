@@ -16,7 +16,7 @@
  */
 /*!
  * \file
- * \brief SIP-router core :: Daemonize
+ * \brief Kamailio core :: Daemonize
  * \author andrei
  *      
  * \ingroup core 

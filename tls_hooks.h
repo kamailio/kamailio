@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 iptelorg GmbH 
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,18 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * tls hooks for modules
- *
- * History:
- * --------
- *  2007-02-09  created by andrei
- *  2010-05-14  new hook interface (better suited for async. tcp) (andrei)
- */
 
 /**
  * @file
- * @brief SIP-router TLS support :: TLS hooks for modules
+ * @brief Kamailio TLS support :: TLS hooks for modules
  * @ingroup tls
  * Module: @ref tls
  */

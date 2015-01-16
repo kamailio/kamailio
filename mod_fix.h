@@ -16,7 +16,7 @@
 
 /**
  * @file mod_fix.h
- * @brief Generic fixup functions for module function parameter.
+ * @brief Kamailio core :: Generic fixup functions for module function parameter.
  * (kamailio compatibility)
  * @ingroup core
  * Module: \ref core

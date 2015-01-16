@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,14 +13,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * /home/andrei/sr.git/switch.h
- */
-/*
- * History:
- * --------
- *  2009-02-02  initial version (andrei)
-*/
 
 #ifndef __switch_h
 #define __switch_h

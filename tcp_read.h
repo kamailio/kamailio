@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,16 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** tcp internal read functions.
+
+/** Kamailio core :: tcp internal read functions.
  * @file tcp_read.h
  * @ingroup: core
  * Module: @ref core
  */
-/*
- * History:
- * --------
- *  2010-05-18  initial version (andrei)
-*/
 
 #ifndef __tcp_read_h
 #define __tcp_read_h

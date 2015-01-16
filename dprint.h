@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief SIP-router core :: debug printing
+ * @brief Kamailio core :: debug printing
  * @ingroup core
  * Module: @ref core
  */

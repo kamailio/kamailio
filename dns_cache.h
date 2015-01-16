@@ -23,7 +23,7 @@
 
 /**
  * @file
- * @brief SIP-router core :: resolver/dns related functions, dns cache and failover
+ * @brief Kamailio core :: resolver/dns related functions, dns cache and failover
  * @author andrei
  * @ingroup core
  * Module: @ref core
