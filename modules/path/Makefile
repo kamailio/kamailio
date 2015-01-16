@@ -1,4 +1,3 @@
-# $Id$
 #
 # path module makefile
 #

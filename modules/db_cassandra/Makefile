@@ -1,4 +1,3 @@
-# $Id$
 #
 # db_cassandra module makefile
 #

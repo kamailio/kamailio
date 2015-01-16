@@ -1,6 +1,5 @@
-# $Id: Makefile 1133 2006-10-02 17:31:13Z bogdan_iancu $
 #
-# example module makefile
+# mi_datagram module makefile
 #
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile

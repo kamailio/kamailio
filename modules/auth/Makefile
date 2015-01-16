@@ -1,4 +1,3 @@
-# $Id$
 #
 # auth example module makefile
 #

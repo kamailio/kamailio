@@ -1,4 +1,3 @@
-# $Id$
 #
 # Usrloc module Makefile
 #

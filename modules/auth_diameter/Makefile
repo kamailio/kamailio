@@ -1,4 +1,3 @@
-# $Id$
 #
 # Digest Authentication - Diameter support
 #

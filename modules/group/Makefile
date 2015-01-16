@@ -1,4 +1,3 @@
-# $Id$
 #
 # group example module makefile
 #

@@ -1,4 +1,3 @@
-# $Id$
 #
 # sca module makefile
 #

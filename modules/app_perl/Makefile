@@ -1,5 +1,3 @@
-# $Id$
-#
 # perl module makefile
 #
 # 

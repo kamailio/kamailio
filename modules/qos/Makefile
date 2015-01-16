@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # WARNING: do not run this directly, it should be run by the master Makefile
 #
 # Copyright (C) 2006 SOMA Networks, Inc.
@@ -23,9 +21,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
 # USA
 #
-# History:
-# --------
-#  2007-07-16  initial version (osas)
 #
 
 include ../../Makefile.defs

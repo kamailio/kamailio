@@ -1,4 +1,3 @@
-# $Id$
 #
 # IMS_ICSCF make file
 #

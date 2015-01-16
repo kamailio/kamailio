@@ -1,6 +1,5 @@
-# $Id$
 #
-# Digest Authentication - Database support
+# uid_avp_db
 #
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile

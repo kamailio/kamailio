@@ -1,6 +1,5 @@
-# $Id: Makefile 1856 2007-03-15 21:06:00Z  $
 #
-# Resource List Server
+# rls: Resource List Server
 #
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile

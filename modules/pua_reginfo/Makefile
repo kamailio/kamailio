@@ -1,6 +1,4 @@
-# $Id: Makefile 1856 2007-03-15 21:06:00Z jblache $
-#
-# PUBLISH
+# PUA_REGINFO
 #
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile

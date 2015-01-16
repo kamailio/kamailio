@@ -1,5 +1,3 @@
-# $Id$
-#
 # acc module makefile
 #
 #

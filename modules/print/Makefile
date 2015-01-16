@@ -1,4 +1,3 @@
-# $Id$
 #
 # print example module makefile
 #

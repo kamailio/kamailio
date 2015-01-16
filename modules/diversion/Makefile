@@ -1,4 +1,3 @@
-# $Id$
 #
 # Diversion Header Field Support2
 #

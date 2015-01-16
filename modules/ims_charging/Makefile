@@ -1,6 +1,5 @@
-# $Id$
 #
-# ims_ro make file
+# ims_charging make file
 #
 # 
 

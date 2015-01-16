@@ -1,5 +1,5 @@
 #
-# XML operations 
+# XMLOPS: XML operations 
 # 
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile

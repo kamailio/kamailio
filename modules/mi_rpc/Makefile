@@ -1,4 +1,3 @@
-# $Id$
 #
 # mi_rpc module makefile
 #

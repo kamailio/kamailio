@@ -1,6 +1,5 @@
-# $Id$
 #
-# Usrloc module Makefile
+# ims_Usrloc_scscf module Makefile
 #
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile

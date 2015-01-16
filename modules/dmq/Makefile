@@ -1,4 +1,3 @@
-# $Id$
 #
 # distributed message queue system for inter-intstance communication
 #

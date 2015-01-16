@@ -1,5 +1,4 @@
 #
-# $Id$
 #
 # WARNING: do not run this directly, it should be run by the master Makefile
 #
@@ -23,9 +22,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
 # USA
 #
-# History:
-# --------
-#  2006-05-11  initial version (ronw)
 #
 
 include ../../Makefile.defs

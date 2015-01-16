@@ -1,5 +1,3 @@
-# $Id$
-#
 # acc_radius module makefile
 #
 #

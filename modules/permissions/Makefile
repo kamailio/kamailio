@@ -1,4 +1,3 @@
-# $Id$
 #
 # PERMISSIONS module makefile
 # 

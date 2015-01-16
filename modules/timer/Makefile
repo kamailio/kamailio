@@ -1,4 +1,3 @@
-# $Id$
 #
 # timer module makefile
 #

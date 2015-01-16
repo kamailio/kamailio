@@ -1,4 +1,3 @@
-# $Id: Makefile $
 #
 # XCAP client for Kamailio
 #

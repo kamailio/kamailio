@@ -1,5 +1,5 @@
-# $Id$
 #
+# Kamailio :: counters module
 
 include ../../Makefile.defs
 auto_gen=

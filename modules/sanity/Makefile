@@ -1,4 +1,3 @@
-# $Id$
 #
 # sanity check module makefile
 #
