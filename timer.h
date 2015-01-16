@@ -31,7 +31,7 @@
 
 
 /**
- * @page TimerDoc SIP-router's timer documentation
+ * @page TimerDoc Kamailio's timer documentation
  * @verbinclude timers.txt
  *
  */
