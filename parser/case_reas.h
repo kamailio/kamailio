@@ -13,14 +13,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * parser/case_reas.h
- */
-/*
- * History:
- * --------
- *  2010-02-18  initial version (andrei)
-*/
 
 /** Parser :: Reason Header Name Parsing Macros.
  * @file 
