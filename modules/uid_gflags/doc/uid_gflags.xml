@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <book id="gflags" xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
@@ -29,7 +35,7 @@
 	    or AVPs is that they the scope of the global flags is not limited
 	    to the SIP message or transaction being processed. Global flags are
 	    always available, their contents is not forgotten when a SIP
-	    transaction gets destroyed in SER.
+	    transaction gets destroyed in &kamailio;.
 	</para>
 	<para>
 	    Global flags can be accessed from the configuration script, for example:
@@ -43,9 +49,9 @@ if (is_ugflag("1")) {
 	</programlisting>
 	<para>
 	    The value of the global flags can be manipulated by external tools
-	    such as the web interface of SER or cmd line administration
+	    such as the web interface of &kamailio; or cmd line administration
 	    tools. One particular application of global flags could be runtime
-	    configuration changes without the need to restart SER.
+	    configuration changes without the need to restart &kamailio;.
 	</para>
     </section>
 
