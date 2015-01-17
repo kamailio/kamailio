@@ -1,5 +1,3 @@
-/* $Id$
- */
 
 #ifndef __ctl_defaults_h
 #define __ctl_defaults_h

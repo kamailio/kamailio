@@ -1,23 +1,15 @@
 /*
- * $Id$
- *
- *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2005 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,6 +17,16 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+/*! \file
+ * \brief ctl module
+ * \ingroup ctl
+ *
+ */
+
+/*! \defgroup ctl Control binrpc socket
  *
  * Fifo server is a very powerful tool used to access easily
  * ser's internals via textual interface, similarly to
@@ -52,22 +54,6 @@
  * File test/transaction.fifo illustrates example of use
  * of t_uac command (part of TM module).
  *
- * History:
- * --------
- *  2003-03-29  destroy pkg mem introduced (jiri)
- *  2003-03-19  replaced all mallocs/frees w/ ctl_malloc/ctl_free (andrei)
- *  2003-01-29  new built-in fifo commands: arg and pwd (jiri)
- *  2003-10-07  fifo security fixes: permissions, always delete old fifo,
- *               reply fifo checks -- added fifo_check (andrei)
- *  2003-10-13  added fifo_dir for reply fifos (andrei)
- *  2003-10-30  DB interface exported via FIFO (bogdan)
- *  2004-03-09  open_fifo_server split into init_ and start_ (andrei)
- *  2004-04-29  added chown(sock_user, sock_group)  (andrei)
- *  2004-06-06  updated to the new DB interface  & init_db_fifo (andrei)
- *  2004-09-19  fifo is deleted on exit (destroy_fifo)  (andrei)
- *  2005-03-02  meminfo fifo cmd added (andrei)
- *  2006-02-17  hacked to process fifo request as a part of the ctrl module
- *              and to work also over tcp, udp or unix sockets (andrei)
  */
 
 #ifdef USE_FIFO
