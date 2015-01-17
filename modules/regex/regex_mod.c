@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * regex module - pcre operations
  *
  * Copyright (C) 2008 Iñaki Baz Castillo
@@ -21,12 +19,7 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2011-02-22  pcre_match_group() allows now pseudo-variable as group argument.
- *  2009-01-14  initial version (Iñaki Baz Castillo).
  */
-
 
 /*!
  * \file
