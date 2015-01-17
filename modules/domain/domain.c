@@ -40,7 +40,7 @@ static db_func_t domain_dbf;
 int domain_db_bind(const str* db_url)
 {
 	if (db_bind_mod(db_url, &domain_dbf )) {
-	        LM_ERR("Cannot bind to database module!");
+	        LM_ERR("Cannot bind to database module!\n");
 		return -1;
 	}
 	return 0;

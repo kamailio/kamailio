@@ -176,7 +176,8 @@ static int mod_init(void)
 
     /* Bind database */
     if (domain_db_bind(&db_url)) {
-	LM_ERR("no database module found\n");
+	LM_DBG("Usign db_url [%.*s]\n", db_url.len, db_url.s);
+	LM_ERR("no database module found. Have you configure thed \"db_url\" modparam properly?\n");
 	return -1;
     }
 
