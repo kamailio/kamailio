@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * Diversion Header Field Support
  *
  * Copyright (C) 2004 FhG Fokus
