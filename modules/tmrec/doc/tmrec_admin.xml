@@ -80,7 +80,7 @@ modparam("tmrec", "separator", ";")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="tmrec.f.tmrec_match">
 	    <title>
 		<function moreinfo="none">tmrec_match(timerec [, timestamp])</function>
 	    </title>
@@ -284,7 +284,7 @@ modparam("tmrec", "separator", ";")
 	    </example>
 	</section>
 
-	<section>
+	<section id="tmrec.f.is_leap_year">
 	    <title>
 		<function moreinfo="none">is_leap_year([year])</function>
 	    </title>
@@ -308,7 +308,7 @@ if(is_leap_year("2010"))
 	    </example>
 	</section>
 
-	<section>
+	<section id="tmrec.f.time_period_match">
 	    <title>
 		<function moreinfo="none">time_period_match(period [, timestamp])</function>
 	    </title>
