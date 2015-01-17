@@ -1,9 +1,7 @@
 /*
- * $Id$
- *
  * Copyright (C) 2013 Robert Boisvert
  *
- * This file is part of the mohqueue module for sip-router, a free SIP server.
+ * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
  * The mohqueue module is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -297,7 +295,7 @@ db1_con_t *mohq_dbconnect (void)
 str *pdb_url = &pmod_data->pcfg->db_url;
 db1_con_t *pconn = pmod_data->pdb->init (pdb_url);
 if (!pconn)
-  { LM_ERR ("Unable to connect to DB %s", pdb_url->s); }
+  { LM_ERR ("Unable to connect to DB %s\n", pdb_url->s); }
 return pconn;
 }
 
@@ -428,7 +426,7 @@ for (nidx = 0; nidx < MOHQ_COLCNT; nidx++)
 db1_res_t *presult = NULL;
 if (pdb->query (pconn, 0, 0, 0, prkeys, 0, MOHQ_COLCNT, 0, &presult))
   {
-  LM_ERR ("%stable query (%s) failed!", pfncname,
+  LM_ERR ("%stable query (%s) failed!\n", pfncname,
     pmod_data->pcfg->db_qtable.s);
   return;
   }
@@ -449,7 +447,7 @@ for (nidx = 0; nidx < nrows; nidx++)
   struct sip_uri puri_parsed [1];
   if (parse_uri (puri, strlen (puri), puri_parsed))
     {
-    LM_ERR ("Queue,Field (%s,%.*s): %s is not a valid URI!", pqname,
+    LM_ERR ("Queue,Field (%s,%.*s): %s is not a valid URI!\n", pqname,
       STR_FMT (&MOHQCSTR_URI), puri);
     continue;
     }
@@ -477,7 +475,7 @@ for (nidx = 0; nidx < nrows; nidx++)
       struct stat psb [1];
       if (lstat (pmohdir, psb))
         {
-        LM_ERR ("Queue,Field (%s,%.*s): Unable to find %s!", pqname,
+        LM_ERR ("Queue,Field (%s,%.*s): Unable to find %s!\n", pqname,
           STR_FMT (&MOHQCSTR_MDIR), pmohdir);
         continue;
         }
@@ -485,7 +483,7 @@ for (nidx = 0; nidx < nrows; nidx++)
         {
         if ((psb->st_mode & S_IFMT) != S_IFDIR)
           {
-          LM_ERR ("Queue,Field (%s,%.*s): %s is not a directory!", pqname,
+          LM_ERR ("Queue,Field (%s,%.*s): %s is not a directory!\n", pqname,
             STR_FMT (&MOHQCSTR_MDIR), pmohdir);
           continue;
           }
@@ -501,7 +499,7 @@ for (nidx = 0; nidx < nrows; nidx++)
     (char *)VAL_STRING (prowvals + MOHQCOL_MFILE));
   if (!pmohfiles [0])
     {
-    LM_ERR ("Queue,Field (%s,%.*s): Unable to find MOH files (%s/%s.*)!",
+    LM_ERR ("Queue,Field (%s,%.*s): Unable to find MOH files (%s/%s.*)!\n",
       pqname, STR_FMT (&MOHQCSTR_MDIR), pmohdir,
       (char *)VAL_STRING (prowvals + MOHQCOL_MFILE));
     continue;
@@ -576,7 +574,7 @@ for (nidx = 0; nidx < nrows; nidx++)
     pnewlst = (mohq_lst *) shm_malloc (sizeof (mohq_lst) * nsize);
     if (!pnewlst)
       {
-      LM_ERR ("%sUnable to allocate shared memory!", pfncname);
+      LM_ERR ("%sUnable to allocate shared memory!\n", pfncname);
       return;
       }
     pmod_data->mohq_cnt = nsize;

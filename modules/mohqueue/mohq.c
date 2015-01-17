@@ -1,9 +1,8 @@
 /*
- * $Id$
  *
  * Copyright (C) 2013 Robert Boisvert
  *
- * This file is part of the mohqueue module for sip-router, a free SIP server.
+ * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
  * The mohqueue module is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

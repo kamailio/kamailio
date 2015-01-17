@@ -1,9 +1,7 @@
 /*
- * $Id$
- *
  * Copyright (C) 2013 Robert Boisvert
  *
- * This file is part of the mohqueue module for sip-router, a free SIP server.
+ * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
  * The mohqueue module is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -195,10 +193,10 @@ if (pcall->call_state != CLSTA_INVITED)
   **********/
 
   if (pcall->call_state != CLSTA_INQUEUE)
-    { LM_ERR ("%sUnexpected ACK (%s)!", pfncname, pcall->call_from); }
+    { LM_ERR ("%sUnexpected ACK (%s)!\n", pfncname, pcall->call_from); }
   else
     {
-    mohq_debug (pcall->pmohq, "%sACK from refused re-INVITE (%s)!",
+    mohq_debug (pcall->pmohq, "%sACK from refused re-INVITE (%s)!\n",
       pfncname, pcall->call_from);
     }
   return 1;
@@ -212,7 +210,7 @@ if (pcall->call_state != CLSTA_INVITED)
 
 if (ptm->t_lookup_ident (&ptrans, pcall->call_hash, pcall->call_label) < 0)
   {
-  LM_ERR ("%sINVITE transaction missing for call (%s)!",
+  LM_ERR ("%sINVITE transaction missing for call (%s)!\n",
     pfncname, pcall->call_from);
   return 1;
   }
@@ -220,7 +218,7 @@ else
   {
   if (ptm->t_release (pcall->call_pmsg) < 0)
     {
-    LM_ERR ("%sRelease transaction failed for call (%s)!",
+    LM_ERR ("%sRelease transaction failed for call (%s)!\n",
       pfncname, pcall->call_from);
     return 1;
     }
@@ -261,7 +259,7 @@ char *pfncname = "bye_cb: ";
 call_lst *pcall = (call_lst *)*pcbp->param;
 if (ntype == TMCB_ON_FAILURE)
   {
-  LM_ERR ("%sCall (%s) did not respond to BYE", pfncname,
+  LM_ERR ("%sCall (%s) did not respond to BYE\n", pfncname,
     pcall->call_from);
   }
 else
@@ -269,7 +267,7 @@ else
   int nreply = pcbp->code;
   if ((nreply / 100) != 2)
     {
-    LM_ERR ("%sCall (%s) BYE error (%d)", pfncname,
+    LM_ERR ("%sCall (%s) BYE error (%d)\n", pfncname,
       pcall->call_from, nreply);
     }
   else
@@ -302,7 +300,7 @@ int bye_msg (sip_msg_t *pmsg, call_lst *pcall)
 char *pfncname = "bye_msg: ";
 if (pmod_data->psl->freply (pmsg, 200, presp_ok) < 0)
   {
-  LM_ERR ("%sUnable to create reply to call (%s)", pfncname,
+  LM_ERR ("%sUnable to create reply to call (%s)\n", pfncname,
     pcall->call_from);
   return 1;
   }
@@ -310,7 +308,7 @@ if (pcall->call_state >= CLSTA_INQUEUE)
   { drop_call (pmsg, pcall); }
 else
   {
-  LM_ERR ("%sEnding call (%s) before placed in queue!",
+  LM_ERR ("%sEnding call (%s) before placed in queue!\n",
     pfncname, pcall->call_from);
   delete_call (pcall);
   }
@@ -340,14 +338,14 @@ if (pcall->call_state < CLSTA_INQUEUE)
   mohq_debug (pcall->pmohq, "%sCANCELed call (%s)",
     pfncname, pcall->call_from);
   if (pmod_data->psl->freply (pmsg, 487, presp_reqterm) < 0)
-    { LM_ERR ("%sUnable to create reply!", pfncname); }
+    { LM_ERR ("%sUnable to create reply!\n", pfncname); }
   }
 else
   {
-  LM_ERR ("%sUnable to CANCEL because accepted INVITE for call (%s)!",
+  LM_ERR ("%sUnable to CANCEL because accepted INVITE for call (%s)!\n",
     pfncname, pcall->call_from);
   if (pmod_data->psl->freply (pmsg, 481, presp_nocall) < 0)
-    { LM_ERR ("%sUnable to create reply!", pfncname); }
+    { LM_ERR ("%sUnable to create reply!\n", pfncname); }
   }
 return 1;
 }
@@ -378,7 +376,7 @@ if (pmsg != FAKED_REPLY)
     pfncname, pcall->call_from);
   if (pmod_data->fn_rtp_destroy (pmsg, 0, 0) != 1)
     {
-    LM_ERR ("%srtpproxy_destroy refused for call (%s)!",
+    LM_ERR ("%srtpproxy_destroy refused for call (%s)!\n",
       pfncname, pcall->call_from);
     }
   }
@@ -402,7 +400,7 @@ int npos1 = sizeof (pbyemsg) // BYE template
 phdr = pkg_malloc (npos1);
 if (!phdr)
   {
-  LM_ERR ("%sNo more memory!", pfncname);
+  LM_ERR ("%sNo more memory!\n", pfncname);
   goto bye_err;
   }
 sprintf (phdr, pbyemsg,
@@ -422,11 +420,11 @@ set_uac_req (puac, pbye, phdrs, 0, pdlg,
 pcall->call_state = CLSTA_BYE;
 if (ptm->t_request_within (puac) < 0)
   {
-  LM_ERR ("%sUnable to create BYE request for call (%s)!",
+  LM_ERR ("%sUnable to create BYE request for call (%s)!\n",
     pfncname, pcall->call_from);
   goto bye_err;
   }
-mohq_debug (pcall->pmohq, "%sSent BYE request for call (%s)",
+mohq_debug (pcall->pmohq, "%sSent BYE request for call (%s)\n",
   pfncname, pcall->call_from);
 bsent = 1;
 
@@ -466,7 +464,7 @@ int create_call (int mohq_idx, sip_msg_t *pmsg)
 char *pfncname = "create_call: ";
 if (!mohq_lock_set (pmod_data->pcall_lock, 1, 2000))
   {
-  LM_ERR ("%sUnable to lock calls!", pfncname);
+  LM_ERR ("%sUnable to lock calls!\n", pfncname);
   return -1;
   }
 call_lst *pcall;
@@ -474,7 +472,7 @@ int ncall_idx = find_call (pmsg, &pcall);
 if (pcall)
   {
   mohq_lock_release (pmod_data->pcall_lock);
-  LM_ERR ("%sCall already in use (%s)!", pfncname, pcall->call_from);
+  LM_ERR ("%sCall already in use (%s)!\n", pfncname, pcall->call_from);
   return -1;
   }
 for (ncall_idx = 0; ncall_idx < pmod_data->call_cnt; ncall_idx++)
@@ -485,7 +483,7 @@ for (ncall_idx = 0; ncall_idx < pmod_data->call_cnt; ncall_idx++)
 if (ncall_idx == pmod_data->call_cnt)
   {
   mohq_lock_release (pmod_data->pcall_lock);
-  LM_ERR ("%sNo call slots available!", pfncname);
+  LM_ERR ("%sNo call slots available!\n", pfncname);
   return -1;
   }
 
@@ -605,14 +603,14 @@ if (pcall->call_hash || pcall->call_label)
   {
   if (ptm->t_lookup_ident (&ptrans, pcall->call_hash, pcall->call_label) < 0)
     {
-    LM_ERR ("%sLookup transaction failed for call (%s)!", pfncname,
+    LM_ERR ("%sLookup transaction failed for call (%s)!\n", pfncname,
       pcall->call_from);
     }
   else
     {
     if (ptm->t_release (pcall->call_pmsg) < 0)
       {
-      LM_ERR ("%sRelease transaction failed for call (%s)!",
+      LM_ERR ("%sRelease transaction failed for call (%s)!\n",
         pfncname, pcall->call_from);
       }
     }
@@ -655,21 +653,21 @@ char *pfncname = "deny_method: ";
 tm_api_t *ptm = pmod_data->ptm;
 if (ptm->t_newtran (pmsg) < 0)
   {
-  LM_ERR ("%sUnable to create new transaction!", pfncname);
+  LM_ERR ("%sUnable to create new transaction!\n", pfncname);
   if (pmod_data->psl->freply (pmsg, 500, presp_srverr) < 0)
     {
-    LM_ERR ("%sUnable to create reply to %.*s!", pfncname,
+    LM_ERR ("%sUnable to create reply to %.*s!\n", pfncname,
       STR_FMT (&REQ_LINE (pmsg).method));
     }
   return;
   }
 if (!add_lump_rpl2 (pmsg, pallowhdr->s, pallowhdr->len, LUMP_RPL_HDR))
-  { LM_ERR ("%sUnable to add Allow header!", pfncname); }
+  { LM_ERR ("%sUnable to add Allow header!\n", pfncname); }
 LM_ERR ("%sRefused %.*s for call (%s)!", pfncname,
   STR_FMT (&REQ_LINE (pmsg).method), pcall->call_from);
 if (ptm->t_reply (pmsg, 405, presp_noallow->s) < 0)
   {
-  LM_ERR ("%sUnable to create reply to %.*s!", pfncname,
+  LM_ERR ("%sUnable to create reply to %.*s!\n", pfncname,
     STR_FMT (&REQ_LINE (pmsg).method));
   }
 return;
@@ -699,7 +697,7 @@ if (pmsg != FAKED_REPLY)
     pfncname, pcall->call_from);
   if (pmod_data->fn_rtp_destroy (pmsg, 0, 0) != 1)
     {
-    LM_ERR ("%srtpproxy_destroy refused for call (%s)!",
+    LM_ERR ("%srtpproxy_destroy refused for call (%s)!\n",
       pfncname, pcall->call_from);
     }
   }
@@ -785,7 +783,7 @@ for (nidx = 0; nidx < pmod_data->call_cnt; nidx++)
     {
     if ((pcall->call_time + 32) < time (0))
       {
-      LM_ERR ("find_call: No ACK response for call (%s)", pcall->call_from);
+      LM_ERR ("find_call: No ACK response for call (%s)\n", pcall->call_from);
       delete_call (pcall);
       continue;
       }
@@ -831,7 +829,7 @@ int nidx;
 str tmpstr;
 if (!mohq_lock_set (pmod_data->pmohq_lock, 0, 500))
   {
-  LM_ERR ("%sUnable to lock queues!", pfncname);
+  LM_ERR ("%sUnable to lock queues!\n", pfncname);
   return -1;
   }
 for (nidx = 0; nidx < pmod_data->mohq_cnt; nidx++)
@@ -843,7 +841,7 @@ for (nidx = 0; nidx < pmod_data->mohq_cnt; nidx++)
   }
 if (nidx == pmod_data->mohq_cnt)
   {
-  LM_ERR ("%sUnable to find queue (%.*s)!", pfncname, STR_FMT (pqname));
+  LM_ERR ("%sUnable to find queue (%.*s)!\n", pfncname, STR_FMT (pqname));
   nidx = -1;
   }
 mohq_lock_release (pmod_data->pmohq_lock);
