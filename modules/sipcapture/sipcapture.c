@@ -794,16 +794,16 @@ static int mod_init(void) {
 	}
 	
 	if ((insert_retries <0) || ( insert_retries > 500)) {
-		LM_ERR("insert_retries should be a value between 0 and 500");
+		LM_ERR("insert_retries should be a value between 0 and 500\n");
 		return -1;
 	}
 
 	if  (( 0 == insert_retries) && (insert_retry_timeout != 0)){
-		LM_ERR("insert_retry_timeout has no meaning when insert_retries is not set");
+		LM_ERR("insert_retry_timeout has no meaning when insert_retries is not set\n");
 	}
 
 	if ((insert_retry_timeout <0) || ( insert_retry_timeout > 300)) {
-		LM_ERR("insert_retry_timeout should be a value between 0 and 300");
+		LM_ERR("insert_retry_timeout should be a value between 0 and 300\n");
 		return -1;
 	}
 
@@ -964,7 +964,7 @@ static int child_init(int rank)
 
 	while (c){
 		if (!c->db_url.s || !c->db_url.len ){
-			LM_ERR("DB URL not set for capture mode:[%.*s]", c->name.len, c->name.s);
+			LM_ERR("DB URL not set for capture mode:[%.*s]\n", c->name.len, c->name.s);
 			return -1;
 		}
 		c->db_con = c->db_funcs.init(&c->db_url);
