@@ -43,8 +43,8 @@ install-tls-cert: $(cfg_prefix)/$(cfg_dir)
 install-cfg:  install-tls-cert
 	@$(call try_err, $(INSTALL_TOUCH) \
 			"$(cfg_prefix)/$(cfg_dir)tls.cfg.sample" )
-	@sed -e "s#\./modules/tls/#$(cfg_target)#g" \
-			-e "s#ser-selfsigned#$(MAIN_NAME)-selfsigned#g" \
+	@sed -e "s#\/usr/local/etc/kamailio/#$(cfg_target)#g" \
+			-e "s#kamailio-selfsigned#$(MAIN_NAME)-selfsigned#g" \
 				< ./tls.cfg > "$(cfg_prefix)/$(cfg_dir)tls.cfg.sample"
 	@if [ -z "${skip_cfg_install}" -a \
 			! -f "$(cfg_prefix)/$(cfg_dir)tls.cfg" ]; then \
