@@ -321,7 +321,7 @@ static int matrix_insert(int first, short int second, int res)
 		while (srcitem) {
 			if (srcitem->id == first) {
 				srcitem->second_list[second] = res;
-				LM_DBG("inserted (%d, %d, %d)", first, second, res);
+				LM_DBG("inserted (%d, %d, %d)\n", first, second, res);
 				return 0;
 			}
 			srcitem = srcitem->next;
@@ -329,7 +329,7 @@ static int matrix_insert(int first, short int second, int res)
 		/* not found */
 		srcitem = shm_malloc(sizeof(struct first_t));
 		if (srcitem == NULL) {
-			LM_ERR("out of shared memory.");
+			LM_ERR("out of shared memory.\n");
 			return -1;
 		}
 		memset(srcitem, 0, sizeof(struct first_t));
@@ -343,7 +343,7 @@ static int matrix_insert(int first, short int second, int res)
 		matrix->head = srcitem;
 	}
 
-	LM_DBG("inserted new row for (%d, %d, %d)", first, second, res);
+	LM_DBG("inserted new row for (%d, %d, %d)\n", first, second, res);
 	return 0;
 }
 
@@ -498,7 +498,7 @@ static int db_reload_matrix(void)
 
 	matrix_dbf.free_result(matrix_dbh, res);
 
-	LM_INFO("loaded %d matrix entries.", n);
+	LM_INFO("loaded %d matrix entries.\n", n);
 	return n;
 }
 
