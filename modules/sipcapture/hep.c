@@ -37,7 +37,7 @@
 #include "sipcapture.h"
 
 
-
+static int show_error = 0;
 static int count = 0;
 
 struct hep_timehdr* heptime;
@@ -58,7 +58,10 @@ int hep_msg_received(void *data)
         struct receive_info *ri;
 
         if(!hep_capture_on) {
-                LOG(L_ERR, "sipcapture:hep_msg_received HEP is not enabled\n");
+        	if(show_error == 0) {
+                	LOG(L_ERR, "sipcapture:hep_msg_received HEP is not enabled\n");
+                	show_error = 1;
+        	}
                 return -1;
         }
 
