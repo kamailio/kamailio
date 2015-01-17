@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * MSILO module
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,25 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History
- * -------
- *
- * 2003-01-23: switched from t_uac to t_uac_dlg (dcm)
- * 2003-02-28: protocolization of t_uac_dlg completed (jiri)
- * 2003-03-11: updated to the new module interface (andrei)
- *             removed non-constant initializers to some strs (andrei)
- * 2003-03-16: flags parameter added (janakj)
- * 2003-04-05: default_uri #define used (jiri)
- * 2003-04-06: db_init removed from mod_init, will be called from child_init
- *             now (janakj)
- * 2003-04-07: m_dump takes a parameter which sets the way the outgoing URI
- *             is computed (dcm)
- * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
- * 2004-06-07 updated to the new DB api (andrei)
- * 2006-09-10 m_dump now checks if registering UA supports MESSAGE method (jh)
- * 2006-10-05 added max_messages module variable (jh)
- * 2011-10-19 added storage of extra SIP headers (hpw)
- * 2011-12-07 added storage of extra SIP headers from AVP (jh)
  */
 
 #include <stdio.h>

@@ -1,5 +1,5 @@
-/**
- * $Id$
+/*! \file
+ * \brief MSILO API
  *
  */
 
