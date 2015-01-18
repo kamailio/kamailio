@@ -1,18 +1,16 @@
 /*
- * $Id$
- *
- * BDB Compatibility layer for SIP-router
+ * BDB Compatibility layer for Kamailio
  *
  * Copyright (C) 2010 Marius Zbihlei marius.zbihlei at 1and1 dot ro
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify it under the
+ * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version.
  *
- * SIP-router is distributed in the hope that it will be useful, but WITHOUT ANY
+ * Kamailio is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
  * details.
