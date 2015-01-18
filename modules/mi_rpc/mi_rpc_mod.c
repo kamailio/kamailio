@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * mi_rpc module
  *
  * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com).
