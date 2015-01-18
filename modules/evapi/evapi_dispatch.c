@@ -434,6 +434,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	struct hostent *h = NULL;
 	struct ev_io io_server;
 	struct ev_io io_notify;
+	int yes_true = 1;
 
 	LM_DBG("starting dispatcher processing\n");
 
@@ -468,6 +469,18 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	evapi_srv_addr.sin_family = h->h_addrtype;
 	evapi_srv_addr.sin_port   = htons((short)lport);
 	evapi_srv_addr.sin_addr  = *(struct in_addr*)h->h_addr;
+
+	/* Set SO_REUSEADDR option on listening socket so that we don't
+	 * have to wait for connections in TIME_WAIT to go away before 
+	 * re-binding.
+	 */
+
+	if(setsockopt(evapi_srv_sock, SOL_SOCKET, SO_REUSEADDR, 
+		&yes_true, sizeof(int)) < 0) {
+		LM_ERR("cannot set SO_REUSEADDR option on descriptor\n");
+		close(evapi_srv_sock);
+		return -1;
+	}
 
 	if (bind(evapi_srv_sock, (struct sockaddr*)&evapi_srv_addr,
 				sizeof(evapi_srv_addr)) < 0) {
