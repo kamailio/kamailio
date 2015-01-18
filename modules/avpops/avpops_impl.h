@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2004-2006 Voice Sistem SRL
  *
  * This file is part of Kamailio.
@@ -19,9 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * History:
- * ---------
- *  2004-10-04  first version (ramona)
  */
 
 
