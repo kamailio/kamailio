@@ -40,6 +40,7 @@ extern void *rh;
 extern struct extra_attr *auth_extra;
 
 extern int use_ruri_flag;
+extern int import_all_avp;
 
 extern auth_api_s_t auth_api;
 
