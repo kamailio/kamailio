@@ -1,19 +1,14 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,25 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History
- * -------
- *  2003-01-28  removed scratchpad (jiri)
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
- *  2003-03-06  enum_request_method changed to begin with 1;
- *               0 reserved for invalid values; (jiri)
- *  2003-03-31  removed sip_msg->repl_add_rm (andrei)
- *  2003-04-01  2 macros added: GET_NEXT_HOP and GET_RURI (janakj)
- *  2003-04-04  structure for parsed inbound uri added (jiri)
- *  2003-04-11  updated the  sip_uri structure (lots of fields added) (andrei)
- *  2003-04-12  added msg_flags to sip_msg (andrei)
- *  2003-11-02  added diversion header field to sip_msg (jh)
- *  2004-11-08  added force_send_socket (andrei)
- *  2005-02-25  uri types added (sip, sips & tel)  (andrei)
- *  2006-04-20  uri comp member (only if USE_COMP is defined) (andrei)
- *  2006-11-10  check_transaction_quadruple inlined (andrei)
- *  2007-01-26  added date, identity, identity_info header fields
- *		to sip_msg (gergo)
- *  2007-03-14  added SIP_MSG_START(msg) macro
  */
 
 /*! \file 

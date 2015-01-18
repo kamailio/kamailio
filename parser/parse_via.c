@@ -3,19 +3,14 @@
  * 
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -30,31 +25,6 @@
  *
  * @ingroup parser
  */
-
-/* 
- *  2003-01-21  added rport parsing code, contributed by
- *               Maxim Sobolev  <sobomax@FreeBSD.org>
- *  2003-01-23  added extra via param parsing code (i=...), used
- *               by tcp to identify the sending socket, by andrei
- *  2003-01-23  fixed rport parsing code to accept rport w/o any value,
- *               by andrei
- *  2003-01-27  modified parse_via to set new via_param->start member and
- *               via->params.s (andrei)
- *  2003-01-28  zero-terminations replaced with VIA_ZT (jiri)
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
- *  2003-04-26  ZSW (jiri)
- *  2003-06-23  fixed  parse_via_param [op].* param. parsing bug (andrei)
- *  2003-07-02  added support for TLS parsing in via (andrei)
- *  2003-10-27  added support for alias via param parsing [see
- *               draft-ietf-sip-connect-reuse-00.txt.]  (andrei)
- *  2004-03-31  fixed rport set instead of i bug (andrei)
- *  2005-03-02  if via has multiple bodies, and one of them is bad set
- *               also the first one as bad (andrei)
- *  2006-02-24  added support for comp parameter parsing, see rfc3486 (andrei)
- *  2008-08-08  SCTP support (andrei)
- */
-
-
 
 #include "../comp_defs.h"
 #include <stdlib.h>

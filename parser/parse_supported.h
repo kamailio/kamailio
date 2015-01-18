@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 Andreas Granig <agranig@linguin.org>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,11 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * -------
- * 2006-03-02  parse_supported() parses and cumulates all SUPPORTED 
- *             headers (bogdan)
  */
 
 /*!

@@ -1,14 +1,14 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -17,14 +17,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * 2003-08-04 parse_content_type_hdr separates type from subtype inside
- * the mime type (bogdan)
- * 2003-08-04 CPL subtype added (bogdan)
- * 2003-08-05 parse_accept_hdr function added (bogdan)
- * 2008-05-23 reset the type/subtype to unknown, if the end of
- *		tree has reached, but the type/subtype has still
- *		some remaining characters (Miklos)
  */
 
 /*! \file
