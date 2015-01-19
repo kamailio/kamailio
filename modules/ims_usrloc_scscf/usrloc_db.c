@@ -6,6 +6,7 @@
 #include "math.h"
 #include "subscribe.h"
 #include "../../lib/ims/useful_defs.h"
+#include "../../parser/parse_param.h"
 
 str id_col = str_init(ID_COL); /*!< Name of column containing ID (gen. auto_increment field */
 str impu_id_col = str_init(IMPU_ID_COL); /*!< Name of column containing impu ID in mapping table */
@@ -507,17 +508,20 @@ int inline int_to_str_len(int i) {
 }
 
 static inline int dbrow2contact(db_val_t* val, ucontact_info_t* ci) {
-	static str path, user_agent, callid;
-
+	static str path, user_agent, callid, params;
+	param_hooks_t hooks;
 	
-	//TODO FIX PARAMS
-//	/* params */
-//	if (!VAL_NULL(val + 1)) {
-//		params.s = (char*)VAL_STRING(val + 1);
-//		params.len = strlen(params.s);
-//	}
-//	ci->params = &params;
-//	LM_DBG("Loading contact params: [%.*s]", ci->params->len, ci->params->s);
+	// Set ci to 0:
+	memset( ci, 0, sizeof(ucontact_info_t));
+
+	/* params */
+	if (!VAL_NULL(val + 1)) {
+		params.s = (char*)VAL_STRING(val + 1);
+		params.len = strlen(params.s);
+		if (parse_params(&params, CLASS_CONTACT, &hooks, &ci->params) < 0) {
+			LM_WARN("Error while parsing parameters: %.*s\n", params.len, params.s);
+		}
+	}
 	
 	/* path */
 	if (!VAL_NULL(val + 2)) {
