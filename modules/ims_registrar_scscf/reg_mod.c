@@ -156,6 +156,8 @@ int subscription_min_expires = 10; /**< minimum subscription expiration time 		*
 int subscription_max_expires = 1000000; /**< maximum subscription expiration time 		*/
 int subscription_expires_range = 0;
 
+int notification_list_size_threshold = 0; /**Threshold for size of notification list after which a warning is logged */
+
 
 extern reg_notification_list *notification_list; /**< list of notifications for reg to be sent			*/
 
@@ -251,6 +253,7 @@ static param_export_t params[] = {
     {"ue_unsubscribe_on_dereg", INT_PARAM, &ue_unsubscribe_on_dereg},
     {"subscription_expires_range", INT_PARAM, &subscription_expires_range},
     {"user_data_always", INT_PARAM, &user_data_always},
+    {"notification_list_size_threshold", INT_PARAM, &notification_list_size_threshold},
 
     {0, 0, 0}
 };

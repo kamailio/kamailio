@@ -77,6 +77,8 @@ reg_notification_list *notification_list = 0; //< List of pending notifications
 
 extern struct tm_binds tmb;
 
+extern int notification_list_size_threshold;
+
 extern int subscription_default_expires;
 extern int subscription_min_expires;
 extern int subscription_max_expires;
@@ -121,6 +123,7 @@ int notify_init() {
 	return 0;
     }
     notification_list->lock = lock_init(notification_list->lock);
+    notification_list->size = 0;
     sem_new(notification_list->empty, 0); //pre-locked - as we assume list is empty at start
     return 1;
 }
@@ -1995,6 +1998,11 @@ void add_notification(reg_notification * n) {
     if (notification_list->tail) notification_list->tail->next = n;
     notification_list->tail = n;
     if (!notification_list->head) notification_list->head = n;
+    notification_list->size++;
+    if(notification_list_size_threshold > 0 && notification_list->size > notification_list_size_threshold) {
+	    LM_WARN("notification_list is size [%d] and has exceed notification_list_size_threshold of [%d]", notification_list->size, notification_list_size_threshold);
+    }
+    
     sem_release(notification_list->empty);
     lock_release(notification_list->lock);
 }
@@ -2019,6 +2027,7 @@ reg_notification* get_notification() {
         notification_list->tail = 0;
     }
     n->next = 0; //make sure whoever gets this cant access our list
+    notification_list->size--;
     lock_release(notification_list->lock);
 
     return n;

@@ -88,6 +88,7 @@ typedef struct {
     reg_notification *head; /**< first notification in the list	*/
     reg_notification *tail; /**< last notification in the list	*/
     gen_sem_t *empty;
+    int size;
 } reg_notification_list;
 
 /** Events for subscriptions */
