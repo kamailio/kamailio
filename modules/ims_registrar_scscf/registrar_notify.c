@@ -1879,6 +1879,11 @@ reg_notification * new_notification(str subscription_state,
     str buf;
     char bufc[MAX_REGINFO_SIZE];
 
+    if (content.len > MAX_REGINFO_SIZE) {
+        LM_ERR("content size (%d) exceeds MAX_REGINFO_SIZE (%d)!\n", content.len, MAX_REGINFO_SIZE);
+        return 0;
+    }
+
     sprintf(bufc, content.s, r->version);
     buf.s = bufc;
     buf.len = strlen(bufc);
