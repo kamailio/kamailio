@@ -58,6 +58,7 @@ extern struct dlg_binds dlgb;
 extern int cdp_event_latency;
 extern int cdp_event_threshold;
 extern int cdp_event_latency_loglevel;
+extern int cdp_event_list_size_threshold;
 
 int init_cdp_cb_event_list() {
     cdp_event_list = shm_malloc(sizeof (cdp_cb_event_list_t));
@@ -72,6 +73,7 @@ int init_cdp_cb_event_list() {
         return 0;
     }
     cdp_event_list->lock = lock_init(cdp_event_list->lock);
+    cdp_event_list->size = 0;
 
     sem_new(cdp_event_list->empty, 0); //pre-locked - as we assume list is empty at start
 
@@ -130,6 +132,10 @@ void push_cdp_cb_event(cdp_cb_event_t* event) {
         cdp_event_list->tail->next = event;
         cdp_event_list->tail = event;
     }
+    cdp_event_list->size++;
+    if(cdp_event_list_size_threshold > 0 && cdp_event_list->size > cdp_event_list_size_threshold) {
+	    LM_WARN("cdp_event_list is size [%d] and has exceed cdp_event_list_size_threshold of [%d]", cdp_event_list->size, cdp_event_list_size_threshold);
+    }
     sem_release(cdp_event_list->empty);
     lock_release(cdp_event_list->lock);
 }
@@ -153,6 +159,7 @@ cdp_cb_event_t* pop_cdp_cb_event() {
         cdp_event_list->tail = 0;
     }
     ev->next = 0; //make sure whoever gets this cant access our list
+    cdp_event_list->size--;
     lock_release(cdp_event_list->lock);
 
     return ev;

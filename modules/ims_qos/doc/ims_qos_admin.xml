@@ -201,6 +201,25 @@ modparam("ims_qos", "authorize_video_flow", 0)
         </programlisting>
       </example>
     </section>
+    <section>
+      <title><varname>cdp_event_list_size_threshold</varname> (integer)</title>
+
+      <para>This is a threshold on the size of the cdp event list.  Once the
+	queue exceeds this length a warning is logged.  0 disables this feature</para>
+
+      <para><emphasis> Default value is 0. </emphasis></para>
+
+      <example>
+        <title><varname>cdp_event_list_size_threshold</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "cdp_event_list_size_threshold", 10)
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>

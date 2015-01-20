@@ -63,6 +63,7 @@ typedef struct {
 	cdp_cb_event_t *head;
 	cdp_cb_event_t *tail;
 	gen_sem_t *empty;
+	int size;
 } cdp_cb_event_list_t;
 
 int init_cdp_cb_event_list();

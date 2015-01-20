@@ -98,6 +98,8 @@ int cdp_event_latency = 1; /*flag: report slow processing of CDP callback events
 int cdp_event_threshold = 500; /*time in ms above which we should report slow processing of CDP callback event - default 500ms*/
 int cdp_event_latency_loglevel = 0; /*log-level to use to report slow processing of CDP callback event - default ERROR*/
 
+int cdp_event_list_size_threshold = 0;  /**Threshold for size of cdp event list after which a warning is logged */
+
 /** module functions */
 static int mod_init(void);
 static int mod_child_init(int);
@@ -131,6 +133,7 @@ static param_export_t params[] = {
     { "cdp_event_threshold", INT_PARAM, &cdp_event_threshold}, /*time in ms above which we should report slow processing of CDP callback event*/
     { "cdp_event_latency_log", INT_PARAM, &cdp_event_latency_loglevel}, /*log-level to use to report slow processing of CDP callback event*/
     { "authorize_video_flow", INT_PARAM, &authorize_video_flow}, /*whether or not we authorize resources for video flows*/
+    { "cdp_event_list_size_threshold", INT_PARAM, &cdp_event_list_size_threshold}, /**Threshold for size of cdp event list after which a warning is logged */
     { 0, 0, 0}
 };
 
