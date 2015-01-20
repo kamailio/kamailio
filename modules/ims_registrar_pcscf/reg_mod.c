@@ -58,16 +58,18 @@
 #include "../../lib/kcore/statistics.h"
 #include "../../modules/sl/sl.h"
 #include "../../mod_fix.h"
+#include "../../cfg/cfg_struct.h"
 
 /* Bindings to PUA */
 #include "../pua/pua_bind.h"
 #include "notify.h"
 
+#include "async_reginfo.h"
+
 #include "reg_mod.h"
 #include "save.h"
 #include "service_routes.h"
 #include "lookup.h"
-
 MODULE_VERSION
 
 usrloc_api_t ul;						/**!< Structure containing pointers to usrloc functions*/
@@ -92,6 +94,7 @@ unsigned int pending_reg_expires = 30;			/**!< parameter for expiry time of a pe
 
 int is_registered_fallback2ip = 0;
 
+int reginfo_queue_size_threshold = 0;    /**Threshold for size of reginfo queue after which a warning is logged */
 
 
 char* rcv_avp_param = 0;
@@ -165,6 +168,7 @@ static param_export_t params[] = {
         {"ignore_contact_rxport_check", INT_PARAM, &ignore_contact_rxport_check         },
         {"ignore_reg_state",		INT_PARAM, &ignore_reg_state			},
 	{"force_icscf_uri",		PARAM_STR, &force_icscf_uri			},
+	{"reginfo_queue_size_threshold",	INT_PARAM, &reginfo_queue_size_threshold		},
 //	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
 	{0, 0, 0}
 };
@@ -232,6 +236,9 @@ static int mod_init(void) {
 	bind_usrloc_t bind_usrloc;
 	bind_pua_t bind_pua;
 
+	/*register space for event processor*/
+	register_procs(1);
+	
 	if (!fix_parameters()) goto error;
 
 	/* bind the SL API */
@@ -284,6 +291,13 @@ static int mod_init(void) {
                        return -1;
                }
 	       LM_DBG("Successfully bound to PUA module\n");
+	       
+	       /*init cdb cb event list*/
+		if (!init_reginfo_event_list()) {
+		    LM_ERR("unable to initialise reginfo_event_list\n");
+		    return -1;
+		}
+	       LM_DBG("Successfully initialised reginfo_event_list\n");
        }
 
 	return 0;
@@ -299,6 +313,20 @@ static void mod_destroy(void)
 
 static int child_init(int rank)
 {
+    
+	LM_DBG("Initialization of module in child [%d] \n", rank);
+	if (rank == PROC_MAIN) {
+	     LM_DBG("Creating RegInfo Event Processor process\n");
+	    int pid = fork_process(PROC_SIPINIT, "RegInfo Event Processor", 1);
+	    if (pid < 0)
+		return -1; //error
+	    if (pid == 0) {
+		if (cfg_child_init())
+		    return -1; //error
+		reginfo_event_process();
+	    }
+	}
+    
 	if (rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0;
 	if (rank == 1) {

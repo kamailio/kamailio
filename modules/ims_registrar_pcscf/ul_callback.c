@@ -48,6 +48,7 @@
 #include "../pua/send_publish.h"
 
 #include "../pua/pua_bind.h"
+#include "async_reginfo.h"
 
 #include <libxml/parser.h>
 
@@ -185,12 +186,14 @@ error:
 #define P_ASSERTED_IDENTITY_HDR_PREFIX	"P-Asserted-Identity: <"
 int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 {
-	publ_info_t publ;
+	//publ_info_t publ;
 	str content_type;
 	int id_buf_len;
 	char id_buf[512];
 	str p_asserted_identity_header;
-
+	str publ_id;
+	reginfo_event_t *new_event;
+	
 	content_type.s = "application/reginfo+xml";
 	content_type.len = 23;
 	
@@ -220,28 +223,29 @@ int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 		goto error;
 	}
 	LM_DBG("XML-Body:\n%.*s\n", body->len, body->s);
-
-	memset(&publ, 0, sizeof(publ_info_t));
-	publ.pres_uri = &impu->public_identity;
-	publ.body = body;
+	
 	id_buf_len = snprintf(id_buf, sizeof(id_buf), "IMSPCSCF_PUBLISH.%.*s", c->aor.len, c->aor.s);
-	publ.id.s = id_buf;
-	publ.id.len = id_buf_len;
-	publ.content_type = content_type;
-	publ.expires = 3600;
+	publ_id.s = id_buf;
+	publ_id.len = id_buf_len;
 
-	/* make UPDATE_TYPE, as if this "publish dialog" is not found
-	 by pua it will fallback to INSERT_TYPE anyway */
-	publ.flag |= UPDATE_TYPE;
-	publ.source_flag |= REGINFO_PUBLISH;
-	publ.event |= REGINFO_EVENT;
-	publ.extra_headers = &p_asserted_identity_header;
-
-	if (pua.send_publish(&publ) < 0) {
-		LM_ERR("Error while sending publish\n");
-	}
+	new_event = new_reginfo_event(REG_EVENT_PUBLISH, body, &publ_id, &content_type, 0, 0,
+	0, 0, 3600, UPDATE_TYPE, REGINFO_PUBLISH, REGINFO_EVENT, &p_asserted_identity_header, &impu->public_identity);
+	
+	if (!new_event) {
+            LM_ERR("Unable to create event for cdp callback\n");
+            goto error;
+        }
+        //push the new event onto the stack (FIFO)
+        push_reginfo_event(new_event);
+	
 	if (p_asserted_identity_header.s) {
 		pkg_free(p_asserted_identity_header.s);
+	}
+	
+	if (body) {
+		if (body->s)
+			xmlFree(body->s);
+		pkg_free(body);
 	}
 	
 	return 1;

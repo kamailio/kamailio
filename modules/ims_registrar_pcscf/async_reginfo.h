@@ -56,10 +56,24 @@
 typedef struct _reginfo_event{
 	int event;							/* event id */
 	time_t registered;					/* time event was added to list - useful if we want to report on things that have taken too long to process */
+	str publ_body;
+	str publ_id;
+	str publ_content_type;
+	str subs_remote_target;
+	str subs_watcher_uri;
+	str subs_contact;
+	str subs_outbound_proxy;
+	int expires;
+	int flag;
+	int sourge_flag;
+	int reg_info_event;
+	str extra_headers;
+	str pres_uri;
 	struct _reginfo_event *next;
 } reginfo_event_t;
 
 typedef struct {
+	int size;
 	gen_lock_t *lock;
 	reginfo_event_t *head;
 	reginfo_event_t *tail;
@@ -70,7 +84,8 @@ typedef struct {
 int init_reginfo_event_list();
 void destroy_reginfo_event_list();
 
-reginfo_event_t* new_reginfo_event (int event); 			/*create new event*/
+reginfo_event_t* new_reginfo_event (int event, str *publ_body, str *publ_id, str *publ_content_type, str *subs_remote_target, str *subs_watcher_uri,
+	str *subs_contact, str *subs_outbound_proxy, int expires, int flag, int source_flag, int reg_info_event, str *extra_headers, str *pres_uri);
 void push_reginfo_event(reginfo_event_t* event);	/*add event to stack*/
 reginfo_event_t* pop_reginfo_event();				/*pop next (head) event off list*/
 void free_reginfo_event(reginfo_event_t*);			/*free memory allocated for event*/
