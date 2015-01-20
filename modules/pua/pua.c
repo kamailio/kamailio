@@ -73,6 +73,9 @@ int reginfo_increase_version = 0;
 pua_event_t* pua_evlist= NULL;
 int dbmode = 0;
 
+int db_table_lock_write = 1;
+db_locking_t db_table_lock = DB_LOCKING_WRITE;
+
 int pua_fetch_rows = 500;
 
 /* database connection */
@@ -134,6 +137,7 @@ static param_export_t params[]={
 	{"check_remote_contact",     INT_PARAM, &check_remote_contact},
 	{"db_mode",                  INT_PARAM, &dbmode},
 	{"fetch_rows",               INT_PARAM, &pua_fetch_rows},
+	{"db_table_lock_write",     INT_PARAM, &db_table_lock_write},
 	{0,                          0,         0}
 };
 
@@ -280,10 +284,13 @@ static int mod_init(void)
 			register_timer(db_update, 0, update_period);
 	}
 
+	if (db_table_lock_write != 1)
+		db_table_lock = DB_LOCKING_NONE;
+	
 	if(pua_db)
 		pua_dbf.close(pua_db);
 	pua_db = NULL;
-
+	
 	return 0;
 }
 

@@ -49,6 +49,8 @@
 #include "event_list.h"
 #include "pua_db.h"
 
+extern db_locking_t db_table_lock;
+
 str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 		str* extra_headers, int is_body)
 {
@@ -216,7 +218,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
-		if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
+		if (pua_dbf.start_transaction(pua_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -502,7 +504,7 @@ int send_publish( publ_info_t* publ )
 	
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
-		if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
+		if (pua_dbf.start_transaction(pua_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;

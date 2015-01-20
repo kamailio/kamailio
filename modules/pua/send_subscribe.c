@@ -48,6 +48,7 @@
 #include "pua_db.h"
 #include "../presence/subscribe.h"
 
+extern db_locking_t db_table_lock;
 
 void print_subs(subs_info_t* subs)
 {
@@ -301,7 +302,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
-		if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
+		if (pua_dbf.start_transaction(pua_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -687,7 +688,7 @@ faked_error:
 
 		if (pua_dbf.start_transaction)
 		{
-			if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
+			if (pua_dbf.start_transaction(pua_db, db_table_lock) < 0)
 			{
 				LM_ERR("in start_transaction\n");
 				goto error;
@@ -986,7 +987,7 @@ int send_subscribe(subs_info_t* subs)
 
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
-		if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
+		if (pua_dbf.start_transaction(pua_db, db_table_lock) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;

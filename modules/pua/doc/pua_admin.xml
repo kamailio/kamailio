@@ -287,6 +287,28 @@ modparam("pua", "db_mode", 0)
 		</example>
 	</section>
 	<section>
+	    <title><varname>db_table_lock_write</varname> (integer)</title>
+	    <para>
+		Enable (=1) or disable (=0) the Locks for table during an transaction.
+		Locking only the "current" table causes problems with a MySQL-Databases
+		in "DB-Only" mode.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1 (Write Lock for the Tables).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_table_lock_write</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_table_lock_write", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section>
 		<title><varname>check_remote_contact</varname> (int)</title>
 		<para>
 		When sending a SUBSCRIBE check that the remote contact matches the
