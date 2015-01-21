@@ -1523,6 +1523,8 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
     buf.len = 0;
     pad.s = padc;
     pad.len = 0;
+    
+    int expires;
 
     LM_DBG("Getting reginfo_full");
 
@@ -1561,14 +1563,24 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
 	    if (ptr->q != -1) {
 		LM_DBG("q value not equal to -1");
 		float q = (float) ptr->q / 1000;
+		expires = ptr->expires - act_time;
+		if(expires < 0) {
+		    LM_WARN("Contact expires is negative - setting to 0\n");
+		    expires = 0;
+		}
 		sprintf(pad.s, contact_s_q.s, ptr, r_active.len, r_active.s,
-			r_registered.len, r_registered.s, ptr->expires - act_time,
+			r_registered.len, r_registered.s, expires,
 			q);
 	    } else {
 		LM_DBG("q value equal to -1");
-	    sprintf(pad.s, contact_s.s, ptr, r_active.len, r_active.s,
+		expires = ptr->expires - act_time;
+		if(expires < 0) {
+		    LM_WARN("Contact expires is negative - setting to 0\n");
+		    expires = 0;
+		}
+		sprintf(pad.s, contact_s.s, ptr, r_active.len, r_active.s,
 			r_registered.len, r_registered.s,
-			ptr->expires - act_time);
+			expires);
 	    }
 	    pad.len = strlen(pad.s);
 	    STR_APPEND(buf, pad);
@@ -1657,6 +1669,11 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
 
     if (r) {
         expires = c->expires - act_time;
+	if(expires < 0) {
+	    LM_WARN("Contact expires is negative - setting to 0\n");
+	    expires = 0;
+	}
+	
         if (//richard we only use expired and unregistered
                 (event_type == IMS_REGISTRAR_CONTACT_EXPIRED ||
                 event_type == IMS_REGISTRAR_CONTACT_UNREGISTERED)
