@@ -755,7 +755,7 @@ static int pv_auth_check(sip_msg_t *msg, char *realm,
 		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
 					&msg->first_line.u.request.method);
 
-	if(ret==AUTH_OK && (vflags&AUTH_CHECK_ID_F)) {
+	if(ret==AUTH_OK && (vchecks&AUTH_CHECK_ID_F)) {
 		hdr = (msg->proxy_auth==0)?msg->authorization:msg->proxy_auth;
 		srealm = ((auth_body_t*)(hdr->parsed))->digest.username.user;
 
