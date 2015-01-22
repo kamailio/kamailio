@@ -318,7 +318,7 @@ static int child_init(int rank)
 {
     
 	LM_DBG("Initialization of module in child [%d] \n", rank);
-	if (rank == PROC_MAIN) {
+        if ((subscribe_to_reginfo == 1) && (rank == PROC_MAIN)) {
 	     LM_DBG("Creating RegInfo Event Processor process\n");
 	    int pid = fork_process(PROC_SIPINIT, "RegInfo Event Processor", 1);
 	    if (pid < 0)
