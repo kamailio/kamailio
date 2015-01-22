@@ -269,7 +269,8 @@ modparam("debugger", "mod_hash_size", 5)
 	    <title><varname>mod_level_mode</varname> (int)</title>
 	    <para>
 			Enable or disable per module log level (0 - disabled, 1 - enabled).
-			This parameter is tunable via the Kamailio config framework.
+			This parameter is tunable via the Kamailio config framework. To use
+			per module log level you also have to set <varname>mod_hash_size</varname>.
 	    </para>
 	    <para>
 		<emphasis>
@@ -291,7 +292,8 @@ modparam("debugger", "mod_level_mode", 1)
 	    <para>
 		Specify module log level - the value must be in the format:
 		modulename=level. The parameter can be set many times. For core
-		log level, use module name 'core'.
+		log level, use module name 'core'. You also must enable
+		<varname>mod_level_mode</varname> and <varname>mod_hash_size</varname>.
 	    </para>
 	    <example>
 		<title>Set <varname>mod_level</varname> parameter</title>
