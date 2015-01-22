@@ -2491,7 +2491,7 @@ usrloc() {
 			fi
 
 			if [ -z "$DEFAULT_Q" ] ; then
-				DEFAULT_Q = "1.0"
+				DEFAULT_Q="1.0"
 			fi
 
 			$CTLCMD ul_add "$USRLOC_TABLE" "$OSERUSER@$OSERDOMAIN" "$2" \
