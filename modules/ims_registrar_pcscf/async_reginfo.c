@@ -56,6 +56,9 @@ reginfo_event_list_t *reginfo_event_list = 0;
 
 int init_reginfo_event_list()
 {
+	if (reginfo_event_list)
+		return 1;
+
 	reginfo_event_list = shm_malloc(sizeof(reginfo_event_list_t));
 	if (!reginfo_event_list) {
 		LM_ERR("No more SHM mem\n");
@@ -241,6 +244,9 @@ void push_reginfo_event(reginfo_event_t* event)
 reginfo_event_t* pop_reginfo_event()
 {
 	reginfo_event_t *ev;
+
+	// Make sure, it's initialized:
+	init_reginfo_event_list();
 
 	lock_get(reginfo_event_list->lock);
 	while (reginfo_event_list->head == 0) {
