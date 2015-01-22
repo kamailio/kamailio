@@ -812,6 +812,8 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 
 	cp = ip_addr2a(&msg->rcv.src_ip);
 	len = c->uri.len + strlen(cp) + 6 /* :port */ - hostport.len + 1;
+	if(msg->rcv.src_ip.af==AF_INET6)
+		len += 2;
 	buf = pkg_malloc(len);
 	if (buf == NULL) {
 		LM_ERR("out of pkg memory\n");
@@ -821,8 +823,13 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	temp[1] = c->uri.s[c->uri.len];
 	c->uri.s[c->uri.len] = hostport.s[0] = '\0';
 	if(uri.maddr.len<=0) {
-		len1 = snprintf(buf, len, "%s%s:%d%s", c->uri.s, cp, msg->rcv.src_port,
-		    hostport.s + hostport.len);
+		if(msg->rcv.src_ip.af==AF_INET6) {
+			len1 = snprintf(buf, len, "%s[%s]:%d%s", c->uri.s, cp,
+					msg->rcv.src_port, hostport.s + hostport.len);
+		} else {
+			len1 = snprintf(buf, len, "%s%s:%d%s", c->uri.s, cp,
+					msg->rcv.src_port, hostport.s + hostport.len);
+		}
 	} else {
 		/* skip maddr parameter - makes no sense anymore */
 		LM_DBG("removing maddr parameter from contact uri: [%.*s]\n",
@@ -836,8 +843,15 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 			params1.len--;
 		params2.s = uri.maddr.s + uri.maddr.len;
 		params2.len = c->uri.s + c->uri.len - params2.s;
-		len1 = snprintf(buf, len, "%s%s:%d%.*s%.*s", c->uri.s, cp, msg->rcv.src_port,
-		    params1.len, params1.s, params2.len, params2.s);
+		if(msg->rcv.src_ip.af==AF_INET6) {
+			len1 = snprintf(buf, len, "%s[%s]:%d%.*s%.*s", c->uri.s, cp,
+					msg->rcv.src_port, params1.len, params1.s,
+					params2.len, params2.s);
+		} else {
+			len1 = snprintf(buf, len, "%s%s:%d%.*s%.*s", c->uri.s, cp,
+					msg->rcv.src_port, params1.len, params1.s,
+					params2.len, params2.s);
+		}
 	}
 	if (len1 < len)
 		len = len1;
