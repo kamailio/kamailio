@@ -89,37 +89,37 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 			r = NULL;
 		errno = 0;
 		if ( p == vp->strvalue && q ) {
-			// int name and str value
+			/* int name and str value */
 			*flags |= AVP_VAL_STR;
 			name->n = strtol(++p,&q,10);
 			value->s.s = ++q;
 			value->s.len = strlen(q);
 		} else if ( p && !r && p > vp->strvalue && !q ) {
-			// str name and int value
+			/* str name and int value */
 			*flags |= AVP_NAME_STR;
 			name->s.len = p - vp->strvalue;
 			name->s.s = vp->strvalue;
 			value->n = strtol(++p,&r,10);
 		} else if ( p && p != r && !q ) {
-			// int name and int vale
+			/* int name and int vale */
 			name->n = strtol(++p,&q,10);
 			value->n = strtol(++r,&q,10);
 		} else if ( (!p || p > q) && q ) {
-			// str name and str value
+			/* str name and str value */
 			*flags |= AVP_VAL_STR|AVP_NAME_STR;
 			name->s.len = q - vp->strvalue;
 			name->s.s = vp->strvalue;
 			value->s.len = strlen(++q);
 			value->s.s = q;
-		} else // error - unknown
+		} else /* error - unknown */
 			return 0;
 	    if ( errno != 0 )
 			return 0;
 	} else if (vp->type == PW_TYPE_STRING) {
 			*flags |= AVP_VAL_STR|AVP_NAME_STR;
-			// if start of value is the name of value
+			/* if start of value is the name of value */
 			if (vp->strvalue == strstr(vp->strvalue,vp->name))
-				// then get value after name + one char delimiter
+				/* then get value after name + one char delimiter */
 				p = vp->strvalue + strlen(vp->name) + sizeof(char);
 			else
 				p = vp->strvalue;
