@@ -38,6 +38,7 @@ static pcontact_t * c = NULL;
 extern usrloc_api_t ul;
 extern int ignore_contact_rxport_check;
 static str * asserted_identity;
+static str * registration_contact;
 
 /*!
  * \brief Parse the message and find first occurrence of Route header field.
@@ -222,7 +223,9 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 		}
 	}
 	asserted_identity = NULL;
+	registration_contact = NULL;
 	if (c) {
+		registration_contact = &c->contact_user;
 		p = c->head;
 		while (p) {
 			if (p->is_default == 1)
@@ -494,6 +497,18 @@ str * get_asserted_identity(struct sip_msg* _m) {
 		return NULL;
 	} else return asserted_identity;
 }
+
+
+/**
+ * Get the contact used during registration of this user
+ */
+str * get_registration_contact(struct sip_msg* _m) {
+	if (_m->id != current_msg_id) {
+		LM_ERR("Unable to get contact used during registration: Please call is_registered first!\n");
+		return NULL;
+	} else return registration_contact;
+}
+
 
 /**
  * checked if passed identity is an asserted identity

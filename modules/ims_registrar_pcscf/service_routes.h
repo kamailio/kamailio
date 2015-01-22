@@ -47,6 +47,11 @@ int is_registered(struct sip_msg* _m, udomain_t* _d);
 str * get_asserted_identity(struct sip_msg* _m);
 
 /**
+ * Get the contact used during registration of this user
+ */
+str * get_registration_contact(struct sip_msg* _m);
+
+/**
  * Assert a given identity of a user
  */
 int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity);

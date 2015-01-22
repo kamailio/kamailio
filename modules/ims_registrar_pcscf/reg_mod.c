@@ -127,6 +127,7 @@ static int assert_identity_fixup(void ** param, int param_no);
 
 /* Pseudo-Variables */
 static int pv_get_asserted_identity_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_registration_contact_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 /**
  * Update the time.
@@ -183,6 +184,8 @@ stat_export_t mod_stats[] = {
 static pv_export_t mod_pvs[] = {
     {{"pcscf_asserted_identity", (sizeof("pcscf_asserted_identity")-1)}, /* The first identity of the contact. */
      PVT_OTHER, pv_get_asserted_identity_f, 0, 0, 0, 0, 0},
+    {{"pcscf_registration_contact", (sizeof("pcscf_registration_contact")-1)}, /* The contact used during REGISTER */
+     PVT_OTHER, pv_get_registration_contact_f, 0, 0, 0, 0, 0},
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -476,6 +479,19 @@ pv_get_asserted_identity_f(struct sip_msg *msg, pv_param_t *param,
 		  pv_value_t *res)
 {
 	str * ret_val = get_asserted_identity(msg);
+	if (ret_val != NULL) return pv_get_strval(msg, param, res, ret_val);
+	else return -1;
+}
+
+
+/*
+ * Get the asserted Identity for the current user
+ */
+static int
+pv_get_registration_contact_f(struct sip_msg *msg, pv_param_t *param,
+		  pv_value_t *res)
+{
+	str * ret_val = get_registration_contact(msg);
 	if (ret_val != NULL) return pv_get_strval(msg, param, res, ret_val);
 	else return -1;
 }
