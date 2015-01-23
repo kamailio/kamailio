@@ -46,17 +46,17 @@
 
 #define TABLE_VERSION 6
 
-struct addr_list ***addr_hash_table; /* Ptr to current hash table ptr */
-struct addr_list **addr_hash_table_1;     /* Pointer to hash table 1 */
-struct addr_list **addr_hash_table_2;     /* Pointer to hash table 2 */
+struct addr_list ***addr_hash_table = NULL; /* Ptr to current hash table ptr */
+struct addr_list **addr_hash_table_1 = NULL; /* Pointer to hash table 1 */
+struct addr_list **addr_hash_table_2 = NULL; /* Pointer to hash table 2 */
 
-struct subnet **subnet_table;        /* Ptr to current subnet table */
-struct subnet *subnet_table_1;       /* Ptr to subnet table 1 */
-struct subnet *subnet_table_2;       /* Ptr to subnet table 2 */
+struct subnet **subnet_table = NULL;  /* Ptr to current subnet table */
+struct subnet *subnet_table_1 = NULL; /* Ptr to subnet table 1 */
+struct subnet *subnet_table_2 = NULL; /* Ptr to subnet table 2 */
 
-struct domain_name_list ***domain_list_table;        /* Ptr to current domain name table */
-static struct domain_name_list **domain_list_table_1;       /* Ptr to domain name table 1 */
-static struct domain_name_list **domain_list_table_2;       /* Ptr to domain name table 2 */
+struct domain_name_list ***domain_list_table = NULL; /* Ptr to current domain name table */
+static struct domain_name_list **domain_list_table_1 = NULL; /* Ptr to domain name table 1 */
+static struct domain_name_list **domain_list_table_2 = NULL; /* Ptr to domain name table 2 */
 
 
 static db1_con_t* db_handle = 0;
