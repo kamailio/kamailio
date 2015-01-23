@@ -10,7 +10,7 @@ Jordan Levy
 
    <jordan@flowroute.com>
 
-   Copyright Â© 2011 Flowroute LLC (flowroute.com)
+   Copyright © 2011 Flowroute LLC (flowroute.com)
      __________________________________________________________________
 
    Table of Contents
@@ -77,6 +77,9 @@ Chapter 1. Admin Guide
    2.1. Kamailio Modules
    2.2. External Libraries or Applications
 
+   This module uses Linux specific API, it might not compile on other
+   types of operating systems.
+
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
@@ -112,7 +115,7 @@ modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
    4.2. jsonrpc_request(method, parameters, return_route, error_route,
           result_var)
 
-4.1.  jsonrpc_notification(method, parameters)
+4.1. jsonrpc_notification(method, parameters)
 
    Invokes the remote 'method' with the given 'parameters' as a
    notification. Unlike jsonrpc_request (below), notifications do not
@@ -127,7 +130,7 @@ modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
 jsonrpc_notification("update_user", "{'id': 1234, 'name': 'Petros'}")
 ...
 
-4.2.  jsonrpc_request(method, parameters, return_route, error_route,
+4.2. jsonrpc_request(method, parameters, return_route, error_route,
 result_var)
 
    Invokes the remote 'method' with the given 'parameters'. When the

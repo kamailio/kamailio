@@ -32,6 +32,10 @@
 
 	<section>
 		<title>Dependencies</title>
+		<para>
+			This module uses Linux specific API, it might not compile on other
+			types of operating systems.
+		</para>
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
