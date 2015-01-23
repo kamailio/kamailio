@@ -77,9 +77,6 @@ Chapter 1. Admin Guide
    2.1. Kamailio Modules
    2.2. External Libraries or Applications
 
-   This module uses Linux specific API, it might not compile on other
-   types of operating systems.
-
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
@@ -87,10 +84,14 @@ Chapter 1. Admin Guide
 
 2.2. External Libraries or Applications
 
+   Note: this module uses Linux specific API, part of glibc library, it
+   might not compile on other types of operating systems.
+
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * libjson (https://github.com/json-c/json-c/wiki)
      * libevent - http://libevent.org/
+     * glibc - http://www.gnu.org/software/libc/ (v2.8 or higher)
 
 3. Parameters
 
