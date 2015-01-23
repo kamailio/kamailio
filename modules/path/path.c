@@ -67,7 +67,7 @@ static int prepend_path(struct sip_msg* _m, str *user, path_param_t param, str *
 
 	/* maximum possible length of suffix */
 	suffix_len = strlen(";lr;received=sip::12345%3Btransport%3Dsctp;ob;>\r\n")
-			+ IP_ADDR_MAX_STR_SIZE + (add_params ? add_params->len : 0) + 1;
+			+ IP_ADDR_MAX_STR_SIZE + 2 + (add_params ? add_params->len : 0) + 1;
 
 	cp = suffix = pkg_malloc(suffix_len);
 	if (!suffix) {
@@ -86,8 +86,13 @@ static int prepend_path(struct sip_msg* _m, str *user, path_param_t param, str *
 		else
 			proto_str = NULL;
 
-		cp += sprintf(cp, ";received=sip:%s:%hu%s", ip_addr2a(&_m->rcv.src_ip),
-				_m->rcv.src_port, proto_str ? : "");
+		if(_m->rcv.src_ip.af==AF_INET6) {
+			cp += sprintf(cp, ";received=sip:[%s]:%hu%s", ip_addr2a(&_m->rcv.src_ip),
+					_m->rcv.src_port, proto_str ? : "");
+		} else {
+			cp += sprintf(cp, ";received=sip:%s:%hu%s", ip_addr2a(&_m->rcv.src_ip),
+					_m->rcv.src_port, proto_str ? : "");
+		}
 		break;
 	case PATH_PARAM_OB:
 		cp += sprintf(cp, ";ob");
