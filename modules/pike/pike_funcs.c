@@ -184,7 +184,7 @@ void clean_routine(unsigned int ticks , void *param)
 	/* LM_DBG("entering (%d)\n",ticks); */
 	/* before locking check first if the list is not empty and if can
 	 * be at least one element removed */
-	if ( is_list_empty( timer )) return; /* quick exit */
+	if (timer==0 || is_list_empty( timer )) return; /* quick exit */
 
 	/* get the expired elements */
 	lock_get( timer_lock );
