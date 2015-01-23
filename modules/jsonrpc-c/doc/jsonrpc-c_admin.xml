@@ -32,10 +32,6 @@
 
 	<section>
 		<title>Dependencies</title>
-		<para>
-			This module uses Linux specific API, it might not compile on other
-			types of operating systems.
-		</para>
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
@@ -52,6 +48,10 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
+				Note: this module uses Linux specific API, part of glibc library,
+				it might not compile on other types of operating systems.
+			</para>
+			<para>
 				The following libraries or applications must be installed before running
 				&kamailio; with this module loaded:
 				<itemizedlist>
@@ -63,6 +63,12 @@
 					<listitem>
 						<para>
 							<emphasis>libevent</emphasis> - http://libevent.org/
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>glibc</emphasis> - http://www.gnu.org/software/libc/
+							(v2.8 or higher)
 						</para>
 					</listitem>
 				</itemizedlist>
