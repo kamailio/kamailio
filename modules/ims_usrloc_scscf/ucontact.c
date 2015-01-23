@@ -69,6 +69,7 @@
 #include "contact_hslot.h"
 
 extern struct contact_list* contact_list;
+extern int db_mode;
 
 /*!
  * \brief Create a new contact structure
@@ -383,7 +384,7 @@ int update_ucontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
         return -1;
     }
     
-    if (db_insert_ucontact(_r, _c) != 0) {  /* this is an insert/update */
+    if (db_mode == WRITE_THROUGH && (db_insert_ucontact(_r, _c) != 0)) {  /* this is an insert/update */
 	LM_ERR("failed to update contact in DB [%.*s]\n", _c->aor.len, _c->aor.s);
 	return -1;
     }
