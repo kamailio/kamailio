@@ -564,11 +564,6 @@ Note
    information given will not be stored in the CDR as they cannot be
    accessed by the end of the call when the CDR is logged.
 
-   Note that CDR generation does not involve any kind of database storage
-   (yet). In order to persist the CDRs into a database you will have to
-   set up an exterior process (i.e., a script living outside of Kamailio)
-   and implement the storage task yourself.
-
    Sometimes, dialogs expire because the UA has a problem and a final
    message is never transmitted. You can toggle on/off the generation of
    CDR-based logging in such cases with only the dlg_vars showing by using
