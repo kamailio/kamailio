@@ -27,11 +27,10 @@ Andrey Rybkin
         3. Parameters
 
               3.1. enable (int)
-              3.2. flag (int)
 
    List of Examples
 
-   1.1. Set flag parameter
+   1.1. Set enable parameter
 
 Chapter 1. Admin Guide
 
@@ -45,12 +44,11 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. enable (int)
-        3.2. flag (int)
 
 1. Overview
 
-   The module add usrloc contacts replication between multiple servers via
-   DMQ module.
+   The module adds user location (usrloc) records replication between
+   multiple servers via DMQ module.
 
 2. Dependencies
 
@@ -59,28 +57,23 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * DMQ module must be loaded first.. USRLOC module must be loaded
-       first..
+     * DMQ module..
+     * USRLOC module..
 
 3. Parameters
 
    3.1. enable (int)
-   3.2. flag (int)
 
 3.1. enable (int)
 
-   USRLOC replication 0 - disabled 1 - enabled
+   The parameter controls whetner the replication is active or not. The
+   value can be:
+     * 0 - replication is disabled
+     * 1 - replication is enabled
 
    Default value is 0.
 
-3.2. flag (int)
-
-   Flag to be used for marking if a contact should be constructed for the
-   DMQ
-
-   Default value is 2.
-
-   Example 1.1. Set flag parameter
+   Example 1.1. Set enable parameter
 ...
-modparam("dmq_usrloc", "flag", 2)
+modparam("dmq_usrloc", "enable", 1)
 ...

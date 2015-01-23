@@ -40,11 +40,10 @@ dmq_resp_cback_t usrloc_dmq_resp_callback = {&usrloc_dmq_resp_callback_f, 0};
 int usrloc_dmq_send_all();
 int usrloc_dmq_request_sync();
 int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* node);
-usrloc_api_t ul;
 
 #define MAX_AOR_LEN 256
 
-int add_contact(str aor, ucontact_info_t* ci)
+static int add_contact(str aor, ucontact_info_t* ci)
 {
 	urecord_t* r;
 	udomain_t* _d;
@@ -52,14 +51,14 @@ int add_contact(str aor, ucontact_info_t* ci)
 	str contact;
 	int res;
 
-	ul.get_udomain("location", &_d);
-	res = ul.get_urecord(_d, &aor, &r);
+	dmq_ul.get_udomain("location", &_d);
+	res = dmq_ul.get_urecord(_d, &aor, &r);
 	if (res < 0) {
 		LM_ERR("failed to retrieve record from usrloc\n");
 		goto error;
 	} else if ( res == 0) {
 		LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
-		res = ul.get_ucontact(r, ci->c, ci->callid, ci->path, ci->cseq, &c);
+		res = dmq_ul.get_ucontact(r, ci->c, ci->callid, ci->path, ci->cseq, &c);
 		LM_DBG("get_ucontact = %d\n", res);
 		if (res==-1) {
 			LM_ERR("Invalid cseq\n");
@@ -68,28 +67,28 @@ int add_contact(str aor, ucontact_info_t* ci)
 			LM_DBG("Not found contact\n");
 			contact.s = ci->c->s;
 			contact.len = ci->c->len;
-			ul.insert_ucontact(r, &contact, ci, &c);
+			dmq_ul.insert_ucontact(r, &contact, ci, &c);
 		} else if (res == 0) {
 			LM_DBG("Found contact\n");
-			ul.update_ucontact(r, c, ci);
+			dmq_ul.update_ucontact(r, c, ci);
 		}
 	} else {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		ul.insert_urecord(_d, &aor, &r);
+		dmq_ul.insert_urecord(_d, &aor, &r);
 		LM_DBG("Insert record\n");
 		contact.s = ci->c->s;
 		contact.len = ci->c->len;
-		ul.insert_ucontact(r, &contact, ci, &c);
+		dmq_ul.insert_ucontact(r, &contact, ci, &c);
 		LM_DBG("Insert ucontact\n");
 	}
 
 		LM_DBG("Release record\n");
-		ul.release_urecord(r);
+		dmq_ul.release_urecord(r);
 		LM_DBG("Unlock udomain\n");
-		ul.unlock_udomain(_d, &aor);
+		dmq_ul.unlock_udomain(_d, &aor);
 		return 0;
 	error:
-		ul.unlock_udomain(_d, &aor);
+		dmq_ul.unlock_udomain(_d, &aor);
 		return -1;
 }
 
@@ -113,11 +112,11 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
   ucontact_t* ptr = 0;
   int res;
 
-  if (ul.get_all_ucontacts == NULL){
-    LM_ERR("ul.get_all_ucontacts is NULL\n");
+  if (dmq_ul.get_all_ucontacts == NULL){
+    LM_ERR("dmq_ul.get_all_ucontacts is NULL\n");
     goto done;
   }
-	rval = ul.get_all_ucontacts(buf, len, 0, 0, 1);
+	rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1);
 	if (rval<0) {
 		LM_ERR("failed to fetch contacts\n");
 		goto done;
@@ -131,7 +130,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 			LM_ERR("out of pkg memory\n");
 			goto done;
 		}
-		rval = ul.get_all_ucontacts(buf, len, 0, 0, 1);
+		rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1);
 		if (rval != 0) {
 			pkg_free(buf);
 			goto done;
@@ -159,14 +158,14 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
         memcpy( &aorhash, cp, sizeof(aorhash));
         cp = (char*)cp + sizeof(aorhash);
 
-        ul.get_udomain("location", &_d);
+        dmq_ul.get_udomain("location", &_d);
 
-        res = ul.get_urecord_by_ruid(_d, aorhash, &ruid, &r, &ptr);
+        res = dmq_ul.get_urecord_by_ruid(_d, aorhash, &ruid, &r, &ptr);
         aor = r->aor;
         if (res > 0) {
             LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-            ul.release_urecord(r);
-            ul.unlock_udomain(_d, &aor);
+            dmq_ul.release_urecord(r);
+            dmq_ul.unlock_udomain(_d, &aor);
             continue;
         }
         LM_DBG("- AoR: %.*s  AoRhash=%d  Flags=%d\n", aor.len, aor.s, aorhash, flags);
@@ -175,8 +174,8 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
             usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, node);
             ptr = ptr->next;
         }
-        ul.release_urecord(r);
-        ul.unlock_udomain(_d, &aor);
+        dmq_ul.release_urecord(r);
+        dmq_ul.unlock_udomain(_d, &aor);
     }
 	pkg_free(buf);
 
@@ -340,7 +339,7 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	ci.callid = &callid;
 	ci.cseq = cseq;
 	ci.flags = flags;
-	ci.flags |= usrloc_dmq_flag;
+	ci.flags |= FL_RPL;
 	ci.cflags = cflags;
 	ci.user_agent = &user_agent;
 	ci.methods = methods;
@@ -434,7 +433,7 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	}
 
 	flags = ptr->flags;
-	flags &= ~usrloc_dmq_flag;
+	flags &= ~FL_RPL;
 
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", action);
 
@@ -488,7 +487,7 @@ int usrloc_dmq_resp_callback_f(struct sip_msg* msg, int code,
 	return 0;
 }
 
-void ul_cb_contact(ucontact_t* ptr, int type, void* param)
+void dmq_ul_cb_contact(ucontact_t* ptr, int type, void* param)
 {
 	str aor;
 
@@ -496,7 +495,7 @@ void ul_cb_contact(ucontact_t* ptr, int type, void* param)
 		aor.s = ptr->aor->s;
 		aor.len = ptr->aor->len;
 
-		if (!(ptr->flags & usrloc_dmq_flag)) {
+		if (!(ptr->flags & FL_RPL)) {
 
 			switch(type){
 				case UL_CONTACT_INSERT:

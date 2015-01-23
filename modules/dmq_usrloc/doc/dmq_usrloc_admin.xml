@@ -16,7 +16,8 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The module add usrloc contacts replication between multiple servers via DMQ module.
+		The module adds user location (usrloc) records replication
+		between multiple servers via DMQ module.
 	</para>
 	</section>
 	<section>
@@ -28,8 +29,12 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>DMQ module must be loaded first.</emphasis>.
-				<emphasis>USRLOC module must be loaded first.</emphasis>.
+				<emphasis>DMQ module.</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>USRLOC module.</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -41,34 +46,34 @@
 	<section id="usrloc_dmq.p.enable">
 		<title><varname>enable</varname> (int)</title>
 		<para>
-		USRLOC replication
-			0 - disabled
-			1 - enabled
+			The parameter controls whetner the replication is active or not.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				0 - replication is disabled
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - replication is enabled
+			</para>
+			</listitem>
+			</itemizedlist>
 		</para>
 		<para>
 		<emphasis>
 			Default value is 0.
 		</emphasis>
 		</para>
-	</section>
-	<section id="usrloc_dmq.p.flag">
-		<title><varname>flag</varname> (int)</title>
-		<para>
-			Flag to be used for marking if a contact should be constructed for the DMQ
-		</para>
-		<para>
-		<emphasis>
-			Default value is 2.
-		</emphasis>
-		</para>
 		<example>
-		<title>Set <varname>flag</varname> parameter</title>
+		<title>Set <varname>enable</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dmq_usrloc", "flag", 2)
+modparam("dmq_usrloc", "enable", 1)
 ...
 </programlisting>
-		</example>
+	</example>
 	</section>
 	</section>
 
