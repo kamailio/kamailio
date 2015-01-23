@@ -54,7 +54,7 @@
 
 /*! transformation buffer size */
 #define KZ_TR_BUFFER_SIZE 65536
-#define KZ_TR_BUFFER_SLOTS	8
+#define KZ_TR_BUFFER_SLOTS	4
 
 /*! transformation buffer */
 static char **_kz_tr_buffer_list = NULL;
@@ -62,6 +62,14 @@ static char **_kz_tr_buffer_list = NULL;
 static char *_kz_tr_buffer = NULL;
 
 static int _kz_tr_buffer_idx = 0;
+
+#define KZ_TR_ALLOC_PARSE_SIZE	2048
+
+static pv_spec_t**  _kz_parse_specs  = NULL;
+static tr_param_t** _kz_parse_params = NULL;
+static int _kz_tr_parse_spec = 0;
+static int _kz_tr_parse_params = 0;
+
 
 /*!
  *
@@ -71,6 +79,7 @@ int kz_tr_init_buffers(void)
 	int i;
 
 	_kz_tr_buffer_list = (char**)malloc(KZ_TR_BUFFER_SLOTS * sizeof(char*));
+
 	if(_kz_tr_buffer_list==NULL)
 		return -1;
 	for(i=0; i<KZ_TR_BUFFER_SLOTS; i++) {
@@ -78,12 +87,56 @@ int kz_tr_init_buffers(void)
 		if(_kz_tr_buffer_list[i]==NULL)
 			return -1;
 	}
+
+	_kz_parse_specs = (pv_spec_t**)malloc(KZ_TR_ALLOC_PARSE_SIZE * sizeof(pv_spec_t*));
+	for(i=0; i < KZ_TR_ALLOC_PARSE_SIZE; i++)
+		_kz_parse_specs[i] = NULL;
+
+	_kz_parse_params = (tr_param_t**)malloc(KZ_TR_ALLOC_PARSE_SIZE * sizeof(tr_param_t*));
+	for(i=0; i < KZ_TR_ALLOC_PARSE_SIZE; i++)
+		_kz_parse_params[i] = NULL;
+
 	return 0;
 }
 
-/*!
- *
- */
+void kz_tr_clear_buffers(void)
+{
+	int i;
+	if(_kz_tr_buffer_list != NULL) {
+		for(i=0; i<KZ_TR_BUFFER_SLOTS; i++) {
+			if(_kz_tr_buffer_list[i] != NULL) {
+				free(_kz_tr_buffer_list[i]);
+				_kz_tr_buffer_list[i] = NULL;
+			}
+		}
+		free(_kz_tr_buffer_list);
+		_kz_tr_buffer_list = NULL;
+	}
+
+	if(_kz_parse_specs != NULL) {
+		for(i=0; i<KZ_TR_ALLOC_PARSE_SIZE; i++) {
+			if(_kz_parse_specs[i] != NULL) {
+				free(_kz_parse_specs[i]);
+				_kz_parse_specs[i] = NULL;
+			}
+		}
+		free(_kz_parse_specs);
+		_kz_parse_specs = NULL;
+	}
+
+	if(_kz_parse_params != NULL) {
+		for(i=0; i<KZ_TR_ALLOC_PARSE_SIZE; i++) {
+			if(_kz_parse_params[i] != NULL) {
+				free(_kz_parse_params[i]);
+				_kz_parse_params[i] = NULL;
+			}
+		}
+		free(_kz_parse_params);
+		_kz_parse_params = NULL;
+	}
+
+}
+
 char *kz_tr_set_crt_buffer(void)
 {
 	_kz_tr_buffer = _kz_tr_buffer_list[_kz_tr_buffer_idx];
@@ -100,6 +153,30 @@ char *kz_tr_set_crt_buffer(void)
 		val->rs.s = _kz_tr_buffer; \
 	} while(0);
 
+void kz_destroy_pv_value(pv_value_t *val) {
+
+	if(val->flags & PV_VAL_PKG)
+		pkg_free(val->rs.s);
+	else if(val->flags & PV_VAL_SHM)
+		shm_free(val->rs.s);
+	pkg_free(val);
+}
+
+void kz_free_pv_value(pv_value_t *val ) {
+	if(val->flags & PV_VAL_PKG)
+		pkg_free(val->rs.s);
+	else if(val->flags & PV_VAL_SHM)
+		shm_free(val->rs.s);
+}
+
+pv_value_t* kz_alloc_pv_value() {
+	pv_value_t* v = (pv_value_t*) pkg_malloc(sizeof(pv_value_t));
+	if(v != NULL)
+		memset(v, 0, sizeof(pv_value_t*));
+	return v;
+}
+
+
 /*!
  * \brief Evaluate kazoo transformations
  * \param msg SIP message
@@ -111,11 +188,13 @@ char *kz_tr_set_crt_buffer(void)
 int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val)
 {
 
+	str sv;
+	pv_value_t* pv;
+	pv_value_t v;
+
 	if(val==NULL || (val->flags&PV_VAL_NULL))
 		return -1;
 
-	char* tofree = NULL;
-	int oldflags = 0;
 
 	kz_tr_set_crt_buffer();
 
@@ -125,72 +204,80 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 			if(!(val->flags&PV_VAL_STR))
 				return -1;
 
-			oldflags = val->flags;
-			tofree = val->rs.s;
-
-			if( kz_amqp_encode_ex(&val->rs, val ) != 1) {
-				LM_ERR("error encoding value\n");
+			pv = kz_alloc_pv_value();
+			if(pv == NULL)
+			{
+				LM_ERR("kazoo encode transform : no more private memory\n");
 				return -1;
 			}
 
-            /*
-			// it seems that val memory is not freed
-			// even with flag set to PV_VAL_PKG
+			if( kz_amqp_encode_ex(&val->rs, pv ) != 1) {
+				LM_ERR("error encoding value\n");
+				kz_destroy_pv_value(pv);
+				return -1;
+			}
 
-			strncpy(_kz_tr_buffer, val->rs.s, val->rs.len);
-			if(val->flags & PV_VAL_PKG)
-				pkg_free(val->rs.s);
-			else if(val->flags & PV_VAL_SHM)
-				shm_free(val->rs.s);
-			_kz_tr_buffer[val->rs.len] = '\0';
+			strncpy(_kz_tr_buffer, pv->rs.s, pv->rs.len);
+			_kz_tr_buffer[pv->rs.len] = '\0';
+
 			val->flags = PV_VAL_STR;
 			val->ri = 0;
 			val->rs.s = _kz_tr_buffer;
-            */
+			val->rs.len = pv->rs.len;
 
-			if(oldflags & PV_VAL_PKG) {
-				pkg_free(tofree);
-			} else if(oldflags & PV_VAL_SHM) {
-				shm_free(tofree);
-			}
-
+			kz_destroy_pv_value(pv);
+			kz_free_pv_value(val);
 
 			break;
 		case TR_KAZOO_JSON:
+			if(!(val->flags&PV_VAL_STR))
+				return -1;
+
 			if(tp==NULL)
 			{
 				LM_ERR("kazoo json transform invalid parameter\n");
 				return -1;
 			}
 
-			oldflags = val->flags;
-			tofree = val->rs.s;
+			pv = kz_alloc_pv_value();
+			if(pv == NULL)
+			{
+				LM_ERR("kazoo encode transform : no more private memory\n");
+				return -1;
+			}
 
-			if(kz_json_get_field_ex(&val->rs, &tp->v.s, val ) != 1) {
+
+			if(tp->type == TR_PARAM_STRING)
+			{
+				sv = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("value cannot get spec value in json transform\n");
+					kz_destroy_pv_value(pv);
+					return -1;
+				}
+				sv = v.rs;
+			}
+
+
+			if(kz_json_get_field_ex(&val->rs, &sv, pv ) != 1) {
 				LM_ERR("error getting json\n");
+				kz_destroy_pv_value(pv);
 				return -1;
 			}
             
-            /*
-			// it seems that val memory is not freed
-			// even with flag set to PV_VAL_PKG
+			strncpy(_kz_tr_buffer, pv->rs.s, pv->rs.len);
+			_kz_tr_buffer[pv->rs.len] = '\0';
 
-			strncpy(_kz_tr_buffer, val->rs.s, val->rs.len);
-			if(val->flags & PV_VAL_PKG)
-				pkg_free(val->rs.s);
-			else if(val->flags & PV_VAL_SHM)
-				shm_free(val->rs.s);
-			_kz_tr_buffer[val->rs.len] = '\0';
 			val->flags = PV_VAL_STR;
 			val->ri = 0;
 			val->rs.s = _kz_tr_buffer;
-            */
+			val->rs.len = pv->rs.len;
 
-			if(oldflags & PV_VAL_PKG) {
-				pkg_free(tofree);
-			} else if(oldflags & PV_VAL_SHM) {
-				shm_free(tofree);
-			}
+			kz_destroy_pv_value(pv);
+			kz_free_pv_value(val);
 
 			break;
 
@@ -205,7 +292,7 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 	while(is_in_str(_p, _in) && (*_p==' ' || *_p=='\t' || *_p=='\n')) _p++; \
 	if(*_p==PV_MARKER) \
 	{ /* pseudo-variable */ \
-		_spec = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t)); \
+		_spec = (pv_spec_t*)malloc(sizeof(pv_spec_t)); \
 		if(_spec==NULL) \
 		{ \
 			LM_ERR("no more private memory!\n"); \
@@ -220,7 +307,7 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 			goto error; \
 		} \
 		_p = _p0; \
-		_tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t)); \
+		_tp = (tr_param_t*)malloc(sizeof(tr_param_t)); \
 		if(_tp==NULL) \
 		{ \
 			LM_ERR("no more private memory!\n"); \
@@ -229,6 +316,8 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 		memset(_tp, 0, sizeof(tr_param_t)); \
 		_tp->type = TR_PARAM_SPEC; \
 		_tp->v.data = (void*)_spec; \
+		_kz_parse_specs[_kz_tr_parse_spec++] = _spec; \
+		_kz_parse_params[_kz_tr_parse_params++] = _tp; \
 	} else { /* string */ \
 		_ps = _p; \
 		while(is_in_str(_p, _in) && *_p!='\t' && *_p!='\n' \
@@ -240,7 +329,7 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 				_in->len, _in->s); \
 			goto error; \
 		} \
-		_tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t)); \
+		_tp = (tr_param_t*)malloc(sizeof(tr_param_t)); \
 		if(_tp==NULL) \
 		{ \
 			LM_ERR("no more private memory!\n"); \
@@ -250,6 +339,7 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 		_tp->type = TR_PARAM_STRING; \
 		_tp->v.s.s = _ps; \
 		_tp->v.s.len = _p - _ps; \
+		_kz_parse_params[_kz_tr_parse_params++] = _tp; \
 	}
 
 
@@ -317,9 +407,9 @@ char* kz_tr_parse(str* in, trans_t *t)
 			name.len, name.s, name.len);
 error:
 	if(tp)
-		tr_param_free(tp);
+		free(tp);
 	if(spec)
-		pv_spec_free(spec);
+		free(spec);
 	return NULL;
 done:
 	t->name = name;
