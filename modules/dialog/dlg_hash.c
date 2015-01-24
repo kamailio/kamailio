@@ -689,7 +689,7 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
 			ref_dlg_unsafe(dlg, 1);
 			dlg_unlock( d_table, d_entry);
-			LM_DBG("dialog callid='%.*s' found\n on entry %u, dir=%d\n",
+			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d\n",
 				callid->len, callid->s,h_entry,*dir);
 			return dlg;
 		}
