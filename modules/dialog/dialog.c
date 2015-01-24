@@ -615,17 +615,17 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (register_script_cb( spiral_detect_reset, POST_SCRIPT_CB|REQUEST_CB,0)<0) {
+	if (register_script_cb(spiral_detect_reset,POST_SCRIPT_CB|REQUEST_CB,0)<0) {
 		LM_ERR("cannot register req pre-script spiral detection reset callback\n");
 		return -1;
 	}
 
-	if (register_script_cb( cb_dlg_locals_reset, POST_SCRIPT_CB|ONREPLY_CB_TYPE,0)<0) {
+	if (register_script_cb(cb_dlg_locals_reset,POST_SCRIPT_CB|ONREPLY_CB,0)<0) {
 		LM_ERR("cannot register reply post-script dlg locals reset callback\n");
 		return -1;
 	}
 
-	if (register_script_cb( cb_dlg_locals_reset, POST_SCRIPT_CB|FAILURE_CB_TYPE,0)<0) {
+	if (register_script_cb(cb_dlg_locals_reset,POST_SCRIPT_CB|FAILURE_CB,0)<0) {
 		LM_ERR("cannot register failure post-script dlg locals reset callback\n");
 		return -1;
 	}

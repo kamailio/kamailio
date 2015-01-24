@@ -83,7 +83,7 @@ int cb_dlg_cfg_reset(sip_msg_t *msg, unsigned int flags, void *cbp)
 
 int cb_dlg_locals_reset(sip_msg_t *msg, unsigned int flags, void *cbp)
 {
-	LM_DBG("resetting the local dialog shortcuts\n");
+	LM_DBG("resetting the local dialog shortcuts on script callback: %u\n", flags);
 	cb_dlg_cfg_reset(msg, flags, cbp);
 	cb_profile_reset(msg, flags, cbp);
 
