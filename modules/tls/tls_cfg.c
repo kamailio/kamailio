@@ -50,7 +50,7 @@ struct cfg_group_tls default_tls_cfg = {
 	STR_NULL, /* certificate (default value set in fix_tls_cfg) */
 	STR_NULL, /* cipher_list (default value set in fix_tls_cfg) */
 	0, /* session_cache */
-	STR_STATIC_INIT("sip-router-tls-3.1"), /* session_id */
+	STR_STATIC_INIT("kamailio-tls-4.x.y"), /* session_id */
 	STR_NULL, /* config_file */
 	3, /* log  (L_DBG)*/
 	3, /* debug (L_DBG) */
