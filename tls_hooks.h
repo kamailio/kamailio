@@ -64,15 +64,18 @@ struct tls_hooks{
 	void (*tcpconn_clean)(struct tcp_connection* c);
 	void (*tcpconn_close)(struct tcp_connection*c , int fd);
 	
-	/* per listening socket init, called on ser startup (after modules,
+	/* per listening socket init, called on kamailio startup (after modules,
 	 *  process table, init() and udp socket initialization)*/
 	int (*init_si)(struct socket_info* si);
-	/* generic init function (called at ser init, after module initialization
+	/* generic init function (called at kamailio init, after module initialization
 	 *  and process table creation)*/
 	int (*init)(void);
 	/* destroy function, called after the modules are destroyed, and 
 	 * after  destroy_tcp() */
 	void (*destroy)(void);
+	/* generic pre-init function (called at kamailio start, before module
+	 * initialization (after modparams) */
+	int (*pre_init)(void);
 };
 
 
