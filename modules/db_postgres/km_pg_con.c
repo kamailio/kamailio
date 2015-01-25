@@ -29,6 +29,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../tls_hooks_init.h" 
 #include <string.h>
 #include <time.h>
 
@@ -73,6 +74,9 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 		LM_DBG("opening connection: postgres://xxxx:xxxx@%s/%s\n", ZSW(id->host),
 			ZSW(id->database));
 	}
+
+	/* don't attempt to re-init openssl if done already */
+	if(tls_loaded()) PQinitSSL(0);
 
  	ptr->con = PQsetdbLogin(id->host, ports, NULL, NULL, id->database, id->username, id->password);
 	LM_DBG("PQsetdbLogin(%p)\n", ptr->con);
