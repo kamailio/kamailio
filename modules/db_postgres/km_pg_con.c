@@ -30,6 +30,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../tls_hooks_init.h" 
 #include <string.h>
 #include <time.h>
 #include <netinet/in.h>
@@ -97,6 +98,9 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 	}
 
 	keywords[i] = values[i] = NULL;
+
+	/* don't attempt to re-init openssl if done already */
+	if(tls_loaded()) PQinitSSL(0);
 
 	ptr->con = PQconnectdbParams(keywords, values, 1);
 	LM_DBG("PQconnectdbParams(%p)\n", ptr->con);
