@@ -231,7 +231,8 @@ static struct tls_hooks tls_h = {
 	tls_h_close,
 	tls_h_init_si,
 	init_tls_h,
-	destroy_tls_h
+	destroy_tls_h,
+	tls_mod_pre_init_h,
 };
 
 
@@ -253,12 +254,21 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
+	if (tls_disable) {
+		LOG(L_WARN, "tls support is disabled "
+				"(set enable_tls=1 in the config to enable it)\n");
+		return 0;
+	}
+
 	/* shm is used, be sure it is initialized */
 	if(!shm_initialized() && init_shm()<0)
 		return -1;
 
 	if(tls_pre_init()<0)
 		return -1;
+
+	register_tls_hooks(&tls_h);
+
 	return 0;
 }
 
@@ -267,7 +277,7 @@ static int mod_init(void)
 	int method;
 
 	if (tls_disable){
-		LOG(L_WARN, "WARNING: tls: mod_init: tls support is disabled "
+		LOG(L_WARN, "tls support is disabled "
 				"(set enable_tls=1 in the config to enable it)\n");
 		return 0;
 	}
@@ -306,7 +316,6 @@ static int mod_init(void)
 	}
 	*tls_domains_cfg = NULL;
 
-	register_tls_hooks(&tls_h);
 	register_select_table(tls_sel);
 	/* register the rpc interface */
 	if (rpc_register_array(tls_rpc)!=0) {
