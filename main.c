@@ -2498,6 +2498,24 @@ try_again:
 	if (real_time&4)
 			set_rt_prio(rt_prio, rt_policy);
 
+#ifdef USE_TCP
+#ifdef USE_TLS
+	if (!tls_disable){
+		if (!tls_loaded()){
+			LM_WARN("tls support enabled, but no tls engine "
+						" available (forgot to load the tls module?)\n");
+			LM_WARN("disabling tls...\n");
+			tls_disable=1;
+		} else {
+			LM_DBG("=============================\n");
+			if (pre_init_tls()<0){
+				LM_CRIT("could not pre-initialize tls, exiting...\n");
+				goto error;
+			}
+		}
+	}
+#endif /* USE_TLS */
+#endif /* USE_TCP */
 	
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
