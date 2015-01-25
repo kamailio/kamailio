@@ -61,6 +61,7 @@
 #include "tls_cfg.h"
 
 /* will be set to 1 when the TLS env is initialized to make destroy safe */
+static int tls_mod_preinitialized = 0;
 static int tls_mod_initialized = 0;
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
@@ -456,6 +457,7 @@ end:
 
 /**
  * tls pre-init function
+ * - executed when module is loaded
  */
 int tls_pre_init(void)
 {
@@ -480,6 +482,23 @@ int tls_pre_init(void)
 	return 0;
 }
 
+/**
+ * tls mod pre-init function
+ * - executed before any mod_init()
+ */
+int tls_mod_pre_init_h(void)
+{
+	if(tls_mod_preinitialized==1) {
+		LM_DBG("already mod pre-initialized\n");
+		return 0;
+	}
+	DBG("============= :preparing tls env for modules initialization\n");
+	SSL_library_init();
+	SSL_load_error_strings();
+	tls_mod_preinitialized=1;
+	return 0;
+}
+
 /*
  * First step of TLS initialization
  */
@@ -497,6 +516,12 @@ int init_tls_h(void)
 	str tls_grp;
 	str s;
 	cfg_ctx_t* cfg_ctx;
+
+	if(tls_mod_initialized == 1) {
+		LM_DBG("already initialized\n");
+		return 0;
+	}
+	DBG("initializing tls system\n");
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 	WARN("You are using an old version of OpenSSL (< 0.9.7). Upgrade!\n");
@@ -644,8 +669,6 @@ int init_tls_h(void)
 		}
 	}
 	
-	SSL_library_init();
-	SSL_load_error_strings();
 	init_ssl_methods();
 	tls_mod_initialized = 1;
 	return 0;
@@ -680,7 +703,7 @@ int tls_check_sockets(tls_domains_cfg_t* cfg)
 void destroy_tls_h(void)
 {
 	DBG("tls module final tls destroy\n");
-	if(tls_mod_initialized > 0)
+	if(tls_mod_preinitialized > 0)
 		ERR_free_strings();
 	/* TODO: free all the ctx'es */
 	tls_destroy_cfg();
