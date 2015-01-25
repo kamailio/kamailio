@@ -1,17 +1,15 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 SOMA Networks, Inc.
  * Written By Ron Winacott (karwin)
  *
- * This file is part of SIP-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify it
+ * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP-router is distributed in the hope that it will be useful, but
+ * Kamailio is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -21,10 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
  *
- * History:
- * --------
- * 2006-05-11 initial version (karwin)
- * 2006-10-10 Code cleanup of this header file. (karwin)
  */
 
 /*! \file sst/sst_handlers.h
