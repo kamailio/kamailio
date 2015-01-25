@@ -347,7 +347,7 @@ error0:
  * \brief Destroy a dialog, run callbacks and free memory
  * \param dlg destroyed dialog
  */
-inline void destroy_dlg(struct dlg_cell *dlg)
+void destroy_dlg(struct dlg_cell *dlg)
 {
 	int ret = 0;
 	struct dlg_var *var;

@@ -213,7 +213,7 @@ static inline void unlink_unsafe_dlg(dlg_entry_t *d_entry, dlg_cell_t *dlg)
  * \brief Destroy a dialog, run callbacks and free memory
  * \param dlg destroyed dialog
  */
-inline void destroy_dlg(dlg_cell_t *dlg);
+void destroy_dlg(dlg_cell_t *dlg);
 
 
 /*!
