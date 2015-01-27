@@ -68,26 +68,21 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
     flag_t old_bflags;
     int i = 0;
 
-	req = _m;	
-	if (!req){
+	if (!_m){
 		LM_ERR("NULL message!!!\n");
 		return -1;
 	}
- 	if (req->first_line.type!=SIP_REQUEST){
- 		req = get_request_from_reply(req);
- 	}
+
+	if (_m->new_uri.s) aor = _m->new_uri;
+	else aor = _m->first_line.u.request.uri;
 	
-	if (_m->new_uri.s) uri = _m->new_uri;
-	else uri = _m->first_line.u.request.uri;
-		
-	for(i=0;i<uri.len;i++)
-		if (uri.s[i]==';' || uri.s[i]=='?') {
-			uri.len = i;
+	for(i=0;i<aor.len;i++)
+		if (aor.s[i]==';' || aor.s[i]=='?') {
+			aor.len = i;
 			break;
 		}
-	
-	LM_DBG("Looking for <%.*s>\n",uri.len,uri.s);
 
+	LM_DBG("Looking for <%.*s>\n",aor.len,aor.s);
 
     get_act_time();
 
