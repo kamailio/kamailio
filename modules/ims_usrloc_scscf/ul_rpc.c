@@ -135,6 +135,8 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
 	return;
     }
 
+    i = 0;
+
     if (impu_rec->num_contacts > 0 && impu_rec->newcontacts[0]) {
 	while (i < MAX_CONTACTS_PER_IMPU && (contact = impu_rec->newcontacts[i++])) {
 	    //contact is not null terminated so we need to create a null terminated version
