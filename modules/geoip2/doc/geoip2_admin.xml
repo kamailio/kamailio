@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		This module allows real-time queries against the Max Mind GeoIP2 
+		database to be performed from the config script.  
+	</para>
+	<para>
+		The Max Mind GeoIP2 database is a map of IP network address assignments 
+		to geographical locales that can be useful -- though approximate --
+		in identifying the physical location with which an IP host address
+		is associated on a relatively granular level.
+	</para>
+	<para>
+		This database itself can be obtained on a free or commercial basis 
+		from <ulink url="http://dev.maxmind.com/geoip/">
+		http://dev.maxmind.com/geoip/</ulink>. The 
+		library libmaxminddb
+		that interfaces with the Max Mind API, as well as scripts to
+		automate downloading of the on-disk version are available at
+		<ulink url="http://dev.maxmind.com/geoip/geoip2/downloadable/">
+		http://dev.maxmind.com/geoip/geoip2/downloadable/</ulink>.
+	</para>
+	<para>
+		This module exports a new class of pseudo-variables -
+		$gip(pvc=&gt;key) - to enable access to the results of a query to the
+		database.
+	</para>
+	<para>
+		Many queries can be done and store results in different containers to
+		be able to use in parallel. Database is loaded at startup in cache.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>libmaxminddb</emphasis> - the GeoIP2 library.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section>
+	    <title><varname>path</varname> (string)</title>
+	    <para>
+		Path to the GeoIP2 database file.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>null</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>path</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("geoip2", "path", "/usr/local/share/GeoIP/GeoLite2-City.mmdb")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+	
+    <section>
+	<title>Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">geoip_match(ipaddr, pvc)</function>
+	    </title>
+	    <para>
+			Match ipaddr against the GeoIP database and set the pvc container. The
+			function has to be called before accessing a key via: $gip(pvc=&gt;key).
+	    </para>
+		<example>
+		<title><function>geoip_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(geoip_match("$si", "src"))
+    xlog("SIP message from: $gip(src=&gt;cc)\n");
+...
+</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+	
+	<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$gip(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an 
+				identifier for this query result;  it is designated by the second 
+				parameter of geoip_match(). The <emphasis>key</emphasis> can be one of
+				the following:
+				</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>cc</emphasis> - country code
+				</para></listitem>
+				<listitem><para>
+					<emphasis>tz</emphasis> - time zone
+				</para></listitem>
+				<listitem><para>
+					<emphasis>zip</emphasis> - postal code
+				</para></listitem>
+				<listitem><para>
+					<emphasis>lat</emphasis> - latitude
+				</para></listitem>
+				<listitem><para>
+					<emphasis>lon</emphasis> - longitude
+				</para></listitem>
+				<listitem><para>
+					<emphasis>nmask</emphasis> - network mask (CIDR format)
+				</para></listitem>
+				<listitem><para>
+					<emphasis>city</emphasis> - city
+				</para></listitem>
+				<listitem><para>
+					<emphasis>regc</emphasis> - region
+				</para></listitem>
+				<listitem><para>
+					<emphasis>regn</emphasis> - region name
+				</para></listitem>
+				<listitem><para>
+					<emphasis>metro</emphasis> - metro code
+				</para></listitem>
+			</itemizedlist>
+			</listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
+</chapter>
+

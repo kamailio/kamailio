@@ -1,0 +1,146 @@
+geoip2 Module
+
+Sergey Okhapkin
+
+   callwithus.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. path (string)
+
+        4. Functions
+
+              4.1. geoip_match(ipaddr, pvc)
+
+        5. Exported pseudo-variables
+
+   List of Examples
+
+   1.1. Set path parameter
+   1.2. geoip_match usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. path (string)
+
+   4. Functions
+
+        4.1. geoip_match(ipaddr, pvc)
+
+   5. Exported pseudo-variables
+
+1. Overview
+
+   This module allows real-time queries against the Max Mind GeoIP2
+   database to be performed from the config script.
+
+   The Max Mind GeoIP2 database is a map of IP network address assignments
+   to geographical locales that can be useful -- though approximate -- in
+   identifying the physical location with which an IP host address is
+   associated on a relatively granular level.
+
+   This database itself can be obtained on a free or commercial basis from
+   http://dev.maxmind.com/geoip/. The library libmaxminddb that interfaces
+   with the Max Mind API, as well as scripts to automate downloading of
+   the on-disk version are available at
+   http://dev.maxmind.com/geoip/geoip2/downloadable/.
+
+   This module exports a new class of pseudo-variables - $gip(pvc=>key) -
+   to enable access to the results of a query to the database.
+
+   Many queries can be done and store results in different containers to
+   be able to use in parallel. Database is loaded at startup in cache.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libmaxminddb - the GeoIP2 library.
+
+3. Parameters
+
+   3.1. path (string)
+
+3.1. path (string)
+
+   Path to the GeoIP2 database file.
+
+   Default value is “null”.
+
+   Example 1.1. Set path parameter
+...
+modparam("geoip2", "path", "/usr/local/share/GeoIP/GeoLite2-City.mmdb")
+...
+
+4. Functions
+
+   4.1. geoip_match(ipaddr, pvc)
+
+4.1.  geoip_match(ipaddr, pvc)
+
+   Match ipaddr against the GeoIP database and set the pvc container. The
+   function has to be called before accessing a key via: $gip(pvc=>key).
+
+   Example 1.2. geoip_match usage
+...
+if(geoip_match("$si", "src"))
+    xlog("SIP message from: $gip(src=>cc)\n");
+...
+
+5. Exported pseudo-variables
+
+     * $gip(pvc=>key) - pvc is an identifier for this query result; it is
+       designated by the second parameter of geoip_match(). The key can be
+       one of the following:
+          + cc - country code
+          + tz - time zone
+          + zip - postal code
+          + lat - latitude
+          + lon - longitude
+          + nmask - network mask (CIDR format)
+          + city - city
+          + regc - region
+          + regn - region name
+          + metro - metro code
+
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/wiki/.
