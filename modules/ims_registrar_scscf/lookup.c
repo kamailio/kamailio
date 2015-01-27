@@ -68,14 +68,26 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
     flag_t old_bflags;
     int i = 0;
 
+	req = _m;	
+	if (!req){
+		LM_ERR("NULL message!!!\n");
+		return -1;
+	}
+ 	if (req->first_line.type!=SIP_REQUEST){
+ 		req = get_request_from_reply(req);
+ 	}
+	
+	if (_m->new_uri.s) uri = _m->new_uri;
+	else uri = _m->first_line.u.request.uri;
+		
+	for(i=0;i<uri.len;i++)
+		if (uri.s[i]==';' || uri.s[i]=='?') {
+			uri.len = i;
+			break;
+		}
+	
+	LM_DBG("Looking for <%.*s>\n",uri.len,uri.s);
 
-    if (_m->new_uri.s) uri = _m->new_uri;
-    else uri = _m->first_line.u.request.uri;
-
-    if (extract_aor(&uri, &aor) < 0) {
-	LM_ERR("failed to extract address of record\n");
-	return -3;
-    }
 
     get_act_time();
 
