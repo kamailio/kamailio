@@ -40,7 +40,7 @@
 MODULE_VERSION
 
 /* MODULE OBJECT */
-sca_mod			*sca;
+sca_mod			*sca = NULL;
 
 
 /* EXTERNAL API */
@@ -365,10 +365,15 @@ error:
     void
 sca_mod_destroy( void )
 {
+	if(sca==0)
+		return;
+
     /* write back to the DB to retain most current subscription info */
     if ( sca_subscription_db_update() != 0 ) {
-	LM_ERR( "sca_mod_destroy: failed to save current subscriptions "
-		"in DB %.*s", STR_FMT( sca->cfg->db_url ));
+		if(sca && sca->cfg && sca->cfg->db_url) {
+			LM_ERR( "sca_mod_destroy: failed to save current subscriptions "
+				"in DB %.*s", STR_FMT( sca->cfg->db_url ));
+		}
     }
 
     sca_db_disconnect();
