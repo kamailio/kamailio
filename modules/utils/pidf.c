@@ -1,6 +1,4 @@
 /*
- * $Id: pidf.c 1953 2007-04-04 08:50:33Z anca_vamanu $
- *
  * presence module - presence server implementation
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -21,13 +19,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-04-14  initial version (anca)
  */
 
 /*! \file
- * \brief SIP-router ::  PIDF handling
+ * \brief Kamailio ::  PIDF handling
  * \ingroup utils
  */
 

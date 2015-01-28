@@ -23,7 +23,7 @@
 
 /*!
  * \file
- * \brief SIP-router utils :: Core
+ * \brief Kamailio utils :: Core
  * \ingroup utils
  * Module: \ref utils
  */

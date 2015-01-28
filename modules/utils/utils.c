@@ -21,18 +21,14 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- * 2008-11-24: Introduced utils module and its first function: http_query.
- *
  */
 
 /*! \file
- * \brief SIP-router utils :: Module core
+ * \brief Kamailio utils :: Module core
  * \ingroup utils
  */
 
-/*! \defgroup Utils SIP-router :: Various utilities
+/*! \defgroup Utils Kamailio :: Various utilities
  *
  */
 

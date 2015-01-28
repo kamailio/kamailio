@@ -21,15 +21,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-04-11  initial version (anca)
- *  2009-06-03  util version (jh)
  */
 
 /*!
  * \file
- * \brief SIP-router utils :: 
+ * \brief Kamailio utils :: 
  * \ingroup utils
  * Module: \ref utils
  */
