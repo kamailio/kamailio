@@ -929,10 +929,10 @@ error:
  */
 int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservation_units, str* incoming_trunk_id, str* outgoing_trunk_id,
 						cfg_action_t* action, unsigned int tindex, unsigned int tlabel) {
-	str session_id = { 0, 0 },
-		called_asserted_identity = {0 , 0 },
-		subscription_id = {0 , 0 },
-	asserted_identity = {0 , 0 };
+    str session_id = { 0, 0 },
+    called_asserted_identity = {0 , 0 },
+    subscription_id = {0 , 0 },
+    asserted_identity = {0 , 0 };
     int subscription_id_type = AVP_EPC_Subscription_Id_Type_End_User_SIP_URI;
     AAASession* cc_acc_session = NULL;
     Ro_CCR_t * ro_ccr_data = 0;
@@ -1065,10 +1065,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
         goto error;
 
     if (!cc_acc_session)
-    	goto error;
-
-	
-	
+    	goto error;	
 	
     if (!(ccr = Ro_new_ccr(cc_acc_session, ro_ccr_data)))
         goto error;

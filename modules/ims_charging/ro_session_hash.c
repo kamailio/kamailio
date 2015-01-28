@@ -7,8 +7,8 @@
 
 #include "ro_session_hash.h"
 
-#define MAX_LDG_LOCKS  2048
-#define MIN_LDG_LOCKS  2
+#define MAX_ROSESSION_LOCKS  2048
+#define MIN_ROSESSION_LOCKS  2
 
 /*! global ro_session table */
 struct ro_session_table *ro_session_table = 0;
@@ -82,7 +82,7 @@ int init_ro_session_table(unsigned int size) {
     unsigned int n;
     unsigned int i;
 
-    ro_session_table = (struct ro_session_table*) shm_malloc(sizeof (struct ro_session_table) +size * sizeof (struct ro_session_entry));
+    ro_session_table = (struct ro_session_table*) shm_malloc(sizeof (struct ro_session_table) + size * sizeof (struct ro_session_entry));
     if (ro_session_table == 0) {
         LM_ERR("no more shm mem (1)\n");
         goto error0;
@@ -92,8 +92,8 @@ int init_ro_session_table(unsigned int size) {
     ro_session_table->size = size;
     ro_session_table->entries = (struct ro_session_entry*) (ro_session_table + 1);
 
-    n = (size < MAX_LDG_LOCKS) ? size : MAX_LDG_LOCKS;
-    for (; n >= MIN_LDG_LOCKS; n--) {
+    n = (size < MAX_ROSESSION_LOCKS) ? size : MAX_ROSESSION_LOCKS;
+    for (; n >= MIN_ROSESSION_LOCKS; n--) {
         ro_session_table->locks = lock_set_alloc(n);
         if (ro_session_table->locks == 0)
             continue;
@@ -107,20 +107,21 @@ int init_ro_session_table(unsigned int size) {
     }
 
     if (ro_session_table->locks == 0) {
-        LM_ERR("unable to allocted at least %d locks for the hash table\n",
-                MIN_LDG_LOCKS);
+        LM_ERR("unable to allocate at least %d locks for the hash table\n",
+                MIN_ROSESSION_LOCKS);
         goto error1;
     }
 
     for (i = 0; i < size; i++) {
         memset(&(ro_session_table->entries[i]), 0, sizeof (struct ro_session_entry));
-        ro_session_table->entries[i].next_id = rand();
+        ro_session_table->entries[i].next_id = rand() % (3*size);
         ro_session_table->entries[i].lock_idx = i % ro_session_table->locks_no;
     }
 
     return 0;
 error1:
     shm_free(ro_session_table);
+    ro_session_table = NULL;
 error0:
     return -1;
 }

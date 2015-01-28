@@ -315,7 +315,7 @@ static int mod_init(void) {
 	return 0;
 
 error:
-	LM_ERR("Failed to initialise ims_qos module\n");
+	LM_ERR("Failed to initialise ims_charging module\n");
 	return RO_RETURN_FALSE;
 
 }
@@ -360,7 +360,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	int ret = RO_RETURN_TRUE;
 	int dir = 0;
 	str identity = {0, 0},
-		contact = {0, 0};
+	contact = {0, 0};
 	struct hdr_field *h=0;
 	
 	cfg_action_t* cfg_action;
