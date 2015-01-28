@@ -208,6 +208,10 @@ int ix_orig_trunk_query(struct sip_msg* msg) {
     create_orig_avps(ix_route_list->first);
     
     free_route_list(ix_route_list);
+    
+    if(free_called_asserted_identity) {
+	if(called_asserted_identity.s) shm_free(called_asserted_identity.s);// shm_malloc in cscf_get_public_identity_from_requri
+    }  
 
     return 1;
     
