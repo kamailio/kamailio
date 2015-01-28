@@ -1526,21 +1526,30 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 				{
 					LM_DBG("Could not get the notify_body\n");
 				}
-				else		/* apply authorization rules if exists */
-				if(subs->event->req_auth)
+				else
 				{
-					if(subs->auth_rules_doc && subs->event->apply_auth_nbody
-							&& subs->event->apply_auth_nbody(notify_body,
-								subs,&final_body)<0)
+					/* call aux_body_processing if exists */
+					if(subs->event->aux_body_processing)
 					{
-						LM_ERR("in function apply_auth\n");
-						goto error;
+						subs->event->aux_body_processing(subs, notify_body);
 					}
-					if(final_body)
+					
+					/* apply authorization rules if exists */
+					if(subs->event->req_auth)
 					{
-						xmlFree(notify_body->s);
-						pkg_free(notify_body);
-						notify_body= final_body;
+						if(subs->auth_rules_doc && subs->event->apply_auth_nbody
+								&& subs->event->apply_auth_nbody(notify_body,
+									subs,&final_body)<0)
+						{
+							LM_ERR("in function apply_auth\n");
+							goto error;
+						}
+						if(final_body)
+						{
+							xmlFree(notify_body->s);
+							pkg_free(notify_body);
+							notify_body= final_body;
+						}
 					}
 				}
 			}
