@@ -683,44 +683,59 @@ AAA_AVP *rx_create_media_subcomponent_avp_register() {
  */
 
 AAA_AVP* rx_create_codec_data_avp(str *raw_sdp_stream, int number, int direction) {
-    char data[PCC_MAX_Char4];
-    char *p;
-    int l, len;
+    str data;
+    int l = 0;
+    AAA_AVP* result;
+    data.len = 0;
 
     switch (direction) {
-
-        case 0: sprintf(data, "uplink\noffer\n");
+        case 0: data.len = 13;
             break;
-        case 1: sprintf(data, "uplink\nanswer\n");
+        case 1: data.len = 14;
             break;
-        case 2: sprintf(data, "downlink\noffer\n");
+        case 2: data.len = 15;
             break;
-        case 3: sprintf(data, "downlink\nanswer\n");
+        case 3: data.len = 16;
+            break;
+        default:
+            break;
+    }
+    data.len += raw_sdp_stream->len + 1; // 0 Terminated.
+    LM_DBG("data.len is calculated %i, sdp-stream has a len of %i\n", data.len, raw_sdp_stream->len);
+    data.s = (char*)pkg_malloc(data.len);
+    memset(data.s, 0, data.len);
+    
+    switch (direction) {
+        case 0: memcpy(data.s, "uplink\noffer\n", 13);
+		l = 13;
+            break;
+        case 1: memcpy(data.s, "uplink\nanswer\n", 14);
+		l = 14;
+            break;
+        case 2: memcpy(data.s, "downlink\noffer\n", 15);
+		l = 15;
+            break;
+        case 3: memcpy(data.s, "downlink\nanswer\n", 16);
+		l = 16;
             break;
         default:
             break;
 
     }
+    // LM_DBG("data.s = \"%.*s\"\n", l, data.s);
+    memcpy(data.s + l, raw_sdp_stream->s, raw_sdp_stream->len);
+    LM_DBG("data.s = \"%.*s\"\n", data.len, data.s);
 
-    l = strlen(data);
-
-    if ((l + raw_sdp_stream->len) >= PCC_MAX_Char4) {
-        len = PCC_MAX_Char4 - l - 1;
-    } else {
-        len = raw_sdp_stream->len;
-    }
-
-    memcpy(data + l, raw_sdp_stream->s, len);
-    p = data + l + len;
-    *p = '\0';
-
-    return (cdpb.AAACreateAVP(AVP_IMS_Codec_Data,
+    result = cdpb.AAACreateAVP(AVP_IMS_Codec_Data,
             AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-            IMS_vendor_id_3GPP, data, strlen(data),
-            AVP_DUPLICATE_DATA));
+            IMS_vendor_id_3GPP, data.s, data.len,
+            AVP_DUPLICATE_DATA);
+ 
+    // Free the buffer:
+    pkg_free(data.s);
 
+    return result;
 }
-
 
 /**
  * Creates and adds a Vendor Specific Application ID Group AVP.
