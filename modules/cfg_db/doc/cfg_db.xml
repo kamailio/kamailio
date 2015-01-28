@@ -37,7 +37,7 @@
 		API then driver is notified and has chance to set value (of any
 		parameter) based on value taken from database. It's primarily
 		targeted for interfacing with 3rd party software which is aware
-		of the Kamailio configuration.
+		of the &kamailio; configuration.
 		</para>
 		<para>
 		A parameter is uniquely identified by a <emphasis>group_name</emphasis> plus a
@@ -56,8 +56,8 @@
 		in the second step using the same procedure as C-code parameters.
 		</para>
 		<para>
-		The module does not reflect changes made in parameters when &ser; is running.
-		It just declares variables and assigns values when &ser; is starting. That's all.
+		The module does not reflect changes made in parameters when &kamailio; is running.
+		It just declares variables and assigns values when &kamailio; is starting. That's all.
 		</para>
 	</section>
 
