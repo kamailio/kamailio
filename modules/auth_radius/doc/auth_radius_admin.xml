@@ -188,6 +188,23 @@ modparam("auth_radius", "use_ruri_flag", 22)
                 </programlisting>
                 </example>
         </section>
+	<section id="auth_radius.p.radius_avps_mode">
+		<title><varname>radius_avps_mode</varname> (integer)</title>
+		<para>
+			If set to 1, all RADIUS AVPs returned by RADIUS server are stored
+			in &kamailio; AVPs list. If set to 0, only the SIP_AVP type of RADIUS
+			AVPs are stored in &kamailio; AVPs list.
+		</para>
+		<para>
+			Default value is 0.
+		</para>
+		<example>
+		<title><varname>radius_avps_mode</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "radius_avps_mode", 1)
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
