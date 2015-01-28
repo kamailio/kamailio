@@ -14,7 +14,7 @@
 
 #define RO_TABLE_VERSION            1
 #define RO_SESSION_TABLE_NAME       "ro_session"
-#define RO_SESSION_TABLE_COL_NUM    17
+#define RO_SESSION_TABLE_COL_NUM    18
 
 #define ID_COL                      "id"
 #define HASH_ENTRY_COL              "hash_entry"
@@ -32,7 +32,8 @@
 #define STATE_COL                   "state"
 #define RATING_GROUP_COL            "rating_group"
 #define SERVICE_IDENTIFIER_COL      "service_identifier"
-#define TRUNK_ID_COL		    "trunk_id"
+#define INCOMING_TRUNK_ID_COL	    "incoming_trunk_id"
+#define OUTGOING_TRUNK_ID_COL		    "outgoing_trunk_id"
 
 int init_ro_db(const str *db_url, int dlg_hash_size , int db_update_period, int fetch_num_rows);
 int load_ro_info_from_db(int hash_size, int fetch_num_rows);

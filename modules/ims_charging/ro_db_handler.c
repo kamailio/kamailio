@@ -19,7 +19,8 @@ str last_event_ts_column = str_init(LAST_EVENT_TS_COL);
 str reserved_sec_column = str_init(RESERVED_SECS_COL);
 str valid_for_column = str_init(VALID_FOR_COL);
 str state_column = str_init(STATE_COL);
-str trunk_id_column = str_init(TRUNK_ID_COL);
+str incoming_trunk_id_column = str_init(INCOMING_TRUNK_ID_COL);
+str outgoing_trunk_id_column = str_init(OUTGOING_TRUNK_ID_COL);
 str rating_group_column = str_init(RATING_GROUP_COL);
 str service_identifier_column = str_init(SERVICE_IDENTIFIER_COL);
 
@@ -38,7 +39,8 @@ typedef enum ro_session_field_idx {
     RESERVED_SECS_COL_IDX,
     VALID_FOR_COL_IDX,
     STATE_COL_IDX,
-    TRUNK_ID_COL_IDX,
+    INCOMING_TRUNK_ID_COL_IDX,
+    OUTGOING_TRUNK_ID_COL_IDX,
     RATING_GROUP_COL_IDX,
     SERVICE_IDENTIFIER_COL_IDX
 	    
@@ -164,7 +166,7 @@ int update_ro_dbinfo_unsafe(struct ro_session* ro_session) {
 	db_key_t insert_keys[RO_SESSION_TABLE_COL_NUM] = {
 	    &id_column, &h_entry_column, &h_id_column, &session_id_column, &dlg_h_entry_column, &dlg_h_id_column,
 	    &direction_column, &asserted_column, &callee_column, &start_time_col, &last_event_ts_column,
-	    &reserved_sec_column, &valid_for_column, &state_column, &trunk_id_column, &rating_group_column, &service_identifier_column
+	    &reserved_sec_column, &valid_for_column, &state_column, &incoming_trunk_id_column, &outgoing_trunk_id_column, &rating_group_column, &service_identifier_column
 	};
 
 	VAL_TYPE(GET_FIELD_IDX(values, ID_COL_IDX)) = DB1_INT;
@@ -183,7 +185,8 @@ int update_ro_dbinfo_unsafe(struct ro_session* ro_session) {
 	db_set_int_val(values, RESERVED_SECS_COL_IDX, ro_session->reserved_secs);
 	db_set_int_val(values, VALID_FOR_COL_IDX, ro_session->valid_for);
 	db_set_int_val(values, STATE_COL_IDX, ro_session->active);
-	db_set_str_val(values, TRUNK_ID_COL_IDX, &ro_session->trunk_id);
+	db_set_str_val(values, INCOMING_TRUNK_ID_COL_IDX, &ro_session->incoming_trunk_id);
+	db_set_str_val(values, OUTGOING_TRUNK_ID_COL_IDX, &ro_session->outgoing_trunk_id);
 	db_set_int_val(values, RATING_GROUP_COL_IDX, ro_session->rating_group);
 	db_set_int_val(values, SERVICE_IDENTIFIER_COL_IDX, ro_session->service_identifier);
 	
@@ -202,7 +205,7 @@ int update_ro_dbinfo_unsafe(struct ro_session* ro_session) {
 	db_key_t update_keys[RO_SESSION_TABLE_COL_NUM-1] = {
 	    &h_entry_column, &h_id_column, &session_id_column, &dlg_h_entry_column, &dlg_h_id_column,
 	    &direction_column, &asserted_column, &callee_column, &start_time_col, &last_event_ts_column,
-	    &reserved_sec_column, &valid_for_column, &state_column, &trunk_id_column, &rating_group_column, &service_identifier_column
+	    &reserved_sec_column, &valid_for_column, &state_column, &incoming_trunk_id_column, &outgoing_trunk_id_column, &rating_group_column, &service_identifier_column
 	};
 
 	db_set_int_val(values, HASH_ENTRY_COL_IDX - 1, ro_session->h_entry);
@@ -218,7 +221,8 @@ int update_ro_dbinfo_unsafe(struct ro_session* ro_session) {
 	db_set_int_val(values, RESERVED_SECS_COL_IDX - 1, ro_session->reserved_secs);
 	db_set_int_val(values, VALID_FOR_COL_IDX - 1, ro_session->valid_for);
 	db_set_int_val(values, STATE_COL_IDX - 1, ro_session->active);
-	db_set_str_val(values, TRUNK_ID_COL_IDX - 1, &ro_session->trunk_id);
+	db_set_str_val(values, INCOMING_TRUNK_ID_COL_IDX - 1, &ro_session->incoming_trunk_id);
+	db_set_str_val(values, OUTGOING_TRUNK_ID_COL_IDX - 1, &ro_session->outgoing_trunk_id);
 	db_set_int_val(values, RATING_GROUP_COL_IDX - 1, ro_session->rating_group);
 	db_set_int_val(values, SERVICE_IDENTIFIER_COL_IDX - 1, ro_session->service_identifier);
 

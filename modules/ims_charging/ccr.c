@@ -96,15 +96,13 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
         if (!cdp_avp->epcapp.add_Called_Party_Address(&aList2, *(x->called_party_address), 0))
             goto error;
     
-    if (x->trunk_id && x->role_of_node) {
-	if (*(x->role_of_node) == RO_ORIG_DIRECTION) {
-	    if (!cdp_avp->epcapp.add_Outgoing_Trunk_Group_Id(&aList, *(x->trunk_id), 0))
-                goto error;
+    if (x->incoming_trunk_id && x->outgoing_trunk_id) {
+	if (!cdp_avp->epcapp.add_Outgoing_Trunk_Group_Id(&aList, *(x->outgoing_trunk_id), 0))
+	    goto error;
 	    
-	} else if (*(x->role_of_node) == RO_TERM_DIRECTION){
-	    if (!cdp_avp->epcapp.add_Incoming_Trunk_Group_Id(&aList, *(x->trunk_id), 0))
-                goto error;
-	}
+	if (!cdp_avp->epcapp.add_Incoming_Trunk_Group_Id(&aList, *(x->incoming_trunk_id), 0))
+	    goto error;
+	    
 	if (!cdp_avp->epcapp.add_Trunk_Group_Id(&aList2, &aList, 0))
             goto error;
         aList.head = aList.tail = 0;

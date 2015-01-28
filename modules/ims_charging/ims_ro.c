@@ -381,7 +381,8 @@ int get_timestamps(struct sip_msg * req, struct sip_msg * reply, time_t * req_ti
  *
  */
 
-Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, AAASession ** authp, int dir, str asserted_identity, str called_asserted_identity, str subscription_id, int subscription_id_type, str* trunk_id) {
+Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, AAASession ** authp, int dir, str asserted_identity, 
+	str called_asserted_identity, str subscription_id, int subscription_id_type, str* incoming_trunk_id, str *outgoing_trunk_id) {
 
     Ro_CCR_t * ro_ccr_data = 0;
     AAASession * auth = NULL;
@@ -419,7 +420,8 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, &reply_timestamp, NULL)))
         goto error;
 
-    if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &asserted_identity, &called_asserted_identity, &icid, &orig_ioi, &term_ioi, dir, trunk_id)))
+    if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &asserted_identity, &called_asserted_identity, &icid, 
+	&orig_ioi, &term_ioi, dir, incoming_trunk_id, outgoing_trunk_id)))
         goto error;
     event_type = 0;
     time_stamps = 0;
@@ -466,12 +468,14 @@ error :
     return NULL;
 }
 
-int sip_create_ro_ccr_data(struct sip_msg * msg, int dir, Ro_CCR_t ** ro_ccr_data, AAASession ** auth, str asserted_identity, str called_asserted_identity, str subscription_id, int subscription_id_type, str* trunk_id) {
+int sip_create_ro_ccr_data(struct sip_msg * msg, int dir, Ro_CCR_t ** ro_ccr_data, AAASession ** auth, str asserted_identity, str called_asserted_identity, 
+	str subscription_id, int subscription_id_type, str* incoming_trunk_id, str* outgoing_trunk_id) {
 
     if (msg->first_line.type == SIP_REQUEST) {
         /*end of session*/
         if (strncmp(msg->first_line.u.request.method.s, "INVITE", 6) == 0) {
-            if (!(*ro_ccr_data = dlg_create_ro_session(msg, NULL, auth, dir, asserted_identity, called_asserted_identity, subscription_id, subscription_id_type, trunk_id)))
+            if (!(*ro_ccr_data = dlg_create_ro_session(msg, NULL, auth, dir, asserted_identity, called_asserted_identity, subscription_id, 
+		    subscription_id_type, incoming_trunk_id, outgoing_trunk_id)))
                 goto error;
         }
     } else {
@@ -508,13 +512,14 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
 
     event_type = new_event_type(&sip_method, &sip_event, 0);
 
-    LM_DBG("Sending interim CCR request for (usage:new) [%i:%i] seconds for user [%.*s] using session id [%.*s] active rating group [%d] active service identifier [%d] trunk_id [%.*s]\n",
+    LM_DBG("Sending interim CCR request for (usage:new) [%i:%i] seconds for user [%.*s] using session id [%.*s] active rating group [%d] active service identifier [%d] incoming_trunk_id [%.*s] outgoing_trunk_id [%.*s]\n",
     						used,
     						reserve,
     						ro_session->asserted_identity.len, ro_session->asserted_identity.s,
     						ro_session->ro_session_id.len, ro_session->ro_session_id.s,
 						ro_session->rating_group, ro_session->service_identifier, 
-						ro_session->trunk_id.len, ro_session->trunk_id.s);
+						ro_session->incoming_trunk_id.len, ro_session->incoming_trunk_id.s,
+						ro_session->outgoing_trunk_id.len, ro_session->outgoing_trunk_id.s);
 
     req_timestamp = time(0);
 
@@ -522,7 +527,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
         goto error;
 
     if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->asserted_identity, 
-	    &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->trunk_id)))
+	    &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id)))
         goto error;
 
     LM_DBG("Created IMS information\n");
@@ -741,12 +746,13 @@ void send_ccr_stop(struct ro_session *ro_session) {
 
     event_type = new_event_type(&sip_method, &sip_event, 0);
     
-    LM_DBG("Sending stop CCR request for (usage) [%i] seconds for user [%.*s] using session id [%.*s] active rating group [%d] active service identifier [%d] trunk_id [%.*s]\n",
+    LM_DBG("Sending stop CCR request for (usage) [%i] seconds for user [%.*s] using session id [%.*s] active rating group [%d] active service identifier [%d] incoming_trunk_id [%.*s] outgoing_trunk_id [%.*s]\n",
     						used,
     						ro_session->asserted_identity.len, ro_session->asserted_identity.s,
     						ro_session->ro_session_id.len, ro_session->ro_session_id.s,
 						ro_session->rating_group, ro_session->service_identifier, 
-						ro_session->trunk_id.len, ro_session->trunk_id.s);
+						ro_session->incoming_trunk_id.len, ro_session->incoming_trunk_id.s,
+						ro_session->outgoing_trunk_id.len, ro_session->outgoing_trunk_id.s);
 
     req_timestamp = time(0);
 
@@ -754,7 +760,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
         goto error0;
 
     if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->asserted_identity, 
-		&ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->trunk_id)))
+		&ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id)))
         goto error0;
     
     event_type = 0;
@@ -914,8 +920,6 @@ error:
  * Send a CCR to the OCS based on the SIP message (INVITE ONLY)
  * @param msg - SIP message
  * @param direction - orig|term
- * @param charge_type - IEC (Immediate Event Charging), ECUR (Event Charging with Unit Reservation), SCUR (Session Charging with Unit Reservation)
- * @param unit_type - unused
  * @param reservation_units - units to try to reserve
  * @param reservation_units - config route to call when receiving a CCA
  * @param tindex - transaction index
@@ -923,7 +927,7 @@ error:
  *
  * @returns #CSCF_RETURN_BREAK if OK, #CSCF_RETURN_ERROR on error
  */
-int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_type, str* unit_type, int reservation_units, str* trunk_id,
+int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservation_units, str* incoming_trunk_id, str* outgoing_trunk_id,
 						cfg_action_t* action, unsigned int tindex, unsigned int tlabel) {
 	str session_id = { 0, 0 },
 		called_asserted_identity = {0 , 0 },
@@ -950,11 +954,10 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
     
     int sdp_stream_num = 0;
 
-    LM_DBG("Sending initial CCR request for charge_type [%.*s] unit_type [%.*s] reservation_units [%d] trunk_id [%.*s]\n",
-						charge_type->len, charge_type->s,
-    						unit_type->len, unit_type->s,
-    						reservation_units,
-						trunk_id->len, trunk_id->s);
+    LM_DBG("Sending initial CCR request for reservation_units [%d] incoming_trunk_id [%.*s] outgoing_trunk_id [%.*s]\n",
+						reservation_units,
+						incoming_trunk_id->len, incoming_trunk_id->s,
+						outgoing_trunk_id->len, outgoing_trunk_id->s);
     
     
     
@@ -1043,7 +1046,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
 	//create a session object without auth and diameter session id - we will add this later.
 	new_session = build_new_ro_session(dir, 0, 0, &session_id, &dlg->callid,
 			&asserted_identity, &called_asserted_identity, &mac, dlg->h_entry, dlg->h_id,
-			reservation_units, 0, active_rating_group, active_service_identifier, trunk_id);
+			reservation_units, 0, active_rating_group, active_service_identifier, incoming_trunk_id, outgoing_trunk_id);
 
 	if (!new_session) {
 		LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
@@ -1055,7 +1058,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_
 	ssd->tlabel	= tlabel;
 	ssd->ro_session	= new_session;
 
-    if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &cc_acc_session, asserted_identity, called_asserted_identity, subscription_id, subscription_id_type, trunk_id))
+    if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &cc_acc_session, asserted_identity, called_asserted_identity, subscription_id, subscription_id_type, incoming_trunk_id, outgoing_trunk_id))
         goto error;
 
     if (!ro_ccr_data)

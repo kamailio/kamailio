@@ -91,13 +91,13 @@ static int mod_init(void);
 static int mod_child_init(int);
 static void mod_destroy(void);
 
-static int w_ro_ccr(struct sip_msg *msg, char* route_name, char* direction, char* charge_type, char* unit_type, int reservation_units, char* trunk_id);
+static int w_ro_ccr(struct sip_msg *msg, char* route_name, char* direction, int reservation_units, char* incoming_trunk_id, char* outgoing_trunk_id);
 //void ro_session_ontimeout(struct ro_tl *tl);
 
 static int ro_fixup(void **param, int param_no);
 
 static cmd_export_t cmds[] = {
-		{ "Ro_CCR", 	(cmd_function) w_ro_ccr, 6, ro_fixup, 0, REQUEST_ROUTE },
+		{ "Ro_CCR", 	(cmd_function) w_ro_ccr, 5, ro_fixup, 0, REQUEST_ROUTE },
 		{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -346,13 +346,10 @@ static void mod_destroy(void) {
 
 }
 
-static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, char* c_charge_type, char* c_unit_type, int reservation_units, char* c_trunk_id) {
+static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, int reservation_units, char* c_incoming_trunk_id, char* c_outgoing_trunk_id) {
 	/* PSEUDOCODE/NOTES
 	 * 1. What mode are we in - terminating or originating
-	 * 2. check request type - 	IEC - Immediate Event Charging
-	 * 							ECUR - Event Charging with Unit Reservation
-	 * 							SCUR - Session Charging with Unit Reservation
-	 * 3. probably only do SCUR in this module for now - can see event based charging in another component instead (AS for SMS for example, etc)
+	 * 2. We assume this is SCUR in this module for now - can see event based charging in another component instead (AS for SMS for example, etc)
 	 * 4. Check a dialog exists for call, if not we fail
 	 * 5. make sure we dont already have an Ro Session for this dialog
 	 * 6. create new Ro Session
@@ -377,7 +374,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	struct ro_session *ro_session = 0;
 	int free_contact = 0;
 	
-	str s_route_name, s_direction, s_charge_type, s_unit_type, s_trunk_id;
+	str s_route_name, s_direction, s_incoming_trunk_id, s_outgoing_trunk_id;
 	
 	if (get_str_fparam(&s_route_name, msg, (fparam_t*) c_route_name) < 0) {
 	    LM_ERR("failed to get s_route_name\n");
@@ -387,26 +384,21 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	    LM_ERR("failed to get s_direction\n");
 	    return RO_RETURN_ERROR;
 	}
-	if (get_str_fparam(&s_charge_type, msg, (fparam_t*) c_charge_type) < 0) {
-	    LM_ERR("failed to get s_charge_type\n");
+	if (get_str_fparam(&s_incoming_trunk_id, msg, (fparam_t*) c_incoming_trunk_id) < 0) {
+	    LM_ERR("failed to get s_incoming_trunk_id\n");
 	    return RO_RETURN_ERROR;
 	}
-	if (get_str_fparam(&s_unit_type, msg, (fparam_t*) c_unit_type) < 0) {
-	    LM_ERR("failed to get s_unit_type\n");
-	    return RO_RETURN_ERROR;
-	}
-	if (get_str_fparam(&s_trunk_id, msg, (fparam_t*) c_trunk_id) < 0) {
-	    LM_ERR("failed to get s_trunk_id\n");
+	if (get_str_fparam(&s_outgoing_trunk_id, msg, (fparam_t*) c_outgoing_trunk_id) < 0) {
+	    LM_ERR("failed to get s_outgoing_trunk_id\n");
 	    return RO_RETURN_ERROR;
 	}
 	
-	LM_DBG("Ro CCR initiated: direction:%.*s, charge_type:%.*s, unit_type:%.*s, reservation_units:%i, route_name:%.*s, trunk_id:%.*s\n",
+	LM_DBG("Ro CCR initiated: direction:%.*s, reservation_units:%i, route_name:%.*s, incoming_trunk_id:%.*s outgoing_trunk_id:%.*s\n",
 			s_direction.len, s_direction.s,
-			s_charge_type.len, s_charge_type.s,
-			s_unit_type.len, s_unit_type.s,
 			reservation_units,
 			s_route_name.len, s_route_name.s,
-			s_trunk_id.len, s_trunk_id.s);
+			s_incoming_trunk_id.len, s_incoming_trunk_id.s,
+			s_outgoing_trunk_id.len, s_outgoing_trunk_id.s);
 	
 
 	if (msg->first_line.type != SIP_REQUEST) {
@@ -546,7 +538,7 @@ send_ccr:
 		goto done;
 	}
 	
-	ret = Ro_Send_CCR(msg, dlg, dir, &s_charge_type, &s_unit_type, reservation_units, &s_trunk_id, cfg_action, tindex, tlabel);
+	ret = Ro_Send_CCR(msg, dlg, dir, reservation_units, &s_incoming_trunk_id, &s_outgoing_trunk_id, cfg_action, tindex, tlabel);
 	
 	if(ret < 0){
 	    LM_ERR("Failed to send CCR\n");
@@ -562,9 +554,9 @@ static int ro_fixup(void **param, int param_no) {
 	str s;
 	unsigned int num;
 
-	if ( (param_no > 0 && param_no <= 4) || (param_no == 6) ) {
+	if ( (param_no > 0 && param_no <= 2) || (param_no >= 4 && param_no <= 6)) {
 		return fixup_var_str_12(param, param_no);
-	} else if (param_no == 5) {
+	} else if (param_no == 3) {
 		/*convert to int */
 		s.s = (char*)*param;
 		s.len = strlen(s.s);
