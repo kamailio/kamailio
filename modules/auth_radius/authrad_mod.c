@@ -65,7 +65,7 @@ static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int service_type = -1;
 
 int use_ruri_flag = -1;
-int import_all_avp = 0;
+int ar_radius_avps_mode = 0;
 
 static char *auth_extra_str = 0;
 struct extra_attr *auth_extra = 0;
@@ -94,7 +94,7 @@ static param_export_t params[] = {
 	{"service_type",     INT_PARAM, &service_type	},
 	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag	},
 	{"auth_extra",       PARAM_STRING, &auth_extra_str	},
-	{"import_all_avp",	 INT_PARAM, &import_all_avp	},
+	{"radius_avps_mode",	 INT_PARAM, &ar_radius_avps_mode	},
 	{0, 0, 0}
 };
 
