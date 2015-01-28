@@ -223,6 +223,31 @@ modparam("presence_dialoginfo", "force_single_dialog", 1)
 		</example>
 		</section>
 
+        <section>
+        <title><varname>force_dummy_dialog</varname> (int)</title>
+        <para>
+            By default the module returns null body 
+            if there are no bodies to aggregate. 
+            some sip clients like Bria expect at least one dialog.
+            you can activate this parameter to send a dummy dialog.
+        </para>
+        <para>
+            If this parameter is set and there are no dialog bodies to aggregate,
+            it will return a dummy dialog.
+        </para>
+        <para>
+            <emphasis>Default value is <quote>0</quote>.</emphasis>
+        </para>
+        <example>
+            <title>Set <varname></varname> parameter</title>
+            <programlisting format="linespecific">
+...
+modparam("presence_dialoginfo", "force_dummy_dialog", 1)
+...
+</programlisting>
+        </example>
+        </section>
+
 	</section>
 
 	<section>

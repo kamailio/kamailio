@@ -56,6 +56,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n);
 int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_nodes);
 
 extern int force_single_dialog;
+extern int force_dummy_dialog;
 
 void free_xml_body(char* body)
 {
@@ -66,6 +67,47 @@ void free_xml_body(char* body)
 	body= NULL;
 }
 
+#define DIALOGINFO_EMPTY_BODY "<dialog-info>\
+<dialog direction=\"recipient\">\
+<state>terminated</state>\
+</dialog>\
+</dialog-info>"
+
+#define DIALOGINFO_EMPTY_BODY_SIZE 512
+
+str* dlginfo_agg_nbody_empty(str* pres_user, str* pres_domain)
+{
+	str* n_body= NULL;
+
+	LM_DBG("creating empty dialog for [pres_user]=%.*s [pres_domain]= %.*s\n",
+			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
+
+	str* body_array = (str*)pkg_malloc(sizeof(str));
+	char* body = (char*)pkg_malloc(DIALOGINFO_EMPTY_BODY_SIZE);
+	sprintf(body, DIALOGINFO_EMPTY_BODY);//, pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
+	body_array->s = body;
+	body_array->len = strlen(body);
+
+
+	n_body= agregate_xmls(pres_user, pres_domain, &body_array, 1);
+	LM_DBG("[n_body]=%p\n", n_body);
+	if(n_body) {
+		LM_DBG("[*n_body]=%.*s\n",n_body->len, n_body->s);
+	}
+	if(n_body== NULL)
+	{
+		LM_ERR("while aggregating body\n");
+	}
+
+	pkg_free(body);
+	pkg_free(body_array);
+
+
+	xmlCleanupParser();
+	xmlMemoryDump();
+
+	return n_body;
+}
 
 str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, int off_index)
 {
@@ -74,8 +116,11 @@ str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n
 	LM_DBG("[pres_user]=%.*s [pres_domain]= %.*s, [n]=%d\n",
 			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s, n);
 
-	if(body_array== NULL)
+	if(body_array== NULL && (!force_dummy_dialog))
 		return NULL;
+
+	if(body_array== NULL)
+		return dlginfo_agg_nbody_empty(pres_user, pres_domain);
 
 	n_body= agregate_xmls(pres_user, pres_domain, body_array, n);
 	LM_DBG("[n_body]=%p\n", n_body);
