@@ -105,6 +105,7 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
 	    
 	if (!cdp_avp->epcapp.add_Trunk_Group_Id(&aList2, &aList, 0))
             goto error;
+	cdp_avp->cdp->AAAFreeAVPList(&aList);
         aList.head = aList.tail = 0;
     }
 
@@ -132,6 +133,7 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
 
         if (!cdp_avp->epcapp.add_Inter_Operator_Identifier(&aList2, &aList, 0))
             goto error;
+	cdp_avp->cdp->AAAFreeAVPList(&aList);
         aList.head = aList.tail = 0;
     }
 
@@ -154,6 +156,7 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
 
         if (!cdp_avp->epcapp.add_Service_Specific_Info(&aList2, &aList, 0))
             goto error;
+	cdp_avp->cdp->AAAFreeAVPList(&aList);
         aList.head = aList.tail = 0;
     }
 
