@@ -208,6 +208,7 @@ sca_set_config( sca_mod *scam )
 	LM_ERR( "Failed to shm_malloc module configuration" );
 	return( -1 );
     }
+    memset(scam->cfg, 0, sizeof( sca_config ));
 
     if ( outbound_proxy.s ) {
 	outbound_proxy.len = strlen( outbound_proxy.s );
@@ -295,23 +296,23 @@ sca_mod_init( void )
 
     if ( rpc_register_array( sca_rpc ) != 0 ) {
 	LM_ERR( "Failed to register RPC commands" );
-	return( -1 );
+	goto error;
     }
 
     if ( sca_bind_srdb1( sca, &dbf ) != 0 ) {
 	LM_ERR( "Failed to initialize required DB API" );
-	return( -1 );
+	goto error;
     }
 
     if ( load_tm_api( &tmb ) != 0 ) {
 	LM_ERR( "Failed to initialize required tm API" );
-	return( -1 );
+	goto error;
     }
     sca->tm_api = &tmb;
 
     if ( sca_bind_sl( sca, &slb ) != 0 ) {
 	LM_ERR( "Failed to initialize required sl API" );
-	return( -1 );
+	goto error;
     }
     
     if ( sca_hash_table_create( &sca->subscriptions,
