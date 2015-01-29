@@ -277,31 +277,60 @@ int dlg_cseq_msg_sent(void *data)
 
 	/* new cseq value */
 	dlg->iflags |= DLG_IFLAG_CSEQ_DIFF;
-	/* copy first part till after via branch */
-	tbuf_len = via->branch->value.s + via->branch->value.len - msg.buf;
-	memcpy(tbuf, msg.buf, tbuf_len);
-	/* complete via branch */
-	tbuf[tbuf_len++] = '.';
-	tbuf[tbuf_len++] = 'c';
-	tbuf[tbuf_len++] = 's';
-	memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s, get_cseq(&msg)->number.len);
-	tbuf_len += get_cseq(&msg)->number.len;
-	/* copy till beginning of cseq number */
-	memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
-			get_cseq(&msg)->number.s - via->branch->value.s
-			- via->branch->value.len);
-	tbuf_len += get_cseq(&msg)->number.s - via->branch->value.s
-					- via->branch->value.len;
-	/* add new value */
-	memcpy(tbuf+tbuf_len, nval.s, nval.len);
-	tbuf_len += nval.len;
-	/* copy from after cseq number to the end of sip message */
-	memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
-			msg.buf + msg.len - get_cseq(&msg)->number.s
-			- get_cseq(&msg)->number.len);
-	tbuf_len += msg.buf+msg.len - get_cseq(&msg)->number.s
-				- get_cseq(&msg)->number.len;
 
+	if(via->branch->value.s<get_cseq(&msg)->number.s) {
+		/* Via is before CSeq */
+		/* copy first part till after via branch */
+		tbuf_len = via->branch->value.s + via->branch->value.len - msg.buf;
+		memcpy(tbuf, msg.buf, tbuf_len);
+		/* complete via branch */
+		tbuf[tbuf_len++] = '.';
+		tbuf[tbuf_len++] = 'c';
+		tbuf[tbuf_len++] = 's';
+		memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s, get_cseq(&msg)->number.len);
+		tbuf_len += get_cseq(&msg)->number.len;
+		/* copy till beginning of cseq number */
+		memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
+				get_cseq(&msg)->number.s - via->branch->value.s
+				- via->branch->value.len);
+		tbuf_len += get_cseq(&msg)->number.s - via->branch->value.s
+					- via->branch->value.len;
+		/* add new value */
+		memcpy(tbuf+tbuf_len, nval.s, nval.len);
+		tbuf_len += nval.len;
+		/* copy from after cseq number to the end of sip message */
+		memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
+				msg.buf + msg.len - get_cseq(&msg)->number.s
+				- get_cseq(&msg)->number.len);
+		tbuf_len += msg.buf+msg.len - get_cseq(&msg)->number.s
+				- get_cseq(&msg)->number.len;
+	} else {
+		/* CSeq is before Via */
+		/* copy till beginning of cseq number */
+		tbuf_len = get_cseq(&msg)->number.s - msg.buf;
+		memcpy(tbuf, msg.buf, tbuf_len);
+		/* add new value */
+		memcpy(tbuf+tbuf_len, nval.s, nval.len);
+		tbuf_len += nval.len;
+		/* copy from after cseq number to the after via branch */
+		memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
+				via->branch->value.s + via->branch->value.len
+				- get_cseq(&msg)->number.s - get_cseq(&msg)->number.len);
+		tbuf_len += via->branch->value.s + via->branch->value.len
+				- get_cseq(&msg)->number.s - get_cseq(&msg)->number.len;
+		/* complete via branch */
+		tbuf[tbuf_len++] = '.';
+		tbuf[tbuf_len++] = 'c';
+		tbuf[tbuf_len++] = 's';
+		memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s, get_cseq(&msg)->number.len);
+		tbuf_len += get_cseq(&msg)->number.len;
+		/* copy from after via to the end of sip message */
+		memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
+				msg.buf + msg.len - via->branch->value.s
+				- via->branch->value.len);
+		tbuf_len += msg.buf+msg.len - via->branch->value.s
+				- via->branch->value.len;
+	}
 	/* replace old msg content */
 	obuf->s = pkg_malloc((tbuf_len+1)*sizeof(char));
 	if(obuf->s==NULL) {
