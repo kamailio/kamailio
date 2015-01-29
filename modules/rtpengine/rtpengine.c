@@ -201,6 +201,9 @@ static struct rtpp_set * default_rtpp_set=0;
 
 static str body_intermediate;
 
+static str rtp_inst_pv_param = {NULL, 0};
+static pv_spec_t *rtp_inst_pvar = NULL;
+
 /* array with the sockets used by rtpporxy (per process)*/
 static unsigned int rtpp_no = 0;
 static int *rtpp_socks = 0;
@@ -278,6 +281,7 @@ static param_export_t params[] = {
 	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param },
 	{"setid_avp",             PARAM_STRING, &setid_avp_param },
 	{"force_send_interface",  PARAM_STRING, &force_send_ip_str	},
+	{"rtp_inst_pvar",         PARAM_STR, &rtp_inst_pv_param },
 	{0, 0, 0}
 };
 
@@ -811,6 +815,18 @@ mod_init(void)
 		}
 	}
 
+	if (rtp_inst_pv_param.s) {
+		rtp_inst_pv_param.len = strlen(rtp_inst_pv_param.s);
+		rtp_inst_pvar = pv_cache_get(&rtp_inst_pv_param);
+		if ((rtp_inst_pvar == NULL) ||
+			((rtp_inst_pvar->type != PVT_AVP) &&
+	     	 (rtp_inst_pvar->type != PVT_XAVP) &&
+			 (rtp_inst_pvar->type != PVT_SCRIPTVAR))) {
+		LM_ERR("Invalid pvar name <%.*s>\n", rtp_inst_pv_param.len, rtp_inst_pv_param.s);
+		return -1;
+		}
+	}
+
 	if (extra_id_pv_param.s && *extra_id_pv_param.s) {
 		extra_id_pv_param.len = strlen(extra_id_pv_param.s);
 		if(pv_parse_format(&extra_id_pv_param, &extra_id_pv) < 0) {
@@ -1326,7 +1342,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			LM_ERR("no available proxies\n");
 			goto error;
 		}
-
+		set_rtp_inst_pvar(msg, &node->rn_url);
 		cp = send_rtpp_command(node, ng_flags.dict, &ret);
 	} while (cp == NULL);
 	LM_DBG("proxy reply: %.*s\n", ret, cp);
@@ -2052,3 +2068,20 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_rtpstat_wrap, parms, 1);
 }
 
+int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri) {
+	pv_value_t val;
+
+	if (rtp_inst_pvar == NULL)
+		return 0;
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_STR;
+	val.rs = *uri;
+
+	if (rtp_inst_pvar->setf(msg, &rtp_inst_pvar->pvp, (int)EQ_T, &val) < 0)
+	{
+		LM_ERR("Failed to add RTP Engine URI to pvar\n");
+		return -1;
+	}
+	return 0;
+}

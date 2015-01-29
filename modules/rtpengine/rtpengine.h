@@ -61,6 +61,8 @@ struct rtpp_set_head{
 struct rtpp_set *get_rtpp_set(int set_id);
 int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
 
+int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
+
 int init_rtpproxy_db(void);
 
 extern str rtpp_db_url;
