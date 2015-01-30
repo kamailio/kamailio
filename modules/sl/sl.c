@@ -164,13 +164,13 @@ static int mod_init(void)
 		return -1;
 	}
 
+	memset(&tmb, 0, sizeof(struct tm_binds));
 	if(sl_bind_tm!=0)
 	{
 		if(load_tm_api(&tmb)==-1)
 		{
 			LM_INFO("could not bind tm module - only stateless mode"
-					" available\n");
-			sl_bind_tm=0;
+					" available during modules initialization\n");
 		}
 	}
 
@@ -186,6 +186,14 @@ static int child_init(int rank)
 			ERR("init_sl_stats_child failed\n");
 			return -1;
 		}
+		if(sl_bind_tm!=0 && tmb.register_tmcb==0) {
+			if(load_tm_api(&tmb)==-1) {
+				LM_INFO("could not bind tm module - only stateless mode"
+					" available during runtime\n");
+				sl_bind_tm=0;
+			}
+		}
+
 	}
 	return 0;
 }
@@ -267,7 +275,7 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 		}
 	}
 
-	if(sl_bind_tm!=0)
+	if(sl_bind_tm!=0 && tmb.t_gett!=0)
 	{
 		t = tmb.t_gett();
 		if(t!= NULL && t!=T_UNDEFINED)
@@ -324,7 +332,7 @@ int get_reply_totag(struct sip_msg *msg, str *totag)
 	struct cell * t;
 	if(msg==NULL || totag==NULL)
 		return -1;
-	if(sl_bind_tm!=0)
+	if(sl_bind_tm!=0 && tmb.t_gett!=0)
 	{
 		t = tmb.t_gett();
 		if(t!= NULL && t!=T_UNDEFINED)
