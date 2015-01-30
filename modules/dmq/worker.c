@@ -91,11 +91,11 @@ void worker_loop(int id)
 			current_job = job_queue_pop(worker->queue);
 			/* job_queue_pop might return NULL if queue is empty */
 			if(current_job) {
-				/* attempt to identify node based on from uri */
-				if (current_job->msg->from->parsed) {
-					dmq_node = find_dmq_node_uri(node_list, &((struct to_body*)current_job->msg->from->parsed)->uri);
-				} else {
+				/* extract the from uri */
+				if (parse_from_header(current_job->msg) < 0) {
 					LM_ERR("bad sip message or missing From hdr\n");
+				} else {
+					dmq_node = find_dmq_node_uri(node_list, &((struct to_body*)current_job->msg->from->parsed)->uri);
 				}
 
 				ret_value = current_job->f(current_job->msg, &peer_response, dmq_node);
