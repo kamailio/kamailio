@@ -55,6 +55,7 @@
 #include "rx_authdata.h"
 #include "rx_avp.h"
 #include "mod.h"
+#include "../../parser/sdp/sdp_helpr_funcs.h"
 
 #include "../../lib/ims/ims_getters.h"
 
@@ -343,6 +344,31 @@ int rx_add_subscription_id_avp(AAAMessage *msg, str identifier, int identifier_t
             __FUNCTION__);
 }
 
+inline unsigned int sdp_b_value(str * payload, char * subtype) {
+   char * line;
+   unsigned int i;
+   str s;
+   line = find_sdp_line(payload->s, payload->s + payload->len, 'b');
+   while (line != NULL) {
+      // b=AS:
+      if ((line[2] == subtype[0]) && (line[3] == subtype[1])) {
+        LM_DBG("SDP-Line: %.*s\n", 5, line);
+        line += 5;
+        i = 0;
+        while ((line[i] != '\r') && (line[i] != '\n') && ((line +i) <= (payload->s + payload->len))) {
+          i++;
+	}
+        s.s = line;
+        s.len = i;
+        LM_DBG("value: %.*s\n", s.len, s.s);
+        if (str2int(&s, &i) == 0) return i;
+        else return 0;
+      }
+      line = find_next_sdp_line(line, payload->s + payload->len, 'b', NULL);
+   }
+   return 0;
+}
+
 inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, str *media_description, str *ipA, str *portA, str *ipB, str *portB, str *transport,
         str *req_raw_payload, str *rpl_raw_payload, enum dialog_direction dlg_direction) {
     str data;
@@ -351,8 +377,10 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
     AAA_AVP *codec_data1, *codec_data2;
     AAA_AVP * media_sub_component[PCC_Media_Sub_Components];
     AAA_AVP *flow_status;
+    AAA_AVP *dl_bw, *ul_bw, *rs_bw, *rr_bw;
 
     int media_sub_component_number = 0;
+    unsigned int bandwidth = 0;
 
     int type;
     char x[4];
@@ -412,6 +440,72 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
     cdpb.AAAAddAVPToList(&list, media_type);
 
     /*RR and RS*/
+    if ((type == AVP_IMS_Media_Type_Audio) || (type == AVP_IMS_Media_Type_Video)) {
+	// Get bandwidth from SDP:
+        bandwidth = sdp_b_value(req_raw_payload, "AS");
+        LM_DBG("Request: got bandwidth %i from b=AS-Line\n", bandwidth);
+        // Set default values:
+        if ((type == AVP_IMS_Media_Type_Audio) && (bandwidth <= 0))
+	  bandwidth = audio_default_bandwidth;
+        if ((type == AVP_IMS_Media_Type_Video) && (bandwidth <= 0))
+	  bandwidth = video_default_bandwidth;
+        
+        // According to 3GPP TS 29.213, Rel. 9+, this value is * 1000:
+        bandwidth *= 1000; 
+  
+        // Add AVP
+        set_4bytes(x,bandwidth);
+	ul_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_UL,
+            AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+            IMS_vendor_id_3GPP, x, 4,
+            AVP_DUPLICATE_DATA);
+    	cdpb.AAAAddAVPToList(&list, ul_bw);
+
+	// Get bandwidth from SDP:
+        bandwidth = sdp_b_value(rpl_raw_payload, "AS");
+        LM_DBG("Answer: got bandwidth %i from b=AS-Line\n", bandwidth);
+        // Set default values:
+        if ((type == AVP_IMS_Media_Type_Audio) && (bandwidth <= 0))
+	  bandwidth = audio_default_bandwidth;
+        if ((type == AVP_IMS_Media_Type_Video) && (bandwidth <= 0))
+	  bandwidth = video_default_bandwidth;
+
+        // According to 3GPP TS 29.213, Rel. 9+, this value is * 1000:
+        bandwidth *= 1000; 
+        
+        // Add AVP
+        set_4bytes(x,bandwidth);
+	dl_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_DL,
+            AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+            IMS_vendor_id_3GPP, x, 4,
+            AVP_DUPLICATE_DATA);
+    	cdpb.AAAAddAVPToList(&list, dl_bw);
+
+	// Get A=RS-bandwidth from SDP-Reply:
+        bandwidth = sdp_b_value(rpl_raw_payload, "RS");
+        LM_DBG("Answer: Got bandwidth %i from b=RS-Line\n", bandwidth);
+	if (bandwidth >= 0) {
+		// Add AVP
+		set_4bytes(x,bandwidth);
+		rs_bw = cdpb.AAACreateAVP(AVP_EPC_RS_Bandwidth,
+		    AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+		    IMS_vendor_id_3GPP, x, 4,
+		    AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, rs_bw);
+	}
+	// Get A=RS-bandwidth from SDP-Reply:
+        bandwidth = sdp_b_value(rpl_raw_payload, "RR");
+        LM_DBG("Answer: Got bandwidth %i from b=RR-Line\n", bandwidth);
+	if (bandwidth >= 0) {
+		// Add AVP
+		set_4bytes(x,bandwidth);
+		rr_bw = cdpb.AAACreateAVP(AVP_EPC_RR_Bandwidth,
+		    AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+		    IMS_vendor_id_3GPP, x, 4,
+		    AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, rr_bw);
+	}
+    }
 
     /*codec-data*/
 

@@ -220,6 +220,44 @@ modparam("ims_qos", "cdp_event_list_size_threshold", 10)
         </programlisting>
       </example>
     </section>
+    <section>
+      <title><varname>audio_default_bandwidth</varname> (integer)</title>
+
+      <para>This parameters defines the default bandwidth for Audio,
+            if no "b=AS"-Parameter is found in the SDP.</para>
+
+      <para><emphasis> Default value is 64 (64 kBit)</emphasis></para>
+
+      <example>
+        <title><varname>audio_default_bandwidth</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "audio_default_bandwidth", 32)
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>video_default_bandwidth</varname> (integer)</title>
+
+      <para>This parameters defines the default bandwidth for Video,
+            if no "b=AS"-Parameter is found in the SDP.</para>
+
+      <para><emphasis> Default value is 128 (128 kBit)</emphasis></para>
+
+      <example>
+        <title><varname>video_default_bandwidth</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "video_default_bandwidth", 256)
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
