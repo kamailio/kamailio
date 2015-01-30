@@ -221,7 +221,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			Not a huge problem, fr timer will fire, but CANCEL
 			will not be sent. last_received will be set to 408. */
 
-		reset_kr();
+//		reset_kr();
 
 		/* fake the request and the environment, like in failure_route */
 		if (!fake_req(&faked_req, t->uas.request, 0 /* extra flags */, uac)) {
