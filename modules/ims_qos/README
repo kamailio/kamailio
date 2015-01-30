@@ -15,9 +15,16 @@ Richard Good
    Smile Communications
    <richard.good@smilecoms.com>
 
+Carsten Bock
+
+   ng-voice GmbH
+   <carsten@ng-voice.com>
+
    Copyright © 2007 FhG FOKUS
 
    Copyright © 2012 Smile Communications
+
+   Copyright © 2015 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -38,11 +45,16 @@ Richard Good
               3.4. cdp_event_latency (integer)
               3.5. cdp_event_threshold (integer)
               3.6. cdp_event_latency_log (integer)
+              3.7. authorize_video_flow (integer)
+              3.8. cdp_event_list_size_threshold (integer)
+              3.9. audio_default_bandwidth (integer)
+              3.10. video_default_bandwidth (integer)
 
         4. Functions
 
-              4.1. Rx_AAR_Register(domain)
-              4.2. Rx_AAR(domain)
+              4.1. Rx_AAR_Register(route_block, domain)
+              4.2. Rx_AAR(route_block, direction, subscription_id,
+                      subscription_id_type)
 
         5. Statistics
 
@@ -57,8 +69,12 @@ Richard Good
    1.4. cdp_event_latency parameter usage
    1.5. cdp_event_threshold parameter usage
    1.6. cdp_event_latency_log parameter usage
-   1.7. Rx_AAR_Register
-   1.8. Rx_AAR
+   1.7. authorize_video_flow parameter usage
+   1.8. cdp_event_list_size_threshold parameter usage
+   1.9. audio_default_bandwidth parameter usage
+   1.10. video_default_bandwidth parameter usage
+   1.11. Rx_AAR_Register
+   1.12. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -78,11 +94,16 @@ Chapter 1. Admin Guide
         3.4. cdp_event_latency (integer)
         3.5. cdp_event_threshold (integer)
         3.6. cdp_event_latency_log (integer)
+        3.7. authorize_video_flow (integer)
+        3.8. cdp_event_list_size_threshold (integer)
+        3.9. audio_default_bandwidth (integer)
+        3.10. video_default_bandwidth (integer)
 
    4. Functions
 
-        4.1. Rx_AAR_Register(domain)
-        4.2. Rx_AAR(domain)
+        4.1. Rx_AAR_Register(route_block, domain)
+        4.2. Rx_AAR(route_block, direction, subscription_id,
+                subscription_id_type)
 
    5. Statistics
 
@@ -123,6 +144,10 @@ Chapter 1. Admin Guide
    3.4. cdp_event_latency (integer)
    3.5. cdp_event_threshold (integer)
    3.6. cdp_event_latency_log (integer)
+   3.7. authorize_video_flow (integer)
+   3.8. cdp_event_list_size_threshold (integer)
+   3.9. audio_default_bandwidth (integer)
+   3.10. video_default_bandwidth (integer)
 
 3.1. rx_dest_realm (string)
 
@@ -138,8 +163,11 @@ modparam("ims_qos", "rx_dest_realm", "ims.smilecoms.com")
 
 3.2. rx_forced_peer (string)
 
-   This is the optional name of the origin host of the Diameter server
-   (typically a PCRF). If not set then realm routing is used.
+   FQDN of the Diameter server (typically a PCRF) to communicate with. If
+   not set then realm routing is used. If you use this, the routing
+   defined in your diameter xml configuration file (CDP) will be ignored
+   and as a result you will lose the benefits of load balancing and
+   failover.
 
    Default value is ''.
 
@@ -199,12 +227,62 @@ modparam("ims_qos", "cdp_event_threshold", 500)
 modparam("ims_qos", "cdp_event_latency_log", 1)
 ...
 
+3.7. authorize_video_flow (integer)
+
+   This is a flag that specifies whether or not to authorize video flows.
+   1 means video flows will be authorized over Rx and 0 means video flows
+   will not be authorized over Rx
+
+   Default value is 1.
+
+   Example 1.7. authorize_video_flow parameter usage
+...
+modparam("ims_qos", "authorize_video_flow", 0)
+...
+
+3.8. cdp_event_list_size_threshold (integer)
+
+   This is a threshold on the size of the cdp event list. Once the queue
+   exceeds this length a warning is logged. 0 disables this feature
+
+   Default value is 0.
+
+   Example 1.8. cdp_event_list_size_threshold parameter usage
+...
+modparam("ims_qos", "cdp_event_list_size_threshold", 10)
+...
+
+3.9. audio_default_bandwidth (integer)
+
+   This parameters defines the default bandwidth for Audio, if no
+   "b=AS"-Parameter is found in the SDP.
+
+   Default value is 64 (64 kBit)
+
+   Example 1.9. audio_default_bandwidth parameter usage
+...
+modparam("ims_qos", "audio_default_bandwidth", 32)
+...
+
+3.10. video_default_bandwidth (integer)
+
+   This parameters defines the default bandwidth for Video, if no
+   "b=AS"-Parameter is found in the SDP.
+
+   Default value is 128 (128 kBit)
+
+   Example 1.10. video_default_bandwidth parameter usage
+...
+modparam("ims_qos", "video_default_bandwidth", 256)
+...
+
 4. Functions
 
-   4.1. Rx_AAR_Register(domain)
-   4.2. Rx_AAR(domain)
+   4.1. Rx_AAR_Register(route_block, domain)
+   4.2. Rx_AAR(route_block, direction, subscription_id,
+          subscription_id_type)
 
-4.1. Rx_AAR_Register(domain)
+4.1. Rx_AAR_Register(route_block, domain)
 
    Perform a AAR on Diameter RX interface to subscribe to signalling
    status. This purpose of this is tell a Diameter server (typically a
@@ -213,17 +291,29 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
    see 3GGP TS 29.214.
 
    Meaning of the parameters is as follows:
+     * Route block to resume after async UAR Diameter reply.
      * domain that usrloc_pcscf uses to store user information.
+
+   Return codes:
+     * -1 - error: There was an error, so we must either ignore it (no
+       subscription) or send 403 (depends on behaviour you want)
+       0 - Success: AAR-Request sent, reply is processed asynchronously.
+       1 - Success: No need to send AAR-Request, as a subscription still
+       exists (continue as normal)
 
    This function can be used from REQUEST_ROUTE.
 
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.7. Rx_AAR_Register
+   Example 1.11. Rx_AAR_Register
 ...
-    Rx_AAR_Register("location");
-
+if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
+    exit;
+}
+...
+route[REG_AAR_REPLY]
+{
     switch ($avp(s:aar_return_code)) {
         case 1:
             xlog("L_DBG", "Diameter: AAR success on subscription to signalling\n
@@ -235,37 +325,44 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
             t_reply("403", "Can't register to QoS for signalling");
             exit;
     }
-
 ...
 
-4.2. Rx_AAR(domain)
+4.2. Rx_AAR(route_block, direction, subscription_id, subscription_id_type)
 
    Perform a AAR on Diameter RX interface to request resource
    authorisation from a Diameter server (typically a PCRF). For more
    details see 3GGP TS 29.214.
 
    Meaning of the parameters is as follows:
-     * domain that usrloc_pcscf uses to store user information.
+     * Route block to resume after async UAR Diameter reply.
+     * direction of this message - orig, term, etc.
+     * subscription_id to hard code subscription ID for AAR. Used for some
+       broken PCRFs. Leave blank to use default
+     * subscription_id_type to hard code subscription ID type for AAR.
+       Only applicable if subscription_id is set. Set to -1 to use
+       default. This is as per RFC 4006: END_USER_E164 0, END_USER_IMSI 1,
+       END_USER_SIP_URI 2, END_USER_NAI 3, END_USER_PRIVATE 4
 
    This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.8. Rx_AAR
+   Example 1.12. Rx_AAR
 ...
-    Rx_AAR("location");
-
-    switch ($avp(s:aar_return_code)) {
-        case 1:
-            xlog("L_DBG", "Diameter: AAR success\n");
-            break;
-        default:
-            xlog("L_ERR", "Diameter: AAR failed\n");
-            t_reply("403", "QoS not authorized");
-            exit;
+if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
+    exit;
+}
+...
+route[ORIGN_SESSION_AAR_REPLY]
+{
+    if ($avp(s:aar_return_code) != 1) {
+        xlog("L_ERR", "IMS: AAR failed Orig\n");
+        dlg_terminate("all", "Sorry no QoS available");
+    } else {
+        xlog("L_DBG", "Diameter: Orig AAR success on media authorization\n");
     }
-
+}
 ...
 
 5. Statistics
