@@ -46,7 +46,7 @@ static redisc_reply_t *_redisc_rpl_list=NULL;
  */
 int redisc_init(void)
 {
-	char *addr, *unix_sock_path = NULL;
+	char *addr, *pass, *unix_sock_path = NULL;
 	unsigned int port, db;
 	redisc_server_t *rsrv=NULL;
 	param_t *pit = NULL;
@@ -66,6 +66,8 @@ int redisc_init(void)
 		addr = "127.0.0.1";
 		port = 6379;
 		db = 0;
+		pass = NULL;
+
 		for (pit = rsrv->attrs; pit; pit=pit->next)
 		{
 			if(pit->name.len==4 && strncmp(pit->name.s, "unix", 4)==0) {
@@ -80,6 +82,9 @@ int redisc_init(void)
 			} else if(pit->name.len==2 && strncmp(pit->name.s, "db", 2)==0) {
 				if(str2int(&pit->body, &db) < 0)
 					db = 0;
+			} else if(pit->name.len==4 && strncmp(pit->name.s, "pass", 4)==0) {
+				pass = pit->body.s;
+				pass[pit->body.len] = '\0';
 			}
 		}
 
@@ -93,6 +98,8 @@ int redisc_init(void)
 		if(!rsrv->ctxRedis)
 			goto err;
 		if (rsrv->ctxRedis->err)
+			goto err2;
+		if ((pass != NULL) && redisc_check_auth(rsrv, pass))
 			goto err2;
 		if (redisCommandNR(rsrv->ctxRedis, "PING"))
 			goto err2;
@@ -514,4 +521,18 @@ int redisc_free_reply(str *name)
 
 	/* reply entry not found. */
 	return -1;
+}
+
+int redisc_check_auth(redisc_server_t *rsrv, char *pass)
+{
+	redisReply *reply;
+	int retval = 0;
+
+	reply = redisCommand(rsrv->ctxRedis, "AUTH %s", pass);
+	if (reply->type == REDIS_REPLY_ERROR) {
+		LM_ERR("Redis authentication error\n");
+		retval = -1;
+	}
+	freeReplyObject(reply);
+	return retval;
 }

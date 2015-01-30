@@ -67,4 +67,5 @@ int redisc_exec(str *srv, str *res, str *cmd, ...);
 void* redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv, const size_t *argvlen);
 redisc_reply_t *redisc_get_reply(str *name);
 int redisc_free_reply(str *name);
+int redisc_check_auth(redisc_server_t *rsrv, char *pass);
 #endif
