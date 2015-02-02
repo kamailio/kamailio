@@ -62,14 +62,13 @@
 	<section id="ndb_redis.p.server">
 		<title><varname>server</varname> (str)</title>
 		<para>
-			Specify the details to connect to REDIS server. It takes a list of
-			attribute=value separated by semicolon, the attributes can be
-			name, unix, addr, port and db. Name is a generic identifier to be used
-			with module functions. unix is the path to the unix domain socket provided
-			by redis server. addr and port are the IP address and the port to
-			connect to REDIS server. unix and (addr, port) are mutually exclusive.
-			If both appear in same server settings unix domain socket is configured.
-			db is the DB number to use (defaults to 0 if not specified).
+			Specify the details to connect to REDIS server. It takes a list of attribute=value
+			separated by semicolon, the attributes can be name, unix, addr, port, db and pass. Name
+			is a generic identifier to be used with module functions. unix is the path to the unix
+			domain socket provided by redis server. addr and port are the IP address and the port to
+			connect to REDIS server. pass is the server password. unix and (addr, port) are mutually
+			exclusive.  If both appear in same server settings unix domain socket is configured.  db
+			is the DB number to use (defaults to 0 if not specified).
 		</para>
 		<para>
 			You can set this parameter many times, in case you want to connect to
@@ -86,7 +85,7 @@
 		<programlisting format="linespecific">
 ...
 modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
-modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4")
+modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4;pass=mypassword")
 
 # Unix domain socket
 modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
