@@ -67,6 +67,8 @@ Richard Fuchs
               4.5. extra_id_pv (string)
               4.6. setid_avp (string)
               4.7. force_send_interface (string)
+              4.8. write_sdp_avp (string)
+              4.9. rtp_inst_pvar (string)
 
         5. Functions
 
@@ -97,15 +99,17 @@ Richard Fuchs
    1.5. Set extra_id_pv parameter
    1.6. Set setid_avp parameter
    1.7. Set force_send_interface parameter
-   1.8. set_rtpengine_set usage
-   1.9. rtpengine_offer usage
-   1.10. rtpengine_answer usage
-   1.11. rtpengine_delete usage
-   1.12. rtpengine_manage usage
-   1.13. start_recording usage
-   1.14. $rtpstat Usage
-   1.15. nh_enable_rtpp usage
-   1.16. nh_show_rtpp usage
+   1.8. Set write_sdp_avp parameter
+   1.9. Set rtp_inst_pvar parameter
+   1.10. set_rtpengine_set usage
+   1.11. rtpengine_offer usage
+   1.12. rtpengine_answer usage
+   1.13. rtpengine_delete usage
+   1.14. rtpengine_manage usage
+   1.15. start_recording usage
+   1.16. $rtpstat Usage
+   1.17. nh_enable_rtpp usage
+   1.18. nh_show_rtpp usage
 
 Chapter 1. Admin Guide
 
@@ -127,6 +131,8 @@ Chapter 1. Admin Guide
         4.5. extra_id_pv (string)
         4.6. setid_avp (string)
         4.7. force_send_interface (string)
+        4.8. write_sdp_avp (string)
+        4.9. rtp_inst_pvar (string)
 
    5. Functions
 
@@ -216,6 +222,8 @@ Chapter 1. Admin Guide
    4.5. extra_id_pv (string)
    4.6. setid_avp (string)
    4.7. force_send_interface (string)
+   4.8. write_sdp_avp (string)
+   4.9. rtp_inst_pvar (string)
 
 4.1. rtpengine_sock (string)
 
@@ -314,6 +322,32 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 modparam("rtpengine", "force_send_interface", "10.3.7.123")
 ...
 
+4.8. write_sdp_avp (string)
+
+   If this parameter is set to a valid AVP specifier, the SDP returned by
+   rtpengine in the offer/answer operations is returned in the specified
+   SDP instead of the message body.
+
+   There is no default value.
+
+   Example 1.8. Set write_sdp_avp parameter
+...
+modparam("rtpengine", "write_sdp_avp", "$avp(sdp)")
+...
+
+4.9. rtp_inst_pvar (string)
+
+   A pseudo variable to store the chosen RTP Engine IP address. If this
+   parameter is set, the IP address and port of the instance chosen will
+   be stored in the given variable.
+
+   By default, this parameter is not set.
+
+   Example 1.9. Set rtp_inst_pvar parameter
+...
+modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
+...
+
 5. Functions
 
    5.1. set_rtpengine_set(setid[, setid])
@@ -345,7 +379,7 @@ modparam("rtpengine", "force_send_interface", "10.3.7.123")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.8. set_rtpengine_set usage
+   Example 1.10. set_rtpengine_set usage
 ...
 set_rtpengine_set("2");
 rtpengine_offer();
@@ -515,7 +549,7 @@ rtpengine_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. rtpengine_offer usage
+   Example 1.11. rtpengine_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -559,7 +593,7 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.10. rtpengine_answer usage
+   Example 1.12. rtpengine_answer usage
 
    See rtpengine_offer() function example above for example.
 
@@ -572,7 +606,7 @@ onreply_route[2]
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. rtpengine_delete usage
+   Example 1.13. rtpengine_delete usage
 ...
 rtpengine_delete();
 ...
@@ -602,7 +636,7 @@ rtpengine_delete();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. rtpengine_manage usage
+   Example 1.14. rtpengine_manage usage
 ...
 rtpengine_manage();
 ...
@@ -615,7 +649,7 @@ rtpengine_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.13. start_recording usage
+   Example 1.15. start_recording usage
 ...
 start_recording();
 ...
@@ -631,7 +665,7 @@ start_recording();
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.14. $rtpstat Usage
+   Example 1.16. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -654,7 +688,7 @@ start_recording();
    NOTE: if a RTP proxy is defined multiple times (in the same or
    diferente sete), all of its instances will be enables/disabled.
 
-   Example 1.15.  nh_enable_rtpp usage
+   Example 1.17.  nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -666,7 +700,7 @@ $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.16.  nh_show_rtpp usage
+   Example 1.18.  nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp
 ...
