@@ -1342,11 +1342,11 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			LM_ERR("no available proxies\n");
 			goto error;
 		}
-		set_rtp_inst_pvar(msg, &node->rn_url);
 		cp = send_rtpp_command(node, ng_flags.dict, &ret);
 	} while (cp == NULL);
 	LM_DBG("proxy reply: %.*s\n", ret, cp);
 
+	set_rtp_inst_pvar(msg, &node->rn_url);
 	/*** process reply ***/
 
 	resp = bencode_decode_expect(bencbuf, cp, ret, BENCODE_DICTIONARY);
