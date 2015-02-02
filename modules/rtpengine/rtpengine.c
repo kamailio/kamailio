@@ -211,7 +211,13 @@ static int *rtpp_socks = 0;
 static int     setid_avp_type;
 static int_str setid_avp;
 
+static str            write_sdp_avp = {NULL, 0};
+static avp_name_t     write_sdp_avp_name;
+static unsigned short write_sdp_avp_flags;
+
+
 char* force_send_ip_str="";
+
 
 typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
@@ -282,6 +288,7 @@ static param_export_t params[] = {
 	{"setid_avp",             PARAM_STRING, &setid_avp_param },
 	{"force_send_interface",  PARAM_STRING, &force_send_ip_str	},
 	{"rtp_inst_pvar",         PARAM_STR, &rtp_inst_pv_param },
+	{"write_sdp_avp",         PARAM_STR, &write_sdp_avp          },
 	{0, 0, 0}
 };
 
@@ -851,6 +858,21 @@ mod_init(void)
 		return -1;
 	    }
 	    setid_avp_type = avp_flags;
+	}
+
+	if (write_sdp_avp.len > 0) {
+		avp_spec = pv_cache_get(&write_sdp_avp);
+		if (avp_spec==NULL || (avp_spec->type != PVT_AVP)) {
+		LM_ERR("write_sdp_avp: malformed or non AVP definition <%.*s>\n",
+		       write_sdp_avp.len, write_sdp_avp.s);
+		return -1;
+		}
+		if (pv_get_avp_name(0, &(avp_spec->pvp), &write_sdp_avp_name,
+		                    &write_sdp_avp_flags) != 0) {
+		LM_ERR("write_sdp_avp: invalid AVP definition <%.*s>\n",
+		       write_sdp_avp.len, write_sdp_avp.s);
+		return -1;
+		}
 	}
 
 	if (rtpp_strings)
@@ -1962,6 +1984,7 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
 	bencode_item_t *dict;
 	str body, newbody;
 	struct lump *anchor;
+	avp_value_t avp_val;
 
 	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, &body);
 	if (!dict)
@@ -1978,14 +2001,34 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
 	if (more)
 		body_intermediate = newbody;
 	else {
-		anchor = del_lump(msg, body.s - msg->buf, body.len, 0);
-		if (!anchor) {
-			LM_ERR("del_lump failed\n");
-			goto error_free;
-		}
-		if (!insert_new_lump_after(anchor, newbody.s, newbody.len, 0)) {
-			LM_ERR("insert_new_lump_after failed\n");
-			goto error_free;
+		if (write_sdp_avp.len > 0) {
+			avp_val.s.len = newbody.len;
+			avp_val.s.s = shm_malloc(avp_val.s.len);
+
+			if (avp_val.s.s == NULL) {
+				LM_ERR("No more PKG memory\n");
+				goto error_free;
+			}
+
+			memcpy(avp_val.s.s, newbody.s, avp_val.s.len);
+			pkg_free(newbody.s);
+
+			if (add_avp(AVP_VAL_STR | write_sdp_avp_flags, write_sdp_avp_name, avp_val) != 0)
+			{
+				LM_ERR("Failed to add SDP avp %.*s\n", write_sdp_avp.len, write_sdp_avp.s);
+				pkg_free(avp_val.s.s);
+				return -1;
+			}
+		} else {
+			anchor = del_lump(msg, body.s - msg->buf, body.len, 0);
+			if (!anchor) {
+				LM_ERR("del_lump failed\n");
+				goto error_free;
+			}
+			if (!insert_new_lump_after(anchor, newbody.s, newbody.len, 0)) {
+				LM_ERR("insert_new_lump_after failed\n");
+				goto error_free;
+			}
 		}
 	}
 
