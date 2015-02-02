@@ -62,10 +62,26 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-    LM_ERR("mod_init_values ip  %s", statsd_params.ip);
-    LM_ERR("mod_init_values port %s", statsd_params.port);
-    int rc = statsd_init(statsd_params.ip, statsd_params.port);
-    LM_ERR("Error code in mod_init is %i",rc);
+    int rc = 0;
+    if(!statsd_params.ip){
+        LM_INFO("Statsd init ip value is null. use default 127.0.0.1\r\n");
+    }else{
+        LM_INFO("Statsd init ip value %s \r\n", statsd_params.ip);
+    }
+
+    if(!statsd_params.port){
+        LM_INFO("Statsd init port value is null. use default 8125\r\n");
+    } else {
+        LM_INFO("Statsd init port value %s\r\n", statsd_params.port);
+    }
+
+    rc = statsd_init(statsd_params.ip, statsd_params.port);
+    if (rc < 0){
+        LM_ERR("Statsd connection failed (ERROR_CODE: %i) \n",rc);
+        return -1;
+    }else{
+        LM_INFO("Statsd: sucess connection to statsd server\n");
+    }
     return 0;
 }
 
@@ -100,7 +116,7 @@ static int func_time_start(struct sip_msg *msg, char *key)
     avp_val.s.len = strlen(avp_val.s.s);
 
 	if (add_avp(AVP_NAME_STR|AVP_VAL_STR, avp_key, avp_val) < 0) {
-        LM_ERR("failed to create AVP\n");
+        LM_ERR("Statsd: time start failed to create AVP\n");
         return -1;
     }
     return 1;
@@ -117,7 +133,7 @@ static int func_time_end(struct sip_msg *msg, char *key)
     struct search_state st;
 
     get_milliseconds(unix_time);
-    LM_ERR("STOP %s",unix_time);
+    LM_DBG("Statsd: statsd_stop at %s\n",unix_time);
     avp_t* prev_avp;
 
     int_str avp_value, avp_name;
@@ -127,18 +143,22 @@ static int func_time_end(struct sip_msg *msg, char *key)
     prev_avp = search_first_avp(
         AVP_NAME_STR|AVP_VAL_STR, avp_name, &avp_value, &st);
     if(avp_value.s.len == 0){
-        LM_ERR("Not valid key(%s)",key);
+        LM_ERR("Statsd: statsd_stop not valid key(%s)\n",key);
         return 1;
     }
 
     start_time = strtol(avp_value.s.s, &endptr,10);
     if(strlen(endptr) >0){
-      LM_ERR("Not valid key(%s) it's not a number value=%s",key,avp_value.s.s);
+      LM_DBG(
+          "Statsd:statsd_stop not valid key(%s) it's not a number value=%s\n",
+          key, avp_value.s.s);
       return 0;
     }
 
     result = atol(unix_time) - start_time;
-    LM_DBG("Start_time=%ld unix_time=%ld (%i)",start_time, atol(unix_time),result);
+    LM_DBG(
+        "Statsd: statsd_stop Start_time=%ld unix_time=%ld (%i)\n",
+        start_time, atol(unix_time), result);
     destroy_avp(prev_avp);
     return statsd_timing(key, result);
 }
