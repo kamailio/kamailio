@@ -123,6 +123,10 @@ void worker_loop(int id)
 					del_nonshm_lump_rpl(&current_job->msg->reply_lump);
 					pkg_free(peer_response.body.s);
 				}
+				if(current_job->msg->from->parsed){
+					free_to(current_job->msg->from->parsed);
+				}
+
 				LM_DBG("sent reply\n");
 				shm_free(current_job->msg);
 				shm_free(current_job);

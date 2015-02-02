@@ -38,20 +38,22 @@ int statsd_connect(void){
         NULL, &serverAddr);
     if (error != 0)
     {
-        LM_ERR("could not initiate server information (%s)\n",gai_strerror(error));
+        LM_ERR(
+            "Statsd: could not initiate server information (%s)\n",
+            gai_strerror(error));
         return False;
     }
 
     statsd_socket.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (statsd_socket.sock == 0 ){
-        LM_ERR("could not initiate a connect to statsd\n");
+        LM_ERR("Statsd: could not initiate a connect to statsd\n");
         return False;
     }
 
     rc = connect(
         statsd_socket.sock, serverAddr->ai_addr, serverAddr->ai_addrlen);
-    if (rc <0){
-        LM_ERR("could not initiate a connect to statsd\n");
+    if (rc < 0){
+        LM_ERR("Statsd: could not initiate a connect to statsd\n");
         return False;
     }
     return True;
@@ -61,13 +63,12 @@ int send_command(char *command){
     int send_result;
 
     if (!statsd_connect()){
-        LM_ERR("Connection lost to statsd");
         return False;
     }
 
     send_result = send(statsd_socket.sock, command, strlen(command), 0);
     if ( send_result < 0){
-        LM_ERR("could not send the correct info to statsd (%i| %s)",
+        LM_ERR("could not send the correct info to statsd (%i| %s)\n",
             send_result, strerror(errno));
         return True;
     }
@@ -81,7 +82,7 @@ int statsd_set(char *key, char *value){
    int val;
    val = strtol(value, &end, 0);
    if (*end){
-       LM_ERR("statsd_count could not  use the provide value(%s)", value);
+       LM_ERR("statsd_count could not  use the provide value(%s)\n", value);
        return False;
    }
    snprintf(command, sizeof command, "%s:%i|s\n", key, val);
@@ -102,7 +103,7 @@ int statsd_count(char *key, char *value){
 
    val = strtol(value, &end, 0);
    if (*end){
-       LM_ERR("statsd_count could not  use the provide value(%s)", value);
+       LM_ERR("statsd_count could not  use the provide value(%s)\n", value);
        return False;
    }
    snprintf(command, sizeof command, "%s:%i|c\n", key, val);
@@ -123,8 +124,6 @@ int statsd_init(char *ip, char *port){
     if (port != NULL ){
        statsd_connection.port = port;
     }
-    LM_ERR("Statsd_init ip %s", statsd_connection.ip);
-    LM_ERR("Statsd_init port %s", statsd_connection.port);
     return statsd_connect();
 }
 

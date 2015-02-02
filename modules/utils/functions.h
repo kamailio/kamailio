@@ -24,7 +24,7 @@
 
 /*!
  * \file
- * \brief SIP-router utils :: 
+ * \brief Kamailio utils :: 
  * \ingroup utils
  * Module: \ref utils
  */

@@ -169,7 +169,7 @@ struct source_list_t {
 
 static gen_lock_t *lock = NULL;
 static struct source_list_t *sources = NULL;
-static struct dtrie_node_t *dtrie_root;
+static struct dtrie_node_t *dtrie_root = NULL;
 
 
 static int check_user_blacklist_fixup(void** param, int param_no)
@@ -627,7 +627,7 @@ static int init_source_list(void)
 		SHM_MEM_ERROR;
 		return -1;
 	}
-	sources->head = NULL;
+	memset(sources, 0, sizeof(struct source_list_t));
 	return 0;
 }
 

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2009 1&1 Internet AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -22,7 +20,7 @@
 
 /*!
  * \file
- * \brief SIP-router utils :: 
+ * \brief Kamailio utils :: 
  * \ingroup utils
  * Module: \ref utils
  */

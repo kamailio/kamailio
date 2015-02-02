@@ -64,6 +64,10 @@ struct AAA_AVP_List;
 struct AAAMessage;
 enum dialog_direction;
 
+int audio_default_bandwidth;
+int video_default_bandwidth;
+
+
 /*helper*/
 int rx_add_framed_ip_avp(AAA_AVP_LIST * list, str ip, uint16_t version);
 

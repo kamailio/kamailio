@@ -44,6 +44,17 @@
 
         <email>richard.good@smilecoms.com</email>
       </author>
+
+      <author>
+        <firstname>Carsten</firstname>
+
+        <surname>Bock</surname>
+        <affiliation>
+          <orgname>ng-voice GmbH</orgname>
+        </affiliation>
+
+        <email>carsten@ng-voice.com</email>
+      </author>
     </authorgroup>
 
     <copyright>
@@ -55,6 +66,10 @@
       <year>2012</year>
 
       <holder>Smile Communications</holder>
+    </copyright>
+    <copyright>
+      <year>2015</year>
+      <holder>ng-voice GmbH</holder>
     </copyright>
   </bookinfo>
 

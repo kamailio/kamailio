@@ -68,14 +68,21 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
     flag_t old_bflags;
     int i = 0;
 
+	if (!_m){
+		LM_ERR("NULL message!!!\n");
+		return -1;
+	}
 
-    if (_m->new_uri.s) uri = _m->new_uri;
-    else uri = _m->first_line.u.request.uri;
+	if (_m->new_uri.s) aor = _m->new_uri;
+	else aor = _m->first_line.u.request.uri;
+	
+	for(i=0;i<aor.len;i++)
+		if (aor.s[i]==';' || aor.s[i]=='?') {
+			aor.len = i;
+			break;
+		}
 
-    if (extract_aor(&uri, &aor) < 0) {
-	LM_ERR("failed to extract address of record\n");
-	return -3;
-    }
+	LM_DBG("Looking for <%.*s>\n",aor.len,aor.s);
 
     get_act_time();
 
@@ -87,6 +94,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
 	return -1;
     }
     ret = -1;
+    i = 0;
 
     while (i < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[i])) {
 	if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
@@ -99,6 +107,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
 
     /* look first for an un-expired and suported contact */
     if (ptr == 0) {
+	LM_INFO("No contacts founds for IMPU <%.*s>\n",aor.len,aor.s);
 	/* nothing found */
 	goto done;
     }

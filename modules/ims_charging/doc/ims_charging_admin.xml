@@ -737,7 +737,8 @@ modparam("ims_charging", "service_context_id_release", "262")
 
     <section>
       <title><function moreinfo="none">Ro_CCR(route_name, direction,
-      charge_type, unit_type, reservation_units, domain, trunk_id</function></title>
+      reservation_units, domain, incoming_trunk_id, outgoing_trunk_id</function>
+      </title>
 
       <para>Perform a CCR on Diameter Ro interface for Charging</para>
 
@@ -755,21 +756,6 @@ modparam("ims_charging", "service_context_id_release", "262")
         </listitem>
 
         <listitem>
-          <para><emphasis>charge_type</emphasis> "IEC" = Immediate Event
-          Charging, "ECUR" - Event Charging with Unit Reservation or "SCUR" -
-          Session Charging with Unit Reservation.</para>
-
-          <emphasis>(Note: At the moment only SCUR is supported)</emphasis>
-        </listitem>
-
-        <listitem>
-          <para><emphasis>unit_type</emphasis> Types of the unit to be
-          requested</para>
-
-          <emphasis>(unused at the moment)</emphasis>
-        </listitem>
-
-        <listitem>
           <para><emphasis>reservation_units</emphasis> how many units (at the
           moment seconds) should be reservated at the moment.</para>
         </listitem>
@@ -780,8 +766,13 @@ modparam("ims_charging", "service_context_id_release", "262")
         </listitem>
 	
 	<listitem>
-          <para><emphasis>trunk_id</emphasis> Identifies to trunk group from 
-	  which this originates or terminates.</para>
+          <para><emphasis>incoming_trunk_id</emphasis> Identifies the trunk group 
+	  from which this originates.</para>
+        </listitem>
+	
+	<listitem>
+          <para><emphasis>outgoing_trunk_id</emphasis> Identifies the trunk 
+	  group where this will be terminated.</para>
         </listitem>
       </itemizedlist>
 
@@ -796,7 +787,7 @@ modparam("ims_charging", "service_context_id_release", "262")
         <programlisting format="linespecific">
 ...
   xlog("L_DBG","Sending initial CCR Request for call\n");
-  Ro_CCR("CHARGING_CCR_REPLY", "orig", "SCUR", "", "30","1");
+    Ro_CCR("RO_ASYNC_TERM_REPLY", "term", 30, "1", "1");
 }
 
 route[CHARGING_CCR_REPLY] 

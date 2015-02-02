@@ -14,7 +14,8 @@ struct interim_ccr {
 
 void credit_control_session_callback(int event, void* session);
 void remove_aaa_session(str *session_id);
-int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, str* charge_type, str* unit_type, int reservation_units, str *trunk_id, cfg_action_t* action, unsigned int tindex, unsigned int tlabel);
+int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservation_units, 
+	    str *incoming_trunk_id, str *outgoing_trunk_id, cfg_action_t* action, unsigned int tindex, unsigned int tlabel);
 void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned int reserve);
 void send_ccr_stop(struct ro_session *ro_session);
 int get_direction_as_int(str* direction);

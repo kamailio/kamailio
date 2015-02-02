@@ -7,8 +7,8 @@
 
 #include "ro_session_hash.h"
 
-#define MAX_LDG_LOCKS  2048
-#define MIN_LDG_LOCKS  2
+#define MAX_ROSESSION_LOCKS  2048
+#define MIN_ROSESSION_LOCKS  2
 
 /*! global ro_session table */
 struct ro_session_table *ro_session_table = 0;
@@ -82,7 +82,7 @@ int init_ro_session_table(unsigned int size) {
     unsigned int n;
     unsigned int i;
 
-    ro_session_table = (struct ro_session_table*) shm_malloc(sizeof (struct ro_session_table) +size * sizeof (struct ro_session_entry));
+    ro_session_table = (struct ro_session_table*) shm_malloc(sizeof (struct ro_session_table) + size * sizeof (struct ro_session_entry));
     if (ro_session_table == 0) {
         LM_ERR("no more shm mem (1)\n");
         goto error0;
@@ -92,8 +92,8 @@ int init_ro_session_table(unsigned int size) {
     ro_session_table->size = size;
     ro_session_table->entries = (struct ro_session_entry*) (ro_session_table + 1);
 
-    n = (size < MAX_LDG_LOCKS) ? size : MAX_LDG_LOCKS;
-    for (; n >= MIN_LDG_LOCKS; n--) {
+    n = (size < MAX_ROSESSION_LOCKS) ? size : MAX_ROSESSION_LOCKS;
+    for (; n >= MIN_ROSESSION_LOCKS; n--) {
         ro_session_table->locks = lock_set_alloc(n);
         if (ro_session_table->locks == 0)
             continue;
@@ -107,20 +107,21 @@ int init_ro_session_table(unsigned int size) {
     }
 
     if (ro_session_table->locks == 0) {
-        LM_ERR("unable to allocted at least %d locks for the hash table\n",
-                MIN_LDG_LOCKS);
+        LM_ERR("unable to allocate at least %d locks for the hash table\n",
+                MIN_ROSESSION_LOCKS);
         goto error1;
     }
 
     for (i = 0; i < size; i++) {
         memset(&(ro_session_table->entries[i]), 0, sizeof (struct ro_session_entry));
-        ro_session_table->entries[i].next_id = rand();
+        ro_session_table->entries[i].next_id = rand() % (3*size);
         ro_session_table->entries[i].lock_idx = i % ro_session_table->locks_no;
     }
 
     return 0;
 error1:
     shm_free(ro_session_table);
+    ro_session_table = NULL;
 error0:
     return -1;
 }
@@ -176,10 +177,10 @@ void destroy_dlg_table(void) {
 
 struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, 
 	str* called_asserted_identity, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
-	int active_rating_group, int active_service_identifier, str *trunk_id){
+	int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id){
     LM_DBG("Building Ro Session **********");
     char *p;
-    unsigned int len = session_id->len + callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + trunk_id->len + sizeof (struct ro_session);
+    unsigned int len = session_id->len + callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + incoming_trunk_id->len + outgoing_trunk_id->len + sizeof (struct ro_session);
     struct ro_session *new_ro_session = (struct ro_session*) shm_malloc(len);
 
     if (!new_ro_session) {
@@ -235,10 +236,15 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     memcpy(p, called_asserted_identity->s, called_asserted_identity->len);
     p += called_asserted_identity->len;
     
-    new_ro_session->trunk_id.s = p;
-    new_ro_session->trunk_id.len = trunk_id->len;
-    memcpy(p, trunk_id->s, trunk_id->len);
-    p += trunk_id->len;
+    new_ro_session->incoming_trunk_id.s = p;
+    new_ro_session->incoming_trunk_id.len = incoming_trunk_id->len;
+    memcpy(p, incoming_trunk_id->s, incoming_trunk_id->len);
+    p += incoming_trunk_id->len;
+    
+    new_ro_session->outgoing_trunk_id.s = p;
+    new_ro_session->outgoing_trunk_id.len = outgoing_trunk_id->len;
+    memcpy(p, outgoing_trunk_id->s, outgoing_trunk_id->len);
+    p += outgoing_trunk_id->len;
     
     new_ro_session->avp_value.mac.s		= p;
     new_ro_session->avp_value.mac.len	= mac->len;

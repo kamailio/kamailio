@@ -40,7 +40,7 @@
 MODULE_VERSION
 
 /* MODULE OBJECT */
-sca_mod			*sca;
+sca_mod			*sca = NULL;
 
 
 /* EXTERNAL API */
@@ -210,6 +210,7 @@ sca_set_config( sca_mod *scam )
 	LM_ERR( "Failed to shm_malloc module configuration" );
 	return( -1 );
     }
+    memset(scam->cfg, 0, sizeof( sca_config ));
 
     if ( outbound_proxy.s ) {
 	scam->cfg->outbound_proxy = &outbound_proxy;
@@ -293,23 +294,23 @@ sca_mod_init( void )
 
     if ( rpc_register_array( sca_rpc ) != 0 ) {
 	LM_ERR( "Failed to register RPC commands" );
-	return( -1 );
+	goto error;
     }
 
     if ( sca_bind_srdb1( sca, &dbf ) != 0 ) {
 	LM_ERR( "Failed to initialize required DB API" );
-	return( -1 );
+	goto error;
     }
 
     if ( load_tm_api( &tmb ) != 0 ) {
 	LM_ERR( "Failed to initialize required tm API" );
-	return( -1 );
+	goto error;
     }
     sca->tm_api = &tmb;
 
     if ( sca_bind_sl( sca, &slb ) != 0 ) {
 	LM_ERR( "Failed to initialize required sl API" );
-	return( -1 );
+	goto error;
     }
     
     if ( sca_hash_table_create( &sca->subscriptions,
@@ -363,10 +364,15 @@ error:
     void
 sca_mod_destroy( void )
 {
+	if(sca==0)
+		return;
+
     /* write back to the DB to retain most current subscription info */
     if ( sca_subscription_db_update() != 0 ) {
-	LM_ERR( "sca_mod_destroy: failed to save current subscriptions "
-		"in DB %.*s", STR_FMT( sca->cfg->db_url ));
+		if(sca && sca->cfg && sca->cfg->db_url) {
+			LM_ERR( "sca_mod_destroy: failed to save current subscriptions "
+				"in DB %.*s", STR_FMT( sca->cfg->db_url ));
+		}
     }
 
     sca_db_disconnect();

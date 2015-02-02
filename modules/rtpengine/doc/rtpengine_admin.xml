@@ -261,6 +261,25 @@ modparam("rtpengine", "force_send_interface", "10.3.7.123")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.rtp_inst_pvar">
+		<title><varname>rtp_inst_pvar</varname> (string)</title>
+		<para>
+			A pseudo variable to store the chosen RTP Engine IP address.
+			If this parameter is set, the IP address and port of the instance chosen will be stored in the given variable.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>rtp_inst_pvar</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

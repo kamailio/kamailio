@@ -221,7 +221,12 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			Not a huge problem, fr timer will fire, but CANCEL
 			will not be sent. last_received will be set to 408. */
 
-		reset_kr();
+		/* We should not reset kr here to 0 as it's quite possible before continuing the dev. has correctly set the
+		 * kr by, for example, sending a transactional reply in code - resetting here will cause a dirty log message
+		 * "WARNING: script writer didn't release transaction" to appear in log files. TODO: maybe we need to add 
+		 * a special kr for async?
+		 * reset_kr();
+		 */
 
 		/* fake the request and the environment, like in failure_route */
 		if (!fake_req(&faked_req, t->uas.request, 0 /* extra flags */, uac)) {

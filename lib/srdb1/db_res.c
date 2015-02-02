@@ -148,6 +148,7 @@ int db_allocate_columns(db1_res_t* _r, const unsigned int cols)
 		LM_ERR("no private memory left\n");
 		return -1;
 	}
+	memset(RES_NAMES(_r), 0, sizeof(db_key_t) * cols);
 	LM_DBG("allocate %d bytes for result names at %p\n",
 		(int)(sizeof(db_key_t) * cols),
 		RES_NAMES(_r));
@@ -158,6 +159,7 @@ int db_allocate_columns(db1_res_t* _r, const unsigned int cols)
 		pkg_free(RES_NAMES(_r));
 		return -1;
 	}
+	memset(RES_TYPES(_r), 0, sizeof(db_type_t) * cols);
 	LM_DBG("allocate %d bytes for result types at %p\n",
 		(int)(sizeof(db_type_t) * cols),
 		RES_TYPES(_r));

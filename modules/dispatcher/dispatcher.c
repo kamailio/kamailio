@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -28,7 +28,7 @@
  */
 
 /*! \defgroup dispatcher Dispatcher :: Load balancing and failover module
- * 	The dispatcher module implements a set of functions for distributing SIP requests on a 
+ * 	The dispatcher module implements a set of functions for distributing SIP requests on a
  *	set of servers, but also grouping of server resources.
  *
  *	- The module has an internal API exposed to other modules.
@@ -69,8 +69,8 @@ MODULE_VERSION
 /** parameters */
 char *dslistfile = CFG_DIR"dispatcher.list";
 int  ds_force_dst   = 1;
-int  ds_flags       = 0; 
-int  ds_use_default = 0; 
+int  ds_flags       = 0;
+int  ds_use_default = 0;
 static str dst_avp_param = {NULL, 0};
 static str grp_avp_param = {NULL, 0};
 static str cnt_avp_param = {NULL, 0};
@@ -308,13 +308,26 @@ static int mod_init(void)
 		{
 			return -1;
 		}
-	}	
+	}
 	/* copy threshholds to config */
 	cfg_get(dispatcher, dispatcher_cfg, probing_threshold)
 		= probing_threshold;
 	cfg_get(dispatcher, dispatcher_cfg, inactive_threshold)
 		= inactive_threshold;
 
+	if (ds_default_socket.s && ds_default_socket.len > 0) {
+		if (parse_phostport( ds_default_socket.s, &host.s, &host.len,
+				&port, &proto)!=0) {
+			LM_ERR("bad socket <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
+			return -1;
+		}
+		ds_default_sockinfo = grep_sock_info( &host, (unsigned short)port, proto);
+		if (ds_default_sockinfo==0) {
+			LM_WARN("non-local socket <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
+			return -1;
+		}
+		LM_INFO("default dispatcher socket set to <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
+	}
 
 	if(init_data()!= 0)
 		return -1;
@@ -466,7 +479,7 @@ static int mod_init(void)
 				|| hash_param_model==NULL) {
 			LM_ERR("malformed PV string: %s\n", hash_pvar_param.s);
 			return -1;
-		}		
+		}
 	} else {
 		hash_param_model = NULL;
 	}
@@ -522,20 +535,6 @@ static int mod_init(void)
 		register_timer(ds_check_timer, NULL, ds_ping_interval);
 	}
 
-	if (ds_default_socket.s && ds_default_socket.len > 0) {
-		if (parse_phostport( ds_default_socket.s, &host.s, &host.len,
-				&port, &proto)!=0) {
-			LM_ERR("bad socket <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
-			return -1;
-		}
-		ds_default_sockinfo = grep_sock_info( &host, (unsigned short)port, proto);
-		if (ds_default_sockinfo==0) {
-			LM_WARN("non-local socket <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
-			return -1;
-		}
-		LM_INFO("default dispatcher socket set to <%.*s>\n", ds_default_socket.len, ds_default_socket.s);
-	}
-
 	return 0;
 }
 
@@ -568,7 +567,7 @@ static void destroy(void)
 		ds_disconnect_db();
 	ds_hash_load_destroy();
 	if(ds_ping_reply_codes)
-		shm_free(ds_ping_reply_codes);	
+		shm_free(ds_ping_reply_codes);
 
 }
 
@@ -976,7 +975,7 @@ static int ds_parse_reply_codes() {
 	int* ds_ping_reply_codes_old = NULL;
 
 	/* Validate String: */
-	if (cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s == 0 
+	if (cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s == 0
 			|| cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len<=0)
 		return 0;
 
@@ -1028,7 +1027,7 @@ static int ds_parse_reply_codes() {
 				str2sint(&pit->body, &code);
 				if ((code >= 1) && (code < 7)) {
 					/* Add every code from this class, e.g. 100 to 199 */
-					for (i = (code*100); i <= ((code*100)+99); i++) 
+					for (i = (code*100); i <= ((code*100)+99); i++)
 						ds_ping_reply_codes_new[pos++] = i;
 				}
 			}
@@ -1047,7 +1046,7 @@ static int ds_parse_reply_codes() {
 		*ds_ping_reply_codes_cnt = list_size;
 		// Free the old memory area:
 		if(ds_ping_reply_codes_old)
-			shm_free(ds_ping_reply_codes_old);	
+			shm_free(ds_ping_reply_codes_old);
 		/* Less or equal? Set the number of codes first. */
 	} else {
 		// Done:
@@ -1057,7 +1056,7 @@ static int ds_parse_reply_codes() {
 		*ds_ping_reply_codes = ds_ping_reply_codes_new;
 		// Free the old memory area:
 		if(ds_ping_reply_codes_old)
-			shm_free(ds_ping_reply_codes_old);	
+			shm_free(ds_ping_reply_codes_old);
 	}
 	/* Print the list as INFO: */
 	for (i =0; i< *ds_ping_reply_codes_cnt; i++)

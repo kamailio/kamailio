@@ -43,7 +43,7 @@
 struct my_con* db_mysql_new_connection(const struct db_id* id)
 {
 	struct my_con* ptr;
-	char *host, *grp;
+	char *host, *grp, *egrp;
 	unsigned int connection_flag = 0;
 
 	if (!id) {
@@ -57,6 +57,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 		return 0;
 	}
 
+	egrp = 0;
 	memset(ptr, 0, sizeof(struct my_con));
 	ptr->ref = 1;
 	
@@ -68,9 +69,10 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 
 	mysql_init(ptr->con);
 
-	if (id->host[0] == '[' && (host = strchr(id->host, ']')) != NULL) {
+	if (id->host[0] == '[' && (egrp = strchr(id->host, ']')) != NULL) {
 		grp = id->host + 1;
-		*host = '\0';
+		*egrp = '\0';
+		host = egrp;
 		if (host != id->host + strlen(id->host)-1) {
 			host += 1; // host found after closing bracket
 		}
@@ -129,11 +131,13 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 
 	ptr->timestamp = time(0);
 	ptr->id = (struct db_id*)id;
+	if(egrp) *egrp = ']';
 	return ptr;
 
  err:
 	if (ptr && ptr->con) pkg_free(ptr->con);
 	if (ptr) pkg_free(ptr);
+	if(egrp) *egrp = ']';
 	return 0;
 }
 
