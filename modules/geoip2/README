@@ -29,14 +29,14 @@ Daniel-Constantin Mierla
 
         4. Functions
 
-              4.1. geoip_match(ipaddr, pvc)
+              4.1. geoip2_match(ipaddr, pvc)
 
         5. Exported pseudo-variables
 
    List of Examples
 
    1.1. Set path parameter
-   1.2. geoip_match usage
+   1.2. geoip2_match usage
 
 Chapter 1. Admin Guide
 
@@ -54,7 +54,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. geoip_match(ipaddr, pvc)
+        4.1. geoip2_match(ipaddr, pvc)
 
    5. Exported pseudo-variables
 
@@ -74,7 +74,7 @@ Chapter 1. Admin Guide
    the on-disk version are available at
    http://dev.maxmind.com/geoip/geoip2/downloadable/.
 
-   This module exports a new class of pseudo-variables - $gip(pvc=>key) -
+   This module exports a new class of pseudo-variables - $gip2(pvc=>key) -
    to enable access to the results of a query to the database.
 
    Many queries can be done and store results in different containers to
@@ -113,24 +113,24 @@ modparam("geoip2", "path", "/usr/local/share/GeoIP/GeoLite2-City.mmdb")
 
 4. Functions
 
-   4.1. geoip_match(ipaddr, pvc)
+   4.1. geoip2_match(ipaddr, pvc)
 
-4.1.  geoip_match(ipaddr, pvc)
+4.1.  geoip2_match(ipaddr, pvc)
 
    Match ipaddr against the GeoIP database and set the pvc container. The
-   function has to be called before accessing a key via: $gip(pvc=>key).
+   function has to be called before accessing a key via: $gip2(pvc=>key).
 
-   Example 1.2. geoip_match usage
+   Example 1.2. geoip2_match usage
 ...
-if(geoip_match("$si", "src"))
-    xlog("SIP message from: $gip(src=>cc)\n");
+if(geoip2_match("$si", "src"))
+    xlog("SIP message from: $gip2(src=>cc)\n");
 ...
 
 5. Exported pseudo-variables
 
-     * $gip(pvc=>key) - pvc is an identifier for this query result; it is
-       designated by the second parameter of geoip_match(). The key can be
-       one of the following:
+     * $gip2(pvc=>key) - pvc is an identifier for this query result; it is
+       designated by the second parameter of geoip2_match(). The key can
+       be one of the following:
           + cc - country code
           + tz - time zone
           + zip - postal code

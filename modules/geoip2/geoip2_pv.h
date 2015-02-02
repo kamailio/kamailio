@@ -27,14 +27,14 @@
 
 #include "../../pvar.h"
 
-int pv_parse_geoip_name(pv_spec_p sp, str *in);
-int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
+int pv_parse_geoip2_name(pv_spec_p sp, str *in);
+int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
-int geoip_init_pv(char *path);
-void geoip_destroy_pv(void);
-void geoip_pv_reset(str *pvclass);
-int geoip_update_pv(str *tomatch, str *pvclass);
+int geoip2_init_pv(char *path);
+void geoip2_destroy_pv(void);
+void geoip2_pv_reset(str *pvclass);
+int geoip2_update_pv(str *tomatch, str *pvclass);
 
 #endif
 

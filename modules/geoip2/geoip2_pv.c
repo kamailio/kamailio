@@ -33,7 +33,7 @@
 
 #include "geoip2_pv.h"
 
-typedef struct _sr_geoip_record {
+typedef struct _sr_geoip2_record {
 	MMDB_lookup_result_s record;
 	str time_zone;
 	str zip;
@@ -47,32 +47,32 @@ typedef struct _sr_geoip_record {
 	char nmask[8];
 	char tomatch[256];
 	int flags;
-} sr_geoip_record_t;
+} sr_geoip2_record_t;
 
-typedef struct _sr_geoip_item {
+typedef struct _sr_geoip2_item {
 	str pvclass;
 	unsigned int hashid;
-	sr_geoip_record_t r;
-	struct _sr_geoip_item *next;
-} sr_geoip_item_t;
+	sr_geoip2_record_t r;
+	struct _sr_geoip2_item *next;
+} sr_geoip2_item_t;
 
-typedef struct _geoip_pv {
-	sr_geoip_item_t *item;
+typedef struct _geoip2_pv {
+	sr_geoip2_item_t *item;
 	int type;
-} geoip_pv_t;
+} geoip2_pv_t;
 
 static MMDB_s _handle_GeoIP;
 
-static sr_geoip_item_t *_sr_geoip_list = NULL;
+static sr_geoip2_item_t *_sr_geoip2_list = NULL;
 
-sr_geoip_record_t *sr_geoip_get_record(str *name)
+sr_geoip2_record_t *sr_geoip2_get_record(str *name)
 {
-	sr_geoip_item_t *it = NULL;
+	sr_geoip2_item_t *it = NULL;
 	unsigned int hashid = 0;
 
 	hashid =  get_hash1_raw(name->s, name->len);
 
-	it = _sr_geoip_list;
+	it = _sr_geoip2_list;
 	while(it!=NULL)
 	{
 		if(it->hashid==hashid && it->pvclass.len == name->len
@@ -83,14 +83,14 @@ sr_geoip_record_t *sr_geoip_get_record(str *name)
 	return NULL;
 }
 
-sr_geoip_item_t *sr_geoip_add_item(str *name)
+sr_geoip2_item_t *sr_geoip2_add_item(str *name)
 {
-	sr_geoip_item_t *it = NULL;
+	sr_geoip2_item_t *it = NULL;
 	unsigned int hashid = 0;
 
 	hashid =  get_hash1_raw(name->s, name->len);
 
-	it = _sr_geoip_list;
+	it = _sr_geoip2_list;
 	while(it!=NULL)
 	{
 		if(it->hashid==hashid && it->pvclass.len == name->len
@@ -99,13 +99,13 @@ sr_geoip_item_t *sr_geoip_add_item(str *name)
 		it = it->next;
 	}
 	/* add new */
-	it = (sr_geoip_item_t*)pkg_malloc(sizeof(sr_geoip_item_t));
+	it = (sr_geoip2_item_t*)pkg_malloc(sizeof(sr_geoip2_item_t));
 	if(it==NULL)
 	{
 		LM_ERR("no more pkg\n");
 		return NULL;
 	}
-	memset(it, 0, sizeof(sr_geoip_item_t));
+	memset(it, 0, sizeof(sr_geoip2_item_t));
 	it->pvclass.s = (char*)pkg_malloc(name->len+1);
 	if(it->pvclass.s==NULL)
 	{
@@ -117,26 +117,26 @@ sr_geoip_item_t *sr_geoip_add_item(str *name)
 	it->pvclass.s[name->len] = '\0';
 	it->pvclass.len = name->len;
 	it->hashid = hashid;
-	it->next = _sr_geoip_list;
-	_sr_geoip_list = it;
+	it->next = _sr_geoip2_list;
+	_sr_geoip2_list = it;
 	return it;
 }
 
 
-int pv_parse_geoip_name(pv_spec_p sp, str *in)
+int pv_parse_geoip2_name(pv_spec_p sp, str *in)
 {
-	geoip_pv_t *gpv=NULL;
+	geoip2_pv_t *gpv=NULL;
 	char *p;
 	str pvc;
 	str pvs;
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
 
-	gpv = (geoip_pv_t*)pkg_malloc(sizeof(geoip_pv_t));
+	gpv = (geoip2_pv_t*)pkg_malloc(sizeof(geoip2_pv_t));
 	if(gpv==NULL)
 		return -1;
 
-	memset(gpv, 0, sizeof(geoip_pv_t));
+	memset(gpv, 0, sizeof(geoip2_pv_t));
 
 	p = in->s;
 
@@ -168,10 +168,10 @@ int pv_parse_geoip_name(pv_spec_p sp, str *in)
 
 	pvs.len = in->len - (int)(p - in->s);
 	pvs.s = p;
-	LM_DBG("geoip [%.*s] - key [%.*s]\n", pvc.len, pvc.s,
+	LM_DBG("geoip2 [%.*s] - key [%.*s]\n", pvc.len, pvc.s,
 			pvs.len, pvs.s);
 
-	gpv->item = sr_geoip_add_item(&pvc);
+	gpv->item = sr_geoip2_add_item(&pvc);
 	if(gpv->item==NULL)
 		goto error;
 
@@ -221,11 +221,11 @@ error:
 	if(gpv!=NULL)
 		pkg_free(gpv);
 
-	LM_ERR("error at PV geoip name: %.*s\n", in->len, in->s);
+	LM_ERR("error at PV geoip2 name: %.*s\n", in->len, in->s);
 	return -1;
 }
 
-int pv_geoip_get_strzval(struct sip_msg *msg, pv_param_t *param,
+int pv_geoip2_get_strzval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, char *sval)
 {
 	str s;
@@ -237,16 +237,16 @@ int pv_geoip_get_strzval(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &s);
 }
 
-int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
+int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	geoip_pv_t *gpv;
+	geoip2_pv_t *gpv;
 	MMDB_entry_data_s entry_data;
 
 	if(msg==NULL || param==NULL)
 		return -1;
 
-	gpv = (geoip_pv_t*)param->pvn.u.dname;
+	gpv = (geoip2_pv_t*)param->pvn.u.dname;
 	if(gpv==NULL)
 		return -1;
 	if(gpv->item==NULL)
@@ -296,7 +296,7 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 					snprintf(gpv->item->r.latitude, 15, "%f", entry_data.double_value);
 				gpv->item->r.flags |= 2;
 			}
-			return pv_geoip_get_strzval(msg, param, res,
+			return pv_geoip2_get_strzval(msg, param, res,
 					gpv->item->r.latitude);
 		case 4: /* lon */
 			if((gpv->item->r.flags&4)==0)
@@ -309,7 +309,7 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 					snprintf(gpv->item->r.longitude, 15, "%f", entry_data.double_value);
 				gpv->item->r.flags |= 4;
 			}
-			return pv_geoip_get_strzval(msg, param, res,
+			return pv_geoip2_get_strzval(msg, param, res,
 					gpv->item->r.longitude);
 		case 8: /* city */
 			if(gpv->item->r.city.s==NULL)
@@ -370,7 +370,7 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 					snprintf(gpv->item->r.metro, 15, "%hd", entry_data.uint16);
 				gpv->item->r.flags |= 256;
 			}
-			return pv_geoip_get_strzval(msg, param, res,
+			return pv_geoip2_get_strzval(msg, param, res,
 					gpv->item->r.metro);
 		case 13: /* nmask */
 			if((gpv->item->r.flags&1024)==0)
@@ -379,7 +379,7 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 				snprintf(gpv->item->r.nmask, 8, "%hd", gpv->item->r.record.netmask);
 				gpv->item->r.flags |= 1024;
 			}
-			return pv_geoip_get_strzval(msg, param, res,
+			return pv_geoip2_get_strzval(msg, param, res,
 					gpv->item->r.nmask);
 		default: /* cc */
 			if(gpv->item->r.country.s==NULL)
@@ -407,7 +407,7 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 	}
 }
 
-int geoip_init_pv(char *path)
+int geoip2_init_pv(char *path)
 {
 	int status = MMDB_open(path, MMDB_MODE_MMAP, &_handle_GeoIP);
 	
@@ -419,29 +419,29 @@ int geoip_init_pv(char *path)
 	return 0;
 }
 
-void geoip_destroy_list(void)
+void geoip2_destroy_list(void)
 {
 }
 
-void geoip_destroy_pv(void)
+void geoip2_destroy_pv(void)
 {
 	MMDB_close(&_handle_GeoIP);
 }
 
-void geoip_pv_reset(str *name)
+void geoip2_pv_reset(str *name)
 {
-	sr_geoip_record_t *gr = NULL;
+	sr_geoip2_record_t *gr = NULL;
 	
-	gr = sr_geoip_get_record(name);
+	gr = sr_geoip2_get_record(name);
 
 	if(gr==NULL)
 		return;
-	memset(gr, 0, sizeof(struct _sr_geoip_record));
+	memset(gr, 0, sizeof(struct _sr_geoip2_record));
 }
 
-int geoip_update_pv(str *tomatch, str *name)
+int geoip2_update_pv(str *tomatch, str *name)
 {
-	sr_geoip_record_t *gr = NULL;
+	sr_geoip2_record_t *gr = NULL;
 	int gai_error, mmdb_error;
 	
 	if(tomatch->len>255)
@@ -450,7 +450,7 @@ int geoip_update_pv(str *tomatch, str *name)
 		return -3;
 	}
 	
-	gr = sr_geoip_get_record(name);
+	gr = sr_geoip2_get_record(name);
 	if(gr==NULL)
 	{
 		LM_DBG("container not found: %s\n", tomatch->s);
@@ -469,7 +469,7 @@ int geoip_update_pv(str *tomatch, str *name)
 		LM_DBG("no match for: %s\n", gr->tomatch);
 		return -2;
 	}
-	LM_DBG("geoip PV updated for: %s\n", gr->tomatch);
+	LM_DBG("geoip2 PV updated for: %s\n", gr->tomatch);
 
 	return 1;
 }

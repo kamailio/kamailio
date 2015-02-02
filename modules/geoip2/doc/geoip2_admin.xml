@@ -38,7 +38,7 @@
 	</para>
 	<para>
 		This module exports a new class of pseudo-variables -
-		$gip(pvc=&gt;key) - to enable access to the results of a query to the
+		$gip2(pvc=&gt;key) - to enable access to the results of a query to the
 		database.
 	</para>
 	<para>
@@ -104,18 +104,18 @@ modparam("geoip2", "path", "/usr/local/share/GeoIP/GeoLite2-City.mmdb")
 	<title>Functions</title>
  	<section>
 	    <title>
-		<function moreinfo="none">geoip_match(ipaddr, pvc)</function>
+		<function moreinfo="none">geoip2_match(ipaddr, pvc)</function>
 	    </title>
 	    <para>
 			Match ipaddr against the GeoIP database and set the pvc container. The
-			function has to be called before accessing a key via: $gip(pvc=&gt;key).
+			function has to be called before accessing a key via: $gip2(pvc=&gt;key).
 	    </para>
 		<example>
-		<title><function>geoip_match</function> usage</title>
+		<title><function>geoip2_match</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(geoip_match("$si", "src"))
-    xlog("SIP message from: $gip(src=&gt;cc)\n");
+if(geoip2_match("$si", "src"))
+    xlog("SIP message from: $gip2(src=&gt;cc)\n");
 ...
 </programlisting>
 	    </example>
@@ -127,9 +127,9 @@ if(geoip_match("$si", "src"))
 		<title>Exported pseudo-variables</title>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>$gip(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an 
+				<emphasis>$gip2(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an 
 				identifier for this query result;  it is designated by the second 
-				parameter of geoip_match(). The <emphasis>key</emphasis> can be one of
+				parameter of geoip2_match(). The <emphasis>key</emphasis> can be one of
 				the following:
 				</para>
 			<itemizedlist>
