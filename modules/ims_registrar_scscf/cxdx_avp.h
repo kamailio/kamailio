@@ -53,6 +53,7 @@ struct AAAMessage;
 struct AAA_AVP;
 struct sip_msg;
 
+inline int cxdx_add_call_id(AAAMessage *msg, str data);
 /**
  * Creates and adds a Destination-Realm AVP.
  * @param msg - the Diameter message to add to.

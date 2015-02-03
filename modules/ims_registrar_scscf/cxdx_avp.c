@@ -142,6 +142,17 @@ static inline str cxdx_get_avp(AAAMessage *msg,int avp_code,int vendor_id,
 		return avp->data;
 }
 
+inline int cxdx_add_call_id(AAAMessage *msg, str data) 
+{
+    return 
+	cxdx_add_avp(msg,data.s,data.len,
+		AVP_Call_Id,
+		AAA_AVP_FLAG_VENDOR_SPECIFIC,
+		50,
+		AVP_DUPLICATE_DATA,
+		__FUNCTION__);
+}
+
 /**
  * Creates and adds a Destination-Realm AVP.
  * @param msg - the Diameter message to add to.
