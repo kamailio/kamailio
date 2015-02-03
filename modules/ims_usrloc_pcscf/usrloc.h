@@ -185,6 +185,7 @@ typedef struct pcontact_info {
  */
 typedef struct pcontact {
 	unsigned int aorhash; 					/*!< Hash over address of record */
+	unsigned int sl;                                        /*!< slot number */
 	struct hslot* slot; 					/*!< Collision slot in the hash table array we belong to */
 	str* domain; 							/*!< Pointer to domain we belong to (null terminated string) */
 	str aor;			 					/*!< Address of record */

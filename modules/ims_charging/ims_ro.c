@@ -487,6 +487,7 @@ error:
     return 0;
 }
 
+/* must be called with lock on ro_session */
 void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned int reserve) {
     AAASession * auth = 0;
 
@@ -647,6 +648,7 @@ error:
     // to it can be reused later.
     //
     struct ro_session_entry *ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
+    ro_session_lock(ro_session_table, ro_session_entry);
     unref_ro_session_unsafe(ro_session, 1, ro_session_entry);//unref from the initial timer that fired this event.
     ro_session_unlock(ro_session_table, ro_session_entry);
 

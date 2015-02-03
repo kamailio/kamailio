@@ -159,14 +159,15 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 				//if the Ro session is not active we don't need to do anything. This prevents
 				//double processing for various dialog_terminated callback events.
 				//If however, the call was never answered, then we can continue as normal
+				ro_session_lock(ro_session_table, ro_session_entry);
 				if (!ro_session->active && (ro_session->start_time != 0)) {
 					unref_ro_session(ro_session,1);
 					LM_ERR("Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);
+					ro_session_unlock(ro_session_table, ro_session_entry);
 					return;
 				}
 			
 	
-				ro_session_lock(ro_session_table, ro_session_entry);
 
 				if (ro_session->active) { // if the call was never activated, there's no timer to remove
 					int ret = remove_ro_timer(&ro_session->ro_tl);

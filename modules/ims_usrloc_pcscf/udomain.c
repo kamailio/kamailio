@@ -229,6 +229,7 @@ int mem_insert_pcontact(struct udomain* _d, str* _contact, struct pcontact_info*
 	}
 
 	sl = ((*_c)->aorhash) & (_d->size - 1);
+	(*_c)->sl = sl;
 	slot_add(&_d->table[sl], *_c);
 	update_stat(_d->contacts, 1);
 	return 0;

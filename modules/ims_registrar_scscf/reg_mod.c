@@ -195,6 +195,7 @@ static cmd_export_t cmds[] = {
     {"lookup", (cmd_function) w_lookup, 1, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"lookup_path_to_contact", (cmd_function) w_lookup_path_to_contact, 1, fixup_var_str_12, 0, REQUEST_ROUTE},
     {"term_impu_registered", (cmd_function) term_impu_registered, 1, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+    {"term_impu_has_contact", (cmd_function) term_impu_has_contact, 1, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"impu_registered", (cmd_function) impu_registered, 1, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"assign_server_unreg", (cmd_function) w_assign_server_unreg, 3, assign_save_fixup3_async, 0, REQUEST_ROUTE},
     {"add_sock_hdr", (cmd_function) add_sock_hdr, 1, fixup_str_null, 0, REQUEST_ROUTE},

@@ -60,7 +60,7 @@
  */
 int lookup(struct sip_msg* _m, udomain_t* _d) {
     impurecord_t* r;
-    str aor, uri;
+    str aor;
     ucontact_t* ptr;
     int res;
     int ret;
@@ -206,14 +206,17 @@ int lookup_path_to_contact(struct sip_msg* _m, char* contact_uri) {
 	
 	if (get_path_dst_uri(&contact->path, &path_dst) < 0) {
 	    LM_ERR("failed to get dst_uri for Path\n");
+	    ul.release_ucontact(contact);
 	    return -1;
 	}
 	if (set_path_vector(_m, &contact->path) < 0) {
 	    LM_ERR("failed to set path vector\n");
+	    ul.release_ucontact(contact);
 	    return -1;
 	}
 	if (set_dst_uri(_m, &path_dst) < 0) {
 	    LM_ERR("failed to set dst_uri of Path\n");
+	    ul.release_ucontact(contact);
 	    return -1;
 	}
 	
@@ -259,6 +262,60 @@ int impu_registered(struct sip_msg* _m, char* _t, char* _s)
 	return ret;
 }
 
+/**
+ * Check that the IMPU at the Term S has at least one valid contact...
+ * @param _m - msg
+ * @param _t - t
+ * @param _s - s
+ * @return true if there is at least one valid contact. false if not
+ */
+int term_impu_has_contact(struct sip_msg* _m, udomain_t* _d, char* _s) 
+{
+    impurecord_t* r;
+    str aor, uri;
+    ucontact_t* ptr;
+    int res;
+    int ret;
+    int i = 0;
+
+    if (_m->new_uri.s) uri = _m->new_uri;
+    else uri = _m->first_line.u.request.uri;
+
+    if (extract_aor(&uri, &aor) < 0) {
+	LM_ERR("failed to extract address of record\n");
+	return -3;
+    }
+
+    get_act_time();
+
+    ul.lock_udomain(_d, &aor);
+    res = ul.get_impurecord(_d, &aor, &r);
+    if (res > 0) {
+	LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+	ul.unlock_udomain(_d, &aor);
+	return -1;
+    }
+
+    while (i < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[i])) {
+	if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
+	    LM_DBG("Found a valid contact [%.*s]\n", ptr->c.len, ptr->c.s);
+	    i++;
+	    ret = 1;
+	    break;
+	}
+	i++;
+    }
+
+    /* look first for an un-expired and supported contact */
+    if (ptr == 0) {
+	/* nothing found */
+	ret = -1;
+    } 
+
+    ul.unlock_udomain(_d, &aor);
+
+    return ret;
+}
 /*! \brief the term_impu_registered() function
  * Return true if the AOR in the Request-URI  for the terminating user is registered
  */

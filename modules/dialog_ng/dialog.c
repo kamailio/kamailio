@@ -65,9 +65,6 @@ struct tm_binds d_tmb;
 struct rr_binds d_rrb;
 pv_spec_t timeout_avp;
 
-int active_dlgs_cnt = 0;
-int early_dlgs_cnt	= 0;
-
 /* db stuff */
 int dlg_db_mode_param = DB_MODE_NONE;
 static int db_fetch_rows = 200;
@@ -91,6 +88,10 @@ static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_dlg_terminate(struct sip_msg*, char*, char*);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
+
+stat_var *active_dlgs = 0;
+stat_var *early_dlgs = 0;
+stat_var *expired_dlgs = 0;
 
 static cmd_export_t cmds[] = {
     {"set_dlg_profile", (cmd_function) w_set_dlg_profile, 1, fixup_profile,
@@ -157,6 +158,12 @@ static mi_export_t mi_cmds[] = {
     /* TODO: restore old dialog functionality later - also expose dialoig_out cmds, possibly*/
 };
 
+stat_export_t mod_stats[] = {
+    {"active_dialogs", STAT_NO_RESET, &active_dlgs},
+    {"early_dialogs", STAT_NO_RESET, &early_dlgs},
+    {0, 0, 0}
+};
+
 static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
@@ -164,7 +171,7 @@ struct module_exports exports = {
     DEFAULT_DLFLAGS, /* dlopen flags */
     cmds, /* exported functions */
     mod_params, /* param exports */
-    0, /* exported statistics */
+    mod_stats, /* exported statistics */
     mi_cmds, /* exported MI functions */
     0, /* exported pseudo-variables */
     0, /* extra processes */
@@ -361,6 +368,14 @@ static int mod_init(void) {
         LM_ERR("failed to register RPC commands\n");
         return -1;
     }
+
+#ifdef STATISTICS
+    /* register statistics */
+    if (register_module_stats(exports.name, mod_stats) != 0) {
+	LM_ERR("failed to register %s statistics\n", exports.name);
+	return -1;
+    }
+#endif
 
 
     if (faked_msg_init() < 0)
