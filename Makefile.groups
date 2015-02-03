@@ -124,7 +124,7 @@ mod_list_perldeps=app_perl db_perlvdb
 mod_list_python=app_python
 
 # - modules depending on geoip library
-mod_list_geoip=geoip
+mod_list_geoip=geoip geoip2
 
 # - modules depending on sqlite library
 mod_list_sqlite=db_sqlite
