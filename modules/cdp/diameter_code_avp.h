@@ -265,6 +265,7 @@ typedef enum {
 	AVP_MIP6_Agent_Info				  =  486, //RFC5447
 	
 	AVP_Service_Selection			  =  493, //RFC5778  
+	AVP_Call_Id                       =  494,
 	
 }AAA_AVPCodeNr;
 
