@@ -266,7 +266,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
 	}
 
 	ro_session_entry = &(ro_session_table->entries[i_req->ro_session->h_entry]);
-
+	ro_session_lock(ro_session_table, ro_session_entry);
 	LM_DBG("credit=%d credit_valid_for=%d", i_req->new_credit, i_req->credit_valid_for);
 
 	used_secs = now - i_req->ro_session->last_event_timestamp;
@@ -392,7 +392,6 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 	}
 
 	ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
-	ro_session_lock(ro_session_table, ro_session_entry);
 	
 	LM_DBG("event-type=%d", ro_session->event_type);
 	
@@ -467,7 +466,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 	update_stat(killed_calls, 1);
 
 	//unref_ro_session_unsafe(ro_session, 1, ro_session_entry); //unref from the initial timer that fired this event.
-	ro_session_unlock(ro_session_table, ro_session_entry);
+//	ro_session_unlock(ro_session_table, ro_session_entry);
 
 	dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id, NULL);
 	return;
