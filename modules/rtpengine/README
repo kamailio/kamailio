@@ -67,7 +67,7 @@ Richard Fuchs
               4.5. extra_id_pv (string)
               4.6. setid_avp (string)
               4.7. force_send_interface (string)
-              4.8. write_sdp_avp (string)
+              4.8. write_sdp_pv (string)
               4.9. rtp_inst_pvar (string)
 
         5. Functions
@@ -131,7 +131,7 @@ Chapter 1. Admin Guide
         4.5. extra_id_pv (string)
         4.6. setid_avp (string)
         4.7. force_send_interface (string)
-        4.8. write_sdp_avp (string)
+        4.8. write_sdp_pv (string)
         4.9. rtp_inst_pvar (string)
 
    5. Functions
@@ -222,7 +222,7 @@ Chapter 1. Admin Guide
    4.5. extra_id_pv (string)
    4.6. setid_avp (string)
    4.7. force_send_interface (string)
-   4.8. write_sdp_avp (string)
+   4.8. write_sdp_pv (string)
    4.9. rtp_inst_pvar (string)
 
 4.1. rtpengine_sock (string)
@@ -322,11 +322,11 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 modparam("rtpengine", "force_send_interface", "10.3.7.123")
 ...
 
-4.8. write_sdp_avp (string)
+4.8. write_sdp_pv (string)
 
-   If this parameter is set to a valid AVP specifier, the SDP returned by
-   rtpengine in the offer/answer operations is returned in the specified
-   SDP instead of the message body.
+   If this parameter is set to a valid AVP or script var specifier, the
+   SDP returned by rtpengine in the offer/answer operations is returned in
+   the specified variable instead of the message body.
 
    There is no default value.
 

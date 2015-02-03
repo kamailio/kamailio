@@ -260,12 +260,12 @@ modparam("rtpengine", "force_send_interface", "10.3.7.123")
 </programlisting>
 		</example>
 	</section>
-	<section id="rtpengine.p.write_sdp_avp">
-		<title><varname>write_sdp_avp</varname> (string)</title>
+	<section id="rtpengine.p.write_sdp_pv">
+		<title><varname>write_sdp_pv</varname> (string)</title>
 		<para>
-			If this parameter is set to a valid AVP specifier, the
+			If this parameter is set to a valid AVP or script var specifier, the
             SDP returned by rtpengine in the offer/answer operations
-            is returned in the specified SDP instead of the
+            is returned in the specified variable instead of the
             message body.
 		</para>
 		<para>
