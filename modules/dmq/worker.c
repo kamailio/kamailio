@@ -76,6 +76,7 @@ void worker_loop(int id)
 	dmq_job_t* current_job;
 	peer_reponse_t peer_response;
 	int ret_value;
+	int not_parsed;
 	dmq_node_t *dmq_node = NULL;
 
 	worker = &workers[id];
@@ -92,6 +93,11 @@ void worker_loop(int id)
 			/* job_queue_pop might return NULL if queue is empty */
 			if(current_job) {
 				/* extract the from uri */
+				if (current_job->msg->from->parsed) {
+					not_parsed = 0;
+				} else {
+					not_parsed = 1;
+				}
 				if (parse_from_header(current_job->msg) < 0) {
 					LM_ERR("bad sip message or missing From hdr\n");
 				} else {
@@ -123,7 +129,7 @@ void worker_loop(int id)
 					del_nonshm_lump_rpl(&current_job->msg->reply_lump);
 					pkg_free(peer_response.body.s);
 				}
-				if(current_job->msg->from->parsed){
+				if((current_job->msg->from->parsed)&&(not_parsed)){
 					free_to(current_job->msg->from->parsed);
 				}
 
