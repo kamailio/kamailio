@@ -248,7 +248,7 @@ inline int auth_client_statefull_sm_process(cdp_session_t* s, int event, AAAMess
                 case AUTH_EV_SERVICE_TERMINATED:
                 case AUTH_EV_SESSION_GRACE_TIMEOUT:
                     cdp_session_cleanup(s, NULL);
-		    s==0;
+		    s=0;
                     break;
 
                 default:
