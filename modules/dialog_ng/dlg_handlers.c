@@ -47,9 +47,8 @@ extern struct tm_binds d_tmb;
 
 /* statistic variables */
 extern stat_var *early_dlgs; /*!< number of early dialogs */
-extern stat_var *processed_dlgs; /*!< number of processed dialogs */
+extern stat_var *active_dlgs; /*!< number of active dialogs */
 extern stat_var *expired_dlgs; /*!< number of expired dialogs */
-extern stat_var *failed_dlgs; /*!< number of failed dialogs */
 
 extern pv_elem_t *ruri_param_model; /*!< pv-string to get r-uri */
 
@@ -504,6 +503,10 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
 	if (dlg_db_mode == DB_MODE_REALTIME)
 	    update_dialog_dbinfo(dlg);
 
+	if (old_state != DLG_STATE_EARLY) {
+	    update_stat(early_dlgs, 1);
+	}
+
 	run_dlg_callbacks(DLGCB_EARLY, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
 	return;
     }
@@ -604,7 +607,10 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
         if (unref)
             unref_dlg(dlg, unref);
 
-        return;
+		if (old_state == DLG_STATE_EARLY)
+	    update_stat(early_dlgs, -1);
+
+		return;
     }
 
     if (unref) unref_dlg(dlg, unref);
@@ -1195,12 +1201,13 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
                     dlg->callid.len, dlg->callid.s,
                     dlg->from_tag.len, dlg->from_tag.s);
 
-        } else {
-            unref++;
-        }
-        /* dialog terminated (BYE) */
-        dlg_terminated(req, dlg, dir);
-        unref_dlg(dlg, unref);
+		} else {
+			unref++;
+		}
+		/* dialog terminated (BYE) */
+		dlg_terminated(req, dlg, dir);
+		unref_dlg(dlg, unref);
+		update_stat(active_dlgs, -1);
 
         return;
     }
@@ -1303,10 +1310,11 @@ void dlg_ontimeout(struct dlg_tl *tl) {
                 dlg->from_tag.len, dlg->from_tag.s);
 
 
-        /* dialog timeout */
-        run_dlg_callbacks(DLGCB_EXPIRED, dlg, NULL, NULL, DLG_DIR_NONE, 0);
-
-        unref_dlg(dlg, unref + 1);
+		/* dialog timeout */
+		run_dlg_callbacks(DLGCB_EXPIRED, dlg, NULL, NULL, DLG_DIR_NONE, 0);
+		unref_dlg(dlg, unref + 1);
+		update_stat(&active_dlgs, -1);
+		update_stat(&expired_dlgs, 1);
     } else {
         unref_dlg(dlg, 1);
     }

@@ -38,6 +38,7 @@
 #include "../../str.h"
 #include "../../socket_info.h"
 #include "../../lib/srutils/srjson.h"
+#include "../../lib/kcore/statistics.h"
 
 #include "dlg_hash.h"
 #include "dlg_var.h"
@@ -123,8 +124,9 @@ static db1_con_t* dialog_db_handle    = 0; /* database connection handle */
 static db_func_t dialog_dbf;
 
 extern int dlg_enable_stats;
-extern int active_dlgs_cnt;
-extern int early_dlgs_cnt;
+extern stat_var *active_dlgs; /*!< number of active dialogs */
+extern stat_var *early_dlgs; /*!< number of active dialogs */
+
 
 #define GET_FIELD_IDX(_val, _idx)\
 		(_val + _idx)
@@ -546,10 +548,10 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			dlg->state 		= VAL_INT(GET_FIELD_IDX(values, DLGI_STATE_COL_IDX));
 
 			if (dlg->state==DLG_STATE_CONFIRMED) {
-				active_dlgs_cnt++;
+				update_stat(active_dlgs, 1);
 			}
 			else if (dlg->state==DLG_STATE_EARLY) {
-				early_dlgs_cnt++;
+				update_stat(early_dlgs, 1);
 			}
 
 			dlg->tl.timeout = (unsigned int)(VAL_INT(GET_FIELD_IDX(values, DLGI_TIMEOUT_COL_IDX)));
