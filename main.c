@@ -2507,7 +2507,6 @@ try_again:
 			LM_WARN("disabling tls...\n");
 			tls_disable=1;
 		} else {
-			LM_DBG("=============================\n");
 			if (pre_init_tls()<0){
 				LM_CRIT("could not pre-initialize tls, exiting...\n");
 				goto error;
