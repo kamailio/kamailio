@@ -408,9 +408,9 @@ int cfg_dmq_t_replicate(struct sip_msg* msg, char* s)
 		 *   - ourself
 		 *   - any inactive nodes
 		 */
-                if(node->local || node->status != DMQ_NODE_ACTIVE) {
-                        LM_DBG("skipping node %.*s\n", STR_FMT(&node->orig_uri));
-                        node = node->next;
+		if(node->local || node->status != DMQ_NODE_ACTIVE) {
+			LM_DBG("skipping node %.*s\n", STR_FMT(&node->orig_uri));
+			node = node->next;
 			continue;
 		}
 		if(tmb.t_replicate(msg, &node->orig_uri) < 0) {
