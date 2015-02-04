@@ -223,9 +223,15 @@ static int get_cpuload(double * load)
 	FILE * f = fopen("/proc/stat", "r");
 	double vload;
 	int ncpu;
+	static int errormsg = 0;
 
 	if (! f) {
-		LM_ERR("could not open /proc/stat\n");
+		/* Only write this error message five times. Otherwise you will annoy
+		   BSD-ish system administrators. */
+		if (errormsg < 5) {
+			LM_ERR("could not open /proc/stat\n");
+			errormsg++;
+		}
 		return -1;
 	}
 	if (fscanf(f, "cpu  %lld%lld%lld%lld%lld%lld%lld%lld",
