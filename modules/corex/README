@@ -16,7 +16,7 @@ Muhammad Shahzad Shafi
 
    <shahzad@voip-demos.com>
 
-   Copyright © 2012 asipto.com
+   Copyright (c) 2012 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -33,7 +33,7 @@ Muhammad Shahzad Shafi
 
               3.1. alias_subdomains (string)
               3.2. network_io_intercept (int)
-              3.3. msg_min_len (int)
+              3.3. min_msg_len (int)
               3.4. msg_avp (string)
 
         4. Functions
@@ -64,7 +64,7 @@ Muhammad Shahzad Shafi
 
    1.1. Set alias_subdomains parameter
    1.2. Set network_io_intercept parameter
-   1.3. Set msg_min_len parameter
+   1.3. Set min_msg_len parameter
    1.4. Set msg_avp parameter
    1.5. append_branch usage
    1.6. send usage
@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
 
         3.1. alias_subdomains (string)
         3.2. network_io_intercept (int)
-        3.3. msg_min_len (int)
+        3.3. min_msg_len (int)
         3.4. msg_avp (string)
 
    4. Functions
@@ -159,7 +159,7 @@ Chapter 1. Admin Guide
 
    3.1. alias_subdomains (string)
    3.2. network_io_intercept (int)
-   3.3. msg_min_len (int)
+   3.3. min_msg_len (int)
    3.4. msg_avp (string)
 
 3.1. alias_subdomains (string)
@@ -191,7 +191,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 modparam("corex", "network_io_intercept", 1)
 ...
 
-3.3. msg_min_len (int)
+3.3. min_msg_len (int)
 
    Minimum content length of the packet to execute the
    event_route[network:msg]. This only works if network_io_intercept
@@ -199,9 +199,9 @@ modparam("corex", "network_io_intercept", 1)
 
    Default value is 0.
 
-   Example 1.3. Set msg_min_len parameter
+   Example 1.3. Set min_msg_len parameter
 ...
-modparam("corex", "msg_min_len", 32)
+modparam("corex", "min_msg_len", 32)
 ...
 
 3.4. msg_avp (string)
@@ -229,7 +229,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.7. msg_iflag_reset(flagname)
    4.8. msg_iflag_is_set(flagname)
 
-4.1. append_branch([ uri, [ q ] ])
+4.1.  append_branch([ uri, [ q ] ])
 
    Append a new branch to the destination set, useful to build the set of
    destination addresses for parallel forking or redirect replies.
@@ -251,7 +251,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
     append_branch("$avp(uri)", "0.5");
 ...
 
-4.2. send([ host [ :port ] ])
+4.2.  send([ host [ :port ] ])
 
    Send the original SIP message to a specific destination in stateless
    mode. No changes are applied to received message, no Via header is
@@ -273,12 +273,12 @@ modparam("corex", "msg_avp", "$avp(msg)")
         send("$var(res)");
 ...
 
-4.3. send_tcp([ host [ :port ] ])
+4.3.  send_tcp([ host [ :port ] ])
 
    This function is identical to send() described above, except that it
    sends the SIP message using the TCP protocol instead of UDP.
 
-4.4. send_data(uri, data)
+4.4.  send_data(uri, data)
 
    Send the data to address specified by uri. Both parameters can contain
    pseudo-variables. The uri parameter has to be a valid SIP URI. The data
@@ -291,7 +291,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
         send_data("sip:example.com:5070;transport=sctp", "Message at $Ts");
 ...
 
-4.5. is_incoming()
+4.5.  is_incoming()
 
    Returns true if contents of message buffer $mb are the data received
    from remote host, otherwise false indicating that the contents of $mb
@@ -313,7 +313,7 @@ event_route[network:msg] {
 }
 ...
 
-4.6. msg_iflag_set(flagname)
+4.6.  msg_iflag_set(flagname)
 
    Set internal SIP message flag. The parameter flagname can be:
    USE_UAC_FROM, USE_UAC_TO or UAC_AUTH.
@@ -330,7 +330,7 @@ event_route[network:msg] {
     msg_iflag_set("UAC_AUTH");
 ...
 
-4.7. msg_iflag_reset(flagname)
+4.7.  msg_iflag_reset(flagname)
 
    Reset the internal flag given as parameter.
 
@@ -341,7 +341,7 @@ event_route[network:msg] {
     msg_iflag_reset("UAC_AUTH");
 ...
 
-4.8. msg_iflag_is_set(flagname)
+4.8.  msg_iflag_is_set(flagname)
 
    Test if the internal flag given as parameter is set.
 
@@ -361,28 +361,28 @@ event_route[network:msg] {
    5.3. corex.shm_status
    5.4. corex.shm_summary
 
-5.1. corex.list_sockets
+5.1.  corex.list_sockets
 
    Print the list of sockets the application is listening on.
 
    Example:
                 kamcmd corex.list_sockets
 
-5.2. corex.list_aliases
+5.2.  corex.list_aliases
 
    Print the list of hostname aliases used to match the myself condition.
 
    Example:
                 kamcmd corex.list_aliases
 
-5.3. corex.shm_status
+5.3.  corex.shm_status
 
    Trigger shm status dump to syslog.
 
    Example:
                 kamcmd corex.shm_status
 
-5.4. corex.shm_summary
+5.4.  corex.shm_summary
 
    Trigger shm summary dump to syslog.
 
@@ -393,7 +393,7 @@ event_route[network:msg] {
 
    6.1. event_route[network:msg]
 
-6.1. event_route[network:msg]
+6.1.  event_route[network:msg]
 
    Event route block to be executed when new data is received from network
    or the data that is about to be sent to a remote host by a SIP worker
