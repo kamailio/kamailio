@@ -10,7 +10,7 @@ Dan Pascu
 
    <dan@ag-projects.com>
 
-   Copyright © 2005-2008 Dan Pascu
+   Copyright (c) 2005-2008 Dan Pascu
      __________________________________________________________________
 
    Table of Contents
@@ -151,6 +151,7 @@ Chapter 1. Admin Guide
 4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
+     * pv module
      * dialog module
 
 4.2. External Libraries or Applications
