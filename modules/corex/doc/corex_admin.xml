@@ -119,7 +119,7 @@ modparam("corex", "network_io_intercept", 1)
         </example>
     </section>
     <section>
-        <title><varname>msg_min_len</varname> (int)</title>
+        <title><varname>min_msg_len</varname> (int)</title>
         <para>
             Minimum content length of the packet to execute the event_route[network:msg].
 			This only works if network_io_intercept parameter is set to non-zero.
@@ -130,10 +130,10 @@ modparam("corex", "network_io_intercept", 1)
         </emphasis>
         </para>
         <example>
-        <title>Set <varname>msg_min_len</varname> parameter</title>
+        <title>Set <varname>min_msg_len</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("corex", "msg_min_len", 32)
+modparam("corex", "min_msg_len", 32)
 ...
 </programlisting>
         </example>
