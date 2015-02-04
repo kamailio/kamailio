@@ -1,0 +1,115 @@
+TCP Ops module
+
+Camille Oudot
+
+   Orange
+
+   Copyright © 2015 Orange
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Parameters
+        3. Functions
+
+              3.1. tcp_keepalive_enable([conid], idle, count, interval)
+              3.2. tcp_keepalive_disable([conid])
+
+   List of Examples
+
+   1.1. tcp_keepalive_enable usage
+   1.2. tcp_keepalive_disable usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Parameters
+   3. Functions
+
+        3.1. tcp_keepalive_enable([conid], idle, count, interval)
+        3.2. tcp_keepalive_disable([conid])
+
+1. Overview
+
+   This modules allows kamailio to control the TCP options (such as the
+   keepalive mechanism), on demand, and on a per-socket basis.
+
+   Note: the keepalive functions only work on systems with the
+   HAVE_TCP_KEEPIDLE, HAVE_TCP_KEEPCNT and HAVE_TCP_KEEPINTVL macros
+   defined (currently only Linux).
+
+2. Parameters
+
+3. Functions
+
+   3.1. tcp_keepalive_enable([conid], idle, count, interval)
+   3.2. tcp_keepalive_disable([conid])
+
+3.1.  tcp_keepalive_enable([conid], idle, count, interval)
+
+   Enables keepalive on a TCP connection.
+
+   Meaning of the parameters is as follows:
+     * conid (optionnal): the kamailio internal connection id on which TCP
+       keepalive will be enabled. If no parameter is given, the keepalive
+       mechanism will be enabled on the current message source connection.
+     * idle (seconds): the time before the first keepalive packet is sent
+       out.
+     * count: number of non-acked keepalive before reseting the
+       connection.
+     * interval (seconds): time between two keepalive probes.
+
+   Retuns 1 on success, -1 on failure.
+
+   Example 1.1. tcp_keepalive_enable usage
+request_route {
+        if (is_method("INVITE")) {
+                $avp(caller_conid) = $conid;
+        }
+        ...
+}
+
+onreply_route {
+        if (is_method("INVITE") && status == 200) {
+                # enable on callee's connection
+                tcp_keepalive_enable("60", "5", "5");
+                # enable on caller's connection
+                tcp_keepalive_enable("$avp(caller_conid)", "60", "5", "2");
+        }
+        ...
+}
+
+3.2.  tcp_keepalive_disable([conid])
+
+   Disables keepalive on a TCP connection.
+
+   Meaning of the parameters is as follows:
+     * conid (optionnal): the kamailio internal connection id on which TCP
+       keepalive will be disabled. If no parameter is given, the keepalive
+       mechanism will be disabled on the current message source
+       connection.
+
+   Retuns 1 on success, -1 on failure.
+
+   Example 1.2. tcp_keepalive_disable usage
+request_route {
+        ...
+        if (is_method("BYE")) {
+                $avp(bye_conid) = $conid;
+        }
+        ...
+}
+
+onreply_route {
+        ...
+        if (is_method("BYE") && status == 200) {
+                tcp_keepalive_disable();
+                tcp_keepalive_disable("$avp(bye_conid)");
+        }
+        ...
+}

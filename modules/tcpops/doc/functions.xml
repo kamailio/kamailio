@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="print.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	</sectioninfo>
+
+	<title>Functions</title>
+
+	<section id="tcpops.f.tcp_keepalive_enable">
+		<title>
+			<function>tcp_keepalive_enable([conid], idle, count, interval)</function>
+		</title>
+		<para>
+				Enables keepalive on a TCP connection.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> (optionnal): the kamailio internal
+				connection id on which TCP keepalive will be enabled. If no parameter
+				is given, the keepalive mechanism will be enabled on the current message
+				source connection.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>idle</emphasis> (seconds): the time before the first
+				keepalive packet is sent out.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>count</emphasis>: number of non-acked keepalive before
+				reseting the connection. 
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>interval</emphasis> (seconds): time between two keepalive
+				probes. 
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Retuns 1 on success, -1 on failure.</para>
+		<example>
+			<title><function>tcp_keepalive_enable</function> usage</title>
+			<programlisting><![CDATA[
+request_route {
+	if (is_method("INVITE")) {
+		$avp(caller_conid) = $conid;
+	}
+	...
+}
+
+onreply_route {
+	if (is_method("INVITE") && status == 200) {
+		# enable on callee's connection
+		tcp_keepalive_enable("60", "5", "5");
+		# enable on caller's connection
+		tcp_keepalive_enable("$avp(caller_conid)", "60", "5", "2");
+	}
+	...
+}
+			]]></programlisting>
+		</example>
+	</section>
+	
+	 <section id="tcpops.f.tcp_keepalive_disable">
+		<title>
+			<function>tcp_keepalive_disable([conid])</function>
+		</title>
+		<para>
+				Disables keepalive on a TCP connection.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> (optionnal): the kamailio internal
+				connection id on which TCP keepalive will be disabled. If no parameter
+				is given, the keepalive mechanism will be disabled on the current message
+				source connection.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Retuns 1 on success, -1 on failure.</para>
+		<example>
+			<title><function>tcp_keepalive_disable</function> usage</title>
+			<programlisting><![CDATA[
+request_route {
+	...
+	if (is_method("BYE")) {
+		$avp(bye_conid) = $conid;
+	}
+	...
+}
+
+onreply_route {
+	...
+	if (is_method("BYE") && status == 200) {
+		tcp_keepalive_disable();
+		tcp_keepalive_disable("$avp(bye_conid)");
+	}
+	...
+}
+			]]></programlisting>
+		</example>
+	</section>
+</section>

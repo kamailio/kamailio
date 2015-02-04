@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="print" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>TCP Ops module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Camille</firstname>
+		<surname>Oudot</surname>
+		<affiliation><orgname>Orange</orgname></affiliation>
+		<address>
+		    <email>camille.oudot@orange.com</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2015</year>
+	    <holder>Orange</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="tcpops.overview">
+	<title>Overview</title>
+	<para>
+	    This modules allows kamailio to control the TCP options (such as the keepalive
+	    mechanism), on demand, and on a per-socket basis.
+	</para>
+	<para>
+	<emphasis>Note</emphasis>: the keepalive functions only work on systems with the
+	HAVE_TCP_KEEPIDLE, HAVE_TCP_KEEPCNT and HAVE_TCP_KEEPINTVL macros defined
+	(currently only Linux).
+	</para>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    </chapter>
+</book>
+
