@@ -1,3 +1,865 @@
+===================== 2015-02-05 Version 4.1.8 Released =====================
+
+===================== Changes Since Version 4.1.7 ===========================
+
+commit d2c15da6e21f65d3c97f739752c677b93a015e7a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 5 14:33:41 2015 +0100
+
+    Makefile.defs: version set to 4.1.8
+
+commit 406340e9172acfcbd20d79682a078173553e684e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 5 14:27:01 2015 +0100
+
+    pkg/rpm: version set to 4.1.8 in spec files
+
+commit c3f756022cb6e2597700390c5bafd77e42698e14
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 5 14:24:20 2015 +0100
+
+    pkg/deb: version set to 4.1.8 in spec files
+
+commit 75e862dbca42de5ded8cb6cddbbeba823c46270c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 5 11:26:34 2015 +0100
+
+    core: safety check for append_branch() when called with no uri and no msg
+    
+    - uri or msg parameter must be given, otherwise the new address cannot
+      be set
+    - get_redirects() from uac_redirect can execute this function with both
+      parameters invalid in case of invalid contact, reported by Javi
+      Gallart
+    
+    (cherry picked from commit 2c4ed5922a2322f3b5059f6264884acfb5dec97f)
+    (cherry picked from commit a90e73327cccb5259af08cbf93f2a1b793a0ca2e)
+
+commit 20477e75bd9ca4455348e68b66aad28484aebc90
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 4 18:30:05 2015 +0100
+
+    core: removed log message used for troubleshooting
+    
+    (cherry picked from commit c22dfcd6359079f9ea3600bfeb31fe5edbf4f8b1)
+    (cherry picked from commit f1f9c545c617c6756659c550881dcf73e123b292)
+
+commit d8e4e900d0bf098656b996464986f37082a6b994
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 30 08:15:58 2015 +0100
+
+    sl: re-attempt to bind to tm after all mods init
+    
+    - handle the situation when tm is initialized after the sl module
+    - re-binding is done on child callback with rank PROC_INIT
+    
+    (cherry picked from commit 85d3488c3910d447f6900df166bc6b0c16a64e9c)
+    (cherry picked from commit aa87917aa27bcc9f3f71da4cead1b51d17e75da7)
+
+commit 6c04ea3fc133fa9fbedf1a8ac926e616dd5898c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 29 21:46:43 2015 +0100
+
+    lib/srdb1: init columns array to 0
+    
+    - allows proper cleanup if there is an error while filling the items
+    
+    (cherry picked from commit e59db798b84f1641f807d216c2ca460cfedb31e7)
+    (cherry picked from commit 29e6386a140ccc4025e2ff98ad8a3b0d5da1b6c3)
+
+commit 34305cffa8e0097b174fde5cfa102e871dd186bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 29 10:45:52 2015 +0100
+
+    sca: more error handling during initialization of the module
+    
+    - fix crash when the module doesn't initialize and calls destroy
+      function during shutdonw at startup
+    - reported by Olle E. Johansson, GH#57
+    
+    (cherry picked from commit df2a45541c5e37907374c5e7595de1f30ea84f98)
+    (cherry picked from commit da06d9a4912f71b3e9f7af3d29a1543a4884efa9)
+
+commit be2fc8297d5af01aa14167bb4d9917f5567784ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 28 22:09:21 2015 +0100
+
+    sca: initialize sca variable to catch destroy on shutdown at startup
+    
+    - reported by GH#35
+    
+    (cherry picked from commit 010977f5febcf923a31d545bd631fbee11dd426c)
+    (cherry picked from commit 0d47a5cfc723be2b8ef2baeb439d5df05b5c580c)
+
+commit b7ebc49226246d0980763209608b49777c08f0d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 28 22:02:02 2015 +0100
+
+    userblacklist: init variables for safer destroy at startup
+    
+    - reported by GH#42
+    
+    (cherry picked from commit c28551cd245f5e8ab9fc5d5c29f657cc06ad81e2)
+    (cherry picked from commit 23e8ab71c7c6a3baf8858e02391e67f2e8c30c97)
+
+commit cf86d3de411227df68564627c200543b9241ae17
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 25 11:00:28 2015 +0100
+
+    db_postgress: disable initialization of libssl if tls is loaded
+    
+    - based on the note from docs to avoid double attempt to init the ssl
+      library
+    - http://www.postgresql.org/docs/9.4/static/libpq-ssl.html
+    
+    (cherry picked from commit f04dec82e90ec7a3e6aea4ea8e9ed23b06b165c6)
+    
+    Conflicts:
+    	modules/db_postgres/km_pg_con.c
+    
+    (cherry picked from commit eeae005fb3d5239dd6e3af727504fc829ea5a0fb)
+
+commit ca62ee4fdf8e4e3c55f7f7f990b2d60f1b26b794
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 25 10:59:07 2015 +0100
+
+    tls: implemented tls hook for pre-mod init execution
+    
+    - do openssl init at this callback
+    
+    (cherry picked from commit f71243410d5e051def1a47cc73adb6caeeadd1cd)
+    (cherry picked from commit e6eca3e988226e3654c5c22d762048a5fff3491c)
+
+commit 4f9be3b31c021f8ffa1b96decf9506480b4064c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 25 10:57:00 2015 +0100
+
+    core: tls hooks can execute a callback before modules init function is executed
+    
+    - useful to prepare tls environment before a module might access it
+    - executed after modparam but before mod_init
+    
+    (cherry picked from commit 4700831fa0f2dc52e296ce647711b03d1406497a)
+    (cherry picked from commit 93804b66c5301af75cd6930f9c6653228cce8719)
+
+commit c19063884ef9f61ff9607bef9b6a0ca6426e1cf6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 24 22:37:43 2015 +0100
+
+    tls: updated the default tls session id string
+    
+    (cherry picked from commit e47018b0a65a5e26ea47d789f0bc6d471aa3a117)
+    (cherry picked from commit e5885f2f4bb6066af8988942beff217cb282a29b)
+
+commit 8ee34daf8b1ce26b2d268dcac31cfbb41be8af24
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 12:50:49 2015 +0100
+
+    path: received parameter enclosed in square brackets if ipv6
+    
+    - received should be useless for ipv4, but still can be enforced from
+      config, so has to be well formatted because it is followed by a port
+    - reported by Sebastian Damm
+    
+    (cherry picked from commit 077b26385854feb701950d020e382c254b803e75)
+    (cherry picked from commit 6a9887370e1de87afc7f0da79b09eb62b350469f)
+
+commit e499db5715a5d535fd9a9bfbc5260e35a625b36e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 11:07:26 2015 +0100
+
+    permissions: init global pointer variables to null for safe shutdown at start
+    
+    - reported by Olle E. Johansson, GH#41
+    
+    (cherry picked from commit 165a3fc2e4dfed09bd9f46e43270d49cf5f72a87)
+    (cherry picked from commit 0421282a10446dd67236b6d4c7d103ee45301c28)
+
+commit 3bc1c9732545a23d1b13031c184b688f9a70a4cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 10:55:15 2015 +0100
+
+    pike: check that timer var is initialized before accessing the fields
+    
+    - safe start with empty config, reported by Olle E. Johansson, GH#39
+    
+    (cherry picked from commit c87a75c5fb7aa5d940093fbbca8d9557cc9a0239)
+    (cherry picked from commit 688593f15e2a67dfaf00d3b371633b3f93e3d584)
+
+commit cd8b2d7356428185e1f9afe563fb6af0e72e44f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 22 22:35:36 2015 +0100
+
+    nathelper: enclode IPv6 in square branckets for fix_nated_contact()
+    
+    - even there is no nat in ipv6
+    
+    (cherry picked from commit 814c08f36f13ace21e52181da3039402f951b0a8)
+    (cherry picked from commit ac3498deab72dd833af24e9974ad251960e8d6fa)
+
+commit 4c871780d92112684ade6183c46002566d7e3f3e
+Author: Martin Mikkelsen <martin.mikkelsen@zisson.no>
+Date:   Wed Jan 21 16:55:15 2015 +0100
+
+    auth: use correct parameter for pv_auth_check checks
+    
+    The pv_auth_check has a flags and a checks parameter but the flags
+    parameter is used for both. This means that if flags has the 1-bit set
+    it will enable both HA1-passwords and from/to URI checks and setting the
+    1-bit in the checks parameter does not do anything.
+    
+    This fixes the parameters so that the checks parameter is used for the
+    to/from URI checks.
+    
+    (cherry picked from commit 2cdda10aa232e545ba79ca71876f0160a68e324b)
+    (cherry picked from commit 8e40cee0473dab5e7796c6479f46f5994280b76a)
+
+commit 89516388125cf086b44afd8aa72a675f13175c02
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 13:15:10 2015 +0100
+
+    seas: fixed inline functions warnings for clang
+    
+    (cherry picked from commit c52e4e13ea57702aeed45a7a2059b97faf4d06f6)
+    (cherry picked from commit 71aae0b0dda086219663af38357801e05c49124f)
+
+commit 79c8abb59e7b845b00f720b91628b8999103f94f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 25 18:46:07 2015 +0100
+
+    dialog: remove inline for destroy_dlg() to make clang linker work
+
+commit 7ec74722f6731539aa11db1f5a3322204c17694e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 24 18:33:45 2015 +0100
+
+    dialog: use proper flags for script callback that clean dlg shortcuts
+    
+    (cherry picked from commit b0679c91f22a9eb9b995175b1d1abfb836a5a3f6)
+    (cherry picked from commit 4fa400f262d2426a8a714ec65c5c88ec8e67f733)
+
+commit 6da6904f02da3fa1ac9ac9527dce046ce0b39d35
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 24 11:21:04 2015 +0100
+
+    dialog: removed end of line in middle of log message
+    
+    (cherry picked from commit 3b89c83bceb70da6fcbc9495dbcfec04e3f65ba4)
+    (cherry picked from commit cd0e341cba059f43ac204a5d13e4baee9c5948f1)
+
+commit d145b7d02fae95ed0522c4681ad2a40410373ab0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 17 13:30:45 2015 +0100
+
+    tls: fixed installation path update for tls.cfg
+    
+    (cherry picked from commit ecb32d326615242fed43a6e2655627848842afd2)
+    (cherry picked from commit 0c1dc464e2b4e7a47e8a54ab087799bdcadb69ea)
+
+commit 89a53d3710cc1b672897161bd4a118b59d0b5eb4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 17:54:18 2015 +0100
+
+    presence: fix counter and type for removing presentity from cache
+    
+    - report and patch by Kristian F. HÃ¸gh
+    
+    (cherry picked from commit d43e8965640bbc64e56ef33f27d4f3c3a85c73fa)
+    (cherry picked from commit 32e85b6481b31a1f4aa46603849cb02433e50915)
+
+commit fceba94bace3457546089c3ebf58b6098163d20b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 13:40:51 2015 +0100
+
+    sl: don't remove the lump added in the 'after' list of delete lump
+    
+    - they are destroyed together, making the operation useless
+    
+    (cherry picked from commit 338b00c0f2d38694cffe3536e7eeed0e0d5372dd)
+    (cherry picked from commit 6b7bbc8e58eae9b43b47efb270c20bb3d93ec2f0)
+
+commit 1ba3ac33da3be5cb677a1280b1d791694387f645
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 13:37:42 2015 +0100
+
+    core: remove_lump() clears its innner before/after lists
+    
+    - fixing leak issues that could be created by using sl_forward_reply()
+      in config file
+    
+    (cherry picked from commit 1fd0ca99eaa4b2c5cfcb8bd555a35088ddf49343)
+    (cherry picked from commit 74888e44aa4db53a3e8db49d848af97d460f7e1f)
+
+commit e4d9b6e08e88fc487cfe408ff43caf7b418c8932
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 13:15:25 2015 +0100
+
+    core: parse_ppi_pai - free header parameters for PAI and PPI
+    
+    - they are not considere in the compacted p_id_body_t and not freed
+    - specs don't mention headers parameters for PAI and PPI, but could come
+      as UA extensions
+    
+    (cherry picked from commit c1b4d442501591bd18e8130474eeb5c16101e549)
+    (cherry picked from commit 38d6c0bc62b12ecb8402d165a21813c533c55324)
+
+commit a1f047fbacf64ae540726c1fef1bedb9da591669
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 13:11:37 2015 +0100
+
+    core: parse_add_spec() free params in case of parsing failure
+    
+    (cherry picked from commit 5a71429596851d8096de1abe5542e57e8b8f6547)
+    (cherry picked from commit b7657fde6c74673060e1d59e604c1b72ca284dbf)
+
+commit 8c6a2a9d06af6176fafe90fe4e9e205d3f392ee8
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Mon Jan 12 16:24:04 2015 +0100
+
+    siputils: fix for e164_check()
+    
+    - the condition for non-digit matching was always false
+    
+    (cherry picked from commit 160710af0ab85dbf211fa7d445d6d4be9b66db10)
+    (cherry picked from commit a56b51de8d6c10e06146fbf65ae7d46793e288c9)
+
+commit 799b61f53a711f6dd79b5e18e29828ed308dd985
+Author: Walter Doekes <walter+github@wjd.nu>
+Date:   Mon Jan 12 12:05:52 2015 +0100
+
+    websocket: Check frame->wsc in ws_frame_transmit for NULL.
+    
+    Add frame.wsc == NULL check in ws_frame_transmit similar to the checks
+    in ws_close and friends and ws_frame_receive to avoid crashing if the
+    tcp connection was been terminated prematurely.
+    
+    (cherry picked from commit c109755d347500d8dcfa92a75cb11c9cea2727c2)
+    (cherry picked from commit b41d779b6d8b30f311a490d76f211c1ca656ce38)
+
+commit 4c1ce655afe85c8e341f71e579de64bd6e7b1d28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 10 11:38:00 2015 +0100
+
+    docbook/Makefile: use default system catalog implicitely
+    
+    - custom catalog can be forced with nocatalog=no
+    
+    (cherry picked from commit 508b11011c85bb21e5bd4212a16fabb9136e22fa)
+    (cherry picked from commit 9e293335585598e6f7bf7c9e58a0bee4cc9eb068)
+
+commit 8ab37e559518acf06ab30eabdd5d82f82d36d51b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 9 20:36:51 2015 +0100
+
+    jsonrpc-c: fixed typo in header guard
+    
+    (cherry picked from commit 8f86d2f16af57dc26229f721c9cb86b7f68208cd)
+    (cherry picked from commit d374e4b2b92dab4127df9a98ae9b374928f03a28)
+
+commit 5374aeff7beae14a88a403514d67a7e62ec6fb94
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 12 11:16:53 2015 +0100
+
+    ratelimit: _SC_NPROCESSORS_ONLN is available on FreeBSD
+    
+    - used for getting number of cpus
+    - reported on GH#24
+    
+    (cherry picked from commit 7886ddc516f5a4cef1d3730306a2a2ded06d4986)
+    (cherry picked from commit f0159a194a8ac0c0f5599867764d447ef2b5bf45)
+
+commit cd7e96c1be68f27ddeb5c55435a72c514f8b0f31
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 12 11:03:22 2015 +0100
+
+    pipelimit: _SC_NPROCESSORS_ONLN is available on FreeBSD
+    
+    - used for getting number of cpus
+    - reported on GH#24
+    
+    (cherry picked from commit cf65a6ad41396bf5e67d23e12720c420688d7880)
+    (cherry picked from commit a711f12d5f4b48b3ccf385492d4c93ace7db515c)
+
+commit d3d66b1087b34676be30811c61e52fabf015059e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 22:01:27 2015 +0100
+
+    dialog: proper handling of dlg_set_timeout() for not confirmed dialogs
+    
+    (cherry picked from commit a41eab6bedf670f9f34f069b82a85c3a49c5e1bd)
+    (cherry picked from commit a01849a60533e3b60dab71f1a3a632ae4b84f831)
+
+commit 66534a4be5b8108663f8d9f889d4c9bb2afd1b61
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 4 23:55:18 2015 +0100
+
+    tm: safety check for CRLF at end of custom headers for local requests
+    
+    - if hdrs value is not ending in '\n', add '\r\n'
+    
+    (cherry picked from commit b60b337e04f41d4b5262cb068f1bef6f827dba27)
+    (cherry picked from commit c3ce62ca27ddd348635f048ec9e7840a5a7f4c48)
+
+commit 7c10bf0c4bde5c0fbc488748d8eb2a8223adc890
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 5 15:58:50 2015 +0100
+
+    core: preprocessor subst rules are applied to pv names
+    
+    - all name is matched and substituted before pv is looked up
+    - reported in FS#139
+    
+    (cherry picked from commit 39ffe589035fce17145023204b1005702e02a66f)
+    (cherry picked from commit 4fb321cb441e38ca5b0fc65904cddf4f65f0bb53)
+
+commit 4cc6875796e2335fa5e8666bbc85ddf48f43aec5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 17:02:45 2015 +0100
+
+    ratelimite: take in consideration number of cpus for load
+    
+    - on multi core systems, the sums of stats can go over 100%, resulting
+      in out of range for expected load_value to be 0.0 to 1.0
+    - safety checks to avoid overflows
+    
+    (cherry picked from commit b22c63a930a3c8d4055ddeea48bb29b7fb3b2eb1)
+    (cherry picked from commit 3fb17ae591fcdfb0b1127f6f9547fe2c7f4c4619)
+
+commit c5c351c1eec326cc278b75e94e66df81344ce195
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 16:57:36 2015 +0100
+
+    pipelimit: take in consideration number of cpus for load
+    
+    - on multi core systems, the sums of stats can go over 100%, resulting
+      in out of range for expected load_value to be 0.0 to 1.0
+    - safety checks to avoid overflows
+    - reported by Luca M.
+    
+    (cherry picked from commit d9e87383613d4d24efe3d1eb144ad6c9cc30b2b0)
+    (cherry picked from commit 4b435cb33c86844e6f8339090f445ab062a24f28)
+
+commit 357e038ad5322cceff6764bf44d34033f138d4fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 6 22:24:35 2015 +0100
+
+    utils/protoshoot: fixed name and ticks
+    
+    - version to 0.4
+    
+    (cherry picked from commit 72a616f074f554dfb177ca8ec2b55f9ff11ad352)
+    (cherry picked from commit 0a9d23605b50bef00f516255e3bc2d1ab75f0494)
+
+commit b5dcd76df30811c8bd2f38efc8f8a6baf2c4e238
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 29 21:23:01 2014 +0100
+
+    db_mysql: fixing include in Makefile for many paths
+    
+    - sed matching should break at whitespace, to fix the case when
+      mysql_config returns multiple include paths
+    - reported by FS#503
+    
+    (cherry picked from commit 487d4160b99a1a5ea48751d2f7404cb08e1f4546)
+    (cherry picked from commit a8ac25dc14e4bfb744159148bb7edcdb6f77b58a)
+
+commit 390a7afbb051bd51f0c2207b862046f6de677d39
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 23 10:24:32 2014 +0100
+
+    tm: downgraded err to warn when sending out for a branch fails
+    
+    - can happen if tcp connection is not active and no connect is set, FS#68
+    
+    (cherry picked from commit c10c13b2582fd667d24e691219939e224cffaf30)
+    (cherry picked from commit 8dfcf311562861dcf36c19be80ad1594169b57b1)
+
+commit 969d3f185b905e1b58d9c79d2bac399d43e0cf70
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 23 00:51:45 2014 +0100
+
+    siptrace: use the method from cseq header for tm replies
+    
+    - the hook in transaction structure is invalid for cancel replies,
+      because the transaction structure is built for invite
+    - reported by Klaus Darilion, FS#489
+    
+    (cherry picked from commit 88173da2b684a3a3f86ee01ac5de401f492ff240)
+    (cherry picked from commit 0702109631ac1cd56a5ce575c1674dc41db1a4de)
+
+commit f38a1c6e636f13e68d3300aeced3089b56566ea1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 22 21:41:53 2014 +0100
+
+    core: safety checks on proto variable for dsn resolving
+    
+    - avoid crashes if functions used inadequately with a null pointer
+    
+    (cherry picked from commit aff1dcd3dc63c0fe124fc138d553da0723c615a8)
+    (cherry picked from commit 813b25663adbaae1c4f5ea2731c1fe16cad756e2)
+
+commit 5b5044c74704dde359a009250038e7a63b060dbe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 22 21:37:43 2014 +0100
+
+    nat_traversal: use local variable for port and proto on keepalive resolve
+    
+    - safe execution for those resolving functions expecting PROTO_NONE
+    - reported by Jason Penton, FS#491
+    
+    (cherry picked from commit 0bbcbe8328d558a9bf3cb151ab53be93b09c2669)
+    (cherry picked from commit b97ee8732103edc6391c2625ea38c448c371054a)
+
+commit 74e5c239b4a5df0fa1c1de9af9df3ca1bc0637d5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 17 23:30:29 2014 +0100
+
+    auth_db: fixed is_subscriber() when load_credentials is not set
+    
+    - the flag parameter can be also explicit on skipping the credentials
+    
+    (cherry picked from commit d948ca564b4f669905485e040e295f54bd3f36a2)
+    (cherry picked from commit 0b0b47277becda0926db0e60b6119a2621c28891)
+
+commit c72fc424115cdcac107418c68450c59333954288
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 10 16:14:16 2014 +0100
+
+    siputils: fix for e164_check()
+    
+    - the condition for non-digit matching was always false
+    
+    (cherry picked from commit fbcfa198a2c89868fa021f6a63774425e480b27b)
+    (cherry picked from commit 2d1032b3c8a1184357615b37da99dfd76526afa7)
+
+commit df9e8241112e3eef5a65238950061fb46c4b3e53
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 26 16:39:07 2014 +0100
+
+    registrar: don't free r-uri branch attributes in lookup_branches()
+    
+    - just clear the values in sip_msg_t structure so the pointers can be
+      reused and avoid double free
+    - reported by Anthony Messina
+    
+    (cherry picked from commit 9a46223c077c8d058cdc633563b0d9f14af332ae)
+    (cherry picked from commit 82a60e0c7a7e33908bae52d11fe4911df91823c2)
+
+commit cfe96f969515554daf1ebb9299444a4e62b35cb3
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Dec 3 09:13:49 2014 +0200
+
+    modules/pua: do not override send_publish return value at error
+    
+    (cherry picked from commit 0ac4c8e579214a75b102f2f1c6877dffb2db8597)
+
+commit b7a33afcc23ab123736a236b9b212668ec15c955
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 6 18:43:50 2014 +0100
+
+    htable: use mode everywhere to control the locks for add operation
+    
+    (cherry picked from commit c7ff8a88e773e8d25958f86d178f05ee10fd0410)
+    (cherry picked from commit 4bd289f1d893fd36c4fe508f34c0d2a58901d119)
+
+commit deb53770a5e4725f3da59d3ab36315be90d80384
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 4 16:32:13 2014 +0100
+
+    pua_reginfo: avoid sending notify when processing location record action triggered by itself
+    
+    (cherry picked from commit e070257321853d799a6325ac5e94f69b4ccb85e7)
+    (cherry picked from commit 39d6a77084f6c32af1f0de646410a247e55355c3)
+
+commit 432919572488b39105d04cfc7a0247f9e6b97bc0
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Nov 10 12:24:11 2014 +0100
+
+    perl: Sync log levels with kamailio core
+    
+    (cherry picked from commit 92fa1ac28b4991cd83338d1f99e898dfe1d8742f)
+    (cherry picked from commit 2965000599c1b03ad9b90eb6c773d03953b6e603)
+
+commit 15bbb0963320ccc26e46443815048a941011dcfe
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 30 17:15:38 2014 +0100
+
+    perl: check for and handle memory allocation failures
+    
+    (cherry picked from commit 293caa403bba6741d15254a42d106392fc657888)
+    (cherry picked from commit c161bd375b2e00215fa3d657aa6ec273ce515e6c)
+
+commit d6f1f583409dc71ac3b0ea3572ef830a1ea05614
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 30 17:12:28 2014 +0100
+
+    core: Don't log errors when dns find no more records
+    
+    If the proxy is listeneing on both ipv4 and ipv6, DNS attempts are done for
+    both A and AAAA records. If the last of these lookup fails with no records
+    found, don't log an error if the first lookup did already return records.
+    
+    (cherry picked from commit 3aec75e97b579cc67340c0fb81b276321b4ab73a)
+    (cherry picked from commit d14ba3700928a16b500cf832c1101d2fdd12a0e2)
+
+commit 79d4bfdc5fe85c02b5f2c620c68837cc58c20744
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Oct 16 14:57:42 2012 +0200
+
+    dispatcher: Ignore IPv6 addresses if IPv6 lookups are disabled.
+    
+    (cherry picked from commit 2d7f748ef690846365e4dd5bc5a91df21e39321c)
+    (cherry picked from commit 51b7e8f539ada81cdb8e7fe49d5c0ccf5e3cc274)
+
+commit 43cf46c246c830e89c2de9fb6e5068945ebaba3f
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Oct 14 15:58:41 2014 +0200
+
+    tm: backup xavps before running callbacks
+    
+    regular avps were being backupped, just not xavps.
+    
+    (cherry picked from commit e1f96b11379abd60fd53c49a376f6cf3cb1fc69d)
+    (cherry picked from commit 2d311c5897f68362f3bde53a3bbe21316d7c769f)
+
+commit 5f1dfee0b84859d81e7a2d3c8a2f018f9d9bc464
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 2 16:33:26 2014 +0200
+
+    tm: remove dead code
+    
+    (cherry picked from commit 3d24997fd1ba34bd4e426656b1533530718008a0)
+    (cherry picked from commit 0c7df3a8375ee3dba52e42c098d70c54e779183c)
+
+commit 9bfbccfd497990a2605d03bf21c2b6f7e8eed21b
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Thu Oct 2 16:46:23 2014 +0200
+
+    tm: log an error message as error, not debug
+    
+    (cherry picked from commit 54f19e018a1a569b532555311505d4962de49bd7)
+    (cherry picked from commit 50c60c511259bff8c8e782f949547a9f0967c5c6)
+
+commit a3a3766c3fb3e54ece5977c7a94cca222513049b
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Fri Aug 22 15:56:22 2014 +0200
+
+    mi_datagram: Send error response on out-of-memory
+    
+    (cherry picked from commit 902a77af1501f78fcc1205a37a5307e1d300f301)
+    (cherry picked from commit 9cc499e8350ee8f37dfb844c02497d7233e146d1)
+
+commit 2e64885da313c5978e663414154cf392c1699a85
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Fri Aug 22 15:16:00 2014 +0200
+
+    core: Document the right type for 'str*' in the RPC interface
+    
+    (cherry picked from commit a4eacbb469909978b7a9eff8767dcbdd5110ee99)
+    (cherry picked from commit 293d7cb86bc1c59ede155dfbcf8627ccfcbc1710)
+
+commit 9e72cd630ff1b5c180ecf85187b0d516da0a692a
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Aug 19 12:36:23 2014 +0200
+
+    core: sip_msg_shm_clone: clone parsed maxforwards value in shm
+    
+    maxfwd module modified the msg buf directly instead of adding a lump. In
+    addition it is filling the parsed value of the header field.
+    
+    Clone this field into shm so later code can at least determine if the msg
+    has been mangled so it can retreive the original value of the header.
+    
+    (cherry picked from commit 42f506c08073c5f8ca84f1f12ea9e6c820f162d8)
+    (cherry picked from commit a7ab7030ea0f5afb08009985a245e1499e1f8517)
+
+commit ce483e8cae0b163bf0c8816b3b58f9745bea247c
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Oct 20 15:38:51 2014 +0200
+
+    kcore: print_rr_body: return number of printed Record-Route bodies
+    
+    Act like the documentation, return the number of printed RR bodies, not the
+    total number of RR bodies.
+    
+    (cherry picked from commit aa4fabe05dd3b6dc841325fe279596293d327a92)
+    (cherry picked from commit ae01e2ed5e7decace416fefbfd64073ffd3d62ac)
+
+commit e3807707f9d61ab61364ca9dcb1f88dfc4dbf1ad
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Oct 20 15:38:11 2014 +0200
+
+    tm: Fix setting flags for record-route headers
+    
+    The flags where set in add_uac() by counting the number of record-route
+    headers added by prepare_new_uac(). The latter function backups and
+    restores the list of lumps, so add_uac() only sees the original list,
+    which is not what has happened on the branch being handled.
+    
+    Moving setting the flags into prepare_new_uac() fixes this.
+    
+    This fixed the dialog module, which has to remove the correct number
+    of RR headers from the callee's routeset (which it does based on the
+    tm flags).
+    
+    (cherry picked from commit ee9b78709516b935e087b0efcb620c13aad1a740)
+    (cherry picked from commit d68066614211d1a406c0c12f11ce907340e42255)
+
+commit d872d5203507c017e80f7eb29f2be13d11088baf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 13 12:39:10 2015 +0100
+
+    exec: proper handling of empty headers for exec_bash_safety
+    
+    (cherry picked from commit ae491ab355f0b2441bc20060154107b9163597de)
+    (cherry picked from commit d08a925872aa9bb2b22552171281cbe18783cbef)
+
+commit 8bed6769527eaf5aca47b5d1b3fe096090dac1f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 25 12:20:36 2014 +0100
+
+    usrloc: fixed issue updating last_modified
+    
+    - introduced in previous commit ( Closes #6 )
+    
+    (based on commit 767c2bc60f7f5a601118329df2c16b2646dbb58f)
+
+commit 56b54a5767a3ad0df446fe181aee0ee5fd64276d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Nov 24 14:48:16 2014 +0100
+
+    usrloc: fix db_update_addr and db_delete_ucontact_addr
+    
+    use query WHERE columns depending on matching_mode option
+    
+    (cherry picked from commit e8a795a6a413ae453f619e3deaf36c26b85b0077)
+    
+    Conflicts:
+    	modules/usrloc/ucontact.c
+
+commit 7b16cfadb1de404fae4144ea878366ec6fd37ac8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jan 6 21:55:25 2015 +0100
+
+    test/travis: move travis scripts to tests/travis ( Closes #20 )
+    
+    (cherry picked from commit d8642e20ae37e7724b9b9c517054b5d41c3c52f8)
+    
+    Conflicts:
+    	.travis.yml
+    	test/travis/databases_travis.sh
+    
+    (cherry picked from commit a0d6ec4487530147d90c0dd988824fd57260cfcc)
+
+commit 0aadaaf321c69edc68735607c2ed8445773e5e5c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jan 5 19:07:08 2015 +0100
+
+    travis-ci: set proper email notification options
+    
+    (cherry picked from commit 04999c90b074bf1571036ab88bb0a384a58f97a2)
+
+commit 8bfe0a4b2ea98dac2574c24b78c9ccd4d17f61a6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jan 5 15:38:26 2015 +0100
+
+    travis-ci: build only supported branches. Send email notifications on failure only
+    
+    (cherry picked from commit dc9928ec99901ec713d1a79b02a8554ed5f6618e)
+
+commit 31cdb7bae9d26987426f6aa72e5a2f261ba40d6f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 18 21:41:46 2014 +0100
+
+    pkg/kamailio: Initial Travis CI configuration
+    
+    (cherry picked from commit 3cdfb23b6e9d13fea3ee0994b450279c3cc6a488)
+
+commit 30168fee88d89c5bc640b54d1300eb5e670873e4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 10 11:16:54 2014 +0100
+
+    dialog: reset local variables shortcuts after reply and failure processing
+    
+    - avoid using wrong values to find dialogs with processing of next messages
+    - reported by Julia Boudniatsky
+    - backport of:
+      dcdb73d792719e38844eef60f821365b587893d7 (master)
+      8a6660697bf08d0522fcd7ffa60698ebcdc4f990 (4.2.)
+
+commit 98091fef61e360627a18572619dd026fa4fa1acb
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Tue Dec 9 19:05:31 2014 +0000
+
+    registrar: Fix memory leak around path and outbound header parsing
+    
+    - Fix leak of parsed URI and URI parameters during a call to save()
+    (cherry picked from commit 56c880120c07443eceb732117f0f1aa3558dcfe5)
+
+commit ce0a5c1a0df6b305b09e1ad7d23d1a92842c0d70
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 5 22:40:25 2014 +0100
+
+    exec: use proper header field iterator to print env variables
+    
+    - issue introduced with the patch for shellshock
+    - reported by and credits for troubleshooting to Kristian Kielhofner
+    
+    (cherry picked from commit 8855e3e7fcece4ca2ab33e1f9c54b15831152400)
+    (cherry picked from commit db8859587bb5b97637e1f815ab631fc42e8d49c9)
+
+commit bb9c3af9be386f3933713ef180c293ac9162e3e7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 5 18:17:39 2014 +0100
+
+    core: keep the password only if the user part is set
+    
+    - a report by Timo Klecker
+    
+    (cherry picked from commit 8c3d167b63096d3b465c53aca92ee18c5255188c)
+    (cherry picked from commit f03a1769c55b4992613e153bd8d7bd012fc67525)
+
+commit daa1e1adb9cab6720e9bb19b1d2a87ecde5ec2b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 1 11:50:15 2014 +0100
+
+    nat_traversal: use dedicated function for testing via address against source ip
+    
+    (cherry picked from commit c6c4230fb0c4ca18f5c681c7195d3e1531255f3a)
+    (cherry picked from commit fad00aeb2fb96cd9796ef41568e9b3cb535f300c)
+
+commit 01824551d36a12a62b7bf64ee62df78a5f2d6111
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 1 11:48:39 2014 +0100
+
+    nathelper: use dedicated function for testing via address against source ip
+    
+    - reported by Igor Potjevlesch
+    - previous used functions was checking the presence of rport and
+      received parameters, ending in a wrong result for nat testing
+    
+    (cherry picked from commit 0b10377df11977d7ddd7e6bf30fe060d1fe200aa)
+    (cherry picked from commit a2832bf95bf0fa4e866ee4a04cabe944d5374ffb)
+
+commit 518b3e9c9b9fd7cd03903f69c31b95ababc31856
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 1 11:47:19 2014 +0100
+
+    core: dedicated function to check Via address with source ip
+    
+    - received_via_test() as alternative to received_test() which looks also
+      for rport and received parameters, confusing nat detection tests
+    
+    (cherry picked from commit 194743bf0de92ae09fdc817e57863f6bdb159539)
+    (cherry picked from commit 7ebf861b27ae7e90092bc875d75772e5a1c941d5)
+
+commit e9ca0a2c4e5ca2a77020dda247a9eaa641cd5557
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Thu Nov 13 12:16:25 2014 +0100
+
+    app_python	Avoid collission in name space - rename init_modules to ap_init_modules
+
+
 ===================== 2014-11-06 Version 4.1.7 Released =====================
 
 ===================== Changes Since Version 4.1.6 ===========================
