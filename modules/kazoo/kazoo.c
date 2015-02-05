@@ -96,6 +96,9 @@ db_func_t kz_pa_dbf;
 str kz_presentity_table = str_init("presentity");
 str kz_db_url = {0,0};
 
+str kz_query_timeout_avp = {0,0};
+pv_spec_t kz_query_timeout_spec;
+
 MODULE_VERSION
 
 static tr_export_t mod_trans[] = {
@@ -149,13 +152,13 @@ static param_export_t params[] = {
     {"amqp_consumer_ack_timeout_sec", INT_PARAM, &kz_ack_tv.tv_sec},
     {"amqp_interprocess_timeout_micro", INT_PARAM, &kz_sock_tv.tv_usec},
     {"amqp_interprocess_timeout_sec", INT_PARAM, &kz_sock_tv.tv_sec},
-    {"amqp_waitframe_timout_micro", INT_PARAM, &kz_amqp_tv.tv_usec},
-    {"amqp_waitframe_timout_sec", INT_PARAM, &kz_amqp_tv.tv_sec},
+    {"amqp_waitframe_timeout_micro", INT_PARAM, &kz_amqp_tv.tv_usec},
+    {"amqp_waitframe_timeout_sec", INT_PARAM, &kz_amqp_tv.tv_sec},
     {"amqp_consumer_processes", INT_PARAM, &dbk_consumer_processes},
     {"amqp_consumer_event_key", STR_PARAM, &dbk_consumer_event_key.s},
     {"amqp_consumer_event_subkey", STR_PARAM, &dbk_consumer_event_subkey.s},
-    {"amqp_query_timout_micro", INT_PARAM, &kz_qtimeout_tv.tv_usec},
-    {"amqp_query_timout_sec", INT_PARAM, &kz_qtimeout_tv.tv_sec},
+    {"amqp_query_timeout_micro", INT_PARAM, &kz_qtimeout_tv.tv_usec},
+    {"amqp_query_timeout_sec", INT_PARAM, &kz_qtimeout_tv.tv_sec},
     {"amqp_internal_loop_count", INT_PARAM, &dbk_internal_loop_count},
     {"amqp_consumer_loop_count", INT_PARAM, &dbk_consumer_loop_count},
     {"amqp_consumer_ack_loop_count", INT_PARAM, &dbk_consumer_ack_loop_count},
@@ -165,6 +168,7 @@ static param_export_t params[] = {
     {"pua_mode", INT_PARAM, &dbk_pua_mode},
     {"single_consumer_on_reconnect", INT_PARAM, &dbk_single_consumer_on_reconnect},
     {"consume_messages_on_reconnect", INT_PARAM, &dbk_consume_messages_on_reconnect},
+    {"amqp_query_timeout_avp", STR_PARAM, &kz_query_timeout_avp.s},
     {0, 0, 0}
 };
 
@@ -184,6 +188,30 @@ struct module_exports exports = {
     mod_child_init				/* per-child init function */
 };
 
+inline static int kz_parse_avp( str *avp_spec, pv_spec_t *avp, char *txt)
+{
+	if (pv_parse_spec(avp_spec, avp)==NULL) {
+		LM_ERR("malformed or non AVP %s AVP definition\n",txt);
+		return -1;
+	}
+	return 0;
+}
+
+static int kz_init_avp(void) {
+	if(kz_query_timeout_avp.s)
+		kz_query_timeout_avp.len = strlen(kz_query_timeout_avp.s);
+
+	if ( kz_query_timeout_avp.s ) {
+		if ( kz_parse_avp(&kz_query_timeout_avp, &kz_query_timeout_spec, "amqp_query_timeout_avp") <0) {
+			return -1;
+		}
+	} else {
+		memset( &kz_query_timeout_spec, 0, sizeof(pv_spec_t));
+	}
+
+	return 0;
+}
+
 static int mod_init(void) {
 	int i;
     startup_time = (int) time(NULL);
@@ -198,13 +226,13 @@ static int mod_init(void) {
     dbk_consumer_event_key.len = strlen(dbk_consumer_event_key.s);
    	dbk_consumer_event_subkey.len = strlen(dbk_consumer_event_subkey.s);
 
+
+   	if(kz_init_avp()) {
+   		LM_ERR("Error in avp params\n");
+   		return -1;
+   	}
+
     kz_amqp_init();
-
-    if (kz_callid_init() < 0) {
-	LOG(L_CRIT, "Error while initializing Call-ID generator\n");
-	return -1;
-    }
-
 
     if(dbk_pua_mode == 1) {
 		kz_db_url.len = kz_db_url.s ? strlen(kz_db_url.s) : 0;
@@ -276,15 +304,6 @@ static int mod_child_init(int rank)
 	int i;
 
 	fire_init_event(rank);
-
-	if (rank != PROC_INIT) {
-	   if (kz_callid_child_init(rank) < 0) { 
-		/* don't init callid for PROC_INIT*/
-		LOG(L_ERR, "ERROR: child_init: Error while initializing Call-ID"
-				" generator\n");
-		return -2;
-           }
-	}
 
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0;
@@ -376,7 +395,6 @@ static int fire_init_event(int rank)
 static void mod_destroy(void) {
 	kz_amqp_destroy();
     shm_free(kz_pipe_fds);
-    kz_tr_clear_buffers();
 }
 
 
