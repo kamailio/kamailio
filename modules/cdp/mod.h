@@ -47,7 +47,6 @@
 #define _CDP__H
 
 #include "../../sr_module.h"
-#include "statistics.h"
 
 #define M_NAME "cdp"
 

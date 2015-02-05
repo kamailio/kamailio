@@ -55,6 +55,7 @@
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
 #include "../../cfg/cfg_struct.h"
+#include "cdp_stats.h"
 
 MODULE_VERSION
 
@@ -170,12 +171,6 @@ static param_export_t cdp_params[] = {
 	{ 0, 0, 0 }
 };
 
-stat_export_t mod_stats[] = {
-	{"avg_response_time" ,  STAT_IS_FUNC, 	(stat_var**)get_avg_cdp_response_time	},
-	{"timeouts" ,  			0, 				(stat_var**)&stat_cdp_timeouts  		},
-	{0,0,0}
-};
-
 /**
  * Exported module interface
  */
@@ -184,7 +179,7 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS,
 	cdp_cmds,                       		/**< Exported functions */
 	cdp_params,                     		/**< Exported parameters */
-	mod_stats,
+	0,
 	0,										/**< MI cmds */
 	0,										/**< pseudovariables */
 	0,										/**< extra processes */
@@ -206,23 +201,11 @@ static int cdp_init( void )
 		LM_ERR("failed to register RPC commands for CDP module\n");
 		return -1;
 	}
-#ifdef STATISTICS
-	/* register statistics */
-	if ( register_stat("cdp", "replies_response_time", &replies_response_time,0 )!=0 ) {
-		LM_ERR("failed to register stat\n");
-		return -1;
-	}
-
-	if ( register_stat("cdp", "replies_received", &replies_received, 0)!=0 ) {
-		LM_ERR("failed to register stat\n");
-		return -1;
-	}
 	
-	if (register_module_stats( exports.name, mod_stats)!=0 ) {
-		LM_ERR("failed to register core statistics\n");
-		return -1;
+	if (cdp_init_counters() != 0) {
+	    LM_ERR("Failed to register counters for CDP modules\n");
+	    return -1;
 	}
-#endif
 
 	if (!diameter_peer_init(config_file)){
 		LM_ERR("error initializing the diameter peer\n");

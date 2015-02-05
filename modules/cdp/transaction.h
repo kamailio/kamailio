@@ -47,7 +47,6 @@
 #define __TRANSACTION_H_
 
 #include <time.h>
-#include "statistics.h"
 #include "utils.h"
 #include "diameter.h"
 #include "diameter_api.h"

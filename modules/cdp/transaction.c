@@ -47,8 +47,9 @@
 
 #include "timer.h"
 #include "globals.h"
+#include "cdp_stats.h"
 
-
+extern struct cdp_counters_h cdp_cnts_h;
 cdp_trans_list_t *trans_list=0;		/**< list of transactions */
 
 /**
@@ -197,7 +198,8 @@ int cdp_trans_timer(time_t now, void* ptr)
 	while(x)
 	{
 		if (now>x->expires){
-            update_stat(stat_cdp_timeouts, 1);		//Transaction has timed out waiting for response
+            counter_inc(cdp_cnts_h.timeout);		//Transaction has timed out waiting for response
+	    
 			x->ans = 0;
 			if (x->cb){
 				(x->cb)(1,*(x->ptr),0, (now - x->expires));
