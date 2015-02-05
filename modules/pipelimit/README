@@ -150,6 +150,7 @@ Chapter 1. Admin Guide
 
    The following modules must be loaded before this module:
      * database connection module.
+     * sl: Stateless Request Handling.
 
 2.2. External Libraries or Applications
 

@@ -45,6 +45,11 @@
 				<emphasis>database connection module</emphasis>.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>sl: Stateless Request Handling</emphasis>.
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 	</section>
