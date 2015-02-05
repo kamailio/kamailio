@@ -451,7 +451,7 @@ modparam("kazoo", "amqp_interprocess_timeout_micro", 200000)
     </section>    
 
     <section>
-        <title><varname>amqp_waitframe_timout</varname>(str)</title>
+        <title><varname>amqp_waitframe_tiemout</varname>(str)</title>
         <para>
         Timeout when checking for messages from rabbitmq.
         </para>
@@ -459,18 +459,18 @@ modparam("kazoo", "amqp_interprocess_timeout_micro", 200000)
         <emphasis>Default value is 100000 micro.</emphasis>
         </para>
         <example>
-        <title>Set <varname>amqp_waitframe_timout</varname> parameter</title>
+        <title>Set <varname>amqp_waitframe_timeout</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("kazoo", "amqp_waitframe_timout_sec", 1)
-modparam("kazoo", "amqp_waitframe_timout_micro", 200000)
+modparam("kazoo", "amqp_waitframe_timeout_sec", 1)
+modparam("kazoo", "amqp_waitframe_timeout_micro", 200000)
 ...
 </programlisting>
         </example>
     </section>    
 
     <section>
-        <title><varname>amqp_query_timout</varname>(str)</title>
+        <title><varname>amqp_query_timeout</varname>(str)</title>
         <para>
         Timeout when checking for reply messages from rabbitmq for kazoo_query commands.
         </para>
@@ -478,15 +478,41 @@ modparam("kazoo", "amqp_waitframe_timout_micro", 200000)
         <emphasis>Default value is 2 sec.</emphasis>
         </para>
         <example>
-        <title>Set <varname>amqp_query_timout</varname> parameter</title>
+        <title>Set <varname>amqp_query_timeout</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("kazoo", "amqp_query_timout_sec", 1)
-modparam("kazoo", "amqp_query_timout_micro", 200000)
+modparam("kazoo", "amqp_query_timeout_sec", 1)
+modparam("kazoo", "amqp_query_timeout_micro", 200000)
 ...
 </programlisting>
         </example>
     </section>    
+ 
+     <section>
+        <title><varname>amqp_query_timeout_avp</varname>(str)</title>
+        <para>
+        avp holding the value in seconds for Timeout when checking for reply messages from rabbitmq for kazoo_query commands.
+        </para>
+        <para>
+        <emphasis>Default value is NULL (no value).</emphasis>
+        </para>
+        <example>
+        <title>>Set <varname>amqp_query_timeout_avp</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "amqp_query_timeout_avp", "$var(kz_timeout)")
+
+route[SOME_ROUTE]
+{
+    $var(kz_timeout) = 12;
+    kazoo_query(exchange, routingkey, payload);
+}    
+
+...
+</programlisting>
+        </example>
+    </section>    
+ 
  
     </section>
         
