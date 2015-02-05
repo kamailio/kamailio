@@ -341,6 +341,11 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 
 	/* if not parameterized, take current uri */
 	if (uri==0 || uri->len==0 || uri->s==0) {
+		if(msg==NULL) {
+			LM_ERR("no new uri and no msg to take r-uri\n");
+			ser_error = E_INVALID_PARAMS;
+			return -1;
+		}
 		if (msg->new_uri.s)
 			luri = msg->new_uri;
 		else
