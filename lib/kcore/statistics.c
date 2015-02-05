@@ -371,6 +371,12 @@ static int get_used_waiting_queue(
 	
 	int  waitingQueueSize = 0;
 
+#ifndef __OS_linux
+	/* /proc/net/tcp and /proc/net/udp only exists on Linux systems, so don't bother with
+	   trying to open these files */
+	return 0;
+#endif
+
 	/* Set up the file we want to open. */
 	if (forTCP) {
 		fileToOpen = "/proc/net/tcp";
