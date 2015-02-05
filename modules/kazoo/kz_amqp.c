@@ -851,7 +851,7 @@ int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, cha
 				if((pv_val.flags & PV_VAL_INT) && pv_val.ri != 0 ) {
 					kz_timeout.tv_usec = 0;
 					kz_timeout.tv_sec = pv_val.ri;
-					LM_INFO("SET TIMEOUT TO %i\n", kz_timeout.tv_sec);
+					LM_DBG("SET TIMEOUT TO %i\n", (int) kz_timeout.tv_sec);
 				}
 			}
 		}
