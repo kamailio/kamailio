@@ -43,8 +43,6 @@
 #define MI_DLG_OPERATION_ERR_LEN	(sizeof(MI_DLG_OPERATION_ERR)-1)
 
 extern struct tm_binds d_tmb;
-//extern int dlg_enable_stats;
-//extern stat_var * active_dlgs;
 
 struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param );
 

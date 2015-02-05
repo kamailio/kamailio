@@ -32,6 +32,7 @@
 #include "dlg_var.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
+#include "dlg_ng_stats.h"
 
 MODULE_VERSION
 
@@ -88,10 +89,6 @@ static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_dlg_terminate(struct sip_msg*, char*, char*);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
-
-stat_var *active_dlgs = 0;
-stat_var *early_dlgs = 0;
-stat_var *expired_dlgs = 0;
 
 static cmd_export_t cmds[] = {
     {"set_dlg_profile", (cmd_function) w_set_dlg_profile, 1, fixup_profile,
@@ -158,12 +155,6 @@ static mi_export_t mi_cmds[] = {
     /* TODO: restore old dialog functionality later - also expose dialoig_out cmds, possibly*/
 };
 
-stat_export_t mod_stats[] = {
-    {"active_dialogs", STAT_NO_RESET, &active_dlgs},
-    {"early_dialogs", STAT_NO_RESET, &early_dlgs},
-    {0, 0, 0}
-};
-
 static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
@@ -171,7 +162,7 @@ struct module_exports exports = {
     DEFAULT_DLFLAGS, /* dlopen flags */
     cmds, /* exported functions */
     mod_params, /* param exports */
-    mod_stats, /* exported statistics */
+    0, /* exported statistics */
     mi_cmds, /* exported MI functions */
     0, /* exported pseudo-variables */
     0, /* extra processes */
@@ -368,15 +359,11 @@ static int mod_init(void) {
         LM_ERR("failed to register RPC commands\n");
         return -1;
     }
-
-#ifdef STATISTICS
-    /* register statistics */
-    if (register_module_stats(exports.name, mod_stats) != 0) {
-	LM_ERR("failed to register %s statistics\n", exports.name);
+    
+    if (dialog_ng_stats_init() != 0) {
+	LM_ERR("Failed to register dialog_ng counters\n");
 	return -1;
     }
-#endif
-
 
     if (faked_msg_init() < 0)
         return -1;
@@ -607,6 +594,7 @@ static void mod_destroy(void) {
     destroy_dlg_callbacks(DLGCB_CREATED | DLGCB_LOADED);
     destroy_dlg_handlers();
     destroy_dlg_profiles();
+    dialog_ng_stats_destroy();
 }
 
 static int w_set_dlg_profile(struct sip_msg *msg, char *profile, char *value) {

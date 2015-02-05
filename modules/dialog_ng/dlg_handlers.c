@@ -30,6 +30,7 @@
 #include "dlg_profile.h"
 #include "dlg_var.h"
 #include "dlg_db_handler.h"
+#include "dlg_ng_stats.h"
 
 static str rr_param; /*!< record-route parameter for matching */
 static int dlg_flag; /*!< flag for dialog tracking */
@@ -43,12 +44,7 @@ int spiral_detected = -1;
 
 extern struct rr_binds d_rrb; /*!< binding to record-routing module */
 extern struct tm_binds d_tmb;
-
-
-/* statistic variables */
-extern stat_var *early_dlgs; /*!< number of early dialogs */
-extern stat_var *active_dlgs; /*!< number of active dialogs */
-extern stat_var *expired_dlgs; /*!< number of expired dialogs */
+extern struct dialog_ng_counters_h dialog_ng_cnts_h;
 
 extern pv_elem_t *ruri_param_model; /*!< pv-string to get r-uri */
 
@@ -504,7 +500,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
 	    update_dialog_dbinfo(dlg);
 
 	if (old_state != DLG_STATE_EARLY) {
-	    update_stat(early_dlgs, 1);
+	    counter_inc(dialog_ng_cnts_h.early);
 	}
 
 	run_dlg_callbacks(DLGCB_EARLY, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
@@ -608,8 +604,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
             unref_dlg(dlg, unref);
 
 		if (old_state == DLG_STATE_EARLY)
-	    update_stat(early_dlgs, -1);
-
+		    counter_add(dialog_ng_cnts_h.early, -1);
 		return;
     }
 
@@ -1207,8 +1202,8 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
 		/* dialog terminated (BYE) */
 		dlg_terminated(req, dlg, dir);
 		unref_dlg(dlg, unref);
-		update_stat(active_dlgs, -1);
-
+		counter_add(dialog_ng_cnts_h.active, -1);
+		counter_inc(dialog_ng_cnts_h.processed);
         return;
     }
 
@@ -1309,12 +1304,12 @@ void dlg_ontimeout(struct dlg_tl *tl) {
                 dlg->callid.len, dlg->callid.s,
                 dlg->from_tag.len, dlg->from_tag.s);
 
-
 		/* dialog timeout */
 		run_dlg_callbacks(DLGCB_EXPIRED, dlg, NULL, NULL, DLG_DIR_NONE, 0);
 		unref_dlg(dlg, unref + 1);
-		update_stat(&active_dlgs, -1);
-		update_stat(&expired_dlgs, 1);
+		counter_add(dialog_ng_cnts_h.active, -1);
+		counter_inc(dialog_ng_cnts_h.expired);
+		counter_inc(dialog_ng_cnts_h.processed);
     } else {
         unref_dlg(dlg, 1);
     }
