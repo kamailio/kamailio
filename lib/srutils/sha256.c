@@ -36,6 +36,12 @@
 #include <assert.h>	/* assert() */
 #include "sha256.h"
 
+/* discover byte order on solaris */
+#if defined(__SVR4) || defined(__sun)
+       #include <sys/isa_defs.h>
+       #define BYTE_ORDER _BYTE_ORDER
+#endif
+
 /*
  * ASSERT NOTE:
  * Some sanity checking code is included using assert().  On my FreeBSD
