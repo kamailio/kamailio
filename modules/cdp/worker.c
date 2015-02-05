@@ -58,12 +58,14 @@
 #include "diameter_api.h"
 
 #include "../../cfg/cfg_struct.h"
+#include "cdp_stats.h"
 
 /* defined in ../diameter_peer.c */
 int dp_add_pid(pid_t pid);
 void dp_del_pid(pid_t pid);
 
 extern dp_config *config; /**< Configuration for this diameter peer 	*/
+extern struct cdp_counters_h cdp_cnts_h;
 
 task_queue_t *tasks; /**< queue of tasks */
 
@@ -231,6 +233,8 @@ int put_task(peer *p, AAAMessage *msg) {
 
         lock_get(tasks->lock);
     }
+    
+    counter_inc(cdp_cnts_h.queuelength);
 
     gettimeofday(&stop, NULL);
     elapsed_useconds = stop.tv_usec - start.tv_usec;
@@ -250,7 +254,7 @@ int put_task(peer *p, AAAMessage *msg) {
     lock_release(tasks->lock);
 
     if(workerq_length_threshold_percentage > 0) {
-	num_tasks = tasks->end - tasks->start;
+        num_tasks = tasks->end - tasks->start;
 	length_percentage = num_tasks/tasks->max*100;
 	if(length_percentage > workerq_length_threshold_percentage) {
 	    LM_WARN("Queue length has exceeded length threshold percentage [%i] and is length [%i]", length_percentage, num_tasks);
@@ -286,6 +290,7 @@ task_t take_task() {
         lock_get(tasks->lock);
     }
 
+    counter_add(cdp_cnts_h.queuelength, -1);
     t = tasks->queue[tasks->start];
     tasks->queue[tasks->start].msg = 0;
     tasks->start = (tasks->start + 1) % tasks->max;

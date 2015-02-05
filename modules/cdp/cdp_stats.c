@@ -12,6 +12,8 @@ counter_def_t cdp_cnt_defs[] = {
 	"total number of replies received"},
     {&cdp_cnts_h.replies_response_time, "replies_response_time", 0, 0, 0,
 	"total time waiting for replies"},
+    {&cdp_cnts_h.queuelength, "queuelength", 0, 0, 0,
+	"current length of worker queue tasks"},
     {0, "average_response_time", 0,
 	cdp_internal_stats, (void*) (long) CDP_AVG_RSP,
 	"average response time for CDP replies"},

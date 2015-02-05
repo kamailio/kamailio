@@ -8,8 +8,11 @@ struct cdp_counters_h {
     counter_handle_t replies_received;
     counter_handle_t replies_response_time;
     counter_handle_t avg_response_time;
+    counter_handle_t queuelength;
 };
-#endif	/* CDP_STATS_H */
 
 int cdp_init_counters();
 void cdp_destroy_counters();
+
+#endif	/* CDP_STATS_H */
+
