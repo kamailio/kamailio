@@ -556,6 +556,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
             ref_dlg(dlg, 1);
         }
 
+	counter_add(dialog_ng_cnts_h.early, -1);
 	counter_inc(dialog_ng_counters_h.active);
         run_dlg_callbacks(DLGCB_CONFIRMED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
 

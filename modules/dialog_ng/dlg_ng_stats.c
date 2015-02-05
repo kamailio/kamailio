@@ -2,7 +2,7 @@
 
 struct dialog_ng_counters_h dialog_ng_cnts_h;
 
-/* sctp counters definitions */
+/* dialog_ng counters definitions */
 counter_def_t dialog_ng_cnt_defs[] =  {
 	{&dialog_ng_cnts_h.active, "active", 0, 0, 0,
 		"number of current active (answered) dialogs"},

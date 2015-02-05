@@ -10,7 +10,8 @@ struct dialog_ng_counters_h {
     counter_handle_t processed;
 
 };
-#endif	/* DIALOG_NG_STATS_H */
 
 int dialog_ng_stats_init();
 void dialog_ng_stats_destroy();
+
+#endif	/* DIALOG_NG_STATS_H */
