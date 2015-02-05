@@ -163,7 +163,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				<emphasis>SL: Stateless request handling</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
