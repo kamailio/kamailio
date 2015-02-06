@@ -172,7 +172,7 @@ void kz_free_pv_value(pv_value_t *val ) {
 pv_value_t* kz_alloc_pv_value() {
 	pv_value_t* v = (pv_value_t*) pkg_malloc(sizeof(pv_value_t));
 	if(v != NULL)
-		memset(v, 0, sizeof(pv_value_t*));
+		memset(v, 0, sizeof(pv_value_t));
 	return v;
 }
 
