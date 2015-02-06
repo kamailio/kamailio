@@ -5,7 +5,7 @@
 #include <amqp_framing.h>
 #include <amqp_tcp_socket.h>
 #include <json.h>
-#include <uuid.h>
+#include <uuid/uuid.h>
 #include "../../mem/mem.h"
 #include "../../timer_proc.h"
 #include "../../sr_module.h"
