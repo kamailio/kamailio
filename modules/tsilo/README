@@ -97,6 +97,7 @@ Chapter 1. Admin Guide
      * REGISTRAR--registrar module-- used to lookup for new contacts and
        update the dset for the r-uri.
      * TM--transaction module-- used to send SIP requests.
+     * SL
 
 2.2. External libraries or applications
 

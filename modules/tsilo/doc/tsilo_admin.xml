@@ -47,6 +47,11 @@
 				send &sip; requests.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>SL</emphasis>
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 	</section>
