@@ -24,6 +24,7 @@
 
 #include "dmq_funcs.h"
 #include "notification_peer.h"
+#include "../../dset.h"
 
 /**
  * @brief register a DMQ peer
@@ -385,6 +386,7 @@ int cfg_dmq_t_replicate(struct sip_msg* msg, char* s)
 	dmq_node_t* node;
 	struct socket_info* sock;
 	int i = 0;
+	int first = 1;
 
 	/* avoid loops - do not replicate if message has come from another node
 	 * (override if optional parameter is set)
@@ -413,10 +415,22 @@ int cfg_dmq_t_replicate(struct sip_msg* msg, char* s)
                         node = node->next;
 			continue;
 		}
+
+		if (!first) {
+			if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, sock, 0, 0, 0, 0) == -1) {
+				LM_ERR("failed to append a branch\n");
+				node = node->next;
+				continue;
+			}
+		} else {
+			first = 0;
+		}
+
 		if(tmb.t_replicate(msg, &node->orig_uri) < 0) {
 			LM_ERR("error calling t_replicate\n");
 			goto error;
 		}
+
 		node = node->next;
 	}
 	lock_release(&node_list->lock);
