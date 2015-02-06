@@ -133,52 +133,58 @@ return 0;
 static int init_cfg (void)
 
 {
-/**********
-* db_url, db_ctable, db_qtable exist?
-**********/
+  int error = 0;
+  int bfnd = 0;
+  struct stat psb [1];
 
+  /**********
+  * db_url, db_ctable, db_qtable exist?
+  **********/
+  
   if (!db_url.s || db_url.len<=0)
   {
-    LM_ERR ("db_url parameter not set!");
-    return 0;
+    LM_ERR ("db_url parameter not set!\n");
+    error = 1;
   }
-  pmod_data->pcfg->db_url = db_url;
 
   if (!db_ctable.s || db_ctable.len<=0)
   {
-    LM_ERR ("db_ctable parameter not set!");
-    return 0;
+    LM_ERR ("db_ctable parameter not set!\n");
+    error = 1;
   }
-  pmod_data->pcfg->db_ctable = db_ctable;
 
   if (!db_qtable.s || db_qtable.len<=0)
   {
-    LM_ERR ("db_qtable parameter not set!");
-    return 0;
+    LM_ERR ("db_qtable parameter not set!\n");
+    error = 1;
+  } 
+
+  /**********
+  * mohdir
+  * o exists?
+  * o directory?
+  **********/
+
+  if (!*mohdir) {
+    LM_ERR ("mohdir parameter not set!\n");
+    error = 1;
+  } else if (strlen(mohdir) > MOHDIRLEN) {
+    LM_ERR ("mohdir too long!");
+    error = 1;
+  }
+  if (moh_maxcalls < 1 || moh_maxcalls > 5000)
+  {
+    LM_ERR ("moh_maxcalls not in range of 1-5000!");
+    error = 1;
+  }
+  if (error == 1) {
+	return 0;
   }
   pmod_data->pcfg->db_qtable = db_qtable;
-
-
-/**********
-* mohdir
-* o exists?
-* o directory?
-**********/
-
-  if (!*mohdir)
-  {
-    LM_ERR ("mohdir parameter not set!");
-    return 0;
-  }
-  if (strlen(mohdir) > MOHDIRLEN)
-  {
-    LM_ERR ("mohdir too long!");
-    return 0;
-  }
+  pmod_data->pcfg->db_ctable = db_ctable;
+  pmod_data->pcfg->db_url = db_url;
   pmod_data->pcfg->mohdir = mohdir;
 
-  int bfnd = 0;
-  struct stat psb [1];
   if (!lstat (mohdir, psb))
   {
     if ((psb->st_mode & S_IFMT) == S_IFDIR)
@@ -186,31 +192,24 @@ static int init_cfg (void)
   }
   if (!bfnd)
   {
-    LM_ERR ("mohdir is not a directory!");
+    LM_ERR ("mohdir is not a directory!\n");
     return 0;
   }
 
-/**********
-* max calls
-* o valid count?
-* o alloc memory
-**********/
+  /**********
+  * max calls
+  * o valid count?
+  * o alloc memory
+  **********/
 
-if (moh_maxcalls < 1 || moh_maxcalls > 5000)
-  {
-  LM_ERR ("moh_maxcalls not in range of 1-5000!");
-  return 0;
+   pmod_data->pcall_lst = (call_lst *) shm_malloc (sizeof (call_lst) * moh_maxcalls);
+   if (!pmod_data->pcall_lst) {
+       LM_ERR ("Unable to allocate shared memory");
+       return -1;
   }
-pmod_data->pcall_lst =
-  (call_lst *) shm_malloc (sizeof (call_lst) * moh_maxcalls);
-if (!pmod_data->pcall_lst)
-  {
-  LM_ERR ("Unable to allocate shared memory");
+  memset (pmod_data->pcall_lst, 0, sizeof (call_lst) * moh_maxcalls);
+  pmod_data->call_cnt = moh_maxcalls;
   return -1;
-  }
-memset (pmod_data->pcall_lst, 0, sizeof (call_lst) * moh_maxcalls);
-pmod_data->call_cnt = moh_maxcalls;
-return -1;
 }
 
 /**********
@@ -372,47 +371,47 @@ if (!init_db ())
 
 if (sl_load_api (pmod_data->psl))
   {
-  LM_ERR ("Unable to load SL module");
+  LM_ERR ("Unable to load SL module\n");
   goto initerr;
   }
 if (load_tm_api (pmod_data->ptm))
   {
-  LM_ERR ("Unable to load TM module");
+  LM_ERR ("Unable to load TM module\n");
   goto initerr;
   }
 if (load_rr_api (pmod_data->prr))
   {
-  LM_ERR ("Unable to load RR module");
+  LM_ERR ("Unable to load RR module\n");
   goto initerr;
   }
 pmod_data->fn_rtp_answer = find_export ("rtpproxy_answer", 0, 0);
 if (!pmod_data->fn_rtp_answer)
   {
-  LM_ERR ("Unable to load rtpproxy_answer");
+  LM_ERR ("Unable to load rtpproxy_answer\n");
   goto initerr;
   }
 pmod_data->fn_rtp_offer = find_export ("rtpproxy_offer", 0, 0);
 if (!pmod_data->fn_rtp_offer)
   {
-  LM_ERR ("Unable to load rtpproxy_offer");
+  LM_ERR ("Unable to load rtpproxy_offer\n");
   goto initerr;
   }
 pmod_data->fn_rtp_stream_c = find_export ("rtpproxy_stream2uac", 2, 0);
 if (!pmod_data->fn_rtp_stream_c)
   {
-  LM_ERR ("Unable to load rtpproxy_stream2uac");
+  LM_ERR ("Unable to load rtpproxy_stream2uac\n");
   goto initerr;
   }
 pmod_data->fn_rtp_stream_s = find_export ("rtpproxy_stream2uas", 2, 0);
 if (!pmod_data->fn_rtp_stream_s)
   {
-  LM_ERR ("Unable to load rtpproxy_stream2uas");
+  LM_ERR ("Unable to load rtpproxy_stream2uas\n");
   goto initerr;
   }
 pmod_data->fn_rtp_destroy = find_export ("rtpproxy_destroy", 0, 0);
 if (!pmod_data->fn_rtp_destroy)
   {
-  LM_ERR ("Unable to load rtpproxy_destroy");
+  LM_ERR ("Unable to load rtpproxy_destroy\n");
   goto initerr;
   }
 
