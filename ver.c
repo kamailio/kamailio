@@ -29,7 +29,15 @@ const char ver_version[] = VERSION;
 const char ver_arch[] = ARCH;
 const char ver_os[] = OS_QUOTED;
 const char ver_id[] = REPO_HASH " " REPO_STATE;
+#ifdef VERSION_NODATE
+const char ver_compiled_time[] =  "" ;
+#else
+#ifdef VERSION_DATE
+const char ver_compiled_time[] =  VERSION_DATE ;
+#else
 const char ver_compiled_time[] =  __TIME__ " " __DATE__ ;
+#endif
+#endif
 const char ver_compiler[] = COMPILER;
 
 const char ver_flags[] = SER_COMPILE_FLAGS;

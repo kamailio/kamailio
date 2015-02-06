@@ -1905,8 +1905,12 @@ int main(int argc, char** argv)
 					printf("flags: %s\n", ver_flags );
 					print_ct_constants();
 					printf("id: %s\n", ver_id);
-					printf("compiled on %s with %s\n",
+					if(strlen(ver_compiled_time)>0)
+						printf("compiled on %s with %s\n",
 							ver_compiled_time, ver_compiler );
+					else
+						printf("compiled with %s\n",
+							ver_compiler );
 
 					exit(0);
 					break;
