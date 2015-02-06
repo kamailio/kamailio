@@ -24,9 +24,9 @@
 #ifndef TCP_KEEPALIVE_H_
 #define TCP_KEEPALIVE_H_
 
-int get_current_fd(int conid, int *fd);
-int acquire_fd_from_tcpmain(int conid, int *fd);
-int tcp_keepalive_enable(int fd, int idle, int count, int interval, int closefd);
-int tcp_keepalive_disable(int fd, int closefd);
+int tcpops_get_current_fd(int conid, int *fd);
+int tcpops_acquire_fd_from_tcpmain(int conid, int *fd);
+int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd);
+int tcpops_keepalive_disable(int fd, int closefd);
 
 #endif /* TCP_KEEPALIVE_H_ */

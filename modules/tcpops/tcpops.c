@@ -39,7 +39,7 @@
  * @return 1 on success, 0 on failure
  *
  */
-int get_current_fd(int conid, int *fd)
+int tcpops_get_current_fd(int conid, int *fd)
 {
 	struct tcp_connection *s_con;
 	if (unlikely((s_con = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)) {
@@ -62,7 +62,7 @@ int get_current_fd(int conid, int *fd)
  * @return 1 on success, 0 on failure
  *
  */
-int acquire_fd_from_tcpmain(int conid, int *fd)
+int tcpops_acquire_fd_from_tcpmain(int conid, int *fd)
 {
 	struct tcp_connection *s_con, *tmp;
 	long msg[2];
@@ -98,20 +98,20 @@ error_release:
 #if !defined(HAVE_SO_KEEPALIVE) || !defined(HAVE_TCP_KEEPIDLE) || !defined(HAVE_TCP_KEEPCNT) || !defined(HAVE_TCP_KEEPINTVL)
 	#warning "TCP keepalive is not fully supported by your platform"
 
-int tcp_keepalive_enable(int fd, int idle, int count, int interval, int closefd)
+int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd)
 {
 	LM_ERR("tcp_keepalive_enable() failed: this module does not support your platform\n");
 	return -1;
 }
 
-int tcp_keepalive_disable(int fd, int closefd)
+int tcpops_keepalive_disable(int fd, int closefd)
 {
 	LM_ERR("tcp_keepalive_disable() failed: this module does not support your platform\n");
 	return -1;
 }
 #else
 
-int tcp_keepalive_enable(int fd, int idle, int count, int interval, int closefd)
+int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd)
 {
 	static const int enable = 1;
 	int ret = -1;
@@ -148,7 +148,7 @@ int tcp_keepalive_enable(int fd, int idle, int count, int interval, int closefd)
 	return ret;
 }
 
-int tcp_keepalive_disable(int fd, int closefd)
+int tcpops_keepalive_disable(int fd, int closefd)
 {
 	static const int disable = 0;
 	int ret = -1;

@@ -126,11 +126,11 @@ static int w_tcp_keepalive_enable4(sip_msg_t* msg, char* con, char* idle, char *
 	_IVALUE (con)
 
 	if (msg != NULL && msg->rcv.proto_reserved1 == i_con) {
-		if (!get_current_fd(msg->rcv.proto_reserved1, &fd)) {
+		if (!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
 			return -1;
 		}
 	} else {
-		if (!acquire_fd_from_tcpmain(i_con, &fd)) {
+		if (!tcpops_acquire_fd_from_tcpmain(i_con, &fd)) {
 			return -1;
 		}
 		closefd = 1;
@@ -140,7 +140,7 @@ static int w_tcp_keepalive_enable4(sip_msg_t* msg, char* con, char* idle, char *
 	_IVALUE (cnt)
 	_IVALUE (intvl)
 
-	return tcp_keepalive_enable(fd, i_idle, i_cnt, i_intvl, closefd);
+	return tcpops_keepalive_enable(fd, i_idle, i_cnt, i_intvl, closefd);
 
 }
 
@@ -152,7 +152,7 @@ static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *
 		return -1;
 	}
 
-	if (!get_current_fd(msg->rcv.proto_reserved1, &fd)) {
+	if (!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
 		return -1;
 	}
 
@@ -160,7 +160,7 @@ static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *
 	_IVALUE (cnt)
 	_IVALUE (intvl)
 
-	return tcp_keepalive_enable(fd, i_idle, i_cnt, i_intvl, 0);
+	return tcpops_keepalive_enable(fd, i_idle, i_cnt, i_intvl, 0);
 }
 
 static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con)
@@ -171,17 +171,17 @@ static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con)
 	_IVALUE (con)
 
 	if (msg != NULL && msg->rcv.proto_reserved1 == i_con) {
-		if (!get_current_fd(msg->rcv.proto_reserved1, &fd)) {
+		if (!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
 			return -1;
 		}
 	} else {
-		if (!acquire_fd_from_tcpmain(i_con, &fd)) {
+		if (!tcpops_acquire_fd_from_tcpmain(i_con, &fd)) {
 			return -1;
 		}
 		closefd = 1;
 	}
 
-	return tcp_keepalive_disable(fd, closefd);
+	return tcpops_keepalive_disable(fd, closefd);
 }
 
 static int w_tcp_keepalive_disable0(sip_msg_t* msg)
@@ -191,11 +191,11 @@ static int w_tcp_keepalive_disable0(sip_msg_t* msg)
 	if (msg == NULL)
 		return -1;
 
-	if (!get_current_fd(msg->rcv.proto_reserved1, &fd)) {
+	if (!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
 		return -1;
 	}
 
-	return tcp_keepalive_disable(fd, 0);
+	return tcpops_keepalive_disable(fd, 0);
 }
 
 /**
