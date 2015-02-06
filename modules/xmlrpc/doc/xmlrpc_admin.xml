@@ -10,6 +10,22 @@
 
 <chapter>
 	<title>&adminguide;</title>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>SL</emphasis> - Stateless request handling
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
 
 	<section>
 	<title>Parameters</title>
