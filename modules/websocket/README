@@ -4,7 +4,7 @@ Peter Dunkley
 
    Crocodile RCS Ltd
 
-   Copyright © 2012-2013 Crocodile RCS Ltd
+   Copyright � 2012-2013 Crocodile RCS Ltd
      __________________________________________________________________
 
    Table of Contents
@@ -129,11 +129,11 @@ Chapter 1. Admin Guide
 2.1. Initiating a connection
 
    A WebSocket connection is initiated with an HTTP GET. The xhttp module
-   is used to handle this GET and call the Section 5.1, “
-   ws_handle_handshake() ” exported function.
+   is used to handle this GET and call the Section 5.1, "
+   ws_handle_handshake() " exported function.
 
    event_route[xhttp:request] should perform some validation of the HTTP
-   headers before calling Section 5.1, “ ws_handle_handshake() ”. The
+   headers before calling Section 5.1, " ws_handle_handshake() ". The
    event_route can also be used to make sure the HTTP GET has the correct
    URI, perform HTTP authentication on the WebSocket connection, and check
    the Origin header (RFC 6454) to ensure a browser-based SIP UA or MSRP
@@ -299,6 +299,7 @@ onreply_route[WS_REPLY] {
 
    The following module must be loaded before this module:
      * sl.
+     * tm.
 
    The following modules are required to make proper use of this module:
      * nathelper or outbound.
@@ -436,7 +437,7 @@ modparam("websocket", "cors_mode", 2)
    5.1. ws_handle_handshake()
    5.2. ws_close([status, reason[, connection_id]])
 
-5.1.  ws_handle_handshake()
+5.1. ws_handle_handshake()
 
    This function checks an HTTP GET request for the required headers and
    values, and (if successful) upgrades the connection from HTTP to
@@ -455,7 +456,7 @@ Note
 ws_handle_handshake();
 ...
 
-5.2.  ws_close([status, reason[, connection_id]])
+5.2. ws_close([status, reason[, connection_id]])
 
    This function closes a WebSocket connection.
 
@@ -496,7 +497,7 @@ ws_close(4000, "Because I say so");
    Name: ws.dump
 
    Parameters:
-     * order (optional) - “id_hash”, “used_desc”, or “used_asc”.
+     * order (optional) - "id_hash", "used_desc", or "used_asc".
 
 Note
 
@@ -581,7 +582,7 @@ Note
 
    7.1. websocket:closed
 
-7.1.  websocket:closed
+7.1. websocket:closed
 
    When defined, the module calls event_route[websocket:closed] when a
    connection closes. The connection may be identified using the the $si

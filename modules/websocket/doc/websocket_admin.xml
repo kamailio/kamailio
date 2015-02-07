@@ -218,6 +218,9 @@ onreply_route[WS_REPLY] {
 		<listitem>
 		<para><emphasis>sl</emphasis>.</para>
 		</listitem>
+		<listitem>
+		<para><emphasis>tm</emphasis>.</para>
+		</listitem>
 		</itemizedlist>
 		</para>
 		<para>
