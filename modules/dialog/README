@@ -449,6 +449,7 @@ Chapter 1. Admin Guide
    The following modules must be loaded before this module:
      * TM - Transaction module
      * RR - Record-Route module
+     * PV - Pseudovariables module
 
 4.2. External Libraries or Applications
 

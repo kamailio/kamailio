@@ -121,6 +121,11 @@
 				<emphasis>RR</emphasis> - Record-Route module
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>PV</emphasis> - Pseudovariables module
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 	</section>
