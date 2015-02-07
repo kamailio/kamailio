@@ -113,6 +113,9 @@ CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
 # LDFLAGS -> LD_EXTRA_OPTS
 LD_EXTRA_OPTS := $(shell dpkg-buildflags --get LDFLAGS)
 
+# https://wiki.debian.org/ReproducibleBuilds/
+CC_EXTRA_OPTS += -DVERSION_NODATE
+
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
