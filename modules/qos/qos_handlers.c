@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 SOMA Networks, Inc.
  * Written by Ovidiu Sas (osas)
  *
@@ -21,9 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
  *
- * History:
- * --------
- * 2007-07-16 initial version (osas)
  */
 
 
