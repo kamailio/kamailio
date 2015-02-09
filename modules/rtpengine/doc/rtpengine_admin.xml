@@ -260,6 +260,26 @@ modparam("rtpengine", "force_send_interface", "10.3.7.123")
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.p.write_sdp_pv">
+		<title><varname>write_sdp_pv</varname> (string)</title>
+		<para>
+			If this parameter is set to a valid AVP or script var specifier, the
+            SDP returned by rtpengine in the offer/answer operations
+            is returned in the specified variable instead of the
+            message body.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<example>
+		<title>Set <varname>write_sdp_avp</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "write_sdp_avp", "$avp(sdp)")
+...
+</programlisting>
+		</example>
+	</section>
 
 	<section id="rtpengine.p.rtp_inst_pvar">
 		<title><varname>rtp_inst_pvar</varname> (string)</title>
