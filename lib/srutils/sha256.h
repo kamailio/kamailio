@@ -53,6 +53,12 @@ extern "C" {
 
 #endif /* SHA2_USE_INTTYPES_H */
 
+/* fix types for Sun Solaris */
+#if defined(__SVR4) || defined(__sun)
+    typedef uint8_t u_int8_t;
+    typedef uint32_t u_int32_t;
+    typedef uint64_t u_int64_t;
+#endif
 
 /*** SHA-256/384/512 Various Length Definitions ***********************/
 #define SHA256_BLOCK_LENGTH		64
