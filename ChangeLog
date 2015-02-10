@@ -1,3 +1,596 @@
+===================== 2015-02-10 Version 4.2.3 Released =====================
+
+===================== Changes Since Version 4.2.1 ===========================
+
+commit cf4ade36b6c138da8c76f7bbd7395f63bd38508d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 10 15:08:43 2015 +0100
+
+    Makefile.defs: version set to 4.2.3
+
+commit ccc46dfcba8e64899c2a77d95fc078158443126d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 10 15:07:53 2015 +0100
+
+    pkg/rpm: set version 4.2.3 in spec files
+
+commit 2ad63ac4b6f2395facf28b88046bd326348ae384
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 10 15:05:44 2015 +0100
+
+    pkg/deb: version set to 4.2.3 in spec files
+
+commit c2b03863299b490346735e8b2501098117a42310
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue Feb 10 09:57:31 2015 +0100
+
+    sctp: fixes for FreeBSD 10.1 compile error and 2 warnings
+    
+    - missing argument for macro SCTP_EV_REMOTE_ERROR() and two extraneous
+      parentheses
+    
+    (cherry picked from commit b06626e811edae93c5f28dc132eca7542a6dcc97)
+
+commit f5b42be4a36d035332a796dde62e4f91e709f3c3
+Author: Jon Auer <jauer@corp.netwurx.net>
+Date:   Thu Feb 5 23:34:59 2015 +0000
+
+    fix compile errors in srutils/sha256 on SunOS (SmartOS)
+    
+    (cherry picked from commit fdb4c7758f0d6d6ebed8cf9d01a412ed024efb8b)
+
+commit d8b487c9253ed68098fa4a75ab963fdfffbc3b1c
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Fri Feb 6 17:29:25 2015 +0000
+
+    kazoo : revert uuid include
+    
+    (cherry picked from commit ad76e342a8235e4a752593dd5fab5b676a89425a)
+
+commit 6edcfda108524397302ca2d00c804ac21cd4a01e
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Fri Feb 6 16:08:54 2015 +0000
+
+    kazoo : fix memset size error  & includes
+    
+    kz_trans was calling memset with wrong size of structure
+    kx_amqp was including uuid.h from uuid directory
+    
+    (cherry picked from commit 5113c047d353724d1a6f5a204e5a895ff1dd519a)
+
+commit 5e07d01aaae15d3441876d8ee154a53484d08682
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Fri Feb 6 10:59:35 2015 +0000
+
+    dmq: add branches when replicating to multiple nodes
+    
+    - reported by Leonardo Arena
+    
+    (cherry picked from commit ff114281fc2f523ed7bf87ea31448ce7327fdf93)
+
+commit f30a61f339f947783210053469d262e61ce58638
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Thu Feb 5 22:34:32 2015 +0000
+
+    kazoo : less agressive log
+    
+    changed log from INFO to DEBUG when timeout is set
+    (cherry picked from commit f9c248a66fdca5317e8820e53f1a0f99cd58ef8a)
+
+commit 090afb32c19b8e76fcbcb6deaaa2f4fe42e0f38f
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Thu Feb 5 19:35:37 2015 +0000
+
+    kazoo : timeout fixes & improvements
+    
+    1) fixes names in parameters (timout corrected to timeout)
+    
+    2) kazoo_query was always using the same timeout value which could be a problem, since there are different kinds of request and some may be given more time to process.
+    solved by adding amqp_query_timeout_avp parameter to allow usage of different timeouts.
+    
+    (cherry picked from commit 0c3925e6f787c6e8d2e1bc7a45fec0c99ba203d8)
+
+commit a90e73327cccb5259af08cbf93f2a1b793a0ca2e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 5 11:26:34 2015 +0100
+
+    core: safety check for append_branch() when called with no uri and no msg
+    
+    - uri or msg parameter must be given, otherwise the new address cannot
+      be set
+    - get_redirects() from uac_redirect can execute this function with both
+      parameters invalid in case of invalid contact, reported by Javi
+      Gallart
+    
+    (cherry picked from commit 2c4ed5922a2322f3b5059f6264884acfb5dec97f)
+
+commit f1f9c545c617c6756659c550881dcf73e123b292
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 4 18:30:05 2015 +0100
+
+    core: removed log message used for troubleshooting
+    
+    (cherry picked from commit c22dfcd6359079f9ea3600bfeb31fe5edbf4f8b1)
+
+commit 144a99f9695a132d4bc4d789dcf0a2a18a470447
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 3 18:48:42 2015 +0100
+
+    db_mongodb: build proper complex filters for db operations
+    
+    - handle ==, != (<>), >, <, <=, >=
+    - bitwise AND (&) not supported
+    
+    (cherry picked from commit f3ae358e937f4df6f0ee28e8d5df16f4245ae4b8)
+
+commit aa87917aa27bcc9f3f71da4cead1b51d17e75da7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 30 08:15:58 2015 +0100
+
+    sl: re-attempt to bind to tm after all mods init
+    
+    - handle the situation when tm is initialized after the sl module
+    - re-binding is done on child callback with rank PROC_INIT
+    
+    (cherry picked from commit 85d3488c3910d447f6900df166bc6b0c16a64e9c)
+
+commit 29e6386a140ccc4025e2ff98ad8a3b0d5da1b6c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 29 21:46:43 2015 +0100
+
+    lib/srdb1: init columns array to 0
+    
+    - allows proper cleanup if there is an error while filling the items
+    
+    (cherry picked from commit e59db798b84f1641f807d216c2ca460cfedb31e7)
+
+commit da06d9a4912f71b3e9f7af3d29a1543a4884efa9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 29 10:45:52 2015 +0100
+
+    sca: more error handling during initialization of the module
+    
+    - fix crash when the module doesn't initialize and calls destroy
+      function during shutdonw at startup
+    - reported by Olle E. Johansson, GH#57
+    
+    (cherry picked from commit df2a45541c5e37907374c5e7595de1f30ea84f98)
+
+commit c39e896e144c33a9f7f10a99029b9a63aff85530
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 29 10:37:13 2015 +0100
+
+    dialog: proper handling cseq increment when cseq header is before via
+    
+    - reported by Fernando Aquilino
+    
+    (cherry picked from commit 8c3a12f6aca7c6492ee440da469834997ea89eee)
+
+commit 0d47a5cfc723be2b8ef2baeb439d5df05b5c580c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 28 22:09:21 2015 +0100
+
+    sca: initialize sca variable to catch destroy on shutdown at startup
+    
+    - reported by GH#35
+    
+    (cherry picked from commit 010977f5febcf923a31d545bd631fbee11dd426c)
+
+commit 23e8ab71c7c6a3baf8858e02391e67f2e8c30c97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 28 22:02:02 2015 +0100
+
+    userblacklist: init variables for safer destroy at startup
+    
+    - reported by GH#42
+    
+    (cherry picked from commit c28551cd245f5e8ab9fc5d5c29f657cc06ad81e2)
+
+commit 008b03ae8361ca06da9042b479c10e760391da72
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Sun Jan 18 17:08:18 2015 -0500
+
+    evapi: Listening socket will be bound with SO_REUSEADDR option so that rebinding does not have to wait for TIME_WAIT connections to clear.
+    
+    (cherry picked from commit cd1a59f223e2806ca4c16ab4a8dc1e0ff2b219d1)
+
+commit e2db60867748eac2e6585ef9d865b12c1e8ddfe2
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sat Jan 17 18:43:42 2015 +0100
+
+    sipcapture Add some missing \n in log messages
+    
+    (cherry picked from commit 5bafc03222bf6fcc59dbcf8aec30def9cdb24581)
+
+commit a244189eeb454e7c1de85022002d69bf38482f43
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Sat Jan 17 20:34:35 2015 +0100
+
+    added bool to print error once
+    (cherry picked from commit c8363905755e5d120251eed95c5fa1be45e8f216)
+
+commit f28c1afd0815d3f31b1ce19c3252a14f11da27fb
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Jan 31 04:21:34 2015 +0200
+
+    db_mysql: restore group ending character in db url
+    
+    - manual cherry-pick from master (git git cherry-pick -x
+      1d3b89b10bfd825e4ca73bb95b0ae489843dd9f1 failed)
+
+commit e8a306188cf50efb7b4a352d65494b4c736c9584
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Jan 28 17:31:06 2015 +0000
+
+    presence_dialoginfo : optionally send dummy dialog
+    (cherry picked from commit 5c9b3afca092dfda33c96dbf5195b8f7bbc2d4cf)
+
+commit 25ec407671a88d6a993239958642dff114ca70d8
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Jan 28 18:26:37 2015 +0100
+
+    presence: do aux_body_processing() if exists after get_p_notify_body()
+    
+    - fix for send_notify_request()
+    
+    (cherry picked from commit cfef15ef1ca52abf4d6df129a5768baa0aaf5a07)
+
+commit 387b3afc5a5c2082688cd898ecbf6457bc0715c4
+Author: Klaus Darilion <klaus.mailinglists@pernau.at>
+Date:   Thu Jan 22 09:24:52 2015 +0000
+
+    kamctl: fix variable assignment
+    
+    There must not be a space before and after the = assignment operator.
+    
+    (cherry picked from commit 513a6d8bf8d270b0a4fa9743daab5263c9688447)
+
+commit eeae005fb3d5239dd6e3af727504fc829ea5a0fb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 25 11:00:28 2015 +0100
+
+    db_postgress: disable initialization of libssl if tls is loaded
+    
+    - based on the note from docs to avoid double attempt to init the ssl
+      library
+    - http://www.postgresql.org/docs/9.4/static/libpq-ssl.html
+    
+    (cherry picked from commit f04dec82e90ec7a3e6aea4ea8e9ed23b06b165c6)
+    
+    Conflicts:
+    	modules/db_postgres/km_pg_con.c
+
+commit e6eca3e988226e3654c5c22d762048a5fff3491c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 25 10:59:07 2015 +0100
+
+    tls: implemented tls hook for pre-mod init execution
+    
+    - do openssl init at this callback
+    
+    (cherry picked from commit f71243410d5e051def1a47cc73adb6caeeadd1cd)
+
+commit 93804b66c5301af75cd6930f9c6653228cce8719
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 25 10:57:00 2015 +0100
+
+    core: tls hooks can execute a callback before modules init function is executed
+    
+    - useful to prepare tls environment before a module might access it
+    - executed after modparam but before mod_init
+    
+    (cherry picked from commit 4700831fa0f2dc52e296ce647711b03d1406497a)
+
+commit e5885f2f4bb6066af8988942beff217cb282a29b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 24 22:37:43 2015 +0100
+
+    tls: updated the default tls session id string
+    
+    (cherry picked from commit e47018b0a65a5e26ea47d789f0bc6d471aa3a117)
+
+commit 6a9887370e1de87afc7f0da79b09eb62b350469f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 12:50:49 2015 +0100
+
+    path: received parameter enclosed in square brackets if ipv6
+    
+    - received should be useless for ipv4, but still can be enforced from
+      config, so has to be well formatted because it is followed by a port
+    - reported by Sebastian Damm
+    
+    (cherry picked from commit 077b26385854feb701950d020e382c254b803e75)
+
+commit 83b3c2425a0e886677954936a60111224edc740b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 12:28:42 2015 +0100
+
+    jsonrpc-c: explicitely listed glibc as dependency
+    
+    (cherry picked from commit 11f300f2c7c8ffe4a6b49b471ffcd116ee218985)
+
+commit 0421282a10446dd67236b6d4c7d103ee45301c28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 11:07:26 2015 +0100
+
+    permissions: init global pointer variables to null for safe shutdown at start
+    
+    - reported by Olle E. Johansson, GH#41
+    
+    (cherry picked from commit 165a3fc2e4dfed09bd9f46e43270d49cf5f72a87)
+
+commit 688593f15e2a67dfaf00d3b371633b3f93e3d584
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 10:55:15 2015 +0100
+
+    pike: check that timer var is initialized before accessing the fields
+    
+    - safe start with empty config, reported by Olle E. Johansson, GH#39
+    
+    (cherry picked from commit c87a75c5fb7aa5d940093fbbca8d9557cc9a0239)
+
+commit 767a91caac78f8f40ce140be0c313002c9aad0b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 10:47:45 2015 +0100
+
+    jsonrpc-c: added note that it depends on Linux specific API
+    
+    - reported by Olle E. Johansson, GH#33
+    
+    (cherry picked from commit 33570d9f575e3b0566ac5f0b9904940420be9ae2)
+
+commit 332d8fa0aace2c331f464042084e421acaee8a80
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 23 09:50:17 2015 +0100
+
+    acc: removed note in the docs about no-db support for cdrs
+    
+    (cherry picked from commit 75db07b5d7794b0f67d5798917d1833a21382bb7)
+
+commit ac3498deab72dd833af24e9974ad251960e8d6fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 22 22:35:36 2015 +0100
+
+    nathelper: enclode IPv6 in square branckets for fix_nated_contact()
+    
+    - even there is no nat in ipv6
+    
+    (cherry picked from commit 814c08f36f13ace21e52181da3039402f951b0a8)
+
+commit 8e40cee0473dab5e7796c6479f46f5994280b76a
+Author: Martin Mikkelsen <martin.mikkelsen@zisson.no>
+Date:   Wed Jan 21 16:55:15 2015 +0100
+
+    auth: use correct parameter for pv_auth_check checks
+    
+    The pv_auth_check has a flags and a checks parameter but the flags
+    parameter is used for both. This means that if flags has the 1-bit set
+    it will enable both HA1-passwords and from/to URI checks and setting the
+    1-bit in the checks parameter does not do anything.
+    
+    This fixes the parameters so that the checks parameter is used for the
+    to/from URI checks.
+    
+    (cherry picked from commit 2cdda10aa232e545ba79ca71876f0160a68e324b)
+
+commit 3271a8f4fad18f525165b7c08037355679b01767
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Jan 12 14:56:48 2015 +0100
+
+    async: Clarify difference between modparam("async","workers",x) and async_workers in core config
+    
+    (cherry picked from commit 06557a25af96d3de05d0302f202e6c4cbd0b84e9)
+
+commit 7ce10a5c6df8a8ee679dabb42cc719bbbb4fa381
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 11 16:51:36 2015 +0100
+
+    core: removed unused code
+    
+    - removes also some clang compile warnings
+    
+    (cherry picked from commit c8eeed253763d4407268494f89050b7681518091)
+
+commit 4fa400f262d2426a8a714ec65c5c88ec8e67f733
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 24 18:33:45 2015 +0100
+
+    dialog: use proper flags for script callback that clean dlg shortcuts
+    
+    (cherry picked from commit b0679c91f22a9eb9b995175b1d1abfb836a5a3f6)
+
+commit cd0e341cba059f43ac204a5d13e4baee9c5948f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 24 11:21:04 2015 +0100
+
+    dialog: removed end of line in middle of log message
+    
+    (cherry picked from commit 3b89c83bceb70da6fcbc9495dbcfec04e3f65ba4)
+
+commit 96c44ab31df9cc1a4400ad16515191332ef767fc
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Fri Jan 23 23:52:57 2015 +0000
+
+    kazoo : fix memory allocation errors
+    
+    (cherry picked from commit fa5468c24283c8ff0a1b2254e927a128d03137fd)
+
+commit 0c1dc464e2b4e7a47e8a54ab087799bdcadb69ea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 17 13:30:45 2015 +0100
+
+    tls: fixed installation path update for tls.cfg
+    
+    (cherry picked from commit ecb32d326615242fed43a6e2655627848842afd2)
+
+commit 32e85b6481b31a1f4aa46603849cb02433e50915
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 17:54:18 2015 +0100
+
+    presence: fix counter and type for removing presentity from cache
+    
+    - report and patch by Kristian F. HÃ¸gh
+    
+    (cherry picked from commit d43e8965640bbc64e56ef33f27d4f3c3a85c73fa)
+
+commit 6b7bbc8e58eae9b43b47efb270c20bb3d93ec2f0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 13:40:51 2015 +0100
+
+    sl: don't remove the lump added in the 'after' list of delete lump
+    
+    - they are destroyed together, making the operation useless
+    
+    (cherry picked from commit 338b00c0f2d38694cffe3536e7eeed0e0d5372dd)
+
+commit 74888e44aa4db53a3e8db49d848af97d460f7e1f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 13:37:42 2015 +0100
+
+    core: remove_lump() clears its innner before/after lists
+    
+    - fixing leak issues that could be created by using sl_forward_reply()
+      in config file
+    
+    (cherry picked from commit 1fd0ca99eaa4b2c5cfcb8bd555a35088ddf49343)
+
+commit 38d6c0bc62b12ecb8402d165a21813c533c55324
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 13:15:25 2015 +0100
+
+    core: parse_ppi_pai - free header parameters for PAI and PPI
+    
+    - they are not considere in the compacted p_id_body_t and not freed
+    - specs don't mention headers parameters for PAI and PPI, but could come
+      as UA extensions
+    
+    (cherry picked from commit c1b4d442501591bd18e8130474eeb5c16101e549)
+
+commit b7657fde6c74673060e1d59e604c1b72ca284dbf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 15 13:11:37 2015 +0100
+
+    core: parse_add_spec() free params in case of parsing failure
+    
+    (cherry picked from commit 5a71429596851d8096de1abe5542e57e8b8f6547)
+
+commit a56b51de8d6c10e06146fbf65ae7d46793e288c9
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Mon Jan 12 16:24:04 2015 +0100
+
+    siputils: fix for e164_check()
+    
+    - the condition for non-digit matching was always false
+    
+    (cherry picked from commit 160710af0ab85dbf211fa7d445d6d4be9b66db10)
+
+commit b41d779b6d8b30f311a490d76f211c1ca656ce38
+Author: Walter Doekes <walter+github@wjd.nu>
+Date:   Mon Jan 12 12:05:52 2015 +0100
+
+    websocket: Check frame->wsc in ws_frame_transmit for NULL.
+    
+    Add frame.wsc == NULL check in ws_frame_transmit similar to the checks
+    in ws_close and friends and ws_frame_receive to avoid crashing if the
+    tcp connection was been terminated prematurely.
+    
+    (cherry picked from commit c109755d347500d8dcfa92a75cb11c9cea2727c2)
+
+commit 9e293335585598e6f7bf7c9e58a0bee4cc9eb068
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 10 11:38:00 2015 +0100
+
+    docbook/Makefile: use default system catalog implicitely
+    
+    - custom catalog can be forced with nocatalog=no
+    
+    (cherry picked from commit 508b11011c85bb21e5bd4212a16fabb9136e22fa)
+
+commit a30cfc6c928721f32f1d0692f89e4183d468d614
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 10 11:33:50 2015 +0100
+
+    dispatcher: refrashed description of dispatching algorithm 8
+    
+    - priority based selection
+    
+    (cherry picked from commit aaf6c2bde1d5e3cd4443ed09c3d5767828a4bda4)
+
+commit d374e4b2b92dab4127df9a98ae9b374928f03a28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 9 20:36:51 2015 +0100
+
+    jsonrpc-c: fixed typo in header guard
+    
+    (cherry picked from commit 8f86d2f16af57dc26229f721c9cb86b7f68208cd)
+
+commit f8276f7c368250fb79d470467cda4fdf20d241cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 23:18:50 2015 +0100
+
+    presence: slot and presentity uri printed in log message
+    
+    - useful for understanding while deleting subscription from memory fails
+      to find the item
+    
+    (cherry picked from commit 8006c3a2637342c21837e5332d3eeb75bb9bf7de)
+
+commit d08a925872aa9bb2b22552171281cbe18783cbef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 13 12:39:10 2015 +0100
+
+    exec: proper handling of empty headers for exec_bash_safety
+    
+    (cherry picked from commit ae491ab355f0b2441bc20060154107b9163597de)
+
+commit f0159a194a8ac0c0f5599867764d447ef2b5bf45
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 12 11:16:53 2015 +0100
+
+    ratelimit: _SC_NPROCESSORS_ONLN is available on FreeBSD
+    
+    - used for getting number of cpus
+    - reported on GH#24
+    
+    (cherry picked from commit 7886ddc516f5a4cef1d3730306a2a2ded06d4986)
+
+commit a711f12d5f4b48b3ccf385492d4c93ace7db515c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 12 11:03:22 2015 +0100
+
+    pipelimit: _SC_NPROCESSORS_ONLN is available on FreeBSD
+    
+    - used for getting number of cpus
+    - reported on GH#24
+    
+    (cherry picked from commit cf65a6ad41396bf5e67d23e12720c420688d7880)
+
+commit 840d15e03523413282426135175e25761488bcac
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Aug 26 16:37:08 2014 +0200
+
+    dmq: Don't delete the original notification_peer on timeout
+    
+    (cherry picked from commit e73aa4032873b3fca88bb809d6d4ce4f28c0f237)
+    (cherry picked from commit 69dc8ec9fce8628cdf9bf39f7a25136544ae9a29)
+
+commit 120bf4a4f6854592bd910334d4d0bd97c9f94974
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Thu Nov 13 18:30:34 2014 +0000
+
+    dmq: force to send replicated messages from configured server address - as reported on list by Victor Kustov
+    
+    (cherry picked from commit 7b5f79f9f384bfe3c16c399184281ebe63bb7785)
+
+commit a01849a60533e3b60dab71f1a3a632ae4b84f831
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 7 22:01:27 2015 +0100
+
+    dialog: proper handling of dlg_set_timeout() for not confirmed dialogs
+    
+    (cherry picked from commit a41eab6bedf670f9f34f069b82a85c3a49c5e1bd)
+
+
 ===================== 2015-01-08 Version 4.2.2 Released =====================
 
 ===================== Changes Since Version 4.2.1 ===========================
