@@ -2397,7 +2397,7 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_SENDER_DRY_EVENT:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_sender_dry_event),
 								si, su, "SCTP_SENDER_DRY_EVENT");
-			SCTP_EV_REMOTE_ERROR(&si->address, si->port_no, su);
+			SCTP_EV_REMOTE_ERROR(&si->address, si->port_no, su, 0);
 			SNOT("sctp notification from %s on %.*s:%d: "
 					"SCTP_SENDER_DRY_EVENT on %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -2659,7 +2659,7 @@ again:
 			goto again;
 		}
 #elif defined __OS_freebsd
-		if ((errno==ENOENT)){
+		if (errno==ENOENT){
 			/* it didn't work, no retrying */
 			WARN("unexpected sendmsg() failure (ENOENT),"
 					" assoc_id %d\n", sinfo->sinfo_assoc_id);
@@ -2826,7 +2826,7 @@ again:
 			goto again;
 		}
 #elif defined __OS_freebsd
-		if ((errno==ENOENT)){
+		if (errno==ENOENT){
 			/* it didn't work, no retrying */
 			WARN("sctp sendmsg: unexpected sendmsg() failure (ENOENT),"
 					" assoc_id %d\n", assoc_id);
