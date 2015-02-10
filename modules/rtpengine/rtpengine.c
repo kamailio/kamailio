@@ -182,7 +182,7 @@ static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
 
 static int rtpengine_disable_tout = 60;
 static int rtpengine_retr = 5;
-static int rtpengine_tout = 1;
+static int rtpengine_tout_ms = 1000;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
@@ -279,7 +279,7 @@ static param_export_t params[] = {
 	                         (void*)rtpengine_set_store          },
 	{"rtpengine_disable_tout",INT_PARAM, &rtpengine_disable_tout },
 	{"rtpengine_retr",        INT_PARAM, &rtpengine_retr         },
-	{"rtpengine_tout",        INT_PARAM, &rtpengine_tout         },
+	{"rtpengine_tout_ms",     INT_PARAM, &rtpengine_tout_ms      },
 	{"db_url",                PARAM_STR, &rtpp_db_url },
 	{"table_name",            PARAM_STR, &rtpp_table_name },
 	{"url_col",               PARAM_STR, &rtpp_url_col },
@@ -1546,7 +1546,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				LM_ERR("can't send command to a RTP proxy\n");
 				goto badproxy;
 			}
-			while ((poll(fds, 1, rtpengine_tout * 1000) == 1) &&
+			while ((poll(fds, 1, rtpengine_tout_ms) == 1) &&
 			    (fds[0].revents & POLLIN) != 0) {
 				do {
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf)-1, 0);

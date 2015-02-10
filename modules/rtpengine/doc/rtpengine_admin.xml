@@ -159,21 +159,21 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 </programlisting>
 		</example>
 	</section>
-	<section id="rtpengine.p.rtpengine_tout">
-		<title><varname>rtpengine_tout</varname> (integer)</title>
+	<section id="rtpengine.p.rtpengine_tout_ms">
+		<title><varname>rtpengine_tout_ms</varname> (integer)</title>
 		<para>
-		Timeout value in waiting for reply from &rtp; proxy.
+		Timeout value expressed in milliseconds in waiting for reply from &rtp; proxy.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>1</quote>.
+			Default value is <quote>1000</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>rtpengine_tout</varname> parameter</title>
+		<title>Set <varname>rtpengine_tout_ms</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("rtpengine", "rtpengine_tout", 2)
+modparam("rtpengine", "rtpengine_tout_ms", 2000)
 ...
 </programlisting>
 		</example>
