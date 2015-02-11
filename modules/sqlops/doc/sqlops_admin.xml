@@ -385,7 +385,9 @@ sql_result_free("ra");
 			driver module (e.g., db_mysql). The query is executed in another
 			process and result is not available back to config, thus it should
 			be used only for sql statements that don't return values (e.g.,
-			insert, delete, update...).
+			insert, delete, update...). Note that async_workers core parameter
+			must be set in order to enable the asyncronous framework
+			needed by this function.
 		</para>
 		<itemizedlist>
 		<listitem>
