@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Digest Authentication - Database support
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,15 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * history:
- * ---------
- * 2003-02-28 scratchpad compatibility abandoned
- * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2004-06-06 updated to the new DB api, added auth_db_{init,bind,close,ver}
- *             (andrei)
- * 2005-05-31 general definition of AVPs in credentials now accepted - ID AVP,
- *            STRING AVP, AVP aliases (bogdan)
- * 2006-03-01 pseudo variables support for domain name (bogdan)
  */
 
 
