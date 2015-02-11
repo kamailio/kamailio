@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2013 Konstantin Mosesov
  *
  * This file is part of Kamailio, a free SIP server.
@@ -9,7 +7,6 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- *
  *
  * This file is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
