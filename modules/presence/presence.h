@@ -76,6 +76,7 @@ extern int startup_time;
 extern char *to_tag_pref;
 extern int expires_offset;
 extern str server_address;
+extern int min_expires;
 extern int max_expires;
 extern int subs_dbmode;
 extern int publ_cache_enabled;

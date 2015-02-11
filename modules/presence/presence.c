@@ -139,6 +139,7 @@ char prefix='a';
 int startup_time=0;
 str db_url = {0, 0};
 int expires_offset = 0;
+int min_expires= 0;
 int max_expires= 3600;
 int shtable_size= 9;
 shtable_t subs_htable= NULL;
@@ -195,6 +196,7 @@ static param_export_t params[]={
 	{ "to_tag_pref",            PARAM_STRING, &to_tag_pref },
 	{ "expires_offset",         INT_PARAM, &expires_offset },
 	{ "max_expires",            INT_PARAM, &max_expires },
+	{ "min_expires",            INT_PARAM, &min_expires },
 	{ "server_address",         PARAM_STR, &server_address},
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
@@ -273,6 +275,12 @@ static int mod_init(void)
 
 	if(max_expires<= 0)
 		max_expires = 3600;
+
+	if(min_expires < 0)
+		min_expires = 0;
+
+	if(min_expires > max_expires)
+		min_expires = max_expires;
 
 	if(server_address.s== NULL)
 		LM_DBG("server_address parameter not set in configuration file\n");

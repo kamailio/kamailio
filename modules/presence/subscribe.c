@@ -863,7 +863,7 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 		ev_param= ev_param->next;
 	}
 	
-	if(extract_sdialog_info(&subs, msg, max_expires, &to_tag_gen,
+	if(extract_sdialog_info(&subs, msg, min_expires, max_expires, &to_tag_gen,
 				server_address, watcher_user, watcher_domain)< 0)
 	{
 		LM_ERR("failed to extract dialog information\n");
@@ -1088,9 +1088,9 @@ error:
 }
 
 
-int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
-		int* to_tag_gen, str scontact, str watcher_user,
-		str watcher_domain)
+int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int miexp,
+		int mexp, int* to_tag_gen, str scontact,
+		str watcher_user, str watcher_domain)
 {
 	str rec_route= {0, 0};
 	int rt  = 0;
@@ -1119,7 +1119,8 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	}
 	if(lexpire > mexp)
 		lexpire = mexp;
-
+	if (lexpire && miexp && lexpire < miexp)
+                lexpire = miexp;
 	subs->expires = lexpire;
 
 	if( msg->to==NULL || msg->to->body.s==NULL)
