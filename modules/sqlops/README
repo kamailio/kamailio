@@ -280,7 +280,8 @@ sql_result_free("ra");
    module (e.g., db_mysql). The query is executed in another process and
    result is not available back to config, thus it should be used only for
    sql statements that don't return values (e.g., insert, delete,
-   update...).
+   update...). Note that async_workers core parameter must be set in order
+   to enable the asyncronous framework needed by this function.
      * connection - the name of the connection to be used for the query
        (defined via "sqlcon" parameter).
      * query - SQL query string or pseudo-variables containing SQL query.
