@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright Â© 2014 asipto.com
+   Copyright © 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -62,8 +62,12 @@ Chapter 1. Admin Guide
 
 1.1. Limitations
 
-     * This module has implemented INSERT, UPDATE and DELETE. Query
-       (SELECT) is not yet storing the result.
+     * This module has implemented the equivalent operations for INSERT,
+       UPDATE, DELETE and SELECT. The match condition (WHERE clause) works
+       with the operators: equal, not equal, greater than, less than,
+       equal or greater than, equal or less than. Raw query is not
+       implemented inside this module, use ndb_mongodb for sending any
+       kind of command to a MongoDB server.
 
 2. Dependencies
 
