@@ -269,11 +269,11 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 					dlginfo->from_uri.s);
 			dialog_publish_multi("terminated", dlginfo->pubruris_caller,
 					&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
-					dlginfo->lifetime, 0, 0, &(dlginfo->from_contact),
+					10, 0, 0, &(dlginfo->from_contact),
 					&target, send_publish_flag==-1?1:0);
 			dialog_publish_multi("terminated", dlginfo->pubruris_callee,
 					&uri, &(dlginfo->from_uri), &(dlginfo->callid), 0,
-					dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact),
+					10, 0, 0, &target, &(dlginfo->from_contact),
 					send_publish_flag==-1?1:0);
 			break;
 		case DLGCB_CONFIRMED:
@@ -364,11 +364,11 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 					type, dlginfo->from_uri.len, dlginfo->from_uri.s);
 			dialog_publish_multi("terminated", dlginfo->pubruris_caller,
 					&(dlginfo->from_uri), &uri, &(dlginfo->callid), 1,
-					dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target,
+					10, 0, 0, &(dlginfo->from_contact), &target,
 					send_publish_flag==-1?1:0);
 			dialog_publish_multi("terminated", dlginfo->pubruris_callee, &uri,
 					&(dlginfo->from_uri), &(dlginfo->callid), 0,
-					dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact),
+					10, 0, 0, &target, &(dlginfo->from_contact),
 					send_publish_flag==-1?1:0);
 
 	}
