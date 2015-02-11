@@ -32,7 +32,7 @@
 #include "global.h"
 
 #include "utils.h"
-#include "java_mod.h"
+#include "app_java_mod.h"
 #include "java_iface.h"
 #include "java_support.h"
 
