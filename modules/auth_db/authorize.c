@@ -49,7 +49,7 @@
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
 #include "api.h"
-#include "authdb_mod.h"
+#include "auth_db_mod.h"
 #include "authorize.h"
 
 
