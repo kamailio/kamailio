@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 voice-system.ro
  * Copyright (C) 2009 asipto.com
  *

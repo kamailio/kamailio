@@ -1,6 +1,4 @@
-/**
- * $Id$
- *
+/*
  * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com) 
  *
  * Permission to use, copy, modify, and distribute this software for any

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2005 FhG Fokus
  * Copyright (C) 2005 Voice Sistem SRL
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)

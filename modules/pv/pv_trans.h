@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 voice-system.ro
  *
  * This file is part of Kamailio, a free SIP server.

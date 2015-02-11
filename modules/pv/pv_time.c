@@ -1,6 +1,4 @@
 /*
- * $Id: pv_shv.c 5291 2008-12-03 16:47:50Z miconda $
- *
  * Copyright (C) 2007 Elena-Ramona Modroiu
  *
  * This file is part of Kamailio, a free SIP server.

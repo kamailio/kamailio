@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2005 FhG Fokus
  * Copyright (C) 2008 Daniel-Constantin Mierla (asipto.com)
  *

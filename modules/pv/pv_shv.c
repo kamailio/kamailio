@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 Elena-Ramona Modroiu
  * Copyright (C) 2013 Olle E. Johansson
  *
