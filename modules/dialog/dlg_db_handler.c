@@ -366,7 +366,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			next_id = d_table->entries[dlg->h_entry].next_id;
 
 			d_table->entries[dlg->h_entry].next_id =
-				(next_id < dlg->h_id) ? (dlg->h_id+1) : next_id;
+				(next_id <= dlg->h_id) ? (dlg->h_id+1) : next_id;
 
 			GET_STR_VALUE(to_tag, values, 6, 1, 1);
 
