@@ -58,6 +58,7 @@ static str pu_481_rpl  = str_init("Subscription does not exist");
 static str pu_400_rpl  = str_init("Bad request");
 static str pu_500_rpl  = str_init("Server Internal Error");
 static str pu_489_rpl  = str_init("Bad Event");
+static str pu_423_rpl  = str_init("Interval Too Brief");
 
 int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 		str* local_contact)
@@ -863,11 +864,10 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 		ev_param= ev_param->next;
 	}
 	
-	if(extract_sdialog_info(&subs, msg, min_expires, max_expires, &to_tag_gen,
-				server_address, watcher_user, watcher_domain)< 0)
+	if(extract_sdialog_info_ex(&subs, msg, min_expires, max_expires, &to_tag_gen,
+				server_address, watcher_user, watcher_domain, &reply_code, &reply_str)< 0)
 	{
-		LM_ERR("failed to extract dialog information\n");
-		goto error;
+            goto error;
 	}
 
 	if (pres_notifier_processes > 0 && pa_dbf.start_transaction)
@@ -1088,9 +1088,10 @@ error:
 }
 
 
-int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int miexp,
+int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, int miexp,
 		int mexp, int* to_tag_gen, str scontact,
-		str watcher_user, str watcher_domain)
+		str watcher_user, str watcher_domain,
+        int* reply_code, str* reply_str)
 {
 	str rec_route= {0, 0};
 	int rt  = 0;
@@ -1119,8 +1120,19 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int miexp,
 	}
 	if(lexpire > mexp)
 		lexpire = mexp;
-	if (lexpire && miexp && lexpire < miexp)
-                lexpire = miexp;
+
+    if (lexpire && miexp && lexpire < miexp) {
+        if(min_expires_action == 1) {
+            LM_DBG("subscription expiration invalid , requested=%d, minimum=%d, returning error \"423 Interval Too brief\"\n", lexpire, miexp);
+            *reply_code = INTERVAL_TOO_BRIEF;
+            *reply_str = pu_423_rpl;
+            goto error;
+        } else {
+            LM_DBG("subscription expiration set to minimum (%d) for requested (%d)\n", lexpire, miexp);
+            lexpire = miexp;
+        }
+    }
+    
 	subs->expires = lexpire;
 
 	if( msg->to==NULL || msg->to->body.s==NULL)
@@ -1326,6 +1338,15 @@ error:
 	return -1;
 }
 
+int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
+                         int* to_tag_gen, str scontact,
+                         str watcher_user, str watcher_domain)
+{
+    int reply_code = 500;
+    str reply_str = pu_500_rpl;
+    return extract_sdialog_info_ex(subs, msg, min_expires, mexp, to_tag_gen,
+        scontact, watcher_user, watcher_domain, &reply_code, &reply_str);
+}
 
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 		str* reply_str)
