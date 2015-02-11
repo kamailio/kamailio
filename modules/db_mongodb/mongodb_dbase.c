@@ -1226,8 +1226,8 @@ int db_mongodb_update(const db1_con_t* _h, const db_key_t* _k,
 		}
 	}
 
-	if (!mongoc_collection_find_and_modify (collection, mdoc, NULL, udoc, NULL,
-				false, false, false, NULL, &error)) {
+	if (!mongoc_collection_update (collection, MONGOC_UPDATE_NONE, mdoc,
+				udoc, NULL, &error)) {
 		LM_ERR("failed to update in collection: %s\n", error.message);
 		goto error;
 	}
