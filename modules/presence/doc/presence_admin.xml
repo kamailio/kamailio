@@ -322,7 +322,7 @@ modparam("presence", "expires_offset", 10)
        <section>
                <title><varname>max_expires</varname> (int)</title>
                <para>
-               The the maximum admissible expires value for PUBLISH/SUBSCRIBE
+               The maximum admissible expires value for PUBLISH/SUBSCRIBE
                message (in seconds).
                </para>
                <para>
@@ -337,6 +337,61 @@ modparam("presence", "max_expires", 3600)
 ...
 </programlisting>
 	</example>
+</section>
+
+<section>
+    <title><varname>min_expires</varname> (int)</title>
+    <para>
+        The minimum admissible expires value for PUBLISH/SUBSCRIBE
+        message (in seconds).
+    </para>
+    <para>
+        If &gt; 0 then min_expires_action parameter determines the response.
+    </para>
+    <para>
+        <emphasis>Default value is <quote>0</quote>.
+        </emphasis>
+    </para>
+    <example>
+        <title>Set <varname>min_expires</varname> parameter</title>
+        <programlisting format="linespecific">
+            ...
+            modparam("presence", "min_expires", 1800)
+            ...
+        </programlisting>
+    </example>
+</section>
+
+<section>
+    <title><varname>min_expires_action</varname> (int)</title>
+    <para>
+        The action to take when UA sends a expires value less then min_expires.
+    </para>
+    <para>
+        <itemizedlist>
+            <title>Possible Values</title>
+            <listitem>
+                <para> 1 : RFC Compliant, returns <quote>423 Interval Too Brief</quote></para>
+            </listitem>
+            <listitem>
+                <para> 2 : forces the min_expires value in the subscription</para>
+            </listitem>
+        </itemizedlist>
+    </para>
+    <para>
+        If &gt; 0 then min_expires_action parameter determines the response.
+    </para>
+    <para>
+        <emphasis>Default value is <quote>1</quote>.</emphasis>
+    </para>
+    <example>
+        <title>Set <varname>min_expires</varname> parameter</title>
+        <programlisting format="linespecific">
+            ...
+            modparam("presence", "min_expires", 1800)
+            ...
+        </programlisting>
+    </example>
 </section>
 
 <section>

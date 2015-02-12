@@ -47,6 +47,7 @@
 
 #define LCONTACT_BUF_SIZE 1024
 #define BAD_EVENT_CODE 489
+#define INTERVAL_TOO_BRIEF 423
 
 
 #define EVENT_DIALOG_SLA(ev) \

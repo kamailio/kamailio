@@ -102,13 +102,13 @@ int a_to_i (char *s,int len)
 
 int send_error_reply(struct sip_msg* msg, int reply_code, str reply_str)
 {
-	if(reply_code== BAD_EVENT_CODE)
-	{
-		str hdr_append;
-		char buffer[256];
-		int i;
-		pres_ev_t* ev= EvList->events;
+    str hdr_append;
+    char buffer[256];
+    int i;
+    pres_ev_t* ev= EvList->events;
 
+    if(reply_code== BAD_EVENT_CODE)
+	{
 		hdr_append.s = buffer;
 		hdr_append.s[0]='\0';
 		hdr_append.len = sprintf(hdr_append.s, "Allow-Events: ");
@@ -138,7 +138,26 @@ int send_error_reply(struct sip_msg* msg, int reply_code, str reply_str)
 			LM_ERR("unable to add lump_rl\n");
 			return -1;
 		}
-	}
+    } else if(reply_code== INTERVAL_TOO_BRIEF) {
+        
+        hdr_append.s = buffer;
+        hdr_append.s[0]='\0';
+        hdr_append.len = sprintf(hdr_append.s, "Min-Expires: %d", min_expires);
+        if(hdr_append.len < 0)
+        {
+            LM_ERR("unsuccessful sprintf\n");
+            return -1;
+        }
+        memcpy(hdr_append.s+ hdr_append.len, CRLF, CRLF_LEN);
+        hdr_append.len+=  CRLF_LEN;
+        hdr_append.s[hdr_append.len]= '\0';
+        
+        if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
+        {
+            LM_ERR("unable to add lump_rl\n");
+            return -1;
+        }
+    }
 
 	if (slb.freply(msg, reply_code, &reply_str) < 0)
 	{
