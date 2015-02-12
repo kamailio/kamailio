@@ -3,6 +3,12 @@ COREPATH=../..
 include $(COREPATH)/Makefile.defs
 include $(COREPATH)/config.mak
 
+ifeq ($(basedir),)
+kamctltmpdir = /tmp
+else
+kamctltmpdir = $(basedir)
+endif
+
 all:
 		@echo "No compilation needed for kamctl"
 
@@ -25,63 +31,63 @@ install-bin: $(bin_prefix)/$(bin_dir)
 		cat kamctl | \
 		sed -e "s#/usr/local/sbin#$(bin_target)#g" | \
 		sed -e "s#/usr/local/lib/kamailio#$(lib_target)#g" | \
-		sed -e "s#/usr/local/etc/kamailio#$(cfg_target)#g"  >$(basedir)/kamctl
+		sed -e "s#/usr/local/etc/kamailio#$(cfg_target)#g"  >$(kamctltmpdir)/kamctl
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/kamctl
-		$(INSTALL_BIN) $(basedir)/kamctl $(bin_prefix)/$(bin_dir)
-		rm -fr $(basedir)/kamctl
+		$(INSTALL_BIN) $(kamctltmpdir)/kamctl $(bin_prefix)/$(bin_dir)
+		rm -fr $(kamctltmpdir)/kamctl
 		sed -e "s#/usr/local/sbin#$(bin_target)#g" \
-			< kamctl.base > $(basedir)/kamctl.base
+			< kamctl.base > $(kamctltmpdir)/kamctl.base
 		mkdir -p $(modules_prefix)/$(lib_dir)/kamctl 
 		$(INSTALL_TOUCH) \
 			$(modules_prefix)/$(lib_dir)/kamctl
-		$(INSTALL_CFG) $(basedir)/kamctl.base \
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.base \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.base
-		rm -fr $(basedir)/kamctl.base
+		rm -fr $(kamctltmpdir)/kamctl.base
 		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.ctlbase > $(basedir)/kamctl.ctlbase
-		$(INSTALL_CFG) $(basedir)/kamctl.ctlbase \
+			< kamctl.ctlbase > $(kamctltmpdir)/kamctl.ctlbase
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.ctlbase \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.ctlbase
-		rm -fr $(basedir)/kamctl.ctlbase
+		rm -fr $(kamctltmpdir)/kamctl.ctlbase
 		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.fifo > $(basedir)/kamctl.fifo
-		$(INSTALL_CFG) $(basedir)/kamctl.fifo \
+			< kamctl.fifo > $(kamctltmpdir)/kamctl.fifo
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.fifo \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.fifo
-		rm -fr $(basedir)/kamctl.fifo
+		rm -fr $(kamctltmpdir)/kamctl.fifo
 		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.ser > $(basedir)/kamctl.ser
-		$(INSTALL_CFG) $(basedir)/kamctl.ser \
+			< kamctl.ser > $(kamctltmpdir)/kamctl.ser
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.ser \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.ser
-		rm -fr $(basedir)/kamctl.ser
+		rm -fr $(kamctltmpdir)/kamctl.ser
 		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.ser_mi > $(basedir)/kamctl.ser_mi
-		$(INSTALL_CFG) $(basedir)/kamctl.ser_mi \
+			< kamctl.ser_mi > $(kamctltmpdir)/kamctl.ser_mi
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.ser_mi \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.ser_mi
-		rm -fr $(basedir)/kamctl.ser_mi
+		rm -fr $(kamctltmpdir)/kamctl.ser_mi
 		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.unixsock > $(basedir)/kamctl.unixsock
-		$(INSTALL_CFG) $(basedir)/kamctl.unixsock \
+			< kamctl.unixsock > $(kamctltmpdir)/kamctl.unixsock
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.unixsock \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.unixsock
-		rm -fr $(basedir)/kamctl.unixsock
+		rm -fr $(kamctltmpdir)/kamctl.unixsock
 		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.sqlbase > $(basedir)/kamctl.sqlbase
-		$(INSTALL_CFG) $(basedir)/kamctl.sqlbase \
+			< kamctl.sqlbase > $(kamctltmpdir)/kamctl.sqlbase
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.sqlbase \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.sqlbase
-		rm -fr $(basedir)/kamctl.sqlbase
+		rm -fr $(kamctltmpdir)/kamctl.sqlbase
 		# install db setup base script
 		sed -e "s#/usr/local/sbin#$(bin_target)#g" \
 			-e "s#/usr/local/etc/kamailio#$(cfg_target)#g" \
 			-e "s#/usr/local/share/kamailio#$(data_target)#g" \
-			< kamdbctl.base > $(basedir)/kamdbctl.base
-		$(INSTALL_CFG) $(basedir)/kamdbctl.base \
+			< kamdbctl.base > $(kamctltmpdir)/kamdbctl.base
+		$(INSTALL_CFG) $(kamctltmpdir)/kamdbctl.base \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.base
-		rm -fr $(basedir)/kamdbctl.base
+		rm -fr $(kamctltmpdir)/kamdbctl.base
 		cat kamdbctl | \
 		sed -e "s#/usr/local/sbin#$(bin_target)#g" | \
 		sed -e "s#/usr/local/lib/kamailio#$(lib_target)#g" | \
-		sed -e "s#/usr/local/etc/kamailio#$(cfg_target)#g"  >$(basedir)/kamdbctl
+		sed -e "s#/usr/local/etc/kamailio#$(cfg_target)#g"  >$(kamctltmpdir)/kamdbctl
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/kamdbctl
-		$(INSTALL_BIN) $(basedir)/kamdbctl $(bin_prefix)/$(bin_dir)
-		rm -fr $(basedir)/kamdbctl
+		$(INSTALL_BIN) $(kamctltmpdir)/kamdbctl $(bin_prefix)/$(bin_dir)
+		rm -fr $(kamctltmpdir)/kamdbctl
 
 install-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 		sed -e "s#/etc/$(NAME)/$(NAME)\.cfg#$(cfg_target)$(NAME).cfg#g" \
@@ -105,15 +111,15 @@ install-modules: $(bin_prefix)/$(bin_dir)
 		if [ "$(MYSQLON)" = "yes" ]; then \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
 			sed -e "s#/usr/local/sbin#$(bin_target)#g" \
-				< kamctl.mysql > $(basedir)/kamctl.mysql ; \
-			$(INSTALL_CFG) $(basedir)/kamctl.mysql \
+				< kamctl.mysql > $(kamctltmpdir)/kamctl.mysql ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamctl.mysql \
 				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.mysql ; \
-			rm -fr $(basedir)/kamctl.mysql ; \
+			rm -fr $(kamctltmpdir)/kamctl.mysql ; \
 			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
-			< kamdbctl.mysql > $(basedir)/kamdbctl.mysql ; \
+			< kamdbctl.mysql > $(kamctltmpdir)/kamdbctl.mysql ; \
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.mysql ; \
-			$(INSTALL_CFG) $(basedir)/kamdbctl.mysql $(modules_prefix)/$(lib_dir)/kamctl/ ; \
-			rm -fr $(basedir)/kamdbctl.mysql ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamdbctl.mysql $(modules_prefix)/$(lib_dir)/kamctl/ ; \
+			rm -fr $(kamctltmpdir)/kamdbctl.mysql ; \
 			mkdir -p $(data_prefix)/$(data_dir)/mysql ; \
 			for FILE in $(wildcard mysql/*) ; do \
 				if [ -f $$FILE ] ; then \
@@ -128,15 +134,15 @@ install-modules: $(bin_prefix)/$(bin_dir)
 		if [ "$(PGSQLON)" = "yes" ]; then \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
 			sed -e "s#/usr/local/sbin#$(bin_target)#g" \
-				< kamctl.pgsql > $(basedir)/kamctl.pgsql ; \
-			$(INSTALL_CFG) $(basedir)/kamctl.pgsql \
+				< kamctl.pgsql > $(kamctltmpdir)/kamctl.pgsql ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamctl.pgsql \
 				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.pgsql ; \
-			rm -fr $(basedir)/kamctl.pgsql ; \
+			rm -fr $(kamctltmpdir)/kamctl.pgsql ; \
 			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
-				< kamdbctl.pgsql > $(basedir)/kamdbctl.pgsql ; \
+				< kamdbctl.pgsql > $(kamctltmpdir)/kamdbctl.pgsql ; \
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.pgsql ; \
-			$(INSTALL_CFG) $(basedir)/kamdbctl.pgsql $(modules_prefix)/$(lib_dir)/kamctl/ ; \
-			rm -fr $(basedir)/kamdbctl.pgsql ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamdbctl.pgsql $(modules_prefix)/$(lib_dir)/kamctl/ ; \
+			rm -fr $(kamctltmpdir)/kamdbctl.pgsql ; \
 			mkdir -p $(data_prefix)/$(data_dir)/postgres ; \
 			for FILE in $(wildcard postgres/*) ; do \
 				if [ -f $$FILE ] ; then \
@@ -151,20 +157,20 @@ install-modules: $(bin_prefix)/$(bin_dir)
 		if [ "$(ORACLEON)" = "yes" ]; then \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
 			sed -e "s#/usr/local/sbin#$(bin_target)#g" \
-				< kamctl.oracle > $(basedir)/kamctl.oracle ; \
-			$(INSTALL_CFG) $(basedir)/kamctl.oracle \
+				< kamctl.oracle > $(kamctltmpdir)/kamctl.oracle ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamctl.oracle \
 				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.oracle ; \
-			rm -fr $(basedir)/kamctl.oracle ; \
+			rm -fr $(kamctltmpdir)/kamctl.oracle ; \
 			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
-			< kamdbctl.oracle > $(basedir)/kamdbctl.oracle ; \
+			< kamdbctl.oracle > $(kamctltmpdir)/kamdbctl.oracle ; \
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.oracle ; \
-			$(INSTALL_CFG) $(basedir)/kamdbctl.oracle $(modules_prefix)/$(lib_dir)/kamctl/ ; \
-			rm -fr $(basedir)/kamdbctl.oracle ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamdbctl.oracle $(modules_prefix)/$(lib_dir)/kamctl/ ; \
+			rm -fr $(kamctltmpdir)/kamdbctl.oracle ; \
 			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
-			< kamdbfunc.oracle > $(basedir)/kamdbfunc.oracle ; \
+			< kamdbfunc.oracle > $(kamctltmpdir)/kamdbfunc.oracle ; \
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbfunc.oracle ; \
-			$(INSTALL_CFG) $(basedir)/kamdbfunc.oracle $(modules_prefix)/$(lib_dir)/kamctl/ ; \
-			rm -fr $(basedir)/kamdbfunc.oracle ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamdbfunc.oracle $(modules_prefix)/$(lib_dir)/kamctl/ ; \
+			rm -fr $(kamctltmpdir)/kamdbfunc.oracle ; \
 			mkdir -p $(data_prefix)/$(data_dir)/oracle ; \
 			for FILE in $(wildcard oracle/*) ; do \
 				if [ -f $$FILE ] ; then \
@@ -199,15 +205,15 @@ install-modules: $(bin_prefix)/$(bin_dir)
 		if [ "$(BERKELEYDBON)" = "yes" ]; then \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
 			sed -e "s#/usr/local/share/kamailio/#$(data_target)#g" \
-				< kamctl.db_berkeley > $(basedir)/kamctl.db_berkeley ; \
-			$(INSTALL_CFG) $(basedir)/kamctl.db_berkeley \
+				< kamctl.db_berkeley > $(kamctltmpdir)/kamctl.db_berkeley ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamctl.db_berkeley \
 				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.db_berkeley ; \
-			rm -fr $(basedir)/kamctl.db_berkeley ; \
+			rm -fr $(kamctltmpdir)/kamctl.db_berkeley ; \
 			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
-				< kamdbctl.db_berkeley > $(basedir)/kamdbctl.db_berkeley ; \
+				< kamdbctl.db_berkeley > $(kamctltmpdir)/kamdbctl.db_berkeley ; \
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.db_berkeley ; \
-			$(INSTALL_CFG) $(basedir)/kamdbctl.db_berkeley $(modules_prefix)/$(lib_dir)/kamctl/ ; \
-			rm -fr $(basedir)/kamdbctl.db_berkeley ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamdbctl.db_berkeley $(modules_prefix)/$(lib_dir)/kamctl/ ; \
+			rm -fr $(kamctltmpdir)/kamdbctl.db_berkeley ; \
 			mkdir -p $(data_prefix)/$(data_dir)/db_berkeley/kamailio ; \
 			for FILE in $(wildcard db_berkeley/kamailio/*) ; do \
 				if [ -f $$FILE ] ; then \
@@ -224,15 +230,15 @@ install-modules: $(bin_prefix)/$(bin_dir)
 		if [ "$(DBTEXTON)" = "yes" ]; then \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
 			sed -e "s#/usr/local/share/kamailio/#$(data_target)#g" \
-				< kamctl.dbtext > $(basedir)/kamctl.dbtext ; \
-			$(INSTALL_CFG) $(basedir)/kamctl.dbtext \
+				< kamctl.dbtext > $(kamctltmpdir)/kamctl.dbtext ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamctl.dbtext \
 				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.dbtext ; \
-			rm -fr $(basedir)/kamctl.dbtext ; \
+			rm -fr $(kamctltmpdir)/kamctl.dbtext ; \
 			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
-				< kamdbctl.dbtext > $(basedir)/kamdbctl.dbtext ; \
+				< kamdbctl.dbtext > $(kamctltmpdir)/kamdbctl.dbtext ; \
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.dbtext ; \
-			$(INSTALL_CFG) $(basedir)/kamdbctl.dbtext $(modules_prefix)/$(lib_dir)/kamctl/ ; \
-			rm -fr $(basedir)/kamdbctl.dbtext ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamdbctl.dbtext $(modules_prefix)/$(lib_dir)/kamctl/ ; \
+			rm -fr $(kamctltmpdir)/kamdbctl.dbtext ; \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl/dbtextdb ; \
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/dbtextdb/dbtextdb.py ; \
 			$(INSTALL_BIN) dbtextdb/dbtextdb.py $(modules_prefix)/$(lib_dir)/kamctl/dbtextdb/ ; \
@@ -250,15 +256,15 @@ install-modules: $(bin_prefix)/$(bin_dir)
 		if [ "$(SQLITEON)" = "yes" ]; then \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
 			sed -e "s#/usr/local/sbin#$(bin_target)#g" \
-				< kamctl.sqlite > $(basedir)/kamctl.sqlite ; \
-			$(INSTALL_CFG) $(basedir)/kamctl.sqlite \
+				< kamctl.sqlite > $(kamctltmpdir)/kamctl.sqlite ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamctl.sqlite \
 				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.sqlite ; \
-			rm -fr $(basedir)/kamctl.sqlite ; \
+			rm -fr $(kamctltmpdir)/kamctl.sqlite ; \
 			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
-				< kamdbctl.sqlite > $(basedir)/kamdbctl.sqlite ; \
+				< kamdbctl.sqlite > $(kamctltmpdir)/kamdbctl.sqlite ; \
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.sqlite ; \
-			$(INSTALL_CFG) $(basedir)/kamdbctl.sqlite $(modules_prefix)/$(lib_dir)/kamctl/ ; \
-			rm -fr $(basedir)/kamdbctl.sqlite ; \
+			$(INSTALL_CFG) $(kamctltmpdir)/kamdbctl.sqlite $(modules_prefix)/$(lib_dir)/kamctl/ ; \
+			rm -fr $(kamctltmpdir)/kamdbctl.sqlite ; \
 			mkdir -p $(data_prefix)/$(data_dir)/db_sqlite ; \
 			for FILE in $(wildcard db_sqlite/*) ; do \
 				if [ -f $$FILE ] ; then \
