@@ -795,7 +795,7 @@ install-every-module-doc: $(foreach mods,$(modules_dirs),install-$(mods)-doc)
 
 install-every-module-man: $(foreach mods,$(modules_dirs),install-$(mods)-man)
 
-install-utils: utils $(bin_prefix)/$(bin_dir)
+install-utils: utils $(bin_prefix)/$(bin_dir) $(run_prefix)/$(run_dir)
 	@for r in $(C_INSTALL_BIN) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
@@ -1027,6 +1027,7 @@ uninstall:
 	@echo " *LIBDIR Path is: ${lib_prefix}/${lib_dir}"
 	@echo " *MANDIR Path is: ${man_prefix}/${man_dir}"
 	@echo " *SHRDIR Path is: ${share_prefix}/${share_dir}"
+	@echo " *RUNDIR Path is: $(run_prefix)/$(run_dir)"
 	@if [ "${PREFIX}" != "/usr/local" ] ; then \
 		echo "-Custom PREFIX Path" ; \
 		if [ "${PREFIX}" = "/" -o "${PREFIX}" = "/usr" ] ; then \
@@ -1057,6 +1058,7 @@ uninstall:
 		echo "rm -rf ${doc_prefix}/${doc_dir}" ; \
 		echo "rm -rf ${lib_prefix}/${lib_dir}" ; \
 		echo "rm -rf ${share_prefix}/${share_dir}" ; \
+		echo "rm -rf $(run_prefix)/$(run_dir)" ; \
 		echo ; \
 		echo "-WARNING: before running the commands, be sure they don't delete any system directory or file" ; \
 	fi ;

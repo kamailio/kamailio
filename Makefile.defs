@@ -467,7 +467,7 @@ cfg_target = $(prefix)/$(cfg_dir)
 bin_target = $(prefix)/$(bin_dir)
 #modules_target = $(prefix)/$(modules_dir)
 lib_target = $(prefix)/$(lib_dir)
-run_target = $(runbasedir)/$(run_dir)
+run_target = $(run_prefix)/$(run_dir)
 doc_target = $(prefix)/$(doc_dir)
 data_target = $(prefix)/$(data_dir)
 
@@ -2018,8 +2018,8 @@ saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME FLAVOUR INSTALL_FLAVOUR \
 # extra: prefix DESTDIR BASEDIR basedirt
 saved_chg_vars:=\
 		CC_EXTRA_OPTS CPU CFLAGS_RM CFLAGS MOD_CFLAGS LIB_CFLAGS UTILS_CFLAGS \
-		BASEDIR basedir DESTDIR LIBDIR \
-		PREFIX prefix\
+		BASEDIR basedir DESTDIR LIBDIR RUNBASEDIR runbasedir \
+		PREFIX prefix \
 		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \
 		doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir \
 		share_prefix share_dir lib_prefix lib_dir data_prefix data_dir \
