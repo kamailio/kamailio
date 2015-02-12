@@ -377,7 +377,7 @@ share_dir = share/$(MAIN_NAME)/
 # lib/$(MAIN_NAME)/modules , lib/$(MAIN_NAME)/modules-s, lib/$(MAIN_NAME)/modules-k
 modules_dir = $(LIBDIR)/$(MAIN_NAME)/
 lib_dir = $(LIBDIR)/$(MAIN_NAME)/
-
+run_dir = var/run/$(MAIN_NAME)/
 doc_dir = doc/$(MAIN_NAME)/
 man_dir = man/
 data_dir = $(MAIN_NAME)/
@@ -429,6 +429,17 @@ LOCALBASE ?= /usr/local
 # Doxygen directory
 doxygen_dir=doc/doxygen
 
+BASEDIR ?= $(DESTDIR)
+basedir = $(BASEDIR)
+
+ifeq ($(BASEDIR),)
+RUNBASEDIR ?= $(PREFIX)
+else
+RUNBASEDIR ?= $(BASEDIR)/$(PREFIX)
+endif
+
+runbasedir = $(RUNBASEDIR)
+
 # install location
 PREFIX ?= $(LOCALBASE)
 prefix = $(PREFIX)
@@ -438,13 +449,12 @@ prefix = $(PREFIX)
 #  basedir=/tmp
 #  prefix=/usr/local
 
-BASEDIR ?= $(DESTDIR)
-basedir = $(BASEDIR)
 # install prefixes for various stuff
 cfg_prefix = $(basedir)$(prefix)
 bin_prefix = $(basedir)$(prefix)
 modules_prefix = $(basedir)$(prefix)
 lib_prefix = $(basedir)$(prefix)
+run_prefix = $(runbasedir)
 doc_prefix = $(basedir)$(prefix)
 man_prefix = $(basedir)$(prefix)
 ut_prefix = $(basedir)$(prefix)
@@ -457,6 +467,7 @@ cfg_target = $(prefix)/$(cfg_dir)
 bin_target = $(prefix)/$(bin_dir)
 #modules_target = $(prefix)/$(modules_dir)
 lib_target = $(prefix)/$(lib_dir)
+run_target = $(runbasedir)/$(run_dir)
 doc_target = $(prefix)/$(doc_dir)
 data_target = $(prefix)/$(data_dir)
 
@@ -613,6 +624,7 @@ C_DEFS= $(extra_defs) \
 	 -D__CPU_$(ARCH) $(os_defs) \
 	 -DSER_VER=$(SER_VER) \
 	 -DCFG_DIR='"$(cfg_target)"'\
+	 -DRUN_DIR='"$(run_target)"'\
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DDNS_IP_HACK \
@@ -2011,7 +2023,7 @@ saved_chg_vars:=\
 		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \
 		doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir \
 		share_prefix share_dir lib_prefix lib_dir data_prefix data_dir \
-		cfg_target lib_target data_target
+		cfg_target lib_target data_target run_prefix run_dir run_target
 
 
 #export relevant variables to the sub-makes

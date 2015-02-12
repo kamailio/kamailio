@@ -663,13 +663,16 @@ man: $(foreach mods,$(modules_dirs),$(mods)-man)
 mk-install_dirs: $(cfg_prefix)/$(cfg_dir) $(bin_prefix)/$(bin_dir) \
 			$(modules_prefix)/$(modules_dir) $(doc_prefix)/$(doc_dir) \
 			$(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5 \
-			$(share_prefix)/$(share_dir) \
+			$(share_prefix)/$(share_dir) $(run_prefix)/$(run_dir) \
 			$(foreach mods,$(modules_dirs),\
 				$(modules_prefix)/$(modules_dir)$(mods) \
 				$(doc_prefix)/$(doc_dir)$(mods) )
 
 $(cfg_prefix)/$(cfg_dir): 
 		mkdir -p $(cfg_prefix)/$(cfg_dir)
+
+$(run_prefix)/$(run_dir): 
+		mkdir -p $(run_prefix)/$(run_dir)
 
 $(bin_prefix)/$(bin_dir):
 		mkdir -p $(bin_prefix)/$(bin_dir)
