@@ -399,22 +399,24 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 				path_dst.len = 0;
 			}
 
-			/* The same as for the first contact applies for branches 
-			 * regarding path vs. received. */
-			LM_DBG("instance is %.*s\n",
-			       ptr->instance.len, ptr->instance.s);
-			if (append_branch(_m, &ptr->c,
-					  path_dst.len?&path_dst:&ptr->received,
-					  path_dst.len?&path_str:0, ptr->q, ptr->cflags,
-					  ptr->sock,
-					  ptr->instance.len?&(ptr->instance):0,
-				          ptr->instance.len?ptr->reg_id:0,
-					  &ptr->ruid, &ptr->user_agent)
-			    == -1) {
-				LM_ERR("failed to append a branch\n");
-				/* Also give a chance to the next branches*/
-				continue;
-			}
+            if(_mode == 0) {
+                /* The same as for the first contact applies for branches
+                 * regarding path vs. received. */
+                LM_DBG("instance is %.*s\n",
+                       ptr->instance.len, ptr->instance.s);
+                if (append_branch(_m, &ptr->c,
+                          path_dst.len?&path_dst:&ptr->received,
+                          path_dst.len?&path_str:0, ptr->q, ptr->cflags,
+                          ptr->sock,
+                          ptr->instance.len?&(ptr->instance):0,
+                              ptr->instance.len?ptr->reg_id:0,
+                          &ptr->ruid, &ptr->user_agent)
+                    == -1) {
+                    LM_ERR("failed to append a branch\n");
+                    /* Also give a chance to the next branches*/
+                    continue;
+                }
+            }
 			if(ptr->xavp!=NULL) {
 				xavp = xavp_clone_level_nodata(ptr->xavp);
 				if(xavp_insert(xavp, nr_branches, NULL)<0) {

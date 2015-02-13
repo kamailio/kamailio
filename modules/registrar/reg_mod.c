@@ -185,6 +185,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"lookup_to_dset",  (cmd_function)w_lookup_to_dset,  1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
+    {"lookup_to_dset",  (cmd_function)w_lookup_to_dset,  2,  domain_uri_fixup, 0,
+        REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)w_registered,  1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)w_registered,  2,  domain_uri_fixup, 0,
