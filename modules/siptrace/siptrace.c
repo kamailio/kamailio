@@ -72,6 +72,7 @@ struct _siptrace_data {
 	char *dir;
 	str fromtag;
 	str fromip;
+	str totag;
 	str toip;
 	char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	char fromip_buff[IP_ADDR_MAX_STR_SIZE+12];
@@ -123,8 +124,10 @@ static str toip_column        = str_init("toip");        /* 07 */
 static str fromtag_column     = str_init("fromtag");     /* 08 */
 static str direction_column   = str_init("direction");   /* 09 */
 static str time_us_column     = str_init("time_us");     /* 10 */
+static str totag_column       = str_init("totag");       /* 11 */
 
-#define NR_KEYS 11
+#define NR_KEYS 12
+#define SIP_TRACE_TABLE_VERSION 4
 
 #define XHEADERS_BUFSIZE 512
 
@@ -193,6 +196,7 @@ static param_export_t params[] = {
 	{"fromip_column",      PARAM_STR, &fromip_column      },
 	{"toip_column",        PARAM_STR, &toip_column        },
 	{"fromtag_column",     PARAM_STR, &fromtag_column     },
+	{"totag_column",       PARAM_STR, &totag_column       },
 	{"direction_column",   PARAM_STR, &direction_column   },
 	{"trace_flag",         INT_PARAM, &trace_flag           },
 	{"trace_on",           INT_PARAM, &trace_on             },
@@ -461,6 +465,12 @@ static int child_init(int rank)
 		if (!db_con)
 		{
 			LM_ERR("unable to connect to database. Please check configuration.\n");
+			return -1;
+		}
+		if (db_check_table_version(&db_funcs, db_con, &siptrace_table,
+					   SIP_TRACE_TABLE_VERSION) < 0) {
+			LM_ERR("error during table version check\n");
+			db_funcs.close(db_con);		
 			return -1;
 		}
 	}
@@ -809,6 +819,11 @@ static int sip_trace_store_db(struct _siptrace_data *sto)
 	db_vals[10].nul = 0;
 	db_vals[10].val.int_val = sto->tv.tv_usec;
 
+	db_keys[11] = &totag_column;
+	db_vals[11].type = DB1_STR;
+	db_vals[11].nul = 0;
+	db_vals[11].val.str_val = sto->totag;
+
 	db_funcs.use_table(db_con, siptrace_get_table());
 
 	if(trace_on_flag!=NULL && *trace_on_flag!=0) {
@@ -1025,6 +1040,7 @@ static int sip_trace(struct sip_msg *msg, struct dest_info * dst, char *dir)
 	}
 
 	sto.fromtag = get_from(msg)->tag_value;
+	sto.totag = get_to(msg)->tag_value;
 
 #ifdef STATISTICS
 	if(msg->first_line.type==SIP_REPLY) {
@@ -1210,6 +1226,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	sto.dir = "out";
 
 	sto.fromtag = get_from(msg)->tag_value;
+	sto.totag = get_to(msg)->tag_value;
 
 #ifdef STATISTICS
 	sto.stat = siptrace_req;
@@ -1282,6 +1299,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	sto.dir = "in";
 
 	sto.fromtag = get_from(msg)->tag_value;
+	sto.totag = get_to(msg)->tag_value;
 #ifdef STATISTICS
 	sto.stat = siptrace_rpl;
 #endif
@@ -1390,6 +1408,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 
 	sto.dir = "out";
 	sto.fromtag = get_from(msg)->tag_value;
+	sto.totag = get_to(msg)->tag_value;
 
 #ifdef STATISTICS
 	sto.stat = siptrace_rpl;
@@ -1476,6 +1495,7 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 
 	sto.dir = "out";
 	sto.fromtag = get_from(msg)->tag_value;
+	sto.totag = get_to(msg)->tag_value;
 
 #ifdef STATISTICS
 	sto.stat = siptrace_rpl;

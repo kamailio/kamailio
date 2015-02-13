@@ -9,7 +9,7 @@
 
 <table id="sip_trace" xmlns:db="http://docbook.org/ns/docbook">
     <name>sip_trace</name>
-    <version>3</version>
+    <version>4</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used to store incoming/outgoing SIP messages in database. More informations can be found in the siptrace module documentation at: &KAMAILIO_MOD_DOC;siptrace.html.
@@ -102,6 +102,14 @@
         <size>&id_len;</size>
         <default/>
         <description>From tag</description>
+    </column>
+
+    <column>
+        <name>totag</name>
+        <type>string</type>
+        <size>&id_len;</size>
+        <default/>
+        <description>To tag</description>
     </column>
 
     <column>
