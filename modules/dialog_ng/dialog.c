@@ -126,7 +126,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t mod_params[] = {
     { "hash_size", INT_PARAM, &dlg_hash_size},
-    { "rr_param", PARAM_STRING, &rr_param},
+    { "rr_param", PARAM_STR, &rr_param},
     { "dlg_flag", INT_PARAM, &dlg_flag},
     { "timeout_avp", PARAM_STR, &timeout_spec},
     { "default_timeout", INT_PARAM, &default_timeout},
@@ -134,14 +134,14 @@ static param_export_t mod_params[] = {
     //In this new dialog module we always match using DID
     //{ "dlg_match_mode", INT_PARAM, &seq_match_mode},
 
-    { "db_url",				PARAM_STRING, &db_url 				},
+    { "db_url",				PARAM_STR, &db_url 				},
     { "db_mode",			INT_PARAM, &dlg_db_mode_param		},
     { "db_update_period",	INT_PARAM, &db_update_period		},
     { "db_fetch_rows",		INT_PARAM, &db_fetch_rows			}
     ,
     { "detect_spirals",		INT_PARAM, &detect_spirals			},
-    { "profiles_with_value",PARAM_STRING, &profiles_wv_s			},
-    { "profiles_no_value",	PARAM_STRING, &profiles_nv_s			},
+    { "profiles_with_value",PARAM_STR, &profiles_wv_s			},
+    { "profiles_no_value",	PARAM_STR, &profiles_nv_s			},
     { "bridge_controller",	PARAM_STR, &dlg_bridge_controller	},
     { "ruri_pvar",			PARAM_STR, &ruri_pvar_param		},
 
