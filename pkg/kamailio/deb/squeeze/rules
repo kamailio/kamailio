@@ -64,7 +64,7 @@ endef
 define PACKAGE_GRP_INSTALL_template
 	$(foreach grp,$(PACKAGE_GROUPS),\
 		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
-		basedir=$(CURDIR)/debian/kamailio-$(grp)-modules \
+		BASEDIR=$(CURDIR)/debian/kamailio-$(grp)-modules \
 		cfg_prefix=$(CURDIR)/debian/kamailio-$(grp)-modules \
 		doc-dir=share/doc/kamailio-$(grp)-modules
 		# eliminate duplicate libs
@@ -82,7 +82,7 @@ endef
 define PACKAGE_EXTRA_INSTALL_template
 	$(foreach grp,$(EXTRA_GROUPS),\
 		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
-		basedir=$(CURDIR)/debian/kamailio-extra-modules \
+		BASEDIR=$(CURDIR)/debian/kamailio-extra-modules \
 		cfg_prefix=$(CURDIR)/debian/kamailio-extra-modules \
 		doc-dir=share/doc/kamailio-extra-modules
 	)
@@ -96,13 +96,6 @@ define PACKAGE_EXTRA_INSTALL_template
 	done
 	find $(CURDIR)/debian/kamailio-extra-modules -depth -empty -type d -exec rmdir {} \;
 endef
-
-ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -g
-endif
-ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
-	INSTALL_PROGRAM += -s
-endif
 
 # CFLAGS + CPPFLAGS -> CC_EXTRA_OPTS
 CC_EXTRA_OPTS := $(shell dpkg-buildflags --get CPPFLAGS)
@@ -120,7 +113,7 @@ configure-stamp:
 	# Add here commands to configure the package.
 	$(MAKE) FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$(CURDIR)/debian/kamailio \
 			cfg_target=/etc/kamailio/ \
-			basedir=$(CURDIR)/debian/kamailio \
+			BASEDIR=$(CURDIR)/debian/kamailio \
 			skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
 			CC_EXTRA_OPTS="$(CC_EXTRA_OPTS)" \
 			LD_EXTRA_OPTS="$(LD_EXTRA_OPTS)" \
@@ -163,6 +156,8 @@ install: build
 	# install /etc/default/kamailio file
 	mkdir -p $(CURDIR)/debian/kamailio/etc/default
 	cp -f debian/kamailio.default $(CURDIR)/debian/kamailio/etc/default/kamailio
+	# delete /var/run/kamailio dir
+	rm -rf $(CURDIR)/debian/kamailio/usr/local
 
 
 # This single target is used to build all the packages, all at once, or
