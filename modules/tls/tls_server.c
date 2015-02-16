@@ -151,6 +151,8 @@ static int tls_complete_init(struct tcp_connection* c)
 	      * count immediately.
 	      */
 
+	LM_DBG("completing tls connection initialization\n");
+
 	lock_get(tls_domains_cfg_lock);
 	cfg = *tls_domains_cfg;
 
@@ -164,17 +166,19 @@ static int tls_complete_init(struct tcp_connection* c)
 	if (c->flags & F_CONN_PASSIVE) {
 		state=S_TLS_ACCEPTING;
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV,
-								&c->rcv.dst_ip, c->rcv.dst_port);
+								&c->rcv.dst_ip, c->rcv.dst_port, 0);
 	} else {
 		state=S_TLS_CONNECTING;
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
-								&c->rcv.dst_ip, c->rcv.dst_port);
+								&c->rcv.dst_ip, c->rcv.dst_port, 0);
 	}
 	if (unlikely(c->state<0)) {
 		BUG("Invalid connection (state %d)\n", c->state);
 		goto error;
 	}
-	DBG("Using TLS domain %s\n", tls_domain_str(dom));
+	DBG("Using initial TLS domain %s (dom %p ctx %p sn [%s])\n",
+			tls_domain_str(dom), dom, dom->ctx[process_no],
+			ZSW(dom->server_name.s));
 
 	data = (struct tls_extra_data*)shm_malloc(sizeof(struct tls_extra_data));
 	if (!data) {

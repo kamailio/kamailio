@@ -138,6 +138,8 @@ const SSL_METHOD* ssl_methods[TLS_METHOD_MAX];
 #define NULL_GRACE_PERIOD 10U
 */
 
+
+
 inline static char* buf_append(char* buf, char* end, char* str, int str_len)
 {
 	if ( (buf+str_len)<end){
