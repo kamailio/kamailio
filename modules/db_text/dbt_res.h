@@ -47,7 +47,7 @@ typedef struct _dbt_result
 typedef struct _dbt_con
 {
 	dbt_cache_p con;
-    int affected;
+	int affected;
 } dbt_con_t, *dbt_con_p;
 
 #define DBT_CON_CONNECTION(db_con) (((dbt_con_p)((db_con)->tail))->con)
