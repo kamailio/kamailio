@@ -1592,7 +1592,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
 	    STR_APPEND(buf, uri_e);
 	    
 	    param = ptr->params;
-	    while (param)
+	    while (param) {
 			if (supported_param(&param->name) != 0) { 
 				param = param->next;
 				continue;
