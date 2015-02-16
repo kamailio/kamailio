@@ -105,7 +105,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
 	i++;
     }
 
-    /* look first for an un-expired and suported contact */
+    /* look first for an un-expired and supported contact */
     if (ptr == 0) {
 	LM_INFO("No contacts founds for IMPU <%.*s>\n",aor.len,aor.s);
 	/* nothing found */

@@ -1592,7 +1592,11 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
 	    STR_APPEND(buf, uri_e);
 	    
 	    param = ptr->params;
-	    while (param && supported_param(&param->name) == 0) {
+	    while (param)
+			if (supported_param(&param->name) != 0) { 
+				param = param->next;
+				continue;
+			}
 		
 		if(param->body.len > 0) {
 		    LM_DBG("This contact has params name: [%.*s] body [%.*s]\n", param->name.len, param->name.s, param->body.len, param->body.s);
