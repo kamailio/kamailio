@@ -172,7 +172,7 @@ binary-common:
 	dh_testroot
 	dh_installdebconf
 	dh_installdocs
-	dh_installexamples
+	dh_installexamples -Xobsoleted
 	dh_installmenu
 	dh_installinit -pkamailio -- defaults 23
 	dh_installcron
