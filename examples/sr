@@ -38,9 +38,9 @@ MYDIR=$HM/core
 CORE=$MYDIR/core
 TMP=/tmp/srcore.$$
 
-sip-router_start() {
+sip_router_start() {
 	if [ -r $BIN -a -r $CORE ] ; then
-		echo "before startup sip-router core found on `date` at $HOSTNAME" > $TMP
+		echo "before startup sip-router core found on `date` at `hostname`" > $TMP
 		echo "----------------------------------" >> $TMP
 		DATE=`date "+%Y-%m-%d--%H-%M"`
 		NEWCORE=$MYDIR/core.$DATE
@@ -60,7 +60,7 @@ sip-router_start() {
 	echo
 }
 
-sip-router_stop() {
+sip_router_stop() {
 	echo "Stopping SIP router: "
 	killproc $BINNAME
 	RETVAL=$?
@@ -84,15 +84,15 @@ monit_stop() {
 # See how we were called.
 case "$1" in
   serstart)
-	sip-router_start
+	sip_router_start
 	;;
   sip-routerstop)
-    sip-router_stop
+    sip_router_stop
 	;;
   sip-routerrestart)
-	sip-router_stop
+	sip_router_stop
 	echo
-	sip-router_start
+	sip_router_start
 	;;
   start)
     monit_start
