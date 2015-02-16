@@ -336,6 +336,20 @@ int dbt_raw_query(db1_con_t* _h, char* _s, db1_res_t** _r)
 }
 
 /*
+ * Affected Rows
+ */
+int dbt_affected_rows(db1_con_t* _h)
+{
+    if (!_h || !CON_TABLE(_h))
+    {
+        LM_ERR("invalid parameter\n");
+        return -1;
+    }
+
+    return ((dbt_con_p)_h->tail)->affected;
+}
+
+/*
  * Insert a row into table
  */
 int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
@@ -350,6 +364,9 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
+ 
+    ((dbt_con_p)_h->tail)->affected = 0;
+    
 	if(!_k || !_v || _n<=0)
 	{
 		LM_ERR("no key-value to insert\n");
@@ -407,6 +424,8 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		goto clean;
 	}
 
+    ((dbt_con_p)_h->tail)->affected = 1;
+    
 	/* dbt_print_table(_tbc, NULL); */
 	
 	/* unlock databse */
@@ -452,6 +471,8 @@ int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		return -1;
 	}
 
+    ((dbt_con_p)_h->tail)->affected = 0;
+
 	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
@@ -464,6 +485,7 @@ int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	if(!_k || !_v || _n<=0)
 	{
 		LM_DBG("deleting all records\n");
+        ((dbt_con_p)_h->tail)->affected = _tbc->nrrows;
 		dbt_table_free_rows(_tbc);
 		/* unlock databse */
 		dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
@@ -490,6 +512,9 @@ int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 			_tbc->nrrows--;
 			// free row
 			dbt_row_free(_tbc, _drp);
+
+            ((dbt_con_p)_h->tail)->affected++;
+
 		}
 		_drp = _drp0;
 	}
@@ -530,7 +555,9 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
-	
+
+    ((dbt_con_p)_h->tail)->affected = 0;
+    
 	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
@@ -569,6 +596,9 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 					goto error;
 				}
 			}
+
+            ((dbt_con_p)_h->tail)->affected++;
+
 		}
 		_drp = _drp->next;
 	}
