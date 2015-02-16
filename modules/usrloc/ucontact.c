@@ -824,9 +824,9 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	nr_cols2++;
 
 	keys2[nr_cols2] = &ruid_col;
+	vals2[nr_cols2].type = DB1_STR;
 	if(_c->ruid.len>0)
 	{
-		vals2[nr_cols2].type = DB1_STR;
 		vals2[nr_cols2].nul = 0;
 		vals2[nr_cols2].val.str_val = _c->ruid;
 	} else {
@@ -835,9 +835,9 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	nr_cols2++;
 
 	keys2[nr_cols2] = &instance_col;
+	vals2[nr_cols2].type = DB1_STR;
 	if(_c->instance.len>0)
 	{
-		vals2[nr_cols2].type = DB1_STR;
 		vals2[nr_cols2].nul = 0;
 		vals2[nr_cols2].val.str_val = _c->instance;
 	} else {
@@ -1036,9 +1036,9 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 	n2++;
 
 	keys2[n2] = &instance_col;
+	vals2[n2].type = DB1_STR;
 	if(_c->instance.len>0)
 	{
-		vals2[n2].type = DB1_STR;
 		vals2[n2].nul = 0;
 		vals2[n2].val.str_val = _c->instance;
 	} else {
