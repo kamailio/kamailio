@@ -202,10 +202,10 @@ cmodules=$(foreach mods,$(modules_dirs), $($(mods)))
 
 
 # list of utils directories that should be compiled by make utils
-C_COMPILE_UTILS=	utils/sercmd
+C_COMPILE_UTILS=	utils/kamcmd
 # list of binaries that should be installed alongside
 # (they should be created after make utils, see C_COMPILE_UTILS)
-C_INSTALL_BIN=	# sercmd is now installed by ctl
+C_INSTALL_BIN=	# kamcmd is now installed by ctl
 
 # which utils know to install themselves and should be installed
 # along the core (list of utils directories)
