@@ -60,6 +60,7 @@
 #define PV_IDX_INT	0
 #define PV_IDX_PVAR	1
 #define PV_IDX_ALL	2
+#define PV_IDX_ITR	3
 
 /*! if PV name is dynamic, integer, or str */
 #define pv_has_dname(pv) ((pv)->pvp.pvn.type==PV_NAME_PVAR)
