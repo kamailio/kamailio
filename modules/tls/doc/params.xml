@@ -350,6 +350,28 @@ modparam("tls", "cipher_list", "HIGH")
 	</example>
 	</section>
 
+	<section id="tls.p.server_name">
+	<title><varname>server_name</varname> (string)</title>
+	<para>
+		Sets the Server Name Indication (SNI) value.
+	</para>
+	<para>
+		This is a TLS extension and is not working for old and obsoleted
+		SSL versions.
+	</para>
+	<para>
+		The default value is empty (not set).
+	</para>
+	<example>
+	    <title>Set <varname>server_name</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "server_name", "kamailio.org")
+...
+	    </programlisting>
+	</example>
+	</section>
+
 	<section id="tls.p.send_timeout">
 	<title><varname>send_timeout</varname> (int)</title>
 	<para>
@@ -993,6 +1015,7 @@ modparam("tls", "renegotiation", 1)
 			<listitem><para>ca_list</para></listitem>
 			<listitem><para>crl</para></listitem>
 			<listitem><para>cipher_list</para></listitem>
+			<listitem><para>server_name</para></listitem>
 	</itemizedlist>
 	<para>
 		All the parameters that take filenames as values will be resolved
@@ -1031,6 +1054,7 @@ private_key = local_key.pem
 certificate = local_cert.pem
 verify_depth = 3
 ca_list = local_ca.pem
+server_name = kamailio.org
 
 	</programlisting>
 	</example>
@@ -1056,6 +1080,34 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 			</programlisting>
 		</example>
 	</para>
+	</section>
+
+	<section id="tls.p.xavp_cfg">
+	<title><varname>xavp_cfg</varname> (string)</title>
+	<para>
+		Sets the name of XAVP that stored attributes for TLS connections.
+	</para>
+	<para>
+		The following (inner) attributes can be set:
+	</para>
+	<itemizedlist>
+		<listitem><para>server_name - SNI to be used for outbound connections</para></listitem>
+	</itemizedlist>
+	<para>
+		The default value is empty (not set).
+	</para>
+	<example>
+	    <title>Set <varname>xavp_cfg</varname> parameter</title>
+	    <programlisting>
+...
+  modparam("tls", "xavp_cfg", "tls")
+ ...
+  $xavp(tls=>server_name) = "kamailio.org";
+  $du = "sip:kamailio.org:5061;transport=tls";
+  route(RELAY);
+...
+	    </programlisting>
+	</example>
 	</section>
 
 </section>
