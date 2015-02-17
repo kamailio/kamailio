@@ -82,6 +82,7 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2);
 MODULE_VERSION
 
 
+str sr_tls_xavp_cfg = {0, 0};
 /*
  * Default settings when modparams are used 
  */
@@ -203,6 +204,7 @@ static param_export_t params[] = {
 	{"low_mem_threshold1",  PARAM_INT,    &default_tls_cfg.low_mem_threshold1},
 	{"low_mem_threshold2",  PARAM_INT,    &default_tls_cfg.low_mem_threshold2},
 	{"renegotiation",       PARAM_INT,    &sr_tls_renegotiation},
+	{"xavp_cfg",            PARAM_STR,    &sr_tls_xavp_cfg},
 	{0, 0, 0}
 };
 

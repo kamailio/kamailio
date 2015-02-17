@@ -1302,6 +1302,12 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 	}
 
 	while (p) {
+		if(sname) {
+			LM_DBG("comparing addr: [%s:%d]  [%s:%d] -- sni: [%.*s] [%.*s]\n",
+				ip_addr2a(&p->ip), p->port, ip_addr2a(ip), port,
+				p->server_name.len, ZSW(p->server_name.s),
+				sname->len, ZSW(sname->s));
+		}
 		if ((p->port == port) && ip_addr_cmp(&p->ip, ip)) {
 			if(sname && sname->len>0) {
 				if(p->server_name.len==sname->len

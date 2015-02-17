@@ -42,6 +42,7 @@
 #include "../../route.h"
 #include "../../forward.h"
 #include "../../onsend.h"
+#include "../../xavp.h"
 
 #include "tls_init.h"
 #include "tls_domain.h"
@@ -127,6 +128,30 @@ int tls_run_event_routes(struct tcp_connection *c);
 #endif /* TLS_RD_DEBUG */
 
 
+extern str sr_tls_xavp_cfg;
+
+/**
+ * get the server name (sni) for outbound connections from xavp
+ */
+static str *tls_get_connect_server_name(void)
+{
+#ifndef OPENSSL_NO_TLSEXT
+	sr_xavp_t *vavp = NULL;
+	str sname = {"server_name", 11};
+
+	if(sr_tls_xavp_cfg.s!=NULL)
+		vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sname);
+	if(vavp==NULL || vavp->val.v.s.len<=0) {
+		LM_DBG("xavp with outbound server name not found\n");
+		return NULL;
+	}
+	LM_DBG("found xavp with outbound server name: %s\n", vavp->val.v.s.s);
+	return &vavp->val.v.s;
+#else
+	return NULL;
+#endif
+}
+
 /** finish the ssl init.
  * Creates the SSL context + internal tls_extra_data and sets
  * extra_data to it.
@@ -141,6 +166,7 @@ static int tls_complete_init(struct tcp_connection* c)
 	struct tls_extra_data* data = 0;
 	tls_domains_cfg_t* cfg;
 	enum tls_conn_states state;
+	str *sname = NULL;
 
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
@@ -169,8 +195,9 @@ static int tls_complete_init(struct tcp_connection* c)
 								&c->rcv.dst_ip, c->rcv.dst_port, 0);
 	} else {
 		state=S_TLS_CONNECTING;
+		sname = tls_get_connect_server_name();
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
-								&c->rcv.dst_ip, c->rcv.dst_port, 0);
+								&c->rcv.dst_ip, c->rcv.dst_port, sname);
 	}
 	if (unlikely(c->state<0)) {
 		BUG("Invalid connection (state %d)\n", c->state);
@@ -199,6 +226,20 @@ static int tls_complete_init(struct tcp_connection* c)
 			BIO_free(data->rwbio);
 		goto error;
 	}
+
+#ifndef OPENSSL_NO_TLSEXT
+	if (sname!=NULL) {
+		if(!SSL_set_tlsext_host_name(data->ssl, sname->s)) {
+			if (data->ssl)
+				SSL_free(data->ssl);
+			if (data->rwbio)
+				BIO_free(data->rwbio);
+			goto error;
+		}
+		LM_DBG("outbound TLS server name set to: %s\n", sname->s);
+	}
+#endif
+
 #ifdef TLS_KSSL_WORKARROUND
 	 /* if needed apply workaround for openssl bug #1467 */
 	if (data->ssl->kssl_ctx && openssl_kssl_malloc_bug){
@@ -211,7 +252,6 @@ static int tls_complete_init(struct tcp_connection* c)
 
 	/* link the extra data struct inside ssl connection*/
 	SSL_set_app_data(data->ssl, data);
-
 	return 0;
 
  error:
