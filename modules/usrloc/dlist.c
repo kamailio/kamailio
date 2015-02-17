@@ -103,6 +103,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	int port, proto;
 	char *p;
 	str addr;
+	str recv;
 	str path;
 	str ruid;
 	str host;
@@ -163,17 +164,26 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 		for(i = 0; i < RES_ROW_N(res); i++) {
 			row = RES_ROWS(res) + i;
 
+
 			/* received */
-			addr.s = (char*)VAL_STRING(ROW_VALUES(row));
-			if ( VAL_NULL(ROW_VALUES(row)) || addr.s==0 || addr.s[0]==0 ) {
-				/* contact */
-				addr.s = (char*)VAL_STRING(ROW_VALUES(row)+1);
-				if (VAL_NULL(ROW_VALUES(row)+1) || addr.s==0 || addr.s[0]==0) {
-					LM_ERR("empty contact -> skipping\n");
-					continue;
-				}
+			recv.s = (char*)VAL_STRING(ROW_VALUES(row));
+			if ( VAL_NULL(ROW_VALUES(row)) || recv.s==0 || recv.s[0]==0 ) {
+				recv.s = NULL;
+				recv.len = 0;
 			}
-			addr.len = strlen(addr.s);
+			else {
+				recv.len = strlen(recv.s);
+			}
+
+			/* contact */
+			addr.s = (char*)VAL_STRING(ROW_VALUES(row)+1);
+			if (VAL_NULL(ROW_VALUES(row)+1) || addr.s==0 || addr.s[0]==0) {
+				LM_ERR("empty contact -> skipping\n");
+				continue;
+			}
+			else {
+				addr.len = strlen(addr.s);
+			}
 
 			/* path */
 			path.s = (char*)VAL_STRING(ROW_VALUES(row)+4);
@@ -194,6 +204,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			}
 
 			needed = (int)(sizeof(addr.len) + addr.len
+					+ sizeof(recv.len) + recv.len
 					+ sizeof(sock) + sizeof(dbflags)
 					+ sizeof(path.len) + path.len
 					+ sizeof(ruid.len) + ruid.len
@@ -203,11 +214,20 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 				continue;
 			}
 
-			/* write received/contact */
+			/* write contact */
 			memcpy(cp, &addr.len, sizeof(addr.len));
 			cp = (char*)cp + sizeof(addr.len);
 			memcpy(cp, addr.s, addr.len);
 			cp = (char*)cp + addr.len;
+
+			/* write received */
+			memcpy(cp, &recv.len, sizeof(recv.len));
+			cp = (char*)cp + sizeof(recv.len);
+			/* copy received only if exist */
+			if(recv.len){
+				memcpy(cp, recv.s, recv.len);
+				cp = (char*)cp + recv.len;
+			}
 
 			/* sock */
 			p  = (char*)VAL_STRING(ROW_VALUES(row) + 2);
@@ -347,65 +367,38 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 						}
 					}
 
-					if (c->received.s) {
-						needed = (int)(sizeof(c->received.len)
-								+ c->received.len
-								+ sizeof(c->sock) + sizeof(c->cflags)
-								+ sizeof(c->path.len) + c->path.len
-								+ sizeof(c->ruid.len) + c->ruid.len
-								+ sizeof(r->aorhash));
-						if (len >= needed) {
-							memcpy(cp,&c->received.len,sizeof(c->received.len));
-							cp = (char*)cp + sizeof(c->received.len);
-							memcpy(cp, c->received.s, c->received.len);
-							cp = (char*)cp + c->received.len;
-							memcpy(cp, &c->sock, sizeof(c->sock));
-							cp = (char*)cp + sizeof(c->sock);
-							memcpy(cp, &c->cflags, sizeof(c->cflags));
-							cp = (char*)cp + sizeof(c->cflags);
-							memcpy(cp, &c->path.len, sizeof(c->path.len));
-							cp = (char*)cp + sizeof(c->path.len);
-							memcpy(cp, c->path.s, c->path.len);
-							cp = (char*)cp + c->path.len;
-							memcpy(cp, &c->ruid.len, sizeof(c->ruid.len));
-							cp = (char*)cp + sizeof(c->ruid.len);
-							memcpy(cp, c->ruid.s, c->ruid.len);
-							cp = (char*)cp + c->ruid.len;
-							memcpy(cp, &r->aorhash, sizeof(r->aorhash));
-							cp = (char*)cp + sizeof(r->aorhash);
-							len -= needed;
-						} else {
-							shortage += needed;
-						}
-					} else {
-						needed = (int)(sizeof(c->c.len) + c->c.len
+					needed = (int)(sizeof(c->c.len) + c->c.len
+							+ sizeof(c->received.len) + c->received.len
 							+ sizeof(c->sock) + sizeof(c->cflags)
 							+ sizeof(c->path.len) + c->path.len
 							+ sizeof(c->ruid.len) + c->ruid.len
 							+ sizeof(r->aorhash));
-						if (len >= needed) {
-							memcpy(cp, &c->c.len, sizeof(c->c.len));
-							cp = (char*)cp + sizeof(c->c.len);
-							memcpy(cp, c->c.s, c->c.len);
-							cp = (char*)cp + c->c.len;
-							memcpy(cp, &c->sock, sizeof(c->sock));
-							cp = (char*)cp + sizeof(c->sock);
-							memcpy(cp, &c->cflags, sizeof(c->cflags));
-							cp = (char*)cp + sizeof(c->cflags);
-							memcpy(cp, &c->path.len, sizeof(c->path.len));
-							cp = (char*)cp + sizeof(c->path.len);
-							memcpy(cp, c->path.s, c->path.len);
-							cp = (char*)cp + c->path.len;
-							memcpy(cp, &c->ruid.len, sizeof(c->ruid.len));
-							cp = (char*)cp + sizeof(c->ruid.len);
-							memcpy(cp, c->ruid.s, c->ruid.len);
-							cp = (char*)cp + c->ruid.len;
-							memcpy(cp, &r->aorhash, sizeof(r->aorhash));
-							cp = (char*)cp + sizeof(r->aorhash);
-							len -= needed;
-						} else {
-							shortage += needed;
-						}
+					if (len >= needed) {
+						memcpy(cp, &c->c.len, sizeof(c->c.len));
+						cp = (char*)cp + sizeof(c->c.len);
+						memcpy(cp, c->c.s, c->c.len);
+						cp = (char*)cp + c->c.len;
+						memcpy(cp,&c->received.len,sizeof(c->received.len));
+						cp = (char*)cp + sizeof(c->received.len);
+						memcpy(cp, c->received.s, c->received.len);
+						cp = (char*)cp + c->received.len;
+						memcpy(cp, &c->sock, sizeof(c->sock));
+						cp = (char*)cp + sizeof(c->sock);
+						memcpy(cp, &c->cflags, sizeof(c->cflags));
+						cp = (char*)cp + sizeof(c->cflags);
+						memcpy(cp, &c->path.len, sizeof(c->path.len));
+						cp = (char*)cp + sizeof(c->path.len);
+						memcpy(cp, c->path.s, c->path.len);
+						cp = (char*)cp + c->path.len;
+						memcpy(cp, &c->ruid.len, sizeof(c->ruid.len));
+						cp = (char*)cp + sizeof(c->ruid.len);
+						memcpy(cp, c->ruid.s, c->ruid.len);
+						cp = (char*)cp + c->ruid.len;
+						memcpy(cp, &r->aorhash, sizeof(r->aorhash));
+						cp = (char*)cp + sizeof(r->aorhash);
+						len -= needed;
+					} else {
+						shortage += needed;
 					}
 				}
 			}
