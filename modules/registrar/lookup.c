@@ -674,6 +674,13 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
 				continue;
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d, &aor);
+			if(ptr->xavp!=NULL) {
+				xavp = xavp_clone_level_nodata(ptr->xavp);
+				if(xavp_add(xavp, NULL)<0) {
+					LM_ERR("error adding xavp for %.*s after successful match\n", aor.len, ZSW(aor.s));
+					return -1;
+				}
+			}
 			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 			return 1;
 		}
