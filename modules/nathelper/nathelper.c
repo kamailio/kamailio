@@ -2051,6 +2051,8 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	int rval;
 	void *buf, *cp;
 	str c;
+	str recv;
+	str *dst_uri;
 	str opt;
 	str path;
 	str ruid;
@@ -2111,6 +2113,9 @@ nh_timer(unsigned int ticks, void *timer_idx)
 			break;
 		c.s = (char*)cp + sizeof(c.len);
 		cp =  (char*)cp + sizeof(c.len) + c.len;
+		memcpy(&(recv.len), cp, sizeof(recv.len));
+		recv.s = (char*)cp + sizeof(recv.len);
+		cp =  (char*)cp + sizeof(recv.len) + recv.len;
 		memcpy( &send_sock, cp, sizeof(send_sock));
 		cp = (char*)cp + sizeof(send_sock);
 		memcpy( &flags, cp, sizeof(flags));
@@ -2126,6 +2131,9 @@ nh_timer(unsigned int ticks, void *timer_idx)
 
 		if ((flags & natping_disable_flag)) /* always 0 if natping_disable_flag not set */
 			continue;
+
+		if(recv.len>0) dst_uri = &recv;
+		else dst_uri = &c;
 
 		/* determin the destination */
 		if ( path.len && (flags&sipping_flag)!=0 ) {
@@ -2149,14 +2157,14 @@ nh_timer(unsigned int ticks, void *timer_idx)
 				LM_ERR("could not parse path host for udpping_from_path\n");
 				continue;
 			}
-			if (parse_uri(c.s, c.len, &curi) < 0) {
-				LM_ERR("can't parse contact uri\n");
+			if (parse_uri(dst_uri->s, dst_uri->len, &curi) < 0) {
+				LM_ERR("can't parse contact/received uri\n");
 				continue;
 			}
 		} else {
 			/* send to the contact/received */
-			if (parse_uri(c.s, c.len, &curi) < 0) {
-				LM_ERR("can't parse contact uri\n");
+			if (parse_uri(dst_uri->s, dst_uri->len, &curi) < 0) {
+				LM_ERR("can't parse contact/received uri\n");
 				continue;
 			}
 		}
