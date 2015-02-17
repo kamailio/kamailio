@@ -302,6 +302,7 @@ static int fixup_fix_sdp(void** param, int param_no);
 static int fixup_add_contact_alias(void** param, int param_no);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static int nh_sip_reply_received(sip_msg_t *msg);
+static int pv_get_received_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 static void nh_timer(unsigned int, void *);
 static int mod_init(void);
@@ -404,11 +405,13 @@ static cmd_export_t cmds[] = {
 };
 
 static pv_export_t mod_pvs[] = {
-    {{"rr_count", (sizeof("rr_count")-1)}, /* number of records routes */
-     PVT_CONTEXT, pv_get_rr_count_f, 0, 0, 0, 0, 0},
-    {{"rr_top_count", (sizeof("rr_top_count")-1)}, /* number of topmost rrs */
-     PVT_CONTEXT, pv_get_rr_top_count_f, 0, 0, 0, 0, 0},
-    {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+	/* number of records routes */
+	{{"rr_count", (sizeof("rr_count")-1)}, PVT_CONTEXT, pv_get_rr_count_f, 0, 0, 0, 0, 0},
+	/* number of topmost rrs */
+	{{"rr_top_count", (sizeof("rr_top_count")-1)}, PVT_CONTEXT, pv_get_rr_top_count_f, 0, 0, 0, 0, 0},
+	/* received_uri */
+	{str_init("received_uri"), PVT_OTHER, pv_get_received_uri, NULL, NULL, NULL, NULL, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[] = {
@@ -2562,6 +2565,23 @@ sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg)
 	}
 	memcpy(buf+res->len, hostport.s+hostport.len, c->len-(hostport.s+hostport.len-c->name.s));
 	res->len+= c->len-(hostport.s+hostport.len-c->name.s);
+
+	return 0;
+}
+
+static int
+pv_get_received_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str uri;
+	int_str val;
+
+	if (create_rcv_uri(&uri, msg) < 0) {
+		return -1;
+	}
+
+	res->ri = 0;
+	res->rs = uri;
+	res->flags = PV_VAL_STR;
 
 	return 0;
 }
