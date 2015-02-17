@@ -631,6 +631,8 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
 	ucontact_t* ptr;
 	int res;
 	int_str match_callid=(int_str)0;
+	int_str match_received=(int_str)0;
+	int_str match_contact=(int_str)0;
 
 	if(_uri!=NULL)
 	{
@@ -666,11 +668,37 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
 			match_callid.n = 0;
 			match_callid.s.s = NULL;
 		}
+		if (reg_received_avp_name.n) {
+			struct usr_avp *avp =
+				search_first_avp( reg_received_avp_type, reg_received_avp_name, &match_received, 0);
+			if (!(avp && is_avp_str_val(avp)))
+				match_received.n = 0;
+				match_received.s.s = NULL;
+		} else {
+			match_received.n = 0;
+			match_received.s.s = NULL;
+		}
+		if (reg_contact_avp_name.n) {
+			struct usr_avp *avp =
+				search_first_avp( reg_contact_avp_type, reg_contact_avp_name, &match_contact, 0);
+			if (!(avp && is_avp_str_val(avp)))
+				match_contact.n = 0;
+				match_contact.s.s = NULL;
+		} else {
+			match_contact.n = 0;
+			match_contact.s.s = NULL;
+		}
 
 		for (ptr = r->contacts; ptr; ptr = ptr->next) {
 			if(!VALID_CONTACT(ptr, act_time)) continue;
 			if (match_callid.s.s && /* optionally enforce tighter matching w/ Call-ID */
 				memcmp(match_callid.s.s,ptr->callid.s,match_callid.s.len))
+				continue;
+			if (match_received.s.s && /* optionally enforce tighter matching w/ Received */
+				memcmp(match_received.s.s,ptr->received.s,match_received.s.len))
+				continue;
+			if (match_contact.s.s && /* optionally enforce tighter matching w/ Contact */
+				memcmp(match_contact.s.s,ptr->c.s,match_contact.s.len))
 				continue;
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d, &aor);

@@ -88,6 +88,10 @@ extern unsigned short rcv_avp_type;
 extern int_str rcv_avp_name;
 extern unsigned short reg_callid_avp_type;
 extern int_str reg_callid_avp_name;
+extern unsigned short reg_received_avp_type;
+extern int_str reg_received_avp_name;
+extern unsigned short reg_contact_avp_type;
+extern int_str reg_contact_avp_name;
 
 extern str rcv_param;
 extern int method_filtering;
