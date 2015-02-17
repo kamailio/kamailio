@@ -35,6 +35,7 @@
 struct cfg_group_tls default_tls_cfg = {
 	0, /* tls_force_run */
 	STR_STATIC_INIT("TLSv1"), /* method */
+	STR_NULL, /* server name (sni) */
 	0, /* verify_certificate */
 	9, /* verify_depth */
 	0, /* require_certificate */
@@ -138,7 +139,9 @@ cfg_def_t	tls_cfg_def[] = {
 	{"force_run", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
 		"force loading the tls module even when initial sanity checks fail"},
 	{"method",   CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
-		"TLS method used (TLSv1, SSLv3, SSLv2, SSLv23)"},
+		"TLS method used (TLSv1.2, TLSv1.1, TLSv1, SSLv3, SSLv2, SSLv23)"},
+	{"server_name",   CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
+		"Server name (SNI)"},
 	{"verify_certificate", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
 		"if enabled the certificates will be verified" },
 	{"verify_depth", CFG_VAR_INT | CFG_READONLY, 0, 100, 0, 0,

@@ -99,6 +99,7 @@ static tls_domain_t mod_params = {
 	{0, },                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
+	{0, 0},           /* Server name (SNI) */
 	0                 /* next */
 };
 
@@ -120,6 +121,7 @@ tls_domain_t srv_defaults = {
 	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
+	{0, 0},           /* Server name (SNI) */
 	0                 /* next */
 };
 
@@ -141,6 +143,7 @@ tls_domain_t cli_defaults = {
 	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
 	{0, 0}, /* Certificate revocation list */
+	{0, 0},           /* Server name (SNI) */
 	0                 /* next */
 };
 
@@ -170,6 +173,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"tls_method",          PARAM_STR,    &default_tls_cfg.method       },
+	{"server_name",         PARAM_STR,    &default_tls_cfg.server_name  },
 	{"verify_certificate",  PARAM_INT,    &default_tls_cfg.verify_cert  },
 	{"verify_depth",        PARAM_INT,    &default_tls_cfg.verify_depth },
 	{"require_certificate", PARAM_INT,    &default_tls_cfg.require_cert },
@@ -307,6 +311,7 @@ static int mod_init(void)
 	mod_params.crl_file = cfg_get(tls, tls_cfg, crl);
 	mod_params.cert_file = cfg_get(tls, tls_cfg, certificate);
 	mod_params.cipher_list = cfg_get(tls, tls_cfg, cipher_list);
+	mod_params.server_name = cfg_get(tls, tls_cfg, server_name);
 
 	tls_domains_cfg =
 			(tls_domains_cfg_t**)shm_malloc(sizeof(tls_domains_cfg_t*));
