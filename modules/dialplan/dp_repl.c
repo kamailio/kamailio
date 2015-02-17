@@ -156,7 +156,7 @@ int dpl_detect_avp_indx(const pv_elem_p elem, pv_elem_p *avp)
 
 	for(e=elem, num=num_avp_all=0; e!=NULL; e=e->next, num++) {
 		if(e->spec!=NULL && e->spec->type==PVT_AVP &&
-			e->spec->pvp.pvi.type==PV_IDX_ALL)
+			e->spec->pvp.pvi.type==PV_IDX_ITR)
 		{
 			*avp = e;
 			num_avp_all++;
