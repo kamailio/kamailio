@@ -36,27 +36,29 @@ Carsten Bock
               9.7. verify_depth (integer)
               9.8. require_certificate (boolean)
               9.9. cipher_list (string)
-              9.10. send_timeout (int)
-              9.11. handshake_timeout (int)
-              9.12. connection_timeout (int)
-              9.13. tls_disable_compression (boolean)
-              9.14. ssl_release_buffers (integer)
-              9.15. ssl_free_list_max_len (integer)
-              9.16. ssl_max_send_fragment (integer)
-              9.17. ssl_read_ahead (boolean)
-              9.18. send_close_notify (boolean)
-              9.19. con_ct_wq_max (integer)
-              9.20. ct_wq_max (integer)
-              9.21. ct_wq_blk_size (integer)
-              9.22. tls_log (int)
-              9.23. tls_debug (int)
-              9.24. low_mem_threshold1 (integer)
-              9.25. low_mem_threshold2 (integer)
-              9.26. tls_force_run (boolean)
-              9.27. session_cache (boolean)
-              9.28. session_id (str)
-              9.29. renegotiation (boolean)
-              9.30. config (string)
+              9.10. server_name (string)
+              9.11. send_timeout (int)
+              9.12. handshake_timeout (int)
+              9.13. connection_timeout (int)
+              9.14. tls_disable_compression (boolean)
+              9.15. ssl_release_buffers (integer)
+              9.16. ssl_free_list_max_len (integer)
+              9.17. ssl_max_send_fragment (integer)
+              9.18. ssl_read_ahead (boolean)
+              9.19. send_close_notify (boolean)
+              9.20. con_ct_wq_max (integer)
+              9.21. ct_wq_max (integer)
+              9.22. ct_wq_blk_size (integer)
+              9.23. tls_log (int)
+              9.24. tls_debug (int)
+              9.25. low_mem_threshold1 (integer)
+              9.26. low_mem_threshold2 (integer)
+              9.27. tls_force_run (boolean)
+              9.28. session_cache (boolean)
+              9.29. session_id (str)
+              9.30. renegotiation (boolean)
+              9.31. config (string)
+              9.32. xavp_cfg (string)
 
         10. Functions
 
@@ -87,37 +89,39 @@ Carsten Bock
    1.9. Set verify_depth parameter
    1.10. Set require_certificate parameter
    1.11. Set cipher_list parameter
-   1.12. Set connection_timeout parameter
-   1.13. Set tls.connection_timeout at runtime
-   1.14. Set tls_disable_compression parameter
-   1.15. Set ssl_release_buffers parameter
-   1.16. Set ssl_freelist_max_len parameter
-   1.17. Set ssl_max_send_fragment parameter
-   1.18. Set ssl_read_ahead parameter
-   1.19. Set send_close_notify parameter
-   1.20. Set tls.send_close_notify at runtime
-   1.21. Set con_ct_wq_max parameter
-   1.22. Set tls.con_ct_wq_max at runtime
-   1.23. Set ct_wq_max parameter
-   1.24. Set tls.ct_wq_max at runtime
-   1.25. Set ct_wq_blk_size parameter
-   1.26. Set tls.ct_wq_max at runtime
-   1.27. Set tls_log parameter
-   1.28. Set tls.log at runtime
-   1.29. Set tls_debug parameter
-   1.30. Set tls.debug at runtime
-   1.31. Set low_mem_threshold1 parameter
-   1.32. Set tls.low_mem_threshold1 at runtime
-   1.33. Set low_mem_threshold2 parameter
-   1.34. Set tls.low_mem_threshold2 at runtime
-   1.35. Set tls_force_run parameter
-   1.36. Set session_cache parameter
-   1.37. Set session_id parameter
-   1.38. Set renegotiation parameter
-   1.39. Short config file
-   1.40. Set config parameter
-   1.41. Change and reload tls config at runtime
-   1.42. is_peer_verified usage
+   1.12. Set server_name parameter
+   1.13. Set connection_timeout parameter
+   1.14. Set tls.connection_timeout at runtime
+   1.15. Set tls_disable_compression parameter
+   1.16. Set ssl_release_buffers parameter
+   1.17. Set ssl_freelist_max_len parameter
+   1.18. Set ssl_max_send_fragment parameter
+   1.19. Set ssl_read_ahead parameter
+   1.20. Set send_close_notify parameter
+   1.21. Set tls.send_close_notify at runtime
+   1.22. Set con_ct_wq_max parameter
+   1.23. Set tls.con_ct_wq_max at runtime
+   1.24. Set ct_wq_max parameter
+   1.25. Set tls.ct_wq_max at runtime
+   1.26. Set ct_wq_blk_size parameter
+   1.27. Set tls.ct_wq_max at runtime
+   1.28. Set tls_log parameter
+   1.29. Set tls.log at runtime
+   1.30. Set tls_debug parameter
+   1.31. Set tls.debug at runtime
+   1.32. Set low_mem_threshold1 parameter
+   1.33. Set tls.low_mem_threshold1 at runtime
+   1.34. Set low_mem_threshold2 parameter
+   1.35. Set tls.low_mem_threshold2 at runtime
+   1.36. Set tls_force_run parameter
+   1.37. Set session_cache parameter
+   1.38. Set session_id parameter
+   1.39. Set renegotiation parameter
+   1.40. Short config file
+   1.41. Set config parameter
+   1.42. Change and reload tls config at runtime
+   1.43. Set xavp_cfg parameter
+   1.44. is_peer_verified usage
 
 Chapter 1. Admin Guide
 
@@ -142,27 +146,29 @@ Chapter 1. Admin Guide
         9.7. verify_depth (integer)
         9.8. require_certificate (boolean)
         9.9. cipher_list (string)
-        9.10. send_timeout (int)
-        9.11. handshake_timeout (int)
-        9.12. connection_timeout (int)
-        9.13. tls_disable_compression (boolean)
-        9.14. ssl_release_buffers (integer)
-        9.15. ssl_free_list_max_len (integer)
-        9.16. ssl_max_send_fragment (integer)
-        9.17. ssl_read_ahead (boolean)
-        9.18. send_close_notify (boolean)
-        9.19. con_ct_wq_max (integer)
-        9.20. ct_wq_max (integer)
-        9.21. ct_wq_blk_size (integer)
-        9.22. tls_log (int)
-        9.23. tls_debug (int)
-        9.24. low_mem_threshold1 (integer)
-        9.25. low_mem_threshold2 (integer)
-        9.26. tls_force_run (boolean)
-        9.27. session_cache (boolean)
-        9.28. session_id (str)
-        9.29. renegotiation (boolean)
-        9.30. config (string)
+        9.10. server_name (string)
+        9.11. send_timeout (int)
+        9.12. handshake_timeout (int)
+        9.13. connection_timeout (int)
+        9.14. tls_disable_compression (boolean)
+        9.15. ssl_release_buffers (integer)
+        9.16. ssl_free_list_max_len (integer)
+        9.17. ssl_max_send_fragment (integer)
+        9.18. ssl_read_ahead (boolean)
+        9.19. send_close_notify (boolean)
+        9.20. con_ct_wq_max (integer)
+        9.21. ct_wq_max (integer)
+        9.22. ct_wq_blk_size (integer)
+        9.23. tls_log (int)
+        9.24. tls_debug (int)
+        9.25. low_mem_threshold1 (integer)
+        9.26. low_mem_threshold2 (integer)
+        9.27. tls_force_run (boolean)
+        9.28. session_cache (boolean)
+        9.29. session_id (str)
+        9.30. renegotiation (boolean)
+        9.31. config (string)
+        9.32. xavp_cfg (string)
 
    10. Functions
 
@@ -477,27 +483,29 @@ Revoking a certificate and using a CRL
    9.7. verify_depth (integer)
    9.8. require_certificate (boolean)
    9.9. cipher_list (string)
-   9.10. send_timeout (int)
-   9.11. handshake_timeout (int)
-   9.12. connection_timeout (int)
-   9.13. tls_disable_compression (boolean)
-   9.14. ssl_release_buffers (integer)
-   9.15. ssl_free_list_max_len (integer)
-   9.16. ssl_max_send_fragment (integer)
-   9.17. ssl_read_ahead (boolean)
-   9.18. send_close_notify (boolean)
-   9.19. con_ct_wq_max (integer)
-   9.20. ct_wq_max (integer)
-   9.21. ct_wq_blk_size (integer)
-   9.22. tls_log (int)
-   9.23. tls_debug (int)
-   9.24. low_mem_threshold1 (integer)
-   9.25. low_mem_threshold2 (integer)
-   9.26. tls_force_run (boolean)
-   9.27. session_cache (boolean)
-   9.28. session_id (str)
-   9.29. renegotiation (boolean)
-   9.30. config (string)
+   9.10. server_name (string)
+   9.11. send_timeout (int)
+   9.12. handshake_timeout (int)
+   9.13. connection_timeout (int)
+   9.14. tls_disable_compression (boolean)
+   9.15. ssl_release_buffers (integer)
+   9.16. ssl_free_list_max_len (integer)
+   9.17. ssl_max_send_fragment (integer)
+   9.18. ssl_read_ahead (boolean)
+   9.19. send_close_notify (boolean)
+   9.20. con_ct_wq_max (integer)
+   9.21. ct_wq_max (integer)
+   9.22. ct_wq_blk_size (integer)
+   9.23. tls_log (int)
+   9.24. tls_debug (int)
+   9.25. low_mem_threshold1 (integer)
+   9.26. low_mem_threshold2 (integer)
+   9.27. tls_force_run (boolean)
+   9.28. session_cache (boolean)
+   9.29. session_id (str)
+   9.30. renegotiation (boolean)
+   9.31. config (string)
+   9.32. xavp_cfg (string)
 
 9.1. tls_method (string)
 
@@ -714,19 +722,33 @@ modparam("tls", "require_certificate", 1)
 modparam("tls", "cipher_list", "HIGH")
 ...
 
-9.10. send_timeout (int)
+9.10. server_name (string)
+
+   Sets the Server Name Indication (SNI) value.
+
+   This is a TLS extension and is not working for old and obsoleted SSL
+   versions.
+
+   The default value is empty (not set).
+
+   Example 1.12. Set server_name parameter
+...
+modparam("tls", "server_name", "kamailio.org")
+...
+
+9.11. send_timeout (int)
 
    This parameter is obsolete and cannot be used in newer TLS versions (>
    Kamailio 3.0). In these versions the send_timeout is replaced by
    tcp_send_timeout (common with all the tcp connections).
 
-9.11. handshake_timeout (int)
+9.12. handshake_timeout (int)
 
    This parameter is obsolete and cannot be used in newer TLS versions (>
    Kamailio 3.0). In these versions the handshake_timeout is replaced by
    tcp_connect_timeout (common with all the tcp connections).
 
-9.12. connection_timeout (int)
+9.13. connection_timeout (int)
 
    Sets the amount of time after which an idle TLS connection will be
    closed, if no I/O ever occured after the initial open. If an I/O event
@@ -740,15 +762,15 @@ modparam("tls", "cipher_list", "HIGH")
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.connection_timeout.
 
-   Example 1.12. Set connection_timeout parameter
+   Example 1.13. Set connection_timeout parameter
 ...
 modparam("tls", "connection_timeout", 60)
 ...
 
-   Example 1.13. Set tls.connection_timeout at runtime
+   Example 1.14. Set tls.connection_timeout at runtime
  $ kamcmd cfg.set_now_int tls connection_timeout 180
 
-9.13. tls_disable_compression (boolean)
+9.14. tls_disable_compression (boolean)
 
    If set compression over SSL/TLS will be disabled. Note that compression
    uses a lot of memory (about 10x more then with the compression
@@ -757,12 +779,12 @@ modparam("tls", "connection_timeout", 60)
 
    By default compression is disabled.
 
-   Example 1.14. Set tls_disable_compression parameter
+   Example 1.15. Set tls_disable_compression parameter
 ...
 modparam("tls", "tls_disable_compression", 0) # enable
 ...
 
-9.14. ssl_release_buffers (integer)
+9.15. ssl_release_buffers (integer)
 
    Release internal OpenSSL read or write buffers as soon as they are no
    longer needed. Combined with ssl_free_list_max_len has the potential of
@@ -781,10 +803,10 @@ Note
    This option is supported only for OpenSSL versions >= 1.0.0. On all the
    other versions attempting to change the default will trigger an error.
 
-   Example 1.15. Set ssl_release_buffers parameter
+   Example 1.16. Set ssl_release_buffers parameter
 modparam("tls", "ssl_release_buffers", 1)
 
-9.15. ssl_free_list_max_len (integer)
+9.16. ssl_free_list_max_len (integer)
 
    Sets the maximum number of free memory chunks, that OpenSSL will keep
    per connection. Setting it to 0 would cause any unused memory chunk to
@@ -804,10 +826,10 @@ Note
    This option is supported only for OpenSSL versions >= 1.0.0. On all the
    other versions attempting to change the default will trigger an error.
 
-   Example 1.16. Set ssl_freelist_max_len parameter
+   Example 1.17. Set ssl_freelist_max_len parameter
 modparam("tls", "ssl_freelist_max_len", 0)
 
-9.16. ssl_max_send_fragment (integer)
+9.17. ssl_max_send_fragment (integer)
 
    Sets the maximum number of bytes (from the clear text) sent into one
    TLS or SSL record. Valid values are between 512 and 16384. Note however
@@ -839,10 +861,10 @@ Note
    This option is supported only for OpenSSL versions >= 0.9.9. On all the
    other versions attempting to change the default will trigger an error.
 
-   Example 1.17. Set ssl_max_send_fragment parameter
+   Example 1.18. Set ssl_max_send_fragment parameter
 modparam("tls", "ssl_max_send_fragment", 4096)
 
-9.17. ssl_read_ahead (boolean)
+9.18. ssl_read_ahead (boolean)
 
    Enables read ahead, reducing the number of internal OpenSSL BIO read()
    calls. This option has only debugging value, in normal circumstances it
@@ -861,10 +883,10 @@ modparam("tls", "ssl_max_send_fragment", 4096)
 
    By default the value is 0 (disabled).
 
-   Example 1.18. Set ssl_read_ahead parameter
+   Example 1.19. Set ssl_read_ahead parameter
 modparam("tls", "ssl_read_ahead", 1)
 
-9.18. send_close_notify (boolean)
+9.19. send_close_notify (boolean)
 
    Enables/disables sending close notify alerts prior to closing the
    corresponding TCP connection. Sending the close notify prior to tcp
@@ -877,15 +899,15 @@ modparam("tls", "ssl_read_ahead", 1)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.send_close_notify.
 
-   Example 1.19. Set send_close_notify parameter
+   Example 1.20. Set send_close_notify parameter
 ...
 modparam("tls", "send_close_notify", 1)
 ...
 
-   Example 1.20. Set tls.send_close_notify at runtime
+   Example 1.21. Set tls.send_close_notify at runtime
  $ kamcmd cfg.set_now_int tls send_close_notify 1
 
-9.19. con_ct_wq_max (integer)
+9.20. con_ct_wq_max (integer)
 
    Sets the maximum allowed per connection clear-text send queue size in
    bytes. This queue is used when data cannot be encrypted and sent
@@ -896,15 +918,15 @@ modparam("tls", "send_close_notify", 1)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.con_ct_wq_max.
 
-   Example 1.21. Set con_ct_wq_max parameter
+   Example 1.22. Set con_ct_wq_max parameter
 ...
 modparam("tls", "con_ct_wq_max", 1048576)
 ...
 
-   Example 1.22. Set tls.con_ct_wq_max at runtime
+   Example 1.23. Set tls.con_ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls con_ct_wq_max 1048576
 
-9.20. ct_wq_max (integer)
+9.21. ct_wq_max (integer)
 
    Sets the maximum total number of bytes queued in all the clear-text
    send queues. These queues are used when data cannot be encrypted and
@@ -915,15 +937,15 @@ modparam("tls", "con_ct_wq_max", 1048576)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.ct_wq_max.
 
-   Example 1.23. Set ct_wq_max parameter
+   Example 1.24. Set ct_wq_max parameter
 ...
 modparam("tls", "ct_wq_max", 4194304)
 ...
 
-   Example 1.24. Set tls.ct_wq_max at runtime
+   Example 1.25. Set tls.ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls ct_wq_max 4194304
 
-9.21. ct_wq_blk_size (integer)
+9.22. ct_wq_blk_size (integer)
 
    Minimum block size for the internal clear-text send queues (debugging /
    advanced tunning). Good values are multiple of typical datagram sizes.
@@ -933,15 +955,15 @@ modparam("tls", "ct_wq_max", 4194304)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.ct_wq_blk_size.
 
-   Example 1.25. Set ct_wq_blk_size parameter
+   Example 1.26. Set ct_wq_blk_size parameter
 ...
 modparam("tls", "ct_wq_blk_size", 2048)
 ...
 
-   Example 1.26. Set tls.ct_wq_max at runtime
+   Example 1.27. Set tls.ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls ct_wq_blk_size 2048
 
-9.22. tls_log (int)
+9.23. tls_log (int)
 
    Sets the log level at which TLS related messages will be logged.
 
@@ -950,16 +972,16 @@ modparam("tls", "ct_wq_blk_size", 2048)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.log.
 
-   Example 1.27. Set tls_log parameter
+   Example 1.28. Set tls_log parameter
 ...
 # ignore TLS messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 
-   Example 1.28. Set tls.log at runtime
+   Example 1.29. Set tls.log at runtime
  $ kamcmd cfg.set_now_int tls log 10
 
-9.23. tls_debug (int)
+9.24. tls_debug (int)
 
    Sets the log level at which TLS debug messages will be logged. Note
    that TLS debug messages are enabled only if the TLS module is compiled
@@ -971,16 +993,16 @@ modparam("tls", "tls_log", 10)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.debug.
 
-   Example 1.29. Set tls_debug parameter
+   Example 1.30. Set tls_debug parameter
 ...
 # ignore TLS debug messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_debug", 10)
 ...
 
-   Example 1.30. Set tls.debug at runtime
+   Example 1.31. Set tls.debug at runtime
  $ kamcmd cfg.set_now_int tls debug 10
 
-9.24. low_mem_threshold1 (integer)
+9.25. low_mem_threshold1 (integer)
 
    Sets the minimal free memory from which attempts to open or accept new
    TLS connections will start to fail. The value is expressed in KB.
@@ -1003,15 +1025,15 @@ modparam("tls", "tls_debug", 10)
 
    See also low_mem_threshold2.
 
-   Example 1.31. Set low_mem_threshold1 parameter
+   Example 1.32. Set low_mem_threshold1 parameter
 ...
 modparam("tls", "low_mem_threshold1", -1)
 ...
 
-   Example 1.32. Set tls.low_mem_threshold1 at runtime
+   Example 1.33. Set tls.low_mem_threshold1 at runtime
  $ kamcmd cfg.set_now_int tls low_mem_threshold1 2048
 
-9.25. low_mem_threshold2 (integer)
+9.26. low_mem_threshold2 (integer)
 
    Sets the minimal free memory from which TLS operations on already
    established TLS connections will start to fail preemptively. The value
@@ -1035,15 +1057,15 @@ modparam("tls", "low_mem_threshold1", -1)
 
    See also low_mem_threshold1.
 
-   Example 1.33. Set low_mem_threshold2 parameter
+   Example 1.34. Set low_mem_threshold2 parameter
 ...
 modparam("tls", "low_mem_threshold2", -1)
 ...
 
-   Example 1.34. Set tls.low_mem_threshold2 at runtime
+   Example 1.35. Set tls.low_mem_threshold2 at runtime
  $ kamcmd cfg.set_now_int tls low_mem_threshold2 1024
 
-9.26. tls_force_run (boolean)
+9.27. tls_force_run (boolean)
 
    If enabled Kamailio will start even if some of the openssl sanity
    checks fail (turn it on at your own risk).
@@ -1059,36 +1081,36 @@ modparam("tls", "low_mem_threshold2", -1)
 
    By default tls_force_run is disabled.
 
-   Example 1.35. Set tls_force_run parameter
+   Example 1.36. Set tls_force_run parameter
 ...
 modparam("tls", "tls_force_run", 11)
 ...
 
-9.27. session_cache (boolean)
+9.28. session_cache (boolean)
 
    If enabled Kamailio will do caching of the TLS sessions data,
    generation a session_id and sending it back to client.
 
    By default TLS session caching is disabled (0).
 
-   Example 1.36. Set session_cache parameter
+   Example 1.37. Set session_cache parameter
 ...
 modparam("tls", "session_cache", 1)
 ...
 
-9.28. session_id (str)
+9.29. session_id (str)
 
    The value for session ID context, making sense when session caching is
    enabled.
 
    By default TLS session_id is "sip-router-tls-3.1".
 
-   Example 1.37. Set session_id parameter
+   Example 1.38. Set session_id parameter
 ...
 modparam("tls", "session_id", "my-session-id-context")
 ...
 
-9.29. renegotiation (boolean)
+9.30. renegotiation (boolean)
 
    If enabled Kamailio will allow renegotiations of TLS connection
    initiated by the client. This may expose to a security risk if the
@@ -1097,12 +1119,12 @@ modparam("tls", "session_id", "my-session-id-context")
 
    By default TLS renegotiation is disabled (0).
 
-   Example 1.38. Set renegotiation parameter
+   Example 1.39. Set renegotiation parameter
 ...
 modparam("tls", "renegotiation", 1)
 ...
 
-9.30. config (string)
+9.31. config (string)
 
    Sets the name of the TLS specific config file or config directory.
 
@@ -1131,6 +1153,7 @@ modparam("tls", "renegotiation", 1)
      * ca_list
      * crl
      * cipher_list
+     * server_name
 
    All the parameters that take filenames as values will be resolved using
    the same rules as for the tls config filename itself: starting with a
@@ -1142,7 +1165,7 @@ modparam("tls", "renegotiation", 1)
    when it initiates a new connection by itself (it connects to
    something).
 
-   Example 1.39. Short config file
+   Example 1.40. Short config file
 [server:default]
 method = TLSv1
 verify_certificate = yes
@@ -1165,11 +1188,12 @@ private_key = local_key.pem
 certificate = local_cert.pem
 verify_depth = 3
 ca_list = local_ca.pem
+server_name = kamailio.org
 
    For a more complete example check the tls.cfg distributed with the
    Kamailio source (kamailio/modules/tls/tls.cfg).
 
-   Example 1.40. Set config parameter
+   Example 1.41. Set config parameter
 ...
 modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 ...
@@ -1177,9 +1201,27 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
    It can be changed also at runtime. The new config will not be loaded
    immediately, but after the first tls.reload RPC call.
 
-   Example 1.41. Change and reload tls config at runtime
+   Example 1.42. Change and reload tls config at runtime
  $ kamcmd cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ kamcmd tls.reload
+
+9.32. xavp_cfg (string)
+
+   Sets the name of XAVP that stored attributes for TLS connections.
+
+   The following (inner) attributes can be set:
+     * server_name - SNI to be used for outbound connections
+
+   The default value is empty (not set).
+
+   Example 1.43. Set xavp_cfg parameter
+...
+  modparam("tls", "xavp_cfg", "tls")
+ ...
+  $xavp(tls=>server_name) = "kamailio.org";
+  $du = "sip:kamailio.org:5061;transport=tls";
+  route(RELAY);
+...
 
 10. Functions
 
@@ -1191,7 +1233,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
    , the peer presented an X509 certificate and the certificate chain
    verified ok. It can be used only in a request route.
 
-   Example 1.42. is_peer_verified usage
+   Example 1.44. is_peer_verified usage
         if (proto==TLS && !is_peer_verified()){
                 sl_send_reply("400", "No certificate or verification failed");
                 drop;
