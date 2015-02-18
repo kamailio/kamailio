@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of kamailio, a free SIP server.
@@ -20,7 +20,7 @@
 
 /*! \file
  * \ingroup sqlops
- * \brief SIP-router SQL-operations :: API
+ * \brief Kamailio SQL-operations :: API
  *
  * - Module: \ref sqlops
  */

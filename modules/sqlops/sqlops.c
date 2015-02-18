@@ -20,12 +20,12 @@
 
 /*! \file
  * \ingroup sqlops
- * \brief SIP-router SQL-operations :: Module interface
+ * \brief Kamailio SQL-operations :: Module interface
  *
  * - Module: \ref sqlops
  */
 
-/*! \defgroup sqlops SIP-Router :: SQL Operations
+/*! \defgroup sqlops Kamailio :: SQL Operations
  *  \note Kamailio module - part of modules_k
 
  * The module adds support for raw SQL queries in the configuration file.

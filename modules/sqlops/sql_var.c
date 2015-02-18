@@ -20,7 +20,7 @@
 
 /*! \file
  * \ingroup sqlops
- * \brief SIP-router SQL-operations :: Variables
+ * \brief Kamailio SQL-operations :: Variables
  *
  * - Module: \ref sqlops
  */
