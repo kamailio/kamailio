@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2011 SpeakUp B.V. (alex@speakup.nl)
  *
  * This file is part of kamailio, a free SIP server.
