@@ -344,7 +344,7 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	hostent2ip_addr(&dp->ip_address, he, 0);
 
 	/* Copy the port out of the URI */
-	dp->port = puri.port_no;		
+	dp->port = puri.port_no;
 	/* Copy the proto out of the URI */
 	dp->proto = puri.proto;
 
@@ -1899,7 +1899,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 		/* add to avp */
 
 		for(i=hash-1; i>=0 && cnt<limit; i--)
-		{	
+		{
 			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
 				continue;
@@ -1947,7 +1947,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 		}
 
 		for(i=idx->nr-1; i>hash && cnt<limit; i--)
-		{	
+		{
 			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
 				continue;
@@ -2238,10 +2238,10 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 
 			/* reset the bits used for states */
 			idx->dlist[i].flags &= ~(DS_STATES_ALL);
-			
+
 			/* we need the initial state for inactive counter */
 			init_state = state;
-			
+
 			if((state & DS_TRYING_DST) && (old_state & DS_INACTIVE_DST))
 			{
 				/* old state is inactive, new state is trying => keep it inactive
@@ -2257,7 +2257,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			} else {
 				idx->dlist[i].flags |= state;
 			}
-			
+
 			if(state & DS_TRYING_DST)
 			{
 				idx->dlist[i].message_count++;
@@ -2281,7 +2281,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 						/* Destination has enough replied messages.. Bringing it to active state */
 						idx->dlist[i].message_count = 0;
 					}
-				}else{ 
+				}else{
 					idx->dlist[i].message_count = 0;
 				}
 			}
@@ -2561,9 +2561,6 @@ int ds_print_mi_list(struct mi_node* rpl)
 			node= add_mi_node_child(set_node, 0, "URI", 3,
 					list->dlist[j].uri.s, list->dlist[j].uri.len);
 			if(node == NULL)
-				return -1;
-
-			if(attr == 0)
 				return -1;
 
 			memset(&c, 0, sizeof(c));
