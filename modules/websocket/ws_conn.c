@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012-2013 Crocodile RCS Ltd
  *
  * This file is part of Kamailio, a free SIP server.

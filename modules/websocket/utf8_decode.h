@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
  *
  * MIT License
