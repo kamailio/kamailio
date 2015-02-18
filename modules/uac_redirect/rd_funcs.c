@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -20,10 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  *
- * History:
- * ---------
- *  2005-06-22  first version (bogdan)
- *  2006-05-23  push also q value into branches (bogdan)
  */
 
 
