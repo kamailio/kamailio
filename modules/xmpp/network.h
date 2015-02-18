@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * XMPP Module
  * This file is part of Kamailio, a free SIP server.
  *
@@ -19,13 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * Author: Andreea Spirea
- *
  */
 
 /*! \file
  * \ingroup xmpp
+ * \author Andreea Spirea
  */
 
 

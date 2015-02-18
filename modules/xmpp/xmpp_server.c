@@ -1,7 +1,4 @@
 /*
- * $Id$
- *
- * XMPP Module
  * This file is part of Kamailio, a free SIP server.
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
