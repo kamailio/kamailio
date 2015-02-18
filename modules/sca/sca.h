@@ -1,9 +1,7 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Andrew Mortensen
  *
- * This file is part of the sca module for sip-router, a free SIP server.
+ * This file is part of the sca module for Kamailio, a free SIP server.
  *
  * The sca module is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
