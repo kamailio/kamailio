@@ -203,6 +203,7 @@ int isup_get_called_party_nai(unsigned char *buf, int len);
 int isup_get_screening(unsigned char *buf, int len);
 int isup_get_presentation(unsigned char *buf, int len);
 int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, int nai, unsigned char *buf, int len);
+int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int called_status, int called_category, int e2e_indicator, unsigned char *buf, int len);
 int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int presentation, int screening, unsigned char * buf, int len);
 
 

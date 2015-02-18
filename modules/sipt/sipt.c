@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2013 Voxbone SA
+ * Copyright (C) 2015 Voxbone SA
  *
  * This file is part of SIP-Router, a free SIP server.
  *
@@ -39,6 +39,7 @@
 
 MODULE_VERSION
 
+static int sipt_set_bci_1(struct sip_msg *msg, char *_charge_indicator, char *_called_status, char * _called_category, char * _e2e_indicator);
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai);
 static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char *_pres, char * _screen);
 static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -133,6 +134,12 @@ static cmd_export_t cmds[]={
 		fixup_str_str_str, fixup_free_str_str_str,         /* */
 		/* can be applied to original requests */
 		REQUEST_ROUTE|BRANCH_ROUTE}, 
+	{"sipt_set_bci_1", /* action name as in scripts */
+		(cmd_function)sipt_set_bci_1,  /* C function name */
+		4,          /* number of parameters */
+		fixup_str_str_str, fixup_free_str_str_str,         /* */
+		/* can be applied to original requests */
+		ONREPLY_ROUTE}, 
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -467,6 +474,67 @@ static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	return -1;
+}
+
+static int sipt_set_bci_1(struct sip_msg *msg, char *_charge_indicator, char *_called_status, char * _called_category, char * _e2e_indicator)
+{
+	str * str_charge_indicator = (str*)_charge_indicator;
+	unsigned int charge_indicator = 0;
+	str2int(str_charge_indicator, &charge_indicator);
+	str * str_called_status = (str*)_called_status;
+	unsigned int called_status = 0;
+	str2int(str_called_status, &called_status);
+	str * str_called_category = (str*)_called_category;
+	unsigned int called_category = 0;
+	str2int(str_called_category, &called_category);
+	str * str_e2e_indicator = (str*)_e2e_indicator;
+	unsigned int e2e_indicator = 0;
+	str2int(str_e2e_indicator, &e2e_indicator);
+	struct sdp_mangler mangle;
+
+	// update forwarded iam
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_INFO("No ISUP Message Found");
+		return -1;
+	}
+	str sdp;
+	sdp.s = get_body_part(msg, TYPE_APPLICATION, SUBTYPE_SDP, &sdp.len);
+	
+	unsigned char newbuf[1024];
+	memset(newbuf, 0, 1024);
+	if (body.s==0) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+	body.len = msg->len -(int)(body.s-msg->buf);
+	if (body.len==0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_ACM && body.s[0] != ISUP_COT)
+	{
+		LM_DBG("message not an ACM or COT\n");
+		return -1;
+	}
+
+	mangle.msg = msg;
+	mangle.body_offset = (int)(body.s - msg->buf);
+
+
+
+	int res = isup_update_bci_1(&mangle, charge_indicator, called_status, called_category, e2e_indicator, (unsigned char*)body.s, body.len);
+	if(res < 0)
+	{
+		LM_DBG("error updating ACM\n");
+		return -1;
+	}
+
+	return 1;
 }
 
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai)
