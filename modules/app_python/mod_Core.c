@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2012 Konstantin Mosesov
  *
  * This file is part of Kamailio, a free SIP server.
