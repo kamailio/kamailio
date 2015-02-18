@@ -208,6 +208,11 @@ int dbt_row_match(dbt_table_p _dtp, dbt_row_p _drp, int* _lkey,
 			if(res!=0)
 				return 0;
 		}else{
+		if(!strcmp(_op[i], OP_NEQ))
+		{
+			if(res==0)
+				return 0;
+		}else{
 		if(!strcmp(_op[i], OP_LT))
 		{
 			if(res!=-1)
@@ -229,7 +234,7 @@ int dbt_row_match(dbt_table_p _dtp, dbt_row_p _drp, int* _lkey,
 				return 0;
 		}else{
 			return 0;
-		}}}}}		
+		}}}}}}
 	}
 	return 1;
 }
