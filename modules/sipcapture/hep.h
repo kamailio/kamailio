@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * hep related structure
  *
  * Copyright (C) 2011-14 Alexandr Dubovikov <alexandr.dubovikov@gmail.com>

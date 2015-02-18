@@ -1,6 +1,4 @@
 /* 
- * $Id$ 
- *
  * sipcapture module - helper module to capture sip messages
  *
  * Copyright (C) 2011-2014 Alexandr Dubovikov (QSC AG) (alexandr.dubovikov@gmail.com)
