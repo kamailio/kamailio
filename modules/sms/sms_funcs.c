@@ -1,21 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -23,17 +16,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/*
- * History:
- * --------
- * 2003-01-23: switched from t_uac to t_uac_dlg, adapted to new way of
- *              parsing for Content-Type (bogdan)
- * 2003-02-28: protocolization of t_uac_dlg completed (jiri)
- * 2003-08-05: adapted to the new parse_content_type_hdr function (bogdan)
- * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
- * 2003-09-11: force parsing to hdr when extracting destination user (bogdan)
  */
 
 #include <unistd.h>
