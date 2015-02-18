@@ -1,6 +1,4 @@
 /*
- * $Id: urecord.h 5241 2008-11-21 12:52:25Z henningw $ 
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.

@@ -1,6 +1,4 @@
 /*
- * $Id: ul_mi.h 5194 2008-11-13 10:38:11Z henningw $
- *
  * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.

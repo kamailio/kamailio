@@ -1,6 +1,4 @@
 /*
- * $Id: utime.h 4518 2008-07-28 15:39:28Z henningw $
- *
  * Usrloc time related functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
