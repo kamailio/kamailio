@@ -1204,9 +1204,10 @@ static int fixup_aar_register(void** param, int param_no) {
 
 static int fixup_aar(void** param, int param_no) {
     str s;
-    unsigned int num;
+    int num;
     
-    if (strlen((char*) *param) <= 0) {
+    //param 3 can be empty
+    if (param_no != 3 && strlen((char*) *param) <= 0) {
         LM_ERR("empty parameter %d not allowed\n", param_no);
         return -1;
     }
@@ -1221,12 +1222,12 @@ static int fixup_aar(void** param, int param_no) {
 	/*convert to int */
 	s.s = (char*)*param;
 	s.len = strlen(s.s);
-	if (str2int(&s, &num)==0) {
+	if (str2sint(&s, &num)==0) {
 		pkg_free(*param);
 		*param = (void*)(unsigned long)num;
 		return 0;
 	}
-	LM_ERR("Bad reservation units: <%s>n", (char*)(*param));
+	LM_ERR("Bad subscription id: <%s>n", (char*)(*param));
 	return E_CFG;
     }
 
