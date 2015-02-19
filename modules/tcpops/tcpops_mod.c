@@ -45,15 +45,15 @@ static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *
 static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con);
 static int w_tcp_keepalive_disable0(sip_msg_t* msg);
 
-static int fixup_tcp_keepalive_numpv(void** param, int param_no);
+static int fixup_numpv(void** param, int param_no);
 
 
 static cmd_export_t cmds[]={
-	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable4, 4, fixup_tcp_keepalive_numpv,
+	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable4, 4, fixup_numpv,
 		0, ANY_ROUTE},
-	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable3, 3, fixup_tcp_keepalive_numpv,
+	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable3, 3, fixup_numpv,
 		0, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable1, 1, fixup_tcp_keepalive_numpv,
+	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable1, 1, fixup_numpv,
 		0, ANY_ROUTE},
 	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable0, 0, 0,
 		0, REQUEST_ROUTE|ONREPLY_ROUTE},
@@ -148,7 +148,13 @@ static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *
 {
 	int fd;
 
-	if (msg == NULL) {
+	if (unlikely(msg == NULL)) {
+		return -1;
+	}
+
+	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS && msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
+	{
+		LM_ERR("the current message does not come from a TCP connection\n");
 		return -1;
 	}
 
@@ -188,8 +194,14 @@ static int w_tcp_keepalive_disable0(sip_msg_t* msg)
 {
 	int fd;
 
-	if (msg == NULL)
+	if (unlikely(msg == NULL))
 		return -1;
+
+	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS && msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
+	{
+		LM_ERR("the current message does not come from a TCP connection\n");
+		return -1;
+	}
 
 	if (!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
 		return -1;
@@ -201,7 +213,7 @@ static int w_tcp_keepalive_disable0(sip_msg_t* msg)
 /**
  *
  */
-static int fixup_tcp_keepalive_numpv(void** param, int param_no)
+static int fixup_numpv(void** param, int param_no)
 {
 	return fixup_igp_null(param, 1);
 }
