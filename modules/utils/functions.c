@@ -133,8 +133,7 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 	*(post + post_value.len) = (char)0;
  	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post);
     }
-       
-
+    
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)http_query_timeout);
 
@@ -146,21 +145,21 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
     if (_post) {
 	pkg_free(post);
     }
-
-	if (res != CURLE_OK) {
-		/* http://curl.haxx.se/libcurl/c/libcurl-errors.html */
-		if (res == CURLE_COULDNT_CONNECT) {
-			LM_WARN("failed to connect() to host\n");
-		} else if ( res == CURLE_COULDNT_RESOLVE_HOST ) {
-			LM_WARN("couldn't resolve host\n");
-		} else {
-			LM_ERR("failed to perform curl (%d)\n", res);
-		}
+    
+    if (res != CURLE_OK) {
+    	/* http://curl.haxx.se/libcurl/c/libcurl-errors.html */
+	if (res == CURLE_COULDNT_CONNECT) {
+		LM_WARN("failed to connect() to host\n");
+	} else if ( res == CURLE_COULDNT_RESOLVE_HOST ) {
+		LM_WARN("couldn't resolve host\n");
+	} else {
+		LM_ERR("failed to perform curl (%d)\n", res);
+	}
 	
-		curl_easy_cleanup(curl);
-		if(stream.buf)
-			pkg_free(stream.buf);
-		return -1;
+	curl_easy_cleanup(curl);
+	if(stream.buf)
+		pkg_free(stream.buf);
+	return -1;
     }
 
     curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
@@ -181,7 +180,7 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 	dst = (pv_spec_t *)_dst;
 	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
     }
-	
+    
     curl_easy_cleanup(curl);
     pkg_free(stream.buf);
     return stat;
