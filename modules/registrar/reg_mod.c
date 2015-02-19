@@ -126,16 +126,13 @@ int reg_outbound_mode = 0;
 int reg_regid_mode = 0;
 int reg_flow_timer = 0;
 
-/* Populate these AVPs if testing for specific registration instance. */
-char *reg_callid_avp_param = 0;
-unsigned short reg_callid_avp_type = 0;
-int_str reg_callid_avp_name;
-char *reg_received_avp_param = 0;
-unsigned short reg_received_avp_type = 0;
-int_str reg_received_avp_name;
-char *reg_contact_avp_param = 0;
-unsigned short reg_contact_avp_type = 0;
-int_str reg_contact_avp_name;
+int reg_match_flags_param = 0;
+int reg_match_return_flags_param = 0;
+str match_return_flags_name = str_init("match_return_flags");
+str match_flags_name = str_init("match_flags");
+str match_callid_name = str_init("match_callid");
+str match_received_name = str_init("match_received");
+str match_contact_name = str_init("match_contact");
 
 char* rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
@@ -231,24 +228,23 @@ static param_export_t params[] = {
 	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires			},
 	{"received_param",     PARAM_STR, &rcv_param           					},
 	{"received_avp",       PARAM_STRING, &rcv_avp_param       					},
-	{"reg_callid_avp",     PARAM_STRING, &reg_callid_avp_param					},
-	{"reg_received_avp",     PARAM_STRING, &reg_received_avp_param					},
-	{"reg_contact_avp",     PARAM_STRING, &reg_contact_avp_param					},
 	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts			},
 	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after			},
-	{"sock_flag",          INT_PARAM, &sock_flag           					},
-	{"sock_hdr_name",      PARAM_STR, &sock_hdr_name     					},
-	{"method_filtering",   INT_PARAM, &method_filtering    					},
-	{"use_path",           INT_PARAM, &path_enabled        					},
-	{"path_mode",          INT_PARAM, &path_mode           					},
-	{"path_use_received",  INT_PARAM, &path_use_params     					},
-        {"path_check_local",   INT_PARAM, &path_check_local                                     },
-	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     					},
-	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     					},
-	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
-	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
+	{"sock_flag",          INT_PARAM, &sock_flag           				},
+	{"sock_hdr_name",      PARAM_STR, &sock_hdr_name     				},
+	{"method_filtering",   INT_PARAM, &method_filtering    				},
+	{"use_path",           INT_PARAM, &path_enabled        				},
+	{"path_mode",          INT_PARAM, &path_mode           				},
+	{"path_use_received",  INT_PARAM, &path_use_params     				},
+	{"path_check_local",   INT_PARAM, &path_check_local					},
+	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     				},
+	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     				},
+	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    				},
+	{"outbound_mode",      INT_PARAM, &reg_outbound_mode				},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
 	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
+	{"match_flags",        INT_PARAM, &reg_match_flags_param			},
+	{"match_return_flags", INT_PARAM, &reg_match_return_flags_param		},
 	{0, 0, 0}
 };
 
@@ -318,8 +314,6 @@ static int mod_init(void)
 		LM_ERR("Fail to declare the configuration\n");
 	        return -1;
 	}
-	                                                
-	                                                
 
 	if (rcv_avp_param && *rcv_avp_param) {
 		s.s = rcv_avp_param; s.len = strlen(s.s);
@@ -337,60 +331,6 @@ static int mod_init(void)
 	} else {
 		rcv_avp_name.n = 0;
 		rcv_avp_type = 0;
-	}
-
-	if (reg_callid_avp_param && *reg_callid_avp_param) {
-		s.s = reg_callid_avp_param; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &avp_spec)==0
-			|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition - reg_callid_avp\n", reg_callid_avp_param);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &avp_spec.pvp, &reg_callid_avp_name, &reg_callid_avp_type)!=0)
-		{
-			LM_ERR("[%s]- invalid AVP definition - reg_callid_avp\n", reg_callid_avp_param);
-			return -1;
-		}
-	} else {
-		reg_callid_avp_name.n = 0;
-		reg_callid_avp_type = 0;
-	}
-
-	if (reg_received_avp_param && *reg_received_avp_param) {
-		s.s = reg_received_avp_param; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &avp_spec)==0
-			|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition - reg_received_avp\n", reg_received_avp_param);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &avp_spec.pvp, &reg_received_avp_name, &reg_received_avp_type)!=0)
-		{
-			LM_ERR("[%s]- invalid AVP definition - reg_received_avp\n", reg_received_avp_param);
-			return -1;
-		}
-	} else {
-		reg_received_avp_name.n = 0;
-		reg_received_avp_type = 0;
-	}
-
-	if (reg_contact_avp_param && *reg_contact_avp_param) {
-		s.s = reg_contact_avp_param; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &avp_spec)==0
-			|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition - reg_contact_avp\n", reg_contact_avp_param);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &avp_spec.pvp, &reg_contact_avp_name, &reg_contact_avp_type)!=0)
-		{
-			LM_ERR("[%s]- invalid AVP definition - reg_contact_avp\n", reg_contact_avp_param);
-			return -1;
-		}
-	} else {
-		reg_contact_avp_name.n = 0;
-		reg_contact_avp_type = 0;
 	}
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
