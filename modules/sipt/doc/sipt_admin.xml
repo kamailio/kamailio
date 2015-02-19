@@ -68,8 +68,8 @@ sipt_destination($rU, 31, 4);
 			<title><function moreinfo="none">sipt_destination(destination, hops, nai)</function> usage</title>
 			<programlisting format="linespecific">
 ...
-# set bci for e2e internetworking, and no charging
-sipt_set_bci_1("0", "0", "0", "1");
+# set bci for charging, subscriber free, ordinary, no e2e available
+sipt_set_bci_1("2", "1", "1", "0");
 ...
 </programlisting>
 		</example>
