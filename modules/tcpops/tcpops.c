@@ -30,6 +30,7 @@
 #include "../../tcp_conn.h"
 #include "../../globals.h"
 #include "../../pass_fd.h"
+#include "../../timer.h"
 
 /**
  * gets the fd of the current message source connection
@@ -169,3 +170,17 @@ int tcpops_keepalive_disable(int fd, int closefd)
 }
 
 #endif
+
+int tcpops_set_connection_lifetime(struct tcp_connection* con, int time) {
+	if (unlikely(con == NULL)) {
+		LM_CRIT("BUG: con == NULL");
+	}
+	if (unlikely(time < 0)) {
+		LM_ERR("Invalid timeout value, %d, must be >= 0\n", time);
+		return -1;
+	}
+	con->lifetime = S_TO_TICKS(time);
+	con->timeout = get_ticks_raw() + con->lifetime;
+	LM_DBG("new connection lifetime for conid=%d: %d\n", con->id, con->timeout);
+	return 1;
+}

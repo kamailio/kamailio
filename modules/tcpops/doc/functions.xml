@@ -104,4 +104,44 @@ onreply_route {
 			]]></programlisting>
 		</example>
 	</section>
+	<section id="tcpops.f.set_connection_lifetime">
+                <title>
+                        <function>set_connection_lifetime([conid], lifetime)</function>
+                </title>
+                <para>
+                                Sets the connection lifetime of a connection (TCP).
+                </para>
+                <para>Meaning of the parameters is as follows:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para><emphasis>conid</emphasis> (optionnal): the kamailio internal
+                                connection id on which to set the new lifetime. If no parameter
+                                is given, it will be set on the current message source connection.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para><emphasis>lifetime</emphasis> (seconds): the new connection lifetime.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>Retuns 1 on success, -1 on failure.</para>
+                <example>
+                        <title><function>set_connection_lifetime</function> usage</title>
+                        <programlisting><![CDATA[
+...
+# use 10s as default lifetime
+tcp_connection_lifetime=10 
+...
+
+request_route {
+        ...
+        if (is_method("REGISTER") && pv_www_authenticate("$td", "xxx", "0")) {
+                # raise the TCP lifetime to a bigger value
+                set_connection_lifetime("3605");
+        }
+        ...
+}
+                        ]]></programlisting>
+                </example>
+        </section>
 </section>

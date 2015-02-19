@@ -24,9 +24,12 @@
 #ifndef TCP_KEEPALIVE_H_
 #define TCP_KEEPALIVE_H_
 
+#include "../../tcp_conn.h"
+
 int tcpops_get_current_fd(int conid, int *fd);
 int tcpops_acquire_fd_from_tcpmain(int conid, int *fd);
 int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd);
 int tcpops_keepalive_disable(int fd, int closefd);
+int tcpops_set_connection_lifetime(struct tcp_connection* con, int time);
 
 #endif /* TCP_KEEPALIVE_H_ */

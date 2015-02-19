@@ -44,6 +44,8 @@ static int w_tcp_keepalive_enable4(sip_msg_t* msg, char* con, char* idle, char *
 static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *intvl);
 static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con);
 static int w_tcp_keepalive_disable0(sip_msg_t* msg);
+static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* con, char* time);
+static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time);
 
 static int fixup_numpv(void** param, int param_no);
 
@@ -56,6 +58,10 @@ static cmd_export_t cmds[]={
 	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable1, 1, fixup_numpv,
 		0, ANY_ROUTE},
 	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable0, 0, 0,
+		0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime2, 2, fixup_numpv,
+		0, ANY_ROUTE},
+	{"set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime1, 1, fixup_numpv,
 		0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -208,6 +214,48 @@ static int w_tcp_keepalive_disable0(sip_msg_t* msg)
 	}
 
 	return tcpops_keepalive_disable(fd, 0);
+}
+
+
+static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* conid, char* time)
+{
+	struct tcp_connection *s_con;
+	int ret = -1;
+
+	_IVALUE (conid)
+	_IVALUE (time)
+
+	if (unlikely((s_con = tcpconn_get(i_conid, 0, 0, 0, 0)) == NULL)) {
+		LM_ERR("invalid connection id %d, (must be a TCP connid)\n", i_conid);
+		return 0;
+	} else {
+		ret = tcpops_set_connection_lifetime(s_con, i_time);
+		tcpconn_put(s_con);
+	}
+	return ret;
+}
+
+
+static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time)
+{
+	struct tcp_connection *s_con;
+	int ret = -1;
+
+	_IVALUE (time)
+
+	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS && msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
+	{
+		LM_ERR("the current message does not come from a TCP connection\n");
+		return -1;
+	}
+
+	if (unlikely((s_con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)) {
+		return -1;
+	} else {
+		ret = tcpops_set_connection_lifetime(s_con, i_time);
+		tcpconn_put(s_con);
+	}
+	return ret;
 }
 
 /**
