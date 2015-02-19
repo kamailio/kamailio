@@ -17,7 +17,10 @@ Torrey Searle
         3. Functions
 
               3.1. sipt_destination(destination, hops, nai)
-              3.2. sipt_set_calling(origin, nai, presentation, screening)
+              3.2. sipt_set_bci_1(charge_indicator, called_status,
+                      called_category, e2e_indicator)
+
+              3.3. sipt_set_calling(origin, nai, presentation, screening)
 
         4. Exported pseudo-variables
 
@@ -48,13 +51,14 @@ Torrey Searle
    List of Examples
 
    1.1. sipt_destination(destination, hops, nai) usage
-   1.2. sipt_set_calling(origin, nai, presentation, screening) usage
-   1.3. sipt_presentation pseudo-variable usage
-   1.4. sipt_screening pseudo-variable usage
-   1.5. sipt_hop_counter pseudo-variable usage
-   1.6. sipt_cpc pseudo-variable usage
-   1.7. sipt_calling_party_nai pseudo-variable usage
-   1.8. sipt_called_party_nai pseudo-variable usage
+   1.2. sipt_destination(destination, hops, nai) usage
+   1.3. sipt_set_calling(origin, nai, presentation, screening) usage
+   1.4. sipt_presentation pseudo-variable usage
+   1.5. sipt_screening pseudo-variable usage
+   1.6. sipt_hop_counter pseudo-variable usage
+   1.7. sipt_cpc pseudo-variable usage
+   1.8. sipt_calling_party_nai pseudo-variable usage
+   1.9. sipt_called_party_nai pseudo-variable usage
 
 Chapter 1. Admin Guide
 
@@ -65,7 +69,10 @@ Chapter 1. Admin Guide
    3. Functions
 
         3.1. sipt_destination(destination, hops, nai)
-        3.2. sipt_set_calling(origin, nai, presentation, screening)
+        3.2. sipt_set_bci_1(charge_indicator, called_status,
+                called_category, e2e_indicator)
+
+        3.3. sipt_set_calling(origin, nai, presentation, screening)
 
    4. Exported pseudo-variables
 
@@ -97,7 +104,10 @@ Chapter 1. Admin Guide
 3. Functions
 
    3.1. sipt_destination(destination, hops, nai)
-   3.2. sipt_set_calling(origin, nai, presentation, screening)
+   3.2. sipt_set_bci_1(charge_indicator, called_status, called_category,
+          e2e_indicator)
+
+   3.3. sipt_set_calling(origin, nai, presentation, screening)
 
 3.1. sipt_destination(destination, hops, nai)
 
@@ -114,14 +124,29 @@ $rU = "19495551234";
 sipt_destination($rU, 31, 4);
 ...
 
-3.2. sipt_set_calling(origin, nai, presentation, screening)
+3.2. sipt_set_bci_1(charge_indicator, called_status, called_category,
+e2e_indicator)
+
+   updates the first byte of the backward call indicator in the ACM or COT
+   in the body if setting the Charge Indicator to “charge_indicator”, the
+   Called party's status indicator in “called_status”, the Called party's
+   category indicator in “called_category” and the End to End Method
+   Indicator with the value of the value of “e2e_indicator”.
+
+   Example 1.2. sipt_destination(destination, hops, nai) usage
+...
+# set bci for charging, subscriber free, ordinary, no e2e available
+sipt_set_bci_1("2", "1", "1", "0");
+...
+
+3.3. sipt_set_calling(origin, nai, presentation, screening)
 
    updates the IAM in the body if it exists, setting (or adding) the
    calling party number to “origin” with the nature address specified in
    “nai” and setting the presentation and screening values to
    “presentation” and “screening”.
 
-   Example 1.2. sipt_set_calling(origin, nai, presentation, screening)
+   Example 1.3. sipt_set_calling(origin, nai, presentation, screening)
    usage
 ...
 # update the calling party to the value in the from header
@@ -154,7 +179,7 @@ sipt_set_calling($fU, 4, 0, 3);
    2 address not avail (national use)
    3 spare
 
-   Example 1.3. sipt_presentation pseudo-variable usage
+   Example 1.4. sipt_presentation pseudo-variable usage
 ...
 # add privacy header if restriction is requested
 if($sipt(calling_party_number.presentation) == 1)
@@ -177,7 +202,7 @@ if($sipt(calling_party_number.presentation) == 1)
    2 Reserved (user provided, verified and failed)
    3 Network provided
 
-   Example 1.4. sipt_screening pseudo-variable usage
+   Example 1.5. sipt_screening pseudo-variable usage
 ...
 
 # remove P-Asserted-Identity header if the screening isn't verified
@@ -195,7 +220,7 @@ if($avp(s:screening) != 1 && $avp(s:screening) != 3)
    Returns the value of the Hop Counter for the IAM message if it exists.
    Returns -1 if there isn't a hop counter.
 
-   Example 1.5. sipt_hop_counter pseudo-variable usage
+   Example 1.6. sipt_hop_counter pseudo-variable usage
 ...
 # get the hop counter and update the Max-Forwards header if it exists
 $avp(s:hop) = $sipt(hop_counter);
@@ -212,7 +237,7 @@ if($avp(s:hop) > 0)
    Returns the value of the Calling Party Category for the IAM message.
    Returns -1 if there is a parsing error.
 
-   Example 1.6. sipt_cpc pseudo-variable usage
+   Example 1.7. sipt_cpc pseudo-variable usage
 ...
 # get the Cpc code and set put it in a custom sip header
 append_hf("X-CPC: $sipt(cpc)\r\n");
@@ -233,7 +258,7 @@ $sipt.(calling_party_number.nai) / $sipt_calling_party_nai
    3 National (significant) number (national use)
    4 International use
 
-   Example 1.7. sipt_calling_party_nai pseudo-variable usage
+   Example 1.8. sipt_calling_party_nai pseudo-variable usage
 ...
 # get the Calling Nai and add country code if national
 if($sipt(calling_party_number.nai) == 3)
@@ -257,7 +282,7 @@ $sipt(called_party_number.nai) / $sipt_called_party_nai
    4 International use
    5 Network-specific number (national use)
 
-   Example 1.8. sipt_called_party_nai pseudo-variable usage
+   Example 1.9. sipt_called_party_nai pseudo-variable usage
 ...
 # get the Called Nai and add country code if national
 if($sipt(called_party_number.nai) == 3)

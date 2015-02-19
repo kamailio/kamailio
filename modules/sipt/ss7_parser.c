@@ -158,7 +158,7 @@ static int get_optional_header(unsigned char header, unsigned char *buf, int len
 		offset += offsetof(struct isup_iam_fixed, optional_pointer);
 		optional_pointer = message->iam.optional_pointer;
 	}
-	else if(message->type == ISUP_ACM)
+	else if(message->type == ISUP_ACM || message->type == ISUP_COT)
 	{
 		len -= offsetof(struct isup_acm_fixed, optional_pointer);
 		offset += offsetof(struct isup_acm_fixed, optional_pointer);
@@ -303,6 +303,28 @@ int isup_get_called_party_nai(unsigned char *buf, int len)
 	if (len < 1)
 		return -1;
 	return message->called_party_number[1]&0x7F;
+}
+
+int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int called_status, int called_category, int e2e_indicator, unsigned char *buf, int len)
+{
+	struct isup_acm_fixed * orig_message = (struct isup_acm_fixed*)buf;
+	unsigned char bci;
+
+	// not an acm or cot? do nothing
+	if(orig_message->type != ISUP_ACM && orig_message->type != ISUP_COT)
+	{
+		return 1;
+	}
+
+	if (len < sizeof(struct isup_acm_fixed))
+		return -1;
+
+	bci = (charge_indicator & 0x3) | ((called_status & 0x3)<<2) |
+		((called_category & 0x3)<<4) | ((e2e_indicator & 0x3)<<6);
+
+	add_body_segment(mangle, offsetof(struct isup_acm_fixed, backwards_call_ind), &bci, 1);
+
+	return sizeof(struct isup_acm_fixed);
 }
 
 int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, int nai, unsigned char *buf, int len)

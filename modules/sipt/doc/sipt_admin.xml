@@ -56,6 +56,24 @@ sipt_destination($rU, 31, 4);
 </programlisting>
 		</example>
 	</section>
+	<section id="sipt.f.sipt_set_bci_1">
+		<title><function moreinfo="none">sipt_set_bci_1(charge_indicator, called_status, called_category, e2e_indicator)</function></title>
+		<para>
+			updates the first byte of the backward call indicator in the ACM or COT in the body if setting the 
+			Charge Indicator to <quote>charge_indicator</quote>, the Called party's status indicator in <quote>called_status</quote>, 
+			the Called party's category indicator in <quote>called_category</quote> and the End to End Method Indicator
+			with the value of the value of <quote>e2e_indicator</quote>.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_destination(destination, hops, nai)</function> usage</title>
+			<programlisting format="linespecific">
+...
+# set bci for charging, subscriber free, ordinary, no e2e available
+sipt_set_bci_1("2", "1", "1", "0");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="sipt.f.sipt_set_calling">
 		<title><function moreinfo="none">sipt_set_calling(origin, nai, presentation, screening)</function></title>
 		<para>
