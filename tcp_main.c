@@ -998,6 +998,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		c->type=PROTO_TCP;
 		c->rcv.proto=PROTO_TCP;
 		c->timeout=get_ticks_raw()+cfg_get(tcp, tcp_cfg, con_lifetime);
+		c->lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
 	}
 	
 	return c;
@@ -3280,7 +3281,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			}
 			/* update the timeout*/
 			t=get_ticks_raw();
-			con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
+			con_lifetime=tcpconn->lifetime;
 			tcpconn->timeout=t+con_lifetime;
 			crt_timeout=con_lifetime;
 #ifdef TCP_ASYNC

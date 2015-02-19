@@ -757,7 +757,7 @@ static void core_tcp_list(rpc_t* rpc, void* c)
 	char* state;
 	char* type;
 	struct tcp_connection* con;
-	int i, len, timeout;
+	int i, len, timeout, lifetime;
 
 	if (tcp_disable) {
 		rpc->fault(c, 500, "tcp support disabled");
@@ -789,6 +789,7 @@ static void core_tcp_list(rpc_t* rpc, void* c)
 				BUG("failed to convert destination ip");
 			dst_ip[len] = 0;
 			timeout = TICKS_TO_S(con->timeout - get_ticks_raw());
+			lifetime = TICKS_TO_S(con->lifetime);
 			switch(con->state) {
 				case S_CONN_ERROR:
 					state = "CONN_ERROR";
@@ -814,11 +815,12 @@ static void core_tcp_list(rpc_t* rpc, void* c)
 				default:
 					state = "UNKNOWN";
 			}
-			rpc->struct_add(handle, "dssddsdsd",
+			rpc->struct_add(handle, "dssdddsdsd",
 					"id", con->id,
 					"type", type,
 					"state", state,
 					"timeout", timeout,
+					"lifetime", lifetime,
 					"ref_count", con->refcnt,
 					"src_ip", src_ip,
 					"src_port", con->rcv.src_port,

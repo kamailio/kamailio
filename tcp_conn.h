@@ -204,6 +204,7 @@ struct tcp_connection{
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	struct timer_ln timer;
 	ticks_t timeout;/* connection timeout, after this it will be removed*/
+	ticks_t lifetime;/* connection lifetime */
 	unsigned id_hash; /* hash index in the id_hash */
 	struct tcp_connection* id_next; /* next, prev in id hash table */
 	struct tcp_connection* id_prev;
