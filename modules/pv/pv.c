@@ -381,7 +381,7 @@ static pv_export_t mod_pvs[] = {
 	{{"td", (sizeof("td")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, pv_set_to_domain,
 		0, 0, pv_init_iname, 3},
-	{{"su", (sizeof("sut")-1)}, /* */
+	{{"sut", (sizeof("sut")-1)}, /* */
 		PVT_OTHER, pv_get_srcaddr_uri_full, 0,
 		0, 0, 0, 0},
 	{{"to.domain", (sizeof("to.domain")-1)}, /* */
