@@ -664,16 +664,18 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
 		LM_DBG("searching with initial match flags (%d,%d)\n", match_flags, match_return_flags);
 		if(reg_xavp_cfg.s!=NULL) {
 
-			if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_flags_name)) != NULL
-					&& vavp->val.v.s.len > 0) {
-				match_flags = vavp->val.v.i;
-				LM_DBG("match flags set to %d\n", match_flags);
-			}
+			if(match_search_flags == 1) {
+				if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_flags_name)) != NULL
+						&& vavp->val.v.s.len > 0) {
+					match_flags = vavp->val.v.i;
+					LM_DBG("match flags set to %d\n", match_flags);
+				}
 
-			if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_return_flags_name)) != NULL
-					&& vavp->val.v.s.len > 0) {
-				match_return_flags = vavp->val.v.i;
-				LM_DBG("match return flags set to %d\n", match_return_flags);
+				if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_return_flags_name)) != NULL
+						&& vavp->val.v.s.len > 0) {
+					match_return_flags = vavp->val.v.i;
+					LM_DBG("match return flags set to %d\n", match_return_flags);
+				}
 			}
 
 			if((match_flags & 1)

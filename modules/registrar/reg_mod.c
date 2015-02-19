@@ -128,6 +128,7 @@ int reg_flow_timer = 0;
 
 int reg_match_flags_param = 0;
 int reg_match_return_flags_param = 0;
+int reg_match_search_flags_param = 0;
 str match_return_flags_name = str_init("match_return_flags");
 str match_flags_name = str_init("match_flags");
 str match_callid_name = str_init("match_callid");
@@ -245,6 +246,7 @@ static param_export_t params[] = {
 	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
 	{"match_flags",        INT_PARAM, &reg_match_flags_param			},
 	{"match_return_flags", INT_PARAM, &reg_match_return_flags_param		},
+	{"match_search_flags", INT_PARAM, &reg_match_search_flags_param		},
 	{0, 0, 0}
 };
 

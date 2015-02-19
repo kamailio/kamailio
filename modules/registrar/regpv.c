@@ -778,10 +778,12 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		return -1;
 	}
 
-	if(reg_xavp_cfg.s!=NULL) {
-		if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_return_flags_name)) != NULL) {
-			match_return_flags = vavp->val.v.i;
-			LM_INFO("match return flags set to %d\n", match_return_flags);
+	if(match_search_flags == 1) {
+		if(reg_xavp_cfg.s!=NULL) {
+			if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_return_flags_name)) != NULL) {
+				match_return_flags = vavp->val.v.i;
+				LM_INFO("match return flags set to %d\n", match_return_flags);
+			}
 		}
 	}
 
