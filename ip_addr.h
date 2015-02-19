@@ -245,7 +245,8 @@ void print_net(struct net* net);
 char* get_proto_name(unsigned int proto);
 #define proto2a get_proto_name
 
-
+int get_valid_proto_string(unsigned int iproto, int utype, int vtype,
+		str *sproto);
 
 #ifdef USE_MCAST
 /* Returns 1 if the given address is a multicast address */

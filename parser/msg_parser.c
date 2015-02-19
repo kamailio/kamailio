@@ -1033,3 +1033,86 @@ int msg_set_time(sip_msg_t* const msg)
 		return 0;
 	return gettimeofday(&msg->tval, NULL);
 }
+
+/**
+ * get source ip, port and protocol in SIP URI format
+ * - tmode - 0: short format (transport=udp is not added, being default)
+ */
+int get_src_uri(sip_msg_t *m, int tmode, str *uri)
+{
+	static char buf[MAX_URI_SIZE];
+	char* p;
+	str ip, port;
+	int len;
+	str proto;
+
+	if (!uri || !m) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if(tmode==0) {
+		switch(m->rcv.proto) {
+			case PROTO_NONE:
+			case PROTO_UDP:
+				proto.s = 0; /* Do not add transport parameter, UDP is default */
+				proto.len = 0;
+			break;
+			default:
+				if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
+					LM_ERR("unknown transport protocol\n");
+					return -1;
+				}
+		}
+	} else {
+		if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
+			LM_ERR("unknown transport protocol\n");
+			return -1;
+		}
+	}
+
+	ip.s = ip_addr2a(&m->rcv.src_ip);
+	ip.len = strlen(ip.s);
+
+	port.s = int2str(m->rcv.src_port, &port.len);
+
+	len = 4 + ip.len + 2*(m->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
+	if (proto.s) {
+		len += TRANSPORT_PARAM_LEN;
+		len += proto.len;
+	}
+
+	if (len > MAX_URI_SIZE) {
+		LM_ERR("buffer too small\n");
+		return -1;
+	}
+
+	p = buf;
+	memcpy(p, "sip:", 4);
+	p += 4;
+
+	if (m->rcv.src_ip.af==AF_INET6)
+		*p++ = '[';
+	memcpy(p, ip.s, ip.len);
+	p += ip.len;
+	if (m->rcv.src_ip.af==AF_INET6)
+		*p++ = ']';
+
+	*p++ = ':';
+
+	memcpy(p, port.s, port.len);
+	p += port.len;
+
+	if (proto.s) {
+		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		p += TRANSPORT_PARAM_LEN;
+
+		memcpy(p, proto.s, proto.len);
+		p += proto.len;
+	}
+
+	uri->s = buf;
+	uri->len = len;
+
+	return 0;
+}

@@ -307,7 +307,50 @@ int is_mcast(struct ip_addr* ip)
 
 #endif /* USE_MCAST */
 
-
+/** get string for known protocols.
+ * @param iproto - protocol number
+ * @param utype  - 1 if result is used for URI, or 0
+ * @param vtype  - 1 if result is wanted uppercase, or 0 for lowercase
+ * @param sproto - the string for the proto
+ * @return  0 if it is a valid and supported protocol, negative otherwise
+ */
+int get_valid_proto_string(unsigned int iproto, int utype, int vtype,
+		str *sproto)
+{
+	switch(iproto){
+		case PROTO_NONE:
+			return -1;
+		case PROTO_UDP:
+			sproto->len = 3;
+			sproto->s = (vtype)?"UDP":"udp";
+			return 0;
+		case PROTO_TCP:
+			sproto->len = 3;
+			sproto->s = (vtype)?"TCP":"tcp";
+			return 0;
+		case PROTO_TLS:
+			sproto->len = 3;
+			sproto->s = (vtype)?"TLS":"tls";
+			return 0;
+		case PROTO_SCTP:
+			sproto->len = 4;
+			sproto->s = (vtype)?"SCTP":"sctp";
+			return 0;
+		case PROTO_WS:
+		case PROTO_WSS:
+			if(iproto==PROTO_WS || utype) {
+				/* ws-only in SIP URI */
+				sproto->len = 2;
+				sproto->s = (vtype)?"WS":"ws";
+			} else {
+				sproto->len = 3;
+				sproto->s = (vtype)?"WSS":"wss";
+			}
+			return 0;
+		default:
+			return -2;
+	}
+}
 
 /** get protocol name (asciiz).
  * @param proto - protocol number
@@ -315,22 +358,14 @@ int is_mcast(struct ip_addr* ip)
  */
 char* get_proto_name(unsigned int proto)
 {
+	str sproto;
 	switch(proto){
 		case PROTO_NONE:
 			return "*";
-		case PROTO_UDP:
-			return "udp";
-		case PROTO_TCP:
-			return "tcp";
-		case PROTO_TLS:
-			return "tls";
-		case PROTO_SCTP:
-			return "sctp";
-		case PROTO_WS:
-		case PROTO_WSS:
-			return "ws";
 		default:
-			return "unknown";
+			if(get_valid_proto_string(proto, 1, 0, &sproto)<0)
+				return "unknown";
+			return sproto.s;
 	}
 }
 

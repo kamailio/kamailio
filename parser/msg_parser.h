@@ -521,4 +521,9 @@ int msg_set_time(sip_msg_t* const msg);
  */
 void msg_ldata_reset(sip_msg_t*);
 
+/**
+ * get source ip, port and protocol in SIP URI format
+ */
+int get_src_uri(sip_msg_t *m, int tmode, str *uri);
+
 #endif
