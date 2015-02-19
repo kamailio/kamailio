@@ -37,9 +37,14 @@
 #include "../../action.h"
 #include "../../lib/kcore/faked_msg.h"
 #include "../usrloc/usrloc.h"
+#include "../../pvapi.h"
+#include "../../xavp.h"
 #include "reg_mod.h"
 #include "common.h"
 #include "regpv.h"
+
+#define REGPV_FIELD_DELIM ", "
+#define REGPV_FIELD_DELIM_LEN (sizeof(REGPV_FIELD_DELIM) - 1)
 
 typedef struct _regpv_profile {
 	str pname;
