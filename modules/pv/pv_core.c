@@ -110,36 +110,6 @@ int pv_get_return_code(struct sip_msg *msg, pv_param_t *param,
 }
 */
 
-int pv_get_known_proto_string(int proto, str *sproto)
-{
-	switch(proto) {
-		case PROTO_UDP:
-			sproto->s = "udp";
-			sproto->len = 3;
-		return 0;
-		case PROTO_TCP:
-			sproto->s = "tcp";
-			sproto->len = 3;
-		return 0;
-		case PROTO_TLS:
-			sproto->s = "tls";
-			sproto->len = 3;
-		return 0;
-		case PROTO_SCTP:
-			sproto->s = "sctp";
-			sproto->len = 4;
-		return 0;
-		case PROTO_WS:
-			sproto->s = "ws";
-			sproto->len = 2;
-		return 0;
-		case PROTO_WSS:
-			sproto->s = "wss";
-			sproto->len = 3;
-		return 0;
-	}
-	return -1;
-}
 
 int pv_get_pid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
@@ -689,33 +659,42 @@ int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_uintval(msg, param, res, msg->rcv.src_port);
 }
 
-int pv_get_srcaddr_uri(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
+int pv_get_srcaddr_uri_helper(struct sip_msg *msg, pv_param_t *param,
+		int tmode, pv_value_t *res)
 {
-	str sip;
-	str sproto;
+	str uri;
 	str sr;
 
 	if(msg==NULL)
 		return -1;
 
-	if(pv_get_known_proto_string(msg->rcv.proto, &sproto)<0)
+	if(get_src_uri(msg, tmode, &uri)<0)
 		return pv_get_null(msg, param, res);
 
-	sip.s = ip_addr2a(&msg->rcv.src_ip);
-	sip.len = strlen(sip.s);
-	if (sip.len + sproto.len + 32 >= pv_get_buffer_size())
+	if (uri.len + 1 >= pv_get_buffer_size())
 	{
 		LM_ERR("local buffer size exceeded\n");
 		return pv_get_null(msg, param, res);
 	}
 
 	sr.s = pv_get_buffer();
-	sr.len = snprintf(sr.s, pv_get_buffer_size(),
-			"sip:%.*s:%d;transport=%.*s", sip.len, sip.s,
-			msg->rcv.src_port, sproto.len, sproto.s);
+	strncpy(sr.s, uri.s, uri.len);
+	sr.len = uri.len;
+	sr.s[sr.len] = '\0';
 
 	return pv_get_strval(msg, param, res, &sr);
+}
+
+int pv_get_srcaddr_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_srcaddr_uri_helper(msg, param, 0, res);
+}
+
+int pv_get_srcaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_srcaddr_uri_helper(msg, param, 1, res);
 }
 
 int pv_get_rcvip(struct sip_msg *msg, pv_param_t *param,
@@ -1098,9 +1077,9 @@ int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL)
 		return -1;
 
-	if(pv_get_known_proto_string(msg->rcv.proto, &s)<0)
+	if(get_valid_proto_string(msg->rcv.proto, 0, 0, &s)<0)
 	{
-		s.s = "NONE";
+		s.s = "none";
 		s.len = 4;
 	}
 
