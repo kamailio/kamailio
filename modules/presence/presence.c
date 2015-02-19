@@ -100,6 +100,12 @@ str server_address= {0, 0};
 evlist_t* EvList= NULL;
 int pres_subs_remove_match = 0;
 
+/* sip uri match */
+sip_uri_match_f presence_sip_uri_match;
+static int sip_uri_case_sensitive_match(str* s1, str* s2);
+static int sip_uri_case_insensitive_match(str* s1, str* s2);
+int pres_uri_match = 0;
+
 /* to tag prefix */
 char* to_tag_pref = "10";
 
@@ -211,6 +217,7 @@ static param_export_t params[]={
 	{ "db_table_lock_type",     INT_PARAM, &db_table_lock_type},
 	{ "local_log_level",        PARAM_INT, &pres_local_log_level},
 	{ "subs_remove_match",      PARAM_INT, &pres_subs_remove_match},
+	{ "sip_uri_match",          PARAM_INT, &pres_uri_match},
     {0,0,0}
 };
 
@@ -241,6 +248,12 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	if(pres_uri_match == 1) {
+		presence_sip_uri_match = sip_uri_case_insensitive_match;
+	} else {
+		presence_sip_uri_match = sip_uri_case_sensitive_match;
+	}
+
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
@@ -1471,9 +1484,9 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 		if(s->event== subs->event && s->pres_uri.len== subs->pres_uri.len &&
 			s->watcher_user.len== subs->watcher_user.len && 
 			s->watcher_domain.len==subs->watcher_domain.len &&
-			strncmp(s->pres_uri.s, subs->pres_uri.s, subs->pres_uri.len)== 0 &&
-			strncmp(s->watcher_user.s, subs->watcher_user.s, s->watcher_user.len)== 0 &&
-			strncmp(s->watcher_domain.s,subs->watcher_domain.s,s->watcher_domain.len)==0)
+			presence_sip_uri_match(&s->pres_uri, &subs->pres_uri)== 0 &&
+			presence_sip_uri_match(&s->watcher_user, &subs->watcher_user)== 0 &&
+			presence_sip_uri_match(&s->watcher_domain, &subs->watcher_domain)==0)
 		{
 			i++;
 			s->status= subs->status;
@@ -1838,4 +1851,30 @@ static int presence_init_rpc(void)
 		return -1;
 	}
 	return 0;
+}
+
+static int sip_uri_case_sensitive_match(str* s1, str* s2)
+{
+	if(!s1) {
+		LM_ERR("null pointer (s1) in sip_uri_match\n");
+		return -1;
+	}
+	if(!s2) {
+		LM_ERR("null pointer (s2) in sip_uri_match\n");
+		return -1;
+	}
+	return strncmp(s1->s, s2->s, s2->len);
+}
+
+static int sip_uri_case_insensitive_match(str* s1, str* s2)
+{
+	if(!s1) {
+		LM_ERR("null pointer (s1) in sip_uri_match\n");
+		return -1;
+	}
+	if(!s2) {
+		LM_ERR("null pointer (s2) in sip_uri_match\n");
+		return -1;
+	}
+	return strncasecmp(s1->s, s2->s, s2->len);
 }

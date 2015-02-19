@@ -519,7 +519,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			if(presentity->sender)
 			{
 				if(!(presentity->sender->len == sender.len && 
-				strncmp(presentity->sender->s, sender.s, sender.len)== 0))
+				presence_sip_uri_match(presentity->sender, &sender)== 0))
 					 bla_update_publish= 0;
 			}
 after_dialog_check:

@@ -391,7 +391,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 
 			if(s->event== subs->event->wipeer &&
 				s->pres_uri.len== subs->pres_uri.len &&
-				strncmp(s->pres_uri.s, subs->pres_uri.s,subs->pres_uri.len)== 0)
+				presence_sip_uri_match(&s->pres_uri, &subs->pres_uri)== 0)
 			{
 				if(add_watcher_list(s, watchers)< 0)
 				{
@@ -704,7 +704,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 				sender.len= strlen(sender.s);
 			
 				if(sender.len== contact->len &&
-						strncmp(sender.s, contact->s, sender.len)== 0)
+						presence_sip_uri_match(&sender, contact)== 0)
 				{
 					notify_body= build_empty_bla_body(pres_uri);
 					pa_dbf.free_result(pa_db, result);
@@ -1212,9 +1212,9 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			if((!(s->status== ACTIVE_STATUS &&
 		    s->reason.len== 0 &&
 				s->event== event && s->pres_uri.len== pres_uri->len &&
-				strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)) || 
+				presence_sip_uri_match(&s->pres_uri, pres_uri)== 0)) || 
 				(sender && sender->len== s->contact.len && 
-				strncmp(sender->s, s->contact.s, sender->len)== 0))
+				presence_sip_uri_match(sender, &s->contact)== 0))
 				continue;
 
 			s_new= mem_copy_subs(s, PKG_MEM_TYPE);
@@ -1888,7 +1888,7 @@ int watcher_found_in_list(watcher_t * watchers, str wuri)
 
 	while(w)
 	{
-		if(w->uri.len == wuri.len && strncmp(w->uri.s, wuri.s, wuri.len)== 0)
+		if(w->uri.len == wuri.len && presence_sip_uri_match(&w->uri, &wuri)== 0)
 			return 1;
 		w= w->next;
 	}
