@@ -624,7 +624,7 @@ done:
  * it is similar to lookup but registered neither rewrites
  * the Request-URI nor appends branches
  */
-int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
+int registered(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag)
 {
 	str uri, aor;
 	urecord_t* r;
@@ -633,10 +633,6 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
 	str match_callid = {0,0};
 	str match_received = {0,0};
 	str match_contact = {0,0};
-	sr_xavp_t *vavp=NULL;
-	int match_return_flags = reg_match_return_flags_param;
-	int match_flags = reg_match_flags_param;
-
 
 	if(_uri!=NULL)
 	{
@@ -661,38 +657,24 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
 	}
 
 	if (res == 0) {
-		LM_DBG("searching with initial match flags (%d,%d)\n", match_flags, match_return_flags);
+		LM_DBG("searching with initial match flags (%d,%d)\n", match_flags, reg_match_flag);
 		if(reg_xavp_cfg.s!=NULL) {
 
-			if(match_search_flags == 1) {
-				if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_flags_name)) != NULL
-						&& vavp->val.v.s.len > 0) {
-					match_flags = vavp->val.v.i;
-					LM_DBG("match flags set to %d\n", match_flags);
-				}
-
-				if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_return_flags_name)) != NULL
-						&& vavp->val.v.s.len > 0) {
-					match_return_flags = vavp->val.v.i;
-					LM_DBG("match return flags set to %d\n", match_return_flags);
-				}
-			}
-
-			if((match_flags & 1)
+			if((match_flag & 1)
 					&& (vavp = xavp_get_child_with_sval(&reg_xavp_cfg, &match_callid_name)) != NULL
 					&& vavp->val.v.s.len > 0) {
 				match_callid = vavp->val.v.s;
 				LM_DBG("matching with callid %.*s\n", match_callid.len, match_callid.s);
 			}
 
-			if((match_flags & 2)
+			if((match_flag & 2)
 					&& (vavp = xavp_get_child_with_sval(&reg_xavp_cfg, &match_received_name)) != NULL
 					&& vavp->val.v.s.len > 0) {
 				match_received = vavp->val.v.s;
 				LM_DBG("matching with received %.*s\n", match_received.len, match_received.s);
 			}
 
-			if((match_flags & 4)
+			if((match_flag & 4)
 					&& (vavp = xavp_get_child_with_sval(&reg_xavp_cfg, &match_contact_name)) != NULL
 					&& vavp->val.v.s.len > 0) {
 				match_contact = vavp->val.v.s;
@@ -716,7 +698,7 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
 			ul.unlock_udomain(_d, &aor);
 			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 
-			if(ptr->xavp!=NULL && match_return_flags == 1) {
+			if(ptr->xavp!=NULL && reg_match_flag_param == 1) {
 				sr_xavp_t *xavp = xavp_clone_level_nodata(ptr->xavp);
 				if(xavp_add(xavp, NULL)<0) {
 					LM_ERR("error adding xavp for %.*s after successful match\n", aor.len, ZSW(aor.s));

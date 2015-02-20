@@ -731,8 +731,6 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 	int ilen;
 	int n;
 	char *p;
-	int match_return_flags = reg_match_return_flags_param;
-	sr_xavp_t *vavp=NULL;
 
 	rpp = regpv_get_profile((str*)profile);
 	if(rpp==0)
@@ -776,15 +774,6 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain((udomain_t*)table, &aor);
 		return -1;
-	}
-
-	if(match_search_flags == 1) {
-		if(reg_xavp_cfg.s!=NULL) {
-			if( (vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &match_return_flags_name)) != NULL) {
-				match_return_flags = vavp->val.v.i;
-				LM_INFO("match return flags set to %d\n", match_return_flags);
-			}
-		}
 	}
 
 	ptr = r->contacts;
@@ -853,9 +842,8 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 			c0->instance.len = ptr->instance.len;
 			p += c0->instance.len;
 		}
-		if(ptr->xavp != NULL && match_return_flags == 1)
+		if(ptr->xavp != NULL && reg_match_flag_param == 1)
 		{
-			LM_DBG("adding contact xavp \n");
 			c0->xavp = xavp_clone_level_nodata(ptr->xavp);
 		}
 		if(ptr0==NULL)
@@ -998,7 +986,7 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 		c0->instance.len = ptr->instance.len;
 		p += c0->instance.len;
 	}
-	if(ptr->xavp != NULL)
+	if(ptr->xavp != NULL && reg_match_flag_param == 1)
 	{
 		c0->xavp = xavp_clone_level_nodata(ptr->xavp);
 	}		

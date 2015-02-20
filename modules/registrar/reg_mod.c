@@ -94,6 +94,7 @@ static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_branches(struct sip_msg* _m, char* _d, char* _p2);
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
+static int w_registered2(struct sip_msg* _m, char* _d, char* _uri, char* _flags);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid);
 
@@ -103,6 +104,7 @@ static int domain_uri_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
 static int unreg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
+static int registered_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
@@ -126,11 +128,7 @@ int reg_outbound_mode = 0;
 int reg_regid_mode = 0;
 int reg_flow_timer = 0;
 
-int reg_match_flags_param = 0;
-int reg_match_return_flags_param = 0;
-int reg_match_search_flags_param = 0;
-str match_return_flags_name = str_init("match_return_flags");
-str match_flags_name = str_init("match_flags");
+int reg_match_flag_param = 0;
 str match_callid_name = str_init("match_callid");
 str match_received_name = str_init("match_received");
 str match_contact_name = str_init("match_contact");
@@ -193,6 +191,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)w_registered,  2,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"registered",   (cmd_function)w_registered2, 3,  registered_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"add_sock_hdr", (cmd_function)add_sock_hdr,  1,  fixup_str_null, 0,
 			REQUEST_ROUTE },
 	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
@@ -244,9 +244,7 @@ static param_export_t params[] = {
 	{"outbound_mode",      INT_PARAM, &reg_outbound_mode				},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
 	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
-	{"match_flags",        INT_PARAM, &reg_match_flags_param			},
-	{"match_return_flags", INT_PARAM, &reg_match_return_flags_param		},
-	{"match_search_flags", INT_PARAM, &reg_match_search_flags_param		},
+	{"reg_on_match_flag",  INT_PARAM, &reg_match_flag_param				},
 	{0, 0, 0}
 };
 
@@ -496,7 +494,24 @@ static int w_registered(struct sip_msg* _m, char* _d, char* _uri)
 		LM_ERR("invalid uri parameter\n");
 		return -1;
 	}
-	return registered(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
+	return registered(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL, 0);
+}
+
+static int w_registered2(struct sip_msg* _m, char* _d, char* _uri, char* _flags)
+{
+	str uri = {0};
+	int flags = 0;
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	if(_flags!=NULL && (fixup_get_ivalue(_m, (fparam_t*)_flags, &flags)) < 0)
+	{
+		LM_ERR("invalid flags parameter\n");
+		return -1;
+	}
+	return registered(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL, flags);
 }
 
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri)
@@ -557,6 +572,18 @@ static int domain_uri_fixup(void** param, int param_no)
 		return domain_fixup(param, 1);
 	} else if (param_no == 2) {
 		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
+static int registered_fixup(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return domain_fixup(param, 1);
+	} else if (param_no == 2) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no == 3) {
+		return fixup_igp_null(param, 1);
 	}
 	return 0;
 }
@@ -626,7 +653,6 @@ static int fetchc_fixup(void** param, int param_no)
 	}
 	return 0;
 }
-
 
 static void mod_destroy(void)
 {
