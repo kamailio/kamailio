@@ -633,6 +633,7 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag)
 	str match_callid = {0,0};
 	str match_received = {0,0};
 	str match_contact = {0,0};
+	r_xavp_t *vavp = NULL;
 
 	if(_uri!=NULL)
 	{
