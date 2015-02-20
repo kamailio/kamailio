@@ -59,17 +59,13 @@ int lookup_transport(struct sip_msg* _m, udomain_t* _d, str* _uri) {
     str uri;
     pcontact_t* pcontact;
     char tmp[MAX_URI_SIZE];
-    char srcip[20];
-    str received_host;
+    str received_host = {0,0};
     str tmp_s;
     int ret = 1;
 
     if (_m->new_uri.s) uri = _m->new_uri;
     else uri = _m->first_line.u.request.uri;
 
-    received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-    received_host.s = srcip;
-    
     //now lookup in usrloc
     ul.lock_udomain(_d, &uri, &received_host, _m->rcv.src_port);
     if (ul.get_pcontact(_d, &uri, &received_host, _m->rcv.src_port, &pcontact) != 0) { //need to insert new contact
