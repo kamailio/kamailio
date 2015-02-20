@@ -199,7 +199,7 @@ static char* xhttp_to_sip(sip_msg_t* msg, int* new_msg_len)
 	struct hostport hp;
 	struct dest_info dst;
 	
-	ip.s = ip_addr2a(&msg->rcv.src_ip);
+	ip.s = ip_addr2strz(&msg->rcv.src_ip);
 	ip.len = strlen(ip.s);
 	port.s = int2str(msg->rcv.src_port, &port.len);
 	hp.host = &ip;
