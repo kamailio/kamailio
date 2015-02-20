@@ -59,9 +59,9 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable0, 0, 0,
 		0, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime2, 2, fixup_numpv,
+	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime2, 2, fixup_numpv,
 		0, ANY_ROUTE},
-	{"set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime1, 1, fixup_numpv,
+	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime1, 1, fixup_numpv,
 		0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };

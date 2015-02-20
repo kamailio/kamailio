@@ -104,9 +104,9 @@ onreply_route {
 			]]></programlisting>
 		</example>
 	</section>
-	<section id="tcpops.f.set_connection_lifetime">
+	<section id="tcpops.f.tcp_set_connection_lifetime">
                 <title>
-                        <function>set_connection_lifetime([conid], lifetime)</function>
+                        <function>tcp_set_connection_lifetime([conid], lifetime)</function>
                 </title>
                 <para>
                                 Sets the connection lifetime of a connection (TCP).
@@ -126,7 +126,7 @@ onreply_route {
                 </itemizedlist>
                 <para>Retuns 1 on success, -1 on failure.</para>
                 <example>
-                        <title><function>set_connection_lifetime</function> usage</title>
+                        <title><function>tcp_set_connection_lifetime</function> usage</title>
                         <programlisting><![CDATA[
 ...
 # use 10s as default lifetime
@@ -137,7 +137,7 @@ request_route {
         ...
         if (is_method("REGISTER") && pv_www_authenticate("$td", "xxx", "0")) {
                 # raise the TCP lifetime to a bigger value
-                set_connection_lifetime("3605");
+                tcp_set_connection_lifetime("3605");
         }
         ...
 }

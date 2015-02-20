@@ -17,13 +17,13 @@ Camille Oudot
 
               3.1. tcp_keepalive_enable([conid], idle, count, interval)
               3.2. tcp_keepalive_disable([conid])
-              3.3. set_connection_lifetime([conid], lifetime)
+              3.3. tcp_set_connection_lifetime([conid], lifetime)
 
    List of Examples
 
    1.1. tcp_keepalive_enable usage
    1.2. tcp_keepalive_disable usage
-   1.3. set_connection_lifetime usage
+   1.3. tcp_set_connection_lifetime usage
 
 Chapter 1. Admin Guide
 
@@ -35,7 +35,7 @@ Chapter 1. Admin Guide
 
         3.1. tcp_keepalive_enable([conid], idle, count, interval)
         3.2. tcp_keepalive_disable([conid])
-        3.3. set_connection_lifetime([conid], lifetime)
+        3.3. tcp_set_connection_lifetime([conid], lifetime)
 
 1. Overview
 
@@ -52,7 +52,7 @@ Chapter 1. Admin Guide
 
    3.1. tcp_keepalive_enable([conid], idle, count, interval)
    3.2. tcp_keepalive_disable([conid])
-   3.3. set_connection_lifetime([conid], lifetime)
+   3.3. tcp_set_connection_lifetime([conid], lifetime)
 
 3.1.  tcp_keepalive_enable([conid], idle, count, interval)
 
@@ -118,7 +118,7 @@ onreply_route {
         ...
 }
 
-3.3.  set_connection_lifetime([conid], lifetime)
+3.3.  tcp_set_connection_lifetime([conid], lifetime)
 
    Sets the connection lifetime of a connection (TCP).
 
@@ -130,7 +130,7 @@ onreply_route {
 
    Retuns 1 on success, -1 on failure.
 
-   Example 1.3. set_connection_lifetime usage
+   Example 1.3. tcp_set_connection_lifetime usage
 ...
 # use 10s as default lifetime
 tcp_connection_lifetime=10
@@ -140,7 +140,7 @@ request_route {
         ...
         if (is_method("REGISTER") && pv_www_authenticate("$td", "xxx", "0")) {
                 # raise the TCP lifetime to a bigger value
-                set_connection_lifetime("3605");
+                tcp_set_connection_lifetime("3605");
         }
         ...
 }
