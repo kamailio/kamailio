@@ -1,7 +1,5 @@
 /*
- * $Id$
- *
- * Export vontact attrs as PV
+ * Export contact attrs as PV
  *
  * Copyright (C) 2008 Daniel-Constantin Mierla (asipto.com)
  *

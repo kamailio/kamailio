@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Send a reply
  *
  * Copyright (C) 2001-2003 FhG Fokus

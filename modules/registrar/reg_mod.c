@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Registrar module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -20,29 +18,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * --------
- *  2003-03-11  updated to the new module exports interface (andrei)
- *  2003-03-16  flags export parameter added (janakj)
- *  2003-03-21  save_noreply added, provided by Maxim Sobolev
- *              <sobomax@portaone.com> (janakj)
- *  2005-07-11  added sip_natping_flag for nat pinging with SIP method
- *              instead of UDP package (bogdan)
- *  2006-09-19  AOR may be provided via an AVP instead of being fetched
- *              from URI (bogdan)
- *  2006-10-04  removed the "desc_time_order" parameter, as its functionality
- *              was moved to usrloc (Carsten Bock, BASIS AudioNet GmbH)
- *  2006-11-22  save_noreply and save_memory merged into save();
- *              removed the module parameter "use_domain" - now it is
- *              imported from usrloc module (bogdan)
- *  2006-11-28  Added statistics tracking for the number of accepted/rejected
- *              registrations, as well as for the max expiry time, max 
- *              contacts and default expiry time(Jeffrey Magder-SOMA Networks)
- *  2007-02-24  sip_natping_flag moved into branch flags, so migrated to 
- *              nathelper module (bogdan)
- *  2009-12-09  Commented out tcp_persistent_flag param, because sr_3.0 tm
- *              does not support it (Juha)
  *
  */
 

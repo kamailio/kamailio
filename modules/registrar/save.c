@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Process REGISTER request and send reply
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -22,21 +20,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ----------
- * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-02-28 scrathcpad compatibility abandoned (jiri)
- * 2003-03-21 save_noreply added, patch provided by Maxim Sobolev 
- *            <sobomax@portaone.com> (janakj)
- * 2005-07-11 added sip_natping_flag for nat pinging with SIP method
- *            instead of UDP package (bogdan)
- * 2006-04-13 added tcp_persistent_flag for keeping the TCP connection as long
- *            as a TCP contact is registered (bogdan)
- * 2006-11-22 save_noreply and save_memory merged into save() (bogdan)
- * 2006-11-28 Added statistic support for the number of accepted/rejected 
- *            registrations. (Jeffrey Magder - SOMA Networks) 
- * 2007-02-24  sip_natping_flag moved into branch flags, so migrated to 
- *             nathelper module (bogdan)
  */
 /*!
  * \file

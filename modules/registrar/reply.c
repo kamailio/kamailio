@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Send a reply
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,12 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2003-01-18: buffer overflow patch committed (Jan on behalf of Maxim)
- * 2003-01-21: Errors reported via Error-Info header field - janakj
- * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
- * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
 /*!

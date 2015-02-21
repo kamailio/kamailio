@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Helper functions for Path support.
  *
  * Copyright (C) 2006 Andreas Granig <agranig@linguin.org>

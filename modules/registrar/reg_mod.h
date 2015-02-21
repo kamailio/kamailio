@@ -1,6 +1,4 @@
 /* 
- * $Id$ 
- *
  * registrar module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,16 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *
- * 2005-07-11  added sip_natping_flag for nat pinging with SIP method
- *             instead of UDP package (bogdan)
- * 2006-11-28  Added statistics tracking for the number of accepted/rejected
- *             registrations, as well as for the max expiry time, max contacts,
- *             and default expiry time. (Jeffrey Magder - SOMA Networks)
- * 2007-02-24  sip_natping_flag moved into branch flags, so migrated to 
- *             nathelper module (bogdan)
  */
 
 /*!

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Functions that process REGISTER message 
  * and store data in usrloc
  *
@@ -22,11 +20,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- * 2003-03-21  save_noreply added, provided by Maxim Sobolev 
- *             <sobomax@portaone.com> (janakj)
- * 2006-11-22  save_noreply and save_memory merged into save() (bogdan)
  */
 /*!
  * \file

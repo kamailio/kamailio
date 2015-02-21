@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Functions that process REGISTER message 
  * and store data in usrloc
  *
