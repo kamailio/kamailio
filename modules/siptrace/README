@@ -16,9 +16,9 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2010 asipto.com
+   Copyright (c) 2010 asipto.com
 
-   Copyright © 2006 voice-system.ro
+   Copyright (c) 2006 voice-system.ro
      __________________________________________________________________
 
    Table of Contents
@@ -215,7 +215,7 @@ modparam("siptrace", "table", "strace")
 
 3.3. trace_flag (integer)
 
-   Which flag is used to mark messages to trace
+   Which flag is used to mark messages to trace without traced user.
 
    Default value is "0".
 
@@ -424,7 +424,7 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 
    4.1. sip_trace([address])
 
-4.1. sip_trace([address])
+4.1.  sip_trace([address])
 
    Store or forward the current processed SIP message in database. It is
    stored in the form prior applying changes made to it.
@@ -449,7 +449,7 @@ sip_trace("sip:10.1.1.2:5085");
 
    5.1. sip_trace
 
-5.1. sip_trace
+5.1.  sip_trace
 
    Name: sip_trace
 
@@ -470,7 +470,7 @@ sip_trace("sip:10.1.1.2:5085");
 
    6.1. siptrace.status param
 
-6.1. siptrace.status param
+6.1.  siptrace.status param
 
    Name: siptrace.status
 
