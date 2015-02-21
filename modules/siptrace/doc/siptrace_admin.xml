@@ -132,7 +132,8 @@ modparam("siptrace", "table", "strace")
 	<section id="siptrace.p.trace_flag">
 		<title><varname>trace_flag</varname> (integer)</title>
 		<para>
-		Which flag is used to mark messages to trace
+		Which flag is used to mark messages to trace without
+		traced user.
 		</para>
 		<para>
 		<emphasis>
