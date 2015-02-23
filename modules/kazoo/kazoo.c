@@ -269,8 +269,8 @@ static int mod_init(void) {
     }
 
 
-    int total_workers = dbk_consumer_processes + 1;
-    int total_pipes = total_workers + 1;
+    int total_workers = dbk_consumer_processes + 3;
+    int total_pipes = total_workers;
     kz_pipe_fds = (int*) shm_malloc(sizeof(int) * (total_pipes) * 2 );
 
     for(i=0; i < total_pipes; i++) {
@@ -310,45 +310,60 @@ static int mod_child_init(int rank)
 
 
 	if (rank==PROC_MAIN) {
-		pid=fork_process(1, "AMQP Manager", 1);
+		pid=fork_process(1, "AMQP Publisher", 1);
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0){
-			kz_amqp_manager_loop(0);
+			kz_amqp_publisher_proc(0);
 		}
 		else {
-			for(i=0; i < dbk_consumer_processes; i++) {
-				pid=fork_process(i+2, "AMQP Consumer", 1);
+			pid=fork_process(2, "AMQP Consumer", 1);
+			if (pid<0)
+				return -1; /* error */
+			if(pid==0){
+				kz_amqp_consumer_proc(1);
+			}
+			else {
+				pid=fork_process(3, "AMQP Timer", 1);
 				if (pid<0)
 					return -1; /* error */
 				if(pid==0){
-					mod_consumer_proc(i+1);
+					kz_amqp_timeout_proc(2);
+				}
+				else {
+					for(i=0; i < dbk_consumer_processes; i++) {
+						pid=fork_process(i+4, "AMQP Consumer Worker", 1);
+						if (pid<0)
+							return -1; /* error */
+						if(pid==0){
+							mod_consumer_proc(i+3);
+						}
+					}
 				}
 			}
 		}
-
 		return 0;
 	}
 
-		if(dbk_pua_mode == 1) {
-			if (kz_pa_dbf.init==0)
-			{
-				LM_CRIT("child_init: database not bound\n");
-				return -1;
-			}
-			kz_pa_db = kz_pa_dbf.init(&kz_db_url);
-			if (!kz_pa_db)
-			{
-				LM_ERR("child %d: unsuccessful connecting to database\n", rank);
-				return -1;
-			}
+	if(dbk_pua_mode == 1) {
+		if (kz_pa_dbf.init==0)
+		{
+			LM_CRIT("child_init: database not bound\n");
+			return -1;
+		}
+		kz_pa_db = kz_pa_dbf.init(&kz_db_url);
+		if (!kz_pa_db)
+		{
+			LM_ERR("child %d: unsuccessful connecting to database\n", rank);
+			return -1;
+		}
 
-			if (kz_pa_dbf.use_table(kz_pa_db, &kz_presentity_table) < 0)
-			{
-				LM_ERR( "child %d:unsuccessful use_table presentity_table\n", rank);
-				return -1;
-			}
-			LM_DBG("child %d: Database connection opened successfully\n", rank);
+		if (kz_pa_dbf.use_table(kz_pa_db, &kz_presentity_table) < 0)
+		{
+			LM_ERR( "child %d:unsuccessful use_table presentity_table\n", rank);
+			return -1;
+		}
+		LM_DBG("child %d: Database connection opened successfully\n", rank);
 	}
 
 	return 0;

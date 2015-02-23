@@ -139,6 +139,10 @@ void kz_amqp_consumer_loop(int child_no);
 //void kz_amqp_generic_consumer_loop(int child_no);
 void kz_amqp_manager_loop(int child_no);
 
+void kz_amqp_consumer_proc(int child_no);
+void kz_amqp_publisher_proc(int child_no);
+void kz_amqp_timeout_proc(int child_no);
+
 int kz_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
 int kz_pv_get_last_query_result(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
 int kz_pv_get_connection_host(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
