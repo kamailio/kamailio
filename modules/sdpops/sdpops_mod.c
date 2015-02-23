@@ -159,12 +159,17 @@ static int mod_init(void)
 int sdp_locate_line(sip_msg_t* msg, char *pos, str *aline)
 {
 	char *p;
+	char *bend;
+
 	p = pos;
 	while(*p!='\n') p--;
 	aline->s = p + 1;
 	p = pos;
-	while(*p!='\n') p++;
+	bend = msg->buf+msg->len;
+	while(*p!='\n' && p<bend) p++;
 	aline->len = p - aline->s + 1;
+	if(unlikely(p==bend)) aline->len--;
+
 	return 0;
 }
 
