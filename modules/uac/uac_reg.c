@@ -116,6 +116,7 @@ str auth_password_column = str_init("auth_password");
 str auth_proxy_column = str_init("auth_proxy");
 str expires_column = str_init("expires");
 
+
 #if 0
 INSERT INTO version (table_name, table_version) values ('uacreg','1');
 CREATE TABLE uacreg (
@@ -140,9 +141,22 @@ extern pv_spec_t auth_username_spec;
 extern pv_spec_t auth_realm_spec;
 extern pv_spec_t auth_password_spec;
 
+counter_handle_t regtotal;         /* Total number of registrations in memory */
+counter_handle_t regactive;        /* Active registrations - 200 OK */
+counter_handle_t regdisabled;      /* Disabled registrations */
+
+/* Init counters */
+static void uac_reg_counter_init()
+{
+	LM_DBG("*** Initializing UAC reg counters\n");
+        counter_register(&regtotal, "uac", "regtotal", 0, 0, 0, "Total number of registration accounts in memory", 0);
+        counter_register(&regactive, "uac", "regactive", 0, 0, 0, "Number of successfully registred accounts (200 OK)", 0);
+        counter_register(&regdisabled, "uac", "regdisabled", 0, 0, 0, "Counter of failed registrations (not 200 OK)", 0);
+}
+
 
 /**
- *
+ * Init the in-memory registration database in hash table
  */
 int uac_reg_init_ht(unsigned int sz)
 {
@@ -230,6 +244,9 @@ int uac_reg_init_ht(unsigned int sz)
 			return -1;
 		}
 	}
+
+	/* Initialize uac reg counters */
+	uac_reg_counter_init();
 
 	return 0;
 }
@@ -343,6 +360,10 @@ int uac_reg_reset_ht_gc(void)
 		_reg_htable_gc->entries[i].byuser = NULL;
 		_reg_htable_gc->entries[i].usize = 0;
 	}
+	/* Reset all counters */
+	counter_reset(regtotal);
+	counter_reset(regactive);
+	counter_reset(regdisabled);
 	return 0;
 }
 
@@ -364,7 +385,7 @@ int uac_reg_ht_shift(void)
 	lock_get(_reg_htable_gc_lock);
 	if(_reg_htable_gc->stime > tn-UAC_REG_GC_INTERVAL) {
 		lock_release(_reg_htable_gc_lock);
-		LM_ERR("shifting the memory table is not possible in less than %d\n", UAC_REG_GC_INTERVAL);
+		LM_ERR("shifting the memory table is not possible in less than %d secs\n", UAC_REG_GC_INTERVAL);
 		return -1;
 	}
 	uac_reg_reset_ht_gc();
@@ -516,6 +537,7 @@ int reg_ht_add(reg_uac_t *reg)
 
 	reg_ht_add_byuser(nr);
 	reg_ht_add_byuuid(nr);
+	counter_inc(regtotal);
 
 	return 0;
 }
@@ -876,14 +898,17 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 error:
-	if(reg_retry_interval)
+	if(reg_retry_interval) {
 		ri->timer_expires = time(NULL) + reg_retry_interval;
-	else
+	} else {
 		ri->flags |= UAC_REG_DISABLED;
+		counter_inc(regdisabled);
+	}
 done:
 	if(ri)
 		ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
 	shm_free(uuid);
+	counter_inc(regactive);
 }
 
 int uac_reg_update(reg_uac_t *reg, time_t tn)
@@ -912,6 +937,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	reg->timer_expires = tn;
 	reg->flags |= UAC_REG_ONGOING;
 	reg->flags &= ~UAC_REG_ONLINE;
+	counter_add(regactive, -1);		/* Take it out of the active pool while re-registering */
 	uuid = (char*)shm_malloc(reg->l_uuid.len+1);
 	if(uuid==NULL)
 	{
@@ -959,8 +985,10 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		shm_free(uuid);
 		if (reg_retry_interval)
 			reg->timer_expires = (tn ? tn : time(NULL)) + reg_retry_interval;
-		else
+		else {
 			reg->flags |= UAC_REG_DISABLED;
+			counter_inc(regdisabled);
+		}
 		reg->flags &= ~UAC_REG_ONGOING;
 		return -1;
 	}
@@ -1655,6 +1683,7 @@ static const char* rpc_uac_reg_enable_doc[2] = {
 static void rpc_uac_reg_enable(rpc_t* rpc, void* ctx)
 {
 	rpc_uac_reg_update_flag(rpc, ctx, 0, UAC_REG_DISABLED);
+	counter_add(regdisabled, -1);
 }
 
 static const char* rpc_uac_reg_disable_doc[2] = {
@@ -1665,6 +1694,7 @@ static const char* rpc_uac_reg_disable_doc[2] = {
 static void rpc_uac_reg_disable(rpc_t* rpc, void* ctx)
 {
 	rpc_uac_reg_update_flag(rpc, ctx, 1, UAC_REG_DISABLED);
+	counter_inc(regdisabled);
 }
 
 static const char* rpc_uac_reg_reload_doc[2] = {
