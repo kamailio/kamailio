@@ -240,7 +240,7 @@ static int mod_init(void) {
     }
 
     if(kz_timer_ms > 0) {
-    	kz_timer_tv.tv_usec = (kz_timer_ms  1000) * 1000;
+    	kz_timer_tv.tv_usec = (kz_timer_ms % 1000) * 1000;
     	kz_timer_tv.tv_sec = kz_timer_ms / 1000;
     }
     
