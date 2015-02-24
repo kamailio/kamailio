@@ -697,7 +697,7 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag)
 				continue;
 			if (match_contact.s && /* optionally enforce tighter matching w/ Contact */
 				match_contact.len > 0 &&
-				(match_contact.len != ptr->s.len || 
+				(match_contact.len != ptr->c.len || 
 				memcmp(match_contact.s, ptr->c.s, match_contact.len)))
 				continue;
 
