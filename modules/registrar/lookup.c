@@ -686,18 +686,20 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag)
 		for (ptr = r->contacts; ptr; ptr = ptr->next) {
 			if(!VALID_CONTACT(ptr, act_time)) continue;
 			if (match_callid.s && /* optionally enforce tighter matching w/ Call-ID */
-				memcmp(match_callid.s,ptr->callid.s,match_callid.len))
+				match_callid.len > 0 &&
+				(match_callid.len != ptr->callid.len || 
+				memcmp(match_callid.s, ptr->callid.s, match_callid.len)))
 				continue;
 			if (match_received.s && /* optionally enforce tighter matching w/ ip:port */
-				memcmp(match_received.s,ptr->received.s,match_received.len))
+				match_received.len > 0 &&
+				(match_received.len != ptr->received.len || 
+				memcmp(match_received.s, ptr->received.s, match_received.len)))
 				continue;
 			if (match_contact.s && /* optionally enforce tighter matching w/ Contact */
-				memcmp(match_contact.s,ptr->c.s,match_contact.len))
+				match_contact.len > 0 &&
+				(match_contact.len != ptr->s.len || 
+				memcmp(match_contact.s, ptr->c.s, match_contact.len)))
 				continue;
-
-			ul.release_urecord(r);
-			ul.unlock_udomain(_d, &aor);
-			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 
 			if(ptr->xavp!=NULL && reg_match_flag_param == 1) {
 				sr_xavp_t *xavp = xavp_clone_level_nodata(ptr->xavp);
@@ -706,6 +708,10 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag)
 					xavp_destroy_list(&xavp);
 				}
 			}
+
+			ul.release_urecord(r);
+			ul.unlock_udomain(_d, &aor);
+			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 
 			return 1;
 		}
