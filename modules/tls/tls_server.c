@@ -196,16 +196,8 @@ static int tls_complete_init(struct tcp_connection* c)
 	} else {
 		state=S_TLS_CONNECTING;
 		sname = tls_get_connect_server_name();
-		if(&c->rcv.bind_address!=NULL) {
-			/* if there is a bind_address, use it, because the src port
-			 * for connection can be randomly assigned by OS */
-			dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
-						&c->rcv.bind_address->address,
-						c->rcv.bind_address->port_no, sname);
-		} else {
-			dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
+		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
 						&c->rcv.dst_ip, c->rcv.dst_port, sname);
-		}
 	}
 	if (unlikely(c->state<0)) {
 		BUG("Invalid connection (state %d)\n", c->state);

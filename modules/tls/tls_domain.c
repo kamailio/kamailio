@@ -1308,7 +1308,7 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 				p->server_name.len, ZSW(p->server_name.s),
 				sname->len, ZSW(sname->s));
 		}
-		if ((p->port == port) && ip_addr_cmp(&p->ip, ip)) {
+		if ((p->port==0 || p->port == port) && ip_addr_cmp(&p->ip, ip)) {
 			if(sname && sname->len>0) {
 				if(p->server_name.len==sname->len
 					&& strncasecmp(p->server_name.s, sname->s, sname->len)==0) {
