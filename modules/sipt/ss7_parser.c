@@ -316,13 +316,14 @@ int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int cal
 		return 1;
 	}
 
-	if (len < sizeof(struct isup_acm_fixed))
+	// add minus 1 because the optinal pointer is optional
+	if (len < sizeof(struct isup_acm_fixed) -1 )
 		return -1;
 
 	bci = (charge_indicator & 0x3) | ((called_status & 0x3)<<2) |
 		((called_category & 0x3)<<4) | ((e2e_indicator & 0x3)<<6);
 
-	add_body_segment(mangle, offsetof(struct isup_acm_fixed, backwards_call_ind), &bci, 1);
+	replace_body_segment(mangle, offsetof(struct isup_acm_fixed, backwards_call_ind), 1, &bci, 1);
 
 	return sizeof(struct isup_acm_fixed);
 }
