@@ -41,7 +41,7 @@
 #include "kz_trans.h"
 #include "kz_pua.h"
 
-#define DBK_DEFAULT_NO_CONSUMERS 4
+#define DBK_DEFAULT_NO_CONSUMERS 8
 
 static int mod_init(void);
 static int  mod_child_init(int rank);
@@ -232,8 +232,10 @@ static int mod_init(void) {
    		return -1;
    	}
 
-    kz_amqp_init();
-
+    if(!kz_amqp_init()) {
+   		return -1;
+    }
+    
     if(dbk_pua_mode == 1) {
 		kz_db_url.len = kz_db_url.s ? strlen(kz_db_url.s) : 0;
 		LM_DBG("db_url=%s/%d/%p\n", ZSW(kz_db_url.s), kz_db_url.len,kz_db_url.s);
