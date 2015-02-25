@@ -76,6 +76,8 @@ void ucontact_xavp_store(ucontact_t *_c)
 }
 #endif
 
+int uldb_delete_attrs_ruid(str* _dname, str *_ruid);
+
 /*!
  * \brief Create a new contact structure
  * \param _dom domain
@@ -896,15 +898,12 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	}
 	/* delete old db attrs and add the current list */
 	if (ul_xavp_contact_name.s) {
+		uldb_delete_attrs_ruid(_c->domain, &_c->ruid);
 		if (use_domain) {
-			uldb_delete_attrs(_c->domain, &vals1[0].val.str_val,
-					  &vals1[n1-1].val.str_val, &_c->ruid);
 			uldb_insert_attrs(_c->domain, &vals1[0].val.str_val,
 					  &vals1[n1-1].val.str_val,
 					  &_c->ruid, _c->xavp);
 		} else {
-			uldb_delete_attrs(_c->domain, &vals1[0].val.str_val,
-					  NULL, &_c->ruid);
 			uldb_insert_attrs(_c->domain, &vals1[0].val.str_val,
 					  NULL, &_c->ruid, _c->xavp);
 		}
@@ -1081,8 +1080,9 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 
 	/* delete old db attrs and add the current list */
 	if (ul_xavp_contact_name.s) {
-	        auser = *_c->aor;
-	        if (use_domain) {
+		uldb_delete_attrs_ruid(_c->domain, &_c->ruid);
+		auser = *_c->aor;
+		if (use_domain) {
 			adomain.s = memchr(_c->aor->s, '@', _c->aor->len);
 			if (adomain.s==0) {
 				auser.len = 0;
@@ -1093,14 +1093,9 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 				adomain.len = _c->aor->s +
 					_c->aor->len - adomain.s;
 			}
-
-			uldb_delete_attrs(_c->domain, &auser,
-					  &adomain, &_c->ruid);
 			uldb_insert_attrs(_c->domain, &auser,
 					  &adomain, &_c->ruid, _c->xavp);
 		} else {
-			uldb_delete_attrs(_c->domain, &auser,
-					  NULL, &_c->ruid);
 			uldb_insert_attrs(_c->domain, &auser,
 					  NULL, &_c->ruid, _c->xavp);
 		}
@@ -1299,14 +1294,11 @@ int db_update_ucontact_instance(ucontact_t* _c)
 
 	/* delete old db attrs and add the current list */
 	if (ul_xavp_contact_name.s) {
+		uldb_delete_attrs_ruid(_c->domain, &_c->ruid);
 	    if (use_domain) {
-			uldb_delete_attrs(_c->domain, &auser,
-					  &adomain, &_c->ruid);
 			uldb_insert_attrs(_c->domain, &auser,
 					  &adomain, &_c->ruid, _c->xavp);
 		} else {
-			uldb_delete_attrs(_c->domain, &auser,
-					  NULL, &_c->ruid);
 			uldb_insert_attrs(_c->domain, &auser,
 					  NULL, &_c->ruid, _c->xavp);
 		}
@@ -1389,27 +1381,7 @@ int db_delete_ucontact_addr(ucontact_t* _c)
 			return -1;
 	}
 
-	if (use_domain) {
-	    keys[n] = &domain_col;
-	    vals[n].type = DB1_STR;
-	    vals[n].nul = 0;
-	    dom = memchr(_c->aor->s, '@', _c->aor->len);
-	    if (dom==0) {
-		vals[0].val.str_val.len = 0;
-		vals[n].val.str_val = *_c->aor;
-	    } else {
-		vals[0].val.str_val.len = dom - _c->aor->s;
-		vals[n].val.str_val.s = dom + 1;
-		vals[n].val.str_val.len = _c->aor->s +
-		    _c->aor->len - dom - 1;
-	    }
-	    uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
-			      &vals[n].val.str_val, &_c->ruid);
-	    n++;
-	} else {
-	    uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
-			      NULL, &_c->ruid);
-	}
+	uldb_delete_attrs_ruid(_c->domain, &_c->ruid);
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -1450,6 +1422,8 @@ int db_delete_ucontact_ruid(ucontact_t* _c)
 	vals[n].nul = 0;
 	vals[n].val.str_val = _c->ruid;
 	n++;
+
+	uldb_delete_attrs_ruid(_c->domain, &_c->ruid);
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -1606,10 +1580,22 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
  */
 int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid)
 {
+	return uldb_delete_attrs_ruid(_dname, _ruid);
+}
+
+/*!
+ * \brief Delete all location attributes from a udomain by ruid
+ *
+ * \param _dname loaded domain name
+ * \param _ruid usrloc record unique id
+ * \return 0 on success, -1 on failure
+ */
+int uldb_delete_attrs_ruid(str* _dname, str *_ruid)
+{
 	char tname_buf[64];
 	str tname;
-	db_key_t keys[3];
-	db_val_t vals[3];
+	db_key_t keys[1];
+	db_val_t vals[1];
 
 	LM_DBG("trying to delete location attributes\n");
 
@@ -1628,30 +1614,18 @@ int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid)
 	tname.s = tname_buf;
 	tname.len = _dname->len + 6;
 
-	keys[0] = &ulattrs_user_col;
-	keys[1] = &ulattrs_ruid_col;
-	keys[2] = &ulattrs_domain_col;
+	keys[0] = &ulattrs_ruid_col;
 
 	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
-	vals[0].val.str_val = *_user;
-
-	vals[1].type = DB1_STR;
-	vals[1].nul = 0;
-	vals[1].val.str_val = *_ruid;
-
-	if (use_domain) {
-		vals[2].type = DB1_STR;
-		vals[2].nul = 0;
-		vals[2].val.str_val = *_domain;
-	}
+	vals[0].val.str_val = *_ruid;
 
 	if (ul_dbf.use_table(ul_dbh, &tname) < 0) {
 		LM_ERR("sql use_table failed\n");
 		return -1;
 	}
 
-	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (3) : (2)) < 0) {
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, 1) < 0) {
 		LM_ERR("deleting from database failed\n");
 		return -1;
 	}
