@@ -1,9 +1,7 @@
 /*
-
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of sip-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,16 +14,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * History:
- * --------
- *  2003-03-12  split shm_mem_init in shm_getmem & shm_mem_init_mallocs
- *               (andrei)
- *  2004-07-27  ANON mmap support, needed on darwin (andrei)
- *  2004-09-19  shm_mem_destroy: destroy first the lock & then unmap (andrei)
- *  2007-06-10   support for sfm_malloc & shm_malloc_destroy() (andrei)
  */
 
 /**

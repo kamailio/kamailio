@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of sip-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,30 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * History:
- * --------
- *              created by andrei
- *  2003-07-06  added fm_realloc (andrei)
- *  2004-07-19  fragments book keeping code and support for 64 bits
- *               memory blocks (64 bits machine & size >=2^32) 
- *              GET_HASH s/</<=/ (avoids waste of 1 hash cell)   (andrei)
- *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
- *  2005-03-02  added fm_info() (andrei)
- *  2005-12-12  fixed realloc shrink real_used accounting (andrei)
- *              fixed initial size (andrei)
- *  2006-02-03  fixed realloc out of mem. free bug (andrei)
- *  2006-04-07  s/DBG/MDBG (andrei)
- *  2007-02-23  added fm_available() (andrei)
- *  2007-06-23  added hash bitmap (andrei)
- *  2009-09-28  added fm_sums() (patch from Dragos Vingarzan)
- *  2010-03-11  fix big fragments bug (smaller fragment was wrongly
- *               returned sometimes) (andrei)
- *  2010-03-12  fix real_used stats for realloc: a realloc that shrank an
- *               allocation accounted twice fro the frag. overhead (andrei)
- *  2010-09-30  fixed search for big fragments using the hash bitmap
- *               (only the first bucket was tried) (andrei)
- */
 
 /**
  * \file

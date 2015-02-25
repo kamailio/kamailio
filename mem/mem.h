@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of sip-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,16 +14,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * History:
- * --------
- *  2003-03-10  __FUNCTION__ is a gcc-ism, defined it to "" for sun cc
- *               (andrei)
- *  2003-03-07  split init_malloc into init_pkg_mallocs & init_shm_mallocs 
- *               (andrei)
- *  2007-02-23   added pkg_info() and pkg_available() (andrei)
  */
 
 /**
