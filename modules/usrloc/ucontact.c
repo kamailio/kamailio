@@ -76,6 +76,8 @@ void ucontact_xavp_store(ucontact_t *_c)
 }
 #endif
 
+int uldb_delete_attrs_ruid(str* _dname, str *_ruid);
+
 /*!
  * \brief Create a new contact structure
  * \param _dom domain
@@ -1451,6 +1453,8 @@ int db_delete_ucontact_ruid(ucontact_t* _c)
 	vals[n].val.str_val = _c->ruid;
 	n++;
 
+	uldb_delete_attrs_ruid(_c->domain, &_c->ruid);
+
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
 		return -1;
@@ -1611,6 +1615,9 @@ int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid)
 	db_key_t keys[3];
 	db_val_t vals[3];
 
+	if(ul_db_ops_ruid==1)
+		return uldb_delete_attrs_ruid(_dname, _ruid);
+
 	LM_DBG("trying to delete location attributes\n");
 
 	if(ul_xavp_contact_name.s==NULL) {
@@ -1652,6 +1659,56 @@ int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid)
 	}
 
 	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (3) : (2)) < 0) {
+		LM_ERR("deleting from database failed\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*!
+ * \brief Delete all location attributes from a udomain by ruid
+ *
+ * \param _dname loaded domain name
+ * \param _ruid usrloc record unique id
+ * \return 0 on success, -1 on failure
+ */
+int uldb_delete_attrs_ruid(str* _dname, str *_ruid)
+{
+	char tname_buf[64];
+	str tname;
+	db_key_t keys[1];
+	db_val_t vals[1];
+
+	LM_DBG("trying to delete location attributes\n");
+
+	if(ul_xavp_contact_name.s==NULL) {
+		/* feature disabled by mod param */
+		return 0;
+	}
+
+	if(_dname->len+6>=64) {
+		LM_ERR("attributes table name is too big\n");
+		return -1;
+	}
+	strncpy(tname_buf, _dname->s, _dname->len);
+	tname_buf[_dname->len] = '\0';
+	strcat(tname_buf, "_attrs");
+	tname.s = tname_buf;
+	tname.len = _dname->len + 6;
+
+	keys[0] = &ulattrs_ruid_col;
+
+	vals[0].type = DB1_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val = *_ruid;
+
+	if (ul_dbf.use_table(ul_dbh, &tname) < 0) {
+		LM_ERR("sql use_table failed\n");
+		return -1;
+	}
+
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, 1) < 0) {
 		LM_ERR("deleting from database failed\n");
 		return -1;
 	}
