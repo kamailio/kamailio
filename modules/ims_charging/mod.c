@@ -12,7 +12,6 @@
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/mod_export.h"
 #include "../../parser/parse_to.h"
-#include "stats.h"
 #include "ro_timer.h"
 #include "ro_session_hash.h"
 #include "ims_ro.h"
@@ -21,6 +20,7 @@
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "../../lib/ims/ims_getters.h"
 #include "ro_db_handler.h"
+#include "ims_charging_stats.h"
 
 MODULE_VERSION
 
@@ -75,17 +75,6 @@ int cdp_event_threshold = 500; /*time in ms above which we should report slow pr
 int cdp_event_latency_loglevel = 0; /*log-level to use to report slow processing of CDP callback event - default ERROR*/
 int single_ro_session_per_dialog = 0; /*whether to to have 1 ro_session per dialog or let user decide from config - default is an ro session every time Ro_CCR called from config file*/
 
-stat_var *initial_ccrs;
-stat_var *interim_ccrs;
-stat_var *final_ccrs;
-stat_var *successful_initial_ccrs;
-stat_var *successful_interim_ccrs;
-stat_var *successful_final_ccrs;
-stat_var *ccr_responses_time;
-stat_var *billed_secs;
-stat_var *killed_calls;
-stat_var *ccr_timeouts;
-
 /** module functions */
 static int mod_init(void);
 static int mod_child_init(int);
@@ -133,29 +122,11 @@ static param_export_t params[] = {
 		{ 0, 0, 0 }
 };
 
-stat_export_t charging_stats[] = {
-    {"initial_ccrs", STAT_NO_RESET, &initial_ccrs},
-    {"interim_ccrs", STAT_NO_RESET, &interim_ccrs},
-    {"final_ccrs", STAT_NO_RESET, &final_ccrs},
-    {"successful_initial_ccrs", STAT_NO_RESET, &successful_initial_ccrs},
-    {"successful_interim_ccr", STAT_NO_RESET, &successful_interim_ccrs},
-    {"successful_final_ccrs", STAT_NO_RESET, &successful_final_ccrs},
-    {"failed_initial_ccrs", STAT_IS_FUNC, (stat_var**) get_failed_initial_ccrs},
-    {"failed_interim_ccr", STAT_IS_FUNC, (stat_var**) get_failed_interim_ccrs},
-    {"failed_final_ccrs", STAT_IS_FUNC, (stat_var**) get_failed_final_ccrs},
-    {"ccr_avg_response_time", STAT_IS_FUNC, (stat_var**) get_ccr_avg_response_time},
-    {"ccr_responses_time", STAT_NO_RESET, &ccr_responses_time},
-    {"billed_secs", STAT_NO_RESET, &billed_secs},
-    {"killed_calls", STAT_NO_RESET, &killed_calls},
-    {"ccr_timeouts", 0, &ccr_timeouts},
-    {0, 0, 0}
-};
-
 /** module exports */
 struct module_exports exports = { MOD_NAME, DEFAULT_DLFLAGS, /* dlopen flags */
 		cmds, 		/* Exported functions */
 		params, 	/* Exported params */
-		charging_stats,	/* exported statistics */
+		0,		/* exported statistics */
 		0, 			/* exported MI functions */
 		0, 			/* exported pseudo-variables */
 		0, 			/* extra processes */
@@ -280,16 +251,10 @@ static int mod_init(void) {
 	    return -1;
 	}
 	
-	 /* register statistics */
-	if (register_module_stats(exports.name, charging_stats) != 0) {
-		LM_ERR("failed to register core statistics\n");
-		return -1;
+	if (ims_charging_init_counters() != 0) {
+	    LM_ERR("Failed to register counters for ims_charging module\n");
+	    return -1;
 	}
-
-	/*if (register_stat(MOD_NAME, "ccr_responses_time", &ccr_responses_time, 0)) {
-		LM_ERR("failed to register core statistics\n");
-		return -1;
-	}*/
 	
 	/* if a database should be used to store the dialogs' information */
 	ro_db_mode = ro_db_mode_param;

@@ -14,14 +14,16 @@
 #include "ro_timer.h"
 #include "ro_session_hash.h"
 #include "ims_ro.h"
-#include "stats.h"
 #include "ro_db_handler.h"
 #include "mod.h"
+#include "ims_charging_stats.h"
+#include "../../counters.h"
 
 extern int interim_request_credits;
 extern int ro_timer_buffer;
 extern int ro_db_mode;
 extern struct dlg_binds dlgb;
+extern struct ims_charging_counters_h ims_charging_cnts_h;
 
 /*! global dialog timer */
 struct ro_timer *roi_timer = 0;
@@ -383,7 +385,6 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 	LM_DBG("We have a fired timer [p=%p] and tl=[%i].\n", tl, tl->timeout);
 
 	/* find the session id for this timer*/
-	struct ro_session_entry *ro_session_entry = NULL;
 	struct ro_session* ro_session = ((struct ro_session*) ((char *) (tl) - (unsigned long) (&((struct ro_session*) 0)->ro_tl)));
 
 	if (!ro_session) {
@@ -391,8 +392,6 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 		return;
 	}
 
-	ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
-	
 	LM_DBG("event-type=%d", ro_session->event_type);
 	
 //	if (!ro_session->active) {
@@ -407,7 +406,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 		used_secs = now - ro_session->last_event_timestamp;
 		call_time = now - ro_session->start_time;
 
-		update_stat(billed_secs, used_secs);
+		counter_add(ims_charging_cnts_h.billed_secs, used_secs);
 
 		if (ro_session->callid.s != NULL
 				&& ro_session->dlg_h_entry	>= 0
@@ -463,7 +462,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 	}
 
 
-	update_stat(killed_calls, 1);
+	counter_inc(ims_charging_cnts_h.killed_calls);
 
 	//unref_ro_session_unsafe(ro_session, 1, ro_session_entry); //unref from the initial timer that fired this event.
 //	ro_session_unlock(ro_session_table, ro_session_entry);
