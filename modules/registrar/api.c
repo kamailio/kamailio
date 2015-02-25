@@ -103,7 +103,7 @@ int regapi_registered(struct sip_msg *msg, char *table)
 		LM_ERR("usrloc domain [%s] not found\n", table);
 		return -1;
 	}
-	return registered(msg, d, NULL);
+	return registered(msg, d, NULL, 0);
 }
 
 /**

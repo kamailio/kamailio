@@ -35,9 +35,14 @@
 #include "../../action.h"
 #include "../../lib/kcore/faked_msg.h"
 #include "../usrloc/usrloc.h"
+#include "../../pvapi.h"
+#include "../../xavp.h"
 #include "reg_mod.h"
 #include "common.h"
 #include "regpv.h"
+
+#define REGPV_FIELD_DELIM ", "
+#define REGPV_FIELD_DELIM_LEN (sizeof(REGPV_FIELD_DELIM) - 1)
 
 typedef struct _regpv_profile {
 	str pname;
@@ -53,6 +58,7 @@ typedef struct _regpv_profile {
 typedef struct _regpv_name {
 	regpv_profile_t *rp;
 	int attr;
+	pv_xavp_name_t* xname;
 } regpv_name_t;
 
 static regpv_profile_t *_regpv_profile_list = NULL;
@@ -110,6 +116,9 @@ static void regpv_free_profile(regpv_profile_t *rpp)
 	ptr = rpp->contacts;
 	while(ptr)
 	{
+		if(ptr->xavp) {
+			xavp_destroy_list(&ptr->xavp);
+		}
 		ptr0 = ptr;
 		ptr = ptr->next;
 		pkg_free(ptr0);
@@ -150,6 +159,285 @@ void regpv_free_profiles(void)
 	}
 	_regpv_profile_list = 0;
 }
+
+char* regpv_xavp_fill_ni(str *in, pv_xavp_name_t *xname)
+{
+	char *p;
+	str idx;
+	int n;
+
+	if(in->s==NULL || in->len<=0 || xname==NULL)
+		return NULL;
+	p = in->s;
+
+	/* eat ws */
+	while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	if(p>in->s+in->len || *p=='\0')
+		goto error;
+	xname->name.s = p;
+	while(p < in->s + in->len)
+	{
+		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r' || *p=='[')
+			break;
+		p++;
+	}
+	xname->name.len = p - xname->name.s;
+	if(p>in->s+in->len || *p=='\0')
+		return p;
+	/* eat ws */
+	while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	if(p>in->s+in->len || *p=='\0')
+		return p;
+
+	if(*p!='[')
+		return p;
+	/* there is index */
+	p++;
+	idx.s = p;
+	n = 0;
+	while(p<in->s+in->len && *p!='\0')
+	{
+		if(*p==']')
+		{
+			if(n==0)
+				break;
+			n--;
+		}
+		if(*p == '[')
+			n++;
+		p++;
+	}
+	if(p>in->s+in->len || *p=='\0')
+		goto error;
+
+	if(p==idx.s)
+	{
+		LM_ERR("xavp [\"%.*s\"] does not get empty index param\n",
+				in->len, in->s);
+		goto error;
+	}
+	idx.len = p - idx.s;
+	if(pv_parse_index(&xname->index, &idx)!=0)
+	{
+		LM_ERR("idx \"%.*s\" has an invalid index param [%.*s]\n",
+					in->len, in->s, idx.len, idx.s);
+		goto error;
+	}
+	xname->index.type = PVT_EXTRA;
+	p++;
+	return p;
+error:
+	return NULL;
+}
+
+int regpv_parse_xavp_name(pv_spec_p sp, str *in)
+{
+	pv_xavp_name_t *xname=NULL;
+	char *p;
+	str s;
+
+	if(in->s==NULL || in->len<=0)
+		return -1;
+
+	xname = (pv_xavp_name_t*)shm_malloc(sizeof(pv_xavp_name_t));
+	if(xname==NULL)
+		return -1;
+
+	memset(xname, 0, sizeof(pv_xavp_name_t));
+
+	s = *in;
+
+	p = regpv_xavp_fill_ni(&s, xname);
+	if(p==NULL) {
+		goto error;
+	}
+
+	if(*p!='=') {
+		goto done;
+	}
+	p++;
+	if(*p!='>') {
+		goto error;
+	}
+	p++;
+
+	s.len = in->len - (int)(p - in->s);
+	s.s = p;
+	LM_INFO("xavp sublist [%.*s] - key [%.*s]\n", xname->name.len,
+			xname->name.s, s.len, s.s);
+
+	xname->next = (pv_xavp_name_t*)pkg_malloc(sizeof(pv_xavp_name_t));
+	if(xname->next==NULL) {
+		goto error;
+	}
+
+	memset(xname->next, 0, sizeof(pv_xavp_name_t));
+
+	p = regpv_xavp_fill_ni(&s, xname->next);
+	if(p==NULL) {
+		goto error;
+	}
+
+done:
+	sp->pvp.pvn.u.dname = (void*)xname;
+	sp->pvp.pvn.type = PV_NAME_PVAR;
+	return 0;
+
+error:
+	if(xname!=NULL) {
+		pkg_free(xname);
+	}
+	return -1;
+}
+
+int regpv_xavp_get_value(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, sr_xavp_t *avp)
+{
+	static char _pv_xavp_buf[128];
+	str s;
+
+	switch(avp->val.type) {
+		case SR_XTYPE_NULL:
+			return pv_get_null(msg, param, res);
+		break;
+		case SR_XTYPE_INT:
+			return pv_get_sintval(msg, param, res, avp->val.v.i);
+		break;
+		case SR_XTYPE_STR:
+			return pv_get_strval(msg, param, res, &avp->val.v.s);
+		break;
+		case SR_XTYPE_TIME:
+			if(snprintf(_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t)<0)
+				return pv_get_null(msg, param, res);
+		break;
+		case SR_XTYPE_LONG:
+			if(snprintf(_pv_xavp_buf, 128, "%ld", (long unsigned)avp->val.v.l)<0)
+				return pv_get_null(msg, param, res);
+		break;
+		case SR_XTYPE_LLONG:
+			if(snprintf(_pv_xavp_buf, 128, "%lld", avp->val.v.ll)<0)
+				return pv_get_null(msg, param, res);
+		break;
+		case SR_XTYPE_XAVP:
+			if(snprintf(_pv_xavp_buf, 128, "<<xavp:%p>>", avp->val.v.xavp)<0)
+				return pv_get_null(msg, param, res);
+		break;
+		case SR_XTYPE_DATA:
+			if(snprintf(_pv_xavp_buf, 128, "<<data:%p>>", avp->val.v.data)<0)
+				return pv_get_null(msg, param, res);
+		break;
+		default:
+			return pv_get_null(msg, param, res);
+	}
+	s.s = _pv_xavp_buf;
+	s.len = strlen(_pv_xavp_buf);
+	return pv_get_strval(msg, param, res, &s);
+}
+
+int regpv_get_xavp_from_start(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, sr_xavp_t **start)
+{
+	pv_xavp_name_t *xname=NULL;
+	sr_xavp_t *avp=NULL;
+	int idxf = 0;
+	int idx = 0;
+	int count;
+	char *p, *p_ini;
+	int p_size;
+
+	if(param==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	xname = ((regpv_name_t*)param->pvn.u.dname)->xname;
+
+	if(xname->index.type==PVT_EXTRA)
+	{
+		/* get the index */
+		if(pv_get_spec_index(msg, &xname->index.pvp, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+	}
+	/* fix the index */
+	if(idx<0)
+	{
+		count = xavp_count(&xname->name, start);
+		idx = count + idx;
+	}
+	avp = xavp_get_by_index(&xname->name, idx, start);
+	if(avp==NULL) {
+		LM_DBG("GET XAVP AVP = NULL\n");
+		return pv_get_null(msg, param, res);
+	}
+	if(xname->next==NULL) {
+		LM_DBG("GET XAVP XNAME NEXT = NULL\n");
+		return regpv_xavp_get_value(msg, param, res, avp);
+	}
+
+	idx = 0;
+	idxf = 0;
+	if(xname->next->index.type==PVT_EXTRA)
+	{
+		/* get the index */
+		if(pv_get_spec_index(msg, &xname->next->index.pvp, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+	}
+	/* fix the index */
+	if(idx<0)
+	{
+		count = xavp_count(&xname->next->name, &avp->val.v.xavp);
+		idx = count + idx;
+	}
+	avp = xavp_get_by_index(&xname->next->name, idx, &avp->val.v.xavp);
+	if(avp==NULL) {
+		LM_DBG("GET XAVP AVP BY INDEX = NULL\n");
+		return pv_get_null(msg, param, res);
+	}
+	/* get all values of second key */
+	if(idxf==PV_IDX_ALL)
+	{
+		p_ini = pv_get_buffer();
+		p = p_ini;
+		p_size = pv_get_buffer_size();
+		do {
+			if(p!=p_ini)
+			{
+				if(p-p_ini+REGPV_FIELD_DELIM_LEN+1>p_size)
+				{
+					LM_ERR("local buffer length exceeded\n");
+					return pv_get_null(msg, param, res);
+				}
+				memcpy(p, REGPV_FIELD_DELIM, REGPV_FIELD_DELIM_LEN);
+				p += REGPV_FIELD_DELIM_LEN;
+			}
+			if(regpv_xavp_get_value(msg, param, res, avp)<0)
+			{
+				LM_ERR("can get value\n");
+				return pv_get_null(msg, param, res);
+			}
+			if(p-p_ini+res->rs.len+1>p_size)
+			{
+				LM_ERR("local buffer length exceeded!\n");
+				return pv_get_null(msg, param, res);
+			}
+			memcpy(p, res->rs.s, res->rs.len);
+			p += res->rs.len;
+		} while ((avp=xavp_get_next(avp))!=0);
+		res->rs.s = p_ini;
+		res->rs.len = p - p_ini;
+		return 0;
+	}
+	return regpv_xavp_get_value(msg, param, res, avp);
+}
+
 
 int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
@@ -192,7 +480,7 @@ int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 	/* get contact */
 	i = 0;
 	c = rpp->contacts;
-	while(rpp)
+	while(c)
 	{
 		if(i == idx)
 			break;
@@ -269,6 +557,10 @@ int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 			if(c->instance.len>0)
 				return  pv_get_strval(msg, param, res, &c->instance);
 		break;
+		case 21: /* xavp */
+			if(c->xavp)
+				return regpv_get_xavp_from_start(msg, param, res, &c->xavp);
+		break;
 	}
 
 	return pv_get_null(msg, param, res);
@@ -332,6 +624,15 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 	}
 	memset(rp, 0, sizeof(regpv_name_t));
 	rp->rp = rpp;
+
+	if(strstr(pa.s, "=>")) {
+		regpv_parse_xavp_name(sp, &pa);
+		pv_xavp_name_t* xname = (pv_xavp_name_t*)sp->pvp.pvn.u.dname;
+		LM_DBG("ulc parse xavp name [%.*s] \n", xname->name.len, xname->name.s);
+		rp->xname = xname;
+		rp->attr = 21;
+		goto done;
+	}
 
 	switch(pa.len)
 	{
@@ -402,6 +703,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 		default:
 			goto error;
 	}
+done:
 	sp->pvp.pvn.u.dname = (void*)rp;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
 
@@ -538,7 +840,10 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 			c0->instance.len = ptr->instance.len;
 			p += c0->instance.len;
 		}
-
+		if(ptr->xavp != NULL && reg_match_flag_param == 1)
+		{
+			c0->xavp = xavp_clone_level_nodata(ptr->xavp);
+		}
 		if(ptr0==NULL)
 		{
 			rpp->contacts = c0;
@@ -679,6 +984,10 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 		c0->instance.len = ptr->instance.len;
 		p += c0->instance.len;
 	}
+	if(ptr->xavp != NULL && reg_match_flag_param == 1)
+	{
+		c0->xavp = xavp_clone_level_nodata(ptr->xavp);
+	}		
 
 	rpp->contacts = c0;
 	rpp->nrc = 1;
