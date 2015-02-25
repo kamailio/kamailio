@@ -74,8 +74,12 @@ extern float def_q;
 
 extern unsigned short rcv_avp_type;
 extern int_str rcv_avp_name;
-extern unsigned short reg_callid_avp_type;
-extern int_str reg_callid_avp_name;
+
+extern int reg_match_flag_param;
+extern str match_callid_name;
+extern str match_received_name;
+extern str match_contact_name;
+
 
 extern str rcv_param;
 extern int method_filtering;
