@@ -896,6 +896,27 @@ modparam("usrloc", "handle_lost_tcp", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.close_expired_tcp">
+		<title><varname>close_expired_tcp</varname> (int)</title>
+		<para>
+            If set to 1, Kamailio will close the TCP connection when a contact
+            has expired, if the corresponding transport is TCP/TLS/WS/WSS.
+        </para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>close_expired_tcp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "close_expired_tcp", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.expires_type">
 		<title><varname>expires_type</varname> (int)</title>
 		<para>

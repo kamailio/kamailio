@@ -34,6 +34,7 @@
 #include "../../ut.h"
 #include "../../hashes.h"
 #include "../../tcp_conn.h"
+#include "../../pass_fd.h"
 #include "ul_mod.h"
 #include "usrloc.h"
 #include "utime.h"
@@ -237,6 +238,31 @@ static inline int is_tcp_alive(ucontact_t *c)
 }
 
 /*!
+ * \brief Close a TCP connection
+ *
+ * Requests the TCP main process to close the specified TCP connection
+ * \param conid the internal connection ID
+ */
+static inline int close_connection(int conid) {
+	struct tcp_connection *con;
+	long msg[2];
+	int n;
+	if ((con = tcpconn_get(conid, 0, 0, 0, 0))) {
+		msg[0] = (long)con;
+		msg[1] = CONN_EOF;
+
+		n = send_all(unix_tcp_sock, msg, sizeof(msg));
+		tcpconn_put(con);
+		if (unlikely(n <= 0)){
+			LM_ERR("failed to send close request: %s (%d)\n", strerror(errno), errno);
+			return 0;
+		}
+		return 1;
+	}
+	return 0;
+}
+
+/*!
  * \brief Expires timer for NO_DB db_mode
  *
  * Expires timer for NO_DB db_mode, process all contacts from
@@ -246,6 +272,7 @@ static inline int is_tcp_alive(ucontact_t *c)
 static inline void nodb_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
+
 
 	ptr = _r->contacts;
 
@@ -263,6 +290,10 @@ static inline void nodb_timer(urecord_t* _r)
 			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
+
+			if (close_expired_tcp && is_valid_tcpconn(ptr)) {
+				close_connection(ptr->tcpconn_id);
+			}
 
 			t = ptr;
 			ptr = ptr->next;
@@ -300,6 +331,10 @@ static inline void wt_timer(urecord_t* _r)
 			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
+
+			if (close_expired_tcp && is_valid_tcpconn(ptr)) {
+				close_connection(ptr->tcpconn_id);
+			}
 
 			t = ptr;
 			ptr = ptr->next;
@@ -349,6 +384,10 @@ static inline void wb_timer(urecord_t* _r)
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
 			update_stat( _r->slot->d->expires, 1);
+
+			if (close_expired_tcp && is_valid_tcpconn(ptr)) {
+				close_connection(ptr->tcpconn_id);
+			}
 
 			t = ptr;
 			ptr = ptr->next;
