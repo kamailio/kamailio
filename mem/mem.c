@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of sip-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,10 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *
- * History:
- * --------
- *  2003-04-08  init_mallocs split into init_{pkg,shm}_malloc (andrei)
- * 
  */
 
 /**

@@ -1,7 +1,8 @@
-/* $Id$
- *
+/*
  * shared memory, multi-process safe, pool based, mostly lockless version of 
  *  f_malloc
+ *
+ * This file is part of Kamailio, a free SIP server.
  *
  * Copyright (C) 2007 iptelorg GmbH
  *
@@ -17,25 +18,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * History:
- * --------
- *              created by andrei
- *  2003-07-06  added fm_realloc (andrei)
- *  2004-07-19  fragments book keeping code and support for 64 bits
- *               memory blocks (64 bits machine & size >=2^32) 
- *              GET_HASH s/</<=/ (avoids waste of 1 hash cell)   (andrei)
- *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
- *  2005-03-02  added fm_info() (andrei)
- *  2005-12-12  fixed realloc shrink real_used accounting (andrei)
- *              fixed initial size (andrei)
- *  2006-02-03  fixed realloc out of mem. free bug (andrei)
- *  2006-04-07  s/DBG/MDBG (andrei)
- *  2007-02-23  added fm_available() (andrei)
- *  2007-06-09  forked from the fm_maloc code (andrei)
- *  2007-06-11  forked from the sfm_maloc code (andrei)
- */
-
 
 #ifdef LL_MALLOC
 

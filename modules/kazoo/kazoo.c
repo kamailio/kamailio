@@ -70,6 +70,8 @@ struct timeval kz_sock_tv = (struct timeval){0,100000};
 struct timeval kz_amqp_tv = (struct timeval){0,100000};
 struct timeval kz_qtimeout_tv = (struct timeval){2,0};
 struct timeval kz_ack_tv = (struct timeval){0,100000};
+struct timeval kz_timer_tv = (struct timeval){0,200000};
+int kz_timer_ms = 200;
 
 
 str dbk_consumer_event_key = str_init("Event-Category");
@@ -148,6 +150,7 @@ static param_export_t params[] = {
   //  {"mwi_expires", INT_PARAM, &dbk_mwi_expires},
     {"amqp_connection", STR_PARAM|USE_FUNC_PARAM,(void*)kz_amqp_add_connection},
     {"amqp_max_channels", INT_PARAM, &dbk_channels},
+    {"amqp_timmer_process_interval", INT_PARAM, &kz_timer_ms},
     {"amqp_consumer_ack_timeout_micro", INT_PARAM, &kz_ack_tv.tv_usec},
     {"amqp_consumer_ack_timeout_sec", INT_PARAM, &kz_ack_tv.tv_sec},
     {"amqp_interprocess_timeout_micro", INT_PARAM, &kz_sock_tv.tv_usec},
@@ -234,6 +237,11 @@ static int mod_init(void) {
 
     if(!kz_amqp_init()) {
    		return -1;
+    }
+
+    if(kz_timer_ms > 0) {
+    	kz_timer_tv.tv_usec = (kz_timer_ms % 1000) * 1000;
+    	kz_timer_tv.tv_sec = kz_timer_ms / 1000;
     }
     
     if(dbk_pua_mode == 1) {

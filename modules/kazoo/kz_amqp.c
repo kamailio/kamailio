@@ -35,6 +35,7 @@ extern struct timeval kz_sock_tv;
 extern struct timeval kz_amqp_tv;
 extern struct timeval kz_qtimeout_tv;
 extern struct timeval kz_ack_tv;
+extern struct timeval kz_timer_tv;
 
 extern int dbk_internal_loop_count;
 extern int dbk_consumer_loop_count;
@@ -1909,6 +1910,7 @@ void kz_amqp_timeout_proc(int child_no)
 	int i;
     while(1) {
 		struct timeval now;
+		usleep(kz_timer_tv.tv_usec);
 		for(i=0; i < dbk_channels; i++) {
 			gettimeofday(&now, NULL);
 			if(channels[i].state == KZ_AMQP_CALLING
@@ -1972,7 +1974,7 @@ void kz_amqp_publisher_proc(int child_no)
     	while(OK) {
 			FD_ZERO(&fdset);
 			FD_SET(data_pipe, &fdset);
-			selret = select(FD_SETSIZE, &fdset, NULL, NULL, &kz_sock_tv);
+			selret = select(FD_SETSIZE, &fdset, NULL, NULL, NULL);
 			if (selret < 0) {
 				LM_ERR("select() failed: %s\n", strerror(errno));
 				continue;
