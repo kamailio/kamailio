@@ -273,6 +273,8 @@ cdp_avp			(Multiple_Registration_Indication,IMS_vendor_id_3GPP,0,							Enumerat
 cdp_avp_add_ptr	(Restoration_Info,				IMS_vendor_id_3GPP,0,							Grouped,		AAA_AVP_LIST*)	
 cdp_avp_get		(Restoration_Info,				IMS_vendor_id_3GPP,0,							Grouped,		AAA_AVP_LIST)	
 
+cdp_avp_ptr		(Access_Network_Information,            IMS_vendor_id_3GPP,	0,		UTF8String,		str)        
+
 
 /*
  * ETSI something, that probably does not exist anymore
