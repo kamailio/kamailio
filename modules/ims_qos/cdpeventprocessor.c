@@ -51,6 +51,7 @@
 #include "mod.h"
 #include "cdpeventprocessor.h"
 #include "rx_str.h"
+#include "ims_qos_stats.h"
 
 cdp_cb_event_list_t *cdp_event_list = 0;
 extern usrloc_api_t ul;
@@ -59,6 +60,8 @@ extern int cdp_event_latency;
 extern int cdp_event_threshold;
 extern int cdp_event_latency_loglevel;
 extern int cdp_event_list_size_threshold;
+
+extern struct ims_qos_counters_h ims_qos_cnts_h;
 
 int init_cdp_cb_event_list() {
     cdp_event_list = shm_malloc(sizeof (cdp_cb_event_list_t));
@@ -255,10 +258,12 @@ void cdp_cb_event_process() {
 			    ul.update_pcontact(domain, &ci, pcontact);
 			}
 			ul.unlock_udomain(domain, &p_session_data->registration_aor, &p_session_data->ip, p_session_data->recv_port);
+			counter_add(ims_qos_cnts_h.active_registration_rx_sessions, -1);
 		    }
                 } else {
                     LM_DBG("This is a media bearer session session");
-                    
+		    
+		    counter_add(ims_qos_cnts_h.active_media_rx_sessions, -1);
                     //we only terminate the dialog if this was triggered from the transport plane or timeout - i.e. if must_terminate_dialog is set
                     //if this was triggered from the signalling plane (i.e. someone hanging up) then we don'y need to terminate the dialog
                     if (p_session_data->must_terminate_dialog) {

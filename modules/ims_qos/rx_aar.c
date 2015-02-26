@@ -48,7 +48,6 @@
  *  2011-02-02  initial version (jason.penton)
  */
 
-#include "stats.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/sdp/sdp.h"
 #include "../cdp_avp/mod_export.h"
@@ -66,10 +65,15 @@
 #include "mod.h"
 
 #include "../../lib/ims/useful_defs.h"
+#include "ims_qos_stats.h"
+
+
 #define macro_name(_rc)	#_rc
 
 //extern struct tm_binds tmb;
 usrloc_api_t ul;
+
+extern struct ims_qos_counters_h ims_qos_cnts_h;
 
 extern int authorize_video_flow;
 
@@ -116,7 +120,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
 
     if (is_timeout != 0) {
         LM_ERR("Error timeout when sending AAR message via CDP\n");
-        update_stat(stat_aar_timeouts, 1);
+        counter_inc(ims_qos_cnts_h.media_aar_timeouts);
         goto error;
     }
     if (!aaa) {
@@ -124,8 +128,8 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
         goto error;
     }
 
-    update_stat(aar_replies_received, 1);
-    update_stat(aar_replies_response_time, elapsed_msecs);
+    counter_inc(ims_qos_cnts_h.media_aars);
+    counter_add(ims_qos_cnts_h.media_aar_response_time, elapsed_msecs);
 
     /* Process the response to AAR, retrieving result code and associated Rx session ID */
     if (rx_process_aaa(aaa, &cdp_result) < 0) {
@@ -135,11 +139,14 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
 
     if (cdp_result >= 2000 && cdp_result < 3000) {
         LM_DBG("Success, received code: [%i] from PCRF for AAR request\n", cdp_result);
+	counter_inc(ims_qos_cnts_h.successful_media_aars);
 	
 	LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len, aaa->sessionId->data.s);
 
 	if(!data->aar_update) {
 	    LM_DBG("This is an AAA response to an initial AAR");
+	    counter_inc(ims_qos_cnts_h.active_media_rx_sessions);
+	    
 	    str * passed_rx_session_id = shm_malloc(sizeof (struct _str));
 	    passed_rx_session_id->s = 0;
 	    passed_rx_session_id->len = 0;
@@ -151,6 +158,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
         result = CSCF_RETURN_TRUE;
     } else {
         LM_DBG("Received negative reply from PCRF for AAR Request\n");
+	counter_inc(ims_qos_cnts_h.failed_media_aars);
         //we don't free rx_authdata_p here - it is free-ed when the CDP session expires
         goto error; // if its not a success then that means i want to reject this call!
     }
@@ -223,7 +231,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 
     if (is_timeout != 0) {
         LM_ERR("Error timeout when sending AAR message via CDP\n");
-        update_stat(stat_aar_timeouts, 1);
+        counter_inc(ims_qos_cnts_h.registration_aar_timeouts);
         goto error;
     }
     if (!aaa) {
@@ -231,8 +239,8 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         goto error;
     }
 
-    update_stat(aar_replies_received, 1);
-    update_stat(aar_replies_response_time, elapsed_msecs);
+    counter_inc(ims_qos_cnts_h.registration_aars);
+    counter_add(ims_qos_cnts_h.registration_aar_response_time, elapsed_msecs);
 
     /* Process the response to AAR, retrieving result code and associated Rx session ID */
     if (rx_process_aaa(aaa, &cdp_result) < 0) {
@@ -241,7 +249,8 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
     }
 
     if (cdp_result >= 2000 && cdp_result < 3000) {
-        if (is_rereg) {
+        counter_inc(ims_qos_cnts_h.successful_registration_aars);
+	if (is_rereg) {
             LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the the subscription was successful\n");
             result = CSCF_RETURN_TRUE;
             create_return_code(result);
@@ -263,6 +272,8 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 	    goto error;
 	}
 	p_session_data->session_has_been_opened = 1;
+	counter_inc(ims_qos_cnts_h.active_registration_rx_sessions);
+	
 	if (auth) cdpb.AAASessionsUnlock(auth->hash);
 	
 	
@@ -300,6 +311,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         result = CSCF_RETURN_TRUE;
     } else {
         LM_DBG("Received negative reply from PCRF for AAR Request\n");
+	counter_inc(ims_qos_cnts_h.failed_registration_aars);
         result = CSCF_RETURN_FALSE;
         goto error;
     }
