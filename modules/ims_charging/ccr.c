@@ -108,6 +108,10 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
 	cdp_avp->cdp->AAAFreeAVPList(&aList);
         aList.head = aList.tail = 0;
     }
+    
+    if (x->access_network_info) {
+		cdp_avp->imsapp.add_Access_Network_Information(&aList2, *(x->access_network_info), 0);
+    }
 
     for (sl = x->called_asserted_identity.head; sl; sl = sl->next) {
         if (!cdp_avp->epcapp.add_Called_Asserted_Identity(&aList2, sl->data, 0))

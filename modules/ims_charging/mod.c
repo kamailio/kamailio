@@ -325,6 +325,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	int ret = RO_RETURN_TRUE;
 	int dir = 0;
 	str identity = {0, 0},
+	pani = {0,0},
 	contact = {0, 0};
 	struct hdr_field *h=0;
 	
@@ -393,6 +394,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 			goto send_ccr;
 		}
 		
+		pani = cscf_get_access_network_info(msg, &h);
 	} else if (dir == RO_TERM_DIRECTION){
 		//get callee IMPU from called part id - if not present then skip this
 		if ((identity = cscf_get_public_identity_from_called_party_id(msg, &h)).len == 0) {
@@ -503,7 +505,7 @@ send_ccr:
 		goto done;
 	}
 	
-	ret = Ro_Send_CCR(msg, dlg, dir, reservation_units, &s_incoming_trunk_id, &s_outgoing_trunk_id, cfg_action, tindex, tlabel);
+	ret = Ro_Send_CCR(msg, dlg, dir, reservation_units, &s_incoming_trunk_id, &s_outgoing_trunk_id, &pani, cfg_action, tindex, tlabel);
 	
 	if(ret < 0){
 	    LM_ERR("Failed to send CCR\n");

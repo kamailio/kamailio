@@ -20,6 +20,8 @@
 #define RO_SESSION_FLAG_CHANGED      (1<<2) /*!< ro session has been updated */
 #define RO_SESSION_FLAG_DELETED      (1<<3) /*!< ro session has been deleted */
 
+#define MAX_PANI_LEN 100
+
 enum ro_session_event_type {
     pending,
     answered,
@@ -50,6 +52,7 @@ struct ro_session {
     str called_asserted_identity;
     str incoming_trunk_id;
     str outgoing_trunk_id;
+    char pani[MAX_PANI_LEN];
     unsigned int hop_by_hop;
     struct ro_tl ro_tl;
     unsigned int reserved_secs;
@@ -191,7 +194,7 @@ void remove_aaa_session(str *session_id);
 
 struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity, 
 	str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
-	int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id);
+	int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani);
 
 /*!
  * \brief Refefence a ro_session with locking

@@ -271,7 +271,8 @@ typedef struct {
     str_list_t calling_party_address;
     str *called_party_address;
     str_list_t called_asserted_identity;
-    str * requested_party_address;
+    str *requested_party_address;
+    str *access_network_info;
 
     time_stamps_t *time_stamps;
 
@@ -398,7 +399,8 @@ ims_information_t * new_ims_information(event_type_t * event_type,
         str * term_ioi,
         int node_role,
 	str *incoming_trunk_id,
-	str *outgoing_trunk_id);
+	str *outgoing_trunk_id,
+        str *pani);
 
 void event_type_free(event_type_t *x);
 void time_stamps_free(time_stamps_t *x);
