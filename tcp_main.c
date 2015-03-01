@@ -3770,17 +3770,17 @@ inline static int send2child(struct tcp_connection* tcpconn)
 		if(tcpconn->rcv.bind_address->workers>0) {
 			wfirst = tcpconn->rcv.bind_address->workers_tcpidx;
 			wlast = wfirst + tcpconn->rcv.bind_address->workers;
-			LM_DBG("===== checking per-socket specific workers (%d/%d..%d/%d) [%s]\n",
+			LM_DBG("checking per-socket specific workers (%d/%d..%d/%d) [%s]\n",
 					tcp_children[wfirst].pid, tcp_children[wfirst].proc_no,
 					tcp_children[wlast-1].pid, tcp_children[wlast-1].proc_no,
-					tcpconn->rcv.bind_address->sock_str.s);
+					(tcpconn->rcv.bind_address)?tcpconn->rcv.bind_address->sock_str.s:"");
 		} else {
 			wfirst = 0;
 			wlast = tcp_sockets_gworkers - 1;
-			LM_DBG("+++++ checking per-socket generic workers (%d/%d..%d/%d) [%s]\n",
+			LM_DBG("checking per-socket generic workers (%d/%d..%d/%d) [%s]\n",
 					tcp_children[wfirst].pid, tcp_children[wfirst].proc_no,
 					tcp_children[wlast-1].pid, tcp_children[wlast-1].proc_no,
-					tcpconn->rcv.bind_address->sock_str.s);
+					(tcpconn->rcv.bind_address)?tcpconn->rcv.bind_address->sock_str.s:"");
 		}
 		idx = wfirst;
 		min_busy = tcp_children[idx].busy;
@@ -3807,7 +3807,8 @@ inline static int send2child(struct tcp_connection* tcpconn)
 	}
 	LM_DBG("selected tcp worker %d %d(%ld) for activity on [%s], %p\n",
 			idx, tcp_children[idx].proc_no, (long)tcp_children[idx].pid,
-			tcpconn->rcv.bind_address->sock_str.s, tcpconn);
+			(tcpconn->rcv.bind_address)?tcpconn->rcv.bind_address->sock_str.s:"",
+			tcpconn);
 	/* first make sure this child doesn't have pending request for
 	 * tcp_main (to avoid a possible deadlock: e.g. child wants to
 	 * send a release command, but the master fills its socket buffer
