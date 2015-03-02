@@ -74,11 +74,12 @@ Chapter 1. Admin Guide
 request_route {
         if (is_method("INVITE")) {
                 $avp(caller_conid) = $conid;
+                t_on_reply("foo");
         }
         ...
 }
 
-onreply_route {
+onreply_route[foo] {
         if (is_method("INVITE") && status == 200) {
                 # enable on callee's connection
                 tcp_keepalive_enable("60", "5", "5");
@@ -105,11 +106,12 @@ request_route {
         ...
         if (is_method("BYE")) {
                 $avp(bye_conid) = $conid;
+                t_on_reply("foo");
         }
         ...
 }
 
-onreply_route {
+onreply_route[foo] {
         ...
         if (is_method("BYE") && status == 200) {
                 tcp_keepalive_disable();
