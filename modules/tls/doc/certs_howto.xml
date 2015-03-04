@@ -68,7 +68,7 @@ Creating CA certificate
 	cd ca
 	
 2. create ca directory structure and files  (see ca(1))
-	mkdir demoCA #default CA name, edit /etc/ss/openssl.cnf
+	mkdir demoCA #default CA name, edit /etc/ssl/openssl.cnf
 	mkdir  demoCA/private
 	mkdir demoCA/newcerts
 	touch demoCA/index.txt
