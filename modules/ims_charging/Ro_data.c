@@ -125,7 +125,7 @@ ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t
         str_dup_ptr(x->outgoing_trunk_id, *outgoing_trunk_id, pkg);
     
     if (pani && pani->s) {
-		str_dup_ptr(x->access_network_info, *pani, pkg);
+	str_dup_ptr(x->access_network_info, *pani, pkg);
     }
 
     //WL_FREE_ALL(&(x->called_asserted_identity),str_list_t,pkg);

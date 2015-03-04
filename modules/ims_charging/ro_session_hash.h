@@ -52,7 +52,7 @@ struct ro_session {
     str called_asserted_identity;
     str incoming_trunk_id;
     str outgoing_trunk_id;
-    char pani[MAX_PANI_LEN];
+    str pani;
     unsigned int hop_by_hop;
     struct ro_tl ro_tl;
     unsigned int reserved_secs;

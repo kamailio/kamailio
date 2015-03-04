@@ -526,7 +526,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
 	goto error;
 
     if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->asserted_identity,
-	    &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id, 0)))
+	    &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id, &ro_session->pani)))
 	goto error;
 
     LM_DBG("Created IMS information\n");
@@ -760,7 +760,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
 	goto error0;
 
     if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->asserted_identity,
-	    &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id, 0)))
+	    &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id, &ro_session->pani)))
 	goto error0;
 
     event_type = 0;

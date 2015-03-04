@@ -180,7 +180,8 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
 	int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani){
     LM_DBG("Building Ro Session **********");
     char *p;
-    unsigned int len = session_id->len + callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + incoming_trunk_id->len + outgoing_trunk_id->len + sizeof (struct ro_session);
+    unsigned int len = session_id->len + callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + 
+        incoming_trunk_id->len + outgoing_trunk_id->len + pani->len + sizeof (struct ro_session);
     struct ro_session *new_ro_session = (struct ro_session*) shm_malloc(len);
 
     if (!new_ro_session) {
@@ -193,10 +194,10 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
 
     memset(new_ro_session, 0, len);
     
-    if (pani->len < MAX_PANI_LEN) {
-		p = new_ro_session->pani;
-		memcpy(p, pani->s, pani->len);
-    }
+//    if (pani->len < MAX_PANI_LEN) {
+//		p = new_ro_session->pani;
+//		memcpy(p, pani->s, pani->len);
+//    }
 
     new_ro_session->direction = direction;
     new_ro_session->auth_appid = auth_appid;
@@ -251,11 +252,15 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     memcpy(p, outgoing_trunk_id->s, outgoing_trunk_id->len);
     p += outgoing_trunk_id->len;
     
-    new_ro_session->avp_value.mac.s		= p;
-    new_ro_session->avp_value.mac.len	= mac->len;
+    new_ro_session->avp_value.mac.s = p;
+    new_ro_session->avp_value.mac.len = mac->len;
     memcpy(p, mac->s, mac->len);
-
     p += mac->len;
+    
+    new_ro_session->pani.s = p;
+    memcpy(p, pani->s, pani->len);
+    new_ro_session->pani.len = pani->len;
+    p += pani->len;
 
     if (p != (((char*) new_ro_session) + len)) {
         LM_ERR("buffer overflow\n");
