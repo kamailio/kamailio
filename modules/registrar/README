@@ -1068,6 +1068,7 @@ event_route[usrloc:contact-expired] {
      * ruid - record unique ID
      * reg-id - reg-id value
      * instance - instance value
+     * conid - TCP socket internal connection ID ($null if UDP)
 
    The pseudo-variable accepts positive index value to access a specific
    contact record.
