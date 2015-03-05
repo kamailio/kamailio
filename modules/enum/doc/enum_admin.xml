@@ -21,7 +21,7 @@
 		based on the user part of the current Request-URI. These functions
 		assume that the Request URI user part consists of an international phone number 
 		of the form +decimal-digits, where the number of digits is at
-		least 2 and at most 15. Out of this number 
+		least 2 and at most 20. Out of this number
 		<function moreinfo="none">enum_query</function> forms a domain name, 
 		where the digits are in reverse order and separated by dots followed by 
 		domain suffix that by default is <quote>e164.arpa.</quote>. For example, 
