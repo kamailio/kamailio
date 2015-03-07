@@ -1,6 +1,5 @@
 /*
- * $Id$
- *
+ * 
  *  simple locking test program
  *  (no paralles stuff)
  * 

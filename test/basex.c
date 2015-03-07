@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Tests for basex.h
  *
  * Copyright (C) 2008 iptelorg GmbH

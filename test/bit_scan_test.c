@@ -1,5 +1,4 @@
-/* $Id$
- * 
+/*
  * test bit_scan operations from bit_scan.h
  *  (both for correctness  and speed)
  * 
