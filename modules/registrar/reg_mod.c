@@ -69,6 +69,7 @@ static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_branches(struct sip_msg* _m, char* _d, char* _p2);
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
+static int w_registered2(struct sip_msg* _m, char* _d, char* _uri, char* _flags);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid);
 
@@ -78,6 +79,7 @@ static int domain_uri_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
 static int unreg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
+static int registered_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
@@ -101,10 +103,10 @@ int reg_outbound_mode = 0;
 int reg_regid_mode = 0;
 int reg_flow_timer = 0;
 
-/* Populate this AVP if testing for specific registration instance. */
-char *reg_callid_avp_param = 0;
-unsigned short reg_callid_avp_type = 0;
-int_str reg_callid_avp_name;
+int reg_match_flag_param = 0;
+str match_callid_name = str_init("match_callid");
+str match_received_name = str_init("match_received");
+str match_contact_name = str_init("match_contact");
 
 char* rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
@@ -164,6 +166,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)w_registered,  2,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"registered",   (cmd_function)w_registered2, 3,  registered_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"add_sock_hdr", (cmd_function)add_sock_hdr,  1,  fixup_str_null, 0,
 			REQUEST_ROUTE },
 	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
@@ -200,22 +204,22 @@ static param_export_t params[] = {
 	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires			},
 	{"received_param",     PARAM_STR, &rcv_param           					},
 	{"received_avp",       PARAM_STRING, &rcv_avp_param       					},
-	{"reg_callid_avp",     PARAM_STRING, &reg_callid_avp_param					},
 	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts			},
 	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after			},
-	{"sock_flag",          INT_PARAM, &sock_flag           					},
-	{"sock_hdr_name",      PARAM_STR, &sock_hdr_name     					},
-	{"method_filtering",   INT_PARAM, &method_filtering    					},
-	{"use_path",           INT_PARAM, &path_enabled        					},
-	{"path_mode",          INT_PARAM, &path_mode           					},
-	{"path_use_received",  INT_PARAM, &path_use_params     					},
-        {"path_check_local",   INT_PARAM, &path_check_local                                     },
-	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     					},
-	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     					},
-	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
-	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
+	{"sock_flag",          INT_PARAM, &sock_flag           				},
+	{"sock_hdr_name",      PARAM_STR, &sock_hdr_name     				},
+	{"method_filtering",   INT_PARAM, &method_filtering    				},
+	{"use_path",           INT_PARAM, &path_enabled        				},
+	{"path_mode",          INT_PARAM, &path_mode           				},
+	{"path_use_received",  INT_PARAM, &path_use_params     				},
+	{"path_check_local",   INT_PARAM, &path_check_local					},
+	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     				},
+	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     				},
+	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    				},
+	{"outbound_mode",      INT_PARAM, &reg_outbound_mode				},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
 	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
+	{"reg_on_match_flag",  INT_PARAM, &reg_match_flag_param				},
 	{0, 0, 0}
 };
 
@@ -285,8 +289,6 @@ static int mod_init(void)
 		LM_ERR("Fail to declare the configuration\n");
 	        return -1;
 	}
-	                                                
-	                                                
 
 	if (rcv_avp_param && *rcv_avp_param) {
 		s.s = rcv_avp_param; s.len = strlen(s.s);
@@ -304,24 +306,6 @@ static int mod_init(void)
 	} else {
 		rcv_avp_name.n = 0;
 		rcv_avp_type = 0;
-	}
-
-	if (reg_callid_avp_param && *reg_callid_avp_param) {
-		s.s = reg_callid_avp_param; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &avp_spec)==0
-			|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition\n", reg_callid_avp_param);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &avp_spec.pvp, &reg_callid_avp_name, &reg_callid_avp_type)!=0)
-		{
-			LM_ERR("[%s]- invalid AVP definition\n", reg_callid_avp_param);
-			return -1;
-		}
-	} else {
-		reg_callid_avp_name.n = 0;
-		reg_callid_avp_type = 0;
 	}
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
@@ -485,7 +469,24 @@ static int w_registered(struct sip_msg* _m, char* _d, char* _uri)
 		LM_ERR("invalid uri parameter\n");
 		return -1;
 	}
-	return registered(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
+	return registered(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL, 0);
+}
+
+static int w_registered2(struct sip_msg* _m, char* _d, char* _uri, char* _flags)
+{
+	str uri = {0};
+	int flags = 0;
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	if(_flags!=NULL && (fixup_get_ivalue(_m, (fparam_t*)_flags, &flags)) < 0)
+	{
+		LM_ERR("invalid flags parameter\n");
+		return -1;
+	}
+	return registered(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL, flags);
 }
 
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri)
@@ -546,6 +547,18 @@ static int domain_uri_fixup(void** param, int param_no)
 		return domain_fixup(param, 1);
 	} else if (param_no == 2) {
 		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
+static int registered_fixup(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return domain_fixup(param, 1);
+	} else if (param_no == 2) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no == 3) {
+		return fixup_igp_null(param, 1);
 	}
 	return 0;
 }
@@ -615,7 +628,6 @@ static int fetchc_fixup(void** param, int param_no)
 	}
 	return 0;
 }
-
 
 static void mod_destroy(void)
 {
