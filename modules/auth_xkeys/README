@@ -65,7 +65,20 @@ Chapter 1. Admin Guide
    It is similar to the API key based authentication used by many web
    services. In short, the sender adds a particular header with a hash
    token computed with the shared key and some values from the SIP request
-   (e.g., local IP, From/To/R-URI username, Call-ID, CSeq).
+   (e.g., local IP, From/To/R-URI username, Call-ID, CSeq). The receiver
+   will check the hash value and decide whether the SIP message is
+   authenticated or not. The sender and receiver have to agree beforehand
+   on the name of the server, shared secret, algorithm to be used and what
+   data is going to be hashed.
+
+   The module is designed to work with many shared keys on the same group,
+   for more flexibility in adding/removing keys. The last added key in the
+   group is used to add the header, but older ones are used for matching
+   the hash value. That allows to change the active shared key without
+   affecting ongoing traffic. If one decides to use a new share key, add
+   it first to receiver (it will still authenticate with older key) and
+   then to the sender. Once both nodes are provisioned with the new key,
+   the older one can be removed.
 
    For proper protection, it is recommended to use this authentication
    mechanism over a secure channel (e.g., TLS, VPN, private network).
