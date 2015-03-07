@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
