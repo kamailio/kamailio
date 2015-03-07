@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * dmq module - distributed message queue
  *
  * Copyright (C) 2011 Bucur Marius - Ovidiu
