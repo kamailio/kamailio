@@ -192,7 +192,7 @@ int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 	/* get contact */
 	i = 0;
 	c = rpp->contacts;
-	while(rpp)
+	while(c)
 	{
 		if(i == idx)
 			break;
