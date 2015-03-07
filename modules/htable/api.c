@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * Copyright (C) 2008 Elena-Ramona Modroiu (asipto.com)
  *
