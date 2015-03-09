@@ -69,14 +69,17 @@
 
 #define DIALOGINFO_EMPTY_BODY "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
 <dialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"1\" state=\"full\" entity=\"%.*s\"> \
-<dialog direction=\"initiator\">\
+<dialog call-id=\"76001e23e09704ea9e1257ebea85e1f3\" direction=\"initiator\">\
 <state>terminated</state>\
 </dialog>\
 </dialog-info>"
 
+#define LOCAL_TAG "local-tag=\"%.*s\""
+#define REMOTE_TAG "remote-tag=\"%.*s\""
+
 #define DIALOGINFO_BODY "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
 <dialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"1\" state=\"full\" entity=\"%.*s\">\
-<dialog id=\"%.*s\" call-id=\"%.*s\" local-tag=\"%.*s\" remote-tag=\"%.*s\" direction=\"%.*s\">\
+<dialog id=\"%.*s\" call-id=\"%.*s\" %.*s %.*s direction=\"%.*s\">\
 <state>%.*s</state>\
 <local>\
 <identity display=\"%.*s\">%.*s</identity>\
@@ -91,7 +94,7 @@
 
 #define DIALOGINFO_BODY_2 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
 <dialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"1\" state=\"full\" entity=\"%.*s\">\
-<dialog id=\"%.*s\" call-id=\"%.*s\" local-tag=\"%.*s\" remote-tag=\"%.*s\" direction=\"%.*s\">\
+<dialog id=\"%.*s\" call-id=\"%.*s\" %.*s %.*s direction=\"%.*s\">\
 <state>%.*s</state>\
 <local>\
 <identity display=\"%.*s\">%.*s</identity>\
