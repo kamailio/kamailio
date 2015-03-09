@@ -199,14 +199,16 @@ sql_result_t* sql_get_result(str *name)
 			return sr;
 		sr = sr->next;
 	}
-	sr = (sql_result_t*)pkg_malloc(sizeof(sql_result_t));
+	sr = (sql_result_t*)pkg_malloc(sizeof(sql_result_t) + name->len);
 	if(sr==NULL)
 	{
 		LM_ERR("no pkg memory\n");
 		return NULL;
 	}
 	memset(sr, 0, sizeof(sql_result_t));
-	sr->name = *name;
+	memcpy(sr+1, name->s, name->len);
+	sr->name.s = (char *)(sr + 1);
+	sr->name.len = name->len;
 	sr->resid = resid;
 	sr->next = _sql_result_root;
 	_sql_result_root = sr;
@@ -665,6 +667,7 @@ void sql_destroy(void)
 		pkg_free(r);
 		r = r0;
 	}
+	_sql_result_root = NULL;
 }
 
 /**
