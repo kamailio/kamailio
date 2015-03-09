@@ -2889,6 +2889,9 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 		} else {
 			hfl = hf;
 		}
+		/* if flags set for first header, then all done */
+		if(flags!=NULL && *flags=='f')
+			return ret;
 	}
 	if(hfl!=NULL)
 	{
