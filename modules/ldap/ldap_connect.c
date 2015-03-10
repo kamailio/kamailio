@@ -235,7 +235,7 @@ int ldap_connect_ex(char* _ld_name, int llevel)
 
 int ldap_connect(char* _ld_name)
 {
-	return ldap_connect(_ld_name, L_DBG);
+	return ldap_connect_ex(_ld_name, L_DBG);
 }
 
 int ldap_disconnect(char* _ld_name)
