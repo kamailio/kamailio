@@ -145,7 +145,7 @@
 						LM_DBG("serial operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
 						dbh = cls->wlist[i].clist[j]->dbh;\
-						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+						if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
 							LM_ERR("unsupported command by db connector\n");\
 							return -1;\
 						}\
@@ -172,7 +172,7 @@
 						LM_DBG("round robin operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
 						dbh = cls->wlist[i].clist[j]->dbh;\
-						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+						if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
 							LM_ERR("unsupported command by db connector\n");\
 							return -1;\
 						}\
@@ -200,7 +200,7 @@
 						LM_DBG("parallel operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
 						dbh = cls->wlist[i].clist[j]->dbh;\
-						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+						if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
 							LM_ERR("unsupported command by db connector\n");\
 							return -1;\
 						}\
