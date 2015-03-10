@@ -83,6 +83,9 @@ static int pv_get_from_tag_initial(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
 static int pv_get_to_tag_initial(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
+static int pv_get_rdir(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_rdir_name(pv_spec_p sp, str *in);
+
 /*!
  * \brief Exported functions
  */
@@ -138,6 +141,9 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_from_tag_initial, 0, 0, 0, 0, 0},
     {{"tti", (sizeof("tti")-1)}, /* To-Tag as for response to initial request */
 		PVT_OTHER, pv_get_to_tag_initial, 0, 0, 0, 0, 0},
+	{ {"rdir", (sizeof("rdir")-1)}, PVT_OTHER, pv_get_rdir, 0,
+		pv_parse_rdir_name, 0, 0, 0 },
+
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -489,6 +495,9 @@ static int remove_record_route(sip_msg_t* _m, char* _s1, char* _s2)
 	return 1;
 }
 
+/**
+ *
+ */
 static int pv_get_to_tag_initial(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -525,6 +534,9 @@ static int pv_get_to_tag_initial(sip_msg_t *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &xto->tag_value);
 }
 
+/**
+ *
+ */
 static int pv_get_from_tag_initial(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -559,4 +571,64 @@ static int pv_get_from_tag_initial(sip_msg_t *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);
 	}
 	return pv_get_strval(msg, param, res, &xto->tag_value);
+}
+
+/**
+ *
+ */
+static int pv_parse_rdir_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 2:
+			if(strncmp(in->s, "id", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "name", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV af key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+static str pv_rr_flow_list[] = {
+		{ "downstream",  10 },
+		{ "upstream",    8  },
+		{ 0, 0 }
+	};
+
+/**
+ *
+ */
+static int pv_get_rdir(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(msg==NULL || param==NULL)
+		return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1:
+			if(is_direction(msg, RR_FLOW_UPSTREAM)==0)
+				return pv_get_strval(msg, param, res, &pv_rr_flow_list[1]);
+			return pv_get_strval(msg, param, res, &pv_rr_flow_list[0]);
+		default:
+			if(is_direction(msg, RR_FLOW_UPSTREAM)==0)
+				return pv_get_uintval(msg, param, res, RR_FLOW_UPSTREAM);
+			return pv_get_uintval(msg, param, res, RR_FLOW_DOWNSTREAM);
+	}
 }
