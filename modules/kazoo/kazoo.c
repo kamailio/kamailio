@@ -320,18 +320,18 @@ static int mod_child_init(int rank)
 
 
 	if (rank==PROC_MAIN) {
-		pid=fork_process(1, "AMQP Publisher", 1);
+		pid=fork_process(2, "AMQP Consumer", 1);
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0){
-			kz_amqp_publisher_proc(0);
+			kz_amqp_consumer_proc(1);
 		}
 		else {
-			pid=fork_process(2, "AMQP Consumer", 1);
+			pid=fork_process(1, "AMQP Publisher", 1);
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0){
-				kz_amqp_consumer_proc(1);
+				kz_amqp_publisher_proc(0);
 			}
 			else {
 				pid=fork_process(3, "AMQP Timer", 1);
