@@ -31,7 +31,7 @@
 	<section id="xmlrpc.design">
 	<title>Design Goals</title>
 	<para>
-	    
+
 	</para>
 	<itemizedlist>
 	    <listitem>
@@ -99,7 +99,7 @@ User-Agent: Radio UserLand/7.1b7 (WinNT)
 Host: time.xmlrpc.com
 Content-Type: text/xml
 Content-length: 131
-	    
+
 <?xml version="1.0"?>
 <methodCall>
 <methodName>currentTime.getCurrentTime</methodName>
@@ -307,7 +307,7 @@ if (method == "POST" || method == "GET") {
 	    <function>dispatch_rpc</function> scans through the list of all
 	    exported RPC functions searching for the
 	    <function>statistics</function> function of the usrloc module. The
-		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/rpc/ser_rpc.html'>
+		<ulink url='http://rpm.kamailio.org/docbook/sip-router/branch/master/rpc/kamailio_rpc.html'>
 		&kamailio; RPC Module API</ulink>
 		describes in detail how modules export RPC functions.
 	</para>
@@ -367,7 +367,7 @@ Warning: 392 127.0.0.1:5060 "Noisy feedback tells:  pid=9975 req_src_ip=127.0.0
 		HTTP requests from one SIP server to another and use standard
 		SIP routing mechanisms to decide which SIP server should
 		process the request. There is no need to have multiple SIP
-		servers in simple setups, because one SIP server can both add 
+		servers in simple setups, because one SIP server can both add
 		fake Via header field and process the RPC at the same
 		time. Modified configuration file snipped could then look like
 		this:
@@ -659,8 +659,8 @@ Content-Length: 276
 	<section id="xmlrpc.interoperability_problems">
 	    <title>Interoperability Problems</title>
 	    <para>
-		Due to a bug in Python xmlrpclib there is an interoperability 
-		problem with basic clients using it: by default an xmlrpclib client 
+		Due to a bug in Python xmlrpclib there is an interoperability
+		problem with basic clients using it: by default an xmlrpclib client
 		expects the server to immediately close the connection after answering
 		and if the server does not close the connections the xmlrpclib client
 		will wait forever.
@@ -671,7 +671,7 @@ Content-Length: 276
 		make ser close the tcp connection after each request.
 		</para>
 		<para>
-		The <ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules/xmlrpc/examples/xmlrpc_test.py'>
+		The <ulink url='https://github.com/kamailio/kamailio/blob/master/modules/xmlrpc/examples/xmlrpc_test.py'>
 		examples/xmlrpc_test.py
 		</ulink> provides a very simple example of using xmlrpclib with a
 		Transport class that works.
@@ -683,7 +683,7 @@ Content-Length: 276
 		<function>set_reply_no_connect()</function> is also recommended
 		(avoid trying to open tcp connection to xmlrpc clients that closed it).
 		Alternatively ending the XMLRPC route with return -1, exit -1 or
-		drop -1 can also be used, but note that this will not work for 
+		drop -1 can also be used, but note that this will not work for
 		async rpcs (it will close the connection immeidately and not on the
 		async response).
 		<example>
@@ -716,28 +716,35 @@ route[XMLRPC]{
 	<section id="xmlrpc.client_examples">
 	<title>Client Examples</title>
 	<!-- TODO:
-	    implement clients in various languages 
-	- pros, cons 
+	    implement clients in various languages
+	- pros, cons
 	- How failures
-	    are mapped to XMLRPC 
-	- How success replies are mapped 
+	    are mapped to XMLRPC
+	- How success replies are mapped
 	- How data
-	    types of the API are mapped to XMLRPC elements 
+	    types of the API are mapped to XMLRPC elements
 	- 200 OK with no
 	    data transformed to one value - True
 	-->
 	<para>
 	<itemizedlist>
 		<listitem><para>
-			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules/xmlrpc/examples/xmlrpc_test.pl'>
+			<ulink url='https://github.com/kamailio/kamailio/blob/master/modules/xmlrpc/examples/xmlrpc_test.pl'>
 			<emphasis>examples/xmlrpc_test.pl</emphasis>
 			</ulink> (basic perl application that builds and sends an
 			<emphasis>XMLRPC</emphasis> request from its commandline
 			parameters).
 		</para></listitem>
 		<listitem><para>
-			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules/xmlrpc/examples/xmlrpc_test.py'>
+			<ulink url='https://github.com/kamailio/kamailio/blob/master/modules/xmlrpc/examples/xmlrpc_test.py'>
 			<emphasis>examples/xmlrpc_test.py</emphasis>
+			</ulink> (basic python application that builds and sends an
+			<emphasis>XMLRPC</emphasis> request from its commandline
+			parameters).
+		</para></listitem>
+		<listitem><para>
+			<ulink url='https://github.com/kamailio/kamailio/blob/master/modules/xmlrpc/examples/xmlrpc_test2.py'>
+			<emphasis>examples/xmlrpc_test2.py</emphasis>
 			</ulink> (basic python application that builds and sends an
 			<emphasis>XMLRPC</emphasis> request from its commandline
 			parameters).
@@ -746,7 +753,7 @@ route[XMLRPC]{
 			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=ser;a=tree;f=ser_ctl'>
 			<emphasis>ser_ctl</emphasis>
 			</ulink>
-			(complex python application that 
+			(complex python application that
 			uses the <emphasis>XML-RPC</emphasis> interface implemented by the
 			<emphasis>xmlrpc</emphasis> module).
 		</para></listitem>
@@ -755,7 +762,7 @@ route[XMLRPC]{
 			<emphasis>serweb</emphasis>
 			</ulink>
 			(php application that can use
-			the <emphasis>XML-RPC</emphasis> interface to call ser 
+			the <emphasis>XML-RPC</emphasis> interface to call ser
 			functions).
 		</para></listitem>
 	</itemizedlist>
