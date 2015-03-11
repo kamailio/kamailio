@@ -264,6 +264,9 @@ static int mod_init(void)
 				goto error;
 			}
 	}
+	/* get the uid/gid from core if not set for the module */
+	if(usock_uid==-1 && sock_uid!=-1) usock_uid = sock_uid;
+	if(usock_gid==-1 && sock_gid!=-1) usock_gid = sock_gid;
 	/* open socket now, before suid */
 	if (init_ctrl_sockets(&ctrl_sock_lst, listen_lst, DEFAULT_CTL_PORT,
 			usock_mode, usock_uid, usock_gid)<0){
