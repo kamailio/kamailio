@@ -212,6 +212,11 @@ int pv_parse_geoip_name(pv_spec_p sp, str *in)
 				gpv->type = 12;
 			else goto error;
 		break;
+		case 6:
+			if(strncmp(pvs.s, "contid", 6)==0)
+				gpv->type = 13;
+			else goto error;
+		break;
 		default:
 			goto error;
 	}
@@ -349,6 +354,11 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 				return pv_get_null(msg, param, res);
 			return pv_get_sintval(msg, param, res,
 					gpv->item->r.record->metro_code);
+		case 13: /* contid */
+			if(gpv->item->r.record==NULL)
+				return pv_get_null(msg, param, res);
+			return pv_geoip_get_strzval(msg, param, res,
+					gpv->item->r.record->continent_code);
 		default: /* cc */
 			if(gpv->item->r.record==NULL)
 				return pv_get_null(msg, param, res);
