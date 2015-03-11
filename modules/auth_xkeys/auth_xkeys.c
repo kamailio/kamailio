@@ -197,7 +197,6 @@ int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
 		str *alg, str *data)
 {
 	str xdata;
-	str hbody;
 	auth_xkey_t *itc;
 	char xout[SHA512_DIGEST_STRING_LENGTH];
 	struct lump* anchor;
