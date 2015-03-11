@@ -2350,12 +2350,15 @@ try_again:
 			fprintf(stderr, "bad user name/uid number: -u %s\n", user);
 			goto error;
 		}
+		sock_uid = uid;
+		sock_gid = gid;
 	}
 	if (group){
 		if (group2gid(&gid, group)<0){
 				fprintf(stderr, "bad group name/gid number: -u %s\n", group);
 			goto error;
 		}
+		sock_gid = gid;
 	}
 	if (fix_all_socket_lists()!=0){
 		fprintf(stderr,  "failed to initialize list addresses\n");
