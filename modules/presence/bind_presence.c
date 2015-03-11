@@ -1,5 +1,4 @@
 /*
- * $Id: bind_presence.c 1979 2007-04-06 13:24:12Z anca_vamanu $
  *
  * presence module - presence server implementation
  *
@@ -21,13 +20,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-04-17  initial version (Anca Vamanu)
  */
 
 /*! \file
- * \brief SIP-Router Presence :: Kamailio generic presence module
+ * \brief Kamailio Presence :: Kamailio generic presence module
  *
  * This is the core presence module, used in combination with other modules.
  *
