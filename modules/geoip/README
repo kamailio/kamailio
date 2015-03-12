@@ -68,7 +68,9 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module allows real-time queries against the Max Mind GeoIP
-   database to be performed from the config script.
+   database to be performed from the config script. It uses the old
+   version of API, still very common on OS distributions. For using the
+   new version of GeoIP API, see geoip2 module.
 
    The Max Mind GeoIP database is a map of IP network address assignments
    to geographical locales that can be useful -- though approximate -- in
@@ -160,6 +162,7 @@ if(geoip_match("$si", "src"))
           + regc - region
           + regn - region name
           + metro - metro code
+          + contc - continent code
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/dokuwiki/.
+   http://www.kamailio.org/wiki/.
