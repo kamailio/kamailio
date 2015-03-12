@@ -317,6 +317,7 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 		} else {
 			jsonrpc_set_plain_reply(ctx->http_code, &ctx->http_text, &rbuf,
 					ctx->jrpl->free_fn);
+			rbuf.s = NULL;
 		}
 	} else {
 		if(ctx->msg) {
