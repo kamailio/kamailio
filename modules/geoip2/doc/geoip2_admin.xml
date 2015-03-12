@@ -163,6 +163,9 @@ if(geoip2_match("$si", "src"))
 				<listitem><para>
 					<emphasis>metro</emphasis> - metro code
 				</para></listitem>
+				<listitem><para>
+					<emphasis>contc</emphasis> - continent code
+				</para></listitem>
 			</itemizedlist>
 			</listitem>
 		</itemizedlist>

@@ -41,6 +41,7 @@ typedef struct _sr_geoip2_record {
 	str region_code;
 	str region_name;
 	str country;
+	str cont_code;
 	char latitude[16];
 	char longitude[16];
 	char metro[16];
@@ -207,6 +208,8 @@ int pv_parse_geoip2_name(pv_spec_p sp, str *in)
 				gpv->type = 12;
 			else if(strncmp(pvs.s, "nmask", 5)==0)
 				gpv->type = 13;
+			else if(strncmp(pvs.s, "contc", 5)==0)
+				gpv->type = 6;
 			else goto error;
 		break;
 		default:
@@ -311,6 +314,22 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			}
 			return pv_geoip2_get_strzval(msg, param, res,
 					gpv->item->r.longitude);
+		case 6: /* contc */
+			if(gpv->item->r.cont_code.s==NULL)
+			{
+				if(gpv->item->r.flags&16)
+					return pv_get_null(msg, param, res);
+				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
+					"continent","code", NULL
+					) != MMDB_SUCCESS)
+					return pv_get_null(msg, param, res);
+				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
+					gpv->item->r.cont_code.s = (char *)entry_data.utf8_string;
+					gpv->item->r.cont_code.len = entry_data.data_size;
+				}
+				gpv->item->r.flags |= 16;
+			}
+			return pv_get_strval(msg, param, res, &gpv->item->r.cont_code);
 		case 8: /* city */
 			if(gpv->item->r.city.s==NULL)
 			{

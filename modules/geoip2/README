@@ -141,6 +141,7 @@ if(geoip2_match("$si", "src"))
           + regc - region
           + regn - region name
           + metro - metro code
+          + contc - continent code
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
