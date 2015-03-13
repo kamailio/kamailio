@@ -249,7 +249,7 @@ redisc_server_t *redisc_get_server(str *name)
  */
 int redisc_reconnect_server(redisc_server_t *rsrv)
 {
-	char *addr, *unix_sock_path = NULL;
+	char *addr, *pass, *unix_sock_path = NULL;
 	unsigned int port, db;
 	param_t *pit = NULL;
 	struct timeval tv;
@@ -259,6 +259,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	addr = "127.0.0.1";
 	port = 6379;
 	db = 0;
+	pass = NULL;
 	for (pit = rsrv->attrs; pit; pit=pit->next)
 	{
 		if(pit->name.len==4 && strncmp(pit->name.s, "unix", 4)==0) {
@@ -273,6 +274,9 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 		} else if(pit->name.len==2 && strncmp(pit->name.s, "db", 2)==0) {
 			if(str2int(&pit->body, &db) < 0)
 				db = 0;
+		} else if(pit->name.len==4 && strncmp(pit->name.s, "pass", 4)==0) {
+			pass = pit->body.s;
+			pass[pit->body.len] = '\0';
 		}
 	}
 	if(rsrv->ctxRedis!=NULL) {
@@ -288,6 +292,8 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	if(!rsrv->ctxRedis)
 		goto err;
 	if (rsrv->ctxRedis->err)
+		goto err2;
+	if ((pass != NULL) && redisc_check_auth(rsrv, pass))
 		goto err2;
 	if (redisCommandNR(rsrv->ctxRedis, "PING"))
 		goto err2;
