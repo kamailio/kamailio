@@ -1,6 +1,4 @@
 /*
- * $Id: pua_callback.c,v 1.2 2007/02/20 13:40:09 anca_vamanu Exp $
- *
  * pua module - presence user agent module
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.

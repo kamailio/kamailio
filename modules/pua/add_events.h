@@ -1,6 +1,4 @@
 /*
- * $Id: add_events.h  2007-05-03 15:05:20Z anca_vamanu $
- *
  * pua module - presence user agent module
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
@@ -21,7 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *	initial version 2007-05-03 (anca)
  */
 #ifndef _PUA_ADD_EV_H_
 #define _PUA_ADD_EV_H_
