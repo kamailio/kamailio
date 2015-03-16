@@ -797,7 +797,9 @@ $ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 			<title><function moreinfo="none">nh_show_rtpp</function></title>
 			<para>
 			Displays all the &rtp; proxies and their information: set and
-			status (disabled or not, weight and recheck_ticks).
+			status (disabled or not, weight and recheck_ticks). If a RTP proxy has been disabled by a mi command
+			a "(permanent)" quote will appear when printing the disabled status. This is to differentiate from
+			a temporary disable due to the proxy being not found responsive by kamailio.
 			</para>
 			<para>
 			No parameter.
