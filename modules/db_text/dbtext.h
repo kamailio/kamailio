@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * DBText module core functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,10 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2003-01-30 created by Daniel
- * 
  */
 
 

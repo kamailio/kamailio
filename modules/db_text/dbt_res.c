@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * DBText module core functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,14 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2009-03-01 added support for ORDER-BY clause by Edgar Holleis
- * 2003-06-05 fixed bug: when comparing two values and the first was less than
- *           the second one, the result of 'dbt_row_match' was always true,
- *           thanks to Gabriel, (Daniel)
- * 2003-02-04 created by Daniel
- * 
  */
 
 #include <stdio.h>

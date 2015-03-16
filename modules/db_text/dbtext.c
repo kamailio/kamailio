@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * DBText module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,13 +19,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
- * History:
- * --------
- * 2003-01-30 created by Daniel
- * 2003-03-11 New module interface (janakj)
- * 2003-03-16 flags export parameter added (janakj)
- * 2014-12-10 added the null string handling (for compatibility with dialplan)
  * 
  */
 
