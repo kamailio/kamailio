@@ -26,6 +26,36 @@
 	Peers are grouped by name in order to ensure the correct messages are passed to the relevant peers. 
 	This grouping of peers can be compared to a topic in a typical pub/sub system.
 	</para>
+	<para>
+	DMQ sends SIP requests using the <emphasis>KDMQ</emphasis> request method, that is private 
+	to Kamailio.
+	</para>
+<example>
+                <title>Example of a KDMQ message</title>
+		<para>
+		This message is for basic DMQ bus handling. Other messages are produced
+		by other modules, like the <emphasis>htable</emphasis> module.
+		</para>
+                <programlisting format="linespecific">
+
+
+KDMQ sip:notification_peer@192.168.40.15:5090 SIP/2.0
+Via: SIP/2.0/UDP 192.168.40.15;branch=z9hG4bK55e5.423d95110000
+To: &lt;sip:notification_peer@192.168.40.15:5090&gt;
+From: &lt;sip:notification_peer@192.168.40.15:5060&gt;;tag=2cdb7a33a7f21abb98fd3a44968e3ffd-5b01
+CSeq: 10 KDMQ
+Call-ID: 1fe138e07b5d0a7a-50419@192.168.40.15
+Content-Length: 116
+User-Agent: kamailio (4.3.0 (x86_64/linneaus))
+Max-Forwards: 1
+Content-Type: text/plain
+
+sip:192.168.40.16:5060;status=active
+sip:192.168.40.15:5060;status=disabled
+sip:192.168.40.17:5060;status=active
+
+</programlisting>
+                </example>
 	
 	</section>
 

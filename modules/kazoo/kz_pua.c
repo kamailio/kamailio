@@ -320,6 +320,8 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
     int expires = 0;
     str event = str_init("dialog");
     int reset = 0;
+    char to_tag_buffer[100];
+    char from_tag_buffer[100];
 
     char *body = (char *)pkg_malloc(DIALOGINFO_BODY_BUFFER_SIZE);
     if(body == NULL) {
@@ -374,6 +376,16 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
 
     if(!to_uri.len)
     	to_uri = to;
+
+    if(fromtag.len > 0) {
+    	fromtag.len = sprintf(from_tag_buffer, LOCAL_TAG, fromtag.len, fromtag.s);
+    	fromtag.s = from_tag_buffer;
+    }
+
+    if(totag.len > 0) {
+    	totag.len = sprintf(to_tag_buffer, REMOTE_TAG, totag.len, totag.s);
+    	totag.s = to_tag_buffer;
+    }
 
     if(callid.len) {
 

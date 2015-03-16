@@ -1,0 +1,179 @@
+AUTH_XKEYS Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2015 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. xkey (str)
+
+        4. Functions
+
+              4.1. auth_xkeys_add(hdr, kid, alg, data)
+              4.2. auth_xkeys_check(hdr, kid, alg, data)
+
+   List of Examples
+
+   1.1. Set xkey parameter
+   1.2. auth_xkeys_add usage
+   1.3. auth_xkeys_check usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. xkey (str)
+
+   4. Functions
+
+        4.1. auth_xkeys_add(hdr, kid, alg, data)
+        4.2. auth_xkeys_check(hdr, kid, alg, data)
+
+1. Overview
+
+   This module provides a custom mechanism to authenticate a SIP entity
+   using a list of shared keys.
+
+   It is similar to the API key based authentication used by many web
+   services. In short, the sender adds a particular header with a hash
+   token computed with the shared key and some values from the SIP request
+   (e.g., local IP, From/To/R-URI username, Call-ID, CSeq). The receiver
+   will check the hash value and decide whether the SIP message is
+   authenticated or not. The sender and receiver have to agree beforehand
+   on the name of the server, shared secret, algorithm to be used and what
+   data is going to be hashed.
+
+   The module is designed to work with many shared keys on the same group,
+   for more flexibility in adding/removing keys. The last added key in the
+   group is used to add the header, but older ones are used for matching
+   the hash value. That allows to change the active shared key without
+   affecting ongoing traffic. If one decides to use a new share key, add
+   it first to receiver (it will still authenticate with older key) and
+   then to the sender. Once both nodes are provisioned with the new key,
+   the older one can be removed.
+
+   For proper protection, it is recommended to use this authentication
+   mechanism over a secure channel (e.g., TLS, VPN, private network).
+
+   The benefit is avoiding the extra traffic and processing required by
+   WWW-Digest authentication schema (no more 401/407 and a follow up
+   request with credentials).
+
+   Another goal is to provide more elasticity for scalability needs of the
+   core SIP network nodes. Most of the nodes in the core network or the
+   interconnecting peers trust each other based on IP address. But adding
+   a new node requires updates to the exiting ones to trust the IP address
+   of the new node. On large deployments, that can become rather complex.
+   For example, as a replacement for IP trust relationships, the sender
+   can hash the local IP with the secret shared key, add it in the header
+   and the receiver will check if the source ip hased with the key results
+   in the same value.
+
+   Not being a challenge-reply mechanism, this can be used to authenticate
+   SIP responses from trusted peers.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. xkey (str)
+
+3.1. xkey (str)
+
+   Specify the attributes for a shared secret. The value is in the format
+   'name1=value1;name2=value2;...'. The attributes can be:
+     * id - the id of the group for keys
+     * name - the name of the key within group
+     * value - the value of the key
+     * expires - expiration time (seconds)
+
+   Default value is empty.
+
+   Example 1.1. Set xkey parameter
+...
+modparam("auth_xkeys", "xkey", "id=abc;name=xyz;value=secret;expires=72000")
+...
+
+4. Functions
+
+   4.1. auth_xkeys_add(hdr, kid, alg, data)
+   4.2. auth_xkeys_check(hdr, kid, alg, data)
+
+4.1. auth_xkeys_add(hdr, kid, alg, data)
+
+   Add a header computed with the first key in the group kid, hasing with
+   algorithm alg over the content of parameter data. The parameters can
+   include variables.
+
+   The algorithm can be: sha256, sha384, sha512.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.2. auth_xkeys_add usage
+...
+auth_xkeys_add("X-My-Key", "abc", "sha256", "$Ri:$fu:$ru:$hdr(CSeq)");
+...
+
+4.2. auth_xkeys_check(hdr, kid, alg, data)
+
+   Check if the value of header hdr matches the value computed with the
+   first key in the group kid, hasing with algorithm alg over the content
+   of parameter data. The parameters can include variables.
+
+   The algorithm can be: sha256, sha384, sha512.
+
+   Note that the header is not removed by the function, it is recommended
+   to remove it if sending to untrusted destination.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.3. auth_xkeys_check usage
+...
+if(!auth_xkeys_add("X-My-Key", "abc", "sha256", "$si:$fu:$ru:$hdr(CSeq)")) {
+    send_reply("403", "Forbidden");
+    exit;
+}
+remove_hf("X-My-Key");
+...

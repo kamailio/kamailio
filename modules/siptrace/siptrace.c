@@ -1,6 +1,4 @@
 /* 
- * $Id$ 
- *
  * siptrace module - helper module to trace sip messages
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.

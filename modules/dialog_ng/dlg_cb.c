@@ -235,7 +235,7 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 {
 	struct dlg_callback *cb;
 
-	if (create_cbs==NULL || create_cbs->first==NULL)
+	if (create_cbs==NULL || create_cbs==POINTER_CLOSED_MARKER || create_cbs->first==NULL)
 		return;
 
 	params.req = msg;

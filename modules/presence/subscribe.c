@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * presence module - presence server implementation
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -21,9 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2006-08-15  initial version (Anca Vamanu)
  */
 
 /*! \file

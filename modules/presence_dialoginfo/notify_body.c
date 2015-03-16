@@ -68,7 +68,7 @@ void free_xml_body(char* body)
 }
 
 #define DIALOGINFO_EMPTY_BODY "<dialog-info>\
-<dialog direction=\"recipient\">\
+<dialog id=\"615293b33c62dec073e05d9421e9f48b\" direction=\"recipient\">\
 <state>terminated</state>\
 </dialog>\
 </dialog-info>"

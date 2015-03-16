@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * pua module - presence user agent module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.

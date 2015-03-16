@@ -43,7 +43,6 @@
  * 
  */
 
-#include "stats.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -72,7 +71,7 @@
 #include "../../parser/sdp/sdp.h"
 
 #include "../../lib/ims/useful_defs.h"
-
+#include "ims_qos_stats.h"
 
 MODULE_VERSION
 
@@ -102,6 +101,13 @@ int audio_default_bandwidth = 64;
 int video_default_bandwidth = 128;
 
 int cdp_event_list_size_threshold = 0;  /**Threshold for size of cdp event list after which a warning is logged */
+
+stat_var *aars;
+stat_var *strs;
+stat_var *asrs;
+stat_var *successful_aars;
+stat_var *successful_strs;
+
 
 /** module functions */
 static int mod_init(void);
@@ -142,11 +148,6 @@ static param_export_t params[] = {
     { 0, 0, 0}
 };
 
-stat_export_t mod_stats[] = {
-    {"aar_avg_response_time", STAT_IS_FUNC, (stat_var**) get_avg_aar_response_time},
-    {"aar_timeouts", 0, (stat_var**) & stat_aar_timeouts},
-    {0, 0, 0}
-};
 
 /** module exports */
 struct module_exports exports = {"ims_qos", DEFAULT_DLFLAGS, /* dlopen flags */
@@ -162,18 +163,6 @@ struct module_exports exports = {"ims_qos", DEFAULT_DLFLAGS, /* dlopen flags */
  * init module function
  */
 static int mod_init(void) {
-#ifdef STATISTICS
-    /* register statistics */
-    if (register_module_stats(exports.name, mod_stats) != 0) {
-        LM_ERR("failed to register core statistics\n");
-        goto error;
-    }
-
-    if (!register_stats()) {
-        LM_ERR("Unable to register statistics\n");
-        goto error;
-    }
-#endif
 
     callback_singleton = shm_malloc(sizeof (int));
     *callback_singleton = 0;
@@ -226,6 +215,11 @@ static int mod_init(void) {
         LM_ERR("unable to initialise cdp callback event list\n");
         return -1;
     }
+    
+    if (ims_qos_init_counters() != 0) {
+	    LM_ERR("Failed to register counters for ims_qos module\n");
+	    return -1;
+	}
 
     return 0;
 error:

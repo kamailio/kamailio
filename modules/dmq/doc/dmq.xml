@@ -26,6 +26,11 @@
                 <surname>Chance</surname>
 		<affiliation>Sipcentric Ltd.</affiliation>
             </author>
+            <author>
+                <firstname>Olle E.</firstname>
+                <surname>Johansson</surname>
+		<affiliation>Edvina AB</affiliation>
+            </author>
             <editor>
                 <firstname>Marius Ovidiu</firstname>
                 <surname>Bucur</surname>
@@ -45,6 +50,10 @@
         <copyright>
             <year>2013</year>
             <holder>Charles Chance, Sipcentric Ltd.</holder>
+        </copyright>
+        <copyright>
+            <year>2015</year>
+            <holder>Olle E. Johansson, Edvina AB</holder>
         </copyright>
   </bookinfo>
     <toc></toc>

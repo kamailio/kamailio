@@ -1,6 +1,4 @@
 /*
- * $Id: pidf.h 1401 2006-12-14 11:12:42Z anca_vamanu $
- *
  * pua module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -21,9 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-07-03  initial version (anca)
  */
 
 #ifndef PUA_PIDF_H

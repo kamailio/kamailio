@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * dmq module - distributed message queue
  *

@@ -158,7 +158,7 @@ extern int dbcl_max_query_length;
 								cls->name.len, cls->name.s, i, j);\
 						sec = get_ticks();\
 						dbh = cls->wlist[i].clist[j]->dbh;\
-						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+						if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
 							LM_ERR("unsupported command by db connector\n");\
 							return -1;\
 						}\
@@ -189,7 +189,7 @@ extern int dbcl_max_query_length;
 								cls->name.len, cls->name.s, i, j);\
 						sec = get_ticks();\
 						dbh = cls->wlist[i].clist[j]->dbh;\
-						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+						if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
 							LM_ERR("unsupported command by db connector\n");\
 							return -1;\
 						}\
@@ -221,7 +221,7 @@ extern int dbcl_max_query_length;
 								cls->name.len, cls->name.s, i, j);\
 						sec = get_ticks();\
 						dbh = cls->wlist[i].clist[j]->dbh;\
-						if(cls->rlist[i].clist[j]->dbf.qfunc==NULL) {\
+						if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
 							LM_ERR("unsupported command by db connector\n");\
 							return -1;\
 						}\

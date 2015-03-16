@@ -109,6 +109,8 @@ MODULE_VERSION
 #define MI_RTP_PROXY_NOT_FOUND_LEN	(sizeof(MI_RTP_PROXY_NOT_FOUND)-1)
 #define MI_PING_DISABLED			"NATping disabled from script"
 #define MI_PING_DISABLED_LEN		(sizeof(MI_PING_DISABLED)-1)
+#define MI_DISABLED_PERMANENT        "1 (permanent)"
+#define MI_DISABLED_PERMANENT_LEN    (sizeof(MI_DISABLED_PERMANENT)-1)
 #define MI_SET						"set"
 #define MI_SET_LEN					(sizeof(MI_SET)-1)
 #define MI_INDEX					"index"
@@ -760,8 +762,19 @@ static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
 
 			add_rtpp_node_int_info(crt_node, MI_INDEX, MI_INDEX_LEN,
 				crt_rtpp->idx, child, len,string,error);
-			add_rtpp_node_int_info(crt_node, MI_DISABLED, MI_DISABLED_LEN,
-				crt_rtpp->rn_disabled, child, len,string,error);
+			
+			if (( 1 == crt_rtpp->rn_disabled ) && ( crt_rtpp->rn_recheck_ticks == MI_MAX_RECHECK_TICKS)) {
+				if( !(child = add_mi_node_child(crt_node, MI_DUP_VALUE, MI_DISABLED, MI_DISABLED_LEN,
+								MI_DISABLED_PERMANENT, MI_DISABLED_PERMANENT_LEN))) {
+					LM_ERR("cannot add disabled (permanent) message\n");
+					goto error;
+				}
+			}
+			else {
+				add_rtpp_node_int_info(crt_node, MI_DISABLED, MI_DISABLED_LEN,
+					crt_rtpp->rn_disabled, child, len,string,error);
+			}
+
 			add_rtpp_node_int_info(crt_node, MI_WEIGHT, MI_WEIGHT_LEN,
 				crt_rtpp->rn_weight,  child, len, string,error);
 			add_rtpp_node_int_info(crt_node, MI_RECHECK_TICKS,MI_RECHECK_T_LEN,

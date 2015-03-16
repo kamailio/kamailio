@@ -60,6 +60,9 @@
 #include "rx_asr.h"
 #include "rx_avp.h"
 #include "../../lib/ims/ims_getters.h"
+#include "ims_qos_stats.h"
+
+extern struct ims_qos_counters_h ims_qos_cnts_h;
 
 /*
  * Called upon receipt of an ASR. Terminates the user session and returns the ASA.
@@ -76,13 +79,15 @@ AAAMessage* rx_process_asr(AAAMessage *request) {
 
     if (!request || !request->sessionId) return 0;
 
+    counter_inc(ims_qos_cnts_h.asrs);
+    
     session = cdpb.AAAGetAuthSession(request->sessionId->data);
 
     if (!session) {
         LM_DBG("received an ASR but the session is already deleted\n");
         return 0;
     }
-
+    
     code = rx_get_abort_cause(request);
     LM_DBG("abort-cause code is %u\n", code);
 

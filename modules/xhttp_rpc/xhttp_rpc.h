@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2011 VoIP Embedded, Inc.
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * 2011-11-11  initial version (osas)
  */
 
 

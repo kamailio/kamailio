@@ -259,7 +259,8 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 	}
 	if(con->dbf.raw_query(con->dbh, query, &db_res)!=0)
 	{
-		LM_ERR("cannot do the query\n");
+		LM_ERR("cannot do the query [%.*s]\n",
+				(query->len>32)?32:query->len, query->s);
 		return -1;
 	}
 

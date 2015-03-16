@@ -29,17 +29,36 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. pretty_format (int)
+              3.2. transport (int)
+              3.3. fifo_name (str)
+              3.4. fifo_mode (int)
+              3.5. fifo_group (int or str)
+              3.6. fifo_user (int or str)
+              3.7. fifo_reply_dir (str)
 
         4. Functions
 
               4.1. jsonrpc_dispatch()
               4.2. jsonrpc_exec(cmd)
 
+        5. JSONRPC Transports
+
+              5.1. JSONRPC Over HTTP
+              5.2. JSONRPC Over FIFO
+
    List of Examples
 
    1.1. Set pretty_format parameter
-   1.2. jsonrpc_dispatch usage
-   1.3. jsonrpc_exec usage
+   1.2. Set transport parameter
+   1.3. Set fifo_name parameter
+   1.4. Set fifo_mode parameter
+   1.5. Set fifo_group parameter
+   1.6. Set fifo_user parameter
+   1.7. Set fifo_reply_dir parameter
+   1.8. jsonrpc_dispatch usage
+   1.9. jsonrpc_exec usage
+   1.10. JSONRPC Over Fifo Command
+   1.11. JSONRPC Over Fifo Command From Termina
 
 Chapter 1. Admin Guide
 
@@ -57,21 +76,35 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. pretty_format (int)
+        3.2. transport (int)
+        3.3. fifo_name (str)
+        3.4. fifo_mode (int)
+        3.5. fifo_group (int or str)
+        3.6. fifo_user (int or str)
+        3.7. fifo_reply_dir (str)
 
    4. Functions
 
         4.1. jsonrpc_dispatch()
         4.2. jsonrpc_exec(cmd)
 
+   5. JSONRPC Transports
+
+        5.1. JSONRPC Over HTTP
+        5.2. JSONRPC Over FIFO
+
 1. Overview
 
    1.1. Limitations
 
-   This module provides a JSON-RPC server over HTTP implementation,
+   This module provides a JSON-RPC v2 server over HTTP implementation,
    tailored for the needs of Kamailio. It implements the Kamailio RPC
    interface over JSON-RPC.
 
-   The JSONRPC-S module uses the xHTTP module to handle HTTP requests.
+   The specification for JSON-RPC is available at:
+   http://www.jsonrpc.org/specification.
+
+   The JSONRPC-S module uses the xHTTP module to handle HTTP/S requests.
    Read the documentation of the xHTTP module for more details.
 
 1.1. Limitations
@@ -102,6 +135,12 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. pretty_format (int)
+   3.2. transport (int)
+   3.3. fifo_name (str)
+   3.4. fifo_mode (int)
+   3.5. fifo_group (int or str)
+   3.6. fifo_user (int or str)
+   3.7. fifo_reply_dir (str)
 
 3.1. pretty_format (int)
 
@@ -114,6 +153,80 @@ Chapter 1. Admin Guide
 modparam("jsonrpc-s", "pretty_format", 1)
 ...
 
+3.2. transport (int)
+
+   Control what transports are enabled. The value can be:
+     * 0 - all transports that can be enabled. For http, the xhttp module
+       must be loaded. For FIFO, the fifo_name parameter must be set.
+     * 1 - only HTTP transport
+     * 2 - only FIFO transport
+
+   Default value is '0'.
+
+   Example 1.2. Set transport parameter
+...
+modparam("jsonrpc-s", "transport", 1)
+...
+
+3.3. fifo_name (str)
+
+   The name of the FIFO file to be created for listening and reading
+   external commands.
+
+   Default value is NONE.
+
+   Example 1.3. Set fifo_name parameter
+...
+modparam("jsonrpc-s", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
+...
+
+3.4. fifo_mode (int)
+
+   Permission to be used for creating the listening FIFO file. It follows
+   the UNIX conventions.
+
+   Default value is 0660 (rw-rw----).
+
+   Example 1.4. Set fifo_mode parameter
+...
+modparam("jsonrpc-s", "fifo_mode", 0600)
+...
+
+3.5. fifo_group (int or str)
+
+   System Group to be used for creating the listening FIFO file.
+
+   Default value is the inherited one (process group).
+
+   Example 1.5. Set fifo_group parameter
+...
+modparam("jsonrpc-s", "fifo_group", 0)
+modparam("jsonrpc-s", "fifo_group", "root")
+...
+
+3.6. fifo_user (int or str)
+
+   System User to be used for creating the listening FIFO file.
+
+   Default value is the inherited one (process user).
+
+   Example 1.6. Set fifo_user parameter
+...
+modparam("jsonrpc-s", "fifo_user", 0)
+modparam("jsonrpc-s", "fifo_user", "root")
+...
+
+3.7. fifo_reply_dir (str)
+
+   Directory to be used for creating the reply FIFO files.
+
+   Default value is "/tmp/"
+
+   Example 1.7. Set fifo_reply_dir parameter
+...
+modparam("jsonrpc-s", "fifo_reply_dir", "/home/kamailio/tmp/")
+...
+
 4. Functions
 
    4.1. jsonrpc_dispatch()
@@ -123,7 +236,7 @@ modparam("jsonrpc-s", "pretty_format", 1)
 
    Handle the JSONRPC request and generate a response.
 
-   Example 1.2. jsonrpc_dispatch usage
+   Example 1.8. jsonrpc_dispatch usage
 ...
 #!KAMAILIO
 
@@ -174,7 +287,62 @@ event_route[xhttp:request] {
    dynamic string with variables. The result of the command can be
    accessed via $jsonrpl(key) pseudo variables.
 
-   Example 1.3. jsonrpc_exec usage
+   Example 1.9. jsonrpc_exec usage
 ...
 jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
 ...
+
+5. JSONRPC Transports
+
+   5.1. JSONRPC Over HTTP
+   5.2. JSONRPC Over FIFO
+
+   JSONRPC specifications do not enforce a specific transport to carry the
+   JSON documents. Very common is JSONRPC over HTTP or HTTPS, and they are
+   supported by Kamailio. In addition, Kamailio supports receiving JSON
+   documents via a local FIFO file.
+
+5.1. JSONRPC Over HTTP
+
+   It requires that XHTTP module is loaded. HTTPS can be used if you
+   enable TLS for Kamailio. The JSONRPC requests have to be sent to the
+   TCP or TLS ports of Kamailio.
+
+   The 'transport' parameter has to be 0 or 1.
+
+   The format of the JSON document must follow the JSONRPC specifications.
+
+5.2. JSONRPC Over FIFO
+
+   This module can retrive JSONRPC requests via a local FIFO file. To
+   enable this feature, 'fifo_name' parameter must be set and 'transport'
+   parameter has to be 0 or 2.
+
+   The format of the JSON document must follow the JSONRPC specifications
+   plus an additional field named 'reply_name'. The value for this field
+   must be the name of the FIFO file were to write the JSONRPC response.
+   The reply FIFO file is created in the folder specified by
+   'fifo_reply_dir'. Next is an example showing a JSONRPC command to be
+   sent via FIFO transport.
+
+   Example 1.10. JSONRPC Over Fifo Command
+...
+{
+ "jsonrpc": "2.0",
+  "method": "core.psx",
+  "reply_name": "kamailio_jsonrpc_reply_fifo",
+  "id": 1
+}
+...
+
+   Next is an example of how to test it from a terminal, assuming that the
+   parameter 'fifo_name' is set to '/tmp/kamailio_jsonrpc_fifo'.
+
+   Example 1.11. JSONRPC Over Fifo Command From Termina
+...
+mkfifo /tmp/kamailio_jsonrpc_reply_fifo
+cat /tmp/kamailio_jsonrpc_reply_fifo &
+echo '{"jsonrpc": "2.0", "method": "core.psx", \
+          "reply_name": "kamailio_jsonrpc_reply_fifo", "id": 1}' \
+     > /tmp/kamailio_jsonrpc_fifo
+rm /tmp/kamailio_jsonrpc_reply_fifo

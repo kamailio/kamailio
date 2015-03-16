@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
@@ -40,6 +38,8 @@
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_rr.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
 #include "../outbound/api.h"
 #include "loose.h"
 #include "record.h"
@@ -79,6 +79,13 @@ static int w_is_direction(struct sip_msg *,char *, char *);
 static int remove_record_route(sip_msg_t*, char*, char*);
 /* PV functions */
 static int pv_get_route_uri_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_from_tag_initial(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+static int pv_get_to_tag_initial(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+static int pv_get_rdir(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_rdir_name(pv_spec_p sp, str *in);
+
 /*!
  * \brief Exported functions
  */
@@ -129,7 +136,14 @@ static param_export_t params[] ={
  */
 static pv_export_t mod_pvs[] = {
     {{"route_uri", (sizeof("route_uri")-1)}, /* URI of the first Route-Header */
-     PVT_OTHER, pv_get_route_uri_f, 0, 0, 0, 0, 0},
+		PVT_OTHER, pv_get_route_uri_f, 0, 0, 0, 0, 0},
+    {{"fti", (sizeof("fti")-1)}, /* From-Tag as for initial request */
+		PVT_OTHER, pv_get_from_tag_initial, 0, 0, 0, 0, 0},
+    {{"tti", (sizeof("tti")-1)}, /* To-Tag as for response to initial request */
+		PVT_OTHER, pv_get_to_tag_initial, 0, 0, 0, 0, 0},
+	{ {"rdir", (sizeof("rdir")-1)}, PVT_OTHER, pv_get_rdir, 0,
+		pv_parse_rdir_name, 0, 0, 0 },
+
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -479,4 +493,142 @@ static int remove_record_route(sip_msg_t* _m, char* _s1, char* _s2)
 {
 	free_rr_lump(&(_m->add_rm));
 	return 1;
+}
+
+/**
+ *
+ */
+static int pv_get_to_tag_initial(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct to_body *xto;
+	if(msg==NULL)
+		return -1;
+
+	if(msg->to==NULL && parse_headers(msg, HDR_TO_F, 0)==-1) {
+		LM_ERR("cannot parse To header\n");
+		return pv_get_null(msg, param, res);
+	}
+	if(msg->to==NULL || get_to(msg)==NULL) {
+		LM_DBG("no To header\n");
+		return pv_get_null(msg, param, res);
+	}
+	xto = get_to(msg);
+
+	if(is_direction(msg, RR_FLOW_UPSTREAM)==0) {
+		if(parse_from_header(msg)<0) {
+			LM_ERR("cannot parse From header\n");
+			return pv_get_null(msg, param, res);
+		}
+		if(msg->from==NULL || get_from(msg)==NULL) {
+			LM_DBG("no From header\n");
+			return pv_get_null(msg, param, res);
+		}
+		xto = get_from(msg);
+	}
+
+	if (xto->tag_value.s==NULL || xto->tag_value.len<=0) {
+		LM_DBG("no Tag parameter\n");
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &xto->tag_value);
+}
+
+/**
+ *
+ */
+static int pv_get_from_tag_initial(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct to_body *xto;
+	if(msg==NULL)
+		return -1;
+
+	if(parse_from_header(msg)<0) {
+		LM_ERR("cannot parse From header\n");
+		return pv_get_null(msg, param, res);
+	}
+	if(msg->from==NULL || get_from(msg)==NULL) {
+		LM_DBG("no From header\n");
+		return pv_get_null(msg, param, res);
+	}
+	xto = get_from(msg);
+
+	if(is_direction(msg, RR_FLOW_UPSTREAM)==0) {
+		if(msg->to==NULL && parse_headers(msg, HDR_TO_F, 0)==-1) {
+			LM_ERR("cannot parse To header\n");
+			return pv_get_null(msg, param, res);
+		}
+		if(msg->to==NULL || get_to(msg)==NULL) {
+			LM_DBG("no To header\n");
+			return pv_get_null(msg, param, res);
+		}
+		xto = get_to(msg);
+	}
+
+	if (xto->tag_value.s==NULL || xto->tag_value.len<=0) {
+		LM_DBG("no Tag parameter\n");
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &xto->tag_value);
+}
+
+/**
+ *
+ */
+static int pv_parse_rdir_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 2:
+			if(strncmp(in->s, "id", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "name", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV af key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+static str pv_rr_flow_list[] = {
+		{ "downstream",  10 },
+		{ "upstream",    8  },
+		{ 0, 0 }
+	};
+
+/**
+ *
+ */
+static int pv_get_rdir(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(msg==NULL || param==NULL)
+		return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1:
+			if(is_direction(msg, RR_FLOW_UPSTREAM)==0)
+				return pv_get_strval(msg, param, res, &pv_rr_flow_list[1]);
+			return pv_get_strval(msg, param, res, &pv_rr_flow_list[0]);
+		default:
+			if(is_direction(msg, RR_FLOW_UPSTREAM)==0)
+				return pv_get_uintval(msg, param, res, RR_FLOW_UPSTREAM);
+			return pv_get_uintval(msg, param, res, RR_FLOW_DOWNSTREAM);
+	}
 }

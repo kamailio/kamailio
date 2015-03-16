@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * rls db - RLS database support 
  *
  * Copyright (C) 2011 Crocodile RCS Ltd

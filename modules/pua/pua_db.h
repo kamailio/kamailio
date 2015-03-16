@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * pua_db headers - presence user agent db headers
  *
  * Copyright (C) 2011 Crocodile RCS Ltd

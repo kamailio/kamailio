@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * pua db - presence user agent database support 
  *
  * Copyright (C) 2011 Crocodile RCS Ltd

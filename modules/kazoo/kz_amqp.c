@@ -283,6 +283,42 @@ void kz_amqp_init_connection_pool() {
 	}
 }
 
+int kz_amqp_bind_init_targeted_channel(int idx )
+{
+    kz_amqp_bind_ptr bind = NULL;
+    str rpl_exch = str_init("targeted");
+    str rpl_exch_type = str_init("direct");
+    int ret = -1;
+    char serverid[512];
+
+    bind = (kz_amqp_bind_ptr)shm_malloc(sizeof(kz_amqp_bind));
+	if(bind == NULL) {
+		LM_ERR("error allocation memory for reply\n");
+		goto error;
+	}
+	memset(bind, 0, sizeof(kz_amqp_bind));
+
+	bind->exchange = kz_amqp_bytes_dup_from_str(&rpl_exch);
+	bind->exchange_type = kz_amqp_bytes_dup_from_str(&rpl_exch_type);
+
+    sprintf(serverid, "kamailio@%.*s-<%d-%d>", dbk_node_hostname.len, dbk_node_hostname.s, my_pid(), idx);
+    bind->queue = kz_amqp_bytes_dup_from_string(serverid);
+
+    sprintf(serverid, "kamailio@%.*s-<%d>-targeted-%d", dbk_node_hostname.len, dbk_node_hostname.s, my_pid(), idx);
+    bind->routing_key = kz_amqp_bytes_dup_from_string(serverid);
+
+    if (bind->exchange.bytes == NULL || bind->routing_key.bytes == NULL || bind->queue.bytes == NULL) {
+		LM_ERR("Out of memory allocating for exchange/routing_key\n");
+		goto error;
+    }
+
+    channels[idx].targeted = bind;
+    return 0;
+ error:
+	kz_amqp_free_bind(bind);
+    return ret;
+}
+
 int kz_amqp_init() {
 	int i;
 	kz_amqp_init_connection_pool();
@@ -294,11 +330,15 @@ int kz_amqp_init() {
 		channels = shm_malloc(dbk_channels * sizeof(kz_amqp_channel));
 		memset(channels, 0, dbk_channels * sizeof(kz_amqp_channel));
 		for(i=0; i < dbk_channels; i++) {
+			channels[i].channel = i+1;
 			if(lock_init(&channels[i].lock)==NULL) {
 				LM_ERR("could not initialize locks for channels\n");
 				return 0;
 			}
-			channels[i].channel = i+1;
+			if(kz_amqp_bind_init_targeted_channel(i)) {
+				LM_ERR("could not initialize targeted channels\n");
+				return 0;
+			}
 		}
 	}
 	return 1;
@@ -541,10 +581,12 @@ kz_amqp_conn_ptr kz_amqp_get_next_connection() {
 
 int kz_amqp_open_next_connection(kz_amqp_conn_ptr ptr) {
 	if(ptr == NULL) {
+		LM_ERR("OPEN CONNECTION PTR == NULL\n");
 		return -1;
 	}
 
 	if(kz_pool == NULL) {
+		LM_ERR("OPEN CONNECTION POOL == NULL\n");
 		return -2;
 	}
 
@@ -1216,7 +1258,43 @@ int get_channel_index() {
 	return get_channel_index();
 }
 
-int kz_amqp_bind_targeted_channel(kz_amqp_conn_ptr kz_conn, int loopcount, int idx )
+int kz_amqp_bind_targeted_channel(kz_amqp_conn_ptr kz_conn, int idx )
+{
+    kz_amqp_bind_ptr bind = channels[idx].targeted;
+    amqp_queue_declare_ok_t *r = NULL;
+    int ret = -1;
+
+    r = amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
+    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
+    {
+		goto error;
+    }
+
+	amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+    if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
+    {
+		ret = -RET_AMQP_ERROR;
+		goto error;
+    }
+
+    if (amqp_queue_bind(kz_conn->conn, channels[idx].channel, bind->queue, bind->exchange, bind->routing_key, kz_amqp_empty_table) < 0
+	    || kz_amqp_error("Binding queue", amqp_get_rpc_reply(kz_conn->conn)))
+    {
+		goto error;
+    }
+
+    if (amqp_basic_consume(kz_conn->conn, channels[idx].channel, bind->queue, kz_amqp_empty_bytes, 0, 1, 1, kz_amqp_empty_table) < 0
+	    || kz_amqp_error("Consuming", amqp_get_rpc_reply(kz_conn->conn)))
+    {
+		goto error;
+    }
+
+    return 0;
+ error:
+    return ret;
+}
+
+int kz_amqp_bind_targeted_channel_ex(kz_amqp_conn_ptr kz_conn, int loopcount, int idx )
 {
     kz_amqp_bind_ptr bind = NULL;
     amqp_queue_declare_ok_t *r = NULL;
@@ -1283,7 +1361,7 @@ int kz_amqp_bind_targeted_channels(kz_amqp_conn_ptr kz_conn , int loopcount)
 {
 	int i, ret;
 	for(i = 0; i < dbk_channels; i++) {
-		ret = kz_amqp_bind_targeted_channel(kz_conn, loopcount, i);
+		ret = kz_amqp_bind_targeted_channel_ex(kz_conn, loopcount, i);
 		if(ret != 0)
 			return ret;
 	}
@@ -1704,7 +1782,7 @@ void kz_amqp_manager_loop(int child_no)
     		/* end cleanup */
     		channel_res = kz_amqp_channel_open(kzconn, channels[i].channel);
     		if(channel_res == 0) {
-    			kz_amqp_bind_targeted_channel(kzconn, loopcount, i);
+    			kz_amqp_bind_targeted_channel_ex(kzconn, loopcount, i);
 				channels[i].state = KZ_AMQP_FREE;
     		}
     	}
@@ -1934,9 +2012,10 @@ void kz_amqp_timeout_proc(int child_no)
 
 void kz_amqp_publisher_proc(int child_no)
 {
-	LM_DBG("starting manager %d\n", child_no);
+	LM_DBG("starting publisher %d\n", child_no);
 	close(kz_pipe_fds[child_no*2+1]);
 	int data_pipe = kz_pipe_fds[child_no*2];
+	LM_DBG("publisher started %d\n", child_no);
     fd_set fdset;
     int idx, i;
     int selret;
@@ -1946,11 +2025,20 @@ void kz_amqp_publisher_proc(int child_no)
 	int channel_res;
 
     kzconn = (kz_amqp_conn_ptr)pkg_malloc(sizeof(kz_amqp_conn));
+    if(kzconn == NULL)
+    {
+    	LM_ERR("NO MORE PACKAGE MEMORY\n");
+    	return;
+    }
     memset(kzconn, 0, sizeof(kz_amqp_conn));
 
     while(1) {
     	OK = 1;
-   		kz_amqp_open_next_connection(kzconn);
+   		if(kz_amqp_open_next_connection(kzconn)) {
+   			LM_ERR("Error opening connection\n");
+   			sleep(3);
+   			continue;
+   		}
     	kz_amqp_fire_connection_event("open", kzconn->info->info.host);
 
     	for(i=0,channel_res=0; i < dbk_channels && channel_res == 0; i++) {
@@ -1971,6 +2059,7 @@ void kz_amqp_publisher_proc(int child_no)
 			}
 
     	}
+
     	while(OK) {
 			FD_ZERO(&fdset);
 			FD_SET(data_pipe, &fdset);
@@ -1992,17 +2081,17 @@ void kz_amqp_publisher_proc(int child_no)
 								OK = 0;
 								LM_ERR("ERROR SENDING PUBLISH");
 							}
-							channels[idx].state = KZ_AMQP_FREE;
 							channels[idx].cmd = NULL;
 							lock_release(&cmd->lock);
+							channels[idx].state = KZ_AMQP_FREE;
 							break;
 						case KZ_AMQP_CALL:
 							idx = kz_amqp_send_receive(kzconn, cmd);
 							if(idx < 0) {
-								channels[idx].state = KZ_AMQP_FREE;
 								channels[idx].cmd = NULL;
 								cmd->return_code = -1;
 								lock_release(&cmd->lock);
+								channels[idx].state = KZ_AMQP_FREE;
 								LM_ERR("ERROR SENDING QUERY");
 								OK = 0;
 							}
@@ -2031,15 +2120,29 @@ void kz_amqp_consumer_proc(int child_no)
     kz_amqp_channel_ptr consumer_channels = NULL;
 
     kzconn = (kz_amqp_conn_ptr)pkg_malloc(sizeof(kz_amqp_conn));
+    if(kzconn == NULL)
+    {
+    	LM_ERR("NO MORE PACKAGE MEMORY\n");
+    	return;
+    }
     memset(kzconn, 0, sizeof(kz_amqp_conn));
 
     consumer_channels = (kz_amqp_channel_ptr)pkg_malloc(sizeof(kz_amqp_channel)*bindings_count);
+    if(consumer_channels == NULL)
+    {
+    	LM_ERR("NO MORE PACKAGE MEMORY\n");
+    	return;
+    }
 	for(i=0; i < bindings_count; i++)
 		consumer_channels[i].channel = dbk_channels + i + 1;
 
     while(1) {
     	OK = 1;
-   		kz_amqp_open_next_connection(kzconn);
+   		if(kz_amqp_open_next_connection(kzconn)) {
+   			LM_ERR("Error opening connection\n");
+   			sleep(3);
+   			continue;
+   		}
     	kz_amqp_fire_connection_event("open", kzconn->info->info.host);
 
     	/* reset channels */
@@ -2047,16 +2150,20 @@ void kz_amqp_consumer_proc(int child_no)
     	for(i=0,channel_res=0; i < dbk_channels && channel_res == 0; i++) {
 			/* start cleanup */
 			channels[i].consumer = NULL;
+
+			/*
 			if(channels[i].targeted != NULL) {
 				kz_amqp_free_bind(channels[i].targeted);
 				channels[i].targeted = NULL;
 			}
+			*/
+
 			/* end cleanup */
 
 			/* bind targeted channels */
 			channel_res = kz_amqp_channel_open(kzconn, channels[i].channel);
 			if(channel_res == 0) {
-				kz_amqp_bind_targeted_channel(kzconn, 0, i);
+				kz_amqp_bind_targeted_channel(kzconn, i);
 			}
     	}
 
@@ -2079,6 +2186,8 @@ void kz_amqp_consumer_proc(int child_no)
 				i++;
 			}
 		}
+
+		LM_DBG("CONSUMER INIT DONE\n");
 
 		while(OK) {
 			payload = NULL;

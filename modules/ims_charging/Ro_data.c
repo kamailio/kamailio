@@ -87,7 +87,7 @@ out_of_memory:
 }
 
 ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t * time_stamps, str * user_session_id, str * outgoing_session_id, str * calling_party, 
-	str * called_party, str * icid, str * orig_ioi, str * term_ioi, int node_role, str *incoming_trunk_id, str *outgoing_trunk_id) {
+	str * called_party, str * icid, str * orig_ioi, str * term_ioi, int node_role, str *incoming_trunk_id, str *outgoing_trunk_id, str* pani) {
 
     str_list_slot_t *sl = 0;
     ims_information_t *x = 0;
@@ -123,6 +123,10 @@ ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t
     
     if (outgoing_trunk_id && outgoing_trunk_id->s)
         str_dup_ptr(x->outgoing_trunk_id, *outgoing_trunk_id, pkg);
+    
+    if (pani && pani->s) {
+	str_dup_ptr(x->access_network_info, *pani, pkg);
+    }
 
     //WL_FREE_ALL(&(x->called_asserted_identity),str_list_t,pkg);
     //str_free_ptr(x->requested_party_address,pkg);
@@ -239,6 +243,7 @@ void ims_information_free(ims_information_t *x) {
     
     str_free_ptr(x->incoming_trunk_id, pkg);
     str_free_ptr(x->outgoing_trunk_id, pkg);
+    str_free_ptr(x->access_network_info, pkg);
 
     time_stamps_free(x->time_stamps);
 
