@@ -797,6 +797,20 @@ failure_route[REMOTE_AUTH] {
 		</para>
 	</section>
 	<section>
+		<title>Counters</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>regtotal</emphasis>: Total number of registrations
+			</para></listitem>
+			<listitem><para>
+				<emphasis>regactive</emphasis>: Total number of active registrations (successfully registred with service)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>regdisabled</emphasis>: Total number of disabled registrations (no longer active)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+	<section>
 		<title>RPC Commands</title>
 		<section id="uac.r.uac.reg_dump">
 			<title>
