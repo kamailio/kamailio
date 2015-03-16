@@ -62,16 +62,17 @@ Ramona-Elena Modroiu
               4.10. uac_reg_request_to(user, mode)
 
         5. Pseudo Variables
-        6. RPC Commands
+        6. Counters
+        7. RPC Commands
 
-              6.1. uac.reg_dump
-              6.2. uac.reg_info
-              6.3. uac.reg_enable
-              6.4. uac.reg_disable
-              6.5. uac.reg_reload
-              6.6. uac.reg_refresh
+              7.1. uac.reg_dump
+              7.2. uac.reg_info
+              7.3. uac.reg_enable
+              7.4. uac.reg_disable
+              7.5. uac.reg_reload
+              7.6. uac.reg_refresh
 
-        7. Remote Registration
+        8. Remote Registration
 
    List of Examples
 
@@ -152,16 +153,17 @@ Chapter 1. Admin Guide
         4.10. uac_reg_request_to(user, mode)
 
    5. Pseudo Variables
-   6. RPC Commands
+   6. Counters
+   7. RPC Commands
 
-        6.1. uac.reg_dump
-        6.2. uac.reg_info
-        6.3. uac.reg_enable
-        6.4. uac.reg_disable
-        6.5. uac.reg_reload
-        6.6. uac.reg_refresh
+        7.1. uac.reg_dump
+        7.2. uac.reg_info
+        7.3. uac.reg_enable
+        7.4. uac.reg_disable
+        7.5. uac.reg_reload
+        7.6. uac.reg_refresh
 
-   7. Remote Registration
+   8. Remote Registration
 
 1. Overview
 
@@ -689,16 +691,24 @@ failure_route[REMOTE_AUTH] {
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
 
-6. RPC Commands
+6. Counters
 
-   6.1. uac.reg_dump
-   6.2. uac.reg_info
-   6.3. uac.reg_enable
-   6.4. uac.reg_disable
-   6.5. uac.reg_reload
-   6.6. uac.reg_refresh
+     * regtotal: Total number of registrations
+     * regactive: Total number of active registrations (successfully
+       registred with service)
+     * regdisabled: Total number of disabled registrations (no longer
+       active)
 
-6.1. uac.reg_dump
+7. RPC Commands
+
+   7.1. uac.reg_dump
+   7.2. uac.reg_info
+   7.3. uac.reg_enable
+   7.4. uac.reg_disable
+   7.5. uac.reg_reload
+   7.6. uac.reg_refresh
+
+7.1. uac.reg_dump
 
    Dump the content of remote registration table from memory.
 
@@ -707,7 +717,7 @@ failure_route[REMOTE_AUTH] {
    kamcmd uac.reg_dump
 ...
 
-6.2. uac.reg_info
+7.2. uac.reg_info
 
    Return the details of a remote registration record based on a filter.
    The command has two parameter: attribute and value. The attribute can
@@ -720,7 +730,7 @@ failure_route[REMOTE_AUTH] {
    kamcmd uac.reg_info l_uuid account123
 ...
 
-6.3. uac.reg_enable
+7.3. uac.reg_enable
 
    Enable a remote registration record based on a filter. The command has
    two parameter: attribute and value. The attribute can be: l_uuid,
@@ -733,7 +743,7 @@ failure_route[REMOTE_AUTH] {
    kamcmd uac.reg_enable l_uuid account123
 ...
 
-6.4. uac.reg_disable
+7.4. uac.reg_disable
 
    Disable a remote registration record based on a filter. The command has
    two parameter: attribute and value. The attribute can be: l_uuid,
@@ -746,7 +756,7 @@ failure_route[REMOTE_AUTH] {
    kamcmd uac.reg_disable l_uuid account123
 ...
 
-6.5. uac.reg_reload
+7.5. uac.reg_reload
 
    Reload the records from database for remote registrations.
 
@@ -755,7 +765,7 @@ failure_route[REMOTE_AUTH] {
    kamcmd uac.reg_reload
 ...
 
-6.6. uac.reg_refresh
+7.6. uac.reg_refresh
 
    Load one record by l_uuid from database for remote registrations. If
    the record exists in memory, its authentication password is updated,
@@ -767,7 +777,7 @@ failure_route[REMOTE_AUTH] {
    kamcmd uac.reg_refresh account123
 ...
 
-7. Remote Registration
+8. Remote Registration
 
    The module can register contact addresses to remote REGISTRAR servers.
    You have to add records to uacreg table. The table stores following
