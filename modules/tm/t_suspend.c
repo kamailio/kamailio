@@ -105,6 +105,10 @@ int t_suspend(struct sip_msg *msg,
 			LM_ERR("failed to add the blind UAC\n");
 			return -1;
 		}
+		/* propagate failure route to new branch
+		 * - failure route to be executed if the branch is not continued
+		 *   before timeout */
+		t->uac[t->async_backup.blind_uac].on_failure = t->on_failure;
 	} else {
 		LM_DBG("this is a suspend on reply - setting msg flag to SUSPEND\n");
 		msg->msg_flags |= FL_RPL_SUSPENDED;
