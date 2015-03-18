@@ -39,7 +39,8 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils lua memcached \
 			   snmpstats carrierroute xmpp cpl redis python geoip\
 			   sqlite json mono ims sctp java \
-			   purple tls outbound websocket autheph dnssec kazoo cnxcc
+			   purple tls outbound websocket autheph dnssec kazoo \
+			   cnxcc evapi
 
 # module groups to be packaged onto kamailio-extra-modules
 EXTRA_GROUPS=gzcompress uuid ev jansson
