@@ -743,7 +743,7 @@ int sqlops_is_null(str *sres, int i, int j)
 		LM_ERR("row index out of bounds [%d/%d]\n", i, res->nrows);
 		goto error;
 	}
-	if(i>=res->ncols)
+	if(j>=res->ncols)
 	{
 		LM_ERR("column index out of bounds [%d/%d]\n", j, res->ncols);
 		goto error;
