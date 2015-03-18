@@ -156,6 +156,18 @@ Description: Json parser and jsonrpc modules for Kamailio
  This package provides json parser for Kamailio's configuration file
  and the JSON-RPC client over netstrings.
 
+Package: kamailio-evapi-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: kamailio (= ${binary:Version}),
+         libev-dev,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: The EVAPI module can be used to create an event message flow from
+ Kamailio to any application that can connect to a TCP socket. The remote
+ application can also issue messages received by Kamailio.
+
 Package: kamailio-memcached-modules
 Architecture: linux-any
 Multi-Arch: same
