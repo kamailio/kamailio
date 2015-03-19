@@ -25,6 +25,7 @@ static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "SELECT FROM_INTERCONNECT_PARTNER_ID AS IPID, PRIORITY "
 "FROM service_rate "
 "WHERE '%.*s' like concat(FROM_PREFIX,'%') "
+" AND SERVICE_CODE = '%.*s' AND LEG='%.*s' "
 "ORDER BY length(FROM_PREFIX) desc limit 1 "
 ") "
 ") "
@@ -45,6 +46,7 @@ static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "UNION "
 "( "
 "SELECT TO_INTERCONNECT_PARTNER_ID AS IPID, PRIORITY "
+" AND SERVICE_CODE = '%.*s' AND LEG='%.*s' "
 "FROM service_rate "
 "WHERE '%.*s' like concat(TO_PREFIX,'%') "
 "ORDER BY length(TO_PREFIX) desc limit 1 "
@@ -78,6 +80,7 @@ static char *term_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "SELECT FROM_INTERCONNECT_PARTNER_ID AS IPID, PRIORITY "
 "FROM service_rate "
 "WHERE '%.*s' like concat(FROM_PREFIX,'%') "
+" AND SERVICE_CODE = '%.*s' AND LEG='%.*s' "
 "ORDER BY length(FROM_PREFIX) desc limit 1 "
 ") "
 ") "
@@ -100,6 +103,7 @@ static char *term_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "SELECT TO_INTERCONNECT_PARTNER_ID AS IPID, PRIORITY "
 "FROM service_rate "
 "WHERE '%.*s' like concat(TO_PREFIX,'%') "
+" AND SERVICE_CODE = '%.*s' AND LEG='%.*s' "
 "ORDER BY length(TO_PREFIX) desc limit 1 "
 ") "
 ") "
@@ -171,13 +175,16 @@ int get_orig_route_data(str* a_number, str* b_number, str* leg, str* sc, ix_rout
     int num_rows;
     
 
-    if (strlen(orig_route_data_query) + a_number->len + a_number->len + b_number->len + b_number->len + leg->len + sc->len > QUERY_LEN) {
+    if (strlen(orig_route_data_query) + a_number->len + a_number->len + b_number->len + b_number->len + (3*leg->len) + (3*sc->len) > QUERY_LEN) {
 	LM_ERR("query too big\n");
 	return -1;
     }
     
-    snprintf(query, QUERY_LEN, orig_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, b_number->len, b_number->s,
-	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s);
+    snprintf(query, QUERY_LEN, orig_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, 
+            sc->len, sc->s, leg->len, leg->s,
+            b_number->len, b_number->s,
+	    sc->len, sc->s, leg->len, leg->s,
+            b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s);
     query_s.s = query;
     query_s.len = strlen(query);
 
@@ -265,13 +272,16 @@ int get_term_route_data(str* a_number, str* b_number, str* leg, str* sc, str* ex
     int num_rows;
     
 
-    if (strlen(term_route_data_query) + a_number->len + a_number->len + b_number->len + a_number->len + leg->len + sc->len + ext_trunk_id->len > QUERY_LEN) {
+    if (strlen(term_route_data_query) + a_number->len + a_number->len + b_number->len + a_number->len + (3*leg->len) + (3*sc->len) + ext_trunk_id->len > QUERY_LEN) {
 	LM_ERR("query too big\n");
 	return -1;
     }
     
-    snprintf(query, QUERY_LEN, term_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, b_number->len, b_number->s,
-	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s, ext_trunk_id->len, ext_trunk_id->s);
+    snprintf(query, QUERY_LEN, term_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, 
+            sc->len, sc->s, leg->len, leg->s,
+            b_number->len, b_number->s,
+	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s,
+            sc->len, sc->s, leg->len, leg->s, ext_trunk_id->len, ext_trunk_id->s);
     query_s.s = query;
     query_s.len = strlen(query);
 
