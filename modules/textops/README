@@ -95,7 +95,7 @@ Juha Heinanen
 
    1.1. search usage
    1.2. search_body usage
-   1.3. search_body usage
+   1.3. search_hf usage
    1.4. search_append usage
    1.5. search_append_body usage
    1.6. replace usage
@@ -107,7 +107,7 @@ Juha Heinanen
    1.12. subst_uri usage
    1.13. subst usage
    1.14. subst_body usage
-   1.15. search_body usage
+   1.15. subst_hf usage
    1.16. set_body usage
    1.17. set_reply_body usage
    1.18. filter_body usage
@@ -310,7 +310,7 @@ if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.3. search_body usage
+   Example 1.3. search_hf usage
 ...
 if ( search_hf("From", ":test@", "a") ) { /*....*/ };
 ...
@@ -454,8 +454,8 @@ if(has_body() && replace_body_atonce("^.+$", ""))
 if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
 
 # replace the uri in to: with the value of avp sip_address (just an example)
-if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') )
- {};
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig')
+) {};
 
 ...
 
@@ -483,7 +483,8 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
 
 # adds the avp 'uri_prefix' as prefix to numeric uris, and save the original
 # uri (\0 match) as a parameter: orig_uri (just an example)
-if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
+if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){
+$
 
 ...
 
@@ -550,7 +551,7 @@ if ( subst_body('/^o=(.*) /o=$fU /') ) {};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.15. search_body usage
+   Example 1.15. subst_hf usage
 ...
 if ( subst_hf("From", "/:test@/:best@/", "a") ) { /*....*/ };
 ...
@@ -1029,8 +1030,8 @@ text
    Example 1.38. append_body_part usage
 ...
 $var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c"
-append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handling
-=required");
+append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handlin
+g=required");
 ...
 Will append this the body:
 ...
