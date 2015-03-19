@@ -667,6 +667,11 @@ int pv_parse_index(pv_spec_p sp, str *in)
 		sp->pvp.pvi.type = PV_IDX_ALL;
 		return 0;
 	}
+	if(*p=='+' && in->len==1)
+	{
+		sp->pvp.pvi.type = PV_IDX_ITR;
+		return 0;
+	}
 	sign = 1;
 	if(*p=='-')
 	{
@@ -1225,7 +1230,10 @@ int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
 		*flags = PV_IDX_ALL;
 		return 0;
 	}
-	
+	if(ip->pvi.type == PV_IDX_ITR) {
+		*flags = PV_IDX_ITR;
+		return 0;
+	}
 	if(ip->pvi.type == PV_IDX_INT)
 	{
 		*idx = ip->pvi.u.ival;

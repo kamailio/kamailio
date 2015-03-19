@@ -97,7 +97,7 @@ dpl_id_p select_dpid(int id);
 struct subst_expr* repl_exp_parse(str subst);
 void repl_expr_free(struct subst_expr *se);
 int translate(struct sip_msg *msg, str user_name, str* repl_user, dpl_id_p idp, str *);
-int rule_translate(struct sip_msg *msg, str , dpl_node_t * rule,  str *);
+int rule_translate(struct sip_msg *msg, str , dpl_node_t * rule, pcre *subst_comp,  str *);
 
 pcre *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype);
 #endif
