@@ -157,7 +157,7 @@ if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
-		<title><function>search_body</function> usage</title>
+		<title><function>search_hf</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if ( search_hf("From", ":test@", "a") ) { /*....*/ };
@@ -604,7 +604,7 @@ if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
-		<title><function>search_body</function> usage</title>
+		<title><function>subst_hf</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if ( subst_hf("From", "/:test@/:best@/", "a") ) { /*....*/ };
