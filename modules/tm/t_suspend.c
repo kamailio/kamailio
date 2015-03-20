@@ -216,13 +216,13 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			}
 
 			/* Set last_received to something >= 200,
-+                       * the actual value does not matter, the branch
-+                       * will never be picked up for response forwarding.
-+                       * If last_received is lower than 200,
-+                       * then the branch may tried to be cancelled later,
-+                       * for example when t_reply() is called from
-+                       * a failure route => deadlock, because both
-+                       * of them need the reply lock to be held. */
+			 * the actual value does not matter, the branch
+			 * will never be picked up for response forwarding.
+			 * If last_received is lower than 200,
+			 * then the branch may tried to be cancelled later,
+			 * for example when t_reply() is called from
+			 * a failure route => deadlock, because both
+			 * of them need the reply lock to be held. */
 			t->uac[branch].last_received=500;
 			uac = &t->uac[branch];
 		}
