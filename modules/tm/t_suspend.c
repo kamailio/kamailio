@@ -226,10 +226,15 @@ int t_continue(unsigned int hash_index, unsigned int label,
 				return 1;
 			}
 
-			/*we really don't need this next line anymore otherwise we will 
-			never be able to forward replies after a (t_relay) on this branch.
-			We want to try and treat this branch as 'normal' (as if it were a normal req, not async)' */
-			//t->uac[branch].last_received=500;
+			/* Set last_received to something >= 200,
++                       * the actual value does not matter, the branch
++                       * will never be picked up for response forwarding.
++                       * If last_received is lower than 200,
++                       * then the branch may tried to be cancelled later,
++                       * for example when t_reply() is called from
++                       * a failure route => deadlock, because both
++                       * of them need the reply lock to be held. */
+			t->uac[branch].last_received=500;
 			uac = &t->uac[branch];
 		}
 		/* else
