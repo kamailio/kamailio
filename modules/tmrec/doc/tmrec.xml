@@ -28,10 +28,19 @@
 		<surname>Balashov</surname>
 		<email>abalashov@evaristesys.com</email>
 	    </editor>
+	    <editor>
+		<firstname>Richard</firstname>
+		<surname>Fuchs</surname>
+		<email>rfuchs@sipwise.com</email>
+	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2012</year>
 	    <holder>asipto.com</holder>
+	</copyright>
+	<copyright>
+	    <year>2012</year>
+	    <holder>Sipwise GmbH</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
