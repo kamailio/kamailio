@@ -468,7 +468,7 @@ void delete_subs(str* pres_uri, str* ev_name, str* to_tag,
 	/* delete record from hash table also if not in dbonly mode */
 	if(subs_dbmode != DB_ONLY)
 	{
-		unsigned int hash_code= core_hash(pres_uri, ev_name, shtable_size);
+		unsigned int hash_code= core_case_hash(pres_uri, ev_name, shtable_size);
 		if(delete_shtable(subs_htable, hash_code, &subs) < 0) {
 			LM_ERR("Failed to delete subscription from memory"
 					" [slot: %u ev: %.*s pu: %.*s ci: %.*s ft: %.*s tt: %.*s]\n",
@@ -491,7 +491,7 @@ int update_subscription_notifier(struct sip_msg* msg, subs_t* subs,
 	*sent_reply= 0;
 
 	/* Set the notifier/update fields for the subscription */
-	subs->updated = core_hash(&subs->callid, &subs->from_tag, 0) %
+	subs->updated = core_case_hash(&subs->callid, &subs->from_tag, 0) %
 				(pres_waitn_time * pres_notifier_poll_rate
 					* pres_notifier_processes);
 	if (subs->event->type & WINFO_TYPE)
@@ -611,7 +611,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		/* if subscriptions are stored in memory, update them */
 		if(subs_dbmode != DB_ONLY)
 		{
-			hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
+			hash_code= core_case_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 			if(update_shtable(subs_htable, hash_code, subs, REMOTE_TYPE)< 0)
 			{
 				LM_ERR("failed to update subscription in memory\n");
@@ -638,7 +638,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 			{
 				LM_DBG("inserting in shtable\n");
 				subs->db_flag = (subs_dbmode==WRITE_THROUGH)?WTHROUGHDB_FLAG:INSERTDB_FLAG;
-				hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
+				hash_code= core_case_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 				subs->version = 0;
 				if(insert_shtable(subs_htable,hash_code,subs)< 0)
 				{
@@ -1372,7 +1372,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	else
 		pres_uri = subs->pres_uri;
 
-	hash_code= core_hash(&pres_uri, &subs->event->name, shtable_size);
+	hash_code= core_case_hash(&pres_uri, &subs->event->name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
 	s= search_shtable(subs_htable, subs->callid, subs->to_tag,
 		subs->from_tag, hash_code);
@@ -2481,7 +2481,7 @@ int restore_db_subs(void)
 			s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
 			s.sockinfo_str.len= strlen(s.sockinfo_str.s);
 			s.db_flag = (subs_dbmode==WRITE_THROUGH)?WTHROUGHDB_FLAG:NO_UPDATEDB_FLAG;
-			hash_code= core_hash(&s.pres_uri, &s.event->name, shtable_size);
+			hash_code= core_case_hash(&s.pres_uri, &s.event->name, shtable_size);
 			if(insert_shtable(subs_htable, hash_code, &s)< 0)
 			{
 				LM_ERR("adding new record in hash table\n");

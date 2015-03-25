@@ -1033,7 +1033,7 @@ char* get_sphere(str* pres_uri)
 	if ( publ_cache_enabled )
 	{
 		/* search in hash table*/
-		hash_code= core_hash(pres_uri, NULL, phtable_size);
+		hash_code= core_case_hash(pres_uri, NULL, phtable_size);
 
 		lock_get(&pres_htable[hash_code].lock);
 

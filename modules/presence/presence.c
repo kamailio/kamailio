@@ -1024,7 +1024,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	}
 
 	LM_DBG("found %d record-uri in watchers_table\n", result->n);
-	hash_code= core_hash(&pres_uri, &ev->name, shtable_size);
+	hash_code= core_case_hash(&pres_uri, &ev->name, shtable_size);
 	subs.db_flag= hash_code;
 
 	/*must do a copy as sphere_check requires database queries */
@@ -1445,7 +1445,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 					* pres_notifier_processes));
 	} else {
 		db_vals[n_update_cols].val.int_val = 
-			core_hash(&subs->callid, &subs->from_tag, 0) %
+			core_case_hash(&subs->callid, &subs->from_tag, 0) %
 				  (pres_waitn_time * pres_notifier_poll_rate
 					* pres_notifier_processes);
 	}

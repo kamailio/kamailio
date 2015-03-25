@@ -375,7 +375,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 			goto error;
 		}
 	} else {
-		hash_code= core_hash(&subs->pres_uri, &subs->event->wipeer->name,
+		hash_code= core_case_hash(&subs->pres_uri, &subs->event->wipeer->name,
 				shtable_size);
 		lock_get(&subs_htable[hash_code].lock);
 		s= subs_htable[hash_code].entries;
@@ -612,7 +612,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	if( publ_cache_enabled )
 	{
 		/* search in hash table if any record exists */
-		hash_code= core_hash(&pres_uri, NULL, phtable_size);
+		hash_code= core_case_hash(&pres_uri, NULL, phtable_size);
 		if(search_phtable(&pres_uri, event->evp->type, hash_code)== NULL)
 		{
 			LM_DBG("No record exists in hash_table\n");
@@ -1191,7 +1191,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			goto error;
 		}
 	}else {
-		hash_code= core_hash(pres_uri, &event->name, shtable_size);
+		hash_code= core_case_hash(pres_uri, &event->name, shtable_size);
 		
 		lock_get(&subs_htable[hash_code].lock);
 
@@ -1653,7 +1653,7 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 	if(subs->expires!= 0 && subs->status != TERMINATED_STATUS)
 	{
 		unsigned int hash_code;
-		hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
+		hash_code= core_case_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 
 		/* if subscriptions are held also in memory, update the subscription hashtable */
 		if(subs_dbmode != DB_ONLY)
@@ -2265,7 +2265,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val =
-			core_hash(&callid, &from_tag, 0) % (pres_waitn_time *
+			core_case_hash(&callid, &from_tag, 0) % (pres_waitn_time *
  			 pres_notifier_poll_rate * pres_notifier_processes);
 		n_update_cols++;
 
@@ -2326,7 +2326,7 @@ int set_updated(subs_t *sub)
 	update_vals[0].type = DB1_INT;
 	update_vals[0].nul = 0;
 	update_vals[0].val.int_val =
-		core_hash(&sub->callid, &sub->from_tag, 0) %
+		core_case_hash(&sub->callid, &sub->from_tag, 0) %
 			(pres_waitn_time * pres_notifier_poll_rate
 						* pres_notifier_processes);
 
