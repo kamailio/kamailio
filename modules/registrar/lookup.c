@@ -619,13 +619,24 @@ done:
  * it is similar to lookup but registered neither rewrites
  * the Request-URI nor appends branches
  */
-int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
+int registered(struct sip_msg* _m, udomain_t* _d, str* _uri) {
+	return registered4(_m, _d, _uri, 0, 0);
+}
+
+int registered3(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag) {
+	return registered4(_m, _d, _uri, match_flag, 0);
+}
+
+int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag, int match_action_flag)
 {
 	str uri, aor;
 	urecord_t* r;
 	ucontact_t* ptr;
 	int res;
-	int_str match_callid=(int_str)0;
+	str match_callid = {0,0};
+	str match_received = {0,0};
+	str match_contact = {0,0};
+	sr_xavp_t *vavp = NULL;
 
 	if(_uri!=NULL)
 	{
@@ -650,26 +661,61 @@ int registered(struct sip_msg* _m, udomain_t* _d, str* _uri)
 	}
 
 	if (res == 0) {
-		
-		if (reg_callid_avp_name.n) {
-			struct usr_avp *avp =
-				search_first_avp( reg_callid_avp_type, reg_callid_avp_name, &match_callid, 0);
-			if (!(avp && is_avp_str_val(avp)))
-				match_callid.n = 0;
-				match_callid.s.s = NULL;
-		} else {
-			match_callid.n = 0;
-			match_callid.s.s = NULL;
+		LM_DBG("searching with match flags (%d,%d)\n", match_flag, reg_match_flag_param);
+		if(reg_xavp_cfg.s!=NULL) {
+
+			if((match_flag & 1)
+					&& (vavp = xavp_get_child_with_sval(&reg_xavp_cfg, &match_callid_name)) != NULL
+					&& vavp->val.v.s.len > 0) {
+				match_callid = vavp->val.v.s;
+				LM_DBG("matching with callid %.*s\n", match_callid.len, match_callid.s);
+			}
+
+			if((match_flag & 2)
+					&& (vavp = xavp_get_child_with_sval(&reg_xavp_cfg, &match_received_name)) != NULL
+					&& vavp->val.v.s.len > 0) {
+				match_received = vavp->val.v.s;
+				LM_DBG("matching with received %.*s\n", match_received.len, match_received.s);
+			}
+
+			if((match_flag & 4)
+					&& (vavp = xavp_get_child_with_sval(&reg_xavp_cfg, &match_contact_name)) != NULL
+					&& vavp->val.v.s.len > 0) {
+				match_contact = vavp->val.v.s;
+				LM_DBG("matching with contact %.*s\n", match_contact.len, match_contact.s);
+			}
 		}
 
 		for (ptr = r->contacts; ptr; ptr = ptr->next) {
 			if(!VALID_CONTACT(ptr, act_time)) continue;
-			if (match_callid.s.s && /* optionally enforce tighter matching w/ Call-ID */
-				memcmp(match_callid.s.s,ptr->callid.s,match_callid.s.len))
+			if (match_callid.s && /* optionally enforce tighter matching w/ Call-ID */
+				match_callid.len > 0 &&
+				(match_callid.len != ptr->callid.len || 
+				memcmp(match_callid.s, ptr->callid.s, match_callid.len)))
 				continue;
+			if (match_received.s && /* optionally enforce tighter matching w/ ip:port */
+				match_received.len > 0 &&
+				(match_received.len != ptr->received.len || 
+				memcmp(match_received.s, ptr->received.s, match_received.len)))
+				continue;
+			if (match_contact.s && /* optionally enforce tighter matching w/ Contact */
+				match_contact.len > 0 &&
+				(match_contact.len != ptr->c.len || 
+				memcmp(match_contact.s, ptr->c.s, match_contact.len)))
+				continue;
+
+			if(ptr->xavp!=NULL && match_action_flag == 1) {
+				sr_xavp_t *xavp = xavp_clone_level_nodata(ptr->xavp);
+				if(xavp_add(xavp, NULL)<0) {
+					LM_ERR("error adding xavp for %.*s after successful match\n", aor.len, ZSW(aor.s));
+					xavp_destroy_list(&xavp);
+				}
+			}
+
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d, &aor);
 			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
+
 			return 1;
 		}
 	}

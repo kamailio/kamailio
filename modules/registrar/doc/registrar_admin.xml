@@ -659,6 +659,11 @@ modparam("registrar", "path_check_local", 1)
 	<section id="registrar.p.reg_callid_avp">
 		<title><varname>reg_callid_avp</varname> (string)</title>
 		<para>
+			<emphasis>
+				obsolete. use match_option in registered function
+			</emphasis>
+		</para>
+		<para>
 		If reg_callid_avp is defined and populated when the
 		<function>registered()</function> is invoked, the result is 
 		TRUE only if an active registration with
@@ -1102,7 +1107,7 @@ lookup_branches("location");
 
 	<section id="registrar.f.registered">
 		<title>
-		<function moreinfo="none">registered(domain [, uri])</function>
+		<function moreinfo="none">registered(domain [, uri [, match_option [, match_action]]])</function>
 		</title>
 		<para>
 		The function returns true if the AOR in the Request-URI is 
@@ -1124,6 +1129,35 @@ lookup_branches("location");
 			of R-URI. It can be a dynamic string with pseudo-variables.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+			<emphasis>match_option</emphasis> (optional) - flag parameter to restrict
+			contact search. use reg_xavp_cfg to set the values to compare to.
+			</para>
+            <para>flag values is as follows:</para>
+			<itemizedlist>
+				<listitem>
+					<para>1 - match_callid</para>
+				</listiem>
+				<listitem>
+					<para>2 - match_received</para>
+				</listiem>
+				<listitem>
+					<para>4 - match_contact</para>
+				</listiem>
+			</itemizedlist>			
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>match_action</emphasis> (optional) - actions to perform when match is positive.
+			</para>
+            <para>flag values is as follows:</para>
+			<itemizedlist>
+				<listitem>
+					<para>1 - set xavp_rcd with value from matched contact</para>
+				</listiem>
+			</itemizedlist>						
+		</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -1137,6 +1171,13 @@ if (registered("location")) {
 	...
 };
 ...
+$xavp(regcfg=>match_received) = $su;
+if (registered("location","$rz:$Au", 2)) {
+	sl_send_reply("100", "Trying");
+	...
+};
+...
+
 </programlisting>
 		</example>
 	</section>

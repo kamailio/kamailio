@@ -67,6 +67,7 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d);
  * the Request-URI nor appends branches
  */
 int registered(struct sip_msg* _m, udomain_t* _d, str* _uri);
-
+int registered3(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag);
+int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag, int match_action_flag);
 
 #endif /* LOOKUP_H */
