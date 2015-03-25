@@ -699,6 +699,35 @@ modparam("presence", "subs_remove_match", 1)
 	    </example>
 	</section>
 
+<section id="presence.p.sip_uri_match">
+    <title><varname>sip_uri_match</varname> (int)</title>
+    <para>
+        The mode used when comparing uris.
+    </para>
+    <para>
+        <itemizedlist>
+            <title>Possible Values</title>
+            <listitem>
+                <para> 0 : case sensitive</para>
+            </listitem>
+            <listitem>
+                <para> 1 : case insensitive</para>
+            </listitem>
+        </itemizedlist>
+    </para>
+    <para>
+        <emphasis>Default value is <quote>0</quote>.</emphasis>
+    </para>
+    <example>
+        <title>Set <varname>sip_uri_match</varname> parameter</title>
+        <programlisting format="linespecific">
+            ...
+            modparam("presence", "sip_uri_match", 1)
+            ...
+        </programlisting>
+    </example>
+</section>
+
 </section>
 
 <section>
