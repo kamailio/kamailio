@@ -698,6 +698,63 @@ modparam("presence", "subs_remove_match", 1)
 </programlisting>
 	    </example>
 	</section>
+	<section id="presence.p.xavp_cfg">
+    <title><varname>xavp_cfg</varname> (str)</title>
+    <para>
+		The name of the xavp to be used to specify attributes for internal
+		processing of presence module.
+    </para>
+    <para>
+		Inner attributes inside xavp can be:
+    </para>
+    <itemizedlist>
+        <listitem>
+			<para><emphasis>priority</emphasis> - integer value to set the
+			priority of the presence document (higher value, higher priority).
+			It can set the order of the aggregated presence documents sent by
+			NOTIFY (first the document with higher priority). If xavp_cfg
+			parameter is set but this attribute is not in the avp,
+			the priority of the presence document is based on timestamp,
+			so newer documents have higher priority.</para>
+        </listitem>
+     </itemizedlist>
+    <para>
+        Default value is <emphasis>empty</emphasis> (not set).
+    </para>
+    <example>
+        <title>Set <varname>xavp_cfg</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("presence", "xavp_cfg", "pres")
+...
+if(is_method("PUBLISH")) {
+    $xavp(pres=>priority) = 100;
+}
+...
+</programlisting>
+    </example>
+	</section>
+
+	<section id="presence.p.retrieve_order">
+	    <title><varname>retrieve_order</varname> (int)</title>
+	    <para>
+		If set to 0, presentity records are retrieve by received_time order.
+		if set to 1, presentity records are retrieve by priority order.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>retrieve_order</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "retrieve_order", 1)
+...
+</programlisting>
+	    </example>
+	</section>
 
 <section id="presence.p.sip_uri_match">
     <title><varname>sip_uri_match</varname> (int)</title>
