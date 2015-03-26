@@ -230,6 +230,8 @@ typedef struct _cdp_session_t {
 	unsigned int vendor_id;				/**< specific vendor id for this session */
 	cdp_session_type_t type;
 	str dest_host, dest_realm; 			/*the destination host and realm, used only for auth, for the moment*/
+        str sticky_peer_fqdn;                           /*peer that we would like to stick for for this session*/
+        int sticky_peer_fqdn_buflen;                     /*length of buffer available for sticky peer*/
 	union {
 		cdp_auth_session_t auth;
 		cdp_acc_session_t acc;

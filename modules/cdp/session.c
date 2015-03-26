@@ -123,7 +123,9 @@ void free_session(cdp_session_t *x)
 
 		if(x->dest_host.s) shm_free(x->dest_host.s);
 		if(x->dest_realm.s) shm_free(x->dest_realm.s);
-
+                if (x->sticky_peer_fqdn_buflen && x->sticky_peer_fqdn.s) {
+                    shm_free(x->sticky_peer_fqdn.s);
+                }
 		shm_free(x);
 	}
 }
