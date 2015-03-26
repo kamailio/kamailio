@@ -596,6 +596,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	struct sip_uri uri;
 	unsigned int hash_code;
 	str sender;
+	static str query_str;
 
 	if(parse_uri(pres_uri.s, pres_uri.len, &uri)< 0)
 	{
@@ -651,7 +652,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 		return NULL;
 	}
 
-	static str query_str = str_init("received_time");
+	query_str = str_received_time_col;
 	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
 		 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0) 
 	{
