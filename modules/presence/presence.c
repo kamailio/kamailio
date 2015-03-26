@@ -149,6 +149,8 @@ int publ_cache_enabled = 1;
 int pres_waitn_time = 5;
 int pres_notifier_poll_rate = 10;
 int pres_notifier_processes = 1;
+str pres_xavp_cfg = {0};
+int pres_retrieve_order = 0;
 
 int db_table_lock_type = 1;
 db_locking_t db_table_lock = DB_LOCKING_WRITE;
@@ -208,6 +210,8 @@ static param_export_t params[]={
 	{ "db_table_lock_type",     INT_PARAM, &db_table_lock_type},
 	{ "local_log_level",        PARAM_INT, &pres_local_log_level},
 	{ "subs_remove_match",      PARAM_INT, &pres_subs_remove_match},
+	{ "xavp_cfg",               PARAM_STR, &pres_xavp_cfg},
+	{ "retrieve_order",         PARAM_INT, &pres_retrieve_order},
     {0,0,0}
 };
 

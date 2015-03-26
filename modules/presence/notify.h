@@ -96,6 +96,7 @@ extern str str_id_col;
 extern str str_sender_col;
 extern str str_updated_col;
 extern str str_updated_winfo_col;
+extern str str_priority_col;
 
 void PRINT_DLG(FILE* out, dlg_t* _d);
 

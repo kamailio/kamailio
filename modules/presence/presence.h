@@ -88,6 +88,8 @@ extern int pres_fetch_rows;
 extern int pres_waitn_time;
 extern int pres_notifier_poll_rate;
 extern int pres_notifier_processes;
+extern str pres_xavp_cfg;
+extern int pres_retrieve_order;
 
 extern int phtable_size;
 extern phtable_t* pres_htable;

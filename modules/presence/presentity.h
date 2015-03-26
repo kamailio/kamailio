@@ -46,6 +46,7 @@ typedef struct presentity
 	str* sender;
 	time_t expires;
 	time_t received_time;
+	unsigned int priority;
 } presentity_t;
 
 /* create new presentity */

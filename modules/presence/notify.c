@@ -94,6 +94,7 @@ str str_id_col = str_init("id");
 str str_sender_col = str_init("sender");
 str str_updated_col = str_init("updated");
 str str_updated_winfo_col = str_init("updated_winfo");
+str str_priority_col = str_init("priority");
 
 int subset=0;
 
