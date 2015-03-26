@@ -1025,6 +1025,7 @@ char* get_sphere(str* pres_uri)
 	int n_query_cols = 0;
 	struct sip_uri uri;
 	str body;
+	static str query_str;
 
 
 	if(!sphere_enable)
@@ -1090,7 +1091,7 @@ char* get_sphere(str* pres_uri)
 		return NULL;
 	}
 
-	static str query_str = str_init("received_time");
+	query_str = str_received_time_col;
 	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
 		 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0) 
 	{
