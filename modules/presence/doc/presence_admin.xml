@@ -81,7 +81,7 @@
 	
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="presence.p.db_url">
 		<title><varname>db_url</varname>(str)</title>
 		<para>
 		The database url.
@@ -103,7 +103,7 @@ modparam("presence", "db_url",
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence.p.presentity_table">
 		<title><varname>presentity_table</varname>(str)</title>
 		<para>
 		The name of the db table where PUBLISH presence information is stored.
@@ -121,7 +121,7 @@ modparam("presence", "presentity_table", "presentity")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence.p.active_watchers_table">
 		<title><varname>active_watchers_table</varname>(str)</title>
 		<para>
 		The name of the db table where active subscription information is stored. 
@@ -139,7 +139,7 @@ modparam("presence", "active_watchers_table", "active_watchers")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence.p.watchers_table">
 		<title><varname>watchers_table</varname>(str)</title>
 		<para>
 		The name of the db table where subscription states are stored.
@@ -157,7 +157,7 @@ modparam("presence", "watchers_table", "watchers")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence.p.clean_period">
 		<title><varname>clean_period</varname> (int)</title>
 		<para>
 		The period in seconds between checks if there are expired messages stored in database.
@@ -175,7 +175,7 @@ modparam("presence", "clean_period", 100)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence.p.db_update_period">
 		<title><varname>db_update_period</varname> (int)</title>
 		<para>
 		The period at which to synchronize cached subscriber info with the
@@ -195,7 +195,7 @@ modparam("presence", "db_update_period", 100)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.waitn_time">
 		<title><varname>waitn_time</varname> (int)</title>
 		<para>
 		The maximum time period that NOTIFY requests will
@@ -221,7 +221,7 @@ modparam("presence", "waitn_time", 10)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.notifier_poll_rate">
 		<title><varname>notifier_poll_rate</varname> (int)</title>
 		<para>
 		The number of times per second that the notifier processes
@@ -247,7 +247,7 @@ modparam("presence", "notifier_poll_rate", 20)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.notifier_processes">
 		<title><varname>notifier_processes</varname> (int)</title>
 		<para>
 		The number of notifier processes that should be started.
@@ -278,7 +278,7 @@ modparam("presence", "notifier_processes", 2)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.to_tag_pref">
 		<title><varname>to_tag_pref</varname> (str)</title>
 		<para>
 		The prefix used when generating to_tag when sending replies for
@@ -298,7 +298,7 @@ modparam("presence", "to_tag_pref", 'pres')
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.expires_offset">
 		<title><varname>expires_offset</varname> (int)</title>
 		<para>
 		The value in seconds that should be subtracted from the expires value when
@@ -319,7 +319,7 @@ modparam("presence", "expires_offset", 10)
 		</example>
 
 </section>
-       <section>
+       <section id="presence.p.max_expires">
                <title><varname>max_expires</varname> (int)</title>
                <para>
                The maximum admissible expires value for PUBLISH/SUBSCRIBE
@@ -339,7 +339,7 @@ modparam("presence", "max_expires", 3600)
 	</example>
 </section>
 
-<section>
+<section id="presence.p.min_expires">
     <title><varname>min_expires</varname> (int)</title>
     <para>
         The minimum admissible expires value for PUBLISH/SUBSCRIBE
@@ -362,7 +362,7 @@ modparam("presence", "max_expires", 3600)
     </example>
 </section>
 
-<section>
+<section id="presence.p.min_expires_action">
     <title><varname>min_expires_action</varname> (int)</title>
     <para>
         The action to take when UA sends a expires value less then min_expires.
@@ -394,7 +394,7 @@ modparam("presence", "max_expires", 3600)
     </example>
 </section>
 
-<section>
+<section id="presence.p.server_address">
 		<title><varname>server_address</varname> (str)</title>
 		<para>
 		The presence server address which will become the value of Contact header filed 
@@ -410,7 +410,7 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 		</example>
 	</section>
 
-<section>
+<section id="presence.p.subs_db_mode">
 		<title><varname>subs_db_mode</varname> (int)</title>
 		<para>
 		The presence module can utilize database for persistent subscription storage.
@@ -475,7 +475,7 @@ modparam("presence", "subs_db_mode", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.publ_cache">
 		<title><varname>publ_cache</varname> (int)</title>
 		<para>
 		To improve performance, the presence module holds by default a
@@ -505,7 +505,7 @@ modparam("presence", "publ_cache", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.subs_htable_size">
 		<title><varname>subs_htable_size</varname> (int)</title>
 		<para>
 		The size of the in-memory hash table to store subscription dialogs.
@@ -525,7 +525,7 @@ modparam("presence", "subs_htable_size", 11)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.pres_htable_size">
 		<title><varname>pres_htable_size</varname> (int)</title>
 		<para>
         	The size of the in-memory hash table to store publish records.
@@ -544,7 +544,7 @@ modparam("presence", "pres_htable_size", 11)
 	</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence.p.send_fast_notify">
 		<title><varname>send_fast_notify</varname> (int)</title>
 		<para>
 		This parameter enables or disables the sending of an initial empty NOTIFY after a SUBSCRIBE/reSUBSCRIBE. 
@@ -565,7 +565,7 @@ modparam("presence", "send_fast_notify", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.enable_sphere_check">
 		<title><varname>enable_sphere_check</varname> (int)</title>
 		<para>
 		This parameter is a flag that should be set if permission rules include
@@ -589,7 +589,7 @@ modparam("presence", "enable_sphere_check", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.p.timeout_rm_subs">
 		<title><varname>timeout_rm_subs</varname> (int)</title>
 		<para>
 		This parameter is a flag that should be set if subscriptions should be
@@ -611,7 +611,7 @@ modparam("presence", "timeout_rm_subs", 0)
 	</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence.p.fetch_rows">
 	    <title><varname>fetch_rows</varname> (integer)</title>
 	    <para>
 		Number of rows to be loaded in one step from database.
@@ -630,7 +630,7 @@ modparam("presence", "fetch_rows", 1000)
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="presence.p.db_table_lock_type">
 	    <title><varname>db_table_lock_type</varname> (integer)</title>
 	    <para>
 		Enable (=1) or disable (=0) the Locks for table during an
@@ -732,9 +732,9 @@ modparam("presence", "subs_remove_match", 1)
 
 <section>
 	<title>Functions</title>
-	<section>
+	<section id="presence.f.handle_publish">
 		<title>
-		<function moreinfo="none">handle_publish(char* sender_uri)</function>
+		<function moreinfo="none">handle_publish([sender_uri])</function>
 		</title>
 		<para>
 		Handles PUBLISH requests by storing and updating 
@@ -789,7 +789,7 @@ modparam("presence", "subs_remove_match", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.f.handle_subscribe">
 		<title>
 		<function moreinfo="none">handle_subscribe([watcher_uri])</function>
 		</title>
@@ -838,7 +838,7 @@ if(method=="SUBSCRIBE")
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.f.pres_auth_status">
 		<title>
 		<function moreinfo="none">pres_auth_status(watcher_uri, presentity_uri)</function>
 		</title>
@@ -873,7 +873,7 @@ if (method=="MESSAGE") {
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.f.pres_refresh_watchers">
 		<title>
 		<function moreinfo="none">pres_refresh_watchers(uri, event, type[, file_uri, filename])</function>
 		</title>
@@ -933,7 +933,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 		</example>
 	</section>
 
-	<section>
+	<section id="presence.f.pres_update_whatchers">
 		<title>
 		<function moreinfo="none">pres_update_watchers(uri, event)</function>
 		</title>
