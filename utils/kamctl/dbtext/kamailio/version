@@ -39,7 +39,7 @@ mtree:1
 mtrees:2
 pdt:1
 pl_pipes:1
-presentity:3
+presentity:4
 pua:7
 purplemap:1
 re_grp:1
@@ -48,7 +48,7 @@ rls_watchers:3
 rtpproxy:1
 sca_subscriptions:1
 silo:7
-sip_trace:3
+sip_trace:4
 speed_dial:2
 subscriber:6
 trusted:5

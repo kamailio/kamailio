@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('sip_trace','3');
+INSERT INTO version (table_name, table_version) values ('sip_trace','4');
 CREATE TABLE sip_trace (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     time_stamp DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL,
@@ -11,6 +11,7 @@ CREATE TABLE sip_trace (
     fromip VARCHAR(50) DEFAULT '' NOT NULL,
     toip VARCHAR(50) DEFAULT '' NOT NULL,
     fromtag VARCHAR(64) DEFAULT '' NOT NULL,
+    totag VARCHAR(64) DEFAULT '' NOT NULL,
     direction VARCHAR(4) DEFAULT '' NOT NULL
 );
 

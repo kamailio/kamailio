@@ -15,6 +15,7 @@
 				<col><field>fromip</field></col>
 				<col><field>toip</field></col>
 				<col><field>fromtag</field></col>
+				<col><field>totag</field></col>
 				<col><field>direction</field></col>
 			</query_cols>
 		</cmd>
@@ -32,6 +33,7 @@
 				<col><field>fromip</field></col>
 				<col><field>toip</field></col>
 				<col><field>fromtag</field></col>
+				<col><field>totag</field></col>
 				<col><field>direction</field></col>
 			</query_cols>
 		</cmd>
@@ -52,6 +54,7 @@
 				<col><field>fromip</field></col>
 				<col><field>toip</field></col>
 				<col><field>fromtag</field></col>
+				<col><field>totag</field></col>
 				<col><field>direction</field></col>
 			</query_cols>
 		</cmd>

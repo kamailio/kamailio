@@ -503,6 +503,7 @@
 		<column><field>received_time</field><type>DB1_INT</type></column>
 		<column><field>body</field><type>DB1_BLOB</type></column>
 		<column><field>sender</field><type>DB1_STR</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of active_watchers table-->
 	<db_table id="active_watchers">
@@ -706,6 +707,7 @@
 		<column><field>fromip</field><type>DB1_STR</type></column>
 		<column><field>toip</field><type>DB1_STR</type></column>
 		<column><field>fromtag</field><type>DB1_STR</type></column>
+		<column><field>totag</field><type>DB1_STR</type></column>
 		<column><field>direction</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of speed_dial table-->
@@ -2871,6 +2873,7 @@
 				<col><field>received_time</field></col>
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -2885,6 +2888,7 @@
 				<col><field>received_time</field></col>
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -2902,6 +2906,7 @@
 				<col><field>received_time</field></col>
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
@@ -3630,6 +3635,7 @@
 				<col><field>fromip</field></col>
 				<col><field>toip</field></col>
 				<col><field>fromtag</field></col>
+				<col><field>totag</field></col>
 				<col><field>direction</field></col>
 			</query_cols>
 		</cmd>
@@ -3647,6 +3653,7 @@
 				<col><field>fromip</field></col>
 				<col><field>toip</field></col>
 				<col><field>fromtag</field></col>
+				<col><field>totag</field></col>
 				<col><field>direction</field></col>
 			</query_cols>
 		</cmd>
@@ -3667,6 +3674,7 @@
 				<col><field>fromip</field></col>
 				<col><field>toip</field></col>
 				<col><field>fromtag</field></col>
+				<col><field>totag</field></col>
 				<col><field>direction</field></col>
 			</query_cols>
 		</cmd>

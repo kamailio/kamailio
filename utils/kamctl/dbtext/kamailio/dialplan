@@ -1,1 +1,1 @@
-id(int,auto) dpid(int) pr(int) match_op(int) match_exp(string) match_len(int) subst_exp(string,null) repl_exp(string,null) attrs(string,null) 
+id(int,auto) dpid(int) pr(int) match_op(int) match_exp(string) match_len(int) subst_exp(string) repl_exp(string) attrs(string) 

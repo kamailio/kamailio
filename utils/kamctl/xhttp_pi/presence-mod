@@ -13,6 +13,7 @@
 				<col><field>received_time</field></col>
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -27,6 +28,7 @@
 				<col><field>received_time</field></col>
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -44,6 +46,7 @@
 				<col><field>received_time</field></col>
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

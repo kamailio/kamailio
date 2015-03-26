@@ -11,6 +11,7 @@
 		<column><field>received_time</field><type>DB1_INT</type></column>
 		<column><field>body</field><type>DB1_BLOB</type></column>
 		<column><field>sender</field><type>DB1_STR</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of active_watchers table-->
 	<db_table id="active_watchers">

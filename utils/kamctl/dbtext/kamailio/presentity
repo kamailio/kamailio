@@ -1,1 +1,1 @@
-id(int,auto) username(string) domain(string) event(string) etag(string) expires(int) received_time(int) body(string) sender(string) 
+id(int,auto) username(string) domain(string) event(string) etag(string) expires(int) received_time(int) body(string) sender(string) priority(int) 

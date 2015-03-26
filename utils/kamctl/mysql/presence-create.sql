@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('presentity','3');
+INSERT INTO version (table_name, table_version) values ('presentity','4');
 CREATE TABLE presentity (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL,
@@ -9,6 +9,7 @@ CREATE TABLE presentity (
     received_time INT(11) NOT NULL,
     body BLOB NOT NULL,
     sender VARCHAR(128) NOT NULL,
+    priority INT(11) DEFAULT 0 NOT NULL,
     CONSTRAINT presentity_idx UNIQUE (username, domain, event, etag)
 );
 

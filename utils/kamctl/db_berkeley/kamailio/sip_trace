@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) time_stamp(datetime) time_us(int) callid(str) traced_user(str) msg(str) method(str) status(str) fromip(str) toip(str) fromtag(str) direction(str)
+id(int) time_stamp(datetime) time_us(int) callid(str) traced_user(str) msg(str) method(str) status(str) fromip(str) toip(str) fromtag(str) totag(str) direction(str)
 METADATA_KEY
 3 
 METADATA_READONLY
@@ -7,4 +7,4 @@ METADATA_READONLY
 METADATA_LOGFLAGS
 0
 METADATA_DEFAULTS
-NIL|'1900-01-01 00:00:01'|0|''|''|NIL|''|''|''|''|''|''
+NIL|'1900-01-01 00:00:01'|0|''|''|NIL|''|''|''|''|''|''|''

@@ -13,5 +13,6 @@
 		<column><field>fromip</field><type>DB1_STR</type></column>
 		<column><field>toip</field><type>DB1_STR</type></column>
 		<column><field>fromtag</field><type>DB1_STR</type></column>
+		<column><field>totag</field><type>DB1_STR</type></column>
 		<column><field>direction</field><type>DB1_STR</type></column>
 	</db_table>
