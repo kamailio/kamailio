@@ -54,7 +54,7 @@
 		a dedicated receiver process will be forked. All other unkwnown peers will share a single
 		receiver.
 	-->
-	<Peer FQDN="hss.open-ims.test" Realm="open-ims.test" port="3868"/>
+	<Peer FQDN="hss.open-ims.test" Realm="open-ims.test" port="3868" src_addr="192.168.1.1"/>
 
 	<!--
 		Definition of incoming connection acceptors. If no bind is specified, the acceptor will bind

@@ -54,6 +54,7 @@ typedef struct{
 	str fqdn;	/**< FQDN of the peer */
 	str realm;	/**< Realm of the peer */
 	int port;	/**< TCP port of the peer; the Diameter uri is then aaa://fqdn:port. */
+    str src_addr; /**< IP address used to connect to the peer */
 } peer_config;
 
 

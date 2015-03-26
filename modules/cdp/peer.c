@@ -56,7 +56,7 @@
  * @param port - port of the peer to connect to
  * @returns the new peer* if ok, NULL on error
  */
-peer* new_peer(str fqdn,str realm,int port)
+peer* new_peer(str fqdn,str realm,int port,str src_addr)
 {
 	peer *x;
 	x = shm_malloc(sizeof(peer));
@@ -69,6 +69,8 @@ peer* new_peer(str fqdn,str realm,int port)
 	if (!x->fqdn.s) goto error;	
 	shm_str_dup_macro(x->realm,realm);
 	if (!x->realm.s) goto error;	
+	shm_str_dup_macro(x->src_addr,src_addr);
+	if (!x->src_addr.s) goto error;
 	x->port = port;
 	x->lock = lock_alloc();
 	x->lock = lock_init(x->lock);
@@ -99,6 +101,7 @@ void free_peer(peer *x,int locked)
 	if (!locked) lock_get(x->lock);
 	if (x->fqdn.s) shm_free(x->fqdn.s);
 	if (x->realm.s) shm_free(x->realm.s);	
+	if (x->src_addr.s) shm_free(x->src_addr.s);
 	lock_destroy(x->lock);
 	lock_dealloc((void*)x->lock);
 	shm_free(x);
