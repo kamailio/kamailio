@@ -99,4 +99,7 @@ extern db_locking_t db_table_lock;
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri);
 
+typedef int (*sip_uri_match_f) (str* s1, str* s2);
+extern sip_uri_match_f presence_sip_uri_match;
+
 #endif /* PA_MOD_H */
