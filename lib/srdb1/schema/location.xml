@@ -9,7 +9,7 @@
 
 <table id="location" xmlns:db="http://docbook.org/ns/docbook">
     <name>location</name>
-    <version>6</version>
+    <version>7</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Persistent user location information for the usrloc module. More information can be found at: &KAMAILIO_MOD_DOC;usrloc.html
@@ -177,6 +177,30 @@
         <size>11</size>
         <default>0</default>
         <description>The value of reg-id contact parameter</description>
+    </column>
+
+    <column>
+        <name>server_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of server_id from configuration file</description>
+    </column>
+
+    <column>
+        <name>connection_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of connection id for location record</description>
+    </column>
+
+    <column>
+        <name>keepalive</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value to control sending keep alive requests</description>
     </column>
 
 
