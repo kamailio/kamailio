@@ -21,6 +21,9 @@
 		<column><field>methods</field><type>DB1_INT</type></column>
 		<column><field>instance</field><type>DB1_STR</type></column>
 		<column><field>reg_id</field><type>DB1_INT</type></column>
+		<column><field>server_id</field><type>DB1_INT</type></column>
+		<column><field>connection_id</field><type>DB1_INT</type></column>
+		<column><field>keepalive</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of location_attrs table-->
 	<db_table id="location_attrs">

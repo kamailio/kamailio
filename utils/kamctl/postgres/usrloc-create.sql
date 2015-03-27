@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('location','6');
+INSERT INTO version (table_name, table_version) values ('location','7');
 CREATE TABLE location (
     id SERIAL PRIMARY KEY NOT NULL,
     ruid VARCHAR(64) DEFAULT '' NOT NULL,
@@ -19,6 +19,9 @@ CREATE TABLE location (
     methods INTEGER DEFAULT NULL,
     instance VARCHAR(255) DEFAULT NULL,
     reg_id INTEGER DEFAULT 0 NOT NULL,
+    server_id INTEGER DEFAULT 0 NOT NULL,
+    connection_id INTEGER DEFAULT 0 NOT NULL,
+    keepalive INTEGER DEFAULT 0 NOT NULL,
     CONSTRAINT location_ruid_idx UNIQUE (ruid)
 );
 

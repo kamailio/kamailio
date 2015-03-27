@@ -23,6 +23,9 @@
 				<col><field>methods</field></col>
 				<col><field>instance</field></col>
 				<col><field>reg_id</field></col>
+				<col><field>server_id</field></col>
+				<col><field>connection_id</field></col>
+				<col><field>keepalive</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -47,6 +50,9 @@
 				<col><field>methods</field></col>
 				<col><field>instance</field></col>
 				<col><field>reg_id</field></col>
+				<col><field>server_id</field></col>
+				<col><field>connection_id</field></col>
+				<col><field>keepalive</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -74,6 +80,9 @@
 				<col><field>methods</field></col>
 				<col><field>instance</field></col>
 				<col><field>reg_id</field></col>
+				<col><field>server_id</field></col>
+				<col><field>connection_id</field></col>
+				<col><field>keepalive</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

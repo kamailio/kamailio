@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('location','6');
+INSERT INTO version (table_name, table_version) values ('location','7');
 CREATE TABLE location (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     ruid VARCHAR(64) DEFAULT '' NOT NULL,
@@ -19,6 +19,9 @@ CREATE TABLE location (
     methods INT(11) DEFAULT NULL,
     instance VARCHAR(255) DEFAULT NULL,
     reg_id INT(11) DEFAULT 0 NOT NULL,
+    server_id INT(11) DEFAULT 0 NOT NULL,
+    connection_id INT(11) DEFAULT 0 NOT NULL,
+    keepalive INT(11) DEFAULT 0 NOT NULL,
     CONSTRAINT ruid_idx UNIQUE (ruid)
 );
 
