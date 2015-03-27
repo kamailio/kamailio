@@ -133,6 +133,8 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->last_modified = _ci->last_modified;
 	c->last_keepalive = _ci->last_modified;
 	c->tcpconn_id = _ci->tcpconn_id;
+	c->server_id = _ci->server_id;
+	c->keepalive = (_ci->cflags & nat_bflag)?1:0;
 #ifdef WITH_XAVP
 	ucontact_xavp_store(c);
 #endif
@@ -464,8 +466,8 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[18];
-	db_val_t vals[18];
+	db_key_t keys[21];
+	db_val_t vals[21];
 	int nr_cols;
 	
 	if (_c->flags & FL_MEM) {
@@ -622,6 +624,24 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[nr_cols].val.int_val = (int)_c->reg_id;
 	nr_cols++;
 
+	keys[nr_cols] = &srv_id_col;
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.int_val = (int)_c->server_id;
+	nr_cols++;
+
+	keys[nr_cols] = &con_id_col;
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.int_val = (int)_c->tcpconn_id;
+	nr_cols++;
+
+	keys[nr_cols] = &keepalive_col;
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.int_val = (int)_c->keepalive;
+	nr_cols++;
+
 	if (use_domain) {
 		keys[nr_cols] = &domain_col;
 		vals[nr_cols].type = DB1_STR;
@@ -671,8 +691,8 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	db_val_t vals1[4];
 	int n1 = 0;
 
-	db_key_t keys2[16];
-	db_val_t vals2[16];
+	db_key_t keys2[19];
+	db_val_t vals2[19];
 	int nr_cols2 = 0;
 
 
@@ -853,6 +873,24 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	vals2[nr_cols2].val.int_val = (int)_c->reg_id;
 	nr_cols2++;
 
+	keys2[nr_cols2] = &srv_id_col;
+	vals2[nr_cols2].type = DB1_INT;
+	vals2[nr_cols2].nul = 0;
+	vals2[nr_cols2].val.int_val = (int)_c->server_id;
+	nr_cols2++;
+
+	keys2[nr_cols2] = &con_id_col;
+	vals2[nr_cols2].type = DB1_INT;
+	vals2[nr_cols2].nul = 0;
+	vals2[nr_cols2].val.int_val = (int)_c->tcpconn_id;
+	nr_cols2++;
+
+	keys2[nr_cols2] = &keepalive_col;
+	vals2[nr_cols2].type = DB1_INT;
+	vals2[nr_cols2].nul = 0;
+	vals2[nr_cols2].val.int_val = (int)_c->keepalive;
+	nr_cols2++;
+
 	keys2[nr_cols2] = &contact_col;
 	vals2[nr_cols2].type = DB1_STR;
 	vals2[nr_cols2].nul = 0;
@@ -928,8 +966,8 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 	db_val_t vals1[1];
 	int n1;
 
-	db_key_t keys2[15];
-	db_val_t vals2[15];
+	db_key_t keys2[18];
+	db_val_t vals2[18];
 	int n2;
 
 
@@ -1054,6 +1092,24 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 	vals2[n2].val.int_val = (int)_c->reg_id;
 	n2++;
 
+	keys2[n2] = &srv_id_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.int_val = (int)_c->server_id;
+	n2++;
+
+	keys2[n2] = &con_id_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.int_val = (int)_c->tcpconn_id;
+	n2++;
+
+	keys2[n2] = &keepalive_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.int_val = (int)_c->keepalive;
+	n2++;
+
 	keys2[n2] = &contact_col;
 	vals2[n2].type = DB1_STR;
 	vals2[n2].nul = 0;
@@ -1124,8 +1180,8 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	db_val_t vals1[4];
 	int n1;
 
-	db_key_t keys2[13];
-	db_val_t vals2[13];
+	db_key_t keys2[16];
+	db_val_t vals2[16];
 	int n2;
 
 
@@ -1245,6 +1301,24 @@ int db_update_ucontact_instance(ucontact_t* _c)
 	vals2[n2].type = DB1_STR;
 	vals2[n2].nul = 0;
 	vals2[n2].val.str_val = _c->callid;
+	n2++;
+
+	keys2[n2] = &srv_id_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.bitmap_val = _c->server_id;
+	n2++;
+
+	keys2[n2] = &con_id_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.bitmap_val = _c->tcpconn_id;
+	n2++;
+
+	keys2[n2] = &keepalive_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.bitmap_val = _c->keepalive;
 	n2++;
 
 	keys2[n2] = &contact_col;

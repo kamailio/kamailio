@@ -78,6 +78,9 @@ MODULE_VERSION
 #define INSTANCE_COL   "instance"
 #define REG_ID_COL     "reg_id"
 #define LAST_MOD_COL   "last_modified"
+#define SRV_ID_COL     "server_id"
+#define CON_ID_COL     "connection_id"
+#define KEEPALIVE_COL  "keepalive"
 
 #define ULATTRS_USER_COL       "username"
 #define ULATTRS_DOMAIN_COL     "domain"
@@ -137,6 +140,9 @@ str methods_col     = str_init(METHODS_COL);	/*!< Name of column containing the 
 str instance_col    = str_init(INSTANCE_COL);	/*!< Name of column containing the SIP instance value */
 str reg_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the reg-id value */
 str last_mod_col    = str_init(LAST_MOD_COL);	/*!< Name of column containing the last modified date */
+str srv_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the server id value */
+str con_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the connection id value */
+str keepalive_col   = str_init(REG_ID_COL);		/*!< Name of column containing the keepalive value */
 
 str ulattrs_user_col   = str_init(ULATTRS_USER_COL);   /*!< Name of column containing username */
 str ulattrs_domain_col = str_init(ULATTRS_DOMAIN_COL); /*!< Name of column containing domain */
@@ -202,6 +208,9 @@ static param_export_t params[] = {
 	{"methods_column",      PARAM_STR, &methods_col   },
 	{"instance_column",     PARAM_STR, &instance_col  },
 	{"reg_id_column",       PARAM_STR, &reg_id_col    },
+	{"server_id_column",    PARAM_STR, &srv_id_col    },
+	{"connection_id_column",PARAM_STR, &con_id_col    },
+	{"keepalive_column",    PARAM_STR, &keepalive_col },
 	{"matching_mode",       INT_PARAM, &matching_mode   },
 	{"cseq_delay",          INT_PARAM, &cseq_delay      },
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
