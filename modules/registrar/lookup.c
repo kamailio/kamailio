@@ -661,7 +661,7 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag, in
 	}
 
 	if (res == 0) {
-		LM_DBG("searching with match flags (%d,%d)\n", match_flag, reg_match_flag_param);
+		LM_DBG("searching with match flags (%d,%d)\n", match_flag, match_action_flag);
 		if(reg_xavp_cfg.s!=NULL) {
 
 			if((match_flag & 1)
