@@ -449,6 +449,66 @@ modparam("usrloc", "instance_column", "myinstance")
 		</example>
 	</section>
 
+	<section id="usrloc.p.server_id_column">
+		<title><varname>server_id_column</varname> (string)</title>
+		<para>
+		Name of database table column containing the value for server id.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>server_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server_id_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "server_id_column", "srv_id")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.connection_id_column">
+		<title><varname>connection_id_column</varname> (string)</title>
+		<para>
+		Name of database table column containing the value for connection id.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>connection_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>connection_id_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "connection_id_column", "con_id")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.keepalive_column">
+		<title><varname>keepalive_column</varname> (string)</title>
+		<para>
+		Name of database table column containing the value for keepalive status.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>keepalive</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>keepalive_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "keepalive_column", "kalive")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>

@@ -53,25 +53,29 @@ Bogdan-Andrei Iancu
               3.15. path_column (string)
               3.16. ruid_column (string)
               3.17. instance_column (string)
-              3.18. use_domain (integer)
-              3.19. desc_time_order (integer)
-              3.20. timer_interval (integer)
-              3.21. db_url (string)
-              3.22. db_mode (integer)
-              3.23. matching_mode (integer)
-              3.24. cseq_delay (integer)
-              3.25. fetch_rows (integer)
-              3.26. hash_size (integer)
-              3.27. preload (string)
-              3.28. db_update_as_insert (string)
-              3.29. db_check_update (string)
-              3.30. timer_procs (string)
-              3.31. xavp_contact (string)
-              3.32. db_ops_ruid (int)
-              3.33. handle_lost_tcp (int)
-              3.34. expires_type (int)
-              3.35. db_raw_fetch_type (int)
-              3.36. db_insert_null (int)
+              3.18. server_id_column (string)
+              3.19. connection_id_column (string)
+              3.20. keepalive_column (string)
+              3.21. use_domain (integer)
+              3.22. desc_time_order (integer)
+              3.23. timer_interval (integer)
+              3.24. db_url (string)
+              3.25. db_mode (integer)
+              3.26. matching_mode (integer)
+              3.27. cseq_delay (integer)
+              3.28. fetch_rows (integer)
+              3.29. hash_size (integer)
+              3.30. preload (string)
+              3.31. db_update_as_insert (string)
+              3.32. db_check_update (string)
+              3.33. timer_procs (string)
+              3.34. xavp_contact (string)
+              3.35. db_ops_ruid (int)
+              3.36. handle_lost_tcp (int)
+              3.37. close_expired_tcp (int)
+              3.38. expires_type (int)
+              3.39. db_raw_fetch_type (int)
+              3.40. db_insert_null (int)
 
         4. Functions
         5. MI Commands
@@ -146,25 +150,29 @@ Bogdan-Andrei Iancu
    1.15. Set path_column parameter
    1.16. Set ruid_column parameter
    1.17. Set instance_column parameter
-   1.18. Set use_domain parameter
-   1.19. Set desc_time_order parameter
-   1.20. Set timer_interval parameter
-   1.21. Set db_url parameter
-   1.22. Set db_mode parameter
-   1.23. Set matching_mode parameter
-   1.24. Set cseq_delay parameter
-   1.25. Set fetch_rows parameter
-   1.26. Set hash_size parameter
-   1.27. Set preload parameter
-   1.28. Set db_update_as_insert parameter
-   1.29. Set db_check_update parameter
-   1.30. Set timer_procs parameter
-   1.31. Set xavp_contact parameter
-   1.32. Set db_ops_ruid parameter
-   1.33. Set handle_lost_tcp parameter
-   1.34. Set expires_type parameter
-   1.35. Set db_raw_fetch_type parameter
-   1.36. Set db_insert_null parameter
+   1.18. Set server_id_column parameter
+   1.19. Set connection_id_column parameter
+   1.20. Set keepalive_column parameter
+   1.21. Set use_domain parameter
+   1.22. Set desc_time_order parameter
+   1.23. Set timer_interval parameter
+   1.24. Set db_url parameter
+   1.25. Set db_mode parameter
+   1.26. Set matching_mode parameter
+   1.27. Set cseq_delay parameter
+   1.28. Set fetch_rows parameter
+   1.29. Set hash_size parameter
+   1.30. Set preload parameter
+   1.31. Set db_update_as_insert parameter
+   1.32. Set db_check_update parameter
+   1.33. Set timer_procs parameter
+   1.34. Set xavp_contact parameter
+   1.35. Set db_ops_ruid parameter
+   1.36. Set handle_lost_tcp parameter
+   1.37. Set close_expired_tcp parameter
+   1.38. Set expires_type parameter
+   1.39. Set db_raw_fetch_type parameter
+   1.40. Set db_insert_null parameter
 
 Chapter 1. Admin Guide
 
@@ -198,25 +206,29 @@ Chapter 1. Admin Guide
         3.15. path_column (string)
         3.16. ruid_column (string)
         3.17. instance_column (string)
-        3.18. use_domain (integer)
-        3.19. desc_time_order (integer)
-        3.20. timer_interval (integer)
-        3.21. db_url (string)
-        3.22. db_mode (integer)
-        3.23. matching_mode (integer)
-        3.24. cseq_delay (integer)
-        3.25. fetch_rows (integer)
-        3.26. hash_size (integer)
-        3.27. preload (string)
-        3.28. db_update_as_insert (string)
-        3.29. db_check_update (string)
-        3.30. timer_procs (string)
-        3.31. xavp_contact (string)
-        3.32. db_ops_ruid (int)
-        3.33. handle_lost_tcp (int)
-        3.34. expires_type (int)
-        3.35. db_raw_fetch_type (int)
-        3.36. db_insert_null (int)
+        3.18. server_id_column (string)
+        3.19. connection_id_column (string)
+        3.20. keepalive_column (string)
+        3.21. use_domain (integer)
+        3.22. desc_time_order (integer)
+        3.23. timer_interval (integer)
+        3.24. db_url (string)
+        3.25. db_mode (integer)
+        3.26. matching_mode (integer)
+        3.27. cseq_delay (integer)
+        3.28. fetch_rows (integer)
+        3.29. hash_size (integer)
+        3.30. preload (string)
+        3.31. db_update_as_insert (string)
+        3.32. db_check_update (string)
+        3.33. timer_procs (string)
+        3.34. xavp_contact (string)
+        3.35. db_ops_ruid (int)
+        3.36. handle_lost_tcp (int)
+        3.37. close_expired_tcp (int)
+        3.38. expires_type (int)
+        3.39. db_raw_fetch_type (int)
+        3.40. db_insert_null (int)
 
    4. Functions
    5. MI Commands
@@ -284,7 +296,7 @@ Chapter 1. Admin Guide
        retransmissions in this case.
 
    To find out how to control/select the contact maching algorithm, please
-   see the module parameter matching_mode - Section 3.23, "matching_mode
+   see the module parameter matching_mode - Section 3.26, "matching_mode
    (integer)".
 
 2. Dependencies
@@ -322,25 +334,29 @@ Chapter 1. Admin Guide
    3.15. path_column (string)
    3.16. ruid_column (string)
    3.17. instance_column (string)
-   3.18. use_domain (integer)
-   3.19. desc_time_order (integer)
-   3.20. timer_interval (integer)
-   3.21. db_url (string)
-   3.22. db_mode (integer)
-   3.23. matching_mode (integer)
-   3.24. cseq_delay (integer)
-   3.25. fetch_rows (integer)
-   3.26. hash_size (integer)
-   3.27. preload (string)
-   3.28. db_update_as_insert (string)
-   3.29. db_check_update (string)
-   3.30. timer_procs (string)
-   3.31. xavp_contact (string)
-   3.32. db_ops_ruid (int)
-   3.33. handle_lost_tcp (int)
-   3.34. expires_type (int)
-   3.35. db_raw_fetch_type (int)
-   3.36. db_insert_null (int)
+   3.18. server_id_column (string)
+   3.19. connection_id_column (string)
+   3.20. keepalive_column (string)
+   3.21. use_domain (integer)
+   3.22. desc_time_order (integer)
+   3.23. timer_interval (integer)
+   3.24. db_url (string)
+   3.25. db_mode (integer)
+   3.26. matching_mode (integer)
+   3.27. cseq_delay (integer)
+   3.28. fetch_rows (integer)
+   3.29. hash_size (integer)
+   3.30. preload (string)
+   3.31. db_update_as_insert (string)
+   3.32. db_check_update (string)
+   3.33. timer_procs (string)
+   3.34. xavp_contact (string)
+   3.35. db_ops_ruid (int)
+   3.36. handle_lost_tcp (int)
+   3.37. close_expired_tcp (int)
+   3.38. expires_type (int)
+   3.39. db_raw_fetch_type (int)
+   3.40. db_insert_null (int)
 
 3.1. nat_bflag (integer)
 
@@ -534,7 +550,41 @@ modparam("usrloc", "ruid_column", "myruid")
 modparam("usrloc", "instance_column", "myinstance")
 ...
 
-3.18. use_domain (integer)
+3.18. server_id_column (string)
+
+   Name of database table column containing the value for server id.
+
+   Default value is "server_id".
+
+   Example 1.18. Set server_id_column parameter
+...
+modparam("usrloc", "server_id_column", "srv_id")
+...
+
+3.19. connection_id_column (string)
+
+   Name of database table column containing the value for connection id.
+
+   Default value is "connection_id".
+
+   Example 1.19. Set connection_id_column parameter
+...
+modparam("usrloc", "connection_id_column", "con_id")
+...
+
+3.20. keepalive_column (string)
+
+   Name of database table column containing the value for keepalive
+   status.
+
+   Default value is "keepalive".
+
+   Example 1.20. Set keepalive_column parameter
+...
+modparam("usrloc", "keepalive_column", "kalive")
+...
+
+3.21. use_domain (integer)
 
    If the domain part of the user should be also saved and used for
    identifing the user (along with the username part). Useful in multi
@@ -542,24 +592,24 @@ modparam("usrloc", "instance_column", "myinstance")
 
    Default value is "0 (false)".
 
-   Example 1.18. Set use_domain parameter
+   Example 1.21. Set use_domain parameter
 ...
 modparam("usrloc", "use_domain", 1)
 ...
 
-3.19. desc_time_order (integer)
+3.22. desc_time_order (integer)
 
    If the user's contacts should be kept timestamp ordered; otherwise the
    contact will be ordered based on q value. Non 0 value means true.
 
    Default value is "0 (false)".
 
-   Example 1.19. Set desc_time_order parameter
+   Example 1.22. Set desc_time_order parameter
 ...
 modparam("usrloc", "desc_time_order", 1)
 ...
 
-3.20. timer_interval (integer)
+3.23. timer_interval (integer)
 
    Number of seconds between two timer runs. The module uses a timer to
    delete expired contacts, synchronize with database and other tasks,
@@ -567,23 +617,23 @@ modparam("usrloc", "desc_time_order", 1)
 
    Default value is 60.
 
-   Example 1.20. Set timer_interval parameter
+   Example 1.23. Set timer_interval parameter
 ...
 modparam("usrloc", "timer_interval", 120)
 ...
 
-3.21. db_url (string)
+3.24. db_url (string)
 
    URL of the database that should be used.
 
    Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
-   Example 1.21. Set db_url parameter
+   Example 1.24. Set db_url parameter
 ...
 modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-3.22. db_mode (integer)
+3.25. db_mode (integer)
 
    The usrloc module can utilize a database for persistent contact
    storage. If a database is used, the location database (contacts) will
@@ -629,12 +679,12 @@ Warning
 
    Default value is 0.
 
-   Example 1.22. Set db_mode parameter
+   Example 1.25. Set db_mode parameter
 ...
 modparam("usrloc", "db_mode", 2)
 ...
 
-3.23. matching_mode (integer)
+3.26. matching_mode (integer)
 
    What contact matching algorithm to be used. Refer to section
    Section 1.1, "Contact matching" for the description of the algorithms.
@@ -648,12 +698,12 @@ modparam("usrloc", "db_mode", 2)
 
    Default value is 0 (CONTACT_ONLY).
 
-   Example 1.23. Set matching_mode parameter
+   Example 1.26. Set matching_mode parameter
 ...
 modparam("usrloc", "matching_mode", 1)
 ...
 
-3.24. cseq_delay (integer)
+3.27. cseq_delay (integer)
 
    Delay (in seconds) for accepting as retransmissions register requests
    with same Call-ID and Cseq. The delay is calculated starting from the
@@ -667,12 +717,12 @@ modparam("usrloc", "matching_mode", 1)
 
    Default value is "20 seconds".
 
-   Example 1.24. Set cseq_delay parameter
+   Example 1.27. Set cseq_delay parameter
 ...
 modparam("usrloc", "cseq_delay", 5)
 ...
 
-3.25. fetch_rows (integer)
+3.28. fetch_rows (integer)
 
    The number of the rows to be fetched at once from database when loading
    the location records. This value can be used to tune the load time at
@@ -681,12 +731,12 @@ modparam("usrloc", "cseq_delay", 5)
 
    Default value is "2000".
 
-   Example 1.25. Set fetch_rows parameter
+   Example 1.28. Set fetch_rows parameter
 ...
 modparam("usrloc", "fetch_rows", 3000)
 ...
 
-3.26. hash_size (integer)
+3.29. hash_size (integer)
 
    The number of entries of the hash table used by usrloc to store the
    location records is 2^hash_size. For hash_size=4, the number of slots
@@ -694,12 +744,12 @@ modparam("usrloc", "fetch_rows", 3000)
 
    Default value is "10" (1024 slots).
 
-   Example 1.26. Set hash_size parameter
+   Example 1.29. Set hash_size parameter
 ...
 modparam("usrloc", "hash_size", 12)
 ...
 
-3.27. preload (string)
+3.30. preload (string)
 
    Preload location table given as value. A location table is loaded based
    on fixup of registrar functions, therefore you need to use this
@@ -708,12 +758,12 @@ modparam("usrloc", "hash_size", 12)
 
    Default value is "NULL".
 
-   Example 1.27. Set preload parameter
+   Example 1.30. Set preload parameter
 ...
 modparam("usrloc", "preload", "location")
 ...
 
-3.28. db_update_as_insert (string)
+3.31. db_update_as_insert (string)
 
    Set this parameter if you want to do INSERT DB operations instead of
    UPDATE DB operations. It is recommended to set this parameter if you
@@ -721,12 +771,12 @@ modparam("usrloc", "preload", "location")
 
    Default value is "0".
 
-   Example 1.28. Set db_update_as_insert parameter
+   Example 1.31. Set db_update_as_insert parameter
 ...
 modparam("usrloc", "db_update_as_insert", 1)
 ...
 
-3.29. db_check_update (string)
+3.32. db_check_update (string)
 
    Set this parameter to 1 if you want to do DB INSERT if the number of
    affected rows by contact DB UPDATE operation is 0. The database module
@@ -736,12 +786,12 @@ modparam("usrloc", "db_update_as_insert", 1)
 
    Default value is "0" (no DB INSERT).
 
-   Example 1.29. Set db_check_update parameter
+   Example 1.32. Set db_check_update parameter
 ...
 modparam("usrloc", "db_check_update", 1)
 ...
 
-3.30. timer_procs (string)
+3.33. timer_procs (string)
 
    Number of timer processes to be started by module. Timer processes take
    care of checking expired records and syncronization with database. If
@@ -750,24 +800,24 @@ modparam("usrloc", "db_check_update", 1)
 
    Default value is "0".
 
-   Example 1.30. Set timer_procs parameter
+   Example 1.33. Set timer_procs parameter
 ...
 modparam("usrloc", "timer_procs", 4)
 ...
 
-3.31. xavp_contact (string)
+3.34. xavp_contact (string)
 
    The name of XAVP storring the attributes per contact. They are saved in
    location record and restored at lookup.
 
    Default value is "NULL".
 
-   Example 1.31. Set xavp_contact parameter
+   Example 1.34. Set xavp_contact parameter
 ...
 modparam("usrloc", "xavp_contact", "ulattrs")
 ...
 
-3.32. db_ops_ruid (int)
+3.35. db_ops_ruid (int)
 
    If set to 1, database queries for update or delete are done using ruid
    value. If it is set to 0, the old style using aor, contact and call-id
@@ -775,24 +825,36 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 
    Default value is "1".
 
-   Example 1.32. Set db_ops_ruid parameter
+   Example 1.35. Set db_ops_ruid parameter
 ...
 modparam("usrloc", "db_ops_ruid", 0)
 ...
 
-3.33. handle_lost_tcp (int)
+3.36. handle_lost_tcp (int)
 
    If set to 1, Kamailio will remove location records made via
    TCP/TLS/WS/WSS transports when it looses corresponding tcp connections.
 
    Default value is "0".
 
-   Example 1.33. Set handle_lost_tcp parameter
+   Example 1.36. Set handle_lost_tcp parameter
 ...
 modparam("usrloc", "handle_lost_tcp", 1)
 ...
 
-3.34. expires_type (int)
+3.37. close_expired_tcp (int)
+
+   If set to 1, Kamailio will close the TCP connection when a contact has
+   expired, if the corresponding transport is TCP/TLS/WS/WSS.
+
+   Default value is "0".
+
+   Example 1.37. Set close_expired_tcp parameter
+...
+modparam("usrloc", "close_expired_tcp", 1)
+...
+
+3.38. expires_type (int)
 
    If set to 1, Kamailio expects to deal with BIGINT type on database
    columns for expires and last modified values. It allows to handle
@@ -802,12 +864,12 @@ modparam("usrloc", "handle_lost_tcp", 1)
 
    Default value is "0".
 
-   Example 1.34. Set expires_type parameter
+   Example 1.38. Set expires_type parameter
 ...
 modparam("usrloc", "expires_type", 1)
 ...
 
-3.35. db_raw_fetch_type (int)
+3.39. db_raw_fetch_type (int)
 
    This affect DB-only mode and controls what kind of raw query is used to
    fetch the contacts from database for specific needs (e.g., sending NAT
@@ -817,19 +879,19 @@ modparam("usrloc", "expires_type", 1)
 
    Default value is "0".
 
-   Example 1.35. Set db_raw_fetch_type parameter
+   Example 1.39. Set db_raw_fetch_type parameter
 ...
 modparam("usrloc", "db_raw_fetch_type", 1)
 ...
 
-3.36. db_insert_null (int)
+3.40. db_insert_null (int)
 
    If set to 1, the insert operation to database will add null values in
    the sql statement.
 
    Default value is "0" (don't add null fields in insert statement).
 
-   Example 1.36. Set db_insert_null parameter
+   Example 1.40. Set db_insert_null parameter
 ...
 modparam("usrloc", "db_insert_null", 1)
 ...
