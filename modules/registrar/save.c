@@ -217,7 +217,8 @@ static inline int no_contacts(sip_msg_t *_m, udomain_t* _d, str* _a, str* _h)
 /*! \brief
  * Fills the common part (for all contacts) of the info structure
  */
-static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsigned int _e, unsigned int _f, int _use_regid)
+static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
+		unsigned int _e, unsigned int _f, int _use_regid)
 {
 	static ucontact_info_t ci;
 	static str no_ua = str_init("n/a");
@@ -304,6 +305,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsig
 			ci.cflags |= ul.nat_flag;
 			ci.received = path_received;
 		}
+
+		ci.server_id = server_id;
 
 		allow_parsed = 0; /* not parsed yet */
 		received_found = 0; /* not found yet */
