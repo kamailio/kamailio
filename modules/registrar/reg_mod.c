@@ -71,6 +71,8 @@ static int w_lookup_branches(struct sip_msg* _m, char* _d, char* _p2);
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid);
+static int w_registered3(struct sip_msg* _m, char* _d, char* _uri, char* _flags);
+static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags, char* _actionflags);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -78,6 +80,7 @@ static int domain_uri_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
 static int unreg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
+static int registered_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
