@@ -819,7 +819,31 @@ void faked_env(struct cell *t, struct sip_msg *msg, int is_async_env) {
 	}
 }
 
+/**
+ * helper function to clone back to pkg fields that can change in fake_req
+ */
+int fake_req_clone_str_helper(str *src, str *dst, char *txt)
+{
+	/* src string can change -- make a private copy */
+	if (src->s!=0 && src->len!=0) {
+		dst->s=pkg_malloc(src->len+1);
+		if (!dst->s) {
+			LM_ERR("no pkg mem to clone %s back to faked msg\n", txt);
+			return -1;
+		}
+		dst->len=src->len;
+		memcpy(dst->s, src->s, dst->len);
+		dst->s[dst->len]=0;
+	}else{
+		/* in case src->len==0, but src->s!=0 (extra safety) */
+		dst->s = 0;
+	}
+	return 0;
+}
 
+/**
+ * fake a semi-private sip message using transaction's shared memory message
+ */
 int fake_req(struct sip_msg *faked_req,
 		struct sip_msg *shmem_msg, int extra_flags, struct ua_client *uac)
 {
@@ -839,47 +863,40 @@ int fake_req(struct sip_msg *faked_req,
 	
 	faked_req->msg_flags|=extra_flags; /* set the extra tm flags */
 
-	/* dst_uri can change ALSO!!! -- make a private copy */
-	if (shmem_msg->dst_uri.s!=0 && shmem_msg->dst_uri.len!=0) {
-		faked_req->dst_uri.s=pkg_malloc(shmem_msg->dst_uri.len+1);
-		if (!faked_req->dst_uri.s) {
-			LOG(L_ERR, "ERROR: fake_req: no uri/pkg mem\n");
-			goto error01;
-		}
-		faked_req->dst_uri.len=shmem_msg->dst_uri.len;
-		memcpy( faked_req->dst_uri.s, shmem_msg->dst_uri.s,
-			faked_req->dst_uri.len);
-		faked_req->dst_uri.s[faked_req->dst_uri.len]=0;
-	}else{
-		/* in case len==0, but shmem_msg->dst_uri.s!=0 (extra safety) */
-		faked_req->dst_uri.s = 0;
+	/* path_vec was cloned in shm and can change -- make a private copy */
+	if(fake_req_clone_str_helper(&shmem_msg->path_vec, &faked_req->path_vec,
+				"path_vec")<0) {
+		goto error00;
 	}
-	/* new_uri can change -- make a private copy */
-	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
-		faked_req->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
-		if (!faked_req->new_uri.s) {
-			LOG(L_ERR, "ERROR: fake_req: no uri/pkg mem\n");
-			goto error00;
-		}
-		faked_req->new_uri.len=shmem_msg->new_uri.len;
-		memcpy( faked_req->new_uri.s, shmem_msg->new_uri.s,
-			faked_req->new_uri.len);
-		faked_req->new_uri.s[faked_req->new_uri.len]=0;
-	}else{
-		/* in case len==0, but shmem_msg->new_uri.s!=0  (extra safety)*/
-		faked_req->new_uri.s = 0;
+	/* dst_uri was cloned in shm and can change -- make a private copy */
+	if(fake_req_clone_str_helper(&shmem_msg->dst_uri, &faked_req->dst_uri,
+				"dst_uri")<0) {
+		goto error01;
 	}
+	/* new_uri was cloned in shm and can change -- make a private copy */
+	if(fake_req_clone_str_helper(&shmem_msg->new_uri, &faked_req->new_uri,
+				"new_uri")<0) {
+		goto error02;
+	}
+
 	if(uac) setbflagsval(0, uac->branch_flags);
 	else setbflagsval(0, 0);
 
 	return 1;
-error00:
+
+error02:
 	if (faked_req->dst_uri.s) {
 		pkg_free(faked_req->dst_uri.s);
 		faked_req->dst_uri.s = 0;
 		faked_req->dst_uri.len = 0;
 	}
 error01:
+	if (faked_req->path_vec.s) {
+		pkg_free(faked_req->path_vec.s);
+		faked_req->path_vec.s = 0;
+		faked_req->path_vec.len = 0;
+	}
+error00:
 	return 0;
 }
 
