@@ -2856,3 +2856,34 @@ void rpc_reply(rpc_t* rpc, void* c)
 		return;
 	}
 }
+
+/**
+ * re-entrant locking of reply mutex
+ */
+void tm_reply_mutex_lock(tm_cell_t *t)
+{
+	int mypid;
+
+	mypid = my_pid();
+	if (likely(atomic_get(&t->reply_locker_pid) != mypid)) {
+		lock(&t->reply_mutex);
+		atomic_set(&t->reply_locker_pid, mypid);
+	} else {
+		/* locked within the same process that called us*/
+		t->reply_rec_lock_level++;
+	}
+}
+
+/**
+ * re-entrant unlocking of reply mutex
+ */
+void tm_reply_mutex_unlock(tm_cell_t *t)
+{
+	if (likely(t->reply_rec_lock_level == 0)) {
+		atomic_set(&t->reply_locker_pid, 0);
+		unlock(&t->reply_mutex);
+	} else  {
+		/* recursive locked => decrease rec. lock count */
+		t->reply_rec_lock_level--;
+	}
+}

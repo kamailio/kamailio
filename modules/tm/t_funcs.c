@@ -69,6 +69,7 @@
 #include "t_funcs.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
+#include "t_reply.h"
 #include "config.h"
 #include "t_stats.h"
 

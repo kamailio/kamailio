@@ -37,6 +37,7 @@
 #include "../../ut.h"
 #include "config.h"
 #include "t_funcs.h"
+#include "t_reply.h"
 #include "t_lookup.h"
 
 /* usr_avp flag for sequential forking */
