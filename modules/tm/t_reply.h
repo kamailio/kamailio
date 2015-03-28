@@ -23,11 +23,6 @@
 #ifndef _T_REPLY_H
 #define _T_REPLY_H
 
-/* CANCEL_REASON_SUPPORT on by default */
-#ifndef NO_CANCEL_REASON_SUPPORT
-#define CANCEL_REASON_SUPPORT
-#endif /* NO_CANCEL_REASON_SUPPORT */
-
 #include "defs.h"
 #include "../../rpc.h"
 #include "../../tags.h"
@@ -139,8 +134,11 @@ int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt);
 typedef int (*tget_reply_totag_f)(struct sip_msg *, str *);
 int t_get_reply_totag(struct sip_msg *msg, str *totag);
 
-#define LOCK_REPLIES(_t) lock(&(_t)->reply_mutex )
-#define UNLOCK_REPLIES(_t) unlock(&(_t)->reply_mutex )
+void tm_reply_mutex_lock(tm_cell_t *t);
+void tm_reply_mutex_unlock(tm_cell_t *t);
+
+#define LOCK_REPLIES(_t) tm_reply_mutex_lock((_t))
+#define UNLOCK_REPLIES(_t) tm_reply_mutex_unlock((_t))
 
 /* This function is called whenever a reply for our module is received;
  * we need to register this function on module initialization;

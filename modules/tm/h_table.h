@@ -75,7 +75,6 @@ struct async_state;
 #include "../../mem/shm_mem.h"
 #include "lock.h"
 #include "sip_msg.h"
-#include "t_reply.h"
 #include "t_hooks.h"
 #ifdef USE_DNS_FAILOVER
 #include "../../dns_cache.h"
@@ -428,7 +427,12 @@ typedef struct cell
 #endif
 
 	/* protection against concurrent reply processing */
-	ser_lock_t   reply_mutex;
+	ser_lock_t reply_mutex;
+	/* pid of the process that holds the reply lock */
+	atomic_t reply_locker_pid;
+	/* recursive reply lock count */
+	int reply_rec_lock_level;
+
 	/* protect against concurrent async continues */
 	ser_lock_t   async_mutex;
 		

@@ -30,5 +30,9 @@
 #ifndef _TM_DEFS_H
 #define _TM_DEFS_H
 
+/* CANCEL_REASON_SUPPORT on by default */
+#ifndef NO_CANCEL_REASON_SUPPORT
+#define CANCEL_REASON_SUPPORT
+#endif /* NO_CANCEL_REASON_SUPPORT */
 
 #endif

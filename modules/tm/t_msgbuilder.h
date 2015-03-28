@@ -27,6 +27,7 @@
 #include "defs.h"
 #include "dlg.h"
 #include "h_table.h"
+#include "t_reply.h"
 
 
 #define CSEQ "CSeq: "

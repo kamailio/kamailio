@@ -43,6 +43,7 @@
 #include "t_msgbuilder.h"
 #include "t_lookup.h"
 #include "t_fwd.h"
+#include "t_reply.h"
 #include "t_append_branches.h"
 
 int t_append_branches(void) {
