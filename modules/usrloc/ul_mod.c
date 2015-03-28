@@ -140,9 +140,9 @@ str methods_col     = str_init(METHODS_COL);	/*!< Name of column containing the 
 str instance_col    = str_init(INSTANCE_COL);	/*!< Name of column containing the SIP instance value */
 str reg_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the reg-id value */
 str last_mod_col    = str_init(LAST_MOD_COL);	/*!< Name of column containing the last modified date */
-str srv_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the server id value */
-str con_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the connection id value */
-str keepalive_col   = str_init(REG_ID_COL);		/*!< Name of column containing the keepalive value */
+str srv_id_col      = str_init(SRV_ID_COL);		/*!< Name of column containing the server id value */
+str con_id_col      = str_init(CON_ID_COL);		/*!< Name of column containing the connection id value */
+str keepalive_col   = str_init(KEEPALIVE_COL);	/*!< Name of column containing the keepalive value */
 
 str ulattrs_user_col   = str_init(ULATTRS_USER_COL);   /*!< Name of column containing username */
 str ulattrs_domain_col = str_init(ULATTRS_DOMAIN_COL); /*!< Name of column containing domain */
