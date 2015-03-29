@@ -46,6 +46,11 @@ int ts_store(struct sip_msg* msg) {
 	t = _tmb.t_gett();
 	ruri = msg->first_line.u.request.uri;
 
+	if (!t || t==T_UNDEFINED) {
+		LM_ERR("no transaction defined for %.*s\n", ruri.len, ruri.s);
+		return -1;
+	}
+	
 	LM_DBG("storing transaction %u:%u for r-uri: %.*s\n", t->hash_index, t->label, ruri.len, ruri.s);
 
 	lock_entry_by_ruri(&ruri);
