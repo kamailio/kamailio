@@ -297,7 +297,7 @@ void remove_ts_urecord(ts_urecord_t* _r)
 int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord* _r)
 {
 	ts_transaction_t *ptr, *prev;
-        ts_transaction_t* ts;
+    ts_transaction_t* ts;
 
 	unsigned int tindex;
 	unsigned int tlabel;
