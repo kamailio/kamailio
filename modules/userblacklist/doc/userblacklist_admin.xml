@@ -383,25 +383,138 @@ if (!check_whitelist("globalblacklist")) {
 </section>
 
 <section>
-	    <title><acronym>MI</acronym> Commands</title>
+	<title><acronym>MI</acronym> Commands</title>
 		<section>
-	    <title>
-		<function moreinfo="none">reload_blacklist</function>
-	    </title>
-	    <para>
-		Reload the internal global blacklist cache. This is necessary after
-		the database tables for the global blacklist have been changed.
-	    </para>
-	<example>
-		<title><function>reload_blacklist</function> usage</title>
-		<programlisting format="linespecific">
-...
-&ctltool; fifo reload_blacklist
-...
-		</programlisting>
-	    </example>
-	</section>
+			<title>
+				<function moreinfo="none">reload_blacklist</function>
+			</title>
+			<para>
+				Reload the internal global blacklist cache. This is necessary after
+				the database tables for the global blacklist have been changed.
+			</para>
+			<example>
+				<title><function>reload_blacklist</function> usage</title>
+				<programlisting format="linespecific">
+					...
+					&ctltool; fifo reload_blacklist
+					...
+				</programlisting>
+	    		</example>
+		</section>
+
+		<section>
+			<title>
+				<function moreinfo="none">dump_blacklist</function>
+			</title>
+			<para>
+				Dumps the default, in memory, global_blacklist content to stdout.
+				Note that a reload_blacklist should be issued before, 
+				in order to see the latest content of the database.
+			</para>
+			<example>
+				<title><function>dump_blacklist</function> usage</title>
+				<programlisting format="linespecific">
+					...
+					&ctltool; fifo reload_blacklist
+					&ctltool; fifo dump_blacklist
+					...
+				</programlisting>
+	    		</example>
+		</section>
+
+		<section>
+			<title>
+				<function moreinfo="none">check_blacklist prefix</function>
+			</title>
+			<para>
+				Searches in the default, in memory, global list. 
+				Finds the longest prefix that matches the given prefix parameter. 
+				Returns true if the prefix is found and the whitelist is <emphasis>not</emphasis> set. 
+				Returns false otherwise - either prefix found and whitelist set or prefix not found. 
+				Note that a reload_blacklist should be issued before, 
+				in order to check through the latest content of the database.
+			</para>
+			<example>
+				<title><function>check_blacklist</function> usage</title>
+				<programlisting format="linespecific">
+					...
+					&ctltool; fifo reload_blacklist
+					&ctltool; fifo check_blacklist prefix
+					...
+				</programlisting>
+	    		</example>
+		</section>
+
+		<section>
+			<title>
+				<function moreinfo="none">check_whitelist prefix</function>
+			</title>
+			<para>
+				Searches in the default, in memory, global list. 
+				Finds the longest prefix that matches the given prefix parameter. 
+				Returns true if the prefix is found and the whitelist is set. 
+				Returns false otherwise - either prefix found and whitelist 
+				<emphasis>not</emphasis> set or prefix not found. 
+				Note that a reload_blacklist should be issued before, 
+				in order to check through the latest content of the database.
+			</para>
+			<example>
+				<title><function>check_whitelist</function> usage</title>
+				<programlisting format="linespecific">
+					...
+					&ctltool; fifo reload_blacklist
+					&ctltool; fifo check_whitelist prefix
+					...
+				</programlisting>
+	    		</example>
+		</section>
+
+		<section>
+			<title>
+				<function moreinfo="none">check_userblacklist user [domain] prefix</function>
+			</title>
+			<para>
+				Searches in the default user list table.
+				Finds the longest prefix for the given user@domain that matches the given prefix parameter. 
+				Returns true if the prefix is found and the whitelist is <emphasis>not</emphasis> set. 
+				Returns false otherwise - either prefix found and whitelist set or prefix not found. 
+				Note that the domain parameter is optional. 
+				If not given, the second parameter is the considered to be the prefix. 
+			</para>
+			<example>
+				<title><function>check_userblacklist</function> usage</title>
+				<programlisting format="linespecific">
+					...
+					&ctltool; fifo check_userblacklist user [domain] prefix
+					...
+				</programlisting>
+	    		</example>
+		</section>
+
+		<section>
+			<title>
+				<function moreinfo="none">check_userwhitelist user [domain] prefix</function>
+			</title>
+			<para>
+				Searches in the default user list table.
+				Finds the longest prefix for the given user@domain that matches the given prefix parameter. 
+				Returns true if the prefix is found and the whitelist is set. 
+				Returns false otherwise - either prefix found and whitelist 
+				<emphasis>not</emphasis> set or prefix not found. 
+				Note that the domain parameter is optional. 
+				If not given, the second parameter is the considered to be the prefix. 
+			</para>
+			<example>
+				<title><function>check_userwhitelist</function> usage</title>
+				<programlisting format="linespecific">
+					...
+					&ctltool; fifo check_userwhitelist user [domain] prefix
+					...
+				</programlisting>
+	    		</example>
+		</section>
 </section>
+
     <section>
 	<title>Installation and Running</title>
 	<section>
