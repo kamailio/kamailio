@@ -95,7 +95,7 @@ MODULE_VERSION
 
 
 #define DEFAULT_RTPP_SET_ID		0
-
+#define MAX_RTPP_TRIED_NODES    50
 #define MI_SET_NATPING_STATE		"nh_enable_ping"
 #define MI_DEFAULT_NATPING_STATE	1
 
@@ -185,6 +185,7 @@ static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
 static int rtpengine_disable_tout = 60;
 static int rtpengine_retr = 5;
 static int rtpengine_tout_ms = 1000;
+static int queried_nodes_limit = MAX_RTPP_TRIED_NODES;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
@@ -282,6 +283,7 @@ static param_export_t params[] = {
 	{"rtpengine_disable_tout",INT_PARAM, &rtpengine_disable_tout },
 	{"rtpengine_retr",        INT_PARAM, &rtpengine_retr         },
 	{"rtpengine_tout_ms",     INT_PARAM, &rtpengine_tout_ms      },
+	{"queried_nodes_limit",   INT_PARAM, &queried_nodes_limit    },
 	{"db_url",                PARAM_STR, &rtpp_db_url },
 	{"table_name",            PARAM_STR, &rtpp_table_name },
 	{"url_col",               PARAM_STR, &rtpp_url_col },
@@ -885,6 +887,11 @@ mod_init(void)
 	if (rtpp_strings)
 		pkg_free(rtpp_strings);
 
+	if ((queried_nodes_limit < 1) || (queried_nodes_limit > MAX_RTPP_TRIED_NODES)) {
+		LM_ERR("queried_nodes_limit must be a number in the range 1..50 \n");
+		return -1;
+	}
+
 	if (load_tm_api( &tmb ) < 0)
 	{
 		LM_DBG("could not load the TM-functions - answer-offer model"
@@ -1250,7 +1257,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	struct ng_flags_parse ng_flags;
 	bencode_item_t *item, *resp;
 	str callid, from_tag, to_tag, body, viabranch, error;
-	int ret;
+	int ret, queried_nodes;
 	struct rtpp_node *node;
 	char *cp;
 
@@ -1365,7 +1372,12 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	if(msg->id != current_msg_id)
 		active_rtpp_set = default_rtpp_set;
 
+	queried_nodes = 0;
 	do {
+		if (++queried_nodes > queried_nodes_limit) {
+			LM_ERR("queried nodes limit reached\n");
+			goto error;
+		}
 		node = select_rtpp_node(callid, 1);
 		if (!node) {
 			LM_ERR("no available proxies\n");

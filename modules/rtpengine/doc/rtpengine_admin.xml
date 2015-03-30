@@ -178,6 +178,27 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.p.queried_nodes_limit">
+		<title><varname>queried_nodes_limit</varname> (integer)</title>
+		<para>
+		The total number of nodes inside a set (sets are configurable via rtpengine_sock function) to be queried 
+		before giving up establishing a session. This brings more flexibility in case checking all rtpengines
+		would take too long. Max limit is 50.
+		</para>
+		<para>
+		<emphasis>
+			By default all nodes in a set are tried before giving up communicating with the rtpengines.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>queried_nodes_limit</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "queried_nodes_limit", 5)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.p.rtpengine_retr">
 		<title><varname>rtpengine_retr</varname> (integer)</title>
 		<para>
