@@ -550,7 +550,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			if(presentity->sender)
 			{
 				if(!(presentity->sender->len == sender.len && 
-				strncmp(presentity->sender->s, sender.s, sender.len)== 0))
+				presence_sip_uri_match(presentity->sender, &sender)== 0))
 					 bla_update_publish= 0;
 			}
 after_dialog_check:
@@ -1071,7 +1071,7 @@ char* get_sphere(str* pres_uri)
 	if ( publ_cache_enabled )
 	{
 		/* search in hash table*/
-		hash_code= core_hash(pres_uri, NULL, phtable_size);
+		hash_code= core_case_hash(pres_uri, NULL, phtable_size);
 
 		lock_get(&pres_htable[hash_code].lock);
 
