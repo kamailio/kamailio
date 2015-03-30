@@ -755,6 +755,45 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 		LM_ERR("cleaning pending subscriptions\n");
 }
 
+char* last_presentity = NULL;
+
+int pv_parse_subscription_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "uri", 3)==0) {
+				sp->pvp.pvn.u.isname.name.n = 1;
+			} else {
+				goto error;
+			};
+			break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV subscription name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+int pv_get_subscription(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res)
+{
+	if(param->pvn.u.isname.name.n==1) /* presentity */
+		return last_presentity == NULL ? pv_get_null(msg, param, res) : pv_get_strzval(msg, param, res, last_presentity);
+
+	LM_ERR("unknown specifier\n");
+	return pv_get_null(msg, param, res);
+
+}
+
 int handle_subscribe0(struct sip_msg* msg)
 {
 	struct to_body *pfrom;
@@ -808,6 +847,11 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 	int reply_code;
 	str reply_str;
 	int sent_reply= 0;
+
+	if(last_presentity) {
+		pkg_free(last_presentity);
+		last_presentity = NULL;
+	}
 
 	/* ??? rename to avoid collisions with other symbols */
 	counter++;
@@ -906,6 +950,13 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 		}
 		reason= subs.reason;
 	}
+
+	if(subs.pres_uri.len > 0 && subs.pres_uri.s) {
+		last_presentity= (char*)pkg_malloc((subs.pres_uri.len+1) * sizeof(char));
+		strncpy(last_presentity, subs.pres_uri.s, subs.pres_uri.len);
+		last_presentity[subs.pres_uri.len] = '\0';
+	}
+		
 	/* mark that the received event is a SUBSCRIBE message */
 	subs.recv_event = PRES_SUBSCRIBE_RECV;
 

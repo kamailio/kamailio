@@ -102,4 +102,7 @@ int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri);
 typedef int (*sip_uri_match_f) (str* s1, str* s2);
 extern sip_uri_match_f presence_sip_uri_match;
 
+int pv_get_subscription(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
+int pv_parse_subscription_name(pv_spec_p sp, str *in);
+
 #endif /* PA_MOD_H */
