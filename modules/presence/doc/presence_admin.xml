@@ -1130,6 +1130,40 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 </section>
 
 <section>
+	<title>Pseudo Variables</title>
+		
+		<section>
+			<title><varname>$subs(attr)</varname></title>
+			<para>
+				Access the attributes of handled subscription. 
+				It must be used after a call of
+				<quote>handle_subscription())</quote>.
+			</para>
+			<para>
+			The <quote>attr</quote> can be:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>uri</emphasis> - subscription presentity uri
+				</para>
+				</listitem>	  
+			</itemizedlist>
+
+			<example>
+			<title><function moreinfo="none">$subs(name)</function> usage</title>
+<programlisting format="linespecific">
+...
+if(handle_subscription())
+{
+  xlog("presentity=$subs(uri)\n");
+}
+...
+				 </programlisting>
+			</example>
+		</section>
+</section>
+
+<section>
 	<title>Installation</title>
 	<para>
 	The module requires 3 tables in the &kamailio; database: "presentity",

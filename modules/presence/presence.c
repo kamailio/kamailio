@@ -228,6 +228,11 @@ static mi_export_t mi_cmds[] = {
 	{  0,                0,                     0,  0,  0}
 };
 
+static pv_export_t pres_mod_pvs[] = {
+	{{"subs", (sizeof("subs")-1)}, PVT_OTHER, pv_get_subscription, 0, pv_parse_subscription_name, 0, 0, 0},
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 /** module exports */
 struct module_exports exports= {
 	"presence",			/* module name */
@@ -236,7 +241,7 @@ struct module_exports exports= {
 	params,				/* exported parameters */
 	0,					/* exported statistics */
 	mi_cmds,   			/* exported MI functions */
-	0,					/* exported pseudo-variables */
+	pres_mod_pvs,		/* exported pseudo-variables */
 	0,					/* extra processes */
 	mod_init,			/* module initialization function */
 	0,   				/* response handling function */
