@@ -544,6 +544,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     int must_free_asserted_identity = 0;
     sdp_session_cell_t* sdp_session;
     str s_id;
+    
+    struct hdr_field *h=0;
 
     cfg_action_t* cfg_action = 0;
     saved_transaction_t* saved_t_data = 0; //data specific to each contact's AAR async call
@@ -719,8 +721,13 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 	    } else {
 		LM_DBG("terminating direction\n");
 		if ((identifier = cscf_get_asserted_identity(msg, 0)).len == 0) {
-		    LM_DBG("No P-Asserted-Identity hdr found in response. Using To hdr in resp");
-		    identifier = cscf_get_public_identity(msg); //get public identity from to header
+		    LM_DBG("No P-Asserted-Identity hdr found in response. Using Called party id in resp");
+		    //get identity from called party id
+		    //getting called asserted identity
+		    if ((identifier = cscf_get_public_identity_from_called_party_id(t->uas.request, &h)).len == 0) {
+			LM_DBG("No P-Called-Identity hdr found. Using request URI for called_asserted_identity");
+			identifier = cscf_get_public_identity(msg); //get public identity from to header
+		    }
 		}
 	    }
 	    if (strncasecmp(identifier.s,"tel:",4)==0) {
