@@ -21,6 +21,7 @@
  *
  * History:
  * -------
+ *  2015-03-31: Added srv_query function (rboisvert)
  *  2011-07-29: Added a function to detect RFC1918 private IPv4 addresses (ibc)
  *  2011-04-27: Initial version (ibc)
  */
@@ -92,10 +93,13 @@ static int w_dns_sys_match_ip(sip_msg_t*, char*, char*);
 static int w_dns_int_match_ip(sip_msg_t*, char*, char*);
 
 static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
+static int w_srv_query(struct sip_msg* msg, char* str1, char* str2);
 
 static pv_export_t mod_pvs[] = {
 	{ {"dns", sizeof("dns")-1}, PVT_OTHER, pv_get_dns, 0,
 		pv_parse_dns_name, 0, 0, 0 },
+	{ {"srvquery", sizeof("srvquery")-1}, PVT_OTHER, pv_get_srv, 0,
+		pv_parse_srv_name, 0, 0, 0 },
 	{ {"HN", sizeof("HN")-1}, PVT_OTHER, pv_get_hn, 0,
 		pv_parse_hn_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
@@ -131,6 +135,8 @@ static cmd_export_t cmds[] =
   { "dns_int_match_ip", (cmd_function)w_dns_int_match_ip, 2, fixup_spve_spve, 0,
   ANY_ROUTE },
   { "dns_query", (cmd_function)w_dns_query, 2, fixup_spve_spve, 0,
+  ANY_ROUTE },
+  { "srv_query", (cmd_function)w_srv_query, 2, fixup_spve_spve, 0,
   ANY_ROUTE },
   { "bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0 }
@@ -772,4 +778,32 @@ static int w_dns_query(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	return dns_update_pv(&hostname, &name);
+}
+
+/**
+ *
+ */
+static int w_srv_query(struct sip_msg* msg, char* str1, char* str2)
+{
+	str srvcname;
+	str name;
+
+	if(msg==NULL)
+	{
+		LM_ERR("received null msg\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)str1, &srvcname)<0)
+	{
+		LM_ERR("cannot get the srvcname\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)str2, &name)<0)
+	{
+		LM_ERR("cannot get the pvid name\n");
+		return -1;
+	}
+
+	return srv_update_pv(&srvcname, &name);
 }

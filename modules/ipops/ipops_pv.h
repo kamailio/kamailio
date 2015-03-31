@@ -39,5 +39,9 @@ int pv_parse_hn_name(pv_spec_p sp, str *in);
 int pv_get_hn(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_parse_srv_name(pv_spec_t *, str *);
+int pv_get_srv(sip_msg_t *, pv_param_t *, pv_value_t *);
+int srv_update_pv(str *, str *);
+
 #endif
 
