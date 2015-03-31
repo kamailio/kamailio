@@ -848,6 +848,7 @@ int pres_htable_restore(void)
 	int event;
 	event_t ev;
 	char* sphere= NULL;
+	static str query_str;
 
 	result_cols[user_col= n_result_cols++]= &str_username_col;
 	result_cols[domain_col= n_result_cols++]= &str_domain_col;
@@ -862,7 +863,7 @@ int pres_htable_restore(void)
 		goto error;
 	}
 
-	static str query_str = str_init("username");
+	query_str = str_username_col;
 	if (db_fetch_query(&pa_dbf, pres_fetch_rows, pa_db, 0, 0, 0, result_cols,
 				0, n_result_cols, &query_str, &result) < 0)
 	{
