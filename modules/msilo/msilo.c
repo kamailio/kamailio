@@ -139,6 +139,7 @@ int_str ms_extra_hdrs_avp_name;
 unsigned short ms_extra_hdrs_avp_type;
 
 str msg_type = str_init("MESSAGE");
+static int ms_skip_notification_flag = -1;
 
 /** module functions */
 static int mod_init(void);
@@ -208,6 +209,7 @@ static param_export_t params[]={
 	{ "add_date",         INT_PARAM, &ms_add_date             },
 	{ "max_messages",     INT_PARAM, &ms_max_messages         },
 	{ "add_contact",      INT_PARAM, &ms_add_contact          },
+	{ "skip_notification_flag", PARAM_INT, &ms_skip_notification_flag },
 	{ 0,0,0 }
 };
 
@@ -274,6 +276,15 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+
+	if(ms_skip_notification_flag!=-1) {
+		if(ms_skip_notification_flag<0 || ms_skip_notification_flag>31) {
+			LM_ERR("invalid skip notification flag value: %d\n",
+					ms_skip_notification_flag);
+			return -1;
+		}
+		ms_skip_notification_flag = 1 << ms_skip_notification_flag;
+	}
 
 	/* binding to mysql module  */
 	if (db_bind_mod(&ms_db_url, &msilo_dbf))
@@ -810,7 +821,9 @@ static int m_store(struct sip_msg* msg, str *owner_s)
 	update_stat(ms_stored_msgs, 1);
 #endif
 
-	if(ms_from==NULL || ms_offline_message == NULL)
+	if(ms_from==NULL || ms_offline_message == NULL
+			|| (ms_skip_notification_flag!=-1
+				&& (msg->flags & ms_skip_notification_flag)))
 		goto done;
 
 	LM_DBG("sending info message.\n");
