@@ -655,6 +655,31 @@ modparam("msilo", "extra_hdrs_avp", "$avp(msilo_extra_hdrs)")
 		</example>
 	</section>
 
+	<section id="msilo.p.skip_notification_flag">
+		<title><varname>skip_notification_flag</varname> (int)</title>
+		<para>
+			Flag to mark the message for which no notification should be
+			sent back to sender when storing in msilo. Valid value is in
+			between 0 and 31.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>-1</quote> (feature disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>skip_notification_flag</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "skip_notification_flag", 18)
+...
+setflag(18);
+m_store(...);
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

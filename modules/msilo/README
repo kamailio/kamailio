@@ -66,6 +66,7 @@ Juha Heinanen
               3.27. max_messages (int)
               3.28. add_contact (int)
               3.29. extra_hdrs_avp (str)
+              3.30. skip_notification_flag (int)
 
         4. Functions
 
@@ -115,9 +116,10 @@ Juha Heinanen
    1.27. Set the "max_messages" parameter
    1.28. Set the "add_contact" parameter
    1.29. Set the "extra_hdrs_avp" parameter
-   1.30. m_store usage
-   1.31. m_dump usage
-   1.32. Kamailio config script - sample msilo usage
+   1.30. Set the "skip_notification_flag" parameter
+   1.31. m_store usage
+   1.32. m_dump usage
+   1.33. Kamailio config script - sample msilo usage
 
 Chapter 1. Admin Guide
 
@@ -160,6 +162,7 @@ Chapter 1. Admin Guide
         3.27. max_messages (int)
         3.28. add_contact (int)
         3.29. extra_hdrs_avp (str)
+        3.30. skip_notification_flag (int)
 
    4. Functions
 
@@ -258,6 +261,7 @@ Chapter 1. Admin Guide
    3.27. max_messages (int)
    3.28. add_contact (int)
    3.29. extra_hdrs_avp (str)
+   3.30. skip_notification_flag (int)
 
 3.1. db_url (string)
 
@@ -618,6 +622,21 @@ modparam("msilo", "add_contact", 1)
 modparam("msilo", "extra_hdrs_avp", "$avp(msilo_extra_hdrs)")
 ...
 
+3.30. skip_notification_flag (int)
+
+   Flag to mark the message for which no notification should be sent back
+   to sender when storing in msilo. Valid value is in between 0 and 31.
+
+   Default value is "-1" (feature disabled).
+
+   Example 1.30. Set the "skip_notification_flag" parameter
+...
+modparam("msilo", "skip_notification_flag", 18)
+...
+setflag(18);
+m_store(...);
+...
+
 4. Functions
 
    4.1. m_store([owner])
@@ -639,7 +658,7 @@ modparam("msilo", "extra_hdrs_avp", "$avp(msilo_extra_hdrs)")
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. m_store usage
+   Example 1.31. m_store usage
 ...
 m_store();
 m_store("$tu");
@@ -659,7 +678,7 @@ m_store("$tu");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.31. m_dump usage
+   Example 1.32. m_dump usage
 ...
 m_dump();
 m_dump("$fu");
@@ -701,7 +720,7 @@ m_dump("$fu");
 
    Next picture displays a sample usage of msilo.
 
-   Example 1.32. Kamailio config script - sample msilo usage
+   Example 1.33. Kamailio config script - sample msilo usage
 ...
 # $Id$
 #
