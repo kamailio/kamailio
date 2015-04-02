@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver     4.2.3
+%define ver     4.2.4
 %define rel     0
 
 %define EXCLUDED_MODULES	mysql jabber cpl-c auth_radius misc_radius peering postgress pa unixodbc osp tlsops
