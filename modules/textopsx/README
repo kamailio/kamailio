@@ -33,11 +33,12 @@ Daniel-Constantin Mierla
               2.12. include_hf_value(hf, hvalue)
               2.13. exclude_hf_value(hf, hvalue)
               2.14. hf_value_exists(hf, hvalue)
-              2.15. Selects
 
-                    2.15.1. @hf_value
-                    2.15.2. @hf_value2
-                    2.15.3. @hf_value_exists
+        3. Selects
+
+              3.1. @hf_value
+              3.2. @hf_value2
+              3.3. @hf_value_exists
 
    List of Examples
 
@@ -78,11 +79,12 @@ Chapter 1. Admin Guide
         2.12. include_hf_value(hf, hvalue)
         2.13. exclude_hf_value(hf, hvalue)
         2.14. hf_value_exists(hf, hvalue)
-        2.15. Selects
 
-              2.15.1. @hf_value
-              2.15.2. @hf_value2
-              2.15.3. @hf_value_exists
+   3. Selects
+
+        3.1. @hf_value
+        3.2. @hf_value2
+        3.3. @hf_value_exists
 
 1. Overview
 
@@ -106,11 +108,6 @@ Chapter 1. Admin Guide
    2.12. include_hf_value(hf, hvalue)
    2.13. exclude_hf_value(hf, hvalue)
    2.14. hf_value_exists(hf, hvalue)
-   2.15. Selects
-
-        2.15.1. @hf_value
-        2.15.2. @hf_value2
-        2.15.3. @hf_value_exists
 
 2.1. msg_apply_changes()
 
@@ -375,9 +372,13 @@ if (@hf_value_exists.supported.path == "1") {
 }
 ...
 
-2.15. Selects
+3. Selects
 
-2.15.1. @hf_value
+   3.1. @hf_value
+   3.2. @hf_value2
+   3.3. @hf_value_exists
+
+3.1. @hf_value
 
    Get value of required header-value or param. Note that functions called
    'value2' works with Authorization-like headers where comma is not
@@ -418,10 +419,10 @@ $rr = @hf_value.route.uri;
 $prt = @hf_value2.authorization.integrity_protected;
 ...
 
-2.15.2. @hf_value2
+3.2. @hf_value2
 
    TBA.
 
-2.15.3. @hf_value_exists
+3.3. @hf_value_exists
 
    TBA.

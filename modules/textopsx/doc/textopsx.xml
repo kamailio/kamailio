@@ -40,6 +40,7 @@
     </section>
 
     <xi:include href="functions.xml"/>
+    <xi:include href="selects.xml"/>
     </chapter>
 </book>
 

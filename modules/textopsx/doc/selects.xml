@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="textopsx.selects" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Selects</title>
+
+    <section id="textopsx.sel.hf_value">
+	<title>@hf_value</title>
+	<para>
+		Get value of required header-value or param. Note that functions called 'value2'
+		works with Authorization-like headers where comma is not treated as value delimiter. Formats:
+		@hf_value.HFNAME[IDX]    # idx value, negative value counts from bottom
+		@hf_value.HFNAME.PARAM_NAME
+		@hf_value.HFNAME[IDX].PARAM_NAME
+		@hf_value.HFNAME.p.PARAM_NAME  # or .param., useful if requred called "uri", "p", "param"
+		@hf_value.HFNAME[IDX].p.PARAM_NAME # dtto
+		@hf_value.HFNAME[IDX].uri # (&lt; &amp; &gt; excluded)
+		@hf_value.HFNAME[*]     # return comma delimited list of all values (combines headers)
+		@hf_value.HFNAME        # the same as above [*] but may be parsed by cfg.y
+		@hf_value.HFNAME[*].uri # return comma delimited list of uris (&lt; &amp; &gt; excluded)
+		@hf_value.HFNAME.uri    # the same as above [*] but may be parsed by cfg.y
+		@hf_value.HFNAME[IDX].name  # returns name part, quotes excluded
+		@hf_value.HFNAME.name   # returns name part of the first value
+
+		@hf_value2.HFNAME        # returns value of first header
+		@hf_value2.HFNAME[IDX]   # returns value of idx's header
+		@hf_value2.HFNAME.PARAM_NAME
+		@hf_value2.HFNAME[IDX].PARAM_NAME
+
+		@hf_value.HFNAME[IDX].uri  # return URI, quotes excluded
+		@hf_value.HFNAME.p.uri  # returns param named uri, not URI itself
+		@hf_value.HFNAME.p.name # returns param named name, not name itself
+		@hf_value.HFNAME[IDX].uri.name #  any sel_any_uri nested features may be used
+		@hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>HFNAME</emphasis> - Header field name. Underscores are treated as dashes.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>IDX</emphasis> - Value index, negative value counts from bottom
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>PARAM_NAME</emphasis> - name of parameter
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>@hf_value select</function> usage</title>
+	    <programlisting>
+...
+$a = @hf_value.my_header[1].my_param;
+xplog("L_ERR", "$sel(@hf_value.via[-1]), $sel(@hf_value.from.tag)\n");
+$b = @hf_value.p_associated_uri;
+
+xplog("L_ERR", "Route uris: '$sel(@hf_value.route[*].uri)'\n");
+$rr = @hf_value.route.uri;
+
+$prt = @hf_value2.authorization.integrity_protected;
+...
+	    </programlisting>
+	</example>
+    </section>
+    <section id="textopsx.sel.hf_value2">
+	<title>@hf_value2</title>
+	<para>
+		TBA.
+	</para>
+    </section>
+    <section id="textopsx.sel.hf_value_exists">
+	<title>@hf_value_exists</title>
+	<para>
+		TBA.
+	</para>
+    </section>
+
+</section>
