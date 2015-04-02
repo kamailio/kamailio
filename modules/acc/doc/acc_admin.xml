@@ -25,7 +25,7 @@
 	<para>
 		To account a transaction and to choose which set of backends to be 
 		used, the script writer just has to set some flags (see the module
-		parameters section for flag definitions <xref linkend="ACC-param-id"/>).
+		parameters section for flag definitions <xref linkend="acc.i.params"/>).
 		If the accounting flag for a specific backend is set, the acc module 
 		will then report on completed transaction. A typical usage of the 
 		module takes no acc-specific script command -- the functionality 
@@ -38,7 +38,7 @@
 		The accounting module will log by default a fixed set of attributes 
 		for the transaction - if you customize your accounting by adding more
 		information to be logged, please see the next chapter about extra
-		accounting - <xref linkend="ACC-extra-id"/>.
+		accounting - <xref linkend="acc.i.extra-accounting"/>.
 	</para>
 	<para>
 		The fixed minimal accounting information is: 
@@ -155,7 +155,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 	</section>
 	</section>
 
-	<section id="ACC-extra-id">
+	<section id="acc.i.extra-accounting">
 		<title>Extra accounting</title>
 		<section>
 			<title>Overview</title>
@@ -237,7 +237,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 		</section>
 	</section>
 
-	<section id="multi-call-legs">
+	<section id="acc.i.multi-call-legs">
 		<title>Multi Call-Legs accounting</title>
 		<section>
 			<title>Overview</title>
@@ -358,10 +358,10 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				- <xref linkend="acc.p.cdr_expired_dlg_enable"/>. Default behavior is not logging.
                 </para>
         </section>
-		<section id="cdr-extra-id">
+		<section id="acc.i.cdr-extra">
 			<title>CDR Extra</title>
 					This section is similar to the <quote>LOG accounting</quote> part of
-					<xref linkend="ACC-extra-id"/>.
+					<xref linkend="acc.i.extra-accounting"/>.
 			<section>
 				<title>Definitions and syntax</title>
 					<para>
@@ -495,7 +495,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
 		</section>
 	</section>
 
-	<section id="ACC-param-id">
+	<section id="acc.i.params">
 	<title>Parameters</title>
 	<!-- Generic ACC parameters -->
 	<section id="acc.p.early_media">
@@ -746,7 +746,7 @@ modparam("acc", "log_facility", "LOG_DAEMON")
 		<title><varname>log_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged.
-		See section <xref linkend="ACC-extra-id"/> for more details.
+		See section <xref linkend="acc.i.extra-accounting"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
@@ -844,7 +844,7 @@ modparam("acc", "service_type", 16)
 		<title><varname>radius_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged via RADIUS - RADIUS specific.
-		See section <xref linkend="ACC-extra-id"/> for more details.
+		See section <xref linkend="acc.i.extra-accounting"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
@@ -1077,7 +1077,7 @@ modparam("acc", "acc_time_column", "time")
 		<title><varname>db_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged into database - DB specific.
-		See section <xref linkend="ACC-extra-id"/> for more details.
+		See section <xref linkend="acc.i.extra-accounting"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
@@ -1193,7 +1193,7 @@ modparam("acc", "diameter_client_port", 3000)
 		<title><varname>diameter_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged via DIAMETER - DIAMETER specific.
-		See section <xref linkend="ACC-extra-id"/> for more details.
+		See section <xref linkend="acc.i.extra-accounting"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
@@ -1285,7 +1285,7 @@ modparam("acc", "cdr_facility", "LOG_DAEMON")
 		<title><varname>cdr_extra</varname> (string)</title>
 		<para>
 		Set of pseudo-variables defining custom CDR fields. See
-        <xref linkend="cdr-extra-id"/> for more details.
+        <xref linkend="acc.i.cdr-extra"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
