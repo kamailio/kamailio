@@ -1,6 +1,475 @@
+===================== 2015-04-02 Version 4.2.4 Released =====================
+
+===================== Changes Since Version 4.2.3 ===========================
+
+commit 144a09eb4eb01eb45e79923e4101bc5a09d04c28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 2 12:49:05 2015 +0200
+
+    Makefile.defs: version set to 4.2.4
+
+commit a4cf2c8fda717ed087b075e41a1b78708e3c97a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 2 12:13:04 2015 +0200
+
+    pkg/rpm: version set to 4.2.4 in spec files
+
+commit f76e0b3adb42b6e9e8b0055b75dadac6d9a4b107
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 2 12:09:56 2015 +0200
+
+    pkg/deb: version set to 4.2.4 in spec files
+
+commit 9b1991a53283e2a16b5a20f88e83e4afa64b81f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 31 15:15:27 2015 +0200
+
+    presence: query_str filled with value of the corresponding column
+    
+    - static value was used that made setting of parameter for column names
+      not being considered
+    
+    (cherry picked from commit 845bdb8884743f5e126a53eb6aeb34f1f6afb1ea)
+
+commit 5f508193ba3abf4fbb76defc1c0f333e38ff5dfc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 28 15:00:48 2015 +0100
+
+    tm: clone path vector back to pkg for faked message
+    
+    - it is cloned and can be changed, resulting in attempt to free a shm
+      pointer via pkg operation
+    - reported by Jose Seabra
+    
+    (cherry picked from commit 8a7c70a5b831542cde77e7945e97d51901b95310)
+
+commit 9a00a53deb90ab16f0e73a7f63390f208042e559
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 28 14:31:59 2015 +0100
+
+    tm: reply_lock per transaction made re-entrant
+    
+    - on a report by Jason Penton
+    - re-ordered some includes to get rid of cross dependencies in defines
+    
+    (cherry picked from commit 3957db5fb51e23535a89b15c8f05463e5702424d)
+
+commit e79c347fbcc9db52ee8b3ab1a733fdfcd143c0d2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 26 15:51:54 2015 +0100
+
+    presence: more use of variable for received_time column instead of static value
+    
+    (cherry picked from commit beba4579778f8af0bc0d88c13a6f433dd9ffa8a0)
+
+commit 74e136f0b3ab07f7bd55a6aa1e0522d7d1472548
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 26 15:48:09 2015 +0100
+
+    presence: use name of received_time column from associated variable
+    
+    (cherry picked from commit 8729aa8cde19f39eebce7ef9be7e31ea121b9a99)
+
+commit cc1dcba334dffc965802e8eaeb156c7027a7a630
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Fri Mar 20 09:43:36 2015 -0400
+
+    tmrec: update licensing and copyright info
+    
+    (cherry picked from commit e172b7a1b66edfb302da8d498eada7da9f21643e)
+
+commit f7300652f8c7e252165a5b04090e35f2eca1b6a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 20 12:57:04 2015 +0100
+
+    tm: formated the comment without + chars
+    
+    (cherry picked from commit e6cdb91037abc5a7668e7919281072b15e758739)
+
+commit 28ea4c042b51152f0968ce10b0b71a4fb1d356c5
+Author: jaybeepee <jason.penton@gmail.com>
+Date:   Fri Mar 20 13:29:34 2015 +0200
+
+    modules/tm: restore code to set blind uac branch last_reply > 200
+    
+    (cherry picked from commit 0ee3dc5e3edc49cf62f97ddd87a40b12c59b73ff)
+
+commit 9a71a7e09f9a764e0c7d0e846474608bed420035
+Author: Giacomo Vacca <giacomo.vacca@gmail.com>
+Date:   Thu Mar 19 11:30:56 2015 -0400
+
+    textops: minor typos in README
+    
+    (cherry picked from commit 5681e9c6e9850eedd15e53219ce2bc55fd38dd90)
+
+commit b06ab1be65b96cc064f5e036bd42d014bc10f4ad
+Author: Giacomo Vacca <giacomo.vacca@gmail.com>
+Date:   Thu Mar 19 11:28:58 2015 -0400
+
+    textops: minor typos in doc
+    
+    (cherry picked from commit 6c866c1296a34e0733bf33a1feac57ca8bfc64d7)
+
+commit aa458695a1f7272ff1c898ed728dd97b72290ccb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 18 19:50:09 2015 +0100
+
+    tm: propagate the on_failure value in to the branch for t_suspend()
+    
+    - likely lost when on_failure was added to each branch structure
+    - reported by Mickael Marrache
+    
+    (cherry picked from commit 6484b199fb48acc2c55f318812f2c968b845ca80)
+
+commit e1d18d0234bb43b39aed72108c0408724c6849a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 11 09:42:02 2015 +0100
+
+    ctl: use uid/gid from the core if not set for the module
+    
+    - otherwise it cannot do clean created files at shut down
+    
+    (cherry picked from commit 3b5633de56c2367d19122f0f3c01698af34a21e9)
+
+commit b2084ee2e828a94dfc0e565ef713d6101d9fb442
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 11 09:40:52 2015 +0100
+
+    core: set the global sock_uid/gid based on the user/group values
+    
+    - they were left with initial value, more or less being unused
+    
+    (cherry picked from commit d7a10e6a5ea8852681b57586eb9b4d73b75f05bf)
+
+commit 4ab41baecf0f9912c2a3ed859d53ffe3e5b46a26
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 7 23:31:49 2015 +0100
+
+    registrar: use proper iterator to get to the index of the $ulc() contact
+    
+    - part of a patch by Luis Azedo
+    
+    (cherry picked from commit f39b92acb2be15e03aa117bdf171087ea7a77050)
+
+commit 6697d2ecfd254f2269317785654a5881e684210b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 5 21:26:36 2015 +0100
+
+    enum: updated the docs in regards to max len for enum number
+    
+    - synced with the code, following on a report from Alex Balashov
+    
+    (cherry picked from commit 910be93e5caebea5cef33335d0c48de636169ff5)
+
+commit 745f951d08acdf65ff0de878fcbe3a945171ffc7
+Author: Sebastian ThÃ¶rn <sebastian.thorn@loxytel.se>
+Date:   Wed Mar 4 17:16:22 2015 +0100
+
+    Fixed path ss -> ssl
+    
+    (cherry picked from commit a5245d5c44cd49a699caa94f844dfb128a8d9764)
+
+commit 7993d34c292aea01cf32bea3bb300aeb666ab90d
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Wed Feb 25 18:16:48 2015 +0000
+
+    usrloc - fix db_delete_ucontact_ruid
+    
+    when the contact is deleted using db_delete_ucontact_ruid (default)
+    the uldb_attrs_delete is not called leaving the location_attrs with unwanted records
+    
+    created uldb_attrs_delete_ruid to be called by db_delete_ucontact_ruid
+    redirected uldb_attrs_delete to uldb_attrs_delete_ruid when ul_db_ops_ruid == 1
+    
+    (cherry picked from commit 09c51685af36071aad6054d84571c260be2ba9e2)
+    (cherry picked from commit f5a7b12ce5f73749e9ae3d7a31e2a3616539421c)
+
+commit 21311a110cb0d70a53224d12ced09972a0a15235
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 26 21:58:47 2015 +0100
+
+    uac: skip only the invalid record when loading remote registration records
+    
+    - fixes loading only the good records before the wrong record, thus
+      working with partial valid data afterwards, even more valid records
+      were in the db
+    
+    (cherry picked from commit 634db00a82f36c6c60d272ccada4a1d5338d1cbc)
+
+commit ad6320e754971b6f872967e225729b589b334ef4
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sun Feb 22 01:10:12 2015 +0200
+
+    modules/siptrace: small README clarification
+    
+    (cherry picked from commit 6a97c65c122400e46a4103b756c6973f7bea134e)
+
+commit f3128e163d13eb78002e9aa0a7e4d1c30239c1d8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 20 20:40:39 2015 +0100
+
+    xhttp: use proper function to set the ip addres of the fake via
+    
+    - for ipv6 it has to be enclosed in between [ ]
+    - reported by Sergey Okhapkin
+    
+    (cherry picked from commit 5c1a9df4fc8bd72f44066bcef13f381f01cd9d07)
+
+commit 362cb1d7eaf359dd57937a43e2fca3df96031eef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 19 21:13:39 2015 +0100
+
+    utils: cleanup CURL handle when the POST value can't be fetched from the PVAR
+    
+    - patch provided by mikomarrache on GH #88
+    
+    (cherry picked from commit b88e165214296d1d7491cf389295800b499a5d34)
+
+commit c44df47b7e461a51af43b75fa0122704063ff8dc
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Sun Mar 29 17:48:20 2015 +0200
+
+    modules/tsilo: return from ts_store if transaction is not defined
+    
+    (cherry picked from commit e7dc20f48c674b0eca5419c93e05a430a5b20e71)
+
+commit 6614c8e78ac9cb5add92aff0db2d3a24dbc65423
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 18 18:36:37 2015 +0100
+
+    sqlops: fix column index for sqlops_is_null()
+    
+    - report and patch by Mihaly Zachar
+    
+    (cherry picked from commit 768dc8b566e2af04411570ef7b4d55a210a1927d)
+
+commit df86f2a9a09339687af5914b85fe8bd8f8f1f575
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 12 15:18:58 2015 +0100
+
+    jsonrpc-s: reset response body after linking it to $jsonrpl() variable
+
+commit 87ca6e634c627a6beb4b7355fcfcbd0070e2afe1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 14:58:32 2015 +0100
+
+    ldap: fixed copy&paste error added in previous commit
+    
+    (cherry picked from commit c6ddf3aec7eb6e8d6046b006fde64ab7479aab5e)
+
+commit b2aa72a6357dd93c75a345fd433c3b86c2654313
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 14:52:08 2015 +0100
+
+    ldap: more useful info on reconnect
+    
+    - reconnect message made a notice level, being not an error situation
+    - print the chosen ldap server address at info level when reconnecting
+    
+    (cherry picked from commit c5ae4020de8499e7a318783b21276dfd3fc0a6e3)
+
+commit bb81ec09e22bb35944879a081eba47b1cfcc816b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 14:38:38 2015 +0100
+
+    sqlops: more verbose log message if execution of query fails
+    
+    (cherry picked from commit 941fbda5c66da6c8069b3bce3764249bbb58baaa)
+
+commit 4ae4e5f381fba4cf43d8792e56d2baa4b2edcc6f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 13:54:11 2015 +0100
+
+    db_cluster: fix checking the capabilities for write operation with different priorities
+    
+    - reported by Jan Hazenberg
+    
+    (cherry picked from commit 8375f37cd7603216a2bb55a4e9985b3c5e54af91)
+
+commit 7e0e8ee8e0753590e00445094b12bcefcf24605d
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Tue Mar 10 08:22:05 2015 +0000
+
+    kazoo: consumer unallocated structure prevents kazoo from starting on busy systems
+    
+    when kamailio starts, publisher begins to process without checking memory allocation initialized by consumer
+    
+    allocate bind structure once at initialization
+    change the order of child process initialization
+    change targeted binding
+    
+    (cherry picked from commit 6e1b56cb6d640db820254b8c69f7fd6e20865465)
+
+commit 4e1a1007db5441849bc3c45a1b768e6a69b79c8f
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Mon Mar 9 12:47:31 2015 +0000
+
+    kazoo: only create tags if not empty
+    
+    to-tag and from-tag are created empty if not supplied in amp payload
+    this patch formats the dialog message to include the tags only if they are supplied in amp payload
+    
+    (cherry picked from commit deb0e811cddd71c45ebb36db7b41faa8d9e9ca5e)
+
+commit 7140f86bc020ef60d2b35b79e9d051a415372036
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 9 12:33:58 2015 +0100
+
+    textops: stop after substituting in first header if flag f is set for subst_hf()
+    
+    - reported by Julia Boudniatsky
+    
+    (cherry picked from commit 0f5aaac47a6002bbd4fdfaf0e6897d307c2cbc0e)
+
+commit 80a7b7593a68dd2686a5c17f9f85f561bb694785
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 1 21:16:46 2015 +0100
+
+    core: cleaned debug messages and added safety check for bind address
+    
+    (cherry picked from commit 2549f7a6361de36e0dde14de3d5c4c076564871c)
+
+commit af726efbe52bfa082d4b8060be01b0a69c732b0d
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Tue Feb 24 22:37:32 2015 +0000
+
+    kazoo - fix compilation
+    
+    (cherry picked from commit 12af51df76e779c70470c57ef0b992831441f275)
+
+commit 9b44517c6e8efe9e6445940ee7f0c505abef613d
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Tue Feb 24 22:22:32 2015 +0000
+
+    kazoo - fix timer interval
+    
+    amqp timer and publish proc take all cpu
+    new param amqp_timmer_process_interval in MS
+    and removed the timeout on select from tcp workers
+    
+    (cherry picked from commit 7ae9f6693406c76d7d58389d5cf4ccaa44958a02)
+
+commit 856b9e7df04d41a5564a755ce60be5bd708c80cb
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Tue Feb 24 09:33:53 2015 +0000
+
+    kazoo - fix crashing on heavy load
+    
+    (cherry picked from commit 0506b9898867c5d165defa0acf1501cad13513eb)
+
+commit e24c9ff7038534e07682e8a7bafd903e4303590e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 23 14:29:46 2015 +0100
+
+    sdpops: safety check when location a= line not to exceed end of message
+    
+    (cherry picked from commit 91596953115fe1bbe5c6f0dd0dd6e8d99cdbd285)
+
+commit 449ba0c0a3a1c79c597452c3411fd823465c9482
+Author: Luis Azedo <luis@2600hz.com>
+Date:   Mon Feb 23 20:55:57 2015 +0000
+
+    kazoo - fix timeouts
+    
+    timeout should be ms not sec
+    set time before state so timeout check doesn't set timeout immediately
+    separate proc for handling timeouts
+    
+    (cherry picked from commit b9e5b9181c0f9c315e0f27ad96f69d5ca8cafba3)
+
+commit 9524b3471802c09361fd290cf35b2d5096ac0767
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Feb 18 23:01:57 2015 +0000
+
+    db_text : missing OP_NEQ
+    
+    this affects the presence package when it queries for active_watchers
+    (cherry picked from commit 5adbfc6cc62be393ac55d296cab79f7e60b17ae4)
+
+commit df4df4fbe8c742d960b0fdecd5a1e9967a96b58b
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Mon Feb 16 13:14:06 2015 +0000
+
+    usrloc - fix column types not initialized on update
+    
+    some columns were not initialized on update leading to errors in update
+    
+    ERROR: db_text [dbt_lib.c:464]: dbt_is_neq_type(): invalid datatype -1001432832
+    ERROR: db_text [dbt_base.c:560]: dbt_update(): incompatible types!
+    ERROR: db_text [dbt_base.c:599]: dbt_update(): failed to update the table!
+    (cherry picked from commit cf521e66825fea4b7498d615d435739628fe4c09)
+
+commit 458e8ba0ff7a7453050734c47f71a7b9bcaa03a6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 11 13:05:41 2015 +0100
+
+    sqlops: regenereated the readme file
+    
+    (cherry picked from commit 61d6b119398a87c4a877de3fba0dc9c6ec2830a7)
+
+commit 2ee8e8d0a0808fde86941712bc7fbebcac103dcc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 11 12:50:43 2015 +0100
+
+    sqlops: added note to sql_async_query() about core async_workers
+    
+    - the parameter must be set to enable the async framework used by this
+      function
+    
+    (cherry picked from commit 112e83c2e8b72be04f7ad5b896db0bf3bcbdbe8f)
+
+commit 6580596a53e26df9653d4ee13dd43144f912b51f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 11 12:37:22 2015 +0100
+
+    db_mongodb: regenerated README file
+    
+    (cherry picked from commit 7ae56a331209adeff7c5da86e1ebd8321d586a35)
+
+commit 921ed59eb8f766a9dc9c87138c3b6ba04d4c1bfa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 11 12:19:45 2015 +0100
+
+    db_mongodb: updated details in docs about the limitations
+    
+    (cherry picked from commit 6940ce0e991fd5b6af9ef5822dc2b1a324319174)
+
+commit 1c77a5acada0cdf66e05b754ae232e8efa624be2
+Author: mikomarrache <mikomarrache@users.noreply.github.com>
+Date:   Wed Feb 11 11:47:17 2015 +0100
+
+    db_mongo_db: use mongoc_collection_update() for update operation
+    
+    - used instead of mongoc_collection_find_and_modify(), which returns the
+      document, but it is not needed
+    
+    (cherry picked from commit e31e4632f83e805775bbc1e208178bee11ab137b)
+
+commit 1ad7c7d0a3a534ed1d388391d16fb2c715a24419
+Author: mikomarrache <mikomarrache@users.noreply.github.com>
+Date:   Wed Feb 11 11:42:14 2015 +0100
+
+    db_mongodb: use $set operator to update a specific list of fields in a document
+    
+    - fix to keep all the other fields unchanged
+    
+    (cherry picked from commit 2a045585efc9a8e5b17123d320539d0c8cb6be77)
+
+commit 9b0ed6d54e47880818f934a8988c89d340739564
+Author: mikomarrache <mikomarrache@users.noreply.github.com>
+Date:   Wed Feb 11 11:37:26 2015 +0100
+
+    dialog: fix initialization of slot next_id to avoid colision after restart
+    
+    - next_id was set to the highest id of a dialog loaded from database,
+      next new dialog was reusing the same value
+    
+    (cherry picked from commit e122c5ee8c6055c033cc11f14e5308ed94461fe6)
+
+
 ===================== 2015-02-10 Version 4.2.3 Released =====================
 
-===================== Changes Since Version 4.2.1 ===========================
+===================== Changes Since Version 4.2.2 ===========================
 
 commit cf4ade36b6c138da8c76f7bbd7395f63bd38508d
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
