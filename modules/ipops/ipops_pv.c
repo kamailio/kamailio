@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 
 #include "../../dprint.h"
+#include "../../rand/fastrand.h"
 #include "../../hashes.h"
 #include "../../resolve.h"
 #include "../../pvar.h"
@@ -65,7 +66,6 @@ typedef struct _dns_pv {
 	pv_spec_t *pidx;
 	int nidx;
 } dns_pv_t;
-
 
 static sr_dns_item_t *_sr_dns_list = NULL;
 
@@ -131,7 +131,6 @@ sr_dns_item_t *sr_dns_add_item(str *name)
 	_sr_dns_list = it;
 	return it;
 }
-
 
 /**
  *
@@ -215,12 +214,12 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 			else if(strncmp(pvs.s, "ipv6", 4)==0)
 				dpv->type = 3;
 			else goto error;
-		break;
+			break;
 		case 5: 
 			if(strncmp(pvs.s, "count", 5)==0)
 				dpv->type = 4;
 			else goto error;
-		break;
+			break;
 		default:
 			goto error;
 	}
@@ -361,13 +360,13 @@ int dns_update_pv(str *hostname, str *name)
 	void *addr;
 	int status;
 	int i;
-	
+
 	if(hostname->len>255)
 	{
 		LM_DBG("target hostname too long (max 255): %s\n", hostname->s);
 		return -2;
 	}
-	
+
 	dr = sr_dns_get_item(name);
 	if(dr==NULL)
 	{
@@ -391,10 +390,10 @@ int dns_update_pv(str *hostname, str *name)
 
 	if ((status = getaddrinfo(dr->hostname, NULL, &hints, &res)) != 0)
 	{
-        LM_ERR("unable to resolve %s - getaddrinfo: %s\n",
+		LM_ERR("unable to resolve %s - getaddrinfo: %s\n",
 				dr->hostname, gai_strerror(status));
-        return -4;
-    }
+		return -4;
+	}
 
 	i=0;
 	for(p=res; p!=NULL; p=p->ai_next)
@@ -421,7 +420,7 @@ int dns_update_pv(str *hostname, str *name)
 					PV_DNS_RECS, dr->hostname);
 			break;
 		}
-    }
+	}
 	freeaddrinfo(res);
 
 	dr->count = i;
@@ -430,7 +429,6 @@ int dns_update_pv(str *hostname, str *name)
 
 	return 1;
 }
-
 
 struct _hn_pv_data {
 	str data;
@@ -487,7 +485,7 @@ int hn_pv_data_init(void)
 		_hn_data->hostname.len   = d - _hn_data->data.s;
 		_hn_data->hostname.s     = _hn_data->data.s;
 		_hn_data->domain.len     = _hn_data->fullname.len
-										- _hn_data->hostname.len-1;
+			- _hn_data->hostname.len-1;
 		_hn_data->domain.s       = d+1;
 	} else {
 		_hn_data->hostname       = _hn_data->fullname;
@@ -497,7 +495,7 @@ int hn_pv_data_init(void)
 	if (he) {
 		if ((strlen(he->h_name)!=_hn_data->fullname.len)
 				|| strncmp(he->h_name, _hn_data->fullname.s,
-									_hn_data->fullname.len)) {
+					_hn_data->fullname.len)) {
 			LM_WARN("hostname '%.*s' different than gethostbyname '%s'\n",
 					_hn_data->fullname.len, _hn_data->fullname.s, he->h_name);
 		}
@@ -549,7 +547,7 @@ int pv_parse_hn_name(pv_spec_p sp, str *in)
 			else if(strncmp(in->s, "i", 1)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
-		break;
+			break;
 		default:
 			goto error;
 	}
@@ -594,4 +592,544 @@ int pv_get_hn(struct sip_msg *msg, pv_param_t *param,
 				return pv_get_null(msg, param, res);;
 			return pv_get_strval(msg, param, res, &_hn_data->hostname);
 	}
+}
+
+/**********
+ * srvquery PV
+ **********/
+
+static char *srvqrylst []
+= {"count", "port", "priority", "target", "weight", NULL};
+
+#define PV_SRV_MAXSTR 64
+#define PV_SRV_MAXRECS 32
+
+typedef struct _sr_srv_record {
+	unsigned short priority;
+	unsigned short weight;
+	unsigned short port;
+	char target [PV_SRV_MAXSTR + 1];
+} sr_srv_record_t;
+
+typedef struct _sr_srv_item {
+	str pvid;
+	unsigned int hashid;
+	int count;
+	sr_srv_record_t rr [PV_SRV_MAXRECS];
+	struct _sr_srv_item *next;
+} sr_srv_item_t;
+
+typedef struct _srv_pv {
+	sr_srv_item_t *item;
+	int type;
+	int flags;
+	pv_spec_t *pidx;
+	int nidx;
+} srv_pv_t;
+
+static sr_srv_item_t *_sr_srv_list = NULL;
+
+/**********
+ * Add srvquery Item
+ *
+ * INPUT:
+ *   Arg (1) = pvid string pointer
+ *   Arg (2) = find flag; <>0=search only
+ * OUTPUT: srv record pointer; NULL=not found
+ **********/
+
+sr_srv_item_t *sr_srv_add_item (str *pvid, int findflg)
+
+{
+	sr_srv_item_t *pitem;
+	unsigned int hashid;
+
+	/**********
+	 * o get hash
+	 * o already exists?
+	 **********/
+
+	hashid = get_hash1_raw (pvid->s, pvid->len);
+	for (pitem = _sr_srv_list; pitem; pitem = pitem->next) {
+		if (pitem->hashid == hashid
+				&& pitem->pvid.len == pvid->len
+				&& !strncmp (pitem->pvid.s, pvid->s, pvid->len))
+			return pitem;
+	}
+	if (findflg)
+		return NULL;
+
+	/**********
+	 * o alloc/init item structure
+	 * o link in new item
+	 **********/
+
+	pitem = (sr_srv_item_t *) pkg_malloc (sizeof (sr_srv_item_t));
+	if (!pitem) {
+		LM_ERR ("No more pkg memory!\n");
+		return NULL;
+	}
+	memset (pitem, 0, sizeof (sr_srv_item_t));
+	pitem->pvid.s = (char *) pkg_malloc (pvid->len + 1);
+	if (!pitem->pvid.s) {
+		LM_ERR ("No more pkg memory!\n");
+		pkg_free (pitem);
+		return NULL;
+	}
+	memcpy (pitem->pvid.s, pvid->s, pvid->len);
+	pitem->pvid.len = pvid->len;
+	pitem->hashid = hashid;
+	pitem->next = _sr_srv_list;
+	_sr_srv_list = pitem;
+	return pitem;
+}
+
+/**********
+ * Skip Over
+ *
+ * INPUT:
+ *   Arg (1) = string pointer
+ *   Arg (2) = starting position
+ *   Arg (3) = whitespace flag
+ * OUTPUT: position past skipped
+ **********/
+
+int skip_over (str *pstr, int pos, int bWS)
+
+{
+	char *pchar;
+
+	/**********
+	 * o string exists?
+	 * o skip over
+	 **********/
+
+	if (pos >= pstr->len)
+		return pstr->len;
+	for (pchar = &pstr->s [pos]; pos < pstr->len; pchar++, pos++) {
+		if (*pchar == ' ' || *pchar == '\t' || *pchar == '\n' || *pchar == '\r') {
+			if (bWS)
+				continue;
+		}
+		if ((*pchar>='A' && *pchar<='Z') || (*pchar>='a' && *pchar<='z')
+				|| (*pchar>='0' && *pchar<='9')) {
+			if (!bWS)
+				continue;
+		}
+		break;
+	}
+	return pos;
+}
+
+/**********
+ * Sort SRV Records by Weight (RFC 2782)
+ *
+ * INPUT:
+ *   Arg (1) = pointer to array of SRV records
+ *   Arg (2) = first record in range
+ *   Arg (3) = last record in range
+ * OUTPUT: position past skipped
+ **********/
+
+void sort_weights (struct srv_rdata **plist, int pos1, int pos2)
+
+{
+	int idx1, idx2, lastfound;
+	struct srv_rdata *wlist [PV_SRV_MAXRECS];
+	unsigned int rand, sum, sums [PV_SRV_MAXRECS];
+
+	/**********
+	 * place zero weights in the unordered list and then non-zero
+	 **********/
+
+	idx2 = 0;
+	for (idx1 = pos1; idx1 <= pos2; idx1++) {
+		if (!plist [idx1]->weight) {
+			wlist [idx2++] = plist [idx1];
+		}
+	}
+	for (idx1 = pos1; idx1 <= pos2; idx1++) {
+		if (plist [idx1]->weight) {
+			wlist [idx2++] = plist [idx1];
+		}
+	}
+
+	/**********
+	 * generate running sum list
+	 **********/
+
+	sum = 0;
+	for (idx1 = 0; idx1 < idx2; idx1++) {
+		sum += wlist [idx1]->weight;
+		sums [idx1] = sum;
+	}
+
+	/**********
+	 * resort randomly
+	 **********/
+
+	lastfound = 0;
+	for (idx1 = pos1; idx1 <= pos2; idx1++) {
+		/**********
+		 * o calculate a random number in range
+		 * o find first unsorted
+		 **********/
+
+		rand = fastrand_max (sum);
+		for (idx2 = 0; idx2 <= pos2 - pos1; idx2++) {
+			if (!wlist [idx2]) {
+				continue;
+			}
+			if (sums [idx2] >= rand) {
+				plist [idx1] = wlist [idx2];
+				wlist [idx2] = 0;
+				break;
+			}
+			lastfound = idx2;
+		}
+		if (idx2 > pos2 - pos1) {
+			plist [idx1] = wlist [lastfound];
+			wlist [lastfound] = 0;
+		}
+	}
+	return;
+}
+
+/**********
+ * Sort SRV Records by Priority/Weight
+ *
+ * INPUT:
+ *   Arg (1) = pointer to array of SRV records
+ *   Arg (2) = record count
+ * OUTPUT: position past skipped
+ **********/
+
+void sort_srv (struct srv_rdata **plist, int rcount)
+
+{
+	int idx1, idx2;
+	struct srv_rdata *pswap;
+
+	/**********
+	 * sort by priority
+	 **********/
+
+	for (idx1 = 1; idx1 < rcount; idx1++) {
+		pswap = plist [idx1];
+		for (idx2 = idx1;
+				idx2 && (plist [idx2 - 1]->priority > pswap->priority); --idx2) {
+			plist [idx2] = plist [idx2 - 1];
+		}
+		plist [idx2] = pswap;
+	}
+
+	/**********
+	 * check for multiple priority
+	 **********/
+
+	idx2 = 0;
+	pswap = plist [0];
+	for (idx1 = 1; idx1 <= rcount; idx1++) {
+		if ((idx1 == rcount) || (pswap->priority != plist [idx1]->priority)) {
+			/**********
+			 * o range has more than one element?
+			 * o restart range
+			 **********/
+
+			if (idx1 - idx2 - 1) {
+				sort_weights (plist, idx2, idx1 - 1);
+			}
+			idx2 = idx1;
+			pswap = plist [idx2];
+		}
+	}
+	return;
+}
+
+/**********
+ * Parse srvquery Name
+ *
+ * INPUT:
+ *   Arg (1) = pv spec pointer
+ *   Arg (2) = input string pointer
+ * OUTPUT: 0=success
+ **********/
+
+int pv_parse_srv_name (pv_spec_t *sp, str *in)
+
+{
+	char *pstr;
+	int i, pos, sign;
+	srv_pv_t *dpv;
+	str pvi, pvk, pvn;
+
+	/**********
+	 * o alloc/init pvid structure
+	 * o extract pvid name
+	 * o check separator
+	 **********/
+
+	if (!sp || !in || in->len<=0)
+		return -1;
+	dpv = (srv_pv_t *) pkg_malloc (sizeof (srv_pv_t));
+	if (!dpv) {
+		LM_ERR ("No more pkg memory!\n");
+		return -1;
+	}
+	memset (dpv, 0, sizeof (srv_pv_t));
+	pos = skip_over (in, 0, 1);
+	if (pos == in->len)
+		goto error;
+	pvn.s = &in->s [pos];
+	pvn.len = pos;
+	pos = skip_over (in, pos, 0);
+	pvn.len = pos - pvn.len;
+	if (!pvn.len)
+		goto error;
+	pos = skip_over (in, pos, 1);
+	if ((pos + 2) > in->len)
+		goto error;
+	if (strncmp (&in->s [pos], "=>", 2))
+		goto error;
+
+	/**********
+	 * o extract key name
+	 * o check key name
+	 * o count?
+	 **********/
+
+	pos = skip_over (in, pos + 2, 1);
+	pvk.s = &in->s [pos];
+	pvk.len = pos;
+	pos = skip_over (in, pos, 0);
+	pvk.len = pos - pvk.len;
+	if (!pvk.len)
+		goto error;
+	for (i = 0; srvqrylst [i]; i++) {
+		if (strlen (srvqrylst [i]) != pvk.len)
+			continue;
+		if (!strncmp (pvk.s, srvqrylst [i], pvk.len)) {
+			dpv->type = i;
+			break;
+		}
+	}
+	if (!srvqrylst [i])
+		goto error;
+	if (!i)
+		goto noindex;
+
+	/**********
+	 * o check for array
+	 * o extract array index and check
+	 **********/
+
+	pos = skip_over (in, pos, 1);
+	if ((pos + 3) > in->len)
+		goto error;
+	if (in->s [pos] != '[')
+		goto error;
+	pos = skip_over (in, pos + 1, 1);
+	if ((pos + 2) > in->len)
+		goto error;
+	pvi.s = &in->s [pos];
+	pvi.len = pos;
+	if (in->s [pos] == PV_MARKER) {
+		/**********
+		 * o search from the end back to array close
+		 * o get PV value
+		 **********/
+
+		for (i = in->len - 1; i != pos; --i) {
+			if (in->s [i] == ']')
+				break;
+		}
+		if (i == pos)
+			goto error;
+		pvi.len = i - pvi.len;
+		pos = i + 1;
+		dpv->pidx = pv_cache_get (&pvi);
+		if (!dpv->pidx)
+			goto error;
+		dpv->flags |= SR_DNS_PVIDX;
+	} else {
+		/**********
+		 * o get index value
+		 * o check for reverse index
+		 * o convert string to number
+		 **********/
+
+		pos = skip_over (in, pos, 0);
+		pvi.len = pos - pvi.len;
+		sign = 1;
+		i = 0;
+		pstr = pvi.s;
+		if (*pstr == '-') {
+			sign = -1;
+			i++;
+			pstr++;
+		}
+		for (dpv->nidx = 0; i < pvi.len; i++) {
+			if (*pstr >= '0' && *pstr <= '9')
+				dpv->nidx = (dpv->nidx * 10) + *pstr++ - '0';
+		}
+		if (i != pvi.len)
+			goto error;
+		dpv->nidx *= sign;
+		pos = skip_over (in, pos, 1);
+		if (pos == in->len)
+			goto error;
+		if (in->s [pos++] != ']')
+			goto error;
+	}
+
+	/**********
+	 * o check for trailing whitespace
+	 * o add data to PV
+	 **********/
+
+noindex:
+	if (skip_over (in, pos, 1) != in->len)
+		goto error;
+	LM_DBG ("srvquery (%.*s => %.*s [%.*s])\n",
+			pvn.len, pvn.s, pvk.len, pvk.s, pvi.len, pvi.s);
+	dpv->item = sr_srv_add_item (&pvn, 0);
+	if (!dpv->item)
+		goto error;
+	sp->pvp.pvn.u.dname = (void *)dpv;
+	sp->pvp.pvn.type = PV_NAME_OTHER;
+	return 0;
+
+error:
+	LM_ERR ("error at PV srvquery: %.*s@%d\n", in->len, in->s, pos);
+	pkg_free (dpv);
+	return -1;
+}
+
+int srv_update_pv (str *srvcname, str *pvid)
+
+{
+	int idx1, idx2, rcount;
+	struct rdata *phead, *psrv;
+	struct srv_rdata *plist [PV_SRV_MAXRECS];
+	sr_srv_item_t *pitem;
+	sr_srv_record_t *prec;
+
+	/**********
+	 * o service name missing?
+	 * o find pvid
+	 **********/
+
+	if (!srvcname->len) {
+		LM_DBG ("service name missing: %.*s\n", srvcname->len, srvcname->s);
+		return -2;
+	}
+	pitem = sr_srv_add_item (pvid, 1);
+	if (!pitem) {
+		LM_DBG ("pvid not found: %.*s\n", pvid->len, pvid->s);
+		return -3;
+	}
+
+	/**********
+	 * o get records
+	 * o sort by priority/weight
+	 * o save to PV
+	 **********/
+
+	LM_DBG ("attempting to query: %.*s\n", srvcname->len, srvcname->s);
+	phead = get_record (srvcname->s, T_SRV, RES_ONLY_TYPE);
+	rcount = 0;
+	for (psrv = phead; psrv; psrv = psrv->next) {
+		if (rcount < PV_SRV_MAXRECS) {
+			plist [rcount++] = (struct srv_rdata *) psrv->rdata;
+		} else {
+			LM_WARN ("truncating srv_query list to %d records!", PV_SRV_MAXRECS);
+			break;
+		}
+	}
+	pitem->count = rcount;
+	if (rcount)
+		sort_srv (plist, rcount);
+	for (idx1 = 0; idx1 < rcount; idx1++) {
+		prec = &pitem->rr [idx1];
+		prec->priority = plist [idx1]->priority;
+		prec->weight = plist [idx1]->weight;
+		prec->port = plist [idx1]->port;
+		idx2 = plist [idx1]->name_len;
+		if (idx2 > PV_SRV_MAXSTR) {
+			LM_WARN ("truncating srv_query target (%.*s)!", idx2, plist [idx1]->name);
+			idx2 = PV_SRV_MAXSTR;
+		}
+		strncpy (prec->target, plist [idx1]->name, idx2);
+		prec->target [idx2] = '\0';
+	}
+	if (phead)
+		free_rdata_list (phead);
+	LM_DBG ("srvquery PV updated for: %.*s (%d)\n",
+			srvcname->len, srvcname->s, rcount);
+	return 1;
+}
+
+/**********
+ * Get srvquery Values
+ *
+ * INPUT:
+ *   Arg (1) = SIP message pointer
+ *   Arg (2) = parameter pointer
+ *   Arg (3) = PV value pointer
+ * OUTPUT: 0=success
+ **********/
+
+int pv_get_srv (sip_msg_t *pmsg, pv_param_t *param, pv_value_t *res)
+
+{
+	pv_value_t val;
+	srv_pv_t *dpv;
+
+	/**********
+	 * o sipmsg and param exist?
+	 * o PV name exists?
+	 * o count?
+	 **********/
+
+	if(!pmsg || !param)
+		return -1;
+	dpv = (srv_pv_t *) param->pvn.u.dname;
+	if(!dpv || !dpv->item)
+		return -1;
+	if (!dpv->type)
+		return pv_get_sintval (pmsg, param, res, dpv->item->count);
+
+	/**********
+	 * o get index value
+	 * o reverse index?
+	 * o extract data
+	 **********/
+
+	if (!dpv->pidx) {
+		val.ri = dpv->nidx;
+	} else {
+		if (pv_get_spec_value (pmsg, dpv->pidx, &val) < 0
+				|| !(val.flags & PV_VAL_INT)) {
+			LM_ERR ("failed to evaluate index variable!\n");
+			return pv_get_null (pmsg, param, res);
+		}
+	}
+	if (val.ri < 0) {
+		if ((dpv->item->count + val.ri) < 0)
+			return pv_get_null (pmsg, param, res);
+		val.ri = dpv->item->count + val.ri;
+	}
+	if (val.ri >= dpv->item->count)
+		return pv_get_null(pmsg, param, res);
+	switch (dpv->type) {
+		case 1: /* port */
+			return pv_get_sintval (pmsg, param, res, dpv->item->rr [val.ri].port);
+		case 2: /* priority */
+			return pv_get_sintval (pmsg, param, res, dpv->item->rr [val.ri].priority);
+		case 3: /* target */
+			return pv_get_strzval (pmsg, param, res, dpv->item->rr [val.ri].target);
+		case 4: /* weight */
+			return pv_get_sintval (pmsg, param, res, dpv->item->rr [val.ri].weight);
+	}
+	return pv_get_null (pmsg, param, res);
 }
