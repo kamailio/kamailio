@@ -680,6 +680,91 @@ if(dns_query("test.com", "xyz"))
 
     </section>
 
+    <section id="ipops.f.srv_query">
+      <title>
+        <function moreinfo="none">srv_query(srvcname, pvid)</function>
+      </title>
+
+      <para>
+Queries DNS SRV records to resolve a service/protocol name into a list of priorities, weights, ports, and targets sorted by priority and weight as outlined in <ulink url="http://tools.ietf.org/html/rfc2782">RFC 2782</ulink>.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+			  <emphasis>srvcname</emphasis> - string or pseudo-variable containing the service/protocol. For example, "_sip._tcp.example.com".
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pvid</emphasis> - container id for script variable.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Output:</para>
+
+      <para>
+        Returns a positive number indicating success or a negative number when an error is encountered. It can be used from ANY_ROUTE.
+      </para>
+
+      <para>
+        The $srvquery pseudo-variable (PV) is loaded with the results of the query. Multiple queries can be stored in the PV using the pvid key. Each query contains zero-indexed arrays sorted by priority and weight that contain:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>count</emphasis> - number of records found
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>port [index]</emphasis> - port number
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>priority [index]</emphasis> - priority number as defined by <ulink url="http://tools.ietf.org/html/rfc2782">RFC 2782</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>target [index]</emphasis> - target host name
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>weight [index]</emphasis> - weight number as defined by <ulink url="http://tools.ietf.org/html/rfc2782">RFC 2782</ulink>
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <example>
+        <title>
+          <function>srv_query</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (srv_query ("_sip._udp.example.com", "udp") > 0) {
+  $var(cnt) = $srvquery(udp=>count);
+  $var(i) = 0;
+  while ($var(i) &lt; $var(cnt)) {
+    xlog ("port[$var(i)] $srvquery(udp=>port[$var(i)])\n)";
+    xlog ("priority[$var(i)] $srvquery(udp=>priority[$var(i)])\n)";
+    xlog ("target[$var(i)] $srvquery(udp=>target[$var(i)])\n)";
+    xlog ("weight[$var(i)] $srvquery(udp=>weight[$var(i)])\n)";
+    $var(i) = $var(i) + 1;
+  }
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
   </section>
  
 </chapter>
