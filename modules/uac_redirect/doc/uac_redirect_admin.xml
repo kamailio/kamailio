@@ -510,37 +510,45 @@ loadmodule "modules/uac_redirect/uac_redirect.so"
 
 modparam("usrloc", "db_mode",   0)
 
-route{
+request_route{
 	if (uri==myself) {
 
 		if (method=="REGISTER") {
 			save("location");
 			exit;
-		};
+		}
 
 		if (!lookup("location")) {
 			sl_send_reply("404", "Not Found");
 			exit;
-		};
+		}
 		# do redirect with accounting
-		t_on_failure("2");
+		t_on_failure("REDIRECT_ACC");
 	} else {
 		# just do redirect
-		t_on_failure("1");
+		t_on_failure("REDIRECT_NOACC");
 	}
 
 	if (!t_relay()) {
 		sl_reply_error();
-	};
+	}
 }
 
-failure_route[1] {
+# redirect without storing acc record
+failure_route[REDIRECT_NOACC] {
+	if(!t_check_status("3[0-9][0-9]")) {
+		exit;
+	}
 	get_redirects("3:1");
 	t_relay();
 }
 
-failure_route[2] {
-	get_redirects("6:2","redirect");
+# redirect with storing acc record
+failure_route[REDIRECT_ACC] {
+	if(!t_check_status("3[0-9][0-9]")) {
+		exit;
+	}
+	get_redirects("6:2", "redirect");
 	t_relay();
 }
 				</programlisting>
