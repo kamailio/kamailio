@@ -2779,7 +2779,7 @@ static int search_hf_f(struct sip_msg* msg, char* str_hf, char* re, char *flags)
 					return 1;
 			} else {
 				if(flags!=NULL && *flags=='f')
-					return 1;
+					return -1;
 			}
 		} else {
 			hfl = hf;
