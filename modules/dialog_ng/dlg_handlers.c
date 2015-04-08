@@ -1212,7 +1212,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
     }
 
     if ((event == DLG_EVENT_REQ || event == DLG_EVENT_REQACK)
-            && new_state == DLG_STATE_CONFIRMED) {
+            && (new_state == DLG_STATE_CONFIRMED || new_state==DLG_STATE_EARLY)) {
 
         timeout = get_dlg_timeout(req);
         if (timeout != default_timeout) {
@@ -1294,9 +1294,8 @@ void dlg_ontimeout(struct dlg_tl *tl) {
         }
     }
 
-    if ((dlg->dflags & DLG_FLAG_TOBYE)
-            && (dlg->state == DLG_STATE_CONFIRMED)) {
-        //TODO: dlg_bye_all(dlg, NULL);
+    if (dlg->state == DLG_STATE_CONFIRMED) {
+        dlg_bye_all(dlg, NULL);
         unref_dlg(dlg, 1);
         return;
     }
