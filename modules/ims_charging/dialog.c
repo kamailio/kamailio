@@ -27,26 +27,8 @@ void dlg_reply(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
 	reply = _params->rpl;
 	if (!reply) {
 		LM_WARN("dlg_reply has no SIP reply associated.\n");
+		return;
 	}
-	
-//	if (reply != FAKED_REPLY && reply->REPLY_STATUS == 200) {
-//		//get CC session from callback param
-//		char* cdp_session_id = (char*)*_params->param;
-//		LM_INFO("Call answered\n");
-//		LM_DBG("Call answered and we have a session id of [%s]\n", cdp_session_id);
-//
-//		str session_id;
-//		session_id.s = cdp_session_id;
-//		session_id.len = strlen(cdp_session_id);
-//		AAASession* cdp_session = cdpb.AAAGetCCAccSession(session_id);
-//		if (!cdp_session) {
-//			LM_ERR("could not find find CC App CDP session\n");
-//			return;
-//		}
-//
-//		cdpb.AAAStartChargingCCAccSession(cdp_session);
-//		cdpb.AAASessionsUnlock(cdp_session->hash);
-//	}
 
 	if (reply != FAKED_REPLY && reply->REPLY_STATUS == 200) {
 		LM_DBG("Call answered on dlg [%p] - search for Ro Session and initialise timers.\n", dlg);
