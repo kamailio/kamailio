@@ -390,7 +390,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			<section>
 				<title>Overview</title>
 				<para>
-				As mentioned in <xref linkend="multi-call-legs"/>, a leg represents a parallel
+				As mentioned in <xref linkend="acc.i.multi-call-legs"/>, a leg represents a parallel
 				or forwarded call. In contrast to the normal accounting the cdr logging uses dialogs
 				instead of transaction to log data. This may reduce the amount of information 
 				but it also make it possible to combine all important data in one cdr at 
@@ -642,7 +642,7 @@ modparam("acc", "acc_prepare_flag", 5)
 		<title><varname>multi_leg_info</varname> (string)</title>
 		<para>
 		Defines the AVP set to be used in per-call-leg accounting.
-		See <xref linkend="multi-call-legs"/> for a 
+		See <xref linkend="acc.i.multi-call-legs"/> for a 
 		detailed description of the Multi Call-Legs accounting.
 		</para>
 		<para>
@@ -1538,6 +1538,25 @@ modparam("acc", "reason_from_hf", 1)
 		<programlisting format="linespecific">
 ...
 modparam("acc", "clone_msg", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.cdr_on_failed">
+		<title><varname>cdr_on_failed</varname> (int)</title>
+		<para>
+		If set to 1, the module stores the CDR for a failed dialog (calls not
+		answered). If set to 0, those records are not stored, only those for
+		answered calls.
+		</para>
+		<para>
+		Default value is 1.
+		</para>
+		<example>
+		<title>cdr_on_failed</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_on_failed", 0)
 ...
 </programlisting>
 		</example>

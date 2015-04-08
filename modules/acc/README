@@ -134,6 +134,7 @@ Sven Knoblich
               6.51. time_format (str)
               6.52. reason_from_hf (int)
               6.53. clone_msg (int)
+              6.54. cdr_on_failed (int)
 
         7. Functions
 
@@ -199,10 +200,11 @@ Sven Knoblich
    1.51. time_format example
    1.52. reason_from_hf
    1.53. clone_msg
-   1.54. acc_log_request usage
-   1.55. acc_db_request usage
-   1.56. acc_rad_request usage
-   1.57. acc_diam_request usage
+   1.54. cdr_on_failed
+   1.55. acc_log_request usage
+   1.56. acc_db_request usage
+   1.57. acc_rad_request usage
+   1.58. acc_diam_request usage
 
 Chapter 1. Admin Guide
 
@@ -300,6 +302,7 @@ Chapter 1. Admin Guide
         6.51. time_format (str)
         6.52. reason_from_hf (int)
         6.53. clone_msg (int)
+        6.54. cdr_on_failed (int)
 
    7. Functions
 
@@ -721,6 +724,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.51. time_format (str)
    6.52. reason_from_hf (int)
    6.53. clone_msg (int)
+   6.54. cdr_on_failed (int)
 
 6.1. early_media (integer)
 
@@ -1406,6 +1410,19 @@ modparam("acc", "reason_from_hf", 1)
 modparam("acc", "clone_msg", 0)
 ...
 
+6.54. cdr_on_failed (int)
+
+   If set to 1, the module stores the CDR for a failed dialog (calls not
+   answered). If set to 0, those records are not stored, only those for
+   answered calls.
+
+   Default value is 1.
+
+   Example 1.54. cdr_on_failed
+...
+modparam("acc", "cdr_on_failed", 0)
+...
+
 7. Functions
 
    7.1. acc_log_request(comment)
@@ -1426,7 +1443,7 @@ modparam("acc", "clone_msg", 0)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.54. acc_log_request usage
+   Example 1.55. acc_log_request usage
 ...
 acc_log_request("Some comment");
 $var(code) = 404;
@@ -1448,7 +1465,7 @@ acc_log_request("$var(code) Error: $avp(reason)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.55. acc_db_request usage
+   Example 1.56. acc_db_request usage
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
@@ -1466,7 +1483,7 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.56. acc_rad_request usage
+   Example 1.57. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 acc_rad_request("$var(code) Error: $avp(reason)");
@@ -1483,7 +1500,7 @@ acc_rad_request("$var(code) Error: $avp(reason)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.57. acc_diam_request usage
+   Example 1.58. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 acc_diam_request("$var(code) Error: $avp(reason)");
