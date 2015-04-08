@@ -120,7 +120,7 @@ int acc_time_mode  = 0;
 str acc_time_attr  = str_init("time_attr");
 str acc_time_exten  = str_init("time_exten");
 int _acc_clone_msg  = 1;
-int _acc_cdr_on_failed = 0;
+int _acc_cdr_on_failed = 1;
 
 /*@}*/
 
