@@ -67,6 +67,7 @@ cat <<EOF
            ........................... column key equal to value as string
  db nmatch <table> <key> <value>...... display record from table that has
            ........................... column key equal to value as non-string
+ db connect .......................... connect to db server via cli
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_db_ops"
