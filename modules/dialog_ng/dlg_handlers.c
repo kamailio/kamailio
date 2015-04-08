@@ -215,12 +215,11 @@ int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg,
     } else {
         skip_recs = 0;
         /* was the 200 OK received or local generated */
-        /*skip_recs = dlg->from_rr_nb +
+        skip_recs = dlg->from_rr_nb +
                 ((t->relayed_reply_branch >= 0) ?
                 ((t->uac[t->relayed_reply_branch].flags & TM_UAC_FLAG_R2) ? 2 :
                 ((t->uac[t->relayed_reply_branch].flags & TM_UAC_FLAG_RR) ? 1 : 0))
                 : 0);
-         * */
     }
 
     if (msg->record_route) {
