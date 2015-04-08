@@ -120,6 +120,7 @@ int acc_time_mode  = 0;
 str acc_time_attr  = str_init("time_attr");
 str acc_time_exten  = str_init("time_exten");
 int _acc_clone_msg  = 1;
+int _acc_cdr_on_failed = 0;
 
 /*@}*/
 
@@ -317,6 +318,7 @@ static param_export_t params[] = {
 	{"cdrs_table",           PARAM_STR, &acc_cdrs_table       },
 	{"time_format",          PARAM_STRING, &acc_time_format   },
 	{"clone_msg",            PARAM_INT, &_acc_clone_msg       },
+	{"cdr_on_failed",        PARAM_INT, &_acc_cdr_on_failed   },
 	{0,0,0}
 };
 

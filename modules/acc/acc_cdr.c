@@ -88,6 +88,7 @@ extern str cdr_end_str;
 extern str cdr_duration_str;
 extern str acc_cdrs_table;
 extern int cdr_log_enable;
+extern int _acc_cdr_on_failed;
 
 /* write all basic information to buffers(e.g. start-time ...) */
 static int cdr_core2strar( struct dlg_cell* dlg,
@@ -693,11 +694,13 @@ static void cdr_on_create( struct dlg_cell* dialog,
         return;
     }
 
-    if( dlgb.register_dlgcb( dialog, DLGCB_FAILED, cdr_on_failed, 0, 0) != 0)
-    {
-        LM_ERR("can't register create dialog FAILED callback\n");
-        return;
-    }
+	if(_acc_cdr_on_failed==1) {
+		if( dlgb.register_dlgcb( dialog, DLGCB_FAILED, cdr_on_failed, 0, 0) != 0)
+		{
+			LM_ERR("can't register create dialog FAILED callback\n");
+			return;
+		}
+	}
 
     if( dlgb.register_dlgcb( dialog, DLGCB_TERMINATED, cdr_on_end, 0, 0) != 0)
     {
