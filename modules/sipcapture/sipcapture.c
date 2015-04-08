@@ -1096,7 +1096,6 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 
 	str *table = NULL;
 	_capture_mode_data_t *c = NULL;
-	  str newtable;
         char strftime_buf[128];
         time_t tvsec_;
 
@@ -1343,12 +1342,12 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
                 return -1;
         }
 
-        newtable.len = strftime(strftime_buf, sizeof(strftime_buf), table->s,  &capt_ts);
-        newtable.s = strftime_buf;
+        table->len = strftime(strftime_buf, sizeof(strftime_buf), table->s,  &capt_ts);
+        table->s = strftime_buf;
 
 	/* check dynamic table */
-	LM_DBG("insert into homer table: [%.*s]\n", newtable->len, newtable->s);
-	c->db_funcs.use_table(c->db_con, newtable);
+	LM_DBG("insert into homer table: [%.*s]\n", table->len, table->s);
+	c->db_funcs.use_table(c->db_con, table);
 
 	LM_DBG("storing info...\n");
 
