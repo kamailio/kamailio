@@ -74,7 +74,7 @@ int peer_handles_application(peer *p, int app_id, int vendor_id) {
  * @param r - the list of routing entries to look into
  * @returns - the peer or null if none connected
  */
-peer* get_first_connected_route(str* session_id, routing_entry *r, int app_id, int vendor_id) {
+peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, int app_id, int vendor_id) {
     peer * peers[LB_MAX_PEERS];
     int peer_count = 0;
     int prev_metric = 0;
@@ -82,9 +82,7 @@ peer* get_first_connected_route(str* session_id, routing_entry *r, int app_id, i
     peer *p;
     int j;
     time_t least_recent_time;
-    cdp_session_t* cdp_session;
 
-    cdp_session = cdp_get_session(*session_id);
     if (cdp_session) {
         /*try and find an already used peer for this session - sticky*/
         if ((cdp_session->sticky_peer_fqdn.len > 0) && cdp_session->sticky_peer_fqdn.s) {
@@ -92,18 +90,12 @@ peer* get_first_connected_route(str* session_id, routing_entry *r, int app_id, i
             p = get_peer_by_fqdn(&cdp_session->sticky_peer_fqdn);
             if (p && !p->disabled && (p->state == I_Open || p->state == R_Open) && peer_handles_application(p, app_id, vendor_id)) {
                 p->last_selected = time(NULL);
-                if (cdp_session)
-                    AAASessionsUnlock(cdp_session->hash);
                 LM_DBG("Found a sticky peer [%.*s] for this session - re-using\n", p->fqdn.len, p->fqdn.s);
                 return p;
             }
         }
     }
 
-
-    LM_DBG("get_first_connected_route in list %p for app_id %d and vendor_id %d and existing session_id is [%.*s]\n",
-            r, app_id, vendor_id,
-            session_id->len, session_id->s);
     for (i = r; i; i = i->next) {
         if (peer_count >= LB_MAX_PEERS)
             break;
@@ -129,8 +121,6 @@ peer* get_first_connected_route(str* session_id, routing_entry *r, int app_id, i
     }
 
     if (peer_count == 0) {
-        if (cdp_session)
-            AAASessionsUnlock(cdp_session->hash);
         return 0;
     }
 
@@ -152,7 +142,6 @@ peer* get_first_connected_route(str* session_id, routing_entry *r, int app_id, i
             cdp_session->sticky_peer_fqdn.s = (char*) shm_malloc(p->fqdn.len + 1);
             if (!cdp_session->sticky_peer_fqdn.s) {
                 LM_ERR("no more shm memory\n");
-                AAASessionsUnlock(cdp_session->hash);
                 return 0;
             }
             cdp_session->sticky_peer_fqdn_buflen = p->fqdn.len + 1;
@@ -160,7 +149,6 @@ peer* get_first_connected_route(str* session_id, routing_entry *r, int app_id, i
         }
         cdp_session->sticky_peer_fqdn.len = p->fqdn.len;
         memcpy(cdp_session->sticky_peer_fqdn.s, p->fqdn.s, p->fqdn.len);
-        AAASessionsUnlock(cdp_session->hash);
     }
     p->last_selected = time(NULL);
     return p;
@@ -175,8 +163,8 @@ peer* get_first_connected_route(str* session_id, routing_entry *r, int app_id, i
  * @param m - the Diameter message to find the destination peer for
  * @returns - the connected peer or null if none connected found
  */
-peer* get_routing_peer(AAAMessage *m) {
-    str destination_realm = {0, 0}, destination_host = {0, 0}, session_id;
+peer* get_routing_peer(cdp_session_t* cdp_session, AAAMessage *m) {
+    str destination_realm = {0, 0}, destination_host = {0, 0};
     AAA_AVP *avp, *avp_vendor, *avp2;
     AAA_AVP_LIST group;
     peer *p;
@@ -186,7 +174,6 @@ peer* get_routing_peer(AAAMessage *m) {
     LM_DBG("getting diameter routing peer for realm: [%.*s]\n", m->dest_realm->data.len, m->dest_realm->data.s);
 
     app_id = m->applicationId;
-    session_id = m->sessionId->data;
     avp = AAAFindMatchingAVP(m, 0, AVP_Vendor_Specific_Application_Id, 0, AAA_FORWARD_SEARCH);
     if (avp) {
         group = AAAUngroupAVPS(avp->data);
@@ -247,7 +234,7 @@ peer* get_routing_peer(AAAMessage *m) {
                     strncasecmp(rr->realm.s, destination_realm.s, destination_realm.len) == 0)
                 break;
         if (rr) {
-            p = get_first_connected_route(&session_id, rr->routes, app_id, vendor_id);
+            p = get_first_connected_route(cdp_session, rr->routes, app_id, vendor_id);
             if (p) return p;
             else LM_ERR("get_routing_peer(): No connected Route peer found for Realm <%.*s>. Trying DefaultRoutes next...\n",
                     destination_realm.len, destination_realm.s);
@@ -256,7 +243,7 @@ peer* get_routing_peer(AAAMessage *m) {
     /* if not found in the realms or no destination_realm, 
      * get the first connected host in default routes */
     LM_DBG("no routing peer found, trying default route\n");
-    p = get_first_connected_route(&session_id, config->r_table->routes, app_id, vendor_id);
+    p = get_first_connected_route(cdp_session, config->r_table->routes, app_id, vendor_id);
     if (!p) {
         LM_ERR("get_routing_peer(): No connected DefaultRoute peer found for app_id %d and vendor id %d.\n",
                 app_id, vendor_id);

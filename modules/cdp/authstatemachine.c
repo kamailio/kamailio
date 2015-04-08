@@ -782,7 +782,8 @@ void Send_STR(cdp_session_t* s, AAAMessage* msg) {
     AAAAddAVPToMessage(str, avp, str->avpList.tail);
     //todo - add all the other avps
 
-    p = get_routing_peer(str);
+    /* we are already locked on the auth session*/
+    p = get_routing_peer(s, str);
 
     if (!p) {
         LM_ERR("unable to get routing peer in Send_STR \n");
@@ -820,7 +821,7 @@ void Send_ASR(cdp_session_t* s, AAAMessage* msg) {
     AAAAddAVPToMessage(asr, avp, asr->avpList.tail);
     //todo - add all the other avps
 
-    p = get_routing_peer(asr);
+    p = get_routing_peer(s, asr);
     if (!p) {
         LM_ERR("unable to get routing peer in Send_ASR \n");
         if (asr) AAAFreeMessage(&asr); //needed in frequency

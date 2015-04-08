@@ -132,8 +132,14 @@ AAAReturnCode AAASendMessage(
 		AAATransactionCallback_f *callback_f,
 		void *callback_param)
 {
+        cdp_session_t* cdp_session;
 	peer *p;
-	p = get_routing_peer(message);
+        cdp_session = cdp_get_session(message->sessionId->data);
+        
+	p = get_routing_peer(cdp_session, message);
+        if (cdp_session) {
+            AAASessionsUnlock(cdp_session->hash);
+        }
 	if (!p) {
 		LM_ERR("AAASendMessage(): Can't find a suitable connected peer in the routing table.\n");
 		goto error;
@@ -238,12 +244,16 @@ AAAMessage* AAASendRecvMessage(AAAMessage *message)
 	gen_sem_t *sem=0;
 	cdp_trans_t *t;
 	AAAMessage *ans;
-    struct timeval start, stop;
-    long elapsed_usecs=0, elapsed_millis=0;
+        struct timeval start, stop;
+        long elapsed_usecs=0, elapsed_millis=0;
+        cdp_session_t* cdp_session;
 
-    gettimeofday(&start, NULL);
-
-	p = get_routing_peer(message);
+        gettimeofday(&start, NULL);
+        cdp_session = cdp_get_session(message->sessionId->data);
+	p = get_routing_peer(cdp_session, message);
+        if (cdp_session) {
+            AAASessionsUnlock(cdp_session->hash);
+        }
 	if (!p) {
 		LM_ERR("AAASendRecvMessage(): Can't find a suitable connected peer in the routing table.\n");
 		goto error;
