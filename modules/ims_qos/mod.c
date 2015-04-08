@@ -530,9 +530,9 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     int result = CSCF_RETURN_ERROR;
     struct cell *t;
 
-    AAASession* auth_session;
+    AAASession* auth_session = 0;
     rx_authsessiondata_t* rx_authdata_p = 0;
-    str *rx_session_id;
+    str *rx_session_id = 0;
     str callid = {0, 0};
     str ftag = {0, 0};
     str ttag = {0, 0};
@@ -544,8 +544,11 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     int must_free_asserted_identity = 0;
     sdp_session_cell_t* sdp_session;
     str s_id;
+    char *sep = 0;
     
     struct hdr_field *h=0;
+    
+    struct dlg_cell* dlg = 0;
 
     cfg_action_t* cfg_action = 0;
     saved_transaction_t* saved_t_data = 0; //data specific to each contact's AAR async call
@@ -687,8 +690,16 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
         rx_session_id = dlgb.get_dlg_var(&callid, &ftag, &ttag,
                 &term_session_key);
     }
-
-    if (!rx_session_id || rx_session_id->len <= 0 || !rx_session_id->s) {
+    if (rx_session_id && rx_session_id->len > 0 && rx_session_id->s) {
+	auth_session = cdpb.AAAGetAuthSession(*rx_session_id);
+	if(auth_session && auth_session->u.auth.state != AUTH_ST_OPEN) {
+	    LM_DBG("This session is not state open - so we will create a new session");
+	    if (auth_session) cdpb.AAASessionsUnlock(auth_session->hash);
+	    auth_session = 0;
+	}
+    }
+	
+    if (!auth_session) {
         LM_DBG("New AAR session for this dialog in mode %s\n", direction);
         
 	
@@ -715,6 +726,11 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 			    LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
 			    goto error;
 		    }
+		    LM_DBG("going to remove parameters if any from identity: [%.*s]\n", identifier.len, identifier.s);
+		    sep = memchr(identifier.s, 59 /* ; */, identifier.len);
+		    if(sep) identifier.len =  (int)(sep - identifier.s);
+		    LM_DBG("identifier from uri : [%.*s]\n", identifier.len, identifier.s);
+		    
 		} else {
 		    must_free_asserted_identity = 1;
 		}
@@ -725,8 +741,22 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		    //get identity from called party id
 		    //getting called asserted identity
 		    if ((identifier = cscf_get_public_identity_from_called_party_id(t->uas.request, &h)).len == 0) {
-			LM_DBG("No P-Called-Identity hdr found. Using request URI for called_asserted_identity");
-			identifier = cscf_get_public_identity(msg); //get public identity from to header
+			
+			LM_DBG("No P-Called-Party hdr found in response. Using req URI from dlg");
+			//get dialog and get the req URI from there
+			dlg = dlgb.get_dlg(msg);
+			if (!dlg) {
+			    LM_ERR("Unable to find dialog and cannot do Rx without it\n");
+			    goto error;
+			}
+			LM_DBG("dlg req uri : [%.*s] going to remove parameters if any\n", dlg->req_uri.len, dlg->req_uri.s);
+			
+			identifier.s =dlg->req_uri.s;
+			identifier.len = dlg->req_uri.len;
+			sep = memchr(dlg->req_uri.s, 59 /* ; */, dlg->req_uri.len);
+			if(sep) identifier.len =  (int)(sep - identifier.s);
+			
+			LM_DBG("identifier from dlg req uri : [%.*s]\n", identifier.len, identifier.s);
 		    }
 		}
 	    }
@@ -808,21 +838,6 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
         LM_DBG("Attached CDP auth session [%.*s] for Rx to dialog in %s mode\n", auth_session->id.len, auth_session->id.s, direction);
     } else {
         LM_DBG("Update AAR session for this dialog in mode %s\n", direction);
-	auth_session = cdpb.AAAGetAuthSession(*rx_session_id);
-	
-	    if (!auth_session) {
-	    LM_ERR("Could not get Auth Session for session id: [%.*s] on AAR update\n", rx_session_id->len, rx_session_id->s);
-	    result = CSCF_RETURN_FALSE; //here we return FALSE this just drops the message in the config file
-	    goto error;
-	}
-	
-	if(auth_session->u.auth.state != AUTH_ST_OPEN)
-	{
-	    LM_DBG("This session is not state open, packet will be dropped");
-	    if (auth_session) cdpb.AAASessionsUnlock(auth_session->hash);
-	    result = CSCF_RETURN_FALSE; //here we return FALSE this just drops the message in the config file
-	    goto error;
-	}
 	saved_t_data->aar_update = 1;//this is an update aar - we set this so on async_aar we know this is an update and act accordingly
     }
 
