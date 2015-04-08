@@ -1096,6 +1096,10 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 
 	str *table = NULL;
 	_capture_mode_data_t *c = NULL;
+	  str newtable;
+        char strftime_buf[128];
+        time_t tvsec_;
+
 
 	c = (cm_data)? cm_data:capture_def;
 	if (!c){
@@ -1117,7 +1121,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_keys[0] = &date_column;
 	db_vals[0].type = DB1_DATETIME;
 	db_vals[0].nul = 0;
-	db_vals[0].val.time_val = time(NULL);
+	db_vals[0].val.time_val = (sco->tmstamp/1000000);
 	
 	db_keys[1] = &micro_ts_column;
         db_vals[1].type = DB1_BIGINT;
@@ -1332,10 +1336,19 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 		table = &c->table_names[ii];
 	}
 
+	tvsec_ = (time_t) (sco->tmstamp/1000000);
+        if(gmtime_r( &tvsec_, &capt_ts) == NULL)
+        {
+                LM_ERR("unable to set gmtime for sipcapture\n");
+                return -1;
+        }
+
+        newtable.len = strftime(strftime_buf, sizeof(strftime_buf), table->s,  &capt_ts);
+        newtable.s = strftime_buf;
 
 	/* check dynamic table */
-	LM_DBG("insert into homer table: [%.*s]\n", table->len, table->s);
-	c->db_funcs.use_table(c->db_con, table);
+	LM_DBG("insert into homer table: [%.*s]\n", newtable->len, newtable->s);
+	c->db_funcs.use_table(c->db_con, newtable);
 
 	LM_DBG("storing info...\n");
 
