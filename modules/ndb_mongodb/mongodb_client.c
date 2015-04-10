@@ -217,6 +217,7 @@ int mongodbc_exec_cmd(str *srv, str *dname, str *cname, str *cmd, str *res, int 
 	bson_t reply;
 	const bson_t *cdoc;
 	char c;
+	int nres;
 	int ret;
 
 	if(srv==NULL || cmd==NULL || res==NULL)
@@ -283,10 +284,12 @@ int mongodbc_exec_cmd(str *srv, str *dname, str *cname, str *cmd, str *res, int 
 					NULL,
 					0);
 		} else {
+			nres = 0;
+			if(emode==3) nres = 1; /* return one result */
 			rpl->cursor = mongoc_collection_find (rpl->collection,
 					MONGOC_QUERY_NONE,
 					0,
-					0,
+					nres,
 					0,
 					&command,
 					NULL,
@@ -338,6 +341,14 @@ int mongodbc_exec(str *srv, str *dname, str *cname, str *cmd, str *res)
 int mongodbc_find(str *srv, str *dname, str *cname, str *cmd, str *res)
 {
 	return mongodbc_exec_cmd(srv, dname, cname, cmd, res, 2);
+}
+
+/**
+ *
+ */
+int mongodbc_find_one(str *srv, str *dname, str *cname, str *cmd, str *res)
+{
+	return mongodbc_exec_cmd(srv, dname, cname, cmd, res, 3);
 }
 
 /**

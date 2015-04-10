@@ -35,6 +35,7 @@ int mongodbc_add_server(char *spec);
 int mongodbc_exec_simple(str *srv, str *dname, str *cname, str *cmd, str *res);
 int mongodbc_exec(str *srv, str *dname, str *cname, str *cmd, str *res);
 int mongodbc_find(str *srv, str *dname, str *cname, str *cmd, str *res);
+int mongodbc_find_one(str *srv, str *dname, str *cname, str *cmd, str *res);
 
 typedef struct mongodbc_server {
 	str *sname;
