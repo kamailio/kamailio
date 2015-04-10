@@ -126,9 +126,9 @@
 ...
 # single rtproxy
 modparam("rtpengine", "rtpengine_sock", "udp:localhost:12221")
-# multiple rtproxies for LB
+# multiple rtproxies for LB with weights (missing weight defaults to 1)
 modparam("rtpengine", "rtpengine_sock",
-	"udp:localhost:12221 udp:localhost:12222")
+	"udp:localhost:12221=2 udp:localhost:12222=1")
 # multiple sets of multiple rtproxies
 modparam("rtpengine", "rtpengine_sock",
 	"1 == udp:localhost:12221 udp:localhost:12222")
