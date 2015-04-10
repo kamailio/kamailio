@@ -30,7 +30,9 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. mongodb_cmd(srvname, dbname, cname, command, replyid)
-              4.2. mongodb_cmd(srvname, dbname, cname, command, replyid)
+              4.2. mongodb_cmd_simple(srvname, dbname, cname, command,
+                      replyid)
+
               4.3. mongodb_find(srvname, dbname, cname, command, replyid)
               4.4. mongodb_next(replyid)
               4.5. mongodb_free(replyid)
@@ -61,7 +63,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. mongodb_cmd(srvname, dbname, cname, command, replyid)
-        4.2. mongodb_cmd(srvname, dbname, cname, command, replyid)
+        4.2. mongodb_cmd_simple(srvname, dbname, cname, command, replyid)
         4.3. mongodb_find(srvname, dbname, cname, command, replyid)
         4.4. mongodb_next(replyid)
         4.5. mongodb_free(replyid)
@@ -120,7 +122,7 @@ modparam("ndb_mongodb", "server", "name=mgs2;uri='mongodb://127.0.0.2/kamailio'"
 4. Functions
 
    4.1. mongodb_cmd(srvname, dbname, cname, command, replyid)
-   4.2. mongodb_cmd(srvname, dbname, cname, command, replyid)
+   4.2. mongodb_cmd_simple(srvname, dbname, cname, command, replyid)
    4.3. mongodb_find(srvname, dbname, cname, command, replyid)
    4.4. mongodb_next(replyid)
    4.5. mongodb_free(replyid)
@@ -157,7 +159,7 @@ if(mongodb_cmd("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "mgr1"))
 }
 ...
 
-4.2. mongodb_cmd(srvname, dbname, cname, command, replyid)
+4.2. mongodb_cmd_simple(srvname, dbname, cname, command, replyid)
 
    Send a valid command to MongoDB server identified by srvname. The reply
    will be stored in a local container identified by replyid. All the

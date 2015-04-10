@@ -161,7 +161,7 @@ if(mongodb_cmd("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "mgr1"))
 	</section>
 	<section id="ndb_mongodb.f.mongodb_cmd_simple">
 	    <title>
-		<function moreinfo="none">mongodb_cmd(srvname, dbname, cname, command, replyid)</function>
+		<function moreinfo="none">mongodb_cmd_simple(srvname, dbname, cname, command, replyid)</function>
 	    </title>
 	    <para>
 			Send a valid command to MongoDB server identified by srvname. The reply will
