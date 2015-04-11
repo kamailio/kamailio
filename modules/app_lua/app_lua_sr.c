@@ -682,7 +682,7 @@ static int lua_sr_resetdsturi (lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_core_Map [] = {
+static const luaL_Reg _sr_core_Map [] = {
 	{"probe",        lua_sr_probe},
 	{"dbg",          lua_sr_dbg},
 	{"err",          lua_sr_err},
@@ -859,7 +859,7 @@ static int lua_sr_hdr_append_to_reply (lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_hdr_Map [] = {
+static const luaL_Reg _sr_hdr_Map [] = {
 	{"append", lua_sr_hdr_append},
 	{"remove", lua_sr_hdr_remove},
 	{"insert", lua_sr_hdr_insert},
@@ -1122,7 +1122,7 @@ static int lua_sr_pv_is_null (lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_pv_Map [] = {
+static const luaL_Reg _sr_pv_Map [] = {
 	{"get",      lua_sr_pv_get},
 	{"seti",     lua_sr_pv_seti},
 	{"sets",     lua_sr_pv_sets},
@@ -1399,7 +1399,7 @@ static int lua_sr_xavp_get_keys (lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_xavp_Map [] = {
+static const luaL_Reg _sr_xavp_Map [] = {
 	{"get", lua_sr_xavp_get},
 	{"get_keys",  lua_sr_xavp_get_keys},
 	{NULL, NULL}

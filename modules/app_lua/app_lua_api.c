@@ -216,7 +216,7 @@ int lua_sr_init_probe(void)
 	sr_lua_load_t *li;
 	struct stat sbuf;
 
-	L = lua_open();
+	L = luaL_newstate();
 	if(L==NULL)
 	{
 		LM_ERR("cannot open lua\n");
@@ -267,7 +267,7 @@ int lua_sr_init_child(void)
 	char *txt;
 
 	memset(&_sr_L_env, 0, sizeof(sr_lua_env_t));
-	_sr_L_env.L = lua_open();
+	_sr_L_env.L = luaL_newstate();
 	if(_sr_L_env.L==NULL)
 	{
 		LM_ERR("cannot open lua\n");
@@ -277,10 +277,14 @@ int lua_sr_init_child(void)
 	lua_sr_openlibs(_sr_L_env.L);
 
 	/* set SR lib version */
+#if LUA_VERSION_NUM >= 502
+	lua_pushstring(_sr_L_env.L, SRVERSION);
+	lua_setglobal(_sr_L_env.L, "SRVERSION");
+#else
 	lua_pushstring(_sr_L_env.L, "SRVERSION");
 	lua_pushstring(_sr_L_env.L, SRVERSION);
 	lua_settable(_sr_L_env.L, LUA_GLOBALSINDEX);
-
+#endif
 	if(_sr_lua_load_list != NULL)
 	{
 		_sr_L_env.LL = luaL_newstate();
@@ -293,10 +297,14 @@ int lua_sr_init_child(void)
 		lua_sr_openlibs(_sr_L_env.LL);
 
 		/* set SR lib version */
+#if LUA_VERSION_NUM >= 502
+		lua_pushstring(_sr_L_env.L, SRVERSION);
+		lua_setglobal(_sr_L_env.L, "SRVERSION");
+#else
 		lua_pushstring(_sr_L_env.LL, "SRVERSION");
 		lua_pushstring(_sr_L_env.LL, SRVERSION);
 		lua_settable(_sr_L_env.LL, LUA_GLOBALSINDEX);
-
+#endif
 		/* force loading lua lib now */
 		if(luaL_dostring(_sr_L_env.LL, "sr.probe()")!=0)
 		{

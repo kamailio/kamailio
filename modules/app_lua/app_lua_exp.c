@@ -280,7 +280,7 @@ static int lua_sr_sl_get_reply_totag (lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_sl_Map [] = {
+static const luaL_Reg _sr_sl_Map [] = {
 	{"send_reply",      lua_sr_sl_send_reply},
 	{"get_reply_totag", lua_sr_sl_get_reply_totag},
 	{NULL, NULL}
@@ -711,7 +711,7 @@ static int lua_sr_tm_t_next_contacts(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_tm_Map [] = {
+static const luaL_Reg _sr_tm_Map [] = {
 	{"t_reply",             lua_sr_tm_t_reply},
 	{"t_relay",             lua_sr_tm_t_relay},
 	{"t_on_failure",        lua_sr_tm_t_on_failure},
@@ -979,7 +979,7 @@ static int lua_sr_sqlops_xquery(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_sqlops_Map [] = {
+static const luaL_Reg _sr_sqlops_Map [] = {
 	{"query",   lua_sr_sqlops_query},
 	{"value",   lua_sr_sqlops_value},
 	{"is_null", lua_sr_sqlops_is_null},
@@ -1088,7 +1088,7 @@ static int lua_sr_rr_add_rr_param(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_rr_Map [] = {
+static const luaL_Reg _sr_rr_Map [] = {
 	{"record_route",    lua_sr_rr_record_route},
 	{"loose_route",     lua_sr_rr_loose_route},
 	{"add_rr_param",    lua_sr_rr_add_rr_param},
@@ -1237,7 +1237,7 @@ static int lua_sr_auth_consume_credentials(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_auth_Map [] = {
+static const luaL_Reg _sr_auth_Map [] = {
 	{"www_challenge",            lua_sr_auth_www_challenge},
 	{"proxy_challenge",          lua_sr_auth_proxy_challenge},
 	{"pv_www_authenticate",      lua_sr_auth_pv_www_authenticate},
@@ -1308,7 +1308,7 @@ static int lua_sr_auth_db_proxy_authenticate(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_auth_db_Map [] = {
+static const luaL_Reg _sr_auth_db_Map [] = {
 	{"www_authenticate",      lua_sr_auth_db_www_authenticate},
 	{"proxy_authenticate",    lua_sr_auth_db_proxy_authenticate},
 	{NULL, NULL}
@@ -1356,7 +1356,7 @@ static int lua_sr_maxfwd_process_maxfwd(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_maxfwd_Map [] = {
+static const luaL_Reg _sr_maxfwd_Map [] = {
 	{"process_maxfwd",      lua_sr_maxfwd_process_maxfwd},
 	{NULL, NULL}
 };
@@ -1507,7 +1507,7 @@ static int lua_sr_registrar_registered(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_registrar_Map [] = {
+static const luaL_Reg _sr_registrar_Map [] = {
 	{"save",      lua_sr_registrar_save},
 	{"lookup",    lua_sr_registrar_lookup},
 	{"registered",lua_sr_registrar_registered},
@@ -1659,7 +1659,7 @@ static int lua_sr_dispatcher_is_from(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_dispatcher_Map [] = {
+static const luaL_Reg _sr_dispatcher_Map [] = {
 	{"select",      lua_sr_dispatcher_select},
 	{"next",        lua_sr_dispatcher_next},
 	{"mark",        lua_sr_dispatcher_mark},
@@ -1714,7 +1714,7 @@ static int lua_sr_xhttp_reply(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_xhttp_Map [] = {
+static const luaL_Reg _sr_xhttp_Map [] = {
 	{"reply",       lua_sr_xhttp_reply},
 	{NULL, NULL}
 };
@@ -1759,7 +1759,7 @@ static int lua_sr_sdpops_with_media(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_sdpops_Map [] = {
+static const luaL_Reg _sr_sdpops_Map [] = {
 	{"sdp_with_media",       lua_sr_sdpops_with_media},
 	{NULL, NULL}
 };
@@ -1884,7 +1884,7 @@ static int lua_sr_pres_handle_subscribe(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_presence_Map [] = {
+static const luaL_Reg _sr_presence_Map [] = {
 	{"pres_auth_status",       lua_sr_pres_auth_status},
 	{"handle_publish",         lua_sr_pres_handle_publish},
 	{"handle_subscribe",       lua_sr_pres_handle_subscribe},
@@ -1970,7 +1970,7 @@ static int lua_sr_pres_check_activities(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_presence_xml_Map [] = {
+static const luaL_Reg _sr_presence_xml_Map [] = {
 	{"pres_check_basic",       lua_sr_pres_check_basic},
 	{"pres_check_activities",  lua_sr_pres_check_activities},
 	{NULL, NULL}
@@ -2015,7 +2015,7 @@ static int lua_sr_textops_is_privacy(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_textops_Map [] = {
+static const luaL_Reg _sr_textops_Map [] = {
 	{"is_privacy",       lua_sr_textops_is_privacy},
 	{NULL, NULL}
 };
@@ -2055,7 +2055,7 @@ static int lua_sr_pua_usrloc_set_publish(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_pua_usrloc_Map [] = {
+static const luaL_Reg _sr_pua_usrloc_Map [] = {
 	{"set_publish",            lua_sr_pua_usrloc_set_publish},
 	{NULL, NULL}
 };
@@ -2134,7 +2134,7 @@ static int lua_sr_siputils_is_uri_user_e164(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_siputils_Map [] = {
+static const luaL_Reg _sr_siputils_Map [] = {
 	{"has_totag",            lua_sr_siputils_has_totag},
 	{"is_uri_user_e164",     lua_sr_siputils_is_uri_user_e164},
 	{NULL, NULL}
@@ -2222,7 +2222,7 @@ static int lua_sr_rls_handle_notify(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_rls_Map [] = {
+static const luaL_Reg _sr_rls_Map [] = {
 	{"handle_subscribe",       lua_sr_rls_handle_subscribe},
 	{"handle_notify",          lua_sr_rls_handle_notify},
 	{NULL, NULL}
@@ -2267,7 +2267,7 @@ static int lua_sr_alias_db_lookup(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_alias_db_Map [] = {
+static const luaL_Reg _sr_alias_db_Map [] = {
 	{"lookup",       lua_sr_alias_db_lookup},
 	{NULL, NULL}
 };
@@ -2367,7 +2367,7 @@ static int lua_sr_msilo_dump(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_msilo_Map [] = {
+static const luaL_Reg _sr_msilo_Map [] = {
 	{"store",       lua_sr_msilo_store},
 	{"dump",        lua_sr_msilo_dump},
 	{NULL, NULL}
@@ -2424,7 +2424,7 @@ static int lua_sr_uac_replace_from(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_uac_Map [] = {
+static const luaL_Reg _sr_uac_Map [] = {
 	{"replace_from",lua_sr_uac_replace_from},
 	{NULL, NULL}
 };
@@ -2463,7 +2463,7 @@ static int lua_sr_sanity_check(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_sanity_Map [] = {
+static const luaL_Reg _sr_sanity_Map [] = {
 	{"sanity_check",       lua_sr_sanity_check},
 	{NULL, NULL}
 };
@@ -2524,7 +2524,7 @@ static int lua_sr_cfgutils_unlock(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_cfgutils_Map [] = {
+static const luaL_Reg _sr_cfgutils_Map [] = {
 	{"lock",      lua_sr_cfgutils_lock},
 	{"unlock",    lua_sr_cfgutils_unlock},
 	{NULL, NULL}
@@ -2558,7 +2558,7 @@ static int lua_sr_tmx_t_suspend(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_tmx_Map [] = {
+static const luaL_Reg _sr_tmx_Map [] = {
 	{"t_suspend", lua_sr_tmx_t_suspend},
 	{NULL, NULL}
 };
@@ -2596,7 +2596,7 @@ static int lua_sr_mq_add(lua_State *L)
 /**
  *
  */
-static const luaL_reg _sr_mqueue_Map [] = {
+static const luaL_Reg _sr_mqueue_Map [] = {
 	{"add", lua_sr_mq_add},
 	{NULL, NULL}
 };
