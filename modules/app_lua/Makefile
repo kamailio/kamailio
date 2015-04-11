@@ -15,14 +15,20 @@ ifeq ($(BUILDER),)
 	endif
 	ifeq ($(BUILDER),)
 		LUA51 = $(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1)
-		DEFS+=-I$(LOCALBASE)/include
-		LIBS+=-L$(LOCALBASE)/lib -lm
-		ifeq ($(LUA51),)
-			DEFS+=-I$(LOCALBASE)/include/lua
-			LIBS+=-llua
+		DEFS+= -I$(LOCALBASE)/include
+		LIBS+= -L$(LOCALBASE)/lib -lm
+		ifneq ($(LUA51),)
+			DEFS+= -I$(LOCALBASE)/include/lua5.1
+			LIBS+= -llua5.1
 		else
-			DEFS+=-I$(LOCALBASE)/include/lua5.1
-			LIBS+=-llua5.1
+			LUA52 = $(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2)
+			ifneq ($(LUA52),)
+				DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/lua5.2
+				LIBS+= -llua5.2
+			else
+				DEFS+= -I$(LOCALBASE)/include/lua
+				LIBS+= -llua
+			endif
 		endif
 	else
 		LUAVER=XX
@@ -30,9 +36,14 @@ ifeq ($(BUILDER),)
 		ifeq ($(LUALIBS),)
 			LUALIBS = $(shell pkg-config --silence-errors --libs lua5.1)
 			ifeq ($(LUALIBS),)
-				LUALIBS = $(shell pkg-config --silence-errors --libs lua)
-				ifneq ($(LUALIBS),)
-					LUAVER=5X
+				LUALIBS = $(shell pkg-config --silence-errors --libs lua5.2)
+				ifeq ($(LUALIBS),)
+					LUALIBS = $(shell pkg-config --silence-errors --libs lua)
+					ifneq ($(LUALIBS),)
+						LUAVER=5X
+					endif
+				else
+					LUAVER=52
 				endif
 			else
 				LUAVER=51
@@ -42,12 +53,18 @@ ifeq ($(BUILDER),)
 		endif
 		ifeq ($(LUAVER),XX)
 			LUA51 = $(shell ls /usr/lib/liblua* | grep liblua5.1)
-			ifeq ($(LUA51),)
-				DEFS+=-I/usr/include/lua
-				LIBS= -llua -lm
+			ifneq ($(LUA51),)
+				DEFS+= -I/usr/include/lua5.1
+				LIBS = -llua5.1 -lm
 			else
-				DEFS+=-I/usr/include/lua5.1
-				LIBS= -llua5.1 -lm
+				LUA52 = $(shell ls /usr/lib/liblua* | grep liblua5.2)
+				ifneq ($(LUA51),)
+					DEFS+= -DLUA_COMPAT_MODULE -I/usr/include/lua5.2
+					LIBS = -llua5.2 -lm
+				else
+					DEFS+= -I/usr/include/lua
+					LIBS = -llua -lm
+				endif
 			endif
 		else
 			ifeq ($(LUAVER),51)
@@ -58,8 +75,13 @@ ifeq ($(BUILDER),)
 					DEFS+= $(shell pkg-config --cflags lua-5.1)
 					LIBS = $(shell pkg-config --libs lua-5.1)
 				else
-					DEFS+= $(shell pkg-config --cflags lua)
-					LIBS = $(shell pkg-config --libs lua)
+					ifeq ($(LUAVER),52)
+						DEFS+= -DLUA_COMPAT_MODULE $(shell pkg-config --cflags lua5.2)
+						LIBS = $(shell pkg-config --libs lua5.2)
+					else
+						DEFS+= $(shell pkg-config --cflags lua)
+						LIBS = $(shell pkg-config --libs lua)
+					endif
 				endif
 			endif
 		endif
