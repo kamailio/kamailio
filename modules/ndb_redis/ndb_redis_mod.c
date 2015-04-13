@@ -42,6 +42,7 @@ MODULE_VERSION
 /** parameters */
 
 int redis_srv_param(modparam_t type, void *val);
+int init_without_redis = 0;
 static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 		char* sres);
 static int w_redis_cmd4(struct sip_msg* msg, char* ssrv, char* scmd,
@@ -84,6 +85,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"server",         PARAM_STRING|USE_FUNC_PARAM, (void*)redis_srv_param},
+	{"init_without_redis", INT_PARAM, &init_without_redis},
 	{0, 0, 0}
 };
 
@@ -113,8 +115,15 @@ static int child_init(int rank)
 
 	if(redisc_init()<0)
 	{
-		LM_ERR("failed to initialize redis connections\n");
-		return -1;
+		if (init_without_redis==1)
+		{
+			LM_WARN("failed to initialize redis connections, but initializing module anyway\n");
+			return 0;
+		}
+		else {
+			LM_ERR("failed to initialize redis connections\n");
+			return -1;
+		}
 	}
 	return 0;
 }
