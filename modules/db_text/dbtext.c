@@ -126,7 +126,8 @@ int dbt_bind_api(db_func_t *dbb)
 	dbb->delete      = (db_delete_f)dbt_delete; 
 	dbb->update      = (db_update_f)dbt_update;
 	dbb->affected_rows = (db_affected_rows_f) dbt_affected_rows;
-	dbb->cap         = DB_CAP_AFFECTED_ROWS;
+	dbb->raw_query   = (db_raw_query_f) dbt_raw_query;
+	dbb->cap         = DB_CAP_ALL | DB_CAP_AFFECTED_ROWS | DB_CAP_RAW_QUERY;
 
 	return 0;
 }
