@@ -32,6 +32,7 @@ Vicente Hernando
         3. Parameters
 
               3.1. server (str)
+              3.2. init_without_redis (integer)
 
         4. Functions
 
@@ -41,8 +42,9 @@ Vicente Hernando
    List of Examples
 
    1.1. Set server parameter
-   1.2. redis_cmd usage
-   1.3. redis_free usage
+   1.2. Set init_without_redis parameter
+   1.3. redis_cmd usage
+   1.4. redis_free usage
 
 Chapter 1. Admin Guide
 
@@ -57,6 +59,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. server (str)
+        3.2. init_without_redis (integer)
 
    4. Functions
 
@@ -91,6 +94,7 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. server (str)
+   3.2. init_without_redis (integer)
 
 3.1. server (str)
 
@@ -113,11 +117,23 @@ Chapter 1. Admin Guide
    Example 1.1. Set server parameter
 ...
 modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
-modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4;pass=my
-password")
+modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4;pass=m
+ypassword")
 
 # Unix domain socket
 modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
+...
+
+3.2. init_without_redis (integer)
+
+   If set to 1, the module will correctly initialize even if redis is not
+   available at start up.
+
+   Default value is “0”.
+
+   Example 1.2. Set init_without_redis parameter
+...
+modparam("ndb_redis", "init_without_redis", 1)
 ...
 
 4. Functions
@@ -148,7 +164,7 @@ modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
      * value[n] - returns value of the nth element. value - returns null
        for an array. You need to get each element by index.
 
-   Example 1.2. redis_cmd usage
+   Example 1.3. redis_cmd usage
 ...
 if(redis_cmd("srvN", "INCR cnt", "r")) {
     # success - the incremented value is in $redis(r=>value)
@@ -189,7 +205,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
    function. When ndb_redis module closes, all pending replies are freed
    automatically.
 
-   Example 1.3. redis_free usage
+   Example 1.4. redis_free usage
 ...
 After a redis command call:
         redis_cmd("srvN", "INCR cnt", "r");
