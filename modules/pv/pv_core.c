@@ -1874,6 +1874,7 @@ int pv_get_tcpconn_id(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	struct tcp_connection *con;
+	int conid;
 
 	if (msg == NULL)
 		return -1;
@@ -1881,7 +1882,10 @@ int pv_get_tcpconn_id(struct sip_msg *msg, pv_param_t *param,
 	if ((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)
 		return pv_get_null(msg, param, res);
 
-	return pv_get_sintval(msg, param, res, con->id);
+	conid = con->id;
+	tcpconn_put(con);
+
+	return pv_get_sintval(msg, param, res, conid);
 }
 
 

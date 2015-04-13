@@ -1411,6 +1411,8 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 /* _tcpconn_find with locks and timeout
  * local_addr contains the desired local ip:port. If null any local address 
  * will be used.  IN*ADDR_ANY or 0 port are wild cards.
+ * If found, the connection's reference counter will be incremented, you might
+ * want to decrement it after use.
  */
 struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 									union sockaddr_union* local_addr,
