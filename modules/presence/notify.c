@@ -653,7 +653,11 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 		return NULL;
 	}
 
-	query_str = str_received_time_col;
+	if(pres_retrieve_order==1) {
+		query_str = str_priority_col;
+	} else {
+		query_str = str_received_time_col;
+	}
 	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
 		 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0) 
 	{
