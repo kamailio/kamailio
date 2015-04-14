@@ -1138,13 +1138,13 @@ lookup_branches("location");
 			<itemizedlist>
 				<listitem>
 					<para>1 - match_callid</para>
-				</listiem>
+				</listitem>
 				<listitem>
 					<para>2 - match_received</para>
-				</listiem>
+				</listitem>
 				<listitem>
 					<para>4 - match_contact</para>
-				</listiem>
+				</listitem>
 			</itemizedlist>			
 		</listitem>
 		<listitem>
@@ -1155,7 +1155,7 @@ lookup_branches("location");
 			<itemizedlist>
 				<listitem>
 					<para>1 - set xavp_rcd with value from matched contact</para>
-				</listiem>
+				</listitem>
 			</itemizedlist>						
 		</listitem>
 		</itemizedlist>
