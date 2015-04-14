@@ -93,6 +93,25 @@ modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
 </programlisting>
 		</example>
 	</section>
+	<section id="ndb_redis.p.init_without_redis">
+		<title><varname>init_without_redis</varname> (integer)</title>
+		<para>
+			If set to 1, the module will correctly initialize even if redis is not available at start up.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>init_without_redis</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("ndb_redis", "init_without_redis", 1)
+...
+			</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
