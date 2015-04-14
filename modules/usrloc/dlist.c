@@ -71,12 +71,6 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 	return 1;
 }
 
-extern int ul_db_raw_fetch_type;
-
-#define UL_DB_RAW_FETCH_COMMON	 "select %.*s, %.*s, %.*s, %.*s, %.*s, %.*s from %s where %.*s > %.*s and %.*s & %d = %d and id %% %u = %u"
-
-#define UL_DB_RAW_FETCH_ORACLE   "select %.*s, %.*s, %.*s, %.*s, %.*s, %.*s from %s where %.*s > %.*s and  bitand(%.*s, %d) = %d and mod(id, %u) = %u"
-
 /*!
  * \brief Get all contacts from the database, in partitions if wanted
  * \see get_all_ucontacts
@@ -90,16 +84,13 @@ extern int ul_db_raw_fetch_type;
 static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 								unsigned int part_idx, unsigned int part_max)
 {
-	static char query_buf[512];
-	static str query_str;
-
 	struct socket_info *sock;
 	unsigned int dbflags;
 	db1_res_t* res = NULL;
 	db_row_t *row;
 	dlist_t *dom;
+	str now;
 	char now_s[25];
-	int now_len;
 	int port, proto;
 	char *p;
 	str addr;
@@ -111,11 +102,11 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	int i;
 	void *cp;
 	int shortage, needed;
-
-	if(ul_dbf.raw_query==NULL) {
-		LM_WARN("DB raw query support is required, but not implemented\n");
-		return -1;
-	}
+	db_key_t keys1[2]; /* where */
+	db_val_t vals1[2];
+	db_op_t  ops[2];
+	db_key_t keys2[6]; /* select */
+	int n[2] = {1,6}; /* number of dynamic values used on key1/key2 */
 
 	cp = buf;
 	shortage = 0;
@@ -123,37 +114,48 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	len -= sizeof(addr.len);
 
 	/* get the current time in DB format */
-	now_len = 25;
-	if (db_time2str( time(0), now_s, &now_len)!=0) {
+	now.len = 25;
+	now.s = now_s;
+	if (db_time2str( time(0), now.s, &now.len)!=0) {
 		LM_ERR("failed to print now time\n");
 		return -1;
 	}
 	aorhash = 0;
 
+	/* select fields */
+	keys2[0] = &received_col;
+	keys2[1] = &contact_col;
+	keys2[2] = &sock_col;
+	keys2[3] = &cflags_col;
+	keys2[4] = &path_col;
+	keys2[5] = &ruid_col;
+
+	/* where fields */
+	keys1[0] = &expires_col;
+	ops[0] = OP_GT;
+	vals1[0].type = DB1_STR;
+	vals1[0].nul = 0;
+	vals1[0].val.str_val = now;
+
+	if (flags & nat_bflag) {
+		keys1[n[0]] = &keepalive_col;
+		ops[n[0]] = OP_EQ;
+		vals1[n[0]].type = DB1_INT;
+		vals1[n[0]].nul = 0;
+		vals1[n[0]].val.int_val = 1;
+		n[0]++;
+	}
+
+	/* TODO: use part_idx and part_max on keys1 */
+
 	for (dom = root; dom!=NULL ; dom=dom->next) {
-		/* build query */
-		i = snprintf( query_buf, sizeof(query_buf),
-			(ul_db_raw_fetch_type==1)?
-					UL_DB_RAW_FETCH_ORACLE:UL_DB_RAW_FETCH_COMMON,
-			received_col.len, received_col.s,
-			contact_col.len, contact_col.s,
-			sock_col.len, sock_col.s,
-			cflags_col.len, cflags_col.s,
-			path_col.len, path_col.s,
-			ruid_col.len, ruid_col.s,
-			dom->d->name->s,
-			expires_col.len, expires_col.s,
-			now_len, now_s,
-			cflags_col.len, cflags_col.s,
-			flags, flags, part_max, part_idx);
-		if ( i>=sizeof(query_buf) ) {
-			LM_ERR("DB query too long\n");
+		if (ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
+			LM_ERR("sql use_table failed\n");
 			return -1;
 		}
-		query_str.s = query_buf;
-		query_str.len = i;
-		if ( ul_dbf.raw_query( ul_dbh, &query_str, &res)<0 ) {
-			LM_ERR("raw_query failed\n");
+		if (ul_dbf.query(ul_dbh, keys1,ops, vals1, keys2,
+							n[0], n[1], NULL, &res) <0 ) {
+			LM_ERR("query error\n");
 			return -1;
 		}
 		if( RES_ROW_N(res)==0 ) {
