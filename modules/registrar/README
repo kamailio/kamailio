@@ -20,7 +20,7 @@ Edited by
 
 Bogdan-Andre Iancu
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -73,7 +73,9 @@ Bogdan-Andre Iancu
               4.1. save(domain, [, flags [, uri]])
               4.2. lookup(domain [, uri])
               4.3. lookup_branches(domain)
-              4.4. registered(domain [, uri])
+              4.4. registered(domain [, uri [, match_option [,
+                      match_action]]])
+
               4.5. add_sock_hdr(hdr_name)
               4.6. unregister(domain, uri[, ruid])
               4.7. reg_fetch_contacts(domain, uri, profile)
@@ -187,7 +189,7 @@ Chapter 1. Admin Guide
         4.1. save(domain, [, flags [, uri]])
         4.2. lookup(domain [, uri])
         4.3. lookup_branches(domain)
-        4.4. registered(domain [, uri])
+        4.4. registered(domain [, uri [, match_option [, match_action]]])
         4.5. add_sock_hdr(hdr_name)
         4.6. unregister(domain, uri[, ruid])
         4.7. reg_fetch_contacts(domain, uri, profile)
@@ -229,8 +231,8 @@ Chapter 1. Admin Guide
      * off - stores the value of the Path headers into usrloc without
        passing it back to the UAC in the reply.
      * lazy - stores the Path header and passes it back to the UAC if
-       Path-support is indicated by the “path” param in the Supported HF.
-     * strict - rejects the registration with “420 Bad Extension” if
+       Path-support is indicated by the "path" param in the Supported HF.
+     * strict - rejects the registration with "420 Bad Extension" if
        there's a Path header but no support for it is indicated by the
        UAC. Otherwise it's stored and passed back to the UAC.
 
@@ -242,8 +244,8 @@ Chapter 1. Admin Guide
    client's NAT).
 
    The whole process is transparent to the user, so no config changes are
-   required beside setting the registrar-parameters “use_path” and
-   “path_mode”.
+   required beside setting the registrar-parameters "use_path" and
+   "path_mode".
 
 1.2. GRUU Support
 
@@ -310,7 +312,7 @@ Chapter 1. Admin Guide
    contact parameters, this value will be used for newly created usrloc
    records. The parameter contains number of second to expire (for example
    use 3600 for one hour). If it is set to a lower value than the
-   “min_expires” parameter then it will be ignored. This parameter can be
+   "min_expires" parameter then it will be ignored. This parameter can be
    modified via ser config framework. A random value in a specific
    interval can be selected by using the default_expires_range parameter
 
@@ -325,7 +327,7 @@ modparam("registrar", "default_expires", 1800)
 
    This parameter specifies that the expiry used for newly created usrloc
    records are not fixed, but a random value in the interval
-   “[default_expires-default_expires_range%, default_expires]”. The value
+   "[default_expires-default_expires_range%, default_expires]". The value
    is between 0 and 100 and represent the maximim percentage from expires
    that will be substracted when computing the value. Default is 0,
    meaning default_expires is left unmodified. This parameter can be
@@ -354,7 +356,7 @@ res]
 
 3.4. min_expires (integer)
 
-   The minimum expires value of a “Contact”. Values lower than this
+   The minimum expires value of a "Contact". Values lower than this
    minimum will be automatically set to the minimum. Value 0 disables the
    checking. This parameter can be modified via the Kamailio config
    framework.
@@ -368,7 +370,7 @@ modparam("registrar", "min_expires", 60)
 
 3.5. max_expires (integer)
 
-   The maximum accepted expires value of a “Contact”, values higher than
+   The maximum accepted expires value of a "Contact", values higher than
    this maximum will be automatically set to the maximum. Value 0 disables
    the checking. This parameter can be modified via the Kamailio config
    framework.
@@ -382,7 +384,7 @@ modparam("registrar", "max_expires", 120)
 
 3.6. default_q (integer)
 
-   The parameter represents default “q” value for new contacts. Because
+   The parameter represents default "q" value for new contacts. Because
    Kamailio doesn't support float parameter types, the value in the
    parameter is divided by 1000 and stored as float. For example, if you
    want default_q to be 0.38, use value 380 here. This parameter can be
@@ -472,7 +474,7 @@ modparam("registrar", "received_avp", "$avp(s:rcv)")
 3.12. received_param (string)
 
    The name of the parameter that will be appended to Contact URI's of 200
-   OK when the received URI was set by the “nathelper” module. If the
+   OK when the received URI was set by the "nathelper" module. If the
    value is an empty string, then the parameter is not appended anymore.
 
    Default value is "received".
@@ -555,7 +557,7 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 
    Tells if the contact filtering based on supported methods should be
    performed during lookup. It's enabled only if it has a non zero value.
-   Supported methods are listed in the “Allow:” header in the REGISTER
+   Supported methods are listed in the "Allow:" header in the REGISTER
    message and stored in the location database.
 
    Default value is 0 (disabled).
@@ -567,9 +569,9 @@ modparam("registrar", "method_filtering", 1)
 
 3.18. use_path (integer)
 
-   If set to 1, the “Path:” header is handled according to the parameter
+   If set to 1, the "Path:" header is handled according to the parameter
    This parameter can be modified via Kamailio config framework.
-   “path_mode”.
+   "path_mode".
 
    Default value is 0 (disabled).
 
@@ -586,12 +588,12 @@ modparam("registrar", "use_path", 1)
        the reply.
      * 1 - The Path header is saved into usrloc, but is only included in
        the reply if path support is indicated in the registration request
-       by the “path” option in the “Supported:” header.
+       by the "path" option in the "Supported:" header.
      * 2 - The path header is only saved into usrloc, if path support is
-       indicated in the registration request by the “path” option of the
-       “Supported” header. If no path support is indicated, the request is
-       rejected with “420 - Bad Extension” and the header “Unsupported:
-       path” is included in the reply along with the received “Path”
+       indicated in the registration request by the "path" option of the
+       "Supported" header. If no path support is indicated, the request is
+       rejected with "420 - Bad Extension" and the header "Unsupported:
+       path" is included in the reply along with the received "Path"
        header. This mode is the one recommended by RFC-3327.
 
    Default value is 2.
@@ -603,10 +605,10 @@ modparam("registrar", "path_mode", 0)
 
 3.20. path_use_received (integer)
 
-   If set to 1, the “received” parameter of the first Path URI of a
+   If set to 1, the "received" parameter of the first Path URI of a
    registration is set as received-uri and the NAT branch flag is set for
    this contact. This is useful if the registrar is placed behind a SIP
-   loadbalancer, which passes the nat'ed UAC address as “received”
+   loadbalancer, which passes the nat'ed UAC address as "received"
    parameter in it's Path uri.
 
    Default value is 0 (disabled).
@@ -619,7 +621,7 @@ modparam("registrar", "path_use_received", 1)
 3.21. path_check_local (integer)
 
    If set to 1, when performing a lookup the Path (if present) is
-   evaluated and if the first hop is local (according to “myself” test),
+   evaluated and if the first hop is local (according to "myself" test),
    we skip it to avoid unnecessary looping.
 
    This is useful if multiple servers are sharing a common location
@@ -633,6 +635,8 @@ modparam("registrar", "path_check_local", 1)
 ...
 
 3.22. reg_callid_avp (string)
+
+   obsolete. use match_option in registered function
 
    If reg_callid_avp is defined and populated when the registered() is
    invoked, the result is TRUE only if an active registration with the
@@ -687,7 +691,7 @@ modparam("registrar", "xavp_rcd", "ulrcd")
 
 3.25. gruu_enabled (integer)
 
-   If set to 1 and the “+sip.instance” parameter to Contact header of
+   If set to 1 and the "+sip.instance" parameter to Contact header of
    REGISTER is present, then the value of the parameter is saved to
    location and pub-gruu and temp-gruu addresses are generated.
 
@@ -703,21 +707,21 @@ modparam("registrar", "gruu_enabled", 0)
 3.26. outbound_mode (integer)
 
    If set to 0 this module will accept REGISTER requests that do not
-   contain a “Supported:” header with the outbound options-tag. The 200 OK
+   contain a "Supported:" header with the outbound options-tag. The 200 OK
    response to REGISTER requests that this module generates will not
-   contain “Require:” or “Supported:” headers with the outbound
-   options-tag. If the client has a “Require:” header with the outbound
-   options tag the REGISTER will be rejected with a “420 Bad Extension”
+   contain "Require:" or "Supported:" headers with the outbound
+   options-tag. If the client has a "Require:" header with the outbound
+   options tag the REGISTER will be rejected with a "420 Bad Extension"
    response.
 
    If set to 1 this module will accept REGISTER requests that do not
-   contain a “Supported:” header with the outbound options-tag and
+   contain a "Supported:" header with the outbound options-tag and
    REGISTER requests that do contain a Supported: or Requires: header with
    the outbound options-tag. When the client supports outbound the
    appropriate RFC5626 procedures will be followed.
 
    If set to 2 this module will reject REGISTER requests that do not
-   contain a “Supported:” header with the outbound options-tag. When the
+   contain a "Supported:" header with the outbound options-tag. When the
    client supports outbound the appropriate RFC5626 procedures will be
    followed.
 
@@ -730,11 +734,11 @@ modparam("registrar", "outbound_mode", 2)
 
 3.27. regid_mode (integer)
 
-   If set to 0 this module will ignore the “regid” contact param when
+   If set to 0 this module will ignore the "regid" contact param when
    saving REGISTER request if the request does not indicate support for
    outbound.
 
-   If set to 1 this module will use “regid” contact param (if present)
+   If set to 1 this module will use "regid" contact param (if present)
    when saving REGISTER request even if REGISTER request does not indicate
    support for outbound.
 
@@ -747,10 +751,10 @@ modparam("registrar", "regid_mode", 1)
 
 3.28. flow_timer (integer)
 
-   If set to 0 then this module will not add a “Flow-Timer:” header to 200
+   If set to 0 then this module will not add a "Flow-Timer:" header to 200
    OK responses to REGISTER requests.
 
-   If set to > 0 then this module will add a “Flow-Timer:” header
+   If set to > 0 then this module will add a "Flow-Timer:" header
    containing this value to 200 OK responses to REGISTER requests. This
    parameter may only be set to a value > 0 when outbound_mode is set to 1
    or 2.
@@ -762,7 +766,7 @@ modparam("registrar", "regid_mode", 1)
    useful when you have a single edge proxy/registrar or if you have an
    edge proxy that cannot modify responses. If you are using a separate
    edge proxy you should consider leaving this parameter set to 0 and
-   adding the “Flow-Timer:” header on the edge proxy as this allows you to
+   adding the "Flow-Timer:" header on the edge proxy as this allows you to
    keep all of the timer values for a specific flow in one configuration.
 
    Default value is 0.
@@ -777,18 +781,18 @@ modparam("registrar", "flow_timer", 25)
    4.1. save(domain, [, flags [, uri]])
    4.2. lookup(domain [, uri])
    4.3. lookup_branches(domain)
-   4.4. registered(domain [, uri])
+   4.4. registered(domain [, uri [, match_option [, match_action]]])
    4.5. add_sock_hdr(hdr_name)
    4.6. unregister(domain, uri[, ruid])
    4.7. reg_fetch_contacts(domain, uri, profile)
    4.8. reg_free_contacts(profile)
 
-4.1.  save(domain, [, flags [, uri]])
+4.1. save(domain, [, flags [, uri]])
 
    The function processes a REGISTER message. It can add, remove or modify
    location records (in usrloc) depending on Contact and Expires HFs in
    the REGISTER message. On success and when called from the
-   REQUEST_ROUTE, “200 OK” will be returned listing all contacts that are
+   REQUEST_ROUTE, "200 OK" will be returned listing all contacts that are
    currently in the location database. On an error, an error message will
    be sent with a short description in reason phrase.
 
@@ -828,7 +832,7 @@ save("location", "0x01");
 save("location", "0x00", "sip:test@kamailio.org");
 ...
 
-4.2.  lookup(domain [, uri])
+4.2. lookup(domain [, uri])
 
    The lookup function extracts username and/or domain from Request-URI
    and tries to find all contacts for the username in usrloc. If there are
@@ -868,7 +872,7 @@ switch ($retcode) {
 };
 ...
 
-4.3.  lookup_branches(domain)
+4.3. lookup_branches(domain)
 
    The function performs lookup(domain) on r-uri and additional branches
    (only branches that have no other attributes set than uri).
@@ -885,7 +889,7 @@ switch ($retcode) {
 lookup_branches("location");
 ...
 
-4.4.  registered(domain [, uri])
+4.4. registered(domain [, uri [, match_option [, match_action]]])
 
    The function returns true if the AOR in the Request-URI is registered,
    false otherwise. The function does not modify the message being
@@ -896,6 +900,16 @@ lookup_branches("location");
      * domain - Name of table that should be used for the lookup.
      * uri (optional) - SIP URI to do be used instead of R-URI. It can be
        a dynamic string with pseudo-variables.
+     * match_option (optional) - flag parameter to restrict contact
+       search. use reg_xavp_cfg to set the values to compare to.
+       flag values is as follows:
+          + 1 - match_callid
+          + 2 - match_received
+          + 4 - match_contact
+     * match_action (optional) - actions to perform when match is
+       positive.
+       flag values is as follows:
+          + 1 - set xavp_rcd with value from matched contact
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -906,10 +920,16 @@ if (registered("location")) {
         ...
 };
 ...
+$xavp(regcfg=>match_received) = $su;
+if (registered("location","$rz:$Au", 2)) {
+        sl_send_reply("100", "Trying");
+        ...
+};
+...
 
-4.5.  add_sock_hdr(hdr_name)
+4.5. add_sock_hdr(hdr_name)
 
-   Adds a new header to the current REGISTER request with “hdr_name” which
+   Adds a new header to the current REGISTER request with "hdr_name" which
    contains the description of the received socket (proto:ip:port)
 
    This makes sense only in multiple replicated servers scenarios.
@@ -924,12 +944,12 @@ if (registered("location")) {
 add_sock_hdr("Sock-Info");
 ...
 
-4.6.  unregister(domain, uri[, ruid])
+4.6. unregister(domain, uri[, ruid])
 
    The function removes contacts associated with 'uri' from the location
    database. If 'ruid' is provided a specific contact is removed, if
    'ruid' is not provided all the current contacts are removed. If 'ruid'
-   is provided and the “usrloc” module is using “db_mode=3”, 'uri' does
+   is provided and the "usrloc" module is using "db_mode=3", 'uri' does
    not need to be given and can be empty string.
 
    Meaning of the parameters is as follows:
@@ -951,7 +971,7 @@ unregister("location", "$ru", "$ulc(caller=>ruid)");
 unregister("location", "", "$ruid");
 ...
 
-4.7.  reg_fetch_contacts(domain, uri, profile)
+4.7. reg_fetch_contacts(domain, uri, profile)
 
    The function fetches the contacts for 'uri' from table 'domain' to
    pseudo-variable $ulc(profile).
@@ -973,7 +993,7 @@ reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 ...
 
-4.8.  reg_free_contacts(profile)
+4.8. reg_free_contacts(profile)
 
    The function frees the contacts from pseudo-variable $ulc(profile).
    Should be called to release the content of a profile. Anyhow, fetching
@@ -1042,12 +1062,12 @@ event_route[usrloc:contact-expired] {
 7.1. $ulc(profile=>attr)
 
    Access the attributes of contact addresses stored in 'profile'. It must
-   be used after a call of “reg_fetch_contacts()”.
+   be used after a call of "reg_fetch_contacts()".
 
-   The “profile” has to be one of the values used with
-   “reg_fetch_contacts()”.
+   The "profile" has to be one of the values used with
+   "reg_fetch_contacts()".
 
-   The “attr” can be:
+   The "attr" can be:
      * aor - address of record
      * domain - use location domain name
      * aorhash - hash id for the record
@@ -1105,9 +1125,9 @@ if(reg_fetch_contacts("location", "$fu", "caller"))
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with the old “nat_flag” module parameter?
-   2.2. What happend with the old “use_domain” module parameter?
-   2.3. What happened with the old “save_noreply” and “save_memory”
+   2.1. What happend with the old "nat_flag" module parameter?
+   2.2. What happend with the old "use_domain" module parameter?
+   2.3. What happened with the old "save_noreply" and "save_memory"
           functions?
 
    2.4. Where can I find more about Kamailio?
@@ -1117,23 +1137,23 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with the old “nat_flag” module parameter?
+   What happend with the old "nat_flag" module parameter?
 
    In was removed, as the module internally loads this value from the
-   “USRLOC” module (see the “nat_bflag” USRLOC parameter).
+   "USRLOC" module (see the "nat_bflag" USRLOC parameter).
 
    2.2.
 
-   What happend with the old “use_domain” module parameter?
+   What happend with the old "use_domain" module parameter?
 
    In was removed, as the module internally loads this option from the
-   “USRLOC” module. This was done in order to simplify the configuration.
+   "USRLOC" module. This was done in order to simplify the configuration.
 
    2.3.
 
-   What happened with the old “save_noreply” and “save_memory” functions?
+   What happened with the old "save_noreply" and "save_memory" functions?
 
-   There functions were merged into the new “save(domain,flags)”
+   There functions were merged into the new "save(domain,flags)"
    functions. If a reply should be sent or if the DB should be updated
    also is controlled via the flags.
 
