@@ -322,6 +322,11 @@ do{\
 
 #endif /* ! SHM_SAFE_MALLOC */
 
+/* multi-process safe version of shm_available()
+ */
+inline unsigned long safe_shm_available();
+
+
 #endif /* shm_mem_h */
 
 #endif /* SHM_MEM */

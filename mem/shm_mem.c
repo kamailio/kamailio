@@ -266,5 +266,13 @@ void shm_mem_destroy(void)
 #endif
 }
 
+inline unsigned long safe_shm_available()
+{
+	unsigned long ret;
+	shm_lock();
+	ret = shm_available();
+	shm_unlock();
+	return ret;
+}
 
 #endif
