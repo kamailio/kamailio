@@ -449,7 +449,7 @@ int db_mongodb_get_columns(const db1_con_t* _h, db1_res_t* _r)
 #endif
 
 			default:
-				LM_WARN("unhandled data type column (%.*s) type id (%d), "
+				LM_INFO("unhandled data type column (%.*s) type id (%d), "
 						"use DB1_STRING as default\n", RES_NAMES(_r)[col]->len,
 						RES_NAMES(_r)[col]->s, coltype);
 				RES_TYPES(_r)[col] = DB1_STRING;
