@@ -74,6 +74,7 @@ counter_def_t ims_qos_cnt_defs[] = {
     {&ims_qos_cnts_h.media_aars,			    "media_aars",			0, 0, 0,		    "total number of media AARs"},
     {&ims_qos_cnts_h.successful_media_aars,		    "successful_media_aars",		0, 0, 0,		    "total number of successful media AARs"},
     {&ims_qos_cnts_h.media_aar_response_time,		    "media_aar_response_time",		0, 0, 0,		    "total number of seconds waiting for media AAR responses"},
+    {&ims_qos_cnts_h.aar_replies_received,		    "aar_replies_received",		0, 0, 0,                    "total number of AAR replies received"},
     {0, 0, 0, 0, 0, 0}
 };
 

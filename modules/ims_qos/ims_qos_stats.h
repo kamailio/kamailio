@@ -26,6 +26,7 @@ struct ims_qos_counters_h {
     counter_handle_t media_aars;
     counter_handle_t successful_media_aars;
     counter_handle_t active_media_rx_sessions;
+    counter_handle_t aar_replies_received;
 };
 
 int ims_qos_init_counters();
