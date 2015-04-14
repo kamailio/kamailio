@@ -664,7 +664,7 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
     }
 
     counter_add(ims_charging_cnts_h.ccr_response_time, elapsed_msecs);
-    counter_add(ims_charging_cnts_h.ccr_response_time, 1);
+    counter_inc(ims_charging_cnts_h.ccr_replies_received);
 
     if (!i_req) {
 	LM_ERR("This is so wrong: ro session is NULL\n");
@@ -885,7 +885,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
 	goto error;
     }
 
-    counter_add(ims_charging_cnts_h.ccr_response_time, 1);
+    counter_inc(ims_charging_cnts_h.ccr_replies_received);
     counter_add(ims_charging_cnts_h.ccr_response_time, elapsed_msecs);
 
     if (!cca) {
@@ -1171,7 +1171,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 	goto error0;
     }
 
-    counter_add(ims_charging_cnts_h.ccr_response_time, 1);
+    counter_inc(ims_charging_cnts_h.ccr_replies_received);
     counter_add(ims_charging_cnts_h.ccr_response_time, elapsed_msecs);
 
     if (!cca) {
