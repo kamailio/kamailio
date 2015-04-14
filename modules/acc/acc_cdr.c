@@ -175,7 +175,7 @@ static int db_write_cdr( struct dlg_cell* dialog,
 					LM_ERR("failed to convert string to integer - %d.\n", errno);
 					goto error;
 				}
-				VAL_INT(db_cdr_vals+i) = cdr_value_array[i];
+				VAL_INT(db_cdr_vals+i) = long_val;
 				break;
 			case TYPE_STR:
 				VAL_TYPE(db_cdr_vals+i)=DB1_STR;
