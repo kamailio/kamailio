@@ -66,6 +66,7 @@ counter_def_t ims_qos_cnt_defs[] = {
     {&ims_qos_cnts_h.asrs,				    "asrs",					0, 0, 0,	    "total number of registration ASRs"},
     {&ims_qos_cnts_h.successful_registration_aars,	    "successful_registration_aars",		0, 0, 0,	    "total number of successful registration AARs"},
     {&ims_qos_cnts_h.registration_aar_response_time,	    "registration_aar_response_time",		0, 0, 0,	    "total number of seconds waiting for registration AAR responses"},
+    {&ims_qos_cnts_h.registration_aar_replies_received,	    "registration_aar_replies_received",	0, 0, 0,                    "total number of media AAR replies received"},
 
     {&ims_qos_cnts_h.active_media_rx_sessions,		    "active_media_rx_sessions",		0, 0, 0,		    "number of currently active media Rx sessions"},
     {&ims_qos_cnts_h.media_aar_avg_response_time,	    "media_aar_avg_response_time",	0, ims_qos_internal_stats, (void*) (long) IMS_QOS_MEDIA_AAR_AVG_RSP,	"avg response time for media AARs"},
@@ -74,7 +75,7 @@ counter_def_t ims_qos_cnt_defs[] = {
     {&ims_qos_cnts_h.media_aars,			    "media_aars",			0, 0, 0,		    "total number of media AARs"},
     {&ims_qos_cnts_h.successful_media_aars,		    "successful_media_aars",		0, 0, 0,		    "total number of successful media AARs"},
     {&ims_qos_cnts_h.media_aar_response_time,		    "media_aar_response_time",		0, 0, 0,		    "total number of seconds waiting for media AAR responses"},
-    {&ims_qos_cnts_h.aar_replies_received,		    "aar_replies_received",		0, 0, 0,                    "total number of AAR replies received"},
+    {&ims_qos_cnts_h.media_aar_replies_received,	    "media_aar_replies_received",	0, 0, 0,                    "total number of media AAR replies received"},
     {0, 0, 0, 0, 0, 0}
 };
 

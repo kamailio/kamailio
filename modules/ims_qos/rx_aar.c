@@ -130,7 +130,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
 
     counter_inc(ims_qos_cnts_h.media_aars);
     counter_add(ims_qos_cnts_h.media_aar_response_time, elapsed_msecs);
-    counter_inc(ims_qos_cnts_h.aar_replies_received);
+    counter_inc(ims_qos_cnts_h.media_aar_replies_received);
 
     /* Process the response to AAR, retrieving result code and associated Rx session ID */
     if (rx_process_aaa(aaa, &cdp_result) < 0) {
@@ -242,7 +242,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 
     counter_inc(ims_qos_cnts_h.registration_aars);
     counter_add(ims_qos_cnts_h.registration_aar_response_time, elapsed_msecs);
-    counter_inc(ims_qos_cnts_h.aar_replies_received);
+    counter_inc(ims_qos_cnts_h.registration_aar_replies_received);
 
     /* Process the response to AAR, retrieving result code and associated Rx session ID */
     if (rx_process_aaa(aaa, &cdp_result) < 0) {
