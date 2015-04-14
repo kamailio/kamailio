@@ -41,6 +41,8 @@ static redisc_server_t *_redisc_srv_list=NULL;
 
 static redisc_reply_t *_redisc_rpl_list=NULL;
 
+extern int init_without_redis;
+
 /**
  *
  */
@@ -118,6 +120,12 @@ err2:
 		LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): %s\n",
 			   rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
 	}
+	if (init_without_redis==1)
+	{
+		LM_WARN("failed to initialize redis connections, but initializing module anyway.\n");
+		return 0;
+	}
+
 	return -1;
 err:
 	if (unix_sock_path != NULL) {
@@ -127,6 +135,12 @@ err:
 		LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
 			   rsrv->sname->len, rsrv->sname->s, addr, port, db);
 	}
+	if (init_without_redis==1)
+	{
+		LM_WARN("failed to initialize redis connections, but initializing module anyway.\n");
+		return 0;
+	}
+
 	return -1;
 }
 
