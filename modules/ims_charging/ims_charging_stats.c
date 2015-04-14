@@ -21,6 +21,7 @@ counter_def_t ims_charging_cnt_defs[] = {
     {&ims_charging_cnts_h.successful_final_ccrs,    "successful_final_ccrs",	0, 0, 0,			    "total number of successful final CCRs"},
     {&ims_charging_cnts_h.successful_initial_ccrs,  "successful_initial_ccrs",	0, 0, 0,			    "total number of successful initial CCRs"},
     {&ims_charging_cnts_h.successful_interim_ccrs,   "successful_interim_ccrs",	0, 0, 0,			    "total number of successful interim CCRs"},
+    {&ims_charging_cnts_h.ccr_replies_received,     "ccr_replies_received",     0, 0, 0,                            "total number of CCR replies received"},
     {0, 0, 0, 0, 0, 0}
 };
 

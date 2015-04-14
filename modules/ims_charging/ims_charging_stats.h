@@ -26,6 +26,7 @@ struct ims_charging_counters_h {
     counter_handle_t successful_initial_ccrs;
     counter_handle_t successful_interim_ccrs;
     counter_handle_t active_ro_sessions;
+    counter_handle_t ccr_replies_received;
 };
 
 int ims_charging_init_counters();
