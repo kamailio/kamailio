@@ -9,7 +9,7 @@
 
 <table id="acc_cdrs" xmlns:db="http://docbook.org/ns/docbook">
     <name>acc_cdrs</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the ACC module to report on CDRs relying on dialog callbacks. More information is available at: &KAMAILIO_MOD_DOC;acc.html
@@ -28,24 +28,22 @@
 
 	<column id="start_time">
         <name>start_time</name>
-        <type>string</type>
-        <size>32</size>
-        <description>Start time</description>
+        <type>datetime</type>
+        <description>Start date and time</description>
         <default/>
     </column>
 
     <column>
         <name>end_time</name>
-        <type>string</type>
-        <size>32</size>
-        <description>End time</description>
+        <type>datetime</type>
+        <description>End date and time</description>
         <default/>
     </column>
 
     <column>
         <name>duration</name>
-        <type>string</type>
-        <size>32</size>
+        <type>float</type>
+        <size>10,3</size>
         <description>Duration</description>
         <default/>
     </column>
