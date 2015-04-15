@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) start_time(str) end_time(str) duration(str)
+id(int) start_time(datetime) end_time(datetime) duration(double)
 METADATA_KEY
 
 METADATA_READONLY

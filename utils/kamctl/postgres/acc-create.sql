@@ -12,12 +12,12 @@ CREATE TABLE acc (
 
 CREATE INDEX acc_callid_idx ON acc (callid);
 
-INSERT INTO version (table_name, table_version) values ('acc_cdrs','1');
+INSERT INTO version (table_name, table_version) values ('acc_cdrs','2');
 CREATE TABLE acc_cdrs (
     id SERIAL PRIMARY KEY NOT NULL,
-    start_time VARCHAR(32) DEFAULT '' NOT NULL,
-    end_time VARCHAR(32) DEFAULT '' NOT NULL,
-    duration VARCHAR(32) DEFAULT '' NOT NULL
+    start_time TIMESTAMP WITHOUT TIME ZONE DEFAULT '' NOT NULL,
+    end_time TIMESTAMP WITHOUT TIME ZONE DEFAULT '' NOT NULL,
+    duration REAL DEFAULT '' NOT NULL
 );
 
 CREATE INDEX acc_cdrs_start_time_idx ON acc_cdrs (start_time);

@@ -1,1 +1,1 @@
-id(int,auto) start_time(string) end_time(string) duration(string) 
+id(int,auto) start_time(int) end_time(int) duration(double) 
