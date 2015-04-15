@@ -2092,7 +2092,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	if(sock_avp_name.n!=0)
 	{
 		prev_avp = search_first_avp(sock_avp_type,
-				attrs_avp_name, &avp_value, &st);
+				attrs_avp_name, &sock_avp_value, &st);
 		if(prev_avp!=NULL)
 		{
 			if (sscanf( sock_avp_value.s.s, "%p", (void**)&sock ) != 1)
