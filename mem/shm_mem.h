@@ -314,7 +314,7 @@ do{\
 
 /* multi-process safe version of shm_available()
  */
-inline unsigned long safe_shm_available();
+unsigned long shm_available_safe();
 
 
 #endif /* shm_mem_h */
