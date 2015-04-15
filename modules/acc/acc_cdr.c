@@ -90,6 +90,8 @@ extern str acc_cdrs_table;
 extern int cdr_log_enable;
 extern int _acc_cdr_on_failed;
 
+static int string2time( str* time_str, struct timeval* time_value);
+
 /* write all basic information to buffers(e.g. start-time ...) */
 static int cdr_core2strar( struct dlg_cell* dlg,
                            str* values,
@@ -111,13 +113,13 @@ static int cdr_core2strar( struct dlg_cell* dlg,
     duration = dlgb.get_dlg_var( dlg, (str*)&cdr_duration_str);
 
     values[0] = ( start != NULL ? *start : empty_string);
-    types[0] = ( start != NULL ? TYPE_STR : TYPE_NULL);
+    types[0] = ( start != NULL ? TYPE_DATE : TYPE_NULL);
 
     values[1] = ( end != NULL ? *end : empty_string);
-    types[1] = ( end != NULL ? TYPE_STR : TYPE_NULL);
+    types[1] = ( end != NULL ? TYPE_DATE : TYPE_NULL);
 
     values[2] = ( duration != NULL ? *duration : empty_string);
-    types[2] = ( duration != NULL ? TYPE_STR : TYPE_NULL);
+    types[2] = ( duration != NULL ? TYPE_DOUBLE : TYPE_NULL);
 
     return MAX_CDR_CORE;
 }
@@ -138,6 +140,10 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	db1_con_t *dh=NULL;
 	void *vf=NULL;
 	void *vh=NULL;
+	struct timeval timeval_val;
+	long long_val;
+	double double_val;
+	char * end;
 
 	if(acc_cdrs_table.len<=0)
 		return 0;
@@ -157,9 +163,45 @@ static int db_write_cdr( struct dlg_cell* dialog,
 
 	for(i=0; i<m; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
-		VAL_TYPE(db_cdr_vals+i)=DB1_STR;
-		VAL_NULL(db_cdr_vals+i)=0;
-		VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
+		switch(cdr_type_array[i]) {
+			case TYPE_NULL:
+				VAL_NULL(db_cdr_vals+i)=1;
+				break;
+			case TYPE_INT:
+				VAL_TYPE(db_cdr_vals+i)=DB1_INT;
+				VAL_NULL(db_cdr_vals+i)=0;
+				long_val = strtol(cdr_value_array[i].s, &end, 10);
+				if(errno && (errno != EAGAIN)) {
+					LM_ERR("failed to convert string to integer - %d.\n", errno);
+					goto error;
+				}
+				VAL_INT(db_cdr_vals+i) = long_val;
+				break;
+			case TYPE_STR:
+				VAL_TYPE(db_cdr_vals+i)=DB1_STR;
+				VAL_NULL(db_cdr_vals+i)=0;
+				VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
+				break;
+			case TYPE_DATE:
+				VAL_TYPE(db_cdr_vals+i)=DB1_DATETIME;
+				VAL_NULL(db_cdr_vals+i)=0;
+				if(string2time(&cdr_value_array[i], &timeval_val) < 0) {
+					LM_ERR("failed to convert string to timeval.\n");
+					goto error;
+				}
+				VAL_TIME(db_cdr_vals+i) = timeval_val.tv_sec;
+				break;
+			case TYPE_DOUBLE:
+				VAL_TYPE(db_cdr_vals+i)=DB1_DOUBLE;
+				VAL_NULL(db_cdr_vals+i)=0;
+				double_val = strtod(cdr_value_array[i].s, &end);
+				if(errno && (errno != EAGAIN)) {
+					LM_ERR("failed to convert string to double - %d.\n", errno);
+					goto error;
+				}
+				VAL_DOUBLE(db_cdr_vals+i) = double_val;
+				break;
+		}
 	}
 
     /* get extra values */
