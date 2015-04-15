@@ -59,10 +59,10 @@ int tls_run_event_routes(struct tcp_connection *c);
 /* low memory treshold for openssl bug #1491 workaround */
 #define LOW_MEM_NEW_CONNECTION_TEST() \
 	(cfg_get(tls, tls_cfg, low_mem_threshold1) && \
-	  (safe_shm_available() < cfg_get(tls, tls_cfg, low_mem_threshold1)))
+	  (shm_available_safe() < cfg_get(tls, tls_cfg, low_mem_threshold1)))
 #define LOW_MEM_CONNECTED_TEST() \
 	(cfg_get(tls, tls_cfg, low_mem_threshold2) && \
-	  (safe_shm_available() <  cfg_get(tls, tls_cfg, low_mem_threshold2)))
+	  (shm_available_safe() <  cfg_get(tls, tls_cfg, low_mem_threshold2)))
 
 #define TLS_RD_MBUF_SZ	65536
 #define TLS_WR_MBUF_SZ	65536
