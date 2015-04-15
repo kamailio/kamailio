@@ -430,6 +430,8 @@ typedef void (*unlock_contact_slot_i_t)(int sl);
 
 typedef int (*update_ucontact_t)(struct impurecord* _r, struct ucontact* _c, struct ucontact_info* _ci);
 
+typedef int (*expire_ucontact_t)(struct impurecord* _r, struct ucontact* _c);
+
 typedef int (*unlink_contact_from_impu_t)(struct impurecord* _r, struct ucontact* _c, int write_to_db);
 
 typedef int (*link_contact_to_impu_t)(struct impurecord* _r, struct ucontact* _c, int wirte_to_db);
@@ -496,6 +498,7 @@ typedef struct usrloc_api {
     release_ucontact_t release_ucontact;
     get_all_ucontacts_t get_all_ucontacts;
     update_ucontact_t update_ucontact;
+    expire_ucontact_t expire_ucontact;
     unlink_contact_from_impu_t unlink_contact_from_impu;
     link_contact_to_impu_t link_contact_to_impu;
     //update_user_profile_t update_user_profile;

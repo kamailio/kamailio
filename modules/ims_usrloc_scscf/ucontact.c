@@ -67,6 +67,7 @@
 #include "usrloc_db.h"
 #include "../../hashes.h"
 #include "contact_hslot.h"
+#include "utime.h"
 
 extern struct contact_list* contact_list;
 extern int db_mode;
@@ -331,6 +332,20 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci) {
 }
 
 /*!
+ * \brief Setting contact expires to now in memory
+ * \param _c contact
+  * \return 0 on success, -1 on failure
+ */
+int mem_expire_ucontact(ucontact_t* _c) {
+    get_act_time();
+    _c->expires = act_time;
+
+    return 0;
+}
+
+
+
+/*!
  * \brief Insert a new contact into the list at the correct position
  * \param _r record that holds the sorted contacts
  * \param _c new contact
@@ -367,6 +382,43 @@ static inline void update_contact_pos(struct impurecord* _r, ucontact_t* _c) {
         }
     }
 }
+
+/*!
+ * \brief Setting ucontact expires to now
+ * \param _r record the contact belongs to
+ * \param _c updated contact
+ * \return 0 on success, -1 on failure
+ */
+int expire_ucontact(struct impurecord* _r, ucontact_t* _c) {
+    /* we have to update memory in any case, but database directly
+     * only in db_mode 1 */
+    LM_DBG("Expiring contact aor: [%.*s] and contact uri: [%.*s]\n", _c->aor.len, _c->aor.s, _c->c.len, _c->c.s);
+    if (mem_expire_ucontact(_c) < 0) {
+        LM_ERR("failed to update memory\n");
+        return -1;
+    }
+    
+    if (db_mode == WRITE_THROUGH && (db_insert_ucontact(_r, _c) != 0)) {  /* this is an insert/update */
+	LM_ERR("failed to update contact in DB [%.*s]\n", _c->aor.len, _c->aor.s);
+	return -1;
+    }
+    
+    //make sure IMPU is linked to this contact
+    link_contact_to_impu(_r, _c, 1);
+
+    /* run callbacks for UPDATE event */
+    if (exists_ulcb_type(_c->cbs, UL_CONTACT_EXPIRE)) {
+        LM_DBG("exists callback for type= UL_CONTACT_UPDATE\n");
+        run_ul_callbacks(_c->cbs, UL_CONTACT_EXPIRE, _r, _c);
+    }
+    if (exists_ulcb_type(_r->cbs, UL_IMPU_EXPIRE_CONTACT)) {
+        run_ul_callbacks(_r->cbs, UL_IMPU_EXPIRE_CONTACT, _r, _c);
+    }
+
+    return 0;
+}
+
+
 
 /*!
  * \brief Update ucontact with new values
