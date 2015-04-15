@@ -1424,6 +1424,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 				dlg_unref(dlg, 1);
 			/* run event route for end of dlg */
 			dlg_run_event_route(dlg, NULL, dlg->state, DLG_STATE_DELETED);
+
 			dlg_unref(dlg, 1);
 			if_update_stat(dlg_enable_stats, expired_dlgs, 1);
 			return;
