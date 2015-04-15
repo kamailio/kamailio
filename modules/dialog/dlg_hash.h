@@ -67,6 +67,7 @@
 #define DLG_FLAG_DEL           (1<<8) /*!< delete this var */
 
 #define DLG_FLAG_TM            (1<<9) /*!< dialog is set in transaction */
+#define DLG_FLAG_EXPIRED       (1<<10)/*!< dialog is expired */
 
 /* internal flags stored in db */
 #define DLG_IFLAG_TIMEOUTBYE        (1<<0) /*!< send bye on time-out */

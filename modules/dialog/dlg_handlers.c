@@ -1376,6 +1376,9 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	dlg = ((struct dlg_cell*)((char *)(tl) -
 			(unsigned long)(&((struct dlg_cell*)0)->tl)));
 
+	/* mark dialog as expired */
+	dlg->dflags |= DLG_FLAG_EXPIRED;
+
 	if(dlg->state==DLG_STATE_CONFIRMED_NA
 				|| dlg->state==DLG_STATE_CONFIRMED)
 	{
