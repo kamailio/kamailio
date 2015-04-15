@@ -70,10 +70,13 @@
 #include "usrloc_cb.h"
 #include "userdata_parser.h"
 #include "cxdx_sar.h"
+#include "cxdx_callbacks.h"
 #include "registrar_notify.h"
 #include "../cdp_avp/mod_export.h"
 
 MODULE_VERSION
+
+extern gen_lock_t* process_lock; /* lock on the process table */
 
 int * callback_singleton; /**< Cx callback singleton 								*/
 
@@ -122,6 +125,8 @@ static int unreg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
+
+AAAMessage* callback_cdp_request(AAAMessage *request, void *param);
 
 int tcp_persistent_flag = -1; /*!< if the TCP connection should be kept open */
 int method_filtering = 0; /*!< if the looked up contacts should be filtered based on supported methods */
@@ -301,6 +306,9 @@ static int mod_init(void) {
     str s;
     bind_usrloc_t bind_usrloc;
     qvalue_t dq;
+    
+    callback_singleton = shm_malloc(sizeof (int));
+    *callback_singleton = 0;
 
     /*build the required strings */
     scscf_serviceroute_uri_str.s =
@@ -519,9 +527,51 @@ static int child_init(int rank) {
     /* Init the user data parser */
     if (!parser_init(scscf_user_data_dtd, scscf_user_data_xsd))
         return -1;
+    
+    
+    lock_get(process_lock);
+    if ((*callback_singleton) == 0) {
+        *callback_singleton = 1;
+        cdpb.AAAAddRequestHandler(callback_cdp_request, NULL);
+    }
+    lock_release(process_lock);
 
     return 0;
 }
+
+
+/**
+ * Handler for incoming Diameter requests.
+ * @param request - the received request
+ * @param param - generic pointer
+ * @returns the answer to this request
+ */
+AAAMessage* callback_cdp_request(AAAMessage *request, void *param) {
+    if (is_req(request)) {
+
+        switch (request->applicationId) {
+            case IMS_Cx:
+            //case IMS_Dx:  IMS_Cx is same as IMS_Dx 16777216
+                switch (request->commandCode) {
+                    case IMS_RTR:
+                        LM_INFO("Cx/Dx request handler():- Received an IMS_RTR \n");
+                        return cxdx_process_rtr(request);
+                        break;
+                    default:
+                        LM_ERR("Cx/Dx request handler(): - Received unknown request for Cx/Dx command %d, flags %#1x endtoend %u hopbyhop %u\n", request->commandCode, request->flags, request->endtoendId, request->hopbyhopId);
+                        return 0;
+                        break;
+                }
+                break;
+            default:
+                LM_ERR("Cx/Dx request handler(): - Received unknown request for app %d command %d\n", request->applicationId, request->commandCode);
+                return 0;
+                break;
+        }
+    }
+    return 0;
+}
+
 
 /*! \brief
  * Wrapper to save(location)

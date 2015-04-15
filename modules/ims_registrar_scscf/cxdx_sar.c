@@ -64,6 +64,8 @@
 #include "../../parser/hf.h"
 #include "../../lib/ims/ims_getters.h"
 
+extern struct cdp_binds cdpb;
+
 int create_return_code(int result) {
     int rc;
     int_str avp_val, avp_name;
