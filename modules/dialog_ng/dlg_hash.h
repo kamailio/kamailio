@@ -610,6 +610,8 @@ int update_dlg_did(struct dlg_cell *dlg, str *new_did);
 
 time_t api_get_dlg_expires(str *callid, str *ftag, str *ttag);
 
+void dlg_release(struct dlg_cell *dlg);
+
 char* state_to_char(unsigned int state);
 
 #endif

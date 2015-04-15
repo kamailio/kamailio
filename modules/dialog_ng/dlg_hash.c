@@ -1716,6 +1716,18 @@ error:
     return NULL;
 }
 
+/*!
+ * \brief decrement dialog ref counter by 1
+ * \see dlg_unref
+ * \param dlg dialog
+ */
+void dlg_release(struct dlg_cell *dlg)
+{
+	if(dlg==NULL)
+		return;
+	unref_dlg(dlg, 1);
+}
+
 time_t api_get_dlg_expires(str *callid, str *ftag, str *ttag) {
     struct dlg_cell *dlg;
     time_t expires = 0;
