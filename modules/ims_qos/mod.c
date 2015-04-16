@@ -529,6 +529,10 @@ void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param) {
 static int get_identifier(str* src) {
     char *sep;
     
+    if (src == 0 || src->len == 0){
+        return -1;
+    }
+
     if (identifier_size <= src->len) {
         if (identifier.s) {
             pkg_free(identifier.s);
@@ -572,7 +576,6 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     str ip, uri;
     int identifier_type;
     int ip_version = 0;
-    int must_free_asserted_identity = 0;
     sdp_session_cell_t* sdp_session;
     str s_id;
     struct hdr_field *h=0;
@@ -760,7 +763,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		    
 		} else {
                     get_identifier(&uri);
-		    must_free_asserted_identity = 1;
+                    //free this cscf_get_asserted_identity allocates it
+                    pkg_free(uri.s);
 		}
 	    } else {
 		LM_DBG("terminating direction\n");
@@ -843,12 +847,6 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
             goto error;
         }
 	
-	//free this cscf_get_asserted_identity allocates it
-	if (must_free_asserted_identity) {
-		pkg_free(identifier.s);
-		must_free_asserted_identity = 1;
-	}
-	
 	//create new diameter auth session
         auth_session = cdpb.AAACreateClientAuthSession(1, callback_for_cdp_session, rx_authdata_p); //returns with a lock
         if (!auth_session) {
@@ -901,13 +899,6 @@ error:
     if (saved_t_data)
         free_saved_transaction_global_data(saved_t_data); //only free global data if no AARs were sent. if one was sent we have to rely on the callback (CDP) to free
     //otherwise the callback will segfault
-
-    //free this cscf_get_asserted_identity allocates it
-    if (must_free_asserted_identity) {
-	    pkg_free(identifier.s);
-	    must_free_asserted_identity = 1;
-    }
-
     return result;
 }
 
