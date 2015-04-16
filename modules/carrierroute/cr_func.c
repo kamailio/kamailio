@@ -494,29 +494,30 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 				rr->next!= NULL && rr->dice_to <= prob ; rr = rr->next) {}
 
 			//LM_DBG("CR: candidate hashed destination is: <%.*s>\n", rr->host.len, rr->host.s);
+			if (cr_avoid_failed_dests) {
+				if (is_route_type(FAILURE_ROUTE) && (mode == CARRIERROUTE_MODE_DB) ){
+					build_used_uris_list(used_dests, &no_dests);
 
-			if (is_route_type(FAILURE_ROUTE) && (mode == CARRIERROUTE_MODE_DB) ){
-				build_used_uris_list(used_dests, &no_dests);
+					if (cr_uri_already_used(rr->host, used_dests, no_dests) ) {
+						//LM_DBG("CR: selecting new destination !!! \n");
+						for (rr = rf->rule_list;
+									rr!= NULL && cr_uri_already_used(rr->host, used_dests, no_dests); rr = rr->next) {}
+						/* are there any destinations that were not already used? */
+						if (rr == NULL) {
+							LM_NOTICE("All gateways from this group were already used\n");
+							return -1;
+						}
 
-				if (cr_uri_already_used(rr->host, used_dests, no_dests) ) {
-					//LM_DBG("CR: selecting new destination !!! \n");
-					for (rr = rf->rule_list;
-								rr!= NULL && cr_uri_already_used(rr->host, used_dests, no_dests); rr = rr->next) {}
-					/* are there any destinations that were not already used? */
-					if (rr == NULL) {
-						LM_NOTICE("All gateways from this group were already used\n");
-						return -1;
+						/* this is a hack: we do not take probabilities into consideration if first destination
+						 * was previously tried */
+
+						do {
+							int rule_no = rand() % rf->rule_num;
+							//LM_DBG("CR: trying rule_no=%d \n", rule_no);
+							for (rr = rf->rule_list; (rule_no > 0) && (rr->next!=NULL) ; rule_no-- , rr = rr->next) {}
+						} while (cr_uri_already_used(rr->host, used_dests, no_dests));
+						LM_DBG("CR: candidate selected destination is: <%.*s>\n", rr->host.len, rr->host.s);
 					}
-
-					/* this is a hack: we do not take probabilities into consideration if first destination
-					 * was previously tried */
-
-					do {
-						int rule_no = rand() % rf->rule_num;
-						//LM_DBG("CR: trying rule_no=%d \n", rule_no);
-						for (rr = rf->rule_list; (rule_no > 0) && (rr->next!=NULL) ; rule_no-- , rr = rr->next) {}
-					} while (cr_uri_already_used(rr->host, used_dests, no_dests));
-					LM_DBG("CR: candidate selected destination is: <%.*s>\n", rr->host.len, rr->host.s);
 				}
 			}
 			/*This should be regarded as an ELSE branch for the if above
@@ -534,21 +535,22 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 				}
 			}
 
-			//LM_DBG("CR: destination is: <%.*s>\n", rr->host.len, rr->host.s);
-			cr_new_uri.s = rr->host;
-			/* insert used destination into avp, in case corresponding request fails and
-			 * another destination has to be used; this new destination must not be one
-			 * that failed before
-			 */
+			if (cr_avoid_failed_dests) {
+				//LM_DBG("CR: destination is: <%.*s>\n", rr->host.len, rr->host.s);
+				cr_new_uri.s = rr->host;
+				/* insert used destination into avp, in case corresponding request fails and
+				 * another destination has to be used; this new destination must not be one
+				 * that failed before
+				 */
 
-			if (mode == CARRIERROUTE_MODE_DB){
-				if ( add_avp( AVP_VAL_STR | AVP_NAME_STR, cr_uris_avp, cr_new_uri) < 0){
-					LM_ERR("set AVP failed\n");
-					return -1;
+				if (mode == CARRIERROUTE_MODE_DB){
+					if ( add_avp( AVP_VAL_STR | AVP_NAME_STR, cr_uris_avp, cr_new_uri) < 0){
+						LM_ERR("set AVP failed\n");
+						return -1;
+					}
+					//print_cr_uri_avp();
 				}
-				//print_cr_uri_avp();
 			}
-
 			break;
 		}
 		case alg_crc32_nofallback:

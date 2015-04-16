@@ -337,6 +337,29 @@ modparam("carrierroute", "match_mode", 10)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>avoid_failed_destinations</varname> (integer)</title>
+		<para>
+		Integer parameter to toggle on/off the possibility that in the failurerouting cases 
+		destinations that previously failed are avoided. Possible values are 0 (off), 1 (on).
+		Also see cr_route section.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>avoid_failed_destinations</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("carrierroute", "avoid_failed_destinations", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>
 
     <section>
@@ -414,7 +437,8 @@ cr_tree_rewrite_uri(tree, domain)
         number of channels.
 		</para>
 		<para>
-		The function pays special attention to the failurerouting cases, so that
+		Depending on the value of the avoid_failed_destinations module parameter,
+		the function pays special attention to the failurerouting cases, so that
 		any destination that has failed to provide a successful response will not
 		be reused in a subsequent call of cr_route. This situation can appear when
 		different route domains contain a set of common gateways.
