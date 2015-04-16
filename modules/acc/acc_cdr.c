@@ -294,7 +294,7 @@ static int log_write_cdr( struct dlg_cell* dialog,
                                       cdr_int_array + message_index,
                                       cdr_type_array + message_index);
     } else if (cdr_expired_dlg_enable){
-        LM_WARN( "fallback to dlg_only search because of message does not exist.\n");
+        LM_DBG("fallback to dlg_only search because of message does not exist.\n");
         message_index += extra2strar_dlg_only( cdr_extra,
                                                dialog,
                                                cdr_value_array + message_index,
