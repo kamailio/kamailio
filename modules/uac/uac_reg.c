@@ -878,6 +878,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 error:
+	ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
 	if(reg_retry_interval)
 		ri->timer_expires = time(NULL) + reg_retry_interval;
 	else
