@@ -23,3 +23,9 @@ for grp in ${PACKAGE_GROUPS}; do
 done
 #echo "unit tests"
 #make -C test/unit
+if [[ "$CC" =~ "gcc" ]] ; then
+	echo "make install"
+	sudo make install
+else
+	echo "skip make install step"
+fi
