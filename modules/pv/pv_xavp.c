@@ -21,6 +21,7 @@
 #include "../../dprint.h"
 #include "../../xavp.h"
 #include "../../pvapi.h"
+#include "../../parser/parse_param.h"
 
 #include "pv_xavp.h"
 
@@ -555,4 +556,61 @@ int pv_xavp_print(struct sip_msg* msg, char* s1, char *s2)
 	return 1;
 }
 
+/**
+ *
+ */
+int xavp_params_explode(str *params, str *xname)
+{
+	param_t* params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+	str s;
+	sr_xavp_t *xavp=NULL;
+	sr_xval_t xval;
+
+	if(params==NULL || xname==NULL || params->s==NULL || xname->s==NULL
+			|| params->len<=0 || xname->len<=0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	s.s = params->s;
+	s.len = params->len;
+	if(s.s[s.len-1]==';')
+		s.len--;
+	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0) {
+		LM_DBG("invalid formatted values [%.*s]\n", params->len, params->s);
+		return -1;
+	}
+
+	if(params_list==NULL) {
+		return -1;
+	}
+
+
+	for (pit = params_list; pit; pit=pit->next)
+	{
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = pit->body;
+		if(xavp_add_value(&pit->name, &xval, &xavp)==NULL) {
+			free_params(params_list);
+			xavp_destroy_list(&xavp);
+			return -1;
+		}
+	}
+	free_params(params_list);
+
+	/* add main xavp in root list */
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_XAVP;
+	xval.v.xavp = xavp;
+	if(xavp_add_value(xname, &xval, NULL)==NULL) {
+		xavp_destroy_list(&xavp);
+		return -1;
+	}
+
+	return 0;
+}
 #endif
