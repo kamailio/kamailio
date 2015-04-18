@@ -20,6 +20,7 @@
 
 #include "../../dprint.h"
 #include "../../trim.h"
+#include "../../route.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -27,6 +28,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../lib/kcore/faked_msg.h"
 
 #include "auth.h"
 #include "auth_hdr.h"
@@ -605,6 +607,41 @@ int uac_send_tmdlg(dlg_t *tmdlg, sip_msg_t *rpl)
 
 #define MAX_UACH_SIZE 2048
 
+/**
+ *
+ */
+void uac_req_run_event_route(sip_msg_t *msg, uac_send_info_t *tp, int rcode)
+{
+	char *evrtname = "uac:reply";
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t *fmsg;
+
+	rt = route_get(&event_rt, evrtname);
+	if (rt < 0 || event_rt.rlist[rt] == NULL)
+	{
+		LM_DBG("event_route[uac:reply] does not exist\n");
+		return;
+	}
+
+	uac_send_info_copy(tp, &_uac_req);
+	_uac_req.evcode = rcode;
+	if(msg==NULL)
+	{
+		_uac_req.evtype = 2;
+		fmsg = faked_msg_get_next();
+	} else {
+		_uac_req.evtype = 1;
+		fmsg = msg;
+	}
+
+	backup_rt = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	set_route_type(backup_rt);
+}
+
 /** 
  * TM callback function
  */
@@ -622,13 +659,21 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	dlg_t tmdlg;
 	uac_send_info_t *tp = NULL;
 
+	LM_DBG("tm callback with status %d\n", ps->code);
+
 	if(ps->param==NULL || *ps->param==0)
 	{
-		LM_DBG("message id not received\n");
+		LM_DBG("callback param with message id not received\n");
 		goto done;
 	}
 	tp = (uac_send_info_t*)(*ps->param);
-	if(ps->code != 401 && ps->code != 407)
+
+	if(tp->evroute!=0) {
+		uac_req_run_event_route((ps->rpl==FAKED_REPLY)?NULL:ps->rpl,
+				tp, ps->code);
+	}
+
+	if((ps->code != 401 && ps->code != 407) || tp->s_apasswd.len<=0)
 	{
 		LM_DBG("completed with status %d\n", ps->code);
 		goto done;
