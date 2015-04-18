@@ -755,7 +755,7 @@ error:
 }
 
 
-int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
+int uac_req_send(void)
 {
 	int ret;
 	uac_req_t uac_r;
@@ -801,3 +801,7 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 	return 1;
 }
 
+int w_uac_req_send(struct sip_msg *msg, char *s1, char *s2)
+{
+	return uac_req_send();
+}

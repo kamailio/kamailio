@@ -115,9 +115,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE },
 	{"uac_auth",          (cmd_function)w_uac_auth,       0,                  0, 0,
 			FAILURE_ROUTE },
-	{"uac_req_send",  (cmd_function)uac_req_send,         0,                  0, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
+	{"uac_req_send",  (cmd_function)w_uac_req_send,       0,                  0, 0,
+			ANY_ROUTE},
 	{"uac_reg_lookup",  (cmd_function)w_uac_reg_lookup,  2, fixup_pvar_pvar,
 		fixup_free_pvar_pvar, ANY_ROUTE },
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2, fixup_pvar_uint, fixup_free_pvar_uint,
@@ -574,14 +573,15 @@ static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s)
 }
 
 
-int bind_uac(struct uac_binds *uacb)
+int bind_uac(uac_api_t *uacb)
 {
-	if (uacb == NULL)
-        {
-                LM_WARN("bind_uac: Cannot load uac API into a NULL pointer\n");
-                return -1;
-        }
+	if (uacb == NULL) {
+		LM_WARN("bind_uac: Cannot load uac API into a NULL pointer\n");
+		return -1;
+	}
 
-        uacb->replace_from = replace_from_api;
-        return 0;
+	memset(uacb, 0, sizeof(uac_api_t));
+	uacb->replace_from = replace_from_api;
+	uacb->req_send = uac_req_send;
+	return 0;
 }
