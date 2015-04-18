@@ -796,6 +796,39 @@ failure_route[REMOTE_AUTH] {
 		Exported pseudo-variables are documented at &kamwikilink;.
 		</para>
 	</section>
+
+	<section>
+		<title>Event Routes</title>
+		<section id="uac.ert.uac_reply">
+			<title>
+				<function moreinfo="none">event_route[uac:reply]</function>
+			</title>
+		<para>
+			Event route executed for the final reply to the request set with
+			uac_req_send(). The associated $uac_req(evroute) has to be set to
+			1.
+		</para>
+		<example>
+		<title><function>event_route[uac:reply]</function> usage</title>
+			<programlisting format="linespecific">
+...
+$uac_req(method)="OPTIONS";
+$uac_req(ruri)="sip:kamailio.org";
+$uac_req(furi)="sip:kamailio.org";
+$uac_req(turi)="sip:kamailio.org";
+$uac_req(callid)=$(mb{s.md5});
+$uac_req(evroute)=1;
+uac_req_send();
+...
+event_route[uac:reply] {
+    xlog("received reply code is: $uac_req(evcode)\n");
+}
+...
+			</programlisting>
+		</example>
+		</section>
+	</section>
+
 	<section>
 		<title>Counters</title>
 		<itemizedlist>
