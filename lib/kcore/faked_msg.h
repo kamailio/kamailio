@@ -25,6 +25,7 @@
 #include "../../parser/msg_parser.h"
 
 int faked_msg_init(void);
-struct sip_msg* faked_msg_next(void);
+sip_msg_t* faked_msg_next(void);
+sip_msg_t* faked_msg_get_next(void);
 
 #endif

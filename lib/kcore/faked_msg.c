@@ -71,11 +71,17 @@ int faked_msg_init(void)
 	return 0;
 }
 
-struct sip_msg* faked_msg_next(void)
+sip_msg_t* faked_msg_next(void)
 {
 	_faked_msg.id = 1 + _faked_msg_no++;
 	_faked_msg.pid = my_pid();
 	memset(&_faked_msg.tval, 0, sizeof(struct timeval));
 	clear_branches();
 	return &_faked_msg;
+}
+
+sip_msg_t* faked_msg_get_next(void)
+{
+	faked_msg_init();
+	return faked_msg_next();
 }
