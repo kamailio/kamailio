@@ -266,6 +266,37 @@ if (not_empty("$var(foo)")) {
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_params_explode">
+			<title>
+				<function moreinfo="none">xavp_params_explode(sparams, xname)</function>
+			</title>
+			<para>
+				Convert a parameters string in xavp atributes.
+			</para>
+			<para>
+				The first parameter has to be a string in the format of SIP header
+				parameters (name1=value1;...;nameN=valueN). The second parameter
+				is the name of the root xavp to hold the pairs (nameX,valueX).
+			</para>
+			<para>
+				The values are stored as string type.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_params_explode</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavp_params_explode("a=b;c=d;e=d", "x");
+# results in:
+#    $xavp(x=&gt;a) = "b";
+#    $xavp(x=&gt;c) = "d";
+#    $xavp(x=&gt;e) = "f";
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>

@@ -41,6 +41,7 @@ Daniel-Constantin Mierla
               4.3. is_int(pvar)
               4.4. typeof(pvar, vtype)
               4.5. not_empty(pvar)
+              4.6. xavp_params_explode(sparams, xname)
 
         5. MI Commands
 
@@ -62,8 +63,9 @@ Daniel-Constantin Mierla
    1.6. is_int() usage
    1.7. typeof() usage
    1.8. not_empty() usage
-   1.9. shv_set usage
-   1.10. shv_get usage
+   1.9. xavp_params_explode usage
+   1.10. shv_set usage
+   1.11. shv_get usage
 
 Chapter 1. Admin Guide
 
@@ -88,6 +90,7 @@ Chapter 1. Admin Guide
         4.3. is_int(pvar)
         4.4. typeof(pvar, vtype)
         4.5. not_empty(pvar)
+        4.6. xavp_params_explode(sparams, xname)
 
    5. MI Commands
 
@@ -187,6 +190,7 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
    4.3. is_int(pvar)
    4.4. typeof(pvar, vtype)
    4.5. not_empty(pvar)
+   4.6. xavp_params_explode(sparams, xname)
 
 4.1. pv_isset(pvar)
 
@@ -262,6 +266,27 @@ if (not_empty("$var(foo)")) {
 }
 ...
 
+4.6. xavp_params_explode(sparams, xname)
+
+   Convert a parameters string in xavp atributes.
+
+   The first parameter has to be a string in the format of SIP header
+   parameters (name1=value1;...;nameN=valueN). The second parameter is the
+   name of the root xavp to hold the pairs (nameX,valueX).
+
+   The values are stored as string type.
+
+   Function can be used from ANY ROUTE.
+
+   Example 1.9. xavp_params_explode usage
+...
+xavp_params_explode("a=b;c=d;e=d", "x");
+# results in:
+#    $xavp(x=>a) = "b";
+#    $xavp(x=>c) = "d";
+#    $xavp(x=>e) = "f";
+...
+
 5. MI Commands
 
    5.1. shv_set
@@ -285,7 +310,7 @@ if (not_empty("$var(foo)")) {
                 _value_
                 _empty_line_
 
-   Example 1.9. shv_set usage
+   Example 1.10. shv_set usage
 ...
 $ kamctl fifo shv_set debug int 0
 ...
@@ -303,7 +328,7 @@ $ kamctl fifo shv_set debug int 0
                 _name_
                 _empty_line_
 
-   Example 1.10. shv_get usage
+   Example 1.11. shv_get usage
 ...
 $ kamctl fifo shv_get debug
 $ kamctl fifo shv_get
