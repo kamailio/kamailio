@@ -795,7 +795,7 @@ install-every-module-doc: $(foreach mods,$(modules_dirs),install-$(mods)-doc)
 
 install-every-module-man: $(foreach mods,$(modules_dirs),install-$(mods)-man)
 
-install-utils: utils $(bin_prefix)/$(bin_dir) $(run_prefix)/$(run_dir)
+install-utils: utils $(bin_prefix)/$(bin_dir)
 	@for r in $(C_INSTALL_BIN) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
