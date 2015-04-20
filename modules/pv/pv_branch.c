@@ -32,14 +32,7 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 {
 	int idx = 0;
 	int idxf = 0;
-	str uri;
-	str duri;
-	int lq = 0;
-	str path;
-	unsigned int fl = 0;
-	struct socket_info* fsocket = NULL;
-	str ruid;
-	str location_ua;
+	branch_t *br;
 
 	/* get the index */
 	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
@@ -48,10 +41,10 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);
 	}
 
-	uri.s = get_branch(idx, &uri.len, &lq, &duri, &path, &fl, &fsocket, &ruid, 0, &location_ua);
+	br = get_sip_branch(idx);
 
 	/* branch(count) doesn't need a valid branch, everything else does */
-	if(uri.s == 0 && ( param->pvn.u.isname.name.n != 5/* count*/ ))
+	if(br->len == 0 && ( param->pvn.u.isname.name.n != 5/* count*/ ))
 	{
 		LM_ERR("error accessing branch [%d]\n", idx);
 		return pv_get_null(msg, param, res);
@@ -60,36 +53,36 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 1: /* dst uri */
-			if(duri.len==0)
+			if(br->dst_uri_len==0)
 				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res, &duri);
+			return pv_get_strlval(msg, param, res, br->dst_uri, br->dst_uri_len);
 		case 2: /* path */
-			if(path.len==0)
+			if(br->path_len==0)
 				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res, &path);
+			return pv_get_strlval(msg, param, res, br->path, br->path_len);
 		case 3: /* Q */
-			if(lq == Q_UNSPECIFIED)
+			if(br->q == Q_UNSPECIFIED)
 				return pv_get_null(msg, param, res);
-			return pv_get_sintval(msg, param, res, lq);
+			return pv_get_sintval(msg, param, res, br->q);
 		case 4: /* send socket */
-			if(fsocket!=0)
-				return pv_get_strval(msg, param, res, &fsocket->sock_str);
+			if(br->force_send_socket!=0)
+				return pv_get_strval(msg, param, res, &br->force_send_socket->sock_str);
 			return pv_get_null(msg, param, res);
 		case 5: /* count */
 			return pv_get_uintval(msg, param, res, nr_branches);
 		case 6: /* flags */
-			return pv_get_uintval(msg, param, res, fl);
+			return pv_get_uintval(msg, param, res, br->flags);
 		case 7: /* ruid */
-			if(ruid.len==0)
+			if(br->ruid_len==0)
 				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res, &ruid);
+			return pv_get_strlval(msg, param, res, br->ruid, br->ruid_len);
 		case 8: /* location_ua */
-			if(location_ua.len==0)
+			if(br->location_ua_len==0)
 				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res, &location_ua);
+			return pv_get_strlval(msg, param, res, br->location_ua, br->location_ua_len);
 		default:
 			/* 0 - uri */
-			return pv_get_strval(msg, param, res, &uri);
+			return pv_get_strlval(msg, param, res, br->uri, br->len);
 	}
 
 	return 0;
