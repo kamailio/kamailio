@@ -315,9 +315,11 @@ dmq_node_t* add_server_and_notify(str *paddr)
 		for (index = 0; index < host_cnt; index++) {
 			pstr->s = puri_list [index];
 			pstr->len = strlen (puri_list [index]);
-			pnode = add_dmq_node (node_list, pstr);
-			if (pnode && !pfirst)
-				{ pfirst = pnode; }
+			if (!find_dmq_node_uri(node_list, pstr)) { // check for duplicates
+				pnode = add_dmq_node (node_list, pstr);
+				if (pnode && !pfirst)
+					{ pfirst = pnode; }
+			}
 		}
 	}
 
