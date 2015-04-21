@@ -92,14 +92,14 @@
     <column>
         <name>body</name>
         <type>binary</type>
-        <default/>
+        <null/>
         <description>Body of the message</description>
     </column>
 
     <column>
         <name>extra_hdrs</name>
         <type>text</type>
-        <default/>
+        <null/>
         <description>Extra headers that must be restored</description>
     </column>
 

@@ -23,9 +23,9 @@ CREATE INDEX acc_callid_idx  ON acc (callid);
 INSERT INTO version (table_name, table_version) values ('acc_cdrs','2');
 CREATE TABLE acc_cdrs (
     id NUMBER(10) PRIMARY KEY,
-    start_time DATE DEFAULT '',
-    end_time DATE DEFAULT '',
-    duration NUMBER(10,3) DEFAULT ''
+    start_time DATE DEFAULT '2000-01-01 00:00:00',
+    end_time DATE DEFAULT '2000-01-01 00:00:00',
+    duration NUMBER(10,3) DEFAULT 0 NOT NULL
 );
 
 CREATE OR REPLACE TRIGGER acc_cdrs_tr
