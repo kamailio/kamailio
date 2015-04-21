@@ -378,6 +378,7 @@ DNS_CACHE_MAX_TTL	dns_cache_max_ttl
 DNS_CACHE_MEM		dns_cache_mem
 DNS_CACHE_GC_INT	dns_cache_gc_interval
 DNS_CACHE_DEL_NONEXP	dns_cache_del_nonexp|dns_cache_delete_nonexpired
+DNS_CACHE_REC_PREF	dns_cache_rec_pref
 /* ipv6 auto bind */
 AUTO_BIND_IPV6		auto_bind_ipv6
 /* blacklist */
@@ -778,6 +779,8 @@ IMPORTFILE      "import_file"
 								return DNS_CACHE_GC_INT; }
 <INITIAL>{DNS_CACHE_DEL_NONEXP}	{ count(); yylval.strval=yytext;
 								return DNS_CACHE_DEL_NONEXP; }
+<INITIAL>{DNS_CACHE_REC_PREF}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_REC_PREF; }
 <INITIAL>{AUTO_BIND_IPV6}	{ count(); yylval.strval=yytext;
 								return AUTO_BIND_IPV6; }
 <INITIAL>{DST_BLST_INIT}	{ count(); yylval.strval=yytext;
