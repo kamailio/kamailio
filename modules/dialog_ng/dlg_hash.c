@@ -1052,7 +1052,7 @@ static inline void log_next_state_dlg(const int event, const struct dlg_cell * d
 void next_state_dlg(struct dlg_cell *dlg, int event,
         int *old_state, int *new_state, int *unref, str * to_tag) {
     struct dlg_entry *d_entry;
-
+    
 
 
     d_entry = &(d_table->entries[dlg->h_entry]);
@@ -1067,15 +1067,32 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
     struct dlg_cell_out *dlg_out;
     dlg_out = d_entry_out->first;
     int found = -1;
+    int delete = 1;
 
     switch (event) {
         case DLG_EVENT_TDEL:
             switch (dlg->state) {
                 case DLG_STATE_UNCONFIRMED:
                 case DLG_STATE_EARLY:
-                    dlg->state = DLG_STATE_DELETED;
-                    unref_dlg_unsafe(dlg, 1, d_entry);
-                    *unref = 1;
+		    if (to_tag) {
+                        LM_DBG("Going to check if there is another active branch - we only change state to DELETED if there are no other active branches\n");
+                        while (dlg_out) {
+                            if (dlg_out->to_tag.len != to_tag->len || memcmp(dlg_out->to_tag.s, to_tag->s, dlg_out->to_tag.len) != 0) {
+				if(dlg_out->deleted != 1) {
+				    LM_DBG("Found a dlg_out that is not for this event and is not in state deleted, therefore there is another active branch\n");
+				    delete = 0;
+                                    //we should delete this dlg_out tho...
+                                    dlg_out->deleted=1;
+				}
+                            }
+                            dlg_out = dlg_out->next;
+                        }
+                    } 
+		    if(delete) {
+			dlg->state = DLG_STATE_DELETED;
+			unref_dlg_unsafe(dlg, 1, d_entry);
+			*unref = 1;
+		    }
                     break;
                 case DLG_STATE_CONFIRMED:
                     unref_dlg_unsafe(dlg, 1, d_entry);
@@ -1091,7 +1108,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
             switch (dlg->state) {
                 case DLG_STATE_UNCONFIRMED:
                 case DLG_STATE_EARLY:
-                    dlg->state = DLG_STATE_EARLY;
+		    dlg->state = DLG_STATE_EARLY;
                     break;
                 default:
                     log_next_state_dlg(event, dlg);
@@ -1101,8 +1118,22 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
             switch (dlg->state) {
                 case DLG_STATE_UNCONFIRMED:
                 case DLG_STATE_EARLY:
-                    dlg->state = DLG_STATE_DELETED;
-                    *unref = 1;
+		    if (to_tag) {
+                        LM_DBG("Going to check if there is another active branch - we only change state to DELETED if there are no other active branches\n");
+                        while (dlg_out) {
+                            if (dlg_out->to_tag.len != to_tag->len || memcmp(dlg_out->to_tag.s, to_tag->s, dlg_out->to_tag.len) != 0) {
+				if(dlg_out->deleted != 1) {
+				    LM_DBG("Found a dlg_out that is not for this event and is not in state deleted, therefore there is another active branch\n");
+				    delete = 0;
+				}
+                            }
+                            dlg_out = dlg_out->next;
+                        }
+                    } 
+		    if(delete) {
+			dlg->state = DLG_STATE_DELETED;
+			*unref = 1;
+		    }
                     break;
                 default:
                     log_next_state_dlg(event, dlg);
