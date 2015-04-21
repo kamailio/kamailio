@@ -9,8 +9,8 @@ CREATE TABLE silo (
     exp_time NUMBER(10) DEFAULT 0 NOT NULL,
     snd_time NUMBER(10) DEFAULT 0 NOT NULL,
     ctype VARCHAR2(32) DEFAULT 'text/plain',
-    body BLOB DEFAULT '',
-    extra_hdrs CLOB DEFAULT '',
+    body BLOB,
+    extra_hdrs CLOB,
     callid VARCHAR2(128) DEFAULT '',
     status NUMBER(10) DEFAULT 0 NOT NULL
 );
