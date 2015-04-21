@@ -479,6 +479,10 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2);
 static int pv_typeof(sip_msg_t *msg, char *pv, char *t);
 static int pv_not_empty(sip_msg_t *msg, char *pv, char *s2);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
+static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2);
+static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
+static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
+
 static int pv_init_rpc(void);
 
 static cmd_export_t cmds[]={
@@ -501,6 +505,12 @@ static cmd_export_t cmds[]={
 	{"xavp_params_explode", (cmd_function)w_xavp_params_explode,
 		2, fixup_spve_spve, fixup_free_spve_spve,
 		ANY_ROUTE},
+	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
+		ANY_ROUTE },
+	{"sbranch_append",    (cmd_function)w_sbranch_append,    0, 0, 0,
+		ANY_ROUTE },
+	{"sbranch_reset",     (cmd_function)w_sbranch_reset,     0, 0, 0,
+		ANY_ROUTE },
 
 	{0,0,0,0,0,0}
 };
@@ -690,6 +700,36 @@ static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname)
 	if(xavp_params_explode(&sparams, &sxname)<0)
 		return -1;
 
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2)
+{
+	if(sbranch_set_ruri(msg)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2)
+{
+	if(sbranch_append(msg)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2)
+{
+	if(sbranch_reset()<0)
+		return -1;
 	return 1;
 }
 

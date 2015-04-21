@@ -270,7 +270,11 @@ int pv_set_branchx_helper(sip_msg_t *msg, pv_param_t *param,
 			/* 0 - uri */
 			if(val==NULL || (val->flags&PV_VAL_NULL))
 			{
-				drop_sip_branch(idx);
+				if(btype==1) {
+					memset(br, 0, sizeof(branch_t));
+				} else {
+					drop_sip_branch(idx);
+				}
 			} else {
 				if(!(val->flags&PV_VAL_STR))
 				{
@@ -279,7 +283,11 @@ int pv_set_branchx_helper(sip_msg_t *msg, pv_param_t *param,
 				}
 				if(val->rs.len<=0)
 				{
-					drop_sip_branch(idx);
+					if(btype==1) {
+						memset(br, 0, sizeof(branch_t));
+					} else {
+						drop_sip_branch(idx);
+					}
 				} else {
 					if (unlikely(val->rs.len > MAX_URI_SIZE - 1))
 					{
@@ -581,3 +589,149 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+int sbranch_set_ruri(sip_msg_t *msg)
+{
+	str sv;
+	flag_t old_bflags;
+	branch_t *br;
+	int ret;
+
+	ret = 0;
+	br = &_pv_sbranch;
+	if(br->len==0)
+		return -1;
+
+	sv.s = br->uri;
+	sv.len = br->len;
+
+	if (rewrite_uri(msg, &sv) < 0) {
+		LM_ERR("unable to rewrite Request-URI\n");
+		ret = -3;
+		goto error;
+	}
+
+	/* reset next hop address */
+	reset_dst_uri(msg);
+	if(br->dst_uri_len>0) {
+		sv.s = br->dst_uri;
+		sv.len = br->dst_uri_len;
+		if (set_dst_uri(msg, &sv) < 0) {
+			ret = -3;
+			goto error;
+		}
+	}
+
+	reset_path_vector(msg);
+	if(br->path_len==0) {
+		sv.s = br->path;
+		sv.len = br->path_len;
+		if(set_path_vector(msg, &sv) < 0) {
+			ret = -4;
+			goto error;
+		}
+	}
+
+	reset_instance(msg);
+	if (br->instance_len) {
+		sv.s = br->instance;
+		sv.len = br->instance_len;
+	    if (set_instance(msg, &sv) < 0) {
+			ret = -5;
+			goto error;
+	    }
+	}
+
+	reset_ruid(msg);
+	if (br->ruid_len) {
+		sv.s = br->ruid;
+		sv.len = br->ruid_len;
+	    if (set_ruid(msg, &sv) < 0) {
+			ret = -6;
+			goto error;
+	    }
+	}
+
+	reset_ua(msg);
+	if (br->location_ua_len) {
+		sv.s = br->location_ua;
+		sv.len = br->location_ua_len;
+	    if (set_ua(msg, &sv) < 0) {
+			ret = -7;
+			goto error;
+	    }
+	}
+
+	if (br->force_send_socket)
+		set_force_socket(msg, br->force_send_socket);
+
+	msg->reg_id = br->reg_id;
+	set_ruri_q(br->q);
+	old_bflags = 0;
+	getbflagsval(0, &old_bflags);
+	setbflagsval(0, old_bflags|br->flags);
+
+	return 0;
+error:
+	return ret;
+}
+
+/**
+ *
+ */
+int sbranch_append(sip_msg_t *msg)
+{
+	str uri = {0};
+	str duri = {0};
+	int lq = 0;
+	str path = {0};
+	unsigned int fl = 0;
+	struct socket_info* fsocket = NULL;
+	str ruid = {0};
+	str location_ua = {0};
+	branch_t *br;
+
+	br = &_pv_sbranch;
+	if(br->len==0)
+		return -1;
+
+	uri.s = br->uri;
+	uri.len = br->len;
+
+	if(br->dst_uri_len==0) {
+		duri.s = br->dst_uri;
+		duri.len = br->dst_uri_len;
+	}
+	if(br->path_len==0) {
+		path.s = br->path;
+		path.len = br->path_len;
+	}
+	if(br->ruid_len==0) {
+		ruid.s = br->ruid;
+		ruid.len = br->ruid_len;
+	}
+	if(br->location_ua_len==0) {
+		location_ua.s = br->location_ua;
+		location_ua.len = br->location_ua_len;
+	}
+
+	if (append_branch(msg, &uri, &duri, &path, br->q, br->flags,
+					  br->force_send_socket, 0 /*instance*/, br->reg_id,
+					  &ruid, &location_ua)
+			    == -1) {
+		LM_ERR("failed to append static branch\n");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int sbranch_reset(void)
+{
+	memset(&_pv_sbranch, 0, sizeof(branch_t));
+	return 0;
+}

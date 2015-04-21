@@ -42,6 +42,9 @@ Daniel-Constantin Mierla
               4.4. typeof(pvar, vtype)
               4.5. not_empty(pvar)
               4.6. xavp_params_explode(sparams, xname)
+              4.7. sbranch_set_ruri()
+              4.8. sbranch_append()
+              4.9. sbranch_reset()
 
         5. MI Commands
 
@@ -64,8 +67,11 @@ Daniel-Constantin Mierla
    1.7. typeof() usage
    1.8. not_empty() usage
    1.9. xavp_params_explode usage
-   1.10. shv_set usage
-   1.11. shv_get usage
+   1.10. sbranch_set_ruri() usage
+   1.11. sbranch_append() usage
+   1.12. sbranch_append() usage
+   1.13. shv_set usage
+   1.14. shv_get usage
 
 Chapter 1. Admin Guide
 
@@ -91,6 +97,9 @@ Chapter 1. Admin Guide
         4.4. typeof(pvar, vtype)
         4.5. not_empty(pvar)
         4.6. xavp_params_explode(sparams, xname)
+        4.7. sbranch_set_ruri()
+        4.8. sbranch_append()
+        4.9. sbranch_reset()
 
    5. MI Commands
 
@@ -191,6 +200,9 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
    4.4. typeof(pvar, vtype)
    4.5. not_empty(pvar)
    4.6. xavp_params_explode(sparams, xname)
+   4.7. sbranch_set_ruri()
+   4.8. sbranch_append()
+   4.9. sbranch_reset()
 
 4.1. pv_isset(pvar)
 
@@ -287,6 +299,59 @@ xavp_params_explode("a=b;c=d;e=d", "x");
 #    $xavp(x=>e) = "f";
 ...
 
+4.7. sbranch_set_ruri()
+
+   Use the attributes from static branch ($sbranch(key) variable) to set
+   request URI and the other fields of the branch associated with request
+   URI (destination URI, path, ...).
+
+   Content of the static branch is not reset after this function is
+   executed. It has to be done explicitely with sbranch_reset().
+
+   Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
+
+   Example 1.10. sbranch_set_ruri() usage
+...
+sbranch_reset();
+$sbranch(uri) = "sip:127.0.0.1:5080";
+$sbranch(dst_uri) =  "sip:127.0.0.1:5090";
+$sbranch(path) =  "sip:127.0.0.1:5090, sip:127.0.0.1:5094";
+$sbranch(send_socket) =  "udp:127.0.0.1:5060";
+sbranch_set_ruri();
+...
+
+4.8. sbranch_append()
+
+   Use the attributes from static branch ($sbranch(key) variable) to
+   append a new branch to destination set. It is an alternative to
+   append_branch() that allows setting each attribute specific to the
+   branch.
+
+   Content of the static branch is not reset after this function is
+   executed. It has to be done explicitely with sbranch_reset().
+
+   Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
+
+   Example 1.11. sbranch_append() usage
+...
+sbranch_reset();
+$sbranch(uri) = "sip:127.0.0.1:5080";
+$sbranch(dst_uri) =  "sip:127.0.0.1:5090";
+$sbranch(send_socket) =  "udp:127.0.0.1:5060";
+sbranch_append();
+...
+
+4.9. sbranch_reset()
+
+   Reset the content of static branch ($sbranch(key) variable.
+
+   Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
+
+   Example 1.12. sbranch_append() usage
+...
+sbranch_reset();
+...
+
 5. MI Commands
 
    5.1. shv_set
@@ -310,7 +375,7 @@ xavp_params_explode("a=b;c=d;e=d", "x");
                 _value_
                 _empty_line_
 
-   Example 1.10. shv_set usage
+   Example 1.13. shv_set usage
 ...
 $ kamctl fifo shv_set debug int 0
 ...
@@ -328,7 +393,7 @@ $ kamctl fifo shv_set debug int 0
                 _name_
                 _empty_line_
 
-   Example 1.11. shv_get usage
+   Example 1.14. shv_get usage
 ...
 $ kamctl fifo shv_get debug
 $ kamctl fifo shv_get

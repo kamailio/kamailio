@@ -297,6 +297,85 @@ xavp_params_explode("a=b;c=d;e=d", "x");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.sbranch_set_ruri">
+			<title>
+				<function moreinfo="none">sbranch_set_ruri()</function>
+			</title>
+			<para>
+				Use the attributes from static branch ($sbranch(key) variable) to
+				set request URI and the other fields of the branch associated with
+				request URI (destination URI, path, ...).
+			</para>
+			<para>
+				Content of the static branch is not reset after this function is
+				executed. It has to be done explicitely with sbranch_reset().
+			</para>
+			<para>
+			Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
+			</para>
+			<example>
+				<title><function>sbranch_set_ruri()</function> usage</title>
+				<programlisting format="linespecific">
+...
+sbranch_reset();
+$sbranch(uri) = "sip:127.0.0.1:5080";
+$sbranch(dst_uri) =  "sip:127.0.0.1:5090";
+$sbranch(path) =  "sip:127.0.0.1:5090, sip:127.0.0.1:5094";
+$sbranch(send_socket) =  "udp:127.0.0.1:5060";
+sbranch_set_ruri();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.sbranch_append">
+			<title>
+				<function moreinfo="none">sbranch_append()</function>
+			</title>
+			<para>
+				Use the attributes from static branch ($sbranch(key) variable) to
+				append a new branch to destination set. It is an alternative to
+				append_branch() that allows setting each attribute specific to
+				the branch.
+			</para>
+			<para>
+				Content of the static branch is not reset after this function is
+				executed. It has to be done explicitely with sbranch_reset().
+			</para>
+			<para>
+			Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
+			</para>
+			<example>
+				<title><function>sbranch_append()</function> usage</title>
+				<programlisting format="linespecific">
+...
+sbranch_reset();
+$sbranch(uri) = "sip:127.0.0.1:5080";
+$sbranch(dst_uri) =  "sip:127.0.0.1:5090";
+$sbranch(send_socket) =  "udp:127.0.0.1:5060";
+sbranch_append();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.sbranch_reset">
+			<title>
+				<function moreinfo="none">sbranch_reset()</function>
+			</title>
+			<para>
+				Reset the content of static branch ($sbranch(key) variable.
+			</para>
+			<para>
+			Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
+			</para>
+			<example>
+				<title><function>sbranch_append()</function> usage</title>
+				<programlisting format="linespecific">
+...
+sbranch_reset();
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>
