@@ -24,6 +24,9 @@
 
 #include "notification_peer.h"
 
+#define MAXDMQURILEN	255
+#define MAXDMQHOSTS	30
+
 str notification_content_type = str_init("text/plain");
 dmq_resp_cback_t notification_callback = {&notification_resp_callback_f, 0};
 
@@ -62,27 +65,276 @@ error:
 	return -1;
 }
 
+/**********
+* Create IP URI
+*
+* INPUT:
+*   Arg (1) = container for hosts
+*   Arg (2) = host index
+*   Arg (3) = host name pointer
+*   Arg (4) = host name length
+*   Arg (5) = parsed URI pointer
+* OUTPUT: 0=unable to create URI
+**********/
+
+int create_IP_uri (char **puri_list, int host_index, char *phost,
+	int hostlen, sip_uri_t *puri)
+
+{
+	int pos;
+	char *plist;
+	char *perr = "notification host count reached max!\n";
+
+	/**********
+	* insert
+	* o scheme
+	* o user name/password
+	* o host
+	* o port
+	* o parameters
+	**********/
+
+	plist = puri_list [host_index];
+	if (puri->type == SIPS_URI_T) {
+		strncpy (plist, "sips:", 5);
+		pos = 5;
+	} else {
+		strncpy (plist, "sip:", 4);
+		pos = 4;
+	}
+	if (puri->user.s) {
+		strncpy (&plist [pos], puri->user.s, puri->user.len);
+		pos += puri->user.len;
+		if (puri->passwd.s) {
+			plist [pos++] = ':';
+			strncpy (&plist [pos], puri->passwd.s, puri->passwd.len);
+			pos += puri->passwd.len;
+		}
+		plist [pos++] = '@';
+	}
+	if ((pos + hostlen) > MAXDMQURILEN) {
+		LM_WARN ("%s", perr);
+		return 0;
+	}
+	strncpy (&plist [pos], phost, hostlen);
+	pos += hostlen;
+	if (puri->port_no) {
+		if ((pos + 6) > MAXDMQURILEN) {
+			LM_WARN ("%s", perr);
+			return 0;
+		}
+		plist [pos++] = ':';
+		pos += ushort2sbuf (puri->port_no, &plist [pos], 5);
+	}
+	if (puri->params.s) {
+		if ((pos + puri->params.len) >= MAXDMQURILEN) {
+			LM_WARN ("%s", perr);
+			return 0;
+		}
+		plist [pos++] = ';';
+		strncpy (&plist [pos], puri->params.s, puri->params.len);
+		pos += puri->params.len;
+	}
+	plist [pos] = '\0';
+	return 1;
+}
+
+/**********
+* Get DMQ Host List
+*
+* INPUT:
+*   Arg (1) = container for hosts
+*   Arg (2) = maximum number of hosts
+*   Arg (3) = host string pointer
+*   Arg (4) = parsed URI pointer
+*   Arg (5) = search SRV flag
+* OUTPUT: number of hosts found
+**********/
+
+int get_dmq_host_list (char **puri_list, int max_hosts, str *phost,
+	sip_uri_t *puri, int bSRV)
+
+{
+	int host_cnt, len;
+	unsigned short origport, port;
+	str pstr [1];
+	char pname [256], pIP [IP6_MAX_STR_SIZE + 2];
+	struct rdata *phead, *prec;
+	struct srv_rdata *psrv;
+
+	/**********
+	* o IP address?
+	* o make null terminated name
+	* o search SRV?
+	**********/
+
+	if (str2ip (phost) || str2ip6 (phost)) {
+		if (!create_IP_uri (puri_list, 0, phost->s, phost->len, puri)) {
+			LM_DBG ("adding DMQ node IP host %.*s=%s\n",
+				phost->len, phost->s, puri_list [0]);
+			return 0;
+		}
+		return 1;
+	}
+	strncpy (pname, phost->s, phost->len);
+	pname [phost->len] = '\0';
+	host_cnt = 0;
+	if (bSRV) {
+		/**********
+		* get SRV records
+		**********/
+
+		port = puri->port_no;
+		phead = get_record (pname, T_SRV, RES_ONLY_TYPE);
+		for (prec = phead; prec; prec = prec->next) {
+			/**********
+			* o matching port?
+			* o check max
+			* o save original port
+			* o check target
+			* o restore port
+			**********/
+
+			psrv = (struct srv_rdata *) prec->rdata;
+			if (port && (port != psrv->port))
+				{ continue; }
+			if (host_cnt == max_hosts) {
+				LM_WARN ("notification host count reached max!\n");
+				free_rdata_list (phead);
+				return host_cnt;
+			}
+			pstr->s = psrv->name;
+			pstr->len = psrv->name_len;
+			origport = puri->port_no;
+			puri->port_no = psrv->port;
+			host_cnt += get_dmq_host_list (&puri_list [host_cnt],
+				MAXDMQHOSTS - host_cnt, pstr, puri, 0);
+			puri->port_no = origport;
+		}
+		if (phead)
+			free_rdata_list (phead);
+	}
+
+	/**********
+	* get A records
+	**********/
+
+	phead = get_record (pname, T_A, RES_ONLY_TYPE);
+	for (prec = phead; prec; prec = prec->next) {
+		/**********
+		* o check max
+		* o create URI
+		**********/
+
+		if (host_cnt == max_hosts) {
+			LM_WARN ("notification host count reached max!\n");
+			free_rdata_list (phead);
+			return host_cnt;
+		}
+		len = ip4tosbuf (((struct a_rdata *) prec->rdata)->ip,
+			pIP, IP4_MAX_STR_SIZE);
+		pIP [len] = '\0';
+		if (create_IP_uri (puri_list, host_cnt, pIP, len, puri)) {
+			LM_DBG ("adding DMQ node A host %s=%s\n", pname, puri_list [host_cnt]);
+			host_cnt++;
+		}
+	}
+	if (phead)
+		free_rdata_list (phead);
+
+	/**********
+	* get AAAA records
+	**********/
+
+	phead = get_record (pname, T_AAAA, RES_ONLY_TYPE);
+	for (prec = phead; prec; prec = prec->next) {
+		/**********
+		* o check max
+		* o create URI
+		**********/
+
+		if (host_cnt == max_hosts) {
+			LM_WARN ("notification host count reached max!\n");
+			free_rdata_list (phead);
+			return host_cnt;
+		}
+		pIP [0] = '[';
+		len = ip6tosbuf (((struct aaaa_rdata *) prec->rdata)->ip6,
+			&pIP [1], IP6_MAX_STR_SIZE) + 1;
+		pIP [len++] = ']';
+		pIP [len] = '\0';
+		if (create_IP_uri (puri_list, host_cnt, pIP, len, puri)) {
+			LM_DBG
+        ("adding DMQ node AAAA host %s=%s\n", pname, puri_list [host_cnt]);
+			host_cnt++;
+		}
+	}
+	if (phead)
+		free_rdata_list (phead);
+	return host_cnt;
+}
+
 /**
  * @brief add a server node and notify it
  */
-dmq_node_t* add_server_and_notify(str* server_address)
+dmq_node_t* add_server_and_notify(str *paddr)
 {
-	/* add the notification server to the node list - if any */
-	dmq_node_t* node;
-	
-	node = add_dmq_node(node_list, server_address);
-	if(!node) {
-		LM_ERR("error adding notification node\n");
-		goto error;
+	char puri_data [MAXDMQHOSTS * (MAXDMQURILEN + 1)];
+	char *puri_list [MAXDMQHOSTS];
+	dmq_node_t *pfirst, *pnode;
+	int host_cnt, index;
+	sip_uri_t puri [1];
+	str pstr [1];
+
+	/**********
+	* o init data area
+	* o get list of hosts
+	* o process list
+	**********/
+
+	if (!multi_notify) {
+		pfirst = add_dmq_node (node_list, paddr);
+	} else {
+		/**********
+		* o init data area
+		* o get list of hosts
+		* o process list
+		**********/
+
+		for (index = 0; index < MAXDMQHOSTS; index++) {
+			puri_list [index] = &puri_data [index * (MAXDMQURILEN + 1)];
+		}
+		if (parse_uri (paddr->s, paddr->len, puri) < 0) {
+			/* this is supposed to be good but just in case... */
+			LM_ERR ("add_server_and_notify address invalid\n");
+			return 0;
+		}
+		pfirst = NULL;
+		host_cnt =
+			get_dmq_host_list (puri_list, MAXDMQHOSTS, &puri->host, puri, 1);
+		for (index = 0; index < host_cnt; index++) {
+			pstr->s = puri_list [index];
+			pstr->len = strlen (puri_list [index]);
+			pnode = add_dmq_node (node_list, pstr);
+			if (pnode && !pfirst)
+				{ pfirst = pnode; }
+		}
 	}
-	/* request initial list from the notification server */
-	if(request_nodelist(node, 2) < 0) {
-		LM_ERR("error requesting initial nodelist\n");
-		goto error;
+
+	/**********
+	* o found at least one?
+	* o request node list
+	**********/
+
+	if (!pfirst) {
+		LM_ERR ("error adding notification node\n");
+		return NULL;
 	}
-	return node;
-error:
-	return NULL;
+	if (request_nodelist (pfirst, 2) < 0) {
+		LM_ERR ("error requesting initial nodelist\n");
+		return NULL;
+	}
+	return pfirst;
 }
 
 /**

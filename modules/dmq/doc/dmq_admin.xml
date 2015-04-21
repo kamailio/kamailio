@@ -131,6 +131,29 @@ modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
 </programlisting>
 		</example>
 	</section>
+	<section id="dmq.p.multi_notify">
+		<title><varname>multi_notify</varname>(int)</title>
+		<para>
+		Enables the ability to resolve multiple IPv4/IPv6 addresses for 
+		a single notification address.
+		</para>
+		<para>
+		A value of zero resolves to the first IP address found. 
+		A non-zero value resolves to all IP addresses associated with the host. 
+		This includes addresses from DNS SRV records, A and AAAA records.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>multi_notify</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "multi_notify", 1)
+...
+</programlisting>
+		</example>
+	</section>
         <section id="dmq.p.num_workers">
                 <title><varname>num_workers</varname>(int)</title>
                 <para>

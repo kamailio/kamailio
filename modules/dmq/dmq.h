@@ -45,6 +45,7 @@ extern str dmq_request_method;
 extern str dmq_server_socket;
 extern struct sip_uri dmq_server_uri;
 extern str dmq_notification_address;
+extern int multi_notify;
 extern struct sip_uri dmq_notification_uri;
 /* sl and tm */
 extern struct tm_binds tmb;
