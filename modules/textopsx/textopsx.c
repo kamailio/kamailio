@@ -863,7 +863,7 @@ static int find_hf_value2_param(struct hname_data* hname, str* param_area, str* 
 			while (i<param_area->len && is_space(param_area->s[i])) i++;
 		}
 		else {
-			while (i<param_area->len && !is_space(param_area->s[i]) && !param_area->s[i]!=',') i++;
+			while (i<param_area->len && !is_space(param_area->s[i]) && !(param_area->s[i]!=',')) i++;
 		}
 	}
 	lump_del->s = param_area->s + i;
