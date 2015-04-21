@@ -417,6 +417,7 @@ USER		"user"|"uid"
 GROUP		"group"|"gid"
 CHROOT		"chroot"
 WDIR		"workdir"|"wdir"
+RUNDIR		"rundir"|"run_dir"
 MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
@@ -821,6 +822,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{GROUP}	{ count(); yylval.strval=yytext; return GROUP; }
 <INITIAL>{CHROOT}	{ count(); yylval.strval=yytext; return CHROOT; }
 <INITIAL>{WDIR}	{ count(); yylval.strval=yytext; return WDIR; }
+<INITIAL>{RUNDIR}	{ count(); yylval.strval=yytext; return RUNDIR; }
 <INITIAL>{MHOMED}	{ count(); yylval.strval=yytext; return MHOMED; }
 <INITIAL>{DISABLE_TCP}	{ count(); yylval.strval=yytext; return DISABLE_TCP; }
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }

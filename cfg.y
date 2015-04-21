@@ -468,6 +468,7 @@ extern char *default_routename;
 %token GROUP
 %token CHROOT
 %token WDIR
+%token RUNDIR
 %token MHOMED
 %token DISABLE_TCP
 %token TCP_ACCEPT_ALIASES
@@ -999,6 +1000,9 @@ assign_stm:
 	| WDIR EQUAL STRING     { working_dir=$3; }
 	| WDIR EQUAL ID         { working_dir=$3; }
 	| WDIR EQUAL error      { yyerror("string value expected"); }
+	| RUNDIR EQUAL STRING     { runtime_dir=$3; }
+	| RUNDIR EQUAL ID         { runtime_dir=$3; }
+	| RUNDIR EQUAL error      { yyerror("string value expected"); }
 	| MHOMED EQUAL NUMBER { mhomed=$3; }
 	| MHOMED EQUAL error { yyerror("boolean value expected"); }
 	| DISABLE_TCP EQUAL NUMBER {

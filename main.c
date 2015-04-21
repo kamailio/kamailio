@@ -353,6 +353,7 @@ int received_dns = 0;
 int sr_auto_aliases=1;
 char* working_dir = 0;
 char* chroot_dir = 0;
+char* runtime_dir = "" RUN_DIR;
 char* user=0;
 char* group=0;
 int uid = 0;
