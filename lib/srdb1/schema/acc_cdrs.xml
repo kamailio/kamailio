@@ -30,14 +30,14 @@
         <name>start_time</name>
         <type>datetime</type>
         <description>Start date and time</description>
-        <default/>
+        <default>2000-01-01 00:00:00</default>
     </column>
 
     <column>
         <name>end_time</name>
         <type>datetime</type>
         <description>End date and time</description>
-        <default/>
+        <default>2000-01-01 00:00:00</default>
     </column>
 
     <column>
@@ -45,7 +45,7 @@
         <type>float</type>
         <size>10,3</size>
         <description>Duration</description>
-        <default/>
+        <default>0</default>
     </column>
 
     <index>
