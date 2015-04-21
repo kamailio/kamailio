@@ -17,6 +17,8 @@
 */
 
 #include <stddef.h>
+#include "meminfo.h"
+#define TLSF_STATS
 
 #if defined(__cplusplus)
 extern "C" {
@@ -60,6 +62,8 @@ void tlsf_walk_pool(pool_t pool, tlsf_walker walker, void* user);
 /* Returns nonzero if any internal consistency check fails. */
 int tlsf_check(tlsf_t tlsf);
 int tlsf_check_pool(pool_t pool);
+
+void tlsf_meminfo(tlsf_t pool, struct mem_info *info);
 
 #if defined(__cplusplus)
 };

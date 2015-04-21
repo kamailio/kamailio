@@ -47,7 +47,7 @@ enum tlsf_private
 	** TODO: We can increase this to support larger sizes, at the expense
 	** of more overhead in the TLSF structure.
 	*/
-	FL_INDEX_MAX = 32,
+	FL_INDEX_MAX = 40,
 #else
 	FL_INDEX_MAX = 30,
 #endif
@@ -148,13 +148,24 @@ static const size_t block_size_min =
 	sizeof(block_header_t) - sizeof(block_header_t*);
 static const size_t block_size_max = tlsf_cast(size_t, 1) << FL_INDEX_MAX;
 
+#ifdef TLSF_STATS
+	#define TLSF_INCREASE_REAL_USED(control, increment) do {control->real_used += (increment) ; control->max_used = tlsf_max(control->real_used, control->max_used);}while(0)
+	#define TLSF_INCREASE_FRAGMENTS(control) do {control->fragments++ ; control->fragments = tlsf_max(control->fragments, control->max_fragments);}while(0)
+#endif
 
 /* The TLSF control structure. */
 typedef struct control_t
 {
 	/* Empty lists point at this block to indicate they are free. */
 	block_header_t block_null;
-
+#ifdef TLSF_STATS
+	size_t total_size;
+	size_t allocated;
+	size_t real_used;
+	size_t max_used;
+	size_t fragments;
+	size_t max_fragments;
+#endif
 	/* Bitmaps for free lists. */
 	unsigned int fl_bitmap;
 	unsigned int sl_bitmap[FL_INDEX_COUNT];
@@ -401,6 +412,9 @@ static void remove_free_block(control_t* control, block_header_t* block, int fl,
 			}
 		}
 	}
+#if defined TLSF_STATS
+	control->fragments--;
+#endif
 }
 
 /* Insert a free block into the free block list. */
@@ -422,6 +436,9 @@ static void insert_free_block(control_t* control, block_header_t* block, int fl,
 	control->blocks[fl][sl] = block;
 	control->fl_bitmap |= (1 << fl);
 	control->sl_bitmap[fl] |= (1 << sl);
+#if defined TLSF_STATS
+	TLSF_INCREASE_FRAGMENTS(control);
+#endif
 }
 
 /* Remove a given block from the free list. */
@@ -580,6 +597,10 @@ static void* block_prepare_used(control_t* control, block_header_t* block, size_
 		block_trim_free(control, block, size);
 		block_mark_as_used(block);
 		p = block_to_ptr(block);
+#ifdef TLSF_STATS
+		TLSF_INCREASE_REAL_USED(control, block->size + (p - (void *)block));
+		control->allocated += block->size;
+#endif
 	}
 	return p;
 }
@@ -806,7 +827,9 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 	block_set_free(block);
 	block_set_prev_used(block);
 	block_insert(tlsf_cast(control_t*, tlsf), block);
-
+#ifdef TLSF_STATS
+	tlsf_cast(control_t*, tlsf)->total_size += block->size;
+#endif
 	/* Split the block to create a zero-size sentinel block. */
 	next = block_link_next(block);
 	block_set_size(next, 0);
@@ -829,6 +852,9 @@ void tlsf_remove_pool(tlsf_t tlsf, pool_t pool)
 
 	mapping_insert(block_size(block), &fl, &sl);
 	remove_free_block(control, block, fl, sl);
+#ifdef TLSF_STATS
+	tlsf_cast(control_t*, tlsf)->total_size -= block->size;
+#endif
 }
 
 /*
@@ -880,7 +906,13 @@ tlsf_t tlsf_create(void* mem)
 	}
 
 	control_construct(tlsf_cast(control_t*, mem));
-
+#ifdef TLSF_STATS
+	tlsf_cast(control_t*, mem)->real_used = tlsf_size();
+	tlsf_cast(control_t*, mem)->max_used = tlsf_size();
+	tlsf_cast(control_t*, mem)->allocated = 0;
+	tlsf_cast(control_t*, mem)->total_size = tlsf_size();
+	tlsf_cast(control_t*, mem)->fragments = 0;
+#endif
 	return tlsf_cast(tlsf_t, mem);
 }
 
@@ -961,6 +993,10 @@ void* tlsf_memalign(tlsf_t tlsf, size_t align, size_t size)
 		}
 	}
 
+#ifdef TLSF_STATS
+	/* TODO */
+#endif
+
 	return block_prepare_used(control, block, adjust);
 }
 
@@ -972,6 +1008,10 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		control_t* control = tlsf_cast(control_t*, tlsf);
 		block_header_t* block = block_from_ptr(ptr);
 		tlsf_assert(!block_is_free(block) && "block already marked as free");
+#if defined TLSF_STATS
+		control->allocated -= block->size;
+		control->real_used -= (block->size + (ptr - (void *)block));
+#endif
 		block_mark_as_free(block);
 		block = block_merge_prev(control, block);
 		block = block_merge_next(control, block);
@@ -1034,6 +1074,10 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 		}
 		else
 		{
+#ifdef TLSF_STATS
+			control->allocated -= block->size;
+			control->real_used -= block->size;
+#endif
 			/* Do we need to expand to the next block? */
 			if (adjust > cursize)
 			{
@@ -1044,8 +1088,34 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 			/* Trim the resulting block and return the original pointer. */
 			block_trim_used(control, block, adjust);
 			p = ptr;
+#ifdef TLSF_STATS
+			control->allocated += block->size;
+			TLSF_INCREASE_REAL_USED(control, block->size);
+#endif
 		}
 	}
 
 	return p;
 }
+
+#ifdef TLSF_STATS
+
+void tlsf_meminfo(tlsf_t pool, struct mem_info *info)
+{
+	control_t* control = tlsf_cast(control_t*, pool);
+	memset(info, 0, sizeof(*info));
+	info->free = control->total_size - control->real_used;
+	info->max_used = control->max_used;
+	info->real_used = control->max_used;
+	info->total_frags = control->fragments;
+	info->used = control->allocated;
+	info->total_size = control->total_size;
+}
+
+size_t tlsf_available(tlsf_t pool)
+{
+	control_t* control = tlsf_cast(control_t*, pool);
+	return control->total_size - control->real_used;
+}
+#endif
+

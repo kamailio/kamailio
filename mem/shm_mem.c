@@ -64,6 +64,8 @@ static void* shm_mempool=(void*)-1;
 	struct fm_block* shm_block;
 #elif DL_MALLOC
 	mspace shm_block;
+#elif TLSF_MALLOC
+	tlsf_t shm_block;
 #else
 	struct qm_block* shm_block;
 #endif

@@ -143,6 +143,19 @@
 #	define  shm_malloc_init(buf, len, type) create_mspace_with_base(buf, len, 0)
 #	define shm_malloc_destroy(b) do{}while(0)
 #	define shm_malloc_on_fork() do{}while(0)
+#elif defined TLSF_MALLOC
+#	include "tlsf.h"
+	extern pool_t shm_block;
+#	define MY_MALLOC tlsf_malloc
+#	define MY_FREE tlsf_free
+#	define MY_REALLOC tlsf_realloc
+#	define MY_STATUS(...) ((void) 0)
+#	define MY_MEMINFO	tlsf_meminfo
+#	define MY_SUMS(...) ((void) 0)
+#	define shm_malloc_init(mem, bytes, type) tlsf_create_with_pool((void*) mem, bytes)
+#	define shm_malloc_destroy(b) do{}while(0)
+#	define shm_available() qm_available(shm_block)
+#	define shm_malloc_on_fork() do{}while(0)
 #else
 #	include "q_malloc.h"
 	extern struct qm_block* shm_block;
