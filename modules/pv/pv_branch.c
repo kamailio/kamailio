@@ -27,21 +27,26 @@
 #include "pv_core.h"
 #include "pv_branch.h"
 
-int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
+static branch_t _pv_sbranch = {0};
+
+int pv_get_branchx_helper(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res, int btype)
 {
 	int idx = 0;
 	int idxf = 0;
 	branch_t *br;
 
-	/* get the index */
-	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
-	{
-		LM_ERR("invalid index\n");
-		return pv_get_null(msg, param, res);
+	if(btype==1) {
+		br = &_pv_sbranch;
+	} else {
+		/* get the index */
+		if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return pv_get_null(msg, param, res);
+		}
+		br = get_sip_branch(idx);
 	}
-
-	br = get_sip_branch(idx);
 
 	/* branch(count) doesn't need a valid branch, everything else does */
 	if(br->len == 0 && ( param->pvn.u.isname.name.n != 5/* count*/ ))
@@ -88,8 +93,14 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 	return 0;
 }
 
-int pv_set_branchx(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val)
+int pv_get_branchx(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_branchx_helper(msg, param, res, 0);
+}
+
+int pv_set_branchx_helper(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *val, int btype)
 {
 	int idx = 0;
 	int idxf = 0;
@@ -105,14 +116,17 @@ int pv_set_branchx(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 
-	/* get the index */
-	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
-	{
-		LM_ERR("invalid index\n");
-		return -1;
+	if(btype==1) {
+		br = &_pv_sbranch;
+	} else {
+		/* get the index */
+		if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+		br = get_sip_branch(idx);
 	}
-
-	br = get_sip_branch(idx);
 
 	if(br==NULL)
 	{
@@ -283,6 +297,12 @@ int pv_set_branchx(struct sip_msg* msg, pv_param_t *param,
 	return 0;
 }
 
+int pv_set_branchx(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_branchx_helper(msg, param, op, val, 0);
+}
+
 int pv_parse_branchx_name(pv_spec_p sp, str *in)
 {
 	if(sp==NULL || in==NULL || in->len<=0)
@@ -337,6 +357,18 @@ int pv_parse_branchx_name(pv_spec_p sp, str *in)
 error:
 	LM_ERR("unknown PV branch name %.*s\n", in->len, in->s);
 	return -1;
+}
+
+int pv_get_sbranch(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_branchx_helper(msg, param, res, 1);
+}
+
+int pv_set_sbranch(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_branchx_helper(msg, param, op, val, 1);
 }
 
 int pv_get_sndfrom(struct sip_msg *msg, pv_param_t *param,

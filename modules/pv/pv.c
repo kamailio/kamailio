@@ -68,6 +68,9 @@ static pv_export_t mod_pvs[] = {
 	{ {"branch", sizeof("branch")-1}, /* branch attributes */
 		PVT_CONTEXT, pv_get_branchx, pv_set_branchx,
 		pv_parse_branchx_name, pv_parse_index, 0, 0 },
+	{ {"sbranch", sizeof("sbranch")-1}, /* static branch attributes */
+		PVT_CONTEXT, pv_get_sbranch, pv_set_sbranch,
+		pv_parse_branchx_name, 0, 0, 0 },
 	{ {"mi", (sizeof("mi")-1)}, /* message id */
 		PVT_OTHER, pv_get_msgid, 0,
 		0, 0, 0, 0},

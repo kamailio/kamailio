@@ -29,6 +29,11 @@ int pv_set_branchx(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 int pv_parse_branchx_name(pv_spec_p sp, str *in);
 
+int pv_get_sbranch(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+int pv_set_sbranch(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
 int pv_get_sndto(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_get_sndfrom(struct sip_msg *msg, pv_param_t *param,
