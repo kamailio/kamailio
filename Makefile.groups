@@ -180,6 +180,9 @@ mod_list_mongodb=db_mongodb ndb_mongodb
 # - modules depending on redis and event library
 mod_list_cnxcc=cnxcc
 
+# - modules depending on erlang library
+mod_list_erlang=erlang
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -205,7 +208,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
 			   $(mod_list_ev) $(mod_list_kazoo) \
 			   $(mod_list_mongodb) $(mod_list_cnxcc) \
-			   $(mod_list_jansson) $(mod_list_geoip2))
+			   $(mod_list_jansson) $(mod_list_geoip2) \
+			   $(mod_list_erlang))
 
 
 
@@ -386,6 +390,9 @@ module_group_kmongodb=$(mod_list_mongodb)
 
 # pkg cnxcc module
 module_group_kcnxcc=$(mod_list_cnxcc)
+
+# pkg erlang module
+module_group_kerlang=$(mod_list_erlang)
 
 # list of static modules
 #
