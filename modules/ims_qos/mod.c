@@ -362,8 +362,8 @@ void callback_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params * para
     
     LM_DBG("Dialog callback of type %d received\n", type);
     
-    if(type == DLGCB_TERMINATED || type == DLGCB_DESTROY || type == DLGCB_EXPIRED){
-	   LM_DBG("Dialog has ended - we need to terminate Rx bearer session\n");
+    if(type == DLGCB_TERMINATED || type == DLGCB_DESTROY || type == DLGCB_EXPIRED || type == DLGCB_FAILED){
+	   LM_DBG("Dialog has ended or failed - we need to terminate Rx bearer session\n");
 
 	LM_DBG("Received notification of termination of dialog with Rx session ID: [%.*s]\n",
 		rx_session_id->len, rx_session_id->s);

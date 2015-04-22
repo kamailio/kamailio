@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('silo','7');
+INSERT INTO version (table_name, table_version) values ('silo','8');
 CREATE TABLE silo (
     id NUMBER(10) PRIMARY KEY,
     src_addr VARCHAR2(128) DEFAULT '',

@@ -36,6 +36,8 @@
 #include "../../parser/msg_parser.h"
 #include "../../lib/srutils/shautils.h"
 #include "../../lib/kcore/cmpapi.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 #include "auth_xkeys.h"
 
@@ -201,7 +203,7 @@ int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
 	char xout[SHA512_DIGEST_STRING_LENGTH];
 	struct lump* anchor;
 
-	if(_auth_xkeys_list==NULL || _auth_xkeys_list==NULL) {
+	if(_auth_xkeys_list==NULL || *_auth_xkeys_list==NULL) {
 		LM_ERR("no stored keys\n");
 		return -1;
 	}
@@ -283,7 +285,7 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 	char xout[SHA512_DIGEST_STRING_LENGTH];
 	str hbody;
 
-	if(_auth_xkeys_list==NULL || _auth_xkeys_list==NULL) {
+	if(_auth_xkeys_list==NULL || *_auth_xkeys_list==NULL) {
 		LM_ERR("no stored keys\n");
 		return -1;
 	}
@@ -379,3 +381,117 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 	return -1;
 }
 
+
+static const char* auth_xkeys_rpc_list_doc[2] = {
+	"List existing keys",
+	0
+};
+
+/*
+ * RPC command to list the keys
+ */
+static void auth_xkeys_rpc_list(rpc_t* rpc, void* ctx)
+{
+	void* th;
+	void* ih;
+	void* vh;
+	auth_xkey_t *itc;
+	auth_xkey_t *itd;
+
+	if(_auth_xkeys_list==NULL || *_auth_xkeys_list==NULL) {
+		rpc->fault(ctx, 500, "No keys");
+		return;
+	}
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+	for(itc = *_auth_xkeys_list; itc; itc = itc->next_id) {
+		if(rpc->struct_add(th, "S[",
+					"KID", &itc->kid,
+					"KEYS",  &ih)<0) {
+			rpc->fault(ctx, 500, "Internal error keys array");
+			return;
+		}
+
+		for(itd=itc; itd; itd = itd->next) {
+			if(rpc->struct_add(ih, "{",
+						"KEY", &vh)<0) {
+				rpc->fault(ctx, 500, "Internal error creating keys data");
+				return;
+			}
+			if(rpc->struct_add(vh, "SDd",
+						"NAME",  &itd->kname,
+						"VALUE", &itd->kvalue,
+						"EXPIRES", itd->kexpires)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating dest struct");
+				return;
+			}
+		}
+	}
+	return;
+}
+
+static const char* auth_xkeys_rpc_set_doc[2] = {
+	"Set expires of existing key or add a new key",
+	0
+};
+
+/*
+ * RPC command to set the expires of a key or add a new key
+ */
+static void auth_xkeys_rpc_set(rpc_t* rpc, void* ctx)
+{
+	auth_xkey_t tmp;
+	auth_xkey_t *itc;
+
+	memset(&tmp, 0, sizeof(auth_xkey_t));
+
+	if(rpc->scan(ctx, ".SSSd", &tmp.kid, &tmp.kname,
+				&tmp.kvalue, &tmp.kexpires)<4)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	for(itc = *_auth_xkeys_list; itc; itc = itc->next_id) {
+		if(itc->kid.len==tmp.kid.len
+				&& strncasecmp(itc->kid.s, tmp.kid.s, tmp.kid.len)==0)
+			break;
+	}
+	if(itc==NULL) {
+		LM_DBG("no key chain id [%.*s]\n", tmp.kid.len, tmp.kid.s);
+		/* add one */
+		if(authx_xkey_insert(&tmp)<0) {
+			LM_ERR("unable to insert the key [%.*s:%.*s]\n",
+				tmp.kid.len, tmp.kid.s, tmp.kname.len, tmp.kname.s);
+			rpc->fault(ctx, 500, "Insert failure");
+			return;
+		}
+		return;
+	}
+	itc->kexpires = time(NULL) + tmp.kexpires;
+	return;
+}
+
+rpc_export_t auth_xkeys_rpc_cmds[] = {
+	{"auth_xkeys_.list",   auth_xkeys_rpc_list,
+		auth_xkeys_rpc_list_doc,   0},
+	{"auth_xkeys_.set",   auth_xkeys_rpc_set,
+		auth_xkeys_rpc_set_doc,   0},
+	{0, 0, 0, 0}
+};
+
+/**
+ *
+ */
+int auth_xkeys_init_rpc(void)
+{
+	if (rpc_register_array(auth_xkeys_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
