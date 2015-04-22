@@ -912,6 +912,7 @@ tlsf_t tlsf_create(void* mem)
 	tlsf_cast(control_t*, mem)->allocated = 0;
 	tlsf_cast(control_t*, mem)->total_size = tlsf_size();
 	tlsf_cast(control_t*, mem)->fragments = 0;
+	tlsf_cast(control_t*, mem)->max_fragments = 0;
 #endif
 	return tlsf_cast(tlsf_t, mem);
 }
@@ -1106,7 +1107,7 @@ void tlsf_meminfo(tlsf_t pool, struct mem_info *info)
 	memset(info, 0, sizeof(*info));
 	info->free = control->total_size - control->real_used;
 	info->max_used = control->max_used;
-	info->real_used = control->max_used;
+	info->real_used = control->real_used;
 	info->total_frags = control->fragments;
 	info->used = control->allocated;
 	info->total_size = control->total_size;

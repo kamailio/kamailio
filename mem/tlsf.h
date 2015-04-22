@@ -64,6 +64,7 @@ int tlsf_check(tlsf_t tlsf);
 int tlsf_check_pool(pool_t pool);
 
 void tlsf_meminfo(tlsf_t pool, struct mem_info *info);
+size_t tlsf_available(tlsf_t pool);
 
 #if defined(__cplusplus)
 };
