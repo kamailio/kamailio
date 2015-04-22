@@ -154,7 +154,7 @@
 #	define MY_SUMS(...) ((void) 0)
 #	define shm_malloc_init(mem, bytes, type) tlsf_create_with_pool((void*) mem, bytes)
 #	define shm_malloc_destroy(b) do{}while(0)
-#	define shm_available() qm_available(shm_block)
+#	define shm_available() tlsf_available(shm_block)
 #	define shm_malloc_on_fork() do{}while(0)
 #else
 #	include "q_malloc.h"
