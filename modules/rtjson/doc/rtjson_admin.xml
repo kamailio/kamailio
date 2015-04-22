@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module facilitates SIP routing based on JSON specifications.
+	</para>
+	<para>
+		The values for R-URI ($ru), outbound proxy ($du) and other attributes
+		used for SIP routing can be retrieved in a JSON document. It is able
+		to process attributes for more than one destination and prepare for
+		routing in serial or parallel fashion.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis> - (optional) transaction management.
+			</para>
+			<para>
+				<emphasis>uac</emphasis> - (optional) user agent operations.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="rtjson.p.xavp_cfg">
+		<title><varname>xavp_cfg</varname> (str)</title>
+		<para>
+			The name of the xavp to be used internally by the module. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is "rtjson".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavp_cfg</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtjson", "xavp_cfg", "myxavp")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="rtjson.f.rtjson_init_routes">
+	    <title>
+		<function moreinfo="none">rtjson_init_routes(rtdoc)</function>
+	    </title>
+	    <para>
+		Initialize routing based on JSON document stored in rtdoc parameter.
+		</para>
+		<para>
+		The rtdoc parameter can be a static string or a dynamic string
+		value with config variables. It has to result in a valid JSON document
+		with the structure specified in chapter 'JSON Routing Structure'.
+		</para>
+			<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>rtjson_init_routes</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtjson_init_routes("$var(json)");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="rtjson.f.rtjson_push_routes">
+	    <title>
+		<function moreinfo="none">rtjson_push_routes()</function>
+	    </title>
+	    <para>
+		Push the routes given in JSON document to rtjson_init_routes(rtdoc) to
+		the internal fields used by &kamailio; for routing.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>rtjson_push_routes</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="rtjson.f.rtjson_next_route">
+	    <title>
+		<function moreinfo="none">rtjson_next_route()</function>
+	    </title>
+	    <para>
+		To be used in failure_route for serial forking, to push the next route
+		to the internal fields used by &kamailio; for routing.
+		</para>
+		<para>
+		This function can be used from FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>rtjson_next_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+...
+failure_route[REROUTE] {
+	rtjson_next_route();
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="rtjson.f.rtjson_update_branch">
+	    <title>
+		<function moreinfo="none">rtjson_update_branch()</function>
+	    </title>
+	    <para>
+		To be used in branch_route if the JSON document had attributes
+		that needs to be set for each branch.
+		</para>
+		<para>
+		This function can be used from BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>rtjson_update_branch</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+...
+branch_route[OUTGOING] {
+	rtjson_update_branch();
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+	<section id="rtjson.json-routing-structure">
+	<title>JSON Routing Structure</title>
+	<para>
+		TBA.
+	</para>
+	</section>
+</chapter>
+

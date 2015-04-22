@@ -1,0 +1,182 @@
+RTJSON Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2015 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. xavp_cfg (str)
+
+        4. Functions
+
+              4.1. rtjson_init_routes(rtdoc)
+              4.2. rtjson_push_routes()
+              4.3. rtjson_next_route()
+              4.4. rtjson_update_branch()
+
+        5. JSON Routing Structure
+
+   List of Examples
+
+   1.1. Set xavp_cfg parameter
+   1.2. rtjson_init_routes usage
+   1.3. rtjson_push_routes usage
+   1.4. rtjson_next_route usage
+   1.5. rtjson_update_branch usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. xavp_cfg (str)
+
+   4. Functions
+
+        4.1. rtjson_init_routes(rtdoc)
+        4.2. rtjson_push_routes()
+        4.3. rtjson_next_route()
+        4.4. rtjson_update_branch()
+
+   5. JSON Routing Structure
+
+1. Overview
+
+   This module facilitates SIP routing based on JSON specifications.
+
+   The values for R-URI ($ru), outbound proxy ($du) and other attributes
+   used for SIP routing can be retrieved in a JSON document. It is able to
+   process attributes for more than one destination and prepare for
+   routing in serial or parallel fashion.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * tm - (optional) transaction management.
+       uac - (optional) user agent operations.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Parameters
+
+   3.1. xavp_cfg (str)
+
+3.1. xavp_cfg (str)
+
+   The name of the xavp to be used internally by the module.
+
+   Default value is "rtjson".
+
+   Example 1.1. Set xavp_cfg parameter
+...
+modparam("rtjson", "xavp_cfg", "myxavp")
+...
+
+4. Functions
+
+   4.1. rtjson_init_routes(rtdoc)
+   4.2. rtjson_push_routes()
+   4.3. rtjson_next_route()
+   4.4. rtjson_update_branch()
+
+4.1. rtjson_init_routes(rtdoc)
+
+   Initialize routing based on JSON document stored in rtdoc parameter.
+
+   The rtdoc parameter can be a static string or a dynamic string value
+   with config variables. It has to result in a valid JSON document with
+   the structure specified in chapter 'JSON Routing Structure'.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.2. rtjson_init_routes usage
+...
+rtjson_init_routes("$var(json)");
+...
+
+4.2. rtjson_push_routes()
+
+   Push the routes given in JSON document to rtjson_init_routes(rtdoc) to
+   the internal fields used by Kamailio for routing.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.3. rtjson_push_routes usage
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+...
+
+4.3. rtjson_next_route()
+
+   To be used in failure_route for serial forking, to push the next route
+   to the internal fields used by Kamailio for routing.
+
+   This function can be used from FAILURE_ROUTE.
+
+   Example 1.4. rtjson_next_route usage
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+...
+failure_route[REROUTE] {
+        rtjson_next_route();
+}
+...
+
+4.4. rtjson_update_branch()
+
+   To be used in branch_route if the JSON document had attributes that
+   needs to be set for each branch.
+
+   This function can be used from BRANCH_ROUTE.
+
+   Example 1.5. rtjson_update_branch usage
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+...
+branch_route[OUTGOING] {
+        rtjson_update_branch();
+}
+...
+
+5. JSON Routing Structure
+
+   TBA.
