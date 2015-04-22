@@ -154,7 +154,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
 	    STR_SHM_DUP(*passed_rx_session_id, aaa->sessionId->data, "cb_passed_rx_session_id");
 	    LM_DBG("passed rx session id [%.*s]", passed_rx_session_id->len, passed_rx_session_id->s);
 
-	    dlgb.register_dlgcb_nodlg(&data->callid, &data->ftag, &data->ttag, DLGCB_TERMINATED | DLGCB_DESTROY | DLGCB_EXPIRED | DLGCB_RESPONSE_WITHIN | DLGCB_CONFIRMED, callback_dialog, (void*) (passed_rx_session_id), free_dialog_data);
+	    dlgb.register_dlgcb_nodlg(&data->callid, &data->ftag, &data->ttag, DLGCB_TERMINATED | DLGCB_DESTROY | DLGCB_EXPIRED | DLGCB_RESPONSE_WITHIN | DLGCB_CONFIRMED | DLGCB_FAILED, callback_dialog, (void*) (passed_rx_session_id), free_dialog_data);
 	} 
         result = CSCF_RETURN_TRUE;
     } else {
