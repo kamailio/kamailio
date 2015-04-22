@@ -4,10 +4,12 @@
 
 
 typedef int (*uac_replace_from_t)(sip_msg_t *, str *, str *);
+typedef int (*uac_replace_to_t)(sip_msg_t *, str *, str *);
 typedef int (*uac_req_send_t)(void);
 
 typedef struct uac_binds {
 	uac_replace_from_t	replace_from;
+	uac_replace_to_t	replace_to;
 	uac_req_send_t      req_send;
 } uac_api_t;
 
