@@ -126,6 +126,7 @@ struct tm_binds {
 	t_append_branches_f	t_append_branches;
 	cmd_function	t_load_contacts;
 	cmd_function	t_next_contacts;
+	tset_fr_f set_fr;
 };
 
 typedef struct tm_binds tm_api_t;

@@ -90,6 +90,7 @@ typedef int (*tget_ti_f)(struct sip_msg*, unsigned int*, unsigned int*);
 typedef int (*tlookup_ident_f)(struct cell**, unsigned int, unsigned int);
 typedef int (*trelease_f)(struct sip_msg*);
 typedef int (*tlookup_callid_f)(struct cell **, str, str);
+typedef int (*tset_fr_f)(struct sip_msg*, unsigned int, unsigned int);
 
 int t_is_local(struct sip_msg*);
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label);
