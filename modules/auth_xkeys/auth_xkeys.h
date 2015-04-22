@@ -30,5 +30,6 @@ int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
 		str *alg, str *data);
 int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 		str *alg, str *data);
+int auth_xkeys_init_rpc(void);
 
 #endif

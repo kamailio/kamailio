@@ -93,6 +93,11 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(auth_xkeys_init_rpc()<0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }
 
