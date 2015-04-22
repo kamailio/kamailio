@@ -9,7 +9,7 @@
 
 <table id="silo" xmlns:db="http://docbook.org/ns/docbook">
     <name>silo</name>
-    <version>7</version>
+    <version>8</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para> This table us used by the msilo module to provide offline message storage More information about the msilo module can be found at: &KAMAILIO_MOD_DOC;msilo.html
