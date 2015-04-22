@@ -2384,7 +2384,7 @@ static const luaL_Reg _sr_msilo_Map [] = {
 /**
  *
  */
-static int lua_sr_uac_replace_from(lua_State *L)
+static int lua_sr_uac_replace_x(lua_State *L, int htype)
 {
 	int ret;
 	sr_lua_env_t *env_L;
@@ -2425,7 +2425,54 @@ static int lua_sr_uac_replace_from(lua_State *L)
 		return app_lua_return_error(L);
 	}
 
-	ret = _lua_uacb.replace_from(env_L->msg, &param[0], &param[1]);
+	if(htype==1) {
+		ret = _lua_uacb.replace_to(env_L->msg, &param[0], &param[1]);
+	} else {
+		ret = _lua_uacb.replace_from(env_L->msg, &param[0], &param[1]);
+	}
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_uac_replace_from(lua_State *L)
+{
+	return lua_sr_uac_replace_x(L, 0);
+}
+
+/**
+ *
+ */
+static int lua_sr_uac_replace_to(lua_State *L)
+{
+	return lua_sr_uac_replace_x(L, 1);
+}
+
+/**
+ *
+ */
+static int lua_sr_uac_req_send(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if (!(_sr_lua_exp_reg_mods & SR_LUA_EXP_MOD_UAC))
+	{
+		LM_WARN("weird:uac function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if (env_L->msg == NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_uacb.req_send();
+
 	return app_lua_return_int(L, ret);
 }
 
@@ -2434,6 +2481,8 @@ static int lua_sr_uac_replace_from(lua_State *L)
  */
 static const luaL_Reg _sr_uac_Map [] = {
 	{"replace_from",lua_sr_uac_replace_from},
+	{"replace_to",lua_sr_uac_replace_to},
+	{"uac_req_send",lua_sr_uac_req_send},
 	{NULL, NULL}
 };
 
@@ -2612,10 +2661,10 @@ static const luaL_Reg _sr_mqueue_Map [] = {
 /**
  *
  */
-static int lua_sr_ndb_mongodb_cmd(lua_State *L)
+static int lua_sr_ndb_mongodb_cmd_x(lua_State *L, int ctype)
 {
-	int ret;
-	str param[6];
+	int ret = 0;
+	str param[6] = {0};
 
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
 	{
@@ -2639,7 +2688,101 @@ static int lua_sr_ndb_mongodb_cmd(lua_State *L)
 	param[4].s = (char *) lua_tostring(L, -1);
 	param[4].len = strlen(param[4].s);
 
-	ret = _lua_ndb_mongodbb.cmd(&param[0], &param[1], &param[2], &param[3], &param[4]);
+	if(ctype==1) {
+		ret = _lua_ndb_mongodbb.cmd_simple(&param[0], &param[1], &param[2], &param[3], &param[4]);
+	} else if(ctype==2) {
+		ret = _lua_ndb_mongodbb.find(&param[0], &param[1], &param[2], &param[3], &param[4]);
+	} else if(ctype==3) {
+		ret = _lua_ndb_mongodbb.find_one(&param[0], &param[1], &param[2], &param[3], &param[4]);
+	} else {
+		ret = _lua_ndb_mongodbb.cmd(&param[0], &param[1], &param[2], &param[3], &param[4]);
+	}
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_ndb_mongodb_cmd(lua_State *L)
+{
+	return lua_sr_ndb_mongodb_cmd_x(L, 0);
+}
+
+/**
+ *
+ */
+static int lua_sr_ndb_mongodb_cmd_simple(lua_State *L)
+{
+	return lua_sr_ndb_mongodb_cmd_x(L, 1);
+}
+
+/**
+ *
+ */
+static int lua_sr_ndb_mongodb_find(lua_State *L)
+{
+	return lua_sr_ndb_mongodb_cmd_x(L, 2);
+}
+
+/**
+ *
+ */
+static int lua_sr_ndb_mongodb_find_one(lua_State *L)
+{
+	return lua_sr_ndb_mongodb_cmd_x(L, 3);
+}
+
+/**
+ *
+ */
+static int lua_sr_ndb_mongodb_next_reply(lua_State *L)
+{
+	int ret = 0;
+	str param[1] = {0};
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
+	{
+		LM_WARN("weird: ndb_mongodb function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)!=1)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+
+	param[0].s = (char *) lua_tostring(L, -1);
+	param[0].len = strlen(param[4].s);
+
+	ret = _lua_ndb_mongodbb.next_reply(&param[0]);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_ndb_mongodb_free_reply(lua_State *L)
+{
+	int ret = 0;
+	str param[1] = {0};
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
+	{
+		LM_WARN("weird: ndb_mongodb function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)!=1)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+
+	param[0].s = (char *) lua_tostring(L, -1);
+	param[0].len = strlen(param[4].s);
+
+	ret = _lua_ndb_mongodbb.free_reply(&param[0]);
+
 	return app_lua_return_int(L, ret);
 }
 
@@ -2648,6 +2791,11 @@ static int lua_sr_ndb_mongodb_cmd(lua_State *L)
  */
 static const luaL_Reg _sr_ndb_mongodb_Map [] = {
 	{"cmd", lua_sr_ndb_mongodb_cmd},
+	{"cmd_simple", lua_sr_ndb_mongodb_cmd_simple},
+	{"find", lua_sr_ndb_mongodb_find},
+	{"find_one", lua_sr_ndb_mongodb_find_one},
+	{"next_reply", lua_sr_ndb_mongodb_next_reply},
+	{"free_reply", lua_sr_ndb_mongodb_free_reply},
 	{NULL, NULL}
 };
 
