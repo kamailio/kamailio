@@ -43,6 +43,7 @@ Daniel-Constantin Mierla
    1.3. rtjson_push_routes usage
    1.4. rtjson_next_route usage
    1.5. rtjson_update_branch usage
+   1.6. JSON Routing Structure
 
 Chapter 1. Admin Guide
 
@@ -179,4 +180,56 @@ branch_route[OUTGOING] {
 
 5. JSON Routing Structure
 
-   TBA.
+   The format of the JSON document containing routing information.
+
+   Description of the fields: TBA.
+
+   Example 1.6. JSON Routing Structure
+...
+{
+        "version": "1.0",
+        "routing": "parallel",
+        "routes": [
+                {
+                        "uri": "sip:127.0.0.1:5080",
+                        "dst_uri": "sip:127.0.0.1:5082",
+                        "path": "<sip:127.0.0.1:5084>, <sip:127.0.0.1:5086>",
+                        "socket": "udp:127.0.0.1:5060",
+                        "headers": {
+                                "from": {
+                                        "display": "Alice",
+                                        "uri": "sip:alice@127.0.0.1"
+                                },
+                                "to": {
+                                        "display": "Alice",
+                                        "uri": "sip:alice@127.0.0.1"
+                                },
+                                "extra": "X-Hdr-A: abc\r\nX-Hdr-B: bcd\r\n"
+                        },
+                        "branch_flags": 8,
+                        "fr_timer": 5000,
+                        "fr_inv_timer": 30000
+                },
+                {
+                        "uri": "sip:127.0.0.1:5080",
+                        "dst_uri": "sip:127.0.0.1:5082",
+                        "path": "<sip:127.0.0.1:5084>, <sip:127.0.0.1:5086>",
+                        "socket": "udp:127.0.0.1:5060",
+                        "headers": {
+                                "from": {
+                                        "display": "Alice",
+                                        "uri": "sip:alice@127.0.0.1"
+                                },
+                                "to": {
+                                        "display": "Alice",
+                                        "uri": "sip:alice@127.0.0.1"
+                                },
+                                "extra": "X-Hdr-A: abc\r\nX-Hdr-B: bcd\r\n"
+                        },
+                        "branch_flags": 8,
+                        "fr_timer": 5000,
+                        "fr_inv_timer": 30000
+                }
+        ]
+}
+...

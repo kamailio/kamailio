@@ -188,8 +188,65 @@ branch_route[OUTGOING] {
 	<section id="rtjson.json-routing-structure">
 	<title>JSON Routing Structure</title>
 	<para>
-		TBA.
+		The format of the JSON document containing routing information.
 	</para>
+	<para>
+		Description of the fields: TBA.
+	</para>
+	<example>
+		<title>JSON Routing Structure</title>
+		<programlisting format="linespecific">
+...
+{
+	"version": "1.0",
+	"routing": "parallel",
+	"routes": [
+		{
+			"uri": "sip:127.0.0.1:5080",
+			"dst_uri": "sip:127.0.0.1:5082",
+			"path": "&lt;sip:127.0.0.1:5084&gt;, &lt;sip:127.0.0.1:5086&gt;",
+			"socket": "udp:127.0.0.1:5060",
+			"headers": {
+				"from": {
+					"display": "Alice",
+					"uri": "sip:alice@127.0.0.1"
+				},
+				"to": {
+					"display": "Alice",
+					"uri": "sip:alice@127.0.0.1"
+				},
+				"extra": "X-Hdr-A: abc\r\nX-Hdr-B: bcd\r\n"
+			},
+			"branch_flags": 8,
+			"fr_timer": 5000,
+			"fr_inv_timer": 30000
+		},
+		{
+			"uri": "sip:127.0.0.1:5080",
+			"dst_uri": "sip:127.0.0.1:5082",
+			"path": "&lt;sip:127.0.0.1:5084&gt;, &lt;sip:127.0.0.1:5086&gt;",
+			"socket": "udp:127.0.0.1:5060",
+			"headers": {
+				"from": {
+					"display": "Alice",
+					"uri": "sip:alice@127.0.0.1"
+				},
+				"to": {
+					"display": "Alice",
+					"uri": "sip:alice@127.0.0.1"
+				},
+				"extra": "X-Hdr-A: abc\r\nX-Hdr-B: bcd\r\n"
+			},
+			"branch_flags": 8,
+			"fr_timer": 5000,
+			"fr_inv_timer": 30000
+		}
+	]
+}
+...
+</programlisting>
+	   </example>
+
 	</section>
 </chapter>
 
