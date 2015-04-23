@@ -102,6 +102,7 @@ EXTRAVERSION = -pre0
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
 # 1 - q_malloc (quick malloc)
+# 2 - tlsf_malloc (O(1) malloc and free)
 MEMMNG ?= 0
 # memory debugger switcher
 # 0 - off (no-debug mode)
@@ -501,6 +502,8 @@ data_target = $(prefix)/$(data_dir)
 #		(not true anymore, q_malloc performs approx. the same)
 # -DF_MALLOC
 #		an even faster malloc, not recommended for debugging
+# -DTLSF_MALLOC=1
+#       an implemetation of the "two levels segregation fit" malloc algorithm
 # -DDL_MALLOC
 #		a malloc implementation based on Doug Lea's dl_malloc
 # -DSF_MALLOC 
@@ -662,6 +665,9 @@ ifeq 	($(MEMDBG), 1)
 		C_DEFS+= -DDBG_QM_MALLOC
 endif
 	C_DEFS+= -DMEM_JOIN_FREE
+else ifeq ($(MEMMNG), 2)
+#	use tlsf malloc
+	C_DEFS+= -DTLSF_MALLOC=1
 else
 #	use f_malloc
 	C_DEFS+= -DF_MALLOC
