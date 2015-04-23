@@ -150,7 +150,7 @@ static const size_t block_size_max = tlsf_cast(size_t, 1) << FL_INDEX_MAX;
 
 #ifdef TLSF_STATS
 	#define TLSF_INCREASE_REAL_USED(control, increment) do {control->real_used += (increment) ; control->max_used = tlsf_max(control->real_used, control->max_used);}while(0)
-	#define TLSF_INCREASE_FRAGMENTS(control) do {control->fragments++ ; control->fragments = tlsf_max(control->fragments, control->max_fragments);}while(0)
+	#define TLSF_INCREASE_FRAGMENTS(control) do {control->fragments++ ; control->max_fragments = tlsf_max(control->fragments, control->max_fragments);}while(0)
 #endif
 
 /* The TLSF control structure. */
