@@ -155,7 +155,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 	}
 
 	np->src_ip.len = strlen(src_ip);
-	np->src_ip.s = (char *) shm_malloc(np->src_ip.len);
+	np->src_ip.s = (char *) shm_malloc(np->src_ip.len+1);
 
 	if (np->src_ip.s == NULL) {
 		LM_CRIT("cannot allocate shm memory for src_ip string\n");
@@ -164,6 +164,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 	}
 
 	(void) strncpy(np->src_ip.s, src_ip, np->src_ip.len);
+	np->src_ip.s[np->src_ip.len] = 0;
 
 	if (pattern) {
 		np->pattern = (char *) shm_malloc(strlen(pattern)+1);
