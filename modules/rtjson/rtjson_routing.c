@@ -29,6 +29,7 @@
 #include "../../xavp.h"
 #include "../../dset.h"
 #include "../../mem/shm_mem.h"
+#include "../../data_lump.h"
 #include "../../lib/srutils/srjson.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/uac/api.h"
@@ -314,6 +315,8 @@ int rtjson_init_serial(sip_msg_t *msg, srjson_doc_t *jdoc, sr_xavp_t *iavp)
 	srjson_t *nj = NULL;
 	srjson_t *rj = NULL;
 	str val;
+	unsigned int bflags = 0;
+	unsigned int old_bflags = 0;
 
 	nj = srjson_GetObjectItem(jdoc, jdoc->root, "routes");
 	if(nj==NULL || nj->type!=srjson_Array || nj->child==NULL) {
@@ -362,6 +365,15 @@ int rtjson_init_serial(sip_msg_t *msg, srjson_doc_t *jdoc, sr_xavp_t *iavp)
 		}
 	}
 
+	rj = srjson_GetObjectItem(jdoc, nj, "branch_flags");
+	if(rj!=NULL && rj->type==srjson_Number && rj->valueint!=0) {
+		bflags = rj->valueint;
+
+		old_bflags = 0;
+		getbflagsval(0, &old_bflags);
+		setbflagsval(0, old_bflags|bflags);
+	}
+
 	iavp->val.v.i++;
 
 	return 0;
@@ -375,6 +387,100 @@ error:
  */
 int rtjson_prepare_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 {
+	srjson_t *rj = NULL;
+	srjson_t *tj = NULL;
+	srjson_t *vj = NULL;
+	str xdsp = {0};
+	str xuri = {0};
+	str xhdr = {0};
+	unsigned int bflags = 0;
+	unsigned int fr = 0;
+	unsigned int fr_inv = 0;
+	struct lump *anchor = NULL;
+	char *s;
+
+
+	if(tmb.set_fr!=NULL) {
+		rj = srjson_GetObjectItem(jdoc, nj, "fr_timer");
+		if(rj!=NULL && rj->type==srjson_Number && rj->valueint!=0) {
+			fr = rj->valueint;
+		}
+		rj = srjson_GetObjectItem(jdoc, nj, "fr_inv_timer");
+		if(rj!=NULL && rj->type==srjson_Number && rj->valueint!=0) {
+			fr_inv = rj->valueint;
+		}
+		if(fr || fr_inv) tmb.set_fr(msg, fr_inv, fr);
+	}
+	rj = srjson_GetObjectItem(jdoc, nj, "headers");
+	if(rj==NULL || rj->type!=srjson_Object || rj->child==NULL) {
+		LM_DBG("no header operations - done\n");
+		return 0;
+	}
+
+	tj = srjson_GetObjectItem(jdoc, rj, "extra");
+	if(tj!=NULL && tj->type==srjson_String && tj->valuestring!=0) {
+		xhdr.s =  tj->valuestring;
+		xhdr.len = strlen(xhdr.s);
+	}
+
+	if(xhdr.len>4) {
+		anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+		if(anchor == 0) {
+			LM_ERR("can't get anchor\n");
+			return -1;
+		}
+		s = pkg_malloc(xhdr.len+1);
+		if(s==NULL) {
+			LM_ERR("no more pkg\n");
+			return -1;
+		}
+		strncpy(s, xhdr.s, xhdr.len);
+		s[xhdr.len] = '\0';
+		if (insert_new_lump_before(anchor, s, xhdr.len, 0) == 0) {
+			LM_ERR("can't insert lump\n");
+			pkg_free(s);
+			return -1;
+		}
+	}
+
+	if(uacb.replace_from!=NULL) {
+		tj = srjson_GetObjectItem(jdoc, rj, "from");
+		if(tj!=NULL && tj->type==srjson_Object && rj->child!=NULL) {
+			vj = srjson_GetObjectItem(jdoc, tj, "display");
+			if(vj!=NULL && vj->type==srjson_String && vj->valuestring!=0) {
+				xdsp.s =  vj->valuestring;
+				xdsp.len = strlen(xdsp.s);
+			}
+			vj = srjson_GetObjectItem(jdoc, tj, "uri");
+			if(vj!=NULL && vj->type==srjson_String && vj->valuestring!=0) {
+				xuri.s =  vj->valuestring;
+				xuri.len = strlen(xuri.s);
+			}
+			if(xdsp.len>0 || xuri.len>0) {
+				uacb.replace_from(msg, &xdsp, &xuri);
+			}
+		}
+	}
+
+	if(uacb.replace_to!=NULL) {
+		tj = srjson_GetObjectItem(jdoc, rj, "to");
+		if(tj!=NULL && tj->type==srjson_Object && rj->child!=NULL) {
+			vj = srjson_GetObjectItem(jdoc, tj, "display");
+			if(vj!=NULL && vj->type==srjson_String && vj->valuestring!=0) {
+				xdsp.s =  vj->valuestring;
+				xdsp.len = strlen(xdsp.s);
+			}
+			vj = srjson_GetObjectItem(jdoc, tj, "uri");
+			if(vj!=NULL && vj->type==srjson_String && vj->valuestring!=0) {
+				xuri.s =  vj->valuestring;
+				xuri.len = strlen(xuri.s);
+			}
+			if(xdsp.len>0 || xuri.len>0) {
+				uacb.replace_from(msg, &xdsp, &xuri);
+			}
+		}
+	}
+
 	return 0;
 }
 
