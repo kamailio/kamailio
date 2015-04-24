@@ -51,6 +51,8 @@
 		struct fm_block* mem_block = 0;
 	#elif defined DL_MALLOC
 		/* don't need this */
+	#elif defined TLSF_MALLOC
+		tlsf_t mem_block = 0;
 	#else
 		struct qm_block* mem_block = 0;
 	#endif
@@ -75,6 +77,8 @@ int init_pkg_mallocs(void)
 			mem_block=fm_malloc_init(mem_pool, pkg_mem_size, MEM_TYPE_PKG);
 	#elif DL_MALLOC
 		/* don't need this */
+	#elif TLSF_MALLOC
+		mem_block = tlsf_create_with_pool(mem_pool, pkg_mem_size);
 	#else
 		if (mem_pool)
 			mem_block=qm_malloc_init(mem_pool, pkg_mem_size, MEM_TYPE_PKG);
