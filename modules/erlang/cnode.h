@@ -84,6 +84,8 @@ typedef struct csockfd_handler_s
 	ei_cnode ec; /* erlang C node (actually it's kamailio node) */
 } csockfd_handler_t;
 
+extern csockfd_handler_t *csocket_handler;
+
 int init_cnode_sockets(int idx);
 void cnode_main_loop(int idx);
 
@@ -95,6 +97,7 @@ int wait_cnode_tmo(handler_common_t *phandler_t);
 int destroy_cnode(handler_common_t *phandler_t);
 
 int cnode_connect_to(cnode_handler_t *phandler, ei_cnode *ec, const str *nodename );
+int enode_connect();
 
 enum erl_handle_type {
 	ERL_EPMD_H = 1,
