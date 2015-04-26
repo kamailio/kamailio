@@ -541,10 +541,11 @@ static int mod_init(void)
 		return -1;
 	}
 	if(pv_init_rpc()!=0)
-        {
-                LM_ERR("failed to register RPC commands\n");
-                return -1;
-        }
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+    }
+	pv_init_sbranch();
 
 	return 0;
 }

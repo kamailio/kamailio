@@ -27,7 +27,12 @@
 #include "pv_core.h"
 #include "pv_branch.h"
 
-static branch_t _pv_sbranch = {0};
+static branch_t _pv_sbranch;
+
+void pv_init_sbranch(void)
+{
+	memset(&_pv_sbranch, 0, sizeof(branch_t));
+}
 
 int pv_get_branchx_helper(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res, int btype)
@@ -46,6 +51,9 @@ int pv_get_branchx_helper(sip_msg_t *msg, pv_param_t *param,
 			return pv_get_null(msg, param, res);
 		}
 		br = get_sip_branch(idx);
+		if(br==NULL) {
+			return pv_get_null(msg, param, res);
+		}
 	}
 
 	/* branch(count) doesn't need a valid branch, everything else does */
@@ -685,10 +693,7 @@ int sbranch_append(sip_msg_t *msg)
 {
 	str uri = {0};
 	str duri = {0};
-	int lq = 0;
 	str path = {0};
-	unsigned int fl = 0;
-	struct socket_info* fsocket = NULL;
 	str ruid = {0};
 	str location_ua = {0};
 	branch_t *br;
