@@ -46,6 +46,7 @@ int pv_parse_nh_name(pv_spec_p sp, str *in);
 
 int sbranch_set_ruri(sip_msg_t *msg);
 int sbranch_append(sip_msg_t *msg);
+void pv_init_sbranch(void);
 int sbranch_reset(void);
 
 #endif
