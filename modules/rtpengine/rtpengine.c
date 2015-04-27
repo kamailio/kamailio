@@ -43,6 +43,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "../../flags.h"
 #include "../../sr_module.h"
@@ -172,6 +175,10 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
+static int get_ip_type(char *str_addr);
+static int get_ip_scope(char *str_addr); // useful for link-local ipv6
+static int bind_force_send_ip(int sock_idx);
+
 /* Pseudo-Variables */
 static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
@@ -219,7 +226,7 @@ static pv_spec_t*     write_sdp_pvar = NULL;
 
 
 char* force_send_ip_str="";
-
+int force_send_ip_af = AF_UNSPEC;
 
 typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
@@ -317,6 +324,140 @@ struct module_exports exports = {
 	child_init
 };
 
+
+static int get_ip_type(char *str_addr)
+{
+	struct addrinfo hint, *info = NULL;
+	int ret;
+
+	memset(&hint, '\0', sizeof hint);
+	hint.ai_family = PF_UNSPEC;
+	hint.ai_flags = AI_NUMERICHOST;
+
+	ret = getaddrinfo(str_addr, NULL, &hint, &info);
+	if (ret) {
+		/* Invalid ip addinfos */
+		return -1;
+	}
+
+	if(info->ai_family == AF_INET) {
+		LM_DBG("%s is an ipv4 addinfos\n", str_addr);
+	} else if (info->ai_family == AF_INET6) {
+		LM_DBG("%s is an ipv6 addinfos\n", str_addr);
+	} else {
+		LM_DBG("%s is an unknown addinfos format AF=%d\n",str_addr, info->ai_family);
+		return -1;
+	}
+
+	ret = info->ai_family;
+
+	freeaddrinfo(info);
+
+	return ret;
+}
+
+
+static int get_ip_scope(char *str_addr)
+{
+	struct ifaddrs *ifaddr, *ifa;
+	struct sockaddr_in6 *in6;
+	char str_if_ip[NI_MAXHOST];
+	int ret = -1;
+
+	if (getifaddrs(&ifaddr) == -1) {
+		LM_ERR("getifaddrs() failed: %s\n", gai_strerror(ret));
+		return -1;
+	}
+
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+		in6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+
+		if (ifa->ifa_addr == NULL)
+			continue;
+
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+
+		ret = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6),
+		str_if_ip, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+		if (ret != 0) {
+			LM_ERR("getnameinfo() failed: %s\n", gai_strerror(ret));
+			return -1;
+		}
+
+		if (strstr(str_if_ip, str_addr)) {
+			LM_INFO("dev: %-8s address: <%s> scope %d\n",
+			ifa->ifa_name, str_if_ip, in6->sin6_scope_id);
+			ret = in6->sin6_scope_id;
+			break;
+		}
+	}
+
+	freeifaddrs(ifaddr);
+
+	return ret;
+}
+
+
+static int bind_force_send_ip(int sock_idx)
+{
+	struct sockaddr_in tmp, ip4addr;
+	struct sockaddr_in6 tmp6, ip6addr;
+	char str_addr[INET_ADDRSTRLEN];
+	char str_addr6[INET6_ADDRSTRLEN];
+	socklen_t sock_len = sizeof(struct sockaddr);
+	int ret, scope;
+
+	switch (force_send_ip_af) {
+		case AF_INET:
+			memset(&ip4addr, 0, sizeof(ip4addr));
+			ip4addr.sin_family = AF_INET;
+			ip4addr.sin_port = htons(0);
+			inet_pton(AF_INET, force_send_ip_str, &ip4addr.sin_addr);
+
+			if (bind(rtpp_socks[sock_idx], (struct sockaddr*)&ip4addr, sizeof(ip4addr)) < 0) {
+				LM_ERR("can't bind socket to required ipv4 interface\n");
+				return -1;
+			}
+
+			memset(&tmp, 0, sizeof(tmp));
+			getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp, &sock_len);
+			inet_ntop(AF_INET, &tmp.sin_addr, str_addr, INET_ADDRSTRLEN);
+			LM_INFO("Binding on %s:%d\n", str_addr, ntohs(tmp.sin_port));
+
+			break;
+
+		case AF_INET6:
+			if ((scope = get_ip_scope(force_send_ip_str)) < 0) {
+				LM_ERR("can't get the ipv6 interface scope\n");
+				return -1;
+			}
+			memset(&ip6addr, 0, sizeof(ip6addr));
+			ip6addr.sin6_family = AF_INET6;
+			ip6addr.sin6_port = htons(0);
+			ip6addr.sin6_scope_id = scope;
+			inet_pton(AF_INET6, force_send_ip_str, &ip6addr.sin6_addr);
+
+			if ((ret = bind(rtpp_socks[sock_idx], (struct sockaddr*)&ip6addr, sizeof(ip6addr))) < 0) {
+				LM_ERR("can't bind socket to required ipv6 interface\n");
+				LM_ERR("ret=%d errno=%d\n", ret, errno);
+				return -1;
+			}
+
+			memset(&tmp6, 0, sizeof(tmp6));
+			getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp6, &sock_len);
+			inet_ntop(AF_INET6, &tmp6.sin6_addr, str_addr6, INET6_ADDRSTRLEN);
+			LM_INFO("Binding on ipv6 %s:%d\n", str_addr6, ntohs(tmp6.sin6_port));
+
+			break;
+
+		default:
+			LM_INFO("force_send_ip_str not specified in .cfg file!\n");
+			break;
+	}
+
+	return 0;
+}
 
 
 static inline int str_eq(const str *p, const char *q) {
@@ -799,7 +940,6 @@ mod_init(void)
 	pv_spec_t *avp_spec;
 	unsigned short avp_flags;
 	str s;
-	unsigned char ip_buff[sizeof(struct in6_addr)];
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -899,12 +1039,14 @@ mod_init(void)
 		memset(&tmb, 0, sizeof(struct tm_binds));
 	}
 
-	if ( 0 != strlen(force_send_ip_str)) {
-		if ( inet_pton(AF_INET, force_send_ip_str, ip_buff) <= 0) {
-			LM_ERR("Invalid IP address for force_send_interface <%s>\n", force_send_ip_str);
-			return -1;
-		}
+	/* Determine IP addr type (IPv4 or IPv6 allowed) */
+	force_send_ip_af = get_ip_type(force_send_ip_str);
+	if (force_send_ip_af != AF_INET && force_send_ip_af != AF_INET6 &&
+			strlen(force_send_ip_str) > 0) {
+		LM_ERR("%s is an unknown address\n", force_send_ip_str);
+		return -1;
 	}
+
 	return 0;
 }
 
@@ -917,8 +1059,6 @@ child_init(int rank)
 	struct addrinfo hints, *res;
 	struct rtpp_set  *rtpp_list;
 	struct rtpp_node *pnode;
-	struct sockaddr_in tmp, ip4addr;
-	socklen_t sock_len = sizeof(struct sockaddr);
 
 	if(rtpp_set_list==NULL )
 		return 0;
@@ -975,38 +1115,28 @@ child_init(int rank)
 
 			rtpp_socks[pnode->idx] = socket((pnode->rn_umode == 6)
 			    ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
-			if ( rtpp_socks[pnode->idx] == -1) {
+			if (rtpp_socks[pnode->idx] == -1) {
 				LM_ERR("can't create socket\n");
 				freeaddrinfo(res);
 				return -1;
 			}
 
-			if (strlen(force_send_ip_str)!=0) {
-				memset(&ip4addr, 0, sizeof(ip4addr));
-				ip4addr.sin_family = AF_INET;
-				ip4addr.sin_port = htons(0);
-				inet_pton(AF_INET, force_send_ip_str, &ip4addr.sin_addr);
-
-				if (bind(rtpp_socks[pnode->idx], (struct sockaddr*)&ip4addr, sizeof(ip4addr)) <0) {
-					LM_ERR("can't bind socket to required interface \n");
-					close( rtpp_socks[pnode->idx] );
-					rtpp_socks[pnode->idx] = -1;
-					freeaddrinfo(res);
-					return -1;
-				}
-
-				memset(&tmp, 0, sizeof(tmp)); sock_len = sizeof(struct sockaddr);
-				getsockname(rtpp_socks[pnode->idx], (struct sockaddr *) &tmp, &sock_len);
-				LM_INFO("Binding on %s:%d\n", inet_ntoa(tmp.sin_addr), ntohs(tmp.sin_port));
-			}
-
-			if (connect( rtpp_socks[pnode->idx], res->ai_addr, res->ai_addrlen) == -1) {
-				LM_ERR("can't connect to a RTP proxy\n");
-				close( rtpp_socks[pnode->idx] );
+			if (bind_force_send_ip(pnode->idx) == -1) {
+				LM_ERR("can't bind socket\n");
+				close(rtpp_socks[pnode->idx]);
 				rtpp_socks[pnode->idx] = -1;
 				freeaddrinfo(res);
 				return -1;
 			}
+
+			if (connect(rtpp_socks[pnode->idx], res->ai_addr, res->ai_addrlen) == -1) {
+				LM_ERR("can't connect to a RTP proxy\n");
+				close(rtpp_socks[pnode->idx]);
+				rtpp_socks[pnode->idx] = -1;
+				freeaddrinfo(res);
+				return -1;
+			}
+
 			freeaddrinfo(res);
 rptest:
 			pnode->rn_disabled = rtpp_test(pnode, 0, 1);
