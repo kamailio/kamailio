@@ -1141,7 +1141,7 @@ if(ds_list_exist("10")) {
 			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>ds_mark_dst</function> usage</title>
+		<title><function>ds_is_from_list</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(ds_is_from_list()) {
@@ -1150,7 +1150,10 @@ if(ds_is_from_list()) {
 if(ds_is_from_list("10")) {
     ...
 }
-if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
+if(ds_is_from_list("10", "3")) {
+    ...
+}
+if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
     ...
 }
 ...
