@@ -162,7 +162,7 @@ Alessandro Arrichiello
    1.34. ds_select_dst usage
    1.35. ds_mark_dst usage
    1.36. ds_list_exist usage
-   1.37. ds_mark_dst usage
+   1.37. ds_is_from_list usage
    1.38. ds_load_unset usage
    1.39. dispatcher list file
    1.40. Kamailio config script - sample dispatcher usage
@@ -784,7 +784,7 @@ Note
    4.8. ds_load_update()
    4.9. ds_load_unset()
 
-4.1. ds_select_dst(set, alg[, limit])
+4.1.  ds_select_dst(set, alg[, limit])
 
    The method selects a destination from addresses set. It returns true if
    a new destination is set. The selected address is set to dst_uri field
@@ -856,7 +856,7 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
-4.2. ds_select_domain(set, alg[, limit])
+4.2.  ds_select_domain(set, alg[, limit])
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
@@ -869,21 +869,21 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.3. ds_next_dst()
+4.3.  ds_next_dst()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.4. ds_next_domain()
+4.4.  ds_next_domain()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.5. ds_mark_dst([state])
+4.5.  ds_mark_dst([state])
 
    Mark the last used address from destination set as inactive ("i"/"I"),
    active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T"). Apart of
@@ -920,7 +920,7 @@ failure_route[tryagain] {
 }
 ...
 
-4.6. ds_list_exist(groupid)
+4.6.  ds_list_exist(groupid)
 
    Check if a specific group is defined in dispatcher list or database.
      * groupid - A group ID to check.
@@ -934,7 +934,7 @@ if(ds_list_exist("10")) {
 }
 ...
 
-4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
+4.7.  ds_is_from_list([groupid [, mode [, uri] ] ])
 
    This function returns true, if there is a match of source address or
    uri with an address in the given group of the dispatcher-list;
@@ -970,7 +970,7 @@ if(ds_list_exist("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.37. ds_mark_dst usage
+   Example 1.37. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -978,12 +978,15 @@ if(ds_is_from_list()) {
 if(ds_is_from_list("10")) {
     ...
 }
-if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
+if(ds_is_from_list("10", "3")) {
+    ...
+}
+if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
     ...
 }
 ...
 
-4.8. ds_load_update()
+4.8.  ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -994,7 +997,7 @@ if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.9. ds_load_unset()
+4.9.  ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
@@ -1031,7 +1034,7 @@ onreply_route {
    5.2. ds_list
    5.3. ds_reload
 
-5.1. ds_set_state
+5.1.  ds_set_state
 
    Sets the status for a destination address (can be use to mark the
    destination as active or inactive).
@@ -1056,7 +1059,7 @@ onreply_route {
                 _address_
                 _empty_line_
 
-5.2. ds_list
+5.2.  ds_list
 
    It lists the groups and included destinations.
 
@@ -1068,7 +1071,7 @@ onreply_route {
                 :ds_list:_reply_fifo_file_
                 _empty_line_
 
-5.3. ds_reload
+5.3.  ds_reload
 
    It reloads the groups and included destinations. For algorithm 10 (call
    load distribution), old internal list of active calls is destroyed
@@ -1088,7 +1091,7 @@ onreply_route {
    6.2. dispatcher.list
    6.3. dispatcher.reload
 
-6.1. dispatcher.set_state
+6.1.  dispatcher.set_state
 
    Sets the state for a destination address (can be use to mark the
    destination as active or inactive).
@@ -1112,7 +1115,7 @@ onreply_route {
 kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 ...
 
-6.2. dispatcher.list
+6.2.  dispatcher.list
 
    Lists the groups and included destinations.
 
@@ -1123,7 +1126,7 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
    Example:
                 kamcmd dispatcher.list
 
-6.3. dispatcher.reload
+6.3.  dispatcher.reload
 
    Reloads the groups and included destinations. The command is disabled
    for call load based dispatching (algorithm 10) since removal of
@@ -1510,7 +1513,7 @@ failure_route[RTF_DISPATCH] {
    8.1. dispatcher:dst-down
    8.2. dispatcher:dst-up
 
-8.1. dispatcher:dst-down
+8.1.  dispatcher:dst-down
 
    When defined, the module calls event_route[dispatcher:ds-down] when a
    destination goes down (becomes probing). A typical use case is to
@@ -1521,7 +1524,7 @@ event_route[dispatcher:dst-down] {
 }
 ...
 
-8.2. dispatcher:dst-up
+8.2.  dispatcher:dst-up
 
    When defined, the module calls event_route[dispatcher:ds-up] when a
    destination that was previously down (probing) comes up. A typical use
@@ -1542,51 +1545,51 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   Does dispatcher provide a fair distribution?
+       Does dispatcher provide a fair distribution?
 
-   The algoritms doing hashing over parts of SIP message don't guarantee a
-   fair distribution. You should do some measurements to decide what
-   hashing algorithm fits better in your environment.
+       The algoritms doing hashing over parts of SIP message don't guarantee a
+       fair distribution. You should do some measurements to decide what
+       hashing algorithm fits better in your environment.
 
-   Other distribution algorithms such as round robin or call load
-   dispatching do a fair distribution in terms of delivered calls to
-   gateways.
+       Other distribution algorithms such as round robin or call load
+       dispatching do a fair distribution in terms of delivered calls to
+       gateways.
 
    2.2.
 
-   Is dispatcher dialog stateful?
+       Is dispatcher dialog stateful?
 
-   No. Dispatcher is stateless, although some distribution algorithms are
-   designed to select same destination for subsequent requests of the same
-   dialog (e.g., hashing the call-id).
+       No. Dispatcher is stateless, although some distribution algorithms are
+       designed to select same destination for subsequent requests of the same
+       dialog (e.g., hashing the call-id).
 
    2.3.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.4.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable version should be sent to
-   <sr-users@lists.sip-router.org> and e-mail regarding development
-   versions or GIT snapshots should be send to
-   <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable version should be sent to
+       <sr-users@lists.sip-router.org> and e-mail regarding development
+       versions or GIT snapshots should be send to
+       <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    2.5.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at: http://sip-router.org/tracker
+       Please follow the guidelines provided at: http://sip-router.org/tracker
