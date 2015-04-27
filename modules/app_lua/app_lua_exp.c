@@ -2765,7 +2765,7 @@ static int lua_sr_ndb_mongodb_next_reply(lua_State *L)
 static int lua_sr_ndb_mongodb_free_reply(lua_State *L)
 {
 	int ret = 0;
-	str param[1] = {0};
+	str param[1];
 
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
 	{
