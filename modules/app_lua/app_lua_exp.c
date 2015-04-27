@@ -2664,7 +2664,7 @@ static const luaL_Reg _sr_mqueue_Map [] = {
 static int lua_sr_ndb_mongodb_cmd_x(lua_State *L, int ctype)
 {
 	int ret = 0;
-	str param[6] = {0};
+	str param[6];
 
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
 	{
@@ -2738,7 +2738,7 @@ static int lua_sr_ndb_mongodb_find_one(lua_State *L)
 static int lua_sr_ndb_mongodb_next_reply(lua_State *L)
 {
 	int ret = 0;
-	str param[1] = {0};
+	str param[1];
 
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
 	{
