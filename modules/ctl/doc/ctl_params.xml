@@ -63,7 +63,8 @@
 		setting the parameter multiple times.
 	</para>
 	<para>
-		<emphasis>Default:</emphasis>"unix:/tmp/&ctlsocket;" (Unix stream socket).
+		<emphasis>Default:</emphasis>
+		"unix:/var/run/&kamailiobinary;/&kamailiobinary;_ctl" (Unix stream socket).
 		The default value is used <emphasis>only</emphasis> if no
 		<varname>binrpc</varname> parameter is found in the config file.
 	</para>
