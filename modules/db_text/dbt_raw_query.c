@@ -49,9 +49,9 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 	int ncols = 0;
 	int nc = 0;
 	db_key_t *result_cols = NULL;
-	db_key_t* _k;
-	db_op_t* _op;
-	db_val_t* _v;
+	db_key_t* _k = NULL;
+	db_op_t* _op = NULL;
+	db_val_t* _v = NULL;
 
     fields_end_ptr = strcasestr(_s->s, " from ");
     if(fields_end_ptr == NULL)
