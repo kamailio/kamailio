@@ -93,7 +93,14 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
     memset(c, 0, sizeof (ucontact_t));
     
     c->lock = lock_alloc();
-    c->lock = lock_init(c->lock);
+    if (c->lock==0){
+        goto error;
+    }
+    if (lock_init(c->lock)==0){
+	lock_dealloc(c->lock);
+	c->lock=0;
+	goto error;
+    }
 
     //setup callback list
     c->cbs = (struct ulcb_head_list*) shm_malloc(sizeof (struct ulcb_head_list));
