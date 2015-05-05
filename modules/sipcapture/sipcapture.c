@@ -1098,6 +1098,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	_capture_mode_data_t *c = NULL;
         char strftime_buf[128];
         time_t tvsec_;
+         struct tm capt_ts;
 
 
 	c = (cm_data)? cm_data:capture_def;
