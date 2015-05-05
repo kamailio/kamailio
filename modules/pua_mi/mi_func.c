@@ -42,7 +42,9 @@
  *		<expires>
  *		<event package>
  *		<content_type>     - body type if body of a type different from default
- *                            event content-type or . 
+ *		                     event content-type or .
+ *		<id>               - id for a series of related PUBLISHes to the same
+ *		                     presentity-uri or .
  *		<ETag>             - ETag that publish should match or . if no ETag
  *		<extra_headers>    - extra headers to be added to the request or .
  *		<publish_body>     - may not be present in case of update for expire
