@@ -265,9 +265,13 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 		<para>
 			Forces all control messages between the &sip; proxy and
 			the &rtp; proxy to be sent from the specified local
-			interface. Only IPv4 addresses are supported so far. If
+			interface. Both IPv4 and IPv6 addresses are supported. If
 			not specified, the default interface selected by the
 			operating system will be used.
+			Note: when rtpengine_sock is a IPv6 link-local address,
+			one _must_ set this parameter in order to successfully connect to RTP engine.
+			This is necessarely because OS needs additional scope_id hint to communicate
+			over IPv6 link locals. The scope_id is resolved based on the given IPv6.
 		</para>
 		<para>
 			There is no default value.
@@ -277,6 +281,7 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 <programlisting format="linespecific">
 ...
 modparam("rtpengine", "force_send_interface", "10.3.7.123")
+modparam("rtpengine", "force_send_interface", "2001:8d8:1ff:10c0:9a90:96ff:fea8:fd99")
 ...
 </programlisting>
 		</example>
