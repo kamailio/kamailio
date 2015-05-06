@@ -22,6 +22,7 @@ CREATE TABLE location (
     server_id NUMBER(10) DEFAULT 0 NOT NULL,
     connection_id NUMBER(10) DEFAULT 0 NOT NULL,
     keepalive NUMBER(10) DEFAULT 0 NOT NULL,
+    partition NUMBER(10) DEFAULT 0 NOT NULL,
     CONSTRAINT location_ruid_idx  UNIQUE (ruid)
 );
 

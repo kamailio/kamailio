@@ -881,6 +881,7 @@
 		<column><field>server_id</field><type>DB1_INT</type></column>
 		<column><field>connection_id</field><type>DB1_INT</type></column>
 		<column><field>keepalive</field><type>DB1_INT</type></column>
+		<column><field>partition</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of location_attrs table-->
 	<db_table id="location_attrs">
@@ -4318,6 +4319,7 @@
 				<col><field>server_id</field></col>
 				<col><field>connection_id</field></col>
 				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -4345,6 +4347,7 @@
 				<col><field>server_id</field></col>
 				<col><field>connection_id</field></col>
 				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -4375,6 +4378,7 @@
 				<col><field>server_id</field></col>
 				<col><field>connection_id</field></col>
 				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

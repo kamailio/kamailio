@@ -24,6 +24,7 @@
 		<column><field>server_id</field><type>DB1_INT</type></column>
 		<column><field>connection_id</field><type>DB1_INT</type></column>
 		<column><field>keepalive</field><type>DB1_INT</type></column>
+		<column><field>partition</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of location_attrs table-->
 	<db_table id="location_attrs">
