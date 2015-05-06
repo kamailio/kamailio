@@ -2752,7 +2752,7 @@ static int lua_sr_ndb_mongodb_next_reply(lua_State *L)
 	}
 
 	param[0].s = (char *) lua_tostring(L, -1);
-	param[0].len = strlen(param[4].s);
+	param[0].len = strlen(param[0].s);
 
 	ret = _lua_ndb_mongodbb.next_reply(&param[0]);
 
@@ -2779,7 +2779,7 @@ static int lua_sr_ndb_mongodb_free_reply(lua_State *L)
 	}
 
 	param[0].s = (char *) lua_tostring(L, -1);
-	param[0].len = strlen(param[4].s);
+	param[0].len = strlen(param[0].s);
 
 	ret = _lua_ndb_mongodbb.free_reply(&param[0]);
 
