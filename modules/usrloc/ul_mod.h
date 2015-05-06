@@ -61,6 +61,7 @@ extern str reg_id_col;
 extern str srv_id_col;
 extern str con_id_col;
 extern str keepalive_col;
+extern str partition_col;
 extern str last_mod_col;
 
 extern str ulattrs_user_col;
