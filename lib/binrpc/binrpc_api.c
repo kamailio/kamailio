@@ -1151,6 +1151,7 @@ int binrpc_response_to_text(
 		goto error;
 	}
 
+	memset(&val, 0, sizeof(struct binrpc_val));
 	resp_handle->in_pkt.offset = resp_handle->in_pkt.in_struct = resp_handle->in_pkt.in_array = 0;
 	
 	p=resp_handle->reply_buf;
