@@ -204,6 +204,15 @@
     </column>
 
 
+    <column>
+        <name>partition</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value to of the partition for keep alive requests</description>
+    </column>
+
+
     <index>
         <name>account_contact_idx</name>
         <colref linkend="username"/>
