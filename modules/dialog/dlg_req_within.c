@@ -264,6 +264,10 @@ void dlg_ka_cb(struct cell* t, int type, struct tmcb_params* ps){
 	}
 
 	if(ps->code==408 || ps->code==481) {
+		if (dlg->state != DLG_STATE_CONFIRMED) {
+			LM_DBG("skip updating non-confirmed dialogs\n");
+			goto done;
+		}
 		if(update_dlg_timer(&dlg->tl, 10)<0) {
 			LM_ERR("failed to update dialog lifetime\n");
 			goto done;
