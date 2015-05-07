@@ -81,6 +81,7 @@ int create_orig_avps(route_data_t* route_data) {
     create_response_avp_string("ix_outgoing_trunk_id", &route_data->outgoing_trunk_id);
     create_response_avp_string("ix_route_id", &route_data->route_id);
     create_response_avp_string("ix_external_trunk_id", &route_data->external_trunk_id);
+    create_response_avp_string("ix_is_ported", &route_data->is_ported);
     
     return 1;
 }

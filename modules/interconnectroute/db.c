@@ -4,11 +4,13 @@
 db1_con_t * interconnectroute_dbh = NULL;
 db_func_t interconnectroute_dbf;
 
-static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID, TTO.INTERNAL_ID as TO_TRUNK_ID, RT.ROUTE_ID as ROUTE_ID, TTO.EXTERNAL_ID as EXTERNAL_PARTNER_ID from "
+static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID, TTO.INTERNAL_ID as TO_TRUNK_ID, RT.ROUTE_ID as ROUTE_ID, TTO.EXTERNAL_ID as EXTERNAL_PARTNER_ID, "
+"if (PORT.NUMBER IS NULL,'N','Y') AS PORTED from "
 "service_rate SR "
 "join interconnect_trunk TFROM on TFROM.INTERCONNECT_PARTNER_ID = SR.FROM_INTERCONNECT_PARTNER_ID "
 "join interconnect_trunk TTO on TTO.INTERCONNECT_PARTNER_ID = SR.TO_INTERCONNECT_PARTNER_ID "
 "join interconnect_route RT on TTO.EXTERNAL_ID = RT.EXTERNAL_ID "
+"LEFT JOIN ported_number PORT on PORT.NUMBER = '%.*s' "
 "where "
 "FROM_INTERCONNECT_PARTNER_ID = "
 "( "
@@ -165,7 +167,7 @@ int get_orig_route_data(str* a_number, str* b_number, str* leg, str* sc, ix_rout
     db1_res_t* route_rs;
     db_row_t* route_row;
     db_val_t* route_vals;
-    str query_s, incoming_trunk_id, outgoing_trunk_id, route_id, external_trunk_id;
+    str query_s, incoming_trunk_id, outgoing_trunk_id, route_id, external_trunk_id, is_ported;
     route_data_t* new_route;
     ix_route_list_t* route_list = new_route_list();
     int num_rows;
@@ -176,7 +178,7 @@ int get_orig_route_data(str* a_number, str* b_number, str* leg, str* sc, ix_rout
 	return -1;
     }
     
-    snprintf(query, QUERY_LEN, orig_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, b_number->len, b_number->s,
+    snprintf(query, QUERY_LEN, orig_route_data_query, b_number->len, b_number->s, a_number->len, a_number->s, a_number->len, a_number->s, b_number->len, b_number->s,
 	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s);
     query_s.s = query;
     query_s.len = strlen(query);
@@ -220,8 +222,13 @@ int get_orig_route_data(str* a_number, str* b_number, str* leg, str* sc, ix_rout
 		    external_trunk_id.len = strlen(external_trunk_id.s);
 		    LM_DBG("external_trunk_id: [%.*s]\n", external_trunk_id.len, external_trunk_id.s);
 		}
+                if (!VAL_NULL(route_vals+4)) {
+		    is_ported.s = (char*) VAL_STRING(route_vals+4);
+                    is_ported.len = strlen(is_ported.s);
+		    LM_DBG("ported is: [%.*s]\n", is_ported.len, is_ported.s);
+		}
                 
-		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, &route_id, &external_trunk_id);
+		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, &route_id, &external_trunk_id, &is_ported);
 		if (!new_route) {
 		    LM_DBG("Could not get new route... continuing\n");
 		    continue;
@@ -316,7 +323,7 @@ int get_term_route_data(str* a_number, str* b_number, str* leg, str* sc, str* ex
 		    LM_DBG("external_trunk_id: [%.*s]\n", external_trunk_id.len, external_trunk_id.s);
 		}
 		
-		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, 0, &external_trunk_id);
+		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, 0, &external_trunk_id, 0);
 		if (!new_route) {
 		    LM_DBG("Could not get new route... continuing\n");
 		    continue;

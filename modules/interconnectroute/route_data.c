@@ -23,11 +23,12 @@ int free_route_list (ix_route_list_t* ix_route_list) {
     return 1;
 }
 
-route_data_t* new_route_data(str* incoming_trunk_id, str* outgoing_trunk_id, str* route_id, str* external_trunk_id) {
+route_data_t* new_route_data(str* incoming_trunk_id, str* outgoing_trunk_id, str* route_id, str* external_trunk_id, str* is_ported) {
     struct route_data* route_data;
     char *p;
     int len = sizeof(struct route_data) + incoming_trunk_id->len + outgoing_trunk_id->len +  external_trunk_id->len;
     if(route_id) len = len + route_id->len;
+    if(is_ported) len = len + is_ported->len;
     
     route_data = (struct route_data*)pkg_malloc(len);
     if (!route_data) {
@@ -60,6 +61,13 @@ route_data_t* new_route_data(str* incoming_trunk_id, str* outgoing_trunk_id, str
     memcpy(p, external_trunk_id->s, external_trunk_id->len);
     route_data->external_trunk_id.len = external_trunk_id->len;
     p+= external_trunk_id->len;
+    
+    if (is_ported) {
+        route_data->is_ported.s = p;
+        memcpy(p, is_ported->s, is_ported->len);
+        route_data->is_ported.len = is_ported->len;
+        p+= is_ported->len;
+    }    
     
     if (p != (((char*) route_data) + len)) {
         LM_CRIT("buffer overflow\n");
