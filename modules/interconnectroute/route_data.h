@@ -13,6 +13,7 @@
 typedef struct route_data {
     str     incoming_trunk_id;
     str     outgoing_trunk_id;
+    str     external_trunk_id;
     str     route_id;
     struct route_data* next;
     struct route_data* prev;
@@ -24,7 +25,7 @@ typedef struct ix_route_list {
     int count;
 } ix_route_list_t;
 
-route_data_t* new_route_data(str* incoming_trunk_id, str* outgoing_trunk_id, str* route_id);
+route_data_t* new_route_data(str* incoming_trunk_id, str* outgoing_trunk_id, str* route_id, str* external_trunk_id);
 ix_route_list_t* new_route_list();
 int add_route(struct ix_route_list* list, struct route_data* route);
 int free_route_data(route_data_t* route_data);

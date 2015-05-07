@@ -80,12 +80,15 @@ int create_orig_avps(route_data_t* route_data) {
     create_response_avp_string("ix_incoming_trunk_id", &route_data->incoming_trunk_id);
     create_response_avp_string("ix_outgoing_trunk_id", &route_data->outgoing_trunk_id);
     create_response_avp_string("ix_route_id", &route_data->route_id);
+    create_response_avp_string("ix_external_trunk_id", &route_data->external_trunk_id);
+    
     return 1;
 }
 
 int create_term_avps(route_data_t* route_data) {
     create_response_avp_string("ix_incoming_trunk_id", &route_data->incoming_trunk_id);
     create_response_avp_string("ix_outgoing_trunk_id", &route_data->outgoing_trunk_id);
+    create_response_avp_string("ix_external_trunk_id", &route_data->external_trunk_id);
     return 1;
 }
 
@@ -208,6 +211,10 @@ int ix_orig_trunk_query(struct sip_msg* msg) {
     create_orig_avps(ix_route_list->first);
     
     free_route_list(ix_route_list);
+    
+    if(free_called_asserted_identity) {
+	if(called_asserted_identity.s) shm_free(called_asserted_identity.s);// shm_malloc in cscf_get_public_identity_from_requri
+    }  
 
     return 1;
     
@@ -335,6 +342,10 @@ int ix_term_trunk_query(struct sip_msg* msg, char* ext_trunk_id) {
     
     free_route_list(ix_route_list);
 
+    if(free_called_asserted_identity) {
+	if(called_asserted_identity.s) shm_free(called_asserted_identity.s);// shm_malloc in cscf_get_public_identity_from_requri
+    } 
+    
     return 1;
     
         

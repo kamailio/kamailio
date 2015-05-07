@@ -4,7 +4,7 @@
 db1_con_t * interconnectroute_dbh = NULL;
 db_func_t interconnectroute_dbf;
 
-static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID, TTO.INTERNAL_ID as TO_TRUNK_ID, RT.ROUTE_ID as ROUTE_ID from "
+static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID, TTO.INTERNAL_ID as TO_TRUNK_ID, RT.ROUTE_ID as ROUTE_ID, TTO.EXTERNAL_ID as EXTERNAL_PARTNER_ID from "
 "service_rate SR "
 "join interconnect_trunk TFROM on TFROM.INTERCONNECT_PARTNER_ID = SR.FROM_INTERCONNECT_PARTNER_ID "
 "join interconnect_trunk TTO on TTO.INTERCONNECT_PARTNER_ID = SR.TO_INTERCONNECT_PARTNER_ID "
@@ -25,7 +25,6 @@ static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "SELECT FROM_INTERCONNECT_PARTNER_ID AS IPID, PRIORITY "
 "FROM service_rate "
 "WHERE '%.*s' like concat(FROM_PREFIX,'%') "
-" AND SERVICE_CODE = '%.*s' AND LEG='%.*s' "
 "ORDER BY length(FROM_PREFIX) desc limit 1 "
 ") "
 ") "
@@ -46,7 +45,6 @@ static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "UNION "
 "( "
 "SELECT TO_INTERCONNECT_PARTNER_ID AS IPID, PRIORITY "
-" AND SERVICE_CODE = '%.*s' AND LEG='%.*s' "
 "FROM service_rate "
 "WHERE '%.*s' like concat(TO_PREFIX,'%') "
 "ORDER BY length(TO_PREFIX) desc limit 1 "
@@ -60,7 +58,7 @@ static char *orig_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "and SR.LEG = '%.*s' "
 "order by SR.PRIORITY DESC, RT.PRIORITY DESC LIMIT 1;";
 
-static char *term_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID, TTO.INTERNAL_ID as TO_TRUNK_ID from "
+static char *term_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID, TTO.INTERNAL_ID as TO_TRUNK_ID, TFROM.EXTERNAL_ID as EXTERNAL_PARTNER_ID from "
 "service_rate SR "
 "join interconnect_trunk TFROM on TFROM.INTERCONNECT_PARTNER_ID = SR.FROM_INTERCONNECT_PARTNER_ID "
 "join interconnect_trunk TTO on TTO.INTERCONNECT_PARTNER_ID = SR.TO_INTERCONNECT_PARTNER_ID "
@@ -80,7 +78,6 @@ static char *term_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "SELECT FROM_INTERCONNECT_PARTNER_ID AS IPID, PRIORITY "
 "FROM service_rate "
 "WHERE '%.*s' like concat(FROM_PREFIX,'%') "
-" AND SERVICE_CODE = '%.*s' AND LEG='%.*s' "
 "ORDER BY length(FROM_PREFIX) desc limit 1 "
 ") "
 ") "
@@ -103,7 +100,6 @@ static char *term_route_data_query = "select TFROM.INTERNAL_ID as FROM_TRUNK_ID,
 "SELECT TO_INTERCONNECT_PARTNER_ID AS IPID, PRIORITY "
 "FROM service_rate "
 "WHERE '%.*s' like concat(TO_PREFIX,'%') "
-" AND SERVICE_CODE = '%.*s' AND LEG='%.*s' "
 "ORDER BY length(TO_PREFIX) desc limit 1 "
 ") "
 ") "
@@ -169,22 +165,19 @@ int get_orig_route_data(str* a_number, str* b_number, str* leg, str* sc, ix_rout
     db1_res_t* route_rs;
     db_row_t* route_row;
     db_val_t* route_vals;
-    str query_s, incoming_trunk_id, outgoing_trunk_id, route_id;
+    str query_s, incoming_trunk_id, outgoing_trunk_id, route_id, external_trunk_id;
     route_data_t* new_route;
     ix_route_list_t* route_list = new_route_list();
     int num_rows;
     
 
-    if (strlen(orig_route_data_query) + a_number->len + a_number->len + b_number->len + b_number->len + (3*leg->len) + (3*sc->len) > QUERY_LEN) {
+    if (strlen(orig_route_data_query) + a_number->len + a_number->len + b_number->len + b_number->len + leg->len + sc->len > QUERY_LEN) {
 	LM_ERR("query too big\n");
 	return -1;
     }
     
-    snprintf(query, QUERY_LEN, orig_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, 
-            sc->len, sc->s, leg->len, leg->s,
-            b_number->len, b_number->s,
-	    sc->len, sc->s, leg->len, leg->s,
-            b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s);
+    snprintf(query, QUERY_LEN, orig_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, b_number->len, b_number->s,
+	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s);
     query_s.s = query;
     query_s.len = strlen(query);
 
@@ -222,8 +215,13 @@ int get_orig_route_data(str* a_number, str* b_number, str* leg, str* sc, ix_rout
 		    route_id.len = strlen(route_id.s);
 		    LM_DBG("route_id: [%.*s]\n", route_id.len, route_id.s);
 		}
-		
-		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, &route_id);
+		if (!VAL_NULL(route_vals+3)) {
+		    external_trunk_id.s = (char*) VAL_STRING(route_vals+3);
+		    external_trunk_id.len = strlen(external_trunk_id.s);
+		    LM_DBG("external_trunk_id: [%.*s]\n", external_trunk_id.len, external_trunk_id.s);
+		}
+                
+		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, &route_id, &external_trunk_id);
 		if (!new_route) {
 		    LM_DBG("Could not get new route... continuing\n");
 		    continue;
@@ -266,22 +264,19 @@ int get_term_route_data(str* a_number, str* b_number, str* leg, str* sc, str* ex
     db1_res_t* route_rs;
     db_row_t* route_row;
     db_val_t* route_vals;
-    str query_s, incoming_trunk_id, outgoing_trunk_id;
+    str query_s, incoming_trunk_id, outgoing_trunk_id, external_trunk_id;
     route_data_t* new_route;
     ix_route_list_t* route_list = new_route_list();
     int num_rows;
     
 
-    if (strlen(term_route_data_query) + a_number->len + a_number->len + b_number->len + a_number->len + (3*leg->len) + (3*sc->len) + ext_trunk_id->len > QUERY_LEN) {
+    if (strlen(term_route_data_query) + a_number->len + a_number->len + b_number->len + a_number->len + leg->len + sc->len + ext_trunk_id->len > QUERY_LEN) {
 	LM_ERR("query too big\n");
 	return -1;
     }
     
-    snprintf(query, QUERY_LEN, term_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, 
-            sc->len, sc->s, leg->len, leg->s,
-            b_number->len, b_number->s,
-	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s,
-            sc->len, sc->s, leg->len, leg->s, ext_trunk_id->len, ext_trunk_id->s);
+    snprintf(query, QUERY_LEN, term_route_data_query, a_number->len, a_number->s, a_number->len, a_number->s, b_number->len, b_number->s,
+	    b_number->len, b_number->s, sc->len, sc->s, leg->len, leg->s, ext_trunk_id->len, ext_trunk_id->s);
     query_s.s = query;
     query_s.len = strlen(query);
 
@@ -315,8 +310,13 @@ int get_term_route_data(str* a_number, str* b_number, str* leg, str* sc, str* ex
 		    outgoing_trunk_id.len = strlen(outgoing_trunk_id.s);
 		    LM_DBG("outgoing_trunk_id: [%.*s]\n", outgoing_trunk_id.len, outgoing_trunk_id.s);
 		}
+                if (!VAL_NULL(route_vals+2)) {
+		    external_trunk_id.s = (char*) VAL_STRING(route_vals+1);
+		    external_trunk_id.len = strlen(external_trunk_id.s);
+		    LM_DBG("external_trunk_id: [%.*s]\n", external_trunk_id.len, external_trunk_id.s);
+		}
 		
-		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, 0);
+		new_route = new_route_data(&incoming_trunk_id, &outgoing_trunk_id, 0, &external_trunk_id);
 		if (!new_route) {
 		    LM_DBG("Could not get new route... continuing\n");
 		    continue;
