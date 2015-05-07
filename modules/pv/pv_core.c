@@ -1968,8 +1968,13 @@ int pv_set_scriptvar(struct sip_msg* msg, pv_param_t *param,
 	}
 	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
-		avp_val.n = 0;
-		set_var_value((script_var_t*)param->pvn.u.dname, &avp_val, 0);
+		if(((script_var_t*)param->pvn.u.dname)->v.flags&VAR_TYPE_NULL)
+		{
+			set_var_value((script_var_t*)param->pvn.u.dname, NULL, 0);
+		} else {
+			avp_val.n = 0;
+			set_var_value((script_var_t*)param->pvn.u.dname, &avp_val, 0);
+		}
 		return 0;
 	}
 	flags = 0;
