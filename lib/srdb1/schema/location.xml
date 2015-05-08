@@ -9,7 +9,7 @@
 
 <table id="location" xmlns:db="http://docbook.org/ns/docbook">
     <name>location</name>
-    <version>7</version>
+    <version>8</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Persistent user location information for the usrloc module. More information can be found at: &KAMAILIO_MOD_DOC;usrloc.html
