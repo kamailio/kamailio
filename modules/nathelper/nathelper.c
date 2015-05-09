@@ -929,8 +929,8 @@ set_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 		pkg_free(buf);
 		return -1;
 	}
-	c->uri.s = buf;
-	c->uri.len = len;
+	c->uri.s = buf + br;
+	c->uri.len = len -2*br;
 
 	return 1;
 }
