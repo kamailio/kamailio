@@ -453,9 +453,11 @@ typedef struct cell
 	/* recursive reply lock count */
 	int reply_rec_lock_level;
 
+#ifdef ENABLE_ASYNC_MUTEX
 	/* protect against concurrent async continues */
 	ser_lock_t   async_mutex;
-		
+#endif
+
 	ticks_t fr_timeout;     /* final response interval for retr_bufs */
 	ticks_t fr_inv_timeout; /* final inv. response interval for retr_bufs */
 #ifdef TM_DIFF_RT_TIMEOUT
