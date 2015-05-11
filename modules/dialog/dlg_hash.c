@@ -190,8 +190,9 @@ int dlg_ka_run(ticks_t ti)
 		if(*dlg_ka_list_head == *dlg_ka_list_tail) {
 			*dlg_ka_list_head = NULL;
 			*dlg_ka_list_tail = NULL;
+		} else {
+			*dlg_ka_list_head = dka->next;
 		}
-		*dlg_ka_list_head = dka->next;
 		lock_release(dlg_ka_list_lock);
 
 		/* send keep-alive for dka */
@@ -200,10 +201,16 @@ int dlg_ka_run(ticks_t ti)
 			shm_free(dka);
 			dka = NULL;
 		} else {
-			if(dka->iflags & DLG_IFLAG_KA_SRC)
-				dlg_send_ka(dlg, DLG_CALLER_LEG, 0);
-			if(dka->iflags & DLG_IFLAG_KA_DST)
-				dlg_send_ka(dlg, DLG_CALLEE_LEG, 0);
+			if((dka->iflags & DLG_IFLAG_KA_SRC)
+					&& (dlg->state==DLG_STATE_CONFIRMED))
+				dlg_send_ka(dlg, DLG_CALLER_LEG);
+			if((dka->iflags & DLG_IFLAG_KA_DST)
+					&& (dlg->state==DLG_STATE_CONFIRMED))
+				dlg_send_ka(dlg, DLG_CALLEE_LEG);
+			if(dlg->state==DLG_STATE_DELETED) {
+				shm_free(dka);
+				dka = NULL;
+			}
 			dlg_release(dlg);
 		}
 		/* append to tail */
