@@ -452,7 +452,7 @@ static int bind_force_send_ip(int sock_idx)
 			break;
 
 		default:
-			LM_INFO("force_send_ip_str not specified in .cfg file!\n");
+			LM_DBG("force_send_ip_str not specified in .cfg file!\n");
 			break;
 	}
 
