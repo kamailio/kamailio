@@ -203,10 +203,10 @@ int dlg_ka_run(ticks_t ti)
 		} else {
 			if((dka->iflags & DLG_IFLAG_KA_SRC)
 					&& (dlg->state==DLG_STATE_CONFIRMED))
-				dlg_send_ka(dlg, DLG_CALLER_LEG);
+				dlg_send_ka(dlg, DLG_CALLER_LEG, 0);
 			if((dka->iflags & DLG_IFLAG_KA_DST)
 					&& (dlg->state==DLG_STATE_CONFIRMED))
-				dlg_send_ka(dlg, DLG_CALLEE_LEG);
+				dlg_send_ka(dlg, DLG_CALLEE_LEG, 0);
 			if(dlg->state==DLG_STATE_DELETED) {
 				shm_free(dka);
 				dka = NULL;
