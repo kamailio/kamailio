@@ -393,7 +393,6 @@ int rtjson_prepare_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 	str xdsp = {0};
 	str xuri = {0};
 	str xhdr = {0};
-	unsigned int bflags = 0;
 	unsigned int fr = 0;
 	unsigned int fr_inv = 0;
 	struct lump *anchor = NULL;
@@ -574,7 +573,6 @@ int rtjson_next_route(sip_msg_t *msg)
 	srjson_t *nj = NULL;
 	str val;
 	str xname;
-	int ret;
 	int i;
 
 	xname.s = "json";
@@ -621,8 +619,10 @@ int rtjson_next_route(sip_msg_t *msg)
 		goto error;
 	}
 
+	i = 0;
 	while(nj && i<iavp->val.v.i) {
 		nj = nj->next;
+		i++;
 	}
 	if(nj==NULL)
 		goto error;
@@ -650,7 +650,6 @@ int rtjson_update_branch(sip_msg_t *msg)
 	srjson_t *nj = NULL;
 	str val;
 	str xname;
-	int ret;
 	int i;
 
 	xname.s = "json";
@@ -697,8 +696,10 @@ int rtjson_update_branch(sip_msg_t *msg)
 		goto error;
 	}
 
+	i = 0;
 	while(nj && i<iavp->val.v.i) {
 		nj = nj->next;
+		i++;
 	}
 	if(nj==NULL)
 		goto error;
