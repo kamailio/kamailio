@@ -1144,7 +1144,7 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 		if ((!t->uac[b].request.buffer) && (t->uac[b].last_received>=200))
 			continue;
 		/* there is still an unfinished UAC transaction (we ignore unfinished blind UACs) wait now! */
-		if ( t->uac[b].last_received<200 && !((t->flags&T_ASYNC_CONTINUE) && b==t->async_backup.blind_uac))
+		if ( t->uac[b].last_received<200)
 			return -2;
 		/* if reply is null => t_send_branch "faked" reply, skip over it */
 		if ( rpl && 
