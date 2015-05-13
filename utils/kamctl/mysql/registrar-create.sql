@@ -22,7 +22,7 @@ CREATE TABLE aliases (
     server_id INT(11) DEFAULT 0 NOT NULL,
     connection_id INT(11) DEFAULT 0 NOT NULL,
     keepalive INT(11) DEFAULT 0 NOT NULL,
-    partition INT(11) DEFAULT 0 NOT NULL,
+    `partition` INT(11) DEFAULT 0 NOT NULL,
     CONSTRAINT ruid_idx UNIQUE (ruid)
 );
 
