@@ -39,6 +39,14 @@
 #include "../../data_lump_rpl.h"
 
 
+#ifdef ENABLE_ASYNC_MUTEX
+#define LOCK_ASYNC_CONTINUE(_t) lock(&(_t)->async_mutex )
+#define UNLOCK_ASYNC_CONTINUE(_t) unlock(&(_t)->async_mutex )
+#else
+#define LOCK_ASYNC_CONTINUE(_t) LOCK_REPLIES(_t)
+#define UNLOCK_ASYNC_CONTINUE(_t) UNLOCK_REPLIES(_t)
+#endif
+
 /* Suspends the transaction for later use.
  * Save the returned hash_index and label to get
  * back to the SIP request processing, see the readme.
@@ -177,6 +185,13 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		return 1;
 	}
 
+	/* The transaction has to be locked to protect it
+	 * form calling t_continue() multiple times simultaneously */
+	LOCK_ASYNC_CONTINUE(t);
+
+	t->flags |= T_ASYNC_CONTINUE;   /* we can now know anywhere in kamailio 
+					 * that we are executing post a suspend */
+	
 	/* which route block type were we in when we were suspended */
 	cb_type =  FAILURE_CB_TYPE;;
 	switch (t->async_backup.backup_route) {
@@ -204,6 +219,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 				/* Either t_continue() has already been
 				* called or the branch has already timed out.
 				* Needless to continue. */
+				UNLOCK_ASYNC_CONTINUE(t);
 				UNREF(t); /* t_unref would kill the transaction */
 				return 1;
 			}
@@ -373,6 +389,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	}
 
 done:
+	UNLOCK_ASYNC_CONTINUE(t);
+
 	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
 		/* unref the transaction */
 		t_unref(t->uas.request);
@@ -431,8 +449,11 @@ kill_trans:
 			"reply generation failed\n");
 		/* The transaction must be explicitely released,
 		 * no more timer is running */
+		UNLOCK_ASYNC_CONTINUE(t);
 		t_release_transaction(t);
-	} 
+	} else {
+		UNLOCK_ASYNC_CONTINUE(t);
+	}
 
 	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
 		t_unref(t->uas.request);
