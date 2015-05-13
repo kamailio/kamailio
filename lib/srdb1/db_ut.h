@@ -131,9 +131,10 @@ int db_str2time(const char* _s, time_t* _v);
  * \param _l length of the target
  * \param _c keys that should be printed
  * \param _n number of keys
+ * \param _tq char to quote special tokens or empty string
  * \return the length of the printed result on success, negative on errors
  */
-int db_print_columns(char* _b, const int _l, const db_key_t* _c, const int _n);
+int db_print_columns(char* _b, const int _l, const db_key_t* _c, const int _n, const char *_tq);
 
 
 /**
