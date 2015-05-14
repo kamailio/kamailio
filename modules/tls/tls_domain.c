@@ -1310,7 +1310,7 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 		}
 		if ((p->port==0 || p->port == port) && ip_addr_cmp(&p->ip, ip)) {
 			if(sname && sname->len>0) {
-				if(p->server_name.len==sname->len
+				if(p->server_name.s && p->server_name.len==sname->len
 					&& strncasecmp(p->server_name.s, sname->s, sname->len)==0) {
 					LM_DBG("socket+server_name based TLS server domain found\n");
 					return p;
