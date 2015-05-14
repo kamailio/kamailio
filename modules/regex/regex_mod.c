@@ -281,9 +281,8 @@ static int load_pcres(int action)
 		fclose(f);
 		goto err;
 	}
-	for (i=0; i<max_groups; i++) {
-		patterns[i] = NULL;
-	}
+	memset(patterns, 0, sizeof(char*) * max_groups);
+
 	for (i=0; i<max_groups; i++) {
 		if ((patterns[i] = pkg_malloc(sizeof(char) * group_max_size)) == 0) {
 			LM_ERR("no more memory for patterns[%d]\n", i);
