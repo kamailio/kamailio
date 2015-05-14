@@ -241,7 +241,7 @@ modparam("erlang", "trace_level", 5)
 					<varname>type</varname>
 					<para>
 						get variable type. Possible types are: <emphasis>atom, integer,
-						list, string</emphasis> and <emphasis>tuple</emphasis>.
+						list, string</emphasis>, <emphasis>tuple</emphasis> and <emphasis>pid</emphasis>.
 					</para>
 				</listitem>
 				<listitem>
@@ -390,6 +390,24 @@ xlogl("L_DEBUG","length(T): $tuple(T=>length), format(T): $tuple(T=>format)\n");
 &gt; log output is:
 ...
 DEBUG: &lt;script&gt;: 153:length(T): 2, format(T): {line, [{id, 23}, {owner, "Bob"}]}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.v.pid">
+			<title><varname>$pid(name)</varname></title>
+			<para>
+				<emphasis>pid</emphasis> holds Eralng process identifier. Provides
+				access to pid value and could be used in send message.
+			</para>
+			<example>
+				<title>Example of using pid</title>
+				<programlisting format="linespecific">
+...
+if ($xbuff(msg[0]=>type) == "pid") {
+	$pid(pid) = $xbuff(msg[0]);
+	xlogl("L_INFO","Received PID: $pid(pid=>format)\n");
+}
 ...
 				</programlisting>
 			</example>
@@ -553,8 +571,9 @@ INFO: &lt;script&gt;: 951:Received message: {"hello", "Kamailio"}
 			from erlang node.
 		</para>
 		<para>
-			Event route receive message in <varname>$xbuff(msg)</varname>. Reply
-			variable is optional and can be sent with <emphasis>erl_reply</emphasis>.
+			Event route receives message in <varname>$xbuff(msg)</varname> and sender
+			process in <varname>$xbuff(pid)</varname>. Reply message is optional
+			and can be sent with <emphasis>erl_reply</emphasis>.
 		</para>
 		<section>
 			<title>Registered pseudo process</title>
