@@ -233,6 +233,10 @@ static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l, struct 
 		LM_DBG("one more hf processed\n");
 	} /* header loop */
 
+	if(total_len==0) {
+		LM_DBG("empty result\n");
+		goto error;
+	}
 
 	/* construct a single header block now */
 	ret=pkg_malloc(total_len);
