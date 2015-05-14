@@ -733,6 +733,10 @@ int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list)
 		lst = crt;
 	}
 
+	if(lst==NULL) {
+		LM_ERR("cannot link the xavp\n");
+		return -1;
+	}
 	xavp->next = lst->next;
 	lst->next = xavp;
 
