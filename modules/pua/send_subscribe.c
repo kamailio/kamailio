@@ -888,7 +888,7 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 
 	CONT_COPY(hentity, hentity->contact, subs->contact)
 
-	if(subs->outbound_proxy)
+	if(subs->outbound_proxy && subs->outbound_proxy->len && subs->outbound_proxy->s)
 	{
 		hentity->outbound_proxy= (str*)((char*)hentity+ size);
 		size+= sizeof(str);
@@ -908,7 +908,7 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 		CONT_COPY(hentity, hentity->remote_contact, subs->remote_contact)
 	}
 
-	if(subs->extra_headers)
+	if(subs->extra_headers && subs->extra_headers->s)
 	{
 		hentity->extra_headers= (str*)((char*)hentity+ size);
 		size+= sizeof(str);
