@@ -41,8 +41,8 @@
  */
 int sock_get_ttl(int sock)
 {
-	int ioptval;
-	unsigned int ioptvallen;
+	int ioptval = 0;
+	unsigned int ioptvallen = 0;
 
 	ioptvallen=sizeof(ioptval);
 	if (getsockopt( sock, IPPROTO_IP, IP_TTL, (void*) &ioptval,
@@ -60,7 +60,7 @@ int sock_get_ttl(int sock)
  */
 int sock_set_ttl(int sock, int ttl)
 {
-	int ioptval;
+	int ioptval = 0;
 
 	if (setsockopt( sock, IPPROTO_IP, IP_TTL, (void*) &ioptval,
 					sizeof(ioptval)) == -1 )
