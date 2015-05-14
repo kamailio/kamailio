@@ -230,7 +230,9 @@ int fix_switch(struct action* t)
 				LM_DBG("default only switch optimized away (BLOCK_T)\n");
 				return 0;
 			}
-			LM_DBG("default only switch with side-effect...\n");
+			LM_CRIT("default only switch with side-effect not expected at this point\n");
+			ret=E_BUG;
+			goto error;
 		}else{
 			LM_CRIT("empty switch not expected at this point\n");
 			ret=E_BUG;
@@ -545,7 +547,9 @@ static int fix_match(struct action* t)
 				LM_DBG("default only switch optimized away (BLOCK_T)\n");
 				return 0;
 			}
-			LM_DBG("default only switch with side-effect...\n");
+			LM_CRIT("default only switch with side-effect not expected at this point\n");
+			ret=E_BUG;
+			goto error;
 		}else{
 			LM_CRIT("empty switch not expected at this point\n");
 			ret=E_BUG;
