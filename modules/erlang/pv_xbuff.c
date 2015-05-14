@@ -41,6 +41,7 @@ str xbuff_types[] = {
 		STR_STATIC_INIT("string"),
 		STR_STATIC_INIT("tuple"),
 		STR_STATIC_INIT("list"),
+		STR_STATIC_INIT("pid"),
 		STR_NULL
 };
 
@@ -53,6 +54,8 @@ static str xbuff_list=str_init("[xbuffs]");
 
 static int counter;
 static char *xbuff_fmt_buff = NULL;
+
+void xbuff_data_free(void *p, sr_xavp_sfree_f sfree);
 
 sr_xavp_t *xavp_get_xbuffs()
 {
@@ -103,7 +106,7 @@ sr_xavp_t *xbuff_new(str *name)
  */
 int compile_xbuff_re()
 {
-	char *pattern = "^<<\\(tuple\\|list\\|atom\\):\\(0x[[:xdigit:]]\\+\\)>>$";
+	char *pattern = "^<<\\(tuple\\|list\\|atom\\|pid\\):\\(0x[[:xdigit:]]\\+\\)>>$";
 	size_t bfsz = 128;
 	char errbuff[128];
 	int e;
@@ -147,6 +150,8 @@ int xbuff_match_type_re(str *s, xbuff_type_t *type, sr_xavp_t **addr)
 			t = XBUFF_TYPE_LIST;
 		} else if (STR_EQ(tname,xbuff_types[XBUFF_TYPE_TUPLE])) {
 			t = XBUFF_TYPE_TUPLE;
+		} else if (STR_EQ(tname,xbuff_types[XBUFF_TYPE_PID])) {
+			t = XBUFF_TYPE_PID;
 		} else {
 			LM_ERR("BUG: unknown xbuff type");
 			return -1;
@@ -320,17 +325,13 @@ int pv_xbuff_new_xavp(sr_xavp_t **new, pv_value_t *pval, int *counter, char pref
 				if (!cxavp)
 					return -1;
 
-				if (type == XBUFF_TYPE_ATOM) {
-					nval.type = SR_XTYPE_XAVP;
-					nval.v.xavp = cxavp;
-				} else {
-					nval = cxavp->val;
+				nval = cxavp->val;
 
-					/* free overhead */
-					cxavp->next = NULL;
-					cxavp->val.v.xavp = NULL;
-					xavp_destroy_list(&cxavp);
-				}
+				/* free overhead */
+				cxavp->next = NULL;
+				cxavp->val.v.xavp = NULL;
+				xavp_destroy_list(&cxavp);
+
 				break;
 			case XBUFF_TYPE_TUPLE:
 				s[0] = 't';
@@ -341,17 +342,22 @@ int pv_xbuff_new_xavp(sr_xavp_t **new, pv_value_t *pval, int *counter, char pref
 				if (!cxavp)
 					return -1;
 
-				if (type == XBUFF_TYPE_ATOM) {
-					nval.type = SR_XTYPE_XAVP;
-					nval.v.xavp = cxavp;
-				} else {
-					nval = cxavp->val;
+				nval = cxavp->val;
 
-					/* free overhead */
-					cxavp->next = NULL;
-					cxavp->val.v.xavp = NULL;
-					xavp_destroy_list(&cxavp);
+				/* free overhead */
+				cxavp->next = NULL;
+				cxavp->val.v.xavp = NULL;
+				xavp_destroy_list(&cxavp);
+				break;
+			case XBUFF_TYPE_PID:
+				s[0] = 'p';
+				nval.type = SR_XTYPE_DATA;
+				nval.v.data = (sr_data_t*)shm_malloc(sizeof(sr_data_t)+sizeof(erlang_pid));
+				if (!nval.v.data) {
+					LM_ERR("not enough shared memory\n");
+					return -1;
 				}
+				memcpy((void*)nval.v.data,(void*)xavp,sizeof(sr_data_t)+sizeof(erlang_pid));
 				break;
 			case XBUFF_TYPE_INT:
 			case XBUFF_TYPE_STR:
@@ -399,6 +405,9 @@ int pv_xbuff_get_type(struct sip_msg *msg, pv_param_t *param,
 		break;
 	case 't':
 		return pv_get_strval(msg, param, res, &xbuff_types[XBUFF_TYPE_TUPLE]);
+		break;
+	case 'p':
+		return pv_get_strval(msg, param, res, &xbuff_types[XBUFF_TYPE_PID]);
 		break;
 	}
 
@@ -584,6 +593,17 @@ int pv_xbuff_get_value(struct sip_msg *msg, pv_param_t *param,
 		if(snprintf(_pv_xavp_buf, 128, "%lld", avp->val.v.ll)<0)
 			return pv_get_null(msg, param, res);
 		break;
+	case SR_XTYPE_DATA:
+		switch (avp->name.s[0]) {
+		case 'p':
+			if(snprintf(_pv_xavp_buf, 128, "<<pid:%p>>", avp->val.v.data)<0)
+				return pv_get_null(msg, param, res);
+			break;
+		default:
+			if(snprintf(_pv_xavp_buf, 128, "<<binary:%p>>", avp->val.v.data)<0)
+				return pv_get_null(msg, param, res);
+		}
+		break;
 	case SR_XTYPE_XAVP:
 		switch(avp->name.s[0]) {
 		case 't':
@@ -599,10 +619,6 @@ int pv_xbuff_get_value(struct sip_msg *msg, pv_param_t *param,
 //			LM_ERR("unexpected type!\n");
 //			return pv_get_null(msg, param, res);
 		}
-		break;
-	case SR_XTYPE_DATA:
-		if(snprintf(_pv_xavp_buf, 128, "<<binary:%p>>", avp->val.v.data)<0)
-			return pv_get_null(msg, param, res);
 		break;
 	default:
 		return pv_get_null(msg, param, res);
@@ -883,6 +899,9 @@ int xavp_encode(ei_x_buff *xbuff, sr_xavp_t *xavp,int level)
 			if (xavp_encode(xbuff, xavp->val.v.xavp, level + 1)) return -1;
 			ei_x_encode_empty_list(xbuff);
 			break;
+		case 'p':
+			ei_x_encode_pid(xbuff,xavp->val.v.data->p);
+			break;
 		case 'n':
 			ei_x_encode_atom(xbuff,"undefined");
 			break;
@@ -911,11 +930,12 @@ int xavp_decode(ei_x_buff *xbuff, int *index, sr_xavp_t **xavp,int level)
 	sr_xavp_t **tail;
 	sr_xavp_t *new;
 	char *pbuf=0;
-	erlang_pid pid;
+	erlang_pid *pid;
 	erlang_ref ref;
 	erlang_fun fun;
 	double d;
 	char *p = NULL;
+	sr_data_t *data;
 
 	name.s = _s;
 
@@ -1068,16 +1088,45 @@ int xavp_decode(ei_x_buff *xbuff, int *index, sr_xavp_t **xavp,int level)
 		break;
 
 	case ERL_PID_EXT:
+		name.len = snprintf(_s,sizeof(_s),"p%d",counter++);
+
+		data = (sr_data_t*)shm_malloc(sizeof(sr_data_t)+sizeof(erlang_pid));
+		if (!data) {
+			LM_ERR("not enough shared memory\n");
+			goto err;
+		}
+
+		memset((void*)data,0,sizeof(sr_data_t)+sizeof(erlang_pid));
+
+		data->p = pid = (void*)data+sizeof(sr_data_t);
+		data->pfree = xbuff_data_free;
+
+		if (ei_decode_pid(xbuff->buff,index,pid)<0) {
+			LM_ERR("failed to decode pid\n");
+			shm_free(data);
+			goto err;
+		}
+
+		val.type = SR_XTYPE_DATA;
+		val.v.data = data;
+
+		*xavp = xavp_new_value(&name,&val);
+		if (!*xavp) {
+			LM_ERR("failed to create new xavp!\n");
+			shm_free(data);
+			goto err;
+		}
+
+		break;
 	case ERL_REFERENCE_EXT:
 	case ERL_NEW_REFERENCE_EXT:
 		name.len = snprintf(_s,sizeof(_s),"s%d",counter++);
 		i = *index;
 
-		if (type==ERL_PID_EXT) ei_decode_pid(xbuff->buff,index,&pid);
-		else ei_decode_ref(xbuff->buff,index,&ref);
+		ei_decode_ref(xbuff->buff,index,&ref);
 
 		if (ei_s_print_term(&p,xbuff->buff,&i)<0) {
-			LM_ERR("failed to decode %s\n",type==ERL_PID_EXT?"pid":"reference");
+			LM_ERR("failed to decode reference\n");
 			goto err;
 		}
 		val.type = SR_XTYPE_STR;
@@ -1150,4 +1199,8 @@ void xbuff_destroy_all()
 	sr_xavp_t *list;
 	list = xavp_get_xbuffs();
 	if (list) xavp_destroy_list(&list);
+}
+
+/* does nothing but must be executed in xavp_free[_unsafe] */
+void xbuff_data_free(void *p, sr_xavp_sfree_f sfree) {
 }

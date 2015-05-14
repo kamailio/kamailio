@@ -55,7 +55,11 @@ int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 	size_t sz;
 	ei_x_buff *request = &phandler->request;
 	sr_xavp_t *xreq = NULL;
+	sr_xavp_t *xpid = NULL;
 	str msg_name = str_init("msg");
+	str pid_name = str_init("pid");
+	sr_xval_t val;
+	sr_data_t *data = NULL;
 
 	sz = sizeof("erlang")+strlen(msg->toname)+2;
 	route = (char*)pkg_malloc(sz);
@@ -81,7 +85,7 @@ int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 	fmsg = &tmsg;
 
 	if ((xreq = pv_xbuff_get_xbuff(&msg_name))) {
-		LM_DBG("free previous value\n");
+		LM_DBG("free previous $xbuff(msg) value\n");
 		xavp_destroy_list(&xreq->val.v.xavp);
 	} else {
 		xreq = xbuff_new(&msg_name);
@@ -101,6 +105,42 @@ int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 		goto err;
 	}
 
+	if ((xpid = pv_xbuff_get_xbuff(&pid_name))) {
+		LM_DBG("free previous $xbuff(pid) value\n");
+		xavp_destroy_list(&xpid->val.v.xavp);
+	} else {
+		xpid = xbuff_new(&pid_name);
+	}
+
+	if (!xpid) {
+		LM_ERR("failed to create $xbuff(pid) variable\n");
+		goto err;
+	}
+
+	/* put erl_pid into $xbuff(pid) */
+	data = (sr_data_t*)shm_malloc(sizeof(sr_data_t)+sizeof(erlang_pid));
+	if (!data) {
+		LM_ERR("not enough shared memory\n");
+		goto err;
+	}
+
+	memset((void*)data,0,sizeof(sr_data_t)+sizeof(erlang_pid));
+
+	data->p = (void*)data+sizeof(sr_data_t);
+	data->pfree = xbuff_data_free;
+
+	memcpy(data->p,(void*)&msg->from,sizeof(erlang_pid));
+
+	val.type = SR_XTYPE_DATA;
+	val.v.data = data;
+
+	xpid->val.v.xavp = xavp_new_value(&pid_name,&val);
+	if (!xpid->val.v.xavp) {
+		LM_ERR("failed to create xavp!\n");
+		goto err;
+	}
+	xpid->val.type = SR_XTYPE_XAVP;
+
 	backup_rt = get_route_type();
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
@@ -113,12 +153,16 @@ int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 	return 0;
 
 err:
+	shm_free(data);
 	pkg_free(route);
 	free_xbuff_fmt_buff();
 	xavp_destroy_list(xavp_get_crt_list());
 	return -1;
 }
 
+/*
+ * handle ERL_SEND
+ */
 int handle_send(cnode_handler_t *phandler, erlang_msg * msg)
 {
 	int rt, backup_rt;

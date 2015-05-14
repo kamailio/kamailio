@@ -43,6 +43,7 @@ typedef enum {
 	XBUFF_TYPE_STR,
 	XBUFF_TYPE_TUPLE,
 	XBUFF_TYPE_LIST,
+	XBUFF_TYPE_PID,
 	XBUFF_TYPE_COUNT
 } xbuff_type_t;
 
@@ -83,7 +84,7 @@ void free_xbuff_fmt_buff();
 void xbuff_destroy_all();
 
 /**
- * atom,tuple,xbuff and list
+ * atom,tuple,xbuf,pid and list
  */
 extern regex_t xbuff_type_re;
 
@@ -96,5 +97,6 @@ sr_xavp_t *xavp_get_nth(sr_xavp_t **list, int idx, sr_xavp_t **prv);
 int xavp_get_count(sr_xavp_t *list);
 int xavp_encode(ei_x_buff *xbuff, sr_xavp_t *xavp,int level);
 
+void xbuff_data_free(void *p, sr_xavp_sfree_f sfree);
 
 #endif /* PV_XBUFF_H_ */
