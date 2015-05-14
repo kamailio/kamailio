@@ -354,6 +354,11 @@ static int load_pcres(int action)
 	
 	fclose(f);
 	
+	if(num_pcres_tmp==0) {
+		LM_ERR("no expressions in the file\n");
+		goto err;
+	}
+
 	/* Fix the patterns */
 	for (i=0; i < num_pcres_tmp; i++) {
 		
