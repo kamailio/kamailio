@@ -494,7 +494,6 @@ int rtjson_append_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 	str path = {0};
 	struct socket_info* fsocket = NULL;
 	unsigned int bflags = 0;
-	str val;
 
 	rj = srjson_GetObjectItem(jdoc, nj, "uri");
 	if(rj==NULL || rj->type!=srjson_String || rj->valuestring==NULL) {
@@ -502,17 +501,17 @@ int rtjson_append_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 	}
 
 	uri.s = rj->valuestring;
-	uri.len = strlen(val.s);
+	uri.len = strlen(uri.s);
 
 	rj = srjson_GetObjectItem(jdoc, nj, "dst_uri");
 	if(rj!=NULL && rj->type==srjson_String && rj->valuestring!=NULL) {
 		duri.s = rj->valuestring;
-		duri.len = strlen(val.s);
+		duri.len = strlen(duri.s);
 	}
 	rj = srjson_GetObjectItem(jdoc, nj, "path");
 	if(rj!=NULL && rj->type==srjson_String && rj->valuestring!=NULL) {
 		path.s = rj->valuestring;
-		path.len = strlen(val.s);
+		path.len = strlen(path.s);
 	}
 	
 	if (append_branch(msg, &uri, &duri, &path, 0, bflags,
