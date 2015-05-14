@@ -165,15 +165,18 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 	db_key_t* _k1 = NULL;
 	char** _o1 = NULL;
 	db_val_t* _v1 = NULL;
+	regmatch_t* matches = NULL;
+	int n, l;
+	int len;
+	regex_t preg;
+	int offset = 0;
+	int idx = -1;
 
 	*_k = NULL;
 	*_o = NULL;
 	*_v = NULL;
 
-	int n, l;
-	int len = strlen(where);
-
-	regex_t preg;
+	len = strlen(where);
 
 	if (regcomp(&preg, _regexp, REG_EXTENDED | REG_NEWLINE)) {
 		LM_ERR("error compiling regexp\n");
@@ -187,10 +190,12 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 	_v1 = pkg_malloc(sizeof(db_val_t) * MAX_CLAUSES);
 	memset(_v1, 0, sizeof(db_val_t) * MAX_CLAUSES);
 
-	regmatch_t* matches = (regmatch_t*)pkg_malloc(sizeof(regmatch_t) * MAX_MATCH);
+	matches = (regmatch_t*)pkg_malloc(sizeof(regmatch_t) * MAX_MATCH);
+	if(matches==NULL) {
+		LM_ERR("error getting pkg memory\n");
+		return -1;
+	}
 
-	int offset = 0;
-	int idx = -1;
 	while(offset < len) {
 		char* buffer = where + offset;
 
@@ -238,6 +243,7 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 
 	}
 	regfree(&preg);
+	pkg_free(matches);
 
 	*_k = _k1;
 	*_o = (db_op_t*)_o1;
