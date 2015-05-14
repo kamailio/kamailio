@@ -197,6 +197,7 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 				LM_ERR("No more memory\n");
 				goto error;
 			}
+			alloc_tuple= 1;
 			tuple->s= (char*)pkg_malloc(tuple_id_len* sizeof(char));
 			if(tuple->s== NULL)
 			{
@@ -206,7 +207,6 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 			memcpy(tuple->s, tuple_id, tuple_id_len);
 			tuple->len= tuple_id_len;
 			*tuple_param= tuple;
-			alloc_tuple= 1;
 		}
 	}
 
