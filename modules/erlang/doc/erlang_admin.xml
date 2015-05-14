@@ -512,7 +512,7 @@ erl_reg_send("notifier","$tuple(M)");
 				Function sends reply message <emphasis>msg</emphasis> to the sender process.
 			</para>
 			<example>
-				<title>Example of registered process</title>
+				<title>Example of use <emphasis>erl_reply</emphasis></title>
 				<programlisting format="linespecific">
 ...
 # event route acts as registered process
