@@ -411,6 +411,7 @@ static int load_pcres(int action)
 		memcpy(pcres_tmp[i], pcre_tmp, pcre_size);
 		pcre_free(pcre_tmp);
 		pkg_free(patterns[i]);
+		patterns[i] = NULL;
 	}
 	
 	/* Copy to shared memory */
