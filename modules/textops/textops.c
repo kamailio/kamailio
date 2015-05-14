@@ -2126,6 +2126,11 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	len=s0.len;
 	if (str2) len+= str2->len + REQ_LINE(msg).uri.len;
 
+	if(len==0) {
+		LM_INFO("nothing to add\n");
+		return -1;
+	}
+
 	s  = (char*)pkg_malloc(len);
 	if (!s) {
 		LM_ERR("no pkg memory left\n");
