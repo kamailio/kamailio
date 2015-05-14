@@ -146,65 +146,6 @@ sr_xavp_t *xavp_get_atoms()
 	return list;
 }
 
-int pv_atom_new_xavp(sr_xval_t *xval, pv_value_t *pval, int *counter)
-{
-	char s[32];
-	str name;
-	sr_xavp_t *xavp = NULL;
-	sr_xval_t nval;
-	xbuff_type_t type;
-
-	if (!xval) return -1;
-
-	memset((void*)xval,0,sizeof(sr_xval_t));
-
-	if (pval->flags&PV_VAL_NULL) {
-		nval.type = SR_XTYPE_NULL;
-	} else if (pval->flags&PV_VAL_INT) {
-		LM_ERR("can't convert integer to atom\n");
-		return -1;
-	} else if (pval->flags&PV_VAL_STR) {
-		/* check what it is */
-		if (xbuff_match_type_re(&pval->rs,&type,&xavp)) {
-			nval.type = SR_XTYPE_STR;
-			nval.v.s = pval->rs;
-		} else {
-			switch (type) {
-			case XBUFF_TYPE_ATOM:
-			case XBUFF_TYPE_STR:
-				break;
-			case XBUFF_TYPE_TUPLE:
-			case XBUFF_TYPE_LIST:
-			case XBUFF_TYPE_INT:
-				LM_ERR("can't convert integer, tuple or list into atom\n");
-				return -1;
-				break;
-			default:
-				LM_ERR("BUG: unexpected XBUFF type!\n");
-				return -1;
-			}
-
-			/* copy tree */
-			nval.type = SR_XTYPE_STR;
-			nval.v.s = xavp->val.v.s;
-		}
-	}
-
-	name.s = s;
-	name.len = snprintf(s,31,"a%d",(*counter)++) + 1;
-
-	xavp = xavp_new_value(&name,&nval);
-
-	if (!xavp) {
-		return -1;
-	}
-
-	xval->type = SR_XTYPE_XAVP;
-	xval->v.xavp = xavp;
-
-	return 0;
-}
-
 int pv_atom_set(struct sip_msg* msg,  pv_param_t* param, int op, pv_value_t* val)
 {
 	str name;
@@ -275,6 +216,7 @@ err:
 
 	return -1;
 }
+
 int pv_atom_get_value(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, sr_xavp_t *avp)
 {
