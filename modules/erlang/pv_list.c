@@ -242,7 +242,10 @@ int pv_list_get_value(struct sip_msg *msg, pv_param_t *param,
 		}
 		break;
 	case SR_XTYPE_DATA:
-		if(snprintf(_pv_xavp_buf, 128, "<<binary:%p>>", avp->val.v.data)<0)
+		if (avp->name.s[0] == 'p') {
+			if(snprintf(_pv_xavp_buf, 128, "<<pid:%p>>", avp->val.v.data)<0)
+				return pv_get_null(msg, param, res);
+		} else if(snprintf(_pv_xavp_buf, 128, "<<binary:%p>>", avp->val.v.data)<0)
 			return pv_get_null(msg, param, res);
 		break;
 	default:

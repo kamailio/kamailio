@@ -40,7 +40,8 @@ Seudin Kasumovic
               4.3. $atom(name)
               4.4. $list(name)
               4.5. $tuple(name)
-              4.6. $xbuff(name)
+              4.6. $pid(name)
+              4.7. $xbuff(name)
 
         5. Functions
 
@@ -81,12 +82,13 @@ Seudin Kasumovic
    1.9. Example set and print to log atom
    1.10. Example of using lists
    1.11. Example of using tuple
-   1.12. Example of using xbuff
-   1.13. Example of using erl_rpc
-   1.14. Example of using erl_reg_send
-   1.15. Example of registered process
-   1.16. Example of registered process
-   1.17. Example of using default event route
+   1.12. Example of using pid
+   1.13. Example of using xbuff
+   1.14. Example of using erl_rpc
+   1.15. Example of using erl_reg_send
+   1.16. Example of use erl_reply
+   1.17. Example of registered process
+   1.18. Example of using default event route
    2.1. Example of RPC call from erlang shell with no response
    2.2. Example, check is line registered
    2.3. Example get config variable
@@ -120,7 +122,8 @@ Chapter 1. Admin Guide
         4.3. $atom(name)
         4.4. $list(name)
         4.5. $tuple(name)
-        4.6. $xbuff(name)
+        4.6. $pid(name)
+        4.7. $xbuff(name)
 
    5. Functions
 
@@ -271,7 +274,8 @@ modparam("erlang", "trace_level", 5)
    4.3. $atom(name)
    4.4. $list(name)
    4.5. $tuple(name)
-   4.6. $xbuff(name)
+   4.6. $pid(name)
+   4.7. $xbuff(name)
 
 4.1. Overview
 
@@ -290,8 +294,8 @@ modparam("erlang", "trace_level", 5)
    by self determine variable type, but we need to know what type on some
    position is.
      * type
-       get variable type. Possible types are: atom, integer, list, string
-       and tuple.
+       get variable type. Possible types are: atom, integer, list, string,
+       tuple and pid.
      * length
        get length of list or tuple.
      * format
@@ -410,7 +414,20 @@ xlogl("L_DEBUG","length(T): $tuple(T=>length), format(T): $tuple(T=>format)\n");
 DEBUG: <script>: 153:length(T): 2, format(T): {line, [{id, 23}, {owner, "Bob"}]}
 ...
 
-4.6. $xbuff(name)
+4.6. $pid(name)
+
+   pid holds Eralng process identifier. Provides access to pid value and
+   could be used in send message.
+
+   Example 1.12. Example of using pid
+...
+if ($xbuff(msg[0]=>type) == "pid") {
+        $pid(pid) = $xbuff(msg[0]);
+        xlogl("L_INFO","Received PID: $pid(pid=>format)\n");
+}
+...
+
+4.7. $xbuff(name)
 
    xbuff is created as generic pseudo variable to acts as other pseudo
    variables exported from module. It's useful when in advance we don't
@@ -418,7 +435,7 @@ DEBUG: <script>: 153:length(T): 2, format(T): {line, [{id, 23}, {owner, "Bob"}]}
    initialization. Module functions expect this PV as return value, and PV
    for incoming erlang message.
 
-   Example 1.12. Example of using xbuff
+   Example 1.13. Example of using xbuff
 ...
 # tuple T from previous example
 
@@ -457,7 +474,7 @@ DEBUG: <script>: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{id, 23}
    function. If executing remote function caused error function still
    returns true but error is encoded into repl parameter.
 
-   Example 1.13. Example of using erl_rpc
+   Example 1.14. Example of using erl_rpc
 ...
 # example of call erlang:list_to_tuple(["one","two"])
 # on remote node
@@ -487,7 +504,7 @@ DEBUG: <script>: 386:type(repl): tuple, format(repl): {"one", "two"}
 
    The argument msg is containing the message to be sent.
 
-   Example 1.14. Example of using erl_reg_send
+   Example 1.15. Example of using erl_reg_send
 ...
 # example of send message to registered process
 # {notifier,'node1@erlang.lan'} ! {example,message}
@@ -506,7 +523,7 @@ erl_reg_send("notifier","$tuple(M)");
    Function to send message from event route (pseudo process). Function
    sends reply message msg to the sender process.
 
-   Example 1.15. Example of registered process
+   Example 1.16. Example of use erl_reply
 ...
 # event route acts as registered process
 event_route[erlang:greetings] {
@@ -543,8 +560,8 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
    we can use event routes. Event routes executed when asynchronous
    message received from erlang node.
 
-   Event route receive message in $xbuff(msg). Reply variable is optional
-   and can be sent with erl_reply.
+   Event route receives message in $xbuff(msg) and sender process in
+   $xbuff(pid). Reply message is optional and can be sent with erl_reply.
 
 6.1. Registered pseudo process
 
@@ -552,7 +569,7 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
    event route in form of event_route[erlang:<my_process_name>]. Where
    <my_process_name> is the name of pseudo process.
 
-   Example 1.16. Example of registered process
+   Example 1.17. Example of registered process
 ...
 # event route acts as registered process
 event_route[erlang:handler] {
@@ -576,7 +593,7 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
    The reserved pseudo process name to receive messages sent to Kamailio C
    node. The message are sent to non registered process.
 
-   Example 1.17. Example of using default event route
+   Example 1.18. Example of using default event route
 ...
 # default event route from erlang
 event_route[erlang:self] {
