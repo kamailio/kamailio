@@ -167,15 +167,7 @@ typedef struct control_t
 	size_t max_fragments;
 #endif
 	/* Bitmaps for free lists. */
-#if defined (TLSF_64BIT)
-#	define TLSF_FL_ZERO 0L
-#	define TLSF_FL_ONE 1L
-	unsigned long fl_bitmap;
-#else
-#	define TLSF_FL_ZERO 0
-#	define TLSF_FL_ONE 1
 	unsigned int fl_bitmap;
-#endif
 	unsigned int sl_bitmap[FL_INDEX_COUNT];
 
 	/* Head of free lists. */
@@ -374,7 +366,7 @@ static block_header_t* search_suitable_block(control_t* control, int* fli, int* 
 	if (!sl_map)
 	{
 		/* No block exists. Search in the next largest first-level list. */
-		const unsigned int fl_map = control->fl_bitmap & (~TLSF_FL_ZERO << (fl + 1));
+		const unsigned int fl_map = control->fl_bitmap & (~0 << (fl + 1));
 		if (!fl_map)
 		{
 			/* No free blocks available, memory has been exhausted. */
@@ -416,7 +408,7 @@ static void remove_free_block(control_t* control, block_header_t* block, int fl,
 			/* If the second bitmap is now empty, clear the fl bitmap. */
 			if (!control->sl_bitmap[fl])
 			{
-				control->fl_bitmap &= ~(TLSF_FL_ONE << fl);
+				control->fl_bitmap &= ~(1 << fl);
 			}
 		}
 	}
@@ -442,7 +434,7 @@ static void insert_free_block(control_t* control, block_header_t* block, int fl,
 	** and second-level bitmaps appropriately.
 	*/
 	control->blocks[fl][sl] = block;
-	control->fl_bitmap |= (TLSF_FL_ONE << fl);
+	control->fl_bitmap |= (1 << fl);
 	control->sl_bitmap[fl] |= (1 << sl);
 #if defined TLSF_STATS
 	TLSF_INCREASE_FRAGMENTS(control);
@@ -621,7 +613,7 @@ static void control_construct(control_t* control)
 	control->block_null.next_free = &control->block_null;
 	control->block_null.prev_free = &control->block_null;
 
-	control->fl_bitmap = TLSF_FL_ZERO;
+	control->fl_bitmap = 0;
 	for (i = 0; i < FL_INDEX_COUNT; ++i)
 	{
 		control->sl_bitmap[i] = 0;
@@ -672,7 +664,7 @@ int tlsf_check(tlsf_t tlsf)
 	{
 		for (j = 0; j < SL_INDEX_COUNT; ++j)
 		{
-			const int fl_map = control->fl_bitmap & (TLSF_FL_ONE << i);
+			const int fl_map = control->fl_bitmap & (1 << i);
 			const int sl_list = control->sl_bitmap[i];
 			const int sl_map = sl_list & (1 << j);
 			const block_header_t* block = control->blocks[i][j];
