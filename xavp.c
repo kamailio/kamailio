@@ -723,8 +723,7 @@ int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list)
 		if(crt==NULL)
 			return -1;
 		if (lst == NULL) {
-			crt->next = *list;
-			*list = crt;
+			xavp_add(crt, list);
 		} else {
 			crt->next = lst->next;
 			lst->next = crt;
