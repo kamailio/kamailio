@@ -22,7 +22,7 @@
  * \ingroup mem
  */
 
-#if !defined(q_malloc_h) && !defined(F_MALLOC)
+#if !defined(q_malloc_h) && !defined(F_MALLOC) && !defined(TLSF_MALLOC)
 #define q_malloc_h
 
 #include "meminfo.h"

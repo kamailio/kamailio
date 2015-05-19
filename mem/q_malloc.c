@@ -23,7 +23,7 @@
  */
 
 
-#if !defined(q_malloc) && !(defined F_MALLOC)
+#if !defined(q_malloc) && !(defined F_MALLOC) && !defined(TLSF_MALLOC)
 #define q_malloc
 
 #include <stdlib.h>

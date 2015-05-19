@@ -57,6 +57,14 @@
 	#elif defined(DBG_QM_MALLOC)
 		#define DBG_F_MALLOC
 	#endif
+#elif defined TLSF_MALLOC
+	#ifdef DBG_TLSF_MALLOC
+		#ifndef DBG_QM_MALLOC
+			#define DBG_QM_MALLOC
+		#endif
+	#elif defined(DBG_QM_MALLOC)
+		#define DBG_TLSF_MALLOC
+	#endif
 #endif
 
 
@@ -149,9 +157,9 @@
 #	define MY_MALLOC tlsf_malloc
 #	define MY_FREE tlsf_free
 #	define MY_REALLOC tlsf_realloc
-#	define MY_STATUS(...) ((void) 0)
+#	define MY_STATUS tlsf_status
 #	define MY_MEMINFO	tlsf_meminfo
-#	define MY_SUMS(...) ((void) 0)
+#	define MY_SUMS tlsf_sums
 #	define shm_malloc_init(mem, bytes, type) tlsf_create_with_pool((void*) mem, bytes)
 #	define shm_malloc_destroy(b) do{}while(0)
 #	define shm_available() tlsf_available(shm_block)

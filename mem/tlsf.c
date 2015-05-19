@@ -7,6 +7,9 @@
 
 #include "tlsf.h"
 #include "tlsfbits.h"
+#include "src_loc.h"
+#include "../dprint.h"
+#include "../cfg/cfg.h"
 
 /*
 ** Constants.
@@ -96,7 +99,13 @@ tlsf_static_assert(ALIGN_SIZE == SMALL_BLOCK_SIZE / SL_INDEX_COUNT);
 /*
 ** Data structures and associated constants.
 */
-
+#ifdef DBG_TLSF_MALLOC
+typedef struct {
+	const char* file;
+	const char* func;
+	unsigned long line;
+} alloc_info_t;
+#endif
 /*
 ** Block header structure.
 **
@@ -111,6 +120,10 @@ typedef struct block_header_t
 {
 	/* Points to the previous physical block. */
 	struct block_header_t* prev_phys_block;
+
+#ifdef DBG_TLSF_MALLOC
+	alloc_info_t alloc_info;
+#endif
 
 	/* The size of this block, excluding the block header. */
 	size_t size;
@@ -133,7 +146,11 @@ static const size_t block_header_prev_free_bit = 1 << 1;
 ** The size of the block header exposed to used blocks is the size field.
 ** The prev_phys_block field is stored *inside* the previous free block.
 */
+#ifdef DBG_TLSF_MALLOC
+static const size_t block_header_overhead = sizeof(size_t) + sizeof(alloc_info_t);
+#else
 static const size_t block_header_overhead = sizeof(size_t);
+#endif
 
 /* User data starts directly after the size field in a used block. */
 static const size_t block_start_offset =
@@ -144,7 +161,7 @@ static const size_t block_start_offset =
 ** the prev_phys_block field, and no larger than the number of addressable
 ** bits for FL_INDEX.
 */
-static const size_t block_size_min = 
+static const size_t block_size_min =
 	sizeof(block_header_t) - sizeof(block_header_t*);
 static const size_t block_size_max = tlsf_cast(size_t, 1) << FL_INDEX_MAX;
 
@@ -255,7 +272,7 @@ static block_header_t* block_prev(const block_header_t* block)
 static block_header_t* block_next(const block_header_t* block)
 {
 	block_header_t* next = offset_to_block(block_to_ptr(block),
-		block_size(block) - block_header_overhead);
+		block_size(block) - sizeof(block_header_t*));
 	tlsf_assert(!block_is_last(block));
 	return next;
 }
@@ -467,7 +484,7 @@ static block_header_t* block_split(block_header_t* block, size_t size)
 {
 	/* Calculate the amount of space left in the remaining block. */
 	block_header_t* remaining =
-		offset_to_block(block_to_ptr(block), size - block_header_overhead);
+		offset_to_block(block_to_ptr(block), size - sizeof(block_header_t*));
 
 	const size_t remain_size = block_size(block) - (size + block_header_overhead);
 
@@ -476,7 +493,7 @@ static block_header_t* block_split(block_header_t* block, size_t size)
 
 	tlsf_assert(block_size(block) == remain_size + size + block_header_overhead);
 	block_set_size(remaining, remain_size);
-	tlsf_assert(block_size(remaining) >= block_size_min && "block split with invalid size");
+	tlsf_assert(block_size(remaining) >= 0 && "block split with invalid size");
 
 	block_set_size(block, size);
 	block_mark_as_free(remaining);
@@ -534,6 +551,11 @@ static void block_trim_free(control_t* control, block_header_t* block, size_t si
 		block_header_t* remaining_block = block_split(block, size);
 		block_link_next(block);
 		block_set_prev_free(remaining_block);
+#ifdef DBG_TLSF_MALLOC
+		remaining_block->alloc_info.file = _SRC_LOC_;
+		remaining_block->alloc_info.func = _SRC_FUNCTION_;
+		remaining_block->alloc_info.line = _SRC_LINE_;
+#endif
 		block_insert(control, remaining_block);
 	}
 }
@@ -549,6 +571,11 @@ static void block_trim_used(control_t* control, block_header_t* block, size_t si
 		block_set_prev_used(remaining_block);
 
 		remaining_block = block_merge_next(control, remaining_block);
+#ifdef DBG_TLSF_MALLOC
+		remaining_block->alloc_info.file = _SRC_LOC_;
+		remaining_block->alloc_info.func = _SRC_FUNCTION_;
+		remaining_block->alloc_info.line = _SRC_LINE_;
+#endif
 		block_insert(control, remaining_block);
 	}
 }
@@ -588,8 +615,12 @@ static block_header_t* block_locate_free(control_t* control, size_t size)
 
 	return block;
 }
-
+#ifdef DBG_TLSF_MALLOC
+static void* block_prepare_used(control_t* control, block_header_t* block, size_t size,
+		const char *file, const char *function, unsigned long line)
+#else
 static void* block_prepare_used(control_t* control, block_header_t* block, size_t size)
+#endif
 {
 	void* p = 0;
 	if (block)
@@ -600,6 +631,11 @@ static void* block_prepare_used(control_t* control, block_header_t* block, size_
 #ifdef TLSF_STATS
 		TLSF_INCREASE_REAL_USED(control, block->size + (p - (void *)block));
 		control->allocated += block->size;
+#endif
+#ifdef DBG_TLSF_MALLOC
+		block->alloc_info.file = file;
+		block->alloc_info.func = function;
+		block->alloc_info.line = line;
 #endif
 	}
 	return p;
@@ -715,8 +751,7 @@ static void default_walker(void* ptr, size_t size, int used, void* user)
 void tlsf_walk_pool(pool_t pool, tlsf_walker walker, void* user)
 {
 	tlsf_walker pool_walker = walker ? walker : default_walker;
-	block_header_t* block =
-		offset_to_block(pool, -(int)block_header_overhead);
+	block_header_t* block = pool + tlsf_size() - sizeof(block_header_t*);
 
 	while (block && !block_is_last(block))
 	{
@@ -806,11 +841,11 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 	if (pool_bytes < block_size_min || pool_bytes > block_size_max)
 	{
 #if defined (TLSF_64BIT)
-		printf("tlsf_add_pool: Memory size must be between 0x%x and 0x%x00 bytes.\n", 
+		printf("tlsf_add_pool: Memory size must be between 0x%x and 0x%x00 bytes.\n",
 			(unsigned int)(pool_overhead + block_size_min),
 			(unsigned int)((pool_overhead + block_size_max) / 256));
 #else
-		printf("tlsf_add_pool: Memory size must be between %u and %u bytes.\n", 
+		printf("tlsf_add_pool: Memory size must be between %u and %u bytes.\n",
 			(unsigned int)(pool_overhead + block_size_min),
 			(unsigned int)(pool_overhead + block_size_max));
 #endif
@@ -822,13 +857,18 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 	** so that the prev_phys_block field falls outside of the pool -
 	** it will never be used.
 	*/
-	block = offset_to_block(mem, -(tlsfptr_t)block_header_overhead);
+	block = mem - sizeof (size_t);/*offset_to_block(mem, -(tlsfptr_t)block_header_overhead);*/
 	block_set_size(block, pool_bytes);
 	block_set_free(block);
 	block_set_prev_used(block);
 	block_insert(tlsf_cast(control_t*, tlsf), block);
 #ifdef TLSF_STATS
 	tlsf_cast(control_t*, tlsf)->total_size += block->size;
+#endif
+#ifdef DBG_TLSF_MALLOC
+	block->alloc_info.file = _SRC_LOC_;
+	block->alloc_info.func = _SRC_FUNCTION_;
+	block->alloc_info.line = _SRC_LINE_;
 #endif
 	/* Split the block to create a zero-size sentinel block. */
 	next = block_link_next(block);
@@ -878,7 +918,7 @@ int test_ffs_fls()
 #if defined (TLSF_64BIT)
 	rv += (tlsf_fls_sizet(0x80000000) == 31) ? 0 : 0x100;
 	rv += (tlsf_fls_sizet(0x100000000) == 32) ? 0 : 0x200;
-	rv += (tlsf_fls_sizet(0xffffffffffffffff) == 63) ? 0 : 0x400; 
+	rv += (tlsf_fls_sizet(0xffffffffffffffff) == 63) ? 0 : 0x400;
 #endif
 
 	if (rv)
@@ -935,73 +975,29 @@ pool_t tlsf_get_pool(tlsf_t tlsf)
 	return tlsf_cast(pool_t, (char*)tlsf + tlsf_size());
 }
 
+#ifdef DBG_TLSF_MALLOC
+void* tlsf_malloc(tlsf_t tlsf, size_t size,
+		const char *file, const char *function, unsigned long line)
+#else
 void* tlsf_malloc(tlsf_t tlsf, size_t size)
+#endif
 {
 	control_t* control = tlsf_cast(control_t*, tlsf);
 	const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
 	block_header_t* block = block_locate_free(control, adjust);
+#ifdef DBG_TLSF_MALLOC
+	return block_prepare_used(control, block, adjust, file, function, line);
+#else
 	return block_prepare_used(control, block, adjust);
-}
-
-void* tlsf_memalign(tlsf_t tlsf, size_t align, size_t size)
-{
-	control_t* control = tlsf_cast(control_t*, tlsf);
-	const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
-
-	/*
-	** We must allocate an additional minimum block size bytes so that if
-	** our free block will leave an alignment gap which is smaller, we can
-	** trim a leading free block and release it back to the pool. We must
-	** do this because the previous physical block is in use, therefore
-	** the prev_phys_block field is not valid, and we can't simply adjust
-	** the size of that block.
-	*/
-	const size_t gap_minimum = sizeof(block_header_t);
-	const size_t size_with_gap = adjust_request_size(adjust + align + gap_minimum, align);
-
-	/* If alignment is less than or equals base alignment, we're done. */
-	const size_t aligned_size = (align <= ALIGN_SIZE) ? adjust : size_with_gap;
-
-	block_header_t* block = block_locate_free(control, aligned_size);
-
-	/* This can't be a static assert. */
-	tlsf_assert(sizeof(block_header_t) == block_size_min + block_header_overhead);
-
-	if (block)
-	{
-		void* ptr = block_to_ptr(block);
-		void* aligned = align_ptr(ptr, align);
-		size_t gap = tlsf_cast(size_t,
-			tlsf_cast(tlsfptr_t, aligned) - tlsf_cast(tlsfptr_t, ptr));
-
-		/* If gap size is too small, offset to next aligned boundary. */
-		if (gap && gap < gap_minimum)
-		{
-			const size_t gap_remain = gap_minimum - gap;
-			const size_t offset = tlsf_max(gap_remain, align);
-			const void* next_aligned = tlsf_cast(void*,
-				tlsf_cast(tlsfptr_t, aligned) + offset);
-
-			aligned = align_ptr(next_aligned, align);
-			gap = tlsf_cast(size_t,
-				tlsf_cast(tlsfptr_t, aligned) - tlsf_cast(tlsfptr_t, ptr));
-		}
-
-		if (gap)
-		{
-			tlsf_assert(gap >= gap_minimum && "gap size too small");
-			block = block_trim_free_leading(control, block, gap);
-		}
-	}
-
-#ifdef TLSF_STATS
-	/* TODO */
 #endif
-
-	return block_prepare_used(control, block, adjust);
 }
 
+#ifdef DBG_TLSF_MALLOC
+void tlsf_free(tlsf_t tlsf, void* ptr,
+		const char *file, const char *function, unsigned long line)
+#else
 void tlsf_free(tlsf_t tlsf, void* ptr)
+#endif
 {
 	/* Don't attempt to free a NULL pointer. */
 	if (ptr)
@@ -1012,6 +1008,11 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 #if defined TLSF_STATS
 		control->allocated -= block->size;
 		control->real_used -= (block->size + (ptr - (void *)block));
+#endif
+#ifdef DBG_TLSF_MALLOC
+		block->alloc_info.file = file;
+		block->alloc_info.func = function;
+		block->alloc_info.line = line;
 #endif
 		block_mark_as_free(block);
 		block = block_merge_prev(control, block);
@@ -1033,7 +1034,12 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 ** - an extended buffer size will leave the newly-allocated area with
 **   contents undefined
 */
+#ifdef DBG_TLSF_MALLOC
+void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size,
+		const char *file, const char *function, unsigned long line)
+#else
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
+#endif
 {
 	control_t* control = tlsf_cast(control_t*, tlsf);
 	void* p = 0;
@@ -1041,12 +1047,20 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 	/* Zero-size requests are treated as free. */
 	if (ptr && size == 0)
 	{
+#ifdef DBG_TLSF_MALLOC
+		tlsf_free(tlsf, ptr, file, function, line);
+#else
 		tlsf_free(tlsf, ptr);
+#endif
 	}
 	/* Requests with NULL pointers are treated as malloc. */
 	else if (!ptr)
 	{
+#ifdef DBG_TLSF_MALLOC
+		p = tlsf_malloc(tlsf, size, file, function, line);
+#else
 		p = tlsf_malloc(tlsf, size);
+#endif
 	}
 	else
 	{
@@ -1065,12 +1079,20 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 		*/
 		if (adjust > cursize && (!block_is_free(next) || adjust > combined))
 		{
+#ifdef DBG_TLSF_MALLOC
+			p = tlsf_malloc(tlsf, size, file, function, line);
+#else
 			p = tlsf_malloc(tlsf, size);
+#endif
 			if (p)
 			{
 				const size_t minsize = tlsf_min(cursize, size);
 				memcpy(p, ptr, minsize);
+#ifdef DBG_TLSF_MALLOC
+				tlsf_free(tlsf, ptr, file, function, line);
+#else
 				tlsf_free(tlsf, ptr);
+#endif
 			}
 		}
 		else
@@ -1118,5 +1140,118 @@ size_t tlsf_available(tlsf_t pool)
 	control_t* control = tlsf_cast(control_t*, pool);
 	return control->total_size - control->real_used;
 }
+
+static void tlsf_status_cb(void* ptr, size_t size, int used, void* user)
+{
+#ifdef DBG_TLSF_MALLOC
+	block_header_t* block = block_from_ptr(ptr);
+#endif
+
+#ifdef DBG_TLSF_MALLOC
+	LOG_(DEFAULT_FACILITY, *(int*)user, "tlsf_status: ", "(%p): used=%s size=%zu was %s from %s: %s(%ld)\n",
+			ptr, used ? "true" : "false", size, used ? "alloc'd" : "free'd", block->alloc_info.file, block->alloc_info.func, block->alloc_info.line);
+#else
+	LOG_(DEFAULT_FACILITY, *(int*)user, "tlsf_status: ", "(%p): used=%s size=%zu\n",
+			ptr, used ? "true" : "false", size);
+#endif
+
+
+}
+
+void tlsf_status(tlsf_t pool)
+{
+	int memlog;
+	control_t* control = tlsf_cast(control_t*, pool);
+
+	memlog=cfg_get(core, core_cfg, memlog);
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ", "status of pool (%p):\n", pool);
+#ifdef TLSF_STATS
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ", "heap size= %zu\n",
+			control->total_size);
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+			"used= %zu, used+overhead=%zu, free=%zu, fragments=%zu\n",
+			control->allocated, control->real_used, control->total_size - control->real_used, control->fragments);
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+			"max used (+overhead)=%zu, max fragments=%zu\n", control->max_used, control->max_fragments);
+#endif
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+			"dumping all fragments:\n");
+	tlsf_walk_pool(pool, tlsf_status_cb, (void *) &memlog);
+}
+
+#ifdef DBG_TLSF_MALLOC
+typedef struct _mem_counter{
+	const char *file;
+	const char *func;
+	unsigned long line;
+
+	unsigned long size;
+	int count;
+
+	struct _mem_counter *next;
+} mem_counter;
+
+static mem_counter* get_mem_counter(mem_counter **root, block_header_t* f)
+{
+	mem_counter *x;
+	if (!*root) goto make_new;
+	for(x=*root;x;x=x->next)
+		if (x->file == f->alloc_info.file && x->func == f->alloc_info.func && x->line == f->alloc_info.line)
+			return x;
+make_new:
+	x = malloc(sizeof(mem_counter));
+	x->file = f->alloc_info.file;
+	x->func = f->alloc_info.func;
+	x->line = f->alloc_info.line;
+	x->count = 0;
+	x->size = 0;
+	x->next = *root;
+	*root = x;
+	return x;
+}
+
+
+void tlsf_sums(tlsf_t pool)
+{
+	int memlog;
+	block_header_t* block = pool + tlsf_size() - sizeof(block_header_t*);
+	mem_counter *root = NULL, *x;
+
+	memlog=cfg_get(core, core_cfg, memlog);
+
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
+			"pool (%p) summarizing all alloc'ed. fragments:\n", pool);
+
+
+	while (block && !block_is_last(block))
+	{
+		if(!block_is_free(block)) {
+			x = get_mem_counter(&root, block);
+			x->count++;
+			x->size+=block_size(block);
+		}
+
+		block = block_next(block);
+	}
+
+	x = root;
+	while(x){
+		LOG_(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
+				" count=%6d size=%10lu bytes from %s: %s(%ld)\n",
+			x->count,x->size,
+			x->file, x->func, x->line
+			);
+		root = x->next;
+		free(x);
+		x = root;
+	}
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
+			"-----------------------------\n");
+}
+#else
+void tlsf_sums(tlsf_t pool)
+{}
+#endif /* defined DBG_TLSF_MALLOC */
+
 #endif
 
