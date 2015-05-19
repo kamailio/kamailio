@@ -469,6 +469,10 @@ void timer_urecord(urecord_t* _r)
  */
 int db_delete_urecord(urecord_t* _r)
 {
+	if (ul_db_disable_delete) {
+		return 0;
+	}
+
 	db_key_t keys[2];
 	db_val_t vals[2];
 	char* dom;
@@ -510,6 +514,10 @@ int db_delete_urecord(urecord_t* _r)
  */
 int db_delete_urecord_by_ruid(str *_table, str *_ruid)
 {
+	if (ul_db_disable_delete) {
+		return 0;
+	}
+
 	db_key_t keys[1];
 	db_val_t vals[1];
 

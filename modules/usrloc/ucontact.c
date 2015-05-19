@@ -1431,6 +1431,10 @@ int db_update_ucontact(ucontact_t* _c)
  */
 int db_delete_ucontact_addr(ucontact_t* _c)
 {
+	if (ul_db_disable_delete) {
+		return 0;
+	}
+
 	char* dom;
 	db_key_t keys[4];
 	db_val_t vals[4];
@@ -1522,6 +1526,10 @@ int db_delete_ucontact_addr(ucontact_t* _c)
  */
 int db_delete_ucontact_ruid(ucontact_t* _c)
 {
+	if (ul_db_disable_delete) {
+		return 0;
+	}
+
 	db_key_t keys[1];
 	db_val_t vals[1];
 	int n;
@@ -1699,6 +1707,10 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
  */
 int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid)
 {
+	if (ul_db_disable_delete) {
+		return 0;
+	}
+
 	char tname_buf[64];
 	str tname;
 	db_key_t keys[3];
@@ -1764,6 +1776,10 @@ int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid)
  */
 int uldb_delete_attrs_ruid(str* _dname, str *_ruid)
 {
+	if (ul_db_disable_delete) {
+		return 0;
+	}
+
 	char tname_buf[64];
 	str tname;
 	db_key_t keys[1];

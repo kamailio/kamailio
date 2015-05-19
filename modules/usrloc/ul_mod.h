@@ -83,6 +83,7 @@ extern int ul_fetch_rows;
 extern int ul_hash_size;
 extern int ul_db_update_as_insert;
 extern int ul_db_check_update;
+extern int ul_db_disable_delete;
 extern int ul_keepalive_timeout;
 extern int handle_lost_tcp;
 extern int close_expired_tcp;
