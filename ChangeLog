@@ -1,3 +1,478 @@
+===================== 2015-05-19 Version 4.2.5 Released =====================
+
+===================== Changes Since Version 4.2.5 ===========================
+
+commit 832118397f710479db8ed3c7ca84fb9de4a13716
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 19 15:24:02 2015 +0200
+
+    Makefile.defs: version set to 4.2.5
+
+commit c7ac6d742b2e9eb2a90747d065327612513eae6a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 19 15:13:49 2015 +0200
+
+    core: enable log_prefix for sip responses
+    
+    - reported by Klaus Darilion
+    
+    (cherry picked from commit 967ed551845044123f4e93c60091d7a1fa43692f)
+
+commit a2cad23e21a164360ce560e04dcc2745533474c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 19 14:07:42 2015 +0200
+
+    pkg/rpm: version set to 4.2.5 in spec files
+
+commit dde8d9286ab5a45ed2caee6ae2e7f42e146b5a00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 19 14:05:31 2015 +0200
+
+    pkg/deb: version set to 4.2.5 in spec files
+
+commit 53dbdd384670e384c714739224e3c38366a23b3f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 19:21:25 2015 +0200
+
+    sipcapture: fix not to access freed pointer during shut down
+    
+    (cherry picked from commit 1db6fdf41dbb4b6c95e0f86dfebc4c793858d8b5)
+
+commit cd42ec08027349be350b40e78bb5fff98ed32527
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 19:16:26 2015 +0200
+
+    core: safety check for linker when inserting xavp with index
+    
+    (cherry picked from commit ec438b45696e17af0a3b19bb7ac12b221f897517)
+
+commit b8268aff60a023bfcd188f4c2e57fb3ba9b00138
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 14:51:06 2015 +0200
+
+    regex: replaced allocated memory initialization with a for loop to one memset
+    
+    (cherry picked from commit abdc02f1cb26c71b4118044d8c45dec728992e15)
+
+commit 723f170b882d98a6100ccfb931447d7630f57bde
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 14:41:44 2015 +0200
+
+    rr: reset lump pointer to avoid using it after free for remove rr function
+    
+    (cherry picked from commit f03c86ade6af9bc529a52f7fd50004721278ae19)
+
+commit fd6dba3b9752e9cbf21da2ca7b66b2e5c1dafce7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 14:36:24 2015 +0200
+
+    regex: safety to check to avoid working with zero size allocations
+    
+    (cherry picked from commit 5e5866b2ac8390caa9373f49345ed877c6e5f037)
+
+commit e71012814800462519b9040e82c892dfa39bf817
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 14:29:12 2015 +0200
+
+    textops: safety check to know there is a string to add via lump
+    
+    (cherry picked from commit ca220afe0f738f2353d16c96dd16ab279ffdcf74)
+
+commit 3fd7f816607acbc80ed49b5743dd55870d6b1e92
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 13:40:11 2015 +0200
+
+    tm: safety check not to allocate 0 bytes in rpc command
+    
+    (cherry picked from commit 88b67575f9457312d0277e16dc06103be3a31965)
+
+commit 7cb9428ec3785e42b95eb2cc30cb4ac8503e760d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 13:24:38 2015 +0200
+
+    tmx: check for empty result not to allocate 0 bytes
+    
+    - allocation of 0 size is undefined when using system malloc
+    
+    (cherry picked from commit 0db313f0047fc512dec2976cac168989b60d49c8)
+
+commit c468ed26732022f532080dffc8c9f8aaf854ef2f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 13:15:06 2015 +0200
+
+    presence_xml: better error handling to free all allocated vars
+    
+    (cherry picked from commit 2d40e14d2b0b150acd34ac2d1df25936d8faaca9)
+
+commit 8f324fb6b3955ea6d5d4e57ec022d400f2c4e124
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 13:09:47 2015 +0200
+
+    pua: mark that tupple was allocated so can be freed in case of errors
+    
+    (cherry picked from commit 1b20aa04048d15d0861b3f5291fd3b9a1614fdf5)
+
+commit b103dff88f4ac83acf20798c06d43b2586810a36
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 13:01:18 2015 +0200
+
+    regex: reset pointer after free to avoid double free if an error occurs
+    
+    (cherry picked from commit 379667e878c9e0795998f600edbcbb3974846f71)
+
+commit bae153942524b1d86e29f10208e35dbf088d7db5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 12:54:18 2015 +0200
+
+    imc: better condition to catch no result of database query
+    
+    (cherry picked from commit 29d7ca71fdfc8c52fb5e68fcf3bccf98dde0d089)
+
+commit a89778423e4886ac48857253d9567d17040e3b45
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 10:04:26 2015 +0200
+
+    pua: safety checks for str pointers
+    
+    (cherry picked from commit 80977adc1bd70479c1e32d867563e4e684060b25)
+
+commit e759e5c8998958eca61b317135be0acb3088fac0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 10:25:47 2015 +0200
+
+    core: init vars for socket ttl helper function to avoid warnings
+    
+    (cherry picked from commit 23b476ed7c7b48ddd7cacf3d88e9c104db06d5dc)
+
+commit c5015138170c9624055203cde4331091d96e928e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 12:03:28 2015 +0200
+
+    presence: initialize variable to avoid compile warning
+    
+    (cherry picked from commit c5ef9569d524ab49d538e85a905520b72e1d8dea)
+
+commit 50d9cf9501f2ad3fbf9a282ea58055523b34d5cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 12:28:29 2015 +0200
+
+    presence: initialize result to avoid freeing garbage in case of other errors
+    
+    (cherry picked from commit c24329ed483ea3abd720af73411a2331acc947e4)
+
+commit 6495f4120a702bd852c11d3449467e5ee0994bf7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 13 15:56:23 2015 +0200
+
+    evapi: use internal log functions and free io struct if client failed to connect
+    
+    (cherry picked from commit eb889f41f036afb4248303fd6a1c7db393724c58)
+
+commit 129e1456bd5369912690245b5a21b0591ead51f4
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Mon May 18 17:00:08 2015 +0100
+
+    core: Fix crash in xavp.c
+    
+    - Inserting an xavp into a list can crash when inserting XTYPE_NULL padding entries
+    (cherry picked from commit 497b6ad2cee8481ba1f3568ed7d8a836e508016a)
+
+commit 511c7fb674928e6c2d67256714bd1b7394b0d550
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Thu May 14 13:54:20 2015 +0100
+
+    app_lua: Fix memory leak in sr.modf
+    
+    - Free pkg memory allocated to store cloned function parameters
+    (cherry picked from commit 733f5ad7c9b2515c52b00875fb5dac689ddd9a17)
+
+commit 0ba8d570acedc165b27336ec4cef2b11e0d31595
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 12 21:38:58 2015 +0200
+
+    travisci: use regex to select 4.X branches
+    
+    (cherry picked from commit 5695978137225cc16cbe1cf8282c3eb31262257d)
+
+commit b73897a21afec416195c159858a20fc35f6889f0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 12 20:18:04 2015 +0200
+
+    dialog: fixed backport conflict for keepalive dialog state check
+
+commit 0a1865e84b2b1e2b5ee06966b91680d7c7743126
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 11 22:13:31 2015 +0200
+
+    presence_dialoginfo: fixed several libxml2 API usage leaks
+    
+    - reported by dkovik, GH#155
+    
+    (cherry picked from commit 6390b0506856529849ef02001a992db9057c795f)
+
+commit b4e39387136bf1850a486c4ae5b497050e46740b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 11 17:15:10 2015 +0200
+
+    dialog: don't send keepalive if dialog not in confirmed state
+    
+    - if dialog is in deleted state, remove it from keep alive list
+      immediately
+    
+    (cherry picked from commit 0e22abe2b89be8936df4b8230955fbaf43ad40e7)
+
+commit bf8be8c52039fc50dafd0c9c140c01ab84384977
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 10 18:18:00 2015 +0200
+
+    tm: disabled use of dedicated mutex for async continue
+    
+    - it can be enabled by defining ENABLE_ASYNC_MUTEX
+    - reply mutex is re-entrant and protects better the transaction
+      strucutre
+    - a dedicated lock for async continue exposes a race on removing from
+      timer when suspended transaction is resument at the same time when the
+      timer fires expiration event
+    
+    (cherry picked from commit 96b84ba4d7f5ee4a763fe7db81bbf4f9a6a3ef77)
+
+commit 766542727ab054c790fc820e4a09a4cdbc4e73ae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 7 13:23:43 2015 +0200
+
+    dialog: check if dialog is still in confirmed state when processing keepalive reply
+    
+    (cherry picked from commit 04410aef38f5ed40c8f4a6796d95658407e1597c)
+
+commit 4f2339fd9f8cff6c2649a22242dd30562d59ed76
+Author: Jon Bergli Heier <jon.bergli.heier@zisson.no>
+Date:   Thu May 7 11:08:08 2015 +0200
+
+    htable: Add missing ht_slot_unlock in ht_cell_value_add
+    
+    (cherry picked from commit ace37c7a60e5d931216339c179de6e91615dac7e)
+
+commit 5b0fa2fedbf4ffc81d0ac322a68bd2946363cc55
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Wed May 6 06:32:30 2015 +0300
+
+    sctp: fix typo scp_register_rpc -> sctp_register_rpc
+    (cherry picked from commit 177b0d2807763b13d30148f44c1cc4d3d765d67c)
+
+commit 4ba9c0ed412310d97b9a4fda3830d93c486c1888
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue May 5 21:54:22 2015 +0300
+
+    pua_mi: document missing mi_pua_publish parameter "id"
+    (cherry picked from commit 201dc5b600d8516368a54c70af6f02c3ea06353b)
+
+commit e1d8b50c8e262c259c57f91de95efae5798538fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 23 16:34:35 2015 +0200
+
+    permissions: fixed reload trusted rpc command
+    
+    - reported by Emmanuel Schmidbauer, GH#138
+    
+    (cherry picked from commit 48663e4239f819b42e7035d9f4023c161eb71d05)
+
+commit 574c8bab52d3aad39ae21dfb39a756e14f28fea9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 23 16:23:01 2015 +0200
+
+    permissions: store src ip in zero terminated string for trusted table
+    
+    - it is printed as string via rpc, resulting in invalid chars in the
+      output
+    - reported by Emmanuel Schmidbauer, GH#137
+    
+    (cherry picked from commit 89642d3cddd90ba3e3f6d310e239492634fa6405)
+
+commit e2f304fb532da500d7fc6c790c4750a73ae848fa
+Author: mikomarrache <mikomarrache@users.noreply.github.com>
+Date:   Wed Apr 22 15:04:40 2015 +0300
+
+    db_mongodb: fix typo
+    (cherry picked from commit aa87b852fbfd333f2073ac7390c3f3b6568e0024)
+
+commit ed2c270ee1b4d447796803c37241a1207dd9c191
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 21 19:10:01 2015 +0200
+
+    textopsx: fixed clang compile warning on comparing bool with char
+    
+    (cherry picked from commit bc5ac8caee55f8d197992fb00b4cb098eeb69843)
+
+commit b5cd3fdea7e37ce3bfb28fcde252012c0d7336ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 16 11:59:30 2015 +0200
+
+    acc: warning set to debug level if request is missing for dialog cdrs
+    
+    - self generating bye requests don't have incoming request
+    
+    (cherry picked from commit 26543b90f80791b9e2b763fb97d78a8c90e445dc)
+
+commit cf9e203c912d66e5a498e50b97118af1e0be5d05
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 15 18:04:10 2015 +0200
+
+    dialog: run both DLGCB_TERMINATED and DLGCB_TERMINATED_CONFIRMED callbacks for local BYE
+    
+    - only DLGCB_TERMINATED was run, but that resulted in CDRs not being
+      stored by acc for that situation
+    - on a report by Mickael Marrache
+    
+    (cherry picked from commit 265dc95aac8eb4b5cee7992dde55ff08c92a7ac5)
+
+commit e6c9a20503538b70dc01a9a9ee6299fc8043606a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 15 18:03:40 2015 +0200
+
+    acc: DLGCB_TERMINATED callback can be run without received request
+    
+    - the case of local generated bye
+    
+    (cherry picked from commit 1e7e0279bbf53c4a530aa3a8c1d322a68d8090f9)
+
+commit 3d2e3433fd6a3e3f886e1591b11614817078889c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 15 11:25:18 2015 +0200
+
+    tls: updated to use shm_available_safe()
+    
+    (cherry picked from commit c178f4427af82d6d33101677835c60de1c343073)
+
+commit f9a0c9b4d49acedc34fead30e69e997dda0220ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 15 11:22:36 2015 +0200
+
+    tls: removed inline specifier and renamed safe_shm_available()
+    
+    - became shm_available_safe() to have the shm_ prefix which common for
+      shm functions
+    - declaring inline in c header file and implementing in c source file
+      makes clang throw compile warnings
+    
+    (cherry picked from commit c4d48f3ae363fb6f6a7d789a0f32b28eb60c2404)
+
+commit e463d8333d12b8d320106725938e5425d83a652b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 15 11:16:01 2015 +0200
+
+    usrloc: change log level from info to dbg when socket is not local
+    
+    - common scenario when working with shared db, reducing the syslog
+      thoughput
+    - based on a patch by Mickael Marrache
+    
+    (cherry picked from commit 1f2921097316925600573402793b5332a6535e7d)
+
+commit 177a169e4eb883b8a38bdab2ba0dd4439d766646
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Tue Apr 14 19:41:38 2015 +0200
+
+    tls: use multiprocess-safe shm_available()
+    
+    under high load, the values returned by shm_available() can be inconsistent.
+    Use safe_shm_available() instead.
+    
+    (cherry picked from commit 1fe36fa983b8f271165750977120d758faf84d01)
+
+commit c8e704539cd64ce932b276f455524dd4a8d64e04
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Tue Apr 14 19:38:14 2015 +0200
+
+    mem: add a multiprocess-safe shm_available()
+    
+    new safe_shm_available() function secured with shm_lock()
+    
+    (cherry picked from commit 51e263de80532e297546f17d2f2ed528ffe9731b)
+
+commit 9839280c0c2aabdd7749cb7553354fb20545a0ea
+Author: Mickael Marrache <mickaelmarrache@gmail.com>
+Date:   Tue Apr 14 18:18:30 2015 +0200
+
+    db_mongodb: change warn to info for log message on unhandled data type log
+    
+    - less verbosity to syslog
+    
+    (cherry picked from commit ebf6483650c0cff88703e071383184b3f4ac7309)
+
+commit 9ab45a4b0c557aa2bfcf121361346590e0246f73
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 10 11:32:20 2015 +0200
+
+    ndb_mongodb: fixed name of the function in docs
+    
+    (cherry picked from commit c6eff0f5f6ec33fba5d61e4a6616d1bddfe6f958)
+
+commit d5220ac3efc2df4a1995fc79425340cfc79ecf00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 8 16:29:33 2015 +0200
+
+    kamctl: added help for 'db connect' command
+    
+    (cherry picked from commit 545037884e806df0d450fd6d7b425808c944d8a8)
+
+commit 2786d32a29e29c77f7b5ea0f2e044c53afa43e3c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 3 20:02:37 2015 +0200
+
+    uac_redirect: updated the example script
+    
+    (cherry picked from commit 1a3ce79cc058c57197a7b3736b3ec8b08be5c33f)
+
+commit a3a050c862398e6afa39f5dc1b00b0e9f93aad1a
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Sat May 9 18:16:28 2015 +0200
+
+    modules/nathelper: don't include enclosing bracket in contact uri in set_contact_alias
+    
+    (cherry picked from commit b525ada2d12bf85c385a5f97859afd5d52405354)
+
+commit 97f1ee6e287b6f711ddbe04700a82295341ed880
+Author: Timo TerÃ¤s <timo.teras@iki.fi>
+Date:   Mon Mar 9 16:30:53 2015 +0200
+
+    sqlops: fix use-after-free by deep copying result name
+    
+    When creating a new result handle, deep copy the result name.
+    Otherwise we might end up accessing the name after it's freed.
+    
+    (cherry picked from commit 6e2604464e64cfaaf1e0327228f53f4787b69470)
+
+commit d3005687cc7d52ef689592391a19fc89c59aa312
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 16 10:51:36 2015 +0200
+
+    uac: reset the ongoing registration flags in case of error in tm callback
+    
+    - resulted in being stuck in a state that didn't retry registration
+    - reported by AndyJRobinson, GH#124
+    
+    (cherry picked from commit 08d7b66310e7c09a70db296f533f98b32d2e4ad8)
+
+commit a23331fbe5392cb6902dfd891b02162c65874f21
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Mon Apr 13 17:04:41 2015 +0200
+
+    pv: fix memory leak when getting $conid
+    
+    cherry-picked from 0e8ef73c2095a7564735a1dab9ed32e3531fc59e
+
+commit ac36829250fb8cf8347328cdfd980fd9362a1e33
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 7 12:34:34 2015 +0200
+
+    textops: fixed reply code on no-match for search_hf() with flag f
+    
+    - true instead of false was returned
+    - reported and patch by Paolo on sr-users
+    
+    (cherry picked from commit 59f1451db54be608f1417075001d2f0aa5be8786)
+
+
 ===================== 2015-04-02 Version 4.2.4 Released =====================
 
 ===================== Changes Since Version 4.2.3 ===========================
