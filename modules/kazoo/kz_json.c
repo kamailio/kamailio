@@ -122,7 +122,7 @@ int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
 				str field = str_init(*(tokens + i));
 				// check for idx []
 				int sresult = sscanf(field.s, "%[^[][%[^]]]", f1, f2); //, f3);
-				LM_DBG("CHECK IDX %d - %s , %s, %s\n", sresult, field.s, f1, f2);
+				LM_DBG("CHECK IDX %d - %s , %s, %s\n", sresult, field.s, f1, (sresult > 1? f2 : "(null)"));
 
 				jtree = kz_json_get_object(jtree, f1);
 				if(jtree != NULL) {
