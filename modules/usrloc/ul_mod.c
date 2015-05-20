@@ -109,6 +109,7 @@ int ul_db_update_as_insert = 0;
 int ul_timer_procs = 0;
 int ul_db_check_update = 0;
 int ul_keepalive_timeout = 0;
+int ul_db_disable_delete = 0;
 
 int ul_db_ops_ruid = 1;
 int ul_expires_type = 0;
@@ -229,6 +230,7 @@ static param_export_t params[] = {
 	{"expires_type",        PARAM_INT, &ul_expires_type},
 	{"db_raw_fetch_type",   PARAM_INT, &ul_db_raw_fetch_type},
 	{"db_insert_null",      PARAM_INT, &ul_db_insert_null},
+	{"db_disable_delete",	PARAM_INT, &ul_db_disable_delete},
 	{0, 0, 0}
 };
 

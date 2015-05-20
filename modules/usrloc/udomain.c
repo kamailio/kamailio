@@ -866,6 +866,10 @@ done:
  */
 int db_timer_udomain(udomain_t* _d)
 {
+    if (ul_db_disable_delete) {
+        return 0;
+    }
+
 	db_key_t keys[2];
 	db_op_t  ops[2];
 	db_val_t vals[2];
