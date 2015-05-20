@@ -668,6 +668,9 @@ endif
 else ifeq ($(MEMMNG), 2)
 #	use tlsf malloc
 	C_DEFS+= -DTLSF_MALLOC=1
+ifeq 	($(MEMDBG), 1)
+		C_DEFS+= -DDBG_TLSF_MALLOC
+endif
 else
 #	use f_malloc
 	C_DEFS+= -DF_MALLOC
