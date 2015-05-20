@@ -901,23 +901,30 @@ int db_timer_udomain(udomain_t* _d)
  */
 int testdb_udomain(db1_con_t* con, udomain_t* d)
 {
-	db_key_t key[1], col[1];
-	db_val_t val[1];
+	db_key_t key[2], col[1];
+	db_val_t val[2];
 	db1_res_t* res = NULL;
 
-	if (ul_dbf.use_table(con, d->name) < 0) {
+	if(ul_dbf.use_table(con, d->name) < 0) {
 		LM_ERR("failed to change table\n");
 		return -1;
 	}
 
 	key[0] = &user_col;
+	key[1] = &domain_col;
 
 	col[0] = &user_col;
+
 	VAL_TYPE(val) = DB1_STRING;
 	VAL_NULL(val) = 0;
 	VAL_STRING(val) = "dummy_user";
 	
-	if (ul_dbf.query( con, key, 0, val, col, 1, 1, 0, &res) < 0) {
+	VAL_TYPE(val+1) = DB1_STRING;
+	VAL_NULL(val+1) = 0;
+	VAL_STRING(val+1) = "dummy_domain";
+
+	if(ul_dbf.query(con, key, 0, val, col, (use_domain)?2:1, 1, 0, &res)<0) {
+		if(res) ul_dbf.free_result( con, res);
 		LM_ERR("failure in db_query\n");
 		return -1;
 	}
