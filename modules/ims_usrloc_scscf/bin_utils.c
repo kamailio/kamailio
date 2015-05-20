@@ -898,7 +898,14 @@ ims_subscription *bin_decode_ims_subscription(bin_data *x)
 		if (!bin_decode_service_profile(x,imss->service_profiles+i)) goto error;
 
 	imss->lock = lock_alloc();
-	imss->lock = lock_init(imss->lock);
+	if (imss->lock==0){
+		goto error;
+	}
+	if (lock_init(imss->lock)==0){
+		lock_dealloc(imss->lock);
+		imss->lock=0;
+		goto error;
+	}
 	imss->ref_count = 1;
 
 	return imss;

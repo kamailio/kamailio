@@ -274,9 +274,8 @@ static int load_pcres(int action)
 		fclose(f);
 		goto err;
 	}
-	for (i=0; i<max_groups; i++) {
-		patterns[i] = NULL;
-	}
+	memset(patterns, 0, sizeof(char*) * max_groups);
+
 	for (i=0; i<max_groups; i++) {
 		if ((patterns[i] = pkg_malloc(sizeof(char) * group_max_size)) == 0) {
 			LM_ERR("no more memory for patterns[%d]\n", i);
@@ -347,6 +346,11 @@ static int load_pcres(int action)
 	
 	fclose(f);
 	
+	if(num_pcres_tmp==0) {
+		LM_ERR("no expressions in the file\n");
+		goto err;
+	}
+
 	/* Fix the patterns */
 	for (i=0; i < num_pcres_tmp; i++) {
 		
@@ -411,6 +415,7 @@ static int load_pcres(int action)
 		memcpy(pcres_tmp[i], pcre_tmp, pcre_size);
 		pcre_free(pcre_tmp);
 		pkg_free(patterns[i]);
+		patterns[i] = NULL;
 	}
 	
 	/* Copy to shared memory */

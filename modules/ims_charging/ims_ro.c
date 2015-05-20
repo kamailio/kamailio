@@ -1218,6 +1218,12 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i]\n",
 	    ro_cca_data->mscc->granted_service_unit->cc_time,
 	    ro_cca_data->mscc->validity_time);
+    
+    if (ro_cca_data->mscc->granted_service_unit->cc_time <=0 ) {
+        LM_DBG("got zero GSU.... reservation failed");
+	error_code = RO_RETURN_FALSE;
+	goto error1;
+    }
 
     ssd->ro_session->last_event_timestamp = time(0);
     ssd->ro_session->event_type = pending;

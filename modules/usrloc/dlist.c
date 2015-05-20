@@ -46,6 +46,12 @@
 /*! \brief Global list of all registered domains */
 dlist_t* root = 0;
 
+unsigned int _ul_max_partition = 0;
+
+void ul_set_max_partition(unsigned int m)
+{
+	_ul_max_partition = m;
+}
 
 /*!
  * \brief Find domain with the given name
@@ -102,11 +108,11 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	int i;
 	void *cp;
 	int shortage, needed;
-	db_key_t keys1[2]; /* where */
-	db_val_t vals1[2];
-	db_op_t  ops[2];
+	db_key_t keys1[3]; /* where */
+	db_val_t vals1[3];
+	db_op_t  ops1[3];
 	db_key_t keys2[6]; /* select */
-	int n[2] = {1,6}; /* number of dynamic values used on key1/key2 */
+	int n[2] = {2,6}; /* number of dynamic values used on key1/key2 */
 
 	cp = buf;
 	shortage = 0;
@@ -132,14 +138,23 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 	/* where fields */
 	keys1[0] = &expires_col;
-	ops[0] = OP_GT;
+	ops1[0] = OP_GT;
 	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;
 	vals1[0].val.str_val = now;
 
+	keys1[1] = &partition_col;
+	ops1[1] = OP_EQ;
+	vals1[1].type = DB1_INT;
+	vals1[1].nul = 0;
+	if(_ul_max_partition>0)
+		vals1[1].val.int_val = part_idx;
+	else
+		vals1[1].val.int_val = 0;
+
 	if (flags & nat_bflag) {
 		keys1[n[0]] = &keepalive_col;
-		ops[n[0]] = OP_EQ;
+		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
 		vals1[n[0]].nul = 0;
 		vals1[n[0]].val.int_val = 1;
@@ -153,7 +168,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			LM_ERR("sql use_table failed\n");
 			return -1;
 		}
-		if (ul_dbf.query(ul_dbh, keys1,ops, vals1, keys2,
+		if (ul_dbf.query(ul_dbh, keys1, ops1, vals1, keys2,
 							n[0], n[1], NULL, &res) <0 ) {
 			LM_ERR("query error\n");
 			return -1;

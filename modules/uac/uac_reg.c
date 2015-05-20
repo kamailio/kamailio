@@ -898,7 +898,6 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 error:
-	ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
 	if(reg_retry_interval) {
 		ri->timer_expires = time(NULL) + reg_retry_interval;
 	} else {
@@ -935,16 +934,16 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		return 4;
 	if(reg->timer_expires > tn + reg_timer_interval + 3)
 		return 3;
-	reg->timer_expires = tn;
-	reg->flags |= UAC_REG_ONGOING;
-	reg->flags &= ~UAC_REG_ONLINE;
-	counter_add(regactive, -1);		/* Take it out of the active pool while re-registering */
 	uuid = (char*)shm_malloc(reg->l_uuid.len+1);
 	if(uuid==NULL)
 	{
 		LM_ERR("no more shm\n");
 		return -1;
 	}
+	reg->timer_expires = tn;
+	reg->flags |= UAC_REG_ONGOING;
+	reg->flags &= ~UAC_REG_ONLINE;
+	counter_add(regactive, -1);		/* Take it out of the active pool while re-registering */
 	memcpy(uuid, reg->l_uuid.s, reg->l_uuid.len);
 	uuid[reg->l_uuid.len] = '\0';
 

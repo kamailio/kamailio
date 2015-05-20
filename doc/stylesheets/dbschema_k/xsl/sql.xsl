@@ -55,7 +55,9 @@
 	<xsl:apply-templates select="version"/>
 
 	<xsl:text>CREATE TABLE </xsl:text>
+	<xsl:call-template name="quotechar"/>
 	<xsl:value-of select="$table.name"/>
+	<xsl:call-template name="quotechar"/>
 	<xsl:text> (&#x0A;</xsl:text>
 
 	<!-- Process all columns -->
@@ -173,7 +175,9 @@
 
     <xsl:template match="column">
 	<xsl:text>    </xsl:text>
+	<xsl:call-template name="quotechar"/>
 	<xsl:call-template name="get-name"/>
+	<xsl:call-template name="quotechar"/>
 	<xsl:text> </xsl:text>
 
 	<xsl:call-template name="column.type"/>
@@ -245,9 +249,11 @@
 <!-- ################ COLREF ################  -->
 
     <xsl:template match="colref">
+	<xsl:call-template name="quotechar"/>
 	<xsl:call-template name="get-column-name">
 	    <xsl:with-param name="select" select="@linkend"/>
 	</xsl:call-template>
+	<xsl:call-template name="quotechar"/>
 	<xsl:if test="not(position()=last())">
 	    <xsl:text>, </xsl:text>
 	</xsl:if>

@@ -695,9 +695,9 @@ static void dump_dtrie_mi(const struct dtrie_node_t *root,
 	const unsigned int branches, char *prefix, int *length, struct mi_root *reply)
 {
 	struct mi_node *crt_node;
-        unsigned int i;
-        char digit, *val;
-	int val_len;
+	unsigned int i;
+	char digit, *val = NULL;
+	int val_len = 0;
 
 	/* Sanity check - should not reach here anyway */
 	if (NULL == root) {

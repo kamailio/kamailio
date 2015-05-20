@@ -60,7 +60,7 @@ static void fifo_process(int rank);
 static int mi_destroy(void);
 
 /* FIFO server vars */
-static char *mi_fifo = 0;		 		/*!< FIFO name */
+static char *mi_fifo = NAME "_fifo";		/*!< FIFO name */
 static char *mi_fifo_reply_dir = DEFAULT_MI_REPLY_DIR; 	/*!< dir where reply fifos are allowed */
 static char *mi_reply_indent = DEFAULT_MI_REPLY_IDENT;
 static int  mi_fifo_uid = -1;				/*!< Fifo default UID */
@@ -114,11 +114,34 @@ static int mi_mod_init(void)
 {
 	int n;
 	struct stat filestat;
+	int len;
+	int sep;
+	char *p;
 
 	/* checking the mi_fifo module param */
 	if (mi_fifo==NULL || *mi_fifo == 0) {
 		LM_ERR("No MI fifo configured\n");
 		return -1;
+	}
+	if(*mi_fifo != '/') {
+		if(runtime_dir!=NULL && *runtime_dir!=0) {
+			len = strlen(runtime_dir);
+			sep = 0;
+			if(runtime_dir[len-1]!='/') {
+				sep = 1;
+			}
+			len += sep + strlen(mi_fifo);
+			p = pkg_malloc(len + 1);
+			if(p==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
+			strcpy(p, runtime_dir);
+			if(sep) strcat(p, "/");
+			strcat(p, mi_fifo);
+			mi_fifo = p;
+			LM_DBG("fifo path is [%s]\n", mi_fifo);
+		}
 	}
 
 	LM_DBG("testing mi_fifo existance ...\n");

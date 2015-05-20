@@ -56,6 +56,9 @@ int handle_worker(handler_common_t *phandler)
 	eapi_t api;
 	int rc;
 
+	/* ensure be connected */
+	enode_connect();
+
 	memset((void*)&msg,0,sizeof(msg));
 
 	/* Kamailio worker PID */

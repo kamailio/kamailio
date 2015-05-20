@@ -138,7 +138,8 @@ modparam("jsonrpc-s", "transport", 1)
 		<title><varname>fifo_name</varname> (str)</title>
 		<para>
 		The name of the FIFO file to be created for listening and 
-		reading external commands.
+		reading external commands. If the given path is not absolute,
+		the fifo file is created relative to run_dir (global parameter).
 		</para>
 		<para>
 		<emphasis>

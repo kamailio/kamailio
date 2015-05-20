@@ -111,9 +111,15 @@ Chapter 1. Admin Guide
 4.1. fifo_name (string)
 
    The name of the FIFO file to be created for listening and reading
-   external commands.
+   external commands. If the value is a file name or does not start with
+   '/', the FIFO file is created in the 'run_dir'. The 'run_dir' is a core
+   parameter that can specify where to create runtime files, its default
+   value is '/var/run/kamailio/'.
 
-   Default value is NONE.
+   Default value is 'Kamailio_fifo'.
+
+   The full path used by default for FIFO file is
+   '/var/run/kamailio/Kamailio_fifo'
 
    Example 1.1. Set fifo_name parameter
 ...

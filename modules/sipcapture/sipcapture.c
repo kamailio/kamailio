@@ -1026,7 +1026,7 @@ static void destroy(void)
 	c = capture_modes_root;
 
 	while (c){
-		c0 = c;
+		c0 = c->next;
 		if (c->name.s){
 			pkg_free(c->name.s);
 		}
@@ -1041,7 +1041,7 @@ static void destroy(void)
 		}
 
 		pkg_free(c);
-		c = c0->next;
+		c = c0;
 	}
 
 	if (capture_on_flag)

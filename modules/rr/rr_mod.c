@@ -459,13 +459,11 @@ static void free_rr_lump(struct lump **list)
 				are in failure_route. -- No problem, only the
 				anchor is left in the list */
 				
-				LOG(L_DBG, "DEBUG: free_rr_lump: lump %p" \
-						" is left in the list\n",
+				LM_DBG("lump %p is left in the list\n",
 						lump);
 				
 				if (lump->len)
-				    LOG(L_CRIT, "BUG: free_rr_lump: lump %p" \
-						" can not be removed, but len=%d\n",
+				    LM_CRIT("lump %p can not be removed, but len=%d\n",
 						lump, lump->len);
 						
 				prev_lump=lump;
@@ -474,14 +472,16 @@ static void free_rr_lump(struct lump **list)
 				else *list = lump->next;
 				if (!(lump->flags&(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)))
 					free_lump(lump);
-				if (!(lump->flags&LUMPFLAG_SHMEM))
+				if (!(lump->flags&LUMPFLAG_SHMEM)) {
 					pkg_free(lump);
+					lump = 0;
+				}
 			}
 		} else {
 			/* store previous position */
 			prev_lump=lump;
 		}
-		if (first_shmem && (lump->flags&LUMPFLAG_SHMEM))
+		if (first_shmem && lump && (lump->flags&LUMPFLAG_SHMEM))
 			first_shmem=0;
 	}
 }

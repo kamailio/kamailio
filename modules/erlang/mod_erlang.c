@@ -49,6 +49,7 @@
 #include "pv_tuple.h"
 #include "pv_atom.h"
 #include "pv_list.h"
+#include "pv_pid.h"
 
 MODULE_VERSION
 
@@ -123,6 +124,16 @@ static pv_export_t pvs[] = {
 				pv_xbuff_get,
 				pv_xbuff_set,
 				pv_xbuff_parse_name,
+				0,
+				0,
+				0
+		},
+		{
+				{ "pid", (sizeof("pid")-1) },
+				PVT_OTHER,
+				pv_pid_get,
+				pv_pid_set,
+				pv_pid_parse_name,
 				0,
 				0,
 				0

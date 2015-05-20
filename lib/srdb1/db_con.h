@@ -37,12 +37,17 @@
  */
 typedef struct {
 	const str* table;      /*!< Default table that should be used              */
+	const char *tquote;    /*!< Char to quote special tokens (table/column names) */
 	unsigned long tail;    /*!< Variable length tail, database module specific */
 } db1_con_t;
 
 
 /** Return the table of the connection handle */
 #define CON_TABLE(cn)      ((cn)->table)
+/** Return the tquote of the connection handle */
+#define CON_TQUOTE(cn)     ((cn)->tquote)
+/** Return the tquote of the connection handle or empty str if null */
+#define CON_TQUOTESZ(cn)   (((cn)->tquote)?((cn)->tquote):"")
 /** Return the tail of the connection handle */
 #define CON_TAIL(cn)       ((cn)->tail)
 

@@ -320,56 +320,6 @@ clean:
 }
 
 /*
- * Raw SQL query -- is not the case to have this method
- */
-int dbt_raw_query(db1_con_t* _h, const str* _s, db1_res_t** _r)
-{
-	*_r = NULL;
-    int res = -1;
-	dbt_table_p _tbc = NULL;
-	int cols;
-	int n = 0;
-	db_key_t *result_cols = NULL;
-
-	if(!_h) {
-		LM_ERR("H INVALID\n");
-		return res;
-	}
-
-	if(!_s) {
-		LM_ERR("S INVALID\n");
-		return res;
-	}
-
-	if(dbt_use_table(_h, _s) != 0) {
-		LM_ERR("USE INVALID %.*s\n", _s->len, _s->s);
-		return res;
-	}
-
-	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-	if(!_tbc)
-	{
-		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-		return res;
-	}
-
-	cols = _tbc->nrcols;
-	result_cols = pkg_malloc(sizeof(db_key_t) * cols);
-	memset(result_cols, 0, sizeof(db_key_t) * cols);
-	for(n=0; n < cols; n++) {
-		result_cols[n] = &_tbc->colv[n]->name;
-	}
-
-	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-
-	res = dbt_query(_h, NULL, NULL, NULL, result_cols, 0, cols, NULL, _r);
-	pkg_free(result_cols);
-	return res;
-
-
-}
-
-/*
  * Affected Rows
  */
 int dbt_affected_rows(db1_con_t* _h)

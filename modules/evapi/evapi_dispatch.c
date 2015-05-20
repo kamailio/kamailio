@@ -332,12 +332,13 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	
 	evapi_client = (struct ev_io*) malloc (sizeof(struct ev_io));
 	if(evapi_client==NULL) {
-		perror("no more memory\n");
+		LM_ERR("no more memory\n");
 		return;
 	}
 
 	if(EV_ERROR & revents) {
-		perror("received invalid event\n");
+		LM_ERR("received invalid event\n");
+		free(evapi_client);
 		return;
 	}
 
@@ -346,6 +347,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 
 	if (csock < 0) {
 		LM_ERR("cannot accept the client\n");
+		free(evapi_client);
 		return;
 	}
 	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
@@ -357,6 +359,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 							EVAPI_IPADDR_SIZE)==NULL) {
 					LM_ERR("cannot convert ipv4 address\n");
 					close(csock);
+					free(evapi_client);
 					return;
 				}
 			} else {
@@ -366,6 +369,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 							EVAPI_IPADDR_SIZE)==NULL) {
 					LM_ERR("cannot convert ipv6 address\n");
 					close(csock);
+					free(evapi_client);
 					return;
 				}
 			}
@@ -378,6 +382,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	if(i==EVAPI_MAX_CLIENTS) {
 		LM_ERR("too many clients\n");
 		close(csock);
+		free(evapi_client);
 		return;
 	}
 
@@ -389,8 +394,10 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	evenv.eset = 1;
 	evapi_run_cfg_route(&evenv, _evapi_rts.con_new);
 
-	if(_evapi_clients[i].connected == 0)
+	if(_evapi_clients[i].connected == 0) {
+		free(evapi_client);
 		return;
+	}
 
 	/* start watcher to read messages from whatchers */
 	ev_io_init(evapi_client, evapi_recv_client, csock, EV_READ);

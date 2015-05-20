@@ -915,14 +915,53 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
     dlg = lookup_dlg(h_entry, h_id);
     if (dlg) {
         //dlg_bye_all(dlg, (rpc_extra_hdrs.len>0)?&rpc_extra_hdrs:NULL);
-        unref_dlg(dlg, 1);
-    }
+    unref_dlg(dlg, 1);
+}
 }*/
+
+static const char *rpc_end_dlg_entry_id_doc[2] = {
+    "End a given dialog based on [h_entry] [h_id]", 0
+};
+
+
+
+
+
+/* Wrapper for terminating dialog from API - from other modules */
+static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
+    unsigned int h_entry, h_id;
+    struct dlg_cell * dlg = NULL;
+    str rpc_extra_hdrs = {NULL,0};
+    int n;
+
+    n = rpc->scan(c, "dd", &h_entry, &h_id);
+    if (n < 2) {
+	    LM_ERR("unable to read the parameters (%d)\n", n);
+	    rpc->fault(c, 500, "Invalid parameters");
+	    return;
+    }
+    if(rpc->scan(c, "*S", &rpc_extra_hdrs)<1)
+    {
+	    rpc_extra_hdrs.s = NULL;
+	    rpc_extra_hdrs.len = 0;
+    }
+
+    dlg = lookup_dlg(h_entry, h_id);//increments ref count!
+    if(dlg==NULL) {
+	    rpc->fault(c, 404, "Dialog not found");
+	    return;
+    }
+
+    unref_dlg(dlg, 1);
+
+    dlg_terminate(dlg, NULL, NULL/*reason*/, 2, NULL);
+
+}
 
 
 static rpc_export_t rpc_methods[] = {
 	{"dlg2.list", rpc_print_dlgs, rpc_print_dlgs_doc, 0},
-    //{"dlg.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
+        {"dlg2.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
     {0, 0, 0, 0}
 };
 

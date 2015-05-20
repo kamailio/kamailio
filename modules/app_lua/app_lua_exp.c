@@ -2664,7 +2664,7 @@ static const luaL_Reg _sr_mqueue_Map [] = {
 static int lua_sr_ndb_mongodb_cmd_x(lua_State *L, int ctype)
 {
 	int ret = 0;
-	str param[6] = {0};
+	str param[6];
 
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
 	{
@@ -2738,7 +2738,7 @@ static int lua_sr_ndb_mongodb_find_one(lua_State *L)
 static int lua_sr_ndb_mongodb_next_reply(lua_State *L)
 {
 	int ret = 0;
-	str param[1] = {0};
+	str param[1];
 
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
 	{
@@ -2752,7 +2752,7 @@ static int lua_sr_ndb_mongodb_next_reply(lua_State *L)
 	}
 
 	param[0].s = (char *) lua_tostring(L, -1);
-	param[0].len = strlen(param[4].s);
+	param[0].len = strlen(param[0].s);
 
 	ret = _lua_ndb_mongodbb.next_reply(&param[0]);
 
@@ -2765,7 +2765,7 @@ static int lua_sr_ndb_mongodb_next_reply(lua_State *L)
 static int lua_sr_ndb_mongodb_free_reply(lua_State *L)
 {
 	int ret = 0;
-	str param[1] = {0};
+	str param[1];
 
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_NDB_MONGODB))
 	{
@@ -2779,7 +2779,7 @@ static int lua_sr_ndb_mongodb_free_reply(lua_State *L)
 	}
 
 	param[0].s = (char *) lua_tostring(L, -1);
-	param[0].len = strlen(param[4].s);
+	param[0].len = strlen(param[0].s);
 
 	ret = _lua_ndb_mongodbb.free_reply(&param[0]);
 

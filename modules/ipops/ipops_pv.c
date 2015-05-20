@@ -861,7 +861,7 @@ int pv_parse_srv_name (pv_spec_t *sp, str *in)
 	char *pstr;
 	int i, pos, sign;
 	srv_pv_t *dpv;
-	str pvi, pvk, pvn;
+	str pvi = {0}, pvk = {0}, pvn = {0};
 
 	/**********
 	 * o alloc/init pvid structure
@@ -991,7 +991,7 @@ noindex:
 	if (skip_over (in, pos, 1) != in->len)
 		goto error;
 	LM_DBG ("srvquery (%.*s => %.*s [%.*s])\n",
-			pvn.len, pvn.s, pvk.len, pvk.s, pvi.len, pvi.s);
+			pvn.len, ZSW(pvn.s), pvk.len, ZSW(pvk.s), pvi.len, ZSW(pvi.s));
 	dpv->item = sr_srv_add_item (&pvn, 0);
 	if (!dpv->item)
 		goto error;

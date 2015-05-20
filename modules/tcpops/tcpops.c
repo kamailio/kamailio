@@ -174,6 +174,7 @@ int tcpops_keepalive_disable(int fd, int closefd)
 int tcpops_set_connection_lifetime(struct tcp_connection* con, int time) {
 	if (unlikely(con == NULL)) {
 		LM_CRIT("BUG: con == NULL");
+		return -1;
 	}
 	if (unlikely(time < 0)) {
 		LM_ERR("Invalid timeout value, %d, must be >= 0\n", time);

@@ -122,7 +122,12 @@ int notify_init() {
 	LM_ERR("failed to create cdp event list lock\n");
 	return 0;
     }
-    notification_list->lock = lock_init(notification_list->lock);
+    if (lock_init(notification_list->lock)==0){
+       lock_dealloc(notification_list->lock);
+       notification_list->lock=0;
+       LM_ERR("failed to initialize cdp event list lock\n");
+       return 0;
+    }
     notification_list->size = 0;
     sem_new(notification_list->empty, 0); //pre-locked - as we assume list is empty at start
     return 1;

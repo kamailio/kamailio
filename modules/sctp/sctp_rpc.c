@@ -154,7 +154,7 @@ static void core_sctpinfo(rpc_t* rpc, void* c)
 /*
  * RPC Methods exported by this module
  */
-static rpc_export_t scp_rpc_methods[] = {
+static rpc_export_t sctp_rpc_methods[] = {
 	{"sctp.options",      core_sctp_options,      core_sctp_options_doc,
 		0},
 	{"sctp.info",         core_sctpinfo,          core_sctpinfo_doc,   0},
@@ -165,7 +165,7 @@ static rpc_export_t scp_rpc_methods[] = {
 
 int sctp_register_rpc(void)
 {
-	if (rpc_register_array(scp_rpc_methods)!=0)
+	if (rpc_register_array(sctp_rpc_methods)!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
 		return -1;

@@ -17,7 +17,7 @@ active_watchers|11
 address|
 address|6
 aliases|
-aliases|6
+aliases|8
 carrier_name|
 carrier_name|1
 carrierfailureroute|
@@ -69,7 +69,7 @@ lcr_rule|2
 lcr_rule_target|
 lcr_rule_target|1
 location|
-location|7
+location|8
 location_attrs|
 location_attrs|1
 matrix|

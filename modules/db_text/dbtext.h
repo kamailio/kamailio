@@ -60,7 +60,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 /*
  * Raw SQL query
  */
-int dbt_raw_query(db1_con_t* _h, const str* _s, db1_res_t** _r);
+int dbt_raw_query(db1_con_t* _h,  str* _s, db1_res_t** _r);
 
 
 /*

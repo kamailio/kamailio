@@ -458,6 +458,9 @@ int st_flush_ucontact(ucontact_t* _c)
 
 /* ============== Database related functions ================ */
 
+extern unsigned int _ul_max_partition;
+static unsigned int _ul_partition_counter = 0;
+
 /*!
  * \brief Insert contact into the database
  * \param _c inserted contact
@@ -466,8 +469,8 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[21];
-	db_val_t vals[21];
+	db_key_t keys[22];
+	db_val_t vals[22];
 	int nr_cols;
 	
 	if (_c->flags & FL_MEM) {
@@ -641,6 +644,18 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[nr_cols].nul = 0;
 	vals[nr_cols].val.int_val = (int)_c->keepalive;
 	nr_cols++;
+
+	keys[nr_cols] = &partition_col;
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	if(_ul_max_partition>0) {
+		vals[nr_cols].val.int_val = ((_ul_partition_counter++) + my_pid())
+										% _ul_max_partition;
+	} else {
+		vals[nr_cols].val.int_val = 0;
+	}
+	nr_cols++;
+
 
 	if (use_domain) {
 		keys[nr_cols] = &domain_col;
