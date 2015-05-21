@@ -36,11 +36,11 @@ static int *get_counter(char *key) {
 	if (d == NULL) {
 		gchar *k = g_strdup(key);
 		d = (int*) pkg_malloc(sizeof(int));
-		LM_DBG("counter created @0x%08x\n", (unsigned int)d);
+		LM_DBG("counter created @0x%p\n", d);
 		*d = 0;
 		g_hash_table_insert(hash, k, d);
 	}
-	LM_DBG("counter@0x%08x: key: %s ; value: %d\n", (unsigned int)d, key, *d);
+	LM_DBG("counter@0x%p: key: %s ; value: %d\n", d, key, *d);
 	return d;
 }
 
