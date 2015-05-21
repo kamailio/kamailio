@@ -571,11 +571,20 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 		return -1;
 	}
 
+	if (db_mode==DB_ONLY) {
+		if (db_insert_ucontact(*_c) < 0) {
+			LM_ERR("failed to insert in database\n");
+			return -1;
+		} else {
+			(*_c)->state = CS_SYNC;
+		}
+	}
+
 	if (exists_ulcb_type(UL_CONTACT_INSERT)) {
 		run_ul_callbacks( UL_CONTACT_INSERT, *_c);
 	}
 
-	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
+	if (db_mode == WRITE_THROUGH) {
 		if (db_insert_ucontact(*_c) < 0) {
 			LM_ERR("failed to insert in database\n");
 			return -1;
