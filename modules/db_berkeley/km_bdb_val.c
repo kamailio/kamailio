@@ -173,6 +173,8 @@ int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 		VAL_TYPE(_v) = DB1_BLOB;
 		LM_DBG("got blob len %d\n", _l);
 		return 0;
+	default:
+		break;
 	}
 
 	return -6;
