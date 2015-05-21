@@ -1639,6 +1639,28 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
 	}
 }
 
+/*!
+ * \brief helper function for update_ucontact
+ * \param _c contact
+ * \return 0 on success, -1 on failure
+ */
+static inline int update_contact_db(ucontact_t* _c)
+{
+	int res;
+
+	if (ul_db_update_as_insert)
+		res = db_insert_ucontact(_c);
+	else
+		res = db_update_ucontact(_c);
+
+	if (res < 0) {
+		LM_ERR("failed to update database\n");
+		return -1;
+	} else {
+		_c->state = CS_SYNC;
+	}
+	return 0;
+}
 
 /*!
  * \brief Update ucontact with new values
@@ -1649,13 +1671,15 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
  */
 int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 {
-	int res;
-
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
 	if (mem_update_ucontact( _c, _ci) < 0) {
 		LM_ERR("failed to update memory\n");
 		return -1;
+	}
+
+	if (db_mode==DB_ONLY) {
+		if (update_contact_db(_c) < 0) return -1;
 	}
 
 	/* run callbacks for UPDATE event */
@@ -1670,18 +1694,8 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 
 	st_update_ucontact(_c);
 
-	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
-		if (ul_db_update_as_insert)
-			res = db_insert_ucontact(_c);
-		else
-			res = db_update_ucontact(_c);
-
-		if (res < 0) {
-			LM_ERR("failed to update database\n");
-			return -1;
-		} else {
-			_c->state = CS_SYNC;
-		}
+	if (db_mode == WRITE_THROUGH) {
+		if (update_contact_db(_c) < 0) return -1;
 	}
 	return 0;
 }
