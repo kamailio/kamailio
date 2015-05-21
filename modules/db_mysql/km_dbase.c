@@ -140,7 +140,8 @@ void db_mysql_async_exec_task(void *param)
 		return;
 	}
 	if(db_mysql_submit_query(dbc, &p[1])<0) {
-		LM_ERR("failed to execute query on async worker\n");
+		LM_ERR("failed to execute query [%.*s] on async worker\n",
+		       (p[1].len>100)?100:p[1].len, p[1].s);
 	}
 	db_mysql_close(dbc);
 }
