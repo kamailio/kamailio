@@ -65,7 +65,6 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 	str * body= NULL;
 	ucontact_t * ptr;
 	char buf[512];
-	int buf_len;
 	int reg_active = 0;
 	time_t cur_time = time(0);
 
@@ -99,7 +98,7 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 
 	/* Add the properties to this Node for AOR and ID: */
 	xmlNewProp(registration_node, BAD_CAST "aor", BAD_CAST uri.s);
-	buf_len = snprintf(buf, sizeof(buf), "%p", record);
+	snprintf(buf, sizeof(buf), "%p", record);
 	xmlNewProp(registration_node, BAD_CAST "id", BAD_CAST buf);
 
 	ptr = record->contacts;
@@ -113,7 +112,7 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 				goto error;
 			}
 			memset(buf, 0, sizeof(buf));
-			buf_len = snprintf(buf, sizeof(buf), "%p", ptr);
+			snprintf(buf, sizeof(buf), "%p", ptr);
 			xmlNewProp(contact_node, BAD_CAST "id", BAD_CAST buf);
 			/* Check, if this is the modified contact: */
 			if (ptr == c) {
@@ -128,50 +127,50 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 				else if (type & UL_CONTACT_DELETE) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "unregistered");
 				else xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "unknown");
 				memset(buf, 0, sizeof(buf));
-				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-cur_time));
+				snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-cur_time));
 				xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
 			} else {
 				reg_active = 1;
 				xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
 				xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "registered");
 				memset(buf, 0, sizeof(buf));
-				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-cur_time));
+				snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-cur_time));
 				xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
 			}
 			if (ptr->q != Q_UNSPECIFIED) {
 				float q = (float)ptr->q/1000;
 				memset(buf, 0, sizeof(buf));
-				buf_len = snprintf(buf, sizeof(buf), "%.3f", q);
+				snprintf(buf, sizeof(buf), "%.3f", q);
 				xmlNewProp(contact_node, BAD_CAST "q", BAD_CAST buf);
 			}
 			/* CallID Attribute */
 			memset(buf, 0, sizeof(buf));
-			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->callid.len, ptr->callid.s);
+			snprintf(buf, sizeof(buf), "%.*s", ptr->callid.len, ptr->callid.s);
 			xmlNewProp(contact_node, BAD_CAST "callid", BAD_CAST buf);
 
 			/* CSeq Attribute */
 			memset(buf, 0, sizeof(buf));
-			buf_len = snprintf(buf, sizeof(buf), "%d", ptr->cseq);
+			snprintf(buf, sizeof(buf), "%d", ptr->cseq);
 			xmlNewProp(contact_node, BAD_CAST "cseq", BAD_CAST buf);
 
 			/* received Attribute */
 			memset(buf, 0, sizeof(buf));
-	                buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->received.len, ptr->received.s);
+	                snprintf(buf, sizeof(buf), "%.*s", ptr->received.len, ptr->received.s);
          	       	xmlNewProp(contact_node, BAD_CAST "received", BAD_CAST buf);
 			
 			/* path Attribute */
 			memset(buf, 0, sizeof(buf));
-			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->path.len, ptr->path.s);
+			snprintf(buf, sizeof(buf), "%.*s", ptr->path.len, ptr->path.s);
 			xmlNewProp(contact_node, BAD_CAST "path", BAD_CAST buf);
 
 			/* user_agent Attribute */
 			memset(buf, 0, sizeof(buf));
-			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->user_agent.len, ptr->user_agent.s);
+			snprintf(buf, sizeof(buf), "%.*s", ptr->user_agent.len, ptr->user_agent.s);
 			xmlNewProp(contact_node, BAD_CAST "user_agent", BAD_CAST buf);
 
 			/* URI-Node */
 			memset(buf, 0, sizeof(buf));
-			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->c.len, ptr->c.s);
+			snprintf(buf, sizeof(buf), "%.*s", ptr->c.len, ptr->c.s);
 			uri_node = xmlNewChild(contact_node, NULL, BAD_CAST "uri", BAD_CAST buf) ;
 			if(uri_node == NULL) {
 				LM_ERR("while adding child\n");
