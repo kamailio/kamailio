@@ -313,7 +313,7 @@ inline int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark) {
  */
 int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark) {
     struct lump *l = msg->add_rm;
-    int hlen;
+    size_t hlen;
     char * hstr = NULL;
     const str *regstate, *sescase;
 
