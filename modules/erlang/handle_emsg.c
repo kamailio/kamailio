@@ -141,6 +141,9 @@ int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 	}
 	xpid->val.type = SR_XTYPE_XAVP;
 
+	/* registered process reply to from */
+	cnode_reply_to_pid = &msg->from;
+
 	backup_rt = get_route_type();
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
@@ -734,6 +737,8 @@ int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg * msg)
 
 	if (msg->msgtype == ERL_REG_SEND )
 	{
+		cnode_reply_to_pid = &msg->from;
+
 		if (!strncmp(msg->toname, "net_kernel",MAXATOMLEN)) {
 			/* respond to ping stuff */
 			ret = handle_net_kernel(phandler, msg);
@@ -744,7 +749,8 @@ int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg * msg)
 			/* try registered process */
 			handle_reg_send(phandler,msg);
 		}
-		from = msg->from;
+	} else if (msg->msgtype == ERL_SEND) {
+		ret = handle_send(phandler, msg);
 	} else {
 		/* TODO: fix below after adding #Pid and #Ref in PVs */
 		request->index = 0;
@@ -785,24 +791,30 @@ int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg * msg)
 
 	if (ret)
 	{
+		/* reset pid */
+		cnode_reply_to_pid = NULL;
 		return ret;
 	}
-	else if (response->index > 1)
+	else if (response->index > 1 && cnode_reply_to_pid)
 	{
-		ei_x_print_msg(response, &from, 1);
+		ei_x_print_msg(response, cnode_reply_to_pid, 1);
 
-		if (ei_send(phandler->sockfd, &from, response->buff, response->index))
+		if (ei_send(phandler->sockfd, cnode_reply_to_pid, response->buff, response->index))
 		{
 			LM_ERR("ei_send failed on node=<%s> socket=<%d>, %s\n",
 					phandler->ec.thisnodename,phandler->sockfd, strerror(erl_errno));
 		}
 
+		/* reset pid */
+		cnode_reply_to_pid = NULL;
 		return ret;
-
 	}
 	else
 	{
 		LM_DBG("** no reply **\n");
+
+		/* reset pid */
+		cnode_reply_to_pid = NULL;
 		return 0;
 	}
 }

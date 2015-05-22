@@ -62,10 +62,12 @@ static int postprocess_request(struct sip_msg *msg, unsigned int flags, void *_p
 /*  exported functions */
 static int erl_rpc(struct sip_msg *msg, char *module, char *function, char *args, char *reply);
 static int erl_reg_send_k(struct sip_msg *msg, char *_server, char *_emsg);
+static int erl_send_k(struct sip_msg *msg, char *_server, char *_emsg);
 static int erl_reply_k(struct sip_msg *msg, char *_emsg);
 
 /* fix-ups */
 static int fixup_rpc(void** param, int param_no);
+static int fixup_send(void** param, int param_no);
 static int fixup_reg(void** param, int param_no);
 static int fixup_reply(void** param, int param_no);
 
@@ -164,6 +166,7 @@ static param_export_t parameters[] =
 static cmd_export_t commands[] =
 {
 		{"erl_rpc", (cmd_function)erl_rpc, 4, fixup_rpc, 0, ANY_ROUTE},
+		{"erl_send", (cmd_function)erl_send_k, 2, fixup_send, 0, ANY_ROUTE},
 		{"erl_reg_send", (cmd_function)erl_reg_send_k, 2, fixup_reg, 0, ANY_ROUTE},
 		{"erl_reply", (cmd_function)erl_reply_k, 1, fixup_reply, 0, EVENT_ROUTE},
 		{"load_erl",(cmd_function)load_erl,0, 0,         0,         0}, /* API loader */
@@ -1048,6 +1051,306 @@ static int fixup_reply(void** param, int param_no)
 		} else if(pv_parse_spec( &s, &erl_param->value.sp)==NULL) {
 
 			/* only XBUFF is accepted for emsg and reply */
+			LM_ERR("wrong parameter #%d\n",param_no);
+			pv_spec_free(&erl_param->value.sp);
+			pkg_free((void*)erl_param);
+			return E_UNSPEC;
+		} else {
+			if (erl_param->value.sp.type ==PVT_XAVP) {
+				LM_ERR("XAVP not acceptable for parameter #%d\n",param_no);
+				pkg_free((void*)erl_param);
+				return E_UNSPEC;
+			}
+
+			if (erl_param->value.sp.setf == pv_list_set
+					|| erl_param->value.sp.setf == pv_xbuff_set
+					|| erl_param->value.sp.setf == pv_tuple_set
+					|| erl_param->value.sp.setf == pv_atom_set) {
+
+				erl_param->type = ERL_PARAM_XBUFF_SPEC;
+			} else {
+				erl_param->type = ERL_PARAM_FPARAM;
+				erl_param->value.fp = *(fparam_t*)*param;
+			}
+		}
+	}
+
+	*param = (void*)erl_param;
+
+	return 0;
+}
+
+static int erl_send_k(struct sip_msg *msg, char *_pid, char *_emsg)
+{
+	erl_param_t *param_pid=(erl_param_t*)_pid;
+	erl_param_t *param_emsg=(erl_param_t*)_emsg;
+
+	str str_msg;
+	sr_xavp_t *xmsg=NULL;
+	pv_spec_t sp;
+	pv_spec_t *nsp = NULL;
+	pv_param_t  pvp;
+	pv_name_t *pvn;
+	pv_index_t *pvi;
+	int idx;
+	int idxf;
+	int attr;
+	ei_x_buff ei_msg;
+	erlang_pid *pid;
+
+	switch (param_pid->type) {
+	case ERL_PARAM_XBUFF_SPEC:
+		sp = param_pid->value.sp;
+		pvp = sp.pvp; /* work on copy */
+
+		if (pvp.pvn.type != PV_NAME_INTSTR || !(pvp.pvn.u.isname.type & AVP_NAME_STR)) {
+			LM_ERR("unsupported name of pid\n");
+			return -1;
+		}
+
+		if( pvp.pvn.type == PV_NAME_PVAR) {
+			nsp = pvp.pvn.u.dname;
+		}
+
+		if (nsp) {
+			pvi = &nsp->pvp.pvi;
+			pvn = &nsp->pvp.pvn;
+		} else {
+			pvi = &pvp.pvi;
+			pvn = &pvp.pvn;
+		}
+
+		if (sp.getf == pv_pid_get ) {
+			xmsg = pv_pid_get_pid(&pvn->u.isname.name.s);
+		} else if (sp.setf == pv_xbuff_set) {
+			xmsg = pv_xbuff_get_xbuff(&pvn->u.isname.name.s);
+		} else {
+			LM_ERR("BUG: unexpected type for pid parameter\n");
+			return -1;
+		}
+
+		/* fix index */
+		attr = xbuff_get_attr_flags(pvi->type);
+		pvi->type = xbuff_fix_index(pvi->type);
+
+		/* get the index */
+		if(pv_get_spec_index(msg, &pvp, &idx, &idxf))
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+
+		if (xbuff_is_attr_set(attr)) {
+			LM_WARN("attribute is not expected here!\n");
+		}
+
+		if (!xmsg) {
+			LM_ERR("undefined variable '%.*s'\n",STR_FMT(&pvn->u.isname.name.s));
+			return -1;
+		}
+
+		xmsg = xmsg->val.v.xavp;
+
+		if ((idxf != PV_IDX_ALL) && !xbuff_is_no_index(attr) ) {
+			xmsg = xavp_get_nth(&xmsg->val.v.xavp,idx,NULL);
+		}
+
+		if (!xmsg) {
+			LM_ERR("undefined value in '%.*s' at index %d\n",STR_FMT(&pvn->u.isname.name.s),idx);
+			goto err;
+		}
+
+		/* erlang_pid <- XAVP */
+		if (xmsg->name.s[0] == 'p' && xmsg->val.type == SR_XTYPE_DATA && xmsg->val.v.data) {
+			pid = xmsg->val.v.data->p;
+		} else {
+			LM_ERR("invalid value for pid parameter\n");
+			return -1;
+		}
+		break;
+	default:
+		LM_ERR("unexpected type for pid parameter\n");
+		return -1;
+	}
+
+	ei_x_new_with_version(&ei_msg);
+
+	switch(param_emsg->type){
+	case ERL_PARAM_FPARAM:
+		if(get_str_fparam(&str_msg,msg,&param_emsg->value.fp)){
+			LM_ERR("can't get emsg parameter\n");
+			goto err;
+		}
+
+		ei_x_encode_string_len(&ei_msg,str_msg.s,str_msg.len);
+
+		break;
+	case ERL_PARAM_XBUFF_SPEC:
+		sp = param_emsg->value.sp;
+		pvp = sp.pvp; /* work on copy */
+
+		if (pvp.pvn.type != PV_NAME_INTSTR || !(pvp.pvn.u.isname.type & AVP_NAME_STR)) {
+			LM_ERR("unsupported name of list\n");
+			return -1;
+		}
+
+		if( pvp.pvn.type == PV_NAME_PVAR) {
+			nsp = pvp.pvn.u.dname;
+		}
+
+		if (nsp) {
+			pvi = &nsp->pvp.pvi;
+			pvn = &nsp->pvp.pvn;
+		} else {
+			pvi = &pvp.pvi;
+			pvn = &pvp.pvn;
+		}
+
+		if (sp.setf == pv_list_set ) {
+			xmsg = pv_list_get_list(&pvn->u.isname.name.s);
+		} else if (sp.setf == pv_xbuff_set) {
+			xmsg = pv_xbuff_get_xbuff(&pvn->u.isname.name.s);
+		}  else if (sp.setf == pv_tuple_set) {
+			xmsg = pv_tuple_get_tuple(&pvn->u.isname.name.s);
+		}
+
+		/* fix index */
+		attr = xbuff_get_attr_flags(pvi->type);
+		pvi->type = xbuff_fix_index(pvi->type);
+
+		/* get the index */
+		if(pv_get_spec_index(msg, &pvp, &idx, &idxf))
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+
+		if (xbuff_is_attr_set(attr)) {
+			LM_WARN("attribute is not expected here!\n");
+		}
+
+		if (!xmsg) {
+			LM_ERR("undefined variable '%.*s'\n",STR_FMT(&pvn->u.isname.name.s));
+			return -1;
+		}
+
+		xmsg = xmsg->val.v.xavp;
+
+		if ((idxf != PV_IDX_ALL) && !xbuff_is_no_index(attr) ) {
+			xmsg = xavp_get_nth(&xmsg->val.v.xavp,idx,NULL);
+		}
+
+		if (!xmsg) {
+			LM_ERR("undefined value in '%.*s' at index %d\n",STR_FMT(&pvn->u.isname.name.s),idx);
+			goto err;
+		}
+
+		/* ei_x_buff <- XAVP */
+		if (erl_api.xavp2xbuff(&ei_msg,xmsg)) {
+			LM_ERR("failed to encode %.*s\n",STR_FMT(&pvn->u.isname.name.s));
+			goto err;
+		}
+
+		break;
+	default:
+		LM_ERR("unexpected type for emsg parameter\n");
+		return -1;
+	}
+
+	if (erl_api.send(pid,&ei_msg)) {
+		goto err;
+	}
+
+	ei_x_free(&ei_msg);
+
+	return 1;
+
+err:
+	ei_x_free(&ei_msg);
+
+	return -1;
+}
+
+static int fixup_send(void** param, int param_no)
+{
+	erl_param_t *erl_param;
+
+	str s;
+
+	erl_param=(erl_param_t*)pkg_malloc(sizeof(erl_param_t));
+
+	if(!erl_param) {
+		LM_ERR("no more memory\n");
+		return -1;
+	}
+
+	memset(erl_param,0,sizeof(erl_param_t));
+
+	if (param_no==1) {
+
+		s.s = (char*)*param; s.len = strlen(s.s);
+
+		if (pv_parse_avp_name(&erl_param->value.sp,&s)) {
+			LM_ERR("failed to parse parameter #%d\n",param_no);
+			pkg_free((void*)erl_param);
+			return E_UNSPEC;
+		}
+
+		if (erl_param->value.sp.pvp.pvn.type == PV_NAME_INTSTR) {
+			if (fix_param_types(FPARAM_STR|FPARAM_STRING,param)) {
+				LM_ERR("wrong parameter #%d\n",param_no);
+				pkg_free((void*)erl_param);
+				return E_UNSPEC;
+			}
+			LM_INFO("param emsg is PV_NAME_INTSTR\n");
+			erl_param->type = ERL_PARAM_FPARAM;
+			erl_param->value.fp = *(fparam_t*)*param;
+		} else if(pv_parse_spec( &s, &erl_param->value.sp)==NULL) {
+
+			/* only XBUFF is accepted for emsg */
+			LM_ERR("wrong parameter #%d\n",param_no);
+			pv_spec_free(&erl_param->value.sp);
+			pkg_free((void*)erl_param);
+			return E_UNSPEC;
+		} else {
+			if (erl_param->value.sp.type ==PVT_XAVP) {
+				LM_ERR("XAVP not acceptable for parameter #%d\n",param_no);
+				pkg_free((void*)erl_param);
+				return E_UNSPEC;
+			}
+
+			if (erl_param->value.sp.getf == pv_pid_get
+					|| erl_param->value.sp.getf == pv_xbuff_get) {
+				erl_param->type = ERL_PARAM_XBUFF_SPEC;
+			} else {
+				erl_param->type = ERL_PARAM_FPARAM;
+				erl_param->value.fp = *(fparam_t*)*param;
+			}
+		}
+	}
+
+	if (param_no==2) {
+
+		s.s = (char*)*param; s.len = strlen(s.s);
+
+		if (pv_parse_avp_name(&erl_param->value.sp,&s)) {
+			LM_ERR("failed to parse parameter #%d\n",param_no);
+			pkg_free((void*)erl_param);
+			return E_UNSPEC;
+		}
+
+		if (erl_param->value.sp.pvp.pvn.type == PV_NAME_INTSTR) {
+			if (fix_param_types(FPARAM_STR|FPARAM_STRING,param)) {
+				LM_ERR("wrong parameter #%d\n",param_no);
+				pkg_free((void*)erl_param);
+				return E_UNSPEC;
+			}
+			LM_INFO("param emsg is PV_NAME_INTSTR\n");
+			erl_param->type = ERL_PARAM_FPARAM;
+			erl_param->value.fp = *(fparam_t*)*param;
+		} else if(pv_parse_spec( &s, &erl_param->value.sp)==NULL) {
+
+			/* only XBUFF is accepted for emsg */
 			LM_ERR("wrong parameter #%d\n",param_no);
 			pv_spec_free(&erl_param->value.sp);
 			pkg_free((void*)erl_param);

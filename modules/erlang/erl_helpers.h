@@ -147,7 +147,8 @@ int ei_decode_strorbin(char *buf, int *index, int maxlen, char *dst);
 
 typedef enum {
 	API_RPC_CALL,
-	API_REG_SEND
+	API_REG_SEND,
+	API_SEND
 } eapi_t;
 
 #endif /* ERL_HELPERS_H_ */

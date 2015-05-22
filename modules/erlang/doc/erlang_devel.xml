@@ -72,6 +72,25 @@
 		</section>
 		<section>
 			<title>
+				<function moreinfo="none">send(pid,msg)</function>
+			</title>
+			<para>
+				This function sends an Erlang term to a process. On success return 0.
+			</para>
+			<para>Meaning of parameters is as follows:</para>
+			<itemizedlist mark="none">
+				<listitem>
+					<para><emphasis>erlang_pid *pid</emphasis> - pid of the intended
+					recipient process on remote node.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>ei_x_buff *msg</emphasis> - dynamic ei buffer
+					with encoded erlang term. The msg must be encoded with version byte.</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
 				<function moreinfo="none">reply(msg)</function>
 			</title>
 			<para>

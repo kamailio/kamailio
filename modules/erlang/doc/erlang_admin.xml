@@ -523,6 +523,38 @@ erl_reg_send("notifier","$tuple(M)");
 				</programlisting>
 			</example>
 		</section>
+		<section id="erlang.f.erl_send">
+			<title><function moreinfo="none">erl_send(pid,msg)</function></title>
+			<para>
+				This function sends an Erlang term to a process. This function
+				can be used from ANY_ROUTE. The argument <emphasis>pid</emphasis>
+				is the Erlang process id of the intended recipient process on
+				remote node. The argument <emphasis>msg</emphasis> is containing
+				the message to be sent.
+			</para>
+			<example>
+				<title>Example of using erl_send</title>
+				<programlisting format="linespecific">
+...
+# example of send message to process
+# Pid ! {example,message}
+
+$atom(notifier) = "notifier";
+$list(args) = $atom(notifier);
+
+erl_rpc("erlang", "whereis", "$list(args)", "$xbuff(pid)");
+
+$atom(example) = "example";
+$atom(message) = "message";
+
+$tuple(M) = $atom(message);
+$tuple(M) = $atom(example);
+
+erl_send("$xbuff(pid)","$tuple(M)");
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="erlang.f.erl_reply">
 			<title><function>erl_reply(msg)</function></title>
 			<para>
@@ -620,6 +652,10 @@ event_route[erlang:self] {
 
 	xlogl("L_INFO","Received message: $xbuff(msg=>format)\n");
 
+	if(pv_isset("$xbuff(msg[1])") &amp;&amp; $xbuff(msg[1]=>type) == "pid") {
+		xlogl("L_INFO","Echo reply to: $xbuff(msg[1]=>format)\n");
+		erl_send("$xbuff(msg[1])","$xbuff(msg[0])");
+	}
 }
 ...
 
@@ -629,9 +665,13 @@ event_route[erlang:self] {
 &lt;14808.9.0&gt;
 (node1@erlang.lan)14> Pid ! ["hello from",self()].
 ["hello from",&lt;0.247.0&gt;]
+(node1@erlang.lan)15> flush().
+Shell got "hello from"
+ok
 
-&gt; logged info message:
-INFO: &lt;script&gt;: 957:Received message: ["hello from", "&lt;node1@erlang.lan.247.0>"]
+&gt; logged info messages:
+INFO: &lt;script&gt;: 653:Received message: ["hello from", &lt;node1@erlang.lan.247.0&gt;]
+INFO: &lt;script&gt;: 656:Echo reply to: &lt;node1@erlang.lan.247.0&gt;]
 &gt;
 				</programlisting>
 			</example>

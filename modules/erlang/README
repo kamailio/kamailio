@@ -47,7 +47,8 @@ Seudin Kasumovic
 
               5.1. erl_rpc(mod,fun,args,reply)
               5.2. erl_reg_send(server,msg)
-              5.3. erl_reply(msg)
+              5.3. erl_send(pid,msg)
+              5.4. erl_reply(msg)
 
         6. Event routes
 
@@ -65,9 +66,10 @@ Seudin Kasumovic
               1.1. erl_load_api(erl_api)
               1.2. rpc(reply,module,function,args)
               1.3. reg_send(server,msg)
-              1.4. reply(msg)
-              1.5. xavp2xbuff(xbuff,xavp)
-              1.6. xbuff2xavp(xavp,xbuff)
+              1.4. send(pid,msg)
+              1.5. reply(msg)
+              1.6. xavp2xbuff(xbuff,xavp)
+              1.7. xbuff2xavp(xavp,xbuff)
 
    List of Examples
 
@@ -86,9 +88,10 @@ Seudin Kasumovic
    1.13. Example of using xbuff
    1.14. Example of using erl_rpc
    1.15. Example of using erl_reg_send
-   1.16. Example of use erl_reply
-   1.17. Example of registered process
-   1.18. Example of using default event route
+   1.16. Example of using erl_send
+   1.17. Example of use erl_reply
+   1.18. Example of registered process
+   1.19. Example of using default event route
    2.1. Example of RPC call from erlang shell with no response
    2.2. Example, check is line registered
    2.3. Example get config variable
@@ -129,7 +132,8 @@ Chapter 1. Admin Guide
 
         5.1. erl_rpc(mod,fun,args,reply)
         5.2. erl_reg_send(server,msg)
-        5.3. erl_reply(msg)
+        5.3. erl_send(pid,msg)
+        5.4. erl_reply(msg)
 
    6. Event routes
 
@@ -455,7 +459,8 @@ DEBUG: <script>: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{id, 23}
 
    5.1. erl_rpc(mod,fun,args,reply)
    5.2. erl_reg_send(server,msg)
-   5.3. erl_reply(msg)
+   5.3. erl_send(pid,msg)
+   5.4. erl_reply(msg)
 
 5.1.  erl_rpc(mod,fun,args,reply)
 
@@ -518,12 +523,38 @@ $tuple(M) = $atom(example);
 erl_reg_send("notifier","$tuple(M)");
 ...
 
-5.3. erl_reply(msg)
+5.3. erl_send(pid,msg)
+
+   This function sends an Erlang term to a process. This function can be
+   used from ANY_ROUTE. The argument pid is the Erlang process id of the
+   intended recipient process on remote node. The argument msg is
+   containing the message to be sent.
+
+   Example 1.16. Example of using erl_send
+...
+# example of send message to process
+# Pid ! {example,message}
+
+$atom(notifier) = "notifier";
+$list(args) = $atom(notifier);
+
+erl_rpc("erlang", "whereis", "$list(args)", "$xbuff(pid)");
+
+$atom(example) = "example";
+$atom(message) = "message";
+
+$tuple(M) = $atom(message);
+$tuple(M) = $atom(example);
+
+erl_send("$xbuff(pid)","$tuple(M)");
+...
+
+5.4. erl_reply(msg)
 
    Function to send message from event route (pseudo process). Function
    sends reply message msg to the sender process.
 
-   Example 1.16. Example of use erl_reply
+   Example 1.17. Example of use erl_reply
 ...
 # event route acts as registered process
 event_route[erlang:greetings] {
@@ -569,7 +600,7 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
    event route in form of event_route[erlang:<my_process_name>]. Where
    <my_process_name> is the name of pseudo process.
 
-   Example 1.17. Example of registered process
+   Example 1.18. Example of registered process
 ...
 # event route acts as registered process
 event_route[erlang:handler] {
@@ -593,13 +624,17 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
    The reserved pseudo process name to receive messages sent to Kamailio C
    node. The message are sent to non registered process.
 
-   Example 1.18. Example of using default event route
+   Example 1.19. Example of using default event route
 ...
 # default event route from erlang
 event_route[erlang:self] {
 
         xlogl("L_INFO","Received message: $xbuff(msg=>format)\n");
 
+        if(pv_isset("$xbuff(msg[1])") && $xbuff(msg[1]=>type) == "pid") {
+                xlogl("L_INFO","Echo reply to: $xbuff(msg[1]=>format)\n");
+                erl_send("$xbuff(msg[1])","$xbuff(msg[0])");
+        }
 }
 ...
 
@@ -609,9 +644,13 @@ event_route[erlang:self] {
 <14808.9.0>
 (node1@erlang.lan)14> Pid ! ["hello from",self()].
 ["hello from",<0.247.0>]
+(node1@erlang.lan)15> flush().
+Shell got "hello from"
+ok
 
-> logged info message:
-INFO: <script>: 957:Received message: ["hello from", "<node1@erlang.lan.247.0>"]
+> logged info messages:
+INFO: <script>: 653:Received message: ["hello from", <node1@erlang.lan.247.0>]
+INFO: <script>: 656:Echo reply to: <node1@erlang.lan.247.0>]
 >
 
 Chapter 2. Using Kamailio from Erlang
@@ -683,18 +722,20 @@ Chapter 3. Developer Guide
         1.1. erl_load_api(erl_api)
         1.2. rpc(reply,module,function,args)
         1.3. reg_send(server,msg)
-        1.4. reply(msg)
-        1.5. xavp2xbuff(xbuff,xavp)
-        1.6. xbuff2xavp(xavp,xbuff)
+        1.4. send(pid,msg)
+        1.5. reply(msg)
+        1.6. xavp2xbuff(xbuff,xavp)
+        1.7. xbuff2xavp(xavp,xbuff)
 
 1. Available Functions
 
    1.1. erl_load_api(erl_api)
    1.2. rpc(reply,module,function,args)
    1.3. reg_send(server,msg)
-   1.4. reply(msg)
-   1.5. xavp2xbuff(xbuff,xavp)
-   1.6. xbuff2xavp(xavp,xbuff)
+   1.4. send(pid,msg)
+   1.5. reply(msg)
+   1.6. xavp2xbuff(xbuff,xavp)
+   1.7. xbuff2xavp(xavp,xbuff)
 
 1.1.  erl_load_api(erl_api)
 
@@ -726,14 +767,24 @@ Chapter 3. Developer Guide
      * ei_x_buff *msg - dynamic ei buffer with encoded erlang term. The
        msg must be encoded with version byte.
 
-1.4.  reply(msg)
+1.4.  send(pid,msg)
+
+   This function sends an Erlang term to a process. On success return 0.
+
+   Meaning of parameters is as follows:
+     * erlang_pid *pid - pid of the intended recipient process on remote
+       node.
+     * ei_x_buff *msg - dynamic ei buffer with encoded erlang term. The
+       msg must be encoded with version byte.
+
+1.5.  reply(msg)
 
    Function to send reply on processed message.
 
    Meaning of parameters is as follows:
      * ei_x_buff *msg - dynamic ei buffer with encoded erlang term.
 
-1.5.  xavp2xbuff(xbuff,xavp)
+1.6.  xavp2xbuff(xbuff,xavp)
 
    Function encodes XAVP variable into ei dynamic buffer. How to create
    XAVP variable see source code.
@@ -743,7 +794,7 @@ Chapter 3. Developer Guide
        encoded.
      * sr_xavp_t *xavp - XAVP variable to be encoded.
 
-1.6.  xbuff2xavp(xavp,xbuff)
+1.7.  xbuff2xavp(xavp,xbuff)
 
    Function decodes ei dynamic buffer into XAVP variable.
 

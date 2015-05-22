@@ -32,6 +32,7 @@
 
 int _impl_api_rpc_call(ei_x_buff* reply, const str *module,const str *function, const ei_x_buff *args);
 int _impl_reg_send(const str *server, const ei_x_buff *msg);
+int _impl_send(const erlang_pid *pid, const ei_x_buff *msg);
 int _impl_reply(const ei_x_buff *msg);
 int xavp2xbuff(ei_x_buff *xbuff, sr_xavp_t *xavp);
 int xbuff2xavp(sr_xavp_t **xavp, ei_x_buff *xbuff);
@@ -45,6 +46,7 @@ int load_erl( erl_api_t *erl_api )
 {
 	erl_api->rpc = _impl_api_rpc_call;
 	erl_api->reg_send = _impl_reg_send;
+	erl_api->send = _impl_send;
 	erl_api->reply = _impl_reply;
 	erl_api->xavp2xbuff = xavp2xbuff;
 	erl_api->xbuff2xavp = xbuff2xavp;
@@ -257,5 +259,85 @@ int _impl_reply(const ei_x_buff *msg)
 	memcpy((void*)enode->response.buff,(void*)msg->buff,msg->buffsz);
 	enode->response.index = msg->index;
 
+	return 0;
+}
+
+int _impl_send(const erlang_pid *pid, const ei_x_buff *msg)
+{
+	struct msghdr msgh;
+	struct iovec cnt[6];
+	int pid_no = my_pid();
+	eapi_t api = API_SEND;
+	int buffsz;
+	int rc;
+	int i=0,version;
+
+	if (ei_decode_version(msg->buff,&i,&version)) {
+		LM_ERR("msg must be encoded with version\n");
+		return -1;
+	}
+
+	if (enode) {
+
+		/* copy into reply */
+		if (enode->response.buffsz < msg->buffsz) {
+			/* realocate */
+			enode->response.buff=realloc(enode->response.buff,msg->buffsz);
+			if (!enode->response.buff) {
+				LM_ERR("realloc failed: not enough memory\n");
+				return -1;
+			}
+			enode->response.buffsz = msg->buffsz;
+		}
+
+		memcpy((void*)enode->response.buff,(void*)msg->buff,msg->buffsz);
+		enode->response.index = msg->index;
+
+		/* address process */
+		cnode_reply_to_pid = (erlang_pid *)pid;
+		return 0;
+	} else if (csockfd) {
+
+		/* send via cnode */
+		memset(&msgh, 0, sizeof(msgh));
+		memset(&cnt, 0, sizeof(cnt));
+
+		/* Kamailio PID */
+		cnt[0].iov_base = (void*)&pid_no;
+		cnt[0].iov_len  = sizeof(pid_no);
+
+		/* method */
+		cnt[1].iov_base = (void*)&api;
+		cnt[1].iov_len = sizeof(api);
+
+		/* put size of following data */
+		buffsz = msg->index; /* occupied size */
+		cnt[2].iov_base = (void*)&buffsz;
+		cnt[2].iov_len = sizeof(buffsz);
+
+		/* module name */
+		cnt[3].iov_base = (void*)pid;
+		cnt[3].iov_len  = sizeof(erlang_pid);
+
+		/* Erlang arguments content */
+		cnt[4].iov_base = (void*)msg->buff;
+		cnt[4].iov_len = buffsz; /* occupied size */
+
+		msgh.msg_iov = cnt;
+		msgh.msg_iovlen = 5;
+
+		while ((rc = sendmsg(csockfd, &msgh, 0)) == -1 && errno == EAGAIN)
+			;
+
+		if (rc == -1) {
+			LM_ERR("sendmsg failed: %s\n",strerror(errno));
+			return -1;
+		}
+	} else {
+		LM_ERR("not connected\n");
+		return -1;
+	}
+
+	/* no reply */
 	return 0;
 }
