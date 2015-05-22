@@ -334,15 +334,15 @@ int worker_reg_send_impl(ei_cnode *ec, int s,int wpid)
 	{
 		if (erl_errno)
 		{
-			LM_ERR("ei_rpc failed on node=<%s> socket=<%d>: %s\n",enode->conn.nodename,enode->sockfd,strerror(erl_errno));
+			LM_ERR("ei_reg_send failed on node=<%s> socket=<%d>: %s\n",enode->conn.nodename,enode->sockfd,strerror(erl_errno));
 		}
 		else if (errno)
 		{
-			LM_ERR("ei_rpc failed on node=<%s> socket=<%d>: %s\n",enode->conn.nodename,enode->sockfd,strerror(errno));
+			LM_ERR("ei_reg_send failed on node=<%s> socket=<%d>: %s\n",enode->conn.nodename,enode->sockfd,strerror(errno));
 		}
 		else
 		{
-			LM_ERR("ei_rpc failed on node=<%s> socket=<%d>, Unknown error.\n",ec->thisalivename,enode->sockfd);
+			LM_ERR("ei_reg_send failed on node=<%s> socket=<%d>, Unknown error.\n",ec->thisalivename,enode->sockfd);
 		}
 	}
 
