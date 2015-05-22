@@ -316,7 +316,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 
 		if(ptr->xavp!=NULL) {
 			xavp = xavp_clone_level_nodata(ptr->xavp);
-			if(xavp_add(xavp, NULL)<0) {
+			if(xavp_insert(xavp, 0, NULL)<0) {
 				ret = -3;
 				goto done;
 			}
