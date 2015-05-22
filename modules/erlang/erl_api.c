@@ -236,8 +236,11 @@ int _impl_reply(const ei_x_buff *msg)
 
 	/* must be in call back / event route */
 
-	if (!enode) {
+	if (csockfd) {
 		LM_ERR("not in callback\n");
+		return -1;
+	} else if (!enode) {
+		LM_ERR("not connected\n");
 		return -1;
 	}
 	/* copy into reply */

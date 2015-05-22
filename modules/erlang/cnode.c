@@ -514,6 +514,7 @@ int csockfd_init(csockfd_handler_t *phandler, const ei_cnode *ec)
 
 	csocket_handler = phandler;
 
+	csockfd = 0;
 	return 0;
 }
 
