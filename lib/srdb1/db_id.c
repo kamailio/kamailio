@@ -81,7 +81,7 @@ static int parse_db_url(struct db_id* id, const str* url)
 	};
 
 	enum state st;
-	unsigned int len, i;
+	unsigned int len, i, j, a;
 	const char* begin;
 	char* prev_token;
 
@@ -162,6 +162,14 @@ static int parse_db_url(struct db_id* id, const str* url)
 				st = ST_HOST;
 				id->username = prev_token;
 				prev_token = 0;
+				a = 0;
+				/* go to last '@' to support when it is part of password */
+				for(j = i+1; j < len; j++) {
+					if(url->s[j]=='@') {
+						a = j;
+					}
+				}
+				if(a!=0) i = a;
 				if (dupl_string(&id->password, begin, url->s + i) < 0) goto err;
 				begin = url->s + i + 1;
 				break;
