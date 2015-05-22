@@ -31,26 +31,29 @@
 #include "../../str.h"
 #include "tls_domain.h"
 
+static inline int tls_err_ret(char *s, tls_domains_cfg_t **tls_domains_cfg) {
+	long err;
+	int ret = 0;
+	if ((*tls_domains_cfg)->srv_default->ctx &&
+		(*tls_domains_cfg)->srv_default->ctx[0])
+	{
+		while((err = ERR_get_error())) {
+			ret = 1;
+			ERR("%s%s\n", s ? s : "", ERR_error_string(err, 0));
+		}
+	}
+	return ret;
+}
 
-#define TLS_ERR_RET(r, s)                               \
-do {                                                    \
-	long err;                                       \
-        (r) = 0;                                        \
-	if ((*tls_domains_cfg)->srv_default->ctx &&         \
-	    (*tls_domains_cfg)->srv_default->ctx[0]) {      \
-		while((err = ERR_get_error())) {        \
-			(r) = 1;                        \
-			ERR("%s%s\n", ((s)) ? (s) : "", \
-			    ERR_error_string(err, 0));  \
-		}                                       \
-	}                                               \
+#define TLS_ERR_RET(r, s) \
+do { \
+	(r) = tls_err_ret((s), tls_domains_cfg); \
 } while(0)
 
 
-#define TLS_ERR(s)           \
-do {                         \
-	int ret;             \
-	TLS_ERR_RET(ret, s); \
+#define TLS_ERR(s) \
+do { \
+	tls_err_ret((s), tls_domains_cfg); \
 } while(0)
 
 
