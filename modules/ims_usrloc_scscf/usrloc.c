@@ -51,6 +51,7 @@
 #include "subscribe.h"
 #include "../../sr_module.h"
 #include "ul_mod.h"
+#include "bin_utils.h"
 
 /*! nat branch flag */
 extern unsigned int nat_bflag;
@@ -83,6 +84,9 @@ int bind_usrloc(usrloc_api_t* api) {
 
 	api->lock_udomain = lock_udomain;
 	api->unlock_udomain = unlock_udomain;
+
+	api->lock_subscription = lock_ims_subscription;
+	api->unlock_subscription = unlock_ims_subscription;
 
 	api->lock_contact_slot = lock_contact_slot;
 	api->unlock_contact_slot = unlock_contact_slot;

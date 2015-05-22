@@ -221,7 +221,7 @@ int can_publish_reg(struct sip_msg *msg, char *_t, char *str2) {
     }
 
     //check if asserted identity is in service profile
-    lock_get(r->s->lock);
+    ul.lock_subscription(r->s);
     if (r->s) {
 	for (i = 0; i < r->s->service_profiles_cnt; i++)
 	    for (j = 0; j < r->s->service_profiles[i].public_identities_cnt; j++) {
@@ -233,12 +233,12 @@ int can_publish_reg(struct sip_msg *msg, char *_t, char *str2) {
 			    i, j);
 		    ret = CSCF_RETURN_TRUE;
 		    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-		    lock_release(r->s->lock);
+		    ul.unlock_subscription(r->s);
 		    goto done;
 		}
 	    }
     }
-    lock_release(r->s->lock);
+    ul.unlock_subscription(r->s);
     LM_DBG("Did not find p-asserted-identity <%.*s> in SP\n", asserted_id.len, asserted_id.s);
 
     //check if asserted is present in any of the path headers
@@ -379,7 +379,7 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     }
 
     //check if asserted identity is in service profile
-    lock_get(r->s->lock);
+    ul.lock_subscription(r->s);
     if (r->s) {
         for (i = 0; i < r->s->service_profiles_cnt; i++)
             for (j = 0; j < r->s->service_profiles[i].public_identities_cnt; j++) {
@@ -391,12 +391,12 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
                             i, j);
                     ret = CSCF_RETURN_TRUE;
                     ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-                    lock_release(r->s->lock);
+	            ul.unlock_subscription(r->s);
                     goto done;
                 }
             }
     }
-    lock_release(r->s->lock);
+    ul.unlock_subscription(r->s);
     LM_DBG("Did not find p-asserted-identity <%.*s> in SP\n", asserted_id.len, asserted_id.s);
 
     //check if asserted is present in any of the path headers
@@ -571,10 +571,10 @@ int process_contact(impurecord_t* presentity_impurecord, udomain_t * _d, int exp
 	    goto done;
 	} 
 
-	lock_get(subscription->lock);
+        ul.lock_subscription(subscription);
 	subscription->ref_count++;
 	LM_DBG("subscription ref count after add is now %d\n", subscription->ref_count);
-	lock_release(subscription->lock);
+        ul.unlock_subscription(subscription);
 
 	//now update the implicit set
 	for (i = 0; i < subscription->service_profiles_cnt; i++) {
@@ -617,11 +617,10 @@ next_implicit_impu:
 	    }
 	}
 
-	lock_get(subscription->lock);
+        ul.lock_subscription(subscription);
 	subscription->ref_count--;
 	LM_DBG("subscription ref count after sub is now %d\n", subscription->ref_count);
-	lock_release(subscription->lock);
-
+        ul.unlock_subscription(subscription);
 	
 	ul.lock_udomain(_d, &presentity_impurecord->public_identity);
 	

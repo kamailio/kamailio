@@ -655,8 +655,7 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
 	LM_DBG("no subscription associated with impu\n");
 	return 0;
     }
-
-    lock_get(impu_rec->s->lock);
+    lock_ims_subscription(impu_rec->s);
     for (i = 0; i < impu_rec->s->service_profiles_cnt; i++) {
 	for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
 	    impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
@@ -713,7 +712,7 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
 	return 1;
     }
 
-    lock_release(impu_rec->s->lock);
+    unlock_ims_subscription(impu_rec->s);
 
     return 0;
 }

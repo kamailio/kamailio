@@ -95,5 +95,8 @@ inline int bin_decode_str(bin_data *x,str *s);
 int bin_encode_ims_subscription(bin_data *x, ims_subscription *s);
 ims_subscription *bin_decode_ims_subscription(bin_data *x);
 
+void lock_ims_subscription(ims_subscription *);
+void unlock_ims_subscription(ims_subscription *);
+
 #endif	/* BIN_UTILS_H */
 

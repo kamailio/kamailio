@@ -897,16 +897,19 @@ ims_subscription *bin_decode_ims_subscription(bin_data *x)
 	for(i=0;i<imss->service_profiles_cnt;i++)
 		if (!bin_decode_service_profile(x,imss->service_profiles+i)) goto error;
 
-	imss->lock = lock_alloc();
-	if (imss->lock==0){
+	imss->slock = lock_alloc();
+	if (imss->slock==0){
 		goto error;
 	}
-	if (lock_init(imss->lock)==0){
-		lock_dealloc(imss->lock);
-		imss->lock=0;
+	if (lock_init(imss->slock)==0){
+		lock_dealloc(imss->slock);
+		imss->slock=0;
 		goto error;
 	}
 	imss->ref_count = 1;
+#ifdef EXTRA_DEBUG
+    	LM_DBG("LOCK CREATED FOR SUBSCRIPTION [%.*s]: %p\n", imss->private_identity.len, imss->private_identity.s, imss->slock);
+#endif
 
 	return imss;
 error:
@@ -917,5 +920,19 @@ error:
 		shm_free(imss);
 	}
 	return 0;
+}
+
+void lock_ims_subscription(ims_subscription * s) {
+#ifdef EXTRA_DEBUG
+    LM_DBG("LOCKING SUBSCRIPTION [%.*s]: %p (Refcount: %d)\n", s->private_identity.len, s->private_identity.s, s->slock, s->ref_count);
+#endif
+    lock_get(s->slock);
+}
+
+void unlock_ims_subscription(ims_subscription * s) {
+#ifdef EXTRA_DEBUG
+    LM_DBG("UN-LOCKING SUBSCRIPTION [%.*s]: %p (Refcount: %d)\n", s->private_identity.len, s->private_identity.s, s->slock, s->ref_count);
+#endif
+    lock_release(s->slock);
 }
 

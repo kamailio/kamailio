@@ -243,7 +243,7 @@ typedef struct ims_subscription_s {
     unsigned short service_profiles_cnt; /**< size of the array above		*/
 
     int ref_count; /**< referenced count 				*/
-    gen_lock_t *lock; /**< lock for operations on it 		*/
+    gen_lock_t * slock; /**< lock for operations on it 		*/
     struct ims_subscription_s* next;
     struct ims_subscription_s* prev;
 } ims_subscription;
@@ -428,6 +428,10 @@ typedef void (*lock_contact_slot_i_t)(int sl);
 
 typedef void (*unlock_contact_slot_i_t)(int sl);
 
+typedef void (*lock_subscription_t)(ims_subscription *);
+
+typedef void (*unlock_subscription_t)(ims_subscription *);
+
 typedef int (*update_ucontact_t)(struct impurecord* _r, struct ucontact* _c, struct ucontact_info* _ci);
 
 typedef int (*expire_ucontact_t)(struct impurecord* _r, struct ucontact* _c);
@@ -490,6 +494,10 @@ typedef struct usrloc_api {
 
     lock_contact_slot_t lock_contact_slot;
     unlock_contact_slot_t unlock_contact_slot;
+
+    lock_subscription_t lock_subscription;
+    unlock_subscription_t unlock_subscription;
+
     lock_contact_slot_i_t lock_contact_slot_i;
     unlock_contact_slot_i_t unlock_contact_slot_i;
     insert_ucontact_t insert_ucontact;

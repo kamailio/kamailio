@@ -129,9 +129,9 @@ int new_impurecord(str* _dom, str* public_identity, int reg_state, int barring, 
     /*assign ims subscription profile*/
     if (*s) {
         (*_r)->s = *s;
-        lock_get((*_r)->s->lock);
+	lock_ims_subscription((*_r)->s);
         (*_r)->s->ref_count++;
-        lock_release((*_r)->s->lock);
+	unlock_ims_subscription((*_r)->s);
     }
 
     return 0;
@@ -164,14 +164,14 @@ void free_impurecord(impurecord_t* _r) {
         shm_free(_r->ecf2.s);
     if (_r->s) {
         LM_DBG("ref count on this IMS data is %d\n", _r->s->ref_count);
-        lock_get(_r->s->lock);
+	lock_ims_subscription(_r->s);
         if (_r->s->ref_count == 1) {
             LM_DBG("freeing IMS subscription data\n");
             free_ims_subscription_data(_r->s);
         } else {
             LM_DBG("decrementing IMS subscription data ref count\n");
             _r->s->ref_count--;
-            lock_release(_r->s->lock);
+            unlock_ims_subscription(_r->s);
         }
     }
 
@@ -771,8 +771,14 @@ void free_ims_subscription_data(ims_subscription *s) {
     }
     if (s->service_profiles) shm_free(s->service_profiles);
     if (s->private_identity.s) shm_free(s->private_identity.s);
-    lock_destroy(s->lock);
-    lock_dealloc(s->lock);
+#pragma message __FILE__ " add unlocking here????"
+    // ul.unlock_subscription(s);
+#ifdef EXTRA_DEBUG
+    LM_DBG("SUBSCRIPTION LOCK %p destroyed\n", s->slock);
+#endif
+    lock_destroy(s->slock);
+    lock_dealloc(s->slock);
+
     shm_free(s);
 
 }
@@ -846,7 +852,7 @@ int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
     if (s) {
         LM_DBG("we have a new ims_subscription\n");
         if ((*_r)->s) {
-            lock_get((*_r)->s->lock);
+	    lock_ims_subscription((*_r)->s);
             if ((*_r)->s->ref_count == 1) {
                 LM_DBG("freeing user data as no longer referenced\n");
                 free_ims_subscription_data((*_r)->s); //no need to release lock after this. its gone ;)
@@ -854,13 +860,13 @@ int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
             } else {
                 (*_r)->s->ref_count--;
                 LM_DBG("new ref count for ims sub is %d\n", (*_r)->s->ref_count);
-                lock_release((*_r)->s->lock);
+	        unlock_ims_subscription((*_r)->s);
             }
         }
         (*_r)->s = *s;
-        lock_get((*_r)->s->lock);
+	lock_ims_subscription((*_r)->s);
         (*_r)->s->ref_count++;
-        lock_release((*_r)->s->lock);
+	unlock_ims_subscription((*_r)->s);
     }
 
     run_ul_callbacks((*_r)->cbs, UL_IMPU_UPDATE, *_r, NULL);
