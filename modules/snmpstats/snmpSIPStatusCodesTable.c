@@ -490,7 +490,6 @@ void kamailioSIPStatusCodesTable_set_reserve2( netsnmp_request_group *rg )
 		(kamailioSIPStatusCodesTable_context *)rg->undo_info;
 
 	netsnmp_request_group_item *current;
-	netsnmp_variable_list      *var;
 
 	int rc;
 
@@ -498,7 +497,6 @@ void kamailioSIPStatusCodesTable_set_reserve2( netsnmp_request_group *rg )
 
 	for( current = rg->list; current; current = current->next ) {
 
-		var = current->ri->requestvb;
 		rc = SNMP_ERR_NOERROR;
 
 		switch(current->tri->colnum) 

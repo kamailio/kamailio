@@ -140,6 +140,9 @@ inline SV *valdata(db_val_t* val) {
 		case DB1_BITMAP:
 			data = newSViv(VAL_BITMAP(val));
 			break;
+
+		default:
+			break;
 	}
 
 	return data;

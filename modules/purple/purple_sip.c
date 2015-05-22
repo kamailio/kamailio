@@ -74,7 +74,7 @@ static str* build_pidf(char *uri, char *id, enum purple_publish_basic basic, enu
 	xmlNodePtr root_node = NULL, status_node = NULL;
 	xmlNodePtr tuple_node = NULL, basic_node = NULL;
 	xmlNodePtr person_node = NULL, activities_node = NULL;
-	xmlNsPtr pidf_ns, dm_ns, rpid_ns, cipid_ns;
+	xmlNsPtr pidf_ns, dm_ns, rpid_ns;
 	char* entity = NULL;
 
 	entity = (char*)pkg_malloc(7+ strlen(uri)*sizeof(char));
@@ -104,7 +104,7 @@ static str* build_pidf(char *uri, char *id, enum purple_publish_basic basic, enu
 	pidf_ns = xmlNewNs(root_node, BAD_CAST "urn:ietf:params:xml:ns:pidf", NULL);
 	dm_ns = xmlNewNs(root_node, BAD_CAST "urn:ietf:params:xml:ns:pidf:data-model", BAD_CAST "dm");
 	rpid_ns = xmlNewNs(root_node, BAD_CAST "urn:ietf:params:xml:ns:pidf:rpid", BAD_CAST "rpid");
-	cipid_ns = xmlNewNs(root_node, BAD_CAST "urn:ietf:params:xml:ns:pidf:cipid", BAD_CAST "c");
+	xmlNewNs(root_node, BAD_CAST "urn:ietf:params:xml:ns:pidf:cipid", BAD_CAST "c");
 	
 	tuple_node = xmlNewChild(root_node, NULL, BAD_CAST "tuple", NULL);
 	if( tuple_node == NULL) {

@@ -165,7 +165,6 @@ void deleteUser(hashSlot_t *theTable, char *aor, int hashTableSize)
 	int hashIndex = calculateHashSlot(aor, hashTableSize);
 	int searchStringLength = strlen(aor);
 
-	aorToIndexStruct_t *previousRecord = theTable[hashIndex].first;
 	aorToIndexStruct_t *currentRecord  = theTable[hashIndex].first;
 
 	while (currentRecord != NULL) {
@@ -227,7 +226,6 @@ void deleteUser(hashSlot_t *theTable, char *aor, int hashTableSize)
 		}
 
 		/* Advance to the next records. */
-		previousRecord = currentRecord;
 		currentRecord = currentRecord->next;
 	}
 

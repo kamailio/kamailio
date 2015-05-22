@@ -166,7 +166,7 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 	char** _o1 = NULL;
 	db_val_t* _v1 = NULL;
 	regmatch_t* matches = NULL;
-	int n, l;
+	int l;
 	int len;
 	regex_t preg;
 	int offset = 0;
@@ -233,11 +233,11 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 			_v1[idx].val.str_val.s = pkg_malloc(l+1);
 			strncpy(_v1[idx].val.str_val.s, buffer+matches[5].rm_so, l);
 		}
-
-//		for(n=0; n < MAX_MATCH; n++) {
-//			LM_ERR("MATCH RESULT %d - %d,%d\n", n, matches[n].rm_so, matches[n].rm_eo);
-//		}
-
+/*		int n;
+		for(n=0; n < MAX_MATCH; n++) {
+			LM_ERR("MATCH RESULT %d - %d,%d\n", n, matches[n].rm_so, matches[n].rm_eo);
+		}
+*/
 		if(matches[0].rm_eo != -1)
 			offset += matches[0].rm_eo;
 
