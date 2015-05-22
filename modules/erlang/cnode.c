@@ -46,6 +46,7 @@ static io_wait_h io_h;
 
 cnode_handler_t *enode = NULL;
 csockfd_handler_t *csocket_handler = NULL;
+erlang_pid *cnode_reply_to_pid = NULL;
 
 /**
  * @brief Initialize Kamailo as C node by active connect as client.

@@ -32,6 +32,7 @@
 typedef int (*erl_rpc_f)(ei_x_buff* reply, const str *module,const str *function, const ei_x_buff *args);
 typedef int (*erl_reg_send_f)(const str *server,const ei_x_buff *msg);
 typedef int (*erl_reply_f)(const ei_x_buff *msg);
+typedef int (*erl_send_f)(const erlang_pid *pid,const ei_x_buff *msg);
 
 /* data serialization */
 typedef int (*xavp2xbuff_f)(ei_x_buff *xbuff, sr_xavp_t *xavp);
@@ -40,6 +41,7 @@ typedef int (*xbuff2xavp_f)(sr_xavp_t **xavp, ei_x_buff *xbuff);
 typedef struct erl_api_s {
 	erl_rpc_f rpc;
 	erl_reg_send_f reg_send;
+	erl_send_f send;
 	erl_reply_f reply;
 	xavp2xbuff_f xavp2xbuff;
 	xbuff2xavp_f xbuff2xavp;

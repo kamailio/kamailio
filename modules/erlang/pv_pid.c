@@ -34,6 +34,11 @@ static str pid_list=str_init("[pids]");
 static char *pid_fmt_buff = NULL;
 static int counter;
 
+sr_xavp_t *pv_pid_get_pid(str *name)
+{
+	return xavp_get_child(&pid_list,name);
+}
+
 int pv_pid_parse_name(pv_spec_t *sp, str *in)
 {
 	char *p;

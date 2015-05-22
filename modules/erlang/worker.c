@@ -30,6 +30,7 @@
 
 int worker_rpc_impl(ei_cnode *ec, int s, int wpid);
 int worker_reg_send_impl(ei_cnode *ec, int s, int wpid);
+int worker_send_impl(ei_cnode *ec, int s, int wpid);
 
 int worker_init(worker_handler_t *phandler, int fd, const ei_cnode *ec)
 {
@@ -87,6 +88,10 @@ int handle_worker(handler_common_t *phandler)
 		break;
 	case API_REG_SEND:
 		if (worker_reg_send_impl(&w->ec,w->sockfd,wpid))
+			return -1;
+		break;
+	case API_SEND:
+		if (worker_send_impl(&w->ec,w->sockfd,wpid))
 			return -1;
 		break;
 	default:
@@ -353,6 +358,94 @@ int worker_reg_send_impl(ei_cnode *ec, int s,int wpid)
 
 err:
 	pkg_free(server.s);
+	free(emsg.buff);
+
+	return -1;
+}
+
+int worker_send_impl(ei_cnode *ec, int s,int wpid)
+{
+	erlang_pid pid;
+	ei_x_buff emsg;
+	struct msghdr msgh;
+	struct iovec cnt[6];
+	int rc;
+
+	memset((void*)&emsg,0,sizeof(emsg));
+
+	memset((void*)&msgh,0,sizeof(msgh));
+
+	/* Erlang args size */
+	cnt[0].iov_base = &emsg.buffsz;
+	cnt[0].iov_len  = sizeof(int);
+
+	/* get data size */
+	msgh.msg_iov    = cnt;
+	msgh.msg_iovlen = 1;
+
+	while ((rc = recvmsg(s, &msgh, MSG_PEEK)) == -1 && errno == EAGAIN)
+		;
+
+	if (rc == -1){
+		LM_ERR("recvmsg failed (socket=%d): %s\n",s,strerror(errno));
+		return -1;
+	}
+
+	emsg.buff = (char*)malloc(emsg.buffsz);
+	if (!emsg.buff) {
+		LM_ERR("malloc: not enough memory\n");
+		goto err;
+	}
+
+	/* buffers */
+	cnt[1].iov_base = &pid;
+	cnt[1].iov_len  = sizeof(erlang_pid);
+
+	cnt[2].iov_base = emsg.buff;
+	cnt[2].iov_len  = emsg.buffsz;
+
+	/* get whole data */
+	msgh.msg_iovlen = 3;
+	while ((rc = recvmsg(s, &msgh, MSG_WAITALL)) == -1 && errno == EAGAIN)
+		;
+
+	if (rc == -1){
+		LM_ERR("recvmsg failed (socket=%d): %s\n",s,strerror(errno));
+		goto err;
+	}
+
+	if(!enode) {
+		LM_NOTICE("there is no connected Erlang node\n");
+		goto err;
+	}
+
+	LM_DBG(">> <%s.%d.%d> ! emsg\n",pid.node,pid.num,pid.serial);
+
+	EI_X_BUFF_PRINT(&emsg);
+
+	/* do ERL_SEND */
+	if ((rc = ei_send(enode->sockfd,&pid,emsg.buff,emsg.buffsz)) == ERL_ERROR)
+	{
+		if (erl_errno)
+		{
+			LM_ERR("ei_send failed on node=<%s> socket=<%d>: %s\n",enode->conn.nodename,enode->sockfd,strerror(erl_errno));
+		}
+		else if (errno)
+		{
+			LM_ERR("ei_send failed on node=<%s> socket=<%d>: %s\n",enode->conn.nodename,enode->sockfd,strerror(errno));
+		}
+		else
+		{
+			LM_ERR("ei_send failed on node=<%s> socket=<%d>, Unknown error.\n",ec->thisalivename,enode->sockfd);
+		}
+	}
+
+	free(emsg.buff);
+
+	return 0;
+
+err:
+
 	free(emsg.buff);
 
 	return -1;

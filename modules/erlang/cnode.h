@@ -69,6 +69,9 @@ typedef struct cnode_handler_s
  */
 extern cnode_handler_t *enode;
 
+/* where to reply - reset to NULL after use */
+extern erlang_pid *cnode_reply_to_pid;
+
 typedef struct csockfd_handler_s
 {
 	/* d-linked list  */
