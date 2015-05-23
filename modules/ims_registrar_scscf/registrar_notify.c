@@ -95,6 +95,8 @@ static str ctype_hdr2 = {"\r\n", 2};
 extern int ue_unsubscribe_on_dereg;
 extern int subscription_expires_range;
 
+extern char *domain;
+
 /* \brief
  * Return randomized expires between expires-range% and expires.
  * RFC allows only value less or equal to the one provided by UAC.
@@ -441,7 +443,11 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int e
     impurecord_t* r;
     int num_impus;
     str* impu_list;
+    int res = 0;
+    udomain_t* udomain;
 
+    get_act_time();
+    
     LM_DBG("Sending Reg event notifies\n");
     LM_DBG("Switching on event type: %d", event_type);
     switch (event_type) {
@@ -456,7 +462,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int e
             //lets get IMPU list for presentity as well as register for callbacks (IFF its a new SUBSCRIBE)
 
             ul.lock_udomain(_d, presentity_uri);
-            int res = ul.get_impurecord(_d, presentity_uri, &r);
+            res = ul.get_impurecord(_d, presentity_uri, &r);
             if (res != 0) {
                 LM_WARN("Strange, '%.*s' Not found in usrloc\n", presentity_uri->len, presentity_uri->s);
                 ul.unlock_udomain(_d, presentity_uri);
@@ -478,7 +484,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int e
             ul.unlock_udomain((udomain_t*) _d, presentity_uri);
 
             content = generate_reginfo_full(_d, impu_list,
-                    num_impus);
+                    num_impus, 0, 0);
 
             if (impu_list) {
                 pkg_free(impu_list);
@@ -502,7 +508,34 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int e
                 return 0;
             }
 
-	    content = get_reginfo_partial(r_passed, c_passed, event_type);
+	    //content = get_reginfo_partial(r_passed, c_passed, event_type);
+	    
+	    //this is a ulcallback so r_passed domain is already locked
+	    res = ul.get_impus_from_subscription_as_string(_d, r_passed,
+                    0/*all unbarred impus*/, &impu_list, &num_impus);
+	    if (res != 0) {
+                LM_WARN("failed to get IMPUs from subscription\n");
+                if (impu_list) {
+                    pkg_free(impu_list);
+                }
+                return 1;
+            }
+	    
+	    //TODO this should be a configurable module param
+	    if (ul.register_udomain(domain, &udomain) < 0) {
+		LM_ERR("Unable to register usrloc domain....aborting\n");
+		return 0;
+	    }
+//	    
+	    content = generate_reginfo_full(udomain, impu_list,
+                    num_impus, &r_passed->public_identity, 1);
+//	    
+	    if (impu_list) {
+                pkg_free(impu_list);
+            }
+
+            LM_DBG("About to ceate notification");
+	    
             create_notifications(_d, r_passed, c_passed, presentity_uri, watcher_contact, content, event_type);
             if (content.s) pkg_free(content.s);
             //                        if (send_now) notification_timer(0, 0);
@@ -1515,7 +1548,7 @@ static str uri_e = {"</uri>\n", 7};
  * @returns the str with the XML content
  * if its a new subscription we do things like subscribe to updates on IMPU, etc
  */
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
+str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *primary_impu, int primary_locked) {
     str x = {0, 0};
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
@@ -1529,6 +1562,9 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
     pad.s = padc;
     pad.len = 0;
     
+    int domain_locked = 1;
+    int terminate_impu = 1;
+    
     int expires;
 
     LM_DBG("Getting reginfo_full");
@@ -1539,26 +1575,49 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
     STR_APPEND(buf, pad);
 
     for (i = 0; i < num_impus; i++) {
-        ul.lock_udomain(_t, &impu_list[i]);
-        LM_DBG("Scrolling through public identities, current one <%.*s>", impu_list[i].len, impu_list[i].s);
-        res = ul.get_impurecord(_t, &(impu_list[i]), &r);
-        if (res != 0) {
-            LM_WARN("impu disappeared, ignoring it\n");
-	    ul.unlock_udomain(_t, &impu_list[i]);
-            continue;
-        }
+	LM_DBG("Scrolling through public identities, current one <%.*s>", impu_list[i].len, impu_list[i].s);
+	if(primary_locked && strncasecmp(impu_list[i].s, primary_impu->s, impu_list[i].len) == 0) {
+	    LM_DBG("Don't need to lock this impu [%.*s]  as its a ulcallback so already locked\n", impu_list[i].len, impu_list[i].s);
+	    domain_locked = 0;
+	} else {
+	    LM_DBG("Need to lock this impu\n");
+	    ul.lock_udomain(_t, &impu_list[i]);
+	    domain_locked = 1;
+	}
+	
+	res = ul.get_impurecord(_t, &(impu_list[i]), &r);
+	if (res != 0) {
+	    LM_WARN("impu disappeared, ignoring it\n");
+	    if(domain_locked) {
+		ul.unlock_udomain(_t, &impu_list[i]);
+	    }
+	    continue;
+	}
+	
         LM_DBG("Retrieved IMPU record");
-
-        if (r->reg_state == IMPU_REGISTERED) {
-            LM_DBG("IMPU reg state is IMPU REGISTERED so putting in status active");
-            sprintf(pad.s, registration_s.s, r->public_identity.len,
-                    r->public_identity.s, r, r_active.len, r_active.s);
-        } else {
-            LM_DBG("IMPU reg state is not IMPU REGISTERED so putting in status terminated");
+	
+	j=0;
+	terminate_impu = 1;
+	while (j<MAX_CONTACTS_PER_IMPU && (ptr=r->newcontacts[j])) {
+	    if (((ptr->expires - act_time) > 0)) {
+		LM_DBG("IMPU <%.*s> has another active contact <%.*s> so will set its state to active\n",
+			r->public_identity.len, r->public_identity.s, ptr->c.len, ptr->c.s);
+		terminate_impu = 0;
+		break;
+	    }
+	    j++;
+	}
+	if(terminate_impu) {
+	    LM_DBG("IMPU reg state has no active contacts so putting in status terminated");
             sprintf(pad.s, registration_s.s, r->public_identity.len,
                     r->public_identity.s, r, r_terminated.len,
                     r_terminated.s);
-        }
+	} else {
+	    LM_DBG("IMPU has active contacts so putting in status active");
+            sprintf(pad.s, registration_s.s, r->public_identity.len,
+                    r->public_identity.s, r, r_active.len, r_active.s);
+	}
+
         pad.len = strlen(pad.s);
         STR_APPEND(buf, pad);
         
@@ -1573,9 +1632,16 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
 		    LM_WARN("Contact expires is negative - setting to 0\n");
 		    expires = 0;
 		}
-		sprintf(pad.s, contact_s_q.s, ptr, r_active.len, r_active.s,
+		if(expires == 0) {
+		    sprintf(pad.s, contact_s_q.s, ptr, r_terminated.len, r_terminated.s,
+			r_expired.len, r_expired.s, expires,
+			q);
+		} else {
+		    sprintf(pad.s, contact_s_q.s, ptr, r_active.len, r_active.s,
 			r_registered.len, r_registered.s, expires,
 			q);
+		}
+		
 	    } else {
 		LM_DBG("q value equal to -1");
 		expires = ptr->expires - act_time;
@@ -1583,9 +1649,13 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
 		    LM_WARN("Contact expires is negative - setting to 0\n");
 		    expires = 0;
 		}
-		sprintf(pad.s, contact_s.s, ptr, r_active.len, r_active.s,
-			r_registered.len, r_registered.s,
-			expires);
+		if(expires == 0) {
+		    sprintf(pad.s, contact_s_q.s, ptr, r_terminated.len, r_terminated.s,
+			r_expired.len, r_expired.s, expires);
+		} else {
+		    sprintf(pad.s, contact_s_q.s, ptr, r_active.len, r_active.s,
+			r_registered.len, r_registered.s, expires);
+		}
 	    }
 	    pad.len = strlen(pad.s);
 	    STR_APPEND(buf, pad);
@@ -1628,7 +1698,9 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
 	
         STR_APPEND(buf, registration_e);
 
-        ul.unlock_udomain(_t, &impu_list[i]);
+	if(domain_locked) {
+	    ul.unlock_udomain(_t, &impu_list[i]);
+	}
     }
 
     STR_APPEND(buf, r_reginfo_e);

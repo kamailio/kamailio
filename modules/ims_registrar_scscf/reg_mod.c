@@ -109,6 +109,8 @@ str cxdx_forced_peer = {0,0};
 str scscf_name_str = str_init("sip:scscf2.ims.smilecoms.com:6060"); /* default scscf_name - actual should be set via parameter*/
 str scscf_serviceroute_uri_str; /* Service Route URI */
 
+char *domain = "location";  ///TODO should be configurable mod param
+
 /*! \brief Module init & destroy function */
 static int mod_init(void);
 static int child_init(int);

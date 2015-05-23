@@ -30,6 +30,8 @@
 extern struct cdp_binds cdpb;
 extern usrloc_api_t ul;
 
+extern char *domain;
+
 /*int PPR_RTR_Event(void *parsed_message, int type, void *param) {
 	if (type & CXDX_PPR_RECEIVED) {
 		LM_ERR("Received a PPR-Request\n");
@@ -69,7 +71,10 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
 	    LM_DBG("RTR received with IMPU [%.*s] in public identity AVP - this is supported\n", public_id.len, public_id.s);
 
 	    //TODO this should be a configurable module param
-	    ul.register_udomain("location", &udomain);
+	    if (ul.register_udomain(domain, &udomain) < 0) {
+		LM_ERR("Unable to register usrloc domain....aborting\n");
+		return 0;
+	    }
 	    
 	    ul.lock_udomain(udomain, &public_id);
             res = ul.get_impurecord(udomain, &public_id, &r);
