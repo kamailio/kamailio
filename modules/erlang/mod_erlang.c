@@ -880,7 +880,6 @@ static int fixup_reg(void** param, int param_no)
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
-			LM_INFO("param emsg is PV_NAME_INTSTR\n");
 			erl_param->type = ERL_PARAM_FPARAM;
 			erl_param->value.fp = *(fparam_t*)*param;
 		} else if(pv_parse_spec( &s, &erl_param->value.sp)==NULL) {
@@ -1060,7 +1059,6 @@ static int fixup_reply(void** param, int param_no)
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
-			LM_INFO("param emsg is PV_NAME_INTSTR\n");
 			erl_param->type = ERL_PARAM_FPARAM;
 			erl_param->value.fp = *(fparam_t*)*param;
 		} else if(pv_parse_spec( &s, &erl_param->value.sp)==NULL) {
@@ -1321,7 +1319,6 @@ static int fixup_send(void** param, int param_no)
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
-			LM_INFO("param emsg is PV_NAME_INTSTR\n");
 			erl_param->type = ERL_PARAM_FPARAM;
 			erl_param->value.fp = *(fparam_t*)*param;
 		} else if(pv_parse_spec( &s, &erl_param->value.sp)==NULL) {
@@ -1364,7 +1361,6 @@ static int fixup_send(void** param, int param_no)
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
-			LM_INFO("param emsg is PV_NAME_INTSTR\n");
 			erl_param->type = ERL_PARAM_FPARAM;
 			erl_param->value.fp = *(fparam_t*)*param;
 		} else if(pv_parse_spec( &s, &erl_param->value.sp)==NULL) {
