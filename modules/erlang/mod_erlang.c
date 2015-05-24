@@ -392,6 +392,7 @@ static void mod_destroy(void)
 		free_atom_fmt_buff();
 		free_list_fmt_buff();
 		free_xbuff_fmt_buff();
+		free_pid_fmt_buff();
 }
 
 static int postprocess_request(struct sip_msg *msg, unsigned int flags, void *_param)
@@ -400,6 +401,7 @@ static int postprocess_request(struct sip_msg *msg, unsigned int flags, void *_p
 	free_atom_fmt_buff();
 	free_list_fmt_buff();
 	free_xbuff_fmt_buff();
+	free_pid_fmt_buff();
 	return 0;
 }
 
