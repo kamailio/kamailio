@@ -146,6 +146,11 @@ sr_xavp_t *xavp_get_atoms()
 	return list;
 }
 
+sr_xavp_t *pv_atom_get_atom(str *name)
+{
+	return xavp_get_child(&atom_list, name);
+}
+
 int pv_atom_set(struct sip_msg* msg,  pv_param_t* param, int op, pv_value_t* val)
 {
 	str name;

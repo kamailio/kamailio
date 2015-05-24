@@ -1124,7 +1124,7 @@ static int erl_send_k(struct sip_msg *msg, char *_pid, char *_emsg)
 
 		if (sp.getf == pv_pid_get ) {
 			xmsg = pv_pid_get_pid(&pvn->u.isname.name.s);
-		} else if (sp.setf == pv_xbuff_set) {
+		} else if (sp.getf == pv_xbuff_get) {
 			xmsg = pv_xbuff_get_xbuff(&pvn->u.isname.name.s);
 		} else {
 			LM_ERR("BUG: unexpected type for pid parameter\n");
@@ -1208,12 +1208,16 @@ static int erl_send_k(struct sip_msg *msg, char *_pid, char *_emsg)
 			pvn = &pvp.pvn;
 		}
 
-		if (sp.setf == pv_list_set ) {
+		if (sp.getf == pv_list_get ) {
 			xmsg = pv_list_get_list(&pvn->u.isname.name.s);
-		} else if (sp.setf == pv_xbuff_set) {
+		} else if (sp.getf == pv_xbuff_get) {
 			xmsg = pv_xbuff_get_xbuff(&pvn->u.isname.name.s);
-		}  else if (sp.setf == pv_tuple_set) {
+		} else if (sp.getf == pv_tuple_get) {
 			xmsg = pv_tuple_get_tuple(&pvn->u.isname.name.s);
+		} else if (sp.getf == pv_atom_get) {
+			xmsg = pv_atom_get_atom(&pvn->u.isname.name.s);
+		} else if (sp.getf == pv_pid_get) {
+			xmsg = pv_pid_get_pid(&pvn->u.isname.name.s);
 		}
 
 		/* fix index */
@@ -1364,10 +1368,11 @@ static int fixup_send(void** param, int param_no)
 				return E_UNSPEC;
 			}
 
-			if (erl_param->value.sp.setf == pv_list_set
-					|| erl_param->value.sp.setf == pv_xbuff_set
-					|| erl_param->value.sp.setf == pv_tuple_set
-					|| erl_param->value.sp.setf == pv_atom_set) {
+			if (erl_param->value.sp.getf == pv_list_get
+					|| erl_param->value.sp.getf == pv_xbuff_get
+					|| erl_param->value.sp.getf == pv_tuple_get
+					|| erl_param->value.sp.getf == pv_atom_get
+					|| erl_param->value.sp.getf == pv_pid_get) {
 
 				erl_param->type = ERL_PARAM_XBUFF_SPEC;
 			} else {

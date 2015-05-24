@@ -32,4 +32,6 @@ int pv_atom_get(struct sip_msg*, pv_param_t*, pv_value_t*);
 
 void free_atom_fmt_buff();
 
+sr_xavp_t *pv_atom_get_atom(str *name);
+
 #endif /* PV_ATOM_H_ */
