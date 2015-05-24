@@ -241,7 +241,8 @@ modparam("erlang", "trace_level", 5)
 					<varname>type</varname>
 					<para>
 						get variable type. Possible types are: <emphasis>atom, integer,
-						list, string</emphasis>, <emphasis>tuple</emphasis> and <emphasis>pid</emphasis>.
+						list, string</emphasis>, <emphasis>tuple</emphasis>,
+						<emphasis>pid</emphasis> and <emphasis>ref</emphasis>.
 					</para>
 				</listitem>
 				<listitem>
@@ -407,6 +408,24 @@ DEBUG: &lt;script&gt;: 153:length(T): 2, format(T): {line, [{id, 23}, {owner, "B
 if ($xbuff(msg[0]=>type) == "pid") {
 	$pid(pid) = $xbuff(msg[0]);
 	xlogl("L_INFO","Received PID: $pid(pid=>format)\n");
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.v.ref">
+			<title><varname>$ref(name)</varname></title>
+			<para>
+				<emphasis>ref</emphasis> holds Erlang reference. Provides
+				access to reference value and could be used in send message.
+			</para>
+			<example>
+				<title>Example of using ref</title>
+				<programlisting format="linespecific">
+...
+if ($xbuff(msg[0]=>type) == "ref") {
+	$ref(ref) = $xbuff(msg[0]);
+	xlogl("L_INFO","Reference: $ref(ref=>format)\n");
 }
 ...
 				</programlisting>

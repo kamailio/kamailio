@@ -50,6 +50,7 @@
 #include "pv_atom.h"
 #include "pv_list.h"
 #include "pv_pid.h"
+#include "pv_ref.h"
 
 MODULE_VERSION
 
@@ -136,6 +137,16 @@ static pv_export_t pvs[] = {
 				pv_pid_get,
 				pv_pid_set,
 				pv_pid_parse_name,
+				0,
+				0,
+				0
+		},
+		{
+				{ "ref", (sizeof("ref")-1) },
+				PVT_OTHER,
+				pv_ref_get,
+				pv_ref_set,
+				pv_ref_parse_name,
 				0,
 				0,
 				0
@@ -393,6 +404,7 @@ static void mod_destroy(void)
 		free_list_fmt_buff();
 		free_xbuff_fmt_buff();
 		free_pid_fmt_buff();
+		free_ref_fmt_buff();
 }
 
 static int postprocess_request(struct sip_msg *msg, unsigned int flags, void *_param)
@@ -402,6 +414,7 @@ static int postprocess_request(struct sip_msg *msg, unsigned int flags, void *_p
 	free_list_fmt_buff();
 	free_xbuff_fmt_buff();
 	free_pid_fmt_buff();
+	free_ref_fmt_buff();
 	return 0;
 }
 

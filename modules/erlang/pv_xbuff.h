@@ -44,6 +44,7 @@ typedef enum {
 	XBUFF_TYPE_TUPLE,
 	XBUFF_TYPE_LIST,
 	XBUFF_TYPE_PID,
+	XBUFF_TYPE_REF,
 	XBUFF_TYPE_COUNT
 } xbuff_type_t;
 

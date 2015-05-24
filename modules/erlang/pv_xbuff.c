@@ -42,6 +42,7 @@ str xbuff_types[] = {
 		STR_STATIC_INIT("tuple"),
 		STR_STATIC_INIT("list"),
 		STR_STATIC_INIT("pid"),
+		STR_STATIC_INIT("ref"),
 		STR_NULL
 };
 
@@ -106,7 +107,7 @@ sr_xavp_t *xbuff_new(str *name)
  */
 int compile_xbuff_re()
 {
-	char *pattern = "^<<\\(tuple\\|list\\|atom\\|pid\\):\\(0x[[:xdigit:]]\\+\\)>>$";
+	char *pattern = "^<<\\(tuple\\|list\\|atom\\|pid\\|ref\\):\\(0x[[:xdigit:]]\\+\\)>>$";
 	size_t bfsz = 128;
 	char errbuff[128];
 	int e;
@@ -152,6 +153,8 @@ int xbuff_match_type_re(str *s, xbuff_type_t *type, sr_xavp_t **addr)
 			t = XBUFF_TYPE_TUPLE;
 		} else if (STR_EQ(tname,xbuff_types[XBUFF_TYPE_PID])) {
 			t = XBUFF_TYPE_PID;
+		} else if (STR_EQ(tname,xbuff_types[XBUFF_TYPE_REF])) {
+			t = XBUFF_TYPE_REF;
 		} else {
 			LM_ERR("BUG: unknown xbuff type");
 			return -1;
@@ -359,6 +362,16 @@ int pv_xbuff_new_xavp(sr_xavp_t **new, pv_value_t *pval, int *counter, char pref
 				}
 				memcpy((void*)nval.v.data,(void*)xavp,sizeof(sr_data_t)+sizeof(erlang_pid));
 				break;
+			case XBUFF_TYPE_REF:
+				s[0] = 'r';
+				nval.type = SR_XTYPE_DATA;
+				nval.v.data = (sr_data_t*)shm_malloc(sizeof(sr_data_t)+sizeof(erlang_ref));
+				if (!nval.v.data) {
+					LM_ERR("not enough shared memory\n");
+					return -1;
+				}
+				memcpy((void*)nval.v.data,(void*)xavp,sizeof(sr_data_t)+sizeof(erlang_ref));
+				break;
 			case XBUFF_TYPE_INT:
 			case XBUFF_TYPE_STR:
 			default:
@@ -408,6 +421,9 @@ int pv_xbuff_get_type(struct sip_msg *msg, pv_param_t *param,
 		break;
 	case 'p':
 		return pv_get_strval(msg, param, res, &xbuff_types[XBUFF_TYPE_PID]);
+		break;
+	case 'r':
+		return pv_get_strval(msg, param, res, &xbuff_types[XBUFF_TYPE_REF]);
 		break;
 	}
 
@@ -597,6 +613,10 @@ int pv_xbuff_get_value(struct sip_msg *msg, pv_param_t *param,
 		switch (avp->name.s[0]) {
 		case 'p':
 			if(snprintf(_pv_xavp_buf, 128, "<<pid:%p>>", avp->val.v.data)<0)
+				return pv_get_null(msg, param, res);
+			break;
+		case 'r':
+			if(snprintf(_pv_xavp_buf, 128, "<<ref:%p>>", avp->val.v.data)<0)
 				return pv_get_null(msg, param, res);
 			break;
 		default:
@@ -902,6 +922,9 @@ int xavp_encode(ei_x_buff *xbuff, sr_xavp_t *xavp,int level)
 		case 'p':
 			ei_x_encode_pid(xbuff,xavp->val.v.data->p);
 			break;
+		case 'r':
+			ei_x_encode_ref(xbuff,xavp->val.v.data->p);
+			break;
 		case 'n':
 			ei_x_encode_atom(xbuff,"undefined");
 			break;
@@ -931,7 +954,7 @@ int xavp_decode(ei_x_buff *xbuff, int *index, sr_xavp_t **xavp,int level)
 	sr_xavp_t *new;
 	char *pbuf=0;
 	erlang_pid *pid;
-	erlang_ref ref;
+	erlang_ref *ref;
 	erlang_fun fun;
 	double d;
 	char *p = NULL;
@@ -1120,24 +1143,35 @@ int xavp_decode(ei_x_buff *xbuff, int *index, sr_xavp_t **xavp,int level)
 		break;
 	case ERL_REFERENCE_EXT:
 	case ERL_NEW_REFERENCE_EXT:
-		name.len = snprintf(_s,sizeof(_s),"s%d",counter++);
-		i = *index;
+		name.len = snprintf(_s,sizeof(_s),"r%d",counter++);
 
-		ei_decode_ref(xbuff->buff,index,&ref);
-
-		if (ei_s_print_term(&p,xbuff->buff,&i)<0) {
-			LM_ERR("failed to decode reference\n");
+		data = (sr_data_t*)shm_malloc(sizeof(sr_data_t)+sizeof(erlang_ref));
+		if (!data) {
+			LM_ERR("not enough shared memory\n");
 			goto err;
 		}
-		val.type = SR_XTYPE_STR;
-		val.v.s.s = p;
-		val.v.s.len = strlen(p);
+
+		memset((void*)data,0,sizeof(sr_data_t)+sizeof(erlang_ref));
+
+		data->p = ref = (void*)data+sizeof(sr_data_t);
+		data->pfree = xbuff_data_free;
+
+		if (ei_decode_ref(xbuff->buff,index,ref)<0) {
+			LM_ERR("failed to decode pid\n");
+			shm_free(data);
+			goto err;
+		}
+
+		val.type = SR_XTYPE_DATA;
+		val.v.data = data;
 
 		*xavp = xavp_new_value(&name,&val);
 		if (!*xavp) {
 			LM_ERR("failed to create new xavp!\n");
+			shm_free(data);
 			goto err;
 		}
+
 		break;
 	case ERL_FUN_EXT:
 		name.len = snprintf(_s,sizeof(_s),"s%d",counter++);
