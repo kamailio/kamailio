@@ -37,12 +37,12 @@ Seudin Kasumovic
 
               4.1. Overview
               4.2. Attributes
-              4.3. $atom(name)
-              4.4. $list(name)
-              4.5. $tuple(name)
-              4.6. $pid(name)
-              4.7. $ref(name)
-              4.8. $xbuff(name)
+              4.3. $erl_atom(name)
+              4.4. $erl_list(name)
+              4.5. $erl_tuple(name)
+              4.6. $erl_pid(name)
+              4.7. $erl_ref(name)
+              4.8. $erl_xbuff(name)
 
         5. Functions
 
@@ -82,12 +82,12 @@ Seudin Kasumovic
    1.6. Set trace_level parameter
    1.7. Example of using attribute length
    1.8. Example of using attributes type and format
-   1.9. Example set and print to log atom
-   1.10. Example of using lists
-   1.11. Example of using tuple
-   1.12. Example of using pid
-   1.13. Example of using ref
-   1.14. Example of using xbuff
+   1.9. Example set and print to log $erl_atom
+   1.10. Example of using $erl_list
+   1.11. Example of using erl_tuple
+   1.12. Example of using $erl_pid
+   1.13. Example of using erl_ref
+   1.14. Example of using $erl_xbuff
    1.15. Example of using erl_rpc
    1.16. Example of using erl_reg_send
    1.17. Example of using erl_send
@@ -124,12 +124,12 @@ Chapter 1. Admin Guide
 
         4.1. Overview
         4.2. Attributes
-        4.3. $atom(name)
-        4.4. $list(name)
-        4.5. $tuple(name)
-        4.6. $pid(name)
-        4.7. $ref(name)
-        4.8. $xbuff(name)
+        4.3. $erl_atom(name)
+        4.4. $erl_list(name)
+        4.5. $erl_tuple(name)
+        4.6. $erl_pid(name)
+        4.7. $erl_ref(name)
+        4.8. $erl_xbuff(name)
 
    5. Functions
 
@@ -147,7 +147,7 @@ Chapter 1. Admin Guide
 
    Erlang is a general-purpose programming language and runtime
    environment. Erlang has built-in support for concurrency, distribution
-   and fault tolerance. This module provides interact with erlang node.
+   and fault tolerance. This module provides interact with Erlang node.
    The module allows sending, receiving Erlang messages and RPC calls
    between each other.
 
@@ -166,8 +166,8 @@ Chapter 1. Admin Guide
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * ei - Erlang interface C library.
-       The routines for handling the erlang binary term format and
-       communicate with with distributed erlang. For more details see
+       The routines for handling the Erlang binary term format and
+       communicate with with distributed Erlang. For more details see
        Erlang Interface Reference Manual
      * epmd - Erlang Port Mapper Daemon.
        This daemon acts as a name server on all hosts involved in
@@ -278,12 +278,12 @@ modparam("erlang", "trace_level", 5)
 
    4.1. Overview
    4.2. Attributes
-   4.3. $atom(name)
-   4.4. $list(name)
-   4.5. $tuple(name)
-   4.6. $pid(name)
-   4.7. $ref(name)
-   4.8. $xbuff(name)
+   4.3. $erl_atom(name)
+   4.4. $erl_list(name)
+   4.5. $erl_tuple(name)
+   4.6. $erl_pid(name)
+   4.7. $erl_ref(name)
+   4.8. $erl_xbuff(name)
 
 4.1. Overview
 
@@ -308,12 +308,12 @@ modparam("erlang", "trace_level", 5)
        get length of list or tuple.
      * format
        Prints a term, in clear text. It tries to resemble the term
-       printing in the erlang shell.
+       printing in the Erlang shell.
 
    Example 1.7. Example of using attribute length
 ...
-xlogl("L_DEBUG","The number of elements in list L: $list(L=>length)\n");
-xlogl("L_DEBUG","The number of elements in tuple T: $tuple(T=>length)\n");
+xlogl("L_DEBUG","The number of elements in list L: $erl_list(L=>length)\n");
+xlogl("L_DEBUG","The number of elements in tuple T: $erl_tuple(T=>length)\n");
 ...
 
 > example of log output:
@@ -324,10 +324,10 @@ DEBUG: <script>: 121:The number of elements in tuple T: 2
 
    Example 1.8. Example of using attributes type and format
 ...
-xlogl("L_DEBUG","list L in clear text: $list(L=>format), the type at index 2: $l
-ist(L[2]=>type)\n");
-xlogl("L_DEBUG","tuple T in clear text: $tuple(T=>format), the type at index 1:
-$tuple[T[1]=>type)\n");
+xlogl("L_DEBUG","list L in clear text: $erl_list(L=>format), the type at index 2
+: $erl_list(L[2]=>type)\n");
+xlogl("L_DEBUG","tuple T in clear text: $erltuple(T=>format), the type at index
+1: $erl_tuple[T[1]=>type)\n");
 ...
 
 > example of log output:
@@ -338,26 +338,26 @@ DEBUG: <script>: 131:tuple T in clear text: {example, tuple}, the type at index
 1: atom
 ...
 
-4.3. $atom(name)
+4.3. $erl_atom(name)
 
-   Atom pseudo variable allows create analog to erlang atom data type.
+   erl_atom pseudo variable allows create analog to Erlang atom data type.
    Erlang atom is a literal, a constant with name. Formatted output pseudo
    variable atom could be enclosed in single quotes (') if it does not
    begin with a lower-case letter or if it contains other characters than
    alphanumeric characters, underscore (_), or @.
 
-   Example 1.9. Example set and print to log atom
+   Example 1.9. Example set and print to log $erl_atom
 ...
-$atom(A) = "badrpc";
-xlogl("L_DEBUG","$$atom(A): $atom(A=>format)\n");
+$erl_atom(A) = "badrpc";
+xlogl("L_DEBUG","$$erl_atom(A): $erl_atom(A=>format)\n");
 ...
 
 > log output is:
 
-DEBUG: <script>: 123:$atom(A): badrpc
+DEBUG: <script>: 123:$erl_atom(A): badrpc
 ...
 
-4.4. $list(name)
+4.4. $erl_list(name)
 
    Compound data type with a variable number of terms. Formally, a list is
    either the empty list [] or consists of one or more elements.
@@ -367,19 +367,21 @@ DEBUG: <script>: 123:$atom(A): badrpc
    given index. List supports [*] index to get whole list or reset all
    elements in the list. To create empty list set whole list to $null.
 
-   Example 1.10. Example of using lists
+   Example 1.10. Example of using $erl_list
 ...
-$atom(E) = "example";
-$list(L) = "list";
-$list(L) = "of";
-$list(L) = $atom(E);
+$erl_atom(E) = "example";
+$erl_list(L) = "list";
+$erl_list(L) = "of";
+$erl_list(L) = $erl_atom(E);
 
-xlogl("L_DEBUG","length(L): $list(L=>length), format(L): $list(L=>format)\n");
+xlogl("L_DEBUG","length(L): $erl_list(L=>length), format(L): $erl_list(L=>format
+)\n");
 
 # empty list
-$tuple(E[*]) = $null;
+$erl_tuple(E[*]) = $null;
 
-xlogl("L_DEBUG","length(E): $list(E=>length), format(E): $list(L=>format)\n");
+xlogl("L_DEBUG","length(E): $erl_list(E=>length), format(E): $erl_list(L=>format
+)\n");
 ...
 
 > log output is:
@@ -388,33 +390,34 @@ DEBUG: <script>: 143:length(L): 3, format(L): [example, "of", "list"]
 DEBUG: <script>: 148:length(E): 0, format(E): []
 ...
 
-4.5. $tuple(name)
+4.5. $erl_tuple(name)
 
-   From the erlang point of view the tuple compound data type with a fixed
+   From the Erlang point of view the tuple compound data type with a fixed
    number of terms. The module implementation of tuple has the same
    behavior as the list.
 
-   Example 1.11. Example of using tuple
+   Example 1.11. Example of using erl_tuple
 ...
-$atom(line) = "line";
-$atom(id)   = "id";
-$atom(owner)= "owner";
+$erl_atom(line) = "line";
+$erl_atom(id)   = "id";
+$erl_atom(owner)= "owner";
 
 $var(user)  = "Bob";
 
-$tuple(owner) = $var(user);
-$tuple(owner) = $atom(owner);
+$erl_tuple(owner) = $var(user);
+$erl_tuple(owner) = $erl_atom(owner);
 
-$tuple(id) = 23;
-$tuple(id) = $atom(id);
+$erl_tuple(id) = 23;
+$erl_tuple(id) = $erl_atom(id);
 
-$list(L) = $tuple(owner);
-$list(L) = $tuple(id);
+$erl_list(L) = $erl_tuple(owner);
+$erl_list(L) = $erl_tuple(id);
 
-$tuple(T) = $list(L);
-$tuple(T) = $atom(line);
+$erl_tuple(T) = $erl_list(L);
+$erl_tuple(T) = $erl_atom(line);
 
-xlogl("L_DEBUG","length(T): $tuple(T=>length), format(T): $tuple(T=>format)\n");
+xlogl("L_DEBUG","length(T): $erl_tuple(T=>length), format(T): $erl_tuple(T=>form
+at)\n");
 ...
 
 > log output is:
@@ -422,48 +425,48 @@ xlogl("L_DEBUG","length(T): $tuple(T=>length), format(T): $tuple(T=>format)\n");
 DEBUG: <script>: 153:length(T): 2, format(T): {line, [{id, 23}, {owner, "Bob"}]}
 ...
 
-4.6. $pid(name)
+4.6. $erl_pid(name)
 
-   pid holds Eralng process identifier. Provides access to pid value and
-   could be used in send message.
+   erl_pid holds Eralng process identifier. Provides access to Erlang PID
+   value and could be used in send message.
 
-   Example 1.12. Example of using pid
+   Example 1.12. Example of using $erl_pid
 ...
-if ($xbuff(msg[0]=>type) == "pid") {
-        $pid(pid) = $xbuff(msg[0]);
-        xlogl("L_INFO","Received PID: $pid(pid=>format)\n");
+if ($erl_xbuff(msg[0]=>type) == "pid") {
+        $erl_pid(pid) = $erl_xbuff(msg[0]);
+        xlogl("L_INFO","Received PID: $erl_pid(pid=>format)\n");
 }
 ...
 
-4.7. $ref(name)
+4.7. $erl_ref(name)
 
-   ref holds Erlang reference. Provides access to reference value and
+   erl_ref holds Erlang reference. Provides access to reference value and
    could be used in send message.
 
-   Example 1.13. Example of using ref
+   Example 1.13. Example of using erl_ref
 ...
-if ($xbuff(msg[0]=>type) == "ref") {
-        $ref(ref) = $xbuff(msg[0]);
-        xlogl("L_INFO","Reference: $ref(ref=>format)\n");
+if ($erl_xbuff(msg[0]=>type) == "ref") {
+        $erl_ref(ref) = $erl_xbuff(msg[0]);
+        xlogl("L_INFO","Reference: $erl_ref(ref=>format)\n");
 }
 ...
 
-4.8. $xbuff(name)
+4.8. $erl_xbuff(name)
 
-   xbuff is created as generic pseudo variable to acts as other pseudo
+   erl_xbuff is created as generic pseudo variable to acts as other pseudo
    variables exported from module. It's useful when in advance we don't
    know what variable type to expect. The behavior of variable depends of
    initialization. Module functions expect this PV as return value, and PV
-   for incoming erlang message.
+   for incoming Erlang message.
 
-   Example 1.14. Example of using xbuff
+   Example 1.14. Example of using $erl_xbuff
 ...
-# tuple T from previous example
+# Tuple T from previous example
 
-$xbuff(X) = $tuple(T);
+$erl_xbuff(X) = $erl_tuple(T);
 
-xlogl("L_DEBUG","typeof(X): $xbuff(X=>type), length(X): $xbuff(X=>length), forma
-t(X): $xbuff(X=>format)\n");
+xlogl("L_DEBUG","typeof(X): $erl_xbuff(X=>type), length(X): $erl_xbuff(X=>length
+), format(X): $erl_xbuff(X=>format)\n");
 ...
 
 > log output is:
@@ -501,16 +504,16 @@ DEBUG: <script>: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{id, 23}
 # example of call erlang:list_to_tuple(["one","two"])
 # on remote node
 
-$list(L) = "two";
-$list(L) = "one";
+$erl_list(L) = "two";
+$erl_list(L) = "one";
 
 # put list into list
-$list(args) = $list(L);
+$erl_list(args) = $erl_list(L);
 
-erl_rpc("erlang", "list_to_tuple", "$list(args)", "$xbuff(repl)");
+erl_rpc("erlang", "list_to_tuple", "$erl_list(args)", "$erl_xbuff(repl)");
 
-xlogl("L_DEBUG","type(repl): $xbuff(repl=>type), format(repl): $xbuff(repl=>form
-at)\n");
+xlogl("L_DEBUG","type(repl): $erl_xbuff(repl=>type), format(repl): $erl_xbuff(re
+pl=>format)\n");
 
 > log output:
 ...
@@ -531,13 +534,13 @@ DEBUG: <script>: 386:type(repl): tuple, format(repl): {"one", "two"}
 # example of send message to registered process
 # {notifier,'node1@erlang.lan'} ! {example,message}
 
-$atom(example) = "example";
-$atom(message) = "message";
+$erl_atom(example) = "example";
+$erl_atom(message) = "message";
 
-$tuple(M) = $atom(message);
-$tuple(M) = $atom(example);
+$erl_tuple(M) = $erl_atom(message);
+$erl_tuple(M) = $erl_atom(example);
 
-erl_reg_send("notifier","$tuple(M)");
+erl_reg_send("notifier","$erl_tuple(M)");
 ...
 
 5.3. erl_send(pid,msg)
@@ -552,18 +555,18 @@ erl_reg_send("notifier","$tuple(M)");
 # example of send message to process
 # Pid ! {example,message}
 
-$atom(notifier) = "notifier";
-$list(args) = $atom(notifier);
+$erl_atom(notifier) = "notifier";
+$erl_list(args) = $erl_atom(notifier);
 
-erl_rpc("erlang", "whereis", "$list(args)", "$xbuff(pid)");
+erl_rpc("erlang", "whereis", "$erl_list(args)", "$erl_xbuff(pid)");
 
-$atom(example) = "example";
-$atom(message) = "message";
+$erl_atom(example) = "example";
+$erl_atom(message) = "message";
 
-$tuple(M) = $atom(message);
-$tuple(M) = $atom(example);
+$erl_tuple(M) = $erl_atom(message);
+$erl_tuple(M) = $erl_atom(example);
 
-erl_send("$xbuff(pid)","$tuple(M)");
+erl_send("$erl_xbuff(pid)","$erl_tuple(M)");
 ...
 
 5.4. erl_reply(msg)
@@ -576,14 +579,14 @@ erl_send("$xbuff(pid)","$tuple(M)");
 # event route acts as registered process
 event_route[erlang:greetings] {
 
-        xlogl("L_INFO","Received message: $xbuff(msg=>format)\n");
+        xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
 
-        $atom(hello) = "hello";
-        $tuple(reply) = "Erlang";
-        $tuple(reply) = $atom(hello);
+        $erl_atom(hello) = "hello";
+        $erl_tuple(reply) = "Erlang";
+        $erl_tuple(reply) = $erl_atom(hello);
 
         # reply greeting
-        erl_reply("$tuple(reply)");
+        erl_reply("$erl_tuple(reply)");
 }
 ...
 
@@ -608,8 +611,9 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
    we can use event routes. Event routes executed when asynchronous
    message received from erlang node.
 
-   Event route receives message in $xbuff(msg) and sender process in
-   $xbuff(pid). Reply message is optional and can be sent with erl_reply.
+   Event route receives message in $erl_xbuff(msg) and sender process in
+   $erl_xbuff(pid). Reply message is optional and can be sent with
+   erl_reply.
 
 6.1. Registered pseudo process
 
@@ -622,7 +626,7 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
 # event route acts as registered process
 event_route[erlang:handler] {
 
-        xlogl("L_INFO","Received message: $xbuff(msg=>format)\n");
+        xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
 
 }
 ...
@@ -646,11 +650,12 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
 # default event route from erlang
 event_route[erlang:self] {
 
-        xlogl("L_INFO","Received message: $xbuff(msg=>format)\n");
+        xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
 
-        if(pv_isset("$xbuff(msg[1])") && $xbuff(msg[1]=>type) == "pid") {
-                xlogl("L_INFO","Echo reply to: $xbuff(msg[1]=>format)\n");
-                erl_send("$xbuff(msg[1])","$xbuff(msg[0])");
+        if(pv_isset("$erl_xbuff(msg[1])") && $erl_xbuff(msg[1]=>type) == "pid")
+{
+                xlogl("L_INFO","Echo reply to: $erl_xbuff(msg[1]=>format)\n");
+                erl_send("$erl_xbuff(msg[1])","$erl_xbuff(msg[0])");
         }
 }
 ...

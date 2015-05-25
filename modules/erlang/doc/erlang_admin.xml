@@ -18,8 +18,8 @@
 		<para>
 			Erlang is a general-purpose programming language and runtime environment.
 			Erlang has built-in support for concurrency, distribution and fault tolerance.
-			This module provides interact with erlang node. The module allows sending
-			and receiving Erlang messages and RPC calls between each other.
+			This module provides interact with Erlang node. The module allows sending,
+			receiving Erlang messages and RPC calls between each other.
 		</para>
 	</section>
 
@@ -48,8 +48,8 @@
 				<para>
 					<emphasis>ei</emphasis> - Erlang interface C library.
 					<para>
-						The routines for handling the erlang binary term format 
-						and communicate with with distributed erlang.
+						The routines for handling the Erlang binary term format
+						and communicate with with distributed Erlang.
 						For more details see <ulink url="http://www.erlang.org/doc/apps/erl_interface/index.html">Erlang Interface Reference Manual</ulink>
 					</para>
 				</para>
@@ -255,7 +255,7 @@ modparam("erlang", "trace_level", 5)
 					<varname>format</varname>
 					<para>
 						Prints a term, in clear text. It tries to resemble the
-						term printing in the erlang shell.
+						term printing in the Erlang shell.
 					</para>
 				</listitem>
 			</itemizedlist>
@@ -263,8 +263,8 @@ modparam("erlang", "trace_level", 5)
 				<title>Example of using attribute <emphasis>length</emphasis></title>
 				<programlisting format="linespecific">
 ...
-xlogl("L_DEBUG","The number of elements in list L: $list(L=>length)\n");
-xlogl("L_DEBUG","The number of elements in tuple T: $tuple(T=>length)\n");
+xlogl("L_DEBUG","The number of elements in list L: $erl_list(L=>length)\n");
+xlogl("L_DEBUG","The number of elements in tuple T: $erl_tuple(T=>length)\n");
 ...
 
 &gt; example of log output:
@@ -278,8 +278,8 @@ DEBUG: &lt;script&gt;: 121:The number of elements in tuple T: 2
 				<title>Example of using attributes <emphasis>type</emphasis> and <emphasis>format</emphasis></title>
 				<programlisting format="linespecific">
 ...
-xlogl("L_DEBUG","list L in clear text: $list(L=>format), the type at index 2: $list(L[2]=>type)\n");
-xlogl("L_DEBUG","tuple T in clear text: $tuple(T=>format), the type at index 1: $tuple[T[1]=>type)\n");
+xlogl("L_DEBUG","list L in clear text: $erl_list(L=>format), the type at index 2: $erl_list(L[2]=>type)\n");
+xlogl("L_DEBUG","tuple T in clear text: $erltuple(T=>format), the type at index 1: $erl_tuple[T[1]=>type)\n");
 ...
 
 &gt; example of log output:
@@ -290,10 +290,10 @@ DEBUG: &lt;script&gt;: 131:tuple T in clear text: {example, tuple}, the type at 
 				</programlisting>
 			</example>
 		</section>
-		<section id="erlang.v.atom">
-			<title><varname>$atom(name)</varname></title>
+		<section id="erlang.v.erl_atom">
+			<title><varname>$erl_atom(name)</varname></title>
 			<para>
-				Atom pseudo variable allows create analog to erlang atom data type.
+				<emphasis>erl_atom</emphasis> pseudo variable allows create analog to Erlang atom data type.
 				Erlang atom is a literal, a constant with name. Formatted output pseudo
 				variable atom could be enclosed in single quotes (') if it does 
 				not begin with a lower-case letter or if it contains other characters
@@ -303,22 +303,22 @@ DEBUG: &lt;script&gt;: 131:tuple T in clear text: {example, tuple}, the type at 
 
 			</para>
 			<example>
-				<title>Example set and print to log atom</title>
+				<title>Example set and print to log $erl_atom</title>
 				<programlisting format="linespecific">
 ...
-$atom(A) = "badrpc";
-xlogl("L_DEBUG","$$atom(A): $atom(A=>format)\n");
+$erl_atom(A) = "badrpc";
+xlogl("L_DEBUG","$$erl_atom(A): $erl_atom(A=>format)\n");
 ...
 
 &gt; log output is:
 
-DEBUG: &lt;script&gt;: 123:$atom(A): badrpc
+DEBUG: &lt;script&gt;: 123:$erl_atom(A): badrpc
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="erlang.v.list">
-			<title><varname>$list(name)</varname></title>
+		<section id="erlang.v.erl_list">
+			<title><varname>$erl_list(name)</varname></title>
 			<para>
 				Compound data type with a variable number of terms. Formally,
 				a list is either the empty list [] or consists of one or more 
@@ -332,20 +332,20 @@ DEBUG: &lt;script&gt;: 123:$atom(A): badrpc
 				<emphasis>$null</emphasis>.
 			</para>
 			<example>
-				<title>Example of using lists</title>
+				<title>Example of using $erl_list</title>
 				<programlisting format="linespecific">
 ...
-$atom(E) = "example";
-$list(L) = "list";
-$list(L) = "of";
-$list(L) = $atom(E);
+$erl_atom(E) = "example";
+$erl_list(L) = "list";
+$erl_list(L) = "of";
+$erl_list(L) = $erl_atom(E);
 
-xlogl("L_DEBUG","length(L): $list(L=>length), format(L): $list(L=>format)\n");
+xlogl("L_DEBUG","length(L): $erl_list(L=>length), format(L): $erl_list(L=>format)\n");
 
 # empty list
-$tuple(E[*]) = $null;
+$erl_tuple(E[*]) = $null;
 
-xlogl("L_DEBUG","length(E): $list(E=>length), format(E): $list(L=>format)\n");
+xlogl("L_DEBUG","length(E): $erl_list(E=>length), format(E): $erl_list(L=>format)\n");
 ...
 
 &gt; log output is:
@@ -356,36 +356,36 @@ DEBUG: &lt;script&gt;: 148:length(E): 0, format(E): []
 				</programlisting>
 			</example>
 		</section>
-		<section id="erlang.v.tuple">
-			<title><varname>$tuple(name)</varname></title>
+		<section id="erlang.v.erl_tuple">
+			<title><varname>$erl_tuple(name)</varname></title>
 			<para>
-				From the erlang point of view the tuple compound data type with
+				From the Erlang point of view the tuple compound data type with
 				a fixed number of terms. The module implementation of tuple has
 				the same behavior as the list.
 			</para>
 			<example>
-				<title>Example of using tuple</title>
+				<title>Example of using erl_tuple</title>
 				<programlisting format="linespecific">
 ...
-$atom(line) = "line";
-$atom(id)   = "id";
-$atom(owner)= "owner";
+$erl_atom(line) = "line";
+$erl_atom(id)   = "id";
+$erl_atom(owner)= "owner";
 
 $var(user)  = "Bob";
 
-$tuple(owner) = $var(user);
-$tuple(owner) = $atom(owner);
+$erl_tuple(owner) = $var(user);
+$erl_tuple(owner) = $erl_atom(owner);
 
-$tuple(id) = 23;
-$tuple(id) = $atom(id);
+$erl_tuple(id) = 23;
+$erl_tuple(id) = $erl_atom(id);
 
-$list(L) = $tuple(owner);
-$list(L) = $tuple(id);
+$erl_list(L) = $erl_tuple(owner);
+$erl_list(L) = $erl_tuple(id);
 
-$tuple(T) = $list(L);
-$tuple(T) = $atom(line);
+$erl_tuple(T) = $erl_list(L);
+$erl_tuple(T) = $erl_atom(line);
 
-xlogl("L_DEBUG","length(T): $tuple(T=>length), format(T): $tuple(T=>format)\n");
+xlogl("L_DEBUG","length(T): $erl_tuple(T=>length), format(T): $erl_tuple(T=>format)\n");
 ...
 
 &gt; log output is:
@@ -395,61 +395,61 @@ DEBUG: &lt;script&gt;: 153:length(T): 2, format(T): {line, [{id, 23}, {owner, "B
 				</programlisting>
 			</example>
 		</section>
-		<section id="erlang.v.pid">
-			<title><varname>$pid(name)</varname></title>
+		<section id="erlang.v.erl_pid">
+			<title><varname>$erl_pid(name)</varname></title>
 			<para>
-				<emphasis>pid</emphasis> holds Eralng process identifier. Provides
-				access to pid value and could be used in send message.
+				<emphasis>erl_pid</emphasis> holds Eralng process identifier. Provides
+				access to Erlang PID value and could be used in send message.
 			</para>
 			<example>
-				<title>Example of using pid</title>
+				<title>Example of using $erl_pid</title>
 				<programlisting format="linespecific">
 ...
-if ($xbuff(msg[0]=>type) == "pid") {
-	$pid(pid) = $xbuff(msg[0]);
-	xlogl("L_INFO","Received PID: $pid(pid=>format)\n");
+if ($erl_xbuff(msg[0]=>type) == "pid") {
+	$erl_pid(pid) = $erl_xbuff(msg[0]);
+	xlogl("L_INFO","Received PID: $erl_pid(pid=>format)\n");
 }
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="erlang.v.ref">
-			<title><varname>$ref(name)</varname></title>
+		<section id="erlang.v.erl_ref">
+			<title><varname>$erl_ref(name)</varname></title>
 			<para>
-				<emphasis>ref</emphasis> holds Erlang reference. Provides
+				<emphasis>erl_ref</emphasis> holds Erlang reference. Provides
 				access to reference value and could be used in send message.
 			</para>
 			<example>
-				<title>Example of using ref</title>
+				<title>Example of using erl_ref</title>
 				<programlisting format="linespecific">
 ...
-if ($xbuff(msg[0]=>type) == "ref") {
-	$ref(ref) = $xbuff(msg[0]);
-	xlogl("L_INFO","Reference: $ref(ref=>format)\n");
+if ($erl_xbuff(msg[0]=>type) == "ref") {
+	$erl_ref(ref) = $erl_xbuff(msg[0]);
+	xlogl("L_INFO","Reference: $erl_ref(ref=>format)\n");
 }
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="erlang.v.xbuff">
-			<title><varname>$xbuff(name)</varname></title>
+		<section id="erlang.v.erl_xbuff">
+			<title><varname>$erl_xbuff(name)</varname></title>
 			<para>
-				<emphasis>xbuff</emphasis> is created as generic pseudo variable
+				<emphasis>erl_xbuff</emphasis> is created as generic pseudo variable
 				to acts as other pseudo variables exported from module. It's useful
 				when in advance we don't know what variable type to expect.
 				The behavior of variable depends of initialization. Module
 				functions expect this PV as return value, and PV for incoming
-				erlang message.
+				Erlang message.
 			</para>
 			<example>
-				<title>Example of using xbuff</title>
+				<title>Example of using $erl_xbuff</title>
 				<programlisting format="linespecific">
 ...
-# tuple T from previous example
+# Tuple T from previous example
 
-$xbuff(X) = $tuple(T);
+$erl_xbuff(X) = $erl_tuple(T);
 
-xlogl("L_DEBUG","typeof(X): $xbuff(X=>type), length(X): $xbuff(X=>length), format(X): $xbuff(X=>format)\n");
+xlogl("L_DEBUG","typeof(X): $erl_xbuff(X=>type), length(X): $erl_xbuff(X=>length), format(X): $erl_xbuff(X=>format)\n");
 ...
 
 &gt; log output is:
@@ -495,15 +495,15 @@ DEBUG: &lt;script&gt;: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{i
 # example of call erlang:list_to_tuple(["one","two"])
 # on remote node
 
-$list(L) = "two";
-$list(L) = "one";
+$erl_list(L) = "two";
+$erl_list(L) = "one";
 
 # put list into list
-$list(args) = $list(L);
+$erl_list(args) = $erl_list(L);
 
-erl_rpc("erlang", "list_to_tuple", "$list(args)", "$xbuff(repl)");
+erl_rpc("erlang", "list_to_tuple", "$erl_list(args)", "$erl_xbuff(repl)");
 
-xlogl("L_DEBUG","type(repl): $xbuff(repl=>type), format(repl): $xbuff(repl=>format)\n");
+xlogl("L_DEBUG","type(repl): $erl_xbuff(repl=>type), format(repl): $erl_xbuff(repl=>format)\n");
 
 &gt; log output:
 ...
@@ -531,13 +531,13 @@ DEBUG: &lt;script&gt;: 386:type(repl): tuple, format(repl): {"one", "two"}
 # example of send message to registered process
 # {notifier,'node1@erlang.lan'} ! {example,message}
 
-$atom(example) = "example";
-$atom(message) = "message";
+$erl_atom(example) = "example";
+$erl_atom(message) = "message";
 
-$tuple(M) = $atom(message);
-$tuple(M) = $atom(example);
+$erl_tuple(M) = $erl_atom(message);
+$erl_tuple(M) = $erl_atom(example);
 
-erl_reg_send("notifier","$tuple(M)");
+erl_reg_send("notifier","$erl_tuple(M)");
 ...
 				</programlisting>
 			</example>
@@ -558,18 +558,18 @@ erl_reg_send("notifier","$tuple(M)");
 # example of send message to process
 # Pid ! {example,message}
 
-$atom(notifier) = "notifier";
-$list(args) = $atom(notifier);
+$erl_atom(notifier) = "notifier";
+$erl_list(args) = $erl_atom(notifier);
 
-erl_rpc("erlang", "whereis", "$list(args)", "$xbuff(pid)");
+erl_rpc("erlang", "whereis", "$erl_list(args)", "$erl_xbuff(pid)");
 
-$atom(example) = "example";
-$atom(message) = "message";
+$erl_atom(example) = "example";
+$erl_atom(message) = "message";
 
-$tuple(M) = $atom(message);
-$tuple(M) = $atom(example);
+$erl_tuple(M) = $erl_atom(message);
+$erl_tuple(M) = $erl_atom(example);
 
-erl_send("$xbuff(pid)","$tuple(M)");
+erl_send("$erl_xbuff(pid)","$erl_tuple(M)");
 ...
 				</programlisting>
 			</example>
@@ -581,20 +581,20 @@ erl_send("$xbuff(pid)","$tuple(M)");
 				Function sends reply message <emphasis>msg</emphasis> to the sender process.
 			</para>
 			<example>
-				<title>Example of use <emphasis>erl_reply</emphasis></title>
+				<title>Example of use erl_reply</title>
 				<programlisting format="linespecific">
 ...
 # event route acts as registered process
 event_route[erlang:greetings] {
 
-	xlogl("L_INFO","Received message: $xbuff(msg=>format)\n");
+	xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
 
-	$atom(hello) = "hello";
-	$tuple(reply) = "Erlang";
-	$tuple(reply) = $atom(hello);
+	$erl_atom(hello) = "hello";
+	$erl_tuple(reply) = "Erlang";
+	$erl_tuple(reply) = $erl_atom(hello);
 
 	# reply greeting
-	erl_reply("$tuple(reply)");
+	erl_reply("$erl_tuple(reply)");
 }
 ...
 
@@ -622,8 +622,8 @@ INFO: &lt;script&gt;: 951:Received message: {"hello", "Kamailio"}
 			from erlang node.
 		</para>
 		<para>
-			Event route receives message in <varname>$xbuff(msg)</varname> and sender
-			process in <varname>$xbuff(pid)</varname>. Reply message is optional
+			Event route receives message in <varname>$erl_xbuff(msg)</varname> and sender
+			process in <varname>$erl_xbuff(pid)</varname>. Reply message is optional
 			and can be sent with <emphasis>erl_reply</emphasis>.
 		</para>
 		<section>
@@ -640,7 +640,7 @@ INFO: &lt;script&gt;: 951:Received message: {"hello", "Kamailio"}
 # event route acts as registered process
 event_route[erlang:handler] {
 
-	xlogl("L_INFO","Received message: $xbuff(msg=>format)\n");
+	xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
 
 }
 ...
@@ -669,11 +669,11 @@ INFO: &lt;script&gt;: 951:Received message: {"hello", "Kamailio"}
 # default event route from erlang
 event_route[erlang:self] {
 
-	xlogl("L_INFO","Received message: $xbuff(msg=>format)\n");
+	xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
 
-	if(pv_isset("$xbuff(msg[1])") &amp;&amp; $xbuff(msg[1]=>type) == "pid") {
-		xlogl("L_INFO","Echo reply to: $xbuff(msg[1]=>format)\n");
-		erl_send("$xbuff(msg[1])","$xbuff(msg[0])");
+	if(pv_isset("$erl_xbuff(msg[1])") &amp;&amp; $erl_xbuff(msg[1]=>type) == "pid") {
+		xlogl("L_INFO","Echo reply to: $erl_xbuff(msg[1]=>format)\n");
+		erl_send("$erl_xbuff(msg[1])","$erl_xbuff(msg[0])");
 	}
 }
 ...

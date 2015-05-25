@@ -92,7 +92,7 @@ erl_api_t erl_api;
 
 static pv_export_t pvs[] = {
 		{
-				{ "tuple", (sizeof("tuple")-1) },
+				{ "erl_tuple", (sizeof("erl_tuple")-1) },
 				PVT_OTHER,
 				pv_tuple_get,
 				pv_tuple_set,
@@ -102,7 +102,7 @@ static pv_export_t pvs[] = {
 				0
 		},
 		{
-				{ "atom", (sizeof("atom")-1) },
+				{ "erl_atom", (sizeof("erl_atom")-1) },
 				PVT_OTHER,
 				pv_atom_get,
 				pv_atom_set,
@@ -112,7 +112,7 @@ static pv_export_t pvs[] = {
 				0
 		},
 		{
-				{ "list", (sizeof("list")-1) },
+				{ "erl_list", (sizeof("erl_list")-1) },
 				PVT_OTHER,
 				pv_list_get,
 				pv_list_set,
@@ -122,7 +122,7 @@ static pv_export_t pvs[] = {
 				0
 		},
 		{
-				{ "xbuff", (sizeof("xbuff")-1) },
+				{ "erl_xbuff", (sizeof("erl_xbuff")-1) },
 				PVT_OTHER,
 				pv_xbuff_get,
 				pv_xbuff_set,
@@ -132,7 +132,7 @@ static pv_export_t pvs[] = {
 				0
 		},
 		{
-				{ "pid", (sizeof("pid")-1) },
+				{ "erl_pid", (sizeof("erl_pid")-1) },
 				PVT_OTHER,
 				pv_pid_get,
 				pv_pid_set,
@@ -142,7 +142,7 @@ static pv_export_t pvs[] = {
 				0
 		},
 		{
-				{ "ref", (sizeof("ref")-1) },
+				{ "erl_ref", (sizeof("erl_ref")-1) },
 				PVT_OTHER,
 				pv_ref_get,
 				pv_ref_set,
