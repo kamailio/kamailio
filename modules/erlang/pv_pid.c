@@ -45,6 +45,7 @@ int pv_pid_parse_name(pv_spec_t *sp, str *in)
 	str idx;
 	str name;
 	str attr;
+	int l;
 
 	if (in->s == NULL || in->len <= 0)
 		return -1;
@@ -57,7 +58,8 @@ int pv_pid_parse_name(pv_spec_t *sp, str *in)
 		if (*p == '[' || *p== '=')
 			break;
 		if (!is_pv_xbuff_valid_char(*p)) {
-			LM_ERR("invalid character in var name %.*s at %d\n",STR_FMT(in),p-in->s);
+			l = p-in->s;
+			LM_ERR("invalid character in var name %.*s at %d\n",STR_FMT(in),l);
 			goto error;
 		}
 		p++;
@@ -95,7 +97,8 @@ int pv_pid_parse_name(pv_spec_t *sp, str *in)
 		p++;
 
 		if (!is_in_str(p,in) || *p!='>') {
-			LM_ERR("invalid operator (expected =>) for accessing attribute in token %.*s at position %d\n",STR_FMT(in),p-in->s);
+			l = p-in->s;
+			LM_ERR("invalid operator (expected =>) for accessing attribute in token %.*s at position %d\n",STR_FMT(in),l);
 			goto error;
 		}
 
@@ -103,7 +106,8 @@ int pv_pid_parse_name(pv_spec_t *sp, str *in)
 
 		while (is_in_str(p,in)) {
 			if (!is_pv_xbuff_valid_char(*p)) {
-				LM_ERR("invalid character in attribute name in token %.*s at %d\n",STR_FMT(in),p-in->s);
+				l = p-in->s;
+				LM_ERR("invalid character in attribute name in token %.*s at %d\n",STR_FMT(in),l);
 				goto error;
 			}
 			p++;
@@ -128,7 +132,8 @@ int pv_pid_parse_name(pv_spec_t *sp, str *in)
 	}
 
 	if (p < in->s + in->len) {
-		LM_ERR("unexpected token in %.*s at %d\n",STR_FMT(in),p-in->s);
+		l = p-in->s;
+		LM_ERR("unexpected token in %.*s at %d\n",STR_FMT(in),l);
 		goto error;
 	}
 
