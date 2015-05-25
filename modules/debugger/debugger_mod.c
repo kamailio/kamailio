@@ -47,6 +47,7 @@ static void mod_destroy(void);
 static int w_dbg_breakpoint(struct sip_msg* msg, char* point, char* str2);
 static int fixup_dbg_breakpoint(void** param, int param_no);
 static int dbg_mod_level_param(modparam_t type, void *val);
+static int dbg_mod_facility_param(modparam_t type, void *val);
 
 static int fixup_dbg_pv_dump(void** param, int param_no);
 static int w_dbg_dump(struct sip_msg* msg, char* mask, char* level);
@@ -91,6 +92,8 @@ static param_export_t params[]={
 	{"mod_hash_size",     INT_PARAM, &default_dbg_cfg.mod_hash_size},
 	{"mod_level_mode",    INT_PARAM, &default_dbg_cfg.mod_level_mode},
 	{"mod_level",         PARAM_STRING|USE_FUNC_PARAM, (void*)dbg_mod_level_param},
+	{"mod_facility_mode", INT_PARAM, &default_dbg_cfg.mod_facility_mode},
+	{"mod_facility",      PARAM_STRING|USE_FUNC_PARAM, (void*)dbg_mod_facility_param},
 	{"reset_msgid",       INT_PARAM, &_dbg_reset_msgid},
 	{"cfgpkgcheck",       INT_PARAM, &_dbg_cfgpkgcheck},
 	{0, 0, 0}
@@ -141,8 +144,9 @@ static int mod_init(void)
 		LM_ERR("Fail to declare the configuration\n");
 		return -1;
 	}
-	LM_DBG("cfg level_mode:%d hash_size:%d\n",
+	LM_DBG("cfg level_mode:%d facility_mode:%d hash_size:%d\n",
 		cfg_get(dbg, dbg_cfg, mod_level_mode),
+		cfg_get(dbg, dbg_cfg, mod_facility_mode),
 		cfg_get(dbg, dbg_cfg, mod_hash_size));
 
 	if(dbg_init_mod_levels(cfg_get(dbg, dbg_cfg, mod_hash_size))<0)
@@ -179,6 +183,7 @@ static int child_init(int rank)
 	LM_DBG("rank is (%d)\n", rank);
 	if (rank==PROC_INIT) {
 		dbg_enable_mod_levels();
+		dbg_enable_mod_facilities();
 		dbg_enable_log_assign();
 		return dbg_init_pid_list();
 	}
@@ -320,6 +325,46 @@ static int dbg_mod_level_param(modparam_t type, void *val)
 		return -1;
 	}
 	if(dbg_set_mod_debug_level(s.s, s.len, &l)<0)
+	{
+		LM_ERR("cannot store parameter: %s\n", (char*)val);
+		return -1;
+	}
+	return 0;
+
+}
+
+static int dbg_mod_facility_param(modparam_t type, void *val)
+{
+	char *p;
+	str s;
+	int fl;
+	if(val==NULL)
+		return -1;
+
+	p = strchr((char*)val, '=');
+	if(p==NULL) {
+		LM_ERR("invalid parameter value: %s\n", (char*)val);
+		return -1;
+	}
+	s.s = p + 1;
+	s.len = strlen(s.s);
+
+	if ((fl = str2facility(s.s)) == -1) {
+		LM_ERR("invalid parameter - facility value: %s\n", (char*)val);
+		return -1;
+	}
+
+	s.s = (char*)val;
+	s.len = p - s.s;
+	LM_DBG("cfg facility_mode:%d hash_size:%d\n",
+		cfg_get(dbg, dbg_cfg, mod_facility_mode),
+		cfg_get(dbg, dbg_cfg, mod_hash_size));
+	if(dbg_init_mod_levels(cfg_get(dbg, dbg_cfg, mod_hash_size))<0)
+	{
+		LM_ERR("failed to init per module log level\n");
+		return -1;
+	}
+	if(dbg_set_mod_debug_facility(s.s, s.len, &fl)<0)
 	{
 		LM_ERR("cannot store parameter: %s\n", (char*)val);
 		return -1;

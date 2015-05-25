@@ -130,10 +130,15 @@ struct log_level_info {
 
 /** @brief per process debug level handling */
 int get_debug_level(char *mname, int mnlen);
+int get_debug_facility(char *mname, int mnlen);
 void set_local_debug_level(int level);
+void set_local_debug_facility(int facility);
 void reset_local_debug_level(void);
+void reset_local_debug_facility(void);
 typedef int (*get_module_debug_level_f)(char *mname, int mnlen, int *mlevel);
+typedef int (*get_module_debug_facility_f)(char *mname, int mnlen, int *mfacility);
 void set_module_debug_level_cb(get_module_debug_level_f f);
+void set_module_debug_facility_cb(get_module_debug_facility_f f);
 
 #define is_printable(level) (get_debug_level(LOG_MNAME, LOG_MNAME_LEN)>=(level))
 extern struct log_level_info log_level_info[];
@@ -141,7 +146,7 @@ extern char *log_name;
 
 #ifndef NO_SIG_DEBUG
 /** @brief protection against "simultaneous" printing from signal handlers */
-extern volatile int dprint_crit; 
+extern volatile int dprint_crit;
 #endif
 
 int str2facility(char *s);
@@ -210,7 +215,7 @@ void log_prefix_init(void);
 							syslog(LOG2SYSLOG_LEVEL(level) | \
 								   (((facility) != DEFAULT_FACILITY) ? \
 									(facility) : \
-									cfg_get(core, core_cfg, log_facility)), \
+								    get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
 									"%s: %s" fmt, \
 									(lname)?(lname):LOG_LEVEL2NAME(level),\
 									(prefix), __VA_ARGS__); \
@@ -227,13 +232,13 @@ void log_prefix_init(void);
 								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
 									   (((facility) != DEFAULT_FACILITY) ? \
 										(facility) : \
-										cfg_get(core, core_cfg, log_facility)),\
+								        get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
 									   "%s" fmt, (prefix), __VA_ARGS__); \
 							else \
 								syslog(LOG2SYSLOG_LEVEL(L_DBG) | \
 									   (((facility) != DEFAULT_FACILITY) ? \
 										(facility) : \
-										cfg_get(core, core_cfg, log_facility)),\
+								        get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
 									   "%s" fmt, (prefix), __VA_ARGS__); \
 						} \
 					} \
@@ -298,7 +303,7 @@ void log_prefix_init(void);
 							syslog(LOG2SYSLOG_LEVEL(__llevel) |\
 							   (((facility) != DEFAULT_FACILITY) ? \
 								(facility) : \
-								cfg_get(core, core_cfg, log_facility)), \
+								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
 								"%.*s%s: %s" fmt,\
 								log_prefix_val->len, log_prefix_val->s, \
 								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
@@ -307,7 +312,7 @@ void log_prefix_init(void);
 							syslog(LOG2SYSLOG_LEVEL(__llevel) |\
 							   (((facility) != DEFAULT_FACILITY) ? \
 								(facility) : \
-								cfg_get(core, core_cfg, log_facility)), \
+								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
 								"%s: %s" fmt,\
 								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
 								(prefix) , ## args); \
