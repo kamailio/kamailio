@@ -649,6 +649,23 @@ static void cdr_on_expired( struct dlg_cell* dialog,
     }
 
     LM_DBG("dialog '%p' expired!\n", dialog);
+    /* compute duration for timed out acknowledged dialog */
+	if ( params && params->dlg_data ) {
+		if ( (void*)CONFIRMED_DIALOG_STATE == params->dlg_data) {
+			if( set_end_time( dialog) != 0)
+			{
+				LM_ERR( "failed to set end time!\n");
+				return;
+			}	
+			
+			if( set_duration( dialog) != 0)
+			{
+				LM_ERR( "failed to set duration!\n");
+				return;
+			}
+			
+		}
+	}
 
     if( cdr_expired_dlg_enable  && (write_cdr( dialog, 0) != 0))
     {
