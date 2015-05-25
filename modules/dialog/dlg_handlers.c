@@ -1371,6 +1371,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	dlg_cell_t *dlg;
 	int new_state, old_state, unref;
 	sip_msg_t *fmsg;
+	void* timeout_cb = 0;
 
 	/* get the dialog tl payload */
 	dlg = ((struct dlg_cell*)((char *)(tl) -
@@ -1413,6 +1414,11 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	}
 
 	next_state_dlg( dlg, DLG_EVENT_REQBYE, &old_state, &new_state, &unref);
+    /* used for computing duration for timed out acknowledged dialog */
+	if (DLG_STATE_CONFIRMED == old_state) {
+		timeout_cb = (void *)CONFIRMED_DIALOG_STATE;
+	}	
+
 	dlg_run_event_route(dlg, NULL, old_state, new_state);
 
 	if (new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
@@ -1422,7 +1428,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 
 		/* dialog timeout */
-		run_dlg_callbacks( DLGCB_EXPIRED, dlg, NULL, NULL, DLG_DIR_NONE, 0);
+		run_dlg_callbacks( DLGCB_EXPIRED, dlg, NULL, NULL, DLG_DIR_NONE, timeout_cb);
 
 		dlg_unref(dlg, unref+1);
 

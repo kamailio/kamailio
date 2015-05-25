@@ -58,6 +58,8 @@ typedef int (*set_dlg_variable_f)( struct dlg_cell* dlg,
 typedef str* (*get_dlg_variable_f)( struct dlg_cell* dlg,
                                     str* key);
 
+#define CONFIRMED_DIALOG_STATE 1
+
 #define DLGCB_LOADED          (1<<0)
 #define DLGCB_CREATED         (1<<1)
 #define DLGCB_FAILED          (1<<2)
