@@ -70,7 +70,7 @@ typedef struct _sr_xavp {
 } sr_xavp_t;
 
 int xavp_init_head(void);
-void avpx_free(sr_xavp_t *xa);
+void xavp_free(sr_xavp_t *xa);
 
 int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list);
 int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list);
