@@ -924,14 +924,16 @@ error:
 
 void lock_ims_subscription(ims_subscription * s) {
 #ifdef EXTRA_DEBUG
-    LM_DBG("LOCKING SUBSCRIPTION [%.*s]: %p (Refcount: %d)\n", s->private_identity.len, s->private_identity.s, s->slock, s->ref_count);
+    LM_DBG("LOCKING SUBSCRIPTION %p (Refcount: %d)\n", s->slock, s->ref_count);
+    LM_DBG("(SUBSCRIPTION PRIVATE IDENTITY [%.*s])\n", s->private_identity.len, s->private_identity.s);
 #endif
     lock_get(s->slock);
 }
 
 void unlock_ims_subscription(ims_subscription * s) {
 #ifdef EXTRA_DEBUG
-    LM_DBG("UN-LOCKING SUBSCRIPTION [%.*s]: %p (Refcount: %d)\n", s->private_identity.len, s->private_identity.s, s->slock, s->ref_count);
+    LM_DBG("UN-LOCKING SUBSCRIPTION %p (Refcount: %d)\n", s->slock, s->ref_count);
+    LM_DBG("(SUBSCRIPTION PRIVATE IDENTITY [%.*s])\n", s->private_identity.len, s->private_identity.s);
 #endif
     lock_release(s->slock);
 }
