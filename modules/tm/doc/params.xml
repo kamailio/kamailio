@@ -1407,4 +1407,25 @@ modparam("tm", "dns_reuse_rcv_socket", 1)
 		</example>
 	</section>
 
+	<section id="tm.p.xavp_contact">
+		<title><varname>xavp_contact</varname> (string)</title>
+		<para>
+		The name of XAVP storing the attributes per contact. This must be the same as
+		the usrloc parameter <varname>xavp_contacts</varname>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavp_contact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm|usrloc", "xavp_contact", "ulattrs")
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>

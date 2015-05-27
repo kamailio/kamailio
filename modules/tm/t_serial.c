@@ -32,6 +32,7 @@
 #include "../../dset.h"
 #include "../../parser/msg_parser.h"
 #include "../../ut.h"
+#include "../../xavp.h"
 #include "config.h"
 #include "t_funcs.h"
 #include "t_reply.h"
@@ -39,6 +40,8 @@
 
 /* usr_avp flag for sequential forking */
 #define Q_FLAG      (1<<2)
+
+extern str ulattrs_xavp_name;
 
 /* Struture where information regarding contacts is stored */
 struct contact {
@@ -53,6 +56,7 @@ struct contact {
 	unsigned int flags;
 	unsigned short q_flag;
 	struct contact *next;
+	sr_xavp_t *ulattrs;
 };
 
 struct instance_list {
@@ -97,7 +101,7 @@ static str ua_name = {"ua", 2};
 
 void add_contacts_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 		unsigned int flags, unsigned int q_flag, str *instance,
-		str *ruid, str *location_ua)
+		str *ruid, str *location_ua, sr_xavp_t *ulattrs_xavp)
 {
 	sr_xavp_t *record;
 	sr_xval_t val;
@@ -150,6 +154,8 @@ void add_contacts_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 		val.v.s = *location_ua;
 		xavp_add_value(&ua_name, &val, &record);
 	}
+
+	xavp_add(xavp_clone_level_nodata(ulattrs_xavp), &record);
 
 	val.type = SR_XTYPE_XAVP;
 	val.v.xavp = record;
@@ -215,6 +221,10 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 		contacts->instance = msg->instance;
 		contacts->ruid = msg->ruid;
 		contacts->location_ua = msg->location_ua;
+		if (ulattrs_xavp_name.s != NULL)
+		{
+			contacts->ulattrs = xavp_get_by_index(&ulattrs_xavp_name, 0, NULL);
+		}
 		first_idx = 0;
 	} else {
 		/* Insert first branch to first contact */
@@ -234,6 +244,10 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 		contacts->ruid.len = branch->ruid_len;
 		contacts->location_ua.s = branch->location_ua;
 		contacts->location_ua.len = branch->location_ua_len;
+		if (ulattrs_xavp_name.s != NULL)
+		{
+			contacts->ulattrs = xavp_get_by_index(&ulattrs_xavp_name, 1, NULL);
+		}
 		first_idx = 1;
 	}
 
@@ -264,6 +278,10 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 		next->ruid.len = branch->ruid_len;
 		next->location_ua.s = branch->location_ua;
 		next->location_ua.len = branch->location_ua_len;
+		if (ulattrs_xavp_name.s != NULL)
+		{
+			next->ulattrs = xavp_get_by_index(&ulattrs_xavp_name, idx + 1, NULL);
+		}
 		next->next = (struct contact *)0;
 
 		prev = (struct contact *)0;
@@ -320,13 +338,17 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 
 		add_contacts_avp(&(curr->uri), &(curr->dst_uri), &(curr->path),
 				&sock_str, curr->flags, curr->q_flag,
-				&(curr->instance), &(curr->ruid), &(curr->location_ua));
+				&(curr->instance), &(curr->ruid), &(curr->location_ua),
+				curr->ulattrs);
 
 		curr = curr->next;
 	}
 
 	/* Clear all branches */
 	clear_branches();
+	if (ulattrs_xavp_name.s != NULL){
+		xavp_rm_by_name(&ulattrs_xavp_name, 1, NULL);
+	}
 
 	/* Free contact list */
 	free_contact_list(contacts);
@@ -336,7 +358,7 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 
 void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 		unsigned int flags, str *instance, str *ruid,
-		str *location_ua)
+		str *location_ua, sr_xavp_t *ulattrs_xavp)
 {
 	sr_xavp_t *record;
 	sr_xval_t val;
@@ -381,6 +403,8 @@ void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 		val.v.s = *location_ua;
 		xavp_add_value(&ua_name, &val, &record);
 	}
+
+	xavp_add(ulattrs_xavp, &record);
 
 	val.type = SR_XTYPE_INT;
 	val.v.i = flags;
@@ -516,6 +540,12 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 		location_ua.len = 0;
 	}
 
+	if (ulattrs_xavp_name.s != NULL)
+	{
+		vavp = xavp_extract(&ulattrs_xavp_name, &xavp->val.v.xavp);
+		xavp_insert(vavp, 0, NULL);
+	}
+
 	/* Rewrite Request-URI */
 	rewrite_uri(msg, &uri);
 
@@ -627,8 +657,9 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 				ilp = ilp->next;
 			}
 			if (ilp) {
+				vavp = (ulattrs_xavp_name.s != NULL)?xavp_extract(&ulattrs_xavp_name, &xavp->val.v.xavp):NULL;
 				add_contact_flows_avp(&uri, &dst_uri, &path, &sock_str,
-						flags, &instance, &ruid, &location_ua);
+						flags, &instance, &ruid, &location_ua, vavp);
 				goto check_q_flag;
 			}
 			if (!q_flag) {
@@ -670,6 +701,12 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 			free_instance_list(il);
 			xavp_rm(xavp_list, NULL);
 			return -1;
+		}
+
+		if (ulattrs_xavp_name.s != NULL)
+		{
+			vavp = xavp_extract(&ulattrs_xavp_name, &xavp->val.v.xavp);
+			xavp_insert(vavp, nr_branches, NULL);
 		}
 
 check_q_flag:
@@ -806,6 +843,12 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 			LM_ERR("appending branch failed\n");
 			xavp_rm(xavp_list, NULL);
 			return -1;
+		}
+
+		if (ulattrs_xavp_name.s != NULL)
+		{
+			vavp = xavp_extract(&ulattrs_xavp_name, &xavp->val.v.xavp);
+			xavp_insert(vavp, nr_branches, NULL);
 		}
 
 		xavp_rm(xavp, NULL);

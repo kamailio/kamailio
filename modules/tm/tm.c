@@ -268,6 +268,7 @@ static char *fr_inv_timer_param = 0 /*FR_INV_TIMER_AVP*/;
 
 str contacts_avp = {0, 0};
 str contact_flows_avp = {0, 0};
+str ulattrs_xavp_name = {NULL, 0};
 
 int tm_remap_503_500 = 1;
 
@@ -512,6 +513,7 @@ static param_export_t params[]={
 	{"local_cancel_reason", PARAM_INT, &default_tm_cfg.local_cancel_reason   },
 	{"e2e_cancel_reason",   PARAM_INT, &default_tm_cfg.e2e_cancel_reason     },
 #endif /* CANCEL_REASON_SUPPORT */
+	{"xavp_contact",        PARAM_STR, &ulattrs_xavp_name                    },
 	{0,0,0}
 };
 
