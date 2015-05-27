@@ -807,8 +807,10 @@ modparam("usrloc", "timer_procs", 4)
 
 3.34. xavp_contact (string)
 
-   The name of XAVP storring the attributes per contact. They are saved in
-   location record and restored at lookup.
+   The name of XAVP storing the attributes per contact. They are saved in
+   location record and restored at lookup. The tm module parameter
+   xavp_contact must also be set to the same value to use the
+   t_load_contacts and t_next_contacts functions.
 
    Default value is "NULL".
 
