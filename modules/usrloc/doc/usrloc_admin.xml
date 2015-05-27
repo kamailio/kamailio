@@ -895,8 +895,10 @@ modparam("usrloc", "timer_procs", 4)
 	<section id="usrloc.p.xavp_contact">
 		<title><varname>xavp_contact</varname> (string)</title>
 		<para>
-		The name of XAVP storring the attributes per contact. They are saved
-		in location record and restored at lookup.
+		The name of XAVP storing the attributes per contact. They are saved
+		in location record and restored at lookup. The tm module parameter
+		<varname>xavp_contact</varname> must also be set to the same value to use the
+		<varname>t_load_contacts</varname> and <varname>t_next_contacts</varname> functions.
 		</para>
 		<para>
 		<emphasis>
