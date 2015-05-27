@@ -81,7 +81,11 @@ send_subscribe_t pua_send_subscribe;
 
 static cmd_export_t cmds[]=
 {
+#ifdef REG_BY_PUBLISH
+	{"pua_set_publish", (cmd_function)pua_set_publish, 2, 0, 0, REQUEST_ROUTE},
+#else
 	{"pua_set_publish", (cmd_function)pua_set_publish, 0, 0, 0, REQUEST_ROUTE},
+#endif
 	{"bind_pua_usrloc", (cmd_function)bind_pua_usrloc, 1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0} 
 };
