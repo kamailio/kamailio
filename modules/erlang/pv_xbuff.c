@@ -977,7 +977,9 @@ int xavp_decode(ei_x_buff *xbuff, int *index, sr_xavp_t **xavp,int level)
 
 	switch (type) {
 	case ERL_ATOM_EXT:
-
+#ifdef ERL_SMALL_ATOM_EXT
+	case ERL_SMALL_ATOM_EXT:
+#endif
 		name.len = snprintf(_s,sizeof(_s),"a%d",counter++);
 		pbuf = (char*)pkg_realloc(pbuf,size+1);
 

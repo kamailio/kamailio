@@ -460,9 +460,13 @@ int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *
 	 */
 
 	ei_get_type(request->buff,&request->index,&type,&size);
-
+#ifdef ERL_SMALL_ATOM_EXT
 	if (type == ERL_ATOM_EXT || type == ERL_SMALL_ATOM_EXT)
 	{
+#else
+	if (type == ERL_ATOM_EXT)
+	{
+#endif
 		if (ei_decode_atom(request->buff,&request->index,module))
 		{
 			encode_error_msg(response, ref, "error", "Failed to decode module name");
@@ -477,8 +481,13 @@ int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *
 
 	ei_get_type(request->buff,&request->index,&type,&size);
 
+#ifdef ERL_SMALL_ATOM_EXT
 	if (type == ERL_ATOM_EXT || type == ERL_SMALL_ATOM_EXT)
 	{
+#else
+	if (type == ERL_ATOM_EXT)
+	{
+#endif
 		if (ei_decode_atom(request->buff,&request->index,method))
 		{
 			encode_error_msg(response, ref, "error", "Failed to decode method name");
