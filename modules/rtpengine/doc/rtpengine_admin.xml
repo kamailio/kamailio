@@ -584,6 +584,12 @@ rtpengine_offer();
 				value will revert to the default TOS (normally 184). A value of -1 may be used
 				to leave the currently used TOS unchanged.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>delete-delay=...</emphasis> - override the default delay (in seconds)
+				before a call is actually deleted from memory. Can be set to zero to effectuate
+				immediate deletion. This option only makes sense for <emphasis>delete</emphasis>
+				operations.
+				</para></listitem>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>

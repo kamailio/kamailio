@@ -1260,6 +1260,8 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				}
 				else if (str_eq(&key, "TOS") && val.s)
 					bencode_dictionary_add_integer(ng_flags->dict, "TOS", atoi(val.s));
+				else if (str_eq(&key, "delete-delay") && val.s)
+					bencode_dictionary_add_integer(ng_flags->dict, "delete delay", atoi(val.s));
 				else
 					goto generic;
 				goto next;
