@@ -65,6 +65,7 @@
 #include "../presence/hash.h"
 #include "../../modules/dialog_ng/dlg_load.h"
 #include "../../modules/dialog_ng/dlg_hash.h"
+#include "ul_scscf_stats.h"
 
 MODULE_VERSION
 
@@ -101,6 +102,7 @@ int subs_hash_size = 9;					/*!<number of ims subscription slots*/
 int contacts_hash_size = 9;
 
 struct contact_list* contact_list;
+struct ims_subscription_list* ims_subscription_list;
 
 int db_mode = 0;						/*!<database mode*/
 db1_con_t* ul_dbh = 0;
@@ -159,17 +161,13 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-
 stat_export_t mod_stats[] = {
-	{"registered_users" ,  STAT_IS_FUNC, (stat_var**)get_number_of_users  },
 	{0,0,0}
 };
-
 
 static mi_export_t mi_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
-
 
 struct module_exports exports = {
 	"ims_usrloc_scscf",
@@ -199,14 +197,6 @@ static int mod_init(void) {
 		fprintf(debug_file, "starting\n");
 		fflush(debug_file);
 	}
-
-#ifdef STATISTICS
-	/* register statistics */
-	if (register_module_stats( exports.name, mod_stats)!=0 ) {
-		LM_ERR("failed to register core statistics\n");
-		return -1;
-	}
-#endif
 
 	if (rpc_register_array(ul_rpc) != 0) {
 		LM_ERR("failed to register RPC commands\n");
@@ -247,11 +237,6 @@ static int mod_init(void) {
 		return -1;
 	}
 
-	if (subs_init_locks() != 0) {
-		LM_ERR("IMS Subscription locks array initialization failed\n");
-		return -1;
-	}
-	
 	/* create hash table for storing registered contacts */
 	if (init_contacts_locks() !=0) {
 	    LM_ERR("failed to initialise locks array for contacts\n");
@@ -272,7 +257,26 @@ static int mod_init(void) {
 	} 
 	contact_list->size = contacts_hash_size;
 	
-	/* presence binding for subscribe processing*/
+	if (subs_init_locks() != 0) {
+		LM_ERR("IMS Subscription locks array initialization failed\n");
+		return -1;
+	}
+        ims_subscription_list = (struct ims_subscription_list*) shm_malloc(sizeof(struct ims_subscription_list));
+        if (!ims_subscription_list) {
+            LM_ERR("no more shm memory to create ims subscription list\n");
+            return -1;
+        }
+        ims_subscription_list->slot = (struct hslot_sp*) shm_malloc(sizeof(struct hslot_sp) * subs_hash_size);
+        if (!ims_subscription_list->slot) {
+	    LM_ERR("no more memory to create subscription list structure\n");
+	    return -1;
+	}
+        for (i=0; i<subs_hash_size;i++) {
+	    subs_init_slot(&ims_subscription_list->slot[i], i);
+	} 
+	ims_subscription_list->size = subs_hash_size;
+        
+        /* presence binding for subscribe processing*/
 	presence_api_t pres;
 	bind_presence_t bind_presence;
 
@@ -342,6 +346,12 @@ static int mod_init(void) {
 	if (load_dlg_api(&dlgb) != 0) { /* load the dialog API */
 		LM_ERR("can't load Dialog API\n");
 		return -1;
+	}
+        
+        /* Register counters */
+        if (ul_scscf_init_counters() != 0) {
+	    LM_ERR("Failed to register counters\n");
+	    return -1;
 	}
 	
 	/* Register cache timer */
@@ -436,14 +446,21 @@ static void destroy(void) {
  * Timer handler
  */
 static void timer(unsigned int ticks, void* param) {
-	if (usrloc_debug) {
-		print_all_udomains(debug_file);
-		fflush(debug_file);
-	}
+    int count=0, i;
+    struct ims_subscription_s* ims_subscription;
+    
+    if (usrloc_debug) {
+        print_all_udomains(debug_file);
+        fflush(debug_file);
+    }
+    
+    if (sync_subscriptions() !=0 ) {
+        LM_ERR("Failed to sync subscriptions\n");
+    }
 
-	LM_DBG("Syncing cache\n");
-	if (synchronize_all_udomains() != 0) {
-		LM_ERR("synchronizing cache failed\n");
-	}
+    LM_DBG("Syncing cache\n");
+    if (synchronize_all_udomains() != 0) {
+        LM_ERR("synchronizing cache failed\n");
+    }
 }
 

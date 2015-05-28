@@ -103,4 +103,7 @@ void subs__lock_idx(int idx);
 void subs__release_idx(int idx);
 #endif
 
+int sync_subscriptions();
+void print_subscription(ims_subscription* s);
+
 #endif /* HSLOTSP_H */

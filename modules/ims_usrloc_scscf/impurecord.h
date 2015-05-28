@@ -175,5 +175,8 @@ int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
 int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db);
 int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db);
 
+void ref_subscription_unsafe(ims_subscription* s);
+void unref_subscription_unsafe(ims_subscription* s);
+
 #endif
 

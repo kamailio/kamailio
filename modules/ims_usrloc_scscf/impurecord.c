@@ -62,6 +62,8 @@
 #include "../../modules/dialog_ng/dlg_hash.h"
 #include "contact_hslot.h"
 #include "dlist.h"
+#include "ul_scscf_stats.h"
+#include "hslot_sp.h"
 
 /*! contact matching mode */
 int matching_mode = CONTACT_ONLY;
@@ -72,10 +74,13 @@ extern int unreg_validity;
 extern int maxcontact_behaviour;
 extern int maxcontact;
 extern int db_mode;
+extern struct ul_scscf_counters_h ul_scscf_cnts_h;
 
 extern int sub_dialog_hash_size;
+extern int subs_hash_size;
 extern shtable_t sub_dialog_table;
 extern struct contact_list* contact_list;
+extern struct ims_subscription_list* ims_subscription_list;
 
 extern struct dlg_binds dlgb;
 
@@ -127,11 +132,9 @@ int new_impurecord(str* _dom, str* public_identity, int reg_state, int barring, 
     if (ecf1 && ecf1->len > 0) STR_SHM_DUP((*_r)->ecf1, *ecf1, "ECF1");
     if (ecf2 && ecf2->len > 0) STR_SHM_DUP((*_r)->ecf2, *ecf2, "ECF2");
     /*assign ims subscription profile*/
-    if (*s) {
-        (*_r)->s = *s;
-	lock_ims_subscription((*_r)->s);
-        (*_r)->s->ref_count++;
-	unlock_ims_subscription((*_r)->s);
+    if (s && *s) {
+         ref_subscription_unsafe(*s);
+	(*_r)->s = *s;
     }
 
     return 0;
@@ -153,6 +156,7 @@ void free_impurecord(impurecord_t* _r) {
     struct ul_callback *cbp, *cbp_tmp;
     struct _reg_subscriber* subscriber, *s_tmp;
 
+    LM_DBG("free_impurecord\n");
     //free IMS specific extensions
     if (_r->ccf1.s)
         shm_free(_r->ccf1.s);
@@ -163,16 +167,7 @@ void free_impurecord(impurecord_t* _r) {
     if (_r->ecf2.s)
         shm_free(_r->ecf2.s);
     if (_r->s) {
-        LM_DBG("ref count on this IMS data is %d\n", _r->s->ref_count);
-	lock_ims_subscription(_r->s);
-        if (_r->s->ref_count == 1) {
-            LM_DBG("freeing IMS subscription data\n");
-            free_ims_subscription_data(_r->s);
-        } else {
-            LM_DBG("decrementing IMS subscription data ref count\n");
-            _r->s->ref_count--;
-            unlock_ims_subscription(_r->s);
-        }
+        unref_subscription_unsafe(_r->s);
     }
 
     /*remove REG subscriptions to this IMPU*/
@@ -264,8 +259,8 @@ ucontact_t* mem_insert_ucontact(impurecord_t* _r, str* _c, ucontact_info_t* _ci)
         LM_ERR("failed to create new contact\n");
         return 0;
     }
-    if_update_stat(_r->slot, _r->slot->d->contacts, 1);
-    
+    counter_inc(ul_scscf_cnts_h.active_contacts);
+
     LM_DBG("Created new contact in memory with AOR: [%.*s] and hash [%d]\n", _c->len, _c->s, c->contact_hash);
     
     sl = (c->contact_hash);// & (contact_list->size - 1);
@@ -789,24 +784,58 @@ void free_ims_subscription_data(ims_subscription *s) {
  */
 int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r) {
     int res;
+    int subscription_hash, sl;
+    struct ims_subscription_s* subscription, *subs_ptr;
 
+    /* before we get started let's check if we already have subscription data for this impi */
+    if (s && *s) {
+        subs_ptr = (*s);
+        subscription_hash = core_hash(&(*s)->private_identity, 0, 0);
+        sl = subscription_hash & (subs_hash_size - 1);
+        lock_get(ims_subscription_list->slot[sl].lock);
+        subscription = ims_subscription_list->slot[sl].first;
+        if (!subscription) {
+            LM_DBG("No subscription yet for [%.*s]... adding\n", (*s)->private_identity.len, (*s)->private_identity.s);
+            //(*s)->ref_count++;  //bump subscription - we're currently referencing it
+            subs_slot_add(&ims_subscription_list->slot[sl], subs_ptr);
+        } else {
+            /* check through entries if any match */
+            while (subscription) {
+                if ((subs_ptr->private_identity.len == subscription->private_identity.len) && (memcmp(subs_ptr->private_identity.s, subscription->private_identity.s, subscription->private_identity.len) == 0)) {
+                    LM_DBG("found an existing subscription for IMPI [%.*s]\n", subs_ptr->private_identity.len, subs_ptr->private_identity.s);
+                    //reuse the existing one... TODO - maybe update it with the latest profile... (if it has changed)
+                    subs_ptr = subscription;
+                    //subscription->ref_count++;    //we don't bump ref now becuase this impu could already be referencing this subscription
+                    break;
+                }
+                subscription = subscription->next;
+            }
+            if (subscription == NULL) {
+                LM_DBG("could not find existing subscription for IMPI [%.*s]... adding\n", (*s)->private_identity.len, (*s)->private_identity.s);
+                //subs_ptr->ref_count++;  //bump ref coz we're currently reffing it
+                subs_slot_add(&ims_subscription_list->slot[sl], subs_ptr);
+            }
+        }
+        lock_release(ims_subscription_list->slot[sl].lock);
+    }
+
+
+    //    r = _d->table[sl].first;
     res = get_impurecord(_d, public_identity, _r);
     if (res != 0) {
         if (reg_state != IMPU_NOT_REGISTERED && s) {
             LM_DBG("No existing impu record for <%.*s>.... creating new one\n", public_identity->len, public_identity->s);
-            res = insert_impurecord(_d, public_identity, reg_state, barring, s, ccf1, ccf2, ecf1, ecf2, _r);
-
-            //for the first time we create an IMPU we must set the primary record (we don't worry about it on updates - ignored)
-            (*_r)->is_primary = is_primary; //TODO = this should prob move to insert_impurecord fn
-
-            if (reg_state == IMPU_UNREGISTERED) {
-                //update unreg expiry so the unreg record is not stored 'forever'
-                (*_r)->expires = time(NULL) + unreg_validity;
-            }
+            res = insert_impurecord(_d, public_identity, reg_state, barring, &subs_ptr, ccf1, ccf2, ecf1, ecf2, _r);
             if (res != 0) {
                 LM_ERR("Unable to insert new IMPU for <%.*s>\n", public_identity->len, public_identity->s);
                 return -1;
             } else {
+                //for the first time we create an IMPU we must set the primary record (we don't worry about it on updates - ignored)
+                (*_r)->is_primary = is_primary; //TODO = this should prob move to insert_impurecord fn
+                if (reg_state == IMPU_UNREGISTERED) {
+                    //update unreg expiry so the unreg record is not stored 'forever'
+                    (*_r)->expires = time(NULL) + unreg_validity;
+                }
                 run_ul_callbacks(NULL, UL_IMPU_INSERT, *_r, NULL);
                 return 0;
             }
@@ -850,23 +879,17 @@ int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
     }
 
     if (s) {
-        LM_DBG("we have a new ims_subscription\n");
-        if ((*_r)->s) {
-	    lock_ims_subscription((*_r)->s);
-            if ((*_r)->s->ref_count == 1) {
-                LM_DBG("freeing user data as no longer referenced\n");
-                free_ims_subscription_data((*_r)->s); //no need to release lock after this. its gone ;)
-                (*_r)->s = 0;
-            } else {
-                (*_r)->s->ref_count--;
-                LM_DBG("new ref count for ims sub is %d\n", (*_r)->s->ref_count);
-	        unlock_ims_subscription((*_r)->s);
+        LM_DBG("IMS subscription passed into update_impurecord\n");
+        if ((*_r)->s != subs_ptr) {
+            LM_DBG("new subscription for IMPU... swapping - TODO need to unref the old one...and then ref the new one\n");
+            unref_subscription_unsafe((*_r)->s);
+            ref_subscription_unsafe(subs_ptr);
+            (*_r)->s = subs_ptr;
+        } else {
+            if (s && *s) {
+                LM_DBG("new subscription is the same as the old one....not doing anything");
             }
         }
-        (*_r)->s = *s;
-	lock_ims_subscription((*_r)->s);
-        (*_r)->s->ref_count++;
-	unlock_ims_subscription((*_r)->s);
     }
 
     run_ul_callbacks((*_r)->cbs, UL_IMPU_UPDATE, *_r, NULL);
@@ -980,4 +1003,30 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
     }
     
     return 0;
+}
+
+void ref_subscription_unsafe(ims_subscription* s) {
+    LM_DBG("Reffing subscription [%.*s] - was [%d]\n", s->private_identity.len, s->private_identity.s, s->ref_count);
+    lock_subscription(s);
+    s->ref_count++;
+    unlock_subscription(s);
+}
+
+void unref_subscription_unsafe(ims_subscription* s) {
+    int sl;
+    unsigned int subscription_hash;
+    LM_DBG("un-Reffing subscription [%.*s] - was [%d]\n", s->private_identity.len, s->private_identity.s, s->ref_count);
+
+    subscription_hash = core_hash(&s->private_identity, 0, 0);
+    sl = subscription_hash & (subs_hash_size - 1);
+    lock_get(ims_subscription_list->slot[sl].lock);
+    lock_subscription(s);
+    s->ref_count--;
+    if (s->ref_count == 0) {
+        subs_slot_rem(&ims_subscription_list->slot[sl], s);
+        free_ims_subscription_data(s);
+    } else {
+        unlock_subscription(s);
+    }
+    lock_release(ims_subscription_list->slot[sl].lock);
 }

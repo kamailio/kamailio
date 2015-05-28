@@ -385,28 +385,6 @@ void print_all_udomains(FILE* _f)
 
 
 /*!
- * \brief Loops through all domains summing up the number of users
- * \return the number of users, could be zero
- */
-unsigned long get_number_of_users(void)
-{
-	long numberOfUsers = 0;
-
-	dlist_t* current_dlist;
-	
-	current_dlist = root;
-
-	while (current_dlist)
-	{
-		numberOfUsers += get_stat_val(current_dlist->d->users); 
-		current_dlist  = current_dlist->next;
-	}
-
-	return numberOfUsers;
-}
-
-
-/*!
  * \brief Run timer handler of all domains
  * \return 0 if all timer return 0, != 0 otherwise
  */
