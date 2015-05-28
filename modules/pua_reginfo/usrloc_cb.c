@@ -219,9 +219,9 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	str content_type;
 	udomain_t * domain;
 	urecord_t * record;
+	ucontact_t* _c = NULL;
 	int res;
 	str uri = {NULL, 0};
-	str user = {NULL, 0};
 
 	char* at = NULL;
 	char id_buf[512];
@@ -246,9 +246,6 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 		LM_ERR("Unknown Type %i\n", type);
 		return;
 	}
-	/* make a local copy of the AOR */
-	user.len = c->aor->len;
-	user.s = c->aor->s;
 
 	/* Get the UDomain for this account */
 	res = ul.get_udomain(c->domain->s, &domain);
@@ -257,10 +254,11 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 		return;
 	}
 
-	/* Get the URecord for this AOR */
-	res = ul.get_urecord(domain, &user, &record);
-	if (res > 0) {
-		LM_ERR("' %.*s (%.*s)' Not found in usrloc\n", c->aor->len, c->aor->s, c->domain->len, c->domain->s);
+	/* Get the URecord for this ruid */
+	res = ul.get_urecord_by_ruid(domain, ul.get_aorhash(c->aor), &(c->ruid),
+		&record, &_c);
+	if (res < 0) {
+		LM_ERR("'%.*s (%.*s)' Not found in usrloc\n", c->aor->len, c->aor->s, c->domain->len, c->domain->s);
 		return;
 	}
 
