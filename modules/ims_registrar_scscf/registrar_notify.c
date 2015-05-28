@@ -232,8 +232,8 @@ int can_publish_reg(struct sip_msg *msg, char *_t, char *str2) {
 		    LM_DBG("Identity found in SP[%d][%d]\n",
 			    i, j);
 		    ret = CSCF_RETURN_TRUE;
-		    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
 		    ul.unlock_subscription(r->s);
+		    ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
 		    goto done;
 		}
 	    }
@@ -390,8 +390,8 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
                     LM_DBG("Identity found in SP[%d][%d]\n",
                             i, j);
                     ret = CSCF_RETURN_TRUE;
+                    ul.unlock_subscription(r->s);
                     ul.unlock_udomain((udomain_t*) _t, &presentity_uri);
-	            ul.unlock_subscription(r->s);
                     goto done;
                 }
             }
