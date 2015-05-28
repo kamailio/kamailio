@@ -476,9 +476,15 @@ rtpengine_offer();
 				</para></listitem>
 				<listitem><para>
 				<emphasis>trust-address</emphasis> - flags that IP address in &sdp; should
-				be trusted. Without this flag, the &rtp; proxy ignores address in
+				be trusted. Starting with rtpengine 3.8, this is the default behaviour.
+				In older versions, without this flag the &rtp; proxy ignores the address in
 				the &sdp; and uses source address of the &sip; message as media
 				address which is passed to the &rtp; proxy.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>SIP-source-address</emphasis> - the opposite of
+				<emphasis>trust-address</emphasis>. Restores the old default behaviour
+				of ignoring endpoint addresses in the &sdp; body.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>replace-origin</emphasis> - flags that IP from the origin
@@ -589,6 +595,39 @@ rtpengine_offer();
 				before a call is actually deleted from memory. Can be set to zero to effectuate
 				immediate deletion. This option only makes sense for <emphasis>delete</emphasis>
 				operations.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>strict-source</emphasis> - instructs the &rtp; proxy to check the
+				source addresses of all incoming &rtp; packets and drop the packets if the
+				address doesn't match.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>media-handover</emphasis> - the antithesis of
+				<emphasis>strict-source</emphasis>. Instructs the &rtp; proxy not only to accept
+				mismatching &rtp; source addresses (as it normally would), but also to accept
+				them as the new endpoint address of the opposite media flow. Not recommended
+				as it allows media streams to be hijacked by an attacker.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>DTLS=...</emphasis> - influence the behaviour of DTLS-SRTP. Possible
+				values are <quote>no</quote> or <quote>off</quote> to suppress offering or
+				accepting DTLS-SRTP, and <quote>passive</quote> to prefer participating in
+				DTLS-SRTP in a passive role.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>SDES-off</emphasis> - don't offer SDES when it normally would. In an SRTP
+				context, this leaves DTLS-SRTP as the only other option.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>SDES-unencrypted_srtp, SDES-unencrypted_srtcp,
+				SDES-unauthenticated_srtp</emphasis> - these directly reflect the SDES session
+				parameters from RFC 4568 and will make the &rtp; proxy offer these parameters
+				when offering SDES.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>SDES-encrypted_srtp, SDES-encrypted_srtcp,
+				SDES-authenticated_srtp</emphasis> - the opposites of the flags above. Useful
+				if accepting these parameters is not desired and they should be rejected instead.
 				</para></listitem>
 			</itemizedlist>
 		</listitem>
