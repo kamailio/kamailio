@@ -474,10 +474,10 @@ void free_ims_subscription_data(ims_subscription *s) {
         shm_free(s->private_identity.s);
     ul.unlock_subscription(s);
 #ifdef EXTRA_DEBUG
-    LM_DBG("SUBSCRIPTION LOCK %p destroyed\n", s->slock);
+    LM_DBG("SUBSCRIPTION LOCK %p destroyed\n", s->lock);
 #endif
-    lock_destroy(s->slock);
-    lock_dealloc(s->slock);
+    lock_destroy(s->lock);
+    lock_dealloc(s->lock);
     shm_free(s);
 
 }
