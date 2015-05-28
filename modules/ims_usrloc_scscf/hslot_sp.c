@@ -50,8 +50,6 @@ int subs_locks_no=4;
 /*! global list of locks */
 gen_lock_set_t* subs_locks=0;
 
-extern struct ims_subscription_list* ims_subscription_list;
-
 
 /*!
  * \brief Initialize locks for the hash table
@@ -217,29 +215,4 @@ void subs_slot_rem(hslot_sp_t* _s, struct ims_subscription_s* _r)
 	_r->prev = _r->next = 0;
 	_r->slot = 0;
 	_s->n--;
-}
-
-void print_subscription(ims_subscription* s) {
-    LM_DBG("IMS Subscription: [%.*s], ref: [%d]\n", s->private_identity.len, s->private_identity.s, s->ref_count);
-}
-
-int sync_subscriptions() {
-    int i, count=0;
-    ims_subscription* ims_subscription;
-    
-    for (i = 0; i < ims_subscription_list->size - 1; i++) {
-        lock_get(ims_subscription_list->slot[i].lock);
-        count += ims_subscription_list->slot[i].n;
-        ims_subscription = ims_subscription_list->slot[i].first;
-        while (ims_subscription) {
-            //do stuff (check ref for example)
-            print_subscription(ims_subscription);
-            ims_subscription = ims_subscription->next;
-        }
-        lock_release(ims_subscription_list->slot[i].lock);
-    }
-
-    LM_DBG("Active Subscriptions: [%d]\n", count);
-    
-    return 0;
 }

@@ -72,6 +72,10 @@ struct udomain {
     str* name; /*!< Domain name (NULL terminated) */
     int size; /*!< Hash table size */
     struct hslot* table; /*!< Hash table - array of collision slots */
+    /* statistics */
+    stat_var *users; /*!< no of registered users */
+    stat_var *contacts; /*!< no of registered contacts */
+    stat_var *expires; /*!< no of expires */
 };
 
 
@@ -158,8 +162,6 @@ void lock_contact_slot(str* contact_uri);
 void unlock_contact_slot(str* contact_uri);
 void lock_contact_slot_i(int i);
 void unlock_contact_slot_i(int i);
-void lock_subscription(ims_subscription* s);
-void unlock_subscription(ims_subscription* s);
 
 /* ===== module interface ======= */
 

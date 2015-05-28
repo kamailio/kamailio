@@ -59,7 +59,6 @@
 #include "../../lib/srdb1/db.h"
 #include "../../socket_info.h"
 #include "../../ut.h"
-#include "../../counters.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
@@ -67,12 +66,33 @@
 #include "bin_utils.h"
 #include "usrloc_db.h"
 #include "contact_hslot.h"
-#include "ul_scscf_stats.h"
 
 extern int unreg_validity;
 extern int db_mode;
 struct contact_list* contact_list;
-extern struct ul_scscf_counters_h ul_scscf_cnts_h;
+
+#ifdef STATISTICS
+
+static char *build_stat_name(str* domain, char *var_name) {
+    int n;
+    char *s;
+    char *p;
+
+    n = domain->len + 1 + strlen(var_name) + 1;
+    s = (char*) shm_malloc(n);
+    if (s == 0) {
+	LM_ERR("no more shm mem\n");
+	return 0;
+    }
+    memcpy(s, domain->s, domain->len);
+    p = s + domain->len;
+    *(p++) = '-';
+    memcpy(p, var_name, strlen(var_name));
+    p += strlen(var_name);
+    *(p++) = 0;
+    return s;
+}
+#endif
 
 /*!
  * \brief Create a new domain structure
@@ -84,6 +104,9 @@ extern struct ul_scscf_counters_h ul_scscf_cnts_h;
  */
 int new_udomain(str* _n, int _s, udomain_t** _d) {
     int i;
+#ifdef STATISTICS
+    char *name;
+#endif
 
     /* Must be always in shared memory, since
      * the cache is accessed from timer which
@@ -110,8 +133,30 @@ int new_udomain(str* _n, int _s, udomain_t** _d) {
 
     (*_d)->size = _s;
 
-    return 0;
+#ifdef STATISTICS
+    /* register the statistics */
+    if ((name = build_stat_name(_n, "users")) == 0 || register_stat("usrloc",
+	    name, &(*_d)->users, STAT_NO_RESET | STAT_SHM_NAME) != 0) {
+	LM_ERR("failed to add stat variable\n");
+	goto error2;
+    }
+    if ((name = build_stat_name(_n, "contacts")) == 0 || register_stat("usrloc",
+	    name, &(*_d)->contacts, STAT_NO_RESET | STAT_SHM_NAME) != 0) {
+	LM_ERR("failed to add stat variable\n");
+	goto error2;
+    }
+    if ((name = build_stat_name(_n, "expires")) == 0 || register_stat("usrloc",
+	    name, &(*_d)->expires, STAT_SHM_NAME) != 0) {
+	LM_ERR("failed to add stat variable\n");
+	goto error2;
+    }
+#endif
 
+    return 0;
+#ifdef STATISTICS
+error2:
+    shm_free((*_d)->table);
+#endif
 error1:
     shm_free(*_d);
 error0:
@@ -230,7 +275,7 @@ int mem_insert_impurecord(struct udomain* _d, str* public_identity, int reg_stat
 
     sl = ((*_r)->aorhash) & (_d->size - 1);
     slot_add(&_d->table[sl], *_r);
-    counter_inc(ul_scscf_cnts_h.active_impus);
+    update_stat(_d->users, 1);
 
     LM_DBG("inserted new impurecord into memory [%.*s]\n", (*_r)->public_identity.len, (*_r)->public_identity.s);
     return 0;
@@ -245,7 +290,7 @@ void mem_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
     LM_DBG("deleting impurecord from memory [%.*s]\n", _r->public_identity.len, _r->public_identity.s);
     slot_rem(_r->slot, _r);
     free_impurecord(_r);
-    counter_add(ul_scscf_cnts_h.active_impus, -1);
+    update_stat(_d->users, -1);
 }
 
 /*!
@@ -472,22 +517,6 @@ void unlock_contact_slot_i(int i) {
 #endif
 }
 
-void lock_subscription(ims_subscription* s) {
-#ifdef EXTRA_DEBUG
-    LM_DBG("LOCKING SUBSCRIPTION %p (Refcount: %d)\n", s->slock, s->ref_count);
-    LM_DBG("(SUBSCRIPTION PRIVATE IDENTITY [%.*s])\n", s->private_identity.len, s->private_identity.s);
-#endif
-    lock_get(s->lock);
-}
-
-void unlock_subscription(ims_subscription* s) {
-#ifdef EXTRA_DEBUG
-    LM_DBG("UN-LOCKING SUBSCRIPTION %p (Refcount: %d)\n", s->slock, s->ref_count);
-    LM_DBG("(SUBSCRIPTION PRIVATE IDENTITY [%.*s])\n", s->private_identity.len, s->private_identity.s);
-#endif
-    lock_release(s->lock);
-}
-
 /*!
  * \brief Create and insert a new record
  * \param _d domain to insert the new record
@@ -499,7 +528,15 @@ int insert_impurecord(struct udomain* _d, str* public_identity, int reg_state, i
 	ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
 	struct impurecord** _r) {
 
-    /* check to see if we already have this subscription information in memory*/
+    //	ims_subscription* s = 0;
+    //	/*check we can parse XML user data*/
+    //	if (xml_data->s && xml_data->len > 0) {
+    //		s = parse_user_data(*xml_data);
+    //		if (!s) {
+    //			LM_ERR("Unable to parse XML user data from SAA\n");
+    //			goto error;
+    //		}
+    //	}
     if (mem_insert_impurecord(_d, public_identity, reg_state, barring, s, ccf1, ccf2, ecf1, ecf2, _r) < 0) {
 	LM_ERR("inserting record failed\n");
 	goto error;
@@ -618,8 +655,7 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
 	LM_DBG("no subscription associated with impu\n");
 	return 0;
     }
-
-    lock_subscription(impu_rec->s);
+    lock_ims_subscription(impu_rec->s);
     for (i = 0; i < impu_rec->s->service_profiles_cnt; i++) {
 	for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
 	    impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
@@ -676,7 +712,7 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
 	return 1;
     }
 
-    unlock_subscription(impu_rec->s);
+    unlock_ims_subscription(impu_rec->s);
 
     return 0;
 }
