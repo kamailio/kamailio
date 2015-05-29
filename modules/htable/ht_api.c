@@ -346,7 +346,7 @@ int ht_init_tables(void)
 		{
 			if(lock_init(&ht->entries[i].lock)==0)
 			{
-				LM_ERR("cannot initalize lock[%d] in [%.*s]\n", i,
+				LM_ERR("cannot initialize lock[%d] in [%.*s]\n", i,
 						ht->name.len, ht->name.s);
 				i--;
 				while(i>=0)
