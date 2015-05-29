@@ -228,7 +228,7 @@ int uac_reg_init_ht(unsigned int sz)
 	{
 		if(lock_init(&_reg_htable->entries[i].lock)==0)
 		{
-			LM_ERR("cannot initalize lock[%d] n", i);
+			LM_ERR("cannot initialize lock[%d] n", i);
 			i--;
 			while(i>=0)
 			{
