@@ -95,7 +95,7 @@ int msrp_cmap_init(int msize)
 	{
 		if(lock_init(&_msrp_cmap_head->cslots[i].lock)==0)
 		{
-			LM_ERR("cannot initalize lock[%d]\n", i);
+			LM_ERR("cannot initialize lock[%d]\n", i);
 			i--;
 			while(i>=0)
 			{
