@@ -62,7 +62,7 @@ int ospSetupProvider(void)
     cacerts[0] = &cacert;
 
     if ((result = OSPPInit(_osp_crypto_hw)) != 0) {
-        LM_ERR("failed to initalize OSP (%d)\n", result);
+        LM_ERR("failed to initialize OSP (%d)\n", result);
     } else if (OSPPUtilLoadPEMPrivateKey(_osp_private_key, &privatekey) != 0) {
         LM_ERR("failed to load private key from '%s'\n", _osp_private_key);
     } else if (OSPPUtilLoadPEMCert(_osp_local_certificate, &localcert) != 0) {
