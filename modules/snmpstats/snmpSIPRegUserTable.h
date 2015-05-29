@@ -55,7 +55,7 @@
  *
  *    Instead of adding the record directly to the table, the callback functions
  *    now adds either an add/delete command to the interprocessBuffer.  When an
- *    snmp request is recieved by the SNMPStats sub-process, it will consume
+ *    snmp request is received by the SNMPStats sub-process, it will consume
  *    this interprocess buffer, adding and deleting users.  When it is finished,
  *    it can service the SNMP request.  
  *

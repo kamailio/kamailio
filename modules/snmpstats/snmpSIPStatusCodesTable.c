@@ -34,7 +34,7 @@
  * 1) kamailioSIPStatusCodesTable_create_row()
  *
  *    - The row structure has been modified from its default to store the
- *      number of messages that have been recieved and sent with a certain
+ *      number of messages that have been received and sent with a certain
  *      status code, at the time this row was created.  This function 
  *      populates that data. 
  *
