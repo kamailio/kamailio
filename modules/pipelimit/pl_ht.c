@@ -83,7 +83,7 @@ int pl_init_htable(unsigned int hsize)
 	{
 		if(lock_init(&_pl_pipes_ht->slots[i].lock)==0)
 		{
-			LM_ERR("cannot initalize lock[%d]\n", i);
+			LM_ERR("cannot initialize lock[%d]\n", i);
 			i--;
 			while(i>=0)
 			{
