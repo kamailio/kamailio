@@ -86,7 +86,7 @@ enum pg_type_id {
 
 
 /** Creates a new Oid mapping table.
- * The function creates a new Oid mapping table and initalizes the contents
+ * The function creates a new Oid mapping table and initializes the contents
  * of the table with values obtained from the PostgreSQL result in parameter.
  * Each element of the table maps field type name to oid and vice versa.
  * @param res A PostgreSQL result structure used to initialize the array.
