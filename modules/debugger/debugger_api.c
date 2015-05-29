@@ -1088,7 +1088,7 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 	{
 		if(lock_init(&_dbg_mod_table[i].lock)==0)
 		{
-			LM_ERR("cannot initalize lock[%d]\n", i);
+			LM_ERR("cannot initialize lock[%d]\n", i);
 			i--;
 			while(i>=0)
 			{
