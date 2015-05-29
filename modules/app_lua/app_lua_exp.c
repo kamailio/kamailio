@@ -1477,6 +1477,57 @@ static int lua_sr_registrar_lookup(lua_State *L)
 /**
  *
  */
+static int lua_sr_registrar_lookup_to_dset(lua_State *L)
+{
+	int ret;
+	char *table = NULL;
+	str uri = {NULL, 0};
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_REGISTRAR))
+	{
+		LM_WARN("weird: registrar function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)==1)
+	{
+		table = (char*)lua_tostring(L, -1);
+	}
+	else if (lua_gettop(L)==2)
+	{
+		table = (char*)lua_tostring(L, -2);
+		uri.s = (char*)lua_tostring(L, -1);
+		uri.len = strlen(uri.s);
+	} else
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	if(table==NULL || strlen(table)==0)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)==2)
+	{
+		ret = _lua_registrarb.lookup_to_dset(env_L->msg, table, &uri);
+	} else {
+		ret = _lua_registrarb.lookup_to_dset(env_L->msg, table, NULL);
+	}
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
 static int lua_sr_registrar_registered(lua_State *L)
 {
 	int ret;
@@ -1518,6 +1569,7 @@ static int lua_sr_registrar_registered(lua_State *L)
 static const luaL_Reg _sr_registrar_Map [] = {
 	{"save",      lua_sr_registrar_save},
 	{"lookup",    lua_sr_registrar_lookup},
+	{"lookup_to_dset",lua_sr_registrar_lookup_to_dset},
 	{"registered",lua_sr_registrar_registered},
 	{NULL, NULL}
 };
