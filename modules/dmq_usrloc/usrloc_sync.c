@@ -514,6 +514,6 @@ void dmq_ul_cb_contact(ucontact_t* ptr, int type, void* param)
 										break;
 			}
 		} else {
-			LM_DBG("Contact recieved from DMQ... skip\n");
+			LM_DBG("Contact received from DMQ... skip\n");
 		}
 }
