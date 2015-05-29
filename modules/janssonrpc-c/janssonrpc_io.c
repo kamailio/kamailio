@@ -647,7 +647,7 @@ int handle_response(json_t* response)
 		}
 		error_s = json_dumps(error, JSON_COMPACT);
 		if(error_s) {
-			WARN("Request recieved an error: \n%s\n", error_s);
+			WARN("Request received an error: \n%s\n", error_s);
 			free(error_s);
 		} else {
 			fail_request(
