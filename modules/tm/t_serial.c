@@ -263,6 +263,7 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 			return -1;
 		}
 
+		memset(next, 0, sizeof(struct contact));
 		next->uri.s = branch->uri;
 		next->uri.len = branch->len;
 		next->dst_uri.s = branch->dst_uri;
