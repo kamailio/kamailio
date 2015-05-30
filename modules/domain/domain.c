@@ -362,7 +362,8 @@ int reload_tables ( void )
 	}
 
 	if ((VAL_NULL(ROW_VALUES(row) + 2) == 1) ||
-	    (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)) {
+	    ((VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT) &&
+	    (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_BIGINT))) {
 	    LM_ERR("type at row <%u> is null or not int\n", i);
 	    goto err;
 	}
