@@ -16,11 +16,11 @@ Carsten Bock
 
    ng-voice GmbH
 
-   Copyright © 2004 FhG FOKUS
+   Copyright Â© 2004 FhG FOKUS
 
-   Copyright © 2005 Voice Sistem
+   Copyright Â© 2005 Voice Sistem
 
-   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright Â© 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -886,7 +886,7 @@ if(ds_is_from_list()) {
 if(ds_is_from_list("10")) {
     ...
 }
-if(ds_is_from_list("10", "sip:127.0.0.1:5080", "3")) {
+if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
     ...
 }
 ...
