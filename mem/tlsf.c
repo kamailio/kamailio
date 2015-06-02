@@ -580,22 +580,6 @@ static void block_trim_used(control_t* control, block_header_t* block, size_t si
 	}
 }
 
-static block_header_t* block_trim_free_leading(control_t* control, block_header_t* block, size_t size)
-{
-	block_header_t* remaining_block = block;
-	if (block_can_split(block, size))
-	{
-		/* We want the 2nd block. */
-		remaining_block = block_split(block, size - block_header_overhead);
-		block_set_prev_free(remaining_block);
-
-		block_link_next(block);
-		block_insert(control, block);
-	}
-
-	return remaining_block;
-}
-
 static block_header_t* block_locate_free(control_t* control, size_t size)
 {
 	int fl = 0, sl = 0;
