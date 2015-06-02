@@ -770,7 +770,8 @@ int uac_req_send(void)
 	uac_r.headers = (_uac_req.s_hdrs.len <= 0) ? NULL : &_uac_req.s_hdrs;
 	uac_r.body = (_uac_req.s_body.len <= 0) ? NULL : &_uac_req.s_body;
 	uac_r.ssock = (_uac_req.s_sock.len <= 0) ? NULL : &_uac_req.s_sock;
-	if(_uac_req.evroute > 0)
+	if((_uac_req.s_auser.len > 0 && _uac_req.s_apasswd.len>0)
+			|| (_uac_req.evroute > 0))
 	{
 		tp = uac_send_info_clone(&_uac_req);
 		if(tp==NULL)
