@@ -59,7 +59,7 @@ typedef struct _mt_node
     struct _mt_node *child;
 } mt_node_t;
 
-#define MT_MAX_DEPTH	32
+#define MT_MAX_DEPTH	64
 
 #define MT_NODE_SIZE	mt_char_list.len
 
