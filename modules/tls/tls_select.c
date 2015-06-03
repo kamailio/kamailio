@@ -160,7 +160,11 @@ static int get_cert(X509** cert, struct tcp_connection** c, struct sip_msg* msg,
 	if (!ssl) goto err;
 	*cert = my ? SSL_get_certificate(ssl) : SSL_get_peer_certificate(ssl);
 	if (!*cert) {
-		ERR("Unable to retrieve TLS certificate from SSL structure\n");
+		if (my) {
+			ERR("Unable to retrieve my TLS certificate from SSL structure\n");
+		} else {
+			ERR("Unable to retrieve peer TLS certificate from SSL structure\n");
+		}
 		goto err;
 	}
 	
