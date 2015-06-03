@@ -73,13 +73,13 @@ extern struct statstable *seas_stats_table;
  */
 struct statstable* init_seas_stats_table(void);
 int stop_stats_server(void);
-static inline void destroy_seas_stats_table(void);
+void destroy_seas_stats_table(void);
 /** Statistics server process
  * functions
  */
 void serve_stats(int fd);
 int start_stats_server(char *socket);
-static inline int print_stats_info(int f,int sock);
+int print_stats_info(int f,int sock);
 /**
  * Statistics functions
  */
