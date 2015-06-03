@@ -34,7 +34,7 @@
  * based on the user part of the current Request-URI. These functions
  * assume that the Request URI user part consists of an international
  * phone number of the form +decimal-digits, where the number of digits is
- * at least 2 and at most 15. Out of this number enum_query forms a domain
+ * at least 2 and at most 32. Out of this number enum_query forms a domain
  * name, where the digits are in reverse order and separated by dots
  * followed by domain suffix that by default is "e164.arpa.". For example,
  * if the user part is +35831234567, the domain name will be
@@ -1005,7 +1005,7 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 	struct naptr_rdata* naptr;
 	str pattern, replacement, result, new_result;
 	str *suffix, *service;
-	char string[17];
+	char string[MAX_NUM_LEN];
 	pv_spec_t *sp;
 	pv_value_t pv_val;
 
