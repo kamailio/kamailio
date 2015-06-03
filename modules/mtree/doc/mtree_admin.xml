@@ -17,8 +17,18 @@
     <section>
 	<title>Overview</title>
 	<para>
-		This module loads data indexed by prefixes from database and returns
-		associated string or precompiled value.
+		This module loads (prefix, value) records from database and indexes
+		them in a named memory tree. Name of the tree is specified for each
+		record or as module parameter.
+	</para>
+	<para>	
+		It exports to configuration file functions to match against in-memory
+		trees and return the values (raw or precompiled) associated with
+		matched prefixes.
+	</para>
+	<para>	
+		The maximum size of the prefix is limited internally to 63, database
+		table definition may enforce lower maximum size.
 	</para>
     </section>
     <section>
