@@ -89,12 +89,4 @@ struct __attribute__((packed)) pdb_msg {
     struct pdb_bdy bdy;
 };
 
-
-
-void pdb_msg_dbg (struct pdb_msg msg);
-int pdb_msg_format_send(struct pdb_msg *msg,
-                            uint8_t version, uint8_t type,
-                            uint8_t code, uint16_t id,
-                            char *payload, uint16_t payload_len);
-
 #endif

@@ -65,7 +65,29 @@ void print_usage(char *program) {
 	LINFO("    -h: Print this help.\n");
 }
 
+int pdb_msg_server_send(int so, char *buf, size_t answerlen, struct sockaddr *fromaddr, socklen_t fromaddrlen)
+{
+	ssize_t bytes_sent;
+	int try = 0;
+	again:
+		bytes_sent = sendto(so, buf, answerlen, 0, fromaddr, fromaddrlen);
+		if (bytes_sent < 3) {
+			if ((errno == EINTR) && (try < 3)) {
+				try++;
+				LERR("sendto() failed - trying again. errno=%d (%s)\n", errno, strerror(errno));
+				goto again;
+			}
+			LERR("sendto() failed with errno=%d (%s)\n", errno, strerror(errno));
+			if ((errno==EAGAIN)||(errno==EINTR)||(errno==EWOULDBLOCK)) return 0;
+			return -1;
+		}
+		if (bytes_sent != answerlen) {
+			LERR("cannot send the whole answer (%ld/%ld).\n", (long int)bytes_sent, (long int)answerlen);
+			return 0;
+		}
 
+    return 0;
+}
 
 
 /*
@@ -77,60 +99,101 @@ void print_usage(char *program) {
 */
 int udp_server(int so)
 {
+    struct pdb_msg msg;
 	struct sockaddr fromaddr;
 	socklen_t fromaddrlen;
-	size_t answerlen;
+	size_t answerlen = 0;
 	ssize_t bytes_received;
-	ssize_t bytes_sent;
 	carrier_t carrierid;
-	char buf[NETBUFSIZE+1+sizeof(carrierid)]; /* additional space for '\0' termination and carrier */
+	char buf[sizeof(struct pdb_msg)];
 	int i;
-	int try;
 
 	for (;;) {
 		fromaddrlen = sizeof(fromaddr);
-		bytes_received = recvfrom(so, buf, NETBUFSIZE, 0, &fromaddr, &fromaddrlen);
+		bytes_received = recvfrom(so, buf, sizeof(struct pdb_msg), 0, &fromaddr, &fromaddrlen);
 		if (bytes_received<0) {
-      LERR("recvfrom() failed with errno=%d (%s)\n", errno, strerror(errno));
+            LERR("recvfrom() failed with errno=%d (%s)\n", errno, strerror(errno));
 			if ((errno==EAGAIN)||(errno==EINTR)||(errno==EWOULDBLOCK)) continue;
 			return -1;
 		}
-		
-		/* take only digits */
-		i=0;
-		while ((i<bytes_received) && (buf[i]>='0') && (buf[i]<='9')) i++;
-		buf[i]=0; /* terminate string */
-		i++;
 
-		carrierid=lookup_number(buf);
-		
-		/* convert to network byte order*/
-		carrierid=htons(carrierid);
+        switch (buf[0]) {
+            case PDB_VERSION_1:
+                /* get received bytes */
+                memcpy(&msg, buf, bytes_received);
+//                pdb_msg_dbg(msg);
+                short int *_id = (short int *)&(msg.hdr.id); /* make gcc happy */
+                msg.hdr.id = ntohs(*_id);
 
-		/* append carrier id to answer */
-		memcpy(&(buf[i]), &carrierid, sizeof(carrierid));
-		answerlen=i+sizeof(carrierid);
-		
-		try=0;
-	again:
-		bytes_sent = sendto(so, buf, answerlen, 0, &fromaddr, fromaddrlen);
-		if (bytes_sent < 3) {
-			if ((errno==EINTR) && (try<3)) {
-				try++;
-				LERR("sendto() failed - trying again. errno=%d (%s)\n", errno, strerror(errno));
-				goto again;
-			}
-			LERR("sendto() failed with errno=%d (%s)\n", errno, strerror(errno));
-			if ((errno==EAGAIN)||(errno==EINTR)||(errno==EWOULDBLOCK)) continue;
-			return -1;
-		}
-		if (bytes_sent != answerlen) {
-			LERR("cannot send the whole answer (%ld/%ld).\n", (long int)bytes_sent, (long int)answerlen);
-			continue;
-		}
-	}
+                i = 0;
+                while (i < strlen(msg.bdy.payload)) {
+                    if (msg.bdy.payload[i] < '0' || msg.bdy.payload[i] > '9') {
+                        pdb_msg_format_send(&msg, PDB_VERSION_1, PDB_TYPE_REPLY_ID, PDB_CODE_NOT_NUMBER, htons(msg.hdr.id), NULL, 0);
+                        goto msg_send;
+                    }
+                    i++;
+                }
+                /* lookup pdb_id */
+                carrierid=lookup_number(msg.bdy.payload);
 
-	return 0;
+                /* check if not found pdb_id */
+                if (carrierid == 0) {
+                    pdb_msg_format_send(&msg, PDB_VERSION_1, PDB_TYPE_REPLY_ID, PDB_CODE_NOT_FOUND, htons(msg.hdr.id), NULL, 0);
+                    goto msg_send;
+                }
+
+                /* convert to network byte order*/
+                carrierid = htons(carrierid);
+
+                /* prepare the message payload to be sent
+                 * add the number string and append the carrier id
+                 */
+                memcpy(buf, msg.bdy.payload, msg.hdr.length - sizeof(msg.hdr));
+                memcpy(buf + msg.hdr.length - sizeof(msg.hdr), &carrierid, sizeof(carrierid));
+
+                /* all ok, send pdb_msg with pdb_id in payload */
+                pdb_msg_format_send(&msg, PDB_VERSION_1, PDB_TYPE_REPLY_ID, PDB_CODE_OK, htons(msg.hdr.id), buf, msg.hdr.length - sizeof(msg.hdr) + sizeof(carrierid));
+                goto msg_send;
+
+                break;
+
+            /* old pdb version; no pdb_msg used */
+            default:
+                /* take only digits */
+                i=0;
+                while ((i<bytes_received) && (buf[i]>='0') && (buf[i]<='9')) i++;
+                buf[i]=0; /* terminate string */
+                i++;
+
+                /* lookup pdb_id */
+                carrierid=lookup_number(buf);
+
+                /* convert to network byte order*/
+                carrierid=htons(carrierid);
+
+                /* append carrier id to answer */
+                memcpy(&(buf[i]), &carrierid, sizeof(carrierid));
+                answerlen=i+sizeof(carrierid);
+                goto buf_send;
+
+                break;
+        }
+
+msg_send:
+//        pdb_msg_dbg(msg);
+        if (pdb_msg_server_send(so, (char*)&msg, msg.hdr.length, &fromaddr, fromaddrlen) < 0) {
+            return -1;
+        }
+        continue;
+
+buf_send:
+        if (pdb_msg_server_send(so, buf, answerlen, &fromaddr, fromaddrlen)) {
+            return -1;
+        }
+        continue;
+    }
+
+	return -1;
 }
 
 

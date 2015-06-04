@@ -23,12 +23,13 @@
 # the 'Bundesnetzagentur' and convert this into the format which the pdbt tool
 # understands.
 
-url="http://www.bundesnetzagentur.de/cln_1912/DE/Sachgebiete/Telekommunikation/RegulierungTelekommunikation/Nummernverwaltung/TechnischeNummern/Portierungskennung/VerzeichnisPortKenn_Basepage.html"
+#old_url="http://www.bundesnetzagentur.de/cln_1912/DE/Sachgebiete/Telekommunikation/RegulierungTelekommunikation/Nummernverwaltung/TechnischeNummern/Portierungskennung/VerzeichnisPortKenn_Basepage.html"
+url="http://www.bundesnetzagentur.de/cln_1421/DE/Sachgebiete/Telekommunikation/Unternehmen_Institutionen/Nummerierung/Technische%20Nummern/Portierungskennungen/VerzeichnisPortKenn_Basepage.html?nn=268376#Inhalt"
 
-# fix LOCALE problem during filtering 
+# fix LOCALE problem during filtering
 export LANG="C"
 
-wget -O - "$url" | recode latin1..utf8 | sed 's/^*.Verzeichnis der Portierungskennungen//' | awk '/<tbody>/, /<\/tbody>/' | tr -d '\r' | tr '\n' '@' | sed 's/<\/table>.*$//' | sed 's/<\/tbody>.*$//'
+wget -O - "$url" | recode latin1..utf8 | sed 's/^*.Verzeichnis der Portierungskennungen//' | awk '/<tbody>/, /<\/tbody>/' | tr -d '\r' | tr '\n' '@' | sed 's/<\/table>.*$//' | sed 's/<\/tbody>.*$//' | awk -F "</td" -v RS="</tr" '{ gsub(/.*>/,"",$1) gsub(/.*>/,"",$2); if ( $1 != "") { printf "%s %s\n",$2,$1 } }'
 
 # probably also possible to use this:
 # http://www.bundesnetzagentur.de/cae/servlet/contentblob/156772/publicationFile/8492/KonsolidiertesVerzPortierungsk.zip
