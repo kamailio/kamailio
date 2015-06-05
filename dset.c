@@ -122,14 +122,14 @@ int drop_sip_branch(int idx)
 		return 0;
 	if(idx<0 && (int)nr_branches+idx<0)
 		return 0;
+	if(idx<0)
+		idx += nr_branches;
 	/* last branch */
 	if(idx==nr_branches-1)
 	{
 		nr_branches--;
 		return 0;
 	}
-	if(idx<0)
-		idx = nr_branches+idx;
 	/* shift back one position */
 	for(; idx<nr_branches-1; idx++)
 		memcpy(&branches[idx], &branches[idx+1], sizeof(branch_t));
