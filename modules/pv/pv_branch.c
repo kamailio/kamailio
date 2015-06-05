@@ -133,6 +133,16 @@ int pv_set_branchx_helper(sip_msg_t *msg, pv_param_t *param,
 			LM_ERR("invalid index\n");
 			return -1;
 		}
+		if(idx<0)
+		{
+			if((int)nr_branches + idx >= 0) {
+				idx += nr_branches;
+			} else {
+				LM_ERR("index too low: %d (%u)\n", idx, nr_branches);
+				return -1;
+			}
+		}
+		LM_DBG("managing branch index %d (%u)\n", idx, nr_branches);
 		br = get_sip_branch(idx);
 	}
 
