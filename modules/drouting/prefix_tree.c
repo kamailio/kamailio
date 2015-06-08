@@ -133,15 +133,28 @@ get_prefix(
 		if(NULL == tmp)
 			goto err_exit;
 		local=*tmp;
-		if( !IS_DECIMAL_DIGIT(local) ) {
+			
+		if( IS_DECIMAL_DIGIT(local) ) {
+			idx = local -'0';
+		}
+		else if (local == '*'){
+			idx = 10;
+		}
+		else if (local == '#'){
+			idx = 11;
+		}
+		else if (local == '+'){
+			idx = 12;
+		}
+		else{
 			/* unknown character in the prefix string */
 			goto err_exit;
+
 		}
 		if( tmp == (prefix->s+prefix->len-1) ) {
 			/* last digit in the prefix string */
 			break;
 		}
-		idx = local -'0';
 		if( NULL == ptree->ptnode[idx].next) {
 			/* this is a leaf */
 			break;
@@ -156,6 +169,12 @@ get_prefix(
 			goto err_exit;
 		/* is it a real node or an intermediate one */
 		idx = *tmp-'0';
+		if (*tmp == '*')
+			idx = 10;
+		else if (*tmp == '#')
+			idx = 11;
+		else if (*tmp == '+')
+			idx = 12;
 		if(NULL != ptree->ptnode[idx].rg) {
 			/* real node; check the constraints on the routing info*/
 			if( NULL != (rt = internal_check_rt( &(ptree->ptnode[idx]), rgid)))
@@ -206,34 +225,50 @@ add_prefix(
 	while(tmp < (prefix->s+prefix->len)) {
 		if(NULL == tmp)
 			goto err_exit;
-		if( !IS_DECIMAL_DIGIT(*tmp) ) {
+		int insert_index = -1;
+		if( IS_DECIMAL_DIGIT(*tmp)  ) {
+			/* unknown character in the prefix string */
+			insert_index = *tmp - '0';
+		}
+		else if (*tmp=='*'){
+			insert_index = 10;
+		}
+		else if (*tmp=='#'){
+			insert_index = 11;
+		}
+		else if (*tmp=='+'){
+			insert_index = 12;
+		}
+
+		else{
 			/* unknown character in the prefix string */
 			goto err_exit;
 		}
 		if( tmp == (prefix->s+prefix->len-1) ) {
-			/* last digit in the prefix string */
+			/* last symbol in the prefix string */
+			
 			LM_DBG("adding info %p, %d at: "
-				"%p (%d)\n", r, rg, &(ptree->ptnode[*tmp-'0']), *tmp-'0');
-			res = add_rt_info(&(ptree->ptnode[*tmp-'0']), r,rg);
+				"%p (%d)\n", r, rg, &(ptree->ptnode[insert_index]), insert_index);
+			res = add_rt_info(&(ptree->ptnode[insert_index]), r,rg);
 			if(res < 0 )
 				goto err_exit;
 			unode++;
 			res = 1;
 			goto ok_exit;
 		}
-		/* process the current digit in the prefix */
-		if(NULL == ptree->ptnode[*tmp - '0'].next) {
+		/* process the current symbol in the prefix */
+		if(NULL == ptree->ptnode[insert_index].next) {
 			/* allocate new node */
-			INIT_PTREE_NODE(ptree, ptree->ptnode[*tmp - '0'].next);
-			inode+=10;
+			INIT_PTREE_NODE(ptree, ptree->ptnode[insert_index].next);
+			inode+=PTREE_CHILDREN;
 #if 0
 			printf("new tree node: %p (bp: %p)\n", 
-					ptree->ptnode[*tmp - '0'].next,
-					ptree->ptnode[*tmp - '0'].next->bp
+					ptree->ptnode[insert_index].next,
+					ptree->ptnode[insert_index].next->bp
 					);
 #endif
 		}
-		ptree = ptree->ptnode[*tmp-'0'].next;
+		ptree = ptree->ptnode[insert_index].next;
 		tmp++; 
 	}
 

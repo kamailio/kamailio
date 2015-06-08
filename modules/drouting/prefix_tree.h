@@ -34,7 +34,7 @@
 #include "../../ip_addr.h"
 #include "dr_time.h"
 
-#define PTREE_CHILDREN 10
+#define PTREE_CHILDREN 13  //decimal digits, '*', '#',  '+'
 #define IS_DECIMAL_DIGIT(d) \
 	(((d)>='0') && ((d)<= '9'))
 
