@@ -193,7 +193,7 @@ inline int db_double2str(double _v, char* _s, int* _l)
 		return -1;
 	}
 
-	ret = snprintf(_s, *_l, "%-10.2f", _v);
+	ret = snprintf(_s, *_l, "%-10.6f", _v);
 	if (ret < 0 || ret >= *_l) {
 		LM_ERR("Error in snprintf\n");
 		return -1;
