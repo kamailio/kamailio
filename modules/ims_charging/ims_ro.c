@@ -547,6 +547,9 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     //getting subscription id type
     if (strncasecmp(subscr.id.s, "tel:", 4) == 0) {
 	subscr.type = Subscription_Type_MSISDN;
+	// Strip "tel:":
+	subscr.id.s += 4;
+	subscr.id.len -= 4;
     } else {
 	subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
     }
@@ -780,6 +783,9 @@ void send_ccr_stop(struct ro_session *ro_session) {
     //getting subscription id type
     if (strncasecmp(subscr.id.s, "tel:", 4) == 0) {
 	subscr.type = Subscription_Type_MSISDN;
+	// Strip "tel:":
+	subscr.id.s += 4;
+	subscr.id.len -= 4;
     } else {
 	subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
     }
@@ -996,6 +1002,9 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     //getting subscription id type
     if (strncasecmp(subscription_id.s, "tel:", 4) == 0) {
 	subscription_id_type = Subscription_Type_MSISDN;
+	// Strip "tel:":
+	subscription_id.s += 4;
+	subscription_id.len -= 4;
     } else {
 	subscription_id_type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
     }
