@@ -191,6 +191,17 @@ modparam("sl", "bind_tm", 0)  # feature disabled
    text reason. The reply is sent stateless, totally independent of the
    Transaction module and with no retransmission for the INVITE's replies.
 
+   If the code is in the range 300-399 (redirect reply), the current
+   destination set is appended to the reply as Contact headers. The
+   destination set contains the request URI (R-URI), if it is modified
+   compared to the received one, plus the branches added to the request
+   (e.g., after an append_branch() or lookup("location")). If the R-URI
+   was changed but it is not desired to be part of the destination set, it
+   can be reverted using the function revert_uri().
+
+   Custom headers to the reply can be added using append_to_reply()
+   function from textops module.
+
    Meaning of the parameters is as follows:
      * code - Return code.
      * reason - Reason phrase.
