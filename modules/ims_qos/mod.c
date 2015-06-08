@@ -358,6 +358,10 @@ void callback_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params * para
     int new_has_video = 0;
     int must_unlock_aaa = 1;
     
+    if (rx_session_id==0) {
+        LM_WARN("Strange... no rx session ID in callback.... why?\n");
+        return;
+    } 
     //getting session data
     
     LM_DBG("Dialog callback of type %d received\n", type);
@@ -857,6 +861,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
             }
             goto error;
         }
+        auth_session->u.auth.class = AUTH_CLASS_RXMEDIA;
 
         //attach new cdp auth session to dlg for this direction
         if (dlg_direction == DLG_MOBILE_ORIGINATING) {
@@ -1101,6 +1106,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                             lock_release(saved_t_data->lock);
                             goto error;
                         }
+                        auth->u.auth.class = AUTH_CLASS_RXREG;
                     }
 
                     //we are ready to send the AAR async. lets save the local data data
