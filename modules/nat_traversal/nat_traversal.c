@@ -1460,7 +1460,7 @@ FixContact(struct sip_msg *msg)
     }
 
     offset = contact->uri.s - msg->buf;
-    anchor = del_lump(msg, offset, contact->uri.len, HDR_CONTACT_F);
+    anchor = del_lump(msg, offset, contact->uri.len, (enum _hdr_types_t)HDR_CONTACT_F);
 
     if (!anchor) {
         pkg_free(buf);
@@ -1470,7 +1470,7 @@ FixContact(struct sip_msg *msg)
     len = sprintf(buf, "%.*s%s:%d%.*s", before_host.len, before_host.s,
                   newip.s, newport, after.len, after.s);
 
-    if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_F) == 0) {
+    if (insert_new_lump_after(anchor, buf, len, (enum _hdr_types_t)HDR_CONTACT_F) == 0) {
         pkg_free(buf);
         return -1;
     }
