@@ -1189,14 +1189,14 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 
-	str tmp, corrtmp;
+	str tmp, corrtmp, ntab;
 	int ii = 0;
 	int ret = 0;
 	int counter = 0;
 	db_insert_f insert;
 	time_t retry_failed_time = 0;
 	struct tm capt_ts;
-	
+ 
 	/* new */
 	str *table = NULL;
 	_capture_mode_data_t *c = NULL;
@@ -1437,11 +1437,9 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 		table = &c->table_names[ii];
 	}
 	else {
-	        table->s = table_name.s;
-	        table->len = table_name.len;
+	        table = &table_name;
 	}
 
-        
 	tvsec_ = (time_t) (sco->tmstamp/1000000);        		
 	if(gmtime_r( &tvsec_, &capt_ts) == NULL)
         {
@@ -1449,9 +1447,11 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
                 return -1;
         }
 
-        table->len = strftime(strftime_buf, sizeof(strftime_buf), table->s,  &capt_ts);
-        table->s = strftime_buf;
-	
+    	ntab.len = strftime(strftime_buf, sizeof(strftime_buf), table->s,  &capt_ts);
+        ntab.s = strftime_buf;
+
+        table = &ntab;
+
 	/* check dynamic table */
 	LM_DBG("insert into homer table [1]: [%.*s]\n", table->len, table->s);
 	c->db_funcs.use_table(c->db_con, table);
