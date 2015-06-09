@@ -490,7 +490,7 @@ static CallInfo*
 get_call_info(struct sip_msg *msg, CallControlAction action)
 {
     static CallInfo call_info;
-    int headers;
+    hdr_flags_t headers;
 
     memset(&call_info, 0, sizeof(struct CallInfo));
 
