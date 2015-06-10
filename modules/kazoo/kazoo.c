@@ -73,6 +73,8 @@ struct timeval kz_ack_tv = (struct timeval){0,100000};
 struct timeval kz_timer_tv = (struct timeval){0,200000};
 int kz_timer_ms = 200;
 
+str kz_json_escape_str = str_init("%");
+char kz_json_escape_char = '%';
 
 str dbk_consumer_event_key = str_init("Event-Category");
 str dbk_consumer_event_subkey = str_init("Event-Name");
@@ -139,6 +141,7 @@ static cmd_export_t cmds[] = {
 
 
     {"kazoo_json", (cmd_function) kz_json_get_field, 3, fixup_kz_json, fixup_kz_json_free, ANY_ROUTE},
+    {"kazoo_json_keys", (cmd_function) kz_json_get_keys, 3, fixup_kz_json, fixup_kz_json_free, ANY_ROUTE},
     {"kazoo_encode", (cmd_function) kz_amqp_encode, 2, fixup_kz_amqp_encode, fixup_kz_amqp_encode_free, ANY_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
@@ -172,6 +175,7 @@ static param_export_t params[] = {
     {"single_consumer_on_reconnect", INT_PARAM, &dbk_single_consumer_on_reconnect},
     {"consume_messages_on_reconnect", INT_PARAM, &dbk_consume_messages_on_reconnect},
     {"amqp_query_timeout_avp", STR_PARAM, &kz_query_timeout_avp.s},
+    {"json_escape_char", STR_PARAM, &kz_json_escape_str.s},
     {0, 0, 0}
 };
 
@@ -218,7 +222,7 @@ static int kz_init_avp(void) {
 static int mod_init(void) {
 	int i;
     startup_time = (int) time(NULL);
-
+    kz_json_escape_char = kz_json_escape_str.s[0];
 
     if (dbk_node_hostname.s == NULL) {
 	LM_ERR("You must set the node_hostname parameter\n");

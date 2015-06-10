@@ -29,6 +29,9 @@
 #include "../../lvalue.h"
 
 #include "kz_json.h"
+#include "const.h"
+#include "../../pvar.h"
+#include "../../usr_avp.h"
 
 static str kz_pv_str_empty = {"", 0};
 
@@ -76,6 +79,12 @@ char** str_split(char* a_str, const char a_delim)
             *(result + idx) = ptr;
         	memcpy(ptr, token, len);
         	ptr[len] = '\0';
+        	int i = 0;
+        	while(i < len) {
+        		if(ptr[i] == kz_json_escape_char)
+        			ptr[i] = '.';
+        		i++;
+        	}
             token = strtok(0, delim);
             idx++;
         }
@@ -86,8 +95,7 @@ char** str_split(char* a_str, const char a_delim)
     return result;
 }
 
-
-int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
+struct json_object * kz_json_get_field_object(str* json, str* field)
 {
   char** tokens;
   char* dup;
@@ -102,10 +110,13 @@ int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
 
   if (is_error(j)) {
 	  LM_ERR("empty or invalid JSON\n");
-	  return -1;
+	  return NULL;
   }
 
   struct json_object *jtree = NULL;
+  struct json_object *ret = NULL;
+
+  LM_DBG("getting json %.*s\n", field->len, field->s);
 
   dup = pkg_malloc(field->len+1);
   memcpy(dup, field->s, field->len);
@@ -143,6 +154,23 @@ int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
         pkg_free(tokens);
     }
 
+
+
+	if(jtree != NULL)
+		ret = json_object_get(jtree);
+
+	json_object_put(j);
+
+	return ret;
+}
+
+
+int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
+{
+
+  struct json_object *jtree = kz_json_get_field_object(json, field);
+
+
 	if(jtree != NULL) {
 		char *value = (char*)json_object_get_string(jtree);
 		int len = strlen(value);
@@ -152,14 +180,12 @@ int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
 		dst_val->rs.len = len;
 		dst_val->flags = PV_VAL_STR | PV_VAL_PKG;
         dst_val->ri = 0;
+        json_object_put(jtree);
 	} else {
 		dst_val->flags = PV_VAL_NULL;
         dst_val->rs = kz_pv_str_empty;
         dst_val->ri = 0;
 	}
-
-	json_object_put(j);
-
 	return 1;
 }
 
@@ -180,7 +206,6 @@ int kz_json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
 		LM_ERR("cannot get field string value\n");
 		return -1;
 	}
-
 
 	if(kz_json_get_field_ex(&json_s, &field_s, &dst_val) != 1)
 		return -1;
@@ -224,4 +249,60 @@ struct json_object* kz_json_get_object(struct json_object* jso, const char *key)
 	struct json_object *result = NULL;
 	json_object_object_get_ex(jso, key, &result);
 	return result;
+}
+
+int kz_json_get_keys(struct sip_msg* msg, char* json, char* field, char* dst)
+{
+  str json_s;
+  str field_s;
+  int_str keys_avp_name;
+  unsigned short keys_avp_type;
+  pv_spec_t *avp_spec;
+
+	if (fixup_get_svalue(msg, (gparam_p)json, &json_s) != 0) {
+		LM_ERR("cannot get json string value\n");
+		return -1;
+	}
+
+	if (fixup_get_svalue(msg, (gparam_p)field, &field_s) != 0) {
+		LM_ERR("cannot get field string value\n");
+		return -1;
+	}
+
+	if(dst == NULL){
+		LM_ERR("avp spec is null\n");
+		return -1;
+	}
+
+	avp_spec = (pv_spec_t *)dst;
+
+	if(avp_spec->type != PVT_AVP) {
+		LM_ERR("invalid avp spec\n");
+		return -1;
+	}
+
+	if(pv_get_avp_name(0, &avp_spec->pvp, &keys_avp_name, &keys_avp_type)!=0)
+	{
+		LM_ERR("invalid AVP definition\n");
+		return -1;
+	}
+
+	struct json_object *jtree = kz_json_get_field_object(&json_s, &field_s);
+
+	if(jtree != NULL) {
+		json_object_object_foreach(jtree, k, v) {
+			LM_DBG("ITERATING KEY %s\n", k);
+			int_str val;
+			val.s.s = k;
+			val.s.len = strlen(k);
+			if (add_avp(AVP_VAL_STR|keys_avp_type, keys_avp_name, val) < 0) {
+				LM_ERR("failed to create AVP\n");
+			    json_object_put(jtree);
+				return -1;
+			}
+		}
+	    json_object_put(jtree);
+	}
+
+	return 1;
 }
