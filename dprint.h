@@ -98,6 +98,9 @@
 #define L_INFO   	2
 #define L_DBG    	3
 #define L_MAX    	3
+#define L_OFFSET   42 /* needs to be added and then substracted
+                        because L_WARN may be confused with NULL pointer
+                        (e.g. fixup_dbg_sip_msg) */
 
 /** @brief This is the facility value used to indicate that the caller of the macro
  * did not override the facility. Value 0 (the defaul) is LOG_KERN on Linux
