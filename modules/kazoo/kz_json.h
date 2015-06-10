@@ -14,6 +14,7 @@
 
 int kz_json_get_field(struct sip_msg* msg, char* json, char* field, char* dst);
 int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val);
+int kz_json_get_keys(struct sip_msg* msg, char* json, char* field, char* dst);
 
 struct json_object* kz_json_parse(const char *str);
 struct json_object* kz_json_get_object(struct json_object* jso, const char *key);
