@@ -1,0 +1,55 @@
+SMS-OPS Module
+
+Carsten Bock
+
+   ng-voice GmbH
+   <carsten@ng-voice.com>
+
+Edited by
+
+Carsten Bock
+
+   <carsten@ng-voice.com>
+
+   Copyright © 2015 Carsten Bock, ng-voice GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+1. Overview
+
+   This module collects the Transformations for 3GPP-SMS-V2.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
