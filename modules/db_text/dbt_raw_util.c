@@ -171,6 +171,7 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 	regex_t preg;
 	int offset = 0;
 	int idx = -1;
+	char int_buf[50];
 
 	*_k = NULL;
 	*_o = NULL;
@@ -225,8 +226,10 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 
 		l = matches[5].rm_eo - matches[5].rm_so;
 		if(matches[4].rm_so == -1) {
+			strncpy(int_buf, buffer+matches[5].rm_so, l);
+			int_buf[l] = '\0';
 			_v1[idx].type = DB1_INT;
-			_v1[idx].val.int_val = 0;
+			_v1[idx].val.int_val = atoi(int_buf);
 		} else {
 			_v1[idx].type = DB1_STR;
 			_v1[idx].val.str_val.len = l;
