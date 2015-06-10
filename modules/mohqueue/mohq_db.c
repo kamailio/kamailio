@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Robert Boisvert
+ * Copyright (C) 2013-15 Robert Boisvert
  *
  * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
@@ -214,7 +214,7 @@ pcall->call_time = time (0);
 fill_call_vals (prvals, pcall, CALL_COLCNT);
 if (pdb->insert (pconn, prkeys, prvals, CALL_COLCNT) < 0)
   {
-  LM_WARN ("%sUnable to add new row to %s", pfncname,
+  LM_WARN ("%sUnable to add new row to %s\n", pfncname,
     pmod_data->pcfg->db_ctable.s);
   }
 mohq_dbdisconnect (pconn);
@@ -241,7 +241,7 @@ db_func_t *pdb = pmod_data->pdb;
 pdb->use_table (pconn, &pmod_data->pcfg->db_ctable);
 if (pdb->delete (pconn, 0, 0, 0, 0) < 0)
   {
-  LM_WARN ("%sUnable to delete all rows from %s", pfncname,
+  LM_WARN ("%sUnable to delete all rows from %s\n", pfncname,
     pmod_data->pcfg->db_ctable.s);
   }
 return;
@@ -275,7 +275,7 @@ db_val_t prvals [1];
 set_call_val (prvals, 0, CALLCOL_CALL, pcall->call_id);
 if (pdb->delete (pconn, prkeys, 0, prvals, 1) < 0)
   {
-  LM_WARN ("%sUnable to delete row from %s", pfncname,
+  LM_WARN ("%sUnable to delete row from %s\n", pfncname,
     pmod_data->pcfg->db_ctable.s);
   }
 mohq_dbdisconnect (pconn);
@@ -295,7 +295,7 @@ db1_con_t *mohq_dbconnect (void)
 str *pdb_url = &pmod_data->pcfg->db_url;
 db1_con_t *pconn = pmod_data->pdb->init (pdb_url);
 if (!pconn)
-  { LM_ERR ("Unable to connect to DB %s\n", pdb_url->s); }
+  { LM_ERR ("Unable to connect to DB %s!\n", pdb_url->s); }
 return pconn;
 }
 
@@ -346,7 +346,7 @@ db_val_t puvals [1];
 fill_call_vals (puvals, pcall, CALLCOL_STATE);
 if (pdb->update (pconn, pqkeys, 0, pqvals, pukeys, puvals, 1, 1) < 0)
   {
-  LM_WARN ("%sUnable to update row in %s", pfncname,
+  LM_WARN ("%sUnable to update row in %s\n", pfncname,
     pmod_data->pcfg->db_ctable.s);
   }
 mohq_dbdisconnect (pconn);
@@ -388,7 +388,7 @@ puvals->type = DB1_INT;
 puvals->nul = 0;
 if (pdb->update (pconn, pqkeys, 0, pqvals, pukeys, puvals, 1, 1) < 0)
   {
-  LM_WARN ("%sUnable to update row in %s", pfncname,
+  LM_WARN ("%sUnable to update row in %s\n", pfncname,
     pmod_data->pcfg->db_qtable.s);
   }
 mohq_dbdisconnect (pconn);
@@ -523,21 +523,21 @@ for (nidx = 0; nidx < nrows; nidx++)
       if (strcmp (pqlst [nidx2].mohq_mohdir, pmohdir))
         {
         strcpy (pqlst [nidx2].mohq_mohdir, pmohdir);
-        LM_INFO ("Queue,Field (%s,%.*s): Changed", pqname,
+        LM_INFO ("Queue,Field (%s,%.*s): Changed\n", pqname,
           STR_FMT (&MOHQCSTR_MDIR));
         }
       ptext = (char *)VAL_STRING (prowvals + MOHQCOL_MFILE);
       if (strcmp (pqlst [nidx2].mohq_mohfile, ptext))
         {
         strcpy (pqlst [nidx2].mohq_mohfile, ptext);
-        LM_INFO ("Queue,Field (%s,%.*s): Changed", pqname,
+        LM_INFO ("Queue,Field (%s,%.*s): Changed\n", pqname,
           STR_FMT (&MOHQCSTR_MFILE));
         }
       ptext = (char *)VAL_STRING (prowvals + MOHQCOL_NAME);
       if (strcmp (pqlst [nidx2].mohq_name, ptext))
         {
         strcpy (pqlst [nidx2].mohq_name, ptext);
-        LM_INFO ("Queue,Field (%s,%.*s): Changed", pqname,
+        LM_INFO ("Queue,Field (%s,%.*s): Changed\n", pqname,
           STR_FMT (&MOHQCSTR_NAME));
         }
       int bdebug = VAL_INT (prowvals + MOHQCOL_DEBUG) ? MOHQF_DBG : 0;
@@ -547,7 +547,7 @@ for (nidx = 0; nidx < nrows; nidx++)
           { pqlst [nidx2].mohq_flags |= MOHQF_DBG; }
         else
           { pqlst [nidx2].mohq_flags &= ~MOHQF_DBG; }
-        LM_INFO ("Queue,Field (%s,%.*s): Changed", pqname,
+        LM_INFO ("Queue,Field (%s,%.*s): Changed\n", pqname,
           STR_FMT (&MOHQCSTR_DEBUG));
         }
       bfnd = -1;
@@ -590,7 +590,7 @@ for (nidx = 0; nidx < nrows; nidx++)
       (char *)VAL_STRING (prowvals + MOHQCOL_NAME));
     if (VAL_INT (prowvals + MOHQCOL_DEBUG))
       { pnewlst [nsize].mohq_flags |= MOHQF_DBG; }
-    LM_INFO ("Added new queue (%s)", pnewlst [nsize].mohq_name);
+    LM_INFO ("Added new queue (%s)\n", pnewlst [nsize].mohq_name);
     if (nsize)
       { shm_free (pmod_data->pmohq_lst); }
     pmod_data->pmohq_lst = pnewlst;
@@ -611,7 +611,7 @@ for (nidx = 0; nidx < pmod_data->mohq_cnt; nidx++)
 
   if (pqlst [nidx].mohq_flags & MOHQF_CHK)
     { continue; }
-  LM_INFO ("Removed queue (%s)", pqlst [nidx].mohq_name);
+  LM_INFO ("Removed queue (%s)\n", pqlst [nidx].mohq_name);
   if (nidx != (pmod_data->mohq_cnt - 1))
     {
     memcpy (&pqlst [nidx], &pqlst [pmod_data->mohq_cnt - 1],

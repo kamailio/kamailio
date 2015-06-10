@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Robert Boisvert
+ * Copyright (C) 2013-15 Robert Boisvert
  *
  * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
@@ -61,31 +61,35 @@ typedef struct
 
 /* call_state values */
 #define CLSTA_ENTER     100
-#define CLSTA_PRACKSTRT 101
-#define CLSTA_PRACKRPLY 102
-#define CLSTA_RINGING   103
+#define CLSTA_TRYING    101
+#define CLSTA_PRACKSTRT 102
+#define CLSTA_PRACKRPLY 103
 #define CLSTA_INVITED   104
 #define CLSTA_CANCEL    105
 #define CLSTA_INQUEUE   200
 #define CLSTA_REFER     301
 #define CLSTA_RFRWAIT   302
+#define CLSTA_BYEOK     304
 #define CLSTA_BYE       305
 
 typedef struct
   {
-  int call_active;
-  char call_id [101];
-  char call_from [URI_LEN + 1];
+  char call_buffer [1024];
+  size_t call_bufpos;
+  char *call_id;
+  char *call_from;
   char call_referto [URI_LEN + 1];
-  char call_contact [URI_LEN + 1];
-  char call_tag [101];
-  char call_via [1024];
+  char *call_contact;
+  char *call_tag;
+  char *call_via;
+  char *call_route;
   char call_addr [IP_ADDR_MAX_STR_SIZE + 4];
   int call_state;
   int call_cseq;
   int call_aport;
   mohq_lst *pmohq;
   time_t call_time;
+  time_t refer_time;
   unsigned int call_hash;
   unsigned int call_label;
   sip_msg_t *call_pmsg;
@@ -118,6 +122,8 @@ typedef struct
   cmd_function fn_rtp_offer;
   cmd_function fn_rtp_stream_c;
   cmd_function fn_rtp_stream_s;
+  cmd_function fn_rtp_stop_c;
+  cmd_function fn_rtp_stop_s;
   } mod_data;
 
 /**********
