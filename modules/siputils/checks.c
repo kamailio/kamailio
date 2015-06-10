@@ -168,23 +168,23 @@ int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 	value = (str*)_value;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
-	        LM_ERR("ruri parsing failed\n");
-	        return -1;
+		LM_ERR("ruri parsing failed\n");
+		return -1;
 	}
 
 	t = _msg->parsed_uri.params;
 
 	if (parse_params(&t, CLASS_ANY, &hooks, &params) < 0) {
-	        LM_ERR("ruri parameter parsing failed\n");
-	        return -1;
+		LM_ERR("ruri parameter parsing failed\n");
+		return -1;
 	}
 
 	for (pit = params; pit; pit = pit->next) {
 		if ((pit->name.len == param->len) &&
-		    (strncmp(pit->name.s, param->s, param->len) == 0)) {
+				(strncmp(pit->name.s, param->s, param->len) == 0)) {
 			if (value) {
 				if ((value->len == pit->body.len) &&
-				    strncmp(value->s, pit->body.s, value->len) == 0) {
+						strncmp(value->s, pit->body.s, value->len) == 0) {
 					goto ok;
 				} else {
 					goto nok;
@@ -198,7 +198,7 @@ int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 			}
 		}
 	}
-	
+
 nok:
 	free_params(params);
 	return -1;
@@ -226,8 +226,8 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 	}
 
 	if (parse_sip_msg_uri(_msg) < 0) {
-	        LM_ERR("ruri parsing failed\n");
-	        return -1;
+		LM_ERR("ruri parsing failed\n");
+		return -1;
 	}
 
 	parsed_uri = &(_msg->parsed_uri);
@@ -264,7 +264,7 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 		parsed_uri->params.len + param->len + 1 +
 		parsed_uri->headers.len + 1;
 	if (new_uri.len > MAX_URI_SIZE) {
-	        LM_ERR("new ruri too long\n");
+		LM_ERR("new ruri too long\n");
 		return -1;
 	}
 
@@ -328,83 +328,83 @@ ok:
  */
 int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
 {
-    str uri, hostpart, tel_uri, sip_uri;
-    char *at;
-    int i, j, in_tel_parameters = 0;
-    pv_spec_t *res;
-    pv_value_t res_val;
+	str uri, hostpart, tel_uri, sip_uri;
+	char *at;
+	int i, j, in_tel_parameters = 0;
+	pv_spec_t *res;
+	pv_value_t res_val;
 
-    /* get parameters */
-    if (get_str_fparam(&uri, _msg, (fparam_t*)_uri) < 0) {
-	LM_ERR("failed to get uri value\n");
-    }
-    if (get_str_fparam(&hostpart, _msg, (fparam_t*)_hostpart) < 0) {
-	LM_ERR("failed to get hostpart value\n");
-    }
-    res = (pv_spec_t *)_res;
-
-    /* check if anything needs to be done */
-    if (uri.len < 4) return 1;
-    if (strncasecmp(uri.s, "tel:", 4) != 0) return 1;
-    
-    /* reserve memory for clean tel uri */
-    tel_uri.s = pkg_malloc(uri.len+1);
-    if (tel_uri.s == 0) {
-	LM_ERR("no more pkg memory\n");
-	return -1;
-    }
-	
-    /* Remove visual separators before converting to SIP URI. Don't remove 
-       visual separators in TEL URI parameters (after the first ";") */
-    for (i=0, j=0; i < uri.len; i++) {
-	if (in_tel_parameters == 0) {
-	    if (uri.s[i] == ';')
-		in_tel_parameters = 1;
+	/* get parameters */
+	if (get_str_fparam(&uri, _msg, (fparam_t*)_uri) < 0) {
+		LM_ERR("failed to get uri value\n");
 	}
-	if (in_tel_parameters == 0) {
-	    if ((uri.s[i] != '-') && (uri.s[i] != '.') && 
-		(uri.s[i] != '(') && (uri.s[i] != ')'))
-		tel_uri.s[j++] = tolower(uri.s[i]);
-	} else {
-	    tel_uri.s[j++] = tolower(uri.s[i]);
+	if (get_str_fparam(&hostpart, _msg, (fparam_t*)_hostpart) < 0) {
+		LM_ERR("failed to get hostpart value\n");
 	}
-    }
-    tel_uri.s[j] = '\0';
-    tel_uri.len = strlen(tel_uri.s);
+	res = (pv_spec_t *)_res;
 
-    /* reserve memory for resulting sip uri */
-    sip_uri.len = 4 + tel_uri.len - 4 + 1 + hostpart.len + 1 + 10;
-    sip_uri.s = pkg_malloc(sip_uri.len);
-    if (sip_uri.s == 0) {
-	LM_ERR("no more pkg memory\n");
+	/* check if anything needs to be done */
+	if (uri.len < 4) return 1;
+	if (strncasecmp(uri.s, "tel:", 4) != 0) return 1;
+
+	/* reserve memory for clean tel uri */
+	tel_uri.s = pkg_malloc(uri.len+1);
+	if (tel_uri.s == 0) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+
+	/* Remove visual separators before converting to SIP URI. Don't remove 
+	   visual separators in TEL URI parameters (after the first ";") */
+	for (i=0, j=0; i < uri.len; i++) {
+		if (in_tel_parameters == 0) {
+			if (uri.s[i] == ';')
+				in_tel_parameters = 1;
+		}
+		if (in_tel_parameters == 0) {
+			if ((uri.s[i] != '-') && (uri.s[i] != '.') && 
+					(uri.s[i] != '(') && (uri.s[i] != ')'))
+				tel_uri.s[j++] = tolower(uri.s[i]);
+		} else {
+			tel_uri.s[j++] = tolower(uri.s[i]);
+		}
+	}
+	tel_uri.s[j] = '\0';
+	tel_uri.len = strlen(tel_uri.s);
+
+	/* reserve memory for resulting sip uri */
+	sip_uri.len = 4 + tel_uri.len - 4 + 1 + hostpart.len + 1 + 10;
+	sip_uri.s = pkg_malloc(sip_uri.len);
+	if (sip_uri.s == 0) {
+		LM_ERR("no more pkg memory\n");
+		pkg_free(tel_uri.s);
+		return -1;
+	}
+
+	/* create resulting sip uri */
+	at = sip_uri.s;
+	append_str(at, "sip:", 4);
+	append_str(at, tel_uri.s + 4, tel_uri.len - 4);
+	append_chr(at, '@');
+	append_str(at, hostpart.s, hostpart.len);
+	append_chr(at, ';');
+	append_str(at, "user=phone", 10);
+
+	/* tel_uri is not needed anymore */
 	pkg_free(tel_uri.s);
-	return -1;
-    }
 
-    /* create resulting sip uri */
-    at = sip_uri.s;
-    append_str(at, "sip:", 4);
-    append_str(at, tel_uri.s + 4, tel_uri.len - 4);
-    append_chr(at, '@');
-    append_str(at, hostpart.s, hostpart.len);
-    append_chr(at, ';');
-    append_str(at, "user=phone", 10);
+	/* set result pv value and write sip uri to result pv */
+	res_val.rs = sip_uri;
+	res_val.flags = PV_VAL_STR;
+	if (res->setf(_msg, &res->pvp, (int)EQ_T, &res_val) != 0) {
+		LM_ERR("failed to set result pvar\n");
+		pkg_free(sip_uri.s);
+		return -1;
+	}
 
-    /* tel_uri is not needed anymore */
-    pkg_free(tel_uri.s);
-
-    /* set result pv value and write sip uri to result pv */
-    res_val.rs = sip_uri;
-    res_val.flags = PV_VAL_STR;
-    if (res->setf(_msg, &res->pvp, (int)EQ_T, &res_val) != 0) {
-	LM_ERR("failed to set result pvar\n");
+	/* free allocated pkg memory and return */
 	pkg_free(sip_uri.s);
-	return -1;
-    }
-
-    /* free allocated pkg memory and return */
-    pkg_free(sip_uri.s);
-    return 1;
+	return 1;
 }
 
 
@@ -432,26 +432,26 @@ static inline int e164_check(str* _user)
  */
 int is_e164(struct sip_msg* _m, char* _sp, char* _s2)
 {
-    pv_spec_t *sp;
-    pv_value_t pv_val;
+	pv_spec_t *sp;
+	pv_value_t pv_val;
 
-    sp = (pv_spec_t *)_sp;
+	sp = (pv_spec_t *)_sp;
 
-    if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_STR) {
-	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
-		LM_DBG("missing argument\n");
-		return -1;
-	    }
-	    return e164_check(&(pv_val.rs));
+	if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
+		if (pv_val.flags & PV_VAL_STR) {
+			if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+				LM_DBG("missing argument\n");
+				return -1;
+			}
+			return e164_check(&(pv_val.rs));
+		} else {
+			LM_ERR("pseudo variable value is not string\n");
+			return -1;
+		}
 	} else {
-	    LM_ERR("pseudo variable value is not string\n");
-	    return -1;
+		LM_ERR("failed to get pseudo variable value\n");
+		return -1;
 	}
-    } else {
-	LM_ERR("failed to get pseudo variable value\n");
-	return -1;
-    }
 }
 
 
@@ -460,45 +460,45 @@ int is_e164(struct sip_msg* _m, char* _sp, char* _s2)
  */
 int w_is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 {
-    pv_spec_t *sp;
-    pv_value_t pv_val;
+	pv_spec_t *sp;
+	pv_value_t pv_val;
 
-    sp = (pv_spec_t *)_sp;
+	sp = (pv_spec_t *)_sp;
 
-    if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_STR) {
-	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
-		LM_DBG("missing uri\n");
-		return -1;
-	    }
-	    return is_uri_user_e164(&pv_val.rs);
+	if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
+		if (pv_val.flags & PV_VAL_STR) {
+			if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+				LM_DBG("missing uri\n");
+				return -1;
+			}
+			return is_uri_user_e164(&pv_val.rs);
+		} else {
+			LM_ERR("pseudo variable value is not string\n");
+			return -1;
+		}
 	} else {
-	    LM_ERR("pseudo variable value is not string\n");
-	    return -1;
+		LM_ERR("failed to get pseudo variable value\n");
+		return -1;
 	}
-    } else {
-	LM_ERR("failed to get pseudo variable value\n");
-	return -1;
-    }
 }
 
 
 int is_uri_user_e164(str *uri)
 {
-    char *chr;
-    str user;
+	char *chr;
+	str user;
 
-    chr = memchr(uri->s, ':', uri->len);
-    if (chr == NULL) {
-	LM_ERR("parsing URI failed\n");
-	return -1;
-    };
-    user.s = chr + 1;
-    chr = memchr(user.s, '@', uri->len - (user.s - uri->s));
-    if (chr == NULL) return -1;
-    user.len = chr - user.s;
+	chr = memchr(uri->s, ':', uri->len);
+	if (chr == NULL) {
+		LM_ERR("parsing URI failed\n");
+		return -1;
+	};
+	user.s = chr + 1;
+	chr = memchr(user.s, '@', uri->len - (user.s - uri->s));
+	if (chr == NULL) return -1;
+	user.len = chr - user.s;
 
-    return e164_check(&user);
+	return e164_check(&user);
 }
 
 /*
@@ -506,87 +506,87 @@ int is_uri_user_e164(str *uri)
  */
 int set_uri_user(struct sip_msg* _m, char* _uri, char* _value)
 {
-    pv_spec_t *uri_pv, *value_pv;
-    pv_value_t uri_val, value_val, res_val;
-    str uri, value;
-    char *at, *colon, *c;
-    char new_uri[MAX_URI_SIZE + 1];
+	pv_spec_t *uri_pv, *value_pv;
+	pv_value_t uri_val, value_val, res_val;
+	str uri, value;
+	char *at, *colon, *c;
+	char new_uri[MAX_URI_SIZE + 1];
 
-    uri_pv = (pv_spec_t *)_uri;
-    if (uri_pv && (pv_get_spec_value(_m, uri_pv, &uri_val) == 0)) {
-	if (uri_val.flags & PV_VAL_STR) {
-	    if (uri_val.rs.len == 0 || uri_val.rs.s == NULL) {
-		LM_ERR("missing uri value\n");
-		return -1;
-	    }
+	uri_pv = (pv_spec_t *)_uri;
+	if (uri_pv && (pv_get_spec_value(_m, uri_pv, &uri_val) == 0)) {
+		if (uri_val.flags & PV_VAL_STR) {
+			if (uri_val.rs.len == 0 || uri_val.rs.s == NULL) {
+				LM_ERR("missing uri value\n");
+				return -1;
+			}
+		} else {
+			LM_ERR("uri value is not string\n");
+			return -1;
+		}
 	} else {
-	    LM_ERR("uri value is not string\n");
-	    return -1;
-	}
-    } else {
-	LM_ERR("failed to get uri value\n");
-	return -1;
-    }
-    uri = uri_val.rs;
-
-    value_pv = (pv_spec_t *)_value;
-    if (value_pv && (pv_get_spec_value(_m, value_pv, &value_val) == 0)) {
-	if (value_val.flags & PV_VAL_STR) {
-	    if (value_val.rs.s == NULL) {
-		LM_ERR("missing uriuser value\n");
+		LM_ERR("failed to get uri value\n");
 		return -1;
-	    }
-	} else {
-	    LM_ERR("uriuser value is not string\n");
-	    return -1;
 	}
-    } else {
-	LM_ERR("failed to get uriuser value\n");
-	return -1;
-    }
-    value = value_val.rs;
+	uri = uri_val.rs;
 
-    colon = strchr(uri.s, ':');
-    if (colon == NULL) {
-	LM_ERR("uri does not contain ':' character\n");
-	return -1;
-    }
-    at = strchr(uri.s, '@');
-    c = &(new_uri[0]);
-    if (at == NULL) {
-	if (value.len == 0) return 1;
-	if (uri.len + value.len > MAX_URI_SIZE) {
-	    LM_ERR("resulting uri would be too large\n");
-	    return -1;
-	}
-	append_str(c, uri.s, colon - uri.s + 1);
-	append_str(c, value.s, value.len);
-	append_chr(c, '@');
-	append_str(c, colon + 1, uri.len - (colon - uri.s + 1));
-	res_val.rs.len = uri.len + value.len + 1;
-    } else {
-	if (value.len == 0) {
-	    append_str(c, uri.s, colon - uri.s + 1);
-	    append_str(c, at + 1, uri.len - (at - uri.s + 1));
-	    res_val.rs.len = uri.len - (at - colon);
+	value_pv = (pv_spec_t *)_value;
+	if (value_pv && (pv_get_spec_value(_m, value_pv, &value_val) == 0)) {
+		if (value_val.flags & PV_VAL_STR) {
+			if (value_val.rs.s == NULL) {
+				LM_ERR("missing uriuser value\n");
+				return -1;
+			}
+		} else {
+			LM_ERR("uriuser value is not string\n");
+			return -1;
+		}
 	} else {
-	    if (uri.len + value.len - (at - colon - 1) > MAX_URI_SIZE) {
-		LM_ERR("resulting uri would be too large\n");
+		LM_ERR("failed to get uriuser value\n");
 		return -1;
-	    }
-	    append_str(c, uri.s, colon - uri.s + 1);
-	    append_str(c, value.s, value.len);
-	    append_str(c, at, uri.len - (at - uri.s));
-	    res_val.rs.len = uri.len + value.len - (at - colon - 1);
 	}
-    }
+	value = value_val.rs;
 
-    res_val.rs.s = &(new_uri[0]);
-    LM_DBG("resulting uri: %.*s\n", res_val.rs.len, res_val.rs.s);
-    res_val.flags = PV_VAL_STR;
-    uri_pv->setf(_m, &uri_pv->pvp, (int)EQ_T, &res_val);
+	colon = strchr(uri.s, ':');
+	if (colon == NULL) {
+		LM_ERR("uri does not contain ':' character\n");
+		return -1;
+	}
+	at = strchr(uri.s, '@');
+	c = &(new_uri[0]);
+	if (at == NULL) {
+		if (value.len == 0) return 1;
+		if (uri.len + value.len > MAX_URI_SIZE) {
+			LM_ERR("resulting uri would be too large\n");
+			return -1;
+		}
+		append_str(c, uri.s, colon - uri.s + 1);
+		append_str(c, value.s, value.len);
+		append_chr(c, '@');
+		append_str(c, colon + 1, uri.len - (colon - uri.s + 1));
+		res_val.rs.len = uri.len + value.len + 1;
+	} else {
+		if (value.len == 0) {
+			append_str(c, uri.s, colon - uri.s + 1);
+			append_str(c, at + 1, uri.len - (at - uri.s + 1));
+			res_val.rs.len = uri.len - (at - colon);
+		} else {
+			if (uri.len + value.len - (at - colon - 1) > MAX_URI_SIZE) {
+				LM_ERR("resulting uri would be too large\n");
+				return -1;
+			}
+			append_str(c, uri.s, colon - uri.s + 1);
+			append_str(c, value.s, value.len);
+			append_str(c, at, uri.len - (at - uri.s));
+			res_val.rs.len = uri.len + value.len - (at - colon - 1);
+		}
+	}
 
-    return 1;
+	res_val.rs.s = &(new_uri[0]);
+	LM_DBG("resulting uri: %.*s\n", res_val.rs.len, res_val.rs.s);
+	res_val.flags = PV_VAL_STR;
+	uri_pv->setf(_m, &uri_pv->pvp, (int)EQ_T, &res_val);
+
+	return 1;
 }
 
 /*
@@ -594,80 +594,80 @@ int set_uri_user(struct sip_msg* _m, char* _uri, char* _value)
  */
 int set_uri_host(struct sip_msg* _m, char* _uri, char* _value)
 {
-    pv_spec_t *uri_pv, *value_pv;
-    pv_value_t uri_val, value_val, res_val;
-    str uri, value;
-    char *at, *colon, *c, *next;
-    unsigned int host_len;
-    char new_uri[MAX_URI_SIZE + 1];
+	pv_spec_t *uri_pv, *value_pv;
+	pv_value_t uri_val, value_val, res_val;
+	str uri, value;
+	char *at, *colon, *c, *next;
+	unsigned int host_len;
+	char new_uri[MAX_URI_SIZE + 1];
 
-    uri_pv = (pv_spec_t *)_uri;
-    if (uri_pv && (pv_get_spec_value(_m, uri_pv, &uri_val) == 0)) {
-	if (uri_val.flags & PV_VAL_STR) {
-	    if (uri_val.rs.len == 0 || uri_val.rs.s == NULL) {
-		LM_ERR("missing uri value\n");
-		return -1;
-	    }
+	uri_pv = (pv_spec_t *)_uri;
+	if (uri_pv && (pv_get_spec_value(_m, uri_pv, &uri_val) == 0)) {
+		if (uri_val.flags & PV_VAL_STR) {
+			if (uri_val.rs.len == 0 || uri_val.rs.s == NULL) {
+				LM_ERR("missing uri value\n");
+				return -1;
+			}
+		} else {
+			LM_ERR("uri value is not string\n");
+			return -1;
+		}
 	} else {
-	    LM_ERR("uri value is not string\n");
-	    return -1;
-	}
-    } else {
-	LM_ERR("failed to get uri value\n");
-	return -1;
-    }
-    uri = uri_val.rs;
-
-    value_pv = (pv_spec_t *)_value;
-    if (value_pv && (pv_get_spec_value(_m, value_pv, &value_val) == 0)) {
-	if (value_val.flags & PV_VAL_STR) {
-	    if (value_val.rs.s == NULL) {
-		LM_ERR("missing uri value\n");
+		LM_ERR("failed to get uri value\n");
 		return -1;
-	    }
-	} else {
-	    LM_ERR("uri value is not string\n");
-	    return -1;
 	}
-    } else {
-	LM_ERR("failed to get uri value\n");
-	return -1;
-    }
-    value = value_val.rs;
+	uri = uri_val.rs;
 
-    if (value.len == 0) {
-	LM_ERR("hostpart of uri cannot be empty\n");
-	return -1;
-    }
-    if (uri.len + value.len > MAX_URI_SIZE) {
-	LM_ERR("resulting uri would be too large\n");
-	return -1;
-    }
+	value_pv = (pv_spec_t *)_value;
+	if (value_pv && (pv_get_spec_value(_m, value_pv, &value_val) == 0)) {
+		if (value_val.flags & PV_VAL_STR) {
+			if (value_val.rs.s == NULL) {
+				LM_ERR("missing uri value\n");
+				return -1;
+			}
+		} else {
+			LM_ERR("uri value is not string\n");
+			return -1;
+		}
+	} else {
+		LM_ERR("failed to get uri value\n");
+		return -1;
+	}
+	value = value_val.rs;
 
-    colon = strchr(uri.s, ':');
-    if (colon == NULL) {
-	LM_ERR("uri does not contain ':' character\n");
-	return -1;
-    }
-    c = &(new_uri[0]);
-    at = strchr(colon + 1, '@');
-    if (at == NULL) {
-	next = colon + 1;
-    } else {
-	next = at + 1;
-    }
-    append_str(c, uri.s, next - uri.s);
-    host_len = strcspn(next, ":;?");
-    append_str(c, value.s, value.len);
-    strcpy(c, next + host_len);
-    res_val.rs.len = uri.len + value.len - host_len;
-    res_val.rs.s = &(new_uri[0]);
+	if (value.len == 0) {
+		LM_ERR("hostpart of uri cannot be empty\n");
+		return -1;
+	}
+	if (uri.len + value.len > MAX_URI_SIZE) {
+		LM_ERR("resulting uri would be too large\n");
+		return -1;
+	}
 
-    LM_DBG("resulting uri: %.*s\n", res_val.rs.len, res_val.rs.s);
-    res_val.flags = PV_VAL_STR;
-    uri_pv->setf(_m, &uri_pv->pvp, (int)EQ_T, &res_val);
+	colon = strchr(uri.s, ':');
+	if (colon == NULL) {
+		LM_ERR("uri does not contain ':' character\n");
+		return -1;
+	}
+	c = &(new_uri[0]);
+	at = strchr(colon + 1, '@');
+	if (at == NULL) {
+		next = colon + 1;
+	} else {
+		next = at + 1;
+	}
+	append_str(c, uri.s, next - uri.s);
+	host_len = strcspn(next, ":;?");
+	append_str(c, value.s, value.len);
+	strcpy(c, next + host_len);
+	res_val.rs.len = uri.len + value.len - host_len;
+	res_val.rs.s = &(new_uri[0]);
 
-    return 1;
+	LM_DBG("resulting uri: %.*s\n", res_val.rs.len, res_val.rs.s);
+	res_val.flags = PV_VAL_STR;
+	uri_pv->setf(_m, &uri_pv->pvp, (int)EQ_T, &res_val);
+
+	return 1;
 }
 
 /**
@@ -684,7 +684,7 @@ int get_uri_param(struct sip_msg* _msg, char* _param, char* _value)
 
 	param = (str*)_param;
 	dst = (pv_spec_t *) _value;
-  
+
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("ruri parsing failed\n");
 		return -1;
@@ -710,7 +710,7 @@ int get_uri_param(struct sip_msg* _msg, char* _param, char* _value)
 			params = params->next;
 		}
 	}
-  
+
 	free_params(params);
 	return -1;
 
@@ -726,10 +726,10 @@ found:
  */
 int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
 {
-    str tval = {0, 0};
-    int i;
+	str tval = {0, 0};
+	int i;
 
-    if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
+	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
 	{
 		LM_ERR("cannot get parameter value\n");
 		return -1;
@@ -760,10 +760,10 @@ int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
  */
 int is_numeric(sip_msg_t *msg, char *_sp, char* _s2)
 {
-    str tval = {0, 0};
-    int i;
+	str tval = {0, 0};
+	int i;
 
-    if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
+	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
 	{
 		LM_ERR("cannot get parameter value\n");
 		return -1;
