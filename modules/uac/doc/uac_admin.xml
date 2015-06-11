@@ -42,8 +42,10 @@
 			</listitem>
 			<listitem>
 			<para>
-				CSeq is not increased during authentication - the response 
-				may be rejected.
+				CSeq is not increased automatically by uac_auth() during authentication
+				- the follow up request may be rejected. CSeq can be increased when
+				authenticating INVITE requests - dialog module has to be used, with
+				CSeq tracking feature enabled (see the readme of dialog module).
 			</para>
 			</listitem>
 			<listitem>
@@ -688,7 +690,31 @@ uac_restore_to();
 				<title><function>uac_auth</function> usage</title>
 				<programlisting format="linespecific">
 ...
-uac_auth();
+modparam("uac","auth_username_avp","$avp(auser)")
+modparam("uac","auth_password_avp","$avp(apass)")
+modparam("uac","auth_realm_avp","$avp(arealm)")
+
+request_route {
+   ...
+   if(is_method("INVITE")) {
+      t_on_failure("TRUNKAUTH");
+   }
+   ...
+}
+
+failure_route[TRUNKAUTH] {
+
+    if (t_is_canceled()) {
+        exit;
+    }
+    if(t_check_status("401|407")) {
+        $avp(auser) = "test";
+        $avp(apass) = "test";
+        uac_auth();
+        t_relay();
+        exit;
+    }
+}
 ...
 				</programlisting>
 			</example>
