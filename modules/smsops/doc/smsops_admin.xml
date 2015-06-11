@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module collects the Transformations for 3GPP-SMS-V2.
+		This module collects the Transformations for 3GPP-SMS.
 	</para>
 	</section>
 	<section>
@@ -49,5 +49,51 @@
 		</para>
 	</section>
 	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<para>There are no configurable Parameters yet</para>
+	</section>
+	</section>
+	<section>
+	<title>Functions</title>
+		<section id="smsops.f.isRPDATA">
+		<title><function moreinfo="none">isRPDATA()</function></title>
+		<para>
+			Returns true, if the message contains RP-Data in it's body.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>isRPDATA()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (isRPDATA())
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="smsops.f.isRPDATA">
+		<title><function moreinfo="none">smsdump()</function></title>
+		<para>Dumps the content of a 3GPP-SMS message to the Debug-Log.</para>
+		<para>Please make sure, to have debug-Log enabled. Otherwise, you won't see anything.</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>smsdump()</function> usage</title>
+		<programlisting format="linespecific">
+...
+smsdump();
+...
+</programlisting>
+		</example>
+		</section>
+	</section><!-- end of functions -->
+
 </chapter>
 
