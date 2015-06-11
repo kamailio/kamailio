@@ -1,8 +1,4 @@
 /**
- * $Id$
- *
- * Copyright (C) 2011 Flowroute LLC (flowroute.com)
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * This file is free software; you can redistribute it and/or modify
@@ -32,6 +28,18 @@
 #include "const.h"
 #include "../../pvar.h"
 #include "../../usr_avp.h"
+
+# define json_foreach_key(obj,key) \
+	char *key;\
+	struct lh_entry *entry ## key; \
+	struct lh_entry *entry_next ## key = NULL; \
+	for(entry ## key = json_object_get_object(obj)->head; \
+		(entry ## key ? ( \
+			key = (char*)entry ## key->k, \
+			entry_next ## key = entry ## key->next, \
+			entry ## key) : 0); \
+		entry ## key = entry_next ## key)
+
 
 static str kz_pv_str_empty = {"", 0};
 
@@ -290,12 +298,12 @@ int kz_json_get_keys(struct sip_msg* msg, char* json, char* field, char* dst)
 	struct json_object *jtree = kz_json_get_field_object(&json_s, &field_s);
 
 	if(jtree != NULL) {
-		json_object_object_foreach(jtree, k, v) {
+		json_foreach_key(jtree, k) {
 			LM_DBG("ITERATING KEY %s\n", k);
-			int_str val;
-			val.s.s = k;
-			val.s.len = strlen(k);
-			if (add_avp(AVP_VAL_STR|keys_avp_type, keys_avp_name, val) < 0) {
+			int_str v1;
+			v1.s.s = k;
+			v1.s.len = strlen(k);
+			if (add_avp(AVP_VAL_STR|keys_avp_type, keys_avp_name, v1) < 0) {
 				LM_ERR("failed to create AVP\n");
 			    json_object_put(jtree);
 				return -1;
