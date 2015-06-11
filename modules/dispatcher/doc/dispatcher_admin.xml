@@ -18,19 +18,19 @@
 	<para>
 		This module offers SIP load balancer functionality and it can be
 		used as SIP traffic dispatcher. There are many load balancing and
-		traffic dispaching algorithms that you can choose from, like:
+		traffic dispaching algorithms that you can choose from, for example:
 		round-robin, weight based load balancing, call load distribution,
-		hashing over SIP message attributes.
+		and hashing over SIP message attributes.
 	</para>
 	<para>
-		The module can be used as a stateless load balancer, it does not
+		The module can be used as a stateless load balancer; it does not
 		depend on any call state tracking module. It requires the TM module if
 		you enable auto-discovery of active/inactive gateways.
 	</para>
 	<para>
 		It is very lightweight, therefore suitable for handling heavy SIP
-		traffic. The module has a small footprint and ability to load balancing rules
-		from a text plain file makes it suitable for embedded systems.
+		traffic. As the module has a small footprint and the ability to load 
+		balancing rules from a plain text file, it is suitable for embedded systems.
 	</para>
 	</section>
 	<section>
