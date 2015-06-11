@@ -120,10 +120,15 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 
 
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+    _tbc = NULL;
 
 	res = dbt_query(_h, _k, _op, _v, result_cols, nc, cols, NULL, _r);
 
 error:
+
+    if(_tbc)
+        dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+    
 	if(tokens) {
 	    for (i = 0; *(tokens + i); i++) {
 	    	pkg_free(*(tokens + i));
