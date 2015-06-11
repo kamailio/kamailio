@@ -119,7 +119,6 @@ get_prefix(
 {
 	rt_info_t *rt = NULL;
 	char *tmp=NULL;
-	char local=0;
 	int idx=0;
 
 	if(NULL == ptree)
@@ -132,24 +131,10 @@ get_prefix(
 	while(tmp< (prefix->s+prefix->len)) {
 		if(NULL == tmp)
 			goto err_exit;
-		local=*tmp;
-			
-		if( IS_DECIMAL_DIGIT(local) ) {
-			idx = local -'0';
-		}
-		else if (local == '*'){
-			idx = 10;
-		}
-		else if (local == '#'){
-			idx = 11;
-		}
-		else if (local == '+'){
-			idx = 12;
-		}
-		else{
+		idx = get_node_index(*tmp);
+		if (idx == -1){
 			/* unknown character in the prefix string */
 			goto err_exit;
-
 		}
 		if( tmp == (prefix->s+prefix->len-1) ) {
 			/* last digit in the prefix string */
@@ -168,13 +153,7 @@ get_prefix(
 		if(NULL == tmp)
 			goto err_exit;
 		/* is it a real node or an intermediate one */
-		idx = *tmp-'0';
-		if (*tmp == '*')
-			idx = 10;
-		else if (*tmp == '#')
-			idx = 11;
-		else if (*tmp == '+')
-			idx = 12;
+		idx = get_node_index(*tmp);
 		if(NULL != ptree->ptnode[idx].rg) {
 			/* real node; check the constraints on the routing info*/
 			if( NULL != (rt = internal_check_rt( &(ptree->ptnode[idx]), rgid)))
@@ -225,22 +204,8 @@ add_prefix(
 	while(tmp < (prefix->s+prefix->len)) {
 		if(NULL == tmp)
 			goto err_exit;
-		int insert_index = -1;
-		if( IS_DECIMAL_DIGIT(*tmp)  ) {
-			/* unknown character in the prefix string */
-			insert_index = *tmp - '0';
-		}
-		else if (*tmp=='*'){
-			insert_index = 10;
-		}
-		else if (*tmp=='#'){
-			insert_index = 11;
-		}
-		else if (*tmp=='+'){
-			insert_index = 12;
-		}
-
-		else{
+		int insert_index = get_node_index(*tmp);
+		if (insert_index == -1){
 			/* unknown character in the prefix string */
 			goto err_exit;
 		}
@@ -352,4 +317,33 @@ print_rt(
 				rt->pgwl[i].pgw->id, 
 				rt->pgwl[i].pgw->pri.len, rt->pgwl[i].pgw->pri.s,
 				rt->pgwl[i].pgw->ip.len, rt->pgwl[i].pgw->ip.s);
+}
+
+
+int
+get_node_index(
+		char ch
+		)
+{
+	switch (ch)
+	{
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			return ch - '0';
+		case '*':
+			return 10;
+		case '#':
+			return 11;
+		case '+':
+			return 12;
+	}
+	return -1;
 }
