@@ -116,16 +116,20 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	int i;
+
 	if (rank!=PROC_MAIN)
 		return 0;
 
 	if(async_workers<=0)
 		return 0;
 
-	if(fork_dummy_timer(PROC_TIMER, "ASYNC MOD TIMER", 1 /*socks flag*/,
+	for(i=0; i<async_workers; i++) {
+		if(fork_dummy_timer(PROC_TIMER, "ASYNC MOD TIMER", 1 /*socks flag*/,
 				async_timer_exec, NULL, 1 /*sec*/)<0) {
-		LM_ERR("failed to register timer routine as process\n");
-		return -1; /* error */
+			LM_ERR("failed to register timer routine as process (%d)\n", i);
+			return -1; /* error */
+		}
 	}
 
 	return 0;
