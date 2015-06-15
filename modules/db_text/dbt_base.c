@@ -503,7 +503,8 @@ int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		_drp = _drp0;
 	}
 
-	dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
+	if( ((dbt_con_p)_h->tail)->affected )
+		dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
 	
 	/* dbt_print_table(_tbc, NULL); */
 	
@@ -587,7 +588,8 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		_drp = _drp->next;
 	}
 
-	dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
+	if( ((dbt_con_p)_h->tail)->affected )
+		dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
 	
 	/* dbt_print_table(_tbc, NULL); */
 	
