@@ -499,8 +499,8 @@ urecord_t* db_load_urecord_by_ruid(udomain_t* _d, str *_ruid)
 	columns[12] = &last_mod_col;
 	columns[13] = &ruid_col;
 	columns[14] = &instance_col;
-	columns[15] = &user_col;
-	columns[16] = &reg_id_col;
+	columns[15] = &reg_id_col;
+	columns[16] = &user_col;
 	columns[17] = &domain_col;
 
 	if (desc_time_order)
