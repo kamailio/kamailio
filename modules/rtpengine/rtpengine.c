@@ -102,11 +102,12 @@ MODULE_VERSION
 #define MI_SET_NATPING_STATE		"nh_enable_ping"
 #define MI_DEFAULT_NATPING_STATE	1
 
-#define MI_ENABLE_RTP_PROXY			"nh_enable_rtpp"
 #define MI_MIN_RECHECK_TICKS		0
 #define MI_MAX_RECHECK_TICKS		(unsigned int)-1
 
+#define MI_ENABLE_RTP_PROXY			"nh_enable_rtpp"
 #define MI_SHOW_RTP_PROXIES			"nh_show_rtpp"
+#define MI_PING_RTP_PROXY           "nh_ping_rtpp"
 
 #define MI_RTP_PROXY_NOT_FOUND		"RTP proxy not found"
 #define MI_RTP_PROXY_NOT_FOUND_LEN	(sizeof(MI_RTP_PROXY_NOT_FOUND)-1)
@@ -118,6 +119,8 @@ MODULE_VERSION
 #define MI_SET_LEN					(sizeof(MI_SET)-1)
 #define MI_INDEX					"index"
 #define MI_INDEX_LEN				(sizeof(MI_INDEX)-1)
+#define MI_ENABLED					"enabled"
+#define MI_ENABLED_LEN				(sizeof(MI_ENABLED)-1)
 #define MI_DISABLED					"disabled"
 #define MI_DISABLED_LEN				(sizeof(MI_DISABLED)-1)
 #define MI_WEIGHT					"weight"
@@ -125,6 +128,24 @@ MODULE_VERSION
 #define MI_RECHECK_TICKS			"recheck_ticks"
 #define MI_RECHECK_T_LEN			(sizeof(MI_RECHECK_TICKS)-1)
 
+#define MI_ERROR                    "Error when adding rtpp node details"
+#define MI_ERROR_LEN                (sizeof(MI_ERROR)-1)
+#define MI_ALL                      "all"
+#define MI_ALL_LEN           		(sizeof(MI_ALL)-1)
+#define MI_ENABLE                   "enable"
+#define MI_ENABLE_LEN         		(sizeof(MI_ENABLE)-1)
+#define MI_DISABLE                  "disable"
+#define MI_DISABLE_LEN         		(sizeof(MI_DISABLE)-1)
+#define MI_PING                     "ping"
+#define MI_PING_LEN         		(sizeof(MI_PING)-1)
+#define MI_SUCCESS                  "success"
+#define MI_SUCCESS_LEN         		(sizeof(MI_SUCCESS)-1)
+#define MI_FAIL                     "fail"
+#define MI_FAIL_LEN         		(sizeof(MI_FAIL)-1)
+
+#define MI_FOUND_ALL                   2
+#define MI_FOUND_ONE                   1
+#define MI_FOUND_NONE                  0
 
 
 #define	CPORT		"22222"
@@ -135,6 +156,7 @@ enum rtpe_operation {
 	OP_DELETE,
 	OP_START_RECORDING,
 	OP_QUERY,
+	OP_PING,
 };
 
 struct ng_flags_parse {
@@ -148,6 +170,7 @@ static const char *command_strings[] = {
 	[OP_DELETE]		= "delete",
 	[OP_START_RECORDING]	= "start recording",
 	[OP_QUERY]		= "query",
+	[OP_PING]		= "ping",
 };
 
 static char *gencookie();
@@ -179,14 +202,22 @@ static int get_ip_type(char *str_addr);
 static int get_ip_scope(char *str_addr); // useful for link-local ipv6
 static int bind_force_send_ip(int sock_idx);
 
+static int add_rtpp_node_info(struct mi_node *node,
+                              struct rtpp_node *crt_rtpp,
+                              struct rtpp_set *rtpp_list);
+
+static int rtpp_test_ping(struct rtpp_node *node);
+
 /* Pseudo-Variables */
 static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 /*mi commands*/
 static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree,
 		void* param );
-static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
+static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree,
 		void* param);
+static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree,
+        void* param);
 
 
 static int rtpengine_disable_tout = 60;
@@ -224,6 +255,8 @@ static int_str setid_avp;
 static str            write_sdp_pvar_str = {NULL, 0};
 static pv_spec_t*     write_sdp_pvar = NULL;
 
+#define RTPENGINE_SESS_LIMIT_MSG "Parallel session limit reached"
+#define RTPENGINE_SESS_LIMIT_MSG_LEN (sizeof(RTPENGINE_SESS_LIMIT_MSG)-1)
 
 char* force_send_ip_str="";
 int force_send_ip_af = AF_UNSPEC;
@@ -303,8 +336,9 @@ static param_export_t params[] = {
 };
 
 static mi_export_t mi_cmds[] = {
-	{MI_ENABLE_RTP_PROXY,     mi_enable_rtp_proxy,  0,                0, 0},
-	{MI_SHOW_RTP_PROXIES,     mi_show_rtpproxies,   MI_NO_INPUT_FLAG, 0, 0},
+	{MI_ENABLE_RTP_PROXY,     mi_enable_rtp_proxy,  0,  0,  0},
+	{MI_SHOW_RTP_PROXIES,     mi_show_rtp_proxy,    0,  0,  0},
+	{MI_PING_RTP_PROXY,       mi_ping_rtp_proxy,    0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -423,7 +457,7 @@ static int bind_force_send_ip(int sock_idx)
 			memset(&tmp, 0, sizeof(tmp));
 			getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp, &sock_len);
 			inet_ntop(AF_INET, &tmp.sin_addr, str_addr, INET_ADDRSTRLEN);
-			LM_INFO("Binding on %s:%d\n", str_addr, ntohs(tmp.sin_port));
+			LM_DBG("Binding on %s:%d\n", str_addr, ntohs(tmp.sin_port));
 
 			break;
 
@@ -447,7 +481,7 @@ static int bind_force_send_ip(int sock_idx)
 			memset(&tmp6, 0, sizeof(tmp6));
 			getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp6, &sock_len);
 			inet_ntop(AF_INET6, &tmp6.sin6_addr, str_addr6, INET6_ADDRSTRLEN);
-			LM_INFO("Binding on ipv6 %s:%d\n", str_addr6, ntohs(tmp6.sin6_port));
+			LM_DBG("Binding on ipv6 %s:%d\n", str_addr6, ntohs(tmp6.sin6_port));
 
 			break;
 
@@ -779,64 +813,201 @@ static int fixup_set_id(void ** param, int param_no)
 	return 0;
 }
 
-static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree,
-												void* param )
-{	struct mi_node* node;
-	str rtpp_url;
+static int rtpp_test_ping(struct rtpp_node *node)
+{
+    bencode_buffer_t bencbuf;
+    bencode_item_t *dict;
+    char *cp;
+    int ret;
+
+    if (bencode_buffer_init(&bencbuf)) {
+        return -1;
+    }
+    dict = bencode_dictionary(&bencbuf);
+    bencode_dictionary_add_string(dict, "command", command_strings[OP_PING]);
+
+    if (bencbuf.error) {
+        goto error;
+    }
+
+    cp = send_rtpp_command(node, dict, &ret);
+    if (!cp) {
+        goto error;
+    }
+
+    dict = bencode_decode_expect(&bencbuf, cp, ret, BENCODE_DICTIONARY);
+    if (!dict || bencode_dictionary_get_strcmp(dict, "result", "pong")) {
+        goto error;
+    }
+
+    bencode_buffer_free(&bencbuf);
+    return 0;
+
+error:
+    bencode_buffer_free(&bencbuf);
+    return -1;
+}
+
+static struct mi_root* mi_enable_rtp_proxy(struct mi_root *cmd_tree,
+												void *param )
+{
+	struct mi_node *node, *crt_node;
+	struct rtpp_set *rtpp_list;
+	struct rtpp_node *crt_rtpp, *found_rtpp;
+	struct mi_root *root;
+	struct mi_attr *attr;
 	unsigned int enable;
-	struct rtpp_set * rtpp_list;
-	struct rtpp_node * crt_rtpp;
-	int found;
+	int found, found_rtpp_disabled;
+	str rtpp_url;
+	str snode, sattr, svalue;
 
-	found = 0;
+	found = MI_FOUND_NONE;
+	found_rtpp_disabled = 0;
+	found_rtpp = NULL;
+	enable = 0;
 
-	if(rtpp_set_list ==NULL)
-		goto end;
+	if (rtpp_set_list == NULL) {
+	    return init_mi_tree(404, MI_RTP_PROXY_NOT_FOUND, MI_RTP_PROXY_NOT_FOUND_LEN);
+	}
 
 	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	if (node == NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
 
-	if(node->value.s == NULL || node->value.len ==0)
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	if (node->value.s == NULL || node->value.len ==0) {
+		return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
 
+	/* get proxy */
 	rtpp_url = node->value;
 
 	node = node->next;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	if (node == NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
 
-	enable = 0;
-	if( strno2int( &node->value, &enable) <0)
+	if (node->value.s == NULL || node->value.len ==0) {
+		return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	/* get value (enable/disable) */
+	if(strno2int(&node->value, &enable) < 0) {
 		goto error;
+	}
+
+	node = node->next;
+	if (node != NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+    /* found a matching all - show all rtpp */
+    if (strncmp(MI_ALL, rtpp_url.s, MI_ALL_LEN) == 0) {
+        found = MI_FOUND_ALL;
+    }
 
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
-					rtpp_list = rtpp_list->rset_next){
+					rtpp_list = rtpp_list->rset_next) {
 
 		for(crt_rtpp = rtpp_list->rn_first; crt_rtpp != NULL;
-						crt_rtpp = crt_rtpp->rn_next){
-			/*found a matching rtpp*/
+						crt_rtpp = crt_rtpp->rn_next) {
 
-			if(crt_rtpp->rn_url.len == rtpp_url.len){
+	        /* found a matching rtpp - show it */
+	        if (found == MI_FOUND_ALL ||
+                    (crt_rtpp->rn_url.len == rtpp_url.len &&
+	                strncmp(crt_rtpp->rn_url.s, rtpp_url.s, rtpp_url.len) == 0)) {
+	            /* do ping when try to enable the rtpp */
+	            if (enable) {
 
-				if(strncmp(crt_rtpp->rn_url.s, rtpp_url.s, rtpp_url.len) == 0){
-					/*set the enabled/disabled status*/
-					found = 1;
-					crt_rtpp->rn_recheck_ticks =
-						enable? MI_MIN_RECHECK_TICKS : MI_MAX_RECHECK_TICKS;
-					crt_rtpp->rn_disabled = enable?0:1;
-				}
-			}
+	                /* if ping success, enable the rtpp and reset ticks */
+	                if (rtpp_test_ping(crt_rtpp) == 0) {
+					    crt_rtpp->rn_disabled = 0;
+	                    crt_rtpp->rn_recheck_ticks = MI_MIN_RECHECK_TICKS;
+
+	                /* if ping fail, disable the rtpps but _not_ permanently*/
+	                } else {
+	                    crt_rtpp->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
+					    crt_rtpp->rn_disabled = 1;
+	                    found_rtpp_disabled = 1;
+	                }
+
+	            /* do not ping when disable the rtpp; disable it permanenty */
+	            } else {
+					crt_rtpp->rn_disabled = 1;
+	                crt_rtpp->rn_recheck_ticks = MI_MAX_RECHECK_TICKS;
+	            }
+
+                if (found == MI_FOUND_NONE) {
+                        found = MI_FOUND_ONE;
+                        found_rtpp = crt_rtpp;
+                }
+	        }
 		}
 	}
 
-end:
-	if(found)
-		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	return init_mi_tree(404,MI_RTP_PROXY_NOT_FOUND,MI_RTP_PROXY_NOT_FOUND_LEN);
+	root = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	if (!root) {
+		LM_ERR("the MI tree cannot be initialized!\n");
+		return 0;
+	}
+	node = &root->node;
+
+	switch (found) {
+	    case MI_FOUND_ALL:
+	        snode.s = MI_ALL;
+	        snode.len = MI_ALL_LEN;
+            break;
+	    case MI_FOUND_ONE:
+	        snode.s = found_rtpp->rn_url.s;
+	        snode.len = found_rtpp->rn_url.len;
+	        break;
+	    default:
+	        if (root) {
+	            free_mi_tree(root);
+	        }
+	        return init_mi_tree(404, MI_RTP_PROXY_NOT_FOUND, MI_RTP_PROXY_NOT_FOUND_LEN);
+	}
+
+    svalue.s = MI_SUCCESS;
+    svalue.len = MI_SUCCESS_LEN;
+
+    if (enable) {
+        sattr.s = MI_ENABLE;
+        sattr.len = MI_ENABLE_LEN;
+
+        if (found_rtpp_disabled) {
+            svalue.s = MI_FAIL;
+            svalue.len = MI_FAIL_LEN;
+        }
+    } else {
+        sattr.s = MI_DISABLE;
+        sattr.len = MI_DISABLE_LEN;
+    }
+
+	if (!(crt_node = add_mi_node_child(node, 0,
+	                                   snode.s, snode.len,
+	                                   0, 0)) ) {
+	    LM_ERR("cannot add the child node to the tree\n");
+	    goto error;
+	}
+
+	if ((attr = add_mi_attr(crt_node, MI_DUP_VALUE,
+	                        sattr.s, sattr.len,
+	                        svalue.s, svalue.len)) == 0) {
+	    LM_ERR("cannot add attributes to the node\n");
+	    goto error;
+	}
+
+
+	return root;
+
 error:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	if (root) {
+	    free_mi_tree(root);
+	}
+	return init_mi_tree(404, MI_ERROR, MI_ERROR_LEN);
 }
+
 
 
 
@@ -853,18 +1024,111 @@ error:
 			goto _error;\
 	}while(0);
 
-static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
-												void* param)
+
+static int add_rtpp_node_info (struct mi_node *node,
+	                           struct rtpp_node *crt_rtpp,
+	                           struct rtpp_set *rtpp_list)
 {
-	struct mi_node* node, *crt_node, *child;
-	struct mi_root* root;
-	struct mi_attr * attr;
-	struct rtpp_set * rtpp_list;
-	struct rtpp_node * crt_rtpp;
-	char * string, *id;
 	int id_len, len;
+    int rtpp_ticks;
+	struct mi_node *crt_node, *child;
+	struct mi_attr *attr;
+	char *string, *id;
 
 	string = id = 0;
+
+	id = int2str(rtpp_list->id_set, &id_len);
+	if(!id) {
+	    LM_ERR("cannot convert set id\n");
+	    goto error;
+	}
+
+	if(!(crt_node = add_mi_node_child(node, 0, crt_rtpp->rn_url.s,
+	        crt_rtpp->rn_url.len, 0,0)) ) {
+	    LM_ERR("cannot add the child node to the tree\n");
+	    goto error;
+	}
+
+	LM_DBG("adding node name %s \n",crt_rtpp->rn_url.s );
+
+	if((attr = add_mi_attr(crt_node, MI_DUP_VALUE, MI_SET, MI_SET_LEN,
+	                        id, id_len))== 0) {
+	    LM_ERR("cannot add attributes to the node\n");
+	    goto error;
+	}
+
+	add_rtpp_node_int_info(crt_node, MI_INDEX, MI_INDEX_LEN,
+	    crt_rtpp->idx, child, len, string, error);
+
+	if ((1 == crt_rtpp->rn_disabled ) && (crt_rtpp->rn_recheck_ticks == MI_MAX_RECHECK_TICKS)) {
+	    if( !(child = add_mi_node_child(crt_node, MI_DUP_VALUE, MI_DISABLED, MI_DISABLED_LEN,
+	                    MI_DISABLED_PERMANENT, MI_DISABLED_PERMANENT_LEN))) {
+	        LM_ERR("cannot add disabled (permanent) message\n");
+	        goto error;
+	    }
+	}
+	else {
+	    add_rtpp_node_int_info(crt_node, MI_DISABLED, MI_DISABLED_LEN,
+	        crt_rtpp->rn_disabled, child, len, string, error);
+	}
+
+	add_rtpp_node_int_info(crt_node, MI_WEIGHT, MI_WEIGHT_LEN,
+	    crt_rtpp->rn_weight, child, len, string, error);
+
+	if (crt_rtpp->rn_recheck_ticks == MI_MAX_RECHECK_TICKS) {
+	    if( !(child = add_mi_node_child(crt_node, MI_DUP_VALUE,
+	                  MI_RECHECK_TICKS, MI_RECHECK_T_LEN,
+	                  "N/A", sizeof("N/A") - 1))) {
+	        LM_ERR("cannot add MAX recheck_ticks value\n");
+	        goto error;
+	    }
+	} else {
+        rtpp_ticks = crt_rtpp->rn_recheck_ticks - get_ticks();
+        rtpp_ticks = rtpp_ticks < 0 ? 0 : rtpp_ticks;
+	    add_rtpp_node_int_info(crt_node, MI_RECHECK_TICKS, MI_RECHECK_T_LEN,
+	        rtpp_ticks, child, len, string, error);
+	}
+
+	return 0;
+
+error:
+	return -1;
+}
+
+static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree,
+												void* param)
+{
+	struct mi_node *node;
+	struct mi_root *root;
+	struct rtpp_set *rtpp_list;
+	struct rtpp_node *crt_rtpp;
+	int found;
+	str rtpp_url;
+
+	found = MI_FOUND_NONE;
+
+	if (rtpp_set_list == NULL) {
+	    return init_mi_tree(404, MI_RTP_PROXY_NOT_FOUND, MI_RTP_PROXY_NOT_FOUND_LEN);
+	}
+
+	node = cmd_tree->node.kids;
+	if (node == NULL) {
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+	if (node->value.s == NULL || node->value.len ==0) {
+		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	rtpp_url = node->value;
+	if (strncmp(MI_ALL, rtpp_url.s, MI_ALL_LEN) != 0 && rtpp_set_list == NULL) {
+	    return init_mi_tree(404, MI_RTP_PROXY_NOT_FOUND, MI_RTP_PROXY_NOT_FOUND_LEN);
+	}
+
+	node = node->next;
+	if (node != NULL) {
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
 
 	root = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 	if (!root) {
@@ -872,65 +1136,180 @@ static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
 		return 0;
 	}
 
-	if(rtpp_set_list ==NULL)
-		return root;
-
 	node = &root->node;
 
+    /* found a matching all - show all rtpp */
+    if (strncmp(MI_ALL, rtpp_url.s, MI_ALL_LEN) == 0) {
+        found = MI_FOUND_ALL;
+    }
+
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
-					rtpp_list = rtpp_list->rset_next){
+					rtpp_list = rtpp_list->rset_next) {
 
 		for(crt_rtpp = rtpp_list->rn_first; crt_rtpp != NULL;
-						crt_rtpp = crt_rtpp->rn_next){
+						crt_rtpp = crt_rtpp->rn_next) {
 
-			id =  int2str(rtpp_list->id_set, &id_len);
-			if(!id){
-				LM_ERR("cannot convert set id\n");
-				goto error;
-			}
+	        /* found a matching rtpp - show it */
+	        if (found == MI_FOUND_ALL ||
+                    (crt_rtpp->rn_url.len == rtpp_url.len &&
+	                strncmp(crt_rtpp->rn_url.s, rtpp_url.s, rtpp_url.len) == 0)) {
 
-			if(!(crt_node = add_mi_node_child(node, 0, crt_rtpp->rn_url.s,
-					crt_rtpp->rn_url.len, 0,0)) ) {
-				LM_ERR("cannot add the child node to the tree\n");
-				goto error;
-			}
+	            if (add_rtpp_node_info(node, crt_rtpp, rtpp_list) < 0) {
+	                goto error;
+	            }
 
-			LM_DBG("adding node name %s \n",crt_rtpp->rn_url.s );
-
-			if((attr = add_mi_attr(crt_node, MI_DUP_VALUE, MI_SET, MI_SET_LEN,
-									id, id_len))== 0){
-				LM_ERR("cannot add attributes to the node\n");
-				goto error;
-			}
-
-			add_rtpp_node_int_info(crt_node, MI_INDEX, MI_INDEX_LEN,
-				crt_rtpp->idx, child, len,string,error);
-			
-			if (( 1 == crt_rtpp->rn_disabled ) && ( crt_rtpp->rn_recheck_ticks == MI_MAX_RECHECK_TICKS)) {
-				if( !(child = add_mi_node_child(crt_node, MI_DUP_VALUE, MI_DISABLED, MI_DISABLED_LEN,
-								MI_DISABLED_PERMANENT, MI_DISABLED_PERMANENT_LEN))) {
-					LM_ERR("cannot add disabled (permanent) message\n");
-					goto error;
-				}
-			}
-			else {
-				add_rtpp_node_int_info(crt_node, MI_DISABLED, MI_DISABLED_LEN,
-					crt_rtpp->rn_disabled, child, len,string,error);
-			}
-
-			add_rtpp_node_int_info(crt_node, MI_WEIGHT, MI_WEIGHT_LEN,
-				crt_rtpp->rn_weight,  child, len, string,error);
-			add_rtpp_node_int_info(crt_node, MI_RECHECK_TICKS,MI_RECHECK_T_LEN,
-				crt_rtpp->rn_recheck_ticks, child, len, string, error);
+                if (found == MI_FOUND_NONE) {
+                        found = MI_FOUND_ONE;
+                }
+	        }
 		}
 	}
 
+	switch (found) {
+	    case MI_FOUND_ALL:
+	    case MI_FOUND_ONE:
+	        break;
+	    default:
+	        if (root) {
+	            free_mi_tree(root);
+	        }
+	        return init_mi_tree(404, MI_RTP_PROXY_NOT_FOUND, MI_RTP_PROXY_NOT_FOUND_LEN);
+	}
+
 	return root;
+
 error:
-	if (root)
+	if (root) {
 		free_mi_tree(root);
-	return 0;
+	}
+	return init_mi_tree(404, MI_ERROR, MI_ERROR_LEN);
 }
+
+static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree,
+												void* param)
+{
+	struct mi_node *node, *crt_node;
+	struct mi_attr *attr;
+	struct mi_root *root;
+	struct rtpp_set *rtpp_list;
+	struct rtpp_node *crt_rtpp, *found_rtpp;
+	int found, found_rtpp_disabled;
+	str rtpp_url;
+	str snode, sattr, svalue;
+
+	found = 0;
+	found_rtpp_disabled = 0;
+	found_rtpp = NULL;
+
+	if (rtpp_set_list == NULL) {
+	    return init_mi_tree(404, MI_RTP_PROXY_NOT_FOUND, MI_RTP_PROXY_NOT_FOUND_LEN);
+	}
+
+	node = cmd_tree->node.kids;
+	if (node == NULL) {
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+	if (node->value.s == NULL || node->value.len ==0) {
+		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	rtpp_url = node->value;
+
+	node = node->next;
+	if (node != NULL) {
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+    /* found a matching all - ping all rtpp */
+    if (strncmp(MI_ALL, rtpp_url.s, MI_ALL_LEN) == 0) {
+        found = MI_FOUND_ALL;
+    }
+
+	for (rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
+					rtpp_list = rtpp_list->rset_next) {
+
+		for (crt_rtpp = rtpp_list->rn_first; crt_rtpp != NULL;
+						crt_rtpp = crt_rtpp->rn_next) {
+
+	        /* found a matching rtpp - ping it */
+	        if (found == MI_FOUND_ALL ||
+                    (crt_rtpp->rn_url.len == rtpp_url.len &&
+	                strncmp(crt_rtpp->rn_url.s, rtpp_url.s, rtpp_url.len) == 0)) {
+
+	            /* if ping fail */
+	            if (rtpp_test_ping(crt_rtpp) < 0) {
+	                crt_rtpp->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
+	                found_rtpp_disabled = 1;
+	                crt_rtpp->rn_disabled = 1;
+	            }
+
+                if (found == MI_FOUND_NONE) {
+    	            found = MI_FOUND_ONE;
+	                found_rtpp = crt_rtpp;
+                }
+		    }
+	    }
+	}
+
+	root = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	if (!root) {
+		LM_ERR("the MI tree cannot be initialized!\n");
+		return 0;
+	}
+
+	node = &root->node;
+
+	switch (found) {
+	    case MI_FOUND_ALL:
+	        snode.s = MI_ALL;
+	        snode.len = MI_ALL_LEN;
+	        break;
+	    case MI_FOUND_ONE:
+	        snode.s = found_rtpp->rn_url.s;
+	        snode.len = found_rtpp->rn_url.len;
+	        break;
+	    default:
+	        if (root) {
+	            free_mi_tree(root);
+	        }
+	        return init_mi_tree(404, MI_RTP_PROXY_NOT_FOUND, MI_RTP_PROXY_NOT_FOUND_LEN);
+	}
+
+    sattr.s = MI_PING;
+    sattr.len = MI_PING_LEN;
+
+    if (found_rtpp_disabled) {
+        svalue.s = MI_FAIL;
+        svalue.len = MI_FAIL_LEN;
+    } else {
+        svalue.s = MI_SUCCESS;
+        svalue.len = MI_SUCCESS_LEN;
+    }
+
+	if (!(crt_node = add_mi_node_child(node, 0,
+	                                   snode.s, snode.len,
+	                                   0, 0)) ) {
+	    LM_ERR("cannot add the child node to the tree\n");
+	    goto error;
+	}
+
+	if ((attr = add_mi_attr(crt_node, MI_DUP_VALUE,
+	                        sattr.s, sattr.len,
+	                        svalue.s, svalue.len)) == 0) {
+	    LM_ERR("cannot add attributes to the node\n");
+	    goto error;
+	}
+
+	return root;
+
+error:
+	if (root) {
+	    free_mi_tree(root);
+	}
+	return init_mi_tree(404, MI_ERROR, MI_ERROR_LEN);
+}
+
 
 
 static int
@@ -1505,6 +1884,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		active_rtpp_set = default_rtpp_set;
 
 	queried_nodes = 0;
+select_node:
 	do {
 		if (++queried_nodes > queried_nodes_limit) {
 			LM_ERR("queried nodes limit reached\n");
@@ -1516,6 +1896,10 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			goto error;
 		}
 		cp = send_rtpp_command(node, ng_flags.dict, &ret);
+        if (cp == NULL) {
+    	    node->rn_disabled = 1;
+        	node->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
+        }
 	} while (cp == NULL);
 	LM_DBG("proxy reply: %.*s\n", ret, cp);
 
@@ -1528,11 +1912,19 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		goto error;
 	}
 	if (!bencode_dictionary_get_strcmp(resp, "result", "error")) {
-		if (!bencode_dictionary_get_str(resp, "error-reason", &error))
-			LM_ERR("proxy return error but didn't give an error reason: %.*s\n", ret, cp);
-		else
+		if (!bencode_dictionary_get_str(resp, "error-reason", &error)) {
+		    LM_ERR("proxy return error but didn't give an error reason: %.*s\n", ret, cp);
+		}
+		else {
+			if ((RTPENGINE_SESS_LIMIT_MSG_LEN == error.len) && 
+			    (strncmp(error.s, RTPENGINE_SESS_LIMIT_MSG, RTPENGINE_SESS_LIMIT_MSG_LEN) == 0))
+			{
+				LM_WARN("proxy %.*s: %.*s", node->rn_url.len, node->rn_url.s , error.len, error.s);
+				goto select_node;
+			}
 			LM_ERR("proxy replied with error: %.*s\n", error.len, error.s);
-		goto error;
+		}
+        goto error;
 	}
 
 	if (body_out)
@@ -1606,6 +1998,8 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 
 	cp = send_rtpp_command(node, dict, &ret);
 	if (!cp) {
+	    node->rn_disabled = 1;
+    	node->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
 		LM_ERR("proxy did not respond to ping\n");
 		goto error;
 	}
@@ -1638,6 +2032,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 	static char buf[0x10000];
 	struct pollfd fds[1];
 	struct iovec *v;
+    str out = STR_NULL;
 
 	v = bencode_iovec(dict, &vcnt, 1, 0);
 	if (!v) {
@@ -1663,7 +2058,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 			close(fd);
-			LM_ERR("can't connect to RTP proxy\n");
+			LM_ERR("can't connect to RTP proxy <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 
@@ -1672,7 +2067,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		} while (len == -1 && errno == EINTR);
 		if (len <= 0) {
 			close(fd);
-			LM_ERR("can't send command to a RTP proxy\n");
+			LM_ERR("can't send command to RTP proxy <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 		do {
@@ -1680,7 +2075,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		} while (len == -1 && errno == EINTR);
 		close(fd);
 		if (len <= 0) {
-			LM_ERR("can't read reply from a RTP proxy\n");
+			LM_ERR("can't read reply from RTP proxy <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 	} else {
@@ -1700,7 +2095,8 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				len = writev(rtpp_socks[node->idx], v, vcnt + 1);
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if (len <= 0) {
-				LM_ERR("can't send command to a RTP proxy\n");
+                bencode_get_str(bencode_dictionary_get(dict, "command"), &out);
+				LM_ERR("can't send command \"%.*s\" to RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
 				goto badproxy;
 			}
 			while ((poll(fds, 1, rtpengine_tout_ms) == 1) &&
@@ -1709,7 +2105,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf)-1, 0);
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
-					LM_ERR("can't read reply from a RTP proxy\n");
+					LM_ERR("can't read reply from RTP proxy <%s>\n", node->rn_url.s);
 					goto badproxy;
 				}
 				if (len >= (v[0].iov_len - 1) &&
@@ -1726,7 +2122,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 			}
 		}
 		if (i == rtpengine_retr) {
-			LM_ERR("timeout waiting reply from a RTP proxy\n");
+			LM_ERR("timeout waiting reply from RTP proxy <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 	}
@@ -1735,11 +2131,8 @@ out:
 	cp[len] = '\0';
 	*outlen = len;
 	return cp;
-badproxy:
-	LM_ERR("proxy <%s> does not respond, disable it\n", node->rn_url.s);
-	node->rn_disabled = 1;
-	node->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
 
+badproxy:
 	return NULL;
 }
 

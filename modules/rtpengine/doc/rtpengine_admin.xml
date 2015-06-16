@@ -837,21 +837,30 @@ start_recording();
 	<section>
 		<title><acronym>MI</acronym> Commands</title>
 		<section id="rtpengine.m.nh_enable_rtpp">
-			<title><function moreinfo="none">nh_enable_rtpp</function></title>
+			<title><function moreinfo="none">nh_enable_rtpp proxy_url/all 0/1</function></title>
 			<para>
-			Enables a &rtp; proxy if parameter value is greater than 0.
-			Disables it if a zero value is given.
-			</para>
-			<para>
-			The first parameter is the &rtp; proxy url (exactly as defined in
-			the config file).
-			</para>
-			<para>
+			Enables a &rtp; proxy if the second parameter value is greater than 0. Disables it if a zero value is given.
+			The first parameter is either a specific &rtp; proxy url (exactly as defined in
+			the config file) or the keyword <emphasis>all</emphasis>.
 			The second parameter value must be a number in decimal.
 			</para>
 			<para>
-			NOTE: if a &rtp; proxy is defined multiple times (in the same or
-			diferente sete), all of its instances will be enables/disabled.
+            When try to enable the &rtp; proxy, an application ping command is sent to it.
+            If it fails, the proxy is not enabled.
+            Displays <emphasis>success</emphasis> or <emphasis>fail</emphasis> when try to enable/disable.
+			</para>
+			<para>
+			NOTE: If a &rtp; proxy is defined multiple times (in the same or diferent sets), all of its instances will be enabled/disabled.
+			</para>
+			<para>
+			NOTE: If a &rtp; proxy is in the disabled permanent state and one tries to enable it, even if the ping fails,
+            it is moved to a disabled temporary state and a recheck_ticks are given to it.
+            While the recheck_ticks are grater than 0, the proxy is considered disabled temporary, and it is not taken into consideration for sending data.
+            When the recheck_ticks are 0, the proxy is retested <emphasis>when trying to send data</emphasis>(not automatically retested), and data can be send to it on success.
+			</para>
+			<para>
+			NOTE: When specify the IPv6 &rtp; proxy url one must prefix it with <emphasis>::</emphasis>
+            to escape the :: from the IPv6 address. See the example below.
 			</para>
 			<example>
 			<title>
@@ -859,28 +868,68 @@ start_recording();
 			<programlisting format="linespecific">
 ...
 $ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
+$ &ctltool; fifo nh_enable_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
+$ &ctltool; fifo nh_enable_rtpp all 1
 ...
 			</programlisting>
 			</example>
 		</section>
 
-			<section id="rtpengine.m.nh_show_rtpp">
-			<title><function moreinfo="none">nh_show_rtpp</function></title>
+	    <section id="rtpengine.m.nh_show_rtpp">
+			<title><function moreinfo="none">nh_show_rtpp proxy_url/all</function></title>
 			<para>
 			Displays all the &rtp; proxies and their information: set and
-			status (disabled or not, weight and recheck_ticks). If a RTP proxy has been disabled by a mi command
-			a "(permanent)" quote will appear when printing the disabled status. This is to differentiate from
-			a temporary disable due to the proxy being not found responsive by kamailio.
+			status (disabled or not, weight and recheck_ticks). If a &rtp; proxy has been disabled by
+            nh_enable_rtpp mi command a "(permanent)" quote will appear when printing the disabled status.
+            This is to differentiate from a temporary disable due to the proxy being not found responsive
+            by kamailio. In addition, when disabled permanent, recheck_ticks have no meaning and "N\A"
+            is printed instead of the value.
 			</para>
 			<para>
-			No parameter.
+            It takes either a specific &rtp; proxy url (exactly as defined in
+			the config file) or the keyword <emphasis>all</emphasis> as a parameter.
+			</para>
+			<para>
+			NOTE: When specify the IPv6 &rtp; proxy url one must prefix it with <emphasis>::</emphasis>
+            to escape the :: from the IPv6 address. See the example below.
 			</para>
 			<example>
 			<title>
 				<function moreinfo="none">nh_show_rtpp</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_show_rtpp
+$ &ctltool; fifo nh_show_rtpp udp:192.168.2.133:8081
+$ &ctltool; fifo nh_show_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ &ctltool; fifo nh_show_rtpp all
+...
+			</programlisting>
+			</example>
+		</section>
+
+	    <section id="rtpengine.m.nh_ping_rtpp">
+			<title><function moreinfo="none">nh_ping_rtpp proxy_url/all</function></title>
+			<para>
+            Sends an application ping command to the &rtp; proxy. If the proxy does not respond,
+            it will be disabled, but not permanent. If the proxy responds, no action is taken.
+            Displays the ping result, i.e.
+            <emphasis>success</emphasis> or <emphasis>fail</emphasis> when try to ping.
+			</para>
+			<para>
+            It takes either a specific &rtp; proxy url (exactly as defined in
+			the config file) or the keyword <emphasis>all</emphasis> as a parameter.
+			</para>
+			<para>
+			NOTE: When specify the IPv6 &rtp; proxy url one must prefix it with <emphasis>::</emphasis>
+            to escape the :: from the IPv6 address. See the example below.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">nh_ping_rtpp</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &ctltool; fifo nh_ping_rtpp udp:192.168.2.133:8081
+$ &ctltool; fifo nh_ping_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ &ctltool; fifo nh_ping_rtpp all
 ...
 			</programlisting>
 			</example>
