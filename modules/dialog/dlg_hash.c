@@ -273,7 +273,6 @@ int dlg_clean_run(ticks_t ti)
  */
 int init_dlg_table(unsigned int size)
 {
-	unsigned int n;
 	unsigned int i;
 
 	dlg_ka_list_head = (dlg_ka_t **)shm_malloc(sizeof(dlg_ka_t *));
