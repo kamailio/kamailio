@@ -51,11 +51,27 @@
     </column>
 
     <column>
+        <name>ruri_pattern</name>
+        <type>string</type>
+        <size>&id_len;</size>
+        <default><null/></default>
+        <null/>
+        <description>Regular expression matches Request URI of request.</description>
+    </column>
+
+    <column>
         <name>tag</name>
         <type>string</type>
         <size>64</size>
         <null/>
         <description>Tag</description>
+    </column>
+
+    <column>
+        <name>priority</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Priority of rule.</description>
     </column>
 
     <index>

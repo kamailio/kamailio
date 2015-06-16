@@ -68,7 +68,9 @@ str trusted_table = str_init("trusted");   /* Name of trusted table */
 str source_col = str_init("src_ip");       /* Name of source address column */
 str proto_col = str_init("proto");         /* Name of protocol column */
 str from_col = str_init("from_pattern");   /* Name of from pattern column */
+str ruri_col = str_init("ruri_pattern");   /* Name of RURI pattern column */
 str tag_col = str_init("tag");             /* Name of tag column */
+str priority_col = str_init("priority");   /* Name of priority column */
 str tag_avp_param = {NULL, 0};             /* Peer tag AVP spec */
 int peer_tag_mode = 0;                     /* Add tags form all mathcing peers to avp */
 
@@ -166,7 +168,9 @@ static param_export_t params[] = {
 	{"source_col",         PARAM_STR, &source_col      },
 	{"proto_col",          PARAM_STR, &proto_col       },
 	{"from_col",           PARAM_STR, &from_col        },
+	{"ruri_col",           PARAM_STR, &ruri_col        },
 	{"tag_col",            PARAM_STR, &tag_col         },
+	{"priority_col",       PARAM_STR, &priority_col    },
 	{"peer_tag_avp",       PARAM_STR, &tag_avp_param   },
 	{"peer_tag_mode",      INT_PARAM, &peer_tag_mode     },
 	{"address_table",      PARAM_STR, &address_table   },
