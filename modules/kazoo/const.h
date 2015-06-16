@@ -13,6 +13,7 @@
 extern str str_event_message_summary;
 extern str str_event_dialog;
 extern str str_event_presence;
+extern str kz_app_name;
 
 extern str str_username_col;
 extern str str_domain_col;

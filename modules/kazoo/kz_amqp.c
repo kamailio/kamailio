@@ -688,15 +688,19 @@ void kz_amqp_add_payload_common_properties(json_obj_ptr json_obj, char* server_i
     char node_name[512];
 
 
-    json_object_object_add(json_obj, BLF_JSON_APP_NAME,
-			   json_object_new_string(NAME));
-    json_object_object_add(json_obj, BLF_JSON_APP_VERSION,
-			   json_object_new_string(VERSION));
-    sprintf(node_name, "kamailio@%.*s", dbk_node_hostname.len, dbk_node_hostname.s);
-    json_object_object_add(json_obj, BLF_JSON_NODE,
-			   json_object_new_string(node_name));
-    json_object_object_add(json_obj, BLF_JSON_MSG_ID,
-			   json_object_new_string_len(unique->s, unique->len));
+	if(kz_json_get_object(json_obj, BLF_JSON_APP_NAME) == NULL)
+		json_object_object_add(json_obj, BLF_JSON_APP_NAME, json_object_new_string(kz_app_name.s));
+
+	if(kz_json_get_object(json_obj, BLF_JSON_APP_VERSION) == NULL)
+		json_object_object_add(json_obj, BLF_JSON_APP_VERSION, json_object_new_string(VERSION));
+
+	if(kz_json_get_object(json_obj, BLF_JSON_NODE) == NULL) {
+		sprintf(node_name, "kamailio@%.*s", dbk_node_hostname.len, dbk_node_hostname.s);
+		json_object_object_add(json_obj, BLF_JSON_NODE,	json_object_new_string(node_name));	
+	}
+
+	if(kz_json_get_object(json_obj, BLF_JSON_MSG_ID) == NULL)
+		json_object_object_add(json_obj, BLF_JSON_MSG_ID, json_object_new_string_len(unique->s, unique->len));
 
 }
 

@@ -103,6 +103,8 @@ str kz_db_url = {0,0};
 str kz_query_timeout_avp = {0,0};
 pv_spec_t kz_query_timeout_spec;
 
+str kz_app_name = str_init(NAME);
+
 MODULE_VERSION
 
 static tr_export_t mod_trans[] = {
@@ -176,6 +178,7 @@ static param_export_t params[] = {
     {"consume_messages_on_reconnect", INT_PARAM, &dbk_consume_messages_on_reconnect},
     {"amqp_query_timeout_avp", STR_PARAM, &kz_query_timeout_avp.s},
     {"json_escape_char", STR_PARAM, &kz_json_escape_str.s},
+    {"app_name", STR_PARAM, &kz_app_name.s},
     {0, 0, 0}
 };
 
