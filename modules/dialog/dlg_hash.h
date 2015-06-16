@@ -46,6 +46,7 @@
 #include "../../locking.h"
 #include "../../lib/kmi/mi.h"
 #include "../../timer.h"
+#include "../../atomic_ops.h"
 #include "dlg_timer.h"
 #include "dlg_cb.h"
 
@@ -146,7 +147,9 @@ typedef struct dlg_entry
 	struct dlg_cell    *first;	/*!< dialog list */
 	struct dlg_cell    *last;	/*!< optimisation, end of the dialog list */
 	unsigned int       next_id;	/*!< next id */
-	unsigned int       lock_idx;	/*!< lock index */
+	gen_lock_t lock;     /* mutex to access items in the slot */
+	atomic_t locker_pid; /* pid of the process that holds the lock */
+	int rec_lock_level;  /* recursive lock count */
 } dlg_entry_t;
 
 
@@ -155,8 +158,6 @@ typedef struct dlg_table
 {
 	unsigned int       size;	/*!< size of the dialog table */
 	struct dlg_entry   *entries;	/*!< dialog hash table */
-	unsigned int       locks_no;	/*!< number of locks */
-	gen_lock_set_t     *locks;	/*!< lock table */
 } dlg_table_t;
 
 
@@ -172,12 +173,22 @@ extern dlg_table_t *d_table;
 
 
 /*!
- * \brief Set a dialog lock
+ * \brief Set a dialog lock (re-entrant)
  * \param _table dialog table
  * \param _entry locked entry
  */
 #define dlg_lock(_table, _entry) \
-		lock_set_get( (_table)->locks, (_entry)->lock_idx);
+		do { \
+			int mypid; \
+			mypid = my_pid(); \
+			if (likely(atomic_get( &(_entry)->locker_pid) != mypid)) { \
+				lock_get( &(_entry)->lock); \
+				atomic_set( &(_entry)->locker_pid, mypid); \
+			} else { \
+				/* locked within the same process that executed us */ \
+				(_entry)->rec_lock_level++; \
+			} \
+		} while(0)
 
 
 /*!
@@ -186,7 +197,15 @@ extern dlg_table_t *d_table;
  * \param _entry locked entry
  */
 #define dlg_unlock(_table, _entry) \
-		lock_set_release( (_table)->locks, (_entry)->lock_idx);
+		do { \
+			if (likely((_entry)->rec_lock_level == 0)) { \
+				atomic_set( &(_entry)->locker_pid, 0); \
+				lock_release( &(_entry)->lock); \
+			} else  { \
+				/* recursive locked => decrease lock count */ \
+				(_entry)->rec_lock_level--; \
+			} \
+		} while(0)
 
 /*!
  * \brief Unlink a dialog from the list without locking
