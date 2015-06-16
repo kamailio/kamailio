@@ -539,7 +539,7 @@ modparam("p_usrloc", "connection_expires", "300")
 	    </para>
 	    <example>
 		<title>Set <varname>alg_location</varname> parameter</title>
-		<programlisting format="linespecific">
+			<programlisting format="linespecific">
 ...
 modparam("p_usrloc", "alg_location", 1)
 ...
@@ -584,7 +584,53 @@ modparam("p_usrloc", "default_db_type", "cluster")
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+	<title><varname>db_ops_ruid</varname> (int)</title>
+	<para>
+		If set to 1, database queries for update or delete are done using
+		ruid value. If it is set to 0, the old style using aor, contact and
+		call-id is done.
+	</para>
+	<para>
+	<emphasis>
+		Default value is <quote>1</quote>.
+	</emphasis>
+	</para>
+	<example>
+	<title>Set <varname>db_ops_ruid</varname> parameter</title>
+	<programlisting format="linespecific">
+...
+modparam("p_usrloc", "db_ops_ruid", 0)
+...
+    </programlisting>
+    </example>
+	</section>
+    
+    <section>
+        <title><varname>db_update_as_insert</varname> (string)</title>
+        <para>
+                Set this parameter if you want to do INSERT DB operations
+                instead of UPDATE DB operations. It is recommended to set this parameter
+                if you use Cassandra as a DB backend.
+        </para>
+        <para>
+        <emphasis>
+             Default value is <quote>0</quote>.
+        </emphasis>
+	</para>
+	<example>
+	<title>Set <varname>db_update_as_insert</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("usrloc", "db_update_as_insert", 1)
+...
+</programlisting>
+    </example>
     </section>
+
+    </section>
+
     	<section>
 		<title><varname>default_db_url</varname>(str)</title>
 		<para>
@@ -647,7 +693,9 @@ modparam("p_usrloc", "db_mode", 2)
 	<title><varname>db_url</varname></title> <para> This parameters is now obsolete, and replaced by specific p_usrloc parameters</para>
 	</section>
     </section>
-    <section>
+  
+
+    <section>	    
 	<title>Installation &amp; Running</title>
 	<section>
 	<title>Database setup</title>
