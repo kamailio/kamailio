@@ -218,6 +218,9 @@ str ping_valid_reply_codes_param = {"", 0};
 str ping_socket_param = {"", 0};
 str ping_from_param = {"sip:pinger@localhost", 20};
 
+/* use priority as main ordering criteria */
+static unsigned int priority_ordering_param = 0;
+
 /*
  * Other module types and variables
  */
@@ -345,6 +348,7 @@ static param_export_t params[] = {
     {"lcr_rule_hash_size",       INT_PARAM, &lcr_rule_hash_size_param},
     {"lcr_gw_count",             INT_PARAM, &lcr_gw_count_param},
     {"dont_strip_or_prefix_flag",INT_PARAM, &dont_strip_or_prefix_flag_param},
+    {"priority_ordering",        INT_PARAM, &priority_ordering_param},
     {"fetch_rows",               INT_PARAM, &fetch_rows_param},
     {"ping_interval",            INT_PARAM, &ping_interval_param},
     {"ping_inactivate_threshold",  INT_PARAM, &ping_inactivate_threshold_param},
@@ -462,6 +466,12 @@ static int mod_init(void)
 	!flag_in_range(dont_strip_or_prefix_flag_param)) {
 	LM_ERR("invalid dont_strip_or_prefix_flag value <%d>\n",
 	       dont_strip_or_prefix_flag_param);
+	return -1;
+    }
+
+    if ((priority_ordering_param != 0) && (priority_ordering_param != 1)) {
+        LM_ERR("invalid priority_ordering value <%d>\n",
+	       priority_ordering_param);
 	return -1;
     }
 
@@ -780,6 +790,17 @@ static int comp_matched(const void *m1, const void *m2)
     struct matched_gw_info *mi1 = (struct matched_gw_info *) m1;
     struct matched_gw_info *mi2 = (struct matched_gw_info *) m2;
 
+    if (priority_ordering_param) {
+        /* Sort by priority */
+	if (mi1->priority < mi2->priority) return 1;
+	if (mi1->priority == mi2->priority) {
+	    /* Sort by randomized weigth */
+	    if (mi1->weight > mi2->weight) return 1;
+	    if (mi1->weight == mi2->weight) return 0;
+	}
+	return -1;
+    }
+
     /* Sort by prefix_len */
     if (mi1->prefix_len > mi2->prefix_len) return 1;
     if (mi1->prefix_len == mi2->prefix_len) {
@@ -789,9 +810,7 @@ static int comp_matched(const void *m1, const void *m2)
 	    /* Sort by randomized weigth */
 	    if (mi1->weight > mi2->weight) return 1;
 	    if (mi1->weight == mi2->weight) return 0;
-	    return -1;
 	}
-	return -1;
     }
     return -1;
 }
