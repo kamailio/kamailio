@@ -255,6 +255,8 @@ static int_str setid_avp;
 static str            write_sdp_pvar_str = {NULL, 0};
 static pv_spec_t*     write_sdp_pvar = NULL;
 
+#define RTPENGINE_SESS_LIMIT_MSG "Parallel session limit reached"
+#define RTPENGINE_SESS_LIMIT_MSG_LEN (sizeof(RTPENGINE_SESS_LIMIT_MSG)-1)
 
 char* force_send_ip_str="";
 int force_send_ip_af = AF_UNSPEC;
@@ -1882,6 +1884,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		active_rtpp_set = default_rtpp_set;
 
 	queried_nodes = 0;
+select_node:
 	do {
 		if (++queried_nodes > queried_nodes_limit) {
 			LM_ERR("queried nodes limit reached\n");
@@ -1909,11 +1912,19 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		goto error;
 	}
 	if (!bencode_dictionary_get_strcmp(resp, "result", "error")) {
-		if (!bencode_dictionary_get_str(resp, "error-reason", &error))
-			LM_ERR("proxy return error but didn't give an error reason: %.*s\n", ret, cp);
-		else
+		if (!bencode_dictionary_get_str(resp, "error-reason", &error)) {
+		    LM_ERR("proxy return error but didn't give an error reason: %.*s\n", ret, cp);
+		}
+		else {
+			if ((RTPENGINE_SESS_LIMIT_MSG_LEN == error.len) && 
+			    (strncmp(error.s, RTPENGINE_SESS_LIMIT_MSG, RTPENGINE_SESS_LIMIT_MSG_LEN) == 0))
+			{
+				LM_WARN("proxy %.*s: %.*s", node->rn_url.len, node->rn_url.s , error.len, error.s);
+				goto select_node;
+			}
 			LM_ERR("proxy replied with error: %.*s\n", error.len, error.s);
-		goto error;
+		}
+        goto error;
 	}
 
 	if (body_out)
