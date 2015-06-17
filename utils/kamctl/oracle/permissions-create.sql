@@ -1,10 +1,12 @@
-INSERT INTO version (table_name, table_version) values ('trusted','5');
+INSERT INTO version (table_name, table_version) values ('trusted','6');
 CREATE TABLE trusted (
     id NUMBER(10) PRIMARY KEY,
     src_ip VARCHAR2(50),
     proto VARCHAR2(4),
     from_pattern VARCHAR2(64) DEFAULT NULL,
-    tag VARCHAR2(64)
+    ruri_pattern VARCHAR2(64) DEFAULT NULL,
+    tag VARCHAR2(64),
+    priority NUMBER(10) DEFAULT 0 NOT NULL
 );
 
 CREATE OR REPLACE TRIGGER trusted_tr

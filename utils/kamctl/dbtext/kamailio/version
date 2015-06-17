@@ -51,7 +51,7 @@ silo:8
 sip_trace:4
 speed_dial:2
 subscriber:6
-trusted:5
+trusted:6
 uacreg:1
 uid_credentials:7
 uid_domain:2

@@ -468,7 +468,9 @@
 		<column><field>src_ip</field><type>DB1_STR</type></column>
 		<column><field>proto</field><type>DB1_STR</type></column>
 		<column><field>from_pattern</field><type>DB1_STR</type></column>
+		<column><field>ruri_pattern</field><type>DB1_STR</type></column>
 		<column><field>tag</field><type>DB1_STR</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of address table-->
 	<db_table id="address">
@@ -2744,7 +2746,9 @@
 				<col><field>src_ip</field></col>
 				<col><field>proto</field></col>
 				<col><field>from_pattern</field></col>
+				<col><field>ruri_pattern</field></col>
 				<col><field>tag</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -2754,7 +2758,9 @@
 				<col><field>src_ip</field></col>
 				<col><field>proto</field></col>
 				<col><field>from_pattern</field></col>
+				<col><field>ruri_pattern</field></col>
 				<col><field>tag</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -2767,7 +2773,9 @@
 				<col><field>src_ip</field></col>
 				<col><field>proto</field></col>
 				<col><field>from_pattern</field></col>
+				<col><field>ruri_pattern</field></col>
 				<col><field>tag</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
