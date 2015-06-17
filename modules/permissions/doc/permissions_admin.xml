@@ -664,6 +664,26 @@ modparam("permissions", "from_col", "regexp")
 </programlisting>
 		</example>
 	</section>
+	<section id ="permissions.p.ruri_col">
+		<title><varname>ruri_col</varname> (string)</title>
+		<para>
+		Name of the column trusted table containing a regular
+		expression that is matched against the Request URI.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>ruri_pattern</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ruri_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "ruri_col", "regexp")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id ="permissions.p.tag_col">
 		<title><varname>tag_col</varname> (string)</title>
 		<para>
@@ -682,6 +702,26 @@ modparam("permissions", "from_col", "regexp")
 		<programlisting format="linespecific">
 ...
 modparam("permissions", "tag_col", "peer_tag")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="permissions.p.priority_col">
+		<title><varname>priority_col</varname> (integer)</title>
+		<para>
+		The column name used to store the priority of the corresponding rule from the database
+		row.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>priority</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>priority_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "priority_col", "column_name")
 ...
 </programlisting>
 		</example>
