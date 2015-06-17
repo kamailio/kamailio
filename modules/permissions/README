@@ -14,6 +14,10 @@ Edited by
 
 Juha Heinanen
 
+Edited by
+
+Emmanuel Schmidbauer
+
    Copyright © 2003 Miklos Tirpak
 
    Copyright © 2006-2008 Juha Heinanen
@@ -54,9 +58,11 @@ Juha Heinanen
               3.14. source_col (string)
               3.15. proto_col (string)
               3.16. from_col (string)
-              3.17. tag_col (string)
-              3.18. peer_tag_avp (AVP string)
-              3.19. peer_tag_mode (integer)
+              3.17. ruri_col (string)
+              3.18. tag_col (string)
+              3.19. priority_col (integer)
+              3.20. peer_tag_avp (AVP string)
+              3.21. peer_tag_mode (integer)
 
         4. Functions
 
@@ -108,20 +114,22 @@ Juha Heinanen
    1.14. Set source_col parameter
    1.15. Set proto_col parameter
    1.16. Set from_col parameter
-   1.17. Set tag_col parameter
-   1.18. Set peer_tag_avp parameter
-   1.19. Set peer_tag_mode parameter
-   1.20. allow_routing usage
-   1.21. allow_routing(basename) usage
-   1.22. allow_routing(allow_file, deny_file) usage
-   1.23. allow_register(basename) usage
-   1.24. allow_register(allow_file, deny_file) usage
-   1.25. allow_uri(basename, pvar) usage
-   1.26. allow_address() usage
-   1.27. allow_source_address(group_id) usage
-   1.28. allow_source_address_group() usage
-   1.29. allow_source_address_group() usage
-   1.30. allow_trusted() usage
+   1.17. Set ruri_col parameter
+   1.18. Set tag_col parameter
+   1.19. Set priority_col parameter
+   1.20. Set peer_tag_avp parameter
+   1.21. Set peer_tag_mode parameter
+   1.22. allow_routing usage
+   1.23. allow_routing(basename) usage
+   1.24. allow_routing(allow_file, deny_file) usage
+   1.25. allow_register(basename) usage
+   1.26. allow_register(allow_file, deny_file) usage
+   1.27. allow_uri(basename, pvar) usage
+   1.28. allow_address() usage
+   1.29. allow_source_address(group_id) usage
+   1.30. allow_source_address_group() usage
+   1.31. allow_source_address_group() usage
+   1.32. allow_trusted() usage
 
 Chapter 1. Admin Guide
 
@@ -158,9 +166,11 @@ Chapter 1. Admin Guide
         3.14. source_col (string)
         3.15. proto_col (string)
         3.16. from_col (string)
-        3.17. tag_col (string)
-        3.18. peer_tag_avp (AVP string)
-        3.19. peer_tag_mode (integer)
+        3.17. ruri_col (string)
+        3.18. tag_col (string)
+        3.19. priority_col (integer)
+        3.20. peer_tag_avp (AVP string)
+        3.21. peer_tag_mode (integer)
 
    4. Functions
 
@@ -388,9 +398,11 @@ Chapter 1. Admin Guide
    3.14. source_col (string)
    3.15. proto_col (string)
    3.16. from_col (string)
-   3.17. tag_col (string)
-   3.18. peer_tag_avp (AVP string)
-   3.19. peer_tag_mode (integer)
+   3.17. ruri_col (string)
+   3.18. tag_col (string)
+   3.19. priority_col (integer)
+   3.20. peer_tag_avp (AVP string)
+   3.21. peer_tag_mode (integer)
 
 3.1. default_allow_file (string)
 
@@ -605,7 +617,19 @@ modparam("permissions", "proto_col", "transport")
 modparam("permissions", "from_col", "regexp")
 ...
 
-3.17. tag_col (string)
+3.17. ruri_col (string)
+
+   Name of the column trusted table containing a regular expression that
+   is matched against the Request URI.
+
+   Default value is "ruri_pattern".
+
+   Example 1.17. Set ruri_col parameter
+...
+modparam("permissions", "ruri_col", "regexp")
+...
+
+3.18. tag_col (string)
 
    Name of the column in the "address" or "trusted" table containing a
    string that is added as value to peer_tag AVP if peer_tag AVP has been
@@ -613,24 +637,36 @@ modparam("permissions", "from_col", "regexp")
 
    Default value is "tag".
 
-   Example 1.17. Set tag_col parameter
+   Example 1.18. Set tag_col parameter
 ...
 modparam("permissions", "tag_col", "peer_tag")
 ...
 
-3.18. peer_tag_avp (AVP string)
+3.19. priority_col (integer)
+
+   The column name used to store the priority of the corresponding rule
+   from the database row.
+
+   Default value is "priority".
+
+   Example 1.19. Set priority_col parameter
+...
+modparam("permissions", "priority_col", "column_name")
+...
+
+3.20. peer_tag_avp (AVP string)
 
    If defined, the AVP will be set as a side effect of allow_trusted call
    to not NULL tag column value of the matching peer.
 
    Default value is "undefined".
 
-   Example 1.18. Set peer_tag_avp parameter
+   Example 1.20. Set peer_tag_avp parameter
 ...
 modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 ...
 
-3.19. peer_tag_mode (integer)
+3.21. peer_tag_mode (integer)
 
    Tag mode for allow_trusted. "0" sets only the tag of the first match.
    "1" adds the tags of all matches to the avp. In addition the return
@@ -639,7 +675,7 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 
    Default value is "0".
 
-   Example 1.19. Set peer_tag_mode parameter
+   Example 1.21. Set peer_tag_mode parameter
 ...
 modparam("permissions", "peer_tag_mode", 1)
 ...
@@ -667,7 +703,7 @@ modparam("permissions", "peer_tag_mode", 1)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.20. allow_routing usage
+   Example 1.22. allow_routing usage
 ...
 if (allow_routing()) {
         t_relay();
@@ -690,7 +726,7 @@ if (allow_routing()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.21. allow_routing(basename) usage
+   Example 1.23. allow_routing(basename) usage
 ...
 if (allow_routing("basename")) {
         t_relay();
@@ -715,7 +751,7 @@ if (allow_routing("basename")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.22. allow_routing(allow_file, deny_file) usage
+   Example 1.24. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
         t_relay();
@@ -738,7 +774,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.23. allow_register(basename) usage
+   Example 1.25. allow_register(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register")) {
@@ -768,7 +804,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.24. allow_register(allow_file, deny_file) usage
+   Example 1.26. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register.allow", "register.deny")) {
@@ -797,7 +833,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.25. allow_uri(basename, pvar) usage
+   Example 1.27. allow_uri(basename, pvar) usage
 ...
 if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
         t_relay();
@@ -823,7 +859,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. allow_address() usage
+   Example 1.28. allow_address() usage
 ...
 
 // Check if source address/port is in group 1
@@ -845,7 +881,7 @@ if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. allow_source_address(group_id) usage
+   Example 1.29. allow_source_address(group_id) usage
 ...
 
 // Check source address/port of request
@@ -862,7 +898,7 @@ if (!allow_source_address("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. allow_source_address_group() usage
+   Example 1.30. allow_source_address_group() usage
 ...
 
 $var(group) = allow_source_address_group();
@@ -880,7 +916,7 @@ if ($var(group) != -1) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.29. allow_source_address_group() usage
+   Example 1.31. allow_source_address_group() usage
 ...
 
 $var(group) = allow_address_group("1.2.3.4", "5060");
@@ -905,7 +941,7 @@ if ($var(group) != -1) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. allow_trusted() usage
+   Example 1.32. allow_trusted() usage
 ...
 if (allow_trusted()) {
         t_relay();
