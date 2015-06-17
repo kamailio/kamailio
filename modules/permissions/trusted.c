@@ -24,6 +24,7 @@
  * History:
  * --------
  *  2004-06-07  updated to the new DB api, moved reload_trusted_table (andrei)
+ *  2015-05-06  added regular expression matching R-URI and priority by Emmanuel Schmidbauer <eschmidbauer@voipxswitch.com>
  */
 
 #include <sys/types.h>
