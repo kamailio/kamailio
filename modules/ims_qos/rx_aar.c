@@ -98,6 +98,8 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
     struct cell *t = 0;
     unsigned int cdp_result;
     int result = CSCF_RETURN_ERROR;
+    AAASession *auth = 0;
+    rx_authsessiondata_t* p_session_data = 0;
     
     LM_DBG("Received AAR callback\n");
     saved_transaction_t* data = (saved_transaction_t*) param;
@@ -145,8 +147,29 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
 	LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len, aaa->sessionId->data.s);
 
 	if(!data->aar_update) {
-	    LM_DBG("This is an AAA response to an initial AAR");
+	    LM_DBG("This is an AAA response to an initial AAR - active_media_rx_sessions");
+	    
+	    //need to set Rx auth data to say this session has been successfully opened
+	    //This is used elsewhere to prevent acting on termination events when the session has not been opened
+	    //getting auth session
+	    auth = cdpb.AAAGetAuthSession(aaa->sessionId->data);
+	    if (!auth) {
+		LM_DBG("Could not get Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
+		goto error;
+	    }
+	    //getting session data
+	    p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
+	    if (!p_session_data) {
+		LM_DBG("Could not get session data on Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
+		if (auth) cdpb.AAASessionsUnlock(auth->hash);
+		goto error;
+	    }
+	    
+	    LM_DBG("Setting session_has_been_opened and incrementing active_media_rx_sessions\n");
+	    p_session_data->session_has_been_opened = 1;
 	    counter_inc(ims_qos_cnts_h.active_media_rx_sessions);
+
+	    if (auth) cdpb.AAASessionsUnlock(auth->hash);
 	    
 	    str * passed_rx_session_id = shm_malloc(sizeof (struct _str));
 	    passed_rx_session_id->s = 0;
@@ -252,7 +275,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 
     if (cdp_result >= 2000 && cdp_result < 3000) {
         counter_inc(ims_qos_cnts_h.successful_registration_aars);
-	if (is_rereg) {
+        if (is_rereg) {
             LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the the subscription was successful\n");
             result = CSCF_RETURN_TRUE;
             create_return_code(result);
@@ -273,7 +296,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 	    if (auth) cdpb.AAASessionsUnlock(auth->hash);
 	    goto error;
 	}
-	p_session_data->session_has_been_opened = 1;
+	    p_session_data->session_has_been_opened = 1;
 	counter_inc(ims_qos_cnts_h.active_registration_rx_sessions);
 	
 	if (auth) cdpb.AAASessionsUnlock(auth->hash);

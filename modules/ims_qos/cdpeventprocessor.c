@@ -262,8 +262,11 @@ void cdp_cb_event_process() {
 		    }
                 } else {
                     LM_DBG("This is a media bearer session session");
+		    if(p_session_data->session_has_been_opened) {
+			LM_DBG("Session was opened so decrementing active_media_rx_sessions\n");
+			counter_add(ims_qos_cnts_h.active_media_rx_sessions, -1);
+		    }
 		    
-		    counter_add(ims_qos_cnts_h.active_media_rx_sessions, -1);
                     //we only terminate the dialog if this was triggered from the transport plane or timeout - i.e. if must_terminate_dialog is set
                     //if this was triggered from the signalling plane (i.e. someone hanging up) then we don'y need to terminate the dialog
                     if (p_session_data->must_terminate_dialog) {
