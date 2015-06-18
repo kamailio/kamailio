@@ -112,6 +112,7 @@ typedef struct {
 	amqp_boolean_t auto_delete;
 	amqp_boolean_t no_ack;
 	amqp_boolean_t wait_for_consumer_ack;
+	amqp_boolean_t federate;
 } kz_amqp_bind, *kz_amqp_bind_ptr;
 
 typedef struct {

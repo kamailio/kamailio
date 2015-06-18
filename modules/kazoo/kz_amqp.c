@@ -95,7 +95,8 @@ char *kz_amqp_bytes_dup(amqp_bytes_t bytes)
 
 void kz_amqp_bytes_free(amqp_bytes_t bytes)
 {
-  shm_free(bytes.bytes);
+	if(bytes.bytes)
+		shm_free(bytes.bytes);
 }
 
 amqp_bytes_t kz_amqp_bytes_malloc_dup(amqp_bytes_t src)
@@ -108,6 +109,29 @@ amqp_bytes_t kz_amqp_bytes_malloc_dup(amqp_bytes_t src)
     ((char*)result.bytes)[result.len] = '\0';
   }
   return result;
+}
+
+void kz_local_amqp_bytes_free(amqp_bytes_t bytes)
+{
+	if(bytes.bytes)
+		pkg_free(bytes.bytes);
+}
+
+amqp_bytes_t kz_local_amqp_bytes_malloc_dup(amqp_bytes_t src)
+{
+  amqp_bytes_t result = {0, 0};
+  result.len = src.len;
+  result.bytes = pkg_malloc(src.len+1);
+  if (result.bytes != NULL) {
+    memcpy(result.bytes, src.bytes, src.len);
+    ((char*)result.bytes)[result.len] = '\0';
+  }
+  return result;
+}
+
+amqp_bytes_t kz_local_amqp_bytes_dup_from_string(char *src)
+{
+	return kz_local_amqp_bytes_malloc_dup(amqp_cstring_bytes(src));
 }
 
 amqp_bytes_t kz_amqp_bytes_dup_from_string(char *src)
@@ -1070,6 +1094,7 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	int exclusive = 0;
 	int auto_delete = 1;
 	int no_ack = 1;
+	int federate = 0;
 	int wait_for_consumer_ack = 1;
 
     json_obj_ptr json_obj = NULL;
@@ -1122,6 +1147,10 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
     	wait_for_consumer_ack = json_object_get_int(tmpObj);
     }
 
+    tmpObj = kz_json_get_object(json_obj, "federate");
+    if(tmpObj != NULL) {
+    	federate = json_object_get_int(tmpObj);
+    }
 
 	kz_amqp_bind_ptr bind = kz_amqp_bind_alloc(&exchange_s, &exchange_type_s, &queue_s, &routing_key_s);
 	if(bind == NULL) {
@@ -1135,6 +1164,7 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	bind->auto_delete = auto_delete;
 	bind->no_ack = no_ack;
 	bind->wait_for_consumer_ack = wait_for_consumer_ack;
+	bind->federate = federate;
 
 
 	kz_amqp_binding_ptr binding = shm_malloc(sizeof(kz_amqp_binding));
@@ -1265,18 +1295,19 @@ int get_channel_index() {
 int kz_amqp_bind_targeted_channel(kz_amqp_conn_ptr kz_conn, int idx )
 {
     kz_amqp_bind_ptr bind = channels[idx].targeted;
+//    amqp_queue_declare_ok_t *r = NULL;
     int ret = -1;
-
-    amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
-    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
-    {
-		goto error;
-    }
 
 	amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
     if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
+		goto error;
+    }
+
+    amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
+    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
+    {
 		goto error;
     }
 
@@ -1300,6 +1331,7 @@ int kz_amqp_bind_targeted_channel(kz_amqp_conn_ptr kz_conn, int idx )
 int kz_amqp_bind_targeted_channel_ex(kz_amqp_conn_ptr kz_conn, int loopcount, int idx )
 {
     kz_amqp_bind_ptr bind = NULL;
+//    amqp_queue_declare_ok_t *r = NULL;
     str rpl_exch = str_init("targeted");
     str rpl_exch_type = str_init("direct");
     int ret = -1;
@@ -1327,16 +1359,16 @@ int kz_amqp_bind_targeted_channel_ex(kz_amqp_conn_ptr kz_conn, int loopcount, in
 		goto error;
     }
 
-    amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
-    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
-    {
-		goto error;
-    }
-
 	amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
     if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
+		goto error;
+    }
+
+    amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
+    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
+    {
 		goto error;
     }
 
@@ -1373,16 +1405,31 @@ int kz_amqp_bind_targeted_channels(kz_amqp_conn_ptr kz_conn , int loopcount)
 int kz_amqp_bind_consumer_ex(kz_amqp_conn_ptr kz_conn, kz_amqp_bind_ptr bind, int idx, kz_amqp_channel_ptr chan)
 {
     int ret = -1;
+    amqp_bytes_t federated = {0, 0};
+	char _federated[100];
 
-    amqp_queue_declare(kz_conn->conn, chan[idx].channel, bind->queue, bind->passive, bind->durable, bind->exclusive, bind->auto_delete, kz_amqp_empty_table);
-    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
+	amqp_exchange_declare(kz_conn->conn, chan[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+    if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
 		goto error;
     }
 
-	amqp_exchange_declare(kz_conn->conn, chan[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
-    if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
+    if(bind->federate == 1 && dbk_use_federated_exchanges == 1) {
+    	sprintf(_federated, "%.*s%.*s",
+    			dbk_federated_exchanges.len, dbk_federated_exchanges.s,
+    			(int) bind->exchange.len, (char*)bind->exchange.bytes);
+    	federated = kz_local_amqp_bytes_dup_from_string(_federated);
+		amqp_exchange_declare(kz_conn->conn, chan[idx].channel, federated, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+		if (kz_amqp_error("Declaring federated exchange", amqp_get_rpc_reply(kz_conn->conn)))
+		{
+			ret = -RET_AMQP_ERROR;
+			goto error;
+		}
+    }
+
+    amqp_queue_declare(kz_conn->conn, chan[idx].channel, bind->queue, bind->passive, bind->durable, bind->exclusive, bind->auto_delete, kz_amqp_empty_table);
+    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
 		goto error;
@@ -1394,6 +1441,15 @@ int kz_amqp_bind_consumer_ex(kz_amqp_conn_ptr kz_conn, kz_amqp_bind_ptr bind, in
     {
 		ret = -RET_AMQP_ERROR;
 		goto error;
+    }
+
+    if(bind->federate == 1 && dbk_use_federated_exchanges == 1) {
+		if (amqp_queue_bind(kz_conn->conn, chan[idx].channel, bind->queue, federated, bind->routing_key, kz_amqp_empty_table) < 0
+			|| kz_amqp_error("Binding queue to federated exchange", amqp_get_rpc_reply(kz_conn->conn)))
+		{
+			ret = -RET_AMQP_ERROR;
+			goto error;
+		}
     }
 
     LM_DBG("BASIC CONSUME\n");
@@ -1408,8 +1464,8 @@ int kz_amqp_bind_consumer_ex(kz_amqp_conn_ptr kz_conn, kz_amqp_bind_ptr bind, in
 	chan[idx].consumer = bind;
     ret = idx;
  error:
-
-    return ret;
+ 	 kz_local_amqp_bytes_free(federated);
+     return ret;
 }
 
 
@@ -1419,15 +1475,15 @@ int kz_amqp_bind_consumer(kz_amqp_conn_ptr kz_conn, kz_amqp_bind_ptr bind)
 
     int	idx = get_channel_index();
 
-    amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, bind->passive, bind->durable, bind->exclusive, bind->auto_delete, kz_amqp_empty_table);
-    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
+	amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+    if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
 		goto error;
     }
 
-	amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
-    if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
+    amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, bind->passive, bind->durable, bind->exclusive, bind->auto_delete, kz_amqp_empty_table);
+    if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
 		goto error;

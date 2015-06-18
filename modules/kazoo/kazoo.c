@@ -57,6 +57,9 @@ int dbk_reconn_retries = 8;
 
 int dbk_presentity_phtable_size = 4096;
 
+int dbk_use_federated_exchanges = 1;
+str dbk_federated_exchanges = str_init("federate-");
+
 //int dbk_dialog_expires = 30;
 //int dbk_presence_expires = 3600;
 //int dbk_mwi_expires = 3600;
@@ -179,6 +182,8 @@ static param_export_t params[] = {
     {"amqp_query_timeout_avp", STR_PARAM, &kz_query_timeout_avp.s},
     {"json_escape_char", STR_PARAM, &kz_json_escape_str.s},
     {"app_name", STR_PARAM, &kz_app_name.s},
+    {"use_federated_exchanges", INT_PARAM, &dbk_use_federated_exchanges},
+    {"federated_exchange_prepend", STR_PARAM, &dbk_federated_exchanges.s},
     {0, 0, 0}
 };
 

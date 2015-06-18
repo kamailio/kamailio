@@ -44,4 +44,7 @@ extern str str_null_string;
 
 extern char kz_json_escape_char;
 
+extern int dbk_use_federated_exchanges;
+extern str dbk_federated_exchanges;
+
 #endif /* DBK_CONST_H_ */
