@@ -31,7 +31,8 @@
 
 #include "dbt_raw_util.h"
 
-static const char* _regexp = "\\s*(and|or)?\\s*(\\w*)\\s*(>=|<=|<>|=|>|<)\\s*(')?([a-zA-Z0-9_-]*)(')?";
+//static const char* _regexp = "\\s*(and|or)?\\s*(\\w*)\\s*(>=|<=|<>|=|>|<)\\s*(')?([a-zA-Z0-9_-]*)(')?";
+static const char* _regexp = "\\s*(and|or)?\\s*(\\w*)\\s*(>=|<=|<>|=|>|<)\\s*(['\"])?([^'\"]*)(['\"])?";
 
 char** dbt_str_split(char* a_str, const char a_delim, int* c)
 {
